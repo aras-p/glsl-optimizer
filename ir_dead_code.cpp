@@ -40,41 +40,33 @@ public:
    {
       this->var = var;
       assign = NULL;
-      referenced = false;
+      referenced_count = 0;
+      assigned_count = 0;
       declaration = false;
    }
 
    ir_variable *var; /* The key: the variable's pointer. */
    ir_assignment *assign; /* An assignment to the variable, if any */
-   bool referenced; /* If the variable has ever been referenced. */
+
+   /** Number of times the variable is referenced, including assignments. */
+   unsigned referenced_count;
+
+   /** Number of times the variable is assignmened. */
+   unsigned assigned_count;
+
    bool declaration; /* If the variable had a decl in the instruction stream */
 };
 
-class ir_dead_code_visitor : public ir_visitor {
+class ir_dead_code_visitor : public ir_hierarchical_visitor {
 public:
+   virtual ir_visitor_status visit(ir_variable *);
 
-   /**
-    * \name Visit methods
-    *
-    * As typical for the visitor pattern, there must be one \c visit method for
-    * each concrete subclass of \c ir_instruction.  Virtual base classes within
-    * the hierarchy should not have \c visit methods.
-    */
-   /*@{*/
-   virtual void visit(ir_variable *);
-   virtual void visit(ir_loop *);
-   virtual void visit(ir_loop_jump *);
-   virtual void visit(ir_function_signature *);
-   virtual void visit(ir_function *);
-   virtual void visit(ir_expression *);
-   virtual void visit(ir_swizzle *);
-   virtual void visit(ir_dereference *);
-   virtual void visit(ir_assignment *);
-   virtual void visit(ir_constant *);
-   virtual void visit(ir_call *);
-   virtual void visit(ir_return *);
-   virtual void visit(ir_if *);
-   /*@}*/
+   virtual ir_visitor_status visit_enter(ir_function *);
+   virtual ir_visitor_status visit_enter(ir_dereference *);
+   virtual ir_visitor_status visit_leave(ir_dereference *);
+   virtual ir_visitor_status visit_leave(ir_assignment *);
+
+   ir_dead_code_visitor(void);
 
    variable_entry *get_variable_entry(ir_variable *var);
 
@@ -83,7 +75,16 @@ public:
 
    /* List of variable_entry */
    exec_list variable_list;
+
+   /* Depth of derefernce stack. */
+   int in_dereference;
 };
+
+ir_dead_code_visitor::ir_dead_code_visitor(void)
+{
+   this->in_dereference = 0;
+}
+
 
 variable_entry *
 ir_dead_code_visitor::get_variable_entry(ir_variable *var)
@@ -101,85 +102,49 @@ ir_dead_code_visitor::get_variable_entry(ir_variable *var)
 }
 
 
-void
+ir_visitor_status
 ir_dead_code_visitor::visit(ir_variable *ir)
 {
    variable_entry *entry = this->get_variable_entry(ir);
    if (entry) {
-      entry->declaration = true;
+      if (this->in_dereference)
+	 entry->referenced_count++;
+      else
+	 entry->declaration = true;
    }
+
+   return visit_continue;
 }
 
 
-void
-ir_dead_code_visitor::visit(ir_loop *ir)
-{
-   visit_exec_list(&ir->body_instructions, this);
-   if (ir->from)
-      ir->from->accept(this);
-   if (ir->to)
-      ir->to->accept(this);
-   if (ir->increment)
-      ir->increment->accept(this);
-}
-
-void
-ir_dead_code_visitor::visit(ir_loop_jump *ir)
+ir_visitor_status
+ir_dead_code_visitor::visit_enter(ir_function *ir)
 {
    (void) ir;
+   return visit_continue_with_parent;
 }
 
 
-void
-ir_dead_code_visitor::visit(ir_function_signature *ir)
-{
-   visit_exec_list(&ir->body, this);
-}
-
-void
-ir_dead_code_visitor::visit(ir_function *ir)
+ir_visitor_status
+ir_dead_code_visitor::visit_enter(ir_dereference *ir)
 {
    (void) ir;
+   this->in_dereference++;
+   return visit_continue;
 }
 
-void
-ir_dead_code_visitor::visit(ir_expression *ir)
+
+ir_visitor_status
+ir_dead_code_visitor::visit_leave(ir_dereference *ir)
 {
-   unsigned int operand;
-
-   for (operand = 0; operand < ir->get_num_operands(); operand++) {
-      ir->operands[operand]->accept(this);
-   }
+   (void) ir;
+   this->in_dereference--;
+   return visit_continue;
 }
 
 
-void
-ir_dead_code_visitor::visit(ir_swizzle *ir)
-{
-   ir->val->accept(this);
-}
-
-
-void
-ir_dead_code_visitor::visit(ir_dereference *ir)
-{
-   ir_variable *var;
-
-   if (ir->mode == ir_dereference::ir_reference_array) {
-      ir->selector.array_index->accept(this);
-   }
-
-   var = ir->var->as_variable();
-   if (var) {
-      variable_entry *entry = this->get_variable_entry(var);
-      entry->referenced = true;
-   } else {
-      ir->var->accept(this);
-   }
-}
-
-void
-ir_dead_code_visitor::visit(ir_assignment *ir)
+ir_visitor_status
+ir_dead_code_visitor::visit_leave(ir_assignment *ir)
 {
    ir_instruction *lhs = ir->lhs;
 
@@ -192,8 +157,6 @@ ir_dead_code_visitor::visit(ir_assignment *ir)
 
       ir_dereference *deref = lhs->as_dereference();
       if (deref) {
-	 if (deref->mode == ir_dereference::ir_reference_array)
-	    deref->selector.array_index->accept(this);
 	 lhs = deref->var;
       } else {
 	 ir_swizzle *swiz = lhs->as_swizzle();
@@ -202,61 +165,18 @@ ir_dead_code_visitor::visit(ir_assignment *ir)
       }
    }
 
-   ir->rhs->accept(this);
-   if (ir->condition)
-      ir->condition->accept(this);
 
    variable_entry *entry;
    entry = this->get_variable_entry(lhs->as_variable());
    if (entry) {
+      entry->assigned_count++;
       if (entry->assign == NULL)
 	 entry->assign = ir;
    }
+
+   return visit_continue;
 }
 
-
-void
-ir_dead_code_visitor::visit(ir_constant *ir)
-{
-   (void) ir;
-}
-
-
-void
-ir_dead_code_visitor::visit(ir_call *ir)
-{
-   foreach_iter(exec_list_iterator, iter, *ir) {
-      ir_rvalue *param = (ir_rvalue *)iter.get();
-
-      /* FINISHME: handle out values. */
-      param->accept(this);
-   }
-
-   /* Ignore the callee.  Function bodies will get handled when they're
-    * encountered at the top level instruction stream and spawn their
-    * own dead code visitor.
-    */
-}
-
-
-void
-ir_dead_code_visitor::visit(ir_return *ir)
-{
-   ir_rvalue *val = ir->get_value();
-
-   if (val)
-      val->accept(this);
-}
-
-
-void
-ir_dead_code_visitor::visit(ir_if *ir)
-{
-   ir->condition->accept(this);
-
-   visit_exec_list(&ir->then_instructions, this);
-   visit_exec_list(&ir->else_instructions, this);
-}
 
 /**
  * Do a dead code pass over instructions and everything that instructions
@@ -271,12 +191,23 @@ do_dead_code(exec_list *instructions)
    ir_dead_code_visitor v;
    bool progress = false;
 
-   visit_exec_list(instructions, &v);
+   v.run(instructions);
 
    foreach_iter(exec_list_iterator, iter, v.variable_list) {
       variable_entry *entry = (variable_entry *)iter.get();
 
-      if (entry->referenced || !entry->declaration)
+      /* Since each assignment is a reference, the refereneced count must be
+       * greater than or equal to the assignment count.  If they are equal,
+       * then all of the references are assignments, and the variable is
+       * dead.
+       *
+       * Note that if the variable is neither assigned nor referenced, both
+       * counts will be zero and will be caught by the equality test.
+       */
+      assert(entry->referenced_count >= entry->assigned_count);
+
+      if ((entry->referenced_count > entry->assigned_count)
+	  || !entry->declaration)
 	 continue;
 
       if (entry->assign) {
