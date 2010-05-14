@@ -89,8 +89,8 @@ struct brw_sf_unit_key {
    unsigned line_smooth:1;
    unsigned point_sprite:1;
    unsigned point_attenuated:1;
-   unsigned front_face:2;
-   unsigned cull_mode:2;
+   unsigned front_ccw:1;
+   unsigned cull_face:2;
    unsigned flatshade_first:1;
    unsigned gl_rasterization_rules:1;
    unsigned line_last_pixel_enable:1;
@@ -115,8 +115,8 @@ sf_unit_populate_key(struct brw_context *brw, struct brw_sf_unit_key *key)
 
    /* PIPE_NEW_RAST */
    key->scissor = rast->scissor;
-   key->front_face = rast->front_winding;
-   key->cull_mode = rast->cull_mode;
+   key->front_ccw = rast->front_ccw;
+   key->cull_face = rast->cull_face;
    key->line_smooth = rast->line_smooth;
    key->line_width = rast->line_width;
    key->flatshade_first = rast->flatshade_first;

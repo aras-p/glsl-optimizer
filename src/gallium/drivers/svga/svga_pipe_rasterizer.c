@@ -82,7 +82,7 @@ svga_create_rasterizer_state(struct pipe_context *pipe,
    /* fill_cw, fill_ccw      - draw module or index translation */
 
    rast->shademode = svga_translate_flatshade( templ->flatshade );
-   rast->cullmode = svga_translate_cullmode( templ->cull_mode, 
+   rast->cullmode = svga_translate_cullmode( templ->cull_face, 
                                              templ->front_ccw );
    rast->scissortestenable = templ->scissor;
    rast->multisampleantialias = templ->multisample;
@@ -118,12 +118,12 @@ svga_create_rasterizer_state(struct pipe_context *pipe,
       rast->need_pipeline |= SVGA_PIPELINE_FLAG_POINTS;
 
    {
-      boolean offset_cw = templ->offset_cw;
-      boolean offset_ccw = templ->offset_ccw;
-      boolean offset  = 0;
-      int fill_cw = templ->fill_cw;
-      int fill_ccw = templ->fill_ccw;
+      int fill_front = templ->fill_front;
+      int fill_back = templ->fill_back;
       int fill = PIPE_POLYGON_MODE_FILL;
+      boolean offset_front = util_get_offset(templ, fill_front);
+      boolean offset_back = util_get_offset(templ, fill_back);
+      boolean offset  = 0;
 
       switch (templ->cull_face) {
       case PIPE_FACE_FRONT_AND_BACK:

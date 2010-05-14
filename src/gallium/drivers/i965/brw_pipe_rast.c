@@ -50,14 +50,14 @@ calculate_clip_key_rast( const struct brw_context *brw,
    key->fill_ccw = CLIP_CULL;
    key->fill_cw = CLIP_CULL;
 
-   if (!(templ->cull_mode & PIPE_FACE_FRONT)) {
+   if (!(templ->cull_face & PIPE_FACE_FRONT)) {
       if (templ->front_ccw)
          key->fill_ccw = translate_fill(templ->fill_front);
       else 
          key->fill_cw = translate_fill(templ->fill_front);
    }
 
-   if (!(templ->cull_mode & PIPE_FACE_BACK)) {
+   if (!(templ->cull_face & PIPE_FACE_BACK)) {
       if (templ->front_ccw)
          key->fill_cw = translate_fill(templ->fill_back);
       else 
@@ -138,12 +138,12 @@ static void *brw_create_rasterizer_state( struct pipe_context *pipe,
    /* Caclculate lookup value for WM IZ table.
     */
    if (templ->line_smooth) {
-      if (templ->fill_cw == PIPE_POLYGON_MODE_LINE &&
-	  templ->fill_ccw == PIPE_POLYGON_MODE_LINE) {
+      if (templ->fill_front == PIPE_POLYGON_MODE_LINE &&
+	  templ->fill_back == PIPE_POLYGON_MODE_LINE) {
 	 rast->unfilled_aa_line = AA_ALWAYS;
       }
-      else if (templ->fill_cw == PIPE_POLYGON_MODE_LINE ||
-	       templ->fill_ccw == PIPE_POLYGON_MODE_LINE) {
+      else if (templ->fill_front == PIPE_POLYGON_MODE_LINE ||
+	       templ->fill_back == PIPE_POLYGON_MODE_LINE) {
 	 rast->unfilled_aa_line = AA_SOMETIMES;
       }
       else {

@@ -166,8 +166,8 @@ static enum pipe_error upload_sf_prog(struct brw_context *brw)
    case PIPE_PRIM_TRIANGLES: 
       /* PIPE_NEW_RAST
        */
-      if (rast->fill_cw != PIPE_POLYGON_MODE_FILL ||
-	  rast->fill_ccw != PIPE_POLYGON_MODE_FILL)
+      if (rast->fill_front != PIPE_POLYGON_MODE_FILL ||
+	  rast->fill_back != PIPE_POLYGON_MODE_FILL)
 	 key.primitive = SF_UNFILLED_TRIS;
       else
 	 key.primitive = SF_TRIANGLES;

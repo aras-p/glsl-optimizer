@@ -390,7 +390,7 @@ nv50_rasterizer_state_create(struct pipe_context *pipe,
 	so_data(so, cso->poly_smooth ? 1 : 0);
 
 	so_method(so, tesla, NV50TCL_CULL_FACE_ENABLE, 3);
-	so_data  (so, cso->cull_mode != PIPE_FACE_NONE);
+	so_data  (so, cso->cull_face != PIPE_FACE_NONE);
 	if (cso->front_ccw) {
 		so_data(so, NV50TCL_FRONT_FACE_CCW);
         }

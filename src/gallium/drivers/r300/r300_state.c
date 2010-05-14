@@ -777,10 +777,10 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
         rs->cull_mode = R300_FRONT_FACE_CW;
 
     /* Polygon offset */
-    if (state->offset_front) {
+    if (util_get_offset(state, state->fill_front)) {
        rs->polygon_offset_enable |= R300_FRONT_ENABLE;
     }
-    if (state->offset_back) {
+    if (util_get_offset(state, state->fill_back)) {
        rs->polygon_offset_enable |= R300_BACK_ENABLE;
     }
 
@@ -862,7 +862,9 @@ static void r300_bind_rs_state(struct pipe_context* pipe, void* state)
     }
 
     if (rs) {
-        r300->polygon_offset_enabled = rs->rs.offset_cw || rs->rs.offset_ccw;
+        r300->polygon_offset_enabled = (rs->rs.offset_point ||
+                                        rs->rs.offset_line ||
+                                        rs->rs.offset_tri);
         r300->sprite_coord_enable = rs->rs.sprite_coord_enable;
         r300->two_sided_color = rs->rs.light_twoside;
     } else {

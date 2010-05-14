@@ -128,8 +128,9 @@ wm_unit_populate_key(struct brw_context *brw, struct brw_wm_unit_key *key)
    key->line_stipple = brw->curr.rast->templ.line_stipple_enable;
 
 
-   key->offset_enable = (brw->curr.rast->templ.offset_cw ||
-			 brw->curr.rast->templ.offset_ccw);
+   key->offset_enable = (brw->curr.rast->templ.offset_point ||
+			 brw->curr.rast->templ.offset_line ||
+			 brw->curr.rast->templ.offset_tri);
 
    key->offset_units = brw->curr.rast->templ.offset_units;
    key->offset_factor = brw->curr.rast->templ.offset_scale;

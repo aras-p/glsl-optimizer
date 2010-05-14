@@ -379,7 +379,7 @@ void polygon_fill(struct polygon *poly, struct vg_context *ctx)
          dsa.stencil[0].func = PIPE_FUNC_ALWAYS;
          dsa.stencil[0].valuemask = ~0;
 
-         raster.cull_mode = raster.front_winding ^ PIPE_WINDING_BOTH;
+         raster.cull_face = PIPE_FACE_BACK;
          dsa.stencil[0].fail_op = PIPE_STENCIL_OP_KEEP;
          dsa.stencil[0].zfail_op = PIPE_STENCIL_OP_KEEP;
          dsa.stencil[0].zpass_op = PIPE_STENCIL_OP_INCR_WRAP;
@@ -389,7 +389,7 @@ void polygon_fill(struct polygon *poly, struct vg_context *ctx)
          cso_set_rasterizer(ctx->cso_context, &raster);
          draw_polygon(ctx, poly);
 
-         raster.cull_mode = raster.front_winding;
+         raster.cull_face = PIPE_FACE_FRONT;
          dsa.stencil[0].fail_op = PIPE_STENCIL_OP_KEEP;
          dsa.stencil[0].zfail_op = PIPE_STENCIL_OP_KEEP;
          dsa.stencil[0].zpass_op = PIPE_STENCIL_OP_DECR_WRAP;
@@ -501,7 +501,7 @@ void polygon_array_fill(struct polygon_array *polyarray, struct vg_context *ctx)
          dsa.stencil[0].func = PIPE_FUNC_ALWAYS;
          dsa.stencil[0].valuemask = ~0;
 
-         raster.cull_mode = raster.front_winding ^ PIPE_WINDING_BOTH;
+         raster.cull_face = PIPE_FACE_BACK;
          dsa.stencil[0].fail_op = PIPE_STENCIL_OP_KEEP;
          dsa.stencil[0].zfail_op = PIPE_STENCIL_OP_KEEP;
          dsa.stencil[0].zpass_op = PIPE_STENCIL_OP_INCR_WRAP;
@@ -514,7 +514,7 @@ void polygon_array_fill(struct polygon_array *polyarray, struct vg_context *ctx)
             draw_polygon(ctx, poly);
          }
 
-         raster.cull_mode = raster.front_winding;
+         raster.cull_face = PIPE_FACE_FRONT;
          dsa.stencil[0].fail_op = PIPE_STENCIL_OP_KEEP;
          dsa.stencil[0].zfail_op = PIPE_STENCIL_OP_KEEP;
          dsa.stencil[0].zpass_op = PIPE_STENCIL_OP_DECR_WRAP;

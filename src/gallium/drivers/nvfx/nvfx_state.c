@@ -218,7 +218,7 @@ nvfx_rasterizer_state_create(struct pipe_context *pipe,
 	sb_method(sb, NV34TCL_POLYGON_MODE_FRONT, 6);
         sb_data(sb, nvgl_polygon_mode(cso->fill_front));
         sb_data(sb, nvgl_polygon_mode(cso->fill_back));
-	switch (cso->cull_mode) {
+	switch (cso->cull_face) {
 	case PIPE_FACE_FRONT:
 		sb_data(sb, NV34TCL_CULL_FACE_FRONT);
 		break;
