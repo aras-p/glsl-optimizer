@@ -25,6 +25,7 @@
 #include "glheader.h"
 #include "context.h"
 #include "enable.h"
+#include "enums.h"
 #include "extensions.h"
 #include "get.h"
 #include "macros.h"
@@ -1678,7 +1679,8 @@ check_extra(GLcontext *ctx, const char *func, const struct value_desc *d)
       }
 
    if (total > 0 && enabled == 0) {
-      _mesa_error(ctx, GL_INVALID_ENUM, "%s(pname=0x%x)", func, d->pname);
+      _mesa_error(ctx, GL_INVALID_ENUM, "%s(pname=%s)", func,
+                  _mesa_lookup_enum_by_nr(d->pname));
       return GL_FALSE;
    }
 
@@ -1727,7 +1729,8 @@ find_value(const char *func, GLenum pname, void **p, union value *v)
       /* If the enum isn't valid, the hash walk ends with index 0,
        * which is the API mask entry at the beginning of values[]. */
       if (d->type == TYPE_API_MASK) {
-	 _mesa_error(ctx, GL_INVALID_ENUM, "%s(pname=0x%x)", func, pname);
+	 _mesa_error(ctx, GL_INVALID_ENUM, "%s(pname=%s)", func,
+                     _mesa_lookup_enum_by_nr(pname));
 	 return &error_value;
       }
       hash += prime_step;
@@ -2256,10 +2259,12 @@ find_value_indexed(const char *func, GLenum pname, int index, union value *v)
    }
 
  invalid_enum:
-   _mesa_error(ctx, GL_INVALID_ENUM, "%s(pname=0x%x)", func, pname);
+   _mesa_error(ctx, GL_INVALID_ENUM, "%s(pname=%s)", func,
+               _mesa_lookup_enum_by_nr(pname));
    return TYPE_INVALID;
  invalid_value:
-   _mesa_error(ctx, GL_INVALID_VALUE, "%s(pname=0x%x)", func, pname);
+   _mesa_error(ctx, GL_INVALID_VALUE, "%s(pname=%s)", func,
+               _mesa_lookup_enum_by_nr(pname));
    return TYPE_INVALID;
 }
 
