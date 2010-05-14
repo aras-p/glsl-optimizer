@@ -190,7 +190,8 @@ _mesa_free_transform_feedback(GLcontext *ctx)
 
    /* Delete the default feedback object */
    assert(ctx->Driver.DeleteTransformFeedback);
-   ctx->Driver.DeleteTransformFeedback(ctx, ctx->TransformFeedback.DefaultObject);
+   ctx->Driver.DeleteTransformFeedback(ctx,
+                                       ctx->TransformFeedback.DefaultObject);
 
    ctx->TransformFeedback.CurrentObject = NULL;
 }
@@ -749,7 +750,7 @@ _mesa_BindTransformFeedback(GLenum target, GLuint name)
    if (ctx->TransformFeedback.CurrentObject->Active &&
        !ctx->TransformFeedback.CurrentObject->Paused) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glBindTransformFeedback(transform is active, or not paused)");
+              "glBindTransformFeedback(transform is active, or not paused)");
       return;
    }
 
@@ -844,7 +845,7 @@ _mesa_ResumeTransformFeedback(void)
 
    if (!obj->Active || !obj->Paused) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glPauseTransformFeedback(feedback not active or not paused)");
+               "glPauseTransformFeedback(feedback not active or not paused)");
       return;
    }
 
@@ -871,6 +872,11 @@ _mesa_DrawTransformFeedback(GLenum mode, GLuint name)
    struct gl_transform_feedback_object *obj =
       lookup_transform_feedback_object(ctx, name);
 
+   if (mode > GL_POLYGON) {
+      _mesa_error(ctx, GL_INVALID_ENUM,
+                  "glDrawTransformFeedback(mode=0x%x)", mode);
+      return;
+   }
    if (!obj) {
       _mesa_error(ctx, GL_INVALID_VALUE,
                   "glDrawTransformFeedback(name = %u)", name);
