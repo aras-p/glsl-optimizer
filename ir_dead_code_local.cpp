@@ -35,10 +35,8 @@
 
 #include <stdio.h>
 #include "ir.h"
-#include "ir_visitor.h"
 #include "ir_print_visitor.h"
 #include "ir_basic_block.h"
-#include "ir_visit_tree.h"
 #include "ir_optimization.h"
 #include "glsl_types.h"
 
@@ -59,31 +57,31 @@ public:
    ir_instruction *ir;
 };
 
-static void
-ir_kill_for_derefs_callback(ir_instruction *ir, void *data)
-{
-   exec_list *assignments = (exec_list *)data;
-   ir_variable *var = ir->as_variable();
-
-   if (!var)
-      return;
-
-   foreach_iter(exec_list_iterator, iter, *assignments) {
-      assignment_entry *entry = (assignment_entry *)iter.get();
-
-      if (entry->lhs == var) {
-	 if (debug)
-	    printf("kill %s\n", entry->lhs->name);
-	 entry->remove();
-      }
+class kill_for_derefs_visitor : public ir_hierarchical_visitor {
+public:
+   kill_for_derefs_visitor(exec_list *assignments)
+   {
+      this->assignments = assignments;
    }
-}
 
-static void
-kill_for_derefs(ir_instruction *ir, exec_list *assignments)
-{
-   ir_visit_tree(ir, ir_kill_for_derefs_callback, assignments);
-}
+   virtual ir_visitor_status visit(ir_variable *var)
+   {
+      foreach_iter(exec_list_iterator, iter, *this->assignments) {
+	 assignment_entry *entry = (assignment_entry *)iter.get();
+
+	 if (entry->lhs == var) {
+	    if (debug)
+	       printf("kill %s\n", entry->lhs->name);
+	    entry->remove();
+	 }
+      }
+
+      return visit_continue;
+   }
+
+private:
+   exec_list *assignments;
+};
 
 /**
  * Adds an entry to the available copy list if it's a plain assignment
@@ -95,11 +93,12 @@ process_assignment(ir_assignment *ir, exec_list *assignments)
    ir_variable *var = NULL;
    bool progress = false;
    ir_instruction *current;
+   kill_for_derefs_visitor v(assignments);
 
    /* Kill assignment entries for things used to produce this assignment. */
-   kill_for_derefs(ir->rhs, assignments);
+   ir->rhs->accept(&v);
    if (ir->condition) {
-      kill_for_derefs(ir->condition, assignments);
+      ir->condition->accept(&v);
    }
 
    /* Walk down the dereference chain to find the variable at the end
@@ -114,7 +113,7 @@ process_assignment(ir_assignment *ir, exec_list *assignments)
 	 current = swiz->val;
       } else if ((deref = current->as_dereference())) {
 	 if (deref->mode == ir_dereference::ir_reference_array)
-	    kill_for_derefs(deref->selector.array_index, assignments);
+	    deref->selector.array_index->accept(&v);
 	 current = deref->var;
       } else {
 	 var = current->as_variable();
@@ -199,7 +198,8 @@ dead_code_local_basic_block(ir_instruction *first,
       if (ir_assign) {
 	 progress = process_assignment(ir_assign, &assignments) || progress;
       } else {
-	 kill_for_derefs(ir, &assignments);
+	 kill_for_derefs_visitor kill(&assignments);
+	 ir->accept(&kill);
       }
 
       if (ir == last)
