@@ -123,7 +123,7 @@ draw_need_pipeline(const struct draw_context *draw,
 
       /* unfilled polygons */
       if (rasterizer->fill_front != PIPE_POLYGON_MODE_FILL ||
-          rasterizer->fill_front != PIPE_POLYGON_MODE_FILL)
+          rasterizer->fill_back != PIPE_POLYGON_MODE_FILL)
          return TRUE;
       
       /* polygon offset */
