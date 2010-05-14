@@ -129,7 +129,8 @@ static void compile_clip_prog( struct brw_context *brw,
     if (INTEL_DEBUG & DEBUG_CLIP) {
       printf("clip:\n");
       for (i = 0; i < program_size / sizeof(struct brw_instruction); i++)
-	 brw_disasm(stdout, &((struct brw_instruction *)program)[i]);
+	 brw_disasm(stdout, &((struct brw_instruction *)program)[i],
+		    intel->gen);
       printf("\n");
     }
 

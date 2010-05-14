@@ -774,7 +774,7 @@ static int src1 (FILE *file, struct brw_instruction *inst)
     }
 }
 
-int brw_disasm (FILE *file, struct brw_instruction *inst)
+int brw_disasm (FILE *file, struct brw_instruction *inst, int gen)
 {
     int	err = 0;
     int space = 0;
@@ -829,12 +829,20 @@ int brw_disasm (FILE *file, struct brw_instruction *inst)
     }
 
     if (inst->header.opcode == BRW_OPCODE_SEND) {
+	int target;
+
+	if (gen >= 5)
+	   target = inst->bits2.send_gen5.sfid;
+	else
+	   target = inst->bits3.generic.msg_target;
+
 	newline (file);
 	pad (file, 16);
 	space = 0;
 	err |= control (file, "target function", target_function,
-			inst->bits3.generic.msg_target, &space);
-	switch (inst->bits3.generic.msg_target) {
+			target, &space);
+
+	switch (target) {
 	case BRW_MESSAGE_TARGET_MATH:
 	    err |= control (file, "math function", math_function,
 			    inst->bits3.math.function, &space);

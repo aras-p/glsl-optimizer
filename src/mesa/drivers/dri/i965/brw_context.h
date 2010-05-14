@@ -726,7 +726,7 @@ void brw_upload_urb_fence(struct brw_context *brw);
 void brw_upload_cs_urb_state(struct brw_context *brw);
 
 /* brw_disasm.c */
-int brw_disasm (FILE *file, struct brw_instruction *inst);
+int brw_disasm (FILE *file, struct brw_instruction *inst, int gen);
 
 /*======================================================================
  * Inline conversion functions.  These are better-typed than the
