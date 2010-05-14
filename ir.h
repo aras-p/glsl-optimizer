@@ -28,6 +28,7 @@
 
 #include "list.h"
 #include "ir_visitor.h"
+#include "ir_hierarchical_visitor.h"
 
 struct ir_program {
    void *bong_hits;
@@ -42,6 +43,7 @@ public:
 
    class ir_constant *constant_expression_value();
    virtual void accept(ir_visitor *) = 0;
+   virtual ir_visitor_status accept(ir_hierarchical_visitor *) = 0;
 
    /**
     * \name IR instruction downcast functions
@@ -130,6 +132,8 @@ public:
       v->visit(this);
    }
 
+   virtual ir_visitor_status accept(ir_hierarchical_visitor *);
+
    /**
     * Duplicate an IR variable
     *
@@ -210,6 +214,8 @@ public:
       v->visit(this);
    }
 
+   virtual ir_visitor_status accept(ir_hierarchical_visitor *);
+
    /**
     * Get the name of the function for which this is a signature
     */
@@ -277,6 +283,8 @@ public:
       v->visit(this);
    }
 
+   virtual ir_visitor_status accept(ir_hierarchical_visitor *);
+
    void add_signature(ir_function_signature *sig)
    {
       sig->function = this;
@@ -343,6 +351,8 @@ public:
       v->visit(this);
    }
 
+   virtual ir_visitor_status accept(ir_hierarchical_visitor *);
+
    ir_rvalue *condition;
    /** List of ir_instruction for the body of the then branch */
    exec_list  then_instructions;
@@ -365,6 +375,8 @@ public:
    {
       v->visit(this);
    }
+
+   virtual ir_visitor_status accept(ir_hierarchical_visitor *);
 
    virtual ir_loop *as_loop()
    {
@@ -402,6 +414,8 @@ public:
    {
       v->visit(this);
    }
+
+   virtual ir_visitor_status accept(ir_hierarchical_visitor *);
 
    virtual ir_assignment * as_assignment()
    {
@@ -531,6 +545,8 @@ public:
       v->visit(this);
    }
 
+   virtual ir_visitor_status accept(ir_hierarchical_visitor *);
+
    ir_expression *clone();
 
    ir_expression_operation operation;
@@ -560,6 +576,8 @@ public:
    {
       v->visit(this);
    }
+
+   virtual ir_visitor_status accept(ir_hierarchical_visitor *);
 
    /**
     * Get a generic ir_call object when an error occurs
@@ -650,6 +668,8 @@ public:
       v->visit(this);
    }
 
+   virtual ir_visitor_status accept(ir_hierarchical_visitor *);
+
 private:
    ir_rvalue *value;
 };
@@ -680,6 +700,8 @@ public:
    {
       v->visit(this);
    }
+
+   virtual ir_visitor_status accept(ir_hierarchical_visitor *);
 
    bool is_break() const
    {
@@ -747,6 +769,8 @@ public:
       v->visit(this);
    }
 
+   virtual ir_visitor_status accept(ir_hierarchical_visitor *);
+
    bool is_lvalue()
    {
       return val->is_lvalue() && !mask.has_duplicates;
@@ -779,6 +803,8 @@ public:
    {
       v->visit(this);
    }
+
+   virtual ir_visitor_status accept(ir_hierarchical_visitor *);
 
    bool is_lvalue();
 
@@ -824,6 +850,8 @@ public:
    {
       v->visit(this);
    }
+
+   virtual ir_visitor_status accept(ir_hierarchical_visitor *);
 
    ir_constant *clone()
    {

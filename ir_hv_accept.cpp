@@ -1,0 +1,265 @@
+/*
+ * Copyright © 2010 Intel Corporation
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice (including the next
+ * paragraph) shall be included in all copies or substantial portions of the
+ * Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ */
+#define NULL 0
+#include "ir.h"
+
+/**
+ * \file ir_hv_accept.cpp
+ * Implementations of all hierarchical visitor accept methods for IR
+ * instructions.
+ */
+
+/**
+ * Process a list of nodes using a hierarchical vistor
+ */
+static ir_visitor_status
+visit_list_elements(ir_hierarchical_visitor *v, exec_list *l)
+{
+   foreach_list (n, l) {
+      ir_instruction *const ir = (ir_instruction *) n;
+      ir_visitor_status s = ir->accept(v);
+
+      if (s != visit_continue)
+	 return s;
+   }
+
+   return visit_continue;
+}
+
+
+ir_visitor_status
+ir_variable::accept(ir_hierarchical_visitor *v)
+{
+   return v->visit(this);
+}
+
+
+ir_visitor_status
+ir_loop::accept(ir_hierarchical_visitor *v)
+{
+   ir_visitor_status s = v->visit_enter(this);
+
+   if (s != visit_continue)
+      return (s == visit_continue_with_parent) ? visit_continue : s;
+
+   s = visit_list_elements(v, &this->body_instructions);
+   if (s == visit_stop)
+      return s;
+
+   if (s != visit_continue_with_parent) {
+      if (this->from) {
+	 s = this->from->accept(v);
+	 if (s != visit_continue)
+	    return (s == visit_continue_with_parent) ? visit_continue : s;
+      }
+
+      if (this->to) {
+	 s = this->to->accept(v);
+	 if (s != visit_continue)
+	    return (s == visit_continue_with_parent) ? visit_continue : s;
+      }
+
+      if (this->increment) {
+	 s = this->increment->accept(v);
+	 if (s != visit_continue)
+	    return (s == visit_continue_with_parent) ? visit_continue : s;
+      }
+   }
+
+   return v->visit_leave(this);
+}
+
+
+ir_visitor_status
+ir_loop_jump::accept(ir_hierarchical_visitor *v)
+{
+   return v->visit(this);
+}
+
+
+ir_visitor_status
+ir_function_signature::accept(ir_hierarchical_visitor *v)
+{
+   ir_visitor_status s = v->visit_enter(this);
+   if (s != visit_continue)
+      return (s == visit_continue_with_parent) ? visit_continue : s;
+
+   s = visit_list_elements(v, &this->body);
+   return (s == visit_stop) ? s : v->visit_leave(this);
+}
+
+
+ir_visitor_status
+ir_function::accept(ir_hierarchical_visitor *v)
+{
+   /* FINISHME: Do we want to walk into functions? */
+   (void) v;
+   return visit_continue;
+}
+
+
+ir_visitor_status
+ir_expression::accept(ir_hierarchical_visitor *v)
+{
+   ir_visitor_status s = v->visit_enter(this);
+
+   if (s != visit_continue)
+      return (s == visit_continue_with_parent) ? visit_continue : s;
+
+   for (unsigned i = 0; i < this->get_num_operands(); i++) {
+      switch (this->operands[i]->accept(v)) {
+      case visit_continue:
+	 break;
+
+      case visit_continue_with_parent:
+	 // I wish for Java's labeled break-statement here.
+	 goto done;
+
+      case visit_stop:
+	 return s;
+      }
+   }
+
+done:
+   return v->visit_leave(this);
+}
+
+
+ir_visitor_status
+ir_swizzle::accept(ir_hierarchical_visitor *v)
+{
+   ir_visitor_status s = v->visit_enter(this);
+   if (s != visit_continue)
+      return (s == visit_continue_with_parent) ? visit_continue : s;
+
+   s = this->val->accept(v);
+   return (s == visit_stop) ? s : v->visit_leave(this);
+}
+
+
+ir_visitor_status
+ir_dereference::accept(ir_hierarchical_visitor *v)
+{
+   ir_visitor_status s = v->visit_enter(this);
+   if (s != visit_continue)
+      return (s == visit_continue_with_parent) ? visit_continue : s;
+
+   if (this->mode == ir_reference_array) {
+      s = this->selector.array_index->accept(v);
+      if (s != visit_continue)
+	 return (s == visit_continue_with_parent) ? visit_continue : s;
+   }
+
+
+   s = this->var->accept(v);
+   return (s == visit_stop) ? s : v->visit_leave(this);
+}
+
+
+ir_visitor_status
+ir_assignment::accept(ir_hierarchical_visitor *v)
+{
+   ir_visitor_status s = v->visit_enter(this);
+   if (s != visit_continue)
+      return (s == visit_continue_with_parent) ? visit_continue : s;
+
+   s = this->lhs->accept(v);
+   if (s != visit_continue)
+      return (s == visit_continue_with_parent) ? visit_continue : s;
+
+   s = this->rhs->accept(v);
+   if (s != visit_continue)
+      return (s == visit_continue_with_parent) ? visit_continue : s;
+
+   if (this->condition)
+      s = this->condition->accept(v);
+
+   return (s == visit_stop) ? s : v->visit_leave(this);
+}
+
+
+ir_visitor_status
+ir_constant::accept(ir_hierarchical_visitor *v)
+{
+   return v->visit(this);
+}
+
+
+ir_visitor_status
+ir_call::accept(ir_hierarchical_visitor *v)
+{
+   ir_visitor_status s = v->visit_enter(this);
+   if (s != visit_continue)
+      return (s == visit_continue_with_parent) ? visit_continue : s;
+
+   s = visit_list_elements(v, &this->actual_parameters);
+   if (s == visit_stop)
+      return s;
+
+   return v->visit_leave(this);
+}
+
+
+ir_visitor_status
+ir_return::accept(ir_hierarchical_visitor *v)
+{
+   ir_visitor_status s = v->visit_enter(this);
+   if (s != visit_continue)
+      return (s == visit_continue_with_parent) ? visit_continue : s;
+
+   ir_rvalue *val = this->get_value();
+   if (val) {
+      s = val->accept(v);
+      if (s != visit_continue)
+	 return (s == visit_continue_with_parent) ? visit_continue : s;
+   }
+
+   return v->visit_leave(this);
+}
+
+
+ir_visitor_status
+ir_if::accept(ir_hierarchical_visitor *v)
+{
+   ir_visitor_status s = v->visit_enter(this);
+   if (s != visit_continue)
+      return (s == visit_continue_with_parent) ? visit_continue : s;
+
+   s = this->condition->accept(v);
+   if (s != visit_continue)
+      return (s == visit_continue_with_parent) ? visit_continue : s;
+
+   if (s != visit_continue_with_parent) {
+      s = visit_list_elements(v, &this->then_instructions);
+      if (s == visit_stop)
+	 return s;
+   }
+
+   if (s != visit_continue_with_parent) {
+      s = visit_list_elements(v, &this->else_instructions);
+      if (s == visit_stop)
+	 return s;
+   }
+
+   return v->visit_leave(this);
+}
