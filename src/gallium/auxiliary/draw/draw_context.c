@@ -566,7 +566,7 @@ draw_get_rasterizer_no_cull( struct draw_context *draw,
       memset(&rast, 0, sizeof(rast));
       rast.scissor = scissor;
       rast.flatshade = flatshade;
-      rast.front_winding = PIPE_WINDING_CCW;
+      rast.front_ccw = 1;
       rast.gl_rasterization_rules = draw->rasterizer->gl_rasterization_rules;
 
       draw->rasterizer_no_cull[scissor][flatshade] =

@@ -79,12 +79,13 @@ struct pipe_rasterizer_state
 {
    unsigned flatshade:1;
    unsigned light_twoside:1;
-   unsigned front_winding:2;  /**< PIPE_WINDING_x */
-   unsigned cull_mode:2;      /**< PIPE_WINDING_x */
-   unsigned fill_cw:2;        /**< PIPE_POLYGON_MODE_x */
-   unsigned fill_ccw:2;       /**< PIPE_POLYGON_MODE_x */
-   unsigned offset_cw:1;
-   unsigned offset_ccw:1;
+   unsigned front_ccw:1;
+   unsigned cull_face:2;      /**< PIPE_FACE_x */
+   unsigned fill_front:2;     /**< PIPE_POLYGON_MODE_x */
+   unsigned fill_back:2;      /**< PIPE_POLYGON_MODE_x */
+   unsigned offset_point:1;
+   unsigned offset_line:1;
+   unsigned offset_tri:1;
    unsigned scissor:1;
    unsigned poly_smooth:1;
    unsigned poly_stipple_enable:1;

@@ -187,7 +187,7 @@ static enum pipe_error upload_sf_prog(struct brw_context *brw)
    key.do_twoside_color = rast->light_twoside;
 
    if (key.do_twoside_color) {
-      key.frontface_ccw = (rast->front_winding == PIPE_WINDING_CCW);
+      key.frontface_ccw = rast->front_ccw;
    }
 
    if (brw_search_cache(&brw->cache, BRW_SF_PROG,

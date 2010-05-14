@@ -765,53 +765,37 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
         R300_GA_LINE_CNTL_END_TYPE_COMP;
 
     /* Enable polygon mode */
-    if (state->fill_cw != PIPE_POLYGON_MODE_FILL ||
-        state->fill_ccw != PIPE_POLYGON_MODE_FILL) {
+    if (state->fill_front != PIPE_POLYGON_MODE_FILL ||
+        state->fill_back != PIPE_POLYGON_MODE_FILL) {
         rs->polygon_mode = R300_GA_POLY_MODE_DUAL;
     }
 
-    /* Radeons don't think in "CW/CCW", they think in "front/back". */
-    if (state->front_winding == PIPE_WINDING_CW) {
+    /* Front face */
+    if (state->front_ccw) 
+        rs->cull_mode = R300_FRONT_FACE_CCW;
+    else
         rs->cull_mode = R300_FRONT_FACE_CW;
 
-        /* Polygon offset */
-        if (state->offset_cw) {
-            rs->polygon_offset_enable |= R300_FRONT_ENABLE;
-        }
-        if (state->offset_ccw) {
-            rs->polygon_offset_enable |= R300_BACK_ENABLE;
-        }
-
-        /* Polygon mode */
-        if (rs->polygon_mode) {
-            rs->polygon_mode |=
-                r300_translate_polygon_mode_front(state->fill_cw);
-            rs->polygon_mode |=
-                r300_translate_polygon_mode_back(state->fill_ccw);
-        }
-    } else {
-        rs->cull_mode = R300_FRONT_FACE_CCW;
-
-        /* Polygon offset */
-        if (state->offset_ccw) {
-            rs->polygon_offset_enable |= R300_FRONT_ENABLE;
-        }
-        if (state->offset_cw) {
-            rs->polygon_offset_enable |= R300_BACK_ENABLE;
-        }
-
-        /* Polygon mode */
-        if (rs->polygon_mode) {
-            rs->polygon_mode |=
-                r300_translate_polygon_mode_front(state->fill_ccw);
-            rs->polygon_mode |=
-                r300_translate_polygon_mode_back(state->fill_cw);
-        }
+    /* Polygon offset */
+    if (state->offset_front) {
+       rs->polygon_offset_enable |= R300_FRONT_ENABLE;
     }
-    if (state->front_winding & state->cull_mode) {
+    if (state->offset_back) {
+       rs->polygon_offset_enable |= R300_BACK_ENABLE;
+    }
+
+    /* Polygon mode */
+    if (rs->polygon_mode) {
+       rs->polygon_mode |=
+          r300_translate_polygon_mode_front(state->fill_front);
+       rs->polygon_mode |=
+          r300_translate_polygon_mode_back(state->fill_back);
+    }
+
+    if (state->cull_face & PIPE_FACE_FRONT) {
         rs->cull_mode |= R300_CULL_FRONT;
     }
-    if (~(state->front_winding) & state->cull_mode) {
+    if (state->cull_face & PIPE_FACE_BACK) {
         rs->cull_mode |= R300_CULL_BACK;
     }
 

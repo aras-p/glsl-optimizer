@@ -345,7 +345,7 @@ nv50_rasterizer_state_create(struct pipe_context *pipe,
 		CALLOC_STRUCT(nv50_rasterizer_stateobj);
 
 	/*XXX: ignored
-	 * 	- light_twosize
+	 * 	- light_twoside
 	 * 	- point_smooth
 	 * 	- multisample
 	 * 	- point_sprite / sprite_coord_mode
@@ -385,72 +385,44 @@ nv50_rasterizer_state_create(struct pipe_context *pipe,
 	so_data  (so, cso->point_quad_rasterization ? 1 : 0);
 
 	so_method(so, tesla, NV50TCL_POLYGON_MODE_FRONT, 3);
-	if (cso->front_winding == PIPE_WINDING_CCW) {
-		so_data(so, nvgl_polygon_mode(cso->fill_ccw));
-		so_data(so, nvgl_polygon_mode(cso->fill_cw));
-	} else {
-		so_data(so, nvgl_polygon_mode(cso->fill_cw));
-		so_data(so, nvgl_polygon_mode(cso->fill_ccw));
-	}
+        so_data(so, nvgl_polygon_mode(cso->fill_front));
+        so_data(so, nvgl_polygon_mode(cso->fill_back));
 	so_data(so, cso->poly_smooth ? 1 : 0);
 
 	so_method(so, tesla, NV50TCL_CULL_FACE_ENABLE, 3);
-	so_data  (so, cso->cull_mode != PIPE_WINDING_NONE);
-	if (cso->front_winding == PIPE_WINDING_CCW) {
+	so_data  (so, cso->cull_mode != PIPE_FACE_NONE);
+	if (cso->front_ccw) {
 		so_data(so, NV50TCL_FRONT_FACE_CCW);
-		switch (cso->cull_mode) {
-		case PIPE_WINDING_CCW:
-			so_data(so, NV50TCL_CULL_FACE_FRONT);
-			break;
-		case PIPE_WINDING_CW:
-			so_data(so, NV50TCL_CULL_FACE_BACK);
-			break;
-		case PIPE_WINDING_BOTH:
-			so_data(so, NV50TCL_CULL_FACE_FRONT_AND_BACK);
-			break;
-		default:
-			so_data(so, NV50TCL_CULL_FACE_BACK);
-			break;
-		}
-	} else {
+        }
+        else {
 		so_data(so, NV50TCL_FRONT_FACE_CW);
-		switch (cso->cull_mode) {
-		case PIPE_WINDING_CCW:
-			so_data(so, NV50TCL_CULL_FACE_BACK);
-			break;
-		case PIPE_WINDING_CW:
-			so_data(so, NV50TCL_CULL_FACE_FRONT);
-			break;
-		case PIPE_WINDING_BOTH:
-			so_data(so, NV50TCL_CULL_FACE_FRONT_AND_BACK);
-			break;
-		default:
-			so_data(so, NV50TCL_CULL_FACE_BACK);
-			break;
-		}
+        }
+	switch (cso->cull_face) {
+	case PIPE_FACE_FRONT:
+		so_data(so, NV50TCL_CULL_FACE_FRONT);
+		break;
+	case PIPE_FACE_BACK:
+		so_data(so, NV50TCL_CULL_FACE_BACK);
+		break;
+	case PIPE_FACE_FRONT_AND_BACK:
+		so_data(so, NV50TCL_CULL_FACE_FRONT_AND_BACK);
+		break;
+	default:
+		so_data(so, NV50TCL_CULL_FACE_BACK);
+		break;
 	}
 
 	so_method(so, tesla, NV50TCL_POLYGON_STIPPLE_ENABLE, 1);
 	so_data  (so, cso->poly_stipple_enable ? 1 : 0);
 
 	so_method(so, tesla, NV50TCL_POLYGON_OFFSET_POINT_ENABLE, 3);
-	if ((cso->offset_cw && cso->fill_cw == PIPE_POLYGON_MODE_POINT) ||
-	    (cso->offset_ccw && cso->fill_ccw == PIPE_POLYGON_MODE_POINT))
-		so_data(so, 1);
-	else
-		so_data(so, 0);
-	if ((cso->offset_cw && cso->fill_cw == PIPE_POLYGON_MODE_LINE) ||
-	    (cso->offset_ccw && cso->fill_ccw == PIPE_POLYGON_MODE_LINE))
-		so_data(so, 1);
-	else
-		so_data(so, 0);
-	if ((cso->offset_cw && cso->fill_cw == PIPE_POLYGON_MODE_FILL) ||
-	    (cso->offset_ccw && cso->fill_ccw == PIPE_POLYGON_MODE_FILL))
-		so_data(so, 1);
-	else
-		so_data(so, 0);
+        so_data(so, cso->offset_point);
+        so_data(so, cso->offset_line);
+        so_data(so, cso->offset_tri);
 
-	if (cso->offset_cw || cso->offset_ccw) {
+	if (cso->offset_point ||
+            cso->offset_line ||
+            cso->offset_tri) {
 		so_method(so, tesla, NV50TCL_POLYGON_OFFSET_FACTOR, 1);
 		so_data  (so, fui(cso->offset_scale));
 		so_method(so, tesla, NV50TCL_POLYGON_OFFSET_UNITS, 1);

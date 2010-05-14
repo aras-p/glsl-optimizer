@@ -48,7 +48,7 @@ struct svga_vs_compile_key
 struct svga_fs_compile_key
 {
    unsigned light_twoside:1;
-   unsigned front_cw:1;
+   unsigned front_ccw:1;
    unsigned white_fragments:1;
    unsigned num_textures:8;
    unsigned num_unnormalized_coords:8;

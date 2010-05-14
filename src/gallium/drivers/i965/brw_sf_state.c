@@ -183,22 +183,22 @@ sf_unit_create_from_key(struct brw_context *brw,
    if (key->scissor)
       sf.sf6.scissor = 1;
 
-   if (key->front_face == PIPE_WINDING_CCW)
+   if (key->front_ccw)
       sf.sf5.front_winding = BRW_FRONTWINDING_CCW;
    else
       sf.sf5.front_winding = BRW_FRONTWINDING_CW;
 
-   switch (key->cull_mode) {
-   case PIPE_WINDING_CCW:
-   case PIPE_WINDING_CW:
-      sf.sf6.cull_mode = (key->front_face == key->cull_mode ?
-			  BRW_CULLMODE_FRONT :
-			  BRW_CULLMODE_BACK);
+   switch (key->cull_face) {
+   case PIPE_FACE_FRONT:
+      sf.sf6.cull_mode = BRW_CULLMODE_FRONT;
       break;
-   case PIPE_WINDING_BOTH:
+   case PIPE_FACE_BACK:
+      sf.sf6.cull_mode = BRW_CULLMODE_BACK;
+      break;
+   case PIPE_FACE_FRONT_AND_BACK:
       sf.sf6.cull_mode = BRW_CULLMODE_BOTH;
       break;
-   case PIPE_WINDING_NONE:
+   case PIPE_FACE_NONE:
       sf.sf6.cull_mode = BRW_CULLMODE_NONE;
       break;
    default:
@@ -284,7 +284,7 @@ static enum pipe_error upload_sf_unit( struct brw_context *brw )
     */
    total_grf = (align(key.total_grf, 16) / 16 - 1);
    viewport_transform = 1;
-   front_winding = (key.front_face == PIPE_WINDING_CCW ?
+   front_winding = (key.front_ccw ?
                     BRW_FRONTWINDING_CCW :
                     BRW_FRONTWINDING_CW);
 

@@ -216,66 +216,39 @@ nvfx_rasterizer_state_create(struct pipe_context *pipe,
 	sb_data(sb, fui(cso->point_size));
 
 	sb_method(sb, NV34TCL_POLYGON_MODE_FRONT, 6);
-	if (cso->front_winding == PIPE_WINDING_CCW) {
-		sb_data(sb, nvgl_polygon_mode(cso->fill_ccw));
-		sb_data(sb, nvgl_polygon_mode(cso->fill_cw));
-		switch (cso->cull_mode) {
-		case PIPE_WINDING_CCW:
-			sb_data(sb, NV34TCL_CULL_FACE_FRONT);
-			break;
-		case PIPE_WINDING_CW:
-			sb_data(sb, NV34TCL_CULL_FACE_BACK);
-			break;
-		case PIPE_WINDING_BOTH:
-			sb_data(sb, NV34TCL_CULL_FACE_FRONT_AND_BACK);
-			break;
-		default:
-			sb_data(sb, NV34TCL_CULL_FACE_BACK);
-			break;
-		}
+        sb_data(sb, nvgl_polygon_mode(cso->fill_front));
+        sb_data(sb, nvgl_polygon_mode(cso->fill_back));
+	switch (cso->cull_mode) {
+	case PIPE_FACE_FRONT:
+		sb_data(sb, NV34TCL_CULL_FACE_FRONT);
+		break;
+	case PIPE_FACE_BACK:
+		sb_data(sb, NV34TCL_CULL_FACE_BACK);
+		break;
+	case PIPE_FACE_FRONT_AND_BACK:
+		sb_data(sb, NV34TCL_CULL_FACE_FRONT_AND_BACK);
+		break;
+	default:
+		sb_data(sb, NV34TCL_CULL_FACE_BACK);
+		break;
+	}
+	if (cso->front_ccw) {
 		sb_data(sb, NV34TCL_FRONT_FACE_CCW);
 	} else {
-		sb_data(sb, nvgl_polygon_mode(cso->fill_cw));
-		sb_data(sb, nvgl_polygon_mode(cso->fill_ccw));
-		switch (cso->cull_mode) {
-		case PIPE_WINDING_CCW:
-			sb_data(sb, NV34TCL_CULL_FACE_BACK);
-			break;
-		case PIPE_WINDING_CW:
-			sb_data(sb, NV34TCL_CULL_FACE_FRONT);
-			break;
-		case PIPE_WINDING_BOTH:
-			sb_data(sb, NV34TCL_CULL_FACE_FRONT_AND_BACK);
-			break;
-		default:
-			sb_data(sb, NV34TCL_CULL_FACE_BACK);
-			break;
-		}
 		sb_data(sb, NV34TCL_FRONT_FACE_CW);
 	}
 	sb_data(sb, cso->poly_smooth ? 1 : 0);
-	sb_data(sb, (cso->cull_mode != PIPE_WINDING_NONE) ? 1 : 0);
+	sb_data(sb, (cso->cull_face != PIPE_FACE_NONE) ? 1 : 0);
 
 	sb_method(sb, NV34TCL_POLYGON_STIPPLE_ENABLE, 1);
 	sb_data(sb, cso->poly_stipple_enable ? 1 : 0);
 
 	sb_method(sb, NV34TCL_POLYGON_OFFSET_POINT_ENABLE, 3);
-	if ((cso->offset_cw && cso->fill_cw == PIPE_POLYGON_MODE_POINT) ||
-	    (cso->offset_ccw && cso->fill_ccw == PIPE_POLYGON_MODE_POINT))
-		sb_data(sb, 1);
-	else
-		sb_data(sb, 0);
-	if ((cso->offset_cw && cso->fill_cw == PIPE_POLYGON_MODE_LINE) ||
-	    (cso->offset_ccw && cso->fill_ccw == PIPE_POLYGON_MODE_LINE))
-		sb_data(sb, 1);
-	else
-		sb_data(sb, 0);
-	if ((cso->offset_cw && cso->fill_cw == PIPE_POLYGON_MODE_FILL) ||
-	    (cso->offset_ccw && cso->fill_ccw == PIPE_POLYGON_MODE_FILL))
-		sb_data(sb, 1);
-	else
-		sb_data(sb, 0);
-	if (cso->offset_cw || cso->offset_ccw) {
+        sb_data(sb, cso->offset_point);
+        sb_data(sb, cso->offset_line);
+        sb_data(sb, cso->offset_tri);
+
+	if (cso->offset_point || cso->offset_line || cso->offset_tri) {
 		sb_method(sb, NV34TCL_POLYGON_OFFSET_FACTOR, 2);
 		sb_data(sb, fui(cso->offset_scale));
 		sb_data(sb, fui(cso->offset_units * 2));
