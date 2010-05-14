@@ -30,17 +30,25 @@
 #include <stdio.h>
 #include "ir.h"
 #include "ir_visitor.h"
-#include "ir_visit_tree.h"
 #include "ir_basic_block.h"
 #include "glsl_types.h"
 
-static void
-has_call_callback(ir_instruction *ir, void *data)
-{
-   bool *has_call = (bool *)data;
+class ir_has_call_visitor : public ir_hierarchical_visitor {
+public:
+   ir_has_call_visitor()
+   {
+      has_call = false;
+   }
 
-   *has_call = *has_call || ir->as_call();
-}
+   virtual ir_visitor_status visit_enter(ir_call *ir)
+   {
+      (void) ir;
+      has_call = true;
+      return visit_stop;
+   }
+
+   bool has_call;
+};
 
 /**
  * Calls a user function for every basic block in the instruction stream.
@@ -108,7 +116,7 @@ void call_for_basic_blocks(exec_list *instructions,
 	    call_for_basic_blocks(&ir_sig->body, callback, data);
 	 }
       } else if (ir->as_assignment()) {
-	 bool has_call = false;
+	 ir_has_call_visitor v;
 
 	 /* If there's a call in the expression tree being assigned,
 	  * then that ends the BB too.
@@ -123,9 +131,8 @@ void call_for_basic_blocks(exec_list *instructions,
 	  * expression flattener may be useful before using the basic
 	  * block finder to get more maximal basic blocks out.
 	  */
-	 ir_visit_tree(ir, has_call_callback, &has_call);
-
-	 if (has_call) {
+	 ir->accept(&v);
+	 if (v.has_call) {
 	    callback(leader, ir, data);
 	    leader = NULL;
 	 }
