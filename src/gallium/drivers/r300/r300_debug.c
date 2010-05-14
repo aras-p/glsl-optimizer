@@ -40,6 +40,7 @@ static struct debug_option debug_options[] = {
     { "texalloc", DBG_TEXALLOC, "Texture allocation (for debugging)" },
     { "fall", DBG_FALL, "Fallbacks (for debugging)" },
     { "rs", DBG_RS, "Rasterizer (for debugging)" },
+    { "fb", DBG_FB, "Framebuffer (for debugging)" },
     { "anisohq", DBG_ANISOHQ, "High quality anisotropic filtering (for benchmarking)" },
     { "notiling", DBG_NO_TILING, "Disable tiling (for benchmarking)" },
     { "noimmd", DBG_NO_IMMD, "Disable immediate mode (for benchmarking)" },

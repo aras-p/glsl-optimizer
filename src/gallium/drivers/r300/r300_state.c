@@ -566,13 +566,35 @@ static void r300_fb_set_tiling_flags(struct r300_context *r300,
     }
 }
 
+static void r300_print_fb_surf_info(struct pipe_surface *surf, unsigned index,
+                                    const char *binding)
+{
+    struct pipe_resource *tex = surf->texture;
+    struct r300_texture *rtex = r300_texture(tex);
+
+    fprintf(stderr,
+            "r300:   %s[%i] Dim: %ix%i, Offset: %i, ZSlice: %i, "
+            "Face: %i, Level: %i, Format: %s\n"
+
+            "r300:     TEX: Macro: %s, Micro: %s, Pitch: %i, "
+            "Dim: %ix%ix%i, LastLevel: %i, Format: %s\n",
+
+            binding, index, surf->width, surf->height, surf->offset,
+            surf->zslice, surf->face, surf->level,
+            util_format_short_name(surf->format),
+
+            rtex->macrotile ? "YES" : " NO", rtex->microtile ? "YES" : " NO",
+            rtex->hwpitch[0], tex->width0, tex->height0, tex->depth0,
+            tex->last_level, util_format_short_name(tex->format));
+}
+
 static void
     r300_set_framebuffer_state(struct pipe_context* pipe,
                                const struct pipe_framebuffer_state* state)
 {
     struct r300_context* r300 = r300_context(pipe);
     struct pipe_framebuffer_state *old_state = r300->fb_state.state;
-    unsigned max_width, max_height;
+    unsigned max_width, max_height, i;
     uint32_t zbuffer_bpp = 0;
 
     if (state->nr_cbufs > 4) {
@@ -632,6 +654,16 @@ static void
         if (r300->zbuffer_bpp != zbuffer_bpp) {
             r300->zbuffer_bpp = zbuffer_bpp;
             r300->rs_state.dirty = TRUE;
+        }
+    }
+
+    if (DBG_ON(r300, DBG_FB)) {
+        fprintf(stderr, "r300: set_framebuffer_state:\n");
+        for (i = 0; i < state->nr_cbufs; i++) {
+            r300_print_fb_surf_info(state->cbufs[i], i, "CB");
+        }
+        if (state->zsbuf) {
+            r300_print_fb_surf_info(state->zsbuf, 0, "ZB");
         }
     }
 }
