@@ -323,6 +323,11 @@ char *math_precision[2] = {
     [1] = "partial_precision"
 };
 
+char *urb_opcode[2] = {
+    [0] = "urb_write",
+    [1] = "ff_sync",
+};
+
 char *urb_swizzle[4] = {
     [BRW_URB_SWIZZLE_NONE] = "",
     [BRW_URB_SWIZZLE_INTERLEAVE] = "interleave",
@@ -872,8 +877,17 @@ int brw_disasm (FILE *file, struct brw_instruction *inst, int gen)
 		    inst->bits3.dp_write.send_commit_msg);
 	    break;
 	case BRW_MESSAGE_TARGET_URB:
-	    format (file, " %d", inst->bits3.urb.offset);
+	    if (gen >= 5) {
+		format (file, " %d", inst->bits3.urb_gen5.offset);
+	    } else {
+		format (file, " %d", inst->bits3.urb.offset);
+	    }
+
 	    space = 1;
+	    if (gen >= 5) {
+		err |= control (file, "urb opcode", urb_opcode,
+				inst->bits3.urb_gen5.opcode, &space);
+	    }
 	    err |= control (file, "urb swizzle", urb_swizzle,
 			    inst->bits3.urb.swizzle_control, &space);
 	    err |= control (file, "urb allocate", urb_allocate,
