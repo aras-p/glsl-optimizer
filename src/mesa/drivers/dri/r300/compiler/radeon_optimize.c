@@ -82,6 +82,18 @@ static void peephole_scan_read(void * data, struct rc_instruction * inst,
 	if (file != RC_FILE_TEMPORARY || index != s->Mov->U.I.DstReg.Index)
 		return;
 
+	/* These instructions cannot read from the constants file.
+	 * see radeonTransformTEX()
+	 */
+	if(s->Mov->U.I.SrcReg[0].File != RC_FILE_TEMPORARY &&
+			s->Mov->U.I.SrcReg[0].File != RC_FILE_INPUT &&
+				(inst->U.I.Opcode == RC_OPCODE_TEX ||
+				inst->U.I.Opcode == RC_OPCODE_TXB ||
+				inst->U.I.Opcode == RC_OPCODE_TXP ||
+				inst->U.I.Opcode == RC_OPCODE_KIL)){
+		s->Conflict = 1;
+		return;
+	}
 	if ((mask & s->MovMask) == mask) {
 		if (s->SourceClobbered) {
 			s->Conflict = 1;
@@ -109,7 +121,8 @@ static void peephole_scan_write(void * data, struct rc_instruction * inst,
 			s->DefinedMask |= mask;
 		else
 			s->DefinedMask &= ~mask;
-	} else if (file == s->Mov->U.I.SrcReg[0].File && index == s->Mov->U.I.SrcReg[0].Index) {
+	}
+	if (file == s->Mov->U.I.SrcReg[0].File && index == s->Mov->U.I.SrcReg[0].Index) {
 		if (mask & s->SourcedMask)
 			s->SourceClobbered = 1;
 	} else if (s->Mov->U.I.SrcReg[0].RelAddr && file == RC_FILE_ADDRESS) {
