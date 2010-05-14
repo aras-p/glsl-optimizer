@@ -1499,7 +1499,7 @@ static void r300_set_constant_buffer(struct pipe_context *pipe,
     struct r300_constant_buffer *cbuf;
     struct pipe_transfer *tr;
     void *mapped;
-    int max_size = 0;
+    int max_size = 0, max_size_bytes = 0, clamped_size = 0;
 
     switch (shader) {
         case PIPE_SHADER_VERTEX:
@@ -1518,6 +1518,7 @@ static void r300_set_constant_buffer(struct pipe_context *pipe,
             assert(0);
             return;
     }
+    max_size_bytes = max_size * 4 * sizeof(float);
 
     if (buf == NULL || buf->width0 == 0 ||
         (mapped = pipe_buffer_map(pipe, buf, PIPE_TRANSFER_READ, &tr)) == NULL)
@@ -1526,19 +1527,21 @@ static void r300_set_constant_buffer(struct pipe_context *pipe,
         return;
     }
 
-    assert((buf->width0 % 4 * sizeof(float)) == 0);
+    if (shader == PIPE_SHADER_FRAGMENT ||
+        (shader == PIPE_SHADER_VERTEX && r300->screen->caps.has_tcl)) {
+        assert((buf->width0 % (4 * sizeof(float))) == 0);
 
-    /* Check the size of the constant buffer. */
-    /* XXX Subtract immediates and RC_STATE_* variables. */
-    if (buf->width0 > (sizeof(float) * 4 * max_size)) {
-        fprintf(stderr, "r300: Max size of the constant buffer is "
-                      "%i*4 floats.\n", max_size);
-        abort();
+        /* Check the size of the constant buffer. */
+        /* XXX Subtract immediates and RC_STATE_* variables. */
+        if (buf->width0 > max_size_bytes) {
+            fprintf(stderr, "r300: Max size of the constant buffer is "
+                          "%i*4 floats.\n", max_size);
+        }
+        clamped_size = MIN2(buf->width0, max_size_bytes);
+
+        memcpy(cbuf->constants, mapped, clamped_size);
+        cbuf->count = clamped_size / (4 * sizeof(float));
     }
-
-    memcpy(cbuf->constants, mapped, buf->width0);
-    cbuf->count = buf->width0 / (4 * sizeof(float));
-    pipe_buffer_unmap(pipe, buf, tr);
 
     if (shader == PIPE_SHADER_VERTEX) {
         if (r300->screen->caps.has_tcl) {
@@ -1548,12 +1551,13 @@ static void r300_set_constant_buffer(struct pipe_context *pipe,
             r300->pvs_flush.dirty = TRUE;
         } else if (r300->draw) {
             draw_set_mapped_constant_buffer(r300->draw, PIPE_SHADER_VERTEX,
-                0, cbuf->constants,
-                buf->width0);
+                0, mapped, buf->width0);
         }
     } else if (shader == PIPE_SHADER_FRAGMENT) {
         r300->fs_constants.dirty = TRUE;
     }
+
+    pipe_buffer_unmap(pipe, buf, tr);
 }
 
 void r300_init_state_functions(struct r300_context* r300)
