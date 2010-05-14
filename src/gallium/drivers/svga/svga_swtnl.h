@@ -30,7 +30,6 @@
 
 struct svga_context;
 struct pipe_context;
-struct pipe_buffer;
 struct vbuf_render;
 
 

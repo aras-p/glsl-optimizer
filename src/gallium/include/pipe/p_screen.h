@@ -54,7 +54,6 @@ struct winsys_handle;
 /** Opaque type */
 struct pipe_fence_handle;
 struct pipe_winsys;
-struct pipe_texture;
 struct pipe_resource;
 struct pipe_surface;
 struct pipe_transfer;
