@@ -33,8 +33,8 @@
 
 typedef struct {
 	int is_function;
-	string_list_t *parameter_list;
-	string_list_t *replacement_list;
+	string_list_t *parameters;
+	string_list_t *replacements;
 } macro_t;
 
 struct glcpp_parser {
@@ -48,13 +48,13 @@ yyerror (void *scanner, const char *error);
 void
 _define_object_macro (glcpp_parser_t *parser,
 		      const char *macro,
-		      string_list_t *replacement_list);
+		      string_list_t *replacements);
 
 void
 _define_function_macro (glcpp_parser_t *parser,
 			const char *macro,
-			string_list_t *parameter_list,
-			string_list_t *replacement_list);
+			string_list_t *parameters,
+			string_list_t *replacements);
 
 void
 _print_expanded_object_macro (glcpp_parser_t *parser, const char *macro);
@@ -402,15 +402,15 @@ glcpp_parser_macro_type (glcpp_parser_t *parser, const char *identifier)
 void
 _define_object_macro (glcpp_parser_t *parser,
 		      const char *identifier,
-		      string_list_t *replacement_list)
+		      string_list_t *replacements)
 {
 	macro_t *macro;
 
 	macro = xtalloc (parser, macro_t);
 
 	macro->is_function = 0;
-	macro->parameter_list = NULL;
-	macro->replacement_list = talloc_steal (macro, replacement_list);
+	macro->parameters = NULL;
+	macro->replacements = talloc_steal (macro, replacements);
 
 	hash_table_insert (parser->defines, macro, identifier);
 }
@@ -418,16 +418,16 @@ _define_object_macro (glcpp_parser_t *parser,
 void
 _define_function_macro (glcpp_parser_t *parser,
 			const char *identifier,
-			string_list_t *parameter_list,
-			string_list_t *replacement_list)
+			string_list_t *parameters,
+			string_list_t *replacements)
 {
 	macro_t *macro;
 
 	macro = xtalloc (parser, macro_t);
 
 	macro->is_function = 1;
-	macro->parameter_list = talloc_steal (macro, parameter_list);
-	macro->replacement_list = talloc_steal (macro, replacement_list);
+	macro->parameters = talloc_steal (macro, parameters);
+	macro->replacements = talloc_steal (macro, replacements);
 
 	hash_table_insert (parser->defines, macro, identifier);
 }
@@ -482,7 +482,7 @@ _print_expanded_macro_recursive (glcpp_parser_t *parser,
 				 string_list_t *arguments)
 {
 	macro_t *macro;
-	string_list_t *replacement_list;
+	string_list_t *replacements;
 
 	macro = hash_table_find (parser->defines, token);
 	if (macro == NULL) {
@@ -490,10 +490,10 @@ _print_expanded_macro_recursive (glcpp_parser_t *parser,
 		return;
 	}
 
-	replacement_list = macro->replacement_list;
+	replacements = macro->replacements;
 
-	_print_expanded_string_list_recursive (parser, replacement_list,
-					orig, parameters, arguments);
+	_print_expanded_string_list_recursive (parser, replacements,
+					       orig, parameters, arguments);
 }
 
 void
@@ -518,15 +518,15 @@ _print_expanded_function_macro (glcpp_parser_t *parser,
 	macro = hash_table_find (parser->defines, identifier);
 	assert (macro->is_function);
 
-	if (_string_list_length (arguments) != _string_list_length (macro->parameter_list)) {
+	if (_string_list_length (arguments) != _string_list_length (macro->parameters)) {
 		fprintf (stderr,
 			 "Error: macro %s invoked with %d arguments (expected %d)\n",
 			 identifier,
 			 _string_list_length (arguments),
-			 _string_list_length (macro->parameter_list));
+			 _string_list_length (macro->parameters));
 		return;
 	}
 
 	_print_expanded_macro_recursive (parser, identifier, identifier,
-					 macro->parameter_list, arguments);
+					 macro->parameters, arguments);
 }
