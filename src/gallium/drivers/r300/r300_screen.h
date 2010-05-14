@@ -61,19 +61,22 @@ static INLINE struct r300_screen* r300_screen(struct pipe_screen* screen) {
  * those changes.
  */
 /*@{*/
-#define DBG_HELP    0x0000001
-#define DBG_FP      0x0000002
-#define DBG_VP      0x0000004
-#define DBG_CS      0x0000008
-#define DBG_DRAW    0x0000010
-#define DBG_TEX     0x0000020
-#define DBG_FALL    0x0000040
-#define DBG_ANISOHQ 0x0000080
-#define DBG_NO_TILING 0x0000100
-#define DBG_NO_IMMD 0x0000200
-#define DBG_STATS   0x0000400
-#define DBG_RS      0x0000800
-#define DBG_TEXALLOC 0x0001000
+#define DBG_HELP        (1 << 0)
+/* Logging. */
+#define DBG_FP          (1 << 1)
+#define DBG_VP          (1 << 2)
+#define DBG_CS          (1 << 3)
+#define DBG_DRAW        (1 << 4)
+#define DBG_TEX         (1 << 5)
+#define DBG_TEXALLOC    (1 << 6)
+#define DBG_RS          (1 << 7)
+#define DBG_FALL        (1 << 8)
+/* Features. */
+#define DBG_ANISOHQ     (1 << 16)
+#define DBG_NO_TILING   (1 << 17)
+#define DBG_NO_IMMD     (1 << 18)
+/* Statistics. */
+#define DBG_STATS       (1 << 24)
 /*@}*/
 
 static INLINE boolean SCREEN_DBG_ON(struct r300_screen * screen, unsigned flags)
