@@ -239,6 +239,43 @@ lp_wider_type(struct lp_type type)
 
 
 /**
+ * Return the size of the LLVMType in bits.
+ * XXX this function doesn't necessarily handle all LLVM types.
+ */
+unsigned
+lp_sizeof_llvm_type(LLVMTypeRef t)
+{
+   LLVMTypeKind k = LLVMGetTypeKind(t);
+
+   switch (k) {
+   case LLVMIntegerTypeKind:
+      return LLVMGetIntTypeWidth(t);
+   case LLVMFloatTypeKind:
+      return 8 * sizeof(float);
+   case LLVMDoubleTypeKind:
+      return 8 * sizeof(double);
+   case LLVMVectorTypeKind:
+      {
+         LLVMTypeRef elem = LLVMGetElementType(t);
+         unsigned len = LLVMGetVectorSize(t);
+         return len * lp_sizeof_llvm_type(elem);
+      }
+      break;
+   case LLVMArrayTypeKind:
+      {
+         LLVMTypeRef elem = LLVMGetElementType(t);
+         unsigned len = LLVMGetArrayLength(t);
+         return len * lp_sizeof_llvm_type(elem);
+      }
+      break;
+   default:
+      assert(0 && "Unexpected type in lp_get_llvm_type_size()");
+      return 0;
+   }
+}
+
+
+/**
  * Return string name for a LLVMTypeKind.  Useful for debugging.
  */
 const char *

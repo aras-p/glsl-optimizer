@@ -316,6 +316,10 @@ struct lp_type
 lp_wider_type(struct lp_type type);
 
 
+unsigned
+lp_sizeof_llvm_type(LLVMTypeRef t);
+
+
 const char *
 lp_typekind_name(LLVMTypeKind t);
 
