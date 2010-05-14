@@ -149,7 +149,10 @@ macro:
 ;
 
 argument_list:
-	argument {
+	/* empty */ {
+		$$ = _argument_list_create (parser);
+	}
+|	argument {
 		$$ = _argument_list_create (parser);
 		_argument_list_append ($$, $1);
 	}
@@ -164,8 +167,9 @@ argument_list:
 ;
 
 argument:
-	/* empty */ {
+	word {
 		$$ = _string_list_create (parser);
+		_string_list_append_item ($$, $1);
 	}
 |	argument word {
 		_string_list_append_item ($1, $2);
