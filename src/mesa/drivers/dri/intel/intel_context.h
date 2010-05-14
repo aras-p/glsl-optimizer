@@ -326,7 +326,7 @@ extern int INTEL_DEBUG;
 #define DEBUG_BUFMGR    0x200
 #define DEBUG_REGION    0x400
 #define DEBUG_FBO       0x800
-#define DEBUG_LOCK      0x1000
+#define DEBUG_GS        0x1000
 #define DEBUG_SYNC	0x2000
 #define DEBUG_PRIMS	0x4000
 #define DEBUG_VERTS	0x8000
