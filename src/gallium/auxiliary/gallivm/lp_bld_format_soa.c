@@ -89,6 +89,11 @@ lp_build_format_swizzle_soa(const struct util_format_description *format_desc,
  * It requires that a packed pixel fits into an element of the output
  * channels. The common case is when converting pixel with a depth of 32 bit or
  * less into floats.
+ *
+ * \param format_desc  the format of the 'packed' incoming pixel vector
+ * \param type  the desired type for rgba_out (type.length = n, above)
+ * \param packed  the incoming vector of packed pixels
+ * \param rgba_out  returns the SoA R,G,B,A vectors
  */
 void
 lp_build_unpack_rgba_soa(LLVMBuilderRef builder,
@@ -115,8 +120,8 @@ lp_build_unpack_rgba_soa(LLVMBuilderRef builder,
    /* Decode the input vector components */
    start = 0;
    for (chan = 0; chan < format_desc->nr_channels; ++chan) {
-      unsigned width = format_desc->channel[chan].size;
-      unsigned stop = start + width;
+      const unsigned width = format_desc->channel[chan].size;
+      const unsigned stop = start + width;
       LLVMValueRef input;
 
       input = packed;
@@ -247,9 +252,10 @@ lp_build_unpack_rgba_soa(LLVMBuilderRef builder,
 
 
 /**
- * Fetch a pixel into a SoA.
+ * Fetch a texels from a texture, returning them in SoA layout.
  *
- * \param type  the desired return type for 'rgba'
+ * \param type  the desired return type for 'rgba'.  The vector length
+ *              is the number of texels to fetch
  *
  * \param base_ptr  points to start of the texture image block.  For non-
  *                  compressed formats, this simply points to the texel.
@@ -290,6 +296,7 @@ lp_build_fetch_rgba_soa(LLVMBuilderRef builder,
 
       /*
        * gather the texels from the texture
+       * Ex: packed = {BGRA, BGRA, BGRA, BGRA}.
        */
       packed = lp_build_gather(builder,
                                type.length,
