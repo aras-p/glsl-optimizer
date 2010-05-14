@@ -487,6 +487,7 @@ static const struct dri_debug_control debug_control[] = {
    { "glsl_force", DEBUG_GLSL_FORCE },
    { "urb",   DEBUG_URB },
    { "vs",    DEBUG_VS },
+   { "clip",  DEBUG_CLIP },
    { NULL,    0 }
 };
 

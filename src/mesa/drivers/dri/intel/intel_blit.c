@@ -353,6 +353,9 @@ intelClearWithBlit(GLcontext *ctx, GLbitfield mask)
       OUT_BATCH(clear_val);
       ADVANCE_BATCH();
 
+      if (intel->always_flush_cache)
+	 intel_batchbuffer_emit_mi_flush(intel->batch);
+
       if (buf == BUFFER_DEPTH || buf == BUFFER_STENCIL)
 	 mask &= ~(BUFFER_BIT_DEPTH | BUFFER_BIT_STENCIL);
       else
