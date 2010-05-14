@@ -111,6 +111,7 @@ struct setup_context {
    uint numFragsWritten;  /**< per primitive */
 #endif
 
+   unsigned cull_face;		/* which faces cull */
    unsigned nr_vertex_attrs;
 };
 
@@ -373,6 +374,14 @@ setup_sort_vertices(struct setup_context *setup,
    setup->facing = 
       ((det < 0.0) ^ 
        (setup->softpipe->rasterizer->front_ccw));
+
+   {
+      unsigned face = setup->facing == 0 ? PIPE_FACE_FRONT : PIPE_FACE_BACK;
+
+      if (face & setup->cull_face)
+	 return FALSE;
+   }
+
 
    /* Prepare pixel offset for rasterisation:
     *  - pixel center (0.5, 0.5) for GL, or
@@ -810,11 +819,9 @@ sp_setup_tri(struct setup_context *setup,
    setup->numFragsWritten = 0;
 #endif
 
-   /* Culling already done by draw module.
-    */
-
    if (!setup_sort_vertices( setup, det, v0, v1, v2 ))
       return;
+
    setup_tri_coefficients( setup );
    setup_tri_edges( setup );
 
@@ -1396,6 +1403,17 @@ sp_setup_prepare(struct setup_context *setup)
    setup->nr_vertex_attrs = draw_num_shader_outputs(sp->draw);
 
    sp->quad.first->begin( sp->quad.first );
+
+   if (sp->reduced_api_prim == PIPE_PRIM_TRIANGLES &&
+       sp->rasterizer->fill_front == PIPE_POLYGON_MODE_FILL &&
+       sp->rasterizer->fill_back == PIPE_POLYGON_MODE_FILL) {
+      /* we'll do culling */
+      setup->cull_face = sp->rasterizer->cull_face;
+   }
+   else {
+      /* 'draw' will do culling */
+      setup->cull_face = PIPE_FACE_NONE;
+   }
 }
 
 
