@@ -121,10 +121,7 @@ macro:
 ;
 
 argument_list:
-	/* empty */ {
-		$$ = _list_create (parser);
-	}
-|	argument {
+	argument {
 		$$ = _list_create (parser);
 		_list_append_list ($$, $1);
 	}
