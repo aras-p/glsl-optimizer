@@ -25,6 +25,7 @@ env.Append(CPPPATH = [
 
 sources = [
     'graw_xlib.c',
+    'graw_util.c',
 ]
 
 if True:
