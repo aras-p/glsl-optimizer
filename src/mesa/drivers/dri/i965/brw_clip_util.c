@@ -370,18 +370,13 @@ void brw_clip_ff_sync(struct brw_clip_compile *c)
         need_ff_sync = brw_IF(p, BRW_EXECUTE_1);
         {
             brw_OR(p, c->reg.ff_sync, c->reg.ff_sync, brw_imm_ud(0x1));
-            brw_ff_sync(p, 
-                    c->reg.R0,
-                    0,
-                    c->reg.R0,
-                    1,	
-                    1,		/* used */
-                    1,  	/* msg length */
-                    1,		/* response length */
-                    0,		/* eot */
-                    1,		/* write compelete */
-                    0,		/* urb offset */
-                    BRW_URB_SWIZZLE_NONE);
+            brw_ff_sync(p,
+			c->reg.R0,
+			0,
+			c->reg.R0,
+			1, /* allocate */
+			1, /* response length */
+			0 /* eot */);
         }
         brw_ENDIF(p, need_ff_sync);
         brw_set_predicate_control(p, BRW_PREDICATE_NONE);

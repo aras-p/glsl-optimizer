@@ -280,28 +280,23 @@ static void brw_set_math_message( struct brw_context *brw,
 }
 
 
-static void brw_set_ff_sync_message( struct brw_context *brw,
-				 struct brw_instruction *insn,
-				 GLboolean allocate,
-				 GLboolean used,
-				 GLuint msg_length,
-				 GLuint response_length,
-				 GLboolean end_of_thread,
-				 GLboolean complete,
-				 GLuint offset,
-				 GLuint swizzle_control )
+static void brw_set_ff_sync_message(struct brw_context *brw,
+				    struct brw_instruction *insn,
+				    GLboolean allocate,
+				    GLuint response_length,
+				    GLboolean end_of_thread)
 {
 	brw_set_src1(insn, brw_imm_d(0));
 
-	insn->bits3.urb_gen5.opcode = 1;
-	insn->bits3.urb_gen5.offset = offset;
-	insn->bits3.urb_gen5.swizzle_control = swizzle_control;
+	insn->bits3.urb_gen5.opcode = 1; /* FF_SYNC */
+	insn->bits3.urb_gen5.offset = 0; /* Not used by FF_SYNC */
+	insn->bits3.urb_gen5.swizzle_control = 0; /* Not used by FF_SYNC */
 	insn->bits3.urb_gen5.allocate = allocate;
-	insn->bits3.urb_gen5.used = used;
-	insn->bits3.urb_gen5.complete = complete;
+	insn->bits3.urb_gen5.used = 0; /* Not used by FF_SYNC */
+	insn->bits3.urb_gen5.complete = 0; /* Not used by FF_SYNC */
 	insn->bits3.urb_gen5.header_present = 1;
-	insn->bits3.urb_gen5.response_length = response_length;
-	insn->bits3.urb_gen5.msg_length = msg_length;
+	insn->bits3.urb_gen5.response_length = response_length; /* may be 1 or 0 */
+	insn->bits3.urb_gen5.msg_length = 1;
 	insn->bits3.urb_gen5.end_of_thread = end_of_thread;
 	insn->bits2.send_gen5.sfid = BRW_MESSAGE_TARGET_URB;
 	insn->bits2.send_gen5.end_of_thread = end_of_thread;
@@ -1451,17 +1446,10 @@ void brw_ff_sync(struct brw_compile *p,
 		   GLuint msg_reg_nr,
 		   struct brw_reg src0,
 		   GLboolean allocate,
-		   GLboolean used,
-		   GLuint msg_length,
 		   GLuint response_length,
-		   GLboolean eot,
-		   GLboolean writes_complete,
-		   GLuint offset,
-		   GLuint swizzle)
+		   GLboolean eot)
 {
    struct brw_instruction *insn = next_insn(p, BRW_OPCODE_SEND);
-
-   assert(msg_length < 16);
 
    brw_set_dest(insn, dest);
    brw_set_src0(insn, src0);
@@ -1470,13 +1458,8 @@ void brw_ff_sync(struct brw_compile *p,
    insn->header.destreg__conditionalmod = msg_reg_nr;
 
    brw_set_ff_sync_message(p->brw,
-		       insn,
-		       allocate,
-		       used,
-		       msg_length,
-		       response_length, 
-		       eot, 
-		       writes_complete, 
-		       offset,
-		       swizzle);
+			   insn,
+			   allocate,
+			   response_length,
+			   eot);
 }

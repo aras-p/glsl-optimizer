@@ -822,13 +822,8 @@ void brw_ff_sync(struct brw_compile *p,
 		   GLuint msg_reg_nr,
 		   struct brw_reg src0,
 		   GLboolean allocate,
-		   GLboolean used,
-		   GLuint msg_length,
 		   GLuint response_length,
-		   GLboolean eot,
-		   GLboolean writes_complete,
-		   GLuint offset,
-		   GLuint swizzle);
+		   GLboolean eot);
 
 void brw_fb_WRITE(struct brw_compile *p,
 		   struct brw_reg dest,
