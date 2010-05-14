@@ -716,6 +716,10 @@ void r300_emit_rs_block_state(struct r300_context* r300,
     unsigned count = (rs->inst_count & R300_RS_INST_COUNT_MASK) + 1;
     CS_LOCALS(r300);
 
+    if (SCREEN_DBG_ON(r300->screen, DBG_DRAW)) {
+        r500_dump_rs_block(rs);
+    }
+
     DBG(r300, DBG_DRAW, "r300: RS emit:\n");
 
     BEGIN_CS(size);

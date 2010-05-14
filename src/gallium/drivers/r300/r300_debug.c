@@ -98,3 +98,84 @@ void r300_init_debug(struct r300_screen * screen)
         }
     }
 }
+
+void r500_dump_rs_block(struct r300_rs_block *rs)
+{
+    unsigned count, ip, it_count, ic_count, i, j;
+    unsigned tex_ptr;
+    unsigned col_ptr, col_fmt;
+
+    count = rs->inst_count & 0xf;
+    count++;
+
+    it_count = rs->count & 0x7f;
+    ic_count = (rs->count >> 7) & 0xf;
+
+    fprintf(stderr, "RS Block: %d texcoords (linear), %d colors (perspective)\n",
+        it_count, ic_count);
+    fprintf(stderr, "%d instructions\n", count);
+
+    for (i = 0; i < count; i++) {
+        if (rs->inst[i] & 0x10) {
+            ip = rs->inst[i] & 0xf;
+            fprintf(stderr, "texture: ip %d to psf %d\n",
+                ip, (rs->inst[i] >> 5) & 0x7f);
+
+            tex_ptr = rs->ip[ip] & 0xffffff;
+            fprintf(stderr, "       : ");
+
+            j = 3;
+            do {
+                if (tex_ptr & 0x3f == 63) {
+                    fprintf(stderr, "1.0");
+                } else if (tex_ptr & 0x3f == 62) {
+                    fprintf(stderr, "0.0");
+                } else {
+                    fprintf(stderr, "[%d]", tex_ptr & 0x3f);
+                }
+            } while (j-- && fprintf(stderr, "/"));
+            fprintf(stderr, "\n");
+        }
+
+        if (rs->inst[i] & 0x10000) {
+            ip = (rs->inst[i] >> 12) & 0xf;
+            fprintf(stderr, "color: ip %d to psf %d\n",
+                ip, (rs->inst[i] >> 18) & 0x7f);
+
+            col_ptr = (rs->ip[ip] >> 24) & 0x7;
+            col_fmt = (rs->ip[ip] >> 27) & 0xf;
+            fprintf(stderr, "     : offset %d ", col_ptr);
+
+            switch (col_fmt) {
+                case 0:
+                    fprintf(stderr, "(R/G/B/A)");
+                    break;
+                case 1:
+                    fprintf(stderr, "(R/G/B/0)");
+                    break;
+                case 2:
+                    fprintf(stderr, "(R/G/B/1)");
+                    break;
+                case 4:
+                    fprintf(stderr, "(0/0/0/A)");
+                    break;
+                case 5:
+                    fprintf(stderr, "(0/0/0/0)");
+                    break;
+                case 6:
+                    fprintf(stderr, "(0/0/0/1)");
+                    break;
+                case 8:
+                    fprintf(stderr, "(1/1/1/A)");
+                    break;
+                case 9:
+                    fprintf(stderr, "(1/1/1/0)");
+                    break;
+                case 10:
+                    fprintf(stderr, "(1/1/1/1)");
+                    break;
+            }
+            fprintf(stderr, "\n");
+        }
+    }
+}
