@@ -177,13 +177,20 @@ argument:
 |	argument word {
 		_string_list_append_item ($1, $2);
 		talloc_free ($2);
+		$$ = $1;
 	}
 |	argument SPACE word {
 		_string_list_append_item ($1, " ");
 		_string_list_append_item ($1, $3);
 		talloc_free ($3);
+		$$ = $1;
 	}
-|	argument '(' argument ')'
+|	argument '(' argument ')' {
+		_string_list_append_item ($1, "(");
+		_string_list_append_list ($1, $3);
+		_string_list_append_item ($1, ")");
+		$$ = $1;
+	}
 ;
 
 directive_with_newline:
