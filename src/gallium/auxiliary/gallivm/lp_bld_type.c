@@ -195,6 +195,7 @@ lp_uint_type(struct lp_type type)
 {
    struct lp_type res_type;
 
+   assert(type.length <= LP_MAX_VECTOR_LENGTH);
    memset(&res_type, 0, sizeof res_type);
    res_type.width = type.width;
    res_type.length = type.length;
@@ -211,6 +212,7 @@ lp_int_type(struct lp_type type)
 {
    struct lp_type res_type;
 
+   assert(type.length <= LP_MAX_VECTOR_LENGTH);
    memset(&res_type, 0, sizeof res_type);
    res_type.width = type.width;
    res_type.length = type.length;
