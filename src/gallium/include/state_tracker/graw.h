@@ -17,6 +17,7 @@
 #include "pipe/p_format.h"
 
 struct pipe_screen;
+struct pipe_context;
 
 PUBLIC struct pipe_screen *graw_init( void );
 
@@ -32,5 +33,13 @@ PUBLIC void *graw_create_window( int x,
                                  enum pipe_format format );
 
 PUBLIC void graw_destroy_window( void *handle );
+PUBLIC void graw_set_display_func( void (*func)( void ) );
+PUBLIC void graw_main_loop( void );
+
+PUBLIC void *graw_parse_vertex_shader( struct pipe_context *pipe,
+                                       const char *text );
+
+PUBLIC void *graw_parse_fragment_shader( struct pipe_context *pipe,
+                                         const char *text );
 
 #endif

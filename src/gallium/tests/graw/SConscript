@@ -12,7 +12,8 @@ env.Prepend(LIBPATH = [graw.dir])
 env.Prepend(LIBS = ['graw'])
 
 progs = [
-    'clear'
+    'clear',
+    'tri'
 ]
 
 for prog in progs:
