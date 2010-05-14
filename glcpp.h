@@ -30,7 +30,6 @@
 
 /* Some data types used for parser value. */
 
-
 typedef struct string_node {
 	const char *str;
 	struct string_node *next;
@@ -40,6 +39,16 @@ typedef struct string_list {
 	string_node_t *head;
 	string_node_t *tail;
 } string_list_t;
+
+typedef struct argument_node {
+	string_list_t *argument;
+	struct argument_node *next;
+} argument_node_t;
+
+typedef struct argument_list {
+	argument_node_t *head;
+	argument_node_t *tail;
+} argument_list_t;
 
 typedef struct glcpp_parser glcpp_parser_t;
 
