@@ -326,7 +326,8 @@ ast_expression::print(void) const
       printf("( ");
 
       foreach_list_const (n, &this->expressions) {
-	 printf(", ");
+	 if (n != this->expressions.get_head())
+	    printf(", ");
 
 	 ast_node *ast = exec_node_data(ast_node, n, link);
 	 ast->print();
