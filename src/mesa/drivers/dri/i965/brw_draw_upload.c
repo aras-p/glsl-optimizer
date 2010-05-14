@@ -59,7 +59,7 @@ static GLuint half_float_types[5] = {
    0,
    BRW_SURFACEFORMAT_R16_FLOAT,
    BRW_SURFACEFORMAT_R16G16_FLOAT,
-   0, /* can't seem to render this one */
+   BRW_SURFACEFORMAT_R16G16B16A16_FLOAT,
    BRW_SURFACEFORMAT_R16G16B16A16_FLOAT
 };
 
