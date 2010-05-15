@@ -53,16 +53,13 @@ static const struct debug_named_value lp_debug_flags[] = {
    { "pipe",   DEBUG_PIPE },
    { "tgsi",   DEBUG_TGSI },
    { "tex",    DEBUG_TEX },
-   { "asm",    DEBUG_ASM },
    { "setup",  DEBUG_SETUP },
    { "rast",   DEBUG_RAST },
    { "query",  DEBUG_QUERY },
    { "screen", DEBUG_SCREEN },
-   { "jit",    DEBUG_JIT },
    { "show_tiles",    DEBUG_SHOW_TILES },
    { "show_subtiles", DEBUG_SHOW_SUBTILES },
    { "counters", DEBUG_COUNTERS },
-   { "nopt", DEBUG_NO_LLVM_OPT },
    {NULL, 0}
 };
 #endif

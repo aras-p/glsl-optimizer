@@ -38,6 +38,7 @@
 #include "util/u_memory.h"
 #include "util/u_cpu_detect.h"
 #include "gallivm/lp_bld_init.h"
+#include "gallivm/lp_bld_debug.h"
 #include "lp_debug.h"
 #include "lp_screen.h"
 #include "gallivm/lp_bld_intr.h"
@@ -151,8 +152,9 @@ lp_jit_init_globals(struct llvmpipe_screen *screen)
       screen->context_ptr_type = LLVMPointerType(context_type, 0);
    }
 
-   if (LP_DEBUG & DEBUG_JIT)
+   if (gallivm_debug & GALLIVM_DEBUG_IR) {
       LLVMDumpModule(screen->module);
+   }
 }
 
 
@@ -180,7 +182,7 @@ lp_jit_screen_init(struct llvmpipe_screen *screen)
    screen->pass = LLVMCreateFunctionPassManager(screen->provider);
    LLVMAddTargetData(screen->target, screen->pass);
 
-   if ((LP_DEBUG & DEBUG_NO_LLVM_OPT) == 0) {
+   if ((gallivm_debug & GALLIVM_DEBUG_NO_OPT) == 0) {
       /* These are the passes currently listed in llvm-c/Transforms/Scalar.h,
        * but there are more on SVN. */
       /* TODO: Add more passes */

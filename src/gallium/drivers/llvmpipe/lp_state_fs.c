@@ -862,7 +862,7 @@ generate_fragment(struct llvmpipe_context *lp,
    if (1)
       LLVMRunFunctionPassManager(screen->pass, function);
 
-   if (LP_DEBUG & DEBUG_JIT) {
+   if (gallivm_debug & GALLIVM_DEBUG_IR) {
       /* Print the LLVM IR to stderr */
       lp_debug_dump_value(function);
       debug_printf("\n");
@@ -876,8 +876,9 @@ generate_fragment(struct llvmpipe_context *lp,
 
       variant->jit_function[do_tri_test] = cast_voidptr_to_lp_jit_frag_func(f);
 
-      if (LP_DEBUG & DEBUG_ASM)
+      if (gallivm_debug & GALLIVM_DEBUG_ASM) {
          lp_disassemble(f);
+      }
    }
 }
 
@@ -889,7 +890,7 @@ generate_variant(struct llvmpipe_context *lp,
 {
    struct lp_fragment_shader_variant *variant;
 
-   if (LP_DEBUG & DEBUG_JIT) {
+   if (gallivm_debug & GALLIVM_DEBUG_IR) {
       unsigned i;
 
       tgsi_dump(shader->base.tokens, 0);
@@ -997,7 +998,7 @@ llvmpipe_create_fs_state(struct pipe_context *pipe,
    /* we need to keep a local copy of the tokens */
    shader->base.tokens = tgsi_dup_tokens(templ->tokens);
 
-   if (LP_DEBUG & DEBUG_TGSI) {
+   if (gallivm_debug & GALLIVM_DEBUG_TGSI) {
       debug_printf("llvmpipe: Create fragment shader %p:\n", (void *) shader);
       tgsi_dump(templ->tokens, 0);
    }
