@@ -29,7 +29,21 @@
 #include "pipe/p_compiler.h"
 #include "util/u_cpu_detect.h"
 #include "util/u_debug.h"
+#include "lp_bld_debug.h"
 #include "lp_bld_init.h"
+
+
+#ifdef DEBUG
+unsigned gallivm_debug = 0;
+
+static const struct debug_named_value lp_bld_debug_flags[] = {
+   { "tgsi",   GALLIVM_DEBUG_TGSI },
+   { "ir",     GALLIVM_DEBUG_IR },
+   { "asm",    GALLIVM_DEBUG_ASM },
+   { "nopt",   GALLIVM_DEBUG_NO_OPT },
+   {NULL, 0}
+};
+#endif
 
 
 LLVMModuleRef lp_build_module = NULL;
@@ -41,6 +55,10 @@ LLVMTargetDataRef lp_build_target = NULL;
 void
 lp_build_init(void)
 {
+#ifdef DEBUG
+   gallivm_debug = debug_get_flags_option("GALLIVM_DEBUG", lp_bld_debug_flags, 0 );
+#endif
+
    LLVMInitializeNativeTarget();
 
    LLVMLinkInJIT();
