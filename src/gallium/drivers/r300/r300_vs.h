@@ -56,8 +56,8 @@ struct r300_vertex_shader {
     void *draw_vs;
 };
 
-void r300_translate_vertex_shader(struct r300_context* r300,
-                                  struct r300_vertex_shader* vs,
-                                  const struct tgsi_token *tokens);
+void r300_init_vs_outputs(struct r300_vertex_shader *vs);
 
+void r300_translate_vertex_shader(struct r300_context *r300,
+                                  struct r300_vertex_shader *vs);
 #endif /* R300_VS_H */

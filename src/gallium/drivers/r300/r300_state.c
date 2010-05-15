@@ -1428,8 +1428,10 @@ static void* r300_create_vs_state(struct pipe_context* pipe,
     vs->state = *shader;
     vs->state.tokens = tgsi_dup_tokens(shader->tokens);
 
+    r300_init_vs_outputs(vs);
+
     if (r300->screen->caps.has_tcl) {
-        r300_translate_vertex_shader(r300, vs, vs->state.tokens);
+        r300_translate_vertex_shader(r300, vs);
     } else {
         vs->draw_vs = draw_create_vertex_shader(r300->draw, shader);
     }
