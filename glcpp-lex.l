@@ -32,6 +32,9 @@
 %option reentrant noyywrap
 %option extra-type="glcpp_parser_t *"
 
+%x ST_DEFINE
+%x ST_DEFVAL
+
 SPACE		[[:space:]]
 NONSPACE	[^[:space:]]
 NEWLINE		[\n]
@@ -52,7 +55,29 @@ TOKEN		[^[:space:](),]+
 	 * "#define foo()" from "#define foo ()".
 	 */
 {HASH}define{HSPACE}* {
+	BEGIN ST_DEFINE;
 	return DEFINE;
+}
+
+<ST_DEFINE>{IDENTIFIER}	{
+	BEGIN ST_DEFVAL;
+	yylval.str = xtalloc_strdup (yyextra, yytext);
+	return IDENTIFIER;
+}
+
+<ST_DEFVAL>\n {
+	BEGIN INITIAL;
+	return NEWLINE;
+}
+
+<ST_DEFVAL>{HSPACE}+ {
+	BEGIN INITIAL;
+	return SPACE;
+}
+
+<ST_DEFVAL>"("	{
+	BEGIN INITIAL;
+	return '(';
 }
 
 {IDENTIFIER} {
@@ -84,8 +109,6 @@ TOKEN		[^[:space:](),]+
 	return NEWLINE;
 }
 
-{HSPACE}+ {
-	return SPACE;
-}
+{SPACE}+
 
 %%

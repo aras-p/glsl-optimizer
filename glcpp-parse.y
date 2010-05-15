@@ -135,7 +135,6 @@ content:
 |	'('	{ printf ("("); }
 |	')'	{ printf (")"); }
 |	','	{ printf (","); }
-|	SPACE	{ printf (" "); }
 ;
 
 macro:
@@ -156,10 +155,6 @@ argument_list:
 		$$ = _argument_list_create (parser);
 		_argument_list_append ($$, $1);
 	}
-|	argument_list ',' SPACE argument {
-		_argument_list_append ($1, $4);
-		$$ = $1;
-	}
 |	argument_list ',' argument {
 		_argument_list_append ($1, $3);
 		$$ = $1;
@@ -177,12 +172,6 @@ argument:
 |	argument word {
 		_string_list_append_item ($1, $2);
 		talloc_free ($2);
-		$$ = $1;
-	}
-|	argument SPACE word {
-		_string_list_append_item ($1, " ");
-		_string_list_append_item ($1, $3);
-		talloc_free ($3);
 		$$ = $1;
 	}
 |	argument '(' argument ')' {
@@ -209,8 +198,8 @@ directive:
 		string_list_t *list = _string_list_create (parser);
 		_define_function_macro (parser, $2, $4, list);
 	}
-|	DEFINE IDENTIFIER '(' parameter_list ')' SPACE replacement_list {
-		_define_function_macro (parser, $2, $4, $7);
+|	DEFINE IDENTIFIER '(' parameter_list ')' replacement_list {
+		_define_function_macro (parser, $2, $4, $6);
 	}
 |	UNDEF FUNC_MACRO {
 		string_list_t *replacement = hash_table_find (parser->defines, $2);
@@ -256,7 +245,6 @@ replacement_word:
 |	'('		{ $$ = xtalloc_strdup (parser, "("); }
 |	')'		{ $$ = xtalloc_strdup (parser, ")"); }
 |	','		{ $$ = xtalloc_strdup (parser, ","); }
-|	SPACE		{ $$ = xtalloc_strdup (parser, " "); }
 ;
 
 parameter_list:
@@ -373,8 +361,11 @@ _print_string_list (string_list_t *list)
 	if (list == NULL)
 		return;
 
-	for (node = list->head; node; node = node->next)
+	for (node = list->head; node; node = node->next) {
 		printf ("%s", node->str);
+		if (node->next)
+			printf (" ");
+	}
 }
 
 argument_list_t *
@@ -623,6 +614,7 @@ _expand_function_macro (glcpp_parser_t *parser,
 			argument_list_t *arguments)
 {
 	string_list_t *result;
+
 	macro_t *macro;
 
 	result = _string_list_create (parser);
