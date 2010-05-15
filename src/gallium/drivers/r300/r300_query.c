@@ -59,6 +59,7 @@ static struct pipe_query *r300_create_query(struct pipe_context *pipe,
     /* XXX */
     if (q->offset >= 4096) {
         q->offset = 0;
+        fprintf(stderr, "r300: Rewinding OQBO...\n");
     }
 
     return (struct pipe_query*)q;
@@ -80,7 +81,12 @@ static void r300_begin_query(struct pipe_context* pipe,
     struct r300_context* r300 = r300_context(pipe);
     struct r300_query* q = (struct r300_query*)query;
 
-    assert(r300->query_current == NULL);
+    if (r300->query_current != NULL) {
+        fprintf(stderr, "r300: begin_query: "
+                "Some other query has already been started.\n");
+        assert(0);
+        return;
+    }
 
     pipe_buffer_write(pipe,
 		      r300->oqbo,
@@ -98,6 +104,12 @@ static void r300_end_query(struct pipe_context* pipe,
 {
     struct r300_context* r300 = r300_context(pipe);
     struct r300_query* q = (struct r300_query*)query;
+
+    if ((struct r300_query*)query != r300->query_current) {
+        fprintf(stderr, "r300: end_query: Got invalid query.\n");
+        assert(0);
+        return;
+    }
 
     r300_emit_query_end(r300);
     q->begin_emitted = false;
