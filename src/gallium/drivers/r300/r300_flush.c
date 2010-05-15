@@ -48,9 +48,9 @@ static void r300_flush(struct pipe_context* pipe,
         draw_flush(r300->draw);
     }
 
-    r300_emit_query_end(r300);
-
     if (r300->dirty_hw) {
+        r300_emit_query_end(r300);
+
         FLUSH_CS;
         r300->dirty_hw = 0;
 

@@ -103,7 +103,6 @@ static void r300_end_query(struct pipe_context* pipe,
 	                   struct pipe_query* query)
 {
     struct r300_context* r300 = r300_context(pipe);
-    struct r300_query* q = (struct r300_query*)query;
 
     if ((struct r300_query*)query != r300->query_current) {
         fprintf(stderr, "r300: end_query: Got invalid query.\n");
@@ -112,7 +111,6 @@ static void r300_end_query(struct pipe_context* pipe,
     }
 
     r300_emit_query_end(r300);
-    q->begin_emitted = false;
     r300->query_current = NULL;
 }
 

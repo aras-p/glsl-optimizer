@@ -651,6 +651,8 @@ void r300_emit_query_end(struct r300_context* r300)
             rv530_emit_query_end_single_z(r300, query);
     } else 
         r300_emit_query_end_frag_pipes(r300, query);
+
+    query->begin_emitted = FALSE;
 }
 
 void r300_emit_rs_state(struct r300_context* r300, unsigned size, void* state)
@@ -1094,7 +1096,8 @@ validate:
         }
     }
     /* ...occlusion query buffer... */
-    if (r300->query_start.dirty) {
+    if (r300->query_start.dirty ||
+        (r300->query_current && r300->query_current->begin_emitted)) {
         if (!r300_add_buffer(r300->rws, r300->oqbo,
 			     0, RADEON_GEM_DOMAIN_GTT)) {
             r300->context.flush(&r300->context, 0, NULL);
