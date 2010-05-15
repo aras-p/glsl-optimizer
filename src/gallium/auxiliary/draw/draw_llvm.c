@@ -12,6 +12,7 @@
 #include "gallivm/lp_bld_printf.h"
 
 #include "tgsi/tgsi_exec.h"
+#include "tgsi/tgsi_dump.h"
 
 #include "util/u_cpu_detect.h"
 #include "util/u_string.h"
@@ -214,27 +215,34 @@ draw_llvm_create(struct draw_context *draw)
 
    llvm->pass = LLVMCreateFunctionPassManager(llvm->provider);
    LLVMAddTargetData(llvm->target, llvm->pass);
-   /* These are the passes currently listed in llvm-c/Transforms/Scalar.h,
-    * but there are more on SVN. */
-   /* TODO: Add more passes */
-   LLVMAddCFGSimplificationPass(llvm->pass);
-   LLVMAddPromoteMemoryToRegisterPass(llvm->pass);
-   LLVMAddConstantPropagationPass(llvm->pass);
-   if(util_cpu_caps.has_sse4_1) {
-      /* FIXME: There is a bug in this pass, whereby the combination of fptosi
-       * and sitofp (necessary for trunc/floor/ceil/round implementation)
-       * somehow becomes invalid code.
+
+   if ((gallivm_debug & GALLIVM_DEBUG_NO_OPT) == 0) {
+      /* These are the passes currently listed in llvm-c/Transforms/Scalar.h,
+       * but there are more on SVN. */
+      /* TODO: Add more passes */
+      LLVMAddCFGSimplificationPass(llvm->pass);
+      LLVMAddPromoteMemoryToRegisterPass(llvm->pass);
+      LLVMAddConstantPropagationPass(llvm->pass);
+      if(util_cpu_caps.has_sse4_1) {
+         /* FIXME: There is a bug in this pass, whereby the combination of fptosi
+          * and sitofp (necessary for trunc/floor/ceil/round implementation)
+          * somehow becomes invalid code.
+          */
+         LLVMAddInstructionCombiningPass(llvm->pass);
+      }
+      LLVMAddGVNPass(llvm->pass);
+   } else {
+      /* We need at least this pass to prevent the backends to fail in
+       * unexpected ways.
        */
-      LLVMAddInstructionCombiningPass(llvm->pass);
+      LLVMAddPromoteMemoryToRegisterPass(llvm->pass);
    }
-   LLVMAddGVNPass(llvm->pass);
 
    init_globals(llvm);
 
-
-#if 0
-   LLVMDumpModule(lp_build_module);
-#endif
+   if (gallivm_debug & GALLIVM_DEBUG_IR) {
+      LLVMDumpModule(llvm->module);
+   }
 
    return llvm;
 }
@@ -283,7 +291,10 @@ generate_vs(struct draw_llvm *llvm,
    num_vs = 4;              /* number of vertices per block */
 #endif
 
-   /*tgsi_dump(tokens, 0);*/
+   if (gallivm_debug & GALLIVM_DEBUG_IR) {
+      tgsi_dump(tokens, 0);
+   }
+
    lp_build_tgsi_soa(builder,
                      tokens,
                      vs_type,
@@ -727,7 +738,7 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant)
 
    LLVMRunFunctionPassManager(llvm->pass, variant->function);
 
-   if (0) {
+   if (gallivm_debug & GALLIVM_DEBUG_IR) {
       lp_debug_dump_value(variant->function);
       debug_printf("\n");
    }
@@ -735,8 +746,9 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant)
    code = LLVMGetPointerToGlobal(llvm->draw->engine, variant->function);
    variant->jit_func = voidptr_to_draw_jit_vert_func(code);
 
-   if (0)
+   if (gallivm_debug & GALLIVM_DEBUG_ASM) {
       lp_disassemble(code);
+   }
 }
 
 
@@ -881,7 +893,7 @@ draw_llvm_generate_elts(struct draw_llvm *llvm, struct draw_llvm_variant *varian
 
    LLVMRunFunctionPassManager(llvm->pass, variant->function_elts);
 
-   if (0) {
+   if (gallivm_debug & GALLIVM_DEBUG_IR) {
       lp_debug_dump_value(variant->function_elts);
       debug_printf("\n");
    }
@@ -889,8 +901,9 @@ draw_llvm_generate_elts(struct draw_llvm *llvm, struct draw_llvm_variant *varian
    code = LLVMGetPointerToGlobal(llvm->draw->engine, variant->function_elts);
    variant->jit_func_elts = voidptr_to_draw_vert_func_elts(code);
 
-   if (0)
+   if (gallivm_debug & GALLIVM_DEBUG_ASM) {
       lp_disassemble(code);
+   }
 }
 
 void
