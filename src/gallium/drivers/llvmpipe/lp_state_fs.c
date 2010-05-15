@@ -87,7 +87,6 @@
 #include "lp_bld_depth.h"
 #include "lp_bld_interp.h"
 #include "lp_context.h"
-#include "lp_debug.h"
 #include "lp_perf.h"
 #include "lp_screen.h"
 #include "lp_setup.h"

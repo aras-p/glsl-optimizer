@@ -39,7 +39,6 @@
 #include "util/u_cpu_detect.h"
 #include "gallivm/lp_bld_init.h"
 #include "gallivm/lp_bld_debug.h"
-#include "lp_debug.h"
 #include "lp_screen.h"
 #include "gallivm/lp_bld_intr.h"
 #include "lp_jit.h"
