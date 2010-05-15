@@ -756,8 +756,12 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
     int i;
     float psiz;
 
-    /* Copy rasterizer state for Draw. */
+    /* Copy rasterizer state. */
     rs->rs = *state;
+    rs->rs_draw = *state;
+
+    /* Override some states for Draw. */
+    rs->rs_draw.sprite_coord_enable = 0; /* We can do this in HW. */
 
 #ifdef PIPE_ARCH_LITTLE_ENDIAN
     rs->vap_control_status = R300_VC_NO_SWAP;
@@ -904,9 +908,9 @@ static void r300_bind_rs_state(struct pipe_context* pipe, void* state)
     int last_sprite_coord_enable = r300->sprite_coord_enable;
     boolean last_two_sided_color = r300->two_sided_color;
 
-    if (r300->draw) {
+    if (r300->draw && rs) {
         draw_flush(r300->draw);
-        draw_set_rasterizer_state(r300->draw, &rs->rs, state);
+        draw_set_rasterizer_state(r300->draw, &rs->rs_draw, state);
     }
 
     if (rs) {

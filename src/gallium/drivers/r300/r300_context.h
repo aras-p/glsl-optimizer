@@ -90,8 +90,10 @@ struct r300_dsa_state {
 };
 
 struct r300_rs_state {
-    /* Draw-specific rasterizer state */
+    /* Original rasterizer state. */
     struct pipe_rasterizer_state rs;
+    /* Draw-specific rasterizer state. */
+    struct pipe_rasterizer_state rs_draw;
 
     uint32_t vap_control_status;    /* R300_VAP_CNTL_STATUS: 0x2140 */
     uint32_t antialiasing_config;   /* R300_GB_AA_CONFIG: 0x4020 */
