@@ -1246,7 +1246,7 @@ static void r300_set_vertex_buffers(struct pipe_context* pipe,
     }
 }
 
-/* Update the PSC tables. */
+/* Initialize the PSC tables. */
 static void r300_vertex_psc(struct r300_vertex_element_state *velems)
 {
     struct r300_vertex_stream_state *vstream = &velems->vertex_stream;
@@ -1385,7 +1385,6 @@ static void* r300_create_vertex_elements_state(struct pipe_context* pipe,
                     abort();
                 }
             }
-
         }
     }
     return velems;
@@ -1406,6 +1405,7 @@ static void r300_bind_vertex_elements_state(struct pipe_context *pipe,
     if (r300->draw) {
         draw_flush(r300->draw);
         draw_set_vertex_elements(r300->draw, velems->count, velems->velem);
+        return;
     }
 
     UPDATE_STATE(&velems->vertex_stream, r300->vertex_stream_state);

@@ -80,6 +80,9 @@ static void r300_destroy_context(struct pipe_context* context)
     FREE(r300->ztop_state.state);
     FREE(r300->fs_constants.state);
     FREE(r300->vs_constants.state);
+    if (!r300->screen->caps.has_tcl) {
+        FREE(r300->vertex_stream_state.state);
+    }
     FREE(r300);
 }
 
@@ -151,6 +154,9 @@ static void r300_setup_atoms(struct r300_context* r300)
     r300->ztop_state.state = CALLOC_STRUCT(r300_ztop_state);
     r300->fs_constants.state = CALLOC_STRUCT(r300_constant_buffer);
     r300->vs_constants.state = CALLOC_STRUCT(r300_constant_buffer);
+    if (!r300->screen->caps.has_tcl) {
+        r300->vertex_stream_state.state = CALLOC_STRUCT(r300_vertex_stream_state);
+    }
 
     /* Some non-CSO atoms don't use the state pointer. */
     r300->invariant_state.allow_null_state = TRUE;

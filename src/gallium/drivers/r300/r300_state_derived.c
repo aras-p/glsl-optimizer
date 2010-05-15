@@ -116,13 +116,12 @@ static void r300_draw_emit_all_attribs(struct r300_context* r300)
 static void r300_swtcl_vertex_psc(struct r300_context *r300)
 {
     struct r300_vertex_stream_state *vstream = r300->vertex_stream_state.state;
-        struct vertex_info* vinfo = &r300->vertex_info;
+    struct vertex_info *vinfo = &r300->vertex_info;
     uint16_t type, swizzle;
     enum pipe_format format;
     unsigned i, attrib_count;
     int* vs_output_tab = r300->stream_loc_notcl;
 
-    /* XXX hax */
     memset(vstream, 0, sizeof(struct r300_vertex_stream_state));
 
     /* For each Draw attribute, route it to the fragment shader according
