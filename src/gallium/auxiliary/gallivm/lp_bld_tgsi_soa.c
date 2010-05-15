@@ -42,6 +42,7 @@
 #include "util/u_debug.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
+#include "util/u_string.h"
 #include "tgsi/tgsi_dump.h"
 #include "tgsi/tgsi_info.h"
 #include "tgsi/tgsi_parse.h"
@@ -303,7 +304,7 @@ static LLVMValueRef lp_get_function(struct lp_build_tgsi_soa_context *bld,
       int i;
       char func_name[32];
 
-      snprintf(func_name, 31, "func%d", label);
+      util_snprintf(func_name, 31, "func%d", label);
 
       arg_types[0] = LLVMPointerType(vec_type, 0);  /* inputs */
       arg_types[1] = LLVMPointerType(vec_type, 0);  /* outpus */
