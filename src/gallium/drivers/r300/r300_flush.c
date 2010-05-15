@@ -56,7 +56,7 @@ static void r300_flush(struct pipe_context* pipe,
 
         /* New kitchen sink, baby. */
         foreach(atom, &r300->atom_list) {
-            if (atom->state) {
+            if (atom->state || atom->allow_null_state) {
                 atom->dirty = TRUE;
             }
         }

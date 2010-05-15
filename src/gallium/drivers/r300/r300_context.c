@@ -151,6 +151,13 @@ static void r300_setup_atoms(struct r300_context* r300)
     r300->ztop_state.state = CALLOC_STRUCT(r300_ztop_state);
     r300->fs_constants.state = CALLOC_STRUCT(r300_constant_buffer);
     r300->vs_constants.state = CALLOC_STRUCT(r300_constant_buffer);
+
+    /* Some non-CSO atoms don't use the state pointer. */
+    r300->invariant_state.allow_null_state = TRUE;
+    r300->fs_rc_constant_state.allow_null_state = TRUE;
+    r300->pvs_flush.allow_null_state = TRUE;
+    r300->query_start.allow_null_state = TRUE;
+    r300->texture_cache_inval.allow_null_state = TRUE;
 }
 
 struct pipe_context* r300_create_context(struct pipe_screen* screen,

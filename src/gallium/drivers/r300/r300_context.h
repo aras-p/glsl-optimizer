@@ -55,6 +55,8 @@ struct r300_atom {
     unsigned size;
     /* Whether this atom should be emitted. */
     boolean dirty;
+    /* Whether this atom may be emitted with state == NULL. */
+    boolean allow_null_state;
 };
 
 struct r300_blend_state {
