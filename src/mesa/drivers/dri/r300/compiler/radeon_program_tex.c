@@ -119,7 +119,7 @@ int radeonTransformTEX(
 			struct rc_instruction * inst_cmp;
 			unsigned tmp_texsample = rc_find_free_temporary(c);
 			unsigned tmp_sum = rc_find_free_temporary(c);
-			unsigned tmp_recip_w;
+			unsigned tmp_recip_w = 0;
 			int pass, fail, tex;
 
 			/* Save the output register. */
