@@ -548,8 +548,8 @@ void r300_emit_query_start(struct r300_context *r300, unsigned size, void*state)
 }
 
 
-static void r300_emit_query_finish(struct r300_context *r300,
-                                   struct r300_query *query)
+static void r300_emit_query_end_frag_pipes(struct r300_context *r300,
+                                           struct r300_query *query)
 {
     struct r300_capabilities* caps = &r300->screen->caps;
     CS_LOCALS(r300);
@@ -604,8 +604,8 @@ static void r300_emit_query_finish(struct r300_context *r300,
     END_CS;
 }
 
-static void rv530_emit_query_single(struct r300_context *r300,
-                                    struct r300_query *query)
+static void rv530_emit_query_end_single_z(struct r300_context *r300,
+                                          struct r300_query *query)
 {
     CS_LOCALS(r300);
 
@@ -617,8 +617,8 @@ static void rv530_emit_query_single(struct r300_context *r300,
     END_CS;
 }
 
-static void rv530_emit_query_double(struct r300_context *r300,
-                                    struct r300_query *query)
+static void rv530_emit_query_end_double_z(struct r300_context *r300,
+                                          struct r300_query *query)
 {
     CS_LOCALS(r300);
 
@@ -646,11 +646,11 @@ void r300_emit_query_end(struct r300_context* r300)
 
     if (caps->family == CHIP_FAMILY_RV530) {
         if (caps->num_z_pipes == 2)
-            rv530_emit_query_double(r300, query);
+            rv530_emit_query_end_double_z(r300, query);
         else
-            rv530_emit_query_single(r300, query);
+            rv530_emit_query_end_single_z(r300, query);
     } else 
-        r300_emit_query_finish(r300, query);
+        r300_emit_query_end_frag_pipes(r300, query);
 }
 
 void r300_emit_rs_state(struct r300_context* r300, unsigned size, void* state)
