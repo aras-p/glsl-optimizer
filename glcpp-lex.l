@@ -39,7 +39,7 @@ SPACE		[[:space:]]
 NONSPACE	[^[:space:]]
 NEWLINE		[\n]
 HSPACE		[ \t]
-HASH		^{HSPACE}*#
+HASH		^{HSPACE}*#{HSPACE}*
 IDENTIFIER	[_a-zA-Z][_a-zA-Z0-9]*
 TOKEN		[^[:space:](),]+
 
@@ -109,6 +109,6 @@ TOKEN		[^[:space:](),]+
 	return NEWLINE;
 }
 
-{SPACE}+
+{HSPACE}+
 
 %%
