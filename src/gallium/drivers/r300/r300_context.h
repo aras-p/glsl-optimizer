@@ -235,10 +235,6 @@ struct r300_constant_buffer {
 struct r300_query {
     /* The kind of query. Currently only OQ is supported. */
     unsigned type;
-    /* Whether this query is currently active. Only active queries will
-     * get emitted into the command stream, and only active queries get
-     * tallied. */
-    boolean active;
     /* The current count of this query. Required to be at least 32 bits. */
     unsigned int count;
     /* The offset of this query into the query buffer, in bytes. */

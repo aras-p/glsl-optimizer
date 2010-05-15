@@ -43,8 +43,6 @@ static struct pipe_query *r300_create_query(struct pipe_context *pipe,
     q->type = query_type;
     assert(q->type == PIPE_QUERY_OCCLUSION_COUNTER);
 
-    q->active = FALSE;
-
     if (r300screen->caps.family == CHIP_FAMILY_RV530)
         query_size = r300screen->caps.num_z_pipes * sizeof(uint32_t);
     else
