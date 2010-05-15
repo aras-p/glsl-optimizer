@@ -234,32 +234,14 @@ propagate_copies(ir_instruction *ir, exec_list *acp)
 static void
 kill_invalidated_copies(ir_assignment *ir, exec_list *acp)
 {
-   ir_instruction *current = ir->lhs;
+   ir_variable *var = ir->lhs->variable_referenced();
+   assert(var != NULL);
 
-   /* Walk down the dereference chain to find the variable at the end
-    * of it that we're actually modifying.
-    */
-   while (current != NULL) {
-      ir_swizzle *swiz;
-      ir_dereference *deref;
+   foreach_iter(exec_list_iterator, iter, *acp) {
+      acp_entry *entry = (acp_entry *)iter.get();
 
-      if ((swiz = current->as_swizzle())) {
-	 current = swiz->val;
-      } else if ((deref = current->as_dereference())) {
-	 current = deref->var;
-      } else {
-	 ir_variable *var = current->as_variable();
-	 assert(var);
-
-	 foreach_iter(exec_list_iterator, iter, *acp) {
-	    acp_entry *entry = (acp_entry *)iter.get();
-
-	    if (entry->lhs == var || entry->rhs == var) {
-	       entry->remove();
-	    }
-	 }
-	 current = NULL;
-	 break;
+      if (entry->lhs == var || entry->rhs == var) {
+	 entry->remove();
       }
    }
 }
