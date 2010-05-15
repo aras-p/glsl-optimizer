@@ -932,7 +932,7 @@ static void r500_render_draw_arrays(struct vbuf_render* render,
 
     CS_LOCALS(r300);
 
-    r300_prepare_for_rendering(r300, PREP_FIRST_DRAW, NULL, 2, 0, 0);
+    r300_prepare_for_rendering(r300, PREP_FIRST_DRAW, NULL, 4, 0, 0);
 
     DBG(r300, DBG_DRAW, "r300: Doing vbuf render, count %d\n", count);
 
@@ -953,7 +953,9 @@ static void r500_render_draw_arrays(struct vbuf_render* render,
         r300render->vbo_transfer);
     */
 
-    BEGIN_CS(2);
+    BEGIN_CS(4);
+    OUT_CS_REG(R300_GA_COLOR_CONTROL,
+            r300_provoking_vertex_fixes(r300, r300render->prim));
     OUT_CS_PKT3(R300_PACKET3_3D_DRAW_VBUF_2, 0);
     OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_VERTEX_LIST | (count << 16) |
            r300render->hwprim);
@@ -967,13 +969,15 @@ static void r500_render_draw_elements(struct vbuf_render* render,
     struct r300_render* r300render = r300_render(render);
     struct r300_context* r300 = r300render->r300;
     int i;
-    unsigned dwords = 2 + (count+1)/2;
+    unsigned dwords = 4 + (count+1)/2;
 
     CS_LOCALS(r300);
 
     r300_prepare_for_rendering(r300, PREP_FIRST_DRAW, NULL, dwords, 0, 0);
 
     BEGIN_CS(dwords);
+    OUT_CS_REG(R300_GA_COLOR_CONTROL,
+            r300_provoking_vertex_fixes(r300, r300render->prim));
     OUT_CS_PKT3(R300_PACKET3_3D_DRAW_INDX_2, (count+1)/2);
     OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (count << 16) |
            r300render->hwprim);
