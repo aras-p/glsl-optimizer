@@ -928,6 +928,7 @@ static void r500_render_draw_arrays(struct vbuf_render* render,
     struct r300_context* r300 = r300render->r300;
     uint8_t* ptr;
     unsigned i;
+    (void) i; (void) ptr;
 
     CS_LOCALS(r300);
 
