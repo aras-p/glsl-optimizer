@@ -85,6 +85,14 @@ public:
       return false;
    }
 
+   /**
+    * Get the variable that is ultimately referenced by an r-value
+    */
+   virtual ir_variable *variable_referenced()
+   {
+      return NULL;
+   }
+
 protected:
    ir_rvalue()
    {
@@ -744,6 +752,11 @@ public:
       return val->is_lvalue() && !mask.has_duplicates;
    }
 
+   /**
+    * Get the variable that is ultimately referenced by an r-value
+    */
+   virtual ir_variable *variable_referenced();
+
    ir_rvalue *val;
    ir_swizzle_mask mask;
 };
@@ -768,6 +781,11 @@ public:
    }
 
    bool is_lvalue();
+
+   /**
+    * Get the variable that is ultimately referenced by an r-value
+    */
+   virtual ir_variable *variable_referenced();
 
    enum {
       ir_reference_variable,

@@ -283,6 +283,36 @@ ir_dereference::is_lvalue()
    return this->var->as_rvalue()->is_lvalue();
 }
 
+
+ir_variable *
+ir_dereference::variable_referenced()
+{
+   /* Walk down the dereference chain to find the variable at the end.
+    *
+    * This could be implemented recurrsively, but it would still need to call
+    * as_variable and as_rvalue, so the code wouldn't be any cleaner.
+    */
+   for (ir_instruction *current = this->var; current != NULL; /* empty */ ) {
+      ir_dereference *deref;
+      ir_variable *v;
+
+      if ((deref = current->as_dereference())) {
+	 current = deref->var;
+      } else if ((v = current->as_variable())) {
+	 return v;
+      } else {
+	 /* This is the case of, for example, an array dereference of the
+	  * value returned by a function call.
+	  */
+	 return NULL;
+      }
+   }
+
+   assert(!"Should not get here.");
+   return NULL;
+}
+
+
 ir_swizzle::ir_swizzle(ir_rvalue *val, unsigned x, unsigned y, unsigned z,
 		       unsigned w, unsigned count)
    : val(val)
@@ -402,6 +432,11 @@ ir_swizzle::create(ir_rvalue *val, const char *str, unsigned vector_length)
 #undef S
 #undef I
 
+ir_variable *
+ir_swizzle::variable_referenced()
+{
+   return this->val->variable_referenced();
+}
 
 ir_variable::ir_variable(const struct glsl_type *type, const char *name)
    : max_array_access(0), read_only(false), centroid(false), invariant(false),
