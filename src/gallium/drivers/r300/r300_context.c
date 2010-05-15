@@ -214,6 +214,9 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
         draw_set_rasterize_stage(r300->draw, r300_draw_stage(r300));
         /* Enable Draw's clipping. */
         draw_set_driver_clipping(r300->draw, FALSE);
+        /* Disable converting points/lines to triangles. */
+        draw_wide_line_threshold(r300->draw, 10000000.f);
+        draw_wide_point_threshold(r300->draw, 10000000.f);
     }
 
     r300_setup_atoms(r300);
