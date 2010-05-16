@@ -749,6 +749,10 @@ void r300_swtcl_draw_arrays(struct pipe_context* pipe,
 
     draw_arrays(r300->draw, mode, start, count);
 
+    /* XXX Not sure whether this is the best fix.
+     * It prevents CS from being rejected and weird assertion failures. */
+    draw_flush(r300->draw);
+
     for (i = 0; i < r300->vertex_buffer_count; i++) {
         pipe_buffer_unmap(pipe, r300->vertex_buffer[i].buffer,
 			  vb_transfer[i]);
@@ -797,6 +801,10 @@ void r300_swtcl_draw_range_elements(struct pipe_context* pipe,
                                          minIndex, maxIndex, indices);
 
     draw_arrays(r300->draw, mode, start, count);
+
+    /* XXX Not sure whether this is the best fix.
+     * It prevents CS from being rejected and weird assertion failures. */
+    draw_flush(r300->draw);
 
     for (i = 0; i < r300->vertex_buffer_count; i++) {
         pipe_buffer_unmap(pipe, r300->vertex_buffer[i].buffer,
