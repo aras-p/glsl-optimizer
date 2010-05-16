@@ -614,13 +614,13 @@ void r300_update_derived_state(struct r300_context* r300)
 
     if (r300->rs_block_state.dirty) {
         r300_update_rs_block(r300);
-    }
 
-    if (r300->draw) {
-        memset(&r300->vertex_info, 0, sizeof(struct vertex_info));
-        r300_draw_emit_all_attribs(r300);
-        draw_compute_vertex_size(&r300->vertex_info);
-        r300_swtcl_vertex_psc(r300);
+        if (r300->draw) {
+            memset(&r300->vertex_info, 0, sizeof(struct vertex_info));
+            r300_draw_emit_all_attribs(r300);
+            draw_compute_vertex_size(&r300->vertex_info);
+            r300_swtcl_vertex_psc(r300);
+        }
     }
 
     r300_update_hyperz_state(r300);
