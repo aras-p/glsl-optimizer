@@ -7,7 +7,6 @@
 #include "util/u_draw_quad.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
-#include "util/u_rect.h"
 #include "util/u_sampler.h"
 #include "util/u_surface.h"
 
