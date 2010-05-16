@@ -192,8 +192,6 @@ GLboolean brwCreateContext( int api,
    ctx->VertexProgram._MaintainTnlProgram = GL_TRUE;
    ctx->FragmentProgram._MaintainTexEnvProgram = GL_TRUE;
 
-   make_empty_list(&brw->query.active_head);
-
    brw_draw_init( brw );
 
    return GL_TRUE;

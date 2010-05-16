@@ -38,7 +38,6 @@
  * required for handling queries, so that we can be sure that we won't
  * have to emit a batchbuffer without getting the ending PS_DEPTH_COUNT.
  */
-#include "main/simple_list.h"
 #include "main/imports.h"
 
 #include "brw_context.h"
@@ -105,7 +104,7 @@ brw_begin_query(GLcontext *ctx, struct gl_query_object *q)
    query->first_index = -1;
    query->last_index = -1;
 
-   insert_at_head(&brw->query.active_head, query);
+   brw->query.obj = query;
    intel->stats_wm++;
 }
 
@@ -131,7 +130,7 @@ brw_end_query(GLcontext *ctx, struct gl_query_object *q)
       brw->query.bo = NULL;
    }
 
-   remove_from_list(query);
+   brw->query.obj = NULL;
 
    intel->stats_wm--;
 }
@@ -161,7 +160,7 @@ brw_prepare_query_begin(struct brw_context *brw)
    struct intel_context *intel = &brw->intel;
 
    /* Skip if we're not doing any queries. */
-   if (is_empty_list(&brw->query.active_head))
+   if (!brw->query.obj)
       return;
 
    /* Get a new query BO if we're going to need it. */
@@ -182,10 +181,10 @@ void
 brw_emit_query_begin(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
-   struct brw_query_object *query;
+   struct brw_query_object *query = brw->query.obj;
 
    /* Skip if we're not doing any queries, or we've emitted the start. */
-   if (brw->query.active || is_empty_list(&brw->query.active_head))
+   if (!query || brw->query.active)
       return;
 
    BEGIN_BATCH(4);
@@ -205,16 +204,14 @@ brw_emit_query_begin(struct brw_context *brw)
    OUT_BATCH(0);
    ADVANCE_BATCH();
 
-   foreach(query, &brw->query.active_head) {
-      if (query->bo != brw->query.bo) {
-	 if (query->bo != NULL)
-	    brw_queryobj_get_results(query);
-	 dri_bo_reference(brw->query.bo);
-	 query->bo = brw->query.bo;
-	 query->first_index = brw->query.index;
-      }
-      query->last_index = brw->query.index;
+   if (query->bo != brw->query.bo) {
+      if (query->bo != NULL)
+	 brw_queryobj_get_results(query);
+      dri_bo_reference(brw->query.bo);
+      query->bo = brw->query.bo;
+      query->first_index = brw->query.index;
    }
+   query->last_index = brw->query.index;
    brw->query.active = GL_TRUE;
 }
 

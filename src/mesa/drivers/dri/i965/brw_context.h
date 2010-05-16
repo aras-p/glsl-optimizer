@@ -418,9 +418,6 @@ struct brw_vertex_info {
 struct brw_query_object {
    struct gl_query_object Base;
 
-   /** Doubly linked list of active query objects in the context. */
-   struct brw_query_object *prev, *next;
-
    /** Last query BO associated with this query. */
    dri_bo *bo;
    /** First index in bo with query data for this object. */
@@ -661,7 +658,7 @@ struct brw_context
    } cc;
 
    struct {
-      struct brw_query_object active_head;
+      struct brw_query_object *obj;
       dri_bo *bo;
       int index;
       GLboolean active;
