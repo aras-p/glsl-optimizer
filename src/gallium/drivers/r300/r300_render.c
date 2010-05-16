@@ -735,6 +735,8 @@ void r300_swtcl_draw_arrays(struct pipe_context* pipe,
         return;
     }
 
+    r300_update_derived_state(r300);
+
     for (i = 0; i < r300->vertex_buffer_count; i++) {
         void* buf = pipe_buffer_map(pipe,
                                     r300->vertex_buffer[i].buffer,
@@ -778,6 +780,8 @@ void r300_swtcl_draw_range_elements(struct pipe_context* pipe,
     if (!u_trim_pipe_prim(mode, &count)) {
         return;
     }
+
+    r300_update_derived_state(r300);
 
     for (i = 0; i < r300->vertex_buffer_count; i++) {
         void* buf = pipe_buffer_map(pipe,
@@ -827,7 +831,7 @@ struct r300_render {
     size_t vbo_max_used;
     void * vbo_ptr;
 
-   struct pipe_transfer *vbo_transfer;
+    struct pipe_transfer *vbo_transfer;
 };
 
 static INLINE struct r300_render*
@@ -841,8 +845,6 @@ r300_render_get_vertex_info(struct vbuf_render* render)
 {
     struct r300_render* r300render = r300_render(render);
     struct r300_context* r300 = r300render->r300;
-
-    r300_update_derived_state(r300);
 
     return &r300->vertex_info;
 }
