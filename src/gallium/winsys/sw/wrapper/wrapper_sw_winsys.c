@@ -176,6 +176,18 @@ wsw_dt_from_handle(struct sw_winsys *ws,
    return wsw_dt_wrap_texture(wsw, tex, stride);
 }
 
+static boolean
+wsw_dt_get_handle(struct sw_winsys *ws,
+                  struct sw_displaytarget *dt,
+                  struct winsys_handle *whandle)
+{
+   struct wrapper_sw_winsys *wsw = wrapper_sw_winsys(ws);
+   struct wrapper_sw_displaytarget *wdt = wrapper_sw_displaytarget(dt);
+   struct pipe_resource *tex = wdt->tex;
+
+   return wsw->screen->resource_get_handle(wsw->screen, tex, whandle);
+}
+
 static void *
 wsw_dt_map(struct sw_winsys *ws,
            struct sw_displaytarget *dt,
@@ -268,6 +280,7 @@ wrapper_sw_winsys_warp_pipe_screen(struct pipe_screen *screen)
 
    wsw->base.displaytarget_create = wsw_dt_create;
    wsw->base.displaytarget_from_handle = wsw_dt_from_handle;
+   wsw->base.displaytarget_get_handle = wsw_dt_get_handle;
    wsw->base.displaytarget_map = wsw_dt_map;
    wsw->base.displaytarget_unmap = wsw_dt_unmap;
    wsw->base.displaytarget_destroy = wsw_dt_destroy;
