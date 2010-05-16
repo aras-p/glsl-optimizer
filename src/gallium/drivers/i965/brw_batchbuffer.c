@@ -161,7 +161,7 @@ brw_batchbuffer_emit_reloc(struct brw_batchbuffer *batch,
    int ret;
 
    if (batch->ptr - batch->map > batch->buf->size) {
-      debug_printf("bad relocation ptr %p map %p offset %d size %d\n",
+      debug_printf("bad relocation ptr %p map %p offset %li size %i\n",
 		   batch->ptr, batch->map, batch->ptr - batch->map, batch->buf->size);
 
       return PIPE_ERROR_OUT_OF_MEMORY;
