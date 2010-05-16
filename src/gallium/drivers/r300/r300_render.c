@@ -901,10 +901,6 @@ static void r300_render_unmap_vertices(struct vbuf_render* render,
 {
     struct r300_render* r300render = r300_render(render);
     struct pipe_context* context = &r300render->r300->context;
-    CS_LOCALS(r300render->r300);
-    BEGIN_CS(2);
-    OUT_CS_REG(R300_VAP_VF_MAX_VTX_INDX, max);
-    END_CS;
 
     r300render->vbo_max_used = MAX2(r300render->vbo_max_used,
                                     r300render->vertex_size * (max + 1));
@@ -938,12 +934,13 @@ static void r500_render_draw_arrays(struct vbuf_render* render,
     struct r300_context* r300 = r300render->r300;
     uint8_t* ptr;
     unsigned i;
+    unsigned dwords = 6;
 
     CS_LOCALS(r300);
 
     (void) i; (void) ptr;
 
-    r300_prepare_for_rendering(r300, PREP_FIRST_DRAW, NULL, 4, 0, 0);
+    r300_prepare_for_rendering(r300, PREP_FIRST_DRAW, NULL, dwords, 0, 0);
 
     DBG(r300, DBG_DRAW, "r300: Doing vbuf render, count %d\n", count);
 
@@ -964,9 +961,10 @@ static void r500_render_draw_arrays(struct vbuf_render* render,
         r300render->vbo_transfer);
     */
 
-    BEGIN_CS(4);
+    BEGIN_CS(dwords);
     OUT_CS_REG(R300_GA_COLOR_CONTROL,
             r300_provoking_vertex_fixes(r300, r300render->prim));
+    OUT_CS_REG(R300_VAP_VF_MAX_VTX_INDX, count - 1);
     OUT_CS_PKT3(R300_PACKET3_3D_DRAW_VBUF_2, 0);
     OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_VERTEX_LIST | (count << 16) |
            r300render->hwprim);
@@ -980,7 +978,9 @@ static void r500_render_draw_elements(struct vbuf_render* render,
     struct r300_render* r300render = r300_render(render);
     struct r300_context* r300 = r300render->r300;
     int i;
-    unsigned dwords = 4 + (count+1)/2;
+    unsigned dwords = 6 + (count+1)/2;
+    unsigned max_index = (r300render->vbo_size - r300render->vbo_offset) /
+                         (r300render->r300->vertex_info.size * 4) - 1;
 
     CS_LOCALS(r300);
 
@@ -989,6 +989,7 @@ static void r500_render_draw_elements(struct vbuf_render* render,
     BEGIN_CS(dwords);
     OUT_CS_REG(R300_GA_COLOR_CONTROL,
             r300_provoking_vertex_fixes(r300, r300render->prim));
+    OUT_CS_REG(R300_VAP_VF_MAX_VTX_INDX, max_index);
     OUT_CS_PKT3(R300_PACKET3_3D_DRAW_INDX_2, (count+1)/2);
     OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (count << 16) |
            r300render->hwprim);
