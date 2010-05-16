@@ -87,14 +87,6 @@ struct r300_winsys_screen {
 			     struct r300_winsys_buffer **pdst,
 			     struct r300_winsys_buffer *src);
 
-    boolean (*buffer_references)(struct r300_winsys_buffer *a,
-				 struct r300_winsys_buffer *b);
-
-    void (*buffer_flush_range)(struct r300_winsys_screen *rws,
-			       struct r300_winsys_buffer *buf,
-			       unsigned offset,
-			       unsigned length);
-
     /* Add a pipe_resource to the list of buffer objects to validate. */
     boolean (*add_buffer)(struct r300_winsys_screen *winsys,
                           struct r300_winsys_buffer *buf,
