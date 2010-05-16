@@ -210,7 +210,7 @@ brw_texture_get_handle(struct pipe_screen *screen,
 
    stride = tex->pitch * tex->cpp;
 
-   return bscreen->sws->bo_get_handle(tex->bo, whandle, stride);
+   return bscreen->sws->bo_get_handle(tex->bo, whandle, stride) == PIPE_OK;
 }
 
 
