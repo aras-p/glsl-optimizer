@@ -88,4 +88,7 @@ boolean radeon_drm_bufmgr_get_handle(struct pb_buffer *_buf,
 
 boolean radeon_drm_bufmgr_is_buffer_referenced(struct pb_buffer *_buf,
                                                enum r300_reference_domain domain);
+
+void radeon_drm_bufmgr_wait(struct pb_buffer *_buf);
+
 #endif

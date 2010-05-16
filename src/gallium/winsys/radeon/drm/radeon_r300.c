@@ -98,6 +98,13 @@ static void radeon_r300_winsys_buffer_unmap(struct r300_winsys_screen *ws,
     pb_unmap(_buf);
 }
 
+static void radeon_r300_winsys_buffer_wait(struct r300_winsys_screen *ws,
+                                           struct r300_winsys_buffer *buf)
+{
+    struct pb_buffer *_buf = radeon_pb_buffer(buf);
+    radeon_drm_bufmgr_wait(_buf);
+}
+
 static void radeon_r300_winsys_buffer_reference(struct r300_winsys_screen *rws,
 						struct r300_winsys_buffer **pdst,
 						struct r300_winsys_buffer *src)
@@ -343,6 +350,7 @@ radeon_setup_winsys(int fd, struct radeon_libdrm_winsys* ws)
     ws->base.buffer_get_tiling = radeon_r300_winsys_buffer_get_tiling;
     ws->base.buffer_map = radeon_r300_winsys_buffer_map;
     ws->base.buffer_unmap = radeon_r300_winsys_buffer_unmap;
+    ws->base.buffer_wait = radeon_r300_winsys_buffer_wait;
     ws->base.buffer_reference = radeon_r300_winsys_buffer_reference;
     ws->base.buffer_from_handle = radeon_r300_winsys_buffer_from_handle;
     ws->base.buffer_get_handle = radeon_r300_winsys_buffer_get_handle;

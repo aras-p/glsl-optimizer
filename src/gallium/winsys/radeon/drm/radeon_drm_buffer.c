@@ -419,3 +419,10 @@ void radeon_drm_bufmgr_flush_maps(struct pb_manager *_mgr)
 
     make_empty_list(&mgr->buffer_map_list);
 }
+
+void radeon_drm_bufmgr_wait(struct pb_buffer *_buf)
+{
+    struct radeon_drm_buffer *buf = get_drm_buffer(_buf);
+
+    radeon_bo_wait(buf->bo);
+}
