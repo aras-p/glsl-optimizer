@@ -145,6 +145,7 @@ wsw_dt_create(struct sw_winsys *ws,
     * XXX Why don't we just get the template.
     */
    memset(&templ, 0, sizeof(templ));
+   templ.target = PIPE_TEXTURE_2D;
    templ.width0 = width;
    templ.height0 = height;
    templ.format = format;
