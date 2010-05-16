@@ -427,9 +427,6 @@ struct brw_query_object {
    int first_index;
    /** Last index in bo with query data for this object. */
    int last_index;
-
-   /* Total count of pixels from previous BOs */
-   unsigned int count;
 };
 
 
