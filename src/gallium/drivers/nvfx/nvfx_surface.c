@@ -27,35 +27,54 @@
  **************************************************************************/
 
 #include "nvfx_context.h"
+#include "nvfx_resource.h"
 #include "pipe/p_defines.h"
 #include "util/u_inlines.h"
 
 static void
 nvfx_surface_copy(struct pipe_context *pipe,
-		  struct pipe_surface *dest, unsigned destx, unsigned desty,
-		  struct pipe_surface *src, unsigned srcx, unsigned srcy,
+		  struct pipe_resource *dest, struct pipe_subresource subdst,
+		  unsigned destx, unsigned desty, unsigned destz,
+		  struct pipe_resource *src, struct pipe_subresource subsrc,
+		  unsigned srcx, unsigned srcy, unsigned srcz,
 		  unsigned width, unsigned height)
 {
 	struct nvfx_context *nvfx = nvfx_context(pipe);
 	struct nv04_surface_2d *eng2d = nvfx->screen->eng2d;
+	struct pipe_surface *ps_dst, *ps_src;
 
-	eng2d->copy(eng2d, dest, destx, desty, src, srcx, srcy, width, height);
+	ps_src = nvfx_miptree_surface_new(pipe->screen, dest, subsrc.face,
+					  subsrc.level, srcz, 0 /* bind flags */);
+	ps_dst = nvfx_miptree_surface_new(pipe->screen, dest, subdst.face,
+					  subdst.level, destz, 0 /* bindflags */);
+
+	eng2d->copy(eng2d, ps_dst, destx, desty, ps_src, srcx, srcy, width, height);
+
+	nvfx_miptree_surface_del(ps_src);
+	nvfx_miptree_surface_del(ps_dst);
 }
 
 static void
-nvfx_surface_fill(struct pipe_context *pipe, struct pipe_surface *dest,
-		  unsigned destx, unsigned desty, unsigned width,
-		  unsigned height, unsigned value)
+nvfx_surface_fill(struct pipe_context *pipe, struct pipe_resource *dest,
+		  struct pipe_subresource subdst,
+		  unsigned destx, unsigned desty, unsigned destz,
+		  unsigned width, unsigned height, unsigned value)
 {
 	struct nvfx_context *nvfx = nvfx_context(pipe);
+	struct pipe_surface *ps;
 	struct nv04_surface_2d *eng2d = nvfx->screen->eng2d;
 
-	eng2d->fill(eng2d, dest, destx, desty, width, height, value);
+	ps = nvfx_miptree_surface_new(pipe->screen, dest, subdst.face,
+				      subdst.level, destz, 0 /* bind flags */);
+	
+	eng2d->fill(eng2d, ps, destx, desty, width, height, value);
+
+	nvfx_miptree_surface_del(ps);
 }
 
 void
 nvfx_init_surface_functions(struct nvfx_context *nvfx)
 {
-	nvfx->pipe.surface_copy = nvfx_surface_copy;
-	nvfx->pipe.surface_fill = nvfx_surface_fill;
+	nvfx->pipe.resource_copy_region = nvfx_surface_copy;
+	nvfx->pipe.resource_fill_region = nvfx_surface_fill;
 }

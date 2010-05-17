@@ -195,27 +195,40 @@ nv50_surface_do_copy(struct nv50_screen *screen, struct pipe_surface *dst,
 
 static void
 nv50_surface_copy(struct pipe_context *pipe,
-		  struct pipe_surface *dest, unsigned destx, unsigned desty,
-		  struct pipe_surface *src, unsigned srcx, unsigned srcy,
+		  struct pipe_resource *dest, struct pipe_subresource subdst,
+		  unsigned destx, unsigned desty, unsigned destz,
+		  struct pipe_resource *src, struct pipe_subresource subsrc,
+		  unsigned srcx, unsigned srcy, unsigned srcz,
 		  unsigned width, unsigned height)
 {
 	struct nv50_context *nv50 = nv50_context(pipe);
 	struct nv50_screen *screen = nv50->screen;
+	struct pipe_surface *ps_dst, *ps_src;
 
 	assert((src->format == dest->format) ||
 	       (nv50_2d_format_faithful(src->format) &&
 		nv50_2d_format_faithful(dest->format)));
 
-	nv50_surface_do_copy(screen, dest, destx, desty, src, srcx,
-				     srcy, width, height);
+	ps_src = nv50_miptree_surface_new(pipe->screen, dest, subsrc.face,
+					  subsrc.level, srcz, 0 /* bind flags */);
+	ps_dst = nv50_miptree_surface_new(pipe->screen, dest, subdst.face,
+					  subdst.level, destz, 0 /* bindflags */);
+
+	nv50_surface_do_copy(screen, ps_dst, destx, desty, ps_src, srcx,
+			     srcy, width, height);
+
+	nv50_miptree_surface_del(ps_src);
+	nv50_miptree_surface_del(ps_dst);
 }
 
 static void
-nv50_surface_fill(struct pipe_context *pipe, struct pipe_surface *dest,
-		  unsigned destx, unsigned desty, unsigned width,
-		  unsigned height, unsigned value)
+nv50_surface_fill(struct pipe_context *pipe, struct pipe_resource *dest,
+		  struct pipe_subresource subdst,
+		  unsigned destx, unsigned desty, unsigned destz,
+		  unsigned width, unsigned height, unsigned value)
 {
 	struct nv50_context *nv50 = nv50_context(pipe);
+	struct pipe_surface *ps;
 	struct nv50_screen *screen = nv50->screen;
 	struct nouveau_channel *chan = screen->eng2d->channel;
 	struct nouveau_grobj *eng2d = screen->eng2d;
@@ -225,9 +238,12 @@ nv50_surface_fill(struct pipe_context *pipe, struct pipe_surface *dest,
 	if (format < 0)
 		return;
 
+	ps = nv50_miptree_surface_new(pipe->screen, dest, subdst.face,
+				      subdst.level, destz, 0 /* bind flags */);
+	
 	WAIT_RING (chan, 32);
 
-	ret = nv50_surface_set(screen, dest, 1);
+	ret = nv50_surface_set(screen, ps, 1);
 	if (ret)
 		return;
 
@@ -240,13 +256,15 @@ nv50_surface_fill(struct pipe_context *pipe, struct pipe_surface *dest,
 	OUT_RING  (chan, desty);
 	OUT_RING  (chan, width);
 	OUT_RING  (chan, height);
+
+	nv50_miptree_surface_del(ps);
 }
 
 void
 nv50_init_surface_functions(struct nv50_context *nv50)
 {
-	nv50->pipe.surface_copy = nv50_surface_copy;
-	nv50->pipe.surface_fill = nv50_surface_fill;
+	nv50->pipe.resource_copy_region = nv50_surface_copy;
+	nv50->pipe.resource_fill_region = nv50_surface_fill;
 }
 
 

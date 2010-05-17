@@ -115,10 +115,14 @@ static boolean
 nvfx_screen_surface_format_supported(struct pipe_screen *pscreen,
 				     enum pipe_format format,
 				     enum pipe_texture_target target,
+				     unsigned sample_count,
 				     unsigned tex_usage, unsigned geom_flags)
 {
 	struct nvfx_screen *screen = nvfx_screen(pscreen);
 	struct pipe_surface *front = ((struct nouveau_winsys *) pscreen->winsys)->front;
+
+	 if (sample_count > 1)
+		return FALSE;
 
 	if (tex_usage & PIPE_BIND_RENDER_TARGET) {
 		switch (format) {

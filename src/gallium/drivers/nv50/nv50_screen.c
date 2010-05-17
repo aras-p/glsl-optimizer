@@ -32,8 +32,12 @@ static boolean
 nv50_screen_is_format_supported(struct pipe_screen *pscreen,
 				enum pipe_format format,
 				enum pipe_texture_target target,
+				unsigned sample_count,
 				unsigned tex_usage, unsigned geom_flags)
 {
+	if (sample_count > 1)
+		return FALSE;
+
 	if (tex_usage & PIPE_BIND_RENDER_TARGET) {
 		switch (format) {
 		case PIPE_FORMAT_B8G8R8X8_UNORM:

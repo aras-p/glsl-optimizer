@@ -300,7 +300,7 @@ nvfx_miptree_surface_del(struct pipe_surface *ps)
 	if(ns->backing)
 	{
 		struct nvfx_screen* screen = (struct nvfx_screen*)ps->texture->screen;
-		if(ns->backing->base.usage & PIPE_BIND_BLIT_DESTINATION)
+		if(1 /*ns->backing->base.usage & PIPE_BIND_BLIT_DESTINATION*/)
 			screen->eng2d->copy(screen->eng2d, &ns->backing->base, 0, 0, ps, 0, 0, ns->base.width, ns->base.height);
 		nvfx_miptree_surface_del(&ns->backing->base);
 	}
