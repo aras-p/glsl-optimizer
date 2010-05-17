@@ -37,7 +37,7 @@
 #include "rbug_context.h"
 #include "rbug_objects.h"
 
-DEBUG_GET_ONCE_BOOL_OPTION(rbug, "GALLIUM_RBUG", FALSE);
+DEBUG_GET_ONCE_BOOL_OPTION(rbug, "GALLIUM_RBUG", FALSE)
 
 static void
 rbug_screen_destroy(struct pipe_screen *_screen)
