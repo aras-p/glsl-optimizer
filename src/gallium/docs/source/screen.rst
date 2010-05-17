@@ -214,22 +214,14 @@ Determine if a resource in the given format can be used in a specific manner.
 
 **target** one of the PIPE_TEXTURE_x flags
 
+**sample_count** the number of samples. 0 and 1 mean no multisampling,
+the maximum allowed legal value is 32.
+
 **bindings** is a bitmask of :ref:`PIPE_BIND` flags.
 
 **geom_flags** is a bitmask of PIPE_TEXTURE_GEOM_x flags.
 
 Returns TRUE if all usages can be satisfied.
-
-is_msaa_supported
-^^^^^^^^^^^^^^^^^
-
-Determine if a format supports multisampling with a given number of samples.
-
-**format** the resource format
-
-**sample_count** the number of samples. Valid query range is 2-32.
-
-Returns TRUE if sample_count number of samples is supported with this format.
 
 .. _resource_create:
 
