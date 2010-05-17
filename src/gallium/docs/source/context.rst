@@ -200,9 +200,16 @@ returned).  Otherwise, if the ``wait`` parameter is FALSE, the call
 will not block and the return value will be TRUE if the query has
 completed or FALSE otherwise.
 
-A common type of query is the occlusion query which counts the number of
-fragments/pixels which are written to the framebuffer (and not culled by
-Z/stencil/alpha testing or shader KILL instructions).
+The most common type of query is the occlusion query,
+``PIPE_QUERY_OCCLUSION_COUNTER``, which counts the number of fragments which
+are written to the framebuffer without being culled by
+:ref:`Depth, Stencil, & Alpha` testing or shader KILL instructions.
+
+Another type of query, ``PIPE_QUERY_TIME_ELAPSED``, returns the amount of
+time, in milliseconds, the context takes to perform operations.
+
+Gallium does not guarantee the availability of any query types; one must
+always check the capabilities of the :ref:`Screen` first.
 
 
 Conditional Rendering

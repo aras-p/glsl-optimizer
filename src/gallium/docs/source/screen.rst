@@ -1,3 +1,5 @@
+.. _screen:
+
 Screen
 ======
 
@@ -33,6 +35,7 @@ The integer capabilities:
 * ``MAX_RENDER_TARGETS``: The maximum number of render targets that may be
   bound.
 * ``OCCLUSION_QUERY``: Whether occlusion queries are available.
+* ``TIMER_QUERY``: Whether timer queries are available.
 * ``TEXTURE_SHADOW_MAP``: XXX
 * ``MAX_TEXTURE_2D_LEVELS``: The maximum number of mipmap levels available
   for a 2D texture.
