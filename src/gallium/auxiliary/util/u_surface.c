@@ -70,7 +70,7 @@ util_create_rgba_surface(struct pipe_screen *screen,
    /* Choose surface format */
    for (i = 0; rgbaFormats[i]; i++) {
       if (screen->is_format_supported(screen, rgbaFormats[i],
-                                      target, bind, 0)) {
+                                      target, 0, bind, 0)) {
          format = rgbaFormats[i];
          break;
       }
@@ -122,42 +122,42 @@ util_destroy_rgba_surface(struct pipe_resource *texture,
 /**
  * Fallback function for pipe->surface_copy().
  * Note: (X,Y)=(0,0) is always the upper-left corner.
- * if do_flip, flip the image vertically on its way from src rect to dst rect.
  */
 void
-util_surface_copy(struct pipe_context *pipe,
-                  boolean do_flip,
-                  struct pipe_surface *dst,
-                  unsigned dst_x, unsigned dst_y,
-                  struct pipe_surface *src,
-                  unsigned src_x, unsigned src_y, 
-                  unsigned w, unsigned h)
+util_resource_copy_region(struct pipe_context *pipe,
+                          struct pipe_resource *dst,
+                          struct pipe_subresource subdst,
+                          unsigned dst_x, unsigned dst_y, unsigned dst_z,
+                          struct pipe_resource *src,
+                          struct pipe_subresource subsrc,
+                          unsigned src_x, unsigned src_y, unsigned src_z,
+                          unsigned w, unsigned h)
 {
    struct pipe_transfer *src_trans, *dst_trans;
    void *dst_map;
    const void *src_map;
    enum pipe_format src_format, dst_format;
 
-   assert(src->texture && dst->texture);
-   if (!src->texture || !dst->texture)
+   assert(src && dst);
+   if (!src || !dst)
       return;
 
-   src_format = src->texture->format;
-   dst_format = dst->texture->format;
+   src_format = src->format;
+   dst_format = dst->format;
 
    src_trans = pipe_get_transfer(pipe,
-				 src->texture,
-				 src->face,
-				 src->level,
-				 src->zslice,
+				 src,
+				 subsrc.face,
+				 subsrc.level,
+				 src_z,
 				 PIPE_TRANSFER_READ,
 				 src_x, src_y, w, h);
 
    dst_trans = pipe_get_transfer(pipe,
-				 dst->texture,
-				 dst->face,
-				 dst->level,
-				 dst->zslice,
+				 dst,
+				 subdst.face,
+				 subdst.level,
+				 src_z,
 				 PIPE_TRANSFER_WRITE,
 				 dst_x, dst_y, w, h);
 
@@ -172,16 +172,15 @@ util_surface_copy(struct pipe_context *pipe,
    assert(dst_map);
 
    if (src_map && dst_map) {
-      /* If do_flip, invert src_y position and pass negative src stride */
       util_copy_rect(dst_map,
                      dst_format,
                      dst_trans->stride,
                      0, 0,
                      w, h,
                      src_map,
-                     do_flip ? -(int) src_trans->stride : src_trans->stride,
+                     src_trans->stride,
                      0,
-                     do_flip ? h - 1 : 0);
+                     0);
    }
 
    pipe->transfer_unmap(pipe, src_trans);
@@ -200,22 +199,23 @@ util_surface_copy(struct pipe_context *pipe,
  * Fallback for pipe->surface_fill() function.
  */
 void
-util_surface_fill(struct pipe_context *pipe,
-                  struct pipe_surface *dst,
-                  unsigned dstx, unsigned dsty,
-                  unsigned width, unsigned height, unsigned value)
+util_resource_fill_region(struct pipe_context *pipe,
+                          struct pipe_resource *dst,
+                          struct pipe_subresource subdst,
+                          unsigned dstx, unsigned dsty, unsigned dstz,
+                          unsigned width, unsigned height, unsigned value)
 {
    struct pipe_transfer *dst_trans;
    void *dst_map;
 
-   assert(dst->texture);
-   if (!dst->texture)
+   assert(dst);
+   if (!dst)
       return;
    dst_trans = pipe_get_transfer(pipe,
-				 dst->texture,
-				 dst->face,
-				 dst->level,
-				 dst->zslice,
+				 dst,
+				 subdst.face,
+				 subdst.level,
+				 dstz,
 				 PIPE_TRANSFER_WRITE,
 				 dstx, dsty, width, height);
 
@@ -226,11 +226,11 @@ util_surface_fill(struct pipe_context *pipe,
    if (dst_map) {
       assert(dst_trans->stride > 0);
 
-      switch (util_format_get_blocksize(dst->texture->format)) {
+      switch (util_format_get_blocksize(dst->format)) {
       case 1:
       case 2:
       case 4:
-         util_fill_rect(dst_map, dst->texture->format,
+         util_fill_rect(dst_map, dst->format,
 			dst_trans->stride,
                         0, 0, width, height, value);
          break;

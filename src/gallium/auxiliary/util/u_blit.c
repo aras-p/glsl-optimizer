@@ -192,7 +192,6 @@ get_next_slot( struct blit_state *ctx )
    
    return ctx->vbuf_slot++ * sizeof ctx->vertices;
 }
-                               
 
 
 
@@ -279,10 +278,11 @@ regions_overlap(int srcX0, int srcY0,
  */
 void
 util_blit_pixels_writemask(struct blit_state *ctx,
-                           struct pipe_surface *src,
-                           struct pipe_sampler_view *src_sampler_view,
+                           struct pipe_resource *src_tex,
+                           struct pipe_subresource srcsub,
                            int srcX0, int srcY0,
                            int srcX1, int srcY1,
+                           int srcZ0,
                            struct pipe_surface *dst,
                            int dstX0, int dstY0,
                            int dstX1, int dstY1,
@@ -292,6 +292,7 @@ util_blit_pixels_writemask(struct blit_state *ctx,
    struct pipe_context *pipe = ctx->pipe;
    struct pipe_screen *screen = pipe->screen;
    struct pipe_sampler_view *sampler_view = NULL;
+   struct pipe_sampler_view sv_templ;
    struct pipe_framebuffer_state fb;
    const int srcW = abs(srcX1 - srcX0);
    const int srcH = abs(srcY1 - srcY0);
@@ -302,13 +303,13 @@ util_blit_pixels_writemask(struct blit_state *ctx,
    assert(filter == PIPE_TEX_MIPFILTER_NEAREST ||
           filter == PIPE_TEX_MIPFILTER_LINEAR);
 
-   assert(screen->is_format_supported(screen, src->format, PIPE_TEXTURE_2D,
-                                      PIPE_BIND_SAMPLER_VIEW, 0));
-   assert(screen->is_format_supported(screen, dst->format, PIPE_TEXTURE_2D,
-                                      PIPE_BIND_RENDER_TARGET, 0));
+   assert(srcsub.level <= src_tex->last_level);
 
    /* do the regions overlap? */
-   overlap = util_same_surface(src, dst) &&
+   overlap = src_tex == dst->texture &&
+             dst->face == srcsub.face &&
+             dst->level == srcsub.level &&
+             dst->zslice == srcZ0 &&
       regions_overlap(srcX0, srcY0, srcX1, srcY1,
                       dstX0, dstY0, dstX1, dstY1);
 
@@ -317,8 +318,7 @@ util_blit_pixels_writemask(struct blit_state *ctx,
     * no overlapping.
     * Filter mode should not matter since there's no stretching.
     */
-   if (pipe->surface_copy &&
-       dst->format == src->format &&
+   if (dst->format == src_tex->format &&
        srcX0 < srcX1 &&
        dstX0 < dstX1 &&
        srcY0 < srcY1 &&
@@ -326,29 +326,36 @@ util_blit_pixels_writemask(struct blit_state *ctx,
        (dstX1 - dstX0) == (srcX1 - srcX0) &&
        (dstY1 - dstY0) == (srcY1 - srcY0) &&
        !overlap) {
-      pipe->surface_copy(pipe,
-			 dst, dstX0, dstY0, /* dest */
-			 src, srcX0, srcY0, /* src */
-			 srcW, srcH);       /* size */
+      struct pipe_subresource subdst;
+      subdst.face = dst->face;
+      subdst.level = dst->level;
+      pipe->resource_copy_region(pipe,
+                                 dst->texture, subdst,
+                                 dstX0, dstY0, dst->zslice,/* dest */
+                                 src_tex, srcsub,
+                                 srcX0, srcY0, srcZ0,/* src */
+                                 srcW, srcH);       /* size */
       return;
    }
-   
-   assert(screen->is_format_supported(screen, dst->format, PIPE_TEXTURE_2D,
-                                      PIPE_BIND_RENDER_TARGET, 0));
+
 
    /* Create a temporary texture when src and dest alias or when src
-    * is anything other than a single-level 2d texture.
+    * is anything other than a 2d texture.
+    * XXX should just use appropriate shader to access 1d / 3d slice / cube face,
+    * much like the u_blitter code does (should be pretty trivial).
     * 
     * This can still be improved upon.
     */
-   if (util_same_surface(src, dst) ||
-       src->texture->target != PIPE_TEXTURE_2D ||
-       src->texture->last_level != 0)
+   if ((src_tex == dst->texture &&
+       dst->face == srcsub.face &&
+       dst->level == srcsub.level &&
+       dst->zslice == srcZ0) ||
+       src_tex->target != PIPE_TEXTURE_2D)
    {
       struct pipe_resource texTemp;
       struct pipe_resource *tex;
       struct pipe_sampler_view sv_templ;
-      struct pipe_surface *texSurf;
+      struct pipe_subresource texsub;
       const int srcLeft = MIN2(srcX0, srcX1);
       const int srcTop = MIN2(srcY0, srcY1);
 
@@ -369,7 +376,7 @@ util_blit_pixels_writemask(struct blit_state *ctx,
       /* create temp texture */
       memset(&texTemp, 0, sizeof(texTemp));
       texTemp.target = PIPE_TEXTURE_2D;
-      texTemp.format = src->format;
+      texTemp.format = src_tex->format;
       texTemp.last_level = 0;
       texTemp.width0 = srcW;
       texTemp.height0 = srcH;
@@ -380,49 +387,50 @@ util_blit_pixels_writemask(struct blit_state *ctx,
       if (!tex)
          return;
 
-      u_sampler_view_default_template(&sv_templ, tex, tex->format);
-
-      sampler_view = ctx->pipe->create_sampler_view(ctx->pipe, tex, &sv_templ);
-      if (!sampler_view) {
-         pipe_resource_reference(&tex, NULL);
-         return;
-      }
-
-      texSurf = screen->get_tex_surface(screen, tex, 0, 0, 0, 
-                                        PIPE_BIND_BLIT_DESTINATION);
-
+      texsub.face = 0;
+      texsub.level = 0;
       /* load temp texture */
-      if (pipe->surface_copy) {
-         pipe->surface_copy(pipe,
-                            texSurf, 0, 0,   /* dest */
-                            src, srcLeft, srcTop, /* src */
-                            srcW, srcH);     /* size */
-      } else {
-         util_surface_copy(pipe, FALSE,
-                           texSurf, 0, 0,   /* dest */
-                           src, srcLeft, srcTop, /* src */
-                           srcW, srcH);     /* size */
-      }
+      pipe->resource_copy_region(pipe,
+                                 tex, texsub, 0, 0, 0,  /* dest */
+                                 src_tex, srcsub, srcLeft, srcTop, srcZ0, /* src */
+                                 srcW, srcH);     /* size */
 
-      /* free the surface, update the texture if necessary.
-       */
-      pipe_surface_reference(&texSurf, NULL);
       s0 = 0.0f; 
       s1 = 1.0f;
       t0 = 0.0f;
       t1 = 1.0f;
 
+      u_sampler_view_default_template(&sv_templ, tex, tex->format);
+      sampler_view = pipe->create_sampler_view(pipe, tex, &sv_templ);
+
+      if (!sampler_view) {
+         pipe_resource_reference(&tex, NULL);
+         return;
+      }
       pipe_resource_reference(&tex, NULL);
    }
    else {
-      pipe_sampler_view_reference(&sampler_view, src_sampler_view);
-      s0 = srcX0 / (float)src->texture->width0;
-      s1 = srcX1 / (float)src->texture->width0;
-      t0 = srcY0 / (float)src->texture->height0;
-      t1 = srcY1 / (float)src->texture->height0;
+      u_sampler_view_default_template(&sv_templ, src_tex, src_tex->format);
+      sv_templ.first_level = sv_templ.last_level = srcsub.level;
+      sampler_view = pipe->create_sampler_view(pipe, src_tex, &sv_templ);
+
+      if (!sampler_view) {
+         return;
+      }
+
+      s0 = srcX0 / (float)(u_minify(sampler_view->texture->width0, srcsub.level));
+      s1 = srcX1 / (float)(u_minify(sampler_view->texture->width0, srcsub.level));
+      t0 = srcY0 / (float)(u_minify(sampler_view->texture->height0, srcsub.level));
+      t1 = srcY1 / (float)(u_minify(sampler_view->texture->height0, srcsub.level));
    }
 
-   
+
+   assert(screen->is_format_supported(screen, sampler_view->format, PIPE_TEXTURE_2D,
+                                      sampler_view->texture->nr_samples,
+                                      PIPE_BIND_SAMPLER_VIEW, 0));
+   assert(screen->is_format_supported(screen, dst->format, PIPE_TEXTURE_2D,
+                                      dst->texture->nr_samples,
+                                      PIPE_BIND_RENDER_TARGET, 0));
 
    /* save state (restored below) */
    cso_save_blend(ctx->cso);
@@ -447,6 +455,9 @@ util_blit_pixels_writemask(struct blit_state *ctx,
    /* sampler */
    ctx->sampler.min_img_filter = filter;
    ctx->sampler.mag_img_filter = filter;
+   /* we've limited this already with the sampler view but you never know... */
+   ctx->sampler.min_lod = srcsub.level;
+   ctx->sampler.max_lod = srcsub.level;
    cso_single_sampler(ctx->cso, 0, &ctx->sampler);
    cso_single_sampler_done(ctx->cso);
 
@@ -515,18 +526,21 @@ util_blit_pixels_writemask(struct blit_state *ctx,
 
 void
 util_blit_pixels(struct blit_state *ctx,
-                 struct pipe_surface *src,
-                 struct pipe_sampler_view *src_sampler_view,
+                 struct pipe_resource *src_tex,
+                 struct pipe_subresource srcsub,
                  int srcX0, int srcY0,
                  int srcX1, int srcY1,
+                 int srcZ,
                  struct pipe_surface *dst,
                  int dstX0, int dstY0,
                  int dstX1, int dstY1,
                  float z, uint filter )
 {
-   util_blit_pixels_writemask( ctx, src, src_sampler_view,
+   util_blit_pixels_writemask( ctx, src_tex,
+                               srcsub,
                                srcX0, srcY0,
                                srcX1, srcY1,
+                               srcZ,
                                dst,
                                dstX0, dstY0,
                                dstX1, dstY1,
@@ -548,7 +562,6 @@ void util_blit_flush( struct blit_state *ctx )
 
 /**
  * Copy pixel block from src texture to dst surface.
- * Overlapping regions are acceptable.
  *
  * XXX Should support selection of level.
  * XXX need some control over blitting Z and/or stencil.
@@ -582,6 +595,7 @@ util_blit_pixels_tex(struct blit_state *ctx,
 
    assert(ctx->pipe->screen->is_format_supported(ctx->pipe->screen, dst->format,
                                                  PIPE_TEXTURE_2D,
+                                                 dst->texture->nr_samples,
                                                  PIPE_BIND_RENDER_TARGET,
                                                  0));
 

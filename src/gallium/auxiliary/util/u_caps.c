@@ -68,6 +68,7 @@ util_check_caps_out(struct pipe_screen *screen, const unsigned *list, int *out)
          if (!screen->is_format_supported(screen,
                                           list[i++],
                                           PIPE_TEXTURE_2D,
+                                          0,
                                           PIPE_BIND_SAMPLER_VIEW,
                                           0)) {
             *out = i - 2;

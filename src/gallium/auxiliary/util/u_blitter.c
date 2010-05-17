@@ -743,8 +743,8 @@ static void util_blitter_overlap_copy(struct blitter_context *blitter,
       return;
 
    tex_surf = screen->get_tex_surface(screen, texture, 0, 0, 0,
-				      PIPE_BIND_BLIT_SOURCE | 
-				      PIPE_BIND_BLIT_DESTINATION);
+				      PIPE_BIND_SAMPLER_VIEW | 
+				      PIPE_BIND_RENDER_TARGET);
 
    /* blit from the src to the temp */
    util_blitter_do_copy(blitter, tex_surf, 0, 0,
@@ -797,9 +797,9 @@ void util_blitter_copy(struct blitter_context *blitter,
    /* (assuming copying a stencil buffer is not possible) */
    if ((!ignore_stencil && is_stencil) ||
        !screen->is_format_supported(screen, dst->format, dst->texture->target,
-                                    dst_tex_usage, 0) ||
+                                    dst->texture->nr_samples, dst_tex_usage, 0) ||
        !screen->is_format_supported(screen, src->format, src->texture->target,
-                                    PIPE_BIND_SAMPLER_VIEW, 0)) {
+                                    src->texture->nr_samples, PIPE_BIND_SAMPLER_VIEW, 0)) {
       util_surface_copy(pipe, FALSE, dst, dstx, dsty, src, srcx, srcy,
                         width, height);
       return;
@@ -836,6 +836,7 @@ void util_blitter_fill(struct blitter_context *blitter,
    /* check if we can render to the surface */
    if (util_format_is_depth_or_stencil(dst->format) || /* unlikely, but you never know */
        !screen->is_format_supported(screen, dst->format, dst->texture->target,
+                                    dst->texture->nr_samples,
                                     PIPE_BIND_RENDER_TARGET, 0)) {
       util_surface_fill(pipe, dst, dstx, dsty, width, height, value);
       return;
