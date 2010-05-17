@@ -674,10 +674,10 @@ lp_setup_choose_triangle( struct lp_setup_context *setup )
    case PIPE_FACE_NONE:
       setup->triangle = triangle_both;
       break;
-   case PIPE_FACE_FRONT:
+   case PIPE_FACE_BACK:
       setup->triangle = setup->ccw_is_frontface ? triangle_ccw : triangle_cw;
       break;
-   case PIPE_FACE_BACK:
+   case PIPE_FACE_FRONT:
       setup->triangle = setup->ccw_is_frontface ? triangle_cw : triangle_ccw;
       break;
    default:
