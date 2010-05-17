@@ -601,55 +601,67 @@ identity_set_vertex_buffers(struct pipe_context *_pipe,
                             buffers);
 }
 static void
-identity_surface_copy(struct pipe_context *_pipe,
-                      struct pipe_surface *_dst,
-                      unsigned dstx,
-                      unsigned dsty,
-                      struct pipe_surface *_src,
-                      unsigned srcx,
-                      unsigned srcy,
-                      unsigned width,
-                      unsigned height)
+identity_resource_copy_region(struct pipe_context *_pipe,
+                              struct pipe_resource *_dst,
+                              struct pipe_subresource subdst,
+                              unsigned dstx,
+                              unsigned dsty,
+                              unsigned dstz,
+                              struct pipe_resource *_src,
+                              struct pipe_subresource subsrc,
+                              unsigned srcx,
+                              unsigned srcy,
+                              unsigned srcz,
+                              unsigned width,
+                              unsigned height)
 {
    struct identity_context *id_pipe = identity_context(_pipe);
-   struct identity_surface *id_surface_dst = identity_surface(_dst);
-   struct identity_surface *id_surface_src = identity_surface(_src);
+   struct identity_resource *id_resource_dst = identity_resource(_dst);
+   struct identity_resource *id_resource_src = identity_resource(_src);
    struct pipe_context *pipe = id_pipe->pipe;
-   struct pipe_surface *dst = id_surface_dst->surface;
-   struct pipe_surface *src = id_surface_src->surface;
+   struct pipe_resource *dst = id_resource_dst->resource;
+   struct pipe_resource *src = id_resource_src->resource;
 
-   pipe->surface_copy(pipe,
-                      dst,
-                      dstx,
-                      dsty,
-                      src,
-                      srcx,
-                      srcy,
-                      width,
-                      height);
+   pipe->resource_copy_region(pipe,
+                              dst,
+                              subdst,
+                              dstx,
+                              dsty,
+                              dstz,
+                              src,
+                              subsrc,
+                              srcx,
+                              srcy,
+                              srcz,
+                              width,
+                              height);
 }
 
 static void
-identity_surface_fill(struct pipe_context *_pipe,
-                      struct pipe_surface *_dst,
-                      unsigned dstx,
-                      unsigned dsty,
-                      unsigned width,
-                      unsigned height,
-                      unsigned value)
+identity_resource_fill_region(struct pipe_context *_pipe,
+                              struct pipe_resource *_dst,
+                              struct pipe_subresource subdst,
+                              unsigned dstx,
+                              unsigned dsty,
+                              unsigned dstz,
+                              unsigned width,
+                              unsigned height,
+                              unsigned value)
 {
    struct identity_context *id_pipe = identity_context(_pipe);
-   struct identity_surface *id_surface_dst = identity_surface(_dst);
+   struct identity_resource *id_resource_dst = identity_resource(_dst);
    struct pipe_context *pipe = id_pipe->pipe;
-   struct pipe_surface *dst = id_surface_dst->surface;
+   struct pipe_resource *dst = id_resource_dst->resource;
 
-   pipe->surface_fill(pipe,
-                      dst,
-                      dstx,
-                      dsty,
-                      width,
-                      height,
-                      value);
+   pipe->resource_fill_region(pipe,
+                              dst,
+                              subdst,
+                              dstx,
+                              dsty,
+                              dstz,
+                              width,
+                              height,
+                              value);
 }
 
 static void
@@ -888,8 +900,8 @@ identity_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
    id_pipe->base.set_fragment_sampler_views = identity_set_fragment_sampler_views;
    id_pipe->base.set_vertex_sampler_views = identity_set_vertex_sampler_views;
    id_pipe->base.set_vertex_buffers = identity_set_vertex_buffers;
-   id_pipe->base.surface_copy = identity_surface_copy;
-   id_pipe->base.surface_fill = identity_surface_fill;
+   id_pipe->base.resource_copy_region = identity_resource_copy_region;
+   id_pipe->base.resource_fill_region = identity_resource_fill_region;
    id_pipe->base.clear = identity_clear;
    id_pipe->base.flush = identity_flush;
    id_pipe->base.is_resource_referenced = identity_is_resource_referenced;
