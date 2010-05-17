@@ -308,7 +308,7 @@ void renderer_copy_texture(struct renderer *ctx,
 #endif
 
    assert(screen->is_format_supported(screen, dst_surf->format, PIPE_TEXTURE_2D,
-                                      PIPE_BIND_RENDER_TARGET, 0));
+                                      0, PIPE_BIND_RENDER_TARGET, 0));
 
    /* save state (restored below) */
    cso_save_blend(ctx->cso);
@@ -415,7 +415,7 @@ void renderer_copy_surface(struct renderer *ctx,
    struct pipe_sampler_view view_templ;
    struct pipe_sampler_view *view;
    struct pipe_resource texTemp, *tex;
-   struct pipe_surface *texSurf;
+   struct pipe_subresource subsrc, subdst;
    struct pipe_framebuffer_state fb;
    struct st_framebuffer *stfb = ctx->owner->draw_buffer;
    const int srcW = abs(srcX1 - srcX0);
@@ -441,11 +441,11 @@ void renderer_copy_surface(struct renderer *ctx,
    }
 
    assert(screen->is_format_supported(screen, src->format, PIPE_TEXTURE_2D,
-                                      PIPE_BIND_SAMPLER_VIEW, 0));
+                                      0, PIPE_BIND_SAMPLER_VIEW, 0));
    assert(screen->is_format_supported(screen, dst->format, PIPE_TEXTURE_2D,
-                                      PIPE_BIND_SAMPLER_VIEW, 0));
+                                      0, PIPE_BIND_SAMPLER_VIEW, 0));
    assert(screen->is_format_supported(screen, dst->format, PIPE_TEXTURE_2D,
-                                      PIPE_BIND_RENDER_TARGET, 0));
+                                      0, PIPE_BIND_RENDER_TARGET, 0));
 
    /*
     * XXX for now we're always creating a temporary texture.
@@ -460,6 +460,7 @@ void renderer_copy_surface(struct renderer *ctx,
    texTemp.width0 = srcW;
    texTemp.height0 = srcH;
    texTemp.depth0 = 1;
+   texTemp.bind = PIPE_BIND_SAMPLER_VIEW;
 
    tex = screen->resource_create(screen, &texTemp);
    if (!tex)
@@ -471,24 +472,15 @@ void renderer_copy_surface(struct renderer *ctx,
    if (!view)
       return;
 
-   texSurf = screen->get_tex_surface(screen, tex, 0, 0, 0,
-                                     PIPE_BIND_RENDER_TARGET);
+   subdst.face = 0;
+   subdst.level = 0;
+   subsrc.face = src->face;
+   subsrc.level = src->level;
 
-   /* load temp texture */
-   if (pipe->surface_copy) {
-      pipe->surface_copy(pipe,
-                         texSurf, 0, 0,   /* dest */
-                         src, srcLeft, srcTop, /* src */
-                         srcW, srcH);     /* size */
-   } else {
-      util_surface_copy(pipe, FALSE,
-                        texSurf, 0, 0,   /* dest */
-                        src, srcLeft, srcTop, /* src */
-                        srcW, srcH);     /* size */
-   }
-
-   /* free the surface, update the texture if necessary.*/
-   screen->tex_surface_destroy(texSurf);
+   pipe->resource_copy_region(pipe,
+                              tex, subdst, 0, 0, 0,  /* dest */
+                              src->texture, subsrc, srcLeft, srcTop, src->zslice, /* src */
+                              srcW, srcH);     /* size */
 
    /* save state (restored below) */
    cso_save_blend(ctx->cso);

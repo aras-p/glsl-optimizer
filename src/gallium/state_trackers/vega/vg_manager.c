@@ -122,28 +122,22 @@ setup_new_alpha_mask(struct vg_context *ctx, struct st_framebuffer *stfb)
 
    /* if we had an old surface copy it over */
    if (old_sampler_view) {
-      struct pipe_surface *surface = pipe->screen->get_tex_surface(
-         pipe->screen,
-         stfb->alpha_mask_view->texture,
-         0, 0, 0,
-         PIPE_BIND_RENDER_TARGET |
-         PIPE_BIND_BLIT_DESTINATION);
-      struct pipe_surface *old_surface = pipe->screen->get_tex_surface(
-         pipe->screen,
-         old_sampler_view->texture,
-         0, 0, 0,
-         PIPE_BIND_BLIT_SOURCE);
-      pipe->surface_copy(pipe,
-                         surface,
-                         0, 0,
-                         old_surface,
-                         0, 0,
-                         MIN2(old_surface->width, surface->width),
-                         MIN2(old_surface->height, surface->height));
-      if (surface)
-         pipe_surface_reference(&surface, NULL);
-      if (old_surface)
-         pipe_surface_reference(&old_surface, NULL);
+      struct pipe_subresource subsurf, subold_surf;
+      subsurf.face = 0;
+      subsurf.level = 0;
+      subold_surf.face = 0;
+      subold_surf.level = 0;
+      pipe->resource_copy_region(pipe,
+                                 stfb->alpha_mask_view->texture,
+                                 subsurf,
+                                 0, 0, 0,
+                                 old_sampler_view->texture,
+                                 subold_surf,
+                                 0, 0, 0,
+                                 MIN2(old_sampler_view->texture->width0,
+                                      stfb->alpha_mask_view->texture->width0),
+                                 MIN2(old_sampler_view->texture->height0,
+                                      stfb->alpha_mask_view->texture->height0));
    }
 
    /* Free the old texture
@@ -170,9 +164,7 @@ vg_context_update_depth_stencil_rb(struct vg_context * ctx,
 
    /* Probably need dedicated flags for surface usage too:
     */
-   surface_usage = (PIPE_BIND_RENDER_TARGET |
-                    PIPE_BIND_BLIT_SOURCE |
-                    PIPE_BIND_BLIT_DESTINATION);
+   surface_usage = PIPE_BIND_DEPTH_STENCIL; /* XXX: was: RENDER_TARGET */
 
    dsrb->texture = create_texture(pipe, dsrb->format, width, height);
    if (!dsrb->texture)
@@ -214,9 +206,7 @@ vg_context_update_color_rb(struct vg_context *ctx, struct pipe_resource *pt)
 
    strb->texture = pt;
    strb->surface = screen->get_tex_surface(screen, strb->texture, 0, 0, 0,
-         PIPE_BIND_RENDER_TARGET |
-         PIPE_BIND_BLIT_SOURCE |
-         PIPE_BIND_BLIT_DESTINATION);
+                                           PIPE_BIND_RENDER_TARGET);
    if (!strb->surface) {
       pipe_resource_reference(&strb->texture, NULL);
       return TRUE;
