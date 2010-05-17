@@ -94,6 +94,7 @@ struct st_context
       struct pipe_sampler_view *sampler_views[PIPE_MAX_SAMPLERS];
       struct pipe_scissor_state scissor;
       struct pipe_viewport_state viewport;
+      unsigned sample_mask;
 
       GLuint num_samplers;
       GLuint num_textures;

@@ -73,6 +73,7 @@ st_new_renderbuffer_fb(enum pipe_format format, int samples, boolean sw);
 extern void
 st_init_fbo_functions(struct dd_function_table *functions);
 
+/* XXX unused ? */
 extern struct pipe_sampler_view *
 st_get_renderbuffer_sampler_view(struct st_renderbuffer *rb,
                                  struct pipe_context *pipe);

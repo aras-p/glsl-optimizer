@@ -807,15 +807,15 @@ st_init_bitmap(struct st_context *st)
    st->bitmap.rasterizer.gl_rasterization_rules = 1;
 
    /* find a usable texture format */
-   if (screen->is_format_supported(screen, PIPE_FORMAT_I8_UNORM, PIPE_TEXTURE_2D, 
+   if (screen->is_format_supported(screen, PIPE_FORMAT_I8_UNORM, PIPE_TEXTURE_2D, 0,
                                    PIPE_BIND_SAMPLER_VIEW, 0)) {
       st->bitmap.tex_format = PIPE_FORMAT_I8_UNORM;
    }
-   else if (screen->is_format_supported(screen, PIPE_FORMAT_A8_UNORM, PIPE_TEXTURE_2D, 
+   else if (screen->is_format_supported(screen, PIPE_FORMAT_A8_UNORM, PIPE_TEXTURE_2D, 0,
                                         PIPE_BIND_SAMPLER_VIEW, 0)) {
       st->bitmap.tex_format = PIPE_FORMAT_A8_UNORM;
    }
-   else if (screen->is_format_supported(screen, PIPE_FORMAT_L8_UNORM, PIPE_TEXTURE_2D, 
+   else if (screen->is_format_supported(screen, PIPE_FORMAT_L8_UNORM, PIPE_TEXTURE_2D, 0,
                                         PIPE_BIND_SAMPLER_VIEW, 0)) {
       st->bitmap.tex_format = PIPE_FORMAT_L8_UNORM;
    }

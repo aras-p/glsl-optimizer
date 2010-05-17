@@ -123,7 +123,7 @@ create_color_map_texture(GLcontext *ctx)
 
    /* find an RGBA texture format */
    format = st_choose_format(pipe->screen, GL_RGBA,
-                             PIPE_TEXTURE_2D, PIPE_BIND_SAMPLER_VIEW);
+                             PIPE_TEXTURE_2D, 0, PIPE_BIND_SAMPLER_VIEW);
 
    /* create texture for color map/table */
    pt = st_texture_create(st, PIPE_TEXTURE_2D, format, 0,

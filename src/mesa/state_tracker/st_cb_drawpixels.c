@@ -968,6 +968,7 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
    enum pipe_format srcFormat, texFormat;
    GLboolean invertTex = GL_FALSE;
    GLint readX, readY, readW, readH;
+   GLuint sample_count;
    struct gl_pixelstore_attrib pack = ctx->DefaultPacking;
 
    pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
@@ -994,9 +995,15 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
       driver_vp = make_passthrough_vertex_shader(st, GL_TRUE);
    }
 
+   sample_count = rbRead->texture->nr_samples;
+   /* I believe this would be legal, presumably would need to do a resolve
+      for color, and for depth/stencil spec says to just use one of the
+      depth/stencil samples per pixel? Need some transfer clarifications. */
+   assert(sample_count < 2);
+
    srcFormat = rbRead->texture->format;
 
-   if (screen->is_format_supported(screen, srcFormat, PIPE_TEXTURE_2D, 
+   if (screen->is_format_supported(screen, srcFormat, PIPE_TEXTURE_2D, sample_count,
                                    PIPE_BIND_SAMPLER_VIEW, 0)) {
       texFormat = srcFormat;
    }
@@ -1004,14 +1011,14 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
       /* srcFormat can't be used as a texture format */
       if (type == GL_DEPTH) {
          texFormat = st_choose_format(screen, GL_DEPTH_COMPONENT,
-                                      PIPE_TEXTURE_2D, 
+                                      PIPE_TEXTURE_2D, sample_count,
                                       PIPE_BIND_DEPTH_STENCIL);
          assert(texFormat != PIPE_FORMAT_NONE);
       }
       else {
          /* default color format */
          texFormat = st_choose_format(screen, GL_RGBA, PIPE_TEXTURE_2D, 
-                                      PIPE_BIND_SAMPLER_VIEW);
+                                      sample_count, PIPE_BIND_SAMPLER_VIEW);
          assert(texFormat != PIPE_FORMAT_NONE);
       }
    }
@@ -1050,27 +1057,20 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
    /* Make temporary texture which is a copy of the src region.
     */
    if (srcFormat == texFormat) {
+      struct pipe_subresource srcsub, dstsub;
+      srcsub.face = 0;
+      srcsub.level = 0;
+      dstsub.face = 0;
+      dstsub.level = 0;
       /* copy source framebuffer surface into mipmap/texture */
-      struct pipe_surface *psRead = screen->get_tex_surface(screen,
-                                       rbRead->texture, 0, 0, 0,
-                                       PIPE_BIND_BLIT_SOURCE);
-      struct pipe_surface *psTex = screen->get_tex_surface(screen, pt, 0, 0, 0, 
-                                       PIPE_BIND_RENDER_TARGET |
-                                       PIPE_BIND_BLIT_DESTINATION);
-      pipe->surface_copy(pipe,
-                         psTex,                               /* dest surf */
-                         pack.SkipPixels, pack.SkipRows,      /* dest pos */
-                         psRead,                              /* src surf */
-                         readX, readY, readW, readH);         /* src region */
+      pipe->resource_copy_region(pipe,
+                                 pt,                                /* dest tex */
+                                 dstsub,
+                                 pack.SkipPixels, pack.SkipRows, 0, /* dest pos */
+                                 rbRead->texture,                   /* src tex */
+                                 srcsub,
+                                 readX, readY, 0, readW, readH);    /* src region */
 
-      if (0) {
-         /* debug */
-         debug_dump_surface(pipe, "copypixsrcsurf", psRead);
-         debug_dump_surface(pipe, "copypixtemptex", psTex);
-      }
-
-      pipe_surface_reference(&psRead, NULL); 
-      pipe_surface_reference(&psTex, NULL);
    }
    else {
       /* CPU-based fallback/conversion */

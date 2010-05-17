@@ -46,11 +46,12 @@ st_pipe_format_to_mesa_format(enum pipe_format pipeFormat);
 
 extern enum pipe_format
 st_choose_format(struct pipe_screen *screen, GLenum internalFormat,
-                 enum pipe_texture_target target, unsigned tex_usage);
+                 enum pipe_texture_target target, unsigned sample_count,
+                 unsigned tex_usage);
 
 extern enum pipe_format
 st_choose_renderbuffer_format(struct pipe_screen *screen,
-                              GLenum internalFormat);
+                              GLenum internalFormat, unsigned sample_count);
 
 
 extern gl_format
