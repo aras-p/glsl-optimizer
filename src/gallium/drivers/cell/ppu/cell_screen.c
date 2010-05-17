@@ -132,12 +132,16 @@ cell_get_paramf(struct pipe_screen *screen, int param)
 
 static boolean
 cell_is_format_supported( struct pipe_screen *screen,
-                          enum pipe_format format, 
+                          enum pipe_format format,
                           enum pipe_texture_target target,
-                          unsigned tex_usage, 
+                          unsigned sample_count,
+                          unsigned tex_usage,
                           unsigned geom_flags )
 {
    struct sw_winsys *winsys = cell_screen(screen)->winsys;
+
+   if (sample_count > 1)
+      return FALSE;
 
    if (tex_usage & (PIPE_BIND_DISPLAY_TARGET |
                     PIPE_BIND_SCANOUT |
