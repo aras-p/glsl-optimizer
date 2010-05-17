@@ -52,6 +52,8 @@ nvfx_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 		return screen->is_nv4x ? 4 : 2;
 	case PIPE_CAP_OCCLUSION_QUERY:
 		return 1;
+        case PIPE_CAP_TIMER_QUERY:
+		return 0;
 	case PIPE_CAP_TEXTURE_SHADOW_MAP:
 		return 1;
 	case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:

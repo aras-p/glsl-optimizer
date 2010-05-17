@@ -115,6 +115,7 @@ static int r300_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
             return 1;
 
         /* Unsupported features (boolean caps). */
+        case PIPE_CAP_TIMER_QUERY:
         case PIPE_CAP_DUAL_SOURCE_BLEND:
         case PIPE_CAP_TGSI_CONT_SUPPORTED:
         case PIPE_CAP_INDEP_BLEND_ENABLE:

@@ -76,6 +76,8 @@ cell_get_param(struct pipe_screen *screen, enum pipe_cap param)
       return 1;
    case PIPE_CAP_OCCLUSION_QUERY:
       return 1;
+   case PIPE_CAP_TIMER_QUERY:
+      return 0;
    case PIPE_CAP_TEXTURE_SHADOW_MAP:
       return 10;
    case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:

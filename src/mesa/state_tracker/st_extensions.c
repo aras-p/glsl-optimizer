@@ -296,6 +296,9 @@ void st_init_extensions(struct st_context *st)
    if (screen->get_param(screen, PIPE_CAP_OCCLUSION_QUERY)) {
       ctx->Extensions.ARB_occlusion_query = GL_TRUE;
    }
+   if (screen->get_param(screen, PIPE_CAP_TIMER_QUERY)) {
+     ctx->Extensions.EXT_timer_query = GL_TRUE;
+   }
 
    if (screen->get_param(screen, PIPE_CAP_TEXTURE_SHADOW_MAP)) {
       ctx->Extensions.ARB_depth_texture = GL_TRUE;

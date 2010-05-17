@@ -94,6 +94,9 @@ st_BeginQuery(GLcontext *ctx, struct gl_query_object *q)
    case GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN:
       type = PIPE_QUERY_PRIMITIVES_EMITTED;
       break;
+   case GL_TIME_ELAPSED_EXT:
+      type = PIPE_QUERY_TIME_ELAPSED;
+      break;
    default:
       assert(0 && "unexpected query target in st_BeginQuery()");
       return;
