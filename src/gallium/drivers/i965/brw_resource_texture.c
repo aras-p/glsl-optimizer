@@ -594,7 +594,8 @@ fail:
 boolean brw_is_format_supported( struct pipe_screen *screen,
 				 enum pipe_format format,
 				 enum pipe_texture_target target,
-				 unsigned tex_usage, 
+				 unsigned sample_count,
+				 unsigned tex_usage,
 				 unsigned geom_flags )
 {
    return translate_tex_format(format) != BRW_SURFACEFORMAT_INVALID;
