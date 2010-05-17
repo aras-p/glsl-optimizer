@@ -149,7 +149,6 @@ content:
 		_print_string_list ($1);
 	}
 |	directive_with_newline { printf ("\n"); }
-|	NEWLINE	{ printf ("\n"); }
 |	'('	{ printf ("("); }
 |	')'	{ printf (")"); }
 |	','	{ printf (","); }

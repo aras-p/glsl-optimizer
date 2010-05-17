@@ -27,13 +27,36 @@
 
 #include "glcpp.h"
 #include "glcpp-parse.h"
+
+/* Yes, a macro with a return statement in it is evil. But surely no
+ * more evil than all the code generation happening with flex in the
+ * first place. */
+#define LEXIFY_IDENTIFIER do {					\
+	yylval.str = xtalloc_strdup (yyextra, yytext);		\
+	switch (glcpp_parser_macro_type (yyextra, yylval.str))	\
+	{							\
+		case MACRO_TYPE_UNDEFINED:			\
+			return IDENTIFIER;			\
+		break;						\
+		case MACRO_TYPE_OBJECT:				\
+			return OBJ_MACRO;			\
+		break;						\
+		case MACRO_TYPE_FUNCTION:			\
+			return FUNC_MACRO;			\
+		break;						\
+	}							\
+ } while (0)
+
 %}
 
 %option reentrant noyywrap
 %option extra-type="glcpp_parser_t *"
 
 %x ST_DEFINE
+%x ST_DEFVAL_START
 %x ST_DEFVAL
+%x ST_UNDEF
+%x ST_UNDEF_END
 
 SPACE		[[:space:]]
 NONSPACE	[^[:space:]]
@@ -46,7 +69,18 @@ TOKEN		[^[:space:](),]+
 %%
 
 {HASH}undef{HSPACE}* {
+	BEGIN ST_UNDEF;
 	return UNDEF;
+}
+
+<ST_UNDEF>{IDENTIFIER} {
+	BEGIN ST_UNDEF_END;
+	LEXIFY_IDENTIFIER;
+}
+
+<ST_UNDEF_END>\n {
+	BEGIN INITIAL;
+	return NEWLINE;
 }
 
 	/* We use the ST_DEFINE and ST_DEFVAL states so that we can
@@ -60,9 +94,37 @@ TOKEN		[^[:space:](),]+
 }
 
 <ST_DEFINE>{IDENTIFIER}	{
-	BEGIN ST_DEFVAL;
+	BEGIN ST_DEFVAL_START;
 	yylval.str = xtalloc_strdup (yyextra, yytext);
 	return IDENTIFIER;
+}
+
+<ST_DEFVAL_START>\n {
+	BEGIN INITIAL;
+	return NEWLINE;
+}
+
+<ST_DEFVAL_START>{HSPACE}+ {
+	BEGIN ST_DEFVAL;
+	return SPACE;
+}
+
+<ST_DEFVAL_START>"("	{
+	BEGIN ST_DEFVAL;
+	return '(';
+}
+
+<ST_DEFVAL>{IDENTIFIER} {
+	LEXIFY_IDENTIFIER;
+}
+
+<ST_DEFVAL>[(),] {
+	return yytext[0];
+}
+
+<ST_DEFVAL>{TOKEN} {
+	yylval.str = xtalloc_strdup (yyextra, yytext);
+	return TOKEN;
 }
 
 <ST_DEFVAL>\n {
@@ -70,30 +132,10 @@ TOKEN		[^[:space:](),]+
 	return NEWLINE;
 }
 
-<ST_DEFVAL>{HSPACE}+ {
-	BEGIN INITIAL;
-	return SPACE;
-}
-
-<ST_DEFVAL>"("	{
-	BEGIN INITIAL;
-	return '(';
-}
+<ST_DEFVAL>{HSPACE}+
 
 {IDENTIFIER} {
-	yylval.str = xtalloc_strdup (yyextra, yytext);
-	switch (glcpp_parser_macro_type (yyextra, yylval.str))
-	{
-		case MACRO_TYPE_UNDEFINED:
-			return IDENTIFIER;
-		break;
-		case MACRO_TYPE_OBJECT:
-			return OBJ_MACRO;
-		break;
-		case MACRO_TYPE_FUNCTION:
-			return FUNC_MACRO;
-		break;
-	}
+	LEXIFY_IDENTIFIER;
 }
 
 [(),]	{
@@ -106,7 +148,7 @@ TOKEN		[^[:space:](),]+
 }
 
 \n {
-	return NEWLINE;
+	printf ("\n");
 }
 
 {HSPACE}+
