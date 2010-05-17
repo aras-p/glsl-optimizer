@@ -46,6 +46,7 @@
 #include "st_debug.h"
 #include "st_context.h"
 #include "st_atom.h"
+#include "st_cb_bitmap.h"
 #include "st_cb_readpixels.h"
 #include "st_cb_fbo.h"
 
@@ -343,6 +344,8 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
       /* The ReadPixels transfer is totally outside the window bounds */
       return;
    }
+
+   st_flush_bitmap_cache(st);
 
    dest = _mesa_map_pbo_dest(ctx, &clippedPacking, dest);
    if (!dest)
