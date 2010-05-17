@@ -173,6 +173,12 @@ static void populate_key( struct brw_context *brw,
    
    /* _NEW_LIGHT */
    key->pv_first = (ctx->Light.ProvokingVertex == GL_FIRST_VERTEX_CONVENTION);
+   if (key->primitive == GL_QUADS && ctx->Light.ShadeModel != GL_FLAT) {
+      /* Provide consistent primitive order with brw_set_prim's
+       * optimization of single quads to trifans.
+       */
+      key->pv_first = GL_TRUE;
+   }
 
    key->need_gs_prog = (key->hint_gs_always ||
 			brw->primitive == GL_QUADS ||
