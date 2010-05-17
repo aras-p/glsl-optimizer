@@ -238,8 +238,6 @@ struct pipe_context {
    /**
     * Resource functions for blit-like functionality
     *
-    * The pipe driver is allowed to set these functions to NULL, and in that
-    * case, they will not be available.
     * If a driver supports multisampling, resource_resolve must be available.
     */
    /*@{*/

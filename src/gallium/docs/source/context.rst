@@ -253,8 +253,7 @@ Resource Busy Queries
 Blitting
 ^^^^^^^^
 
-These methods emulate classic blitter controls. They are not guaranteed to be
-available; if they are set to NULL, then they are not present.
+These methods emulate classic blitter controls.
 
 These methods operate directly on ``pipe_resource`` objects, and stand
 apart from any 3D state in the context.  Blitting functionality may be
@@ -264,8 +263,8 @@ moved to a separate abstraction at some point in the future.
 
 ``resource_copy_region`` blits a region of a subresource of a resource to a
 region of another subresource of a resource, provided that both resources have the
-same format. The source and destination may be the same resource, and overlapping
-blits are permitted.
+same format. The source and destination may be the same resource, but overlapping
+blits are not permitted.
 
 ``resource_resolve`` resolves a multisampled resource into a non-multisampled
 one. Formats and dimensions must match. This function must be present if a driver
