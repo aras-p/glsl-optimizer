@@ -449,7 +449,7 @@ void renderer_copy_prepare(struct xorg_renderer *r,
    struct xorg_shader shader;
 
    assert(screen->is_format_supported(screen, dst_surface->format,
-                                      PIPE_TEXTURE_2D,
+                                      PIPE_TEXTURE_2D, 0,
                                       PIPE_BIND_RENDER_TARGET,
                                       0));
    (void) screen;
@@ -525,7 +525,7 @@ renderer_clone_texture(struct xorg_renderer *r,
 
    /* the coming in texture should already have that invariance */
    debug_assert(screen->is_format_supported(screen, src->format,
-                                            PIPE_TEXTURE_2D,
+                                            PIPE_TEXTURE_2D, 0,
                                             PIPE_BIND_SAMPLER_VIEW, 0));
 
    format = src->format;
@@ -548,25 +548,19 @@ renderer_clone_texture(struct xorg_renderer *r,
 
    {
       /* copy source framebuffer surface into texture */
-      struct pipe_surface *ps_read = screen->get_tex_surface(
-         screen, src, 0, 0, 0, PIPE_BIND_BLIT_SOURCE);
-      struct pipe_surface *ps_tex = screen->get_tex_surface(
-         screen, pt, 0, 0, 0, PIPE_BIND_BLIT_DESTINATION );
-      if (pipe->surface_copy) {
-         pipe->surface_copy(pipe,
-                ps_tex, /* dest */
-                0, 0, /* destx/y */
-                ps_read,
-                0, 0, src->width0, src->height0);
-      } else {
-          util_surface_copy(pipe, FALSE,
-                ps_tex, /* dest */
-                0, 0, /* destx/y */
-                ps_read,
-                0, 0, src->width0, src->height0);
-      }
-      pipe_surface_reference(&ps_read, NULL);
-      pipe_surface_reference(&ps_tex, NULL);
+      struct pipe_subresource subsrc, subdst;
+      subsrc.face = 0;
+      subsrc.level = 0;
+      subdst.face = 0;
+      subdst.level = 0;
+      pipe->resource_copy_region(pipe,
+                                 pt, /* dest */
+                                 subdst,
+                                 0, 0, 0, /* destx/y/z */
+                                 src,
+                                 subsrc,
+                                 0, 0, 0,
+                                 src->width0, src->height0);
    }
 
    return pt;
