@@ -476,7 +476,7 @@ static const struct dri_debug_control debug_control[] = {
    { "prim",  DEBUG_PRIMS },
    { "vert",  DEBUG_VERTS },
    { "dri",   DEBUG_DRI },
-   { "dma",   DEBUG_DMA },
+   { "sf",    DEBUG_SF },
    { "san",   DEBUG_SANITY },
    { "sleep", DEBUG_SLEEP },
    { "stats", DEBUG_STATS },

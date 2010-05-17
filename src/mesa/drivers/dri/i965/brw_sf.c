@@ -46,6 +46,7 @@
 static void compile_sf_prog( struct brw_context *brw,
 			     struct brw_sf_prog_key *key )
 {
+   struct intel_context *intel = &brw->intel;
    struct brw_sf_compile c;
    const GLuint *program;
    GLuint program_size;
@@ -106,6 +107,14 @@ static void compile_sf_prog( struct brw_context *brw,
    /* get the program
     */
    program = brw_get_program(&c.func, &program_size);
+
+   if (INTEL_DEBUG & DEBUG_SF) {
+      printf("sf:\n");
+      for (i = 0; i < program_size / sizeof(struct brw_instruction); i++)
+	 brw_disasm(stdout, &((struct brw_instruction *)program)[i],
+		    intel->gen);
+      printf("\n");
+   }
 
    /* Upload
     */

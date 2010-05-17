@@ -331,7 +331,7 @@ extern int INTEL_DEBUG;
 #define DEBUG_PRIMS	0x4000
 #define DEBUG_VERTS	0x8000
 #define DEBUG_DRI       0x10000
-#define DEBUG_DMA       0x20000
+#define DEBUG_SF        0x20000
 #define DEBUG_SANITY    0x40000
 #define DEBUG_SLEEP     0x80000
 #define DEBUG_STATS     0x100000
