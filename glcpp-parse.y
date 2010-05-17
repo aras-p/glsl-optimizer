@@ -133,6 +133,10 @@ content:
 		printf ("%s", $1);
 		talloc_free ($1);
 	}
+|	FUNC_MACRO {
+		printf ("%s", $1);
+		talloc_free ($1);
+	}
 |	macro {
 		_print_string_list ($1);
 	}
