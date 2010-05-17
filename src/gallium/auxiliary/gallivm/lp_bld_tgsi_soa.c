@@ -107,6 +107,7 @@ struct lp_exec_mask {
    } loop_stack[LP_MAX_TGSI_NESTING];
    int loop_stack_size;
 
+   LLVMValueRef ret_mask;
    struct {
       int pc;
       LLVMValueRef ret_mask;
@@ -180,7 +181,7 @@ static void lp_exec_mask_init(struct lp_exec_mask *mask, struct lp_build_context
    mask->call_stack_size = 0;
 
    mask->int_vec_type = lp_build_int_vec_type(mask->bld->type);
-   mask->break_mask = mask->cont_mask = mask->cond_mask =
+   mask->exec_mask = mask->ret_mask = mask->break_mask = mask->cont_mask = mask->cond_mask =
          LLVMConstAllOnes(mask->int_vec_type);
 }
 
@@ -201,15 +202,12 @@ static void lp_exec_mask_update(struct lp_exec_mask *mask)
    } else
       mask->exec_mask = mask->cond_mask;
 
-   /*if (mask->call_stack_size) {
-      LLVMValueRef ret_mask =
-         mask->call_stack[mask->call_stack_size - 1].ret_mask;
+   if (mask->call_stack_size) {
       mask->exec_mask = LLVMBuildAnd(mask->bld->builder,
                                      mask->exec_mask,
-                                     ret_mask,
+                                     mask->ret_mask,
                                      "callmask");
-                                     }*/
-
+   }
 
    mask->has_mask = (mask->cond_stack_size > 0 ||
                      mask->loop_stack_size > 0 ||
@@ -375,12 +373,6 @@ static void lp_exec_mask_store(struct lp_exec_mask *mask,
       } else {
          pred = mask->exec_mask;
       }
-      if (mask->call_stack_size) {
-         pred = LLVMBuildAnd(mask->bld->builder, pred,
-                             mask->call_stack[
-                                mask->call_stack_size - 1].ret_mask,
-                             "");
-      }
    }
 
    if (pred) {
@@ -400,16 +392,17 @@ static void lp_exec_mask_call(struct lp_exec_mask *mask,
                               int func,
                               int *pc)
 {
+   assert(mask->call_stack_size < LP_MAX_TGSI_NESTING);
    mask->call_stack[mask->call_stack_size].pc = *pc;
-   mask->call_stack[mask->call_stack_size].ret_mask =
-      LLVMConstAllOnes(mask->int_vec_type);
+   mask->call_stack[mask->call_stack_size].ret_mask = mask->ret_mask;
+   mask->call_stack_size++;
    *pc = func;
 }
 
 static void lp_exec_mask_ret(struct lp_exec_mask *mask, int *pc)
 {
    LLVMValueRef exec_mask;
-   LLVMValueRef ret_mask;
+
    if (mask->call_stack_size == 0) {
       /* returning from main() */
       *pc = -1;
@@ -419,26 +412,24 @@ static void lp_exec_mask_ret(struct lp_exec_mask *mask, int *pc)
                             mask->exec_mask,
                             "ret");
 
-   ret_mask = mask->call_stack[
-      mask->call_stack_size - 1].ret_mask;
-   ret_mask = LLVMBuildAnd(mask->bld->builder,
-                           ret_mask,
-                           exec_mask, "ret_full");
-
-   mask->call_stack[mask->call_stack_size - 1].ret_mask = ret_mask;
+   mask->ret_mask = LLVMBuildAnd(mask->bld->builder,
+                                 mask->ret_mask,
+                                 exec_mask, "ret_full");
 
    lp_exec_mask_update(mask);
 }
 
 static void lp_exec_mask_bgnsub(struct lp_exec_mask *mask)
 {
-   mask->call_stack_size++;
 }
 
 static void lp_exec_mask_endsub(struct lp_exec_mask *mask, int *pc)
 {
+   assert(mask->call_stack_size);
    mask->call_stack_size--;
    *pc = mask->call_stack[mask->call_stack_size].pc;
+   mask->ret_mask = mask->call_stack[mask->call_stack_size].ret_mask;
+   lp_exec_mask_update(mask);
 }
 
 static LLVMValueRef
