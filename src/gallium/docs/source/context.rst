@@ -291,17 +291,22 @@ data to be written to the resource at this point.
 The returned map points to the start of the mapped range according to
 the box region, not the beginning of the resource.
 
-.. _transfer_flush_region:
-``transfer_flush_region`` If a transfer was created with TRANFER_FLUSH_EXPLICIT,
-only the region specified is guaranteed to be written to. This is relative to
-the mapped range, not the beginning of the resource.
-
 ``transfer_unmap`` remove the memory mapping for the transfer object.
 Any pointers into the map should be considered invalid and discarded.
 
 ``transfer_inline_write`` performs a simplified transfer for simple writes.
 Basically get_transfer, transfer_map, data write, transfer_unmap, and
 transfer_destroy all in one.
+
+.. _transfer_flush_region:
+
+transfer_flush_region
+%%%%%%%%%%%%%%%%%%%%%
+
+If a transfer was created with ``FLUSH_EXPLICIT``, it will not automatically
+be flushed on write or unmap. Flushes must be requested with
+``transfer_flush_region``. Flush ranges are relative to the mapped range, not
+the beginning of the resource.
 
 .. _pipe_transfer:
 
@@ -322,5 +327,4 @@ These flags control the behavior of a transfer object.
   operations pending on the resource are undefined. Cannot be used with
   ``READ``.
 * ``FLUSH_EXPLICIT``: Written ranges will be notified later with
-  :ref:`transfer_flush_region`. Cannot be used with
-  ``READ``.
+  :ref:`transfer_flush_region`. Cannot be used with ``READ``.
