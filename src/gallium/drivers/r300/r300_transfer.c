@@ -56,63 +56,44 @@ r300_transfer(struct pipe_transfer* transfer)
 static void r300_copy_from_tiled_texture(struct pipe_context *ctx,
                                          struct r300_transfer *r300transfer)
 {
-    struct pipe_screen *screen = ctx->screen;
     struct pipe_transfer *transfer = (struct pipe_transfer*)r300transfer;
     struct pipe_resource *tex = transfer->resource;
-    struct pipe_surface *src, *dst;
+    struct pipe_subresource subdst;
 
-    src = screen->get_tex_surface(screen, tex,
-				  transfer->sr.face,
-                                  transfer->sr.level,
-				  transfer->box.z,
-				  PIPE_BIND_BLIT_SOURCE);
+    subdst.face = 0;
+    subdst.level = 0;
 
-    dst = screen->get_tex_surface(screen, &r300transfer->detiled_texture->b.b,
-                                  0, 0, 0,
-                                  PIPE_BIND_BLIT_DESTINATION);
-
-    ctx->surface_copy(ctx, dst, 0, 0, src, 
-		      transfer->box.x, transfer->box.y,
-                      transfer->box.width, transfer->box.height);
-
-    pipe_surface_reference(&src, NULL);
-    pipe_surface_reference(&dst, NULL);
+    ctx->resource_copy_region(ctx, &r300transfer->detiled_texture->b.b, subdst,
+			      0, 0, 0,
+			      tex, transfer->sr,
+			      transfer->box.x, transfer->box.y, transfer->box.z,
+			      transfer->box.width, transfer->box.height);
 }
 
 /* Copy a detiled texture to a tiled one. */
 static void r300_copy_into_tiled_texture(struct pipe_context *ctx,
                                          struct r300_transfer *r300transfer)
 {
-    struct pipe_screen *screen = ctx->screen;
     struct pipe_transfer *transfer = (struct pipe_transfer*)r300transfer;
     struct pipe_resource *tex = transfer->resource;
-    struct pipe_surface *src, *dst;
+    struct pipe_subresource subsrc;
 
-    src = screen->get_tex_surface(screen, &r300transfer->detiled_texture->b.b,
-                                  0, 0, 0,
-                                  PIPE_BIND_BLIT_SOURCE);
-
-    dst = screen->get_tex_surface(screen, tex,
-				  transfer->sr.face,
-                                  transfer->sr.level,
-				  transfer->box.z,
-                                  PIPE_BIND_BLIT_DESTINATION);
+    subsrc.face = 0;
+    subsrc.level = 0;
 
     /* XXX this flush prevents the following DRM error from occuring:
      * [drm:radeon_cs_ioctl] *ERROR* Failed to parse relocation !
      * Reproducible with perf/copytex. */
     ctx->flush(ctx, 0, NULL);
 
-    ctx->surface_copy(ctx, dst,
-		      transfer->box.x, transfer->box.y,
-		      src, 0, 0,
-                      transfer->box.width, transfer->box.height);
+    ctx->resource_copy_region(ctx, tex, transfer->sr,
+			      transfer->box.x, transfer->box.y, transfer->box.z,
+			      &r300transfer->detiled_texture->b.b, subsrc,
+			      0, 0, 0,
+			      transfer->box.width, transfer->box.height);
 
     /* XXX this flush fixes a few piglit tests (e.g. glean/pixelFormats). */
     ctx->flush(ctx, 0, NULL);
-
-    pipe_surface_reference(&src, NULL);
-    pipe_surface_reference(&dst, NULL);
 }
 
 struct pipe_transfer*

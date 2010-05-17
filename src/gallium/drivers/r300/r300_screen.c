@@ -198,6 +198,7 @@ static float r300_get_paramf(struct pipe_screen* pscreen, int param)
 static boolean r300_is_format_supported(struct pipe_screen* screen,
                                         enum pipe_format format,
                                         enum pipe_texture_target target,
+                                        unsigned sample_count,
                                         unsigned usage,
                                         unsigned geom_flags)
 {
@@ -220,6 +221,9 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
             "target %d in %s\n", target, __FUNCTION__);
         return FALSE;
     }
+
+   if (sample_count > 1)
+      return FALSE;
 
     /* Check sampler format support. */
     if ((usage & PIPE_BIND_SAMPLER_VIEW) &&
