@@ -156,24 +156,22 @@ dri1_swap_copy(struct pipe_context *pipe,
    struct drm_clip_rect clip;
    struct drm_clip_rect *cur;
    int i;
+   struct pipe_subresource subdst, subsrc;
+   subsrc.face = 0;
+   subsrc.level = 0;
+   subdst.face = 0;
+   subdst.level = 0;
 
    cur = dPriv->pClipRects;
 
    for (i = 0; i < dPriv->numClipRects; ++i) {
       if (dri1_intersect_src_bbox(&clip, dPriv->x, dPriv->y, cur++, bbox)) {
-         if (pipe->surface_copy) {
-            pipe->surface_copy(pipe, dst, clip.x1, clip.y1,
-                               src,
-                               (int)clip.x1 - dPriv->x,
-                               (int)clip.y1 - dPriv->y,
-                               clip.x2 - clip.x1, clip.y2 - clip.y1);
-         } else {
-            util_surface_copy(pipe, FALSE, dst, clip.x1, clip.y1,
-                              src,
-                              (int)clip.x1 - dPriv->x,
-                              (int)clip.y1 - dPriv->y,
-                              clip.x2 - clip.x1, clip.y2 - clip.y1);
-         }
+         pipe->resource_copy_region(pipe, dst->texture, subdst,
+                                    clip.x1, clip.y1, 0,
+                                    src->texture, subsrc,
+                                    (int)clip.x1 - dPriv->x,
+                                    (int)clip.y1 - dPriv->y, 0,
+                                    clip.x2 - clip.x1, clip.y2 - clip.y1);
       }
    }
 }
@@ -204,6 +202,8 @@ dri1_present_texture_locked(__DRIdrawable * dPriv,
       return;
 
    pipe = dri1_get_pipe_context(screen);
+   /* XXX should probably use resources instead of surfaces in the api
+      - we get surface but only use the texture from it it seems... */
    psurf = dri1_get_pipe_surface(drawable, ptex);
    if (!pipe || !psurf)
       return;
