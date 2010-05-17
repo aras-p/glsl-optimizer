@@ -116,6 +116,14 @@ _argument_list_member_at (argument_list_t *list, int index);
 %type <string_list> argument macro parameter_list replacement_list
 %type <argument_list> argument_list
 
+/* Hard to remove shift/reduce conflicts documented as follows:
+ *
+ * 1. '(' after FUNC_MACRO name which is correctly resolved to shift
+ *    to form macro invocation rather than reducing directly to
+ *    content.
+ */
+%expect 1
+
 %%
 
 input:
