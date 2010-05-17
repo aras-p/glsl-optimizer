@@ -81,6 +81,8 @@
 #define QUAD_BOTTOM_LEFT  2
 #define QUAD_BOTTOM_RIGHT 3
 
+#define LP_MAX_INSTRUCTIONS 256
+
 
 struct lp_exec_mask {
    struct lp_build_context *bld;
@@ -104,6 +106,12 @@ struct lp_exec_mask {
       LLVMValueRef break_var;
    } loop_stack[LP_MAX_TGSI_NESTING];
    int loop_stack_size;
+
+   struct {
+      int pc;
+      LLVMValueRef ret_mask;
+   } call_stack[LP_MAX_TGSI_NESTING];
+   int call_stack_size;
 
    LLVMValueRef exec_mask;
 };
@@ -134,6 +142,9 @@ struct lp_build_tgsi_soa_context
 
    struct lp_build_mask_context *mask;
    struct lp_exec_mask exec_mask;
+
+   struct tgsi_full_instruction *instructions;
+   uint max_instructions;
 };
 
 static const unsigned char
@@ -166,6 +177,7 @@ static void lp_exec_mask_init(struct lp_exec_mask *mask, struct lp_build_context
    mask->has_mask = FALSE;
    mask->cond_stack_size = 0;
    mask->loop_stack_size = 0;
+   mask->call_stack_size = 0;
 
    mask->int_vec_type = lp_build_int_vec_type(mask->bld->type);
    mask->break_mask = mask->cont_mask = mask->cond_mask =
@@ -189,9 +201,19 @@ static void lp_exec_mask_update(struct lp_exec_mask *mask)
    } else
       mask->exec_mask = mask->cond_mask;
 
+   /*if (mask->call_stack_size) {
+      LLVMValueRef ret_mask =
+         mask->call_stack[mask->call_stack_size - 1].ret_mask;
+      mask->exec_mask = LLVMBuildAnd(mask->bld->builder,
+                                     mask->exec_mask,
+                                     ret_mask,
+                                     "callmask");
+                                     }*/
+
 
    mask->has_mask = (mask->cond_stack_size > 0 ||
-                     mask->loop_stack_size > 0);
+                     mask->loop_stack_size > 0 ||
+                     mask->call_stack_size > 0);
 }
 
 static void lp_exec_mask_cond_push(struct lp_exec_mask *mask,
@@ -353,6 +375,12 @@ static void lp_exec_mask_store(struct lp_exec_mask *mask,
       } else {
          pred = mask->exec_mask;
       }
+      if (mask->call_stack_size) {
+         pred = LLVMBuildAnd(mask->bld->builder, pred,
+                             mask->call_stack[
+                                mask->call_stack_size - 1].ret_mask,
+                             "");
+      }
    }
 
    if (pred) {
@@ -368,6 +396,50 @@ static void lp_exec_mask_store(struct lp_exec_mask *mask,
       LLVMBuildStore(mask->bld->builder, val, dst);
 }
 
+static void lp_exec_mask_call(struct lp_exec_mask *mask,
+                              int func,
+                              int *pc)
+{
+   mask->call_stack[mask->call_stack_size].pc = *pc;
+   mask->call_stack[mask->call_stack_size].ret_mask =
+      LLVMConstAllOnes(mask->int_vec_type);
+   *pc = func;
+}
+
+static void lp_exec_mask_ret(struct lp_exec_mask *mask, int *pc)
+{
+   LLVMValueRef exec_mask;
+   LLVMValueRef ret_mask;
+   if (mask->call_stack_size == 0) {
+      /* returning from main() */
+      *pc = -1;
+      return;
+   }
+   exec_mask = LLVMBuildNot(mask->bld->builder,
+                            mask->exec_mask,
+                            "ret");
+
+   ret_mask = mask->call_stack[
+      mask->call_stack_size - 1].ret_mask;
+   ret_mask = LLVMBuildAnd(mask->bld->builder,
+                           ret_mask,
+                           exec_mask, "ret_full");
+
+   mask->call_stack[mask->call_stack_size - 1].ret_mask = ret_mask;
+
+   lp_exec_mask_update(mask);
+}
+
+static void lp_exec_mask_bgnsub(struct lp_exec_mask *mask)
+{
+   mask->call_stack_size++;
+}
+
+static void lp_exec_mask_endsub(struct lp_exec_mask *mask, int *pc)
+{
+   mask->call_stack_size--;
+   *pc = mask->call_stack[mask->call_stack_size].pc;
+}
 
 static LLVMValueRef
 emit_ddx(struct lp_build_tgsi_soa_context *bld,
@@ -937,7 +1009,8 @@ static boolean
 emit_instruction(
    struct lp_build_tgsi_soa_context *bld,
    const struct tgsi_full_instruction *inst,
-   const struct tgsi_opcode_info *info)
+   const struct tgsi_opcode_info *info,
+   int *pc)
 {
    unsigned chan_index;
    LLVMValueRef src0, src1, src2;
@@ -960,6 +1033,8 @@ emit_instruction(
     * assume a full writemask and then let LLVM optimization passes eliminate
     * redundant code.
     */
+
+   (*pc)++;
 
    assert(info->num_dst <= 1);
    if (info->num_dst) {
@@ -1559,16 +1634,18 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_CAL:
-      /* FIXME */
-      return FALSE;
+      lp_exec_mask_call(&bld->exec_mask,
+                        inst->Label.Label,
+                        pc);
+
       break;
 
    case TGSI_OPCODE_RET:
-      /* FIXME */
-      return FALSE;
+      lp_exec_mask_ret(&bld->exec_mask, pc);
       break;
 
    case TGSI_OPCODE_END:
+      *pc = -1;
       break;
 
    case TGSI_OPCODE_SSG:
@@ -1734,6 +1811,10 @@ emit_instruction(
       lp_exec_bgnloop(&bld->exec_mask);
       break;
 
+   case TGSI_OPCODE_BGNSUB:
+      lp_exec_mask_bgnsub(&bld->exec_mask);
+      break;
+
    case TGSI_OPCODE_ELSE:
       lp_exec_mask_cond_invert(&bld->exec_mask);
       break;
@@ -1744,6 +1825,10 @@ emit_instruction(
 
    case TGSI_OPCODE_ENDLOOP:
       lp_exec_endloop(&bld->exec_mask);
+      break;
+
+   case TGSI_OPCODE_ENDSUB:
+      lp_exec_mask_endsub(&bld->exec_mask, pc);
       break;
 
    case TGSI_OPCODE_PUSHA:
@@ -1886,7 +1971,9 @@ lp_build_tgsi_soa(LLVMBuilderRef builder,
    struct lp_build_tgsi_soa_context bld;
    struct tgsi_parse_context parse;
    uint num_immediates = 0;
+   uint num_instructions = 0;
    unsigned i;
+   int pc = 0;
 
    /* Setup build context */
    memset(&bld, 0, sizeof bld);
@@ -1900,6 +1987,13 @@ lp_build_tgsi_soa(LLVMBuilderRef builder,
    bld.sampler = sampler;
    bld.has_indirect_addressing = info->opcode_count[TGSI_OPCODE_ARR] > 0 ||
                                  info->opcode_count[TGSI_OPCODE_ARL] > 0;
+   bld.instructions = (struct tgsi_full_instruction *)
+                      MALLOC( LP_MAX_INSTRUCTIONS * sizeof(struct tgsi_full_instruction) );
+   bld.max_instructions = LP_MAX_INSTRUCTIONS;
+
+   if (!bld.instructions) {
+      return;
+   }
 
    lp_exec_mask_init(&bld.exec_mask, &bld.base);
 
@@ -1916,11 +2010,21 @@ lp_build_tgsi_soa(LLVMBuilderRef builder,
 
       case TGSI_TOKEN_TYPE_INSTRUCTION:
          {
-            unsigned opcode = parse.FullToken.FullInstruction.Instruction.Opcode;
-            const struct tgsi_opcode_info *opcode_info = tgsi_get_opcode_info(opcode);
-            if (!emit_instruction( &bld, &parse.FullToken.FullInstruction, opcode_info ))
-               _debug_printf("warning: failed to translate tgsi opcode %s to LLVM\n",
-                             opcode_info->mnemonic);
+            /* save expanded instruction */
+            if (num_instructions == bld.max_instructions) {
+               bld.instructions = REALLOC(bld.instructions,
+                                          bld.max_instructions
+                                          * sizeof(struct tgsi_full_instruction),
+                                          (bld.max_instructions + LP_MAX_INSTRUCTIONS)
+                                          * sizeof(struct tgsi_full_instruction));
+               bld.max_instructions += LP_MAX_INSTRUCTIONS;
+            }
+
+            memcpy(bld.instructions + num_instructions,
+                   &parse.FullToken.FullInstruction,
+                   sizeof(bld.instructions[0]));
+
+            num_instructions++;
          }
 
          break;
@@ -1947,6 +2051,16 @@ lp_build_tgsi_soa(LLVMBuilderRef builder,
          assert( 0 );
       }
    }
+
+   while (pc != -1) {
+      struct tgsi_full_instruction *instr = bld.instructions + pc;
+      const struct tgsi_opcode_info *opcode_info =
+         tgsi_get_opcode_info(instr->Instruction.Opcode);
+      if (!emit_instruction( &bld, instr, opcode_info, &pc ))
+         _debug_printf("warning: failed to translate tgsi opcode %s to LLVM\n",
+                       opcode_info->mnemonic);
+   }
+
    if (0) {
       LLVMBasicBlockRef block = LLVMGetInsertBlock(builder);
       LLVMValueRef function = LLVMGetBasicBlockParent(block);
@@ -1956,5 +2070,14 @@ lp_build_tgsi_soa(LLVMBuilderRef builder,
       debug_printf("2222222222222222222222222222 \n");
    }
    tgsi_parse_free( &parse );
+
+   if (0) {
+      LLVMModuleRef module = LLVMGetGlobalParent(
+         LLVMGetBasicBlockParent(LLVMGetInsertBlock(bld.base.builder)));
+      LLVMDumpModule(module);
+
+   }
+
+   FREE( bld.instructions );
 }
 
