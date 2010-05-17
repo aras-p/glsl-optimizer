@@ -76,6 +76,12 @@ _string_list_append_item (string_list_t *list, const char *str);
 void
 _string_list_append_list (string_list_t *list, string_list_t *tail);
 
+void
+_string_list_push (string_list_t *list, const char *str);
+
+void
+_string_list_pop (string_list_t *list);
+
 int
 _string_list_contains (string_list_t *list, const char *member, int *index);
 
@@ -319,6 +325,45 @@ _string_list_append_item (string_list_t *list, const char *str)
 	list->tail = node;
 }
 
+void
+_string_list_push (string_list_t *list, const char *str)
+{
+	string_node_t *node;
+
+	node = xtalloc (list, string_node_t);
+	node->str = xtalloc_strdup (node, str);
+
+	node->next = list->head;
+
+	if (list->tail == NULL) {
+		list->tail = node;
+	}
+
+	list->head = node;
+}
+
+void
+_string_list_pop (string_list_t *list)
+{
+	string_node_t *node;
+
+	node = list->head;
+
+	if (node == NULL) {
+		fprintf (stderr, "Internal error: _string_list_pop called on an empty list.\n");
+		exit (1);
+	}
+
+	list->head = node->next;
+
+	if (list->tail == node) {
+		assert (node->next == NULL);
+		list->tail = NULL;
+	}
+
+	talloc_free (node);
+}
+
 int
 _string_list_contains (string_list_t *list, const char *member, int *index)
 {
@@ -330,7 +375,8 @@ _string_list_contains (string_list_t *list, const char *member, int *index)
 
 	for (i = 0, node = list->head; node; i++, node = node->next) {
 		if (strcmp (node->str, member) == 0) {
-			*index = i;
+			if (index)
+				*index = i;
 			return 1;
 		}
 	}
@@ -525,14 +571,14 @@ _define_function_macro (glcpp_parser_t *parser,
 static string_list_t *
 _expand_macro_recursive (glcpp_parser_t *parser,
 			 const char *token,
-			 const char *orig,
+			 string_list_t *active,
 			 string_list_t *parameters,
 			 argument_list_t *arguments);
 
 static string_list_t *
 _expand_string_list_recursive (glcpp_parser_t *parser,
 			       string_list_t *list,
-			       const char *orig,
+			       string_list_t *active,
 			       string_list_t *parameters,
 			       argument_list_t *arguments)
 {
@@ -547,7 +593,10 @@ _expand_string_list_recursive (glcpp_parser_t *parser,
 	for (node = list->head ; node ; node = node->next) {
 		token = node->str;
 
-		if (strcmp (token, orig) == 0) {
+		/* Don't expand this macro if it's on the active
+		 * stack, (meaning we're already in the process of
+		 * expanding it). */
+		if (_string_list_contains (active, token, NULL)) {
 			_string_list_append_item (result, token);
 			continue;
 		}
@@ -557,11 +606,11 @@ _expand_string_list_recursive (glcpp_parser_t *parser,
 
 			argument = _argument_list_member_at (arguments, index);
 			child = _expand_string_list_recursive (parser, argument,
-							       orig, NULL, NULL);
+							       active, NULL, NULL);
 			_string_list_append_list (result, child);
 		} else {
 			child = _expand_macro_recursive (parser, token,
-							 orig, parameters,
+							 active, parameters,
 							 arguments);
 			_string_list_append_list (result, child);
 		}
@@ -574,12 +623,18 @@ _expand_string_list_recursive (glcpp_parser_t *parser,
 static string_list_t *
 _expand_macro_recursive (glcpp_parser_t *parser,
 			 const char *token,
-			 const char *orig,
+			 string_list_t *active,
 			 string_list_t *parameters,
 			 argument_list_t *arguments)
 {
 	macro_t *macro;
 	string_list_t *replacements;
+	string_list_t *result;
+
+	if (active == NULL)
+		active = _string_list_create (NULL);
+
+	_string_list_push (active, token);
 
 	macro = hash_table_find (parser->defines, token);
 	if (macro == NULL) {
@@ -592,8 +647,14 @@ _expand_macro_recursive (glcpp_parser_t *parser,
 
 	replacements = macro->replacements;
 
-	return _expand_string_list_recursive (parser, replacements,
-					      orig, parameters, arguments);
+	result = _expand_string_list_recursive (parser, replacements,
+						active, parameters, arguments);
+
+	_string_list_pop (active);
+	if (_string_list_length (active) == 0)
+		talloc_free (active);
+
+	return result;
 }
 
 string_list_t *
@@ -604,7 +665,7 @@ _expand_object_macro (glcpp_parser_t *parser, const char *identifier)
 	macro = hash_table_find (parser->defines, identifier);
 	assert (! macro->is_function);
 
-	return _expand_macro_recursive (parser, identifier, identifier,
+	return _expand_macro_recursive (parser, identifier, NULL,
 					NULL, NULL);
 }
 
@@ -613,11 +674,7 @@ _expand_function_macro (glcpp_parser_t *parser,
 			const char *identifier,
 			argument_list_t *arguments)
 {
-	string_list_t *result;
-
 	macro_t *macro;
-
-	result = _string_list_create (parser);
 
 	macro = hash_table_find (parser->defines, identifier);
 	assert (macro->is_function);
@@ -633,6 +690,6 @@ _expand_function_macro (glcpp_parser_t *parser,
 		return NULL;
 	}
 
-	return _expand_macro_recursive (parser, identifier, identifier,
+	return _expand_macro_recursive (parser, identifier, NULL,
 					macro->parameters, arguments);
 }
