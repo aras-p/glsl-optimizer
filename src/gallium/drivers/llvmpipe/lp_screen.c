@@ -168,8 +168,9 @@ llvmpipe_get_paramf(struct pipe_screen *screen, int param)
  */
 static boolean
 llvmpipe_is_format_supported( struct pipe_screen *_screen,
-                              enum pipe_format format, 
+                              enum pipe_format format,
                               enum pipe_texture_target target,
+                              unsigned sample_count,
                               unsigned bind,
                               unsigned geom_flags )
 {
@@ -185,6 +186,9 @@ llvmpipe_is_format_supported( struct pipe_screen *_screen,
           target == PIPE_TEXTURE_2D ||
           target == PIPE_TEXTURE_3D ||
           target == PIPE_TEXTURE_CUBE);
+
+   if (sample_count > 1)
+      return FALSE;
 
    if (bind & PIPE_BIND_RENDER_TARGET) {
       if (format_desc->colorspace == UTIL_FORMAT_COLORSPACE_ZS)
