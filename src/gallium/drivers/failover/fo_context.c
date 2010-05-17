@@ -156,8 +156,8 @@ struct pipe_context *failover_create( struct pipe_context *hw,
 
    failover_init_state_functions( failover );
 
-   failover->pipe.surface_copy = hw->surface_copy;
-   failover->pipe.surface_fill = hw->surface_fill;
+   failover->pipe.resource_copy_region = hw->resource_copy_region;
+   failover->pipe.resource_fill_region = hw->resource_fill_region;
 
 #if 0
    failover->pipe.texture_create = hw->texture_create;
