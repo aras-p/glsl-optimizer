@@ -85,16 +85,18 @@ struct st_device {
     */
    int is_format_supported( enum pipe_format format, 
                             enum pipe_texture_target target,
+                            unsigned sample_count,
                             unsigned bind, 
                             unsigned geom_flags ) {
       /* We can't really display surfaces with the python statetracker so mask
        * out that usage */
       bind &= ~PIPE_BIND_DISPLAY_TARGET;
 
-      return $self->screen->is_format_supported( $self->screen, 
-                                                 format, 
-                                                 target, 
-                                                 bind, 
+      return $self->screen->is_format_supported( $self->screen,
+                                                 format,
+                                                 target,
+                                                 sample_count,
+                                                 bind,
                                                  geom_flags );
    }
 

@@ -230,8 +230,8 @@ class Screen(Object):
         context = self.real.context_create()
         return Context(self.interpreter, context)
     
-    def is_format_supported(self, format, target, bind, geom_flags):
-        return self.real.is_format_supported(format, target, bind, geom_flags)
+    def is_format_supported(self, format, target, sample_count, bind, geom_flags):
+        return self.real.is_format_supported(format, target, sample_count, bind, geom_flags)
     
     def resource_create(self, templat):
         return self.real.resource_create(
