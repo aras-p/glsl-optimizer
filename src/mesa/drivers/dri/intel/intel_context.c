@@ -906,6 +906,12 @@ intelMakeCurrent(__DRIcontext * driContextPriv,
       driContextPriv->dri2.read_stamp = driReadPriv->dri2.stamp - 1;
       intel_prepare_render(intel);
       _mesa_make_current(&intel->ctx, fb, readFb);
+
+      /* We do this in intel_prepare_render() too, but intel->ctx.DrawBuffer
+       * is NULL at that point.  We can't call _mesa_makecurrent()
+       * first, since we need the buffer size for the initial
+       * viewport.  So just call intel_draw_buffer() again here. */
+      intel_draw_buffer(&intel->ctx, intel->ctx.DrawBuffer);
    }
    else {
       _mesa_make_current(NULL, NULL, NULL);
