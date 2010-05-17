@@ -563,7 +563,7 @@ kms_display_is_format_supported(struct native_display *ndpy,
                                 enum pipe_format fmt, boolean is_color)
 {
    return ndpy->screen->is_format_supported(ndpy->screen,
-         fmt, PIPE_TEXTURE_2D,
+         fmt, PIPE_TEXTURE_2D, 0,
          (is_color) ? PIPE_BIND_RENDER_TARGET :
          PIPE_BIND_DEPTH_STENCIL, 0);
 }

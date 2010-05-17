@@ -351,7 +351,7 @@ egl_g3d_fill_depth_stencil_formats(_EGLDisplay *dpy,
       /* pick the first supported format */
       for (i = 0; i < n; i++) {
          if (screen->is_format_supported(screen, fmt[i],
-                  PIPE_TEXTURE_2D, PIPE_BIND_DEPTH_STENCIL, 0)) {
+                  PIPE_TEXTURE_2D, 0, PIPE_BIND_DEPTH_STENCIL, 0)) {
             formats[count++] = fmt[i];
             break;
          }

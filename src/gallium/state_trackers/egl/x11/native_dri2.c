@@ -498,9 +498,9 @@ choose_color_format(const __GLcontextModes *mode, enum pipe_format formats[32])
 
 static boolean
 is_format_supported(struct pipe_screen *screen,
-                    enum pipe_format fmt, boolean is_color)
+                    enum pipe_format fmt, unsigned sample_count, boolean is_color)
 {
-   return screen->is_format_supported(screen, fmt, PIPE_TEXTURE_2D,
+   return screen->is_format_supported(screen, fmt, PIPE_TEXTURE_2D, sample_count,
          (is_color) ? PIPE_BIND_RENDER_TARGET :
          PIPE_BIND_DEPTH_STENCIL, 0);
 }
@@ -512,6 +512,7 @@ dri2_display_convert_config(struct native_display *ndpy,
 {
    enum pipe_format formats[32];
    int num_formats, i;
+   int sample_count = 0;
 
    if (!(mode->renderType & GLX_RGBA_BIT) || !mode->rgbMode)
       return FALSE;
@@ -536,7 +537,7 @@ dri2_display_convert_config(struct native_display *ndpy,
    /* choose color format */
    num_formats = choose_color_format(mode, formats);
    for (i = 0; i < num_formats; i++) {
-      if (is_format_supported(ndpy->screen, formats[i], TRUE)) {
+      if (is_format_supported(ndpy->screen, formats[i], sample_count, TRUE)) {
          nconf->color_format = formats[i];
          break;
       }
