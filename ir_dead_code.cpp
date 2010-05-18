@@ -146,28 +146,8 @@ ir_dead_code_visitor::visit_leave(ir_dereference *ir)
 ir_visitor_status
 ir_dead_code_visitor::visit_leave(ir_assignment *ir)
 {
-   ir_instruction *lhs = ir->lhs;
-
-   /* Walk through the LHS and mark references for variables used in
-    * array indices but not for the assignment dereference.
-    */
-   while (lhs) {
-      if (lhs->as_variable())
-	 break;
-
-      ir_dereference *deref = lhs->as_dereference();
-      if (deref) {
-	 lhs = deref->var;
-      } else {
-	 ir_swizzle *swiz = lhs->as_swizzle();
-
-	 lhs = swiz->val;
-      }
-   }
-
-
    variable_entry *entry;
-   entry = this->get_variable_entry(lhs->as_variable());
+   entry = this->get_variable_entry(ir->lhs->variable_referenced());
    if (entry) {
       entry->assigned_count++;
       if (entry->assign == NULL)
