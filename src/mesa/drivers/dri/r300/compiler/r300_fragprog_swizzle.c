@@ -56,7 +56,8 @@ static const struct swizzle_data native_swizzles[] = {
 	{MAKE_SWZ3(Z, X, Y), R300_ALU_ARGC_SRC0C_ZXY, 1},
 	{MAKE_SWZ3(W, Z, Y), R300_ALU_ARGC_SRC0CA_WZY, 1},
 	{MAKE_SWZ3(ONE, ONE, ONE), R300_ALU_ARGC_ONE, 0},
-	{MAKE_SWZ3(ZERO, ZERO, ZERO), R300_ALU_ARGC_ZERO, 0}
+	{MAKE_SWZ3(ZERO, ZERO, ZERO), R300_ALU_ARGC_ZERO, 0},
+	{MAKE_SWZ3(HALF, HALF, HALF), R300_ALU_ARGC_HALF, 0}
 };
 
 static const int num_native_swizzles = sizeof(native_swizzles)/sizeof(native_swizzles[0]);
@@ -221,6 +222,7 @@ unsigned int r300FPTranslateAlphaSwizzle(unsigned int src, unsigned int swizzle)
 	case RC_SWIZZLE_W: return R300_ALU_ARGA_SRC0A + src;
 	case RC_SWIZZLE_ONE: return R300_ALU_ARGA_ONE;
 	case RC_SWIZZLE_ZERO: return R300_ALU_ARGA_ZERO;
+	case RC_SWIZZLE_HALF: return R300_ALU_ARGA_HALF;
 	default: return R300_ALU_ARGA_ONE;
 	}
 }
