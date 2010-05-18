@@ -7,9 +7,9 @@ include $(TOP)/configs/current
 INCLUDE_DIRS = -I$(TOP)/include $(X11_CFLAGS)
 
 HEADERS = $(TOP)/include/GLES/egl.h
-LIB_DEP = $(TOP)/$(LIB_DIR)/libEGL.so
+LIB_DEP = $(TOP)/$(LIB_DIR)/$(EGL_LIB_NAME)
 
-LIBS = -L$(TOP)/$(LIB_DIR) -lEGL -lGL -lm
+LIBS = -L$(TOP)/$(LIB_DIR) -l$(EGL_LIB) -l$(GL_LIB) -lm
 
 EGLUT_DIR = $(TOP)/progs/egl/eglut
 

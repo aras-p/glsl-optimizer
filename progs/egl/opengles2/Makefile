@@ -14,13 +14,13 @@ HEADERS = $(TOP)/include/GLES/egl.h
 
 
 ES2_LIB_DEPS = \
-	$(TOP)/$(LIB_DIR)/libEGL.so \
-	$(TOP)/$(LIB_DIR)/libGLESv2.so
+	$(TOP)/$(LIB_DIR)/$(EGL_LIB_NAME) \
+	$(TOP)/$(LIB_DIR)/$(GLESv2_LIB_NAME)
 
 
 ES2_LIBS = \
-	-L$(TOP)/$(LIB_DIR) -lEGL \
-	-L$(TOP)/$(LIB_DIR) -lGLESv2 $(LIBDRM_LIB) $(X11_LIBS) \
+	-L$(TOP)/$(LIB_DIR) -l$(EGL_LIB) -l$(GLESv2_LIB) \
+	$(LIBDRM_LIB) $(X11_LIBS)
 
 PROGRAMS = \
 	es2_info \

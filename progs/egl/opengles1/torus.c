@@ -17,6 +17,10 @@
 
 #include "eglut.h"
 
+#ifndef M_PI
+#define M_PI 3.14159265
+#endif
+
 static const struct {
    GLenum internalFormat;
    const char *name;

@@ -29,6 +29,10 @@
 #include <EGL/egl.h>
 
 
+#ifndef M_PI
+#define M_PI 3.14159265
+#endif
+
 #define FLOAT_TO_FIXED(X)   ((X) * 65535.0)
 
 

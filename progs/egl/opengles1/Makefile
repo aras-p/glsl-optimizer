@@ -12,13 +12,13 @@ HEADERS = $(TOP)/include/GLES/egl.h
 
 
 ES1_LIB_DEPS = \
-	$(TOP)/$(LIB_DIR)/libEGL.so \
-	$(TOP)/$(LIB_DIR)/libGLESv1_CM.so
+	$(TOP)/$(LIB_DIR)/$(EGL_LIB_NAME) \
+	$(TOP)/$(LIB_DIR)/$(GLESv1_CM_LIB_NAME)
 
 
 ES1_LIBS = \
-	-L$(TOP)/$(LIB_DIR) -lEGL \
-	-L$(TOP)/$(LIB_DIR) -lGLESv1_CM $(LIBDRM_LIB) $(X11_LIBS)
+	-L$(TOP)/$(LIB_DIR) -l$(EGL_LIB) -l$(GLESv1_CM_LIB) \
+	$(LIBDRM_LIB) $(X11_LIBS)
 
 EGLUT_DIR = $(TOP)/progs/egl/eglut
 

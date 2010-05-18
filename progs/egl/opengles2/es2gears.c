@@ -46,6 +46,10 @@
 #include <EGL/eglext.h>
 #include "eglut.h"
 
+#ifndef M_PI
+#define M_PI 3.14159265
+#endif
+
 struct gear {
    GLfloat *vertices;
    GLuint vbo;

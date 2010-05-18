@@ -3,7 +3,7 @@
 TOP = ../../..
 include $(TOP)/configs/current
 
-VG_LIBS=-lm -lEGL -lOpenVG -L$(TOP)/lib -L$(TOP)/lib/gallium
+VG_LIBS=-lm -L$(TOP)/$(LIB_DIR) -l$(EGL_LIB) -l$(VG_LIB)
 INCLUDE_DIRS = -I$(TOP)/include $(X11_CFLAGS)
 
 EGLUT_DIR = $(TOP)/progs/egl/eglut

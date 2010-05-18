@@ -22,6 +22,10 @@
 #include <EGL/egl.h>
 
 
+#ifndef M_PI
+#define M_PI 3.14159265
+#endif
+
 static int TexWidth = 256, TexHeight = 256;
 
 static int WinWidth = 300, WinHeight = 300;

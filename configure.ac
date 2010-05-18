@@ -265,7 +265,7 @@ else
     darwin* )
         LIB_EXTENSION='dylib' ;;
     cygwin* )
-        LIB_EXTENSION='dll' ;;
+        LIB_EXTENSION='dll.a' ;;
     aix* )
         LIB_EXTENSION='a' ;;
     * )
