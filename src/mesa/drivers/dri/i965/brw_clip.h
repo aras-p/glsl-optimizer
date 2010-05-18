@@ -114,8 +114,6 @@ struct brw_clip_compile {
 
    GLboolean need_direction;
 
-   GLuint last_mrf;
-
    GLuint header_position_offset;
    GLuint offset[VERT_ATTRIB_MAX];
 };

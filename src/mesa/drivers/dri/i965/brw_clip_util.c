@@ -211,27 +211,14 @@ void brw_clip_emit_vue(struct brw_clip_compile *c,
 		       GLuint header)
 {
    struct brw_compile *p = &c->func;
-   GLuint start = c->last_mrf;
 
    brw_clip_ff_sync(c);
 
    assert(!(allocate && eot));
-   
-   /* Cycle through mrf regs - probably futile as we have to wait for
-    * the allocation response anyway.  Also, the order this function
-    * is invoked doesn't correspond to the order the instructions will
-    * be executed, so it won't have any effect in many cases.
-    */
-#if 0
-   if (start + c->nr_regs + 1 >= MAX_MRF)
-      start = 0;
 
-   c->last_mrf = start + c->nr_regs + 1;
-#endif
-	
    /* Copy the vertex from vertn into m1..mN+1:
     */
-   brw_copy_from_indirect(p, brw_message_reg(start+1), vert, c->nr_regs);
+   brw_copy_from_indirect(p, brw_message_reg(1), vert, c->nr_regs);
 
    /* Overwrite PrimType and PrimStart in the message header, for
     * each vertex in turn:
@@ -247,7 +234,7 @@ void brw_clip_emit_vue(struct brw_clip_compile *c,
     */
    brw_urb_WRITE(p, 
 		 allocate ? c->reg.R0 : retype(brw_null_reg(), BRW_REGISTER_TYPE_UD),
-		 start,
+		 0,
 		 c->reg.R0,
 		 allocate,
 		 1,		/* used */
