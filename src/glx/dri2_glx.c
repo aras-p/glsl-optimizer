@@ -739,8 +739,8 @@ dri2CreateDisplay(Display * dpy)
 #ifdef __DRI_USE_INVALIDATE
    if (pdp->invalidateAvailable)
       pdp->loader_extensions[i++] = &dri2UseInvalidate.base;
-   pdp->loader_extensions[i++] = NULL;
 #endif
+   pdp->loader_extensions[i++] = NULL;
 
    return &pdp->base;
 }
