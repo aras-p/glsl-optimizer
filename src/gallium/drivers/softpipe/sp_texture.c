@@ -343,11 +343,15 @@ softpipe_get_transfer(struct pipe_context *pipe,
    if (spt) {
       struct pipe_transfer *pt = &spt->base;
       enum pipe_format format = resource->format;
+      const unsigned hgt = u_minify(spr->base.height0, sr.level);
+      const unsigned nblocksy = util_format_get_nblocksy(format, hgt);
+
       pipe_resource_reference(&pt->resource, resource);
       pt->sr = sr;
       pt->usage = usage;
       pt->box = *box;
       pt->stride = spr->stride[sr.level];
+      pt->slice_stride = pt->stride * nblocksy;
 
       spt->offset = sp_get_tex_image_offset(spr, sr.level, sr.face, box->z);
  
