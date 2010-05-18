@@ -403,7 +403,7 @@ xorg_dri2_init(ScreenPtr pScreen)
     }
 #endif
 
-    dri2info.version = DRI2INFOREC_VERSION;
+    dri2info.version = min(DRI2INFOREC_VERSION, 3);
     dri2info.fd = ms->fd;
 
     dri2info.driverName = pScrn->driverName;
