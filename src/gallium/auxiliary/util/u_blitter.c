@@ -26,8 +26,8 @@
 
 /**
  * @file
- * Blitter utility to facilitate acceleration of the clear, surface_copy,
- * and surface_fill functions.
+ * Blitter utility to facilitate acceleration of the clear, resource_copy_region,
+ * and resource_fill_region functions.
  *
  * @author Marek Olšák
  */
@@ -787,7 +787,7 @@ void util_blitter_copy(struct blitter_context *blitter,
          return;
       }
    }
-		   
+
    is_depth = util_format_get_component_bits(src->format, UTIL_FORMAT_COLORSPACE_ZS, 0) != 0;
    is_stencil = util_format_get_component_bits(src->format, UTIL_FORMAT_COLORSPACE_ZS, 1) != 0;
    dst_tex_usage = is_depth || is_stencil ? PIPE_BIND_DEPTH_STENCIL :
@@ -800,8 +800,14 @@ void util_blitter_copy(struct blitter_context *blitter,
                                     dst->texture->nr_samples, dst_tex_usage, 0) ||
        !screen->is_format_supported(screen, src->format, src->texture->target,
                                     src->texture->nr_samples, PIPE_BIND_SAMPLER_VIEW, 0)) {
-      util_surface_copy(pipe, FALSE, dst, dstx, dsty, src, srcx, srcy,
-                        width, height);
+      struct pipe_subresource subdst, subsrc;
+      subdst.face = dst->face;
+      subdst.level = dst->level;
+      subsrc.face = src->face;
+      subsrc.level = src->level;
+      util_resource_copy_region(pipe, dst, subdst, dstx, dsty, dst->zslice,
+                                src, subsrc, srcx, srcy, src->zslice,
+                                width, height);
       return;
    }
 
@@ -838,7 +844,11 @@ void util_blitter_fill(struct blitter_context *blitter,
        !screen->is_format_supported(screen, dst->format, dst->texture->target,
                                     dst->texture->nr_samples,
                                     PIPE_BIND_RENDER_TARGET, 0)) {
-      util_surface_fill(pipe, dst, dstx, dsty, width, height, value);
+      struct pipe_subresource subdst;
+      subdst.face = dst->face;
+      subdst.level = dst->level;
+      util_resource_fill_region(pipe, dst->texture, subdst, dstx, dsty,
+                                dst->zslice, width, height, value);
       return;
    }
 

@@ -120,7 +120,7 @@ util_destroy_rgba_surface(struct pipe_resource *texture,
 
 
 /**
- * Fallback function for pipe->surface_copy().
+ * Fallback function for pipe->resource_copy_region().
  * Note: (X,Y)=(0,0) is always the upper-left corner.
  */
 void
@@ -196,7 +196,7 @@ util_resource_copy_region(struct pipe_context *pipe,
 
 
 /**
- * Fallback for pipe->surface_fill() function.
+ * Fallback for pipe->resource_fill_region() function.
  */
 void
 util_resource_fill_region(struct pipe_context *pipe,
