@@ -452,6 +452,17 @@ identity_set_clip_state(struct pipe_context *_pipe,
 }
 
 static void
+identity_set_sample_mask(struct pipe_context *_pipe,
+                         unsigned sample_mask)
+{
+   struct identity_context *id_pipe = identity_context(_pipe);
+   struct pipe_context *pipe = id_pipe->pipe;
+
+   pipe->set_sample_mask(pipe,
+                         sample_mask);
+}
+
+static void
 identity_set_constant_buffer(struct pipe_context *_pipe,
                              uint shader,
                              uint index,
@@ -892,6 +903,7 @@ identity_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
    id_pipe->base.set_blend_color = identity_set_blend_color;
    id_pipe->base.set_stencil_ref = identity_set_stencil_ref;
    id_pipe->base.set_clip_state = identity_set_clip_state;
+   id_pipe->base.set_sample_mask = identity_set_sample_mask;
    id_pipe->base.set_constant_buffer = identity_set_constant_buffer;
    id_pipe->base.set_framebuffer_state = identity_set_framebuffer_state;
    id_pipe->base.set_polygon_stipple = identity_set_polygon_stipple;

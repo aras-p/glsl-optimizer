@@ -167,12 +167,19 @@ static void brw_set_stencil_ref(struct pipe_context *pipe,
    brw->state.dirty.mesa |= PIPE_NEW_DEPTH_STENCIL_ALPHA;
 }
 
+static void
+brw_set_sample_mask(struct pipe_context *pipe,
+                    unsigned sample_mask)
+{
+}
+
 void brw_pipe_depth_stencil_init( struct brw_context *brw )
 {
    brw->base.set_stencil_ref = brw_set_stencil_ref;
    brw->base.create_depth_stencil_alpha_state = brw_create_depth_stencil_state;
    brw->base.bind_depth_stencil_alpha_state = brw_bind_depth_stencil_state;
    brw->base.delete_depth_stencil_alpha_state = brw_delete_depth_stencil_state;
+   brw->base.set_sample_mask = brw_set_sample_mask;
 }
 
 void brw_pipe_depth_stencil_cleanup( struct brw_context *brw )

@@ -111,3 +111,10 @@ void softpipe_set_stencil_ref( struct pipe_context *pipe,
 
    softpipe->dirty |= SP_NEW_DEPTH_STENCIL_ALPHA;
 }
+
+void
+softpipe_set_sample_mask(struct pipe_context *pipe,
+                         unsigned sample_mask)
+{
+}
+

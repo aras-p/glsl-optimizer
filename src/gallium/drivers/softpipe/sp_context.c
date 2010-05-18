@@ -251,6 +251,7 @@ softpipe_create_context( struct pipe_screen *screen,
    softpipe->pipe.set_blend_color = softpipe_set_blend_color;
    softpipe->pipe.set_stencil_ref = softpipe_set_stencil_ref;
    softpipe->pipe.set_clip_state = softpipe_set_clip_state;
+   softpipe->pipe.set_sample_mask = softpipe_set_sample_mask;
    softpipe->pipe.set_constant_buffer = softpipe_set_constant_buffer;
    softpipe->pipe.set_framebuffer_state = softpipe_set_framebuffer_state;
    softpipe->pipe.set_polygon_stipple = softpipe_set_polygon_stipple;

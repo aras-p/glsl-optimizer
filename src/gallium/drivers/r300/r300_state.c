@@ -404,6 +404,13 @@ static void r300_set_clip_state(struct pipe_context* pipe,
     r300->clip_state.dirty = TRUE;
 }
 
+static void
+r300_set_sample_mask(struct pipe_context *pipe,
+                     unsigned sample_mask)
+{
+}
+
+
 /* Create a new depth, stencil, and alpha state based on the CSO dsa state.
  *
  * This contains the depth buffer, stencil buffer, alpha test, and such.
@@ -1502,6 +1509,7 @@ void r300_init_state_functions(struct r300_context* r300)
     r300->context.set_blend_color = r300_set_blend_color;
 
     r300->context.set_clip_state = r300_set_clip_state;
+    r300->context.set_sample_mask = r300_set_sample_mask;
 
     r300->context.set_constant_buffer = r300_set_constant_buffer;
 

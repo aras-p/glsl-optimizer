@@ -876,6 +876,22 @@ trace_context_set_clip_state(struct pipe_context *_pipe,
    trace_dump_call_end();
 }
 
+static INLINE void
+trace_context_set_sample_mask(struct pipe_context *_pipe,
+                              unsigned sample_mask)
+{
+   struct trace_context *tr_ctx = trace_context(_pipe);
+   struct pipe_context *pipe = tr_ctx->pipe;
+
+   trace_dump_call_begin("pipe_context", "set_sample_mask");
+
+   trace_dump_arg(ptr, pipe);
+   trace_dump_arg(uint, sample_mask);
+
+   pipe->set_sample_mask(pipe, sample_mask);
+
+   trace_dump_call_end();
+}
 
 static INLINE void
 trace_context_set_constant_buffer(struct pipe_context *_pipe,
@@ -1561,6 +1577,7 @@ trace_context_create(struct trace_screen *tr_scr,
    tr_ctx->base.set_blend_color = trace_context_set_blend_color;
    tr_ctx->base.set_stencil_ref = trace_context_set_stencil_ref;
    tr_ctx->base.set_clip_state = trace_context_set_clip_state;
+   tr_ctx->base.set_sample_mask = trace_context_set_sample_mask;
    tr_ctx->base.set_constant_buffer = trace_context_set_constant_buffer;
    tr_ctx->base.set_framebuffer_state = trace_context_set_framebuffer_state;
    tr_ctx->base.set_polygon_stipple = trace_context_set_polygon_stipple;
