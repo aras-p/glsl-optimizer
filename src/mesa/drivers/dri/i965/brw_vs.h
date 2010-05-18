@@ -43,7 +43,7 @@ struct brw_vs_prog_key {
    GLuint program_string_id;
    GLuint nr_userclip:4;
    GLuint copy_edgeflag:1;
-   GLuint pad:26;
+   GLuint point_coord_replace:8;
 };
 
 

@@ -163,6 +163,7 @@ static void upload_sf_prog(struct brw_context *brw)
       break;
    }
 
+   /* _NEW_POINT */
    key.do_point_sprite = ctx->Point.PointSprite;
    if (key.do_point_sprite) {
       int i;
