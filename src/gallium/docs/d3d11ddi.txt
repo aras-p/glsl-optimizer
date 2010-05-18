@@ -79,7 +79,7 @@ set_clip_state
 set_polygon_stipple
 	+ Gallium supports polygon stipple
 
-surface_fill
+resource_fill_region
 	+ Gallium supports subrectangle fills of surfaces, D3D10 only supports full clears of views
 
 * DirectX 10/11 DDI functions and Gallium equivalents
@@ -114,11 +114,10 @@ CheckDeferredContextHandleSizes (D3D11 only)
 CheckFormatSupport -> screen->is_format_supported
 	! Gallium passes usages to this function, D3D11 returns them
 	- Gallium does not differentiate between blendable and non-blendable render targets
-	- Gallium lacks multisampled-texture and multisampled-render-target usages
+	! Gallium includes sample count directly, D3D11 uses additional query 
 
 CheckMultisampleQualityLevels
-	* could merge this with is_format_supported
-	- Gallium lacks multisampling support
+	! is merged with is_format_supported
 
 CommandListExecute (D3D11 only)
 	- Gallium does not support command lists
@@ -139,7 +138,6 @@ ClearUnorderedAccessViewUint (D3D11 only)
 
 CreateBlendState (extended in D3D10.1) -> create_blend_state
 	# D3D10 does not support per-RT blend modes (but per-RT blending), only D3D10.1 does
-	- Gallium lacks alpha-to-coverage
 	+ Gallium supports logic ops
 	+ Gallium supports dithering
 	+ Gallium supports using the broadcast alpha component of the blend constant color
@@ -198,7 +196,6 @@ CreateQuery -> create_query
 CreateRasterizerState
 	- Gallium lacks clamping of polygon offset depth biases
 	- Gallium lacks support to disable depth clipping
-	- Gallium lacks multisampling
 	+ Gallium, like OpenGL, supports PIPE_POLYGON_MODE_POINT
 	+ Gallium, like OpenGL, supports per-face polygon fill modes
 	+ Gallium, like OpenGL, supports culling everything
@@ -228,7 +225,6 @@ CreateResource -> texture_create or buffer_create
 	! D3D11 specifies mapping flags (i.e. read/write/discard);:it's unclear what they are used for here
 	- D3D11 supports odd things in the D3D10_DDI_RESOURCE_MISC_FLAG enum (D3D10_DDI_RESOURCE_MISC_DISCARD_ON_PRESENT, D3D11_DDI_RESOURCE_MISC_BUFFER_ALLOW_RAW_VIEWS, D3D11_DDI_RESOURCE_MISC_BUFFER_STRUCTURED)
 	- Gallium does not support indirect draw call parameter buffers
-	- Gallium lacks multisampling
 	- Gallium lacks array textures
 	! D3D11 supports specifying hardware modes and other stuff here for scanout resources
 	+ Gallium allows specifying minimum buffer alignment
@@ -400,7 +396,7 @@ ResourceCopy
 ResourceCopyRegion
 ResourceConvert (D3D10.1+ only)
 ResourceConvertRegion (D3D10.1+ only)
-	-> surface_copy
+	-> resource_copy_region
 	- Gallium does not support hardware buffer copies
 	- Gallium does not support copying 3D texture subregions in a single call
 
@@ -410,8 +406,7 @@ ResourceIsStagingBusy -> is_texture_referenced, is_buffer_referenced
 ResourceReadAfterWriteHazard
 	! Gallium specifies hides this, except for the render and texture caches
 
-ResourceResolveSubresource
-	- Gallium does not support multisample sample resolution
+ResourceResolveSubresource -> resource_resolve
 
 ResourceMap
 ResourceUnmap
@@ -433,9 +428,8 @@ StagingResourceUnmap
 ResourceUpdateSubresourceUP -> transfer functionality, transfer_inline_write in gallium-resources
 DefaultConstantBufferUpdateSubresourceUP -> transfer functionality, transfer_inline_write in gallium-resources
 
-SetBlendState -> bind_blend_state and set_blend_color
-	! D3D11 fuses bind_blend_state and set_blend_color in a single function
-	- Gallium lacks the sample mask
+SetBlendState -> bind_blend_state, set_blend_color and set_sample_mask
+	! D3D11 fuses bind_blend_state, set_blend_color and set_sample_mask in a single function
 
 SetDepthStencilState -> bind_depth_stencil_alpha_state and set_stencil_ref
 	! D3D11 fuses bind_depth_stencil_alpha_state and set_stencil_ref in a single function
