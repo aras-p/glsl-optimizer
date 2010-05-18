@@ -276,7 +276,7 @@ intel_batchbuffer_emit_mi_flush(struct intel_batchbuffer *batch)
 {
    struct intel_context *intel = batch->intel;
 
-   if (0 && intel->gen >= 4) {
+   if (intel->gen >= 4) {
       BEGIN_BATCH(4);
       OUT_BATCH(_3DSTATE_PIPE_CONTROL |
 		PIPE_CONTROL_INSTRUCTION_FLUSH |
