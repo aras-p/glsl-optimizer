@@ -441,8 +441,9 @@ st_validate_attachment(struct pipe_screen *screen,
    if (!stObj)
       return GL_FALSE;
 
-   return screen->is_format_supported(screen, stObj->pt->format, stObj->pt->nr_samples,
-                                      PIPE_TEXTURE_2D, bindings, 0);
+   return screen->is_format_supported(screen, stObj->pt->format,
+                                      PIPE_TEXTURE_2D,
+                                      stObj->pt->nr_samples, bindings, 0);
 }
 
 
