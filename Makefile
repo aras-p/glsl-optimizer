@@ -13,7 +13,7 @@ glcpp: glcpp.o glcpp-lex.o glcpp-parse.o hash_table.o xtalloc.o
 	bison --debug --defines=$*.h --output=$*.c $^
 
 %.c: %.l
-	flex --outfile=$@ $<
+	flex --prefix=glcpp_ --outfile=$@ $<
 
 glcpp-lex.c: glcpp-parse.h
 

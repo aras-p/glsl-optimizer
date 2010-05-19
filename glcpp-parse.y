@@ -82,6 +82,9 @@ _argument_list_length (argument_list_t *list);
 string_list_t *
 _argument_list_member_at (argument_list_t *list, int index);
 
+static int
+yylex (yyscan_t scanner);
+
 %}
 
 %union {
@@ -405,7 +408,7 @@ glcpp_parser_create (void)
 
 	parser = xtalloc (NULL, glcpp_parser_t);
 
-	yylex_init_extra (parser, &parser->scanner);
+	glcpp_lex_init_extra (parser, &parser->scanner);
 	parser->defines = hash_table_ctor (32, hash_table_string_hash,
 					   hash_table_string_compare);
 	parser->expansions = NULL;
@@ -426,7 +429,7 @@ glcpp_parser_parse (glcpp_parser_t *parser)
 void
 glcpp_parser_destroy (glcpp_parser_t *parser)
 {
-	yylex_destroy (parser->scanner);
+	glcpp_lex_destroy (parser->scanner);
 	hash_table_dtor (parser->defines);
 	talloc_free (parser);
 }
@@ -641,4 +644,10 @@ _expand_function_macro (glcpp_parser_t *parser,
 	}
 
 	glcpp_parser_push_expansion_macro (parser, macro, arguments);
+}
+
+static int
+yylex (yyscan_t scanner)
+{
+	return glcpp_lex (scanner);
 }
