@@ -85,6 +85,29 @@ private:
    exec_list *assignments;
 };
 
+class array_index_visit : public ir_hierarchical_visitor {
+public:
+   array_index_visit(ir_hierarchical_visitor *v)
+   {
+      this->visitor = v;
+   }
+
+   virtual ir_visitor_status visit_enter(class ir_dereference_array *ir)
+   {
+      ir->selector.array_index->accept(visitor);
+      return visit_continue;
+   }
+
+   static void run(ir_instruction *ir, ir_hierarchical_visitor *v)
+   {
+      array_index_visit top_visit(v);
+      ir->accept(& top_visit);
+   }
+
+   ir_hierarchical_visitor *visitor;
+};
+
+
 /**
  * Adds an entry to the available copy list if it's a plain assignment
  * of a variable to a variable.
@@ -94,7 +117,6 @@ process_assignment(ir_assignment *ir, exec_list *assignments)
 {
    ir_variable *var = NULL;
    bool progress = false;
-   ir_instruction *current;
    kill_for_derefs_visitor v(assignments);
 
    /* Kill assignment entries for things used to produce this assignment. */
@@ -103,28 +125,10 @@ process_assignment(ir_assignment *ir, exec_list *assignments)
       ir->condition->accept(&v);
    }
 
-   /* Walk down the dereference chain to find the variable at the end
-    * of it that we're actually modifying.  Kill assignment enties used as
-    * array indices, too.
+   /* Kill assignment enties used as array indices.
     */
-   for (current = ir->lhs; current != NULL;) {
-      ir_swizzle *swiz;
-      ir_dereference *deref;
-
-      if ((swiz = current->as_swizzle())) {
-	 current = swiz->val;
-      } else if ((deref = current->as_dereference())) {
-	 if (deref->mode == ir_dereference::ir_reference_array)
-	    deref->selector.array_index->accept(&v);
-	 current = deref->var;
-      } else {
-	 var = current->as_variable();
-
-	 current = NULL;
-	 break;
-      }
-   }
-
+   array_index_visit::run(ir->lhs, &v);
+   var = ir->lhs->variable_referenced();
    assert(var);
 
    bool always_assign = true;
