@@ -953,10 +953,10 @@ emit_declaration(
       case TGSI_FILE_TEMPORARY:
          assert(idx < LP_MAX_TGSI_TEMPS);
          if (bld->has_indirect_addressing) {
-            LLVMValueRef val = LLVMConstInt(LLVMInt32Type(),
-                                            last*4 + 4, 0);
+            LLVMValueRef array_size = LLVMConstInt(LLVMInt32Type(),
+                                                   last*4 + 4, 0);
             bld->temps_array = lp_build_array_alloca(bld->base.builder,
-                                                     vec_type, val, "");
+                                                     vec_type, array_size, "");
          } else {
             for (i = 0; i < NUM_CHANNELS; i++)
                bld->temps[idx][i] = lp_build_alloca(bld->base.builder,
