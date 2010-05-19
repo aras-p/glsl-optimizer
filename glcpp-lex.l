@@ -84,12 +84,12 @@ TOKEN		[^[:space:](),]+
 
 <ST_DEFINE_OBJ_OR_FUNC>\n {
 	BEGIN INITIAL;
-	yylval.str = xtalloc_strdup (yyextra, "");
-	return REPLACEMENT;
+	return NEWLINE;
 }
 
 <ST_DEFINE_OBJ_OR_FUNC>{HSPACE}+ {
 	BEGIN ST_DEFINE_VALUE;
+	return SPACE;
 }
 
 <ST_DEFINE_OBJ_OR_FUNC>"(" {
@@ -113,10 +113,21 @@ TOKEN		[^[:space:](),]+
 
 <ST_DEFINE_PARAMETER>{HSPACE}+
 
-<ST_DEFINE_VALUE>.*\n {
+<ST_DEFINE_VALUE>{TOKEN} {
+	yylval.str = xtalloc_strdup (yyextra, yytext);
+	return TOKEN;
+}
+
+<ST_DEFINE_VALUE>[(),] {
+	yylval.str = xtalloc_strdup (yyextra, yytext);
+	return TOKEN;
+}
+
+<ST_DEFINE_VALUE>{HSPACE}+
+
+<ST_DEFINE_VALUE>\n {
 	BEGIN INITIAL;
-	yylval.str = xtalloc_strndup (yyextra, yytext, strlen (yytext) - 1);
-	return REPLACEMENT;
+	return NEWLINE;
 }
 
 {IDENTIFIER} {
@@ -161,54 +172,4 @@ TOKEN		[^[:space:](),]+
 
 {HSPACE}+
 
-<<EOF>> {
-	int done;
-
-	done = glcpp_lex_stack_pop (yyextra->lex_stack);
-
-	if (done)
-		yyterminate ();
-
-	glcpp_parser_pop_expansion (yyextra);
-}
-
 %%
-
-void
-glcpp_lex_stack_push (glcpp_lex_stack_t *stack, const char *string)
-{
-	struct yyguts_t *yyg = (struct yyguts_t*) stack->parser->scanner;
-	glcpp_lex_node_t *node;
-
-	/* Save the current buffer on the top of the stack. */
-	node = xtalloc (stack, glcpp_lex_node_t);
-	node->buffer = YY_CURRENT_BUFFER;
-
-	node->next = stack->head;
-	stack->head = node;
-
-	/* Then switch to a new scan buffer for string. */
-	yy_scan_string (string, stack->parser->scanner);
-}
-
-int
-glcpp_lex_stack_pop (glcpp_lex_stack_t *stack)
-{
-	struct yyguts_t *yyg = (struct yyguts_t*) stack->parser->scanner;
-	glcpp_lex_node_t *node;
-
-	node = stack->head;
-
-	if (node == NULL)
-		return 1;
-
-	stack->head = node->next;
-
-	yy_delete_buffer (YY_CURRENT_BUFFER, stack->parser->scanner);
-	yy_switch_to_buffer ((YY_BUFFER_STATE) node->buffer,
-			     stack->parser->scanner);
-
-	talloc_free (node);
-
-	return 0;
-}

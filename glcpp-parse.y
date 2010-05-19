@@ -34,13 +34,13 @@ yyerror (void *scanner, const char *error);
 void
 _define_object_macro (glcpp_parser_t *parser,
 		      const char *macro,
-		      const char *replacement);
+		      string_list_t *replacements);
 
 void
 _define_function_macro (glcpp_parser_t *parser,
 			const char *macro,
 			string_list_t *parameters,
-			const char *replacement);
+			string_list_t *replacements);
 
 void
 _expand_object_macro (glcpp_parser_t *parser, const char *identifier);
@@ -80,6 +80,14 @@ _argument_list_length (argument_list_t *list);
 string_list_t *
 _argument_list_member_at (argument_list_t *list, int index);
 
+static void
+glcpp_parser_push_expansion_macro (glcpp_parser_t *parser,
+				   macro_t *macro,
+				   argument_list_t *arguments);
+
+static void
+glcpp_parser_pop_expansion (glcpp_parser_t *parser);
+
 #define yylex glcpp_parser_lex
 
 static int
@@ -96,9 +104,9 @@ glcpp_parser_lex (glcpp_parser_t *parser);
 %parse-param {glcpp_parser_t *parser}
 %lex-param {glcpp_parser_t *parser}
 
-%token DEFINE FUNC_MACRO IDENTIFIER OBJ_MACRO REPLACEMENT TOKEN UNDEF
-%type <str> argument_word FUNC_MACRO IDENTIFIER OBJ_MACRO REPLACEMENT TOKEN
-%type <string_list> argument macro parameter_list
+%token DEFINE FUNC_MACRO IDENTIFIER OBJ_MACRO NEWLINE SPACE TOKEN UNDEF
+%type <str> argument_word FUNC_MACRO IDENTIFIER OBJ_MACRO TOKEN
+%type <string_list> argument macro parameter_list replacement_list pp_tokens
 %type <argument_list> argument_list
 
 /* Hard to remove shift/reduce conflicts documented as follows:
@@ -194,10 +202,14 @@ argument_word:
 
 
 directive:
-	DEFINE IDENTIFIER REPLACEMENT {
-		_define_object_macro (parser, $2, $3);
+	DEFINE IDENTIFIER NEWLINE {
+		string_list_t *list = _string_list_create (parser);
+		_define_object_macro (parser, $2, list);
 	}
-|	DEFINE IDENTIFIER '(' parameter_list ')' REPLACEMENT {
+|	DEFINE IDENTIFIER SPACE replacement_list NEWLINE {
+		_define_object_macro (parser, $2, $4);
+	}
+|	DEFINE IDENTIFIER '(' parameter_list ')' replacement_list NEWLINE {
 		_define_function_macro (parser, $2, $4, $6);
 	}
 |	UNDEF IDENTIFIER {
@@ -225,6 +237,27 @@ parameter_list:
 |	parameter_list ',' IDENTIFIER {
 		_string_list_append_item ($1, $3);
 		talloc_free ($3);
+		$$ = $1;
+	}
+;
+
+replacement_list:
+	/* empty */ {
+		$$ = _string_list_create (parser);
+	}
+|	pp_tokens {
+		$$ = $1;
+	}
+;
+
+
+pp_tokens:
+	TOKEN {
+		$$ = _string_list_create (parser);
+		_string_list_append_item ($$, $1);
+	}
+|	pp_tokens TOKEN {
+		_string_list_append_item ($1, $2);
 		$$ = $1;
 	}
 ;
@@ -413,10 +446,6 @@ glcpp_parser_create (void)
 					   hash_table_string_compare);
 	parser->expansions = NULL;
 
-	parser->lex_stack = xtalloc (parser, glcpp_lex_stack_t);
-	parser->lex_stack->parser = parser;
-	parser->lex_stack->head = NULL;
-
 	return parser;
 }
 
@@ -495,7 +524,7 @@ glcpp_parser_classify_token (glcpp_parser_t *parser,
 void
 _define_object_macro (glcpp_parser_t *parser,
 		      const char *identifier,
-		      const char *replacement)
+		      string_list_t *replacements)
 {
 	macro_t *macro;
 
@@ -504,7 +533,7 @@ _define_object_macro (glcpp_parser_t *parser,
 	macro->is_function = 0;
 	macro->parameters = NULL;
 	macro->identifier = talloc_strdup (macro, identifier);
-	macro->replacement = talloc_steal (macro, replacement);
+	macro->replacements = talloc_steal (macro, replacements);
 
 	hash_table_insert (parser->defines, macro, identifier);
 }
@@ -513,7 +542,7 @@ void
 _define_function_macro (glcpp_parser_t *parser,
 			const char *identifier,
 			string_list_t *parameters,
-			const char *replacement)
+			string_list_t *replacements)
 {
 	macro_t *macro;
 
@@ -522,7 +551,7 @@ _define_function_macro (glcpp_parser_t *parser,
 	macro->is_function = 1;
 	macro->parameters = talloc_steal (macro, parameters);
 	macro->identifier = talloc_strdup (macro, identifier);
-	macro->replacement = talloc_steal (macro, replacement);
+	macro->replacements = talloc_steal (macro, replacements);
 
 	hash_table_insert (parser->defines, macro, identifier);
 }
@@ -531,7 +560,7 @@ static void
 _glcpp_parser_push_expansion_internal (glcpp_parser_t *parser,
 				       macro_t *macro,
 				       argument_list_t *arguments,
-				       const char * replacement)
+				       string_node_t *replacements)
 {
 	expansion_node_t *node;
 
@@ -539,20 +568,19 @@ _glcpp_parser_push_expansion_internal (glcpp_parser_t *parser,
 
 	node->macro = macro;
 	node->arguments = arguments;
+	node->replacements = replacements;
 
 	node->next = parser->expansions;
 	parser->expansions = node;
-		
-	glcpp_lex_stack_push (parser->lex_stack, replacement);
 }
 
-void
+static void
 glcpp_parser_push_expansion_macro (glcpp_parser_t *parser,
 				   macro_t *macro,
 				   argument_list_t *arguments)
 {
 	_glcpp_parser_push_expansion_internal (parser, macro, arguments,
-					       macro->replacement);
+					       macro->replacements->head);
 }
 
 void
@@ -561,38 +589,16 @@ glcpp_parser_push_expansion_argument (glcpp_parser_t *parser,
 {
 	argument_list_t *arguments;
 	string_list_t *argument;
-	string_node_t *node;
-	char *argument_str, *s;
-	int length;
 
 	arguments = parser->expansions->arguments;
 
 	argument = _argument_list_member_at (arguments, argument_index);
 
-	length = 0;
-	for (node = argument->head; node; node = node->next)
-		length += strlen (node->str) + 1;
-
-	argument_str = xtalloc_size (parser, length);
-
-	*argument_str = '\0';
-	s = argument_str;
-	for (node = argument->head; node; node = node->next) {
-		strcpy (s, node->str);
-		s += strlen (node->str);
-		if (node->next) {
-			*s = ' ';
-			s++;
-			*s = '\0';
-		}
-	}
-
 	_glcpp_parser_push_expansion_internal (parser, NULL, NULL,
-					       argument_str);
+					       argument->head);
 }
 
-/* The lexer calls this when it exhausts a string. */
-void
+static void
 glcpp_parser_pop_expansion (glcpp_parser_t *parser)
 {
 	expansion_node_t *node;
@@ -649,5 +655,55 @@ _expand_function_macro (glcpp_parser_t *parser,
 static int
 glcpp_parser_lex (glcpp_parser_t *parser)
 {
-	return glcpp_lex (parser->scanner);
+	expansion_node_t *expansion;
+	string_node_t *replacements;
+	int parameter_index;
+
+    /* Who says C can't do efficient tail recursion? */
+    RECURSE:
+
+	expansion = parser->expansions;
+
+	if (expansion == NULL)
+		return glcpp_lex (parser->scanner);
+
+	replacements = expansion->replacements;
+
+	/* Pop expansion when replacements is exhausted. */
+	if (replacements == NULL) {
+		glcpp_parser_pop_expansion (parser);
+		goto RECURSE;
+	}
+
+	expansion->replacements = replacements->next;
+
+	if (strcmp (replacements->str, "(") == 0)
+		return '(';
+	else if (strcmp (replacements->str, ")") == 0)
+		return ')';
+	else if (strcmp (replacements->str, ",") == 0)
+		return ',';
+
+	yylval.str = xtalloc_strdup (parser, replacements->str);
+
+	switch (glcpp_parser_classify_token (parser, yylval.str,
+					     &parameter_index))
+	{
+	case TOKEN_CLASS_ARGUMENT:
+		talloc_free (yylval.str);
+		glcpp_parser_push_expansion_argument (parser,
+						      parameter_index);
+		goto RECURSE;
+		break;
+	case TOKEN_CLASS_IDENTIFIER:
+		return IDENTIFIER;
+		break;
+	case TOKEN_CLASS_FUNC_MACRO:
+		return FUNC_MACRO;
+		break;
+	default:
+	case TOKEN_CLASS_OBJ_MACRO:
+		return OBJ_MACRO;
+		break;
+	}
 }
