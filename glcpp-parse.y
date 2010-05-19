@@ -103,8 +103,12 @@ _argument_list_member_at (argument_list_t *list, int index);
  * 1. '(' after FUNC_MACRO name which is correctly resolved to shift
  *    to form macro invocation rather than reducing directly to
  *    content.
+ *
+ * 2. Similarly, '(' after FUNC_MACRO which is correctly resolved to
+ *    shift to form macro invocation rather than reducing directly to
+ *    argument.
  */
-%expect 1
+%expect 2
 
 %%
 
@@ -167,6 +171,10 @@ argument:
 	}
 |	macro {
 		$$ = _string_list_create (parser);
+	}
+|	FUNC_MACRO {
+		$$ = _string_list_create (parser);
+		_string_list_append_item ($$, $1);
 	}
 |	argument word {
 		_string_list_append_item ($1, $2);
