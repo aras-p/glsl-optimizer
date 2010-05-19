@@ -817,7 +817,7 @@ read_constant(_mesa_glsl_parse_state *st, s_list *list)
    return NULL; // should not be reached
 }
 
-static ir_instruction *
+static ir_variable *
 read_dereferencable(_mesa_glsl_parse_state *st, s_expression *expr)
 {
    // Read the subject of a dereference - either a variable name or a swizzle
@@ -828,15 +828,8 @@ read_dereferencable(_mesa_glsl_parse_state *st, s_expression *expr)
 	 ir_read_error(st, expr, "undeclared variable: %s", var_name->value());
       }
       return var;
-   } else {
-      // Hopefully a (swiz ...)
-      s_list *list = SX_AS_LIST(expr);
-      if (list != NULL && !list->subexpressions.is_empty()) {
-	 s_symbol *tag = SX_AS_SYMBOL(list->subexpressions.head);
-	 if (tag != NULL && strcmp(tag->value(), "swiz") == 0)
-	    return read_swizzle(st, list);
-      }
    }
+
    ir_read_error(st, expr, "expected variable name or (swiz ...)");
    return NULL;
 }
@@ -849,10 +842,10 @@ read_var_ref(_mesa_glsl_parse_state *st, s_list *list)
       return NULL;
    }
    s_expression *subj_expr = (s_expression*) list->subexpressions.head->next;
-   ir_instruction *subject = read_dereferencable(st, subj_expr);
+   ir_variable *subject = read_dereferencable(st, subj_expr);
    if (subject == NULL)
       return NULL;
-   return new ir_dereference(subject);
+   return new ir_dereference_variable(subject);
 }
 
 static ir_dereference *
@@ -865,13 +858,13 @@ read_array_ref(_mesa_glsl_parse_state *st, s_list *list)
    }
 
    s_expression *subj_expr = (s_expression*) list->subexpressions.head->next;
-   ir_instruction *subject = read_dereferencable(st, subj_expr);
+   ir_variable *subject = read_dereferencable(st, subj_expr);
    if (subject == NULL)
       return NULL;
 
    s_expression *idx_expr = (s_expression*) subj_expr->next;
    ir_rvalue *idx = read_rvalue(st, idx_expr);
-   return new ir_dereference(subject, idx);
+   return new ir_dereference_array(subject, idx);
 }
 
 static ir_dereference *

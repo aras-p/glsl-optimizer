@@ -62,7 +62,8 @@ _mesa_ast_field_selection_to_hir(const ast_expression *expr,
 			  expr->primary_expression.identifier);
       }
    } else if (op->type->base_type == GLSL_TYPE_STRUCT) {
-      result = new ir_dereference(op, expr->primary_expression.identifier);
+      result = new ir_dereference_record(op,
+					 expr->primary_expression.identifier);
 
       if (result->type->is_error()) {
 	 _mesa_glsl_error(& loc, state, "Cannot access field `%s' of "

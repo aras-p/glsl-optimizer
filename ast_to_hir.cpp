@@ -535,7 +535,7 @@ get_lvalue_copy(exec_list *instructions, struct _mesa_glsl_parse_state *state,
    var = new ir_variable(lvalue->type, "_internal_tmp");
    var->mode = ir_var_auto;
 
-   var_deref = new ir_dereference(var);
+   var_deref = new ir_dereference_variable(var);
    do_assignment(instructions, state, var_deref, lvalue, loc);
 
    /* Once we've created this temporary, mark it read only so it's no
@@ -803,17 +803,17 @@ ast_expression::hir(exec_list *instructions,
 	 ir_variable *const tmp = generate_temporary(glsl_type::bool_type,
 						     instructions, state);
 
-	 ir_dereference *const then_deref = new ir_dereference(tmp);
+	 ir_dereference *const then_deref = new ir_dereference_variable(tmp);
 	 ir_assignment *const then_assign =
 	    new ir_assignment(then_deref, op[1], NULL);
 	 stmt->then_instructions.push_tail(then_assign);
 
-	 ir_dereference *const else_deref = new ir_dereference(tmp);
+	 ir_dereference *const else_deref = new ir_dereference_variable(tmp);
 	 ir_assignment *const else_assign =
 	    new ir_assignment(else_deref, new ir_constant(false), NULL);
 	 stmt->else_instructions.push_tail(else_assign);
 
-	 result = new ir_dereference(tmp);
+	 result = new ir_dereference_variable(tmp);
 	 type = tmp->type;
       }
       break;
@@ -865,17 +865,17 @@ ast_expression::hir(exec_list *instructions,
 	    error_emitted = true;
 	 }
 
-	 ir_dereference *const then_deref = new ir_dereference(tmp);
+	 ir_dereference *const then_deref = new ir_dereference_variable(tmp);
 	 ir_assignment *const then_assign =
 	    new ir_assignment(then_deref, new ir_constant(true), NULL);
 	 stmt->then_instructions.push_tail(then_assign);
 
-	 ir_dereference *const else_deref = new ir_dereference(tmp);
+	 ir_dereference *const else_deref = new ir_dereference_variable(tmp);
 	 ir_assignment *const else_assign =
 	    new ir_assignment(else_deref, op[1], NULL);
 	 stmt->else_instructions.push_tail(else_assign);
 
-	 result = new ir_dereference(tmp);
+	 result = new ir_dereference_variable(tmp);
 	 type = tmp->type;
       }
       break;
@@ -996,13 +996,13 @@ ast_expression::hir(exec_list *instructions,
       instructions->push_tail(stmt);
 
       op[1] = this->subexpressions[1]->hir(& stmt->then_instructions, state);
-      ir_dereference *const then_deref = new ir_dereference(tmp);
+      ir_dereference *const then_deref = new ir_dereference_variable(tmp);
       ir_assignment *const then_assign =
 	 new ir_assignment(then_deref, op[1], NULL);
       stmt->then_instructions.push_tail(then_assign);
 
       op[2] = this->subexpressions[2]->hir(& stmt->else_instructions, state);
-      ir_dereference *const else_deref = new ir_dereference(tmp);
+      ir_dereference *const else_deref = new ir_dereference_variable(tmp);
       ir_assignment *const else_assign =
 	 new ir_assignment(else_deref, op[2], NULL);
       stmt->else_instructions.push_tail(else_assign);
@@ -1028,7 +1028,7 @@ ast_expression::hir(exec_list *instructions,
 	 tmp->type = op[1]->type;
       }
 
-      result = new ir_dereference(tmp);
+      result = new ir_dereference_variable(tmp);
       type = tmp->type;
       break;
    }
@@ -1097,18 +1097,9 @@ ast_expression::hir(exec_list *instructions,
 
       error_emitted = op[0]->type->is_error() || op[1]->type->is_error();
 
-      ir_dereference *const lhs = op[0]->as_dereference();
-      ir_instruction *array;
-      if ((lhs != NULL)
-	  && (lhs->mode == ir_dereference::ir_reference_variable)) {
-	 result = new ir_dereference(lhs->var, op[1]);
+      ir_instruction *const array = op[0];
 
-	 delete op[0];
-	 array = lhs->var;
-      } else {
-	 result = new ir_dereference(op[0], op[1]);
-	 array = op[0];
-      }
+      result = new ir_dereference_array(op[0], op[1]);
 
       /* Do not use op[0] after this point.  Use array.
        */
@@ -1218,7 +1209,7 @@ ast_expression::hir(exec_list *instructions,
       ir_variable *var = 
 	 state->symbols->get_variable(this->primary_expression.identifier);
 
-      result = new ir_dereference(var);
+      result = new ir_dereference_variable(var);
 
       if (var != NULL) {
 	 type = result->type;
@@ -1722,7 +1713,7 @@ ast_declarator_list::hir(exec_list *instructions,
 			     ? "attribute" : "varying");
 	 }
 
-	 ir_dereference *const lhs = new ir_dereference(var);
+	 ir_dereference *const lhs = new ir_dereference_variable(var);
 	 ir_rvalue *rhs = decl->initializer->hir(instructions, state);
 
 	 /* Calculate the constant value if this is a const

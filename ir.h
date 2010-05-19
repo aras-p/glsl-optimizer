@@ -788,12 +788,6 @@ public:
 
 class ir_dereference : public ir_rvalue {
 public:
-   ir_dereference(struct ir_instruction *);
-
-   ir_dereference(ir_instruction *variable, ir_rvalue *array_index);
-
-   ir_dereference(ir_instruction *variable, const char *field);
-
    virtual ir_dereference *as_dereference()
    {
       return this;
@@ -811,9 +805,9 @@ public:
    /**
     * Get the variable that is ultimately referenced by an r-value
     */
-   virtual ir_variable *variable_referenced();
+   virtual ir_variable *variable_referenced() = 0;
 
-   enum {
+   enum ir_deref_mode {
       ir_reference_variable,
       ir_reference_array,
       ir_reference_record
@@ -830,6 +824,63 @@ public:
       ir_rvalue *array_index;
       const char *field;
    } selector;
+
+protected:
+   ir_dereference(ir_deref_mode mode)
+      : mode(mode)
+   {
+      /* empty */
+   }
+};
+
+
+class ir_dereference_variable : public ir_dereference {
+public:
+   ir_dereference_variable(ir_variable *var);
+
+   /**
+    * Get the variable that is ultimately referenced by an r-value
+    */
+   virtual ir_variable *variable_referenced()
+   {
+      return (ir_variable *) this->var;
+   }
+};
+
+
+class ir_dereference_array : public ir_dereference {
+public:
+   ir_dereference_array(ir_rvalue *value, ir_rvalue *array_index);
+
+   ir_dereference_array(ir_variable *var, ir_rvalue *array_index);
+
+   /**
+    * Get the variable that is ultimately referenced by an r-value
+    */
+   virtual ir_variable *variable_referenced()
+   {
+      return ((ir_rvalue *) this->var)->variable_referenced();
+   }
+
+
+private:
+   void set_array(ir_rvalue *value);
+};
+
+
+class ir_dereference_record : public ir_dereference {
+public:
+   ir_dereference_record(ir_rvalue *value, const char *field);
+
+   ir_dereference_record(ir_variable *var, const char *field);
+
+   /**
+    * Get the variable that is ultimately referenced by an r-value
+    */
+   virtual ir_variable *variable_referenced()
+   {
+      return ((ir_rvalue *) this->var)->variable_referenced();
+   }
 };
 
 

@@ -220,28 +220,27 @@ ir_function_cloning_visitor::visit(ir_swizzle *ir)
 void
 ir_function_cloning_visitor::visit(ir_dereference *ir)
 {
-   ir_variable *old_var = ir->var->as_variable();
-   ir_instruction *var;
-
-   if (old_var)
-      var = this->get_remapped_variable(old_var);
-   else {
-      ir->var->accept(this);
-      var = this->result;
-   }
-
    if (ir->mode == ir_dereference::ir_reference_variable) {
-      this->result = new ir_dereference(var);
+      ir_variable *var = this->get_remapped_variable(ir->variable_referenced());
+      this->result = new ir_dereference_variable(var);
    } else if (ir->mode == ir_dereference::ir_reference_array) {
-      ir_rvalue *index;
+      ir->var->accept(this);
+
+      ir_rvalue *var = this->result->as_rvalue();
 
       ir->selector.array_index->accept(this);
-      index = this->result->as_rvalue();
 
-      this->result = new ir_dereference(var, index);
+      ir_rvalue *index = this->result->as_rvalue();
+
+      this->result = new ir_dereference_array(var, index);
    } else {
       assert(ir->mode == ir_dereference::ir_reference_record);
-      this->result = new ir_dereference(var, strdup(ir->selector.field));
+
+      ir->var->accept(this);
+
+      ir_rvalue *var = this->result->as_rvalue();
+
+      this->result = new ir_dereference_record(var, strdup(ir->selector.field));
    }
 }
 
@@ -300,7 +299,8 @@ ir_function_cloning_visitor::visit(ir_return *ir)
    rval = this->result->as_rvalue();
    assert(rval);
 
-   result = new ir_assignment(new ir_dereference(this->retval), rval, NULL);
+   result = new ir_assignment(new ir_dereference_variable(this->retval), rval,
+			      NULL);
 }
 
 
@@ -406,7 +406,7 @@ ir_call::generate_inline(ir_instruction *next_ir)
 	  parameters[i]->mode == ir_var_inout) {
 	 ir_assignment *assign;
 
-	 assign = new ir_assignment(new ir_dereference(parameters[i]),
+	 assign = new ir_assignment(new ir_dereference_variable(parameters[i]),
 				    param, NULL);
 	 next_ir->insert_before(assign);
       }
@@ -438,7 +438,7 @@ ir_call::generate_inline(ir_instruction *next_ir)
 	 ir_assignment *assign;
 
 	 assign = new ir_assignment(param->as_rvalue(),
-				    new ir_dereference(parameters[i]),
+				    new ir_dereference_variable(parameters[i]),
 				    NULL);
 	 next_ir->insert_before(assign);
       }
@@ -449,7 +449,7 @@ ir_call::generate_inline(ir_instruction *next_ir)
    delete(parameters);
 
    if (retval)
-      return new ir_dereference(retval);
+      return new ir_dereference_variable(retval);
    else
       return NULL;
 }

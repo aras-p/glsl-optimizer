@@ -143,12 +143,12 @@ ir_expression_flattening_visitor::visit(ir_expression *ir)
 	 var = new ir_variable(ir->operands[operand]->type, "flattening_tmp");
 	 this->base_ir->insert_before(var);
 
-	 assign = new ir_assignment(new ir_dereference(var),
+	 assign = new ir_assignment(new ir_dereference_variable(var),
 				    ir->operands[operand],
 				    NULL);
 	 this->base_ir->insert_before(assign);
 
-	 ir->operands[operand] = new ir_dereference(var);
+	 ir->operands[operand] = new ir_dereference_variable(var);
       }
    }
 }

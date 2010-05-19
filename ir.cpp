@@ -223,22 +223,40 @@ ir_constant::ir_constant(bool b)
 }
 
 
-ir_dereference::ir_dereference(ir_instruction *var)
+ir_dereference_variable::ir_dereference_variable(ir_variable *var)
+   : ir_dereference(ir_reference_variable)
 {
-   this->mode = ir_reference_variable;
    this->var = var;
    this->type = (var != NULL) ? var->type : glsl_type::error_type;
 }
 
 
-ir_dereference::ir_dereference(ir_instruction *var,
-			       ir_rvalue *array_index)
-   : mode(ir_reference_array), var(var)
+ir_dereference_array::ir_dereference_array(ir_rvalue *value,
+					   ir_rvalue *array_index)
+   : ir_dereference(ir_reference_array)
 {
-   type = glsl_type::error_type;
+   this->selector.array_index = array_index;
+   this->set_array(value);
+}
 
-   if (var != NULL) {
-      const glsl_type *const vt = var->type;
+
+ir_dereference_array::ir_dereference_array(ir_variable *var,
+					   ir_rvalue *array_index)
+   : ir_dereference(ir_reference_array)
+{
+   this->selector.array_index = array_index;
+   this->set_array(new ir_dereference_variable(var));
+}
+
+
+void
+ir_dereference_array::set_array(ir_rvalue *value)
+{
+   this->var = value;
+   this->type = glsl_type::error_type;
+
+   if (this->var != NULL) {
+      const glsl_type *const vt = this->var->type;
 
       if (vt->is_array()) {
 	 type = vt->element_type();
@@ -248,68 +266,45 @@ ir_dereference::ir_dereference(ir_instruction *var,
 	 type = vt->get_base_type();
       }
    }
-
-   this->selector.array_index = array_index;
 }
 
-ir_dereference::ir_dereference(ir_instruction *variable, const char *field)
-   : mode(ir_reference_record), var(variable)
+
+ir_dereference_record::ir_dereference_record(ir_rvalue *value,
+					     const char *field)
+   : ir_dereference(ir_reference_record)
 {
+   this->var = value;
    this->selector.field = field;
-   this->type = (var != NULL)
-      ? var->type->field_type(field) : glsl_type::error_type;
+   this->type = (this->var != NULL)
+      ? this->var->type->field_type(field) : glsl_type::error_type;
 }
+
+
+ir_dereference_record::ir_dereference_record(ir_variable *var,
+					     const char *field)
+   : ir_dereference(ir_reference_record)
+{
+   this->var = new ir_dereference_variable(var);
+   this->selector.field = field;
+   this->type = (this->var != NULL)
+      ? this->var->type->field_type(field) : glsl_type::error_type;
+}
+
 
 bool
 ir_dereference::is_lvalue()
 {
-   if (var == NULL)
+   ir_variable *var = this->variable_referenced();
+
+   /* Every l-value derference chain eventually ends in a variable.
+    */
+   if ((var == NULL) || var->read_only)
       return false;
 
-   ir_variable *const as_var = var->as_variable();
-   if (mode == ir_reference_variable) {
-      if (as_var == NULL)
-	 return false;
+   if (this->type->is_array() && !var->array_lvalue)
+      return false;
 
-      if (as_var->type->is_array() && !as_var->array_lvalue)
-	 return false;
-   }
-
-   if (as_var != NULL)
-      return !as_var->read_only;
-
-   /* Walk up the dereference chain and figure out if the variable is read-only.
-    */
-   return this->var->as_rvalue()->is_lvalue();
-}
-
-
-ir_variable *
-ir_dereference::variable_referenced()
-{
-   /* Walk down the dereference chain to find the variable at the end.
-    *
-    * This could be implemented recurrsively, but it would still need to call
-    * as_variable and as_rvalue, so the code wouldn't be any cleaner.
-    */
-   for (ir_instruction *current = this->var; current != NULL; /* empty */ ) {
-      ir_dereference *deref;
-      ir_variable *v;
-
-      if ((deref = current->as_dereference())) {
-	 current = deref->var;
-      } else if ((v = current->as_variable())) {
-	 return v;
-      } else {
-	 /* This is the case of, for example, an array dereference of the
-	  * value returned by a function call.
-	  */
-	 return NULL;
-      }
-   }
-
-   assert(!"Should not get here.");
-   return NULL;
+   return true;
 }
 
 

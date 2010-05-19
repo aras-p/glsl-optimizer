@@ -200,7 +200,7 @@ dereference_component(ir_rvalue *src, unsigned component)
       const int c = component / src->type->column_type()->vector_elements;
       const int r = component % src->type->column_type()->vector_elements;
       ir_constant *const col_index = new ir_constant(glsl_type::int_type, &c);
-      ir_dereference *const col = new ir_dereference(src, col_index);
+      ir_dereference *const col = new ir_dereference_array(src, col_index);
 
       col->type = src->type->column_type();
 
