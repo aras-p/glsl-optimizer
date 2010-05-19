@@ -427,6 +427,7 @@ ir_constant_visitor::visit(ir_dereference_variable *ir)
 void
 ir_constant_visitor::visit(ir_dereference_array *ir)
 {
+   (void) ir;
    value = NULL;
    /* FINISHME: Other dereference modes. */
 }
@@ -435,6 +436,7 @@ ir_constant_visitor::visit(ir_dereference_array *ir)
 void
 ir_constant_visitor::visit(ir_dereference_record *ir)
 {
+   (void) ir;
    value = NULL;
    /* FINISHME: Other dereference modes. */
 }

@@ -235,7 +235,7 @@ ir_dereference_array::ir_dereference_array(ir_rvalue *value,
 					   ir_rvalue *array_index)
    : ir_dereference(ir_reference_array)
 {
-   this->selector.array_index = array_index;
+   this->array_index = array_index;
    this->set_array(value);
 }
 
@@ -244,7 +244,7 @@ ir_dereference_array::ir_dereference_array(ir_variable *var,
 					   ir_rvalue *array_index)
    : ir_dereference(ir_reference_array)
 {
-   this->selector.array_index = array_index;
+   this->array_index = array_index;
    this->set_array(new ir_dereference_variable(var));
 }
 
@@ -252,11 +252,11 @@ ir_dereference_array::ir_dereference_array(ir_variable *var,
 void
 ir_dereference_array::set_array(ir_rvalue *value)
 {
-   this->var = value;
+   this->array = value;
    this->type = glsl_type::error_type;
 
-   if (this->var != NULL) {
-      const glsl_type *const vt = this->var->type;
+   if (this->array != NULL) {
+      const glsl_type *const vt = this->array->type;
 
       if (vt->is_array()) {
 	 type = vt->element_type();
@@ -273,10 +273,10 @@ ir_dereference_record::ir_dereference_record(ir_rvalue *value,
 					     const char *field)
    : ir_dereference(ir_reference_record)
 {
-   this->var = value;
-   this->selector.field = field;
-   this->type = (this->var != NULL)
-      ? this->var->type->field_type(field) : glsl_type::error_type;
+   this->record = value;
+   this->field = field;
+   this->type = (this->record != NULL)
+      ? this->record->type->field_type(field) : glsl_type::error_type;
 }
 
 
@@ -284,10 +284,10 @@ ir_dereference_record::ir_dereference_record(ir_variable *var,
 					     const char *field)
    : ir_dereference(ir_reference_record)
 {
-   this->var = new ir_dereference_variable(var);
-   this->selector.field = field;
-   this->type = (this->var != NULL)
-      ? this->var->type->field_type(field) : glsl_type::error_type;
+   this->record = new ir_dereference_variable(var);
+   this->field = field;
+   this->type = (this->record != NULL)
+      ? this->record->type->field_type(field) : glsl_type::error_type;
 }
 
 

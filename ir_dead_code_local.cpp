@@ -94,7 +94,7 @@ public:
 
    virtual ir_visitor_status visit_enter(class ir_dereference_array *ir)
    {
-      ir->selector.array_index->accept(visitor);
+      ir->array_index->accept(visitor);
       return visit_continue;
    }
 

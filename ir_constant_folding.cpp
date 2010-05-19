@@ -129,21 +129,21 @@ void
 ir_constant_folding_visitor::visit(ir_dereference_array *ir)
 {
    ir_constant *const_val =
-      ir->selector.array_index->constant_expression_value();
+      ir->array_index->constant_expression_value();
 
    if (const_val)
-      ir->selector.array_index = const_val;
+      ir->array_index = const_val;
    else
-      ir->selector.array_index->accept(this);
+      ir->array_index->accept(this);
 
-   ir->var->accept(this);
+   ir->array->accept(this);
 }
 
 
 void
 ir_constant_folding_visitor::visit(ir_dereference_record *ir)
 {
-   ir->var->accept(this);
+   ir->record->accept(this);
 }
 
 

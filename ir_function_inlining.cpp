@@ -231,11 +231,11 @@ ir_function_cloning_visitor::visit(ir_dereference_variable *ir)
 void
 ir_function_cloning_visitor::visit(ir_dereference_array *ir)
 {
-   ir->var->accept(this);
+   ir->array->accept(this);
 
    ir_rvalue *var = this->result->as_rvalue();
 
-   ir->selector.array_index->accept(this);
+   ir->array_index->accept(this);
 
    ir_rvalue *index = this->result->as_rvalue();
 
@@ -245,11 +245,11 @@ ir_function_cloning_visitor::visit(ir_dereference_array *ir)
 void
 ir_function_cloning_visitor::visit(ir_dereference_record *ir)
 {
-   ir->var->accept(this);
+   ir->record->accept(this);
 
    ir_rvalue *var = this->result->as_rvalue();
 
-   this->result = new ir_dereference_record(var, strdup(ir->selector.field));
+   this->result = new ir_dereference_record(var, strdup(ir->field));
 }
 
 void
@@ -525,14 +525,14 @@ ir_function_inlining_visitor::visit(ir_dereference_variable *ir)
 void
 ir_function_inlining_visitor::visit(ir_dereference_array *ir)
 {
-   ir->selector.array_index->accept(this);
-   ir->var->accept(this);
+   ir->array_index->accept(this);
+   ir->array->accept(this);
 }
 
 void
 ir_function_inlining_visitor::visit(ir_dereference_record *ir)
 {
-   ir->var->accept(this);
+   ir->record->accept(this);
 }
 
 void

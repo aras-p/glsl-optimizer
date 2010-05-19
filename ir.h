@@ -806,18 +806,6 @@ public:
       ir_reference_record
    } mode;
 
-   /**
-    * Object being dereferenced.
-    *
-    * Must be either an \c ir_variable or an \c ir_rvalue.
-    */
-   ir_instruction *var;
-
-   union {
-      ir_rvalue *array_index;
-      const char *field;
-   } selector;
-
 protected:
    ir_dereference(ir_deref_mode mode)
       : mode(mode)
@@ -836,7 +824,7 @@ public:
     */
    virtual ir_variable *variable_referenced()
    {
-      return (ir_variable *) this->var;
+      return this->var;
    }
 
    virtual void accept(ir_visitor *v)
@@ -845,6 +833,11 @@ public:
    }
 
    virtual ir_visitor_status accept(ir_hierarchical_visitor *);
+
+   /**
+    * Object being dereferenced.
+    */
+   ir_variable *var;
 };
 
 
@@ -859,7 +852,7 @@ public:
     */
    virtual ir_variable *variable_referenced()
    {
-      return ((ir_rvalue *) this->var)->variable_referenced();
+      return this->array->variable_referenced();
    }
 
    virtual void accept(ir_visitor *v)
@@ -868,6 +861,9 @@ public:
    }
 
    virtual ir_visitor_status accept(ir_hierarchical_visitor *);
+
+   ir_rvalue *array;
+   ir_rvalue *array_index;
 
 private:
    void set_array(ir_rvalue *value);
@@ -885,7 +881,7 @@ public:
     */
    virtual ir_variable *variable_referenced()
    {
-      return ((ir_rvalue *) this->var)->variable_referenced();
+      return this->record->variable_referenced();
    }
 
    virtual void accept(ir_visitor *v)
@@ -894,6 +890,9 @@ public:
    }
 
    virtual ir_visitor_status accept(ir_hierarchical_visitor *);
+
+   ir_rvalue *record;
+   const char *field;
 };
 
 

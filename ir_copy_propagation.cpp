@@ -169,14 +169,14 @@ ir_copy_propagation_visitor::visit(ir_dereference_variable *ir)
 void
 ir_copy_propagation_visitor::visit(ir_dereference_array *ir)
 {
-   ir->var->accept(this);
-   ir->selector.array_index->accept(this);
+   ir->array->accept(this);
+   ir->array_index->accept(this);
 }
 
 void
 ir_copy_propagation_visitor::visit(ir_dereference_record *ir)
 {
-   ir->var->accept(this);
+   ir->record->accept(this);
 }
 
 void
@@ -270,12 +270,12 @@ add_copy(ir_assignment *ir, exec_list *acp)
    ir_dereference *lhs_deref = ir->lhs->as_dereference();
    if (!lhs_deref || lhs_deref->mode != ir_dereference::ir_reference_variable)
       return;
-   ir_variable *lhs_var = lhs_deref->var->as_variable();
+   ir_variable *lhs_var = lhs_deref->variable_referenced();
 
    ir_dereference *rhs_deref = ir->rhs->as_dereference();
    if (!rhs_deref || rhs_deref->mode != ir_dereference::ir_reference_variable)
       return;
-   ir_variable *rhs_var = rhs_deref->var->as_variable();
+   ir_variable *rhs_var = rhs_deref->variable_referenced();
 
    entry = new acp_entry(lhs_var, rhs_var);
    acp->push_tail(entry);

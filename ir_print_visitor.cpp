@@ -171,8 +171,8 @@ void ir_print_visitor::visit(ir_dereference_variable *ir)
 void ir_print_visitor::visit(ir_dereference_array *ir)
 {
    printf("(array_ref ");
-   ir->var->accept(this);
-   ir->selector.array_index->accept(this);
+   ir->array->accept(this);
+   ir->array_index->accept(this);
    printf(") ");
 }
 
@@ -180,8 +180,8 @@ void ir_print_visitor::visit(ir_dereference_array *ir)
 void ir_print_visitor::visit(ir_dereference_record *ir)
 {
    printf("(record_ref ");
-   ir->var->accept(this);
-   printf("(%s)) ", ir->selector.field);
+   ir->record->accept(this);
+   printf("(%s)) ", ir->field);
 }
 
 

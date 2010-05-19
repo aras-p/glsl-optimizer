@@ -183,11 +183,11 @@ ir_dereference_array::accept(ir_hierarchical_visitor *v)
    if (s != visit_continue)
       return (s == visit_continue_with_parent) ? visit_continue : s;
 
-   s = this->selector.array_index->accept(v);
+   s = this->array_index->accept(v);
    if (s != visit_continue)
       return (s == visit_continue_with_parent) ? visit_continue : s;
 
-   s = this->var->accept(v);
+   s = this->array->accept(v);
    return (s == visit_stop) ? s : v->visit_leave(this);
 }
 
@@ -199,7 +199,7 @@ ir_dereference_record::accept(ir_hierarchical_visitor *v)
    if (s != visit_continue)
       return (s == visit_continue_with_parent) ? visit_continue : s;
 
-   s = this->var->accept(v);
+   s = this->record->accept(v);
    return (s == visit_stop) ? s : v->visit_leave(this);
 }
 

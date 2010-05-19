@@ -482,7 +482,7 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
 
 	 assert(d != NULL);
 
-	 ir_variable *const var = d->var->as_variable();
+	 ir_variable *const var = d->variable_referenced();
 
 	 assert(var != NULL);
 
