@@ -28,8 +28,6 @@
 
 #include "glcpp.h"
 
-#define YYLEX_PARAM parser->scanner
-
 void
 yyerror (void *scanner, const char *error);
 
