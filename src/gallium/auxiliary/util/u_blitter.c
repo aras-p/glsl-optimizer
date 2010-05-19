@@ -712,53 +712,6 @@ static void util_blitter_do_copy(struct blitter_context *blitter,
 
 }
 
-static void util_blitter_overlap_copy(struct blitter_context *blitter,
-				      struct pipe_surface *dst,
-				      unsigned dstx, unsigned dsty,
-				      struct pipe_surface *src,
-				      unsigned srcx, unsigned srcy,
-				      unsigned width, unsigned height)
-{
-   struct blitter_context_priv *ctx = (struct blitter_context_priv*)blitter;
-   struct pipe_context *pipe = ctx->pipe;
-   struct pipe_screen *screen = pipe->screen;
-
-   struct pipe_resource texTemp;
-   struct pipe_resource *texture;
-   struct pipe_surface *tex_surf;
-
-   /* check whether the states are properly saved */
-   blitter_check_saved_CSOs(ctx);
-
-   memset(&texTemp, 0, sizeof(texTemp));
-   texTemp.target = PIPE_TEXTURE_2D;
-   texTemp.format = dst->texture->format; /* XXX verify supported by driver! */
-   texTemp.last_level = 0;
-   texTemp.width0 = width;
-   texTemp.height0 = height;
-   texTemp.depth0 = 1;
-
-   texture = screen->resource_create(screen, &texTemp);
-   if (!texture)
-      return;
-
-   tex_surf = screen->get_tex_surface(screen, texture, 0, 0, 0,
-				      PIPE_BIND_SAMPLER_VIEW | 
-				      PIPE_BIND_RENDER_TARGET);
-
-   /* blit from the src to the temp */
-   util_blitter_do_copy(blitter, tex_surf, 0, 0,
-			src, srcx, srcy,
-			width, height,
-			FALSE);
-   util_blitter_do_copy(blitter, dst, dstx, dsty,
-			tex_surf, 0, 0,
-			width, height,
-			FALSE);
-   pipe_surface_reference(&tex_surf, NULL);
-   pipe_resource_reference(&texture, NULL);
-   blitter_restore_CSOs(ctx);
-}
 
 void util_blitter_copy(struct blitter_context *blitter,
                        struct pipe_surface *dst,
@@ -780,11 +733,8 @@ void util_blitter_copy(struct blitter_context *blitter,
       return;
 
    if (dst->texture == src->texture) {
-      if (is_overlap(srcx, srcx + width, srcy, srcy + height,
-		             dstx, dstx + width, dsty, dsty + height)) {
-         util_blitter_overlap_copy(blitter, dst, dstx, dsty, src, srcx, srcy,
-                                   width, height);
-         return;
+      assert(!is_overlap(srcx, srcx + width, srcy, srcy + height,
+             dstx, dstx + width, dsty, dsty + height))
       }
    }
 
