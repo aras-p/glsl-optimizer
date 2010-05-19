@@ -85,7 +85,7 @@ read_builtins(_mesa_glsl_parse_state *st, exec_list *instructions,
 
 EOF
 
-@versions = sort(<builtins/[1-9][0-9][0-9]>);
+@versions = sort(<builtins/[1-9][0-9][0-9]*>);
 foreach $version (@versions) {
    $version =~ s!builtins/!!g;
    process_version($version);
@@ -99,7 +99,14 @@ _mesa_glsl_initialize_functions(exec_list *instructions,
 EOF
 
 foreach $version (@versions) {
-   print "   if (state->language_version >= $version)\n";
+    $version_number = $version;
+   if ($version =~ m/_vs/) {
+       $version_check = " && state->target == vertex_shader";
+       $version_number =~ s/_vs//;
+   } else {
+       $version_check = "";
+   }
+   print "   if (state->language_version >= $version_number$version_check)\n";
    print "      read_builtins(state, instructions, functions_for_$version,\n";
    print "                    sizeof(functions_for_$version) / ";
    print "sizeof(const char *));\n\n"

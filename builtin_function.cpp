@@ -1778,6 +1778,22 @@ static const char *functions_for_110 [] = {
    builtins_110_tan,
 };
 
+/* Version 110_vs builtins */
+
+static const char *builtins_110_vs_ftransform = {
+   "((function ftransform\n"
+   "   (signature vec4\n"
+   "     (parameters)\n"
+   "    ((return (expression vec4 *\n"
+   "	      (var_ref gl_ModelViewProjectionMatrix)\n"
+   "	      (var_ref gl_Vertex)))))\n"
+   "))\n"
+};
+
+static const char *functions_for_110_vs [] = {
+   builtins_110_vs_ftransform,
+};
+
 /* Version 130 builtins */
 
 static const char *builtins_130_equal = {
@@ -2038,6 +2054,10 @@ _mesa_glsl_initialize_functions(exec_list *instructions,
    if (state->language_version >= 110)
       read_builtins(state, instructions, functions_for_110,
                     sizeof(functions_for_110) / sizeof(const char *));
+
+   if (state->language_version >= 110 && state->target == vertex_shader)
+      read_builtins(state, instructions, functions_for_110_vs,
+                    sizeof(functions_for_110_vs) / sizeof(const char *));
 
    if (state->language_version >= 130)
       read_builtins(state, instructions, functions_for_130,
