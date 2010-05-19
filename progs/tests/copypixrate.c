@@ -270,6 +270,9 @@ main(int argc, char *argv[])
    printf("Draw Buffer: %s\n", (Buffer == GL_BACK) ? "Back" : "Front");
    Init();
 
+   printf("Mode: %s\n", (UseBlit ? "glBlitFramebuffer" : "glCopyPixels"));
+   printf("Alpha Test: %s\n", (AlphaTest ? "yes" : "no"));
+
    glutMainLoop();
    return 0;
 }
