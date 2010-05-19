@@ -887,6 +887,8 @@ dump_fs_variant_key(const struct lp_fragment_shader_variant_key *key)
 {
    unsigned i;
 
+   debug_printf("fs variant %p:\n", (void *) key);
+
    if (key->depth.enabled) {
       debug_printf("depth.format = %s\n", util_format_name(key->zsbuf_format));
       debug_printf("depth.func = %s\n", util_dump_func(key->depth.func, TRUE));
@@ -914,11 +916,11 @@ dump_fs_variant_key(const struct lp_fragment_shader_variant_key *key)
    }
    else if (key->blend.rt[0].blend_enable) {
       debug_printf("blend.rgb_func = %s\n",   util_dump_blend_func  (key->blend.rt[0].rgb_func, TRUE));
-      debug_printf("rgb_src_factor = %s\n",   util_dump_blend_factor(key->blend.rt[0].rgb_src_factor, TRUE));
-      debug_printf("rgb_dst_factor = %s\n",   util_dump_blend_factor(key->blend.rt[0].rgb_dst_factor, TRUE));
-      debug_printf("alpha_func = %s\n",       util_dump_blend_func  (key->blend.rt[0].alpha_func, TRUE));
-      debug_printf("alpha_src_factor = %s\n", util_dump_blend_factor(key->blend.rt[0].alpha_src_factor, TRUE));
-      debug_printf("alpha_dst_factor = %s\n", util_dump_blend_factor(key->blend.rt[0].alpha_dst_factor, TRUE));
+      debug_printf("blend.rgb_src_factor = %s\n",   util_dump_blend_factor(key->blend.rt[0].rgb_src_factor, TRUE));
+      debug_printf("blend.rgb_dst_factor = %s\n",   util_dump_blend_factor(key->blend.rt[0].rgb_dst_factor, TRUE));
+      debug_printf("blend.alpha_func = %s\n",       util_dump_blend_func  (key->blend.rt[0].alpha_func, TRUE));
+      debug_printf("blend.alpha_src_factor = %s\n", util_dump_blend_factor(key->blend.rt[0].alpha_src_factor, TRUE));
+      debug_printf("blend.alpha_dst_factor = %s\n", util_dump_blend_factor(key->blend.rt[0].alpha_dst_factor, TRUE));
    }
    debug_printf("blend.colormask = 0x%x\n", key->blend.rt[0].colormask);
    for (i = 0; i < PIPE_MAX_SAMPLERS; ++i) {
