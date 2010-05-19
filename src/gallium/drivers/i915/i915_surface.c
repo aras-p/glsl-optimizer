@@ -85,7 +85,6 @@ i915_surface_copy(struct pipe_context *pipe,
    assert( util_format_get_blockheight(dpt->format) == 1 );
 
    i915_copy_blit( i915_context(pipe),
-                   FALSE,
                    util_format_get_blocksize(dpt->format),
                    (unsigned short) src_tex->stride, src_tex->buffer, src_offset,
                    (unsigned short) dst_tex->stride, dst_tex->buffer, dst_offset,
