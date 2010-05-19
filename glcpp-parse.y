@@ -96,7 +96,7 @@ glcpp_parser_lex (glcpp_parser_t *parser);
 %parse-param {glcpp_parser_t *parser}
 %lex-param {glcpp_parser_t *parser}
 
-%token DEFINE FUNC_MACRO IDENTIFIER NEWLINE OBJ_MACRO REPLACEMENT TOKEN UNDEF
+%token DEFINE FUNC_MACRO IDENTIFIER OBJ_MACRO REPLACEMENT TOKEN UNDEF
 %type <str> argument_word FUNC_MACRO IDENTIFIER OBJ_MACRO REPLACEMENT TOKEN
 %type <string_list> argument macro parameter_list
 %type <argument_list> argument_list
