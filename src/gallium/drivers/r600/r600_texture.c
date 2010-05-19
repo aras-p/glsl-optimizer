@@ -113,7 +113,6 @@ static void r600_texture_destroy(struct pipe_screen *screen,
 {
 	struct r600_texture *rtex = (struct r600_texture*)ptex;
 
-	pipe_resource_reference((struct pipe_resource**)&rtex, NULL);
 	FREE(rtex);
 }
 

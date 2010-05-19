@@ -73,8 +73,8 @@ struct pipe_resource *r600_buffer_create(struct pipe_screen *screen,
 	if (rbuffer == NULL)
 		return NULL;
 
-	pipe_reference_init(&rbuffer->b.b.reference, 1);
 	rbuffer->b.b = *templ;
+	pipe_reference_init(&rbuffer->b.b.reference, 1);
 	rbuffer->b.b.screen = screen;
 	rbuffer->b.vtbl = &r600_buffer_vtbl;
 

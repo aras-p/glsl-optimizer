@@ -99,11 +99,11 @@ static int r600_draw_common(struct r600_draw *draw)
 	if (r)
 		return r;
 
-	for (i = 0 ; i < rctx->nvertex_element; i++) {
-		j = rctx->vertex_element[i].vertex_buffer_index;
+	for (i = 0 ; i < rctx->vertex_elements->count; i++) {
+		j = rctx->vertex_elements->elements[i].vertex_buffer_index;
 		rbuffer = (struct r600_buffer*)rctx->vertex_buffer[j].buffer;
-		offset = rctx->vertex_element[i].src_offset + rctx->vertex_buffer[j].buffer_offset;
-		r = r600_conv_pipe_format(rctx->vertex_element[i].src_format, &format);
+		offset = rctx->vertex_elements->elements[i].src_offset + rctx->vertex_buffer[j].buffer_offset;
+		r = r600_conv_pipe_format(rctx->vertex_elements->elements[i].src_format, &format);
 		if (r)
 			return r;
 		vs_resource = radeon_state(rscreen->rw, R600_VS_RESOURCE_TYPE, R600_VS_RESOURCE + i);

@@ -35,6 +35,13 @@
 struct r600_state;
 typedef void (*r600_state_destroy_t)(struct r600_state *rstate);
 
+/* XXX move this to a more appropriate place */
+struct r600_vertex_elements_state
+{
+	unsigned count;
+	struct pipe_vertex_element elements[32];
+};
+
 struct r600_state {
 	unsigned		type;
 	struct r600_atom	*atom;
@@ -63,13 +70,13 @@ struct r600_context {
 	struct r600_pipe_shader		*vs_shader;
 	unsigned			flat_shade;
 	unsigned			nvertex_buffer;
-	unsigned			nvertex_element;
+	struct r600_vertex_elements_state *vertex_elements;
 	struct pipe_vertex_buffer	vertex_buffer[PIPE_MAX_ATTRIBS];
-	struct pipe_vertex_element	vertex_element[PIPE_MAX_ATTRIBS];
 	struct blitter_context		*blitter;
 	struct pipe_stencil_ref		stencil_ref;
 	struct pipe_framebuffer_state	fb_state;
 	struct radeon_draw		*draw;
+	struct pipe_viewport_state *viewport;
 };
 
 void r600_draw_arrays(struct pipe_context *ctx, unsigned mode,

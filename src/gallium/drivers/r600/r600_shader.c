@@ -200,8 +200,8 @@ int r600_pipe_shader_update(struct pipe_context *ctx, struct r600_pipe_shader *r
 	rshader = &rpshader->shader;
 	switch (rpshader->type) {
 	case C_PROGRAM_TYPE_VS:
-		for (i = 0; i < rctx->nvertex_element; i++) {
-			resource_format[nresources++] = rctx->vertex_element[i].src_format;
+		for (i = 0; i < rctx->vertex_elements->count; i++) {
+			resource_format[nresources++] = rctx->vertex_elements->elements[i].src_format;
 		}
 		break;
 	default:

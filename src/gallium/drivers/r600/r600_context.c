@@ -50,9 +50,8 @@ static int dc = 0;
 
 	if (radeon_ctx_pm4(rctx->ctx))
 		return;
-	if (dc)
-		return;
-	radeon_ctx_dump_bof(rctx->ctx, "gallium.bof");
+	if (!dc)
+	    radeon_ctx_dump_bof(rctx->ctx, "gallium.bof");
 	radeon_ctx_submit(rctx->ctx);
 	rctx->ctx = radeon_ctx_decref(rctx->ctx);
 	rctx->ctx = radeon_ctx(rscreen->rw);
@@ -78,13 +77,12 @@ struct pipe_context *r600_create_context(struct pipe_screen *screen, void *priv)
 	r600_init_query_functions(rctx);
 	r600_init_state_functions(rctx);
 	r600_init_context_resource_functions(rctx);
-#if 0
+
 	rctx->blitter = util_blitter_create(&rctx->context);
 	if (rctx->blitter == NULL) {
 		FREE(rctx);
 		return NULL;
 	}
-#endif
 
 	rctx->cb_cntl = radeon_state(rscreen->rw, R600_CB_CNTL_TYPE, R600_CB_CNTL);
 	rctx->cb_cntl->states[R600_CB_CNTL__CB_SHADER_MASK] = 0x0000000F;

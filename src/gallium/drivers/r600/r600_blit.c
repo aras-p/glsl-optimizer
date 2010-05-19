@@ -47,6 +47,10 @@ static void r600_blitter_save_states(struct pipe_context *ctx)
 					rctx->ps_shader);
 	util_blitter_save_vertex_shader(rctx->blitter,
 					rctx->vs_shader);
+	util_blitter_save_vertex_elements(rctx->blitter,
+					rctx->vertex_elements);
+	util_blitter_save_viewport(rctx->blitter,
+					rctx->viewport);
 }
 
 void r600_clear(struct pipe_context *ctx, unsigned buffers,
@@ -55,12 +59,10 @@ void r600_clear(struct pipe_context *ctx, unsigned buffers,
 	struct r600_context *rctx = (struct r600_context*)ctx;
 	struct pipe_framebuffer_state *fb = &rctx->fb_state;
 
-#if 0
 	r600_blitter_save_states(ctx);
 	util_blitter_clear(rctx->blitter, fb->width, fb->height,
 				fb->nr_cbufs, buffers, rgba, depth,
 				stencil);
-#endif
 }
 
 void r600_surface_copy(struct pipe_context *ctx,

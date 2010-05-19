@@ -128,6 +128,7 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 	rctx->db->bo[0] = radeon_bo_incref(rscreen->rw, rstate->bo[0]);
 	rctx->db->nbo = 1;
 	rctx->db->placement[0] = RADEON_GEM_DOMAIN_GTT;
+	rctx->fb_state = *state;
 }
 
 static void *r600_create_fs_state(struct pipe_context *ctx,
@@ -308,6 +309,7 @@ static void r600_set_viewport_state(struct pipe_context *ctx,
 		return;
 	}
 	radeon_draw_set_new(rctx->draw, rstate);
+	rctx->viewport = state;
 }
 
 static void r600_set_vertex_buffers(struct pipe_context *ctx,
@@ -320,12 +322,6 @@ static void r600_set_vertex_buffers(struct pipe_context *ctx,
 	rctx->nvertex_buffer = count;
 }
 
-/* XXX move this to a more appropriate place */
-struct r600_vertex_elements_state
-{
-	unsigned count;
-	struct pipe_vertex_element elements[32];
-};
 
 static void *r600_create_vertex_elements_state(struct pipe_context *ctx,
 					       unsigned count,
@@ -344,8 +340,7 @@ static void r600_bind_vertex_elements_state(struct pipe_context *ctx, void *stat
 	struct r600_context *rctx = (struct r600_context*)ctx;
 	struct r600_vertex_elements_state *v = (struct r600_vertex_elements_state*)state;
 
-	memcpy(rctx->vertex_element, v->elements, v->count * sizeof(struct pipe_vertex_element));
-	rctx->nvertex_element = v->count;
+	rctx->vertex_elements = v;
 }
 
 static void r600_delete_vertex_elements_state(struct pipe_context *ctx, void *state)
