@@ -94,7 +94,7 @@ _argument_list_member_at (argument_list_t *list, int index);
 %lex-param {void *scanner}
 
 %token DEFINE FUNC_MACRO IDENTIFIER NEWLINE OBJ_MACRO REPLACEMENT TOKEN UNDEF
-%type <str> FUNC_MACRO IDENTIFIER OBJ_MACRO REPLACEMENT TOKEN word
+%type <str> argument_word FUNC_MACRO IDENTIFIER OBJ_MACRO REPLACEMENT TOKEN
 %type <string_list> argument macro parameter_list
 %type <argument_list> argument_list
 
@@ -165,18 +165,14 @@ argument_list:
 ;
 
 argument:
-	word {
+	argument_word {
 		$$ = _string_list_create (parser);
 		_string_list_append_item ($$, $1);
 	}
 |	macro {
 		$$ = _string_list_create (parser);
 	}
-|	FUNC_MACRO {
-		$$ = _string_list_create (parser);
-		_string_list_append_item ($$, $1);
-	}
-|	argument word {
+|	argument argument_word {
 		_string_list_append_item ($1, $2);
 		talloc_free ($2);
 		$$ = $1;
@@ -188,6 +184,13 @@ argument:
 		$$ = $1;
 	}
 ;
+
+argument_word:
+	IDENTIFIER { $$ = $1; }
+|	TOKEN { $$ = $1; }
+|	FUNC_MACRO { $$ = $1; }
+;
+
 
 directive:
 	DEFINE IDENTIFIER REPLACEMENT {
@@ -223,11 +226,6 @@ parameter_list:
 		talloc_free ($3);
 		$$ = $1;
 	}
-;
-
-word:
-	IDENTIFIER { $$ = $1; }
-|	TOKEN { $$ = $1; }
 ;
 
 %%
