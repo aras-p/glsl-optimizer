@@ -39,7 +39,7 @@ if 'LLVM' in os.environ:
 else:
     default_llvm = 'no'
     try:
-        if subprocess.call(['llvm-config', '--version'], stdout=subprocess.PIPE) == 0:
+        if env['platform'] != 'windows' and subprocess.call(['llvm-config', '--version'], stdout=subprocess.PIPE) == 0:
             default_llvm = 'yes'
     except:
         pass
