@@ -61,7 +61,9 @@ public:
    virtual void visit(ir_function *);
    virtual void visit(ir_expression *);
    virtual void visit(ir_swizzle *);
-   virtual void visit(ir_dereference *);
+   virtual void visit(ir_dereference_variable *);
+   virtual void visit(ir_dereference_array *);
+   virtual void visit(ir_dereference_record *);
    virtual void visit(ir_assignment *);
    virtual void visit(ir_constant *);
    virtual void visit(ir_call *);
@@ -117,15 +119,30 @@ ir_constant_folding_visitor::visit(ir_swizzle *ir)
 
 
 void
-ir_constant_folding_visitor::visit(ir_dereference *ir)
+ir_constant_folding_visitor::visit(ir_dereference_variable *ir)
 {
-   if (ir->mode == ir_dereference::ir_reference_array) {
-      ir_constant *const_val = ir->selector.array_index->constant_expression_value();
-      if (const_val)
-	 ir->selector.array_index = const_val;
-      else
-	 ir->selector.array_index->accept(this);
-   }
+   (void) ir;
+}
+
+
+void
+ir_constant_folding_visitor::visit(ir_dereference_array *ir)
+{
+   ir_constant *const_val =
+      ir->selector.array_index->constant_expression_value();
+
+   if (const_val)
+      ir->selector.array_index = const_val;
+   else
+      ir->selector.array_index->accept(this);
+
+   ir->var->accept(this);
+}
+
+
+void
+ir_constant_folding_visitor::visit(ir_dereference_record *ir)
+{
    ir->var->accept(this);
 }
 

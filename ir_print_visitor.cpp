@@ -74,22 +74,18 @@ print_type(const glsl_type *t)
 
 void ir_print_visitor::visit(ir_variable *ir)
 {
-   if (deref_depth) {
-      printf("%s", ir->name);
-   } else {
-      printf("(declare ");
+   printf("(declare ");
 
-      const char *const cent = (ir->centroid) ? "centroid " : "";
-      const char *const inv = (ir->invariant) ? "invariant " : "";
-      const char *const mode[] = { "", "uniform ", "in ", "out ", "inout " };
-      const char *const interp[] = { "", "flat", "noperspective" };
+   const char *const cent = (ir->centroid) ? "centroid " : "";
+   const char *const inv = (ir->invariant) ? "invariant " : "";
+   const char *const mode[] = { "", "uniform ", "in ", "out ", "inout " };
+   const char *const interp[] = { "", "flat", "noperspective" };
 
-      printf("(%s%s%s%s) ",
-	     cent, inv, mode[ir->mode], interp[ir->interpolation]);
+   printf("(%s%s%s%s) ",
+	  cent, inv, mode[ir->mode], interp[ir->interpolation]);
 
-      print_type(ir->type);
-      printf(" %s)", ir->name);
-   }
+   print_type(ir->type);
+   printf(" %s)", ir->name);
 }
 
 
@@ -166,31 +162,26 @@ void ir_print_visitor::visit(ir_swizzle *ir)
 }
 
 
-void ir_print_visitor::visit(ir_dereference *ir)
+void ir_print_visitor::visit(ir_dereference_variable *ir)
 {
-   deref_depth++;
+   printf("(var_ref %s) ", ir->variable_referenced()->name);
+}
 
-   switch (ir->mode) {
-   case ir_dereference::ir_reference_variable: {
-      printf("(var_ref ");
-      ir->var->accept(this);
-      printf(") ");
-      break;
-   }
-   case ir_dereference::ir_reference_array:
-      printf("(array_ref ");
-      ir->var->accept(this);
-      ir->selector.array_index->accept(this);
-      printf(") ");
-      break;
-   case ir_dereference::ir_reference_record:
-      printf("(record_ref ");
-      ir->var->accept(this);
-      printf("(%s)) ", ir->selector.field);
-      break;
-   }
 
-   deref_depth--;
+void ir_print_visitor::visit(ir_dereference_array *ir)
+{
+   printf("(array_ref ");
+   ir->var->accept(this);
+   ir->selector.array_index->accept(this);
+   printf(") ");
+}
+
+
+void ir_print_visitor::visit(ir_dereference_record *ir)
+{
+   printf("(record_ref ");
+   ir->var->accept(this);
+   printf("(%s)) ", ir->selector.field);
 }
 
 

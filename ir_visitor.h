@@ -49,7 +49,9 @@ public:
    virtual void visit(class ir_function *) = 0;
    virtual void visit(class ir_expression *) = 0;
    virtual void visit(class ir_swizzle *) = 0;
-   virtual void visit(class ir_dereference *) = 0;
+   virtual void visit(class ir_dereference_variable *) = 0;
+   virtual void visit(class ir_dereference_array *) = 0;
+   virtual void visit(class ir_dereference_record *) = 0;
    virtual void visit(class ir_assignment *) = 0;
    virtual void visit(class ir_constant *) = 0;
    virtual void visit(class ir_call *) = 0;

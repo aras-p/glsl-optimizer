@@ -61,7 +61,9 @@ public:
    virtual void visit(ir_function *);
    virtual void visit(ir_expression *);
    virtual void visit(ir_swizzle *);
-   virtual void visit(ir_dereference *);
+   virtual void visit(ir_dereference_variable *);
+   virtual void visit(ir_dereference_array *);
+   virtual void visit(ir_dereference_record *);
    virtual void visit(ir_assignment *);
    virtual void visit(ir_constant *);
    virtual void visit(ir_call *);
@@ -134,7 +136,9 @@ public:
    virtual void visit(ir_function *);
    virtual void visit(ir_expression *);
    virtual void visit(ir_swizzle *);
-   virtual void visit(ir_dereference *);
+   virtual void visit(ir_dereference_variable *);
+   virtual void visit(ir_dereference_array *);
+   virtual void visit(ir_dereference_record *);
    virtual void visit(ir_assignment *);
    virtual void visit(ir_constant *);
    virtual void visit(ir_call *);
@@ -218,30 +222,34 @@ ir_function_cloning_visitor::visit(ir_swizzle *ir)
 }
 
 void
-ir_function_cloning_visitor::visit(ir_dereference *ir)
+ir_function_cloning_visitor::visit(ir_dereference_variable *ir)
 {
-   if (ir->mode == ir_dereference::ir_reference_variable) {
-      ir_variable *var = this->get_remapped_variable(ir->variable_referenced());
-      this->result = new ir_dereference_variable(var);
-   } else if (ir->mode == ir_dereference::ir_reference_array) {
-      ir->var->accept(this);
+   ir_variable *var = this->get_remapped_variable(ir->variable_referenced());
+   this->result = new ir_dereference_variable(var);
+}
 
-      ir_rvalue *var = this->result->as_rvalue();
+void
+ir_function_cloning_visitor::visit(ir_dereference_array *ir)
+{
+   ir->var->accept(this);
 
-      ir->selector.array_index->accept(this);
+   ir_rvalue *var = this->result->as_rvalue();
 
-      ir_rvalue *index = this->result->as_rvalue();
+   ir->selector.array_index->accept(this);
 
-      this->result = new ir_dereference_array(var, index);
-   } else {
-      assert(ir->mode == ir_dereference::ir_reference_record);
+   ir_rvalue *index = this->result->as_rvalue();
 
-      ir->var->accept(this);
+   this->result = new ir_dereference_array(var, index);
+}
 
-      ir_rvalue *var = this->result->as_rvalue();
+void
+ir_function_cloning_visitor::visit(ir_dereference_record *ir)
+{
+   ir->var->accept(this);
 
-      this->result = new ir_dereference_record(var, strdup(ir->selector.field));
-   }
+   ir_rvalue *var = this->result->as_rvalue();
+
+   this->result = new ir_dereference_record(var, strdup(ir->selector.field));
 }
 
 void
@@ -509,11 +517,21 @@ ir_function_inlining_visitor::visit(ir_swizzle *ir)
 
 
 void
-ir_function_inlining_visitor::visit(ir_dereference *ir)
+ir_function_inlining_visitor::visit(ir_dereference_variable *ir)
 {
-   if (ir->mode == ir_dereference::ir_reference_array) {
-      ir->selector.array_index->accept(this);
-   }
+   ir->var->accept(this);
+}
+
+void
+ir_function_inlining_visitor::visit(ir_dereference_array *ir)
+{
+   ir->selector.array_index->accept(this);
+   ir->var->accept(this);
+}
+
+void
+ir_function_inlining_visitor::visit(ir_dereference_record *ir)
+{
    ir->var->accept(this);
 }
 

@@ -61,7 +61,9 @@ public:
    virtual void visit(ir_function *);
    virtual void visit(ir_expression *);
    virtual void visit(ir_swizzle *);
-   virtual void visit(ir_dereference *);
+   virtual void visit(ir_dereference_variable *);
+   virtual void visit(ir_dereference_array *);
+   virtual void visit(ir_dereference_record *);
    virtual void visit(ir_assignment *);
    virtual void visit(ir_constant *);
    virtual void visit(ir_call *);

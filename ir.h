@@ -793,11 +793,6 @@ public:
       return this;
    }
 
-   virtual void accept(ir_visitor *v)
-   {
-      v->visit(this);
-   }
-
    bool is_lvalue();
 
    /**
@@ -844,6 +839,11 @@ public:
       return (ir_variable *) this->var;
    }
 
+   virtual void accept(ir_visitor *v)
+   {
+      v->visit(this);
+   }
+
    virtual ir_visitor_status accept(ir_hierarchical_visitor *);
 };
 
@@ -860,6 +860,11 @@ public:
    virtual ir_variable *variable_referenced()
    {
       return ((ir_rvalue *) this->var)->variable_referenced();
+   }
+
+   virtual void accept(ir_visitor *v)
+   {
+      v->visit(this);
    }
 
    virtual ir_visitor_status accept(ir_hierarchical_visitor *);
@@ -881,6 +886,11 @@ public:
    virtual ir_variable *variable_referenced()
    {
       return ((ir_rvalue *) this->var)->variable_referenced();
+   }
+
+   virtual void accept(ir_visitor *v)
+   {
+      v->visit(this);
    }
 
    virtual ir_visitor_status accept(ir_hierarchical_visitor *);

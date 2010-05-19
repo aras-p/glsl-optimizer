@@ -78,7 +78,9 @@ public:
    virtual void visit(ir_function *);
    virtual void visit(ir_expression *);
    virtual void visit(ir_swizzle *);
-   virtual void visit(ir_dereference *);
+   virtual void visit(ir_dereference_variable *);
+   virtual void visit(ir_dereference_array *);
+   virtual void visit(ir_dereference_record *);
    virtual void visit(ir_assignment *);
    virtual void visit(ir_constant *);
    virtual void visit(ir_call *);
@@ -149,28 +151,32 @@ ir_copy_propagation_visitor::visit(ir_swizzle *ir)
  * must not be shared by multiple IR operations!
  */
 void
-ir_copy_propagation_visitor::visit(ir_dereference *ir)
+ir_copy_propagation_visitor::visit(ir_dereference_variable *ir)
 {
-   ir_variable *var;
+   ir_variable *var = ir->variable_referenced();
 
-   if (ir->mode == ir_dereference::ir_reference_array) {
-      ir->selector.array_index->accept(this);
-   }
+   foreach_iter(exec_list_iterator, iter, *this->acp) {
+      acp_entry *entry = (acp_entry *)iter.get();
 
-   var = ir->var->as_variable();
-   if (var) {
-      foreach_iter(exec_list_iterator, iter, *this->acp) {
-	 acp_entry *entry = (acp_entry *)iter.get();
-
-	 if (var == entry->lhs) {
-	    ir->var = entry->rhs;
-	    this->progress = true;
-	    break;
-	 }
+      if (var == entry->lhs) {
+	 ir->var = entry->rhs;
+	 this->progress = true;
+	 break;
       }
-   } else {
-      ir->var->accept(this);
    }
+}
+
+void
+ir_copy_propagation_visitor::visit(ir_dereference_array *ir)
+{
+   ir->var->accept(this);
+   ir->selector.array_index->accept(this);
+}
+
+void
+ir_copy_propagation_visitor::visit(ir_dereference_record *ir)
+{
+   ir->var->accept(this);
 }
 
 void
