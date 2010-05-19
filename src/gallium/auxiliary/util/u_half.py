@@ -83,11 +83,11 @@ for i in xrange(1, 1024):
 
 	# normalize number
 	while (m & 0x00800000) == 0:
-		e -= 0x00800000;
-		m <<= 1;
+		e -= 0x00800000
+		m <<= 1
 
-	m &= ~0x00800000;
-	e += 0x38800000;
+	m &= ~0x00800000
+	e += 0x38800000
 	value(m | e)
 
 # normals
