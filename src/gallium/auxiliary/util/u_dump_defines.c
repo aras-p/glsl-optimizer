@@ -258,6 +258,7 @@ DEFINE_UTIL_DUMP_CONTINUOUS(stencil_op)
 
 static const char *
 util_dump_tex_target_names[] = {
+   "PIPE_BUFFER",
    "PIPE_TEXTURE_1D",
    "PIPE_TEXTURE_2D",
    "PIPE_TEXTURE_3D",
@@ -266,6 +267,7 @@ util_dump_tex_target_names[] = {
 
 static const char *
 util_dump_tex_target_short_names[] = {
+   "buffer",
    "1d",
    "2d",
    "3d",
