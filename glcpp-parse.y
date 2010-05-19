@@ -427,6 +427,22 @@ glcpp_parser_destroy (glcpp_parser_t *parser)
 	talloc_free (parser);
 }
 
+static int
+glcpp_parser_is_expanding (glcpp_parser_t *parser, const char *member)
+{
+	expansion_node_t *node;
+
+	for (node = parser->expansions; node; node = node->next) {
+		if (node->macro &&
+		    strcmp (node->macro->identifier, member) == 0)
+		{
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
 token_class_t
 glcpp_parser_classify_token (glcpp_parser_t *parser,
 			     const char *identifier,
@@ -457,6 +473,12 @@ glcpp_parser_classify_token (glcpp_parser_t *parser,
 	if (macro == NULL)
 		return TOKEN_CLASS_IDENTIFIER;
 
+	/* Don't consider this a macro if we are already actively
+	 * expanding this macro. */
+	if (glcpp_parser_is_expanding (parser, identifier))
+		return TOKEN_CLASS_IDENTIFIER;
+
+	/* Definitely a macro. Just need to check if it's function-like. */
 	if (macro->is_function)
 		return TOKEN_CLASS_FUNC_MACRO;
 	else
@@ -580,37 +602,6 @@ glcpp_parser_pop_expansion (glcpp_parser_t *parser)
 	talloc_free (node);
 }
 
-int
-glcpp_parser_is_expanding (glcpp_parser_t *parser, const char *member)
-{
-	expansion_node_t *node;
-
-	for (node = parser->expansions; node; node = node->next) {
-		if (node->macro &&
-		    strcmp (node->macro->identifier, member) == 0)
-		{
-			return 1;
-		}
-	}
-
-	return 0;
-}
-
-static void
-_expand_macro (glcpp_parser_t *parser,
-	       const char *token,
-	       macro_t *macro,
-	       argument_list_t *arguments)
-{
-	/* Don't recurse if we're already actively expanding this token. */
-	if (glcpp_parser_is_expanding (parser, token)) {
-		printf ("%s", token);
-		return;
-	}
-
-	glcpp_parser_push_expansion_macro (parser, macro, arguments);
-}
-
 void
 _expand_object_macro (glcpp_parser_t *parser, const char *identifier)
 {
@@ -618,8 +609,9 @@ _expand_object_macro (glcpp_parser_t *parser, const char *identifier)
 
 	macro = hash_table_find (parser->defines, identifier);
 	assert (! macro->is_function);
+	assert (! glcpp_parser_is_expanding (parser, identifier));
 
-	_expand_macro (parser, identifier, macro, NULL);
+	glcpp_parser_push_expansion_macro (parser, macro, NULL);
 }
 
 void
@@ -631,6 +623,7 @@ _expand_function_macro (glcpp_parser_t *parser,
 
 	macro = hash_table_find (parser->defines, identifier);
 	assert (macro->is_function);
+	assert (! glcpp_parser_is_expanding (parser, identifier));
 
 	if (_argument_list_length (arguments) !=
 	    _string_list_length (macro->parameters))
@@ -643,5 +636,5 @@ _expand_function_macro (glcpp_parser_t *parser,
 		return;
 	}
 
-	_expand_macro (parser, identifier, macro, arguments);
+	glcpp_parser_push_expansion_macro (parser, macro, arguments);
 }
