@@ -824,7 +824,13 @@ ir_to_mesa_visitor::visit(ir_assignment *ir)
    assert(l);
    assert(r);
 
-   assert(!ir->condition);
+   if (ir->condition) {
+	 ir_constant *condition_constant;
+
+	 condition_constant = ir->condition->constant_expression_value();
+
+	 assert(condition_constant && condition_constant->value.b[0]);
+   }
 
    t = this->create_tree(MB_TERM_assign, ir, l, r);
    mono_burg_label(t, NULL);
