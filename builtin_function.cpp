@@ -1329,6 +1329,67 @@ static const char *builtins_110_radians = {
    "))\n"
 };
 
+static const char *builtins_110_reflect = {
+   "((function reflect\n"
+   "   (signature float\n"
+   "     (parameters\n"
+   "       (declare (in) float i)\n"
+   "       (declare (in) float n))\n"
+   "     ((return (expression float -\n"
+   "	       (var_ref i)\n"
+   "	       (expression float *\n"
+   "		(constant float (2.0))\n"
+   "		(expression float *\n"
+   "		 (expression float dot\n"
+   "		  (var_ref n)\n"
+   "		  (var_ref i))\n"
+   "		 (var_ref n)))))))\n"
+   "\n"
+   "   (signature vec2\n"
+   "     (parameters\n"
+   "       (declare (in) vec2 i)\n"
+   "       (declare (in) vec2 n))\n"
+   "     ((return (expression vec2 -\n"
+   "	       (var_ref i)\n"
+   "	       (expression vec2 *\n"
+   "		(constant float (2.0))\n"
+   "		(expression vec2 *\n"
+   "		 (expression float dot\n"
+   "		  (var_ref n)\n"
+   "		  (var_ref i))\n"
+   "		 (var_ref n)))))))\n"
+   "\n"
+   "   (signature vec3\n"
+   "     (parameters\n"
+   "       (declare (in) vec3 i)\n"
+   "       (declare (in) vec3 n))\n"
+   "     ((return (expression vec3 -\n"
+   "	       (var_ref i)\n"
+   "	       (expression vec3 *\n"
+   "		(constant float (2.0))\n"
+   "		(expression vec3 *\n"
+   "		 (expression float dot\n"
+   "		  (var_ref n)\n"
+   "		  (var_ref i))\n"
+   "		 (var_ref n)))))))\n"
+   "\n"
+   "   (signature vec4\n"
+   "     (parameters\n"
+   "       (declare (in) vec4 i)\n"
+   "       (declare (in) vec4 n))\n"
+   "     ((return (expression vec4 -\n"
+   "	       (var_ref i)\n"
+   "	       (expression vec4 *\n"
+   "		(constant float (2.0))\n"
+   "		(expression vec4 *\n"
+   "		 (expression float dot\n"
+   "		  (var_ref n)\n"
+   "		  (var_ref i))\n"
+   "		 (var_ref n)))))))\n"
+   "\n"
+   "))\n"
+};
+
 static const char *builtins_110_sign = {
    "((function sign\n"
    "   (signature float\n"
@@ -1770,6 +1831,7 @@ static const char *functions_for_110 [] = {
    builtins_110_notEqual,
    builtins_110_pow,
    builtins_110_radians,
+   builtins_110_reflect,
    builtins_110_sign,
    builtins_110_sin,
    builtins_110_smoothstep,
