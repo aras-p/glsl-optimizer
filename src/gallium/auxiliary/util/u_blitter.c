@@ -734,8 +734,7 @@ void util_blitter_copy(struct blitter_context *blitter,
 
    if (dst->texture == src->texture) {
       assert(!is_overlap(srcx, srcx + width, srcy, srcy + height,
-             dstx, dstx + width, dsty, dsty + height))
-      }
+             dstx, dstx + width, dsty, dsty + height));
    }
 
    is_depth = util_format_get_component_bits(src->format, UTIL_FORMAT_COLORSPACE_ZS, 0) != 0;
@@ -755,8 +754,8 @@ void util_blitter_copy(struct blitter_context *blitter,
       subdst.level = dst->level;
       subsrc.face = src->face;
       subsrc.level = src->level;
-      util_resource_copy_region(pipe, dst, subdst, dstx, dsty, dst->zslice,
-                                src, subsrc, srcx, srcy, src->zslice,
+      util_resource_copy_region(pipe, dst->texture, subdst, dstx, dsty, dst->zslice,
+                                src->texture, subsrc, srcx, srcy, src->zslice,
                                 width, height);
       return;
    }
