@@ -53,6 +53,8 @@
 %term exp2_vec4
 %term log_vec4
 %term log2_vec4
+%term sin_vec4
+%term cos_vec4
 %term add_vec4_vec4
 %term sub_vec4_vec4
 %term mul_vec4_vec4
@@ -155,6 +157,20 @@ vec4: swizzle_vec4(vec4) 1
 	ir_to_mesa_emit_op1_full(tree->v, tree->ir, OPCODE_MOV,
 				 tree->dst_reg,
 				 reg);
+}
+
+vec4: sin_vec4(vec4) 1
+{
+	ir_to_mesa_emit_scalar_op1(tree, OPCODE_SIN,
+				   tree->dst_reg,
+				   tree->left->src_reg);
+}
+
+vec4: cos_vec4(vec4) 1
+{
+	ir_to_mesa_emit_scalar_op1(tree, OPCODE_COS,
+				   tree->dst_reg,
+				   tree->left->src_reg);
 }
 
 vec4: add_vec4_vec4(vec4, vec4) 1 { ir_to_mesa_emit_op2(tree, OPCODE_ADD); }
