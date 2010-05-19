@@ -206,7 +206,7 @@ are written to the framebuffer without being culled by
 :ref:`Depth, Stencil, & Alpha` testing or shader KILL instructions.
 
 Another type of query, ``PIPE_QUERY_TIME_ELAPSED``, returns the amount of
-time, in milliseconds, the context takes to perform operations.
+time, in nanoseconds, the context takes to perform operations.
 
 Gallium does not guarantee the availability of any query types; one must
 always check the capabilities of the :ref:`Screen` first.
