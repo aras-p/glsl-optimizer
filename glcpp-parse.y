@@ -169,9 +169,6 @@ argument:
 		$$ = _string_list_create (parser);
 		_string_list_append_item ($$, $1);
 	}
-|	macro {
-		$$ = _string_list_create (parser);
-	}
 |	argument argument_word {
 		_string_list_append_item ($1, $2);
 		talloc_free ($2);
@@ -189,6 +186,7 @@ argument_word:
 	IDENTIFIER { $$ = $1; }
 |	TOKEN { $$ = $1; }
 |	FUNC_MACRO { $$ = $1; }
+|	macro {	$$ = xtalloc_strdup (parser, ""); }
 ;
 
 
