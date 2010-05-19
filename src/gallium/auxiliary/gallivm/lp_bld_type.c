@@ -354,6 +354,11 @@ lp_dump_llvmtype(LLVMTypeRef t)
       unsigned b = LLVMGetIntTypeWidth(t);
       debug_printf("%u-bit Integer\n", b);
    }
+   else if (k == LLVMPointerTypeKind) {
+      LLVMTypeRef te = LLVMGetElementType(t);
+      debug_printf("Pointer to ");
+      lp_dump_llvmtype(te);
+   }
    else {
       debug_printf("%s\n", lp_typekind_name(k));
    }
