@@ -910,7 +910,7 @@ dump_fs_variant_key(const struct lp_fragment_shader_variant_key *key)
    }
 
    if (key->blend.logicop_enable) {
-      debug_printf("blend.logicop_func = %u\n", key->blend.logicop_func);
+      debug_printf("blend.logicop_func = %s\n", util_dump_logicop(key->blend.logicop_func, TRUE));
    }
    else if (key->blend.rt[0].blend_enable) {
       debug_printf("blend.rgb_func = %s\n",   util_dump_blend_func  (key->blend.rt[0].rgb_func, TRUE));
