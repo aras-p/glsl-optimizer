@@ -1426,10 +1426,19 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
     *     float, vec2, vec3, vec4, mat2, mat3, and mat4, or arrays of
     *     these."
     */
-   if (qual->varying && var->type->base_type != GLSL_TYPE_FLOAT) {
-      var->type = glsl_type::error_type;
-      _mesa_glsl_error(loc, state,
-		       "varying variables must be of base type float");
+   if (qual->varying) {
+      const glsl_type *non_array_type;
+
+      if (var->type && var->type->is_array())
+	 non_array_type = var->type->fields.array;
+      else
+	 non_array_type = var->type;
+
+      if (non_array_type && non_array_type->base_type != GLSL_TYPE_FLOAT) {
+	 var->type = glsl_type::error_type;
+	 _mesa_glsl_error(loc, state,
+			  "varying variables must be of base type float");
+      }
    }
 
    if (qual->in && qual->out)
