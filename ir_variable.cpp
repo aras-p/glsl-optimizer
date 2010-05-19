@@ -114,7 +114,16 @@ generate_110_uniforms(exec_list *instructions,
     * FINISHME: (glFrontMaterial, glBackMaterial)
     */
 
-   /* FINISHME: Add support for gl_LightSource[] */
+   /* FINISHME: The size of this array is implementation dependent based on the
+    * FINISHME: value of GL_MAX_TEXTURE_LIGHTS.  GL_MAX_TEXTURE_LIGHTS must be
+    * FINISHME: at least 8, so hard-code 8 for now.
+    */
+   const glsl_type *const light_source_array_type =
+      glsl_type::get_array_instance(symtab->get_type("gl_LightSourceParameters"), 8);
+
+   add_variable("gl_LightSource", ir_var_uniform, light_source_array_type,
+		instructions, symtab);
+
    /* FINISHME: Add support for gl_LightModel */
    /* FINISHME: Add support for gl_FrontLightProduct[], gl_BackLightProduct[] */
    /* FINISHME: Add support for gl_TextureEnvColor[] */
