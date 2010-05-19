@@ -839,7 +839,7 @@ nv50_init_state_functions(struct nv50_context *nv50)
 	nv50->pipe.set_blend_color = nv50_set_blend_color;
         nv50->pipe.set_stencil_ref = nv50_set_stencil_ref;
 	nv50->pipe.set_clip_state = nv50_set_clip_state;
-	nv50->pipe_set_sample_mask = nv50_set_sample_mask;
+	nv50->pipe.set_sample_mask = nv50_set_sample_mask;
 	nv50->pipe.set_constant_buffer = nv50_set_constant_buffer;
 	nv50->pipe.set_framebuffer_state = nv50_set_framebuffer_state;
 	nv50->pipe.set_polygon_stipple = nv50_set_polygon_stipple;
