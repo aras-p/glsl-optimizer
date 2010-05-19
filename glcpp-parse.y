@@ -82,8 +82,10 @@ _argument_list_length (argument_list_t *list);
 string_list_t *
 _argument_list_member_at (argument_list_t *list, int index);
 
+#define yylex glcpp_parser_lex
+
 static int
-yylex (yyscan_t scanner);
+glcpp_parser_lex (glcpp_parser_t *parser);
 
 %}
 
@@ -94,7 +96,7 @@ yylex (yyscan_t scanner);
 }
 
 %parse-param {glcpp_parser_t *parser}
-%lex-param {void *scanner}
+%lex-param {glcpp_parser_t *parser}
 
 %token DEFINE FUNC_MACRO IDENTIFIER NEWLINE OBJ_MACRO REPLACEMENT TOKEN UNDEF
 %type <str> argument_word FUNC_MACRO IDENTIFIER OBJ_MACRO REPLACEMENT TOKEN
@@ -647,7 +649,7 @@ _expand_function_macro (glcpp_parser_t *parser,
 }
 
 static int
-yylex (yyscan_t scanner)
+glcpp_parser_lex (glcpp_parser_t *parser)
 {
-	return glcpp_lex (scanner);
+	return glcpp_lex (parser->scanner);
 }
