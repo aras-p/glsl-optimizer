@@ -843,7 +843,7 @@ lp_build_alloca(LLVMBuilderRef builder,
  * first block may prevent the X86 backend from successfully align the stack as
  * required.
  *
- * Also the scalarrepl pass is supossedly more powerful and can promote
+ * Also the scalarrepl pass is supposedly more powerful and can promote
  * arrays in many cases.
  *
  * See also:
