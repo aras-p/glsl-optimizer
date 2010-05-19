@@ -47,7 +47,7 @@ extern "C" {
 }
 
 ir_to_mesa_src_reg ir_to_mesa_undef = {
-   PROGRAM_UNDEFINED, 0, SWIZZLE_NOOP, false,
+   PROGRAM_UNDEFINED, 0, SWIZZLE_NOOP, NEGATE_NONE, false,
 };
 
 ir_to_mesa_dst_reg ir_to_mesa_undef_dst = {
@@ -184,6 +184,7 @@ ir_to_mesa_visitor::create_tree(int op,
    tree->right = right;
    tree->v = this;
    tree->src_reg.swizzle = SWIZZLE_XYZW;
+   tree->src_reg.negate = 0;
    tree->dst_reg.writemask = WRITEMASK_XYZW;
    ir_to_mesa_set_tree_reg(tree, PROGRAM_UNDEFINED, 0);
    tree->ir = ir;
@@ -417,6 +418,10 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
       this->result = this->create_tree_for_float(ir, 0.0);
       this->result = this->create_tree(MB_TERM_seq_vec4_vec4, ir,
 				       op[0], this->result);
+      break;
+   case ir_unop_neg:
+      op[0]->src_reg.negate = ~op[0]->src_reg.negate;
+      this->result = op[0];
       break;
    case ir_unop_exp:
       this->result = this->create_tree(MB_TERM_exp_vec4, ir, op[0], NULL);

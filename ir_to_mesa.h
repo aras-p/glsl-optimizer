@@ -40,6 +40,7 @@ typedef struct ir_to_mesa_src_reg {
    int file; /**< PROGRAM_* from Mesa */
    int index; /**< temporary index, VERT_ATTRIB_*, FRAG_ATTRIB_*, etc. */
    int swizzle; /**< SWIZZLE_XYZWONEZERO swizzles from Mesa. */
+   int negate; /**< NEGATE_XYZW mask from mesa */
    bool reladdr; /**< Register index should be offset by address reg. */
 } ir_to_mesa_src_reg;
 
