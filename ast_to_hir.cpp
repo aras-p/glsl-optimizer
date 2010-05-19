@@ -132,8 +132,8 @@ arithmetic_result_type(ir_rvalue * &value_a, ir_rvalue * &value_b,
 		       bool multiply,
 		       struct _mesa_glsl_parse_state *state, YYLTYPE *loc)
 {
-   const glsl_type *const type_a = value_a->type;
-   const glsl_type *const type_b = value_b->type;
+   const glsl_type *type_a = value_a->type;
+   const glsl_type *type_b = value_b->type;
 
    /* From GLSL 1.50 spec, page 56:
     *
@@ -159,7 +159,9 @@ arithmetic_result_type(ir_rvalue * &value_a, ir_rvalue * &value_b,
 		       "arithmetic operator");
       return glsl_type::error_type;
    }
-      
+   type_a = value_a->type;
+   type_b = value_b->type;
+
    /*    "If the operands are integer types, they must both be signed or
     *    both be unsigned."
     *
@@ -362,8 +364,8 @@ static const struct glsl_type *
 relational_result_type(ir_rvalue * &value_a, ir_rvalue * &value_b,
 		       struct _mesa_glsl_parse_state *state, YYLTYPE *loc)
 {
-   const glsl_type *const type_a = value_a->type;
-   const glsl_type *const type_b = value_b->type;
+   const glsl_type *type_a = value_a->type;
+   const glsl_type *type_b = value_b->type;
 
    /* From GLSL 1.50 spec, page 56:
     *    "The relational operators greater than (>), less than (<), greater
@@ -391,6 +393,8 @@ relational_result_type(ir_rvalue * &value_a, ir_rvalue * &value_b,
 		       "relational operator");
       return glsl_type::error_type;
    }
+   type_a = value_a->type;
+   type_b = value_b->type;
 
    if (type_a->base_type != type_b->base_type) {
       _mesa_glsl_error(loc, state, "base type mismatch");
@@ -420,9 +424,10 @@ relational_result_type(ir_rvalue * &value_a, ir_rvalue * &value_b,
  * type-check return values.
  */
 ir_rvalue *
-validate_assignment(const glsl_type *lhs_type, ir_rvalue *rhs)
+validate_assignment(struct _mesa_glsl_parse_state *state,
+		    const glsl_type *lhs_type, ir_rvalue *rhs)
 {
-   const glsl_type *const rhs_type = rhs->type;
+   const glsl_type *rhs_type = rhs->type;
 
    /* If there is already some error in the RHS, just return it.  Anything
     * else will lead to an avalanche of error message back to the user.
@@ -447,7 +452,13 @@ validate_assignment(const glsl_type *lhs_type, ir_rvalue *rhs)
       return rhs;
    }
 
-   /* FINISHME: Check for and apply automatic conversions. */
+   /* Check for implicit conversion in GLSL 1.20 */
+   if (apply_implicit_conversion(lhs_type, rhs, state)) {
+      rhs_type = rhs->type;
+      if (rhs_type == lhs_type)
+	 return rhs;
+   }
+
    return NULL;
 }
 
@@ -466,7 +477,7 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
       }
    }
 
-   ir_rvalue *new_rhs = validate_assignment(lhs->type, rhs);
+   ir_rvalue *new_rhs = validate_assignment(state, lhs->type, rhs);
    if (new_rhs == NULL) {
       _mesa_glsl_error(& lhs_loc, state, "type mismatch");
    } else {
