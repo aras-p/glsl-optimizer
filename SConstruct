@@ -31,6 +31,7 @@ import common
 # Configuration options
 
 default_statetrackers = 'mesa'
+default_targets = 'none'
 
 if common.default_platform in ('linux', 'freebsd', 'darwin'):
 	default_drivers = 'softpipe,failover,svga,i915,i965,trace,identity,llvmpipe'
@@ -53,6 +54,28 @@ opts.Add(ListVariable('drivers', 'pipe drivers to build', default_drivers,
                      ['softpipe', 'failover', 'svga', 'i915', 'i965', 'trace', 'r300', 'identity', 'llvmpipe', 'nouveau', 'nv50', 'nvfx']))
 opts.Add(ListVariable('winsys', 'winsys drivers to build', default_winsys,
                      ['xlib', 'vmware', 'i915', 'i965', 'gdi', 'radeon', 'graw-xlib']))
+
+opts.Add(ListVariable('targets', 'driver targets to build', default_targets,
+		      ['dri-i915',
+		       'dri-i965',
+		       'dri-nouveau',
+		       'dri-radeong',
+		       'dri-swrast',
+		       'dri-vmwgfx',
+		       'egl-i915',
+		       'egl-i965',
+		       'egl-nouveau',
+		       'egl-radeon',
+		       'egl-swrast',
+		       'egl-vmwgfx',
+		       'graw-xlib',
+		       'libgl-gdi',
+		       'libgl-xlib',
+		       'xorg-i915',
+		       'xorg-i965',
+		       'xorg-nouveau',
+		       'xorg-radeon',
+		       'xorg-vmwgfx']))
 
 opts.Add(EnumVariable('MSVS_VERSION', 'MS Visual C++ version', None, allowed_values=('7.1', '8.0', '9.0')))
 

@@ -20,33 +20,58 @@ enum pipe_format formats[] = {
 static const int WIDTH = 300;
 static const int HEIGHT = 300;
 
-int main( int argc, char *argv[] )
+struct pipe_screen *screen;
+struct pipe_context *ctx;
+struct pipe_surface *surf;
+static void *window = NULL;
+
+static void draw( void )
 {
-   struct pipe_screen *screen;
-   struct pipe_context *pipe;
-   struct pipe_surface *surf;
+   float clear_color[4] = {1,0,1,1};
+
+   ctx->clear(ctx, PIPE_CLEAR_COLOR, clear_color, 0, 0);
+   ctx->flush(ctx, PIPE_FLUSH_RENDER_CACHE, NULL);
+
+#if 0
+   /* At the moment, libgraw leaks out/makes available some of the
+    * symbols from gallium/auxiliary, including these debug helpers.
+    * Will eventually want to bless some of these paths, and lock the
+    * others down so they aren't accessible from test programs.
+    *
+    * This currently just happens to work on debug builds - a release
+    * build will probably fail to link here:
+    */
+   debug_dump_surface_bmp(ctx, "result.bmp", surf);
+#endif
+
+   screen->flush_frontbuffer(screen, surf, window);
+}
+
+static void init( void )
+{
    struct pipe_framebuffer_state fb;
    struct pipe_resource *tex, templat;
-   void *window = NULL;
-   float clear_color[4] = {1,0,1,1};
    int i;
 
-   screen = graw_init();
-   if (screen == NULL)
-      exit(1);
-
+   /* It's hard to say whether window or screen should be created
+    * first.  Different environments would prefer one or the other.
+    *
+    * Also, no easy way of querying supported formats if the screen
+    * cannot be created first.
+    */
    for (i = 0; 
         window == NULL && formats[i] != PIPE_FORMAT_NONE;
         i++) {
       
-      window = graw_create_window(0,0,300,300, formats[i]);
+      screen = graw_create_window_and_screen(0,0,300,300,
+                                             formats[i],
+                                             &window);
    }
-   
    if (window == NULL)
       exit(2);
    
-   pipe = screen->context_create(screen, NULL);
-   if (pipe == NULL)
+   ctx = screen->context_create(screen, NULL);
+   if (ctx == NULL)
       exit(3);
 
    templat.target = PIPE_TEXTURE_2D;
@@ -57,10 +82,10 @@ int main( int argc, char *argv[] )
    templat.last_level = 0;
    templat.nr_samples = 1;
    templat.bind = (PIPE_BIND_RENDER_TARGET |
-                        PIPE_BIND_DISPLAY_TARGET);
+                   PIPE_BIND_DISPLAY_TARGET);
    
    tex = screen->resource_create(screen,
-                                &templat);
+                                 &templat);
    if (tex == NULL)
       exit(4);
 
@@ -76,21 +101,16 @@ int main( int argc, char *argv[] )
    fb.height = HEIGHT;
    fb.cbufs[0] = surf;
 
-   pipe->set_framebuffer_state(pipe, &fb);
-   pipe->clear(pipe, PIPE_CLEAR_COLOR, clear_color, 0, 0);
-   pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
+   ctx->set_framebuffer_state(ctx, &fb);
+}
 
-   /* At the moment, libgraw includes/makes available all the symbols
-    * from gallium/auxiliary, including these debug helpers.  Will
-    * eventually want to bless some of these paths, and lock the
-    * others down so they aren't accessible from test programs.
-    */
-   if (0)
-      debug_dump_surface_bmp(pipe, "result.bmp", surf);
 
-   screen->flush_frontbuffer(screen, surf, window);
 
-   os_time_sleep(100*1000*100);
+int main( int argc, char *argv[] )
+{
+   init();
 
+   graw_set_display_func( draw );
+   graw_main_loop();
    return 0;
 }
