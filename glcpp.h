@@ -42,8 +42,19 @@ typedef struct string_list {
 	string_node_t *tail;
 } string_list_t;
 
+typedef struct token_node {
+	int type;
+	const char *value;
+	struct token_node *next;
+} token_node_t;
+
+typedef struct token_list {
+	token_node_t *head;
+	token_node_t *tail;
+} token_list_t;
+
 typedef struct argument_node {
-	string_list_t *argument;
+	token_list_t *argument;
 	struct argument_node *next;
 } argument_node_t;
 
@@ -70,13 +81,13 @@ typedef struct {
 	int is_function;
 	string_list_t *parameters;
 	const char *identifier;
-	string_list_t *replacements;
+	token_list_t *replacements;
 } macro_t;
 
 typedef struct expansion_node {
 	macro_t *macro;
 	argument_list_t *arguments;
-	string_node_t *replacements;
+	token_node_t *replacements;
 	struct expansion_node *next;
 } expansion_node_t;
 
