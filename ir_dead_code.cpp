@@ -60,13 +60,10 @@ public:
 class ir_dead_code_visitor : public ir_hierarchical_visitor {
 public:
    virtual ir_visitor_status visit(ir_variable *);
+   virtual ir_visitor_status visit(ir_dereference_variable *);
 
    virtual ir_visitor_status visit_enter(ir_function *);
-   virtual ir_visitor_status visit_enter(ir_dereference *);
-   virtual ir_visitor_status visit_leave(ir_dereference *);
    virtual ir_visitor_status visit_leave(ir_assignment *);
-
-   ir_dead_code_visitor(void);
 
    variable_entry *get_variable_entry(ir_variable *var);
 
@@ -75,15 +72,7 @@ public:
 
    /* List of variable_entry */
    exec_list variable_list;
-
-   /* Depth of derefernce stack. */
-   int in_dereference;
 };
-
-ir_dead_code_visitor::ir_dead_code_visitor(void)
-{
-   this->in_dereference = 0;
-}
 
 
 variable_entry *
@@ -106,12 +95,21 @@ ir_visitor_status
 ir_dead_code_visitor::visit(ir_variable *ir)
 {
    variable_entry *entry = this->get_variable_entry(ir);
-   if (entry) {
-      if (this->in_dereference)
-	 entry->referenced_count++;
-      else
-	 entry->declaration = true;
-   }
+   if (entry)
+      entry->declaration = true;
+
+   return visit_continue;
+}
+
+
+ir_visitor_status
+ir_dead_code_visitor::visit(ir_dereference_variable *ir)
+{
+   ir_variable *const var = ir->variable_referenced();
+   variable_entry *entry = this->get_variable_entry(var);
+
+   if (entry)
+      entry->referenced_count++;
 
    return visit_continue;
 }
@@ -122,24 +120,6 @@ ir_dead_code_visitor::visit_enter(ir_function *ir)
 {
    (void) ir;
    return visit_continue_with_parent;
-}
-
-
-ir_visitor_status
-ir_dead_code_visitor::visit_enter(ir_dereference *ir)
-{
-   (void) ir;
-   this->in_dereference++;
-   return visit_continue;
-}
-
-
-ir_visitor_status
-ir_dead_code_visitor::visit_leave(ir_dereference *ir)
-{
-   (void) ir;
-   this->in_dereference--;
-   return visit_continue;
 }
 
 

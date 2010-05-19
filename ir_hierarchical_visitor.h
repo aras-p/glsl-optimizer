@@ -83,6 +83,22 @@ public:
    virtual ir_visitor_status visit(class ir_variable *);
    virtual ir_visitor_status visit(class ir_constant *);
    virtual ir_visitor_status visit(class ir_loop_jump *);
+
+   /**
+    * ir_dereference_variable isn't technically a leaf, but it is treated as a
+    * leaf here for a couple reasons.  By not automatically visiting the one
+    * child ir_variable node from the ir_dereference_variable, ir_variable
+    * nodes can always be handled as variable declarations.  Code that used
+    * non-hierarchical visitors had to set an "in a dereference" flag to
+    * determine how to handle an ir_variable.  By forcing the visitor to
+    * handle the ir_variable within the ir_dereference_varaible visitor, this
+    * kludge can be avoided.
+    *
+    * In addition, I can envision no use for having separate enter and leave
+    * methods.  Anything that could be done in the enter and leave methods
+    * that couldn't just be done in the visit method.
+    */
+   virtual ir_visitor_status visit(class ir_dereference_variable *);
    /*@}*/
 
    /**
@@ -99,8 +115,10 @@ public:
    virtual ir_visitor_status visit_leave(class ir_expression *);
    virtual ir_visitor_status visit_enter(class ir_swizzle *);
    virtual ir_visitor_status visit_leave(class ir_swizzle *);
-   virtual ir_visitor_status visit_enter(class ir_dereference *);
-   virtual ir_visitor_status visit_leave(class ir_dereference *);
+   virtual ir_visitor_status visit_enter(class ir_dereference_array *);
+   virtual ir_visitor_status visit_leave(class ir_dereference_array *);
+   virtual ir_visitor_status visit_enter(class ir_dereference_record *);
+   virtual ir_visitor_status visit_leave(class ir_dereference_record *);
    virtual ir_visitor_status visit_enter(class ir_assignment *);
    virtual ir_visitor_status visit_leave(class ir_assignment *);
    virtual ir_visitor_status visit_enter(class ir_call *);

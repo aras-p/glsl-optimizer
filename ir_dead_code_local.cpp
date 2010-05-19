@@ -64,8 +64,10 @@ public:
       this->assignments = assignments;
    }
 
-   virtual ir_visitor_status visit(ir_variable *var)
+   virtual ir_visitor_status visit(ir_dereference_variable *ir)
    {
+      ir_variable *const var = ir->variable_referenced();
+
       foreach_iter(exec_list_iterator, iter, *this->assignments) {
 	 assignment_entry *entry = (assignment_entry *)iter.get();
 

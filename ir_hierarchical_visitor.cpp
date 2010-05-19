@@ -46,6 +46,13 @@ ir_hierarchical_visitor::visit(ir_loop_jump *ir)
 }
 
 ir_visitor_status
+ir_hierarchical_visitor::visit(ir_dereference_variable *ir)
+{
+   (void) ir;
+   return visit_continue;
+}
+
+ir_visitor_status
 ir_hierarchical_visitor::visit_enter(ir_loop *ir)
 {
    (void) ir;
@@ -116,14 +123,28 @@ ir_hierarchical_visitor::visit_leave(ir_swizzle *ir)
 }
 
 ir_visitor_status
-ir_hierarchical_visitor::visit_enter(ir_dereference *ir)
+ir_hierarchical_visitor::visit_enter(ir_dereference_array *ir)
 {
    (void) ir;
    return visit_continue;
 }
 
 ir_visitor_status
-ir_hierarchical_visitor::visit_leave(ir_dereference *ir)
+ir_hierarchical_visitor::visit_leave(ir_dereference_array *ir)
+{
+   (void) ir;
+   return visit_continue;
+}
+
+ir_visitor_status
+ir_hierarchical_visitor::visit_enter(ir_dereference_record *ir)
+{
+   (void) ir;
+   return visit_continue;
+}
+
+ir_visitor_status
+ir_hierarchical_visitor::visit_leave(ir_dereference_record *ir)
 {
    (void) ir;
    return visit_continue;
