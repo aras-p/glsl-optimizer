@@ -520,6 +520,15 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
       this->result = this->create_tree(MB_TERM_sne_vec4_vec4, ir,
 				       op[0], this->result);
       break;
+   case ir_unop_trunc:
+      this->result = this->create_tree(MB_TERM_trunc_vec4, ir, op[0], NULL);
+      break;
+   case ir_unop_ceil:
+      this->result = this->create_tree(MB_TERM_ceil_vec4, ir, op[0], NULL);
+      break;
+   case ir_unop_floor:
+      this->result = this->create_tree(MB_TERM_floor_vec4, ir, op[0], NULL);
+      break;
    default:
       break;
    }

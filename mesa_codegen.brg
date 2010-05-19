@@ -53,6 +53,9 @@
 %term exp2_vec4
 %term log_vec4
 %term log2_vec4
+%term trunc_vec4
+%term ceil_vec4
+%term floor_vec4
 %term sin_vec4
 %term cos_vec4
 %term add_vec4_vec4
@@ -71,7 +74,6 @@
 %term sqrt_vec4
 %term rsq_vec4
 %term swizzle_vec4
-%term trunc_vec4
 
 # Each tree will produce stmt.  Currently, the only production for
 # stmt is from an assign rule -- every statement tree from
@@ -158,6 +160,16 @@ vec4: swizzle_vec4(vec4) 1
 				 tree->dst_reg,
 				 reg);
 }
+
+vec4: trunc_vec4(vec4) 1 { ir_to_mesa_emit_op1(tree, OPCODE_TRUNC); }
+
+vec4: ceil_vec4(vec4) 1 {
+	tree->left->src_reg.negate = ~tree->left->src_reg.negate;
+	ir_to_mesa_emit_op1(tree, OPCODE_FLR);
+	tree->src_reg.negate = ~tree->left->src_reg.negate;
+}
+
+vec4: floor_vec4(vec4) 1 { ir_to_mesa_emit_op1(tree, OPCODE_FLR); }
 
 vec4: sin_vec4(vec4) 1
 {
@@ -260,7 +272,5 @@ vec4: log2_vec4(vec4) 1
 				   tree->dst_reg,
 				   tree->left->src_reg);
 }
-
-vec4: trunc_vec4(vec4) 1 { ir_to_mesa_emit_op1(tree, OPCODE_TRUNC); }
 
 %%
