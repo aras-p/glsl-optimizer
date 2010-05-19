@@ -47,7 +47,7 @@ static const builtin_variable builtin_110_deprecated_fs_variables[] = {
 
 static const builtin_variable builtin_110_deprecated_vs_variables[] = {
    { ir_var_in,  "vec4",  "gl_Vertex" },
-   { ir_var_in,  "vec4",  "gl_Normal" },
+   { ir_var_in,  "vec3",  "gl_Normal" },
    { ir_var_in,  "vec4",  "gl_Color" },
    { ir_var_in,  "vec4",  "gl_SecondaryColor" },
    { ir_var_in,  "vec4",  "gl_MultiTexCoord0" },
