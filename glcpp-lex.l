@@ -27,34 +27,15 @@
 
 #include "glcpp.h"
 #include "glcpp-parse.h"
-
-/* Yes, a macro with a return statement in it is evil. But surely no
- * more evil than all the code generation happening with flex in the
- * first place. */
-#define LEXIFY_IDENTIFIER do {					\
-	yylval.str = xtalloc_strdup (yyextra, yytext);		\
-	switch (glcpp_parser_macro_type (yyextra, yylval.str))	\
-	{							\
-		case MACRO_TYPE_UNDEFINED:			\
-			return IDENTIFIER;			\
-		break;						\
-		case MACRO_TYPE_OBJECT:				\
-			return OBJ_MACRO;			\
-		break;						\
-		case MACRO_TYPE_FUNCTION:			\
-			return FUNC_MACRO;			\
-		break;						\
-	}							\
- } while (0)
-
 %}
 
 %option reentrant noyywrap
 %option extra-type="glcpp_parser_t *"
 
 %x ST_DEFINE
-%x ST_DEFVAL_START
-%x ST_DEFVAL
+%x ST_DEFINE_OBJ_OR_FUNC
+%x ST_DEFINE_PARAMETER
+%x ST_DEFINE_VALUE
 %x ST_UNDEF
 %x ST_UNDEF_END
 
@@ -75,12 +56,14 @@ TOKEN		[^[:space:](),]+
 
 <ST_UNDEF>{IDENTIFIER} {
 	BEGIN ST_UNDEF_END;
-	LEXIFY_IDENTIFIER;
+	yylval.str = xtalloc_strdup (yyextra, yytext);
+	return IDENTIFIER;
 }
+
+<ST_UNDEF_END>{HSPACE}*
 
 <ST_UNDEF_END>\n {
 	BEGIN INITIAL;
-	return NEWLINE;
 }
 
 	/* We use the ST_DEFINE and ST_DEFVAL states so that we can
@@ -94,48 +77,73 @@ TOKEN		[^[:space:](),]+
 }
 
 <ST_DEFINE>{IDENTIFIER}	{
-	BEGIN ST_DEFVAL_START;
+	BEGIN ST_DEFINE_OBJ_OR_FUNC;
 	yylval.str = xtalloc_strdup (yyextra, yytext);
 	return IDENTIFIER;
 }
 
-<ST_DEFVAL_START>\n {
+<ST_DEFINE_OBJ_OR_FUNC>\n {
 	BEGIN INITIAL;
-	return NEWLINE;
+	yylval.str = xtalloc_strdup (yyextra, "");
+	return REPLACEMENT;
 }
 
-<ST_DEFVAL_START>{HSPACE}+ {
-	BEGIN ST_DEFVAL;
-	return SPACE;
+<ST_DEFINE_OBJ_OR_FUNC>{HSPACE}+ {
+	BEGIN ST_DEFINE_VALUE;
 }
 
-<ST_DEFVAL_START>"("	{
-	BEGIN ST_DEFVAL;
+<ST_DEFINE_OBJ_OR_FUNC>"(" {
+	BEGIN ST_DEFINE_PARAMETER;
 	return '(';
 }
 
-<ST_DEFVAL>{IDENTIFIER} {
-	LEXIFY_IDENTIFIER;
-}
-
-<ST_DEFVAL>[(),] {
-	return yytext[0];
-}
-
-<ST_DEFVAL>{TOKEN} {
+<ST_DEFINE_PARAMETER>{IDENTIFIER} {
 	yylval.str = xtalloc_strdup (yyextra, yytext);
-	return TOKEN;
+	return IDENTIFIER;
 }
 
-<ST_DEFVAL>\n {
+<ST_DEFINE_PARAMETER>"," {
+	return ',';
+}
+
+<ST_DEFINE_PARAMETER>")" {
+	BEGIN ST_DEFINE_VALUE;
+	return ')';
+}
+
+<ST_DEFINE_PARAMETER>{HSPACE}+
+
+<ST_DEFINE_VALUE>.*\n {
 	BEGIN INITIAL;
-	return NEWLINE;
+	yylval.str = xtalloc_strndup (yyextra, yytext, strlen (yytext) - 1);
+	return REPLACEMENT;
 }
-
-<ST_DEFVAL>{HSPACE}+
 
 {IDENTIFIER} {
-	LEXIFY_IDENTIFIER;
+	int parameter_index;
+	yylval.str = xtalloc_strdup (yyextra, yytext);
+	switch (glcpp_parser_classify_token (yyextra, yylval.str,
+					     &parameter_index))
+	{
+		case TOKEN_CLASS_ARGUMENT:
+			talloc_free (yylval.str);
+			/* We don't return a value here since the
+			 * current token will be replaced by new
+			 * tokens. */
+			glcpp_parser_push_expansion_argument (yyextra,
+							      parameter_index);
+		break;
+		case TOKEN_CLASS_IDENTIFIER:
+			return IDENTIFIER;
+		break;
+		case TOKEN_CLASS_FUNC_MACRO:
+			return FUNC_MACRO;
+		break;
+		case TOKEN_CLASS_OBJ_MACRO:
+			return OBJ_MACRO;
+		break;
+
+	}
 }
 
 [(),]	{
@@ -153,4 +161,54 @@ TOKEN		[^[:space:](),]+
 
 {HSPACE}+
 
+<<EOF>> {
+	int done;
+
+	done = glcpp_lex_stack_pop (yyextra->lex_stack);
+
+	if (done)
+		yyterminate ();
+
+	glcpp_parser_pop_expansion (yyextra);
+}
+
 %%
+
+void
+glcpp_lex_stack_push (glcpp_lex_stack_t *stack, const char *string)
+{
+	struct yyguts_t *yyg = (struct yyguts_t*) stack->parser->scanner;
+	glcpp_lex_node_t *node;
+
+	/* Save the current buffer on the top of the stack. */
+	node = xtalloc (stack, glcpp_lex_node_t);
+	node->buffer = YY_CURRENT_BUFFER;
+
+	node->next = stack->head;
+	stack->head = node;
+
+	/* Then switch to a new scan buffer for string. */
+	yy_scan_string (string, stack->parser->scanner);
+}
+
+int
+glcpp_lex_stack_pop (glcpp_lex_stack_t *stack)
+{
+	struct yyguts_t *yyg = (struct yyguts_t*) stack->parser->scanner;
+	glcpp_lex_node_t *node;
+
+	node = stack->head;
+
+	if (node == NULL)
+		return 1;
+
+	stack->head = node->next;
+
+	yy_delete_buffer (YY_CURRENT_BUFFER, stack->parser->scanner);
+	yy_switch_to_buffer ((YY_BUFFER_STATE) node->buffer,
+			     stack->parser->scanner);
+
+	talloc_free (node);
+
+	return 0;
+}

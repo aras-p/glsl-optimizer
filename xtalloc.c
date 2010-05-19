@@ -50,3 +50,17 @@ xtalloc_strdup (const void *t, const char *p)
 
 	return ret;
 }
+
+char *
+xtalloc_strndup (const void *t, const char *p, size_t n)
+{
+	char *ret;
+
+	ret = talloc_strndup (t, p, n);
+	if (ret == NULL) {
+		fprintf (stderr, "Out of memory.\n");
+		exit (1);
+	}
+
+	return ret;
+}
