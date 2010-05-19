@@ -110,23 +110,16 @@ intelDRI2Flush(__DRIdrawable *drawable)
    if (intel->gen < 4)
       INTEL_FIREVERTICES(intel);
 
+   intel->need_throttle = GL_TRUE;
+
    if (intel->batch->map != intel->batch->ptr)
       intel_batchbuffer_flush(intel->batch);
-}
-
-static void
-intelDRI2Invalidate(__DRIdrawable *drawable)
-{
-   struct intel_context *intel = drawable->driContextPriv->driverPrivate;
-
-   intel->using_dri2_swapbuffers = GL_TRUE;
-   dri2InvalidateDrawable(drawable);
 }
 
 static const struct __DRI2flushExtensionRec intelFlushExtension = {
     { __DRI2_FLUSH, __DRI2_FLUSH_VERSION },
     intelDRI2Flush,
-    intelDRI2Invalidate,
+    dri2InvalidateDrawable,
 };
 
 static __DRIimage *

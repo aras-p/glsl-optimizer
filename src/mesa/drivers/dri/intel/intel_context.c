@@ -440,6 +440,28 @@ intel_prepare_render(struct intel_context *intel)
     */
    if (intel->is_front_buffer_rendering)
       intel->front_buffer_dirty = GL_TRUE;
+
+   /* Wait for the swapbuffers before the one we just emitted, so we
+    * don't get too many swaps outstanding for apps that are GPU-heavy
+    * but not CPU-heavy.
+    *
+    * We're using intelDRI2Flush (called from the loader before
+    * swapbuffer) and glFlush (for front buffer rendering) as the
+    * indicator that a frame is done and then throttle when we get
+    * here as we prepare to render the next frame.  At this point for
+    * round trips for swap/copy and getting new buffers are done and
+    * we'll spend less time waiting on the GPU.
+    *
+    * Unfortunately, we don't have a handle to the batch containing
+    * the swap, and getting our hands on that doesn't seem worth it,
+    * so we just us the first batch we emitted after the last swap.
+    */
+   if (intel->need_throttle && intel->first_post_swapbuffers_batch) {
+      drm_intel_bo_wait_rendering(intel->first_post_swapbuffers_batch);
+      drm_intel_bo_unreference(intel->first_post_swapbuffers_batch);
+      intel->first_post_swapbuffers_batch = NULL;
+      intel->need_throttle = GL_FALSE;
+   }
 }
 
 static void
@@ -451,8 +473,7 @@ intel_viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
     if (intel->saved_viewport)
 	intel->saved_viewport(ctx, x, y, w, h);
 
-    if (!intel->using_dri2_swapbuffers &&
-	!intel->meta.internal_viewport_call && ctx->DrawBuffer->Name == 0) {
+    if (!intel->meta.internal_viewport_call && ctx->DrawBuffer->Name == 0) {
        dri2InvalidateDrawable(driContext->driDrawablePriv);
        dri2InvalidateDrawable(driContext->driReadablePriv);
     }
@@ -530,27 +551,8 @@ intel_glFlush(GLcontext *ctx)
    struct intel_context *intel = intel_context(ctx);
 
    intel_flush(ctx);
-
    intel_flush_front(ctx);
-
-   /* We're using glFlush as an indicator that a frame is done, which is
-    * what DRI2 does before calling SwapBuffers (and means we should catch
-    * people doing front-buffer rendering, as well)..
-    *
-    * Wait for the swapbuffers before the one we just emitted, so we don't
-    * get too many swaps outstanding for apps that are GPU-heavy but not
-    * CPU-heavy.
-    *
-    * Unfortunately, we don't have a handle to the batch containing the swap,
-    * and getting our hands on that doesn't seem worth it, so we just us the
-    * first batch we emitted after the last swap.
-    */
-   if (!intel->using_dri2_swapbuffers &&
-       intel->first_post_swapbuffers_batch != NULL) {
-      drm_intel_bo_wait_rendering(intel->first_post_swapbuffers_batch);
-      drm_intel_bo_unreference(intel->first_post_swapbuffers_batch);
-      intel->first_post_swapbuffers_batch = NULL;
-   }
+   intel->need_throttle = GL_TRUE;
 }
 
 void
