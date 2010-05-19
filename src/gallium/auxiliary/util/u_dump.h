@@ -71,6 +71,9 @@ const char *
 util_dump_blend_func(unsigned value, boolean shortened);
 
 const char *
+util_dump_logicop(unsigned value, boolean shortened);
+
+const char *
 util_dump_func(unsigned value, boolean shortened);
 
 const char *

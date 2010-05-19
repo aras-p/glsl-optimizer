@@ -160,6 +160,49 @@ DEFINE_UTIL_DUMP_CONTINUOUS(blend_func)
 
 
 static const char *
+util_dump_logicop_names[] = {
+   "PIPE_LOGICOP_CLEAR",
+   "PIPE_LOGICOP_NOR",
+   "PIPE_LOGICOP_AND_INVERTED",
+   "PIPE_LOGICOP_COPY_INVERTED",
+   "PIPE_LOGICOP_AND_REVERSE",
+   "PIPE_LOGICOP_INVERT",
+   "PIPE_LOGICOP_XOR",
+   "PIPE_LOGICOP_NAND",
+   "PIPE_LOGICOP_AND",
+   "PIPE_LOGICOP_EQUIV",
+   "PIPE_LOGICOP_NOOP",
+   "PIPE_LOGICOP_OR_INVERTED",
+   "PIPE_LOGICOP_COPY",
+   "PIPE_LOGICOP_OR_REVERSE",
+   "PIPE_LOGICOP_OR",
+   "PIPE_LOGICOP_SET"
+};
+
+static const char *
+util_dump_logicop_short_names[] = {
+   "clear",
+   "nor",
+   "and_inverted",
+   "copy_inverted",
+   "and_reverse",
+   "invert",
+   "xor",
+   "nand",
+   "and",
+   "equiv",
+   "noop",
+   "or_inverted",
+   "copy",
+   "or_reverse",
+   "or",
+   "set"
+};
+
+DEFINE_UTIL_DUMP_CONTINUOUS(logicop)
+
+
+static const char *
 util_dump_func_names[] = {
    "PIPE_FUNC_NEVER",
    "PIPE_FUNC_LESS",
