@@ -74,6 +74,8 @@
 %term sqrt_vec4
 %term rsq_vec4
 %term swizzle_vec4
+%term min_vec4_vec4
+%term max_vec4_vec4
 
 # Each tree will produce stmt.  Currently, the only production for
 # stmt is from an assign rule -- every statement tree from
@@ -272,5 +274,8 @@ vec4: log2_vec4(vec4) 1
 				   tree->dst_reg,
 				   tree->left->src_reg);
 }
+
+vec4: min_vec4_vec4(vec4, vec4) 1 { ir_to_mesa_emit_op2(tree, OPCODE_MIN); }
+vec4: max_vec4_vec4(vec4, vec4) 1 { ir_to_mesa_emit_op2(tree, OPCODE_MAX); }
 
 %%

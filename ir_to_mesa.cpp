@@ -529,6 +529,12 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
    case ir_unop_floor:
       this->result = this->create_tree(MB_TERM_floor_vec4, ir, op[0], NULL);
       break;
+   case ir_binop_min:
+      this->result = this->create_tree(MB_TERM_min_vec4_vec4, ir, op[0], op[1]);
+      break;
+   case ir_binop_max:
+      this->result = this->create_tree(MB_TERM_max_vec4_vec4, ir, op[0], op[1]);
+      break;
    default:
       break;
    }
