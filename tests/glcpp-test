@@ -5,5 +5,5 @@ for test in *.c; do
     ../glcpp < $test > $test.out
     gcc -E $test -o $test.gcc
     grep -v '^#' < $test.gcc > $test.expected
-    diff -B -w -u $test.expected $test.out
+    diff -u $test.expected $test.out
 done
