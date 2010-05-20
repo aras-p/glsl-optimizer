@@ -407,6 +407,7 @@ lp_build_flow_skip_cond_break(struct lp_build_flow_context *flow,
    /* for each variable, update the Phi node with a (variable, block) pair */
    for(i = 0; i < skip->num_variables; ++i) {
       assert(*flow->variables[i]);
+      assert(LLVMTypeOf(skip->phi[i]) == LLVMTypeOf(*flow->variables[i]));
       LLVMAddIncoming(skip->phi[i], flow->variables[i], &current_block, 1);
    }
 
@@ -433,6 +434,7 @@ lp_build_flow_skip_end(struct lp_build_flow_context *flow)
    /* add (variable, block) tuples to the phi nodes */
    for(i = 0; i < skip->num_variables; ++i) {
       assert(*flow->variables[i]);
+      assert(LLVMTypeOf(skip->phi[i]) == LLVMTypeOf(*flow->variables[i]));
       LLVMAddIncoming(skip->phi[i], flow->variables[i], &current_block, 1);
       *flow->variables[i] = skip->phi[i];
    }
