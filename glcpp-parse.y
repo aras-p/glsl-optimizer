@@ -102,6 +102,7 @@ glcpp_parser_lex (glcpp_parser_t *parser);
 %}
 
 %union {
+	int ival;
 	char *str;
 	argument_list_t *argument_list;
 	string_list_t *string_list;
@@ -112,8 +113,9 @@ glcpp_parser_lex (glcpp_parser_t *parser);
 %parse-param {glcpp_parser_t *parser}
 %lex-param {glcpp_parser_t *parser}
 
-%token DEFINE FUNC_MACRO IDENTIFIER IDENTIFIER_FINALIZED OBJ_MACRO NEWLINE SPACE TOKEN UNDEF
-%type <str> FUNC_MACRO IDENTIFIER IDENTIFIER_FINALIZED OBJ_MACRO
+%token DEFINE FUNC_MACRO IDENTIFIER IDENTIFIER_FINALIZED OBJ_MACRO NEWLINE SEPARATOR SPACE TOKEN UNDEF
+%type <ival> input punctuator
+%type <str> content FUNC_MACRO IDENTIFIER IDENTIFIER_FINALIZED OBJ_MACRO
 %type <argument_list> argument_list
 %type <string_list> macro parameter_list
 %type <token> TOKEN argument_word argument_word_or_comma
@@ -135,37 +137,70 @@ glcpp_parser_lex (glcpp_parser_t *parser);
 
 %%
 
+	/* We do all printing at the input level.
+	 *
+	 * The value for "input" is simply TOKEN or SEPARATOR so we
+	 * can decide whether it's necessary to print a space
+	 * character between any two. */
 input:
-	/* empty */
-|	input content
+	/* empty */ {
+		$$ = SEPARATOR;
+	}
+|	input content {
+		int is_token;
+
+		if ($2 && strlen ($2)) {
+			int c = $2[0];
+			int is_not_separator = ((c >= 'a' && c <= 'z') ||
+						(c >= 'A' && c <= 'Z') ||
+						(c >= 'A' && c <= 'Z') ||
+						(c >= '0' && c <= '9') ||
+						(c == '_'));
+
+			if ($1 == TOKEN && is_not_separator)
+				printf (" ");
+			printf ("%s", $2);
+			if (is_not_separator)
+				$$ = TOKEN;
+			else
+				$$ = SEPARATOR;
+		} else {
+			$$ = $1;
+		}
+		if ($2)
+			talloc_free ($2);
+	}
 ;
 
-	/* We do all printing at the content level */
 content:
 	IDENTIFIER {
-		printf ("%s", $1);
-		talloc_free ($1);
+		$$ = $1;
 	}
 |	IDENTIFIER_FINALIZED {
-		printf ("%s", $1);
-		talloc_free ($1);
+		$$ = $1;
 	}
 |	TOKEN {
-		printf ("%s", $1.value);
-		talloc_free ($1.value);
+		$$ = $1.value;
 	}
 |	FUNC_MACRO {
-		printf ("%s", $1);
-		talloc_free ($1);
+		$$ = $1;
 	}
 |	directive {
-		printf ("\n");
+		$$ = talloc_strdup (parser, "\n");
 	}
-|	'('	{ printf ("("); }
-|	')'	{ printf (")"); }
-|	','	{ printf (","); }
-|	macro
+|	punctuator {
+		$$ = talloc_asprintf (parser, "%c", $1);
+	}
+|	macro {
+		$$ = NULL;
+	}
 ;
+
+punctuator:
+	'('	{ $$ = '('; }
+|	')'	{ $$ = ')'; }
+|	','	{ $$ = ','; }
+	;
 
 macro:
 	FUNC_MACRO '(' argument_list ')' {
