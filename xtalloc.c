@@ -64,3 +64,21 @@ xtalloc_strndup (const void *t, const char *p, size_t n)
 
 	return ret;
 }
+
+char *
+xtalloc_asprintf (const void *t, const char *fmt, ...)
+{
+	va_list ap;
+	char *ret;
+
+	va_start(ap, fmt);
+
+	ret = talloc_vasprintf(t, fmt, ap);
+	if (ret == NULL) {
+		fprintf (stderr, "Out of memory.\n");
+		exit (1);
+	}
+
+	va_end(ap);
+	return ret;
+}

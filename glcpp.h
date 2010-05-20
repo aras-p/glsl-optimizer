@@ -149,4 +149,7 @@ xtalloc_strdup (const void *t, const char *p);
 char *
 xtalloc_strndup (const void *t, const char *p, size_t n);
 
+char *
+xtalloc_asprintf (const void *t, const char *fmt, ...);
+
 #endif
