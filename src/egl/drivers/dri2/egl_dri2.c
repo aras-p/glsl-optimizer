@@ -417,12 +417,6 @@ dri2_get_buffers_with_format(__DRIdrawable * driDrawable,
    return dri2_surf->buffers;
 }
 
-#ifdef GLX_USE_TLS
-static const char dri_driver_format[] = "%.*s/tls/%s_dri.so";
-#else
-static const char dri_driver_format[] = "%.*s/%s_dri.so";
-#endif
-
 static const char dri_driver_path[] = DEFAULT_DRIVER_DIR;
 
 struct dri2_extension_match {
@@ -680,15 +674,24 @@ dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp,
    dri2_dpy->driver = NULL;
    end = search_paths + strlen(search_paths);
    for (p = search_paths; p < end && dri2_dpy->driver == NULL; p = next + 1) {
+      int len;
       next = strchr(p, ':');
       if (next == NULL)
          next = end;
 
+      len = next - p;
+#if GLX_USE_TLS
       snprintf(path, sizeof path,
-	       dri_driver_format, (int) (next - p), p, dri2_dpy->driver_name);
+	       "%.*s/tls/%s_dri.so", len, p, dri2_dpy->driver_name);
       dri2_dpy->driver = dlopen(path, RTLD_NOW | RTLD_GLOBAL);
-      if (dri2_dpy->driver == NULL)
-	 _eglLog(_EGL_DEBUG, "failed to open %s: %s\n", path, dlerror());
+#endif
+      if (dri2_dpy->driver == NULL) {
+	 snprintf(path, sizeof path,
+		  "%.*s/%s_dri.so", len, p, dri2_dpy->driver_name);
+	 dri2_dpy->driver = dlopen(path, RTLD_NOW | RTLD_GLOBAL);
+	 if (dri2_dpy->driver == NULL)
+	    _eglLog(_EGL_DEBUG, "failed to open %s: %s\n", path, dlerror());
+      }
    }
 
    if (dri2_dpy->driver == NULL) {
