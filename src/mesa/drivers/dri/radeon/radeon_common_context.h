@@ -93,6 +93,13 @@ struct radeon_renderbuffer
 	GLuint pf_pending;  /**< sequence number of pending flip */
 	GLuint vbl_pending;   /**< vblank sequence number of pending flip */
 	__DRIdrawable *dPriv;
+
+	/* r6xx+ tiling */
+	GLuint tile_config;
+	GLint group_bytes;
+	GLint num_channels;
+	GLint num_banks;
+	GLint r7xx_bank_op;
 };
 
 struct radeon_framebuffer

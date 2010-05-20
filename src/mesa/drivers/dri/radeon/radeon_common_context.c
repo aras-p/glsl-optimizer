@@ -699,6 +699,13 @@ radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable,
 		rb->base.Height = drawable->h;
 		rb->has_surface = 0;
 
+		/* r6xx+ tiling */
+		rb->tile_config = radeon->radeonScreen->tile_config;
+		rb->group_bytes = radeon->radeonScreen->group_bytes;
+		rb->num_channels = radeon->radeonScreen->num_channels;
+		rb->num_banks = radeon->radeonScreen->num_banks;
+		rb->r7xx_bank_op = radeon->radeonScreen->r7xx_bank_op;
+
 		if (buffers[i].attachment == __DRI_BUFFER_STENCIL && depth_bo) {
 			if (RADEON_DEBUG & RADEON_DRI)
 				fprintf(stderr, "(reusing depth buffer as stencil)\n");
@@ -727,7 +734,7 @@ radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable,
 				bo->flags |= RADEON_BO_FLAGS_MACRO_TILE;
 			if (tiling_flags & RADEON_TILING_MICRO)
 				bo->flags |= RADEON_BO_FLAGS_MICRO_TILE;
-			
+
 		}
 
 		if (buffers[i].attachment == __DRI_BUFFER_DEPTH) {
