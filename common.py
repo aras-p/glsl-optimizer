@@ -29,12 +29,19 @@ _machine_map = {
 	'ppc' : 'ppc',
 	'x86_64': 'x86_64',
 }
+
+
+# find default_machine value
 if 'PROCESSOR_ARCHITECTURE' in os.environ:
 	default_machine = os.environ['PROCESSOR_ARCHITECTURE']
 else:
 	default_machine = _platform.machine()
 default_machine = _machine_map.get(default_machine, 'generic')
 
+print "sys.argv = " + sys.argv[2]
+
+
+# find default_llvm value
 if 'LLVM' in os.environ:
     default_llvm = 'yes'
 else:
@@ -54,6 +61,8 @@ else:
     except:
         pass
 
+
+# find default_dri value
 if default_platform in ('linux', 'freebsd'):
 	default_dri = 'yes'
 elif default_platform in ('winddk', 'windows', 'wince', 'darwin'):
