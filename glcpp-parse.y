@@ -779,8 +779,6 @@ glcpp_parser_lex (glcpp_parser_t *parser)
 		return '(';
 	else if (strcmp (replacements->value, ")") == 0)
 		return ')';
-	else if (strcmp (replacements->value, ",") == 0)
-		return ',';
 
 	yylval.str = xtalloc_strdup (parser, replacements->value);
 
