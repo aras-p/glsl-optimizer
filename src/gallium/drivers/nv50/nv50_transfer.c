@@ -274,7 +274,6 @@ nv50_upload_sifc(struct nv50_context *nv50,
 {
 	struct nouveau_channel *chan = nv50->screen->base.channel;
 	struct nouveau_grobj *eng2d = nv50->screen->eng2d;
-	struct nouveau_grobj *tesla = nv50->screen->tesla;
 	unsigned line_dwords = (w * cpp + 3) / 4;
 
 	reloc |= NOUVEAU_BO_WR;
@@ -346,7 +345,4 @@ nv50_upload_sifc(struct nv50_context *nv50,
 
 		src = (uint8_t *) src + src_pitch;
 	}
-
-	BEGIN_RING(chan, tesla, NV50TCL_CODE_CB_FLUSH, 1);
-	OUT_RING  (chan, 0);
 }

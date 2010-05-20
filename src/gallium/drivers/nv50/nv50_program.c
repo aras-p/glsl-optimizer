@@ -4208,9 +4208,12 @@ static void
 nv50_program_validate_code(struct nv50_context *nv50, struct nv50_program *p)
 {
 	struct nouveau_channel *chan = nv50->screen->base.channel;
+	struct nouveau_grobj *tesla = nv50->screen->tesla;
 	struct nv50_program_exec *e;
 	uint32_t *up, i;
 	boolean upload = FALSE;
+	unsigned offset;
+	int width;
 
 	if (!p->bo) {
 		nouveau_bo_new(chan->device, NOUVEAU_BO_VRAM, 0x100,
@@ -4267,10 +4270,22 @@ nv50_program_validate_code(struct nv50_context *nv50, struct nv50_program *p)
 			NOUVEAU_ERR("0x%08x\n", e->inst[1]);
 	}
 #endif
-	nv50_upload_sifc(nv50, p->bo, 0, NOUVEAU_BO_VRAM,
-			 NV50_2D_DST_FORMAT_R8_UNORM, 65536, 1, 262144,
-			 up, NV50_2D_SIFC_FORMAT_R8_UNORM, 0,
-			 0, 0, p->exec_size * 4, 1, 1);
+
+	/* SIFC_HEIGHT/SIFC_WIDTH of 65536 do not work, and are not reported
+	 * as data error either. hw bug ? */
+#define SIFC_MAX_WIDTH (65536 - 256)
+	offset = 0;
+	width = p->exec_size * 4;
+	while (width > 0) {
+		nv50_upload_sifc(nv50, p->bo, offset, NOUVEAU_BO_VRAM,
+				 NV50_2D_DST_FORMAT_R8_UNORM, 65536, 1, 262144,
+				 &up[offset / 4], NV50_2D_SIFC_FORMAT_R8_UNORM,
+				 0, 0, 0, MIN2(SIFC_MAX_WIDTH, width), 1, 1);
+		width -= SIFC_MAX_WIDTH;
+		offset += SIFC_MAX_WIDTH;
+	}
+	BEGIN_RING(chan, tesla, NV50TCL_CODE_CB_FLUSH, 1);
+	OUT_RING  (chan, 0);
 
 	FREE(up);
 }
