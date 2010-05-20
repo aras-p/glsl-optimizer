@@ -173,7 +173,12 @@ TOKEN		[^[:space:](),]+
 }
 
 \n {
+	/* XXX: Printing here (rather than in a parser production)
+	 * *and* frobbing a bit of the parser state here are both ugly
+	 * things. But all my attempts to avoid this by returning a
+	 * NEWLINE token here have led to even more ugly things. */
 	printf ("\n");
+	yyextra->just_printed_separator = 1;
 }
 
 {HSPACE}+

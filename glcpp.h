@@ -101,6 +101,7 @@ struct glcpp_parser {
 	yyscan_t scanner;
 	struct hash_table *defines;
 	expansion_node_t *expansions;
+	int just_printed_separator;
 };
 
 void

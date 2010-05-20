@@ -114,7 +114,7 @@ glcpp_parser_lex (glcpp_parser_t *parser);
 %lex-param {glcpp_parser_t *parser}
 
 %token DEFINE FUNC_MACRO IDENTIFIER IDENTIFIER_FINALIZED OBJ_MACRO NEWLINE SEPARATOR SPACE TOKEN UNDEF
-%type <ival> input punctuator
+%type <ival> punctuator
 %type <str> content FUNC_MACRO IDENTIFIER IDENTIFIER_FINALIZED OBJ_MACRO
 %type <argument_list> argument_list
 %type <string_list> macro parameter_list
@@ -144,7 +144,7 @@ glcpp_parser_lex (glcpp_parser_t *parser);
 	 * character between any two. */
 input:
 	/* empty */ {
-		$$ = SEPARATOR;
+		parser->just_printed_separator = 1;
 	}
 |	input content {
 		int is_token;
@@ -157,16 +157,18 @@ input:
 						(c >= '0' && c <= '9') ||
 						(c == '_'));
 
-			if ($1 == TOKEN && is_not_separator)
+			if (! parser->just_printed_separator && is_not_separator)
+			{
 				printf (" ");
+			}
 			printf ("%s", $2);
+
 			if (is_not_separator)
-				$$ = TOKEN;
+				parser->just_printed_separator = 0;
 			else
-				$$ = SEPARATOR;
-		} else {
-			$$ = $1;
+				parser->just_printed_separator = 1;
 		}
+
 		if ($2)
 			talloc_free ($2);
 	}
@@ -560,6 +562,8 @@ glcpp_parser_create (void)
 	parser->defines = hash_table_ctor (32, hash_table_string_hash,
 					   hash_table_string_compare);
 	parser->expansions = NULL;
+
+	parser->just_printed_separator = 1;
 
 	return parser;
 }
