@@ -760,6 +760,8 @@ glcpp_parser_lex (glcpp_parser_t *parser)
 	expansion_node_t *expansion;
 	token_node_t *replacements;
 	int parameter_index;
+	const char *token;
+	token_class_t class;
 
     /* Who says C can't do efficient tail recursion? */
     RECURSE:
@@ -779,12 +781,31 @@ glcpp_parser_lex (glcpp_parser_t *parser)
 
 	expansion->replacements = replacements->next;
 
-	if (strcmp (replacements->value, "(") == 0)
+	token = replacements->value;
+
+	/* Implement token pasting. */
+	if (replacements->next && strcmp (replacements->next->value, "##") == 0) {
+		token_node_t *next_node;
+
+		next_node = replacements->next->next;
+
+		if (next_node == NULL) {
+			fprintf (stderr, "Error: '##' cannot appear at the end of a macro expansion.\n");
+			exit (1);
+		}
+
+		token = xtalloc_asprintf (parser, "%s%s",
+					  token, next_node->value);
+		expansion->replacements = next_node->next;
+	}
+
+
+	if (strcmp (token, "(") == 0)
 		return '(';
-	else if (strcmp (replacements->value, ")") == 0)
+	else if (strcmp (token, ")") == 0)
 		return ')';
 
-	yylval.str = xtalloc_strdup (parser, replacements->value);
+	yylval.str = xtalloc_strdup (parser, token);
 
 	/* Carefully refuse to expand any finalized identifier. */
 	if (replacements->type == IDENTIFIER_FINALIZED)
