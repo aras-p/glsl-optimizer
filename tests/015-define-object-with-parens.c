@@ -1,4 +1,4 @@
-#define foo ( ) 1
+#define foo ()1
 foo()
-#define bar () 2
-bar( )
+#define bar ()2
+bar()

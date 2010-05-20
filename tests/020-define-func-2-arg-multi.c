@@ -1,2 +1,2 @@
-#define foo(x,y) x, two fish, red fish, y
+#define foo(x,y) x,two fish,red fish,y
 foo(one fish, blue fish)
