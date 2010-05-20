@@ -119,8 +119,8 @@ glcpp_parser_lex (glcpp_parser_t *parser);
 %type <str> FUNC_MACRO IDENTIFIER IDENTIFIER_FINALIZED OBJ_MACRO
 %type <argument_list> argument_list
 %type <string_list> macro parameter_list
-%type <token> TOKEN argument_word
-%type <token_list> argument replacement_list pp_tokens
+%type <token> TOKEN argument_word argument_word_or_comma
+%type <token_list> argument argument_or_comma replacement_list pp_tokens
 
 /* Hard to remove shift/reduce conflicts documented as follows:
  *
@@ -131,8 +131,10 @@ glcpp_parser_lex (glcpp_parser_t *parser);
  * 2. Similarly, '(' after FUNC_MACRO which is correctly resolved to
  *    shift to form macro invocation rather than reducing directly to
  *    argument.
+ *
+ * 3. Similarly again now that we added argument_or_comma as well.
  */
-%expect 2
+%expect 3
 
 %%
 
@@ -202,7 +204,7 @@ argument:
 		talloc_free ($2.value);
 		$$ = $1;
 	}
-|	argument '(' argument ')' {
+|	argument '(' argument_or_comma ')' {
 		_token_list_append ($1, '(', "(");
 		_token_list_append_list ($1, $3);
 		_token_list_append ($1, ')', ")");
@@ -218,6 +220,40 @@ argument_word:
 |	macro {	$$.type = TOKEN; $$.value = xtalloc_strdup (parser, ""); }
 ;
 
+	/* XXX: The body of argument_or_comma is the same as the body
+	 * of argument, but with "argument" and "argument_word"
+	 * changed to "argument_or_comma" and
+	 * "argument_word_or_comma". It would be nice to have less
+	 * redundancy here, but I'm not sure how.
+	 *
+	 * It would also be nice to have a less ugly grammar to have
+	 * to implement, but such is the C preprocessor.
+	 */
+argument_or_comma:
+	argument_word_or_comma {
+		$$ = _token_list_create (parser);
+		_token_list_append ($$, $1.type, $1.value);
+	}
+|	argument_or_comma argument_word_or_comma {
+		_token_list_append ($1, $2.type, $2.value);
+		$$ = $1;
+	}
+|	argument_or_comma '(' argument_or_comma ')' {
+		_token_list_append ($1, '(', "(");
+		_token_list_append_list ($1, $3);
+		_token_list_append ($1, ')', ")");
+		$$ = $1;
+	}
+;
+
+argument_word_or_comma:
+	IDENTIFIER { $$.type = IDENTIFIER; $$.value = $1; }
+|	IDENTIFIER_FINALIZED { $$.type = IDENTIFIER_FINALIZED; $$.value = $1; }
+|	TOKEN { $$ = $1; }
+|	FUNC_MACRO { $$.type = FUNC_MACRO; $$.value = $1; }
+|	macro {	$$.type = TOKEN; $$.value = xtalloc_strdup (parser, ""); }
+|	',' { $$.type = ','; $$.value = xtalloc_strdup (parser, ","); }
+;
 
 directive:
 	DEFINE IDENTIFIER NEWLINE {
