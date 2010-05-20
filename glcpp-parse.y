@@ -171,6 +171,12 @@ input:
 
 		if ($2)
 			talloc_free ($2);
+
+		if (parser->need_newline) {
+			printf ("\n");
+			parser->just_printed_separator = 1;
+			parser->need_newline = 0;
+		}
 	}
 ;
 
@@ -564,6 +570,7 @@ glcpp_parser_create (void)
 	parser->expansions = NULL;
 
 	parser->just_printed_separator = 1;
+	parser->need_newline = 0;
 
 	return parser;
 }
@@ -577,6 +584,8 @@ glcpp_parser_parse (glcpp_parser_t *parser)
 void
 glcpp_parser_destroy (glcpp_parser_t *parser)
 {
+	if (parser->need_newline)
+		printf ("\n");
 	glcpp_lex_destroy (parser->scanner);
 	hash_table_dtor (parser->defines);
 	talloc_free (parser);

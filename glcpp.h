@@ -102,6 +102,7 @@ struct glcpp_parser {
 	struct hash_table *defines;
 	expansion_node_t *expansions;
 	int just_printed_separator;
+	int need_newline;
 };
 
 void
