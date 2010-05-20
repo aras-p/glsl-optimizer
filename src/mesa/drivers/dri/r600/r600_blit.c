@@ -390,11 +390,18 @@ set_render_target(context_t *context, struct radeon_bo *bo, gl_format mesa_forma
 			 0, RADEON_GEM_DOMAIN_VRAM | RADEON_GEM_DOMAIN_GTT, 0);
     END_BATCH();
 
-    BEGIN_BATCH_NO_AUTOSTATE(12);
+    BEGIN_BATCH_NO_AUTOSTATE(9);
     R600_OUT_BATCH_REGVAL(CB_COLOR0_SIZE + (4 * id), cb_color0_size);
     R600_OUT_BATCH_REGVAL(CB_COLOR0_VIEW + (4 * id), cb_color0_view);
-    R600_OUT_BATCH_REGVAL(CB_COLOR0_INFO + (4 * id), cb_color0_info);
     R600_OUT_BATCH_REGVAL(CB_COLOR0_MASK + (4 * id), 0);
+    END_BATCH();
+
+    BEGIN_BATCH_NO_AUTOSTATE(3 + 2);
+    R600_OUT_BATCH_REGVAL(CB_COLOR0_INFO + (4 * id), cb_color0_info);
+    R600_OUT_BATCH_RELOC(0,
+			 bo,
+			 0,
+			 0, RADEON_GEM_DOMAIN_VRAM | RADEON_GEM_DOMAIN_GTT, 0);
     END_BATCH();
 
     COMMIT_BATCH();
@@ -1447,7 +1454,7 @@ set_default_state(context_t *context)
 	    SETbit(sq_dyn_gpr_cntl_ps_flush_req, VS_PC_LIMIT_ENABLE_bit);
     }
 
-    BEGIN_BATCH_NO_AUTOSTATE(117);
+    BEGIN_BATCH_NO_AUTOSTATE(114);
     R600_OUT_BATCH_REGSEQ(SQ_CONFIG, 6);
     R600_OUT_BATCH(sq_config);
     R600_OUT_BATCH(sq_gpr_resource_mgmt_1);
@@ -1477,7 +1484,6 @@ set_default_state(context_t *context)
                          (CLRCMP_SEL_SRC << CLRCMP_FCN_SEL_shift));
     R600_OUT_BATCH_REGVAL(SQ_VTX_BASE_VTX_LOC, 0);
     R600_OUT_BATCH_REGVAL(SQ_VTX_START_INST_LOC, 0);
-    R600_OUT_BATCH_REGVAL(DB_DEPTH_INFO, 0);
     R600_OUT_BATCH_REGVAL(DB_DEPTH_CONTROL, 0);
     R600_OUT_BATCH_REGVAL(CB_SHADER_MASK, (OUTPUT0_ENABLE_mask));
     R600_OUT_BATCH_REGVAL(CB_TARGET_MASK, (TARGET0_ENABLE_mask));
@@ -1607,7 +1613,7 @@ unsigned r600_blit(GLcontext *ctx,
     /* Flush is needed to make sure that source buffer has correct data */
     radeonFlush(ctx);
 
-    rcommonEnsureCmdBufSpace(&context->radeon, 304, __FUNCTION__);
+    rcommonEnsureCmdBufSpace(&context->radeon, 305, __FUNCTION__);
 
     /* load shaders */
     load_shaders(context->radeon.glCtx);
@@ -1616,7 +1622,7 @@ unsigned r600_blit(GLcontext *ctx,
         return GL_FALSE;
 
     /* set clear state */
-    /* 117 */
+    /* 114 */
     set_default_state(context);
 
     /* shaders */
@@ -1632,7 +1638,7 @@ unsigned r600_blit(GLcontext *ctx,
     set_tex_sampler(context);
 
     /* dst */
-    /* 27 */
+    /* 31 */
     set_render_target(context, dst_bo, dst_mesaformat,
 		      dst_pitch, dst_width, dst_height, dst_offset);
     /* scissors */

@@ -617,16 +617,23 @@ static void r700SendDepthTargetState(GLcontext *ctx, struct radeon_state_atom *a
 
 	r700SetDepthTarget(context);
 
-        BEGIN_BATCH_NO_AUTOSTATE(8 + 2);
+        BEGIN_BATCH_NO_AUTOSTATE(7 + 2);
 	R600_OUT_BATCH_REGSEQ(DB_DEPTH_SIZE, 2);
 	R600_OUT_BATCH(r700->DB_DEPTH_SIZE.u32All);
 	R600_OUT_BATCH(r700->DB_DEPTH_VIEW.u32All);
-	R600_OUT_BATCH_REGSEQ(DB_DEPTH_BASE, 2);
+	R600_OUT_BATCH_REGSEQ(DB_DEPTH_BASE, 1);
 	R600_OUT_BATCH(r700->DB_DEPTH_BASE.u32All);
-	R600_OUT_BATCH(r700->DB_DEPTH_INFO.u32All);
 	R600_OUT_BATCH_RELOC(r700->DB_DEPTH_BASE.u32All,
 			     rrb->bo,
 			     r700->DB_DEPTH_BASE.u32All,
+			     0, RADEON_GEM_DOMAIN_VRAM, 0);
+        END_BATCH();
+        BEGIN_BATCH_NO_AUTOSTATE(3 + 2);
+	R600_OUT_BATCH_REGSEQ(DB_DEPTH_INFO, 1);
+	R600_OUT_BATCH(r700->DB_DEPTH_INFO.u32All);
+	R600_OUT_BATCH_RELOC(r700->DB_DEPTH_INFO.u32All,
+			     rrb->bo,
+			     r700->DB_DEPTH_INFO.u32All,
 			     0, RADEON_GEM_DOMAIN_VRAM, 0);
         END_BATCH();
 
@@ -687,25 +694,33 @@ static void r700SendRenderTargetState(GLcontext *ctx, struct radeon_state_atom *
 	BEGIN_BATCH_NO_AUTOSTATE(3 + 2);
 	R600_OUT_BATCH_REGSEQ(CB_COLOR0_TILE + (4 * id), 1);
 	R600_OUT_BATCH(r700->render_target[id].CB_COLOR0_TILE.u32All);
-	R600_OUT_BATCH_RELOC(r700->render_target[id].CB_COLOR0_BASE.u32All,
+	R600_OUT_BATCH_RELOC(r700->render_target[id].CB_COLOR0_TILE.u32All,
 			     rrb->bo,
-			     r700->render_target[id].CB_COLOR0_BASE.u32All,
+			     r700->render_target[id].CB_COLOR0_TILE.u32All,
 			     0, RADEON_GEM_DOMAIN_VRAM, 0);
 	END_BATCH();
 	BEGIN_BATCH_NO_AUTOSTATE(3 + 2);
 	R600_OUT_BATCH_REGSEQ(CB_COLOR0_FRAG + (4 * id), 1);
 	R600_OUT_BATCH(r700->render_target[id].CB_COLOR0_FRAG.u32All);
-	R600_OUT_BATCH_RELOC(r700->render_target[id].CB_COLOR0_BASE.u32All,
+	R600_OUT_BATCH_RELOC(r700->render_target[id].CB_COLOR0_FRAG.u32All,
 			     rrb->bo,
-			     r700->render_target[id].CB_COLOR0_BASE.u32All,
+			     r700->render_target[id].CB_COLOR0_FRAG.u32All,
 			     0, RADEON_GEM_DOMAIN_VRAM, 0);
         END_BATCH();
 
-        BEGIN_BATCH_NO_AUTOSTATE(12);
+        BEGIN_BATCH_NO_AUTOSTATE(9);
 	R600_OUT_BATCH_REGVAL(CB_COLOR0_SIZE + (4 * id), r700->render_target[id].CB_COLOR0_SIZE.u32All);
 	R600_OUT_BATCH_REGVAL(CB_COLOR0_VIEW + (4 * id), r700->render_target[id].CB_COLOR0_VIEW.u32All);
-	R600_OUT_BATCH_REGVAL(CB_COLOR0_INFO + (4 * id), r700->render_target[id].CB_COLOR0_INFO.u32All);
 	R600_OUT_BATCH_REGVAL(CB_COLOR0_MASK + (4 * id), r700->render_target[id].CB_COLOR0_MASK.u32All);
+        END_BATCH();
+
+	BEGIN_BATCH_NO_AUTOSTATE(3 + 2);
+	R600_OUT_BATCH_REGVAL(CB_COLOR0_INFO + (4 * id), r700->render_target[id].CB_COLOR0_INFO.u32All);
+	R600_OUT_BATCH_RELOC(r700->render_target[id].CB_COLOR0_INFO.u32All,
+			     rrb->bo,
+			     r700->render_target[id].CB_COLOR0_INFO.u32All,
+			     0, RADEON_GEM_DOMAIN_VRAM, 0);
+
         END_BATCH();
 
 	COMMIT_BATCH();
@@ -1567,7 +1582,7 @@ void r600InitAtoms(context_t *context)
 	ALLOC_STATE(sq, always, 34, r700SendSQConfig);
 	ALLOC_STATE(db, always, 17, r700SendDBState);
 	ALLOC_STATE(stencil, always, 4, r700SendStencilState);
-	ALLOC_STATE(db_target, always, 12, r700SendDepthTargetState);
+	ALLOC_STATE(db_target, always, 16, r700SendDepthTargetState);
 	ALLOC_STATE(sc, always, 15, r700SendSCState);
 	ALLOC_STATE(scissor, always, 22, r700SendScissorState);
 	ALLOC_STATE(aa, always, 12, r700SendAAState);
@@ -1578,7 +1593,7 @@ void r600InitAtoms(context_t *context)
 	ALLOC_STATE(poly, always, 10, r700SendPolyState);
 	ALLOC_STATE(cb, cb, 18, r700SendCBState);
 	ALLOC_STATE(clrcmp, always, 6, r700SendCBCLRCMPState);
-	ALLOC_STATE(cb_target, always, 29, r700SendRenderTargetState);
+	ALLOC_STATE(cb_target, always, 31, r700SendRenderTargetState);
 	ALLOC_STATE(blnd, blnd, (6 + (R700_MAX_RENDER_TARGETS * 3)), r700SendCBBlendState);
 	ALLOC_STATE(blnd_clr, always, 6, r700SendCBBlendColorState);
 	ALLOC_STATE(sx, always, 9, r700SendSXState);
