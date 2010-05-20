@@ -18,8 +18,6 @@
 #include "sw/sw_public.h"
 #include "sw/sw.c"
 
-#include "state_tracker/graw.h"
-
 #include <stdio.h>
 
 
