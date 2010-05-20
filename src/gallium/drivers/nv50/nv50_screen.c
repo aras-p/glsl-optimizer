@@ -152,6 +152,34 @@ nv50_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 	case PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT:
 	case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER:
 		return 0;
+	case PIPE_CAP_MAX_VS_INSTRUCTIONS:
+	case PIPE_CAP_MAX_FS_INSTRUCTIONS:
+	case PIPE_CAP_MAX_VS_ALU_INSTRUCTIONS:
+	case PIPE_CAP_MAX_FS_ALU_INSTRUCTIONS:
+	case PIPE_CAP_MAX_VS_TEX_INSTRUCTIONS:
+	case PIPE_CAP_MAX_FS_TEX_INSTRUCTIONS:
+	case PIPE_CAP_MAX_VS_TEX_INDIRECTIONS:
+	case PIPE_CAP_MAX_FS_TEX_INDIRECTIONS: /* arbitrary limit */
+		return 16384;
+	case PIPE_CAP_MAX_VS_CONTROL_FLOW_DEPTH:
+	case PIPE_CAP_MAX_FS_CONTROL_FLOW_DEPTH: /* need stack bo */
+		return 4;
+	case PIPE_CAP_MAX_VS_INPUTS:
+		return 16;
+	case PIPE_CAP_MAX_FS_INPUTS: /* 128 / 4 with GP */
+		return 64 / 4;
+	case PIPE_CAP_MAX_VS_CONSTS:
+	case PIPE_CAP_MAX_FS_CONSTS:
+		return 65536 / 16;
+	case PIPE_CAP_MAX_VS_ADDRS:
+	case PIPE_CAP_MAX_FS_ADDRS: /* no spilling atm */
+		return 1;
+	case PIPE_CAP_MAX_VS_PREDS:
+	case PIPE_CAP_MAX_FS_PREDS: /* not yet handled */
+		return 0;
+	case PIPE_CAP_MAX_VS_TEMPS:
+	case PIPE_CAP_MAX_FS_TEMPS: /* no spilling atm */
+		return 128 / 4;
 	default:
 		NOUVEAU_ERR("Unknown PIPE_CAP %d\n", param);
 		return 0;
