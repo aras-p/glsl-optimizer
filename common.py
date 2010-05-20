@@ -3,6 +3,7 @@
 
 import os
 import os.path
+import re
 import subprocess
 import sys
 import platform as _platform
@@ -37,9 +38,18 @@ default_machine = _machine_map.get(default_machine, 'generic')
 if 'LLVM' in os.environ:
     default_llvm = 'yes'
 else:
+    # Search sys.argv[] for a "platform=foo" argument since we don't have
+    # an 'env' variable at this point.
+    platform = default_platform
+    pattern = re.compile("(platform=)(.*)")
+    for arg in sys.argv:
+        m = pattern.match(arg)
+        if m:
+            platform = m.group(2)
+
     default_llvm = 'no'
     try:
-        if env['platform'] != 'windows' and subprocess.call(['llvm-config', '--version'], stdout=subprocess.PIPE) == 0:
+        if platform != 'windows' and subprocess.call(['llvm-config', '--version'], stdout=subprocess.PIPE) == 0:
             default_llvm = 'yes'
     except:
         pass
