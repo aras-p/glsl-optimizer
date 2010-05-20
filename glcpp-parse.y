@@ -87,11 +87,6 @@ void
 _token_list_append_list (token_list_t *list, token_list_t *tail);
 
 static void
-glcpp_parser_push_expansion_macro (glcpp_parser_t *parser,
-				   macro_t *macro,
-				   argument_list_t *arguments);
-
-static void
 glcpp_parser_pop_expansion (glcpp_parser_t *parser);
 
 #define yylex glcpp_parser_lex
@@ -614,24 +609,7 @@ glcpp_parser_classify_token (glcpp_parser_t *parser,
 {
 	macro_t *macro;
 
-	/* First we check if we are currently expanding a
-	 * function-like macro, and if so, whether the parameter list
-	 * contains a parameter matching this token name. */
-	if (parser->expansions &&
-	    parser->expansions->macro &&
-	    parser->expansions->macro->parameters)
-	{
-		string_list_t *list;
-
-		list = parser->expansions->macro->parameters;
-
-		if (_string_list_contains (list, identifier, parameter_index))
-		    return TOKEN_CLASS_ARGUMENT;
-	}
-
-	/* If not a function-like macro parameter, we next check if
-	 * this token is a macro itself. */
-
+	/* Is this token a defined macro? */
 	macro = hash_table_find (parser->defines, identifier);
 
 	if (macro == NULL)
@@ -685,45 +663,19 @@ _define_function_macro (glcpp_parser_t *parser,
 }
 
 static void
-_glcpp_parser_push_expansion_internal (glcpp_parser_t *parser,
-				       macro_t *macro,
-				       argument_list_t *arguments,
-				       token_node_t *replacements)
+_glcpp_parser_push_expansion (glcpp_parser_t *parser,
+			      macro_t *macro,
+			      token_node_t *replacements)
 {
 	expansion_node_t *node;
 
 	node = xtalloc (parser, expansion_node_t);
 
 	node->macro = macro;
-	node->arguments = arguments;
 	node->replacements = replacements;
 
 	node->next = parser->expansions;
 	parser->expansions = node;
-}
-
-static void
-glcpp_parser_push_expansion_macro (glcpp_parser_t *parser,
-				   macro_t *macro,
-				   argument_list_t *arguments)
-{
-	_glcpp_parser_push_expansion_internal (parser, macro, arguments,
-					       macro->replacements->head);
-}
-
-void
-glcpp_parser_push_expansion_argument (glcpp_parser_t *parser,
-				      int argument_index)
-{
-	argument_list_t *arguments;
-	token_list_t *argument;
-
-	arguments = parser->expansions->arguments;
-
-	argument = _argument_list_member_at (arguments, argument_index);
-
-	_glcpp_parser_push_expansion_internal (parser, NULL, NULL,
-					       argument->head);
 }
 
 static void
@@ -752,7 +704,7 @@ _expand_object_macro (glcpp_parser_t *parser, const char *identifier)
 	assert (! macro->is_function);
 	assert (! glcpp_parser_is_expanding (parser, identifier));
 
-	glcpp_parser_push_expansion_macro (parser, macro, NULL);
+	_glcpp_parser_push_expansion (parser, macro, macro->replacements->head);
 }
 
 void
@@ -761,6 +713,9 @@ _expand_function_macro (glcpp_parser_t *parser,
 			argument_list_t *arguments)
 {
 	macro_t *macro;
+	token_list_t *expanded;
+	token_node_t *i, *j;
+	int parameter_index;
 
 	macro = hash_table_find (parser->defines, identifier);
 	assert (macro->is_function);
@@ -777,7 +732,26 @@ _expand_function_macro (glcpp_parser_t *parser,
 		return;
 	}
 
-	glcpp_parser_push_expansion_macro (parser, macro, arguments);
+	expanded = _token_list_create (macro);
+
+	for (i = macro->replacements->head; i; i = i->next) {
+		if (_string_list_contains (macro->parameters, i->value,
+					   &parameter_index))
+		{
+			token_list_t *argument;
+			argument = _argument_list_member_at (arguments,
+							     parameter_index);
+			for (j = argument->head; j; j = j->next)
+			{
+				_token_list_append (expanded, j->type,
+						    j->value);
+			}
+		} else {
+			_token_list_append (expanded, i->type, i->value);
+		}
+	}
+
+	_glcpp_parser_push_expansion (parser, macro, expanded->head);
 }
 
 static int
@@ -819,12 +793,6 @@ glcpp_parser_lex (glcpp_parser_t *parser)
 	switch (glcpp_parser_classify_token (parser, yylval.str,
 					     &parameter_index))
 	{
-	case TOKEN_CLASS_ARGUMENT:
-		talloc_free (yylval.str);
-		glcpp_parser_push_expansion_argument (parser,
-						      parameter_index);
-		goto RECURSE;
-		break;
 	case TOKEN_CLASS_IDENTIFIER:
 		return IDENTIFIER;
 		break;

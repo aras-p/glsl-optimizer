@@ -138,14 +138,6 @@ TOKEN		[^[:space:](),]+
 	switch (glcpp_parser_classify_token (yyextra, yylval.str,
 					     &parameter_index))
 	{
-		case TOKEN_CLASS_ARGUMENT:
-			talloc_free (yylval.str);
-			/* We don't return a value here since the
-			 * current token will be replaced by new
-			 * tokens. */
-			glcpp_parser_push_expansion_argument (yyextra,
-							      parameter_index);
-		break;
 		case TOKEN_CLASS_IDENTIFIER:
 			return IDENTIFIER;
 		break;

@@ -71,7 +71,6 @@ typedef struct argument_list {
 typedef struct glcpp_parser glcpp_parser_t;
 
 typedef enum {
-	TOKEN_CLASS_ARGUMENT,
 	TOKEN_CLASS_IDENTIFIER,
 	TOKEN_CLASS_IDENTIFIER_FINALIZED,
 	TOKEN_CLASS_FUNC_MACRO,
@@ -92,7 +91,6 @@ typedef struct {
 
 typedef struct expansion_node {
 	macro_t *macro;
-	argument_list_t *arguments;
 	token_node_t *replacements;
 	struct expansion_node *next;
 } expansion_node_t;
