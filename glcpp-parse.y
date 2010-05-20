@@ -50,9 +50,6 @@ _expand_function_macro (glcpp_parser_t *parser,
 			const char *identifier,
 			argument_list_t *arguments);
 
-void
-_print_string_list (string_list_t *list);
-
 string_list_t *
 _string_list_create (void *ctx);
 
@@ -394,21 +391,6 @@ _string_list_length (string_list_t *list)
 		length++;
 
 	return length;
-}
-
-void
-_print_string_list (string_list_t *list)
-{
-	string_node_t *node;
-
-	if (list == NULL)
-		return;
-
-	for (node = list->head; node; node = node->next) {
-		printf ("%s", node->str);
-		if (node->next)
-			printf (" ");
-	}
 }
 
 argument_list_t *
