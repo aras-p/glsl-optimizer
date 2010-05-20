@@ -108,7 +108,7 @@ emit_vertex(struct push_context *ctx, unsigned n)
    int i;
 
    if (ctx->edgeflag_attr < 16) {
-      float *edgeflag = ctx->attr[ctx->edgeflag_attr].map +
+      float *edgeflag = (uint8_t *)ctx->attr[ctx->edgeflag_attr].map +
                         ctx->attr[ctx->edgeflag_attr].stride * n;
 
       if (*edgeflag != ctx->edgeflag) {
@@ -120,7 +120,8 @@ emit_vertex(struct push_context *ctx, unsigned n)
 
    BEGIN_RING_NI(chan, tesla, NV50TCL_VERTEX_DATA, ctx->vtx_size);
    for (i = 0; i < ctx->attr_nr; i++)
-      ctx->attr[i].push(chan, ctx->attr[i].map + ctx->attr[i].stride * n);
+      ctx->attr[i].push(chan,
+			(uint8_t *)ctx->attr[i].map + ctx->attr[i].stride * n);
 }
 
 static void
@@ -243,14 +244,14 @@ nv50_push_elements_instanced(struct pipe_context *pipe,
          assert(bo->map);
          return;
       }
-      ctx.attr[n].map = bo->map + vb->buffer_offset + ve->src_offset;
+      ctx.attr[n].map = (uint8_t *)bo->map + vb->buffer_offset + ve->src_offset;
       nouveau_bo_unmap(bo);
 
       ctx.attr[n].stride = vb->stride;
       ctx.attr[n].divisor = ve->instance_divisor;
       if (ctx.attr[n].divisor) {
          ctx.attr[n].step = i_start % ve->instance_divisor;
-         ctx.attr[n].map += i_start * vb->stride;
+         ctx.attr[n].map = (uint8_t *)ctx.attr[n].map + i_start * vb->stride;
       }
 
       size = util_format_get_component_bits(ve->src_format,
@@ -331,7 +332,7 @@ nv50_push_elements_instanced(struct pipe_context *pipe,
               ctx.attr[i].divisor != ++ctx.attr[i].step)
             continue;
          ctx.attr[i].step = 0;
-         ctx.attr[i].map += ctx.attr[i].stride;
+         ctx.attr[i].map = (uint8_t *)ctx.attr[i].map + ctx.attr[i].stride;
       }
 
       u_split_prim_init(&s, mode, start, count);
