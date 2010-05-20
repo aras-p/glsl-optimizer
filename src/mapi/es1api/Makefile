@@ -106,7 +106,7 @@ pcedit = \
 
 pcedit-es1 = \
 	$(pcedit) \
-	-e 's,@GLESv1_CM_REQ_PRIV@,$(GLESv1_CM_REQ_PRIV),' \
+	-e 's,@GLESv1_CM_PC_REQ_PRIV@,$(GLESv1_CM_PC_REQ_PRIV),' \
 	-e 's,@GLESv1_CM_PC_LIB_PRIV@,$(GLESv1_CM_PC_LIB_PRIV),' \
 	-e 's,@GLESv1_CM_PC_CFLAGS@,$(GLESv1_CM_PC_CFLAGS),' \
 	-e 's,@GLESv1_CM_LIB@,$(GLESv1_CM_LIB),'
