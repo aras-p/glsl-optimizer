@@ -108,16 +108,18 @@ glcpp_parser_lex (glcpp_parser_t *parser);
 	char *str;
 	argument_list_t *argument_list;
 	string_list_t *string_list;
+	token_t token;
 	token_list_t *token_list;
 }
 
 %parse-param {glcpp_parser_t *parser}
 %lex-param {glcpp_parser_t *parser}
 
-%token DEFINE FUNC_MACRO IDENTIFIER OBJ_MACRO NEWLINE SPACE TOKEN UNDEF
-%type <str> argument_word FUNC_MACRO IDENTIFIER OBJ_MACRO TOKEN
+%token DEFINE FUNC_MACRO IDENTIFIER IDENTIFIER_FINALIZED OBJ_MACRO NEWLINE SPACE TOKEN UNDEF
+%type <str> FUNC_MACRO IDENTIFIER IDENTIFIER_FINALIZED OBJ_MACRO
 %type <argument_list> argument_list
 %type <string_list> macro parameter_list
+%type <token> TOKEN argument_word
 %type <token_list> argument replacement_list pp_tokens
 
 /* Hard to remove shift/reduce conflicts documented as follows:
@@ -145,9 +147,13 @@ content:
 		printf ("%s", $1);
 		talloc_free ($1);
 	}
-|	TOKEN {
+|	IDENTIFIER_FINALIZED {
 		printf ("%s", $1);
 		talloc_free ($1);
+	}
+|	TOKEN {
+		printf ("%s", $1.value);
+		talloc_free ($1.value);
 	}
 |	FUNC_MACRO {
 		printf ("%s", $1);
@@ -189,11 +195,11 @@ argument_list:
 argument:
 	argument_word {
 		$$ = _token_list_create (parser);
-		_token_list_append ($$, IDENTIFIER, $1);
+		_token_list_append ($$, $1.type, $1.value);
 	}
 |	argument argument_word {
-		_token_list_append ($1, IDENTIFIER, $2);
-		talloc_free ($2);
+		_token_list_append ($1, $2.type, $2.value);
+		talloc_free ($2.value);
 		$$ = $1;
 	}
 |	argument '(' argument ')' {
@@ -205,10 +211,11 @@ argument:
 ;
 
 argument_word:
-	IDENTIFIER { $$ = $1; }
+	IDENTIFIER { $$.type = IDENTIFIER; $$.value = $1; }
+|	IDENTIFIER_FINALIZED { $$.type = IDENTIFIER_FINALIZED; $$.value = $1; }
 |	TOKEN { $$ = $1; }
-|	FUNC_MACRO { $$ = $1; }
-|	macro {	$$ = xtalloc_strdup (parser, ""); }
+|	FUNC_MACRO { $$.type = FUNC_MACRO; $$.value = $1; }
+|	macro {	$$.type = TOKEN; $$.value = xtalloc_strdup (parser, ""); }
 ;
 
 
@@ -265,10 +272,10 @@ replacement_list:
 pp_tokens:
 	TOKEN {
 		$$ = _token_list_create (parser);
-		_token_list_append ($$, TOKEN, $1);
+		_token_list_append ($$, $1.type, $1.value);
 	}
 |	pp_tokens TOKEN {
-	_token_list_append ($1, TOKEN, $2);
+	_token_list_append ($1, $2.type, $2.value);
 		$$ = $1;
 	}
 ;
@@ -567,7 +574,7 @@ glcpp_parser_classify_token (glcpp_parser_t *parser,
 	/* Don't consider this a macro if we are already actively
 	 * expanding this macro. */
 	if (glcpp_parser_is_expanding (parser, identifier))
-		return TOKEN_CLASS_IDENTIFIER;
+		return TOKEN_CLASS_IDENTIFIER_FINALIZED;
 
 	/* Definitely a macro. Just need to check if it's function-like. */
 	if (macro->is_function)
@@ -741,6 +748,10 @@ glcpp_parser_lex (glcpp_parser_t *parser)
 
 	yylval.str = xtalloc_strdup (parser, replacements->value);
 
+	/* Carefully refuse to expand any finalized identifier. */
+	if (replacements->type == IDENTIFIER_FINALIZED)
+		return IDENTIFIER_FINALIZED;
+
 	switch (glcpp_parser_classify_token (parser, yylval.str,
 					     &parameter_index))
 	{
@@ -752,6 +763,9 @@ glcpp_parser_lex (glcpp_parser_t *parser)
 		break;
 	case TOKEN_CLASS_IDENTIFIER:
 		return IDENTIFIER;
+		break;
+	case TOKEN_CLASS_IDENTIFIER_FINALIZED:
+		return IDENTIFIER_FINALIZED;
 		break;
 	case TOKEN_CLASS_FUNC_MACRO:
 		return FUNC_MACRO;

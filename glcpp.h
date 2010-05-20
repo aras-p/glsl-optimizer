@@ -42,6 +42,11 @@ typedef struct string_list {
 	string_node_t *tail;
 } string_list_t;
 
+typedef struct token {
+	int type;
+	char *value;
+} token_t;
+
 typedef struct token_node {
 	int type;
 	const char *value;
@@ -68,6 +73,7 @@ typedef struct glcpp_parser glcpp_parser_t;
 typedef enum {
 	TOKEN_CLASS_ARGUMENT,
 	TOKEN_CLASS_IDENTIFIER,
+	TOKEN_CLASS_IDENTIFIER_FINALIZED,
 	TOKEN_CLASS_FUNC_MACRO,
 	TOKEN_CLASS_OBJ_MACRO
 } token_class_t;

@@ -114,12 +114,14 @@ TOKEN		[^[:space:](),]+
 <ST_DEFINE_PARAMETER>{HSPACE}+
 
 <ST_DEFINE_VALUE>{TOKEN} {
-	yylval.str = xtalloc_strdup (yyextra, yytext);
+	yylval.token.type = TOKEN;
+	yylval.token.value = xtalloc_strdup (yyextra, yytext);
 	return TOKEN;
 }
 
 <ST_DEFINE_VALUE>[(),] {
-	yylval.str = xtalloc_strdup (yyextra, yytext);
+	yylval.token.type = TOKEN;
+	yylval.token.value = xtalloc_strdup (yyextra, yytext);
 	return TOKEN;
 }
 
@@ -147,6 +149,9 @@ TOKEN		[^[:space:](),]+
 		case TOKEN_CLASS_IDENTIFIER:
 			return IDENTIFIER;
 		break;
+		case TOKEN_CLASS_IDENTIFIER_FINALIZED:
+			return IDENTIFIER_FINALIZED;
+		break;
 		case TOKEN_CLASS_FUNC_MACRO:
 			return FUNC_MACRO;
 		break;
@@ -162,7 +167,8 @@ TOKEN		[^[:space:](),]+
 }
 
 {TOKEN} {
-	yylval.str = xtalloc_strdup (yyextra, yytext);
+	yylval.token.type = TOKEN;
+	yylval.token.value = xtalloc_strdup (yyextra, yytext);
 	return TOKEN;
 }
 
