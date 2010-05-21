@@ -1589,7 +1589,7 @@ fi
 echo "        Use XCB:         $enable_xcb"
 
 echo ""
-if test "x$MESA_LLVM" == x1; then
+if test "x$MESA_LLVM" = x1; then
     echo "        llvm:            yes"
     echo "        llvm-config:     $LLVM_CONFIG"
     echo "        llvm-version:    $LLVM_VERSION"
