@@ -249,6 +249,14 @@ typedef struct __GLXattributeMachineRec
    __GLXattribute **stackPointer;
 } __GLXattributeMachine;
 
+struct glx_context_vtable {
+   void (*bind_tex_image)(Display * dpy,
+			  GLXDrawable drawable,
+			  int buffer, const int *attrib_list);
+   void (*release_tex_image)(Display * dpy, GLXDrawable drawable, int buffer);
+   
+};
+
 /**
  * GLX state that needs to be kept on the client.  One of these records
  * exist for each context that has been made current by this client.
@@ -457,6 +465,8 @@ struct __GLXcontextRec
    unsigned long thread_id;
 
    char gl_extension_bits[__GL_EXT_BYTES];
+
+   const struct glx_context_vtable *vtable;
 };
 
 #define __glXSetError(gc,code)  \
@@ -510,6 +520,11 @@ struct __GLXscreenConfigsRec
      * set of extensions that the application can actually use.
      */
    char *effectiveGLXexts;
+
+   /**
+    * Context vtable to use for direct contexts on this screen
+    */
+   const struct glx_context_vtable *direct_context_vtable;
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
     /**

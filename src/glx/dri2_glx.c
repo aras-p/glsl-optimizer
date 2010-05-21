@@ -563,6 +563,40 @@ dri2InvalidateBuffers(Display *dpy, XID drawable)
 #endif
 }
 
+static void
+dri2_bind_tex_image(Display * dpy,
+		    GLXDrawable drawable,
+		    int buffer, const int *attrib_list)
+{
+   GLXContext gc = __glXGetCurrentContext();
+   __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable, NULL);
+
+   if (pdraw != NULL) {
+      if (pdraw->psc->texBuffer->base.version >= 2 &&
+	  pdraw->psc->texBuffer->setTexBuffer2 != NULL) {
+	 (*pdraw->psc->texBuffer->setTexBuffer2) (gc->__driContext,
+						  pdraw->textureTarget,
+						  pdraw->textureFormat,
+						  pdraw->driDrawable);
+      }
+      else {
+	 (*pdraw->psc->texBuffer->setTexBuffer) (gc->__driContext,
+						 pdraw->textureTarget,
+						 pdraw->driDrawable);
+      }
+   }
+}
+
+static void
+dri2_release_tex_image(Display * dpy, GLXDrawable drawable, int buffer)
+{
+}
+
+static const struct glx_context_vtable dri2_context_vtable = {
+   dri2_bind_tex_image,
+   dri2_release_tex_image,
+};
+
 static __GLXDRIscreen *
 dri2CreateScreen(__GLXscreenConfigs * psc, int screen,
                  __GLXdisplayPrivate * priv)
@@ -682,6 +716,8 @@ dri2CreateScreen(__GLXscreenConfigs * psc, int screen,
     * available.*/
    psp->copySubBuffer = dri2CopySubBuffer;
    __glXEnableDirectExtension(psc, "GLX_MESA_copy_sub_buffer");
+
+   psc->direct_context_vtable = &dri2_context_vtable;
 
    Xfree(driverName);
    Xfree(deviceName);

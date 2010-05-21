@@ -634,6 +634,11 @@ driDestroyScreen(__GLXscreenConfigs * psc)
       dlclose(psc->driver);
 }
 
+static const struct glx_context_vtable dri_context_vtable = {
+   NULL,
+   NULL,
+};
+
 static __GLXDRIscreen *
 driCreateScreen(__GLXscreenConfigs * psc, int screen,
                 __GLXdisplayPrivate * priv)
@@ -699,6 +704,8 @@ driCreateScreen(__GLXscreenConfigs * psc, int screen,
    psp->swapBuffers = driSwapBuffers;
    psp->waitX = NULL;
    psp->waitGL = NULL;
+
+   psc->direct_context_vtable = &dri_context_vtable;
 
    return psp;
 }

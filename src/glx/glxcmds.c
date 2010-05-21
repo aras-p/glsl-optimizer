@@ -62,9 +62,7 @@
 
 static const char __glXGLXClientVendorName[] = "Mesa Project and SGI";
 static const char __glXGLXClientVersion[] = "1.4";
-
-
-/****************************************************************************/
+static const struct glx_context_vtable glx_indirect_context_vtable;
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
 
@@ -378,13 +376,10 @@ CreateContext(Display * dpy, int generic_id,
 	      unsigned code, int renderType, int screen)
 {
    GLXContext gc;
-#ifdef GLX_DIRECT_RENDERING
-#ifdef GLX_USE_APPLEGL
+   __GLXscreenConfigs *const psc = GetGLXScreenConfigs(dpy, screen);
+#if defined(GLX_DIRECT_RENDERING) && defined(GLX_USE_APPLEGL)
    int errorcode;
    bool x11error;
-#else
-   __GLXscreenConfigs *const psc = GetGLXScreenConfigs(dpy, screen);
-#endif
 #endif
     
    if (dpy == NULL)
@@ -410,6 +405,11 @@ CreateContext(Display * dpy, int generic_id,
       }
    }
 #endif
+
+   if (gc->driContext != NULL)
+      gc->vtable = psc->direct_context_vtable;
+   else
+      gc->vtable = &glx_indirect_context_vtable;
 
    LockDisplay(dpy);
    switch (code) {
@@ -2997,10 +2997,10 @@ __glXCopySubBufferMESA(Display * dpy, GLXDrawable drawable,
 /**
  * GLX_EXT_texture_from_pixmap
  */
-/*@{*/
 static void
-__glXBindTexImageEXT(Display * dpy,
-                     GLXDrawable drawable, int buffer, const int *attrib_list)
+glx_indirect_bind_tex_image(Display * dpy,
+			    GLXDrawable drawable,
+			    int buffer, const int *attrib_list)
 {
    xGLXVendorPrivateReq *req;
    GLXContext gc = __glXGetCurrentContext();
@@ -3011,36 +3011,11 @@ __glXBindTexImageEXT(Display * dpy,
    CARD8 opcode;
    unsigned int i;
 
-   if (gc == NULL)
-      return;
-
    i = 0;
    if (attrib_list) {
       while (attrib_list[i * 2] != None)
          i++;
    }
-
-#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
-   if (gc->driContext) {
-      __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable, NULL);
-
-      if (pdraw != NULL) {
-         if (pdraw->psc->texBuffer->base.version >= 2 &&
-             pdraw->psc->texBuffer->setTexBuffer2 != NULL) {
-            (*pdraw->psc->texBuffer->setTexBuffer2) (gc->__driContext,
-                                                     pdraw->textureTarget,
-                                                     pdraw->textureFormat,
-                                                     pdraw->driDrawable);
-         }
-         else {
-            (*pdraw->psc->texBuffer->setTexBuffer) (gc->__driContext,
-                                                    pdraw->textureTarget,
-                                                    pdraw->driDrawable);
-         }
-      }
-      return;
-   }
-#endif
 
    opcode = __glXSetupForCommand(dpy);
    if (!opcode)
@@ -3076,16 +3051,13 @@ __glXBindTexImageEXT(Display * dpy,
 }
 
 static void
-__glXReleaseTexImageEXT(Display * dpy, GLXDrawable drawable, int buffer)
+glx_indirect_release_tex_image(Display * dpy, GLXDrawable drawable, int buffer)
 {
    xGLXVendorPrivateReq *req;
    GLXContext gc = __glXGetCurrentContext();
    CARD32 *drawable_ptr;
    INT32 *buffer_ptr;
    CARD8 opcode;
-
-   if ((gc == NULL) || GC_IS_DIRECT(gc))
-      return;
 
    opcode = __glXSetupForCommand(dpy);
    if (!opcode)
@@ -3106,6 +3078,35 @@ __glXReleaseTexImageEXT(Display * dpy, GLXDrawable drawable, int buffer)
 
    UnlockDisplay(dpy);
    SyncHandle();
+}
+
+static const struct glx_context_vtable glx_indirect_context_vtable = {
+   glx_indirect_bind_tex_image,
+   glx_indirect_release_tex_image,
+};
+
+/*@{*/
+static void
+__glXBindTexImageEXT(Display * dpy,
+                     GLXDrawable drawable, int buffer, const int *attrib_list)
+{
+   GLXContext gc = __glXGetCurrentContext();
+
+   if (gc == NULL || gc->vtable->bind_tex_image == NULL)
+      return;
+
+   gc->vtable->bind_tex_image(dpy, drawable, buffer, attrib_list);
+}
+
+static void
+__glXReleaseTexImageEXT(Display * dpy, GLXDrawable drawable, int buffer)
+{
+   GLXContext gc = __glXGetCurrentContext();
+
+   if (gc == NULL || gc->vtable->release_tex_image == NULL)
+      return;
+
+   gc->vtable->release_tex_image(dpy, drawable, buffer);
 }
 
 /*@}*/
