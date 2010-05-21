@@ -235,6 +235,13 @@ egl_g3d_st_manager_get_egl_image(struct st_manager *smapi,
    return TRUE;
 }
 
+static int
+egl_g3d_st_manager_get_param(struct st_manager *smapi,
+                             enum st_manager_param param)
+{
+   return 0;
+}
+
 struct st_manager *
 egl_g3d_create_st_manager(_EGLDisplay *dpy)
 {
@@ -247,6 +254,7 @@ egl_g3d_create_st_manager(_EGLDisplay *dpy)
 
       gsmapi->base.screen = gdpy->native->screen;
       gsmapi->base.get_egl_image = egl_g3d_st_manager_get_egl_image;
+      gsmapi->base.get_param = egl_g3d_st_manager_get_param;
    }
 
    return &gsmapi->base;;

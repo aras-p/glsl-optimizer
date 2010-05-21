@@ -106,6 +106,13 @@ enum st_context_resource_type {
 };
 
 /**
+ * Value to st_manager->get_param function.
+ */
+enum st_manager_param {
+   ST_MANAGER_TEMP,
+};
+
+/**
  * The return type of st_api->get_proc_address.
  */
 typedef void (*st_proc_t)(void);
@@ -319,6 +326,12 @@ struct st_manager
     */
    boolean (*get_egl_image)(struct st_manager *smapi,
                             struct st_egl_image *stimg);
+
+   /**
+    * Query an manager param.
+    */
+   int (*get_param)(struct st_manager *smapi,
+                    enum st_manager_param param);
 };
 
 /**

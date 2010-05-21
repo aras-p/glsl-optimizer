@@ -337,6 +337,13 @@ dri_get_egl_image(struct st_manager *smapi,
    return TRUE;
 }
 
+static int
+dri_get_param(struct st_manager *smapi,
+              enum st_manager_param param)
+{
+   return 0;
+}
+
 static void
 dri_destroy_option_cache(struct dri_screen * screen)
 {
@@ -391,6 +398,7 @@ dri_init_screen_helper(struct dri_screen *screen,
    }
 
    screen->base.get_egl_image = dri_get_egl_image;
+   screen->base.get_param = dri_get_param;
    screen->st_api = st_gl_api_create();
 
    if (!screen->st_api)

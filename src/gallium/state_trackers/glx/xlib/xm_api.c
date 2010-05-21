@@ -87,6 +87,12 @@ void xmesa_set_driver( const struct xm_driver *templ )
 static struct xmesa_display Displays[MAX_DISPLAYS];
 static int NumDisplays = 0;
 
+static int
+xmesa_get_param(struct st_manager *smapi,
+                enum st_manager_param *param)
+{
+   return 0;
+}
 
 static XMesaDisplay
 xmesa_init_display( Display *display )
@@ -116,8 +122,10 @@ xmesa_init_display( Display *display )
       xmdpy->display = display;
       xmdpy->screen = driver.create_pipe_screen(display);
       xmdpy->smapi = CALLOC_STRUCT(st_manager);
-      if (xmdpy->smapi)
+      if (xmdpy->smapi) {
          xmdpy->smapi->screen = xmdpy->screen;
+         xmdpy->smapi->get_param = xmesa_get_param;
+      }
 
       if (xmdpy->screen && xmdpy->smapi) {
          pipe_mutex_init(xmdpy->mutex);
