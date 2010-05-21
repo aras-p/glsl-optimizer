@@ -93,17 +93,18 @@ nvfx_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 		return 4096;
 	case PIPE_CAP_MAX_FS_CONTROL_FLOW_DEPTH:
 		/* FIXME: is it the dynamic (nv30:0/nv40:24) or the static
-		   value (written there) ? */
+		   value (nv30:0/nv40:4) ? */
 		return screen->is_nv4x ? 4 : 0;
-	/*case PIPE_CAP_MAX_FS_INPUTS:*/	/* FIXME */
-	/*case PIPE_CAP_MAX_FS_CONSTS:*/	/* FIXME */
-	/*	return 0;*/
+	case PIPE_CAP_MAX_FS_INPUTS:
+		return 10;
+	case PIPE_CAP_MAX_FS_CONSTS:
+		return screen->is_nv4x ? 224 : 32;
 	case PIPE_CAP_MAX_FS_TEMPS:
 		return 32;
 	case PIPE_CAP_MAX_FS_ADDRS:
 		return screen->is_nv4x ? 1 : 0;
-	/*case PIPE_CAP_MAX_FS_PREDS:*/		/* FIXME */
-	/*	return 0;*/
+	case PIPE_CAP_MAX_FS_PREDS:
+		return screen->is_nv4x ? 1 : 0;
 	case PIPE_CAP_MAX_VS_INSTRUCTIONS:
 	case PIPE_CAP_MAX_VS_ALU_INSTRUCTIONS:
 		return screen->is_nv4x ? 512 : 256;
@@ -111,19 +112,19 @@ nvfx_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 	case PIPE_CAP_MAX_VS_TEX_INDIRECTIONS:
 		return screen->is_nv4x ? 512 : 0;
 	case PIPE_CAP_MAX_VS_CONTROL_FLOW_DEPTH:
-		/* FIXME: is it the dynamic (nv30/nv40:24) or the static
-		   value (written there) ? */
+		/* FIXME: is it the dynamic (nv30:24/nv40:24) or the static
+		   value (nv30:1/nv40:4) ? */
 		return screen->is_nv4x ? 4 : 1;
-	/*case PIPE_CAP_MAX_VS_INPUTS:*/	/* FIXME */
-	/*	return 0;*/
+	case PIPE_CAP_MAX_VS_INPUTS:
+		return 16;
 	case PIPE_CAP_MAX_VS_CONSTS:
 		return 256;
 	case PIPE_CAP_MAX_VS_TEMPS:
-		return screen->is_nv4x ? 48 : 16;
+		return screen->is_nv4x ? 32 : 13;
 	case PIPE_CAP_MAX_VS_ADDRS:
 		return 2;
-	/*case PIPE_CAP_MAX_VS_PREDS:*/	/* FIXME */
-	/*	return 0;*/
+	case PIPE_CAP_MAX_VS_PREDS:
+		return screen->is_nv4x ? 1 : 0;
 	default:
 		NOUVEAU_ERR("Unknown PIPE_CAP %d\n", param);
 		return 0;
