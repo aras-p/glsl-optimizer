@@ -314,15 +314,17 @@ dri_get_swap_info(__DRIdrawable * dPriv, __DRIswapInfo * sInfo)
 
 static boolean
 dri_get_egl_image(struct st_manager *smapi,
-                             struct st_egl_image *stimg)
+                  struct st_context_iface *stctxi,
+                  void *egl_image,
+                  struct st_egl_image *stimg)
 {
    struct dri_context *ctx =
-      (struct dri_context *)stimg->stctxi->st_manager_private;
+      (struct dri_context *)stctxi->st_manager_private;
    struct dri_screen *screen = dri_screen(ctx->sPriv);
    __DRIimage *img = NULL;
 
    if (screen->lookup_egl_image) {
-      img = screen->lookup_egl_image(ctx, stimg->egl_image);
+      img = screen->lookup_egl_image(ctx, egl_image);
    }
 
    if (!img)

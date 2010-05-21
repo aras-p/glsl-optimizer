@@ -146,10 +146,6 @@ struct st_context_resource
  */
 struct st_egl_image
 {
-   /* these fields are filled by the caller */
-   struct st_context_iface *stctxi;
-   void *egl_image;
-
    /* this is owned by the caller */
    struct pipe_resource *texture;
 
@@ -329,10 +325,22 @@ struct st_manager
    /**
     * Look up and return the info of an EGLImage.
     *
+    * This is used to implement for example EGLImageTargetTexture2DOES.
+    * The GLeglImageOES agrument of that call is passed directly to this
+    * function call and the information needed to access this is returned
+    * in the given struct out.
+    *
+    * @smapi: manager owning the caller context
+    * @stctx: caller context
+    * @egl_image: EGLImage that caller recived
+    * @out: return struct filled out with access information.
+    *
     * This function is optional.
     */
    boolean (*get_egl_image)(struct st_manager *smapi,
-                            struct st_egl_image *stimg);
+                            struct st_context_iface *stctx,
+                            void *egl_image,
+                            struct st_egl_image *out);
 
    /**
     * Query an manager param.

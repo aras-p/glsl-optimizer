@@ -206,10 +206,11 @@ egl_g3d_destroy_st_apis(void)
 
 static boolean
 egl_g3d_st_manager_get_egl_image(struct st_manager *smapi,
-                                 struct st_egl_image *stimg)
+                                 void *egl_image,
+                                 struct st_egl_image *out)
 {
    struct egl_g3d_st_manager *gsmapi = egl_g3d_st_manager(smapi);
-   EGLImageKHR handle = (EGLImageKHR) stimg->egl_image;
+   EGLImageKHR handle = (EGLImageKHR) egl_image;
    _EGLImage *img;
    struct egl_g3d_image *gimg;
 
@@ -224,11 +225,11 @@ egl_g3d_st_manager_get_egl_image(struct st_manager *smapi,
 
    gimg = egl_g3d_image(img);
 
-   stimg->texture = NULL;
-   pipe_resource_reference(&stimg->texture, gimg->texture);
-   stimg->face = gimg->face;
-   stimg->level = gimg->level;
-   stimg->zslice = gimg->zslice;
+   out->texture = NULL;
+   pipe_resource_reference(&out->texture, gimg->texture);
+   out->face = gimg->face;
+   out->level = gimg->level;
+   out->zslice = gimg->zslice;
 
    _eglUnlockMutex(&gsmapi->display->Mutex);
 
