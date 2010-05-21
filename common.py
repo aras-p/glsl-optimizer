@@ -38,8 +38,6 @@ else:
 	default_machine = _platform.machine()
 default_machine = _machine_map.get(default_machine, 'generic')
 
-print "sys.argv = " + sys.argv[2]
-
 
 # find default_llvm value
 if 'LLVM' in os.environ:
