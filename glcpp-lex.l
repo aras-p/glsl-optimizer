@@ -36,6 +36,7 @@
 %x ST_DEFINE_OBJ_OR_FUNC
 %x ST_DEFINE_PARAMETER
 %x ST_DEFINE_VALUE
+%x ST_IF
 %x ST_UNDEF
 %x ST_UNDEF_END
 
@@ -44,10 +45,41 @@ NONSPACE	[^[:space:]]
 NEWLINE		[\n]
 HSPACE		[ \t]
 HASH		^{HSPACE}*#{HSPACE}*
+INTEGER		[0-9]+
 IDENTIFIER	[_a-zA-Z][_a-zA-Z0-9]*
 TOKEN		[^[:space:](),]+
 
 %%
+
+{HASH}if{HSPACE}* {
+	BEGIN ST_IF;
+	return IF;
+}
+
+{HASH}elif{HSPACE}* {
+	BEGIN ST_IF;
+	return ELIF;
+}
+
+<ST_IF>{INTEGER} {
+	yylval.ival = atoi (yytext);
+	return INTEGER;
+}
+
+<ST_IF>{HSPACE}+
+
+<ST_IF>\n {
+	BEGIN INITIAL;
+	return NEWLINE;
+}
+
+{HASH}endif{HSPACE}* {
+	return ENDIF;
+}
+
+{HASH}else{HSPACE}* {
+	return ELSE;
+}
 
 {HASH}undef{HSPACE}* {
 	BEGIN ST_UNDEF;

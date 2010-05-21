@@ -89,6 +89,16 @@ _token_list_append_list (token_list_t *list, token_list_t *tail);
 static void
 glcpp_parser_pop_expansion (glcpp_parser_t *parser);
 
+static void
+_glcpp_parser_skip_stack_push_if (glcpp_parser_t *parser, int condition);
+
+static void
+_glcpp_parser_skip_stack_change_if (glcpp_parser_t *parser, const char *type,
+				    int condition);
+			
+static void
+_glcpp_parser_skip_stack_pop (glcpp_parser_t *parser);
+
 #define yylex glcpp_parser_lex
 
 static int
@@ -108,8 +118,8 @@ glcpp_parser_lex (glcpp_parser_t *parser);
 %parse-param {glcpp_parser_t *parser}
 %lex-param {glcpp_parser_t *parser}
 
-%token DEFINE FUNC_MACRO IDENTIFIER IDENTIFIER_FINALIZED OBJ_MACRO NEWLINE SEPARATOR SPACE TOKEN UNDEF
-%type <ival> punctuator
+%token DEFINE ELIF ELSE ENDIF FUNC_MACRO IDENTIFIER IDENTIFIER_FINALIZED IF IFDEF IFNDEF INTEGER OBJ_MACRO NEWLINE SEPARATOR SPACE TOKEN UNDEF
+%type <ival> expression INTEGER punctuator
 %type <str> content FUNC_MACRO IDENTIFIER IDENTIFIER_FINALIZED OBJ_MACRO
 %type <argument_list> argument_list
 %type <string_list> macro parameter_list
@@ -143,8 +153,12 @@ input:
 	}
 |	input content {
 		int is_token;
+		int skipping = 0;
 
-		if ($2 && strlen ($2)) {
+		if (parser->skip_stack && parser->skip_stack->type != SKIP_NO_SKIP)
+			skipping = 1;
+
+		if ($2 && strlen ($2) && ! skipping) {
 			int c = $2[0];
 			int is_not_separator = ((c >= 'a' && c <= 'z') ||
 						(c >= 'A' && c <= 'Z') ||
@@ -301,6 +315,28 @@ directive:
 |	DEFINE IDENTIFIER '(' parameter_list ')' replacement_list NEWLINE {
 		_define_function_macro (parser, $2, $4, $6);
 	}
+|	IF expression NEWLINE {
+		_glcpp_parser_skip_stack_push_if (parser, $2);
+	}
+|	IFDEF IDENTIFIER NEWLINE {
+		string_list_t *macro = hash_table_find (parser->defines, $2);
+		talloc_free ($2);
+		_glcpp_parser_skip_stack_push_if (parser, macro != NULL);
+	}
+|	IFNDEF IDENTIFIER NEWLINE {
+		string_list_t *macro = hash_table_find (parser->defines, $2);
+		talloc_free ($2);
+		_glcpp_parser_skip_stack_push_if (parser, macro == NULL);
+	}
+|	ELIF expression NEWLINE {
+		_glcpp_parser_skip_stack_change_if (parser, "#elif", $2);
+	}
+|	ELSE {
+		_glcpp_parser_skip_stack_change_if (parser, "else", 1);
+	}
+|	ENDIF {
+		_glcpp_parser_skip_stack_pop (parser);
+	}
 |	UNDEF IDENTIFIER {
 		string_list_t *macro = hash_table_find (parser->defines, $2);
 		if (macro) {
@@ -311,6 +347,13 @@ directive:
 			talloc_free (macro);
 		}
 		talloc_free ($2);
+	}
+;
+
+/* XXX: Need to fill out with all operators. */
+expression:
+	INTEGER {
+		$$ = $1;
 	}
 ;
 
@@ -567,6 +610,8 @@ glcpp_parser_create (void)
 	parser->just_printed_separator = 1;
 	parser->need_newline = 0;
 
+	parser->skip_stack = NULL;
+
 	return parser;
 }
 
@@ -581,6 +626,8 @@ glcpp_parser_destroy (glcpp_parser_t *parser)
 {
 	if (parser->need_newline)
 		printf ("\n");
+	if (parser->skip_stack)
+		fprintf (stderr, "Error: Unterminated #if\n");
 	glcpp_lex_destroy (parser->scanner);
 	hash_table_dtor (parser->defines);
 	talloc_free (parser);
@@ -828,4 +875,60 @@ glcpp_parser_lex (glcpp_parser_t *parser)
 		return OBJ_MACRO;
 		break;
 	}
+}
+
+static void
+_glcpp_parser_skip_stack_push_if (glcpp_parser_t *parser, int condition)
+{
+	skip_type_t current = SKIP_NO_SKIP;
+	skip_node_t *node;
+
+	if (parser->skip_stack)
+		current = parser->skip_stack->type;
+
+	node = xtalloc (parser, skip_node_t);
+
+	if (current == SKIP_NO_SKIP) {
+		if (condition)
+			node->type = SKIP_NO_SKIP;
+		else
+			node->type = SKIP_TO_ELSE;
+	} else {
+		node->type = SKIP_TO_ENDIF;
+	}
+
+	node->next = parser->skip_stack;
+	parser->skip_stack = node;
+}
+
+static void
+_glcpp_parser_skip_stack_change_if (glcpp_parser_t *parser, const char *type,
+				    int condition)
+{
+	if (parser->skip_stack == NULL) {
+		fprintf (stderr, "Error: %s without #if\n", type);
+		exit (1);
+	}
+
+	if (parser->skip_stack->type == SKIP_TO_ELSE) {
+		if (condition)
+			parser->skip_stack->type = SKIP_NO_SKIP;
+	} else {
+		parser->skip_stack->type = SKIP_TO_ENDIF;
+	}
+}
+			
+static void
+_glcpp_parser_skip_stack_pop (glcpp_parser_t *parser)
+{
+	skip_node_t *node;
+
+	if (parser->skip_stack == NULL) {
+		fprintf (stderr, "Error: #endif without #if\n");
+		exit (1);
+	}
+
+	node = parser->skip_stack;
+	parser->skip_stack = node->next;
+	talloc_free (node);
 }

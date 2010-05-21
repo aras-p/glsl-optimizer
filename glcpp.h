@@ -95,12 +95,24 @@ typedef struct expansion_node {
 	struct expansion_node *next;
 } expansion_node_t;
 
+typedef enum skip_type {
+	SKIP_NO_SKIP,
+	SKIP_TO_ELSE,
+	SKIP_TO_ENDIF
+} skip_type_t;
+
+typedef struct skip_node {
+	skip_type_t type;
+	struct skip_node *next;
+} skip_node_t;
+
 struct glcpp_parser {
 	yyscan_t scanner;
 	struct hash_table *defines;
 	expansion_node_t *expansions;
 	int just_printed_separator;
 	int need_newline;
+	skip_node_t *skip_stack;
 };
 
 void
