@@ -752,55 +752,67 @@ rbug_set_vertex_buffers(struct pipe_context *_pipe,
                             buffers);
 }
 static void
-rbug_surface_copy(struct pipe_context *_pipe,
-                  struct pipe_surface *_dst,
-                  unsigned dstx,
-                  unsigned dsty,
-                  struct pipe_surface *_src,
-                  unsigned srcx,
-                  unsigned srcy,
-                  unsigned width,
-                  unsigned height)
+rbug_resource_copy_region(struct pipe_context *_pipe,
+                          struct pipe_resource *_dst,
+                          struct pipe_subresource subdst,
+                          unsigned dstx,
+                          unsigned dsty,
+                          unsigned dstz,
+                          struct pipe_resource *_src,
+                          struct pipe_subresource subsrc,
+                          unsigned srcx,
+                          unsigned srcy,
+                          unsigned srcz,
+                          unsigned width,
+                          unsigned height)
 {
    struct rbug_context *rb_pipe = rbug_context(_pipe);
-   struct rbug_surface *rb_surface_dst = rbug_surface(_dst);
-   struct rbug_surface *rb_surface_src = rbug_surface(_src);
+   struct rbug_resource *rb_resource_dst = rbug_resource(_dst);
+   struct rbug_resource *rb_resource_src = rbug_resource(_src);
    struct pipe_context *pipe = rb_pipe->pipe;
-   struct pipe_surface *dst = rb_surface_dst->surface;
-   struct pipe_surface *src = rb_surface_src->surface;
+   struct pipe_resource *dst = rb_resource_dst->resource;
+   struct pipe_resource *src = rb_resource_src->resource;
 
-   pipe->surface_copy(pipe,
-                      dst,
-                      dstx,
-                      dsty,
-                      src,
-                      srcx,
-                      srcy,
-                      width,
-                      height);
+   pipe->resource_copy_region(pipe,
+                              dst,
+                              subdst,
+                              dstx,
+                              dsty,
+                              dstz,
+                              src,
+                              subsrc,
+                              srcx,
+                              srcy,
+                              srcz,
+                              width,
+                              height);
 }
 
 static void
-rbug_surface_fill(struct pipe_context *_pipe,
-                  struct pipe_surface *_dst,
-                  unsigned dstx,
-                  unsigned dsty,
-                  unsigned width,
-                  unsigned height,
-                  unsigned value)
+rbug_resource_fill_region(struct pipe_context *_pipe,
+                          struct pipe_resource *_dst,
+                          struct pipe_subresource subdst,
+                          unsigned dstx,
+                          unsigned dsty,
+                          unsigned dstz,
+                          unsigned width,
+                          unsigned height,
+                          unsigned value)
 {
    struct rbug_context *rb_pipe = rbug_context(_pipe);
-   struct rbug_surface *rb_surface_dst = rbug_surface(_dst);
+   struct rbug_resource *rb_resource_dst = rbug_resource(_dst);
    struct pipe_context *pipe = rb_pipe->pipe;
-   struct pipe_surface *dst = rb_surface_dst->surface;
+   struct pipe_resource *dst = rb_resource_dst->resource;
 
-   pipe->surface_fill(pipe,
-                      dst,
-                      dstx,
-                      dsty,
-                      width,
-                      height,
-                      value);
+   pipe->resource_fill_region(pipe,
+                              dst,
+                              subdst,
+                              dstx,
+                              dsty,
+                              dstz,
+                              width,
+                              height,
+                              value);
 }
 
 static void
@@ -1050,8 +1062,8 @@ rbug_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
    rb_pipe->base.set_fragment_sampler_views = rbug_set_fragment_sampler_views;
    rb_pipe->base.set_vertex_sampler_views = rbug_set_vertex_sampler_views;
    rb_pipe->base.set_vertex_buffers = rbug_set_vertex_buffers;
-   rb_pipe->base.surface_copy = rbug_surface_copy;
-   rb_pipe->base.surface_fill = rbug_surface_fill;
+   rb_pipe->base.resource_copy_region = rbug_resource_copy_region;
+   rb_pipe->base.resource_fill_region = rbug_resource_fill_region;
    rb_pipe->base.clear = rbug_clear;
    rb_pipe->base.flush = rbug_flush;
    rb_pipe->base.is_resource_referenced = rbug_is_resource_referenced;
