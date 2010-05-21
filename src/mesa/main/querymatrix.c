@@ -71,7 +71,7 @@ fpclassify(double x)
 }
 
 #elif defined(__APPLE__) || defined(__CYGWIN__) || defined(__FreeBSD__) || \
-     (defined(__sun) && defined(__C99FEATURES__))
+     defined(__DragonFly__) || (defined(__sun) && defined(__C99FEATURES__))
 
 /* fpclassify is available. */
 
