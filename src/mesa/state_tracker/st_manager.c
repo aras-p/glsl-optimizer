@@ -621,15 +621,15 @@ st_api_create_context(struct st_api *stapi, struct st_manager *smapi,
       return NULL;
    }
 
-   st->iface.destroy = st_context_destroy;
+   st->invalidate_on_gl_viewport =
+      smapi->get_param(smapi, ST_MANAGER_BROKEN_INVALIDATE);
 
+   st->iface.destroy = st_context_destroy;
    st->iface.notify_invalid_framebuffer =
       st_context_notify_invalid_framebuffer;
    st->iface.flush = st_context_flush;
-
    st->iface.teximage = st_context_teximage;
    st->iface.copy = NULL;
-
    st->iface.st_context_private = (void *) smapi;
 
    return &st->iface;

@@ -51,6 +51,7 @@
 #include "st_cb_xformfb.h"
 #include "st_cb_flush.h"
 #include "st_cb_strings.h"
+#include "st_cb_viewport.h"
 #include "st_atom.h"
 #include "st_draw.h"
 #include "st_extensions.h"
@@ -278,6 +279,7 @@ void st_init_driver_functions(struct dd_function_table *functions)
    st_init_texture_functions(functions);
    st_init_flush_functions(functions);
    st_init_string_functions(functions);
+   st_init_viewport_functions(functions);
 
    st_init_xformfb_functions(functions);
 

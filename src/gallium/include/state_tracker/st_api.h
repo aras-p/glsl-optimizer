@@ -109,7 +109,14 @@ enum st_context_resource_type {
  * Value to st_manager->get_param function.
  */
 enum st_manager_param {
-   ST_MANAGER_TEMP,
+   /**
+    * The dri state tracker on old libGL's doesn't do the right thing
+    * with regards to invalidating the framebuffers.
+    *
+    * For the mesa state tracker that means that it needs to invalidate
+    * the framebuffer in glViewport itself.
+    */
+   ST_MANAGER_BROKEN_INVALIDATE
 };
 
 /**

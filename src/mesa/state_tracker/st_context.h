@@ -79,6 +79,12 @@ struct st_context
    struct draw_stage *selection_stage;  /**< For GL_SELECT rendermode */
    struct draw_stage *rastpos_stage;  /**< For glRasterPos */
 
+
+   /* On old libGL's for linux we need to invalidate the drawables
+    * on glViewpport calls, this is set via a option.
+    */
+   boolean invalidate_on_gl_viewport;
+
    /* Some state is contained in constant objects.
     * Other state is just parameter values.
     */

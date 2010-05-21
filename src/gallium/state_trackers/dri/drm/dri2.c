@@ -526,6 +526,7 @@ dri2_init_screen(__DRIscreen * sPriv)
       goto fail;
 
    screen->auto_fake_front = dri_with_format(sPriv);
+   screen->broken_invalidate = !sPriv->dri2.useInvalidate;
 
    return configs;
 fail:
