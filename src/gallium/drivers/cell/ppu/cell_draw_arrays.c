@@ -103,7 +103,7 @@ cell_draw_range_elements(struct pipe_context *pipe,
       draw_set_mapped_vertex_buffer(draw, i, NULL);
    }
    if (indexBuffer) {
-      draw_set_mapped_element_buffer(draw, 0, NULL);
+      draw_set_mapped_element_buffer(draw, 0, 0, NULL);
    }
 
    /*
@@ -122,7 +122,7 @@ cell_draw_elements(struct pipe_context *pipe,
                    unsigned mode, unsigned start, unsigned count)
 {
    cell_draw_range_elements( pipe, indexBuffer,
-                             indexSize, indeBias,
+                             indexSize, indexBias,
                              0, 0xffffffff,
                              mode, start, count );
 }
