@@ -70,7 +70,6 @@ st_BlitFramebuffer(GLcontext *ctx,
    const GLbitfield depthStencil = (GL_DEPTH_BUFFER_BIT |
                                     GL_STENCIL_BUFFER_BIT);
    struct st_context *st = st_context(ctx);
-   struct pipe_context *pipe = st->pipe;
    const uint pFilter = ((filter == GL_NEAREST)
                          ? PIPE_TEX_MIPFILTER_NEAREST
                          : PIPE_TEX_MIPFILTER_LINEAR);
