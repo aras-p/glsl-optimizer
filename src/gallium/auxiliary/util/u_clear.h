@@ -47,25 +47,24 @@ util_clear(struct pipe_context *pipe,
 {
    if (buffers & PIPE_CLEAR_COLOR) {
       struct pipe_surface *ps = framebuffer->cbufs[0];
+      struct pipe_subresource subdst;
       union util_color uc;
 
+      subdst.face = ps->face;
+      subdst.level = ps->level;
       util_pack_color(rgba, ps->format, &uc);
-      if (pipe->surface_fill) {
-         pipe->surface_fill(pipe, ps, 0, 0, ps->width, ps->height, uc.ui);
-      } else {
-         util_surface_fill(pipe, ps, 0, 0, ps->width, ps->height, uc.ui);
-      }
+      pipe->resource_fill_region(pipe, ps->texture, subdst, 0, 0, ps->zslice,
+                                 ps->width, ps->height, uc.ui);
    }
 
    if (buffers & PIPE_CLEAR_DEPTHSTENCIL) {
       struct pipe_surface *ps = framebuffer->zsbuf;
+      struct pipe_subresource subdst;
 
-      if (pipe->surface_fill) {
-         pipe->surface_fill(pipe, ps, 0, 0, ps->width, ps->height,
-                            util_pack_z_stencil(ps->format, depth, stencil));
-      } else {
-         util_surface_fill(pipe, ps, 0, 0, ps->width, ps->height,
-                           util_pack_z_stencil(ps->format, depth, stencil));
-      }
+      subdst.face = ps->face;
+      subdst.level = ps->level;
+      pipe->resource_fill_region(pipe, ps->texture, subdst, 0, 0, ps->zslice,
+                                 ps->width, ps->height,
+                                 util_pack_z_stencil(ps->format, depth, stencil));
    }
 }

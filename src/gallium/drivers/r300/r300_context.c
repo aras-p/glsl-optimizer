@@ -186,8 +186,8 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     r300->context.destroy = r300_destroy_context;
 
     r300->context.clear = r300_clear;
-    r300->context.surface_copy = r300_surface_copy;
-    r300->context.surface_fill = r300_surface_fill;
+    r300->context.resource_copy_region = r300_surface_copy;
+    r300->context.resource_fill_region = r300_surface_fill;
 
     if (r300screen->caps.has_tcl) {
         r300->context.draw_arrays = r300_draw_arrays;

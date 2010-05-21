@@ -54,6 +54,7 @@ objects. They all follow simple, one-method binding calls, e.g.
 * ``set_stencil_ref`` sets the stencil front and back reference values
   which are used as comparison values in stencil test.
 * ``set_blend_color``
+* ``set_sample_mask``
 * ``set_clip_state``
 * ``set_polygon_stipple``
 * ``set_scissor_state`` sets the bounds for the scissor test, which culls
@@ -259,18 +260,22 @@ Resource Busy Queries
 Blitting
 ^^^^^^^^
 
-These methods emulate classic blitter controls. They are not guaranteed to be
-available; if they are set to NULL, then they are not present.
+These methods emulate classic blitter controls.
 
-These methods operate directly on ``pipe_surface`` objects, and stand
+These methods operate directly on ``pipe_resource`` objects, and stand
 apart from any 3D state in the context.  Blitting functionality may be
 moved to a separate abstraction at some point in the future.
 
-``surface_fill`` performs a fill operation on a section of a surface.
+``resource_fill_region`` performs a fill operation on a section of a resource.
 
-``surface_copy`` blits a region of a surface to a region of another surface,
-provided that both surfaces are the same format. The source and destination
-may be the same surface, and overlapping blits are permitted.
+``resource_copy_region`` blits a region of a subresource of a resource to a
+region of another subresource of a resource, provided that both resources have the
+same format. The source and destination may be the same resource, but overlapping
+blits are not permitted.
+
+``resource_resolve`` resolves a multisampled resource into a non-multisampled
+one. Formats and dimensions must match. This function must be present if a driver
+supports multisampling.
 
 The interfaces to these calls are likely to change to make it easier
 for a driver to batch multiple blits with the same source and

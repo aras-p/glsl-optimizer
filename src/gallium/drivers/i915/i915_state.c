@@ -812,6 +812,12 @@ i915_delete_vertex_elements_state(struct pipe_context *pipe, void *velems)
    FREE( velems );
 }
 
+static void
+i915_set_sample_mask(struct pipe_context *pipe,
+                     unsigned sample_mask)
+{
+}
+
 void
 i915_init_state_functions( struct i915_context *i915 )
 {
@@ -843,6 +849,7 @@ i915_init_state_functions( struct i915_context *i915 )
    i915->base.set_blend_color = i915_set_blend_color;
    i915->base.set_stencil_ref = i915_set_stencil_ref;
    i915->base.set_clip_state = i915_set_clip_state;
+   i915->base.set_sample_mask = i915_set_sample_mask;
    i915->base.set_constant_buffer = i915_set_constant_buffer;
    i915->base.set_framebuffer_state = i915_set_framebuffer_state;
 

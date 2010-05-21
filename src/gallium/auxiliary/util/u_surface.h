@@ -33,23 +33,6 @@
 #include "pipe/p_state.h"
 
 
-/**
- * Are s1 and s2 the same surface?
- * Surfaces are basically views into textures so check if the two surfaces
- * name the same part of the same texture.
- */
-static INLINE boolean
-util_same_surface(const struct pipe_surface *s1, const struct pipe_surface *s2)
-{
-   return (s1->texture == s2->texture &&
-           s1->face == s2->face &&
-           s1->level == s2->level &&
-           s1->zslice == s2->zslice);
-}
-
-
-
-
 extern boolean
 util_create_rgba_surface(struct pipe_screen *screen,
                          uint width, uint height, uint bind,
@@ -64,19 +47,21 @@ util_destroy_rgba_surface(struct pipe_resource *texture,
 
 
 extern void
-util_surface_copy(struct pipe_context *pipe,
-                  boolean do_flip,
-                  struct pipe_surface *dst,
-                  unsigned dst_x, unsigned dst_y,
-                  struct pipe_surface *src,
-                  unsigned src_x, unsigned src_y, 
-                  unsigned w, unsigned h);
+util_resource_copy_region(struct pipe_context *pipe,
+                          struct pipe_resource *dst,
+                          struct pipe_subresource subdst,
+                          unsigned dst_x, unsigned dst_y, unsigned dst_z,
+                          struct pipe_resource *src,
+                          struct pipe_subresource subsrc,
+                          unsigned src_x, unsigned src_y, unsigned src_z,
+                          unsigned w, unsigned h);
 
 extern void
-util_surface_fill(struct pipe_context *pipe,
-                  struct pipe_surface *dst,
-                  unsigned dstx, unsigned dsty,
-                  unsigned width, unsigned height, unsigned value);
+util_resource_fill_region(struct pipe_context *pipe,
+                          struct pipe_resource *dst,
+                          struct pipe_subresource subdst,
+                          unsigned dstx, unsigned dsty, unsigned dstz,
+                          unsigned width, unsigned height, unsigned value);
 
 
 

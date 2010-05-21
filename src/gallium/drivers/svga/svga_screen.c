@@ -290,16 +290,20 @@ svga_translate_format_cap(enum pipe_format format)
 
 static boolean
 svga_is_format_supported( struct pipe_screen *screen,
-                          enum pipe_format format, 
+                          enum pipe_format format,
                           enum pipe_texture_target target,
-                          unsigned tex_usage, 
+                          unsigned sample_count,
+                          unsigned tex_usage,
                           unsigned geom_flags )
 {
    struct svga_winsys_screen *sws = svga_screen(screen)->sws;
    SVGA3dDevCapIndex index;
    SVGA3dDevCapResult result;
-   
+
    assert(tex_usage);
+
+   if (sample_count > 1)
+      return FALSE;
 
    /* Override host capabilities */
    if (tex_usage & PIPE_BIND_RENDER_TARGET) {

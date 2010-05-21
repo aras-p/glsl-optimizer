@@ -74,7 +74,7 @@ st_texture_create(struct st_context *st,
        _mesa_lookup_enum_by_nr(format), last_level);
 
    assert(format);
-   assert(screen->is_format_supported(screen, format, target, 
+   assert(screen->is_format_supported(screen, format, target, 0,
                                       PIPE_BIND_SAMPLER_VIEW, 0));
 
    memset(&pt, 0, sizeof(pt));
@@ -282,18 +282,20 @@ st_texture_image_copy(struct pipe_context *pipe,
                       struct pipe_resource *src, GLuint srcLevel,
                       GLuint face)
 {
-   struct pipe_screen *screen = pipe->screen;
    GLuint width = u_minify(dst->width0, dstLevel); 
    GLuint height = u_minify(dst->height0, dstLevel); 
    GLuint depth = u_minify(dst->depth0, dstLevel); 
-   struct pipe_surface *src_surface;
-   struct pipe_surface *dst_surface;
+   struct pipe_subresource dstsub, srcsub;
    GLuint i;
 
    assert(u_minify(src->width0, srcLevel) == width);
    assert(u_minify(src->height0, srcLevel) == height);
    assert(u_minify(src->depth0, srcLevel) == depth);
 
+   dstsub.face = face;
+   dstsub.level = dstLevel;
+   srcsub.face = face;
+   srcsub.level = srcLevel;
    /* Loop over 3D image slices */
    for (i = 0; i < depth; i++) {
 
@@ -301,21 +303,14 @@ st_texture_image_copy(struct pipe_context *pipe,
          print_center_pixel(pipe, src);
       }
 
-      dst_surface = screen->get_tex_surface(screen, dst, face, dstLevel, i,
-                                            PIPE_BIND_BLIT_DESTINATION);
-
-      src_surface = screen->get_tex_surface(screen, src, face, srcLevel, i,
-                                            PIPE_BIND_BLIT_SOURCE);
-
-      pipe->surface_copy(pipe,
-                         dst_surface,
-                         0, 0, /* destX, Y */
-                         src_surface,
-                         0, 0, /* srcX, Y */
-                         width, height);
-
-      pipe_surface_reference(&src_surface, NULL);
-      pipe_surface_reference(&dst_surface, NULL);
+      pipe->resource_copy_region(pipe,
+                                 dst,
+                                 dstsub,
+                                 0, 0, i,/* destX, Y, Z */
+                                 src,
+                                 srcsub,
+                                 0, 0, i,/* srcX, Y, Z */
+                                 width, height);
    }
 }
 

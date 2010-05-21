@@ -147,9 +147,6 @@ resources might be created and handled quite differently.
 * ``PIPE_BIND_VERTEX_BUFFER``: A vertex buffer.
 * ``PIPE_BIND_INDEX_BUFFER``: An vertex index/element buffer.
 * ``PIPE_BIND_CONSTANT_BUFFER``: A buffer of shader constants.
-* ``PIPE_BIND_BLIT_SOURCE``: A blit source, as given to surface_copy.
-* ``PIPE_BIND_BLIT_DESTINATION``: A blit destination, as given to surface_copy
-  and surface_fill.
 * ``PIPE_BIND_TRANSFER_WRITE``: A transfer object which will be written to.
 * ``PIPE_BIND_TRANSFER_READ``: A transfer object which will be read from.
 * ``PIPE_BIND_CUSTOM``:
@@ -236,12 +233,14 @@ Determine if a resource in the given format can be used in a specific manner.
 
 **target** one of the PIPE_TEXTURE_x flags
 
+**sample_count** the number of samples. 0 and 1 mean no multisampling,
+the maximum allowed legal value is 32.
+
 **bindings** is a bitmask of :ref:`PIPE_BIND` flags.
 
 **geom_flags** is a bitmask of PIPE_TEXTURE_GEOM_x flags.
 
 Returns TRUE if all usages can be satisfied.
-
 
 .. _resource_create:
 

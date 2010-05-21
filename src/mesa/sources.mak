@@ -182,6 +182,7 @@ STATETRACKER_SOURCES = \
 	state_tracker/st_atom_constbuf.c \
 	state_tracker/st_atom_depth.c \
 	state_tracker/st_atom_framebuffer.c \
+	state_tracker/st_atom_msaa.c \
 	state_tracker/st_atom_pixeltransfer.c \
 	state_tracker/st_atom_sampler.c \
 	state_tracker/st_atom_scissor.c \

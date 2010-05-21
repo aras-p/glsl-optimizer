@@ -220,9 +220,10 @@ brw_get_paramf(struct pipe_screen *screen, enum pipe_cap param)
 
 static boolean
 brw_is_format_supported(struct pipe_screen *screen,
-                         enum pipe_format format, 
+                         enum pipe_format format,
                          enum pipe_texture_target target,
-                         unsigned tex_usage, 
+                         unsigned sample_count,
+                         unsigned tex_usage,
                          unsigned geom_flags)
 {
    static const enum pipe_format tex_supported[] = {
@@ -277,6 +278,9 @@ brw_is_format_supported(struct pipe_screen *screen,
    };
    const enum pipe_format *list;
    uint i;
+
+   if (sample_count > 1)
+      return FALSE;
 
    if (tex_usage & PIPE_BIND_DEPTH_STENCIL)
       list = depth_supported;

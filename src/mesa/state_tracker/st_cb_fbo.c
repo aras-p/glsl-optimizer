@@ -72,7 +72,7 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    if (strb->format != PIPE_FORMAT_NONE)
       format = strb->format;
    else
-      format = st_choose_renderbuffer_format(screen, internalFormat);
+      format = st_choose_renderbuffer_format(screen, internalFormat, rb->NumSamples);
       
    /* init renderbuffer fields */
    strb->Base.Width  = width;
@@ -442,7 +442,8 @@ st_validate_attachment(struct pipe_screen *screen,
       return GL_FALSE;
 
    return screen->is_format_supported(screen, stObj->pt->format,
-				      PIPE_TEXTURE_2D, bindings, 0);
+                                      PIPE_TEXTURE_2D,
+                                      stObj->pt->nr_samples, bindings, 0);
 }
 
 
@@ -545,6 +546,7 @@ void st_init_fbo_functions(struct dd_function_table *functions)
    functions->ReadBuffer = st_ReadBuffer;
 }
 
+/* XXX unused ? */
 struct pipe_sampler_view *
 st_get_renderbuffer_sampler_view(struct st_renderbuffer *rb,
                                  struct pipe_context *pipe)

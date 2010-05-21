@@ -125,6 +125,19 @@ failover_set_clip_state( struct pipe_context *pipe,
    failover->hw->set_clip_state( failover->hw, clip );
 }
 
+static void
+failover_set_sample_mask(struct pipe_context *pipe,
+                         unsigned sample_mask)
+{
+   struct failover_context *failover = failover_context(pipe);
+
+   failover->sample_mask = sample_mask;
+   failover->dirty |= FO_NEW_SAMPLE_MASK;
+   failover->sw->set_sample_mask( failover->sw, sample_mask );
+   failover->hw->set_sample_mask( failover->hw, sample_mask );
+
+}
+
 
 static void *
 failover_create_depth_stencil_state(struct pipe_context *pipe,
@@ -614,6 +627,7 @@ failover_init_state_functions( struct failover_context *failover )
    failover->pipe.set_blend_color = failover_set_blend_color;
    failover->pipe.set_stencil_ref = failover_set_stencil_ref;
    failover->pipe.set_clip_state = failover_set_clip_state;
+   failover->pipe.set_sample_mask = failover_set_sample_mask;
    failover->pipe.set_framebuffer_state = failover_set_framebuffer_state;
    failover->pipe.set_polygon_stipple = failover_set_polygon_stipple;
    failover->pipe.set_scissor_state = failover_set_scissor_state;

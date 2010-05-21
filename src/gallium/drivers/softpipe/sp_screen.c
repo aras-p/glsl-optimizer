@@ -178,8 +178,9 @@ softpipe_get_paramf(struct pipe_screen *screen, enum pipe_cap param)
  */
 static boolean
 softpipe_is_format_supported( struct pipe_screen *screen,
-                              enum pipe_format format, 
+                              enum pipe_format format,
                               enum pipe_texture_target target,
+                              unsigned sample_count,
                               unsigned bind,
                               unsigned geom_flags )
 {
@@ -193,6 +194,9 @@ softpipe_is_format_supported( struct pipe_screen *screen,
 
    format_desc = util_format_description(format);
    if (!format_desc)
+      return FALSE;
+
+   if (sample_count > 1)
       return FALSE;
 
    if (bind & (PIPE_BIND_DISPLAY_TARGET |

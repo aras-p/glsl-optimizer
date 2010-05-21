@@ -479,6 +479,12 @@ nvfx_set_clip_state(struct pipe_context *pipe,
 }
 
 static void
+nvfx_set_sample_mask(struct pipe_context *pipe,
+		     unsigned sample_mask)
+{
+}
+
+static void
 nvfx_set_constant_buffer(struct pipe_context *pipe, uint shader, uint index,
 			 struct pipe_resource *buf )
 {
@@ -617,6 +623,7 @@ nvfx_init_state_functions(struct nvfx_context *nvfx)
 	nvfx->pipe.set_blend_color = nvfx_set_blend_color;
         nvfx->pipe.set_stencil_ref = nvfx_set_stencil_ref;
 	nvfx->pipe.set_clip_state = nvfx_set_clip_state;
+	nvfx->pipe.set_sample_mask = nvfx_set_sample_mask;
 	nvfx->pipe.set_constant_buffer = nvfx_set_constant_buffer;
 	nvfx->pipe.set_framebuffer_state = nvfx_set_framebuffer_state;
 	nvfx->pipe.set_polygon_stipple = nvfx_set_polygon_stipple;

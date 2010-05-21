@@ -148,6 +148,11 @@ llvmpipe_set_stencil_ref(struct pipe_context *pipe,
    llvmpipe->dirty |= LP_NEW_DEPTH_STENCIL_ALPHA;
 }
 
+static void
+llvmpipe_set_sample_mask(struct pipe_context *pipe,
+                         unsigned sample_mask)
+{
+}
 
 void
 llvmpipe_init_blend_funcs(struct llvmpipe_context *llvmpipe)
@@ -163,4 +168,5 @@ llvmpipe_init_blend_funcs(struct llvmpipe_context *llvmpipe)
    llvmpipe->pipe.set_blend_color = llvmpipe_set_blend_color;
 
    llvmpipe->pipe.set_stencil_ref = llvmpipe_set_stencil_ref;
+   llvmpipe->pipe.set_sample_mask = llvmpipe_set_sample_mask;
 }

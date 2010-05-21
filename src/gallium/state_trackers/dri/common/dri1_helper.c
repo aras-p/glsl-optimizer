@@ -93,7 +93,7 @@ dri1_get_pipe_surface(struct dri_drawable *drawable, struct pipe_resource *ptex)
       pipe_surface_reference(&drawable->dri1_surface, NULL);
 
       drawable->dri1_surface = pipe_screen->get_tex_surface(pipe_screen,
-            ptex, 0, 0, 0, PIPE_BIND_BLIT_SOURCE);
+            ptex, 0, 0, 0, 0/* no bind flag???*/);
 
       psurf = drawable->dri1_surface;
    }

@@ -130,17 +130,18 @@ class TextureColorSampleTest(TestCase):
         zslice = self.zslice
         minz = 0.0
         maxz = 1.0
-        
+
         bind = PIPE_BIND_SAMPLER_VIEW
         geom_flags = 0
+        sample_count = 0
         if width != height:
             geom_flags |= PIPE_TEXTURE_GEOM_NON_SQUARE
         if not is_pot(width) or not is_pot(height) or not is_pot(depth):
             geom_flags |= PIPE_TEXTURE_GEOM_NON_POWER_OF_TWO
-        
-        if not dev.is_format_supported(format, target, bind, geom_flags):
+
+        if not dev.is_format_supported(format, target, sample_count, bind, geom_flags):
             raise TestSkip
-        
+
         # disabled blending/masking
         blend = Blend()
         blend.rt[0].rgb_src_factor = PIPE_BLENDFACTOR_ONE
@@ -348,17 +349,18 @@ class TextureDepthSampleTest(TestCase):
         zslice = self.zslice
         minz = 0.0
         maxz = 1.0
-        
+
         bind = PIPE_BIND_SAMPLER_VIEW
         geom_flags = 0
+        sample_count = 0
         if width != height:
             geom_flags |= PIPE_TEXTURE_GEOM_NON_SQUARE
         if not is_pot(width) or not is_pot(height) or not is_pot(depth):
             geom_flags |= PIPE_TEXTURE_GEOM_NON_POWER_OF_TWO
-        
-        if not dev.is_format_supported(format, target, bind, geom_flags):
+
+        if not dev.is_format_supported(format, target, sample_count, bind, geom_flags):
             raise TestSkip
-        
+
         # disabled blending/masking
         blend = Blend()
         blend.rt[0].rgb_src_factor = PIPE_BLENDFACTOR_ONE

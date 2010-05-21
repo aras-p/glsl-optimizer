@@ -63,6 +63,9 @@ failover_state_emit( struct failover_context *failover )
    if (failover->dirty & FO_NEW_CLIP)
       failover->sw->set_clip_state( failover->sw, &failover->clip );
 
+   if (failover->dirty & FO_NEW_SAMPLE_MASK)
+      failover->sw->set_sample_mask( failover->sw, failover->sample_mask );
+
    if (failover->dirty & FO_NEW_DEPTH_STENCIL)
       failover->sw->bind_depth_stencil_alpha_state( failover->sw,
                                                     failover->depth_stencil->sw_state );

@@ -502,12 +502,9 @@ nv04_surface_wrap_for_render(struct pipe_screen *pscreen,
 	struct nv04_surface* temp_ns;
 	int temp_flags;
 
-	temp_flags = (ns->base.usage |
-		      PIPE_BIND_BLIT_SOURCE |
-		      PIPE_BIND_BLIT_DESTINATION);
+	temp_flags = ns->base.usage;
 
-	ns->base.usage = (PIPE_BIND_BLIT_SOURCE |
-			 PIPE_BIND_BLIT_DESTINATION);
+	ns->base.usage = 0;
 
 	memset(&templ, 0, sizeof(templ));
 	templ.format = ns->base.texture->format;
@@ -526,7 +523,7 @@ nv04_surface_wrap_for_render(struct pipe_screen *pscreen,
 	temp_ns = (struct nv04_surface*)pscreen->get_tex_surface(pscreen, temp_tex, 0, 0, 0, temp_flags);
 	temp_ns->backing = ns;
 
-	if(ns->base.usage & PIPE_BIND_BLIT_SOURCE)
+	if(1) /* hmm */
 		eng2d->copy(eng2d, &temp_ns->backing->base,
 			    0, 0, &ns->base,
 			    0, 0, ns->base.width, ns->base.height);

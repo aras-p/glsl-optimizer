@@ -41,15 +41,41 @@
  */
 static void
 i915_surface_copy(struct pipe_context *pipe,
-		  struct pipe_surface *dst,
-		  unsigned dstx, unsigned dsty,
-		  struct pipe_surface *src,
-		  unsigned srcx, unsigned srcy, unsigned width, unsigned height)
+		  struct pipe_resource *dst, struct pipe_subresource subdst,
+		  unsigned dstx, unsigned dsty, unsigned dstz,
+		  struct pipe_resource *src, struct pipe_subresource subsrc,
+		  unsigned srcx, unsigned srcy, unsigned srcz,
+		  unsigned width, unsigned height)
 {
-   struct i915_texture *dst_tex = i915_texture(dst->texture);
-   struct i915_texture *src_tex = i915_texture(src->texture);
+   struct i915_texture *dst_tex = i915_texture(dst);
+   struct i915_texture *src_tex = i915_texture(src);
    struct pipe_resource *dpt = &dst_tex->b.b;
    struct pipe_resource *spt = &src_tex->b.b;
+   unsigned dst_offset, src_offset;  /* in bytes */
+
+   if (dst->target == PIPE_TEXTURE_CUBE) {
+      dst_offset = dst_tex->image_offset[subdst.level][subdst.face];
+   }
+   else if (dst->target == PIPE_TEXTURE_3D) {
+      dst_offset = dst_tex->image_offset[subdst.level][dstz];
+   }
+   else {
+      dst_offset = dst_tex->image_offset[subdst.level][0];
+      assert(subdst.face == 0);
+      assert(dstz == 0);
+   }
+   if (src->target == PIPE_TEXTURE_CUBE) {
+      src_offset = src_tex->image_offset[subsrc.level][subsrc.face];
+   }
+   else if (src->target == PIPE_TEXTURE_3D) {
+      src_offset = src_tex->image_offset[subsrc.level][srcz];
+   }
+   else {
+      src_offset = src_tex->image_offset[subsrc.level][0];
+      assert(subsrc.face == 0);
+      assert(srcz == 0);
+   }
+
 
    assert( dst != src );
    assert( util_format_get_blocksize(dpt->format) == util_format_get_blocksize(spt->format) );
@@ -59,22 +85,34 @@ i915_surface_copy(struct pipe_context *pipe,
    assert( util_format_get_blockheight(dpt->format) == 1 );
 
    i915_copy_blit( i915_context(pipe),
-                   FALSE,
                    util_format_get_blocksize(dpt->format),
-                   (unsigned short) src_tex->stride, src_tex->buffer, src->offset,
-                   (unsigned short) dst_tex->stride, dst_tex->buffer, dst->offset,
+                   (unsigned short) src_tex->stride, src_tex->buffer, src_offset,
+                   (unsigned short) dst_tex->stride, dst_tex->buffer, dst_offset,
                    (short) srcx, (short) srcy, (short) dstx, (short) dsty, (short) width, (short) height );
 }
 
 
 static void
 i915_surface_fill(struct pipe_context *pipe,
-		  struct pipe_surface *dst,
-		  unsigned dstx, unsigned dsty,
+		  struct pipe_resource *dst, struct pipe_subresource subdst,
+		  unsigned dstx, unsigned dsty, unsigned dstz,
 		  unsigned width, unsigned height, unsigned value)
 {
-   struct i915_texture *tex = i915_texture(dst->texture);
+   struct i915_texture *tex = i915_texture(dst);
    struct pipe_resource *pt = &tex->b.b;
+   unsigned dst_offset;  /* in bytes */
+
+   if (dst->target == PIPE_TEXTURE_CUBE) {
+      dst_offset = tex->image_offset[subdst.level][subdst.face];
+   }
+   else if (dst->target == PIPE_TEXTURE_3D) {
+      dst_offset = tex->image_offset[subdst.level][dstz];
+   }
+   else {
+      dst_offset = tex->image_offset[subdst.level][0];
+      assert(subdst.face == 0);
+      assert(dstz == 0);
+   }
 
    assert(util_format_get_blockwidth(pt->format) == 1);
    assert(util_format_get_blockheight(pt->format) == 1);
@@ -82,7 +120,7 @@ i915_surface_fill(struct pipe_context *pipe,
    i915_fill_blit( i915_context(pipe),
                    util_format_get_blocksize(pt->format),
                    (unsigned short) tex->stride,
-                   tex->buffer, dst->offset,
+                   tex->buffer, dst_offset,
                    (short) dstx, (short) dsty,
                    (short) width, (short) height,
                    value );
@@ -137,13 +175,11 @@ i915_tex_surface_destroy(struct pipe_surface *surf)
 }
 
 
-/* Probably going to make blits work on textures rather than surfaces.
- */
 void
 i915_init_surface_functions(struct i915_context *i915)
 {
-   i915->base.surface_copy = i915_surface_copy;
-   i915->base.surface_fill = i915_surface_fill;
+   i915->base.resource_copy_region = i915_surface_copy;
+   i915->base.resource_fill_region = i915_surface_fill;
 }
 
 /* No good reason for these to be in the screen.

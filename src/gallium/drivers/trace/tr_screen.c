@@ -133,6 +133,7 @@ static boolean
 trace_screen_is_format_supported(struct pipe_screen *_screen,
                                  enum pipe_format format,
                                  enum pipe_texture_target target,
+                                 unsigned sample_count,
                                  unsigned tex_usage,
                                  unsigned geom_flags)
 {
@@ -145,10 +146,12 @@ trace_screen_is_format_supported(struct pipe_screen *_screen,
    trace_dump_arg(ptr, screen);
    trace_dump_arg(format, format);
    trace_dump_arg(int, target);
+   trace_dump_arg(uint, sample_count);
    trace_dump_arg(uint, tex_usage);
    trace_dump_arg(uint, geom_flags);
 
-   result = screen->is_format_supported(screen, format, target, tex_usage, geom_flags);
+   result = screen->is_format_supported(screen, format, target, sample_count,
+                                        tex_usage, geom_flags);
 
    trace_dump_ret(bool, result);
 

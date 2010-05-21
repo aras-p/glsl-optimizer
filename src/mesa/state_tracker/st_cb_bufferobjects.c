@@ -179,9 +179,7 @@ st_bufferobj_data(GLcontext *ctx,
    switch(target) {
    case GL_PIXEL_PACK_BUFFER_ARB:
    case GL_PIXEL_UNPACK_BUFFER_ARB:
-      buffer_usage = (PIPE_BIND_RENDER_TARGET |
-		      PIPE_BIND_BLIT_SOURCE |
-		      PIPE_BIND_BLIT_DESTINATION);
+      buffer_usage = PIPE_BIND_RENDER_TARGET;
       break;
    case GL_ARRAY_BUFFER_ARB:
       buffer_usage = PIPE_BIND_VERTEX_BUFFER;

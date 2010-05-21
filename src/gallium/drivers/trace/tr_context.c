@@ -764,6 +764,22 @@ trace_context_set_clip_state(struct pipe_context *_pipe,
    trace_dump_call_end();
 }
 
+static INLINE void
+trace_context_set_sample_mask(struct pipe_context *_pipe,
+                              unsigned sample_mask)
+{
+   struct trace_context *tr_ctx = trace_context(_pipe);
+   struct pipe_context *pipe = tr_ctx->pipe;
+
+   trace_dump_call_begin("pipe_context", "set_sample_mask");
+
+   trace_dump_arg(ptr, pipe);
+   trace_dump_arg(uint, sample_mask);
+
+   pipe->set_sample_mask(pipe, sample_mask);
+
+   trace_dump_call_end();
+}
 
 static INLINE void
 trace_context_set_constant_buffer(struct pipe_context *_pipe,
@@ -1029,61 +1045,72 @@ trace_context_set_vertex_buffers(struct pipe_context *_pipe,
 
 
 static INLINE void
-trace_context_surface_copy(struct pipe_context *_pipe,
-                           struct pipe_surface *dest,
-                           unsigned destx, unsigned desty,
-                           struct pipe_surface *src,
-                           unsigned srcx, unsigned srcy,
-                           unsigned width, unsigned height)
+trace_context_resource_copy_region(struct pipe_context *_pipe,
+                                   struct pipe_resource *dst,
+                                   struct pipe_subresource subdst,
+                                   unsigned dstx, unsigned dsty, unsigned dstz,
+                                   struct pipe_resource *src,
+                                   struct pipe_subresource subsrc,
+                                   unsigned srcx, unsigned srcy, unsigned srcz,
+                                   unsigned width, unsigned height)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
    struct pipe_context *pipe = tr_ctx->pipe;
 
-   dest = trace_surface_unwrap(tr_ctx, dest);
-   src = trace_surface_unwrap(tr_ctx, src);
+   dst = trace_resource_unwrap(tr_ctx, dst);
+   src = trace_resource_unwrap(tr_ctx, src);
 
-   trace_dump_call_begin("pipe_context", "surface_copy");
+   trace_dump_call_begin("pipe_context", "resource_copy_region");
 
    trace_dump_arg(ptr, pipe);
-   trace_dump_arg(ptr, dest);
-   trace_dump_arg(uint, destx);
-   trace_dump_arg(uint, desty);
+   trace_dump_arg(ptr, dst);
+   trace_dump_arg_struct(subresource, subdst);
+   trace_dump_arg(uint, dstx);
+   trace_dump_arg(uint, dsty);
+   trace_dump_arg(uint, dstz);
    trace_dump_arg(ptr, src);
+   trace_dump_arg_struct(subresource, subsrc);
    trace_dump_arg(uint, srcx);
    trace_dump_arg(uint, srcy);
+   trace_dump_arg(uint, srcz);
    trace_dump_arg(uint, width);
    trace_dump_arg(uint, height);
 
-   pipe->surface_copy(pipe,
-                      dest, destx, desty,
-                      src, srcx, srcy, width, height);
+   pipe->resource_copy_region(pipe,
+                              dst, subdst, dstx, dsty, dstz,
+                              src, subsrc, srcx, srcy, srcz, width, height);
 
    trace_dump_call_end();
 }
 
 
 static INLINE void
-trace_context_surface_fill(struct pipe_context *_pipe,
-                           struct pipe_surface *dst,
-                           unsigned dstx, unsigned dsty,
-                           unsigned width, unsigned height,
-                           unsigned value)
+trace_context_resource_fill_region(struct pipe_context *_pipe,
+                                   struct pipe_resource *dst,
+                                   struct pipe_subresource subdst,
+                                   unsigned dstx, unsigned dsty, unsigned dstz,
+                                   unsigned width, unsigned height,
+                                   unsigned value)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
    struct pipe_context *pipe = tr_ctx->pipe;
 
-   dst = trace_surface_unwrap(tr_ctx, dst);
+   dst = trace_resource_unwrap(tr_ctx, dst);
 
-   trace_dump_call_begin("pipe_context", "surface_fill");
+   trace_dump_call_begin("pipe_context", "resource_fill_region");
 
    trace_dump_arg(ptr, pipe);
    trace_dump_arg(ptr, dst);
+   trace_dump_arg_struct(subresource, subdst);
    trace_dump_arg(uint, dstx);
    trace_dump_arg(uint, dsty);
+   trace_dump_arg(uint, dstz);
    trace_dump_arg(uint, width);
    trace_dump_arg(uint, height);
+   trace_dump_arg(uint, value);
 
-   pipe->surface_fill(pipe, dst, dstx, dsty, width, height, value);
+   pipe->resource_fill_region(pipe, dst, subdst, dstx, dsty, dstz,
+                              width, height, value);
 
    trace_dump_call_end();
 }
@@ -1412,6 +1439,7 @@ trace_context_create(struct trace_screen *tr_scr,
    tr_ctx->base.set_blend_color = trace_context_set_blend_color;
    tr_ctx->base.set_stencil_ref = trace_context_set_stencil_ref;
    tr_ctx->base.set_clip_state = trace_context_set_clip_state;
+   tr_ctx->base.set_sample_mask = trace_context_set_sample_mask;
    tr_ctx->base.set_constant_buffer = trace_context_set_constant_buffer;
    tr_ctx->base.set_framebuffer_state = trace_context_set_framebuffer_state;
    tr_ctx->base.set_polygon_stipple = trace_context_set_polygon_stipple;
@@ -1422,10 +1450,8 @@ trace_context_create(struct trace_screen *tr_scr,
    tr_ctx->base.create_sampler_view = trace_create_sampler_view;
    tr_ctx->base.sampler_view_destroy = trace_sampler_view_destroy;
    tr_ctx->base.set_vertex_buffers = trace_context_set_vertex_buffers;
-   if (pipe->surface_copy)
-      tr_ctx->base.surface_copy = trace_context_surface_copy;
-   if (pipe->surface_fill)
-      tr_ctx->base.surface_fill = trace_context_surface_fill;
+   tr_ctx->base.resource_copy_region = trace_context_resource_copy_region;
+   tr_ctx->base.resource_fill_region = trace_context_resource_fill_region;
    tr_ctx->base.clear = trace_context_clear;
    tr_ctx->base.flush = trace_context_flush;
    tr_ctx->base.is_resource_referenced = trace_is_resource_referenced;

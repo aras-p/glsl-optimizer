@@ -148,6 +148,9 @@ void softpipe_set_stencil_ref( struct pipe_context *pipe,
 void softpipe_set_clip_state( struct pipe_context *,
                               const struct pipe_clip_state * );
 
+void softpipe_set_sample_mask( struct pipe_context *,
+                               unsigned sample_mask );
+
 void softpipe_set_constant_buffer(struct pipe_context *,
                                   uint shader, uint index,
                                   struct pipe_resource *buf);

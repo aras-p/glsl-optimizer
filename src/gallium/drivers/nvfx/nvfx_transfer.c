@@ -40,11 +40,13 @@ static unsigned nvfx_transfer_bind_flags( unsigned transfer_usage )
 {
 	unsigned bind = 0;
 
+#if 0
 	if (transfer_usage & PIPE_TRANSFER_WRITE)
 		bind |= PIPE_BIND_BLIT_SOURCE;
 
 	if (transfer_usage & PIPE_TRANSFER_READ)
 		bind |= PIPE_BIND_BLIT_DESTINATION;
+#endif
 
 	return bind;
 }
@@ -128,7 +130,7 @@ nvfx_miptree_transfer_new(struct pipe_context *pipe,
 
 		src = pscreen->get_tex_surface(pscreen, pt,
 	                                       sr.face, sr.level, box->z,
-	                                       PIPE_BIND_BLIT_SOURCE);
+	                                       0 /*PIPE_BIND_BLIT_SOURCE*/);
 
 		/* TODO: Check if SIFM can deal with x,y,w,h when swizzling */
 		/* TODO: Check if SIFM can un-swizzle */
@@ -160,7 +162,7 @@ nvfx_miptree_transfer_del(struct pipe_context *pipe,
 	                                       ptx->sr.face,
 					       ptx->sr.level,
 					       ptx->box.z,
-	                                       PIPE_BIND_BLIT_DESTINATION);
+	                                       0 /*PIPE_BIND_BLIT_DESTINATION*/);
 
 		/* TODO: Check if SIFM can deal with x,y,w,h when swizzling */
 		nvscreen->eng2d->copy(nvscreen->eng2d,

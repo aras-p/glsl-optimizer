@@ -161,9 +161,10 @@ i915_get_paramf(struct pipe_screen *screen, enum pipe_cap param)
 
 static boolean
 i915_is_format_supported(struct pipe_screen *screen,
-                         enum pipe_format format, 
+                         enum pipe_format format,
                          enum pipe_texture_target target,
-                         unsigned tex_usage, 
+                         unsigned sample_count,
+                         unsigned tex_usage,
                          unsigned geom_flags)
 {
    static const enum pipe_format tex_supported[] = {
@@ -183,17 +184,25 @@ i915_is_format_supported(struct pipe_screen *screen,
       PIPE_FORMAT_Z24_UNORM_S8_USCALED,
       PIPE_FORMAT_NONE  /* list terminator */
    };
-   static const enum pipe_format surface_supported[] = {
+   static const enum pipe_format render_supported[] = {
       PIPE_FORMAT_B8G8R8A8_UNORM,
       PIPE_FORMAT_B5G6R5_UNORM,
+      PIPE_FORMAT_NONE  /* list terminator */
+   };
+   static const enum pipe_format depth_supported[] = {
       PIPE_FORMAT_Z24_UNORM_S8_USCALED,
       PIPE_FORMAT_NONE  /* list terminator */
    };
    const enum pipe_format *list;
    uint i;
 
-   if(tex_usage & PIPE_BIND_RENDER_TARGET)
-      list = surface_supported;
+   if (sample_count > 1)
+      return FALSE;
+
+   if(tex_usage & PIPE_BIND_DEPTH_STENCIL)
+      list = depth_supported;
+   else if (tex_usage & PIPE_BIND_RENDER_TARGET)
+      list = render_supported;
    else
       list = tex_supported;
 

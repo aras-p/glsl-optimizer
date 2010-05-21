@@ -437,10 +437,12 @@ xorg_dri2_init(ScreenPtr pScreen)
     ms->d_depth_bits_last =
 	 ms->screen->is_format_supported(ms->screen, PIPE_FORMAT_Z24X8_UNORM,
 					 PIPE_TEXTURE_2D,
+					 0,
 					 PIPE_BIND_DEPTH_STENCIL, 0);
     ms->ds_depth_bits_last =
 	 ms->screen->is_format_supported(ms->screen, PIPE_FORMAT_Z24_UNORM_S8_USCALED,
 					 PIPE_TEXTURE_2D,
+					 0,
 					 PIPE_BIND_DEPTH_STENCIL, 0);
 
     return DRI2ScreenInit(pScreen, &dri2info);

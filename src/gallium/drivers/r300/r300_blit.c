@@ -117,25 +117,36 @@ static void r300_hw_copy(struct pipe_context* pipe,
 
 /* Copy a block of pixels from one surface to another. */
 void r300_surface_copy(struct pipe_context* pipe,
-                       struct pipe_surface* dst,
-                       unsigned dstx, unsigned dsty,
-                       struct pipe_surface* src,
-                       unsigned srcx, unsigned srcy,
+                       struct pipe_resource* dst,
+                       struct pipe_subresource subdst,
+                       unsigned dstx, unsigned dsty, unsigned dstz,
+                       struct pipe_resource* src,
+                       struct pipe_subresource subsrc,
+                       unsigned srcx, unsigned srcy, unsigned srcz,
                        unsigned width, unsigned height)
 {
-    enum pipe_format old_format = dst->texture->format;
+    struct pipe_screen *screen = pipe->screen;
+    enum pipe_format old_format = dst->format;
     enum pipe_format new_format = old_format;
+    struct pipe_surface *srcsurf, *dstsurf;
+    unsigned bind;
 
-    if (dst->texture->format != src->texture->format) {
+    if (util_format_is_depth_or_stencil(dst->format))
+       bind = PIPE_BIND_DEPTH_STENCIL;
+    else
+       bind = PIPE_BIND_RENDER_TARGET;
+
+    if (dst->format != src->format) {
         debug_printf("r300: Implementation error: Format mismatch in %s\n"
             "    : src: %s dst: %s\n", __FUNCTION__,
-            util_format_short_name(src->texture->format),
-            util_format_short_name(dst->texture->format));
+            util_format_short_name(src->format),
+            util_format_short_name(dst->format));
         debug_assert(0);
     }
 
     if (!pipe->screen->is_format_supported(pipe->screen,
-                                           old_format, src->texture->target,
+                                           old_format, src->target,
+                                           src->nr_samples,
                                            PIPE_BIND_RENDER_TARGET |
                                            PIPE_BIND_SAMPLER_VIEW, 0) &&
         util_format_is_plain(old_format)) {
@@ -164,36 +175,64 @@ void r300_surface_copy(struct pipe_context* pipe,
         src->format = new_format;
 
         r300_texture_reinterpret_format(pipe->screen,
-                                        dst->texture, new_format);
+                                        dst, new_format);
         r300_texture_reinterpret_format(pipe->screen,
-                                        src->texture, new_format);
+                                        src, new_format);
     }
 
-    r300_hw_copy(pipe, dst, dstx, dsty, src, srcx, srcy, width, height);
+    srcsurf = screen->get_tex_surface(screen, src,
+                                      subsrc.face, subsrc.level, srcz,
+                                      PIPE_BIND_SAMPLER_VIEW);
+
+    dstsurf = screen->get_tex_surface(screen, dst,
+                                      subdst.face, subdst.level, dstz,
+                                      bind);
+
+    r300_hw_copy(pipe, dstsurf, dstx, dsty, srcsurf, srcx, srcy, width, height);
+
+    pipe_surface_reference(&srcsurf, NULL);
+    pipe_surface_reference(&dstsurf, NULL);
 
     if (old_format != new_format) {
         dst->format = old_format;
         src->format = old_format;
 
         r300_texture_reinterpret_format(pipe->screen,
-                                        dst->texture, old_format);
+                                        dst, old_format);
         r300_texture_reinterpret_format(pipe->screen,
-                                        src->texture, old_format);
+                                        src, old_format);
     }
 }
 
 /* Fill a region of a surface with a constant value. */
 void r300_surface_fill(struct pipe_context* pipe,
-                       struct pipe_surface* dst,
-                       unsigned dstx, unsigned dsty,
+                       struct pipe_resource* dst,
+                       struct pipe_subresource subdst,
+                       unsigned dstx, unsigned dsty, unsigned dstz,
                        unsigned width, unsigned height,
                        unsigned value)
 {
+    struct pipe_screen *screen = pipe->screen;
     struct r300_context* r300 = r300_context(pipe);
+    struct pipe_surface *dstsurf;
+    unsigned bind;
+
+    if (util_format_is_depth_or_stencil(dst->format))
+       bind = PIPE_BIND_DEPTH_STENCIL;
+    else
+       bind = PIPE_BIND_RENDER_TARGET;
+
+    dstsurf = screen->get_tex_surface(screen, dst,
+                                      subdst.face,
+                                      subdst.level,
+                                      dstz,
+                                      bind);
 
     r300_blitter_save_states(r300);
     util_blitter_save_framebuffer(r300->blitter, r300->fb_state.state);
 
     util_blitter_fill(r300->blitter,
-                      dst, dstx, dsty, width, height, value);
+                      dstsurf, dstx, dsty, width, height, value);
+
+    pipe_surface_reference(&dstsurf, NULL);
 }

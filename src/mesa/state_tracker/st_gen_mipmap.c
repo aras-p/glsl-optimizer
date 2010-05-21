@@ -83,7 +83,7 @@ st_render_mipmap(struct st_context *st,
    assert(target != GL_TEXTURE_3D); /* not done yet */
 
    /* check if we can render in the texture's format */
-   if (!screen->is_format_supported(screen, psv->format, psv->texture->target,
+   if (!screen->is_format_supported(screen, psv->format, psv->texture->target, 0,
                                     PIPE_BIND_RENDER_TARGET, 0)) {
       return FALSE;
    }
@@ -324,7 +324,11 @@ st_generate_mipmap(GLcontext *ctx, GLenum target,
    if (!pt)
       return;
 
-   /* find expected last mipmap level to generate */
+   /* not sure if this ultimately actually should work,
+      but we're not supporting multisampled textures yet. */
+   assert(pt->nr_samples < 2);
+
+   /* find expected last mipmap level to generate*/
    lastLevel = compute_num_levels(ctx, texObj, target) - 1;
 
    if (lastLevel == 0)

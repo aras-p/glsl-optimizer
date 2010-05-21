@@ -1,4 +1,5 @@
 #include "util/u_debug.h"
+#include "util/u_surface.h"
 
 #include "brw_resource.h"
 #include "brw_context.h"
@@ -37,6 +38,8 @@ brw_init_resource_functions(struct brw_context *brw )
    brw->base.transfer_unmap = u_transfer_unmap_vtbl;
    brw->base.transfer_destroy = u_transfer_destroy_vtbl;
    brw->base.transfer_inline_write = u_transfer_inline_write_vtbl;
+   brw->base.resource_copy_region = util_resource_copy_region;
+   brw->base.resource_fill_region = util_resource_fill_region;
 }
 
 void

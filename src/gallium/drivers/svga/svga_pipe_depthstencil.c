@@ -147,6 +147,12 @@ static void svga_set_stencil_ref( struct pipe_context *pipe,
    svga->dirty |= SVGA_NEW_STENCIL_REF;
 }
 
+static void
+svga_set_sample_mask(struct pipe_context *pipe,
+                     unsigned sample_mask)
+{
+}
+
 
 void svga_init_depth_stencil_functions( struct svga_context *svga )
 {
@@ -155,6 +161,7 @@ void svga_init_depth_stencil_functions( struct svga_context *svga )
    svga->pipe.delete_depth_stencil_alpha_state = svga_delete_depth_stencil_state;
 
    svga->pipe.set_stencil_ref = svga_set_stencil_ref;
+   svga->pipe.set_sample_mask = svga_set_sample_mask;
 }
 
 

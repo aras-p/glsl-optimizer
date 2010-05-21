@@ -407,24 +407,16 @@ egl_g3d_swap_buffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf)
 /**
  * Get the pipe surface of the given attachment of the native surface.
  */
-static struct pipe_surface *
-get_pipe_surface(struct native_display *ndpy, struct native_surface *nsurf,
-                 enum native_attachment natt,
-		 unsigned bind)
+static struct pipe_resource *
+get_pipe_resource(struct native_display *ndpy, struct native_surface *nsurf,
+                  enum native_attachment natt)
 {
    struct pipe_resource *textures[NUM_NATIVE_ATTACHMENTS];
-   struct pipe_surface *psurf;
 
    textures[natt] = NULL;
    nsurf->validate(nsurf, 1 << natt, NULL, textures, NULL, NULL);
-   if (!textures[natt])
-      return NULL;
 
-   psurf = ndpy->screen->get_tex_surface(ndpy->screen, textures[natt],
-         0, 0, 0, bind);
-   pipe_resource_reference(&textures[natt], NULL);
-
-   return psurf;
+   return textures[natt];
 }
 
 static EGLBoolean
@@ -437,7 +429,7 @@ egl_g3d_copy_buffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf,
    struct egl_g3d_config *gconf;
    struct native_surface *nsurf;
    struct pipe_screen *screen = gdpy->native->screen;
-   struct pipe_surface *psurf;
+   struct pipe_resource *ptex;
 
    if (!gsurf->render_texture)
       return EGL_TRUE;
@@ -466,22 +458,23 @@ egl_g3d_copy_buffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf,
          return EGL_FALSE;
    }
 
-   psurf = get_pipe_surface(gdpy->native, nsurf, NATIVE_ATTACHMENT_FRONT_LEFT,
-			    PIPE_BIND_BLIT_DESTINATION);
-   if (psurf) {
+   ptex = get_pipe_resource(gdpy->native, nsurf, NATIVE_ATTACHMENT_FRONT_LEFT);
+   if (ptex) {
       struct pipe_surface *psrc;
+      struct pipe_subresource subsrc, subdst;
+      subsrc.face = 0;
+      subsrc.level = 0;
+      subdst.face = 0;
+      subdst.level = 0;
 
-      psrc = screen->get_tex_surface(screen, gsurf->render_texture,
-            0, 0, 0, PIPE_BIND_BLIT_SOURCE);
       if (psrc) {
-         gdpy->pipe->surface_copy(gdpy->pipe, psurf, 0, 0,
-               psrc, 0, 0, psurf->width, psurf->height);
-         pipe_surface_reference(&psrc, NULL);
+         gdpy->pipe->resource_copy_region(gdpy->pipe, ptex, subdst, 0, 0, 0,
+               gsurf->render_texture, subsrc, 0, 0, 0, ptex->width0, ptex->height0);
 
          nsurf->flush_frontbuffer(nsurf);
       }
 
-      pipe_surface_reference(&psurf, NULL);
+      pipe_resource_reference(&ptex, NULL);
    }
 
    nsurf->destroy(nsurf);

@@ -198,6 +198,9 @@ struct pipe_context {
    void (*set_stencil_ref)( struct pipe_context *,
                             const struct pipe_stencil_ref * );
 
+   void (*set_sample_mask)( struct pipe_context *,
+                            unsigned sample_mask );
+
    void (*set_clip_state)( struct pipe_context *,
                             const struct pipe_clip_state * );
 
@@ -233,32 +236,47 @@ struct pipe_context {
 
 
    /**
-    * Surface functions
+    * Resource functions for blit-like functionality
     *
-    * The pipe driver is allowed to set these functions to NULL, and in that
-    * case, they will not be available.
+    * If a driver supports multisampling, resource_resolve must be available.
     */
    /*@{*/
 
    /**
-    * Copy a block of pixels from one surface to another.
-    * The surfaces must be of the same format.
+    * Copy a block of pixels from one resource to another.
+    * The resource must be of the same format.
+    * Resources with nr_samples > 1 are not allowed.
     */
-   void (*surface_copy)(struct pipe_context *pipe,
-			struct pipe_surface *dest,
-			unsigned destx, unsigned desty,
-			struct pipe_surface *src,
-			unsigned srcx, unsigned srcy,
-			unsigned width, unsigned height);
+   void (*resource_copy_region)(struct pipe_context *pipe,
+                                struct pipe_resource *dst,
+                                struct pipe_subresource subdst,
+                                unsigned dstx, unsigned dsty, unsigned dstz,
+                                struct pipe_resource *src,
+                                struct pipe_subresource subsrc,
+                                unsigned srcx, unsigned srcy, unsigned srcz,
+                                unsigned width, unsigned height);
 
    /**
-    * Fill a region of a surface with a constant value.
+    * Fill a region of a resource with a constant value.
+    * Resources with nr_samples > 1 are not allowed.
     */
-   void (*surface_fill)(struct pipe_context *pipe,
-			struct pipe_surface *dst,
-			unsigned dstx, unsigned dsty,
-			unsigned width, unsigned height,
-			unsigned value);
+   void (*resource_fill_region)(struct pipe_context *pipe,
+                                struct pipe_resource *dst,
+                                struct pipe_subresource subdst,
+                                unsigned dstx, unsigned dsty, unsigned dstz,
+                                unsigned width, unsigned height,
+                                unsigned value);
+
+   /**
+    * Resolve a multisampled resource into a non-multisampled one.
+    * Source and destination must have the same size and same format.
+    */
+   void (*resource_resolve)(struct pipe_context *pipe,
+                            struct pipe_resource *dst,
+                            struct pipe_subresource subdst,
+                            struct pipe_resource *src,
+                            struct pipe_subresource subsrc);
+
    /*@}*/
 
    /**

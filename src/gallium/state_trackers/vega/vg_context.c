@@ -457,8 +457,7 @@ void vg_prepare_blend_surface(struct vg_context *ctx)
    dest_surface = pipe->screen->get_tex_surface(pipe->screen,
                                                 stfb->blend_texture_view->texture,
                                                 0, 0, 0,
-                                                PIPE_BIND_BLIT_DESTINATION |
-						PIPE_BIND_RENDER_TARGET);
+                                                PIPE_BIND_RENDER_TARGET);
    /* flip it, because we want to use it as a sampler */
    util_blit_pixels_tex(ctx->blit,
                         view,
@@ -494,8 +493,7 @@ void vg_prepare_blend_surface_from_mask(struct vg_context *ctx)
    dest_surface = pipe->screen->get_tex_surface(pipe->screen,
                                                 stfb->blend_texture_view->texture,
                                                 0, 0, 0,
-                                                PIPE_BIND_BLIT_DESTINATION |
-						PIPE_BIND_RENDER_TARGET);
+                                                PIPE_BIND_RENDER_TARGET);
 
    /* flip it, because we want to use it as a sampler */
    util_blit_pixels_tex(ctx->blit,

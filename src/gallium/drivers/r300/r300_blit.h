@@ -24,7 +24,8 @@
 #define R300_BLIT_H
 
 struct pipe_context;
-struct pipe_surface;
+struct pipe_resource;
+struct pipe_subresource;
 
 void r300_clear(struct pipe_context* pipe,
                 unsigned buffers,
@@ -33,15 +34,18 @@ void r300_clear(struct pipe_context* pipe,
                 unsigned stencil);
 
 void r300_surface_copy(struct pipe_context* pipe,
-                       struct pipe_surface* dst,
-                       unsigned dstx, unsigned dsty,
-                       struct pipe_surface* src,
-                       unsigned srcx, unsigned srcy,
+                       struct pipe_resource* dst,
+                       struct pipe_subresource subdst,
+                       unsigned dstx, unsigned dsty, unsigned dstz,
+                       struct pipe_resource* src,
+                       struct pipe_subresource subsrc,
+                       unsigned srcx, unsigned srcy, unsigned srcz,
                        unsigned width, unsigned height);
 
 void r300_surface_fill(struct pipe_context* pipe,
-                       struct pipe_surface* dst,
-                       unsigned dstx, unsigned dsty,
+                       struct pipe_resource* dst,
+                       struct pipe_subresource subdst,
+                       unsigned dstx, unsigned dsty, unsigned dstz,
                        unsigned width, unsigned height,
                        unsigned value);
 

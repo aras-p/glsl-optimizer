@@ -52,8 +52,6 @@ nouveau_screen_bo_new(struct pipe_screen *pscreen, unsigned alignment,
 
 	if (bind & (PIPE_BIND_RENDER_TARGET |
 			PIPE_BIND_DEPTH_STENCIL |
-			PIPE_BIND_BLIT_SOURCE |
-			PIPE_BIND_BLIT_DESTINATION |
 			PIPE_BIND_SCANOUT |
 			PIPE_BIND_DISPLAY_TARGET |
 			PIPE_BIND_SAMPLER_VIEW))

@@ -26,8 +26,8 @@
 
 /**
  * @file
- * Blitter utility to facilitate acceleration of the clear, surface_copy,
- * and surface_fill functions.
+ * Blitter utility to facilitate acceleration of the clear, resource_copy_region,
+ * and resource_fill_region functions.
  *
  * @author Marek Olšák
  */
@@ -709,53 +709,6 @@ static void util_blitter_do_copy(struct blitter_context *blitter,
 
 }
 
-static void util_blitter_overlap_copy(struct blitter_context *blitter,
-				      struct pipe_surface *dst,
-				      unsigned dstx, unsigned dsty,
-				      struct pipe_surface *src,
-				      unsigned srcx, unsigned srcy,
-				      unsigned width, unsigned height)
-{
-   struct blitter_context_priv *ctx = (struct blitter_context_priv*)blitter;
-   struct pipe_context *pipe = ctx->pipe;
-   struct pipe_screen *screen = pipe->screen;
-
-   struct pipe_resource texTemp;
-   struct pipe_resource *texture;
-   struct pipe_surface *tex_surf;
-
-   /* check whether the states are properly saved */
-   blitter_check_saved_CSOs(ctx);
-
-   memset(&texTemp, 0, sizeof(texTemp));
-   texTemp.target = PIPE_TEXTURE_2D;
-   texTemp.format = dst->texture->format; /* XXX verify supported by driver! */
-   texTemp.last_level = 0;
-   texTemp.width0 = width;
-   texTemp.height0 = height;
-   texTemp.depth0 = 1;
-
-   texture = screen->resource_create(screen, &texTemp);
-   if (!texture)
-      return;
-
-   tex_surf = screen->get_tex_surface(screen, texture, 0, 0, 0,
-				      PIPE_BIND_BLIT_SOURCE | 
-				      PIPE_BIND_BLIT_DESTINATION);
-
-   /* blit from the src to the temp */
-   util_blitter_do_copy(blitter, tex_surf, 0, 0,
-			src, srcx, srcy,
-			width, height,
-			FALSE);
-   util_blitter_do_copy(blitter, dst, dstx, dsty,
-			tex_surf, 0, 0,
-			width, height,
-			FALSE);
-   pipe_surface_reference(&tex_surf, NULL);
-   pipe_resource_reference(&texture, NULL);
-   blitter_restore_CSOs(ctx);
-}
 
 void util_blitter_copy(struct blitter_context *blitter,
                        struct pipe_surface *dst,
@@ -777,14 +730,10 @@ void util_blitter_copy(struct blitter_context *blitter,
       return;
 
    if (dst->texture == src->texture) {
-      if (is_overlap(srcx, srcx + width, srcy, srcy + height,
-		             dstx, dstx + width, dsty, dsty + height)) {
-         util_blitter_overlap_copy(blitter, dst, dstx, dsty, src, srcx, srcy,
-                                   width, height);
-         return;
-      }
+      assert(!is_overlap(srcx, srcx + width, srcy, srcy + height,
+             dstx, dstx + width, dsty, dsty + height));
    }
-		   
+
    is_depth = util_format_get_component_bits(src->format, UTIL_FORMAT_COLORSPACE_ZS, 0) != 0;
    is_stencil = util_format_get_component_bits(src->format, UTIL_FORMAT_COLORSPACE_ZS, 1) != 0;
    dst_tex_usage = is_depth || is_stencil ? PIPE_BIND_DEPTH_STENCIL :
@@ -794,11 +743,17 @@ void util_blitter_copy(struct blitter_context *blitter,
    /* (assuming copying a stencil buffer is not possible) */
    if ((!ignore_stencil && is_stencil) ||
        !screen->is_format_supported(screen, dst->format, dst->texture->target,
-                                    dst_tex_usage, 0) ||
+                                    dst->texture->nr_samples, dst_tex_usage, 0) ||
        !screen->is_format_supported(screen, src->format, src->texture->target,
-                                    PIPE_BIND_SAMPLER_VIEW, 0)) {
-      util_surface_copy(pipe, FALSE, dst, dstx, dsty, src, srcx, srcy,
-                        width, height);
+                                    src->texture->nr_samples, PIPE_BIND_SAMPLER_VIEW, 0)) {
+      struct pipe_subresource subdst, subsrc;
+      subdst.face = dst->face;
+      subdst.level = dst->level;
+      subsrc.face = src->face;
+      subsrc.level = src->level;
+      util_resource_copy_region(pipe, dst->texture, subdst, dstx, dsty, dst->zslice,
+                                src->texture, subsrc, srcx, srcy, src->zslice,
+                                width, height);
       return;
    }
 
@@ -833,8 +788,13 @@ void util_blitter_fill(struct blitter_context *blitter,
    /* check if we can render to the surface */
    if (util_format_is_depth_or_stencil(dst->format) || /* unlikely, but you never know */
        !screen->is_format_supported(screen, dst->format, dst->texture->target,
+                                    dst->texture->nr_samples,
                                     PIPE_BIND_RENDER_TARGET, 0)) {
-      util_surface_fill(pipe, dst, dstx, dsty, width, height, value);
+      struct pipe_subresource subdst;
+      subdst.face = dst->face;
+      subdst.level = dst->level;
+      util_resource_fill_region(pipe, dst->texture, subdst, dstx, dsty,
+                                dst->zslice, width, height, value);
       return;
    }
 

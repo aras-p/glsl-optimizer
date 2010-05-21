@@ -96,7 +96,7 @@ xmesa_st_framebuffer_copy_textures(struct st_framebuffer_iface *stfbi,
    struct xmesa_st_framebuffer *xstfb = xmesa_st_framebuffer(stfbi);
    struct pipe_resource *src_ptex = xstfb->textures[src_statt];
    struct pipe_resource *dst_ptex = xstfb->textures[dst_statt];
-   struct pipe_surface *src, *dst;
+   struct pipe_subresource subsrc, subdst;
    struct pipe_context *pipe;
 
    if (!src_ptex || !dst_ptex)
@@ -110,16 +110,14 @@ xmesa_st_framebuffer_copy_textures(struct st_framebuffer_iface *stfbi,
       xstfb->display->pipe = pipe;
    }
 
-   src = xstfb->screen->get_tex_surface(xstfb->screen,
-         src_ptex, 0, 0, 0, PIPE_BIND_BLIT_SOURCE);
-   dst = xstfb->screen->get_tex_surface(xstfb->screen,
-         dst_ptex, 0, 0, 0, PIPE_BIND_BLIT_DESTINATION);
+   subsrc.face = 0;
+   subsrc.level = 0;
+   subdst.face = 0;
+   subdst.level = 0;
 
-   if (src && dst)
-      pipe->surface_copy(pipe, dst, x, y, src, x, y, width, height);
-
-   pipe_surface_reference(&src, NULL);
-   pipe_surface_reference(&dst, NULL);
+   if (src_ptex && dst_ptex)
+      pipe->resource_copy_region(pipe, dst_ptex, subdst, x, y, 0,
+                                 src_ptex, subsrc, x, y, 0, width, height);
 }
 
 /**

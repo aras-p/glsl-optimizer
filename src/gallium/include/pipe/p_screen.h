@@ -88,7 +88,7 @@ struct pipe_screen {
 
    struct pipe_context * (*context_create)( struct pipe_screen *,
 					    void *priv );
-   
+
    /**
     * Check if the given pipe_format is supported as a texture or
     * drawing surface.
@@ -98,7 +98,8 @@ struct pipe_screen {
    boolean (*is_format_supported)( struct pipe_screen *,
                                    enum pipe_format format,
                                    enum pipe_texture_target target,
-                                   unsigned bindings, 
+                                   unsigned sample_count,
+                                   unsigned bindings,
                                    unsigned geom_flags );
 
    /**
