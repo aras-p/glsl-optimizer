@@ -1,5 +1,0 @@
-!!ARBvp1.0
-DST result.color, vertex.color, vertex.color; 
-MOV  result.position, vertex.position;
-END
-

@@ -524,12 +524,7 @@ dnl If $with_demos is yes, directories will be added as libs available
 PROGRAM_DIRS=""
 case "$with_demos" in
 no) ;;
-yes)
-    # If the driver isn't osmesa, we have libGL and can build xdemos
-    if test "$mesa_driver" != osmesa; then
-        PROGRAM_DIRS="xdemos"
-    fi
-    ;;
+yes) ;;
 *)
     # verify the requested demos directories exist
     demos=`IFS=,; echo $with_demos`
@@ -1026,7 +1021,7 @@ if test "x$enable_egl" = xyes; then
     fi
 
     if test "$with_demos" = yes; then
-        PROGRAM_DIRS="$PROGRAM_DIRS egl/eglut egl/opengl"
+        PROGRAM_DIRS="$PROGRAM_DIRS egl/eglut"
     fi
 fi
 AC_SUBST([EGL_LIB_DEPS])
@@ -1045,12 +1040,6 @@ if test "x$enable_glu" = xyes; then
 
     case "$mesa_driver" in
     osmesa)
-        # If GLU is available and we have libOSMesa (not 16 or 32),
-        # we can build the osdemos
-        if test "$with_demos" = yes && test "$osmesa_bits" = 8; then
-            PROGRAM_DIRS="$PROGRAM_DIRS osdemos"
-        fi
-
         # Link libGLU to libOSMesa instead of libGL
         GLU_LIB_DEPS=""
         GLU_PC_REQ="osmesa"
@@ -1200,11 +1189,6 @@ if test "x$enable_glut" = xyes; then
     fi
     GLUT_LIB_DEPS="$GLUT_LIB_DEPS -lm"
     GLUT_PC_LIB_PRIV="$GLUT_PC_LIB_PRIV -lm"
-
-    # If glut is available, we can build most programs
-    if test "$with_demos" = yes; then
-        PROGRAM_DIRS="$PROGRAM_DIRS demos redbook samples glsl"
-    fi
 
     # If static, empty GLUT_LIB_DEPS and add libs for programs to link
     if test "$enable_static" = no; then

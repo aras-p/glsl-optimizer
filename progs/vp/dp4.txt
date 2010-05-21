@@ -1,5 +1,0 @@
-!!ARBvp1.0
-DP4 result.color, vertex.color.xxxx, vertex.color; 
-MOV  result.position, vertex.position;
-END
-

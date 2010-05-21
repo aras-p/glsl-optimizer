@@ -1,5 +1,0 @@
-!!ARBfp1.0
-TEMP R0;
-ADD R0, fragment.color.x, fragment.color.x;
-RCP result.color, R0.x;
-END

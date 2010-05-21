@@ -1,3 +1,0 @@
-!!ARBfp1.0
-SLT result.color, {0.5}.x, fragment.color;
-END

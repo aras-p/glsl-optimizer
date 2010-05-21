@@ -1,6 +1,0 @@
-Import('*')
-
-progs_env.Program(
-        target = 'vp-tris',
-        source = ['vp-tris.c'],
-    )
