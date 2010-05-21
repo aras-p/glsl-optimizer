@@ -89,7 +89,7 @@ static int NumDisplays = 0;
 
 static int
 xmesa_get_param(struct st_manager *smapi,
-                enum st_manager_param *param)
+                enum st_manager_param param)
 {
    return 0;
 }
