@@ -671,14 +671,14 @@ void
 lp_setup_choose_triangle( struct lp_setup_context *setup )
 {
    switch (setup->cullmode) {
-   case PIPE_WINDING_NONE:
+   case PIPE_FACE_NONE:
       setup->triangle = triangle_both;
       break;
-   case PIPE_WINDING_CCW:
-      setup->triangle = triangle_cw;
+   case PIPE_FACE_BACK:
+      setup->triangle = setup->ccw_is_frontface ? triangle_ccw : triangle_cw;
       break;
-   case PIPE_WINDING_CW:
-      setup->triangle = triangle_ccw;
+   case PIPE_FACE_FRONT:
+      setup->triangle = setup->ccw_is_frontface ? triangle_cw : triangle_ccw;
       break;
    default:
       setup->triangle = triangle_nop;

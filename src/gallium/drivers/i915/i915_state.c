@@ -686,17 +686,23 @@ i915_create_rasterizer_state(struct pipe_context *pipe,
    else
       cso->sc[0] = _3DSTATE_SCISSOR_ENABLE_CMD | DISABLE_SCISSOR_RECT;
 
-   switch (rasterizer->cull_mode) {
-   case PIPE_WINDING_NONE:
+   switch (rasterizer->cull_face) {
+   case PIPE_FACE_NONE:
       cso->LIS4 |= S4_CULLMODE_NONE;
       break;
-   case PIPE_WINDING_CW:
-      cso->LIS4 |= S4_CULLMODE_CW;
+   case PIPE_FACE_FRONT:
+      if (rasterizer->front_ccw)
+         cso->LIS4 |= S4_CULLMODE_CCW;
+      else 
+         cso->LIS4 |= S4_CULLMODE_CW;
       break;
-   case PIPE_WINDING_CCW:
-      cso->LIS4 |= S4_CULLMODE_CCW;
+   case PIPE_FACE_BACK:
+      if (rasterizer->front_ccw)
+         cso->LIS4 |= S4_CULLMODE_CW;
+      else 
+         cso->LIS4 |= S4_CULLMODE_CCW;
       break;
-   case PIPE_WINDING_BOTH:
+   case PIPE_FACE_FRONT_AND_BACK:
       cso->LIS4 |= S4_CULLMODE_BOTH;
       break;
    }

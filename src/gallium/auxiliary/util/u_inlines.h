@@ -369,6 +369,24 @@ pipe_transfer_destroy( struct pipe_context *context,
 }
 
 
+static INLINE boolean util_get_offset( 
+   const struct pipe_rasterizer_state *templ,
+   unsigned fill_mode)
+{
+   switch(fill_mode) {
+   case PIPE_POLYGON_MODE_POINT:
+      return templ->offset_point;
+   case PIPE_POLYGON_MODE_LINE:
+      return templ->offset_line;
+   case PIPE_POLYGON_MODE_FILL:
+      return templ->offset_tri;
+   default:
+      assert(0);
+      return FALSE;
+   }
+}
+
+
 #ifdef __cplusplus
 }
 #endif

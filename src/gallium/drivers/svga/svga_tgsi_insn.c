@@ -2588,10 +2588,10 @@ static boolean emit_light_twoside( struct svga_shader_emitter *emit )
    
    if_token = inst_token( SVGA3DOP_IFC );
 
-   if (emit->key.fkey.front_cw)
-      if_token.control = SVGA3DOPCOMP_GT;
-   else
+   if (emit->key.fkey.front_ccw)
       if_token.control = SVGA3DOPCOMP_LT;
+   else
+      if_token.control = SVGA3DOPCOMP_GT;
 
    zero = scalar(zero, TGSI_SWIZZLE_X);
 
@@ -2639,12 +2639,12 @@ static boolean emit_frontface( struct svga_shader_emitter *emit )
    temp = dst_register( SVGA3DREG_TEMP,
                         emit->nr_hw_temp++ );
 
-   if (emit->key.fkey.front_cw) {
-      pass = scalar( zero, TGSI_SWIZZLE_W );
-      fail = scalar( zero, TGSI_SWIZZLE_X );
-   } else {
+   if (emit->key.fkey.front_ccw) {
       pass = scalar( zero, TGSI_SWIZZLE_X );
       fail = scalar( zero, TGSI_SWIZZLE_W );
+   } else {
+      pass = scalar( zero, TGSI_SWIZZLE_W );
+      fail = scalar( zero, TGSI_SWIZZLE_X );
    }
 
    if (!emit_conditional(emit, PIPE_FUNC_GREATER,

@@ -300,12 +300,13 @@ util_dump_rasterizer_state(struct os_stream *stream, const struct pipe_rasterize
 
    util_dump_member(stream, bool, state, flatshade);
    util_dump_member(stream, bool, state, light_twoside);
-   util_dump_member(stream, uint, state, front_winding);
-   util_dump_member(stream, uint, state, cull_mode);
-   util_dump_member(stream, uint, state, fill_cw);
-   util_dump_member(stream, uint, state, fill_ccw);
-   util_dump_member(stream, bool, state, offset_cw);
-   util_dump_member(stream, bool, state, offset_ccw);
+   util_dump_member(stream, uint, state, front_ccw);
+   util_dump_member(stream, uint, state, cull_face);
+   util_dump_member(stream, uint, state, fill_front);
+   util_dump_member(stream, uint, state, fill_back);
+   util_dump_member(stream, bool, state, offset_point);
+   util_dump_member(stream, bool, state, offset_line);
+   util_dump_member(stream, bool, state, offset_tri);
    util_dump_member(stream, bool, state, scissor);
    util_dump_member(stream, bool, state, poly_smooth);
    util_dump_member(stream, bool, state, poly_stipple_enable);

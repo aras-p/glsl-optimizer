@@ -136,12 +136,13 @@ void trace_dump_rasterizer_state(const struct pipe_rasterizer_state *state)
 
    trace_dump_member(bool, state, flatshade);
    trace_dump_member(bool, state, light_twoside);
-   trace_dump_member(uint, state, front_winding);
-   trace_dump_member(uint, state, cull_mode);
-   trace_dump_member(uint, state, fill_cw);
-   trace_dump_member(uint, state, fill_ccw);
-   trace_dump_member(bool, state, offset_cw);
-   trace_dump_member(bool, state, offset_ccw);
+   trace_dump_member(uint, state, front_ccw);
+   trace_dump_member(uint, state, cull_face);
+   trace_dump_member(uint, state, fill_front);
+   trace_dump_member(uint, state, fill_back);
+   trace_dump_member(bool, state, offset_point);
+   trace_dump_member(bool, state, offset_line);
+   trace_dump_member(bool, state, offset_tri);
    trace_dump_member(bool, state, scissor);
    trace_dump_member(bool, state, poly_smooth);
    trace_dump_member(bool, state, poly_stipple_enable);

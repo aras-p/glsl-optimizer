@@ -119,11 +119,11 @@ enum pipe_error {
 #define PIPE_POLYGON_MODE_LINE  1
 #define PIPE_POLYGON_MODE_POINT 2
 
-/** Polygon front/back window, also for culling */
-#define PIPE_WINDING_NONE 0
-#define PIPE_WINDING_CW   1
-#define PIPE_WINDING_CCW  2
-#define PIPE_WINDING_BOTH (PIPE_WINDING_CW | PIPE_WINDING_CCW)
+/** Polygon face specification, eg for culling */
+#define PIPE_FACE_NONE           0
+#define PIPE_FACE_FRONT          1
+#define PIPE_FACE_BACK           2
+#define PIPE_FACE_FRONT_AND_BACK (PIPE_FACE_FRONT | PIPE_FACE_BACK)
 
 /** Stencil ops */
 #define PIPE_STENCIL_OP_KEEP       0

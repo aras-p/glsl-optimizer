@@ -89,8 +89,8 @@ struct brw_sf_unit_key {
    unsigned line_smooth:1;
    unsigned point_sprite:1;
    unsigned point_attenuated:1;
-   unsigned front_face:2;
-   unsigned cull_mode:2;
+   unsigned front_ccw:1;
+   unsigned cull_face:2;
    unsigned flatshade_first:1;
    unsigned gl_rasterization_rules:1;
    unsigned line_last_pixel_enable:1;
@@ -115,8 +115,8 @@ sf_unit_populate_key(struct brw_context *brw, struct brw_sf_unit_key *key)
 
    /* PIPE_NEW_RAST */
    key->scissor = rast->scissor;
-   key->front_face = rast->front_winding;
-   key->cull_mode = rast->cull_mode;
+   key->front_ccw = rast->front_ccw;
+   key->cull_face = rast->cull_face;
    key->line_smooth = rast->line_smooth;
    key->line_width = rast->line_width;
    key->flatshade_first = rast->flatshade_first;
@@ -183,22 +183,22 @@ sf_unit_create_from_key(struct brw_context *brw,
    if (key->scissor)
       sf.sf6.scissor = 1;
 
-   if (key->front_face == PIPE_WINDING_CCW)
+   if (key->front_ccw)
       sf.sf5.front_winding = BRW_FRONTWINDING_CCW;
    else
       sf.sf5.front_winding = BRW_FRONTWINDING_CW;
 
-   switch (key->cull_mode) {
-   case PIPE_WINDING_CCW:
-   case PIPE_WINDING_CW:
-      sf.sf6.cull_mode = (key->front_face == key->cull_mode ?
-			  BRW_CULLMODE_FRONT :
-			  BRW_CULLMODE_BACK);
+   switch (key->cull_face) {
+   case PIPE_FACE_FRONT:
+      sf.sf6.cull_mode = BRW_CULLMODE_FRONT;
       break;
-   case PIPE_WINDING_BOTH:
+   case PIPE_FACE_BACK:
+      sf.sf6.cull_mode = BRW_CULLMODE_BACK;
+      break;
+   case PIPE_FACE_FRONT_AND_BACK:
       sf.sf6.cull_mode = BRW_CULLMODE_BOTH;
       break;
-   case PIPE_WINDING_NONE:
+   case PIPE_FACE_NONE:
       sf.sf6.cull_mode = BRW_CULLMODE_NONE;
       break;
    default:
@@ -284,7 +284,7 @@ static enum pipe_error upload_sf_unit( struct brw_context *brw )
     */
    total_grf = (align(key.total_grf, 16) / 16 - 1);
    viewport_transform = 1;
-   front_winding = (key.front_face == PIPE_WINDING_CCW ?
+   front_winding = (key.front_ccw ?
                     BRW_FRONTWINDING_CCW :
                     BRW_FRONTWINDING_CW);
 

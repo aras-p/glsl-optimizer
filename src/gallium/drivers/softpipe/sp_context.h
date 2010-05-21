@@ -109,6 +109,9 @@ struct softpipe_context {
    /** The reduced version of the primitive supplied by the state tracker */
    unsigned reduced_api_prim;
 
+   /** Derived information about which winding orders to cull */
+   unsigned cull_mode;
+
    /**
     * The reduced primitive after unfilled triangles, wide-line decomposition,
     * etc, are taken into account.  This is the primitive type that's actually
