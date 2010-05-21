@@ -184,8 +184,7 @@ st_context_create(struct st_device *st_dev)
    {
       struct pipe_rasterizer_state rasterizer;
       memset(&rasterizer, 0, sizeof(rasterizer));
-      rasterizer.front_winding = PIPE_WINDING_CW;
-      rasterizer.cull_mode = PIPE_WINDING_NONE;
+      rasterizer.cull_face = PIPE_FACE_NONE;
       cso_set_rasterizer(st_ctx->cso, &rasterizer);
    }
 

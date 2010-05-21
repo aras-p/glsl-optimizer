@@ -152,7 +152,7 @@ cell_flush_prim_buffer(struct cell_context *cell)
       struct cell_command_render *render = &cell_global.command[i].render;
       render->prim_type = PIPE_PRIM_TRIANGLES;
       render->num_verts = cell->prim_buffer.num_verts;
-      render->front_winding = cell->rasterizer->front_winding;
+      render->front_ccw = cell->rasterizer->front_ccw;
       render->vertex_size = cell->vertex_info->size * 4;
       render->xmin = cell->prim_buffer.xmin;
       render->ymin = cell->prim_buffer.ymin;

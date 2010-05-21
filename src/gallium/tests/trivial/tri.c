@@ -151,8 +151,7 @@ static void init_prog(struct program *p)
 
 	/* rasterizer */
 	memset(&p->rasterizer, 0, sizeof(p->rasterizer));
-	p->rasterizer.front_winding = PIPE_WINDING_CW;
-	p->rasterizer.cull_mode = PIPE_WINDING_NONE;
+	p->rasterizer.cull_face = PIPE_FACE_NONE;
 	p->rasterizer.gl_rasterization_rules = 1;
 
 	/* drawing destination */

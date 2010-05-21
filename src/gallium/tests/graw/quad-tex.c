@@ -377,8 +377,7 @@ static void init( void )
       struct pipe_rasterizer_state rasterizer;
       void *handle;
       memset(&rasterizer, 0, sizeof rasterizer);
-      rasterizer.front_winding = PIPE_WINDING_CW;
-      rasterizer.cull_mode = PIPE_WINDING_NONE;
+      rasterizer.cull_face = PIPE_FACE_NONE;
       rasterizer.gl_rasterization_rules = 1;
       handle = ctx->create_rasterizer_state(ctx, &rasterizer);
       ctx->bind_rasterizer_state(ctx, handle);
