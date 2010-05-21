@@ -23,9 +23,7 @@ dri_surface_from_handle(struct drm_api *api, struct pipe_screen *pscreen,
 	struct pipe_resource tmpl;
 	struct winsys_handle whandle;
 	unsigned bind = (PIPE_BIND_SCANOUT |
-			 PIPE_BIND_RENDER_TARGET |
-			 PIPE_BIND_BLIT_DESTINATION |
-			 PIPE_BIND_BLIT_SOURCE);
+			 PIPE_BIND_RENDER_TARGET);
 
 	memset(&tmpl, 0, sizeof(tmpl));
 	tmpl.bind = bind;
