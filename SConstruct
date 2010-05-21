@@ -231,8 +231,3 @@ SConscript(
 
 env.Default('src')
 
-SConscript(
-    'progs/SConscript',
-    variant_dir = os.path.join('progs', env['build']),
-    duplicate = 0 # http://www.scons.org/doc/0.97/HTML/scons-user/x2261.html
-)
