@@ -570,8 +570,17 @@ dri2_bind_tex_image(Display * dpy,
 {
    GLXContext gc = __glXGetCurrentContext();
    __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable, NULL);
+    __GLXdisplayPrivate *dpyPriv = __glXInitialize(dpy);
+    __GLXDRIdisplayPrivate *pdp =
+	(__GLXDRIdisplayPrivate *) dpyPriv->dri2Display;
 
    if (pdraw != NULL) {
+
+#if __DRI2_FLUSH_VERSION >= 3
+      if (!pdp->invalidateAvailable && pdraw->psc->f)
+	 pdraw->psc->f->invalidate(pdraw->driDrawable);
+#endif
+
       if (pdraw->psc->texBuffer->base.version >= 2 &&
 	  pdraw->psc->texBuffer->setTexBuffer2 != NULL) {
 	 (*pdraw->psc->texBuffer->setTexBuffer2) (gc->__driContext,
