@@ -73,7 +73,7 @@ cell_destroy_context( struct pipe_context *pipe )
 static struct draw_context *
 cell_draw_create(struct cell_context *cell)
 {
-   struct draw_context *draw = draw_create();
+   struct draw_context *draw = draw_create(&cell->pipe);
 
 #if 0 /* broken */
    if (getenv("GALLIUM_CELL_VS")) {

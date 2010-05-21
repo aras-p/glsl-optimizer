@@ -197,7 +197,7 @@ cell_bind_rasterizer_state(struct pipe_context *pipe, void *rast)
    struct cell_context *cell = cell_context(pipe);
 
    /* pass-through to draw module */
-   draw_set_rasterizer_state(cell->draw, rasterizer);
+   draw_set_rasterizer_state(cell->draw, rasterizer, rast);
 
    cell->rasterizer = rasterizer;
 
