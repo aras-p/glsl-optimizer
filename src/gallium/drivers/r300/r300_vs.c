@@ -160,11 +160,16 @@ static void set_vertex_inputs_outputs(struct r300_vertex_program_compiler * c)
     c->code->outputs[outputs->wpos] = reg++;
 }
 
+void r300_init_vs_outputs(struct r300_vertex_shader *vs)
+{
+    tgsi_scan_shader(vs->state.tokens, &vs->info);
+    r300_shader_read_vs_outputs(&vs->info, &vs->outputs);
+}
+
 static void r300_dummy_vertex_shader(
     struct r300_context* r300,
     struct r300_vertex_shader* shader)
 {
-    struct pipe_shader_state state;
     struct ureg_program *ureg;
     struct ureg_dst dst;
     struct ureg_src imm;
@@ -178,18 +183,12 @@ static void r300_dummy_vertex_shader(
     ureg_MOV(ureg, dst, imm);
     ureg_END(ureg);
 
-    state.tokens = ureg_finalize(ureg);
+    shader->state.tokens = tgsi_dup_tokens(ureg_finalize(ureg));
+    ureg_destroy(ureg);
 
     shader->dummy = TRUE;
+    r300_init_vs_outputs(shader);
     r300_translate_vertex_shader(r300, shader);
-
-    ureg_destroy(ureg);
-}
-
-void r300_init_vs_outputs(struct r300_vertex_shader *vs)
-{
-    tgsi_scan_shader(vs->state.tokens, &vs->info);
-    r300_shader_read_vs_outputs(&vs->info, &vs->outputs);
 }
 
 void r300_translate_vertex_shader(struct r300_context *r300,
