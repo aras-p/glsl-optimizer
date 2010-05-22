@@ -126,9 +126,9 @@ void r500_dump_rs_block(struct r300_rs_block *rs)
 
             j = 3;
             do {
-                if (tex_ptr & 0x3f == 63) {
+                if ((tex_ptr & 0x3f) == 63) {
                     fprintf(stderr, "1.0");
-                } else if (tex_ptr & 0x3f == 62) {
+                } else if ((tex_ptr & 0x3f) == 62) {
                     fprintf(stderr, "0.0");
                 } else {
                     fprintf(stderr, "[%d]", tex_ptr & 0x3f);

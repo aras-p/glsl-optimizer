@@ -465,6 +465,8 @@ struct draw_stage* r300_draw_stage(struct r300_context* r300);
 void r300_init_state_functions(struct r300_context* r300);
 void r300_init_resource_functions(struct r300_context* r300);
 
+void r500_dump_rs_block(struct r300_rs_block *rs);
+
 static INLINE boolean CTX_DBG_ON(struct r300_context * ctx, unsigned flags)
 {
     return SCREEN_DBG_ON(ctx->screen, flags);
