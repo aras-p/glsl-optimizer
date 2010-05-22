@@ -565,6 +565,7 @@ llvmpipe_get_transfer(struct pipe_context *pipe,
       pt->box = *box;
       pt->sr = sr;
       pt->stride = lprex->row_stride[sr.level];
+      pt->slice_stride = lprex->img_stride[sr.level];
       pt->usage = usage;
 
       return pt;
