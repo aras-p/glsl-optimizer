@@ -27,16 +27,9 @@
 
 #include <vl_winsys.h>
 #include <state_tracker/xlib_sw_winsys.h>
-//#include <X11/Xutil.h>
-//#include <util/u_simple_screen.h>
-//#include <pipe/p_state.h>
-//#include <util/u_inlines.h>
-//#include <util/u_format.h>
 #include <util/u_memory.h>
-//#include <util/u_math.h>
 #include <softpipe/sp_public.h>
 #include <softpipe/sp_video_context.h>
-//#include <softpipe/sp_texture.h>
 
 /* TODO: Find a good way to calculate this */
 static enum pipe_format VisualToPipe(Visual *visual)
@@ -45,21 +38,31 @@ static enum pipe_format VisualToPipe(Visual *visual)
    return PIPE_FORMAT_B8G8R8X8_UNORM;
 }
 
-Drawable
-vl_video_bind_drawable(struct vl_context *vctx, Drawable drawable)
+/* XXX: Not thread-safe */
+static struct xlib_drawable xdraw;
+
+void*
+vl_displaytarget_get(struct vl_screen *vscreen, Drawable drawable,
+                     unsigned *width_out, unsigned *height_out)
 {
-#if 0
-   struct xsp_context *xsp_context = (struct xsp_context*)vctx;
-   Drawable old_drawable;
+   Window root;
+   int x, y;
+   unsigned int width, height;
+   unsigned int border_width;
+   unsigned int depth;
 
-   assert(vctx);
+   assert(vscreen);
 
-   old_drawable = xsp_context->drawable;
-   xsp_context->drawable = drawable;
+   if (XGetGeometry(vscreen->display, drawable, &root, &x, &y, &width, &height, &border_width, &depth) == BadDrawable)
+      return NULL;
 
-   return old_drawable;
-#endif
-   return None;
+   if (width_out) *width_out = width;
+   if (height_out) *height_out = height;
+
+   xdraw.depth = depth;
+   xdraw.drawable = drawable;
+
+   return &xdraw;
 }
 
 struct vl_screen*
@@ -81,14 +84,15 @@ vl_screen_create(Display *display, int screen)
    }
 
    vscreen->pscreen = softpipe_create_screen(winsys);
-
    if (!vscreen->pscreen) {
       winsys->destroy(winsys);
       FREE(vscreen);
       return NULL;
    }
 
-   vscreen->format = VisualToPipe(XDefaultVisual(display, screen));
+   vscreen->display = display;
+   xdraw.visual = XDefaultVisual(display, screen);
+   vscreen->format = VisualToPipe(xdraw.visual);
 
    return vscreen;
 }
@@ -134,7 +138,7 @@ void vl_video_destroy(struct vl_context *vctx)
 {
    assert(vctx);
 
-#if 0
+#if 1
    vctx->vpipe->destroy(vctx->vpipe);
 #endif
    FREE(vctx);

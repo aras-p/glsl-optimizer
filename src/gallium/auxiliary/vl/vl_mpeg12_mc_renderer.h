@@ -35,6 +35,7 @@
 
 struct pipe_context;
 struct pipe_macroblock;
+struct keymap;
 
 /* A slice is video-width (rounded up to a multiple of macroblock width) x macroblock height */
 enum VL_MPEG12_MC_RENDERER_BUFFER_MODE
@@ -105,6 +106,8 @@ struct vl_mpeg12_mc_renderer
    short *texels[3];
    struct vertex2f surface_tex_inv_size;
    struct vertex2f zero_block[3];
+
+   struct keymap *texview_map;
 };
 
 bool vl_mpeg12_mc_renderer_init(struct vl_mpeg12_mc_renderer *renderer,

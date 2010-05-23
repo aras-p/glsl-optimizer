@@ -32,6 +32,7 @@
 #include <util/u_format.h>
 #include <util/u_math.h>
 #include <util/u_memory.h>
+#include <util/u_keymap.h>
 #include <util/u_sampler.h>
 #include <tgsi/tgsi_ureg.h>
 
@@ -1004,6 +1005,33 @@ gen_macroblock_stream(struct vl_mpeg12_mc_renderer *r,
       pipe_buffer_unmap(r->pipe, r->vertex_bufs.individual.ref[i].buffer, buf_transfer[i + 1]);
 }
 
+static struct pipe_sampler_view
+*find_or_create_sampler_view(struct vl_mpeg12_mc_renderer *r, struct pipe_surface *surface)
+{
+   struct pipe_sampler_view *sampler_view;
+   assert(r);
+   assert(surface);
+
+   sampler_view = (struct pipe_sampler_view*)util_keymap_lookup(r->texview_map, &surface);
+   if (!sampler_view) {
+      struct pipe_sampler_view templat;
+      boolean added_to_map;
+
+      u_sampler_view_default_template(&templat, surface->texture,
+                                      surface->texture->format);
+      sampler_view = r->pipe->create_sampler_view(r->pipe, surface->texture,
+                                                  &templat);
+      if (!sampler_view)
+         return NULL;
+
+      added_to_map = util_keymap_insert(r->texview_map, &surface,
+                                        sampler_view, r->pipe);
+      assert(added_to_map);
+   }
+
+   return sampler_view;
+}
+
 static void
 flush(struct vl_mpeg12_mc_renderer *r)
 {
@@ -1051,10 +1079,11 @@ flush(struct vl_mpeg12_mc_renderer *r)
       vb_start += num_macroblocks[MACROBLOCK_TYPE_INTRA] * 24;
    }
 
-   if (false /*num_macroblocks[MACROBLOCK_TYPE_FWD_FRAME_PRED] > 0*/) {
+   if (num_macroblocks[MACROBLOCK_TYPE_FWD_FRAME_PRED] > 0) {
       r->pipe->set_vertex_buffers(r->pipe, 2, r->vertex_bufs.all);
       r->pipe->bind_vertex_elements_state(r->pipe, r->vertex_elems_state.individual.p);
       r->textures.individual.ref[0] = r->past->texture;
+      r->sampler_views.individual.ref[0] = find_or_create_sampler_view(r, r->past);
       r->pipe->set_fragment_sampler_views(r->pipe, 4, r->sampler_views.all);
       r->pipe->bind_fragment_sampler_states(r->pipe, 4, r->samplers.all);
       r->pipe->bind_vs_state(r->pipe, r->p_vs[0]);
@@ -1069,6 +1098,7 @@ flush(struct vl_mpeg12_mc_renderer *r)
       r->pipe->set_vertex_buffers(r->pipe, 2, r->vertex_bufs.all);
       r->pipe->bind_vertex_elements_state(r->pipe, r->vertex_elems_state.individual.p);
       r->textures.individual.ref[0] = r->past->texture;
+      r->sampler_views.individual.ref[0] = find_or_create_sampler_view(r, r->past);
       r->pipe->set_fragment_sampler_views(r->pipe, 4, r->sampler_views.all);
       r->pipe->bind_fragment_sampler_states(r->pipe, 4, r->samplers.all);
       r->pipe->bind_vs_state(r->pipe, r->p_vs[1]);
@@ -1079,10 +1109,11 @@ flush(struct vl_mpeg12_mc_renderer *r)
       vb_start += num_macroblocks[MACROBLOCK_TYPE_FWD_FIELD_PRED] * 24;
    }
 
-   if (false /*num_macroblocks[MACROBLOCK_TYPE_BKWD_FRAME_PRED] > 0*/) {
+   if (num_macroblocks[MACROBLOCK_TYPE_BKWD_FRAME_PRED] > 0) {
       r->pipe->set_vertex_buffers(r->pipe, 2, r->vertex_bufs.all);
       r->pipe->bind_vertex_elements_state(r->pipe, r->vertex_elems_state.individual.p);
       r->textures.individual.ref[0] = r->future->texture;
+      r->sampler_views.individual.ref[0] = find_or_create_sampler_view(r, r->future);
       r->pipe->set_fragment_sampler_views(r->pipe, 4, r->sampler_views.all);
       r->pipe->bind_fragment_sampler_states(r->pipe, 4, r->samplers.all);
       r->pipe->bind_vs_state(r->pipe, r->p_vs[0]);
@@ -1097,6 +1128,7 @@ flush(struct vl_mpeg12_mc_renderer *r)
       r->pipe->set_vertex_buffers(r->pipe, 2, r->vertex_bufs.all);
       r->pipe->bind_vertex_elements_state(r->pipe, r->vertex_elems_state.individual.p);
       r->textures.individual.ref[0] = r->future->texture;
+      r->sampler_views.individual.ref[0] = find_or_create_sampler_view(r, r->future);
       r->pipe->set_fragment_sampler_views(r->pipe, 4, r->sampler_views.all);
       r->pipe->bind_fragment_sampler_states(r->pipe, 4, r->samplers.all);
       r->pipe->bind_vs_state(r->pipe, r->p_vs[1]);
@@ -1107,11 +1139,13 @@ flush(struct vl_mpeg12_mc_renderer *r)
       vb_start += num_macroblocks[MACROBLOCK_TYPE_BKWD_FIELD_PRED] * 24;
    }
 
-   if (false /*num_macroblocks[MACROBLOCK_TYPE_BI_FRAME_PRED] > 0*/) {
+   if (num_macroblocks[MACROBLOCK_TYPE_BI_FRAME_PRED] > 0) {
       r->pipe->set_vertex_buffers(r->pipe, 3, r->vertex_bufs.all);
       r->pipe->bind_vertex_elements_state(r->pipe, r->vertex_elems_state.individual.b);
       r->textures.individual.ref[0] = r->past->texture;
       r->textures.individual.ref[1] = r->future->texture;
+      r->sampler_views.individual.ref[0] = find_or_create_sampler_view(r, r->past);
+      r->sampler_views.individual.ref[1] = find_or_create_sampler_view(r, r->future);
       r->pipe->set_fragment_sampler_views(r->pipe, 5, r->sampler_views.all);
       r->pipe->bind_fragment_sampler_states(r->pipe, 5, r->samplers.all);
       r->pipe->bind_vs_state(r->pipe, r->b_vs[0]);
@@ -1127,6 +1161,8 @@ flush(struct vl_mpeg12_mc_renderer *r)
       r->pipe->bind_vertex_elements_state(r->pipe, r->vertex_elems_state.individual.b);
       r->textures.individual.ref[0] = r->past->texture;
       r->textures.individual.ref[1] = r->future->texture;
+      r->sampler_views.individual.ref[0] = find_or_create_sampler_view(r, r->past);
+      r->sampler_views.individual.ref[1] = find_or_create_sampler_view(r, r->future);
       r->pipe->set_fragment_sampler_views(r->pipe, 5, r->sampler_views.all);
       r->pipe->bind_fragment_sampler_states(r->pipe, 5, r->samplers.all);
       r->pipe->bind_vs_state(r->pipe, r->b_vs[1]);
@@ -1270,6 +1306,21 @@ grab_macroblock(struct vl_mpeg12_mc_renderer *r,
    ++r->num_macroblocks;
 }
 
+static void
+texview_map_delete(const struct keymap *map,
+                   const void *key, void *data,
+                   void *user)
+{
+   struct pipe_context *pipe = (struct pipe_context*)user;
+
+   assert(map);
+   assert(key);
+   assert(data);
+   assert(user);
+
+   pipe->sampler_view_destroy(pipe, data);
+}
+
 bool
 vl_mpeg12_mc_renderer_init(struct vl_mpeg12_mc_renderer *renderer,
                            struct pipe_context *pipe,
@@ -1302,13 +1353,22 @@ vl_mpeg12_mc_renderer_init(struct vl_mpeg12_mc_renderer *renderer,
    renderer->eb_handling = eb_handling;
    renderer->pot_buffers = pot_buffers;
 
-   if (!init_pipe_state(renderer))
+   renderer->texview_map = util_new_keymap(sizeof(struct pipe_surface*), -1,
+                                           texview_map_delete);
+   if (!renderer->texview_map)
       return false;
+
+   if (!init_pipe_state(renderer)) {
+      util_delete_keymap(renderer->texview_map, renderer->pipe);
+      return false;
+   }
    if (!init_shaders(renderer)) {
+      util_delete_keymap(renderer->texview_map, renderer->pipe);
       cleanup_pipe_state(renderer);
       return false;
    }
    if (!init_buffers(renderer)) {
+      util_delete_keymap(renderer->texview_map, renderer->pipe);
       cleanup_shaders(renderer);
       cleanup_pipe_state(renderer);
       return false;
@@ -1333,6 +1393,7 @@ vl_mpeg12_mc_renderer_cleanup(struct vl_mpeg12_mc_renderer *renderer)
 
    xfer_buffers_unmap(renderer);
 
+   util_delete_keymap(renderer->texview_map, renderer->pipe);
    cleanup_pipe_state(renderer);
    cleanup_shaders(renderer);
    cleanup_buffers(renderer);

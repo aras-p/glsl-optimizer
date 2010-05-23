@@ -30,6 +30,8 @@
 #include <pipe/p_context.h>
 #include <util/u_inlines.h>
 #include <util/u_memory.h>
+#include <util/u_keymap.h>
+#include <util/u_sampler.h>
 #include <tgsi/tgsi_ureg.h>
 #include "vl_csc.h"
 
@@ -251,6 +253,21 @@ cleanup_buffers(struct vl_compositor *c)
    pipe_resource_reference(&c->fs_const_buf, NULL);
 }
 
+static void
+texview_map_delete(const struct keymap *map,
+                   const void *key, void *data,
+                   void *user)
+{
+   struct pipe_context *pipe = (struct pipe_context*)user;
+
+   assert(map);
+   assert(key);
+   assert(data);
+   assert(user);
+
+   pipe->sampler_view_destroy(pipe, data);
+}
+
 bool vl_compositor_init(struct vl_compositor *compositor, struct pipe_context *pipe)
 {
    unsigned i;
@@ -261,13 +278,22 @@ bool vl_compositor_init(struct vl_compositor *compositor, struct pipe_context *p
 
    compositor->pipe = pipe;
 
-   if (!init_pipe_state(compositor))
+   compositor->texview_map = util_new_keymap(sizeof(struct pipe_surface*), -1,
+                                             texview_map_delete);
+   if (!compositor->texview_map)
       return false;
+
+   if (!init_pipe_state(compositor)) {
+      util_delete_keymap(compositor->texview_map, compositor->pipe);
+      return false;
+   }
    if (!init_shaders(compositor)) {
+      util_delete_keymap(compositor->texview_map, compositor->pipe);
       cleanup_pipe_state(compositor);
       return false;
    }
    if (!init_buffers(compositor)) {
+      util_delete_keymap(compositor->texview_map, compositor->pipe);
       cleanup_shaders(compositor);
       cleanup_pipe_state(compositor);
       return false;
@@ -288,6 +314,7 @@ void vl_compositor_cleanup(struct vl_compositor *compositor)
 {
    assert(compositor);
 
+   util_delete_keymap(compositor->texview_map, compositor->pipe);
    cleanup_buffers(compositor);
    cleanup_shaders(compositor);
    cleanup_pipe_state(compositor);
@@ -459,8 +486,28 @@ static void draw_layers(struct vl_compositor *c,
    num_rects = gen_data(c, src_surface, src_rect, dst_rect, src_surfaces);
 
    for (i = 0; i < num_rects; ++i) {
-      //c->pipe->set_fragment_sampler_views(c->pipe, 1, &src_surfaces[i]->texture);
+      boolean delete_view = FALSE;
+      struct pipe_sampler_view *surface_view = (struct pipe_sampler_view*)util_keymap_lookup(c->texview_map,
+                                                                                             &src_surfaces[i]);
+      if (!surface_view) {
+         struct pipe_sampler_view templat;
+         u_sampler_view_default_template(&templat, src_surfaces[i]->texture,
+                                         src_surfaces[i]->texture->format);
+         surface_view = c->pipe->create_sampler_view(c->pipe, src_surfaces[i]->texture,
+                                                     &templat);
+         if (!surface_view)
+            return;
+
+         delete_view = !util_keymap_insert(c->texview_map, &src_surfaces[i],
+                                           surface_view, c->pipe);
+      }
+
+      c->pipe->set_fragment_sampler_views(c->pipe, 1, &surface_view);
       c->pipe->draw_arrays(c->pipe, PIPE_PRIM_TRIANGLES, i * 6, 6);
+
+      if (delete_view) {
+         c->pipe->sampler_view_destroy(c->pipe, surface_view);
+      }
    }
 }
 

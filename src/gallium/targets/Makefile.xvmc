@@ -1,0 +1,61 @@
+# This makefile template is used to build libXvMCg3dvl.so
+
+LIBBASENAME = XvMCg3dvl
+LIBNAME = lib$(LIBBASENAME).so
+XVMC_MAJOR = 1
+XVMC_MINOR = 0
+INCLUDES = -I$(TOP)/src/gallium/include \
+	   -I$(TOP)/src/gallium/drivers \
+	   -I$(TOP)/src/gallium/auxiliary \
+	   -I$(TOP)/src/gallium/winsys/g3dvl \
+	   $(DRIVER_INCLUDES)
+DEFINES = -DGALLIUM_TRACE $(DRIVER_DEFINES)
+LIBS = $(EXTRA_LIB_PATH) $(DRIVER_LIBS) -lXvMC -lXv -lX11 -lm
+STATE_TRACKER_LIB = $(TOP)/src/gallium/state_trackers/xorg/xvmc/libxvmctracker.a
+
+# XXX: Hack, XvMC public funcs aren't exported if we link to libxvmctracker.a :(
+OBJECTS = $(C_SOURCES:.c=.o) \
+	  $(ASM_SOURCES:.S=.o) \
+	  $(TOP)/src/gallium/state_trackers/xorg/xvmc/*.o
+
+##### RULES #####
+
+.c.o:
+	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
+
+.S.o:
+	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
+
+##### TARGETS #####
+
+default: depend symlinks $(TOP)/$(LIB_DIR)/gallium/$(LIBNAME)
+
+$(TOP)/$(LIB_DIR)/gallium/$(LIBNAME): $(OBJECTS) $(PIPE_DRIVERS) $(STATE_TRACKER-LIB) $(TOP)/$(LIB_DIR)/gallium Makefile
+	$(MKLIB) -o $(LIBBASENAME) -linker '$(CC)' -ldflags '$(LDFLAGS)' \
+		-major $(XVMC_MAJOR) -minor $(XVMC_MINOR) $(MKLIB_OPTIONS) \
+		-install $(TOP)/$(LIB_DIR)/gallium \
+		$(OBJECTS) $(STATE_TRACKER_LIB) $(PIPE_DRIVERS) $(LIBS)
+
+$(TOP)/$(LIB_DIR)/gallium:
+	mkdir -p $@
+
+depend: $(C_SOURCES) $(ASM_SOURCES) $(SYMLINKS)
+	rm -f depend
+	touch depend
+	$(MKDEP) $(MKDEP_OPTIONS) $(DEFINES) $(INCLUDES) $(C_SOURCES) \
+		$(ASM_SOURCES) 2> /dev/null
+
+# Emacs tags
+tags:
+	etags `find . -name \*.[ch]` `find ../include`
+
+# Remove .o and backup files
+clean:
+	-rm -f *.o *~ *.so $(SYMLINKS)
+	-rm -f depend depend.bak
+
+#install: $(LIBNAME)
+#	$(INSTALL) -d $(DESTDIR)$(DRI_DRIVER_INSTALL_DIR)
+#	$(MINSTALL) -m 755 $(LIBNAME) $(DESTDIR)$(DRI_DRIVER_INSTALL_DIR)
+
+include depend

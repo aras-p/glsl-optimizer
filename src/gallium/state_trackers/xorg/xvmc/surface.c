@@ -121,7 +121,7 @@ CreateOrResizeBackBuffer(struct vl_context *vctx, unsigned int width, unsigned i
    template.height0 = height;
    template.depth0 = 1;
    template.usage = PIPE_USAGE_DEFAULT;
-   template.bind = PIPE_BIND_RENDER_TARGET;
+   template.bind = PIPE_BIND_RENDER_TARGET | PIPE_BIND_DISPLAY_TARGET | PIPE_BIND_BLIT_SOURCE;
    template.flags = 0;
 
    tex = vpipe->screen->resource_create(vpipe->screen, &template);
@@ -129,7 +129,7 @@ CreateOrResizeBackBuffer(struct vl_context *vctx, unsigned int width, unsigned i
       return false;
 
    *backbuffer = vpipe->screen->get_tex_surface(vpipe->screen, tex, 0, 0, 0,
-                                                PIPE_BIND_RENDER_TARGET | PIPE_BIND_BLIT_SOURCE);
+                                                template.bind);
    pipe_resource_reference(&tex, NULL);
 
    if (!*backbuffer)
@@ -366,11 +366,6 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
                       short destx, short desty, unsigned short destw, unsigned short desth,
                       int flags)
 {
-   Window root;
-   int x, y;
-   unsigned int width, height;
-   unsigned int border_width;
-   unsigned int depth;
    struct pipe_video_context *vpipe;
    XvMCSurfacePrivate *surface_priv;
    XvMCContextPrivate *context_priv;
@@ -378,6 +373,8 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
    XvMCContext *context;
    struct pipe_video_rect src_rect = {srcx, srcy, srcw, srch};
    struct pipe_video_rect dst_rect = {destx, desty, destw, desth};
+   void *displaytarget;
+   unsigned width, height;
 
    XVMC_MSG(XVMC_TRACE, "[XvMC] Displaying surface %p.\n", surface);
 
@@ -386,7 +383,12 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
    if (!surface || !surface->privData)
       return XvMCBadSurface;
 
-   if (XGetGeometry(dpy, drawable, &root, &x, &y, &width, &height, &border_width, &depth) == BadDrawable)
+   surface_priv = surface->privData;
+   context = surface_priv->context;
+   context_priv = context->privData;
+
+   displaytarget = vl_displaytarget_get(context_priv->vctx->vscreen, drawable, &width, &height);
+   if (!displaytarget)
       return BadDrawable;
 
    assert(flags == XVMC_TOP_FIELD || flags == XVMC_BOTTOM_FIELD || flags == XVMC_FRAME_PICTURE);
@@ -404,9 +406,6 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
    assert(desty + desth - 1 < height);
     */
 
-   surface_priv = surface->privData;
-   context = surface_priv->context;
-   context_priv = context->privData;
    subpicture_priv = surface_priv->subpicture ? surface_priv->subpicture->privData : NULL;
    vpipe = context_priv->vctx->vpipe;
 
@@ -435,16 +434,12 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
 
    XVMC_MSG(XVMC_TRACE, "[XvMC] Submitted surface %p for display. Pushing to front buffer.\n", surface);
 
-   vl_video_bind_drawable(context_priv->vctx, drawable);
-
-#if 0
    vpipe->screen->flush_frontbuffer
    (
       vpipe->screen,
       context_priv->backbuffer,
-      vpipe->priv
+      displaytarget
    );
-#endif
 
    XVMC_MSG(XVMC_TRACE, "[XvMC] Pushed surface %p to front buffer.\n", surface);
 
