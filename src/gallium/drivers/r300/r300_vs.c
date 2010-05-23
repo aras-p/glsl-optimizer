@@ -227,7 +227,8 @@ void r300_translate_vertex_shader(struct r300_context *r300,
     if (compiler.Base.Error) {
         /* XXX We should fallback using Draw. */
         fprintf(stderr, "r300 VP: Compiler error:\n%sUsing a dummy shader"
-                " instead.\n", compiler.Base.ErrorMsg);
+                " instead.\nIf there's an 'unknown opcode' message, please"
+                " file a bug report and attach this log.\n", compiler.Base.ErrorMsg);
 
         if (vs->dummy) {
             fprintf(stderr, "r300 VP: Cannot compile the dummy shader! "

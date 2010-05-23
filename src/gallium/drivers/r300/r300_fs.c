@@ -295,7 +295,8 @@ static void r300_translate_fragment_shader(
 
     if (compiler.Base.Error) {
         fprintf(stderr, "r300 FP: Compiler Error:\n%sUsing a dummy shader"
-                " instead.\n", compiler.Base.ErrorMsg);
+                " instead.\nIf there's an 'unknown opcode' message, please"
+                " file a bug report and attach this log.\n", compiler.Base.ErrorMsg);
 
         if (shader->dummy) {
             fprintf(stderr, "r300 FP: Cannot compile the dummy shader! "
