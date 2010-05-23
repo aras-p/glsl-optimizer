@@ -252,7 +252,7 @@ struct brw_vs_ouput_sizes {
 #define BRW_MAX_TEX_UNIT 16
 
 /** Max number of render targets in a shader */
-#define BRW_MAX_DRAW_BUFFERS 4
+#define BRW_MAX_DRAW_BUFFERS 8
 
 /**
  * Size of our surface binding table for the WM.

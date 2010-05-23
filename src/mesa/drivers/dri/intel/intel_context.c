@@ -716,7 +716,6 @@ intelInitContext(struct intel_context *intel,
    _mesa_init_point(ctx);
 
    meta_init_metaops(ctx, &intel->meta);
-   ctx->Const.MaxColorAttachments = 4;  /* XXX FBO: review this */
    if (intel->gen >= 4) {
       if (MAX_WIDTH > 8192)
 	 ctx->Const.MaxRenderbufferSize = 8192;
