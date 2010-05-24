@@ -5008,6 +5008,7 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
       }
 #else
       (void) is_rect_sampler_spec; /* silence warning */
+      (void) ctx;
 #endif
       {
          GLint sampNum = _mesa_add_sampler(prog->Parameters, varName, datatype);

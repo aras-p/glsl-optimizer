@@ -2494,6 +2494,7 @@ init_default_precision(slang_output_ctx *O, slang_unit_type type)
       else
 	 O->default_precision[i] = PRECISION_HIGH;
 #else
+      (void) ctx;
       O->default_precision[i] = PRECISION_HIGH;
 #endif
    }
@@ -2743,6 +2744,8 @@ compile_with_grammar(const char *source,
 	 return GL_FALSE;
       }
    }
+#else
+   (void) ctx;
 #endif
 
 #if FEATURE_ARB_shading_language_120
