@@ -136,7 +136,7 @@ test_format(unsigned verbose, FILE *fp,
    LLVMValueRef fetch = NULL;
    LLVMPassManagerRef pass = NULL;
    fetch_ptr_t fetch_ptr;
-   float unpacked[4];
+   PIPE_ALIGN_VAR(16) float unpacked[4];
    boolean success;
    unsigned i, j, k;
 
