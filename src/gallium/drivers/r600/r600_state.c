@@ -124,10 +124,27 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 	}
 	radeon_draw_set_new(rctx->draw, rstate);
 	rctx->db = radeon_state_decref(rctx->db);
-	rctx->db = radeon_state(rscreen->rw, R600_DB_TYPE, R600_DB);
-	rctx->db->bo[0] = radeon_bo_incref(rscreen->rw, rstate->bo[0]);
-	rctx->db->nbo = 1;
-	rctx->db->placement[0] = RADEON_GEM_DOMAIN_GTT;
+	if(state->zsbuf) {
+		rtex = (struct r600_texture*)state->zsbuf->texture;
+		rbuffer = (struct r600_buffer*)rtex->buffer;
+		rctx->db = radeon_state(rscreen->rw, R600_DB_TYPE, R600_DB);
+		if(rctx->db == NULL)
+		     return;
+		rctx->db->bo[0] = radeon_bo_incref(rscreen->rw, rbuffer->bo);
+		rctx->db->nbo = 1;
+		rctx->db->placement[0] = RADEON_GEM_DOMAIN_VRAM;
+		level = state->zsbuf->level;
+		pitch = rtex->pitch[level] / 8 - 1;
+		slice = rtex->pitch[level] * state->zsbuf->height / 64 - 1;
+
+		rctx->db->states[R600_DB__DB_DEPTH_BASE] = 0x00000000;
+		rctx->db->states[R600_DB__DB_DEPTH_INFO] = 0x00010006;
+		rctx->db->states[R600_DB__DB_DEPTH_VIEW] = 0x00000000;
+		rctx->db->states[R600_DB__DB_PREFETCH_LIMIT] = (state->zsbuf->height / 8) -1;
+		rctx->db->states[R600_DB__DB_DEPTH_SIZE] = S_028000_PITCH_TILE_MAX(pitch) |
+						S_028000_SLICE_TILE_MAX(slice);
+	} else 
+		rctx->db = NULL;
 	rctx->fb_state = *state;
 }
 
@@ -357,6 +374,8 @@ static void *r600_create_dsa_state(struct pipe_context *ctx,
 	rstate = radeon_state(rscreen->rw, R600_DSA_TYPE, R600_DSA);
 	if (rstate == NULL)
 		return NULL;
+	unsigned db_depth_control = 0x00700700 | S_028800_Z_ENABLE(state->depth.enabled) | S_028800_Z_WRITE_ENABLE(state->depth.writemask) | S_028800_ZFUNC(state->depth.func);
+	
 	rstate->states[R600_DSA__DB_STENCIL_CLEAR] = 0x00000000;
 	rstate->states[R600_DSA__DB_DEPTH_CLEAR] = 0x3F800000;
 	rstate->states[R600_DSA__SX_ALPHA_TEST_CONTROL] = 0x00000000;
@@ -366,7 +385,7 @@ static void *r600_create_dsa_state(struct pipe_context *ctx,
 	rstate->states[R600_DSA__SPI_FOG_FUNC_SCALE] = 0x00000000;
 	rstate->states[R600_DSA__SPI_FOG_FUNC_BIAS] = 0x00000000;
 	rstate->states[R600_DSA__SPI_FOG_CNTL] = 0x00000000;
-	rstate->states[R600_DSA__DB_DEPTH_CONTROL] = 0x00700700;
+	rstate->states[R600_DSA__DB_DEPTH_CONTROL] = db_depth_control;
 	rstate->states[R600_DSA__DB_SHADER_CONTROL] = 0x00000210;
 	rstate->states[R600_DSA__DB_RENDER_CONTROL] = 0x00000060;
 	rstate->states[R600_DSA__DB_RENDER_OVERRIDE] = 0x0000002A;
