@@ -182,6 +182,13 @@ static void upload_pipelined_state_pointers(struct brw_context *brw )
 {
    struct intel_context *intel = &brw->intel;
 
+   if (intel->gen == 5) {
+      /* Need to flush before changing clip max threads for errata. */
+      BEGIN_BATCH(1);
+      OUT_BATCH(MI_FLUSH);
+      ADVANCE_BATCH();
+   }
+
    BEGIN_BATCH(7);
    OUT_BATCH(CMD_PIPELINED_STATE_POINTERS << 16 | (7 - 2));
    OUT_RELOC(brw->vs.state_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 0);
