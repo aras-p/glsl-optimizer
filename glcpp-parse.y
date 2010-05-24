@@ -107,6 +107,7 @@ glcpp_parser_lex (glcpp_parser_t *parser);
 %}
 
 %union {
+	intmax_t imaxval;
 	int ival;
 	char *str;
 	argument_list_t *argument_list;
@@ -119,7 +120,8 @@ glcpp_parser_lex (glcpp_parser_t *parser);
 %lex-param {glcpp_parser_t *parser}
 
 %token DEFINE DEFINED ELIF ELSE ENDIF FUNC_MACRO IDENTIFIER IDENTIFIER_FINALIZED IF IFDEF IFNDEF INTEGER OBJ_MACRO NEWLINE SPACE TOKEN UNDEF
-%type <ival> expression INTEGER punctuator
+%type <ival> punctuator
+%type <imaxval> expression INTEGER
 %type <str> content FUNC_MACRO IDENTIFIER IDENTIFIER_FINALIZED OBJ_MACRO
 %type <argument_list> argument_list
 %type <string_list> macro parameter_list

@@ -24,6 +24,8 @@
 #ifndef GLCPP_H
 #define GLCPP_H
 
+#include <stdint.h>
+
 #include <talloc.h>
 
 #include "hash_table.h"
