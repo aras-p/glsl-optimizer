@@ -278,7 +278,6 @@ intel_batchbuffer_emit_mi_flush(struct intel_batchbuffer *batch)
    if (intel->gen >= 4) {
       BEGIN_BATCH(4);
       OUT_BATCH(_3DSTATE_PIPE_CONTROL |
-		PIPE_CONTROL_INSTRUCTION_FLUSH |
 		PIPE_CONTROL_WRITE_FLUSH |
 		PIPE_CONTROL_NO_WRITE);
       OUT_BATCH(0); /* write address */
