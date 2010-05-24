@@ -244,6 +244,8 @@ test_all(unsigned verbose, FILE *fp)
    enum pipe_format format;
    boolean success = TRUE;
 
+   util_format_s3tc_init();
+
    for (format = 1; format < PIPE_FORMAT_COUNT; ++format) {
       const struct util_format_description *format_desc;
 
