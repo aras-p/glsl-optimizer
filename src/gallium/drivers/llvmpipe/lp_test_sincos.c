@@ -187,7 +187,7 @@ test_all(unsigned verbose, FILE *fp)
 {
    bool success = TRUE;
 
-   test_sincos(verbose, fp, NULL);
+   test_sincos(verbose, fp);
 
    return success;
 }
