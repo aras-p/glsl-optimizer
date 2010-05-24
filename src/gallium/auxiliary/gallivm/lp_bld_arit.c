@@ -59,6 +59,7 @@
 #include "lp_bld_pack.h"
 #include "lp_bld_debug.h"
 #include "lp_bld_arit.h"
+#include "lp_bld_printf.h"
 
 
 /**
@@ -1171,132 +1172,455 @@ lp_build_rsqrt(struct lp_build_context *bld,
 }
 
 
-#ifdef PIPE_OS_WINDOWS
-
-/*
- * XXX: X86 backend translates llvm.cos.v4f32 to 4 calls to CRT's cosf()
- * which is neither efficient nor does the CRT linkage work on Windows
- * causing segmentation fault.
- *
- * XXX: With LLVM 2.7 both schemes cause an assertion failure.
- */
-static LLVMValueRef
-lp_build_sincos(struct lp_build_context *bld,
-                const char *name,
-                float (*func)(float),
-                LLVMValueRef a)
+static inline LLVMValueRef
+lp_build_const_v4si(unsigned long value)
 {
-   LLVMModuleRef module =
-         LLVMGetGlobalParent(LLVMGetBasicBlockParent(LLVMGetInsertBlock(bld->builder)));
-   LLVMValueRef function;
-   LLVMValueRef res;
-   unsigned i;
-
-   assert(bld->type.floating);
-   assert(bld->type.width == 32);
-
-   function = LLVMGetNamedFunction(module, name);
-   if (!function) {
-      LLVMTypeRef ret_type;
-      LLVMTypeRef arg_types[1];
-      LLVMTypeRef function_type;
-
-      ret_type = LLVMFloatType();
-      arg_types[0] = LLVMFloatType();
-      function_type = LLVMFunctionType(ret_type, arg_types, Elements(arg_types), 0);
-      function = LLVMAddFunction(module, name, function_type);
-
-      LLVMSetFunctionCallConv(function, LLVMCCallConv);
-      LLVMSetLinkage(function, LLVMPrivateLinkage);
-
-      assert(LLVMIsDeclaration(function));
-
-      LLVMAddGlobalMapping(lp_build_engine, function, func);
-   }
-
-   res = bld->undef;
-
-   for (i = 0; i < bld->type.length; ++i) {
-      LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), i, 0);
-      LLVMValueRef args[1];
-      LLVMValueRef tmp;
-
-      args[0] = LLVMBuildExtractElement(bld->builder, a, index, "");
-
-      tmp = LLVMBuildCall(bld->builder, function, args, Elements(args), "");
-
-      res = LLVMBuildInsertElement(bld->builder, res, tmp, index, "");
-   }
-
-   return res;
+   LLVMValueRef element = LLVMConstInt(LLVMInt32Type(), value, 0);
+   LLVMValueRef elements[4] = { element, element, element, element };
+   return LLVMConstVector(elements, 4);
 }
 
-static float c_cosf( float f )
+static inline LLVMValueRef
+lp_build_const_v4sf(float value)
 {
-   return (float) cos( (double) f );
-}
-
-static float c_sinf( float f )
-{
-   return (float) sin( (double) f );
-}
-
-LLVMValueRef
-lp_build_cos(struct lp_build_context *bld,
-             LLVMValueRef a)
-{
-   return lp_build_sincos(bld, "cosf", &c_cosf, a);
-}
-
-LLVMValueRef
-lp_build_sin(struct lp_build_context *bld,
-             LLVMValueRef a)
-{
-   return lp_build_sincos(bld, "sinf", &c_sinf, a);
-}
-
-#else /* !PIPE_OS_WINDOWS */
-
-/**
- * Generate cos(a)
- */
-LLVMValueRef
-lp_build_cos(struct lp_build_context *bld,
-              LLVMValueRef a)
-{
-   const struct lp_type type = bld->type;
-   LLVMTypeRef vec_type = lp_build_vec_type(type);
-   char intrinsic[32];
-
-   /* TODO: optimize the constant case */
-
-   assert(type.floating);
-   util_snprintf(intrinsic, sizeof intrinsic, "llvm.cos.v%uf%u", type.length, type.width);
-
-   return lp_build_intrinsic_unary(bld->builder, intrinsic, vec_type, a);
+   LLVMValueRef element = LLVMConstReal(LLVMFloatType(), value);
+   LLVMValueRef elements[4] = { element, element, element, element };
+   return LLVMConstVector(elements, 4);
 }
 
 
 /**
- * Generate sin(a)
+ * Generate sin(a) using SSE2
  */
 LLVMValueRef
 lp_build_sin(struct lp_build_context *bld,
-              LLVMValueRef a)
+             LLVMValueRef a)
 {
-   const struct lp_type type = bld->type;
-   LLVMTypeRef vec_type = lp_build_vec_type(type);
-   char intrinsic[32];
+   struct lp_type int_type = lp_int_type(bld->type);
+   LLVMBuilderRef b = bld->builder;
+   LLVMTypeRef v4sf = LLVMVectorType(LLVMFloatType(), 4);
+   LLVMTypeRef v4si = LLVMVectorType(LLVMInt32Type(), 4);
 
-   /* TODO: optimize the constant case */
+   /*
+    *  take the absolute value,
+    *  x = _mm_and_ps(x, *(v4sf*)_ps_inv_sign_mask);
+    */
 
-   assert(type.floating);
-   util_snprintf(intrinsic, sizeof intrinsic, "llvm.sin.v%uf%u", type.length, type.width);
+   LLVMValueRef inv_sig_mask = lp_build_const_v4si(~0x80000000);
+   LLVMValueRef a_v4si = LLVMBuildBitCast(b, a, v4si, "a_v4si");
 
-   return lp_build_intrinsic_unary(bld->builder, intrinsic, vec_type, a);
+   LLVMValueRef absi = LLVMBuildAnd(b, a_v4si, inv_sig_mask, "absi");
+   LLVMValueRef x_abs = LLVMBuildBitCast(b, absi, v4sf, "x_abs");
+
+   /*
+    * extract the sign bit (upper one)
+    * sign_bit = _mm_and_ps(sign_bit, *(v4sf*)_ps_sign_mask);
+    */
+   LLVMValueRef sig_mask = lp_build_const_v4si(0x80000000);
+   LLVMValueRef sign_bit_i = LLVMBuildAnd(b, a_v4si, sig_mask, "sign_bit_i");
+
+   /*
+    * scale by 4/Pi
+    * y = _mm_mul_ps(x, *(v4sf*)_ps_cephes_FOPI);
+    */
+   
+   LLVMValueRef FOPi = lp_build_const_v4sf(1.27323954473516);
+   LLVMValueRef scale_y = LLVMBuildMul(b, x_abs, FOPi, "scale_y");
+
+   /*
+    * store the integer part of y in mm0
+    * emm2 = _mm_cvttps_epi32(y);
+    */
+   
+   LLVMValueRef emm2_i = LLVMBuildFPToSI(b, scale_y, v4si, "emm2_i");
+
+   /*
+    * j=(j+1) & (~1) (see the cephes sources)
+    * emm2 = _mm_add_epi32(emm2, *(v4si*)_pi32_1);
+    */
+
+   LLVMValueRef all_one = lp_build_const_v4si(1);
+   LLVMValueRef emm2_add =  LLVMBuildAdd(b, emm2_i, all_one, "emm2_add");
+   /*
+    * emm2 = _mm_and_si128(emm2, *(v4si*)_pi32_inv1);
+    */
+   LLVMValueRef inv_one = lp_build_const_v4si(~1);
+   LLVMValueRef emm2_and =  LLVMBuildAnd(b, emm2_add, inv_one, "emm2_and");
+
+   /*
+    * y = _mm_cvtepi32_ps(emm2);
+    */
+   LLVMValueRef y_2 = LLVMBuildSIToFP(b, emm2_and, v4sf, "y_2");
+
+   /* get the swap sign flag
+    * emm0 = _mm_and_si128(emm2, *(v4si*)_pi32_4);
+    */
+   LLVMValueRef pi32_4 = lp_build_const_v4si(4);
+   LLVMValueRef emm0_and =  LLVMBuildAnd(b, emm2_add, pi32_4, "emm0_and");
+   
+   /*
+    * emm2 = _mm_slli_epi32(emm0, 29);
+    */  
+   LLVMValueRef const_29 = lp_build_const_v4si(29);
+   LLVMValueRef swap_sign_bit = LLVMBuildShl(b, emm0_and, const_29, "swap_sign_bit");
+
+   /*
+    * get the polynom selection mask 
+    * there is one polynom for 0 <= x <= Pi/4
+    * and another one for Pi/4<x<=Pi/2
+    * Both branches will be computed.
+    *  
+    * emm2 = _mm_and_si128(emm2, *(v4si*)_pi32_2);
+    * emm2 = _mm_cmpeq_epi32(emm2, _mm_setzero_si128());
+    */
+
+   LLVMValueRef pi32_2 = lp_build_const_v4si(2);
+   LLVMValueRef emm2_3 =  LLVMBuildAnd(b, emm2_and, pi32_2, "emm2_3");
+   LLVMValueRef poly_mask = lp_build_compare(b, int_type, PIPE_FUNC_EQUAL,
+                                             emm2_3, lp_build_const_v4si(0));
+   /*
+    *   sign_bit = _mm_xor_ps(sign_bit, swap_sign_bit);
+    */
+   LLVMValueRef sign_bit_1 =  LLVMBuildXor(b, sign_bit_i, swap_sign_bit, "sign_bit");
+
+   /*
+    * _PS_CONST(minus_cephes_DP1, -0.78515625);
+    * _PS_CONST(minus_cephes_DP2, -2.4187564849853515625e-4);
+    * _PS_CONST(minus_cephes_DP3, -3.77489497744594108e-8);
+    */
+   LLVMValueRef DP1 = lp_build_const_v4sf(-0.78515625);
+   LLVMValueRef DP2 = lp_build_const_v4sf(-2.4187564849853515625e-4);
+   LLVMValueRef DP3 = lp_build_const_v4sf(-3.77489497744594108e-8);
+
+   /*
+    * The magic pass: "Extended precision modular arithmetic" 
+    * x = ((x - y * DP1) - y * DP2) - y * DP3; 
+    * xmm1 = _mm_mul_ps(y, xmm1);
+    * xmm2 = _mm_mul_ps(y, xmm2);
+    * xmm3 = _mm_mul_ps(y, xmm3);
+    */
+   LLVMValueRef xmm1 = LLVMBuildMul(b, y_2, DP1, "xmm1");
+   LLVMValueRef xmm2 = LLVMBuildMul(b, y_2, DP2, "xmm2");
+   LLVMValueRef xmm3 = LLVMBuildMul(b, y_2, DP3, "xmm3");
+
+   /*
+    * x = _mm_add_ps(x, xmm1);
+    * x = _mm_add_ps(x, xmm2);
+    * x = _mm_add_ps(x, xmm3);
+    */ 
+
+   LLVMValueRef x_1 = LLVMBuildAdd(b, x_abs, xmm1, "x_1");
+   LLVMValueRef x_2 = LLVMBuildAdd(b, x_1, xmm2, "x_2");
+   LLVMValueRef x_3 = LLVMBuildAdd(b, x_2, xmm3, "x_3");
+
+   /*
+    * Evaluate the first polynom  (0 <= x <= Pi/4)
+    *
+    * z = _mm_mul_ps(x,x);
+    */
+   LLVMValueRef z = LLVMBuildMul(b, x_3, x_3, "z");
+
+   /*
+    * _PS_CONST(coscof_p0,  2.443315711809948E-005);
+    * _PS_CONST(coscof_p1, -1.388731625493765E-003);
+    * _PS_CONST(coscof_p2,  4.166664568298827E-002);
+    */
+   LLVMValueRef coscof_p0 = lp_build_const_v4sf(2.443315711809948E-005);
+   LLVMValueRef coscof_p1 = lp_build_const_v4sf(-1.388731625493765E-003);
+   LLVMValueRef coscof_p2 = lp_build_const_v4sf(4.166664568298827E-002);
+
+   /*
+    * y = *(v4sf*)_ps_coscof_p0;
+    * y = _mm_mul_ps(y, z);
+    */
+   LLVMValueRef y_3 = LLVMBuildMul(b, z, coscof_p0, "y_3");
+   LLVMValueRef y_4 = LLVMBuildAdd(b, y_3, coscof_p1, "y_4");
+   LLVMValueRef y_5 = LLVMBuildMul(b, y_4, z, "y_5");
+   LLVMValueRef y_6 = LLVMBuildAdd(b, y_5, coscof_p2, "y_6");
+   LLVMValueRef y_7 = LLVMBuildMul(b, y_6, z, "y_7");
+   LLVMValueRef y_8 = LLVMBuildMul(b, y_7, z, "y_8");
+
+
+   /*
+    * tmp = _mm_mul_ps(z, *(v4sf*)_ps_0p5);
+    * y = _mm_sub_ps(y, tmp);
+    * y = _mm_add_ps(y, *(v4sf*)_ps_1);
+    */ 
+   LLVMValueRef half = lp_build_const_v4sf(0.5);
+   LLVMValueRef tmp = LLVMBuildMul(b, z, half, "tmp");
+   LLVMValueRef y_9 = LLVMBuildSub(b, y_8, tmp, "y_8");
+   LLVMValueRef one = lp_build_const_v4sf(1.0);
+   LLVMValueRef y_10 = LLVMBuildAdd(b, y_9, one, "y_9");
+
+   /*
+    * _PS_CONST(sincof_p0, -1.9515295891E-4);
+    * _PS_CONST(sincof_p1,  8.3321608736E-3);
+    * _PS_CONST(sincof_p2, -1.6666654611E-1);
+    */
+   LLVMValueRef sincof_p0 = lp_build_const_v4sf(-1.9515295891E-4);
+   LLVMValueRef sincof_p1 = lp_build_const_v4sf(8.3321608736E-3);
+   LLVMValueRef sincof_p2 = lp_build_const_v4sf(-1.6666654611E-1);
+
+   /*
+    * Evaluate the second polynom  (Pi/4 <= x <= 0)
+    *
+    * y2 = *(v4sf*)_ps_sincof_p0;
+    * y2 = _mm_mul_ps(y2, z);
+    * y2 = _mm_add_ps(y2, *(v4sf*)_ps_sincof_p1);
+    * y2 = _mm_mul_ps(y2, z);
+    * y2 = _mm_add_ps(y2, *(v4sf*)_ps_sincof_p2);
+    * y2 = _mm_mul_ps(y2, z);
+    * y2 = _mm_mul_ps(y2, x);
+    * y2 = _mm_add_ps(y2, x);
+    */
+
+   LLVMValueRef y2_3 = LLVMBuildMul(b, z, sincof_p0, "y2_3");
+   LLVMValueRef y2_4 = LLVMBuildAdd(b, y2_3, sincof_p1, "y2_4");
+   LLVMValueRef y2_5 = LLVMBuildMul(b, y2_4, z, "y2_5");
+   LLVMValueRef y2_6 = LLVMBuildAdd(b, y2_5, sincof_p2, "y2_6");
+   LLVMValueRef y2_7 = LLVMBuildMul(b, y2_6, z, "y2_7");
+   LLVMValueRef y2_8 = LLVMBuildMul(b, y2_7, x_3, "y2_8");
+   LLVMValueRef y2_9 = LLVMBuildAdd(b, y2_8, x_3, "y2_9");
+
+   /*
+    * select the correct result from the two polynoms
+    * xmm3 = poly_mask;
+    * y2 = _mm_and_ps(xmm3, y2); //, xmm3);
+    * y = _mm_andnot_ps(xmm3, y);
+    * y = _mm_add_ps(y,y2);
+    */
+   LLVMValueRef y2_i = LLVMBuildBitCast(b, y2_9, v4si, "y2_i");
+   LLVMValueRef y_i = LLVMBuildBitCast(b, y_10, v4si, "y_i");
+   LLVMValueRef y2_and = LLVMBuildAnd(b, y2_i, poly_mask, "y2_and");
+   LLVMValueRef inv = lp_build_const_v4si(~0);
+   LLVMValueRef poly_mask_inv = LLVMBuildXor(b, poly_mask, inv, "poly_mask_inv");
+   LLVMValueRef y_and = LLVMBuildAnd(b, y_i, poly_mask_inv, "y_and");
+   LLVMValueRef y_combine = LLVMBuildAdd(b, y_and, y2_and, "y_combine");
+
+   /*
+    * update the sign
+    * y = _mm_xor_ps(y, sign_bit);
+    */
+   LLVMValueRef y_sign = LLVMBuildXor(b, y_combine, sign_bit_1, "y_sin");
+   LLVMValueRef y_result = LLVMBuildBitCast(b, y_sign, v4sf, "y_result");
+   return y_result;
 }
 
-#endif /* !PIPE_OS_WINDOWS */
+
+/**
+ * Generate cos(a) using SSE2
+ */
+LLVMValueRef
+lp_build_cos(struct lp_build_context *bld,
+             LLVMValueRef a)
+{
+   struct lp_type int_type = lp_int_type(bld->type);
+   LLVMBuilderRef b = bld->builder;
+   LLVMTypeRef v4sf = LLVMVectorType(LLVMFloatType(), 4);
+   LLVMTypeRef v4si = LLVMVectorType(LLVMInt32Type(), 4);
+
+   /*
+    *  take the absolute value,
+    *  x = _mm_and_ps(x, *(v4sf*)_ps_inv_sign_mask);
+    */
+
+   LLVMValueRef inv_sig_mask = lp_build_const_v4si(~0x80000000);
+   LLVMValueRef a_v4si = LLVMBuildBitCast(b, a, v4si, "a_v4si");
+
+   LLVMValueRef absi = LLVMBuildAnd(b, a_v4si, inv_sig_mask, "absi");
+   LLVMValueRef x_abs = LLVMBuildBitCast(b, absi, v4sf, "x_abs");
+
+   /*
+    * scale by 4/Pi
+    * y = _mm_mul_ps(x, *(v4sf*)_ps_cephes_FOPI);
+    */
+   
+   LLVMValueRef FOPi = lp_build_const_v4sf(1.27323954473516);
+   LLVMValueRef scale_y = LLVMBuildMul(b, x_abs, FOPi, "scale_y");
+
+   /*
+    * store the integer part of y in mm0
+    * emm2 = _mm_cvttps_epi32(y);
+    */
+   
+   LLVMValueRef emm2_i = LLVMBuildFPToSI(b, scale_y, v4si, "emm2_i");
+
+   /*
+    * j=(j+1) & (~1) (see the cephes sources)
+    * emm2 = _mm_add_epi32(emm2, *(v4si*)_pi32_1);
+    */
+
+   LLVMValueRef all_one = lp_build_const_v4si(1);
+   LLVMValueRef emm2_add =  LLVMBuildAdd(b, emm2_i, all_one, "emm2_add");
+   /*
+    * emm2 = _mm_and_si128(emm2, *(v4si*)_pi32_inv1);
+    */
+   LLVMValueRef inv_one = lp_build_const_v4si(~1);
+   LLVMValueRef emm2_and =  LLVMBuildAnd(b, emm2_add, inv_one, "emm2_and");
+
+   /*
+    * y = _mm_cvtepi32_ps(emm2);
+    */
+   LLVMValueRef y_2 = LLVMBuildSIToFP(b, emm2_and, v4sf, "y_2");
+
+
+   /*
+    * emm2 = _mm_sub_epi32(emm2, *(v4si*)_pi32_2);
+    */
+   LLVMValueRef const_2 = lp_build_const_v4si(2);
+   LLVMValueRef emm2_2 = LLVMBuildSub(b, emm2_and, const_2, "emm2_2");
+
+
+   /* get the swap sign flag
+    * emm0 = _mm_andnot_si128(emm2, *(v4si*)_pi32_4);
+    */
+   LLVMValueRef inv = lp_build_const_v4si(~0);
+   LLVMValueRef emm0_not = LLVMBuildXor(b, emm2_2, inv, "emm0_not");
+   LLVMValueRef pi32_4 = lp_build_const_v4si(4);
+   LLVMValueRef emm0_and =  LLVMBuildAnd(b, emm0_not, pi32_4, "emm0_and");
+   
+   /*
+    * emm2 = _mm_slli_epi32(emm0, 29);
+    */  
+   LLVMValueRef const_29 = lp_build_const_v4si(29);
+   LLVMValueRef sign_bit = LLVMBuildShl(b, emm0_and, const_29, "sign_bit");
+
+   /*
+    * get the polynom selection mask 
+    * there is one polynom for 0 <= x <= Pi/4
+    * and another one for Pi/4<x<=Pi/2
+    * Both branches will be computed.
+    *  
+    * emm2 = _mm_and_si128(emm2, *(v4si*)_pi32_2);
+    * emm2 = _mm_cmpeq_epi32(emm2, _mm_setzero_si128());
+    */
+
+   LLVMValueRef pi32_2 = lp_build_const_v4si(2);
+   LLVMValueRef emm2_3 =  LLVMBuildAnd(b, emm2_2, pi32_2, "emm2_3");
+   LLVMValueRef poly_mask = lp_build_compare(b, int_type, PIPE_FUNC_EQUAL,
+   				             emm2_3, lp_build_const_v4si(0));
+
+   /*
+    * _PS_CONST(minus_cephes_DP1, -0.78515625);
+    * _PS_CONST(minus_cephes_DP2, -2.4187564849853515625e-4);
+    * _PS_CONST(minus_cephes_DP3, -3.77489497744594108e-8);
+    */
+   LLVMValueRef DP1 = lp_build_const_v4sf(-0.78515625);
+   LLVMValueRef DP2 = lp_build_const_v4sf(-2.4187564849853515625e-4);
+   LLVMValueRef DP3 = lp_build_const_v4sf(-3.77489497744594108e-8);
+
+   /*
+    * The magic pass: "Extended precision modular arithmetic" 
+    * x = ((x - y * DP1) - y * DP2) - y * DP3; 
+    * xmm1 = _mm_mul_ps(y, xmm1);
+    * xmm2 = _mm_mul_ps(y, xmm2);
+    * xmm3 = _mm_mul_ps(y, xmm3);
+    */
+   LLVMValueRef xmm1 = LLVMBuildMul(b, y_2, DP1, "xmm1");
+   LLVMValueRef xmm2 = LLVMBuildMul(b, y_2, DP2, "xmm2");
+   LLVMValueRef xmm3 = LLVMBuildMul(b, y_2, DP3, "xmm3");
+
+   /*
+    * x = _mm_add_ps(x, xmm1);
+    * x = _mm_add_ps(x, xmm2);
+    * x = _mm_add_ps(x, xmm3);
+    */ 
+
+   LLVMValueRef x_1 = LLVMBuildAdd(b, x_abs, xmm1, "x_1");
+   LLVMValueRef x_2 = LLVMBuildAdd(b, x_1, xmm2, "x_2");
+   LLVMValueRef x_3 = LLVMBuildAdd(b, x_2, xmm3, "x_3");
+
+   /*
+    * Evaluate the first polynom  (0 <= x <= Pi/4)
+    *
+    * z = _mm_mul_ps(x,x);
+    */
+   LLVMValueRef z = LLVMBuildMul(b, x_3, x_3, "z");
+
+   /*
+    * _PS_CONST(coscof_p0,  2.443315711809948E-005);
+    * _PS_CONST(coscof_p1, -1.388731625493765E-003);
+    * _PS_CONST(coscof_p2,  4.166664568298827E-002);
+    */
+   LLVMValueRef coscof_p0 = lp_build_const_v4sf(2.443315711809948E-005);
+   LLVMValueRef coscof_p1 = lp_build_const_v4sf(-1.388731625493765E-003);
+   LLVMValueRef coscof_p2 = lp_build_const_v4sf(4.166664568298827E-002);
+
+   /*
+    * y = *(v4sf*)_ps_coscof_p0;
+    * y = _mm_mul_ps(y, z);
+    */
+   LLVMValueRef y_3 = LLVMBuildMul(b, z, coscof_p0, "y_3");
+   LLVMValueRef y_4 = LLVMBuildAdd(b, y_3, coscof_p1, "y_4");
+   LLVMValueRef y_5 = LLVMBuildMul(b, y_4, z, "y_5");
+   LLVMValueRef y_6 = LLVMBuildAdd(b, y_5, coscof_p2, "y_6");
+   LLVMValueRef y_7 = LLVMBuildMul(b, y_6, z, "y_7");
+   LLVMValueRef y_8 = LLVMBuildMul(b, y_7, z, "y_8");
+
+
+   /*
+    * tmp = _mm_mul_ps(z, *(v4sf*)_ps_0p5);
+    * y = _mm_sub_ps(y, tmp);
+    * y = _mm_add_ps(y, *(v4sf*)_ps_1);
+    */ 
+   LLVMValueRef half = lp_build_const_v4sf(0.5);
+   LLVMValueRef tmp = LLVMBuildMul(b, z, half, "tmp");
+   LLVMValueRef y_9 = LLVMBuildSub(b, y_8, tmp, "y_8");
+   LLVMValueRef one = lp_build_const_v4sf(1.0);
+   LLVMValueRef y_10 = LLVMBuildAdd(b, y_9, one, "y_9");
+
+   /*
+    * _PS_CONST(sincof_p0, -1.9515295891E-4);
+    * _PS_CONST(sincof_p1,  8.3321608736E-3);
+    * _PS_CONST(sincof_p2, -1.6666654611E-1);
+    */
+   LLVMValueRef sincof_p0 = lp_build_const_v4sf(-1.9515295891E-4);
+   LLVMValueRef sincof_p1 = lp_build_const_v4sf(8.3321608736E-3);
+   LLVMValueRef sincof_p2 = lp_build_const_v4sf(-1.6666654611E-1);
+
+   /*
+    * Evaluate the second polynom  (Pi/4 <= x <= 0)
+    *
+    * y2 = *(v4sf*)_ps_sincof_p0;
+    * y2 = _mm_mul_ps(y2, z);
+    * y2 = _mm_add_ps(y2, *(v4sf*)_ps_sincof_p1);
+    * y2 = _mm_mul_ps(y2, z);
+    * y2 = _mm_add_ps(y2, *(v4sf*)_ps_sincof_p2);
+    * y2 = _mm_mul_ps(y2, z);
+    * y2 = _mm_mul_ps(y2, x);
+    * y2 = _mm_add_ps(y2, x);
+    */
+
+   LLVMValueRef y2_3 = LLVMBuildMul(b, z, sincof_p0, "y2_3");
+   LLVMValueRef y2_4 = LLVMBuildAdd(b, y2_3, sincof_p1, "y2_4");
+   LLVMValueRef y2_5 = LLVMBuildMul(b, y2_4, z, "y2_5");
+   LLVMValueRef y2_6 = LLVMBuildAdd(b, y2_5, sincof_p2, "y2_6");
+   LLVMValueRef y2_7 = LLVMBuildMul(b, y2_6, z, "y2_7");
+   LLVMValueRef y2_8 = LLVMBuildMul(b, y2_7, x_3, "y2_8");
+   LLVMValueRef y2_9 = LLVMBuildAdd(b, y2_8, x_3, "y2_9");
+
+   /*
+    * select the correct result from the two polynoms
+    * xmm3 = poly_mask;
+    * y2 = _mm_and_ps(xmm3, y2); //, xmm3);
+    * y = _mm_andnot_ps(xmm3, y);
+    * y = _mm_add_ps(y,y2);
+    */
+   LLVMValueRef y2_i = LLVMBuildBitCast(b, y2_9, v4si, "y2_i");
+   LLVMValueRef y_i = LLVMBuildBitCast(b, y_10, v4si, "y_i");
+   LLVMValueRef y2_and = LLVMBuildAnd(b, y2_i, poly_mask, "y2_and");
+   LLVMValueRef poly_mask_inv = LLVMBuildXor(b, poly_mask, inv, "poly_mask_inv");
+   LLVMValueRef y_and = LLVMBuildAnd(b, y_i, poly_mask_inv, "y_and");
+   LLVMValueRef y_combine = LLVMBuildAdd(b, y_and, y2_and, "y_combine");
+
+   /*
+    * update the sign
+    * y = _mm_xor_ps(y, sign_bit);
+    */
+   LLVMValueRef y_sign = LLVMBuildXor(b, y_combine, sign_bit, "y_sin");
+   LLVMValueRef y_result = LLVMBuildBitCast(b, y_sign, v4sf, "y_result");
+   return y_result;
+}
 
 
 /**
