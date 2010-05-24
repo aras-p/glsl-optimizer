@@ -4971,6 +4971,7 @@ GLboolean
 _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
                                slang_unit_type type)
 {
+   GET_CURRENT_CONTEXT(ctx);
    struct gl_program *prog = A->program;
    const char *varName = (char *) var->a_name;
    GLboolean success = GL_TRUE;
@@ -5000,7 +5001,8 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
       }
 #if FEATURE_es2_glsl /* XXX should use FEATURE_texture_rect */
       /* disallow rect samplers */
-      if (is_rect_sampler_spec(&var->type.specifier)) {
+      if (ctx->API == API_OPENGLES2 &&
+	  is_rect_sampler_spec(&var->type.specifier)) {
          slang_info_log_error(A->log, "invalid sampler type for '%s'", varName);
          return GL_FALSE;
       }

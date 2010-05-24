@@ -858,13 +858,15 @@ _slang_link(GLcontext *ctx,
 
 #if FEATURE_es2_glsl
    /* must have both a vertex and fragment program for ES2 */
-   if (!vertProg) {
-      link_error(shProg, "missing vertex shader\n");
-      return;
-   }
-   if (!fragProg) {
-      link_error(shProg, "missing fragment shader\n");
-      return;
+   if (ctx->API == API_OPENGLES2) {
+      if (!vertProg) {
+	 link_error(shProg, "missing vertex shader\n");
+	 return;
+      }
+      if (!fragProg) {
+	 link_error(shProg, "missing fragment shader\n");
+	 return;
+      }
    }
 #endif
 

@@ -74,7 +74,8 @@ _mesa_init_program(GLcontext *ctx)
 #if FEATURE_NV_vertex_program || FEATURE_ARB_vertex_program
    ctx->VertexProgram.Enabled = GL_FALSE;
 #if FEATURE_es2_glsl
-   ctx->VertexProgram.PointSizeEnabled = GL_TRUE;
+   ctx->VertexProgram.PointSizeEnabled =
+      (ctx->API == API_OPENGLES2) ? GL_TRUE : GL_FALSE;
 #else
    ctx->VertexProgram.PointSizeEnabled = GL_FALSE;
 #endif

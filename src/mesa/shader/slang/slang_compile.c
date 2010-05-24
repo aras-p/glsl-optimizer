@@ -2485,10 +2485,14 @@ parse_default_precision(slang_parse_ctx * C, slang_output_ctx * O)
 static void
 init_default_precision(slang_output_ctx *O, slang_unit_type type)
 {
+   GET_CURRENT_CONTEXT(ctx);
    GLuint i;
    for (i = 0; i < TYPE_SPECIFIER_COUNT; i++) {
 #if FEATURE_es2_glsl
-      O->default_precision[i] = PRECISION_LOW;
+      if (ctx->API == API_OPENGLES2)
+	 O->default_precision[i] = PRECISION_LOW;
+      else
+	 O->default_precision[i] = PRECISION_HIGH;
 #else
       O->default_precision[i] = PRECISION_HIGH;
 #endif
@@ -2559,7 +2563,8 @@ parse_code_unit(slang_parse_ctx * C, slang_code_unit * unit,
 
    /* allow 'invariant' keyword? */
 #if FEATURE_es2_glsl
-   o.allow_invariant = GL_TRUE;
+   o.allow_invariant =
+      (ctx->API == API_OPENGLES2 || C->version >= 120) ? GL_TRUE : GL_FALSE;
 #else
    o.allow_invariant = (C->version >= 120) ? GL_TRUE : GL_FALSE;
 #endif
@@ -2569,7 +2574,8 @@ parse_code_unit(slang_parse_ctx * C, slang_code_unit * unit,
 
    /* allow 'lowp/mediump/highp' keywords? */
 #if FEATURE_es2_glsl
-   o.allow_precision = GL_TRUE;
+   o.allow_precision =
+      (ctx->API == API_OPENGLES2 || C->version >= 120) ? GL_TRUE : GL_FALSE;
 #else
    o.allow_precision = (C->version >= 120) ? GL_TRUE : GL_FALSE;
 #endif
@@ -2690,6 +2696,7 @@ compile_with_grammar(const char *source,
                      unsigned int shader_type,
                      unsigned int parsing_builtin)
 {
+   GET_CURRENT_CONTEXT(ctx);
    struct sl_pp_purify_options options;
    struct sl_pp_context *context;
    unsigned char *prod;
@@ -2728,11 +2735,13 @@ compile_with_grammar(const char *source,
 
 
 #if FEATURE_es2_glsl
-   if (sl_pp_context_add_predefined(context, "GL_ES", "1") ||
-       sl_pp_context_add_predefined(context, "GL_FRAGMENT_PRECISION_HIGH", "1")) {
-      slang_info_log_error(infolog, "%s", sl_pp_context_error_message(context));
-      sl_pp_context_destroy(context);
-      return GL_FALSE;
+   if (ctx->API == API_OPENGLES2) {
+      if (sl_pp_context_add_predefined(context, "GL_ES", "1") ||
+	  sl_pp_context_add_predefined(context, "GL_FRAGMENT_PRECISION_HIGH", "1")) {
+	 slang_info_log_error(infolog, "%s", sl_pp_context_error_message(context));
+	 sl_pp_context_destroy(context);
+	 return GL_FALSE;
+      }
    }
 #endif
 
