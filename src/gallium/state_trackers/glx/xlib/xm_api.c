@@ -1184,6 +1184,10 @@ void xmesa_destroy_buffers_on_display(Display *dpy)
       next = b->Next;
       if (b->xm_visual->display == dpy) {
          xmesa_free_buffer(b);
+         /* delete head of list? */
+         if (XMesaBufferList == b) {
+            XMesaBufferList = next;
+         }
       }
    }
 }
