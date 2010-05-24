@@ -45,9 +45,12 @@ NONSPACE	[^[:space:]]
 NEWLINE		[\n]
 HSPACE		[ \t]
 HASH		^{HSPACE}*#{HSPACE}*
-INTEGER		[0-9]+
 IDENTIFIER	[_a-zA-Z][_a-zA-Z0-9]*
 TOKEN		[^[:space:](),]+
+
+DECIMAL_INTEGER		[1-9][0-9]*[uU]?
+OCTAL_INTEGER		0[0-7]*[uU]?
+HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 
 %%
 
@@ -61,8 +64,18 @@ TOKEN		[^[:space:](),]+
 	return ELIF;
 }
 
-<ST_IF>{INTEGER} {
-	yylval.ival = atoi (yytext);
+<ST_IF>{DECIMAL_INTEGER} {
+	yylval.ival = strtoll (yytext, NULL, 10);
+	return INTEGER;
+}
+
+<ST_IF>{OCTAL_INTEGER} {
+	yylval.ival = strtoll (yytext + 1, NULL, 8);
+	return INTEGER;
+}
+
+<ST_IF>{HEXADECIMAL_INTEGER} {
+	yylval.ival = strtoll (yytext + 2, NULL, 16);
 	return INTEGER;
 }
 
