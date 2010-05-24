@@ -102,7 +102,7 @@ TOKEN		[^[:space:](),]+
 	return OR;
 }
 
-<ST_IF>[-+*/%<>&^|()] {
+<ST_IF>[-+*/%<>&^|()~] {
 	return yytext[0];
 }
 
