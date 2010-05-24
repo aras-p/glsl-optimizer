@@ -76,6 +76,8 @@ if env['platform'] != 'embedded':
         'format',
         'blend',
         'conv',
+	'printf',
+	'sincos',
     ]
 
     for test in tests:

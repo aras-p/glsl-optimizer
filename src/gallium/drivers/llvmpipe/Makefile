@@ -50,8 +50,12 @@ CPP_SOURCES = \
 PROGS := lp_test_format	\
 	 lp_test_blend	\
 	 lp_test_conv	\
-	 lp_test_printf
+	 lp_test_printf \
+         lp_test_sincos
 
+lp_test_sincos.o : sse_mathfun.h
+
+PROGS_DEPS := ../../auxiliary/libgallium.a
 
 include ../../Makefile.template
 
