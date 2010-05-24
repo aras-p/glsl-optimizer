@@ -66,6 +66,51 @@ TOKEN		[^[:space:](),]+
 	return INTEGER;
 }
 
+<ST_IF>"defined" {
+	return DEFINED;
+}
+
+<ST_IF>"<<" {
+	return LEFT_SHIFT;
+}
+
+<ST_IF>">>" {
+	return RIGHT_SHIFT;
+}
+
+<ST_IF>"<=" {
+	return LESS_OR_EQUAL;
+}
+
+<ST_IF>">=" {
+	return GREATER_OR_EQUAL;
+}
+
+<ST_IF>"==" {
+	return EQUAL;
+}
+
+<ST_IF>"!=" {
+	return NOT_EQUAL;
+}
+
+<ST_IF>"&&" {
+	return AND;
+}
+
+<ST_IF>"||" {
+	return OR;
+}
+
+<ST_IF>[-+*/%<>&^|()] {
+	return yytext[0];
+}
+
+<ST_IF>{IDENTIFIER} {
+	yylval.str = xtalloc_strdup (yyextra, yytext);
+	return IDENTIFIER;
+}
+
 <ST_IF>{HSPACE}+
 
 <ST_IF>\n {

@@ -118,13 +118,24 @@ glcpp_parser_lex (glcpp_parser_t *parser);
 %parse-param {glcpp_parser_t *parser}
 %lex-param {glcpp_parser_t *parser}
 
-%token DEFINE ELIF ELSE ENDIF FUNC_MACRO IDENTIFIER IDENTIFIER_FINALIZED IF IFDEF IFNDEF INTEGER OBJ_MACRO NEWLINE SEPARATOR SPACE TOKEN UNDEF
+%token DEFINE DEFINED ELIF ELSE ENDIF FUNC_MACRO IDENTIFIER IDENTIFIER_FINALIZED IF IFDEF IFNDEF INTEGER OBJ_MACRO NEWLINE SPACE TOKEN UNDEF
 %type <ival> expression INTEGER punctuator
 %type <str> content FUNC_MACRO IDENTIFIER IDENTIFIER_FINALIZED OBJ_MACRO
 %type <argument_list> argument_list
 %type <string_list> macro parameter_list
 %type <token> TOKEN argument_word argument_word_or_comma
 %type <token_list> argument argument_or_comma replacement_list pp_tokens
+%left OR
+%left AND
+%left '|'
+%left '^'
+%left '&'
+%left EQUAL NOT_EQUAL
+%left '<' '>' LESS_OR_EQUAL GREATER_OR_EQUAL
+%left LEFT_SHIFT RIGHT_SHIFT
+%left '+' '-'
+%left '*' '/' '%'
+%right UNARY
 
 /* Hard to remove shift/reduce conflicts documented as follows:
  *
@@ -142,11 +153,7 @@ glcpp_parser_lex (glcpp_parser_t *parser);
 
 %%
 
-	/* We do all printing at the input level.
-	 *
-	 * The value for "input" is simply TOKEN or SEPARATOR so we
-	 * can decide whether it's necessary to print a space
-	 * character between any two. */
+	 /* We do all printing at the input level. */
 input:
 	/* empty */ {
 		parser->just_printed_separator = 1;
@@ -350,10 +357,86 @@ directive:
 	}
 ;
 
-/* XXX: Need to fill out with all operators. */
 expression:
 	INTEGER {
 		$$ = $1;
+	}
+|	expression OR expression {
+		$$ = $1 || $3;
+	}
+|	expression AND expression {
+		$$ = $1 && $3;
+	}
+|	expression '|' expression {
+		$$ = $1 | $3;
+	}
+|	expression '^' expression {
+		$$ = $1 ^ $3;
+	}
+|	expression '&' expression {
+		$$ = $1 & $3;
+	}
+|	expression NOT_EQUAL expression {
+		$$ = $1 != $3;
+	}
+|	expression EQUAL expression {
+		$$ = $1 == $3;
+	}
+|	expression GREATER_OR_EQUAL expression {
+		$$ = $1 >= $3;
+	}
+|	expression LESS_OR_EQUAL expression {
+		$$ = $1 <= $3;
+	}
+|	expression '>' expression {
+		$$ = $1 > $3;
+	}
+|	expression '<' expression {
+		$$ = $1 < $3;
+	}
+|	expression RIGHT_SHIFT expression {
+		$$ = $1 >> $3;
+	}
+|	expression LEFT_SHIFT expression {
+		$$ = $1 << $3;
+	}
+|	expression '-' expression {
+		$$ = $1 - $3;
+	}
+|	expression '+' expression {
+		$$ = $1 + $3;
+	}
+|	expression '%' expression {
+		$$ = $1 % $3;
+	}
+|	expression '/' expression {
+		$$ = $1 / $3;
+	}
+|	expression '*' expression {
+		$$ = $1 * $3;
+	}
+|	'!' expression %prec UNARY {
+		$$ = ! $2;
+	}
+|	'~' expression %prec UNARY {
+		$$ = ~ $2;
+	}
+|	'-' expression %prec UNARY {
+		$$ = - $2;
+	}
+|	'+' expression %prec UNARY {
+		$$ = + $2;
+	}
+|	DEFINED IDENTIFIER %prec UNARY {
+		string_list_t *macro = hash_table_find (parser->defines, $2);
+		talloc_free ($2);
+		if (macro)
+			$$ = 1;
+		else
+			$$ = 0;
+	}
+|	'(' expression ')' {
+		$$ = $2;
 	}
 ;
 
