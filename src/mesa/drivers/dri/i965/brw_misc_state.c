@@ -526,10 +526,10 @@ static void upload_invarient_state( struct brw_context *brw )
       BRW_BATCH_STRUCT(brw, &gdo);
    }
 
-   intel_batchbuffer_emit_mi_flush(intel->batch);
-
    if (intel->gen >= 6) {
       int i;
+
+      intel_batchbuffer_emit_mi_flush(intel->batch);
 
       BEGIN_BATCH(3);
       OUT_BATCH(CMD_3D_MULTISAMPLE << 16 | (3 - 2));
