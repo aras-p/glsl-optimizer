@@ -818,6 +818,21 @@ _mesa_meta_end(GLcontext *ctx)
 
 
 /**
+ * Convert Z from a normalized value in the range [0, 1] to an object-space
+ * Z coordinate in [-1, +1] so that drawing at the new Z position with the
+ * default/identity ortho projection results in the original Z value.
+ * Used by the meta-Clear, Draw/CopyPixels and Bitmap functions where the Z
+ * value comes from the clear value or raster position.
+ */
+static INLINE GLfloat
+invert_z(GLfloat normZ)
+{
+   GLfloat objZ = 1.0 - 2.0 * normZ;
+   return objZ;
+}
+
+
+/**
  * One-time init for a temp_texture object.
  * Choose tex target, compute max tex size, etc.
  */
@@ -1438,7 +1453,7 @@ _mesa_meta_Clear(GLcontext *ctx, GLbitfield buffers)
       const GLfloat y0 = (GLfloat) ctx->DrawBuffer->_Ymin;
       const GLfloat x1 = (GLfloat) ctx->DrawBuffer->_Xmax;
       const GLfloat y1 = (GLfloat) ctx->DrawBuffer->_Ymax;
-      const GLfloat z = 1.0 - 2.0 * ctx->Depth.Clear;
+      const GLfloat z = invert_z(ctx->Depth.Clear);
       GLuint i;
 
       verts[0].x = x0;
@@ -1544,7 +1559,7 @@ _mesa_meta_CopyPixels(GLcontext *ctx, GLint srcX, GLint srcY,
       const GLfloat dstY0 = (GLfloat) dstY;
       const GLfloat dstX1 = dstX + width * ctx->Pixel.ZoomX;
       const GLfloat dstY1 = dstY + height * ctx->Pixel.ZoomY;
-      const GLfloat z = ctx->Current.RasterPos[2];
+      const GLfloat z = invert_z(ctx->Current.RasterPos[2]);
 
       verts[0].x = dstX0;
       verts[0].y = dstY0;
@@ -1833,7 +1848,7 @@ _mesa_meta_DrawPixels(GLcontext *ctx,
       const GLfloat y0 = (GLfloat) y;
       const GLfloat x1 = x + width * ctx->Pixel.ZoomX;
       const GLfloat y1 = y + height * ctx->Pixel.ZoomY;
-      const GLfloat z = ctx->Current.RasterPos[2];
+      const GLfloat z = invert_z(ctx->Current.RasterPos[2]);
 
       verts[0].x = x0;
       verts[0].y = y0;
@@ -2036,7 +2051,7 @@ _mesa_meta_Bitmap(GLcontext *ctx,
       const GLfloat y0 = (GLfloat) y;
       const GLfloat x1 = (GLfloat) (x + width);
       const GLfloat y1 = (GLfloat) (y + height);
-      const GLfloat z = ctx->Current.RasterPos[2];
+      const GLfloat z = invert_z(ctx->Current.RasterPos[2]);
       GLuint i;
 
       verts[0].x = x0;
