@@ -258,14 +258,14 @@ texview_map_delete(const struct keymap *map,
                    const void *key, void *data,
                    void *user)
 {
-   struct pipe_context *pipe = (struct pipe_context*)user;
+   struct pipe_sampler_view *sv = (struct pipe_sampler_view*)data;
 
    assert(map);
    assert(key);
    assert(data);
    assert(user);
 
-   pipe->sampler_view_destroy(pipe, data);
+   pipe_sampler_view_reference(&sv, NULL);
 }
 
 bool vl_compositor_init(struct vl_compositor *compositor, struct pipe_context *pipe)
@@ -506,7 +506,7 @@ static void draw_layers(struct vl_compositor *c,
       c->pipe->draw_arrays(c->pipe, PIPE_PRIM_TRIANGLES, i * 6, 6);
 
       if (delete_view) {
-         c->pipe->sampler_view_destroy(c->pipe, surface_view);
+         pipe_sampler_view_reference(&surface_view, NULL);
       }
    }
 }

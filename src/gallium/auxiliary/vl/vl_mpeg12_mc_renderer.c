@@ -675,7 +675,7 @@ cleanup_buffers(struct vl_mpeg12_mc_renderer *r)
    pipe_resource_reference(&r->vs_const_buf, NULL);
 
    for (i = 0; i < 3; ++i) {
-      r->pipe->sampler_view_destroy(r->pipe, r->sampler_views.all[i]);
+      pipe_sampler_view_reference(&r->sampler_views.all[i], NULL);
       r->pipe->delete_vertex_elements_state(r->pipe, r->vertex_elems_state.all[i]);
       pipe_resource_reference(&r->vertex_bufs.all[i].buffer, NULL);
       pipe_resource_reference(&r->textures.all[i], NULL);
@@ -1311,14 +1311,14 @@ texview_map_delete(const struct keymap *map,
                    const void *key, void *data,
                    void *user)
 {
-   struct pipe_context *pipe = (struct pipe_context*)user;
+   struct pipe_sampler_view *sv = (struct pipe_sampler_view*)data;
 
    assert(map);
    assert(key);
    assert(data);
    assert(user);
 
-   pipe->sampler_view_destroy(pipe, data);
+   pipe_sampler_view_reference(&sv, NULL);
 }
 
 bool
