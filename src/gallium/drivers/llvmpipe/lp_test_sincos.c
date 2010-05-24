@@ -41,10 +41,6 @@
 #include "lp_test.h"
 
 
-struct sincos_test_case {
-};
-
-
 void
 write_tsv_header(FILE *fp)
 {
@@ -101,7 +97,7 @@ printv(char* string, v4sf value)
 
 PIPE_ALIGN_STACK
 static boolean
-test_sincos(unsigned verbose, FILE *fp, const struct sincos_test_case *testcase)
+test_sincos(unsigned verbose, FILE *fp)
 {
    LLVMModuleRef module = NULL;
    LLVMValueRef test_sin = NULL, test_cos = NULL;
@@ -178,7 +174,7 @@ test_sincos(unsigned verbose, FILE *fp, const struct sincos_test_case *testcase)
 #else /* !PIPE_ARCH_SSE */
 
 static boolean
-test_sincos(unsigned verbose, FILE *fp, const struct sincos_test_case *testcase)
+test_sincos(unsigned verbose, FILE *fp)
 {
    return TRUE;
 }
