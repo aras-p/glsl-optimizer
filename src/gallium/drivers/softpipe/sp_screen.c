@@ -37,6 +37,7 @@
 #include "sp_texture.h"
 #include "sp_screen.h"
 #include "sp_context.h"
+#include "sp_video_context.h"
 #include "sp_fence.h"
 #include "sp_public.h"
 
@@ -274,6 +275,7 @@ softpipe_create_screen(struct sw_winsys *winsys)
    screen->base.is_format_supported = softpipe_is_format_supported;
    screen->base.context_create = softpipe_create_context;
    screen->base.flush_frontbuffer = softpipe_flush_frontbuffer;
+   screen->base.video_context_create = sp_video_create;
 
    util_format_s3tc_init();
 

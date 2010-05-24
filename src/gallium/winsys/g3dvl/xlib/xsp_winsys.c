@@ -116,8 +116,12 @@ vl_video_create(struct vl_screen *vscreen,
 
    assert(vscreen);
    assert(width && height);
+   assert(vscreen->pscreen->video_context_create);
 
-   vpipe = sp_video_create(vscreen->pscreen, profile, chroma_format, width, height);
+   vpipe = vscreen->pscreen->video_context_create(vscreen->pscreen,
+                                                  profile,
+                                                  chroma_format,
+                                                  width, height, NULL);
    if (!vpipe)
       return NULL;
 
