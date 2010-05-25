@@ -7,6 +7,7 @@ for test in *.c; do
     echo "Testing $test"
     ../glcpp < $test > $test.out
     gcc -E $test -o $test.gcc
-    grep -v '^#' < $test.gcc > $test.expected
-#    diff -B -u $test.expected $test.out
+#    grep -v '^#' < $test.gcc > $test.expected
+    grep -v '^[ 	]*#' < $test > $test.expected
+    diff -w -u $test.expected $test.out
 done

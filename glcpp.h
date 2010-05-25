@@ -44,21 +44,34 @@ typedef struct string_list {
 	string_node_t *tail;
 } string_list_t;
 
-typedef struct token {
+typedef struct token token_t;
+typedef struct token_list token_list_t;
+
+typedef union YYSTYPE
+{
+	int ival;
+	char *str;
+	token_t *token;
+	token_list_t *token_list;
+} YYSTYPE;
+
+# define YYSTYPE_IS_TRIVIAL 1
+# define YYSTYPE_IS_DECLARED 1
+
+struct token {
 	int type;
-	char *value;
-} token_t;
+	YYSTYPE value;
+};
 
 typedef struct token_node {
-	int type;
-	const char *value;
+	token_t *token;
 	struct token_node *next;
 } token_node_t;
 
-typedef struct token_list {
+struct token_list {
 	token_node_t *head;
 	token_node_t *tail;
-} token_list_t;
+};
 
 typedef struct argument_node {
 	token_list_t *argument;

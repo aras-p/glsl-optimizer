@@ -77,14 +77,28 @@ _argument_list_length (argument_list_t *list);
 token_list_t *
 _argument_list_member_at (argument_list_t *list, int index);
 
+/* Note: This function talloc_steal()s the str pointer. */
+token_t *
+_token_create_str (void *ctx, int type, char *str);
+
+token_t *
+_token_create_ival (void *ctx, int type, int ival);
+
 token_list_t *
 _token_list_create (void *ctx);
 
+/* Note: This function add a talloc_reference() to token.
+ *
+ * You may want to talloc_unlink any current reference if you no
+ * longer need it. */
 void
-_token_list_append (token_list_t *list, int type, const char *value);
+_token_list_append (token_list_t *list, token_t *token);
 
 void
 _token_list_append_list (token_list_t *list, token_list_t *tail);
+
+void
+_token_list_print (token_list_t *list);
 
 static void
 glcpp_parser_pop_expansion (glcpp_parser_t *parser);
@@ -107,12 +121,9 @@ glcpp_parser_lex (glcpp_parser_t *parser);
 %}
 
 %union {
-	intmax_t imaxval;
 	int ival;
 	char *str;
-	argument_list_t *argument_list;
-	string_list_t *string_list;
-	token_t token;
+	token_t *token;
 	token_list_t *token_list;
 }
 
@@ -121,6 +132,10 @@ glcpp_parser_lex (glcpp_parser_t *parser);
 
 %token HASH_DEFINE_FUNC HASH_DEFINE_OBJ HASH IDENTIFIER NEWLINE OTHER HASH_UNDEF
 %token LEFT_SHIFT RIGHT_SHIFT LESS_OR_EQUAL GREATER_OR_EQUAL EQUAL NOT_EQUAL AND OR PASTE
+%type <ival> punctuator
+%type <str> IDENTIFIER OTHER
+%type <token> preprocessing_token
+%type <token_list> pp_tokens replacement_list text_line
 
 	/* Stale stuff just to allow code to compile. */
 %token IDENTIFIER_FINALIZED FUNC_MACRO OBJ_MACRO
@@ -134,7 +149,11 @@ input:
 
 line:
 	control_line
-|	text_line
+|	text_line {
+		_token_list_print ($1);
+		printf ("\n");
+		talloc_free ($1);
+	}
 |	HASH non_directive
 ;
 
@@ -152,7 +171,7 @@ identifier_list:
 ;
 
 text_line:
-	NEWLINE
+	NEWLINE { $$ = NULL; }
 |	pp_tokens NEWLINE
 ;
 
@@ -161,54 +180,67 @@ non_directive:
 ;
 
 replacement_list:
-	/* empty */
+	/* empty */ { $$ = NULL; }
 |	pp_tokens
 ;
 
 pp_tokens:
-	preprocessing_token
-|	pp_tokens preprocessing_token
+	preprocessing_token {
+		$$ = _token_list_create (parser);
+		_token_list_append ($$, $1);
+		talloc_unlink (parser, $1);
+	}
+|	pp_tokens preprocessing_token {
+		$$ = $1;
+		_token_list_append ($$, $2);
+		talloc_unlink (parser, $2);
+	}
 ;
 
 preprocessing_token:
-	IDENTIFIER
-|	punctuator
-|	OTHER
+	IDENTIFIER {
+		$$ = _token_create_str (parser, IDENTIFIER, $1);
+	}
+|	punctuator {
+		$$ = _token_create_ival (parser, $1, $1);
+	}
+|	OTHER {
+		$$ = _token_create_str (parser, OTHER, $1);
+	}
 ;
 
 punctuator:
-	'['
-|	']'
-|	'('
-|	')'
-|	'{'
-|	'}'
-|	'.'
-|	'&'
-|	'*'
-|	'+'
-|	'-'
-|	'~'
-|	'!'
-|	'/'
-|	'%'
-|	LEFT_SHIFT
-|	RIGHT_SHIFT
-|	'<'
-|	'>'
-|	LESS_OR_EQUAL
-|	GREATER_OR_EQUAL
-|	EQUAL
-|	NOT_EQUAL
-|	'^'
-|	'|'
-|	AND
-|	OR
-|	';'
-|	','
-|	PASTE
+	'['			{ $$ = '['; }
+|	']'			{ $$ = ']'; }
+|	'('			{ $$ = '('; }
+|	')'			{ $$ = ')'; }
+|	'{'			{ $$ = '{'; }
+|	'}'			{ $$ = '}'; }
+|	'.'			{ $$ = '.'; }
+|	'&'			{ $$ = '&'; }
+|	'*'			{ $$ = '*'; }
+|	'+'			{ $$ = '+'; }
+|	'-'			{ $$ = '-'; }
+|	'~'			{ $$ = '~'; }
+|	'!'			{ $$ = '!'; }
+|	'/'			{ $$ = '/'; }
+|	'%'			{ $$ = '%'; }
+|	LEFT_SHIFT		{ $$ = LEFT_SHIFT; }
+|	RIGHT_SHIFT		{ $$ = RIGHT_SHIFT; }
+|	'<'			{ $$ = '<'; }
+|	'>'			{ $$ = '>'; }
+|	LESS_OR_EQUAL		{ $$ = LESS_OR_EQUAL; }
+|	GREATER_OR_EQUAL	{ $$ = GREATER_OR_EQUAL; }
+|	EQUAL			{ $$ = EQUAL; }
+|	NOT_EQUAL		{ $$ = NOT_EQUAL; }
+|	'^'			{ $$ = '^'; }
+|	'|'			{ $$ = '|'; }
+|	AND			{ $$ = AND; }
+|	OR			{ $$ = OR; }
+|	';'			{ $$ = ';'; }
+|	','			{ $$ = ','; }
+|	PASTE			{ $$ = PASTE; }
 ;
-
 
 %%
 
@@ -361,6 +393,77 @@ _argument_list_member_at (argument_list_t *list, int index)
 	return NULL;
 }
 
+/* Note: This function talloc_steal()s the str pointer. */
+token_t *
+_token_create_str (void *ctx, int type, char *str)
+{
+	token_t *token;
+
+	token = xtalloc (ctx, token_t);
+	token->type = type;
+	token->value.str = talloc_steal (token, str);
+
+	return token;
+}
+
+token_t *
+_token_create_ival (void *ctx, int type, int ival)
+{
+	token_t *token;
+
+	token = xtalloc (ctx, token_t);
+	token->type = type;
+	token->value.ival = ival;
+
+	return token;
+}
+
+void
+_token_print (token_t *token)
+{
+	if (token->type < 256) {
+		printf ("%c", token->type);
+		return;
+	}
+
+	switch (token->type) {
+	case IDENTIFIER:
+	case OTHER:
+		printf ("%s", token->value.str);
+		break;
+	case LEFT_SHIFT:
+		printf ("<<");
+		break;
+	case RIGHT_SHIFT:
+		printf (">>");
+		break;
+	case LESS_OR_EQUAL:
+		printf ("<=");
+		break;
+	case GREATER_OR_EQUAL:
+		printf (">=");
+		break;
+	case EQUAL:
+		printf ("==");
+		break;
+	case NOT_EQUAL:
+		printf ("!=");
+		break;
+	case AND:
+		printf ("&&");
+		break;
+	case OR:
+		printf ("||");
+		break;
+	case PASTE:
+		printf ("##");
+		break;
+	default:
+		fprintf (stderr, "Error: Don't know how to print token type %d\n", token->type);
+		break;
+	}
+}
+
 token_list_t *
 _token_list_create (void *ctx)
 {
@@ -374,13 +477,12 @@ _token_list_create (void *ctx)
 }
 
 void
-_token_list_append (token_list_t *list, int type, const char *value)
+_token_list_append (token_list_t *list, token_t *token)
 {
 	token_node_t *node;
 
 	node = xtalloc (list, token_node_t);
-	node->type = type;
-	node->value = xtalloc_strdup (list, value);
+	node->token = xtalloc_reference (list, token);
 
 	node->next = NULL;
 
@@ -403,6 +505,21 @@ _token_list_append_list (token_list_t *list, token_list_t *tail)
 	}
 
 	list->tail = tail->tail;
+}
+
+void
+_token_list_print (token_list_t *list)
+{
+	token_node_t *node;
+
+	if (list == NULL)
+		return;
+
+	for (node = list->head; node; node = node->next) {
+		_token_print (node->token);
+		if (node->next)
+			printf (" ");
+	}
 }
 
 void
@@ -598,7 +715,8 @@ _expand_function_macro (glcpp_parser_t *parser,
 	expanded = _token_list_create (macro);
 
 	for (i = macro->replacements->head; i; i = i->next) {
-		if (_string_list_contains (macro->parameters, i->value,
+		if (_string_list_contains (macro->parameters,
+					   i->token->value.str,
 					   &parameter_index))
 		{
 			token_list_t *argument;
@@ -606,11 +724,10 @@ _expand_function_macro (glcpp_parser_t *parser,
 							     parameter_index);
 			for (j = argument->head; j; j = j->next)
 			{
-				_token_list_append (expanded, j->type,
-						    j->value);
+				_token_list_append (expanded, j->token);
 			}
 		} else {
-			_token_list_append (expanded, i->type, i->value);
+			_token_list_append (expanded, i->token);
 		}
 	}
 
@@ -644,10 +761,10 @@ glcpp_parser_lex (glcpp_parser_t *parser)
 
 	expansion->replacements = replacements->next;
 
-	token = replacements->value;
+	token = replacements->token->value.str;
 
 	/* Implement token pasting. */
-	if (replacements->next && strcmp (replacements->next->value, "##") == 0) {
+	if (replacements->next && strcmp (replacements->next->token->value.str, "##") == 0) {
 		token_node_t *next_node;
 
 		next_node = replacements->next->next;
@@ -658,7 +775,7 @@ glcpp_parser_lex (glcpp_parser_t *parser)
 		}
 
 		token = xtalloc_asprintf (parser, "%s%s",
-					  token, next_node->value);
+					  token, next_node->token->value.str);
 		expansion->replacements = next_node->next;
 	}
 
@@ -671,7 +788,7 @@ glcpp_parser_lex (glcpp_parser_t *parser)
 	yylval.str = xtalloc_strdup (parser, token);
 
 	/* Carefully refuse to expand any finalized identifier. */
-	if (replacements->type == IDENTIFIER_FINALIZED)
+	if (replacements->token->type == IDENTIFIER_FINALIZED)
 		return IDENTIFIER_FINALIZED;
 
 	switch (glcpp_parser_classify_token (parser, yylval.str,
