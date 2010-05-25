@@ -127,20 +127,14 @@ glcpp_parser_lex (glcpp_parser_t *parser);
 
 %}
 
-%union {
-	int ival;
-	char *str;
-	token_t *token;
-	token_list_t *token_list;
-}
-
 %parse-param {glcpp_parser_t *parser}
 %lex-param {glcpp_parser_t *parser}
 
-%token HASH_DEFINE_FUNC HASH_DEFINE_OBJ HASH IDENTIFIER NEWLINE OTHER HASH_UNDEF
+%token HASH HASH_DEFINE_FUNC HASH_DEFINE_OBJ HASH_UNDEF IDENTIFIER NEWLINE OTHER SPACE
 %token LEFT_SHIFT RIGHT_SHIFT LESS_OR_EQUAL GREATER_OR_EQUAL EQUAL NOT_EQUAL AND OR PASTE
 %type <ival> punctuator
-%type <str> IDENTIFIER OTHER
+%type <str> IDENTIFIER OTHER SPACE
+%type <string_list> identifier_list
 %type <token> preprocessing_token
 %type <token_list> pp_tokens replacement_list text_line
 
@@ -169,8 +163,12 @@ control_line:
 	HASH_DEFINE_OBJ IDENTIFIER replacement_list NEWLINE {
 		_define_object_macro (parser, $2, $3);
 	}
-|	HASH_DEFINE_FUNC IDENTIFIER '(' ')' replacement_list NEWLINE
-|	HASH_DEFINE_FUNC IDENTIFIER '(' identifier_list ')' replacement_list NEWLINE
+|	HASH_DEFINE_FUNC IDENTIFIER '(' ')' replacement_list NEWLINE {
+		_define_function_macro (parser, $2, NULL, $5);
+	}
+|	HASH_DEFINE_FUNC IDENTIFIER '(' identifier_list ')' replacement_list NEWLINE {
+		_define_function_macro (parser, $2, $4, $6);
+	}
 |	HASH_UNDEF IDENTIFIER NEWLINE {
 		string_list_t *macro = hash_table_find (parser->defines, $2);
 		if (macro) {
@@ -186,8 +184,16 @@ control_line:
 ;
 
 identifier_list:
-	IDENTIFIER
-|	identifier_list ',' IDENTIFIER
+	IDENTIFIER {
+		$$ = _string_list_create (parser);
+		_string_list_append_item ($$, $1);
+		talloc_steal ($$, $1);
+	}
+|	identifier_list ',' IDENTIFIER {
+		$$ = $1;	
+		_string_list_append_item ($$, $3);
+		talloc_steal ($$, $3);
+	}
 ;
 
 text_line:
@@ -225,6 +231,9 @@ preprocessing_token:
 		$$ = _token_create_ival (parser, $1, $1);
 	}
 |	OTHER {
+		$$ = _token_create_str (parser, OTHER, $1);
+	}
+|	SPACE {
 		$$ = _token_create_str (parser, OTHER, $1);
 	}
 ;
@@ -649,7 +658,14 @@ glcpp_parser_classify_token (glcpp_parser_t *parser,
 		return TOKEN_CLASS_OBJ_MACRO;
 }
 
-void
+/* Print a non-macro token, or the expansion of an object-like macro.
+ *
+ * Returns 0 if this token is completely printed.
+ *
+ * Returns 1 in the case that 'token' is a function-like macro that
+ * needs further expansion.
+ */
+static int
 _glcpp_parser_print_expanded_token (glcpp_parser_t *parser,
 				    token_t *token)
 {
@@ -659,7 +675,7 @@ _glcpp_parser_print_expanded_token (glcpp_parser_t *parser,
 	/* We only expand identifiers */
 	if (token->type != IDENTIFIER) {
 		_token_print (token);
-		return;
+		return 0;
 	}
 
 	/* Look up this identifier in the hash table. */
@@ -669,20 +685,135 @@ _glcpp_parser_print_expanded_token (glcpp_parser_t *parser,
 	/* Not a macro, so just print directly. */
 	if (macro == NULL) {
 		printf ("%s", identifier);
-		return;
+		return 0;
 	}
 
-	/* We're not (yet) supporting function-like macros. */
+	/* For function-like macros return 1 for further processing. */
 	if (macro->is_function) {
-		printf ("%s", identifier);
-		return;
+		return 1;
 	}
 
 	/* Finally, don't expand this macro if we're already actively
 	 * expanding it, (to avoid infinite recursion). */
 	if (_string_list_contains (parser->active, identifier, NULL)) {
 		printf ("%s", identifier);
+		return 0;
+	}
+
+	_string_list_push (parser->active, identifier);
+	_glcpp_parser_print_expanded_token_list (parser,
+						 macro->replacements);
+	_string_list_pop (parser->active);
+
+	return 0;
+}
+
+typedef enum function_status
+{
+	FUNCTION_STATUS_SUCCESS,
+	FUNCTION_NOT_A_FUNCTION,
+	FUNCTION_UNBALANCED_PARENTHESES
+} function_status_t;
+
+/* Find a set of function-like macro arguments by looking for a
+ * balanced set of parentheses. Upon return *node will be the last
+ * consumed node, such that further processing can continue with
+ * node->next.
+ *
+ * Return values:
+ *
+ *   FUNCTION_STATUS_SUCCESS:
+ *
+ *	Successfully parsed a set of function arguments.	
+ *
+ *   FUNCTION_NOT_A_FUNCTION:
+ *
+ *	Macro name not followed by a '('. This is not an error, but
+ *	simply that the macro name should be treated as a non-macro.
+ *
+ *   FUNCTION_UNBLANCED_PARENTHESES
+ *
+ *	Macro name is not followed by a balanced set of parentheses.
+ */
+static function_status_t
+_find_arguments (token_node_t **node_ret, argument_list_t **arguments)
+{
+	token_node_t *node = *node_ret, *last;
+	int paren_count;
+	int arg_count;
+
+	last = node;
+	node = node->next;
+
+	/* Ignore whitespace before first parenthesis. */
+	while (node && node->token->type == SPACE)
+		node = node->next;
+
+	if (node == NULL || node->token->type != '(')
+		return FUNCTION_NOT_A_FUNCTION;
+
+	paren_count = 0;
+	arg_count = 0;
+	do {
+		if (node->token->type == '(')
+		{
+			paren_count++;
+		}
+		else if (node->token->type == ')')
+		{
+			paren_count--;
+		}
+		else if (node->token->type == ',' &&
+			 paren_count == 1)
+		{
+			arg_count++;
+		}
+
+		last = node;
+		node = node->next;
+
+	} while (node && paren_count);
+
+	if (node && paren_count)
+		return FUNCTION_UNBALANCED_PARENTHESES;
+
+	*node_ret = last;
+
+	return FUNCTION_STATUS_SUCCESS;
+}
+
+/* Prints the expansion of *node (consuming further tokens from the
+ * list as necessary). Upon return *node will be the last consumed
+ * node, such that further processing can continue with node->next. */
+static void
+_glcpp_parser_print_expanded_function (glcpp_parser_t *parser,
+				       token_node_t **node_ret)
+{
+	macro_t *macro;
+	token_node_t *node;
+	const char *identifier;
+	argument_list_t *arguments;
+	function_status_t status;
+
+	node = *node_ret;
+	identifier = node->token->value.str;
+
+	macro = hash_table_find (parser->defines, identifier);
+
+	assert (macro->is_function);
+
+	status = _find_arguments (node_ret, &arguments);
+
+	switch (status) {
+	case FUNCTION_STATUS_SUCCESS:
+		break;
+	case FUNCTION_NOT_A_FUNCTION:
+		printf ("%s", identifier);
 		return;
+	case FUNCTION_UNBALANCED_PARENTHESES:
+		fprintf (stderr, "Error: Macro %s call has unbalanced parentheses\n",
+			 identifier);
+		exit (1);
 	}
 
 	_string_list_push (parser->active, identifier);
@@ -696,12 +827,15 @@ _glcpp_parser_print_expanded_token_list (glcpp_parser_t *parser,
 					 token_list_t *list)
 {
 	token_node_t *node;
+	function_status_t function_status;
 
 	if (list == NULL)
 		return;
 
 	for (node = list->head; node; node = node->next) {
-		_glcpp_parser_print_expanded_token (parser, node->token);
+		if (_glcpp_parser_print_expanded_token (parser, node->token))
+			_glcpp_parser_print_expanded_function (parser, &node);
+
 		if (node->next)
 			printf (" ");
 	}

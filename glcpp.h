@@ -51,6 +51,7 @@ typedef union YYSTYPE
 {
 	int ival;
 	char *str;
+	string_list_t *string_list;
 	token_t *token;
 	token_list_t *token_list;
 } YYSTYPE;
