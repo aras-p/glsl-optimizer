@@ -112,13 +112,15 @@ void util_blitter_clear(struct blitter_context *blitter,
  * - fragment sampler states
  * - fragment sampler textures
  */
-void util_blitter_copy(struct blitter_context *blitter,
-                       struct pipe_surface *dst,
-                       unsigned dstx, unsigned dsty,
-                       struct pipe_surface *src,
-                       unsigned srcx, unsigned srcy,
-                       unsigned width, unsigned height,
-                       boolean ignore_stencil);
+void util_blitter_copy_region(struct blitter_context *blitter,
+                              struct pipe_resource *dst,
+                              struct pipe_subresource subdst,
+                              unsigned dstx, unsigned dsty, unsigned dstz,
+                              struct pipe_resource *src,
+                              struct pipe_subresource subsrc,
+                              unsigned srcx, unsigned srcy, unsigned srcz,
+                              unsigned width, unsigned height,
+                              boolean ignore_stencil);
 
 /**
  * Fill a region of a surface with a constant value.

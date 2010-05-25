@@ -85,12 +85,14 @@ void r300_clear(struct pipe_context* pipe,
 }
 
 /* Copy a block of pixels from one surface to another using HW. */
-static void r300_hw_copy(struct pipe_context* pipe,
-                         struct pipe_surface* dst,
-                         unsigned dstx, unsigned dsty,
-                         struct pipe_surface* src,
-                         unsigned srcx, unsigned srcy,
-                         unsigned width, unsigned height)
+static void r300_hw_copy_region(struct pipe_context* pipe,
+                                struct pipe_resource *dst,
+                                struct pipe_subresource subdst,
+                                unsigned dstx, unsigned dsty, unsigned dstz,
+                                struct pipe_resource *src,
+                                struct pipe_subresource subsrc,
+                                unsigned srcx, unsigned srcy, unsigned srcz,
+                                unsigned width, unsigned height)
 {
     struct r300_context* r300 = r300_context(pipe);
     struct r300_textures_state* state =
@@ -111,30 +113,23 @@ static void r300_hw_copy(struct pipe_context* pipe,
         (struct pipe_sampler_view**)state->sampler_views);
 
     /* Do a copy */
-    util_blitter_copy(r300->blitter,
-                      dst, dstx, dsty, src, srcx, srcy, width, height, TRUE);
+    util_blitter_copy_region(r300->blitter, dst, subdst, dstx, dsty, dstz,
+                             src, subsrc, srcx, srcy, srcz, width, height,
+                             TRUE);
 }
 
 /* Copy a block of pixels from one surface to another. */
-void r300_surface_copy(struct pipe_context* pipe,
-                       struct pipe_resource* dst,
-                       struct pipe_subresource subdst,
-                       unsigned dstx, unsigned dsty, unsigned dstz,
-                       struct pipe_resource* src,
-                       struct pipe_subresource subsrc,
-                       unsigned srcx, unsigned srcy, unsigned srcz,
-                       unsigned width, unsigned height)
+void r300_resource_copy_region(struct pipe_context *pipe,
+                               struct pipe_resource *dst,
+                               struct pipe_subresource subdst,
+                               unsigned dstx, unsigned dsty, unsigned dstz,
+                               struct pipe_resource *src,
+                               struct pipe_subresource subsrc,
+                               unsigned srcx, unsigned srcy, unsigned srcz,
+                               unsigned width, unsigned height)
 {
-    struct pipe_screen *screen = pipe->screen;
     enum pipe_format old_format = dst->format;
     enum pipe_format new_format = old_format;
-    struct pipe_surface *srcsurf, *dstsurf;
-    unsigned bind;
-
-    if (util_format_is_depth_or_stencil(dst->format))
-       bind = PIPE_BIND_DEPTH_STENCIL;
-    else
-       bind = PIPE_BIND_RENDER_TARGET;
 
     if (dst->format != src->format) {
         debug_printf("r300: Implementation error: Format mismatch in %s\n"
@@ -180,18 +175,8 @@ void r300_surface_copy(struct pipe_context* pipe,
                                         src, new_format);
     }
 
-    srcsurf = screen->get_tex_surface(screen, src,
-                                      subsrc.face, subsrc.level, srcz,
-                                      PIPE_BIND_SAMPLER_VIEW);
-
-    dstsurf = screen->get_tex_surface(screen, dst,
-                                      subdst.face, subdst.level, dstz,
-                                      bind);
-
-    r300_hw_copy(pipe, dstsurf, dstx, dsty, srcsurf, srcx, srcy, width, height);
-
-    pipe_surface_reference(&srcsurf, NULL);
-    pipe_surface_reference(&dstsurf, NULL);
+    r300_hw_copy_region(pipe, dst, subdst, dstx, dsty, dstz,
+                        src, subsrc, srcx, srcy, srcz, width, height);
 
     if (old_format != new_format) {
         dst->format = old_format;

@@ -33,14 +33,14 @@ void r300_clear(struct pipe_context* pipe,
                 double depth,
                 unsigned stencil);
 
-void r300_surface_copy(struct pipe_context* pipe,
-                       struct pipe_resource* dst,
-                       struct pipe_subresource subdst,
-                       unsigned dstx, unsigned dsty, unsigned dstz,
-                       struct pipe_resource* src,
-                       struct pipe_subresource subsrc,
-                       unsigned srcx, unsigned srcy, unsigned srcz,
-                       unsigned width, unsigned height);
+void r300_resource_copy_region(struct pipe_context *pipe,
+                               struct pipe_resource *dst,
+                               struct pipe_subresource subdst,
+                               unsigned dstx, unsigned dsty, unsigned dstz,
+                               struct pipe_resource *src,
+                               struct pipe_subresource subsrc,
+                               unsigned srcx, unsigned srcy, unsigned srcz,
+                               unsigned width, unsigned height);
 
 void r300_resource_fill_region(struct pipe_context* pipe,
                                struct pipe_resource* dst,
