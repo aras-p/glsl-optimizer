@@ -715,9 +715,7 @@ static void util_blitter_do_copy(struct blitter_context *blitter,
 
    blitter_set_rectangle(ctx, dstx, dsty, dstx+width, dsty+height, dst->width, dst->height, 0);
    blitter_draw_quad(ctx);
-
 }
-
 
 void util_blitter_copy(struct blitter_context *blitter,
                        struct pipe_surface *dst,
@@ -775,37 +773,40 @@ void util_blitter_copy(struct blitter_context *blitter,
    blitter_restore_CSOs(ctx);
 }
 
-void util_blitter_fill(struct blitter_context *blitter,
-                       struct pipe_surface *dst,
-                       unsigned dstx, unsigned dsty,
-                       unsigned width, unsigned height,
-                       unsigned value)
+/* Fill a region of a surface with a constant value. */
+void util_blitter_fill_region(struct blitter_context *blitter,
+                              struct pipe_resource *dst,
+                              struct pipe_subresource subdst,
+                              unsigned dstx, unsigned dsty, unsigned dstz,
+                              unsigned width, unsigned height,
+                              unsigned value)
 {
    struct blitter_context_priv *ctx = (struct blitter_context_priv*)blitter;
    struct pipe_context *pipe = ctx->pipe;
    struct pipe_screen *screen = pipe->screen;
+   struct pipe_surface *dstsurf;
    struct pipe_framebuffer_state fb_state;
    float rgba[4];
    ubyte ub_rgba[4] = {0};
    union util_color color;
    int i;
 
-   assert(dst->texture);
-   if (!dst->texture)
+   assert(dst);
+   if (!dst)
       return;
 
    /* check if we can render to the surface */
    if (util_format_is_depth_or_stencil(dst->format) || /* unlikely, but you never know */
-       !screen->is_format_supported(screen, dst->format, dst->texture->target,
-                                    dst->texture->nr_samples,
+       !screen->is_format_supported(screen, dst->format, dst->target,
+                                    dst->nr_samples,
                                     PIPE_BIND_RENDER_TARGET, 0)) {
-      struct pipe_subresource subdst;
-      subdst.face = dst->face;
-      subdst.level = dst->level;
-      util_resource_fill_region(pipe, dst->texture, subdst, dstx, dsty,
-                                dst->zslice, width, height, value);
+      util_resource_fill_region(pipe, dst, subdst, dstx, dsty, dstz,
+                                width, height, value);
       return;
    }
+
+   dstsurf = screen->get_tex_surface(screen, dst, subdst.face, subdst.level,
+                                     dstz, PIPE_BIND_RENDER_TARGET);
 
    /* unpack the color */
    color.ui = value;
@@ -827,15 +828,17 @@ void util_blitter_fill(struct blitter_context *blitter,
    pipe->bind_vertex_elements_state(pipe, ctx->velem_state);
 
    /* set a framebuffer state */
-   fb_state.width = dst->width;
-   fb_state.height = dst->height;
+   fb_state.width = dstsurf->width;
+   fb_state.height = dstsurf->height;
    fb_state.nr_cbufs = 1;
-   fb_state.cbufs[0] = dst;
+   fb_state.cbufs[0] = dstsurf;
    fb_state.zsbuf = 0;
    pipe->set_framebuffer_state(pipe, &fb_state);
 
    blitter_set_clear_color(ctx, rgba);
-   blitter_set_rectangle(ctx, 0, 0, width, height, dst->width, dst->height, 0);
+   blitter_set_rectangle(ctx, 0, 0, width, height, dstsurf->width, dstsurf->height, 0);
    blitter_draw_quad(ctx);
    blitter_restore_CSOs(ctx);
+
+   pipe_surface_reference(&dstsurf, NULL);
 }

@@ -205,34 +205,18 @@ void r300_surface_copy(struct pipe_context* pipe,
 }
 
 /* Fill a region of a surface with a constant value. */
-void r300_surface_fill(struct pipe_context* pipe,
-                       struct pipe_resource* dst,
-                       struct pipe_subresource subdst,
-                       unsigned dstx, unsigned dsty, unsigned dstz,
-                       unsigned width, unsigned height,
-                       unsigned value)
+void r300_resource_fill_region(struct pipe_context *pipe,
+                               struct pipe_resource *dst,
+                               struct pipe_subresource subdst,
+                               unsigned dstx, unsigned dsty, unsigned dstz,
+                               unsigned width, unsigned height,
+                               unsigned value)
 {
-    struct pipe_screen *screen = pipe->screen;
-    struct r300_context* r300 = r300_context(pipe);
-    struct pipe_surface *dstsurf;
-    unsigned bind;
-
-    if (util_format_is_depth_or_stencil(dst->format))
-       bind = PIPE_BIND_DEPTH_STENCIL;
-    else
-       bind = PIPE_BIND_RENDER_TARGET;
-
-    dstsurf = screen->get_tex_surface(screen, dst,
-                                      subdst.face,
-                                      subdst.level,
-                                      dstz,
-                                      bind);
+    struct r300_context *r300 = r300_context(pipe);
 
     r300_blitter_save_states(r300);
     util_blitter_save_framebuffer(r300->blitter, r300->fb_state.state);
 
-    util_blitter_fill(r300->blitter,
-                      dstsurf, dstx, dsty, width, height, value);
-
-    pipe_surface_reference(&dstsurf, NULL);
+    util_blitter_fill_region(r300->blitter, dst, subdst,
+                             dstx, dsty, dstz, width, height, value);
 }

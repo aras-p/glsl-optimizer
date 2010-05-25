@@ -42,11 +42,11 @@ void r300_surface_copy(struct pipe_context* pipe,
                        unsigned srcx, unsigned srcy, unsigned srcz,
                        unsigned width, unsigned height);
 
-void r300_surface_fill(struct pipe_context* pipe,
-                       struct pipe_resource* dst,
-                       struct pipe_subresource subdst,
-                       unsigned dstx, unsigned dsty, unsigned dstz,
-                       unsigned width, unsigned height,
-                       unsigned value);
+void r300_resource_fill_region(struct pipe_context* pipe,
+                               struct pipe_resource* dst,
+                               struct pipe_subresource subdst,
+                               unsigned dstx, unsigned dsty, unsigned dstz,
+                               unsigned width, unsigned height,
+                               unsigned value);
 
 #endif /* R300_BLIT_H */

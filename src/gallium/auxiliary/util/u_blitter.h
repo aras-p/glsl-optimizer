@@ -130,11 +130,12 @@ void util_blitter_copy(struct blitter_context *blitter,
  * already required to be saved:
  * - framebuffer state
  */
-void util_blitter_fill(struct blitter_context *blitter,
-                       struct pipe_surface *dst,
-                       unsigned dstx, unsigned dsty,
-                       unsigned width, unsigned height,
-                       unsigned value);
+void util_blitter_fill_region(struct blitter_context *blitter,
+                              struct pipe_resource *dst,
+                              struct pipe_subresource subdst,
+                              unsigned dstx, unsigned dsty, unsigned dstz,
+                              unsigned width, unsigned height,
+                              unsigned value);
 
 
 /* The functions below should be used to save currently bound constant state
