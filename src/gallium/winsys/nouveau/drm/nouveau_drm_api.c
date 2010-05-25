@@ -13,52 +13,6 @@
 #include "nouveau/nouveau_winsys.h"
 #include "nouveau/nouveau_screen.h"
 
-static struct pipe_surface *
-dri_surface_from_handle(struct drm_api *api, struct pipe_screen *pscreen,
-                        unsigned handle, enum pipe_format format,
-                        unsigned width, unsigned height, unsigned pitch)
-{
-	struct pipe_surface *ps = NULL;
-	struct pipe_resource *pt = NULL;
-	struct pipe_resource tmpl;
-	struct winsys_handle whandle;
-	unsigned bind = (PIPE_BIND_SCANOUT |
-			 PIPE_BIND_RENDER_TARGET);
-
-	memset(&tmpl, 0, sizeof(tmpl));
-	tmpl.bind = bind;
-	tmpl.target = PIPE_TEXTURE_2D;
-	tmpl.last_level = 0;
-	tmpl.depth0 = 1;
-	tmpl.format = format;
-	tmpl.width0 = width;
-	tmpl.height0 = height;
-
-	memset(&whandle, 0, sizeof(whandle));
-	whandle.stride = pitch;
-	whandle.handle = handle;
-
-	pt = pscreen->resource_from_handle(pscreen, &tmpl, &whandle);
-	if (!pt)
-		return NULL;
-
-	ps = pscreen->get_tex_surface(pscreen, pt, 0, 0, 0, bind);
-
-	/* we don't need the texture from this point on */
-	pipe_resource_reference(&pt, NULL);
-	return ps;
-}
-
-static struct pipe_surface *
-nouveau_dri1_front_surface(struct pipe_context *pipe)
-{
-	return nouveau_winsys_screen(pipe->screen)->front;
-}
-
-static struct dri1_api nouveau_dri1_api = {
-	nouveau_dri1_front_surface,
-};
-
 static void
 nouveau_drm_destroy_winsys(struct pipe_winsys *s)
 {
@@ -72,7 +26,6 @@ static struct pipe_screen *
 nouveau_drm_create_screen(struct drm_api *api, int fd,
 			  struct drm_create_screen_arg *arg)
 {
-	struct dri1_create_screen_arg *dri1 = (void *)arg;
 	struct nouveau_winsys *nvws;
 	struct pipe_winsys *ws;
 	struct nouveau_device *dev = NULL;
@@ -114,31 +67,6 @@ nouveau_drm_create_screen(struct drm_api *api, int fd,
 	if (!nvws->pscreen) {
 		ws->destroy(ws);
 		return NULL;
-	}
-
-	if (arg && arg->mode == DRM_CREATE_DRI1) {
-		struct nouveau_dri *nvdri = dri1->ddx_info;
-		enum pipe_format format;
-
-		if (nvdri->bpp == 16)
-			format = PIPE_FORMAT_B5G6R5_UNORM;
-		else
-			format = PIPE_FORMAT_B8G8R8A8_UNORM;
-
-		nvws->front = dri_surface_from_handle(api, nvws->pscreen,
-						      nvdri->front_offset,
-						      format, nvdri->width,
-						      nvdri->height,
-						      nvdri->front_pitch *
-						      (nvdri->bpp / 8));
-		if (!nvws->front) {
-			debug_printf("%s: error referencing front buffer\n",
-				     __func__);
-			ws->destroy(ws);
-			return NULL;
-		}
-
-		dri1->api = &nouveau_dri1_api;
 	}
 
 	return nvws->pscreen;

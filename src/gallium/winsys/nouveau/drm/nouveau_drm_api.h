@@ -2,7 +2,6 @@
 #define __NOUVEAU_DRM_API_H__
 
 #include "state_tracker/drm_api.h"
-#include "state_tracker/dri1_api.h"
 
 #include "util/u_simple_screen.h"
 
