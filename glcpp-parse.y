@@ -95,7 +95,7 @@ _glcpp_parser_skip_stack_push_if (glcpp_parser_t *parser, int condition);
 static void
 _glcpp_parser_skip_stack_change_if (glcpp_parser_t *parser, const char *type,
 				    int condition);
-			
+
 static void
 _glcpp_parser_skip_stack_pop (glcpp_parser_t *parser);
 
@@ -243,7 +243,7 @@ _string_list_append_item (string_list_t *list, const char *str)
 
 	node = xtalloc (list, string_node_t);
 	node->str = xtalloc_strdup (node, str);
-		
+
 	node->next = NULL;
 
 	if (list->head == NULL) {
@@ -404,7 +404,7 @@ _token_list_append_list (token_list_t *list, token_list_t *tail)
 
 	list->tail = tail->tail;
 }
-		
+
 void
 yyerror (void *scanner, const char *error)
 {
@@ -733,7 +733,7 @@ _glcpp_parser_skip_stack_change_if (glcpp_parser_t *parser, const char *type,
 		parser->skip_stack->type = SKIP_TO_ENDIF;
 	}
 }
-			
+
 static void
 _glcpp_parser_skip_stack_pop (glcpp_parser_t *parser)
 {
