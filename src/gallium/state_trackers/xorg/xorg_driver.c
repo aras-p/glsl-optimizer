@@ -311,7 +311,7 @@ drv_init_resource_management(ScrnInfoPtr pScrn)
 	return TRUE;
 
     if (ms->api) {
-	ms->screen = ms->api->create_screen(ms->api, ms->fd, NULL);
+	ms->screen = ms->api->create_screen(ms->api, ms->fd);
 
 	if (ms->screen)
 	    return TRUE;

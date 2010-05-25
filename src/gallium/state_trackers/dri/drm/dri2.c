@@ -518,7 +518,7 @@ dri2_init_screen(__DRIscreen * sPriv)
    sPriv->private = (void *)screen;
    sPriv->extensions = dri_screen_extensions;
 
-   pscreen = screen->api->create_screen(screen->api, screen->fd, NULL);
+   pscreen = screen->api->create_screen(screen->api, screen->fd);
    /* dri_init_screen_helper checks pscreen for us */
 
    configs = dri_init_screen_helper(screen, pscreen, 32);

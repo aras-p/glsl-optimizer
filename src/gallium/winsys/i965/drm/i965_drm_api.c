@@ -53,22 +53,12 @@ i965_libdrm_winsys_destroy(struct brw_winsys_screen *iws)
 }
 
 static struct pipe_screen *
-i965_libdrm_create_screen(struct drm_api *api, int drmFD,
-                          struct drm_create_screen_arg *arg)
+i965_libdrm_create_screen(struct drm_api *api, int drmFD)
 {
    struct i965_libdrm_winsys *idws;
    unsigned int deviceID;
 
    debug_printf("%s\n", __FUNCTION__);
-
-   if (arg != NULL) {
-      switch(arg->mode) {
-      case DRM_CREATE_NORMAL:
-         break;
-      default:
-         return NULL;
-      }
-   }
 
    idws = CALLOC_STRUCT(i965_libdrm_winsys);
    if (!idws)

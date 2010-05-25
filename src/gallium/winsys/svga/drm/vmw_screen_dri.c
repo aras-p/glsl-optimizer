@@ -89,44 +89,31 @@ vmw_dri1_check_version(const struct dri1_api_version *cur,
  * bottom of the file.
  */
 static struct pipe_screen *
-vmw_drm_create_screen(struct drm_api *drm_api,
-                      int fd,
-                      struct drm_create_screen_arg *arg)
+vmw_drm_create_screen(struct drm_api *drm_api, int fd)
 {
    struct vmw_winsys_screen *vws;
    struct pipe_screen *screen;
    boolean use_old_scanout_flag = FALSE;
 
-   if (!arg || arg->mode == DRM_CREATE_NORMAL) {
-      struct dri1_api_version drm_ver;
-      drmVersionPtr ver;
+   struct dri1_api_version drm_ver;
+   drmVersionPtr ver;
 
-      ver = drmGetVersion(fd);
-      if (ver == NULL)
-	 return NULL;
+   ver = drmGetVersion(fd);
+   if (ver == NULL)
+      return NULL;
 
-      drm_ver.major = ver->version_major;
-      drm_ver.minor = ver->version_minor;
-      drm_ver.patch_level = 0; /* ??? */
+   drm_ver.major = ver->version_major;
+   drm_ver.minor = ver->version_minor;
+   drm_ver.patch_level = 0; /* ??? */
 
-      drmFreeVersion(ver);
-      if (!vmw_dri1_check_version(&drm_ver, &drm_required,
-				  &drm_compat, "vmwgfx drm driver"))
-	 return NULL;
+   drmFreeVersion(ver);
+   if (!vmw_dri1_check_version(&drm_ver, &drm_required,
+			       &drm_compat, "vmwgfx drm driver"))
+      return NULL;
 
-      if (!vmw_dri1_check_version(&drm_ver, &drm_scanout,
-				  &drm_compat, "use old scanout field (not a error)"))
-         use_old_scanout_flag = TRUE;
-   }
-
-   if (arg != NULL) {
-      switch (arg->mode) {
-      case DRM_CREATE_NORMAL:
-	 break;
-      default:
-	 return NULL;
-      }
-   }
+   if (!vmw_dri1_check_version(&drm_ver, &drm_scanout,
+			       &drm_compat, "use old scanout field (not a error)"))
+      use_old_scanout_flag = TRUE;
 
    vws = vmw_winsys_create( fd, use_old_scanout_flag );
    if (!vws)

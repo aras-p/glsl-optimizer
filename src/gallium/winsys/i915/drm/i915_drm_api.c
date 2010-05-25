@@ -49,20 +49,10 @@ i915_drm_winsys_destroy(struct i915_winsys *iws)
 }
 
 static struct pipe_screen *
-i915_drm_create_screen(struct drm_api *api, int drmFD,
-                       struct drm_create_screen_arg *arg)
+i915_drm_create_screen(struct drm_api *api, int drmFD)
 {
    struct i915_drm_winsys *idws;
    unsigned int deviceID;
-
-   if (arg != NULL) {
-      switch(arg->mode) {
-      case DRM_CREATE_NORMAL:
-         break;
-      default:
-         return NULL;
-      }
-   }
 
    idws = CALLOC_STRUCT(i915_drm_winsys);
    if (!idws)

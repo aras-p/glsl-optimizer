@@ -56,15 +56,14 @@ sw_drm_api(struct drm_api *api)
 
 
 static struct pipe_screen *
-sw_drm_create_screen(struct drm_api *_api, int drmFD,
-                     struct drm_create_screen_arg *arg)
+sw_drm_create_screen(struct drm_api *_api, int drmFD)
 {
    struct sw_drm_api *swapi = sw_drm_api(_api);
    struct drm_api *api = swapi->api;
    struct sw_winsys *sww;
    struct pipe_screen *screen;
 
-   screen = api->create_screen(api, drmFD, arg);
+   screen = api->create_screen(api, drmFD);
    if (!screen)
       return NULL;
 

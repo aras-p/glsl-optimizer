@@ -46,17 +46,13 @@ identity_drm_api(struct drm_api *_api)
 }
 
 static struct pipe_screen *
-identity_drm_create_screen(struct drm_api *_api, int fd,
-                           struct drm_create_screen_arg *arg)
+identity_drm_create_screen(struct drm_api *_api, int fd)
 {
    struct identity_drm_api *id_api = identity_drm_api(_api);
    struct drm_api *api = id_api->api;
    struct pipe_screen *screen;
 
-   if (arg && arg->mode != DRM_CREATE_NORMAL)
-      return NULL;
-
-   screen = api->create_screen(api, fd, arg);
+   screen = api->create_screen(api, fd);
 
    return identity_screen_create(screen);
 }

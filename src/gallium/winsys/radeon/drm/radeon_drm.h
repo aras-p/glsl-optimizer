@@ -33,9 +33,7 @@
 #include "state_tracker/drm_api.h"
 
 
-struct pipe_screen* radeon_create_screen(struct drm_api* api,
-                                         int drmFB,
-					 struct drm_create_screen_arg *arg);
+struct pipe_screen* radeon_create_screen(struct drm_api* api, int drmFB);
 
 void radeon_destroy_drm_api(struct drm_api* api);
 

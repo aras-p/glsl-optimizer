@@ -153,9 +153,7 @@ static void do_ioctls(int fd, struct radeon_libdrm_winsys* winsys)
 }
 
 /* Create a pipe_screen. */
-struct pipe_screen* radeon_create_screen(struct drm_api* api,
-                                         int drmFB,
-                                         struct drm_create_screen_arg *arg)
+struct pipe_screen* radeon_create_screen(struct drm_api* api, int drmFB)
 {
     struct radeon_libdrm_winsys* rws; 
     boolean ret;

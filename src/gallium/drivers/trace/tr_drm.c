@@ -47,8 +47,7 @@ trace_drm_api(struct drm_api *_api)
 }
 
 static struct pipe_screen *
-trace_drm_create_screen(struct drm_api *_api, int fd,
-                        struct drm_create_screen_arg *arg)
+trace_drm_create_screen(struct drm_api *_api, int fd)
 {
    struct trace_drm_api *tr_api = trace_drm_api(_api);
    struct drm_api *api = tr_api->api;
@@ -56,11 +55,7 @@ trace_drm_create_screen(struct drm_api *_api, int fd,
 
    /* TODO trace call */
 
-   if (arg && arg->mode != DRM_CREATE_NORMAL)
-      return NULL;
-
-   screen = api->create_screen(api, fd, arg);
-
+   screen = api->create_screen(api, fd);
 
    return trace_screen_create(rbug_screen_create(screen));
 }
