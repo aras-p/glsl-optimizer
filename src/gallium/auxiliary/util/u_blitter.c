@@ -321,8 +321,8 @@ static void blitter_restore_CSOs(struct blitter_context_priv *ctx)
 
    if (ctx->blitter.saved_num_vertex_buffers != ~0) {
       pipe->set_vertex_buffers(pipe,
-                                       ctx->blitter.saved_num_vertex_buffers,
-                                       ctx->blitter.saved_vertex_buffers);
+                               ctx->blitter.saved_num_vertex_buffers,
+                               ctx->blitter.saved_vertex_buffers);
       ctx->blitter.saved_num_vertex_buffers = ~0;
    }
 }
@@ -372,19 +372,19 @@ static void blitter_set_clear_color(struct blitter_context_priv *ctx,
    int i;
 
    if (rgba) {
-       for (i = 0; i < 4; i++) {
-          ctx->vertices[i][1][0] = rgba[0];
-          ctx->vertices[i][1][1] = rgba[1];
-          ctx->vertices[i][1][2] = rgba[2];
-          ctx->vertices[i][1][3] = rgba[3];
-       }
+      for (i = 0; i < 4; i++) {
+         ctx->vertices[i][1][0] = rgba[0];
+         ctx->vertices[i][1][1] = rgba[1];
+         ctx->vertices[i][1][2] = rgba[2];
+         ctx->vertices[i][1][3] = rgba[3];
+      }
    } else {
-       for (i = 0; i < 4; i++) {
-          ctx->vertices[i][1][0] = 0;
-          ctx->vertices[i][1][1] = 0;
-          ctx->vertices[i][1][2] = 0;
-          ctx->vertices[i][1][3] = 0;
-       }
+      for (i = 0; i < 4; i++) {
+         ctx->vertices[i][1][0] = 0;
+         ctx->vertices[i][1][1] = 0;
+         ctx->vertices[i][1][2] = 0;
+         ctx->vertices[i][1][3] = 0;
+      }
    }
 }
 
