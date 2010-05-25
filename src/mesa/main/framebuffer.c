@@ -544,7 +544,8 @@ _mesa_update_framebuffer_visual(struct gl_framebuffer *fb)
          const GLenum baseFormat = _mesa_get_format_base_format(rb->Format);
          const gl_format fmt = rb->Format;
          
-         if (baseFormat == GL_RGBA || baseFormat == GL_RGB) {
+         if (baseFormat == GL_RGBA || baseFormat == GL_RGB ||
+	     baseFormat == GL_ALPHA) {
             fb->Visual.redBits = _mesa_get_format_bits(fmt, GL_RED_BITS);
             fb->Visual.greenBits = _mesa_get_format_bits(fmt, GL_GREEN_BITS);
             fb->Visual.blueBits = _mesa_get_format_bits(fmt, GL_BLUE_BITS);
