@@ -135,6 +135,11 @@ intel_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
       rb->Format = MESA_FORMAT_ARGB8888;
       rb->DataType = GL_UNSIGNED_BYTE;
       break;
+   case GL_ALPHA:
+   case GL_ALPHA8:
+      rb->Format = MESA_FORMAT_A8;
+      rb->DataType = GL_UNSIGNED_BYTE;
+      break;
    case GL_STENCIL_INDEX:
    case GL_STENCIL_INDEX1_EXT:
    case GL_STENCIL_INDEX4_EXT:
@@ -346,6 +351,10 @@ intel_create_renderbuffer(gl_format format)
       irb->Base._BaseFormat = GL_DEPTH_STENCIL;
       irb->Base.DataType = GL_UNSIGNED_INT_24_8_EXT;
       break;
+   case MESA_FORMAT_A8:
+      irb->Base._BaseFormat = GL_ALPHA;
+      irb->Base.DataType = GL_UNSIGNED_BYTE;
+      break;
    default:
       _mesa_problem(NULL,
                     "Unexpected intFormat in intel_create_renderbuffer");
@@ -450,6 +459,10 @@ intel_update_wrapper(GLcontext *ctx, struct intel_renderbuffer *irb,
    else if (texImage->TexFormat == MESA_FORMAT_ARGB4444) {
       irb->Base.DataType = GL_UNSIGNED_BYTE;
       DBG("Render to ARGB4444 texture OK\n");
+   }
+   else if (texImage->TexFormat == MESA_FORMAT_A8) {
+      irb->Base.DataType = GL_UNSIGNED_BYTE;
+      DBG("Render to A8 texture OK\n");
    }
    else if (texImage->TexFormat == MESA_FORMAT_Z16) {
       irb->Base.DataType = GL_UNSIGNED_SHORT;
@@ -660,6 +673,7 @@ intel_validate_framebuffer(GLcontext *ctx, struct gl_framebuffer *fb)
       case MESA_FORMAT_RGB565:
       case MESA_FORMAT_ARGB1555:
       case MESA_FORMAT_ARGB4444:
+      case MESA_FORMAT_A8:
 	 break;
       default:
 	 fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;

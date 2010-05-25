@@ -239,6 +239,7 @@
 #define XY_DST_TILED		(1 << 11)
 
 /* BR13 */
+#define BR13_8			(0x0 << 24)
 #define BR13_565		(0x1 << 24)
 #define BR13_8888		(0x3 << 24)
 

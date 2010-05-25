@@ -64,6 +64,24 @@ static GLuint translate_raster_op(GLenum logicop)
    }
 }
 
+static uint32_t
+br13_for_cpp(int cpp)
+{
+   switch (cpp) {
+   case 4:
+      return BR13_8888;
+      break;
+   case 2:
+      return BR13_565;
+      break;
+   case 1:
+      return BR13_8;
+      break;
+   default:
+      assert(0);
+      return 0;
+   }
+}
 
 /* Copy BitBlt
  */
@@ -131,18 +149,14 @@ intelEmitCopyBlit(struct intel_context *intel,
    src_pitch *= cpp;
    dst_pitch *= cpp;
 
-   BR13 = translate_raster_op(logic_op) << 16;
+   BR13 = br13_for_cpp(cpp) | translate_raster_op(logic_op) << 16;
 
    switch (cpp) {
    case 1:
-      CMD = XY_SRC_COPY_BLT_CMD;
-      break;
    case 2:
-      BR13 |= BR13_565;
       CMD = XY_SRC_COPY_BLT_CMD;
       break;
    case 4:
-      BR13 |= BR13_8888;
       CMD = XY_SRC_COPY_BLT_CMD | XY_BLT_WRITE_ALPHA | XY_BLT_WRITE_RGB;
       break;
    default:
@@ -265,12 +279,11 @@ intelClearWithBlit(GLcontext *ctx, GLbitfield mask)
 	  irb->region->buffer, (pitch * cpp),
 	  x1, y1, x2 - x1, y2 - y1);
 
-      BR13 = 0xf0 << 16;
+      BR13 = br13_for_cpp(cpp) | 0xf0 << 16;
       CMD = XY_COLOR_BLT_CMD;
 
       /* Setup the blit command */
       if (cpp == 4) {
-	 BR13 |= BR13_8888;
 	 if (buf == BUFFER_DEPTH || buf == BUFFER_STENCIL) {
 	    if (mask & BUFFER_BIT_DEPTH)
 	       CMD |= XY_BLT_WRITE_RGB;
@@ -280,9 +293,6 @@ intelClearWithBlit(GLcontext *ctx, GLbitfield mask)
 	    /* clearing RGBA */
 	    CMD |= XY_BLT_WRITE_ALPHA | XY_BLT_WRITE_RGB;
 	 }
-      } else {
-	 ASSERT(cpp == 2);
-	 BR13 |= BR13_565;
       }
 
       assert(irb->region->tiling != I915_TILING_Y);
@@ -322,6 +332,10 @@ intelClearWithBlit(GLcontext *ctx, GLbitfield mask)
 	 case MESA_FORMAT_ARGB1555:
 	    clear_val = PACK_COLOR_1555(clear[3], clear[0],
 					clear[1], clear[2]);
+	    break;
+	 case MESA_FORMAT_A8:
+	    clear_val = PACK_COLOR_8888(clear[3], clear[3],
+					clear[3], clear[3]);
 	    break;
 	 default:
 	    _mesa_problem(ctx, "Unexpected renderbuffer format: %d\n",
@@ -419,10 +433,7 @@ intelEmitImmediateColorExpandBlit(struct intel_context *intel,
 #endif
 
    br13 = dst_pitch | (translate_raster_op(logic_op) << 16) | (1 << 29);
-   if (cpp == 2)
-      br13 |= BR13_565;
-   else
-      br13 |= BR13_8888;
+   br13 |= br13_for_cpp(cpp);
 
    blit_cmd = XY_TEXT_IMMEDIATE_BLIT_CMD | XY_TEXT_BYTE_PACKED; /* packing? */
    if (dst_tiling != I915_TILING_NONE)

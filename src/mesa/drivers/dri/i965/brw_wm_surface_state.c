@@ -515,6 +515,9 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
       case MESA_FORMAT_ARGB4444:
 	 key.surface_format = BRW_SURFACEFORMAT_B4G4R4A4_UNORM;
 	 break;
+      case MESA_FORMAT_A8:
+	 key.surface_format = BRW_SURFACEFORMAT_A8_UNORM;
+	 break;
       default:
 	 _mesa_problem(ctx, "Bad renderbuffer format: %d\n", irb->Base.Format);
       }

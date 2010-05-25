@@ -106,6 +106,13 @@ intel_set_span_functions(struct intel_context *intel,
 #define TAG2(x,y) intel_##x##y##_xRGB8888
 #include "spantmp2.h"
 
+/* a8 color span and pixel functions */
+#define SPANTMP_PIXEL_FMT GL_ALPHA
+#define SPANTMP_PIXEL_TYPE GL_UNSIGNED_BYTE
+#define TAG(x) intel_##x##_A8
+#define TAG2(x,y) intel_##x##y##_A8
+#include "spantmp2.h"
+
 #define LOCAL_DEPTH_VARS						\
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);		\
    const GLint yScale = rb->Name ? 1 : -1;				\
@@ -341,6 +348,9 @@ intel_set_span_functions(struct intel_context *intel,
    struct intel_renderbuffer *irb = (struct intel_renderbuffer *) rb;
 
    switch (irb->Base.Format) {
+   case MESA_FORMAT_A8:
+      intel_InitPointers_A8(rb);
+      break;
    case MESA_FORMAT_RGB565:
       intel_InitPointers_RGB565(rb);
       break;
