@@ -252,6 +252,22 @@ struct r300_query {
     struct r300_query* next;
 };
 
+/* Fence object.
+ *
+ * This is a fake fence. Instead of syncing with the fence, we sync
+ * with the context, which is inefficient but compliant.
+ *
+ * This is not a subclass of pipe_fence_handle because pipe_fence_handle is
+ * never actually fully defined. So, rather than have it as a member, and do
+ * subclass-style casting, we treat pipe_query as an opaque, and just
+ * trust that our state tracker does not ever mess up query objects.
+ */
+struct r300_fence {
+    struct pipe_reference reference;
+    struct r300_context *ctx;
+    boolean signalled;
+};
+
 struct r300_texture {
     /* Parent class */
     struct u_resource b;
@@ -474,6 +490,7 @@ void r300_init_render_functions(struct r300_context *r300);
 void r300_init_state_functions(struct r300_context* r300);
 void r300_init_resource_functions(struct r300_context* r300);
 
+void r300_finish(struct r300_context *r300);
 void r500_dump_rs_block(struct r300_rs_block *rs);
 
 static INLINE boolean CTX_DBG_ON(struct r300_context * ctx, unsigned flags)

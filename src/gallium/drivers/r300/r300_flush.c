@@ -37,8 +37,7 @@ static void r300_flush(struct pipe_context* pipe,
     struct r300_context *r300 = r300_context(pipe);
     struct r300_query *query;
     struct r300_atom *atom;
-    struct pipe_framebuffer_state *fb;
-    unsigned i;
+    struct r300_fence **rfence = (struct r300_fence**)fence;
 
     CS_LOCALS(r300);
     (void) cs_count;
@@ -75,37 +74,10 @@ static void r300_flush(struct pipe_context* pipe,
         query->flushed = TRUE;
     }
 
-    /* XXX
-     *
-     * This is a preliminary implementation of glFinish. Note that st/mesa
-     * uses a non-null fence when glFinish is called and then waits for
-     * the fence. Instead of returning the actual fence, we do the sync
-     * directly.
-     *
-     * The ideal implementation should use something like EmitIrqLocked and
-     * WaitIrq, or better, real fences.
-     *
-     * This feature degrades performance to the level of r300c for games that
-     * use glFinish a lot, even openarena does. Ideally we wouldn't need
-     * glFinish at all if we had proper throttling in swapbuffers so that
-     * the CPU wouldn't outrun the GPU by several frames, so this is basically
-     * a temporary fix for the input lag. Once swap&sync works with DRI2,
-     * I'll be happy to remove this code.
-     *
-     * - M. */
-    if (fence && r300->fb_state.state) {
-        fb = r300->fb_state.state;
-
-        for (i = 0; i < fb->nr_cbufs; i++) {
-            if (fb->cbufs[i]->texture) {
-                r300->rws->buffer_wait(r300->rws,
-                    r300_texture(fb->cbufs[i]->texture)->buffer);
-            }
-            if (fb->zsbuf) {
-                r300->rws->buffer_wait(r300->rws,
-                    r300_texture(fb->zsbuf->texture)->buffer);
-            }
-        }
+    /* Create a new fence. */
+    if (rfence) {
+        *rfence = CALLOC_STRUCT(r300_fence);
+        (*rfence)->ctx = r300;
     }
 }
 

@@ -235,3 +235,29 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     FREE(r300);
     return NULL;
 }
+
+void r300_finish(struct r300_context *r300)
+{
+    struct pipe_framebuffer_state *fb;
+    unsigned i;
+
+    /* This is a preliminary implementation of glFinish.
+     *
+     * The ideal implementation should use something like EmitIrqLocked and
+     * WaitIrq, or better, real fences.
+     */
+    if (r300->fb_state.state) {
+        fb = r300->fb_state.state;
+
+        for (i = 0; i < fb->nr_cbufs; i++) {
+            if (fb->cbufs[i]->texture) {
+                r300->rws->buffer_wait(r300->rws,
+                    r300_texture(fb->cbufs[i]->texture)->buffer);
+            }
+            if (fb->zsbuf) {
+                r300->rws->buffer_wait(r300->rws,
+                    r300_texture(fb->zsbuf->texture)->buffer);
+            }
+        }
+    }
+}

@@ -319,20 +319,33 @@ static void r300_fence_reference(struct pipe_screen *screen,
                                  struct pipe_fence_handle **ptr,
                                  struct pipe_fence_handle *fence)
 {
+    struct r300_fence **oldf = (struct r300_fence**)ptr;
+    struct r300_fence *newf = (struct r300_fence*)fence;
+
+    if (pipe_reference(&(*oldf)->reference, &newf->reference))
+        FREE(*oldf);
+
+    *ptr = fence;
 }
 
 static int r300_fence_signalled(struct pipe_screen *screen,
                                 struct pipe_fence_handle *fence,
                                 unsigned flags)
 {
-    return 0;
+    struct r300_fence *rfence = (struct r300_fence*)fence;
+
+    return rfence->signalled ? 0 : 1; /* 0 == success */
 }
 
 static int r300_fence_finish(struct pipe_screen *screen,
                              struct pipe_fence_handle *fence,
                              unsigned flags)
 {
-    return 0;
+    struct r300_fence *rfence = (struct r300_fence*)fence;
+
+    r300_finish(rfence->ctx);
+    rfence->signalled = TRUE;
+    return 0; /* 0 == success */
 }
 
 struct pipe_screen* r300_create_screen(struct r300_winsys_screen *rws)
