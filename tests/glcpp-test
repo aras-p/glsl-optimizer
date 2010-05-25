@@ -9,5 +9,5 @@ for test in *.c; do
     gcc -E $test -o $test.gcc
 #    grep -v '^#' < $test.gcc > $test.expected
     grep -v '^[ 	]*#' < $test > $test.expected
-    diff -w -u $test.expected $test.out
+    diff -u $test.expected $test.out
 done

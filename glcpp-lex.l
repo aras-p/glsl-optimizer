@@ -32,6 +32,21 @@
 %option reentrant noyywrap
 %option extra-type="glcpp_parser_t *"
 
+	/* This lexer has two states:
+	 *
+	 * The CONTROL state is for control lines (directives)
+	 * It lexes exactly as specified in the C99 specification.
+	 *
+	 * The INITIAL state is for input lines. In this state, we
+	 * make the OTHER token much more broad in that it now
+	 * includes tokens consisting entirely of whitespace. This
+	 * allows us to pass text through verbatim. It avoids the
+	 * "inadvertent token pasting" problem that would occur if we
+	 * just printed tokens, while also avoiding excess whitespace
+	 * insertion in the output.*/
+
+%x CONTROL
+
 SPACE		[[:space:]]
 NONSPACE	[^[:space:]]
 NEWLINE		[\n]
@@ -48,19 +63,80 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 %%
 
 {HASH}define{HSPACE}+/{IDENTIFIER}"(" {
+	BEGIN CONTROL;
 	return HASH_DEFINE_FUNC;
 }
 
 {HASH}define {
+	BEGIN CONTROL;
 	return HASH_DEFINE_OBJ;
 }
 
 {HASH}undef {
+	BEGIN CONTROL;
 	return HASH_UNDEF;
 }
 
 {HASH} {
+	BEGIN CONTROL;
 	return HASH;
+}
+
+<CONTROL>{IDENTIFIER} {
+	yylval.str = xtalloc_strdup (yyextra, yytext);
+	return IDENTIFIER;
+}
+
+<CONTROL>"<<"  {
+	return LEFT_SHIFT;
+}
+
+<CONTROL>">>" {
+	return RIGHT_SHIFT;
+}
+
+<CONTROL>"<=" {
+	return LESS_OR_EQUAL;
+}
+
+<CONTROL>">=" {
+	return GREATER_OR_EQUAL;
+}
+
+<CONTROL>"==" {
+	return EQUAL;
+}
+
+<CONTROL>"!=" {
+	return NOT_EQUAL;
+}
+
+<CONTROL>"&&" {
+	return AND;
+}
+
+<CONTROL>"||" {
+	return OR;
+}
+
+<CONTROL>"##" {
+	return PASTE;
+}
+
+<CONTROL>{PUNCTUATION} {
+	return yytext[0];
+}
+
+<CONTROL>{OTHER} {
+	yylval.str = xtalloc_strdup (yyextra, yytext);
+	return OTHER;
+}
+
+<CONTROL>{HSPACE}+
+
+<CONTROL>\n {
+	BEGIN INITIAL;
+	return NEWLINE;
 }
 
 {IDENTIFIER} {
@@ -68,55 +144,23 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 	return IDENTIFIER;
 }
 
-"<<"  {
-	return LEFT_SHIFT;
+{OTHER}+ {
+	yylval.str = xtalloc_strdup (yyextra, yytext);
+	return OTHER;
 }
 
-">>" {
-	return RIGHT_SHIFT;
-}
-
-"<=" {
-	return LESS_OR_EQUAL;
-}
-
-">=" {
-	return GREATER_OR_EQUAL;
-}
-
-"==" {
-	return EQUAL;
-}
-
-"!=" {
-	return NOT_EQUAL;
-}
-
-"&&" {
-	return AND;
-}
-
-"||" {
-	return OR;
-}
-
-"##" {
-	return PASTE;
-}
-
-{PUNCTUATION} {
-	return yytext[0];
+{HSPACE}+ {
+	yylval.str = xtalloc_strdup (yyextra, yytext);
+	return OTHER;
 }
 
 \n {
 	return NEWLINE;
 }
 
-{OTHER} {
+. {
 	yylval.str = xtalloc_strdup (yyextra, yytext);
 	return OTHER;
 }
-
-{HSPACE}+
 
 %%

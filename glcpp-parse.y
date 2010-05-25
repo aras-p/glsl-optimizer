@@ -517,8 +517,6 @@ _token_list_print (token_list_t *list)
 
 	for (node = list->head; node; node = node->next) {
 		_token_print (node->token);
-		if (node->next)
-			printf (" ");
 	}
 }
 
