@@ -38,7 +38,6 @@
 #include "r300_screen_buffer.h"
 #include "r300_emit.h"
 #include "r300_reg.h"
-#include "r300_render.h"
 #include "r300_state_derived.h"
 
 static uint32_t r300_translate_primitive(unsigned prim)
@@ -237,10 +236,10 @@ static boolean immd_is_good_idea(struct r300_context *r300,
  * after resolving fallback issues (e.g. stencil ref two-sided).             *
  ****************************************************************************/
 
-void r500_emit_draw_arrays_immediate(struct r300_context *r300,
-                                     unsigned mode,
-                                     unsigned start,
-                                     unsigned count)
+static void r500_emit_draw_arrays_immediate(struct r300_context *r300,
+                                            unsigned mode,
+                                            unsigned start,
+                                            unsigned count)
 {
     struct pipe_vertex_element* velem;
     struct pipe_vertex_buffer* vbuf;
@@ -327,9 +326,9 @@ void r500_emit_draw_arrays_immediate(struct r300_context *r300,
     }
 }
 
-void r500_emit_draw_arrays(struct r300_context *r300,
-                           unsigned mode,
-                           unsigned count)
+static void r500_emit_draw_arrays(struct r300_context *r300,
+                                  unsigned mode,
+                                  unsigned count)
 {
     boolean alt_num_verts = count > 65535;
     CS_LOCALS(r300);
@@ -356,14 +355,14 @@ void r500_emit_draw_arrays(struct r300_context *r300,
     END_CS;
 }
 
-void r500_emit_draw_elements(struct r300_context *r300,
-                             struct pipe_resource* indexBuffer,
-                             unsigned indexSize,
-                             unsigned minIndex,
-                             unsigned maxIndex,
-                             unsigned mode,
-                             unsigned start,
-                             unsigned count)
+static void r500_emit_draw_elements(struct r300_context *r300,
+                                    struct pipe_resource* indexBuffer,
+                                    unsigned indexSize,
+                                    unsigned minIndex,
+                                    unsigned maxIndex,
+                                    unsigned mode,
+                                    unsigned start,
+                                    unsigned count)
 {
     uint32_t count_dwords;
     uint32_t offset_dwords = indexSize * start / sizeof(uint32_t);
@@ -463,10 +462,10 @@ static void r300_end_stencil_ref_fallback(struct r300_context *r300)
     END_CS;
 }
 
-void r300_emit_draw_arrays_immediate(struct r300_context *r300,
-                                     unsigned mode,
-                                     unsigned start,
-                                     unsigned count)
+static void r300_emit_draw_arrays_immediate(struct r300_context *r300,
+                                            unsigned mode,
+                                            unsigned start,
+                                            unsigned count)
 {
     if (!r300->stencil_ref_bf_fallback) {
         r500_emit_draw_arrays_immediate(r300, mode, start, count);
@@ -479,9 +478,9 @@ void r300_emit_draw_arrays_immediate(struct r300_context *r300,
     }
 }
 
-void r300_emit_draw_arrays(struct r300_context *r300,
-                           unsigned mode,
-                           unsigned count)
+static void r300_emit_draw_arrays(struct r300_context *r300,
+                                  unsigned mode,
+                                  unsigned count)
 {
     if (!r300->stencil_ref_bf_fallback) {
         r500_emit_draw_arrays(r300, mode, count);
@@ -494,14 +493,14 @@ void r300_emit_draw_arrays(struct r300_context *r300,
     }
 }
 
-void r300_emit_draw_elements(struct r300_context *r300,
-                             struct pipe_resource* indexBuffer,
-                             unsigned indexSize,
-                             unsigned minIndex,
-                             unsigned maxIndex,
-                             unsigned mode,
-                             unsigned start,
-                             unsigned count)
+static void r300_emit_draw_elements(struct r300_context *r300,
+                                    struct pipe_resource* indexBuffer,
+                                    unsigned indexSize,
+                                    unsigned minIndex,
+                                    unsigned maxIndex,
+                                    unsigned mode,
+                                    unsigned start,
+                                    unsigned count)
 {
     if (!r300->stencil_ref_bf_fallback) {
         r500_emit_draw_elements(r300, indexBuffer, indexSize,
@@ -580,15 +579,15 @@ static void r300_align_ushort_elts(struct r300_context *r300,
 }
 
 /* This is the fast-path drawing & emission for HW TCL. */
-void r300_draw_range_elements(struct pipe_context* pipe,
-                              struct pipe_resource* indexBuffer,
-                              unsigned indexSize,
-                              int indexBias,
-                              unsigned minIndex,
-                              unsigned maxIndex,
-                              unsigned mode,
-                              unsigned start,
-                              unsigned count)
+static void r300_draw_range_elements(struct pipe_context* pipe,
+                                     struct pipe_resource* indexBuffer,
+                                     unsigned indexSize,
+                                     int indexBias,
+                                     unsigned minIndex,
+                                     unsigned maxIndex,
+                                     unsigned mode,
+                                     unsigned start,
+                                     unsigned count)
 {
     struct r300_context* r300 = r300_context(pipe);
     struct pipe_resource* orgIndexBuffer = indexBuffer;
@@ -652,10 +651,10 @@ void r300_draw_range_elements(struct pipe_context* pipe,
 }
 
 /* Simple helpers for context setup. Should probably be moved to util. */
-void r300_draw_elements(struct pipe_context* pipe,
-                        struct pipe_resource* indexBuffer,
-                        unsigned indexSize, int indexBias, unsigned mode,
-                        unsigned start, unsigned count)
+static void r300_draw_elements(struct pipe_context* pipe,
+                               struct pipe_resource* indexBuffer,
+                               unsigned indexSize, int indexBias, unsigned mode,
+                               unsigned start, unsigned count)
 {
     struct r300_context *r300 = r300_context(pipe);
 
@@ -664,8 +663,8 @@ void r300_draw_elements(struct pipe_context* pipe,
                               mode, start, count);
 }
 
-void r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
-                      unsigned start, unsigned count)
+static void r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
+                             unsigned start, unsigned count)
 {
     struct r300_context* r300 = r300_context(pipe);
     boolean alt_num_verts = r300->screen->caps.is_r500 &&
@@ -718,10 +717,10 @@ void r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
  ***************************************************************************/
 
 /* SW TCL arrays, using Draw. */
-void r300_swtcl_draw_arrays(struct pipe_context* pipe,
-                               unsigned mode,
-                               unsigned start,
-                               unsigned count)
+static void r300_swtcl_draw_arrays(struct pipe_context* pipe,
+                                   unsigned mode,
+                                   unsigned start,
+                                   unsigned count)
 {
     struct r300_context* r300 = r300_context(pipe);
     struct pipe_transfer *vb_transfer[PIPE_MAX_ATTRIBS];
@@ -761,15 +760,15 @@ void r300_swtcl_draw_arrays(struct pipe_context* pipe,
 }
 
 /* SW TCL elements, using Draw. */
-void r300_swtcl_draw_range_elements(struct pipe_context* pipe,
-                                       struct pipe_resource* indexBuffer,
-                                       unsigned indexSize,
-                                       int indexBias,
-                                       unsigned minIndex,
-                                       unsigned maxIndex,
-                                       unsigned mode,
-                                       unsigned start,
-                                       unsigned count)
+static void r300_swtcl_draw_range_elements(struct pipe_context* pipe,
+                                           struct pipe_resource* indexBuffer,
+                                           unsigned indexSize,
+                                           int indexBias,
+                                           unsigned minIndex,
+                                           unsigned maxIndex,
+                                           unsigned mode,
+                                           unsigned start,
+                                           unsigned count)
 {
     struct r300_context* r300 = r300_context(pipe);
     struct pipe_transfer *vb_transfer[PIPE_MAX_ATTRIBS];
@@ -1094,4 +1093,27 @@ struct draw_stage* r300_draw_stage(struct r300_context* r300)
     draw_set_render(r300->draw, render);
 
     return stage;
+}
+
+void r300_init_render_functions(struct r300_context *r300)
+{
+    if (r300->screen->caps.has_tcl) {
+        r300->context.draw_arrays = r300_draw_arrays;
+        r300->context.draw_elements = r300_draw_elements;
+        r300->context.draw_range_elements = r300_draw_range_elements;
+
+        if (r300->screen->caps.is_r500) {
+            r300->emit_draw_arrays_immediate = r500_emit_draw_arrays_immediate;
+            r300->emit_draw_arrays = r500_emit_draw_arrays;
+            r300->emit_draw_elements = r500_emit_draw_elements;
+        } else {
+            r300->emit_draw_arrays_immediate = r300_emit_draw_arrays_immediate;
+            r300->emit_draw_arrays = r300_emit_draw_arrays;
+            r300->emit_draw_elements = r300_emit_draw_elements;
+        }
+    } else {
+        r300->context.draw_arrays = r300_swtcl_draw_arrays;
+        r300->context.draw_elements = r300_draw_elements;
+        r300->context.draw_range_elements = r300_swtcl_draw_range_elements;
+    }
 }

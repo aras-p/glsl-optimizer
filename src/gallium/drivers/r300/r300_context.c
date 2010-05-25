@@ -28,7 +28,6 @@
 
 #include "r300_context.h"
 #include "r300_emit.h"
-#include "r300_render.h"
 #include "r300_screen.h"
 #include "r300_screen_buffer.h"
 #include "r300_state_invariant.h"
@@ -182,25 +181,7 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
 
     r300->context.destroy = r300_destroy_context;
 
-    if (r300screen->caps.has_tcl) {
-        r300->context.draw_arrays = r300_draw_arrays;
-        r300->context.draw_elements = r300_draw_elements;
-        r300->context.draw_range_elements = r300_draw_range_elements;
-
-        if (r300screen->caps.is_r500) {
-            r300->emit_draw_arrays_immediate = r500_emit_draw_arrays_immediate;
-            r300->emit_draw_arrays = r500_emit_draw_arrays;
-            r300->emit_draw_elements = r500_emit_draw_elements;
-        } else {
-            r300->emit_draw_arrays_immediate = r300_emit_draw_arrays_immediate;
-            r300->emit_draw_arrays = r300_emit_draw_arrays;
-            r300->emit_draw_elements = r300_emit_draw_elements;
-        }
-    } else {
-        r300->context.draw_arrays = r300_swtcl_draw_arrays;
-        r300->context.draw_elements = r300_draw_elements;
-        r300->context.draw_range_elements = r300_swtcl_draw_range_elements;
-
+    if (!r300screen->caps.has_tcl) {
         /* Create a Draw. This is used for SW TCL. */
         r300->draw = draw_create(&r300->context);
         /* Enable our renderer. */
@@ -222,6 +203,7 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     r300_init_blit_functions(r300);
     r300_init_flush_functions(r300);
     r300_init_query_functions(r300);
+    r300_init_render_functions(r300);
     r300_init_state_functions(r300);
     r300_init_resource_functions(r300);
 
