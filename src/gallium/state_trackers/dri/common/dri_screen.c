@@ -35,7 +35,6 @@
 #include "dri_screen.h"
 #include "dri_context.h"
 #include "dri_drawable.h"
-#include "dri1_helper.h"
 
 #include "util/u_inlines.h"
 #include "pipe/p_screen.h"
@@ -347,8 +346,6 @@ dri_destroy_option_cache(struct dri_screen * screen)
 void
 dri_destroy_screen_helper(struct dri_screen * screen)
 {
-   dri1_destroy_pipe_context(screen);
-
    if (screen->st_api && screen->st_api->destroy)
       screen->st_api->destroy(screen->st_api);
 

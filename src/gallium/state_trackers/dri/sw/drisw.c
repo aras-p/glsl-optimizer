@@ -43,7 +43,6 @@
 #include "dri_screen.h"
 #include "dri_context.h"
 #include "dri_drawable.h"
-#include "dri1_helper.h"
 
 DEBUG_GET_ONCE_BOOL_OPTION(swrast_no_present, "SWRAST_NO_PRESENT", FALSE);
 static boolean swrast_no_present = FALSE;
@@ -88,6 +87,24 @@ drisw_put_image(struct dri_drawable *drawable,
    put_image(dPriv, data, width, height);
 }
 
+static struct pipe_surface *
+drisw_get_pipe_surface(struct dri_drawable *drawable, struct pipe_resource *ptex)
+{
+   struct pipe_screen *pipe_screen = dri_screen(drawable->sPriv)->base.screen;
+   struct pipe_surface *psurf = drawable->drisw_surface;
+
+   if (!psurf || psurf->texture != ptex) {
+      pipe_surface_reference(&drawable->drisw_surface, NULL);
+
+      drawable->drisw_surface = pipe_screen->get_tex_surface(pipe_screen,
+            ptex, 0, 0, 0, 0/* no bind flag???*/);
+
+      psurf = drawable->drisw_surface;
+   }
+
+   return psurf;
+}
+
 static INLINE void
 drisw_present_texture(__DRIdrawable *dPriv,
                       struct pipe_resource *ptex)
@@ -99,7 +116,7 @@ drisw_present_texture(__DRIdrawable *dPriv,
    if (swrast_no_present)
       return;
 
-   psurf = dri1_get_pipe_surface(drawable, ptex);
+   psurf = drisw_get_pipe_surface(drawable, ptex);
    if (!psurf)
       return;
 
@@ -174,10 +191,6 @@ drisw_flush_frontbuffer(struct dri_drawable *drawable,
  * During fixed-size operation, the function keeps allocating new attachments
  * as they are requested. Unused attachments are not removed, not until the
  * framebuffer is resized or destroyed.
- *
- * It should be possible for DRI1 and DRISW to share this function, but it
- * seems a better seperation and safer for each DRI version to provide its own
- * function.
  */
 static void
 drisw_allocate_textures(struct dri_drawable *drawable,

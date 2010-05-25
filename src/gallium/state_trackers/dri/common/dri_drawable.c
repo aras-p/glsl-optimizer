@@ -32,7 +32,6 @@
 #include "dri_screen.h"
 #include "dri_context.h"
 #include "dri_drawable.h"
-#include "dri1_helper.h"
 
 #include "pipe/p_screen.h"
 #include "util/u_format.h"
@@ -138,8 +137,6 @@ dri_create_buffer(__DRIscreen * sPriv,
    drawable->dPriv = dPriv;
    dPriv->driverPrivate = (void *)drawable;
 
-   drawable->desired_fences = 2;
-
    return GL_TRUE;
 fail:
    FREE(drawable);
@@ -152,14 +149,10 @@ dri_destroy_buffer(__DRIdrawable * dPriv)
    struct dri_drawable *drawable = dri_drawable(dPriv);
    int i;
 
-   dri1_swap_fences_clear(drawable);
-
-   dri1_destroy_pipe_surface(drawable);
+   pipe_surface_reference(&drawable->drisw_surface, NULL);
 
    for (i = 0; i < ST_ATTACHMENT_COUNT; i++)
       pipe_resource_reference(&drawable->textures[i], NULL);
-
-   drawable->desired_fences = 0;
 
    FREE(drawable);
 }

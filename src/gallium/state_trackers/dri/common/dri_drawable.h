@@ -33,12 +33,8 @@
 #include "state_tracker/st_api.h"
 
 struct pipe_surface;
-struct pipe_fence_handle;
 struct st_framebuffer;
 struct dri_context;
-
-#define DRI_SWAP_FENCES_MAX  8
-#define DRI_SWAP_FENCES_MASK 7
 
 struct dri_drawable
 {
@@ -57,14 +53,8 @@ struct dri_drawable
    struct pipe_resource *textures[ST_ATTACHMENT_COUNT];
    unsigned int texture_mask, texture_stamp;
 
-   struct pipe_fence_handle *swap_fences[DRI_SWAP_FENCES_MAX];
-   unsigned int head;
-   unsigned int tail;
-   unsigned int desired_fences;
-   unsigned int cur_fences;
-
-   /* used only by DRI1 */
-   struct pipe_surface *dri1_surface;
+   /* used only by DRISW */
+   struct pipe_surface *drisw_surface;
 };
 
 static INLINE struct dri_drawable *
