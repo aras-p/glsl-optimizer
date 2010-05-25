@@ -55,11 +55,15 @@ brw_queryobj_get_results(struct brw_query_object *query)
    if (query->bo == NULL)
       return;
 
-   /* Map and count the pixels from the current query BO */
    dri_bo_map(query->bo, GL_FALSE);
    results = query->bo->virtual;
-   for (i = query->first_index; i <= query->last_index; i++) {
-      query->Base.Result += results[i * 2 + 1] - results[i * 2];
+   if (query->Base.Target == GL_TIME_ELAPSED_EXT) {
+      query->Base.Result += 1000 * ((results[1] >> 32) - (results[0] >> 32));
+   } else {
+      /* Map and count the pixels from the current query BO */
+      for (i = query->first_index; i <= query->last_index; i++) {
+	 query->Base.Result += results[i * 2 + 1] - results[i * 2];
+      }
    }
    dri_bo_unmap(query->bo);
 
@@ -98,14 +102,31 @@ brw_begin_query(GLcontext *ctx, struct gl_query_object *q)
    struct intel_context *intel = intel_context(ctx);
    struct brw_query_object *query = (struct brw_query_object *)q;
 
-   /* Reset our driver's tracking of query state. */
-   dri_bo_unreference(query->bo);
-   query->bo = NULL;
-   query->first_index = -1;
-   query->last_index = -1;
+   if (query->Base.Target == GL_TIME_ELAPSED_EXT) {
+      dri_bo_unreference(query->bo);
+      query->bo = drm_intel_bo_alloc(intel->bufmgr, "timer query",
+				     4096, 4096);
 
-   brw->query.obj = query;
-   intel->stats_wm++;
+      BEGIN_BATCH(4);
+      OUT_BATCH(_3DSTATE_PIPE_CONTROL |
+		PIPE_CONTROL_WRITE_TIMESTAMP);
+      OUT_RELOC(query->bo,
+		I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION,
+		PIPE_CONTROL_GLOBAL_GTT_WRITE |
+		0);
+      OUT_BATCH(0);
+      OUT_BATCH(0);
+      ADVANCE_BATCH();
+   } else {
+      /* Reset our driver's tracking of query state. */
+      dri_bo_unreference(query->bo);
+      query->bo = NULL;
+      query->first_index = -1;
+      query->last_index = -1;
+
+      brw->query.obj = query;
+      intel->stats_wm++;
+   }
 }
 
 /**
@@ -118,21 +139,36 @@ brw_end_query(GLcontext *ctx, struct gl_query_object *q)
    struct intel_context *intel = intel_context(ctx);
    struct brw_query_object *query = (struct brw_query_object *)q;
 
-   /* Flush the batchbuffer in case it has writes to our query BO.
-    * Have later queries write to a new query BO so that further rendering
-    * doesn't delay the collection of our results.
-    */
-   if (query->bo) {
-      brw_emit_query_end(brw);
+   if (query->Base.Target == GL_TIME_ELAPSED_EXT) {
+      BEGIN_BATCH(4);
+      OUT_BATCH(_3DSTATE_PIPE_CONTROL |
+		PIPE_CONTROL_WRITE_TIMESTAMP);
+      OUT_RELOC(query->bo,
+		I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION,
+		PIPE_CONTROL_GLOBAL_GTT_WRITE |
+		8);
+      OUT_BATCH(0);
+      OUT_BATCH(0);
+      ADVANCE_BATCH();
+
       intel_batchbuffer_flush(intel->batch);
+   } else {
+      /* Flush the batchbuffer in case it has writes to our query BO.
+       * Have later queries write to a new query BO so that further rendering
+       * doesn't delay the collection of our results.
+       */
+      if (query->bo) {
+	 brw_emit_query_end(brw);
+	 intel_batchbuffer_flush(intel->batch);
 
-      dri_bo_unreference(brw->query.bo);
-      brw->query.bo = NULL;
+	 dri_bo_unreference(brw->query.bo);
+	 brw->query.bo = NULL;
+      }
+
+      brw->query.obj = NULL;
+
+      intel->stats_wm--;
    }
-
-   brw->query.obj = NULL;
-
-   intel->stats_wm--;
 }
 
 static void brw_wait_query(GLcontext *ctx, struct gl_query_object *q)

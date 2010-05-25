@@ -57,6 +57,7 @@
 #define need_GL_EXT_provoking_vertex
 #define need_GL_EXT_secondary_color
 #define need_GL_EXT_stencil_two_side
+#define need_GL_EXT_timer_query
 #define need_GL_APPLE_vertex_array_object
 #define need_GL_APPLE_object_purgeable
 #define need_GL_ATI_separate_stencil
@@ -182,6 +183,9 @@ static const struct dri_extension brw_extensions[] = {
    { NULL,                                NULL }
 };
 
+static const struct dri_extension ironlake_extensions[] = {
+   { "GL_EXT_timer_query",                GL_EXT_timer_query_functions },
+};
 
 static const struct dri_extension arb_oq_extensions[] = {
    { "GL_ARB_occlusion_query",            GL_ARB_occlusion_query_functions },
@@ -206,6 +210,9 @@ intelInitExtensions(GLcontext *ctx)
    /* Disable imaging extension until convolution is working in teximage paths.
     */
    driInitExtensions(ctx, card_extensions, GL_FALSE);
+
+   if (intel->gen >= 5)
+      driInitExtensions(ctx, ironlake_extensions, GL_FALSE);
 
    if (intel->gen >= 4)
       driInitExtensions(ctx, brw_extensions, GL_FALSE);
