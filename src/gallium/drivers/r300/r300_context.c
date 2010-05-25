@@ -28,7 +28,6 @@
 
 #include "r300_context.h"
 #include "r300_emit.h"
-#include "r300_query.h"
 #include "r300_render.h"
 #include "r300_screen.h"
 #include "r300_screen_buffer.h"

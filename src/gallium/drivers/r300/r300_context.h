@@ -441,7 +441,12 @@ struct r300_context {
     uint64_t flush_counter;
 };
 
-/* Convenience cast wrapper. */
+/* Convenience cast wrappers. */
+static INLINE struct r300_query* r300_query(struct pipe_query* q)
+{
+    return (struct r300_query*)q;
+}
+
 static INLINE struct r300_texture* r300_texture(struct pipe_resource* tex)
 {
     return (struct r300_texture*)tex;
@@ -464,6 +469,7 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
 struct draw_stage* r300_draw_stage(struct r300_context* r300);
 void r300_init_blit_functions(struct r300_context *r300);
 void r300_init_flush_functions(struct r300_context* r300);
+void r300_init_query_functions(struct r300_context* r300);
 void r300_init_state_functions(struct r300_context* r300);
 void r300_init_resource_functions(struct r300_context* r300);
 
