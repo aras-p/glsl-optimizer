@@ -34,6 +34,7 @@
 #include "pipe/p_defines.h"
 #include "util/u_memory.h"
 #include "lp_context.h"
+#include "lp_flush.h"
 #include "lp_query.h"
 #include "lp_rast.h"
 #include "lp_rast_priv.h"
@@ -82,7 +83,7 @@ llvmpipe_get_query_result(struct pipe_context *pipe,
    struct llvmpipe_query *pq = llvmpipe_query(q);
 
    if (!pq->done) {
-      lp_setup_flush(llvmpipe->setup, TRUE);
+      lp_setup_flush(llvmpipe->setup, 0);
    }
 
    if (pq->done) {
@@ -105,7 +106,7 @@ llvmpipe_begin_query(struct pipe_context *pipe, struct pipe_query *q)
     */
    if (pq->binned) {
       struct pipe_fence_handle *fence;
-      pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, &fence);
+      llvmpipe_flush(pipe, 0, &fence);
       if (fence) {
          pipe->screen->fence_finish(pipe->screen, fence, 0);
          pipe->screen->fence_reference(pipe->screen, &fence, NULL);

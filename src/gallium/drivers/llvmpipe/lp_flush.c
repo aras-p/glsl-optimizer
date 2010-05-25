@@ -52,24 +52,15 @@ llvmpipe_flush( struct pipe_context *pipe,
    draw_flush(llvmpipe->draw);
 
    if (fence) {
-      if ((flags & (PIPE_FLUSH_SWAPBUFFERS |
-                    PIPE_FLUSH_RENDER_CACHE))) {
-         /* if we're going to flush the setup/rasterization modules, emit
-          * a fence.
-          * XXX this (and the code below) may need fine tuning...
-          */
-         *fence = lp_setup_fence( llvmpipe->setup );
-      }
-      else {
-         *fence = NULL;
-      }
+      /* if we're going to flush the setup/rasterization modules, emit
+       * a fence.
+       * XXX this (and the code below) may need fine tuning...
+       */
+      *fence = lp_setup_fence( llvmpipe->setup );
    }
 
    /* ask the setup module to flush */
-   if (flags & (PIPE_FLUSH_SWAPBUFFERS | PIPE_FLUSH_RENDER_CACHE |
-                PIPE_FLUSH_TEXTURE_CACHE)) {
-      lp_setup_flush(llvmpipe->setup, flags);
-   }
+   lp_setup_flush(llvmpipe->setup, flags);
 
    /* Enable to dump BMPs of the color/depth buffers each frame */
    if (0) {
@@ -119,19 +110,6 @@ llvmpipe_flush_resource(struct pipe_context *pipe,
    if ((referenced & PIPE_REFERENCED_FOR_WRITE) ||
        ((referenced & PIPE_REFERENCED_FOR_READ) && !read_only)) {
 
-      if (resource->target != PIPE_BUFFER) {
-         /*
-          * TODO: The semantics of these flush flags are too obtuse. They should
-          * disappear and the pipe driver should just ensure that all visible
-          * side-effects happen when they need to happen.
-          */
-         if (referenced & PIPE_REFERENCED_FOR_WRITE)
-            flush_flags |= PIPE_FLUSH_RENDER_CACHE;
-
-         if (referenced & PIPE_REFERENCED_FOR_READ)
-            flush_flags |= PIPE_FLUSH_TEXTURE_CACHE;
-      }
-
       if (cpu_access) {
          /*
           * Flush and wait.
@@ -142,7 +120,7 @@ llvmpipe_flush_resource(struct pipe_context *pipe,
          if (do_not_block)
             return FALSE;
 
-         pipe->flush(pipe, flush_flags, &fence);
+         llvmpipe_flush(pipe, flush_flags, &fence);
 
          if (fence) {
             pipe->screen->fence_finish(pipe->screen, fence, 0);
@@ -153,7 +131,7 @@ llvmpipe_flush_resource(struct pipe_context *pipe,
           * Just flush.
           */
 
-         pipe->flush(pipe, flush_flags, NULL);
+         llvmpipe_flush(pipe, flush_flags, NULL);
       }
    }
 
