@@ -20,7 +20,6 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
-#include "r300_blit.h"
 #include "r300_context.h"
 #include "r300_texture.h"
 
@@ -43,11 +42,11 @@ static void r300_blitter_save_states(struct r300_context* r300)
 }
 
 /* Clear currently bound buffers. */
-void r300_clear(struct pipe_context* pipe,
-                unsigned buffers,
-                const float* rgba,
-                double depth,
-                unsigned stencil)
+static void r300_clear(struct pipe_context* pipe,
+                       unsigned buffers,
+                       const float* rgba,
+                       double depth,
+                       unsigned stencil)
 {
     /* XXX Implement fastfill.
      *
@@ -119,14 +118,14 @@ static void r300_hw_copy_region(struct pipe_context* pipe,
 }
 
 /* Copy a block of pixels from one surface to another. */
-void r300_resource_copy_region(struct pipe_context *pipe,
-                               struct pipe_resource *dst,
-                               struct pipe_subresource subdst,
-                               unsigned dstx, unsigned dsty, unsigned dstz,
-                               struct pipe_resource *src,
-                               struct pipe_subresource subsrc,
-                               unsigned srcx, unsigned srcy, unsigned srcz,
-                               unsigned width, unsigned height)
+static void r300_resource_copy_region(struct pipe_context *pipe,
+                                      struct pipe_resource *dst,
+                                      struct pipe_subresource subdst,
+                                      unsigned dstx, unsigned dsty, unsigned dstz,
+                                      struct pipe_resource *src,
+                                      struct pipe_subresource subsrc,
+                                      unsigned srcx, unsigned srcy, unsigned srcz,
+                                      unsigned width, unsigned height)
 {
     enum pipe_format old_format = dst->format;
     enum pipe_format new_format = old_format;
@@ -190,12 +189,12 @@ void r300_resource_copy_region(struct pipe_context *pipe,
 }
 
 /* Fill a region of a surface with a constant value. */
-void r300_resource_fill_region(struct pipe_context *pipe,
-                               struct pipe_resource *dst,
-                               struct pipe_subresource subdst,
-                               unsigned dstx, unsigned dsty, unsigned dstz,
-                               unsigned width, unsigned height,
-                               unsigned value)
+static void r300_resource_fill_region(struct pipe_context *pipe,
+                                      struct pipe_resource *dst,
+                                      struct pipe_subresource subdst,
+                                      unsigned dstx, unsigned dsty, unsigned dstz,
+                                      unsigned width, unsigned height,
+                                      unsigned value)
 {
     struct r300_context *r300 = r300_context(pipe);
 
@@ -204,4 +203,11 @@ void r300_resource_fill_region(struct pipe_context *pipe,
 
     util_blitter_fill_region(r300->blitter, dst, subdst,
                              dstx, dsty, dstz, width, height, value);
+}
+
+void r300_init_blit_functions(struct r300_context *r300)
+{
+    r300->context.clear = r300_clear;
+    r300->context.resource_copy_region = r300_resource_copy_region;
+    r300->context.resource_fill_region = r300_resource_fill_region;
 }

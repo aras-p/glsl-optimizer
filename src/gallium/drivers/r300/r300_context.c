@@ -26,7 +26,6 @@
 #include "util/u_simple_list.h"
 #include "util/u_upload_mgr.h"
 
-#include "r300_blit.h"
 #include "r300_context.h"
 #include "r300_emit.h"
 #include "r300_flush.h"
@@ -185,10 +184,6 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
 
     r300->context.destroy = r300_destroy_context;
 
-    r300->context.clear = r300_clear;
-    r300->context.resource_copy_region = r300_resource_copy_region;
-    r300->context.resource_fill_region = r300_resource_fill_region;
-
     if (r300screen->caps.has_tcl) {
         r300->context.draw_arrays = r300_draw_arrays;
         r300->context.draw_elements = r300_draw_elements;
@@ -226,6 +221,7 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
 				    R300_BIND_OQBO, 4096);
     make_empty_list(&r300->query_list);
 
+    r300_init_blit_functions(r300);
     r300_init_flush_functions(r300);
     r300_init_query_functions(r300);
     r300_init_state_functions(r300);
