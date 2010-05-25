@@ -142,7 +142,7 @@ void util_blitter_fill_region(struct blitter_context *blitter,
 
 /* The functions below should be used to save currently bound constant state
  * objects inside a driver. The objects are automatically restored at the end
- * of the util_blitter_{clear, fill, copy} functions and then
+ * of the util_blitter_{clear, copy_region, fill_region} functions and then
  * forgotten.
  *
  * CSOs not listed here are not affected by util_blitter. */
