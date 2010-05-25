@@ -164,4 +164,10 @@ xtalloc_strndup (const void *t, const char *p, size_t n);
 char *
 xtalloc_asprintf (const void *t, const char *fmt, ...);
 
+void *
+_xtalloc_reference_loc (const void *context,
+			const void *ptr, const char *location);
+
+#define xtalloc_reference(ctx, ptr) (_TALLOC_TYPEOF(ptr))_xtalloc_reference_loc((ctx),(ptr), __location__)
+
 #endif

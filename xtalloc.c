@@ -82,3 +82,18 @@ xtalloc_asprintf (const void *t, const char *fmt, ...)
 	va_end(ap);
 	return ret;
 }
+
+void *
+_xtalloc_reference_loc (const void *context,
+			const void *ptr, const char *location)
+{
+	void *ret;
+
+	ret = _talloc_reference_loc (context, ptr, location);
+	if (ret == NULL) {
+		fprintf (stderr, "Out of memory.\n");
+		exit (1);
+	}
+
+	return ret;
+}
