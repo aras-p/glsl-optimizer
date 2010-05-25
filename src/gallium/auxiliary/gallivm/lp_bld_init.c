@@ -52,6 +52,29 @@ LLVMModuleProviderRef lp_build_provider = NULL;
 LLVMTargetDataRef lp_build_target = NULL;
 
 
+/*
+ * Optimization values are:
+ * - 0: None (-O0)
+ * - 1: Less (-O1)
+ * - 2: Default (-O2, -Os)
+ * - 3: Aggressive (-O3)
+ *
+ * See also CodeGenOpt::Level in llvm/Target/TargetMachine.h
+ */
+enum LLVM_CodeGenOpt_Level {
+#if HAVE_LLVM >= 0x207
+   None,        // -O0
+   Less,        // -O1
+   Default,     // -O2, -Os
+   Aggressive   // -O3
+#else
+   Default,
+   None,
+   Aggressive
+#endif
+};
+
+
 void
 lp_build_init(void)
 {
@@ -70,9 +93,18 @@ lp_build_init(void)
       lp_build_provider = LLVMCreateModuleProviderForExistingModule(lp_build_module);
 
    if (!lp_build_engine) {
+      enum LLVM_CodeGenOpt_Level optlevel;
       char *error = NULL;
 
-      if (LLVMCreateJITCompiler(&lp_build_engine, lp_build_provider, 1, &error)) {
+      if (gallivm_debug & GALLIVM_DEBUG_NO_OPT) {
+         optlevel = None;
+      }
+      else {
+         optlevel = Default;
+      }
+
+      if (LLVMCreateJITCompiler(&lp_build_engine, lp_build_provider,
+                                (unsigned)optlevel, &error)) {
          _debug_printf("%s\n", error);
          LLVMDisposeMessage(error);
          assert(0);
