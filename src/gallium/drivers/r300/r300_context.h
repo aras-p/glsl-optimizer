@@ -463,6 +463,7 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
 /* Context initialization. */
 struct draw_stage* r300_draw_stage(struct r300_context* r300);
 void r300_init_blit_functions(struct r300_context *r300);
+void r300_init_flush_functions(struct r300_context* r300);
 void r300_init_state_functions(struct r300_context* r300);
 void r300_init_resource_functions(struct r300_context* r300);
 

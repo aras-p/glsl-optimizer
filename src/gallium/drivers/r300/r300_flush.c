@@ -29,7 +29,6 @@
 #include "r300_context.h"
 #include "r300_cs.h"
 #include "r300_emit.h"
-#include "r300_flush.h"
 
 static void r300_flush(struct pipe_context* pipe,
                        unsigned flags,
