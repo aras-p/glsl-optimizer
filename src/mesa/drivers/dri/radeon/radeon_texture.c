@@ -39,6 +39,7 @@
 #include "main/texstore.h"
 #include "main/teximage.h"
 #include "main/texobj.h"
+#include "drivers/common/meta.h"
 
 #include "xmlpool.h"		/* for symbolic values of enum-type options */
 
@@ -294,9 +295,13 @@ void radeonGenerateMipmap(GLcontext* ctx, GLenum target, struct gl_texture_objec
 		radeon_firevertices(rmesa);
 	}
 
-	radeon_teximage_map(baseimage, GL_FALSE);
-	radeon_generate_mipmap(ctx, target, texObj);
-	radeon_teximage_unmap(baseimage);
+	if (_mesa_meta_check_generate_mipmap_fallback(ctx, target, texObj)) {
+		radeon_teximage_map(baseimage, GL_FALSE);
+		radeon_generate_mipmap(ctx, target, texObj);
+		radeon_teximage_unmap(baseimage);
+	} else {
+		_mesa_meta_GenerateMipmap(ctx, target, texObj);
+	}
 }
 
 
