@@ -126,6 +126,7 @@ struct glcpp_parser {
 	yyscan_t scanner;
 	struct hash_table *defines;
 	string_list_t *active;
+	int space_tokens;
 	expansion_node_t *expansions;
 	int just_printed_separator;
 	int need_newline;

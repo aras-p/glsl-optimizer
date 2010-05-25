@@ -160,7 +160,7 @@ line:
 ;
 
 control_line:
-	HASH_DEFINE_OBJ IDENTIFIER replacement_list NEWLINE {
+	HASH_DEFINE_OBJ	IDENTIFIER replacement_list NEWLINE {
 		_define_object_macro (parser, $2, $3);
 	}
 |	HASH_DEFINE_FUNC IDENTIFIER '(' ')' replacement_list NEWLINE {
@@ -212,6 +212,7 @@ replacement_list:
 
 pp_tokens:
 	preprocessing_token {
+		parser->space_tokens = 1;
 		$$ = _token_list_create (parser);
 		_token_list_append ($$, $1);
 		talloc_unlink (parser, $1);
@@ -234,7 +235,7 @@ preprocessing_token:
 		$$ = _token_create_str (parser, OTHER, $1);
 	}
 |	SPACE {
-		$$ = _token_create_str (parser, OTHER, $1);
+		$$ = _token_create_str (parser, SPACE, $1);	
 	}
 ;
 
@@ -494,6 +495,7 @@ _token_print (token_t *token)
 	switch (token->type) {
 	case IDENTIFIER:
 	case OTHER:
+	case SPACE:
 		printf ("%s", token->value.str);
 		break;
 	case LEFT_SHIFT:
@@ -589,6 +591,7 @@ glcpp_parser_create (void)
 	parser->defines = hash_table_ctor (32, hash_table_string_hash,
 					   hash_table_string_compare);
 	parser->active = _string_list_create (parser);
+	parser->space_tokens = 1;
 	parser->expansions = NULL;
 
 	parser->just_printed_separator = 1;
@@ -835,9 +838,6 @@ _glcpp_parser_print_expanded_token_list (glcpp_parser_t *parser,
 	for (node = list->head; node; node = node->next) {
 		if (_glcpp_parser_print_expanded_token (parser, node->token))
 			_glcpp_parser_print_expanded_function (parser, &node);
-
-		if (node->next)
-			printf (" ");
 	}
 }
 
