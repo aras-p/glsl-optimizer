@@ -506,9 +506,10 @@ radeon_render_texture(GLcontext * ctx,
 
    ASSERT(newImage);
 
-   if (newImage->Border != 0) {
-      /* Fallback on drawing to a texture with a border, which won't have a
-       * miptree.
+   radeon_image = (radeon_texture_image *)newImage;
+
+   if (!radeon_image->mt || newImage->Border != 0) {
+      /* Fallback on drawing to a texture without a miptree.
        */
       _mesa_reference_renderbuffer(&att->Renderbuffer, NULL);
       _mesa_render_texture(ctx, fb, att);
@@ -539,7 +540,6 @@ radeon_render_texture(GLcontext * ctx,
        rrb->base.RefCount);
 
    /* point the renderbufer's region to the texture image region */
-   radeon_image = (radeon_texture_image *)newImage;
    if (rrb->bo != radeon_image->mt->bo) {
       if (rrb->bo)
   	radeon_bo_unref(rrb->bo);
