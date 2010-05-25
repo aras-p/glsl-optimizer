@@ -259,8 +259,8 @@ struct r300_query {
  *
  * This is not a subclass of pipe_fence_handle because pipe_fence_handle is
  * never actually fully defined. So, rather than have it as a member, and do
- * subclass-style casting, we treat pipe_query as an opaque, and just
- * trust that our state tracker does not ever mess up query objects.
+ * subclass-style casting, we treat pipe_fence_handle as an opaque, and just
+ * trust that our state tracker does not ever mess up fence objects.
  */
 struct r300_fence {
     struct pipe_reference reference;

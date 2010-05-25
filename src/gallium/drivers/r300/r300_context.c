@@ -253,11 +253,12 @@ void r300_finish(struct r300_context *r300)
             if (fb->cbufs[i]->texture) {
                 r300->rws->buffer_wait(r300->rws,
                     r300_texture(fb->cbufs[i]->texture)->buffer);
+                return;
             }
-            if (fb->zsbuf) {
-                r300->rws->buffer_wait(r300->rws,
-                    r300_texture(fb->zsbuf->texture)->buffer);
-            }
+        }
+        if (fb->zsbuf && fb->zsbuf->texture) {
+            r300->rws->buffer_wait(r300->rws,
+                r300_texture(fb->zsbuf->texture)->buffer);
         }
     }
 }
