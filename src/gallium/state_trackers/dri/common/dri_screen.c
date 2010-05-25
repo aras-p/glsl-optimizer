@@ -40,7 +40,6 @@
 #include "dri_drawable.h"
 #include "dri1_helper.h"
 #ifndef __NOT_HAVE_DRM_H
-#include "dri1.h"
 #include "dri2.h"
 #else
 #include "drisw.h"
@@ -296,22 +295,6 @@ dri_fill_st_visual(struct st_visual *stvis, struct dri_screen *screen,
    /* let the state tracker allocate the accum buffer */
 }
 
-#ifndef __NOT_HAVE_DRM_H
-
-/**
- * Get information about previous buffer swaps.
- */
-static int
-dri_get_swap_info(__DRIdrawable * dPriv, __DRIswapInfo * sInfo)
-{
-   if (dPriv == NULL || dPriv->driverPrivate == NULL || sInfo == NULL)
-      return -1;
-   else
-      return 0;
-}
-
-#endif
-
 static boolean
 dri_get_egl_image(struct st_manager *smapi,
                   struct st_context_iface *stctxi,
@@ -435,14 +418,14 @@ const struct __DriverAPIRec driDriverAPI = {
 
 #ifndef __NOT_HAVE_DRM_H
 
-   .GetSwapInfo = dri_get_swap_info,
-   .GetDrawableMSC = driDrawableGetMSC32,
-   .WaitForMSC = driWaitForMSC32,
+   .GetSwapInfo = NULL,
+   .GetDrawableMSC = NULL,
+   .WaitForMSC = NULL,
    .InitScreen2 = dri2_init_screen,
 
-   .InitScreen = dri1_init_screen,
-   .SwapBuffers = dri1_swap_buffers,
-   .CopySubBuffer = dri1_copy_sub_buffer,
+   .InitScreen = NULL,
+   .SwapBuffers = NULL,
+   .CopySubBuffer = NULL,
 
 #else
 
