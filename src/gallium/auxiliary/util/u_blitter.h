@@ -136,28 +136,10 @@ void util_blitter_fill(struct blitter_context *blitter,
                        unsigned width, unsigned height,
                        unsigned value);
 
-/**
- * Copy all pixels from one surface to another.
- *
- * The rules are the same as in util_blitter_copy with the addition that
- * surfaces must have the same size.
- */
-static INLINE
-void util_blitter_copy_surface(struct blitter_context *blitter,
-                               struct pipe_surface *dst,
-                               struct pipe_surface *src,
-                               boolean ignore_stencil)
-{
-   assert(dst->width == src->width && dst->height == src->height);
-
-   util_blitter_copy(blitter, dst, 0, 0, src, 0, 0, src->width, src->height,
-                     ignore_stencil);
-}
-
 
 /* The functions below should be used to save currently bound constant state
  * objects inside a driver. The objects are automatically restored at the end
- * of the util_blitter_{clear, fill, copy, copy_surface} functions and then
+ * of the util_blitter_{clear, fill, copy} functions and then
  * forgotten.
  *
  * CSOs not listed here are not affected by util_blitter. */
