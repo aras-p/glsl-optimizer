@@ -1407,6 +1407,7 @@ decode_3d_965(uint32_t *data, int count, uint32_t hw_offset, int *failures)
 {
     unsigned int opcode, len;
     int i;
+    char *desc1;
 
     struct {
 	uint32_t opcode;
@@ -1620,6 +1621,32 @@ decode_3d_965(uint32_t *data, int count, uint32_t hw_offset, int *failures)
 	if (len == 7)
 	    instr_out(data, hw_offset, 6, "render target view extent\n");
 
+	return len;
+
+    case 0x7a00:
+	len = (data[0] & 0xff) + 2;
+	if (len != 4)
+	    fprintf(out, "Bad count in PIPE_CONTROL\n");
+	if (count < len)
+	    BUFFER_FAIL(count, len, "PIPE_CONTROL");
+
+	switch ((data[0] >> 14) & 0x3) {
+	case 0: desc1 = "no write"; break;
+	case 1: desc1 = "qword write"; break;
+	case 2: desc1 = "PS_DEPTH_COUNT write"; break;
+	case 3: desc1 = "TIMESTAMP write"; break;
+	}
+	instr_out(data, hw_offset, 0,
+		  "PIPE_CONTROL: %s, %sdepth stall, %sRC write flush, "
+		  "%sinst flush, %stexture flush\n",
+		  desc1,
+		  data[0] & (1 << 13) ? "" : "no ",
+		  data[0] & (1 << 12) ? "" : "no ",
+		  data[0] & (1 << 11) ? "" : "no ",
+		  data[0] & (1 << 9) ? "" : "no ");
+	instr_out(data, hw_offset, 1, "destination address\n");
+	instr_out(data, hw_offset, 2, "immediate dword low\n");
+	instr_out(data, hw_offset, 3, "immediate dword high\n");
 	return len;
 
     case 0x7b00:
