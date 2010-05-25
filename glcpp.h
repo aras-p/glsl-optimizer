@@ -124,6 +124,7 @@ typedef struct skip_node {
 struct glcpp_parser {
 	yyscan_t scanner;
 	struct hash_table *defines;
+	string_list_t *active;
 	expansion_node_t *expansions;
 	int just_printed_separator;
 	int need_newline;

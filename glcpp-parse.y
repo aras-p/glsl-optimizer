@@ -59,6 +59,12 @@ _string_list_append_item (string_list_t *list, const char *str);
 void
 _string_list_append_list (string_list_t *list, string_list_t *tail);
 
+void
+_string_list_push (string_list_t *list, const char *str);
+
+void
+_string_list_pop (string_list_t *list);
+
 int
 _string_list_contains (string_list_t *list, const char *member, int *index);
 
@@ -98,7 +104,8 @@ void
 _token_list_append_list (token_list_t *list, token_list_t *tail);
 
 void
-_token_list_print (token_list_t *list);
+_glcpp_parser_print_expanded_token_list (glcpp_parser_t *parser,
+					 token_list_t *list);
 
 static void
 glcpp_parser_pop_expansion (glcpp_parser_t *parser);
@@ -144,21 +151,24 @@ glcpp_parser_lex (glcpp_parser_t *parser);
 
 input:
 	/* empty */
-|	input line
+|	input line {
+		printf ("\n");
+	}
 ;
 
 line:
 	control_line
 |	text_line {
-		_token_list_print ($1);
-		printf ("\n");
+		_glcpp_parser_print_expanded_token_list (parser, $1);
 		talloc_free ($1);
 	}
 |	HASH non_directive
 ;
 
 control_line:
-	HASH_DEFINE_OBJ IDENTIFIER replacement_list NEWLINE
+	HASH_DEFINE_OBJ IDENTIFIER replacement_list NEWLINE {
+		_define_object_macro (parser, $2, $3);
+	}
 |	HASH_DEFINE_FUNC IDENTIFIER '(' ')' replacement_list NEWLINE
 |	HASH_DEFINE_FUNC IDENTIFIER '(' identifier_list ')' replacement_list NEWLINE
 |	HASH_UNDEF IDENTIFIER NEWLINE
@@ -285,6 +295,42 @@ _string_list_append_item (string_list_t *list, const char *str)
 	}
 
 	list->tail = node;
+}
+
+void
+_string_list_push (string_list_t *list, const char *str)
+{
+	string_node_t *node;
+
+	node = xtalloc (list, string_node_t);
+	node->str = xtalloc_strdup (node, str);
+	node->next = list->head;
+
+	if (list->tail == NULL) {
+		list->tail = node;
+	}
+	list->head = node;
+}
+
+void
+_string_list_pop (string_list_t *list)
+{
+	string_node_t *node;
+
+	node = list->head;
+
+	if (node == NULL) {
+		fprintf (stderr, "Internal error: _string_list_pop called on an empty list.\n");
+		exit (1);
+	}
+
+	list->head = node->next;
+	if (list->tail == node) {
+		assert (node->next == NULL);
+		list->tail = NULL;
+	}
+
+	talloc_free (node);
 }
 
 int
@@ -508,19 +554,6 @@ _token_list_append_list (token_list_t *list, token_list_t *tail)
 }
 
 void
-_token_list_print (token_list_t *list)
-{
-	token_node_t *node;
-
-	if (list == NULL)
-		return;
-
-	for (node = list->head; node; node = node->next) {
-		_token_print (node->token);
-	}
-}
-
-void
 yyerror (void *scanner, const char *error)
 {
 	fprintf (stderr, "Parse error: %s\n", error);
@@ -536,6 +569,7 @@ glcpp_parser_create (void)
 	glcpp_lex_init_extra (parser, &parser->scanner);
 	parser->defines = hash_table_ctor (32, hash_table_string_hash,
 					   hash_table_string_compare);
+	parser->active = _string_list_create (parser);
 	parser->expansions = NULL;
 
 	parser->just_printed_separator = 1;
@@ -603,6 +637,64 @@ glcpp_parser_classify_token (glcpp_parser_t *parser,
 		return TOKEN_CLASS_FUNC_MACRO;
 	else
 		return TOKEN_CLASS_OBJ_MACRO;
+}
+
+void
+_glcpp_parser_print_expanded_token (glcpp_parser_t *parser,
+				    token_t *token)
+{
+	const char *identifier;
+	macro_t *macro;
+
+	/* We only expand identifiers */
+	if (token->type != IDENTIFIER) {
+		_token_print (token);
+		return;
+	}
+
+	/* Look up this identifier in the hash table. */
+	identifier = token->value.str;
+	macro = hash_table_find (parser->defines, identifier);
+
+	/* Not a macro, so just print directly. */
+	if (macro == NULL) {
+		printf ("%s", identifier);
+		return;
+	}
+
+	/* We're not (yet) supporting function-like macros. */
+	if (macro->is_function) {
+		printf ("%s", identifier);
+		return;
+	}
+
+	/* Finally, don't expand this macro if we're already actively
+	 * expanding it, (to avoid infinite recursion). */
+	if (_string_list_contains (parser->active, identifier, NULL)) {
+		printf ("%s", identifier);
+		return;
+	}
+
+	_string_list_push (parser->active, identifier);
+	_glcpp_parser_print_expanded_token_list (parser,
+						 macro->replacements);
+	_string_list_pop (parser->active);
+}
+
+void
+_glcpp_parser_print_expanded_token_list (glcpp_parser_t *parser,
+					 token_list_t *list)
+{
+	token_node_t *node;
+
+	if (list == NULL)
+		return;
+
+	for (node = list->head; node; node = node->next) {
+		_glcpp_parser_print_expanded_token (parser, node->token);
+		if (node->next)
+			printf (" ");
+	}
 }
 
 void
