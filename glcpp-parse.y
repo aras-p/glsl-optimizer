@@ -171,7 +171,17 @@ control_line:
 	}
 |	HASH_DEFINE_FUNC IDENTIFIER '(' ')' replacement_list NEWLINE
 |	HASH_DEFINE_FUNC IDENTIFIER '(' identifier_list ')' replacement_list NEWLINE
-|	HASH_UNDEF IDENTIFIER NEWLINE
+|	HASH_UNDEF IDENTIFIER NEWLINE {
+		string_list_t *macro = hash_table_find (parser->defines, $2);
+		if (macro) {
+			/* XXX: Need hash table to support a real way
+			 * to remove an element rather than prefixing
+			 * a new node with data of NULL like this. */
+			hash_table_insert (parser->defines, NULL, $2);
+			talloc_free (macro);
+		}
+		talloc_free ($2);
+	}
 |	HASH NEWLINE
 ;
 
