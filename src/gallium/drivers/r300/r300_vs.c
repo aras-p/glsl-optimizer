@@ -203,6 +203,8 @@ void r300_translate_vertex_shader(struct r300_context *r300,
     compiler.Base.Debug = DBG_ON(r300, DBG_VP);
     compiler.code = &vs->code;
     compiler.UserData = vs;
+    compiler.Base.is_r500 = r300->screen->caps.is_r500;
+    compiler.Base.max_temp_regs = 32;
 
     if (compiler.Base.Debug) {
         debug_printf("r300: Initial vertex program\n");

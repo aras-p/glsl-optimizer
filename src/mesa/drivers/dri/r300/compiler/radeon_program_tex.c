@@ -237,7 +237,7 @@ int radeonTransformTEX(
 		rc_wrap_mode wrapmode = compiler->state.unit[inst->U.I.TexSrcUnit].wrap_mode;
 
 		/* R300 cannot sample from rectangles. */
-		if (!compiler->is_r500) {
+		if (!c->is_r500) {
 			lower_texture_rect(compiler, inst);
 		}
 
@@ -247,7 +247,7 @@ int radeonTransformTEX(
 			unsigned temp = rc_find_free_temporary(c);
 
 			/* For NPOT fallback, we need normalized coordinates anyway. */
-			if (compiler->is_r500) {
+			if (c->is_r500) {
 				lower_texture_rect(compiler, inst);
 			}
 
@@ -358,7 +358,7 @@ int radeonTransformTEX(
 	/* Cannot write texture to output registers (all chips) or with masks (non-r500) */
 	if (inst->U.I.Opcode != RC_OPCODE_KIL &&
 		(inst->U.I.DstReg.File != RC_FILE_TEMPORARY ||
-		 (!compiler->is_r500 && inst->U.I.DstReg.WriteMask != RC_MASK_XYZW))) {
+		 (!c->is_r500 && inst->U.I.DstReg.WriteMask != RC_MASK_XYZW))) {
 		struct rc_instruction * inst_mov = rc_insert_new_instruction(c, inst);
 
 		inst_mov->U.I.Opcode = RC_OPCODE_MOV;

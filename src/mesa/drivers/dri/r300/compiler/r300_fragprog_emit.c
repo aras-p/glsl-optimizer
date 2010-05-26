@@ -353,7 +353,7 @@ void r300BuildFragmentProgramHwCode(struct r300_fragment_program_compiler *compi
 		}
 	}
 
-	if (code->pixsize >= compiler->max_temp_regs)
+	if (code->pixsize >= compiler->Base.max_temp_regs)
 		rc_error(&compiler->Base, "Too many hardware temporaries used.\n");
 
 	if (compiler->Base.Error)

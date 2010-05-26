@@ -38,6 +38,10 @@ struct radeon_compiler {
 	unsigned Error:1;
 	char * ErrorMsg;
 
+	/* Hardware specification. */
+	unsigned is_r500;
+	unsigned max_temp_regs;
+
 	/**
 	 * Variables used internally, not be touched by callers
 	 * of the compiler
@@ -84,12 +88,9 @@ struct r300_fragment_program_compiler {
 	/* Optional transformations and features. */
 	struct r300_fragment_program_external_state state;
 	unsigned enable_shadow_ambient;
-	/* Hardware specification. */
-	unsigned is_r500;
-	unsigned max_temp_regs;
-    /* Register corresponding to the depthbuffer. */
+	/* Register corresponding to the depthbuffer. */
 	unsigned OutputDepth;
-    /* Registers corresponding to the four colorbuffers. */
+	/* Registers corresponding to the four colorbuffers. */
 	unsigned OutputColor[4];
 
 	void * UserData;

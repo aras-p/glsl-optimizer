@@ -107,7 +107,7 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 
 	debug_program_log(c, "after emulate branches");
 
-	if (c->is_r500) {
+	if (c->Base.is_r500) {
 		struct radeon_program_transformation transformations[] = {
 			{ &r500_transform_IF, 0 },
 			{ &radeonTransformALU, 0 },
@@ -174,14 +174,14 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 
 	debug_program_log(c, "after pair scheduling");
 
-	rc_pair_regalloc(c, c->max_temp_regs);
+	rc_pair_regalloc(c, c->Base.max_temp_regs);
 
 	if (c->Base.Error)
 		return;
 
 	debug_program_log(c, "after register allocation");
 
-	if (c->is_r500) {
+	if (c->Base.is_r500) {
 		r500BuildFragmentProgramHwCode(c);
 	} else {
 		r300BuildFragmentProgramHwCode(c);
@@ -190,7 +190,7 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 	rc_constants_copy(&c->code->constants, &c->Base.Program.Constants);
 
 	if (c->Base.Debug) {
-		if (c->is_r500) {
+		if (c->Base.is_r500) {
 			r500FragmentProgramDump(c->code);
 		} else {
 			r300FragmentProgramDump(c->code);
