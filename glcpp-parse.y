@@ -586,6 +586,86 @@ _token_print (token_t *token)
 	}
 }
 
+/* Change 'token' into a new token formed by pasting 'other'. */
+static void
+_token_paste (token_t *token, token_t *other)
+{
+	/* A very few single-character punctuators can be combined
+	 * with another to form a multi-character punctuator. */
+	switch (token->type) {
+	case '<':
+		if (other->type == '<') {
+			token->type = LEFT_SHIFT;
+			token->value.ival = LEFT_SHIFT;
+			return;
+		} else if (other->type == '=') {
+			token->type = LESS_OR_EQUAL;
+			token->value.ival = LESS_OR_EQUAL;
+			return;
+		}
+		break;
+	case '>':
+		if (other->type == '>') {
+			token->type = RIGHT_SHIFT;
+			token->value.ival = RIGHT_SHIFT;
+			return;
+		} else if (other->type == '=') {
+			token->type = GREATER_OR_EQUAL;
+			token->value.ival = GREATER_OR_EQUAL;
+			return;
+		}
+		break;
+	case '=':
+		if (other->type == '=') {
+			token->type = EQUAL;
+			token->value.ival = EQUAL;
+			return;
+		}
+		break;
+	case '!':
+		if (other->type == '=') {
+			token->type = NOT_EQUAL;
+			token->value.ival = NOT_EQUAL;
+			return;
+		}
+		break;
+	case '&':
+		if (other->type == '&') {
+			token->type = AND;
+			token->value.ival = AND;
+			return;
+		}
+		break;
+	case '|':
+		if (other->type == '|') {
+			token->type = OR;
+			token->value.ival = OR;
+			return;
+		}
+		break;
+	}
+
+	/* Two string-valued tokens can usually just be mashed
+	 * together.
+	 *
+	 * XXX: Since our 'OTHER' case is currently so loose, this may
+	 * allow some things thruogh that should be treated as
+	 * errors. */
+	if ((token->type == IDENTIFIER || token->type == OTHER) &&
+	    (other->type == IDENTIFIER || other->type == OTHER))
+	{
+		token->value.str = talloc_strdup_append (token->value.str,
+							 other->value.str);
+		return;
+	}
+
+	printf ("Error: Pasting \"");
+	_token_print (token);
+	printf ("\" and \"");
+	_token_print (other);
+	printf ("\" does not give a valid preprocessing token.\n");
+}
+
 static void
 _token_list_print (token_list_t *list)
 {
@@ -868,6 +948,43 @@ _glcpp_parser_expand_function_onto (glcpp_parser_t *parser,
 		} else {
 			_token_list_append (substituted, node->token);
 		}
+	}
+
+	/* After argument substitution, and before further expansion
+	 * below, implement token pasting. */
+
+	node = substituted->head;
+	while (node)
+	{
+		token_node_t *next_non_space;
+
+		/* Look ahead for a PASTE token, skipping space. */
+		next_non_space = node->next;
+		while (next_non_space && next_non_space->token->type == SPACE)
+			next_non_space = next_non_space->next;
+
+		if (next_non_space == NULL)
+			break;
+
+		if (next_non_space->token->type != PASTE) {
+			node = next_non_space;
+			continue;
+		}
+
+		/* Now find the next non-space token after the PASTE. */
+		next_non_space = next_non_space->next;
+		while (next_non_space && next_non_space->token->type == SPACE)
+			next_non_space = next_non_space->next;
+
+		if (next_non_space == NULL) {
+			fprintf (stderr, "Error: '##' cannot appear at either end of a macro expansion\n");
+			exit (1);
+		}
+
+		_token_paste (node->token, next_non_space->token);
+		node->next = next_non_space->next;
+
+		node = node->next;
 	}
 
 	_string_list_push (parser->active, identifier);
