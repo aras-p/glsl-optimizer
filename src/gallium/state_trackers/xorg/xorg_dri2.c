@@ -42,6 +42,8 @@
 
 #include "util/u_format.h"
 
+#include "state_tracker/drm_driver.h"
+
 /* Make all the #if cases in the code esier to read */
 #ifndef DRI2INFOREC_VERSION
 #define DRI2INFOREC_VERSION 1

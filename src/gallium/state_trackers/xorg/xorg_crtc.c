@@ -50,6 +50,7 @@
 #include <X11/extensions/dpms.h>
 #endif
 
+#include "state_tracker/drm_driver.h"
 #include "util/u_inlines.h"
 #include "util/u_rect.h"
 

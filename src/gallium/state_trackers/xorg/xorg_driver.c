@@ -51,6 +51,7 @@
 
 #include <pciaccess.h>
 
+#include "state_tracker/drm_driver.h"
 #include "pipe/p_context.h"
 #include "xorg_tracker.h"
 #include "xorg_winsys.h"
@@ -267,17 +268,11 @@ drv_init_drm(ScrnInfoPtr pScrn)
 	    );
 
 
-	ms->api = drm_api_create();
-	ms->fd = drmOpen(ms->api ? ms->api->driver_name : NULL, BusID);
+	ms->fd = drmOpen(driver_descriptor.driver_name, BusID);
 	xfree(BusID);
 
 	if (ms->fd >= 0)
 	    return TRUE;
-
-	if (ms->api && ms->api->destroy)
-	    ms->api->destroy(ms->api);
-
-	ms->api = NULL;
 
 	return FALSE;
     }
@@ -289,10 +284,6 @@ static Bool
 drv_close_drm(ScrnInfoPtr pScrn)
 {
     modesettingPtr ms = modesettingPTR(pScrn);
-
-    if (ms->api && ms->api->destroy)
-	ms->api->destroy(ms->api);
-    ms->api = NULL;
 
     drmClose(ms->fd);
     ms->fd = -1;
@@ -314,17 +305,10 @@ drv_init_resource_management(ScrnInfoPtr pScrn)
     if (ms->screen || ms->kms)
 	return TRUE;
 
-    if (ms->api) {
-	ms->screen = ms->api->create_screen(ms->api, ms->fd);
+    ms->screen = driver_descriptor.create_screen(ms->fd);
 
-	if (ms->screen)
-	    return TRUE;
-
-	if (ms->api->destroy)
-	    ms->api->destroy(ms->api);
-
-	ms->api = NULL;
-    }
+    if (ms->screen)
+	return TRUE;
 
 #ifdef HAVE_LIBKMS
     if (!kms_create(ms->fd, &ms->kms))
@@ -430,7 +414,6 @@ drv_pre_init(ScrnInfoPtr pScrn, int flags)
     }
 
     ms->fd = -1;
-    ms->api = NULL;
     if (!drv_init_drm(pScrn))
 	return FALSE;
 

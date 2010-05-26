@@ -4,6 +4,7 @@ include $(TOP)/configs/current
 LIBNAME = radeon_drv.so
 
 C_SOURCES = \
+	radeon_target.c \
 	radeon_xorg.c
 
 DRIVER_DEFINES = \
