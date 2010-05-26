@@ -754,9 +754,12 @@ _arguments_parse (argument_list_t *arguments, token_node_t **node_ret)
 	if (node == NULL || node->token->type != '(')
 		return FUNCTION_NOT_A_FUNCTION;
 
+	last = node;
+	node = node->next;
+
 	argument = NULL;
 
-	for (paren_count = 0; node; last = node, node = node->next) {
+	for (paren_count = 1; node; last = node, node = node->next) {
 		if (node->token->type == '(')
 		{
 			paren_count++;
@@ -770,7 +773,8 @@ _arguments_parse (argument_list_t *arguments, token_node_t **node_ret)
 				break;
 			}
 		}
-		else if (node->token->type == ',' &&
+
+		if (node->token->type == ',' &&
 			 paren_count == 1)
 		{
 			argument = NULL;
