@@ -72,6 +72,7 @@ typedef struct token_node {
 struct token_list {
 	token_node_t *head;
 	token_node_t *tail;
+	token_node_t *non_space_tail;
 };
 
 typedef struct argument_node {

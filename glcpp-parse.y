@@ -471,7 +471,7 @@ _token_create_ival (void *ctx, int type, int ival)
 }
 
 void
-_token_print (token_t *token)
+_glcpp_parser_print_token (glcpp_parser_t *parser, token_t *token)
 {
 	if (token->type < 256) {
 		printf ("%c", token->type);
@@ -527,6 +527,7 @@ _token_list_create (void *ctx)
 	list = xtalloc (ctx, token_list_t);
 	list->head = NULL;
 	list->tail = NULL;
+	list->non_space_tail = NULL;
 
 	return list;
 }
@@ -548,6 +549,8 @@ _token_list_append (token_list_t *list, token_t *token)
 	}
 
 	list->tail = node;
+	if (token->type != SPACE)
+		list->non_space_tail = node;
 }
 
 void
@@ -560,6 +563,25 @@ _token_list_append_list (token_list_t *list, token_list_t *tail)
 	}
 
 	list->tail = tail->tail;
+	list->non_space_tail = tail->non_space_tail;
+}
+
+void
+_token_list_trim_trailing_space (token_list_t *list)
+{
+	token_node_t *tail, *next;
+
+	if (list->non_space_tail) {
+		tail = list->non_space_tail->next;
+		list->non_space_tail->next = NULL;
+		list->tail = list->non_space_tail;
+
+		while (tail) {
+			next = tail->next;
+			talloc_free (tail);
+			tail = next;
+		}
+	}
 }
 
 void
@@ -618,7 +640,7 @@ _glcpp_parser_print_expanded_token (glcpp_parser_t *parser,
 
 	/* We only expand identifiers */
 	if (token->type != IDENTIFIER) {
-		_token_print (token);
+		_glcpp_parser_print_token (parser, token);
 		return 0;
 	}
 
@@ -719,6 +741,8 @@ _arguments_parse (argument_list_t *arguments, token_node_t **node_ret)
 		if (node->token->type == ',' &&
 			 paren_count == 1)
 		{
+			if (argument)
+				_token_list_trim_trailing_space (argument);
 			argument = NULL;
 		}
 		else {
@@ -833,6 +857,8 @@ _glcpp_parser_print_expanded_token_list (glcpp_parser_t *parser,
 
 	if (list == NULL)
 		return;
+
+	_token_list_trim_trailing_space (list);
 
 	for (node = list->head; node; node = node->next) {
 		if (_glcpp_parser_print_expanded_token (parser, node->token))
