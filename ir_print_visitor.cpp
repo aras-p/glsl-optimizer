@@ -181,7 +181,7 @@ void ir_print_visitor::visit(ir_dereference_record *ir)
 {
    printf("(record_ref ");
    ir->record->accept(this);
-   printf("(%s)) ", ir->field);
+   printf(" %s) ", ir->field);
 }
 
 

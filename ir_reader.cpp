@@ -862,6 +862,22 @@ read_array_ref(_mesa_glsl_parse_state *st, s_list *list)
 static ir_dereference *
 read_record_ref(_mesa_glsl_parse_state *st, s_list *list)
 {
-   ir_read_error(st, list, "FINISHME: record refs not yet supported.");
-   return NULL;
+   if (list->length() != 3) {
+      ir_read_error(st, list, "expected (record_ref <rvalue> <field>)");
+      return NULL;
+   }
+
+   s_expression *subj_expr = (s_expression*) list->subexpressions.head->next;
+   ir_rvalue *subject = read_rvalue(st, subj_expr);
+   if (subject == NULL) {
+      ir_read_error(st, NULL, "when reading the subject of a record_ref");
+      return NULL;
+   }
+
+   s_symbol *field = SX_AS_SYMBOL(subj_expr->next);
+   if (field == NULL) {
+      ir_read_error(st, list, "expected (record_ref ... <field name>)");
+      return NULL;
+   }
+   return new ir_dereference_record(subject, field->value());
 }
