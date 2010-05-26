@@ -490,6 +490,7 @@ void r300_init_render_functions(struct r300_context *r300);
 void r300_init_state_functions(struct r300_context* r300);
 void r300_init_resource_functions(struct r300_context* r300);
 
+boolean r300_check_cs(struct r300_context *r300, unsigned size);
 void r300_finish(struct r300_context *r300);
 void r500_dump_rs_block(struct r300_rs_block *rs);
 

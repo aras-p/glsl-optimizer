@@ -173,7 +173,7 @@ static void r300_prepare_for_rendering(struct r300_context *r300,
     cs_dwords += 26; /* emit_query_end */
 
     /* Reserve requested CS space. */
-    if (!r300->rws->check_cs(r300->rws, cs_dwords)) {
+    if (!r300_check_cs(r300, cs_dwords)) {
         r300->context.flush(&r300->context, 0, NULL);
         flushed = TRUE;
     }

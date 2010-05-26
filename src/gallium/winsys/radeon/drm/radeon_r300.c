@@ -183,12 +183,15 @@ static boolean radeon_validate(struct r300_winsys_screen *rws)
     return TRUE;
 }
 
-static boolean radeon_check_cs(struct r300_winsys_screen *rws, int size)
+static void radeon_get_cs_info(struct r300_winsys_screen *rws,
+                               struct r300_cs_info *info)
 {
     struct radeon_libdrm_winsys *ws = radeon_winsys_screen(rws);
     struct radeon_cs *cs = ws->cs;
 
-    return cs->cdw + size <= cs->ndw;
+    info->capacity = cs->ndw;
+    info->used = cs->cdw;
+    info->free = cs->ndw - cs->cdw;
 }
 
 static void radeon_begin_cs(struct r300_winsys_screen *rws,
@@ -333,7 +336,7 @@ radeon_setup_winsys(int fd, struct radeon_libdrm_winsys* ws)
     ws->base.add_buffer = radeon_add_buffer;
     ws->base.validate = radeon_validate;
     ws->base.destroy = radeon_winsys_destroy;
-    ws->base.check_cs = radeon_check_cs;
+    ws->base.get_cs_info = radeon_get_cs_info;
     ws->base.begin_cs = radeon_begin_cs;
     ws->base.write_cs_dword = radeon_write_cs_dword;
     ws->base.write_cs_table = radeon_write_cs_table;

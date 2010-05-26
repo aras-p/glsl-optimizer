@@ -236,6 +236,14 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     return NULL;
 }
 
+boolean r300_check_cs(struct r300_context *r300, unsigned size)
+{
+    struct r300_cs_info cs_info;
+
+    r300->rws->get_cs_info(r300->rws, &cs_info);
+    return size <= cs_info.free;
+}
+
 void r300_finish(struct r300_context *r300)
 {
     struct pipe_framebuffer_state *fb;

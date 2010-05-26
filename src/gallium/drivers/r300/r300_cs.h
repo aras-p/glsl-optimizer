@@ -54,7 +54,7 @@
     int cs_count = 0; (void) cs_count;
 
 #define CHECK_CS(size) \
-    assert(cs_winsys->check_cs(cs_winsys, (size)))
+    assert(r300_check_cs(cs_context_copy, (size)))
 
 #define BEGIN_CS(size) do { \
     CHECK_CS(size); \
