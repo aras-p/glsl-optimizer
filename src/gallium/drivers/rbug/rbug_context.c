@@ -751,6 +751,17 @@ rbug_set_vertex_buffers(struct pipe_context *_pipe,
                             num_buffers,
                             buffers);
 }
+
+static void
+rbug_set_sample_mask(struct pipe_context *_pipe,
+                     unsigned sample_mask)
+{
+   struct rbug_context *rb_pipe = rbug_context(_pipe);
+   struct pipe_context *pipe = rb_pipe->pipe;
+
+   pipe->set_sample_mask(pipe, sample_mask);
+}
+
 static void
 rbug_resource_copy_region(struct pipe_context *_pipe,
                           struct pipe_resource *_dst,
@@ -1062,6 +1073,7 @@ rbug_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
    rb_pipe->base.set_fragment_sampler_views = rbug_set_fragment_sampler_views;
    rb_pipe->base.set_vertex_sampler_views = rbug_set_vertex_sampler_views;
    rb_pipe->base.set_vertex_buffers = rbug_set_vertex_buffers;
+   rb_pipe->base.set_sample_mask = rbug_set_sample_mask;
    rb_pipe->base.resource_copy_region = rbug_resource_copy_region;
    rb_pipe->base.resource_fill_region = rbug_resource_fill_region;
    rb_pipe->base.clear = rbug_clear;
