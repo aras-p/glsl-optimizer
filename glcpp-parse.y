@@ -854,10 +854,11 @@ _glcpp_parser_expand_function_onto (glcpp_parser_t *parser,
 			token_list_t *argument;
 			argument = _argument_list_member_at (arguments,
 							     parameter_index);
-			for (j = argument->head; j; j = j->next)
-			{
-				_token_list_append (substituted, j->token);
-			}
+			/* Before substituting, we expand the argument
+			 * tokens. */
+			_glcpp_parser_expand_token_list_onto (parser,
+							      argument,
+							      substituted);
 		} else {
 			_token_list_append (substituted, i->token);
 		}
