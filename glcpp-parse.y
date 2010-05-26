@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <inttypes.h>
 
 #include "glcpp.h"
 
@@ -124,27 +125,46 @@ glcpp_parser_lex (glcpp_parser_t *parser);
 %parse-param {glcpp_parser_t *parser}
 %lex-param {glcpp_parser_t *parser}
 
-%token HASH HASH_DEFINE_FUNC HASH_DEFINE_OBJ HASH_UNDEF IDENTIFIER NEWLINE OTHER SPACE
-%token LEFT_SHIFT RIGHT_SHIFT LESS_OR_EQUAL GREATER_OR_EQUAL EQUAL NOT_EQUAL AND OR PASTE
-%type <ival> punctuator SPACE
+%token DEFINED HASH HASH_DEFINE_FUNC HASH_DEFINE_OBJ HASH_ELIF HASH_ELSE HASH_ENDIF HASH_IF HASH_IFDEF HASH_IFNDEF HASH_UNDEF IDENTIFIER INTEGER NEWLINE OTHER SPACE
+%token PASTE
+%type <ival> expression INTEGER punctuator SPACE
 %type <str> IDENTIFIER OTHER
 %type <string_list> identifier_list
 %type <token> preprocessing_token
 %type <token_list> pp_tokens replacement_list text_line
+%left OR
+%left AND
+%left '|'
+%left '^'
+%left '&'
+%left EQUAL NOT_EQUAL
+%left '<' '>' LESS_OR_EQUAL GREATER_OR_EQUAL
+%left LEFT_SHIFT RIGHT_SHIFT
+%left '+' '-'
+%left '*' '/' '%'
+%right UNARY
 
 %%
 
 input:
 	/* empty */
 |	input line {
-		printf ("\n");
+		if (parser->skip_stack == NULL ||
+		    parser->skip_stack->type == SKIP_NO_SKIP)
+		{
+			printf ("\n");
+		}
 	}
 ;
 
 line:
 	control_line
 |	text_line {
-		_glcpp_parser_print_expanded_token_list (parser, $1);
+		if (parser->skip_stack == NULL ||
+		    parser->skip_stack->type == SKIP_NO_SKIP)
+		{
+			_glcpp_parser_print_expanded_token_list (parser, $1);
+		}
 		talloc_free ($1);
 	}
 |	HASH non_directive
@@ -171,7 +191,112 @@ control_line:
 		}
 		talloc_free ($2);
 	}
+|	HASH_IF expression NEWLINE {
+		_glcpp_parser_skip_stack_push_if (parser, $2);
+	}
+|	HASH_IFDEF IDENTIFIER NEWLINE {
+		string_list_t *macro = hash_table_find (parser->defines, $2);
+		talloc_free ($2);
+		_glcpp_parser_skip_stack_push_if (parser, macro != NULL);
+	}
+|	HASH_IFNDEF IDENTIFIER NEWLINE {
+		string_list_t *macro = hash_table_find (parser->defines, $2);
+		talloc_free ($2);
+		_glcpp_parser_skip_stack_push_if (parser, macro == NULL);
+	}
+|	HASH_ELIF expression NEWLINE {
+		_glcpp_parser_skip_stack_change_if (parser, "#elif", $2);
+	}
+|	HASH_ELSE NEWLINE {
+		_glcpp_parser_skip_stack_change_if (parser, "else", 1);
+	}
+|	HASH_ENDIF NEWLINE {
+		_glcpp_parser_skip_stack_pop (parser);
+	}
 |	HASH NEWLINE
+;
+
+expression:
+	INTEGER {
+		$$ = $1;
+	}
+|	expression OR expression {
+		$$ = $1 || $3;
+	}
+|	expression AND expression {
+		$$ = $1 && $3;
+	}
+|	expression '|' expression {
+		$$ = $1 | $3;
+	}
+|	expression '^' expression {
+		$$ = $1 ^ $3;
+	}
+|	expression '&' expression {
+		$$ = $1 & $3;
+	}
+|	expression NOT_EQUAL expression {
+		$$ = $1 != $3;
+	}
+|	expression EQUAL expression {
+		$$ = $1 == $3;
+	}
+|	expression GREATER_OR_EQUAL expression {
+		$$ = $1 >= $3;
+	}
+|	expression LESS_OR_EQUAL expression {
+		$$ = $1 <= $3;
+	}
+|	expression '>' expression {
+		$$ = $1 > $3;
+	}
+|	expression '<' expression {
+		$$ = $1 < $3;
+	}
+|	expression RIGHT_SHIFT expression {
+		$$ = $1 >> $3;
+	}
+|	expression LEFT_SHIFT expression {
+		$$ = $1 << $3;
+	}
+|	expression '-' expression {
+		$$ = $1 - $3;
+	}
+|	expression '+' expression {
+		$$ = $1 + $3;
+	}
+|	expression '%' expression {
+		$$ = $1 % $3;
+	}
+|	expression '/' expression {
+		$$ = $1 / $3;
+	}
+|	expression '*' expression {
+		$$ = $1 * $3;
+	}
+|	'!' expression %prec UNARY {
+		$$ = ! $2;
+	}
+|	'~' expression %prec UNARY {
+		$$ = ~ $2;
+	}
+|	'-' expression %prec UNARY {
+		$$ = - $2;
+	}
+|	'+' expression %prec UNARY {
+		$$ = + $2;
+	}
+|	DEFINED IDENTIFIER %prec UNARY {
+		string_list_t *macro = hash_table_find (parser->defines, $2);
+		talloc_free ($2);
+		if (macro)
+			$$ = 1;
+		else
+			$$ = 0;
+	}
+|	'(' expression ')' {
+		$$ = $2;
+	}
 ;
 
 identifier_list:
@@ -218,6 +343,9 @@ pp_tokens:
 preprocessing_token:
 	IDENTIFIER {
 		$$ = _token_create_str (parser, IDENTIFIER, $1);
+	}
+|	INTEGER {
+		$$ = _token_create_ival (parser, INTEGER, $1);
 	}
 |	punctuator {
 		$$ = _token_create_ival (parser, $1, $1);
@@ -546,6 +674,9 @@ _token_print (token_t *token)
 	}
 
 	switch (token->type) {
+	case INTEGER:
+		printf ("%" PRIxMAX, token->value.ival);
+		break;
 	case IDENTIFIER:
 	case OTHER:
 		printf ("%s", token->value.str);

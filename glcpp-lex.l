@@ -62,10 +62,46 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 	return HASH_UNDEF;
 }
 
+{HASH}if {
+	yyextra->space_tokens = 0;
+	return HASH_IF;
+}
+
+{HASH}elif {
+	yyextra->space_tokens = 0;
+	return HASH_ELIF;
+}
+
+{HASH}else {
+	yyextra->space_tokens = 0;
+	return HASH_ELSE;
+}
+
+{HASH}endif {
+	yyextra->space_tokens = 0;
+	return HASH_ENDIF;
+}
+
 {HASH} {
 	yyextra->space_tokens = 0;
 	return HASH;
 }
+
+{DECIMAL_INTEGER} {
+	yylval.ival = strtoll (yytext, NULL, 10);
+	return INTEGER;
+}
+
+{OCTAL_INTEGER} {
+	yylval.ival = strtoll (yytext + 1, NULL, 8);
+	return INTEGER;
+}
+
+{HEXADECIMAL_INTEGER} {
+	yylval.ival = strtoll (yytext + 2, NULL, 16);
+	return INTEGER;
+}
+
 
 {IDENTIFIER} {
 	yylval.str = xtalloc_strdup (yyextra, yytext);
@@ -106,6 +142,10 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 
 "##" {
 	return PASTE;
+}
+
+"defined" {
+	return DEFINED;
 }
 
 {PUNCTUATION} {
