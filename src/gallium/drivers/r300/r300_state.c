@@ -474,7 +474,7 @@ static void*
             if (caps->is_r500) {
                 dsa->z_buffer_control |= R500_STENCIL_REFMASK_FRONT_BACK;
             } else {
-                dsa->stencil_ref_bf_fallback =
+                dsa->two_sided_stencil_ref =
                   (state->stencil[0].valuemask != state->stencil[1].valuemask ||
                    state->stencil[0].writemask != state->stencil[1].writemask);
             }
@@ -497,20 +497,6 @@ static void*
     return (void*)dsa;
 }
 
-static void r300_update_stencil_ref_fallback_status(struct r300_context *r300)
-{
-    struct r300_dsa_state *dsa = (struct r300_dsa_state*)r300->dsa_state.state;
-
-    if (r300->screen->caps.is_r500) {
-        return;
-    }
-
-    r300->stencil_ref_bf_fallback =
-        dsa->stencil_ref_bf_fallback ||
-        (dsa->two_sided &&
-         r300->stencil_ref.ref_value[0] != r300->stencil_ref.ref_value[1]);
-}
-
 /* Bind DSA state. */
 static void r300_bind_dsa_state(struct pipe_context* pipe,
                                 void* state)
@@ -522,8 +508,6 @@ static void r300_bind_dsa_state(struct pipe_context* pipe,
     }
 
     UPDATE_STATE(state, r300->dsa_state);
-
-    r300_update_stencil_ref_fallback_status(r300);
 }
 
 /* Free DSA state. */
@@ -540,8 +524,6 @@ static void r300_set_stencil_ref(struct pipe_context* pipe,
 
     r300->stencil_ref = *sr;
     r300->dsa_state.dirty = TRUE;
-
-    r300_update_stencil_ref_fallback_status(r300);
 }
 
 /* This switcheroo is needed just because of goddamned MACRO_SWITCH. */
