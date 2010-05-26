@@ -1057,7 +1057,7 @@ void r300_emit_buffer_validate(struct r300_context *r300,
     boolean invalid = FALSE;
 
     /* upload buffers first */
-    if (r300->any_user_vbs) {
+    if (r300->screen->caps.has_tcl && r300->any_user_vbs) {
         r300_upload_user_buffers(r300);
         r300->any_user_vbs = false;
     }

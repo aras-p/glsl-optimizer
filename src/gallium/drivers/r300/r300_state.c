@@ -1183,48 +1183,61 @@ static void r300_set_vertex_buffers(struct pipe_context* pipe,
         return;
     }
 
-    /* Check if the stride is aligned to the size of DWORD. */
-    for (i = 0; i < count; i++) {
-        if (buffers[i].buffer) {
-            if (buffers[i].stride % 4 != 0) {
-                // XXX Shouldn't we align the buffer?
-                fprintf(stderr, "r300: set_vertex_buffers: "
-                        "Unaligned buffer stride %i isn't supported.\n",
-                        buffers[i].stride);
-                abort();
+    if (r300->screen->caps.has_tcl) {
+        /* HW TCL. */
+        /* Check if the stride is aligned to the size of DWORD. */
+        for (i = 0; i < count; i++) {
+            if (buffers[i].buffer) {
+                if (buffers[i].stride % 4 != 0) {
+                    // XXX Shouldn't we align the buffer?
+                    fprintf(stderr, "r300: set_vertex_buffers: "
+                            "Unaligned buffer stride %i isn't supported.\n",
+                            buffers[i].stride);
+                    abort();
+                }
             }
         }
+
+        for (i = 0; i < count; i++) {
+            /* Why, yes, I AM casting away constness. How did you know? */
+            vbo = (struct pipe_vertex_buffer*)&buffers[i];
+
+            /* Skip NULL buffers */
+            if (!buffers[i].buffer) {
+                continue;
+            }
+
+            if (r300_buffer_is_user_buffer(vbo->buffer)) {
+                any_user_buffer = TRUE;
+            }
+
+            if (vbo->max_index == ~0) {
+                /* if no VBO stride then only one vertex value so max index is 1 */
+                /* should think about converting to VS constants like svga does */
+                if (!vbo->stride)
+                    vbo->max_index = 1;
+                else
+                    vbo->max_index =
+                             (vbo->buffer->width0 - vbo->buffer_offset) / vbo->stride;
+            }
+
+            max_index = MIN2(vbo->max_index, max_index);
+        }
+
+        r300->any_user_vbs = any_user_buffer;
+        r300->vertex_buffer_max_index = max_index;
+
+    } else {
+        /* SW TCL. */
+        draw_flush(r300->draw);
+        draw_set_vertex_buffers(r300->draw, count, buffers);
     }
 
+    /* Common code. */
     for (i = 0; i < count; i++) {
-        /* Why, yes, I AM casting away constness. How did you know? */
-        vbo = (struct pipe_vertex_buffer*)&buffers[i];
-
         /* Reference our buffer. */
-        pipe_resource_reference(&r300->vertex_buffer[i].buffer, vbo->buffer);
-
-        /* Skip NULL buffers */
-        if (!buffers[i].buffer) {
-            continue;
-        }
-
-        if (r300_buffer_is_user_buffer(vbo->buffer)) {
-            any_user_buffer = TRUE;
-        }
-
-        if (vbo->max_index == ~0) {
-	    /* if no VBO stride then only one vertex value so max index is 1 */
-	    /* should think about converting to VS constants like svga does */
-	    if (!vbo->stride)
-		vbo->max_index = 1;
- 	    else
-            	vbo->max_index =
-               		 (vbo->buffer->width0 - vbo->buffer_offset) / vbo->stride;
-        }
-
-        max_index = MIN2(vbo->max_index, max_index);
+        pipe_resource_reference(&r300->vertex_buffer[i].buffer, buffers[i].buffer);
     }
-
     for (; i < r300->vertex_buffer_count; i++) {
         /* Dereference any old buffers. */
         pipe_resource_reference(&r300->vertex_buffer[i].buffer, NULL);
@@ -1232,15 +1245,7 @@ static void r300_set_vertex_buffers(struct pipe_context* pipe,
 
     memcpy(r300->vertex_buffer, buffers,
         sizeof(struct pipe_vertex_buffer) * count);
-
     r300->vertex_buffer_count = count;
-    r300->vertex_buffer_max_index = max_index;
-    r300->any_user_vbs = any_user_buffer;
-
-    if (r300->draw) {
-        draw_flush(r300->draw);
-        draw_set_vertex_buffers(r300->draw, count, buffers);
-    }
 }
 
 /* Initialize the PSC tables. */
