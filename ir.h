@@ -95,6 +95,21 @@ public:
       return NULL;
    }
 
+
+   /**
+    * If an r-value is a reference to a whole variable, get that variable
+    *
+    * \return
+    * Pointer to a variable that is completely dereferenced by the r-value.  If
+    * the r-value is not a dereference or the dereference does not access the
+    * entire variable (i.e., it's just one array element, struct field), \c NULL
+    * is returned.
+    */
+   virtual ir_variable *whole_variable_referenced()
+   {
+      return NULL;
+   }
+
 protected:
    ir_rvalue()
    {
@@ -824,6 +839,17 @@ public:
     */
    virtual ir_variable *variable_referenced()
    {
+      return this->var;
+   }
+
+   virtual ir_variable *whole_variable_referenced()
+   {
+      /* ir_dereference_variable objects always dereference the entire
+       * variable.  However, if this dereference is dereferenced by anything
+       * else, the complete deferefernce chain is not a whole-variable
+       * dereference.  This method should only be called on the top most
+       * ir_rvalue in a dereference chain.
+       */
       return this->var;
    }
 

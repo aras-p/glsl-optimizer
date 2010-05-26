@@ -267,18 +267,13 @@ add_copy(ir_assignment *ir, exec_list *acp)
 	 return;
    }
 
-   ir_dereference *lhs_deref = ir->lhs->as_dereference();
-   if (!lhs_deref || lhs_deref->mode != ir_dereference::ir_reference_variable)
-      return;
-   ir_variable *lhs_var = lhs_deref->variable_referenced();
+   ir_variable *lhs_var = ir->lhs->whole_variable_referenced();
+   ir_variable *rhs_var = ir->rhs->whole_variable_referenced();
 
-   ir_dereference *rhs_deref = ir->rhs->as_dereference();
-   if (!rhs_deref || rhs_deref->mode != ir_dereference::ir_reference_variable)
-      return;
-   ir_variable *rhs_var = rhs_deref->variable_referenced();
-
-   entry = new acp_entry(lhs_var, rhs_var);
-   acp->push_tail(entry);
+   if ((lhs_var != NULL) && (rhs_var != NULL)) {
+      entry = new acp_entry(lhs_var, rhs_var);
+      acp->push_tail(entry);
+   }
 }
 
 static void

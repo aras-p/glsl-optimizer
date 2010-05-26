@@ -139,10 +139,7 @@ process_assignment(ir_assignment *ir, exec_list *assignments)
    }
 
    /* Now, check if we did a whole-variable assignment. */
-   ir_dereference *lhs_deref = ir->lhs->as_dereference();
-   if (always_assign &&
-       lhs_deref &&
-       lhs_deref->mode == ir_dereference::ir_reference_variable) {
+   if (always_assign && (ir->lhs->whole_variable_referenced() != NULL)) {
       /* We did a whole-variable assignment.  So, any instruction in
        * the assignment list with the same LHS is dead.
        */
