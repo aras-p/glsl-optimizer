@@ -620,8 +620,10 @@ void r300_texture_reinterpret_format(struct pipe_screen *screen,
 {
     struct r300_screen *r300screen = r300_screen(screen);
 
-    SCREEN_DBG(r300screen, DBG_TEX, "r300: texture_reinterpret_format: %s -> %s\n",
-               util_format_short_name(tex->format), util_format_short_name(new_format));
+    SCREEN_DBG(r300screen, DBG_TEX,
+        "r300: texture_reinterpret_format: %s -> %s\n",
+        util_format_short_name(tex->format),
+        util_format_short_name(new_format));
 
     tex->format = new_format;
 
@@ -784,8 +786,9 @@ static void r300_setup_miptree(struct r300_screen* screen,
     unsigned stride, size, layer_size, nblocksy, i;
     boolean rv350_mode = screen->caps.is_rv350;
 
-    SCREEN_DBG(screen, DBG_TEXALLOC, "r300: Making miptree for texture, format %s\n",
-               util_format_short_name(base->format));
+    SCREEN_DBG(screen, DBG_TEXALLOC,
+        "r300: Making miptree for texture, format %s\n",
+        util_format_short_name(base->format));
 
     for (i = 0; i <= base->last_level; i++) {
         /* Let's see if this miplevel can be macrotiled. */
