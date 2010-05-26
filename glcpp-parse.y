@@ -132,8 +132,8 @@ glcpp_parser_lex (glcpp_parser_t *parser);
 
 %token HASH HASH_DEFINE_FUNC HASH_DEFINE_OBJ HASH_UNDEF IDENTIFIER NEWLINE OTHER SPACE
 %token LEFT_SHIFT RIGHT_SHIFT LESS_OR_EQUAL GREATER_OR_EQUAL EQUAL NOT_EQUAL AND OR PASTE
-%type <ival> punctuator
-%type <str> IDENTIFIER OTHER SPACE
+%type <ival> punctuator SPACE
+%type <str> IDENTIFIER OTHER
 %type <string_list> identifier_list
 %type <token> preprocessing_token
 %type <token_list> pp_tokens replacement_list text_line
@@ -235,7 +235,7 @@ preprocessing_token:
 		$$ = _token_create_str (parser, OTHER, $1);
 	}
 |	SPACE {
-		$$ = _token_create_str (parser, SPACE, $1);	
+		$$ = _token_create_ival (parser, SPACE, SPACE);
 	}
 ;
 
@@ -495,8 +495,10 @@ _token_print (token_t *token)
 	switch (token->type) {
 	case IDENTIFIER:
 	case OTHER:
-	case SPACE:
 		printf ("%s", token->value.str);
+		break;
+	case SPACE:
+		printf (" ");
 		break;
 	case LEFT_SHIFT:
 		printf ("<<");

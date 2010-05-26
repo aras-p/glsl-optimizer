@@ -119,7 +119,6 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 
 {HSPACE}+ {
 	if (yyextra->space_tokens) {
-		yylval.str = xtalloc_strdup (yyextra, yytext);
 		return SPACE;
 	}
 }
