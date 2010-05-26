@@ -38,14 +38,6 @@ void r300_emit_invariant_state(struct r300_context* r300,
 {
     CS_LOCALS(r300);
 
-    if (r300->rws->get_value(r300->rws, R300_VID_DRM_2_3_0)) {
-        /* Subpixel multisampling for AA. */
-        BEGIN_CS(4);
-        OUT_CS_REG(R300_GB_MSPOS0, 0x66666666);
-        OUT_CS_REG(R300_GB_MSPOS1, 0x6666666);
-        END_CS;
-    }
-
     BEGIN_CS(12 + (r300->screen->caps.has_tcl ? 2 : 0));
 
     /*** Graphics Backend (GB) ***/

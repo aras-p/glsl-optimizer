@@ -950,6 +950,11 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
         }
     }
 
+    if (state->gl_rasterization_rules) {
+        rs->multisample_position_0 = 0x66666666;
+        rs->multisample_position_1 = 0x6666666;
+    }
+
     return (void*)rs;
 }
 
@@ -979,7 +984,7 @@ static void r300_bind_rs_state(struct pipe_context* pipe, void* state)
     }
 
     UPDATE_STATE(state, r300->rs_state);
-    r300->rs_state.size = 27 + (r300->polygon_offset_enabled ? 5 : 0);
+    r300->rs_state.size = 31 + (r300->polygon_offset_enabled ? 5 : 0);
 
     if (last_sprite_coord_enable != r300->sprite_coord_enable ||
         last_two_sided_color != r300->two_sided_color) {

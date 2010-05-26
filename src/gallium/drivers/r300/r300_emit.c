@@ -484,6 +484,13 @@ void r300_emit_rs_state(struct r300_context* r300, unsigned size, void* state)
 
     OUT_CS_REG(R300_GB_AA_CONFIG, rs->antialiasing_config);
 
+    OUT_CS_REG(R300_VAP_CNTL_STATUS, rs->vap_control_status);
+    if (r300->rws->get_value(r300->rws, R300_VID_DRM_2_3_0)) {
+        OUT_CS_REG_SEQ(R300_GB_MSPOS0, 2);
+        OUT_CS(rs->multisample_position_0);
+        OUT_CS(rs->multisample_position_1);
+    }
+    OUT_CS_REG(R300_GB_AA_CONFIG, rs->antialiasing_config);
     OUT_CS_REG(R300_GA_POINT_SIZE, rs->point_size);
     OUT_CS_REG_SEQ(R300_GA_POINT_MINMAX, 2);
     OUT_CS(rs->point_minmax);
