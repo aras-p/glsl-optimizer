@@ -864,7 +864,7 @@ void r300_emit_aos(struct r300_context* r300, unsigned offset, boolean indexed)
     END_CS;
 }
 
-void r300_emit_aos_swtcl(struct r300_context *r300)
+void r300_emit_aos_swtcl(struct r300_context *r300, boolean indexed)
 {
     CS_LOCALS(r300);
 
@@ -880,7 +880,7 @@ void r300_emit_aos_swtcl(struct r300_context *r300)
      */
     BEGIN_CS(7);
     OUT_CS_PKT3(R300_PACKET3_3D_LOAD_VBPNTR, 3);
-    OUT_CS(1);
+    OUT_CS(1 | (!indexed ? R300_VC_FORCE_PREFETCH : 0));
     OUT_CS(r300->vertex_info.size |
             (r300->vertex_info.size << 8));
     OUT_CS(r300->vbo_offset);

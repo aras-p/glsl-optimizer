@@ -191,7 +191,7 @@ static void r300_prepare_for_rendering(struct r300_context *r300,
         if (emit_aos)
             r300_emit_aos(r300, aos_offset, flags & PREP_INDEXED);
         if (emit_aos_swtcl)
-            r300_emit_aos_swtcl(r300);
+            r300_emit_aos_swtcl(r300, flags & PREP_INDEXED);
     }
 }
 
@@ -997,8 +997,9 @@ static void r500_render_draw_elements(struct vbuf_render* render,
 
     CS_LOCALS(r300);
 
-    r300_prepare_for_rendering(r300, PREP_FIRST_DRAW | PREP_EMIT_AOS_SWTCL,
-                               NULL, dwords, 0, 0);
+    r300_prepare_for_rendering(r300,
+        PREP_FIRST_DRAW | PREP_EMIT_AOS_SWTCL | PREP_INDEXED,
+        NULL, dwords, 0, 0);
 
     BEGIN_CS(dwords);
     OUT_CS_REG(R300_GA_COLOR_CONTROL,
