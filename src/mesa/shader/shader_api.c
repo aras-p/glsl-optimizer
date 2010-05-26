@@ -808,14 +808,17 @@ _mesa_sizeof_glsl_type(GLenum type)
       return 1;
    case GL_FLOAT_VEC2:
    case GL_INT_VEC2:
+   case GL_UNSIGNED_INT_VEC2:
    case GL_BOOL_VEC2:
       return 2;
    case GL_FLOAT_VEC3:
    case GL_INT_VEC3:
+   case GL_UNSIGNED_INT_VEC3:
    case GL_BOOL_VEC3:
       return 3;
    case GL_FLOAT_VEC4:
    case GL_INT_VEC4:
+   case GL_UNSIGNED_INT_VEC4:
    case GL_BOOL_VEC4:
       return 4;
    case GL_FLOAT_MAT2:
@@ -860,6 +863,21 @@ is_integer_type(GLenum type)
    case GL_INT_VEC2:
    case GL_INT_VEC3:
    case GL_INT_VEC4:
+      return GL_TRUE;
+   default:
+      return GL_FALSE;
+   }
+}
+
+
+static GLboolean
+is_uint_type(GLenum type)
+{
+   switch (type) {
+   case GL_UNSIGNED_INT:
+   case GL_UNSIGNED_INT_VEC2:
+   case GL_UNSIGNED_INT_VEC3:
+   case GL_UNSIGNED_INT_VEC4:
       return GL_TRUE;
    default:
       return GL_FALSE;
@@ -1681,18 +1699,23 @@ compatible_types(GLenum userType, GLenum targetType)
    if (userType == targetType)
       return GL_TRUE;
 
-   if (targetType == GL_BOOL && (userType == GL_FLOAT || userType == GL_INT))
+   if (targetType == GL_BOOL && (userType == GL_FLOAT ||
+                                 userType == GL_UNSIGNED_INT ||
+                                 userType == GL_INT))
       return GL_TRUE;
 
    if (targetType == GL_BOOL_VEC2 && (userType == GL_FLOAT_VEC2 ||
+                                      userType == GL_UNSIGNED_INT_VEC2 ||
                                       userType == GL_INT_VEC2))
       return GL_TRUE;
 
    if (targetType == GL_BOOL_VEC3 && (userType == GL_FLOAT_VEC3 ||
+                                      userType == GL_UNSIGNED_INT_VEC3 ||
                                       userType == GL_INT_VEC3))
       return GL_TRUE;
 
    if (targetType == GL_BOOL_VEC4 && (userType == GL_FLOAT_VEC4 ||
+                                      userType == GL_UNSIGNED_INT_VEC4 ||
                                       userType == GL_INT_VEC4))
       return GL_TRUE;
 
@@ -1790,6 +1813,7 @@ set_program_uniform(GLcontext *ctx, struct gl_program *program,
       /* ordinary uniform variable */
       const GLboolean isUniformBool = is_boolean_type(param->DataType);
       const GLboolean areIntValues = is_integer_type(type);
+      const GLboolean areUintValues = is_uint_type(type);
       const GLint slots = (param->Size + 3) / 4;
       const GLint typeSize = _mesa_sizeof_glsl_type(param->DataType);
       GLsizei k, i;
@@ -1823,6 +1847,13 @@ set_program_uniform(GLcontext *ctx, struct gl_program *program,
          if (areIntValues) {
             /* convert user's ints to floats */
             const GLint *iValues = ((const GLint *) values) + k * elems;
+            for (i = 0; i < elems; i++) {
+               uniformVal[i] = (GLfloat) iValues[i];
+            }
+         }
+         else if (areUintValues) {
+            /* convert user's uints to floats */
+            const GLuint *iValues = ((const GLuint *) values) + k * elems;
             for (i = 0; i < elems; i++) {
                uniformVal[i] = (GLfloat) iValues[i];
             }
@@ -1892,12 +1923,20 @@ _mesa_uniform(GLcontext *ctx, GLint location, GLsizei count,
       basicType = GL_INT;
       elems = 1;
       break;
+   case GL_UNSIGNED_INT:
+      basicType = GL_UNSIGNED_INT;
+      elems = 1;
+      break;
    case GL_FLOAT_VEC2:
       basicType = GL_FLOAT;
       elems = 2;
       break;
    case GL_INT_VEC2:
       basicType = GL_INT;
+      elems = 2;
+      break;
+   case GL_UNSIGNED_INT_VEC2:
+      basicType = GL_UNSIGNED_INT;
       elems = 2;
       break;
    case GL_FLOAT_VEC3:
@@ -1908,12 +1947,20 @@ _mesa_uniform(GLcontext *ctx, GLint location, GLsizei count,
       basicType = GL_INT;
       elems = 3;
       break;
+   case GL_UNSIGNED_INT_VEC3:
+      basicType = GL_UNSIGNED_INT;
+      elems = 3;
+      break;
    case GL_FLOAT_VEC4:
       basicType = GL_FLOAT;
       elems = 4;
       break;
    case GL_INT_VEC4:
       basicType = GL_INT;
+      elems = 4;
+      break;
+   case GL_UNSIGNED_INT_VEC4:
+      basicType = GL_UNSIGNED_INT;
       elems = 4;
       break;
    default:
@@ -1935,8 +1982,15 @@ _mesa_uniform(GLcontext *ctx, GLint location, GLsizei count,
             printf("%d ", v[i]);
          }
       }
+      else if (basicType == GL_UNSIGNED_INT) {
+         const GLuint *v = (const GLuint *) values;
+         for (i = 0; i < count * elems; i++) {
+            printf("%u ", v[i]);
+         }
+      }
       else {
          const GLfloat *v = (const GLfloat *) values;
+         assert(basicType == GL_FLOAT);
          for (i = 0; i < count * elems; i++) {
             printf("%g ", v[i]);
          }
