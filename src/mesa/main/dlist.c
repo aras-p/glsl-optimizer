@@ -371,6 +371,16 @@ typedef enum
    OPCODE_UNIFORM_MATRIX34,
    OPCODE_UNIFORM_MATRIX43,
 
+   /* OpenGL 3.0 */
+   OPCODE_UNIFORM_1UI,
+   OPCODE_UNIFORM_2UI,
+   OPCODE_UNIFORM_3UI,
+   OPCODE_UNIFORM_4UI,
+   OPCODE_UNIFORM_1UIV,
+   OPCODE_UNIFORM_2UIV,
+   OPCODE_UNIFORM_3UIV,
+   OPCODE_UNIFORM_4UIV,
+
    /* GL_EXT_framebuffer_blit */
    OPCODE_BLIT_FRAMEBUFFER,
 
@@ -675,6 +685,10 @@ _mesa_delete_list(GLcontext *ctx, struct gl_display_list *dlist)
          case OPCODE_UNIFORM_2IV:
          case OPCODE_UNIFORM_3IV:
          case OPCODE_UNIFORM_4IV:
+         case OPCODE_UNIFORM_1UIV:
+         case OPCODE_UNIFORM_2UIV:
+         case OPCODE_UNIFORM_3UIV:
+         case OPCODE_UNIFORM_4UIV:
             free(n[3].data);
             n += InstSize[n[0].opcode];
             break;
@@ -6451,6 +6465,149 @@ save_Uniform4ivARB(GLint location, GLsizei count, const GLint *v)
 }
 
 
+
+static void GLAPIENTRY
+save_Uniform1ui(GLint location, GLuint x)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_UNIFORM_1UI, 2);
+   if (n) {
+      n[1].i = location;
+      n[2].i = x;
+   }
+   if (ctx->ExecuteFlag) {
+      /*CALL_Uniform1ui(ctx->Exec, (location, x));*/
+   }
+}
+
+static void GLAPIENTRY
+save_Uniform2ui(GLint location, GLuint x, GLuint y)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_UNIFORM_2UI, 3);
+   if (n) {
+      n[1].i = location;
+      n[2].i = x;
+      n[3].i = y;
+   }
+   if (ctx->ExecuteFlag) {
+      /*CALL_Uniform2ui(ctx->Exec, (location, x, y));*/
+   }
+}
+
+static void GLAPIENTRY
+save_Uniform3ui(GLint location, GLuint x, GLuint y, GLuint z)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_UNIFORM_3UI, 4);
+   if (n) {
+      n[1].i = location;
+      n[2].i = x;
+      n[3].i = y;
+      n[4].i = z;
+   }
+   if (ctx->ExecuteFlag) {
+      /*CALL_Uniform3ui(ctx->Exec, (location, x, y, z));*/
+   }
+}
+
+static void GLAPIENTRY
+save_Uniform4ui(GLint location, GLuint x, GLuint y, GLuint z, GLuint w)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_UNIFORM_4UI, 5);
+   if (n) {
+      n[1].i = location;
+      n[2].i = x;
+      n[3].i = y;
+      n[4].i = z;
+      n[5].i = w;
+   }
+   if (ctx->ExecuteFlag) {
+      /*CALL_Uniform4ui(ctx->Exec, (location, x, y, z, w));*/
+   }
+}
+
+
+
+static void GLAPIENTRY
+save_Uniform1uiv(GLint location, GLsizei count, const GLuint *v)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_UNIFORM_1UIV, 3);
+   if (n) {
+      n[1].i = location;
+      n[2].i = count;
+      n[3].data = memdup(v, count * 1 * sizeof(*v));
+   }
+   if (ctx->ExecuteFlag) {
+      /*CALL_Uniform1uiv(ctx->Exec, (location, count, v));*/
+   }
+}
+
+static void GLAPIENTRY
+save_Uniform2uiv(GLint location, GLsizei count, const GLuint *v)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_UNIFORM_2UIV, 3);
+   if (n) {
+      n[1].i = location;
+      n[2].i = count;
+      n[3].data = memdup(v, count * 2 * sizeof(*v));
+   }
+   if (ctx->ExecuteFlag) {
+      /*CALL_Uniform2uiv(ctx->Exec, (location, count, v));*/
+   }
+}
+
+static void GLAPIENTRY
+save_Uniform3uiv(GLint location, GLsizei count, const GLuint *v)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_UNIFORM_3UIV, 3);
+   if (n) {
+      n[1].i = location;
+      n[2].i = count;
+      n[3].data = memdup(v, count * 3 * sizeof(*v));
+   }
+   if (ctx->ExecuteFlag) {
+      /*CALL_Uniform3uiv(ctx->Exec, (location, count, v));*/
+   }
+}
+
+static void GLAPIENTRY
+save_Uniform4uiv(GLint location, GLsizei count, const GLuint *v)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_UNIFORM_4UIV, 3);
+   if (n) {
+      n[1].i = location;
+      n[2].i = count;
+      n[3].data = memdup(v, count * 4 * sizeof(*v));
+   }
+   if (ctx->ExecuteFlag) {
+      /*CALL_Uniform4uiv(ctx->Exec, (location, count, v));*/
+   }
+}
+
+
+
 static void GLAPIENTRY
 save_UniformMatrix2fvARB(GLint location, GLsizei count, GLboolean transpose,
                          const GLfloat *m)
@@ -7562,7 +7719,32 @@ execute_list(GLcontext *ctx, GLuint list)
 	 case OPCODE_UNIFORM_4IV:
 	    CALL_Uniform4ivARB(ctx->Exec, (n[1].i, n[2].i, n[3].data));
 	    break;
-
+	 case OPCODE_UNIFORM_1UI:
+	    /*CALL_Uniform1uiARB(ctx->Exec, (n[1].i, n[2].i));*/
+	    break;
+	 case OPCODE_UNIFORM_2UI:
+	    /*CALL_Uniform2uiARB(ctx->Exec, (n[1].i, n[2].i, n[3].i));*/
+	    break;
+	 case OPCODE_UNIFORM_3UI:
+	    /*CALL_Uniform3uiARB(ctx->Exec, (n[1].i, n[2].i, n[3].i, n[4].i));*/
+	    break;
+	 case OPCODE_UNIFORM_4UI:
+	    /*CALL_Uniform4uiARB(ctx->Exec,
+                              (n[1].i, n[2].i, n[3].i, n[4].i, n[5].i));
+            */
+	    break;
+	 case OPCODE_UNIFORM_1UIV:
+	    /*CALL_Uniform1uivARB(ctx->Exec, (n[1].i, n[2].i, n[3].data));*/
+	    break;
+	 case OPCODE_UNIFORM_2UIV:
+	    /*CALL_Uniform2uivARB(ctx->Exec, (n[1].i, n[2].i, n[3].data));*/
+	    break;
+	 case OPCODE_UNIFORM_3UIV:
+	    /*CALL_Uniform3uivARB(ctx->Exec, (n[1].i, n[2].i, n[3].data));*/
+	    break;
+	 case OPCODE_UNIFORM_4UIV:
+	    /*CALL_Uniform4uivARB(ctx->Exec, (n[1].i, n[2].i, n[3].data));*/
+	    break;
 	 case OPCODE_UNIFORM_MATRIX22:
 	    CALL_UniformMatrix2fvARB(ctx->Exec,
                                      (n[1].i, n[2].i, n[3].b, n[4].data));
@@ -9350,11 +9532,27 @@ _mesa_create_save_table(void)
    SET_ClearBufferuiv(table, save_ClearBufferuiv);
    SET_ClearBufferfv(table, save_ClearBufferfv);
    SET_ClearBufferfi(table, save_ClearBufferfi);
+   SET_Uniform1ui(table, save_Uniform1ui);
+   SET_Uniform2ui(table, save_Uniform2ui);
+   SET_Uniform3ui(table, save_Uniform3ui);
+   SET_Uniform4ui(table, save_Uniform4ui);
+   SET_Uniform1uiv(table, save_Uniform1uiv);
+   SET_Uniform2uiv(table, save_Uniform2uiv);
+   SET_Uniform3uiv(table, save_Uniform3uiv);
+   SET_Uniform4uiv(table, save_Uniform4uiv);
 #else
    (void) save_ClearBufferiv;
    (void) save_ClearBufferuiv;
    (void) save_ClearBufferfv;
    (void) save_ClearBufferfi;
+   (void) save_Uniform1ui;
+   (void) save_Uniform2ui;
+   (void) save_Uniform3ui;
+   (void) save_Uniform4ui;
+   (void) save_Uniform1uiv;
+   (void) save_Uniform2uiv;
+   (void) save_Uniform3uiv;
+   (void) save_Uniform4uiv;
 #endif
 
    return table;
