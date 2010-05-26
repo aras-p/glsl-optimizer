@@ -128,6 +128,9 @@ struct glcpp_parser {
 	struct hash_table *defines;
 	string_list_t *active;
 	int space_tokens;
+	int newline_as_space;
+	int in_control_line;
+	int paren_count;
 	skip_node_t *skip_stack;
 	token_list_t *lex_from_list;
 	token_node_t *lex_from_node;

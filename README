@@ -24,3 +24,7 @@ parentheses.
 
 The #error, #pragma, #extension, #version, and #line macros are not
 yet supported.
+
+A file that ends with a function-like macro name as the last
+non-whitespace token will result in a parse error, (where it should be
+passed through as is).

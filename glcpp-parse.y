@@ -856,6 +856,9 @@ glcpp_parser_create (void)
 					   hash_table_string_compare);
 	parser->active = _string_list_create (parser);
 	parser->space_tokens = 1;
+	parser->newline_as_space = 0;
+	parser->in_control_line = 0;
+	parser->paren_count = 0;
 
 	parser->skip_stack = NULL;
 
@@ -1274,8 +1277,62 @@ glcpp_parser_lex (glcpp_parser_t *parser)
 	token_node_t *node;
 	int ret;
 
-	if (parser->lex_from_list == NULL)
-		return glcpp_lex (parser->scanner);
+	if (parser->lex_from_list == NULL) {
+		ret = glcpp_lex (parser->scanner);
+
+		/* XXX: This ugly block of code exists for the sole
+		 * purpose of converting a NEWLINE token into a SPACE
+		 * token, but only in the case where we have seen a
+		 * function-like macro name, but have not yet seen its
+		 * closing parenthesis.
+		 *
+		 * There's perhaps a more compact way to do this with
+		 * mid-rule actions in the grammar.
+		 *
+		 * I'm definitely not pleased with the complexity of
+		 * this code here.
+		 */
+		if (parser->newline_as_space)
+		{
+			if (ret == '(') {
+				parser->paren_count++;
+			} else if (ret == ')') {
+				parser->paren_count--;
+				if (parser->paren_count == 0)
+					parser->newline_as_space = 0;
+			} else if (ret == NEWLINE) {
+				ret = SPACE;
+			} else if (ret != SPACE) {
+				if (parser->paren_count == 0)
+					parser->newline_as_space = 0;
+			}
+		}
+		else if (parser->in_control_line)
+		{
+			if (ret == NEWLINE)
+				parser->in_control_line = 0;
+		}
+		else if (ret == HASH_DEFINE_OBJ || ret == HASH_DEFINE_FUNC ||
+			   ret == HASH_UNDEF || ret == HASH_IF ||
+			   ret == HASH_IFDEF || ret == HASH_IFNDEF ||
+			   ret == HASH_ELIF || ret == HASH_ELSE ||
+			   ret == HASH_ENDIF || ret == HASH)
+		{
+			parser->in_control_line = 1;
+		}
+		else if (ret == IDENTIFIER)
+		{
+			macro_t *macro;
+			macro = hash_table_find (parser->defines,
+						 yylval.str);
+			if (macro && macro->is_function) {
+				parser->newline_as_space = 1;
+				parser->paren_count = 0;
+			}
+		}
+
+		return ret;
+	}
 
 	node = parser->lex_from_node;
 
