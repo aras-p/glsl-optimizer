@@ -85,7 +85,7 @@ _token_create_ival (void *ctx, int type, int ival);
 static token_list_t *
 _token_list_create (void *ctx);
 
-/* Note: This function add a talloc_reference() to token.
+/* Note: This function adds a talloc_reference() to token.
  *
  * You may want to talloc_unlink any current reference if you no
  * longer need it. */
