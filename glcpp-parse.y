@@ -100,6 +100,11 @@ _glcpp_parser_print_expanded_token_list (glcpp_parser_t *parser,
 					 token_list_t *list);
 
 static void
+_glcpp_parser_expand_token_list_onto (glcpp_parser_t *parser,
+				      token_list_t *list,
+				      token_list_t *result);
+
+static void
 _glcpp_parser_skip_stack_push_if (glcpp_parser_t *parser, int condition);
 
 static void
@@ -470,55 +475,6 @@ _token_create_ival (void *ctx, int type, int ival)
 	return token;
 }
 
-void
-_glcpp_parser_print_token (glcpp_parser_t *parser, token_t *token)
-{
-	if (token->type < 256) {
-		printf ("%c", token->type);
-		return;
-	}
-
-	switch (token->type) {
-	case IDENTIFIER:
-	case OTHER:
-		printf ("%s", token->value.str);
-		break;
-	case SPACE:
-		printf (" ");
-		break;
-	case LEFT_SHIFT:
-		printf ("<<");
-		break;
-	case RIGHT_SHIFT:
-		printf (">>");
-		break;
-	case LESS_OR_EQUAL:
-		printf ("<=");
-		break;
-	case GREATER_OR_EQUAL:
-		printf (">=");
-		break;
-	case EQUAL:
-		printf ("==");
-		break;
-	case NOT_EQUAL:
-		printf ("!=");
-		break;
-	case AND:
-		printf ("&&");
-		break;
-	case OR:
-		printf ("||");
-		break;
-	case PASTE:
-		printf ("##");
-		break;
-	default:
-		fprintf (stderr, "Error: Don't know how to print token type %d\n", token->type);
-		break;
-	}
-}
-
 token_list_t *
 _token_list_create (void *ctx)
 {
@@ -584,6 +540,67 @@ _token_list_trim_trailing_space (token_list_t *list)
 	}
 }
 
+static void
+_token_print (token_t *token)
+{
+	if (token->type < 256) {
+		printf ("%c", token->type);
+		return;
+	}
+
+	switch (token->type) {
+	case IDENTIFIER:
+	case OTHER:
+		printf ("%s", token->value.str);
+		break;
+	case SPACE:
+		printf (" ");
+		break;
+	case LEFT_SHIFT:
+		printf ("<<");
+		break;
+	case RIGHT_SHIFT:
+		printf (">>");
+		break;
+	case LESS_OR_EQUAL:
+		printf ("<=");
+		break;
+	case GREATER_OR_EQUAL:
+		printf (">=");
+		break;
+	case EQUAL:
+		printf ("==");
+		break;
+	case NOT_EQUAL:
+		printf ("!=");
+		break;
+	case AND:
+		printf ("&&");
+		break;
+	case OR:
+		printf ("||");
+		break;
+	case PASTE:
+		printf ("##");
+		break;
+	default:
+		fprintf (stderr, "Error: Don't know how to print token type %d\n", token->type);
+		break;
+	}
+}
+
+static void
+_token_list_print (token_list_t *list)
+{
+	token_node_t *node;
+
+	if (list == NULL)
+		return;
+
+	for (node = list->head; node; node = node->next)
+		_token_print (node->token);
+}
+
 void
 yyerror (void *scanner, const char *error)
 {
@@ -624,23 +641,26 @@ glcpp_parser_destroy (glcpp_parser_t *parser)
 	talloc_free (parser);
 }
 
-/* Print a non-macro token, or the expansion of an object-like macro.
+/* Appends onto 'expansion' a non-macro token or the expansion of an
+ * object-like macro.
  *
- * Returns 0 if this token is completely printed.
+ * Returns 0 if this token is completely processed.
  *
  * Returns 1 in the case that 'token' is a function-like macro that
  * needs further expansion.
  */
 static int
-_glcpp_parser_print_expanded_token (glcpp_parser_t *parser,
-				    token_t *token)
+_glcpp_parser_expand_token_onto (glcpp_parser_t *parser,
+				 token_t *token,
+				 token_list_t *result)
 {
 	const char *identifier;
 	macro_t *macro;
+	token_list_t *expansion;
 
 	/* We only expand identifiers */
 	if (token->type != IDENTIFIER) {
-		_glcpp_parser_print_token (parser, token);
+		_token_list_append (result, token);
 		return 0;
 	}
 
@@ -648,16 +668,16 @@ _glcpp_parser_print_expanded_token (glcpp_parser_t *parser,
 	identifier = token->value.str;
 	macro = hash_table_find (parser->defines, identifier);
 
-	/* Not a macro, so just print directly. */
+	/* Not a macro, so just append. */
 	if (macro == NULL) {
-		printf ("%s", identifier);
+		_token_list_append (result, token);
 		return 0;
 	}
 
 	/* Finally, don't expand this macro if we're already actively
 	 * expanding it, (to avoid infinite recursion). */
 	if (_string_list_contains (parser->active, identifier, NULL)) {
-		printf ("%s", identifier);
+		_token_list_append (result, token);
 		return 0;
 	}
 
@@ -667,8 +687,9 @@ _glcpp_parser_print_expanded_token (glcpp_parser_t *parser,
 	}
 
 	_string_list_push (parser->active, identifier);
-	_glcpp_parser_print_expanded_token_list (parser,
-						 macro->replacements);
+	_glcpp_parser_expand_token_list_onto (parser,
+					      macro->replacements,
+					      result);
 	_string_list_pop (parser->active);
 
 	return 0;
@@ -770,15 +791,16 @@ _arguments_parse (argument_list_t *arguments, token_node_t **node_ret)
  * list as necessary). Upon return *node will be the last consumed
  * node, such that further processing can continue with node->next. */
 static void
-_glcpp_parser_print_expanded_function (glcpp_parser_t *parser,
-				       token_node_t **node_ret)
+_glcpp_parser_expand_function_onto (glcpp_parser_t *parser,
+				    token_node_t **node_ret,
+				    token_list_t *result)
 {
 	macro_t *macro;
 	token_node_t *node;
 	const char *identifier;
 	argument_list_t *arguments;
 	function_status_t status;
-	token_list_t *expanded;
+	token_list_t *substituted;
 	token_node_t *i, *j;
 	int parameter_index;
 
@@ -796,7 +818,7 @@ _glcpp_parser_print_expanded_function (glcpp_parser_t *parser,
 	case FUNCTION_STATUS_SUCCESS:
 		break;
 	case FUNCTION_NOT_A_FUNCTION:
-		printf ("%s", identifier);
+		_token_list_append (result, node->token);
 		return;
 	case FUNCTION_UNBALANCED_PARENTHESES:
 		fprintf (stderr, "Error: Macro %s call has unbalanced parentheses\n",
@@ -809,7 +831,6 @@ _glcpp_parser_print_expanded_function (glcpp_parser_t *parser,
 		return;
 	}
 
-
 	if (_argument_list_length (arguments) !=
 	    _string_list_length (macro->parameters))
 	{
@@ -821,7 +842,8 @@ _glcpp_parser_print_expanded_function (glcpp_parser_t *parser,
 		return;
 	}
 
-	expanded = _token_list_create (arguments);
+	/* Perform argument substitution on the replacement list. */
+	substituted = _token_list_create (arguments);
 
 	for (i = macro->replacements->head; i; i = i->next) {
 		if (i->token->type == IDENTIFIER &&
@@ -834,36 +856,61 @@ _glcpp_parser_print_expanded_function (glcpp_parser_t *parser,
 							     parameter_index);
 			for (j = argument->head; j; j = j->next)
 			{
-				_token_list_append (expanded, j->token);
+				_token_list_append (substituted, j->token);
 			}
 		} else {
-			_token_list_append (expanded, i->token);
+			_token_list_append (substituted, i->token);
 		}
 	}
 
 	_string_list_push (parser->active, identifier);
-	_glcpp_parser_print_expanded_token_list (parser, expanded);
+	_glcpp_parser_expand_token_list_onto (parser, substituted, result);
 	_string_list_pop (parser->active);
 
 	talloc_free (arguments);
+}
+
+static void
+_glcpp_parser_expand_token_list_onto (glcpp_parser_t *parser,
+				      token_list_t *list,
+				      token_list_t *result)
+{
+	token_node_t *node;
+
+	if (list == NULL)
+		return;
+
+	for (node = list->head; node; node = node->next)
+	{
+		if (_glcpp_parser_expand_token_onto (parser, node->token,
+						     result))
+		{
+			_glcpp_parser_expand_function_onto (parser, &node,
+							    result);
+		}
+	}
 }
 
 void
 _glcpp_parser_print_expanded_token_list (glcpp_parser_t *parser,
 					 token_list_t *list)
 {
+	token_list_t *expanded;
 	token_node_t *node;
 	function_status_t function_status;
 
 	if (list == NULL)
 		return;
 
-	_token_list_trim_trailing_space (list);
+	expanded = _token_list_create (parser);
 
-	for (node = list->head; node; node = node->next) {
-		if (_glcpp_parser_print_expanded_token (parser, node->token))
-			_glcpp_parser_print_expanded_function (parser, &node);
-	}
+	_glcpp_parser_expand_token_list_onto (parser, list, expanded);
+
+	_token_list_trim_trailing_space (expanded);
+
+	_token_list_print (expanded);
+
+	talloc_free (expanded);
 }
 
 void
