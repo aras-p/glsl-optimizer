@@ -113,6 +113,31 @@ extern void GLAPIENTRY
 _mesa_Uniform4ivARB (GLint, GLsizei, const GLint *);
 
 extern void GLAPIENTRY
+_mesa_Uniform1ui(GLint location, GLuint v0);
+
+extern void GLAPIENTRY
+_mesa_Uniform2ui(GLint location, GLuint v0, GLuint v1);
+
+extern void GLAPIENTRY
+_mesa_Uniform3ui(GLint location, GLuint v0, GLuint v1, GLuint v2);
+
+extern void GLAPIENTRY
+_mesa_Uniform4ui(GLint location, GLuint v0, GLuint v1, GLuint v2, GLuint v3);
+
+extern void GLAPIENTRY
+_mesa_Uniform1uiv(GLint location, GLsizei count, const GLuint *value);
+
+extern void GLAPIENTRY
+_mesa_Uniform2uiv(GLint location, GLsizei count, const GLuint *value);
+
+extern void GLAPIENTRY
+_mesa_Uniform3uiv(GLint location, GLsizei count, const GLuint *value);
+
+extern void GLAPIENTRY
+_mesa_Uniform4uiv(GLint location, GLsizei count, const GLuint *value);
+
+
+extern void GLAPIENTRY
 _mesa_UniformMatrix2fvARB (GLint, GLsizei, GLboolean, const GLfloat *);
 
 extern void GLAPIENTRY

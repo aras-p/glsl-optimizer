@@ -646,6 +646,77 @@ _mesa_Uniform4ivARB(GLint location, GLsizei count, const GLint * value)
 }
 
 
+/** OpenGL 3.0 GLuint-valued functions **/
+void GLAPIENTRY
+_mesa_Uniform1ui(GLint location, GLuint v0)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   ctx->Driver.Uniform(ctx, location, 1, &v0, GL_UNSIGNED_INT);
+}
+
+void GLAPIENTRY
+_mesa_Uniform2ui(GLint location, GLuint v0, GLuint v1)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   GLuint v[2];
+   v[0] = v0;
+   v[1] = v1;
+   ctx->Driver.Uniform(ctx, location, 1, v, GL_UNSIGNED_INT_VEC2);
+}
+
+void GLAPIENTRY
+_mesa_Uniform3ui(GLint location, GLuint v0, GLuint v1, GLuint v2)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   GLuint v[3];
+   v[0] = v0;
+   v[1] = v1;
+   v[2] = v2;
+   ctx->Driver.Uniform(ctx, location, 1, v, GL_UNSIGNED_INT_VEC3);
+}
+
+void GLAPIENTRY
+_mesa_Uniform4ui(GLint location, GLuint v0, GLuint v1, GLuint v2, GLuint v3)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   GLuint v[4];
+   v[0] = v0;
+   v[1] = v1;
+   v[2] = v2;
+   v[3] = v3;
+   ctx->Driver.Uniform(ctx, location, 1, v, GL_UNSIGNED_INT_VEC4);
+}
+
+void GLAPIENTRY
+_mesa_Uniform1uiv(GLint location, GLsizei count, const GLuint *value)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   ctx->Driver.Uniform(ctx, location, count, value, GL_UNSIGNED_INT);
+}
+
+void GLAPIENTRY
+_mesa_Uniform2uiv(GLint location, GLsizei count, const GLuint *value)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   ctx->Driver.Uniform(ctx, location, count, value, GL_UNSIGNED_INT_VEC2);
+}
+
+void GLAPIENTRY
+_mesa_Uniform3uiv(GLint location, GLsizei count, const GLuint *value)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   ctx->Driver.Uniform(ctx, location, count, value, GL_UNSIGNED_INT_VEC3);
+}
+
+void GLAPIENTRY
+_mesa_Uniform4uiv(GLint location, GLsizei count, const GLuint *value)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   ctx->Driver.Uniform(ctx, location, count, value, GL_UNSIGNED_INT_VEC4);
+}
+
+
+
 void GLAPIENTRY
 _mesa_UniformMatrix2fvARB(GLint location, GLsizei count, GLboolean transpose,
                           const GLfloat * value)
