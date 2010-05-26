@@ -28,87 +28,76 @@
 
 #include "glcpp.h"
 
-void
+static void
 yyerror (void *scanner, const char *error);
 
-void
+static void
 _define_object_macro (glcpp_parser_t *parser,
 		      const char *macro,
 		      token_list_t *replacements);
 
-void
+static void
 _define_function_macro (glcpp_parser_t *parser,
 			const char *macro,
 			string_list_t *parameters,
 			token_list_t *replacements);
 
-void
-_expand_object_macro (glcpp_parser_t *parser, const char *identifier);
-
-void
-_expand_function_macro (glcpp_parser_t *parser,
-			const char *identifier,
-			argument_list_t *arguments);
-
-string_list_t *
+static string_list_t *
 _string_list_create (void *ctx);
 
-void
+static void
 _string_list_append_item (string_list_t *list, const char *str);
 
-void
+static void
 _string_list_append_list (string_list_t *list, string_list_t *tail);
 
-void
+static void
 _string_list_push (string_list_t *list, const char *str);
 
-void
+static void
 _string_list_pop (string_list_t *list);
 
-int
+static int
 _string_list_contains (string_list_t *list, const char *member, int *index);
 
-int
+static int
 _string_list_length (string_list_t *list);
 
-argument_list_t *
+static argument_list_t *
 _argument_list_create (void *ctx);
 
-void
+static void
 _argument_list_append (argument_list_t *list, token_list_t *argument);
 
-int
+static int
 _argument_list_length (argument_list_t *list);
 
-token_list_t *
+static token_list_t *
 _argument_list_member_at (argument_list_t *list, int index);
 
 /* Note: This function talloc_steal()s the str pointer. */
-token_t *
+static token_t *
 _token_create_str (void *ctx, int type, char *str);
 
-token_t *
+static token_t *
 _token_create_ival (void *ctx, int type, int ival);
 
-token_list_t *
+static token_list_t *
 _token_list_create (void *ctx);
 
 /* Note: This function add a talloc_reference() to token.
  *
  * You may want to talloc_unlink any current reference if you no
  * longer need it. */
-void
+static void
 _token_list_append (token_list_t *list, token_t *token);
 
-void
+static void
 _token_list_append_list (token_list_t *list, token_list_t *tail);
 
-void
+static void
 _glcpp_parser_print_expanded_token_list (glcpp_parser_t *parser,
 					 token_list_t *list);
-
-static void
-glcpp_parser_pop_expansion (glcpp_parser_t *parser);
 
 static void
 _glcpp_parser_skip_stack_push_if (glcpp_parser_t *parser, int condition);
@@ -591,10 +580,6 @@ glcpp_parser_create (void)
 					   hash_table_string_compare);
 	parser->active = _string_list_create (parser);
 	parser->space_tokens = 1;
-	parser->expansions = NULL;
-
-	parser->just_printed_separator = 1;
-	parser->need_newline = 0;
 
 	parser->skip_stack = NULL;
 
@@ -610,54 +595,11 @@ glcpp_parser_parse (glcpp_parser_t *parser)
 void
 glcpp_parser_destroy (glcpp_parser_t *parser)
 {
-	if (parser->need_newline)
-		printf ("\n");
 	if (parser->skip_stack)
 		fprintf (stderr, "Error: Unterminated #if\n");
 	glcpp_lex_destroy (parser->scanner);
 	hash_table_dtor (parser->defines);
 	talloc_free (parser);
-}
-
-static int
-glcpp_parser_is_expanding (glcpp_parser_t *parser, const char *member)
-{
-	expansion_node_t *node;
-
-	for (node = parser->expansions; node; node = node->next) {
-		if (node->macro &&
-		    strcmp (node->macro->identifier, member) == 0)
-		{
-			return 1;
-		}
-	}
-
-	return 0;
-}
-
-token_class_t
-glcpp_parser_classify_token (glcpp_parser_t *parser,
-			     const char *identifier,
-			     int *parameter_index)
-{
-	macro_t *macro;
-
-	/* Is this token a defined macro? */
-	macro = hash_table_find (parser->defines, identifier);
-
-	if (macro == NULL)
-		return TOKEN_CLASS_IDENTIFIER;
-
-	/* Don't consider this a macro if we are already actively
-	 * expanding this macro. */
-	if (glcpp_parser_is_expanding (parser, identifier))
-		return TOKEN_CLASS_IDENTIFIER_FINALIZED;
-
-	/* Definitely a macro. Just need to check if it's function-like. */
-	if (macro->is_function)
-		return TOKEN_CLASS_FUNC_MACRO;
-	else
-		return TOKEN_CLASS_OBJ_MACRO;
 }
 
 /* Print a non-macro token, or the expansion of an object-like macro.
@@ -933,172 +875,10 @@ _define_function_macro (glcpp_parser_t *parser,
 	hash_table_insert (parser->defines, macro, identifier);
 }
 
-static void
-_glcpp_parser_push_expansion (glcpp_parser_t *parser,
-			      macro_t *macro,
-			      token_node_t *replacements)
-{
-	expansion_node_t *node;
-
-	node = xtalloc (parser, expansion_node_t);
-
-	node->macro = macro;
-	node->replacements = replacements;
-
-	node->next = parser->expansions;
-	parser->expansions = node;
-}
-
-static void
-glcpp_parser_pop_expansion (glcpp_parser_t *parser)
-{
-	expansion_node_t *node;
-
-	node = parser->expansions;
-
-	if (node == NULL) {
-		fprintf (stderr, "Internal error: _expansion_list_pop called on an empty list.\n");
-		exit (1);
-	}
-
-	parser->expansions = node->next;
-
-	talloc_free (node);
-}
-
-void
-_expand_object_macro (glcpp_parser_t *parser, const char *identifier)
-{
-	macro_t *macro;
-
-	macro = hash_table_find (parser->defines, identifier);
-	assert (! macro->is_function);
-	assert (! glcpp_parser_is_expanding (parser, identifier));
-
-	_glcpp_parser_push_expansion (parser, macro, macro->replacements->head);
-}
-
-void
-_expand_function_macro (glcpp_parser_t *parser,
-			const char *identifier,
-			argument_list_t *arguments)
-{
-	macro_t *macro;
-	token_list_t *expanded;
-	token_node_t *i, *j;
-	int parameter_index;
-
-	macro = hash_table_find (parser->defines, identifier);
-	assert (macro->is_function);
-	assert (! glcpp_parser_is_expanding (parser, identifier));
-
-	if (_argument_list_length (arguments) !=
-	    _string_list_length (macro->parameters))
-	{
-		fprintf (stderr,
-			 "Error: macro %s invoked with %d arguments (expected %d)\n",
-			 identifier,
-			 _argument_list_length (arguments),
-			 _string_list_length (macro->parameters));
-		return;
-	}
-
-	expanded = _token_list_create (macro);
-
-	for (i = macro->replacements->head; i; i = i->next) {
-		if (_string_list_contains (macro->parameters,
-					   i->token->value.str,
-					   &parameter_index))
-		{
-			token_list_t *argument;
-			argument = _argument_list_member_at (arguments,
-							     parameter_index);
-			for (j = argument->head; j; j = j->next)
-			{
-				_token_list_append (expanded, j->token);
-			}
-		} else {
-			_token_list_append (expanded, i->token);
-		}
-	}
-
-	_glcpp_parser_push_expansion (parser, macro, expanded->head);
-}
-
 static int
 glcpp_parser_lex (glcpp_parser_t *parser)
 {
-	expansion_node_t *expansion;
-	token_node_t *replacements;
-	int parameter_index;
-	const char *token;
-	token_class_t class;
-
-    /* Who says C can't do efficient tail recursion? */
-    RECURSE:
-
-	expansion = parser->expansions;
-
-	if (expansion == NULL)
-		return glcpp_lex (parser->scanner);
-
-	replacements = expansion->replacements;
-
-	/* Pop expansion when replacements is exhausted. */
-	if (replacements == NULL) {
-		glcpp_parser_pop_expansion (parser);
-		goto RECURSE;
-	}
-
-	expansion->replacements = replacements->next;
-
-	token = replacements->token->value.str;
-
-	/* Implement token pasting. */
-	if (replacements->next && strcmp (replacements->next->token->value.str, "##") == 0) {
-		token_node_t *next_node;
-
-		next_node = replacements->next->next;
-
-		if (next_node == NULL) {
-			fprintf (stderr, "Error: '##' cannot appear at the end of a macro expansion.\n");
-			exit (1);
-		}
-
-		token = xtalloc_asprintf (parser, "%s%s",
-					  token, next_node->token->value.str);
-		expansion->replacements = next_node->next;
-	}
-
-
-	if (strcmp (token, "(") == 0)
-		return '(';
-	else if (strcmp (token, ")") == 0)
-		return ')';
-
-	yylval.str = xtalloc_strdup (parser, token);
-
-	/* Carefully refuse to expand any finalized identifier. */
-	if (replacements->token->type == IDENTIFIER_FINALIZED)
-		return IDENTIFIER_FINALIZED;
-
-	switch (glcpp_parser_classify_token (parser, yylval.str,
-					     &parameter_index))
-	{
-	case TOKEN_CLASS_IDENTIFIER:
-		return IDENTIFIER;
-		break;
-	case TOKEN_CLASS_IDENTIFIER_FINALIZED:
-		return IDENTIFIER_FINALIZED;
-		break;
-	case TOKEN_CLASS_FUNC_MACRO:
-		return FUNC_MACRO;
-		break;
-	default:
-	case TOKEN_CLASS_OBJ_MACRO:
-		return OBJ_MACRO;
-		break;
-	}
+	return glcpp_lex (parser->scanner);
 }
 
 static void

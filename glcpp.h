@@ -127,15 +127,8 @@ struct glcpp_parser {
 	struct hash_table *defines;
 	string_list_t *active;
 	int space_tokens;
-	expansion_node_t *expansions;
-	int just_printed_separator;
-	int need_newline;
 	skip_node_t *skip_stack;
 };
-
-void
-glcpp_parser_push_expansion_argument (glcpp_parser_t *parser,
-				      int argument_index);
 
 glcpp_parser_t *
 glcpp_parser_create (void);
