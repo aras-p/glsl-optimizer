@@ -148,12 +148,14 @@ static void r300_prepare_for_rendering(struct r300_context *r300,
                                        struct pipe_resource *index_buffer,
                                        unsigned cs_dwords,
                                        unsigned aos_offset,
-                                       int index_bias)
+                                       int index_bias,
+                                       unsigned *end_cs_dwords)
 {
     boolean flushed = FALSE;
     boolean first_draw = flags & PREP_FIRST_DRAW;
     boolean emit_aos = flags & PREP_EMIT_AOS;
     boolean emit_aos_swtcl = flags & PREP_EMIT_AOS_SWTCL;
+    unsigned end_dwords = 0;
 
     /* Stencil ref fallback. */
     if (r300->stencil_ref_bf_fallback) {
@@ -175,7 +177,9 @@ static void r300_prepare_for_rendering(struct r300_context *r300,
     }
 
     /* Emitted in flush. */
-    cs_dwords += 26; /* emit_query_end */
+    end_dwords += 26; /* emit_query_end */
+
+    cs_dwords += end_dwords;
 
     /* Reserve requested CS space. */
     if (!r300_check_cs(r300, cs_dwords)) {
@@ -193,6 +197,9 @@ static void r300_prepare_for_rendering(struct r300_context *r300,
         if (emit_aos_swtcl)
             r300_emit_aos_swtcl(r300, flags & PREP_INDEXED);
     }
+
+    if (end_cs_dwords)
+        *end_cs_dwords = end_dwords;
 }
 
 static boolean immd_is_good_idea(struct r300_context *r300,
@@ -294,7 +301,7 @@ static void r500_emit_draw_arrays_immediate(struct r300_context *r300,
 
     dwords = 9 + count * vertex_size;
 
-    r300_prepare_for_rendering(r300, PREP_FIRST_DRAW, NULL, dwords, 0, 0);
+    r300_prepare_for_rendering(r300, PREP_FIRST_DRAW, NULL, dwords, 0, 0, NULL);
 
     BEGIN_CS(dwords);
     OUT_CS_REG(R300_GA_COLOR_CONTROL,
@@ -626,7 +633,7 @@ static void r300_draw_range_elements(struct pipe_context* pipe,
     /* 15 dwords for emit_draw_elements */
     r300_prepare_for_rendering(r300,
         PREP_FIRST_DRAW | PREP_VALIDATE_VBOS | PREP_EMIT_AOS | PREP_INDEXED,
-        indexBuffer, 15, 0, indexBias);
+        indexBuffer, 15, 0, indexBias, NULL);
 
     u_upload_flush(r300->upload_vb);
     u_upload_flush(r300->upload_ib);
@@ -647,7 +654,7 @@ static void r300_draw_range_elements(struct pipe_context* pipe,
             if (count) {
                 r300_prepare_for_rendering(r300,
                     PREP_VALIDATE_VBOS | PREP_EMIT_AOS | PREP_INDEXED,
-                    indexBuffer, 15, 0, indexBias);
+                    indexBuffer, 15, 0, indexBias, NULL);
             }
         } while (count);
     }
@@ -694,7 +701,7 @@ static void r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
     } else {
         /* 9 spare dwords for emit_draw_arrays. */
         r300_prepare_for_rendering(r300, PREP_FIRST_DRAW | PREP_VALIDATE_VBOS | PREP_EMIT_AOS,
-                               NULL, 9, start, 0);
+                               NULL, 9, start, 0, NULL);
 
         if (alt_num_verts || count <= 65535) {
             r300->emit_draw_arrays(r300, mode, count);
@@ -710,7 +717,7 @@ static void r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
                 if (count) {
                     r300_prepare_for_rendering(r300,
                         PREP_VALIDATE_VBOS | PREP_EMIT_AOS, NULL, 9,
-                        start, 0);
+                        start, 0, NULL);
                 }
             } while (count);
         }
@@ -953,7 +960,7 @@ static void r500_render_draw_arrays(struct vbuf_render* render,
     (void) i; (void) ptr;
 
     r300_prepare_for_rendering(r300, PREP_FIRST_DRAW | PREP_EMIT_AOS_SWTCL,
-                               NULL, dwords, 0, 0);
+                               NULL, dwords, 0, 0, NULL);
 
     DBG(r300, DBG_DRAW, "r300: Doing vbuf render, count %d\n", count);
 
@@ -991,30 +998,53 @@ static void r500_render_draw_elements(struct vbuf_render* render,
     struct r300_render* r300render = r300_render(render);
     struct r300_context* r300 = r300render->r300;
     int i;
-    unsigned dwords = 6 + (count+1)/2;
+    unsigned end_cs_dwords;
     unsigned max_index = (r300render->vbo_size - r300render->vbo_offset) /
                          (r300render->r300->vertex_info.size * 4) - 1;
+    unsigned short_count;
+    struct r300_cs_info cs_info;
 
     CS_LOCALS(r300);
 
+    /* Reserve at least 256 dwords.
+     *
+     * Below we manage the CS space manually because there may be more
+     * indices than it can fit in CS. */
     r300_prepare_for_rendering(r300,
         PREP_FIRST_DRAW | PREP_EMIT_AOS_SWTCL | PREP_INDEXED,
-        NULL, dwords, 0, 0);
+        NULL, 256, 0, 0, &end_cs_dwords);
 
-    BEGIN_CS(dwords);
-    OUT_CS_REG(R300_GA_COLOR_CONTROL,
-            r300_provoking_vertex_fixes(r300, r300render->prim));
-    OUT_CS_REG(R300_VAP_VF_MAX_VTX_INDX, max_index);
-    OUT_CS_PKT3(R300_PACKET3_3D_DRAW_INDX_2, (count+1)/2);
-    OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (count << 16) |
-           r300render->hwprim);
-    for (i = 0; i < count-1; i += 2) {
-        OUT_CS(indices[i+1] << 16 | indices[i]);
+    while (count) {
+        r300->rws->get_cs_info(r300->rws, &cs_info);
+
+        short_count = MIN2(count, (cs_info.free - end_cs_dwords - 6) * 2);
+
+        BEGIN_CS(6 + (short_count+1)/2);
+        OUT_CS_REG(R300_GA_COLOR_CONTROL,
+                r300_provoking_vertex_fixes(r300, r300render->prim));
+        OUT_CS_REG(R300_VAP_VF_MAX_VTX_INDX, max_index);
+        OUT_CS_PKT3(R300_PACKET3_3D_DRAW_INDX_2, (short_count+1)/2);
+        OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (short_count << 16) |
+               r300render->hwprim);
+        for (i = 0; i < short_count-1; i += 2) {
+            OUT_CS(indices[i+1] << 16 | indices[i]);
+        }
+        if (short_count % 2) {
+            OUT_CS(indices[short_count-1]);
+        }
+        END_CS;
+
+        /* OK now subtract the emitted indices and see if we need to emit
+         * another draw packet. */
+        indices += short_count;
+        count -= short_count;
+
+        if (count) {
+            r300_prepare_for_rendering(r300,
+                PREP_EMIT_AOS_SWTCL | PREP_INDEXED,
+                NULL, 256, 0, 0, &end_cs_dwords);
+        }
     }
-    if (count % 2) {
-        OUT_CS(indices[count-1]);
-    }
-    END_CS;
 }
 
 static void r300_render_draw_arrays(struct vbuf_render* render,
