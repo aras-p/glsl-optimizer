@@ -60,6 +60,7 @@ public:
    virtual void visit(ir_function_signature *);
    virtual void visit(ir_function *);
    virtual void visit(ir_expression *);
+   virtual void visit(ir_texture *);
    virtual void visit(ir_swizzle *);
    virtual void visit(ir_dereference_variable *);
    virtual void visit(ir_dereference_array *);

@@ -143,6 +143,55 @@ void ir_print_visitor::visit(ir_expression *ir)
 }
 
 
+void ir_print_visitor::visit(ir_texture *ir)
+{
+   printf("(%s ", ir->opcode_string());
+
+   ir->sampler->accept(this);
+   printf(" ");
+
+   ir->coordinate->accept(this);
+
+   printf(" (%d %d %d) ", ir->offsets[0], ir->offsets[1], ir->offsets[2]);
+
+   if (ir->op != ir_txf) {
+      if (ir->projector)
+	 ir->projector->accept(this);
+      else
+	 printf("1");
+
+      if (ir->shadow_comparitor) {
+	 printf(" ");
+	 ir->shadow_comparitor->accept(this);
+      } else {
+	 printf(" ()");
+      }
+   }
+
+   printf(" ");
+   switch (ir->op)
+   {
+   case ir_tex:
+      break;
+   case ir_txb:
+      ir->lod_info.bias->accept(this);
+      break;
+   case ir_txl:
+   case ir_txf:
+      ir->lod_info.lod->accept(this);
+      break;
+   case ir_txd:
+      printf("(");
+      ir->lod_info.grad.dPdx->accept(this);
+      printf(" ");
+      ir->lod_info.grad.dPdy->accept(this);
+      printf(")");
+      break;
+   };
+   printf(")");
+}
+
+
 void ir_print_visitor::visit(ir_swizzle *ir)
 {
    const unsigned swiz[4] = {
