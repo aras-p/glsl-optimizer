@@ -807,7 +807,6 @@ _glcpp_parser_expand_function_onto (glcpp_parser_t *parser,
 	argument_list_t *arguments;
 	function_status_t status;
 	token_list_t *substituted;
-	token_node_t *i, *j;
 	int parameter_index;
 
 	node = *node_ret;
@@ -851,10 +850,11 @@ _glcpp_parser_expand_function_onto (glcpp_parser_t *parser,
 	/* Perform argument substitution on the replacement list. */
 	substituted = _token_list_create (arguments);
 
-	for (i = macro->replacements->head; i; i = i->next) {
-		if (i->token->type == IDENTIFIER &&
+	for (node = macro->replacements->head; node; node = node->next)
+	{
+		if (node->token->type == IDENTIFIER &&
 		    _string_list_contains (macro->parameters,
-					   i->token->value.str,
+					   node->token->value.str,
 					   &parameter_index))
 		{
 			token_list_t *argument;
@@ -866,7 +866,7 @@ _glcpp_parser_expand_function_onto (glcpp_parser_t *parser,
 							      argument,
 							      substituted);
 		} else {
-			_token_list_append (substituted, i->token);
+			_token_list_append (substituted, node->token);
 		}
 	}
 
