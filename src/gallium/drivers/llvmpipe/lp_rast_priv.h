@@ -205,6 +205,7 @@ lp_rast_shade_quads_all( struct lp_rasterizer_task *task,
 {
    struct lp_rasterizer *rast = task->rast;
    const struct lp_rast_state *state = task->current_state;
+   struct lp_fragment_shader_variant *variant = state->variant;
    uint8_t *color[PIPE_MAX_COLOR_BUFS];
    void *depth;
    unsigned i;
@@ -216,7 +217,7 @@ lp_rast_shade_quads_all( struct lp_rasterizer_task *task,
    depth = lp_rast_get_depth_block_pointer(rast, x, y);
 
    /* run shader on 4x4 block */
-   state->jit_function[RAST_WHOLE]( &state->jit_context,
+   variant->jit_function[RAST_WHOLE]( &state->jit_context,
                                     x, y,
                                     inputs->facing,
                                     inputs->a0,

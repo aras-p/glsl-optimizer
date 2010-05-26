@@ -1260,10 +1260,7 @@ llvmpipe_update_fs(struct llvmpipe_context *lp)
       LP_COUNT_ADD(nr_llvm_compiles, 2);  /* emit vs. omit in/out test */
    }
 
-   lp_setup_set_fs_functions(lp->setup, 
-                             variant->jit_function[RAST_WHOLE],
-                             variant->jit_function[RAST_EDGE_TEST],
-                             variant->opaque);
+   lp_setup_set_fs_variant(lp->setup, variant);
 }
 
 

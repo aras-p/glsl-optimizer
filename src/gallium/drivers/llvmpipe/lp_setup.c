@@ -415,18 +415,14 @@ lp_setup_set_fs_inputs( struct lp_setup_context *setup,
 }
 
 void
-lp_setup_set_fs_functions( struct lp_setup_context *setup,
-                           lp_jit_frag_func jit_function0,
-                           lp_jit_frag_func jit_function1,
-                           boolean opaque )
+lp_setup_set_fs_variant( struct lp_setup_context *setup,
+                         struct lp_fragment_shader_variant *variant)
 {
    LP_DBG(DEBUG_SETUP, "%s %p\n", __FUNCTION__,
-          cast_lp_jit_frag_func_to_voidptr(jit_function0));
+          variant);
    /* FIXME: reference count */
 
-   setup->fs.current.jit_function[0] = jit_function0;
-   setup->fs.current.jit_function[1] = jit_function1;
-   setup->fs.current.opaque = opaque;
+   setup->fs.current.variant = variant;
    setup->dirty |= LP_SETUP_NEW_FS;
 }
 
@@ -625,7 +621,7 @@ lp_setup_update_state( struct lp_setup_context *setup )
 
    scene = lp_setup_get_current_scene(setup);
 
-   assert(setup->fs.current.jit_function);
+   assert(setup->fs.current.variant);
 
    /* Some of the 'draw' pipeline stages may have changed some driver state.
     * Make sure we've processed those state changes before anything else.

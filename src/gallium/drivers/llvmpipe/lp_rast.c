@@ -413,6 +413,7 @@ lp_rast_shade_tile(struct lp_rasterizer_task *task,
    struct lp_rasterizer *rast = task->rast;
    const struct lp_rast_state *state = task->current_state;
    const struct lp_rast_shader_inputs *inputs = arg.shade_tile;
+   struct lp_fragment_shader_variant *variant = state->variant;
    const unsigned tile_x = task->x, tile_y = task->y;
    unsigned x, y;
 
@@ -434,7 +435,7 @@ lp_rast_shade_tile(struct lp_rasterizer_task *task,
          depth = lp_rast_get_depth_block_pointer(rast, tile_x + x, tile_y + y);
 
          /* run shader on 4x4 block */
-         state->jit_function[RAST_WHOLE]( &state->jit_context,
+         variant->jit_function[RAST_WHOLE]( &state->jit_context,
                                           tile_x + x, tile_y + y,
                                           inputs->facing,
                                           inputs->a0,
@@ -461,6 +462,7 @@ void lp_rast_shade_quads( struct lp_rasterizer_task *task,
                           int32_t c1, int32_t c2, int32_t c3)
 {
    const struct lp_rast_state *state = task->current_state;
+   struct lp_fragment_shader_variant *variant = state->variant;
    struct lp_rasterizer *rast = task->rast;
    uint8_t *color[PIPE_MAX_COLOR_BUFS];
    void *depth;
@@ -492,7 +494,7 @@ void lp_rast_shade_quads( struct lp_rasterizer_task *task,
    assert(lp_check_alignment(inputs->step[2], 16));
 
    /* run shader on 4x4 block */
-   state->jit_function[RAST_EDGE_TEST]( &state->jit_context,
+   variant->jit_function[RAST_EDGE_TEST]( &state->jit_context,
                                         x, y,
                                         inputs->facing,
                                         inputs->a0,

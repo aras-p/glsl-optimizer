@@ -58,7 +58,7 @@ struct pipe_surface;
 struct pipe_blend_color;
 struct pipe_screen;
 struct pipe_framebuffer_state;
-struct lp_fragment_shader;
+struct lp_fragment_shader_variant;
 struct lp_jit_context;
 struct llvmpipe_query;
 
@@ -100,10 +100,8 @@ lp_setup_set_fs_inputs( struct lp_setup_context *setup,
                         unsigned nr );
 
 void
-lp_setup_set_fs_functions( struct lp_setup_context *setup,
-                           lp_jit_frag_func jit_function0,
-                           lp_jit_frag_func jit_function1,
-                           boolean opaque );
+lp_setup_set_fs_variant( struct lp_setup_context *setup,
+                         struct lp_fragment_shader_variant *variant );
 
 void
 lp_setup_set_fs_constants(struct lp_setup_context *setup,

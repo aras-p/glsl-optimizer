@@ -34,6 +34,7 @@
 #include "lp_perf.h"
 #include "lp_setup_context.h"
 #include "lp_rast.h"
+#include "lp_state_fs.h"
 
 #define NUM_CHANNELS 4
 
@@ -579,7 +580,7 @@ do_triangle_ccw(struct lp_setup_context *setup,
                /* triangle covers the whole tile- shade whole tile */
                LP_COUNT(nr_fully_covered_64);
 	       in = TRUE;
-	       if(setup->fs.current.opaque) {
+	       if (setup->fs.current.variant->opaque) {
 	          lp_scene_bin_reset( scene, x, y );
 	          lp_scene_bin_command( scene, x, y,
 	                                lp_rast_set_state,
