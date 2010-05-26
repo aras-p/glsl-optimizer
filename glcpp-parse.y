@@ -132,9 +132,6 @@ glcpp_parser_lex (glcpp_parser_t *parser);
 %type <token> preprocessing_token
 %type <token_list> pp_tokens replacement_list text_line
 
-	/* Stale stuff just to allow code to compile. */
-%token IDENTIFIER_FINALIZED FUNC_MACRO OBJ_MACRO
-
 %%
 
 input:
