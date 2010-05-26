@@ -654,16 +654,16 @@ _glcpp_parser_print_expanded_token (glcpp_parser_t *parser,
 		return 0;
 	}
 
-	/* For function-like macros return 1 for further processing. */
-	if (macro->is_function) {
-		return 1;
-	}
-
 	/* Finally, don't expand this macro if we're already actively
 	 * expanding it, (to avoid infinite recursion). */
 	if (_string_list_contains (parser->active, identifier, NULL)) {
 		printf ("%s", identifier);
 		return 0;
+	}
+
+	/* For function-like macros return 1 for further processing. */
+	if (macro->is_function) {
+		return 1;
 	}
 
 	_string_list_push (parser->active, identifier);
