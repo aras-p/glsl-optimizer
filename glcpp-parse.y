@@ -199,7 +199,7 @@ control_line:
 		_define_function_macro (parser, $2, $4, $6);
 	}
 |	HASH_UNDEF IDENTIFIER NEWLINE {
-		string_list_t *macro = hash_table_find (parser->defines, $2);
+		macro_t *macro = hash_table_find (parser->defines, $2);
 		if (macro) {
 			/* XXX: Need hash table to support a real way
 			 * to remove an element rather than prefixing
@@ -222,12 +222,12 @@ control_line:
 		glcpp_parser_lex_from (parser, expanded);
 	}
 |	HASH_IFDEF IDENTIFIER NEWLINE {
-		string_list_t *macro = hash_table_find (parser->defines, $2);
+		macro_t *macro = hash_table_find (parser->defines, $2);
 		talloc_free ($2);
 		_glcpp_parser_skip_stack_push_if (parser, macro != NULL);
 	}
 |	HASH_IFNDEF IDENTIFIER NEWLINE {
-		string_list_t *macro = hash_table_find (parser->defines, $2);
+		macro_t *macro = hash_table_find (parser->defines, $2);
 		talloc_free ($2);
 		_glcpp_parser_skip_stack_push_if (parser, macro == NULL);
 	}
@@ -889,7 +889,7 @@ _glcpp_parser_evaluate_defined (glcpp_parser_t *parser,
 				token_list_t *list)
 {
 	token_node_t *node, *next;
-	string_list_t *macro;
+	macro_t *macro;
 
 	if (list == NULL)
 		return;
