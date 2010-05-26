@@ -676,8 +676,17 @@ _glcpp_parser_expand_token_onto (glcpp_parser_t *parser,
 
 	/* Finally, don't expand this macro if we're already actively
 	 * expanding it, (to avoid infinite recursion). */
-	if (_string_list_contains (parser->active, identifier, NULL)) {
-		_token_list_append (result, token);
+	if (_string_list_contains (parser->active, identifier, NULL))
+	{
+		/* We change the token type here from IDENTIFIER to
+		 * OTHER to prevent any future expansion of this
+		 * unexpanded token. */
+		char *str;
+		token_t *new_token;
+
+		str = xtalloc_strdup (result, token->value.str);
+		new_token = _token_create_str (result, OTHER, str);
+		_token_list_append (result, new_token);
 		return 0;
 	}
 
