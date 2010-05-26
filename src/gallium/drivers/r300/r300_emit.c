@@ -864,7 +864,7 @@ void r300_emit_aos(struct r300_context* r300, unsigned offset, boolean indexed)
     END_CS;
 }
 
-void r300_emit_vertex_buffer(struct r300_context* r300)
+void r300_emit_aos_swtcl(struct r300_context *r300)
 {
     CS_LOCALS(r300);
 
@@ -1168,7 +1168,6 @@ unsigned r300_get_num_dirty_dwords(struct r300_context *r300)
 /* Emit all dirty state. */
 void r300_emit_dirty_state(struct r300_context* r300)
 {
-    struct r300_screen* r300screen = r300->screen;
     struct r300_atom* atom;
 
     foreach(atom, &r300->atom_list) {
@@ -1179,11 +1178,6 @@ void r300_emit_dirty_state(struct r300_context* r300)
             }
             atom->dirty = FALSE;
         }
-    }
-
-    /* Emit the VBO for SWTCL. */
-    if (!r300screen->caps.has_tcl) {
-        r300_emit_vertex_buffer(r300);
     }
 
     r300->dirty_hw++;

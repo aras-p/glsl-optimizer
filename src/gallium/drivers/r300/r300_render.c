@@ -136,7 +136,8 @@ enum r300_prepare_flags {
     PREP_FIRST_DRAW     = (1 << 0),
     PREP_VALIDATE_VBOS  = (1 << 1),
     PREP_EMIT_AOS       = (1 << 2),
-    PREP_INDEXED        = (1 << 3)
+    PREP_EMIT_AOS_SWTCL = (1 << 3),
+    PREP_INDEXED        = (1 << 4)
 };
 
 /* Check if the requested number of dwords is available in the CS and
@@ -152,6 +153,7 @@ static void r300_prepare_for_rendering(struct r300_context *r300,
     boolean flushed = FALSE;
     boolean first_draw = flags & PREP_FIRST_DRAW;
     boolean emit_aos = flags & PREP_EMIT_AOS;
+    boolean emit_aos_swtcl = flags & PREP_EMIT_AOS_SWTCL;
 
     /* Stencil ref fallback. */
     if (r300->stencil_ref_bf_fallback) {
@@ -167,6 +169,9 @@ static void r300_prepare_for_rendering(struct r300_context *r300,
 
         if (emit_aos)
             cs_dwords += 55; /* emit_aos */
+
+        if (emit_aos_swtcl)
+            cs_dwords += 7; /* emit_aos_swtcl */
     }
 
     /* Emitted in flush. */
@@ -185,6 +190,8 @@ static void r300_prepare_for_rendering(struct r300_context *r300,
         r500_emit_index_offset(r300, index_bias);
         if (emit_aos)
             r300_emit_aos(r300, aos_offset, flags & PREP_INDEXED);
+        if (emit_aos_swtcl)
+            r300_emit_aos_swtcl(r300);
     }
 }
 
@@ -945,7 +952,8 @@ static void r500_render_draw_arrays(struct vbuf_render* render,
 
     (void) i; (void) ptr;
 
-    r300_prepare_for_rendering(r300, PREP_FIRST_DRAW, NULL, dwords, 0, 0);
+    r300_prepare_for_rendering(r300, PREP_FIRST_DRAW | PREP_EMIT_AOS_SWTCL,
+                               NULL, dwords, 0, 0);
 
     DBG(r300, DBG_DRAW, "r300: Doing vbuf render, count %d\n", count);
 
@@ -989,7 +997,8 @@ static void r500_render_draw_elements(struct vbuf_render* render,
 
     CS_LOCALS(r300);
 
-    r300_prepare_for_rendering(r300, PREP_FIRST_DRAW, NULL, dwords, 0, 0);
+    r300_prepare_for_rendering(r300, PREP_FIRST_DRAW | PREP_EMIT_AOS_SWTCL,
+                               NULL, dwords, 0, 0);
 
     BEGIN_CS(dwords);
     OUT_CS_REG(R300_GA_COLOR_CONTROL,
