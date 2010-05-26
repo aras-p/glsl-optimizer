@@ -817,50 +817,42 @@ read_constant(_mesa_glsl_parse_state *st, s_list *list)
    return NULL; // should not be reached
 }
 
-static ir_variable *
-read_dereferencable(_mesa_glsl_parse_state *st, s_expression *expr)
-{
-   // Read the subject of a dereference - either a variable name or a swizzle
-   s_symbol *var_name = SX_AS_SYMBOL(expr);
-   if (var_name != NULL) {
-      ir_variable *var = st->symbols->get_variable(var_name->value());
-      if (var == NULL) {
-	 ir_read_error(st, expr, "undeclared variable: %s", var_name->value());
-      }
-      return var;
-   }
-
-   ir_read_error(st, expr, "expected variable name or (swiz ...)");
-   return NULL;
-}
-
 static ir_dereference *
 read_var_ref(_mesa_glsl_parse_state *st, s_list *list)
 {
    if (list->length() != 2) {
-      ir_read_error(st, list, "expected (var_ref <variable name or (swiz)>)");
+      ir_read_error(st, list, "expected (var_ref <variable name>)");
       return NULL;
    }
-   s_expression *subj_expr = (s_expression*) list->subexpressions.head->next;
-   ir_variable *subject = read_dereferencable(st, subj_expr);
-   if (subject == NULL)
+   s_symbol *var_name = SX_AS_SYMBOL(list->subexpressions.head->next);
+   if (var_name == NULL) {
+      ir_read_error(st, list, "expected (var_ref <variable name>)");
       return NULL;
-   return new ir_dereference_variable(subject);
+   }
+
+   ir_variable *var = st->symbols->get_variable(var_name->value());
+   if (var == NULL) {
+      ir_read_error(st, list, "undeclared variable: %s", var_name->value());
+      return NULL;
+   }
+
+   return new ir_dereference_variable(var);
 }
 
 static ir_dereference *
 read_array_ref(_mesa_glsl_parse_state *st, s_list *list)
 {
    if (list->length() != 3) {
-      ir_read_error(st, list, "expected (array_ref <variable name or (swiz)> "
-			  "<rvalue>)");
+      ir_read_error(st, list, "expected (array_ref <rvalue> <index>)");
       return NULL;
    }
 
    s_expression *subj_expr = (s_expression*) list->subexpressions.head->next;
-   ir_variable *subject = read_dereferencable(st, subj_expr);
-   if (subject == NULL)
+   ir_rvalue *subject = read_rvalue(st, subj_expr);
+   if (subject == NULL) {
+      ir_read_error(st, NULL, "when reading the subject of an array_ref");
       return NULL;
+   }
 
    s_expression *idx_expr = (s_expression*) subj_expr->next;
    ir_rvalue *idx = read_rvalue(st, idx_expr);
