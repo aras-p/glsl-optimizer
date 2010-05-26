@@ -743,7 +743,6 @@ _arguments_parse (argument_list_t *arguments, token_node_t **node_ret)
 	token_list_t *argument;
 	token_node_t *node = *node_ret, *last;
 	int paren_count;
-	int arg_count;
 
 	last = node;
 	node = node->next;
@@ -757,9 +756,7 @@ _arguments_parse (argument_list_t *arguments, token_node_t **node_ret)
 
 	argument = NULL;
 
-	paren_count = 0;
-	arg_count = 0;
-	do {
+	for (paren_count = 0; node; last = node, node = node->next) {
 		if (node->token->type == '(')
 		{
 			paren_count++;
@@ -767,6 +764,11 @@ _arguments_parse (argument_list_t *arguments, token_node_t **node_ret)
 		else if (node->token->type == ')')
 		{
 			paren_count--;
+			if (paren_count == 0) {
+				last = node;
+				node = node->next;
+				break;
+			}
 		}
 		else if (node->token->type == ',' &&
 			 paren_count == 1)
@@ -775,16 +777,16 @@ _arguments_parse (argument_list_t *arguments, token_node_t **node_ret)
 		}
 		else {
 			if (argument == NULL) {
+				/* Don't treat initial whitespace as
+				 * part of the arguement. */
+				if (node->token->type == SPACE)
+					continue;
 				argument = _token_list_create (arguments);
 				_argument_list_append (arguments, argument);
 			}
 			_token_list_append (argument, node->token);
 		}
-
-		last = node;
-		node = node->next;
-
-	} while (node && paren_count);
+	}
 
 	if (node && paren_count)
 		return FUNCTION_UNBALANCED_PARENTHESES;
