@@ -39,15 +39,13 @@
 #include "ir_expression_flattening.h"
 #include "glsl_types.h"
 
-class ir_expression_flattening_visitor : public ir_visitor {
+class ir_expression_flattening_visitor : public ir_hierarchical_visitor {
 public:
    ir_expression_flattening_visitor(ir_instruction *base_ir,
 				    bool (*predicate)(ir_instruction *ir))
    {
       this->base_ir = base_ir;
       this->predicate = predicate;
-
-      /* empty */
    }
 
    virtual ~ir_expression_flattening_visitor()
@@ -55,30 +53,9 @@ public:
       /* empty */
    }
 
-   /**
-    * \name Visit methods
-    *
-    * As typical for the visitor pattern, there must be one \c visit method for
-    * each concrete subclass of \c ir_instruction.  Virtual base classes within
-    * the hierarchy should not have \c visit methods.
-    */
-   /*@{*/
-   virtual void visit(ir_variable *);
-   virtual void visit(ir_loop *);
-   virtual void visit(ir_loop_jump *);
-   virtual void visit(ir_function_signature *);
-   virtual void visit(ir_function *);
-   virtual void visit(ir_expression *);
-   virtual void visit(ir_swizzle *);
-   virtual void visit(ir_dereference_variable *);
-   virtual void visit(ir_dereference_array *);
-   virtual void visit(ir_dereference_record *);
-   virtual void visit(ir_assignment *);
-   virtual void visit(ir_constant *);
-   virtual void visit(ir_call *);
-   virtual void visit(ir_return *);
-   virtual void visit(ir_if *);
-   /*@}*/
+   virtual ir_visitor_status visit_enter(ir_call *);
+   virtual ir_visitor_status visit_enter(ir_return *);
+   virtual ir_visitor_status visit_leave(ir_expression *);
 
    bool (*predicate)(ir_instruction *ir);
    ir_instruction *base_ir;
@@ -96,45 +73,12 @@ do_expression_flattening(exec_list *instructions,
    }
 }
 
-void
-ir_expression_flattening_visitor::visit(ir_variable *ir)
-{
-   (void) ir;
-}
-
-void
-ir_expression_flattening_visitor::visit(ir_loop *ir)
-{
-   do_expression_flattening(&ir->body_instructions, this->predicate);
-}
-
-void
-ir_expression_flattening_visitor::visit(ir_loop_jump *ir)
-{
-   (void) ir;
-}
-
-
-void
-ir_expression_flattening_visitor::visit(ir_function_signature *ir)
-{
-   do_expression_flattening(&ir->body, this->predicate);
-}
-
-void
-ir_expression_flattening_visitor::visit(ir_function *ir)
-{
-   (void) ir;
-}
-
-void
-ir_expression_flattening_visitor::visit(ir_expression *ir)
+ir_visitor_status
+ir_expression_flattening_visitor::visit_leave(ir_expression *ir)
 {
    unsigned int operand;
 
    for (operand = 0; operand < ir->get_num_operands(); operand++) {
-      ir->operands[operand]->accept(this);
-
       /* If the operand matches the predicate, then we'll assign its
        * value to a temporary and deref the temporary as the operand.
        */
@@ -153,68 +97,28 @@ ir_expression_flattening_visitor::visit(ir_expression *ir)
 	 ir->operands[operand] = new ir_dereference_variable(var);
       }
    }
+
+   return visit_continue;
 }
 
 
-void
-ir_expression_flattening_visitor::visit(ir_swizzle *ir)
+ir_visitor_status
+ir_expression_flattening_visitor::visit_enter(ir_call *ir)
 {
-   ir->val->accept(this);
-}
-
-
-void
-ir_expression_flattening_visitor::visit(ir_dereference_variable *ir)
-{
-   ir->var->accept(this);
-}
-
-void
-ir_expression_flattening_visitor::visit(ir_dereference_array *ir)
-{
-   ir->array_index->accept(this);
-   ir->array->accept(this);
-}
-
-void
-ir_expression_flattening_visitor::visit(ir_dereference_record *ir)
-{
-   ir->record->accept(this);
-}
-
-void
-ir_expression_flattening_visitor::visit(ir_assignment *ir)
-{
-   ir->rhs->accept(this);
-}
-
-
-void
-ir_expression_flattening_visitor::visit(ir_constant *ir)
-{
+   /* FINISHME: Why not process the call parameters? (Same behavior as original
+    * FINISHME: code.)
+    */
    (void) ir;
+   return visit_continue_with_parent;
 }
 
 
-void
-ir_expression_flattening_visitor::visit(ir_call *ir)
+ir_visitor_status
+ir_expression_flattening_visitor::visit_enter(ir_return *ir)
 {
+   /* FINISHME: Why not process the return value? (Same behavior as original
+    * FINISHME: code.)
+    */
    (void) ir;
-}
-
-
-void
-ir_expression_flattening_visitor::visit(ir_return *ir)
-{
-   (void) ir;
-}
-
-
-void
-ir_expression_flattening_visitor::visit(ir_if *ir)
-{
-   ir->condition->accept(this);
-
-   do_expression_flattening(&ir->then_instructions, this->predicate);
-   do_expression_flattening(&ir->else_instructions, this->predicate);
+   return visit_continue_with_parent;
 }
