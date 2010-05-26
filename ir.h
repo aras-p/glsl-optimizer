@@ -775,6 +775,16 @@ public:
       /* empty */
    }
 
+   /**
+    * Return a string representing the ir_texture_opcode.
+    */
+   const char *opcode_string();
+
+   /**
+    * Do a reverse-lookup to translate a string into an ir_texture_opcode.
+    */
+   static ir_texture_opcode get_opcode(const char *);
+
    enum ir_texture_opcode op;
 
    /** Sampler to use for the texture access. */

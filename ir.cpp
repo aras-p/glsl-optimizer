@@ -303,6 +303,27 @@ ir_dereference::is_lvalue()
 }
 
 
+const char *tex_opcode_strs[] = { "tex", "txb", "txl", "txd", "txf" };
+
+const char *ir_texture::opcode_string()
+{
+   assert((unsigned int) op <=
+	  sizeof(tex_opcode_strs) / sizeof(tex_opcode_strs[0]));
+   return tex_opcode_strs[op];
+}
+
+ir_texture_opcode
+ir_texture::get_opcode(const char *str)
+{
+   const int count = sizeof(tex_opcode_strs) / sizeof(tex_opcode_strs[0]);
+   for (int op = 0; op < count; op++) {
+      if (strcmp(str, tex_opcode_strs[op]) == 0)
+	 return (ir_texture_opcode) op;
+   }
+   return (ir_texture_opcode) -1;
+}
+
+
 ir_swizzle::ir_swizzle(ir_rvalue *val, unsigned x, unsigned y, unsigned z,
 		       unsigned w, unsigned count)
    : val(val)
