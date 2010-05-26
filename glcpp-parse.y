@@ -405,9 +405,6 @@ _argument_list_append (argument_list_t *list, token_list_t *argument)
 {
 	argument_node_t *node;
 
-	if (argument == NULL || argument->head == NULL)
-		return;
-
 	node = xtalloc (list, argument_node_t);
 	node->argument = argument;
 
@@ -741,8 +738,9 @@ typedef enum function_status
  *	Macro name is not followed by a balanced set of parentheses.
  */
 static function_status_t
-_find_arguments (token_node_t **node_ret, argument_list_t **arguments)
+_arguments_parse (argument_list_t *arguments, token_node_t **node_ret)
 {
+	token_list_t *argument;
 	token_node_t *node = *node_ret, *last;
 	int paren_count;
 	int arg_count;
@@ -756,6 +754,8 @@ _find_arguments (token_node_t **node_ret, argument_list_t **arguments)
 
 	if (node == NULL || node->token->type != '(')
 		return FUNCTION_NOT_A_FUNCTION;
+
+	argument = NULL;
 
 	paren_count = 0;
 	arg_count = 0;
@@ -771,7 +771,14 @@ _find_arguments (token_node_t **node_ret, argument_list_t **arguments)
 		else if (node->token->type == ',' &&
 			 paren_count == 1)
 		{
-			arg_count++;
+			argument = NULL;
+		}
+		else {
+			if (argument == NULL) {
+				argument = _token_list_create (arguments);
+				_argument_list_append (arguments, argument);
+			}
+			_token_list_append (argument, node->token);
 		}
 
 		last = node;
@@ -799,6 +806,9 @@ _glcpp_parser_print_expanded_function (glcpp_parser_t *parser,
 	const char *identifier;
 	argument_list_t *arguments;
 	function_status_t status;
+	token_list_t *expanded;
+	token_node_t *i, *j;
+	int parameter_index;
 
 	node = *node_ret;
 	identifier = node->token->value.str;
@@ -807,7 +817,8 @@ _glcpp_parser_print_expanded_function (glcpp_parser_t *parser,
 
 	assert (macro->is_function);
 
-	status = _find_arguments (node_ret, &arguments);
+	arguments = _argument_list_create (parser);
+	status = _arguments_parse (arguments, node_ret);
 
 	switch (status) {
 	case FUNCTION_STATUS_SUCCESS:
@@ -821,10 +832,48 @@ _glcpp_parser_print_expanded_function (glcpp_parser_t *parser,
 		exit (1);
 	}
 
+	if (macro->replacements == NULL) {
+		talloc_free (arguments);
+		return;
+	}
+
+
+	if (_argument_list_length (arguments) !=
+	    _string_list_length (macro->parameters))
+	{
+		fprintf (stderr,
+			 "Error: macro %s invoked with %d arguments (expected %d)\n",
+			 identifier,
+			 _argument_list_length (arguments),
+			 _string_list_length (macro->parameters));
+		return;
+	}
+
+	expanded = _token_list_create (arguments);
+
+	for (i = macro->replacements->head; i; i = i->next) {
+		if (i->token->type == IDENTIFIER &&
+		    _string_list_contains (macro->parameters,
+					   i->token->value.str,
+					   &parameter_index))
+		{
+			token_list_t *argument;
+			argument = _argument_list_member_at (arguments,
+							     parameter_index);
+			for (j = argument->head; j; j = j->next)
+			{
+				_token_list_append (expanded, j->token);
+			}
+		} else {
+			_token_list_append (expanded, i->token);
+		}
+	}
+
 	_string_list_push (parser->active, identifier);
-	_glcpp_parser_print_expanded_token_list (parser,
-						 macro->replacements);
+	_glcpp_parser_print_expanded_token_list (parser, expanded);
 	_string_list_pop (parser->active);
+
+	talloc_free (arguments);
 }
 
 void
