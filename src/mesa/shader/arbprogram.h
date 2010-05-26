@@ -58,6 +58,14 @@ _mesa_GetVertexAttribivARB(GLuint index, GLenum pname, GLint *params);
 
 
 extern void GLAPIENTRY
+_mesa_GetVertexAttribIiv(GLuint index, GLenum pname, GLint *params);
+
+
+extern void GLAPIENTRY
+_mesa_GetVertexAttribIuiv(GLuint index, GLenum pname, GLuint *params);
+
+
+extern void GLAPIENTRY
 _mesa_GetVertexAttribPointervARB(GLuint index, GLenum pname, GLvoid **pointer);
 
 
