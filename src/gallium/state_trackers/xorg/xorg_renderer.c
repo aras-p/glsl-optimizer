@@ -8,7 +8,6 @@
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "util/u_sampler.h"
-#include "util/u_surface.h"
 
 #include "util/u_inlines.h"
 
