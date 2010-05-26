@@ -54,12 +54,10 @@
 #include "lp_bld_type.h"
 #include "lp_bld_const.h"
 #include "lp_bld_intr.h"
-#include "lp_bld_init.h" /* for lp_build_engine */
 #include "lp_bld_logic.h"
 #include "lp_bld_pack.h"
 #include "lp_bld_debug.h"
 #include "lp_bld_arit.h"
-#include "lp_bld_printf.h"
 
 
 /**
