@@ -600,6 +600,24 @@ static void transform_r300_vertex_fix_LIT(struct radeon_compiler* c,
 	inst->U.I.SrcReg[0] = srcreg(RC_FILE_TEMPORARY, tempreg);
 }
 
+static void transform_r300_vertex_SGT(struct radeon_compiler* c,
+	struct rc_instruction* inst)
+{
+	/* x > y  <==>  -x < -y */
+	inst->U.I.Opcode = RC_OPCODE_SLT;
+	inst->U.I.SrcReg[0].Negate ^= RC_MASK_XYZW;
+	inst->U.I.SrcReg[1].Negate ^= RC_MASK_XYZW;
+}
+
+static void transform_r300_vertex_SLE(struct radeon_compiler* c,
+	struct rc_instruction* inst)
+{
+	/* x <= y  <==>  -x >= -y */
+	inst->U.I.Opcode = RC_OPCODE_SGE;
+	inst->U.I.SrcReg[0].Negate ^= RC_MASK_XYZW;
+	inst->U.I.SrcReg[1].Negate ^= RC_MASK_XYZW;
+}
+
 /**
  * For use with radeonLocalTransform, this transforms non-native ALU
  * instructions of the r300 up to r500 vertex engine.
@@ -621,6 +639,8 @@ int r300_transform_vertex_alu(
 	case RC_OPCODE_SUB: transform_SUB(c, inst); return 1;
 	case RC_OPCODE_SWZ: transform_SWZ(c, inst); return 1;
 	case RC_OPCODE_XPD: transform_XPD(c, inst); return 1;
+	case RC_OPCODE_SLE: transform_r300_vertex_SLE(c, inst); return 1;
+	case RC_OPCODE_SGT: transform_r300_vertex_SGT(c, inst); return 1;
 	default:
 		return 0;
 	}
