@@ -15,5 +15,3 @@ failure_3
 #else
 success_3
 #endif
-
-
