@@ -224,7 +224,6 @@ ir_constant::ir_constant(bool b)
 
 
 ir_dereference_variable::ir_dereference_variable(ir_variable *var)
-   : ir_dereference(ir_reference_variable)
 {
    this->var = var;
    this->type = (var != NULL) ? var->type : glsl_type::error_type;
@@ -233,7 +232,6 @@ ir_dereference_variable::ir_dereference_variable(ir_variable *var)
 
 ir_dereference_array::ir_dereference_array(ir_rvalue *value,
 					   ir_rvalue *array_index)
-   : ir_dereference(ir_reference_array)
 {
    this->array_index = array_index;
    this->set_array(value);
@@ -242,7 +240,6 @@ ir_dereference_array::ir_dereference_array(ir_rvalue *value,
 
 ir_dereference_array::ir_dereference_array(ir_variable *var,
 					   ir_rvalue *array_index)
-   : ir_dereference(ir_reference_array)
 {
    this->array_index = array_index;
    this->set_array(new ir_dereference_variable(var));
@@ -271,7 +268,6 @@ ir_dereference_array::set_array(ir_rvalue *value)
 
 ir_dereference_record::ir_dereference_record(ir_rvalue *value,
 					     const char *field)
-   : ir_dereference(ir_reference_record)
 {
    this->record = value;
    this->field = field;
@@ -282,7 +278,6 @@ ir_dereference_record::ir_dereference_record(ir_rvalue *value,
 
 ir_dereference_record::ir_dereference_record(ir_variable *var,
 					     const char *field)
-   : ir_dereference(ir_reference_record)
 {
    this->record = new ir_dereference_variable(var);
    this->field = field;

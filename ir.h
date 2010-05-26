@@ -814,19 +814,6 @@ public:
     * Get the variable that is ultimately referenced by an r-value
     */
    virtual ir_variable *variable_referenced() = 0;
-
-   enum ir_deref_mode {
-      ir_reference_variable,
-      ir_reference_array,
-      ir_reference_record
-   } mode;
-
-protected:
-   ir_dereference(ir_deref_mode mode)
-      : mode(mode)
-   {
-      /* empty */
-   }
 };
 
 
