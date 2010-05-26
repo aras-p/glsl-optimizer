@@ -37,38 +37,6 @@ extern void GLAPIENTRY
 _mesa_GenPrograms(GLsizei n, GLuint *ids);
 
 
-extern void GLAPIENTRY
-_mesa_EnableVertexAttribArrayARB(GLuint index);
-
-
-extern void GLAPIENTRY
-_mesa_DisableVertexAttribArrayARB(GLuint index);
-
-
-extern void GLAPIENTRY
-_mesa_GetVertexAttribdvARB(GLuint index, GLenum pname, GLdouble *params);
-
-
-extern void GLAPIENTRY
-_mesa_GetVertexAttribfvARB(GLuint index, GLenum pname, GLfloat *params);
-
-
-extern void GLAPIENTRY
-_mesa_GetVertexAttribivARB(GLuint index, GLenum pname, GLint *params);
-
-
-extern void GLAPIENTRY
-_mesa_GetVertexAttribIiv(GLuint index, GLenum pname, GLint *params);
-
-
-extern void GLAPIENTRY
-_mesa_GetVertexAttribIuiv(GLuint index, GLenum pname, GLuint *params);
-
-
-extern void GLAPIENTRY
-_mesa_GetVertexAttribPointervARB(GLuint index, GLenum pname, GLvoid **pointer);
-
-
 extern GLboolean GLAPIENTRY
 _mesa_IsProgramARB(GLuint id);
 
