@@ -77,6 +77,7 @@ static void r300_flush(struct pipe_context* pipe,
     /* Create a new fence. */
     if (rfence) {
         *rfence = CALLOC_STRUCT(r300_fence);
+        pipe_reference_init(&(*rfence)->reference, 1);
         (*rfence)->ctx = r300;
     }
 }
