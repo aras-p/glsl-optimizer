@@ -97,6 +97,10 @@ static void
 _token_list_append_list (token_list_t *list, token_list_t *tail);
 
 static void
+_glcpp_parser_evaluate_defined (glcpp_parser_t *parser,
+				token_list_t *list);
+
+static void
 _glcpp_parser_print_expanded_token_list (glcpp_parser_t *parser,
 					 token_list_t *list);
 
@@ -120,14 +124,17 @@ _glcpp_parser_skip_stack_pop (glcpp_parser_t *parser);
 static int
 glcpp_parser_lex (glcpp_parser_t *parser);
 
+static void
+glcpp_parser_lex_from (glcpp_parser_t *parser, token_list_t *list);
+
 %}
 
 %parse-param {glcpp_parser_t *parser}
 %lex-param {glcpp_parser_t *parser}
 
-%token DEFINED HASH HASH_DEFINE_FUNC HASH_DEFINE_OBJ HASH_ELIF HASH_ELSE HASH_ENDIF HASH_IF HASH_IFDEF HASH_IFNDEF HASH_UNDEF IDENTIFIER INTEGER NEWLINE OTHER SPACE
+%token DEFINED ELIF_EXPANDED HASH HASH_DEFINE_FUNC HASH_DEFINE_OBJ HASH_ELIF HASH_ELSE HASH_ENDIF HASH_IF HASH_IFDEF HASH_IFNDEF HASH_UNDEF IDENTIFIER IF_EXPANDED INTEGER NEWLINE OTHER SPACE
 %token PASTE
-%type <ival> expression INTEGER punctuator SPACE
+%type <ival> expression INTEGER operator SPACE
 %type <str> IDENTIFIER OTHER
 %type <string_list> identifier_list
 %type <token> preprocessing_token
@@ -148,26 +155,37 @@ glcpp_parser_lex (glcpp_parser_t *parser);
 
 input:
 	/* empty */
-|	input line {
+|	input line
+;
+
+line:
+	control_line {
 		if (parser->skip_stack == NULL ||
 		    parser->skip_stack->type == SKIP_NO_SKIP)
 		{
 			printf ("\n");
 		}
 	}
-;
-
-line:
-	control_line
 |	text_line {
 		if (parser->skip_stack == NULL ||
 		    parser->skip_stack->type == SKIP_NO_SKIP)
 		{
 			_glcpp_parser_print_expanded_token_list (parser, $1);
+			printf ("\n");
 		}
 		talloc_free ($1);
 	}
+|	expanded_line
 |	HASH non_directive
+;
+
+expanded_line:
+	IF_EXPANDED expression NEWLINE {
+		_glcpp_parser_skip_stack_push_if (parser, $2);
+	}
+|	ELIF_EXPANDED expression NEWLINE {
+		_glcpp_parser_skip_stack_change_if (parser, "elif", $2);
+	}
 ;
 
 control_line:
@@ -191,8 +209,17 @@ control_line:
 		}
 		talloc_free ($2);
 	}
-|	HASH_IF expression NEWLINE {
-		_glcpp_parser_skip_stack_push_if (parser, $2);
+|	HASH_IF pp_tokens NEWLINE {
+		token_list_t *expanded;
+		token_t *token;
+
+		expanded = _token_list_create (parser);
+		token = _token_create_ival (parser, IF_EXPANDED, IF_EXPANDED);
+		_token_list_append (expanded, token);
+		talloc_unlink (parser, token);
+		_glcpp_parser_evaluate_defined (parser, $2);
+		_glcpp_parser_expand_token_list_onto (parser, $2, expanded);
+		glcpp_parser_lex_from (parser, expanded);
 	}
 |	HASH_IFDEF IDENTIFIER NEWLINE {
 		string_list_t *macro = hash_table_find (parser->defines, $2);
@@ -204,8 +231,17 @@ control_line:
 		talloc_free ($2);
 		_glcpp_parser_skip_stack_push_if (parser, macro == NULL);
 	}
-|	HASH_ELIF expression NEWLINE {
-		_glcpp_parser_skip_stack_change_if (parser, "#elif", $2);
+|	HASH_ELIF pp_tokens NEWLINE {
+		token_list_t *expanded;
+		token_t *token;
+
+		expanded = _token_list_create (parser);
+		token = _token_create_ival (parser, ELIF_EXPANDED, ELIF_EXPANDED);
+		_token_list_append (expanded, token);
+		talloc_unlink (parser, token);
+		_glcpp_parser_evaluate_defined (parser, $2);
+		_glcpp_parser_expand_token_list_onto (parser, $2, expanded);
+		glcpp_parser_lex_from (parser, expanded);
 	}
 |	HASH_ELSE NEWLINE {
 		_glcpp_parser_skip_stack_change_if (parser, "else", 1);
@@ -286,14 +322,6 @@ expression:
 |	'+' expression %prec UNARY {
 		$$ = + $2;
 	}
-|	DEFINED IDENTIFIER %prec UNARY {
-		string_list_t *macro = hash_table_find (parser->defines, $2);
-		talloc_free ($2);
-		if (macro)
-			$$ = 1;
-		else
-			$$ = 0;
-	}
 |	'(' expression ')' {
 		$$ = $2;
 	}
@@ -347,7 +375,7 @@ preprocessing_token:
 |	INTEGER {
 		$$ = _token_create_ival (parser, INTEGER, $1);
 	}
-|	punctuator {
+|	operator {
 		$$ = _token_create_ival (parser, $1, $1);
 	}
 |	OTHER {
@@ -358,7 +386,7 @@ preprocessing_token:
 	}
 ;
 
-punctuator:
+operator:
 	'['			{ $$ = '['; }
 |	']'			{ $$ = ']'; }
 |	'('			{ $$ = '('; }
@@ -389,6 +417,7 @@ punctuator:
 |	';'			{ $$ = ';'; }
 |	','			{ $$ = ','; }
 |	PASTE			{ $$ = PASTE; }
+|	DEFINED			{ $$ = DEFINED; }
 ;
 
 %%
@@ -830,6 +859,9 @@ glcpp_parser_create (void)
 
 	parser->skip_stack = NULL;
 
+	parser->lex_from_list = NULL;
+	parser->lex_from_node = NULL;
+
 	return parser;
 }
 
@@ -848,6 +880,39 @@ glcpp_parser_destroy (glcpp_parser_t *parser)
 	hash_table_dtor (parser->defines);
 	talloc_free (parser);
 }
+
+/* Replace any occurences of DEFINED tokens in 'list' with either a
+ * '0' or '1' INTEGER token depending on whether the next token in the
+ * list is defined or not. */
+static void
+_glcpp_parser_evaluate_defined (glcpp_parser_t *parser,
+				token_list_t *list)
+{
+	token_node_t *node, *next;
+	string_list_t *macro;
+
+	if (list == NULL)
+		return;
+
+	for (node = list->head; node; node = node->next) {
+		if (node->token->type != DEFINED)
+			continue;
+		next = node->next;
+		while (next && next->token->type == SPACE)
+			next = next->next;
+		if (next == NULL || next->token->type != IDENTIFIER) {
+			fprintf (stderr, "Error: operator \"defined\" requires an identifier\n");
+			exit (1);
+		}
+		macro = hash_table_find (parser->defines,
+					 next->token->value.str);
+
+		node->token->type = INTEGER;
+		node->token->value.ival = (macro != NULL);
+		node->next = next->next;
+	}
+}
+	
 
 /* Appends onto 'expansion' a non-macro token or the expansion of an
  * object-like macro.
@@ -1206,7 +1271,53 @@ _define_function_macro (glcpp_parser_t *parser,
 static int
 glcpp_parser_lex (glcpp_parser_t *parser)
 {
-	return glcpp_lex (parser->scanner);
+	token_node_t *node;
+	int ret;
+
+	if (parser->lex_from_list == NULL)
+		return glcpp_lex (parser->scanner);
+
+	node = parser->lex_from_node;
+
+	if (node == NULL) {
+		talloc_free (parser->lex_from_list);
+		parser->lex_from_list = NULL;
+		return NEWLINE;
+	}
+
+	yylval = node->token->value;
+	ret = node->token->type;
+
+	parser->lex_from_node = node->next;
+
+	return ret;
+}
+
+static void
+glcpp_parser_lex_from (glcpp_parser_t *parser, token_list_t *list)
+{
+	token_node_t *node;
+
+	assert (parser->lex_from_list == NULL);
+
+	/* Copy list, eliminating any space tokens. */
+	parser->lex_from_list = _token_list_create (parser);
+
+	for (node = list->head; node; node = node->next) {
+		if (node->token->type == SPACE)
+			continue;
+		_token_list_append (parser->lex_from_list, node->token);
+	}
+
+	talloc_free (list);
+
+	parser->lex_from_node = parser->lex_from_list->head;
+
+	/* It's possible the list consisted of nothing but whitespace. */
+	if (parser->lex_from_node == NULL) {
+		talloc_free (parser->lex_from_list);
+		parser->lex_from_list = NULL;
+	}
 }
 
 static void
