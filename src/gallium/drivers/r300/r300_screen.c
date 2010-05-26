@@ -275,8 +275,17 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
         return FALSE;
     }
 
-   if (sample_count > 1)
-      return FALSE;
+    switch (sample_count) {
+        case 0:
+        case 1:
+        case 2:
+        case 3:
+        case 4:
+        case 6:
+            break;
+        default:
+            return FALSE;
+    }
 
     /* Check sampler format support. */
     if ((usage & PIPE_BIND_SAMPLER_VIEW) &&

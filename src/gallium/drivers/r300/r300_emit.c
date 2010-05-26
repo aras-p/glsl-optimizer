@@ -475,22 +475,60 @@ void r300_emit_query_end(struct r300_context* r300)
 
 void r300_emit_rs_state(struct r300_context* r300, unsigned size, void* state)
 {
-    struct r300_rs_state* rs = (struct r300_rs_state*)state;
+    struct r300_rs_state* rs = state;
+    struct pipe_framebuffer_state* fb = r300->fb_state.state;
     float scale, offset;
+    unsigned mspos0, mspos1, aa_config;
     CS_LOCALS(r300);
 
     BEGIN_CS(size);
     OUT_CS_REG(R300_VAP_CNTL_STATUS, rs->vap_control_status);
 
-    OUT_CS_REG(R300_GB_AA_CONFIG, rs->antialiasing_config);
-
-    OUT_CS_REG(R300_VAP_CNTL_STATUS, rs->vap_control_status);
+    /* Multisampling. Depends on framebuffer sample count. */
     if (r300->rws->get_value(r300->rws, R300_VID_DRM_2_3_0)) {
-        OUT_CS_REG_SEQ(R300_GB_MSPOS0, 2);
-        OUT_CS(rs->multisample_position_0);
-        OUT_CS(rs->multisample_position_1);
+        if (fb->nr_cbufs && fb->cbufs[0]->texture->nr_samples > 1) {
+            aa_config = R300_GB_AA_CONFIG_AA_ENABLE;
+            /* Subsample placement. These may not be optimal. */
+            switch (fb->cbufs[0]->texture->nr_samples) {
+                case 2:
+                    aa_config |= R300_GB_AA_CONFIG_NUM_AA_SUBSAMPLES_2;
+                    mspos0 = 0x33996633;
+                    mspos1 = 0x6666663;
+                    break;
+                case 3:
+                    aa_config |= R300_GB_AA_CONFIG_NUM_AA_SUBSAMPLES_3;
+                    mspos0 = 0x33936933;
+                    mspos1 = 0x6666663;
+                    break;
+                case 4:
+                    aa_config |= R300_GB_AA_CONFIG_NUM_AA_SUBSAMPLES_4;
+                    mspos0 = 0x33939933;
+                    mspos1 = 0x3966663;
+                    break;
+                case 6:
+                    aa_config |= R300_GB_AA_CONFIG_NUM_AA_SUBSAMPLES_6;
+                    mspos0 = 0x22a2aa22;
+                    mspos1 = 0x2a65672;
+                    break;
+                default:
+                    debug_printf("r300: Bad number of multisamples!\n");
+                    break;
+            }
+
+            OUT_CS_REG_SEQ(R300_GB_MSPOS0, 2);
+            OUT_CS(mspos0);
+            OUT_CS(mspos1);
+
+            OUT_CS_REG(R300_GB_AA_CONFIG, aa_config);
+        } else {
+            OUT_CS_REG_SEQ(R300_GB_MSPOS0, 2);
+            OUT_CS(rs->multisample_position_0);
+            OUT_CS(rs->multisample_position_1);
+
+            OUT_CS_REG(R300_GB_AA_CONFIG, rs->antialiasing_config);
+        }
     }
-    OUT_CS_REG(R300_GB_AA_CONFIG, rs->antialiasing_config);
+
     OUT_CS_REG(R300_GA_POINT_SIZE, rs->point_size);
     OUT_CS_REG_SEQ(R300_GA_POINT_MINMAX, 2);
     OUT_CS(rs->point_minmax);

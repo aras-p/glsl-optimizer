@@ -802,6 +802,10 @@ static void r300_setup_miptree(struct r300_screen* screen,
         nblocksy = r300_texture_get_nblocksy(tex, i);
         layer_size = stride * nblocksy;
 
+        if (base->nr_samples) {
+            layer_size *= base->nr_samples;
+        }
+
         if (base->target == PIPE_TEXTURE_CUBE)
             size = layer_size * 6;
         else
