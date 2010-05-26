@@ -27,6 +27,7 @@
 #include "context.h"
 #include "shaders.h"
 #include "shader/shader_api.h"
+#include "main/dispatch.h"
 
 
 /** Define this to enable shader substitution (see below) */
@@ -48,7 +49,7 @@
 
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_AttachObjectARB(GLhandleARB program, GLhandleARB shader)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -56,7 +57,7 @@ _mesa_AttachObjectARB(GLhandleARB program, GLhandleARB shader)
 }
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_AttachShader(GLuint program, GLuint shader)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -64,7 +65,7 @@ _mesa_AttachShader(GLuint program, GLuint shader)
 }
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_BindAttribLocationARB(GLhandleARB program, GLuint index,
                             const GLcharARB *name)
 {
@@ -73,7 +74,7 @@ _mesa_BindAttribLocationARB(GLhandleARB program, GLuint index,
 }
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_CompileShaderARB(GLhandleARB shaderObj)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -81,7 +82,7 @@ _mesa_CompileShaderARB(GLhandleARB shaderObj)
 }
 
 
-GLuint GLAPIENTRY
+static GLuint GLAPIENTRY
 _mesa_CreateShader(GLenum type)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -89,7 +90,7 @@ _mesa_CreateShader(GLenum type)
 }
 
 
-GLhandleARB GLAPIENTRY
+static GLhandleARB GLAPIENTRY
 _mesa_CreateShaderObjectARB(GLenum type)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -97,7 +98,7 @@ _mesa_CreateShaderObjectARB(GLenum type)
 }
 
 
-GLuint GLAPIENTRY
+static GLuint GLAPIENTRY
 _mesa_CreateProgram(void)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -105,7 +106,7 @@ _mesa_CreateProgram(void)
 }
 
 
-GLhandleARB GLAPIENTRY
+static GLhandleARB GLAPIENTRY
 _mesa_CreateProgramObjectARB(void)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -113,7 +114,7 @@ _mesa_CreateProgramObjectARB(void)
 }
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_DeleteObjectARB(GLhandleARB obj)
 {
    if (obj) {
@@ -131,7 +132,7 @@ _mesa_DeleteObjectARB(GLhandleARB obj)
 }
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_DeleteProgram(GLuint name)
 {
    if (name) {
@@ -141,7 +142,7 @@ _mesa_DeleteProgram(GLuint name)
 }
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_DeleteShader(GLuint name)
 {
    if (name) {
@@ -151,7 +152,7 @@ _mesa_DeleteShader(GLuint name)
 }
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_DetachObjectARB(GLhandleARB program, GLhandleARB shader)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -159,7 +160,7 @@ _mesa_DetachObjectARB(GLhandleARB program, GLhandleARB shader)
 }
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_DetachShader(GLuint program, GLuint shader)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -167,7 +168,7 @@ _mesa_DetachShader(GLuint program, GLuint shader)
 }
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_GetActiveAttribARB(GLhandleARB program, GLuint index,
                          GLsizei maxLength, GLsizei * length, GLint * size,
                          GLenum * type, GLcharARB * name)
@@ -178,7 +179,7 @@ _mesa_GetActiveAttribARB(GLhandleARB program, GLuint index,
 }
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_GetActiveUniformARB(GLhandleARB program, GLuint index,
                           GLsizei maxLength, GLsizei * length, GLint * size,
                           GLenum * type, GLcharARB * name)
@@ -189,7 +190,7 @@ _mesa_GetActiveUniformARB(GLhandleARB program, GLuint index,
 }
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_GetAttachedObjectsARB(GLhandleARB container, GLsizei maxCount,
                             GLsizei * count, GLhandleARB * obj)
 {
@@ -198,7 +199,7 @@ _mesa_GetAttachedObjectsARB(GLhandleARB container, GLsizei maxCount,
 }
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_GetAttachedShaders(GLuint program, GLsizei maxCount,
                          GLsizei *count, GLuint *obj)
 {
@@ -207,7 +208,7 @@ _mesa_GetAttachedShaders(GLuint program, GLsizei maxCount,
 }
 
 
-GLint GLAPIENTRY
+static GLint GLAPIENTRY
 _mesa_GetAttribLocationARB(GLhandleARB program, const GLcharARB * name)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -215,7 +216,7 @@ _mesa_GetAttribLocationARB(GLhandleARB program, const GLcharARB * name)
 }
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_GetInfoLogARB(GLhandleARB object, GLsizei maxLength, GLsizei * length,
                     GLcharARB * infoLog)
 {
@@ -233,7 +234,7 @@ _mesa_GetInfoLogARB(GLhandleARB object, GLsizei maxLength, GLsizei * length,
 }
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_GetObjectParameterivARB(GLhandleARB object, GLenum pname, GLint *params)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -260,7 +261,7 @@ _mesa_GetObjectParameterivARB(GLhandleARB object, GLenum pname, GLint *params)
 }
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_GetObjectParameterfvARB(GLhandleARB object, GLenum pname,
                               GLfloat *params)
 {
@@ -270,7 +271,7 @@ _mesa_GetObjectParameterfvARB(GLhandleARB object, GLenum pname,
 }
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_GetProgramiv(GLuint program, GLenum pname, GLint *params)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -278,7 +279,7 @@ _mesa_GetProgramiv(GLuint program, GLenum pname, GLint *params)
 }
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_GetShaderiv(GLuint shader, GLenum pname, GLint *params)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -286,7 +287,7 @@ _mesa_GetShaderiv(GLuint shader, GLenum pname, GLint *params)
 }
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_GetProgramInfoLog(GLuint program, GLsizei bufSize,
                         GLsizei *length, GLchar *infoLog)
 {
@@ -295,7 +296,7 @@ _mesa_GetProgramInfoLog(GLuint program, GLsizei bufSize,
 }
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_GetShaderInfoLog(GLuint shader, GLsizei bufSize,
                        GLsizei *length, GLchar *infoLog)
 {
@@ -304,7 +305,7 @@ _mesa_GetShaderInfoLog(GLuint shader, GLsizei bufSize,
 }
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_GetShaderSourceARB(GLhandleARB shader, GLsizei maxLength,
                          GLsizei *length, GLcharARB *sourceOut)
 {
@@ -313,7 +314,7 @@ _mesa_GetShaderSourceARB(GLhandleARB shader, GLsizei maxLength,
 }
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_GetUniformfvARB(GLhandleARB program, GLint location, GLfloat * params)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -321,7 +322,7 @@ _mesa_GetUniformfvARB(GLhandleARB program, GLint location, GLfloat * params)
 }
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_GetUniformivARB(GLhandleARB program, GLint location, GLint * params)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -340,7 +341,7 @@ _mesa_GetUniformLocation(GLuint program, const GLcharARB *name)
 #endif
 
 
-GLhandleARB GLAPIENTRY
+static GLhandleARB GLAPIENTRY
 _mesa_GetHandleARB(GLenum pname)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -348,7 +349,7 @@ _mesa_GetHandleARB(GLenum pname)
 }
 
 
-GLint GLAPIENTRY
+static GLint GLAPIENTRY
 _mesa_GetUniformLocationARB(GLhandleARB programObj, const GLcharARB *name)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -356,7 +357,7 @@ _mesa_GetUniformLocationARB(GLhandleARB programObj, const GLcharARB *name)
 }
 
 
-GLboolean GLAPIENTRY
+static GLboolean GLAPIENTRY
 _mesa_IsProgram(GLuint name)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -364,7 +365,7 @@ _mesa_IsProgram(GLuint name)
 }
 
 
-GLboolean GLAPIENTRY
+static GLboolean GLAPIENTRY
 _mesa_IsShader(GLuint name)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -372,7 +373,7 @@ _mesa_IsShader(GLuint name)
 }
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_LinkProgramARB(GLhandleARB programObj)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -415,7 +416,7 @@ _mesa_read_shader(const char *fname)
  * Basically, concatenate the source code strings into one long string
  * and pass it to ctx->Driver.ShaderSource().
  */
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_ShaderSourceARB(GLhandleARB shaderObj, GLsizei count,
                       const GLcharARB ** string, const GLint * length)
 {
@@ -508,14 +509,14 @@ _mesa_ShaderSourceARB(GLhandleARB shaderObj, GLsizei count,
 }
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_Uniform1fARB(GLint location, GLfloat v0)
 {
    GET_CURRENT_CONTEXT(ctx);
    ctx->Driver.Uniform(ctx, location, 1, &v0, GL_FLOAT);
 }
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_Uniform2fARB(GLint location, GLfloat v0, GLfloat v1)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -525,7 +526,7 @@ _mesa_Uniform2fARB(GLint location, GLfloat v0, GLfloat v1)
    ctx->Driver.Uniform(ctx, location, 1, v, GL_FLOAT_VEC2);
 }
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_Uniform3fARB(GLint location, GLfloat v0, GLfloat v1, GLfloat v2)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -536,7 +537,7 @@ _mesa_Uniform3fARB(GLint location, GLfloat v0, GLfloat v1, GLfloat v2)
    ctx->Driver.Uniform(ctx, location, 1, v, GL_FLOAT_VEC3);
 }
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_Uniform4fARB(GLint location, GLfloat v0, GLfloat v1, GLfloat v2,
                    GLfloat v3)
 {
@@ -549,14 +550,14 @@ _mesa_Uniform4fARB(GLint location, GLfloat v0, GLfloat v1, GLfloat v2,
    ctx->Driver.Uniform(ctx, location, 1, v, GL_FLOAT_VEC4);
 }
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_Uniform1iARB(GLint location, GLint v0)
 {
    GET_CURRENT_CONTEXT(ctx);
    ctx->Driver.Uniform(ctx, location, 1, &v0, GL_INT);
 }
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_Uniform2iARB(GLint location, GLint v0, GLint v1)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -566,7 +567,7 @@ _mesa_Uniform2iARB(GLint location, GLint v0, GLint v1)
    ctx->Driver.Uniform(ctx, location, 1, v, GL_INT_VEC2);
 }
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_Uniform3iARB(GLint location, GLint v0, GLint v1, GLint v2)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -577,7 +578,7 @@ _mesa_Uniform3iARB(GLint location, GLint v0, GLint v1, GLint v2)
    ctx->Driver.Uniform(ctx, location, 1, v, GL_INT_VEC3);
 }
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_Uniform4iARB(GLint location, GLint v0, GLint v1, GLint v2, GLint v3)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -589,56 +590,56 @@ _mesa_Uniform4iARB(GLint location, GLint v0, GLint v1, GLint v2, GLint v3)
    ctx->Driver.Uniform(ctx, location, 1, v, GL_INT_VEC4);
 }
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_Uniform1fvARB(GLint location, GLsizei count, const GLfloat * value)
 {
    GET_CURRENT_CONTEXT(ctx);
    ctx->Driver.Uniform(ctx, location, count, value, GL_FLOAT);
 }
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_Uniform2fvARB(GLint location, GLsizei count, const GLfloat * value)
 {
    GET_CURRENT_CONTEXT(ctx);
    ctx->Driver.Uniform(ctx, location, count, value, GL_FLOAT_VEC2);
 }
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_Uniform3fvARB(GLint location, GLsizei count, const GLfloat * value)
 {
    GET_CURRENT_CONTEXT(ctx);
    ctx->Driver.Uniform(ctx, location, count, value, GL_FLOAT_VEC3);
 }
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_Uniform4fvARB(GLint location, GLsizei count, const GLfloat * value)
 {
    GET_CURRENT_CONTEXT(ctx);
    ctx->Driver.Uniform(ctx, location, count, value, GL_FLOAT_VEC4);
 }
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_Uniform1ivARB(GLint location, GLsizei count, const GLint * value)
 {
    GET_CURRENT_CONTEXT(ctx);
    ctx->Driver.Uniform(ctx, location, count, value, GL_INT);
 }
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_Uniform2ivARB(GLint location, GLsizei count, const GLint * value)
 {
    GET_CURRENT_CONTEXT(ctx);
    ctx->Driver.Uniform(ctx, location, count, value, GL_INT_VEC2);
 }
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_Uniform3ivARB(GLint location, GLsizei count, const GLint * value)
 {
    GET_CURRENT_CONTEXT(ctx);
    ctx->Driver.Uniform(ctx, location, count, value, GL_INT_VEC3);
 }
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_Uniform4ivARB(GLint location, GLsizei count, const GLint * value)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -647,14 +648,14 @@ _mesa_Uniform4ivARB(GLint location, GLsizei count, const GLint * value)
 
 
 /** OpenGL 3.0 GLuint-valued functions **/
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_Uniform1ui(GLint location, GLuint v0)
 {
    GET_CURRENT_CONTEXT(ctx);
    ctx->Driver.Uniform(ctx, location, 1, &v0, GL_UNSIGNED_INT);
 }
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_Uniform2ui(GLint location, GLuint v0, GLuint v1)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -664,7 +665,7 @@ _mesa_Uniform2ui(GLint location, GLuint v0, GLuint v1)
    ctx->Driver.Uniform(ctx, location, 1, v, GL_UNSIGNED_INT_VEC2);
 }
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_Uniform3ui(GLint location, GLuint v0, GLuint v1, GLuint v2)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -675,7 +676,7 @@ _mesa_Uniform3ui(GLint location, GLuint v0, GLuint v1, GLuint v2)
    ctx->Driver.Uniform(ctx, location, 1, v, GL_UNSIGNED_INT_VEC3);
 }
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_Uniform4ui(GLint location, GLuint v0, GLuint v1, GLuint v2, GLuint v3)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -687,28 +688,28 @@ _mesa_Uniform4ui(GLint location, GLuint v0, GLuint v1, GLuint v2, GLuint v3)
    ctx->Driver.Uniform(ctx, location, 1, v, GL_UNSIGNED_INT_VEC4);
 }
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_Uniform1uiv(GLint location, GLsizei count, const GLuint *value)
 {
    GET_CURRENT_CONTEXT(ctx);
    ctx->Driver.Uniform(ctx, location, count, value, GL_UNSIGNED_INT);
 }
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_Uniform2uiv(GLint location, GLsizei count, const GLuint *value)
 {
    GET_CURRENT_CONTEXT(ctx);
    ctx->Driver.Uniform(ctx, location, count, value, GL_UNSIGNED_INT_VEC2);
 }
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_Uniform3uiv(GLint location, GLsizei count, const GLuint *value)
 {
    GET_CURRENT_CONTEXT(ctx);
    ctx->Driver.Uniform(ctx, location, count, value, GL_UNSIGNED_INT_VEC3);
 }
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_Uniform4uiv(GLint location, GLsizei count, const GLuint *value)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -717,7 +718,7 @@ _mesa_Uniform4uiv(GLint location, GLsizei count, const GLuint *value)
 
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_UniformMatrix2fvARB(GLint location, GLsizei count, GLboolean transpose,
                           const GLfloat * value)
 {
@@ -725,7 +726,7 @@ _mesa_UniformMatrix2fvARB(GLint location, GLsizei count, GLboolean transpose,
    ctx->Driver.UniformMatrix(ctx, 2, 2, location, count, transpose, value);
 }
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_UniformMatrix3fvARB(GLint location, GLsizei count, GLboolean transpose,
                           const GLfloat * value)
 {
@@ -733,7 +734,7 @@ _mesa_UniformMatrix3fvARB(GLint location, GLsizei count, GLboolean transpose,
    ctx->Driver.UniformMatrix(ctx, 3, 3, location, count, transpose, value);
 }
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_UniformMatrix4fvARB(GLint location, GLsizei count, GLboolean transpose,
                           const GLfloat * value)
 {
@@ -745,7 +746,7 @@ _mesa_UniformMatrix4fvARB(GLint location, GLsizei count, GLboolean transpose,
 /**
  * Non-square UniformMatrix are OpenGL 2.1
  */
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_UniformMatrix2x3fv(GLint location, GLsizei count, GLboolean transpose,
                          const GLfloat *value)
 {
@@ -753,7 +754,7 @@ _mesa_UniformMatrix2x3fv(GLint location, GLsizei count, GLboolean transpose,
    ctx->Driver.UniformMatrix(ctx, 2, 3, location, count, transpose, value);
 }
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_UniformMatrix3x2fv(GLint location, GLsizei count, GLboolean transpose,
                          const GLfloat *value)
 {
@@ -761,7 +762,7 @@ _mesa_UniformMatrix3x2fv(GLint location, GLsizei count, GLboolean transpose,
    ctx->Driver.UniformMatrix(ctx, 3, 2, location, count, transpose, value);
 }
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_UniformMatrix2x4fv(GLint location, GLsizei count, GLboolean transpose,
                          const GLfloat *value)
 {
@@ -769,7 +770,7 @@ _mesa_UniformMatrix2x4fv(GLint location, GLsizei count, GLboolean transpose,
    ctx->Driver.UniformMatrix(ctx, 2, 4, location, count, transpose, value);
 }
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_UniformMatrix4x2fv(GLint location, GLsizei count, GLboolean transpose,
                          const GLfloat *value)
 {
@@ -777,7 +778,7 @@ _mesa_UniformMatrix4x2fv(GLint location, GLsizei count, GLboolean transpose,
    ctx->Driver.UniformMatrix(ctx, 4, 2, location, count, transpose, value);
 }
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_UniformMatrix3x4fv(GLint location, GLsizei count, GLboolean transpose,
                          const GLfloat *value)
 {
@@ -785,7 +786,7 @@ _mesa_UniformMatrix3x4fv(GLint location, GLsizei count, GLboolean transpose,
    ctx->Driver.UniformMatrix(ctx, 3, 4, location, count, transpose, value);
 }
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_UniformMatrix4x3fv(GLint location, GLsizei count, GLboolean transpose,
                          const GLfloat *value)
 {
@@ -803,7 +804,7 @@ _mesa_UseProgramObjectARB(GLhandleARB program)
 }
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_ValidateProgramARB(GLhandleARB program)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -812,7 +813,7 @@ _mesa_ValidateProgramARB(GLhandleARB program)
 
 #ifdef FEATURE_ES2
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_GetShaderPrecisionFormat(GLenum shadertype, GLenum precisiontype,
                                GLint* range, GLint* precision)
 {
@@ -821,7 +822,7 @@ _mesa_GetShaderPrecisionFormat(GLenum shadertype, GLenum precisiontype,
 }
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_ReleaseShaderCompiler(void)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -829,7 +830,7 @@ _mesa_ReleaseShaderCompiler(void)
 }
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_ShaderBinary(GLint n, const GLuint* shaders, GLenum binaryformat,
                    const void* binary, GLint length)
 {
@@ -838,3 +839,99 @@ _mesa_ShaderBinary(GLint n, const GLuint* shaders, GLenum binaryformat,
 }
 
 #endif
+
+
+/**
+ * Plug in shader-related functions into API dispatch table.
+ */
+void
+_mesa_init_shader_dispatch(struct _glapi_table *exec)
+{
+   /* GL_ARB_vertex/fragment_shader */
+   SET_DeleteObjectARB(exec, _mesa_DeleteObjectARB);
+   SET_GetHandleARB(exec, _mesa_GetHandleARB);
+   SET_DetachObjectARB(exec, _mesa_DetachObjectARB);
+   SET_CreateShaderObjectARB(exec, _mesa_CreateShaderObjectARB);
+   SET_ShaderSourceARB(exec, _mesa_ShaderSourceARB);
+   SET_CompileShaderARB(exec, _mesa_CompileShaderARB);
+   SET_CreateProgramObjectARB(exec, _mesa_CreateProgramObjectARB);
+   SET_AttachObjectARB(exec, _mesa_AttachObjectARB);
+   SET_LinkProgramARB(exec, _mesa_LinkProgramARB);
+   SET_UseProgramObjectARB(exec, _mesa_UseProgramObjectARB);
+   SET_ValidateProgramARB(exec, _mesa_ValidateProgramARB);
+   SET_Uniform1fARB(exec, _mesa_Uniform1fARB);
+   SET_Uniform2fARB(exec, _mesa_Uniform2fARB);
+   SET_Uniform3fARB(exec, _mesa_Uniform3fARB);
+   SET_Uniform4fARB(exec, _mesa_Uniform4fARB);
+   SET_Uniform1iARB(exec, _mesa_Uniform1iARB);
+   SET_Uniform2iARB(exec, _mesa_Uniform2iARB);
+   SET_Uniform3iARB(exec, _mesa_Uniform3iARB);
+   SET_Uniform4iARB(exec, _mesa_Uniform4iARB);
+   SET_Uniform1fvARB(exec, _mesa_Uniform1fvARB);
+   SET_Uniform2fvARB(exec, _mesa_Uniform2fvARB);
+   SET_Uniform3fvARB(exec, _mesa_Uniform3fvARB);
+   SET_Uniform4fvARB(exec, _mesa_Uniform4fvARB);
+   SET_Uniform1ivARB(exec, _mesa_Uniform1ivARB);
+   SET_Uniform2ivARB(exec, _mesa_Uniform2ivARB);
+   SET_Uniform3ivARB(exec, _mesa_Uniform3ivARB);
+   SET_Uniform4ivARB(exec, _mesa_Uniform4ivARB);
+   SET_UniformMatrix2fvARB(exec, _mesa_UniformMatrix2fvARB);
+   SET_UniformMatrix3fvARB(exec, _mesa_UniformMatrix3fvARB);
+   SET_UniformMatrix4fvARB(exec, _mesa_UniformMatrix4fvARB);
+   SET_GetObjectParameterfvARB(exec, _mesa_GetObjectParameterfvARB);
+   SET_GetObjectParameterivARB(exec, _mesa_GetObjectParameterivARB);
+   SET_GetInfoLogARB(exec, _mesa_GetInfoLogARB);
+   SET_GetAttachedObjectsARB(exec, _mesa_GetAttachedObjectsARB);
+   SET_GetUniformLocationARB(exec, _mesa_GetUniformLocationARB);
+   SET_GetActiveUniformARB(exec, _mesa_GetActiveUniformARB);
+   SET_GetUniformfvARB(exec, _mesa_GetUniformfvARB);
+   SET_GetUniformivARB(exec, _mesa_GetUniformivARB);
+   SET_GetShaderSourceARB(exec, _mesa_GetShaderSourceARB);
+
+   /* OpenGL 2.0 */
+   SET_AttachShader(exec, _mesa_AttachShader);
+   SET_CreateProgram(exec, _mesa_CreateProgram);
+   SET_CreateShader(exec, _mesa_CreateShader);
+   SET_DeleteProgram(exec, _mesa_DeleteProgram);
+   SET_DeleteShader(exec, _mesa_DeleteShader);
+   SET_DetachShader(exec, _mesa_DetachShader);
+   SET_GetAttachedShaders(exec, _mesa_GetAttachedShaders);
+   SET_GetProgramiv(exec, _mesa_GetProgramiv);
+   SET_GetProgramInfoLog(exec, _mesa_GetProgramInfoLog);
+   SET_GetShaderiv(exec, _mesa_GetShaderiv);
+   SET_GetShaderInfoLog(exec, _mesa_GetShaderInfoLog);
+   SET_IsProgram(exec, _mesa_IsProgram);
+   SET_IsShader(exec, _mesa_IsShader);
+
+   /* OpenGL 2.1 */
+   SET_UniformMatrix2x3fv(exec, _mesa_UniformMatrix2x3fv);
+   SET_UniformMatrix3x2fv(exec, _mesa_UniformMatrix3x2fv);
+   SET_UniformMatrix2x4fv(exec, _mesa_UniformMatrix2x4fv);
+   SET_UniformMatrix4x2fv(exec, _mesa_UniformMatrix4x2fv);
+   SET_UniformMatrix3x4fv(exec, _mesa_UniformMatrix3x4fv);
+   SET_UniformMatrix4x3fv(exec, _mesa_UniformMatrix4x3fv);
+
+#if FEATURE_ARB_vertex_shader
+   SET_BindAttribLocationARB(exec, _mesa_BindAttribLocationARB);
+   SET_GetActiveAttribARB(exec, _mesa_GetActiveAttribARB);
+   SET_GetAttribLocationARB(exec, _mesa_GetAttribLocationARB);
+#endif
+
+#ifdef FEATURE_ES2
+   /* XXX finish dispatch */
+   (void) _mesa_GetShaderPrecisionFormat;
+   (void) _mesa_ReleaseShaderCompiler;
+   (void) _mesa_ShaderBinary;
+#endif
+
+   /* OpenGL 3.0 */
+   /* XXX finish dispatch */
+   (void) _mesa_Uniform1ui;
+   (void) _mesa_Uniform2ui;
+   (void) _mesa_Uniform3ui;
+   (void) _mesa_Uniform4ui;
+   (void) _mesa_Uniform1uiv;
+   (void) _mesa_Uniform2uiv;
+   (void) _mesa_Uniform3uiv;
+   (void) _mesa_Uniform4uiv;
+}

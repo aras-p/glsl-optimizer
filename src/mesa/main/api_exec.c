@@ -344,32 +344,10 @@ _mesa_create_exec_table(void)
    SET_StencilFuncSeparate(exec, _mesa_StencilFuncSeparate);
    SET_StencilMaskSeparate(exec, _mesa_StencilMaskSeparate);
    SET_StencilOpSeparate(exec, _mesa_StencilOpSeparate);
-#if FEATURE_ARB_shader_objects
-   SET_AttachShader(exec, _mesa_AttachShader);
-   SET_CreateProgram(exec, _mesa_CreateProgram);
-   SET_CreateShader(exec, _mesa_CreateShader);
-   SET_DeleteProgram(exec, _mesa_DeleteProgram);
-   SET_DeleteShader(exec, _mesa_DeleteShader);
-   SET_DetachShader(exec, _mesa_DetachShader);
-   SET_GetAttachedShaders(exec, _mesa_GetAttachedShaders);
-   SET_GetProgramiv(exec, _mesa_GetProgramiv);
-   SET_GetProgramInfoLog(exec, _mesa_GetProgramInfoLog);
-   SET_GetShaderiv(exec, _mesa_GetShaderiv);
-   SET_GetShaderInfoLog(exec, _mesa_GetShaderInfoLog);
-   SET_IsProgram(exec, _mesa_IsProgram);
-   SET_IsShader(exec, _mesa_IsShader);
-#endif
 
-   /* OpenGL 2.1 */
 #if FEATURE_ARB_shader_objects
-   SET_UniformMatrix2x3fv(exec, _mesa_UniformMatrix2x3fv);
-   SET_UniformMatrix3x2fv(exec, _mesa_UniformMatrix3x2fv);
-   SET_UniformMatrix2x4fv(exec, _mesa_UniformMatrix2x4fv);
-   SET_UniformMatrix4x2fv(exec, _mesa_UniformMatrix4x2fv);
-   SET_UniformMatrix3x4fv(exec, _mesa_UniformMatrix3x4fv);
-   SET_UniformMatrix4x3fv(exec, _mesa_UniformMatrix4x3fv);
+   _mesa_init_shader_dispatch(exec);
 #endif
-
 
    /* 2. GL_EXT_blend_color */
 #if 0
@@ -652,54 +630,6 @@ _mesa_create_exec_table(void)
 #if FEATURE_draw_read_buffer
    SET_DrawBuffersARB(exec, _mesa_DrawBuffersARB);
 #endif
-
-#if FEATURE_ARB_shader_objects
-   SET_DeleteObjectARB(exec, _mesa_DeleteObjectARB);
-   SET_GetHandleARB(exec, _mesa_GetHandleARB);
-   SET_DetachObjectARB(exec, _mesa_DetachObjectARB);
-   SET_CreateShaderObjectARB(exec, _mesa_CreateShaderObjectARB);
-   SET_ShaderSourceARB(exec, _mesa_ShaderSourceARB);
-   SET_CompileShaderARB(exec, _mesa_CompileShaderARB);
-   SET_CreateProgramObjectARB(exec, _mesa_CreateProgramObjectARB);
-   SET_AttachObjectARB(exec, _mesa_AttachObjectARB);
-   SET_LinkProgramARB(exec, _mesa_LinkProgramARB);
-   SET_UseProgramObjectARB(exec, _mesa_UseProgramObjectARB);
-   SET_ValidateProgramARB(exec, _mesa_ValidateProgramARB);
-   SET_Uniform1fARB(exec, _mesa_Uniform1fARB);
-   SET_Uniform2fARB(exec, _mesa_Uniform2fARB);
-   SET_Uniform3fARB(exec, _mesa_Uniform3fARB);
-   SET_Uniform4fARB(exec, _mesa_Uniform4fARB);
-   SET_Uniform1iARB(exec, _mesa_Uniform1iARB);
-   SET_Uniform2iARB(exec, _mesa_Uniform2iARB);
-   SET_Uniform3iARB(exec, _mesa_Uniform3iARB);
-   SET_Uniform4iARB(exec, _mesa_Uniform4iARB);
-   SET_Uniform1fvARB(exec, _mesa_Uniform1fvARB);
-   SET_Uniform2fvARB(exec, _mesa_Uniform2fvARB);
-   SET_Uniform3fvARB(exec, _mesa_Uniform3fvARB);
-   SET_Uniform4fvARB(exec, _mesa_Uniform4fvARB);
-   SET_Uniform1ivARB(exec, _mesa_Uniform1ivARB);
-   SET_Uniform2ivARB(exec, _mesa_Uniform2ivARB);
-   SET_Uniform3ivARB(exec, _mesa_Uniform3ivARB);
-   SET_Uniform4ivARB(exec, _mesa_Uniform4ivARB);
-   SET_UniformMatrix2fvARB(exec, _mesa_UniformMatrix2fvARB);
-   SET_UniformMatrix3fvARB(exec, _mesa_UniformMatrix3fvARB);
-   SET_UniformMatrix4fvARB(exec, _mesa_UniformMatrix4fvARB);
-   SET_GetObjectParameterfvARB(exec, _mesa_GetObjectParameterfvARB);
-   SET_GetObjectParameterivARB(exec, _mesa_GetObjectParameterivARB);
-   SET_GetInfoLogARB(exec, _mesa_GetInfoLogARB);
-   SET_GetAttachedObjectsARB(exec, _mesa_GetAttachedObjectsARB);
-   SET_GetUniformLocationARB(exec, _mesa_GetUniformLocationARB);
-   SET_GetActiveUniformARB(exec, _mesa_GetActiveUniformARB);
-   SET_GetUniformfvARB(exec, _mesa_GetUniformfvARB);
-   SET_GetUniformivARB(exec, _mesa_GetUniformivARB);
-   SET_GetShaderSourceARB(exec, _mesa_GetShaderSourceARB);
-#endif    /* FEATURE_ARB_shader_objects */
-
-#if FEATURE_ARB_vertex_shader
-   SET_BindAttribLocationARB(exec, _mesa_BindAttribLocationARB);
-   SET_GetActiveAttribARB(exec, _mesa_GetActiveAttribARB);
-   SET_GetAttribLocationARB(exec, _mesa_GetAttribLocationARB);
-#endif    /* FEATURE_ARB_vertex_shader */
 
    /* GL_ARB_sync */
 #if FEATURE_ARB_sync
