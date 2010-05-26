@@ -886,6 +886,8 @@ static void* r300_render_map_vertices(struct vbuf_render* render)
 {
     struct r300_render* r300render = r300_render(render);
 
+    assert(!r300render->vbo_transfer);
+
     r300render->vbo_ptr = pipe_buffer_map(&r300render->r300->context,
 					  r300render->vbo,
                                           PIPE_TRANSFER_WRITE,
@@ -901,9 +903,13 @@ static void r300_render_unmap_vertices(struct vbuf_render* render,
     struct r300_render* r300render = r300_render(render);
     struct pipe_context* context = &r300render->r300->context;
 
+    assert(r300render->vbo_transfer);
+
     r300render->vbo_max_used = MAX2(r300render->vbo_max_used,
                                     r300render->vertex_size * (max + 1));
     pipe_buffer_unmap(context, r300render->vbo, r300render->vbo_transfer);
+
+    r300render->vbo_transfer = NULL;
 }
 
 static void r300_render_release_vertices(struct vbuf_render* render)
