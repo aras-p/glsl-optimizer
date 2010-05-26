@@ -1097,7 +1097,7 @@ ast_expression::hir(exec_list *instructions,
 
       error_emitted = op[0]->type->is_error() || op[1]->type->is_error();
 
-      ir_instruction *const array = op[0];
+      ir_rvalue *const array = op[0];
 
       result = new ir_dereference_array(op[0], op[1]);
 
@@ -1181,7 +1181,13 @@ ast_expression::hir(exec_list *instructions,
 	 }
 
 	 if (array->type->is_array()) {
-	    ir_variable *const v = array->as_variable();
+	    /* If the array is a variable dereference, it dereferences the
+	     * whole array, by definition.  Use this to get the variable.
+	     *
+	     * FINISHME: Should some methods for getting / setting / testing
+	     * FINISHME: array access limits be added to ir_dereference?
+	     */
+	    ir_variable *const v = array->whole_variable_referenced();
 	    if ((v != NULL) && (unsigned(idx) > v->max_array_access))
 	       v->max_array_access = idx;
 	 }
