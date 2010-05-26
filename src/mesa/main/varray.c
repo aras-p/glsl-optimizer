@@ -710,6 +710,25 @@ _mesa_VertexAttribPointerARB(GLuint index, GLint size, GLenum type,
 #endif
 
 
+/**
+ * New in GL3:
+ * Set an integer-valued vertex attribute array.
+ * Note that these arrays DO NOT alias the conventional GL vertex arrays
+ * (position, normal, color, fog, texcoord, etc).
+ */
+void GLAPIENTRY
+_mesa_VertexAttribIPointer(GLuint index, GLint size, GLenum type,
+                           GLboolean normalized,
+                           GLsizei stride, const GLvoid *ptr)
+{
+   /* NOTE: until we have integer-valued vertex attributes, just
+    * route this through the regular glVertexAttribPointer() function.
+    */
+   _mesa_VertexAttribPointerARB(index, size, type, normalized, stride, ptr);
+}
+
+
+
 void GLAPIENTRY
 _mesa_VertexPointerEXT(GLint size, GLenum type, GLsizei stride,
                        GLsizei count, const GLvoid *ptr)

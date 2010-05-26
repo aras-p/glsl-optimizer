@@ -116,6 +116,11 @@ _mesa_VertexAttribPointerARB(GLuint index, GLint size, GLenum type,
                              GLboolean normalized, GLsizei stride,
                              const GLvoid *pointer);
 
+void GLAPIENTRY
+_mesa_VertexAttribIPointer(GLuint index, GLint size, GLenum type,
+                           GLboolean normalized,
+                           GLsizei stride, const GLvoid *ptr);
+
 
 extern void GLAPIENTRY
 _mesa_InterleavedArrays(GLenum format, GLsizei stride, const GLvoid *pointer);
