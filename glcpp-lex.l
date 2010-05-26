@@ -102,12 +102,6 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 	return INTEGER;
 }
 
-
-{IDENTIFIER} {
-	yylval.str = xtalloc_strdup (yyextra, yytext);
-	return IDENTIFIER;
-}
-
 "<<"  {
 	return LEFT_SHIFT;
 }
@@ -146,6 +140,11 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 
 "defined" {
 	return DEFINED;
+}
+
+{IDENTIFIER} {
+	yylval.str = xtalloc_strdup (yyextra, yytext);
+	return IDENTIFIER;
 }
 
 {PUNCTUATION} {
