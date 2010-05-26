@@ -840,6 +840,39 @@ _mesa_sizeof_glsl_type(GLenum type)
 }
 
 
+static GLenum
+base_uniform_type(GLenum type)
+{
+   switch (type) {
+#if 0 /* not needed, for now */
+   case GL_BOOL:
+   case GL_BOOL_VEC2:
+   case GL_BOOL_VEC3:
+   case GL_BOOL_VEC4:
+      return GL_BOOL;
+#endif
+   case GL_FLOAT:
+   case GL_FLOAT_VEC2:
+   case GL_FLOAT_VEC3:
+   case GL_FLOAT_VEC4:
+      return GL_FLOAT;
+   case GL_UNSIGNED_INT:
+   case GL_UNSIGNED_INT_VEC2:
+   case GL_UNSIGNED_INT_VEC3:
+   case GL_UNSIGNED_INT_VEC4:
+      return GL_UNSIGNED_INT;
+   case GL_INT:
+   case GL_INT_VEC2:
+   case GL_INT_VEC3:
+   case GL_INT_VEC4:
+      return GL_INT;
+   default:
+      _mesa_problem(NULL, "Invalid type in base_uniform_type()");
+      return GL_FLOAT;
+   }
+}
+
+
 static GLboolean
 is_boolean_type(GLenum type)
 {
@@ -848,36 +881,6 @@ is_boolean_type(GLenum type)
    case GL_BOOL_VEC2:
    case GL_BOOL_VEC3:
    case GL_BOOL_VEC4:
-      return GL_TRUE;
-   default:
-      return GL_FALSE;
-   }
-}
-
-
-static GLboolean
-is_integer_type(GLenum type)
-{
-   switch (type) {
-   case GL_INT:
-   case GL_INT_VEC2:
-   case GL_INT_VEC3:
-   case GL_INT_VEC4:
-      return GL_TRUE;
-   default:
-      return GL_FALSE;
-   }
-}
-
-
-static GLboolean
-is_uint_type(GLenum type)
-{
-   switch (type) {
-   case GL_UNSIGNED_INT:
-   case GL_UNSIGNED_INT_VEC2:
-   case GL_UNSIGNED_INT_VEC3:
-   case GL_UNSIGNED_INT_VEC4:
       return GL_TRUE;
    default:
       return GL_FALSE;
@@ -1812,8 +1815,7 @@ set_program_uniform(GLcontext *ctx, struct gl_program *program,
    else {
       /* ordinary uniform variable */
       const GLboolean isUniformBool = is_boolean_type(param->DataType);
-      const GLboolean areIntValues = is_integer_type(type);
-      const GLboolean areUintValues = is_uint_type(type);
+      const GLenum basicType = base_uniform_type(type);
       const GLint slots = (param->Size + 3) / 4;
       const GLint typeSize = _mesa_sizeof_glsl_type(param->DataType);
       GLsizei k, i;
@@ -1844,14 +1846,14 @@ set_program_uniform(GLcontext *ctx, struct gl_program *program,
          /* uniformVal (the destination) is always float[4] */
          uniformVal = program->Parameters->ParameterValues[index + offset + k];
 
-         if (areIntValues) {
+         if (basicType == GL_INT) {
             /* convert user's ints to floats */
             const GLint *iValues = ((const GLint *) values) + k * elems;
             for (i = 0; i < elems; i++) {
                uniformVal[i] = (GLfloat) iValues[i];
             }
          }
-         else if (areUintValues) {
+         else if (basicType == GL_UNSIGNED_INT) {
             /* convert user's uints to floats */
             const GLuint *iValues = ((const GLuint *) values) + k * elems;
             for (i = 0; i < elems; i++) {
@@ -1860,6 +1862,7 @@ set_program_uniform(GLcontext *ctx, struct gl_program *program,
          }
          else {
             const GLfloat *fValues = ((const GLfloat *) values) + k * elems;
+            assert(basicType == GL_FLOAT);
             for (i = 0; i < elems; i++) {
                uniformVal[i] = fValues[i];
             }
@@ -1886,7 +1889,6 @@ _mesa_uniform(GLcontext *ctx, GLint location, GLsizei count,
    struct gl_shader_program *shProg = ctx->Shader.CurrentProgram;
    struct gl_uniform *uniform;
    GLint elems, offset;
-   GLenum basicType;
 
    if (!shProg || !shProg->LinkStatus) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glUniform(program not linked)");
@@ -1914,65 +1916,14 @@ _mesa_uniform(GLcontext *ctx, GLint location, GLsizei count,
       return;
    }
 
-   switch (type) {
-   case GL_FLOAT:
-      basicType = GL_FLOAT;
-      elems = 1;
-      break;
-   case GL_INT:
-      basicType = GL_INT;
-      elems = 1;
-      break;
-   case GL_UNSIGNED_INT:
-      basicType = GL_UNSIGNED_INT;
-      elems = 1;
-      break;
-   case GL_FLOAT_VEC2:
-      basicType = GL_FLOAT;
-      elems = 2;
-      break;
-   case GL_INT_VEC2:
-      basicType = GL_INT;
-      elems = 2;
-      break;
-   case GL_UNSIGNED_INT_VEC2:
-      basicType = GL_UNSIGNED_INT;
-      elems = 2;
-      break;
-   case GL_FLOAT_VEC3:
-      basicType = GL_FLOAT;
-      elems = 3;
-      break;
-   case GL_INT_VEC3:
-      basicType = GL_INT;
-      elems = 3;
-      break;
-   case GL_UNSIGNED_INT_VEC3:
-      basicType = GL_UNSIGNED_INT;
-      elems = 3;
-      break;
-   case GL_FLOAT_VEC4:
-      basicType = GL_FLOAT;
-      elems = 4;
-      break;
-   case GL_INT_VEC4:
-      basicType = GL_INT;
-      elems = 4;
-      break;
-   case GL_UNSIGNED_INT_VEC4:
-      basicType = GL_UNSIGNED_INT;
-      elems = 4;
-      break;
-   default:
-      _mesa_problem(ctx, "Invalid type in _mesa_uniform");
-      return;
-   }
+   elems = _mesa_sizeof_glsl_type(type);
 
    FLUSH_VERTICES(ctx, _NEW_PROGRAM_CONSTANTS);
 
    uniform = &shProg->Uniforms->Uniforms[location];
 
    if (ctx->Shader.Flags & GLSL_UNIFORMS) {
+      const GLenum basicType = base_uniform_type(type);
       GLint i;
       printf("Mesa: set program %u uniform %s (loc %d) to: ",
 	     shProg->Name, uniform->Name, location);
