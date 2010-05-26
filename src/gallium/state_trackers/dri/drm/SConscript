@@ -22,7 +22,6 @@ if env['dri']:
 		'dri_drawable.c',
 		'dri_screen.c',
 		'dri1_helper.c',
-		'dri1.c',
 		'dri2.c',
 		]
     )
