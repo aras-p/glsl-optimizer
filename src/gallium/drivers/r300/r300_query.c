@@ -146,9 +146,13 @@ static boolean r300_get_query_result(struct pipe_context* pipe,
             /* Looks like our results aren't ready yet. */
             if (wait) {
                 fprintf(stderr, "r300: Despite waiting, OQ results haven't "
-                                "come in yet.\n");
+                                "come in yet. This is a driver bug.\n"
+                                "r300: Returning bogus results to avoid "
+                                "a possible infinite loop...\n");
+                temp = 987654321;
+            } else {
+                temp = ~0U;
             }
-            temp = ~0U;
             break;
         }
         temp += *map;
