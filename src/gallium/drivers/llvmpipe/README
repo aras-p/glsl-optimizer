@@ -82,9 +82,10 @@ Requirements
 
  - scons (optional)
 
- - udis86, http://udis86.sourceforge.net/ (optional):
+ - udis86, http://udis86.sourceforge.net/ (optional). My personal repository
+   supports more opcodes which haven't been merged upstream yet:
  
-     git clone git://udis86.git.sourceforge.net/gitroot/udis86/udis86
+     git clone git://anongit.freedesktop.org/~jrfonseca/udis86
      cd udis86
      ./autogen.sh
      ./configure --with-pic
