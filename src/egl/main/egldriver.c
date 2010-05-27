@@ -571,7 +571,7 @@ _eglLoadDefaultDriver(EGLDisplay dpy, EGLint *major, EGLint *minor)
 
    _eglUnlockMutex(_eglGlobal.Mutex);
 
-   return drv;
+   return _eglGlobal.NumDrivers > 0 ? drv : NULL;
 }
 
 
