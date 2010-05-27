@@ -41,13 +41,11 @@
 #include "main/hash.h"
 #include "shader/program.h"
 #include "shader/prog_parameter.h"
-#include "shader/prog_statevars.h"
 #include "shader/prog_uniform.h"
 #include "shader/shader_api.h"
 #include "shader/uniforms.h"
 #include "shader/slang/slang_compile.h"
 #include "shader/slang/slang_link.h"
-#include "main/dispatch.h"
 
 
 /**
