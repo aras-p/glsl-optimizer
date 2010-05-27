@@ -27,6 +27,9 @@
 #define GLFBDEV_H
 
 
+/* for size_t */
+#include <stdlib.h>
+
 /* avoid including linux/fb.h */
 struct fb_fix_screeninfo;
 struct fb_var_screeninfo;
