@@ -217,6 +217,7 @@ if env['platform'] != 'winddk':
 		'shader/programopt.c',
 		'shader/symbol_table.c',
 		'shader/shader_api.c',
+		'shader/uniforms.c',
 	]
 	
 	slang_sources = [

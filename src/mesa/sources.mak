@@ -247,7 +247,8 @@ SHADER_SOURCES = \
 	shader/prog_uniform.c \
 	shader/programopt.c \
 	shader/symbol_table.c \
-	shader/shader_api.c
+	shader/shader_api.c \
+	shader/uniforms.c
 
 SLANG_SOURCES =	\
 	shader/slang/slang_builtin.c	\
