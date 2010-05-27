@@ -88,18 +88,18 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 }
 
 {DECIMAL_INTEGER} {
-	yylval.ival = strtoll (yytext, NULL, 10);
-	return INTEGER;
+	yylval.str = xtalloc_strdup (yyextra, yytext);
+	return INTEGER_STRING;
 }
 
 {OCTAL_INTEGER} {
-	yylval.ival = strtoll (yytext + 1, NULL, 8);
-	return INTEGER;
+	yylval.str = xtalloc_strdup (yyextra, yytext);
+	return INTEGER_STRING;
 }
 
 {HEXADECIMAL_INTEGER} {
-	yylval.ival = strtoll (yytext + 2, NULL, 16);
-	return INTEGER;
+	yylval.str = xtalloc_strdup (yyextra, yytext);
+	return INTEGER_STRING;
 }
 
 "<<"  {

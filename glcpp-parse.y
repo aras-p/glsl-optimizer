@@ -132,10 +132,10 @@ glcpp_parser_lex_from (glcpp_parser_t *parser, token_list_t *list);
 %parse-param {glcpp_parser_t *parser}
 %lex-param {glcpp_parser_t *parser}
 
-%token COMMA_FINAL DEFINED ELIF_EXPANDED HASH HASH_DEFINE_FUNC HASH_DEFINE_OBJ HASH_ELIF HASH_ELSE HASH_ENDIF HASH_IF HASH_IFDEF HASH_IFNDEF HASH_UNDEF IDENTIFIER IF_EXPANDED INTEGER NEWLINE OTHER PLACEHOLDER SPACE
+%token COMMA_FINAL DEFINED ELIF_EXPANDED HASH HASH_DEFINE_FUNC HASH_DEFINE_OBJ HASH_ELIF HASH_ELSE HASH_ENDIF HASH_IF HASH_IFDEF HASH_IFNDEF HASH_UNDEF IDENTIFIER IF_EXPANDED INTEGER INTEGER_STRING NEWLINE OTHER PLACEHOLDER SPACE
 %token PASTE
 %type <ival> expression INTEGER operator SPACE
-%type <str> IDENTIFIER OTHER
+%type <str> IDENTIFIER INTEGER_STRING OTHER
 %type <string_list> identifier_list
 %type <token> preprocessing_token
 %type <token_list> pp_tokens replacement_list text_line
@@ -253,7 +253,16 @@ control_line:
 ;
 
 expression:
-	INTEGER {
+	INTEGER_STRING {
+		if (strlen ($1) >= 3 && strncmp ($1, "0x", 2) == 0) {
+			$$ = strtoll ($1 + 2, NULL, 16);
+		} else if ($1[0] == '0') {
+			$$ = strtoll ($1, NULL, 8);
+		} else {
+			$$ = strtoll ($1, NULL, 10);
+		}
+	}
+|	INTEGER {
 		$$ = $1;
 	}
 |	expression OR expression {
@@ -372,8 +381,8 @@ preprocessing_token:
 	IDENTIFIER {
 		$$ = _token_create_str (parser, IDENTIFIER, $1);
 	}
-|	INTEGER {
-		$$ = _token_create_ival (parser, INTEGER, $1);
+|	INTEGER_STRING {
+		$$ = _token_create_str (parser, INTEGER_STRING, $1);
 	}
 |	operator {
 		$$ = _token_create_ival (parser, $1, $1);
@@ -710,6 +719,7 @@ _token_print (token_t *token)
 		printf ("%" PRIxMAX, token->value.ival);
 		break;
 	case IDENTIFIER:
+	case INTEGER_STRING:
 	case OTHER:
 		printf ("%s", token->value.str);
 		break;
@@ -828,11 +838,13 @@ _token_paste (token_t *token, token_t *other)
 	/* Two string-valued tokens can usually just be mashed
 	 * together.
 	 *
-	 * XXX: Since our 'OTHER' case is currently so loose, this may
-	 * allow some things thruogh that should be treated as
-	 * errors. */
-	if ((token->type == IDENTIFIER || token->type == OTHER) &&
-	    (other->type == IDENTIFIER || other->type == OTHER))
+	 * XXX: This isn't actually legitimate. Several things here
+	 * should result in a diagnostic since the result cannot be a
+	 * valid, single pre-processing token. For example, pasting
+	 * "123" and "abc" is not legal, but we don't catch that
+	 * here. */
+	if ((token->type == IDENTIFIER || token->type == OTHER || token->type == INTEGER_STRING) &&
+	    (other->type == IDENTIFIER || other->type == OTHER || other->type == INTEGER_STRING))
 	{
 		token->value.str = talloc_strdup_append (token->value.str,
 							 other->value.str);
