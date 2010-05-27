@@ -893,21 +893,28 @@ _mesa_get_attached_shaders(GLcontext *ctx, GLuint program, GLsizei maxCount,
 }
 
 
+/** glGetHandleARB() - return ID/name of currently bound shader program */
 static GLuint
 _mesa_get_handle(GLcontext *ctx, GLenum pname)
 {
-   GLint handle = 0;
-   
    if (pname == GL_PROGRAM_OBJECT_ARB) {
-      CALL_GetIntegerv(ctx->Exec, (GL_CURRENT_PROGRAM, &handle));
-   } else {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glGetHandleARB");
+      if (ctx->Shader.CurrentProgram)
+         return ctx->Shader.CurrentProgram->Name;
+      else
+         return 0;
    }
-
-   return handle;
+   else {
+      _mesa_error(ctx, GL_INVALID_ENUM, "glGetHandleARB");
+      return 0;
+   }
 }
 
 
+/**
+ * glGetProgramiv() - get shader program state.
+ * Note that this is for GLSL shader programs, not ARB vertex/fragment
+ * programs (see glGetProgramivARB).
+ */
 static void
 _mesa_get_programiv(GLcontext *ctx, GLuint program,
                     GLenum pname, GLint *params)
@@ -977,6 +984,7 @@ _mesa_get_programiv(GLcontext *ctx, GLuint program,
 }
 
 
+/** glGetShaderiv() - get GLSL shader state */
 static void
 _mesa_get_shaderiv(GLcontext *ctx, GLuint name, GLenum pname, GLint *params)
 {
