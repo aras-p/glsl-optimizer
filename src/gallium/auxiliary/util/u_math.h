@@ -335,6 +335,15 @@ util_iround(float f)
 }
 
 
+/**
+ * Approximate floating point comparison
+ */
+static INLINE boolean
+util_is_approx(float a, float b, float tol)
+{
+   return fabs(b - a) <= tol;
+}
+
 
 /**
  * Test if x is NaN or +/- infinity.
