@@ -26,19 +26,21 @@
 #include <stdio.h>
 #include <errno.h>
 #include <util/u_format.h>
+#include "r600_screen.h"
 #include "r600_context.h"
 #include "r600_sq.h"
 
 
-struct r600_shader_alu_translate {
+struct r600_alu_instruction {
 	unsigned			copcode;
-	unsigned			opcode;
-	unsigned			is_op3;
+	enum r600_instruction		instruction;
 };
 
 static int r600_shader_alu_translate(struct r600_shader *rshader,
+					struct r600_shader_node *node,
 					struct c_instruction *instruction);
-struct r600_shader_alu_translate r600_alu_translate_list[C_OPCODE_LAST];
+struct r600_alu_instruction r600_alu_instruction[C_OPCODE_LAST];
+struct r600_instruction_info r600_instruction_info[];
 
 int r600_shader_insert_fetch(struct c_shader *shader)
 {
@@ -120,16 +122,16 @@ int r600_shader_vfetch_bytecode(struct r600_shader *rshader,
 	unsigned id = *cid;
 
 	vfetch->cf_addr = id;
-	rshader->bcode[id++] = S_SQ_VTX_WORD0_BUFFER_ID(vfetch->sel[2]) |
-				S_SQ_VTX_WORD0_SRC_GPR(vfetch->sel[1]) |
-				S_SQ_VTX_WORD0_SRC_SEL_X(vfetch->chan[1]) |
+	rshader->bcode[id++] = S_SQ_VTX_WORD0_BUFFER_ID(vfetch->src[1].sel) |
+				S_SQ_VTX_WORD0_SRC_GPR(vfetch->src[0].sel) |
+				S_SQ_VTX_WORD0_SRC_SEL_X(vfetch->src[0].sel) |
 				S_SQ_VTX_WORD0_MEGA_FETCH_COUNT(0x1F);
-	rshader->bcode[id++] = S_SQ_VTX_WORD1_DST_SEL_X(vfetch->dsel[0]) |
-				S_SQ_VTX_WORD1_DST_SEL_Y(vfetch->dsel[1]) |
-				S_SQ_VTX_WORD1_DST_SEL_Z(vfetch->dsel[2]) |
-				S_SQ_VTX_WORD1_DST_SEL_W(vfetch->dsel[3]) |
+	rshader->bcode[id++] = S_SQ_VTX_WORD1_DST_SEL_X(vfetch->dst[0].chan) |
+				S_SQ_VTX_WORD1_DST_SEL_Y(vfetch->dst[1].chan) |
+				S_SQ_VTX_WORD1_DST_SEL_Z(vfetch->dst[2].chan) |
+				S_SQ_VTX_WORD1_DST_SEL_W(vfetch->dst[3].chan) |
 				S_SQ_VTX_WORD1_USE_CONST_FIELDS(1) |
-				S_SQ_VTX_WORD1_GPR_DST_GPR(vfetch->sel[0]);
+				S_SQ_VTX_WORD1_GPR_DST_GPR(vfetch->dst[0].sel);
 	rshader->bcode[id++] = S_SQ_VTX_WORD2_MEGA_FETCH(1);
 	rshader->bcode[id++] = 0;
 	*cid = id;
@@ -152,9 +154,9 @@ int r600_shader_update(struct r600_shader *rshader, enum pipe_format *resource_f
 			rshader->bcode[i] &= C_SQ_VTX_WORD1_DST_SEL_Y;
 			rshader->bcode[i] &= C_SQ_VTX_WORD1_DST_SEL_Z;
 			rshader->bcode[i] &= C_SQ_VTX_WORD1_DST_SEL_W;
-			desc = util_format_description(resource_format[vfetch->sel[2]]);
+			desc = util_format_description(resource_format[vfetch->src[1].sel]);
 			if (desc == NULL) {
-				fprintf(stderr, "%s unknown format %d\n", __func__, resource_format[vfetch->sel[2]]);
+				fprintf(stderr, "%s unknown format %d\n", __func__, resource_format[vfetch->src[1].sel]);
 				continue;
 			}
 			/* WARNING so far TGSI swizzle match R600 ones */
@@ -234,8 +236,8 @@ int r600_shader_register(struct r600_shader *rshader)
 	return 0;
 }
 
-int r600_shader_find_gpr(struct r600_shader *rshader, struct c_vector *v,
-			unsigned swizzle, unsigned *sel, unsigned *chan)
+int r600_shader_find_gpr(struct r600_shader *rshader, struct c_vector *v, unsigned swizzle,
+			struct r600_shader_operand *operand)
 {
 	struct c_vector *tmp;
 
@@ -251,21 +253,24 @@ int r600_shader_find_gpr(struct r600_shader *rshader, struct c_vector *v,
 	 * 254	SQ_ALU_SRC_PV: previous vector result.
 	 * 255	SQ_ALU_SRC_PS: previous scalar result.
 	 */
-	*sel = 248;
-	*chan = 0;
+	operand->vector = v;
+	operand->sel = 248;
+	operand->chan = 0;
+	operand->neg = 0;
+	operand->abs = 0;
 	if (v == NULL)
 		return 0;
 	if (v->file == C_FILE_IMMEDIATE) {
-		*sel = 253;
+		operand->sel = 253;
 	} else {
 		tmp = rshader->gpr[v->id];
 		if (tmp == NULL) {
 			fprintf(stderr, "%s %d unknown register\n", __FILE__, __LINE__);
 			return -EINVAL;
 		}
-		*sel = tmp->id;
+		operand->sel = tmp->id;
 	}
-	*chan = swizzle;
+	operand->chan = swizzle;
 	switch (swizzle) {
 	case C_SWIZZLE_X:
 	case C_SWIZZLE_Y:
@@ -273,12 +278,12 @@ int r600_shader_find_gpr(struct r600_shader *rshader, struct c_vector *v,
 	case C_SWIZZLE_W:
 		break;
 	case C_SWIZZLE_0:
-		*sel = 248;
-		*chan = 0;
+		operand->sel = 248;
+		operand->chan = 0;
 		break;
 	case C_SWIZZLE_1:
-		*sel = 249;
-		*chan = 0;
+		operand->sel = 249;
+		operand->chan = 0;
 		break;
 	default:
 		fprintf(stderr, "%s %d invalid swizzle %d\n", __FILE__, __LINE__, swizzle);
@@ -287,87 +292,83 @@ int r600_shader_find_gpr(struct r600_shader *rshader, struct c_vector *v,
 	return 0;
 }
 
-static int r600_shader_new_node(struct r600_shader *rshader, struct c_node *node)
+static struct r600_shader_node *r600_shader_new_node(struct r600_shader *rshader, struct c_node *node)
 {
 	struct r600_shader_node *rnode;
+
 	rnode = CALLOC_STRUCT(r600_shader_node);
 	if (rnode == NULL)
-		return -ENOMEM;
+		return NULL;
 	rnode->node = node;
 	c_list_init(&rnode->vfetch);
 	c_list_init(&rnode->alu);
 	c_list_add_tail(rnode, &rshader->nodes);
-	rshader->cur_node = rnode;
-	return 0;
-}
-
-static int r600_shader_new_alu(struct r600_shader *rshader, struct r600_shader_alu *alu)
-{
-	struct r600_shader_alu *nalu;
-
-	nalu = CALLOC_STRUCT(r600_shader_alu);
-	if (nalu == NULL)
-		return -ENOMEM;
-	memcpy(nalu, alu, sizeof(struct r600_shader_alu));
-	c_list_add_tail(nalu, &rshader->cur_node->alu);
-	return 0;
+	return rnode;
 }
 
 static int r600_shader_add_vfetch(struct r600_shader *rshader,
+				struct r600_shader_node *node,
 				struct c_instruction *instruction)
 {
 	struct r600_shader_vfetch *vfetch;
+	struct r600_shader_node *rnode;
 	int r;
 
 	if (instruction == NULL)
 		return 0;
 	if (instruction->opcode != C_OPCODE_VFETCH)
 		return 0;
-	if (!c_list_empty(&rshader->cur_node->alu)) {
-		r = r600_shader_new_node(rshader, rshader->cur_node->node);
-		if (r)
-			return r;
+	if (!c_list_empty(&node->alu)) {
+		rnode = r600_shader_new_node(rshader, node->node);
+		if (rnode == NULL)
+			return -ENOMEM;
+		node = rnode;
 	}
 	vfetch = calloc(1, sizeof(struct r600_shader_vfetch));
 	if (vfetch == NULL)
 		return -ENOMEM;
-	r = r600_shader_find_gpr(rshader, instruction->output.vector, 0, &vfetch->sel[0], &vfetch->chan[0]);
+	r = r600_shader_find_gpr(rshader, instruction->output.vector, 0, &vfetch->dst[0]);
 	if (r)
 		return r;
-	r = r600_shader_find_gpr(rshader, instruction->input[0].vector, 0, &vfetch->sel[1], &vfetch->chan[1]);
+	r = r600_shader_find_gpr(rshader, instruction->input[0].vector, 0, &vfetch->src[0]);
 	if (r)
 		return r;
-	r = r600_shader_find_gpr(rshader, instruction->input[1].vector, 0, &vfetch->sel[2], &vfetch->chan[2]);
+	r = r600_shader_find_gpr(rshader, instruction->input[1].vector, 0, &vfetch->src[1]);
 	if (r)
 		return r;
-	vfetch->dsel[0] = C_SWIZZLE_X;
-	vfetch->dsel[1] = C_SWIZZLE_Y;
-	vfetch->dsel[2] = C_SWIZZLE_Z;
-	vfetch->dsel[3] = C_SWIZZLE_W;
-	c_list_add_tail(vfetch, &rshader->cur_node->vfetch);
-	rshader->cur_node->nslot += 2;
+	vfetch->dst[0].chan = C_SWIZZLE_X;
+	vfetch->dst[1].chan = C_SWIZZLE_Y;
+	vfetch->dst[2].chan = C_SWIZZLE_Z;
+	vfetch->dst[3].chan = C_SWIZZLE_W;
+	c_list_add_tail(vfetch, &node->vfetch);
+	node->nslot += 2;
 	return 0;
 }
 
 static int r600_node_translate(struct r600_shader *rshader, struct c_node *node)
 {
 	struct c_instruction *instruction;
+	struct r600_shader_node *rnode;
 	int r;
 
-	r = r600_shader_new_node(rshader, node);
-	if (r)
-		return r;
+	rnode = r600_shader_new_node(rshader, node);
+	if (rnode == NULL)
+		return -ENOMEM;
 	c_list_for_each(instruction, &node->insts) {
 		switch (instruction->opcode) {
 		case C_OPCODE_VFETCH:
-			r = r600_shader_add_vfetch(rshader, instruction);
-			if (r)
+			r = r600_shader_add_vfetch(rshader, rnode, instruction);
+			if (r) {
+				fprintf(stderr, "%s %d vfetch failed\n", __func__, __LINE__);
 				return r;
+			}
 			break;
 		default:
-			r = r600_shader_alu_translate(rshader, instruction);
-			if (r)
+			r = r600_shader_alu_translate(rshader, rnode, instruction);
+			if (r) {
+				fprintf(stderr, "%s %d alu failed\n", __func__, __LINE__);
 				return r;
+			}
 			break;
 		}
 	}
@@ -392,60 +393,144 @@ int r600_shader_translate_rec(struct r600_shader *rshader, struct c_node *node)
 	return 0;
 }
 
-static int r600_shader_alu_translate(struct r600_shader *rshader,
-						struct c_instruction *instruction)
+static struct r600_shader_alu *r600_shader_insert_alu(struct r600_shader *rshader, struct r600_shader_node *node)
 {
-	struct r600_shader_alu_translate *info = &r600_alu_translate_list[instruction->opcode];
-	struct r600_shader_alu alu;
-	unsigned rmask;
-	int r, i, j, c;
+	struct r600_shader_alu *alu;
 
-	if (!c_list_empty(&rshader->cur_node->vfetch)) {
-		r = r600_shader_new_node(rshader, rshader->cur_node->node);
-		if (r)
-			return r;
+	alu = CALLOC_STRUCT(r600_shader_alu);
+	if (alu == NULL)
+		return NULL;
+	alu->alu[0].inst = INST_NOP;
+	alu->alu[1].inst = INST_NOP;
+	alu->alu[2].inst = INST_NOP;
+	alu->alu[3].inst = INST_NOP;
+	alu->alu[4].inst = INST_NOP;
+	alu->alu[0].opcode = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP;
+	alu->alu[1].opcode = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP;
+	alu->alu[2].opcode = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP;
+	alu->alu[3].opcode = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP;
+	alu->alu[4].opcode = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP;
+	c_list_add_tail(alu, &node->alu);
+	return alu;
+}
+
+static int r600_shader_node_add_alu(struct r600_shader *rshader,
+					struct r600_shader_node *node,
+					struct r600_shader_alu *alu,
+					unsigned instruction,
+					unsigned ninput,
+					struct r600_shader_operand *dst,
+					struct r600_shader_operand src[3])
+{
+	struct r600_shader_alu *nalu;
+	unsigned nconstant = 0, nliteral = 0, slot, i;
+
+	/* count number of constant & literal */
+	for (i = 0; i < ninput; i++) {
+		if (src[i].vector->file == C_FILE_IMMEDIATE) {
+			nliteral++;
+			nconstant++;
+		}
 	}
-	memset(&alu, 0, sizeof(struct r600_shader_alu));
-	for (i = 0, c = 0; i < 4; i++) {
+
+	slot = dst->chan;
+	if (r600_instruction_info[instruction].is_trans) {
+		slot = 4;
+	}
+
+	/* allocate new alu group if necessary */
+	nalu = alu;
+	if (alu == NULL) {
+		nalu = r600_shader_insert_alu(rshader, node);
+		if (nalu == NULL)
+			return -ENOMEM;
+		alu = nalu;
+	}
+	if ((alu->alu[slot].inst != INST_NOP &&
+		alu->alu[4].inst != INST_NOP) ||
+		(alu->nconstant + nconstant) > 4 ||
+		(alu->nliteral + nliteral) > 4) {
+		/* neither trans neither dst slot are free need new alu */
+		nalu = r600_shader_insert_alu(rshader, node);
+		if (nalu == NULL)
+			return -ENOMEM;
+		alu = nalu;
+	}
+	if (alu->alu[slot].inst != INST_NOP) {
+		slot = 4;
+	}
+
+	alu->alu[slot].dst = *dst;
+	alu->alu[slot].inst = instruction;
+	alu->alu[slot].opcode = r600_instruction_info[instruction].opcode;
+	alu->alu[slot].is_op3 = r600_instruction_info[instruction].is_op3;
+	for (i = 0; i < ninput; i++) {
+		alu->alu[slot].src[i] = src[i];
+		if (src[i].vector->file == C_FILE_IMMEDIATE) {
+			alu->literal[alu->nliteral++] = src[i].vector->channel[0]->value;
+			alu->literal[alu->nliteral++] = src[i].vector->channel[1]->value;
+			alu->literal[alu->nliteral++] = src[i].vector->channel[2]->value;
+			alu->literal[alu->nliteral++] = src[i].vector->channel[3]->value;
+		}
+	}
+	return 0;
+}
+
+static int r600_shader_alu_translate(struct r600_shader *rshader,
+					struct r600_shader_node *node,
+					struct c_instruction *instruction)
+{
+	struct r600_alu_instruction *ainfo = &r600_alu_instruction[instruction->opcode];
+	struct r600_instruction_info *info;
+	struct r600_shader_alu *alu;
+	struct r600_shader_node *rnode;
+	int r, i, j;
+	struct r600_shader_operand dst;
+	struct r600_shader_operand src[3];
+
+	if (!c_list_empty(&node->vfetch)) {
+		rnode = r600_shader_new_node(rshader, node->node);
+		if (rnode == NULL) {
+			fprintf(stderr, "%s %d new node failed\n", __func__, __LINE__);
+			return -ENOMEM;
+		}
+		node = rnode;
+	}
+	alu = r600_shader_insert_alu(rshader, node);
+	if (alu == NULL) {
+		fprintf(stderr, "%s %d instert alu node failed\n", __func__, __LINE__);
+		return -ENOMEM;
+	}
+	for (i = 0; i < 4; i++) {
 		if (!(instruction->write_mask) || instruction->output.swizzle[i] == C_SWIZZLE_D)
 			continue;
-		alu.alu[c].opcode = instruction->opcode;
-		alu.alu[c].inst = info->opcode;
-		alu.alu[c].is_op3 = info->is_op3;
-		rmask = ~((1 << (i + 1)) - 1);
+		if (ainfo->instruction == INST_NOP) {
+			fprintf(stderr, "%s:%d unsupported instruction %d\n", __FILE__, __LINE__, instruction->opcode);
+			continue;
+		}
+		info = &r600_instruction_info[ainfo->instruction];
 		r = r600_shader_find_gpr(rshader, instruction->output.vector,
-						instruction->output.swizzle[i],
-						&alu.alu[c].dst.sel, &alu.alu[c].dst.chan);
+					instruction->output.swizzle[i], &dst);
 		if (r) {
 			fprintf(stderr, "%s %d register failed\n", __FILE__, __LINE__);
 			return r;
 		}
 		for (j = 0; j < instruction->ninput; j++) {
 			r = r600_shader_find_gpr(rshader, instruction->input[j].vector,
-					instruction->input[j].swizzle[i],
-					&alu.alu[c].src[j].sel, &alu.alu[c].src[j].chan);
+					instruction->input[j].swizzle[i], &src[j]);
 			if (r) {
 				fprintf(stderr, "%s %d register failed\n", __FILE__, __LINE__);
 				return r;
 			}
-			if (instruction->input[j].vector->file == C_FILE_IMMEDIATE) {
-				alu.literal[0] = instruction->input[j].vector->channel[0]->value;
-				alu.literal[1] = instruction->input[j].vector->channel[1]->value;
-				alu.literal[2] = instruction->input[j].vector->channel[2]->value;
-				alu.literal[3] = instruction->input[j].vector->channel[3]->value;
-				if (alu.alu[c].src[j].chan > 1) {
-					alu.nliteral = 4;
-				} else {
-					alu.nliteral = 2;
-				}
-			}
 		}
-		c++;
+		r = r600_shader_node_add_alu(rshader, node, alu, ainfo->instruction,
+					instruction->ninput, &dst, src);
+		if (r) {
+			fprintf(stderr, "%s %d failed\n", __FILE__, __LINE__);
+			return r;
+		}
 	}
-	alu.nalu = c;
-	alu.alu[c - 1].last = 1;
-	r = r600_shader_new_alu(rshader, &alu);
-	return r;
+	return 0;
 }
 
 void r600_shader_node_place(struct r600_shader *rshader)
@@ -490,274 +575,295 @@ int r600_shader_legalize(struct r600_shader *rshader)
 {
 	struct r600_shader_node *node, *nnode;
 	struct r600_shader_alu *alu, *nalu;
-	unsigned i;
 
 	c_list_for_each_safe(node, nnode, &rshader->nodes) {
 		c_list_for_each_safe(alu, nalu, &node->alu) {
-			for (i = 0; i < alu->nalu; i++) {
-				switch (alu->alu[i].opcode) {
-				case C_OPCODE_DP3:
-					if (alu->alu[i].last) {
-						/* force W component to be 0 */
-						alu->alu[i].src[0].chan = alu->alu[i].src[1].chan = 0;
-						alu->alu[i].src[0].sel = alu->alu[i].src[1].sel = 248;
-					}
-					break;
-				case C_OPCODE_SUB:
-					alu->alu[i].src[1].neg ^= 1;
-					break;
-				case C_OPCODE_ABS:
-					alu->alu[i].src[0].abs |= 1;
-					break;
-				default:
-					break;
-				}
-			}
+			alu->nalu = 5;
+			alu->alu[4].last = 1;
 		}
 	}
 	return 0;
 }
 
-#if 0
-static int r600_shader_alu_translate_lit(struct r600_shader *rshader,
-						struct c_instruction *instruction,
-						struct r600_shader_alu_translate *info)
-{
-	struct r600_shader_alu alu;
-	int r;
 
-	if (rshader->cur_node->nvfetch) {
-		r = r600_shader_new_node(rshader, rshader->cur_node->node);
-		if (r)
-			return r;
-	}
-	/* dst.z = log(src0.y) */
-	memset(&alu, 0, sizeof(struct r600_shader_alu));
-	alu.opcode = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LOG_CLAMPED;
-	alu.is_op3 = 0;
-	alu.last = 1;
-	alu.vector[0] = instruction->vectors[0];
-	alu.vector[1] = instruction->vectors[1];
-	alu.component[0] = C_SWIZZLE_Z;
-	alu.component[1] = C_SWIZZLE_Y;
-	r = r600_shader_new_alu(rshader, &alu);
-	if (r)
-		return r;
-	/* dst.z = MUL_LIT(src0.w, dst.z, src0.x)  */
-	memset(&alu, 0, sizeof(struct r600_shader_alu));
-	alu.opcode = V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_MUL_LIT;
-	alu.is_op3 = 0;
-	alu.last = 1;
-	alu.vector[0] = instruction->vectors[0];
-	alu.vector[1] = instruction->vectors[1];
-	alu.vector[2] = instruction->vectors[0];
-	alu.vector[3] = instruction->vectors[1];
-	alu.component[0] = C_SWIZZLE_Z;
-	alu.component[1] = C_SWIZZLE_W;
-	alu.component[2] = C_SWIZZLE_Z;
-	alu.component[3] = C_SWIZZLE_X;
-	r = r600_shader_new_alu(rshader, &alu);
-	if (r)
-		return r;
-	/* dst.z = exp(dst.z) */
-	memset(&alu, 0, sizeof(struct r600_shader_alu));
-	alu.opcode = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_EXP_IEEE;
-	alu.is_op3 = 0;
-	alu.last = 1;
-	alu.vector[0] = instruction->vectors[0];
-	alu.vector[1] = instruction->vectors[0];
-	alu.component[0] = C_SWIZZLE_Z;
-	alu.component[1] = C_SWIZZLE_Z;
-	r = r600_shader_new_alu(rshader, &alu);
-	if (r)
-		return r;
-	/* dst.x = 1 */
-	memset(&alu, 0, sizeof(struct r600_shader_alu));
-	alu.opcode = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOV;
-	alu.is_op3 = 0;
-	alu.last = 0;
-	alu.vector[0] = instruction->vectors[0];
-	alu.vector[1] = instruction->vectors[1];
-	alu.component[0] = C_SWIZZLE_X;
-	alu.component[1] = C_SWIZZLE_1;
-	r = r600_shader_new_alu(rshader, &alu);
-	if (r)
-		return r;
-	/* dst.w = 1 */
-	memset(&alu, 0, sizeof(struct r600_shader_alu));
-	alu.opcode = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOV;
-	alu.is_op3 = 0;
-	alu.last = 0;
-	alu.vector[0] = instruction->vectors[0];
-	alu.vector[1] = instruction->vectors[1];
-	alu.component[0] = C_SWIZZLE_W;
-	alu.component[1] = C_SWIZZLE_1;
-	r = r600_shader_new_alu(rshader, &alu);
-	if (r)
-		return r;
-	/* dst.y = max(src0.x, 0.0) */
-	memset(&alu, 0, sizeof(struct r600_shader_alu));
-	alu.opcode = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MAX;
-	alu.is_op3 = 0;
-	alu.last = 1;
-	alu.vector[0] = instruction->vectors[0];
-	alu.vector[1] = instruction->vectors[1];
-	alu.vector[2] = instruction->vectors[1];
-	alu.component[0] = C_SWIZZLE_Y;
-	alu.component[1] = C_SWIZZLE_X;
-	alu.component[2] = C_SWIZZLE_0;
-	r = r600_shader_new_alu(rshader, &alu);
-	if (r)
-		return r;
-	return 0;
-}
-#endif
-struct r600_shader_alu_translate r600_alu_translate_list[C_OPCODE_LAST] = {
-	{C_OPCODE_ARL, 0, 0},
-	{C_OPCODE_MOV, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOV, 0},
-	{C_OPCODE_LIT, 0, 0},
-	{C_OPCODE_RCP, 0, 0},
-	{C_OPCODE_RSQ, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIPSQRT_FF, 0},
-	{C_OPCODE_EXP, 0, 0},
-	{C_OPCODE_LOG, 0, 0},
-	{C_OPCODE_MUL, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MUL, 0},
-	{C_OPCODE_ADD, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_ADD, 0},
-	{C_OPCODE_DP3, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_DOT4, 0},
-	{C_OPCODE_DP4, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_DOT4, 0},
-	{C_OPCODE_DST, 0, 0},
-	{C_OPCODE_MIN, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MIN, 0},
-	{C_OPCODE_MAX, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MAX, 0},
-	{C_OPCODE_SLT, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETGT, 0},
-	{C_OPCODE_SGE, 0, 0},
-	{C_OPCODE_MAD, V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_MULADD, 1},
-	{C_OPCODE_SUB, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_ADD, 0},
-	{C_OPCODE_LRP, 0, 0},
-	{C_OPCODE_CND, 0, 0},
-	{20, 0, 0},
-	{C_OPCODE_DP2A, 0, 0},
-	{22, 0, 0},
-	{23, 0, 0},
-	{C_OPCODE_FRC, 0, 0},
-	{C_OPCODE_CLAMP, 0, 0},
-	{C_OPCODE_FLR, 0, 0},
-	{C_OPCODE_ROUND, 0, 0},
-	{C_OPCODE_EX2, 0, 0},
-	{C_OPCODE_LG2, 0, 0},
-	{C_OPCODE_POW, 0, 0},
-	{C_OPCODE_XPD, 0, 0},
-	{32, 0, 0},
-	{C_OPCODE_ABS, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOV, 0},
-	{C_OPCODE_RCC, 0, 0},
-	{C_OPCODE_DPH, 0, 0},
-	{C_OPCODE_COS, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_COS, 0},
-	{C_OPCODE_DDX, 0, 0},
-	{C_OPCODE_DDY, 0, 0},
-	{C_OPCODE_KILP, 0, 0},
-	{C_OPCODE_PK2H, 0, 0},
-	{C_OPCODE_PK2US, 0, 0},
-	{C_OPCODE_PK4B, 0, 0},
-	{C_OPCODE_PK4UB, 0, 0},
-	{C_OPCODE_RFL, 0, 0},
-	{C_OPCODE_SEQ, 0, 0},
-	{C_OPCODE_SFL, 0, 0},
-	{C_OPCODE_SGT, 0, 0},
-	{C_OPCODE_SIN, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SIN, 0},
-	{C_OPCODE_SLE, 0, 0},
-	{C_OPCODE_SNE, 0, 0},
-	{C_OPCODE_STR, 0, 0},
-	{C_OPCODE_TEX, 0, 0},
-	{C_OPCODE_TXD, 0, 0},
-	{C_OPCODE_TXP, 0, 0},
-	{C_OPCODE_UP2H, 0, 0},
-	{C_OPCODE_UP2US, 0, 0},
-	{C_OPCODE_UP4B, 0, 0},
-	{C_OPCODE_UP4UB, 0, 0},
-	{C_OPCODE_X2D, 0, 0},
-	{C_OPCODE_ARA, 0, 0},
-	{C_OPCODE_ARR, 0, 0},
-	{C_OPCODE_BRA, 0, 0},
-	{C_OPCODE_CAL, 0, 0},
-	{C_OPCODE_RET, 0, 0},
-	{C_OPCODE_SSG, 0, 0},
-	{C_OPCODE_CMP, 0, 0},
-	{C_OPCODE_SCS, 0, 0},
-	{C_OPCODE_TXB, 0, 0},
-	{C_OPCODE_NRM, 0, 0},
-	{C_OPCODE_DIV, 0, 0},
-	{C_OPCODE_DP2, 0, 0},
-	{C_OPCODE_TXL, 0, 0},
-	{C_OPCODE_BRK, 0, 0},
-	{C_OPCODE_IF, 0, 0},
-	{C_OPCODE_BGNFOR, 0, 0},
-	{C_OPCODE_REP, 0, 0},
-	{C_OPCODE_ELSE, 0, 0},
-	{C_OPCODE_ENDIF, 0, 0},
-	{C_OPCODE_ENDFOR, 0, 0},
-	{C_OPCODE_ENDREP, 0, 0},
-	{C_OPCODE_PUSHA, 0, 0},
-	{C_OPCODE_POPA, 0, 0},
-	{C_OPCODE_CEIL, 0, 0},
-	{C_OPCODE_I2F, 0, 0},
-	{C_OPCODE_NOT, 0, 0},
-	{C_OPCODE_TRUNC, 0, 0},
-	{C_OPCODE_SHL, 0, 0},
-	{88, 0, 0},
-	{C_OPCODE_AND, 0, 0},
-	{C_OPCODE_OR, 0, 0},
-	{C_OPCODE_MOD, 0, 0},
-	{C_OPCODE_XOR, 0, 0},
-	{C_OPCODE_SAD, 0, 0},
-	{C_OPCODE_TXF, 0, 0},
-	{C_OPCODE_TXQ, 0, 0},
-	{C_OPCODE_CONT, 0, 0},
-	{C_OPCODE_EMIT, 0, 0},
-	{C_OPCODE_ENDPRIM, 0, 0},
-	{C_OPCODE_BGNLOOP, 0, 0},
-	{C_OPCODE_BGNSUB, 0, 0},
-	{C_OPCODE_ENDLOOP, 0, 0},
-	{C_OPCODE_ENDSUB, 0, 0},
-	{103, 0, 0},
-	{104, 0, 0},
-	{105, 0, 0},
-	{106, 0, 0},
-	{C_OPCODE_NOP, 0, 0},
-	{108, 0, 0},
-	{109, 0, 0},
-	{110, 0, 0},
-	{111, 0, 0},
-	{C_OPCODE_NRM4, 0, 0},
-	{C_OPCODE_CALLNZ, 0, 0},
-	{C_OPCODE_IFC, 0, 0},
-	{C_OPCODE_BREAKC, 0, 0},
-	{C_OPCODE_KIL, 0, 0},
-	{C_OPCODE_END, 0, 0},
-	{118, 0, 0},
-	{C_OPCODE_F2I, 0, 0},
-	{C_OPCODE_IDIV, 0, 0},
-	{C_OPCODE_IMAX, 0, 0},
-	{C_OPCODE_IMIN, 0, 0},
-	{C_OPCODE_INEG, 0, 0},
-	{C_OPCODE_ISGE, 0, 0},
-	{C_OPCODE_ISHR, 0, 0},
-	{C_OPCODE_ISLT, 0, 0},
-	{C_OPCODE_F2U, 0, 0},
-	{C_OPCODE_U2F, 0, 0},
-	{C_OPCODE_UADD, 0, 0},
-	{C_OPCODE_UDIV, 0, 0},
-	{C_OPCODE_UMAD, 0, 0},
-	{C_OPCODE_UMAX, 0, 0},
-	{C_OPCODE_UMIN, 0, 0},
-	{C_OPCODE_UMOD, 0, 0},
-	{C_OPCODE_UMUL, 0, 0},
-	{C_OPCODE_USEQ, 0, 0},
-	{C_OPCODE_USGE, 0, 0},
-	{C_OPCODE_USHR, 0, 0},
-	{C_OPCODE_USLT, 0, 0},
-	{C_OPCODE_USNE, 0, 0},
-	{C_OPCODE_SWITCH, 0, 0},
-	{C_OPCODE_CASE, 0, 0},
-	{C_OPCODE_DEFAULT, 0, 0},
-	{C_OPCODE_ENDSWITCH, 0, 0},
-	{C_OPCODE_VFETCH, 0, 0},
-	{C_OPCODE_ENTRY, 0, 0},
+
+
+
+
+
+struct r600_instruction_info r600_instruction_info[] = {
+	{INST_ADD,			V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_ADD,			0, 0},
+	{INST_MUL,			V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MUL,			0, 0},
+	{INST_MUL_IEEE,			V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MUL_IEEE,		0, 0},
+	{INST_MAX,			V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MAX,			0, 0},
+	{INST_MIN,			V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MIN,			0, 0},
+	{INST_MAX_DX10,			V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MAX_DX10,		0, 0},
+	{INST_MIN_DX10,			V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MIN_DX10,		0, 0},
+	{INST_SETE,			V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETE,			0, 0},
+	{INST_SETGT,			V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETGT,			0, 0},
+	{INST_SETGE,			V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETGE,			0, 0},
+	{INST_SETNE,			V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETNE,			0, 0},
+	{INST_SETE_DX10,		V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETE_DX10,		0, 0},
+	{INST_SETGT_DX10,		V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETGT_DX10,		0, 0},
+	{INST_SETGE_DX10,		V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETGE_DX10,		0, 0},
+	{INST_SETNE_DX10,		V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETNE_DX10,		0, 0},
+	{INST_FRACT,			V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FRACT,			0, 0},
+	{INST_TRUNC,			V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_TRUNC,			0, 0},
+	{INST_CEIL,			V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_CEIL,			0, 0},
+	{INST_RNDNE,			V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RNDNE,			0, 0},
+	{INST_FLOOR,			V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLOOR,			0, 0},
+	{INST_MOVA,			V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA,			0, 0},
+	{INST_MOVA_FLOOR,		V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA_FLOOR,		0, 0},
+	{INST_MOVA_INT,			V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA_INT,		0, 0},
+	{INST_MOV,			V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOV,			0, 0},
+	{INST_NOP,			V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP,			0, 0},
+	{INST_PRED_SETGT_UINT,		V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGT_UINT,		0, 0},
+	{INST_PRED_SETGE_UINT,		V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGE_UINT,		0, 0},
+	{INST_PRED_SETE,		V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETE,		0, 0},
+	{INST_PRED_SETGT,		V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGT,		0, 0},
+	{INST_PRED_SETGE,		V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGE,		0, 0},
+	{INST_PRED_SETNE,		V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETNE,		0, 0},
+	{INST_PRED_SET_INV,		V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SET_INV,		0, 0},
+	{INST_PRED_SET_POP,		V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SET_POP,		0, 0},
+	{INST_PRED_SET_CLR,		V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SET_CLR,		0, 0},
+	{INST_PRED_SET_RESTORE,		V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SET_RESTORE,	0, 0},
+	{INST_PRED_SETE_PUSH,		V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETE_PUSH,		0, 0},
+	{INST_PRED_SETGT_PUSH,		V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGT_PUSH,		0, 0},
+	{INST_PRED_SETGE_PUSH,		V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGE_PUSH,		0, 0},
+	{INST_PRED_SETNE_PUSH,		V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETNE_PUSH,		0, 0},
+	{INST_KILLE,			V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLE,			0, 0},
+	{INST_KILLGT,			V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLGT,			0, 0},
+	{INST_KILLGE,			V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLGE,			0, 0},
+	{INST_KILLNE,			V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLNE,			0, 0},
+	{INST_AND_INT,			V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_AND_INT,			0, 0},
+	{INST_OR_INT,			V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_OR_INT,			0, 0},
+	{INST_XOR_INT,			V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_XOR_INT,			0, 0},
+	{INST_NOT_INT,			V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOT_INT,			0, 0},
+	{INST_ADD_INT,			V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_ADD_INT,			0, 0},
+	{INST_SUB_INT,			V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SUB_INT,			0, 0},
+	{INST_MAX_INT,			V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MAX_INT,			0, 0},
+	{INST_MIN_INT,			V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MIN_INT,			0, 0},
+	{INST_MAX_UINT,			V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MAX_UINT,		0, 0},
+	{INST_MIN_UINT,			V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MIN_UINT,		0, 0},
+	{INST_SETE_INT,			V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETE_INT,		0, 0},
+	{INST_SETGT_INT,		V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETGT_INT,		0, 0},
+	{INST_SETGE_INT,		V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETGE_INT,		0, 0},
+	{INST_SETNE_INT,		V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETNE_INT,		0, 0},
+	{INST_SETGT_UINT,		V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETGT_UINT,		0, 0},
+	{INST_SETGE_UINT,		V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETGE_UINT,		0, 0},
+	{INST_KILLGT_UINT,		V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLGT_UINT,		0, 0},
+	{INST_KILLGE_UINT,		V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLGE_UINT,		0, 0},
+	{INST_PRED_SETE_INT,		V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETE_INT,		0, 0},
+	{INST_PRED_SETGT_INT,		V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGT_INT,		0, 0},
+	{INST_PRED_SETGE_INT,		V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGE_INT,		0, 0},
+	{INST_PRED_SETNE_INT,		V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETNE_INT,		0, 0},
+	{INST_KILLE_INT,		V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLE_INT,		0, 0},
+	{INST_KILLGT_INT,		V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLGT_INT,		0, 0},
+	{INST_KILLGE_INT,		V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLGE_INT,		0, 0},
+	{INST_KILLNE_INT,		V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLNE_INT,		0, 0},
+	{INST_PRED_SETE_PUSH_INT,	V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETE_PUSH_INT,	0, 0},
+	{INST_PRED_SETGT_PUSH_INT,	V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGT_PUSH_INT,	0, 0},
+	{INST_PRED_SETGE_PUSH_INT,	V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGE_PUSH_INT,	0, 0},
+	{INST_PRED_SETNE_PUSH_INT,	V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETNE_PUSH_INT,	0, 0},
+	{INST_PRED_SETLT_PUSH_INT,	V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETLT_PUSH_INT,	0, 0},
+	{INST_PRED_SETLE_PUSH_INT,	V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETLE_PUSH_INT,	0, 0},
+	{INST_DOT4,			V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_DOT4,			0, 0},
+	{INST_DOT4_IEEE,		V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_DOT4_IEEE,		0, 0},
+	{INST_CUBE,			V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_CUBE,			0, 0},
+	{INST_MAX4,			V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MAX4,			0, 0},
+	{INST_MOVA_GPR_INT,		V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA_GPR_INT,		0, 0},
+	{INST_EXP_IEEE,			V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_EXP_IEEE,		1, 0},
+	{INST_LOG_CLAMPED,		V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LOG_CLAMPED,		1, 0},
+	{INST_LOG_IEEE,			V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LOG_IEEE,		1, 0},
+	{INST_RECIP_CLAMPED,		V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_CLAMPED,		1, 0},
+	{INST_RECIP_FF,			V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_FF,		1, 0},
+	{INST_RECIP_IEEE,		V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_IEEE,		1, 0},
+	{INST_RECIPSQRT_CLAMPED,	V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIPSQRT_CLAMPED,	1, 0},
+	{INST_RECIPSQRT_FF,		V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIPSQRT_FF,		1, 0},
+	{INST_RECIPSQRT_IEEE,		V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIPSQRT_IEEE,		1, 0},
+	{INST_SQRT_IEEE,		V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SQRT_IEEE,		1, 0},
+	{INST_FLT_TO_INT,		V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_INT,		1, 0},
+	{INST_INT_TO_FLT,		V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_INT_TO_FLT,		1, 0},
+	{INST_UINT_TO_FLT,		V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_UINT_TO_FLT,		1, 0},
+	{INST_SIN,			V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SIN,			1, 0},
+	{INST_COS,			V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_COS,			1, 0},
+	{INST_ASHR_INT,			V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_ASHR_INT,		1, 0},
+	{INST_LSHR_INT,			V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LSHR_INT,		1, 0},
+	{INST_LSHL_INT,			V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LSHL_INT,		1, 0},
+	{INST_MULLO_INT,		V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MULLO_INT,		1, 0},
+	{INST_MULHI_INT,		V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MULHI_INT,		1, 0},
+	{INST_MULLO_UINT,		V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MULLO_UINT,		1, 0},
+	{INST_MULHI_UINT,		V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MULHI_UINT,		1, 0},
+	{INST_RECIP_INT,		V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_INT,		1, 0},
+	{INST_RECIP_UINT,		V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_UINT,		1, 0},
+	{INST_FLT_TO_UINT,		V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_UINT,		1, 0},
+	{INST_MUL_LIT,			V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_MUL_LIT,			1, 1},
+	{INST_MUL_LIT_M2,		V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_MUL_LIT_M2,		1, 1},
+	{INST_MUL_LIT_M4,		V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_MUL_LIT_M4,		1, 1},
+	{INST_MUL_LIT_D2,		V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_MUL_LIT_D2,		1, 1},
+	{INST_MULADD,			V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_MULADD,			0, 1},
+	{INST_MULADD_M2,		V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_MULADD_M2,		0, 1},
+	{INST_MULADD_M4,		V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_MULADD_M4,		0, 1},
+	{INST_MULADD_D2,		V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_MULADD_D2,		0, 1},
+	{INST_MULADD_IEEE,		V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_MULADD_IEEE,		0, 1},
+	{INST_MULADD_IEEE_M2,		V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_MULADD_IEEE_M2,		0, 1},
+	{INST_MULADD_IEEE_M4,		V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_MULADD_IEEE_M4,		0, 1},
+	{INST_MULADD_IEEE_D2,		V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_MULADD_IEEE_D2,		0, 1},
+	{INST_CNDE,			V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_CNDE,			0, 1},
+	{INST_CNDGT,			V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_CNDGT,			0, 1},
+	{INST_CNDGE,			V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_CNDGE,			0, 1},
+	{INST_CNDE_INT,			V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_CNDE_INT,		0, 1},
+	{INST_CNDGT_INT,		V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_CNDGT_INT,		0, 1},
+	{INST_CNDGE_INT,		V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_CNDGE_INT,		0, 1},
+};
+
+struct r600_alu_instruction r600_alu_instruction[C_OPCODE_LAST] = {
+	{C_OPCODE_NOP,		INST_NOP},
+	{C_OPCODE_MOV,		INST_MOV},
+	{C_OPCODE_LIT,		INST_NOP},
+	{C_OPCODE_RCP,		INST_RECIP_IEEE},
+	{C_OPCODE_RSQ,		INST_RECIPSQRT_IEEE},
+	{C_OPCODE_EXP,		INST_EXP_IEEE},
+	{C_OPCODE_LOG,		INST_LOG_IEEE},
+	{C_OPCODE_MUL,		INST_MUL},
+	{C_OPCODE_ADD,		INST_ADD},
+	{C_OPCODE_DP3,		INST_DOT4},
+	{C_OPCODE_DP4,		INST_DOT4},
+	{C_OPCODE_DST,		INST_NOP},
+	{C_OPCODE_MIN,		INST_MIN},
+	{C_OPCODE_MAX,		INST_MAX},
+	{C_OPCODE_SLT,		INST_NOP},
+	{C_OPCODE_SGE,		INST_NOP},
+	{C_OPCODE_MAD,		INST_MULADD},
+	{C_OPCODE_SUB,		INST_COUNT},
+	{C_OPCODE_LRP,		INST_NOP},
+	{C_OPCODE_CND,		INST_NOP},
+	{20,			INST_NOP},
+	{C_OPCODE_DP2A,		INST_NOP},
+	{22,			INST_NOP},
+	{23,			INST_NOP},
+	{C_OPCODE_FRC,		INST_NOP},
+	{C_OPCODE_CLAMP,	INST_NOP},
+	{C_OPCODE_FLR,		INST_NOP},
+	{C_OPCODE_ROUND,	INST_NOP},
+	{C_OPCODE_EX2,		INST_NOP},
+	{C_OPCODE_LG2,		INST_NOP},
+	{C_OPCODE_POW,		INST_NOP},
+	{C_OPCODE_XPD,		INST_NOP},
+	{32,			INST_NOP},
+	{C_OPCODE_ABS,		INST_COUNT},
+	{C_OPCODE_RCC,		INST_NOP},
+	{C_OPCODE_DPH,		INST_NOP},
+	{C_OPCODE_COS,		INST_COS},
+	{C_OPCODE_DDX,		INST_NOP},
+	{C_OPCODE_DDY,		INST_NOP},
+	{C_OPCODE_KILP,		INST_NOP},
+	{C_OPCODE_PK2H,		INST_NOP},
+	{C_OPCODE_PK2US,	INST_NOP},
+	{C_OPCODE_PK4B,		INST_NOP},
+	{C_OPCODE_PK4UB,	INST_NOP},
+	{C_OPCODE_RFL,		INST_NOP},
+	{C_OPCODE_SEQ,		INST_NOP},
+	{C_OPCODE_SFL,		INST_NOP},
+	{C_OPCODE_SGT,		INST_NOP},
+	{C_OPCODE_SIN,		INST_SIN},
+	{C_OPCODE_SLE,		INST_NOP},
+	{C_OPCODE_SNE,		INST_NOP},
+	{C_OPCODE_STR,		INST_NOP},
+	{C_OPCODE_TEX,		INST_NOP},
+	{C_OPCODE_TXD,		INST_NOP},
+	{C_OPCODE_TXP,		INST_NOP},
+	{C_OPCODE_UP2H,		INST_NOP},
+	{C_OPCODE_UP2US,	INST_NOP},
+	{C_OPCODE_UP4B,		INST_NOP},
+	{C_OPCODE_UP4UB,	INST_NOP},
+	{C_OPCODE_X2D,		INST_NOP},
+	{C_OPCODE_ARA,		INST_NOP},
+	{C_OPCODE_ARR,		INST_NOP},
+	{C_OPCODE_BRA,		INST_NOP},
+	{C_OPCODE_CAL,		INST_NOP},
+	{C_OPCODE_RET,		INST_NOP},
+	{C_OPCODE_SSG,		INST_NOP},
+	{C_OPCODE_CMP,		INST_NOP},
+	{C_OPCODE_SCS,		INST_NOP},
+	{C_OPCODE_TXB,		INST_NOP},
+	{C_OPCODE_NRM,		INST_NOP},
+	{C_OPCODE_DIV,		INST_NOP},
+	{C_OPCODE_DP2,		INST_NOP},
+	{C_OPCODE_TXL,		INST_NOP},
+	{C_OPCODE_BRK,		INST_NOP},
+	{C_OPCODE_IF,		INST_NOP},
+	{C_OPCODE_BGNFOR,	INST_NOP},
+	{C_OPCODE_REP,		INST_NOP},
+	{C_OPCODE_ELSE,		INST_NOP},
+	{C_OPCODE_ENDIF,	INST_NOP},
+	{C_OPCODE_ENDFOR,	INST_NOP},
+	{C_OPCODE_ENDREP,	INST_NOP},
+	{C_OPCODE_PUSHA,	INST_NOP},
+	{C_OPCODE_POPA,		INST_NOP},
+	{C_OPCODE_CEIL,		INST_NOP},
+	{C_OPCODE_I2F,		INST_NOP},
+	{C_OPCODE_NOT,		INST_NOP},
+	{C_OPCODE_TRUNC,	INST_NOP},
+	{C_OPCODE_SHL,		INST_NOP},
+	{88,			INST_NOP},
+	{C_OPCODE_AND,		INST_NOP},
+	{C_OPCODE_OR,		INST_NOP},
+	{C_OPCODE_MOD,		INST_NOP},
+	{C_OPCODE_XOR,		INST_NOP},
+	{C_OPCODE_SAD,		INST_NOP},
+	{C_OPCODE_TXF,		INST_NOP},
+	{C_OPCODE_TXQ,		INST_NOP},
+	{C_OPCODE_CONT,		INST_NOP},
+	{C_OPCODE_EMIT,		INST_NOP},
+	{C_OPCODE_ENDPRIM,	INST_NOP},
+	{C_OPCODE_BGNLOOP,	INST_NOP},
+	{C_OPCODE_BGNSUB,	INST_NOP},
+	{C_OPCODE_ENDLOOP,	INST_NOP},
+	{C_OPCODE_ENDSUB,	INST_NOP},
+	{103,			INST_NOP},
+	{104,			INST_NOP},
+	{105,			INST_NOP},
+	{106,			INST_NOP},
+	{107,			INST_NOP},
+	{108,			INST_NOP},
+	{109,			INST_NOP},
+	{110,			INST_NOP},
+	{111,			INST_NOP},
+	{C_OPCODE_NRM4,		INST_NOP},
+	{C_OPCODE_CALLNZ,	INST_NOP},
+	{C_OPCODE_IFC,		INST_NOP},
+	{C_OPCODE_BREAKC,	INST_NOP},
+	{C_OPCODE_KIL,		INST_NOP},
+	{C_OPCODE_END,		INST_NOP},
+	{118,			INST_NOP},
+	{C_OPCODE_F2I,		INST_NOP},
+	{C_OPCODE_IDIV,		INST_NOP},
+	{C_OPCODE_IMAX,		INST_NOP},
+	{C_OPCODE_IMIN,		INST_NOP},
+	{C_OPCODE_INEG,		INST_NOP},
+	{C_OPCODE_ISGE,		INST_NOP},
+	{C_OPCODE_ISHR,		INST_NOP},
+	{C_OPCODE_ISLT,		INST_NOP},
+	{C_OPCODE_F2U,		INST_NOP},
+	{C_OPCODE_U2F,		INST_NOP},
+	{C_OPCODE_UADD,		INST_NOP},
+	{C_OPCODE_UDIV,		INST_NOP},
+	{C_OPCODE_UMAD,		INST_NOP},
+	{C_OPCODE_UMAX,		INST_NOP},
+	{C_OPCODE_UMIN,		INST_NOP},
+	{C_OPCODE_UMOD,		INST_NOP},
+	{C_OPCODE_UMUL,		INST_NOP},
+	{C_OPCODE_USEQ,		INST_NOP},
+	{C_OPCODE_USGE,		INST_NOP},
+	{C_OPCODE_USHR,		INST_NOP},
+	{C_OPCODE_USLT,		INST_NOP},
+	{C_OPCODE_USNE,		INST_NOP},
+	{C_OPCODE_SWITCH,	INST_NOP},
+	{C_OPCODE_CASE,		INST_NOP},
+	{C_OPCODE_DEFAULT,	INST_NOP},
+	{C_OPCODE_ENDSWITCH,	INST_NOP},
+	{C_OPCODE_VFETCH,	INST_NOP},
+	{C_OPCODE_ENTRY,	INST_NOP},
+	{C_OPCODE_ARL,		INST_NOP},
 };

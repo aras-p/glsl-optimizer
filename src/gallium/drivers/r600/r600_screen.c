@@ -31,6 +31,7 @@
 #include "r600_screen.h"
 #include "r600_texture.h"
 #include "r600_context.h"
+#include <stdio.h>
 
 static const char* r600_get_vendor(struct pipe_screen* pscreen)
 {
@@ -39,7 +40,7 @@ static const char* r600_get_vendor(struct pipe_screen* pscreen)
 
 static const char* r600_get_name(struct pipe_screen* pscreen)
 {
-	return "R600";
+	return "R600/R700 (HD2XXX,HD3XXX,HD4XXX)";
 }
 
 static int r600_get_param(struct pipe_screen* pscreen, int param)
@@ -150,6 +151,10 @@ static boolean r600_is_format_supported(struct pipe_screen* screen,
 	case PIPE_FORMAT_X8R8G8B8_UNORM:
 	case PIPE_FORMAT_R8G8B8A8_UNORM:
 	case PIPE_FORMAT_R8G8B8X8_UNORM:
+	case PIPE_FORMAT_B8G8R8A8_UNORM:
+	case PIPE_FORMAT_B8G8R8X8_UNORM:
+	case PIPE_FORMAT_A8B8G8R8_SRGB:
+	case PIPE_FORMAT_B8G8R8A8_SRGB:
 	case PIPE_FORMAT_I8_UNORM:
 	case PIPE_FORMAT_Z16_UNORM:
 	case PIPE_FORMAT_X8Z24_UNORM:

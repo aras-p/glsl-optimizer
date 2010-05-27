@@ -71,8 +71,6 @@ struct pipe_context *r600_create_context(struct pipe_screen *screen, void *priv)
 	rctx->context.priv = priv;
 	rctx->context.destroy = r600_destroy_context;
 	rctx->context.clear = r600_clear;
-	rctx->context.surface_copy = r600_surface_copy;
-	rctx->context.surface_fill = r600_surface_fill;
 	rctx->context.draw_arrays = r600_draw_arrays;
 	rctx->context.draw_elements = r600_draw_elements;
 	rctx->context.draw_range_elements = r600_draw_range_elements;

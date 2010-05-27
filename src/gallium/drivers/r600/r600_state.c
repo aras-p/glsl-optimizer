@@ -444,8 +444,13 @@ static void r600_set_stencil_ref(struct pipe_context *ctx,
 	rctx->stencil_ref = *sr;
 }
 
+static void r600_set_sample_mask(struct pipe_context *pipe, unsigned sample_mask)
+{
+}
+
 void r600_init_state_functions(struct r600_context *rctx)
 {
+	rctx->context.set_sample_mask = r600_set_sample_mask;
 	rctx->context.create_blend_state = r600_create_blend_state;
 	rctx->context.bind_blend_state = r600_bind_blend_state;
 	rctx->context.delete_blend_state = r600_delete_state;

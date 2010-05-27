@@ -37,6 +37,7 @@ static int r700_shader_cf_node_bytecode(struct r600_shader *rshader,
 	if (rnode->nfetch) {
 		rshader->bcode[id++] = S_SQ_CF_WORD0_ADDR(rnode->cf_addr >> 1);
 		rshader->bcode[id++] = S_SQ_CF_WORD1_CF_INST(V_SQ_CF_WORD1_SQ_CF_INST_VTX) |
+					S_SQ_CF_WORD1_BARRIER(1) |
 					S_SQ_CF_WORD1_COUNT(rnode->nfetch - 1);
 	} else {
 		rshader->bcode[id++] = S_SQ_CF_ALU_WORD0_ADDR(rnode->cf_addr >> 1);
@@ -53,14 +54,14 @@ static int r700_shader_cf_output_bytecode(struct r600_shader *rshader,
 						unsigned *cid,
 						unsigned end)
 {
-	unsigned gpr, chan;
+	struct r600_shader_operand out;
 	unsigned id = *cid;
 	int r;
 
-	r = r600_shader_find_gpr(rshader, v, 0, &gpr, &chan);
+	r = r600_shader_find_gpr(rshader, v, 0, &out);
 	if (r)
 		return r;
-	rshader->bcode[id + 0] = S_SQ_CF_ALLOC_EXPORT_WORD0_RW_GPR(gpr) |
+	rshader->bcode[id + 0] = S_SQ_CF_ALLOC_EXPORT_WORD0_RW_GPR(out.sel) |
 				S_SQ_CF_ALLOC_EXPORT_WORD0_ELEM_SIZE(3);
 	rshader->bcode[id + 1] = S_SQ_CF_ALLOC_EXPORT_WORD1_SWIZ_SEL_X(0) |
 		S_SQ_CF_ALLOC_EXPORT_WORD1_SWIZ_SEL_Y(1) |
@@ -76,7 +77,7 @@ static int r700_shader_cf_output_bytecode(struct r600_shader *rshader,
 		break;
 	case C_SEMANTIC_COLOR:
 		if (rshader->cshader.type == C_PROGRAM_TYPE_VS) {
-			rshader->output[rshader->noutput].gpr = gpr;
+			rshader->output[rshader->noutput].gpr = out.sel;
 			rshader->output[rshader->noutput].sid = v->sid;
 			rshader->output[rshader->noutput].name = v->name;
 			rshader->bcode[id + 0] |= S_SQ_CF_ALLOC_EXPORT_WORD0_ARRAY_BASE(rshader->noutput++) |
@@ -87,7 +88,7 @@ static int r700_shader_cf_output_bytecode(struct r600_shader *rshader,
 		}
 		break;
 	case C_SEMANTIC_GENERIC:
-		rshader->output[rshader->noutput].gpr = gpr;
+		rshader->output[rshader->noutput].gpr = out.sel;
 		rshader->output[rshader->noutput].sid = v->sid;
 		rshader->output[rshader->noutput].name = v->name;
 		rshader->bcode[id + 0] |= S_SQ_CF_ALLOC_EXPORT_WORD0_ARRAY_BASE(rshader->noutput++) |
@@ -120,7 +121,7 @@ static int r700_shader_alu_bytecode(struct r600_shader *rshader,
 					S_SQ_ALU_WORD1_OP3_SRC2_SEL(alu->src[2].sel) |
 					S_SQ_ALU_WORD1_OP3_SRC2_CHAN(alu->src[2].chan) |
 					S_SQ_ALU_WORD1_OP3_SRC2_NEG(alu->src[2].neg) |
-					S_SQ_ALU_WORD1_OP3_ALU_INST(alu->inst) |
+					S_SQ_ALU_WORD1_OP3_ALU_INST(alu->opcode) |
 					S_SQ_ALU_WORD1_BANK_SWIZZLE(0);
 	} else {
 		rshader->bcode[id++] = S_SQ_ALU_WORD0_SRC0_SEL(alu->src[0].sel) |
@@ -135,7 +136,7 @@ static int r700_shader_alu_bytecode(struct r600_shader *rshader,
 					S_SQ_ALU_WORD1_OP2_SRC0_ABS(alu->src[0].abs) |
 					S_SQ_ALU_WORD1_OP2_SRC1_ABS(alu->src[1].abs) |
 					S_SQ_ALU_WORD1_OP2_WRITE_MASK(1) |
-					S_SQ_ALU_WORD1_OP2_ALU_INST(alu->inst) |
+					S_SQ_ALU_WORD1_OP2_ALU_INST(alu->opcode) |
 					S_SQ_ALU_WORD1_BANK_SWIZZLE(0);
 	}
 	*cid = id;

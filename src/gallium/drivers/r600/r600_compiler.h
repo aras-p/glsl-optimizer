@@ -101,7 +101,7 @@ struct c_vector {
 #define C_SEMANTIC_VERTEXID	11
 #define C_SEMANTIC_COUNT	12 /**< number of semantic values */
 
-#define C_OPCODE_ARL		0
+#define C_OPCODE_NOP		0
 #define C_OPCODE_MOV		1
 #define C_OPCODE_LIT		2
 #define C_OPCODE_RCP		3
@@ -204,8 +204,6 @@ struct c_vector {
 #define C_OPCODE_ENDLOOP	101
 #define C_OPCODE_ENDSUB		102
 /* gap */
-#define C_OPCODE_NOP		107
-/* gap */
 #define C_OPCODE_NRM4		112
 #define C_OPCODE_CALLNZ		113
 #define C_OPCODE_IFC		114
@@ -241,7 +239,8 @@ struct c_vector {
 #define C_OPCODE_ENDSWITCH	144
 #define C_OPCODE_VFETCH		145
 #define C_OPCODE_ENTRY		146
-#define C_OPCODE_LAST		147
+#define C_OPCODE_ARL		147
+#define C_OPCODE_LAST		148
 
 #define C_OPERAND_FLAG_ABS		(1 << 0)
 #define C_OPERAND_FLAG_NEG		(1 << 1)
