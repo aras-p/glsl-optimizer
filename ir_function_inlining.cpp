@@ -50,6 +50,7 @@ public:
    virtual ir_visitor_status visit_enter(ir_call *);
    virtual ir_visitor_status visit_enter(ir_assignment *);
    virtual ir_visitor_status visit_enter(ir_return *);
+   virtual ir_visitor_status visit_enter(ir_texture *);
    virtual ir_visitor_status visit_enter(ir_swizzle *);
 
    bool progress;
@@ -118,6 +119,7 @@ public:
    virtual void visit(ir_function_signature *);
    virtual void visit(ir_function *);
    virtual void visit(ir_expression *);
+   virtual void visit(ir_texture *);
    virtual void visit(ir_swizzle *);
    virtual void visit(ir_dereference_variable *);
    virtual void visit(ir_dereference_array *);
@@ -193,6 +195,14 @@ ir_function_cloning_visitor::visit(ir_expression *ir)
    }
 
    this->result = new ir_expression(ir->operation, ir->type, op[0], op[1]);
+}
+
+
+void
+ir_function_cloning_visitor::visit(ir_texture *ir)
+{
+   // FINISHME: Do stuff with texture lookups
+   (void) ir;
 }
 
 
@@ -430,6 +440,14 @@ ir_function_inlining_visitor::visit_enter(ir_expression *ir)
 
 ir_visitor_status
 ir_function_inlining_visitor::visit_enter(ir_return *ir)
+{
+   (void) ir;
+   return visit_continue_with_parent;
+}
+
+
+ir_visitor_status
+ir_function_inlining_visitor::visit_enter(ir_texture *ir)
 {
    (void) ir;
    return visit_continue_with_parent;

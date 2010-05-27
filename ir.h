@@ -775,6 +775,13 @@ public:
       /* empty */
    }
 
+   virtual void accept(ir_visitor *v)
+   {
+      v->visit(this);
+   }
+
+   virtual ir_visitor_status accept(ir_hierarchical_visitor *);
+
    /**
     * Return a string representing the ir_texture_opcode.
     */

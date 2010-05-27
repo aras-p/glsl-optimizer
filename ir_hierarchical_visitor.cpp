@@ -109,6 +109,20 @@ ir_hierarchical_visitor::visit_leave(ir_expression *ir)
 }
 
 ir_visitor_status
+ir_hierarchical_visitor::visit_enter(ir_texture *ir)
+{
+   (void) ir;
+   return visit_continue;
+}
+
+ir_visitor_status
+ir_hierarchical_visitor::visit_leave(ir_texture *ir)
+{
+   (void) ir;
+   return visit_continue;
+}
+
+ir_visitor_status
 ir_hierarchical_visitor::visit_enter(ir_swizzle *ir)
 {
    (void) ir;

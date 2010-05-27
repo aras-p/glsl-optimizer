@@ -60,6 +60,7 @@ public:
    virtual void visit(ir_function_signature *);
    virtual void visit(ir_function *);
    virtual void visit(ir_expression *);
+   virtual void visit(ir_texture *);
    virtual void visit(ir_swizzle *);
    virtual void visit(ir_dereference_variable *);
    virtual void visit(ir_dereference_array *);
@@ -111,6 +112,14 @@ ir_constant_folding_visitor::visit(ir_expression *ir)
 	 ir->operands[operand]->accept(this);
       }
    }
+}
+
+
+void
+ir_constant_folding_visitor::visit(ir_texture *ir)
+{
+   // FINISHME: Do stuff with texture lookups
+   (void) ir;
 }
 
 

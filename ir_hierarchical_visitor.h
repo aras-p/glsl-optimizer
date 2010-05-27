@@ -113,6 +113,8 @@ public:
    virtual ir_visitor_status visit_leave(class ir_function *);
    virtual ir_visitor_status visit_enter(class ir_expression *);
    virtual ir_visitor_status visit_leave(class ir_expression *);
+   virtual ir_visitor_status visit_enter(class ir_texture *);
+   virtual ir_visitor_status visit_leave(class ir_texture *);
    virtual ir_visitor_status visit_enter(class ir_swizzle *);
    virtual ir_visitor_status visit_leave(class ir_swizzle *);
    virtual ir_visitor_status visit_enter(class ir_dereference_array *);

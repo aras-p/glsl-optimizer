@@ -156,6 +156,12 @@ done:
    return v->visit_leave(this);
 }
 
+ir_visitor_status
+ir_texture::accept(ir_hierarchical_visitor *v)
+{
+   return visit_continue_with_parent;
+}
+
 
 ir_visitor_status
 ir_swizzle::accept(ir_hierarchical_visitor *v)
