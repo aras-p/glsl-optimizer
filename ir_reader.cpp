@@ -53,6 +53,7 @@ static ir_expression *read_expression(_mesa_glsl_parse_state *, s_list *);
 static ir_call *read_call(_mesa_glsl_parse_state *, s_list *);
 static ir_swizzle *read_swizzle(_mesa_glsl_parse_state *, s_list *);
 static ir_constant *read_constant(_mesa_glsl_parse_state *, s_list *);
+static ir_texture *read_texture(_mesa_glsl_parse_state *, s_list *);
 
 static ir_dereference *read_dereference(_mesa_glsl_parse_state *,
 				        s_expression *);
@@ -545,7 +546,9 @@ read_rvalue(_mesa_glsl_parse_state *st, s_expression *expr)
    } else if (strcmp(tag->value(), "constant") == 0) {
       rvalue = read_constant(st, list);
    } else {
-      ir_read_error(st, expr, "unrecognized rvalue tag: %s", tag->value());
+      rvalue = read_texture(st, list);
+      if (rvalue == NULL && !st->error)
+	 ir_read_error(st, expr, "unrecognized rvalue tag: %s", tag->value());
    }
 
    return rvalue;
@@ -898,4 +901,149 @@ read_record_ref(_mesa_glsl_parse_state *st, s_list *list)
       return NULL;
    }
    return new ir_dereference_record(subject, field->value());
+}
+
+static bool
+valid_texture_list_length(ir_texture_opcode op, s_list *list)
+{
+   unsigned required_length = 7;
+   if (op == ir_txf)
+      required_length = 5;
+   else if (op == ir_tex)
+      required_length = 6;
+
+   return list->length() == required_length;
+}
+
+static ir_texture *
+read_texture(_mesa_glsl_parse_state *st, s_list *list)
+{
+   s_symbol *tag = SX_AS_SYMBOL(list->subexpressions.head);
+   assert(tag != NULL);
+
+   ir_texture_opcode op = ir_texture::get_opcode(tag->value());
+   if (op == (ir_texture_opcode) -1)
+      return NULL;
+
+   if (!valid_texture_list_length(op, list)) {
+      ir_read_error(st, NULL, "invalid list size in (%s ...)", tag->value());
+      return NULL;
+   }
+
+   ir_texture *tex = new ir_texture(op);
+
+   // Read sampler (must be a deref)
+   s_expression *sampler_expr = (s_expression *) tag->next;
+   tex->sampler = read_dereference(st, sampler_expr);
+   if (tex->sampler == NULL) {
+      ir_read_error(st, NULL, "when reading sampler in (%s ...)", tag->value());
+      return NULL;
+   }
+
+   // Read coordinate (any rvalue)
+   s_expression *coordinate_expr = (s_expression *) sampler_expr->next;
+   tex->coordinate = read_rvalue(st, coordinate_expr);
+   if (tex->coordinate == NULL) {
+      ir_read_error(st, NULL, "when reading coordinate in (%s ...)",
+		    tag->value());
+      return NULL;
+   }
+
+   // Read texel offset, i.e. (0 0 0)
+   s_list *offset_list = SX_AS_LIST(coordinate_expr->next);
+   if (offset_list == NULL || offset_list->length() != 3) {
+      ir_read_error(st, offset_list, "expected (<int> <int> <int>)");
+      return NULL;
+   }
+   s_int *offset_x = SX_AS_INT(offset_list->subexpressions.head);
+   s_int *offset_y = SX_AS_INT(offset_x->next);
+   s_int *offset_z = SX_AS_INT(offset_y->next);
+   if (offset_x == NULL || offset_y == NULL || offset_z == NULL) {
+      ir_read_error(st, offset_list, "expected (<int> <int> <int>)");
+      return NULL;
+   }
+   tex->offsets[0] = offset_x->value();
+   tex->offsets[1] = offset_y->value();
+   tex->offsets[2] = offset_z->value();
+
+   if (op == ir_txf) {
+      s_expression *lod_expr = (s_expression *) offset_list->next;
+      tex->lod_info.lod = read_rvalue(st, lod_expr);
+      if (tex->lod_info.lod == NULL) {
+	 ir_read_error(st, NULL, "when reading LOD in (txf ...)");
+	 return NULL;
+      }
+   } else {
+      s_expression *proj_expr = (s_expression *) offset_list->next;
+      s_int *proj_as_int = SX_AS_INT(proj_expr);
+      if (proj_as_int && proj_as_int->value() == 1) {
+	 tex->projector = NULL;
+      } else {
+	 tex->projector = read_rvalue(st, proj_expr);
+	 if (tex->projector == NULL) {
+	    ir_read_error(st, NULL, "when reading projective divide in (%s ..)",
+	                  tag->value());
+	    return NULL;
+	 }
+      }
+
+      s_list *shadow_list = SX_AS_LIST(proj_expr->next);
+      if (shadow_list == NULL) {
+	 ir_read_error(st, NULL, "shadow comparitor must be a list");
+	 return NULL;
+      }
+      if (shadow_list->subexpressions.is_empty()) {
+	 tex->shadow_comparitor= NULL;
+      } else {
+	 tex->shadow_comparitor = read_rvalue(st, shadow_list);
+	 if (tex->shadow_comparitor == NULL) {
+	    ir_read_error(st, NULL, "when reading shadow comparitor in (%s ..)",
+			  tag->value());
+	    return NULL;
+	 }
+      }
+      s_expression *lod_expr = (s_expression *) shadow_list->next;
+
+      switch (op) {
+      case ir_txb:
+	 tex->lod_info.bias = read_rvalue(st, lod_expr);
+	 if (tex->lod_info.bias == NULL) {
+	    ir_read_error(st, NULL, "when reading LOD bias in (txb ...)");
+	    return NULL;
+	 }
+	 break;
+      case ir_txl:
+	 tex->lod_info.lod = read_rvalue(st, lod_expr);
+	 if (tex->lod_info.lod == NULL) {
+	    ir_read_error(st, NULL, "when reading LOD in (txl ...)");
+	    return NULL;
+	 }
+	 break;
+      case ir_txd: {
+	 s_list *lod_list = SX_AS_LIST(lod_expr);
+	 if (lod_list->length() != 2) {
+	    ir_read_error(st, lod_expr, "expected (dPdx dPdy) in (txd ...)");
+	    return NULL;
+	 }
+	 s_expression *dx_expr = (s_expression *) lod_list->subexpressions.head;
+	 s_expression *dy_expr = (s_expression *) dx_expr->next;
+
+	 tex->lod_info.grad.dPdx = read_rvalue(st, dx_expr);
+	 if (tex->lod_info.grad.dPdx == NULL) {
+	    ir_read_error(st, NULL, "when reading dPdx in (txd ...)");
+	    return NULL;
+	 }
+	 tex->lod_info.grad.dPdy = read_rvalue(st, dy_expr);
+	 if (tex->lod_info.grad.dPdy == NULL) {
+	    ir_read_error(st, NULL, "when reading dPdy in (txd ...)");
+	    return NULL;
+	 }
+	 break;
+      }
+      default:
+	 // tex doesn't have any extra parameters and txf was handled earlier.
+	 break;
+      };
+   }
+   return tex;
 }
