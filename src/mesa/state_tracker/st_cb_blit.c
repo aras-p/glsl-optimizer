@@ -33,7 +33,6 @@
 #include "main/imports.h"
 #include "main/image.h"
 #include "main/macros.h"
-#include "shader/program.h"
 
 #include "st_context.h"
 #include "st_texture.h"
@@ -41,7 +40,6 @@
 #include "st_cb_fbo.h"
 
 #include "util/u_blit.h"
-#include "util/u_inlines.h"
 
 
 void

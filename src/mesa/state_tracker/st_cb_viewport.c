@@ -29,11 +29,9 @@
 #include "st_context.h"
 #include "st_cb_viewport.h"
 
-#include "pipe/p_context.h"
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
 #include "util/u_atomic.h"
-#include "util/u_debug.h"
 
 /**
  * Cast wrapper to convert a GLframebuffer to an st_framebuffer.

@@ -59,8 +59,6 @@
 #include "st_program.h"
 #include "pipe/p_context.h"
 #include "util/u_inlines.h"
-#include "util/u_rect.h"
-#include "util/u_surface.h"
 #include "cso_cache/cso_context.h"
 
 
