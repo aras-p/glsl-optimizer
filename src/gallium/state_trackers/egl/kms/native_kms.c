@@ -707,7 +707,7 @@ kms_display_init_screen(struct native_display *ndpy)
    }
 #endif
 
-   kdpy->base.screen = kdpy->api->create_screen(kdpy->api, fd, NULL);
+   kdpy->base.screen = kdpy->api->create_screen(kdpy->api, fd);
    if (!kdpy->base.screen) {
       _eglLog(_EGL_WARNING, "failed to create DRM screen");
       drmClose(fd);
