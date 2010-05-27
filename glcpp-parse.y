@@ -666,6 +666,9 @@ _token_list_append (token_list_t *list, token_t *token)
 void
 _token_list_append_list (token_list_t *list, token_list_t *tail)
 {
+	if (tail == NULL || tail->head == NULL)
+		return;
+
 	if (list->head == NULL) {
 		list->head = tail->head;
 	} else {
@@ -1218,7 +1221,7 @@ _glcpp_parser_expand_token_list_onto (glcpp_parser_t *parser,
 	token_list_t *intermediate, *list_orig = list;
 	int i, need_rescan = 0;
 
-	if (list == NULL)
+	if (list == NULL || list->head == NULL)
 		return;
 
 	intermediate = _token_list_create (parser);
