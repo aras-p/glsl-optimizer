@@ -132,7 +132,7 @@ glcpp_parser_lex_from (glcpp_parser_t *parser, token_list_t *list);
 %parse-param {glcpp_parser_t *parser}
 %lex-param {glcpp_parser_t *parser}
 
-%token COMMA_FINAL DEFINED ELIF_EXPANDED HASH HASH_DEFINE_FUNC HASH_DEFINE_OBJ HASH_ELIF HASH_ELSE HASH_ENDIF HASH_IF HASH_IFDEF HASH_IFNDEF HASH_UNDEF IDENTIFIER IF_EXPANDED INTEGER NEWLINE OTHER SPACE
+%token COMMA_FINAL DEFINED ELIF_EXPANDED HASH HASH_DEFINE_FUNC HASH_DEFINE_OBJ HASH_ELIF HASH_ELSE HASH_ENDIF HASH_IF HASH_IFDEF HASH_IFNDEF HASH_UNDEF IDENTIFIER IF_EXPANDED INTEGER NEWLINE OTHER PLACEHOLDER SPACE
 %token PASTE
 %type <ival> expression INTEGER operator SPACE
 %type <str> IDENTIFIER OTHER
@@ -746,6 +746,9 @@ _token_print (token_t *token)
 	case COMMA_FINAL:
 		printf (",");
 		break;
+	case PLACEHOLDER:
+		/* Nothing to print. */
+		break;
 	default:
 		fprintf (stderr, "Error: Don't know how to print token type %d\n", token->type);
 		break;
@@ -756,6 +759,17 @@ _token_print (token_t *token)
 static void
 _token_paste (token_t *token, token_t *other)
 {
+	/* Pasting a placeholder onto anything makes no change. */
+	if (other->type == PLACEHOLDER)
+		return;
+
+	/* When 'token' is a placeholder, just return contents of 'other'. */
+	if (token->type == PLACEHOLDER) {
+		token->type = other->type;
+		token->value = other->value;
+		return;
+	}
+
 	/* A very few single-character punctuators can be combined
 	 * with another to form a multi-character punctuator. */
 	switch (token->type) {
@@ -1159,10 +1173,20 @@ _expand_function_onto (glcpp_parser_t *parser,
 			argument = _argument_list_member_at (arguments,
 							     parameter_index);
 			/* Before substituting, we expand the argument
-			 * tokens. */
-			_glcpp_parser_expand_token_list_onto (parser,
-							      argument,
-							      substituted);
+			 * tokens, or append a placeholder token for
+			 * an empty argument. */
+			if (argument->head) {
+				_glcpp_parser_expand_token_list_onto (parser,
+								      argument,
+								      substituted);
+			} else {
+				token_t *new_token;
+
+				new_token = _token_create_ival (substituted,
+								PLACEHOLDER,
+								PLACEHOLDER);
+				_token_list_append (substituted, new_token);
+			}
 		} else {
 			_token_list_append (substituted, node->token);
 		}
@@ -1196,7 +1220,7 @@ _expand_function_onto (glcpp_parser_t *parser,
 
 		if (next_non_space == NULL) {
 			fprintf (stderr, "Error: '##' cannot appear at either end of a macro expansion\n");
-			exit (1);
+			return FUNCTION_STATUS_SUCCESS;
 		}
 
 		_token_paste (node->token, next_non_space->token);
