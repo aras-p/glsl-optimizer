@@ -80,13 +80,6 @@ struct lp_rasterizer
    /* Framebuffer stuff
     */
    struct {
-      void *map;
-      unsigned tiles_per_row;
-      unsigned blocksize;
-      enum pipe_format format;
-   } cbuf[PIPE_MAX_COLOR_BUFS];
-
-   struct {
       uint8_t *map;
       unsigned stride;
       unsigned blocksize;

@@ -61,16 +61,12 @@ lp_rast_begin( struct lp_rasterizer *rast,
    
    for (i = 0; i < rast->state.nr_cbufs; i++) {
       struct pipe_surface *cbuf = scene->fb.cbufs[i];
-      rast->cbuf[i].format = cbuf->texture->format;
-      rast->cbuf[i].tiles_per_row = align(cbuf->width, TILE_SIZE) / TILE_SIZE;
-      rast->cbuf[i].blocksize = 
-         util_format_get_blocksize(cbuf->texture->format);
-      rast->cbuf[i].map = llvmpipe_resource_map(cbuf->texture,
-                                               cbuf->face,
-                                               cbuf->level,
-                                               cbuf->zslice,
-                                               LP_TEX_USAGE_READ_WRITE,
-                                               LP_TEX_LAYOUT_NONE);
+      llvmpipe_resource_map(cbuf->texture,
+                            cbuf->face,
+                            cbuf->level,
+                            cbuf->zslice,
+                            LP_TEX_USAGE_READ_WRITE,
+                            LP_TEX_LAYOUT_NONE);
    }
 
    if (fb->zsbuf) {
@@ -105,7 +101,6 @@ lp_rast_end( struct lp_rasterizer *rast )
                              cbuf->face,
                              cbuf->level,
                              cbuf->zslice);
-      rast->cbuf[i].map = NULL;
    }
 
    /* Unmap z/stencil buffer */
