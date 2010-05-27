@@ -1044,7 +1044,8 @@ _arguments_parse (argument_list_t *arguments, token_node_t **node_ret)
 	last = node;
 	node = node->next;
 
-	argument = NULL;
+	argument = _token_list_create (arguments);
+	_argument_list_append (arguments, argument);
 
 	for (paren_count = 1; node; last = node, node = node->next) {
 		if (node->token->type == '(')
@@ -1064,18 +1065,16 @@ _arguments_parse (argument_list_t *arguments, token_node_t **node_ret)
 		if (node->token->type == ',' &&
 			 paren_count == 1)
 		{
-			if (argument)
-				_token_list_trim_trailing_space (argument);
-			argument = NULL;
+			_token_list_trim_trailing_space (argument);
+			argument = _token_list_create (arguments);
+			_argument_list_append (arguments, argument);
 		}
 		else {
-			if (argument == NULL) {
+			if (argument->head == NULL) {
 				/* Don't treat initial whitespace as
 				 * part of the arguement. */
 				if (node->token->type == SPACE)
 					continue;
-				argument = _token_list_create (arguments);
-				_argument_list_append (arguments, argument);
 			}
 			_token_list_append (argument, node->token);
 		}
@@ -1132,8 +1131,11 @@ _expand_function_onto (glcpp_parser_t *parser,
 		return FUNCTION_STATUS_SUCCESS;
 	}
 
-	if (_argument_list_length (arguments) !=
-	    _string_list_length (macro->parameters))
+	if (! ((_argument_list_length (arguments) == 
+		_string_list_length (macro->parameters)) ||
+	       (_string_list_length (macro->parameters) == 0 &&
+		_argument_list_length (arguments) == 1 &&
+		arguments->head->argument->head == NULL)))
 	{
 		fprintf (stderr,
 			 "Error: macro %s invoked with %d arguments (expected %d)\n",
