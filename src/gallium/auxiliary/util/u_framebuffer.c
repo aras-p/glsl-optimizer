@@ -109,3 +109,38 @@ util_unreference_framebuffer_state(struct pipe_framebuffer_state *fb)
    fb->width = fb->height = 0;
    fb->nr_cbufs = 0;
 }
+
+
+/* Where multiple sizes are allowed for framebuffer surfaces, find the
+ * minimum width and height of all bound surfaces.
+ */
+boolean
+util_framebuffer_min_size(const struct pipe_framebuffer_state *fb,
+                          unsigned *width,
+                          unsigned *height)
+{
+   unsigned w = ~0;
+   unsigned h = ~0;
+   unsigned i;
+
+   for (i = 0; i < fb->nr_cbufs; i++) {
+      w = MIN2(w, fb->cbufs[i]->width);
+      h = MIN2(h, fb->cbufs[i]->height);
+   }
+
+   if (fb->zsbuf) {
+      w = MIN2(w, fb->zsbuf->width);
+      h = MIN2(h, fb->zsbuf->height);
+   }
+
+   if (w == ~0) {
+      *width = 0;
+      *height = 0;
+      return FALSE;
+   }
+   else {
+      *width = w;
+      *height = h;
+      return TRUE;
+   }
+}

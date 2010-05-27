@@ -46,4 +46,9 @@ extern void
 util_unreference_framebuffer_state(struct pipe_framebuffer_state *fb);
 
 
+extern boolean
+util_framebuffer_min_size(const struct pipe_framebuffer_state *fb,
+                          unsigned *width,
+                          unsigned *height);
+
 #endif /* U_FRAMEBUFFER_H */
