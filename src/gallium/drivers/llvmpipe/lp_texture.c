@@ -1045,6 +1045,7 @@ llvmpipe_get_texture_image(struct llvmpipe_resource *lpr,
                                      lpr->tiles_per_row[level]);
                }
                else {
+                  assert(layout == LP_TEX_LAYOUT_LINEAR);
                   lp_tiled_to_linear(other_data, target_data,
                                      x * TILE_SIZE, y * TILE_SIZE,
                                      TILE_SIZE, TILE_SIZE,
@@ -1054,8 +1055,9 @@ llvmpipe_get_texture_image(struct llvmpipe_resource *lpr,
                }
             }
 
-            llvmpipe_set_texture_tile_layout(lpr, face_slice, level, x, y,
-                                             new_layout);
+            if (new_layout != cur_layout)
+               llvmpipe_set_texture_tile_layout(lpr, face_slice, level, x, y,
+                                                new_layout);
          }
       }
    }
