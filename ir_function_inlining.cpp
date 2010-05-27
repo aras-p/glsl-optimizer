@@ -34,11 +34,11 @@
 #include "ir_expression_flattening.h"
 #include "glsl_types.h"
 
-class ir_function_inlining_visitor : public ir_visitor {
+class ir_function_inlining_visitor : public ir_hierarchical_visitor {
 public:
    ir_function_inlining_visitor()
    {
-      /* empty */
+      progress = false;
    }
 
    virtual ~ir_function_inlining_visitor()
@@ -46,30 +46,13 @@ public:
       /* empty */
    }
 
-   /**
-    * \name Visit methods
-    *
-    * As typical for the visitor pattern, there must be one \c visit method for
-    * each concrete subclass of \c ir_instruction.  Virtual base classes within
-    * the hierarchy should not have \c visit methods.
-    */
-   /*@{*/
-   virtual void visit(ir_variable *);
-   virtual void visit(ir_loop *);
-   virtual void visit(ir_loop_jump *);
-   virtual void visit(ir_function_signature *);
-   virtual void visit(ir_function *);
-   virtual void visit(ir_expression *);
-   virtual void visit(ir_swizzle *);
-   virtual void visit(ir_dereference_variable *);
-   virtual void visit(ir_dereference_array *);
-   virtual void visit(ir_dereference_record *);
-   virtual void visit(ir_assignment *);
-   virtual void visit(ir_constant *);
-   virtual void visit(ir_call *);
-   virtual void visit(ir_return *);
-   virtual void visit(ir_if *);
-   /*@}*/
+   virtual ir_visitor_status visit_enter(ir_expression *);
+   virtual ir_visitor_status visit_enter(ir_call *);
+   virtual ir_visitor_status visit_enter(ir_assignment *);
+   virtual ir_visitor_status visit_enter(ir_return *);
+   virtual ir_visitor_status visit_enter(ir_swizzle *);
+
+   bool progress;
 };
 
 class variable_remap : public exec_node {
@@ -336,39 +319,13 @@ automatic_inlining_predicate(ir_instruction *ir)
 bool
 do_function_inlining(exec_list *instructions)
 {
-   bool progress = false;
+   ir_function_inlining_visitor v;
 
    do_expression_flattening(instructions, automatic_inlining_predicate);
 
-   foreach_iter(exec_list_iterator, iter, *instructions) {
-      ir_instruction *ir = (ir_instruction *)iter.get();
-      ir_assignment *assign = ir->as_assignment();
-      ir_call *call;
+   v.run(instructions);
 
-      if (assign) {
-	 call = assign->rhs->as_call();
-	 if (!call || !can_inline(call))
-	    continue;
-
-	 /* generates the parameter setup, function body, and returns the return
-	  * value of the function
-	  */
-	 ir_rvalue *rhs = call->generate_inline(ir);
-	 assert(rhs);
-
-	 assign->rhs = rhs;
-	 progress = true;
-      } else if ((call = ir->as_call()) && can_inline(call)) {
-	 (void)call->generate_inline(ir);
-	 ir->remove();
-	 progress = true;
-      } else {
-	 ir_function_inlining_visitor v;
-	 ir->accept(&v);
-      }
-   }
-
-   return progress;
+   return v.progress;
 }
 
 ir_rvalue *
@@ -462,112 +419,59 @@ ir_call::generate_inline(ir_instruction *next_ir)
       return NULL;
 }
 
-void
-ir_function_inlining_visitor::visit(ir_variable *ir)
+
+ir_visitor_status
+ir_function_inlining_visitor::visit_enter(ir_expression *ir)
 {
    (void) ir;
+   return visit_continue_with_parent;
 }
 
 
-void
-ir_function_inlining_visitor::visit(ir_loop *ir)
-{
-   do_function_inlining(&ir->body_instructions);
-}
-
-void
-ir_function_inlining_visitor::visit(ir_loop_jump *ir)
+ir_visitor_status
+ir_function_inlining_visitor::visit_enter(ir_return *ir)
 {
    (void) ir;
+   return visit_continue_with_parent;
 }
 
 
-void
-ir_function_inlining_visitor::visit(ir_function_signature *ir)
+ir_visitor_status
+ir_function_inlining_visitor::visit_enter(ir_swizzle *ir)
 {
-   do_function_inlining(&ir->body);
+   (void) ir;
+   return visit_continue_with_parent;
 }
 
 
-void
-ir_function_inlining_visitor::visit(ir_function *ir)
+ir_visitor_status
+ir_function_inlining_visitor::visit_enter(ir_call *ir)
 {
-   foreach_iter(exec_list_iterator, iter, *ir) {
-      ir_function_signature *const sig = (ir_function_signature *) iter.get();
-      sig->accept(this);
+   if (can_inline(ir)) {
+      (void) ir->generate_inline(ir);
+      ir->remove();
+      this->progress = true;
    }
-}
 
-void
-ir_function_inlining_visitor::visit(ir_expression *ir)
-{
-   unsigned int operand;
-
-   for (operand = 0; operand < ir->get_num_operands(); operand++) {
-      ir->operands[operand]->accept(this);
-   }
+   return visit_continue;
 }
 
 
-void
-ir_function_inlining_visitor::visit(ir_swizzle *ir)
+ir_visitor_status
+ir_function_inlining_visitor::visit_enter(ir_assignment *ir)
 {
-   ir->val->accept(this);
-}
+   ir_call *call = ir->rhs->as_call();
+   if (!call || !can_inline(call))
+      return visit_continue;
 
+   /* generates the parameter setup, function body, and returns the return
+    * value of the function
+    */
+   ir_rvalue *rhs = call->generate_inline(ir);
+   assert(rhs);
 
-void
-ir_function_inlining_visitor::visit(ir_dereference_variable *ir)
-{
-   ir->var->accept(this);
-}
+   ir->rhs = rhs;
+   this->progress = true;
 
-void
-ir_function_inlining_visitor::visit(ir_dereference_array *ir)
-{
-   ir->array_index->accept(this);
-   ir->array->accept(this);
-}
-
-void
-ir_function_inlining_visitor::visit(ir_dereference_record *ir)
-{
-   ir->record->accept(this);
-}
-
-void
-ir_function_inlining_visitor::visit(ir_assignment *ir)
-{
-   ir->rhs->accept(this);
-}
-
-
-void
-ir_function_inlining_visitor::visit(ir_constant *ir)
-{
-   (void) ir;
-}
-
-
-void
-ir_function_inlining_visitor::visit(ir_call *ir)
-{
-   (void) ir;
-}
-
-
-void
-ir_function_inlining_visitor::visit(ir_return *ir)
-{
-   (void) ir;
-}
-
-
-void
-ir_function_inlining_visitor::visit(ir_if *ir)
-{
-   ir->condition->accept(this);
-
-   do_function_inlining(&ir->then_instructions);
-   do_function_inlining(&ir->else_instructions);
+   return visit_continue;
 }
