@@ -60,4 +60,8 @@ void r300_init_vs_outputs(struct r300_vertex_shader *vs);
 
 void r300_translate_vertex_shader(struct r300_context *r300,
                                   struct r300_vertex_shader *vs);
+
+void r300_draw_init_vertex_shader(struct draw_context *draw,
+                                  struct r300_vertex_shader *vs);
+
 #endif /* R300_VS_H */
