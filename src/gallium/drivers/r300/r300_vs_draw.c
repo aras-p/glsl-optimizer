@@ -352,7 +352,7 @@ void r300_draw_init_vertex_shader(struct draw_context *draw,
     /* Init the VS output table for the rasterizer. */
     r300_init_vs_outputs(vs);
 
-    /**/
+    /* Make the last generic be WPOS. */
+    vs->outputs.wpos = vs->outputs.generic[transform.last_generic + 1];
     vs->outputs.generic[transform.last_generic + 1] = ATTR_UNUSED;
-    vs->outputs.wpos -= 1;
 }

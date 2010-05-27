@@ -134,7 +134,6 @@ static const float * get_rc_constant_state(
     struct r300_context * r300,
     struct rc_constant * constant)
 {
-    struct r300_viewport_state* viewport = r300->viewport_state.state;
     struct r300_textures_state* texstate = r300->textures_state.state;
     static float vec[4] = { 0.0, 0.0, 0.0, 1.0 };
     struct pipe_resource *tex;
@@ -151,15 +150,15 @@ static const float * get_rc_constant_state(
             break;
 
         case RC_STATE_R300_VIEWPORT_SCALE:
-            vec[0] = viewport->xscale;
-            vec[1] = viewport->yscale;
-            vec[2] = viewport->zscale;
+            vec[0] = r300->viewport.scale[0];
+            vec[1] = r300->viewport.scale[1];
+            vec[2] = r300->viewport.scale[2];
             break;
 
         case RC_STATE_R300_VIEWPORT_OFFSET:
-            vec[0] = viewport->xoffset;
-            vec[1] = viewport->yoffset;
-            vec[2] = viewport->zoffset;
+            vec[0] = r300->viewport.translate[0];
+            vec[1] = r300->viewport.translate[1];
+            vec[2] = r300->viewport.translate[2];
             break;
 
         default:
