@@ -55,92 +55,59 @@ public:
    ir_variable *rhs;
 };
 
-class ir_copy_propagation_visitor : public ir_visitor {
+class ir_copy_propagation_visitor : public ir_hierarchical_visitor {
 public:
    ir_copy_propagation_visitor(exec_list *acp)
    {
       progress = false;
+      in_lhs = false;
       this->acp = acp;
    }
 
-   /**
-    * \name Visit methods
-    *
-    * As typical for the visitor pattern, there must be one \c visit method for
-    * each concrete subclass of \c ir_instruction.  Virtual base classes within
-    * the hierarchy should not have \c visit methods.
-    */
-   /*@{*/
-   virtual void visit(ir_variable *);
-   virtual void visit(ir_loop *);
-   virtual void visit(ir_loop_jump *);
-   virtual void visit(ir_function_signature *);
-   virtual void visit(ir_function *);
-   virtual void visit(ir_expression *);
-   virtual void visit(ir_swizzle *);
-   virtual void visit(ir_dereference_variable *);
-   virtual void visit(ir_dereference_array *);
-   virtual void visit(ir_dereference_record *);
-   virtual void visit(ir_assignment *);
-   virtual void visit(ir_constant *);
-   virtual void visit(ir_call *);
-   virtual void visit(ir_return *);
-   virtual void visit(ir_if *);
-   /*@}*/
+   virtual ir_visitor_status visit(class ir_dereference_variable *);
+   virtual ir_visitor_status visit_enter(class ir_loop *);
+   virtual ir_visitor_status visit_enter(class ir_function_signature *);
+   virtual ir_visitor_status visit_enter(class ir_function *);
+   virtual ir_visitor_status visit_enter(class ir_assignment *);
+   virtual ir_visitor_status visit_enter(class ir_call *);
+   virtual ir_visitor_status visit_enter(class ir_if *);
 
    /** List of acp_entry */
    exec_list *acp;
    bool progress;
+
+   /** Currently in the LHS of an assignment? */
+   bool in_lhs;
 };
 
 
-void
-ir_copy_propagation_visitor::visit(ir_variable *ir)
+ir_visitor_status
+ir_copy_propagation_visitor::visit_enter(ir_loop *ir)
 {
    (void)ir;
+   return visit_continue_with_parent;
 }
 
-
-void
-ir_copy_propagation_visitor::visit(ir_loop *ir)
+ir_visitor_status
+ir_copy_propagation_visitor::visit_enter(ir_function_signature *ir)
 {
    (void)ir;
+   return visit_continue_with_parent;
 }
 
-void
-ir_copy_propagation_visitor::visit(ir_loop_jump *ir)
+ir_visitor_status
+ir_copy_propagation_visitor::visit_enter(ir_assignment *ir)
 {
    (void) ir;
+   this->in_lhs = true;
+   return visit_continue;
 }
 
-
-void
-ir_copy_propagation_visitor::visit(ir_function_signature *ir)
-{
-   (void)ir;
-}
-
-void
-ir_copy_propagation_visitor::visit(ir_function *ir)
+ir_visitor_status
+ir_copy_propagation_visitor::visit_enter(ir_function *ir)
 {
    (void) ir;
-}
-
-void
-ir_copy_propagation_visitor::visit(ir_expression *ir)
-{
-   unsigned int operand;
-
-   for (operand = 0; operand < ir->get_num_operands(); operand++) {
-      ir->operands[operand]->accept(this);
-   }
-}
-
-
-void
-ir_copy_propagation_visitor::visit(ir_swizzle *ir)
-{
-   ir->val->accept(this);
+   return visit_continue_with_parent;
 }
 
 /**
@@ -150,9 +117,17 @@ ir_copy_propagation_visitor::visit(ir_swizzle *ir)
  * rewriting of ir_dereference means that the ir_dereference instance
  * must not be shared by multiple IR operations!
  */
-void
+ir_visitor_status
 ir_copy_propagation_visitor::visit(ir_dereference_variable *ir)
 {
+   /* Ignores the LHS.  Don't want to rewrite the LHS to point at some
+    * other storage!
+    */
+   if (this->in_lhs) {
+      this->in_lhs = false;
+      return visit_continue;
+   }
+
    ir_variable *var = ir->variable_referenced();
 
    foreach_iter(exec_list_iterator, iter, *this->acp) {
@@ -164,67 +139,32 @@ ir_copy_propagation_visitor::visit(ir_dereference_variable *ir)
 	 break;
       }
    }
-}
 
-void
-ir_copy_propagation_visitor::visit(ir_dereference_array *ir)
-{
-   ir->array->accept(this);
-   ir->array_index->accept(this);
-}
-
-void
-ir_copy_propagation_visitor::visit(ir_dereference_record *ir)
-{
-   ir->record->accept(this);
-}
-
-void
-ir_copy_propagation_visitor::visit(ir_assignment *ir)
-{
-   if (ir->condition)
-      ir->condition->accept(this);
-
-   /* Ignores the LHS.  Don't want to rewrite the LHS to point at some
-    * other storage!
-    */
-
-   ir->rhs->accept(this);
+   return visit_continue;
 }
 
 
-void
-ir_copy_propagation_visitor::visit(ir_constant *ir)
-{
-   (void) ir;
-}
-
-
-void
-ir_copy_propagation_visitor::visit(ir_call *ir)
+ir_visitor_status
+ir_copy_propagation_visitor::visit_enter(ir_call *ir)
 {
    (void)ir;
 
    /* Note, if we were to do copy propagation to parameters of calls, we'd
     * have to be careful about out params.
     */
+   return visit_continue_with_parent;
 }
 
 
-void
-ir_copy_propagation_visitor::visit(ir_return *ir)
-{
-   ir_rvalue *val = ir->get_value();
-
-   if (val)
-      val->accept(this);
-}
-
-
-void
-ir_copy_propagation_visitor::visit(ir_if *ir)
+ir_visitor_status
+ir_copy_propagation_visitor::visit_enter(ir_if *ir)
 {
    ir->condition->accept(this);
+
+   /* Do not traverse into the body of the if-statement since that is a
+    * different basic block.
+    */
+   return visit_continue_with_parent;
 }
 
 static bool
