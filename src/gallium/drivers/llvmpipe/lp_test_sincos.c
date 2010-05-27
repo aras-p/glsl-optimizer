@@ -60,7 +60,7 @@ write_tsv_header(FILE *fp)
 typedef __m128 (*test_sincos_t)(__m128);
 
 static LLVMValueRef
-add_sincos_test(LLVMModuleRef module, bool sin)
+add_sincos_test(LLVMModuleRef module, boolean sin)
 {
    LLVMTypeRef v4sf = LLVMVectorType(LLVMFloatType(), 4);
    LLVMTypeRef args[1] = { v4sf };
@@ -185,7 +185,7 @@ test_sincos(unsigned verbose, FILE *fp)
 boolean
 test_all(unsigned verbose, FILE *fp)
 {
-   bool success = TRUE;
+   boolean success = TRUE;
 
    test_sincos(verbose, fp);
 
