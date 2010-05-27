@@ -1802,10 +1802,10 @@ _mesa_FramebufferRenderbufferEXT(GLenum target, GLenum attachment,
       rb = NULL;
    }
 
-   if (attachment == GL_DEPTH_STENCIL_ATTACHMENT) {
+   if (attachment == GL_DEPTH_STENCIL_ATTACHMENT &&
+       rb && rb->Format != MESA_FORMAT_NONE) {
       /* make sure the renderbuffer is a depth/stencil format */
-      const GLenum baseFormat =
-         _mesa_get_format_base_format(att->Renderbuffer->Format);
+      const GLenum baseFormat = _mesa_get_format_base_format(rb->Format);
       if (baseFormat != GL_DEPTH_STENCIL) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glFramebufferRenderbufferEXT(renderbuffer"
