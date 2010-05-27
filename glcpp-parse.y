@@ -926,9 +926,9 @@ _glcpp_parser_evaluate_defined (glcpp_parser_t *parser,
  * needs further expansion.
  */
 static int
-_glcpp_parser_expand_token_onto (glcpp_parser_t *parser,
-				 token_t *token,
-				 token_list_t *result)
+_expand_token_onto (glcpp_parser_t *parser,
+		    token_t *token,
+		    token_list_t *result)
 {
 	const char *identifier;
 	macro_t *macro;
@@ -1075,10 +1075,10 @@ _arguments_parse (argument_list_t *arguments, token_node_t **node_ret)
 /* Prints the expansion of *node (consuming further tokens from the
  * list as necessary). Upon return *node will be the last consumed
  * node, such that further processing can continue with node->next. */
-static void
-_glcpp_parser_expand_function_onto (glcpp_parser_t *parser,
-				    token_node_t **node_ret,
-				    token_list_t *result)
+static function_status_t
+_expand_function_onto (glcpp_parser_t *parser,
+		       token_node_t **node_ret,
+		       token_list_t *result)
 {
 	macro_t *macro;
 	token_node_t *node;
@@ -1103,7 +1103,7 @@ _glcpp_parser_expand_function_onto (glcpp_parser_t *parser,
 		break;
 	case FUNCTION_NOT_A_FUNCTION:
 		_token_list_append (result, node->token);
-		return;
+		return FUNCTION_NOT_A_FUNCTION;
 	case FUNCTION_UNBALANCED_PARENTHESES:
 		fprintf (stderr, "Error: Macro %s call has unbalanced parentheses\n",
 			 identifier);
@@ -1112,7 +1112,7 @@ _glcpp_parser_expand_function_onto (glcpp_parser_t *parser,
 
 	if (macro->replacements == NULL) {
 		talloc_free (arguments);
-		return;
+		return FUNCTION_STATUS_SUCCESS;
 	}
 
 	if (_argument_list_length (arguments) !=
@@ -1123,7 +1123,7 @@ _glcpp_parser_expand_function_onto (glcpp_parser_t *parser,
 			 identifier,
 			 _argument_list_length (arguments),
 			 _string_list_length (macro->parameters));
-		return;
+		exit (1);
 	}
 
 	/* Perform argument substitution on the replacement list. */
@@ -1191,6 +1191,8 @@ _glcpp_parser_expand_function_onto (glcpp_parser_t *parser,
 	_string_list_pop (parser->active);
 
 	talloc_free (arguments);
+
+	return FUNCTION_STATUS_SUCCESS;
 }
 
 static void
@@ -1199,19 +1201,50 @@ _glcpp_parser_expand_token_list_onto (glcpp_parser_t *parser,
 				      token_list_t *result)
 {
 	token_node_t *node;
+	token_list_t *intermediate, *list_orig = list;
+	int i, need_rescan = 0;
 
 	if (list == NULL)
 		return;
 
-	for (node = list->head; node; node = node->next)
-	{
-		if (_glcpp_parser_expand_token_onto (parser, node->token,
-						     result))
-		{
-			_glcpp_parser_expand_function_onto (parser, &node,
-							    result);
+	intermediate = _token_list_create (parser);
+
+	/* XXX: The two-pass expansion here is really ugly. The
+	 * problem this is solving is that we can expand a macro into
+	 * a function-like macro name, and then we need to recognize
+	 * that as a function-like macro, but perhaps the parentheses
+	 * and arguments aren't on the token list yet, (since they are
+	 * in the actual content so they are part of what we are
+	 * expanding.
+	 *
+	 * This ugly hack works, but is messy, fragile, and hard to
+	 * maintain. I think a cleaner solution would separate the
+	 * notions of expanding and appending and avoid this problem
+	 * altogether.
+	 */
+
+	for (i = 0; i < 2; i++) {
+		if (i == 1) {
+			list = intermediate;
+			intermediate = _token_list_create (parser);
 		}
+		for (node = list->head; node; node = node->next)
+		{
+			if (_expand_token_onto (parser, node->token,
+						intermediate))
+			{	
+				if (_expand_function_onto (parser, &node,
+							   intermediate))
+				{
+					need_rescan = 1;
+				}
+			}
+		}
+		if (list != list_orig)
+			talloc_free (list);
 	}
+
+	_token_list_append_list (result, intermediate);
 }
 
 void
