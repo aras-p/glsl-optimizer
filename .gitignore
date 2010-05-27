@@ -6,4 +6,5 @@ glcpp-parse.h
 *~
 tests/*.expected
 tests/*.gcc
+tests/*.glcpp
 tests/*.out
