@@ -467,19 +467,8 @@ recalculate_input_bindings(GLcontext *ctx)
 static void
 bind_arrays(GLcontext *ctx)
 {
-#if 0
-   if (ctx->Array.ArrayObj.Name != exec->array.array_obj) {
-      bind_array_obj(ctx);
-      recalculate_input_bindings(ctx);
-   }
-   else if (exec->array.program_mode != get_program_mode(ctx) ||
-	    exec->array.enabled_flags != ctx->Array.ArrayObj->_Enabled) {
-      recalculate_input_bindings(ctx);
-   }
-#else
    bind_array_obj(ctx);
    recalculate_input_bindings(ctx);
-#endif
 }
 
 
@@ -1139,7 +1128,6 @@ vbo_exec_MultiDrawElementsBaseVertex(GLenum mode,
 void
 vbo_exec_array_init( struct vbo_exec_context *exec )
 {
-#if 1
    exec->vtxfmt.DrawArrays = vbo_exec_DrawArrays;
    exec->vtxfmt.DrawElements = vbo_exec_DrawElements;
    exec->vtxfmt.DrawRangeElements = vbo_exec_DrawRangeElements;
@@ -1149,15 +1137,6 @@ vbo_exec_array_init( struct vbo_exec_context *exec )
    exec->vtxfmt.MultiDrawElementsBaseVertex = vbo_exec_MultiDrawElementsBaseVertex;
    exec->vtxfmt.DrawArraysInstanced = vbo_exec_DrawArraysInstanced;
    exec->vtxfmt.DrawElementsInstanced = vbo_exec_DrawElementsInstanced;
-#else
-   exec->vtxfmt.DrawArrays = _mesa_noop_DrawArrays;
-   exec->vtxfmt.DrawElements = _mesa_noop_DrawElements;
-   exec->vtxfmt.DrawRangeElements = _mesa_noop_DrawRangeElements;
-   exec->vtxfmt.MultiDrawElementsEXT = _mesa_noop_MultiDrawElements;
-   exec->vtxfmt.DrawElementsBaseVertex = _mesa_noop_DrawElementsBaseVertex;
-   exec->vtxfmt.DrawRangeElementsBaseVertex = _mesa_noop_DrawRangeElementsBaseVertex;
-   exec->vtxfmt.MultiDrawElementsBaseVertex = _mesa_noop_MultiDrawElementsBaseVertex;
-#endif
 }
 
 
