@@ -805,7 +805,7 @@ test_all(unsigned verbose, FILE *fp)
    struct pipe_blend_state blend;
    enum vector_mode mode;
    const struct lp_type *type;
-   bool success = TRUE;
+   boolean success = TRUE;
 
    for(rgb_func = blend_funcs; rgb_func < &blend_funcs[num_funcs]; ++rgb_func) {
       for(alpha_func = blend_funcs; alpha_func < &blend_funcs[num_funcs]; ++alpha_func) {
@@ -859,7 +859,7 @@ test_some(unsigned verbose, FILE *fp, unsigned long n)
    enum vector_mode mode;
    const struct lp_type *type;
    unsigned long i;
-   bool success = TRUE;
+   boolean success = TRUE;
 
    for(i = 0; i < n; ++i) {
       rgb_func = &blend_funcs[rand() % num_funcs];
