@@ -132,7 +132,7 @@ glcpp_parser_lex_from (glcpp_parser_t *parser, token_list_t *list);
 %parse-param {glcpp_parser_t *parser}
 %lex-param {glcpp_parser_t *parser}
 
-%token DEFINED ELIF_EXPANDED HASH HASH_DEFINE_FUNC HASH_DEFINE_OBJ HASH_ELIF HASH_ELSE HASH_ENDIF HASH_IF HASH_IFDEF HASH_IFNDEF HASH_UNDEF IDENTIFIER IF_EXPANDED INTEGER NEWLINE OTHER SPACE
+%token COMMA_FINAL DEFINED ELIF_EXPANDED HASH HASH_DEFINE_FUNC HASH_DEFINE_OBJ HASH_ELIF HASH_ELSE HASH_ENDIF HASH_IF HASH_IFDEF HASH_IFNDEF HASH_UNDEF IDENTIFIER IF_EXPANDED INTEGER NEWLINE OTHER SPACE
 %token PASTE
 %type <ival> expression INTEGER operator SPACE
 %type <str> IDENTIFIER OTHER
@@ -740,6 +740,9 @@ _token_print (token_t *token)
 	case PASTE:
 		printf ("##");
 		break;
+	case COMMA_FINAL:
+		printf (",");
+		break;
 	default:
 		fprintf (stderr, "Error: Don't know how to print token type %d\n", token->type);
 		break;
@@ -936,7 +939,18 @@ _expand_token_onto (glcpp_parser_t *parser,
 
 	/* We only expand identifiers */
 	if (token->type != IDENTIFIER) {
-		_token_list_append (result, token);
+		/* We change any COMMA into a COMMA_FINAL to prevent
+		 * it being mistaken for an argument separator
+		 * later. */
+		if (token->type == ',') {
+			token_t *new_token;
+
+			new_token = _token_create_ival (result, COMMA_FINAL,
+							COMMA_FINAL);
+			_token_list_append (result, new_token);
+		} else {
+			_token_list_append (result, token);
+		}
 		return 0;
 	}
 
