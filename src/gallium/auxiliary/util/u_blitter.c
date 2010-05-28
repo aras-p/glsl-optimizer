@@ -26,8 +26,8 @@
 
 /**
  * @file
- * Blitter utility to facilitate acceleration of the clear, resource_copy_region,
- * and resource_fill_region functions.
+ * Blitter utility to facilitate acceleration of the clear, clearRT, clearDS
+ * resource_copy_region functions.
  *
  * @author Marek Olšák
  */
@@ -88,6 +88,7 @@ struct blitter_context_priv
    void *dsa_write_depth_stencil;
    void *dsa_write_depth_keep_stencil;
    void *dsa_keep_depth_stencil;
+   void *dsa_keep_depth_write_stencil;
 
    void *velem_state;
 
@@ -161,8 +162,12 @@ struct blitter_context *util_blitter_create(struct pipe_context *pipe)
    dsa.stencil[0].writemask = 0xff;
    ctx->dsa_write_depth_stencil =
       pipe->create_depth_stencil_alpha_state(pipe, &dsa);
-   /* The DSA state objects which write depth and stencil are created
-    * on-demand. */
+
+
+   dsa.depth.enabled = 0;
+   dsa.depth.writemask = 0;
+   ctx->dsa_keep_depth_write_stencil =
+      pipe->create_depth_stencil_alpha_state(pipe, &dsa);
 
    /* sampler state */
    sampler_state = &ctx->template_sampler_state;
@@ -234,6 +239,7 @@ void util_blitter_destroy(struct blitter_context *blitter)
    pipe->delete_depth_stencil_alpha_state(pipe,
                                           ctx->dsa_write_depth_keep_stencil);
    pipe->delete_depth_stencil_alpha_state(pipe, ctx->dsa_write_depth_stencil);
+   pipe->delete_depth_stencil_alpha_state(pipe, ctx->dsa_keep_depth_write_stencil);
 
    pipe->delete_rasterizer_state(pipe, ctx->rs_state);
    pipe->delete_vs_state(pipe, ctx->vs_col);
@@ -605,9 +611,17 @@ void util_blitter_clear(struct blitter_context *blitter,
    else
       pipe->bind_blend_state(pipe, ctx->blend_keep_color);
 
-   if (clear_buffers & PIPE_CLEAR_DEPTHSTENCIL) {
+   if ((clear_buffers & PIPE_CLEAR_DEPTHSTENCIL) == PIPE_CLEAR_DEPTHSTENCIL) {
       sr.ref_value[0] = stencil & 0xff;
       pipe->bind_depth_stencil_alpha_state(pipe, ctx->dsa_write_depth_stencil);
+      pipe->set_stencil_ref(pipe, &sr);
+   }
+   else if (clear_buffers & PIPE_CLEAR_DEPTH) {
+      pipe->bind_depth_stencil_alpha_state(pipe, ctx->dsa_write_depth_keep_stencil);
+   }
+   else if (clear_buffers & PIPE_CLEAR_STENCIL) {
+      sr.ref_value[0] = stencil & 0xff;
+      pipe->bind_depth_stencil_alpha_state(pipe, ctx->dsa_keep_depth_write_stencil);
       pipe->set_stencil_ref(pipe, &sr);
    }
    else
@@ -766,47 +780,20 @@ void util_blitter_copy_region(struct blitter_context *blitter,
    pipe_surface_reference(&dstsurf, NULL);
 }
 
-/* Fill a region of a surface with a constant value. */
-void util_blitter_fill_region(struct blitter_context *blitter,
-                              struct pipe_resource *dst,
-                              struct pipe_subresource subdst,
-                              unsigned dstx, unsigned dsty, unsigned dstz,
-                              unsigned width, unsigned height,
-                              unsigned value)
+/* Clear a region of a color surface to a constant value. */
+void util_blitter_clearRT(struct blitter_context *blitter,
+                          struct pipe_surface *dstsurf,
+                          const float *rgba,
+                          unsigned dstx, unsigned dsty,
+                          unsigned width, unsigned height)
 {
    struct blitter_context_priv *ctx = (struct blitter_context_priv*)blitter;
    struct pipe_context *pipe = ctx->pipe;
-   struct pipe_screen *screen = pipe->screen;
-   struct pipe_surface *dstsurf;
    struct pipe_framebuffer_state fb_state;
-   float rgba[4];
-   ubyte ub_rgba[4] = {0};
-   union util_color color;
-   int i;
 
-   assert(dst);
-   if (!dst)
+   assert(dstsurf->texture);
+   if (!dstsurf->texture)
       return;
-
-   /* check if we can render to the surface */
-   if (util_format_is_depth_or_stencil(dst->format) || /* unlikely, but you never know */
-       !screen->is_format_supported(screen, dst->format, dst->target,
-                                    dst->nr_samples,
-                                    PIPE_BIND_RENDER_TARGET, 0)) {
-      util_resource_fill_region(pipe, dst, subdst, dstx, dsty, dstz,
-                                width, height, value);
-      return;
-   }
-
-   dstsurf = screen->get_tex_surface(screen, dst, subdst.face, subdst.level,
-                                     dstz, PIPE_BIND_RENDER_TARGET);
-
-   /* unpack the color */
-   color.ui = value;
-   util_unpack_color_ub(dst->format, &color,
-                        ub_rgba, ub_rgba+1, ub_rgba+2, ub_rgba+3);
-   for (i = 0; i < 4; i++)
-      rgba[i] = ubyte_to_float(ub_rgba[i]);
 
    /* check the saved state */
    blitter_check_saved_CSOs(ctx);
@@ -832,6 +819,63 @@ void util_blitter_fill_region(struct blitter_context *blitter,
    blitter_set_rectangle(ctx, 0, 0, width, height, dstsurf->width, dstsurf->height, 0);
    blitter_draw_quad(ctx);
    blitter_restore_CSOs(ctx);
+}
 
-   pipe_surface_reference(&dstsurf, NULL);
+/* Clear a region of a depth stencil surface. */
+void util_blitter_clearDS(struct blitter_context *blitter,
+                          struct pipe_surface *dstsurf,
+                          unsigned clear_flags,
+                          double depth,
+                          unsigned stencil,
+                          unsigned dstx, unsigned dsty,
+                          unsigned width, unsigned height)
+{
+   struct blitter_context_priv *ctx = (struct blitter_context_priv*)blitter;
+   struct pipe_context *pipe = ctx->pipe;
+   struct pipe_framebuffer_state fb_state;
+   struct pipe_stencil_ref sr = { { 0 } };
+
+   assert(dstsurf->texture);
+   if (!dstsurf->texture)
+      return;
+
+   /* check the saved state */
+   blitter_check_saved_CSOs(ctx);
+   assert(blitter->saved_fb_state.nr_cbufs != ~0);
+
+   /* bind CSOs */
+   pipe->bind_blend_state(pipe, ctx->blend_keep_color);
+   if ((clear_flags & PIPE_CLEAR_DEPTHSTENCIL) == PIPE_CLEAR_DEPTHSTENCIL) {
+      sr.ref_value[0] = stencil & 0xff;
+      pipe->bind_depth_stencil_alpha_state(pipe, ctx->dsa_write_depth_stencil);
+      pipe->set_stencil_ref(pipe, &sr);
+   }
+   else if (clear_flags & PIPE_CLEAR_DEPTH) {
+      pipe->bind_depth_stencil_alpha_state(pipe, ctx->dsa_write_depth_keep_stencil);
+   }
+   else if (clear_flags & PIPE_CLEAR_STENCIL) {
+      sr.ref_value[0] = stencil & 0xff;
+      pipe->bind_depth_stencil_alpha_state(pipe, ctx->dsa_keep_depth_write_stencil);
+      pipe->set_stencil_ref(pipe, &sr);
+   }
+   else
+      /* hmm that should be illegal probably, or make it a no-op somewhere */
+      pipe->bind_depth_stencil_alpha_state(pipe, ctx->dsa_keep_depth_stencil);
+
+   pipe->bind_rasterizer_state(pipe, ctx->rs_state);
+   pipe->bind_fs_state(pipe, blitter_get_fs_col(ctx, 0));
+   pipe->bind_vs_state(pipe, ctx->vs_col);
+   pipe->bind_vertex_elements_state(pipe, ctx->velem_state);
+
+   /* set a framebuffer state */
+   fb_state.width = dstsurf->width;
+   fb_state.height = dstsurf->height;
+   fb_state.nr_cbufs = 0;
+   fb_state.cbufs[0] = 0;
+   fb_state.zsbuf = dstsurf;
+   pipe->set_framebuffer_state(pipe, &fb_state);
+
+   blitter_set_rectangle(ctx, 0, 0, width, height, dstsurf->width, dstsurf->height, depth);
+   blitter_draw_quad(ctx);
+   blitter_restore_CSOs(ctx);
 }
