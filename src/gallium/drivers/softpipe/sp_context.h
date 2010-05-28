@@ -50,6 +50,7 @@ struct softpipe_tex_tile_cache;
 struct sp_fragment_shader;
 struct sp_vertex_shader;
 struct sp_velems_state;
+struct sp_so_state;
 
 
 struct softpipe_context {
@@ -65,6 +66,7 @@ struct softpipe_context {
    struct sp_vertex_shader *vs;
    struct sp_geometry_shader *gs;
    struct sp_velems_state *velems;
+   struct sp_so_state *so;
 
    /** Other rendering state */
    struct pipe_blend_color blend_color;

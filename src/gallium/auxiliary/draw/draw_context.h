@@ -162,6 +162,14 @@ draw_set_mapped_constant_buffer(struct draw_context *draw,
                                 const void *buffer,
                                 unsigned size);
 
+void
+draw_set_mapped_so_buffers(struct draw_context *draw,
+                           void *buffers[PIPE_MAX_SO_BUFFERS],
+                           unsigned num_buffers);
+void
+draw_set_so_state(struct draw_context *draw,
+                  struct pipe_stream_output_state *state);
+
 
 /***********************************************************************
  * draw_prim.c 

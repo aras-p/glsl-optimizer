@@ -288,6 +288,7 @@ enum pipe_transfer_usage {
 #define PIPE_BIND_DISPLAY_TARGET       (1 << 8) /* flush_front_buffer */
 #define PIPE_BIND_TRANSFER_WRITE       (1 << 9) /* get_transfer */
 #define PIPE_BIND_TRANSFER_READ        (1 << 10) /* get_transfer */
+#define PIPE_BIND_STREAM_OUTPUT        (1 << 11) /* set_stream_output_buffers */
 #define PIPE_BIND_CUSTOM               (1 << 16) /* state-tracker/winsys usages */
 
 /* The first two flags above were previously part of the amorphous
@@ -322,6 +323,7 @@ enum pipe_transfer_usage {
 #define PIPE_USAGE_STATIC         2 /* same as immutable?? */
 #define PIPE_USAGE_IMMUTABLE      3 /* no change after first upload */
 #define PIPE_USAGE_STREAM         4 /* upload, draw, upload, draw */
+#define PIPE_USAGE_STAGING        5 /* supports data transfers from the GPU to the CPU */
 
 
 /* These are intended to be used in calls to is_format_supported, but

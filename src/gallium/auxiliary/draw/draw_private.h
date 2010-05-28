@@ -235,6 +235,12 @@ struct draw_context
       struct tgsi_sampler **samplers;
    } gs;
 
+   struct {
+      struct pipe_stream_output_state state;
+      void *buffers[PIPE_MAX_SO_BUFFERS];
+      uint num_buffers;
+   } so;
+
    /* Clip derived state:
     */
    float plane[12][4];

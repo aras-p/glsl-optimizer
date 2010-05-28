@@ -251,6 +251,10 @@ softpipe_create_context( struct pipe_screen *screen,
    softpipe->pipe.bind_vertex_elements_state = softpipe_bind_vertex_elements_state;
    softpipe->pipe.delete_vertex_elements_state = softpipe_delete_vertex_elements_state;
 
+   softpipe->pipe.create_stream_output_state = softpipe_create_stream_output_state;
+   softpipe->pipe.bind_stream_output_state = softpipe_bind_stream_output_state;
+   softpipe->pipe.delete_stream_output_state = softpipe_delete_stream_output_state;
+
    softpipe->pipe.set_blend_color = softpipe_set_blend_color;
    softpipe->pipe.set_stencil_ref = softpipe_set_stencil_ref;
    softpipe->pipe.set_clip_state = softpipe_set_clip_state;
@@ -264,7 +268,7 @@ softpipe_create_context( struct pipe_screen *screen,
    softpipe->pipe.create_sampler_view = softpipe_create_sampler_view;
    softpipe->pipe.sampler_view_destroy = softpipe_sampler_view_destroy;
    softpipe->pipe.set_viewport_state = softpipe_set_viewport_state;
-
+   softpipe->pipe.set_stream_output_buffers = softpipe_set_stream_output_buffers;
    softpipe->pipe.set_vertex_buffers = softpipe_set_vertex_buffers;
 
    softpipe->pipe.draw_arrays = softpipe_draw_arrays;

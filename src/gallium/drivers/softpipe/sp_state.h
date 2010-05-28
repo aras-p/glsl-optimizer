@@ -51,6 +51,8 @@
 #define SP_NEW_VS            0x2000
 #define SP_NEW_QUERY         0x4000
 #define SP_NEW_GS            0x8000
+#define SP_NEW_SO            0x10000
+#define SP_NEW_SO_BUFFERS    0x20000
 
 
 struct tgsi_sampler;
@@ -103,6 +105,10 @@ struct sp_geometry_shader {
 struct sp_velems_state {
    unsigned count;
    struct pipe_vertex_element velem[PIPE_MAX_ATTRIBS];
+};
+
+struct sp_so_state {
+   struct pipe_stream_output_state base;
 };
 
 
@@ -263,5 +269,20 @@ softpipe_get_vertex_info(struct softpipe_context *softpipe);
 struct vertex_info *
 softpipe_get_vbuf_vertex_info(struct softpipe_context *softpipe);
 
+void *
+softpipe_create_stream_output_state(
+   struct pipe_context *pipe,
+   const struct pipe_stream_output_state *templ);
+void
+softpipe_bind_stream_output_state(struct pipe_context *pipe,
+                                  void *so);
+void
+softpipe_delete_stream_output_state(struct pipe_context *pipe, void *so);
+
+void
+softpipe_set_stream_output_buffers(struct pipe_context *pipe,
+                                   struct pipe_resource **buffers,
+                                   int *offsets,
+                                   int num_buffers);
 
 #endif

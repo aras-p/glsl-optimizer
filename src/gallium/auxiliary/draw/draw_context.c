@@ -574,3 +574,25 @@ draw_get_rasterizer_no_cull( struct draw_context *draw,
    }
    return draw->rasterizer_no_cull[scissor][flatshade];
 }
+
+void
+draw_set_mapped_so_buffers(struct draw_context *draw,
+                           void *buffers[PIPE_MAX_SO_BUFFERS],
+                           unsigned num_buffers)
+{
+   int i;
+
+   for (i = 0; i < num_buffers; ++i) {
+      draw->so.buffers[i] = buffers[i];
+   }
+   draw->so.num_buffers = num_buffers;
+}
+
+void
+draw_set_so_state(struct draw_context *draw,
+                  struct pipe_stream_output_state *state)
+{
+   memcpy(&draw->so.state,
+          state,
+          sizeof(struct pipe_stream_output_state));
+}

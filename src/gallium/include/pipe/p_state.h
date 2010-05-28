@@ -63,6 +63,7 @@ extern "C" {
 #define PIPE_MAX_SHADER_INPUTS    16
 #define PIPE_MAX_SHADER_OUTPUTS   16
 #define PIPE_MAX_TEXTURE_LEVELS   16
+#define PIPE_MAX_SO_BUFFERS        4
 
 
 struct pipe_reference
@@ -345,6 +346,12 @@ struct pipe_resource
    unsigned flags;	     /**< bitmask of PIPE_RESOURCE_FLAG_x */
 };
 
+struct pipe_stream_output_state
+{
+   /**< format for each output */
+   enum pipe_format format[PIPE_MAX_SHADER_OUTPUTS];
+   int num_outputs;
+};
 
 /**
  * Extra indexing info for (cube) texture resources.

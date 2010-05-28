@@ -186,6 +186,11 @@ struct pipe_context {
    void   (*bind_vertex_elements_state)(struct pipe_context *, void *);
    void   (*delete_vertex_elements_state)(struct pipe_context *, void *);
 
+   void * (*create_stream_output_state)(struct pipe_context *,
+                                        const struct pipe_stream_output_state *);
+   void   (*bind_stream_output_state)(struct pipe_context *, void *);
+   void   (*delete_stream_output_state)(struct pipe_context*, void*);
+
    /*@}*/
 
    /**
@@ -231,6 +236,13 @@ struct pipe_context {
    void (*set_vertex_buffers)( struct pipe_context *,
                                unsigned num_buffers,
                                const struct pipe_vertex_buffer * );
+
+   void (*set_stream_output_buffers)(struct pipe_context *,
+                                     struct pipe_resource **buffers,
+                                     int *offsets, /*array of offsets
+                                                     from the start of each
+                                                     of the buffers */
+                                     int num_buffers);
 
    /*@}*/
 
