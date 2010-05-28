@@ -3,4 +3,3 @@ failure with operator precedence
 #else
 success
 #endif
-
