@@ -647,16 +647,14 @@ dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp,
    disp->DriverData = (void *) dri2_dpy;
    if (disp->NativeDisplay == NULL) {
       dri2_dpy->conn = xcb_connect(0, 0);
-      if (!dri2_dpy->conn) {
-	 _eglLog(_EGL_WARNING, "DRI2: xcb_connect failed");
-	 goto cleanup_dpy;
-      }
    } else {
       dri2_dpy->conn = XGetXCBConnection(disp->NativeDisplay);
    }
 
-   if (dri2_dpy->conn == NULL)
-      goto cleanup_conn;
+   if (xcb_connection_has_error(dri2_dpy->conn)) {
+      _eglLog(_EGL_WARNING, "DRI2: xcb_connect failed");
+      goto cleanup_dpy;
+   }
 
    if (dri2_dpy->conn) {
       if (!dri2_connect(dri2_dpy))
