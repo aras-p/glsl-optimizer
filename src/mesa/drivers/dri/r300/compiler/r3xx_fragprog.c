@@ -26,6 +26,7 @@
 
 #include "radeon_dataflow.h"
 #include "radeon_emulate_branches.h"
+#include "radeon_emulate_loops.h"
 #include "radeon_program_alu.h"
 #include "radeon_program_tex.h"
 #include "r300_fragprog.h"
@@ -103,6 +104,15 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 	/* XXX Ideally this should be done only for r3xx, but since
 	 * we don't have branching support for r5xx, we use the emulation
 	 * on all chipsets. */
+	
+	if(c->Base.is_r500){
+		rc_emulate_loops(&c->Base, R500_PFS_MAX_INST);
+	}
+	else{
+		rc_emulate_loops(&c->Base, R300_PFS_MAX_ALU_INST);
+	}
+	debug_program_log(c, "after emulate loops");
+	
 	rc_emulate_branches(&c->Base);
 
 	debug_program_log(c, "after emulate branches");

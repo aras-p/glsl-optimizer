@@ -180,6 +180,12 @@ typedef enum {
 
 	/** branch instruction: has no effect */
 	RC_OPCODE_ENDIF,
+	
+	RC_OPCODE_BGNLOOP,
+
+	RC_OPCODE_BRK,
+
+	RC_OPCODE_ENDLOOP,
 
 	/** special instruction, used in R300-R500 fragment program pair instructions
 	 * indicates that the result of the alpha operation shall be replicated
