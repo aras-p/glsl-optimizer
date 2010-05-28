@@ -101,13 +101,12 @@ _glcpp_parser_evaluate_defined (glcpp_parser_t *parser,
 				token_list_t *list);
 
 static void
-_glcpp_parser_print_expanded_token_list (glcpp_parser_t *parser,
-					 token_list_t *list);
+_glcpp_parser_expand_token_list (glcpp_parser_t *parser,
+				 token_list_t *list);
 
 static void
-_glcpp_parser_expand_token_list_onto (glcpp_parser_t *parser,
-				      token_list_t *list,
-				      token_list_t *result);
+_glcpp_parser_print_expanded_token_list (glcpp_parser_t *parser,
+					 token_list_t *list);
 
 static void
 _glcpp_parser_skip_stack_push_if (glcpp_parser_t *parser, int condition);
@@ -218,7 +217,8 @@ control_line:
 		_token_list_append (expanded, token);
 		talloc_unlink (parser, token);
 		_glcpp_parser_evaluate_defined (parser, $2);
-		_glcpp_parser_expand_token_list_onto (parser, $2, expanded);
+		_glcpp_parser_expand_token_list (parser, $2);
+		_token_list_append_list (expanded, $2);
 		glcpp_parser_lex_from (parser, expanded);
 	}
 |	HASH_IFDEF IDENTIFIER NEWLINE {
@@ -240,7 +240,8 @@ control_line:
 		_token_list_append (expanded, token);
 		talloc_unlink (parser, token);
 		_glcpp_parser_evaluate_defined (parser, $2);
-		_glcpp_parser_expand_token_list_onto (parser, $2, expanded);
+		_glcpp_parser_expand_token_list (parser, $2);
+		_token_list_append_list (expanded, $2);
 		glcpp_parser_lex_from (parser, expanded);
 	}
 |	HASH_ELSE NEWLINE {
@@ -688,6 +689,22 @@ _token_list_append_list (token_list_t *list, token_list_t *tail)
 	list->non_space_tail = tail->non_space_tail;
 }
 
+token_list_t *
+_token_list_copy (void *ctx, token_list_t *other)
+{
+	token_list_t *copy;
+	token_node_t *node;
+
+	if (other == NULL)
+		return NULL;
+
+	copy = _token_list_create (ctx);
+	for (node = other->head; node; node = node->next)
+		_token_list_append (copy, node->token);
+
+	return copy;
+}
+
 void
 _token_list_trim_trailing_space (token_list_t *list)
 {
@@ -956,9 +973,12 @@ typedef enum function_status
 } function_status_t;
 
 /* Find a set of function-like macro arguments by looking for a
- * balanced set of parentheses. Upon return *node will be the last
- * consumed node, such that further processing can continue with
- * node->next.
+ * balanced set of parentheses.
+ *
+ * When called, 'node' should be the opening-parenthesis token, (or
+ * perhaps preceeding SPACE tokens). Upon successful return *last will
+ * be the last consumed node, (corresponding to the closing right
+ * parenthesis).
  *
  * Return values:
  *
@@ -976,13 +996,13 @@ typedef enum function_status
  *	Macro name is not followed by a balanced set of parentheses.
  */
 static function_status_t
-_arguments_parse (argument_list_t *arguments, token_node_t **node_ret)
+_arguments_parse (argument_list_t *arguments,
+		  token_node_t *node,
+		  token_node_t **last)
 {
 	token_list_t *argument;
-	token_node_t *node = *node_ret, *last;
 	int paren_count;
 
-	last = node;
 	node = node->next;
 
 	/* Ignore whitespace before first parenthesis. */
@@ -992,13 +1012,12 @@ _arguments_parse (argument_list_t *arguments, token_node_t **node_ret)
 	if (node == NULL || node->token->type != '(')
 		return FUNCTION_NOT_A_FUNCTION;
 
-	last = node;
 	node = node->next;
 
 	argument = _token_list_create (arguments);
 	_argument_list_append (arguments, argument);
 
-	for (paren_count = 1; node; last = node, node = node->next) {
+	for (paren_count = 1; node; node = node->next) {
 		if (node->token->type == '(')
 		{
 			paren_count++;
@@ -1006,11 +1025,8 @@ _arguments_parse (argument_list_t *arguments, token_node_t **node_ret)
 		else if (node->token->type == ')')
 		{
 			paren_count--;
-			if (paren_count == 0) {
-				last = node;
-				node = node->next;
+			if (paren_count == 0)
 				break;
-			}
 		}
 
 		if (node->token->type == ',' &&
@@ -1031,32 +1047,44 @@ _arguments_parse (argument_list_t *arguments, token_node_t **node_ret)
 		}
 	}
 
-	if (node && paren_count)
+	if (paren_count)
 		return FUNCTION_UNBALANCED_PARENTHESES;
 
-	*node_ret = last;
+	*last = node;
 
 	return FUNCTION_STATUS_SUCCESS;
 }
 
-/* Appends expansion of *node (consuming further tokens from the list
- * as necessary) onto result. Upon return *node will be the last
- * consumed node, such that further processing can continue with
- * node->next. */
-static void
-_glcpp_parser_expand_function_onto (glcpp_parser_t *parser,
-				    token_node_t **node_ret,
-				    token_list_t *result)
+/* This is a helper function that's essentially part of the
+ * implementation of _glcpp_parser_expand_node. It shouldn't be called
+ * except for by that function.
+ *
+ * Returns NULL if node is a simple token with no expansion, (that is,
+ * although 'node' corresponds to an identifier defined as a
+ * function-like macro, it is not followed with a parenthesized
+ * argument list).
+ *
+ * Compute the complete expansion of node (which is a function-like
+ * macro) and subsequent nodes which are arguments.
+ *
+ * Returns the token list that results from the expansion and sets
+ * *last to the last node in the list that was consumed by the
+ * expansion. Specificallty, *last will be set as follows: as the
+ * token of the closing right parenthesis.
+ */
+static token_list_t *
+_glcpp_parser_expand_function (glcpp_parser_t *parser,
+			       token_node_t *node,
+			       token_node_t **last)
+			       
 {
 	macro_t *macro;
-	token_node_t *node;
 	const char *identifier;
 	argument_list_t *arguments;
 	function_status_t status;
 	token_list_t *substituted;
 	int parameter_index;
 
-	node = *node_ret;
 	identifier = node->token->value.str;
 
 	macro = hash_table_find (parser->defines, identifier);
@@ -1064,23 +1092,20 @@ _glcpp_parser_expand_function_onto (glcpp_parser_t *parser,
 	assert (macro->is_function);
 
 	arguments = _argument_list_create (parser);
-	status = _arguments_parse (arguments, node_ret);
+	status = _arguments_parse (arguments, node, last);
 
 	switch (status) {
 	case FUNCTION_STATUS_SUCCESS:
 		break;
 	case FUNCTION_NOT_A_FUNCTION:
-		_token_list_append (result, node->token);
-		return;
+		return NULL;
 	case FUNCTION_UNBALANCED_PARENTHESES:
-		fprintf (stderr, "Error: Macro %s call has unbalanced parentheses\n",
-			 identifier);
-		exit (1);
+		return NULL;
 	}
 
 	if (macro->replacements == NULL) {
 		talloc_free (arguments);
-		return;
+		return _token_list_create (parser);
 	}
 
 	if (! ((_argument_list_length (arguments) == 
@@ -1094,7 +1119,7 @@ _glcpp_parser_expand_function_onto (glcpp_parser_t *parser,
 			 identifier,
 			 _argument_list_length (arguments),
 			 _string_list_length (macro->parameters));
-		return;
+		return NULL;
 	}
 
 	/* Perform argument substitution on the replacement list. */
@@ -1114,9 +1139,9 @@ _glcpp_parser_expand_function_onto (glcpp_parser_t *parser,
 			 * tokens, or append a placeholder token for
 			 * an empty argument. */
 			if (argument->head) {
-				_glcpp_parser_expand_token_list_onto (parser,
-								      argument,
-								      substituted);
+				_glcpp_parser_expand_token_list (parser,
+								 argument);
+				_token_list_append_list (substituted, argument);
 			} else {
 				token_t *new_token;
 
@@ -1158,7 +1183,7 @@ _glcpp_parser_expand_function_onto (glcpp_parser_t *parser,
 
 		if (next_non_space == NULL) {
 			fprintf (stderr, "Error: '##' cannot appear at either end of a macro expansion\n");
-			return;
+			return NULL;
 		}
 
 		_token_paste (node->token, next_non_space->token);
@@ -1168,22 +1193,33 @@ _glcpp_parser_expand_function_onto (glcpp_parser_t *parser,
 	}
 
 	_string_list_push (parser->active, identifier);
-	_glcpp_parser_expand_token_list_onto (parser, substituted, result);
+	_glcpp_parser_expand_token_list (parser, substituted);
 	_string_list_pop (parser->active);
 
-	talloc_free (arguments);
+	return substituted;
 }
 
-
-/* Appends the expansion of the token in *node onto result.
- * Upon return *node will be the last consumed node, such that further
- * processing can continue with node->next. */
-static void
-_glcpp_parser_expand_token_onto (glcpp_parser_t *parser,
-				 token_node_t **node,
-				 token_list_t *result)
+/* Compute the complete expansion of node, (and subsequent nodes after
+ * 'node' in the case that 'node' is a function-like macro and
+ * subsequent nodes are arguments).
+ *
+ * Returns NULL if node is a simple token with no expansion.
+ *
+ * Otherwise, returns the token list that results from the expansion
+ * and sets *last to the last node in the list that was consumed by
+ * the expansion. Specificallty, *last will be set as follows:
+ *
+ *	As 'node' in the case of object-like macro expansion.
+ *
+ *	As the token of the closing right parenthesis in the case of
+ *	function-like macro expansion.
+ */
+static token_list_t *
+_glcpp_parser_expand_node (glcpp_parser_t *parser,
+			   token_node_t *node,
+			   token_node_t **last)
 {
-	token_t *token = (*node)->token;
+	token_t *token = node->token;
 	const char *identifier;
 	macro_t *macro;
 	token_list_t *expansion;
@@ -1194,52 +1230,110 @@ _glcpp_parser_expand_token_onto (glcpp_parser_t *parser,
 		 * it being mistaken for an argument separator
 		 * later. */
 		if (token->type == ',') {
-			token_t *new_token;
-
-			new_token = _token_create_ival (result, COMMA_FINAL,
-							COMMA_FINAL);
-			_token_list_append (result, new_token);
-		} else {
-			_token_list_append (result, token);
+			token->type = COMMA_FINAL;
+			token->value.ival = COMMA_FINAL;
 		}
-		return;
+
+		return NULL;
 	}
 
 	/* Look up this identifier in the hash table. */
 	identifier = token->value.str;
 	macro = hash_table_find (parser->defines, identifier);
 
-	/* Not a macro, so just append. */
-	if (macro == NULL) {
-		_token_list_append (result, token);
-		return;
-	}
+	/* Not a macro, so no expansion needed. */
+	if (macro == NULL)
+		return NULL;
 
 	/* Finally, don't expand this macro if we're already actively
 	 * expanding it, (to avoid infinite recursion). */
-	if (_string_list_contains (parser->active, identifier, NULL))
-	{
+	if (_string_list_contains (parser->active, identifier, NULL)) {
 		/* We change the token type here from IDENTIFIER to
 		 * OTHER to prevent any future expansion of this
 		 * unexpanded token. */
 		char *str;
-		token_t *new_token;
+		token_list_t *expansion;
+		token_t *final;
 
-		str = xtalloc_strdup (result, token->value.str);
-		new_token = _token_create_str (result, OTHER, str);
-		_token_list_append (result, new_token);
-		return;
+		str = xtalloc_strdup (parser, token->value.str);
+		final = _token_create_str (parser, OTHER, str);
+		expansion = _token_list_create (parser);
+		_token_list_append (expansion, final);
+		*last = node;
+		return expansion;
 	}
 
-	if (macro->is_function) {
-		_glcpp_parser_expand_function_onto (parser, node, result);
-	} else {
+	if (! macro->is_function)
+	{
+		*last = node;
+
+		if (macro->replacements == NULL)
+			return _token_list_create (parser);
+
+		expansion = _token_list_copy (parser, macro->replacements);
+
 		_string_list_push (parser->active, identifier);
-		_glcpp_parser_expand_token_list_onto (parser,
-						      macro->replacements,
-						      result);
+		_glcpp_parser_expand_token_list (parser, expansion);
 		_string_list_pop (parser->active);
+
+		return expansion;
 	}
+
+	return _glcpp_parser_expand_function (parser, node, last);
+}
+
+/* Walk over the token list replacing nodes with their expansion.
+ * Whenever nodes are expanded the walking will walk over the new
+ * nodes, continuing to expand as necessary. The results are placed in
+ * 'list' itself;
+ */
+static void
+_glcpp_parser_expand_token_list (glcpp_parser_t *parser,
+				 token_list_t *list)
+{
+	token_node_t *node_prev;
+	token_node_t *node, *last;
+	token_list_t *expansion;
+
+	if (list == NULL)
+		return;
+
+	_token_list_trim_trailing_space (list);
+
+	node_prev = NULL;
+	node = list->head;
+
+	while (node) {
+		/* Find the expansion for node, which will replace all
+		 * nodes from node to last, inclusive. */
+		expansion = _glcpp_parser_expand_node (parser, node, &last);
+		if (expansion) {
+			/* Splice expansion into list, supporting a
+			 * simple deletion if the expansion is
+			 * empty. */
+			if (expansion->head) {
+				if (node_prev)
+					node_prev->next = expansion->head;
+				else
+					list->head = expansion->head;
+				expansion->tail->next = last->next;
+				if (last == list->tail)
+					list->tail = expansion->tail;
+			} else {
+				if (node_prev)
+					node_prev->next = last->next;
+				else
+					list->head = last->next;
+				if (last == list->tail)
+					list->tail == NULL;
+			}
+		} else {
+			node_prev = node;
+		}
+		node = node_prev ? node_prev->next : list->head;
+	}
+
+	list->non_space_tail = list->tail;
 }
 
 static void
@@ -1247,37 +1341,23 @@ _glcpp_parser_expand_token_list_onto (glcpp_parser_t *parser,
 				      token_list_t *list,
 				      token_list_t *result)
 {
-	token_node_t *node;
+	_glcpp_parser_expand_token_list (parser, list);
 
-	if (list == NULL || list->head == NULL)
-		return;
-
-	for (node = list->head; node; node = node->next)
-	{
-		_glcpp_parser_expand_token_onto (parser, &node, result);
-	}
+	_token_list_append_list (result, list);
 }
 
 void
 _glcpp_parser_print_expanded_token_list (glcpp_parser_t *parser,
 					 token_list_t *list)
 {
-	token_list_t *expanded;
-	token_node_t *node;
-	function_status_t function_status;
-
 	if (list == NULL)
 		return;
 
-	expanded = _token_list_create (parser);
+	_glcpp_parser_expand_token_list (parser, list);
 
-	_glcpp_parser_expand_token_list_onto (parser, list, expanded);
+	_token_list_trim_trailing_space (list);
 
-	_token_list_trim_trailing_space (expanded);
-
-	_token_list_print (expanded);
-
-	talloc_free (expanded);
+	_token_list_print (list);
 }
 
 void
