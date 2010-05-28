@@ -800,33 +800,6 @@ rbug_resource_copy_region(struct pipe_context *_pipe,
 }
 
 static void
-rbug_resource_fill_region(struct pipe_context *_pipe,
-                          struct pipe_resource *_dst,
-                          struct pipe_subresource subdst,
-                          unsigned dstx,
-                          unsigned dsty,
-                          unsigned dstz,
-                          unsigned width,
-                          unsigned height,
-                          unsigned value)
-{
-   struct rbug_context *rb_pipe = rbug_context(_pipe);
-   struct rbug_resource *rb_resource_dst = rbug_resource(_dst);
-   struct pipe_context *pipe = rb_pipe->pipe;
-   struct pipe_resource *dst = rb_resource_dst->resource;
-
-   pipe->resource_fill_region(pipe,
-                              dst,
-                              subdst,
-                              dstx,
-                              dsty,
-                              dstz,
-                              width,
-                              height,
-                              value);
-}
-
-static void
 rbug_clear(struct pipe_context *_pipe,
            unsigned buffers,
            const float *rgba,
@@ -841,6 +814,52 @@ rbug_clear(struct pipe_context *_pipe,
                rgba,
                depth,
                stencil);
+}
+
+static void
+rbug_clearRT(struct pipe_context *_pipe,
+             struct pipe_surface *_dst,
+             const float *rgba,
+             unsigned dstx, unsigned dsty,
+             unsigned width, unsigned height)
+{
+   struct rbug_context *rb_pipe = rbug_context(_pipe);
+   struct rbug_surface *rb_surface_dst = rbug_surface(_dst);
+   struct pipe_context *pipe = rb_pipe->pipe;
+   struct pipe_surface *dst = rb_surface_dst->surface;
+
+   pipe->clearRT(pipe,
+                 dst,
+                 rgba,
+                 dstx,
+                 dsty,
+                 width,
+                 height);
+}
+
+static void
+rbug_clearDS(struct pipe_context *_pipe,
+             struct pipe_surface *_dst,
+             unsigned clear_flags,
+             double depth,
+             unsigned stencil,
+             unsigned dstx, unsigned dsty,
+             unsigned width, unsigned height)
+{
+   struct rbug_context *rb_pipe = rbug_context(_pipe);
+   struct rbug_surface *rb_surface_dst = rbug_surface(_dst);
+   struct pipe_context *pipe = rb_pipe->pipe;
+   struct pipe_surface *dst = rb_surface_dst->surface;
+
+   pipe->clearDS(pipe,
+                 dst,
+                 clear_flags,
+                 depth,
+                 stencil,
+                 dstx,
+                 dsty,
+                 width,
+                 height);
 }
 
 static void
@@ -1075,8 +1094,9 @@ rbug_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
    rb_pipe->base.set_vertex_buffers = rbug_set_vertex_buffers;
    rb_pipe->base.set_sample_mask = rbug_set_sample_mask;
    rb_pipe->base.resource_copy_region = rbug_resource_copy_region;
-   rb_pipe->base.resource_fill_region = rbug_resource_fill_region;
    rb_pipe->base.clear = rbug_clear;
+   rb_pipe->base.clearRT = rbug_clearRT;
+   rb_pipe->base.clearDS = rbug_clearDS;
    rb_pipe->base.flush = rbug_flush;
    rb_pipe->base.is_resource_referenced = rbug_is_resource_referenced;
    rb_pipe->base.create_sampler_view = rbug_context_create_sampler_view;
