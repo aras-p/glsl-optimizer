@@ -219,7 +219,7 @@ llvmpipe_resource_create(struct pipe_screen *_screen,
    pipe_reference_init(&lpr->base.reference, 1);
    lpr->base.screen = &screen->base;
 
-   assert(lpr->base.bind);
+   /* assert(lpr->base.bind); */
 
    if (resource_is_texture(&lpr->base)) {
       if (lpr->base.bind & PIPE_BIND_DISPLAY_TARGET) {

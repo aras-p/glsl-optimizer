@@ -60,13 +60,14 @@ struct llvmpipe_context {
    const struct pipe_rasterizer_state *rasterizer;
    struct lp_fragment_shader *fs;
    const struct lp_vertex_shader *vs;
+   const struct lp_geometry_shader *gs;
    const struct lp_velems_state *velems;
 
    /** Other rendering state */
    struct pipe_blend_color blend_color;
    struct pipe_stencil_ref stencil_ref;
    struct pipe_clip_state clip;
-   struct pipe_resource *constants[PIPE_SHADER_TYPES];
+   struct pipe_resource *constants[PIPE_SHADER_TYPES][PIPE_MAX_CONSTANT_BUFFERS];
    struct pipe_framebuffer_state framebuffer;
    struct pipe_poly_stipple poly_stipple;
    struct pipe_scissor_state scissor;

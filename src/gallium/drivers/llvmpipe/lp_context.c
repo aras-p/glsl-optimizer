@@ -48,7 +48,7 @@
 static void llvmpipe_destroy( struct pipe_context *pipe )
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context( pipe );
-   uint i;
+   uint i, j;
 
    lp_print_counters();
 
@@ -72,8 +72,8 @@ static void llvmpipe_destroy( struct pipe_context *pipe )
    }
 
    for (i = 0; i < Elements(llvmpipe->constants); i++) {
-      if (llvmpipe->constants[i]) {
-         pipe_resource_reference(&llvmpipe->constants[i], NULL);
+      for (j = 0; j < Elements(llvmpipe->constants[i]); j++) {
+         pipe_resource_reference(&llvmpipe->constants[i][j], NULL);
       }
    }
 
@@ -112,6 +112,7 @@ llvmpipe_create_context( struct pipe_screen *screen, void *priv )
    llvmpipe_init_vertex_funcs(llvmpipe);
    llvmpipe_init_fs_funcs(llvmpipe);
    llvmpipe_init_vs_funcs(llvmpipe);
+   llvmpipe_init_gs_funcs(llvmpipe);
    llvmpipe_init_rasterizer_funcs(llvmpipe);
    llvmpipe_init_context_resource_funcs( &llvmpipe->pipe );
    llvmpipe_init_surface_functions(llvmpipe);

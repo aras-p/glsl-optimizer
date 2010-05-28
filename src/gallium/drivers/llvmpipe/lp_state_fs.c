@@ -1078,18 +1078,18 @@ llvmpipe_set_constant_buffer(struct pipe_context *pipe,
    const void *data = constants ? llvmpipe_resource_data(constants) : NULL;
 
    assert(shader < PIPE_SHADER_TYPES);
-   assert(index == 0);
+   assert(index < PIPE_MAX_CONSTANT_BUFFERS);
 
-   if(llvmpipe->constants[shader] == constants)
+   if(llvmpipe->constants[shader][index] == constants)
       return;
 
    draw_flush(llvmpipe->draw);
 
    /* note: reference counting */
-   pipe_resource_reference(&llvmpipe->constants[shader], constants);
+   pipe_resource_reference(&llvmpipe->constants[shader][index], constants);
 
    if(shader == PIPE_SHADER_VERTEX) {
-      draw_set_mapped_constant_buffer(llvmpipe->draw, PIPE_SHADER_VERTEX, 0,
+      draw_set_mapped_constant_buffer(llvmpipe->draw, PIPE_SHADER_VERTEX, index,
                                       data, size);
    }
 
