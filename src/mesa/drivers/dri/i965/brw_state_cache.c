@@ -386,11 +386,14 @@ brw_init_non_surface_cache(struct brw_context *brw)
    brw_init_cache_id(cache, "CLIP_UNIT", BRW_CLIP_UNIT);
 
    brw_init_cache_id(cache, "CLIP_PROG", BRW_CLIP_PROG);
+   brw_init_cache_id(cache, "CLIP_VP", BRW_CLIP_VP);
 
    brw_init_cache_id(cache, "GS_UNIT", BRW_GS_UNIT);
 
    brw_init_cache_id(cache, "GS_PROG", BRW_GS_PROG);
    brw_init_cache_id(cache, "BLEND_STATE", BRW_BLEND_STATE);
+   brw_init_cache_id(cache, "COLOR_CALC_STATE", BRW_COLOR_CALC_STATE);
+   brw_init_cache_id(cache, "DEPTH_STENCIL_STATE", BRW_DEPTH_STENCIL_STATE);
 }
 
 
