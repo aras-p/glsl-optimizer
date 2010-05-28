@@ -348,19 +348,16 @@ static INLINE uint32_t r300_translate_gb_pipes(int pipe_count)
     switch (pipe_count) {
         case 1:
             return R300_GB_TILE_PIPE_COUNT_RV300;
-            break;
         case 2:
             return R300_GB_TILE_PIPE_COUNT_R300;
-            break;
         case 3:
             return R300_GB_TILE_PIPE_COUNT_R420_3P;
-            break;
         case 4:
             return R300_GB_TILE_PIPE_COUNT_R420;
-            break;
     }
     return 0;
 }
+
 
 /* Translate pipe_formats into PSC vertex types. */
 static INLINE uint16_t
