@@ -1015,9 +1015,10 @@ renderbuffer_storage(GLenum target, GLenum internalFormat,
     */
 }
 
+
 #if FEATURE_OES_EGL_image
 void GLAPIENTRY
-_mesa_EGLImageTargetRenderbufferStorageOES (GLenum target, GLeglImageOES image)
+_mesa_EGLImageTargetRenderbufferStorageOES(GLenum target, GLeglImageOES image)
 {
    struct gl_renderbuffer *rb;
    GET_CURRENT_CONTEXT(ctx);
@@ -1030,13 +1031,15 @@ _mesa_EGLImageTargetRenderbufferStorageOES (GLenum target, GLeglImageOES image)
    }
 
    if (target != GL_RENDERBUFFER) {
-      _mesa_error(ctx, GL_INVALID_ENUM, "EGLImageTargetRenderbufferStorageOES");
+      _mesa_error(ctx, GL_INVALID_ENUM,
+                  "EGLImageTargetRenderbufferStorageOES");
       return;
    }
 
    rb = ctx->CurrentRenderbuffer;
    if (!rb) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "EGLImageTargetRenderbufferStorageOES");
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "EGLImageTargetRenderbufferStorageOES");
       return;
    }
 
@@ -1045,6 +1048,7 @@ _mesa_EGLImageTargetRenderbufferStorageOES (GLenum target, GLeglImageOES image)
    ctx->Driver.EGLImageTargetRenderbufferStorage(ctx, rb, image);
 }
 #endif
+
 
 /**
  * Helper function for _mesa_GetRenderbufferParameterivEXT() and
@@ -1113,6 +1117,10 @@ _mesa_RenderbufferStorageMultisample(GLenum target, GLsizei samples,
    renderbuffer_storage(target, internalFormat, width, height, samples);
 }
 
+
+/**
+ * OpenGL ES version of glRenderBufferStorage.
+ */
 void GLAPIENTRY
 _es_RenderbufferStorageEXT(GLenum target, GLenum internalFormat,
 			   GLsizei width, GLsizei height)
@@ -1129,6 +1137,7 @@ _es_RenderbufferStorageEXT(GLenum target, GLenum internalFormat,
 
    renderbuffer_storage(target, internalFormat, width, height, 0);
 }
+
 
 void GLAPIENTRY
 _mesa_GetRenderbufferParameterivEXT(GLenum target, GLenum pname, GLint *params)
