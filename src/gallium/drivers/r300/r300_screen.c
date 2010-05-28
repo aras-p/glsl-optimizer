@@ -146,6 +146,9 @@ static int r300_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
         case PIPE_CAP_MAX_CONST_BUFFER_SIZE:
             return 256;
 
+        case PIPE_CAP_DEPTHSTENCIL_CLEAR_SEPARATE:
+            return 1;
+
         /* Fragment coordinate conventions. */
         case PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT:
         case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER:
