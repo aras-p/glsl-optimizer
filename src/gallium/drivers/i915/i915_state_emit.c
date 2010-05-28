@@ -51,6 +51,7 @@ static unsigned translate_format( enum pipe_format format )
 static unsigned translate_depth_format( enum pipe_format zformat )
 {
    switch (zformat) {
+   case PIPE_FORMAT_Z24X8_UNORM:
    case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
       return DEPTH_FRMT_24_FIXED_8_OTHER;
    case PIPE_FORMAT_Z16_UNORM:

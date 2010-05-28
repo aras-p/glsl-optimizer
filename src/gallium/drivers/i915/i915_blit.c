@@ -36,6 +36,7 @@
 void
 i915_fill_blit(struct i915_context *i915,
                unsigned cpp,
+               unsigned rgba_mask,
                unsigned short dst_pitch,
                struct i915_winsys_buffer *dst_buffer,
                unsigned dst_offset,
@@ -62,8 +63,7 @@ i915_fill_blit(struct i915_context *i915,
    case 4:
       BR13 = (((int) dst_pitch) & 0xffff) |
          (0xF0 << 16) | (1 << 24) | (1 << 25);
-      CMD = (XY_COLOR_BLT_CMD | XY_COLOR_BLT_WRITE_ALPHA |
-             XY_COLOR_BLT_WRITE_RGB);
+      CMD = (XY_COLOR_BLT_CMD | rgba_mask);
       break;
    default:
       return;
