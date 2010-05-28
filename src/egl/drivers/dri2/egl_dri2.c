@@ -628,38 +628,12 @@ dri2_add_configs_for_visuals(struct dri2_egl_display *dri2_dpy,
    return EGL_TRUE;
 }
 
-/**
- * Called via eglInitialize(), GLX_drv->API.Initialize().
- */
 static EGLBoolean
-dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp,
-		EGLint *major, EGLint *minor)
+dri2_load_driver(_EGLDisplay *disp)
 {
+   struct dri2_egl_display *dri2_dpy = disp->DriverData;
    const __DRIextension **extensions;
-   struct dri2_egl_display *dri2_dpy;
    char path[PATH_MAX], *search_paths, *p, *next, *end;
-   unsigned int api_mask;
-
-   dri2_dpy = malloc(sizeof *dri2_dpy);
-   if (!dri2_dpy)
-      return _eglError(EGL_BAD_ALLOC, "eglInitialize");
-
-   disp->DriverData = (void *) dri2_dpy;
-   if (disp->NativeDisplay == NULL) {
-      dri2_dpy->conn = xcb_connect(0, 0);
-   } else {
-      dri2_dpy->conn = XGetXCBConnection(disp->NativeDisplay);
-   }
-
-   if (xcb_connection_has_error(dri2_dpy->conn)) {
-      _eglLog(_EGL_WARNING, "DRI2: xcb_connect failed");
-      goto cleanup_dpy;
-   }
-
-   if (dri2_dpy->conn) {
-      if (!dri2_connect(dri2_dpy))
-	 goto cleanup_conn;
-   }
 
    search_paths = NULL;
    if (geteuid() == getuid()) {
@@ -696,7 +670,7 @@ dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp,
       _eglLog(_EGL_WARNING,
 	      "DRI2: failed to open any driver (search paths %s)",
 	      search_paths);
-      goto cleanup_conn;
+      return EGL_FALSE;
    }
 
    _eglLog(_EGL_DEBUG, "DRI2: dlopen(%s)", path);
@@ -704,11 +678,53 @@ dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp,
    if (extensions == NULL) {
       _eglLog(_EGL_WARNING,
 	      "DRI2: driver exports no extensions (%s)", dlerror());
-      goto cleanup_driver;
+      dlclose(dri2_dpy->driver);
+      return EGL_FALSE;
    }
 
-   if (!dri2_bind_extensions(dri2_dpy, dri2_driver_extensions, extensions))
-      goto cleanup_driver;
+   if (!dri2_bind_extensions(dri2_dpy, dri2_driver_extensions, extensions)) {
+      dlclose(dri2_dpy->driver);
+      return EGL_FALSE;
+   }
+
+   return EGL_TRUE;
+}
+
+
+/**
+ * Called via eglInitialize(), GLX_drv->API.Initialize().
+ */
+static EGLBoolean
+dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp,
+		EGLint *major, EGLint *minor)
+{
+   const __DRIextension **extensions;
+   struct dri2_egl_display *dri2_dpy;
+   unsigned int api_mask;
+
+   dri2_dpy = malloc(sizeof *dri2_dpy);
+   if (!dri2_dpy)
+      return _eglError(EGL_BAD_ALLOC, "eglInitialize");
+
+   disp->DriverData = (void *) dri2_dpy;
+   if (disp->NativeDisplay == NULL) {
+      dri2_dpy->conn = xcb_connect(0, 0);
+   } else {
+      dri2_dpy->conn = XGetXCBConnection(disp->NativeDisplay);
+   }
+
+   if (xcb_connection_has_error(dri2_dpy->conn)) {
+      _eglLog(_EGL_WARNING, "DRI2: xcb_connect failed");
+      goto cleanup_dpy;
+   }
+
+   if (dri2_dpy->conn) {
+      if (!dri2_connect(dri2_dpy))
+	 goto cleanup_conn;
+   }
+
+   if (!dri2_load_driver(disp))
+      goto cleanup_conn;
 
    dri2_dpy->fd = open(dri2_dpy->device_name, O_RDWR);
    if (dri2_dpy->fd == -1) {
