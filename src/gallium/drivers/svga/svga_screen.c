@@ -230,6 +230,9 @@ svga_get_paramf(struct pipe_screen *screen, enum pipe_cap param)
    case PIPE_CAP_MAX_VS_PREDS:
       return svgascreen->use_vs30 ? 1 : 0;
 
+   case PIPE_CAP_DEPTHSTENCIL_CLEAR_SEPARATE:
+      return 1;
+
    default:
       return 0;
    }
