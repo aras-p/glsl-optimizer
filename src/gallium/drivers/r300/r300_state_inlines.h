@@ -371,10 +371,7 @@ r300_translate_vertex_data_type(enum pipe_format format) {
     desc = util_format_description(format);
 
     if (desc->layout != UTIL_FORMAT_LAYOUT_PLAIN) {
-        fprintf(stderr, "r300: Bad format %s in %s:%d\n", util_format_short_name(format),
-            __FUNCTION__, __LINE__);
-        assert(0);
-        abort();
+        return R300_INVALID_FORMAT;
     }
 
     switch (desc->channel[0].type) {
@@ -382,7 +379,7 @@ r300_translate_vertex_data_type(enum pipe_format format) {
         case UTIL_FORMAT_TYPE_FLOAT:
             switch (desc->channel[0].size) {
                 case 16:
-                    /* XXX Supported only on RV350 and later. */
+                    /* Supported only on RV350 and later. */
                     if (desc->nr_channels > 2) {
                         result = R300_DATA_TYPE_FLT16_4;
                     } else {
@@ -393,10 +390,7 @@ r300_translate_vertex_data_type(enum pipe_format format) {
                     result = R300_DATA_TYPE_FLOAT_1 + (desc->nr_channels - 1);
                     break;
                 default:
-                    fprintf(stderr, "r300: Bad format %s in %s:%d\n",
-                        util_format_short_name(format), __FUNCTION__, __LINE__);
-                    assert(0);
-                    abort();
+                    return R300_INVALID_FORMAT;
             }
             break;
         /* Unsigned ints */
@@ -415,19 +409,11 @@ r300_translate_vertex_data_type(enum pipe_format format) {
                     }
                     break;
                 default:
-                    fprintf(stderr, "r300: Bad format %s in %s:%d\n",
-                        util_format_short_name(format), __FUNCTION__, __LINE__);
-                    fprintf(stderr, "r300: desc->channel[0].size == %d\n",
-                        desc->channel[0].size);
-                    assert(0);
-                    abort();
+                    return R300_INVALID_FORMAT;
             }
             break;
         default:
-            fprintf(stderr, "r300: Bad format %s in %s:%d\n",
-                util_format_short_name(format), __FUNCTION__, __LINE__);
-            assert(0);
-            abort();
+            return R300_INVALID_FORMAT;
     }
 
     if (desc->channel[0].type == UTIL_FORMAT_TYPE_SIGNED) {

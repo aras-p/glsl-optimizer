@@ -154,8 +154,15 @@ static void r300_swtcl_vertex_psc(struct r300_context *r300)
         format = draw_translate_vinfo_format(vinfo->attrib[i].emit);
 
         /* Obtain the type of data in this attribute. */
-        type = r300_translate_vertex_data_type(format) |
-            vs_output_tab[i] << R300_DST_VEC_LOC_SHIFT;
+        type = r300_translate_vertex_data_type(format);
+        if (type == R300_INVALID_FORMAT) {
+            fprintf(stderr, "r300: Bad vertex format %s.\n",
+                    util_format_short_name(format));
+            assert(0);
+            abort();
+        }
+
+        type |= vs_output_tab[i] << R300_DST_VEC_LOC_SHIFT;
 
         /* Obtain the swizzle for this attribute. Note that the default
          * swizzle in the hardware is not XYZW! */

@@ -1250,8 +1250,15 @@ static void r300_vertex_psc(struct r300_vertex_element_state *velems)
     for (i = 0; i < velems->count; i++) {
         format = velems->velem[i].src_format;
 
-        type = r300_translate_vertex_data_type(format) |
-            (i << R300_DST_VEC_LOC_SHIFT);
+        type = r300_translate_vertex_data_type(format);
+        if (type == R300_INVALID_FORMAT) {
+            fprintf(stderr, "r300: Bad vertex format %s.\n",
+                    util_format_short_name(format));
+            assert(0);
+            abort();
+        }
+
+        type |= i << R300_DST_VEC_LOC_SHIFT;
         swizzle = r300_translate_vertex_data_swizzle(format);
 
         if (i & 1) {
