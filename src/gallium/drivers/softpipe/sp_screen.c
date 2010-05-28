@@ -187,7 +187,8 @@ softpipe_is_format_supported( struct pipe_screen *screen,
    struct sw_winsys *winsys = softpipe_screen(screen)->winsys;
    const struct util_format_description *format_desc;
 
-   assert(target == PIPE_TEXTURE_1D ||
+   assert(target == PIPE_BUFFER ||
+          target == PIPE_TEXTURE_1D ||
           target == PIPE_TEXTURE_2D ||
           target == PIPE_TEXTURE_3D ||
           target == PIPE_TEXTURE_CUBE);
