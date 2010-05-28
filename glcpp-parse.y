@@ -948,81 +948,6 @@ _glcpp_parser_evaluate_defined (glcpp_parser_t *parser,
 	}
 }
 	
-
-/* Appends onto 'expansion' a non-macro token or the expansion of an
- * object-like macro.
- *
- * Returns 0 if this token is completely processed.
- *
- * Returns 1 in the case that 'token' is a function-like macro that
- * needs further expansion.
- */
-static int
-_glcpp_parser_expand_token_onto (glcpp_parser_t *parser,
-				 token_t *token,
-				 token_list_t *result)
-{
-	const char *identifier;
-	macro_t *macro;
-	token_list_t *expansion;
-
-	/* We only expand identifiers */
-	if (token->type != IDENTIFIER) {
-		/* We change any COMMA into a COMMA_FINAL to prevent
-		 * it being mistaken for an argument separator
-		 * later. */
-		if (token->type == ',') {
-			token_t *new_token;
-
-			new_token = _token_create_ival (result, COMMA_FINAL,
-							COMMA_FINAL);
-			_token_list_append (result, new_token);
-		} else {
-			_token_list_append (result, token);
-		}
-		return 0;
-	}
-
-	/* Look up this identifier in the hash table. */
-	identifier = token->value.str;
-	macro = hash_table_find (parser->defines, identifier);
-
-	/* Not a macro, so just append. */
-	if (macro == NULL) {
-		_token_list_append (result, token);
-		return 0;
-	}
-
-	/* Finally, don't expand this macro if we're already actively
-	 * expanding it, (to avoid infinite recursion). */
-	if (_string_list_contains (parser->active, identifier, NULL))
-	{
-		/* We change the token type here from IDENTIFIER to
-		 * OTHER to prevent any future expansion of this
-		 * unexpanded token. */
-		char *str;
-		token_t *new_token;
-
-		str = xtalloc_strdup (result, token->value.str);
-		new_token = _token_create_str (result, OTHER, str);
-		_token_list_append (result, new_token);
-		return 0;
-	}
-
-	/* For function-like macros return 1 for further processing. */
-	if (macro->is_function) {
-		return 1;
-	}
-
-	_string_list_push (parser->active, identifier);
-	_glcpp_parser_expand_token_list_onto (parser,
-					      macro->replacements,
-					      result);
-	_string_list_pop (parser->active);
-
-	return 0;
-}
-
 typedef enum function_status
 {
 	FUNCTION_STATUS_SUCCESS,
@@ -1114,9 +1039,10 @@ _arguments_parse (argument_list_t *arguments, token_node_t **node_ret)
 	return FUNCTION_STATUS_SUCCESS;
 }
 
-/* Prints the expansion of *node (consuming further tokens from the
- * list as necessary). Upon return *node will be the last consumed
- * node, such that further processing can continue with node->next. */
+/* Appends expansion of *node (consuming further tokens from the list
+ * as necessary) onto result. Upon return *node will be the last
+ * consumed node, such that further processing can continue with
+ * node->next. */
 static void
 _glcpp_parser_expand_function_onto (glcpp_parser_t *parser,
 				    token_node_t **node_ret,
@@ -1232,7 +1158,7 @@ _glcpp_parser_expand_function_onto (glcpp_parser_t *parser,
 
 		if (next_non_space == NULL) {
 			fprintf (stderr, "Error: '##' cannot appear at either end of a macro expansion\n");
-			return FUNCTION_STATUS_SUCCESS;
+			return;
 		}
 
 		_token_paste (node->token, next_non_space->token);
@@ -1248,6 +1174,74 @@ _glcpp_parser_expand_function_onto (glcpp_parser_t *parser,
 	talloc_free (arguments);
 }
 
+
+/* Appends the expansion of the token in *node onto result.
+ * Upon return *node will be the last consumed node, such that further
+ * processing can continue with node->next. */
+static void
+_glcpp_parser_expand_token_onto (glcpp_parser_t *parser,
+				 token_node_t **node,
+				 token_list_t *result)
+{
+	token_t *token = (*node)->token;
+	const char *identifier;
+	macro_t *macro;
+	token_list_t *expansion;
+
+	/* We only expand identifiers */
+	if (token->type != IDENTIFIER) {
+		/* We change any COMMA into a COMMA_FINAL to prevent
+		 * it being mistaken for an argument separator
+		 * later. */
+		if (token->type == ',') {
+			token_t *new_token;
+
+			new_token = _token_create_ival (result, COMMA_FINAL,
+							COMMA_FINAL);
+			_token_list_append (result, new_token);
+		} else {
+			_token_list_append (result, token);
+		}
+		return;
+	}
+
+	/* Look up this identifier in the hash table. */
+	identifier = token->value.str;
+	macro = hash_table_find (parser->defines, identifier);
+
+	/* Not a macro, so just append. */
+	if (macro == NULL) {
+		_token_list_append (result, token);
+		return;
+	}
+
+	/* Finally, don't expand this macro if we're already actively
+	 * expanding it, (to avoid infinite recursion). */
+	if (_string_list_contains (parser->active, identifier, NULL))
+	{
+		/* We change the token type here from IDENTIFIER to
+		 * OTHER to prevent any future expansion of this
+		 * unexpanded token. */
+		char *str;
+		token_t *new_token;
+
+		str = xtalloc_strdup (result, token->value.str);
+		new_token = _token_create_str (result, OTHER, str);
+		_token_list_append (result, new_token);
+		return;
+	}
+
+	if (macro->is_function) {
+		_glcpp_parser_expand_function_onto (parser, node, result);
+	} else {
+		_string_list_push (parser->active, identifier);
+		_glcpp_parser_expand_token_list_onto (parser,
+						      macro->replacements,
+						      result);
+		_string_list_pop (parser->active);
+	}
+}
+
 static void
 _glcpp_parser_expand_token_list_onto (glcpp_parser_t *parser,
 				      token_list_t *list,
@@ -1260,12 +1254,7 @@ _glcpp_parser_expand_token_list_onto (glcpp_parser_t *parser,
 
 	for (node = list->head; node; node = node->next)
 	{
-		if (_glcpp_parser_expand_token_onto (parser, node->token,
-						     result))
-		{
-			_glcpp_parser_expand_function_onto (parser, &node,
-							    result);
-		}
+		_glcpp_parser_expand_token_onto (parser, &node, result);
 	}
 }
 
