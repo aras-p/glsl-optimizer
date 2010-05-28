@@ -272,12 +272,14 @@ alloc_triangle(struct lp_scene *scene, unsigned nr_inputs, unsigned *tri_size)
 
    tri = lp_scene_alloc_aligned( scene, bytes, 16 );
 
-   inputs = (char *) (tri + 1);
-   tri->inputs.a0   = (float (*)[4]) inputs;
-   tri->inputs.dadx = (float (*)[4]) (inputs + input_array_sz);
-   tri->inputs.dady = (float (*)[4]) (inputs + 2 * input_array_sz);
+   if (tri) {
+      inputs = (char *) (tri + 1);
+      tri->inputs.a0   = (float (*)[4]) inputs;
+      tri->inputs.dadx = (float (*)[4]) (inputs + input_array_sz);
+      tri->inputs.dady = (float (*)[4]) (inputs + 2 * input_array_sz);
 
-   *tri_size = bytes;
+      *tri_size = bytes;
+   }
 
    return tri;
 }
@@ -341,6 +343,8 @@ do_triangle_ccw(struct lp_setup_context *setup,
       print_triangle(setup, v1, v2, v3);
 
    tri = alloc_triangle(scene, setup->fs.nr_inputs, &tri_bytes);
+   if (!tri)
+      return;
 
 #ifdef DEBUG
    tri->v[0][0] = v1[0][0];
