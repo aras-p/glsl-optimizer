@@ -92,6 +92,11 @@ struct lp_rast_shader_inputs {
    PIPE_ALIGN_VAR(16) int step[3][16];
 };
 
+struct lp_rast_clearzs {
+   unsigned clearzs_value;
+   unsigned clearzs_mask;
+};
+
 
 /**
  * Rasterization information for a triangle known to be in this bin,
@@ -155,7 +160,7 @@ union lp_rast_cmd_arg {
    const struct lp_rast_triangle *triangle;
    const struct lp_rast_state *set_state;
    uint8_t clear_color[4];
-   unsigned clear_zstencil;
+   const struct lp_rast_clearzs *clear_zstencil;
    struct lp_fence *fence;
    struct llvmpipe_query *query_obj;
 };
@@ -197,13 +202,20 @@ lp_rast_arg_fence( struct lp_fence *fence )
 
 
 static INLINE union lp_rast_cmd_arg
+lp_rast_arg_clearzs( const struct lp_rast_clearzs *clearzs )
+{
+   union lp_rast_cmd_arg arg;
+   arg.clear_zstencil = clearzs;
+   return arg;
+}
+
+static INLINE union lp_rast_cmd_arg
 lp_rast_arg_null( void )
 {
    union lp_rast_cmd_arg arg;
    arg.set_state = NULL;
    return arg;
 }
-
 
 
 /**

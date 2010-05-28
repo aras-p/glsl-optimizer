@@ -201,7 +201,7 @@ lp_scene_reset(struct lp_scene *scene )
    scene->scene_size = 0;
 
    scene->has_color_clear = FALSE;
-   scene->has_depth_clear = FALSE;
+   scene->has_depthstencil_clear = FALSE;
 }
 
 

@@ -177,7 +177,7 @@ lp_rast_tile_begin(struct lp_rasterizer_task *task,
       if (zsbuf) {
          struct llvmpipe_resource *lpt = llvmpipe_resource(zsbuf->texture);
 
-         if (scene->has_depth_clear)
+         if (scene->has_depthstencil_clear)
             usage = LP_TEX_USAGE_WRITE_ALL;
          else
             usage = LP_TEX_USAGE_READ_WRITE;
@@ -269,6 +269,9 @@ lp_rast_clear_zstencil(struct lp_rasterizer_task *task,
                        const union lp_rast_cmd_arg arg)
 {
    struct lp_rasterizer *rast = task->rast;
+   const struct lp_rast_clearzs *clearzs = arg.clear_zstencil;
+   unsigned clear_value = clearzs->clearzs_value;
+   unsigned clear_mask = clearzs->clearzs_mask;
    const unsigned height = TILE_SIZE / TILE_VECTOR_HEIGHT;
    const unsigned width = TILE_SIZE * TILE_VECTOR_HEIGHT;
    const unsigned block_size = rast->zsbuf.blocksize;
@@ -276,7 +279,7 @@ lp_rast_clear_zstencil(struct lp_rasterizer_task *task,
    uint8_t *dst;
    unsigned i, j;
 
-   LP_DBG(DEBUG_RAST, "%s 0x%x\n", __FUNCTION__, arg.clear_zstencil);
+   LP_DBG(DEBUG_RAST, "%s 0x%x%x\n", __FUNCTION__, clear_value, clear_mask);
 
    /*
     * Clear the aera of the swizzled depth/depth buffer matching this tile, in
@@ -292,22 +295,34 @@ lp_rast_clear_zstencil(struct lp_rasterizer_task *task,
 
    switch (block_size) {
    case 1:
-      memset(dst, (uint8_t) arg.clear_zstencil, height * width);
+      memset(dst, (uint8_t) clear_value, height * width);
       break;
    case 2:
       for (i = 0; i < height; i++) {
          uint16_t *row = (uint16_t *)dst;
          for (j = 0; j < width; j++)
-            *row++ = (uint16_t) arg.clear_zstencil;
+            *row++ = (uint16_t) clear_value;
          dst += dst_stride;
       }
       break;
    case 4:
-      for (i = 0; i < height; i++) {
-         uint32_t *row = (uint32_t *)dst;
-         for (j = 0; j < width; j++)
-            *row++ = arg.clear_zstencil;
-         dst += dst_stride;
+      if (clear_mask == 0xffffffff) {
+         for (i = 0; i < height; i++) {
+            uint32_t *row = (uint32_t *)dst;
+            for (j = 0; j < width; j++)
+               *row++ = clear_value;
+            dst += dst_stride;
+         }
+      }
+      else {
+         for (i = 0; i < height; i++) {
+            uint32_t *row = (uint32_t *)dst;
+            for (j = 0; j < width; j++) {
+               uint32_t tmp = ~clear_mask & *row;
+               *row++ = (clear_value & clear_mask) | tmp;
+            }
+            dst += dst_stride;
+         }
       }
       break;
    default:
