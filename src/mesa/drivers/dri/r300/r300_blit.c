@@ -141,10 +141,11 @@ static void r300_emit_tx_setup(struct r300_context *r300,
                                unsigned height,
                                unsigned pitch)
 {
+    int is_r500 = r300->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515;
     BATCH_LOCALS(&r300->radeon);
 
-    assert(width <= 2048);
-    assert(height <= 2048);
+    assert(is_r500 ? width  <= 4096 : width  <= 2048);
+    assert(is_r500 ? height <= 4096 : height <= 2048);
     assert(r300TranslateTexFormat(mesa_format) >= 0);
     assert(offset % 32 == 0);
 
@@ -159,14 +160,17 @@ static void r300_emit_tx_setup(struct r300_context *r300,
                      (0 << 28));
     OUT_BATCH_REGVAL(R300_TX_FILTER1_0, 0);
     OUT_BATCH_REGVAL(R300_TX_SIZE_0,
-                     ((width-1) << R300_TX_WIDTHMASK_SHIFT) |
-                     ((height-1) << R300_TX_HEIGHTMASK_SHIFT) |
+                     (((width  - 1) & 0x7ff) << R300_TX_WIDTHMASK_SHIFT) |
+                     (((height - 1) & 0x7ff) << R300_TX_HEIGHTMASK_SHIFT) |
                      (0 << R300_TX_DEPTHMASK_SHIFT) |
                      (0 << R300_TX_MAX_MIP_LEVEL_SHIFT) |
                      R300_TX_SIZE_TXPITCH_EN);
 
     OUT_BATCH_REGVAL(R300_TX_FORMAT_0, r300TranslateTexFormat(mesa_format));
-    OUT_BATCH_REGVAL(R300_TX_FORMAT2_0, pitch - 1);
+    OUT_BATCH_REGVAL(R300_TX_FORMAT2_0,
+                     (pitch - 1) |
+                     (is_r500 && width  > 2048 ? R500_TXWIDTH_BIT11  : 0) |
+                     (is_r500 && height > 2048 ? R500_TXHEIGHT_BIT11 : 0));
     OUT_BATCH_REGSEQ(R300_TX_OFFSET_0, 1);
     OUT_BATCH_RELOC(0, bo, offset, RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
 
