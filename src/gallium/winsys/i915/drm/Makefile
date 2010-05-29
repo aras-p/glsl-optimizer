@@ -7,7 +7,7 @@ C_SOURCES = \
 	i915_drm_batchbuffer.c \
 	i915_drm_buffer.c \
 	i915_drm_fence.c \
-	i915_drm_api.c
+	i915_drm_winsys.c
 
 LIBRARY_INCLUDES = $(shell pkg-config libdrm --cflags-only-I)
 
