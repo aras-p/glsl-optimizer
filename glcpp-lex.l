@@ -38,7 +38,7 @@ NEWLINE		[\n]
 HSPACE		[ \t]
 HASH		^{HSPACE}*#{HSPACE}*
 IDENTIFIER	[_a-zA-Z][_a-zA-Z0-9]*
-PUNCTUATION	[][(){}.&*~!/%<>^|;,+-]
+PUNCTUATION	[][(){}.&*~!/%<>^|;,=+-]
 OTHER		[^][(){}.&*~!/%<>^|;,=#[:space:]+-]+
 
 DECIMAL_INTEGER		[1-9][0-9]*[uU]?

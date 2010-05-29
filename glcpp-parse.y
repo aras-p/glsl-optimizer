@@ -426,6 +426,7 @@ operator:
 |	OR			{ $$ = OR; }
 |	';'			{ $$ = ';'; }
 |	','			{ $$ = ','; }
+|	'='			{ $$ = '='; }
 |	PASTE			{ $$ = PASTE; }
 |	DEFINED			{ $$ = DEFINED; }
 ;
