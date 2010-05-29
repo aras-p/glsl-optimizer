@@ -16,8 +16,6 @@ struct i915_sw_winsys
 
    boolean dump_cmd;
 
-   unsigned id;
-
    size_t max_batch_size;
 };
 

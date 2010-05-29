@@ -46,11 +46,11 @@ i915_sw_create_screen()
 
    isws->base.destroy = i915_sw_destroy;
 
-   isws->id = deviceID;
+   isws->base.pci_id = deviceID;
    isws->max_batch_size = 16 * 4096;
 
    isws->dump_cmd = debug_get_bool_option("INTEL_DUMP_CMD", FALSE);
 
    /* XXX so this will leak winsys:es */
-   return i915_create_screen(&isws->base, deviceID);
+   return i915_screen_create(&isws->base);
 }

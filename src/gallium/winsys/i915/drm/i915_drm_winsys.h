@@ -21,8 +21,6 @@ struct i915_drm_winsys
 
    int fd; /**< Drm file discriptor */
 
-   unsigned id;
-
    size_t max_batch_size;
 
    struct {

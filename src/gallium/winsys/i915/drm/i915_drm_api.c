@@ -65,7 +65,7 @@ i915_drm_create_screen(struct drm_api *api, int drmFD)
    i915_drm_winsys_init_fence_functions(idws);
 
    idws->fd = drmFD;
-   idws->id = deviceID;
+   idws->base.pci_id = deviceID;
    idws->max_batch_size = 16 * 4096;
 
    idws->base.destroy = i915_drm_winsys_destroy;
@@ -75,7 +75,7 @@ i915_drm_create_screen(struct drm_api *api, int drmFD)
 
    idws->dump_cmd = debug_get_bool_option("INTEL_DUMP_CMD", FALSE);
 
-   return i915_create_screen(&idws->base, deviceID);
+   return i915_screen_create(&idws->base);
 }
 
 static struct drm_api i915_drm_api =

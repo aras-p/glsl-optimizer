@@ -55,7 +55,7 @@ i915_get_name(struct pipe_screen *screen)
    static char buffer[128];
    const char *chipset;
 
-   switch (i915_screen(screen)->pci_id) {
+   switch (i915_screen(screen)->iws->pci_id) {
    case PCI_CHIP_I915_G:
       chipset = "915G";
       break;
@@ -271,14 +271,14 @@ i915_destroy_screen(struct pipe_screen *screen)
  * Create a new i915_screen object
  */
 struct pipe_screen *
-i915_create_screen(struct i915_winsys *iws, uint pci_id)
+i915_screen_create(struct i915_winsys *iws)
 {
    struct i915_screen *is = CALLOC_STRUCT(i915_screen);
 
    if (!is)
       return NULL;
 
-   switch (pci_id) {
+   switch (iws->pci_id) {
    case PCI_CHIP_I915_G:
    case PCI_CHIP_I915_GM:
       is->is_i945 = FALSE;
@@ -295,12 +295,11 @@ i915_create_screen(struct i915_winsys *iws, uint pci_id)
 
    default:
       debug_printf("%s: unknown pci id 0x%x, cannot create screen\n", 
-                   __FUNCTION__, pci_id);
+                   __FUNCTION__, iws->pci_id);
       FREE(is);
       return NULL;
    }
 
-   is->pci_id = pci_id;
    is->iws = iws;
 
    is->base.winsys = NULL;
