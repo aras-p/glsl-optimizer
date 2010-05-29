@@ -50,7 +50,7 @@ static void r600_blitter_save_states(struct pipe_context *ctx)
 	util_blitter_save_vertex_elements(rctx->blitter,
 					rctx->vertex_elements);
 	util_blitter_save_viewport(rctx->blitter,
-					rctx->viewport);
+					&rctx->viewport);
 }
 
 void r600_clear(struct pipe_context *ctx, unsigned buffers,

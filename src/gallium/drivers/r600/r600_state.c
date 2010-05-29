@@ -309,7 +309,7 @@ static void r600_set_viewport_state(struct pipe_context *ctx,
 		return;
 	}
 	radeon_draw_set_new(rctx->draw, rstate);
-	rctx->viewport = state;
+	rctx->viewport = *state;
 }
 
 static void r600_set_vertex_buffers(struct pipe_context *ctx,

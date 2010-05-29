@@ -76,7 +76,7 @@ struct r600_context {
 	struct pipe_stencil_ref		stencil_ref;
 	struct pipe_framebuffer_state	fb_state;
 	struct radeon_draw		*draw;
-	struct pipe_viewport_state *viewport;
+	struct pipe_viewport_state	viewport;
 };
 
 void r600_draw_arrays(struct pipe_context *ctx, unsigned mode,
