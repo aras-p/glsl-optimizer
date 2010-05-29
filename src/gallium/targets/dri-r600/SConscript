@@ -13,6 +13,7 @@ env.Prepend(LIBS = [
     r600drm,
     r600,
     trace,
+    rbug,
     mesa,
     glsl,
     gallium,
