@@ -43,7 +43,7 @@ struct r600_draw {
 	unsigned		start;
 	unsigned		count;
 	unsigned		index_size;
-	struct pipe_buffer	*index_buffer;
+	struct pipe_resource	*index_buffer;
 };
 
 static int r600_draw_common(struct r600_draw *draw)
@@ -167,8 +167,8 @@ static int r600_draw_common(struct r600_draw *draw)
 }
 
 void r600_draw_range_elements(struct pipe_context *ctx,
-		struct pipe_buffer *index_buffer,
-		unsigned index_size, unsigned index_bias, unsigned min_index,
+		struct pipe_resource *index_buffer,
+		unsigned index_size, int index_bias, unsigned min_index,
 		unsigned max_index, unsigned mode,
 		unsigned start, unsigned count)
 {
@@ -186,8 +186,8 @@ printf("index_size %d min %d max %d  start %d  count %d\n", index_size, min_inde
 }
 
 void r600_draw_elements(struct pipe_context *ctx,
-		struct pipe_buffer *index_buffer,
-		unsigned index_size, unsigned index_bias, unsigned mode,
+		struct pipe_resource *index_buffer,
+		unsigned index_size, int index_bias, unsigned mode,
 		unsigned start, unsigned count)
 {
 	struct r600_draw draw;

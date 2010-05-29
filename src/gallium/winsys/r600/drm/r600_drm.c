@@ -34,8 +34,7 @@
 #include "r600_screen.h"
 #include "r600_texture.h"
 
-static struct pipe_screen *r600_drm_create_screen(struct drm_api* api, int drmfd,
-					struct drm_create_screen_arg *arg)
+static struct pipe_screen *r600_drm_create_screen(struct drm_api* api, int drmfd)
 {
 	struct radeon *rw = radeon_new(drmfd, 0);
 

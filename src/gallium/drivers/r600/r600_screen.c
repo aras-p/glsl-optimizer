@@ -43,7 +43,7 @@ static const char* r600_get_name(struct pipe_screen* pscreen)
 	return "R600/R700 (HD2XXX,HD3XXX,HD4XXX)";
 }
 
-static int r600_get_param(struct pipe_screen* pscreen, int param)
+static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 {
 	switch (param) {
 	case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
@@ -103,7 +103,7 @@ static int r600_get_param(struct pipe_screen* pscreen, int param)
 	}
 }
 
-static float r600_get_paramf(struct pipe_screen* pscreen, int param)
+static float r600_get_paramf(struct pipe_screen* pscreen, enum pipe_cap param)
 {
 	switch (param) {
 	case PIPE_CAP_MAX_LINE_WIDTH:
@@ -124,7 +124,8 @@ static float r600_get_paramf(struct pipe_screen* pscreen, int param)
 static boolean r600_is_format_supported(struct pipe_screen* screen,
 					enum pipe_format format,
 					enum pipe_texture_target target,
-					unsigned usage,
+					unsigned sample_count,
+					unsigned bindings,
 					unsigned geom_flags)
 {
 	if (target >= PIPE_MAX_TEXTURE_TYPES) {
