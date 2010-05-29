@@ -783,73 +783,53 @@ _token_print (token_t *token)
 	}
 }
 
-/* Change 'token' into a new token formed by pasting 'other'. */
-static void
+/* Return a new token (talloc()ed off of 'token') formed by pasting
+ * 'token' and 'other'. Note that this function may return 'token' or
+ * 'other' directly rather than allocating anything new.
+ *
+ * Caution: Only very cursory error-checking is performed to see if
+ * the final result is a valid single token. */
+static token_t *
 _token_paste (token_t *token, token_t *other)
 {
 	/* Pasting a placeholder onto anything makes no change. */
 	if (other->type == PLACEHOLDER)
-		return;
+		return token;
 
-	/* When 'token' is a placeholder, just return contents of 'other'. */
-	if (token->type == PLACEHOLDER) {
-		token->type = other->type;
-		token->value = other->value;
-		return;
-	}
+	/* When 'token' is a placeholder, just return 'other'. */
+	if (token->type == PLACEHOLDER)
+		return other;
 
 	/* A very few single-character punctuators can be combined
 	 * with another to form a multi-character punctuator. */
 	switch (token->type) {
 	case '<':
-		if (other->type == '<') {
-			token->type = LEFT_SHIFT;
-			token->value.ival = LEFT_SHIFT;
-			return;
-		} else if (other->type == '=') {
-			token->type = LESS_OR_EQUAL;
-			token->value.ival = LESS_OR_EQUAL;
-			return;
-		}
+		if (other->type == '<')
+			return _token_create_ival (token, LEFT_SHIFT, LEFT_SHIFT);
+		else if (other->type == '=')
+			return _token_create_ival (token, LESS_OR_EQUAL, LESS_OR_EQUAL);
 		break;
 	case '>':
-		if (other->type == '>') {
-			token->type = RIGHT_SHIFT;
-			token->value.ival = RIGHT_SHIFT;
-			return;
-		} else if (other->type == '=') {
-			token->type = GREATER_OR_EQUAL;
-			token->value.ival = GREATER_OR_EQUAL;
-			return;
-		}
+		if (other->type == '>')
+			return _token_create_ival (token, RIGHT_SHIFT, RIGHT_SHIFT);
+		else if (other->type == '=')
+			return _token_create_ival (token, GREATER_OR_EQUAL, GREATER_OR_EQUAL);
 		break;
 	case '=':
-		if (other->type == '=') {
-			token->type = EQUAL;
-			token->value.ival = EQUAL;
-			return;
-		}
+		if (other->type == '=')
+			return _token_create_ival (token, EQUAL, EQUAL);
 		break;
 	case '!':
-		if (other->type == '=') {
-			token->type = NOT_EQUAL;
-			token->value.ival = NOT_EQUAL;
-			return;
-		}
+		if (other->type == '=')
+			return _token_create_ival (token, NOT_EQUAL, NOT_EQUAL);
 		break;
 	case '&':
-		if (other->type == '&') {
-			token->type = AND;
-			token->value.ival = AND;
-			return;
-		}
+		if (other->type == '&')
+			return _token_create_ival (token, AND, AND);
 		break;
 	case '|':
-		if (other->type == '|') {
-			token->type = OR;
-			token->value.ival = OR;
-			return;
-		}
+		if (other->type == '|')
+			return _token_create_ival (token, OR, OR);
 		break;
 	}
 
@@ -864,9 +844,11 @@ _token_paste (token_t *token, token_t *other)
 	if ((token->type == IDENTIFIER || token->type == OTHER || token->type == INTEGER_STRING) &&
 	    (other->type == IDENTIFIER || other->type == OTHER || other->type == INTEGER_STRING))
 	{
-		token->value.str = talloc_strdup_append (token->value.str,
-							 other->value.str);
-		return;
+		char *str;
+
+		str = xtalloc_asprintf (token, "%s%s",
+					token->value.str, other->value.str);
+		return _token_create_str (token, token->type, str);
 	}
 
 	printf ("Error: Pasting \"");
@@ -874,6 +856,8 @@ _token_paste (token_t *token, token_t *other)
 	printf ("\" and \"");
 	_token_print (other);
 	printf ("\" does not give a valid preprocessing token.\n");
+
+	return token;
 }
 
 static void
@@ -1159,6 +1143,8 @@ _glcpp_parser_expand_function (glcpp_parser_t *parser,
 	/* After argument substitution, and before further expansion
 	 * below, implement token pasting. */
 
+	_token_list_trim_trailing_space (substituted);
+
 	node = substituted->head;
 	while (node)
 	{
@@ -1187,11 +1173,15 @@ _glcpp_parser_expand_function (glcpp_parser_t *parser,
 			return NULL;
 		}
 
-		_token_paste (node->token, next_non_space->token);
+		node->token = _token_paste (node->token, next_non_space->token);
 		node->next = next_non_space->next;
+		if (next_non_space == substituted->tail)
+			substituted->tail = node;
 
 		node = node->next;
 	}
+
+	substituted->non_space_tail = substituted->tail;
 
 	_string_list_push (parser->active, identifier);
 	_glcpp_parser_expand_token_list (parser, substituted);
