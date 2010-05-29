@@ -557,19 +557,15 @@ class Context(Object):
         self.real.draw_range_elements(indexBuffer, indexSize, indexBias, minIndex, maxIndex, mode, start, count)
         self._set_dirty()
         
-    def surface_copy(self, dest, destx, desty, src, srcx, srcy, width, height):
-        if dest is not None and src is not None:
+    def resource_copy_region(self, dst, subdst, dstx, dsty, dstz, src, subsrc, srcx, srcy, srcz, width, height):
+        if dst is not None and src is not None:
             if self.interpreter.options.all:
-                self.interpreter.present(self.real, src, 'surface_copy_src', srcx, srcy, width, height)
-            self.real.surface_copy(dest, destx, desty, src, srcx, srcy, width, height)
-            if dest in self.cbufs:
-                self._set_dirty()
-                flags = gallium.PIPE_FLUSH_FRAME
-            else:
-                flags = 0
+                self.interpreter.present(self.real, src, 'resource_copy_src', srcx, srcy, width, height)
+            self.real.resource_copy_region(dst, subdst, dstx, dsty, dstx, src, subsrc, srcx, srcy, srcz, width, height)
+            flags = 0
             self.flush(flags)
             if self.interpreter.options.all:
-                self.interpreter.present(self.real, dest, 'surface_copy_dest', destx, desty, width, height)
+                self.interpreter.present(self.real, dst, 'resource_copy_dst', dstx, dsty, width, height)
 
     def is_resource_referenced(self, texture, face, level):
         #return self.real.is_resource_referenced(format, texture, face, level)
