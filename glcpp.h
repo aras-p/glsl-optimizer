@@ -44,21 +44,36 @@ typedef struct string_list {
 	string_node_t *tail;
 } string_list_t;
 
-typedef struct token {
+typedef struct token token_t;
+typedef struct token_list token_list_t;
+
+typedef union YYSTYPE
+{
+	intmax_t ival;
+	char *str;
+	string_list_t *string_list;
+	token_t *token;
+	token_list_t *token_list;
+} YYSTYPE;
+
+# define YYSTYPE_IS_TRIVIAL 1
+# define YYSTYPE_IS_DECLARED 1
+
+struct token {
 	int type;
-	char *value;
-} token_t;
+	YYSTYPE value;
+};
 
 typedef struct token_node {
-	int type;
-	const char *value;
+	token_t *token;
 	struct token_node *next;
 } token_node_t;
 
-typedef struct token_list {
+struct token_list {
 	token_node_t *head;
 	token_node_t *tail;
-} token_list_t;
+	token_node_t *non_space_tail;
+};
 
 typedef struct argument_node {
 	token_list_t *argument;
@@ -111,15 +126,15 @@ typedef struct skip_node {
 struct glcpp_parser {
 	yyscan_t scanner;
 	struct hash_table *defines;
-	expansion_node_t *expansions;
-	int just_printed_separator;
-	int need_newline;
+	string_list_t *active;
+	int space_tokens;
+	int newline_as_space;
+	int in_control_line;
+	int paren_count;
 	skip_node_t *skip_stack;
+	token_list_t *lex_from_list;
+	token_node_t *lex_from_node;
 };
-
-void
-glcpp_parser_push_expansion_argument (glcpp_parser_t *parser,
-				      int argument_index);
 
 glcpp_parser_t *
 glcpp_parser_create (void);
@@ -163,5 +178,11 @@ xtalloc_strndup (const void *t, const char *p, size_t n);
 
 char *
 xtalloc_asprintf (const void *t, const char *fmt, ...);
+
+void *
+_xtalloc_reference_loc (const void *context,
+			const void *ptr, const char *location);
+
+#define xtalloc_reference(ctx, ptr) (_TALLOC_TYPEOF(ptr))_xtalloc_reference_loc((ctx),(ptr), __location__)
 
 #endif

@@ -32,21 +32,14 @@
 %option reentrant noyywrap
 %option extra-type="glcpp_parser_t *"
 
-%x ST_DEFINE
-%x ST_DEFINE_OBJ_OR_FUNC
-%x ST_DEFINE_PARAMETER
-%x ST_DEFINE_VALUE
-%x ST_IF
-%x ST_UNDEF
-%x ST_UNDEF_END
-
 SPACE		[[:space:]]
 NONSPACE	[^[:space:]]
 NEWLINE		[\n]
 HSPACE		[ \t]
 HASH		^{HSPACE}*#{HSPACE}*
 IDENTIFIER	[_a-zA-Z][_a-zA-Z0-9]*
-TOKEN		[^[:space:](),]+
+PUNCTUATION	[][(){}.&*~!/%<>^|;,=+-]
+OTHER		[^][(){}.&*~!/%<>^|;,=#[:space:]+-]+
 
 DECIMAL_INTEGER		[1-9][0-9]*[uU]?
 OCTAL_INTEGER		0[0-7]*[uU]?
@@ -54,210 +47,123 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 
 %%
 
-{HASH}if{HSPACE}* {
-	BEGIN ST_IF;
-	return IF;
+{HASH}define{HSPACE}+/{IDENTIFIER}"(" {
+	yyextra->space_tokens = 0;
+	return HASH_DEFINE_FUNC;
 }
 
-{HASH}elif{HSPACE}* {
-	BEGIN ST_IF;
-	return ELIF;
+{HASH}define {
+	yyextra->space_tokens = 0;
+	return HASH_DEFINE_OBJ;
 }
 
-<ST_IF>{DECIMAL_INTEGER} {
-	yylval.ival = strtoll (yytext, NULL, 10);
-	return INTEGER;
+{HASH}undef {
+	yyextra->space_tokens = 0;
+	return HASH_UNDEF;
 }
 
-<ST_IF>{OCTAL_INTEGER} {
-	yylval.ival = strtoll (yytext + 1, NULL, 8);
-	return INTEGER;
+{HASH}if {
+	yyextra->space_tokens = 0;
+	return HASH_IF;
 }
 
-<ST_IF>{HEXADECIMAL_INTEGER} {
-	yylval.ival = strtoll (yytext + 2, NULL, 16);
-	return INTEGER;
+{HASH}elif {
+	yyextra->space_tokens = 0;
+	return HASH_ELIF;
 }
 
-<ST_IF>"defined" {
-	return DEFINED;
+{HASH}else {
+	yyextra->space_tokens = 0;
+	return HASH_ELSE;
 }
 
-<ST_IF>"<<" {
+{HASH}endif {
+	yyextra->space_tokens = 0;
+	return HASH_ENDIF;
+}
+
+{HASH} {
+	yyextra->space_tokens = 0;
+	return HASH;
+}
+
+{DECIMAL_INTEGER} {
+	yylval.str = xtalloc_strdup (yyextra, yytext);
+	return INTEGER_STRING;
+}
+
+{OCTAL_INTEGER} {
+	yylval.str = xtalloc_strdup (yyextra, yytext);
+	return INTEGER_STRING;
+}
+
+{HEXADECIMAL_INTEGER} {
+	yylval.str = xtalloc_strdup (yyextra, yytext);
+	return INTEGER_STRING;
+}
+
+"<<"  {
 	return LEFT_SHIFT;
 }
 
-<ST_IF>">>" {
+">>" {
 	return RIGHT_SHIFT;
 }
 
-<ST_IF>"<=" {
+"<=" {
 	return LESS_OR_EQUAL;
 }
 
-<ST_IF>">=" {
+">=" {
 	return GREATER_OR_EQUAL;
 }
 
-<ST_IF>"==" {
+"==" {
 	return EQUAL;
 }
 
-<ST_IF>"!=" {
+"!=" {
 	return NOT_EQUAL;
 }
 
-<ST_IF>"&&" {
+"&&" {
 	return AND;
 }
 
-<ST_IF>"||" {
+"||" {
 	return OR;
 }
 
-<ST_IF>[-+*/%<>&^|()~] {
-	return yytext[0];
+"##" {
+	return PASTE;
 }
 
-<ST_IF>{IDENTIFIER} {
-	yylval.str = xtalloc_strdup (yyextra, yytext);
-	return IDENTIFIER;
-}
-
-<ST_IF>{HSPACE}+
-
-<ST_IF>\n {
-	BEGIN INITIAL;
-	return NEWLINE;
-}
-
-{HASH}endif{HSPACE}* {
-	return ENDIF;
-}
-
-{HASH}else{HSPACE}* {
-	return ELSE;
-}
-
-{HASH}undef{HSPACE}* {
-	BEGIN ST_UNDEF;
-	return UNDEF;
-}
-
-<ST_UNDEF>{IDENTIFIER} {
-	BEGIN ST_UNDEF_END;
-	yylval.str = xtalloc_strdup (yyextra, yytext);
-	return IDENTIFIER;
-}
-
-<ST_UNDEF_END>{HSPACE}*
-
-<ST_UNDEF_END>\n {
-	BEGIN INITIAL;
-}
-
-	/* We use the ST_DEFINE and ST_DEFVAL states so that we can
-	 * pass a space token, (yes, a token for whitespace!), since
-	 * the preprocessor specification requires distinguishing
-	 * "#define foo()" from "#define foo ()".
-	 */
-{HASH}define{HSPACE}* {
-	BEGIN ST_DEFINE;
-	return DEFINE;
-}
-
-<ST_DEFINE>{IDENTIFIER}	{
-	BEGIN ST_DEFINE_OBJ_OR_FUNC;
-	yylval.str = xtalloc_strdup (yyextra, yytext);
-	return IDENTIFIER;
-}
-
-<ST_DEFINE_OBJ_OR_FUNC>\n {
-	BEGIN INITIAL;
-	return NEWLINE;
-}
-
-<ST_DEFINE_OBJ_OR_FUNC>{HSPACE}+ {
-	BEGIN ST_DEFINE_VALUE;
-	return SPACE;
-}
-
-<ST_DEFINE_OBJ_OR_FUNC>"(" {
-	BEGIN ST_DEFINE_PARAMETER;
-	return '(';
-}
-
-<ST_DEFINE_PARAMETER>{IDENTIFIER} {
-	yylval.str = xtalloc_strdup (yyextra, yytext);
-	return IDENTIFIER;
-}
-
-<ST_DEFINE_PARAMETER>"," {
-	return ',';
-}
-
-<ST_DEFINE_PARAMETER>")" {
-	BEGIN ST_DEFINE_VALUE;
-	return ')';
-}
-
-<ST_DEFINE_PARAMETER>{HSPACE}+
-
-<ST_DEFINE_VALUE>{TOKEN} {
-	yylval.token.type = TOKEN;
-	yylval.token.value = xtalloc_strdup (yyextra, yytext);
-	return TOKEN;
-}
-
-<ST_DEFINE_VALUE>[(),] {
-	yylval.token.type = TOKEN;
-	yylval.token.value = xtalloc_strdup (yyextra, yytext);
-	return TOKEN;
-}
-
-<ST_DEFINE_VALUE>{HSPACE}+
-
-<ST_DEFINE_VALUE>\n {
-	BEGIN INITIAL;
-	return NEWLINE;
+"defined" {
+	return DEFINED;
 }
 
 {IDENTIFIER} {
-	int parameter_index;
 	yylval.str = xtalloc_strdup (yyextra, yytext);
-	switch (glcpp_parser_classify_token (yyextra, yylval.str,
-					     &parameter_index))
-	{
-		case TOKEN_CLASS_IDENTIFIER:
-			return IDENTIFIER;
-		break;
-		case TOKEN_CLASS_IDENTIFIER_FINALIZED:
-			return IDENTIFIER_FINALIZED;
-		break;
-		case TOKEN_CLASS_FUNC_MACRO:
-			return FUNC_MACRO;
-		break;
-		case TOKEN_CLASS_OBJ_MACRO:
-			return OBJ_MACRO;
-		break;
-
-	}
+	return IDENTIFIER;
 }
 
-[(),]	{
+{PUNCTUATION} {
 	return yytext[0];
 }
 
-{TOKEN} {
-	yylval.token.type = TOKEN;
-	yylval.token.value = xtalloc_strdup (yyextra, yytext);
-	return TOKEN;
+{OTHER}+ {
+	yylval.str = xtalloc_strdup (yyextra, yytext);
+	return OTHER;
+}
+
+{HSPACE}+ {
+	if (yyextra->space_tokens) {
+		return SPACE;
+	}
 }
 
 \n {
-	yyextra->need_newline = 1;
+	return NEWLINE;
 }
-
-{HSPACE}+
 
 %%
