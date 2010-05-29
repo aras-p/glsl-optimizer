@@ -414,61 +414,29 @@ error1:
     * Surface functions
     */
 
-   void surface_copy(struct st_surface *dst,
-                     unsigned destx, unsigned desty,
-                     struct st_surface *src,
-                     unsigned srcx, unsigned srcy,
-                     unsigned width, unsigned height) 
+   void resource_copy_region(struct pipe_resource *dst,
+                             struct pipe_subresource subdst,
+                             unsigned dstx, unsigned dsty, unsigned dstz,
+                             struct pipe_resource *src,
+                             struct pipe_subresource subsrc,
+                             unsigned srcx, unsigned srcy, unsigned srcz,
+                             unsigned width, unsigned height)
    {
-/* XXX
-      struct pipe_surface *_dst = NULL;
-      struct pipe_surface *_src = NULL;
-
-      _dst = st_pipe_surface(dst, PIPE_BIND_BLIT_DESTINATION);
-      if(!_dst)
-         SWIG_exception(SWIG_ValueError, "couldn't acquire destination surface for writing");
-
-      _src = st_pipe_surface(src, PIPE_BIND_BLIT_SOURCE);
-      if(!_src)
-         SWIG_exception(SWIG_ValueError, "couldn't acquire source surface for reading");
-
-      $self->pipe->surface_copy($self->pipe, _dst, destx, desty, _src, srcx, srcy, width, height);
-
-   fail:
-      pipe_surface_reference(&_src, NULL);
-      pipe_surface_reference(&_dst, NULL);
-*/
-   struct pipe_subresource subdst, subsrc;
-   subsrc.face = src->face;
-   subsrc.level = src->level;
-   subdst.face = dst->face;
-   subdst.level = dst->level;
-   $self->pipe->resource_copy_region($self->pipe, dst->texture, subdst, destx, desty, dst->zslice,
-                                     src->texture, subsrc, srcx, srcy, src->zslice, width, height);
+      $self->pipe->resource_copy_region($self->pipe,
+                                        dst, subdst, dstx, dsty, dstz,
+                                        src, subsrc, srcx, srcy, srcz,
+                                        width, height);
    }
 
-   void surface_fill(struct st_surface *dst,
-                     unsigned x, unsigned y,
-                     unsigned width, unsigned height,
-                     unsigned value) 
+   void resource_fill_region(struct pipe_resource *dst,
+                             struct pipe_subresource subdst,
+                             unsigned dstx, unsigned dsty, unsigned dstz,
+                             unsigned width, unsigned height,
+                             unsigned value)
    {
-/* XXX
-      struct pipe_surface *_dst = NULL;
-
-     _dst = st_pipe_surface(dst, PIPE_BIND_BLIT_DESTINATION);
-      if(!_dst)
-         SWIG_exception(SWIG_ValueError, "couldn't acquire destination surface for writing");
-
-      $self->pipe->surface_fill($self->pipe, _dst, x, y, width, height, value);
-
-   fail:
-      pipe_surface_reference(&_dst, NULL);
-*/
-   struct pipe_subresource subdst;
-   subdst.face = dst->face;
-   subdst.level = dst->level;
-   $self->pipe->resource_fill_region($self->pipe, dst->texture, subdst, x, y, dst->zslice,
-                                     width, height, value);
+      $self->pipe->resource_fill_region($self->pipe,
+                                        dst, subdst, dstx, dsty, dstz,
+                                        width, height, value);
    }
 
    %cstring_output_allocate_size(char **STRING, int *LENGTH, free(*$1));
