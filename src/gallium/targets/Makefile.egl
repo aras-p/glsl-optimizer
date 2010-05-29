@@ -33,10 +33,20 @@ endif
 kms_ST = $(TOP)/src/gallium/state_trackers/egl/libeglkms.a
 kms_LIBS = $(common_LIBS)
 
+### Include directories
+INCLUDES = \
+	-I$(TOP)/include \
+	-I$(TOP)/src/gallium/include \
+	-I$(TOP)/src/gallium/auxiliary \
+	-I$(TOP)/src/gallium/drivers \
+	-I$(TOP)/src/gallium/winsys \
+	-I$(TOP)/src/egl/main \
+	$(LIBDRM_CFLAGS)
+
 ##### RULES #####
 
 .c.o:
-	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
+	$(CC) -c $(INCLUDES) $(CFLAGS) $(EGL_DRIVER_DEFINES) $< -o $@
 
 
 ##### TARGETS #####
