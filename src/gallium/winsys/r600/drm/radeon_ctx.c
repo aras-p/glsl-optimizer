@@ -323,7 +323,6 @@ int radeon_ctx_pm4(struct radeon_ctx *ctx)
 void radeon_ctx_dump_bof(struct radeon_ctx *ctx, const char *file)
 {
 	bof_t *bcs, *blob, *array, *bo, *size, *handle, *device_id, *root;
-	char tmp[256];
 	unsigned i;
 
 	root = device_id = bcs = blob = array = bo = size = handle = NULL;
