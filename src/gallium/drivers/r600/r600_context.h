@@ -32,25 +32,11 @@
 #include "radeon.h"
 #include "r600_shader.h"
 
-struct r600_state;
-typedef void (*r600_state_destroy_t)(struct r600_state *rstate);
-
 /* XXX move this to a more appropriate place */
 struct r600_vertex_elements_state
 {
 	unsigned count;
 	struct pipe_vertex_element elements[32];
-};
-
-struct r600_state {
-	unsigned		type;
-	struct r600_atom	*atom;
-	void			*state;
-	unsigned		nbuffers;
-	struct pipe_buffer	*buffer[256];
-	unsigned		nsurfaces;
-	struct pipe_surface	*surface[256];
-	r600_state_destroy_t	destroy;
 };
 
 struct r600_pipe_shader {
@@ -90,10 +76,6 @@ void r600_draw_range_elements(struct pipe_context *ctx,
 		unsigned index_size, int index_bias, unsigned min_index,
 		unsigned max_index, unsigned mode,
 		unsigned start, unsigned count);
-
-void r600_state_destroy_common(struct r600_state *state);
-struct r600_state *r600_state_new(r600_state_destroy_t destroy);
-struct r600_state *r600_state_destroy(struct r600_state *state);
 
 void r600_init_state_functions(struct r600_context *rctx);
 void r600_init_query_functions(struct r600_context* rctx);

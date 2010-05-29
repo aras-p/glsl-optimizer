@@ -26,8 +26,6 @@
 #include "r600_compiler.h"
 #include "radeon.h"
 
-struct r600_state;
-
 struct r600_shader_operand {
 	struct c_vector			*vector;
 	unsigned			sel;
