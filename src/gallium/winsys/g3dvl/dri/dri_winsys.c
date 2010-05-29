@@ -279,7 +279,7 @@ vl_dri2_get_front(struct vl_dri_screen *vl_dri_scrn, Drawable drawable)
    unsigned int attachments[1] = {DRI_BUFFER_FRONT_LEFT};
    int count;
    DRI2Buffer *dri2_front;
-   struct pipe_resource template, *front_tex;
+   struct pipe_resource *front_tex;
    struct pipe_surface *front_surf = NULL;
 
    assert(vl_dri_scrn);
@@ -293,6 +293,19 @@ vl_dri2_get_front(struct vl_dri_screen *vl_dri_scrn, Drawable drawable)
          .handle = dri2_front->name,
          .stride = dri2_front->pitch
       };
+      struct pipe_resource template;
+
+      memset(&template, 0, sizeof(struct pipe_resource));
+      template.target = PIPE_TEXTURE_2D;
+      template.format = vl_dri_scrn->base.format;
+      template.last_level = 0;
+      template.width0 = w;
+      template.height0 = h;
+      template.depth0 = 1;
+      template.usage = PIPE_USAGE_STATIC;
+      template.bind = PIPE_BIND_RENDER_TARGET;
+      template.flags = 0;
+
       front_tex = vl_dri_scrn->base.pscreen->resource_from_handle(vl_dri_scrn->base.pscreen, &template, &dri2_front_handle);
       if (front_tex)
          front_surf = vl_dri_scrn->base.pscreen->get_tex_surface(vl_dri_scrn->base.pscreen,
@@ -326,33 +339,31 @@ vl_dri2_flush_frontbuffer(struct pipe_screen *screen,
    //st_flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, fence);
 }
 
+/* XXX: Kill with fire */
+struct vl_dri_context *_vl_dri_ctx = NULL;
 
-Drawable
-vl_video_bind_drawable(struct vl_context *vctx, Drawable drawable)
+void*
+vl_displaytarget_get(struct vl_screen *vscreen, Drawable drawable,
+                     unsigned *width, unsigned *height)
 {
-   struct vl_dri_context *vl_dri_ctx = (struct vl_dri_context*)vctx;
-   struct vl_dri_screen *vl_dri_scrn;
-   dri_drawable_t *dri_drawable;
-   Drawable old_drawable = None;
+   struct vl_dri_screen *vl_dri_scrn = (struct vl_dri_screen*)vscreen;
 
-   assert(vctx);
+   assert(vscreen);
+   assert(width);
+   assert(height);
 
-   if (vl_dri_ctx->drawable)
-      old_drawable = vl_dri_ctx->drawable->x_drawable;
-
-   if (drawable != old_drawable) {
-      vl_dri_scrn = (struct vl_dri_screen*)vl_dri_ctx->base.vscreen;
-      if (vl_dri_scrn->dri2) {
-         /* XXX: Need dri2CreateDrawable()? */
-         vl_dri_ctx->dri2_front = vl_dri2_get_front(vl_dri_scrn, drawable);
+   if (vl_dri_scrn->dri2 && _vl_dri_ctx) {
+      if (!_vl_dri_ctx->dri2_front) {
+         _vl_dri_ctx->dri2_front = vl_dri2_get_front((struct vl_dri_screen*)vscreen, drawable);
+         if (!_vl_dri_ctx->dri2_front)
+            return NULL;
+         *width = _vl_dri_ctx->dri2_front->width;
+         *height = _vl_dri_ctx->dri2_front->height;
       }
-      else {
-         driCreateDrawable(vl_dri_scrn->dri_screen, drawable, &dri_drawable);
-         vl_dri_ctx->drawable = dri_drawable;
-      }
+      return _vl_dri_ctx;
    }
-
-   return old_drawable;
+   else
+      return NULL;
 }
 
 struct vl_screen*
@@ -416,8 +427,12 @@ vl_screen_create(Display *display, int screen)
       vl_dri_scrn->base.format = vl_dri_scrn->api_hooks->front_srf_locked(vl_dri_scrn->base.pscreen)->format;
       vl_dri_scrn->base.pscreen->flush_frontbuffer = vl_dri_flush_frontbuffer;
    }
-   else
+   else {
+      /* XXX: Fuuuuu... Can't possibly get this right with current code.
+       * Need to rethink this in st/xvmc and winsys dri/xlib winsyses */
+      vl_dri_scrn->base.format = PIPE_FORMAT_B8G8R8X8_UNORM;
       vl_dri_scrn->base.pscreen->flush_frontbuffer = vl_dri2_flush_frontbuffer;
+   }
 
    return &vl_dri_scrn->base;
 }
@@ -476,6 +491,8 @@ vl_video_create(struct vl_screen *vscreen,
    vl_dri_ctx->fd = vl_dri_scrn->dri_screen->fd;
    if (!vl_dri_scrn->dri2)
       vl_dri_ctx->lock = (drmLock*)&vl_dri_scrn->dri_screen->sarea->lock;
+   else
+      _vl_dri_ctx = vl_dri_ctx;
 
    return &vl_dri_ctx->base;
 }
@@ -487,6 +504,8 @@ void vl_video_destroy(struct vl_context *vctx)
    assert(vctx);
 
    vl_dri_ctx->base.vpipe->destroy(vl_dri_ctx->base.vpipe);
+   if (vl_dri_ctx->dri2_front)
+      pipe_surface_reference(&vl_dri_ctx->dri2_front, NULL);
    if (!((struct vl_dri_screen *)vctx->vscreen)->dri2)
       driDestroyContext(vl_dri_ctx->dri_context);
    FREE(vl_dri_ctx);

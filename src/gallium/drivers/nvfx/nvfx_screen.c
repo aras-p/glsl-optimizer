@@ -5,6 +5,7 @@
 #include "nouveau/nouveau_screen.h"
 
 #include "nvfx_context.h"
+#include "nvfx_video_context.h"
 #include "nvfx_screen.h"
 #include "nvfx_resource.h"
 
@@ -341,6 +342,7 @@ nvfx_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	pscreen->get_paramf = nvfx_screen_get_paramf;
 	pscreen->is_format_supported = nvfx_screen_surface_format_supported;
 	pscreen->context_create = nvfx_create;
+	pscreen->video_context_create = nvfx_video_create;
 
 	switch (dev->chipset & 0xf0) {
 	case 0x30:

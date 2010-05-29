@@ -30,7 +30,7 @@ OBJECTS = $(C_SOURCES:.c=.o) \
 
 default: depend symlinks $(TOP)/$(LIB_DIR)/gallium/$(LIBNAME)
 
-$(TOP)/$(LIB_DIR)/gallium/$(LIBNAME): $(OBJECTS) $(PIPE_DRIVERS) $(STATE_TRACKER-LIB) $(TOP)/$(LIB_DIR)/gallium Makefile
+$(TOP)/$(LIB_DIR)/gallium/$(LIBNAME): $(OBJECTS) $(PIPE_DRIVERS) $(STATE_TRACKER_LIB) $(TOP)/$(LIB_DIR)/gallium Makefile
 	$(MKLIB) -o $(LIBBASENAME) -linker '$(CC)' -ldflags '$(LDFLAGS)' \
 		-major $(XVMC_MAJOR) -minor $(XVMC_MINOR) $(MKLIB_OPTIONS) \
 		-install $(TOP)/$(LIB_DIR)/gallium \

@@ -385,7 +385,7 @@ xfer_buffers_map(struct vl_mpeg12_mc_renderer *r)
          0, 0, 0,
          r->textures.all[i]->width0,
          r->textures.all[i]->height0,
-         0
+         1
       };
 
       r->tex_transfer[i] = r->pipe->get_transfer

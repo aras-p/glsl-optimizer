@@ -74,7 +74,8 @@ sp_mpeg12_get_param(struct pipe_video_context *vpipe, int param)
 #endif
          return FALSE;
       case PIPE_CAP_DECODE_TARGET_PREFERRED_FORMAT:
-         return PIPE_FORMAT_AYUV;
+         //return PIPE_FORMAT_AYUV;
+         return PIPE_FORMAT_VUYA;
       default:
       {
          debug_printf("Softpipe: Unknown PIPE_CAP %d\n", param);

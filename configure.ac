@@ -1255,6 +1255,13 @@ yes)
             # mesa/es is required to build es state tracker
             CORE_DIRS="$CORE_DIRS mesa/es"
             ;;
+        xorg/xvmc)
+            # Check for libXvMC?
+            if test "x$enable_gallium_g3dvl" != xyes; then
+                AC_MSG_ERROR([cannot build XvMC state tracker without --enable-gallium-g3dvl])
+            fi
+            HAVE_ST_XVMC="yes"
+            ;;
         esac
     done
     GALLIUM_STATE_TRACKERS_DIRS="$state_trackers"
@@ -1358,7 +1365,7 @@ dnl
 dnl Gallium helper functions
 dnl
 gallium_check_st() {
-    if test "x$HAVE_ST_DRI" = xyes || test "x$HAVE_ST_EGL" = xyes || test "x$HAVE_ST_XORG" = xyes; then
+    if test "x$HAVE_ST_DRI" = xyes || test "x$HAVE_ST_EGL" = xyes || test "x$HAVE_ST_XORG" = xyes || test "x$HAVE_ST_XVMC" = xyes; then
          GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS $1"
     fi
     if test "x$HAVE_ST_DRI" = xyes && test "x$2" != x; then
@@ -1369,6 +1376,9 @@ gallium_check_st() {
     fi
     if test "x$HAVE_ST_XORG" = xyes && test "x$4" != x; then
          GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $4"
+    fi
+    if test "x$HAVE_ST_XVMC" = xyes && test "x$5" != x; then
+         GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $5"
     fi
 }
 
@@ -1430,7 +1440,7 @@ AC_ARG_ENABLE([gallium-nouveau],
     [enable_gallium_nouveau=no])
 if test "x$enable_gallium_nouveau" = xyes; then
     GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS nouveau nvfx nv50"
-    gallium_check_st "nouveau/drm" "dri-nouveau" "egl-nouveau" "xorg-nouveau"
+    gallium_check_st "nouveau/drm" "dri-nouveau" "egl-nouveau" "xorg-nouveau" "xvmc-nouveau"
 fi
 
 dnl
@@ -1442,7 +1452,14 @@ AC_ARG_ENABLE([gallium-g3dvl],
     [enable_gallium_g3dvl="$enableval"],
     [enable_gallium_g3dvl=no])
 if test "x$enable_gallium_g3dvl" = xyes; then
-    GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS xvmc-softpipe"
+    case "$mesa_driver" in
+    xlib)
+        GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS xvmc-softpipe"
+        ;;
+    dri)
+        GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS g3dvl/dri"
+        ;;
+    esac
 fi
 
 dnl
