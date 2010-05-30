@@ -267,16 +267,16 @@ egl_g3d_create_pixmap_surface(_EGLDriver *drv, _EGLDisplay *dpy,
    return egl_g3d_create_surface(drv, dpy, conf, &arg, attribs);
 }
 
-static _EGLSurface *
-egl_g3d_create_pbuffer_surface(_EGLDriver *drv, _EGLDisplay *dpy,
-                               _EGLConfig *conf, const EGLint *attribs)
+static struct egl_g3d_surface *
+create_pbuffer_surface(_EGLDisplay *dpy, _EGLConfig *conf,
+                       const EGLint *attribs, const char *func)
 {
    struct egl_g3d_config *gconf = egl_g3d_config(conf);
    struct egl_g3d_surface *gsurf;
 
    gsurf = CALLOC_STRUCT(egl_g3d_surface);
    if (!gsurf) {
-      _eglError(EGL_BAD_ALLOC, "eglCreatePbufferSurface");
+      _eglError(EGL_BAD_ALLOC, func);
       return NULL;
    }
 
@@ -289,6 +289,96 @@ egl_g3d_create_pbuffer_surface(_EGLDriver *drv, _EGLDisplay *dpy,
 
    gsurf->stfbi = egl_g3d_create_st_framebuffer(&gsurf->base);
    if (!gsurf->stfbi) {
+      FREE(gsurf);
+      return NULL;
+   }
+
+   return gsurf;
+}
+
+static _EGLSurface *
+egl_g3d_create_pbuffer_surface(_EGLDriver *drv, _EGLDisplay *dpy,
+                               _EGLConfig *conf, const EGLint *attribs)
+{
+   struct egl_g3d_surface *gsurf;
+   struct pipe_resource *ptex = NULL;
+
+   gsurf = create_pbuffer_surface(dpy, conf, attribs,
+         "eglCreatePbufferSurface");
+   if (!gsurf)
+      return NULL;
+
+   gsurf->client_buffer_type = EGL_NONE;
+
+   if (!gsurf->stfbi->validate(gsurf->stfbi,
+            &gsurf->stvis.render_buffer, 1, &ptex)) {
+      egl_g3d_destroy_st_framebuffer(gsurf->stfbi);
+      FREE(gsurf);
+      return NULL;
+   }
+
+   return &gsurf->base;
+}
+
+static _EGLSurface *
+egl_g3d_create_pbuffer_from_client_buffer(_EGLDriver *drv, _EGLDisplay *dpy,
+                                          EGLenum buftype,
+                                          EGLClientBuffer buffer,
+                                          _EGLConfig *conf,
+                                          const EGLint *attribs)
+{
+   struct egl_g3d_surface *gsurf;
+   struct pipe_resource *ptex = NULL;
+   EGLint pbuffer_attribs[32];
+   EGLint count, i;
+
+   switch (buftype) {
+   case EGL_OPENVG_IMAGE:
+      break;
+   default:
+      _eglError(EGL_BAD_PARAMETER, "eglCreatePbufferFromClientBuffer");
+      return NULL;
+      break;
+   }
+
+   /* parse the attributes first */
+   count = 0;
+   for (i = 0; attribs && attribs[i] != EGL_NONE; i++) {
+      EGLint attr = attribs[i++];
+      EGLint val = attribs[i];
+      EGLint err = EGL_SUCCESS;
+
+      switch (attr) {
+      case EGL_TEXTURE_FORMAT:
+      case EGL_TEXTURE_TARGET:
+      case EGL_MIPMAP_TEXTURE:
+         pbuffer_attribs[count++] = attr;
+         pbuffer_attribs[count++] = val;
+         break;
+      default:
+         err = EGL_BAD_ATTRIBUTE;
+         break;
+      }
+      /* bail out */
+      if (err != EGL_SUCCESS) {
+         _eglError(err, "eglCreatePbufferFromClientBuffer");
+         return NULL;
+      }
+   }
+
+   pbuffer_attribs[count++] = EGL_NONE;
+
+   gsurf = create_pbuffer_surface(dpy, conf, pbuffer_attribs,
+         "eglCreatePbufferFromClientBuffer");
+   if (!gsurf)
+      return NULL;
+
+   gsurf->client_buffer_type = buftype;
+   gsurf->client_buffer = buffer;
+
+   if (!gsurf->stfbi->validate(gsurf->stfbi,
+            &gsurf->stvis.render_buffer, 1, &ptex)) {
+      egl_g3d_destroy_st_framebuffer(gsurf->stfbi);
       FREE(gsurf);
       return NULL;
    }
@@ -703,6 +793,7 @@ egl_g3d_init_driver_api(_EGLDriver *drv)
    drv->API.CreateWindowSurface = egl_g3d_create_window_surface;
    drv->API.CreatePixmapSurface = egl_g3d_create_pixmap_surface;
    drv->API.CreatePbufferSurface = egl_g3d_create_pbuffer_surface;
+   drv->API.CreatePbufferFromClientBuffer = egl_g3d_create_pbuffer_from_client_buffer;
    drv->API.DestroySurface = egl_g3d_destroy_surface;
    drv->API.MakeCurrent = egl_g3d_make_current;
    drv->API.SwapBuffers = egl_g3d_swap_buffers;

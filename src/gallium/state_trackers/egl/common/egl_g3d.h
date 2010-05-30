@@ -75,6 +75,9 @@ struct egl_g3d_surface {
    struct native_surface *native;
    struct pipe_resource *render_texture;
 
+   EGLenum client_buffer_type;
+   EGLClientBuffer client_buffer;
+
    unsigned int sequence_number;
 };
 

@@ -29,6 +29,8 @@
 #include "util/u_memory.h"
 #include "util/u_string.h"
 #include "util/u_inlines.h"
+#include "util/u_pointer.h"
+#include "util/u_format.h"
 #include "util/u_dl.h"
 #include "egldriver.h"
 #include "eglimage.h"
@@ -276,7 +278,34 @@ egl_g3d_st_framebuffer_flush_front_pbuffer(struct st_framebuffer_iface *stfbi,
    return TRUE;
 }
 
-static boolean 
+static void
+pbuffer_reference_openvg_image(struct egl_g3d_surface *gsurf)
+{
+   /* TODO */
+}
+
+static void
+pbuffer_allocate_render_texture(struct egl_g3d_surface *gsurf)
+{
+   struct egl_g3d_display *gdpy =
+      egl_g3d_display(gsurf->base.Resource.Display);
+   struct pipe_screen *screen = gdpy->native->screen;
+   struct pipe_resource templ, *ptex;
+
+   memset(&templ, 0, sizeof(templ));
+   templ.target = PIPE_TEXTURE_2D;
+   templ.last_level = 0;
+   templ.width0 = gsurf->base.Width;
+   templ.height0 = gsurf->base.Height;
+   templ.depth0 = 1;
+   templ.format = gsurf->stvis.color_format;
+   templ.bind = PIPE_BIND_RENDER_TARGET;
+
+   ptex = screen->resource_create(screen, &templ);
+   gsurf->render_texture = ptex;
+}
+
+static boolean
 egl_g3d_st_framebuffer_validate_pbuffer(struct st_framebuffer_iface *stfbi,
                                         const enum st_attachment_type *statts,
                                         unsigned count,
@@ -284,7 +313,6 @@ egl_g3d_st_framebuffer_validate_pbuffer(struct st_framebuffer_iface *stfbi,
 {
    _EGLSurface *surf = (_EGLSurface *) stfbi->st_manager_private;
    struct egl_g3d_surface *gsurf = egl_g3d_surface(surf);
-   struct pipe_resource templ;
    unsigned i;
 
    for (i = 0; i < count; i++) {
@@ -294,20 +322,19 @@ egl_g3d_st_framebuffer_validate_pbuffer(struct st_framebuffer_iface *stfbi,
          continue;
 
       if (!gsurf->render_texture) {
-         struct egl_g3d_display *gdpy =
-            egl_g3d_display(gsurf->base.Resource.Display);
-         struct pipe_screen *screen = gdpy->native->screen;
+         switch (gsurf->client_buffer_type) {
+         case EGL_NONE:
+            pbuffer_allocate_render_texture(gsurf);
+            break;
+         case EGL_OPENVG_IMAGE:
+            pbuffer_reference_openvg_image(gsurf);
+            break;
+         default:
+            break;
+         }
 
-         memset(&templ, 0, sizeof(templ));
-         templ.target = PIPE_TEXTURE_2D;
-         templ.last_level = 0;
-         templ.width0 = gsurf->base.Width;
-         templ.height0 = gsurf->base.Height;
-         templ.depth0 = 1;
-         templ.format = gsurf->stvis.color_format;
-         templ.bind = PIPE_BIND_RENDER_TARGET;
-
-         gsurf->render_texture = screen->resource_create(screen, &templ);
+         if (!gsurf->render_texture)
+            return FALSE;
       }
 
       pipe_resource_reference(&out[i], gsurf->render_texture);
