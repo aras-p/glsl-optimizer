@@ -29,6 +29,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "util/u_pointer.h"
 #include "gallivm/lp_bld.h"
 #include "gallivm/lp_bld_printf.h"
 
@@ -57,18 +58,6 @@ write_tsv_header(FILE *fp)
 
 
 typedef void (*test_printf_t)(int i);
-
-/** cast wrapper */
-static test_printf_t
-voidptr_to_test_printf_t(void *p)
-{
-   union {
-      void *v;
-      test_printf_t f;
-   } u;
-   u.v = p;
-   return u.f;
-}
 
 
 static LLVMValueRef
@@ -140,7 +129,7 @@ test_printf(unsigned verbose, FILE *fp, const struct printf_test_case *testcase)
 #endif
 
    code = LLVMGetPointerToGlobal(engine, test);
-   test_printf = voidptr_to_test_printf_t(code);
+   test_printf = (test_printf_t)pointer_to_func(code);
 
    memset(unpacked, 0, sizeof unpacked);
    packed = 0;

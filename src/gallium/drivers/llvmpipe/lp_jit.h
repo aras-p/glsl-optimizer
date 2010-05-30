@@ -169,36 +169,6 @@ typedef void
                     uint32_t *counter);
 
 
-/** cast wrapper to avoid compiler warnings */
-static INLINE lp_jit_frag_func
-cast_voidptr_to_lp_jit_frag_func(void *v)
-{
-   union {
-      void *v;
-      lp_jit_frag_func f;
-   } u;
-   assert(sizeof(u.v) == sizeof(u.f));
-   u.v = v;
-   return u.f;
-}
-
-
-/** cast wrapper */
-static INLINE void *
-cast_lp_jit_frag_func_to_voidptr(lp_jit_frag_func f)
-{
-   union {
-      void *v;
-      lp_jit_frag_func f;
-   } u;
-   assert(sizeof(u.v) == sizeof(u.f));
-   u.f = f;
-   return u.v;
-}
-
-
-
-
 void
 lp_jit_screen_cleanup(struct llvmpipe_screen *screen);
 

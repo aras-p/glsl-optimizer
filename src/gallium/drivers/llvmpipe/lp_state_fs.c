@@ -64,6 +64,7 @@
 #include "pipe/p_defines.h"
 #include "util/u_inlines.h"
 #include "util/u_memory.h"
+#include "util/u_pointer.h"
 #include "util/u_format.h"
 #include "util/u_dump.h"
 #include "os/os_time.h"
@@ -873,7 +874,7 @@ generate_fragment(struct llvmpipe_context *lp,
    {
       void *f = LLVMGetPointerToGlobal(screen->engine, function);
 
-      variant->jit_function[do_tri_test] = cast_voidptr_to_lp_jit_frag_func(f);
+      variant->jit_function[do_tri_test] = (lp_jit_frag_func)pointer_to_func(f);
 
       if (gallivm_debug & GALLIVM_DEBUG_ASM) {
          lp_disassemble(f);

@@ -34,6 +34,7 @@
  */
 
 
+#include "util/u_pointer.h"
 #include "gallivm/lp_bld_type.h"
 #include "gallivm/lp_bld_const.h"
 #include "gallivm/lp_bld_conv.h"
@@ -43,17 +44,6 @@
 
 typedef void (*conv_test_ptr_t)(const void *src, const void *dst);
 
-/** cast wrapper */
-static conv_test_ptr_t
-voidptr_to_conv_test_ptr_t(void *p)
-{
-   union {
-      void *v;
-      conv_test_ptr_t f;
-   } u;
-   u.v = p;
-   return u.f;
-}
 
 void
 write_tsv_header(FILE *fp)
@@ -234,7 +224,7 @@ test_one(unsigned verbose,
       LLVMDumpModule(module);
 
    code = LLVMGetPointerToGlobal(engine, func);
-   conv_test_ptr = voidptr_to_conv_test_ptr_t(code);
+   conv_test_ptr = (conv_test_ptr_t)pointer_to_func(code);
 
    if(verbose >= 2)
       lp_disassemble(code);
