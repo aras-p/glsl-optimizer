@@ -98,6 +98,18 @@ align16( void *unaligned )
    return align_pointer( unaligned, 16 );
 }
 
+typedef void (*func_pointer)(void);
+
+static INLINE func_pointer
+pointer_to_func( void *p )
+{
+   union {
+      void *p;
+      func_pointer f;
+   } pf;
+   pf.p = p;
+   return pf.f;
+}
 
 
 #ifdef __cplusplus
