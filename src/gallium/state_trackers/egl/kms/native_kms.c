@@ -28,6 +28,7 @@
 #include "util/u_debug.h"
 #include "util/u_memory.h"
 #include "util/u_inlines.h"
+#include "util/u_pointer.h"
 #include "util/u_string.h"
 #include "egllog.h"
 
@@ -694,7 +695,27 @@ kms_display_init_screen(struct native_display *ndpy)
    struct kms_display *kdpy = kms_display(ndpy);
    int fd;
 
-   fd = drmOpen(kdpy->api->driver_name, NULL);
+   fd = kdpy->fd;
+   if (fd >= 0) {
+      drmVersionPtr version = drmGetVersion(fd);
+      if (!version || strcmp(version->name, kdpy->api->driver_name)) {
+         if (version) {
+            _eglLog(_EGL_WARNING, "unknown driver name %s", version->name);
+            drmFreeVersion(version);
+         }
+         else {
+            _eglLog(_EGL_WARNING, "invalid fd %d", fd);
+         }
+
+         return FALSE;
+      }
+
+      drmFreeVersion(version);
+   }
+   else {
+      fd = drmOpen(kdpy->api->driver_name, NULL);
+   }
+
    if (fd < 0) {
       _eglLog(_EGL_WARNING, "failed to open DRM device");
       return FALSE;
@@ -727,8 +748,7 @@ static struct native_display_modeset kms_display_modeset = {
 };
 
 static struct native_display *
-kms_create_display(EGLNativeDisplayType dpy,
-                   struct native_event_handler *event_handler,
+kms_create_display(int fd, struct native_event_handler *event_handler,
                    struct drm_api *api)
 {
    struct kms_display *kdpy;
@@ -746,7 +766,7 @@ kms_create_display(EGLNativeDisplayType dpy,
       return NULL;
    }
 
-   kdpy->fd = -1;
+   kdpy->fd = fd;
    if (!kms_display_init_screen(&kdpy->base)) {
       kms_display_destroy(&kdpy->base);
       return NULL;
@@ -818,12 +838,17 @@ native_create_display(EGLNativeDisplayType dpy,
                       struct native_event_handler *event_handler)
 {
    struct native_display *ndpy = NULL;
+   int fd;
 
    if (!drm_api)
       drm_api = drm_api_create();
 
-   if (drm_api)
-      ndpy = kms_create_display(dpy, event_handler, drm_api);
+   if (drm_api) {
+      /* well, this makes fd 0 being ignored */
+      fd = (dpy != EGL_DEFAULT_DISPLAY) ?
+         (int) pointer_to_intptr((void *) dpy) : -1;
+      ndpy = kms_create_display(fd, event_handler, drm_api);
+   }
 
    return ndpy;
 }
