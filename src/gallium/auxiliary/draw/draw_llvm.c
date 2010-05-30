@@ -16,38 +16,11 @@
 
 #include "util/u_cpu_detect.h"
 #include "util/u_string.h"
+#include "util/u_pointer.h"
 
 #include <llvm-c/Transforms/Scalar.h>
 
 #define DEBUG_STORE 0
-
-
-/** cast wrapper */
-static INLINE draw_jit_vert_func_elts
-voidptr_to_draw_vert_func_elts(void *v)
-{
-   union {
-      void *v;
-      draw_jit_vert_func_elts f;
-   } u;
-   assert(sizeof(u.v) == sizeof(u.f));
-   u.v = v;
-   return u.f;
-}
-
-
-/** cast wrapper */
-static INLINE draw_jit_vert_func
-voidptr_to_draw_jit_vert_func(void *v)
-{
-   union {
-      void *v;
-      draw_jit_vert_func f;
-   } u;
-   assert(sizeof(u.v) == sizeof(u.f));
-   u.v = v;
-   return u.f;
-}
 
 
 /* generates the draw jit function */
@@ -744,7 +717,7 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant)
    }
 
    code = LLVMGetPointerToGlobal(llvm->draw->engine, variant->function);
-   variant->jit_func = voidptr_to_draw_jit_vert_func(code);
+   variant->jit_func = (draw_jit_vert_func)pointer_to_func(code);
 
    if (gallivm_debug & GALLIVM_DEBUG_ASM) {
       lp_disassemble(code);
@@ -899,7 +872,7 @@ draw_llvm_generate_elts(struct draw_llvm *llvm, struct draw_llvm_variant *varian
    }
 
    code = LLVMGetPointerToGlobal(llvm->draw->engine, variant->function_elts);
-   variant->jit_func_elts = voidptr_to_draw_vert_func_elts(code);
+   variant->jit_func_elts = (draw_jit_vert_func_elts)pointer_to_func(code);
 
    if (gallivm_debug & GALLIVM_DEBUG_ASM) {
       lp_disassemble(code);
