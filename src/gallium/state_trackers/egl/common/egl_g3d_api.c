@@ -428,7 +428,6 @@ egl_g3d_copy_buffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf,
    _EGLContext *ctx = _eglGetCurrentContext();
    struct egl_g3d_config *gconf;
    struct native_surface *nsurf;
-   struct pipe_screen *screen = gdpy->native->screen;
    struct pipe_resource *ptex;
 
    if (!gsurf->render_texture)
@@ -460,7 +459,7 @@ egl_g3d_copy_buffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf,
 
    ptex = get_pipe_resource(gdpy->native, nsurf, NATIVE_ATTACHMENT_FRONT_LEFT);
    if (ptex) {
-      struct pipe_surface *psrc;
+      struct pipe_resource *psrc = gsurf->render_texture;
       struct pipe_subresource subsrc, subdst;
       subsrc.face = 0;
       subsrc.level = 0;
