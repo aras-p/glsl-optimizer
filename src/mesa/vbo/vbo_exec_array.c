@@ -30,7 +30,6 @@
 #include "main/context.h"
 #include "main/state.h"
 #include "main/api_validate.h"
-#include "main/api_noop.h"
 #include "main/varray.h"
 #include "main/bufferobj.h"
 #include "main/enums.h"
