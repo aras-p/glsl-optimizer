@@ -377,11 +377,11 @@ int r600_init(struct radeon *radeon)
 	case CHIP_RV620:
 	case CHIP_RV635:
 	case CHIP_RS780:
+	case CHIP_RS880:
 		radeon->ntype = R600_NTYPE;
 		radeon->nstate = R600_NSTATE;
 		radeon->type = R600_types;
 		break;
-	case CHIP_RS880:
 	case CHIP_RV770:
 	case CHIP_RV730:
 	case CHIP_RV710:
