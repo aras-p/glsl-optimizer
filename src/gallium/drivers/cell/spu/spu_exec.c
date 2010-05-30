@@ -634,7 +634,7 @@ exec_kil(struct spu_exec_machine *mach,
  * Kill fragment if the condition code is TRUE.
  */
 static void
-exec_kilp(struct tgsi_exec_machine *mach,
+exec_kilp(struct spu_exec_machine *mach,
           const struct tgsi_full_instruction *inst)
 {
    uint kilmask = 0; /* bit 0 = pixel 0, bit 1 = pixel 1, etc */
