@@ -189,7 +189,7 @@ util_format_translate(enum pipe_format dst_format,
    const struct util_format_description *src_format_desc;
    uint8_t *dst_row;
    const uint8_t *src_row;
-   unsigned y_step;
+   unsigned x_step, y_step;
    unsigned dst_step;
    unsigned src_step;
 
@@ -221,6 +221,7 @@ util_format_translate(enum pipe_format dst_format,
     */
 
    y_step = MAX2(dst_format_desc->block.height, src_format_desc->block.height);
+   x_step = MAX2(dst_format_desc->block.width, src_format_desc->block.width);
    assert(y_step % dst_format_desc->block.height == 0);
    assert(y_step % src_format_desc->block.height == 0);
 
@@ -237,7 +238,7 @@ util_format_translate(enum pipe_format dst_format,
       unsigned tmp_stride;
       uint8_t *tmp_row;
 
-      tmp_stride = width * 4 * sizeof *tmp_row;
+      tmp_stride = MAX2(width, x_step) * 4 * sizeof *tmp_row;
       tmp_row = MALLOC(y_step * tmp_stride);
       if (!tmp_row)
          return;
@@ -262,7 +263,7 @@ util_format_translate(enum pipe_format dst_format,
       unsigned tmp_stride;
       float *tmp_row;
 
-      tmp_stride = width * 4 * sizeof *tmp_row;
+      tmp_stride = MAX2(width, x_step) * 4 * sizeof *tmp_row;
       tmp_row = MALLOC(y_step * tmp_stride);
       if (!tmp_row)
          return;
