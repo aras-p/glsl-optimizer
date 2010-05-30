@@ -30,7 +30,6 @@
 #include <util/u_memory.h>
 #include <tgsi/tgsi_dump.h>
 #include "r600_screen.h"
-#include "r600_texture.h"
 #include "r600_context.h"
 #include "r600d.h"
 

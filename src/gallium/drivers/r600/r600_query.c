@@ -28,7 +28,6 @@
 #include <util/u_format.h>
 #include <util/u_memory.h>
 #include "r600_screen.h"
-#include "r600_texture.h"
 #include "r600_context.h"
 
 static struct pipe_query *r600_create_query(struct pipe_context *pipe, unsigned query_type)

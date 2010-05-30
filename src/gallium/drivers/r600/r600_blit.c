@@ -29,7 +29,6 @@
 #include <util/u_inlines.h>
 #include <util/u_memory.h>
 #include "r600_screen.h"
-#include "r600_texture.h"
 #include "r600_context.h"
 
 static void r600_blitter_save_states(struct pipe_context *ctx)
