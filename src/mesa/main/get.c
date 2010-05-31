@@ -674,14 +674,14 @@ static const struct value_desc values[] = {
 
 #if FEATURE_ES2
    /* Enums unique to OpenGL ES 2.0 */
-   { 0, 0, TYPE_API_MASK, API_OPENGLES2_BIT, NO_OFFSET, NO_EXTRA },
+   { 0, 0, TYPE_API_MASK, API_OPENGLES2_BIT, NO_EXTRA },
    { GL_MAX_FRAGMENT_UNIFORM_VECTORS, LOC_CUSTOM, TYPE_INT,
      offsetof(GLcontext, Const.FragmentProgram.MaxUniformComponents), NO_EXTRA },
    { GL_MAX_VARYING_VECTORS, LOC_CUSTOM, TYPE_INT,
      offsetof(GLcontext, Const.MaxVarying), NO_EXTRA },
    { GL_MAX_VERTEX_UNIFORM_VECTORS, LOC_CUSTOM, TYPE_INT,
      offsetof(GLcontext, Const.VertexProgram.MaxUniformComponents), NO_EXTRA },
-   { GL_SHADER_COMPILER, CONST(1), NO_EXTRA, NO_EXTRA },
+   { GL_SHADER_COMPILER, CONST(1), NO_EXTRA },
    /* OES_get_program_binary */
    { GL_NUM_SHADER_BINARY_FORMATS, CONST(0), NO_EXTRA },
    { GL_SHADER_BINARY_FORMATS, CONST(0), NO_EXTRA },
