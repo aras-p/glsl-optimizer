@@ -64,6 +64,11 @@ egl_g3d_search_path_callback(const char *dir, size_t len, void *callback_data)
    char path[1024];
    int ret;
 
+   if (!len) {
+      stmod->lib = util_dl_open(stmod->filename);
+      return !(stmod->lib);
+   }
+
    ret = util_snprintf(path, sizeof(path),
          "%.*s/%s", len, dir, stmod->filename);
    if (ret > 0 && ret < sizeof(path))
@@ -105,6 +110,12 @@ egl_g3d_load_st_module(struct egl_g3d_st_module *stmod,
    }
 }
 
+#ifdef PIPE_OS_WINDOWS
+#define ST_MODULE_SUFFIX ".dll"
+#else
+#define ST_MODULE_SUFFIX ".so"
+#endif
+
 void
 egl_g3d_init_st_apis(struct st_api *stapis[ST_API_COUNT])
 {
@@ -123,24 +134,24 @@ egl_g3d_init_st_apis(struct st_api *stapis[ST_API_COUNT])
       case ST_API_OPENGL:
          skip_checks[api] = "glColor4d";
          symbols[api] = ST_CREATE_OPENGL_SYMBOL;
-         filenames[api][count++] = "api_GL.so";
+         filenames[api][count++] = "api_GL" ST_MODULE_SUFFIX;
          break;
       case ST_API_OPENGL_ES1:
          skip_checks[api] = "glColor4x";
          symbols[api] = ST_CREATE_OPENGL_ES1_SYMBOL;
-         filenames[api][count++] = "api_GLESv1_CM.so";
-         filenames[api][count++] = "api_GL.so";
+         filenames[api][count++] = "api_GLESv1_CM" ST_MODULE_SUFFIX;
+         filenames[api][count++] = "api_GL" ST_MODULE_SUFFIX;
          break;
       case ST_API_OPENGL_ES2:
          skip_checks[api] = "glShaderBinary";
          symbols[api] = ST_CREATE_OPENGL_ES2_SYMBOL;
-         filenames[api][count++] = "api_GLESv2.so";
-         filenames[api][count++] = "api_GL.so";
+         filenames[api][count++] = "api_GLESv2" ST_MODULE_SUFFIX;
+         filenames[api][count++] = "api_GL" ST_MODULE_SUFFIX;
          break;
       case ST_API_OPENVG:
          skip_checks[api] = "vgClear";
          symbols[api] = ST_CREATE_OPENVG_SYMBOL;
-         filenames[api][count++]= "api_OpenVG.so";
+         filenames[api][count++]= "api_OpenVG" ST_MODULE_SUFFIX;
          break;
       default:
          assert(!"Unknown API Type\n");
