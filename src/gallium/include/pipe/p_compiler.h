@@ -102,6 +102,8 @@ typedef unsigned char boolean;
 #ifndef PUBLIC
 #  if defined(__GNUC__) || (defined(__SUNPRO_C) && (__SUNPRO_C >= 0x590))
 #    define PUBLIC __attribute__((visibility("default")))
+#  elif defined(_MSC_VER)
+#    define PUBLIC __declspec(dllexport)
 #  else
 #    define PUBLIC
 #  endif
