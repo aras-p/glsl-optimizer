@@ -423,6 +423,7 @@ driCreateNewDrawable(__DRIscreen *psp, const __DRIconfig *config,
 	return NULL;
     }
 
+    pdp->driContextPriv = NULL;
     pdp->loaderPrivate = data;
     pdp->hHWDrawable = hwDrawable;
     pdp->refcount = 1;

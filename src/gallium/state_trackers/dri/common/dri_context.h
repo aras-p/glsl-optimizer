@@ -65,6 +65,8 @@ struct dri_context
 static INLINE struct dri_context *
 dri_context(__DRIcontext * driContextPriv)
 {
+   if (!driContextPriv)
+     return NULL;
    return (struct dri_context *)driContextPriv->driverPrivate;
 }
 
