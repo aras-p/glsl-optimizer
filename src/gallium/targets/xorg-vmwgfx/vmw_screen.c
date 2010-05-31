@@ -32,8 +32,13 @@
 
 #include "vmw_hook.h"
 #include "vmw_driver.h"
+#include <pipe/p_context.h>
 
 #include "cursorstr.h"
+
+void vmw_winsys_screen_set_throttling(struct pipe_screen *screen,
+				      uint32_t throttle_us);
+
 
 /* modified version of crtc functions */
 xf86CrtcFuncsRec vmw_screen_crtc_funcs;
@@ -83,12 +88,51 @@ vmw_screen_cursor_close(struct vmw_customizer *vmw)
 	config->crtc[i]->funcs = vmw->cursor_priv;
 }
 
+static void
+vmw_context_throttle(CustomizerPtr cust,
+		     struct pipe_context *pipe,
+		     enum xorg_throttling_reason reason)
+{
+    switch (reason) {
+    case THROTTLE_RENDER:
+	vmw_winsys_screen_set_throttling(pipe->screen, 20000);
+	break;
+    default:
+      vmw_winsys_screen_set_throttling(pipe->screen, 0);
+    }
+}
+
+static void
+vmw_context_no_throttle(CustomizerPtr cust,
+		     struct pipe_context *pipe,
+		     enum xorg_throttling_reason reason)
+{
+    vmw_winsys_screen_set_throttling(pipe->screen, 0);
+}
+
 static Bool
 vmw_screen_init(CustomizerPtr cust, int fd)
 {
     struct vmw_customizer *vmw = vmw_customizer(cust);
+    drmVersionPtr ver;
 
     vmw->fd = fd;
+    ver = drmGetVersion(fd);
+    if (ver == NULL ||
+	(ver->version_major == 1 && ver->version_minor < 1)) {
+	cust->swap_throttling = TRUE;
+	cust->dirty_throttling = TRUE;
+	cust->winsys_context_throttle = vmw_context_no_throttle;
+    } else {
+	cust->swap_throttling = TRUE;
+	cust->dirty_throttling = FALSE;
+	cust->winsys_context_throttle = vmw_context_throttle;
+	debug_printf("%s: Enabling kernel throttling.\n", __func__);
+    }
+
+    if (ver)
+	drmFreeVersion(ver);
+
     vmw_screen_cursor_init(vmw);
 
     vmw_ctrl_ext_init(vmw);

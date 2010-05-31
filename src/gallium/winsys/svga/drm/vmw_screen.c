@@ -75,3 +75,13 @@ vmw_winsys_destroy(struct vmw_winsys_screen *vws)
    vmw_ioctl_cleanup(vws);
    FREE(vws);
 }
+
+void
+vmw_winsys_screen_set_throttling(struct pipe_screen *screen,
+				 uint32_t throttle_us)
+{
+   struct vmw_winsys_screen  *vws =
+      vmw_winsys_screen(svga_winsys_screen(screen));
+
+   vws->default_throttle_us = throttle_us;
+}

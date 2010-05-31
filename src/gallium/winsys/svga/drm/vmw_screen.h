@@ -53,6 +53,7 @@ struct vmw_winsys_screen
    struct svga_winsys_screen base;
 
    boolean use_old_scanout_flag;
+   uint32_t default_throttle_us;
 
    struct {
       volatile uint32_t *fifo_map;
@@ -96,9 +97,11 @@ vmw_ioctl_surface_destroy(struct vmw_winsys_screen *vws,
 
 void
 vmw_ioctl_command(struct vmw_winsys_screen *vws,
-                       void *commands,
-                       uint32_t size,
-                       uint32_t *fence);
+		  int32_t cid,
+		  uint32_t throttle_us,
+		  void *commands,
+		  uint32_t size,
+		  uint32_t *fence);
 
 struct vmw_region *
 vmw_ioctl_region_create(struct vmw_winsys_screen *vws, uint32_t size);
@@ -135,6 +138,7 @@ void vmw_pools_cleanup(struct vmw_winsys_screen *vws);
 
 struct vmw_winsys_screen *vmw_winsys_create(int fd, boolean use_old_scanout_flag);
 void vmw_winsys_destroy(struct vmw_winsys_screen *sws);
-
+void vmw_winsys_screen_set_throttling(struct pipe_screen *screen,
+				      uint32_t throttle_us);
 
 #endif /* VMW_SCREEN_H_ */
