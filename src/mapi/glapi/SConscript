@@ -38,7 +38,7 @@ if env['platform'] != 'winddk':
 		'u_thread.c',
 	]
 	for s in mapi_sources:
-		o = env.Object(s[:-2], '../mapi/' + s)
+		o = env.SharedObject(s[:-2], '../mapi/' + s)
 		glapi_sources.append(o)
 
 	#
