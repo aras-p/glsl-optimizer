@@ -4,6 +4,7 @@ SConscript('glsl/SConscript')
 SConscript('mapi/glapi/SConscript')
 
 if 'egl' in env['statetrackers']:
+    SConscript('mapi/vgapi/SConscript')
     SConscript('egl/main/SConscript')
 
 if 'mesa' in env['statetrackers']:
