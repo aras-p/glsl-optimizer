@@ -165,8 +165,8 @@ typedef EGLBoolean (EGLAPIENTRYP PFNEGLGETSYNCATTRIBKHRPROC) (EGLDisplay dpy, EG
 #define EGL_INTERLACED_MESA                    0x4008
 #define EGL_SCREEN_BIT_MESA                    0x08
 
-typedef uint32_t EGLScreenMESA;
-typedef uint32_t EGLModeMESA;
+typedef khronos_uint32_t EGLScreenMESA;
+typedef khronos_uint32_t EGLModeMESA;
 
 #ifdef EGL_EGLEXT_PROTOTYPES
 EGLAPI EGLBoolean EGLAPIENTRY eglChooseModeMESA(EGLDisplay dpy, EGLScreenMESA screen, const EGLint *attrib_list, EGLModeMESA *modes, EGLint modes_size, EGLint *num_modes);
