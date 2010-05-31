@@ -183,7 +183,6 @@ softpipe_set_constant_buffer(struct pipe_context *pipe,
    const void *data = constants ? softpipe_resource(constants)->data : NULL;
 
    assert(shader < PIPE_SHADER_TYPES);
-   assert(index == 0);
 
    draw_flush(softpipe->draw);
 
