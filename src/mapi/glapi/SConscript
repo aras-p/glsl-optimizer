@@ -1,5 +1,5 @@
 #######################################################################
-# SConscript for Mesa
+# SConscript for glapi
 
 
 Import('*')
@@ -11,6 +11,13 @@ if env['platform'] != 'winddk':
 	env.Append(CPPDEFINES = [
 		'MAPI_GLAPI_CURRENT',
 	])
+
+	if env['platform'] == 'windows':
+		env.Append(CPPDEFINES = [
+			'_GDI32_', # prevent gl* being declared __declspec(dllimport) in MS headers
+			'BUILD_GL32', # declare gl* as __declspec(dllexport) in Mesa headers
+			'WIN32_THREADS', # use Win32 thread API
+		])
 
 	env.Append(CPPPATH = [
 		'#/src/mapi',
@@ -25,11 +32,14 @@ if env['platform'] != 'winddk':
 		'glthread.c',
 	]
 	
-	glapi_sources += [
-		'../mapi/u_current.c',
-		'../mapi/u_execmem.c',
-		'../mapi/u_thread.c',
+	mapi_sources = [
+		'u_current.c',
+		'u_execmem.c',
+		'u_thread.c',
 	]
+	for s in mapi_sources:
+		o = env.Object(s[:-2], '../mapi/' + s)
+		glapi_sources.append(o)
 
 	#
 	# Assembly sources
