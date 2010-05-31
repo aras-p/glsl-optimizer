@@ -811,7 +811,7 @@ _mesa_ValidateProgramARB(GLhandleARB program)
    ctx->Driver.ValidateProgram(ctx, program);
 }
 
-#ifdef FEATURE_ES2
+#if FEATURE_ES2
 
 void GLAPIENTRY
 _mesa_GetShaderPrecisionFormat(GLenum shadertype, GLenum precisiontype,
@@ -847,6 +847,7 @@ _mesa_ShaderBinary(GLint n, const GLuint* shaders, GLenum binaryformat,
 void
 _mesa_init_shader_dispatch(struct _glapi_table *exec)
 {
+#if FEATURE_GL
    /* GL_ARB_vertex/fragment_shader */
    SET_DeleteObjectARB(exec, _mesa_DeleteObjectARB);
    SET_GetHandleARB(exec, _mesa_GetHandleARB);
@@ -927,4 +928,5 @@ _mesa_init_shader_dispatch(struct _glapi_table *exec)
    (void) _mesa_Uniform2uiv;
    (void) _mesa_Uniform3uiv;
    (void) _mesa_Uniform4uiv;
+#endif /* FEATURE_GL */
 }
