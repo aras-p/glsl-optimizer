@@ -56,6 +56,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "eglstring.h"
 #include "eglcontext.h"
 #include "egldisplay.h"
 #include "egltypedefs.h"
@@ -284,7 +286,7 @@ eglInitialize(EGLDisplay dpy, EGLint *major, EGLint *minor)
 
       disp->APImajor = major_int;
       disp->APIminor = minor_int;
-      snprintf(disp->Version, sizeof(disp->Version),
+      _eglsnprintf(disp->Version, sizeof(disp->Version),
                "%d.%d (%s)", major_int, minor_int, drv->Name);
 
       /* limit to APIs supported by core */

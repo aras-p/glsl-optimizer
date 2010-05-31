@@ -45,7 +45,7 @@ static EGLint
 _eglAppendExtension(char **str, const char *ext)
 {
    char *s = *str;
-   EGLint len = strlen(ext);
+   size_t len = strlen(ext);
 
    if (s) {
       memcpy(s, ext, len);
@@ -58,7 +58,7 @@ _eglAppendExtension(char **str, const char *ext)
       len++;
    }
 
-   return len;
+   return (EGLint) len;
 }
 
 

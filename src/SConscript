@@ -3,6 +3,9 @@ Import('*')
 SConscript('glsl/SConscript')
 SConscript('mapi/glapi/SConscript')
 
+if 'egl' in env['statetrackers']:
+    SConscript('egl/main/SConscript')
+
 if 'mesa' in env['statetrackers']:
     SConscript('mesa/SConscript')
 

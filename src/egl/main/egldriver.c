@@ -7,6 +7,8 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#include "eglstring.h"
 #include "eglconfig.h"
 #include "eglcontext.h"
 #include "egldefines.h"
@@ -36,8 +38,8 @@
 
 
 /* XXX Need to decide how to do dynamic name lookup on Windows */
-static const char DefaultDriverNames[] = {
-   "TBD",
+static const char *DefaultDriverNames[] = {
+   "egl_gdi_swrast"
 };
 
 typedef HMODULE lib_handle;
@@ -411,7 +413,7 @@ _eglGetSearchPath(void)
 #endif /* _EGL_PLATFORM_POSIX */
 
       if (p) {
-         ret = snprintf(buffer, sizeof(buffer),
+         ret = _eglsnprintf(buffer, sizeof(buffer),
                "%s:%s", p, _EGL_DRIVER_SEARCH_DIR);
          if (ret > 0 && ret < sizeof(buffer))
             search_path = buffer;
@@ -483,7 +485,7 @@ _eglPreloadDisplayDrivers(void)
    if (!dpy || !dpy[0])
       return EGL_FALSE;
 
-   ret = snprintf(prefix, sizeof(prefix), "egl_%s_", dpy);
+   ret = _eglsnprintf(prefix, sizeof(prefix), "egl_%s_", dpy);
    if (ret < 0 || ret >= sizeof(prefix))
       return EGL_FALSE;
 
