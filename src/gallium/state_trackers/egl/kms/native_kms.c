@@ -40,39 +40,11 @@ kms_surface_validate(struct native_surface *nsurf, uint attachment_mask,
                      int *width, int *height)
 {
    struct kms_surface *ksurf = kms_surface(nsurf);
-   struct kms_display *kdpy = ksurf->kdpy;
-   struct pipe_screen *screen = kdpy->base.screen;
-   struct pipe_resource templ, *ptex;
-   int att;
 
-   if (attachment_mask) {
-      memset(&templ, 0, sizeof(templ));
-      templ.target = PIPE_TEXTURE_2D;
-      templ.last_level = 0;
-      templ.width0 = ksurf->width;
-      templ.height0 = ksurf->height;
-      templ.depth0 = 1;
-      templ.format = ksurf->color_format;
-      templ.bind = PIPE_BIND_RENDER_TARGET | PIPE_BIND_SCANOUT;
-   }
-
-   /* create textures */
-   for (att = 0; att < NUM_NATIVE_ATTACHMENTS; att++) {
-      /* delay the allocation */
-      if (!native_attachment_mask_test(attachment_mask, att))
-         continue;
-
-      ptex = ksurf->textures[att];
-      if (!ptex) {
-         ptex = screen->resource_create(screen, &templ);
-         ksurf->textures[att] = ptex;
-      }
-
-      if (textures) {
-         textures[att] = NULL;
-         pipe_resource_reference(&textures[att], ptex);
-      }
-   }
+   if (!resource_surface_add_resources(ksurf->rsurf, attachment_mask))
+      return FALSE;
+   if (textures)
+      resource_surface_get_resources(ksurf->rsurf, textures, attachment_mask);
 
    if (seq_num)
       *seq_num = ksurf->sequence_number;
@@ -112,11 +84,11 @@ kms_surface_init_framebuffers(struct native_surface *nsurf, boolean need_back)
 
       if (!fb->texture) {
          /* make sure the texture has been allocated */
-         kms_surface_validate(&ksurf->base, 1 << natt, NULL, NULL, NULL, NULL);
-         if (!ksurf->textures[natt])
+         resource_surface_add_resources(ksurf->rsurf, 1 << natt);
+         fb->texture =
+            resource_surface_get_single_resource(ksurf->rsurf, natt);
+         if (!fb->texture)
             return FALSE;
-
-         pipe_resource_reference(&fb->texture, ksurf->textures[natt]);
       }
 
       /* already initialized */
@@ -167,7 +139,6 @@ kms_surface_swap_buffers(struct native_surface *nsurf)
    struct kms_crtc *kcrtc = &ksurf->current_crtc;
    struct kms_display *kdpy = ksurf->kdpy;
    struct kms_framebuffer tmp_fb;
-   struct pipe_resource *tmp_texture;
    int err;
 
    if (!ksurf->back_fb.buffer_id) {
@@ -188,11 +159,8 @@ kms_surface_swap_buffers(struct native_surface *nsurf)
    ksurf->front_fb = ksurf->back_fb;
    ksurf->back_fb = tmp_fb;
 
-   tmp_texture = ksurf->textures[NATIVE_ATTACHMENT_FRONT_LEFT];
-   ksurf->textures[NATIVE_ATTACHMENT_FRONT_LEFT] =
-      ksurf->textures[NATIVE_ATTACHMENT_BACK_LEFT];
-   ksurf->textures[NATIVE_ATTACHMENT_BACK_LEFT] = tmp_texture;
-
+   resource_surface_swap_buffers(ksurf->rsurf,
+         NATIVE_ATTACHMENT_FRONT_LEFT, NATIVE_ATTACHMENT_BACK_LEFT, FALSE);
    /* the front/back textures are swapped */
    ksurf->sequence_number++;
    kdpy->event_handler->invalid_surface(&kdpy->base,
@@ -211,7 +179,6 @@ static void
 kms_surface_destroy(struct native_surface *nsurf)
 {
    struct kms_surface *ksurf = kms_surface(nsurf);
-   int i;
 
    if (ksurf->current_crtc.crtc)
          drmModeFreeCrtc(ksurf->current_crtc.crtc);
@@ -224,11 +191,7 @@ kms_surface_destroy(struct native_surface *nsurf)
       drmModeRmFB(ksurf->kdpy->fd, ksurf->back_fb.buffer_id);
    pipe_resource_reference(&ksurf->back_fb.texture, NULL);
 
-   for (i = 0; i < NUM_NATIVE_ATTACHMENTS; i++) {
-      struct pipe_resource *ptex = ksurf->textures[i];
-      pipe_resource_reference(&ptex, NULL);
-   }
-
+   resource_surface_destroy(ksurf->rsurf);
    FREE(ksurf);
 }
 
@@ -249,6 +212,19 @@ kms_display_create_surface(struct native_display *ndpy,
    ksurf->color_format = kconf->base.color_format;
    ksurf->width = width;
    ksurf->height = height;
+
+   ksurf->rsurf = resource_surface_create(kdpy->base.screen,
+         ksurf->color_format,
+         PIPE_BIND_RENDER_TARGET |
+         PIPE_BIND_SAMPLER_VIEW |
+         PIPE_BIND_DISPLAY_TARGET |
+         PIPE_BIND_SCANOUT);
+   if (!ksurf->rsurf) {
+      FREE(ksurf);
+      return NULL;
+   }
+
+   resource_surface_set_size(ksurf->rsurf, ksurf->width, ksurf->height);
 
    ksurf->base.destroy = kms_surface_destroy;
    ksurf->base.swap_buffers = kms_surface_swap_buffers;

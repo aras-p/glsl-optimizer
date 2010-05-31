@@ -35,6 +35,7 @@
 #include "state_tracker/drm_api.h"
 
 #include "common/native.h"
+#include "common/native_helper.h"
 
 struct kms_config;
 struct kms_connector;
@@ -73,11 +74,12 @@ struct kms_framebuffer {
 
 struct kms_surface {
    struct native_surface base;
-   enum pipe_format color_format;
    struct kms_display *kdpy;
+
+   struct resource_surface *rsurf;
+   enum pipe_format color_format;
    int width, height;
 
-   struct pipe_resource *textures[NUM_NATIVE_ATTACHMENTS];
    unsigned int sequence_number;
    struct kms_framebuffer front_fb, back_fb;
 
