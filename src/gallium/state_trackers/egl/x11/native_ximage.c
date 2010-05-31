@@ -123,13 +123,13 @@ static boolean
 ximage_surface_update_buffers(struct native_surface *nsurf, uint buffer_mask)
 {
    struct ximage_surface *xsurf = ximage_surface(nsurf);
-   boolean ret;
 
-   ximage_surface_update_geometry(&xsurf->base);
-   ret = resource_surface_add_resources(xsurf->rsurf, buffer_mask);
-   xsurf->client_stamp = xsurf->server_stamp;
+   if (xsurf->client_stamp != xsurf->server_stamp) {
+      ximage_surface_update_geometry(&xsurf->base);
+      xsurf->client_stamp = xsurf->server_stamp;
+   }
 
-   return ret;
+   return resource_surface_add_resources(xsurf->rsurf, buffer_mask);
 }
 
 /**
@@ -185,10 +185,8 @@ ximage_surface_validate(struct native_surface *nsurf, uint attachment_mask,
    struct ximage_surface *xsurf = ximage_surface(nsurf);
    uint w, h;
 
-   if (xsurf->client_stamp != xsurf->server_stamp) {
-      if (!ximage_surface_update_buffers(&xsurf->base, attachment_mask))
-         return FALSE;
-   }
+   if (!ximage_surface_update_buffers(&xsurf->base, attachment_mask))
+      return FALSE;
 
    if (seq_num)
       *seq_num = xsurf->client_stamp;
@@ -255,7 +253,7 @@ ximage_display_create_surface(struct native_display *ndpy,
    xsurf->drawable = drawable;
    xsurf->visual = *xconf->visual;
    /* initialize the geometry */
-   ximage_surface_update_buffers(&xsurf->base, 0x0);
+   ximage_surface_update_geometry(&xsurf->base);
 
    xsurf->xdraw.visual = xsurf->visual.visual;
    xsurf->xdraw.depth = xsurf->visual.depth;

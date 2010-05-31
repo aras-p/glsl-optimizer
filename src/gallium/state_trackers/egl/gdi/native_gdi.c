@@ -101,13 +101,13 @@ static boolean
 gdi_surface_update_buffers(struct native_surface *nsurf, uint buffer_mask)
 {
    struct gdi_surface *gsurf = gdi_surface(nsurf);
-   boolean ret;
 
-   gdi_surface_update_geometry(&gsurf->base);
-   ret = resource_surface_add_resources(gsurf->rsurf, buffer_mask);
-   gsurf->client_stamp = gsurf->server_stamp;
+   if (gsurf->client_stamp != gsurf->server_stamp) {
+      gdi_surface_update_geometry(&gsurf->base);
+      gsurf->client_stamp = gsurf->server_stamp;
+   }
 
-   return ret;
+   return resource_surface_add_resources(gsurf->rsurf, buffer_mask);
 }
 
 /**
@@ -170,10 +170,8 @@ gdi_surface_validate(struct native_surface *nsurf, uint attachment_mask,
    struct gdi_surface *gsurf = gdi_surface(nsurf);
    uint w, h;
 
-   if (gsurf->client_stamp != gsurf->server_stamp) {
-      if (!gdi_surface_update_buffers(&gsurf->base, attachment_mask))
-         return FALSE;
-   }
+   if (!gdi_surface_update_buffers(&gsurf->base, attachment_mask))
+      return FALSE;
 
    if (seq_num)
       *seq_num = gsurf->client_stamp;
@@ -233,7 +231,7 @@ gdi_display_create_window_surface(struct native_display *ndpy,
    }
 
    /* initialize the geometry */
-   gdi_surface_update_buffers(&gsurf->base, 0x0);
+   gdi_surface_update_geometry(&gsurf->base);
 
    gsurf->base.destroy = gdi_surface_destroy;
    gsurf->base.swap_buffers = gdi_surface_swap_buffers;
