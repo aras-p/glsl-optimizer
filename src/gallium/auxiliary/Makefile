@@ -33,6 +33,7 @@ C_SOURCES = \
 	draw/draw_pt_fetch_shade_emit.c \
 	draw/draw_pt_fetch_shade_pipeline.c \
 	draw/draw_pt_post_vs.c \
+	draw/draw_pt_so_emit.c \
 	draw/draw_pt_util.c \
 	draw/draw_pt_varray.c \
 	draw/draw_pt_vcache.c \

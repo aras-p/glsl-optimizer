@@ -40,6 +40,7 @@ struct fetch_pipeline_middle_end {
    struct draw_context *draw;
 
    struct pt_emit *emit;
+   struct pt_so_emit *so_emit;
    struct pt_fetch *fetch;
    struct pt_post_vs *post_vs;
 
@@ -99,6 +100,8 @@ static void fetch_pipeline_prepare( struct draw_pt_middle_end *middle,
 			    (boolean)draw->identity_viewport,
 			    (boolean)draw->rasterizer->gl_rasterization_rules,
 			    (draw->vs.edgeflag_output ? true : false) );    
+
+   draw_pt_so_emit_prepare( fpme->so_emit, prim );
 
    if (!(opt & PT_PIPELINE)) {
       draw_pt_emit_prepare( fpme->emit, 
@@ -173,6 +176,12 @@ static void fetch_pipeline_run( struct draw_pt_middle_end *middle,
                                   fpme->vertex_size,
                                   fpme->vertex_size);
    }
+
+   /* stream output needs to be done before clipping */
+   draw_pt_so_emit( fpme->so_emit,
+		    (const float (*)[4])pipeline_verts->data,
+		    fetch_count,
+		    fpme->vertex_size );
 
    if (draw_pt_post_vs_run( fpme->post_vs,
 			    pipeline_verts,
@@ -258,6 +267,12 @@ static void fetch_pipeline_linear_run( struct draw_pt_middle_end *middle,
                                   fpme->vertex_size);
    }
 
+   /* stream output needs to be done before clipping */
+   draw_pt_so_emit( fpme->so_emit,
+		    (const float (*)[4])pipeline_verts->data,
+		    count,
+		    fpme->vertex_size );
+
    if (draw_pt_post_vs_run( fpme->post_vs,
 			    pipeline_verts,
 			    count,
@@ -336,6 +351,12 @@ static boolean fetch_pipeline_linear_run_elts( struct draw_pt_middle_end *middle
                                   fpme->vertex_size);
    }
 
+   /* stream output needs to be done before clipping */
+   draw_pt_so_emit( fpme->so_emit,
+		    (const float (*)[4])pipeline_verts->data,
+		    count,
+		    fpme->vertex_size );
+
    if (draw_pt_post_vs_run( fpme->post_vs,
 			    pipeline_verts,
 			    count,
@@ -385,6 +406,9 @@ static void fetch_pipeline_destroy( struct draw_pt_middle_end *middle )
    if (fpme->emit)
       draw_pt_emit_destroy( fpme->emit );
 
+   if (fpme->so_emit)
+      draw_pt_so_emit_destroy( fpme->so_emit );
+
    if (fpme->post_vs)
       draw_pt_post_vs_destroy( fpme->post_vs );
 
@@ -417,6 +441,10 @@ struct draw_pt_middle_end *draw_pt_fetch_pipeline_or_emit( struct draw_context *
 
    fpme->emit = draw_pt_emit_create( draw );
    if (!fpme->emit) 
+      goto fail;
+
+   fpme->so_emit = draw_pt_so_emit_create( draw );
+   if (!fpme->so_emit)
       goto fail;
 
    return &fpme->base;

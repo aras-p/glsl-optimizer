@@ -348,9 +348,19 @@ struct pipe_resource
 
 struct pipe_stream_output_state
 {
+   /**< number of the output buffer to insert each element into */
+   int output_buffer[PIPE_MAX_SHADER_OUTPUTS];
+   /**< which register to grab each output from */
+   int register_index[PIPE_MAX_SHADER_OUTPUTS];
    /**< format for each output */
-   enum pipe_format format[PIPE_MAX_SHADER_OUTPUTS];
+   /**< TGSI_WRITEMASK signifying which components to output */
+   ubyte register_mask[PIPE_MAX_SHADER_OUTPUTS];
+   /**< number of outputs */
    int num_outputs;
+
+   /**< stride for an entire vertex, only used if all output_buffers
+    * are 0 */
+   unsigned stride;
 };
 
 /**

@@ -39,58 +39,12 @@ struct pt_emit {
    struct draw_context *draw;
 
    struct translate *translate;
-   struct translate *so_translate;
 
    struct translate_cache *cache;
    unsigned prim;
 
    const struct vertex_info *vinfo;
 };
-
-static void
-prepare_so_emit( struct pt_emit *emit,
-                 const struct vertex_info *vinfo )
-{
-   struct draw_context *draw = emit->draw;
-   unsigned i;
-   struct translate_key hw_key;
-   unsigned dst_offset = 0;
-   unsigned output_stride = 0;
-   boolean has_so = (draw->so.state.num_outputs > 0);
-
-   if (has_so) {
-
-      for (i = 0; i < draw->so.state.num_outputs; ++i) {
-         unsigned src_offset = (vinfo->attrib[i].src_index * 4 * sizeof(float) );
-         unsigned output_format = draw->so.state.format[i];
-         unsigned output_bytes = util_format_get_blocksize(output_format);
-
-         hw_key.element[i].type = TRANSLATE_ELEMENT_NORMAL;
-         hw_key.element[i].input_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
-         hw_key.element[i].input_buffer = 0;
-         hw_key.element[i].input_offset = src_offset;
-         hw_key.element[i].instance_divisor = 0;
-         hw_key.element[i].output_format = output_format;
-         hw_key.element[i].output_offset = dst_offset;
-
-         dst_offset += output_bytes;
-         output_stride += output_bytes;
-      }
-      hw_key.nr_elements = draw->so.state.num_outputs;
-      hw_key.output_stride = output_stride;
-
-      if (!emit->so_translate ||
-          translate_key_compare(&emit->so_translate->key, &hw_key) != 0)
-      {
-         translate_key_sanitize(&hw_key);
-         emit->so_translate = translate_cache_find(emit->cache, &hw_key);
-      }
-   } else {
-      /* no stream output */
-      emit->so_translate = NULL;
-   }
-}
-
 
 void draw_pt_emit_prepare( struct pt_emit *emit,
 			   unsigned prim,
@@ -168,8 +122,6 @@ void draw_pt_emit_prepare( struct pt_emit *emit,
    *max_vertices = (draw->render->max_vertex_buffer_bytes / 
                     (vinfo->size * 4));
 
-   prepare_so_emit( emit, vinfo );
-
    /* even number */
    *max_vertices = *max_vertices & ~1;
 }
@@ -184,7 +136,6 @@ void draw_pt_emit( struct pt_emit *emit,
 {
    struct draw_context *draw = emit->draw;
    struct translate *translate = emit->translate;
-   struct translate *so_translate = emit->so_translate;
    struct vbuf_render *render = draw->render;
    void *hw_verts;
 
@@ -236,18 +187,6 @@ void draw_pt_emit( struct pt_emit *emit,
                    draw->instance_id,
 		   hw_verts );
 
-   if (so_translate) {
-      void *so_buffer = draw->so.buffers[0];
-
-      /* XXX we only support single output buffer right now */
-      debug_assert(draw->so.num_buffers >= 0);
-
-      so_translate->set_buffer(translate, 0, vertex_data,
-                               stride, ~0);
-      so_translate->run(translate, 0, vertex_count,
-                        draw->instance_id, so_buffer);
-   }
-
    render->unmap_vertices( render, 
                            0, 
                            vertex_count - 1 );
@@ -267,7 +206,6 @@ void draw_pt_emit_linear(struct pt_emit *emit,
 {
    struct draw_context *draw = emit->draw;
    struct translate *translate = emit->translate;
-   struct translate *so_translate = emit->so_translate;
    struct vbuf_render *render = draw->render;
    void *hw_verts;
 
@@ -308,18 +246,6 @@ void draw_pt_emit_linear(struct pt_emit *emit,
                   count,
                   draw->instance_id,
                   hw_verts);
-
-   if (so_translate) {
-      void *so_buffer = draw->so.buffers[0];
-
-      /* XXX we only support single output buffer right now */
-      debug_assert(draw->so.num_buffers >= 0);
-
-      so_translate->set_buffer(translate, 0,
-                               vertex_data, stride, count - 1);
-      so_translate->run(translate, 0, count,
-                        draw->instance_id, so_buffer);
-   }
 
    if (0) {
       unsigned i;
