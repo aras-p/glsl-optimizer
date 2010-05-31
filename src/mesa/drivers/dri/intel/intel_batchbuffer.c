@@ -55,6 +55,7 @@ intel_batchbuffer_reset(struct intel_batchbuffer *batch)
    }
    batch->size = intel->maxBatchSize;
    batch->ptr = batch->map;
+   batch->reserved_space = BATCH_RESERVED;
    batch->dirty_state = ~0;
 }
 
@@ -179,8 +180,6 @@ _intel_batchbuffer_flush(struct intel_batchbuffer *batch, const char *file,
 
    /* Check that we didn't just wrap our batchbuffer at a bad time. */
    assert(!intel->no_batch_wrap);
-
-   batch->reserved_space = BATCH_RESERVED;
 
    /* TODO: Just pass the relocation list and dma buffer up to the
     * kernel.
