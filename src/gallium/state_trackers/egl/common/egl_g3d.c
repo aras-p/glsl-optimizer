@@ -426,7 +426,7 @@ egl_g3d_invalid_surface(struct native_display *ndpy,
 }
 
 static struct native_event_handler egl_g3d_native_event_handler = {
-   .invalid_surface = egl_g3d_invalid_surface
+   egl_g3d_invalid_surface
 };
 
 static EGLBoolean
