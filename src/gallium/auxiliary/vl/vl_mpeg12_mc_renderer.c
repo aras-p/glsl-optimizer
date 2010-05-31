@@ -886,7 +886,7 @@ gen_macroblock_verts(struct vl_mpeg12_mc_renderer *r,
             }
          }
 
-         if (mb->mb_type == PIPE_MPEG12_MOTION_TYPE_FRAME) {
+         if (mb->mo_type == PIPE_MPEG12_MOTION_TYPE_FRAME) {
             for (i = 0; i < 24 * 2; i += 2) {
                vb[i].x = mo_vec[0].x;
                vb[i].y = mo_vec[0].y;
