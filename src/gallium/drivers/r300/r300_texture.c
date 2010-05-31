@@ -963,9 +963,9 @@ struct pipe_resource* r300_texture_create(struct pipe_screen* screen,
                                      base->bind,
 				     tex->size);
     rws->buffer_set_tiling(rws, tex->buffer,
-			   tex->pitch[0],
-			   tex->microtile,
-			   tex->macrotile);
+            tex->pitch[0] * util_format_get_blocksize(tex->b.b.format),
+            tex->microtile,
+            tex->macrotile);
 
     if (!tex->buffer) {
         FREE(tex);
@@ -1093,9 +1093,9 @@ r300_texture_from_handle(struct pipe_screen* screen,
 
     if (override_zb_flags) {
         rws->buffer_set_tiling(rws, tex->buffer,
-                               tex->pitch[0],
-                               tex->microtile,
-                               tex->macrotile);
+                tex->pitch[0] * util_format_get_blocksize(tex->b.b.format),
+                tex->microtile,
+                tex->macrotile);
     }
     return (struct pipe_resource*)tex;
 }

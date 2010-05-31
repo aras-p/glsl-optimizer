@@ -540,18 +540,18 @@ static void r300_fb_set_tiling_flags(struct r300_context *r300,
         level = new_state->cbufs[i]->level;
 
         r300->rws->buffer_set_tiling(r300->rws, tex->buffer,
-                                        tex->pitch[0],
-                                        tex->microtile,
-                                        tex->mip_macrotile[level]);
+                tex->pitch[0] * util_format_get_blocksize(tex->b.b.format),
+                tex->microtile,
+                tex->mip_macrotile[level]);
     }
     if (new_state->zsbuf) {
         tex = r300_texture(new_state->zsbuf->texture);
         level = new_state->zsbuf->level;
 
         r300->rws->buffer_set_tiling(r300->rws, tex->buffer,
-                                        tex->pitch[0],
-                                        tex->microtile,
-                                        tex->mip_macrotile[level]);
+                tex->pitch[0] * util_format_get_blocksize(tex->b.b.format),
+                tex->microtile,
+                tex->mip_macrotile[level]);
     }
 }
 
