@@ -1,0 +1,30 @@
+#######################################################################
+# SConscript for egl-swrast target
+
+Import('*')
+
+if env['platform'] == 'windows':
+
+    env = env.Clone()
+
+    env.Append(LIBS = [
+        'gdi32',
+        'user32',
+        'kernel32',
+        'ws2_32',
+    ])
+
+    drivers = [softpipe]
+    if env['llvm']:
+        drivers += [llvmpipe]
+    drivers += [identity, trace, rbug]
+
+    env['no_import_lib'] = 1
+
+    egl_gdi_swrast = env.SharedLibrary(
+        target ='egl_gdi_swrast',
+	source = 'swrast_glue.c',
+        LIBS = st_egl_gdi + ws_gdi + drivers + gallium + egl + env['LIBS'],
+    )
+
+    env.InstallSharedLibrary(egl_gdi_swrast)
