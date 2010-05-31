@@ -42,6 +42,7 @@
 #include "util/u_format.h"
 #include "util/u_memory.h"
 #include "util/u_sampler.h"
+#include "util/u_string.h"
 
 
 #include "asm_filters.h"
@@ -271,7 +272,7 @@ static struct vg_shader * setup_convolution(struct vg_context *ctx, void *user_d
    VGint num_consts = (VGint)(long)(user_data);
    struct vg_shader *shader;
 
-   snprintf(buffer, 1023, convolution_asm, num_consts, num_consts / 2 + 1);
+   util_snprintf(buffer, 1023, convolution_asm, num_consts, num_consts / 2 + 1);
 
    shader = shader_create_from_text(ctx->pipe, buffer, 200,
                                     PIPE_SHADER_FRAGMENT);
@@ -299,16 +300,16 @@ static struct vg_shader * setup_lookup_single(struct vg_context *ctx, void *user
 
    switch(channel) {
    case VG_RED:
-      snprintf(buffer, 1023, lookup_single_asm, "xxxx");
+      util_snprintf(buffer, 1023, lookup_single_asm, "xxxx");
       break;
    case VG_GREEN:
-      snprintf(buffer, 1023, lookup_single_asm, "yyyy");
+      util_snprintf(buffer, 1023, lookup_single_asm, "yyyy");
       break;
    case VG_BLUE:
-      snprintf(buffer, 1023, lookup_single_asm, "zzzz");
+      util_snprintf(buffer, 1023, lookup_single_asm, "zzzz");
       break;
    case VG_ALPHA:
-      snprintf(buffer, 1023, lookup_single_asm, "wwww");
+      util_snprintf(buffer, 1023, lookup_single_asm, "wwww");
       break;
    default:
       debug_assert(!"Unknown color channel");
