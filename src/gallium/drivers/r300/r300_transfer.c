@@ -40,9 +40,6 @@ struct r300_transfer {
 
     /* Detiled texture. */
     struct r300_texture *detiled_texture;
-
-    /* Transfer and format flags. */
-    unsigned render_target_usage;
 };
 
 /* Convenience cast wrapper. */
@@ -125,11 +122,6 @@ r300_texture_get_transfer(struct pipe_context *ctx,
         /* If the texture is tiled, we must create a temporary detiled texture
          * for this transfer. */
         if (tex->microtile || tex->macrotile) {
-            trans->render_target_usage =
-                util_format_is_depth_or_stencil(texture->format) ?
-                PIPE_BIND_DEPTH_STENCIL :
-                PIPE_BIND_RENDER_TARGET;
-
             base.target = PIPE_TEXTURE_2D;
             base.format = texture->format;
             base.width0 = box->width;
@@ -144,7 +136,7 @@ r300_texture_get_transfer(struct pipe_context *ctx,
             /* For texture reading, the temporary (detiled) texture is used as
              * a render target when blitting from a tiled texture. */
             if (usage & PIPE_TRANSFER_READ) {
-                base.bind |= trans->render_target_usage;
+                base.bind |= PIPE_BIND_RENDER_TARGET;
             }
             /* For texture writing, the temporary texture is used as a sampler
              * when blitting into a tiled texture. */
@@ -244,4 +236,3 @@ void r300_texture_transfer_unmap(struct pipe_context *ctx,
         rws->buffer_unmap(rws, tex->buffer);
     }
 }
-
