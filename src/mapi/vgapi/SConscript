@@ -38,7 +38,7 @@ if env['platform'] != 'winddk':
 
 	vgapi_objects = []
 	for s in mapi_sources:
-		o = env.Object(s[:-2], '../mapi/' + s)
+		o = env.SharedObject(s[:-2], '../mapi/' + s)
 		vgapi_objects.append(o)
 
 	env.Depends(vgapi_objects, vgapi_header)
