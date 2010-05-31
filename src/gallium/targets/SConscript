@@ -33,6 +33,7 @@ if 'xorg' in env['statetrackers']:
 if 'egl' in env['statetrackers']:
 	SConscript([
 		'egl-swrast/SConscript',
+		'egl-apis/SConscript',
 	])
 
 # Ideally all non-target directories would produce convenience
