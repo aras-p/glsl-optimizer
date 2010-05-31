@@ -88,6 +88,7 @@
 #include "lp_bld_depth.h"
 #include "lp_bld_interp.h"
 #include "lp_context.h"
+#include "lp_debug.h"
 #include "lp_perf.h"
 #include "lp_screen.h"
 #include "lp_setup.h"
@@ -1011,7 +1012,7 @@ llvmpipe_create_fs_state(struct pipe_context *pipe,
    /* we need to keep a local copy of the tokens */
    shader->base.tokens = tgsi_dup_tokens(templ->tokens);
 
-   if (gallivm_debug & GALLIVM_DEBUG_TGSI) {
+   if (LP_DEBUG & DEBUG_TGSI) {
       debug_printf("llvmpipe: Create fragment shader %p:\n", (void *) shader);
       tgsi_dump(templ->tokens, 0);
    }
