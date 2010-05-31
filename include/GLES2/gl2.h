@@ -1,6 +1,7 @@
 #ifndef __gl2_h_
 #define __gl2_h_
 
+/* $Revision: 10602 $ on $Date:: 2010-03-04 22:35:34 -0800 #$ */
 
 #include <GLES2/gl2platform.h>
 
@@ -9,62 +10,33 @@ extern "C" {
 #endif
 
 /*
-** License Applicability. Except to the extent portions of this file are
-** made subject to an alternative license as permitted in the SGI Free
-** Software License B, Version 1.0 (the "License"), the contents of this
-** file are subject only to the provisions of the License. You may not use
-** this file except in compliance with the License. You may obtain a copy
-** of the License at Silicon Graphics, Inc., attn: Legal Services, 1600
-** Amphitheatre Parkway, Mountain View, CA 94043-1351, or at:
-**
-** http://oss.sgi.com/projects/FreeB
-**
-** Note that, as provided in the License, the Software is distributed on an
-** "AS IS" basis, with ALL EXPRESS AND IMPLIED WARRANTIES AND CONDITIONS
-** DISCLAIMED, INCLUDING, WITHOUT LIMITATION, ANY IMPLIED WARRANTIES AND
-** CONDITIONS OF MERCHANTABILITY, SATISFACTORY QUALITY, FITNESS FOR A
-** PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
-**
-** Original Code. The Original Code is: OpenGL Sample Implementation,
-** Version 1.2.1, released January 26, 2000, developed by Silicon Graphics,
-** Inc. The Original Code is Copyright (c) 1991-2000 Silicon Graphics, Inc.
-** Copyright in any portions created by third parties is as indicated
-** elsewhere herein. All Rights Reserved.
-**
-** Additional Notice Provisions: The application programming interfaces
-** established by SGI in conjunction with the Original Code are The
-** OpenGL(R) Graphics System: A Specification (Version 1.2.1), released
-** April 1, 1999; The OpenGL(R) Graphics System Utility Library (Version
-** 1.3), released November 4, 1998; and OpenGL(R) Graphics with the X
-** Window System(R) (Version 1.3), released October 19, 1998. This software
-** was created using the OpenGL(R) version 1.2.1 Sample Implementation
-** published by SGI, but has not been independently verified as being
-** compliant with the OpenGL(R) version 1.2.1 Specification.
-*/
+ * This document is licensed under the SGI Free Software B License Version
+ * 2.0. For details, see http://oss.sgi.com/projects/FreeB/ .
+ */
 
 /*-------------------------------------------------------------------------
  * Data type definitions
  *-----------------------------------------------------------------------*/
 
-typedef void            GLvoid;
-typedef unsigned int    GLenum;
-typedef unsigned char   GLboolean;
-typedef unsigned int    GLbitfield;
-typedef signed char     GLbyte;
-typedef short           GLshort;
-typedef int             GLint;
-typedef int             GLsizei;
-typedef unsigned char   GLubyte;
-typedef unsigned short  GLushort;
-typedef unsigned int    GLuint;
-typedef float           GLfloat;
-typedef float           GLclampf;
-typedef int             GLfixed;
-typedef int             GLclampx;
+typedef void             GLvoid;
+typedef char             GLchar;
+typedef unsigned int     GLenum;
+typedef unsigned char    GLboolean;
+typedef unsigned int     GLbitfield;
+typedef khronos_int8_t   GLbyte;
+typedef short            GLshort;
+typedef int              GLint;
+typedef int              GLsizei;
+typedef khronos_uint8_t  GLubyte;
+typedef unsigned short   GLushort;
+typedef unsigned int     GLuint;
+typedef khronos_float_t  GLfloat;
+typedef khronos_float_t  GLclampf;
+typedef khronos_int32_t  GLfixed;
 
 /* GL types for handling large vertex buffer objects */
-typedef int             GLintptr;
-typedef int             GLsizeiptr;
+typedef khronos_intptr_t GLintptr;
+typedef khronos_ssize_t  GLsizeiptr;
 
 /* OpenGL ES core versions */
 #define GL_ES_VERSION_2_0                 1
@@ -77,9 +49,6 @@ typedef int             GLsizeiptr;
 /* Boolean */
 #define GL_FALSE                          0
 #define GL_TRUE                           1
-
-/* \todo check that this should be in core. */
-#define GL_NONE                           0
 
 /* BeginMode */
 #define GL_POINTS                         0x0000
@@ -443,7 +412,6 @@ typedef int             GLsizeiptr;
 #define GL_SHADER_COMPILER                0x8DFA
 
 /* Shader Binary */
-#define GL_PLATFORM_BINARY                0x8D63
 #define GL_SHADER_BINARY_FORMATS          0x8DF8
 #define GL_NUM_SHADER_BINARY_FORMATS      0x8DF9
 
@@ -485,11 +453,12 @@ typedef int             GLsizeiptr;
 #define GL_DEPTH_ATTACHMENT               0x8D00
 #define GL_STENCIL_ATTACHMENT             0x8D20
 
+#define GL_NONE                           0
+
 #define GL_FRAMEBUFFER_COMPLETE                      0x8CD5
 #define GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT         0x8CD6
 #define GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT 0x8CD7
 #define GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS         0x8CD9
-#define GL_FRAMEBUFFER_INCOMPLETE_FORMATS            0x8CDA
 #define GL_FRAMEBUFFER_UNSUPPORTED                   0x8CDD
 
 #define GL_FRAMEBUFFER_BINDING            0x8CA6
@@ -504,18 +473,18 @@ typedef int             GLsizeiptr;
 
 GL_APICALL void         GL_APIENTRY glActiveTexture (GLenum texture);
 GL_APICALL void         GL_APIENTRY glAttachShader (GLuint program, GLuint shader);
-GL_APICALL void         GL_APIENTRY glBindAttribLocation (GLuint program, GLuint index, const char* name);
+GL_APICALL void         GL_APIENTRY glBindAttribLocation (GLuint program, GLuint index, const GLchar* name);
 GL_APICALL void         GL_APIENTRY glBindBuffer (GLenum target, GLuint buffer);
 GL_APICALL void         GL_APIENTRY glBindFramebuffer (GLenum target, GLuint framebuffer);
 GL_APICALL void         GL_APIENTRY glBindRenderbuffer (GLenum target, GLuint renderbuffer);
 GL_APICALL void         GL_APIENTRY glBindTexture (GLenum target, GLuint texture);
-GL_APICALL void         GL_APIENTRY glBlendColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
-GL_APICALL void         GL_APIENTRY glBlendEquation( GLenum mode );
-GL_APICALL void         GL_APIENTRY glBlendEquationSeparate(GLenum modeRGB, GLenum modeAlpha);
+GL_APICALL void         GL_APIENTRY glBlendColor (GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
+GL_APICALL void         GL_APIENTRY glBlendEquation ( GLenum mode );
+GL_APICALL void         GL_APIENTRY glBlendEquationSeparate (GLenum modeRGB, GLenum modeAlpha);
 GL_APICALL void         GL_APIENTRY glBlendFunc (GLenum sfactor, GLenum dfactor);
 GL_APICALL void         GL_APIENTRY glBlendFuncSeparate (GLenum srcRGB, GLenum dstRGB, GLenum srcAlpha, GLenum dstAlpha);
-GL_APICALL void         GL_APIENTRY glBufferData (GLenum target, GLsizeiptr size, const void* data, GLenum usage);
-GL_APICALL void         GL_APIENTRY glBufferSubData (GLenum target, GLintptr offset, GLsizeiptr size, const void* data);
+GL_APICALL void         GL_APIENTRY glBufferData (GLenum target, GLsizeiptr size, const GLvoid* data, GLenum usage);
+GL_APICALL void         GL_APIENTRY glBufferSubData (GLenum target, GLintptr offset, GLsizeiptr size, const GLvoid* data);
 GL_APICALL GLenum       GL_APIENTRY glCheckFramebufferStatus (GLenum target);
 GL_APICALL void         GL_APIENTRY glClear (GLbitfield mask);
 GL_APICALL void         GL_APIENTRY glClearColor (GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
@@ -523,8 +492,8 @@ GL_APICALL void         GL_APIENTRY glClearDepthf (GLclampf depth);
 GL_APICALL void         GL_APIENTRY glClearStencil (GLint s);
 GL_APICALL void         GL_APIENTRY glColorMask (GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha);
 GL_APICALL void         GL_APIENTRY glCompileShader (GLuint shader);
-GL_APICALL void         GL_APIENTRY glCompressedTexImage2D (GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const void* data);
-GL_APICALL void         GL_APIENTRY glCompressedTexSubImage2D (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const void* data);
+GL_APICALL void         GL_APIENTRY glCompressedTexImage2D (GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const GLvoid* data);
+GL_APICALL void         GL_APIENTRY glCompressedTexSubImage2D (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const GLvoid* data);
 GL_APICALL void         GL_APIENTRY glCopyTexImage2D (GLenum target, GLint level, GLenum internalformat, GLint x, GLint y, GLsizei width, GLsizei height, GLint border);
 GL_APICALL void         GL_APIENTRY glCopyTexSubImage2D (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint x, GLint y, GLsizei width, GLsizei height);
 GL_APICALL GLuint       GL_APIENTRY glCreateProgram (void);
@@ -543,7 +512,7 @@ GL_APICALL void         GL_APIENTRY glDetachShader (GLuint program, GLuint shade
 GL_APICALL void         GL_APIENTRY glDisable (GLenum cap);
 GL_APICALL void         GL_APIENTRY glDisableVertexAttribArray (GLuint index);
 GL_APICALL void         GL_APIENTRY glDrawArrays (GLenum mode, GLint first, GLsizei count);
-GL_APICALL void         GL_APIENTRY glDrawElements (GLenum mode, GLsizei count, GLenum type, const void* indices);
+GL_APICALL void         GL_APIENTRY glDrawElements (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
 GL_APICALL void         GL_APIENTRY glEnable (GLenum cap);
 GL_APICALL void         GL_APIENTRY glEnableVertexAttribArray (GLuint index);
 GL_APICALL void         GL_APIENTRY glFinish (void);
@@ -556,10 +525,10 @@ GL_APICALL void         GL_APIENTRY glGenerateMipmap (GLenum target);
 GL_APICALL void         GL_APIENTRY glGenFramebuffers (GLsizei n, GLuint* framebuffers);
 GL_APICALL void         GL_APIENTRY glGenRenderbuffers (GLsizei n, GLuint* renderbuffers);
 GL_APICALL void         GL_APIENTRY glGenTextures (GLsizei n, GLuint* textures);
-GL_APICALL void         GL_APIENTRY glGetActiveAttrib (GLuint program, GLuint index, GLsizei bufsize, GLsizei* length, GLint* size, GLenum* type, char* name);
-GL_APICALL void         GL_APIENTRY glGetActiveUniform (GLuint program, GLuint index, GLsizei bufsize, GLsizei* length, GLint* size, GLenum* type, char* name);
+GL_APICALL void         GL_APIENTRY glGetActiveAttrib (GLuint program, GLuint index, GLsizei bufsize, GLsizei* length, GLint* size, GLenum* type, GLchar* name);
+GL_APICALL void         GL_APIENTRY glGetActiveUniform (GLuint program, GLuint index, GLsizei bufsize, GLsizei* length, GLint* size, GLenum* type, GLchar* name);
 GL_APICALL void         GL_APIENTRY glGetAttachedShaders (GLuint program, GLsizei maxcount, GLsizei* count, GLuint* shaders);
-GL_APICALL int          GL_APIENTRY glGetAttribLocation (GLuint program, const char* name);
+GL_APICALL int          GL_APIENTRY glGetAttribLocation (GLuint program, const GLchar* name);
 GL_APICALL void         GL_APIENTRY glGetBooleanv (GLenum pname, GLboolean* params);
 GL_APICALL void         GL_APIENTRY glGetBufferParameteriv (GLenum target, GLenum pname, GLint* params);
 GL_APICALL GLenum       GL_APIENTRY glGetError (void);
@@ -567,21 +536,21 @@ GL_APICALL void         GL_APIENTRY glGetFloatv (GLenum pname, GLfloat* params);
 GL_APICALL void         GL_APIENTRY glGetFramebufferAttachmentParameteriv (GLenum target, GLenum attachment, GLenum pname, GLint* params);
 GL_APICALL void         GL_APIENTRY glGetIntegerv (GLenum pname, GLint* params);
 GL_APICALL void         GL_APIENTRY glGetProgramiv (GLuint program, GLenum pname, GLint* params);
-GL_APICALL void         GL_APIENTRY glGetProgramInfoLog (GLuint program, GLsizei bufsize, GLsizei* length, char* infolog);
+GL_APICALL void         GL_APIENTRY glGetProgramInfoLog (GLuint program, GLsizei bufsize, GLsizei* length, GLchar* infolog);
 GL_APICALL void         GL_APIENTRY glGetRenderbufferParameteriv (GLenum target, GLenum pname, GLint* params);
 GL_APICALL void         GL_APIENTRY glGetShaderiv (GLuint shader, GLenum pname, GLint* params);
-GL_APICALL void         GL_APIENTRY glGetShaderInfoLog (GLuint shader, GLsizei bufsize, GLsizei* length, char* infolog);
+GL_APICALL void         GL_APIENTRY glGetShaderInfoLog (GLuint shader, GLsizei bufsize, GLsizei* length, GLchar* infolog);
 GL_APICALL void         GL_APIENTRY glGetShaderPrecisionFormat (GLenum shadertype, GLenum precisiontype, GLint* range, GLint* precision);
-GL_APICALL void         GL_APIENTRY glGetShaderSource (GLuint shader, GLsizei bufsize, GLsizei* length, char* source);
+GL_APICALL void         GL_APIENTRY glGetShaderSource (GLuint shader, GLsizei bufsize, GLsizei* length, GLchar* source);
 GL_APICALL const GLubyte* GL_APIENTRY glGetString (GLenum name);
 GL_APICALL void         GL_APIENTRY glGetTexParameterfv (GLenum target, GLenum pname, GLfloat* params);
 GL_APICALL void         GL_APIENTRY glGetTexParameteriv (GLenum target, GLenum pname, GLint* params);
 GL_APICALL void         GL_APIENTRY glGetUniformfv (GLuint program, GLint location, GLfloat* params);
 GL_APICALL void         GL_APIENTRY glGetUniformiv (GLuint program, GLint location, GLint* params);
-GL_APICALL int          GL_APIENTRY glGetUniformLocation (GLuint program, const char* name);
+GL_APICALL int          GL_APIENTRY glGetUniformLocation (GLuint program, const GLchar* name);
 GL_APICALL void         GL_APIENTRY glGetVertexAttribfv (GLuint index, GLenum pname, GLfloat* params);
 GL_APICALL void         GL_APIENTRY glGetVertexAttribiv (GLuint index, GLenum pname, GLint* params);
-GL_APICALL void         GL_APIENTRY glGetVertexAttribPointerv (GLuint index, GLenum pname, void** pointer);
+GL_APICALL void         GL_APIENTRY glGetVertexAttribPointerv (GLuint index, GLenum pname, GLvoid** pointer);
 GL_APICALL void         GL_APIENTRY glHint (GLenum target, GLenum mode);
 GL_APICALL GLboolean    GL_APIENTRY glIsBuffer (GLuint buffer);
 GL_APICALL GLboolean    GL_APIENTRY glIsEnabled (GLenum cap);
@@ -594,25 +563,25 @@ GL_APICALL void         GL_APIENTRY glLineWidth (GLfloat width);
 GL_APICALL void         GL_APIENTRY glLinkProgram (GLuint program);
 GL_APICALL void         GL_APIENTRY glPixelStorei (GLenum pname, GLint param);
 GL_APICALL void         GL_APIENTRY glPolygonOffset (GLfloat factor, GLfloat units);
-GL_APICALL void         GL_APIENTRY glReadPixels (GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, void* pixels);
+GL_APICALL void         GL_APIENTRY glReadPixels (GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid* pixels);
 GL_APICALL void         GL_APIENTRY glReleaseShaderCompiler (void);
 GL_APICALL void         GL_APIENTRY glRenderbufferStorage (GLenum target, GLenum internalformat, GLsizei width, GLsizei height);
 GL_APICALL void         GL_APIENTRY glSampleCoverage (GLclampf value, GLboolean invert);
 GL_APICALL void         GL_APIENTRY glScissor (GLint x, GLint y, GLsizei width, GLsizei height);
-GL_APICALL void         GL_APIENTRY glShaderBinary (GLint n, const GLuint* shaders, GLenum binaryformat, const void* binary, GLint length);
-GL_APICALL void         GL_APIENTRY glShaderSource (GLuint shader, GLsizei count, const char** string, const GLint* length);
+GL_APICALL void         GL_APIENTRY glShaderBinary (GLsizei n, const GLuint* shaders, GLenum binaryformat, const GLvoid* binary, GLsizei length);
+GL_APICALL void         GL_APIENTRY glShaderSource (GLuint shader, GLsizei count, const GLchar** string, const GLint* length);
 GL_APICALL void         GL_APIENTRY glStencilFunc (GLenum func, GLint ref, GLuint mask);
 GL_APICALL void         GL_APIENTRY glStencilFuncSeparate (GLenum face, GLenum func, GLint ref, GLuint mask);
 GL_APICALL void         GL_APIENTRY glStencilMask (GLuint mask);
 GL_APICALL void         GL_APIENTRY glStencilMaskSeparate (GLenum face, GLuint mask);
 GL_APICALL void         GL_APIENTRY glStencilOp (GLenum fail, GLenum zfail, GLenum zpass);
 GL_APICALL void         GL_APIENTRY glStencilOpSeparate (GLenum face, GLenum fail, GLenum zfail, GLenum zpass);
-GL_APICALL void         GL_APIENTRY glTexImage2D (GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const void* pixels);
+GL_APICALL void         GL_APIENTRY glTexImage2D (GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid* pixels);
 GL_APICALL void         GL_APIENTRY glTexParameterf (GLenum target, GLenum pname, GLfloat param);
 GL_APICALL void         GL_APIENTRY glTexParameterfv (GLenum target, GLenum pname, const GLfloat* params);
 GL_APICALL void         GL_APIENTRY glTexParameteri (GLenum target, GLenum pname, GLint param);
 GL_APICALL void         GL_APIENTRY glTexParameteriv (GLenum target, GLenum pname, const GLint* params);
-GL_APICALL void         GL_APIENTRY glTexSubImage2D (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const void* pixels);
+GL_APICALL void         GL_APIENTRY glTexSubImage2D (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid* pixels);
 GL_APICALL void         GL_APIENTRY glUniform1f (GLint location, GLfloat x);
 GL_APICALL void         GL_APIENTRY glUniform1fv (GLint location, GLsizei count, const GLfloat* v);
 GL_APICALL void         GL_APIENTRY glUniform1i (GLint location, GLint x);
@@ -642,7 +611,7 @@ GL_APICALL void         GL_APIENTRY glVertexAttrib3f (GLuint indx, GLfloat x, GL
 GL_APICALL void         GL_APIENTRY glVertexAttrib3fv (GLuint indx, const GLfloat* values);
 GL_APICALL void         GL_APIENTRY glVertexAttrib4f (GLuint indx, GLfloat x, GLfloat y, GLfloat z, GLfloat w);
 GL_APICALL void         GL_APIENTRY glVertexAttrib4fv (GLuint indx, const GLfloat* values);
-GL_APICALL void         GL_APIENTRY glVertexAttribPointer (GLuint indx, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void* ptr);
+GL_APICALL void         GL_APIENTRY glVertexAttribPointer (GLuint indx, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid* ptr);
 GL_APICALL void         GL_APIENTRY glViewport (GLint x, GLint y, GLsizei width, GLsizei height);
 
 #ifdef __cplusplus

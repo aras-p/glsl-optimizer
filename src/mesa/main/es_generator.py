@@ -203,9 +203,6 @@ print """
 typedef double GLdouble;
 typedef double GLclampd;
 
-/* This type is normally in glext.h, but needed here */
-typedef char GLchar;
-
 /* Mesa error handling requires these */
 extern void *_mesa_get_current_context(void);
 extern void _mesa_error(void *ctx, GLenum error, const char *fmtString, ... );
