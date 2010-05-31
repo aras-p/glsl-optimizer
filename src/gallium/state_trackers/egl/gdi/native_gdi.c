@@ -37,6 +37,7 @@
 #include "softpipe/sp_public.h"
 #include "gdi/gdi_sw_winsys.h"
 
+#include "common/native_helper.h"
 #include "common/native.h"
 
 struct gdi_display {
@@ -59,11 +60,8 @@ struct gdi_surface {
 
    unsigned int server_stamp;
    unsigned int client_stamp;
-   int width, height;
-   uint valid_mask;
 
-   struct pipe_resource *resources[NUM_NATIVE_ATTACHMENTS];
-   struct pipe_surface *present_surface;
+   struct resource_surface *rsurf;
 };
 
 static INLINE struct gdi_display *
@@ -78,141 +76,50 @@ gdi_surface(const struct native_surface *nsurf)
    return (struct gdi_surface *) nsurf;
 }
 
-static boolean
-gdi_surface_alloc_buffer(struct native_surface *nsurf,
-                         enum native_attachment which)
-{
-   struct gdi_surface *gsurf = gdi_surface(nsurf);
-   struct pipe_screen *screen = gsurf->gdpy->base.screen;
-   struct pipe_resource templ;
-
-   pipe_resource_reference(&gsurf->resources[which], NULL);
-
-   memset(&templ, 0, sizeof(templ));
-   templ.target = PIPE_TEXTURE_2D;
-   templ.format = gsurf->color_format;
-   templ.width0 = gsurf->width;
-   templ.height0 = gsurf->height;
-   templ.depth0 = 1;
-   templ.bind = PIPE_BIND_RENDER_TARGET |
-                PIPE_BIND_SCANOUT |
-                PIPE_BIND_DISPLAY_TARGET;
-
-   gsurf->resources[which] = screen->resource_create(screen, &templ);
-
-   return (gsurf->resources[which] != NULL);
-}
-
 /**
- * Update the geometry of the surface.  Return TRUE if the geometry has changed
- * since last call.
+ * Update the geometry of the surface.  This is a slow functions.
  */
-static boolean
+static void
 gdi_surface_update_geometry(struct native_surface *nsurf)
 {
    struct gdi_surface *gsurf = gdi_surface(nsurf);
    RECT rect;
-   unsigned int w, h;
-   boolean updated = FALSE;
+   uint w, h;
 
    GetClientRect(gsurf->hWnd, &rect);
    w = rect.right - rect.left;
    h = rect.bottom - rect.top;
 
-   if (gsurf->width != w || gsurf->height != h) {
-      gsurf->width = w;
-      gsurf->height = h;
-
+   if (resource_surface_set_size(gsurf->rsurf, w, h))
       gsurf->server_stamp++;
-      updated = TRUE;
-   }
-
-   return updated;
 }
 
 /**
- * Update the buffers of the surface.  It is a slow function due to the
- * round-trip to the server.
+ * Update the buffers of the surface.
  */
 static boolean
 gdi_surface_update_buffers(struct native_surface *nsurf, uint buffer_mask)
 {
    struct gdi_surface *gsurf = gdi_surface(nsurf);
-   boolean updated;
-   uint new_valid;
-   int att;
+   boolean ret;
 
-   updated = gdi_surface_update_geometry(&gsurf->base);
-   if (updated) {
-      /* all buffers become invalid */
-      gsurf->valid_mask = 0x0;
-   }
-   else {
-      buffer_mask &= ~gsurf->valid_mask;
-      /* all requested buffers are valid */
-      if (!buffer_mask) {
-         gsurf->client_stamp = gsurf->server_stamp;
-         return TRUE;
-      }
-   }
-
-   new_valid = 0x0;
-   for (att = 0; att < NUM_NATIVE_ATTACHMENTS; att++) {
-      if (native_attachment_mask_test(buffer_mask, att)) {
-         /* reallocate the texture */
-         if (!gdi_surface_alloc_buffer(&gsurf->base, att))
-            break;
-
-         new_valid |= (1 << att);
-         if (buffer_mask == new_valid)
-            break;
-      }
-   }
-
-   gsurf->valid_mask |= new_valid;
+   gdi_surface_update_geometry(&gsurf->base);
+   ret = resource_surface_add_resources(gsurf->rsurf, buffer_mask);
    gsurf->client_stamp = gsurf->server_stamp;
 
-   return (new_valid == buffer_mask);
+   return ret;
 }
 
-static boolean
-gdi_surface_present(struct native_surface *nsurf,
-                    enum native_attachment which)
-{
-   struct gdi_surface *gsurf = gdi_surface(nsurf);
-   struct pipe_screen *screen = gsurf->gdpy->base.screen;
-   struct pipe_resource *pres = gsurf->resources[which];
-   struct pipe_surface *psurf;
-   HDC hDC;
-
-   if (!pres)
-      return TRUE;
-
-   psurf = gsurf->present_surface;
-   if (!psurf || psurf->texture != pres) {
-      pipe_surface_reference(&gsurf->present_surface, NULL);
-
-      psurf = screen->get_tex_surface(screen, pres,
-            0, 0, 0, PIPE_BIND_DISPLAY_TARGET);
-      if (!psurf)
-         return FALSE;
-
-      gsurf->present_surface = psurf;
-   }
-
-   hDC = GetDC(gsurf->hWnd);
-   screen->flush_frontbuffer(screen, psurf, (void *) hDC);
-   ReleaseDC(gsurf->hWnd, hDC);
-
-   return TRUE;
-}
-
+/**
+ * Emulate an invalidate event.
+ */
 static void
-gdi_surface_notify_invalid(struct native_surface *nsurf)
+gdi_surface_invalidate(struct native_surface *nsurf)
 {
    struct gdi_surface *gsurf = gdi_surface(nsurf);
    struct gdi_display *gdpy = gsurf->gdpy;
 
+   gsurf->server_stamp++;
    gdpy->event_handler->invalid_surface(&gdpy->base,
          &gsurf->base, gsurf->server_stamp);
 }
@@ -221,12 +128,16 @@ static boolean
 gdi_surface_flush_frontbuffer(struct native_surface *nsurf)
 {
    struct gdi_surface *gsurf = gdi_surface(nsurf);
+   HDC hDC;
    boolean ret;
 
-   ret = gdi_surface_present(&gsurf->base, NATIVE_ATTACHMENT_FRONT_LEFT);
+   hDC = GetDC(gsurf->hWnd);
+   ret = resource_surface_present(gsurf->rsurf,
+         NATIVE_ATTACHMENT_FRONT_LEFT, (void *) hDC);
+   ReleaseDC(gsurf->hWnd, hDC);
+
    /* force buffers to be updated in next validation call */
-   gsurf->server_stamp++;
-   gdi_surface_notify_invalid(&gsurf->base);
+   gdi_surface_invalidate(&gsurf->base);
 
    return ret;
 }
@@ -235,24 +146,18 @@ static boolean
 gdi_surface_swap_buffers(struct native_surface *nsurf)
 {
    struct gdi_surface *gsurf = gdi_surface(nsurf);
-   struct pipe_resource **front, **back, *tmp;
+   HDC hDC;
    boolean ret;
 
-   /* display the back buffer first */
-   ret = gdi_surface_present(&gsurf->base, NATIVE_ATTACHMENT_BACK_LEFT);
-   /* force buffers to be updated in next validation call */
-   gsurf->server_stamp++;
-   gdi_surface_notify_invalid(&gsurf->base);
+   hDC = GetDC(gsurf->hWnd);
+   ret = resource_surface_present(gsurf->rsurf,
+         NATIVE_ATTACHMENT_BACK_LEFT, (void *) hDC);
+   ReleaseDC(gsurf->hWnd, hDC);
 
-   front = &gsurf->resources[NATIVE_ATTACHMENT_FRONT_LEFT];
-   back = &gsurf->resources[NATIVE_ATTACHMENT_BACK_LEFT];
-
-   /* skip swapping unless there is a front buffer */
-   if (*front) {
-      tmp = *front;
-      *front = *back;
-      *back = tmp;
-   }
+   resource_surface_swap_buffers(gsurf->rsurf,
+         NATIVE_ATTACHMENT_FRONT_LEFT, NATIVE_ATTACHMENT_BACK_LEFT, TRUE);
+   /* the front/back buffers have been swapped */
+   gdi_surface_invalidate(&gsurf->base);
 
    return ret;
 }
@@ -263,9 +168,9 @@ gdi_surface_validate(struct native_surface *nsurf, uint attachment_mask,
                         int *width, int *height)
 {
    struct gdi_surface *gsurf = gdi_surface(nsurf);
+   uint w, h;
 
-   if (gsurf->client_stamp != gsurf->server_stamp ||
-       (gsurf->valid_mask & attachment_mask) != attachment_mask) {
+   if (gsurf->client_stamp != gsurf->server_stamp) {
       if (!gdi_surface_update_buffers(&gsurf->base, attachment_mask))
          return FALSE;
    }
@@ -273,20 +178,14 @@ gdi_surface_validate(struct native_surface *nsurf, uint attachment_mask,
    if (seq_num)
       *seq_num = gsurf->client_stamp;
 
-   if (textures) {
-      int att;
-      for (att = 0; att < NUM_NATIVE_ATTACHMENTS; att++) {
-         if (native_attachment_mask_test(attachment_mask, att)) {
-            textures[att] = NULL;
-            pipe_resource_reference(&textures[att], gsurf->resources[att]);
-         }
-      }
-   }
+   if (textures)
+      resource_surface_get_resources(gsurf->rsurf, textures, attachment_mask);
 
+   resource_surface_get_size(gsurf->rsurf, &w, &h);
    if (width)
-      *width = gsurf->width;
+      *width = w;
    if (height)
-      *height = gsurf->height;
+      *height = h;
 
    return TRUE;
 }
@@ -301,13 +200,8 @@ static void
 gdi_surface_destroy(struct native_surface *nsurf)
 {
    struct gdi_surface *gsurf = gdi_surface(nsurf);
-   int i;
 
-   pipe_surface_reference(&gsurf->present_surface, NULL);
-
-   for (i = 0; i < NUM_NATIVE_ATTACHMENTS; i++)
-      pipe_resource_reference(&gsurf->resources[i], NULL);
-
+   resource_surface_destroy(gsurf->rsurf);
    FREE(gsurf);
 }
 
@@ -326,6 +220,17 @@ gdi_display_create_window_surface(struct native_display *ndpy,
    gsurf->gdpy = gdpy;
    gsurf->color_format = nconf->color_format;
    gsurf->hWnd = (HWND) win;
+
+   gsurf->rsurf = resource_surface_create(gdpy->base.screen,
+         gsurf->color_format,
+         PIPE_BIND_RENDER_TARGET |
+         PIPE_BIND_SAMPLER_VIEW |
+         PIPE_BIND_DISPLAY_TARGET |
+         PIPE_BIND_SCANOUT);
+   if (!gsurf->rsurf) {
+      FREE(gsurf);
+      return NULL;
+   }
 
    /* initialize the geometry */
    gdi_surface_update_buffers(&gsurf->base, 0x0);
