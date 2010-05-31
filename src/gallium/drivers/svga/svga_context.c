@@ -239,3 +239,8 @@ void svga_hwtnl_flush_retry( struct svga_context *svga )
    assert(ret == 0);
 }
 
+struct svga_winsys_context *
+svga_winsys_context( struct pipe_context *pipe )
+{
+   return svga_context( pipe )->swc;
+}
