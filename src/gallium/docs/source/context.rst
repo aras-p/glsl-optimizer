@@ -295,6 +295,23 @@ for a driver to batch multiple blits with the same source and
 destination.
 
 
+Stream Output
+^^^^^^^^^^^^^
+
+Stream output, also known as transform feedback allows writing the results of the
+vertex pipeline (after the geometry shader or vertex shader if no geometry shader
+is present) to be written to a buffer created with a ``PIPE_BIND_STREAM_OUTPUT``
+flag.
+
+First a stream output state needs to be created with the
+``create_stream_output_state`` call. It specific the details of what's being written,
+to which buffer and with what kind of a writemask.
+
+Then target buffers needs to be set with the call to ``set_stream_output_buffers``
+which sets the buffers and the offsets from the start of those buffer to where
+the data will be written to.
+
+
 Transfers
 ^^^^^^^^^
 

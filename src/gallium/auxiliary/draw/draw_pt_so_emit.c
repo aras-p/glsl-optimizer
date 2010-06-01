@@ -163,6 +163,8 @@ void draw_pt_so_emit( struct pt_so_emit *emit,
                          stride, ~0);
    translate->run(translate, 0, vertex_count,
                   draw->instance_id, so_buffer);
+
+   render->set_stream_output_info(render, 0, vertex_count);
 }
 
 

@@ -177,7 +177,7 @@ CreateElementLayout -> create_vertex_elements_state
 	! D3D11 has an extra flag (InputSlotClass) that is the same as instance_divisor == 0
 
 CreateGeometryShader -> create_gs_state
-CreateGeometryShaderWithStreamOutput -> create_gs_state
+CreateGeometryShaderWithStreamOutput -> create_gs_state + create_stream_output_state
 CreatePixelShader -> create_fs_state
 CreateVertexShader -> create_vs_state
 	> bytecode is different (see D3d10tokenizedprogramformat.hpp)
@@ -220,7 +220,6 @@ CreateResource -> texture_create or buffer_create
 	# Note that hardware often has the implicit rule, so the D3D11 interface seems to make little sense
 	# Also, the D3D11 API does not allow the user to specify mipmap sizes, so this really seems a dubious decision on Microsoft's part
 	- D3D11 supports specifying initial data to write in the resource
-	- Gallium lacks support for stream output buffer usage
 	- Gallium does not support unordered access buffers
 	! D3D11 specifies mapping flags (i.e. read/write/discard);:it's unclear what they are used for here
 	- D3D11 supports odd things in the D3D10_DDI_RESOURCE_MISC_FLAG enum (D3D10_DDI_RESOURCE_MISC_DISCARD_ON_PRESENT, D3D11_DDI_RESOURCE_MISC_BUFFER_ALLOW_RAW_VIEWS, D3D11_DDI_RESOURCE_MISC_BUFFER_STRUCTURED)
@@ -275,8 +274,7 @@ DispatchIndirect (D3D11 only)
 Draw -> draw_arrays
 	! D3D11 sets primitive modes separately with IaSetTopology: it's not obvious which is better
 
-DrawAuto
-	- Gallium lacks stream out and DrawAuto
+DrawAuto -> draw_auto
 
 DrawIndexed -> draw_elements
 	! D3D11 sets primitive modes separately with IaSetTopology: it's not obvious which is better
@@ -468,8 +466,7 @@ SetViewports
 ShaderResourceViewReadAfterWriteHazard -> flush(PIPE_FLUSH_RENDER_CACHE)
 	- Gallium does not support specifying this per-render-target/view
 
-SoSetTargets
-	- Gallium does not support stream out
+SoSetTargets -> set_stream_output_buffers
 
 VsSetConstantBuffers -> for(i = StartBuffer; i < NumBuffers; ++i) set_constant_buffer(PIPE_SHADER_VERTEX, i, phBuffers[i])
 	* may want to split into fragment/vertex-specific versions

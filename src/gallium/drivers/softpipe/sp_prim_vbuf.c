@@ -542,6 +542,15 @@ sp_vbuf_draw_arrays(struct vbuf_render *vbr, uint start, uint nr)
    }
 }
 
+static void
+sp_vbuf_so_info(struct vbuf_render *vbr, uint buffer, uint vertices)
+{
+   struct softpipe_vbuf_render *cvbr = softpipe_vbuf_render(vbr);
+   struct softpipe_context *softpipe = cvbr->softpipe;
+
+   softpipe->so_target.so_count[buffer] += vertices;
+}
+
 
 static void
 sp_vbuf_destroy(struct vbuf_render *vbr)
@@ -575,6 +584,7 @@ sp_create_vbuf_backend(struct softpipe_context *sp)
    cvbr->base.draw_elements = sp_vbuf_draw_elements;
    cvbr->base.draw_arrays = sp_vbuf_draw_arrays;
    cvbr->base.release_vertices = sp_vbuf_release_vertices;
+   cvbr->base.set_stream_output_info = sp_vbuf_so_info;
    cvbr->base.destroy = sp_vbuf_destroy;
 
    cvbr->softpipe = sp;
