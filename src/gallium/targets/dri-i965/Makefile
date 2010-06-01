@@ -15,6 +15,7 @@ PIPE_DRIVERS = \
 	$(TOP)/src/gallium/drivers/i965/libi965.a
 
 C_SOURCES = \
+	target.c \
 	$(COMMON_GALLIUM_SOURCES) \
 	$(DRIVER_SOURCES)
 

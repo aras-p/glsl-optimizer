@@ -11,6 +11,7 @@ PIPE_DRIVERS = \
 	$(TOP)/src/gallium/drivers/nouveau/libnouveau.a
 
 C_SOURCES = \
+	target.c \
 	$(COMMON_GALLIUM_SOURCES) \
 	$(DRIVER_SOURCES)
 

@@ -24,6 +24,6 @@ env.Prepend(LIBS = [
 
 env.LoadableModule(
     target = 'i965_dri.so',
-    source = 'dummy.c',
+    source = 'target.c',
     SHLIBPREFIX = '',
 )

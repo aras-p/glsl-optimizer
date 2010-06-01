@@ -22,6 +22,6 @@ env.Prepend(LIBS = [
 
 env.SharedLibrary(
     target ='radeon_dri.so',
-    source = 'dummy.c',
+    source = 'target.c',
     SHLIBPREFIX = '',
 )

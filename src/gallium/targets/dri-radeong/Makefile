@@ -12,6 +12,7 @@ PIPE_DRIVERS = \
 	$(TOP)/src/gallium/drivers/r300/libr300.a
 
 C_SOURCES = \
+	target.c \
 	$(COMMON_GALLIUM_SOURCES) \
 	$(DRIVER_SOURCES)
 

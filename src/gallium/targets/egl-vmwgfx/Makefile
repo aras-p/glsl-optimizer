@@ -2,7 +2,7 @@ TOP = ../../../..
 include $(TOP)/configs/current
 
 EGL_DRIVER_NAME = vmwgfx
-EGL_DRIVER_SOURCES = dummy.c
+EGL_DRIVER_SOURCES = target.c
 EGL_DRIVER_LIBS =
 
 EGL_DRIVER_PIPES = \

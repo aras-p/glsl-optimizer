@@ -4,6 +4,7 @@ include $(TOP)/configs/current
 LIBNAME = i965g_drv.so
 
 C_SOURCES = \
+	intel_target.c \
 	intel_xorg.c
 
 DRIVER_DEFINES = \

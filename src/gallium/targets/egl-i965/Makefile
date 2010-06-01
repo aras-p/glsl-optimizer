@@ -2,7 +2,7 @@ TOP = ../../../..
 include $(TOP)/configs/current
 
 EGL_DRIVER_NAME = i965
-EGL_DRIVER_SOURCES = dummy.c
+EGL_DRIVER_SOURCES = target.c
 EGL_DRIVER_LIBS = -ldrm_intel
 
 EGL_DRIVER_PIPES = \

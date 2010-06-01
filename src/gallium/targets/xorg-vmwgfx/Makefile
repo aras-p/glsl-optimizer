@@ -8,6 +8,7 @@ C_SOURCES = \
 	vmw_video.c \
 	vmw_ioctl.c \
 	vmw_ctrl.c \
+	vmw_target.c \
 	vmw_screen.c
 
 DRIVER_INCLUDES = \

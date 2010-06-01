@@ -4,6 +4,7 @@ include $(TOP)/configs/current
 LIBNAME = modesetting_drv.so
 
 C_SOURCES = \
+	nouveau_target.c \
 	nouveau_xorg.c
 
 DRIVER_DEFINES = \
