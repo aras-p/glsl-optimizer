@@ -230,6 +230,7 @@ struct debug_named_value
 {
    const char *name;
    unsigned long value;
+   const char *desc;
 };
 
 
@@ -252,8 +253,9 @@ struct debug_named_value
  *    ...
  * @endcode
  */
-#define DEBUG_NAMED_VALUE(__symbol) {#__symbol, (unsigned long)__symbol} 
-#define DEBUG_NAMED_VALUE_END {NULL, 0} 
+#define DEBUG_NAMED_VALUE(__symbol) DEBUG_NAMED_VALUE_WITH_DESCRIPTION(__symbol, NULL)
+#define DEBUG_NAMED_VALUE_WITH_DESCRIPTION(__symbol, __desc) {#__symbol, (unsigned long)__symbol, __desc}
+#define DEBUG_NAMED_VALUE_END {NULL, 0, NULL}
 
 
 /**

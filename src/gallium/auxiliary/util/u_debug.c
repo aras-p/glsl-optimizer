@@ -42,6 +42,7 @@
 #include "util/u_tile.h" 
 #include "util/u_prim.h" 
 
+#include <limits.h> /* CHAR_BIT */
 
 void _debug_vprintf(const char *format, va_list ap)
 {
@@ -173,6 +174,12 @@ debug_get_num_option(const char *name, long dfault)
    return result;
 }
 
+static INLINE int
+max( int a,
+     int b )
+{
+    return (a > b) ? a : b;
+}
 
 unsigned long
 debug_get_flags_option(const char *name, 
@@ -181,16 +188,21 @@ debug_get_flags_option(const char *name,
 {
    unsigned long result;
    const char *str;
+   const struct debug_named_value *orig = flags;
+   int namealign = 0;
    
    str = os_get_option(name);
    if(!str)
       result = dfault;
    else if (!util_strcmp(str, "help")) {
       result = dfault;
-      while (flags->name) {
-         debug_printf("%s: help for %s: %s [0x%lx]\n", __FUNCTION__, name, flags->name, flags->value);
-         flags++;
-      }
+      debug_printf("%s: help for %s:\n", __FUNCTION__, name);
+      for (; flags->name; ++flags)
+         namealign = max(namealign, strlen(flags->name));
+      for (flags = orig; flags->name; ++flags)
+         debug_printf("| %*s [0x%0*lx]%s%s\n", namealign, flags->name,
+                      sizeof(unsigned long)*CHAR_BIT/4, flags->value,
+                      flags->desc ? " " : "", flags->desc ? flags->desc : "");
    }
    else {
       result = 0;
