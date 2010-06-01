@@ -47,6 +47,45 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 
 %%
 
+{HASH}if/.*\n {
+	yyextra->lexing_if = 1;
+	yyextra->space_tokens = 0;
+	return HASH_IF;
+}
+
+{HASH}elif/.*\n {
+	yyextra->lexing_if = 1;
+	yyextra->space_tokens = 0;
+	return HASH_ELIF;
+}
+
+{HASH}else/.*\n {
+	yyextra->space_tokens = 0;
+	return HASH_ELSE;
+}
+
+{HASH}endif/.*\n {
+	yyextra->space_tokens = 0;
+	return HASH_ENDIF;
+}
+
+	/* When skipping (due to an #if 0 or similar) consume anything
+	 * up to a newline. We do this less priroty than any
+	 * #if-related directive (#if, #elif, #else, #endif), but with
+	 * more priority than any other directive or token to avoid
+	 * any side-effects from skipped content.
+	 *
+	 * We use the lexing_if flag to avoid skipping any part of an
+	 * if conditional expression. */
+[^\n]+/\n {
+	if (yyextra->lexing_if ||
+	    yyextra->skip_stack == NULL ||
+	    yyextra->skip_stack->type == SKIP_NO_SKIP)
+	{
+		REJECT;
+	}
+}
+
 {HASH}define{HSPACE}+/{IDENTIFIER}"(" {
 	yyextra->space_tokens = 0;
 	return HASH_DEFINE_FUNC;
@@ -60,26 +99,6 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 {HASH}undef {
 	yyextra->space_tokens = 0;
 	return HASH_UNDEF;
-}
-
-{HASH}if {
-	yyextra->space_tokens = 0;
-	return HASH_IF;
-}
-
-{HASH}elif {
-	yyextra->space_tokens = 0;
-	return HASH_ELIF;
-}
-
-{HASH}else {
-	yyextra->space_tokens = 0;
-	return HASH_ELSE;
-}
-
-{HASH}endif {
-	yyextra->space_tokens = 0;
-	return HASH_ENDIF;
 }
 
 {HASH} {
@@ -163,6 +182,7 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 }
 
 \n {
+	yyextra->lexing_if = 0;
 	return NEWLINE;
 }
 

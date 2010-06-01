@@ -159,19 +159,11 @@ input:
 
 line:
 	control_line {
-		if (parser->skip_stack == NULL ||
-		    parser->skip_stack->type == SKIP_NO_SKIP)
-		{
-			printf ("\n");
-		}
+		printf ("\n");
 	}
 |	text_line {
-		if (parser->skip_stack == NULL ||
-		    parser->skip_stack->type == SKIP_NO_SKIP)
-		{
-			_glcpp_parser_print_expanded_token_list (parser, $1);
-			printf ("\n");
-		}
+		_glcpp_parser_print_expanded_token_list (parser, $1);
+		printf ("\n");
 		talloc_free ($1);
 	}
 |	expanded_line
@@ -889,6 +881,7 @@ glcpp_parser_create (void)
 	parser->defines = hash_table_ctor (32, hash_table_string_hash,
 					   hash_table_string_compare);
 	parser->active = _string_list_create (parser);
+	parser->lexing_if = 0;
 	parser->space_tokens = 1;
 	parser->newline_as_space = 0;
 	parser->in_control_line = 0;
