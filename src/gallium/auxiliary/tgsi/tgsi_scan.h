@@ -62,8 +62,6 @@ struct tgsi_shader_info
    boolean writes_z;  /**< does fragment shader write Z value? */
    boolean writes_edgeflag; /**< vertex shader outputs edgeflag */
    boolean uses_kill;  /**< KIL or KILP instruction used? */
-   boolean uses_fogcoord; /**< fragment shader uses fog coord? */
-   boolean uses_frontfacing; /**< fragment shader uses front/back-face flag? */
 
    struct {
       unsigned name;

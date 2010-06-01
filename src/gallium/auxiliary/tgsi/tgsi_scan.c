@@ -95,20 +95,6 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                   &fullinst->Src[i];
                int ind = src->Register.Index;
 
-               /* check if we read the frag shader FOG or FACE inputs */
-               if (procType == TGSI_PROCESSOR_FRAGMENT) {
-                  if (src->Register.File == TGSI_FILE_INPUT ||
-                      src->Register.File == TGSI_FILE_SYSTEM_VALUE) {
-                     assert(ind >= 0);
-                     if (info->input_semantic_name[ind] == TGSI_SEMANTIC_FOG) {
-                        info->uses_fogcoord = TRUE;
-                     }
-                     else if (info->input_semantic_name[ind] == TGSI_SEMANTIC_FACE) {
-                        info->uses_frontfacing = TRUE;
-                     }
-                  }
-               }
-
                /* Mark which inputs are effectively used */
                if (src->Register.File == TGSI_FILE_INPUT) {
                   unsigned usage_mask;
