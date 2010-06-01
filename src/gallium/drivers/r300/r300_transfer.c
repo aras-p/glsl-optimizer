@@ -60,11 +60,22 @@ static void r300_copy_from_tiled_texture(struct pipe_context *ctx,
     subdst.face = 0;
     subdst.level = 0;
 
+    /* XXX if we don't flush before copying the texture and mapping it,
+     * we get wrong pixels, i.e. it's like latest draw calls didn't happen,
+     * including this blit. Tests: e.g. piglit/provoking-vertex
+     *
+     * Since the flush immediately before mapping is implicit (the buffer is
+     * always referenced in resource_copy_region), every read transfer costs
+     * 2 flushes. That sucks. */
+    ctx->flush(ctx, 0, NULL);
+
     ctx->resource_copy_region(ctx, &r300transfer->detiled_texture->b.b, subdst,
 			      0, 0, 0,
 			      tex, transfer->sr,
 			      transfer->box.x, transfer->box.y, transfer->box.z,
 			      transfer->box.width, transfer->box.height);
+
+    /* Flushing after the copy is implicit, issued by winsys. */
 }
 
 /* Copy a detiled texture to a tiled one. */
@@ -99,12 +110,6 @@ r300_texture_get_transfer(struct pipe_context *ctx,
     struct r300_screen *r300screen = r300_screen(ctx->screen);
     struct r300_transfer *trans;
     struct pipe_resource base;
-
-    /* XXX Why aren't flushes taken care of by winsys automatically?
-     * Winsys seems to sometimes return a cached buffer instead of
-     * a mapped hardware buffer if this flush is commented out. */
-    if (ctx->is_resource_referenced(ctx, texture, sr.face, sr.level))
-        ctx->flush(ctx, PIPE_FLUSH_RENDER_CACHE, NULL);
 
     trans = CALLOC_STRUCT(r300_transfer);
     if (trans) {
