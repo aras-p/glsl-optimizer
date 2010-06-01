@@ -34,7 +34,6 @@ i915_drm_winsys(struct i915_winsys *iws)
    return (struct i915_drm_winsys *)iws;
 }
 
-struct i915_drm_winsys * i915_drm_winsys_create(int fd, unsigned pci_id);
 struct pipe_fence_handle * i915_drm_fence_create(drm_intel_bo *bo);
 
 void i915_drm_winsys_init_batchbuffer_functions(struct i915_drm_winsys *idws);
