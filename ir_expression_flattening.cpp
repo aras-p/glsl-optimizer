@@ -55,6 +55,9 @@ public:
 
    virtual ir_visitor_status visit_enter(ir_call *);
    virtual ir_visitor_status visit_enter(ir_return *);
+   virtual ir_visitor_status visit_enter(ir_function_signature *);
+   virtual ir_visitor_status visit_enter(ir_if *);
+   virtual ir_visitor_status visit_enter(ir_loop *);
    virtual ir_visitor_status visit_leave(ir_expression *);
 
    bool (*predicate)(ir_instruction *ir);
@@ -71,6 +74,33 @@ do_expression_flattening(exec_list *instructions,
       ir_expression_flattening_visitor v(ir, predicate);
       ir->accept(&v);
    }
+}
+
+ir_visitor_status
+ir_expression_flattening_visitor::visit_enter(ir_function_signature *ir)
+{
+   do_expression_flattening(&ir->body, this->predicate);
+
+   return visit_continue_with_parent;
+}
+
+ir_visitor_status
+ir_expression_flattening_visitor::visit_enter(ir_loop *ir)
+{
+   do_expression_flattening(&ir->body_instructions, this->predicate);
+
+   return visit_continue_with_parent;
+}
+
+ir_visitor_status
+ir_expression_flattening_visitor::visit_enter(ir_if *ir)
+{
+   ir->condition->accept(this);
+
+   do_expression_flattening(&ir->then_instructions, this->predicate);
+   do_expression_flattening(&ir->else_instructions, this->predicate);
+
+   return visit_continue_with_parent;
 }
 
 ir_visitor_status
