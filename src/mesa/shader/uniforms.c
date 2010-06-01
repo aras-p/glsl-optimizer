@@ -319,65 +319,6 @@ lookup_uniform_parameter(GLcontext *ctx, GLuint program, GLint location,
 
 
 /**
- * Called via ctx->Driver.GetUniformfv().
- */
-static void
-_mesa_get_uniformfv(GLcontext *ctx, GLuint program, GLint location,
-                    GLfloat *params)
-{
-   struct gl_program *prog;
-   GLint paramPos;
-
-   lookup_uniform_parameter(ctx, program, location, &prog, &paramPos);
-
-   if (prog) {
-      const struct gl_program_parameter *p =
-         &prog->Parameters->Parameters[paramPos];
-      GLint rows, cols, i, j, k;
-
-      get_uniform_rows_cols(p, &rows, &cols);
-
-      k = 0;
-      for (i = 0; i < rows; i++) {
-         for (j = 0; j < cols; j++ ) {
-            params[k++] = prog->Parameters->ParameterValues[paramPos+i][j];
-         }
-      }
-   }
-}
-
-
-/**
- * Called via ctx->Driver.GetUniformiv().
- * \sa _mesa_get_uniformfv, only difference is a cast.
- */
-static void
-_mesa_get_uniformiv(GLcontext *ctx, GLuint program, GLint location,
-                    GLint *params)
-{
-   struct gl_program *prog;
-   GLint paramPos;
-
-   lookup_uniform_parameter(ctx, program, location, &prog, &paramPos);
-
-   if (prog) {
-      const struct gl_program_parameter *p =
-         &prog->Parameters->Parameters[paramPos];
-      GLint rows, cols, i, j, k;
-
-      get_uniform_rows_cols(p, &rows, &cols);
-
-      k = 0;
-      for (i = 0; i < rows; i++) {
-         for (j = 0; j < cols; j++ ) {
-            params[k++] = (GLint) prog->Parameters->ParameterValues[paramPos+i][j];
-         }
-      }
-   }
-}
-
-
-/**
  * GLGL uniform arrays and structs require special handling.
  *
  * The GL_ARB_shader_objects spec says that if you use
@@ -414,13 +355,79 @@ merge_location_offset(GLint *location, GLint offset)
 
 
 /**
- * Seperate the uniform location and parameter offset.  See above.
+ * Separate the uniform location and parameter offset.  See above.
  */
 static void
 split_location_offset(GLint *location, GLint *offset)
 {
    *offset = *location & 0xffff;
    *location = *location >> 16;
+}
+
+
+
+/**
+ * Called via ctx->Driver.GetUniformfv().
+ */
+static void
+_mesa_get_uniformfv(GLcontext *ctx, GLuint program, GLint location,
+                    GLfloat *params)
+{
+   struct gl_program *prog;
+   GLint paramPos;
+   GLint offset;
+
+   split_location_offset(&location, &offset);
+
+   lookup_uniform_parameter(ctx, program, location, &prog, &paramPos);
+
+   if (prog) {
+      const struct gl_program_parameter *p =
+         &prog->Parameters->Parameters[paramPos];
+      GLint rows, cols, i, j, k;
+
+      get_uniform_rows_cols(p, &rows, &cols);
+
+      k = 0;
+      for (i = 0; i < rows; i++) {
+         for (j = 0; j < cols; j++ ) {
+            params[k++] = prog->Parameters->ParameterValues[paramPos+i][j];
+         }
+      }
+   }
+}
+
+
+/**
+ * Called via ctx->Driver.GetUniformiv().
+ * \sa _mesa_get_uniformfv, only difference is a cast.
+ */
+static void
+_mesa_get_uniformiv(GLcontext *ctx, GLuint program, GLint location,
+                    GLint *params)
+{
+   struct gl_program *prog;
+   GLint paramPos;
+   GLint offset;
+
+   split_location_offset(&location, &offset);
+
+   lookup_uniform_parameter(ctx, program, location, &prog, &paramPos);
+
+   if (prog) {
+      const struct gl_program_parameter *p =
+         &prog->Parameters->Parameters[paramPos];
+      GLint rows, cols, i, j, k;
+
+      get_uniform_rows_cols(p, &rows, &cols);
+
+      k = 0;
+      for (i = 0; i < rows; i++) {
+         for (j = 0; j < cols; j++ ) {
+            params[k++] = (GLint) prog->Parameters->ParameterValues[paramPos+i][j];
+         }
+      }
+   }
 }
 
 
