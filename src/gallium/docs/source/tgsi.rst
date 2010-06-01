@@ -287,7 +287,7 @@ This instruction replicates its result.
   dst.w = src0.x \times src1.x + src0.y \times src1.y + src2.x
 
 
-.. opcode:: FRAC - Fraction
+.. opcode:: FRC - Fraction
 
 .. math::
 
