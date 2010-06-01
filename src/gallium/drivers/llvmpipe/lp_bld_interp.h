@@ -46,10 +46,7 @@
 
 #include "tgsi/tgsi_exec.h"
 
-
-
-struct tgsi_token;
-struct tgsi_shader_info;
+#include "lp_setup.h"
 
 
 struct lp_build_interp_soa_context
@@ -58,7 +55,7 @@ struct lp_build_interp_soa_context
 
    unsigned num_attribs;
    unsigned mask[1 + PIPE_MAX_SHADER_INPUTS]; /**< TGSI_WRITE_MASK_x */
-   unsigned interp[1 + PIPE_MAX_SHADER_INPUTS]; /**< TGSI_INTERPOLATE_x */
+   enum lp_interp interp[1 + PIPE_MAX_SHADER_INPUTS];
 
    LLVMValueRef a0  [1 + PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
    LLVMValueRef dadx[1 + PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
@@ -79,8 +76,8 @@ struct lp_build_interp_soa_context
 
 void
 lp_build_interp_soa_init(struct lp_build_interp_soa_context *bld,
-                         const struct tgsi_shader_info *info,
-                         boolean flatshade,
+                         unsigned num_inputs,
+                         const struct lp_shader_input *inputs,
                          LLVMBuilderRef builder,
                          struct lp_type type,
                          LLVMValueRef a0_ptr,

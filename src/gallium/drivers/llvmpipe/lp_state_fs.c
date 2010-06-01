@@ -759,9 +759,14 @@ generate_fragment(struct llvmpipe_context *lp,
 
    generate_pos0(builder, x, y, &x0, &y0);
 
+   /*
+    * The shader input interpolation info is not explicitely baked in the
+    * shader key, but everything it derives from (TGSI, and flatshade) is
+    * already included in the shader key.
+    */
    lp_build_interp_soa_init(&interp, 
-                            &shader->info,
-                            key->flatshade,
+                            lp->num_inputs,
+                            lp->inputs,
                             builder, fs_type,
                             a0_ptr, dadx_ptr, dady_ptr,
                             x0, y0);

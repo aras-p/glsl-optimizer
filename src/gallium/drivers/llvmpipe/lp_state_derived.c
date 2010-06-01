@@ -50,7 +50,7 @@ compute_vertex_info(struct llvmpipe_context *llvmpipe)
 {
    const struct lp_fragment_shader *lpfs = llvmpipe->fs;
    struct vertex_info *vinfo = &llvmpipe->vertex_info;
-   struct lp_shader_input inputs[1 + PIPE_MAX_SHADER_INPUTS];
+   struct lp_shader_input *inputs = llvmpipe->inputs;
    unsigned vs_index;
    uint i;
 
@@ -124,6 +124,7 @@ compute_vertex_info(struct llvmpipe_context *llvmpipe)
       inputs[i].src_index = vinfo->num_attribs;
       draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_PERSPECTIVE, vs_index);
    }
+   llvmpipe->num_inputs = lpfs->info.num_inputs;
 
    draw_compute_vertex_size(vinfo);
 

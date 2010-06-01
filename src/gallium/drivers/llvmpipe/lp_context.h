@@ -37,6 +37,7 @@
 
 #include "lp_tex_sample.h"
 #include "lp_jit.h"
+#include "lp_setup.h"
 
 
 struct llvmpipe_vbuf_render;
@@ -89,6 +90,10 @@ struct llvmpipe_context {
    
    /** Vertex format */
    struct vertex_info vertex_info;
+
+   /** Fragment shader input interpolation info */
+   unsigned num_inputs;
+   struct lp_shader_input inputs[PIPE_MAX_SHADER_INPUTS];
 
    /** The tiling engine */
    struct lp_setup_context *setup;

@@ -147,20 +147,32 @@ setup_fragcoord_coef(struct lp_setup_context *setup,
                      unsigned slot,
                      const float (*v1)[4],
                      const float (*v2)[4],
-                     const float (*v3)[4])
+                     const float (*v3)[4],
+                     unsigned usage_mask)
 {
    /*X*/
-   tri->inputs.a0[slot][0] = 0.0;
-   tri->inputs.dadx[slot][0] = 1.0;
-   tri->inputs.dady[slot][0] = 0.0;
+   if (usage_mask & TGSI_WRITEMASK_X) {
+      tri->inputs.a0[slot][0] = 0.0;
+      tri->inputs.dadx[slot][0] = 1.0;
+      tri->inputs.dady[slot][0] = 0.0;
+   }
+
    /*Y*/
-   tri->inputs.a0[slot][1] = 0.0;
-   tri->inputs.dadx[slot][1] = 0.0;
-   tri->inputs.dady[slot][1] = 1.0;
+   if (usage_mask & TGSI_WRITEMASK_Y) {
+      tri->inputs.a0[slot][1] = 0.0;
+      tri->inputs.dadx[slot][1] = 0.0;
+      tri->inputs.dady[slot][1] = 1.0;
+   }
+
    /*Z*/
-   linear_coef(setup, tri, oneoverarea, slot, v1, v2, v3, 0, 2);
+   if (usage_mask & TGSI_WRITEMASK_Z) {
+      linear_coef(setup, tri, oneoverarea, slot, v1, v2, v3, 0, 2);
+   }
+
    /*W*/
-   linear_coef(setup, tri, oneoverarea, slot, v1, v2, v3, 0, 3);
+   if (usage_mask & TGSI_WRITEMASK_W) {
+      linear_coef(setup, tri, oneoverarea, slot, v1, v2, v3, 0, 3);
+   }
 }
 
 
@@ -171,13 +183,21 @@ setup_fragcoord_coef(struct lp_setup_context *setup,
 static void setup_facing_coef( struct lp_setup_context *setup,
                                struct lp_rast_triangle *tri,
                                unsigned slot,
-                               boolean frontface )
+                               boolean frontface,
+                               unsigned usage_mask)
 {
    /* convert TRUE to 1.0 and FALSE to -1.0 */
-   constant_coef( setup, tri, slot, 2.0f * frontface - 1.0f, 0 );
-   constant_coef( setup, tri, slot, 0.0f, 1 ); /* wasted */
-   constant_coef( setup, tri, slot, 0.0f, 2 ); /* wasted */
-   constant_coef( setup, tri, slot, 0.0f, 3 ); /* wasted */
+   if (usage_mask & TGSI_WRITEMASK_X)
+      constant_coef( setup, tri, slot, 2.0f * frontface - 1.0f, 0 );
+
+   if (usage_mask & TGSI_WRITEMASK_Y)
+      constant_coef( setup, tri, slot, 0.0f, 1 ); /* wasted */
+
+   if (usage_mask & TGSI_WRITEMASK_Z)
+      constant_coef( setup, tri, slot, 0.0f, 2 ); /* wasted */
+
+   if (usage_mask & TGSI_WRITEMASK_W)
+      constant_coef( setup, tri, slot, 0.0f, 3 ); /* wasted */
 }
 
 
@@ -192,58 +212,65 @@ static void setup_tri_coefficients( struct lp_setup_context *setup,
 				    const float (*v3)[4],
 				    boolean frontface)
 {
+   unsigned fragcoord_usage_mask = TGSI_WRITEMASK_XYZ;
    unsigned slot;
-
-   /* The internal position input is in slot zero:
-    */
-   setup_fragcoord_coef(setup, tri, oneoverarea, 0, v1, v2, v3);
 
    /* setup interpolation for all the remaining attributes:
     */
    for (slot = 0; slot < setup->fs.nr_inputs; slot++) {
       unsigned vert_attr = setup->fs.input[slot].src_index;
+      unsigned usage_mask = setup->fs.input[slot].usage_mask;
       unsigned i;
 
       switch (setup->fs.input[slot].interp) {
       case LP_INTERP_CONSTANT:
          if (setup->flatshade_first) {
             for (i = 0; i < NUM_CHANNELS; i++)
-               if (setup->fs.input[slot].usage_mask & (1 << i))
+               if (usage_mask & (1 << i))
                   constant_coef(setup, tri, slot+1, v1[vert_attr][i], i);
          }
          else {
             for (i = 0; i < NUM_CHANNELS; i++)
-               if (setup->fs.input[slot].usage_mask & (1 << i))
+               if (usage_mask & (1 << i))
                   constant_coef(setup, tri, slot+1, v3[vert_attr][i], i);
          }
          break;
 
       case LP_INTERP_LINEAR:
          for (i = 0; i < NUM_CHANNELS; i++)
-            if (setup->fs.input[slot].usage_mask & (1 << i))
+            if (usage_mask & (1 << i))
                linear_coef(setup, tri, oneoverarea, slot+1, v1, v2, v3, vert_attr, i);
          break;
 
       case LP_INTERP_PERSPECTIVE:
          for (i = 0; i < NUM_CHANNELS; i++)
-            if (setup->fs.input[slot].usage_mask & (1 << i))
+            if (usage_mask & (1 << i))
                perspective_coef(setup, tri, oneoverarea, slot+1, v1, v2, v3, vert_attr, i);
+         fragcoord_usage_mask |= TGSI_WRITEMASK_W;
          break;
 
       case LP_INTERP_POSITION:
-         /* XXX: fix me - duplicates the values in slot zero.
+         /*
+          * The generated pixel interpolators will pick up the coeffs from
+          * slot 0, so all need to ensure that the usage mask is covers all
+          * usages.
           */
-         setup_fragcoord_coef(setup, tri, oneoverarea, slot+1, v1, v2, v3);
+         fragcoord_usage_mask |= usage_mask;
          break;
 
       case LP_INTERP_FACING:
-         setup_facing_coef(setup, tri, slot+1, frontface);
+         setup_facing_coef(setup, tri, slot+1, frontface, usage_mask);
          break;
 
       default:
          assert(0);
       }
    }
+
+   /* The internal position input is in slot zero:
+    */
+   setup_fragcoord_coef(setup, tri, oneoverarea, 0, v1, v2, v3,
+                        fragcoord_usage_mask);
 }
 
 
