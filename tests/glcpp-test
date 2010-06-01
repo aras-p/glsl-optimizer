@@ -3,8 +3,8 @@
 for test in *.c; do
     echo "Testing $test"
     ../glcpp < $test > $test.glcpp
-    grep -v '^$' < $test.glcpp > $test.out || true
+    grep -v '^ *$' < $test.glcpp > $test.out || true
     gcc -E $test -o $test.gcc
-    grep -v '^#' < $test.gcc | grep -v '^$' > $test.expected || true
+    grep -v '^#' < $test.gcc | grep -v '^$' | sed -r -e 's/^ +/ /' > $test.expected || true
     diff -u $test.expected $test.out
 done

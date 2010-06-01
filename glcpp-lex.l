@@ -47,6 +47,17 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 
 %%
 
+	/* Single-line comments */
+"//"[^\n]+\n {
+	return NEWLINE;
+}
+
+	/* Multi-line comments */
+[/][*]([^*]*[*]+[^/])*[^*]*[*]*[/] {
+	if (yyextra->space_tokens)
+		return SPACE;
+}
+
 {HASH}if/.*\n {
 	yyextra->lexing_if = 1;
 	yyextra->space_tokens = 0;
