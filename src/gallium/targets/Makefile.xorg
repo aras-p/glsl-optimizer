@@ -22,6 +22,7 @@ INCLUDES = \
 	-I$(TOP)/src/gallium/include \
 	-I$(TOP)/src/gallium/drivers \
 	-I$(TOP)/src/gallium/auxiliary \
+	-I$(TOP)/src/gallium/winsys \
 	$(DRIVER_INCLUDES)
 
 LIBNAME_STAGING = $(TOP)/$(LIB_DIR)/gallium/$(TARGET)
