@@ -208,22 +208,26 @@ static void setup_tri_coefficients( struct lp_setup_context *setup,
       case LP_INTERP_CONSTANT:
          if (setup->flatshade_first) {
             for (i = 0; i < NUM_CHANNELS; i++)
-               constant_coef(setup, tri, slot+1, v1[vert_attr][i], i);
+               if (setup->fs.input[slot].usage_mask & (1 << i))
+                  constant_coef(setup, tri, slot+1, v1[vert_attr][i], i);
          }
          else {
             for (i = 0; i < NUM_CHANNELS; i++)
-               constant_coef(setup, tri, slot+1, v3[vert_attr][i], i);
+               if (setup->fs.input[slot].usage_mask & (1 << i))
+                  constant_coef(setup, tri, slot+1, v3[vert_attr][i], i);
          }
          break;
 
       case LP_INTERP_LINEAR:
          for (i = 0; i < NUM_CHANNELS; i++)
-            linear_coef(setup, tri, oneoverarea, slot+1, v1, v2, v3, vert_attr, i);
+            if (setup->fs.input[slot].usage_mask & (1 << i))
+               linear_coef(setup, tri, oneoverarea, slot+1, v1, v2, v3, vert_attr, i);
          break;
 
       case LP_INTERP_PERSPECTIVE:
          for (i = 0; i < NUM_CHANNELS; i++)
-            perspective_coef(setup, tri, oneoverarea, slot+1, v1, v2, v3, vert_attr, i);
+            if (setup->fs.input[slot].usage_mask & (1 << i))
+               perspective_coef(setup, tri, oneoverarea, slot+1, v1, v2, v3, vert_attr, i);
          break;
 
       case LP_INTERP_POSITION:

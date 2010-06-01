@@ -37,7 +37,7 @@
 #include "util/u_debug.h"
 #include "util/u_memory.h"
 #include "util/u_math.h"
-#include "tgsi/tgsi_parse.h"
+#include "tgsi/tgsi_scan.h"
 #include "gallivm/lp_bld_debug.h"
 #include "gallivm/lp_bld_const.h"
 #include "gallivm/lp_bld_arit.h"
@@ -315,7 +315,7 @@ pos_update(struct lp_build_interp_soa_context *bld, int quad_index)
  */
 void
 lp_build_interp_soa_init(struct lp_build_interp_soa_context *bld,
-                         const struct tgsi_token *tokens,
+                         const struct tgsi_shader_info *info,
                          boolean flatshade,
                          LLVMBuilderRef builder,
                          struct lp_type type,
@@ -325,8 +325,8 @@ lp_build_interp_soa_init(struct lp_build_interp_soa_context *bld,
                          LLVMValueRef x0,
                          LLVMValueRef y0)
 {
-   struct tgsi_parse_context parse;
-   struct tgsi_full_declaration *decl;
+   unsigned attrib;
+   unsigned chan;
 
    memset(bld, 0, sizeof *bld);
 
@@ -342,48 +342,24 @@ lp_build_interp_soa_init(struct lp_build_interp_soa_context *bld,
    bld->interp[0] = TGSI_INTERPOLATE_LINEAR;
 
    /* Inputs */
-   tgsi_parse_init( &parse, tokens );
-   while( !tgsi_parse_end_of_tokens( &parse ) ) {
-      tgsi_parse_token( &parse );
+   for (attrib = 0; attrib < info->num_inputs; ++attrib) {
+      bld->mask[1 + attrib] = info->input_usage_mask[attrib];
 
-      switch( parse.FullToken.Token.Type ) {
-      case TGSI_TOKEN_TYPE_DECLARATION:
-         decl = &parse.FullToken.FullDeclaration;
-         if( decl->Declaration.File == TGSI_FILE_INPUT ) {
-            unsigned first, last, mask;
-            unsigned attrib;
+      if (info->input_semantic_name[attrib] == TGSI_SEMANTIC_COLOR &&
+          flatshade)
+         bld->interp[1 + attrib] = TGSI_INTERPOLATE_CONSTANT;
+      else
+         bld->interp[1 + attrib] = info->input_interpolate[attrib];
 
-            first = decl->Range.First;
-            last = decl->Range.Last;
-            mask = decl->Declaration.UsageMask;
+   }
+   bld->num_attribs = 1 + info->num_inputs;
 
-            for( attrib = first; attrib <= last; ++attrib ) {
-               bld->mask[1 + attrib] = mask;
-
-               /* XXX: have mesa set INTERP_CONSTANT in the fragment
-                * shader.
-                */
-               if (decl->Semantic.Name == TGSI_SEMANTIC_COLOR &&
-                   flatshade)
-                  bld->interp[1 + attrib] = TGSI_INTERPOLATE_CONSTANT;
-               else
-                  bld->interp[1 + attrib] = decl->Declaration.Interpolate;
-            }
-
-            bld->num_attribs = MAX2(bld->num_attribs, 1 + last + 1);
-         }
-         break;
-
-      case TGSI_TOKEN_TYPE_INSTRUCTION:
-      case TGSI_TOKEN_TYPE_IMMEDIATE:
-      case TGSI_TOKEN_TYPE_PROPERTY:
-         break;
-
-      default:
-         assert( 0 );
+   /* Ensure all masked out input channels have a valid value */
+   for (attrib = 0; attrib < bld->num_attribs; ++attrib) {
+      for (chan = 0; chan < NUM_CHANNELS; ++chan) {
+         bld->attribs[attrib][chan] = bld->base.undef;
       }
    }
-   tgsi_parse_free( &parse );
 
    coeffs_init(bld, a0_ptr, dadx_ptr, dady_ptr);
 

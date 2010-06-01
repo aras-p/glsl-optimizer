@@ -41,8 +41,11 @@ enum lp_interp {
    LP_INTERP_FACING
 };
 
-/* Describes how to generate all the fragment shader inputs from the
- * the vertices passed into our triangle/line/point functions.
+
+/**
+ * Describes how to compute the interpolation coefficients (a0, dadx, dady)
+ * from the vertices passed into our triangle/line/point functions by the
+ * draw module.
  *
  * Vertices are treated as an array of float[4] values, indexed by
  * src_index.
@@ -50,6 +53,7 @@ enum lp_interp {
 struct lp_shader_input {
    enum lp_interp interp;       /* how to interpolate values */
    unsigned src_index;          /* where to find values in incoming vertices */
+   unsigned usage_mask;         /* bitmask of TGSI_WRITEMASK_x flags */
 };
 
 struct pipe_resource;

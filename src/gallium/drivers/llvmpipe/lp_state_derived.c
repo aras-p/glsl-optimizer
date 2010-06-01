@@ -77,6 +77,7 @@ compute_vertex_info(struct llvmpipe_context *llvmpipe)
 
       /* This can be pre-computed, except for flatshade:
        */
+      inputs[i].usage_mask = lpfs->info.input_usage_mask[i];
       switch (lpfs->info.input_semantic_name[i]) {
       case TGSI_SEMANTIC_FACE:
          inputs[i].interp = LP_INTERP_FACING;

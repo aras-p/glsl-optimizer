@@ -49,6 +49,7 @@
 
 
 struct tgsi_token;
+struct tgsi_shader_info;
 
 
 struct lp_build_interp_soa_context
@@ -78,7 +79,7 @@ struct lp_build_interp_soa_context
 
 void
 lp_build_interp_soa_init(struct lp_build_interp_soa_context *bld,
-                         const struct tgsi_token *tokens,
+                         const struct tgsi_shader_info *info,
                          boolean flatshade,
                          LLVMBuilderRef builder,
                          struct lp_type type,
