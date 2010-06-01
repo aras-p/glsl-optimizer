@@ -84,6 +84,57 @@ softpipe_draw_arrays(struct pipe_context *pipe, unsigned mode,
                                           1);
 }
 
+void
+softpipe_draw_auto(struct pipe_context *pipe, unsigned mode)
+{
+   struct softpipe_context *sp = softpipe_context(pipe);
+   struct draw_context *draw = sp->draw;
+   const unsigned start = 0;
+   const unsigned count = sp->so_target.so_count[0];
+   void *buf = sp->so_target.buffer[0]->data;
+   int offset = sp->so_target.offset[0];
+
+   if (!softpipe_check_render_cond(sp) ||
+       sp->so_target.num_buffers != 1)
+      return;
+
+   sp->reduced_api_prim = u_reduced_prim(mode);
+
+   if (sp->dirty) {
+      softpipe_update_derived(sp);
+   }
+
+   softpipe_map_transfers(sp);
+
+   /* Map so buffers */
+   if (offset < 0) /* we were appending so start from beginning */
+      offset = 0;
+   buf = (void*)((int32_t*)buf + offset);
+   draw_set_mapped_vertex_buffer(draw, 0, buf);
+
+   draw_set_mapped_element_buffer_range(draw,
+                                        0, 0,
+                                        start,
+                                        start + count - 1,
+                                        NULL);
+
+   /* draw! */
+   draw_arrays_instanced(draw, mode, start, count, 0, 1);
+
+   /* unmap vertex/index buffers - will cause draw module to flush */
+   draw_set_mapped_vertex_buffer(draw, 0, NULL);
+
+   /*
+    * TODO: Flush only when a user vertex/index buffer is present
+    * (or even better, modify draw module to do this
+    * internally when this condition is seen?)
+    */
+   draw_flush(draw);
+
+   /* Note: leave drawing surfaces mapped */
+   sp->dirty_render_cache = TRUE;
+}
+
 
 void
 softpipe_draw_range_elements(struct pipe_context *pipe,

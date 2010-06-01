@@ -101,6 +101,11 @@ struct pipe_context {
                                 unsigned mode, 
                                 unsigned start, 
                                 unsigned count);
+
+   /**
+    * Draw the stream output buffer at index 0
+    */
+   void (*draw_auto)( struct pipe_context *pipe, unsigned mode );
    /*@}*/
 
    /**

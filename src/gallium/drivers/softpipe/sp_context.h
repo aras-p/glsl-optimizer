@@ -80,6 +80,12 @@ struct softpipe_context {
    struct pipe_sampler_view *vertex_sampler_views[PIPE_MAX_VERTEX_SAMPLERS];
    struct pipe_viewport_state viewport;
    struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
+   struct {
+      struct softpipe_resource *buffer[PIPE_MAX_SO_BUFFERS];
+      int offset[PIPE_MAX_SO_BUFFERS];
+      int so_count[PIPE_MAX_SO_BUFFERS];
+      int num_buffers;
+   } so_target;
 
    unsigned num_samplers;
    unsigned num_sampler_views;

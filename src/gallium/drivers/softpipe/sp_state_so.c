@@ -93,7 +93,14 @@ softpipe_set_stream_output_buffers(struct pipe_context *pipe,
    softpipe->dirty |= SP_NEW_SO_BUFFERS;
 
    for (i = 0; i < num_buffers; ++i) {
-      void *mapped = softpipe_resource(buffers[i])->data;
+      void *mapped;
+      struct softpipe_resource *res = softpipe_resource(buffers[i]);
+
+      softpipe->so_target.buffer[i] = res;
+      softpipe->so_target.offset[i] = offsets[i];
+      softpipe->so_target.so_count[i] = 0;
+
+      mapped = res->data;
       if (offsets[i] >= 0)
          map_buffers[i] = ((char*)mapped) + offsets[i];
       else {
@@ -102,5 +109,7 @@ softpipe_set_stream_output_buffers(struct pipe_context *pipe,
          map_buffers[i] = mapped;
       }
    }
+   softpipe->so_target.num_buffers = num_buffers;
+
    draw_set_mapped_so_buffers(softpipe->draw, map_buffers, num_buffers);
 }
