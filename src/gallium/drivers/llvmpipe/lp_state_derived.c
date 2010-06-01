@@ -78,6 +78,22 @@ compute_vertex_info(struct llvmpipe_context *llvmpipe)
       /* This can be pre-computed, except for flatshade:
        */
       inputs[i].usage_mask = lpfs->info.input_usage_mask[i];
+
+      switch (lpfs->info.input_interpolate[i]) {
+      case TGSI_INTERPOLATE_CONSTANT:
+         inputs[i].interp = LP_INTERP_CONSTANT;
+         break;
+      case TGSI_INTERPOLATE_LINEAR:
+         inputs[i].interp = LP_INTERP_LINEAR;
+         break;
+      case TGSI_INTERPOLATE_PERSPECTIVE:
+         inputs[i].interp = LP_INTERP_PERSPECTIVE;
+         break;
+      default:
+         assert(0);
+         break;
+      }
+
       switch (lpfs->info.input_semantic_name[i]) {
       case TGSI_SEMANTIC_FACE:
          inputs[i].interp = LP_INTERP_FACING;
@@ -96,25 +112,10 @@ compute_vertex_info(struct llvmpipe_context *llvmpipe)
           */
          if (llvmpipe->rasterizer->flatshade)
             inputs[i].interp = LP_INTERP_CONSTANT;
-         else
-            inputs[i].interp = LP_INTERP_LINEAR;
          break;
 
       default:
-         switch (lpfs->info.input_interpolate[i]) {
-         case TGSI_INTERPOLATE_CONSTANT:
-            inputs[i].interp = LP_INTERP_CONSTANT;
-            break;
-         case TGSI_INTERPOLATE_LINEAR:
-            inputs[i].interp = LP_INTERP_LINEAR;
-            break;
-         case TGSI_INTERPOLATE_PERSPECTIVE:
-            inputs[i].interp = LP_INTERP_PERSPECTIVE;
-            break;
-         default:
-            assert(0);
-            break;
-         }
+         break;
       }
 
       /*
