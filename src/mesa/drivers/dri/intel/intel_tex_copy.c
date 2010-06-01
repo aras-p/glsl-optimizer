@@ -74,6 +74,14 @@ get_teximage_source(struct intel_context *intel, GLenum internalFormat)
       return NULL;
    case GL_RGBA:
    case GL_RGBA8:
+      irb = intel_renderbuffer(intel->ctx.ReadBuffer->_ColorReadBuffer);
+      /* We're required to set alpha to 1.0 in this case, but we can't
+       * do that with the blitter, so fall back.  We could use the 3D
+       * engine or do two passes with the blitter, but it doesn't seem
+       * worth it for this case. */
+      if (irb->Base._BaseFormat == GL_RGB)
+	 return NULL;
+      return irb->region;
    case GL_RGB:
    case GL_RGB8:
       return intel_readbuf_region(intel);
