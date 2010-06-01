@@ -45,15 +45,15 @@
 int ST_DEBUG = 0;
 
 static const struct debug_named_value st_debug_flags[] = {
-   { "mesa",     DEBUG_MESA },
-   { "tgsi",     DEBUG_TGSI },
-   { "constants",DEBUG_CONSTANTS },
-   { "pipe",     DEBUG_PIPE },
-   { "tex",      DEBUG_TEX },
-   { "fallback", DEBUG_FALLBACK },
-   { "screen",   DEBUG_SCREEN },
-   { "query",    DEBUG_QUERY },
-   {NULL, 0}
+   { "mesa",     DEBUG_MESA, NULL },
+   { "tgsi",     DEBUG_TGSI, NULL },
+   { "constants",DEBUG_CONSTANTS, NULL },
+   { "pipe",     DEBUG_PIPE, NULL },
+   { "tex",      DEBUG_TEX, NULL },
+   { "fallback", DEBUG_FALLBACK, NULL },
+   { "screen",   DEBUG_SCREEN, NULL },
+   { "query",    DEBUG_QUERY, NULL },
+   DEBUG_NAMED_VALUE_END
 };
 #endif
 

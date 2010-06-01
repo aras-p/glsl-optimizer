@@ -37,11 +37,11 @@
 unsigned gallivm_debug = 0;
 
 static const struct debug_named_value lp_bld_debug_flags[] = {
-   { "tgsi",   GALLIVM_DEBUG_TGSI },
-   { "ir",     GALLIVM_DEBUG_IR },
-   { "asm",    GALLIVM_DEBUG_ASM },
-   { "nopt",   GALLIVM_DEBUG_NO_OPT },
-   {NULL, 0}
+   { "tgsi",   GALLIVM_DEBUG_TGSI, NULL },
+   { "ir",     GALLIVM_DEBUG_IR, NULL },
+   { "asm",    GALLIVM_DEBUG_ASM, NULL },
+   { "nopt",   GALLIVM_DEBUG_NO_OPT, NULL },
+   DEBUG_NAMED_VALUE_END
 };
 #endif
 

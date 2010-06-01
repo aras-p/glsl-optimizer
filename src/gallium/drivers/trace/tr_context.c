@@ -1380,9 +1380,9 @@ trace_context_transfer_inline_write(struct pipe_context *_context,
 
 
 static const struct debug_named_value rbug_blocker_flags[] = {
-   {"before", 1},
-   {"after", 2},
-   {NULL, 0},
+   {"before", 1, NULL},
+   {"after", 2, NULL},
+   DEBUG_NAMED_VALUE_END
 };
 
 struct pipe_context *

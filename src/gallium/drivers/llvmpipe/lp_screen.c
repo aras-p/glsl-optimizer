@@ -50,17 +50,17 @@
 int LP_DEBUG = 0;
 
 static const struct debug_named_value lp_debug_flags[] = {
-   { "pipe",   DEBUG_PIPE },
-   { "tgsi",   DEBUG_TGSI },
-   { "tex",    DEBUG_TEX },
-   { "setup",  DEBUG_SETUP },
-   { "rast",   DEBUG_RAST },
-   { "query",  DEBUG_QUERY },
-   { "screen", DEBUG_SCREEN },
-   { "show_tiles",    DEBUG_SHOW_TILES },
-   { "show_subtiles", DEBUG_SHOW_SUBTILES },
-   { "counters", DEBUG_COUNTERS },
-   {NULL, 0}
+   { "pipe",   DEBUG_PIPE, NULL },
+   { "tgsi",   DEBUG_TGSI, NULL },
+   { "tex",    DEBUG_TEX, NULL },
+   { "setup",  DEBUG_SETUP, NULL },
+   { "rast",   DEBUG_RAST, NULL },
+   { "query",  DEBUG_QUERY, NULL },
+   { "screen", DEBUG_SCREEN, NULL },
+   { "show_tiles",    DEBUG_SHOW_TILES, NULL },
+   { "show_subtiles", DEBUG_SHOW_SUBTILES, NULL },
+   { "counters", DEBUG_COUNTERS, NULL },
+   DEBUG_NAMED_VALUE_END
 };
 #endif
 

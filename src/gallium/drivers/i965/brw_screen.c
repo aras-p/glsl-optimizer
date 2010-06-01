@@ -39,38 +39,38 @@
 
 #ifdef DEBUG
 static const struct debug_named_value debug_names[] = {
-   { "tex",   DEBUG_TEXTURE},
-   { "state", DEBUG_STATE},
-   { "ioctl", DEBUG_IOCTL},
-   { "blit",  DEBUG_BLIT},
-   { "curbe", DEBUG_CURBE},
-   { "fall",  DEBUG_FALLBACKS},
-   { "verb",  DEBUG_VERBOSE},
-   { "bat",   DEBUG_BATCH},
-   { "pix",   DEBUG_PIXEL},
-   { "wins",  DEBUG_WINSYS},
-   { "min",   DEBUG_MIN_URB},
-   { "dis",   DEBUG_DISASSEM},
-   { "sync",  DEBUG_SYNC},
-   { "prim",  DEBUG_PRIMS },
-   { "vert",  DEBUG_VERTS },
-   { "dma",   DEBUG_DMA },
-   { "san",   DEBUG_SANITY },
-   { "sleep", DEBUG_SLEEP },
-   { "stats", DEBUG_STATS },
-   { "sing",  DEBUG_SINGLE_THREAD },
-   { "thre",  DEBUG_SINGLE_THREAD },
-   { "wm",    DEBUG_WM },
-   { "urb",   DEBUG_URB },
-   { "vs",    DEBUG_VS },
-   { NULL,    0 }
+   { "tex",   DEBUG_TEXTURE, NULL },
+   { "state", DEBUG_STATE, NULL },
+   { "ioctl", DEBUG_IOCTL, NULL },
+   { "blit",  DEBUG_BLIT, NULL },
+   { "curbe", DEBUG_CURBE, NULL },
+   { "fall",  DEBUG_FALLBACKS, NULL },
+   { "verb",  DEBUG_VERBOSE, NULL },
+   { "bat",   DEBUG_BATCH, NULL },
+   { "pix",   DEBUG_PIXEL, NULL },
+   { "wins",  DEBUG_WINSYS, NULL },
+   { "min",   DEBUG_MIN_URB, NULL },
+   { "dis",   DEBUG_DISASSEM, NULL },
+   { "sync",  DEBUG_SYNC, NULL },
+   { "prim",  DEBUG_PRIMS, NULL },
+   { "vert",  DEBUG_VERTS, NULL },
+   { "dma",   DEBUG_DMA, NULL },
+   { "san",   DEBUG_SANITY, NULL },
+   { "sleep", DEBUG_SLEEP, NULL },
+   { "stats", DEBUG_STATS, NULL },
+   { "sing",  DEBUG_SINGLE_THREAD, NULL },
+   { "thre",  DEBUG_SINGLE_THREAD, NULL },
+   { "wm",    DEBUG_WM, NULL },
+   { "urb",   DEBUG_URB, NULL },
+   { "vs",    DEBUG_VS, NULL },
+   DEBUG_NAMED_VALUE_END
 };
 
 static const struct debug_named_value dump_names[] = {
-   { "asm",   DUMP_ASM},
-   { "state", DUMP_STATE},
-   { "batch", DUMP_BATCH},
-   { NULL, 0 }
+   { "asm",   DUMP_ASM, NULL },
+   { "state", DUMP_STATE, NULL },
+   { "batch", DUMP_BATCH, NULL },
+   DEBUG_NAMED_VALUE_END
 };
 
 int BRW_DEBUG = 0;

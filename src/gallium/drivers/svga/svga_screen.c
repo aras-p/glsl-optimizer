@@ -43,21 +43,21 @@
 int SVGA_DEBUG = 0;
 
 static const struct debug_named_value svga_debug_flags[] = {
-   { "dma",      DEBUG_DMA },
-   { "tgsi",     DEBUG_TGSI },
-   { "pipe",     DEBUG_PIPE },
-   { "state",    DEBUG_STATE },
-   { "screen",   DEBUG_SCREEN },
-   { "tex",      DEBUG_TEX },
-   { "swtnl",    DEBUG_SWTNL },
-   { "const",    DEBUG_CONSTS },
-   { "viewport", DEBUG_VIEWPORT },
-   { "views",    DEBUG_VIEWS },
-   { "perf",     DEBUG_PERF },
-   { "flush",    DEBUG_FLUSH },
-   { "sync",     DEBUG_SYNC },
-   { "cache",    DEBUG_CACHE },
-   {NULL, 0}
+   { "dma",      DEBUG_DMA, NULL },
+   { "tgsi",     DEBUG_TGSI, NULL },
+   { "pipe",     DEBUG_PIPE, NULL },
+   { "state",    DEBUG_STATE, NULL },
+   { "screen",   DEBUG_SCREEN, NULL },
+   { "tex",      DEBUG_TEX, NULL },
+   { "swtnl",    DEBUG_SWTNL, NULL },
+   { "const",    DEBUG_CONSTS, NULL },
+   { "viewport", DEBUG_VIEWPORT, NULL },
+   { "views",    DEBUG_VIEWS, NULL },
+   { "perf",     DEBUG_PERF, NULL },
+   { "flush",    DEBUG_FLUSH, NULL },
+   { "sync",     DEBUG_SYNC, NULL },
+   { "cache",    DEBUG_CACHE, NULL },
+   DEBUG_NAMED_VALUE_END
 };
 #endif
 
