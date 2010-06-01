@@ -659,27 +659,26 @@ ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
       MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_Z),
       MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_W),
    };
-   ir_variable *var = ir->var;
 
    /* By the time we make it to this stage, matrices should be broken down
     * to vectors.
     */
-   assert(!var->type->is_matrix());
+   assert(!ir->var->type->is_matrix());
 
    tree = this->create_tree(MB_TERM_reference_vec4, ir, NULL, NULL);
 
-   if (strncmp(var->name, "gl_", 3) == 0) {
+   if (strncmp(ir->var->name, "gl_", 3) == 0) {
       unsigned int i;
 
       for (i = 0; i < ARRAY_SIZE(builtin_var_to_mesa_reg); i++) {
-	 if (strcmp(var->name, builtin_var_to_mesa_reg[i].name) == 0)
+	 if (strcmp(ir->var->name, builtin_var_to_mesa_reg[i].name) == 0)
 	    break;
       }
       assert(i != ARRAY_SIZE(builtin_var_to_mesa_reg));
       ir_to_mesa_set_tree_reg(tree, builtin_var_to_mesa_reg[i].file,
 			      builtin_var_to_mesa_reg[i].index);
    } else {
-      this->get_temp_for_var(var, tree);
+      this->get_temp_for_var(ir->var, tree);
    }
 
    /* If the type is smaller than a vec4, replicate the last channel out. */
@@ -698,33 +697,25 @@ ir_to_mesa_visitor::visit(ir_dereference_array *ir)
       MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Y, SWIZZLE_Y),
       MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_X, SWIZZLE_X, SWIZZLE_X),
    };
-   ir_variable *var = ir->variable_referenced();
-   ir_constant *index = ir->array_index->constant_expression_value();
+   ir_constant *index;
+
+   index = ir->array_index->constant_expression_value();
 
    /* By the time we make it to this stage, matrices should be broken down
     * to vectors.
     */
-   assert(!var->type->is_matrix());
+   assert(!ir->type->is_matrix());
 
-   if (strncmp(var->name, "gl_", 3) == 0) {
-      unsigned int i;
-      unsigned int offset = 0;
+   ir->array->accept(this);
+   tree = this->result;
 
-      tree = this->create_tree(MB_TERM_reference_vec4, ir, NULL, NULL);
+   if (tree->src_reg.file == PROGRAM_INPUT ||
+       tree->src_reg.file == PROGRAM_OUTPUT) {
+      assert(index); /* FINISHME: Handle variable indexing of builtins. */
 
-      offset = index->value.i[0];
-
-      for (i = 0; i < ARRAY_SIZE(builtin_var_to_mesa_reg); i++) {
-	 if (strcmp(var->name, builtin_var_to_mesa_reg[i].name) == 0)
-	    break;
-      }
-      assert(i != ARRAY_SIZE(builtin_var_to_mesa_reg));
-      ir_to_mesa_set_tree_reg(tree, builtin_var_to_mesa_reg[i].file,
-			      builtin_var_to_mesa_reg[i].index + offset);
+      tree->src_reg.index += index->value.i[0];
+      tree->dst_reg.index += index->value.i[0];
    } else {
-      tree = this->create_tree(MB_TERM_reference_vec4, ir, NULL, NULL);
-      this->get_temp_for_var(var, tree);
-
       if (index) {
 	 tree->src_reg.index += index->value.i[0];
 	 tree->dst_reg.index += index->value.i[0];
