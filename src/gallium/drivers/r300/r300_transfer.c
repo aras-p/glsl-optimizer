@@ -78,11 +78,6 @@ static void r300_copy_into_tiled_texture(struct pipe_context *ctx,
     subsrc.face = 0;
     subsrc.level = 0;
 
-    /* XXX this flush prevents the following DRM error from occuring:
-     * [drm:radeon_cs_ioctl] *ERROR* Failed to parse relocation !
-     * Reproducible with perf/copytex. */
-    ctx->flush(ctx, 0, NULL);
-
     ctx->resource_copy_region(ctx, tex, transfer->sr,
 			      transfer->box.x, transfer->box.y, transfer->box.z,
 			      &r300transfer->detiled_texture->b.b, subsrc,
