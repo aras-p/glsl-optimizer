@@ -613,13 +613,14 @@ static const struct {
    /* core_fs */
    {"gl_FragCoord", PROGRAM_INPUT, FRAG_ATTRIB_WPOS},
    {"gl_FrontFacing", PROGRAM_INPUT, FRAG_ATTRIB_FACE},
-   {"gl_FragColor", PROGRAM_INPUT, FRAG_ATTRIB_COL0},
+   {"gl_FragColor", PROGRAM_OUTPUT, FRAG_ATTRIB_COL0},
    {"gl_FragDepth", PROGRAM_UNDEFINED, FRAG_ATTRIB_WPOS}, /* FINISHME: WPOS.z */
 
    /* 110_deprecated_fs */
    {"gl_Color", PROGRAM_INPUT, FRAG_ATTRIB_COL0},
    {"gl_SecondaryColor", PROGRAM_INPUT, FRAG_ATTRIB_COL1},
    {"gl_FogFragCoord", PROGRAM_INPUT, FRAG_ATTRIB_FOGC},
+   {"gl_TexCoord", PROGRAM_INPUT, FRAG_ATTRIB_TEX0}, /* array */
 
    /* 110_deprecated_vs */
    {"gl_Vertex", PROGRAM_INPUT, VERT_ATTRIB_POS},
@@ -669,12 +670,24 @@ ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
 
    if (strncmp(ir->var->name, "gl_", 3) == 0) {
       unsigned int i;
+      bool var_in = (ir->var->mode == ir_var_in ||
+		     ir->var->mode == ir_var_inout);
+
+      tree = this->create_tree(MB_TERM_reference_vec4, ir, NULL, NULL);
 
       for (i = 0; i < ARRAY_SIZE(builtin_var_to_mesa_reg); i++) {
-	 if (strcmp(ir->var->name, builtin_var_to_mesa_reg[i].name) == 0)
+	 bool in = builtin_var_to_mesa_reg[i].file == PROGRAM_INPUT;
+
+	 if (strcmp(ir->var->name, builtin_var_to_mesa_reg[i].name) == 0 &&
+	     !(var_in ^ in))
 	    break;
       }
-      assert(i != ARRAY_SIZE(builtin_var_to_mesa_reg));
+      if (i == ARRAY_SIZE(builtin_var_to_mesa_reg)) {
+	 printf("Failed to find builtin for %s variable %s\n",
+		var_in ? "in" : "out",
+		ir->var->name);
+	 abort();
+      }
       ir_to_mesa_set_tree_reg(tree, builtin_var_to_mesa_reg[i].file,
 			      builtin_var_to_mesa_reg[i].index);
    } else {
