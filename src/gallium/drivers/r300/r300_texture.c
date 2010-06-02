@@ -918,6 +918,7 @@ struct pipe_resource* r300_texture_create(struct pipe_screen* screen,
     struct r300_texture* tex = CALLOC_STRUCT(r300_texture);
     struct r300_screen* rscreen = r300_screen(screen);
     struct r300_winsys_screen *rws = (struct r300_winsys_screen *)screen->winsys;
+    enum r300_buffer_domain domain;
 
     if (!tex) {
         return NULL;
@@ -959,8 +960,10 @@ struct pipe_resource* r300_texture_create(struct pipe_screen* screen,
                base->width0, base->height0, base->depth0, base->last_level,
                util_format_short_name(base->format));
 
-    tex->buffer = rws->buffer_create(rws, 2048, base->bind, R300_DOMAIN_VRAM,
-				     tex->size);
+    domain = base->flags & R300_RESOURCE_FLAG_TRANSFER ? R300_DOMAIN_GTT :
+                                                         R300_DOMAIN_VRAM;
+
+    tex->buffer = rws->buffer_create(rws, 2048, base->bind, domain, tex->size);
 
     rws->buffer_set_tiling(rws, tex->buffer,
             tex->pitch[0] * util_format_get_blocksize(tex->b.b.format),
