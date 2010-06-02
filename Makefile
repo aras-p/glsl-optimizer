@@ -22,4 +22,4 @@ test: glcpp
 
 clean:
 	rm -f glcpp glcpp-lex.c glcpp-parse.c *.o *~
-	rm -f tests/*.out tests/*.gcc tests/*.expected tests/*~
+	rm -f tests/*.out tests/*~
