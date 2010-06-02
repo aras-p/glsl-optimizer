@@ -519,13 +519,8 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
 	 _mesa_problem(ctx, "Bad renderbuffer format: %d\n", irb->Base.Format);
       }
       key.tiling = region->tiling;
-      if (brw->intel.intelScreen->driScrnPriv->dri2.enabled) {
-	 key.width = rb->Width;
-	 key.height = rb->Height;
-      } else {
-	 key.width = region->width;
-	 key.height = region->height;
-      }
+      key.width = rb->Width;
+      key.height = rb->Height;
       key.pitch = region->pitch;
       key.cpp = region->cpp;
       key.draw_x = region->draw_x;
