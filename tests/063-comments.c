@@ -13,3 +13,8 @@ and slashes / *** /
 and other stuff.
 ****/
 more code here
+/* Test that /* nested
+   comments */
+are not treated like comments.
+/*/ this is a comment */
+/*/*/
