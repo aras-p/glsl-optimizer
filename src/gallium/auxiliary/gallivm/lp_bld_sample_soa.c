@@ -708,7 +708,6 @@ lp_build_sample_wrap_nearest(struct lp_build_sample_context *bld,
    struct lp_build_context *coord_bld = &bld->coord_bld;
    struct lp_build_context *int_coord_bld = &bld->int_coord_bld;
    struct lp_build_context *uint_coord_bld = &bld->uint_coord_bld;
-   LLVMValueRef two = lp_build_const_vec(coord_bld->type, 2.0);
    LLVMValueRef length_f = lp_build_int_to_float(coord_bld, length);
    LLVMValueRef length_minus_one = lp_build_sub(uint_coord_bld, length, uint_coord_bld->one);
    LLVMValueRef length_f_minus_one = lp_build_sub(coord_bld, length_f, coord_bld->one);
@@ -741,21 +740,17 @@ lp_build_sample_wrap_nearest(struct lp_build_sample_context *bld,
    case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
       {
          LLVMValueRef min, max;
+
          if (bld->static_state->normalized_coords) {
-            /* min = 1.0 / (2 * length) */
-            min = lp_build_rcp(coord_bld, lp_build_mul(coord_bld, two, length_f));
-            /* max = length - min */
-            max = lp_build_sub(coord_bld, length_f, min);
             /* scale coord to length */
             coord = lp_build_mul(coord_bld, coord, length_f);
          }
-         else {
-            /* clamp to [0.5, length - 0.5] */
-            min = lp_build_const_vec(coord_bld->type, 0.5F);
-            max = lp_build_sub(coord_bld, length_f, min);
-         }
-         /* coord = clamp(coord, min, max) */
+
+         /* clamp to [0.5, length - 0.5] */
+         min = lp_build_const_vec(coord_bld->type, 0.5F);
+         max = lp_build_sub(coord_bld, length_f, min);
          coord = lp_build_clamp(coord_bld, coord, min, max);
+
          icoord = lp_build_ifloor(coord_bld, coord);
       }
       break;
@@ -764,23 +759,17 @@ lp_build_sample_wrap_nearest(struct lp_build_sample_context *bld,
       /* Note: this is the same as CLAMP_TO_EDGE, except min = -min */
       {
          LLVMValueRef min, max;
+
          if (bld->static_state->normalized_coords) {
-            /* min = -1.0 / (2 * length) = -0.5 / length */
-            min = lp_build_mul(coord_bld,
-                               lp_build_const_vec(coord_bld->type, -0.5F),
-                               lp_build_rcp(coord_bld, length_f));
-            /* max = length - min */
-            max = lp_build_sub(coord_bld, length_f, min);
             /* scale coord to length */
             coord = lp_build_mul(coord_bld, coord, length_f);
          }
-         else {
-            /* clamp to [-0.5, length + 0.5] */
-            min = lp_build_const_vec(coord_bld->type, -0.5F);
-            max = lp_build_sub(coord_bld, length_f, min);
-         }
-         /* coord = clamp(coord, min, max) */
+
+         /* clamp to [-0.5, length + 0.5] */
+         min = lp_build_const_vec(coord_bld->type, -0.5F);
+         max = lp_build_sub(coord_bld, length_f, min);
          coord = lp_build_clamp(coord_bld, coord, min, max);
+
          icoord = lp_build_ifloor(coord_bld, coord);
       }
       break;
@@ -788,57 +777,72 @@ lp_build_sample_wrap_nearest(struct lp_build_sample_context *bld,
    case PIPE_TEX_WRAP_MIRROR_REPEAT:
       {
          LLVMValueRef min, max;
-         /* min = 1.0 / (2 * length) */
-         min = lp_build_rcp(coord_bld, lp_build_mul(coord_bld, two, length_f));
-         /* max = length - min */
-         max = lp_build_sub(coord_bld, length_f, min);
 
          /* compute mirror function */
          coord = lp_build_coord_mirror(bld, coord);
 
          /* scale coord to length */
+         assert(bld->static_state->normalized_coords);
          coord = lp_build_mul(coord_bld, coord, length_f);
 
-         /* coord = clamp(coord, min, max) */
+         /* clamp to [0.5, length - 0.5] */
+         min = lp_build_const_vec(coord_bld->type, 0.5F);
+         max = lp_build_sub(coord_bld, length_f, min);
          coord = lp_build_clamp(coord_bld, coord, min, max);
+
          icoord = lp_build_ifloor(coord_bld, coord);
       }
       break;
 
    case PIPE_TEX_WRAP_MIRROR_CLAMP:
       coord = lp_build_abs(coord_bld, coord);
+
+      /* scale coord to length */
+      assert(bld->static_state->normalized_coords);
       coord = lp_build_mul(coord_bld, coord, length_f);
-      coord = lp_build_clamp(coord_bld, coord, coord_bld->zero, length_f_minus_one);
+
+      /* clamp to [0, length - 1] */
+      coord = lp_build_min(coord_bld, coord, length_f_minus_one);
+
       icoord = lp_build_ifloor(coord_bld, coord);
       break;
 
    case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_EDGE:
       {
          LLVMValueRef min, max;
-         /* min = 1.0 / (2 * length) */
-         min = lp_build_rcp(coord_bld, lp_build_mul(coord_bld, two, length_f));
-         /* max = length - min */
-         max = lp_build_sub(coord_bld, length_f, min);
 
          coord = lp_build_abs(coord_bld, coord);
-         coord = lp_build_mul(coord_bld, coord, length_f);
+
+         if (bld->static_state->normalized_coords) {
+            /* scale coord to length */
+            coord = lp_build_mul(coord_bld, coord, length_f);
+         }
+
+         /* clamp to [0.5, length - 0.5] */
+         min = lp_build_const_vec(coord_bld->type, 0.5F);
+         max = lp_build_sub(coord_bld, length_f, min);
          coord = lp_build_clamp(coord_bld, coord, min, max);
+
          icoord = lp_build_ifloor(coord_bld, coord);
       }
       break;
 
    case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER:
       {
-         LLVMValueRef min, max;
-         /* min = 1.0 / (2 * length) */
-         min = lp_build_rcp(coord_bld, lp_build_mul(coord_bld, two, length_f));
-         min = lp_build_negate(coord_bld, min);
-         /* max = length - min */
-         max = lp_build_sub(coord_bld, length_f, min);
+         LLVMValueRef max;
 
          coord = lp_build_abs(coord_bld, coord);
-         coord = lp_build_mul(coord_bld, coord, length_f);
-         coord = lp_build_clamp(coord_bld, coord, min, max);
+
+         if (bld->static_state->normalized_coords) {
+            /* scale coord to length */
+            coord = lp_build_mul(coord_bld, coord, length_f);
+         }
+
+         /* clamp to [-0.5, length + 0.5] */
+         max = lp_build_const_vec(coord_bld->type, 0.5F);
+         max = lp_build_add(coord_bld, length_f, max);
+         coord = lp_build_min(coord_bld, coord, max);
+
          icoord = lp_build_ifloor(coord_bld, coord);
       }
       break;
