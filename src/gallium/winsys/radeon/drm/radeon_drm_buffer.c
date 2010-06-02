@@ -145,31 +145,6 @@ const struct pb_vtbl radeon_drm_buffer_vtbl = {
     radeon_drm_buffer_get_base_buffer,
 };
 
-
-static uint32_t radeon_domain_from_usage(unsigned usage)
-{
-    uint32_t domain = 0;
-
-    if (usage & PIPE_BIND_RENDER_TARGET) {
-        domain |= RADEON_GEM_DOMAIN_VRAM;
-    }
-    if (usage & PIPE_BIND_DEPTH_STENCIL) {
-        domain |= RADEON_GEM_DOMAIN_VRAM;
-    }
-    if (usage & PIPE_BIND_SAMPLER_VIEW) {
-        domain |= RADEON_GEM_DOMAIN_VRAM;
-    }
-    /* also need BIND_BLIT_SOURCE/DESTINATION ? */
-    if (usage & PIPE_BIND_VERTEX_BUFFER) {
-        domain |= RADEON_GEM_DOMAIN_GTT;
-    }
-    if (usage & PIPE_BIND_INDEX_BUFFER) {
-        domain |= RADEON_GEM_DOMAIN_GTT;
-    }
-
-    return domain;
-}
-
 struct pb_buffer *radeon_drm_bufmgr_create_buffer_from_handle(struct pb_manager *_mgr,
 							      uint32_t handle)
 {
@@ -225,7 +200,11 @@ radeon_drm_bufmgr_create_buffer(struct pb_manager *_mgr,
     buf->mgr = mgr;
 
     make_empty_list(buf);
-    domain = radeon_domain_from_usage(desc->usage);
+
+    domain =
+        (desc->usage & RADEON_USAGE_DOMAIN_GTT  ? RADEON_GEM_DOMAIN_GTT  : 0) |
+        (desc->usage & RADEON_USAGE_DOMAIN_VRAM ? RADEON_GEM_DOMAIN_VRAM : 0);
+
     buf->bo = radeon_bo_open(rws->bom, 0, size,
 			     desc->alignment, domain, 0);
     if (buf->bo == NULL)

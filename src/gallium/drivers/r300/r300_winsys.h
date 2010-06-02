@@ -74,8 +74,9 @@ struct r300_winsys_screen {
     struct r300_winsys_buffer *(*buffer_create)(struct r300_winsys_screen *ws,
 						unsigned alignment,
 						unsigned usage,
+                                                enum r300_buffer_domain domain,
 						unsigned size);
-    
+
     /**
      * Map the entire data store of a buffer object into the client's address.
      * flags is bitmask of R300_WINSYS_BUFFER_USAGE_CPU_READ/WRITE flags.

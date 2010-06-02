@@ -125,7 +125,7 @@ r300_winsys_buffer_create(struct r300_screen *r300screen,
     struct r300_winsys_screen *rws = r300screen->rws;
     struct r300_winsys_buffer *buf;
 
-    buf = rws->buffer_create(rws, alignment, usage, size);
+    buf = rws->buffer_create(rws, alignment, usage, R300_DOMAIN_GTT, size);
     return buf;
 }
 

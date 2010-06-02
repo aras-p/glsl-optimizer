@@ -31,12 +31,21 @@ static struct r300_winsys_buffer *
 radeon_r300_winsys_buffer_create(struct r300_winsys_screen *rws,
 				 unsigned alignment,
 				 unsigned usage,
+                                 enum r300_buffer_domain domain,
 				 unsigned size)
 {
     struct radeon_libdrm_winsys *ws = radeon_winsys_screen(rws);
     struct pb_desc desc;
     struct pb_manager *provider;
     struct pb_buffer *buffer;
+
+    /* XXX this is hackish, but it's the only way to pass these flags
+     * to the real create function. */
+    usage &= ~(RADEON_USAGE_DOMAIN_GTT | RADEON_USAGE_DOMAIN_VRAM);
+    if (domain & R300_DOMAIN_GTT)
+        usage |= RADEON_USAGE_DOMAIN_GTT;
+    if (domain & R300_DOMAIN_VRAM)
+        usage |= RADEON_USAGE_DOMAIN_VRAM;
 
     memset(&desc, 0, sizeof(desc));
     desc.alignment = alignment;

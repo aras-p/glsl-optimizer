@@ -959,9 +959,9 @@ struct pipe_resource* r300_texture_create(struct pipe_screen* screen,
                base->width0, base->height0, base->depth0, base->last_level,
                util_format_short_name(base->format));
 
-    tex->buffer = rws->buffer_create(rws, 2048,
-                                     base->bind,
+    tex->buffer = rws->buffer_create(rws, 2048, base->bind, R300_DOMAIN_VRAM,
 				     tex->size);
+
     rws->buffer_set_tiling(rws, tex->buffer,
             tex->pitch[0] * util_format_get_blocksize(tex->b.b.format),
             tex->microtile,

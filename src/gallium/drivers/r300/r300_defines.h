@@ -45,4 +45,9 @@ enum r300_buffer_tiling {
     R300_BUFFER_SQUARETILED
 };
 
+enum r300_buffer_domain { /* bitfield */
+    R300_DOMAIN_GTT  = 1,
+    R300_DOMAIN_VRAM = 2
+};
+
 #endif

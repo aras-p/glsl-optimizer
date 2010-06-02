@@ -43,6 +43,8 @@
 
 #include "radeon_winsys.h"
 
+#define RADEON_USAGE_DOMAIN_GTT  (1 << 29)
+#define RADEON_USAGE_DOMAIN_VRAM (1 << 30)
 
 #define RADEON_MAX_BOS 24
 
