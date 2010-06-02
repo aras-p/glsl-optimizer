@@ -485,11 +485,11 @@ void r300_emit_fb_state(struct r300_context* r300, unsigned size, void* state)
         assert(tex && tex->buffer && "cbuf is marked, but NULL!");
 
         OUT_CS_REG_SEQ(R300_RB3D_COLOROFFSET0 + (4 * i), 1);
-        OUT_CS_TEX_RELOC(tex, surf->offset, 0, R300_DOMAIN_VRAM, 0);
+        OUT_CS_TEX_RELOC(tex, surf->offset, 0, tex->domain, 0);
 
         OUT_CS_REG_SEQ(R300_RB3D_COLORPITCH0 + (4 * i), 1);
         OUT_CS_TEX_RELOC(tex, tex->fb_state.colorpitch[surf->level],
-                     0, R300_DOMAIN_VRAM, 0);
+                     0, tex->domain, 0);
 
         OUT_CS_REG(R300_US_OUT_FMT_0 + (4 * i), tex->fb_state.us_out_fmt);
     }
@@ -504,13 +504,13 @@ void r300_emit_fb_state(struct r300_context* r300, unsigned size, void* state)
         assert(tex && tex->buffer && "zsbuf is marked, but NULL!");
 
         OUT_CS_REG_SEQ(R300_ZB_DEPTHOFFSET, 1);
-        OUT_CS_TEX_RELOC(tex, surf->offset, 0, R300_DOMAIN_VRAM, 0);
+        OUT_CS_TEX_RELOC(tex, surf->offset, 0, tex->domain, 0);
 
         OUT_CS_REG(R300_ZB_FORMAT, tex->fb_state.zb_format);
 
         OUT_CS_REG_SEQ(R300_ZB_DEPTHPITCH, 1);
         OUT_CS_TEX_RELOC(tex, tex->fb_state.depthpitch[surf->level],
-                     0, R300_DOMAIN_VRAM, 0);
+                     0, tex->domain, 0);
     }
 
     OUT_CS_REG_SEQ(R300_SC_SCISSORS_TL, 2);
@@ -570,13 +570,13 @@ static void r300_emit_query_end_frag_pipes(struct r300_context *r300,
             OUT_CS_REG(R300_SU_REG_DEST, 1 << 3);
             OUT_CS_REG_SEQ(R300_ZB_ZPASS_ADDR, 1);
             OUT_CS_BUF_RELOC(r300->oqbo, query->offset + (sizeof(uint32_t) * 3),
-                    0, R300_DOMAIN_GTT, 0);
+                    0, r300_buffer(r300->oqbo)->domain, 0);
         case 3:
             /* pipe 2 only */
             OUT_CS_REG(R300_SU_REG_DEST, 1 << 2);
             OUT_CS_REG_SEQ(R300_ZB_ZPASS_ADDR, 1);
             OUT_CS_BUF_RELOC(r300->oqbo, query->offset + (sizeof(uint32_t) * 2),
-                    0, R300_DOMAIN_GTT, 0);
+                    0, r300_buffer(r300->oqbo)->domain, 0);
         case 2:
             /* pipe 1 only */
             /* As mentioned above, accomodate RV380 and older. */
@@ -584,13 +584,13 @@ static void r300_emit_query_end_frag_pipes(struct r300_context *r300,
                     1 << (caps->high_second_pipe ? 3 : 1));
             OUT_CS_REG_SEQ(R300_ZB_ZPASS_ADDR, 1);
             OUT_CS_BUF_RELOC(r300->oqbo, query->offset + (sizeof(uint32_t) * 1),
-                    0, R300_DOMAIN_GTT, 0);
+                    0, r300_buffer(r300->oqbo)->domain, 0);
         case 1:
             /* pipe 0 only */
             OUT_CS_REG(R300_SU_REG_DEST, 1 << 0);
             OUT_CS_REG_SEQ(R300_ZB_ZPASS_ADDR, 1);
             OUT_CS_BUF_RELOC(r300->oqbo, query->offset + (sizeof(uint32_t) * 0),
-                    0, R300_DOMAIN_GTT, 0);
+                    0, r300_buffer(r300->oqbo)->domain, 0);
             break;
         default:
             fprintf(stderr, "r300: Implementation error: Chipset reports %d"
@@ -611,7 +611,7 @@ static void rv530_emit_query_end_single_z(struct r300_context *r300,
     BEGIN_CS(8);
     OUT_CS_REG(RV530_FG_ZBREG_DEST, RV530_FG_ZBREG_DEST_PIPE_SELECT_0);
     OUT_CS_REG_SEQ(R300_ZB_ZPASS_ADDR, 1);
-    OUT_CS_BUF_RELOC(r300->oqbo, query->offset, 0, R300_DOMAIN_GTT, 0);
+    OUT_CS_BUF_RELOC(r300->oqbo, query->offset, 0, r300_buffer(r300->oqbo)->domain, 0);
     OUT_CS_REG(RV530_FG_ZBREG_DEST, RV530_FG_ZBREG_DEST_PIPE_SELECT_ALL);
     END_CS;
 }
@@ -624,10 +624,10 @@ static void rv530_emit_query_end_double_z(struct r300_context *r300,
     BEGIN_CS(14);
     OUT_CS_REG(RV530_FG_ZBREG_DEST, RV530_FG_ZBREG_DEST_PIPE_SELECT_0);
     OUT_CS_REG_SEQ(R300_ZB_ZPASS_ADDR, 1);
-    OUT_CS_BUF_RELOC(r300->oqbo, query->offset, 0, R300_DOMAIN_GTT, 0);
+    OUT_CS_BUF_RELOC(r300->oqbo, query->offset, 0, r300_buffer(r300->oqbo)->domain, 0);
     OUT_CS_REG(RV530_FG_ZBREG_DEST, RV530_FG_ZBREG_DEST_PIPE_SELECT_1);
     OUT_CS_REG_SEQ(R300_ZB_ZPASS_ADDR, 1);
-    OUT_CS_BUF_RELOC(r300->oqbo, query->offset + sizeof(uint32_t), 0, R300_DOMAIN_GTT, 0);
+    OUT_CS_BUF_RELOC(r300->oqbo, query->offset + sizeof(uint32_t), 0, r300_buffer(r300->oqbo)->domain, 0);
     OUT_CS_REG(RV530_FG_ZBREG_DEST, RV530_FG_ZBREG_DEST_PIPE_SELECT_ALL);
     END_CS;
 }
@@ -786,6 +786,7 @@ void r300_emit_textures_state(struct r300_context *r300,
 {
     struct r300_textures_state *allstate = (struct r300_textures_state*)state;
     struct r300_texture_sampler_state *texstate;
+    struct r300_texture *tex;
     unsigned i;
     CS_LOCALS(r300);
 
@@ -795,6 +796,7 @@ void r300_emit_textures_state(struct r300_context *r300,
     for (i = 0; i < allstate->count; i++) {
         if ((1 << i) & allstate->tx_enable) {
             texstate = &allstate->regs[i];
+            tex = r300_texture(allstate->sampler_views[i]->base.texture);
 
             OUT_CS_REG(R300_TX_FILTER0_0 + (i * 4), texstate->filter0);
             OUT_CS_REG(R300_TX_FILTER1_0 + (i * 4), texstate->filter1);
@@ -806,9 +808,8 @@ void r300_emit_textures_state(struct r300_context *r300,
             OUT_CS_REG(R300_TX_FORMAT2_0 + (i * 4), texstate->format.format2);
 
             OUT_CS_REG_SEQ(R300_TX_OFFSET_0 + (i * 4), 1);
-            OUT_CS_TEX_RELOC(r300_texture(allstate->sampler_views[i]->base.texture),
-                             texstate->format.tile_config,
-                             R300_DOMAIN_GTT | R300_DOMAIN_VRAM, 0, 0);
+            OUT_CS_TEX_RELOC(tex, texstate->format.tile_config, tex->domain,
+                             0, 0);
         }
     }
     END_CS;
@@ -818,6 +819,7 @@ void r300_emit_aos(struct r300_context* r300, unsigned offset, boolean indexed)
 {
     struct pipe_vertex_buffer *vb1, *vb2, *vbuf = r300->vertex_buffer;
     struct pipe_vertex_element *velem = r300->velems->velem;
+    struct r300_buffer *buf;
     int i;
     unsigned size1, size2, aos_count = r300->velems->count;
     unsigned packet_size = (aos_count * 3 + 1) / 2;
@@ -857,8 +859,8 @@ void r300_emit_aos(struct r300_context* r300, unsigned offset, boolean indexed)
     }
 
     for (i = 0; i < aos_count; i++) {
-        OUT_CS_BUF_RELOC_NO_OFFSET(vbuf[velem[i].vertex_buffer_index].buffer,
-				   R300_DOMAIN_GTT, 0, 0);
+        buf = r300_buffer(vbuf[velem[i].vertex_buffer_index].buffer);
+        OUT_CS_BUF_RELOC_NO_OFFSET(&buf->b.b, buf->domain, 0, 0);
     }
     END_CS;
 }
@@ -883,7 +885,7 @@ void r300_emit_aos_swtcl(struct r300_context *r300, boolean indexed)
     OUT_CS(r300->vertex_info.size |
             (r300->vertex_info.size << 8));
     OUT_CS(r300->vbo_offset);
-    OUT_CS_BUF_RELOC(r300->vbo, 0, R300_DOMAIN_GTT, 0, 0);
+    OUT_CS_BUF_RELOC(r300->vbo, 0, r300_buffer(r300->vbo)->domain, 0, 0);
     END_CS;
 }
 
@@ -1069,8 +1071,7 @@ validate:
     for (i = 0; i < fb->nr_cbufs; i++) {
         tex = r300_texture(fb->cbufs[i]->texture);
         assert(tex && tex->buffer && "cbuf is marked, but NULL!");
-        if (!r300_add_texture(r300->rws, tex,
-			      0, R300_DOMAIN_VRAM)) {
+        if (!r300_add_texture(r300->rws, tex, 0, tex->domain)) {
             r300->context.flush(&r300->context, 0, NULL);
             goto validate;
         }
@@ -1080,7 +1081,7 @@ validate:
         tex = r300_texture(fb->zsbuf->texture);
         assert(tex && tex->buffer && "zsbuf is marked, but NULL!");
         if (!r300_add_texture(r300->rws, tex,
-			      0, R300_DOMAIN_VRAM)) {
+			      0, tex->domain)) {
             r300->context.flush(&r300->context, 0, NULL);
             goto validate;
         }
@@ -1092,8 +1093,7 @@ validate:
         }
 
         tex = r300_texture(texstate->sampler_views[i]->base.texture);
-        if (!r300_add_texture(r300->rws, tex,
-			      R300_DOMAIN_GTT | R300_DOMAIN_VRAM, 0)) {
+        if (!r300_add_texture(r300->rws, tex, tex->domain, 0)) {
             r300->context.flush(&r300->context, 0, NULL);
             goto validate;
         }
@@ -1102,7 +1102,7 @@ validate:
     if (r300->query_start.dirty ||
         (r300->query_current && r300->query_current->begin_emitted)) {
         if (!r300_add_buffer(r300->rws, r300->oqbo,
-			     0, R300_DOMAIN_GTT)) {
+			     0, r300_buffer(r300->oqbo)->domain)) {
             r300->context.flush(&r300->context, 0, NULL);
             goto validate;
         }
@@ -1110,7 +1110,7 @@ validate:
     /* ...vertex buffer for SWTCL path... */
     if (r300->vbo) {
         if (!r300_add_buffer(r300->rws, r300->vbo,
-			     R300_DOMAIN_GTT, 0)) {
+			     r300_buffer(r300->vbo)->domain, 0)) {
             r300->context.flush(&r300->context, 0, NULL);
             goto validate;
         }
@@ -1121,7 +1121,7 @@ validate:
             pbuf = vbuf[velem[i].vertex_buffer_index].buffer;
 
             if (!r300_add_buffer(r300->rws, pbuf,
-				 R300_DOMAIN_GTT, 0)) {
+				 r300_buffer(pbuf)->domain, 0)) {
 		r300->context.flush(&r300->context, 0, NULL);
                 goto validate;
             }
@@ -1130,7 +1130,7 @@ validate:
     /* ...and index buffer for HWTCL path. */
     if (index_buffer) {
         if (!r300_add_buffer(r300->rws, index_buffer,
-			     R300_DOMAIN_GTT, 0)) {
+			     r300_buffer(index_buffer)->domain, 0)) {
             r300->context.flush(&r300->context, 0, NULL);
             goto validate;
         }

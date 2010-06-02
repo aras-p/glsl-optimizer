@@ -422,7 +422,7 @@ static void r300_emit_draw_elements(struct r300_context *r300,
            (0 << R300_INDX_BUFFER_SKIP_SHIFT));
     OUT_CS(offset_dwords << 2);
     OUT_CS_BUF_RELOC(indexBuffer, count_dwords,
-		     R300_DOMAIN_GTT, 0, 0);
+		     r300_buffer(indexBuffer)->domain, 0, 0);
 
     END_CS;
 }
