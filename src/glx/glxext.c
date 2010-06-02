@@ -585,7 +585,8 @@ __glXInitializeVisualConfigFromTags(__GLcontextModes * config, int count,
          break;
 #endif
       case GLX_USE_GL:
-         if (fbconfig_style_tags) *bp++;
+         if (fbconfig_style_tags)
+            bp++;
          break;
       case None:
          i = count;
