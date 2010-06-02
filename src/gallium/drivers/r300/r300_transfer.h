@@ -24,7 +24,7 @@
 #ifndef R300_TRANSFER
 #define R300_TRANSFER
 
-#include "pipe/p_screen.h"
+#include "pipe/p_context.h"
 
 struct r300_context;
 

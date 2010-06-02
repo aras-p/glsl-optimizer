@@ -21,12 +21,9 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
-#include "r300_context.h"
 #include "r300_transfer.h"
 #include "r300_texture.h"
-#include "r300_screen.h"
-
-#include "r300_winsys.h"
+#include "r300_screen_buffer.h"
 
 #include "util/u_memory.h"
 #include "util/u_format.h"
@@ -110,6 +107,16 @@ r300_texture_get_transfer(struct pipe_context *ctx,
     struct r300_screen *r300screen = r300_screen(ctx->screen);
     struct r300_transfer *trans;
     struct pipe_resource base;
+    boolean referenced_cs, referenced_hw;
+
+    referenced_cs = r300screen->rws->is_buffer_referenced(
+                                r300screen->rws, tex->buffer, R300_REF_CS);
+    if (referenced_cs) {
+        referenced_hw = TRUE;
+    } else {
+        referenced_hw = r300screen->rws->is_buffer_referenced(
+                                r300screen->rws, tex->buffer, R300_REF_HW);
+    }
 
     trans = CALLOC_STRUCT(r300_transfer);
     if (trans) {
@@ -120,8 +127,10 @@ r300_texture_get_transfer(struct pipe_context *ctx,
         trans->transfer.box = *box;
 
         /* If the texture is tiled, we must create a temporary detiled texture
-         * for this transfer. */
-        if (tex->microtile || tex->macrotile) {
+         * for this transfer.
+         * Also make write transfers pipelined. */
+        if (tex->microtile || tex->macrotile ||
+            (referenced_hw & !(usage & PIPE_TRANSFER_READ))) {
             base.target = PIPE_TEXTURE_2D;
             base.format = texture->format;
             base.width0 = box->width;
@@ -166,11 +175,17 @@ r300_texture_get_transfer(struct pipe_context *ctx,
                 /* We cannot map a tiled texture directly because the data is
                  * in a different order, therefore we do detiling using a blit. */
                 r300_copy_from_tiled_texture(ctx, trans);
+
+                /* Always referenced in the blit. */
+                ctx->flush(ctx, 0, NULL);
             }
         } else {
             trans->transfer.stride =
                 r300_texture_get_stride(r300screen, tex, sr.level);
             trans->offset = r300_texture_get_offset(tex, sr.level, box->z, sr.face);
+
+            if (referenced_cs && (usage & PIPE_TRANSFER_READ))
+                ctx->flush(ctx, PIPE_FLUSH_RENDER_CACHE, NULL);
         }
     }
     return &trans->transfer;
