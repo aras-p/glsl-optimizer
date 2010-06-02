@@ -85,6 +85,10 @@ lp_build_one(struct lp_type type);
 
 
 LLVMValueRef
+lp_build_const_elem(struct lp_type type,
+                    double val);
+
+LLVMValueRef
 lp_build_const_vec(struct lp_type type, double val);
 
 
