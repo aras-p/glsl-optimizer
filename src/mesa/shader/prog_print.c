@@ -876,7 +876,7 @@ binary(GLbitfield64 val)
    static char buf[80];
    GLint i, len = 0;
    for (i = 63; i >= 0; --i) {
-      if (val & (1ULL << i))
+      if (val & (BITFIELD64_BIT(i)))
          buf[len++] = '1';
       else if (len > 0 || i == 0)
          buf[len++] = '0';
