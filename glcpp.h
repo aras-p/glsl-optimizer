@@ -123,10 +123,16 @@ typedef struct skip_node {
 	struct skip_node *next;
 } skip_node_t;
 
+typedef struct active_list {
+	const char *identifier;
+	token_node_t *marker;
+	struct active_list *next;
+} active_list_t;
+
 struct glcpp_parser {
 	yyscan_t scanner;
 	struct hash_table *defines;
-	string_list_t *active;
+	active_list_t *active;
 	int lexing_if;
 	int space_tokens;
 	int newline_as_space;
