@@ -591,6 +591,108 @@ _slang_count_temporaries(struct gl_program *prog)
 
 
 /**
+ * If an input attribute is indexed with relative addressing we have
+ * to compute a gl_program::InputsRead bitmask which reflects the fact
+ * that any input may be referenced by array element.  Ex: gl_TexCoord[i].
+ * This function computes the bitmask of potentially read inputs.
+ */
+static GLbitfield
+get_inputs_read_mask(GLenum target, GLuint index, GLboolean relAddr)
+{
+   GLbitfield mask;
+
+   mask = 1 << index;
+
+   if (relAddr) {
+      if (target == GL_VERTEX_PROGRAM_ARB) {
+         switch (index) {
+         case VERT_ATTRIB_TEX0:
+            mask = ((1U << (VERT_ATTRIB_TEX7 + 1)) - 1)
+                 - ((1U << VERT_ATTRIB_TEX0) - 1);
+            break;
+         case VERT_ATTRIB_GENERIC0:
+            /* different code to avoid uint overflow */
+            mask = ~0x0U - ((1U << VERT_ATTRIB_GENERIC0) - 1);
+            break;
+         default:
+            ; /* a non-array input attribute */
+         }
+      }
+      else if (target == GL_FRAGMENT_PROGRAM_ARB) {
+         switch (index) {
+         case FRAG_ATTRIB_TEX0:
+            mask = ((1U << (FRAG_ATTRIB_TEX7 + 1)) - 1)
+                 - ((1U << FRAG_ATTRIB_TEX0) - 1);
+            break;
+         case FRAG_ATTRIB_VAR0:
+            mask = ((1U << (FRAG_ATTRIB_VAR0 + MAX_VARYING)) - 1)
+                 - ((1U << FRAG_ATTRIB_VAR0) - 1);
+            break;
+         default:
+            ; /* a non-array input attribute */
+         }
+      }
+      else {
+         assert(0 && "bad program target");
+      }
+   }
+   else {
+   }
+
+   return mask;
+}
+
+
+/**
+ * If an output attribute is indexed with relative addressing we have
+ * to compute a gl_program::OutputsWritten bitmask which reflects the fact
+ * that any output may be referenced by array element.  Ex: gl_TexCoord[i].
+ * This function computes the bitmask of potentially written outputs.
+ */
+static GLbitfield64
+get_outputs_written_mask(GLenum target, GLuint index, GLboolean relAddr)
+{
+   GLbitfield64 mask;
+
+   mask = BITFIELD64_BIT(index);
+
+   if (relAddr) {
+      if (target == GL_VERTEX_PROGRAM_ARB) {
+         switch (index) {
+         case VERT_RESULT_TEX0:
+            mask = BITFIELD64_RANGE(VERT_RESULT_TEX0,
+                                    (VERT_RESULT_TEX0
+                                     + MAX_TEXTURE_COORD_UNITS - 1));
+            break;
+         case VERT_RESULT_VAR0:
+            mask = BITFIELD64_RANGE(VERT_RESULT_VAR0,
+                                    (VERT_RESULT_VAR0 + MAX_VARYING - 1));
+            break;
+         default:
+            ; /* a non-array output attribute */
+         }
+      }
+      else if (target == GL_FRAGMENT_PROGRAM_ARB) {
+         switch (index) {
+         case FRAG_RESULT_DATA0:
+            mask = BITFIELD64_RANGE(FRAG_RESULT_DATA0,
+                                    (FRAG_RESULT_DATA0
+                                     + MAX_DRAW_BUFFERS - 1));
+            break;
+         default:
+            ; /* a non-array output attribute */
+         }
+      }
+      else {
+         assert(0 && "bad program target");
+      }
+   }
+
+   return mask;
+}
+
+
+/**
  * Scan program instructions to update the program's InputsRead and
  * OutputsWritten fields.
  */
@@ -608,7 +710,9 @@ _slang_update_inputs_outputs(struct gl_program *prog)
       const GLuint numSrc = _mesa_num_inst_src_regs(inst->Opcode);
       for (j = 0; j < numSrc; j++) {
          if (inst->SrcReg[j].File == PROGRAM_INPUT) {
-            prog->InputsRead |= 1 << inst->SrcReg[j].Index;
+            prog->InputsRead |= get_inputs_read_mask(prog->Target,
+                                                     inst->SrcReg[j].Index,
+                                                     inst->SrcReg[j].RelAddr);
          }
          else if (inst->SrcReg[j].File == PROGRAM_ADDRESS) {
             maxAddrReg = MAX2(maxAddrReg, (GLuint) (inst->SrcReg[j].Index + 1));
@@ -616,34 +720,9 @@ _slang_update_inputs_outputs(struct gl_program *prog)
       }
 
       if (inst->DstReg.File == PROGRAM_OUTPUT) {
-         prog->OutputsWritten |= BITFIELD64_BIT(inst->DstReg.Index);
-         if (inst->DstReg.RelAddr) {
-            /* If the output attribute is indexed with relative addressing
-             * we know that it must be a varying or texcoord such as
-             * gl_TexCoord[i] = v;  In this case, mark all the texcoords
-             * or varying outputs as being written.  It's not an error if
-             * a vertex shader writes varying vars that aren't used by the
-             * fragment shader.  But it is an error for a fragment shader
-             * to use varyings that are not written by the vertex shader.
-             */
-            if (prog->Target == GL_VERTEX_PROGRAM_ARB) {
-               if (inst->DstReg.Index == VERT_RESULT_TEX0) {
-                  /* mark all texcoord outputs as written */
-                  const GLbitfield64 mask =
-		     BITFIELD64_RANGE(VERT_RESULT_TEX0,
-				      (VERT_RESULT_TEX0
-				       + MAX_TEXTURE_COORD_UNITS - 1));
-                  prog->OutputsWritten |= mask;
-               }
-               else if (inst->DstReg.Index == VERT_RESULT_VAR0) {
-                  /* mark all generic varying outputs as written */
-                  const GLbitfield64 mask =
-		     BITFIELD64_RANGE(VERT_RESULT_VAR0,
-				      (VERT_RESULT_VAR0 + MAX_VARYING - 1));
-                  prog->OutputsWritten |= mask;
-               }
-            }
-         }
+         prog->OutputsWritten |= get_outputs_written_mask(prog->Target,
+                                                          inst->DstReg.Index,
+                                                          inst->DstReg.RelAddr);
       }
       else if (inst->DstReg.File == PROGRAM_ADDRESS) {
          maxAddrReg = MAX2(maxAddrReg, inst->DstReg.Index + 1);
