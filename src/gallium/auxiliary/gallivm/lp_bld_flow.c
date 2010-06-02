@@ -38,7 +38,7 @@
 #include "lp_bld_flow.h"
 
 
-#define LP_BUILD_FLOW_MAX_VARIABLES 32
+#define LP_BUILD_FLOW_MAX_VARIABLES 64
 #define LP_BUILD_FLOW_MAX_DEPTH 32
 
 /**
