@@ -262,7 +262,7 @@ attribs_update(struct lp_build_interp_soa_context *bld, int quad_index)
       for(chan = 0; chan < NUM_CHANNELS; ++chan) {
          if(mask & (1 << chan)) {
             LLVMValueRef a = coeff_bld->undef;
-            if (interp == LP_INTERP_CONSTANT &&
+            if (interp == LP_INTERP_CONSTANT ||
                 interp == LP_INTERP_FACING) {
                a = bld->a[attrib][chan];
             }
