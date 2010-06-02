@@ -500,11 +500,9 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
    struct lp_build_context *coord_bld = &bld->coord_bld;
    struct lp_build_context *int_coord_bld = &bld->int_coord_bld;
    struct lp_build_context *uint_coord_bld = &bld->uint_coord_bld;
-   LLVMValueRef two = lp_build_const_vec(coord_bld->type, 2.0);
    LLVMValueRef half = lp_build_const_vec(coord_bld->type, 0.5);
    LLVMValueRef length_f = lp_build_int_to_float(coord_bld, length);
    LLVMValueRef length_minus_one = lp_build_sub(uint_coord_bld, length, uint_coord_bld->one);
-   LLVMValueRef length_f_minus_one = lp_build_sub(coord_bld, length_f, coord_bld->one);
    LLVMValueRef coord0, coord1, weight;
 
    switch(wrap_mode) {
@@ -532,16 +530,18 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
 
    case PIPE_TEX_WRAP_CLAMP:
       if (bld->static_state->normalized_coords) {
+         /* scale coord to length */
          coord = lp_build_mul(coord_bld, coord, length_f);
       }
+
+      /* clamp to [0, length] */
+      coord = lp_build_clamp(coord_bld, coord, coord_bld->zero, length_f);
+
+      coord = lp_build_sub(coord_bld, coord, half);
+
       weight = lp_build_fract(coord_bld, coord);
-      coord0 = lp_build_clamp(coord_bld, coord, coord_bld->zero,
-                              length_f_minus_one);
-      coord1 = lp_build_add(coord_bld, coord, coord_bld->one);
-      coord1 = lp_build_clamp(coord_bld, coord1, coord_bld->zero,
-                              length_f_minus_one);
-      coord0 = lp_build_ifloor(coord_bld, coord0);
-      coord1 = lp_build_ifloor(coord_bld, coord1);
+      coord0 = lp_build_ifloor(coord_bld, coord);
+      coord1 = lp_build_add(int_coord_bld, coord0, int_coord_bld->one);
       break;
 
    case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
@@ -555,7 +555,7 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
       else {
          LLVMValueRef min, max;
          /* clamp to [0.5, length - 0.5] */
-         min = lp_build_const_vec(coord_bld->type, 0.5F);
+         min = half;
          max = lp_build_sub(coord_bld, length_f, min);
          coord = lp_build_clamp(coord_bld, coord, min, max);
       }
@@ -574,25 +574,14 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
       {
          LLVMValueRef min, max;
          if (bld->static_state->normalized_coords) {
-            /* min = -1.0 / (2 * length) = -0.5 / length */
-            min = lp_build_mul(coord_bld,
-                               lp_build_const_vec(coord_bld->type, -0.5F),
-                               lp_build_rcp(coord_bld, length_f));
-            /* max = 1.0 - min */
-            max = lp_build_sub(coord_bld, coord_bld->one, min);
-            /* coord = clamp(coord, min, max) */
-            coord = lp_build_clamp(coord_bld, coord, min, max);
-            /* scale coord to length (and sub 0.5?) */
+            /* scale coord to length */
             coord = lp_build_mul(coord_bld, coord, length_f);
-            coord = lp_build_sub(coord_bld, coord, half);
          }
-         else {
-            /* clamp to [-0.5, length + 0.5] */
-            min = lp_build_const_vec(coord_bld->type, -0.5F);
-            max = lp_build_sub(coord_bld, length_f, min);
-            coord = lp_build_clamp(coord_bld, coord, min, max);
-            coord = lp_build_sub(coord_bld, coord, half);
-         }
+         /* clamp to [-0.5, length + 0.5] */
+         min = lp_build_const_vec(coord_bld->type, -0.5F);
+         max = lp_build_sub(coord_bld, length_f, min);
+         coord = lp_build_clamp(coord_bld, coord, min, max);
+         coord = lp_build_sub(coord_bld, coord, half);
          /* compute lerp weight */
          weight = lp_build_fract(coord_bld, coord);
          /* convert to int */
@@ -623,35 +612,41 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
       break;
 
    case PIPE_TEX_WRAP_MIRROR_CLAMP:
-      {
-         LLVMValueRef min, max;
-         /* min = 1.0 / (2 * length) */
-         min = lp_build_rcp(coord_bld, lp_build_mul(coord_bld, two, length_f));
-         /* max = 1.0 - min */
-         max = lp_build_sub(coord_bld, coord_bld->one, min);
+      coord = lp_build_abs(coord_bld, coord);
 
-         coord = lp_build_abs(coord_bld, coord);
-         coord = lp_build_clamp(coord_bld, coord, min, max);
+      if (bld->static_state->normalized_coords) {
+         /* scale coord to length */
          coord = lp_build_mul(coord_bld, coord, length_f);
-         if(0)coord = lp_build_sub(coord_bld, coord, half);
-         weight = lp_build_fract(coord_bld, coord);
-         coord0 = lp_build_ifloor(coord_bld, coord);
-         coord1 = lp_build_add(int_coord_bld, coord0, int_coord_bld->one);
       }
+
+      /* clamp to [0, length] */
+      coord = lp_build_min(coord_bld, coord, length_f);
+
+      coord = lp_build_sub(coord_bld, coord, half);
+
+      weight = lp_build_fract(coord_bld, coord);
+      coord0 = lp_build_ifloor(coord_bld, coord);
+      coord1 = lp_build_add(int_coord_bld, coord0, int_coord_bld->one);
       break;
 
    case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_EDGE:
       {
          LLVMValueRef min, max;
-         /* min = 1.0 / (2 * length) */
-         min = lp_build_rcp(coord_bld, lp_build_mul(coord_bld, two, length_f));
-         /* max = 1.0 - min */
-         max = lp_build_sub(coord_bld, coord_bld->one, min);
 
          coord = lp_build_abs(coord_bld, coord);
+
+         if (bld->static_state->normalized_coords) {
+            /* scale coord to length */
+            coord = lp_build_mul(coord_bld, coord, length_f);
+         }
+
+         /* clamp to [0.5, length - 0.5] */
+         min = half;
+         max = lp_build_sub(coord_bld, length_f, min);
          coord = lp_build_clamp(coord_bld, coord, min, max);
-         coord = lp_build_mul(coord_bld, coord, length_f);
+
          coord = lp_build_sub(coord_bld, coord, half);
+
          weight = lp_build_fract(coord_bld, coord);
          coord0 = lp_build_ifloor(coord_bld, coord);
          coord1 = lp_build_add(int_coord_bld, coord0, int_coord_bld->one);
@@ -661,17 +656,21 @@ lp_build_sample_wrap_linear(struct lp_build_sample_context *bld,
    case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER:
       {
          LLVMValueRef min, max;
-         /* min = -1.0 / (2 * length) = -0.5 / length */
-         min = lp_build_mul(coord_bld,
-                            lp_build_const_vec(coord_bld->type, -0.5F),
-                            lp_build_rcp(coord_bld, length_f));
-         /* max = 1.0 - min */
-         max = lp_build_sub(coord_bld, coord_bld->one, min);
 
          coord = lp_build_abs(coord_bld, coord);
+
+         if (bld->static_state->normalized_coords) {
+            /* scale coord to length */
+            coord = lp_build_mul(coord_bld, coord, length_f);
+         }
+
+         /* clamp to [-0.5, length + 0.5] */
+         min = lp_build_negate(coord_bld, half);
+         max = lp_build_sub(coord_bld, length_f, min);
          coord = lp_build_clamp(coord_bld, coord, min, max);
-         coord = lp_build_mul(coord_bld, coord, length_f);
+
          coord = lp_build_sub(coord_bld, coord, half);
+
          weight = lp_build_fract(coord_bld, coord);
          coord0 = lp_build_ifloor(coord_bld, coord);
          coord1 = lp_build_add(int_coord_bld, coord0, int_coord_bld->one);
