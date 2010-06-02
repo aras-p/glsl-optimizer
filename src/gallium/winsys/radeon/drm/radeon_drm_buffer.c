@@ -339,27 +339,45 @@ void radeon_drm_bufmgr_set_tiling(struct pb_buffer *_buf,
     }
 }
 
+static uint32_t gem_domain(enum r300_buffer_domain dom)
+{
+    uint32_t res = 0;
+
+    if (dom & R300_DOMAIN_GTT)
+        res |= RADEON_GEM_DOMAIN_GTT;
+    if (dom & R300_DOMAIN_VRAM)
+        res |= RADEON_GEM_DOMAIN_VRAM;
+    return res;
+}
+
 boolean radeon_drm_bufmgr_add_buffer(struct pb_buffer *_buf,
-				     uint32_t rd, uint32_t wd)
+				     enum r300_buffer_domain rd,
+                                     enum r300_buffer_domain wd)
 {
     struct radeon_drm_buffer *buf = get_drm_buffer(_buf);
+    uint32_t gem_rd = gem_domain(rd);
+    uint32_t gem_wd = gem_domain(wd);
+
     radeon_cs_space_add_persistent_bo(buf->mgr->rws->cs, buf->bo,
-					  rd, wd);
+					  gem_rd, gem_wd);
     return TRUE;
 }
 
 void radeon_drm_bufmgr_write_reloc(struct pb_buffer *_buf,
-				   uint32_t rd, uint32_t wd,
+				   enum r300_buffer_domain rd,
+                                   enum r300_buffer_domain wd,
 				   uint32_t flags)
 {
     struct radeon_drm_buffer *buf = get_drm_buffer(_buf);
     int retval;
+    uint32_t gem_rd = gem_domain(rd);
+    uint32_t gem_wd = gem_domain(wd);
 
     retval = radeon_cs_write_reloc(buf->mgr->rws->cs,
-				   buf->bo, rd, wd, flags);
+				   buf->bo, gem_rd, gem_wd, flags);
     if (retval) {
         debug_printf("radeon: Relocation of %p (%d, %d, %d) failed!\n",
-		     buf, rd, wd, flags);
+		     buf, gem_rd, gem_wd, flags);
     }
 }
 

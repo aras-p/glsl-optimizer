@@ -173,8 +173,8 @@ static void radeon_set_flush_cb(struct r300_winsys_screen *rws,
 
 static boolean radeon_add_buffer(struct r300_winsys_screen *rws,
                                  struct r300_winsys_buffer *buf,
-                                 uint32_t rd,
-                                 uint32_t wd)
+                                 enum r300_buffer_domain rd,
+                                 enum r300_buffer_domain wd)
 {
     struct pb_buffer *_buf = radeon_pb_buffer(buf);
 
@@ -229,8 +229,8 @@ static void radeon_write_cs_table(struct r300_winsys_screen *rws,
 
 static void radeon_write_cs_reloc(struct r300_winsys_screen *rws,
                                   struct r300_winsys_buffer *buf,
-                                  uint32_t rd,
-                                  uint32_t wd,
+                                  enum r300_buffer_domain rd,
+                                  enum r300_buffer_domain wd,
                                   uint32_t flags)
 {
     struct pb_buffer *_buf = radeon_pb_buffer(buf);

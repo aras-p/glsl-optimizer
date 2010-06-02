@@ -116,7 +116,9 @@ static INLINE boolean r300_add_texture(struct r300_winsys_screen *rws,
 
 static INLINE void r300_buffer_write_reloc(struct r300_winsys_screen *rws,
 				      struct r300_buffer *buf,
-				      uint32_t rd, uint32_t wd, uint32_t flags)
+				      enum r300_buffer_domain rd,
+                                      enum r300_buffer_domain wd,
+                                      uint32_t flags)
 {
     if (!buf->buf)
 	return;
@@ -126,7 +128,9 @@ static INLINE void r300_buffer_write_reloc(struct r300_winsys_screen *rws,
 
 static INLINE void r300_texture_write_reloc(struct r300_winsys_screen *rws,
 					    struct r300_texture *texture,
-					    uint32_t rd, uint32_t wd, uint32_t flags)
+					    enum r300_buffer_domain rd,
+                                            enum r300_buffer_domain wd,
+                                            uint32_t flags)
 {
     rws->write_cs_reloc(rws, texture->buffer, rd, wd, flags);
 }

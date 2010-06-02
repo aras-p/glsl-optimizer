@@ -64,11 +64,13 @@ struct pb_manager *
 radeon_drm_bufmgr_create(struct radeon_libdrm_winsys *rws);
 
 boolean radeon_drm_bufmgr_add_buffer(struct pb_buffer *_buf,
-				     uint32_t rd, uint32_t wd);
+				     enum r300_buffer_domain rd,
+                                     enum r300_buffer_domain wd);
 
 
 void radeon_drm_bufmgr_write_reloc(struct pb_buffer *_buf,
-				   uint32_t rd, uint32_t wd,
+				   enum r300_buffer_domain rd,
+                                   enum r300_buffer_domain wd,
 				   uint32_t flags);
 
 struct pb_buffer *radeon_drm_bufmgr_create_buffer_from_handle(struct pb_manager *_mgr,

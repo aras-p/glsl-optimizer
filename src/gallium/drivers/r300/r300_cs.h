@@ -37,11 +37,6 @@
 #define VERY_VERBOSE_CS 1
 #define VERY_VERBOSE_REGISTERS 1
 
-/* XXX stolen from radeon_drm.h */
-#define RADEON_GEM_DOMAIN_CPU  0x1
-#define RADEON_GEM_DOMAIN_GTT  0x2
-#define RADEON_GEM_DOMAIN_VRAM 0x4
-
 /* XXX stolen from radeon_reg.h */
 #define RADEON_CP_PACKET0 0x0
 

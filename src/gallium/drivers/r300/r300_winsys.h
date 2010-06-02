@@ -101,8 +101,8 @@ struct r300_winsys_screen {
     /* Add a pipe_resource to the list of buffer objects to validate. */
     boolean (*add_buffer)(struct r300_winsys_screen *winsys,
                           struct r300_winsys_buffer *buf,
-                          uint32_t rd,
-                          uint32_t wd);
+                          enum r300_buffer_domain rd,
+                          enum r300_buffer_domain wd);
 
 
     /* Revalidate all currently setup pipe_buffers.
@@ -130,8 +130,8 @@ struct r300_winsys_screen {
     /* Write a relocated dword to the command buffer. */
     void (*write_cs_reloc)(struct r300_winsys_screen *winsys,
                            struct r300_winsys_buffer *buf,
-                           uint32_t rd,
-                           uint32_t wd,
+                           enum r300_buffer_domain rd,
+                           enum r300_buffer_domain wd,
                            uint32_t flags);
 
     /* Finish a command emit. */
