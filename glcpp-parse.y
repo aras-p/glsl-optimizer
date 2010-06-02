@@ -1320,16 +1320,6 @@ _glcpp_parser_expand_token_list (glcpp_parser_t *parser,
 	list->non_space_tail = list->tail;
 }
 
-static void
-_glcpp_parser_expand_token_list_onto (glcpp_parser_t *parser,
-				      token_list_t *list,
-				      token_list_t *result)
-{
-	_glcpp_parser_expand_token_list (parser, list);
-
-	_token_list_append_list (result, list);
-}
-
 void
 _glcpp_parser_print_expanded_token_list (glcpp_parser_t *parser,
 					 token_list_t *list)
