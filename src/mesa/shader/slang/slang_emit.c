@@ -366,7 +366,7 @@ storage_to_src_reg(struct prog_src_register *src, const slang_ir_storage *st)
       st0->File = PROGRAM_TEMPORARY;
    }
 #endif
-   assert(st->File < PROGRAM_UNDEFINED);
+   assert(st->File < PROGRAM_FILE_MAX);
    src->File = st->File;
 
    assert(index >= 0);
