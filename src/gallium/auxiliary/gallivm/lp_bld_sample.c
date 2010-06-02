@@ -92,7 +92,7 @@ lp_sampler_static_state(struct lp_sampler_static_state *state,
    state->wrap_r            = sampler->wrap_r;
    state->min_img_filter    = sampler->min_img_filter;
    state->mag_img_filter    = sampler->mag_img_filter;
-   if (texture->last_level) {
+   if (view->last_level) {
       state->min_mip_filter = sampler->min_mip_filter;
    } else {
       state->min_mip_filter = PIPE_TEX_MIPFILTER_NONE;
@@ -105,8 +105,14 @@ lp_sampler_static_state(struct lp_sampler_static_state *state,
 
    state->normalized_coords = sampler->normalized_coords;
    state->lod_bias          = sampler->lod_bias;
-   state->min_lod           = sampler->min_lod;
-   state->max_lod           = sampler->max_lod;
+   if (!view->last_level &&
+       sampler->min_img_filter == sampler->mag_img_filter) {
+      state->min_lod        = 0.0f;
+      state->max_lod        = 0.0f;
+   } else {
+      state->min_lod        = MAX2(sampler->min_lod, 0.0f);
+      state->max_lod        = sampler->max_lod;
+   }
    state->border_color[0]   = sampler->border_color[0];
    state->border_color[1]   = sampler->border_color[1];
    state->border_color[2]   = sampler->border_color[2];
