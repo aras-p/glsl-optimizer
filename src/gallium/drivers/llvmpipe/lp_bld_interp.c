@@ -340,7 +340,7 @@ lp_build_interp_soa_init(struct lp_build_interp_soa_context *bld,
    coeff_type.length = QUAD_SIZE;
 
    /* XXX: we don't support interpolating into any other types */
-   assert(memcmp(&coeff_type, &type, sizeof &coeff_type) == 0);
+   assert(memcmp(&coeff_type, &type, sizeof coeff_type) == 0);
 
    lp_build_context_init(&bld->coeff_bld, builder, coeff_type);
 
