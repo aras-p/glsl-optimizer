@@ -415,10 +415,8 @@ is_simple_wrap_mode(unsigned mode)
 {
    switch (mode) {
    case PIPE_TEX_WRAP_REPEAT:
-   case PIPE_TEX_WRAP_CLAMP:
    case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
       return TRUE;
-   case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
    default:
       return FALSE;
    }
@@ -455,24 +453,17 @@ lp_build_sample_wrap_int(struct lp_build_sample_context *bld,
          coord = LLVMBuildURem(bld->builder, coord, length, "");
       break;
 
-   case PIPE_TEX_WRAP_CLAMP:
    case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
-   case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
       coord = lp_build_max(int_coord_bld, coord, int_coord_bld->zero);
       coord = lp_build_min(int_coord_bld, coord, length_minus_one);
       break;
 
+   case PIPE_TEX_WRAP_CLAMP:
+   case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
    case PIPE_TEX_WRAP_MIRROR_REPEAT:
    case PIPE_TEX_WRAP_MIRROR_CLAMP:
    case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_EDGE:
    case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER:
-      /* FIXME */
-      _debug_printf("llvmpipe: failed to translate texture wrap mode %s\n",
-                    util_dump_tex_wrap(wrap_mode, TRUE));
-      coord = lp_build_max(uint_coord_bld, coord, uint_coord_bld->zero);
-      coord = lp_build_min(uint_coord_bld, coord, length_minus_one);
-      break;
-
    default:
       assert(0);
    }
