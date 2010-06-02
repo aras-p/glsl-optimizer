@@ -599,9 +599,8 @@ __glXInitializeVisualConfigFromTags(__GLcontextModes * config, int count,
          } else {
              /* Ignore the unrecognized tag's value */
              bp++;
-             break;
          }
-              break;
+         break;
       }
    }
 
