@@ -58,7 +58,6 @@ public:
    virtual class ir_dereference *       as_dereference()      { return NULL; }
    virtual class ir_dereference_array *	as_dereference_array() { return NULL; }
    virtual class ir_rvalue *            as_rvalue()           { return NULL; }
-   virtual class ir_label *             as_label()            { return NULL; }
    virtual class ir_loop *              as_loop()             { return NULL; }
    virtual class ir_assignment *        as_assignment()       { return NULL; }
    virtual class ir_call *              as_call()             { return NULL; }
