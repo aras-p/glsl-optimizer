@@ -105,7 +105,7 @@ struct pipe_context {
    /**
     * Draw the stream output buffer at index 0
     */
-   void (*draw_auto)( struct pipe_context *pipe, unsigned mode );
+   void (*draw_stream_output)( struct pipe_context *pipe, unsigned mode );
    /*@}*/
 
    /**

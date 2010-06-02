@@ -352,7 +352,6 @@ struct pipe_stream_output_state
    int output_buffer[PIPE_MAX_SHADER_OUTPUTS];
    /**< which register to grab each output from */
    int register_index[PIPE_MAX_SHADER_OUTPUTS];
-   /**< format for each output */
    /**< TGSI_WRITEMASK signifying which components to output */
    ubyte register_mask[PIPE_MAX_SHADER_OUTPUTS];
    /**< number of outputs */

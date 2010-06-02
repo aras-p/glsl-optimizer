@@ -250,7 +250,7 @@ softpipe_draw_elements_instanced(struct pipe_context *pipe,
                                  unsigned startInstance,
                                  unsigned instanceCount);
 
-void softpipe_draw_auto(struct pipe_context *pipe, unsigned mode);
+void softpipe_draw_stream_output(struct pipe_context *pipe, unsigned mode);
 
 void
 softpipe_map_transfers(struct softpipe_context *sp);

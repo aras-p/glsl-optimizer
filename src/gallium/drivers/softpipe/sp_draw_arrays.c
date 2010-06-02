@@ -85,7 +85,7 @@ softpipe_draw_arrays(struct pipe_context *pipe, unsigned mode,
 }
 
 void
-softpipe_draw_auto(struct pipe_context *pipe, unsigned mode)
+softpipe_draw_stream_output(struct pipe_context *pipe, unsigned mode)
 {
    struct softpipe_context *sp = softpipe_context(pipe);
    struct draw_context *draw = sp->draw;
