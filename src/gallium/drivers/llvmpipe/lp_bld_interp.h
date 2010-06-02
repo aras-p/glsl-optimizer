@@ -57,6 +57,9 @@ struct lp_build_interp_soa_context
    unsigned mask[1 + PIPE_MAX_SHADER_INPUTS]; /**< TGSI_WRITE_MASK_x */
    enum lp_interp interp[1 + PIPE_MAX_SHADER_INPUTS];
 
+   LLVMValueRef x0;
+   LLVMValueRef y0;
+
    LLVMValueRef a0  [1 + PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
    LLVMValueRef dadx[1 + PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
    LLVMValueRef dady[1 + PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
@@ -83,8 +86,8 @@ lp_build_interp_soa_init(struct lp_build_interp_soa_context *bld,
                          LLVMValueRef a0_ptr,
                          LLVMValueRef dadx_ptr,
                          LLVMValueRef dady_ptr,
-                         LLVMValueRef x0,
-                         LLVMValueRef y0);
+                         LLVMValueRef x,
+                         LLVMValueRef y);
 
 void
 lp_build_interp_soa_update(struct lp_build_interp_soa_context *bld,

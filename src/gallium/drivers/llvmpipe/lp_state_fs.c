@@ -99,45 +99,6 @@
 #include <llvm-c/Analysis.h>
 
 
-static const unsigned char quad_offset_x[4] = {0, 1, 0, 1};
-static const unsigned char quad_offset_y[4] = {0, 0, 1, 1};
-
-
-/*
- * Derive from the quad's upper left scalar coordinates the coordinates for
- * all other quad pixels
- */
-static void
-generate_pos0(LLVMBuilderRef builder,
-              LLVMValueRef x,
-              LLVMValueRef y,
-              LLVMValueRef *x0,
-              LLVMValueRef *y0)
-{
-   LLVMTypeRef int_elem_type = LLVMInt32Type();
-   LLVMTypeRef int_vec_type = LLVMVectorType(int_elem_type, QUAD_SIZE);
-   LLVMTypeRef elem_type = LLVMFloatType();
-   LLVMTypeRef vec_type = LLVMVectorType(elem_type, QUAD_SIZE);
-   LLVMValueRef x_offsets[QUAD_SIZE];
-   LLVMValueRef y_offsets[QUAD_SIZE];
-   unsigned i;
-
-   x = lp_build_broadcast(builder, int_vec_type, x);
-   y = lp_build_broadcast(builder, int_vec_type, y);
-
-   for(i = 0; i < QUAD_SIZE; ++i) {
-      x_offsets[i] = LLVMConstInt(int_elem_type, quad_offset_x[i], 0);
-      y_offsets[i] = LLVMConstInt(int_elem_type, quad_offset_y[i], 0);
-   }
-
-   x = LLVMBuildAdd(builder, x, LLVMConstVector(x_offsets, QUAD_SIZE), "");
-   y = LLVMBuildAdd(builder, y, LLVMConstVector(y_offsets, QUAD_SIZE), "");
-
-   *x0 = LLVMBuildSIToFP(builder, x, vec_type, "");
-   *y0 = LLVMBuildSIToFP(builder, y, vec_type, "");
-}
-
-
 /**
  * Generate the depth /stencil test code.
  */
@@ -635,8 +596,6 @@ generate_fragment(struct llvmpipe_context *lp,
    LLVMValueRef c0, c1, c2, step0_ptr, step1_ptr, step2_ptr, counter = NULL;
    LLVMBasicBlockRef block;
    LLVMBuilderRef builder;
-   LLVMValueRef x0;
-   LLVMValueRef y0;
    struct lp_build_sampler_soa *sampler;
    struct lp_build_interp_soa_context interp;
    LLVMValueRef fs_mask[LP_MAX_VECTOR_LENGTH];
@@ -757,8 +716,6 @@ generate_fragment(struct llvmpipe_context *lp,
    builder = LLVMCreateBuilder();
    LLVMPositionBuilderAtEnd(builder, block);
 
-   generate_pos0(builder, x, y, &x0, &y0);
-
    /*
     * The shader input interpolation info is not explicitely baked in the
     * shader key, but everything it derives from (TGSI, and flatshade) is
@@ -769,7 +726,7 @@ generate_fragment(struct llvmpipe_context *lp,
                             lp->inputs,
                             builder, fs_type,
                             a0_ptr, dadx_ptr, dady_ptr,
-                            x0, y0);
+                            x, y);
 
    /* code generated texture sampling */
    sampler = lp_llvm_sampler_soa_create(key->sampler, context_ptr);

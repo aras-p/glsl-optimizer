@@ -75,6 +75,10 @@
  */
 
 
+static const unsigned char quad_offset_x[4] = {0, 1, 0, 1};
+static const unsigned char quad_offset_y[4] = {0, 0, 1, 1};
+
+
 static void
 attrib_name(LLVMValueRef val, unsigned attrib, unsigned chan, const char *suffix)
 {
@@ -281,18 +285,46 @@ attribs_update(struct lp_build_interp_soa_context *bld, int quad_index)
 /**
  * Generate the position vectors.
  *
- * Parameter x0, y0 are the integer values with the quad upper left coordinates.
+ * Parameter x0, y0 are the integer values with upper left coordinates.
  */
 static void
 pos_init(struct lp_build_interp_soa_context *bld,
          LLVMValueRef x0,
          LLVMValueRef y0)
 {
-   lp_build_name(x0, "pos.x");
-   lp_build_name(y0, "pos.y");
+   LLVMBuilderRef builder = bld->base.builder;
+   LLVMTypeRef int_elem_type = LLVMInt32Type();
+   LLVMTypeRef int_vec_type = LLVMVectorType(int_elem_type, QUAD_SIZE);
+   LLVMTypeRef elem_type = LLVMFloatType();
+   LLVMTypeRef vec_type = LLVMVectorType(elem_type, QUAD_SIZE);
+   LLVMValueRef x_offsets[QUAD_SIZE];
+   LLVMValueRef y_offsets[QUAD_SIZE];
+   unsigned i;
 
-   bld->attribs[0][0] = x0;
-   bld->attribs[0][1] = y0;
+   /*
+    * Derive from the quad's upper left scalar coordinates the coordinates for
+    * all other quad pixels
+    */
+
+   x0 = lp_build_broadcast(builder, int_vec_type, x0);
+   y0 = lp_build_broadcast(builder, int_vec_type, y0);
+
+   for(i = 0; i < QUAD_SIZE; ++i) {
+      x_offsets[i] = LLVMConstInt(int_elem_type, quad_offset_x[i], 0);
+      y_offsets[i] = LLVMConstInt(int_elem_type, quad_offset_y[i], 0);
+   }
+
+   x0 = LLVMBuildAdd(builder, x0, LLVMConstVector(x_offsets, QUAD_SIZE), "");
+   y0 = LLVMBuildAdd(builder, y0, LLVMConstVector(y_offsets, QUAD_SIZE), "");
+
+   bld->x0 = LLVMBuildSIToFP(builder, x0, vec_type, "");
+   bld->y0 = LLVMBuildSIToFP(builder, y0, vec_type, "");
+
+   lp_build_name(bld->x0, "pos.x");
+   lp_build_name(bld->y0, "pos.y");
+
+   bld->attribs[0][0] = bld->x0;
+   bld->attribs[0][1] = bld->y0;
 }
 
 
