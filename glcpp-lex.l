@@ -45,6 +45,8 @@ DECIMAL_INTEGER		[1-9][0-9]*[uU]?
 OCTAL_INTEGER		0[0-7]*[uU]?
 HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 
+NON_STARS_THEN_STARS	[^*]*[*]+
+
 %%
 
 	/* Single-line comments */
@@ -53,7 +55,7 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 }
 
 	/* Multi-line comments */
-"/*"([^*]*[*]+[^*/])*[^*]*[*]+"/" {
+"/*"({NON_STARS_THEN_STARS}[^*/])*{NON_STARS_THEN_STARS}"/" {
 	if (yyextra->space_tokens)
 		return SPACE;
 }
