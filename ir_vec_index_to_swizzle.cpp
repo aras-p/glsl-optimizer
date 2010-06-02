@@ -64,7 +64,6 @@ ir_vec_index_to_swizzle_visitor::convert_vec_index_to_swizzle(ir_rvalue *ir)
 {
    ir_dereference_array *deref = ir->as_dereference_array();
    ir_constant *ir_constant;
-   ir_rvalue *deref_var;
 
    if (!deref)
       return ir;
@@ -72,20 +71,13 @@ ir_vec_index_to_swizzle_visitor::convert_vec_index_to_swizzle(ir_rvalue *ir)
    if (deref->array->type->is_matrix() || deref->array->type->is_array())
       return ir;
 
-   deref_var = deref->array->as_rvalue();
-   if (!deref_var) {
-      ir_variable *var = deref->array->as_variable();
-      assert(var);
-      deref_var = new ir_dereference_variable(var);
-   }
-
    assert(deref->array_index->type->base_type == GLSL_TYPE_INT);
    ir_constant = deref->array_index->constant_expression_value();
    if (!ir_constant)
       return ir;
 
    this->progress = true;
-   return new ir_swizzle(deref_var, ir_constant->value.i[0], 0, 0, 0, 1);
+   return new ir_swizzle(deref->array, ir_constant->value.i[0], 0, 0, 0, 1);
 }
 
 ir_visitor_status
