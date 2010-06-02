@@ -272,6 +272,8 @@ struct r300_texture {
     /* Parent class */
     struct u_resource b;
 
+    enum r300_buffer_domain domain;
+
     /* Offsets into the buffer. */
     unsigned offset[R300_MAX_TEXTURE_LEVELS];
 

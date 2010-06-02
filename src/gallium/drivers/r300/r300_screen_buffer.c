@@ -116,19 +116,6 @@ int r300_upload_user_buffers(struct r300_context *r300)
     return ret;
 }
 
-static struct r300_winsys_buffer *
-r300_winsys_buffer_create(struct r300_screen *r300screen,
-			  unsigned alignment,
-			  unsigned usage,
-			  unsigned size)
-{
-    struct r300_winsys_screen *rws = r300screen->rws;
-    struct r300_winsys_buffer *buf;
-
-    buf = rws->buffer_create(rws, alignment, usage, R300_DOMAIN_GTT, size);
-    return buf;
-}
-
 static void r300_winsys_buffer_destroy(struct r300_screen *r300screen,
 				       struct r300_buffer *rbuf)
 {
@@ -180,9 +167,9 @@ r300_buffer_transfer_map( struct pipe_context *pipe,
 		rws->buffer_reference(rws, &rbuf->buf, NULL);
 
 		rbuf->num_ranges = 0;
-		rbuf->buf = r300_winsys_buffer_create(r300screen,
-						      16,
-						      rbuf->b.b.bind, /* XXX */
+		rbuf->buf = r300screen->rws->buffer_create(r300screen->rws, 16,
+						      rbuf->b.b.bind,
+                                                      rbuf->domain,
 						      rbuf->b.b.width0);
 		break;
 	    }
@@ -278,9 +265,12 @@ struct pipe_resource *r300_buffer_create(struct pipe_screen *screen,
     if (rbuf->b.b.bind & R300_BIND_OQBO)
         alignment = 4096;
 
-    rbuf->buf = r300_winsys_buffer_create(r300screen,
+    rbuf->domain = R300_DOMAIN_GTT;
+
+    rbuf->buf = r300screen->rws->buffer_create(r300screen->rws,
 					  alignment,
 					  rbuf->b.b.bind,
+                                          rbuf->domain,
 					  rbuf->b.b.width0);
 
     if (!rbuf->buf)
@@ -315,6 +305,7 @@ struct pipe_resource *r300_user_buffer_create(struct pipe_screen *screen,
     rbuf->b.b.width0 = bytes;
     rbuf->b.b.height0 = 1;
     rbuf->b.b.depth0 = 1;
+    rbuf->domain = R300_DOMAIN_GTT;
 
     rbuf->user_buffer = ptr;
     return &rbuf->b.b;
