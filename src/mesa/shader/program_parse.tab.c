@@ -3366,7 +3366,7 @@ yyreduce:
 	      s->param_binding_type = (yyvsp[(3) - (3)].temp_sym).param_binding_type;
 	      s->param_binding_begin = (yyvsp[(3) - (3)].temp_sym).param_binding_begin;
 	      s->param_binding_length = (yyvsp[(3) - (3)].temp_sym).param_binding_length;
-              s->param_binding_swizzle = SWIZZLE_XYZW;
+              s->param_binding_swizzle = (yyvsp[(3) - (3)].temp_sym).param_binding_swizzle;
 	      s->param_is_array = 0;
 	   }
 	;}

@@ -1219,7 +1219,7 @@ PARAM_singleStmt: PARAM IDENTIFIER paramSingleInit
 	      s->param_binding_type = $3.param_binding_type;
 	      s->param_binding_begin = $3.param_binding_begin;
 	      s->param_binding_length = $3.param_binding_length;
-              s->param_binding_swizzle = SWIZZLE_XYZW;
+              s->param_binding_swizzle = $3.param_binding_swizzle;
 	      s->param_is_array = 0;
 	   }
 	}
