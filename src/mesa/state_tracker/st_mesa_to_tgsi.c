@@ -319,10 +319,15 @@ translate_src( struct st_translate *t,
 
    if (SrcReg->RelAddr) {
       src = ureg_src_indirect( src, ureg_src(t->address[0]));
-      /* If SrcReg->Index was negative, it was set to zero in
-       * src_register().  Reassign it now.
-       */
-      src.Index = SrcReg->Index;
+      if (SrcReg->File != PROGRAM_INPUT &&
+          SrcReg->File != PROGRAM_OUTPUT) {
+         /* If SrcReg->Index was negative, it was set to zero in
+          * src_register().  Reassign it now.  But don't do this
+          * for input/output regs since they get remapped while
+          * const buffers don't.
+          */
+         src.Index = SrcReg->Index;
+      }
    }
 
    return src;
