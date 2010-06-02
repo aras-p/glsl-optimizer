@@ -372,7 +372,23 @@ lp_build_context_init(struct lp_build_context *bld,
 {
    bld->builder = builder;
    bld->type = type;
-   bld->undef = lp_build_undef(type);
-   bld->zero = lp_build_zero(type);
+
+   bld->int_elem_type = lp_build_int_elem_type(type);
+   if (type.floating)
+      bld->elem_type = lp_build_elem_type(type);
+   else
+      bld->elem_type = bld->int_elem_type;
+
+   if (type.length == 1) {
+      bld->int_vec_type = bld->int_elem_type;
+      bld->vec_type = bld->elem_type;
+   }
+   else {
+      bld->int_vec_type = LLVMVectorType(bld->int_elem_type, type.length);
+      bld->vec_type = LLVMVectorType(bld->elem_type, type.length);
+   }
+
+   bld->undef = LLVMGetUndef(bld->vec_type);
+   bld->zero = LLVMConstNull(bld->vec_type);
    bld->one = lp_build_one(type);
 }

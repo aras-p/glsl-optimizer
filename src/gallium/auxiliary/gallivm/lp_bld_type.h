@@ -129,6 +129,18 @@ struct lp_build_context
    struct lp_type type;
 
    /** Same as lp_build_undef(type) */
+   LLVMTypeRef elem_type;
+
+   /** Same as lp_build_undef(type) */
+   LLVMTypeRef vec_type;
+
+   /** Same as lp_build_undef(type) */
+   LLVMTypeRef int_elem_type;
+
+   /** Same as lp_build_undef(type) */
+   LLVMTypeRef int_vec_type;
+
+   /** Same as lp_build_undef(type) */
    LLVMValueRef undef;
 
    /** Same as lp_build_zero(type) */
