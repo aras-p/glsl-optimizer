@@ -51,14 +51,12 @@
 
 struct lp_build_interp_soa_context
 {
-   struct lp_build_context base;
+   /* QUAD_SIZE x float */
+   struct lp_build_context coeff_bld;
 
    unsigned num_attribs;
    unsigned mask[1 + PIPE_MAX_SHADER_INPUTS]; /**< TGSI_WRITE_MASK_x */
    enum lp_interp interp[1 + PIPE_MAX_SHADER_INPUTS];
-
-   LLVMValueRef x0;
-   LLVMValueRef y0;
 
    LLVMValueRef a0  [1 + PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];
    LLVMValueRef dadx[1 + PIPE_MAX_SHADER_INPUTS][NUM_CHANNELS];

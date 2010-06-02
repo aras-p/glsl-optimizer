@@ -99,7 +99,8 @@ coeffs_init(struct lp_build_interp_soa_context *bld,
             LLVMValueRef dadx_ptr,
             LLVMValueRef dady_ptr)
 {
-   LLVMBuilderRef builder = bld->base.builder;
+   struct lp_build_context *coeff_bld = &bld->coeff_bld;
+   LLVMBuilderRef builder = coeff_bld->builder;
    unsigned attrib;
    unsigned chan;
 
@@ -109,9 +110,9 @@ coeffs_init(struct lp_build_interp_soa_context *bld,
       for(chan = 0; chan < NUM_CHANNELS; ++chan) {
          if(mask & (1 << chan)) {
             LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), attrib*NUM_CHANNELS + chan, 0);
-            LLVMValueRef a0 = bld->base.undef;
-            LLVMValueRef dadx = bld->base.undef;
-            LLVMValueRef dady = bld->base.undef;
+            LLVMValueRef a0 = coeff_bld->undef;
+            LLVMValueRef dadx = coeff_bld->undef;
+            LLVMValueRef dady = coeff_bld->undef;
 
             switch( interp ) {
             case LP_INTERP_PERSPECTIVE:
@@ -120,8 +121,8 @@ coeffs_init(struct lp_build_interp_soa_context *bld,
             case LP_INTERP_LINEAR:
                dadx = LLVMBuildLoad(builder, LLVMBuildGEP(builder, dadx_ptr, &index, 1, ""), "");
                dady = LLVMBuildLoad(builder, LLVMBuildGEP(builder, dady_ptr, &index, 1, ""), "");
-               dadx = lp_build_broadcast_scalar(&bld->base, dadx);
-               dady = lp_build_broadcast_scalar(&bld->base, dady);
+               dadx = lp_build_broadcast_scalar(coeff_bld, dadx);
+               dady = lp_build_broadcast_scalar(coeff_bld, dady);
                attrib_name(dadx, attrib, chan, ".dadx");
                attrib_name(dady, attrib, chan, ".dady");
                /* fall-through */
@@ -129,7 +130,7 @@ coeffs_init(struct lp_build_interp_soa_context *bld,
             case LP_INTERP_CONSTANT:
             case LP_INTERP_FACING:
                a0 = LLVMBuildLoad(builder, LLVMBuildGEP(builder, a0_ptr, &index, 1, ""), "");
-               a0 = lp_build_broadcast_scalar(&bld->base, a0);
+               a0 = lp_build_broadcast_scalar(coeff_bld, a0);
                attrib_name(a0, attrib, chan, ".a0");
                break;
 
@@ -161,6 +162,7 @@ coeffs_init(struct lp_build_interp_soa_context *bld,
 static void
 attribs_init(struct lp_build_interp_soa_context *bld)
 {
+   struct lp_build_context *coeff_bld = &bld->coeff_bld;
    LLVMValueRef x = bld->pos[0];
    LLVMValueRef y = bld->pos[1];
    LLVMValueRef oow = NULL;
@@ -187,9 +189,9 @@ attribs_init(struct lp_build_interp_soa_context *bld)
                if (interp != LP_INTERP_CONSTANT &&
                    interp != LP_INTERP_FACING) {
                   /* res = res + x * dadx */
-                  res = lp_build_add(&bld->base, res, lp_build_mul(&bld->base, x, dadx));
+                  res = lp_build_add(coeff_bld, res, lp_build_mul(coeff_bld, x, dadx));
                   /* res = res + y * dady */
-                  res = lp_build_add(&bld->base, res, lp_build_mul(&bld->base, y, dady));
+                  res = lp_build_add(coeff_bld, res, lp_build_mul(coeff_bld, y, dady));
                }
 
                /* Keep the value of the attribute before perspective divide
@@ -202,8 +204,8 @@ attribs_init(struct lp_build_interp_soa_context *bld)
                   assert(attrib != 0);
                   assert(bld->mask[0] & TGSI_WRITEMASK_W);
                   if(!oow)
-                     oow = lp_build_rcp(&bld->base, w);
-                  res = lp_build_mul(&bld->base, res, oow);
+                     oow = lp_build_rcp(coeff_bld, w);
+                  res = lp_build_mul(coeff_bld, res, oow);
                }
 
                attrib_name(res, attrib, chan, "");
@@ -223,6 +225,7 @@ attribs_init(struct lp_build_interp_soa_context *bld)
 static void
 attribs_update(struct lp_build_interp_soa_context *bld, int quad_index)
 {
+   struct lp_build_context *coeff_bld = &bld->coeff_bld;
    LLVMValueRef oow = NULL;
    unsigned attrib;
    unsigned chan;
@@ -251,15 +254,15 @@ attribs_update(struct lp_build_interp_soa_context *bld, int quad_index)
                   if (quad_index == 1 || quad_index == 3) {
                      /* top-right or bottom-right quad */
                      /* build res = res + dadx + dadx */
-                     res = lp_build_add(&bld->base, res, dadx);
-                     res = lp_build_add(&bld->base, res, dadx);
+                     res = lp_build_add(coeff_bld, res, dadx);
+                     res = lp_build_add(coeff_bld, res, dadx);
                   }
 
                   if (quad_index == 2 || quad_index == 3) {
                      /* bottom-left or bottom-right quad */
                      /* build res = res + dady + dady */
-                     res = lp_build_add(&bld->base, res, dady);
-                     res = lp_build_add(&bld->base, res, dady);
+                     res = lp_build_add(coeff_bld, res, dady);
+                     res = lp_build_add(coeff_bld, res, dady);
                   }
 
                   if (interp == LP_INTERP_PERSPECTIVE) {
@@ -267,8 +270,8 @@ attribs_update(struct lp_build_interp_soa_context *bld, int quad_index)
                      assert(attrib != 0);
                      assert(bld->mask[0] & TGSI_WRITEMASK_W);
                      if(!oow)
-                        oow = lp_build_rcp(&bld->base, w);
-                     res = lp_build_mul(&bld->base, res, oow);
+                        oow = lp_build_rcp(coeff_bld, w);
+                     res = lp_build_mul(coeff_bld, res, oow);
                   }
 
                   attrib_name(res, attrib, chan, "");
@@ -292,11 +295,7 @@ pos_init(struct lp_build_interp_soa_context *bld,
          LLVMValueRef x0,
          LLVMValueRef y0)
 {
-   LLVMBuilderRef builder = bld->base.builder;
-   LLVMTypeRef int_elem_type = LLVMInt32Type();
-   LLVMTypeRef int_vec_type = LLVMVectorType(int_elem_type, QUAD_SIZE);
-   LLVMTypeRef elem_type = LLVMFloatType();
-   LLVMTypeRef vec_type = LLVMVectorType(elem_type, QUAD_SIZE);
+   struct lp_build_context *coeff_bld = &bld->coeff_bld;
    LLVMValueRef x_offsets[QUAD_SIZE];
    LLVMValueRef y_offsets[QUAD_SIZE];
    unsigned i;
@@ -306,25 +305,25 @@ pos_init(struct lp_build_interp_soa_context *bld,
     * all other quad pixels
     */
 
-   x0 = lp_build_broadcast(builder, int_vec_type, x0);
-   y0 = lp_build_broadcast(builder, int_vec_type, y0);
+   x0 = lp_build_broadcast(coeff_bld->builder, coeff_bld->int_vec_type, x0);
+   y0 = lp_build_broadcast(coeff_bld->builder, coeff_bld->int_vec_type, y0);
 
    for(i = 0; i < QUAD_SIZE; ++i) {
-      x_offsets[i] = LLVMConstInt(int_elem_type, quad_offset_x[i], 0);
-      y_offsets[i] = LLVMConstInt(int_elem_type, quad_offset_y[i], 0);
+      x_offsets[i] = LLVMConstInt(coeff_bld->int_elem_type, quad_offset_x[i], 0);
+      y_offsets[i] = LLVMConstInt(coeff_bld->int_elem_type, quad_offset_y[i], 0);
    }
 
-   x0 = LLVMBuildAdd(builder, x0, LLVMConstVector(x_offsets, QUAD_SIZE), "");
-   y0 = LLVMBuildAdd(builder, y0, LLVMConstVector(y_offsets, QUAD_SIZE), "");
+   x0 = LLVMBuildAdd(coeff_bld->builder, x0, LLVMConstVector(x_offsets, QUAD_SIZE), "");
+   y0 = LLVMBuildAdd(coeff_bld->builder, y0, LLVMConstVector(y_offsets, QUAD_SIZE), "");
 
-   bld->x0 = LLVMBuildSIToFP(builder, x0, vec_type, "");
-   bld->y0 = LLVMBuildSIToFP(builder, y0, vec_type, "");
+   x0 = LLVMBuildSIToFP(coeff_bld->builder, x0, coeff_bld->vec_type, "");
+   y0 = LLVMBuildSIToFP(coeff_bld->builder, y0, coeff_bld->vec_type, "");
 
-   lp_build_name(bld->x0, "pos.x");
-   lp_build_name(bld->y0, "pos.y");
+   lp_build_name(x0, "pos.x");
+   lp_build_name(y0, "pos.y");
 
-   bld->attribs[0][0] = bld->x0;
-   bld->attribs[0][1] = bld->y0;
+   bld->attribs[0][0] = x0;
+   bld->attribs[0][1] = y0;
 }
 
 
@@ -334,6 +333,7 @@ pos_init(struct lp_build_interp_soa_context *bld,
 static void
 pos_update(struct lp_build_interp_soa_context *bld, int quad_index)
 {
+   struct lp_build_context *coeff_bld = &bld->coeff_bld;
    LLVMValueRef x = bld->attribs[0][0];
    LLVMValueRef y = bld->attribs[0][1];
    const int xstep = 2, ystep = 2;
@@ -341,18 +341,18 @@ pos_update(struct lp_build_interp_soa_context *bld, int quad_index)
    if (quad_index == 1 || quad_index == 3) {
       /* top-right or bottom-right quad in block */
       /* build x += xstep */
-      x = lp_build_add(&bld->base, x,
-                       lp_build_const_vec(bld->base.type, xstep));
+      x = lp_build_add(coeff_bld, x,
+                       lp_build_const_vec(coeff_bld->type, xstep));
    }
 
    if (quad_index == 2) {
       /* bottom-left quad in block */
       /* build y += ystep */
-      y = lp_build_add(&bld->base, y,
-                       lp_build_const_vec(bld->base.type, ystep));
+      y = lp_build_add(coeff_bld, y,
+                       lp_build_const_vec(coeff_bld->type, ystep));
       /* build x -= xstep */
-      x = lp_build_sub(&bld->base, x,
-                       lp_build_const_vec(bld->base.type, xstep));
+      x = lp_build_sub(coeff_bld, x,
+                       lp_build_const_vec(coeff_bld->type, xstep));
    }
 
    lp_build_name(x, "pos.x");
@@ -378,12 +378,22 @@ lp_build_interp_soa_init(struct lp_build_interp_soa_context *bld,
                          LLVMValueRef x0,
                          LLVMValueRef y0)
 {
+   struct lp_type coeff_type;
    unsigned attrib;
    unsigned chan;
 
    memset(bld, 0, sizeof *bld);
 
-   lp_build_context_init(&bld->base, builder, type);
+   memset(&coeff_type, 0, sizeof coeff_type);
+   coeff_type.floating = TRUE;
+   coeff_type.sign = TRUE;
+   coeff_type.width = 32;
+   coeff_type.length = QUAD_SIZE;
+
+   /* XXX: we don't support interpolating into any other types */
+   assert(memcmp(&coeff_type, &type, sizeof &coeff_type) == 0);
+
+   lp_build_context_init(&bld->coeff_bld, builder, coeff_type);
 
    /* For convenience */
    bld->pos = bld->attribs[0];
@@ -404,7 +414,7 @@ lp_build_interp_soa_init(struct lp_build_interp_soa_context *bld,
    /* Ensure all masked out input channels have a valid value */
    for (attrib = 0; attrib < bld->num_attribs; ++attrib) {
       for (chan = 0; chan < NUM_CHANNELS; ++chan) {
-         bld->attribs[attrib][chan] = bld->base.undef;
+         bld->attribs[attrib][chan] = bld->coeff_bld.undef;
       }
    }
 
