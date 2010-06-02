@@ -956,7 +956,7 @@ typedef enum function_status
  *	Macro name not followed by a '('. This is not an error, but
  *	simply that the macro name should be treated as a non-macro.
  *
- *   FUNCTION_UNBLANCED_PARENTHESES
+ *   FUNCTION_UNBALANCED_PARENTHESES
  *
  *	Macro name is not followed by a balanced set of parentheses.
  */
@@ -1065,6 +1065,9 @@ _glcpp_parser_expand_function (glcpp_parser_t *parser,
 	case FUNCTION_NOT_A_FUNCTION:
 		return NULL;
 	case FUNCTION_UNBALANCED_PARENTHESES:
+		fprintf (stderr, "Error: Macro %s call has unbalanced parentheses\n",
+			 identifier);
+		exit (1);
 		return NULL;
 	}
 
