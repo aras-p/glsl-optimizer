@@ -88,6 +88,9 @@ public:
 
    int next_temp;
    int next_constant;
+   int next_uniform;
+
+   temp_entry *find_variable_storage(ir_variable *var);
 
    ir_to_mesa_src_reg get_temp(int size);
 
@@ -334,13 +337,16 @@ type_size(const struct glsl_type *type)
    case GLSL_TYPE_INT:
    case GLSL_TYPE_FLOAT:
    case GLSL_TYPE_BOOL:
-      assert(!type->is_matrix());
-      /* Regardless of size of vector, it gets a vec4. This is bad
-       * packing for things like floats, but otherwise arrays become a
-       * mess.  Hopefully a later pass over the code can pack scalars
-       * down if appropriate.
-       */
-      return 1;
+      if (type->is_matrix()) {
+	 return 4; /* FINISHME: Not all matrices are 4x4. */
+      } else {
+	 /* Regardless of size of vector, it gets a vec4. This is bad
+	  * packing for things like floats, but otherwise arrays become a
+	  * mess.  Hopefully a later pass over the code can pack scalars
+	  * down if appropriate.
+	  */
+	 return 1;
+      }
    case GLSL_TYPE_ARRAY:
       return type_size(type->fields.array) * type->length;
    case GLSL_TYPE_STRUCT:
@@ -354,29 +360,40 @@ type_size(const struct glsl_type *type)
    }
 }
 
-ir_to_mesa_src_reg
-ir_to_mesa_visitor::get_temp_for_var(ir_variable *var)
+temp_entry *
+ir_to_mesa_visitor::find_variable_storage(ir_variable *var)
 {
-   ir_to_mesa_src_reg src_reg;
-
+   
    temp_entry *entry;
 
    foreach_iter(exec_list_iterator, iter, this->variable_storage) {
       entry = (temp_entry *)iter.get();
 
       if (entry->var == var)
-	 goto done;
+	 return entry;
    }
 
-   entry = new temp_entry(var, PROGRAM_TEMPORARY, this->next_temp);
-   this->variable_storage.push_tail(entry);
+   return NULL;
+}
 
-   next_temp += type_size(var->type);
+ir_to_mesa_src_reg
+ir_to_mesa_visitor::get_temp_for_var(ir_variable *var)
+{
+   temp_entry *entry;
+   ir_to_mesa_src_reg src_reg;
 
-done:
+   entry = find_variable_storage(var);
+   if (!entry) {
+      entry = new temp_entry(var, PROGRAM_TEMPORARY, this->next_temp);
+      this->variable_storage.push_tail(entry);
+
+      next_temp += type_size(var->type);
+   }
+
    src_reg.file = entry->file;
    src_reg.index = entry->index;
    src_reg.swizzle = swizzle_for_size(var->type->vector_elements);
+   src_reg.reladdr = false;
 
    return src_reg;
 }
@@ -384,7 +401,16 @@ done:
 void
 ir_to_mesa_visitor::visit(ir_variable *ir)
 {
-   (void)ir;
+   if (ir->mode == ir_var_uniform) {
+      temp_entry *entry = find_variable_storage(ir);
+
+      if (!entry) {
+	 entry = new temp_entry(ir, PROGRAM_UNIFORM, this->next_uniform);
+	 this->variable_storage.push_tail(entry);
+
+	 this->next_uniform += type_size(ir->type);
+      }
+   }
 }
 
 void
@@ -997,6 +1023,7 @@ ir_to_mesa_visitor::ir_to_mesa_visitor()
    result.file = PROGRAM_UNDEFINED;
    next_temp = 1;
    next_constant = 0;
+   next_uniform = 0;
 }
 
 static struct prog_src_register
