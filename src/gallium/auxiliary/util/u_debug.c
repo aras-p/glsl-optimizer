@@ -174,12 +174,6 @@ debug_get_num_option(const char *name, long dfault)
    return result;
 }
 
-static INLINE int
-max( int a,
-     int b )
-{
-    return (a > b) ? a : b;
-}
 
 unsigned long
 debug_get_flags_option(const char *name, 
@@ -198,7 +192,7 @@ debug_get_flags_option(const char *name,
       result = dfault;
       debug_printf("%s: help for %s:\n", __FUNCTION__, name);
       for (; flags->name; ++flags)
-         namealign = max(namealign, strlen(flags->name));
+         namealign = MAX2(namealign, strlen(flags->name));
       for (flags = orig; flags->name; ++flags)
          debug_printf("| %*s [0x%0*lx]%s%s\n", namealign, flags->name,
                       sizeof(unsigned long)*CHAR_BIT/4, flags->value,
