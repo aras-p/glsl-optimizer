@@ -102,15 +102,11 @@ public:
    int next_temp;
    int next_constant;
 
-   void get_temp(struct mbtree *tree, int size);
+   ir_to_mesa_src_reg get_temp(int size);
 
-   void get_temp_for_var(ir_variable *var, struct mbtree *tree);
+   ir_to_mesa_src_reg get_temp_for_var(ir_variable *var);
 
-   struct mbtree *create_tree(int op,
-			      ir_instruction *ir,
-			      struct mbtree *left,
-			      struct mbtree *right);
-   struct mbtree *create_tree_for_float(ir_instruction *ir, float val);
+   struct ir_to_mesa_src_reg src_reg_for_float(float val);
 
    /**
     * \name Visit methods
@@ -138,61 +134,38 @@ public:
    virtual void visit(ir_if *);
    /*@}*/
 
-   struct mbtree *result;
+   struct ir_to_mesa_src_reg result;
 
    /** List of temp_entry */
    exec_list variable_storage;
 
    /** List of ir_to_mesa_instruction */
    exec_list instructions;
+
+   ir_to_mesa_instruction *ir_to_mesa_emit_op1(ir_instruction *ir,
+					       enum prog_opcode op,
+					       ir_to_mesa_dst_reg dst,
+					       ir_to_mesa_src_reg src0);
+
+   ir_to_mesa_instruction *ir_to_mesa_emit_op2(ir_instruction *ir,
+					       enum prog_opcode op,
+					       ir_to_mesa_dst_reg dst,
+					       ir_to_mesa_src_reg src0,
+					       ir_to_mesa_src_reg src1);
+
+   ir_to_mesa_instruction *ir_to_mesa_emit_op3(ir_instruction *ir,
+					       enum prog_opcode op,
+					       ir_to_mesa_dst_reg dst,
+					       ir_to_mesa_src_reg src0,
+					       ir_to_mesa_src_reg src1,
+					       ir_to_mesa_src_reg src2);
+
+   void ir_to_mesa_emit_scalar_op1(ir_instruction *ir,
+				   enum prog_opcode op,
+				   ir_to_mesa_dst_reg dst,
+				   ir_to_mesa_src_reg src0);
 };
 
 extern ir_to_mesa_src_reg ir_to_mesa_undef;
 extern ir_to_mesa_dst_reg ir_to_mesa_undef_dst;
 
-ir_to_mesa_instruction *
-ir_to_mesa_emit_op1(struct mbtree *tree, enum prog_opcode op);
-
-ir_to_mesa_instruction *
-ir_to_mesa_emit_op1_full(ir_to_mesa_visitor *v, ir_instruction *ir,
-			 enum prog_opcode op,
-			 ir_to_mesa_dst_reg dst,
-			 ir_to_mesa_src_reg src0);
-
-ir_to_mesa_instruction *
-ir_to_mesa_emit_op2(struct mbtree *tree, enum prog_opcode op);
-
-ir_to_mesa_instruction *
-ir_to_mesa_emit_op2_full(ir_to_mesa_visitor *v, ir_instruction *ir,
-			 enum prog_opcode op,
-			 ir_to_mesa_dst_reg dst,
-			 ir_to_mesa_src_reg src0,
-			 ir_to_mesa_src_reg src1);
-
-ir_to_mesa_instruction *
-ir_to_mesa_emit_simple_op2(struct mbtree *tree, enum prog_opcode op);
-
-ir_to_mesa_instruction *
-ir_to_mesa_emit_op3(ir_to_mesa_visitor *v, ir_instruction *ir,
-		    enum prog_opcode op,
-		    ir_to_mesa_dst_reg dst,
-		    ir_to_mesa_src_reg src0,
-		    ir_to_mesa_src_reg src1,
-		    ir_to_mesa_src_reg src2);
-
-void
-ir_to_mesa_emit_scalar_op1(struct mbtree *tree, enum prog_opcode op,
-			   ir_to_mesa_dst_reg dst,
-			   ir_to_mesa_src_reg src0);
-
-inline ir_to_mesa_dst_reg
-ir_to_mesa_dst_reg_from_src(ir_to_mesa_src_reg reg)
-{
-   ir_to_mesa_dst_reg dst_reg;
-
-   dst_reg.file = reg.file;
-   dst_reg.index = reg.index;
-   dst_reg.writemask = WRITEMASK_XYZW;
-
-   return dst_reg;
-}

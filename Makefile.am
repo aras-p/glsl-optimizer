@@ -63,15 +63,10 @@ glsl_SOURCES = \
 	ir_validate.cpp \
 	ir_vec_index_to_swizzle.cpp \
 	linker.cpp \
-	mesa_codegen.cpp \
-	msea_codegen.h \
 	mesa/shader/prog_instruction.c \
 	mesa/shader/prog_instruction.h \
 	mesa/shader/prog_print.c \
 	mesa/shader/prog_print.h
-
-DISTFILES = \
-	mesa_codegen.brg
 
 BUILT_SOURCES = glsl_parser.h glsl_parser.cpp glsl_lexer.cpp
 CLEANFILES = $(BUILT_SOURCES)
@@ -82,8 +77,3 @@ glsl_parser.h: glsl_parser.cpp
 
 .lpp.cpp:
 	$(LEXCOMPILE) --outfile="$@" $<
-
-mesa_codegen.h: mesa_codegen.cpp
-
-mesa_codegen.cpp: mesa_codegen.brg
-	monoburg --no-glib -s $@ -d mesa_codegen.h $<

@@ -33,10 +33,11 @@
  */
 #define g_new
 #define g_error
-#include "mesa_codegen.h"
 
+#include <stdio.h>
 #include "ir.h"
 #include "ir_visitor.h"
+#include "ir_to_mesa.h"
 #include "ir_print_visitor.h"
 #include "ir_expression_flattening.h"
 #include "glsl_types.h"
@@ -54,13 +55,29 @@ ir_to_mesa_dst_reg ir_to_mesa_undef_dst = {
    PROGRAM_UNDEFINED, 0, SWIZZLE_NOOP
 };
 
+ir_to_mesa_dst_reg ir_to_mesa_address_reg = {
+   PROGRAM_ADDRESS, 0, WRITEMASK_X
+};
+
+static int swizzle_for_size(int size)
+{
+   int size_swizzles[4] = {
+      MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_X, SWIZZLE_X, SWIZZLE_X),
+      MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Y, SWIZZLE_Y),
+      MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_Z),
+      MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_W),
+   };
+
+   return size_swizzles[size - 1];
+}
+
 ir_to_mesa_instruction *
-ir_to_mesa_emit_op3(ir_to_mesa_visitor *v, ir_instruction *ir,
-		    enum prog_opcode op,
-		    ir_to_mesa_dst_reg dst,
-		    ir_to_mesa_src_reg src0,
-		    ir_to_mesa_src_reg src1,
-		    ir_to_mesa_src_reg src2)
+ir_to_mesa_visitor::ir_to_mesa_emit_op3(ir_instruction *ir,
+					enum prog_opcode op,
+					ir_to_mesa_dst_reg dst,
+					ir_to_mesa_src_reg src0,
+					ir_to_mesa_src_reg src1,
+					ir_to_mesa_src_reg src2)
 {
    ir_to_mesa_instruction *inst = new ir_to_mesa_instruction();
 
@@ -71,48 +88,42 @@ ir_to_mesa_emit_op3(ir_to_mesa_visitor *v, ir_instruction *ir,
    inst->src_reg[2] = src2;
    inst->ir = ir;
 
-   v->instructions.push_tail(inst);
+   this->instructions.push_tail(inst);
 
    return inst;
 }
 
 
 ir_to_mesa_instruction *
-ir_to_mesa_emit_op2_full(ir_to_mesa_visitor *v, ir_instruction *ir,
-			 enum prog_opcode op,
-			 ir_to_mesa_dst_reg dst,
-			 ir_to_mesa_src_reg src0,
-			 ir_to_mesa_src_reg src1)
+ir_to_mesa_visitor::ir_to_mesa_emit_op2(ir_instruction *ir,
+					enum prog_opcode op,
+					ir_to_mesa_dst_reg dst,
+					ir_to_mesa_src_reg src0,
+					ir_to_mesa_src_reg src1)
 {
-   return ir_to_mesa_emit_op3(v, ir,
-			      op, dst, src0, src1, ir_to_mesa_undef);
+   return ir_to_mesa_emit_op3(ir, op, dst, src0, src1, ir_to_mesa_undef);
 }
 
 ir_to_mesa_instruction *
-ir_to_mesa_emit_op2(struct mbtree *tree, enum prog_opcode op)
+ir_to_mesa_visitor::ir_to_mesa_emit_op1(ir_instruction *ir,
+					enum prog_opcode op,
+					ir_to_mesa_dst_reg dst,
+					ir_to_mesa_src_reg src0)
 {
-   return ir_to_mesa_emit_op2_full(tree->v, tree->ir, op,
-				   tree->dst_reg,
-				   tree->left->src_reg,
-				   tree->right->src_reg);
+   return ir_to_mesa_emit_op3(ir, op, dst,
+			      src0, ir_to_mesa_undef, ir_to_mesa_undef);
 }
 
-ir_to_mesa_instruction *
-ir_to_mesa_emit_op1_full(ir_to_mesa_visitor *v, ir_instruction *ir,
-			 enum prog_opcode op,
-			 ir_to_mesa_dst_reg dst,
-			 ir_to_mesa_src_reg src0)
+inline ir_to_mesa_dst_reg
+ir_to_mesa_dst_reg_from_src(ir_to_mesa_src_reg reg)
 {
-   return ir_to_mesa_emit_op3(v, ir, op,
-			      dst, src0, ir_to_mesa_undef, ir_to_mesa_undef);
-}
+   ir_to_mesa_dst_reg dst_reg;
 
-ir_to_mesa_instruction *
-ir_to_mesa_emit_op1(struct mbtree *tree, enum prog_opcode op)
-{
-   return ir_to_mesa_emit_op1_full(tree->v, tree->ir, op,
-				   tree->dst_reg,
-				   tree->left->src_reg);
+   dst_reg.file = reg.file;
+   dst_reg.index = reg.index;
+   dst_reg.writemask = WRITEMASK_XYZW;
+
+   return dst_reg;
 }
 
 /**
@@ -124,9 +135,10 @@ ir_to_mesa_emit_op1(struct mbtree *tree, enum prog_opcode op)
  * to produce dest channels.
  */
 void
-ir_to_mesa_emit_scalar_op1(struct mbtree *tree, enum prog_opcode op,
-			   ir_to_mesa_dst_reg dst,
-			   ir_to_mesa_src_reg src0)
+ir_to_mesa_visitor::ir_to_mesa_emit_scalar_op1(ir_instruction *ir,
+					       enum prog_opcode op,
+					       ir_to_mesa_dst_reg dst,
+					       ir_to_mesa_src_reg src0)
 {
    int i, j;
    int done_mask = ~dst.writemask;
@@ -152,52 +164,18 @@ ir_to_mesa_emit_scalar_op1(struct mbtree *tree, enum prog_opcode op,
       src.swizzle = MAKE_SWIZZLE4(src_swiz, src_swiz,
 				  src_swiz, src_swiz);
 
-      inst = ir_to_mesa_emit_op1_full(tree->v, tree->ir, op,
-				      dst,
-				      src);
+      inst = ir_to_mesa_emit_op1(ir, op,
+				 dst,
+				 src);
       inst->dst_reg.writemask = this_mask;
       done_mask |= this_mask;
    }
 }
 
-static void
-ir_to_mesa_set_tree_reg(struct mbtree *tree, int file, int index)
+struct ir_to_mesa_src_reg
+ir_to_mesa_visitor::src_reg_for_float(float val)
 {
-   tree->dst_reg.file = file;
-   tree->dst_reg.index = index;
-
-   tree->src_reg.file = file;
-   tree->src_reg.index = index;
-}
-
-struct mbtree *
-ir_to_mesa_visitor::create_tree(int op,
-				ir_instruction *ir,
-				struct mbtree *left, struct mbtree *right)
-{
-   struct mbtree *tree = (struct mbtree *)calloc(sizeof(struct mbtree), 1);
-
-   assert(ir);
-
-   tree->op = op;
-   tree->left = left;
-   tree->right = right;
-   tree->v = this;
-   tree->src_reg.swizzle = SWIZZLE_XYZW;
-   tree->src_reg.negate = 0;
-   tree->dst_reg.writemask = WRITEMASK_XYZW;
-   ir_to_mesa_set_tree_reg(tree, PROGRAM_UNDEFINED, 0);
-   tree->ir = ir;
-
-   return tree;
-}
-
-struct mbtree *
-ir_to_mesa_visitor::create_tree_for_float(ir_instruction *ir, float val)
-{
-   struct mbtree *tree = (struct mbtree *)calloc(sizeof(struct mbtree), 1);
-
-   tree = this->create_tree(MB_TERM_reference_vec4, ir, NULL, NULL);
+   ir_to_mesa_src_reg src_reg;
 
    /* FINISHME: This will end up being _mesa_add_unnamed_constant,
     * which handles sharing values and sharing channels of vec4
@@ -206,11 +184,11 @@ ir_to_mesa_visitor::create_tree_for_float(ir_instruction *ir, float val)
    /* FINISHME: Do something with the constant values for now.
     */
    (void)val;
-   ir_to_mesa_set_tree_reg(tree, PROGRAM_CONSTANT, this->next_constant++);
-   tree->src_reg.swizzle = SWIZZLE_NOOP;
+   src_reg.file = PROGRAM_CONSTANT;
+   src_reg.index = this->next_constant++;
+   src_reg.swizzle = SWIZZLE_NOOP;
 
-   this->result = tree;
-   return tree;
+   return src_reg;
 }
 
 /**
@@ -219,21 +197,24 @@ ir_to_mesa_visitor::create_tree_for_float(ir_instruction *ir, float val)
  * storage).  Actual register allocation for the Mesa VM occurs in a
  * pass over the Mesa IR later.
  */
-void
-ir_to_mesa_visitor::get_temp(struct mbtree *tree, int size)
+ir_to_mesa_src_reg
+ir_to_mesa_visitor::get_temp(int size)
 {
+   ir_to_mesa_src_reg src_reg;
    int swizzle[4];
    int i;
 
-   ir_to_mesa_set_tree_reg(tree, PROGRAM_TEMPORARY, this->next_temp++);
+   src_reg.file = PROGRAM_TEMPORARY;
+   src_reg.index = this->next_temp++;
 
    for (i = 0; i < size; i++)
       swizzle[i] = i;
    for (; i < 4; i++)
       swizzle[i] = size - 1;
-   tree->src_reg.swizzle = MAKE_SWIZZLE4(swizzle[0], swizzle[1],
-					 swizzle[2], swizzle[3]);
-   tree->dst_reg.writemask = (1 << size) - 1;
+   src_reg.swizzle = MAKE_SWIZZLE4(swizzle[0], swizzle[1],
+				   swizzle[2], swizzle[3]);
+
+   return src_reg;
 }
 
 static int
@@ -267,18 +248,18 @@ type_size(const struct glsl_type *type)
    }
 }
 
-void
-ir_to_mesa_visitor::get_temp_for_var(ir_variable *var, struct mbtree *tree)
+ir_to_mesa_src_reg
+ir_to_mesa_visitor::get_temp_for_var(ir_variable *var)
 {
+   ir_to_mesa_src_reg src_reg;
+
    temp_entry *entry;
 
    foreach_iter(exec_list_iterator, iter, this->variable_storage) {
       entry = (temp_entry *)iter.get();
 
-      if (entry->var == var) {
-	 ir_to_mesa_set_tree_reg(tree, entry->file, entry->index);
-	 return;
-      }
+      if (entry->var == var)
+	 goto done;
    }
 
    entry = new temp_entry(var, PROGRAM_TEMPORARY, this->next_temp);
@@ -286,36 +267,12 @@ ir_to_mesa_visitor::get_temp_for_var(ir_variable *var, struct mbtree *tree)
 
    next_temp += type_size(var->type);
 
-   ir_to_mesa_set_tree_reg(tree, entry->file, entry->index);
-}
+done:
+   src_reg.file = entry->file;
+   src_reg.index = entry->index;
+   src_reg.swizzle = swizzle_for_size(var->type->vector_elements);
 
-static void
-reduce(struct mbtree *t, int goal)
-{
-   struct mbtree *kids[10];
-   int rule = mono_burg_rule((MBState *)t->state, goal);
-   const uint16_t *nts = mono_burg_nts[rule];
-   int i;
-
-   mono_burg_kids (t, rule, kids);
-
-   for (i = 0; nts[i]; i++) {
-      reduce(kids[i], nts[i]);
-   }
-
-   if (t->left) {
-      if (mono_burg_func[rule]) {
-	 mono_burg_func[rule](t, NULL);
-      } else {
-	 printf("no code for rules %s\n", mono_burg_rule_string[rule]);
-	 exit(1);
-      }
-   } else {
-      if (mono_burg_func[rule]) {
-	 printf("unused code for rule %s\n", mono_burg_rule_string[rule]);
-	 exit(1);
-      }
-   }
+   return src_reg;
 }
 
 void
@@ -332,15 +289,13 @@ ir_to_mesa_visitor::visit(ir_loop *ir)
    assert(!ir->increment);
    assert(!ir->counter);
 
-   ir_to_mesa_emit_op1_full(this, NULL,
-			    OPCODE_BGNLOOP, ir_to_mesa_undef_dst,
-			    ir_to_mesa_undef);
+   ir_to_mesa_emit_op1(NULL, OPCODE_BGNLOOP,
+		       ir_to_mesa_undef_dst, ir_to_mesa_undef);
 
    visit_exec_list(&ir->body_instructions, this);
 
-   ir_to_mesa_emit_op1_full(this, NULL,
-			    OPCODE_ENDLOOP, ir_to_mesa_undef_dst,
-			    ir_to_mesa_undef);
+   ir_to_mesa_emit_op1(NULL, OPCODE_ENDLOOP,
+		       ir_to_mesa_undef_dst, ir_to_mesa_undef);
 }
 
 void
@@ -348,14 +303,12 @@ ir_to_mesa_visitor::visit(ir_loop_jump *ir)
 {
    switch (ir->mode) {
    case ir_loop_jump::jump_break:
-      ir_to_mesa_emit_op1_full(this, NULL,
-			       OPCODE_BRK, ir_to_mesa_undef_dst,
-			       ir_to_mesa_undef);
+      ir_to_mesa_emit_op1(NULL, OPCODE_BRK,
+			  ir_to_mesa_undef_dst, ir_to_mesa_undef);
       break;
    case ir_loop_jump::jump_continue:
-      ir_to_mesa_emit_op1_full(this, NULL,
-			       OPCODE_CONT, ir_to_mesa_undef_dst,
-			       ir_to_mesa_undef);
+      ir_to_mesa_emit_op1(NULL, OPCODE_CONT,
+			  ir_to_mesa_undef_dst, ir_to_mesa_undef);
       break;
    }
 }
@@ -394,15 +347,17 @@ void
 ir_to_mesa_visitor::visit(ir_expression *ir)
 {
    unsigned int operand;
-   struct mbtree *op[2];
+   struct ir_to_mesa_src_reg op[2], temp;
+   struct ir_to_mesa_src_reg result_src;
+   struct ir_to_mesa_dst_reg result_dst;
    const glsl_type *vec4_type = glsl_type::get_instance(GLSL_TYPE_FLOAT, 4, 1);
    const glsl_type *vec3_type = glsl_type::get_instance(GLSL_TYPE_FLOAT, 3, 1);
    const glsl_type *vec2_type = glsl_type::get_instance(GLSL_TYPE_FLOAT, 2, 1);
 
    for (operand = 0; operand < ir->get_num_operands(); operand++) {
-      this->result = NULL;
+      this->result.file = PROGRAM_UNDEFINED;
       ir->operands[operand]->accept(this);
-      if (!this->result) {
+      if (this->result.file == PROGRAM_UNDEFINED) {
 	 ir_print_visitor v;
 	 printf("Failed to get tree for expression operand:\n");
 	 ir->operands[operand]->accept(&v);
@@ -411,149 +366,163 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
       op[operand] = this->result;
    }
 
-   this->result = NULL;
+   this->result.file = PROGRAM_UNDEFINED;
+
+   /* Storage for our result.  Ideally for an assignment we'd be using
+    * the actual storage for the result here, instead.
+    */
+   result_src = get_temp(4);
+   /* convenience for the emit functions below. */
+   result_dst = ir_to_mesa_dst_reg_from_src(result_src);
 
    switch (ir->operation) {
    case ir_unop_logic_not:
-      this->result = this->create_tree_for_float(ir, 0.0);
-      this->result = this->create_tree(MB_TERM_seq_vec4_vec4, ir,
-				       op[0], this->result);
+      temp = src_reg_for_float(0.0);
+      ir_to_mesa_emit_op2(ir, OPCODE_SEQ, result_dst, op[0], temp);
       break;
    case ir_unop_neg:
-      op[0]->src_reg.negate = ~op[0]->src_reg.negate;
-      this->result = op[0];
+      op[0].negate = ~op[0].negate;
+      result_src = op[0];
       break;
    case ir_unop_exp:
-      this->result = this->create_tree(MB_TERM_exp_vec4, ir, op[0], NULL);
+      ir_to_mesa_emit_scalar_op1(ir, OPCODE_EXP, result_dst, op[0]);
       break;
    case ir_unop_exp2:
-      this->result = this->create_tree(MB_TERM_exp2_vec4, ir, op[0], NULL);
+      ir_to_mesa_emit_scalar_op1(ir, OPCODE_EX2, result_dst, op[0]);
       break;
    case ir_unop_log:
-      this->result = this->create_tree(MB_TERM_log_vec4, ir, op[0], NULL);
+      ir_to_mesa_emit_scalar_op1(ir, OPCODE_LOG, result_dst, op[0]);
       break;
    case ir_unop_log2:
-      this->result = this->create_tree(MB_TERM_log2_vec4, ir, op[0], NULL);
+      ir_to_mesa_emit_scalar_op1(ir, OPCODE_LG2, result_dst, op[0]);
       break;
    case ir_unop_sin:
-      this->result = this->create_tree(MB_TERM_sin_vec4, ir, op[0], NULL);
+      ir_to_mesa_emit_scalar_op1(ir, OPCODE_SIN, result_dst, op[0]);
       break;
    case ir_unop_cos:
-      this->result = this->create_tree(MB_TERM_cos_vec4, ir, op[0], NULL);
+      ir_to_mesa_emit_scalar_op1(ir, OPCODE_COS, result_dst, op[0]);
       break;
    case ir_binop_add:
-      this->result = this->create_tree(MB_TERM_add_vec4_vec4, ir, op[0], op[1]);
+      ir_to_mesa_emit_op2(ir, OPCODE_ADD, result_dst, op[0], op[1]);
       break;
    case ir_binop_sub:
-      this->result = this->create_tree(MB_TERM_sub_vec4_vec4, ir, op[0], op[1]);
+      ir_to_mesa_emit_op2(ir, OPCODE_SUB, result_dst, op[0], op[1]);
       break;
    case ir_binop_mul:
-      this->result = this->create_tree(MB_TERM_mul_vec4_vec4, ir, op[0], op[1]);
+      ir_to_mesa_emit_op2(ir, OPCODE_MUL, result_dst, op[0], op[1]);
       break;
    case ir_binop_div:
-      this->result = this->create_tree(MB_TERM_div_vec4_vec4, ir, op[0], op[1]);
+      ir_to_mesa_emit_scalar_op1(ir, OPCODE_RCP, result_dst, op[1]);
+      ir_to_mesa_emit_op2(ir, OPCODE_RCP, result_dst, op[0], result_src);
       break;
 
    case ir_binop_less:
-      this->result = this->create_tree(MB_TERM_slt_vec4_vec4, ir, op[0], op[1]);
+      ir_to_mesa_emit_op2(ir, OPCODE_SLT, result_dst, op[0], temp);
       break;
    case ir_binop_greater:
-      this->result = this->create_tree(MB_TERM_sgt_vec4_vec4, ir, op[0], op[1]);
+      ir_to_mesa_emit_op2(ir, OPCODE_SGT, result_dst, op[0], temp);
       break;
    case ir_binop_lequal:
-      this->result = this->create_tree(MB_TERM_sle_vec4_vec4, ir, op[0], op[1]);
+      ir_to_mesa_emit_op2(ir, OPCODE_SLE, result_dst, op[0], temp);
       break;
    case ir_binop_gequal:
-      this->result = this->create_tree(MB_TERM_sge_vec4_vec4, ir, op[0], op[1]);
+      ir_to_mesa_emit_op2(ir, OPCODE_SGE, result_dst, op[0], temp);
       break;
    case ir_binop_equal:
-      this->result = this->create_tree(MB_TERM_seq_vec4_vec4, ir, op[0], op[1]);
+      ir_to_mesa_emit_op2(ir, OPCODE_SEQ, result_dst, op[0], temp);
       break;
    case ir_binop_logic_xor:
    case ir_binop_nequal:
-      this->result = this->create_tree(MB_TERM_sne_vec4_vec4, ir, op[0], op[1]);
+      ir_to_mesa_emit_op2(ir, OPCODE_SNE, result_dst, op[0], temp);
       break;
 
    case ir_binop_logic_or:
-      /* This could be a saturated add. */
-      this->result = this->create_tree(MB_TERM_add_vec4_vec4, ir, op[0], op[1]);
-      this->result = this->create_tree(MB_TERM_sne_vec4_vec4, ir,
-				       this->create_tree_for_float(ir, 0.0),
-				       this->result);
+      /* This could be a saturated add and skip the SNE. */
+      ir_to_mesa_emit_op2(ir, OPCODE_ADD,
+			  result_dst,
+			  op[0], op[1]);
+
+      ir_to_mesa_emit_op2(ir, OPCODE_SNE,
+			  result_dst,
+			  result_src, src_reg_for_float(0.0));
       break;
 
    case ir_binop_logic_and:
       /* the bool args are stored as float 0.0 or 1.0, so "mul" gives us "and". */
-      this->result = this->create_tree(MB_TERM_mul_vec4_vec4, ir, op[0], op[1]);
+      ir_to_mesa_emit_op2(ir, OPCODE_MUL,
+			  result_dst,
+			  op[0], op[1]);
       break;
 
    case ir_binop_dot:
       if (ir->operands[0]->type == vec4_type) {
 	 assert(ir->operands[1]->type == vec4_type);
-	 this->result = this->create_tree(MB_TERM_dp4_vec4_vec4,
-					  ir, op[0], op[1]);
+	 ir_to_mesa_emit_op2(ir, OPCODE_DP4,
+			     result_dst,
+			     op[0], op[1]);
       } else if (ir->operands[0]->type == vec3_type) {
 	 assert(ir->operands[1]->type == vec3_type);
-	 this->result = this->create_tree(MB_TERM_dp3_vec4_vec4,
-					  ir, op[0], op[1]);
+	 ir_to_mesa_emit_op2(ir, OPCODE_DP3,
+			     result_dst,
+			     op[0], op[1]);
       } else if (ir->operands[0]->type == vec2_type) {
 	 assert(ir->operands[1]->type == vec2_type);
-	 this->result = this->create_tree(MB_TERM_dp2_vec4_vec4,
-					  ir, op[0], op[1]);
+	 ir_to_mesa_emit_op2(ir, OPCODE_DP2,
+			     result_dst,
+			     op[0], op[1]);
       }
       break;
    case ir_unop_sqrt:
-      this->result = this->create_tree(MB_TERM_sqrt_vec4, ir, op[0], op[1]);
+      ir_to_mesa_emit_scalar_op1(ir, OPCODE_RSQ, result_dst, op[0]);
+      ir_to_mesa_emit_op1(ir, OPCODE_RCP, result_dst, result_src);
       break;
    case ir_unop_rsq:
-      this->result = this->create_tree(MB_TERM_rsq_vec4, ir, op[0], op[1]);
+      ir_to_mesa_emit_scalar_op1(ir, OPCODE_RSQ, result_dst, op[0]);
       break;
    case ir_unop_i2f:
       /* Mesa IR lacks types, ints are stored as truncated floats. */
-      this->result = op[0];
+      result_src = op[0];
       break;
    case ir_unop_f2i:
-      this->result = this->create_tree(MB_TERM_trunc_vec4, ir, op[0], NULL);
+      ir_to_mesa_emit_op1(ir, OPCODE_TRUNC, result_dst, op[0]);
       break;
    case ir_unop_f2b:
-      this->result = this->create_tree_for_float(ir, 0.0);
-      this->result = this->create_tree(MB_TERM_sne_vec4_vec4, ir,
-				       op[0], this->result);
+      ir_to_mesa_emit_op2(ir, OPCODE_SNE, result_dst,
+			  result_src, src_reg_for_float(0.0));
       break;
    case ir_unop_trunc:
-      this->result = this->create_tree(MB_TERM_trunc_vec4, ir, op[0], NULL);
+      ir_to_mesa_emit_op1(ir, OPCODE_TRUNC, result_dst, op[0]);
       break;
    case ir_unop_ceil:
-      this->result = this->create_tree(MB_TERM_ceil_vec4, ir, op[0], NULL);
+      op[0].negate = ~op[0].negate;
+      ir_to_mesa_emit_op1(ir, OPCODE_FLR, result_dst, op[0]);
+      result_src.negate = ~result_src.negate;
       break;
    case ir_unop_floor:
-      this->result = this->create_tree(MB_TERM_floor_vec4, ir, op[0], NULL);
+      ir_to_mesa_emit_op1(ir, OPCODE_FLR, result_dst, op[0]);
       break;
    case ir_binop_min:
-      this->result = this->create_tree(MB_TERM_min_vec4_vec4, ir, op[0], op[1]);
+      ir_to_mesa_emit_op2(ir, OPCODE_MIN, result_dst, op[0], op[1]);
       break;
    case ir_binop_max:
-      this->result = this->create_tree(MB_TERM_max_vec4_vec4, ir, op[0], op[1]);
+      ir_to_mesa_emit_op2(ir, OPCODE_MAX, result_dst, op[0], op[1]);
       break;
    default:
-      break;
-   }
-   if (!this->result) {
       ir_print_visitor v;
       printf("Failed to get tree for expression:\n");
       ir->accept(&v);
       exit(1);
+      break;
    }
 
-   /* Allocate a temporary for the result. */
-   this->get_temp(this->result, ir->type->vector_elements);
+   this->result = result_src;
 }
 
 
 void
 ir_to_mesa_visitor::visit(ir_swizzle *ir)
 {
-   struct mbtree *tree;
+   ir_to_mesa_src_reg src_reg;
    int i;
    int swizzle[4];
 
@@ -563,10 +532,9 @@ ir_to_mesa_visitor::visit(ir_swizzle *ir)
     */
 
    ir->val->accept(this);
-   assert(this->result);
+   assert(this->result.file != PROGRAM_UNDEFINED);
 
-   tree = this->create_tree(MB_TERM_swizzle_vec4, ir, this->result, NULL);
-   this->get_temp(tree, 4);
+   src_reg = this->get_temp(4);
 
    for (i = 0; i < 4; i++) {
       if (i < ir->type->vector_elements) {
@@ -592,12 +560,12 @@ ir_to_mesa_visitor::visit(ir_swizzle *ir)
       }
    }
 
-   tree->src_reg.swizzle = MAKE_SWIZZLE4(swizzle[0],
-					 swizzle[1],
-					 swizzle[2],
-					 swizzle[3]);
+   src_reg.swizzle = MAKE_SWIZZLE4(swizzle[0],
+				   swizzle[1],
+				   swizzle[2],
+				   swizzle[3]);
 
-   this->result = tree;
+   this->result = src_reg;
 }
 
 /* This list should match up with builtin_variables.h */
@@ -653,27 +621,17 @@ static const struct {
 void
 ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
 {
-   struct mbtree *tree;
-   int size_swizzles[4] = {
-      MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_X, SWIZZLE_X, SWIZZLE_X),
-      MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Y, SWIZZLE_Y),
-      MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_Z),
-      MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_W),
-   };
+   ir_to_mesa_src_reg src_reg;
 
    /* By the time we make it to this stage, matrices should be broken down
     * to vectors.
     */
    assert(!ir->var->type->is_matrix());
 
-   tree = this->create_tree(MB_TERM_reference_vec4, ir, NULL, NULL);
-
    if (strncmp(ir->var->name, "gl_", 3) == 0) {
       unsigned int i;
       bool var_in = (ir->var->mode == ir_var_in ||
 		     ir->var->mode == ir_var_inout);
-
-      tree = this->create_tree(MB_TERM_reference_vec4, ir, NULL, NULL);
 
       for (i = 0; i < ARRAY_SIZE(builtin_var_to_mesa_reg); i++) {
 	 bool in = builtin_var_to_mesa_reg[i].file == PROGRAM_INPUT;
@@ -688,29 +646,25 @@ ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
 		ir->var->name);
 	 abort();
       }
-      ir_to_mesa_set_tree_reg(tree, builtin_var_to_mesa_reg[i].file,
-			      builtin_var_to_mesa_reg[i].index);
+      src_reg.file = builtin_var_to_mesa_reg[i].file;
+      src_reg.index = builtin_var_to_mesa_reg[i].index;
    } else {
-      this->get_temp_for_var(ir->var, tree);
+      src_reg = get_temp_for_var(ir->var);
    }
 
    /* If the type is smaller than a vec4, replicate the last channel out. */
-   tree->src_reg.swizzle = size_swizzles[ir->type->vector_elements - 1];
+   src_reg.swizzle = swizzle_for_size(ir->type->vector_elements);
+   src_reg.reladdr = false;
+   src_reg.negate = 0;
 
-   this->result = tree;
+   this->result = src_reg;
 }
 
 void
 ir_to_mesa_visitor::visit(ir_dereference_array *ir)
 {
-   struct mbtree *tree;
-   int size_swizzles[4] = {
-      MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_W),
-      MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_Z),
-      MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Y, SWIZZLE_Y),
-      MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_X, SWIZZLE_X, SWIZZLE_X),
-   };
    ir_constant *index;
+   ir_to_mesa_src_reg src_reg;
 
    index = ir->array_index->constant_expression_value();
 
@@ -720,59 +674,59 @@ ir_to_mesa_visitor::visit(ir_dereference_array *ir)
    assert(!ir->type->is_matrix());
 
    ir->array->accept(this);
-   tree = this->result;
+   src_reg = this->result;
 
-   if (tree->src_reg.file == PROGRAM_INPUT ||
-       tree->src_reg.file == PROGRAM_OUTPUT) {
+   if (src_reg.file == PROGRAM_INPUT ||
+       src_reg.file == PROGRAM_OUTPUT) {
       assert(index); /* FINISHME: Handle variable indexing of builtins. */
 
-      tree->src_reg.index += index->value.i[0];
-      tree->dst_reg.index += index->value.i[0];
+      src_reg.index += index->value.i[0];
    } else {
       if (index) {
-	 tree->src_reg.index += index->value.i[0];
-	 tree->dst_reg.index += index->value.i[0];
+	 src_reg.index += index->value.i[0];
       } else {
+	 ir_to_mesa_src_reg array_base = this->result;
 	 /* Variable index array dereference.  It eats the "vec4" of the
 	  * base of the array and an index that offsets the Mesa register
 	  * index.
 	  */
 	 ir->array_index->accept(this);
 
-	 tree->src_reg.reladdr = true;
-	 tree = this->create_tree(MB_TERM_array_reference_vec4_vec4,
-				  ir, tree, this->result);
-	 this->get_temp(tree, ir->type->vector_elements);
+	 /* FINISHME: This doesn't work when we're trying to do the LHS
+	  * of an assignment.
+	  */
+	 src_reg.reladdr = true;
+	 ir_to_mesa_emit_op1(ir, OPCODE_ARL, ir_to_mesa_address_reg,
+			     this->result);
+
+	 this->result = get_temp(ir->type->vector_elements);
+	 ir_to_mesa_emit_op1(ir, OPCODE_MOV,
+			     ir_to_mesa_dst_reg_from_src(this->result),
+			     src_reg);
       }
    }
 
    /* If the type is smaller than a vec4, replicate the last channel out. */
-   tree->src_reg.swizzle = size_swizzles[ir->type->vector_elements - 1];
+   src_reg.swizzle = swizzle_for_size(ir->type->vector_elements);
 
-   this->result = tree;
+   this->result = src_reg;
 }
 
 void
 ir_to_mesa_visitor::visit(ir_dereference_record *ir)
 {
-   ir_variable *var = ir->variable_referenced();
-   const char *field = ir->field;
-   struct mbtree *tree;
    unsigned int i;
-
-   const glsl_type *struct_type = var->type;
+   const glsl_type *struct_type = ir->record->type;
    int offset = 0;
 
-   tree = this->create_tree(MB_TERM_reference_vec4, ir, NULL, NULL);
-   this->get_temp_for_var(var, tree);
+   ir->record->accept(this);
 
    for (i = 0; i < struct_type->length; i++) {
-      if (strcmp(struct_type->fields.structure[i].name, field) == 0)
+      if (strcmp(struct_type->fields.structure[i].name, ir->field) == 0)
 	 break;
       offset += type_size(struct_type->fields.structure[i].type);
    }
-   tree->src_reg.index += offset;
-   tree->dst_reg.index += offset;
+   this->result.index += offset;
 }
 
 /**
@@ -785,43 +739,44 @@ ir_to_mesa_visitor::visit(ir_dereference_record *ir)
  * and one swizzle, before getting to actual vec4 storage.  So handle
  * those, then go use ir_dereference to handle the rest.
  */
-static struct mbtree *
+static struct ir_to_mesa_dst_reg
 get_assignment_lhs(ir_instruction *ir, ir_to_mesa_visitor *v)
 {
-   struct mbtree *tree = NULL;
+   struct ir_to_mesa_dst_reg dst_reg;
    ir_dereference *deref;
    ir_swizzle *swiz;
 
+   /* Use the rvalue deref handler for the most part.  We'll ignore
+    * swizzles in it and write swizzles using writemask, though.
+    */
    ir->accept(v);
-   tree = v->result;
+   dst_reg = ir_to_mesa_dst_reg_from_src(v->result);
 
    if ((deref = ir->as_dereference())) {
       ir_dereference_array *deref_array = ir->as_dereference_array();
       assert(!deref_array || deref_array->array->type->is_array());
 
       ir->accept(v);
-      tree = v->result;
    } else if ((swiz = ir->as_swizzle())) {
-      tree->dst_reg.writemask = 0;
+      dst_reg.writemask = 0;
       if (swiz->mask.num_components >= 1)
-	 tree->dst_reg.writemask |= (1 << swiz->mask.x);
+	 dst_reg.writemask |= (1 << swiz->mask.x);
       if (swiz->mask.num_components >= 2)
-	 tree->dst_reg.writemask |= (1 << swiz->mask.y);
+	 dst_reg.writemask |= (1 << swiz->mask.y);
       if (swiz->mask.num_components >= 3)
-	 tree->dst_reg.writemask |= (1 << swiz->mask.z);
+	 dst_reg.writemask |= (1 << swiz->mask.z);
       if (swiz->mask.num_components >= 4)
-	 tree->dst_reg.writemask |= (1 << swiz->mask.w);
+	 dst_reg.writemask |= (1 << swiz->mask.w);
    }
 
-   assert(tree);
-
-   return tree;
+   return dst_reg;
 }
 
 void
 ir_to_mesa_visitor::visit(ir_assignment *ir)
 {
-   struct mbtree *l, *r, *t;
+   struct ir_to_mesa_dst_reg l;
+   struct ir_to_mesa_src_reg r;
 
    assert(!ir->lhs->type->is_matrix());
    assert(!ir->lhs->type->is_array());
@@ -831,8 +786,8 @@ ir_to_mesa_visitor::visit(ir_assignment *ir)
 
    ir->rhs->accept(this);
    r = this->result;
-   assert(l);
-   assert(r);
+   assert(l.file != PROGRAM_UNDEFINED);
+   assert(r.file != PROGRAM_UNDEFINED);
 
    if (ir->condition) {
 	 ir_constant *condition_constant;
@@ -842,20 +797,16 @@ ir_to_mesa_visitor::visit(ir_assignment *ir)
 	 assert(condition_constant && condition_constant->value.b[0]);
    }
 
-   t = this->create_tree(MB_TERM_assign, ir, l, r);
-   mono_burg_label(t, NULL);
-   reduce(t, MB_NTERM_stmt);
+   ir_to_mesa_emit_op1(ir, OPCODE_MOV, l, r);
 }
 
 
 void
 ir_to_mesa_visitor::visit(ir_constant *ir)
 {
-   struct mbtree *tree;
+   ir_to_mesa_src_reg src_reg;
 
    assert(!ir->type->is_matrix());
-
-   tree = this->create_tree(MB_TERM_reference_vec4, ir, NULL, NULL);
 
    assert(ir->type->base_type == GLSL_TYPE_FLOAT ||
 	  ir->type->base_type == GLSL_TYPE_UINT ||
@@ -868,10 +819,13 @@ ir_to_mesa_visitor::visit(ir_constant *ir)
     */
    /* FINISHME: Do something with the constant values for now.
     */
-   ir_to_mesa_set_tree_reg(tree, PROGRAM_CONSTANT, this->next_constant++);
-   tree->src_reg.swizzle = SWIZZLE_NOOP;
+   src_reg.file = PROGRAM_CONSTANT;
+   src_reg.index = this->next_constant++;
+   src_reg.swizzle = SWIZZLE_NOOP;
+   src_reg.reladdr = false;
+   src_reg.negate = 0;
 
-   this->result = tree;
+   this->result = src_reg;
 }
 
 
@@ -906,31 +860,30 @@ ir_to_mesa_visitor::visit(ir_if *ir)
    ir_to_mesa_instruction *if_inst, *else_inst = NULL;
 
    ir->condition->accept(this);
-   assert(this->result);
+   assert(this->result.file != PROGRAM_UNDEFINED);
 
-   if_inst = ir_to_mesa_emit_op1_full(this, ir->condition,
-				      OPCODE_IF, ir_to_mesa_undef_dst,
-				      this->result->src_reg);
+   if_inst = ir_to_mesa_emit_op1(ir->condition,
+				 OPCODE_IF, ir_to_mesa_undef_dst,
+				 this->result);
 
    this->instructions.push_tail(if_inst);
 
    visit_exec_list(&ir->then_instructions, this);
 
    if (!ir->else_instructions.is_empty()) {
-      else_inst = ir_to_mesa_emit_op1_full(this, ir->condition,
-					   OPCODE_ELSE, ir_to_mesa_undef_dst,
-					   ir_to_mesa_undef);
+      else_inst = ir_to_mesa_emit_op1(ir->condition, OPCODE_ELSE,
+				      ir_to_mesa_undef_dst,
+				      ir_to_mesa_undef);
       visit_exec_list(&ir->then_instructions, this);
    }
 
-   if_inst = ir_to_mesa_emit_op1_full(this, ir->condition,
-				      OPCODE_ENDIF, ir_to_mesa_undef_dst,
-				      ir_to_mesa_undef);
+   if_inst = ir_to_mesa_emit_op1(ir->condition, OPCODE_ENDIF,
+				 ir_to_mesa_undef_dst, ir_to_mesa_undef);
 }
 
 ir_to_mesa_visitor::ir_to_mesa_visitor()
 {
-   result = NULL;
+   result.file = PROGRAM_UNDEFINED;
    next_temp = 1;
    next_constant = 0;
 }
