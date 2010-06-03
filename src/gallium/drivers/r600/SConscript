@@ -2,7 +2,11 @@ Import('*')
 
 env = env.Clone()
 
-env.ParseConfig('pkg-config --cflags libdrm_radeon')
+try:
+    env.ParseConfig('pkg-config --cflags libdrm_radeon')
+except OSError:
+    print 'warning: not building r600'
+    Return()
 
 env.Append(CPPPATH = [
     '#/include', 
