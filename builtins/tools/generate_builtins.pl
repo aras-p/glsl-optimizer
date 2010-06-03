@@ -102,10 +102,12 @@ foreach $version (@versions) {
     $version_number = $version;
    if ($version =~ m/_vs/) {
        $version_check = " && state->target == vertex_shader";
-       $version_number =~ s/_vs//;
+   } elsif ($version =~ m/_fs/) {
+       $version_check = " && state->target == fragment_shader";
    } else {
        $version_check = "";
    }
+   $version_number =~ s/_[vf]s//;
    print "   if (state->language_version >= $version_number$version_check)\n";
    print "      read_builtins(state, instructions, functions_for_$version,\n";
    print "                    sizeof(functions_for_$version) / ";
