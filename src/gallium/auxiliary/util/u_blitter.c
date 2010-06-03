@@ -26,7 +26,7 @@
 
 /**
  * @file
- * Blitter utility to facilitate acceleration of the clear, clearRT, clearDS
+ * Blitter utility to facilitate acceleration of the clear, clear_render_target, clear_depth_stencil
  * resource_copy_region functions.
  *
  * @author Marek Olšák
@@ -781,11 +781,11 @@ void util_blitter_copy_region(struct blitter_context *blitter,
 }
 
 /* Clear a region of a color surface to a constant value. */
-void util_blitter_clearRT(struct blitter_context *blitter,
-                          struct pipe_surface *dstsurf,
-                          const float *rgba,
-                          unsigned dstx, unsigned dsty,
-                          unsigned width, unsigned height)
+void util_blitter_clear_render_target(struct blitter_context *blitter,
+                                      struct pipe_surface *dstsurf,
+                                      const float *rgba,
+                                      unsigned dstx, unsigned dsty,
+                                      unsigned width, unsigned height)
 {
    struct blitter_context_priv *ctx = (struct blitter_context_priv*)blitter;
    struct pipe_context *pipe = ctx->pipe;
@@ -822,13 +822,13 @@ void util_blitter_clearRT(struct blitter_context *blitter,
 }
 
 /* Clear a region of a depth stencil surface. */
-void util_blitter_clearDS(struct blitter_context *blitter,
-                          struct pipe_surface *dstsurf,
-                          unsigned clear_flags,
-                          double depth,
-                          unsigned stencil,
-                          unsigned dstx, unsigned dsty,
-                          unsigned width, unsigned height)
+void util_blitter_clear_depth_stencil(struct blitter_context *blitter,
+                                      struct pipe_surface *dstsurf,
+                                      unsigned clear_flags,
+                                      double depth,
+                                      unsigned stencil,
+                                      unsigned dstx, unsigned dsty,
+                                      unsigned width, unsigned height)
 {
    struct blitter_context_priv *ctx = (struct blitter_context_priv*)blitter;
    struct pipe_context *pipe = ctx->pipe;

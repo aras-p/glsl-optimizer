@@ -146,8 +146,8 @@ struct pipe_context *failover_create( struct pipe_context *hw,
    failover->pipe.draw_arrays = failover_draw_arrays;
    failover->pipe.draw_elements = failover_draw_elements;
    failover->pipe.clear = hw->clear;
-   failover->pipe.clearRT = hw->clearRT;
-   failover->pipe.clearDS = hw->clearDS;
+   failover->pipe.clear_render_target = hw->clear_render_target;
+   failover->pipe.clear_depth_stencil = hw->clear_depth_stencil;
 
    /* No software occlusion fallback (or other optional functionality)
     * at this point - if the hardware doesn't support it, don't

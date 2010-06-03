@@ -1109,18 +1109,18 @@ trace_context_clear(struct pipe_context *_pipe,
 
 
 static INLINE void
-trace_context_clearRT(struct pipe_context *_pipe,
-                      struct pipe_surface *dst,
-                      const float *rgba,
-                      unsigned dstx, unsigned dsty,
-                      unsigned width, unsigned height)
+trace_context_clear_render_target(struct pipe_context *_pipe,
+                                  struct pipe_surface *dst,
+                                  const float *rgba,
+                                  unsigned dstx, unsigned dsty,
+                                  unsigned width, unsigned height)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
    struct pipe_context *pipe = tr_ctx->pipe;
 
    dst = trace_surface_unwrap(tr_ctx, dst);
 
-   trace_dump_call_begin("pipe_context", "clearRT");
+   trace_dump_call_begin("pipe_context", "clear_render_target");
 
    trace_dump_arg(ptr, pipe);
    trace_dump_arg(ptr, dst);
@@ -1130,26 +1130,26 @@ trace_context_clearRT(struct pipe_context *_pipe,
    trace_dump_arg(uint, width);
    trace_dump_arg(uint, height);
 
-   pipe->clearRT(pipe, dst, rgba, dstx, dsty, width, height);
+   pipe->clear_render_target(pipe, dst, rgba, dstx, dsty, width, height);
 
    trace_dump_call_end();
 }
 
 static INLINE void
-trace_context_clearDS(struct pipe_context *_pipe,
-                      struct pipe_surface *dst,
-                      unsigned clear_flags,
-                      double depth,
-                      unsigned stencil,
-                      unsigned dstx, unsigned dsty,
-                      unsigned width, unsigned height)
+trace_context_clear_depth_stencil(struct pipe_context *_pipe,
+                                  struct pipe_surface *dst,
+                                  unsigned clear_flags,
+                                  double depth,
+                                  unsigned stencil,
+                                  unsigned dstx, unsigned dsty,
+                                  unsigned width, unsigned height)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
    struct pipe_context *pipe = tr_ctx->pipe;
 
    dst = trace_surface_unwrap(tr_ctx, dst);
 
-   trace_dump_call_begin("pipe_context", "clearDS");
+   trace_dump_call_begin("pipe_context", "clear_depth_stencil");
 
    trace_dump_arg(ptr, pipe);
    trace_dump_arg(ptr, dst);
@@ -1161,8 +1161,8 @@ trace_context_clearDS(struct pipe_context *_pipe,
    trace_dump_arg(uint, width);
    trace_dump_arg(uint, height);
 
-   pipe->clearDS(pipe, dst, clear_flags, depth, stencil,
-                 dstx, dsty, width, height);
+   pipe->clear_depth_stencil(pipe, dst, clear_flags, depth, stencil,
+                             dstx, dsty, width, height);
 
    trace_dump_call_end();
 }
@@ -1479,8 +1479,8 @@ trace_context_create(struct trace_screen *tr_scr,
    tr_ctx->base.set_vertex_buffers = trace_context_set_vertex_buffers;
    tr_ctx->base.resource_copy_region = trace_context_resource_copy_region;
    tr_ctx->base.clear = trace_context_clear;
-   tr_ctx->base.clearRT = trace_context_clearRT;
-   tr_ctx->base.clearDS = trace_context_clearDS;
+   tr_ctx->base.clear_render_target = trace_context_clear_render_target;
+   tr_ctx->base.clear_depth_stencil = trace_context_clear_depth_stencil;
    tr_ctx->base.flush = trace_context_flush;
    tr_ctx->base.is_resource_referenced = trace_is_resource_referenced;
 

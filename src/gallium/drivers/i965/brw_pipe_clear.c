@@ -227,11 +227,11 @@ static void brw_clear(struct pipe_context *pipe,
 }
 
 /* XXX should respect region */
-static void brw_clearRT(struct pipe_context *pipe, 
-                        struct pipe_surface *dst,
-                        const float *rgba,
-                        unsigned dstx, unsigned dsty,
-                        unsigned width, unsigned height)
+static void brw_clear_render_target(struct pipe_context *pipe,
+                                    struct pipe_surface *dst,
+                                    const float *rgba,
+                                    unsigned dstx, unsigned dsty,
+                                    unsigned width, unsigned height)
 {
    struct brw_context *brw = brw_context( pipe );
 
@@ -241,13 +241,13 @@ static void brw_clearRT(struct pipe_context *pipe,
 }
 
 /* XXX should respect region */
-static void brw_clearDS(struct pipe_context *pipe, 
-                        struct pipe_surface *dst,
-                        unsigned clear_flags,
-                        double depth,
-                        unsigned stencil,
-                        unsigned dstx, unsigned dsty,
-                        unsigned width, unsigned height)
+static void brw_clear_depth_stencil(struct pipe_context *pipe,
+                                    struct pipe_surface *dst,
+                                    unsigned clear_flags,
+                                    double depth,
+                                    unsigned stencil,
+                                    unsigned dstx, unsigned dsty,
+                                    unsigned width, unsigned height)
 {
    struct brw_context *brw = brw_context( pipe );
 
@@ -260,8 +260,8 @@ static void brw_clearDS(struct pipe_context *pipe,
 void brw_pipe_clear_init( struct brw_context *brw )
 {
    brw->base.clear = brw_clear;
-   brw->base.clearRT = brw_clearRT;
-   brw->base.clearDS = brw_clearDS;
+   brw->base.clear_render_target = brw_clear_render_target;
+   brw->base.clear_depth_stencil = brw_clear_depth_stencil;
 }
 
 

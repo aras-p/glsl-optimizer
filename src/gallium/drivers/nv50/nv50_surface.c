@@ -224,11 +224,11 @@ nv50_surface_copy(struct pipe_context *pipe,
 
 /* XXX this should probably look more along the lines of nv50_clear */
 static void
-nv50_clearRT(struct pipe_context *pipe,
-	     struct pipe_surface *dst,
-	     const float *rgba,
-	     unsigned dstx, unsigned dsty,
-	     unsigned width, unsigned height)
+nv50_clear_render_target(struct pipe_context *pipe,
+			 struct pipe_surface *dst,
+			 const float *rgba,
+			 unsigned dstx, unsigned dsty,
+			 unsigned width, unsigned height)
 {
 	struct nv50_context *nv50 = nv50_context(pipe);
 	struct nv50_screen *screen = nv50->screen;
@@ -264,7 +264,7 @@ void
 nv50_init_surface_functions(struct nv50_context *nv50)
 {
 	nv50->pipe.resource_copy_region = nv50_surface_copy;
-	nv50->pipe.clearRT = nv50_clearRT;
+	nv50->pipe.clear_render_target = nv50_clear_render_target;
 }
 
 

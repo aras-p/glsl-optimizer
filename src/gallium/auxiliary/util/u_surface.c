@@ -196,19 +196,19 @@ util_resource_copy_region(struct pipe_context *pipe,
 
 
 /**
- * Fallback for pipe->clearRT() function.
+ * Fallback for pipe->clear_render_target() function.
  * XXX this looks too hackish to be really useful.
  * cpp > 4 looks like a gross hack at best...
- * and we're missing the equivalent clearDS fallback.
+ * and we're missing the equivalent clear_depth_stencil fallback.
  * Plus can't use these transfer fallbacks when clearing
  * multisampled surfaces for instance.
  */
 void
-util_clearRT(struct pipe_context *pipe,
-             struct pipe_surface *dst,
-             const float *rgba,
-             unsigned dstx, unsigned dsty,
-             unsigned width, unsigned height)
+util_clear_render_target(struct pipe_context *pipe,
+                         struct pipe_surface *dst,
+                         const float *rgba,
+                         unsigned dstx, unsigned dsty,
+                         unsigned width, unsigned height)
 {
    struct pipe_transfer *dst_trans;
    void *dst_map;

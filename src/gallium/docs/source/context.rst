@@ -116,12 +116,12 @@ supports PIPE_CAP_DEPTHSTENCIL_CLEAR_SEPARATE.
 If a surface includes several layers/slices (XXX: not yet...) then all layers
 will be cleared.
 
-``clearRT`` clears a single color rendertarget with the specified color
-value. While it is only possible to clear one surface at a time (which can
+``clear_render_target`` clears a single color rendertarget with the specified
+color value. While it is only possible to clear one surface at a time (which can
 include several layers), this surface need not be bound to the framebuffer.
 
-``clearDS``clears a single depth, stencil or depth/stencil surface with
-the specified depth and stencil values (for combined depth/stencil buffers,
+``clear_depth_stencil``clears a single depth, stencil or depth/stencil surface
+with the specified depth and stencil values (for combined depth/stencil buffers,
 is is also possible to only clear one or the other part). While it is only
 possible to clear one surface at a time (which can include several layers),
 this surface need not be bound to the framebuffer.

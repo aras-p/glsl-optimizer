@@ -189,43 +189,43 @@ static void r300_resource_copy_region(struct pipe_context *pipe,
 }
 
 /* Clear a region of a color surface to a constant value. */
-static void r300_clearRT(struct pipe_context *pipe,
-                         struct pipe_surface *dst,
-                         const float *rgba,
-                         unsigned dstx, unsigned dsty,
-                         unsigned width, unsigned height)
+static void r300_clear_render_target(struct pipe_context *pipe,
+                                     struct pipe_surface *dst,
+                                     const float *rgba,
+                                     unsigned dstx, unsigned dsty,
+                                     unsigned width, unsigned height)
 {
     struct r300_context *r300 = r300_context(pipe);
 
     r300_blitter_save_states(r300);
     util_blitter_save_framebuffer(r300->blitter, r300->fb_state.state);
 
-    util_blitter_clearRT(r300->blitter, dst, rgba,
-                         dstx, dsty, width, height);
+    util_blitter_clear_render_target(r300->blitter, dst, rgba,
+                                     dstx, dsty, width, height);
 }
 
 /* Clear a region of a depth stencil surface. */
-static void r300_clearDS(struct pipe_context *pipe,
-                         struct pipe_surface *dst,
-                         unsigned clear_flags,
-                         double depth,
-                         unsigned stencil,
-                         unsigned dstx, unsigned dsty,
-                         unsigned width, unsigned height)
+static void r300_clear_depth_stencil(struct pipe_context *pipe,
+                                     struct pipe_surface *dst,
+                                     unsigned clear_flags,
+                                     double depth,
+                                     unsigned stencil,
+                                     unsigned dstx, unsigned dsty,
+                                     unsigned width, unsigned height)
 {
     struct r300_context *r300 = r300_context(pipe);
 
     r300_blitter_save_states(r300);
     util_blitter_save_framebuffer(r300->blitter, r300->fb_state.state);
 
-    util_blitter_clearDS(r300->blitter, dst, clear_flags, depth, stencil,
-                         dstx, dsty, width, height);
+    util_blitter_clear_depth_stencil(r300->blitter, dst, clear_flags, depth, stencil,
+                                     dstx, dsty, width, height);
 }
 
 void r300_init_blit_functions(struct r300_context *r300)
 {
     r300->context.clear = r300_clear;
-    r300->context.clearRT = r300_clearRT;
-    r300->context.clearDS = r300_clearDS;
+    r300->context.clear_render_target = r300_clear_render_target;
+    r300->context.clear_depth_stencil = r300_clear_depth_stencil;
     r300->context.resource_copy_region = r300_resource_copy_region;
 }

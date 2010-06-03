@@ -95,11 +95,11 @@ i915_surface_copy(struct pipe_context *pipe,
 
 
 static void
-i915_clearRT(struct pipe_context *pipe,
-             struct pipe_surface *dst,
-             const float *rgba,
-             unsigned dstx, unsigned dsty,
-             unsigned width, unsigned height)
+i915_clear_render_target(struct pipe_context *pipe,
+                         struct pipe_surface *dst,
+                         const float *rgba,
+                         unsigned dstx, unsigned dsty,
+                         unsigned width, unsigned height)
 {
    struct i915_texture *tex = i915_texture(dst->texture);
    struct pipe_resource *pt = &tex->b.b;
@@ -120,13 +120,13 @@ i915_clearRT(struct pipe_context *pipe,
 }
 
 static void
-i915_clearDS(struct pipe_context *pipe,
-             struct pipe_surface *dst,
-             unsigned clear_flags,
-             double depth,
-             unsigned stencil,
-             unsigned dstx, unsigned dsty,
-             unsigned width, unsigned height)
+i915_clear_depth_stencil(struct pipe_context *pipe,
+                         struct pipe_surface *dst,
+                         unsigned clear_flags,
+                         double depth,
+                         unsigned stencil,
+                         unsigned dstx, unsigned dsty,
+                         unsigned width, unsigned height)
 {
    struct i915_texture *tex = i915_texture(dst->texture);
    struct pipe_resource *pt = &tex->b.b;
@@ -209,8 +209,8 @@ void
 i915_init_surface_functions(struct i915_context *i915)
 {
    i915->base.resource_copy_region = i915_surface_copy;
-   i915->base.clearRT = i915_clearRT;
-   i915->base.clearDS = i915_clearDS;
+   i915->base.clear_render_target = i915_clear_render_target;
+   i915->base.clear_depth_stencil = i915_clear_depth_stencil;
 }
 
 /* No good reason for these to be in the screen.

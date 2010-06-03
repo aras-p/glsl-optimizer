@@ -46,14 +46,14 @@ util_clear(struct pipe_context *pipe,
       unsigned i;
       for (i = 0; i < framebuffer->nr_cbufs; i++) {
          struct pipe_surface *ps = framebuffer->cbufs[i];
-         pipe->clearRT(pipe, ps, rgba, 0, 0, ps->width, ps->height);
+         pipe->clear_render_target(pipe, ps, rgba, 0, 0, ps->width, ps->height);
       }
    }
 
    if (buffers & PIPE_CLEAR_DEPTHSTENCIL) {
       struct pipe_surface *ps = framebuffer->zsbuf;
-      pipe->clearDS(pipe, ps, buffers & PIPE_CLEAR_DEPTHSTENCIL,
-                    depth, stencil,
-                    0, 0, ps->width, ps->height);
+      pipe->clear_depth_stencil(pipe, ps, buffers & PIPE_CLEAR_DEPTHSTENCIL,
+                                depth, stencil,
+                                0, 0, ps->width, ps->height);
    }
 }

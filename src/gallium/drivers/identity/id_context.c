@@ -666,48 +666,48 @@ identity_clear(struct pipe_context *_pipe,
 }
 
 static void
-identity_clearRT(struct pipe_context *_pipe,
-                 struct pipe_surface *_dst,
-                 const float *rgba,
-                 unsigned dstx, unsigned dsty,
-                 unsigned width, unsigned height)
+identity_clear_render_target(struct pipe_context *_pipe,
+                             struct pipe_surface *_dst,
+                             const float *rgba,
+                             unsigned dstx, unsigned dsty,
+                             unsigned width, unsigned height)
 {
    struct identity_context *id_pipe = identity_context(_pipe);
    struct identity_surface *id_surface_dst = identity_surface(_dst);
    struct pipe_context *pipe = id_pipe->pipe;
    struct pipe_surface *dst = id_surface_dst->surface;
 
-   pipe->clearRT(pipe,
-                 dst,
-                 rgba,
-                 dstx,
-                 dsty,
-                 width,
-                 height);
+   pipe->clear_render_target(pipe,
+                             dst,
+                             rgba,
+                             dstx,
+                             dsty,
+                             width,
+                             height);
 }
 static void
-identity_clearDS(struct pipe_context *_pipe,
-                        struct pipe_surface *_dst,
-                        unsigned clear_flags,
-                        double depth,
-                        unsigned stencil,
-                        unsigned dstx, unsigned dsty,
-                        unsigned width, unsigned height)
+identity_clear_depth_stencil(struct pipe_context *_pipe,
+                             struct pipe_surface *_dst,
+                             unsigned clear_flags,
+                             double depth,
+                             unsigned stencil,
+                             unsigned dstx, unsigned dsty,
+                             unsigned width, unsigned height)
 {
    struct identity_context *id_pipe = identity_context(_pipe);
    struct identity_surface *id_surface_dst = identity_surface(_dst);
    struct pipe_context *pipe = id_pipe->pipe;
    struct pipe_surface *dst = id_surface_dst->surface;
 
-   pipe->clearDS(pipe,
-                 dst,
-                 clear_flags,
-                 depth,
-                 stencil,
-                 dstx,
-                 dsty,
-                 width,
-                 height);
+   pipe->clear_depth_stencil(pipe,
+                             dst,
+                             clear_flags,
+                             depth,
+                             stencil,
+                             dstx,
+                             dsty,
+                             width,
+                             height);
 
 }
 
@@ -933,8 +933,8 @@ identity_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
    id_pipe->base.set_vertex_buffers = identity_set_vertex_buffers;
    id_pipe->base.resource_copy_region = identity_resource_copy_region;
    id_pipe->base.clear = identity_clear;
-   id_pipe->base.clearRT = identity_clearRT;
-   id_pipe->base.clearDS = identity_clearDS;
+   id_pipe->base.clear_render_target = identity_clear_render_target;
+   id_pipe->base.clear_depth_stencil = identity_clear_depth_stencil;
    id_pipe->base.flush = identity_flush;
    id_pipe->base.is_resource_referenced = identity_is_resource_referenced;
    id_pipe->base.create_sampler_view = identity_context_create_sampler_view;

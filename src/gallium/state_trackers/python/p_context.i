@@ -447,10 +447,10 @@ error1:
                                      src->texture, subsrc, srcx, srcy, src->zslice, width, height);
    }
 
-   void clearRT(struct st_surface *dst,
-                float *rgba,
-                unsigned x, unsigned y,
-                unsigned width, unsigned height)
+   void clear_render_target(struct st_surface *dst,
+                            float *rgba,
+                            unsigned x, unsigned y,
+                            unsigned width, unsigned height)
    {
       struct pipe_surface *_dst = NULL;
 
@@ -458,18 +458,18 @@ error1:
       if(!_dst)
          SWIG_exception(SWIG_ValueError, "couldn't acquire destination surface for writing");
 
-      $self->pipe->clearRT($self->pipe, _dst, rgba, x, y, width, height);
+      $self->pipe->clear_render_target($self->pipe, _dst, rgba, x, y, width, height);
 
    fail:
       pipe_surface_reference(&_dst, NULL);
    }
 
-   void clearDS(struct st_surface *dst,
-                unsigned clear_flags,
-                double depth,
-                unsigned stencil,
-                unsigned x, unsigned y,
-                unsigned width, unsigned height)
+   void clear_depth_stencil(struct st_surface *dst,
+                            unsigned clear_flags,
+                            double depth,
+                            unsigned stencil,
+                            unsigned x, unsigned y,
+                            unsigned width, unsigned height)
    {
       struct pipe_surface *_dst = NULL;
 
@@ -477,8 +477,8 @@ error1:
       if(!_dst)
          SWIG_exception(SWIG_ValueError, "couldn't acquire destination surface for writing");
 
-      $self->pipe->clearDS($self->pipe, _dst, clear_flags, depth, stencil,
-                           x, y, width, height);
+      $self->pipe->clear_depth_stencil($self->pipe, _dst, clear_flags, depth, stencil,
+                                       x, y, width, height);
 
    fail:
       pipe_surface_reference(&_dst, NULL);

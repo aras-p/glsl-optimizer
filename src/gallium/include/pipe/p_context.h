@@ -287,11 +287,11 @@ struct pipe_context {
     * Clear a color rendertarget surface.
     * \param rgba  pointer to an array of one float for each of r, g, b, a.
     */
-   void (*clearRT)(struct pipe_context *pipe,
-                   struct pipe_surface *dst,
-                   const float *rgba,
-                   unsigned dstx, unsigned dsty,
-                   unsigned width, unsigned height);
+   void (*clear_render_target)(struct pipe_context *pipe,
+                               struct pipe_surface *dst,
+                               const float *rgba,
+                               unsigned dstx, unsigned dsty,
+                               unsigned width, unsigned height);
 
    /**
     * Clear a depth-stencil surface.
@@ -299,13 +299,13 @@ struct pipe_context {
     * \param depth  depth clear value in [0,1].
     * \param stencil  stencil clear value
     */
-   void (*clearDS)(struct pipe_context *pipe,
-                   struct pipe_surface *dst,
-                   unsigned clear_flags,
-                   double depth,
-                   unsigned stencil,
-                   unsigned dstx, unsigned dsty,
-                   unsigned width, unsigned height);
+   void (*clear_depth_stencil)(struct pipe_context *pipe,
+                               struct pipe_surface *dst,
+                               unsigned clear_flags,
+                               double depth,
+                               unsigned stencil,
+                               unsigned dstx, unsigned dsty,
+                               unsigned width, unsigned height);
 
    /** Flush rendering
     * \param flags  bitmask of PIPE_FLUSH_x tokens)

@@ -56,11 +56,11 @@ nvfx_surface_copy(struct pipe_context *pipe,
 }
 
 static void
-nvfx_clearRT(struct pipe_context *pipe,
-	     struct pipe_surface *dst,
-	     const float *rgba,
-	     unsigned dstx, unsigned dsty,
-	     unsigned width, unsigned height)
+nvfx_clear_render_target(struct pipe_context *pipe,
+			 struct pipe_surface *dst,
+			 const float *rgba,
+			 unsigned dstx, unsigned dsty,
+			 unsigned width, unsigned height)
 {
 	struct nvfx_context *nvfx = nvfx_context(pipe);
 	struct nv04_surface_2d *eng2d = nvfx->screen->eng2d;
@@ -71,13 +71,13 @@ nvfx_clearRT(struct pipe_context *pipe,
 }
 
 static void
-nvfx_clearDS(struct pipe_context *pipe,
-	     struct pipe_surface *dst,
-	     unsigned clear_flags,
-	     double depth,
-	     unsigned stencil,
-	     unsigned dstx, unsigned dsty,
-	     unsigned width, unsigned height)
+nvfx_clear_depth_stencil(struct pipe_context *pipe,
+			 struct pipe_surface *dst,
+			 unsigned clear_flags,
+			 double depth,
+			 unsigned stencil,
+			 unsigned dstx, unsigned dsty,
+			 unsigned width, unsigned height)
 {
 	struct nvfx_context *nvfx = nvfx_context(pipe);
 	struct nv04_surface_2d *eng2d = nvfx->screen->eng2d;
@@ -91,6 +91,6 @@ void
 nvfx_init_surface_functions(struct nvfx_context *nvfx)
 {
 	nvfx->pipe.resource_copy_region = nvfx_surface_copy;
-	nvfx->pipe.clearRT = nvfx_clearRT;
-	nvfx->pipe.clearDS = nvfx_clearDS;
+	nvfx->pipe.clear_render_target = nvfx_clear_render_target;
+	nvfx->pipe.clear_depth_stencil = nvfx_clear_depth_stencil;
 }
