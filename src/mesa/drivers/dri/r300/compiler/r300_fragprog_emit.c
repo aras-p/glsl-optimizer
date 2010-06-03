@@ -95,7 +95,7 @@ static unsigned int translate_rgb_opcode(struct r300_fragment_program_compiler *
 	case RC_OPCODE_DP4: return R300_ALU_OUTC_DP4;
 	case RC_OPCODE_FRC: return R300_ALU_OUTC_FRC;
 	default:
-		error("translate_rgb_opcode(%i): Unknown opcode", opcode);
+		error("translate_rgb_opcode: Unknown opcode %s", rc_get_opcode_info(opcode)->Name);
 		/* fall through */
 	case RC_OPCODE_NOP:
 		/* fall through */
@@ -116,7 +116,7 @@ static unsigned int translate_alpha_opcode(struct r300_fragment_program_compiler
 	case RC_OPCODE_FRC: return R300_ALU_OUTA_FRC;
 	case RC_OPCODE_LG2: return R300_ALU_OUTA_LG2;
 	default:
-		error("translate_rgb_opcode(%i): Unknown opcode", opcode);
+		error("translate_rgb_opcode: Unknown opcode %s", rc_get_opcode_info(opcode)->Name);
 		/* fall through */
 	case RC_OPCODE_NOP:
 		/* fall through */
@@ -302,7 +302,7 @@ static int emit_tex(struct r300_emit_state * emit, struct rc_instruction * inst)
 	case RC_OPCODE_TXB: opcode = R300_TEX_OP_TXB; break;
 	case RC_OPCODE_TXP: opcode = R300_TEX_OP_TXP; break;
 	default:
-		error("Unknown texture opcode %i", inst->U.I.Opcode);
+		error("Unknown texture opcode %s", rc_get_opcode_info(inst->U.I.Opcode)->Name);
 		return 0;
 	}
 

@@ -82,7 +82,7 @@ static unsigned int translate_rgb_op(struct r300_fragment_program_compiler *c, r
 	case RC_OPCODE_DP4: return R500_ALU_RGBA_OP_DP4;
 	case RC_OPCODE_FRC: return R500_ALU_RGBA_OP_FRC;
 	default:
-		error("translate_rgb_op(%d): unknown opcode\n", opcode);
+		error("translate_rgb_op: unknown opcode %s\n", rc_get_opcode_info(opcode)->Name);
 		/* fall through */
 	case RC_OPCODE_NOP:
 		/* fall through */
@@ -106,7 +106,7 @@ static unsigned int translate_alpha_op(struct r300_fragment_program_compiler *c,
 	case RC_OPCODE_FRC: return R500_ALPHA_OP_FRC;
 	case RC_OPCODE_LG2: return R500_ALPHA_OP_LN2;
 	default:
-		error("translate_alpha_op(%d): unknown opcode\n", opcode);
+		error("translate_alpha_op: unknown opcode %s\n", rc_get_opcode_info(opcode)->Name);
 		/* fall through */
 	case RC_OPCODE_NOP:
 		/* fall through */
@@ -332,7 +332,7 @@ static int emit_tex(struct r300_fragment_program_compiler *c, struct rc_sub_inst
 		code->inst[ip].inst1 |= R500_TEX_INST_PROJ;
 		break;
 	default:
-		error("emit_tex can't handle opcode %x\n", inst->Opcode);
+		error("emit_tex can't handle opcode %s\n", rc_get_opcode_info(inst->Opcode)->Name);
 	}
 
 	use_temporary(code, inst->SrcReg[0].Index);
@@ -432,7 +432,7 @@ static void emit_flowcontrol(struct emit_state * s, struct rc_instruction * inst
 
 		s->CurrentBranchDepth--;
 	} else {
-		rc_error(s->C, "%s: unknown opcode %i\n", __FUNCTION__, inst->U.I.Opcode);
+		rc_error(s->C, "%s: unknown opcode %s\n", __FUNCTION__, rc_get_opcode_info(inst->U.I.Opcode)->Name);
 	}
 }
 

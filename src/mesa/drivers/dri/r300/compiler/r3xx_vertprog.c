@@ -375,7 +375,7 @@ static void translate_vertex_program(struct r300_vertex_program_compiler * compi
 		case RC_OPCODE_SGE: ei_vector2(compiler->code, VE_SET_GREATER_THAN_EQUAL, vpi, inst); break;
 		case RC_OPCODE_SLT: ei_vector2(compiler->code, VE_SET_LESS_THAN, vpi, inst); break;
 		default:
-			rc_error(&compiler->Base, "Unknown opcode %i\n", vpi->Opcode);
+			rc_error(&compiler->Base, "Unknown opcode %s\n", rc_get_opcode_info(vpi->Opcode)->Name);
 			return;
 		}
 
