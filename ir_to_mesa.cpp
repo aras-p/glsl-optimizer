@@ -92,9 +92,7 @@ public:
 
    temp_entry *find_variable_storage(ir_variable *var);
 
-   ir_to_mesa_src_reg get_temp(int size);
-
-   ir_to_mesa_src_reg get_temp_for_var(ir_variable *var);
+   ir_to_mesa_src_reg get_temp(const glsl_type *type);
 
    struct ir_to_mesa_src_reg src_reg_for_float(float val);
 
@@ -179,6 +177,56 @@ static int swizzle_for_size(int size)
 
    return size_swizzles[size - 1];
 }
+
+/* This list should match up with builtin_variables.h */
+static const struct {
+   const char *name;
+   int file;
+   int index;
+} builtin_var_to_mesa_reg[] = {
+   /* core_vs */
+   {"gl_Position", PROGRAM_OUTPUT, VERT_RESULT_HPOS},
+   {"gl_PointSize", PROGRAM_OUTPUT, VERT_RESULT_PSIZ},
+
+   /* core_fs */
+   {"gl_FragCoord", PROGRAM_INPUT, FRAG_ATTRIB_WPOS},
+   {"gl_FrontFacing", PROGRAM_INPUT, FRAG_ATTRIB_FACE},
+   {"gl_FragColor", PROGRAM_OUTPUT, FRAG_ATTRIB_COL0},
+   {"gl_FragDepth", PROGRAM_UNDEFINED, FRAG_ATTRIB_WPOS}, /* FINISHME: WPOS.z */
+
+   /* 110_deprecated_fs */
+   {"gl_Color", PROGRAM_INPUT, FRAG_ATTRIB_COL0},
+   {"gl_SecondaryColor", PROGRAM_INPUT, FRAG_ATTRIB_COL1},
+   {"gl_FogFragCoord", PROGRAM_INPUT, FRAG_ATTRIB_FOGC},
+   {"gl_TexCoord", PROGRAM_INPUT, FRAG_ATTRIB_TEX0}, /* array */
+
+   /* 110_deprecated_vs */
+   {"gl_Vertex", PROGRAM_INPUT, VERT_ATTRIB_POS},
+   {"gl_Normal", PROGRAM_INPUT, VERT_ATTRIB_NORMAL},
+   {"gl_Color", PROGRAM_INPUT, VERT_ATTRIB_COLOR0},
+   {"gl_SecondaryColor", PROGRAM_INPUT, VERT_ATTRIB_COLOR1},
+   {"gl_MultiTexCoord0", PROGRAM_INPUT, VERT_ATTRIB_TEX0},
+   {"gl_MultiTexCoord1", PROGRAM_INPUT, VERT_ATTRIB_TEX1},
+   {"gl_MultiTexCoord2", PROGRAM_INPUT, VERT_ATTRIB_TEX2},
+   {"gl_MultiTexCoord3", PROGRAM_INPUT, VERT_ATTRIB_TEX3},
+   {"gl_MultiTexCoord4", PROGRAM_INPUT, VERT_ATTRIB_TEX4},
+   {"gl_MultiTexCoord5", PROGRAM_INPUT, VERT_ATTRIB_TEX5},
+   {"gl_MultiTexCoord6", PROGRAM_INPUT, VERT_ATTRIB_TEX6},
+   {"gl_MultiTexCoord7", PROGRAM_INPUT, VERT_ATTRIB_TEX7},
+   {"gl_TexCoord", PROGRAM_OUTPUT, VERT_RESULT_TEX0}, /* array */
+   {"gl_FogCoord", PROGRAM_INPUT, VERT_RESULT_FOGC},
+   /*{"gl_ClipVertex", PROGRAM_OUTPUT, VERT_ATTRIB_FOGC},*/ /* FINISHME */
+   {"gl_FrontColor", PROGRAM_OUTPUT, VERT_RESULT_COL0},
+   {"gl_BackColor", PROGRAM_OUTPUT, VERT_RESULT_BFC0},
+   {"gl_FrontSecondaryColor", PROGRAM_OUTPUT, VERT_RESULT_COL1},
+   {"gl_BackSecondaryColor", PROGRAM_OUTPUT, VERT_RESULT_BFC1},
+   {"gl_FogFragCoord", PROGRAM_OUTPUT, VERT_RESULT_FOGC},
+
+   /* 130_vs */
+   /*{"gl_VertexID", PROGRAM_INPUT, VERT_ATTRIB_FOGC},*/ /* FINISHME */
+
+   {"gl_FragData", PROGRAM_OUTPUT, FRAG_RESULT_DATA0}, /* array */
+};
 
 ir_to_mesa_instruction *
 ir_to_mesa_visitor::ir_to_mesa_emit_op3(ir_instruction *ir,
@@ -307,20 +355,22 @@ ir_to_mesa_visitor::src_reg_for_float(float val)
  * pass over the Mesa IR later.
  */
 ir_to_mesa_src_reg
-ir_to_mesa_visitor::get_temp(int size)
+ir_to_mesa_visitor::get_temp(const glsl_type *type)
 {
    ir_to_mesa_src_reg src_reg;
    int swizzle[4];
    int i;
 
+   assert(!type->is_array());
+
    src_reg.file = PROGRAM_TEMPORARY;
-   src_reg.index = this->next_temp++;
+   src_reg.index = type->matrix_columns;
    src_reg.reladdr = false;
 
-   for (i = 0; i < size; i++)
+   for (i = 0; i < type->vector_elements; i++)
       swizzle[i] = i;
    for (; i < 4; i++)
-      swizzle[i] = size - 1;
+      swizzle[i] = type->vector_elements - 1;
    src_reg.swizzle = MAKE_SWIZZLE4(swizzle[0], swizzle[1],
 				   swizzle[2], swizzle[3]);
 
@@ -377,41 +427,10 @@ ir_to_mesa_visitor::find_variable_storage(ir_variable *var)
    return NULL;
 }
 
-ir_to_mesa_src_reg
-ir_to_mesa_visitor::get_temp_for_var(ir_variable *var)
-{
-   temp_entry *entry;
-   ir_to_mesa_src_reg src_reg;
-
-   entry = find_variable_storage(var);
-   if (!entry) {
-      entry = new temp_entry(var, PROGRAM_TEMPORARY, this->next_temp);
-      this->variable_storage.push_tail(entry);
-
-      next_temp += type_size(var->type);
-   }
-
-   src_reg.file = entry->file;
-   src_reg.index = entry->index;
-   src_reg.swizzle = swizzle_for_size(var->type->vector_elements);
-   src_reg.reladdr = false;
-
-   return src_reg;
-}
-
 void
 ir_to_mesa_visitor::visit(ir_variable *ir)
 {
-   if (ir->mode == ir_var_uniform) {
-      temp_entry *entry = find_variable_storage(ir);
-
-      if (!entry) {
-	 entry = new temp_entry(ir, PROGRAM_UNIFORM, this->next_uniform);
-	 this->variable_storage.push_tail(entry);
-
-	 this->next_uniform += type_size(ir->type);
-      }
-   }
+   (void)ir;
 }
 
 void
@@ -497,6 +516,10 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
 	 exit(1);
       }
       op[operand] = this->result;
+
+      /* Only expression implemented for matrices yet */
+      assert(!ir->operands[operand]->type->is_matrix() ||
+	     ir->operation == ir_binop_mul);
    }
 
    this->result.file = PROGRAM_UNDEFINED;
@@ -504,7 +527,7 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
    /* Storage for our result.  Ideally for an assignment we'd be using
     * the actual storage for the result here, instead.
     */
-   result_src = get_temp(ir->type->vector_elements);
+   result_src = get_temp(ir->type);
    /* convenience for the emit functions below. */
    result_dst = ir_to_mesa_dst_reg_from_src(result_src);
    /* Limit writes to the channels that will be used by result_src later.
@@ -547,7 +570,34 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
       ir_to_mesa_emit_op2(ir, OPCODE_SUB, result_dst, op[0], op[1]);
       break;
    case ir_binop_mul:
-      ir_to_mesa_emit_op2(ir, OPCODE_MUL, result_dst, op[0], op[1]);
+      if (ir->operands[0]->type->is_matrix() &&
+	  !ir->operands[1]->type->is_matrix()) {
+	 if (ir->operands[0]->type->is_scalar()) {
+	    ir_to_mesa_dst_reg dst_column = result_dst;
+	    ir_to_mesa_src_reg src_column = op[0];
+	    for (int i = 0; i < ir->operands[0]->type->matrix_columns; i++) {
+	       ir_to_mesa_emit_op2(ir, OPCODE_MUL,
+				   dst_column, src_column, op[1]);
+	       dst_column.index++;
+	       src_column.index++;
+	    }
+	 } else {
+	    ir_to_mesa_dst_reg dst_chan = result_dst;
+	    ir_to_mesa_src_reg src_column = op[0];
+	    ir_to_mesa_src_reg src_chan = op[1];
+	    for (int i = 0; i < ir->operands[0]->type->matrix_columns; i++) {
+	       dst_chan.writemask = (1 << i);
+	       src_chan.swizzle = MAKE_SWIZZLE4(i, i, i, i);
+	       ir_to_mesa_emit_op2(ir, OPCODE_MUL,
+				   dst_chan, src_column, src_chan);
+	       src_column.index++;
+	    }
+	 }
+      } else {
+	 assert(!ir->operands[0]->type->is_matrix());
+	 assert(!ir->operands[1]->type->is_matrix());
+	 ir_to_mesa_emit_op2(ir, OPCODE_MUL, result_dst, op[0], op[1]);
+      }
       break;
    case ir_binop_div:
       ir_to_mesa_emit_scalar_op1(ir, OPCODE_RCP, result_dst, op[1]);
@@ -705,92 +755,63 @@ ir_to_mesa_visitor::visit(ir_swizzle *ir)
    this->result = src_reg;
 }
 
-/* This list should match up with builtin_variables.h */
-static const struct {
-   const char *name;
-   int file;
-   int index;
-} builtin_var_to_mesa_reg[] = {
-   /* core_vs */
-   {"gl_Position", PROGRAM_OUTPUT, VERT_RESULT_HPOS},
-   {"gl_PointSize", PROGRAM_OUTPUT, VERT_RESULT_PSIZ},
-
-   /* core_fs */
-   {"gl_FragCoord", PROGRAM_INPUT, FRAG_ATTRIB_WPOS},
-   {"gl_FrontFacing", PROGRAM_INPUT, FRAG_ATTRIB_FACE},
-   {"gl_FragColor", PROGRAM_OUTPUT, FRAG_ATTRIB_COL0},
-   {"gl_FragDepth", PROGRAM_UNDEFINED, FRAG_ATTRIB_WPOS}, /* FINISHME: WPOS.z */
-
-   /* 110_deprecated_fs */
-   {"gl_Color", PROGRAM_INPUT, FRAG_ATTRIB_COL0},
-   {"gl_SecondaryColor", PROGRAM_INPUT, FRAG_ATTRIB_COL1},
-   {"gl_FogFragCoord", PROGRAM_INPUT, FRAG_ATTRIB_FOGC},
-   {"gl_TexCoord", PROGRAM_INPUT, FRAG_ATTRIB_TEX0}, /* array */
-
-   /* 110_deprecated_vs */
-   {"gl_Vertex", PROGRAM_INPUT, VERT_ATTRIB_POS},
-   {"gl_Normal", PROGRAM_INPUT, VERT_ATTRIB_NORMAL},
-   {"gl_Color", PROGRAM_INPUT, VERT_ATTRIB_COLOR0},
-   {"gl_SecondaryColor", PROGRAM_INPUT, VERT_ATTRIB_COLOR1},
-   {"gl_MultiTexCoord0", PROGRAM_INPUT, VERT_ATTRIB_TEX0},
-   {"gl_MultiTexCoord1", PROGRAM_INPUT, VERT_ATTRIB_TEX1},
-   {"gl_MultiTexCoord2", PROGRAM_INPUT, VERT_ATTRIB_TEX2},
-   {"gl_MultiTexCoord3", PROGRAM_INPUT, VERT_ATTRIB_TEX3},
-   {"gl_MultiTexCoord4", PROGRAM_INPUT, VERT_ATTRIB_TEX4},
-   {"gl_MultiTexCoord5", PROGRAM_INPUT, VERT_ATTRIB_TEX5},
-   {"gl_MultiTexCoord6", PROGRAM_INPUT, VERT_ATTRIB_TEX6},
-   {"gl_MultiTexCoord7", PROGRAM_INPUT, VERT_ATTRIB_TEX7},
-   {"gl_TexCoord", PROGRAM_OUTPUT, VERT_RESULT_TEX0}, /* array */
-   {"gl_FogCoord", PROGRAM_INPUT, VERT_RESULT_FOGC},
-   /*{"gl_ClipVertex", PROGRAM_OUTPUT, VERT_ATTRIB_FOGC},*/ /* FINISHME */
-   {"gl_FrontColor", PROGRAM_OUTPUT, VERT_RESULT_COL0},
-   {"gl_BackColor", PROGRAM_OUTPUT, VERT_RESULT_BFC0},
-   {"gl_FrontSecondaryColor", PROGRAM_OUTPUT, VERT_RESULT_COL1},
-   {"gl_BackSecondaryColor", PROGRAM_OUTPUT, VERT_RESULT_BFC1},
-   {"gl_FogFragCoord", PROGRAM_OUTPUT, VERT_RESULT_FOGC},
-
-   /* 130_vs */
-   /*{"gl_VertexID", PROGRAM_INPUT, VERT_ATTRIB_FOGC},*/ /* FINISHME */
-
-   {"gl_FragData", PROGRAM_OUTPUT, FRAG_RESULT_DATA0}, /* array */
-};
-
 void
 ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
 {
    ir_to_mesa_src_reg src_reg;
+   temp_entry *entry = find_variable_storage(ir->var);
+   unsigned int i;
+   bool var_in;
 
-   /* By the time we make it to this stage, matrices should be broken down
-    * to vectors.
-    */
-   assert(!ir->var->type->is_matrix());
+   if (!entry) {
+      switch (ir->var->mode) {
+      case ir_var_uniform:
+	 entry = new temp_entry(ir->var, PROGRAM_UNIFORM, this->next_uniform);
+	 this->variable_storage.push_tail(entry);
 
-   if (strncmp(ir->var->name, "gl_", 3) == 0) {
-      unsigned int i;
-      bool var_in = (ir->var->mode == ir_var_in ||
-		     ir->var->mode == ir_var_inout);
+	 this->next_uniform += type_size(ir->var->type);
+	 break;
+      case ir_var_in:
+      case ir_var_out:
+      case ir_var_inout:
+	 var_in = (ir->var->mode == ir_var_in ||
+		   ir->var->mode == ir_var_inout);
 
-      for (i = 0; i < ARRAY_SIZE(builtin_var_to_mesa_reg); i++) {
-	 bool in = builtin_var_to_mesa_reg[i].file == PROGRAM_INPUT;
+	 for (i = 0; i < ARRAY_SIZE(builtin_var_to_mesa_reg); i++) {
+	    bool in = builtin_var_to_mesa_reg[i].file == PROGRAM_INPUT;
 
-	 if (strcmp(ir->var->name, builtin_var_to_mesa_reg[i].name) == 0 &&
-	     !(var_in ^ in))
-	    break;
+	    if (strcmp(ir->var->name, builtin_var_to_mesa_reg[i].name) == 0 &&
+		!(var_in ^ in))
+	       break;
+	 }
+	 if (i == ARRAY_SIZE(builtin_var_to_mesa_reg)) {
+	    printf("Failed to find builtin for %s variable %s\n",
+		   var_in ? "in" : "out",
+		   ir->var->name);
+	    abort();
+	 }
+	 entry = new temp_entry(ir->var,
+				builtin_var_to_mesa_reg[i].file,
+				builtin_var_to_mesa_reg[i].index);
+	 break;
+      case ir_var_auto:
+	 entry = new temp_entry(ir->var, PROGRAM_TEMPORARY, this->next_temp);
+	 this->variable_storage.push_tail(entry);
+
+	 next_temp += type_size(ir->var->type);
+	 break;
       }
-      if (i == ARRAY_SIZE(builtin_var_to_mesa_reg)) {
-	 printf("Failed to find builtin for %s variable %s\n",
-		var_in ? "in" : "out",
-		ir->var->name);
-	 abort();
+
+      if (!entry) {
+	 printf("Failed to make storage for %s\n", ir->var->name);
+	 exit(1);
       }
-      src_reg.file = builtin_var_to_mesa_reg[i].file;
-      src_reg.index = builtin_var_to_mesa_reg[i].index;
-   } else {
-      src_reg = get_temp_for_var(ir->var);
    }
 
+   src_reg.file = entry->file;
+   src_reg.index = entry->index;
    /* If the type is smaller than a vec4, replicate the last channel out. */
-   src_reg.swizzle = swizzle_for_size(ir->type->vector_elements);
+   src_reg.swizzle = swizzle_for_size(ir->var->type->vector_elements);
    src_reg.reladdr = false;
    src_reg.negate = 0;
 
@@ -836,7 +857,7 @@ ir_to_mesa_visitor::visit(ir_dereference_array *ir)
 	 ir_to_mesa_emit_op1(ir, OPCODE_ARL, ir_to_mesa_address_reg,
 			     this->result);
 
-	 this->result = get_temp(ir->type->vector_elements);
+	 this->result = get_temp(ir->type);
 	 ir_to_mesa_emit_op1(ir, OPCODE_MOV,
 			     ir_to_mesa_dst_reg_from_src(this->result),
 			     src_reg);
