@@ -175,6 +175,7 @@ struct st_context
       float vertices[4][2][4];  /**< vertex pos + color */
       struct pipe_resource *vbuf;
       unsigned vbuf_slot;
+      boolean enable_ds_separate;
    } clear;
 
    /** used for anything using util_draw_vertex_buffer */

@@ -123,22 +123,33 @@ void util_blitter_copy_region(struct blitter_context *blitter,
                               boolean ignore_stencil);
 
 /**
- * Fill a region of a surface with a constant value.
- *
- * If the surface cannot be rendered to or it's a depth-stencil format,
- * a software fallback path is taken.
+ * Clear a region of a (color) surface to a constant value.
  *
  * These states must be saved in the blitter in addition to the state objects
  * already required to be saved:
  * - framebuffer state
  */
-void util_blitter_fill_region(struct blitter_context *blitter,
-                              struct pipe_resource *dst,
-                              struct pipe_subresource subdst,
-                              unsigned dstx, unsigned dsty, unsigned dstz,
-                              unsigned width, unsigned height,
-                              unsigned value);
+void util_blitter_clear_render_target(struct blitter_context *blitter,
+                                      struct pipe_surface *dst,
+                                      const float *rgba,
+                                      unsigned dstx, unsigned dsty,
+                                      unsigned width, unsigned height);
 
+/**
+ * Clear a region of a depth-stencil surface, both stencil and depth
+ * or only one of them if this is a combined depth-stencil surface.
+ *
+ * These states must be saved in the blitter in addition to the state objects
+ * already required to be saved:
+ * - framebuffer state
+ */
+void util_blitter_clear_depth_stencil(struct blitter_context *blitter,
+                                      struct pipe_surface *dst,
+                                      unsigned clear_flags,
+                                      double depth,
+                                      unsigned stencil,
+                                      unsigned dstx, unsigned dsty,
+                                      unsigned width, unsigned height);
 
 /* The functions below should be used to save currently bound constant state
  * objects inside a driver. The objects are automatically restored at the end

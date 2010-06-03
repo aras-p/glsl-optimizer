@@ -33,5 +33,4 @@ void
 sp_init_surface_functions(struct softpipe_context *sp)
 {
    sp->pipe.resource_copy_region = util_resource_copy_region;
-   sp->pipe.resource_fill_region = util_resource_fill_region;
 }

@@ -51,13 +51,15 @@ nv50_clear(struct pipe_context *pipe, unsigned buffers,
 		mode |= 0x3c;
 	}
 
-	if (buffers & PIPE_CLEAR_DEPTHSTENCIL) {
+	if (buffers & PIPE_CLEAR_DEPTH) {
 		BEGIN_RING(chan, tesla, NV50TCL_CLEAR_DEPTH, 1);
 		OUT_RING  (chan, fui(depth));
+		mode |= NV50TCL_CLEAR_BUFFERS_Z;
+	}
+	if (buffers & PIPE_CLEAR_STENCIL) {
 		BEGIN_RING(chan, tesla, NV50TCL_CLEAR_STENCIL, 1);
 		OUT_RING  (chan, stencil & 0xff);
-
-		mode |= 0x03;
+		mode |= NV50TCL_CLEAR_BUFFERS_S;
 	}
 
 	BEGIN_RING(chan, tesla, NV50TCL_CLEAR_BUFFERS, 1);

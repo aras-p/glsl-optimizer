@@ -79,7 +79,7 @@ set_clip_state
 set_polygon_stipple
 	+ Gallium supports polygon stipple
 
-resource_fill_region
+clearRT/clearDS
 	+ Gallium supports subrectangle fills of surfaces, D3D10 only supports full clears of views
 
 * DirectX 10/11 DDI functions and Gallium equivalents

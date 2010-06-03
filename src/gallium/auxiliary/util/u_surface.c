@@ -40,6 +40,7 @@
 #include "util/u_inlines.h"
 #include "util/u_rect.h"
 #include "util/u_surface.h"
+#include "util/u_pack_color.h"
 
 
 /**
@@ -195,26 +196,33 @@ util_resource_copy_region(struct pipe_context *pipe,
 
 
 /**
- * Fallback for pipe->resource_fill_region() function.
+ * Fallback for pipe->clear_render_target() function.
+ * XXX this looks too hackish to be really useful.
+ * cpp > 4 looks like a gross hack at best...
+ * and we're missing the equivalent clear_depth_stencil fallback.
+ * Plus can't use these transfer fallbacks when clearing
+ * multisampled surfaces for instance.
  */
 void
-util_resource_fill_region(struct pipe_context *pipe,
-                          struct pipe_resource *dst,
-                          struct pipe_subresource subdst,
-                          unsigned dstx, unsigned dsty, unsigned dstz,
-                          unsigned width, unsigned height, unsigned value)
+util_clear_render_target(struct pipe_context *pipe,
+                         struct pipe_surface *dst,
+                         const float *rgba,
+                         unsigned dstx, unsigned dsty,
+                         unsigned width, unsigned height)
 {
    struct pipe_transfer *dst_trans;
    void *dst_map;
+   union util_color uc;
 
-   assert(dst);
-   if (!dst)
+   assert(dst->texture);
+   if (!dst->texture)
       return;
+   util_pack_color(rgba, dst->texture->format, &uc);
    dst_trans = pipe_get_transfer(pipe,
-				 dst,
-				 subdst.face,
-				 subdst.level,
-				 dstz,
+				 dst->texture,
+				 dst->face,
+				 dst->level,
+				 dst->zslice,
 				 PIPE_TRANSFER_WRITE,
 				 dstx, dsty, width, height);
 
@@ -225,22 +233,26 @@ util_resource_fill_region(struct pipe_context *pipe,
    if (dst_map) {
       assert(dst_trans->stride > 0);
 
-      switch (util_format_get_blocksize(dst->format)) {
+      switch (util_format_get_blocksize(dst->texture->format)) {
       case 1:
       case 2:
       case 4:
-         util_fill_rect(dst_map, dst->format,
-			dst_trans->stride,
-                        0, 0, width, height, value);
+         util_pack_color(rgba, dst->texture->format, &uc);
+         util_fill_rect(dst_map, dst->texture->format,
+                        dst_trans->stride,
+                        0, 0, width, height, uc.ui);
          break;
       case 8:
       {
 	 /* expand the 4-byte clear value to an 8-byte value */
+	 /* should probably not convert back from ubyte but not
+	    sure what this code really achieved since it doesn't even
+	    check for format type... */
 	 ushort *row = (ushort *) dst_map;
-	 ushort val0 = UBYTE_TO_USHORT((value >>  0) & 0xff);
-	 ushort val1 = UBYTE_TO_USHORT((value >>  8) & 0xff);
-	 ushort val2 = UBYTE_TO_USHORT((value >> 16) & 0xff);
-	 ushort val3 = UBYTE_TO_USHORT((value >> 24) & 0xff);
+	 ushort val0 = UBYTE_TO_USHORT((uc.ui >>  0) & 0xff);
+	 ushort val1 = UBYTE_TO_USHORT((uc.ui >>  8) & 0xff);
+	 ushort val2 = UBYTE_TO_USHORT((uc.ui >> 16) & 0xff);
+	 ushort val3 = UBYTE_TO_USHORT((uc.ui >> 24) & 0xff);
 	 unsigned i, j;
 	 val0 = (val0 << 8) | val0;
 	 val1 = (val1 << 8) | val1;

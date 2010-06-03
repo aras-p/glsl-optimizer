@@ -108,5 +108,4 @@ void
 svga_init_blit_functions(struct svga_context *svga)
 {
    svga->pipe.resource_copy_region = svga_surface_copy;
-   svga->pipe.resource_fill_region = util_resource_fill_region;
 }

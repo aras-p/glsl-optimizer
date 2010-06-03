@@ -57,11 +57,11 @@ util_resource_copy_region(struct pipe_context *pipe,
                           unsigned w, unsigned h);
 
 extern void
-util_resource_fill_region(struct pipe_context *pipe,
-                          struct pipe_resource *dst,
-                          struct pipe_subresource subdst,
-                          unsigned dstx, unsigned dsty, unsigned dstz,
-                          unsigned width, unsigned height, unsigned value);
+util_clear_render_target(struct pipe_context *pipe,
+                         struct pipe_surface *dst,
+                         const float *rgba,
+                         unsigned dstx, unsigned dsty,
+                         unsigned width, unsigned height);
 
 
 

@@ -1085,38 +1085,6 @@ trace_context_resource_copy_region(struct pipe_context *_pipe,
 
 
 static INLINE void
-trace_context_resource_fill_region(struct pipe_context *_pipe,
-                                   struct pipe_resource *dst,
-                                   struct pipe_subresource subdst,
-                                   unsigned dstx, unsigned dsty, unsigned dstz,
-                                   unsigned width, unsigned height,
-                                   unsigned value)
-{
-   struct trace_context *tr_ctx = trace_context(_pipe);
-   struct pipe_context *pipe = tr_ctx->pipe;
-
-   dst = trace_resource_unwrap(tr_ctx, dst);
-
-   trace_dump_call_begin("pipe_context", "resource_fill_region");
-
-   trace_dump_arg(ptr, pipe);
-   trace_dump_arg(ptr, dst);
-   trace_dump_arg_struct(subresource, subdst);
-   trace_dump_arg(uint, dstx);
-   trace_dump_arg(uint, dsty);
-   trace_dump_arg(uint, dstz);
-   trace_dump_arg(uint, width);
-   trace_dump_arg(uint, height);
-   trace_dump_arg(uint, value);
-
-   pipe->resource_fill_region(pipe, dst, subdst, dstx, dsty, dstz,
-                              width, height, value);
-
-   trace_dump_call_end();
-}
-
-
-static INLINE void
 trace_context_clear(struct pipe_context *_pipe,
                     unsigned buffers,
                     const float *rgba,
@@ -1139,6 +1107,65 @@ trace_context_clear(struct pipe_context *_pipe,
    trace_dump_call_end();
 }
 
+
+static INLINE void
+trace_context_clear_render_target(struct pipe_context *_pipe,
+                                  struct pipe_surface *dst,
+                                  const float *rgba,
+                                  unsigned dstx, unsigned dsty,
+                                  unsigned width, unsigned height)
+{
+   struct trace_context *tr_ctx = trace_context(_pipe);
+   struct pipe_context *pipe = tr_ctx->pipe;
+
+   dst = trace_surface_unwrap(tr_ctx, dst);
+
+   trace_dump_call_begin("pipe_context", "clear_render_target");
+
+   trace_dump_arg(ptr, pipe);
+   trace_dump_arg(ptr, dst);
+   trace_dump_arg_array(float, rgba, 4);
+   trace_dump_arg(uint, dstx);
+   trace_dump_arg(uint, dsty);
+   trace_dump_arg(uint, width);
+   trace_dump_arg(uint, height);
+
+   pipe->clear_render_target(pipe, dst, rgba, dstx, dsty, width, height);
+
+   trace_dump_call_end();
+}
+
+static INLINE void
+trace_context_clear_depth_stencil(struct pipe_context *_pipe,
+                                  struct pipe_surface *dst,
+                                  unsigned clear_flags,
+                                  double depth,
+                                  unsigned stencil,
+                                  unsigned dstx, unsigned dsty,
+                                  unsigned width, unsigned height)
+{
+   struct trace_context *tr_ctx = trace_context(_pipe);
+   struct pipe_context *pipe = tr_ctx->pipe;
+
+   dst = trace_surface_unwrap(tr_ctx, dst);
+
+   trace_dump_call_begin("pipe_context", "clear_depth_stencil");
+
+   trace_dump_arg(ptr, pipe);
+   trace_dump_arg(ptr, dst);
+   trace_dump_arg(uint, clear_flags);
+   trace_dump_arg(float, depth);
+   trace_dump_arg(uint, stencil);
+   trace_dump_arg(uint, dstx);
+   trace_dump_arg(uint, dsty);
+   trace_dump_arg(uint, width);
+   trace_dump_arg(uint, height);
+
+   pipe->clear_depth_stencil(pipe, dst, clear_flags, depth, stencil,
+                             dstx, dsty, width, height);
+
+   trace_dump_call_end();
+}
 
 static INLINE void
 trace_context_flush(struct pipe_context *_pipe,
@@ -1451,8 +1478,9 @@ trace_context_create(struct trace_screen *tr_scr,
    tr_ctx->base.sampler_view_destroy = trace_sampler_view_destroy;
    tr_ctx->base.set_vertex_buffers = trace_context_set_vertex_buffers;
    tr_ctx->base.resource_copy_region = trace_context_resource_copy_region;
-   tr_ctx->base.resource_fill_region = trace_context_resource_fill_region;
    tr_ctx->base.clear = trace_context_clear;
+   tr_ctx->base.clear_render_target = trace_context_clear_render_target;
+   tr_ctx->base.clear_depth_stencil = trace_context_clear_depth_stencil;
    tr_ctx->base.flush = trace_context_flush;
    tr_ctx->base.is_resource_referenced = trace_is_resource_referenced;
 

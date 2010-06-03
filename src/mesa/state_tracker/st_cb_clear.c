@@ -62,10 +62,12 @@ void
 st_init_clear(struct st_context *st)
 {
    struct pipe_context *pipe = st->pipe;
+   struct pipe_screen *pscreen = st->pipe->screen;
 
    memset(&st->clear, 0, sizeof(st->clear));
 
    st->clear.raster.gl_rasterization_rules = 1;
+   st->clear.enable_ds_separate = pscreen->get_param(pscreen, PIPE_CAP_DEPTHSTENCIL_CLEAR_SEPARATE);
 
    /* fragment shader state: color pass-through program */
    st->clear.fs = util_make_fragment_passthrough_shader(pipe);
@@ -365,7 +367,8 @@ check_clear_depth_stencil_with_quad(GLcontext *ctx, struct gl_renderbuffer *rb)
  * Determine if we need to clear the depth buffer by drawing a quad.
  */
 static INLINE GLboolean
-check_clear_depth_with_quad(GLcontext *ctx, struct gl_renderbuffer *rb)
+check_clear_depth_with_quad(GLcontext *ctx, struct gl_renderbuffer *rb,
+                            boolean ds_separate)
 {
    const struct st_renderbuffer *strb = st_renderbuffer(rb);
    const GLboolean isDS = util_format_is_depth_and_stencil(strb->surface->format);
@@ -377,7 +380,7 @@ check_clear_depth_with_quad(GLcontext *ctx, struct gl_renderbuffer *rb)
         ctx->Scissor.Height < rb->Height))
       return GL_TRUE;
 
-   if (isDS && ctx->DrawBuffer->Visual.stencilBits > 0)
+   if (!ds_separate && isDS && ctx->DrawBuffer->Visual.stencilBits > 0)
       return GL_TRUE;
 
    return GL_FALSE;
@@ -388,7 +391,8 @@ check_clear_depth_with_quad(GLcontext *ctx, struct gl_renderbuffer *rb)
  * Determine if we need to clear the stencil buffer by drawing a quad.
  */
 static INLINE GLboolean
-check_clear_stencil_with_quad(GLcontext *ctx, struct gl_renderbuffer *rb)
+check_clear_stencil_with_quad(GLcontext *ctx, struct gl_renderbuffer *rb,
+                              boolean ds_separate)
 {
    const struct st_renderbuffer *strb = st_renderbuffer(rb);
    const GLboolean isDS = util_format_is_depth_and_stencil(strb->surface->format);
@@ -415,7 +419,7 @@ check_clear_stencil_with_quad(GLcontext *ctx, struct gl_renderbuffer *rb)
     * rather than taking depth and stencil clear values from the
     * current state.
     */
-   if (isDS && ctx->DrawBuffer->Visual.depthBits > 0)
+   if (!ds_separate && isDS && ctx->DrawBuffer->Visual.depthBits > 0)
       return GL_TRUE;
 
    return GL_FALSE;
@@ -495,24 +499,27 @@ st_Clear(GLcontext *ctx, GLbitfield mask)
    }
    else {
       /* separate depth/stencil clears */
+      /* I don't think truly separate buffers are actually possible in gallium or hw? */
       if (mask & BUFFER_BIT_DEPTH) {
          struct st_renderbuffer *strb = st_renderbuffer(depthRb);
 
          if (strb->surface) {
-            if (check_clear_depth_with_quad(ctx, depthRb))
-               quad_buffers |= PIPE_CLEAR_DEPTHSTENCIL;
+            if (check_clear_depth_with_quad(ctx, depthRb,
+                                            st->clear.enable_ds_separate))
+               quad_buffers |= PIPE_CLEAR_DEPTH;
             else
-               clear_buffers |= PIPE_CLEAR_DEPTHSTENCIL;
+               clear_buffers |= PIPE_CLEAR_DEPTH;
          }
       }
       if (mask & BUFFER_BIT_STENCIL) {
          struct st_renderbuffer *strb = st_renderbuffer(stencilRb);
 
          if (strb->surface) {
-            if (check_clear_stencil_with_quad(ctx, stencilRb))
-               quad_buffers |= PIPE_CLEAR_DEPTHSTENCIL;
+            if (check_clear_stencil_with_quad(ctx, stencilRb,
+                                              st->clear.enable_ds_separate))
+               quad_buffers |= PIPE_CLEAR_STENCIL;
             else
-               clear_buffers |= PIPE_CLEAR_DEPTHSTENCIL;
+               clear_buffers |= PIPE_CLEAR_STENCIL;
          }
       }
    }
@@ -525,12 +532,22 @@ st_Clear(GLcontext *ctx, GLbitfield mask)
       quad_buffers |= clear_buffers;
       clear_with_quad(ctx,
                       quad_buffers & PIPE_CLEAR_COLOR,
-                      mask & BUFFER_BIT_DEPTH,
-                      mask & BUFFER_BIT_STENCIL);
-   } else if (clear_buffers)
+                      quad_buffers & PIPE_CLEAR_DEPTH,
+                      quad_buffers & PIPE_CLEAR_STENCIL);
+   } else if (clear_buffers) {
+      /* driver cannot know it can clear everything if the buffer
+       * is a combined depth/stencil buffer but this wasn't actually
+       * required from the visual. Hence fix this up to avoid potential
+       * read-modify-write in the driver.
+       */
+      if (((clear_buffers & PIPE_CLEAR_DEPTHSTENCIL) != PIPE_CLEAR_DEPTHSTENCIL) &&
+          (depthRb == stencilRb) &&
+          (ctx->DrawBuffer->Visual.depthBits == 0 ||
+           ctx->DrawBuffer->Visual.stencilBits == 0))
+         clear_buffers |= PIPE_CLEAR_DEPTHSTENCIL;
       st->pipe->clear(st->pipe, clear_buffers, ctx->Color.ClearColor,
                       ctx->Depth.Clear, ctx->Stencil.Clear);
-
+   }
    if (mask & BUFFER_BIT_ACCUM)
       st_clear_accum_buffer(ctx,
                             ctx->DrawBuffer->Attachment[BUFFER_ACCUM].Renderbuffer);

@@ -31,9 +31,6 @@
 
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
-#include "util/u_pack_color.h"
-#include "util/u_rect.h"
-#include "util/u_surface.h"
 
 
 /**
@@ -46,25 +43,17 @@ util_clear(struct pipe_context *pipe,
            const float *rgba, double depth, unsigned stencil)
 {
    if (buffers & PIPE_CLEAR_COLOR) {
-      struct pipe_surface *ps = framebuffer->cbufs[0];
-      struct pipe_subresource subdst;
-      union util_color uc;
-
-      subdst.face = ps->face;
-      subdst.level = ps->level;
-      util_pack_color(rgba, ps->format, &uc);
-      pipe->resource_fill_region(pipe, ps->texture, subdst, 0, 0, ps->zslice,
-                                 ps->width, ps->height, uc.ui);
+      unsigned i;
+      for (i = 0; i < framebuffer->nr_cbufs; i++) {
+         struct pipe_surface *ps = framebuffer->cbufs[i];
+         pipe->clear_render_target(pipe, ps, rgba, 0, 0, ps->width, ps->height);
+      }
    }
 
    if (buffers & PIPE_CLEAR_DEPTHSTENCIL) {
       struct pipe_surface *ps = framebuffer->zsbuf;
-      struct pipe_subresource subdst;
-
-      subdst.face = ps->face;
-      subdst.level = ps->level;
-      pipe->resource_fill_region(pipe, ps->texture, subdst, 0, 0, ps->zslice,
-                                 ps->width, ps->height,
-                                 util_pack_z_stencil(ps->format, depth, stencil));
+      pipe->clear_depth_stencil(pipe, ps, buffers & PIPE_CLEAR_DEPTHSTENCIL,
+                                depth, stencil,
+                                0, 0, ps->width, ps->height);
    }
 }

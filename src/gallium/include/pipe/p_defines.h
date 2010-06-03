@@ -189,9 +189,10 @@ enum pipe_texture_target {
  */
 /** All color buffers currently bound */
 #define PIPE_CLEAR_COLOR        (1 << 0)
+#define PIPE_CLEAR_DEPTH        (1 << 1)
+#define PIPE_CLEAR_STENCIL      (1 << 2)
 /** Depth/stencil combined */
-#define PIPE_CLEAR_DEPTHSTENCIL (1 << 1)
-
+#define PIPE_CLEAR_DEPTHSTENCIL (PIPE_CLEAR_DEPTH | PIPE_CLEAR_STENCIL)
 
 /**
  * Transfer object usage flags
@@ -453,6 +454,7 @@ enum pipe_cap {
    PIPE_CAP_INDEP_BLEND_ENABLE,
    /** different blend funcs per rendertarget */
    PIPE_CAP_INDEP_BLEND_FUNC,
+   PIPE_CAP_DEPTHSTENCIL_CLEAR_SEPARATE,
    PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT,
    PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT,
    PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER,

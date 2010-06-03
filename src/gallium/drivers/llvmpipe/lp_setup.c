@@ -143,6 +143,7 @@ static void reset_context( struct lp_setup_context *setup )
    /* Reset some state:
     */
    setup->clear.flags = 0;
+   setup->clear.clearzs.clearzs_mask = 0;
 
    /* Have an explicit "start-binning" call and get rid of this
     * pointer twiddling?
@@ -172,10 +173,15 @@ static void
 begin_binning( struct lp_setup_context *setup )
 {
    struct lp_scene *scene = lp_setup_get_current_scene(setup);
+   boolean need_zsload = FALSE;
+   if (setup->fb.zsbuf &&
+       ((setup->clear.flags & PIPE_CLEAR_DEPTHSTENCIL) != PIPE_CLEAR_DEPTHSTENCIL) &&
+        util_format_is_depth_and_stencil(setup->fb.zsbuf->format))
+      need_zsload = TRUE;
 
    LP_DBG(DEBUG_SETUP, "%s color: %s depth: %s\n", __FUNCTION__,
           (setup->clear.flags & PIPE_CLEAR_COLOR) ? "clear": "load",
-          (setup->clear.flags & PIPE_CLEAR_DEPTHSTENCIL) ? "clear": "load");
+          need_zsload ? "clear": "load");
 
    if (setup->fb.nr_cbufs) {
       if (setup->clear.flags & PIPE_CLEAR_COLOR) {
@@ -188,10 +194,11 @@ begin_binning( struct lp_setup_context *setup )
 
    if (setup->fb.zsbuf) {
       if (setup->clear.flags & PIPE_CLEAR_DEPTHSTENCIL) {
-         lp_scene_bin_everywhere( scene, 
-				  lp_rast_clear_zstencil, 
-				  setup->clear.zstencil );
-         scene->has_depth_clear = TRUE;
+         if (!need_zsload)
+            scene->has_depthstencil_clear = TRUE;
+         lp_scene_bin_everywhere( scene,
+                                  lp_rast_clear_zstencil,
+                                  lp_rast_arg_clearzs(&setup->clear.clearzs) );
       }
    }
 
@@ -306,6 +313,8 @@ lp_setup_clear( struct lp_setup_context *setup,
 {
    struct lp_scene *scene = lp_setup_get_current_scene(setup);
    unsigned i;
+   boolean full_zs_clear = TRUE;
+   uint32_t mask = 0;
 
    LP_DBG(DEBUG_SETUP, "%s state %d\n", __FUNCTION__, setup->state);
 
@@ -316,10 +325,53 @@ lp_setup_clear( struct lp_setup_context *setup,
    }
 
    if (flags & PIPE_CLEAR_DEPTHSTENCIL) {
-      setup->clear.zstencil.clear_zstencil = 
-         util_pack_z_stencil(setup->fb.zsbuf->format, 
-                             depth,
-                             stencil);
+      if (setup->fb.zsbuf &&
+          ((setup->clear.flags & PIPE_CLEAR_DEPTHSTENCIL) != PIPE_CLEAR_DEPTHSTENCIL) &&
+           util_format_is_depth_and_stencil(setup->fb.zsbuf->format))
+         full_zs_clear = FALSE;
+
+      if (full_zs_clear) {
+         setup->clear.clearzs.clearzs_value =
+            util_pack_z_stencil(setup->fb.zsbuf->format,
+                                depth,
+                                stencil);
+         setup->clear.clearzs.clearzs_mask = 0xffffffff;
+      }
+      else {
+         /* hmm */
+         uint32_t tmpval;
+         if (flags & PIPE_CLEAR_DEPTH) {
+            tmpval = util_pack_z(setup->fb.zsbuf->format,
+                                 depth);
+            switch (setup->fb.zsbuf->format) {
+            case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
+               mask = 0xffffff;
+               break;
+            case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
+               mask = 0xffffff00;
+               break;
+            default:
+               assert(0);
+            }
+         }
+         else {
+            switch (setup->fb.zsbuf->format) {
+            case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
+               mask = 0xff000000;
+               tmpval = stencil << 24;
+               break;
+            case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
+               mask = 0xff;
+               tmpval = stencil;
+               break;
+            default:
+               assert(0);
+            }
+         }
+         setup->clear.clearzs.clearzs_mask |= mask;
+         setup->clear.clearzs.clearzs_value =
+            (setup->clear.clearzs.clearzs_value & ~mask) | (tmpval & mask);
+      }
    }
 
    if (setup->state == SETUP_ACTIVE) {
@@ -336,11 +388,16 @@ lp_setup_clear( struct lp_setup_context *setup,
          scene->has_color_clear = TRUE;
       }
 
-      if (setup->clear.flags & PIPE_CLEAR_DEPTHSTENCIL) {
-         lp_scene_bin_everywhere( scene, 
+      if (flags & PIPE_CLEAR_DEPTHSTENCIL) {
+         if (full_zs_clear)
+            scene->has_depthstencil_clear = TRUE;
+         else
+            setup->clear.clearzs.clearzs_mask = mask;
+         lp_scene_bin_everywhere( scene,
                                   lp_rast_clear_zstencil,
-                                  setup->clear.zstencil );
-         scene->has_depth_clear = TRUE;
+                                  lp_rast_arg_clearzs(&setup->clear.clearzs) );
+
+
       }
 
    }

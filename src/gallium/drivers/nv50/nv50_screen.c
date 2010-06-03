@@ -150,6 +150,8 @@ nv50_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 		return 1;
 	case PIPE_CAP_INDEP_BLEND_FUNC:
 		return 0;
+	case PIPE_CAP_DEPTHSTENCIL_CLEAR_SEPARATE:
+		return 1;
 	case PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT:
 	case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER:
 		return 1;

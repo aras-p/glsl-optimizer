@@ -143,6 +143,8 @@ softpipe_get_param(struct pipe_screen *screen, enum pipe_cap param)
    case PIPE_CAP_MAX_FS_PREDS:
       return TGSI_EXEC_NUM_PREDS;
 
+   case PIPE_CAP_DEPTHSTENCIL_CLEAR_SEPARATE:
+      return 0;
    default:
       return 0;
    }

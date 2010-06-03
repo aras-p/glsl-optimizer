@@ -61,9 +61,11 @@ try_clear(struct svga_context *svga,
    }
 
    if ((buffers & PIPE_CLEAR_DEPTHSTENCIL) && fb->zsbuf) {
-      flags |= SVGA3D_CLEAR_DEPTH;
+      if (buffers & PIPE_CLEAR_DEPTH)
+         flags |= SVGA3D_CLEAR_DEPTH;
 
-      if (svga->curr.framebuffer.zsbuf->format == PIPE_FORMAT_S8_USCALED_Z24_UNORM)
+      if ((svga->curr.framebuffer.zsbuf->format == PIPE_FORMAT_S8_USCALED_Z24_UNORM) &&
+          (buffers & PIPE_CLEAR_STENCIL))
          flags |= SVGA3D_CLEAR_STENCIL;
 
       rect.w = MAX2(rect.w, fb->zsbuf->width);
@@ -100,7 +102,7 @@ svga_clear(struct pipe_context *pipe, unsigned buffers, const float *rgba,
 {
    struct svga_context *svga = svga_context( pipe );
    int ret;
-   
+
    if (buffers & PIPE_CLEAR_COLOR)
       SVGA_DBG(DEBUG_DMA, "clear sid %p\n",
                svga_surface(svga->curr.framebuffer.cbufs[0])->handle);

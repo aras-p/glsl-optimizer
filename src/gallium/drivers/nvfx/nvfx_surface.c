@@ -30,6 +30,7 @@
 #include "nvfx_resource.h"
 #include "pipe/p_defines.h"
 #include "util/u_inlines.h"
+#include "util/u_pack_color.h"
 
 static void
 nvfx_surface_copy(struct pipe_context *pipe,
@@ -55,26 +56,41 @@ nvfx_surface_copy(struct pipe_context *pipe,
 }
 
 static void
-nvfx_surface_fill(struct pipe_context *pipe, struct pipe_resource *dest,
-		  struct pipe_subresource subdst,
-		  unsigned destx, unsigned desty, unsigned destz,
-		  unsigned width, unsigned height, unsigned value)
+nvfx_clear_render_target(struct pipe_context *pipe,
+			 struct pipe_surface *dst,
+			 const float *rgba,
+			 unsigned dstx, unsigned dsty,
+			 unsigned width, unsigned height)
 {
 	struct nvfx_context *nvfx = nvfx_context(pipe);
-	struct pipe_surface *ps;
+	struct nv04_surface_2d *eng2d = nvfx->screen->eng2d;
+	union util_color uc;
+	util_pack_color(rgba, dst->format, &uc);
+
+	eng2d->fill(eng2d, dst, dstx, dsty, width, height, uc.ui);
+}
+
+static void
+nvfx_clear_depth_stencil(struct pipe_context *pipe,
+			 struct pipe_surface *dst,
+			 unsigned clear_flags,
+			 double depth,
+			 unsigned stencil,
+			 unsigned dstx, unsigned dsty,
+			 unsigned width, unsigned height)
+{
+	struct nvfx_context *nvfx = nvfx_context(pipe);
 	struct nv04_surface_2d *eng2d = nvfx->screen->eng2d;
 
-	ps = nvfx_miptree_surface_new(pipe->screen, dest, subdst.face,
-				      subdst.level, destz, 0 /* bind flags */);
-	
-	eng2d->fill(eng2d, ps, destx, desty, width, height, value);
-
-	nvfx_miptree_surface_del(ps);
+	eng2d->fill(eng2d, dst, dstx, dsty, width, height,
+		    util_pack_z_stencil(dst->format, depth, stencil));
 }
+
 
 void
 nvfx_init_surface_functions(struct nvfx_context *nvfx)
 {
 	nvfx->pipe.resource_copy_region = nvfx_surface_copy;
-	nvfx->pipe.resource_fill_region = nvfx_surface_fill;
+	nvfx->pipe.clear_render_target = nvfx_clear_render_target;
+	nvfx->pipe.clear_depth_stencil = nvfx_clear_depth_stencil;
 }

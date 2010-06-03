@@ -428,15 +428,42 @@ error1:
                                         width, height);
    }
 
-   void resource_fill_region(struct pipe_resource *dst,
-                             struct pipe_subresource subdst,
-                             unsigned dstx, unsigned dsty, unsigned dstz,
-                             unsigned width, unsigned height,
-                             unsigned value)
+
+   void clear_render_target(struct st_surface *dst,
+                            float *rgba,
+                            unsigned x, unsigned y,
+                            unsigned width, unsigned height)
    {
-      $self->pipe->resource_fill_region($self->pipe,
-                                        dst, subdst, dstx, dsty, dstz,
-                                        width, height, value);
+      struct pipe_surface *_dst = NULL;
+
+     _dst = st_pipe_surface(dst, PIPE_BIND_RENDER_TARGET);
+      if(!_dst)
+         SWIG_exception(SWIG_ValueError, "couldn't acquire destination surface for writing");
+
+      $self->pipe->clear_render_target($self->pipe, _dst, rgba, x, y, width, height);
+
+   fail:
+      pipe_surface_reference(&_dst, NULL);
+   }
+
+   void clear_depth_stencil(struct st_surface *dst,
+                            unsigned clear_flags,
+                            double depth,
+                            unsigned stencil,
+                            unsigned x, unsigned y,
+                            unsigned width, unsigned height)
+   {
+      struct pipe_surface *_dst = NULL;
+
+     _dst = st_pipe_surface(dst, PIPE_BIND_DEPTH_STENCIL);
+      if(!_dst)
+         SWIG_exception(SWIG_ValueError, "couldn't acquire destination surface for writing");
+
+      $self->pipe->clear_depth_stencil($self->pipe, _dst, clear_flags, depth, stencil,
+                                       x, y, width, height);
+
+   fail:
+      pipe_surface_reference(&_dst, NULL);
    }
 
    %cstring_output_allocate_size(char **STRING, int *LENGTH, free(*$1));

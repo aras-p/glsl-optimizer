@@ -129,6 +129,9 @@ i915_get_param(struct pipe_screen *screen, enum pipe_cap param)
    case PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT:
    case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER:
       return 0;
+   case PIPE_CAP_DEPTHSTENCIL_CLEAR_SEPARATE:
+      /* disable for now */
+      return 0;
    default:
       return 0;
    }
@@ -181,6 +184,9 @@ i915_is_format_supported(struct pipe_screen *screen,
       PIPE_FORMAT_L8A8_UNORM,
       PIPE_FORMAT_UYVY,
       PIPE_FORMAT_YUYV,
+      /* XXX why not?
+      PIPE_FORMAT_Z16_UNORM, */
+      PIPE_FORMAT_Z24X8_UNORM,
       PIPE_FORMAT_Z24_UNORM_S8_USCALED,
       PIPE_FORMAT_NONE  /* list terminator */
    };
@@ -190,6 +196,9 @@ i915_is_format_supported(struct pipe_screen *screen,
       PIPE_FORMAT_NONE  /* list terminator */
    };
    static const enum pipe_format depth_supported[] = {
+      /* XXX why not?
+      PIPE_FORMAT_Z16_UNORM, */
+      PIPE_FORMAT_Z24X8_UNORM,
       PIPE_FORMAT_Z24_UNORM_S8_USCALED,
       PIPE_FORMAT_NONE  /* list terminator */
    };

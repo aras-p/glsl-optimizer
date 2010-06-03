@@ -34,5 +34,4 @@ void
 cell_init_surface_functions(struct cell_context *cell)
 {
    cell->pipe.resource_copy_region = util_resource_copy_region;
-   cell->pipe.resource_fill_region = util_resource_fill_region;
 }

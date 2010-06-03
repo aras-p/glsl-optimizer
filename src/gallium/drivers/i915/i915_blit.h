@@ -44,6 +44,7 @@ extern void i915_copy_blit(struct i915_context *i915,
 
 extern void i915_fill_blit(struct i915_context *i915,
                            unsigned cpp,
+                           unsigned rgba_mask,
                            unsigned short dst_pitch,
                            struct i915_winsys_buffer *dst_buffer,
                            unsigned dst_offset,
