@@ -315,6 +315,7 @@ ir_to_mesa_visitor::get_temp(int size)
 
    src_reg.file = PROGRAM_TEMPORARY;
    src_reg.index = this->next_temp++;
+   src_reg.reladdr = false;
 
    for (i = 0; i < size; i++)
       swizzle[i] = i;
@@ -479,7 +480,7 @@ void
 ir_to_mesa_visitor::visit(ir_expression *ir)
 {
    unsigned int operand;
-   struct ir_to_mesa_src_reg op[2], temp;
+   struct ir_to_mesa_src_reg op[2];
    struct ir_to_mesa_src_reg result_src;
    struct ir_to_mesa_dst_reg result_dst;
    const glsl_type *vec4_type = glsl_type::get_instance(GLSL_TYPE_FLOAT, 4, 1);
@@ -514,8 +515,8 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
 
    switch (ir->operation) {
    case ir_unop_logic_not:
-      temp = src_reg_for_float(0.0);
-      ir_to_mesa_emit_op2(ir, OPCODE_SEQ, result_dst, op[0], temp);
+      ir_to_mesa_emit_op2(ir, OPCODE_SEQ, result_dst,
+			  op[0], src_reg_for_float(0.0));
       break;
    case ir_unop_neg:
       op[0].negate = ~op[0].negate;
@@ -554,23 +555,23 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
       break;
 
    case ir_binop_less:
-      ir_to_mesa_emit_op2(ir, OPCODE_SLT, result_dst, op[0], temp);
+      ir_to_mesa_emit_op2(ir, OPCODE_SLT, result_dst, op[0], op[1]);
       break;
    case ir_binop_greater:
-      ir_to_mesa_emit_op2(ir, OPCODE_SGT, result_dst, op[0], temp);
+      ir_to_mesa_emit_op2(ir, OPCODE_SGT, result_dst, op[0], op[1]);
       break;
    case ir_binop_lequal:
-      ir_to_mesa_emit_op2(ir, OPCODE_SLE, result_dst, op[0], temp);
+      ir_to_mesa_emit_op2(ir, OPCODE_SLE, result_dst, op[0], op[1]);
       break;
    case ir_binop_gequal:
-      ir_to_mesa_emit_op2(ir, OPCODE_SGE, result_dst, op[0], temp);
+      ir_to_mesa_emit_op2(ir, OPCODE_SGE, result_dst, op[0], op[1]);
       break;
    case ir_binop_equal:
-      ir_to_mesa_emit_op2(ir, OPCODE_SEQ, result_dst, op[0], temp);
+      ir_to_mesa_emit_op2(ir, OPCODE_SEQ, result_dst, op[0], op[1]);
       break;
    case ir_binop_logic_xor:
    case ir_binop_nequal:
-      ir_to_mesa_emit_op2(ir, OPCODE_SNE, result_dst, op[0], temp);
+      ir_to_mesa_emit_op2(ir, OPCODE_SNE, result_dst, op[0], op[1]);
       break;
 
    case ir_binop_logic_or:
