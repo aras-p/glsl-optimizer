@@ -371,9 +371,14 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
    /* Storage for our result.  Ideally for an assignment we'd be using
     * the actual storage for the result here, instead.
     */
-   result_src = get_temp(4);
+   result_src = get_temp(ir->type->vector_elements);
    /* convenience for the emit functions below. */
    result_dst = ir_to_mesa_dst_reg_from_src(result_src);
+   /* Limit writes to the channels that will be used by result_src later.
+    * This does limit this temp's use as a temporary for multi-instruction
+    * sequences.
+    */
+   result_dst.writemask = (1 << ir->type->vector_elements) - 1;
 
    switch (ir->operation) {
    case ir_unop_logic_not:
