@@ -943,8 +943,6 @@ ir_to_mesa_visitor::visit(ir_constant *ir)
 {
    ir_to_mesa_src_reg src_reg;
 
-   assert(!ir->type->is_matrix());
-
    assert(ir->type->base_type == GLSL_TYPE_FLOAT ||
 	  ir->type->base_type == GLSL_TYPE_UINT ||
 	  ir->type->base_type == GLSL_TYPE_INT ||
@@ -957,10 +955,12 @@ ir_to_mesa_visitor::visit(ir_constant *ir)
    /* FINISHME: Do something with the constant values for now.
     */
    src_reg.file = PROGRAM_CONSTANT;
-   src_reg.index = this->next_constant++;
+   src_reg.index = this->next_constant;
    src_reg.swizzle = SWIZZLE_NOOP;
    src_reg.reladdr = false;
    src_reg.negate = 0;
+
+   this->next_constant += type_size(ir->type);
 
    this->result = src_reg;
 }
