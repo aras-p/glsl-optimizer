@@ -75,6 +75,10 @@ enum LLVM_CodeGenOpt_Level {
 };
 
 
+extern void
+lp_register_oprofile_jit_event_listener(LLVMExecutionEngineRef EE);
+
+
 void
 lp_build_init(void)
 {
@@ -109,6 +113,10 @@ lp_build_init(void)
          LLVMDisposeMessage(error);
          assert(0);
       }
+
+#if defined(DEBUG) || defined(PROFILE)
+      lp_register_oprofile_jit_event_listener(lp_build_engine);
+#endif
    }
 
    if (!lp_build_target)
