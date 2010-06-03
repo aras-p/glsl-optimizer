@@ -669,9 +669,8 @@ ir_to_mesa_visitor::visit(ir_swizzle *ir)
     */
 
    ir->val->accept(this);
-   assert(this->result.file != PROGRAM_UNDEFINED);
-
-   src_reg = this->get_temp(4);
+   src_reg = this->result;
+   assert(src_reg.file != PROGRAM_UNDEFINED);
 
    for (i = 0; i < 4; i++) {
       if (i < ir->type->vector_elements) {
