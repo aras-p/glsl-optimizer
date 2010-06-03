@@ -53,6 +53,7 @@
 #include "lp_bld_logic.h"
 #include "lp_bld_swizzle.h"
 #include "lp_bld_flow.h"
+#include "lp_bld_quad.h"
 #include "lp_bld_tgsi.h"
 #include "lp_bld_limits.h"
 #include "lp_bld_debug.h"
@@ -75,11 +76,6 @@
 #define CHAN_Y 1
 #define CHAN_Z 2
 #define CHAN_W 3
-
-#define QUAD_TOP_LEFT     0
-#define QUAD_TOP_RIGHT    1
-#define QUAD_BOTTOM_LEFT  2
-#define QUAD_BOTTOM_RIGHT 3
 
 #define LP_MAX_INSTRUCTIONS 256
 
@@ -146,30 +142,6 @@ struct lp_build_tgsi_soa_context
 
    struct tgsi_full_instruction *instructions;
    uint max_instructions;
-};
-
-static const unsigned char
-swizzle_left[4] = {
-   QUAD_TOP_LEFT,     QUAD_TOP_LEFT,
-   QUAD_BOTTOM_LEFT,  QUAD_BOTTOM_LEFT
-};
-
-static const unsigned char
-swizzle_right[4] = {
-   QUAD_TOP_RIGHT,    QUAD_TOP_RIGHT,
-   QUAD_BOTTOM_RIGHT, QUAD_BOTTOM_RIGHT
-};
-
-static const unsigned char
-swizzle_top[4] = {
-   QUAD_TOP_LEFT,     QUAD_TOP_RIGHT,
-   QUAD_TOP_LEFT,     QUAD_TOP_RIGHT
-};
-
-static const unsigned char
-swizzle_bottom[4] = {
-   QUAD_BOTTOM_LEFT,  QUAD_BOTTOM_RIGHT,
-   QUAD_BOTTOM_LEFT,  QUAD_BOTTOM_RIGHT
 };
 
 static void lp_exec_mask_init(struct lp_exec_mask *mask, struct lp_build_context *bld)
@@ -433,25 +405,6 @@ static void lp_exec_mask_endsub(struct lp_exec_mask *mask, int *pc)
 }
 
 static LLVMValueRef
-emit_ddx(struct lp_build_tgsi_soa_context *bld,
-         LLVMValueRef src)
-{
-   LLVMValueRef src_left  = lp_build_swizzle1_aos(&bld->base, src, swizzle_left);
-   LLVMValueRef src_right = lp_build_swizzle1_aos(&bld->base, src, swizzle_right);
-   return lp_build_sub(&bld->base, src_right, src_left);
-}
-
-
-static LLVMValueRef
-emit_ddy(struct lp_build_tgsi_soa_context *bld,
-         LLVMValueRef src)
-{
-   LLVMValueRef src_top    = lp_build_swizzle1_aos(&bld->base, src, swizzle_top);
-   LLVMValueRef src_bottom = lp_build_swizzle1_aos(&bld->base, src, swizzle_bottom);
-   return lp_build_sub(&bld->base, src_top, src_bottom);
-}
-
-static LLVMValueRef
 get_temp_ptr(struct lp_build_tgsi_soa_context *bld,
              unsigned index,
              unsigned chan,
@@ -599,10 +552,10 @@ emit_fetch_deriv(
    /* TODO: use interpolation coeffs for inputs */
 
    if(ddx)
-      *ddx = emit_ddx(bld, src);
+      *ddx = lp_build_ddx(&bld->base, src);
 
    if(ddy)
-      *ddy = emit_ddy(bld, src);
+      *ddy = lp_build_ddy(&bld->base, src);
 }
 
 
@@ -842,8 +795,8 @@ emit_tex( struct lp_build_tgsi_soa_context *bld,
       unit = inst->Src[3].Register.Index;
    }  else {
       for (i = 0; i < num_coords; i++) {
-         ddx[i] = emit_ddx( bld, coords[i] );
-         ddy[i] = emit_ddy( bld, coords[i] );
+         ddx[i] = lp_build_ddx( &bld->base, coords[i] );
+         ddy[i] = lp_build_ddy( &bld->base, coords[i] );
       }
       unit = inst->Src[1].Register.Index;
    }

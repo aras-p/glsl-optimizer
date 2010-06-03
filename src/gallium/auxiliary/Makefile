@@ -158,6 +158,7 @@ GALLIVM_SOURCES = \
         gallivm/lp_bld_logic.c \
         gallivm/lp_bld_pack.c \
         gallivm/lp_bld_printf.c \
+        gallivm/lp_bld_quad.c \
         gallivm/lp_bld_sample.c \
         gallivm/lp_bld_sample_soa.c \
         gallivm/lp_bld_struct.c \
