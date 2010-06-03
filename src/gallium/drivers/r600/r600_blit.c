@@ -64,19 +64,31 @@ void r600_clear(struct pipe_context *ctx, unsigned buffers,
 				stencil);
 }
 
-void r600_surface_copy(struct pipe_context *ctx,
-			struct pipe_surface *dst,
-			unsigned dstx, unsigned dsty,
-			struct pipe_surface *src,
-			unsigned srcx, unsigned srcy,
-			unsigned width, unsigned height)
+void r600_clear_render_target(struct pipe_context *pipe,
+			      struct pipe_surface *dst,
+			      const float *rgba,
+			      unsigned dstx, unsigned dsty,
+			      unsigned width, unsigned height)
 {
 }
 
-void r600_surface_fill(struct pipe_context *ctx,
-			struct pipe_surface *dst,
-			unsigned dstx, unsigned dsty,
-			unsigned width, unsigned height,
-			unsigned value)
+void r300_clear_depth_stencil(struct pipe_context *pipe,
+			      struct pipe_surface *dst,
+			      unsigned clear_flags,
+			      double depth,
+			      unsigned stencil,
+			      unsigned dstx, unsigned dsty,
+			      unsigned width, unsigned height)
+{
+}
+
+void r600_resource_copy_region(struct pipe_context *pipe,
+			       struct pipe_resource *dst,
+			       struct pipe_subresource subdst,
+			       unsigned dstx, unsigned dsty, unsigned dstz,
+			       struct pipe_resource *src,
+			       struct pipe_subresource subsrc,
+			       unsigned srcx, unsigned srcy, unsigned srcz,
+			       unsigned width, unsigned height)
 {
 }

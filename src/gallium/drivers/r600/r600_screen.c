@@ -91,6 +91,8 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_INDEP_BLEND_FUNC:
 		/* FIXME allow this */
 		return 0;
+	case PIPE_CAP_DEPTHSTENCIL_CLEAR_SEPARATE:
+		return 1;
 	case PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT:
 	case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER:
 		return 1;
