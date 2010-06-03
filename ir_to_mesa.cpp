@@ -413,7 +413,7 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
       break;
    case ir_binop_div:
       ir_to_mesa_emit_scalar_op1(ir, OPCODE_RCP, result_dst, op[1]);
-      ir_to_mesa_emit_op2(ir, OPCODE_RCP, result_dst, op[0], result_src);
+      ir_to_mesa_emit_op2(ir, OPCODE_MUL, result_dst, op[0], result_src);
       break;
 
    case ir_binop_less:
