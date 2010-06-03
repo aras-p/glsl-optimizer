@@ -1327,8 +1327,10 @@ util_create_gen_mipmap(struct pipe_context *pipe,
    }
 
    /* fragment shader */
-   ctx->fs2d = util_make_fragment_tex_shader(pipe, TGSI_TEXTURE_2D);
-   ctx->fsCube = util_make_fragment_tex_shader(pipe, TGSI_TEXTURE_CUBE);
+   ctx->fs2d = util_make_fragment_tex_shader(pipe, TGSI_TEXTURE_2D,
+                                             TGSI_INTERPOLATE_LINEAR);
+   ctx->fsCube = util_make_fragment_tex_shader(pipe, TGSI_TEXTURE_CUBE,
+                                               TGSI_INTERPOLATE_LINEAR);
 
    /* vertex data that doesn't change */
    for (i = 0; i < 4; i++) {

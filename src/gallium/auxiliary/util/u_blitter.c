@@ -516,6 +516,26 @@ void *blitter_get_fs_col(struct blitter_context_priv *ctx, unsigned num_cbufs)
    return ctx->fs_col[num_cbufs];
 }
 
+/** Convert PIPE_TEXTURE_x to TGSI_TEXTURE_x */
+static unsigned
+pipe_tex_to_tgsi_tex(unsigned pipe_tex_target)
+{
+   switch (pipe_tex_target) {
+   case PIPE_TEXTURE_1D:
+      return TGSI_TEXTURE_1D;
+   case PIPE_TEXTURE_2D:
+      return TGSI_TEXTURE_2D;
+   case PIPE_TEXTURE_3D:
+      return TGSI_TEXTURE_3D;
+   case PIPE_TEXTURE_CUBE:
+      return TGSI_TEXTURE_CUBE;
+   default:
+      assert(0 && "unexpected texture target");
+      return TGSI_TEXTURE_UNKNOWN;
+   }
+}
+
+
 static INLINE
 void *blitter_get_fs_texfetch_col(struct blitter_context_priv *ctx,
                                   unsigned tex_target)
@@ -526,25 +546,10 @@ void *blitter_get_fs_texfetch_col(struct blitter_context_priv *ctx,
 
    /* Create the fragment shader on-demand. */
    if (!ctx->fs_texfetch_col[tex_target]) {
-      switch (tex_target) {
-         case PIPE_TEXTURE_2D:
-            ctx->fs_texfetch_col[PIPE_TEXTURE_2D] =
-               util_make_fragment_tex_shader(pipe, TGSI_TEXTURE_2D);
-            break;
-         case PIPE_TEXTURE_3D:
-            ctx->fs_texfetch_col[PIPE_TEXTURE_3D] =
-               util_make_fragment_tex_shader(pipe, TGSI_TEXTURE_3D);
-            break;
-         case PIPE_TEXTURE_CUBE:
-            ctx->fs_texfetch_col[PIPE_TEXTURE_CUBE] =
-               util_make_fragment_tex_shader(pipe, TGSI_TEXTURE_CUBE);
-            break;
-         case PIPE_TEXTURE_1D:
-         default:
-            ctx->fs_texfetch_col[PIPE_TEXTURE_1D] =
-               util_make_fragment_tex_shader(pipe, TGSI_TEXTURE_1D);
-            tex_target = PIPE_TEXTURE_1D; /* for the default case */
-      }
+      unsigned tgsi_tex = pipe_tex_to_tgsi_tex(tex_target);
+
+      ctx->fs_texfetch_col[tex_target] =
+        util_make_fragment_tex_shader(pipe, tgsi_tex, TGSI_INTERPOLATE_LINEAR);
    }
 
    return ctx->fs_texfetch_col[tex_target];
@@ -560,25 +565,11 @@ void *blitter_get_fs_texfetch_depth(struct blitter_context_priv *ctx,
 
    /* Create the fragment shader on-demand. */
    if (!ctx->fs_texfetch_depth[tex_target]) {
-      switch (tex_target) {
-         case PIPE_TEXTURE_2D:
-            ctx->fs_texfetch_depth[PIPE_TEXTURE_2D] =
-               util_make_fragment_tex_shader_writedepth(pipe, TGSI_TEXTURE_2D);
-            break;
-         case PIPE_TEXTURE_3D:
-            ctx->fs_texfetch_depth[PIPE_TEXTURE_3D] =
-               util_make_fragment_tex_shader_writedepth(pipe, TGSI_TEXTURE_3D);
-            break;
-         case PIPE_TEXTURE_CUBE:
-            ctx->fs_texfetch_depth[PIPE_TEXTURE_CUBE] =
-               util_make_fragment_tex_shader_writedepth(pipe,TGSI_TEXTURE_CUBE);
-            break;
-         case PIPE_TEXTURE_1D:
-         default:
-            ctx->fs_texfetch_depth[PIPE_TEXTURE_1D] =
-               util_make_fragment_tex_shader_writedepth(pipe, TGSI_TEXTURE_1D);
-            tex_target = PIPE_TEXTURE_1D; /* for the default case */
-      }
+      unsigned tgsi_tex = pipe_tex_to_tgsi_tex(tex_target);
+
+      ctx->fs_texfetch_depth[tex_target] =
+         util_make_fragment_tex_shader_writedepth(pipe, tgsi_tex,
+                                                  TGSI_INTERPOLATE_LINEAR);
    }
 
    return ctx->fs_texfetch_depth[tex_target];

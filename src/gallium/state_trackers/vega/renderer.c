@@ -59,7 +59,8 @@ static void setup_shaders(struct renderer *ctx)
 {
    struct pipe_context *pipe = ctx->pipe;
    /* fragment shader */
-   ctx->fs = util_make_fragment_tex_shader(pipe, TGSI_TEXTURE_2D);
+   ctx->fs = util_make_fragment_tex_shader(pipe, TGSI_TEXTURE_2D,
+                                           TGSI_INTERPOLATE_LINEAR);
 }
 
 static struct pipe_resource *

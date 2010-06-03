@@ -134,7 +134,8 @@ util_create_blit(struct pipe_context *pipe, struct cso_context *cso)
 
    /* fragment shader */
    ctx->fs[TGSI_WRITEMASK_XYZW] =
-      util_make_fragment_tex_shader(pipe, TGSI_TEXTURE_2D);
+      util_make_fragment_tex_shader(pipe, TGSI_TEXTURE_2D,
+                                    TGSI_INTERPOLATE_LINEAR);
    ctx->vbuf = NULL;
 
    /* init vertex data that doesn't change */
@@ -474,6 +475,7 @@ util_blit_pixels_writemask(struct blit_state *ctx,
    if (ctx->fs[writemask] == NULL)
       ctx->fs[writemask] =
          util_make_fragment_tex_shader_writemask(pipe, TGSI_TEXTURE_2D,
+                                                 TGSI_INTERPOLATE_LINEAR,
                                                  writemask);
 
    /* shaders */
