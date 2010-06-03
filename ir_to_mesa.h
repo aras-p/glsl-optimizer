@@ -61,25 +61,6 @@ public:
    ir_instruction *ir;
 };
 
-struct mbtree {
-   struct mbtree *left;
-   struct mbtree *right;
-   void *state;
-   uint16_t op;
-   class ir_to_mesa_visitor *v;
-
-   /** Pointer to the ir source this tree came from for debugging */
-   ir_instruction *ir;
-
-   ir_to_mesa_dst_reg dst_reg;
-
-   /**
-    * This is the representation of this tree node's results as a
-    * source register for its consumer.
-    */
-   ir_to_mesa_src_reg src_reg;
-};
-
 void do_ir_to_mesa(exec_list *instructions);
 
 class temp_entry : public exec_node {
