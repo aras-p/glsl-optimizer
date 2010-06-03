@@ -76,6 +76,9 @@ struct lp_fragment_shader_variant
    lp_jit_frag_func jit_function[2];
 
    struct lp_fragment_shader_variant *next;
+
+   /* For debugging/profiling purposes */
+   unsigned no;
 };
 
 
@@ -87,6 +90,10 @@ struct lp_fragment_shader
    struct tgsi_shader_info info;
 
    struct lp_fragment_shader_variant *variants;
+
+   /* For debugging/profiling purposes */
+   unsigned no;
+   unsigned variant_no;
 };
 
 

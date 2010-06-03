@@ -67,6 +67,7 @@
 #include "util/u_pointer.h"
 #include "util/u_format.h"
 #include "util/u_dump.h"
+#include "util/u_string.h"
 #include "os/os_time.h"
 #include "pipe/p_shader_tokens.h"
 #include "draw/draw_context.h"
@@ -97,6 +98,9 @@
 
 
 #include <llvm-c/Analysis.h>
+
+
+static unsigned fs_no = 0;
 
 
 /**
@@ -577,6 +581,7 @@ generate_fragment(struct llvmpipe_context *lp,
 {
    struct llvmpipe_screen *screen = llvmpipe_screen(lp->pipe.screen);
    const struct lp_fragment_shader_variant_key *key = &variant->key;
+   char func_name[256];
    struct lp_type fs_type;
    struct lp_type blend_type;
    LLVMTypeRef fs_elem_type;
@@ -637,6 +642,9 @@ generate_fragment(struct llvmpipe_context *lp,
 
    blend_vec_type = lp_build_vec_type(blend_type);
 
+   util_snprintf(func_name, sizeof(func_name), "fs%u_variant%u_%s", 
+		 shader->no, variant->no, do_tri_test ? "edge" : "whole");
+
    arg_types[0] = screen->context_ptr_type;            /* context */
    arg_types[1] = LLVMInt32Type();                     /* x */
    arg_types[2] = LLVMInt32Type();                     /* y */
@@ -659,7 +667,7 @@ generate_fragment(struct llvmpipe_context *lp,
 
    func_type = LLVMFunctionType(LLVMVoidType(), arg_types, Elements(arg_types), 0);
 
-   function = LLVMAddFunction(screen->module, "shader", func_type);
+   function = LLVMAddFunction(screen->module, func_name, func_type);
    LLVMSetFunctionCallConv(function, LLVMCCallConv);
 
    variant->function[do_tri_test] = function;
@@ -924,16 +932,20 @@ generate_variant(struct llvmpipe_context *lp,
 {
    struct lp_fragment_shader_variant *variant;
 
-   if (gallivm_debug & GALLIVM_DEBUG_IR) {
-      tgsi_dump(shader->base.tokens, 0);
-      dump_fs_variant_key(key);
-   }
-
    variant = CALLOC_STRUCT(lp_fragment_shader_variant);
    if(!variant)
       return NULL;
 
+   variant->no = shader->variant_no++;
+
    memcpy(&variant->key, key, sizeof *key);
+
+   if (gallivm_debug & GALLIVM_DEBUG_IR) {
+      debug_printf("llvmpipe: Creating fragment shader #%u variant #%u:\n", 
+		   shader->no, variant->no);
+      tgsi_dump(shader->base.tokens, 0);
+      dump_fs_variant_key(key);
+   }
 
    generate_fragment(lp, shader, variant, RAST_WHOLE);
    generate_fragment(lp, shader, variant, RAST_EDGE_TEST);
@@ -968,6 +980,8 @@ llvmpipe_create_fs_state(struct pipe_context *pipe,
    if (!shader)
       return NULL;
 
+   shader->no = fs_no++;
+
    /* get/save the summary info for this shader */
    tgsi_scan_shader(templ->tokens, &shader->info);
 
@@ -976,7 +990,7 @@ llvmpipe_create_fs_state(struct pipe_context *pipe,
 
    if (LP_DEBUG & DEBUG_TGSI) {
       unsigned attrib;
-      debug_printf("llvmpipe: Create fragment shader %p:\n", (void *) shader);
+      debug_printf("llvmpipe: Create fragment shader #%u %p:\n", shader->no, (void *) shader);
       tgsi_dump(templ->tokens, 0);
       debug_printf("usage masks:\n");
       for (attrib = 0; attrib < shader->info.num_inputs; ++attrib) {
