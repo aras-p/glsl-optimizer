@@ -696,7 +696,7 @@ static boolean r300_texture_macro_switch(struct r300_texture *tex,
 unsigned r300_texture_get_stride(struct r300_screen* screen,
                                  struct r300_texture* tex, unsigned level)
 {
-    unsigned tile_width, width;
+    unsigned tile_width, width, stride;
 
     if (tex->stride_override)
         return tex->stride_override;
@@ -715,7 +715,19 @@ unsigned r300_texture_get_stride(struct r300_screen* screen,
                                                 tex->mip_macrotile[level]);
         width = align(width, tile_width);
 
-        return util_format_get_stride(tex->b.b.format, width);
+        stride = util_format_get_stride(tex->b.b.format, width);
+
+        /* Some IGPs need a minimum stride of 64 bytes, hmm...
+         * This doesn't seem to apply to tiled textures, according to r300c. */
+        if (!tex->microtile && !tex->mip_macrotile[level] &&
+            (screen->caps.family == CHIP_FAMILY_RS600 ||
+             screen->caps.family == CHIP_FAMILY_RS690 ||
+             screen->caps.family == CHIP_FAMILY_RS740)) {
+            return stride < 64 ? 64 : stride;
+        }
+
+        /* The alignment to 32 bytes is sort of implied by the layout... */
+        return stride;
     } else {
         return align(util_format_get_stride(tex->b.b.format, width), 32);
     }
