@@ -934,11 +934,12 @@ read_texture(_mesa_glsl_parse_state *st, s_list *list)
 
    // Read sampler (must be a deref)
    s_expression *sampler_expr = (s_expression *) tag->next;
-   tex->sampler = read_dereference(st, sampler_expr);
-   if (tex->sampler == NULL) {
+   ir_dereference *sampler = read_dereference(st, sampler_expr);
+   if (sampler == NULL) {
       ir_read_error(st, NULL, "when reading sampler in (%s ...)", tag->value());
       return NULL;
    }
+   tex->set_sampler(sampler);
 
    // Read coordinate (any rvalue)
    s_expression *coordinate_expr = (s_expression *) sampler_expr->next;

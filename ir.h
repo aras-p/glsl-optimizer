@@ -787,6 +787,9 @@ public:
     */
    const char *opcode_string();
 
+   /** Set the sampler and infer the type. */
+   void set_sampler(ir_dereference *sampler);
+
    /**
     * Do a reverse-lookup to translate a string into an ir_texture_opcode.
     */

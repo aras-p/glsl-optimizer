@@ -324,6 +324,26 @@ ir_texture::get_opcode(const char *str)
 }
 
 
+void
+ir_texture::set_sampler(ir_dereference *sampler)
+{
+   assert(sampler != NULL);
+   this->sampler = sampler;
+
+   switch (sampler->type->sampler_type) {
+   case GLSL_TYPE_FLOAT:
+      this->type = glsl_type::vec4_type;
+      break;
+   case GLSL_TYPE_INT:
+      this->type = glsl_type::ivec4_type;
+      break;
+   case GLSL_TYPE_UINT:
+      this->type = glsl_type::uvec4_type;
+      break;
+   }
+}
+
+
 ir_swizzle::ir_swizzle(ir_rvalue *val, unsigned x, unsigned y, unsigned z,
 		       unsigned w, unsigned count)
    : val(val)

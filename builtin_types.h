@@ -65,6 +65,7 @@ static const struct glsl_type builtin_core_types[] = {
 
 const glsl_type *const glsl_type::bool_type  = & builtin_core_types[0];
 const glsl_type *const glsl_type::int_type   = & builtin_core_types[4];
+const glsl_type *const glsl_type::ivec4_type = & builtin_core_types[7];
 const glsl_type *const glsl_type::float_type = & builtin_core_types[8];
 const glsl_type *const glsl_type::vec2_type = & builtin_core_types[9];
 const glsl_type *const glsl_type::vec3_type = & builtin_core_types[10];
@@ -230,6 +231,7 @@ static const struct glsl_type builtin_130_types[] = {
 };
 
 const glsl_type *const glsl_type::uint_type = & builtin_130_types[0];
+const glsl_type *const glsl_type::uvec4_type = & builtin_130_types[3];
 /*@}*/
 
 /** \name Sampler types added by GL_ARB_texture_rectangle
