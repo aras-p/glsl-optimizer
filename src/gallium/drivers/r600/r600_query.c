@@ -50,7 +50,7 @@ static void r600_end_query(struct pipe_context *pipe, struct pipe_query *query)
 
 static boolean r600_get_query_result(struct pipe_context *pipe,
 					struct pipe_query *query,
-					boolean wait, uint64_t *result)
+					boolean wait, void *result)
 {
 	return TRUE;
 }

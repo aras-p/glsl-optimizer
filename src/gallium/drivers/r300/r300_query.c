@@ -114,7 +114,7 @@ static void r300_end_query(struct pipe_context* pipe,
 static boolean r300_get_query_result(struct pipe_context* pipe,
                                      struct pipe_query* query,
                                      boolean wait,
-                                     uint64_t* result)
+                                     void* vresult)
 {
     struct r300_context* r300 = r300_context(pipe);
     struct r300_screen* r300screen = r300->screen;
@@ -124,6 +124,7 @@ static boolean r300_get_query_result(struct pipe_context* pipe,
     uint32_t* map;
     uint32_t temp = 0;
     unsigned i, num_results;
+    uint64_t *result = (uint64_t*)vresult;
 
     if (q->flushed == FALSE)
         pipe->flush(pipe, 0, NULL);

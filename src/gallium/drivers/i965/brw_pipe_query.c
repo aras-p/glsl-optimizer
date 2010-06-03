@@ -50,10 +50,11 @@ static boolean
 brw_query_get_result(struct pipe_context *pipe,
 		     struct pipe_query *q,
 		     boolean wait,
-		     uint64_t *result)
+		     void *vresult)
 {
    struct brw_context *brw = brw_context(pipe);
    struct brw_query_object *query = (struct brw_query_object *)q;
+   uint64_t *result = (uint64_t*)vresult;
 
    /* Map and count the pixels from the current query BO */
    if (query->bo) {

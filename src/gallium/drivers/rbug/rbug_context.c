@@ -241,7 +241,7 @@ static boolean
 rbug_get_query_result(struct pipe_context *_pipe,
                       struct pipe_query *query,
                       boolean wait,
-                      uint64_t *result)
+                      void *result)
 {
    struct rbug_context *rb_pipe = rbug_context(_pipe);
    struct pipe_context *pipe = rb_pipe->pipe;

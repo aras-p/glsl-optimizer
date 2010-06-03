@@ -135,10 +135,10 @@ struct pipe_context {
     * \param wait  if true, this query will block until the result is ready
     * \return TRUE if results are ready, FALSE otherwise
     */
-   boolean (*get_query_result)(struct pipe_context *pipe, 
+   boolean (*get_query_result)(struct pipe_context *pipe,
                                struct pipe_query *q,
                                boolean wait,
-                               uint64_t *result);
+                               void *result);
    /*@}*/
 
    /**

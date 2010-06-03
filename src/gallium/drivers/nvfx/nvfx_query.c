@@ -96,8 +96,9 @@ nvfx_query_end(struct pipe_context *pipe, struct pipe_query *pq)
 
 static boolean
 nvfx_query_result(struct pipe_context *pipe, struct pipe_query *pq,
-		  boolean wait, uint64_t *result)
+		  boolean wait, void *vresult)
 {
+	uint64_t *result = (uint64_t *)vresult;
 	struct nvfx_context *nvfx = nvfx_context(pipe);
 	struct nvfx_query *q = nvfx_query(pq);
 

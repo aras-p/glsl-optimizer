@@ -76,10 +76,11 @@ static boolean
 llvmpipe_get_query_result(struct pipe_context *pipe, 
 			  struct pipe_query *q,
 			  boolean wait,
-			  uint64_t *result )
+			  void *vresult)
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context( pipe );
    struct llvmpipe_query *pq = llvmpipe_query(q);
+   uint64_t *result = (uint64_t *)vresult;
 
    if (!pq->done) {
       lp_setup_flush(llvmpipe->setup, 0);

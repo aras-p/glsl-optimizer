@@ -118,9 +118,10 @@ static boolean
 softpipe_get_query_result(struct pipe_context *pipe, 
 			  struct pipe_query *q,
 			  boolean wait,
-			  uint64_t *result )
+			  void *vresult)
 {
    struct softpipe_query *sq = softpipe_query(q);
+   uint64_t *result = (uint64_t*)vresult;
    *result = sq->end - sq->start;
    return TRUE;
 }

@@ -106,8 +106,9 @@ nv50_query_end(struct pipe_context *pipe, struct pipe_query *pq)
 
 static boolean
 nv50_query_result(struct pipe_context *pipe, struct pipe_query *pq,
-		  boolean wait, uint64_t *result)
+		  boolean wait, void *vresult)
 {
+	uint64_t *result = (uint64_t*)vresult;
 	struct nv50_query *q = nv50_query(pq);
 	int ret;
 
