@@ -51,7 +51,6 @@
 #include "main/texfetch.h"
 #include "main/texformat.h"
 #include "main/texstate.h"
-#include "main/texobj.h"
 
 #include "swrast_priv.h"
 
