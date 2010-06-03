@@ -31,9 +31,14 @@ kms_SOURCES = $(wildcard kms/*.c)
 kms_OBJECTS = $(kms_SOURCES:.c=.o)
 
 
-ALL_INCLUDES = $(common_INCLUDES) $(x11_INCLUDES) $(kms_INCLUDES)
-ALL_SOURCES = $(common_SOURCES) $(x11_SOURCES) $(kms_SOURCES)
-ALL_OBJECTS = $(common_OBJECTS) $(x11_OBJECTS) $(kms_OBJECTS)
+fbdev_INCLUDES = -I$(TOP)/src/gallium/winsys/sw -I$(TOP)/src/gallium/drivers
+fbdev_SOURCES = $(wildcard fbdev/*.c)
+fbdev_OBJECTS = $(fbdev_SOURCES:.c=.o)
+
+
+ALL_INCLUDES = $(common_INCLUDES) $(x11_INCLUDES) $(kms_INCLUDES) $(fbdev_INCLUDES)
+ALL_SOURCES = $(common_SOURCES) $(x11_SOURCES) $(kms_SOURCES) $(fbdev_SOURCES)
+ALL_OBJECTS = $(common_OBJECTS) $(x11_OBJECTS) $(kms_OBJECTS) $(fbdev_OBJECTS)
 
 ##### TARGETS #####
 
@@ -47,6 +52,9 @@ libeglx11.a: $(x11_OBJECTS) $(common_OBJECTS) Makefile
 
 libeglkms.a: $(kms_OBJECTS) $(common_OBJECTS) Makefile
 	$(MKLIB) -o eglkms -static $(kms_OBJECTS) $(common_OBJECTS)
+
+libeglfbdev.a: $(fbdev_OBJECTS) $(common_OBJECTS) Makefile
+	$(MKLIB) -o eglfbdev -static $(fbdev_OBJECTS) $(common_OBJECTS)
 
 depend: 
 	rm -f depend
@@ -72,5 +80,8 @@ $(x11_OBJECTS): %.o: %.c
 
 $(kms_OBJECTS): %.o: %.c
 	$(CC) -c $(common_INCLUDES) $(kms_INCLUDES) $(DEFINES) $(CFLAGS) $< -o $@
+
+$(fbdev_OBJECTS): %.o: %.c
+	$(CC) -c $(common_INCLUDES) $(fbdev_INCLUDES) $(DEFINES) $(CFLAGS) $< -o $@
 
 sinclude depend
