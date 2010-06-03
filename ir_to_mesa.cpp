@@ -28,16 +28,9 @@
  * printing the result
  */
 
-/* Quiet compiler warnings due to monoburg not marking functions defined
- * in the header as inline.
- */
-#define g_new
-#define g_error
-
 #include <stdio.h>
 #include "ir.h"
 #include "ir_visitor.h"
-#include "ir_to_mesa.h"
 #include "ir_print_visitor.h"
 #include "ir_expression_flattening.h"
 #include "glsl_types.h"
@@ -46,6 +39,119 @@ extern "C" {
 #include "shader/prog_instruction.h"
 #include "shader/prog_print.h"
 }
+
+/**
+ * This struct is a corresponding struct to Mesa prog_src_register, with
+ * wider fields.
+ */
+typedef struct ir_to_mesa_src_reg {
+   int file; /**< PROGRAM_* from Mesa */
+   int index; /**< temporary index, VERT_ATTRIB_*, FRAG_ATTRIB_*, etc. */
+   int swizzle; /**< SWIZZLE_XYZWONEZERO swizzles from Mesa. */
+   int negate; /**< NEGATE_XYZW mask from mesa */
+   bool reladdr; /**< Register index should be offset by address reg. */
+} ir_to_mesa_src_reg;
+
+typedef struct ir_to_mesa_dst_reg {
+   int file; /**< PROGRAM_* from Mesa */
+   int index; /**< temporary index, VERT_ATTRIB_*, FRAG_ATTRIB_*, etc. */
+   int writemask; /**< Bitfield of WRITEMASK_[XYZW] */
+} ir_to_mesa_dst_reg;
+
+extern ir_to_mesa_src_reg ir_to_mesa_undef;
+
+class ir_to_mesa_instruction : public exec_node {
+public:
+   enum prog_opcode op;
+   ir_to_mesa_dst_reg dst_reg;
+   ir_to_mesa_src_reg src_reg[3];
+   /** Pointer to the ir source this tree came from for debugging */
+   ir_instruction *ir;
+};
+
+class temp_entry : public exec_node {
+public:
+   temp_entry(ir_variable *var, int file, int index)
+      : file(file), index(index), var(var)
+   {
+      /* empty */
+   }
+
+   int file;
+   int index;
+   ir_variable *var; /* variable that maps to this, if any */
+};
+
+class ir_to_mesa_visitor : public ir_visitor {
+public:
+   ir_to_mesa_visitor();
+
+   int next_temp;
+   int next_constant;
+
+   ir_to_mesa_src_reg get_temp(int size);
+
+   ir_to_mesa_src_reg get_temp_for_var(ir_variable *var);
+
+   struct ir_to_mesa_src_reg src_reg_for_float(float val);
+
+   /**
+    * \name Visit methods
+    *
+    * As typical for the visitor pattern, there must be one \c visit method for
+    * each concrete subclass of \c ir_instruction.  Virtual base classes within
+    * the hierarchy should not have \c visit methods.
+    */
+   /*@{*/
+   virtual void visit(ir_variable *);
+   virtual void visit(ir_loop *);
+   virtual void visit(ir_loop_jump *);
+   virtual void visit(ir_function_signature *);
+   virtual void visit(ir_function *);
+   virtual void visit(ir_expression *);
+   virtual void visit(ir_swizzle *);
+   virtual void visit(ir_dereference_variable  *);
+   virtual void visit(ir_dereference_array *);
+   virtual void visit(ir_dereference_record *);
+   virtual void visit(ir_assignment *);
+   virtual void visit(ir_constant *);
+   virtual void visit(ir_call *);
+   virtual void visit(ir_return *);
+   virtual void visit(ir_texture *);
+   virtual void visit(ir_if *);
+   /*@}*/
+
+   struct ir_to_mesa_src_reg result;
+
+   /** List of temp_entry */
+   exec_list variable_storage;
+
+   /** List of ir_to_mesa_instruction */
+   exec_list instructions;
+
+   ir_to_mesa_instruction *ir_to_mesa_emit_op1(ir_instruction *ir,
+					       enum prog_opcode op,
+					       ir_to_mesa_dst_reg dst,
+					       ir_to_mesa_src_reg src0);
+
+   ir_to_mesa_instruction *ir_to_mesa_emit_op2(ir_instruction *ir,
+					       enum prog_opcode op,
+					       ir_to_mesa_dst_reg dst,
+					       ir_to_mesa_src_reg src0,
+					       ir_to_mesa_src_reg src1);
+
+   ir_to_mesa_instruction *ir_to_mesa_emit_op3(ir_instruction *ir,
+					       enum prog_opcode op,
+					       ir_to_mesa_dst_reg dst,
+					       ir_to_mesa_src_reg src0,
+					       ir_to_mesa_src_reg src1,
+					       ir_to_mesa_src_reg src2);
+
+   void ir_to_mesa_emit_scalar_op1(ir_instruction *ir,
+				   enum prog_opcode op,
+				   ir_to_mesa_dst_reg dst,
+				   ir_to_mesa_src_reg src0);
+};
 
 ir_to_mesa_src_reg ir_to_mesa_undef = {
    PROGRAM_UNDEFINED, 0, SWIZZLE_NOOP, NEGATE_NONE, false,
