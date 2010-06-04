@@ -993,6 +993,7 @@ static boolean parse_declaration( struct translate_ctx *ctx )
    uint writemask;
    const char *cur;
    uint advance;
+   boolean is_vs_input;
 
    assert(Elements(semantic_names) == TGSI_SEMANTIC_COUNT);
    assert(Elements(interpolate_names) == TGSI_INTERPOLATE_COUNT);
@@ -1021,9 +1022,12 @@ static boolean parse_declaration( struct translate_ctx *ctx )
       decl.Dim.Index2D = brackets[0].first;
    }
 
+   is_vs_input = (file == TGSI_FILE_INPUT && 
+                  ctx->processor == TGSI_PROCESSOR_VERTEX);
+
    cur = ctx->cur;
    eat_opt_white( &cur );
-   if (*cur == ',') {
+   if (*cur == ',' && !is_vs_input) {
       uint i;
 
       cur++;
@@ -1066,7 +1070,7 @@ static boolean parse_declaration( struct translate_ctx *ctx )
 
    cur = ctx->cur;
    eat_opt_white( &cur );
-   if (*cur == ',') {
+   if (*cur == ',' && !is_vs_input) {
       uint i;
 
       cur++;
