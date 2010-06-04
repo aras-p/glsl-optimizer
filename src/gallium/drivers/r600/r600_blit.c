@@ -28,6 +28,7 @@
 #include <util/u_blitter.h>
 #include <util/u_inlines.h>
 #include <util/u_memory.h>
+#include "util/u_surface.h"
 #include "r600_screen.h"
 #include "r600_context.h"
 
@@ -68,6 +69,13 @@ static void r600_clear_render_target(struct pipe_context *pipe,
 				     unsigned dstx, unsigned dsty,
 				     unsigned width, unsigned height)
 {
+	struct r600_context *rctx = r600_context(pipe);
+
+	r600_blitter_save_states(rctx);
+	util_blitter_save_framebuffer(rctx->blitter, &rctx->fb_state);
+
+	util_blitter_clear_render_target(rctx->blitter, dst, rgba,
+					 dstx, dsty, width, height);
 }
 
 static void r600_clear_depth_stencil(struct pipe_context *pipe,
@@ -78,6 +86,13 @@ static void r600_clear_depth_stencil(struct pipe_context *pipe,
 				     unsigned dstx, unsigned dsty,
 				     unsigned width, unsigned height)
 {
+	struct r600_context *rctx = r600_context(pipe);
+
+	r600_blitter_save_states(rctx);
+	util_blitter_save_framebuffer(rctx->blitter, &rctx->fb_state);
+
+	util_blitter_clear_depth_stencil(rctx->blitter, dst, clear_flags, depth, stencil,
+					 dstx, dsty, width, height);
 }
 
 static void r600_resource_copy_region(struct pipe_context *pipe,
@@ -89,6 +104,8 @@ static void r600_resource_copy_region(struct pipe_context *pipe,
 				      unsigned srcx, unsigned srcy, unsigned srcz,
 				      unsigned width, unsigned height)
 {
+	util_resource_copy_region(pipe, dst, subdst, dstx, dsty, dstz,
+				  src, subsrc, srcx, srcy, srcz, width, height);
 }
 
 void r600_init_blit_functions(struct r600_context *rctx)
