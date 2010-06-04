@@ -120,6 +120,13 @@ llvmpipe_flush_resource(struct pipe_context *pipe,
          if (do_not_block)
             return FALSE;
 
+         /*
+          * Do the unswizzling in parallel.
+          *
+          * XXX: Don't abuse the PIPE_FLUSH_FRAME flag for this.
+          */
+         flush_flags |= PIPE_FLUSH_FRAME;
+
          llvmpipe_flush(pipe, flush_flags, &fence);
 
          if (fence) {
