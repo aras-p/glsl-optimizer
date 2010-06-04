@@ -188,6 +188,13 @@ dereference_component(ir_rvalue *src, unsigned component)
 {
    assert(component < src->type->components());
 
+   /* If the source is a constant, just create a new constant instead of a
+    * dereference of the existing constant.
+    */
+   ir_constant *constant = src->as_constant();
+   if (constant)
+      return new ir_constant(constant, component);
+
    if (src->type->is_scalar()) {
       return src;
    } else if (src->type->is_vector()) {
