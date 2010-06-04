@@ -894,6 +894,10 @@ eglGetProcAddress(const char *procname)
 #ifdef EGL_NOK_swap_region
       { "eglSwapBuffersRegionNOK", (_EGLProc) eglSwapBuffersRegionNOK },
 #endif
+#ifdef EGL_MESA_drm_image
+      { "eglCreateDRMImageMESA", (_EGLProc) eglCreateDRMImageMESA },
+      { "eglExportDRMImageMESA", (_EGLProc) eglExportDRMImageMESA },
+#endif
       { NULL, NULL }
    };
    EGLint i;
@@ -1416,3 +1420,42 @@ eglSwapBuffersRegionNOK(EGLDisplay dpy, EGLSurface surface,
 }
 
 #endif /* EGL_NOK_swap_region */
+
+
+#ifdef EGL_MESA_drm_image
+
+EGLImageKHR EGLAPIENTRY
+eglCreateDRMImageMESA(EGLDisplay dpy, const EGLint *attr_list)
+{
+   _EGLDisplay *disp = _eglLockDisplay(dpy);
+   _EGLDriver *drv;
+   _EGLImage *img;
+   EGLImageKHR ret;
+
+   _EGL_CHECK_DISPLAY(disp, EGL_NO_IMAGE_KHR, drv);
+
+   img = drv->API.CreateDRMImageMESA(drv, disp, attr_list);
+   ret = (img) ? _eglLinkImage(img, disp) : EGL_NO_IMAGE_KHR;
+
+   RETURN_EGL_EVAL(disp, ret);
+}
+
+EGLBoolean EGLAPIENTRY
+eglExportDRMImageMESA(EGLDisplay dpy, EGLImageKHR image,
+		      EGLint *name, EGLint *handle, EGLint *stride)
+{
+   _EGLDisplay *disp = _eglLockDisplay(dpy);
+   _EGLImage *img = _eglLookupImage(image, disp);
+   _EGLDriver *drv;
+   EGLBoolean ret;
+
+   _EGL_CHECK_DISPLAY(disp, EGL_FALSE, drv);
+   if (!img)
+      RETURN_EGL_ERROR(disp, EGL_BAD_PARAMETER, EGL_FALSE);
+
+   ret = drv->API.ExportDRMImageMESA(drv, disp, img, name, handle, stride);
+
+   RETURN_EGL_EVAL(disp, ret);
+}
+
+#endif

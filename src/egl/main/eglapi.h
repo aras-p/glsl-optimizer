@@ -90,6 +90,11 @@ typedef EGLBoolean (*GetSyncAttribKHR_t)(_EGLDriver *drv, _EGLDisplay *dpy, _EGL
 typedef EGLBoolean (*SwapBuffersRegionNOK_t)(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *surf, EGLint numRects, const EGLint *rects);
 #endif
 
+#ifdef EGL_MESA_drm_image
+typedef _EGLImage *(*CreateDRMImageMESA_t)(_EGLDriver *drv, _EGLDisplay *disp, const EGLint *attr_list);
+typedef EGLBoolean (*ExportDRMImageMESA_t)(_EGLDriver *drv, _EGLDisplay *disp, _EGLImage *img, EGLint *name, EGLint *handle, EGLint *stride);
+#endif
+
 /**
  * The API dispatcher jumps through these functions
  */
@@ -158,6 +163,11 @@ struct _egl_api
 
 #ifdef EGL_NOK_swap_region
    SwapBuffersRegionNOK_t SwapBuffersRegionNOK;
+#endif
+
+#ifdef EGL_MESA_drm_image
+   CreateDRMImageMESA_t CreateDRMImageMESA;
+   ExportDRMImageMESA_t ExportDRMImageMESA;
 #endif
 };
 

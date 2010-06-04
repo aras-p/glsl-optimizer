@@ -120,6 +120,29 @@ typedef EGLBoolean (EGLAPIENTRYP PFNEGLDESTROYIMAGEKHRPROC) (EGLDisplay dpy, EGL
 #define EGL_GL_RENDERBUFFER_KHR			0x30B9	/* eglCreateImageKHR target */
 #endif
 
+#ifndef EGL_MESA_drm_image
+#define EGL_MESA_drm_image 1
+#define EGL_DRM_BUFFER_FORMAT_MESA		0x31D0	/* eglCreateImageKHR attribute */
+#define EGL_DRM_BUFFER_USE_MESA			0x31D1
+
+/* EGL_DRM_BUFFER_FORMAT_MESA tokens */
+#define EGL_DRM_BUFFER_FORMAT_ARGB32_MESA	0x31D2
+
+/* EGL_DRM_BUFFER_USE_MESA bits */
+#define EGL_DRM_BUFFER_USE_SCANOUT_MESA		0x0001
+#define EGL_DRM_BUFFER_USE_SHARE_MESA		0x0002
+
+#define EGL_DRM_BUFFER_MESA			0x31D3  /* eglCreateImageKHR target */
+#define EGL_DRM_BUFFER_STRIDE_MESA		0x31D4	/* eglCreateImageKHR attribute */
+
+#ifdef EGL_EGLEXT_PROTOTYPES
+EGLAPI EGLImageKHR EGLAPIENTRY eglCreateDRMImageMESA(EGLDisplay dpy, const EGLint *attrib_list);
+EGLAPI EGLBoolean EGLAPIENTRY eglExportDRMImageMESA(EGLDisplay dpy, EGLImageKHR image, EGLint *name, EGLint *handle, EGLint *stride);
+#endif
+typedef EGLImageKHR (EGLAPIENTRYP PFNEGLCREATEDRMIMAGEMESA) (EGLDisplay dpy, const EGLint *attrib_list);
+typedef EGLBoolean (EGLAPIENTRYP PFNEGLEXPORTDRMIMAGEMESA) (EGLDisplay dpy, EGLImageKHR image, EGLint *name, EGLint *handle, EGLint *stride);
+#endif
+
 #if KHRONOS_SUPPORT_INT64   /* EGLTimeKHR requires 64-bit uint support */
 #ifndef EGL_KHR_reusable_sync
 #define EGL_KHR_reusable_sync 1

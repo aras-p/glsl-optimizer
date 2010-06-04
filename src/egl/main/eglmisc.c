@@ -85,6 +85,7 @@ _eglUpdateExtensionsString(_EGLDisplay *dpy)
    _EGL_CHECK_EXTENSION(MESA_screen_surface);
    _EGL_CHECK_EXTENSION(MESA_copy_context);
    _EGL_CHECK_EXTENSION(MESA_drm_display);
+   _EGL_CHECK_EXTENSION(MESA_drm_image);
 
    _EGL_CHECK_EXTENSION(KHR_image_base);
    _EGL_CHECK_EXTENSION(KHR_image_pixmap);
