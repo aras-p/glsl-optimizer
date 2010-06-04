@@ -338,6 +338,7 @@ struct parse_dict {
 
    int all;
    int _GL_ARB_fragment_coord_conventions;
+   int _GL_ARB_texture_rectangle;
 };
 
 
@@ -357,6 +358,7 @@ struct parse_context {
    unsigned int parsing_builtin;
 
    unsigned int fragment_coord_conventions:1;
+   unsigned int texture_rectangle:1;
 
    char error[256];
    int process_error;
@@ -1035,8 +1037,18 @@ _parse_type_specifier_nonarray(struct parse_context *ctx,
    } else if (id == ctx->dict.sampler2DShadow) {
       _update(ctx, e, TYPE_SPECIFIER_SAMPLER2DSHADOW);
    } else if (id == ctx->dict.sampler2DRect) {
+      if (!ctx->texture_rectangle) {
+         _error(ctx, "GL_ARB_texture_rectangle extension must be enabled "
+                     "in order to use a rect sampler");
+         return -1;
+      }
       _update(ctx, e, TYPE_SPECIFIER_SAMPLER2DRECT);
    } else if (id == ctx->dict.sampler2DRectShadow) {
+      if (!ctx->texture_rectangle) {
+         _error(ctx, "GL_ARB_texture_rectangle extension must be enabled "
+                     "in order to use a rect sampler");
+         return -1;
+      }
       _update(ctx, e, TYPE_SPECIFIER_SAMPLER2DRECTSHADOW);
    } else if (id == ctx->dict.sampler1DArray) {
       _update(ctx, e, TYPE_SPECIFIER_SAMPLER_1D_ARRAY);
@@ -1960,8 +1972,18 @@ _parse_prectype(struct parse_context *ctx,
    } else if (id == ctx->dict.sampler2DShadow) {
       type = TYPE_SPECIFIER_SAMPLER2DSHADOW;
    } else if (id == ctx->dict.sampler2DRect) {
+      if (!ctx->texture_rectangle) {
+         _error(ctx, "GL_ARB_texture_rectangle extension must be enabled "
+                     "in order to use a rect sampler");
+         return -1;
+      }
       type = TYPE_SPECIFIER_SAMPLER2DRECT;
    } else if (id == ctx->dict.sampler2DRectShadow) {
+      if (!ctx->texture_rectangle) {
+         _error(ctx, "GL_ARB_texture_rectangle extension must be enabled "
+                     "in order to use a rect sampler");
+         return -1;
+      }
       type = TYPE_SPECIFIER_SAMPLER2DRECTSHADOW;
    } else if (id == ctx->dict.sampler1DArray) {
       type = TYPE_SPECIFIER_SAMPLER_1D_ARRAY;
@@ -2827,6 +2849,9 @@ _parse_extensions(struct parse_context *ctx,
       else if (input->data.extension == ctx->dict._GL_ARB_fragment_coord_conventions) {
          ctx->fragment_coord_conventions = enable;
       }
+      else if (input->data.extension == ctx->dict._GL_ARB_texture_rectangle) {
+         ctx->texture_rectangle = enable;
+      }
    }
 }
 
@@ -2964,6 +2989,7 @@ sl_cl_compile(struct sl_pp_context *context,
 
    ADD_NAME(ctx, all);
    ADD_NAME_STR(ctx, _GL_ARB_fragment_coord_conventions, "GL_ARB_fragment_coord_conventions");
+   ADD_NAME_STR(ctx, _GL_ARB_texture_rectangle, "GL_ARB_texture_rectangle");
 
    ctx.out_buf = NULL;
    ctx.out_cap = 0;
@@ -2972,6 +2998,7 @@ sl_cl_compile(struct sl_pp_context *context,
    ctx.parsing_builtin = 1;
 
    ctx.fragment_coord_conventions = 0;
+   ctx.texture_rectangle = 1;
 
    ctx.error[0] = '\0';
    ctx.process_error = 0;
