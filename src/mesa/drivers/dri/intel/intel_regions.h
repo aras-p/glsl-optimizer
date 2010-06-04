@@ -76,14 +76,14 @@ struct intel_region
 /* Allocate a refcounted region.  Pointers to regions should only be
  * copied by calling intel_reference_region().
  */
-struct intel_region *intel_region_alloc(struct intel_context *intel,
+struct intel_region *intel_region_alloc(struct intel_screen *screen,
                                         uint32_t tiling,
 					GLuint cpp, GLuint width,
                                         GLuint height,
 					GLboolean expect_accelerated_upload);
 
 struct intel_region *
-intel_region_alloc_for_handle(struct intel_context *intel,
+intel_region_alloc_for_handle(struct intel_screen *screen,
 			      GLuint cpp,
 			      GLuint width, GLuint height, GLuint pitch,
 			      unsigned int handle, const char *name);

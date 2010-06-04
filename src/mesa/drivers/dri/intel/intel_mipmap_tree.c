@@ -137,7 +137,7 @@ intel_miptree_create(struct intel_context *intel,
       return NULL;
    }
 
-   mt->region = intel_region_alloc(intel,
+   mt->region = intel_region_alloc(intel->intelScreen,
 				   tiling,
 				   mt->cpp,
 				   mt->total_width,

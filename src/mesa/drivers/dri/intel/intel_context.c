@@ -377,7 +377,8 @@ intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
 	  intel_region_reference(&region, depth_region);
        }
        else
-          region = intel_region_alloc_for_handle(intel, buffers[i].cpp,
+          region = intel_region_alloc_for_handle(intel->intelScreen,
+						 buffers[i].cpp,
 						 drawable->w,
 						 drawable->h,
 						 buffers[i].pitch / buffers[i].cpp,

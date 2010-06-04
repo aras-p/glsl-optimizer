@@ -142,10 +142,10 @@ intel_region_unmap(struct intel_context *intel, struct intel_region *region)
 }
 
 static struct intel_region *
-intel_region_alloc_internal(struct intel_context *intel,
+intel_region_alloc_internal(struct intel_screen *screen,
 			    GLuint cpp,
 			    GLuint width, GLuint height, GLuint pitch,
-			    drm_intel_bo *buffer)
+			    uint32_t tiling, drm_intel_bo *buffer)
 {
    struct intel_region *region;
 
@@ -164,44 +164,36 @@ intel_region_alloc_internal(struct intel_context *intel,
    region->pitch = pitch;
    region->refcount = 1;
    region->buffer = buffer;
-
-   /* Default to no tiling */
-   region->tiling = I915_TILING_NONE;
+   region->tiling = tiling;
+   region->screen = screen;
 
    _DBG("%s <-- %p\n", __FUNCTION__, region);
    return region;
 }
 
 struct intel_region *
-intel_region_alloc(struct intel_context *intel,
+intel_region_alloc(struct intel_screen *screen,
 		   uint32_t tiling,
                    GLuint cpp, GLuint width, GLuint height,
 		   GLboolean expect_accelerated_upload)
 {
    drm_intel_bo *buffer;
-   struct intel_region *region;
    unsigned long flags = 0;
    unsigned long aligned_pitch;
 
    if (expect_accelerated_upload)
       flags |= BO_ALLOC_FOR_RENDER;
 
-   buffer = drm_intel_bo_alloc_tiled(intel->bufmgr, "region",
+   buffer = drm_intel_bo_alloc_tiled(screen->bufmgr, "region",
 				     width, height, cpp,
 				     &tiling, &aligned_pitch, flags);
 
-   region = intel_region_alloc_internal(intel, cpp, width, height,
-					aligned_pitch / cpp, buffer);
-   if (region == NULL)
-      return region;
-
-   region->tiling = tiling;
-
-   return region;
+   return intel_region_alloc_internal(screen, cpp, width, height,
+				      aligned_pitch / cpp, tiling, buffer);
 }
 
 struct intel_region *
-intel_region_alloc_for_handle(struct intel_context *intel,
+intel_region_alloc_for_handle(struct intel_screen *screen,
 			      GLuint cpp,
 			      GLuint width, GLuint height, GLuint pitch,
 			      GLuint handle, const char *name)
@@ -209,9 +201,9 @@ intel_region_alloc_for_handle(struct intel_context *intel,
    struct intel_region *region, *dummy;
    drm_intel_bo *buffer;
    int ret;
-   uint32_t bit_6_swizzle;
+   uint32_t bit_6_swizzle, tiling;
 
-   region = _mesa_HashLookup(intel->intelScreen->named_regions, handle);
+   region = _mesa_HashLookup(screen->named_regions, handle);
    if (region != NULL) {
       dummy = NULL;
       if (region->width != width || region->height != height ||
@@ -225,25 +217,26 @@ intel_region_alloc_for_handle(struct intel_context *intel,
       return dummy;
    }
 
-   buffer = intel_bo_gem_create_from_name(intel->bufmgr, name, handle);
-
-   region = intel_region_alloc_internal(intel, cpp,
-					width, height, pitch, buffer);
-   if (region == NULL)
-      return region;
-
-   ret = drm_intel_bo_get_tiling(region->buffer, &region->tiling,
-				 &bit_6_swizzle);
+   buffer = intel_bo_gem_create_from_name(screen->bufmgr, name, handle);
+   if (buffer == NULL)
+      return NULL;
+   ret = drm_intel_bo_get_tiling(buffer, &tiling, &bit_6_swizzle);
    if (ret != 0) {
       fprintf(stderr, "Couldn't get tiling of buffer %d (%s): %s\n",
 	      handle, name, strerror(-ret));
-      intel_region_release(&region);
+      drm_intel_bo_unreference(buffer);
+      return NULL;
+   }
+
+   region = intel_region_alloc_internal(screen, cpp,
+					width, height, pitch, tiling, buffer);
+   if (region == NULL) {
+      drm_intel_bo_unreference(buffer);
       return NULL;
    }
 
    region->name = handle;
-   region->screen = intel->intelScreen;
-   _mesa_HashInsert(intel->intelScreen->named_regions, handle, region);
+   _mesa_HashInsert(screen->named_regions, handle, region);
 
    return region;
 }

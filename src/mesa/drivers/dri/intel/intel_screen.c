@@ -159,7 +159,8 @@ intel_create_image_from_name(__DRIcontext *context,
     image->data = loaderPrivate;
     cpp = _mesa_get_format_bytes(image->format);
 
-    image->region = intel_region_alloc_for_handle(intel, cpp, width, height,
+    image->region = intel_region_alloc_for_handle(intel->intelScreen,
+						  cpp, width, height,
 						  pitch, name, "image");
     if (image->region == NULL) {
        FREE(image);
