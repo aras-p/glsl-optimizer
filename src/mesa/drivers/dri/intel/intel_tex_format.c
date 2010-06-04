@@ -49,7 +49,14 @@ intelChooseTextureFormat(GLcontext * ctx, GLint internalFormat,
       if (format == GL_RGB && type == GL_UNSIGNED_SHORT_5_6_5) {
          return MESA_FORMAT_RGB565;
       }
-      return do32bpt ? MESA_FORMAT_XRGB8888 : MESA_FORMAT_RGB565;
+      if (do32bpt) {
+	 if (intel->has_xrgb_textures)
+	    return MESA_FORMAT_XRGB8888;
+	 else
+	    return MESA_FORMAT_ARGB8888;
+      } else {
+	 return MESA_FORMAT_RGB565;
+      }
 
    case GL_RGBA8:
    case GL_RGB10_A2:
@@ -68,7 +75,10 @@ intelChooseTextureFormat(GLcontext * ctx, GLint internalFormat,
    case GL_RGB10:
    case GL_RGB12:
    case GL_RGB16:
-      return MESA_FORMAT_XRGB8888;
+      if (intel->has_xrgb_textures)
+	 return MESA_FORMAT_XRGB8888;
+      else
+	 return MESA_FORMAT_ARGB8888;
 
    case GL_RGB5:
    case GL_RGB4:

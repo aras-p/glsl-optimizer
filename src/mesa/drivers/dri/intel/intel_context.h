@@ -145,6 +145,7 @@ struct intel_context
    GLboolean is_g4x;
    GLboolean is_945;
    GLboolean has_luminance_srgb;
+   GLboolean has_xrgb_textures;
 
    int urb_size;
 
