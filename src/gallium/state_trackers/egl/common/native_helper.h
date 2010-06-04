@@ -29,6 +29,7 @@
 #include "native.h"
 
 struct resource_surface;
+struct sw_winsys;
 
 struct resource_surface *
 resource_surface_create(struct pipe_screen *screen,
