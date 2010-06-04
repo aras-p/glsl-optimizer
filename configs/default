@@ -99,8 +99,6 @@ SRC_DIRS = glsl mapi/glapi mapi/vgapi mesa \
 	gallium egl gallium/winsys gallium/targets glu glut/glx glew glw
 GLU_DIRS = sgi
 DRIVER_DIRS = x11 osmesa
-# Which subdirs under $(TOP)/progs/ to enter:
-PROGRAM_DIRS = demos redbook samples glsl objviewer xdemos
 
 # EGL drivers to build
 EGL_DRIVERS_DIRS = glx

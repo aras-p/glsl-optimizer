@@ -52,7 +52,6 @@ GL_LIB_DEPS   = $(EXTRA_LIB_PATH) -lX11 -lXext -lXxf86vm -lXdamage -lXfixes \
 
 # Directories
 SRC_DIRS := glx egl $(SRC_DIRS)
-PROGRAM_DIRS := egl/eglut egl/opengl $(PROGRAM_DIRS)
 
 # EGL directories
 EGL_DRIVERS_DIRS = glx

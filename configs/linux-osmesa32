@@ -22,7 +22,6 @@ OSMESA_LIB_NAME = libOSMesa32.so
 # Directories
 SRC_DIRS = mapi/glapi glsl mesa glu
 DRIVER_DIRS = osmesa
-PROGRAM_DIRS = 
 
 
 # Dependencies

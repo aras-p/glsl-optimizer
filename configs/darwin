@@ -57,4 +57,3 @@ GLU_DIRS = sgi
 DRIVER_DIRS = osmesa
 #DRIVER_DIRS = dri
 DRI_DIRS = swrast
-PROGRAM_DIRS = xdemos

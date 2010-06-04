@@ -95,9 +95,6 @@ GALLIUM_STATE_TRACKERS_DIRS = @GALLIUM_STATE_TRACKERS_DIRS@
 GALLIUM_AUXILIARIES = $(TOP)/src/gallium/auxiliary/libgallium.a
 GALLIUM_DRIVERS = $(foreach DIR,$(GALLIUM_DRIVERS_DIRS),$(TOP)/src/gallium/drivers/$(DIR)/lib$(DIR).a)
 
-# Which subdirs under $(TOP)/progs/ to enter:
-PROGRAM_DIRS = @PROGRAM_DIRS@
-
 # Driver specific build vars
 DRI_DIRS = @DRI_DIRS@ 
 EGL_DISPLAYS = @EGL_DISPLAYS@

@@ -11,7 +11,6 @@ CFLAGS += -fno-strict-aliasing
 
 SRC_DIRS += glut/fbdev
 DRIVER_DIRS = fbdev osmesa
-PROGRAM_DIRS = fbdev demos redbook samples
 
 GL_LIB_DEPS = $(EXTRA_LIB_PATH) -lm -lpthread
 OSMESA_LIB_DEPS = -lm -lpthread
