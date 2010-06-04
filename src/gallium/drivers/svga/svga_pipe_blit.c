@@ -28,7 +28,6 @@
 #include "svga_debug.h"
 #include "svga_cmd.h"
 #include "svga_surface.h"
-#include "util/u_surface.h"
 
 #define FILE_DEBUG_FLAG DEBUG_BLIT
 
