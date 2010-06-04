@@ -1,10 +1,9 @@
 #!/usr/bin/env perl
 
-
 sub process_version {
    my ($version) = @_;
    my @vars;
-   print "/* Version $version builtins */\n\n";
+   print "/* $version builtins */\n\n";
 
    my @files = <builtins/$version/*>;
    foreach $file (@files) {
@@ -85,7 +84,7 @@ read_builtins(_mesa_glsl_parse_state *st, exec_list *instructions,
 
 EOF
 
-@versions = sort(<builtins/[1-9][0-9][0-9]*>);
+@versions = sort(<builtins/[1-9A-Z]*>);
 foreach $version (@versions) {
    $version =~ s!builtins/!!g;
    process_version($version);
@@ -99,16 +98,20 @@ _mesa_glsl_initialize_functions(exec_list *instructions,
 EOF
 
 foreach $version (@versions) {
-    $version_number = $version;
-   if ($version =~ m/_vs/) {
-       $version_check = " && state->target == vertex_shader";
-   } elsif ($version =~ m/_fs/) {
-       $version_check = " && state->target == fragment_shader";
+   if ($version =~ /^[1-9][0-9][0-9]/) {
+      $version_number = $version;
+      $version_number =~ s/_[vf]s//g;
+      $check = "state->language_version >= $version_number";
+      if ($version =~ /_vs/) {
+	 $check = "$check && state->target == vertex_shader";
+      } elsif ($version =~ /_fs/) {
+	 $check = "$check && state->target == fragment_shader";
+      }
    } else {
-       $version_check = "";
+      # Not a version...an extension name
+      $check = "state->${version}_enable";
    }
-   $version_number =~ s/_[vf]s//;
-   print "   if (state->language_version >= $version_number$version_check)\n";
+   print "   if ($check)\n";
    print "      read_builtins(state, instructions, functions_for_$version,\n";
    print "                    sizeof(functions_for_$version) / ";
    print "sizeof(const char *));\n\n"
