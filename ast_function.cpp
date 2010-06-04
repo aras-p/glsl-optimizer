@@ -365,12 +365,26 @@ ast_function_expression::hir(exec_list *instructions,
 	 unsigned nonmatrix_parameters = 0;
 	 exec_list actual_parameters;
 
+	 bool all_parameters_are_constant = true;
+
 	 assert(!this->expressions.is_empty());
 
 	 foreach_list (n, &this->expressions) {
 	    ast_node *ast = exec_node_data(ast_node, n, link);
-	    ir_rvalue *const result =
+	    ir_rvalue *result =
 	       ast->hir(instructions, state)->as_rvalue();
+
+	    /* Attempt to convert the parameter to a constant valued expression.
+	     * After doing so, track whether or not all the parameters to the
+	     * constructor are trivially constant valued expressions.
+	     */
+	    ir_rvalue *const constant =
+	       result->constant_expression_value();
+
+	    if (constant != NULL)
+	       result = constant;
+	    else
+	       all_parameters_are_constant = false;
 
 	    /* From page 50 (page 56 of the PDF) of the GLSL 1.50 spec:
 	     *
@@ -416,6 +430,9 @@ ast_function_expression::hir(exec_list *instructions,
 		* error type should have already been caught above.
 		*/
 	       assert(component->type == base_type);
+
+	       if (component->as_constant() == NULL)
+		  all_parameters_are_constant = false;
 
 	       /* Don't actually generate constructor calls for scalars.
 		* Instead, do the usual component selection and conversion,
@@ -479,7 +496,17 @@ ast_function_expression::hir(exec_list *instructions,
 	 const ir_function_signature *sig =
 	    f->matching_signature(& actual_parameters);
 	 if (sig != NULL) {
-	    return new ir_call(sig, & actual_parameters);
+	    /* If all of the parameters are trivially constant, create a
+	     * constant representing the complete collection of parameters.
+	     */
+	    if (all_parameters_are_constant
+		&& (sig->return_type->is_scalar()
+		    || sig->return_type->is_vector()
+		    || sig->return_type->is_matrix())
+		&& (components_used >= type_components))
+	       return new ir_constant(sig->return_type, & actual_parameters);
+	    else
+	       return new ir_call(sig, & actual_parameters);
 	 } else {
 	    /* FINISHME: Log a better error message here.  G++ will show the
 	     * FINSIHME: types of the actual parameters and the set of
