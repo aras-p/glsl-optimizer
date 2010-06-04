@@ -29,7 +29,6 @@
 #include "util/u_inlines.h"
 #include "util/u_pack_color.h"
 
-#include "util/u_tile.h"
 #include "util/u_format.h"
 
 /* return TRUE for formats that can be converted among each other by NV50_2D */
