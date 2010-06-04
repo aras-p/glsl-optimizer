@@ -240,6 +240,74 @@ ir_constant::ir_constant(const ir_constant *c, unsigned i)
    }
 }
 
+bool
+ir_constant::get_bool_component(unsigned i) const
+{
+   switch (this->type->base_type) {
+   case GLSL_TYPE_UINT:  return this->value.u[i] != 0;
+   case GLSL_TYPE_INT:   return this->value.i[i] != 0;
+   case GLSL_TYPE_FLOAT: return ((int)this->value.f[i]) != 0;
+   case GLSL_TYPE_BOOL:  return this->value.b[i];
+   default:              assert(!"Should not get here."); break;
+   }
+
+   /* Must return something to make the compiler happy.  This is clearly an
+    * error case.
+    */
+   return false;
+}
+
+float
+ir_constant::get_float_component(unsigned i) const
+{
+   switch (this->type->base_type) {
+   case GLSL_TYPE_UINT:  return (float) this->value.u[i];
+   case GLSL_TYPE_INT:   return (float) this->value.i[i];
+   case GLSL_TYPE_FLOAT: return this->value.f[i];
+   case GLSL_TYPE_BOOL:  return this->value.b[i] ? 1.0 : 0.0;
+   default:              assert(!"Should not get here."); break;
+   }
+
+   /* Must return something to make the compiler happy.  This is clearly an
+    * error case.
+    */
+   return 0.0;
+}
+
+int
+ir_constant::get_int_component(unsigned i) const
+{
+   switch (this->type->base_type) {
+   case GLSL_TYPE_UINT:  return this->value.u[i];
+   case GLSL_TYPE_INT:   return this->value.i[i];
+   case GLSL_TYPE_FLOAT: return (int) this->value.f[i];
+   case GLSL_TYPE_BOOL:  return this->value.b[i] ? 1 : 0;
+   default:              assert(!"Should not get here."); break;
+   }
+
+   /* Must return something to make the compiler happy.  This is clearly an
+    * error case.
+    */
+   return 0;
+}
+
+unsigned
+ir_constant::get_uint_component(unsigned i) const
+{
+   switch (this->type->base_type) {
+   case GLSL_TYPE_UINT:  return this->value.u[i];
+   case GLSL_TYPE_INT:   return this->value.i[i];
+   case GLSL_TYPE_FLOAT: return (unsigned) this->value.f[i];
+   case GLSL_TYPE_BOOL:  return this->value.b[i] ? 1 : 0;
+   default:              assert(!"Should not get here."); break;
+   }
+
+   /* Must return something to make the compiler happy.  This is clearly an
+    * error case.
+    */
+   return 0;
+}
+
 
 ir_dereference_variable::ir_dereference_variable(ir_variable *var)
 {

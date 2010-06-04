@@ -1056,6 +1056,20 @@ public:
    }
 
    /**
+    * Get a particular component of a constant as a specific type
+    *
+    * This is useful, for example, to get a value from an integer constant
+    * as a float or bool.  This appears frequently when constructors are
+    * called with all constant parameters.
+    */
+   /*@{*/
+   bool get_bool_component(unsigned i) const;
+   float get_float_component(unsigned i) const;
+   int get_int_component(unsigned i) const;
+   unsigned get_uint_component(unsigned i) const;
+   /*@}*/
+
+   /**
     * Value of the constant.
     *
     * The field used to back the values supplied by the constant is determined
