@@ -260,10 +260,15 @@ test_one(unsigned verbose,
             success = FALSE;
       }
 
-      if (!success) {
+      if (!success || verbose >= 3) {
          if(verbose < 1)
             dump_conv_types(stderr, src_type, dst_type);
-         fprintf(stderr, "MISMATCH\n");
+         if (success) {
+            fprintf(stderr, "PASS\n");
+         }
+         else {
+            fprintf(stderr, "MISMATCH\n");
+         }
 
          for(j = 0; j < num_srcs; ++j) {
             fprintf(stderr, "  Src%u: ", j);
@@ -426,6 +431,23 @@ test_some(unsigned verbose, FILE *fp, unsigned long n)
       if(!test_one(verbose, fp, *src_type, *dst_type))
         success = FALSE;
    }
+
+   return success;
+}
+
+
+boolean
+test_single(unsigned verbose, FILE *fp)
+{
+   /*    float, fixed,  sign,  norm, width, len */
+   struct lp_type f32x4_type =
+      {   TRUE, FALSE,  TRUE,  TRUE,    32,   4 };
+   struct lp_type ub8x4_type =
+      {  FALSE, FALSE, FALSE,  TRUE,     8,  16 };
+
+   boolean success;
+
+   success = test_one(verbose, fp, f32x4_type, ub8x4_type);
 
    return success;
 }

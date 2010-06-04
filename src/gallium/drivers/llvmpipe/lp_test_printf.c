@@ -165,3 +165,11 @@ test_some(unsigned verbose, FILE *fp, unsigned long n)
 {
    return test_all(verbose, fp);
 }
+
+
+boolean
+test_single(unsigned verbose, FILE *fp)
+{
+   printf("no test_single()");
+   return TRUE;
+}

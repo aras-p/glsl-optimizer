@@ -370,10 +370,13 @@ int main(int argc, char **argv)
    unsigned long n = 1000;
    unsigned i;
    boolean success;
+   boolean single = FALSE;
 
    for(i = 1; i < argc; ++i) {
       if(strcmp(argv[i], "-v") == 0)
          ++verbose;
+      else if(strcmp(argv[i], "-s") == 0)
+         single = TRUE;
       else if(strcmp(argv[i], "-o") == 0)
          fp = fopen(argv[++i], "wt");
       else
@@ -391,7 +394,9 @@ int main(int argc, char **argv)
       write_tsv_header(fp);
    }
       
-   if(n)
+   if (single)
+      success = test_single(verbose, fp);
+   else if (n)
       success = test_some(verbose, fp, n);
    else
       success = test_all(verbose, fp);

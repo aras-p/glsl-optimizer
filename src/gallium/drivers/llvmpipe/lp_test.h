@@ -66,6 +66,8 @@ write_tsv_header(FILE *fp);
 boolean
 test_some(unsigned verbose, FILE *fp, unsigned long n);
 
+boolean
+test_single(unsigned verbose, FILE *fp);
 
 boolean
 test_all(unsigned verbose, FILE *fp);
