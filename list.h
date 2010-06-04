@@ -140,6 +140,22 @@ struct exec_node {
       this->prev->next = before;
       this->prev = before;
    }
+
+   /**
+    * Is this the sentinal at the tail of the list?
+    */
+   bool is_tail_sentinal() const
+   {
+      return this->next == NULL;
+   }
+
+   /**
+    * Is this the sentinal at the head of the list?
+    */
+   bool is_head_sentinal() const
+   {
+      return this->prev == NULL;
+   }
 #endif
 };
 
