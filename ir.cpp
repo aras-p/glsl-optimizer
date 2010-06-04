@@ -240,6 +240,51 @@ ir_constant::ir_constant(const ir_constant *c, unsigned i)
    }
 }
 
+ir_constant::ir_constant(const struct glsl_type *type, exec_list *value_list)
+{
+   this->type = type;
+
+   /* FINISHME: Support structure and array types. */
+   assert(type->is_scalar() || type->is_vector() || type->is_matrix());
+
+   ir_constant *value = (ir_constant *) (value_list->head);
+
+   /* Use each component from each entry in the value_list to initialize one
+    * component of the constant being constructed.
+    */
+   for (unsigned i = 0; i < type->components(); /* empty */) {
+      assert(value->as_constant() != NULL);
+      assert(!value->is_tail_sentinal());
+
+      for (unsigned j = 0; j < value->type->components(); j++) {
+	 switch (type->base_type) {
+	 case GLSL_TYPE_UINT:
+	    this->value.u[i] = value->get_uint_component(j);
+	    break;
+	 case GLSL_TYPE_INT:
+	    this->value.i[i] = value->get_int_component(j);
+	    break;
+	 case GLSL_TYPE_FLOAT:
+	    this->value.f[i] = value->get_float_component(j);
+	    break;
+	 case GLSL_TYPE_BOOL:
+	    this->value.b[i] = value->get_bool_component(j);
+	    break;
+	 default:
+	    /* FINISHME: What to do?  Exceptions are not the answer.
+	     */
+	    break;
+	 }
+
+	 i++;
+	 if (i >= type->components())
+	    break;
+      }
+
+      value = (ir_constant *) value->next;
+   }
+}
+
 bool
 ir_constant::get_bool_component(unsigned i) const
 {

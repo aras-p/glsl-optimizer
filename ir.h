@@ -1027,6 +1027,11 @@ public:
    ir_constant(float f);
 
    /**
+    * Construct an ir_constant from a list of ir_constant values
+    */
+   ir_constant(const struct glsl_type *type, exec_list *values);
+
+   /**
     * Construct an ir_constant from a scalar component of another ir_constant
     *
     * The new \c ir_constant inherits the type of the component from the
