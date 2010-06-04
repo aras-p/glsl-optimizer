@@ -31,10 +31,7 @@
 #include "pipe/p_compiler.h"
 #include "util/u_inlines.h"
 #include "state_tracker/xlib_sw_winsys.h"
-#include "target-helpers/wrap_screen.h"
 #include "util/u_debug.h"
-#include "softpipe/sp_public.h"
-#include "llvmpipe/lp_public.h"
 #include "egllog.h"
 
 #include "common/native_helper.h"
@@ -443,65 +440,12 @@ ximage_display_destroy(struct native_display *ndpy)
    FREE(xdpy);
 }
 
-
-/* Helper function to build a subset of a driver stack consisting of
- * one of the software rasterizers (cell, llvmpipe, softpipe) and the
- * xlib winsys.
- *
- * This function could be shared, but currently causes headaches for
- * the build systems, particularly scons if we try.
- *
- * Long term, want to avoid having global #defines for things like
- * GALLIUM_LLVMPIPE, GALLIUM_CELL, etc.  Scons already eliminates
- * those #defines, so things that are painful for it now are likely to
- * be painful for other build systems in the future.
- */
-static struct pipe_screen *
-swrast_xlib_create_screen( Display *display )
-{
-   struct sw_winsys *winsys;
-   struct pipe_screen *screen = NULL;
-
-   /* Create the underlying winsys, which performs presents to Xlib
-    * drawables:
-    */
-   winsys = xlib_create_sw_winsys( display );
-   if (winsys == NULL)
-      return NULL;
-
-   /* Create a software rasterizer on top of that winsys.  Use
-    * llvmpipe if it is available.
-    */
-#if defined(GALLIUM_LLVMPIPE)
-   if (screen == NULL &&
-       !debug_get_bool_option("GALLIUM_NO_LLVM", FALSE))
-      screen = llvmpipe_create_screen( winsys );
-#endif
-
-   if (screen == NULL)
-      screen = softpipe_create_screen( winsys );
-
-   if (screen == NULL)
-      goto fail;
-
-   /* Inject any wrapping layers we want to here:
-    */
-   return gallium_wrap_screen( screen );
-
-fail:
-   if (winsys)
-      winsys->destroy( winsys );
-
-   return NULL;
-}
-
-
-
 struct native_display *
 x11_create_ximage_display(EGLNativeDisplayType dpy,
                           struct native_event_handler *event_handler)
 {
    struct ximage_display *xdpy;
+   struct sw_winsys *winsys = NULL;
 
    xdpy = CALLOC_STRUCT(ximage_display);
    if (!xdpy)
@@ -521,12 +465,16 @@ x11_create_ximage_display(EGLNativeDisplayType dpy,
 
    xdpy->xscr_number = DefaultScreen(xdpy->dpy);
    xdpy->xscr = x11_screen_create(xdpy->dpy, xdpy->xscr_number);
-   if (!xdpy->xscr) {
-      FREE(xdpy);
-      return NULL;
-   }
+   if (!xdpy->xscr)
+      goto fail;
 
-   xdpy->base.screen = swrast_xlib_create_screen(xdpy->dpy);
+   winsys = xlib_create_sw_winsys(xdpy->dpy);
+   if (!winsys)
+      goto fail;
+
+   xdpy->base.screen = native_create_sw_screen(winsys);
+   if (!xdpy->base.screen)
+      goto fail;
 
    xdpy->base.destroy = ximage_display_destroy;
    xdpy->base.get_param = ximage_display_get_param;
@@ -537,4 +485,14 @@ x11_create_ximage_display(EGLNativeDisplayType dpy,
    xdpy->base.create_pixmap_surface = ximage_display_create_pixmap_surface;
 
    return &xdpy->base;
+
+fail:
+   if (winsys && winsys->destroy)
+      winsys->destroy(winsys);
+   if (xdpy->xscr)
+      x11_screen_destroy(xdpy->xscr);
+   if (xdpy->dpy && xdpy->own_dpy)
+      XCloseDisplay(xdpy->dpy);
+   FREE(xdpy);
+   return NULL;
 }

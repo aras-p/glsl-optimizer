@@ -5,6 +5,7 @@ common_INCLUDES = \
 	-I. \
 	-I$(TOP)/src/gallium/include \
 	-I$(TOP)/src/gallium/auxiliary \
+	-I$(TOP)/src/gallium/drivers \
 	-I$(TOP)/src/egl/main \
 	-I$(TOP)/include
 

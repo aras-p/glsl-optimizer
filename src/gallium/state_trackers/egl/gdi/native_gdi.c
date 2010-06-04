@@ -32,9 +32,6 @@
 #include "util/u_memory.h"
 #include "util/u_format.h"
 #include "util/u_inlines.h"
-#include "target-helpers/wrap_screen.h"
-#include "llvmpipe/lp_public.h"
-#include "softpipe/sp_public.h"
 #include "gdi/gdi_sw_winsys.h"
 
 #include "common/native_helper.h"
@@ -369,32 +366,6 @@ gdi_create_display(HDC hDC, struct pipe_screen *screen,
    return &gdpy->base;
 }
 
-static struct pipe_screen *
-gdi_create_screen(void)
-{
-   struct sw_winsys *winsys;
-   struct pipe_screen *screen = NULL;
-
-   winsys = gdi_create_sw_winsys();
-   if (!winsys)
-      return NULL;
-
-#if defined(GALLIUM_LLVMPIPE)
-   if (!screen && !debug_get_bool_option("GALLIUM_NO_LLVM", FALSE))
-      screen = llvmpipe_create_screen(winsys);
-#endif
-   if (!screen)
-      screen = softpipe_create_screen(winsys);
-
-   if (!screen) {
-      if (winsys->destroy)
-         winsys->destroy(winsys);
-      return NULL;
-   }
-
-   return gallium_wrap_screen(screen);
-}
-
 struct native_probe *
 native_create_probe(EGLNativeDisplayType dpy)
 {
@@ -417,11 +388,19 @@ struct native_display *
 native_create_display(EGLNativeDisplayType dpy,
                       struct native_event_handler *event_handler)
 {
+   struct sw_winsys *winsys;
    struct pipe_screen *screen;
 
-   screen = gdi_create_screen();
-   if (!screen)
+   winsys = gdi_create_sw_winsys();
+   if (!winsys)
       return NULL;
+
+   screen = native_create_sw_screen(winsys);
+   if (!screen) {
+      if (winsys->destroy)
+         winsys->destroy(winsys);
+      return NULL;
+   }
 
    return gdi_create_display((HDC) dpy, screen, event_handler);
 }

@@ -68,3 +68,6 @@ boolean
 resource_surface_present(struct resource_surface *rsurf,
                          enum native_attachment which,
                          void *winsys_drawable_handle);
+
+struct pipe_screen *
+native_create_sw_screen(struct sw_winsys *ws);

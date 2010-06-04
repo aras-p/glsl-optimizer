@@ -31,6 +31,9 @@
 #include "pipe/p_screen.h"
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
+#include "softpipe/sp_public.h"
+#include "llvmpipe/lp_public.h"
+#include "target-helpers/wrap_screen.h"
 
 #include "native_helper.h"
 
@@ -232,4 +235,19 @@ resource_surface_present(struct resource_surface *rsurf,
          psurf, winsys_drawable_handle);
 
    return TRUE;
+}
+
+struct pipe_screen *
+native_create_sw_screen(struct sw_winsys *ws)
+{
+   struct pipe_screen *screen = NULL;
+
+#if defined(GALLIUM_LLVMPIPE)
+   if (!screen && !debug_get_bool_option("GALLIUM_NO_LLVM", FALSE))
+      screen = llvmpipe_create_screen(ws);
+#endif
+   if (!screen)
+      screen = softpipe_create_screen(ws);
+
+   return (screen) ? gallium_wrap_screen(screen) : NULL;
 }
