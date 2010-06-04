@@ -214,5 +214,5 @@ int intel_compressed_num_bytes(GLuint mesaFormat)
    block_size = _mesa_get_format_bytes(mesaFormat);
    _mesa_get_format_block_size(mesaFormat, &bw, &bh);
 
-   return block_size / bh;
+   return block_size / bw;
 }
