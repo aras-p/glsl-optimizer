@@ -2,7 +2,7 @@
 
 TOP = .
 
-SUBDIRS = src progs
+SUBDIRS = src
 
 
 default: $(TOP)/configs/current
@@ -183,7 +183,6 @@ ultrix-gcc:
 VERSION=7.9-devel
 DIRECTORY = Mesa-$(VERSION)
 LIB_NAME = MesaLib-$(VERSION)
-DEMO_NAME = MesaDemos-$(VERSION)
 GLUT_NAME = MesaGLUT-$(VERSION)
 
 # This is part of MAIN_FILES
@@ -408,42 +407,6 @@ GLEW_FILES = \
 	$(DIRECTORY)/src/glew/SConscript		\
 	$(DIRECTORY)/src/glew/LICENSE.txt
 
-DEMO_FILES = \
-	$(GLEW_FILES)					\
-	$(DIRECTORY)/progs/beos/*.cpp			\
-	$(DIRECTORY)/progs/beos/Makefile		\
-	$(DIRECTORY)/progs/images/*.rgb			\
-	$(DIRECTORY)/progs/images/*.rgba		\
-	$(DIRECTORY)/progs/demos/Makefile*		\
-	$(DIRECTORY)/progs/demos/descrip.mms		\
-	$(DIRECTORY)/progs/demos/*.[ch]			\
-	$(DIRECTORY)/progs/demos/*.cxx			\
-	$(DIRECTORY)/progs/demos/*.dat			\
-	$(DIRECTORY)/progs/demos/README			\
-	$(DIRECTORY)/progs/fbdev/Makefile		\
-	$(DIRECTORY)/progs/fbdev/glfbdevtest.c		\
-	$(DIRECTORY)/progs/objviewer/*.[ch]		\
-	$(DIRECTORY)/progs/objviewer/*.obj		\
-	$(DIRECTORY)/progs/objviewer/*.mtl		\
-	$(DIRECTORY)/progs/objviewer/*.rgb		\
-	$(DIRECTORY)/progs/objviewer/Makefile		\
-	$(DIRECTORY)/progs/objviewer/README.txt		\
-	$(DIRECTORY)/progs/osdemos/Makefile		\
-	$(DIRECTORY)/progs/osdemos/*.c			\
-	$(DIRECTORY)/progs/xdemos/Makefile*		\
-	$(DIRECTORY)/progs/xdemos/*.[chf]		\
-	$(DIRECTORY)/progs/redbook/Makefile*		\
-	$(DIRECTORY)/progs/redbook/README		\
-	$(DIRECTORY)/progs/redbook/*.[ch]		\
-	$(DIRECTORY)/progs/samples/Makefile*		\
-	$(DIRECTORY)/progs/samples/README		\
-	$(DIRECTORY)/progs/samples/*.c			\
-	$(DIRECTORY)/progs/glsl/Makefile*		\
-	$(DIRECTORY)/progs/glsl/*.c			\
-	$(DIRECTORY)/progs/glsl/*.frag			\
-	$(DIRECTORY)/progs/glsl/*.vert			\
-	$(DIRECTORY)/progs/glsl/*.shtest
-
 GLUT_FILES = \
 	$(DIRECTORY)/include/GL/glut.h			\
 	$(DIRECTORY)/include/GL/glutf90.h		\
@@ -476,8 +439,8 @@ LIB_FILES = \
 
 
 # Everything for new a Mesa release:
-tarballs: rm_depend configure aclocal.m4 lib_gz demo_gz glut_gz \
-	lib_bz2 demo_bz2 glut_bz2 lib_zip demo_zip glut_zip md5
+tarballs: rm_depend configure aclocal.m4 lib_gz glut_gz \
+	lib_bz2 glut_bz2 lib_zip glut_zip md5
 
 
 # Helper for autoconf builds
@@ -506,12 +469,6 @@ lib_gz: rm_config
 	gzip $(LIB_NAME).tar ; \
 	mv $(LIB_NAME).tar.gz $(DIRECTORY)
 
-demo_gz:
-	cd .. ; \
-	tar -cf $(DEMO_NAME).tar $(DEMO_FILES) ; \
-	gzip $(DEMO_NAME).tar ; \
-	mv $(DEMO_NAME).tar.gz $(DIRECTORY)
-
 glut_gz:
 	cd .. ; \
 	tar -cf $(GLUT_NAME).tar $(GLUT_FILES) ; \
@@ -523,12 +480,6 @@ lib_bz2: rm_config
 	tar -cf $(LIB_NAME).tar $(LIB_FILES) ; \
 	bzip2 $(LIB_NAME).tar ; \
 	mv $(LIB_NAME).tar.bz2 $(DIRECTORY)
-
-demo_bz2:
-	cd .. ; \
-	tar -cf $(DEMO_NAME).tar $(DEMO_FILES) ; \
-	bzip2 $(DEMO_NAME).tar ; \
-	mv $(DEMO_NAME).tar.bz2 $(DIRECTORY)
 
 glut_bz2:
 	cd .. ; \
@@ -542,12 +493,6 @@ lib_zip: rm_config
 	zip -qr $(LIB_NAME).zip $(LIB_FILES) ; \
 	mv $(LIB_NAME).zip $(DIRECTORY)
 
-demo_zip:
-	rm -f $(DEMO_NAME).zip ; \
-	cd .. ; \
-	zip -qr $(DEMO_NAME).zip $(DEMO_FILES) ; \
-	mv $(DEMO_NAME).zip $(DIRECTORY)
-
 glut_zip:
 	rm -f $(GLUT_NAME).zip ; \
 	cd .. ; \
@@ -558,14 +503,11 @@ md5:
 	@-md5sum $(LIB_NAME).tar.gz
 	@-md5sum $(LIB_NAME).tar.bz2
 	@-md5sum $(LIB_NAME).zip
-	@-md5sum $(DEMO_NAME).tar.gz
-	@-md5sum $(DEMO_NAME).tar.bz2
-	@-md5sum $(DEMO_NAME).zip
 	@-md5sum $(GLUT_NAME).tar.gz
 	@-md5sum $(GLUT_NAME).tar.bz2
 	@-md5sum $(GLUT_NAME).zip
 
 .PHONY: tarballs rm_depend rm_config md5 \
-	lib_gz demo_gz glut_gz \
-	lib_bz2 demo_bz2 glut_bz2 \
-	lib_zip demo_zip glut_zip
+	lib_gz glut_gz \
+	lib_bz2 glut_bz2 \
+	lib_zip glut_zip
