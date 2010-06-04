@@ -789,6 +789,17 @@ struct __DRIdri2ExtensionRec {
 #define __DRI_IMAGE_FORMAT_XRGB8888     0x1002
 #define __DRI_IMAGE_FORMAT_ARGB8888     0x1003
 
+#define __DRI_IMAGE_USE_SHARE		0x0001
+#define __DRI_IMAGE_USE_SCANOUT		0x0002
+
+/**
+ * queryImage attributes
+ */
+
+#define __DRI_IMAGE_ATTRIB_STRIDE	0x2000
+#define __DRI_IMAGE_ATTRIB_HANDLE	0x2001
+#define __DRI_IMAGE_ATTRIB_NAME		0x2002
+
 typedef struct __DRIimageRec          __DRIimage;
 typedef struct __DRIimageExtensionRec __DRIimageExtension;
 struct __DRIimageExtensionRec {
@@ -804,7 +815,15 @@ struct __DRIimageExtensionRec {
 					       void *loaderPrivate);
 
     void (*destroyImage)(__DRIimage *image);
+
+    __DRIimage *(*createImage)(__DRIscreen *screen,
+			       int width, int height, int format,
+			       unsigned int use,
+			       void *loaderPrivate);
+
+   GLboolean (*queryImage)(__DRIimage *image, int attrib, int *value);
 };
+
 
 /**
  * This extension must be implemented by the loader and passed to the
