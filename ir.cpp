@@ -227,6 +227,19 @@ ir_constant::ir_constant(bool b)
    this->value.b[0] = b;
 }
 
+ir_constant::ir_constant(const ir_constant *c, unsigned i)
+{
+   this->type = c->type->get_base_type();
+
+   switch (this->type->base_type) {
+   case GLSL_TYPE_UINT:  this->value.u[0] = c->value.u[i]; break;
+   case GLSL_TYPE_INT:   this->value.i[0] = c->value.i[i]; break;
+   case GLSL_TYPE_FLOAT: this->value.f[0] = c->value.f[i]; break;
+   case GLSL_TYPE_BOOL:  this->value.b[0] = c->value.b[i]; break;
+   default:              assert(!"Should not get here."); break;
+   }
+}
+
 
 ir_dereference_variable::ir_dereference_variable(ir_variable *var)
 {

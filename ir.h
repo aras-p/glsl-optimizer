@@ -1026,6 +1026,18 @@ public:
    ir_constant(int i);
    ir_constant(float f);
 
+   /**
+    * Construct an ir_constant from a scalar component of another ir_constant
+    *
+    * The new \c ir_constant inherits the type of the component from the
+    * source constant.
+    *
+    * \note
+    * In the case of a matrix constant, the new constant is a scalar, \b not
+    * a vector.
+    */
+   ir_constant(const ir_constant *c, unsigned i);
+
    virtual ir_constant *as_constant()
    {
       return this;
