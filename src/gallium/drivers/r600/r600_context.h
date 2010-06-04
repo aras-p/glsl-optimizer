@@ -48,6 +48,8 @@ struct r600_pipe_shader {
 
 struct r600_context {
 	struct pipe_context		context;
+	struct r600_screen		*screen;
+	struct radeon			*rw;
 	struct radeon_ctx		*ctx;
 	struct radeon_state		*cb_cntl;
 	struct radeon_state		*db;
@@ -64,6 +66,12 @@ struct r600_context {
 	struct radeon_draw		*draw;
 	struct pipe_viewport_state	viewport;
 };
+
+/* Convenience cast wrapper. */
+static INLINE struct r600_context *r600_context(struct pipe_context *pipe)
+{
+    return (struct r600_context*)pipe;
+}
 
 void r600_draw_arrays(struct pipe_context *ctx, unsigned mode,
 			unsigned start, unsigned count);

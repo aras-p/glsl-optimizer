@@ -31,8 +31,6 @@
 #include "radeon.h"
 #include "util/u_transfer.h"
 
-#define r600_screen(s) ((struct r600_screen*)s)
-
 /* Texture transfer. */
 struct r600_transfer {
 	/* Base class. */
@@ -54,6 +52,11 @@ struct r600_screen {
 	struct pipe_screen		screen;
 	struct radeon			*rw;
 };
+
+static INLINE struct r600_screen *r600_screen(struct pipe_screen *screen)
+{
+	return (struct r600_screen*)screen;
+}
 
 /* Buffer functions. */
 struct pipe_resource *r600_buffer_create(struct pipe_screen *screen,

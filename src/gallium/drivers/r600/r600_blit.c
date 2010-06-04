@@ -33,7 +33,7 @@
 
 static void r600_blitter_save_states(struct pipe_context *ctx)
 {
-	struct r600_context *rctx = (struct r600_context*)ctx;
+	struct r600_context *rctx = r600_context(ctx);
 
 	util_blitter_save_blend(rctx->blitter,
 					rctx->draw->state[R600_BLEND]);
@@ -55,7 +55,7 @@ static void r600_blitter_save_states(struct pipe_context *ctx)
 void r600_clear(struct pipe_context *ctx, unsigned buffers,
 		const float *rgba, double depth, unsigned stencil)
 {
-	struct r600_context *rctx = (struct r600_context*)ctx;
+	struct r600_context *rctx = r600_context(ctx);
 	struct pipe_framebuffer_state *fb = &rctx->fb_state;
 
 	r600_blitter_save_states(ctx);

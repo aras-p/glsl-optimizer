@@ -35,7 +35,7 @@
 
 static void r600_destroy_context(struct pipe_context *context)
 {
-	struct r600_context *rctx = (struct r600_context*)context;
+	struct r600_context *rctx = r600_context(context);
 
 	FREE(rctx);
 }
@@ -43,8 +43,8 @@ static void r600_destroy_context(struct pipe_context *context)
 static void r600_flush(struct pipe_context *ctx, unsigned flags,
 			struct pipe_fence_handle **fence)
 {
-	struct r600_context *rctx = (struct r600_context*)ctx;
-	struct r600_screen *rscreen = (struct r600_screen*)ctx->screen;
+	struct r600_context *rctx = r600_context(ctx);
+	struct r600_screen *rscreen = rctx->screen;
 	static int dc = 0;
 
 	if (radeon_ctx_pm4(rctx->ctx))
@@ -78,6 +78,11 @@ struct pipe_context *r600_create_context(struct pipe_screen *screen, void *priv)
 	rctx->context.draw_elements = r600_draw_elements;
 	rctx->context.draw_range_elements = r600_draw_range_elements;
 	rctx->context.flush = r600_flush;
+
+	/* Easy accessing of screen/winsys. */
+	rctx->screen = rscreen;
+	rctx->rw = rscreen->rw;
+
 	r600_init_query_functions(rctx);
 	r600_init_state_functions(rctx);
 	r600_init_context_resource_functions(rctx);

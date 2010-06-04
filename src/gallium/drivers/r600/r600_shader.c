@@ -35,7 +35,7 @@
 
 static int r600_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader *rpshader)
 {
-	struct r600_screen *rscreen = (struct r600_screen*)ctx->screen;
+	struct r600_screen *rscreen = r600_screen(ctx->screen);
 	struct r600_shader *rshader = &rpshader->shader;
 	struct radeon_state *state;
 	unsigned i, tmp;
@@ -63,7 +63,7 @@ static int r600_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader
 
 static int r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *rpshader)
 {
-	struct r600_screen *rscreen = (struct r600_screen*)ctx->screen;
+	struct r600_screen *rscreen = r600_screen(ctx->screen);
 	struct r600_shader *rshader = &rpshader->shader;
 	struct radeon_state *state;
 	unsigned i, tmp;
@@ -92,8 +92,8 @@ static int r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader
 
 static int r600_pipe_shader(struct pipe_context *ctx, struct r600_pipe_shader *rpshader)
 {
-	struct r600_screen *rscreen = (struct r600_screen*)ctx->screen;
-	struct r600_context *rctx = (struct r600_context*)ctx;
+	struct r600_screen *rscreen = r600_screen(ctx->screen);
+	struct r600_context *rctx = r600_context(ctx);
 	struct r600_shader *rshader = &rpshader->shader;
 	int r;
 
@@ -176,7 +176,7 @@ struct r600_pipe_shader *r600_pipe_shader_create(struct pipe_context *ctx, unsig
 
 void r600_pipe_shader_destroy(struct pipe_context *ctx, struct r600_pipe_shader *rpshader)
 {
-	struct r600_screen *rscreen = (struct r600_screen*)ctx->screen;
+	struct r600_screen *rscreen = r600_screen(ctx->screen);
 
 	if (rpshader == NULL)
 		return;
@@ -188,7 +188,7 @@ void r600_pipe_shader_destroy(struct pipe_context *ctx, struct r600_pipe_shader 
 
 int r600_pipe_shader_update(struct pipe_context *ctx, struct r600_pipe_shader *rpshader)
 {
-	struct r600_context *rctx = (struct r600_context*)ctx;
+	struct r600_context *rctx = r600_context(ctx);
 	struct r600_shader *rshader;
 	enum pipe_format resource_format[160];
 	unsigned i, nresources = 0;

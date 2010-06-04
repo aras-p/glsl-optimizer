@@ -48,8 +48,8 @@ struct r600_draw {
 
 static int r600_draw_common(struct r600_draw *draw)
 {
-	struct r600_context *rctx = (struct r600_context*)draw->ctx;
-	struct r600_screen *rscreen = (struct r600_screen*)draw->ctx->screen;
+	struct r600_context *rctx = r600_context(draw->ctx);
+	struct r600_screen *rscreen = rctx->screen;
 	struct radeon_state *vs_resource;
 	struct r600_buffer *rbuffer;
 	unsigned i, j, offset, format, prim;
