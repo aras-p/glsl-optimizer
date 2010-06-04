@@ -84,33 +84,6 @@ void r600_texture_transfer_unmap(struct pipe_context *ctx,
 				 struct pipe_transfer* transfer);
 
 
-/* Blit functions. */
-void r600_clear(struct pipe_context *ctx,
-		unsigned buffers,
-		const float *rgba,
-		double depth,
-		unsigned stencil);
-void r600_clear_render_target(struct pipe_context *pipe,
-			      struct pipe_surface *dst,
-			      const float *rgba,
-			      unsigned dstx, unsigned dsty,
-			      unsigned width, unsigned height);
-void r300_clear_depth_stencil(struct pipe_context *pipe,
-			      struct pipe_surface *dst,
-			      unsigned clear_flags,
-			      double depth,
-			      unsigned stencil,
-			      unsigned dstx, unsigned dsty,
-			      unsigned width, unsigned height);
-void r600_resource_copy_region(struct pipe_context *pipe,
-			       struct pipe_resource *dst,
-			       struct pipe_subresource subdst,
-			       unsigned dstx, unsigned dsty, unsigned dstz,
-			       struct pipe_resource *src,
-			       struct pipe_subresource subsrc,
-			       unsigned srcx, unsigned srcy, unsigned srcz,
-			       unsigned width, unsigned height);
-
 /* helpers */
 int r600_conv_pipe_format(unsigned pformat, unsigned *format);
 int r600_conv_pipe_prim(unsigned pprim, unsigned *prim);

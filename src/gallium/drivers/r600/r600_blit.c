@@ -31,10 +31,8 @@
 #include "r600_screen.h"
 #include "r600_context.h"
 
-static void r600_blitter_save_states(struct pipe_context *ctx)
+static void r600_blitter_save_states(struct r600_context *rctx)
 {
-	struct r600_context *rctx = r600_context(ctx);
-
 	util_blitter_save_blend(rctx->blitter,
 					rctx->draw->state[R600_BLEND]);
 	util_blitter_save_depth_stencil_alpha(rctx->blitter,
@@ -52,43 +50,51 @@ static void r600_blitter_save_states(struct pipe_context *ctx)
 					&rctx->viewport);
 }
 
-void r600_clear(struct pipe_context *ctx, unsigned buffers,
-		const float *rgba, double depth, unsigned stencil)
+static void r600_clear(struct pipe_context *ctx, unsigned buffers,
+		       const float *rgba, double depth, unsigned stencil)
 {
 	struct r600_context *rctx = r600_context(ctx);
 	struct pipe_framebuffer_state *fb = &rctx->fb_state;
 
-	r600_blitter_save_states(ctx);
+	r600_blitter_save_states(rctx);
 	util_blitter_clear(rctx->blitter, fb->width, fb->height,
 				fb->nr_cbufs, buffers, rgba, depth,
 				stencil);
 }
 
-void r600_clear_render_target(struct pipe_context *pipe,
-			      struct pipe_surface *dst,
-			      const float *rgba,
-			      unsigned dstx, unsigned dsty,
-			      unsigned width, unsigned height)
+static void r600_clear_render_target(struct pipe_context *pipe,
+				     struct pipe_surface *dst,
+				     const float *rgba,
+				     unsigned dstx, unsigned dsty,
+				     unsigned width, unsigned height)
 {
 }
 
-void r300_clear_depth_stencil(struct pipe_context *pipe,
-			      struct pipe_surface *dst,
-			      unsigned clear_flags,
-			      double depth,
-			      unsigned stencil,
-			      unsigned dstx, unsigned dsty,
-			      unsigned width, unsigned height)
+static void r600_clear_depth_stencil(struct pipe_context *pipe,
+				     struct pipe_surface *dst,
+				     unsigned clear_flags,
+				     double depth,
+				     unsigned stencil,
+				     unsigned dstx, unsigned dsty,
+				     unsigned width, unsigned height)
 {
 }
 
-void r600_resource_copy_region(struct pipe_context *pipe,
-			       struct pipe_resource *dst,
-			       struct pipe_subresource subdst,
-			       unsigned dstx, unsigned dsty, unsigned dstz,
-			       struct pipe_resource *src,
-			       struct pipe_subresource subsrc,
-			       unsigned srcx, unsigned srcy, unsigned srcz,
-			       unsigned width, unsigned height)
+static void r600_resource_copy_region(struct pipe_context *pipe,
+				      struct pipe_resource *dst,
+				      struct pipe_subresource subdst,
+				      unsigned dstx, unsigned dsty, unsigned dstz,
+				      struct pipe_resource *src,
+				      struct pipe_subresource subsrc,
+				      unsigned srcx, unsigned srcy, unsigned srcz,
+				      unsigned width, unsigned height)
 {
+}
+
+void r600_init_blit_functions(struct r600_context *rctx)
+{
+	rctx->context.clear = r600_clear;
+	rctx->context.clear_render_target = r600_clear_render_target;
+	rctx->context.clear_depth_stencil = r600_clear_depth_stencil;
+	rctx->context.resource_copy_region = r600_resource_copy_region;
 }
