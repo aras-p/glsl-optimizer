@@ -366,6 +366,7 @@ lp_setup_clear( struct lp_setup_context *setup,
                break;
             default:
                assert(0);
+               tmpval = 0;
             }
          }
          setup->clear.clearzs.clearzs_mask |= mask;
