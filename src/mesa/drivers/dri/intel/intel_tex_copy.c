@@ -132,7 +132,7 @@ do_copy_texsubimage(struct intel_context *intel,
 				     0,
 				     &image_x, &image_y);
 
-      /* Can't blit to tiled buffers with non-tile-aligned offset. */
+      /* The blitter can't handle Y-tiled buffers. */
       if (intelImage->mt->region->tiling == I915_TILING_Y) {
 	 return GL_FALSE;
       }
