@@ -636,11 +636,12 @@ int r300_transform_vertex_alu(
 	case RC_OPCODE_FLR: transform_FLR(c, inst); return 1;
 	case RC_OPCODE_LIT: transform_r300_vertex_fix_LIT(c, inst); return 1;
 	case RC_OPCODE_LRP: transform_LRP(c, inst); return 1;
+	case RC_OPCODE_SFL: transform_SFL(c, inst); return 1;
+	case RC_OPCODE_SGT: transform_r300_vertex_SGT(c, inst); return 1;
+	case RC_OPCODE_SLE: transform_r300_vertex_SLE(c, inst); return 1;
 	case RC_OPCODE_SUB: transform_SUB(c, inst); return 1;
 	case RC_OPCODE_SWZ: transform_SWZ(c, inst); return 1;
 	case RC_OPCODE_XPD: transform_XPD(c, inst); return 1;
-	case RC_OPCODE_SLE: transform_r300_vertex_SLE(c, inst); return 1;
-	case RC_OPCODE_SGT: transform_r300_vertex_SGT(c, inst); return 1;
 	default:
 		return 0;
 	}
