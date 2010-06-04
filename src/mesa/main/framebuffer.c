@@ -75,7 +75,6 @@ compute_depth_max(struct gl_framebuffer *fb)
    fb->_MRD = (GLfloat)1.0 / fb->_DepthMaxF;
 }
 
-
 /**
  * Create and initialize a gl_framebuffer object.
  * This is intended for creating _window_system_ framebuffers, not generic
