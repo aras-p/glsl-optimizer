@@ -460,6 +460,7 @@ ir_function_signature::qualifiers_match(exec_list *params)
       ir_variable *b = (ir_variable *)iter_b.get();
 
       if (a->read_only != b->read_only ||
+	  a->mode != b->mode ||
 	  a->interpolation != b->interpolation ||
 	  a->centroid != b->centroid) {
 
