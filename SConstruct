@@ -136,6 +136,8 @@ if 'softpipe' not in env['drivers']:
     env['drivers'].append('softpipe')
 if env['llvm'] and 'llvmpipe' not in env['drivers']:
     env['drivers'].append('llvmpipe')
+if 'sw' not in env['drivers']:
+    env['drivers'].append('sw')
 
 # Includes
 env.Prepend(CPPPATH = [

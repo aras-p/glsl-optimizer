@@ -5,32 +5,34 @@
 # rasterizers into a single driver.  A software rasterizer is defined
 # as any driver which takes an sw_winsys pointer as the only argument
 # to create_screen.
-#
-# XXX: unfortunately users of this driver still need to link in any
-# extra libraries needed for the particular driver (eg llvm for
-# llvmpipe).  Not sure how to get around this.
 
 Import('*')
 
 env = env.Clone()
 
+# To avoid targets having to check extensively or add drivers on a whim, append
+# all referenced extra drivers to the exported symbol.
+extra = []
 if True:
     env.Append(CPPDEFINES = 'GALLIUM_SOFTPIPE')
     env.Prepend(LIBS = [softpipe])
+    extra.append(softpipe)
 
 if env['llvm']:
     env.Append(CPPDEFINES = 'GALLIUM_LLVMPIPE')
     env.Tool('udis86')
     env.Prepend(LIBS = [llvmpipe])
-    
+    extra.append(llvmpipe)
+
 if 'cell' in env['drivers']:
     env.Append(CPPDEFINES = 'GALLIUM_CELL')
     env.Prepend(LIBS = [cell])
+    extra.append(cell)
 
 sw = env.ConvenienceLibrary(
 	target = 'sw',
 	source = [
 		'sw.c',
 		]
-    )
-    Export('sw')
+    ) + extra
+Export('sw')
