@@ -394,15 +394,6 @@ GLW_FILES = \
 	$(DIRECTORY)/src/glw/glw.pc.in			\
 	$(DIRECTORY)/src/glw/depend
 
-GLEW_FILES = \
-	$(DIRECTORY)/include/GL/glew.h			\
-	$(DIRECTORY)/include/GL/glxew.h			\
-	$(DIRECTORY)/include/GL/wglew.h			\
-	$(DIRECTORY)/src/glew/*.c			\
-	$(DIRECTORY)/src/glew/Makefile			\
-	$(DIRECTORY)/src/glew/SConscript		\
-	$(DIRECTORY)/src/glew/LICENSE.txt
-
 GLUT_FILES = \
 	$(DIRECTORY)/include/GL/glut.h			\
 	$(DIRECTORY)/include/GL/glutf90.h		\

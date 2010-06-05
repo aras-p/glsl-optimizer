@@ -52,7 +52,6 @@ INDENT_FLAGS = -i4 -nut -br -brs -npcs -ce -T GLubyte -T GLbyte -T Bool
 GL_LIB = GL
 GLU_LIB = GLU
 GLUT_LIB = glut
-GLEW_LIB = GLEW
 GLW_LIB = GLw
 OSMESA_LIB = OSMesa
 EGL_LIB = EGL
@@ -65,7 +64,6 @@ VG_LIB = OpenVG
 GL_LIB_NAME = lib$(GL_LIB).so
 GLU_LIB_NAME = lib$(GLU_LIB).so
 GLUT_LIB_NAME = lib$(GLUT_LIB).so
-GLEW_LIB_NAME = lib$(GLEW_LIB).a
 GLW_LIB_NAME = lib$(GLW_LIB).so
 OSMESA_LIB_NAME = lib$(OSMESA_LIB).so
 EGL_LIB_NAME = lib$(EGL_LIB).so
@@ -96,7 +94,7 @@ MOTIF_CFLAGS = -I/usr/include/Motif1.2
 # Directories to build
 LIB_DIR = lib
 SRC_DIRS = glsl mapi/glapi mapi/vgapi mesa \
-	gallium egl gallium/winsys gallium/targets glu glut/glx glew glw
+	gallium egl gallium/winsys gallium/targets glu glut/glx glw
 GLU_DIRS = sgi
 DRIVER_DIRS = x11 osmesa
 

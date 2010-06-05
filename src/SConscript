@@ -14,4 +14,3 @@ SConscript('gallium/SConscript')
 
 if platform != 'embedded':
     SConscript('glut/glx/SConscript')
-    SConscript('glew/SConscript')
