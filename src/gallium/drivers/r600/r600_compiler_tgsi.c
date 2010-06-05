@@ -146,7 +146,7 @@ static int ntransform_instruction(struct tgsi_shader *ts)
 	struct c_shader *shader = ts->shader;
 	struct c_instruction instruction;
 	unsigned opcode;
-	int i, r;
+	int i, j, r;
 
 	if (fi->Instruction.NumDstRegs > 1) {
 		fprintf(stderr, "%s %d unsupported\n", __func__, __LINE__);
@@ -192,21 +192,48 @@ static int ntransform_instruction(struct tgsi_shader *ts)
 	}
 	/* FIXME add flow instruction handling */
 	memset(&instruction, 0, sizeof(struct c_instruction));
-	instruction.opcode = opcode;
-	instruction.ninput = fi->Instruction.NumSrcRegs;
-	instruction.write_mask = fi->Dst[0].Register.WriteMask;
-	for (i = 0; i < fi->Instruction.NumSrcRegs; i++) {
-		instruction.input[i].vector = ts->v[fi->Src[i].Register.File][fi->Src[i].Register.Index];
-		instruction.input[i].swizzle[0] = fi->Src[i].Register.SwizzleX;
-		instruction.input[i].swizzle[1] = fi->Src[i].Register.SwizzleY;
-		instruction.input[i].swizzle[2] = fi->Src[i].Register.SwizzleZ;
-		instruction.input[i].swizzle[3] = fi->Src[i].Register.SwizzleW;
+	instruction.nop = 0;
+	for (j = 0; j < 4; j++) {
+		instruction.op[instruction.nop].opcode = opcode;
+		instruction.op[instruction.nop].ninput = fi->Instruction.NumSrcRegs;
+		for (i = 0; i < fi->Instruction.NumSrcRegs; i++) {
+			instruction.op[instruction.nop].input[i].vector = ts->v[fi->Src[i].Register.File][fi->Src[i].Register.Index];
+			switch (j) {
+			case 0:
+				instruction.op[instruction.nop].input[i].swizzle = fi->Src[i].Register.SwizzleX;
+				break;
+			case 1:
+				instruction.op[instruction.nop].input[i].swizzle = fi->Src[i].Register.SwizzleY;
+				break;
+			case 2:
+				instruction.op[instruction.nop].input[i].swizzle = fi->Src[i].Register.SwizzleZ;
+				break;
+			case 3:
+				instruction.op[instruction.nop].input[i].swizzle = fi->Src[i].Register.SwizzleW;
+				break;
+			default:
+				return -EINVAL;
+			}
+		}
+		instruction.op[instruction.nop].output.vector = ts->v[fi->Dst[0].Register.File][fi->Dst[0].Register.Index];
+		switch (j) {
+		case 0:
+			instruction.op[instruction.nop].output.swizzle = (fi->Dst[0].Register.WriteMask & 0x1) ? C_SWIZZLE_X : C_SWIZZLE_D;
+			break;
+		case 1:
+			instruction.op[instruction.nop].output.swizzle = (fi->Dst[0].Register.WriteMask & 0x1) ? C_SWIZZLE_Y : C_SWIZZLE_D;
+			break;
+		case 2:
+			instruction.op[instruction.nop].output.swizzle = (fi->Dst[0].Register.WriteMask & 0x1) ? C_SWIZZLE_Z : C_SWIZZLE_D;
+			break;
+		case 3:
+			instruction.op[instruction.nop].output.swizzle = (fi->Dst[0].Register.WriteMask & 0x1) ? C_SWIZZLE_W : C_SWIZZLE_D;
+			break;
+		default:
+			return -EINVAL;
+		}
+		instruction.nop++;
 	}
-	instruction.output.vector = ts->v[fi->Dst[0].Register.File][fi->Dst[0].Register.Index];
-	instruction.output.swizzle[0] = (fi->Dst[0].Register.WriteMask & 0x1) ? C_SWIZZLE_X : C_SWIZZLE_D;
-	instruction.output.swizzle[1] = (fi->Dst[0].Register.WriteMask & 0x2) ? C_SWIZZLE_Y : C_SWIZZLE_D;
-	instruction.output.swizzle[2] = (fi->Dst[0].Register.WriteMask & 0x4) ? C_SWIZZLE_Z : C_SWIZZLE_D;
-	instruction.output.swizzle[3] = (fi->Dst[0].Register.WriteMask & 0x8) ? C_SWIZZLE_W : C_SWIZZLE_D;
 	return c_node_add_new_instruction(ts->node, &instruction);
 }
 

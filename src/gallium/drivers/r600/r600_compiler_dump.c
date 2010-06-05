@@ -229,28 +229,25 @@ static void pindent(unsigned indent)
 static void c_node_dump(struct c_node *node, unsigned indent)
 {
 	struct c_instruction *i;
-	unsigned j;
+	unsigned j, k;
 
 	pindent(indent); fprintf(stderr, "# node %s\n", c_get_name(c_opcode_str, node->opcode));
 	c_list_for_each(i, &node->insts) {
-		pindent(indent); fprintf(stderr, "%s", c_get_name(c_opcode_str, i->opcode));
-		fprintf(stderr, " %s[%d][%s%s%s%s]",
-				c_get_name(c_file_str, i->output.vector->file),
-				i->output.vector->id,
-				c_get_name(c_file_swz, i->output.swizzle[0]),
-				c_get_name(c_file_swz, i->output.swizzle[1]),
-				c_get_name(c_file_swz, i->output.swizzle[2]),
-				c_get_name(c_file_swz, i->output.swizzle[3]));
-		for (j = 0; j < i->ninput; j++) {
-			fprintf(stderr, " %s[%d][%s%s%s%s]",
-					c_get_name(c_file_str, i->input[j].vector->file),
-					i->input[j].vector->id,
-					c_get_name(c_file_swz, i->input[j].swizzle[0]),
-					c_get_name(c_file_swz, i->input[j].swizzle[1]),
-					c_get_name(c_file_swz, i->input[j].swizzle[2]),
-					c_get_name(c_file_swz, i->input[j].swizzle[3]));
+		for (k = 0; k < i->nop; k++) {
+			pindent(indent);
+			fprintf(stderr, "%s", c_get_name(c_opcode_str, i->op[k].opcode));
+			fprintf(stderr, " %s[%d][%s]",
+				c_get_name(c_file_str, i->op[k].output.vector->file),
+				i->op[k].output.vector->id,
+				c_get_name(c_file_swz, i->op[k].output.swizzle));
+			for (j = 0; j < i->op[k].ninput; j++) {
+				fprintf(stderr, " %s[%d][%s]",
+						c_get_name(c_file_str, i->op[k].input[j].vector->file),
+						i->op[k].input[j].vector->id,
+						c_get_name(c_file_swz, i->op[k].input[j].swizzle));
+			}
+			fprintf(stderr, ";\n");
 		}
-		fprintf(stderr, ";\n");
 	}
 }
 

@@ -71,7 +71,7 @@ struct c_vector {
 #define C_SWIZZLE_W		3
 #define C_SWIZZLE_0		4
 #define C_SWIZZLE_1		5
-#define C_SWIZZLE_D		6	/**< discard */
+#define C_SWIZZLE_D		6
 
 #define C_FILE_NULL		0
 #define C_FILE_CONSTANT		1
@@ -247,18 +247,21 @@ struct c_vector {
 
 struct c_operand {
 	struct c_vector		*vector;
-	unsigned		swizzle[4];
-	unsigned		flag[4];
+	unsigned		swizzle;
+	unsigned		flag;
+};
+
+struct c_op {
+	unsigned		ninput;
+	struct c_operand	input[3];
+	struct c_operand	output;
+	unsigned		opcode;
 };
 
 struct c_instruction {
 	struct c_instruction	*next, *prev;
-	unsigned		opcode;
-	unsigned		ninput;
-	struct c_operand	input[3];
-	struct c_operand	output;
-	unsigned		write_mask;
-	void			*backend;
+	unsigned		nop;
+	struct c_op		op[5];
 };
 
 struct c_node;

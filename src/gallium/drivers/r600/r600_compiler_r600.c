@@ -60,16 +60,31 @@ int r600_shader_insert_fetch(struct c_shader *shader)
 		if (vr == NULL)
 			return -ENOMEM;
 		memset(&instruction, 0, sizeof(struct c_instruction));
-		instruction.opcode = C_OPCODE_VFETCH;
-		instruction.write_mask = 0xF;
-		instruction.ninput = 2;
-		instruction.output.vector = v;
-		instruction.input[0].vector = vi;
-		instruction.input[1].vector = vr;
-		instruction.output.swizzle[0] = C_SWIZZLE_X;
-		instruction.output.swizzle[1] = C_SWIZZLE_Y;
-		instruction.output.swizzle[2] = C_SWIZZLE_Z;
-		instruction.output.swizzle[3] = C_SWIZZLE_W;
+		instruction.nop = 4;
+		instruction.op[0].opcode = C_OPCODE_VFETCH;
+		instruction.op[1].opcode = C_OPCODE_VFETCH;
+		instruction.op[2].opcode = C_OPCODE_VFETCH;
+		instruction.op[3].opcode = C_OPCODE_VFETCH;
+		instruction.op[0].ninput = 2;
+		instruction.op[1].ninput = 2;
+		instruction.op[2].ninput = 2;
+		instruction.op[3].ninput = 2;
+		instruction.op[0].output.vector = v;
+		instruction.op[1].output.vector = v;
+		instruction.op[2].output.vector = v;
+		instruction.op[3].output.vector = v;
+		instruction.op[0].input[0].vector = vi;
+		instruction.op[0].input[1].vector = vr;
+		instruction.op[1].input[0].vector = vi;
+		instruction.op[1].input[1].vector = vr;
+		instruction.op[2].input[0].vector = vi;
+		instruction.op[2].input[1].vector = vr;
+		instruction.op[3].input[0].vector = vi;
+		instruction.op[3].input[1].vector = vr;
+		instruction.op[0].output.swizzle = C_SWIZZLE_X;
+		instruction.op[1].output.swizzle = C_SWIZZLE_Y;
+		instruction.op[2].output.swizzle = C_SWIZZLE_Z;
+		instruction.op[3].output.swizzle = C_SWIZZLE_W;
 		r = c_node_add_new_instruction_head(&shader->entry, &instruction);
 		if (r)
 			return r;
@@ -316,7 +331,7 @@ static int r600_shader_add_vfetch(struct r600_shader *rshader,
 
 	if (instruction == NULL)
 		return 0;
-	if (instruction->opcode != C_OPCODE_VFETCH)
+	if (instruction->op[0].opcode != C_OPCODE_VFETCH)
 		return 0;
 	if (!c_list_empty(&node->alu)) {
 		rnode = r600_shader_new_node(rshader, node->node);
@@ -327,13 +342,13 @@ static int r600_shader_add_vfetch(struct r600_shader *rshader,
 	vfetch = calloc(1, sizeof(struct r600_shader_vfetch));
 	if (vfetch == NULL)
 		return -ENOMEM;
-	r = r600_shader_find_gpr(rshader, instruction->output.vector, 0, &vfetch->dst[0]);
+	r = r600_shader_find_gpr(rshader, instruction->op[0].output.vector, 0, &vfetch->dst[0]);
 	if (r)
 		return r;
-	r = r600_shader_find_gpr(rshader, instruction->input[0].vector, 0, &vfetch->src[0]);
+	r = r600_shader_find_gpr(rshader, instruction->op[0].input[0].vector, 0, &vfetch->src[0]);
 	if (r)
 		return r;
-	r = r600_shader_find_gpr(rshader, instruction->input[1].vector, 0, &vfetch->src[1]);
+	r = r600_shader_find_gpr(rshader, instruction->op[0].input[1].vector, 0, &vfetch->src[1]);
 	if (r)
 		return r;
 	vfetch->dst[0].chan = C_SWIZZLE_X;
@@ -355,7 +370,7 @@ static int r600_node_translate(struct r600_shader *rshader, struct c_node *node)
 	if (rnode == NULL)
 		return -ENOMEM;
 	c_list_for_each(instruction, &node->insts) {
-		switch (instruction->opcode) {
+		switch (instruction->op[0].opcode) {
 		case C_OPCODE_VFETCH:
 			r = r600_shader_add_vfetch(rshader, rnode, instruction);
 			if (r) {
@@ -414,79 +429,13 @@ static struct r600_shader_alu *r600_shader_insert_alu(struct r600_shader *rshade
 	return alu;
 }
 
-static int r600_shader_node_add_alu(struct r600_shader *rshader,
-					struct r600_shader_node *node,
-					struct r600_shader_alu *alu,
-					unsigned instruction,
-					unsigned ninput,
-					struct r600_shader_operand *dst,
-					struct r600_shader_operand src[3])
-{
-	struct r600_shader_alu *nalu;
-	unsigned nconstant = 0, nliteral = 0, slot, i;
-
-	/* count number of constant & literal */
-	for (i = 0; i < ninput; i++) {
-		if (src[i].vector->file == C_FILE_IMMEDIATE) {
-			nliteral++;
-			nconstant++;
-		}
-	}
-
-	slot = dst->chan;
-	if (r600_instruction_info[instruction].is_trans) {
-		slot = 4;
-	}
-
-	/* allocate new alu group if necessary */
-	nalu = alu;
-	if (alu == NULL) {
-		nalu = r600_shader_insert_alu(rshader, node);
-		if (nalu == NULL)
-			return -ENOMEM;
-		alu = nalu;
-	}
-	if ((alu->alu[slot].inst != INST_NOP &&
-		alu->alu[4].inst != INST_NOP) ||
-		(alu->nconstant + nconstant) > 4 ||
-		(alu->nliteral + nliteral) > 4) {
-		/* neither trans neither dst slot are free need new alu */
-		nalu = r600_shader_insert_alu(rshader, node);
-		if (nalu == NULL)
-			return -ENOMEM;
-		alu = nalu;
-	}
-	if (alu->alu[slot].inst != INST_NOP) {
-		slot = 4;
-	}
-
-	alu->alu[slot].dst = *dst;
-	alu->alu[slot].inst = instruction;
-	alu->alu[slot].opcode = r600_instruction_info[instruction].opcode;
-	alu->alu[slot].is_op3 = r600_instruction_info[instruction].is_op3;
-	for (i = 0; i < ninput; i++) {
-		alu->alu[slot].src[i] = src[i];
-		if (src[i].vector->file == C_FILE_IMMEDIATE) {
-			alu->literal[alu->nliteral++] = src[i].vector->channel[0]->value;
-			alu->literal[alu->nliteral++] = src[i].vector->channel[1]->value;
-			alu->literal[alu->nliteral++] = src[i].vector->channel[2]->value;
-			alu->literal[alu->nliteral++] = src[i].vector->channel[3]->value;
-		}
-	}
-	return 0;
-}
-
 static int r600_shader_alu_translate(struct r600_shader *rshader,
 					struct r600_shader_node *node,
 					struct c_instruction *instruction)
 {
-	struct r600_alu_instruction *ainfo = &r600_alu_instruction[instruction->opcode];
-	struct r600_instruction_info *info;
-	struct r600_shader_alu *alu;
 	struct r600_shader_node *rnode;
-	int r, i, j;
-	struct r600_shader_operand dst;
-	struct r600_shader_operand src[3];
+	struct r600_shader_alu *alu;
+	int i, j, r, comp;
 
 	if (!c_list_empty(&node->vfetch)) {
 		rnode = r600_shader_new_node(rshader, node->node);
@@ -496,38 +445,55 @@ static int r600_shader_alu_translate(struct r600_shader *rshader,
 		}
 		node = rnode;
 	}
+
+	/* initialize alu */
 	alu = r600_shader_insert_alu(rshader, node);
-	if (alu == NULL) {
-		fprintf(stderr, "%s %d instert alu node failed\n", __func__, __LINE__);
-		return -ENOMEM;
-	}
-	for (i = 0; i < 4; i++) {
-		if (!(instruction->write_mask) || instruction->output.swizzle[i] == C_SWIZZLE_D)
-			continue;
-		if (ainfo->instruction == INST_NOP) {
-			fprintf(stderr, "%s:%d unsupported instruction %d\n", __FILE__, __LINE__, instruction->opcode);
-			continue;
+
+	/* check special operation like lit */
+
+	/* go through operation */
+	for (i = 0; i < instruction->nop; i++) {
+		struct r600_alu_instruction *ainfo = &r600_alu_instruction[instruction->op[i].opcode];
+		struct r600_instruction_info *iinfo = &r600_instruction_info[ainfo->instruction];
+		unsigned comp;
+
+		/* check that output is a valid component */
+		comp = instruction->op[i].output.swizzle;
+		switch (comp) {
+		case C_SWIZZLE_X:
+		case C_SWIZZLE_Y:
+		case C_SWIZZLE_Z:
+		case C_SWIZZLE_W:
+			break;
+		case C_SWIZZLE_0:
+		case C_SWIZZLE_1:
+		default:
+			fprintf(stderr, "%s %d invalid output\n", __func__, __LINE__);
+			return -EINVAL;
 		}
-		info = &r600_instruction_info[ainfo->instruction];
-		r = r600_shader_find_gpr(rshader, instruction->output.vector,
-					instruction->output.swizzle[i], &dst);
-		if (r) {
-			fprintf(stderr, "%s %d register failed\n", __FILE__, __LINE__);
-			return r;
-		}
-		for (j = 0; j < instruction->ninput; j++) {
-			r = r600_shader_find_gpr(rshader, instruction->input[j].vector,
-					instruction->input[j].swizzle[i], &src[j]);
+		alu->alu[comp].inst = ainfo->instruction;
+		alu->alu[comp].opcode = iinfo->opcode;
+		alu->alu[comp].is_op3 = iinfo->is_op3;
+		for (j = 0; j < instruction->op[i].ninput; j++) {
+			r = r600_shader_find_gpr(rshader, instruction->op[i].input[j].vector,
+					instruction->op[i].input[j].swizzle, &alu->alu[comp].src[j]);
 			if (r) {
 				fprintf(stderr, "%s %d register failed\n", __FILE__, __LINE__);
 				return r;
 			}
 		}
-		r = r600_shader_node_add_alu(rshader, node, alu, ainfo->instruction,
-					instruction->ninput, &dst, src);
+		r = r600_shader_find_gpr(rshader, instruction->op[i].output.vector,
+				instruction->op[i].output.swizzle, &alu->alu[comp].dst);
 		if (r) {
-			fprintf(stderr, "%s %d failed\n", __FILE__, __LINE__);
+			fprintf(stderr, "%s %d register failed\n", __FILE__, __LINE__);
 			return r;
+		}
+	}
+	for (i = instruction->nop; i >= 0; i--) {
+		if (alu->alu[i].inst != INST_NOP) {
+			alu->alu[i].last = 1;
+			alu->nalu = i + 1;
+			break;
 		}
 	}
 	return 0;
@@ -576,12 +542,14 @@ int r600_shader_legalize(struct r600_shader *rshader)
 	struct r600_shader_node *node, *nnode;
 	struct r600_shader_alu *alu, *nalu;
 
+#if 0
 	c_list_for_each_safe(node, nnode, &rshader->nodes) {
 		c_list_for_each_safe(alu, nalu, &node->alu) {
 			alu->nalu = 5;
 			alu->alu[4].last = 1;
 		}
 	}
+#endif
 	return 0;
 }
 
