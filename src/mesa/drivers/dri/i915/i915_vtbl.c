@@ -622,7 +622,7 @@ i915_set_draw_region(struct intel_context *intel,
    }
 
    /* When changing drawing rectangle offset, an MI_FLUSH is first required. */
-   state->Buffer[I915_DESTREG_DRAWRECT0] = MI_FLUSH;
+   state->Buffer[I915_DESTREG_DRAWRECT0] = MI_FLUSH | INHIBIT_FLUSH_RENDER_CACHE;
    state->Buffer[I915_DESTREG_DRAWRECT1] = _3DSTATE_DRAWRECT_INFO;
    state->Buffer[I915_DESTREG_DRAWRECT2] = 0;
    state->Buffer[I915_DESTREG_DRAWRECT3] = (draw_y << 16) | draw_x;
