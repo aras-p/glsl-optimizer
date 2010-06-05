@@ -627,6 +627,33 @@ static void transform_r300_vertex_SEQ(struct radeon_compiler *c,
 	rc_remove_instruction(inst);
 }
 
+static void transform_r300_vertex_SNE(struct radeon_compiler *c,
+	struct rc_instruction *inst)
+{
+	/* x != y  <==>  x < y || y < x */
+	int tmp = rc_find_free_temporary(c);
+
+	/* x < y */
+	emit2(c, inst->Prev, RC_OPCODE_SLT, 0,
+	      dstregtmpmask(tmp, inst->U.I.DstReg.WriteMask),
+	      inst->U.I.SrcReg[0],
+	      inst->U.I.SrcReg[1]);
+
+	/* y < x */
+	emit2(c, inst->Prev, RC_OPCODE_SLT, 0,
+	      inst->U.I.DstReg,
+	      inst->U.I.SrcReg[1],
+	      inst->U.I.SrcReg[0]);
+
+	/* x || y  =  max(x, y) */
+	emit2(c, inst->Prev, RC_OPCODE_MAX, 0,
+	      inst->U.I.DstReg,
+	      srcreg(RC_FILE_TEMPORARY, tmp),
+	      srcreg(inst->U.I.DstReg.File, inst->U.I.DstReg.Index));
+
+	rc_remove_instruction(inst);
+}
+
 static void transform_r300_vertex_SGT(struct radeon_compiler* c,
 	struct rc_instruction* inst)
 {
@@ -672,6 +699,12 @@ int r300_transform_vertex_alu(
 	case RC_OPCODE_SFL: transform_SFL(c, inst); return 1;
 	case RC_OPCODE_SGT: transform_r300_vertex_SGT(c, inst); return 1;
 	case RC_OPCODE_SLE: transform_r300_vertex_SLE(c, inst); return 1;
+	case RC_OPCODE_SNE:
+		if (!c->is_r500) {
+			transform_r300_vertex_SNE(c, inst);
+			return 1;
+		}
+		return 0;
 	case RC_OPCODE_SUB: transform_SUB(c, inst); return 1;
 	case RC_OPCODE_SWZ: transform_SWZ(c, inst); return 1;
 	case RC_OPCODE_XPD: transform_XPD(c, inst); return 1;
