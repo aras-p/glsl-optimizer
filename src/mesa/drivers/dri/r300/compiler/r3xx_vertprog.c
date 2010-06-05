@@ -353,6 +353,8 @@ static void translate_vertex_program(struct r300_vertex_program_compiler * compi
 			return;
 		}
 
+		assert(compiler->Base.is_r500 || vpi->Opcode != RC_OPCODE_SEQ);
+
 		switch (vpi->Opcode) {
 		case RC_OPCODE_ADD: ei_vector2(compiler->code, VE_ADD, vpi, inst); break;
 		case RC_OPCODE_ARL: ei_vector1(compiler->code, VE_FLT2FIX_DX, vpi, inst); break;
@@ -372,6 +374,7 @@ static void translate_vertex_program(struct r300_vertex_program_compiler * compi
 		case RC_OPCODE_POW: ei_pow(compiler->code, vpi, inst); break;
 		case RC_OPCODE_RCP: ei_math1(compiler->code, ME_RECIP_DX, vpi, inst); break;
 		case RC_OPCODE_RSQ: ei_math1(compiler->code, ME_RECIP_SQRT_DX, vpi, inst); break;
+		case RC_OPCODE_SEQ: ei_vector2(compiler->code, VE_SET_EQUAL, vpi, inst); break;
 		case RC_OPCODE_SGE: ei_vector2(compiler->code, VE_SET_GREATER_THAN_EQUAL, vpi, inst); break;
 		case RC_OPCODE_SLT: ei_vector2(compiler->code, VE_SET_LESS_THAN, vpi, inst); break;
 		default:
