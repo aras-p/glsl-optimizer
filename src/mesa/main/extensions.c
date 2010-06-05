@@ -84,6 +84,7 @@ static const struct {
    { OFF, "GL_ARB_texture_mirrored_repeat",    F(ARB_texture_mirrored_repeat)},
    { OFF, "GL_ARB_texture_non_power_of_two",   F(ARB_texture_non_power_of_two)},
    { OFF, "GL_ARB_texture_rectangle",          F(NV_texture_rectangle) },
+   { OFF, "GL_ARB_texture_swizzle",            F(EXT_texture_swizzle) },
    { ON,  "GL_ARB_transpose_matrix",           F(ARB_transpose_matrix) },
    { OFF, "GL_ARB_transform_feedback2",        F(ARB_transform_feedback2) },
    { OFF, "GL_ARB_vertex_array_bgra",          F(EXT_vertex_array_bgra) },
