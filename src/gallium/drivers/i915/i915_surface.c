@@ -143,8 +143,8 @@ i915_clear_depth_stencil(struct pipe_context *pipe,
    /* XXX presumably this does read-modify-write
       (otherwise this won't work anyway). Hence will only want to
       do it if really have stencil and it isn't cleared */
-   if (!((clear_flags & PIPE_CLEAR_STENCIL) ||
-       (dst->format != PIPE_FORMAT_Z24_UNORM_S8_USCALED)))
+   if ((clear_flags & PIPE_CLEAR_STENCIL) ||
+       (dst->format != PIPE_FORMAT_Z24_UNORM_S8_USCALED))
       mask |= XY_COLOR_BLT_WRITE_ALPHA;
 
    i915_fill_blit( i915_context(pipe),
