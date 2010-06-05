@@ -166,8 +166,6 @@ llvmpipe_get_param(struct pipe_screen *screen, enum pipe_cap param)
       return LP_MAX_TGSI_PREDS;
    case PIPE_CAP_DEPTHSTENCIL_CLEAR_SEPARATE:
       return 1;
-   case PIPE_CAP_TEXTURE_SWIZZLE:
-      return 0;
    default:
       assert(0);
       return 0;
