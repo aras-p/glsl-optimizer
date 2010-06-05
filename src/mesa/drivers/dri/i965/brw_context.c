@@ -48,21 +48,11 @@
  * Mesa's Driver Functions
  ***************************************/
 
-static void brwUseProgram(GLcontext *ctx, GLuint program)
-{
-   _mesa_use_program(ctx, program);
-}
-
-static void brwInitProgFuncs( struct dd_function_table *functions )
-{
-   functions->UseProgram = brwUseProgram;
-}
 static void brwInitDriverFunctions( struct dd_function_table *functions )
 {
    intelInitDriverFunctions( functions );
 
    brwInitFragProgFuncs( functions );
-   brwInitProgFuncs( functions );
    brw_init_queryobj_functions(functions);
 }
 
