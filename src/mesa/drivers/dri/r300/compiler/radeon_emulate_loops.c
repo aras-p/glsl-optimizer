@@ -34,6 +34,10 @@
 #include "radeon_compiler.h"
 #include "radeon_dataflow.h"
 
+#define VERBOSE 0
+
+#define DBG(...) do { if (VERBOSE) fprintf(stderr, __VA_ARGS__); } while(0)
+
 struct emulate_loop_state {
 	struct radeon_compiler * C;
 	struct loop_info * Loops;
@@ -150,39 +154,54 @@ static void get_incr_amount(void * data, struct rc_instruction * inst,
 		rc_register_file file, unsigned int index, unsigned int mask)
 {
 	struct count_inst * count_inst = data;
+	int amnt_src_index;
+	struct rc_opcode_info * opcode;
+	float amount;
+
 	if(file != RC_FILE_TEMPORARY ||
 	   count_inst->Index != index ||
 	   (1 << GET_SWZ(count_inst->Swz,0) != mask)){
 	   	return;
 	}
-	switch(inst->U.I.Opcode){
-		int incr_reg;
-	case RC_OPCODE_ADD:
-	{
-		if(inst->U.I.SrcReg[0].File == RC_FILE_TEMPORARY &&
-		   inst->U.I.SrcReg[0].Index == count_inst->Index &&
-		   inst->U.I.SrcReg[0].Swizzle == count_inst->Swz){
-			incr_reg = 1;
-		} else if( inst->U.I.SrcReg[1].File == RC_FILE_TEMPORARY &&
-			   inst->U.I.SrcReg[1].Index == count_inst->Index &&
-			   inst->U.I.SrcReg[1].Swizzle == count_inst->Swz){
-			incr_reg = 0;
-		}
-		else{
-			count_inst->Unknown = 1;
-			return;
-		}
-		if(src_reg_is_immediate(&inst->U.I.SrcReg[incr_reg],
-							count_inst->C)){
-			count_inst->Amount = get_constant_value(count_inst->C,
-						&inst->U.I.SrcReg[incr_reg], 0);
-		}
-		else{
-			count_inst->Unknown = 1 ;
-			return;
-		}
-		break;
+	/* Find the index of the counter register. */
+	opcode = rc_get_opcode_info(inst->U.I.Opcode);
+	if(opcode->NumSrcRegs != 2){
+		count_inst->Unknown = 1;
+		return;
 	}
+	if(inst->U.I.SrcReg[0].File == RC_FILE_TEMPORARY &&
+	   inst->U.I.SrcReg[0].Index == count_inst->Index &&
+	   inst->U.I.SrcReg[0].Swizzle == count_inst->Swz){
+		amnt_src_index = 1;
+	} else if( inst->U.I.SrcReg[1].File == RC_FILE_TEMPORARY &&
+		   inst->U.I.SrcReg[1].Index == count_inst->Index &&
+		   inst->U.I.SrcReg[1].Swizzle == count_inst->Swz){
+		amnt_src_index = 0;
+	}
+	else{
+		count_inst->Unknown = 1;
+		return;
+	}
+	if(src_reg_is_immediate(&inst->U.I.SrcReg[amnt_src_index],
+							count_inst->C)){
+		amount = get_constant_value(count_inst->C,
+				&inst->U.I.SrcReg[amnt_src_index], 0);
+	}
+	else{
+		count_inst->Unknown = 1 ;
+		return;
+	}
+	switch(inst->U.I.Opcode){
+	case RC_OPCODE_ADD:
+		count_inst->Amount += amount;
+		break;
+	case RC_OPCODE_SUB:
+		if(amnt_src_index == 0){
+			count_inst->Unknown = 0;
+			return;
+		}
+		count_inst->Amount -= amount;
+		break;
 	default:
 		count_inst->Unknown = 1;
 		return;
@@ -192,7 +211,7 @@ static void get_incr_amount(void * data, struct rc_instruction * inst,
 
 static int transform_const_loop(struct emulate_loop_state * s,
 						struct loop_info * loop,
-						struct rc_instruction * slt)
+						struct rc_instruction * cond)
 {
 	int end_loops = 1;
 	int iterations;
@@ -205,17 +224,16 @@ static int transform_const_loop(struct emulate_loop_state * s,
 
 	/* Find the counter and the upper limit */
 	
-	/* limit < counter */
-	if(src_reg_is_immediate(&slt->U.I.SrcReg[0], s->C)){
-		limit = &slt->U.I.SrcReg[0];
-		counter = &slt->U.I.SrcReg[1];
+	if(src_reg_is_immediate(&cond->U.I.SrcReg[0], s->C)){
+		limit = &cond->U.I.SrcReg[0];
+		counter = &cond->U.I.SrcReg[1];
 	}
-	/* counter < limit */
-	else if(src_reg_is_immediate(&slt->U.I.SrcReg[1], s->C)){
-		limit = &slt->U.I.SrcReg[1];
-		counter = &slt->U.I.SrcReg[0];
+	else if(src_reg_is_immediate(&cond->U.I.SrcReg[1], s->C)){
+		limit = &cond->U.I.SrcReg[1];
+		counter = &cond->U.I.SrcReg[0];
 	}
 	else{
+		DBG("No constant limit.\n");
 		return 0;
 	}
 	
@@ -229,9 +247,10 @@ static int transform_const_loop(struct emulate_loop_state * s,
 		rc_for_all_writes_mask(inst, update_const_value, &counter_value);
 	}
 	if(!counter_value.HasValue){
+		DBG("Initial counter value cannot be determined.\n");
 		return 0;
 	}
-
+	DBG("Initial counter value is %f\n", counter_value.Value);
 	/* Determine how the counter is modified each loop */
 	count_inst.C = s->C;
 	count_inst.Index = counter->Index;
@@ -249,6 +268,10 @@ static int transform_const_loop(struct emulate_loop_state * s,
 			loop->EndLoop = inst;
 			end_loops--;
 			break;
+		/* XXX Check if the counter is modified within an if statement.
+		 */
+		case RC_OPCODE_IF:
+			break;
 		default:
 			rc_for_all_writes_mask(inst, get_incr_amount, &count_inst);
 			if(count_inst.Unknown){
@@ -257,23 +280,27 @@ static int transform_const_loop(struct emulate_loop_state * s,
 			break;
 		}
 	}
+	/* Infinite loop */
 	if(count_inst.Amount == 0.0f){
 		return 0;
 	}
-
-	/* Calculate the number of iterations of this loop */
+	DBG("Counter is increased by %f each iteration.\n", count_inst.Amount);
+	/* Calculate the number of iterations of this loop.  Keeping this
+	 * simple, since we only support increment and decrement loops.
+	 */
 	limit_value = get_constant_value(s->C, limit, 0);
 	iterations = (int) ((limit_value - counter_value.Value) /
 							count_inst.Amount);
 
+	DBG("Loop will have %d iterations.\n", iterations);
 	/* Prepare loop for unrolling */
 	/* Remove the first 4 instructions inside the loop, which are part
-	 * of the conditional and no longer needed(SGE, IF, BRK, ENDIF).
+	 * of the conditional and no longer needed.
 	 */
-	rc_remove_instruction(loop->BeginLoop->Next);
-	rc_remove_instruction(loop->BeginLoop->Next);
-	rc_remove_instruction(loop->BeginLoop->Next);
-	rc_remove_instruction(loop->BeginLoop->Next);
+	rc_remove_instruction(loop->BeginLoop->Next); /* SLT/SGE */
+	rc_remove_instruction(loop->BeginLoop->Next); /* IF      */
+	rc_remove_instruction(loop->BeginLoop->Next); /* BRK     */
+	rc_remove_instruction(loop->BeginLoop->Next); /* ENDIF   */
 	
 	loop_unroll(s, loop, iterations);
 	loop->EndLoop = NULL;
@@ -283,13 +310,13 @@ static int transform_const_loop(struct emulate_loop_state * s,
 /** 
  * This function prepares a loop to be unrolled by converting it into an if
  * statement.  Here is an outline of the conversion process:
- * BGNLOOP;                         -> BGNLOOP;
- * SGE temp[0], temp[1], temp[2];   -> SLT temp[0], temp[1], temp[2];
- * IF temp[0];                      -> IF temp[0];
- * BRK;                             ->
- * ENDIF;                           -> <Loop Body>
- * <Loop Body>                      -> ENDIF;
- * ENDLOOP;                         -> ENDLOOP
+ * BGNLOOP;                         	-> BGNLOOP;
+ * SGE/SLT temp[0], temp[1], temp[2];	-> SLT/SGE temp[0], temp[1], temp[2];
+ * IF temp[0];                      	-> IF temp[0];
+ * BRK;                             	->
+ * ENDIF;                           	-> <Loop Body>
+ * <Loop Body>                      	-> ENDIF;
+ * ENDLOOP;                         	-> ENDLOOP
  *
  * @param inst A pointer to a BGNLOOP instruction.
  * @return A pointer to the ENDLOOP instruction.
@@ -307,9 +334,16 @@ static struct rc_instruction * transform_loop(struct emulate_loop_state * s,
 	memset(loop, 0, sizeof(struct loop_info));
 	loop->BeginLoop = inst;
 	
-	/* Reverse the SGE instruction */
+	/* Reverse the conditional instruction */
 	ptr = inst->Next;
-	ptr->U.I.Opcode = RC_OPCODE_SLT;
+	switch(ptr->U.I.Opcode){
+	case RC_OPCODE_SGE:
+		ptr->U.I.Opcode = RC_OPCODE_SLT;
+		break;
+	case RC_OPCODE_SLT:
+		ptr->U.I.Opcode = RC_OPCODE_SGE;
+		break;
+	}
 	
 	/* Check if the number of loops is known at compile time. */
 	if(transform_const_loop(s, loop, ptr)){
