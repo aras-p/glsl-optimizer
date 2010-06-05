@@ -261,6 +261,7 @@ struct i915_context
    struct i915_fragment_program *current_program;
 
    struct i915_hw_state state;
+   uint32_t last_draw_offset;
 };
 
 
