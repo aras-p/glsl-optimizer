@@ -180,6 +180,7 @@ void st_init_extensions(struct st_context *st)
     * Extensions that are supported by all Gallium drivers:
     */
    ctx->Extensions.ARB_copy_buffer = GL_TRUE;
+   ctx->Extensions.ARB_draw_elements_base_vertex = GL_TRUE;
    ctx->Extensions.ARB_fragment_coord_conventions = GL_TRUE;
    ctx->Extensions.ARB_fragment_program = GL_TRUE;
    ctx->Extensions.ARB_map_buffer_range = GL_TRUE;
