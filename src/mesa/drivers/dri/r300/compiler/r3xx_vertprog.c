@@ -360,6 +360,7 @@ static void translate_vertex_program(struct r300_vertex_program_compiler * compi
 		switch (vpi->Opcode) {
 		case RC_OPCODE_ADD: ei_vector2(compiler->code, VE_ADD, vpi, inst); break;
 		case RC_OPCODE_ARL: ei_vector1(compiler->code, VE_FLT2FIX_DX, vpi, inst); break;
+		case RC_OPCODE_COS: ei_math1(compiler->code, ME_COS, vpi, inst); break;
 		case RC_OPCODE_DP4: ei_vector2(compiler->code, VE_DOT_PRODUCT, vpi, inst); break;
 		case RC_OPCODE_DST: ei_vector2(compiler->code, VE_DISTANCE_VECTOR, vpi, inst); break;
 		case RC_OPCODE_EX2: ei_math1(compiler->code, ME_EXP_BASE2_FULL_DX, vpi, inst); break;
@@ -378,6 +379,7 @@ static void translate_vertex_program(struct r300_vertex_program_compiler * compi
 		case RC_OPCODE_RSQ: ei_math1(compiler->code, ME_RECIP_SQRT_DX, vpi, inst); break;
 		case RC_OPCODE_SEQ: ei_vector2(compiler->code, VE_SET_EQUAL, vpi, inst); break;
 		case RC_OPCODE_SGE: ei_vector2(compiler->code, VE_SET_GREATER_THAN_EQUAL, vpi, inst); break;
+		case RC_OPCODE_SIN: ei_math1(compiler->code, ME_SIN, vpi, inst); break;
 		case RC_OPCODE_SLT: ei_vector2(compiler->code, VE_SET_LESS_THAN, vpi, inst); break;
 		case RC_OPCODE_SNE: ei_vector2(compiler->code, VE_SET_NOT_EQUAL, vpi, inst); break;
 		default:
@@ -605,8 +607,9 @@ void r3xx_compile_vertex_program(struct r300_vertex_program_compiler* compiler)
 	{
 		struct radeon_program_transformation transformations[] = {
 			{ &r300_transform_vertex_alu, 0 },
+			{ &r300_transform_trig_scale_vertex, 0 }
 		};
-		radeonLocalTransform(&compiler->Base, 1, transformations);
+		radeonLocalTransform(&compiler->Base, 2, transformations);
 	}
 
 	debug_program_log(compiler, "after native rewrite");
