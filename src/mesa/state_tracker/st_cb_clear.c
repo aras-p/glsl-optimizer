@@ -540,7 +540,8 @@ st_Clear(GLcontext *ctx, GLbitfield mask)
        * required from the visual. Hence fix this up to avoid potential
        * read-modify-write in the driver.
        */
-      if (((clear_buffers & PIPE_CLEAR_DEPTHSTENCIL) != PIPE_CLEAR_DEPTHSTENCIL) &&
+      if ((clear_buffers & PIPE_CLEAR_DEPTHSTENCIL) &&
+          ((clear_buffers & PIPE_CLEAR_DEPTHSTENCIL) != PIPE_CLEAR_DEPTHSTENCIL) &&
           (depthRb == stencilRb) &&
           (ctx->DrawBuffer->Visual.depthBits == 0 ||
            ctx->DrawBuffer->Visual.stencilBits == 0))
