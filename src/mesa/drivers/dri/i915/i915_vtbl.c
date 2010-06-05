@@ -627,8 +627,8 @@ i915_set_draw_region(struct intel_context *intel,
    state->Buffer[I915_DESTREG_DRAWRECT2] = 0;
    state->Buffer[I915_DESTREG_DRAWRECT3] = (draw_y << 16) | draw_x;
    state->Buffer[I915_DESTREG_DRAWRECT4] =
-      ((ctx->DrawBuffer->Width + draw_x) & 0xffff) |
-      ((ctx->DrawBuffer->Height + draw_y) << 16);
+      ((ctx->DrawBuffer->Width + draw_x - 1) & 0xffff) |
+      ((ctx->DrawBuffer->Height + draw_y - 1) << 16);
    state->Buffer[I915_DESTREG_DRAWRECT5] = (draw_y << 16) | draw_x;
 
    I915_STATECHANGE(i915, I915_UPLOAD_BUFFERS);
