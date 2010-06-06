@@ -308,6 +308,7 @@ void st_init_extensions(struct st_context *st)
 
    if (screen->get_param(screen, PIPE_CAP_TEXTURE_SHADOW_MAP)) {
       ctx->Extensions.ARB_depth_texture = GL_TRUE;
+      ctx->Extensions.ARB_fragment_program_shadow = GL_TRUE;
       ctx->Extensions.ARB_shadow = GL_TRUE;
       ctx->Extensions.EXT_shadow_funcs = GL_TRUE;
       /*ctx->Extensions.ARB_shadow_ambient = GL_TRUE;*/
