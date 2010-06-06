@@ -34,11 +34,10 @@
 
 struct pipe_screen;
 struct pipe_video_context;
+struct pipe_surface;
 
 struct vl_screen
 {
-   Display *display;
-   enum pipe_format format;
    struct pipe_screen *pscreen;
 };
 
@@ -61,8 +60,10 @@ vl_video_create(struct vl_screen *vscreen,
 
 void vl_video_destroy(struct vl_context *vctx);
 
+struct pipe_surface*
+vl_drawable_surface_get(struct vl_screen *vscreen, Drawable drawable);
+
 void*
-vl_displaytarget_get(struct vl_screen *vscreen, Drawable drawable,
-                     unsigned *width, unsigned *height);
+vl_contextprivate_get(struct vl_context *vctx, struct pipe_surface *drawable_surface);
 
 #endif

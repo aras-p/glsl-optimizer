@@ -353,17 +353,36 @@ free_screen:
 int dri2DestroyScreen(dri_screen_t *dri_screen)
 {
 	/* Not much to do here apparently... */
+	assert(dri_screen);
+	free(dri_screen);
 	return 0;
 }
 
 int dri2CreateDrawable(dri_screen_t *dri_screen, XID drawable)
 {
+	assert(dri_screen);
 	DRI2CreateDrawable(dri_screen->display, drawable);
 	return 0;
 }
 
 int dri2DestroyDrawable(dri_screen_t *dri_screen, XID drawable)
 {
+	assert(dri_screen);
 	DRI2DestroyDrawable(dri_screen->display, drawable);
+	return 0;
+}
+
+int dri2CopyDrawable(dri_screen_t *dri_screen, XID drawable, int dest, int src)
+{
+	XserverRegion region;
+
+	assert(dri_screen);
+	assert(dest >= DRI_BUFFER_FRONT_LEFT && dest <= DRI_BUFFER_DEPTH_STENCIL);
+	assert(src >= DRI_BUFFER_FRONT_LEFT && src <= DRI_BUFFER_DEPTH_STENCIL);
+
+	region = XFixesCreateRegionFromWindow(dri_screen->display, drawable, WindowRegionBounding);
+	DRI2CopyRegion(dri_screen->display, drawable, region, dest, src);
+	XFixesDestroyRegion(dri_screen->display, region);
+
 	return 0;
 }

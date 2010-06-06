@@ -94,6 +94,7 @@ static enum pipe_mpeg12_motion_type MotionToPipe(int xvmc_motion_type, int xvmc_
    return -1;
 }
 
+#if 0
 static bool
 CreateOrResizeBackBuffer(struct vl_context *vctx, unsigned int width, unsigned int height,
                          struct pipe_surface **backbuffer)
@@ -141,6 +142,7 @@ CreateOrResizeBackBuffer(struct vl_context *vctx, unsigned int width, unsigned i
 
    return true;
 }
+#endif
 
 static void
 MacroBlocksToPipe(struct pipe_screen *screen,
@@ -280,7 +282,6 @@ Status XvMCRenderSurface(Display *dpy, XvMCContext *context, unsigned int pictur
    XvMCSurfacePrivate *past_surface_priv;
    XvMCSurfacePrivate *future_surface_priv;
    struct pipe_mpeg12_macroblock pipe_macroblocks[num_macroblocks];
-   unsigned int i;
 
    XVMC_MSG(XVMC_TRACE, "[XvMC] Rendering to surface %p.\n", target_surface);
 
@@ -331,7 +332,7 @@ Status XvMCRenderSurface(Display *dpy, XvMCContext *context, unsigned int pictur
 
    vpipe->set_decode_target(vpipe, t_vsfc);
    vpipe->decode_macroblocks(vpipe, p_vsfc, f_vsfc, num_macroblocks,
-                             &pipe_macroblocks->base, target_surface_priv->render_fence);
+                             &pipe_macroblocks->base, &target_surface_priv->render_fence);
 
    XVMC_MSG(XVMC_TRACE, "[XvMC] Submitted surface %p for rendering.\n", target_surface);
 
@@ -373,8 +374,7 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
    XvMCContext *context;
    struct pipe_video_rect src_rect = {srcx, srcy, srcw, srch};
    struct pipe_video_rect dst_rect = {destx, desty, destw, desth};
-   void *displaytarget;
-   unsigned width, height;
+   struct pipe_surface *drawable_surface;
 
    XVMC_MSG(XVMC_TRACE, "[XvMC] Displaying surface %p.\n", surface);
 
@@ -387,8 +387,8 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
    context = surface_priv->context;
    context_priv = context->privData;
 
-   displaytarget = vl_displaytarget_get(context_priv->vctx->vscreen, drawable, &width, &height);
-   if (!displaytarget)
+   drawable_surface = vl_drawable_surface_get(context_priv->vctx->vscreen, drawable);
+   if (!drawable_surface)
       return BadDrawable;
 
    assert(flags == XVMC_TOP_FIELD || flags == XVMC_BOTTOM_FIELD || flags == XVMC_FRAME_PICTURE);
@@ -402,15 +402,17 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
     * until the app updates destw and desth.
     */
    /*
-   assert(destx + destw - 1 < width);
-   assert(desty + desth - 1 < height);
+   assert(destx + destw - 1 < drawable_surface->width);
+   assert(desty + desth - 1 < drawable_surface->height);
     */
 
    subpicture_priv = surface_priv->subpicture ? surface_priv->subpicture->privData : NULL;
    vpipe = context_priv->vctx->vpipe;
 
+#if 0
    if (!CreateOrResizeBackBuffer(context_priv->vctx, width, height, &context_priv->backbuffer))
       return BadAlloc;
+#endif
 
    if (subpicture_priv) {
       struct pipe_video_rect src_rect = {surface_priv->subx, surface_priv->suby, surface_priv->subw, surface_priv->subh};
@@ -430,16 +432,18 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
       vpipe->set_picture_layers(vpipe, NULL, NULL, NULL, 0);
 
    vpipe->render_picture(vpipe, surface_priv->pipe_vsfc, PictureToPipe(flags), &src_rect,
-                         context_priv->backbuffer, &dst_rect, surface_priv->disp_fence);
+                         drawable_surface, &dst_rect, surface_priv->disp_fence);
 
    XVMC_MSG(XVMC_TRACE, "[XvMC] Submitted surface %p for display. Pushing to front buffer.\n", surface);
 
    vpipe->screen->flush_frontbuffer
    (
       vpipe->screen,
-      context_priv->backbuffer,
-      displaytarget
+      drawable_surface,
+      vl_contextprivate_get(context_priv->vctx, drawable_surface)
    );
+
+   pipe_surface_reference(&drawable_surface, NULL);
 
    XVMC_MSG(XVMC_TRACE, "[XvMC] Pushed surface %p to front buffer.\n", surface);
 

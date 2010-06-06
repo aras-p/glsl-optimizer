@@ -74,8 +74,7 @@ sp_mpeg12_get_param(struct pipe_video_context *vpipe, int param)
 #endif
          return FALSE;
       case PIPE_CAP_DECODE_TARGET_PREFERRED_FORMAT:
-         //return PIPE_FORMAT_AYUV;
-         return PIPE_FORMAT_VUYA;
+         return ctx->decode_format;
       default:
       {
          debug_printf("Softpipe: Unknown PIPE_CAP %d\n", param);
@@ -322,7 +321,8 @@ sp_mpeg12_create(struct pipe_context *pipe, enum pipe_video_profile profile,
                  unsigned width, unsigned height,
                  enum VL_MPEG12_MC_RENDERER_BUFFER_MODE bufmode,
                  enum VL_MPEG12_MC_RENDERER_EMPTY_BLOCK eb_handling,
-                 bool pot_buffers)
+                 bool pot_buffers,
+                 enum pipe_format decode_format)
 {
    struct sp_mpeg12_context *ctx;
 
@@ -352,6 +352,7 @@ sp_mpeg12_create(struct pipe_context *pipe, enum pipe_video_profile profile,
    ctx->base.set_csc_matrix = sp_mpeg12_set_csc_matrix;
 
    ctx->pipe = pipe;
+   ctx->decode_format = decode_format;
 
    if (!vl_mpeg12_mc_renderer_init(&ctx->mc_renderer, ctx->pipe,
                                    width, height, chroma_format,
@@ -382,7 +383,7 @@ sp_mpeg12_create(struct pipe_context *pipe, enum pipe_video_profile profile,
 struct pipe_video_context *
 sp_video_create(struct pipe_screen *screen, enum pipe_video_profile profile,
                 enum pipe_video_chroma_format chroma_format,
-                unsigned width, unsigned height)
+                unsigned width, unsigned height, void *priv)
 {
    struct pipe_context *pipe;
 
@@ -400,7 +401,8 @@ sp_video_create(struct pipe_screen *screen, enum pipe_video_profile profile,
                              width, height,
                              VL_MPEG12_MC_RENDERER_BUFFER_PICTURE,
                              VL_MPEG12_MC_RENDERER_EMPTY_BLOCK_XFER_ONE,
-                             true);
+                             true,
+                             PIPE_FORMAT_AYUV);
 }
 
 struct pipe_video_context *
@@ -409,7 +411,8 @@ sp_video_create_ex(struct pipe_context *pipe, enum pipe_video_profile profile,
                    unsigned width, unsigned height,
                    enum VL_MPEG12_MC_RENDERER_BUFFER_MODE bufmode,
                    enum VL_MPEG12_MC_RENDERER_EMPTY_BLOCK eb_handling,
-                   bool pot_buffers)
+                   bool pot_buffers,
+                   enum pipe_format decode_format)
 {
    assert(pipe);
    assert(width && height);
@@ -420,7 +423,8 @@ sp_video_create_ex(struct pipe_context *pipe, enum pipe_video_profile profile,
                                  chroma_format,
                                  width, height,
                                  bufmode, eb_handling,
-                                 pot_buffers);
+                                 pot_buffers,
+                                 decode_format);
       default:
          return NULL;
    }

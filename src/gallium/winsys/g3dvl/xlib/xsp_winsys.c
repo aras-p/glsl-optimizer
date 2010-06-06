@@ -26,81 +26,136 @@
  **************************************************************************/
 
 #include <vl_winsys.h>
+#include <X11/Xlibint.h>
 #include <state_tracker/xlib_sw_winsys.h>
 #include <util/u_memory.h>
+#include <util/u_format.h>
 #include <softpipe/sp_public.h>
 #include <softpipe/sp_video_context.h>
 
-/* TODO: Find a good way to calculate this */
-static enum pipe_format VisualToPipe(Visual *visual)
+struct vl_xsp_screen
 {
-   assert(visual);
-   return PIPE_FORMAT_B8G8R8X8_UNORM;
-}
+   struct vl_screen base;
+   Display *display;
+   int screen;
+   Visual visual;
+   struct xlib_drawable xdraw;
+   struct pipe_surface *drawable_surface;
+};
 
-/* XXX: Not thread-safe */
-static struct xlib_drawable xdraw;
-
-void*
-vl_displaytarget_get(struct vl_screen *vscreen, Drawable drawable,
-                     unsigned *width_out, unsigned *height_out)
+struct pipe_surface*
+vl_drawable_surface_get(struct vl_screen *vscreen, Drawable drawable)
 {
+   struct vl_xsp_screen *xsp_screen = (struct vl_xsp_screen*)vscreen;
    Window root;
    int x, y;
    unsigned int width, height;
    unsigned int border_width;
    unsigned int depth;
+   struct pipe_resource templat, *drawable_tex;
+   struct pipe_surface *drawable_surface = NULL;
 
    assert(vscreen);
+   assert(drawable != None);
 
-   if (XGetGeometry(vscreen->display, drawable, &root, &x, &y, &width, &height, &border_width, &depth) == BadDrawable)
+   if (XGetGeometry(xsp_screen->display, drawable, &root, &x, &y, &width, &height, &border_width, &depth) == BadDrawable)
       return NULL;
 
-   if (width_out) *width_out = width;
-   if (height_out) *height_out = height;
+   xsp_screen->xdraw.drawable = drawable;
 
-   xdraw.depth = depth;
-   xdraw.drawable = drawable;
+   if (xsp_screen->drawable_surface) {
+      if (xsp_screen->drawable_surface->width == width &&
+          xsp_screen->drawable_surface->height == height) {
+         pipe_surface_reference(&drawable_surface, xsp_screen->drawable_surface);
+         return drawable_surface;
+      }
+      else
+         pipe_surface_reference(&xsp_screen->drawable_surface, NULL);
+   }
 
-   return &xdraw;
+   memset(&templat, 0, sizeof(struct pipe_resource));
+   templat.target = PIPE_TEXTURE_2D;
+   /* XXX: Need to figure out drawable's format */
+   templat.format = PIPE_FORMAT_B8G8R8X8_UNORM;
+   templat.last_level = 0;
+   templat.width0 = width;
+   templat.height0 = height;
+   templat.depth0 = 1;
+   templat.usage = PIPE_USAGE_DEFAULT;
+   templat.bind = PIPE_BIND_RENDER_TARGET | PIPE_BIND_DISPLAY_TARGET | PIPE_BIND_BLIT_SOURCE;
+   templat.flags = 0;
+
+   drawable_tex = vscreen->pscreen->resource_create(vscreen->pscreen, &templat);
+   if (!drawable_tex)
+      return NULL;
+
+   xsp_screen->drawable_surface = vscreen->pscreen->get_tex_surface(vscreen->pscreen, drawable_tex,
+                                                                    0, 0, 0,
+                                                                    templat.bind);
+   pipe_resource_reference(&drawable_tex, NULL);
+
+   if (!xsp_screen->drawable_surface)
+      return NULL;
+
+   pipe_surface_reference(&drawable_surface, xsp_screen->drawable_surface);
+
+   xsp_screen->xdraw.depth = 24/*util_format_get_blocksizebits(templat.format) /
+                             util_format_get_blockwidth(templat.format)*/;
+
+   return drawable_surface;
+}
+
+void*
+vl_contextprivate_get(struct vl_context *vctx, struct pipe_surface *drawable_surface)
+{
+   struct vl_xsp_screen *xsp_screen = (struct vl_xsp_screen*)vctx->vscreen;
+
+   assert(vctx);
+   assert(drawable_surface);
+   assert(xsp_screen->drawable_surface == drawable_surface);
+
+   return &xsp_screen->xdraw;
 }
 
 struct vl_screen*
 vl_screen_create(Display *display, int screen)
 {
-   struct vl_screen *vscreen;
+   struct vl_xsp_screen *xsp_screen;
    struct sw_winsys *winsys;
 
    assert(display);
 
-   vscreen = CALLOC_STRUCT(vl_screen);
-   if (!vscreen)
+   xsp_screen = CALLOC_STRUCT(vl_xsp_screen);
+   if (!xsp_screen)
       return NULL;
 
    winsys = xlib_create_sw_winsys(display);
    if (!winsys) {
-      FREE(vscreen);
+      FREE(xsp_screen);
       return NULL;
    }
 
-   vscreen->pscreen = softpipe_create_screen(winsys);
-   if (!vscreen->pscreen) {
+   xsp_screen->base.pscreen = softpipe_create_screen(winsys);
+   if (!xsp_screen->base.pscreen) {
       winsys->destroy(winsys);
-      FREE(vscreen);
+      FREE(xsp_screen);
       return NULL;
    }
 
-   vscreen->display = display;
-   xdraw.visual = XDefaultVisual(display, screen);
-   vscreen->format = VisualToPipe(xdraw.visual);
+   xsp_screen->display = display;
+   xsp_screen->screen = screen;
+   xsp_screen->xdraw.visual = XDefaultVisual(display, screen);
 
-   return vscreen;
+   return &xsp_screen->base;
 }
 
 void vl_screen_destroy(struct vl_screen *vscreen)
 {
+   struct vl_xsp_screen *xsp_screen = (struct vl_xsp_screen*)vscreen;
+
    assert(vscreen);
 
+   pipe_surface_reference(&xsp_screen->drawable_surface, NULL);
    vscreen->pscreen->destroy(vscreen->pscreen);
    FREE(vscreen);
 }
@@ -142,8 +197,6 @@ void vl_video_destroy(struct vl_context *vctx)
 {
    assert(vctx);
 
-#if 1
    vctx->vpipe->destroy(vctx->vpipe);
-#endif
    FREE(vctx);
 }

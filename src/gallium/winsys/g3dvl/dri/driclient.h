@@ -100,6 +100,7 @@ int dri2CreateScreen(Display *display, int screen, dri_screen_t **dri_screen);
 int dri2DestroyScreen(dri_screen_t *dri_screen);
 int dri2CreateDrawable(dri_screen_t *dri_screen, XID drawable);
 int dri2DestroyDrawable(dri_screen_t *dri_screen, XID drawable);
+int dri2CopyDrawable(dri_screen_t *dri_screen, XID drawable, int dest, int src);
 
 #define DRI_BUFFER_FRONT_LEFT		0
 #define DRI_BUFFER_BACK_LEFT		1

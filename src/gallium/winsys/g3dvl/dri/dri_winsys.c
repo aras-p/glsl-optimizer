@@ -27,250 +27,28 @@
 
 #include <vl_winsys.h>
 #include <driclient.h>
-#include <state_tracker/dri1_api.h>
 #include <pipe/p_video_context.h>
 #include <pipe/p_state.h>
 #include <util/u_memory.h>
+#include <util/u_hash.h>
+#include <util/u_hash_table.h>
+#include <state_tracker/drm_api.h>
+#include <X11/Xlibint.h>
 
 struct vl_dri_screen
 {
    struct vl_screen base;
-   Visual *visual;
    struct drm_api *api;
    dri_screen_t *dri_screen;
-   dri_framebuffer_t dri_framebuf;
-   struct dri1_api *api_hooks;
-   boolean dri2;
+   struct util_hash_table *drawable_table;
+   Drawable last_seen_drawable;
 };
 
 struct vl_dri_context
 {
    struct vl_context base;
-   boolean is_locked;
-   boolean lost_lock;
-   drmLock *lock;
-   dri_context_t *dri_context;
    int fd;
-   struct pipe_video_context *vpipe;
-   dri_drawable_t *drawable;
-   struct pipe_surface *dri2_front;
 };
-
-static void
-vl_dri_lock(void *priv)
-{
-   struct vl_dri_context *vl_dri_ctx = priv;
-   drm_context_t hw_context;
-   char ret = 0;
-
-   assert(priv);
-
-   hw_context = vl_dri_ctx->dri_context->drm_context;
-
-   DRM_CAS(vl_dri_ctx->lock, hw_context, DRM_LOCK_HELD | hw_context, ret);
-   if (ret) {
-      drmGetLock(vl_dri_ctx->fd, hw_context, 0);
-      vl_dri_ctx->lost_lock = TRUE;
-   }
-   vl_dri_ctx->is_locked = TRUE;
-}
-
-static void
-vl_dri_unlock(void *priv)
-{
-   struct vl_dri_context *vl_dri_ctx = priv;
-   drm_context_t hw_context;
-
-   assert(priv);
-
-   hw_context = vl_dri_ctx->dri_context->drm_context;
-
-   vl_dri_ctx->is_locked = FALSE;
-   DRM_UNLOCK(vl_dri_ctx->fd, vl_dri_ctx->lock, hw_context);
-}
-
-static boolean
-vl_dri_is_locked(void *priv)
-{
-   struct vl_dri_context *vl_dri_ctx = priv;
-
-   assert(priv);
-
-   return vl_dri_ctx->is_locked;
-}
-
-static boolean
-vl_dri_lost_lock(void *priv)
-{
-   struct vl_dri_context *vl_dri_ctx = priv;
-
-   assert(priv);
-
-   return vl_dri_ctx->lost_lock;
-}
-
-static void
-vl_dri_clear_lost_lock(void *priv)
-{
-   struct vl_dri_context *vl_dri_ctx = priv;
-
-   assert(priv);
-
-   vl_dri_ctx->lost_lock = FALSE;
-}
-
-struct dri1_api_lock_funcs dri1_lf =
-{
-   .lock = vl_dri_lock,
-   .unlock = vl_dri_unlock,
-   .is_locked = vl_dri_is_locked,
-   .is_lock_lost = vl_dri_lost_lock,
-   .clear_lost_lock = vl_dri_clear_lost_lock
-};
-
-static void
-vl_dri_copy_version(struct dri1_api_version *dst, dri_version_t *src)
-{
-   assert(src);
-   assert(dst);
-   dst->major = src->major;
-   dst->minor = src->minor;
-   dst->patch_level = src->patch;
-}
-
-static boolean
-vl_dri_intersect_src_bbox(struct drm_clip_rect *dst, int dst_x, int dst_y,
-                          const struct drm_clip_rect *src, const struct drm_clip_rect *bbox)
-{
-   int xy1;
-   int xy2;
-
-   assert(dst);
-   assert(src);
-   assert(bbox);
-
-   xy1 = ((int)src->x1 > (int)bbox->x1 + dst_x) ? src->x1 :
-      (int)bbox->x1 + dst_x;
-   xy2 = ((int)src->x2 < (int)bbox->x2 + dst_x) ? src->x2 :
-      (int)bbox->x2 + dst_x;
-   if (xy1 >= xy2 || xy1 < 0)
-      return FALSE;
-
-   dst->x1 = xy1;
-   dst->x2 = xy2;
-
-   xy1 = ((int)src->y1 > (int)bbox->y1 + dst_y) ? src->y1 :
-      (int)bbox->y1 + dst_y;
-   xy2 = ((int)src->y2 < (int)bbox->y2 + dst_y) ? src->y2 :
-      (int)bbox->y2 + dst_y;
-   if (xy1 >= xy2 || xy1 < 0)
-      return FALSE;
-
-   dst->y1 = xy1;
-   dst->y2 = xy2;
-   return TRUE;
-}
-
-static void
-vl_clip_copy(struct vl_dri_context *vl_dri_ctx,
-             struct pipe_surface *dst,
-             struct pipe_surface *src,
-             const struct drm_clip_rect *src_bbox)
-{
-   struct pipe_video_context *vpipe;
-   struct drm_clip_rect clip;
-   struct drm_clip_rect *cur;
-   int i;
-
-   assert(vl_dri_ctx);
-   assert(dst);
-   assert(src);
-   assert(src_bbox);
-
-   vpipe = vl_dri_ctx->base.vpipe;
-
-   assert(vl_dri_ctx->drawable->cliprects);
-   assert(vl_dri_ctx->drawable->num_cliprects > 0);
-
-   cur = vl_dri_ctx->drawable->cliprects;
-
-   for (i = 0; i < vl_dri_ctx->drawable->num_cliprects; ++i) {
-      if (vl_dri_intersect_src_bbox(&clip, vl_dri_ctx->drawable->x, vl_dri_ctx->drawable->y, cur++, src_bbox))
-         vpipe->surface_copy
-         (
-            vpipe, dst, clip.x1, clip.y1, src,
-            (int)clip.x1 - vl_dri_ctx->drawable->x,
-            (int)clip.y1 - vl_dri_ctx->drawable->y,
-            clip.x2 - clip.x1, clip.y2 - clip.y1
-         );
-   }
-}
-
-static void
-vl_dri_update_drawables_locked(struct vl_dri_context *vl_dri_ctx)
-{
-   struct vl_dri_screen *vl_dri_scrn;
-
-   assert(vl_dri_ctx);
-
-   vl_dri_scrn = (struct vl_dri_screen*)vl_dri_ctx->base.vscreen;
-
-   if (vl_dri_ctx->lost_lock) {
-      vl_dri_ctx->lost_lock = FALSE;
-      DRI_VALIDATE_DRAWABLE_INFO(vl_dri_scrn->dri_screen, vl_dri_ctx->drawable);
-   }
-}
-
-static void
-vl_dri_flush_frontbuffer(struct pipe_screen *screen,
-                         struct pipe_surface *surf, void *context_private)
-{
-   struct vl_dri_context *vl_dri_ctx = (struct vl_dri_context*)context_private;
-   struct vl_dri_screen *vl_dri_scrn;
-   struct drm_clip_rect src_bbox;
-   boolean save_lost_lock = FALSE;
-
-   assert(screen);
-   assert(surf);
-   assert(context_private);
-
-   vl_dri_scrn = (struct vl_dri_screen*)vl_dri_ctx->base.vscreen;
-
-   vl_dri_lock(vl_dri_ctx);
-
-   save_lost_lock = vl_dri_ctx->lost_lock;
-
-   vl_dri_update_drawables_locked(vl_dri_ctx);
-
-   if (vl_dri_ctx->drawable->cliprects) {
-      src_bbox.x1 = 0;
-      src_bbox.x2 = vl_dri_ctx->drawable->w;
-      src_bbox.y1 = 0;
-      src_bbox.y2 = vl_dri_ctx->drawable->h;
-
-#if 0
-      if (vl_dri_scrn->_api_hooks->present_locked)
-         vl_dri_scrn->api_hooks->present_locked(pipe, surf,
-                                                vl_dri_ctx->drawable->cliprects,
-                                                vl_dri_ctx->drawable->num_cliprects,
-                                                vl_dri_ctx->drawable->x, vl_dri_drawable->y,
-                                                &bbox, NULL /*fence*/);
-      else
-#endif
-      if (vl_dri_scrn->api_hooks->front_srf_locked) {
-         struct pipe_surface *front = vl_dri_scrn->api_hooks->front_srf_locked(screen);
-
-         if (front)
-            vl_clip_copy(vl_dri_ctx, front, surf, &src_bbox);
-
-         //st_flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, fence);
-      }
-   }
-
-   vl_dri_ctx->lost_lock = save_lost_lock;
-
-   vl_dri_unlock(vl_dri_ctx);
-}
 
 static struct pipe_surface*
 vl_dri2_get_front(struct vl_dri_screen *vl_dri_scrn, Drawable drawable)
@@ -286,6 +64,9 @@ vl_dri2_get_front(struct vl_dri_screen *vl_dri_scrn, Drawable drawable)
 
    dri2_front = DRI2GetBuffers(vl_dri_scrn->dri_screen->display,
                                drawable, &w, &h, attachments, 1, &count);
+
+   assert(count == 1);
+
    if (dri2_front) {
       struct winsys_handle dri2_front_handle =
       {
@@ -297,7 +78,7 @@ vl_dri2_get_front(struct vl_dri_screen *vl_dri_scrn, Drawable drawable)
 
       memset(&template, 0, sizeof(struct pipe_resource));
       template.target = PIPE_TEXTURE_2D;
-      template.format = vl_dri_scrn->base.format;
+      template.format = PIPE_FORMAT_B8G8R8X8_UNORM;
       template.last_level = 0;
       template.width0 = w;
       template.height0 = h;
@@ -310,8 +91,9 @@ vl_dri2_get_front(struct vl_dri_screen *vl_dri_scrn, Drawable drawable)
       if (front_tex)
          front_surf = vl_dri_scrn->base.pscreen->get_tex_surface(vl_dri_scrn->base.pscreen,
                                                                  front_tex, 0, 0, 0,
-                                                                 /*PIPE_BIND_RENDER_TARGET*/ PIPE_BIND_BLIT_DESTINATION);
+                                                                 PIPE_BIND_RENDER_TARGET);
       pipe_resource_reference(&front_tex, NULL);
+      Xfree(dri2_front);
    }
 
    return front_surf;
@@ -322,119 +104,121 @@ vl_dri2_flush_frontbuffer(struct pipe_screen *screen,
                           struct pipe_surface *surf, void *context_private)
 {
    struct vl_dri_context *vl_dri_ctx = (struct vl_dri_context*)context_private;
-   struct vl_dri_screen *vl_dri_scrn;
-   struct pipe_video_context *vpipe;
+   struct vl_dri_screen *vl_dri_scrn = (struct vl_dri_screen*)vl_dri_ctx->base.vscreen;
 
    assert(screen);
    assert(surf);
    assert(context_private);
-   assert(vl_dri_ctx->dri2_front);
 
-   vl_dri_scrn = (struct vl_dri_screen*)vl_dri_ctx->base.vscreen;
-   vpipe = vl_dri_ctx->base.vpipe;
-
-   /* XXX: Why not just render to fake front? */
-   vpipe->surface_copy(vpipe, vl_dri_ctx->dri2_front, 0, 0, surf, 0, 0, surf->width, surf->height);
-
-   //st_flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, fence);
+   dri2CopyDrawable(vl_dri_scrn->dri_screen, vl_dri_scrn->last_seen_drawable,
+                    DRI_BUFFER_FRONT_LEFT, DRI_BUFFER_FAKE_FRONT_LEFT);
 }
 
-/* XXX: Kill with fire */
-struct vl_dri_context *_vl_dri_ctx = NULL;
-
-void*
-vl_displaytarget_get(struct vl_screen *vscreen, Drawable drawable,
-                     unsigned *width, unsigned *height)
+struct pipe_surface*
+vl_drawable_surface_get(struct vl_screen *vscreen, Drawable drawable)
 {
    struct vl_dri_screen *vl_dri_scrn = (struct vl_dri_screen*)vscreen;
 
    assert(vscreen);
-   assert(width);
-   assert(height);
 
-   if (vl_dri_scrn->dri2 && _vl_dri_ctx) {
-      if (!_vl_dri_ctx->dri2_front) {
-         _vl_dri_ctx->dri2_front = vl_dri2_get_front((struct vl_dri_screen*)vscreen, drawable);
-         if (!_vl_dri_ctx->dri2_front)
-            return NULL;
-         *width = _vl_dri_ctx->dri2_front->width;
-         *height = _vl_dri_ctx->dri2_front->height;
+   if (vl_dri_scrn->last_seen_drawable != drawable) {
+      /* Hash table business depends on this equality */
+      assert(None == NULL);
+      Drawable lookup_drawable = (Drawable)util_hash_table_get(vl_dri_scrn->drawable_table, (void*)drawable);
+      if (lookup_drawable == None) {
+         dri2CreateDrawable(vl_dri_scrn->dri_screen, drawable);
+         util_hash_table_set(vl_dri_scrn->drawable_table, (void*)drawable, (void*)drawable);
       }
-      return _vl_dri_ctx;
+      vl_dri_scrn->last_seen_drawable = drawable;
    }
-   else
-      return NULL;
+
+   return vl_dri2_get_front(vl_dri_scrn, drawable);
+}
+
+void*
+vl_contextprivate_get(struct vl_context *vctx, struct pipe_surface *displaytarget)
+{
+   return vctx;
+}
+
+static unsigned drawable_hash(void *key)
+{
+   Drawable drawable = (Drawable)key;
+   assert(drawable != None);
+   return util_hash_crc32(&drawable, sizeof(Drawable));
+}
+
+static int drawable_cmp(void *key1, void *key2)
+{
+   Drawable d1 = (Drawable)key1;
+   Drawable d2 = (Drawable)key2;
+   assert(d1 != None);
+   assert(d2 != None);
+   return d1 != d2;
+}
+
+static enum pipe_error
+drawable_destroy(void *key, void *value, void *data)
+{
+   Drawable drawable = (Drawable)key;
+   struct vl_dri_screen *vl_dri_scrn = (struct vl_dri_screen*)data;
+
+   assert(drawable != None);
+   assert(value);
+   assert(data);
+
+   dri2DestroyDrawable(vl_dri_scrn->dri_screen, drawable);
+
+   return PIPE_OK;
 }
 
 struct vl_screen*
 vl_screen_create(Display *display, int screen)
 {
    struct vl_dri_screen *vl_dri_scrn;
-   struct dri1_create_screen_arg arg;
+   struct drm_create_screen_arg arg;
 
    assert(display);
 
    vl_dri_scrn = CALLOC_STRUCT(vl_dri_screen);
    if (!vl_dri_scrn)
-      return NULL;
+      goto no_struct;
 
-   /* Try DRI2 first */
-   if (dri2CreateScreen(display, screen, &vl_dri_scrn->dri_screen)) {
-      /* If not, try DRI */
-      if (driCreateScreen(display, screen, &vl_dri_scrn->dri_screen, &vl_dri_scrn->dri_framebuf)) {
-         /* Now what? */
-         FREE(vl_dri_scrn);
-         return NULL;
-      }
-      else {
-         /* Got DRI */
-         arg.base.mode = DRM_CREATE_DRI1;
-         arg.lf = &dri1_lf;
-         arg.ddx_info = vl_dri_scrn->dri_framebuf.private;
-         arg.ddx_info_size = vl_dri_scrn->dri_framebuf.private_size;
-         arg.sarea = vl_dri_scrn->dri_screen->sarea;
-         vl_dri_copy_version(&arg.ddx_version, &vl_dri_scrn->dri_screen->ddx);
-         vl_dri_copy_version(&arg.dri_version, &vl_dri_scrn->dri_screen->dri);
-         vl_dri_copy_version(&arg.drm_version, &vl_dri_scrn->dri_screen->drm);
-         arg.api = NULL;
-         vl_dri_scrn->dri2 = FALSE;
-      }
-   }
-   else {
-      /* Got DRI2 */
-      arg.base.mode = DRM_CREATE_NORMAL;
-      vl_dri_scrn->dri2 = TRUE;
-   }
+   if (dri2CreateScreen(display, screen, &vl_dri_scrn->dri_screen))
+      goto no_dri2screen;
 
    vl_dri_scrn->api = drm_api_create();
-   if (!vl_dri_scrn->api) {
-      FREE(vl_dri_scrn);
-      return NULL;
-   }
+   if (!vl_dri_scrn->api)
+      goto no_drmapi;
+
+   arg.mode = DRM_CREATE_NORMAL;
 
    vl_dri_scrn->base.pscreen = vl_dri_scrn->api->create_screen(vl_dri_scrn->api,
                                                                vl_dri_scrn->dri_screen->fd,
-                                                               &arg.base);
+                                                               &arg);
 
-   if (!vl_dri_scrn->base.pscreen) {
-      FREE(vl_dri_scrn);
-      return NULL;
-   }
+   if (!vl_dri_scrn->base.pscreen)
+      goto no_pscreen;
 
-   if (!vl_dri_scrn->dri2) {
-      vl_dri_scrn->visual = XDefaultVisual(display, screen);
-      vl_dri_scrn->api_hooks = arg.api;
-      vl_dri_scrn->base.format = vl_dri_scrn->api_hooks->front_srf_locked(vl_dri_scrn->base.pscreen)->format;
-      vl_dri_scrn->base.pscreen->flush_frontbuffer = vl_dri_flush_frontbuffer;
-   }
-   else {
-      /* XXX: Fuuuuu... Can't possibly get this right with current code.
-       * Need to rethink this in st/xvmc and winsys dri/xlib winsyses */
-      vl_dri_scrn->base.format = PIPE_FORMAT_B8G8R8X8_UNORM;
-      vl_dri_scrn->base.pscreen->flush_frontbuffer = vl_dri2_flush_frontbuffer;
-   }
+   vl_dri_scrn->drawable_table = util_hash_table_create(&drawable_hash, &drawable_cmp);
+   if (!vl_dri_scrn->drawable_table)
+      goto no_hash;
+
+   vl_dri_scrn->last_seen_drawable = None;
+   vl_dri_scrn->base.pscreen->flush_frontbuffer = vl_dri2_flush_frontbuffer;
 
    return &vl_dri_scrn->base;
+
+no_hash:
+   vl_dri_scrn->base.pscreen->destroy(vl_dri_scrn->base.pscreen);
+no_pscreen:
+   vl_dri_scrn->api->destroy(vl_dri_scrn->api);
+no_drmapi:
+   dri2DestroyScreen(vl_dri_scrn->dri_screen);
+no_dri2screen:
+   FREE(vl_dri_scrn);
+no_struct:
+   return NULL;
 }
 
 void vl_screen_destroy(struct vl_screen *vscreen)
@@ -443,11 +227,12 @@ void vl_screen_destroy(struct vl_screen *vscreen)
 
    assert(vscreen);
 
+   util_hash_table_foreach(vl_dri_scrn->drawable_table, drawable_destroy, vl_dri_scrn);
+   util_hash_table_destroy(vl_dri_scrn->drawable_table);
    vl_dri_scrn->base.pscreen->destroy(vl_dri_scrn->base.pscreen);
-   if (vl_dri_scrn->dri2)
-      dri2DestroyScreen(vl_dri_scrn->dri_screen);
-   else
-      driDestroyScreen(vl_dri_scrn->dri_screen);
+   if (vl_dri_scrn->api->destroy)
+      vl_dri_scrn->api->destroy(vl_dri_scrn->api);
+   dri2DestroyScreen(vl_dri_scrn->dri_screen);
    FREE(vl_dri_scrn);
 }
 
@@ -462,39 +247,33 @@ vl_video_create(struct vl_screen *vscreen,
 
    vl_dri_ctx = CALLOC_STRUCT(vl_dri_context);
    if (!vl_dri_ctx)
-      return NULL;
-
-   /* XXX: Is default visual correct/sufficient here? */
-   if (!vl_dri_scrn->dri2)
-      driCreateContext(vl_dri_scrn->dri_screen, vl_dri_scrn->visual, &vl_dri_ctx->dri_context);
+      goto no_struct;
 
    if (!vscreen->pscreen->video_context_create) {
       debug_printf("[G3DVL] No video support found on %s/%s.\n",
                    vscreen->pscreen->get_vendor(vscreen->pscreen),
                    vscreen->pscreen->get_name(vscreen->pscreen));
-      FREE(vl_dri_ctx);
-      return NULL;
+      goto no_vpipe;
    }
 
    vl_dri_ctx->base.vpipe = vscreen->pscreen->video_context_create(vscreen->pscreen,
                                                                    profile, chroma_format,
                                                                    width, height,
-                                                                   vl_dri_ctx->dri_context);
+                                                                   vl_dri_ctx);
 
-   if (!vl_dri_ctx->base.vpipe) {
-      FREE(vl_dri_ctx);
-      return NULL;
-   }
+   if (!vl_dri_ctx->base.vpipe)
+      goto no_vpipe;
 
    vl_dri_ctx->base.vpipe->priv = vl_dri_ctx;
    vl_dri_ctx->base.vscreen = vscreen;
    vl_dri_ctx->fd = vl_dri_scrn->dri_screen->fd;
-   if (!vl_dri_scrn->dri2)
-      vl_dri_ctx->lock = (drmLock*)&vl_dri_scrn->dri_screen->sarea->lock;
-   else
-      _vl_dri_ctx = vl_dri_ctx;
 
    return &vl_dri_ctx->base;
+
+no_vpipe:
+   FREE(vl_dri_ctx);
+no_struct:
+   return NULL;
 }
 
 void vl_video_destroy(struct vl_context *vctx)
@@ -504,9 +283,5 @@ void vl_video_destroy(struct vl_context *vctx)
    assert(vctx);
 
    vl_dri_ctx->base.vpipe->destroy(vl_dri_ctx->base.vpipe);
-   if (vl_dri_ctx->dri2_front)
-      pipe_surface_reference(&vl_dri_ctx->dri2_front, NULL);
-   if (!((struct vl_dri_screen *)vctx->vscreen)->dri2)
-      driDestroyContext(vl_dri_ctx->dri_context);
    FREE(vl_dri_ctx);
 }
