@@ -32,9 +32,9 @@
 #include "radeon_drm.h"
 #include "radeon_r300.h"
 #include "radeon_buffer.h"
+#include "radeon_drm_public.h"
 
 #include "r300_winsys.h"
-#include "trace/tr_drm.h"
 
 #include "util/u_memory.h"
 
@@ -153,7 +153,7 @@ static void do_ioctls(int fd, struct radeon_libdrm_winsys* winsys)
 }
 
 /* Create a pipe_screen. */
-struct pipe_screen* radeon_create_screen(struct drm_api* api, int drmFB)
+struct r300_winsys_screen* r300_drm_winsys_screen_create(int drmFB)
 {
     struct radeon_libdrm_winsys* rws; 
     boolean ret;
@@ -171,22 +171,10 @@ struct pipe_screen* radeon_create_screen(struct drm_api* api, int drmFB)
         ret = radeon_setup_winsys(drmFB, rws);
 	if (ret == FALSE)
 	    goto fail;
-        return r300_create_screen(&rws->base);
+        return &rws->base;
     }
 
 fail:
     FREE(rws);
     return NULL;
-}
-
-static struct drm_api radeon_drm_api_hooks = {
-    .name = "radeon",
-    .driver_name = "radeon",
-    .create_screen = radeon_create_screen,
-    .destroy = NULL,
-};
-
-struct drm_api* drm_api_create()
-{
-    return trace_drm_create(&radeon_drm_api_hooks);
 }

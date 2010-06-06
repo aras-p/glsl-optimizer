@@ -30,6 +30,7 @@
 #include "r300_screen_buffer.h"
 #include "r300_state_inlines.h"
 #include "r300_winsys.h"
+#include "r300_public.h"
 
 /* Return the identifier behind whom the brave coders responsible for this
  * amalgamation of code, sweat, and duct tape, routinely obscure their names.
@@ -366,7 +367,7 @@ static int r300_fence_finish(struct pipe_screen *screen,
     return 0; /* 0 == success */
 }
 
-struct pipe_screen* r300_create_screen(struct r300_winsys_screen *rws)
+struct pipe_screen* r300_screen_create(struct r300_winsys_screen *rws)
 {
     struct r300_screen *r300screen = CALLOC_STRUCT(r300_screen);
 

@@ -180,7 +180,4 @@ struct r300_winsys_screen {
 struct r300_winsys_screen *
 r300_winsys_screen(struct pipe_screen *screen);
 
-/* Creates a new r300 screen. */
-struct pipe_screen* r300_create_screen(struct r300_winsys_screen *rws);
-
 #endif /* R300_WINSYS_H */
