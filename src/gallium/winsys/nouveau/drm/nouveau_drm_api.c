@@ -23,8 +23,7 @@ nouveau_drm_destroy_winsys(struct pipe_winsys *s)
 }
 
 static struct pipe_screen *
-nouveau_drm_create_screen(struct drm_api *api, int fd,
-			  struct drm_create_screen_arg *arg)
+nouveau_drm_create_screen(struct drm_api *api, int fd)
 {
 	struct nouveau_winsys *nvws;
 	struct pipe_winsys *ws;
