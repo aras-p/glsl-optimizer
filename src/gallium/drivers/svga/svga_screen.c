@@ -29,6 +29,7 @@
 #include "util/u_math.h"
 
 #include "svga_winsys.h"
+#include "svga_public.h"
 #include "svga_context.h"
 #include "svga_screen.h"
 #include "svga_resource_texture.h"
