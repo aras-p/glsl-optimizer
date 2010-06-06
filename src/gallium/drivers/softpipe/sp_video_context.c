@@ -402,7 +402,7 @@ sp_video_create(struct pipe_screen *screen, enum pipe_video_profile profile,
                              VL_MPEG12_MC_RENDERER_BUFFER_PICTURE,
                              VL_MPEG12_MC_RENDERER_EMPTY_BLOCK_XFER_ONE,
                              true,
-                             PIPE_FORMAT_AYUV);
+                             PIPE_FORMAT_XYUV);
 }
 
 struct pipe_video_context *

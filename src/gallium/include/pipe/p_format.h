@@ -195,6 +195,8 @@ enum pipe_format {
    PIPE_FORMAT_NV21                  = 140,
    PIPE_FORMAT_AYUV                  = PIPE_FORMAT_A8R8G8B8_UNORM,
    PIPE_FORMAT_VUYA                  = PIPE_FORMAT_B8G8R8A8_UNORM,
+   PIPE_FORMAT_XYUV                  = PIPE_FORMAT_X8R8G8B8_UNORM,
+   PIPE_FORMAT_VUYX                  = PIPE_FORMAT_B8G8R8X8_UNORM,
    PIPE_FORMAT_IA44                  = 141,
    PIPE_FORMAT_AI44                  = 142,
 
@@ -207,6 +209,7 @@ enum pipe_video_chroma_format
    PIPE_VIDEO_CHROMA_FORMAT_422,
    PIPE_VIDEO_CHROMA_FORMAT_444
 };
+
 #ifdef __cplusplus
 }
 #endif
