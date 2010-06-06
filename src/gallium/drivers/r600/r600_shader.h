@@ -114,6 +114,7 @@ int r600_shader_vfetch_bytecode(struct r600_shader *rshader,
 int r600_shader_update(struct r600_shader *rshader,
 			enum pipe_format *resource_format);
 int r600_shader_legalize(struct r600_shader *rshader);
+int r600_cshader_legalize(struct c_shader *shader);
 
 int r700_shader_translate(struct r600_shader *rshader);
 

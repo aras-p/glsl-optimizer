@@ -435,7 +435,7 @@ static int r600_shader_alu_translate(struct r600_shader *rshader,
 {
 	struct r600_shader_node *rnode;
 	struct r600_shader_alu *alu;
-	int i, j, r, comp;
+	int i, j, r, comp, litteral_lastcomp = -1;
 
 	if (!c_list_empty(&node->vfetch)) {
 		rnode = r600_shader_new_node(rshader, node->node);
@@ -481,6 +481,25 @@ static int r600_shader_alu_translate(struct r600_shader *rshader,
 				fprintf(stderr, "%s %d register failed\n", __FILE__, __LINE__);
 				return r;
 			}
+			if (instruction->op[i].input[j].vector->file == C_FILE_IMMEDIATE) {
+				r = instruction->op[i].input[j].swizzle;
+				switch (r) {
+				case C_SWIZZLE_X:
+				case C_SWIZZLE_Y:
+				case C_SWIZZLE_Z:
+				case C_SWIZZLE_W:
+					break;
+				case C_SWIZZLE_0:
+				case C_SWIZZLE_1:
+				default:
+					fprintf(stderr, "%s %d invalid input\n", __func__, __LINE__);
+					return -EINVAL;
+				}
+				alu->literal[r] = instruction->op[i].input[j].vector->channel[r]->value;
+				if (r > litteral_lastcomp) {
+					litteral_lastcomp = r;
+				}
+			}
 		}
 		r = r600_shader_find_gpr(rshader, instruction->op[i].output.vector,
 				instruction->op[i].output.swizzle, &alu->alu[comp].dst);
@@ -489,6 +508,20 @@ static int r600_shader_alu_translate(struct r600_shader *rshader,
 			return r;
 		}
 	}
+	switch (litteral_lastcomp) {
+	case 0:
+	case 1:
+		alu->nliteral = 2;
+		break;
+	case 2:
+	case 3:
+		alu->nliteral = 4;
+		break;
+	case -1:
+	default:
+		break;
+	}
+printf("nliteral: %d\n", alu->nliteral);
 	for (i = instruction->nop; i >= 0; i--) {
 		if (alu->alu[i].inst != INST_NOP) {
 			alu->alu[i].last = 1;
@@ -539,24 +572,45 @@ void r600_shader_node_place(struct r600_shader *rshader)
 
 int r600_shader_legalize(struct r600_shader *rshader)
 {
-	struct r600_shader_node *node, *nnode;
-	struct r600_shader_alu *alu, *nalu;
-
-#if 0
-	c_list_for_each_safe(node, nnode, &rshader->nodes) {
-		c_list_for_each_safe(alu, nalu, &node->alu) {
-			alu->nalu = 5;
-			alu->alu[4].last = 1;
-		}
-	}
-#endif
 	return 0;
 }
 
 
+static int r600_cshader_legalize_rec(struct c_shader *shader, struct c_node *node)
+{
+	struct c_node_link *link;
+	struct c_instruction *i;
+	struct c_operand operand;
+	unsigned k;
+	int r;
 
+	c_list_for_each(i, &node->insts) {
+		for (k = 0; k < i->nop; k++) {
+			switch (i->op[k].opcode) {
+			case C_OPCODE_SLT:
+				i->op[k].opcode = C_OPCODE_SGT;
+				memcpy(&operand, &i->op[k].input[0], sizeof(struct c_operand));
+				memcpy(&i->op[k].input[0], &i->op[k].input[1], sizeof(struct c_operand));
+				memcpy(&i->op[k].input[1], &operand, sizeof(struct c_operand));
+				break;
+			default:
+				break;
+			}
+		}
+	}
+	c_list_for_each(link, &node->childs) {
+		r = r600_cshader_legalize_rec(shader, link->node);
+		if (r) {
+			return r;
+		}
+	}
+	return 0;
+}
 
-
+int r600_cshader_legalize(struct c_shader *shader)
+{
+	return r600_cshader_legalize_rec(shader, &shader->entry);
+}
 
 
 struct r600_instruction_info r600_instruction_info[] = {
@@ -733,7 +787,7 @@ struct r600_alu_instruction r600_alu_instruction[C_OPCODE_LAST] = {
 	{C_OPCODE_RFL,		INST_NOP},
 	{C_OPCODE_SEQ,		INST_NOP},
 	{C_OPCODE_SFL,		INST_NOP},
-	{C_OPCODE_SGT,		INST_NOP},
+	{C_OPCODE_SGT,		INST_SETGT},
 	{C_OPCODE_SIN,		INST_SIN},
 	{C_OPCODE_SLE,		INST_NOP},
 	{C_OPCODE_SNE,		INST_NOP},

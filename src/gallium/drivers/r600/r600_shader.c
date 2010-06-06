@@ -156,6 +156,12 @@ struct r600_pipe_shader *r600_pipe_shader_create(struct pipe_context *ctx, unsig
 		return NULL;
 	}
 	c_shader_dump(&rshader->cshader);
+	r = r600_cshader_legalize(&rshader->cshader);
+	if (r) {
+		r600_pipe_shader_destroy(ctx, rpshader);
+		fprintf(stderr, "ERROR(%s %d)>>\n\n", __func__, __LINE__);
+		return NULL;
+	}
 	r = r700_shader_translate(rshader);
 	if (r) {
 		r600_pipe_shader_destroy(ctx, rpshader);
