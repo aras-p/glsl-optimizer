@@ -169,6 +169,20 @@ ir_constant_visitor::visit(ir_expression *ir)
 	    f[c] = op[0]->value.u[c];
       }
       break;
+   case ir_unop_b2f:
+      assert(op[0]->type->base_type == GLSL_TYPE_BOOL);
+      type = ir->type;
+      for (c = 0; c < ir->operands[0]->type->components(); c++) {
+	 f[c] = op[0]->value.b[c] ? 1.0 : 0.0;
+      }
+      break;
+   case ir_unop_f2b:
+      assert(op[0]->type->base_type == GLSL_TYPE_FLOAT);
+      type = ir->type;
+      for (c = 0; c < ir->operands[0]->type->components(); c++) {
+	 b[c] = bool(op[0]->value.f[c]);
+      }
+      break;
 
    case ir_unop_neg:
       type = ir->type;
