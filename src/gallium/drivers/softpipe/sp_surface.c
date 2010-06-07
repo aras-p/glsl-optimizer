@@ -33,4 +33,6 @@ void
 sp_init_surface_functions(struct softpipe_context *sp)
 {
    sp->pipe.resource_copy_region = util_resource_copy_region;
+   sp->pipe.clear_render_target = util_clear_render_target;
+   sp->pipe.clear_depth_stencil = util_clear_depth_stencil;
 }
