@@ -149,6 +149,15 @@ lp_sampler_static_state(struct lp_sampler_static_state *state,
 
 
 void
+lp_build_sample_partial_offset(struct lp_build_context *bld,
+                               unsigned block_length,
+                               LLVMValueRef coord,
+                               LLVMValueRef stride,
+                               LLVMValueRef *out_offset,
+                               LLVMValueRef *out_i);
+
+
+void
 lp_build_sample_offset(struct lp_build_context *bld,
                        const struct util_format_description *format_desc,
                        LLVMValueRef x,
