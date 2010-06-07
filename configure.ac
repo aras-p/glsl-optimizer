@@ -503,40 +503,6 @@ AC_SUBST([GALLIUM_STATE_TRACKERS_DIRS])
 AC_SUBST([MESA_LLVM])
 
 dnl
-dnl User supplied program configuration
-dnl
-if test -d "$srcdir/progs/demos"; then
-    default_demos=yes
-else
-    default_demos=no
-fi
-AC_ARG_WITH([demos],
-    [AS_HELP_STRING([--with-demos@<:@=DIRS...@:>@],
-        [optional comma delimited demo directories to build
-        @<:@default=auto if source available@:>@])],
-    [with_demos="$withval"],
-    [with_demos="$default_demos"])
-if test "x$with_demos" = x; then
-    with_demos=no
-fi
-
-dnl If $with_demos is yes, directories will be added as libs available
-PROGRAM_DIRS=""
-case "$with_demos" in
-no) ;;
-yes) ;;
-*)
-    # verify the requested demos directories exist
-    demos=`IFS=,; echo $with_demos`
-    for demo in $demos; do
-        test -d "$srcdir/progs/$demo" || \
-            AC_MSG_ERROR([Program directory '$demo' doesn't exist])
-    done
-    PROGRAM_DIRS="$demos"
-    ;;
-esac
-
-dnl
 dnl Find out if X is available. The variable have_x is set if libX11 is
 dnl found to mimic AC_PATH_XTRA.
 dnl
@@ -1013,10 +979,6 @@ if test "x$enable_egl" = xyes; then
         if test "$have_xcb_dri2" = yes; then
             EGL_DRIVERS_DIRS="$EGL_DRIVERS_DIRS dri2"
         fi
-    fi
-
-    if test "$with_demos" = yes; then
-        PROGRAM_DIRS="$PROGRAM_DIRS egl/eglut"
     fi
 fi
 AC_SUBST([EGL_LIB_DEPS])
@@ -1633,15 +1595,6 @@ fi
 echo "        GLU:             $enable_glu"
 echo "        GLw:             $enable_glw (Motif: $enable_motif)"
 echo "        glut:            $enable_glut"
-
-dnl Programs
-# cleanup the programs var for display
-program_dirs=`echo $PROGRAM_DIRS | $SED 's/^ *//;s/  */ /;s/ *$//'`
-if test "x$program_dirs" = x; then
-    echo "        Demos:           no"
-else
-    echo "        Demos:           $program_dirs"
-fi
 
 dnl Compiler options
 # cleanup the CFLAGS/CXXFLAGS/DEFINES vars
