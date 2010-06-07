@@ -42,17 +42,9 @@ intel_batchbuffer_reset(struct intel_batchbuffer *batch)
       batch->buf = NULL;
    }
 
-   if (!batch->buffer)
-      batch->buffer = malloc (intel->maxBatchSize);
-
    batch->buf = dri_bo_alloc(intel->bufmgr, "batchbuffer",
 			     intel->maxBatchSize, 4096);
-   if (batch->buffer)
-      batch->map = batch->buffer;
-   else {
-      dri_bo_map(batch->buf, GL_TRUE);
-      batch->map = batch->buf->virtual;
-   }
+   batch->map = batch->buffer;
    batch->size = intel->maxBatchSize;
    batch->ptr = batch->map;
    batch->reserved_space = BATCH_RESERVED;
@@ -65,6 +57,7 @@ intel_batchbuffer_alloc(struct intel_context *intel)
    struct intel_batchbuffer *batch = calloc(sizeof(*batch), 1);
 
    batch->intel = intel;
+   batch->buffer = malloc(intel->maxBatchSize);
    intel_batchbuffer_reset(batch);
 
    return batch;
@@ -73,14 +66,7 @@ intel_batchbuffer_alloc(struct intel_context *intel)
 void
 intel_batchbuffer_free(struct intel_batchbuffer *batch)
 {
-   if (batch->buffer)
-      free (batch->buffer);
-   else {
-      if (batch->map) {
-	 dri_bo_unmap(batch->buf);
-	 batch->map = NULL;
-      }
-   }
+   free (batch->buffer);
    dri_bo_unreference(batch->buf);
    batch->buf = NULL;
    free(batch);
@@ -97,12 +83,8 @@ do_flush_locked(struct intel_batchbuffer *batch, GLuint used)
    int ret = 0;
    int x_off = 0, y_off = 0;
 
-   if (batch->buffer)
-      dri_bo_subdata (batch->buf, 0, used, batch->buffer);
-   else
-      dri_bo_unmap(batch->buf);
+   dri_bo_subdata (batch->buf, 0, used, batch->buffer);
 
-   batch->map = NULL;
    batch->ptr = NULL;
 
    if (!intel->no_hw)
