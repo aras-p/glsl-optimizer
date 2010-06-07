@@ -126,7 +126,7 @@ _intel_batchbuffer_flush(struct intel_batchbuffer *batch, const char *file,
 	      used);
 
    batch->reserved_space = 0;
-   /* Emit a flush if the bufmgr doesn't do it for us. */
+
    if (intel->always_flush_cache) {
       intel_batchbuffer_emit_mi_flush(batch);
       used = batch->ptr - batch->map;
@@ -163,9 +163,6 @@ _intel_batchbuffer_flush(struct intel_batchbuffer *batch, const char *file,
    /* Check that we didn't just wrap our batchbuffer at a bad time. */
    assert(!intel->no_batch_wrap);
 
-   /* TODO: Just pass the relocation list and dma buffer up to the
-    * kernel.
-    */
    do_flush_locked(batch, used);
 
    if (INTEL_DEBUG & DEBUG_SYNC) {
