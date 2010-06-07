@@ -55,7 +55,6 @@ prepare_so_emit( struct pt_so_emit *emit,
    unsigned i;
    struct translate_key hw_key;
    unsigned dst_offset = 0;
-   unsigned output_stride = 0;
 
    if (emit->has_so) {
       for (i = 0; i < draw->so.state.num_outputs; ++i) {
@@ -72,6 +71,12 @@ prepare_so_emit( struct pt_so_emit *emit,
          /* doesn't handle EMIT_OMIT */
          assert(emit_sz != 0);
 
+         if (draw->so.state.register_mask[i] != TGSI_WRITEMASK_XYZW) {
+            /* we only support rendering with XYZW writemask*/
+            debug_printf("NOT_IMPLEMENTED(writemask with stream output) at %s: %s:%d\n",
+                         __FUNCTION__, __FILE__, __LINE__);
+         }
+
          hw_key.element[i].type = TRANSLATE_ELEMENT_NORMAL;
          hw_key.element[i].input_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
          hw_key.element[i].input_buffer = 0;
@@ -81,10 +86,9 @@ prepare_so_emit( struct pt_so_emit *emit,
          hw_key.element[i].output_offset = dst_offset;
 
          dst_offset += emit_sz;
-         output_stride += emit_sz;
       }
       hw_key.nr_elements = draw->so.state.num_outputs;
-      hw_key.output_stride = output_stride;
+      hw_key.output_stride = draw->so.state.stride;
 
       if (!emit->translate ||
           translate_key_compare(&emit->translate->key, &hw_key) != 0)
@@ -155,9 +159,11 @@ void draw_pt_so_emit( struct pt_so_emit *emit,
       return;
    }
 
-
-   /* XXX we only support single output buffer right now */
-   debug_assert(draw->so.num_buffers >= 0);
+   /* XXX we only support single output buffer */
+   if (draw->so.num_buffers != 1) {
+      debug_printf("NOT_IMPLEMENTED(multiple stream output buffers) at %s: %s:%d\n",
+                   __FUNCTION__, __FILE__, __LINE__);
+   }
 
    translate->set_buffer(translate, 0, vertex_data,
                          stride, ~0);
