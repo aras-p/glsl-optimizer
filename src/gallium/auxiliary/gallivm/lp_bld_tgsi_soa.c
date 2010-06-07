@@ -45,7 +45,6 @@
 #include "tgsi/tgsi_info.h"
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_util.h"
-#include "tgsi/tgsi_exec.h"
 #include "tgsi/tgsi_scan.h"
 #include "lp_bld_type.h"
 #include "lp_bld_const.h"
@@ -76,6 +75,7 @@
 #define CHAN_Y 1
 #define CHAN_Z 2
 #define CHAN_W 3
+#define NUM_CHANNELS 4
 
 #define LP_MAX_INSTRUCTIONS 256
 
