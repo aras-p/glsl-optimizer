@@ -26,7 +26,6 @@
 #include <stdio.h>
 #include <errno.h>
 #include <util/u_inlines.h>
-#include <util/u_format.h>
 #include "r600_screen.h"
 #include "r600d.h"
 
