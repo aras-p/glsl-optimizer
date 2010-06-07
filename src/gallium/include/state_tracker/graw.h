@@ -34,6 +34,9 @@ PUBLIC struct pipe_screen *graw_create_window_and_screen( int x,
 PUBLIC void graw_set_display_func( void (*func)( void ) );
 PUBLIC void graw_main_loop( void );
 
+PUBLIC void *graw_parse_geometry_shader( struct pipe_context *pipe,
+                                         const char *text );
+
 PUBLIC void *graw_parse_vertex_shader( struct pipe_context *pipe,
                                        const char *text );
 
