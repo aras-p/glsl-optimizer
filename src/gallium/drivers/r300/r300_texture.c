@@ -139,7 +139,7 @@ uint32_t r300_translate_texformat(enum pipe_format format,
                     return R300_TX_FORMAT_X16;
                 case PIPE_FORMAT_X8Z24_UNORM:
                 case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
-                    return R300_TX_FORMAT_W24_FP;
+                    return R500_TX_FORMAT_Y8X24;
                 default:
                     return ~0; /* Unsupported. */
             }
@@ -339,6 +339,8 @@ uint32_t r500_tx_format_msb_bit(enum pipe_format format)
     switch (format) {
         case PIPE_FORMAT_RGTC1_UNORM:
         case PIPE_FORMAT_RGTC1_SNORM:
+        case PIPE_FORMAT_X8Z24_UNORM:
+        case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
             return R500_TXFORMAT_MSB;
         default:
             return 0;

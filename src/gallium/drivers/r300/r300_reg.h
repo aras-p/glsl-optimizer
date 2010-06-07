@@ -1575,6 +1575,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R500_TX_FORMAT_Y10X10                0x3
 #       define R500_TX_FORMAT_W10Z10Y10X10          0x4
 #       define R500_TX_FORMAT_ATI1N                 0x5
+#       define R500_TX_FORMAT_Y8X24                 0x6
 
 
 #       define R300_TX_FORMAT_SIGNED_W             (1 << 5)
