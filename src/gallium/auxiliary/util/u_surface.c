@@ -199,7 +199,6 @@ util_resource_copy_region(struct pipe_context *pipe,
  * Fallback for pipe->clear_render_target() function.
  * XXX this looks too hackish to be really useful.
  * cpp > 4 looks like a gross hack at best...
- * and we're missing the equivalent clear_depth_stencil fallback.
  * Plus can't use these transfer fallbacks when clearing
  * multisampled surfaces for instance.
  */
@@ -269,6 +268,113 @@ util_clear_render_target(struct pipe_context *pipe,
 	 }
       }
       break;
+      default:
+         assert(0);
+         break;
+      }
+   }
+
+   pipe->transfer_unmap(pipe, dst_trans);
+   pipe->transfer_destroy(pipe, dst_trans);
+}
+
+/**
+ * Fallback for pipe->clear_stencil() function.
+ * sw fallback doesn't look terribly useful here.
+ * Plus can't use these transfer fallbacks when clearing
+ * multisampled surfaces for instance.
+ */
+void
+util_clear_depth_stencil(struct pipe_context *pipe,
+                         struct pipe_surface *dst,
+                         unsigned clear_flags,
+                         double depth,
+                         unsigned stencil,
+                         unsigned dstx, unsigned dsty,
+                         unsigned width, unsigned height)
+{
+   struct pipe_transfer *dst_trans;
+   ubyte *dst_map;
+   boolean need_rmw = FALSE;
+
+   if ((clear_flags & PIPE_CLEAR_DEPTHSTENCIL) &&
+       ((clear_flags & PIPE_CLEAR_DEPTHSTENCIL) != PIPE_CLEAR_DEPTHSTENCIL) &&
+       util_format_is_depth_and_stencil(dst->format))
+      need_rmw = TRUE;
+
+   assert(dst->texture);
+   if (!dst->texture)
+      return;
+   dst_trans = pipe_get_transfer(pipe,
+                                 dst->texture,
+                                 dst->face,
+                                 dst->level,
+                                 dst->zslice,
+                                 (need_rmw ? PIPE_TRANSFER_READ_WRITE :
+                                     PIPE_TRANSFER_WRITE),
+                                 dstx, dsty, width, height);
+
+   dst_map = pipe->transfer_map(pipe, dst_trans);
+
+   assert(dst_map);
+
+   if (dst_map) {
+      unsigned dst_stride = dst_trans->stride;
+      unsigned zstencil = util_pack_z_stencil(dst->texture->format, depth, stencil);
+      unsigned i, j;
+      assert(dst_trans->stride > 0);
+
+      switch (util_format_get_blocksize(dst->format)) {
+      case 1:
+         assert(dst->format == PIPE_FORMAT_S8_USCALED);
+         if(dst_stride == width)
+            memset(dst_map, (ubyte) zstencil, height * width);
+         else {
+            for (i = 0; i < height; i++) {
+               memset(dst_map, (ubyte) zstencil, width);
+               dst_map += dst_stride;
+            }
+         }
+         break;
+      case 2:
+         assert(dst->format == PIPE_FORMAT_Z16_UNORM);
+         for (i = 0; i < height; i++) {
+            uint16_t *row = (uint16_t *)dst_map;
+            for (j = 0; j < width; j++)
+               *row++ = (uint16_t) zstencil;
+            dst_map += dst_stride;
+            }
+         break;
+      case 4:
+         if (!need_rmw) {
+            for (i = 0; i < height; i++) {
+               uint32_t *row = (uint32_t *)dst_map;
+               for (j = 0; j < width; j++)
+                  *row++ = zstencil;
+               dst_map += dst_stride;
+            }
+         }
+         else {
+            uint32_t dst_mask;
+            if (dst->format == PIPE_FORMAT_Z24_UNORM_S8_USCALED)
+               dst_mask = 0xffffff00;
+            else {
+               assert(dst->format == PIPE_FORMAT_S8_USCALED_Z24_UNORM);
+               dst_mask = 0xffffff;
+            }
+            if (clear_flags & PIPE_CLEAR_DEPTH)
+               dst_mask = ~dst_mask;
+            for (i = 0; i < height; i++) {
+               uint32_t *row = (uint32_t *)dst_map;
+               for (j = 0; j < width; j++) {
+                  uint32_t tmp = *row & dst_mask;
+                  *row++ = tmp & (zstencil & ~dst_mask);
+               }
+               dst_map += dst_stride;
+            }
+         }
+        break;
+      case 8:
       default:
          assert(0);
          break;
