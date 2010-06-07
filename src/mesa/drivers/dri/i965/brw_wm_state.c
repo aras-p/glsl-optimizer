@@ -213,28 +213,24 @@ wm_unit_create_from_key(struct brw_context *brw, struct brw_wm_unit_key *key,
 			 &wm, sizeof(wm));
 
    /* Emit WM program relocation */
-   dri_bo_emit_reloc(bo,
-		     I915_GEM_DOMAIN_INSTRUCTION, 0,
-		     wm.thread0.grf_reg_count << 1,
-		     offsetof(struct brw_wm_unit_state, thread0),
-		     brw->wm.prog_bo);
+   drm_intel_bo_emit_reloc(bo, offsetof(struct brw_wm_unit_state, thread0),
+			   brw->wm.prog_bo, wm.thread0.grf_reg_count << 1,
+			   I915_GEM_DOMAIN_INSTRUCTION, 0);
 
    /* Emit scratch space relocation */
    if (key->total_scratch != 0) {
-      dri_bo_emit_reloc(bo,
-			0, 0,
-			wm.thread2.per_thread_scratch_space,
-			offsetof(struct brw_wm_unit_state, thread2),
-			brw->wm.scratch_bo);
+      drm_intel_bo_emit_reloc(bo, offsetof(struct brw_wm_unit_state, thread2),
+			      brw->wm.scratch_bo,
+			      wm.thread2.per_thread_scratch_space,
+			      0, 0);
    }
 
    /* Emit sampler state relocation */
    if (key->sampler_count != 0) {
-      dri_bo_emit_reloc(bo,
-			I915_GEM_DOMAIN_INSTRUCTION, 0,
-			wm.wm4.stats_enable | (wm.wm4.sampler_count << 2),
-			offsetof(struct brw_wm_unit_state, wm4),
-			brw->wm.sampler_bo);
+      drm_intel_bo_emit_reloc(bo, offsetof(struct brw_wm_unit_state, wm4),
+			      brw->wm.sampler_bo, (wm.wm4.stats_enable |
+						   (wm.wm4.sampler_count << 2)),
+			      I915_GEM_DOMAIN_INSTRUCTION, 0);
    }
 
    return bo;

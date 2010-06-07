@@ -167,11 +167,9 @@ vs_unit_create_from_key(struct brw_context *brw, struct brw_vs_unit_key *key)
 			 &vs, sizeof(vs));
 
    /* Emit VS program relocation */
-   dri_bo_emit_reloc(bo,
-		     I915_GEM_DOMAIN_INSTRUCTION, 0,
-		     vs.thread0.grf_reg_count << 1,
-		     offsetof(struct brw_vs_unit_state, thread0),
-		     brw->vs.prog_bo);
+   drm_intel_bo_emit_reloc(bo, offsetof(struct brw_vs_unit_state, thread0),
+			   brw->vs.prog_bo, vs.thread0.grf_reg_count << 1,
+			   I915_GEM_DOMAIN_INSTRUCTION, 0);
 
    return bo;
 }

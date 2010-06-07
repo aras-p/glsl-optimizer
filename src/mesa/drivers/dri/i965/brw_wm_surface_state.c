@@ -667,11 +667,9 @@ brw_wm_get_binding_table(struct brw_context *brw)
       /* Emit binding table relocations to surface state */
       for (i = 0; i < BRW_WM_MAX_SURF; i++) {
 	 if (brw->wm.surf_bo[i] != NULL) {
-	    dri_bo_emit_reloc(bind_bo,
-			      I915_GEM_DOMAIN_INSTRUCTION, 0,
-			      0,
-			      i * sizeof(GLuint),
-			      brw->wm.surf_bo[i]);
+	    drm_intel_bo_emit_reloc(bind_bo, i * sizeof(GLuint),
+				    brw->wm.surf_bo[i], 0,
+				    I915_GEM_DOMAIN_INSTRUCTION, 0);
 	 }
       }
    }

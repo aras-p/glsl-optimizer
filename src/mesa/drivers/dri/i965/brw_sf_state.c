@@ -327,18 +327,15 @@ sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
     * something loaded through the GPE (L2 ISC), so it's INSTRUCTION domain.
     */
    /* Emit SF program relocation */
-   dri_bo_emit_reloc(bo,
-		     I915_GEM_DOMAIN_INSTRUCTION, 0,
-		     sf.thread0.grf_reg_count << 1,
-		     offsetof(struct brw_sf_unit_state, thread0),
-		     brw->sf.prog_bo);
+   drm_intel_bo_emit_reloc(bo, offsetof(struct brw_sf_unit_state, thread0),
+			   brw->sf.prog_bo, sf.thread0.grf_reg_count << 1,
+			   I915_GEM_DOMAIN_INSTRUCTION, 0);
 
    /* Emit SF viewport relocation */
-   dri_bo_emit_reloc(bo,
-		     I915_GEM_DOMAIN_INSTRUCTION, 0,
-		     sf.sf5.front_winding | (sf.sf5.viewport_transform << 1),
-		     offsetof(struct brw_sf_unit_state, sf5),
-		     brw->sf.vp_bo);
+   drm_intel_bo_emit_reloc(bo, offsetof(struct brw_sf_unit_state, sf5),
+			   brw->sf.vp_bo, (sf.sf5.front_winding |
+					   (sf.sf5.viewport_transform << 1)),
+			   I915_GEM_DOMAIN_INSTRUCTION, 0);
 
    return bo;
 }
