@@ -192,6 +192,22 @@ intel_region_alloc(struct intel_screen *screen,
 				      aligned_pitch / cpp, tiling, buffer);
 }
 
+GLboolean
+intel_region_flink(struct intel_region *region, uint32_t *name)
+{
+   if (region->name == 0) {
+      if (drm_intel_bo_flink(region->buffer, &region->name))
+	 return GL_FALSE;
+      
+      _mesa_HashInsert(region->screen->named_regions,
+		       region->name, region);
+   }
+
+   *name = region->name;
+
+   return GL_TRUE;
+}
+
 struct intel_region *
 intel_region_alloc_for_handle(struct intel_screen *screen,
 			      GLuint cpp,

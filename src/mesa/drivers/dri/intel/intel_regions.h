@@ -88,6 +88,9 @@ intel_region_alloc_for_handle(struct intel_screen *screen,
 			      GLuint width, GLuint height, GLuint pitch,
 			      unsigned int handle, const char *name);
 
+GLboolean
+intel_region_flink(struct intel_region *region, uint32_t *name);
+
 void intel_region_reference(struct intel_region **dst,
                             struct intel_region *src);
 

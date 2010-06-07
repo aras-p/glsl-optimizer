@@ -207,11 +207,79 @@ intel_destroy_image(__DRIimage *image)
     FREE(image);
 }
 
+static __DRIimage *
+intel_create_image(__DRIscreen *screen,
+		   int width, int height, int format,
+		   unsigned int use,
+		   void *loaderPrivate)
+{
+   __DRIimage *image;
+   struct intel_screen *intelScreen = screen->private;
+   int cpp;
+
+   image = CALLOC(sizeof *image);
+   if (image == NULL)
+      return NULL;
+
+   switch (format) {
+   case __DRI_IMAGE_FORMAT_RGB565:
+      image->format = MESA_FORMAT_RGB565;
+      image->internal_format = GL_RGB;
+      image->data_type = GL_UNSIGNED_BYTE;
+      break;
+   case __DRI_IMAGE_FORMAT_XRGB8888:
+      image->format = MESA_FORMAT_XRGB8888;
+      image->internal_format = GL_RGB;
+      image->data_type = GL_UNSIGNED_BYTE;
+      break;
+   case __DRI_IMAGE_FORMAT_ARGB8888:
+      image->format = MESA_FORMAT_ARGB8888;
+      image->internal_format = GL_RGBA;
+      image->data_type = GL_UNSIGNED_BYTE;
+      break;
+   default:
+      free(image);
+      return NULL;
+   }
+
+   image->data = loaderPrivate;
+   cpp = _mesa_get_format_bytes(image->format);
+
+   image->region =
+      intel_region_alloc(intelScreen, I915_TILING_NONE,
+			 cpp, width, height, GL_TRUE);
+   if (image->region == NULL) {
+      FREE(image);
+      return NULL;
+   }
+   
+   return image;
+}
+
+static GLboolean
+intel_query_image(__DRIimage *image, int attrib, int *value)
+{
+   switch (attrib) {
+   case __DRI_IMAGE_ATTRIB_STRIDE:
+      *value = image->region->pitch * image->region->cpp;
+      return GL_TRUE;
+   case __DRI_IMAGE_ATTRIB_HANDLE:
+      *value = image->region->buffer->handle;
+      return GL_TRUE;
+   case __DRI_IMAGE_ATTRIB_NAME:
+      return intel_region_flink(image->region, (uint32_t *) value);
+   default:
+      return GL_FALSE;
+   }
+}
+
 static struct __DRIimageExtensionRec intelImageExtension = {
     { __DRI_IMAGE, __DRI_IMAGE_VERSION },
     intel_create_image_from_name,
     intel_create_image_from_renderbuffer,
     intel_destroy_image,
+    intel_create_image,
+    intel_query_image
 };
 
 static const __DRIextension *intelScreenExtensions[] = {
