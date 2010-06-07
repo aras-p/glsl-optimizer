@@ -134,7 +134,7 @@ static void compile_gs_prog( struct brw_context *brw,
 
    /* Upload
     */
-   dri_bo_unreference(brw->gs.prog_bo);
+   drm_intel_bo_unreference(brw->gs.prog_bo);
    brw->gs.prog_bo = brw_upload_cache_with_auxdata(&brw->cache, BRW_GS_PROG,
 						   &c.key, sizeof(c.key),
 						   NULL, 0,
@@ -201,7 +201,7 @@ static void prepare_gs_prog(struct brw_context *brw)
    }
 
    if (brw->gs.prog_active) {
-      dri_bo_unreference(brw->gs.prog_bo);
+      drm_intel_bo_unreference(brw->gs.prog_bo);
       brw->gs.prog_bo = brw_search_cache(&brw->cache, BRW_GS_PROG,
 					 &key, sizeof(key),
 					 NULL, 0,

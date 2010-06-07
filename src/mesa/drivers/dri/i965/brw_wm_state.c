@@ -122,13 +122,13 @@ wm_unit_populate_key(struct brw_context *brw, struct brw_wm_unit_key *key)
 /**
  * Setup wm hardware state.  See page 225 of Volume 2
  */
-static dri_bo *
+static drm_intel_bo *
 wm_unit_create_from_key(struct brw_context *brw, struct brw_wm_unit_key *key,
-			dri_bo **reloc_bufs)
+			drm_intel_bo **reloc_bufs)
 {
    struct intel_context *intel = &brw->intel;
    struct brw_wm_unit_state wm;
-   dri_bo *bo;
+   drm_intel_bo *bo;
 
    memset(&wm, 0, sizeof(wm));
 
@@ -245,7 +245,7 @@ static void upload_wm_unit( struct brw_context *brw )
 {
    struct intel_context *intel = &brw->intel;
    struct brw_wm_unit_key key;
-   dri_bo *reloc_bufs[3];
+   drm_intel_bo *reloc_bufs[3];
    wm_unit_populate_key(brw, &key);
 
    /* Allocate the necessary scratch space if we haven't already.  Don't
@@ -257,14 +257,14 @@ static void upload_wm_unit( struct brw_context *brw )
       GLuint total = key.total_scratch * brw->wm_max_threads;
 
       if (brw->wm.scratch_bo && total > brw->wm.scratch_bo->size) {
-	 dri_bo_unreference(brw->wm.scratch_bo);
+	 drm_intel_bo_unreference(brw->wm.scratch_bo);
 	 brw->wm.scratch_bo = NULL;
       }
       if (brw->wm.scratch_bo == NULL) {
-	 brw->wm.scratch_bo = dri_bo_alloc(intel->bufmgr,
-                                           "wm scratch",
-                                           total,
-                                           4096);
+	 brw->wm.scratch_bo = drm_intel_bo_alloc(intel->bufmgr,
+						 "wm scratch",
+						 total,
+						 4096);
       }
    }
 
@@ -272,7 +272,7 @@ static void upload_wm_unit( struct brw_context *brw )
    reloc_bufs[1] = brw->wm.scratch_bo;
    reloc_bufs[2] = brw->wm.sampler_bo;
 
-   dri_bo_unreference(brw->wm.state_bo);
+   drm_intel_bo_unreference(brw->wm.state_bo);
    brw->wm.state_bo = brw_search_cache(&brw->cache, BRW_WM_UNIT,
 				       &key, sizeof(key),
 				       reloc_bufs, 3,

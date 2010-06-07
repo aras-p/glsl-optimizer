@@ -99,14 +99,14 @@ static void brwDeleteProgram( GLcontext *ctx,
       struct gl_fragment_program *fp = (struct gl_fragment_program *) prog;
       struct brw_fragment_program *brw_fp = brw_fragment_program(fp);
 
-      dri_bo_unreference(brw_fp->const_buffer);
+      drm_intel_bo_unreference(brw_fp->const_buffer);
    }
 
    if (prog->Target == GL_VERTEX_PROGRAM_ARB) {
       struct gl_vertex_program *vp = (struct gl_vertex_program *) prog;
       struct brw_vertex_program *brw_vp = brw_vertex_program(vp);
 
-      dri_bo_unreference(brw_vp->const_buffer);
+      drm_intel_bo_unreference(brw_vp->const_buffer);
    }
 
    _mesa_delete_program( ctx, prog );

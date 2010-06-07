@@ -53,7 +53,7 @@ static void prepare_cc_vp( struct brw_context *brw )
       ccv.max_depth = 1.0;
    }
 
-   dri_bo_unreference(brw->cc.vp_bo);
+   drm_intel_bo_unreference(brw->cc.vp_bo);
    brw->cc.vp_bo = brw_cache_data(&brw->cache, BRW_CC_VP, &ccv, sizeof(ccv),
 				  NULL, 0);
 }
@@ -184,11 +184,11 @@ cc_unit_populate_key(struct brw_context *brw, struct brw_cc_unit_key *key)
 /**
  * Creates the state cache entry for the given CC unit key.
  */
-static dri_bo *
+static drm_intel_bo *
 cc_unit_create_from_key(struct brw_context *brw, struct brw_cc_unit_key *key)
 {
    struct brw_cc_unit_state cc;
-   dri_bo *bo;
+   drm_intel_bo *bo;
 
    memset(&cc, 0, sizeof(cc));
 
@@ -312,7 +312,7 @@ static void prepare_cc_unit( struct brw_context *brw )
 
    cc_unit_populate_key(brw, &key);
 
-   dri_bo_unreference(brw->cc.state_bo);
+   drm_intel_bo_unreference(brw->cc.state_bo);
    brw->cc.state_bo = brw_search_cache(&brw->cache, BRW_CC_UNIT,
 				       &key, sizeof(key),
 				       &brw->cc.vp_bo, 1,

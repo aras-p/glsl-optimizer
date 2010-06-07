@@ -415,7 +415,7 @@ i830_emit_state(struct intel_context *intel)
    struct i830_hw_state *state = &i830->state;
    int i, count;
    GLuint dirty;
-   dri_bo *aper_array[3 + I830_TEX_UNITS];
+   drm_intel_bo *aper_array[3 + I830_TEX_UNITS];
    int aper_count;
    GET_CURRENT_CONTEXT(ctx);
    BATCH_LOCALS;
@@ -576,7 +576,7 @@ i830_destroy_context(struct intel_context *intel)
 
    for (i = 0; i < I830_TEX_UNITS; i++) {
       if (i830->state.tex_buffer[i] != NULL) {
-	 dri_bo_unreference(i830->state.tex_buffer[i]);
+	 drm_intel_bo_unreference(i830->state.tex_buffer[i]);
 	 i830->state.tex_buffer[i] = NULL;
       }
    }

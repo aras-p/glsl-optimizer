@@ -30,8 +30,9 @@
 
 /** @file intel_regions.h
  *
- * Structure definitions and prototypes for intel_region handling, which is
- * the basic structure for rectangular collections of pixels stored in a dri_bo.
+ * Structure definitions and prototypes for intel_region handling,
+ * which is the basic structure for rectangular collections of pixels
+ * stored in a drm_intel_bo.
  */
 
 #include <xf86drm.h>
@@ -134,9 +135,9 @@ void intel_region_release_pbo(struct intel_context *intel,
 void intel_region_cow(struct intel_context *intel,
                       struct intel_region *region);
 
-dri_bo *intel_region_buffer(struct intel_context *intel,
-			    struct intel_region *region,
-			    GLuint flag);
+drm_intel_bo *intel_region_buffer(struct intel_context *intel,
+				  struct intel_region *region,
+				  GLuint flag);
 
 void _mesa_copy_rect(GLubyte * dst,
                 GLuint cpp,

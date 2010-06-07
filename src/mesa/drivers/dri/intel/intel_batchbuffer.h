@@ -15,7 +15,7 @@ struct intel_batchbuffer
 {
    struct intel_context *intel;
 
-   dri_bo *buf;
+   drm_intel_bo *buf;
 
    GLubyte *buffer;
 
@@ -62,7 +62,7 @@ void intel_batchbuffer_release_space(struct intel_batchbuffer *batch,
                                      GLuint bytes);
 
 GLboolean intel_batchbuffer_emit_reloc(struct intel_batchbuffer *batch,
-                                       dri_bo *buffer,
+                                       drm_intel_bo *buffer,
 				       uint32_t read_domains,
 				       uint32_t write_domain,
 				       uint32_t offset);

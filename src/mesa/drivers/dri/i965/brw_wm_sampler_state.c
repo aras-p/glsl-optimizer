@@ -66,7 +66,7 @@ static GLuint translate_wrap_mode( GLenum wrap )
    }
 }
 
-static dri_bo *upload_default_color( struct brw_context *brw,
+static drm_intel_bo *upload_default_color( struct brw_context *brw,
 				     const GLfloat *color )
 {
    struct brw_sampler_default_color sdc;
@@ -101,7 +101,7 @@ struct wm_sampler_key {
  * entry.
  */
 static void brw_update_sampler_state(struct wm_sampler_entry *key,
-				     dri_bo *sdc_bo,
+				     drm_intel_bo *sdc_bo,
 				     struct brw_sampler_state *sampler)
 {
    memset(sampler, 0, sizeof(*sampler));
@@ -264,7 +264,7 @@ brw_wm_sampler_populate_key(struct brw_context *brw,
 	 entry->comparemode = texObj->CompareMode;
          entry->comparefunc = texObj->CompareFunc;
 
-	 dri_bo_unreference(brw->wm.sdc_bo[unit]);
+	 drm_intel_bo_unreference(brw->wm.sdc_bo[unit]);
 	 if (firstImage->_BaseFormat == GL_DEPTH_COMPONENT) {
 	    float bordercolor[4] = {
 	       texObj->BorderColor.f[0],
@@ -305,7 +305,7 @@ static void upload_wm_samplers( struct brw_context *brw )
       brw->state.dirty.cache |= CACHE_NEW_SAMPLER;
    }
 
-   dri_bo_unreference(brw->wm.sampler_bo);
+   drm_intel_bo_unreference(brw->wm.sampler_bo);
    brw->wm.sampler_bo = NULL;
    if (brw->wm.sampler_count == 0)
       return;

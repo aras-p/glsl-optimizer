@@ -208,7 +208,7 @@ brw_clear_validated_bos(struct brw_context *brw)
 
    /* Clear the last round of validated bos */
    for (i = 0; i < brw->state.validated_bo_count; i++) {
-      dri_bo_unreference(brw->state.validated_bos[i]);
+      drm_intel_bo_unreference(brw->state.validated_bos[i]);
       brw->state.validated_bos[i] = NULL;
    }
    brw->state.validated_bo_count = 0;

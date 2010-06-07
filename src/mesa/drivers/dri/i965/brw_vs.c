@@ -101,7 +101,7 @@ static void do_vs_prog( struct brw_context *brw,
    if (c.vp->use_const_buffer)
       aux_size += c.vp->program.Base.Parameters->NumParameters;
 
-   dri_bo_unreference(brw->vs.prog_bo);
+   drm_intel_bo_unreference(brw->vs.prog_bo);
    brw->vs.prog_bo = brw_upload_cache_with_auxdata(&brw->cache, BRW_VS_PROG,
 						   &c.key, sizeof(c.key),
 						   NULL, 0,
@@ -140,7 +140,7 @@ static void brw_upload_vs_prog(struct brw_context *brw)
 
    /* Make an early check for the key.
     */
-   dri_bo_unreference(brw->vs.prog_bo);
+   drm_intel_bo_unreference(brw->vs.prog_bo);
    brw->vs.prog_bo = brw_search_cache(&brw->cache, BRW_VS_PROG,
 				      &key, sizeof(key),
 				      NULL, 0,

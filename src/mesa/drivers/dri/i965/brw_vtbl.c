@@ -48,9 +48,9 @@
 #include "brw_wm.h"
 
 static void
-dri_bo_release(dri_bo **bo)
+dri_bo_release(drm_intel_bo **bo)
 {
-   dri_bo_unreference(*bo);
+   drm_intel_bo_unreference(*bo);
    *bo = NULL;
 }
 
@@ -172,7 +172,7 @@ static void brw_new_batch( struct intel_context *intel )
     * a new buffer next time.
     */
    if (brw->vb.upload.bo != NULL) {
-      dri_bo_unreference(brw->vb.upload.bo);
+      drm_intel_bo_unreference(brw->vb.upload.bo);
       brw->vb.upload.bo = NULL;
       brw->vb.upload.offset = 0;
    }

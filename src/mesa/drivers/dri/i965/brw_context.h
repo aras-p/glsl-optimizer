@@ -160,7 +160,7 @@ struct brw_state_flags {
 struct brw_vertex_program {
    struct gl_vertex_program program;
    GLuint id;
-   dri_bo *const_buffer;    /** Program constant buffer/surface */
+   drm_intel_bo *const_buffer;    /** Program constant buffer/surface */
    GLboolean use_const_buffer;
 };
 
@@ -172,7 +172,7 @@ struct brw_fragment_program {
    GLboolean isGLSL;  /**< really, any IF/LOOP/CONT/BREAK instructions */
 
    GLboolean use_const_buffer;
-   dri_bo *const_buffer;    /** Program constant buffer/surface */
+   drm_intel_bo *const_buffer;    /** Program constant buffer/surface */
 
    /** for debugging, which texture units are referenced */
    GLbitfield tex_units_used;
@@ -318,10 +318,10 @@ struct brw_cache_item {
    GLuint hash;
    GLuint key_size;		/* for variable-sized keys */
    const void *key;
-   dri_bo **reloc_bufs;
+   drm_intel_bo **reloc_bufs;
    GLuint nr_reloc_bufs;
 
-   dri_bo *bo;
+   drm_intel_bo *bo;
 
    struct brw_cache_item *next;
 };   
@@ -339,7 +339,7 @@ struct brw_cache {
    /* Record of the last BOs chosen for each cache_id.  Used to set
     * brw->state.dirty.cache when a new cache item is chosen.
     */
-   dri_bo *last_bo[BRW_MAX_CACHE];
+   drm_intel_bo *last_bo[BRW_MAX_CACHE];
 };
 
 
@@ -406,7 +406,7 @@ struct brw_vertex_element {
    /** Offset of the first element within the buffer object */
    unsigned int offset;
    /** Buffer object containing the uploaded vertex data */
-   dri_bo *bo;
+   drm_intel_bo *bo;
 };
 
 
@@ -419,7 +419,7 @@ struct brw_query_object {
    struct gl_query_object Base;
 
    /** Last query BO associated with this query. */
-   dri_bo *bo;
+   drm_intel_bo *bo;
    /** First index in bo with query data for this object. */
    int first_index;
    /** Last index in bo with query data for this object. */
@@ -451,15 +451,16 @@ struct brw_context
 
       /**
        * List of buffers accumulated in brw_validate_state to receive
-       * dri_bo_check_aperture treatment before exec, so we can know if we
-       * should flush the batch and try again before emitting primitives.
+       * drm_intel_bo_check_aperture treatment before exec, so we can
+       * know if we should flush the batch and try again before
+       * emitting primitives.
        *
        * This can be a fixed number as we only have a limited number of
        * objects referenced from the batchbuffer in a primitive emit,
        * consisting of the vertex buffers, pipelined state pointers,
        * the CURBE, the depth buffer, and a query BO.
        */
-      dri_bo *validated_bos[VERT_ATTRIB_MAX + 16];
+      drm_intel_bo *validated_bos[VERT_ATTRIB_MAX + 16];
       int validated_bo_count;
    } state;
 
@@ -477,7 +478,7 @@ struct brw_context
 #define BRW_UPLOAD_INIT_SIZE (128*1024)
 
       struct {
-	 dri_bo *bo;
+	 drm_intel_bo *bo;
 	 GLuint offset;
       } upload;
 
@@ -497,7 +498,7 @@ struct brw_context
       const struct _mesa_index_buffer *ib;
 
       /* Updates to these fields are signaled by BRW_NEW_INDEX_BUFFER. */
-      dri_bo *bo;
+      drm_intel_bo *bo;
       unsigned int offset;
       unsigned int size;
       /* Offset to index buffer index to use in CMD_3D_PRIM so that we can
@@ -566,7 +567,7 @@ struct brw_context
       GLuint vs_size;
       GLuint total_size;
 
-      dri_bo *curbe_bo;
+      drm_intel_bo *curbe_bo;
       /** Offset within curbe_bo of space for current curbe entry */
       GLuint curbe_offset;
       /** Offset within curbe_bo of space for next curbe entry */
@@ -580,12 +581,12 @@ struct brw_context
       struct brw_vs_prog_data *prog_data;
       int8_t *constant_map; /* variable array following prog_data */
 
-      dri_bo *prog_bo;
-      dri_bo *state_bo;
+      drm_intel_bo *prog_bo;
+      drm_intel_bo *state_bo;
 
       /** Binding table of pointers to surf_bo entries */
-      dri_bo *bind_bo;
-      dri_bo *surf_bo[BRW_VS_MAX_SURF];
+      drm_intel_bo *bind_bo;
+      drm_intel_bo *surf_bo[BRW_VS_MAX_SURF];
       GLuint nr_surfaces;      
    } vs;
 
@@ -593,25 +594,25 @@ struct brw_context
       struct brw_gs_prog_data *prog_data;
 
       GLboolean prog_active;
-      dri_bo *prog_bo;
-      dri_bo *state_bo;
+      drm_intel_bo *prog_bo;
+      drm_intel_bo *state_bo;
    } gs;
 
    struct {
       struct brw_clip_prog_data *prog_data;
 
-      dri_bo *prog_bo;
-      dri_bo *state_bo;
-      dri_bo *vp_bo;
+      drm_intel_bo *prog_bo;
+      drm_intel_bo *state_bo;
+      drm_intel_bo *vp_bo;
    } clip;
 
 
    struct {
       struct brw_sf_prog_data *prog_data;
 
-      dri_bo *prog_bo;
-      dri_bo *state_bo;
-      dri_bo *vp_bo;
+      drm_intel_bo *prog_bo;
+      drm_intel_bo *state_bo;
+      drm_intel_bo *vp_bo;
    } sf;
 
    struct {
@@ -624,42 +625,42 @@ struct brw_context
       GLbitfield input_size_masks[4];
 
       /** Array of surface default colors (texture border color) */
-      dri_bo *sdc_bo[BRW_MAX_TEX_UNIT];
+      drm_intel_bo *sdc_bo[BRW_MAX_TEX_UNIT];
 
       GLuint render_surf;
       GLuint nr_surfaces;      
 
       GLuint max_threads;
-      dri_bo *scratch_bo;
+      drm_intel_bo *scratch_bo;
 
       GLuint sampler_count;
-      dri_bo *sampler_bo;
+      drm_intel_bo *sampler_bo;
 
       /** Binding table of pointers to surf_bo entries */
-      dri_bo *bind_bo;
-      dri_bo *surf_bo[BRW_WM_MAX_SURF];
+      drm_intel_bo *bind_bo;
+      drm_intel_bo *surf_bo[BRW_WM_MAX_SURF];
 
-      dri_bo *prog_bo;
-      dri_bo *state_bo;
+      drm_intel_bo *prog_bo;
+      drm_intel_bo *state_bo;
    } wm;
 
 
    struct {
       /* gen4 */
-      dri_bo *prog_bo;
-      dri_bo *vp_bo;
+      drm_intel_bo *prog_bo;
+      drm_intel_bo *vp_bo;
 
       /* gen6 */
-      dri_bo *blend_state_bo;
-      dri_bo *depth_stencil_state_bo;
-      dri_bo *color_calc_state_bo;
+      drm_intel_bo *blend_state_bo;
+      drm_intel_bo *depth_stencil_state_bo;
+      drm_intel_bo *color_calc_state_bo;
 
-      dri_bo *state_bo;
+      drm_intel_bo *state_bo;
    } cc;
 
    struct {
       struct brw_query_object *obj;
-      dri_bo *bo;
+      drm_intel_bo *bo;
       int index;
       GLboolean active;
    } query;

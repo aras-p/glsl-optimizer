@@ -55,7 +55,7 @@ brw_queryobj_get_results(struct brw_query_object *query)
    if (query->bo == NULL)
       return;
 
-   dri_bo_map(query->bo, GL_FALSE);
+   drm_intel_bo_map(query->bo, GL_FALSE);
    results = query->bo->virtual;
    if (query->Base.Target == GL_TIME_ELAPSED_EXT) {
       query->Base.Result += 1000 * ((results[1] >> 32) - (results[0] >> 32));
@@ -65,9 +65,9 @@ brw_queryobj_get_results(struct brw_query_object *query)
 	 query->Base.Result += results[i * 2 + 1] - results[i * 2];
       }
    }
-   dri_bo_unmap(query->bo);
+   drm_intel_bo_unmap(query->bo);
 
-   dri_bo_unreference(query->bo);
+   drm_intel_bo_unreference(query->bo);
    query->bo = NULL;
 }
 
@@ -91,7 +91,7 @@ brw_delete_query(GLcontext *ctx, struct gl_query_object *q)
 {
    struct brw_query_object *query = (struct brw_query_object *)q;
 
-   dri_bo_unreference(query->bo);
+   drm_intel_bo_unreference(query->bo);
    free(query);
 }
 
@@ -103,7 +103,7 @@ brw_begin_query(GLcontext *ctx, struct gl_query_object *q)
    struct brw_query_object *query = (struct brw_query_object *)q;
 
    if (query->Base.Target == GL_TIME_ELAPSED_EXT) {
-      dri_bo_unreference(query->bo);
+      drm_intel_bo_unreference(query->bo);
       query->bo = drm_intel_bo_alloc(intel->bufmgr, "timer query",
 				     4096, 4096);
 
@@ -119,7 +119,7 @@ brw_begin_query(GLcontext *ctx, struct gl_query_object *q)
       ADVANCE_BATCH();
    } else {
       /* Reset our driver's tracking of query state. */
-      dri_bo_unreference(query->bo);
+      drm_intel_bo_unreference(query->bo);
       query->bo = NULL;
       query->first_index = -1;
       query->last_index = -1;
@@ -161,7 +161,7 @@ brw_end_query(GLcontext *ctx, struct gl_query_object *q)
 	 brw_emit_query_end(brw);
 	 intel_batchbuffer_flush(intel->batch);
 
-	 dri_bo_unreference(brw->query.bo);
+	 drm_intel_bo_unreference(brw->query.bo);
 	 brw->query.bo = NULL;
       }
 
@@ -202,10 +202,10 @@ brw_prepare_query_begin(struct brw_context *brw)
    /* Get a new query BO if we're going to need it. */
    if (brw->query.bo == NULL ||
        brw->query.index * 2 + 1 >= 4096 / sizeof(uint64_t)) {
-      dri_bo_unreference(brw->query.bo);
+      drm_intel_bo_unreference(brw->query.bo);
       brw->query.bo = NULL;
 
-      brw->query.bo = dri_bo_alloc(intel->bufmgr, "query", 4096, 1);
+      brw->query.bo = drm_intel_bo_alloc(intel->bufmgr, "query", 4096, 1);
       brw->query.index = 0;
    }
 
@@ -243,7 +243,7 @@ brw_emit_query_begin(struct brw_context *brw)
    if (query->bo != brw->query.bo) {
       if (query->bo != NULL)
 	 brw_queryobj_get_results(query);
-      dri_bo_reference(brw->query.bo);
+      drm_intel_bo_reference(brw->query.bo);
       query->bo = brw->query.bo;
       query->first_index = brw->query.index;
    }

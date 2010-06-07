@@ -71,11 +71,11 @@ GLboolean
 intelEmitCopyBlit(struct intel_context *intel,
 		  GLuint cpp,
 		  GLshort src_pitch,
-		  dri_bo *src_buffer,
+		  drm_intel_bo *src_buffer,
 		  GLuint src_offset,
 		  uint32_t src_tiling,
 		  GLshort dst_pitch,
-		  dri_bo *dst_buffer,
+		  drm_intel_bo *dst_buffer,
 		  GLuint dst_offset,
 		  uint32_t dst_tiling,
 		  GLshort src_x, GLshort src_y,
@@ -86,7 +86,7 @@ intelEmitCopyBlit(struct intel_context *intel,
    GLuint CMD, BR13, pass = 0;
    int dst_y2 = dst_y + h;
    int dst_x2 = dst_x + w;
-   dri_bo *aper_array[3];
+   drm_intel_bo *aper_array[3];
    BATCH_LOCALS;
 
    /* Blits are in a different ringbuffer so we don't use them. */
@@ -369,7 +369,7 @@ intelEmitImmediateColorExpandBlit(struct intel_context *intel,
 				  GLubyte *src_bits, GLuint src_size,
 				  GLuint fg_color,
 				  GLshort dst_pitch,
-				  dri_bo *dst_buffer,
+				  drm_intel_bo *dst_buffer,
 				  GLuint dst_offset,
 				  uint32_t dst_tiling,
 				  GLshort x, GLshort y,

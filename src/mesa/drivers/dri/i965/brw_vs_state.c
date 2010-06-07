@@ -79,12 +79,12 @@ vs_unit_populate_key(struct brw_context *brw, struct brw_vs_unit_key *key)
    }
 }
 
-static dri_bo *
+static drm_intel_bo *
 vs_unit_create_from_key(struct brw_context *brw, struct brw_vs_unit_key *key)
 {
    struct intel_context *intel = &brw->intel;
    struct brw_vs_unit_state vs;
-   dri_bo *bo;
+   drm_intel_bo *bo;
 
    memset(&vs, 0, sizeof(vs));
 
@@ -182,7 +182,7 @@ static void prepare_vs_unit(struct brw_context *brw)
 
    vs_unit_populate_key(brw, &key);
 
-   dri_bo_unreference(brw->vs.state_bo);
+   drm_intel_bo_unreference(brw->vs.state_bo);
    brw->vs.state_bo = brw_search_cache(&brw->cache, BRW_VS_UNIT,
 				       &key, sizeof(key),
 				       &brw->vs.prog_bo, 1,

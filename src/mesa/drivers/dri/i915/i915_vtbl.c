@@ -287,7 +287,7 @@ i915_emit_state(struct intel_context *intel)
    struct i915_hw_state *state = &i915->state;
    int i, count, aper_count;
    GLuint dirty;
-   dri_bo *aper_array[3 + I915_TEX_UNITS];
+   drm_intel_bo *aper_array[3 + I915_TEX_UNITS];
    GET_CURRENT_CONTEXT(ctx);
    BATCH_LOCALS;
 
@@ -497,7 +497,7 @@ i915_destroy_context(struct intel_context *intel)
 
    for (i = 0; i < I915_TEX_UNITS; i++) {
       if (i915->state.tex_buffer[i] != NULL) {
-	 dri_bo_unreference(i915->state.tex_buffer[i]);
+	 drm_intel_bo_unreference(i915->state.tex_buffer[i]);
 	 i915->state.tex_buffer[i] = NULL;
       }
    }

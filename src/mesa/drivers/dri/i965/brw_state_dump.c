@@ -54,19 +54,19 @@ state_out(const char *name, void *data, uint32_t hw_offset, int index,
 
 /** Generic, undecoded state buffer debug printout */
 static void
-state_struct_out(const char *name, dri_bo *buffer, unsigned int state_size)
+state_struct_out(const char *name, drm_intel_bo *buffer, unsigned int state_size)
 {
    int i;
 
    if (buffer == NULL)
       return;
 
-   dri_bo_map(buffer, GL_FALSE);
+   drm_intel_bo_map(buffer, GL_FALSE);
    for (i = 0; i < state_size / 4; i++) {
       state_out(name, buffer->virtual, buffer->offset, i,
 		"dword %d\n", i);
    }
-   dri_bo_unmap(buffer);
+   drm_intel_bo_unmap(buffer);
 }
 
 static const char *
@@ -101,7 +101,7 @@ static void dump_wm_surface_state(struct brw_context *brw)
    int i;
 
    for (i = 0; i < brw->wm.nr_surfaces; i++) {
-      dri_bo *surf_bo = brw->wm.surf_bo[i];
+      drm_intel_bo *surf_bo = brw->wm.surf_bo[i];
       unsigned int surfoff;
       struct brw_surface_state *surf;
       char name[20];
@@ -110,7 +110,7 @@ static void dump_wm_surface_state(struct brw_context *brw)
 	 fprintf(stderr, "  WM SS%d: NULL\n", i);
 	 continue;
       }
-      dri_bo_map(surf_bo, GL_FALSE);
+      drm_intel_bo_map(surf_bo, GL_FALSE);
       surfoff = surf_bo->offset;
       surf = (struct brw_surface_state *)(surf_bo->virtual);
 
@@ -128,7 +128,7 @@ static void dump_wm_surface_state(struct brw_context *brw)
       state_out(name, surf, surfoff, 5, "x,y offset: %d,%d\n",
 		surf->ss5.x_offset, surf->ss5.y_offset);
 
-      dri_bo_unmap(surf_bo);
+      drm_intel_bo_unmap(surf_bo);
    }
 }
 
@@ -141,7 +141,7 @@ static void dump_sf_viewport_state(struct brw_context *brw)
    if (brw->sf.vp_bo == NULL)
       return;
 
-   dri_bo_map(brw->sf.vp_bo, GL_FALSE);
+   drm_intel_bo_map(brw->sf.vp_bo, GL_FALSE);
 
    vp = brw->sf.vp_bo->virtual;
    vp_off = brw->sf.vp_bo->offset;
@@ -158,10 +158,10 @@ static void dump_sf_viewport_state(struct brw_context *brw)
    state_out(name, vp, vp_off, 7, "bottom right = %d,%d\n",
 	     vp->scissor.xmax, vp->scissor.ymax);
 
-   dri_bo_unmap(brw->sf.vp_bo);
+   drm_intel_bo_unmap(brw->sf.vp_bo);
 }
 
-static void brw_debug_prog(const char *name, dri_bo *prog)
+static void brw_debug_prog(const char *name, drm_intel_bo *prog)
 {
    unsigned int i;
    uint32_t *data;
@@ -169,7 +169,7 @@ static void brw_debug_prog(const char *name, dri_bo *prog)
    if (prog == NULL)
       return;
 
-   dri_bo_map(prog, GL_FALSE);
+   drm_intel_bo_map(prog, GL_FALSE);
 
    data = prog->virtual;
 
@@ -187,7 +187,7 @@ static void brw_debug_prog(const char *name, dri_bo *prog)
 	 break;
    }
 
-   dri_bo_unmap(prog);
+   drm_intel_bo_unmap(prog);
 }
 
 

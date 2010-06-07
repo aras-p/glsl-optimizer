@@ -197,7 +197,7 @@ static void do_wm_prog( struct brw_context *brw,
     */
    program = brw_get_program(&c->func, &program_size);
 
-   dri_bo_unreference(brw->wm.prog_bo);
+   drm_intel_bo_unreference(brw->wm.prog_bo);
    brw->wm.prog_bo = brw_upload_cache_with_auxdata(&brw->cache, BRW_WM_PROG,
 						   &c->key, sizeof(c->key),
 						   NULL, 0,
@@ -359,7 +359,7 @@ static void brw_prepare_wm_prog(struct brw_context *brw)
 
    /* Make an early check for the key.
     */
-   dri_bo_unreference(brw->wm.prog_bo);
+   drm_intel_bo_unreference(brw->wm.prog_bo);
    brw->wm.prog_bo = brw_search_cache(&brw->cache, BRW_WM_PROG,
 				      &key, sizeof(key),
 				      NULL, 0,

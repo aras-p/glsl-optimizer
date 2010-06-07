@@ -180,7 +180,7 @@ static void brw_merge_inputs( struct brw_context *brw,
    GLuint i;
 
    for (i = 0; i < VERT_ATTRIB_MAX; i++)
-      dri_bo_unreference(brw->vb.inputs[i].bo);
+      drm_intel_bo_unreference(brw->vb.inputs[i].bo);
 
    memset(&brw->vb.inputs, 0, sizeof(brw->vb.inputs));
    memset(&brw->vb.info, 0, sizeof(brw->vb.info));
@@ -475,15 +475,15 @@ void brw_draw_destroy( struct brw_context *brw )
    int i;
 
    if (brw->vb.upload.bo != NULL) {
-      dri_bo_unreference(brw->vb.upload.bo);
+      drm_intel_bo_unreference(brw->vb.upload.bo);
       brw->vb.upload.bo = NULL;
    }
 
    for (i = 0; i < VERT_ATTRIB_MAX; i++) {
-      dri_bo_unreference(brw->vb.inputs[i].bo);
+      drm_intel_bo_unreference(brw->vb.inputs[i].bo);
       brw->vb.inputs[i].bo = NULL;
    }
 
-   dri_bo_unreference(brw->ib.bo);
+   drm_intel_bo_unreference(brw->ib.bo);
    brw->ib.bo = NULL;
 }

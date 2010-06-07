@@ -36,12 +36,12 @@
 #include "brw_context.h"
 
 static INLINE void
-brw_add_validated_bo(struct brw_context *brw, dri_bo *bo)
+brw_add_validated_bo(struct brw_context *brw, drm_intel_bo *bo)
 {
    assert(brw->state.validated_bo_count < ARRAY_SIZE(brw->state.validated_bos));
 
    if (bo != NULL) {
-      dri_bo_reference(bo);
+      drm_intel_bo_reference(bo);
       brw->state.validated_bos[brw->state.validated_bo_count++] = bo;
    }
 };
@@ -113,7 +113,7 @@ const struct brw_tracked_state gen6_wm_state;
  */
 struct brw_surface_key {
    GLenum target, depthmode;
-   dri_bo *bo;
+   drm_intel_bo *bo;
    GLint format, internal_format;
    GLint first_level, last_level;
    GLint width, height, depth;
@@ -134,18 +134,18 @@ void brw_clear_validated_bos(struct brw_context *brw);
 /***********************************************************************
  * brw_state_cache.c
  */
-dri_bo *brw_cache_data(struct brw_cache *cache,
+drm_intel_bo *brw_cache_data(struct brw_cache *cache,
 		       enum brw_cache_id cache_id,
 		       const void *data,
 		       GLuint size,
-		       dri_bo **reloc_bufs,
+		       drm_intel_bo **reloc_bufs,
 		       GLuint nr_reloc_bufs);
 
 drm_intel_bo *brw_upload_cache(struct brw_cache *cache,
 			       enum brw_cache_id cache_id,
 			       const void *key,
 			       GLuint key_sz,
-			       dri_bo **reloc_bufs,
+			       drm_intel_bo **reloc_bufs,
 			       GLuint nr_reloc_bufs,
 			       const void *data,
 			       GLuint data_sz);
@@ -154,7 +154,7 @@ drm_intel_bo *brw_upload_cache_with_auxdata(struct brw_cache *cache,
 					    enum brw_cache_id cache_id,
 					    const void *key,
 					    GLuint key_sz,
-					    dri_bo **reloc_bufs,
+					    drm_intel_bo **reloc_bufs,
 					    GLuint nr_reloc_bufs,
 					    const void *data,
 					    GLuint data_sz,
@@ -162,18 +162,18 @@ drm_intel_bo *brw_upload_cache_with_auxdata(struct brw_cache *cache,
 					    GLuint aux_sz,
 					    void *aux_return);
 
-dri_bo *brw_search_cache( struct brw_cache *cache,
+drm_intel_bo *brw_search_cache( struct brw_cache *cache,
 			  enum brw_cache_id cache_id,
 			  const void *key,
 			  GLuint key_size,
-			  dri_bo **reloc_bufs,
+			  drm_intel_bo **reloc_bufs,
 			  GLuint nr_reloc_bufs,
 			  void *aux_return);
 void brw_state_cache_check_size( struct brw_context *brw );
 
 void brw_init_caches( struct brw_context *brw );
 void brw_destroy_caches( struct brw_context *brw );
-void brw_state_cache_bo_delete(struct brw_cache *cache, dri_bo *bo);
+void brw_state_cache_bo_delete(struct brw_cache *cache, drm_intel_bo *bo);
 
 /***********************************************************************
  * brw_state_batch.c
@@ -188,7 +188,7 @@ void brw_destroy_batch_cache( struct brw_context *brw );
 void brw_clear_batch_cache( struct brw_context *brw );
 
 /* brw_wm_surface_state.c */
-dri_bo *
+drm_intel_bo *
 brw_create_constant_surface( struct brw_context *brw,
                              struct brw_surface_key *key );
 

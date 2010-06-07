@@ -570,7 +570,7 @@ intelFinish(GLcontext * ctx)
        irb = intel_renderbuffer(fb->_ColorDrawBuffers[i]);
 
        if (irb && irb->region)
-	  dri_bo_wait_rendering(irb->region->buffer);
+	  drm_intel_bo_wait_rendering(irb->region->buffer);
    }
    if (fb->_DepthBuffer) {
       /* XXX: Wait on buffer idle */
@@ -850,9 +850,9 @@ intelDestroyContext(__DRIcontext * driContextPriv)
 
       free(intel->prim.vb);
       intel->prim.vb = NULL;
-      dri_bo_unreference(intel->prim.vb_bo);
+      drm_intel_bo_unreference(intel->prim.vb_bo);
       intel->prim.vb_bo = NULL;
-      dri_bo_unreference(intel->first_post_swapbuffers_batch);
+      drm_intel_bo_unreference(intel->first_post_swapbuffers_batch);
       intel->first_post_swapbuffers_batch = NULL;
 
       if (release_texture_heaps) {

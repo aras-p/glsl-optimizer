@@ -98,7 +98,7 @@ brw_update_vs_constant_surface( GLcontext *ctx,
    /* If we're in this state update atom, we need to update VS constants, so
     * free the old buffer and create a new one for the new contents.
     */
-   dri_bo_unreference(vp->const_buffer);
+   drm_intel_bo_unreference(vp->const_buffer);
    vp->const_buffer = brw_vs_update_constant_buffer(brw);
 
    /* If there's no constant buffer, then no surface BO is needed to point at
@@ -143,10 +143,10 @@ brw_update_vs_constant_surface( GLcontext *ctx,
 /**
  * Constructs the binding table for the VS surface state.
  */
-static dri_bo *
+static drm_intel_bo *
 brw_vs_get_binding_table(struct brw_context *brw)
 {
-   dri_bo *bind_bo;
+   drm_intel_bo *bind_bo;
 
    bind_bo = brw_search_cache(&brw->surface_cache, BRW_SS_SURF_BIND,
 			      NULL, 0,
@@ -216,7 +216,7 @@ static void prepare_vs_surfaces(struct brw_context *brw )
     * just slightly increases our working set size.
     */
    if (brw->vs.nr_surfaces != 0) {
-      dri_bo_unreference(brw->vs.bind_bo);
+      drm_intel_bo_unreference(brw->vs.bind_bo);
       brw->vs.bind_bo = brw_vs_get_binding_table(brw);
    }
 }

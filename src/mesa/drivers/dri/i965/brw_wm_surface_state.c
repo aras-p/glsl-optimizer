@@ -196,12 +196,12 @@ brw_set_surface_tiling(struct brw_surface_state *surf, uint32_t tiling)
    }
 }
 
-static dri_bo *
+static drm_intel_bo *
 brw_create_texture_surface( struct brw_context *brw,
 			    struct brw_surface_key *key )
 {
    struct brw_surface_state surf;
-   dri_bo *bo;
+   drm_intel_bo *bo;
 
    memset(&surf, 0, sizeof(surf));
 
@@ -275,7 +275,7 @@ brw_update_texture_surface( GLcontext *ctx, GLuint unit )
    key.cpp = intelObj->mt->cpp;
    key.tiling = intelObj->mt->region->tiling;
 
-   dri_bo_unreference(brw->wm.surf_bo[surf]);
+   drm_intel_bo_unreference(brw->wm.surf_bo[surf]);
    brw->wm.surf_bo[surf] = brw_search_cache(&brw->surface_cache,
                                             BRW_SS_SURFACE,
                                             &key, sizeof(key),
@@ -292,13 +292,13 @@ brw_update_texture_surface( GLcontext *ctx, GLuint unit )
  * Create the constant buffer surface.  Vertex/fragment shader constants will be
  * read from this buffer with Data Port Read instructions/messages.
  */
-dri_bo *
+drm_intel_bo *
 brw_create_constant_surface( struct brw_context *brw,
                              struct brw_surface_key *key )
 {
    const GLint w = key->width - 1;
    struct brw_surface_state surf;
-   dri_bo *bo;
+   drm_intel_bo *bo;
 
    memset(&surf, 0, sizeof(surf));
 
@@ -355,7 +355,7 @@ brw_wm_update_constant_buffer(struct brw_context *brw)
 				     size, 64);
 
    /* _NEW_PROGRAM_CONSTANTS */
-   dri_bo_subdata(const_buffer, 0, size, params->ParameterValues);
+   drm_intel_bo_subdata(const_buffer, 0, size, params->ParameterValues);
 
    return const_buffer;
 }
@@ -378,7 +378,7 @@ brw_update_wm_constant_surface( GLcontext *ctx,
    /* If we're in this state update atom, we need to update WM constants, so
     * free the old buffer and create a new one for the new contents.
     */
-   dri_bo_unreference(fp->const_buffer);
+   drm_intel_bo_unreference(fp->const_buffer);
    fp->const_buffer = brw_wm_update_constant_buffer(brw);
 
    /* If there's no constant buffer, then no surface BO is needed to point at
@@ -408,7 +408,7 @@ brw_update_wm_constant_surface( GLcontext *ctx,
           key.width, key.height, key.depth, key.cpp, key.pitch);
    */
 
-   dri_bo_unreference(brw->wm.surf_bo[surf]);
+   drm_intel_bo_unreference(brw->wm.surf_bo[surf]);
    brw->wm.surf_bo[surf] = brw_search_cache(&brw->surface_cache,
                                             BRW_SS_SURFACE,
                                             &key, sizeof(key),
@@ -475,7 +475,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
 {
    struct intel_context *intel = &brw->intel;
    GLcontext *ctx = &intel->ctx;
-   dri_bo *region_bo = NULL;
+   drm_intel_bo *region_bo = NULL;
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
    struct intel_region *region = irb ? irb->region : NULL;
    struct {
@@ -551,7 +551,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
 			 (ctx->Color.BlendEnabled & (1 << unit)));
    }
 
-   dri_bo_unreference(brw->wm.surf_bo[unit]);
+   drm_intel_bo_unreference(brw->wm.surf_bo[unit]);
    brw->wm.surf_bo[unit] = brw_search_cache(&brw->surface_cache,
 					    BRW_SS_SURFACE,
 					    &key, sizeof(key),
@@ -636,10 +636,10 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
  * Constructs the binding table for the WM surface state, which maps unit
  * numbers to surface state objects.
  */
-static dri_bo *
+static drm_intel_bo *
 brw_wm_get_binding_table(struct brw_context *brw)
 {
-   dri_bo *bind_bo;
+   drm_intel_bo *bind_bo;
 
    assert(brw->wm.nr_surfaces <= BRW_WM_MAX_SURF);
 
@@ -713,12 +713,12 @@ static void prepare_wm_surfaces(struct brw_context *brw )
 	 brw_update_texture_surface(ctx, i);
 	 brw->wm.nr_surfaces = surf + 1;
       } else {
-         dri_bo_unreference(brw->wm.surf_bo[surf]);
+         drm_intel_bo_unreference(brw->wm.surf_bo[surf]);
          brw->wm.surf_bo[surf] = NULL;
       }
    }
 
-   dri_bo_unreference(brw->wm.bind_bo);
+   drm_intel_bo_unreference(brw->wm.bind_bo);
    brw->wm.bind_bo = brw_wm_get_binding_table(brw);
 
    if (brw->wm.nr_surfaces != old_nr_surfaces)

@@ -213,9 +213,9 @@ try_pbo_upload(struct intel_context *intel,
    struct intel_buffer_object *pbo = intel_buffer_object(unpack->BufferObj);
    GLuint src_offset, src_stride;
    GLuint dst_x, dst_y, dst_stride;
-   dri_bo *dst_buffer = intel_region_buffer(intel,
-					    intelImage->mt->region,
-					    INTEL_WRITE_FULL);
+   drm_intel_bo *dst_buffer = intel_region_buffer(intel,
+						  intelImage->mt->region,
+						  INTEL_WRITE_FULL);
 
    if (!_mesa_is_bufferobj(unpack->BufferObj) ||
        intel->ctx._ImageTransferState ||
@@ -242,7 +242,7 @@ try_pbo_upload(struct intel_context *intel,
       intel_flush(&intel->ctx);
 
    {
-      dri_bo *src_buffer = intel_bufferobj_buffer(intel, pbo, INTEL_READ);
+      drm_intel_bo *src_buffer = intel_bufferobj_buffer(intel, pbo, INTEL_READ);
 
       if (!intelEmitCopyBlit(intel,
 			     intelImage->mt->cpp,

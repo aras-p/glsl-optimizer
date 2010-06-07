@@ -237,7 +237,7 @@ struct i915_hw_state
     * be from a PBO or FBO.  Will have to do this for draw and depth for
     * FBO's...
     */
-   dri_bo *tex_buffer[I915_TEX_UNITS];
+   drm_intel_bo *tex_buffer[I915_TEX_UNITS];
    GLuint tex_offset[I915_TEX_UNITS];
 
 

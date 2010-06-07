@@ -146,7 +146,7 @@ i915_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
    /*We need to refcount these. */
 
    if (i915->state.tex_buffer[unit] != NULL) {
-       dri_bo_unreference(i915->state.tex_buffer[unit]);
+       drm_intel_bo_unreference(i915->state.tex_buffer[unit]);
        i915->state.tex_buffer[unit] = NULL;
    }
 
@@ -158,7 +158,7 @@ i915_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
     */
    firstImage = tObj->Image[0][intelObj->firstLevel];
 
-   dri_bo_reference(intelObj->mt->region->buffer);
+   drm_intel_bo_reference(intelObj->mt->region->buffer);
    i915->state.tex_buffer[unit] = intelObj->mt->region->buffer;
    i915->state.tex_offset[unit] = 0; /* Always the origin of the miptree */
 
@@ -397,7 +397,7 @@ i915UpdateTextureState(struct intel_context *intel)
                I915_ACTIVESTATE(i915, I915_UPLOAD_TEX(i), GL_FALSE);
 
 	    if (i915->state.tex_buffer[i] != NULL) {
-	       dri_bo_unreference(i915->state.tex_buffer[i]);
+	       drm_intel_bo_unreference(i915->state.tex_buffer[i]);
 	       i915->state.tex_buffer[i] = NULL;
 	    }
 

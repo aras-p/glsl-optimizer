@@ -38,12 +38,12 @@ intel_batchbuffer_reset(struct intel_batchbuffer *batch)
    struct intel_context *intel = batch->intel;
 
    if (batch->buf != NULL) {
-      dri_bo_unreference(batch->buf);
+      drm_intel_bo_unreference(batch->buf);
       batch->buf = NULL;
    }
 
-   batch->buf = dri_bo_alloc(intel->bufmgr, "batchbuffer",
-			     intel->maxBatchSize, 4096);
+   batch->buf = drm_intel_bo_alloc(intel->bufmgr, "batchbuffer",
+				   intel->maxBatchSize, 4096);
    batch->map = batch->buffer;
    batch->size = intel->maxBatchSize;
    batch->ptr = batch->map;
@@ -67,7 +67,7 @@ void
 intel_batchbuffer_free(struct intel_batchbuffer *batch)
 {
    free (batch->buffer);
-   dri_bo_unreference(batch->buf);
+   drm_intel_bo_unreference(batch->buf);
    batch->buf = NULL;
    free(batch);
 }
@@ -83,18 +83,20 @@ do_flush_locked(struct intel_batchbuffer *batch, GLuint used)
    int ret = 0;
    int x_off = 0, y_off = 0;
 
-   dri_bo_subdata (batch->buf, 0, used, batch->buffer);
+   drm_intel_bo_subdata(batch->buf, 0, used, batch->buffer);
 
    batch->ptr = NULL;
 
-   if (!intel->no_hw)
-      dri_bo_exec(batch->buf, used, NULL, 0, (x_off & 0xffff) | (y_off << 16));
+   if (!intel->no_hw) {
+      drm_intel_bo_exec(batch->buf, used, NULL, 0,
+			(x_off & 0xffff) | (y_off << 16));
+   }
 
    if (INTEL_DEBUG & DEBUG_BATCH) {
-      dri_bo_map(batch->buf, GL_FALSE);
+      drm_intel_bo_map(batch->buf, GL_FALSE);
       intel_decode(batch->buf->virtual, used / 4, batch->buf->offset,
 		   intel->intelScreen->deviceID);
-      dri_bo_unmap(batch->buf);
+      drm_intel_bo_unmap(batch->buf);
 
       if (intel->vtbl.debug_batch != NULL)
 	 intel->vtbl.debug_batch(intel);
@@ -167,8 +169,8 @@ _intel_batchbuffer_flush(struct intel_batchbuffer *batch, const char *file,
 
    if (INTEL_DEBUG & DEBUG_SYNC) {
       fprintf(stderr, "waiting for idle\n");
-      dri_bo_map(batch->buf, GL_TRUE);
-      dri_bo_unmap(batch->buf);
+      drm_intel_bo_map(batch->buf, GL_TRUE);
+      drm_intel_bo_unmap(batch->buf);
    }
 
    /* Reset the buffer:
@@ -181,7 +183,7 @@ _intel_batchbuffer_flush(struct intel_batchbuffer *batch, const char *file,
  */
 GLboolean
 intel_batchbuffer_emit_reloc(struct intel_batchbuffer *batch,
-                             dri_bo *buffer,
+                             drm_intel_bo *buffer,
                              uint32_t read_domains, uint32_t write_domain,
 			     uint32_t delta)
 {

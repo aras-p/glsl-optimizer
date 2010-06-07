@@ -77,12 +77,12 @@ depth_stencil_state_populate_key(struct brw_context *brw,
 /**
  * Creates the state cache entry for the given DEPTH_STENCIL_STATE state key.
  */
-static dri_bo *
+static drm_intel_bo *
 depth_stencil_state_create_from_key(struct brw_context *brw,
 				    struct brw_depth_stencil_state_key *key)
 {
    struct gen6_depth_stencil_state ds;
-   dri_bo *bo;
+   drm_intel_bo *bo;
 
    memset(&ds, 0, sizeof(ds));
 
@@ -143,7 +143,7 @@ prepare_depth_stencil_state(struct brw_context *brw)
 
    depth_stencil_state_populate_key(brw, &key);
 
-   dri_bo_unreference(brw->cc.depth_stencil_state_bo);
+   drm_intel_bo_unreference(brw->cc.depth_stencil_state_bo);
    brw->cc.depth_stencil_state_bo = brw_search_cache(&brw->cache,
 						     BRW_DEPTH_STENCIL_STATE,
 						     &key, sizeof(key),
