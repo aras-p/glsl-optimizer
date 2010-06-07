@@ -86,6 +86,7 @@ struct softpipe_context {
       int so_count[PIPE_MAX_SO_BUFFERS];
       int num_buffers;
    } so_target;
+   struct pipe_query_data_so_statistics so_stats;
 
    unsigned num_samplers;
    unsigned num_sampler_views;

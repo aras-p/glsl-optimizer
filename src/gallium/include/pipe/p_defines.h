@@ -381,7 +381,8 @@ enum pipe_transfer_usage {
 #define PIPE_QUERY_PRIMITIVES_GENERATED  1
 #define PIPE_QUERY_PRIMITIVES_EMITTED    2
 #define PIPE_QUERY_TIME_ELAPSED          3
-#define PIPE_QUERY_TYPES                 4
+#define PIPE_QUERY_SO_STATISTICS         5
+#define PIPE_QUERY_TYPES                 6
 
 
 /**
@@ -498,6 +499,14 @@ enum pipe_cap {
 #define PIPE_REFERENCED_FOR_READ  (1 << 0)
 #define PIPE_REFERENCED_FOR_WRITE (1 << 1)
 
+/**
+ * Composite query types
+ */
+struct pipe_query_data_so_statistics
+{
+   uint64_t num_primitives_written;
+   uint64_t primitives_storage_needed;
+};
 
 #ifdef __cplusplus
 }
