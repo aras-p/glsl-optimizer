@@ -15,8 +15,9 @@ progs = [
     'clear',
     'tri',
     'quad-tex',
-    'fp-test',
-    'vp-test',
+    'fs-test',
+    'vs-test',
+    'gs-test',
     'tri-gs',
 ]
 
