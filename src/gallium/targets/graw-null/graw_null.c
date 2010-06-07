@@ -3,6 +3,8 @@
 #include "util/u_memory.h"
 #include "target-helpers/wrap_screen.h"
 #include "sw/null/null_sw_winsys.h"
+#include "os/os_time.h"
+#include "state_tracker/graw.h"
 
 #ifdef GALLIUM_SOFTPIPE
 #include "softpipe/sp_public.h"
@@ -21,13 +23,26 @@
 #include <stdio.h>
 
 
+static struct {
+   void (*draw)(void);
+} graw;
+
+
+
 struct pipe_screen *
-graw_init( void )
+graw_create_window_and_screen( int x,
+                               int y,
+                               unsigned width,
+                               unsigned height,
+                               enum pipe_format format,
+                               void **handle)
 {
    const char *default_driver;
    const char *driver;
    struct pipe_screen *screen = NULL;
    struct sw_winsys *winsys = NULL;
+   static int dummy;
+
 
    /* Create the underlying winsys, which performs presents to Xlib
     * drawables:
@@ -56,26 +71,25 @@ graw_init( void )
       screen = softpipe_create_screen( winsys );
 #endif
 
+   *handle = &dummy;
+
    /* Inject any wrapping layers we want to here:
     */
    return gallium_wrap_screen( screen );
 }
 
 
-void *
-graw_create_window( int x,
-                    int y,
-                    unsigned width,
-                    unsigned height,
-                    enum pipe_format format )
+
+void 
+graw_set_display_func( void (*draw)( void ) )
 {
-   static int dummy;
-   return &dummy;
+   graw.draw = draw;
 }
 
 
 void
-graw_destroy_window( void *window )
+graw_main_loop( void )
 {
+   graw.draw();
+   os_time_sleep(100000);
 }
-

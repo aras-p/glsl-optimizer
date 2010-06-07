@@ -25,6 +25,7 @@ if env['platform'] == 'windows':
 
 sources = [
     'graw_null.c',
+    '../graw-xlib/graw_util.c',
 ]
 
 if True:

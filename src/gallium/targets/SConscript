@@ -14,7 +14,7 @@ if 'mesa' in env['statetrackers']:
 			'libgl-gdi/SConscript',
 		])
 
-if not 'graw-xlib' in env['targets'] and not env['msvc']:
+if not 'graw-xlib' in env['targets'] and not 'graw-null' in env['targets'] and not env['msvc']:
         # XXX: disable until MSVC can link correctly
         SConscript('graw-null/SConscript')
 
