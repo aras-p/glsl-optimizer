@@ -17,6 +17,7 @@ progs = [
     'quad-tex',
     'fp-test',
     'vp-test',
+    'tri-gs',
 ]
 
 for prog in progs:
