@@ -33,7 +33,6 @@
 #include "util/u_memory.h"
 #include "util/u_inlines.h"
 #include "draw/draw_context.h"
-#include "draw/draw_vs.h"
 #include "tgsi/tgsi_dump.h"
 #include "tgsi/tgsi_scan.h"
 #include "tgsi/tgsi_parse.h"
