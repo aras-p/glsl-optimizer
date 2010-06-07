@@ -9,7 +9,7 @@ except NameError:
 env = env.Clone()
 
 env.Prepend(LIBPATH = [graw.dir])
-env.Prepend(LIBS = ['graw'])
+env.Prepend(LIBS = ['graw'] + gallium)
 
 progs = [
     'clear',
