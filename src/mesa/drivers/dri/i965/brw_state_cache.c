@@ -410,7 +410,6 @@ brw_init_surface_cache(struct brw_context *brw)
       calloc(1, cache->size * sizeof(struct brw_cache_item));
 
    brw_init_cache_id(cache, "SS_SURFACE", BRW_SS_SURFACE);
-   brw_init_cache_id(cache, "SS_SURF_BIND", BRW_SS_SURF_BIND);
 }
 
 

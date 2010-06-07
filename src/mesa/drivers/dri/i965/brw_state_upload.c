@@ -69,6 +69,7 @@ static const struct brw_tracked_state *gen4_atoms[] =
    &brw_vs_surfaces,		/* must do before unit */
    &brw_wm_constant_surface,	/* must do before wm surfaces/bind bo */
    &brw_wm_surfaces,		/* must do before samplers and unit */
+   &brw_wm_binding_table,
    &brw_wm_samplers,
 
    &brw_wm_unit,
@@ -268,6 +269,8 @@ static struct dirty_bit_map brw_bits[] = {
    DEFINE_BIT(BRW_NEW_CONTEXT),
    DEFINE_BIT(BRW_NEW_WM_INPUT_DIMENSIONS),
    DEFINE_BIT(BRW_NEW_PSP),
+   DEFINE_BIT(BRW_NEW_WM_SURFACES),
+   DEFINE_BIT(BRW_NEW_BINDING_TABLE),
    DEFINE_BIT(BRW_NEW_INDICES),
    DEFINE_BIT(BRW_NEW_INDEX_BUFFER),
    DEFINE_BIT(BRW_NEW_VERTICES),
@@ -295,7 +298,6 @@ static struct dirty_bit_map cache_bits[] = {
    DEFINE_BIT(CACHE_NEW_CLIP_UNIT),
    DEFINE_BIT(CACHE_NEW_CLIP_PROG),
    DEFINE_BIT(CACHE_NEW_SURFACE),
-   DEFINE_BIT(CACHE_NEW_SURF_BIND),
    {0, 0, 0}
 };
 

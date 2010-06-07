@@ -639,57 +639,10 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
    }
 }
 
-
-/**
- * Constructs the binding table for the WM surface state, which maps unit
- * numbers to surface state objects.
- */
-static drm_intel_bo *
-brw_wm_get_binding_table(struct brw_context *brw)
-{
-   drm_intel_bo *bind_bo;
-
-   assert(brw->wm.nr_surfaces <= BRW_WM_MAX_SURF);
-
-   bind_bo = brw_search_cache(&brw->surface_cache, BRW_SS_SURF_BIND,
-			      NULL, 0,
-			      brw->wm.surf_bo, brw->wm.nr_surfaces,
-			      NULL);
-
-   if (bind_bo == NULL) {
-      GLuint data_size = brw->wm.nr_surfaces * sizeof(GLuint);
-      uint32_t data[BRW_WM_MAX_SURF];
-      int i;
-
-      for (i = 0; i < brw->wm.nr_surfaces; i++)
-         if (brw->wm.surf_bo[i])
-            data[i] = brw->wm.surf_bo[i]->offset;
-         else
-            data[i] = 0;
-
-      bind_bo = brw_upload_cache( &brw->surface_cache, BRW_SS_SURF_BIND,
-				  NULL, 0,
-				  brw->wm.surf_bo, brw->wm.nr_surfaces,
-				  data, data_size);
-
-      /* Emit binding table relocations to surface state */
-      for (i = 0; i < BRW_WM_MAX_SURF; i++) {
-	 if (brw->wm.surf_bo[i] != NULL) {
-	    drm_intel_bo_emit_reloc(bind_bo, i * sizeof(GLuint),
-				    brw->wm.surf_bo[i], 0,
-				    I915_GEM_DOMAIN_INSTRUCTION, 0);
-	 }
-      }
-   }
-
-   return bind_bo;
-}
-
 static void prepare_wm_surfaces(struct brw_context *brw )
 {
    GLcontext *ctx = &brw->intel.ctx;
    GLuint i;
-   int old_nr_surfaces;
 
    /* _NEW_BUFFERS | _NEW_COLOR */
    /* Update surfaces for drawing buffers */
@@ -703,32 +656,21 @@ static void prepare_wm_surfaces(struct brw_context *brw )
       brw_update_renderbuffer_surface(brw, NULL, 0);
    }
 
-   old_nr_surfaces = brw->wm.nr_surfaces;
-   brw->wm.nr_surfaces = BRW_MAX_DRAW_BUFFERS;
-
-   if (brw->wm.surf_bo[SURF_INDEX_FRAG_CONST_BUFFER] != NULL)
-       brw->wm.nr_surfaces = SURF_INDEX_FRAG_CONST_BUFFER + 1;
-
    /* Update surfaces for textures */
    for (i = 0; i < BRW_MAX_TEX_UNIT; i++) {
       const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[i];
       const GLuint surf = SURF_INDEX_TEXTURE(i);
 
-      /* _NEW_TEXTURE, BRW_NEW_TEXDATA */
+      /* _NEW_TEXTURE */
       if (texUnit->_ReallyEnabled) {
 	 brw_update_texture_surface(ctx, i);
-	 brw->wm.nr_surfaces = surf + 1;
       } else {
          drm_intel_bo_unreference(brw->wm.surf_bo[surf]);
          brw->wm.surf_bo[surf] = NULL;
       }
    }
 
-   drm_intel_bo_unreference(brw->wm.bind_bo);
-   brw->wm.bind_bo = brw_wm_get_binding_table(brw);
-
-   if (brw->wm.nr_surfaces != old_nr_surfaces)
-      brw->state.dirty.brw |= BRW_NEW_NR_WM_SURFACES;
+   brw->state.dirty.brw |= BRW_NEW_WM_SURFACES;
 }
 
 const struct brw_tracked_state brw_wm_surfaces = {
@@ -736,12 +678,69 @@ const struct brw_tracked_state brw_wm_surfaces = {
       .mesa = (_NEW_COLOR |
                _NEW_TEXTURE |
                _NEW_BUFFERS),
-      .brw = (BRW_NEW_CONTEXT |
-	      BRW_NEW_WM_SURFACES),
+      .brw = (BRW_NEW_CONTEXT),
       .cache = 0
    },
    .prepare = prepare_wm_surfaces,
 };
 
+static void
+brw_wm_prepare_binding_table(struct brw_context *brw)
+{
+   int i;
 
+   for (i = 0; i < BRW_WM_MAX_SURF; i++) {
+      if (brw->wm.surf_bo[i]) {
+	 brw_add_validated_bo(brw, brw->wm.surf_bo[i]);
+      }
+   }
+}
 
+/**
+ * Constructs the binding table for the WM surface state, which maps unit
+ * numbers to surface state objects.
+ */
+static void
+brw_wm_upload_binding_table(struct brw_context *brw)
+{
+   uint32_t *bind;
+   int i, nr_surfaces = 0;
+
+   /* Might want to calculate nr_surfaces first, to avoid taking up so much
+    * space for the binding table.
+    */
+   bind = brw_state_batch(brw, sizeof(uint32_t) * BRW_WM_MAX_SURF,
+			  32, &brw->wm.bind_bo, &brw->wm.bind_bo_offset);
+
+   for (i = 0; i < BRW_WM_MAX_SURF; i++) {
+      /* BRW_NEW_WM_SURFACES */
+      if (brw->wm.surf_bo[i]) {
+	 drm_intel_bo_emit_reloc(brw->wm.bind_bo,
+				 brw->wm.bind_bo_offset + i * sizeof(uint32_t),
+				 brw->wm.surf_bo[i], 0,
+				 I915_GEM_DOMAIN_INSTRUCTION, 0);
+	 bind[i] = brw->wm.surf_bo[i]->offset;
+	 nr_surfaces = i + 1;
+      } else {
+	 bind[i] = 0;
+      }
+   }
+
+   if (brw->wm.nr_surfaces != nr_surfaces) {
+      brw->wm.nr_surfaces = nr_surfaces;
+      brw->state.dirty.brw |= BRW_NEW_NR_WM_SURFACES;
+   }
+
+   brw->state.dirty.brw |= BRW_NEW_BINDING_TABLE;
+}
+
+const struct brw_tracked_state brw_wm_binding_table = {
+   .dirty = {
+      .mesa = 0,
+      .brw = (BRW_NEW_BATCH |
+	      BRW_NEW_WM_SURFACES),
+      .cache = 0
+   },
+   .prepare = brw_wm_prepare_binding_table,
+   .emit = brw_wm_upload_binding_table,
+};

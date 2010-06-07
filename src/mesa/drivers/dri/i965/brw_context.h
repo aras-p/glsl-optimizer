@@ -131,6 +131,7 @@ struct brw_context;
 #define BRW_NEW_WM_INPUT_DIMENSIONS     0x100
 #define BRW_NEW_PSP                     0x800
 #define BRW_NEW_WM_SURFACES		0x1000
+#define BRW_NEW_BINDING_TABLE		0x2000
 #define BRW_NEW_INDICES			0x4000
 #define BRW_NEW_VERTICES		0x8000
 /**
@@ -302,7 +303,6 @@ enum brw_cache_id {
    BRW_CLIP_UNIT,
    BRW_CLIP_PROG,
    BRW_SS_SURFACE,
-   BRW_SS_SURF_BIND,
 
    BRW_MAX_CACHE
 };
@@ -377,7 +377,6 @@ struct brw_tracked_state {
 #define CACHE_NEW_CLIP_UNIT              (1<<BRW_CLIP_UNIT)
 #define CACHE_NEW_CLIP_PROG              (1<<BRW_CLIP_PROG)
 #define CACHE_NEW_SURFACE                (1<<BRW_SS_SURFACE)
-#define CACHE_NEW_SURF_BIND              (1<<BRW_SS_SURF_BIND)
 
 struct brw_cached_batch_item {
    struct header *header;
@@ -460,7 +459,7 @@ struct brw_context
        * consisting of the vertex buffers, pipelined state pointers,
        * the CURBE, the depth buffer, and a query BO.
        */
-      drm_intel_bo *validated_bos[VERT_ATTRIB_MAX + 16];
+      drm_intel_bo *validated_bos[VERT_ATTRIB_MAX + BRW_WM_MAX_SURF + 16];
       int validated_bo_count;
    } state;
 
@@ -598,6 +597,7 @@ struct brw_context
 
       /** Binding table of pointers to surf_bo entries */
       drm_intel_bo *bind_bo;
+      uint32_t bind_bo_offset;
       drm_intel_bo *surf_bo[BRW_VS_MAX_SURF];
       GLuint nr_surfaces;      
    } vs;
@@ -650,6 +650,7 @@ struct brw_context
 
       /** Binding table of pointers to surf_bo entries */
       drm_intel_bo *bind_bo;
+      uint32_t bind_bo_offset;
       drm_intel_bo *surf_bo[BRW_WM_MAX_SURF];
 
       drm_intel_bo *prog_bo;

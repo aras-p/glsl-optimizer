@@ -151,59 +151,8 @@ brw_update_vs_constant_surface( GLcontext *ctx,
 }
 
 
-/**
- * Constructs the binding table for the VS surface state.
- */
-static drm_intel_bo *
-brw_vs_get_binding_table(struct brw_context *brw)
-{
-   drm_intel_bo *bind_bo;
-
-   bind_bo = brw_search_cache(&brw->surface_cache, BRW_SS_SURF_BIND,
-			      NULL, 0,
-			      brw->vs.surf_bo, BRW_VS_MAX_SURF,
-			      NULL);
-
-   if (bind_bo == NULL) {
-      GLuint data_size = BRW_VS_MAX_SURF * sizeof(GLuint);
-      uint32_t data[BRW_VS_MAX_SURF];
-      int i;
-
-      for (i = 0; i < BRW_VS_MAX_SURF; i++)
-         if (brw->vs.surf_bo[i])
-            data[i] = brw->vs.surf_bo[i]->offset;
-         else
-            data[i] = 0;
-
-      bind_bo = brw_upload_cache( &brw->surface_cache, BRW_SS_SURF_BIND,
-				  NULL, 0,
-				  brw->vs.surf_bo, BRW_VS_MAX_SURF,
-				  data, data_size);
-
-      /* Emit binding table relocations to surface state */
-      for (i = 0; i < BRW_VS_MAX_SURF; i++) {
-	 if (brw->vs.surf_bo[i] != NULL) {
-	    /* The presumed offsets were set in the data values for
-	     * brw_upload_cache.
-	     */
-	    drm_intel_bo_emit_reloc(bind_bo, i * 4,
-				    brw->vs.surf_bo[i], 0,
-				    I915_GEM_DOMAIN_INSTRUCTION, 0);
-	 }
-      }
-   }
-
-   return bind_bo;
-}
-
-/**
- * Vertex shader surfaces (constant buffer).
- *
- * This consumes the state updates for the constant buffer needing
- * to be updated, and produces BRW_NEW_NR_VS_SURFACES for the VS unit and
- * CACHE_NEW_SURF_BIND for the binding table upload.
- */
-static void prepare_vs_surfaces(struct brw_context *brw )
+static void
+prepare_vs_surfaces(struct brw_context *brw)
 {
    GLcontext *ctx = &brw->intel.ctx;
    int i;
@@ -222,24 +171,63 @@ static void prepare_vs_surfaces(struct brw_context *brw )
       brw->vs.nr_surfaces = nr_surfaces;
    }
 
-   /* Note that we don't end up updating the bind_bo if we don't have a
-    * surface to be pointing at.  This should be relatively harmless, as it
-    * just slightly increases our working set size.
-    */
-   if (brw->vs.nr_surfaces != 0) {
-      drm_intel_bo_unreference(brw->vs.bind_bo);
-      brw->vs.bind_bo = brw_vs_get_binding_table(brw);
+   for (i = 0; i < BRW_VS_MAX_SURF; i++) {
+      brw_add_validated_bo(brw, brw->vs.surf_bo[i]);
    }
+}
+
+/**
+ * Vertex shader surfaces (constant buffer).
+ *
+ * This consumes the state updates for the constant buffer needing
+ * to be updated, and produces BRW_NEW_NR_VS_SURFACES for the VS unit and
+ * CACHE_NEW_SURF_BIND for the binding table upload.
+ */
+static void upload_vs_surfaces(struct brw_context *brw)
+{
+   uint32_t *bind;
+   int i;
+
+   /* BRW_NEW_NR_VS_SURFACES */
+   if (brw->vs.nr_surfaces == 0) {
+      if (brw->vs.bind_bo) {
+	 drm_intel_bo_unreference(brw->vs.bind_bo);
+	 brw->vs.bind_bo = NULL;
+	 brw->state.dirty.brw |= BRW_NEW_BINDING_TABLE;
+      }
+      return;
+   }
+
+   /* Might want to calculate nr_surfaces first, to avoid taking up so much
+    * space for the binding table. (once we have vs samplers)
+    */
+   bind = brw_state_batch(brw, sizeof(uint32_t) * BRW_VS_MAX_SURF,
+			  32, &brw->vs.bind_bo, &brw->vs.bind_bo_offset);
+
+   for (i = 0; i < BRW_VS_MAX_SURF; i++) {
+      /* BRW_NEW_VS_CONSTBUF */
+      if (brw->vs.surf_bo[i]) {
+	 drm_intel_bo_emit_reloc(brw->vs.bind_bo,
+				 brw->vs.bind_bo_offset + i * sizeof(uint32_t),
+				 brw->vs.surf_bo[i], 0,
+				 I915_GEM_DOMAIN_INSTRUCTION, 0);
+	 bind[i] = brw->vs.surf_bo[i]->offset;
+      } else {
+	 bind[i] = 0;
+      }
+   }
+
+   brw->state.dirty.brw |= BRW_NEW_BINDING_TABLE;
 }
 
 const struct brw_tracked_state brw_vs_surfaces = {
    .dirty = {
       .mesa = 0,
-      .brw = (BRW_NEW_VS_CONSTBUF),
+      .brw = (BRW_NEW_VS_CONSTBUF |
+	      BRW_NEW_NR_VS_SURFACES |
+	      BRW_NEW_BATCH),
       .cache = 0
    },
    .prepare = prepare_vs_surfaces,
+   .emit = upload_vs_surfaces,
 };
-
-
-

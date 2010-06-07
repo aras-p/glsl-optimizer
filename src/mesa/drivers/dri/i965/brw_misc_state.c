@@ -96,12 +96,6 @@ const struct brw_tracked_state brw_drawing_rect = {
    .emit = upload_drawing_rect
 };
 
-static void prepare_binding_table_pointers(struct brw_context *brw)
-{
-   brw_add_validated_bo(brw, brw->vs.bind_bo);
-   brw_add_validated_bo(brw, brw->wm.bind_bo);
-}
-
 /**
  * Upload the binding table pointers, which point each stage's array of surface
  * state pointers.
@@ -116,23 +110,24 @@ static void upload_binding_table_pointers(struct brw_context *brw)
    BEGIN_BATCH(6);
    OUT_BATCH(CMD_BINDING_TABLE_PTRS << 16 | (6 - 2));
    if (brw->vs.bind_bo != NULL)
-      OUT_RELOC(brw->vs.bind_bo, I915_GEM_DOMAIN_SAMPLER, 0, 0); /* vs */
+      OUT_RELOC(brw->vs.bind_bo, I915_GEM_DOMAIN_SAMPLER, 0,
+		brw->vs.bind_bo_offset); /* vs */
    else
       OUT_BATCH(0);
    OUT_BATCH(0); /* gs */
    OUT_BATCH(0); /* clip */
    OUT_BATCH(0); /* sf */
-   OUT_RELOC(brw->wm.bind_bo, I915_GEM_DOMAIN_SAMPLER, 0, 0); /* wm/ps */
+   OUT_RELOC(brw->wm.bind_bo, I915_GEM_DOMAIN_SAMPLER, 0,
+	     brw->wm.bind_bo_offset); /* wm/ps */
    ADVANCE_BATCH();
 }
 
 const struct brw_tracked_state brw_binding_table_pointers = {
    .dirty = {
       .mesa = 0,
-      .brw = BRW_NEW_BATCH,
-      .cache = CACHE_NEW_SURF_BIND,
+      .brw = BRW_NEW_BATCH | BRW_NEW_BINDING_TABLE,
+      .cache = 0,
    },
-   .prepare = prepare_binding_table_pointers,
    .emit = upload_binding_table_pointers,
 };
 
@@ -154,21 +149,22 @@ static void upload_gen6_binding_table_pointers(struct brw_context *brw)
 	     GEN6_BINDING_TABLE_MODIFY_PS |
 	     (4 - 2));
    if (brw->vs.bind_bo != NULL)
-      OUT_RELOC(brw->vs.bind_bo, I915_GEM_DOMAIN_SAMPLER, 0, 0); /* vs */
+      OUT_RELOC(brw->vs.bind_bo, I915_GEM_DOMAIN_SAMPLER, 0,
+		brw->vs.bind_bo_offset); /* vs */
    else
       OUT_BATCH(0);
    OUT_BATCH(0); /* gs */
-   OUT_RELOC(brw->wm.bind_bo, I915_GEM_DOMAIN_SAMPLER, 0, 0); /* wm/ps */
+   OUT_RELOC(brw->wm.bind_bo, I915_GEM_DOMAIN_SAMPLER, 0,
+	     brw->wm.bind_bo_offset); /* wm/ps */
    ADVANCE_BATCH();
 }
 
 const struct brw_tracked_state gen6_binding_table_pointers = {
    .dirty = {
       .mesa = 0,
-      .brw = BRW_NEW_BATCH,
-      .cache = CACHE_NEW_SURF_BIND,
+      .brw = BRW_NEW_BATCH | BRW_NEW_BINDING_TABLE,
+      .cache = 0,
    },
-   .prepare = prepare_binding_table_pointers,
    .emit = upload_gen6_binding_table_pointers,
 };
 
