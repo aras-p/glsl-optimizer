@@ -8,7 +8,6 @@
 #include "pipe/p_shader_tokens.h"
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
-#include <unistd.h>             /* for sleep() */
 #include <stdio.h>              /* for fread(), etc */
 
 #include "util/u_debug.h"       /* debug_dump_surface_bmp() */
