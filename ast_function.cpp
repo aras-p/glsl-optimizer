@@ -137,6 +137,7 @@ convert_component(ir_rvalue *src, const glsl_type *desired_type)
 {
    const unsigned a = desired_type->base_type;
    const unsigned b = src->type->base_type;
+   ir_expression *result = NULL;
 
    if (src->type->is_error())
       return src;
@@ -151,32 +152,37 @@ convert_component(ir_rvalue *src, const glsl_type *desired_type)
    case GLSL_TYPE_UINT:
    case GLSL_TYPE_INT:
       if (b == GLSL_TYPE_FLOAT)
-	 return new ir_expression(ir_unop_f2i, desired_type, src, NULL);
+	 result = new ir_expression(ir_unop_f2i, desired_type, src, NULL);
       else {
 	 assert(b == GLSL_TYPE_BOOL);
-	 return new ir_expression(ir_unop_b2i, desired_type, src, NULL);
+	 result = new ir_expression(ir_unop_b2i, desired_type, src, NULL);
       }
       break;
    case GLSL_TYPE_FLOAT:
       switch (b) {
       case GLSL_TYPE_UINT:
-	 return new ir_expression(ir_unop_u2f, desired_type, src, NULL);
+	 result = new ir_expression(ir_unop_u2f, desired_type, src, NULL);
+	 break;
       case GLSL_TYPE_INT:
-	 return new ir_expression(ir_unop_i2f, desired_type, src, NULL);
+	 result = new ir_expression(ir_unop_i2f, desired_type, src, NULL);
+	 break;
       case GLSL_TYPE_BOOL:
-	 return new ir_expression(ir_unop_b2f, desired_type, src, NULL);
+	 result = new ir_expression(ir_unop_b2f, desired_type, src, NULL);
+	 break;
       }
       break;
    case GLSL_TYPE_BOOL: {
       int z = 0;
       ir_constant *const zero = new ir_constant(src->type, &z);
 
-      return new ir_expression(ir_binop_nequal, desired_type, src, zero);
+      result = new ir_expression(ir_binop_nequal, desired_type, src, zero);
    }
    }
 
-   assert(!"Should not get here.");
-   return NULL;
+   assert(result != NULL);
+
+   ir_constant *const constant = result->constant_expression_value();
+   return (constant != NULL) ? (ir_rvalue *) constant : (ir_rvalue *) result;
 }
 
 
