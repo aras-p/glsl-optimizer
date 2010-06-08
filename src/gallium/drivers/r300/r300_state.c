@@ -1167,15 +1167,15 @@ static void r300_set_vertex_buffers(struct pipe_context* pipe,
 
     if (r300->screen->caps.has_tcl) {
         /* HW TCL. */
-        /* Check if the stride is aligned to the size of DWORD. */
+        r300->incompatible_vb_layout = FALSE;
+
+        /* Check if the strides and offsets are aligned to the size of DWORD. */
         for (i = 0; i < count; i++) {
             if (buffers[i].buffer) {
-                if (buffers[i].stride % 4 != 0) {
-                    // XXX Shouldn't we align the buffer?
-                    fprintf(stderr, "r300: set_vertex_buffers: "
-                            "Unaligned buffer stride %i isn't supported.\n",
-                            buffers[i].stride);
-                    abort();
+                if (buffers[i].stride % 4 != 0 ||
+                    buffers[i].buffer_offset % 4 != 0) {
+                    r300->incompatible_vb_layout = TRUE;
+                    break;
                 }
             }
         }
@@ -1248,7 +1248,7 @@ static void r300_vertex_psc(struct r300_vertex_element_state *velems)
      * so PSC should just route stuff based on the vertex elements,
      * and not on attrib information. */
     for (i = 0; i < velems->count; i++) {
-        format = velems->velem[i].src_format;
+        format = velems->hw_format[i];
 
         type = r300_translate_vertex_data_type(format);
         if (type == R300_INVALID_FORMAT) {
@@ -1280,12 +1280,15 @@ static void r300_vertex_psc(struct r300_vertex_element_state *velems)
     vstream->count = (i >> 1) + 1;
 }
 
+#define FORMAT_REPLACE(what, withwhat) \
+    case PIPE_FORMAT_##what: *format = PIPE_FORMAT_##withwhat; break
+
 static void* r300_create_vertex_elements_state(struct pipe_context* pipe,
                                                unsigned count,
                                                const struct pipe_vertex_element* attribs)
 {
     struct r300_vertex_element_state *velems;
-    unsigned i, size;
+    unsigned i;
     enum pipe_format *format;
 
     assert(count <= PIPE_MAX_ATTRIBS);
@@ -1293,88 +1296,69 @@ static void* r300_create_vertex_elements_state(struct pipe_context* pipe,
     if (velems != NULL) {
         velems->count = count;
         memcpy(velems->velem, attribs, sizeof(struct pipe_vertex_element) * count);
+        velems->incompatible_layout = FALSE;
 
         if (r300_screen(pipe->screen)->caps.has_tcl) {
-            r300_vertex_psc(velems);
-
-            /* Check if the format is aligned to the size of DWORD.
-             * We only care about the blocksizes of the formats since
-             * swizzles are already set up. */
+            /* Set the best hw format in case the original format is not
+             * supported by hw. */
             for (i = 0; i < count; i++) {
-                format = &velems->velem[i].src_format;
+                velems->hw_format[i] = velems->velem[i].src_format;
+                format = &velems->hw_format[i];
 
-                /* Replace some formats with their aligned counterparts,
-                 * this is OK because we check for aligned strides too. */
+                /* This is basically the list of unsupported formats.
+                 * For now we don't care about the alignment, that's going to
+                 * be sorted out after the PSC setup. */
                 switch (*format) {
-                    /* Align to RGBA8. */
-                    case PIPE_FORMAT_R8_UNORM:
-                    case PIPE_FORMAT_R8G8_UNORM:
-                    case PIPE_FORMAT_R8G8B8_UNORM:
-                        *format = PIPE_FORMAT_R8G8B8A8_UNORM;
-                        continue;
-                    case PIPE_FORMAT_R8_SNORM:
-                    case PIPE_FORMAT_R8G8_SNORM:
-                    case PIPE_FORMAT_R8G8B8_SNORM:
-                        *format = PIPE_FORMAT_R8G8B8A8_SNORM;
-                        continue;
-                    case PIPE_FORMAT_R8_USCALED:
-                    case PIPE_FORMAT_R8G8_USCALED:
-                    case PIPE_FORMAT_R8G8B8_USCALED:
-                        *format = PIPE_FORMAT_R8G8B8A8_USCALED;
-                        continue;
-                    case PIPE_FORMAT_R8_SSCALED:
-                    case PIPE_FORMAT_R8G8_SSCALED:
-                    case PIPE_FORMAT_R8G8B8_SSCALED:
-                        *format = PIPE_FORMAT_R8G8B8A8_SSCALED;
-                        continue;
+                    FORMAT_REPLACE(R64_FLOAT,           R32_FLOAT);
+                    FORMAT_REPLACE(R64G64_FLOAT,        R32G32_FLOAT);
+                    FORMAT_REPLACE(R64G64B64_FLOAT,     R32G32B32_FLOAT);
+                    FORMAT_REPLACE(R64G64B64A64_FLOAT,  R32G32B32A32_FLOAT);
 
-                    /* Align to RG16. */
-                    case PIPE_FORMAT_R16_UNORM:
-                        *format = PIPE_FORMAT_R16G16_UNORM;
-                        continue;
-                    case PIPE_FORMAT_R16_SNORM:
-                        *format = PIPE_FORMAT_R16G16_SNORM;
-                        continue;
-                    case PIPE_FORMAT_R16_USCALED:
-                        *format = PIPE_FORMAT_R16G16_USCALED;
-                        continue;
-                    case PIPE_FORMAT_R16_SSCALED:
-                        *format = PIPE_FORMAT_R16G16_SSCALED;
-                        continue;
-                    case PIPE_FORMAT_R16_FLOAT:
-                        *format = PIPE_FORMAT_R16G16_FLOAT;
-                        continue;
+                    FORMAT_REPLACE(R32_UNORM,           R32_FLOAT);
+                    FORMAT_REPLACE(R32G32_UNORM,        R32G32_FLOAT);
+                    FORMAT_REPLACE(R32G32B32_UNORM,     R32G32B32_FLOAT);
+                    FORMAT_REPLACE(R32G32B32A32_UNORM,  R32G32B32A32_FLOAT);
 
-                    /* Align to RGBA16. */
-                    case PIPE_FORMAT_R16G16B16_UNORM:
-                        *format = PIPE_FORMAT_R16G16B16A16_UNORM;
-                        continue;
-                    case PIPE_FORMAT_R16G16B16_SNORM:
-                        *format = PIPE_FORMAT_R16G16B16A16_SNORM;
-                        continue;
-                    case PIPE_FORMAT_R16G16B16_USCALED:
-                        *format = PIPE_FORMAT_R16G16B16A16_USCALED;
-                        continue;
-                    case PIPE_FORMAT_R16G16B16_SSCALED:
-                        *format = PIPE_FORMAT_R16G16B16A16_SSCALED;
-                        continue;
-                    case PIPE_FORMAT_R16G16B16_FLOAT:
-                        *format = PIPE_FORMAT_R16G16B16A16_FLOAT;
-                        continue;
+                    FORMAT_REPLACE(R32_USCALED,         R32_FLOAT);
+                    FORMAT_REPLACE(R32G32_USCALED,      R32G32_FLOAT);
+                    FORMAT_REPLACE(R32G32B32_USCALED,   R32G32B32_FLOAT);
+                    FORMAT_REPLACE(R32G32B32A32_USCALED,R32G32B32A32_FLOAT);
+
+                    FORMAT_REPLACE(R32_SNORM,           R32_FLOAT);
+                    FORMAT_REPLACE(R32G32_SNORM,        R32G32_FLOAT);
+                    FORMAT_REPLACE(R32G32B32_SNORM,     R32G32B32_FLOAT);
+                    FORMAT_REPLACE(R32G32B32A32_SNORM,  R32G32B32A32_FLOAT);
+
+                    FORMAT_REPLACE(R32_SSCALED,         R32_FLOAT);
+                    FORMAT_REPLACE(R32G32_SSCALED,      R32G32_FLOAT);
+                    FORMAT_REPLACE(R32G32B32_SSCALED,   R32G32B32_FLOAT);
+                    FORMAT_REPLACE(R32G32B32A32_SSCALED,R32G32B32A32_FLOAT);
+
+                    FORMAT_REPLACE(R32_FIXED,           R32_FLOAT);
+                    FORMAT_REPLACE(R32G32_FIXED,        R32G32_FLOAT);
+                    FORMAT_REPLACE(R32G32B32_FIXED,     R32G32B32_FLOAT);
+                    FORMAT_REPLACE(R32G32B32A32_FIXED,  R32G32B32A32_FLOAT);
 
                     default:;
                 }
 
-                size = util_format_get_blocksize(*format);
+                velems->incompatible_layout =
+                        velems->incompatible_layout ||
+                        velems->velem[i].src_format != velems->hw_format[i] ||
+                        velems->velem[i].src_offset % 4 != 0;
+            }
 
-                if (size % 4 != 0) {
-                    /* XXX Shouldn't we align the format? */
-                    fprintf(stderr, "r300_create_vertex_elements_state: "
-                            "Unaligned format %s:%i isn't supported\n",
-                            util_format_short_name(*format), size);
-                    assert(0);
-                    abort();
-                }
+            /* Now setup PSC.
+             * The unused components will be replaced by (..., 0, 1). */
+            r300_vertex_psc(velems);
+
+            /* Align the formats to the size of DWORD.
+             * We only care about the blocksizes of the formats since
+             * swizzles are already set up. */
+            for (i = 0; i < count; i++) {
+                /* This is OK because we check for aligned strides too. */
+                velems->hw_format_size[i] =
+                    align(util_format_get_blocksize(velems->hw_format[i]), 4);
             }
         }
     }

@@ -821,18 +821,10 @@ void r300_emit_aos(struct r300_context* r300, int offset, boolean indexed)
     struct pipe_vertex_element *velem = r300->velems->velem;
     struct r300_buffer *buf;
     int i;
+    unsigned *hw_format_size = r300->velems->hw_format_size;
     unsigned size1, size2, aos_count = r300->velems->count;
     unsigned packet_size = (aos_count * 3 + 1) / 2;
     CS_LOCALS(r300);
-
-    for (i = 0; i < aos_count; i++) {
-        if ((vbuf[velem[i].vertex_buffer_index].buffer_offset + velem[i].src_offset) % 4 != 0) {
-            /* XXX We must align the buffer. */
-            assert(0);
-            fprintf(stderr, "r300: Unaligned vertex buffer offsets aren't supported, aborting..\n");
-            abort();
-        }
-    }
 
     BEGIN_CS(2 + packet_size + aos_count * 2);
     OUT_CS_PKT3(R300_PACKET3_3D_LOAD_VBPNTR, packet_size);
@@ -841,8 +833,8 @@ void r300_emit_aos(struct r300_context* r300, int offset, boolean indexed)
     for (i = 0; i < aos_count - 1; i += 2) {
         vb1 = &vbuf[velem[i].vertex_buffer_index];
         vb2 = &vbuf[velem[i+1].vertex_buffer_index];
-        size1 = util_format_get_blocksize(velem[i].src_format);
-        size2 = util_format_get_blocksize(velem[i+1].src_format);
+        size1 = hw_format_size[i];
+        size2 = hw_format_size[i+1];
 
         OUT_CS(R300_VBPNTR_SIZE0(size1) | R300_VBPNTR_STRIDE0(vb1->stride) |
                R300_VBPNTR_SIZE1(size2) | R300_VBPNTR_STRIDE1(vb2->stride));
@@ -852,7 +844,7 @@ void r300_emit_aos(struct r300_context* r300, int offset, boolean indexed)
 
     if (aos_count & 1) {
         vb1 = &vbuf[velem[i].vertex_buffer_index];
-        size1 = util_format_get_blocksize(velem[i].src_format);
+        size1 = hw_format_size[i];
 
         OUT_CS(R300_VBPNTR_SIZE0(size1) | R300_VBPNTR_STRIDE0(vb1->stride));
         OUT_CS(vb1->buffer_offset + velem[i].src_offset + offset * vb1->stride);

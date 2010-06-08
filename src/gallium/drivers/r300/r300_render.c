@@ -333,7 +333,7 @@ static void r300_emit_draw_arrays_immediate(struct r300_context *r300,
     for (i = 0; i < vertex_element_count; i++) {
         velem = &r300->velems->velem[i];
         offset[i] = velem->src_offset / 4;
-        size[i] = util_format_get_blocksize(velem->src_format) / 4;
+        size[i] = r300->velems->hw_format_size[i] / 4;
         vertex_size += size[i];
         vbi = velem->vertex_buffer_index;
 
@@ -610,6 +610,11 @@ static void r300_draw_range_elements(struct pipe_context* pipe,
         return;
     }
 
+    if (r300->incompatible_vb_layout ||
+        r300->velems->incompatible_layout) {
+        return;
+    }
+
     if (!u_trim_pipe_prim(mode, &count)) {
         return;
     }
@@ -701,6 +706,11 @@ static void r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
     unsigned short_count;
 
     if (r300->skip_rendering) {
+        return;
+    }
+
+    if (r300->incompatible_vb_layout ||
+        r300->velems->incompatible_layout) {
         return;
     }
 

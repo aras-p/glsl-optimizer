@@ -326,6 +326,17 @@ struct r300_vertex_element_state {
     unsigned count;
     struct pipe_vertex_element velem[PIPE_MAX_ATTRIBS];
 
+    /* If (velem[i].src_format != hw_format[i]), the vertex buffer
+     * referenced by this vertex element cannot be used for rendering and
+     * its vertex data must be translated to hw_format[i]. */
+    enum pipe_format hw_format[PIPE_MAX_ATTRIBS];
+    unsigned hw_format_size[PIPE_MAX_ATTRIBS];
+
+    /* This might mean two things:
+     * - src_format != hw_format, as discussed above.
+     * - src_offset % 4 != 0. */
+    boolean incompatible_layout;
+
     struct r300_vertex_stream_state vertex_stream;
 };
 
@@ -434,6 +445,8 @@ struct r300_context {
     int sprite_coord_enable;
     /* Whether two-sided color selection is enabled (AKA light_twoside). */
     boolean two_sided_color;
+    /* Incompatible vertex buffer layout? (misaligned stride or buffer_offset) */
+    boolean incompatible_vb_layout;
 
     /* upload managers */
     struct u_upload_mgr *upload_vb;
