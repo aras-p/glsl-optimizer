@@ -779,8 +779,13 @@ init_declarator_list:
 single_declaration:
 	fully_specified_type
 	{
-	   $$ = new ast_declarator_list($1);
-	   $$->set_location(yylloc);
+	   if ($1->specifier->type_specifier != ast_struct) {
+	      _mesa_glsl_error(& @1, state, "empty declaration list\n");
+	      YYERROR;
+	   } else {
+	      $$ = new ast_declarator_list($1);
+	      $$->set_location(yylloc);
+	   }
 	}
 	| fully_specified_type IDENTIFIER
 	{
