@@ -25,6 +25,7 @@ C_SOURCES = \
 	sp_state_derived.c \
 	sp_state_fs.c \
 	sp_state_sampler.c \
+	sp_state_so.c \
 	sp_state_rasterizer.c \
 	sp_state_surface.c \
 	sp_state_vertex.c \
