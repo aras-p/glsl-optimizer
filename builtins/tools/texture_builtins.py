@@ -13,19 +13,23 @@ def vec_type(g, size):
     return g + "vec" + str(size)
 
 # Get the base dimension - i.e. sampler3D gives 3
+# Array samplers also get +1 here since the layer is really an extra coordinate
 def get_coord_dim(sampler_type):
     if sampler_type[0].isdigit():
-        return int(sampler_type[0])
+        coord_dim = int(sampler_type[0])
     elif sampler_type.startswith("Cube"):
-        return 3
-    assert False ("coord_dim: invalid sampler_type: " + sampler_type)
+        coord_dim = 3
+    else:
+        assert False ("coord_dim: invalid sampler_type: " + sampler_type)
+
+    if sampler_type.find("Array") != -1:
+        coord_dim += 1
+    return coord_dim
 
 # Get the number of extra vector components (i.e. shadow comparitor)
 def get_extra_dim(sampler_type, use_proj, unused_fields):
     extra_dim = unused_fields
     if sampler_type.find("Shadow") != -1:
-        extra_dim += 1
-    if sampler_type.find("Array") != -1:
         extra_dim += 1
     if use_proj:
         extra_dim += 1
