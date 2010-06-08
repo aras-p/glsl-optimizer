@@ -9,7 +9,6 @@
 #include "pipe/p_defines.h"
 
 #include "util/u_debug.h"       /* debug_dump_surface_bmp() */
-#include "os/os_time.h"       /* os_time_sleep() */
 
 enum pipe_format formats[] = {
    PIPE_FORMAT_R8G8B8A8_UNORM,
