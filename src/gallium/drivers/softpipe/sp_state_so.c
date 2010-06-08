@@ -96,6 +96,13 @@ softpipe_set_stream_output_buffers(struct pipe_context *pipe,
       void *mapped;
       struct softpipe_resource *res = softpipe_resource(buffers[i]);
 
+      if (!res) {
+         /* the whole call is invalid, bail out */
+         softpipe->so_target.num_buffers = 0;
+         draw_set_mapped_so_buffers(softpipe->draw, map_buffers, 0);
+         return;
+      }
+
       softpipe->so_target.buffer[i] = res;
       softpipe->so_target.offset[i] = offsets[i];
       softpipe->so_target.so_count[i] = 0;
