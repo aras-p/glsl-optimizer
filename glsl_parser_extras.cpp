@@ -737,7 +737,8 @@ main(int argc, char **argv)
 	 ast->print();
       }
 
-      _mesa_ast_to_hir(&instructions, &state);
+      if (!state.translation_unit.is_empty())
+	 _mesa_ast_to_hir(&instructions, &state);
    } else {
       /* FINISHME: We should initialize this to the max GLSL version supported
        * FINISHME: by the driver.  At the moment, we don't know what that is.
@@ -748,7 +749,7 @@ main(int argc, char **argv)
    }
 
    /* Optimization passes */
-   if (!state.error) {
+   if (!state.error && !instructions.is_empty()) {
       bool progress;
       do {
 	 progress = false;
