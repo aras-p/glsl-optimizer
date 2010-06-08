@@ -1296,7 +1296,6 @@ static void* r300_create_vertex_elements_state(struct pipe_context* pipe,
     if (velems != NULL) {
         velems->count = count;
         memcpy(velems->velem, attribs, sizeof(struct pipe_vertex_element) * count);
-        velems->incompatible_layout = FALSE;
 
         if (r300_screen(pipe->screen)->caps.has_tcl) {
             /* Set the best hw format in case the original format is not

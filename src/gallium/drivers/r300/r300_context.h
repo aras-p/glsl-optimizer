@@ -31,6 +31,8 @@
 #include "util/u_inlines.h"
 #include "util/u_transfer.h"
 
+#include "translate/translate_cache.h"
+
 #include "r300_defines.h"
 #include "r300_screen.h"
 
@@ -340,6 +342,17 @@ struct r300_vertex_element_state {
     struct r300_vertex_stream_state vertex_stream;
 };
 
+struct r300_translate_context {
+    /* Translate cache for incompatible vertex offset/stride/format fallback. */
+    struct translate_cache *translate_cache;
+
+    /* The vertex buffer slot containing the translated buffer. */
+    unsigned vb_slot;
+
+    /* Saved and new vertex element state. */
+    void *saved_velems, *new_velems;
+};
+
 struct r300_context {
     /* Parent class */
     struct pipe_context context;
@@ -354,6 +367,8 @@ struct r300_context {
     struct blitter_context* blitter;
     /* Stencil two-sided reference value fallback. */
     struct r300_stencilref_context *stencilref_fallback;
+    /* For translating vertex buffers having incompatible vertex layout. */
+    struct r300_translate_context tran;
 
     /* Vertex buffer for rendering. */
     struct pipe_resource* vbo;
@@ -488,6 +503,9 @@ void r300_init_query_functions(struct r300_context* r300);
 void r300_init_render_functions(struct r300_context *r300);
 void r300_init_state_functions(struct r300_context* r300);
 void r300_init_resource_functions(struct r300_context* r300);
+
+void r300_begin_vertex_translate(struct r300_context *r300);
+void r300_end_vertex_translate(struct r300_context *r300);
 
 boolean r300_check_cs(struct r300_context *r300, unsigned size);
 void r300_finish(struct r300_context *r300);

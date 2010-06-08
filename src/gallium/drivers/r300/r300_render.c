@@ -605,18 +605,20 @@ static void r300_draw_range_elements(struct pipe_context* pipe,
                             r300->rws->get_value(r300->rws, R300_VID_DRM_2_3_0);
     unsigned short_count;
     int buffer_offset = 0, index_offset = 0; /* for index bias emulation */
+    boolean translate = FALSE;
 
     if (r300->skip_rendering) {
         return;
     }
 
-    if (r300->incompatible_vb_layout ||
-        r300->velems->incompatible_layout) {
+    if (!u_trim_pipe_prim(mode, &count)) {
         return;
     }
 
-    if (!u_trim_pipe_prim(mode, &count)) {
-        return;
+    /* Set up fallback for incompatible vertex layout if needed. */
+    if (r300->incompatible_vb_layout || r300->velems->incompatible_layout) {
+        r300_begin_vertex_translate(r300);
+        translate = TRUE;
     }
 
     if (indexBias && !index_bias_supported(r300)) {
@@ -681,6 +683,10 @@ static void r300_draw_range_elements(struct pipe_context* pipe,
     if (indexBuffer != orgIndexBuffer) {
         pipe_resource_reference( &indexBuffer, NULL );
     }
+
+    if (translate) {
+        r300_end_vertex_translate(r300);
+    }
 }
 
 /* Simple helpers for context setup. Should probably be moved to util. */
@@ -704,18 +710,20 @@ static void r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
                             count > 65536 &&
                             r300->rws->get_value(r300->rws, R300_VID_DRM_2_3_0);
     unsigned short_count;
+    boolean translate = FALSE;
 
     if (r300->skip_rendering) {
         return;
     }
 
-    if (r300->incompatible_vb_layout ||
-        r300->velems->incompatible_layout) {
+    if (!u_trim_pipe_prim(mode, &count)) {
         return;
     }
 
-    if (!u_trim_pipe_prim(mode, &count)) {
-        return;
+    /* Set up fallback for incompatible vertex layout if needed. */
+    if (r300->incompatible_vb_layout || r300->velems->incompatible_layout) {
+        r300_begin_vertex_translate(r300);
+        translate = TRUE;
     }
 
     r300_update_derived_state(r300);
@@ -746,6 +754,10 @@ static void r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
             } while (count);
         }
 	u_upload_flush(r300->upload_vb);
+    }
+
+    if (translate) {
+        r300_end_vertex_translate(r300);
     }
 }
 

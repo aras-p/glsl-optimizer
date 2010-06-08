@@ -66,6 +66,8 @@ static void r300_destroy_context(struct pipe_context* context)
     u_upload_destroy(r300->upload_vb);
     u_upload_destroy(r300->upload_ib);
 
+    translate_cache_destroy(r300->tran.translate_cache);
+
     FREE(r300->blend_color_state.state);
     FREE(r300->clip_state.state);
     FREE(r300->fb_state.state);
@@ -226,6 +228,8 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
 				      PIPE_BIND_VERTEX_BUFFER);
     if (r300->upload_vb == NULL)
         goto no_upload_vb;
+
+    r300->tran.translate_cache = translate_cache_create();
 
     return &r300->context;
 
