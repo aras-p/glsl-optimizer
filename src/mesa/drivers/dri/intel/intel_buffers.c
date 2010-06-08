@@ -231,6 +231,7 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
 
    intel->vtbl.set_draw_region(intel, colorRegions, depthRegion, 
                                fb->_NumColorDrawBuffers);
+   intel->NewGLState |= _NEW_BUFFERS;
 
    /* update viewport since it depends on window size */
 #ifdef I915
