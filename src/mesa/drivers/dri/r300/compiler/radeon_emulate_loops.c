@@ -297,10 +297,31 @@ static int transform_const_loop(struct emulate_loop_state * s,
 	/* Remove the first 4 instructions inside the loop, which are part
 	 * of the conditional and no longer needed.
 	 */
-	rc_remove_instruction(loop->BeginLoop->Next); /* SLT/SGE */
-	rc_remove_instruction(loop->BeginLoop->Next); /* IF      */
-	rc_remove_instruction(loop->BeginLoop->Next); /* BRK     */
-	rc_remove_instruction(loop->BeginLoop->Next); /* ENDIF   */
+	/* SLT/SGE */
+	if(loop->BeginLoop->Next->U.I.Opcode != RC_OPCODE_SLT &&
+	   loop->BeginLoop->Next->U.I.Opcode != RC_OPCODE_SGE){
+		rc_error(s->C,"Unexpected instruction, expected SLT/SGE\n");
+		return 0;
+	}
+	/* IF */
+	rc_remove_instruction(loop->BeginLoop->Next);
+	if(loop->BeginLoop->Next->U.I.Opcode != RC_OPCODE_IF){
+		rc_error(s->C,"Unexpected instruction, expected IF\n");
+		return 0;
+	}
+	rc_remove_instruction(loop->BeginLoop->Next);
+	/* BRK     */
+	if(loop->BeginLoop->Next->U.I.Opcode != RC_OPCODE_BRK){
+		rc_error(s->C,"Unexpected instruction, expected BRK\n");
+		return 0;
+	}
+	rc_remove_instruction(loop->BeginLoop->Next);
+	/* ENDIF   */
+	if(loop->BeginLoop->Next->U.I.Opcode != RC_OPCODE_ENDIF){
+		rc_error(s->C,"Unexpected instruction, expected ENDIF\n");
+		return 0;
+	}
+	rc_remove_instruction(loop->BeginLoop->Next);
 	
 	loop_unroll(s, loop, iterations);
 	loop->EndLoop = NULL;
@@ -343,6 +364,10 @@ static struct rc_instruction * transform_loop(struct emulate_loop_state * s,
 	case RC_OPCODE_SLT:
 		ptr->U.I.Opcode = RC_OPCODE_SGE;
 		break;
+	default:
+		rc_error(s->C,
+			"Loop does not start with a conditional instruction.");
+		break;
 	}
 	
 	/* Check if the number of loops is known at compile time. */
@@ -363,6 +388,10 @@ static struct rc_instruction * transform_loop(struct emulate_loop_state * s,
 			/* The BRK instruction should always be followed by
 			 * an ENDIF.  This ENDIF will eventually replace the
 			 * ENDLOOP insruction. */
+			if(ptr->Next->U.I.Opcode != RC_OPCODE_ENDIF){
+				rc_error(s->C,
+					"transform_loop: expected ENDIF\n");
+			}
 			endif = ptr->Next;
 			rc_remove_instruction(ptr);
 			rc_remove_instruction(endif);
