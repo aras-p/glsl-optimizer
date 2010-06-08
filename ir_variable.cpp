@@ -97,11 +97,12 @@ generate_110_uniforms(exec_list *instructions,
    }
 
    /* FINISHME: The size of this array is implementation dependent based on the
-    * FINISHME: value of GL_MAX_TEXTURE_COORDS.  GL_MAX_TEXTURE_COORDS must be
-    * FINISHME: at least 2, so hard-code 2 for now.
+    * FINISHME: value of GL_MAX_TEXTURE_COORDS.  Every platform that supports
+    * FINISHME: GLSL sets GL_MAX_TEXTURE_COORDS to at least 4, so hard-code 4
+    * FINISHME: for now.
     */
    const glsl_type *const mat4_array_type =
-      glsl_type::get_array_instance(glsl_type::mat4_type, 2);
+      glsl_type::get_array_instance(glsl_type::mat4_type, 4);
 
    add_variable("gl_TextureMatrix", ir_var_uniform, mat4_array_type,
 		instructions, symtab);
@@ -149,11 +150,12 @@ generate_110_vs_variables(exec_list *instructions,
    generate_110_uniforms(instructions, symtab);
 
    /* FINISHME: The size of this array is implementation dependent based on the
-    * FINISHME: value of GL_MAX_TEXTURE_COORDS.  GL_MAX_TEXTURE_COORDS must be
-    * FINISHME: at least 2, so hard-code 2 for now.
+    * FINISHME: value of GL_MAX_TEXTURE_COORDS.  Every platform that supports
+    * FINISHME: GLSL sets GL_MAX_TEXTURE_COORDS to at least 4, so hard-code 4
+    * FINISHME: for now.
     */
    const glsl_type *const vec4_array_type =
-      glsl_type::get_array_instance(glsl_type::vec4_type, 2);
+      glsl_type::get_array_instance(glsl_type::vec4_type, 4);
 
    add_variable("gl_TexCoord", ir_var_out, vec4_array_type, instructions,
 		symtab);
@@ -229,11 +231,12 @@ generate_110_fs_variables(exec_list *instructions,
    generate_110_uniforms(instructions, symtab);
 
    /* FINISHME: The size of this array is implementation dependent based on the
-    * FINISHME: value of GL_MAX_TEXTURE_COORDS.  GL_MAX_TEXTURE_COORDS must be
-    * FINISHME: at least 2, so hard-code 2 for now.
+    * FINISHME: value of GL_MAX_TEXTURE_COORDS.  Every platform that supports
+    * FINISHME: GLSL sets GL_MAX_TEXTURE_COORDS to at least 4, so hard-code 4
+    * FINISHME: for now.
     */
    const glsl_type *const vec4_array_type =
-      glsl_type::get_array_instance(glsl_type::vec4_type, 2);
+      glsl_type::get_array_instance(glsl_type::vec4_type, 4);
 
    add_variable("gl_TexCoord", ir_var_in, vec4_array_type, instructions,
 		symtab);
