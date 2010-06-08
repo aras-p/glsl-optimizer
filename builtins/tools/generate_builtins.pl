@@ -97,23 +97,26 @@ _mesa_glsl_initialize_functions(exec_list *instructions,
 {
 EOF
 
-foreach $version (@versions) {
+foreach $version_xs (@versions) {
+   $check = "";
+   if ($version_xs =~ /_vs/) {
+      $check = "state->target == vertex_shader && ";
+   } elsif ($version_xs =~ /_fs/) {
+      $check = "state->target == fragment_shader && ";
+   }
+   $version = $version_xs;
+   $version =~ s/_[vf]s//g;
+
    if ($version =~ /^[1-9][0-9][0-9]/) {
-      $version_number = $version;
-      $version_number =~ s/_[vf]s//g;
-      $check = "state->language_version >= $version_number";
-      if ($version =~ /_vs/) {
-	 $check = "$check && state->target == vertex_shader";
-      } elsif ($version =~ /_fs/) {
-	 $check = "$check && state->target == fragment_shader";
-      }
+      $check = "${check}state->language_version >= $version";
    } else {
       # Not a version...an extension name
-      $check = "state->${version}_enable";
+      $check = "${check}state->${version}_enable";
    }
    print "   if ($check)\n";
-   print "      read_builtins(state, instructions, functions_for_$version,\n";
-   print "                    sizeof(functions_for_$version) / ";
+   print "      read_builtins(state, instructions,\n";
+   print "                    functions_for_$version_xs,\n";
+   print "                    sizeof(functions_for_$version_xs) / ";
    print "sizeof(const char *));\n\n"
 }
 
