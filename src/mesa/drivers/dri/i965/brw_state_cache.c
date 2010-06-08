@@ -447,11 +447,6 @@ brw_clear_cache(struct brw_context *brw, struct brw_cache *cache)
 
    cache->n_items = 0;
 
-   if (brw->curbe.last_buf) {
-      free(brw->curbe.last_buf);
-      brw->curbe.last_buf = NULL;
-   }
-
    brw->state.dirty.mesa |= ~0;
    brw->state.dirty.brw |= ~0;
    brw->state.dirty.cache |= ~0;

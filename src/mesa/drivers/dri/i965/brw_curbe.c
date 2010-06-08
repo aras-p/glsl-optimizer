@@ -190,15 +190,11 @@ static void prepare_constant_buffer(struct brw_context *brw)
    GLuint i;
 
    if (sz == 0) {
-      if (brw->curbe.last_buf) {
-	 free(brw->curbe.last_buf);
-	 brw->curbe.last_buf = NULL;
-	 brw->curbe.last_bufsz  = 0;
-      }
+      brw->curbe.last_bufsz  = 0;
       return;
    }
 
-   buf = (GLfloat *) calloc(1, bufsz);
+   buf = brw->curbe.next_buf;
 
    /* fragment shader constants */
    if (brw->curbe.wm_size) {
@@ -289,18 +285,15 @@ static void prepare_constant_buffer(struct brw_context *brw)
    }
 
    if (brw->curbe.curbe_bo != NULL &&
-       brw->curbe.last_buf &&
        bufsz == brw->curbe.last_bufsz &&
        memcmp(buf, brw->curbe.last_buf, bufsz) == 0) {
       /* constants have not changed */
-      free(buf);
-   } 
-   else {
-      /* constants have changed */
-      if (brw->curbe.last_buf)
-	 free(brw->curbe.last_buf);
-
-      brw->curbe.last_buf = buf;
+   } else {
+      /* Update the record of what our last set of constants was.  We
+       * don't just flip the pointers because we don't fill in the
+       * data in the padding between the entries.
+       */
+      memcpy(brw->curbe.last_buf, buf, bufsz);
       brw->curbe.last_bufsz = bufsz;
 
       if (brw->curbe.curbe_bo != NULL &&
@@ -319,6 +312,7 @@ static void prepare_constant_buffer(struct brw_context *brw)
 						  4096, 1 << 6);
 	 brw->curbe.curbe_next_offset = 0;
 	 drm_intel_gem_bo_map_gtt(brw->curbe.curbe_bo);
+	 assert(bufsz < 4096);
       }
 
       brw->curbe.curbe_offset = brw->curbe.curbe_next_offset;

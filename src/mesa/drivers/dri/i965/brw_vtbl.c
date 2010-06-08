@@ -105,6 +105,9 @@ static void brw_destroy_context( struct intel_context *intel )
    dri_bo_release(&brw->cc.blend_state_bo);
    dri_bo_release(&brw->cc.depth_stencil_state_bo);
    dri_bo_release(&brw->cc.color_calc_state_bo);
+
+   free(brw->curbe.last_buf);
+   free(brw->curbe.next_buf);
 }
 
 

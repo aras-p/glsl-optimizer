@@ -184,6 +184,9 @@ GLboolean brwCreateContext( int api,
 
    brw_init_state( brw );
 
+   brw->curbe.last_buf = calloc(1, 4096);
+   brw->curbe.next_buf = calloc(1, 4096);
+
    brw->state.dirty.mesa = ~0;
    brw->state.dirty.brw = ~0;
 
