@@ -89,6 +89,7 @@ softpipe_begin_query(struct pipe_context *pipe, struct pipe_query *q)
    case PIPE_QUERY_SO_STATISTICS:
       sq->so.num_primitives_written = 0;
       sq->so.primitives_storage_needed = 0;
+      break;
    default:
       assert(0);
       break;
@@ -117,6 +118,7 @@ softpipe_end_query(struct pipe_context *pipe, struct pipe_query *q)
          softpipe->so_stats.num_primitives_written;
       sq->so.primitives_storage_needed =
          softpipe->so_stats.primitives_storage_needed;
+      break;
    default:
       assert(0);
       break;
