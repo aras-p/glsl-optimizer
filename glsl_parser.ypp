@@ -94,7 +94,7 @@
 %token MOD_ASSIGN LEFT_ASSIGN RIGHT_ASSIGN AND_ASSIGN XOR_ASSIGN OR_ASSIGN
 %token SUB_ASSIGN
 %token INVARIANT
-%token HIGH_PRECISION MEDIUM_PRECISION LOW_PRECISION PRECISION
+%token LOWP MEDIUMP HIGHP PRECISION
 
 %token VERSION EXTENSION LINE PRAGMA COLON EOL INTERFACE OUTPUT
 
@@ -105,7 +105,7 @@
 %token LONG SHORT DOUBLE HALF FIXED UNSIGNED INPUT OUPTUT
 %token HVEC2 HVEC3 HVEC4 DVEC2 DVEC3 DVEC4 FVEC2 FVEC3 FVEC4
 %token SAMPLER2DRECT SAMPLER3DRECT SAMPLER2DRECTSHADOW
-%token SIZEOF CAST NAMESPACE USING LOWP MEDIUMP HIGHP
+%token SIZEOF CAST NAMESPACE USING
 
 %type <identifier> variable_identifier
 %type <node> statement
@@ -234,11 +234,19 @@ extension_statement:
 external_declaration_list:
 	external_declaration
 	{
-	   state->translation_unit.push_tail(& $1->link);
+	   /* FINISHME: The NULL test is only required because 'precision'
+	    * FINISHME: statements are not yet supported.
+	    */
+	   if ($1 != NULL)
+	      state->translation_unit.push_tail(& $1->link);
 	}
 	| external_declaration_list external_declaration
 	{
-	   state->translation_unit.push_tail(& $2->link);
+	   /* FINISHME: The NULL test is only required because 'precision'
+	    * FINISHME: statements are not yet supported.
+	    */
+	   if ($2 != NULL)
+	      state->translation_unit.push_tail(& $2->link);
 	}
 	;
 
@@ -999,9 +1007,39 @@ basic_type_specifier_nonarray:
 	;
 
 precision_qualifier:
-	HIGH_PRECISION		{ $$ = ast_precision_high; }
-	| MEDIUM_PRECISION	{ $$ = ast_precision_medium; }
-	| LOW_PRECISION		{ $$ = ast_precision_low; }
+	HIGHP		{
+			   if (state->language_version < 130)
+			      _mesa_glsl_error(& @1, state,
+					       "precission qualifier forbidden "
+					       "in GLSL %d.%d (1.30 or later "
+					       "required)\n",
+					       state->language_version / 100,
+					       state->language_version % 100);
+
+			   $$ = ast_precision_high;
+			}
+	| MEDIUMP	{
+			   if (state->language_version < 130)
+			      _mesa_glsl_error(& @1, state,
+					       "precission qualifier forbidden "
+					       "in GLSL %d.%d (1.30 or later "
+					       "required)\n",
+					       state->language_version / 100,
+					       state->language_version % 100);
+
+			   $$ = ast_precision_medium;
+			}
+	| LOWP		{
+			   if (state->language_version < 130)
+			      _mesa_glsl_error(& @1, state,
+					       "precission qualifier forbidden "
+					       "in GLSL %d.%d (1.30 or later "
+					       "required)\n",
+					       state->language_version / 100,
+					       state->language_version % 100);
+
+			   $$ = ast_precision_low;
+			}
 	;
 
 struct_specifier:
