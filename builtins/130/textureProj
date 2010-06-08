@@ -1,0 +1,92 @@
+((function textureProj
+   (signature vec4
+     (parameters
+       (declare (in) sampler1D sampler)
+       (declare (in) vec2 P) )
+     ((return (tex (var_ref sampler) (swiz x (var_ref P)) (0 0 0) (swiz y (var_ref P)) () ))))
+
+   (signature ivec4
+     (parameters
+       (declare (in) isampler1D sampler)
+       (declare (in) vec2 P) )
+     ((return (tex (var_ref sampler) (swiz x (var_ref P)) (0 0 0) (swiz y (var_ref P)) () ))))
+
+   (signature uvec4
+     (parameters
+       (declare (in) usampler1D sampler)
+       (declare (in) vec2 P) )
+     ((return (tex (var_ref sampler) (swiz x (var_ref P)) (0 0 0) (swiz y (var_ref P)) () ))))
+
+   (signature vec4
+     (parameters
+       (declare (in) sampler1D sampler)
+       (declare (in) vec4 P) )
+     ((return (tex (var_ref sampler) (swiz x (var_ref P)) (0 0 0) (swiz w (var_ref P)) () ))))
+
+   (signature ivec4
+     (parameters
+       (declare (in) isampler1D sampler)
+       (declare (in) vec4 P) )
+     ((return (tex (var_ref sampler) (swiz x (var_ref P)) (0 0 0) (swiz w (var_ref P)) () ))))
+
+   (signature uvec4
+     (parameters
+       (declare (in) usampler1D sampler)
+       (declare (in) vec4 P) )
+     ((return (tex (var_ref sampler) (swiz x (var_ref P)) (0 0 0) (swiz w (var_ref P)) () ))))
+
+   (signature vec4
+     (parameters
+       (declare (in) sampler2D sampler)
+       (declare (in) vec3 P) )
+     ((return (tex (var_ref sampler) (swiz xy (var_ref P)) (0 0 0) (swiz z (var_ref P)) () ))))
+
+   (signature ivec4
+     (parameters
+       (declare (in) isampler2D sampler)
+       (declare (in) vec3 P) )
+     ((return (tex (var_ref sampler) (swiz xy (var_ref P)) (0 0 0) (swiz z (var_ref P)) () ))))
+
+   (signature uvec4
+     (parameters
+       (declare (in) usampler2D sampler)
+       (declare (in) vec3 P) )
+     ((return (tex (var_ref sampler) (swiz xy (var_ref P)) (0 0 0) (swiz z (var_ref P)) () ))))
+
+   (signature vec4
+     (parameters
+       (declare (in) sampler2D sampler)
+       (declare (in) vec4 P) )
+     ((return (tex (var_ref sampler) (swiz xy (var_ref P)) (0 0 0) (swiz w (var_ref P)) () ))))
+
+   (signature ivec4
+     (parameters
+       (declare (in) isampler2D sampler)
+       (declare (in) vec4 P) )
+     ((return (tex (var_ref sampler) (swiz xy (var_ref P)) (0 0 0) (swiz w (var_ref P)) () ))))
+
+   (signature uvec4
+     (parameters
+       (declare (in) usampler2D sampler)
+       (declare (in) vec4 P) )
+     ((return (tex (var_ref sampler) (swiz xy (var_ref P)) (0 0 0) (swiz w (var_ref P)) () ))))
+
+   (signature vec4
+     (parameters
+       (declare (in) sampler3D sampler)
+       (declare (in) vec4 P) )
+     ((return (tex (var_ref sampler) (swiz xyz (var_ref P)) (0 0 0) (swiz w (var_ref P)) () ))))
+
+   (signature ivec4
+     (parameters
+       (declare (in) isampler3D sampler)
+       (declare (in) vec4 P) )
+     ((return (tex (var_ref sampler) (swiz xyz (var_ref P)) (0 0 0) (swiz w (var_ref P)) () ))))
+
+   (signature uvec4
+     (parameters
+       (declare (in) usampler3D sampler)
+       (declare (in) vec4 P) )
+     ((return (tex (var_ref sampler) (swiz xyz (var_ref P)) (0 0 0) (swiz w (var_ref P)) () ))))
+
+))
