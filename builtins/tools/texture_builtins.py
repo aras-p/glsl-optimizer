@@ -112,6 +112,24 @@ with open(path.join(builtins_dir, "130_fs", "texture"), 'w') as sys.stdout:
     generate_fiu_sigs("txb", "2DArray")
     print "))"
 
+with open(path.join(builtins_dir, "130", "textureProj"), 'w') as sys.stdout:
+    print "((function textureProj"
+    generate_fiu_sigs("tex", "1D", True)
+    generate_fiu_sigs("tex", "1D", True, 2)
+    generate_fiu_sigs("tex", "2D", True)
+    generate_fiu_sigs("tex", "2D", True, 1)
+    generate_fiu_sigs("tex", "3D", True)
+    print "))"
+
+with open(path.join(builtins_dir, "130_fs", "textureProj"), 'w') as sys.stdout:
+    print "((function textureProj"
+    generate_fiu_sigs("txb", "1D", True)
+    generate_fiu_sigs("txb", "1D", True, 2)
+    generate_fiu_sigs("txb", "2D", True)
+    generate_fiu_sigs("txb", "2D", True, 1)
+    generate_fiu_sigs("txb", "3D", True)
+    print "))"
+
 with open(path.join(builtins_dir, "130", "textureLod"), 'w') as sys.stdout:
     print "((function textureLod"
     generate_fiu_sigs("txl", "1D")
@@ -131,6 +149,15 @@ with open(path.join(builtins_dir, "130", "texelFetch"), 'w') as sys.stdout:
     generate_fiu_sigs("txf", "2DArray")
     print "))"
 
+with open(path.join(builtins_dir, "130", "textureProjLod"), 'w') as sys.stdout:
+    print "((function textureLod"
+    generate_fiu_sigs("txl", "1D", True)
+    generate_fiu_sigs("txl", "1D", True, 2)
+    generate_fiu_sigs("txl", "2D", True)
+    generate_fiu_sigs("txl", "2D", True, 1)
+    generate_fiu_sigs("txl", "3D", True)
+    print "))"
+
 with open(path.join(builtins_dir, "130", "textureGrad"), 'w') as sys.stdout:
     print "((function textureGrad"
     generate_fiu_sigs("txd", "1D")
@@ -140,6 +167,15 @@ with open(path.join(builtins_dir, "130", "textureGrad"), 'w') as sys.stdout:
     generate_fiu_sigs("txd", "1DArray")
     generate_fiu_sigs("txd", "2DArray")
     print ")\n)"
+
+with open(path.join(builtins_dir, "130", "textureProjGrad"), 'w') as sys.stdout:
+    print "((function textureLod"
+    generate_fiu_sigs("txd", "1D", True)
+    generate_fiu_sigs("txd", "1D", True, 2)
+    generate_fiu_sigs("txd", "2D", True)
+    generate_fiu_sigs("txd", "2D", True, 1)
+    generate_fiu_sigs("txd", "3D", True)
+    print "))"
 
 # ARB_texture_rectangle extension
 with open(path.join(builtins_dir, "ARB_texture_rectangle", "textures"), 'w') as sys.stdout:
