@@ -2,7 +2,6 @@
 #include "util/u_debug.h"
 #include "target-helpers/wrap_screen.h"
 #include "sw_public.h"
-#include "state_tracker/sw_winsys.h"
 
 
 /* Helper function to choose and instantiate one of the software rasterizers:
