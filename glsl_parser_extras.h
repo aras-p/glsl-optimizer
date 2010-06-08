@@ -74,6 +74,8 @@ struct _mesa_glsl_parse_state {
    unsigned ARB_draw_buffers_warn:1;
    unsigned ARB_texture_rectangle_enable:1;
    unsigned ARB_texture_rectangle_warn:1;
+   unsigned EXT_texture_array_enable:1;
+   unsigned EXT_texture_array_warn:1;
    /*@}*/
 };
 

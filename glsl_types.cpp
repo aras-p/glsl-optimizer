@@ -90,6 +90,15 @@ generate_ARB_texture_rectangle_types(glsl_symbol_table *symtab, bool warn)
 }
 
 
+static void
+generate_EXT_texture_array_types(glsl_symbol_table *symtab, bool warn)
+{
+   add_types_to_symbol_table(symtab, builtin_EXT_texture_array_types,
+			     Elements(builtin_EXT_texture_array_types),
+			     warn);
+}
+
+
 void
 _mesa_glsl_initialize_types(struct _mesa_glsl_parse_state *state)
 {
@@ -111,6 +120,12 @@ _mesa_glsl_initialize_types(struct _mesa_glsl_parse_state *state)
    if (state->ARB_texture_rectangle_enable) {
       generate_ARB_texture_rectangle_types(state->symbols,
 					   state->ARB_texture_rectangle_warn);
+   }
+
+   if (state->EXT_texture_array_enable && state->language_version < 130) {
+      // These are already included in 130; don't create twice.
+      generate_EXT_texture_array_types(state->symbols,
+				       state->EXT_texture_array_warn);
    }
 }
 

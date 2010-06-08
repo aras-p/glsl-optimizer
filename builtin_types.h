@@ -244,6 +244,18 @@ static const struct glsl_type builtin_ARB_texture_rectangle_types[] = {
 };
 /*@}*/
 
+/** \name Sampler types added by GL_EXT_texture_array
+ */
+/*@{*/
+
+static const struct glsl_type builtin_EXT_texture_array_types[] = {
+   glsl_type(  GLSL_SAMPLER_DIM_1D, 0, 1, GLSL_TYPE_FLOAT, "sampler1DArray"),
+   glsl_type(  GLSL_SAMPLER_DIM_2D, 0, 1, GLSL_TYPE_FLOAT, "sampler2DArray"),
+   glsl_type(  GLSL_SAMPLER_DIM_1D, 1, 1, GLSL_TYPE_FLOAT, "sampler1DArrayShadow"),
+   glsl_type(  GLSL_SAMPLER_DIM_2D, 1, 1, GLSL_TYPE_FLOAT, "sampler2DArrayShadow"),
+};
+/*@}*/
+
 /** \name Sampler types added by GL_EXT_texture_buffer_object
  */
 /*@{*/
