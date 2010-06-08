@@ -226,22 +226,23 @@ void Map_Fragment_Program(r700_AssemblerBase         *pAsm,
 	pAsm->number_of_exports = 0;
 	pAsm->number_of_colorandz_exports = 0; /* don't include stencil and mask out. */
 	pAsm->starting_export_register_number = pAsm->number_used_registers;
-	unBit = 1 << FRAG_RESULT_COLOR;
-	if(mesa_fp->Base.OutputsWritten & unBit)
-	{
-		pAsm->uiFP_OutputMap[FRAG_RESULT_COLOR] = pAsm->number_used_registers++;
-		pAsm->number_of_exports++;
-		pAsm->number_of_colorandz_exports++;
-	}
-	unBit = 1 << FRAG_RESULT_DEPTH;
-	if(mesa_fp->Base.OutputsWritten & unBit)
-	{
-        pAsm->depth_export_register_number = pAsm->number_used_registers;
-		pAsm->uiFP_OutputMap[FRAG_RESULT_DEPTH] = pAsm->number_used_registers++;
-		pAsm->number_of_exports++;
-		pAsm->number_of_colorandz_exports++;
-		pAsm->pR700Shader->depthIsExported = 1;
-	}
+
+    for (i = 0; i < FRAG_RESULT_MAX; ++i)
+    {
+        unBit = 1 << i;
+        if (mesa_fp->Base.OutputsWritten & unBit)
+        {
+            if (i == FRAG_RESULT_DEPTH)
+            {
+                pAsm->depth_export_register_number = pAsm->number_used_registers;
+                pAsm->pR700Shader->depthIsExported = 1;
+            }
+
+            pAsm->uiFP_OutputMap[i] = pAsm->number_used_registers++;
+            ++pAsm->number_of_exports;
+            ++pAsm->number_of_colorandz_exports;
+        }
+    }
 
     pAsm->pucOutMask = (unsigned char*) MALLOC(pAsm->number_of_exports);
     for(ui=0; ui<pAsm->number_of_exports; ui++)
