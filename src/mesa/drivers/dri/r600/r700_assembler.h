@@ -582,7 +582,6 @@ GLboolean check_scalar(r700_AssemblerBase* pAsm,
 GLboolean check_vector(r700_AssemblerBase* pAsm,
                        R700ALUInstruction* alu_instruction_ptr);
 GLboolean assemble_alu_instruction(r700_AssemblerBase *pAsm);
-GLboolean next_ins(r700_AssemblerBase *pAsm);
 
 GLboolean pops(r700_AssemblerBase *pAsm, GLuint pops);
 GLboolean jumpToOffest(r700_AssemblerBase *pAsm, GLuint pops, GLint offset);

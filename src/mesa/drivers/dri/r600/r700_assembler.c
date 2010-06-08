@@ -1051,6 +1051,67 @@ void checkop_init(r700_AssemblerBase* pAsm)
     pAsm->aArgSubst[3] = -1;
 }
 
+static GLboolean next_ins(r700_AssemblerBase *pAsm)
+{
+    struct prog_instruction *pILInst = &(pAsm->pILInst[pAsm->uiCurInst]);
+
+    if (GL_TRUE == pAsm->is_tex)
+    {
+        if (pILInst->TexSrcTarget == TEXTURE_RECT_INDEX)
+        {
+            if (GL_FALSE == assemble_tex_instruction(pAsm, GL_FALSE))
+            {
+                radeon_error("Error assembling TEX instruction\n");
+                return GL_FALSE;
+            }
+        }
+        else
+        {
+            if (GL_FALSE == assemble_tex_instruction(pAsm, GL_TRUE))
+            {
+                radeon_error("Error assembling TEX instruction\n");
+                return GL_FALSE;
+            }
+        }
+    }
+    else
+    {   //ALU
+        if (GL_FALSE == assemble_alu_instruction(pAsm))
+        {
+            radeon_error("Error assembling ALU instruction\n");
+            return GL_FALSE;
+        }
+    }
+
+    if (pAsm->D.dst.rtype == DST_REG_OUT)
+    {
+        assert(pAsm->D.dst.reg >= pAsm->starting_export_register_number);
+
+        if (pAsm->D.dst.op3)
+        {
+            // There is no mask for OP3 instructions, so all channels are written
+            pAsm->pucOutMask[pAsm->D.dst.reg - pAsm->starting_export_register_number] = 0xF;
+        }
+        else
+        {
+            pAsm->pucOutMask[pAsm->D.dst.reg - pAsm->starting_export_register_number]
+               |= (unsigned char)pAsm->pILInst[pAsm->uiCurInst].DstReg.WriteMask;
+        }
+    }
+
+    //reset for next inst.
+    pAsm->D.bits    = 0;
+    pAsm->D2.bits   = 0;
+    pAsm->S[0].bits = 0;
+    pAsm->S[1].bits = 0;
+    pAsm->S[2].bits = 0;
+    pAsm->is_tex = GL_FALSE;
+    pAsm->need_tex_barrier = GL_FALSE;
+    pAsm->D2.bits = 0;
+    pAsm->C[0].bits = pAsm->C[1].bits = pAsm->C[2].bits = pAsm->C[3].bits = 0;
+    return GL_TRUE;
+}
+
 GLboolean mov_temp(r700_AssemblerBase* pAsm, int src)
 {
     GLuint tmp = gethelpr(pAsm);
@@ -2575,64 +2636,6 @@ GLboolean assemble_alu_instruction(r700_AssemblerBase *pAsm)
         contiguous_slots_needed -= 1;
     }
 
-    return GL_TRUE;
-}
-
-GLboolean next_ins(r700_AssemblerBase *pAsm)
-{
-    struct prog_instruction *pILInst = &(pAsm->pILInst[pAsm->uiCurInst]);
-
-    if( GL_TRUE == pAsm->is_tex )
-    {
-	    if (pILInst->TexSrcTarget == TEXTURE_RECT_INDEX) {
-		    if( GL_FALSE == assemble_tex_instruction(pAsm, GL_FALSE) ) 
-		    {
-			    radeon_error("Error assembling TEX instruction\n");
-			    return GL_FALSE;
-		    }
-	    } else {
-		    if( GL_FALSE == assemble_tex_instruction(pAsm, GL_TRUE) ) 
-		    {
-			    radeon_error("Error assembling TEX instruction\n");
-			    return GL_FALSE;
-		    }
-	    }
-    }
-    else 
-    {   //ALU      
-        if( GL_FALSE == assemble_alu_instruction(pAsm) ) 
-        {
-            radeon_error("Error assembling ALU instruction\n");
-            return GL_FALSE;
-        }
-    } 
-      
-    if(pAsm->D.dst.rtype == DST_REG_OUT) 
-    {
-        assert(pAsm->D.dst.reg >= pAsm->starting_export_register_number);
-
-        if(pAsm->D.dst.op3) 
-        {        
-            // There is no mask for OP3 instructions, so all channels are written        
-            pAsm->pucOutMask[pAsm->D.dst.reg - pAsm->starting_export_register_number] = 0xF;
-        }
-        else 
-        {
-            pAsm->pucOutMask[pAsm->D.dst.reg - pAsm->starting_export_register_number] 
-               |= (unsigned char)pAsm->pILInst[pAsm->uiCurInst].DstReg.WriteMask;
-        }
-    }
-    
-    //reset for next inst.
-    pAsm->D.bits    = 0;
-    pAsm->D2.bits   = 0;
-    pAsm->S[0].bits = 0;
-    pAsm->S[1].bits = 0;
-    pAsm->S[2].bits = 0;
-    pAsm->is_tex = GL_FALSE;
-    pAsm->need_tex_barrier = GL_FALSE;
-    pAsm->D2.bits = 0;
-    pAsm->C[0].bits = pAsm->C[1].bits = pAsm->C[2].bits = pAsm->C[3].bits = 0;
     return GL_TRUE;
 }
 
