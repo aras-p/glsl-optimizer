@@ -297,10 +297,12 @@ static int transform_const_loop(struct emulate_loop_state * s,
 	/* Remove the first 4 instructions inside the loop, which are part
 	 * of the conditional and no longer needed.
 	 */
-	/* SLT/SGE */
+	/* SLT/SGE/SGT/SLE */
 	if(loop->BeginLoop->Next->U.I.Opcode != RC_OPCODE_SLT &&
-	   loop->BeginLoop->Next->U.I.Opcode != RC_OPCODE_SGE){
-		rc_error(s->C,"Unexpected instruction, expected SLT/SGE\n");
+	   loop->BeginLoop->Next->U.I.Opcode != RC_OPCODE_SGE &&
+	   loop->BeginLoop->Next->U.I.Opcode != RC_OPCODE_SGT &&
+	   loop->BeginLoop->Next->U.I.Opcode != RC_OPCODE_SLE){
+		rc_error(s->C,"Unexpected instruction, expected LT,GT,LE,GE\n");
 		return 0;
 	}
 	/* IF */
@@ -363,6 +365,12 @@ static struct rc_instruction * transform_loop(struct emulate_loop_state * s,
 		break;
 	case RC_OPCODE_SLT:
 		ptr->U.I.Opcode = RC_OPCODE_SGE;
+		break;
+	case RC_OPCODE_SLE:
+		ptr->U.I.Opcode = RC_OPCODE_SGT;
+		break;
+	case RC_OPCODE_SGT:
+		ptr->U.I.Opcode = RC_OPCODE_SLE;
 		break;
 	default:
 		rc_error(s->C,
