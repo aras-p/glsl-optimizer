@@ -2609,6 +2609,8 @@ GLboolean next_ins(r700_AssemblerBase *pAsm)
       
     if(pAsm->D.dst.rtype == DST_REG_OUT) 
     {
+        assert(pAsm->D.dst.reg >= pAsm->starting_export_register_number);
+
         if(pAsm->D.dst.op3) 
         {        
             // There is no mask for OP3 instructions, so all channels are written        
@@ -6347,6 +6349,8 @@ GLboolean Process_Export(r700_AssemblerBase* pAsm,
 
     if (export_count == 1) 
     {
+        assert(starting_register_number >= pAsm->starting_export_register_number);
+
         ucWriteMask = pAsm->pucOutMask[starting_register_number - pAsm->starting_export_register_number];
 	/* exports Z as a float into Red channel */
 	if (GL_TRUE == is_depth_export)
