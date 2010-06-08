@@ -6437,6 +6437,7 @@ GLboolean Process_Fragment_Exports(r700_AssemblerBase *pR700AsmCode,
 { 
     unsigned int unBit;
     GLuint export_count = 0;
+    unsigned int i;
 
     if(pR700AsmCode->depth_export_register_number >= 0) 
     {
@@ -6446,34 +6447,19 @@ GLboolean Process_Fragment_Exports(r700_AssemblerBase *pR700AsmCode,
 		}
     }
 
-    unBit = 1 << FRAG_RESULT_COLOR;
-	if(OutputsWritten & unBit)
-	{
-		if( GL_FALSE == Process_Export(pR700AsmCode,
-                                       SQ_EXPORT_PIXEL, 
-                                       0, 
-                                       1, 
-                                       pR700AsmCode->uiFP_OutputMap[FRAG_RESULT_COLOR], 
-                                       GL_FALSE) ) 
+    for (i = 0; i < FRAG_RESULT_MAX; ++i)
+    {
+        unBit = 1 << i;
+
+        if (OutputsWritten & unBit)
         {
-            return GL_FALSE;
+            GLboolean is_depth = i == FRAG_RESULT_DEPTH ? GL_TRUE : GL_FALSE;
+            if (!Process_Export(pR700AsmCode, SQ_EXPORT_PIXEL, 0, 1, pR700AsmCode->uiFP_OutputMap[i], is_depth))
+                return GL_FALSE;
+            ++export_count;
         }
-        export_count++;
-	}
-	unBit = 1 << FRAG_RESULT_DEPTH;
-	if(OutputsWritten & unBit)
-	{
-        if( GL_FALSE == Process_Export(pR700AsmCode,
-                                       SQ_EXPORT_PIXEL, 
-                                       0, 
-                                       1, 
-                                       pR700AsmCode->uiFP_OutputMap[FRAG_RESULT_DEPTH], 
-                                       GL_TRUE)) 
-        {
-            return GL_FALSE;
-        }
-        export_count++;
-	}
+    }
+
     /* Need to export something, otherwise we'll hang
      * results are undefined anyway */
     if(export_count == 0)
