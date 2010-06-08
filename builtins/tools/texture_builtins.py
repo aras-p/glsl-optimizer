@@ -74,7 +74,9 @@ def generate_sigs(g, tex_inst, sampler_type, use_proj = False, unused_fields = 0
             print "1",
 
         # Shadow comparitor
-        if sampler_type.endswith("Shadow"):
+        if sampler_type == "2DArrayShadow": # a special case:
+            print "(swiz w (var_ref P))",   # ...array layer is z; shadow is w
+        elif sampler_type.endswith("Shadow"):
             print "(swiz z (var_ref P))",
         else:
             print "()",
@@ -187,6 +189,33 @@ with open(path.join(builtins_dir, "ARB_texture_rectangle", "textures"), 'w') as 
     generate_sigs("", "tex", "2DRect")
     print ")\n (function shadow2DRect"
     generate_sigs("", "tex", "2DRectShadow")
+    print "))"
+
+# EXT_texture_array extension
+with open(path.join(builtins_dir, "EXT_texture_array", "textures"), 'w') as sys.stdout:
+    print "((function texture1DArray"
+    generate_sigs("", "tex", "1DArray")
+    print ")\n (function texture1DArrayLod"
+    generate_sigs("", "txl", "1DArray")
+    print ")\n (function texture2DArray"
+    generate_sigs("", "tex", "2DArray")
+    print ")\n (function texture2DArrayLod"
+    generate_sigs("", "txl", "2DArray")
+    print ")\n (function shadow1DArray"
+    generate_sigs("", "tex", "1DArrayShadow")
+    print ")\n (function shadow1DArrayLod"
+    generate_sigs("", "txl", "1DArrayShadow")
+    print ")\n (function shadow2DArray"
+    generate_sigs("", "tex", "2DArrayShadow")
+    print "))"
+
+with open(path.join(builtins_dir, "EXT_texture_array_fs", "textures"), 'w') as sys.stdout:
+    print "((function texture1DArray"
+    generate_sigs("", "txb", "1DArray")  # MOVE TO _fs
+    print ")\n (function texture2DArray"
+    generate_sigs("", "txb", "2DArray")  # MOVE TO _fs
+    print ")\n (function shadow1DArray"
+    generate_sigs("", "txb", "1DArrayShadow")
     print "))"
 
 # Deprecated (110/120 style) functions with silly names:
