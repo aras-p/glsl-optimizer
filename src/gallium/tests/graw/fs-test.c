@@ -223,6 +223,7 @@ static void set_fragment_shader( const char *filename )
 
    handle = graw_parse_fragment_shader(ctx, buf);
    ctx->bind_fs_state(ctx, handle);
+   fclose(f);
 }
 
 

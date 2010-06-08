@@ -202,6 +202,7 @@ static void set_vertex_shader( void )
 
    handle = graw_parse_vertex_shader(ctx, buf);
    ctx->bind_vs_state(ctx, handle);
+   fclose(f);
 }
 
 static void set_fragment_shader( void )

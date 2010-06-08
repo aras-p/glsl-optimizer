@@ -238,6 +238,7 @@ static void set_geometry_shader( void )
 
    handle = graw_parse_geometry_shader(ctx, buf);
    ctx->bind_gs_state(ctx, handle);
+   fclose(f);
 }
 
 
