@@ -155,7 +155,7 @@ static void get_incr_amount(void * data, struct rc_instruction * inst,
 {
 	struct count_inst * count_inst = data;
 	int amnt_src_index;
-	struct rc_opcode_info * opcode;
+	const struct rc_opcode_info * opcode;
 	float amount;
 
 	if(file != RC_FILE_TEMPORARY ||
