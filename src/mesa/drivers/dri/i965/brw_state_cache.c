@@ -433,42 +433,6 @@ brw_clear_cache(struct brw_context *brw, struct brw_cache *cache)
    brw->state.dirty.cache |= ~0;
 }
 
-/* Clear all entries from the cache that point to the given bo.
- *
- * This lets us release memory for reuse earlier for known-dead buffers,
- * at the cost of walking the entire hash table.
- */
-void
-brw_state_cache_bo_delete(struct brw_cache *cache, drm_intel_bo *bo)
-{
-   struct brw_cache_item **prev;
-   GLuint i;
-
-   if (INTEL_DEBUG & DEBUG_STATE)
-      printf("%s\n", __FUNCTION__);
-
-   for (i = 0; i < cache->size; i++) {
-      for (prev = &cache->items[i]; *prev;) {
-	 struct brw_cache_item *c = *prev;
-
-	 if (drm_intel_bo_references(c->bo, bo)) {
-	    int j;
-
-	    *prev = c->next;
-
-	    for (j = 0; j < c->nr_reloc_bufs; j++)
-	       drm_intel_bo_unreference(c->reloc_bufs[j]);
-	    drm_intel_bo_unreference(c->bo);
-	    free((void *)c->key);
-	    free(c);
-	    cache->n_items--;
-	 } else {
-	    prev = &c->next;
-	 }
-      }
-   }
-}
-
 void
 brw_state_cache_check_size(struct brw_context *brw)
 {
