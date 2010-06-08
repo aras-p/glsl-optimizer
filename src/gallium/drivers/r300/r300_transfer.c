@@ -107,7 +107,7 @@ r300_texture_get_transfer(struct pipe_context *ctx,
     struct r300_screen *r300screen = r300_screen(ctx->screen);
     struct r300_transfer *trans;
     struct pipe_resource base;
-    boolean referenced_cs, referenced_hw;
+    boolean referenced_cs, referenced_hw, blittable;
 
     referenced_cs = r300screen->rws->is_buffer_referenced(
                                 r300screen->rws, tex->buffer, R300_REF_CS);
@@ -117,6 +117,10 @@ r300_texture_get_transfer(struct pipe_context *ctx,
         referenced_hw = r300screen->rws->is_buffer_referenced(
                                 r300screen->rws, tex->buffer, R300_REF_HW);
     }
+
+    blittable = ctx->screen->is_format_supported(
+            ctx->screen, texture->format, texture->target, 0,
+            PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET, 0);
 
     trans = CALLOC_STRUCT(r300_transfer);
     if (trans) {
@@ -130,7 +134,7 @@ r300_texture_get_transfer(struct pipe_context *ctx,
          * for this transfer.
          * Also make write transfers pipelined. */
         if (tex->microtile || tex->macrotile ||
-            (referenced_hw & !(usage & PIPE_TRANSFER_READ))) {
+            ((referenced_hw & !(usage & PIPE_TRANSFER_READ)) && blittable)) {
             base.target = PIPE_TEXTURE_2D;
             base.format = texture->format;
             base.width0 = box->width;
