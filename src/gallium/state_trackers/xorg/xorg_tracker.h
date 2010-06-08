@@ -76,6 +76,7 @@ typedef struct _CustomizerRec
 {
     Bool dirty_throttling;
     Bool swap_throttling;
+    Bool no_3d;
     Bool (*winsys_screen_init)(struct _CustomizerRec *cust, int fd);
     Bool (*winsys_screen_close)(struct _CustomizerRec *cust);
     Bool (*winsys_enter_vt)(struct _CustomizerRec *cust);
@@ -104,6 +105,7 @@ typedef struct _modesettingRec
     Bool swapThrottling;
     Bool dirtyThrottling;
     CloseScreenProcPtr CloseScreen;
+    Bool no3D;
 
     /* Broken-out options. */
     OptionInfoPtr Options;

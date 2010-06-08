@@ -80,7 +80,8 @@ typedef enum
     OPTION_2D_ACCEL,
     OPTION_DEBUG_FALLBACK,
     OPTION_THROTTLE_SWAP,
-    OPTION_THROTTLE_DIRTY
+    OPTION_THROTTLE_DIRTY,
+    OPTION_3D_ACCEL
 } drv_option_enums;
 
 static const OptionInfoRec drv_options[] = {
@@ -89,6 +90,7 @@ static const OptionInfoRec drv_options[] = {
     {OPTION_DEBUG_FALLBACK, "DebugFallback", OPTV_BOOLEAN, {0}, FALSE},
     {OPTION_THROTTLE_SWAP, "SwapThrottling", OPTV_BOOLEAN, {0}, FALSE},
     {OPTION_THROTTLE_DIRTY, "DirtyThrottling", OPTV_BOOLEAN, {0}, FALSE},
+    {OPTION_3D_ACCEL, "3DAccel", OPTV_BOOLEAN, {0}, FALSE},
     {-1, NULL, OPTV_NONE, {0}, FALSE}
 };
 
@@ -315,7 +317,8 @@ drv_init_resource_management(ScrnInfoPtr pScrn)
 	return TRUE;
 
     if (ms->api) {
-	ms->screen = ms->api->create_screen(ms->api, ms->fd);
+	ms->screen = ms->no3D ? NULL :
+	    ms->api->create_screen(ms->api, ms->fd);
 
 	if (ms->screen)
 	    return TRUE;
@@ -646,11 +649,20 @@ drv_screen_init(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     CustomizerPtr cust = ms->cust;
     MessageType from_st;
     MessageType from_dt;
+    MessageType from_3D;
+    Bool use3D;
 
     if (!drv_init_drm(pScrn)) {
 	FatalError("Could not init DRM");
 	return FALSE;
     }
+
+    use3D = cust ? !cust->no_3d : TRUE;
+    from_3D = xf86GetOptValBool(ms->Options, OPTION_3D_ACCEL,
+				&use3D) ?
+	X_CONFIG : X_PROBED;
+
+    ms->no3D = !use3D;
 
     if (!drv_init_resource_management(pScrn)) {
 	FatalError("Could not init resource management (!pipe_screen && !libkms)");
@@ -764,7 +776,7 @@ drv_screen_init(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Fallback debugging is %s\n",
 	       ms->debug_fallback ? "enabled" : "disabled");
 #ifdef DRI2
-    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "3D Acceleration is %s\n",
+    xf86DrvMsg(pScrn->scrnIndex, from_3D, "3D Acceleration is %s\n",
 	       ms->screen ? "enabled" : "disabled");
 #else
     xf86DrvMsg(pScrn->scrnIndex, X_INFO, "3D Acceleration is disabled\n");
