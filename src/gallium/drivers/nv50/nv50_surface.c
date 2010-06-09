@@ -209,7 +209,7 @@ nv50_surface_copy(struct pipe_context *pipe,
 	       (nv50_2d_format_faithful(src->format) &&
 		nv50_2d_format_faithful(dest->format)));
 
-	ps_src = nv50_miptree_surface_new(pipe->screen, dest, subsrc.face,
+	ps_src = nv50_miptree_surface_new(pipe->screen, src, subsrc.face,
 					  subsrc.level, srcz, 0 /* bind flags */);
 	ps_dst = nv50_miptree_surface_new(pipe->screen, dest, subdst.face,
 					  subdst.level, destz, 0 /* bindflags */);
