@@ -115,7 +115,6 @@ nv50_surface_set(struct nv50_screen *screen, struct pipe_surface *ps, int dst)
 	}
 
  	if (!bo->tile_flags) {
-		MARK_RING (chan, 9, 2); /* flush on lack of space or relocs */
  		BEGIN_RING(chan, eng2d, mthd, 2);
  		OUT_RING  (chan, format);
  		OUT_RING  (chan, 1);
@@ -126,7 +125,6 @@ nv50_surface_set(struct nv50_screen *screen, struct pipe_surface *ps, int dst)
  		OUT_RELOCh(chan, bo, ps->offset, flags);
  		OUT_RELOCl(chan, bo, ps->offset, flags);
  	} else {
-		MARK_RING (chan, 11, 2); /* flush on lack of space or relocs */
  		BEGIN_RING(chan, eng2d, mthd, 5);
  		OUT_RING  (chan, format);
  		OUT_RING  (chan, 0);
@@ -162,7 +160,9 @@ nv50_surface_do_copy(struct nv50_screen *screen, struct pipe_surface *dst,
 	struct nouveau_grobj *eng2d = screen->eng2d;
 	int ret;
 
-	WAIT_RING (chan, 32);
+	ret = MARK_RING(chan, 2*16 + 32, 4);
+	if (ret)
+		return ret;
 
 	ret = nv50_surface_set(screen, dst, 1);
 	if (ret)
@@ -241,7 +241,9 @@ nv50_clear_render_target(struct pipe_context *pipe,
 	if (format < 0)
 		return;
 
-	WAIT_RING (chan, 32);
+	ret = MARK_RING (chan, 16 + 32, 2);
+	if (ret)
+		return;
 
 	ret = nv50_surface_set(screen, dst, 1);
 	if (ret)
