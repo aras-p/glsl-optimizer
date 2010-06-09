@@ -44,7 +44,7 @@ nvfx_surface_copy(struct pipe_context *pipe,
 	struct nv04_surface_2d *eng2d = nvfx->screen->eng2d;
 	struct pipe_surface *ps_dst, *ps_src;
 
-	ps_src = nvfx_miptree_surface_new(pipe->screen, dest, subsrc.face,
+	ps_src = nvfx_miptree_surface_new(pipe->screen, src, subsrc.face,
 					  subsrc.level, srcz, 0 /* bind flags */);
 	ps_dst = nvfx_miptree_surface_new(pipe->screen, dest, subdst.face,
 					  subdst.level, destz, 0 /* bindflags */);
