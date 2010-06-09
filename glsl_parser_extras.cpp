@@ -744,6 +744,7 @@ main(int argc, char **argv)
        * FINISHME: by the driver.  At the moment, we don't know what that is.
        */
       state.language_version = 130;
+      _mesa_glsl_initialize_types(&state);
 
       _mesa_glsl_read_ir(&state, &instructions, shader);
    }

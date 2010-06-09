@@ -71,13 +71,6 @@ _mesa_glsl_read_ir(_mesa_glsl_parse_state *state, exec_list *instructions,
       return;
    }
    
-   _mesa_glsl_initialize_types(state);
-
-   /* FINISHME: Constructors probably shouldn't be emitted as part of the IR.
-    * FINISHME: Once they're not, remake them by calling:
-    * FINISHME: _mesa_glsl_initialize_constructors(instructions, state);
-    */
-
    scan_for_prototypes(state, instructions, expr);
    if (state->error)
       return;
