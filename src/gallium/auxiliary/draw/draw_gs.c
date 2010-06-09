@@ -223,11 +223,14 @@ static void draw_fetch_geometry_input(struct draw_geometry_shader *shader,
 static INLINE void
 draw_geometry_fetch_outputs(struct draw_geometry_shader *shader,
                             int num_primitives,
-                            float (*output)[4],
+                            float (**p_output)[4],
                             unsigned vertex_size)
 {
    struct tgsi_exec_machine *machine = shader->machine;
    unsigned prim_idx, j, slot;
+   float (*output)[4];
+
+   output = *p_output;
 
    /* Unswizzle all output results.
     */
@@ -240,7 +243,7 @@ draw_geometry_fetch_outputs(struct draw_geometry_shader *shader,
          int idx = (prim_idx * num_verts_per_prim + j) *
                    shader->info.num_outputs;
 #ifdef DEBUG_OUTPUTS
-         debug_printf("%d) Output vert:\n", idx);
+         debug_printf("%d) Output vert:\n", idx / shader->info.num_outputs);
 #endif
          for (slot = 0; slot < shader->info.num_outputs; slot++) {
             output[slot][0] = machine->Outputs[idx + slot].xyzw[0].f[0];
@@ -259,6 +262,7 @@ draw_geometry_fetch_outputs(struct draw_geometry_shader *shader,
          output = (float (*)[4])((char *)output + vertex_size);
       }
    }
+   *p_output = output;
 }
 
 int draw_geometry_shader_run(struct draw_geometry_shader *shader,
@@ -274,6 +278,7 @@ int draw_geometry_shader_run(struct draw_geometry_shader *shader,
    unsigned num_in_vertices = u_vertices_per_prim(shader->input_primitive);
    unsigned num_in_primitives = count/num_in_vertices;
    unsigned inputs_from_vs = 0;
+   float (*tmp_output)[4];
 
    if (0) debug_printf("%s count = %d\n", __FUNCTION__, count);
 
@@ -288,7 +293,7 @@ int draw_geometry_shader_run(struct draw_geometry_shader *shader,
       if (shader->info.input_semantic_name[i] != TGSI_SEMANTIC_PRIMID)
          ++inputs_from_vs;
    }
-
+   tmp_output = output;
    for (i = 0; i < num_in_primitives; ++i) {
       unsigned int max_input_primitives = 1;
       /* FIXME: handle all the primitives produced by the gs, not just
@@ -311,7 +316,7 @@ int draw_geometry_shader_run(struct draw_geometry_shader *shader,
          machine->Temps[TGSI_EXEC_TEMP_PRIMITIVE_I].xyzw[TGSI_EXEC_TEMP_PRIMITIVE_C].u[0];
 
       draw_geometry_fetch_outputs(shader, out_prim_count,
-                                  output, vertex_size);
+                                  &tmp_output, vertex_size);
    }
    return shader->emitted_vertices;
 }

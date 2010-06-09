@@ -67,7 +67,8 @@ static int max_out_vertex_count(
       if (gs_max_verts > count)
          alloc_count = align(gs_max_verts, 4);
    }
-
+   /*debug_printf("------- alloc count = %d (input = %d)\n",
+                  alloc_count, count);*/
    return alloc_count;
 }
 
