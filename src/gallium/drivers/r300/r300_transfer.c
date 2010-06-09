@@ -162,6 +162,29 @@ r300_texture_get_transfer(struct pipe_context *ctx,
                ctx->screen->resource_create(ctx->screen,
                                             &base));
 
+            if (!trans->detiled_texture) {
+                /* Oh crap, the thing can't create the texture.
+                 * Let's flush and try again. */
+                ctx->flush(ctx, 0, NULL);
+
+                trans->detiled_texture = r300_texture(
+                   ctx->screen->resource_create(ctx->screen,
+                                                &base));
+
+                if (!trans->detiled_texture) {
+                    /* For linear textures, it's safe to fallback to
+                     * an unpipelined transfer. */
+                    if (!tex->microtile && !tex->macrotile) {
+                        goto unpipelined;
+                    }
+
+                    /* Otherwise, go to hell. */
+                    fprintf(stderr,
+                        "r300: Failed to create a transfer object, praise.\n");
+                    return NULL;
+                }
+            }
+
             assert(!trans->detiled_texture->microtile &&
                    !trans->detiled_texture->macrotile);
 
@@ -183,16 +206,20 @@ r300_texture_get_transfer(struct pipe_context *ctx,
                 /* Always referenced in the blit. */
                 ctx->flush(ctx, 0, NULL);
             }
-        } else {
-            trans->transfer.stride =
-                r300_texture_get_stride(r300screen, tex, sr.level);
-            trans->offset = r300_texture_get_offset(tex, sr.level, box->z, sr.face);
-
-            if (referenced_cs && (usage & PIPE_TRANSFER_READ))
-                ctx->flush(ctx, PIPE_FLUSH_RENDER_CACHE, NULL);
+            return &trans->transfer;
         }
+
+    unpipelined:
+        /* Unpipelined transfer. */
+        trans->transfer.stride =
+                r300_texture_get_stride(r300screen, tex, sr.level);
+        trans->offset = r300_texture_get_offset(tex, sr.level, box->z, sr.face);
+
+        if (referenced_cs && (usage & PIPE_TRANSFER_READ))
+            ctx->flush(ctx, PIPE_FLUSH_RENDER_CACHE, NULL);
+        return &trans->transfer;
     }
-    return &trans->transfer;
+    return NULL;
 }
 
 void r300_texture_transfer_destroy(struct pipe_context *ctx,
