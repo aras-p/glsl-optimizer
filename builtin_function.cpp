@@ -3056,6 +3056,39 @@ static const char *functions_for_120 [] = {
 
 /* 130 builtins */
 
+static const char *builtins_130_cosh = {
+   "((function cosh\n"
+   "   (signature float\n"
+   "     (parameters\n"
+   "       (declare (in) float x))\n"
+   "     ((return (expression float * (constant float (0.5))\n"
+   "                (expression float +\n"
+   "		  (expression float exp (var_ref x))\n"
+   "		  (expression float exp (expression float neg (var_ref x))))))))\n"
+   "   (signature vec2\n"
+   "     (parameters\n"
+   "       (declare (in) vec2 x))\n"
+   "     ((return (expression vec2 * (constant vec2 (0.5))\n"
+   "                (expression vec2 +\n"
+   "		  (expression vec2 exp (var_ref x))\n"
+   "		  (expression vec2 exp (expression vec2 neg (var_ref x))))))))\n"
+   "   (signature vec3\n"
+   "     (parameters\n"
+   "       (declare (in) vec3 x))\n"
+   "     ((return (expression vec3 * (constant vec3 (0.5))\n"
+   "                (expression vec3 +\n"
+   "		  (expression vec3 exp (var_ref x))\n"
+   "		  (expression vec3 exp (expression vec3 neg (var_ref x))))))))\n"
+   "   (signature vec4\n"
+   "     (parameters\n"
+   "       (declare (in) vec4 x))\n"
+   "     ((return (expression vec4 * (constant vec4 (0.5))\n"
+   "                (expression vec4 +\n"
+   "		  (expression vec4 exp (var_ref x))\n"
+   "		  (expression vec4 exp (expression vec4 neg (var_ref x))))))))\n"
+   "))\n"
+};
+
 static const char *builtins_130_equal = {
    "((function equal\n"
    "   (signature bvec2\n"
@@ -3295,6 +3328,84 @@ static const char *builtins_130_sign = {
    "      (return (var_ref t))))\n"
    "))\n"
    "\n"
+};
+
+static const char *builtins_130_sinh = {
+   "((function sinh\n"
+   "   (signature float\n"
+   "     (parameters\n"
+   "       (declare (in) float x))\n"
+   "     ((return (expression float * (constant float (0.5))\n"
+   "                (expression float -\n"
+   "		  (expression float exp (var_ref x))\n"
+   "		  (expression float exp (expression float neg (var_ref x))))))))\n"
+   "   (signature vec2\n"
+   "     (parameters\n"
+   "       (declare (in) vec2 x))\n"
+   "     ((return (expression vec2 * (constant vec2 (0.5))\n"
+   "                (expression vec2 -\n"
+   "		  (expression vec2 exp (var_ref x))\n"
+   "		  (expression vec2 exp (expression vec2 neg (var_ref x))))))))\n"
+   "   (signature vec3\n"
+   "     (parameters\n"
+   "       (declare (in) vec3 x))\n"
+   "     ((return (expression vec3 * (constant vec3 (0.5))\n"
+   "                (expression vec3 -\n"
+   "		  (expression vec3 exp (var_ref x))\n"
+   "		  (expression vec3 exp (expression vec3 neg (var_ref x))))))))\n"
+   "   (signature vec4\n"
+   "     (parameters\n"
+   "       (declare (in) vec4 x))\n"
+   "     ((return (expression vec4 * (constant vec4 (0.5))\n"
+   "                (expression vec4 -\n"
+   "		  (expression vec4 exp (var_ref x))\n"
+   "		  (expression vec4 exp (expression vec4 neg (var_ref x))))))))\n"
+   "))\n"
+};
+
+static const char *builtins_130_tanh = {
+   "((function tanh\n"
+   "   (signature float\n"
+   "     (parameters\n"
+   "       (declare (in) float x))\n"
+   "     ((return (expression float /\n"
+   "                (expression float -\n"
+   "		  (expression float exp (var_ref x))\n"
+   "		  (expression float exp (expression float neg (var_ref x))))\n"
+   "                (expression float +\n"
+   "		  (expression float exp (var_ref x))\n"
+   "		  (expression float exp (expression float neg (var_ref x))))))))\n"
+   "   (signature vec2\n"
+   "     (parameters\n"
+   "       (declare (in) vec2 x))\n"
+   "     ((return (expression vec2 /\n"
+   "                (expression vec2 -\n"
+   "		  (expression vec2 exp (var_ref x))\n"
+   "		  (expression vec2 exp (expression vec2 neg (var_ref x))))\n"
+   "                (expression vec2 +\n"
+   "		  (expression vec2 exp (var_ref x))\n"
+   "		  (expression vec2 exp (expression vec2 neg (var_ref x))))))))\n"
+   "   (signature vec3\n"
+   "     (parameters\n"
+   "       (declare (in) vec3 x))\n"
+   "     ((return (expression vec3 /\n"
+   "                (expression vec3 -\n"
+   "		  (expression vec3 exp (var_ref x))\n"
+   "		  (expression vec3 exp (expression vec3 neg (var_ref x))))\n"
+   "                (expression vec3 +\n"
+   "		  (expression vec3 exp (var_ref x))\n"
+   "		  (expression vec3 exp (expression vec3 neg (var_ref x))))))))\n"
+   "   (signature vec4\n"
+   "     (parameters\n"
+   "       (declare (in) vec4 x))\n"
+   "     ((return (expression vec4 /\n"
+   "                (expression vec4 -\n"
+   "		  (expression vec4 exp (var_ref x))\n"
+   "		  (expression vec4 exp (expression vec4 neg (var_ref x))))\n"
+   "                (expression vec4 +\n"
+   "		  (expression vec4 exp (var_ref x))\n"
+   "		  (expression vec4 exp (expression vec4 neg (var_ref x))))))))\n"
+   "))\n"
 };
 
 static const char *builtins_130_texelFetch = {
@@ -4132,6 +4243,7 @@ static const char *builtins_130_textureProjLod = {
 };
 
 static const char *functions_for_130 [] = {
+   builtins_130_cosh,
    builtins_130_equal,
    builtins_130_greaterThan,
    builtins_130_greaterThanEqual,
@@ -4139,6 +4251,8 @@ static const char *functions_for_130 [] = {
    builtins_130_lessThanEqual,
    builtins_130_notEqual,
    builtins_130_sign,
+   builtins_130_sinh,
+   builtins_130_tanh,
    builtins_130_texelFetch,
    builtins_130_texture,
    builtins_130_textureGrad,
