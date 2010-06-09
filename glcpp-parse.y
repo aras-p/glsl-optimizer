@@ -1385,11 +1385,29 @@ _glcpp_parser_print_expanded_token_list (glcpp_parser_t *parser,
 }
 
 void
+_check_for_reserved_macro_name (const char *identifier)
+{
+	/* According to the GLSL specification, macro names starting with "__"
+	 * or "GL_" are reserved for future use.  So, don't allow them.
+	 */
+	if (strncmp(identifier, "__", 2) == 0) {
+		fprintf (stderr, "Error: Macro names starting with \"__\" are reserved.\n");
+		exit(1);
+	}
+	if (strncmp(identifier, "GL_", 3) == 0) {
+		fprintf (stderr, "Error: Macro names starting with \"GL_\" are reserved.\n");
+		exit(1);
+	}
+}
+
+void
 _define_object_macro (glcpp_parser_t *parser,
 		      const char *identifier,
 		      token_list_t *replacements)
 {
 	macro_t *macro;
+
+	_check_for_reserved_macro_name(identifier);
 
 	macro = xtalloc (parser, macro_t);
 
@@ -1408,6 +1426,8 @@ _define_function_macro (glcpp_parser_t *parser,
 			token_list_t *replacements)
 {
 	macro_t *macro;
+
+	_check_for_reserved_macro_name(identifier);
 
 	macro = xtalloc (parser, macro_t);
 
