@@ -266,6 +266,15 @@ ir_constant_visitor::visit(ir_expression *ir)
       }
       break;
 
+   case ir_unop_dFdx:
+   case ir_unop_dFdy:
+      assert(op[0]->type->base_type == GLSL_TYPE_FLOAT);
+      type = ir->type;
+      for (c = 0; c < ir->operands[0]->type->components(); c++) {
+	 f[c] = 0.0;
+      }
+      break;
+
    case ir_binop_add:
       if (ir->operands[0]->type == ir->operands[1]->type) {
 	 type = ir->operands[0]->type;
