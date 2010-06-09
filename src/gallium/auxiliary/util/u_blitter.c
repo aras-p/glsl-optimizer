@@ -282,6 +282,7 @@ static void blitter_check_saved_CSOs(struct blitter_context_priv *ctx)
 static void blitter_restore_CSOs(struct blitter_context_priv *ctx)
 {
    struct pipe_context *pipe = ctx->pipe;
+   unsigned i;
 
    /* restore the state objects which are always required to be saved */
    pipe->bind_blend_state(pipe, ctx->blitter.saved_blend_state);
@@ -328,6 +329,13 @@ static void blitter_restore_CSOs(struct blitter_context_priv *ctx)
       pipe->set_vertex_buffers(pipe,
                                ctx->blitter.saved_num_vertex_buffers,
                                ctx->blitter.saved_vertex_buffers);
+
+      for (i = 0; i < ctx->blitter.saved_num_vertex_buffers; i++) {
+         if (ctx->blitter.saved_vertex_buffers[i].buffer) {
+            pipe_resource_reference(&ctx->blitter.saved_vertex_buffers[i].buffer,
+                                    NULL);
+         }
+      }
       ctx->blitter.saved_num_vertex_buffers = ~0;
    }
 }

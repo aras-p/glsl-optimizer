@@ -27,6 +27,7 @@
 #ifndef U_BLITTER_H
 #define U_BLITTER_H
 
+#include "util/u_inlines.h"
 #include "util/u_memory.h"
 
 #include "pipe/p_state.h"
@@ -259,9 +260,18 @@ util_blitter_save_vertex_buffers(struct blitter_context *blitter,
                                          int num_vertex_buffers,
                                          struct pipe_vertex_buffer *vertex_buffers)
 {
+   unsigned i;
    assert(num_vertex_buffers <= Elements(blitter->saved_vertex_buffers));
 
    blitter->saved_num_vertex_buffers = num_vertex_buffers;
+
+   for (i = 0; i < num_vertex_buffers; i++) {
+      if (vertex_buffers[i].buffer) {
+         pipe_resource_reference(&blitter->saved_vertex_buffers[i].buffer,
+                                 vertex_buffers[i].buffer);
+      }
+   }
+
    memcpy(blitter->saved_vertex_buffers,
           vertex_buffers,
           num_vertex_buffers * sizeof(struct pipe_vertex_buffer));
