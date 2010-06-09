@@ -49,6 +49,9 @@ static void r600_blitter_save_states(struct r600_context *rctx)
 					rctx->vertex_elements);
 	util_blitter_save_viewport(rctx->blitter,
 					&rctx->viewport);
+	/* XXX util_blitter_save_clip(rctx->blitter, &rctx->clip); */
+	util_blitter_save_vertex_buffers(rctx->blitter, rctx->nvertex_buffer,
+					 rctx->vertex_buffer);
 }
 
 static void r600_clear(struct pipe_context *ctx, unsigned buffers,
