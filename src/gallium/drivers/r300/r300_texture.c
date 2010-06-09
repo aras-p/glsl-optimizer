@@ -979,15 +979,15 @@ struct pipe_resource* r300_texture_create(struct pipe_screen* screen,
     tex->buffer = rws->buffer_create(rws, 2048, base->bind, tex->domain,
                                      tex->size);
 
+    if (!tex->buffer) {
+	FREE(tex);
+	return NULL;
+    }
+
     rws->buffer_set_tiling(rws, tex->buffer,
             tex->pitch[0] * util_format_get_blocksize(tex->b.b.format),
             tex->microtile,
             tex->macrotile);
-
-    if (!tex->buffer) {
-        FREE(tex);
-        return NULL;
-    }
 
     return (struct pipe_resource*)tex;
 }
