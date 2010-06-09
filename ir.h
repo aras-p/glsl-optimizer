@@ -770,7 +770,7 @@ enum ir_texture_opcode {
 class ir_texture : public ir_rvalue {
 public:
    ir_texture(enum ir_texture_opcode op)
-      : op(op)
+      : op(op), projector(NULL), shadow_comparitor(NULL)
    {
       /* empty */
    }

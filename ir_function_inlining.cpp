@@ -201,8 +201,28 @@ ir_function_cloning_visitor::visit(ir_expression *ir)
 void
 ir_function_cloning_visitor::visit(ir_texture *ir)
 {
-   // FINISHME: Do stuff with texture lookups
-   (void) ir;
+   ir_texture *tex = new ir_texture(ir->op);
+
+   ir->sampler->accept(this);
+   tex->set_sampler(this->result->as_dereference());
+
+   ir->coordinate->accept(this);
+   tex->coordinate = this->result->as_rvalue();
+
+   if (ir->projector != NULL) {
+      ir->projector->accept(this);
+      tex->projector = this->result->as_rvalue();
+   }
+
+   if (ir->shadow_comparitor != NULL) {
+      ir->shadow_comparitor->accept(this);
+      tex->shadow_comparitor = this->result->as_rvalue();
+   }
+
+   for (int i = 0; i < 3; i++)
+      tex->offsets[i] = ir->offsets[i];
+
+   tex->lod_info = ir->lod_info;
 }
 
 
