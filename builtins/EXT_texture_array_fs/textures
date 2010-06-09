@@ -1,0 +1,27 @@
+((function texture1DArray
+   (signature vec4
+     (parameters
+       (declare (in) sampler1DArray sampler)
+       (declare (in) vec2 P) 
+       (declare (in) float bias) )
+     ((return (txb (var_ref sampler) (var_ref P) (0 0 0) 1 () (var_ref bias) ))))
+
+)
+ (function texture2DArray
+   (signature vec4
+     (parameters
+       (declare (in) sampler2DArray sampler)
+       (declare (in) vec3 P) 
+       (declare (in) float bias) )
+     ((return (txb (var_ref sampler) (var_ref P) (0 0 0) 1 () (var_ref bias) ))))
+
+)
+ (function shadow1DArray
+   (signature vec4
+     (parameters
+       (declare (in) sampler1DArrayShadow sampler)
+       (declare (in) vec3 P) 
+       (declare (in) float bias) )
+     ((return (txb (var_ref sampler) (swiz xy (var_ref P)) (0 0 0) 1 (swiz z (var_ref P)) (var_ref bias) ))))
+
+))
