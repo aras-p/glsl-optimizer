@@ -494,6 +494,14 @@ enum ir_expression_operation {
    ir_unop_cos,
    /*@}*/
 
+   /**
+    * \name Partial derivatives.
+    */
+   /*@{*/
+   ir_unop_dFdx,
+   ir_unop_dFdy,
+   /*@}*/
+
    ir_binop_add,
    ir_binop_sub,
    ir_binop_mul,
