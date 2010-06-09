@@ -689,6 +689,46 @@ static const char *builtins_110_exp2 = {
    "))\n"
 };
 
+static const char *builtins_110_faceforward = {
+   "((function faceforward\n"
+   "   (signature float\n"
+   "     (parameters\n"
+   "       (declare (in) float N)\n"
+   "       (declare (in) float I)\n"
+   "       (declare (in) float Nref))\n"
+   "     ((if (expression bool < (expression float dot (var_ref Nref) (var_ref I)) (constant float (0)))\n"
+   "          ((return (var_ref N)))\n"
+   "	  ((return (expression float neg (var_ref N)))))))\n"
+   "\n"
+   "   (signature vec2\n"
+   "     (parameters\n"
+   "       (declare (in) vec2 N)\n"
+   "       (declare (in) vec2 I)\n"
+   "       (declare (in) vec2 Nref))\n"
+   "     ((if (expression bool < (expression float dot (var_ref Nref) (var_ref I)) (constant float (0)))\n"
+   "          ((return (var_ref N)))\n"
+   "	  ((return (expression vec2 neg (var_ref N)))))))\n"
+   "\n"
+   "   (signature vec3\n"
+   "     (parameters\n"
+   "       (declare (in) vec3 N)\n"
+   "       (declare (in) vec3 I)\n"
+   "       (declare (in) vec3 Nref))\n"
+   "     ((if (expression bool < (expression float dot (var_ref Nref) (var_ref I)) (constant float (0)))\n"
+   "          ((return (var_ref N)))\n"
+   "	  ((return (expression vec3 neg (var_ref N)))))))\n"
+   "\n"
+   "   (signature vec4\n"
+   "     (parameters\n"
+   "       (declare (in) vec4 N)\n"
+   "       (declare (in) vec4 I)\n"
+   "       (declare (in) vec4 Nref))\n"
+   "     ((if (expression bool < (expression float dot (var_ref Nref) (var_ref I)) (constant float (0)))\n"
+   "          ((return (var_ref N)))\n"
+   "	  ((return (expression vec4 neg (var_ref N)))))))\n"
+   "))\n"
+};
+
 static const char *builtins_110_floor = {
    "((function floor\n"
    "   (signature float\n"
@@ -2215,6 +2255,7 @@ static const char *functions_for_110 [] = {
    builtins_110_equal,
    builtins_110_exp,
    builtins_110_exp2,
+   builtins_110_faceforward,
    builtins_110_floor,
    builtins_110_fract,
    builtins_110_greaterThan,
