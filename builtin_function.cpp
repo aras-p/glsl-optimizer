@@ -1165,6 +1165,41 @@ static const char *builtins_110_log2 = {
    "))\n"
 };
 
+static const char *builtins_110_matrixCompMult = {
+   "((function matrixCompMult\n"
+   "   (signature mat2\n"
+   "     (parameters\n"
+   "       (declare (in) mat2 x)\n"
+   "       (declare (in) mat2 y))\n"
+   "     ((declare () mat2 z)\n"
+   "      (assign (constant bool (1)) (array_ref (var_ref z) (constant int (0)))  (expression vec2 * (array_ref (var_ref x) (constant int (0))) (array_ref (var_ref y) (constant int (0))))) \n"
+   "      (assign (constant bool (1)) (array_ref (var_ref z) (constant int (1)))  (expression vec2 * (array_ref (var_ref x) (constant int (1))) (array_ref (var_ref y) (constant int (1))))) \n"
+   "(return (var_ref z))))\n"
+   "\n"
+   "   (signature mat3\n"
+   "     (parameters\n"
+   "       (declare (in) mat3 x)\n"
+   "       (declare (in) mat3 y))\n"
+   "     ((declare () mat3 z)\n"
+   "      (assign (constant bool (1)) (array_ref (var_ref z) (constant int (0)))  (expression vec3 * (array_ref (var_ref x) (constant int (0))) (array_ref (var_ref y) (constant int (0))))) \n"
+   "      (assign (constant bool (1)) (array_ref (var_ref z) (constant int (1)))  (expression vec3 * (array_ref (var_ref x) (constant int (1))) (array_ref (var_ref y) (constant int (1))))) \n"
+   "      (assign (constant bool (1)) (array_ref (var_ref z) (constant int (2)))  (expression vec3 * (array_ref (var_ref x) (constant int (2))) (array_ref (var_ref y) (constant int (2))))) \n"
+   "(return (var_ref z))))\n"
+   "\n"
+   "   (signature mat4\n"
+   "     (parameters\n"
+   "       (declare (in) mat4 x)\n"
+   "       (declare (in) mat4 y))\n"
+   "     ((declare () mat4 z)\n"
+   "      (assign (constant bool (1)) (array_ref (var_ref z) (constant int (0)))  (expression vec4 * (array_ref (var_ref x) (constant int (0))) (array_ref (var_ref y) (constant int (0))))) \n"
+   "      (assign (constant bool (1)) (array_ref (var_ref z) (constant int (1)))  (expression vec4 * (array_ref (var_ref x) (constant int (1))) (array_ref (var_ref y) (constant int (1))))) \n"
+   "      (assign (constant bool (1)) (array_ref (var_ref z) (constant int (2)))  (expression vec4 * (array_ref (var_ref x) (constant int (2))) (array_ref (var_ref y) (constant int (2))))) \n"
+   "      (assign (constant bool (1)) (array_ref (var_ref z) (constant int (3)))  (expression vec4 * (array_ref (var_ref x) (constant int (3))) (array_ref (var_ref y) (constant int (3))))) \n"
+   "(return (var_ref z))))\n"
+   "))\n"
+   "\n"
+};
+
 static const char *builtins_110_max = {
    "((function max\n"
    "   (signature float\n"
@@ -2473,6 +2508,7 @@ static const char *functions_for_110 [] = {
    builtins_110_lessThanEqual,
    builtins_110_log,
    builtins_110_log2,
+   builtins_110_matrixCompMult,
    builtins_110_max,
    builtins_110_min,
    builtins_110_mix,
@@ -2707,6 +2743,76 @@ static const char *builtins_110_vs_ftransform = {
 
 static const char *functions_for_110_vs [] = {
    builtins_110_vs_ftransform,
+};
+
+/* 120 builtins */
+
+static const char *builtins_120_matrixCompMult = {
+   "((function matrixCompMult\n"
+   "   (signature mat2x3\n"
+   "     (parameters\n"
+   "       (declare (in) mat2x3 x)\n"
+   "       (declare (in) mat2x3 y))\n"
+   "     ((declare () mat2x3 z)\n"
+   "      (assign (constant bool (1)) (array_ref (var_ref z) (constant int (0)))  (expression vec3 * (array_ref (var_ref x) (constant int (0))) (array_ref (var_ref y) (constant int (0))))) \n"
+   "      (assign (constant bool (1)) (array_ref (var_ref z) (constant int (1)))  (expression vec3 * (array_ref (var_ref x) (constant int (1))) (array_ref (var_ref y) (constant int (1))))) \n"
+   "(return (var_ref z))))\n"
+   "\n"
+   "   (signature mat3x2\n"
+   "     (parameters\n"
+   "       (declare (in) mat3x2 x)\n"
+   "       (declare (in) mat3x2 y))\n"
+   "     ((declare () mat3x2 z)\n"
+   "      (assign (constant bool (1)) (array_ref (var_ref z) (constant int (0)))  (expression vec2 * (array_ref (var_ref x) (constant int (0))) (array_ref (var_ref y) (constant int (0))))) \n"
+   "      (assign (constant bool (1)) (array_ref (var_ref z) (constant int (1)))  (expression vec2 * (array_ref (var_ref x) (constant int (1))) (array_ref (var_ref y) (constant int (1))))) \n"
+   "      (assign (constant bool (1)) (array_ref (var_ref z) (constant int (2)))  (expression vec2 * (array_ref (var_ref x) (constant int (2))) (array_ref (var_ref y) (constant int (2))))) \n"
+   "(return (var_ref z))))\n"
+   "\n"
+   "   (signature mat2x4\n"
+   "     (parameters\n"
+   "       (declare (in) mat2x4 x)\n"
+   "       (declare (in) mat2x4 y))\n"
+   "     ((declare () mat2x4 z)\n"
+   "      (assign (constant bool (1)) (array_ref (var_ref z) (constant int (0)))  (expression vec4 * (array_ref (var_ref x) (constant int (0))) (array_ref (var_ref y) (constant int (0))))) \n"
+   "      (assign (constant bool (1)) (array_ref (var_ref z) (constant int (1)))  (expression vec4 * (array_ref (var_ref x) (constant int (1))) (array_ref (var_ref y) (constant int (1))))) \n"
+   "(return (var_ref z))))\n"
+   "\n"
+   "   (signature mat4x2\n"
+   "     (parameters\n"
+   "       (declare (in) mat4x2 x)\n"
+   "       (declare (in) mat4x2 y))\n"
+   "     ((declare () mat4x2 z)\n"
+   "      (assign (constant bool (1)) (array_ref (var_ref z) (constant int (0)))  (expression vec2 * (array_ref (var_ref x) (constant int (0))) (array_ref (var_ref y) (constant int (0))))) \n"
+   "      (assign (constant bool (1)) (array_ref (var_ref z) (constant int (1)))  (expression vec2 * (array_ref (var_ref x) (constant int (1))) (array_ref (var_ref y) (constant int (1))))) \n"
+   "      (assign (constant bool (1)) (array_ref (var_ref z) (constant int (2)))  (expression vec2 * (array_ref (var_ref x) (constant int (2))) (array_ref (var_ref y) (constant int (2))))) \n"
+   "      (assign (constant bool (1)) (array_ref (var_ref z) (constant int (3)))  (expression vec2 * (array_ref (var_ref x) (constant int (3))) (array_ref (var_ref y) (constant int (3))))) \n"
+   "(return (var_ref z))))\n"
+   "\n"
+   "   (signature mat3x4\n"
+   "     (parameters\n"
+   "       (declare (in) mat3x4 x)\n"
+   "       (declare (in) mat3x4 y))\n"
+   "     ((declare () mat3x4 z)\n"
+   "      (assign (constant bool (1)) (array_ref (var_ref z) (constant int (0)))  (expression vec4 * (array_ref (var_ref x) (constant int (0))) (array_ref (var_ref y) (constant int (0))))) \n"
+   "      (assign (constant bool (1)) (array_ref (var_ref z) (constant int (1)))  (expression vec4 * (array_ref (var_ref x) (constant int (1))) (array_ref (var_ref y) (constant int (1))))) \n"
+   "      (assign (constant bool (1)) (array_ref (var_ref z) (constant int (2)))  (expression vec4 * (array_ref (var_ref x) (constant int (2))) (array_ref (var_ref y) (constant int (2))))) \n"
+   "(return (var_ref z))))\n"
+   "\n"
+   "   (signature mat4x3\n"
+   "     (parameters\n"
+   "       (declare (in) mat4x3 x)\n"
+   "       (declare (in) mat4x3 y))\n"
+   "     ((declare () mat4x3 z)\n"
+   "      (assign (constant bool (1)) (array_ref (var_ref z) (constant int (0)))  (expression vec3 * (array_ref (var_ref x) (constant int (0))) (array_ref (var_ref y) (constant int (0))))) \n"
+   "      (assign (constant bool (1)) (array_ref (var_ref z) (constant int (1)))  (expression vec3 * (array_ref (var_ref x) (constant int (1))) (array_ref (var_ref y) (constant int (1))))) \n"
+   "      (assign (constant bool (1)) (array_ref (var_ref z) (constant int (2)))  (expression vec3 * (array_ref (var_ref x) (constant int (2))) (array_ref (var_ref y) (constant int (2))))) \n"
+   "      (assign (constant bool (1)) (array_ref (var_ref z) (constant int (3)))  (expression vec3 * (array_ref (var_ref x) (constant int (3))) (array_ref (var_ref y) (constant int (3))))) \n"
+   "(return (var_ref z))))\n"
+   "))\n"
+};
+
+static const char *functions_for_120 [] = {
+   builtins_120_matrixCompMult,
 };
 
 /* 130 builtins */
@@ -4198,6 +4304,11 @@ _mesa_glsl_initialize_functions(exec_list *instructions,
       read_builtins(state, instructions,
                     functions_for_110_vs,
                     sizeof(functions_for_110_vs) / sizeof(const char *));
+
+   if (state->language_version >= 120)
+      read_builtins(state, instructions,
+                    functions_for_120,
+                    sizeof(functions_for_120) / sizeof(const char *));
 
    if (state->language_version >= 130)
       read_builtins(state, instructions,
