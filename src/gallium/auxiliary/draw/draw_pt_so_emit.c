@@ -33,7 +33,6 @@
 #include "draw/draw_pt.h"
 #include "translate/translate.h"
 #include "translate/translate_cache.h"
-#include "util/u_format.h"
 
 struct pt_so_emit {
    struct draw_context *draw;
