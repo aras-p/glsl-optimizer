@@ -37,6 +37,7 @@
 
 #include "util/u_math.h"
 #include "util/u_memory.h"
+#include "util/u_prim.h"
 
 #define MAX_PRIM_VERTICES 6
 /* fixme: move it from here */
@@ -154,35 +155,6 @@ void draw_delete_geometry_shader(struct draw_context *draw,
    FREE(dgs);
 }
 
-static INLINE int num_vertices_for_prim(int prim)
-{
-   switch(prim) {
-   case PIPE_PRIM_POINTS:
-      return 1;
-   case PIPE_PRIM_LINES:
-      return 2;
-   case PIPE_PRIM_LINE_LOOP:
-      return 2;
-   case PIPE_PRIM_LINE_STRIP:
-      return 2;
-   case PIPE_PRIM_TRIANGLES:
-      return 3;
-   case PIPE_PRIM_TRIANGLE_STRIP:
-      return 3;
-   case PIPE_PRIM_TRIANGLE_FAN:
-      return 3;
-   case PIPE_PRIM_LINES_ADJACENCY:
-   case PIPE_PRIM_LINE_STRIP_ADJACENCY:
-      return 4;
-   case PIPE_PRIM_TRIANGLES_ADJACENCY:
-   case PIPE_PRIM_TRIANGLE_STRIP_ADJACENCY:
-      return 6;
-   default:
-      assert(!"Bad geometry shader input");
-      return 0;
-   }
-}
-
 static void draw_fetch_geometry_input(struct draw_geometry_shader *shader,
                                       int start_primitive,
                                       int num_primitives,
@@ -192,7 +164,7 @@ static void draw_fetch_geometry_input(struct draw_geometry_shader *shader,
 {
    struct tgsi_exec_machine *machine = shader->machine;
    unsigned slot, vs_slot, k, j;
-   unsigned num_vertices = num_vertices_for_prim(shader->input_primitive);
+   unsigned num_vertices = u_vertices_per_prim(shader->input_primitive);
    int idx = 0;
 
    for (slot = 0, vs_slot = 0; slot < shader->info.num_inputs; slot++) {
@@ -299,9 +271,11 @@ int draw_geometry_shader_run(struct draw_geometry_shader *shader,
 {
    struct tgsi_exec_machine *machine = shader->machine;
    unsigned int i;
-   unsigned num_in_vertices = num_vertices_for_prim(shader->input_primitive);
+   unsigned num_in_vertices = u_vertices_per_prim(shader->input_primitive);
    unsigned num_in_primitives = count/num_in_vertices;
    unsigned inputs_from_vs = 0;
+
+   if (0) debug_printf("%s count = %d\n", __FUNCTION__, count);
 
    shader->emitted_vertices = 0;
    shader->emitted_primitives = 0;

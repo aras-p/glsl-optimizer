@@ -27,6 +27,7 @@
 
 #include "util/u_math.h"
 #include "util/u_memory.h"
+#include "util/u_prim.h"
 #include "draw/draw_context.h"
 #include "draw/draw_vbuf.h"
 #include "draw/draw_vertex.h"
@@ -51,6 +52,24 @@ struct fetch_pipeline_middle_end {
    unsigned opt;
 };
 
+static int max_out_vertex_count(
+   struct fetch_pipeline_middle_end *fpme, int count)
+{
+   struct draw_context *draw = fpme->draw;
+   unsigned alloc_count = align( count, 4 );
+
+   if (draw->gs.geometry_shader) {
+      unsigned input_primitives = count / u_vertices_per_prim(fpme->input_prim);
+      /* max GS output is number of input primitives * max output
+       * vertices per each invocation */
+      unsigned gs_max_verts = input_primitives *
+                              draw->gs.geometry_shader->max_output_vertices;
+      if (gs_max_verts > count)
+         alloc_count = align(gs_max_verts, 4);
+   }
+
+   return alloc_count;
+}
 
 static void fetch_pipeline_prepare( struct draw_pt_middle_end *middle,
                                     unsigned in_prim,
@@ -140,12 +159,7 @@ static void fetch_pipeline_run( struct draw_pt_middle_end *middle,
    struct draw_geometry_shader *gshader = draw->gs.geometry_shader;
    unsigned opt = fpme->opt;
    struct vertex_header *pipeline_verts;
-   unsigned alloc_count = align( fetch_count, 4 );
-
-   if (draw->gs.geometry_shader &&
-       draw->gs.geometry_shader->max_output_vertices > fetch_count) {
-      alloc_count = align(draw->gs.geometry_shader->max_output_vertices, 4);
-   }
+   unsigned alloc_count = max_out_vertex_count(fpme, fetch_count);
 
    pipeline_verts =
       (struct vertex_header *)MALLOC(fpme->vertex_size * alloc_count);
@@ -236,11 +250,7 @@ static void fetch_pipeline_linear_run( struct draw_pt_middle_end *middle,
    struct draw_geometry_shader *geometry_shader = draw->gs.geometry_shader;
    unsigned opt = fpme->opt;
    struct vertex_header *pipeline_verts;
-   unsigned alloc_count = align( count, 4 );
-
-   if (geometry_shader && geometry_shader->max_output_vertices > count) {
-      alloc_count = align(geometry_shader->max_output_vertices, 4);
-   }
+   unsigned alloc_count = max_out_vertex_count(fpme, count);
 
    pipeline_verts =
       (struct vertex_header *)MALLOC(fpme->vertex_size * alloc_count);
@@ -329,12 +339,7 @@ static boolean fetch_pipeline_linear_run_elts( struct draw_pt_middle_end *middle
    struct draw_geometry_shader *geometry_shader = draw->gs.geometry_shader;
    unsigned opt = fpme->opt;
    struct vertex_header *pipeline_verts;
-   unsigned alloc_count = align( count, 4 );
-
-   if (draw->gs.geometry_shader &&
-       draw->gs.geometry_shader->max_output_vertices > count) {
-      alloc_count = align(draw->gs.geometry_shader->max_output_vertices, 4);
-   }
+   unsigned alloc_count = max_out_vertex_count(fpme, count);
 
    pipeline_verts =
       (struct vertex_header *)MALLOC(fpme->vertex_size * alloc_count);
