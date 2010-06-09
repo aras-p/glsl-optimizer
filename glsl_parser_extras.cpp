@@ -737,7 +737,7 @@ main(int argc, char **argv)
 	 ast->print();
       }
 
-      if (!state.translation_unit.is_empty())
+      if (!state.error && !state.translation_unit.is_empty())
 	 _mesa_ast_to_hir(&instructions, &state);
    } else {
       /* FINISHME: We should initialize this to the max GLSL version supported

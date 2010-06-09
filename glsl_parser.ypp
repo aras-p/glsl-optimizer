@@ -186,21 +186,19 @@
 %%
 
 translation_unit: 
-	version_statement
+	version_statement extension_statement_list
 	{
 	   _mesa_glsl_initialize_types(state);
 	}
-	extension_statement_list external_declaration_list
-	|
-	{
-	   state->language_version = 110;
-	   _mesa_glsl_initialize_types(state);
-	}
-	extension_statement_list external_declaration_list
+	external_declaration_list
 	;
 
 version_statement:
-	VERSION INTCONSTANT EOL
+	/* blank - no #version specified */
+	{
+	   state->language_version = 110;
+	}
+	| VERSION INTCONSTANT EOL
 	{
 	   switch ($2) {
 	   case 110:
