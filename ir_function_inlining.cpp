@@ -411,7 +411,7 @@ ir_call::generate_inline(ir_instruction *next_ir)
       param_iter.next();
    }
 
-   delete(parameters);
+   delete [] parameters;
 
    if (retval)
       return new ir_dereference_variable(retval);
