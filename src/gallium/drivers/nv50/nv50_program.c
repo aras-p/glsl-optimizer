@@ -3924,7 +3924,7 @@ ctor_nv50_pc(struct nv50_pc *pc, struct nv50_program *p)
 		case TGSI_PROPERTY_GS_OUTPUT_PRIM:
 			p->cfg.prim_type = nv50_map_gs_output_prim(data[0]);
 			break;
-		case TGSI_PROPERTY_GS_MAX_VERTICES:
+		case TGSI_PROPERTY_GS_MAX_OUTPUT_VERTICES:
 			p->cfg.vert_count = data[0];
 			break;
 		default:
