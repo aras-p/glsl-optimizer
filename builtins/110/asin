@@ -21,12 +21,12 @@
      	           (constant float (0.0742610))
 	           (expression float abs (var_ref x))))))))))
 
-   (signature float
+   (signature vec2
      (parameters
        (declare (in) vec2 x))
      ((return (expression vec2 *
-     	       (expression vec2 -
-	        (expression vec2 *
+     	       (expression float -
+	        (expression float *
 		 (constant float (3.1415926))
 		 (constant float (0.5)))
 		(expression vec2 sqrt
@@ -43,12 +43,12 @@
      	           (constant float (0.0742610))
 	           (expression vec2 abs (var_ref x))))))))))
 
-   (signature float
+   (signature vec3
      (parameters
        (declare (in) vec3 x))
      ((return (expression vec3 *
      	       (expression vec3 -
-	        (expression vec3 *
+	        (expression float *
 		 (constant float (3.1415926))
 		 (constant float (0.5)))
 		(expression vec3 sqrt
@@ -65,12 +65,12 @@
      	           (constant float (0.0742610))
 	           (expression vec3 abs (var_ref x))))))))))
 
-   (signature float
+   (signature vec4
      (parameters
        (declare (in) vec4 x))
      ((return (expression vec4 *
      	       (expression vec4 -
-	        (expression vec4 *
+	        (expression float *
 		 (constant float (3.1415926))
 		 (constant float (0.5)))
 		(expression vec4 sqrt
