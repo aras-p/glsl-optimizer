@@ -513,6 +513,42 @@ static const char *builtins_110_degrees = {
    "))\n"
 };
 
+static const char *builtins_110_distance = {
+   "((function distance\n"
+   "   (signature float\n"
+   "     (parameters\n"
+   "       (declare (in) float p0)\n"
+   "       (declare (in) float p1))\n"
+   "     ((declare () float p)\n"
+   "      (assign (constant bool (1)) (var_ref p) (expression float - (var_ref p0) (var_ref p1)))\n"
+   "      (return (expression float sqrt (expression float dot (var_ref p) (var_ref p))))))\n"
+   "\n"
+   "   (signature float\n"
+   "     (parameters\n"
+   "       (declare (in) vec2 p0)\n"
+   "       (declare (in) vec2 p1))\n"
+   "     ((declare () vec2 p)\n"
+   "      (assign (constant bool (1)) (var_ref p) (expression vec2 - (var_ref p0) (var_ref p1)))\n"
+   "      (return (expression float sqrt (expression float dot (var_ref p) (var_ref p))))))\n"
+   "\n"
+   "   (signature float\n"
+   "     (parameters\n"
+   "       (declare (in) vec3 p0)\n"
+   "       (declare (in) vec3 p1))\n"
+   "     ((declare () vec3 p)\n"
+   "      (assign (constant bool (1)) (var_ref p) (expression vec3 - (var_ref p0) (var_ref p1)))\n"
+   "      (return (expression float sqrt (expression float dot (var_ref p) (var_ref p))))))\n"
+   "\n"
+   "   (signature float\n"
+   "     (parameters\n"
+   "       (declare (in) vec4 p0)\n"
+   "       (declare (in) vec4 p1))\n"
+   "     ((declare () vec4 p)\n"
+   "      (assign (constant bool (1)) (var_ref p) (expression vec4 - (var_ref p0) (var_ref p1)))\n"
+   "      (return (expression float sqrt (expression float dot (var_ref p) (var_ref p))))))\n"
+   "))\n"
+};
+
 static const char *builtins_110_dot = {
    "((function dot\n"
    "   (signature float\n"
@@ -2174,6 +2210,7 @@ static const char *functions_for_110 [] = {
    builtins_110_cos,
    builtins_110_cross,
    builtins_110_degrees,
+   builtins_110_distance,
    builtins_110_dot,
    builtins_110_equal,
    builtins_110_exp,
