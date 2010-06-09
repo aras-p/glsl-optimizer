@@ -326,7 +326,7 @@ lp_setup_clear( struct lp_setup_context *setup,
 
    if (flags & PIPE_CLEAR_DEPTHSTENCIL) {
       if (setup->fb.zsbuf &&
-          ((setup->clear.flags & PIPE_CLEAR_DEPTHSTENCIL) != PIPE_CLEAR_DEPTHSTENCIL) &&
+          ((flags & PIPE_CLEAR_DEPTHSTENCIL) != PIPE_CLEAR_DEPTHSTENCIL) &&
            util_format_is_depth_and_stencil(setup->fb.zsbuf->format))
          full_zs_clear = FALSE;
 
