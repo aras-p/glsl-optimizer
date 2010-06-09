@@ -966,11 +966,12 @@ struct pipe_resource* r300_texture_create(struct pipe_screen* screen,
 
     SCREEN_DBG(rscreen, DBG_TEX,
                "r300: texture_create: Macro: %s, Micro: %s, Pitch: %i, "
-               "Dim: %ix%ix%i, LastLevel: %i, Format: %s\n",
+               "Dim: %ix%ix%i, LastLevel: %i, Size: %i, Format: %s\n",
                tex->macrotile ? "YES" : " NO",
                tex->microtile ? "YES" : " NO",
                tex->hwpitch[0],
                base->width0, base->height0, base->depth0, base->last_level,
+               tex->size,
                util_format_short_name(base->format));
 
     tex->domain = base->flags & R300_RESOURCE_FLAG_TRANSFER ? R300_DOMAIN_GTT :
