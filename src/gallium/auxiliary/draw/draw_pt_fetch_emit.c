@@ -90,6 +90,7 @@ struct fetch_emit_middle_end {
 
 static void fetch_emit_prepare( struct draw_pt_middle_end *middle,
                                 unsigned prim,
+                                unsigned out_prim,
 				unsigned opt,
                                 unsigned *max_vertices )
 {
@@ -102,7 +103,7 @@ static void fetch_emit_prepare( struct draw_pt_middle_end *middle,
 
 
    ok = draw->render->set_primitive( draw->render, 
-                                     prim );
+                                     out_prim );
    if (!ok) {
       assert(0);
       return;

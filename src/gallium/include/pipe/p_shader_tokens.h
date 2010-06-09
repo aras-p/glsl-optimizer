@@ -173,7 +173,7 @@ union tgsi_immediate_data
 
 #define TGSI_PROPERTY_GS_INPUT_PRIM          0
 #define TGSI_PROPERTY_GS_OUTPUT_PRIM         1
-#define TGSI_PROPERTY_GS_MAX_VERTICES        2
+#define TGSI_PROPERTY_GS_MAX_OUTPUT_VERTICES 2
 #define TGSI_PROPERTY_FS_COORD_ORIGIN        3
 #define TGSI_PROPERTY_FS_COORD_PIXEL_CENTER  4
 #define TGSI_PROPERTY_COUNT                  5

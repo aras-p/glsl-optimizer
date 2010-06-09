@@ -67,9 +67,9 @@ struct fetch_shade_emit {
 
 
 
-			       
 static void fse_prepare( struct draw_pt_middle_end *middle,
-                         unsigned prim, 
+                         unsigned in_prim,
+                         unsigned out_prim,
                          unsigned opt,
                          unsigned *max_vertices )
 {
@@ -79,10 +79,10 @@ static void fse_prepare( struct draw_pt_middle_end *middle,
    const struct vertex_info *vinfo;
    unsigned i;
    unsigned nr_vbs = 0;
-   
 
-   if (!draw->render->set_primitive( draw->render, 
-                                     prim )) {
+
+   if (!draw->render->set_primitive( draw->render,
+                                     out_prim )) {
       assert(0);
       return;
    }
@@ -90,7 +90,6 @@ static void fse_prepare( struct draw_pt_middle_end *middle,
    /* Must do this after set_primitive() above:
     */
    fse->vinfo = vinfo = draw->render->get_vertex_info(draw->render);
-   
 
 
    fse->key.output_stride = vinfo->size * 4;

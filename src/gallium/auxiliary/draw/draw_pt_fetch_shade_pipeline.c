@@ -46,13 +46,15 @@ struct fetch_pipeline_middle_end {
 
    unsigned vertex_data_offset;
    unsigned vertex_size;
-   unsigned prim;
+   unsigned input_prim;
+   unsigned output_prim;
    unsigned opt;
 };
 
 
 static void fetch_pipeline_prepare( struct draw_pt_middle_end *middle,
-                                    unsigned prim,
+                                    unsigned in_prim,
+                                    unsigned out_prim,
 				    unsigned opt,
                                     unsigned *max_vertices )
 {
@@ -77,7 +79,8 @@ static void fetch_pipeline_prepare( struct draw_pt_middle_end *middle,
       }
    }
 
-   fpme->prim = prim;
+   fpme->input_prim = in_prim;
+   fpme->output_prim = out_prim;
    fpme->opt = opt;
 
    /* Always leave room for the vertex header whether we need it or
@@ -99,13 +102,13 @@ static void fetch_pipeline_prepare( struct draw_pt_middle_end *middle,
 			    (boolean)draw->bypass_clipping,
 			    (boolean)draw->identity_viewport,
 			    (boolean)draw->rasterizer->gl_rasterization_rules,
-			    (draw->vs.edgeflag_output ? true : false) );    
+			    (draw->vs.edgeflag_output ? true : false) );
 
-   draw_pt_so_emit_prepare( fpme->so_emit, prim );
+   draw_pt_so_emit_prepare( fpme->so_emit, out_prim );
 
    if (!(opt & PT_PIPELINE)) {
-      draw_pt_emit_prepare( fpme->emit, 
-			    prim,
+      draw_pt_emit_prepare( fpme->emit,
+			    out_prim,
                             max_vertices );
 
       *max_vertices = MAX2( *max_vertices,
@@ -136,9 +139,15 @@ static void fetch_pipeline_run( struct draw_pt_middle_end *middle,
    struct draw_vertex_shader *vshader = draw->vs.vertex_shader;
    struct draw_geometry_shader *gshader = draw->gs.geometry_shader;
    unsigned opt = fpme->opt;
+   struct vertex_header *pipeline_verts;
    unsigned alloc_count = align( fetch_count, 4 );
 
-   struct vertex_header *pipeline_verts = 
+   if (draw->gs.geometry_shader &&
+       draw->gs.geometry_shader->max_output_vertices > fetch_count) {
+      alloc_count = align(draw->gs.geometry_shader->max_output_vertices, 4);
+   }
+
+   pipeline_verts =
       (struct vertex_header *)MALLOC(fpme->vertex_size * alloc_count);
 
    if (!pipeline_verts) {
@@ -168,13 +177,14 @@ static void fetch_pipeline_run( struct draw_pt_middle_end *middle,
                           fpme->vertex_size,
                           fpme->vertex_size);
       if (gshader)
-         draw_geometry_shader_run(gshader,
-                                  (const float (*)[4])pipeline_verts->data,
-                                  (      float (*)[4])pipeline_verts->data,
-                                  draw->pt.user.gs_constants,
-                                  fetch_count,
-                                  fpme->vertex_size,
-                                  fpme->vertex_size);
+         fetch_count =
+            draw_geometry_shader_run(gshader,
+                                     (const float (*)[4])pipeline_verts->data,
+                                     (      float (*)[4])pipeline_verts->data,
+                                     draw->pt.user.gs_constants,
+                                     fetch_count,
+                                     fpme->vertex_size,
+                                     fpme->vertex_size);
    }
 
    /* stream output needs to be done before clipping */
@@ -195,7 +205,7 @@ static void fetch_pipeline_run( struct draw_pt_middle_end *middle,
     */
    if (opt & PT_PIPELINE) {
       draw_pipeline_run( fpme->draw,
-                         fpme->prim,
+                         fpme->output_prim,
                          pipeline_verts,
                          fetch_count,
                          fpme->vertex_size,
@@ -225,9 +235,14 @@ static void fetch_pipeline_linear_run( struct draw_pt_middle_end *middle,
    struct draw_vertex_shader *shader = draw->vs.vertex_shader;
    struct draw_geometry_shader *geometry_shader = draw->gs.geometry_shader;
    unsigned opt = fpme->opt;
+   struct vertex_header *pipeline_verts;
    unsigned alloc_count = align( count, 4 );
 
-   struct vertex_header *pipeline_verts =
+   if (geometry_shader && geometry_shader->max_output_vertices > count) {
+      alloc_count = align(geometry_shader->max_output_vertices, 4);
+   }
+
+   pipeline_verts =
       (struct vertex_header *)MALLOC(fpme->vertex_size * alloc_count);
 
    if (!pipeline_verts) {
@@ -258,13 +273,13 @@ static void fetch_pipeline_linear_run( struct draw_pt_middle_end *middle,
 			 fpme->vertex_size);
 
       if (geometry_shader)
-         draw_geometry_shader_run(geometry_shader,
-                                  (const float (*)[4])pipeline_verts->data,
-                                  (      float (*)[4])pipeline_verts->data,
-                                  draw->pt.user.gs_constants,
-                                  count,
-                                  fpme->vertex_size,
-                                  fpme->vertex_size);
+         count = draw_geometry_shader_run(geometry_shader,
+                                          (const float (*)[4])pipeline_verts->data,
+                                          (      float (*)[4])pipeline_verts->data,
+                                          draw->pt.user.gs_constants,
+                                          count,
+                                          fpme->vertex_size,
+                                          fpme->vertex_size);
    }
 
    /* stream output needs to be done before clipping */
@@ -285,7 +300,7 @@ static void fetch_pipeline_linear_run( struct draw_pt_middle_end *middle,
     */
    if (opt & PT_PIPELINE) {
       draw_pipeline_run_linear( fpme->draw,
-                                fpme->prim,
+                                fpme->output_prim,
                                 pipeline_verts,
                                 count,
                                 fpme->vertex_size);
@@ -313,12 +328,18 @@ static boolean fetch_pipeline_linear_run_elts( struct draw_pt_middle_end *middle
    struct draw_vertex_shader *shader = draw->vs.vertex_shader;
    struct draw_geometry_shader *geometry_shader = draw->gs.geometry_shader;
    unsigned opt = fpme->opt;
+   struct vertex_header *pipeline_verts;
    unsigned alloc_count = align( count, 4 );
 
-   struct vertex_header *pipeline_verts =
+   if (draw->gs.geometry_shader &&
+       draw->gs.geometry_shader->max_output_vertices > count) {
+      alloc_count = align(draw->gs.geometry_shader->max_output_vertices, 4);
+   }
+
+   pipeline_verts =
       (struct vertex_header *)MALLOC(fpme->vertex_size * alloc_count);
 
-   if (!pipeline_verts) 
+   if (!pipeline_verts)
       return FALSE;
 
    /* Fetch into our vertex buffer
@@ -342,13 +363,13 @@ static boolean fetch_pipeline_linear_run_elts( struct draw_pt_middle_end *middle
 			 fpme->vertex_size);
 
       if (geometry_shader)
-         draw_geometry_shader_run(geometry_shader,
-                                  (const float (*)[4])pipeline_verts->data,
-                                  (      float (*)[4])pipeline_verts->data,
-                                  draw->pt.user.gs_constants,
-                                  count,
-                                  fpme->vertex_size,
-                                  fpme->vertex_size);
+         count = draw_geometry_shader_run(geometry_shader,
+                                          (const float (*)[4])pipeline_verts->data,
+                                          (      float (*)[4])pipeline_verts->data,
+                                          draw->pt.user.gs_constants,
+                                          count,
+                                          fpme->vertex_size,
+                                          fpme->vertex_size);
    }
 
    /* stream output needs to be done before clipping */
@@ -369,7 +390,7 @@ static boolean fetch_pipeline_linear_run_elts( struct draw_pt_middle_end *middle
     */
    if (opt & PT_PIPELINE) {
       draw_pipeline_run( fpme->draw,
-                         fpme->prim,
+                         fpme->output_prim,
                          pipeline_verts,
                          count,
                          fpme->vertex_size,

@@ -103,7 +103,7 @@ static boolean post_vs_cliptest_viewport_gl( struct pt_post_vs *pvs,
    unsigned clipped = 0;
    unsigned j;
 
-   if (0) debug_printf("%s\n", __FUNCTION__);
+   if (0) debug_printf("%s count, %d\n", __FUNCTION__, count);
 
    for (j = 0; j < count; j++) {
       float *position = out->data[pos];

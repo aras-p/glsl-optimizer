@@ -136,7 +136,8 @@ static unsigned decompose_prim[PIPE_PRIM_POLYGON + 1] = {
 
 
 static void varray_prepare(struct draw_pt_front_end *frontend,
-                           unsigned prim,
+                           unsigned in_prim,
+                           unsigned out_prim,
                            struct draw_pt_middle_end *middle,
                            unsigned opt)
 {
@@ -144,11 +145,12 @@ static void varray_prepare(struct draw_pt_front_end *frontend,
 
    varray->base.run = varray_run;
 
-   varray->input_prim = prim;
-   varray->output_prim = decompose_prim[prim];
+   varray->input_prim = in_prim;
+   varray->output_prim = decompose_prim[out_prim];
 
    varray->middle = middle;
-   middle->prepare(middle, varray->output_prim, opt, &varray->driver_fetch_max );
+   middle->prepare(middle, varray->input_prim,
+                   varray->output_prim, opt, &varray->driver_fetch_max );
 
    /* check that the max is even */
    assert((varray->driver_fetch_max & 1) == 0);

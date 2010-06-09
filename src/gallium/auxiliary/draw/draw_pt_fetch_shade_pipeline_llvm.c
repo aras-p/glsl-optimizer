@@ -47,7 +47,8 @@ struct llvm_middle_end {
 
    unsigned vertex_data_offset;
    unsigned vertex_size;
-   unsigned prim;
+   unsigned input_prim;
+   unsigned output_prim;
    unsigned opt;
 
    struct draw_llvm *llvm;
@@ -59,7 +60,8 @@ struct llvm_middle_end {
 
 static void
 llvm_middle_end_prepare( struct draw_pt_middle_end *middle,
-                         unsigned prim,
+                         unsigned in_prim,
+                         unsigned out_prim,
                          unsigned opt,
                          unsigned *max_vertices )
 {
@@ -86,7 +88,8 @@ llvm_middle_end_prepare( struct draw_pt_middle_end *middle,
       }
    }
 
-   fpme->prim = prim;
+   fpme->input_prim = in_prim;
+   fpme->output_prim = out_prim;
    fpme->opt = opt;
 
    /* Always leave room for the vertex header whether we need it or
@@ -105,10 +108,10 @@ llvm_middle_end_prepare( struct draw_pt_middle_end *middle,
 			    (boolean)draw->rasterizer->gl_rasterization_rules,
 			    (draw->vs.edgeflag_output ? true : false) );
 
-   draw_pt_so_emit_prepare( fpme->so_emit, prim );
+   draw_pt_so_emit_prepare( fpme->so_emit, out_prim );
    if (!(opt & PT_PIPELINE)) {
       draw_pt_emit_prepare( fpme->emit,
-			    prim,
+			    out_prim,
                             max_vertices );
 
       *max_vertices = MAX2( *max_vertices,
@@ -195,7 +198,7 @@ static void llvm_middle_end_run( struct draw_pt_middle_end *middle,
     */
    if (opt & PT_PIPELINE) {
       draw_pipeline_run( fpme->draw,
-                         fpme->prim,
+                         fpme->output_prim,
                          pipeline_verts,
                          fetch_count,
                          fpme->vertex_size,
@@ -265,7 +268,7 @@ static void llvm_middle_end_linear_run( struct draw_pt_middle_end *middle,
     */
    if (opt & PT_PIPELINE) {
       draw_pipeline_run_linear( fpme->draw,
-                                fpme->prim,
+                                fpme->output_prim,
                                 pipeline_verts,
                                 count,
                                 fpme->vertex_size);
@@ -326,7 +329,7 @@ llvm_middle_end_linear_run_elts( struct draw_pt_middle_end *middle,
     */
    if (opt & PT_PIPELINE) {
       draw_pipeline_run( fpme->draw,
-                         fpme->prim,
+                         fpme->output_prim,
                          pipeline_verts,
                          count,
                          fpme->vertex_size,

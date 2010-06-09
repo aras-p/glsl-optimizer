@@ -1236,7 +1236,7 @@ static void emit_decls( struct ureg_program *ureg )
       assert(ureg->processor == TGSI_PROCESSOR_GEOMETRY);
 
       emit_property(ureg,
-                    TGSI_PROPERTY_GS_MAX_VERTICES,
+                    TGSI_PROPERTY_GS_MAX_OUTPUT_VERTICES,
                     ureg->property_gs_max_vertices);
    }
 

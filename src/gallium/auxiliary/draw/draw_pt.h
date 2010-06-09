@@ -60,7 +60,8 @@ struct draw_context;
  */
 struct draw_pt_front_end {
    void (*prepare)( struct draw_pt_front_end *,
-                    unsigned prim,
+                    unsigned input_prim,
+                    unsigned output_prim,
                     struct draw_pt_middle_end *,
 		    unsigned opt );
 
@@ -84,7 +85,8 @@ struct draw_pt_front_end {
  */
 struct draw_pt_middle_end {
    void (*prepare)( struct draw_pt_middle_end *,
-                    unsigned prim,
+                    unsigned input_prim,
+                    unsigned output_prim,
 		    unsigned opt,
                     unsigned *max_vertices );
 

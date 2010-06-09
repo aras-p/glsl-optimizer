@@ -31,6 +31,7 @@
   */
 
 #include "draw/draw_context.h"
+#include "draw/draw_gs.h"
 #include "draw/draw_private.h"
 #include "draw/draw_pt.h"
 #include "tgsi/tgsi_dump.h"
@@ -68,35 +69,39 @@ draw_pt_arrays(struct draw_context *draw,
    struct draw_pt_front_end *frontend = NULL;
    struct draw_pt_middle_end *middle = NULL;
    unsigned opt = 0;
+   unsigned out_prim = prim;
 
    /* Sanitize primitive length:
     */
    {
       unsigned first, incr;
       draw_pt_split_prim(prim, &first, &incr);
-      count = trim(count, first, incr); 
+      count = trim(count, first, incr);
       if (count < first)
          return TRUE;
+   }
+   if (draw->gs.geometry_shader) {
+      out_prim = draw->gs.geometry_shader->output_primitive;
    }
 
    if (!draw->force_passthrough) {
       if (!draw->render) {
          opt |= PT_PIPELINE;
       }
-      
+
       if (draw_need_pipeline(draw,
                              draw->rasterizer,
-                             prim)) {
+                             out_prim)) {
          opt |= PT_PIPELINE;
       }
 
       if (!draw->bypass_clipping && !draw->pt.test_fse) {
          opt |= PT_CLIPTEST;
       }
-      
+
       opt |= PT_SHADE;
    }
-      
+
    if (draw->pt.middle.llvm && !draw->gs.geometry_shader) {
       middle = draw->pt.middle.llvm;
    } else {
@@ -117,9 +122,9 @@ draw_pt_arrays(struct draw_context *draw,
       frontend = draw->pt.front.varray;
    }
 
-   frontend->prepare( frontend, prim, middle, opt );
+   frontend->prepare( frontend, prim, out_prim, middle, opt );
 
-   frontend->run(frontend, 
+   frontend->run(frontend,
                  draw_pt_elt_func(draw),
                  draw_pt_elt_ptr(draw, start),
                  draw->pt.user.eltBias,

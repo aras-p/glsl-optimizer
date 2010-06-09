@@ -112,7 +112,7 @@ draw_create_geometry_shader(struct draw_context *draw,
                TGSI_PROPERTY_GS_OUTPUT_PRIM)
          gs->output_primitive = gs->info.properties[i].data[0];
       else if (gs->info.properties[i].name ==
-               TGSI_PROPERTY_GS_MAX_VERTICES)
+               TGSI_PROPERTY_GS_MAX_OUTPUT_VERTICES)
          gs->max_output_vertices = gs->info.properties[i].data[0];
    }
 
@@ -247,7 +247,7 @@ static void draw_fetch_geometry_input(struct draw_geometry_shader *shader,
       }
    }
 }
-
+/*#define DEBUG_OUTPUTS 1*/
 static INLINE void
 draw_geometry_fetch_outputs(struct draw_geometry_shader *shader,
                             int num_primitives,
@@ -263,8 +263,11 @@ draw_geometry_fetch_outputs(struct draw_geometry_shader *shader,
     * the first one
     unsigned prim_count =
     mach->Temps[TEMP_PRIMITIVE_I].xyzw[TEMP_PRIMITIVE_C].u[0];*/
+
+   shader->emitted_primitives += num_primitives;
    for (prim_idx = 0; prim_idx < num_primitives; ++prim_idx) {
       unsigned num_verts_per_prim = machine->Primitives[0];
+      shader->emitted_vertices += num_verts_per_prim;
       for (j = 0; j < num_verts_per_prim; j++) {
          int idx = (prim_idx * num_verts_per_prim + j) *
                    shader->info.num_outputs;
@@ -290,19 +293,22 @@ draw_geometry_fetch_outputs(struct draw_geometry_shader *shader,
    }
 }
 
-void draw_geometry_shader_run(struct draw_geometry_shader *shader,
-                              const float (*input)[4],
-                              float (*output)[4],
-                              const void *constants[PIPE_MAX_CONSTANT_BUFFERS],
-                              unsigned count,
-                              unsigned input_stride,
-                              unsigned vertex_size)
+int draw_geometry_shader_run(struct draw_geometry_shader *shader,
+                             const float (*input)[4],
+                             float (*output)[4],
+                             const void *constants[PIPE_MAX_CONSTANT_BUFFERS],
+                             unsigned count,
+                             unsigned input_stride,
+                             unsigned vertex_size)
 {
    struct tgsi_exec_machine *machine = shader->machine;
    unsigned int i;
    unsigned num_vertices = num_vertices_for_prim(shader->input_primitive);
    unsigned num_primitives = count/num_vertices;
    unsigned inputs_from_vs = 0;
+
+   shader->emitted_vertices = 0;
+   shader->emitted_primitives = 0;
 
    for (i = 0; i < PIPE_MAX_CONSTANT_BUFFERS; i++) {
       machine->Consts[i] = constants[i];
@@ -331,6 +337,7 @@ void draw_geometry_shader_run(struct draw_geometry_shader *shader,
       draw_geometry_fetch_outputs(shader, max_primitives,
                                   output, vertex_size);
    }
+   return shader->emitted_vertices;
 }
 
 void draw_geometry_shader_delete(struct draw_geometry_shader *shader)

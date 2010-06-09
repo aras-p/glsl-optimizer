@@ -54,7 +54,7 @@ struct vcache_frontend {
    unsigned draw_count;
    unsigned fetch_count;
    unsigned fetch_max;
-   
+
    struct draw_pt_middle_end *middle;
 
    unsigned input_prim;
@@ -64,14 +64,15 @@ struct vcache_frontend {
    unsigned opt;
 };
 
-static INLINE void 
+static INLINE void
 vcache_flush( struct vcache_frontend *vcache )
 {
    if (vcache->middle_prim != vcache->output_prim) {
       vcache->middle_prim = vcache->output_prim;
-      vcache->middle->prepare( vcache->middle, 
-                               vcache->middle_prim, 
-                               vcache->opt, 
+      vcache->middle->prepare( vcache->middle,
+                               vcache->input_prim,
+                               vcache->middle_prim,
+                               vcache->opt,
                                &vcache->fetch_max );
    }
 
@@ -356,19 +357,20 @@ vcache_check_run( struct draw_pt_front_end *frontend,
    if (0) debug_printf("fetch_count %d fetch_max %d draw_count %d\n", fetch_count, 
                        vcache->fetch_max,
                        draw_count);
-      
+
    if (elt_bias + max_index >= DRAW_PIPE_MAX_VERTICES ||
        fetch_count >= UNDEFINED_VERTEX_ID ||
        fetch_count > draw_count) {
       if (0) debug_printf("fail\n");
       goto fail;
    }
-      
+
    if (vcache->middle_prim != vcache->input_prim) {
       vcache->middle_prim = vcache->input_prim;
-      vcache->middle->prepare( vcache->middle, 
-                               vcache->middle_prim, 
-                               vcache->opt, 
+      vcache->middle->prepare( vcache->middle,
+                               vcache->input_prim,
+                               vcache->middle_prim,
+                               vcache->opt,
                                &vcache->fetch_max );
    }
 
@@ -467,9 +469,10 @@ vcache_check_run( struct draw_pt_front_end *frontend,
 
 
 
-static void 
+static void
 vcache_prepare( struct draw_pt_front_end *frontend,
-                unsigned prim,
+                unsigned in_prim,
+                unsigned out_prim,
                 struct draw_pt_middle_end *middle,
                 unsigned opt )
 {
@@ -479,13 +482,13 @@ vcache_prepare( struct draw_pt_front_end *frontend,
    {
       vcache->base.run = vcache_run_extras;
    }
-   else 
+   else
    {
       vcache->base.run = vcache_check_run;
    }
 
-   vcache->input_prim = prim;
-   vcache->output_prim = u_reduced_prim(prim);
+   vcache->input_prim = in_prim;
+   vcache->output_prim = u_reduced_prim(out_prim);
 
    vcache->middle = middle;
    vcache->opt = opt;
@@ -494,7 +497,8 @@ vcache_prepare( struct draw_pt_front_end *frontend,
     * doing so:
     */
    vcache->middle_prim = (opt & PT_PIPELINE) ? vcache->output_prim : vcache->input_prim;
-   middle->prepare( middle, vcache->middle_prim, opt, &vcache->fetch_max );
+   middle->prepare( middle, vcache->input_prim,
+                    vcache->middle_prim, opt, &vcache->fetch_max );
 }
 
 
