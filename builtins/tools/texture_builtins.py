@@ -8,7 +8,7 @@ def vec_type(g, size):
         if g == "i":
             return "int"
         elif g == "u":
-            return "unsigned"
+            return "uint"
         return "float"
     return g + "vec" + str(size)
 
