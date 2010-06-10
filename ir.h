@@ -1071,6 +1071,8 @@ public:
    unsigned get_uint_component(unsigned i) const;
    /*@}*/
 
+   ir_constant *get_record_field(const char *name);
+
    /**
     * Value of the constant.
     *

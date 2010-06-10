@@ -406,6 +406,32 @@ ir_constant::get_uint_component(unsigned i) const
 }
 
 
+ir_constant *
+ir_constant::get_record_field(const char *name)
+{
+   int idx = this->type->field_index(name);
+
+   if (idx < 0)
+      return NULL;
+
+   if (this->components.is_empty())
+      return NULL;
+
+   exec_node *node = this->components.head;
+   for (int i = 0; i < idx; i++) {
+      node = node->next;
+
+      /* If the end of the list is encountered before the element matching the
+       * requested field is found, return NULL.
+       */
+      if (node->is_tail_sentinal())
+	 return NULL;
+   }
+
+   return (ir_constant *) node;
+}
+
+
 ir_dereference_variable::ir_dereference_variable(ir_variable *var)
 {
    this->var = var;
