@@ -36,7 +36,8 @@
 #include "brw_util.h"
 #include "main/macros.h"
 
-static void prepare_cc_vp( struct brw_context *brw )
+void
+brw_update_cc_vp(struct brw_context *brw)
 {
    GLcontext *ctx = &brw->intel.ctx;
    struct brw_cc_viewport ccv;
@@ -57,15 +58,6 @@ static void prepare_cc_vp( struct brw_context *brw )
    brw->cc.vp_bo = brw_cache_data(&brw->cache, BRW_CC_VP, &ccv, sizeof(ccv),
 				  NULL, 0);
 }
-
-const struct brw_tracked_state brw_cc_vp = {
-   .dirty = {
-      .mesa = _NEW_VIEWPORT | _NEW_TRANSFORM,
-      .brw = BRW_NEW_CONTEXT,
-      .cache = 0
-   },
-   .prepare = prepare_cc_vp
-};
 
 struct brw_cc_unit_key {
    GLboolean stencil, stencil_two_side, color_blend, alpha_enabled;

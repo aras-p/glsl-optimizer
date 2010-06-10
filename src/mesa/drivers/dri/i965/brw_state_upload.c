@@ -61,7 +61,6 @@ static const struct brw_tracked_state *gen4_atoms[] =
    &brw_curbe_offsets,
    &brw_recalculate_urb_fence,
 
-   &brw_cc_vp,
    &brw_cc_unit,
 
    &brw_vs_surfaces,		/* must do before unit */

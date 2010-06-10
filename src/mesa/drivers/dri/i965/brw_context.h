@@ -727,12 +727,19 @@ void brwInitFragProgFuncs( struct dd_function_table *functions );
  */
 void brw_upload_urb_fence(struct brw_context *brw);
 
+/* brw_cc.c */
+void brw_update_cc_vp(struct brw_context *brw);
+
 /* brw_curbe.c
  */
 void brw_upload_cs_urb_state(struct brw_context *brw);
 
 /* brw_disasm.c */
 int brw_disasm (FILE *file, struct brw_instruction *inst, int gen);
+
+/* brw_state.c */
+void brw_enable(GLcontext * ctx, GLenum cap, GLboolean state);
+void brw_depth_range(GLcontext *ctx, GLclampd nearval, GLclampd farval);
 
 /*======================================================================
  * Inline conversion functions.  These are better-typed than the
