@@ -244,8 +244,24 @@ ir_constant::ir_constant(const struct glsl_type *type, exec_list *value_list)
 {
    this->type = type;
 
-   /* FINISHME: Support structure and array types. */
-   assert(type->is_scalar() || type->is_vector() || type->is_matrix());
+   /* FINISHME: Support array types. */
+   assert(type->is_scalar() || type->is_vector() || type->is_matrix()
+	  || type->is_record());
+
+   /* If the constant is a record, the types of each of the entries in
+    * value_list must be a 1-for-1 match with the structure components.  Each
+    * entry must also be a constant.  Just move the nodes from the value_list
+    * to the list in the ir_constant.
+    */
+   /* FINISHME: Should there be some type checking and / or assertions here? */
+   /* FINISHME: Should the new constant take ownership of the nodes from
+    * FINISHME: value_list, or should it make copies?
+    */
+   if (type->is_record()) {
+      value_list->move_nodes_to(& this->components);
+      return;
+   }
+
 
    ir_constant *value = (ir_constant *) (value_list->head);
 

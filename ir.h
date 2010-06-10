@@ -1087,6 +1087,8 @@ public:
       float f[16];
       bool b[16];
    } value;
+
+   exec_list components;
 };
 
 void
