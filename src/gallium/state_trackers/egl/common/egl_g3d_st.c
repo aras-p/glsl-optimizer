@@ -30,7 +30,6 @@
 #include "util/u_string.h"
 #include "util/u_inlines.h"
 #include "util/u_pointer.h"
-#include "util/u_format.h"
 #include "util/u_dl.h"
 #include "egldriver.h"
 #include "eglimage.h"
