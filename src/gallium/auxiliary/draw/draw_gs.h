@@ -57,9 +57,12 @@ struct draw_geometry_shader {
    unsigned emitted_vertices;
    unsigned emitted_primitives;
 
-   /* Extracted from shader:
-    */
-   const float (*immediates)[4];
+   float (*tmp_output)[4];
+   unsigned vertex_size;
+
+   unsigned in_prim_idx;
+   unsigned input_vertex_stride;
+   const float (*input)[4];
 };
 
 /*
