@@ -265,10 +265,18 @@ adjust_colors(const struct gl_framebuffer *fb, GLuint n, GLfloat rgba[][4])
    const GLuint rShift = 8 - fb->Visual.redBits;
    const GLuint gShift = 8 - fb->Visual.greenBits;
    const GLuint bShift = 8 - fb->Visual.blueBits;
-   const GLfloat rScale = 1.0F / (GLfloat) ((1 << fb->Visual.redBits  ) - 1);
-   const GLfloat gScale = 1.0F / (GLfloat) ((1 << fb->Visual.greenBits) - 1);
-   const GLfloat bScale = 1.0F / (GLfloat) ((1 << fb->Visual.blueBits ) - 1);
+   GLfloat rScale = 1.0F / (GLfloat) ((1 << fb->Visual.redBits  ) - 1);
+   GLfloat gScale = 1.0F / (GLfloat) ((1 << fb->Visual.greenBits) - 1);
+   GLfloat bScale = 1.0F / (GLfloat) ((1 << fb->Visual.blueBits ) - 1);
    GLuint i;
+
+   if (fb->Visual.redBits == 0)
+      rScale = 0;
+   if (fb->Visual.greenBits == 0)
+      gScale = 0;
+   if (fb->Visual.blueBits == 0)
+      bScale = 0;
+
    for (i = 0; i < n; i++) {
       GLint r, g, b;
       /* convert float back to ubyte */
