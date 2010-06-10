@@ -39,10 +39,9 @@
 #include "ir_visitor.h"
 #include "ir_optimization.h"
 #include "glsl_types.h"
-#include "linux_list.h"
 
 struct assignment_entry {
-   struct list link;
+   exec_node link;
    int assignment_count;
    ir_variable *var;
    ir_constant *constval;
@@ -50,29 +49,24 @@ struct assignment_entry {
 
 class ir_constant_variable_visitor : public ir_hierarchical_visitor {
 public:
-   ir_constant_variable_visitor()
-   {
-      list_init(&list);
-   }
-
    virtual ir_visitor_status visit_enter(ir_assignment *);
 
-   struct list list;
+   exec_list list;
 };
 
 static struct assignment_entry *
-get_assignment_entry(ir_variable *var, struct list *list)
+get_assignment_entry(ir_variable *var, exec_list *list)
 {
    struct assignment_entry *entry;
 
-   list_foreach_entry(entry, struct assignment_entry, list, link) {
+   foreach_list_typed(struct assignment_entry, entry, link, list) {
       if (entry->var == var)
 	 return entry;
    }
 
    entry = (struct assignment_entry *)calloc(1, sizeof(*entry));
    entry->var = var;
-   list_add(&entry->link, list);
+   list->push_head(&entry->link);
    return entry;
 }
 
@@ -127,16 +121,16 @@ do_constant_variable(exec_list *instructions)
 
    v.run(instructions);
 
-   while (!list_is_empty(&v.list)) {
+   while (!v.list.is_empty()) {
 
       struct assignment_entry *entry;
-      entry = list_entry(v.list.next, struct assignment_entry, link);
+      entry = exec_node_data(struct assignment_entry, v.list.head, link);
 
       if (entry->assignment_count == 1 && entry->constval) {
 	 entry->var->constant_value = entry->constval;
 	 progress = true;
       }
-      list_del(&entry->link);
+      entry->link.remove();
       free(entry);
    }
 
