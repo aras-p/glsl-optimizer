@@ -36,7 +36,11 @@ process_parameters(exec_list *instructions, exec_list *actual_parameters,
 
    foreach_list (n, parameters) {
       ast_node *const ast = exec_node_data(ast_node, n, link);
-      ir_rvalue *const result = ast->hir(instructions, state);
+      ir_rvalue *result = ast->hir(instructions, state);
+
+      ir_constant *const constant = result->constant_expression_value();
+      if (constant != NULL)
+	 result = constant;
 
       actual_parameters->push_tail(result);
       count++;
