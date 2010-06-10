@@ -191,7 +191,7 @@ static void fetch_pipeline_run( struct draw_pt_middle_end *middle,
                           fetch_count,
                           fpme->vertex_size,
                           fpme->vertex_size);
-      if (gshader)
+      if (gshader) {
          fetch_count =
             draw_geometry_shader_run(gshader,
                                      (const float (*)[4])pipeline_verts->data,
@@ -200,6 +200,8 @@ static void fetch_pipeline_run( struct draw_pt_middle_end *middle,
                                      fetch_count,
                                      fpme->vertex_size,
                                      fpme->vertex_size);
+         debug_assert(fetch_count <= alloc_count);
+      }
    }
 
    /* stream output needs to be done before clipping */
@@ -283,14 +285,17 @@ static void fetch_pipeline_linear_run( struct draw_pt_middle_end *middle,
 			 fpme->vertex_size,
 			 fpme->vertex_size);
 
-      if (geometry_shader)
-         count = draw_geometry_shader_run(geometry_shader,
-                                          (const float (*)[4])pipeline_verts->data,
-                                          (      float (*)[4])pipeline_verts->data,
-                                          draw->pt.user.gs_constants,
-                                          count,
-                                          fpme->vertex_size,
-                                          fpme->vertex_size);
+      if (geometry_shader) {
+         count =
+            draw_geometry_shader_run(geometry_shader,
+                                     (const float (*)[4])pipeline_verts->data,
+                                     (      float (*)[4])pipeline_verts->data,
+                                     draw->pt.user.gs_constants,
+                                     count,
+                                     fpme->vertex_size,
+                                     fpme->vertex_size);
+         debug_assert(count <= alloc_count);
+      }
    }
 
    /* stream output needs to be done before clipping */
@@ -368,14 +373,17 @@ static boolean fetch_pipeline_linear_run_elts( struct draw_pt_middle_end *middle
 			 fpme->vertex_size,
 			 fpme->vertex_size);
 
-      if (geometry_shader)
-         count = draw_geometry_shader_run(geometry_shader,
-                                          (const float (*)[4])pipeline_verts->data,
-                                          (      float (*)[4])pipeline_verts->data,
-                                          draw->pt.user.gs_constants,
-                                          count,
-                                          fpme->vertex_size,
-                                          fpme->vertex_size);
+      if (geometry_shader) {
+         count =
+            draw_geometry_shader_run(geometry_shader,
+                                     (const float (*)[4])pipeline_verts->data,
+                                     (      float (*)[4])pipeline_verts->data,
+                                     draw->pt.user.gs_constants,
+                                     count,
+                                     fpme->vertex_size,
+                                     fpme->vertex_size);
+         debug_assert(count <= alloc_count);
+      }
    }
 
    /* stream output needs to be done before clipping */
