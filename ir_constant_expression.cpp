@@ -566,9 +566,9 @@ ir_constant_visitor::visit(ir_dereference_array *ir)
 void
 ir_constant_visitor::visit(ir_dereference_record *ir)
 {
-   (void) ir;
-   value = NULL;
-   /* FINISHME: Other dereference modes. */
+   ir_constant *v = ir->record->constant_expression_value();
+
+   this->value = (v != NULL) ? v->get_record_field(ir->field) : NULL;
 }
 
 
