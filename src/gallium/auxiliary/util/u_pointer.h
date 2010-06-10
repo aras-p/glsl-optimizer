@@ -111,6 +111,17 @@ pointer_to_func( void *p )
    return pf.f;
 }
 
+static INLINE void *
+func_to_pointer( func_pointer f )
+{
+   union {
+      void *p;
+      func_pointer f;
+   } pf;
+   pf.f = f;
+   return pf.p;
+}
+
 
 #ifdef __cplusplus
 }
