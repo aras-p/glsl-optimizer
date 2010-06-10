@@ -91,6 +91,7 @@ draw_create_geometry_shader(struct draw_context *draw,
    if (!gs)
       return NULL;
 
+   gs->draw = draw;
    gs->state = *state;
    gs->state.tokens = tgsi_dup_tokens(state->tokens);
    if (!gs->state.tokens) {
@@ -266,6 +267,7 @@ draw_geometry_fetch_outputs(struct draw_geometry_shader *shader,
 }
 
 int draw_geometry_shader_run(struct draw_geometry_shader *shader,
+                             unsigned pipe_prim,
                              const float (*input)[4],
                              float (*output)[4],
                              const void *constants[PIPE_MAX_CONSTANT_BUFFERS],
@@ -275,12 +277,20 @@ int draw_geometry_shader_run(struct draw_geometry_shader *shader,
 {
    struct tgsi_exec_machine *machine = shader->machine;
    unsigned int i;
-   unsigned num_in_vertices = u_vertices_per_prim(shader->input_primitive);
-   unsigned num_in_primitives = count/num_in_vertices;
+   unsigned num_in_primitives =
+      u_gs_prims_for_vertices(pipe_prim, count);
    unsigned inputs_from_vs = 0;
    float (*tmp_output)[4];
+   unsigned alloc_count = draw_max_output_vertices(shader->draw,
+                                                   pipe_prim,
+                                                   count);
+   /* this is bad, but we can't be overwriting the output array
+    * because it's the same as input array here */
+   struct vertex_header *pipeline_verts =
+      (struct vertex_header *)MALLOC(vertex_size * alloc_count);
 
-   if (0) debug_printf("%s count = %d\n", __FUNCTION__, count);
+   if (0) debug_printf("%s count = %d (prims = %d)\n", __FUNCTION__,
+                       count, num_in_primitives);
 
    shader->emitted_vertices = 0;
    shader->emitted_primitives = 0;
@@ -293,7 +303,9 @@ int draw_geometry_shader_run(struct draw_geometry_shader *shader,
       if (shader->info.input_semantic_name[i] != TGSI_SEMANTIC_PRIMID)
          ++inputs_from_vs;
    }
-   tmp_output = output;
+
+   tmp_output = (      float (*)[4])pipeline_verts->data;
+
    for (i = 0; i < num_in_primitives; ++i) {
       unsigned int max_input_primitives = 1;
       /* FIXME: handle all the primitives produced by the gs, not just
@@ -318,6 +330,12 @@ int draw_geometry_shader_run(struct draw_geometry_shader *shader,
       draw_geometry_fetch_outputs(shader, out_prim_count,
                                   &tmp_output, vertex_size);
    }
+
+   memcpy(output, pipeline_verts->data,
+          shader->info.num_outputs * 4 * sizeof(float) +
+          vertex_size * (shader->emitted_vertices -1));
+
+   FREE(pipeline_verts);
    return shader->emitted_vertices;
 }
 
@@ -336,4 +354,25 @@ void draw_geometry_shader_prepare(struct draw_geometry_shader *shader,
                                     draw->gs.num_samplers,
                                     draw->gs.samplers);
    }
+}
+
+int draw_max_output_vertices(struct draw_context *draw,
+                             unsigned pipe_prim,
+                             unsigned count)
+{
+   unsigned alloc_count = align( count, 4 );
+
+   if (draw->gs.geometry_shader) {
+      unsigned input_primitives = u_gs_prims_for_vertices(pipe_prim,
+                                                          count);
+      /* max GS output is number of input primitives * max output
+       * vertices per each invocation */
+      unsigned gs_max_verts = input_primitives *
+                              draw->gs.geometry_shader->max_output_vertices;
+      if (gs_max_verts > count)
+         alloc_count = align(gs_max_verts, 4);
+   }
+   /*debug_printf("------- alloc count = %d (input = %d)\n",
+                  alloc_count, count);*/
+   return alloc_count;
 }

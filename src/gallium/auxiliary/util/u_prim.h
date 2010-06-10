@@ -169,6 +169,52 @@ u_vertices_per_prim(int primitive)
    }
 }
 
+/**
+ * Returns the number of decomposed primitives for the given
+ * vertex count.
+ * Geometry shader is invoked once for each triangle in
+ * triangle strip, triangle fans and triangles and once
+ * for each line in line strip, line loop, lines.
+ */
+static INLINE unsigned
+u_gs_prims_for_vertices(int primitive, int vertices)
+{
+   switch(primitive) {
+   case PIPE_PRIM_POINTS:
+      return vertices;
+   case PIPE_PRIM_LINES:
+      return vertices / 2;
+   case PIPE_PRIM_LINE_LOOP:
+      return vertices;
+   case PIPE_PRIM_LINE_STRIP:
+      return vertices - 1;
+   case PIPE_PRIM_TRIANGLES:
+      return vertices /  3;
+   case PIPE_PRIM_TRIANGLE_STRIP:
+      return vertices - 2;
+   case PIPE_PRIM_TRIANGLE_FAN:
+      return vertices - 2;
+   case PIPE_PRIM_LINES_ADJACENCY:
+      return vertices / 2;
+   case PIPE_PRIM_LINE_STRIP_ADJACENCY:
+      return vertices - 1;
+   case PIPE_PRIM_TRIANGLES_ADJACENCY:
+      return vertices / 3;
+   case PIPE_PRIM_TRIANGLE_STRIP_ADJACENCY:
+      return vertices - 2;
+
+   /* following primitives should never be used
+    * with geometry shaders abd their size is
+    * undefined */
+   case PIPE_PRIM_POLYGON:
+   case PIPE_PRIM_QUADS:
+   case PIPE_PRIM_QUAD_STRIP:
+   default:
+      debug_printf("Unrecognized geometry shader primitive");
+      return 3;
+   }
+}
+
 const char *u_prim_name( unsigned pipe_prim );
 
 #endif

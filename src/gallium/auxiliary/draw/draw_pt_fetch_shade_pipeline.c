@@ -52,26 +52,6 @@ struct fetch_pipeline_middle_end {
    unsigned opt;
 };
 
-static int max_out_vertex_count(
-   struct fetch_pipeline_middle_end *fpme, int count)
-{
-   struct draw_context *draw = fpme->draw;
-   unsigned alloc_count = align( count, 4 );
-
-   if (draw->gs.geometry_shader) {
-      unsigned input_primitives = count / u_vertices_per_prim(fpme->input_prim);
-      /* max GS output is number of input primitives * max output
-       * vertices per each invocation */
-      unsigned gs_max_verts = input_primitives *
-                              draw->gs.geometry_shader->max_output_vertices;
-      if (gs_max_verts > count)
-         alloc_count = align(gs_max_verts, 4);
-   }
-   /*debug_printf("------- alloc count = %d (input = %d)\n",
-                  alloc_count, count);*/
-   return alloc_count;
-}
-
 static void fetch_pipeline_prepare( struct draw_pt_middle_end *middle,
                                     unsigned in_prim,
                                     unsigned out_prim,
@@ -160,7 +140,9 @@ static void fetch_pipeline_run( struct draw_pt_middle_end *middle,
    struct draw_geometry_shader *gshader = draw->gs.geometry_shader;
    unsigned opt = fpme->opt;
    struct vertex_header *pipeline_verts;
-   unsigned alloc_count = max_out_vertex_count(fpme, fetch_count);
+   unsigned alloc_count = draw_max_output_vertices(draw,
+                                                   fpme->input_prim,
+                                                   fetch_count);
 
    pipeline_verts =
       (struct vertex_header *)MALLOC(fpme->vertex_size * alloc_count);
@@ -194,6 +176,7 @@ static void fetch_pipeline_run( struct draw_pt_middle_end *middle,
       if (gshader) {
          fetch_count =
             draw_geometry_shader_run(gshader,
+                                     fpme->input_prim,
                                      (const float (*)[4])pipeline_verts->data,
                                      (      float (*)[4])pipeline_verts->data,
                                      draw->pt.user.gs_constants,
@@ -253,7 +236,9 @@ static void fetch_pipeline_linear_run( struct draw_pt_middle_end *middle,
    struct draw_geometry_shader *geometry_shader = draw->gs.geometry_shader;
    unsigned opt = fpme->opt;
    struct vertex_header *pipeline_verts;
-   unsigned alloc_count = max_out_vertex_count(fpme, count);
+   unsigned alloc_count = draw_max_output_vertices(draw,
+                                                   fpme->input_prim,
+                                                   count);
 
    pipeline_verts =
       (struct vertex_header *)MALLOC(fpme->vertex_size * alloc_count);
@@ -288,6 +273,7 @@ static void fetch_pipeline_linear_run( struct draw_pt_middle_end *middle,
       if (geometry_shader) {
          count =
             draw_geometry_shader_run(geometry_shader,
+                                     fpme->input_prim,
                                      (const float (*)[4])pipeline_verts->data,
                                      (      float (*)[4])pipeline_verts->data,
                                      draw->pt.user.gs_constants,
@@ -345,7 +331,9 @@ static boolean fetch_pipeline_linear_run_elts( struct draw_pt_middle_end *middle
    struct draw_geometry_shader *geometry_shader = draw->gs.geometry_shader;
    unsigned opt = fpme->opt;
    struct vertex_header *pipeline_verts;
-   unsigned alloc_count = max_out_vertex_count(fpme, count);
+   unsigned alloc_count = draw_max_output_vertices(draw,
+                                                   fpme->input_prim,
+                                                   count);
 
    pipeline_verts =
       (struct vertex_header *)MALLOC(fpme->vertex_size * alloc_count);
@@ -376,6 +364,7 @@ static boolean fetch_pipeline_linear_run_elts( struct draw_pt_middle_end *middle
       if (geometry_shader) {
          count =
             draw_geometry_shader_run(geometry_shader,
+                                     fpme->input_prim,
                                      (const float (*)[4])pipeline_verts->data,
                                      (      float (*)[4])pipeline_verts->data,
                                      draw->pt.user.gs_constants,
