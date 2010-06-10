@@ -290,6 +290,50 @@ process_array_constructor(exec_list *instructions,
 }
 
 
+/**
+ * Try to convert a record constructor to a constant expression
+ */
+static ir_constant *
+constant_record_constructor(const glsl_type *constructor_type,
+			    YYLTYPE *loc, exec_list *parameters,
+			    struct _mesa_glsl_parse_state *state)
+{
+   bool all_parameters_are_constant = true;
+
+   exec_node *node = parameters->head;
+   for (unsigned i = 0; i < constructor_type->length; i++) {
+      ir_instruction *ir = (ir_instruction *) node;
+
+      if (node->is_tail_sentinal()) {
+	 _mesa_glsl_error(loc, state,
+			  "insufficient parameters to constructor for `%s'",
+			  constructor_type->name);
+	 return NULL;
+      }
+
+      if (ir->type != constructor_type->fields.structure[i].type) {
+	 _mesa_glsl_error(loc, state,
+			  "parameter type mismatch in constructor for `%s' "
+			  " (%s vs %s)",
+			  constructor_type->name,
+			  ir->type->name,
+			  constructor_type->fields.structure[i].type->name);
+	 return NULL;
+      }
+
+      if (ir->as_constant() == NULL)
+	 all_parameters_are_constant = false;
+
+      node = node->next;
+   }
+
+   if (!all_parameters_are_constant)
+      return NULL;
+
+   return new ir_constant(constructor_type, parameters);
+}
+
+
 ir_rvalue *
 ast_function_expression::hir(exec_list *instructions,
 			     struct _mesa_glsl_parse_state *state)
@@ -527,6 +571,17 @@ ast_function_expression::hir(exec_list *instructions,
 
       process_parameters(instructions, &actual_parameters, &this->expressions,
 			 state);
+
+      const glsl_type *const type =
+	 state->symbols->get_type(id->primary_expression.identifier);
+
+      if ((type != NULL) && type->is_record()) {
+	 ir_constant *constant =
+	    constant_record_constructor(type, &loc, &actual_parameters, state);
+
+	 if (constant != NULL)
+	    return constant;
+      }
 
       return match_function_by_name(instructions, 
 				    id->primary_expression.identifier, & loc,
