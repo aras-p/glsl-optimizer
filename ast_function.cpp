@@ -106,7 +106,7 @@ process_call(exec_list *instructions, ir_function *f,
 
 static ir_rvalue *
 match_function_by_name(exec_list *instructions, const char *name,
-		       YYLTYPE *loc, exec_list *parameters,
+		       YYLTYPE *loc, exec_list *actual_parameters,
 		       struct _mesa_glsl_parse_state *state)
 {
    ir_function *f = state->symbols->get_function(name);
@@ -116,16 +116,10 @@ match_function_by_name(exec_list *instructions, const char *name,
       return ir_call::get_error_instruction();
    }
 
-   /* Once we've determined that the function being called might exist,
-    * process the parameters.
+   /* Once we've determined that the function being called might exist, try
+    * to find an overload of the function that matches the parameters.
     */
-   exec_list actual_parameters;
-   process_parameters(instructions, &actual_parameters, parameters, state);
-
-   /* After processing the function's actual parameters, try to find an
-    * overload of the function that matches.
-    */
-   return process_call(instructions, f, loc, &actual_parameters, state);
+   return process_call(instructions, f, loc, actual_parameters, state);
 }
 
 
@@ -529,10 +523,14 @@ ast_function_expression::hir(exec_list *instructions,
    } else {
       const ast_expression *id = subexpressions[0];
       YYLTYPE loc = id->get_location();
+      exec_list actual_parameters;
+
+      process_parameters(instructions, &actual_parameters, &this->expressions,
+			 state);
 
       return match_function_by_name(instructions, 
 				    id->primary_expression.identifier, & loc,
-				    &this->expressions, state);
+				    &actual_parameters, state);
    }
 
    return ir_call::get_error_instruction();
