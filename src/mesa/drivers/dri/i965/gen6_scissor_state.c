@@ -63,8 +63,7 @@ prepare_scissor_state(struct brw_context *brw)
 
    drm_intel_bo_unreference(brw->sf.state_bo);
    brw->sf.state_bo = brw_cache_data(&brw->cache, BRW_SF_UNIT,
-				     &scissor, sizeof(scissor),
-				     NULL, 0);
+				     &scissor, sizeof(scissor));
 }
 
 const struct brw_tracked_state gen6_scissor_state = {

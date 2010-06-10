@@ -310,9 +310,7 @@ drm_intel_bo *
 brw_cache_data(struct brw_cache *cache,
 	       enum brw_cache_id cache_id,
 	       const void *data,
-	       GLuint data_size,
-	       drm_intel_bo **reloc_bufs,
-	       GLuint nr_reloc_bufs)
+	       GLuint data_size)
 {
    drm_intel_bo *bo;
    struct brw_cache_item *item, lookup;
@@ -321,8 +319,8 @@ brw_cache_data(struct brw_cache *cache,
    lookup.cache_id = cache_id;
    lookup.key = data;
    lookup.key_size = data_size;
-   lookup.reloc_bufs = reloc_bufs;
-   lookup.nr_reloc_bufs = nr_reloc_bufs;
+   lookup.reloc_bufs = NULL;
+   lookup.nr_reloc_bufs = 0;
    hash = hash_key(&lookup);
    lookup.hash = hash;
 
@@ -335,7 +333,7 @@ brw_cache_data(struct brw_cache *cache,
 
    bo = brw_upload_cache(cache, cache_id,
 			 data, data_size,
-			 reloc_bufs, nr_reloc_bufs,
+			 NULL, 0,
 			 data, data_size);
 
    return bo;

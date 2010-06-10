@@ -105,8 +105,7 @@ static void upload_sf_vp(struct brw_context *brw)
    }
 
    drm_intel_bo_unreference(brw->sf.vp_bo);
-   brw->sf.vp_bo = brw_cache_data(&brw->cache, BRW_SF_VP, &sfv, sizeof(sfv),
-				  NULL, 0);
+   brw->sf.vp_bo = brw_cache_data(&brw->cache, BRW_SF_VP, &sfv, sizeof(sfv));
 }
 
 const struct brw_tracked_state brw_sf_vp = {

@@ -55,8 +55,7 @@ brw_update_cc_vp(struct brw_context *brw)
    }
 
    drm_intel_bo_unreference(brw->cc.vp_bo);
-   brw->cc.vp_bo = brw_cache_data(&brw->cache, BRW_CC_VP, &ccv, sizeof(ccv),
-				  NULL, 0);
+   brw->cc.vp_bo = brw_cache_data(&brw->cache, BRW_CC_VP, &ccv, sizeof(ccv));
 }
 
 struct brw_cc_unit_key {

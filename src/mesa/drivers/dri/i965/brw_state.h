@@ -139,9 +139,7 @@ void brw_clear_validated_bos(struct brw_context *brw);
 drm_intel_bo *brw_cache_data(struct brw_cache *cache,
 		       enum brw_cache_id cache_id,
 		       const void *data,
-		       GLuint size,
-		       drm_intel_bo **reloc_bufs,
-		       GLuint nr_reloc_bufs);
+		       GLuint size);
 
 drm_intel_bo *brw_upload_cache(struct brw_cache *cache,
 			       enum brw_cache_id cache_id,

@@ -74,7 +74,7 @@ static drm_intel_bo *upload_default_color( struct brw_context *brw,
    COPY_4V(sdc.color, color); 
    
    return brw_cache_data(&brw->cache, BRW_SAMPLER_DEFAULT_COLOR,
-			 &sdc, sizeof(sdc), NULL, 0);
+			 &sdc, sizeof(sdc));
 }
 
 

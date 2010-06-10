@@ -51,8 +51,7 @@ prepare_clip_vp(struct brw_context *brw)
 
    drm_intel_bo_unreference(brw->clip.vp_bo);
    brw->clip.vp_bo = brw_cache_data(&brw->cache, BRW_CLIP_VP,
-				    &vp, sizeof(vp),
-				    NULL, 0);
+				    &vp, sizeof(vp));
 }
 
 const struct brw_tracked_state gen6_clip_vp = {
@@ -95,8 +94,7 @@ prepare_sf_vp(struct brw_context *brw)
 
    drm_intel_bo_unreference(brw->sf.vp_bo);
    brw->sf.vp_bo = brw_cache_data(&brw->cache, BRW_SF_VP,
-				  &sfv, sizeof(sfv),
-				  NULL, 0);
+				  &sfv, sizeof(sfv));
 }
 
 const struct brw_tracked_state gen6_sf_vp = {
@@ -125,8 +123,7 @@ prepare_cc_vp(struct brw_context *brw)
    }
 
    drm_intel_bo_unreference(brw->cc.vp_bo);
-   brw->cc.vp_bo = brw_cache_data(&brw->cache, BRW_CC_VP, &ccv, sizeof(ccv),
-				  NULL, 0);
+   brw->cc.vp_bo = brw_cache_data(&brw->cache, BRW_CC_VP, &ccv, sizeof(ccv));
 }
 
 const struct brw_tracked_state gen6_cc_vp = {
