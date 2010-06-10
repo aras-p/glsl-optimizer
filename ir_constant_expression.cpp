@@ -550,7 +550,7 @@ ir_constant_visitor::visit(ir_dereference_variable *ir)
 
    ir_variable *var = ir->variable_referenced();
    if (var && var->constant_value)
-      value = new ir_constant(ir->type, &var->constant_value->value);
+      value = var->constant_value->clone();
 }
 
 
