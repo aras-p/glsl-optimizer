@@ -293,6 +293,14 @@ struct glsl_type {
    }
 
    /**
+    * Query whether or not a type is a record
+    */
+   bool is_record() const
+   {
+      return base_type == GLSL_TYPE_STRUCT;
+   }
+
+   /**
     * Query whether or not a type is the void type singleton.
     */
    bool is_void() const
