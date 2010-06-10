@@ -181,6 +181,7 @@ r300_texture_get_transfer(struct pipe_context *ctx,
                     /* Otherwise, go to hell. */
                     fprintf(stderr,
                         "r300: Failed to create a transfer object, praise.\n");
+                    FREE(trans);
                     return NULL;
                 }
             }
