@@ -718,3 +718,18 @@ glsl_type::field_type(const char *name) const
 
    return error_type;
 }
+
+
+int
+glsl_type::field_index(const char *name) const
+{
+   if (this->base_type != GLSL_TYPE_STRUCT)
+      return -1;
+
+   for (unsigned i = 0; i < this->length; i++) {
+      if (strcmp(name, this->fields.structure[i].name) == 0)
+	 return i;
+   }
+
+   return -1;
+}

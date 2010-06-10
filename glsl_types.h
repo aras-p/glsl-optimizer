@@ -356,6 +356,12 @@ struct glsl_type {
 
 
    /**
+    * Get the location of a filed within a record type
+    */
+   int field_index(const char *name) const;
+
+
+   /**
     * Query the number of elements in an array type
     *
     * \return
