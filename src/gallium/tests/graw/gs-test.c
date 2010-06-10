@@ -17,6 +17,7 @@
 
 static const char *filename = NULL;
 unsigned show_fps = 0;
+unsigned draw_strip = 0;
 
 
 static void usage(char *name)
@@ -26,6 +27,7 @@ static void usage(char *name)
    fprintf(stderr, "\n" );
    fprintf(stderr, "options:\n");
    fprintf(stderr, "    -fps  show frames per second\n");
+   fprintf(stderr, "    -strip renders a triangle strip\n");
 #endif
 }
 
@@ -71,6 +73,25 @@ static struct vertex vertices[] =
    { {-0.9,  0.0, 0.0, 1.0 },
      { 0, 1, 0, 1 },
      { -1, 0, 0, 1 } },
+};
+
+static struct vertex vertices_strip[] =
+{
+   { { 0.9, 0.9, 0.0, 1.0 },
+     { 0, 0, 1, 1 },
+     { 1, 1, 0, 1 } },
+
+   { { 0.9,  -0.9, 0.0, 1.0 },
+     { 1, 0, 0, 1 },
+     { 1, -1, 0, 1 } },
+
+   { {-0.9,  -0.9, 0.0, 1.0 },
+     { 0, 1, 0, 1 },
+     { -1, -1, 0, 1 } },
+
+   { {-0.9,  0.9, 0.0, 1.0 },
+     { 1, 1, 0, 1 },
+     { -1, 1, 0, 1 } },
 };
 
 static float constants[] = 
@@ -171,12 +192,20 @@ static void set_vertices( void )
 
 
    vbuf.stride = sizeof( struct vertex );
-   vbuf.max_index = sizeof(vertices) / vbuf.stride;
    vbuf.buffer_offset = 0;
-   vbuf.buffer = screen->user_buffer_create(screen,
-                                            vertices,
-                                            sizeof(vertices),
-                                            PIPE_BIND_VERTEX_BUFFER);
+   if (draw_strip) {
+      vbuf.max_index = sizeof(vertices_strip) / vbuf.stride;
+      vbuf.buffer = screen->user_buffer_create(screen,
+                                               vertices_strip,
+                                               sizeof(vertices_strip),
+                                               PIPE_BIND_VERTEX_BUFFER);
+   } else {
+      vbuf.max_index = sizeof(vertices) / vbuf.stride;
+      vbuf.buffer = screen->user_buffer_create(screen,
+                                               vertices,
+                                               sizeof(vertices),
+                                               PIPE_BIND_VERTEX_BUFFER);
+   }
 
    ctx->set_vertex_buffers(ctx, 1, &vbuf);
 }
@@ -247,7 +276,11 @@ static void draw( void )
    float clear_color[4] = {.1,.3,.5,0};
 
    ctx->clear(ctx, PIPE_CLEAR_COLOR, clear_color, 0, 0);
-   ctx->draw_arrays(ctx, PIPE_PRIM_TRIANGLES, 0, 3);
+   if (draw_strip)
+      ctx->draw_arrays(ctx, PIPE_PRIM_TRIANGLE_STRIP, 0, 4);
+   else
+      ctx->draw_arrays(ctx, PIPE_PRIM_TRIANGLES, 0, 3);
+
    ctx->flush(ctx, PIPE_FLUSH_RENDER_CACHE, NULL);
 
 #if 0
@@ -501,6 +534,9 @@ static void args(int argc, char *argv[])
    for (i = 1; i < argc; i++) {
       if (strcmp(argv[i], "-fps") == 0) {
          show_fps = 1;
+      }
+      else if (strcmp(argv[i], "-strip") == 0) {
+         draw_strip = 1;
       }
       else if (i == argc - 1) {
 	 filename = argv[i];
