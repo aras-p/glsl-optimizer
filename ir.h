@@ -1055,10 +1055,7 @@ public:
 
    virtual ir_visitor_status accept(ir_hierarchical_visitor *);
 
-   ir_constant *clone()
-   {
-      return new ir_constant(this->type, &this->value);
-   }
+   ir_constant *clone();
 
    /**
     * Get a particular component of a constant as a specific type
@@ -1089,6 +1086,12 @@ public:
    } value;
 
    exec_list components;
+
+private:
+   /**
+    * Parameterless constructor only used by the clone method
+    */
+   ir_constant(void);
 };
 
 void

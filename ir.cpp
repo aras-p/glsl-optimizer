@@ -184,6 +184,11 @@ ir_expression::get_operator(const char *str)
    return (ir_expression_operation) -1;
 }
 
+ir_constant::ir_constant()
+{
+   /* empty */
+}
+
 ir_constant::ir_constant(const struct glsl_type *type, const void *data)
 {
    unsigned size = 0;
@@ -298,6 +303,37 @@ ir_constant::ir_constant(const struct glsl_type *type, exec_list *value_list)
       }
 
       value = (ir_constant *) value->next;
+   }
+}
+
+ir_constant *
+ir_constant::clone()
+{
+   switch (this->type->base_type) {
+   case GLSL_TYPE_UINT:
+   case GLSL_TYPE_INT:
+   case GLSL_TYPE_FLOAT:
+   case GLSL_TYPE_BOOL:
+      return new ir_constant(this->type, &this->value);
+
+   case GLSL_TYPE_STRUCT: {
+      ir_constant *c = new ir_constant;
+
+      c->type = this->type;
+      for (exec_node *node = this->components.head
+	      ; !node->is_tail_sentinal()
+	      ; node = node->next) {
+	 ir_constant *const orig = (ir_constant *) node;
+
+	 c->components.push_tail(orig->clone());
+      }
+
+      return c;
+   }
+
+   default:
+      assert(!"Should not get here."); break;
+      return NULL;
    }
 }
 
