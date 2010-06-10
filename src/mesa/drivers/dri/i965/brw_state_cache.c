@@ -494,8 +494,8 @@ brw_state_cache_check_size(struct brw_context *brw)
    if (INTEL_DEBUG & DEBUG_STATE)
       printf("%s (n_items=%d)\n", __FUNCTION__, brw->cache.n_items);
 
-   /* un-tuned guess.  We've got around 20 state objects for a total of around
-    * 32k, so 1000 of them is around 1.5MB.
+   /* un-tuned guess.  Each object is generally a page, so 1000 of them is 4 MB of
+    * state cache.
     */
    if (brw->cache.n_items > 1000)
       brw_clear_cache(brw, &brw->cache);
