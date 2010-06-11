@@ -110,20 +110,6 @@ const struct brw_tracked_state gen6_viewport_state;
 const struct brw_tracked_state gen6_vs_state;
 const struct brw_tracked_state gen6_wm_state;
 
-/**
- * Use same key for WM and VS surfaces.
- */
-struct brw_surface_key {
-   GLenum target, depthmode;
-   drm_intel_bo *bo;
-   GLint format, internal_format;
-   GLint first_level, last_level;
-   GLint width, height, depth;
-   GLint pitch, cpp;
-   uint32_t tiling;
-   GLuint offset;
-};
-
 /***********************************************************************
  * brw_state.c
  */
@@ -193,7 +179,8 @@ void *brw_state_batch(struct brw_context *brw,
 
 /* brw_wm_surface_state.c */
 void brw_create_constant_surface(struct brw_context *brw,
-				 struct brw_surface_key *key,
+				 drm_intel_bo *bo,
+				 int width,
 				 drm_intel_bo **out_bo,
 				 uint32_t *out_offset);
 

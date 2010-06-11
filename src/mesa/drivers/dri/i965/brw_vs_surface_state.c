@@ -105,7 +105,6 @@ brw_update_vs_constant_surface( GLcontext *ctx,
                                 GLuint surf)
 {
    struct brw_context *brw = brw_context(ctx);
-   struct brw_surface_key key;
    struct brw_vertex_program *vp =
       (struct brw_vertex_program *) brw->vertex_program;
    const struct gl_program_parameter_list *params = vp->program.Base.Parameters;
@@ -121,25 +120,8 @@ brw_update_vs_constant_surface( GLcontext *ctx,
       return;
    }
 
-   memset(&key, 0, sizeof(key));
-
-   key.format = MESA_FORMAT_RGBA_FLOAT32;
-   key.internal_format = GL_RGBA;
-   key.bo = brw->vs.const_bo;
-   key.depthmode = GL_NONE;
-   key.pitch = params->NumParameters;
-   key.width = params->NumParameters;
-   key.height = 1;
-   key.depth = 1;
-   key.cpp = 16;
-
-   /*
-   printf("%s:\n", __FUNCTION__);
-   printf("  width %d  height %d  depth %d  cpp %d  pitch %d\n",
-          key.width, key.height, key.depth, key.cpp, key.pitch);
-   */
-
-   brw_create_constant_surface(brw, &key, &brw->vs.surf_bo[surf],
+   brw_create_constant_surface(brw, brw->vs.const_bo, params->NumParameters,
+			       &brw->vs.surf_bo[surf],
 			       &brw->vs.surf_offset[surf]);
 }
 

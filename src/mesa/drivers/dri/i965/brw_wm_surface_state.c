@@ -257,11 +257,12 @@ brw_update_texture_surface( GLcontext *ctx, GLuint unit )
  */
 void
 brw_create_constant_surface(struct brw_context *brw,
-			    struct brw_surface_key *key,
+			    drm_intel_bo *bo,
+			    int width,
 			    drm_intel_bo **out_bo,
 			    uint32_t *out_offset)
 {
-   const GLint w = key->width - 1;
+   const GLint w = width - 1;
    struct brw_surface_state surf;
    void *map;
 
@@ -271,14 +272,14 @@ brw_create_constant_surface(struct brw_context *brw,
    surf.ss0.surface_type = BRW_SURFACE_BUFFER;
    surf.ss0.surface_format = BRW_SURFACEFORMAT_R32G32B32A32_FLOAT;
 
-   assert(key->bo);
-   surf.ss1.base_addr = key->bo->offset; /* reloc */
+   assert(bo);
+   surf.ss1.base_addr = bo->offset; /* reloc */
 
    surf.ss2.width = w & 0x7f;            /* bits 6:0 of size or width */
    surf.ss2.height = (w >> 7) & 0x1fff;  /* bits 19:7 of size or width */
    surf.ss3.depth = (w >> 20) & 0x7f;    /* bits 26:20 of size or width */
-   surf.ss3.pitch = (key->pitch * key->cpp) - 1; /* ignored?? */
-   brw_set_surface_tiling(&surf, key->tiling); /* tiling now allowed */
+   surf.ss3.pitch = (width * 16) - 1; /* ignored?? */
+   brw_set_surface_tiling(&surf, I915_TILING_NONE); /* tiling now allowed */
 
    map = brw_state_batch(brw, sizeof(surf), 32, out_bo, out_offset);
    memcpy(map, &surf, sizeof(surf));
@@ -289,7 +290,7 @@ brw_create_constant_surface(struct brw_context *brw,
     */
    drm_intel_bo_emit_reloc(*out_bo, (*out_offset +
 				     offsetof(struct brw_surface_state, ss1)),
-			   key->bo, 0,
+			   bo, 0,
 			   I915_GEM_DOMAIN_SAMPLER, 0);
 }
 
@@ -349,7 +350,6 @@ const struct brw_tracked_state brw_wm_constants = {
 static void upload_wm_constant_surface(struct brw_context *brw )
 {
    GLuint surf = SURF_INDEX_FRAG_CONST_BUFFER;
-   struct brw_surface_key key;
    struct brw_fragment_program *fp =
       (struct brw_fragment_program *) brw->fragment_program;
    const struct gl_program_parameter_list *params =
@@ -367,25 +367,8 @@ static void upload_wm_constant_surface(struct brw_context *brw )
       return;
    }
 
-   memset(&key, 0, sizeof(key));
-
-   key.format = MESA_FORMAT_RGBA_FLOAT32;
-   key.internal_format = GL_RGBA;
-   key.bo = brw->wm.const_bo;
-   key.depthmode = GL_NONE;
-   key.pitch = params->NumParameters;
-   key.width = params->NumParameters;
-   key.height = 1;
-   key.depth = 1;
-   key.cpp = 16;
-
-   /*
-   printf("%s:\n", __FUNCTION__);
-   printf("  width %d  height %d  depth %d  cpp %d  pitch %d\n",
-          key.width, key.height, key.depth, key.cpp, key.pitch);
-   */
-
-   brw_create_constant_surface(brw, &key, &brw->wm.surf_bo[surf],
+   brw_create_constant_surface(brw, brw->wm.const_bo, params->NumParameters,
+			       &brw->wm.surf_bo[surf],
 			       &brw->wm.surf_offset[surf]);
    brw->state.dirty.brw |= BRW_NEW_WM_SURFACES;
 }
