@@ -338,6 +338,100 @@ constant_record_constructor(const glsl_type *constructor_type,
 }
 
 
+/**
+ * Generate data for a constant matrix constructor w/a single scalar parameter
+ *
+ * Matrix constructors in GLSL can be passed a single scalar of the
+ * approriate type.  In these cases, the resulting matrix is the identity
+ * matrix multipled by the specified scalar.  This function generates data for
+ * that matrix.
+ *
+ * \param type         Type of the desired matrix.
+ * \param initializer  Scalar value used to initialize the matrix diagonal.
+ * \param data         Location to store the resulting matrix.
+ */
+void
+generate_constructor_matrix(const glsl_type *type, ir_constant *initializer,
+			    ir_constant_data *data)
+{
+   switch (type->base_type) {
+   case GLSL_TYPE_UINT:
+   case GLSL_TYPE_INT:
+      for (unsigned i = 0; i < type->components(); i++)
+	 data->u[i] = 0;
+
+      for (unsigned i = 0; i < type->matrix_columns; i++) {
+	 /* The array offset of the ith row and column of the matrix.
+	  */
+	 const unsigned idx = (i * type->vector_elements) + i;
+
+	 data->u[idx] = initializer->value.u[0];
+      }
+      break;
+
+   case GLSL_TYPE_FLOAT:
+      for (unsigned i = 0; i < type->components(); i++)
+	 data->f[i] = 0;
+
+      for (unsigned i = 0; i < type->matrix_columns; i++) {
+	 /* The array offset of the ith row and column of the matrix.
+	  */
+	 const unsigned idx = (i * type->vector_elements) + i;
+
+	 data->f[idx] = initializer->value.f[0];
+      }
+
+      break;
+
+   default:
+      assert(!"Should not get here.");
+      break;
+   }
+}
+
+
+/**
+ * Generate data for a constant vector constructor w/a single scalar parameter
+ *
+ * Vector constructors in GLSL can be passed a single scalar of the
+ * approriate type.  In these cases, the resulting vector contains the specified
+ * value in all components.  This function generates data for that vector.
+ *
+ * \param type         Type of the desired vector.
+ * \param initializer  Scalar value used to initialize the vector.
+ * \param data         Location to store the resulting vector data.
+ */
+void
+generate_constructor_vector(const glsl_type *type, ir_constant *initializer,
+			    ir_constant_data *data)
+{
+   switch (type->base_type) {
+   case GLSL_TYPE_UINT:
+   case GLSL_TYPE_INT:
+      for (unsigned i = 0; i < type->components(); i++)
+	 data->u[i] = initializer->value.u[0];
+
+      break;
+
+   case GLSL_TYPE_FLOAT:
+      for (unsigned i = 0; i < type->components(); i++)
+	 data->f[i] = initializer->value.f[0];
+
+      break;
+
+   case GLSL_TYPE_BOOL:
+      for (unsigned i = 0; i < type->components(); i++)
+	 data->b[i] = initializer->value.b[0];
+
+      break;
+
+   default:
+      assert(!"Should not get here.");
+      break;
+   }
+}
+
+
 ir_rvalue *
 ast_function_expression::hir(exec_list *instructions,
 			     struct _mesa_glsl_parse_state *state)
@@ -547,10 +641,31 @@ ast_function_expression::hir(exec_list *instructions,
 	    /* If all of the parameters are trivially constant, create a
 	     * constant representing the complete collection of parameters.
 	     */
-	    if (all_parameters_are_constant
-		&& (components_used >= type_components))
-	       return new ir_constant(sig->return_type, & actual_parameters);
-	    else
+	    if (all_parameters_are_constant) {
+	       if (components_used >= type_components)
+		  return new ir_constant(sig->return_type, & actual_parameters);
+
+	       assert(sig->return_type->is_vector()
+		      || sig->return_type->is_matrix());
+
+	       /* Constructors with exactly one component are special for
+		* vectors and matrices.  For vectors it causes all elements of
+		* the vector to be filled with the value.  For matrices it
+		* causes the matrix to be filled with 0 and the diagonal to be
+		* filled with the value.
+		*/
+	       ir_constant_data data;
+	       ir_constant *const initializer =
+		  (ir_constant *) actual_parameters.head;
+	       if (sig->return_type->is_matrix())
+		  generate_constructor_matrix(sig->return_type, initializer,
+					      &data);
+	       else
+		  generate_constructor_vector(sig->return_type, initializer,
+					      &data);
+
+	       return new ir_constant(sig->return_type, &data);
+	    } else
 	       return new ir_call(sig, & actual_parameters);
 	 } else {
 	    /* FINISHME: Log a better error message here.  G++ will show the

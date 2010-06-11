@@ -1018,6 +1018,17 @@ public:
 };
 
 
+/**
+ * Data stored in an ir_constant
+ */
+union ir_constant_data {
+      unsigned u[16];
+      int i[16];
+      float f[16];
+      bool b[16];
+};
+
+
 class ir_constant : public ir_rvalue {
 public:
    ir_constant(const struct glsl_type *type, const void *data);
@@ -1080,12 +1091,7 @@ public:
     * by the type associated with the \c ir_instruction.  Constants may be
     * scalars, vectors, or matrices.
     */
-   union {
-      unsigned u[16];
-      int i[16];
-      float f[16];
-      bool b[16];
-   } value;
+   union ir_constant_data value;
 
    exec_list components;
 
