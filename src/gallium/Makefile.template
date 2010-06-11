@@ -23,6 +23,10 @@ INCLUDES = \
 	-I$(TOP)/src/gallium/drivers \
 	$(LIBRARY_INCLUDES)
 
+ifeq ($(MESA_LLVM),1)
+LIBRARY_DEFINES += $(LLVM_CFLAGS)
+endif
+
 
 ##### TARGETS #####
 
