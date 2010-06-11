@@ -435,13 +435,18 @@ draw_num_shader_outputs(const struct draw_context *draw)
  */
 void
 draw_texture_samplers(struct draw_context *draw,
+                      uint shader,
                       uint num_samplers,
                       struct tgsi_sampler **samplers)
 {
-   draw->vs.num_samplers = num_samplers;
-   draw->vs.samplers = samplers;
-   draw->gs.num_samplers = num_samplers;
-   draw->gs.samplers = samplers;
+   if (shader == PIPE_SHADER_VERTEX) {
+      draw->vs.num_samplers = num_samplers;
+      draw->vs.samplers = samplers;
+   } else {
+      debug_assert(shader == PIPE_SHADER_GEOMETRY);
+      draw->gs.num_samplers = num_samplers;
+      draw->gs.samplers = samplers;
+   }
 }
 
 

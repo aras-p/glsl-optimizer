@@ -100,6 +100,7 @@ struct sp_vertex_shader {
 struct sp_geometry_shader {
    struct pipe_shader_state shader;
    struct draw_geometry_shader *draw_data;
+   int max_sampler;
 };
 
 struct sp_velems_state {
@@ -128,6 +129,10 @@ void
 softpipe_bind_vertex_sampler_states(struct pipe_context *,
                                     unsigned num_samplers,
                                     void **samplers);
+void
+softpipe_bind_geometry_sampler_states(struct pipe_context *,
+                                      unsigned num_samplers,
+                                      void **samplers);
 void softpipe_delete_sampler_state(struct pipe_context *, void *);
 
 void *
@@ -194,6 +199,11 @@ void
 softpipe_set_vertex_sampler_views(struct pipe_context *,
                                   unsigned num,
                                   struct pipe_sampler_view **);
+
+void
+softpipe_set_geometry_sampler_views(struct pipe_context *,
+                                    unsigned num,
+                                    struct pipe_sampler_view **);
 
 struct pipe_sampler_view *
 softpipe_create_sampler_view(struct pipe_context *pipe,

@@ -158,6 +158,9 @@ struct pipe_context {
    void   (*bind_vertex_sampler_states)(struct pipe_context *,
                                         unsigned num_samplers,
                                         void **samplers);
+   void   (*bind_geometry_sampler_states)(struct pipe_context *,
+                                          unsigned num_samplers,
+                                          void **samplers);
    void   (*delete_sampler_state)(struct pipe_context *, void *);
 
    void * (*create_rasterizer_state)(struct pipe_context *,
@@ -237,6 +240,10 @@ struct pipe_context {
    void (*set_vertex_sampler_views)(struct pipe_context *,
                                     unsigned num_views,
                                     struct pipe_sampler_view **);
+
+   void (*set_geometry_sampler_views)(struct pipe_context *,
+                                      unsigned num_views,
+                                      struct pipe_sampler_view **);
 
    void (*set_vertex_buffers)( struct pipe_context *,
                                unsigned num_buffers,

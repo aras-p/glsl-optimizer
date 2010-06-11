@@ -121,6 +121,33 @@ softpipe_bind_vertex_sampler_states(struct pipe_context *pipe,
    softpipe->dirty |= SP_NEW_SAMPLER;
 }
 
+void
+softpipe_bind_geometry_sampler_states(struct pipe_context *pipe,
+                                      unsigned num_samplers,
+                                      void **samplers)
+{
+   struct softpipe_context *softpipe = softpipe_context(pipe);
+   unsigned i;
+
+   assert(num_samplers <= PIPE_MAX_GEOMETRY_SAMPLERS);
+
+   /* Check for no-op */
+   if (num_samplers == softpipe->num_geometry_samplers &&
+       !memcmp(softpipe->geometry_samplers, samplers, num_samplers * sizeof(void *)))
+      return;
+
+   draw_flush(softpipe->draw);
+
+   for (i = 0; i < num_samplers; ++i)
+      softpipe->geometry_samplers[i] = samplers[i];
+   for (i = num_samplers; i < PIPE_MAX_GEOMETRY_SAMPLERS; ++i)
+      softpipe->geometry_samplers[i] = NULL;
+
+   softpipe->num_geometry_samplers = num_samplers;
+
+   softpipe->dirty |= SP_NEW_SAMPLER;
+}
+
 
 struct pipe_sampler_view *
 softpipe_create_sampler_view(struct pipe_context *pipe,
@@ -210,6 +237,36 @@ softpipe_set_vertex_sampler_views(struct pipe_context *pipe,
    softpipe->dirty |= SP_NEW_TEXTURE;
 }
 
+void
+softpipe_set_geometry_sampler_views(struct pipe_context *pipe,
+                                    unsigned num,
+                                    struct pipe_sampler_view **views)
+{
+   struct softpipe_context *softpipe = softpipe_context(pipe);
+   uint i;
+
+   assert(num <= PIPE_MAX_GEOMETRY_SAMPLERS);
+
+   /* Check for no-op */
+   if (num == softpipe->num_geometry_sampler_views &&
+       !memcmp(softpipe->geometry_sampler_views, views, num * sizeof(struct pipe_sampler_view *))) {
+      return;
+   }
+
+   draw_flush(softpipe->draw);
+
+   for (i = 0; i < PIPE_MAX_GEOMETRY_SAMPLERS; i++) {
+      struct pipe_sampler_view *view = i < num ? views[i] : NULL;
+
+      pipe_sampler_view_reference(&softpipe->geometry_sampler_views[i], view);
+      sp_tex_tile_cache_set_sampler_view(softpipe->geometry_tex_cache[i], view);
+   }
+
+   softpipe->num_geometry_sampler_views = num;
+
+   softpipe->dirty |= SP_NEW_TEXTURE;
+}
+
 
 /**
  * Find/create an sp_sampler_varient object for sampling the given texture,
@@ -289,6 +346,26 @@ softpipe_reset_sampler_varients(struct softpipe_context *softpipe)
 
          sp_sampler_varient_bind_texture( softpipe->tgsi.vert_samplers_list[i], 
                                           softpipe->vertex_tex_cache[i],
+                                          texture );
+      }
+   }
+
+   for (i = 0; i <= softpipe->gs->max_sampler; i++) {
+      if (softpipe->geometry_samplers[i]) {
+         struct pipe_resource *texture = NULL;
+
+         if (softpipe->geometry_sampler_views[i]) {
+            texture = softpipe->geometry_sampler_views[i]->texture;
+         }
+
+         softpipe->tgsi.geom_samplers_list[i] =
+            get_sampler_varient( i,
+                                 sp_sampler(softpipe->geometry_samplers[i]),
+                                 texture,
+                                 TGSI_PROCESSOR_GEOMETRY );
+
+         sp_sampler_varient_bind_texture( softpipe->tgsi.geom_samplers_list[i],
+                                          softpipe->geometry_tex_cache[i],
                                           texture );
       }
    }

@@ -35,6 +35,7 @@
 #include "util/u_inlines.h"
 #include "draw/draw_context.h"
 #include "draw/draw_vs.h"
+#include "draw/draw_gs.h"
 #include "tgsi/tgsi_dump.h"
 #include "tgsi/tgsi_exec.h"
 #include "tgsi/tgsi_scan.h"
@@ -222,6 +223,8 @@ softpipe_create_gs_state(struct pipe_context *pipe,
    state->draw_data = draw_create_geometry_shader(softpipe->draw, templ);
    if (state->draw_data == NULL)
       goto fail;
+
+   state->max_sampler = state->draw_data->info.file_max[TGSI_FILE_SAMPLER];
 
    return state;
 
