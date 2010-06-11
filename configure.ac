@@ -1430,20 +1430,35 @@ elif test "x$enable_gallium_svga" = xauto; then
 fi
 
 dnl
-dnl Gallium Intel configuration
+dnl Gallium i915 configuration
 dnl
-AC_ARG_ENABLE([gallium-intel],
-    [AS_HELP_STRING([--enable-gallium-intel],
-        [build gallium intel @<:@default=disabled@:>@])],
-    [enable_gallium_intel="$enableval"],
-    [enable_gallium_intel=auto])
-if test "x$enable_gallium_intel" = xyes; then
+AC_ARG_ENABLE([gallium-i915],
+    [AS_HELP_STRING([--enable-gallium-i915],
+        [build gallium i915 @<:@default=disabled@:>@])],
+    [enable_gallium_i915="$enableval"],
+    [enable_gallium_i915=auto])
+if test "x$enable_gallium_i915" = xyes; then
     GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS i915/sw"
-    GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS i915 i965"
-    gallium_check_st "i915/drm i965/drm" "dri-i915 dri-i965" "egl-i915 egl-i965" "xorg-i915 xorg-i965"
-elif test "x$enable_gallium_intel" = xauto; then
+    GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS i915"
+    gallium_check_st "i915/drm" "dri-i915" "egl-i915" "xorg-i915"
+elif test "x$enable_gallium_i915" = xauto; then
     GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS i915/sw"
-    GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS i915 i965"
+    GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS i915"
+fi
+
+dnl
+dnl Gallium i965 configuration
+dnl
+AC_ARG_ENABLE([gallium-i965],
+    [AS_HELP_STRING([--enable-gallium-i965],
+        [build gallium i965 @<:@default=disabled@:>@])],
+    [enable_gallium_i965="$enableval"],
+    [enable_gallium_i965=auto])
+if test "x$enable_gallium_i965" = xyes; then
+    GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS i965"
+    gallium_check_st "i965/drm" "dri-i965" "egl-i965" "xorg-i965"
+elif test "x$enable_gallium_i965" = xauto; then
+    GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS i965"
 fi
 
 dnl
