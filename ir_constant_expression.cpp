@@ -558,11 +558,7 @@ ir_constant_visitor::visit(ir_swizzle *ir)
    this->value = NULL;
 
    if (v != NULL) {
-      union {
-	 float f[4];
-	 unsigned u[4];
-	 bool b[4];
-      } data;
+      ir_constant_data data;
 
       const unsigned swiz_idx[4] = {
 	 ir->mask.x, ir->mask.y, ir->mask.z, ir->mask.w
@@ -615,10 +611,7 @@ ir_constant_visitor::visit(ir_dereference_array *ir)
 	  */
 	 const unsigned mat_idx = column * column_type->vector_elements;
 
-	 union {
-	    unsigned u[4];
-	    float f[4];
-	 } data;
+	 ir_constant_data data;
 
 	 switch (column_type->base_type) {
 	 case GLSL_TYPE_UINT:
