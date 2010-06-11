@@ -47,6 +47,10 @@ struct emulate_loop_state {
 
 struct loop_info {
 	struct rc_instruction * BeginLoop;
+	struct rc_instruction * Cond;
+	struct rc_instruction * If;
+	struct rc_instruction * Brk;
+	struct rc_instruction * EndIf;
 	struct rc_instruction * EndLoop;
 };
 
@@ -293,37 +297,12 @@ static int transform_const_loop(struct emulate_loop_state * s,
 							count_inst.Amount);
 
 	DBG("Loop will have %d iterations.\n", iterations);
+	
 	/* Prepare loop for unrolling */
-	/* Remove the first 4 instructions inside the loop, which are part
-	 * of the conditional and no longer needed.
-	 */
-	/* SLT/SGE/SGT/SLE */
-	if(loop->BeginLoop->Next->U.I.Opcode != RC_OPCODE_SLT &&
-	   loop->BeginLoop->Next->U.I.Opcode != RC_OPCODE_SGE &&
-	   loop->BeginLoop->Next->U.I.Opcode != RC_OPCODE_SGT &&
-	   loop->BeginLoop->Next->U.I.Opcode != RC_OPCODE_SLE){
-		rc_error(s->C,"Unexpected instruction, expected LT,GT,LE,GE\n");
-		return 0;
-	}
-	/* IF */
-	rc_remove_instruction(loop->BeginLoop->Next);
-	if(loop->BeginLoop->Next->U.I.Opcode != RC_OPCODE_IF){
-		rc_error(s->C,"Unexpected instruction, expected IF\n");
-		return 0;
-	}
-	rc_remove_instruction(loop->BeginLoop->Next);
-	/* BRK     */
-	if(loop->BeginLoop->Next->U.I.Opcode != RC_OPCODE_BRK){
-		rc_error(s->C,"Unexpected instruction, expected BRK\n");
-		return 0;
-	}
-	rc_remove_instruction(loop->BeginLoop->Next);
-	/* ENDIF   */
-	if(loop->BeginLoop->Next->U.I.Opcode != RC_OPCODE_ENDIF){
-		rc_error(s->C,"Unexpected instruction, expected ENDIF\n");
-		return 0;
-	}
-	rc_remove_instruction(loop->BeginLoop->Next);
+	rc_remove_instruction(loop->Cond);
+	rc_remove_instruction(loop->If);
+	rc_remove_instruction(loop->Brk);
+	rc_remove_instruction(loop->EndIf);
 	
 	loop_unroll(s, loop, iterations);
 	loop->EndLoop = NULL;
@@ -334,6 +313,7 @@ static int transform_const_loop(struct emulate_loop_state * s,
  * This function prepares a loop to be unrolled by converting it into an if
  * statement.  Here is an outline of the conversion process:
  * BGNLOOP;                         	-> BGNLOOP;
+ * <Additional conditional code>	-> <Additional conditional code>
  * SGE/SLT temp[0], temp[1], temp[2];	-> SLT/SGE temp[0], temp[1], temp[2];
  * IF temp[0];                      	-> IF temp[0];
  * BRK;                             	->
@@ -342,7 +322,10 @@ static int transform_const_loop(struct emulate_loop_state * s,
  * ENDLOOP;                         	-> ENDLOOP
  *
  * @param inst A pointer to a BGNLOOP instruction.
- * @return A pointer to the ENDLOOP instruction.
+ * @return If the loop can be unrolled, a pointer to the first instruction of
+ * 		the unrolled loop.
+ * 	   Otherwise, A pointer to the ENDLOOP instruction.
+ * 	   Null if there is an error.
  */
 static struct rc_instruction * transform_loop(struct emulate_loop_state * s,
 						struct rc_instruction * inst)
@@ -355,27 +338,79 @@ static struct rc_instruction * transform_loop(struct emulate_loop_state * s,
 
 	loop = &s->Loops[s->LoopCount++];
 	memset(loop, 0, sizeof(struct loop_info));
+	if(inst->U.I.Opcode != RC_OPCODE_BGNLOOP){
+		rc_error(s->C, "expected BGNLOOP\n", __FUNCTION__);
+		return NULL;
+	}
 	loop->BeginLoop = inst;
-	
+
+	for(ptr = loop->BeginLoop->Next; !loop->EndLoop; ptr = ptr->Next){
+		switch(ptr->U.I.Opcode){
+		case RC_OPCODE_BGNLOOP:
+			/* Nested loop */
+			ptr = transform_loop(s, ptr);
+			if(!ptr){
+				return NULL;
+			}
+			break;
+		case RC_OPCODE_BRK:
+			loop->Brk = ptr;
+			if(ptr->Next->U.I.Opcode != RC_OPCODE_ENDIF){
+				rc_error(s->C,
+					"%s: expected ENDIF\n",__FUNCTION__);
+				return NULL;
+			}
+			loop->EndIf = ptr->Next;
+			if(ptr->Prev->U.I.Opcode != RC_OPCODE_IF){
+				rc_error(s->C,
+					"%s: expected IF\n", __FUNCTION__);
+				return NULL;
+			}
+			loop->If = ptr->Prev;
+			switch(loop->If->Prev->U.I.Opcode){
+			case RC_OPCODE_SLT:
+			case RC_OPCODE_SGE:
+			case RC_OPCODE_SGT:
+			case RC_OPCODE_SLE:
+			case RC_OPCODE_SEQ:
+			case RC_OPCODE_SNE:
+				break;
+			default:
+				rc_error(s->C, "%s expected conditional\n",
+								__FUNCTION__);
+				return NULL;
+			}
+			loop->Cond = loop->If->Prev;
+			ptr = loop->EndIf;
+			break;
+		case RC_OPCODE_ENDLOOP:
+			loop->EndLoop = ptr;
+			break;
+		}
+	}
 	/* Reverse the conditional instruction */
-	ptr = inst->Next;
-	switch(ptr->U.I.Opcode){
+	switch(loop->Cond->U.I.Opcode){
 	case RC_OPCODE_SGE:
-		ptr->U.I.Opcode = RC_OPCODE_SLT;
+		loop->Cond->U.I.Opcode = RC_OPCODE_SLT;
 		break;
 	case RC_OPCODE_SLT:
-		ptr->U.I.Opcode = RC_OPCODE_SGE;
+		loop->Cond->U.I.Opcode = RC_OPCODE_SGE;
 		break;
 	case RC_OPCODE_SLE:
-		ptr->U.I.Opcode = RC_OPCODE_SGT;
+		loop->Cond->U.I.Opcode = RC_OPCODE_SGT;
 		break;
 	case RC_OPCODE_SGT:
-		ptr->U.I.Opcode = RC_OPCODE_SLE;
+		loop->Cond->U.I.Opcode = RC_OPCODE_SLE;
+		break;
+	case RC_OPCODE_SEQ:
+		loop->Cond->U.I.Opcode = RC_OPCODE_SNE;
+		break;
+	case RC_OPCODE_SNE:
+		loop->Cond->U.I.Opcode = RC_OPCODE_SEQ;
 		break;
 	default:
-		rc_error(s->C,
-			"Loop does not start with a conditional instruction.");
-		break;
+		rc_error(s->C, "loop->Cond is not a conditional.\n");
+		return NULL;
 	}
 	
 	/* Check if the number of loops is known at compile time. */
@@ -383,36 +418,11 @@ static struct rc_instruction * transform_loop(struct emulate_loop_state * s,
 		return loop->BeginLoop->Next;
 	}
 
-	while(!loop->EndLoop){
-		struct rc_instruction * endif;
-		if(ptr->Type == RC_INSTRUCTION_NORMAL){
-		}
-		switch(ptr->U.I.Opcode){
-		case RC_OPCODE_BGNLOOP:
-			/* Nested loop */
-			ptr = transform_loop(s, ptr);
-			break;
-		case RC_OPCODE_BRK:
-			/* The BRK instruction should always be followed by
-			 * an ENDIF.  This ENDIF will eventually replace the
-			 * ENDLOOP insruction. */
-			if(ptr->Next->U.I.Opcode != RC_OPCODE_ENDIF){
-				rc_error(s->C,
-					"transform_loop: expected ENDIF\n");
-			}
-			endif = ptr->Next;
-			rc_remove_instruction(ptr);
-			rc_remove_instruction(endif);
-			break;
-		case RC_OPCODE_ENDLOOP:
-			/* Insert the ENDIF before ENDLOOP. */
-			rc_insert_instruction(ptr->Prev, endif);
-			loop->EndLoop = ptr;
-			break;
-		}
-		ptr = ptr->Next;
-	}
-	return ptr;
+	/* Prepare the loop to be unrolled */
+	rc_remove_instruction(loop->Brk);
+	rc_remove_instruction(loop->EndIf);
+	rc_insert_instruction(loop->EndLoop->Prev, loop->EndIf);
+	return loop->EndLoop;
 }
 
 static void rc_transform_loops(struct emulate_loop_state * s)
@@ -422,6 +432,9 @@ static void rc_transform_loops(struct emulate_loop_state * s)
 		if(ptr->Type == RC_INSTRUCTION_NORMAL &&
 					ptr->U.I.Opcode == RC_OPCODE_BGNLOOP){
 			ptr = transform_loop(s, ptr);
+			if(!ptr){
+				return;
+			}
 		}
 		ptr = ptr->Next;
 	}
