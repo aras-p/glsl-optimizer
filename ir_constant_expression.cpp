@@ -538,8 +538,33 @@ ir_constant_visitor::visit(ir_texture *ir)
 void
 ir_constant_visitor::visit(ir_swizzle *ir)
 {
-   (void) ir;
-   value = NULL;
+   ir_constant *v = ir->val->constant_expression_value();
+
+   this->value = NULL;
+
+   if (v != NULL) {
+      union {
+	 float f[4];
+	 unsigned u[4];
+	 bool b[4];
+      } data;
+
+      const unsigned swiz_idx[4] = {
+	 ir->mask.x, ir->mask.y, ir->mask.z, ir->mask.w
+      };
+
+      for (unsigned i = 0; i < ir->mask.num_components; i++) {
+	 switch (v->type->base_type) {
+	 case GLSL_TYPE_UINT:
+	 case GLSL_TYPE_INT:   data.u[i] = v->value.u[swiz_idx[i]]; break;
+	 case GLSL_TYPE_FLOAT: data.f[i] = v->value.f[swiz_idx[i]]; break;
+	 case GLSL_TYPE_BOOL:  data.b[i] = v->value.b[swiz_idx[i]]; break;
+	 default:              assert(!"Should not get here."); break;
+	 }
+      }
+
+      this->value = new ir_constant(ir->type, &data);
+   }
 }
 
 
