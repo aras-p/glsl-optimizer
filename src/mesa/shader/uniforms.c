@@ -37,11 +37,13 @@
 
 #include "main/glheader.h"
 #include "main/context.h"
+#include "main/dispatch.h"
+#include "main/shaderapi.h"
+#include "main/shaderobj.h"
+#include "uniforms.h"
 #include "shader/prog_parameter.h"
 #include "shader/prog_statevars.h"
 #include "shader/prog_uniform.h"
-#include "shader/shader_api.h"
-#include "uniforms.h"
 
 
 
@@ -141,7 +143,7 @@ get_uniform_parameter(const struct gl_shader_program *shProg, GLuint index)
 
 
 /**
- * Called via ctx->Driver.GetActiveUniform().
+ * Called by glGetActiveUniform().
  */
 static void
 _mesa_get_active_uniform(GLcontext *ctx, GLuint program, GLuint index,
@@ -367,7 +369,7 @@ split_location_offset(GLint *location, GLint *offset)
 
 
 /**
- * Called via ctx->Driver.GetUniformfv().
+ * Called via glGetUniformfv().
  */
 static void
 _mesa_get_uniformfv(GLcontext *ctx, GLuint program, GLint location,
@@ -399,7 +401,7 @@ _mesa_get_uniformfv(GLcontext *ctx, GLuint program, GLint location,
 
 
 /**
- * Called via ctx->Driver.GetUniformiv().
+ * Called via glGetUniformiv().
  * \sa _mesa_get_uniformfv, only difference is a cast.
  */
 static void
@@ -432,7 +434,7 @@ _mesa_get_uniformiv(GLcontext *ctx, GLuint program, GLint location,
 
 
 /**
- * Called via ctx->Driver.GetUniformLocation().
+ * Called via glGetUniformLocation().
  *
  * The return value will encode two values, the uniform location and an
  * offset (used for arrays, structs).
@@ -505,6 +507,41 @@ _mesa_get_uniform_location(GLcontext *ctx, GLuint program, const GLchar *name)
    }
 
    return location;
+}
+
+
+
+/**
+ * Update the vertex/fragment program's TexturesUsed array.
+ *
+ * This needs to be called after glUniform(set sampler var) is called.
+ * A call to glUniform(samplerVar, value) causes a sampler to point to a
+ * particular texture unit.  We know the sampler's texture target
+ * (1D/2D/3D/etc) from compile time but the sampler's texture unit is
+ * set by glUniform() calls.
+ *
+ * So, scan the program->SamplerUnits[] and program->SamplerTargets[]
+ * information to update the prog->TexturesUsed[] values.
+ * Each value of TexturesUsed[unit] is one of zero, TEXTURE_1D_INDEX,
+ * TEXTURE_2D_INDEX, TEXTURE_3D_INDEX, etc.
+ * We'll use that info for state validation before rendering.
+ */
+void
+_mesa_update_shader_textures_used(struct gl_program *prog)
+{
+   GLuint s;
+
+   memset(prog->TexturesUsed, 0, sizeof(prog->TexturesUsed));
+
+   for (s = 0; s < MAX_SAMPLERS; s++) {
+      if (prog->SamplersUsed & (1 << s)) {
+         GLuint unit = prog->SamplerUnits[s];
+         GLuint tgt = prog->SamplerTargets[s];
+         assert(unit < MAX_TEXTURE_IMAGE_UNITS);
+         assert(tgt < NUM_TEXTURE_TARGETS);
+         prog->TexturesUsed[unit] |= (1 << tgt);
+      }
+   }
 }
 
 
@@ -697,7 +734,7 @@ set_program_uniform(GLcontext *ctx, struct gl_program *program,
 
 
 /**
- * Called via ctx->Driver.Uniform().
+ * Called via glUniform*() functions.
  */
 static void
 _mesa_uniform(GLcontext *ctx, GLint location, GLsizei count,
@@ -859,7 +896,7 @@ set_program_uniform_matrix(GLcontext *ctx, struct gl_program *program,
 
 
 /**
- * Called by ctx->Driver.UniformMatrix().
+ * Called by glUniformMatrix*() functions.
  * Note: cols=2, rows=4  ==>  array[2] of vec4
  */
 static void
@@ -924,14 +961,374 @@ _mesa_uniform_matrix(GLcontext *ctx, GLint cols, GLint rows,
 }
 
 
-
-void
-_mesa_init_uniform_functions(struct dd_function_table *driver)
+void GLAPIENTRY
+_mesa_Uniform1fARB(GLint location, GLfloat v0)
 {
-   driver->GetActiveUniform = _mesa_get_active_uniform;
-   driver->GetUniformfv = _mesa_get_uniformfv;
-   driver->GetUniformiv = _mesa_get_uniformiv;
-   driver->GetUniformLocation = _mesa_get_uniform_location;
-   driver->Uniform = _mesa_uniform;
-   driver->UniformMatrix = _mesa_uniform_matrix;
+   GET_CURRENT_CONTEXT(ctx);
+   _mesa_uniform(ctx, location, 1, &v0, GL_FLOAT);
+}
+
+void GLAPIENTRY
+_mesa_Uniform2fARB(GLint location, GLfloat v0, GLfloat v1)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   GLfloat v[2];
+   v[0] = v0;
+   v[1] = v1;
+   _mesa_uniform(ctx, location, 1, v, GL_FLOAT_VEC2);
+}
+
+void GLAPIENTRY
+_mesa_Uniform3fARB(GLint location, GLfloat v0, GLfloat v1, GLfloat v2)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   GLfloat v[3];
+   v[0] = v0;
+   v[1] = v1;
+   v[2] = v2;
+   _mesa_uniform(ctx, location, 1, v, GL_FLOAT_VEC3);
+}
+
+void GLAPIENTRY
+_mesa_Uniform4fARB(GLint location, GLfloat v0, GLfloat v1, GLfloat v2,
+                   GLfloat v3)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   GLfloat v[4];
+   v[0] = v0;
+   v[1] = v1;
+   v[2] = v2;
+   v[3] = v3;
+   _mesa_uniform(ctx, location, 1, v, GL_FLOAT_VEC4);
+}
+
+void GLAPIENTRY
+_mesa_Uniform1iARB(GLint location, GLint v0)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   _mesa_uniform(ctx, location, 1, &v0, GL_INT);
+}
+
+void GLAPIENTRY
+_mesa_Uniform2iARB(GLint location, GLint v0, GLint v1)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   GLint v[2];
+   v[0] = v0;
+   v[1] = v1;
+   _mesa_uniform(ctx, location, 1, v, GL_INT_VEC2);
+}
+
+void GLAPIENTRY
+_mesa_Uniform3iARB(GLint location, GLint v0, GLint v1, GLint v2)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   GLint v[3];
+   v[0] = v0;
+   v[1] = v1;
+   v[2] = v2;
+   _mesa_uniform(ctx, location, 1, v, GL_INT_VEC3);
+}
+
+void GLAPIENTRY
+_mesa_Uniform4iARB(GLint location, GLint v0, GLint v1, GLint v2, GLint v3)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   GLint v[4];
+   v[0] = v0;
+   v[1] = v1;
+   v[2] = v2;
+   v[3] = v3;
+   _mesa_uniform(ctx, location, 1, v, GL_INT_VEC4);
+}
+
+void GLAPIENTRY
+_mesa_Uniform1fvARB(GLint location, GLsizei count, const GLfloat * value)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   _mesa_uniform(ctx, location, count, value, GL_FLOAT);
+}
+
+void GLAPIENTRY
+_mesa_Uniform2fvARB(GLint location, GLsizei count, const GLfloat * value)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   _mesa_uniform(ctx, location, count, value, GL_FLOAT_VEC2);
+}
+
+void GLAPIENTRY
+_mesa_Uniform3fvARB(GLint location, GLsizei count, const GLfloat * value)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   _mesa_uniform(ctx, location, count, value, GL_FLOAT_VEC3);
+}
+
+void GLAPIENTRY
+_mesa_Uniform4fvARB(GLint location, GLsizei count, const GLfloat * value)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   _mesa_uniform(ctx, location, count, value, GL_FLOAT_VEC4);
+}
+
+void GLAPIENTRY
+_mesa_Uniform1ivARB(GLint location, GLsizei count, const GLint * value)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   _mesa_uniform(ctx, location, count, value, GL_INT);
+}
+
+void GLAPIENTRY
+_mesa_Uniform2ivARB(GLint location, GLsizei count, const GLint * value)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   _mesa_uniform(ctx, location, count, value, GL_INT_VEC2);
+}
+
+void GLAPIENTRY
+_mesa_Uniform3ivARB(GLint location, GLsizei count, const GLint * value)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   _mesa_uniform(ctx, location, count, value, GL_INT_VEC3);
+}
+
+void GLAPIENTRY
+_mesa_Uniform4ivARB(GLint location, GLsizei count, const GLint * value)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   _mesa_uniform(ctx, location, count, value, GL_INT_VEC4);
+}
+
+
+/** OpenGL 3.0 GLuint-valued functions **/
+void GLAPIENTRY
+_mesa_Uniform1ui(GLint location, GLuint v0)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   _mesa_uniform(ctx, location, 1, &v0, GL_UNSIGNED_INT);
+}
+
+void GLAPIENTRY
+_mesa_Uniform2ui(GLint location, GLuint v0, GLuint v1)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   GLuint v[2];
+   v[0] = v0;
+   v[1] = v1;
+   _mesa_uniform(ctx, location, 1, v, GL_UNSIGNED_INT_VEC2);
+}
+
+void GLAPIENTRY
+_mesa_Uniform3ui(GLint location, GLuint v0, GLuint v1, GLuint v2)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   GLuint v[3];
+   v[0] = v0;
+   v[1] = v1;
+   v[2] = v2;
+   _mesa_uniform(ctx, location, 1, v, GL_UNSIGNED_INT_VEC3);
+}
+
+void GLAPIENTRY
+_mesa_Uniform4ui(GLint location, GLuint v0, GLuint v1, GLuint v2, GLuint v3)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   GLuint v[4];
+   v[0] = v0;
+   v[1] = v1;
+   v[2] = v2;
+   v[3] = v3;
+   _mesa_uniform(ctx, location, 1, v, GL_UNSIGNED_INT_VEC4);
+}
+
+void GLAPIENTRY
+_mesa_Uniform1uiv(GLint location, GLsizei count, const GLuint *value)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   _mesa_uniform(ctx, location, count, value, GL_UNSIGNED_INT);
+}
+
+void GLAPIENTRY
+_mesa_Uniform2uiv(GLint location, GLsizei count, const GLuint *value)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   _mesa_uniform(ctx, location, count, value, GL_UNSIGNED_INT_VEC2);
+}
+
+void GLAPIENTRY
+_mesa_Uniform3uiv(GLint location, GLsizei count, const GLuint *value)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   _mesa_uniform(ctx, location, count, value, GL_UNSIGNED_INT_VEC3);
+}
+
+void GLAPIENTRY
+_mesa_Uniform4uiv(GLint location, GLsizei count, const GLuint *value)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   _mesa_uniform(ctx, location, count, value, GL_UNSIGNED_INT_VEC4);
+}
+
+
+
+void GLAPIENTRY
+_mesa_UniformMatrix2fvARB(GLint location, GLsizei count, GLboolean transpose,
+                          const GLfloat * value)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   _mesa_uniform_matrix(ctx, 2, 2, location, count, transpose, value);
+}
+
+void GLAPIENTRY
+_mesa_UniformMatrix3fvARB(GLint location, GLsizei count, GLboolean transpose,
+                          const GLfloat * value)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   _mesa_uniform_matrix(ctx, 3, 3, location, count, transpose, value);
+}
+
+void GLAPIENTRY
+_mesa_UniformMatrix4fvARB(GLint location, GLsizei count, GLboolean transpose,
+                          const GLfloat * value)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   _mesa_uniform_matrix(ctx, 4, 4, location, count, transpose, value);
+}
+
+
+/**
+ * Non-square UniformMatrix are OpenGL 2.1
+ */
+void GLAPIENTRY
+_mesa_UniformMatrix2x3fv(GLint location, GLsizei count, GLboolean transpose,
+                         const GLfloat *value)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   _mesa_uniform_matrix(ctx, 2, 3, location, count, transpose, value);
+}
+
+void GLAPIENTRY
+_mesa_UniformMatrix3x2fv(GLint location, GLsizei count, GLboolean transpose,
+                         const GLfloat *value)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   _mesa_uniform_matrix(ctx, 3, 2, location, count, transpose, value);
+}
+
+void GLAPIENTRY
+_mesa_UniformMatrix2x4fv(GLint location, GLsizei count, GLboolean transpose,
+                         const GLfloat *value)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   _mesa_uniform_matrix(ctx, 2, 4, location, count, transpose, value);
+}
+
+void GLAPIENTRY
+_mesa_UniformMatrix4x2fv(GLint location, GLsizei count, GLboolean transpose,
+                         const GLfloat *value)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   _mesa_uniform_matrix(ctx, 4, 2, location, count, transpose, value);
+}
+
+void GLAPIENTRY
+_mesa_UniformMatrix3x4fv(GLint location, GLsizei count, GLboolean transpose,
+                         const GLfloat *value)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   _mesa_uniform_matrix(ctx, 3, 4, location, count, transpose, value);
+}
+
+void GLAPIENTRY
+_mesa_UniformMatrix4x3fv(GLint location, GLsizei count, GLboolean transpose,
+                         const GLfloat *value)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   _mesa_uniform_matrix(ctx, 4, 3, location, count, transpose, value);
+}
+
+
+void GLAPIENTRY
+_mesa_GetUniformfvARB(GLhandleARB program, GLint location, GLfloat *params)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   _mesa_get_uniformfv(ctx, program, location, params);
+}
+
+
+void GLAPIENTRY
+_mesa_GetUniformivARB(GLhandleARB program, GLint location, GLint *params)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   _mesa_get_uniformiv(ctx, program, location, params);
+}
+
+
+GLint GLAPIENTRY
+_mesa_GetUniformLocationARB(GLhandleARB programObj, const GLcharARB *name)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   return _mesa_get_uniform_location(ctx, programObj, name);
+}
+
+
+void GLAPIENTRY
+_mesa_GetActiveUniformARB(GLhandleARB program, GLuint index,
+                          GLsizei maxLength, GLsizei * length, GLint * size,
+                          GLenum * type, GLcharARB * name)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   _mesa_get_active_uniform(ctx, program, index, maxLength, length, size,
+                            type, name);
+}
+
+
+/**
+ * Plug in shader uniform-related functions into API dispatch table.
+ */
+void
+_mesa_init_shader_uniform_dispatch(struct _glapi_table *exec)
+{
+   SET_Uniform1fARB(exec, _mesa_Uniform1fARB);
+   SET_Uniform2fARB(exec, _mesa_Uniform2fARB);
+   SET_Uniform3fARB(exec, _mesa_Uniform3fARB);
+   SET_Uniform4fARB(exec, _mesa_Uniform4fARB);
+   SET_Uniform1iARB(exec, _mesa_Uniform1iARB);
+   SET_Uniform2iARB(exec, _mesa_Uniform2iARB);
+   SET_Uniform3iARB(exec, _mesa_Uniform3iARB);
+   SET_Uniform4iARB(exec, _mesa_Uniform4iARB);
+   SET_Uniform1fvARB(exec, _mesa_Uniform1fvARB);
+   SET_Uniform2fvARB(exec, _mesa_Uniform2fvARB);
+   SET_Uniform3fvARB(exec, _mesa_Uniform3fvARB);
+   SET_Uniform4fvARB(exec, _mesa_Uniform4fvARB);
+   SET_Uniform1ivARB(exec, _mesa_Uniform1ivARB);
+   SET_Uniform2ivARB(exec, _mesa_Uniform2ivARB);
+   SET_Uniform3ivARB(exec, _mesa_Uniform3ivARB);
+   SET_Uniform4ivARB(exec, _mesa_Uniform4ivARB);
+   SET_UniformMatrix2fvARB(exec, _mesa_UniformMatrix2fvARB);
+   SET_UniformMatrix3fvARB(exec, _mesa_UniformMatrix3fvARB);
+   SET_UniformMatrix4fvARB(exec, _mesa_UniformMatrix4fvARB);
+
+   SET_GetActiveUniformARB(exec, _mesa_GetActiveUniformARB);
+   SET_GetUniformLocationARB(exec, _mesa_GetUniformLocationARB);
+   SET_GetUniformfvARB(exec, _mesa_GetUniformfvARB);
+   SET_GetUniformivARB(exec, _mesa_GetUniformivARB);
+
+   /* OpenGL 2.1 */
+   SET_UniformMatrix2x3fv(exec, _mesa_UniformMatrix2x3fv);
+   SET_UniformMatrix3x2fv(exec, _mesa_UniformMatrix3x2fv);
+   SET_UniformMatrix2x4fv(exec, _mesa_UniformMatrix2x4fv);
+   SET_UniformMatrix4x2fv(exec, _mesa_UniformMatrix4x2fv);
+   SET_UniformMatrix3x4fv(exec, _mesa_UniformMatrix3x4fv);
+   SET_UniformMatrix4x3fv(exec, _mesa_UniformMatrix4x3fv);
+
+   /* OpenGL 3.0 */
+   /* XXX finish dispatch */
+   (void) _mesa_Uniform1ui;
+   (void) _mesa_Uniform2ui;
+   (void) _mesa_Uniform3ui;
+   (void) _mesa_Uniform4ui;
+   (void) _mesa_Uniform1uiv;
+   (void) _mesa_Uniform2uiv;
+   (void) _mesa_Uniform3uiv;
+   (void) _mesa_Uniform4uiv;
 }

@@ -118,6 +118,7 @@
 #include "remap.h"
 #include "scissor.h"
 #include "shared.h"
+#include "shaderobj.h"
 #include "simple_list.h"
 #include "state.h"
 #include "stencil.h"
@@ -131,7 +132,6 @@
 #include "vtxfmt.h"
 #include "shader/program.h"
 #include "shader/prog_print.h"
-#include "shader/shader_api.h"
 #if _HAVE_FULL_GL
 #include "math/m_matrix.h"
 #endif

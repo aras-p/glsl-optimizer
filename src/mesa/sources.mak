@@ -66,7 +66,8 @@ MAIN_SOURCES = \
 	main/remap.c \
 	main/renderbuffer.c \
 	main/scissor.c \
-	main/shaders.c \
+	main/shaderapi.c \
+	main/shaderobj.c \
 	main/shared.c \
 	main/state.c \
 	main/stencil.c \
@@ -247,7 +248,6 @@ SHADER_SOURCES = \
 	shader/prog_uniform.c \
 	shader/programopt.c \
 	shader/symbol_table.c \
-	shader/shader_api.c \
 	shader/uniforms.c
 
 SLANG_SOURCES =	\

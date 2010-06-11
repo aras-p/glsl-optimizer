@@ -31,6 +31,7 @@
 #include "main/mipmap.h"
 #include "main/queryobj.h"
 #include "main/renderbuffer.h"
+#include "main/shaderobj.h"
 #include "main/texcompress.h"
 #include "main/texformat.h"
 #include "main/texgetimage.h"
@@ -52,7 +53,6 @@
 #endif
 
 #include "shader/program.h"
-#include "shader/shader_api.h"
 #include "tnl/tnl.h"
 #include "swrast/swrast.h"
 
@@ -208,6 +208,8 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
    driver->DeleteArrayObject = _mesa_delete_array_object;
    driver->BindArrayObject = NULL;
 
+   _mesa_init_shader_object_functions(driver);
+
 #if FEATURE_EXT_transform_feedback
    _mesa_init_transform_feedback_functions(driver);
 #endif
@@ -231,10 +233,6 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
    driver->EndList = NULL;
    driver->BeginCallList = NULL;
    driver->EndCallList = NULL;
-
-
-   /* XXX temporary here */
-   _mesa_init_glsl_driver_functions(driver);
 }
 
 

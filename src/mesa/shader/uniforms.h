@@ -26,8 +26,133 @@
 #define UNIFORMS_H
 
 
-extern void
-_mesa_init_uniform_functions(struct dd_function_table *driver);
+extern void GLAPIENTRY
+_mesa_Uniform1fARB(GLint, GLfloat);
 
+extern void GLAPIENTRY
+_mesa_Uniform2fARB(GLint, GLfloat, GLfloat);
+
+extern void GLAPIENTRY
+_mesa_Uniform3fARB(GLint, GLfloat, GLfloat, GLfloat);
+
+extern void GLAPIENTRY
+_mesa_Uniform4fARB(GLint, GLfloat, GLfloat, GLfloat, GLfloat);
+
+extern void GLAPIENTRY
+_mesa_Uniform1iARB(GLint, GLint);
+
+extern void GLAPIENTRY
+_mesa_Uniform2iARB(GLint, GLint, GLint);
+
+extern void GLAPIENTRY
+_mesa_Uniform3iARB(GLint, GLint, GLint, GLint);
+
+extern void GLAPIENTRY
+_mesa_Uniform4iARB(GLint, GLint, GLint, GLint, GLint);
+
+extern void GLAPIENTRY
+_mesa_Uniform1fvARB(GLint, GLsizei, const GLfloat *);
+
+extern void GLAPIENTRY
+_mesa_Uniform2fvARB(GLint, GLsizei, const GLfloat *);
+
+extern void GLAPIENTRY
+_mesa_Uniform3fvARB(GLint, GLsizei, const GLfloat *);
+
+extern void GLAPIENTRY
+_mesa_Uniform4fvARB(GLint, GLsizei, const GLfloat *);
+
+extern void GLAPIENTRY
+_mesa_Uniform1ivARB(GLint, GLsizei, const GLint *);
+
+extern void GLAPIENTRY
+_mesa_Uniform2ivARB(GLint, GLsizei, const GLint *);
+
+extern void GLAPIENTRY
+_mesa_Uniform3ivARB(GLint, GLsizei, const GLint *);
+
+extern void GLAPIENTRY
+_mesa_Uniform4ivARB(GLint, GLsizei, const GLint *);
+
+extern void GLAPIENTRY
+_mesa_Uniform1ui(GLint location, GLuint v0);
+
+extern void GLAPIENTRY
+_mesa_Uniform2ui(GLint location, GLuint v0, GLuint v1);
+
+extern void GLAPIENTRY
+_mesa_Uniform3ui(GLint location, GLuint v0, GLuint v1, GLuint v2);
+
+extern void GLAPIENTRY
+_mesa_Uniform4ui(GLint location, GLuint v0, GLuint v1, GLuint v2, GLuint v3);
+
+extern void GLAPIENTRY
+_mesa_Uniform1uiv(GLint location, GLsizei count, const GLuint *value);
+
+extern void GLAPIENTRY
+_mesa_Uniform2uiv(GLint location, GLsizei count, const GLuint *value);
+
+extern void GLAPIENTRY
+_mesa_Uniform3uiv(GLint location, GLsizei count, const GLuint *value);
+
+extern void GLAPIENTRY
+_mesa_Uniform4uiv(GLint location, GLsizei count, const GLuint *value);
+
+
+extern void GLAPIENTRY
+_mesa_UniformMatrix2fvARB(GLint, GLsizei, GLboolean, const GLfloat *);
+
+extern void GLAPIENTRY
+_mesa_UniformMatrix3fvARB(GLint, GLsizei, GLboolean, const GLfloat *);
+
+extern void GLAPIENTRY
+_mesa_UniformMatrix4fvARB(GLint, GLsizei, GLboolean, const GLfloat *);
+
+extern void GLAPIENTRY
+_mesa_UniformMatrix2x3fv(GLint location, GLsizei count, GLboolean transpose,
+                         const GLfloat *value);
+
+extern void GLAPIENTRY
+_mesa_UniformMatrix3x2fv(GLint location, GLsizei count, GLboolean transpose,
+                         const GLfloat *value);
+
+extern void GLAPIENTRY
+_mesa_UniformMatrix2x4fv(GLint location, GLsizei count, GLboolean transpose,
+                         const GLfloat *value);
+
+extern void GLAPIENTRY
+_mesa_UniformMatrix4x2fv(GLint location, GLsizei count, GLboolean transpose,
+                         const GLfloat *value);
+
+extern void GLAPIENTRY
+_mesa_UniformMatrix3x4fv(GLint location, GLsizei count, GLboolean transpose,
+                         const GLfloat *value);
+
+extern void GLAPIENTRY
+_mesa_UniformMatrix4x3fv(GLint location, GLsizei count, GLboolean transpose,
+                         const GLfloat *value);
+
+
+extern void GLAPIENTRY
+_mesa_GetActiveUniformARB(GLhandleARB, GLuint, GLsizei, GLsizei *,
+                          GLint *, GLenum *, GLcharARB *);
+
+extern void GLAPIENTRY
+_mesa_GetUniformfvARB(GLhandleARB, GLint, GLfloat *);
+
+extern void GLAPIENTRY
+_mesa_GetUniformivARB(GLhandleARB, GLint, GLint *);
+
+extern GLint GLAPIENTRY
+_mesa_GetUniformLocationARB(GLhandleARB, const GLcharARB *);
+
+
+
+extern void
+_mesa_update_shader_textures_used(struct gl_program *prog);
+
+
+extern void
+_mesa_init_shader_uniform_dispatch(struct _glapi_table *exec);
 
 #endif /* UNIFORMS_H */

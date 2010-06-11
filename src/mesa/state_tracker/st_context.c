@@ -27,8 +27,8 @@
 
 #include "main/imports.h"
 #include "main/context.h"
+#include "main/shaderobj.h"
 #include "vbo/vbo.h"
-#include "shader/shader_api.h"
 #include "glapi/glapi.h"
 #include "st_context.h"
 #include "st_debug.h"
@@ -254,7 +254,7 @@ void st_destroy_context( struct st_context *st )
 
 void st_init_driver_functions(struct dd_function_table *functions)
 {
-   _mesa_init_glsl_driver_functions(functions);
+   _mesa_init_shader_object_functions(functions);
 
    st_init_accum_functions(functions);
    st_init_blit_functions(functions);

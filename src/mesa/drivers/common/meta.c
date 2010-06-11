@@ -51,7 +51,7 @@
 #include "main/polygon.h"
 #include "main/readpix.h"
 #include "main/scissor.h"
-#include "main/shaders.h"
+#include "main/shaderapi.h"
 #include "main/state.h"
 #include "main/stencil.h"
 #include "main/texobj.h"

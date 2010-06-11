@@ -98,7 +98,8 @@
 #include "shader/nvprogram.h"
 #endif
 #if FEATURE_ARB_shader_objects
-#include "shaders.h"
+#include "shaderapi.h"
+#include "shader/uniforms.h"
 #endif
 #if FEATURE_ARB_sync
 #include "syncobj.h"
@@ -347,6 +348,7 @@ _mesa_create_exec_table(void)
 
 #if FEATURE_ARB_shader_objects
    _mesa_init_shader_dispatch(exec);
+   _mesa_init_shader_uniform_dispatch(exec);
 #endif
 
    /* 2. GL_EXT_blend_color */
