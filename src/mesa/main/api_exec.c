@@ -36,7 +36,7 @@
 #if FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program
 #include "shader/arbprogram.h"
 #endif
-#include "shader/atifragshader.h"
+#include "atifragshader.h"
 #include "attrib.h"
 #include "blend.h"
 #if FEATURE_ARB_vertex_buffer_object

@@ -29,7 +29,7 @@
 #include "main/enums.h"
 #include "main/mtypes.h"
 #include "main/dispatch.h"
-#include "atifragshader.h"
+#include "main/atifragshader.h"
 
 #if FEATURE_ATI_fragment_shader
 

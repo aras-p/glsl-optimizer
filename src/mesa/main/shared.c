@@ -33,13 +33,13 @@
 #include "mtypes.h"
 #include "hash.h"
 #include "arrayobj.h"
+#if FEATURE_ATI_fragment_shader
+#include "atifragshader.h"
+#endif
 #include "bufferobj.h"
 #include "shared.h"
 #include "shader/program.h"
 #include "dlist.h"
-#if FEATURE_ATI_fragment_shader
-#include "shader/atifragshader.h"
-#endif
 #include "shaderobj.h"
 #if FEATURE_ARB_sync
 #include "syncobj.h"
