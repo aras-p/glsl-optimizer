@@ -45,8 +45,8 @@
 #include "shader/program.h"
 #include "shader/prog_parameter.h"
 #include "shader/prog_uniform.h"
-#include "shader/slang/slang_compile.h"
-#include "shader/slang/slang_link.h"
+#include "slang/slang_compile.h"
+#include "slang/slang_link.h"
 
 
 /** Define this to enable shader substitution (see below) */

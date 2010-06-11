@@ -116,7 +116,7 @@ asm_subdirs:
 ######################################################################
 # GLSL built-in library
 glsl_builtin:
-	(cd shader/slang/library && $(MAKE)) || exit 1 ;
+	(cd slang/library && $(MAKE)) || exit 1 ;
 
 
 ######################################################################
@@ -234,7 +234,7 @@ clean: clean-es1 clean-es2
 	-rm -f depend depend.bak libmesa.a libmesagallium.a
 	-rm -f drivers/*/*.o
 	-rm -f *.pc
-	-rm -f shader/slang/library/*_gc.h
+	-rm -f slang/library/*_gc.h
 	-@cd drivers/dri && $(MAKE) clean
 	-@cd drivers/x11 && $(MAKE) clean
 	-@cd drivers/osmesa && $(MAKE) clean
