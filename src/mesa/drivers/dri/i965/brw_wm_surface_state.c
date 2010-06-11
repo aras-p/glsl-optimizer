@@ -655,7 +655,7 @@ const struct brw_tracked_state brw_wm_surfaces = {
       .mesa = (_NEW_COLOR |
                _NEW_TEXTURE |
                _NEW_BUFFERS),
-      .brw = (BRW_NEW_CONTEXT),
+      .brw = (BRW_NEW_BATCH),
       .cache = 0
    },
    .prepare = prepare_wm_surfaces,
@@ -680,12 +680,9 @@ brw_wm_upload_binding_table(struct brw_context *brw)
 
    for (i = 0; i < BRW_WM_MAX_SURF; i++) {
       /* BRW_NEW_WM_SURFACES */
+      bind[i] = brw->wm.surf_offset[i];
       if (brw->wm.surf_bo[i]) {
-	 drm_intel_bo_emit_reloc(brw->wm.bind_bo,
-				 brw->wm.bind_bo_offset + i * sizeof(uint32_t),
-				 brw->wm.surf_bo[i], brw->wm.surf_offset[i],
-				 I915_GEM_DOMAIN_INSTRUCTION, 0);
-	 bind[i] = brw->wm.surf_bo[i]->offset + brw->wm.surf_offset[i];
+	 bind[i] = brw->wm.surf_offset[i];
       } else {
 	 bind[i] = 0;
       }

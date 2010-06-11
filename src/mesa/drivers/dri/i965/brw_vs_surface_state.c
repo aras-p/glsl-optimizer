@@ -194,11 +194,7 @@ static void upload_vs_surfaces(struct brw_context *brw)
    for (i = 0; i < BRW_VS_MAX_SURF; i++) {
       /* BRW_NEW_VS_CONSTBUF */
       if (brw->vs.surf_bo[i]) {
-	 drm_intel_bo_emit_reloc(brw->vs.bind_bo,
-				 brw->vs.bind_bo_offset + i * sizeof(uint32_t),
-				 brw->vs.surf_bo[i], brw->vs.surf_offset[i],
-				 I915_GEM_DOMAIN_INSTRUCTION, 0);
-	 bind[i] = brw->vs.surf_bo[i]->offset + brw->vs.surf_offset[i];
+	 bind[i] = brw->vs.surf_offset[i];
       } else {
 	 bind[i] = 0;
       }

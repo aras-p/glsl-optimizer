@@ -101,7 +101,7 @@ const struct brw_tracked_state brw_drawing_rect = {
  * state pointers.
  *
  * The binding table pointers are relative to the surface state base address,
- * which is 0.
+ * which points at the batchbuffer containing the streamed batch state.
  */
 static void upload_binding_table_pointers(struct brw_context *brw)
 {
@@ -109,16 +109,11 @@ static void upload_binding_table_pointers(struct brw_context *brw)
 
    BEGIN_BATCH(6);
    OUT_BATCH(CMD_BINDING_TABLE_PTRS << 16 | (6 - 2));
-   if (brw->vs.bind_bo != NULL)
-      OUT_RELOC(brw->vs.bind_bo, I915_GEM_DOMAIN_SAMPLER, 0,
-		brw->vs.bind_bo_offset); /* vs */
-   else
-      OUT_BATCH(0);
+   OUT_BATCH(brw->vs.bind_bo_offset);
    OUT_BATCH(0); /* gs */
    OUT_BATCH(0); /* clip */
    OUT_BATCH(0); /* sf */
-   OUT_RELOC(brw->wm.bind_bo, I915_GEM_DOMAIN_SAMPLER, 0,
-	     brw->wm.bind_bo_offset); /* wm/ps */
+   OUT_BATCH(brw->wm.bind_bo_offset);
    ADVANCE_BATCH();
 }
 
@@ -136,7 +131,7 @@ const struct brw_tracked_state brw_binding_table_pointers = {
  * state pointers.
  *
  * The binding table pointers are relative to the surface state base address,
- * which is 0.
+ * which points at the batchbuffer containing the streamed batch state.
  */
 static void upload_gen6_binding_table_pointers(struct brw_context *brw)
 {
@@ -148,14 +143,9 @@ static void upload_gen6_binding_table_pointers(struct brw_context *brw)
 	     GEN6_BINDING_TABLE_MODIFY_GS |
 	     GEN6_BINDING_TABLE_MODIFY_PS |
 	     (4 - 2));
-   if (brw->vs.bind_bo != NULL)
-      OUT_RELOC(brw->vs.bind_bo, I915_GEM_DOMAIN_SAMPLER, 0,
-		brw->vs.bind_bo_offset); /* vs */
-   else
-      OUT_BATCH(0);
+   OUT_BATCH(brw->vs.bind_bo_offset); /* vs */
    OUT_BATCH(0); /* gs */
-   OUT_RELOC(brw->wm.bind_bo, I915_GEM_DOMAIN_SAMPLER, 0,
-	     brw->wm.bind_bo_offset); /* wm/ps */
+   OUT_BATCH(brw->wm.bind_bo_offset); /* wm/ps */
    ADVANCE_BATCH();
 }
 
@@ -586,23 +576,23 @@ const struct brw_tracked_state brw_invarient_state = {
 /**
  * Define the base addresses which some state is referenced from.
  *
- * This allows us to avoid having to emit relocations in many places for
- * cached state, and instead emit pointers inside of large, mostly-static
- * state pools.  This comes at the expense of memory, and more expensive cache
- * misses.
+ * This allows us to avoid having to emit relocations for the objects,
+ * and is actually required for binding table pointers on gen6.
+ *
+ * Surface state base address covers binding table pointers and
+ * surface state objects, but not the surfaces that the surface state
+ * objects point to.
  */
 static void upload_state_base_address( struct brw_context *brw )
 {
    struct intel_context *intel = &brw->intel;
 
-   /* Output the structure (brw_state_base_address) directly to the
-    * batchbuffer, so we can emit relocations inline.
-    */
    if (intel->gen >= 6) {
        BEGIN_BATCH(10);
        OUT_BATCH(CMD_STATE_BASE_ADDRESS << 16 | (10 - 2));
        OUT_BATCH(1); /* General state base address */
-       OUT_BATCH(1); /* Surface state base address */
+       OUT_RELOC(intel->batch->buf, I915_GEM_DOMAIN_SAMPLER, 0,
+		 1); /* Surface state base address */
        OUT_BATCH(1); /* Dynamic state base address */
        OUT_BATCH(1); /* Indirect object base address */
        OUT_BATCH(1); /* Instruction base address */
@@ -615,7 +605,8 @@ static void upload_state_base_address( struct brw_context *brw )
        BEGIN_BATCH(8);
        OUT_BATCH(CMD_STATE_BASE_ADDRESS << 16 | (8 - 2));
        OUT_BATCH(1); /* General state base address */
-       OUT_BATCH(1); /* Surface state base address */
+       OUT_RELOC(intel->batch->buf, I915_GEM_DOMAIN_SAMPLER, 0,
+		 1); /* Surface state base address */
        OUT_BATCH(1); /* Indirect object base address */
        OUT_BATCH(1); /* Instruction base address */
        OUT_BATCH(1); /* General state upper bound */
@@ -626,7 +617,8 @@ static void upload_state_base_address( struct brw_context *brw )
        BEGIN_BATCH(6);
        OUT_BATCH(CMD_STATE_BASE_ADDRESS << 16 | (6 - 2));
        OUT_BATCH(1); /* General state base address */
-       OUT_BATCH(1); /* Surface state base address */
+       OUT_RELOC(intel->batch->buf, I915_GEM_DOMAIN_SAMPLER, 0,
+		 1); /* Surface state base address */
        OUT_BATCH(1); /* Indirect object base address */
        OUT_BATCH(1); /* General state upper bound */
        OUT_BATCH(1); /* Indirect object upper bound */
@@ -637,7 +629,7 @@ static void upload_state_base_address( struct brw_context *brw )
 const struct brw_tracked_state brw_state_base_address = {
    .dirty = {
       .mesa = 0,
-      .brw = BRW_NEW_CONTEXT,
+      .brw = BRW_NEW_BATCH,
       .cache = 0,
    },
    .emit = upload_state_base_address
