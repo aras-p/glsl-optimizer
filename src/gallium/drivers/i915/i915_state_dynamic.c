@@ -1,8 +1,8 @@
 /**************************************************************************
- * 
+ *
  * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,7 +22,7 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
 #include "i915_batch.h"
@@ -37,7 +37,7 @@
 #define FILE_DEBUG_FLAG DEBUG_STATE
 
 /* State that we have chosen to store in the DYNAMIC segment of the
- * i915 indirect state mechanism.  
+ * i915 indirect state mechanism.
  *
  * Can't cache these in the way we do the static state, as there is no
  * start/size in the command packet, instead an 'end' value that gets
@@ -47,10 +47,10 @@
  * (active) state every time a 4kb boundary is crossed.
  */
 
-static INLINE void set_dynamic_indirect( struct i915_context *i915,
-					 unsigned offset,
-					 const unsigned *src,
-					 unsigned dwords )
+static INLINE void set_dynamic_indirect(struct i915_context *i915,
+                                        unsigned offset,
+                                        const unsigned *src,
+                                        unsigned dwords)
 {
    unsigned i;
 
@@ -61,24 +61,28 @@ static INLINE void set_dynamic_indirect( struct i915_context *i915,
 }
 
 
+
 /***********************************************************************
- * Modes4: stencil masks and logicop 
+ * Modes4: stencil masks and logicop
  */
-static void upload_MODES4( struct i915_context *i915 )
+static void upload_MODES4(struct i915_context *i915)
 {
    unsigned modes4 = 0;
 
-   /* I915_NEW_STENCIL */
+   /* I915_NEW_STENCIL
+    */
    modes4 |= i915->depth_stencil->stencil_modes4;
-   /* I915_NEW_BLEND */
+
+   /* I915_NEW_BLEND
+     */
    modes4 |= i915->blend->modes4;
 
-   /* Always, so that we know when state is in-active: 
+   /* Always, so that we know when state is in-active:
     */
-   set_dynamic_indirect( i915, 
-			 I915_DYNAMIC_MODES4,
-			 &modes4,
-			 1 );
+   set_dynamic_indirect(i915,
+                        I915_DYNAMIC_MODES4,
+                        &modes4,
+                        1);
 }
 
 const struct i915_tracked_state i915_upload_MODES4 = {
@@ -88,11 +92,9 @@ const struct i915_tracked_state i915_upload_MODES4 = {
 
 
 
-
 /***********************************************************************
  */
-
-static void upload_BFO( struct i915_context *i915 )
+static void upload_BFO(struct i915_context *i915)
 {
    unsigned bfo[2];
    bfo[0] = i915->depth_stencil->bfo[0];
@@ -101,10 +103,11 @@ static void upload_BFO( struct i915_context *i915 )
    if (bfo[0] & BFO_ENABLE_STENCIL_REF) {
       bfo[0] |= i915->stencil_ref.ref_value[1] << BFO_STENCIL_REF_SHIFT;
    }
-   set_dynamic_indirect( i915,
-			 I915_DYNAMIC_BFO_0,
-			 &(bfo[0]),
-			 2 );
+
+   set_dynamic_indirect(i915,
+                        I915_DYNAMIC_BFO_0,
+                        &(bfo[0]),
+                        2);
 }
 
 const struct i915_tracked_state i915_upload_BFO = {
@@ -113,32 +116,31 @@ const struct i915_tracked_state i915_upload_BFO = {
 };
 
 
+
 /***********************************************************************
  */
-
-
-static void upload_BLENDCOLOR( struct i915_context *i915 )
+static void upload_BLENDCOLOR(struct i915_context *i915)
 {
    unsigned bc[2];
 
-   memset( bc, 0, sizeof(bc) );
+   memset(bc, 0, sizeof(bc));
 
-   /* I915_NEW_BLEND {_COLOR} 
+   /* I915_NEW_BLEND
     */
    {
       const float *color = i915->blend_color.color;
 
       bc[0] = _3DSTATE_CONST_BLEND_COLOR_CMD;
-      bc[1] = pack_ui32_float4( color[0],
-				color[1],
-				color[2], 
-				color[3] );
+      bc[1] = pack_ui32_float4(color[0],
+                               color[1],
+                               color[2],
+                               color[3]);
    }
 
-   set_dynamic_indirect( i915, 
-			 I915_DYNAMIC_BC_0,
-			 bc,
-			 2 );
+   set_dynamic_indirect(i915,
+                        I915_DYNAMIC_BC_0,
+                        bc,
+                        2);
 }
 
 const struct i915_tracked_state i915_upload_BLENDCOLOR = {
@@ -146,19 +148,18 @@ const struct i915_tracked_state i915_upload_BLENDCOLOR = {
    upload_BLENDCOLOR
 };
 
+
+
 /***********************************************************************
  */
-
-
-static void upload_IAB( struct i915_context *i915 )
+static void upload_IAB(struct i915_context *i915)
 {
    unsigned iab = i915->blend->iab;
 
-
-   set_dynamic_indirect( i915,
-			 I915_DYNAMIC_IAB,
-			 &iab,
-			 1 );
+   set_dynamic_indirect(i915,
+                        I915_DYNAMIC_IAB,
+                        &iab,
+                        1);
 }
 
 const struct i915_tracked_state i915_upload_IAB = {
@@ -167,17 +168,15 @@ const struct i915_tracked_state i915_upload_IAB = {
 };
 
 
+
 /***********************************************************************
  */
-
-
-
-static void upload_DEPTHSCALE( struct i915_context *i915 )
+static void upload_DEPTHSCALE(struct i915_context *i915)
 {
-   set_dynamic_indirect( i915,
-			 I915_DYNAMIC_DEPTHSCALE_0,
-			 &(i915->rasterizer->ds[0].u),
-			 2 );
+   set_dynamic_indirect(i915,
+                        I915_DYNAMIC_DEPTHSCALE_0,
+                        &(i915->rasterizer->ds[0].u),
+                        2);
 }
 
 const struct i915_tracked_state i915_upload_DEPTHSCALE = {
@@ -196,10 +195,9 @@ const struct i915_tracked_state i915_upload_DEPTHSCALE = {
  * XXX: does stipple pattern need to be adjusted according to
  * the window position?
  *
- * XXX: possibly need workaround for conform paths test. 
+ * XXX: possibly need workaround for conform paths test.
  */
-
-static void upload_STIPPLE( struct i915_context *i915 )
+static void upload_STIPPLE(struct i915_context *i915)
 {
    unsigned st[2];
 
@@ -209,7 +207,6 @@ static void upload_STIPPLE( struct i915_context *i915 )
    /* I915_NEW_RASTERIZER
     */
    st[1] |= i915->rasterizer->st;
-
 
    /* I915_NEW_STIPPLE
     */
@@ -225,18 +222,16 @@ static void upload_STIPPLE( struct i915_context *i915 )
       /* Not sure what to do about fallbacks, so for now just dont:
        */
       st[1] |= ((p[0] << 0) |
-		(p[1] << 4) |
-		(p[2] << 8) | 
-		(p[3] << 12));
+                (p[1] << 4) |
+                (p[2] << 8) |
+                (p[3] << 12));
    }
 
-
-   set_dynamic_indirect( i915, 
-			 I915_DYNAMIC_STP_0,
-			 &st[0],
-			 2 );
+   set_dynamic_indirect(i915,
+                        I915_DYNAMIC_STP_0,
+                        &st[0],
+                        2);
 }
-
 
 const struct i915_tracked_state i915_upload_STIPPLE = {
    I915_NEW_RASTERIZER | I915_NEW_STIPPLE,
@@ -246,41 +241,44 @@ const struct i915_tracked_state i915_upload_STIPPLE = {
 
 
 /***********************************************************************
- * Scissor.
+ * Scissor enable
  */
 static void upload_SCISSOR_ENABLE( struct i915_context *i915 )
 {
-   set_dynamic_indirect( i915,
-			 I915_DYNAMIC_SC_ENA_0,
-			 &(i915->rasterizer->sc[0]),
-			 1 );
+   set_dynamic_indirect(i915,
+                        I915_DYNAMIC_SC_ENA_0,
+                        &(i915->rasterizer->sc[0]),
+                        1);
 }
 
 const struct i915_tracked_state i915_upload_SCISSOR_ENABLE = {
-   I915_NEW_RASTERIZER,
-   upload_SCISSOR_ENABLE
+   "SCISSOR ENABLE",
+   upload_SCISSOR_ENABLE,
+   I915_NEW_RASTERIZER
 };
 
 
 
-static void upload_SCISSOR_RECT( struct i915_context *i915 )
+/***********************************************************************
+ * Scissor rect
+ */
+static void upload_SCISSOR_RECT(struct i915_context *i915)
 {
    unsigned x1 = i915->scissor.minx;
    unsigned y1 = i915->scissor.miny;
    unsigned x2 = i915->scissor.maxx;
    unsigned y2 = i915->scissor.maxy;
    unsigned sc[3];
- 
+
    sc[0] = _3DSTATE_SCISSOR_RECT_0_CMD;
    sc[1] = (y1 << 16) | (x1 & 0xffff);
    sc[2] = (y2 << 16) | (x2 & 0xffff);
 
-   set_dynamic_indirect( i915, 
-			 I915_DYNAMIC_SC_RECT_0,
-			 &sc[0],
-			 3 );
+   set_dynamic_indirect(i915,
+                        I915_DYNAMIC_SC_RECT_0,
+                        &sc[0],
+                        3);
 }
-
 
 const struct i915_tracked_state i915_upload_SCISSOR_RECT = {
    I915_NEW_SCISSOR,
@@ -289,9 +287,8 @@ const struct i915_tracked_state i915_upload_SCISSOR_RECT = {
 
 
 
-
-
-
+/***********************************************************************
+ */
 static const struct i915_tracked_state *atoms[] = {
    &i915_upload_MODES4,
    &i915_upload_BFO,
@@ -306,12 +303,11 @@ static const struct i915_tracked_state *atoms[] = {
 /* These will be dynamic indirect state commands, but for now just end
  * up on the batch buffer with everything else.
  */
-void i915_update_dynamic( struct i915_context *i915 )
+void i915_update_dynamic(struct i915_context *i915)
 {
    int i;
 
    for (i = 0; i < Elements(atoms); i++)
       if (i915->dirty & atoms[i]->dirty)
-	 atoms[i]->update( i915 );
+         atoms[i]->update(i915);
 }
-
