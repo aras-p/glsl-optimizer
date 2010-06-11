@@ -396,28 +396,10 @@ brw_init_non_surface_cache(struct brw_context *brw)
    brw_init_cache_id(cache, "DEPTH_STENCIL_STATE", BRW_DEPTH_STENCIL_STATE);
 }
 
-
-static void
-brw_init_surface_cache(struct brw_context *brw)
-{
-   struct brw_cache *cache = &brw->surface_cache;
-
-   cache->brw = brw;
-
-   cache->size = 7;
-   cache->n_items = 0;
-   cache->items = (struct brw_cache_item **)
-      calloc(1, cache->size * sizeof(struct brw_cache_item));
-
-   brw_init_cache_id(cache, "SS_SURFACE", BRW_SS_SURFACE);
-}
-
-
 void
 brw_init_caches(struct brw_context *brw)
 {
    brw_init_non_surface_cache(brw);
-   brw_init_surface_cache(brw);
 }
 
 
@@ -498,9 +480,6 @@ brw_state_cache_check_size(struct brw_context *brw)
     */
    if (brw->cache.n_items > 1000)
       brw_clear_cache(brw, &brw->cache);
-
-   if (brw->surface_cache.n_items > 1000)
-      brw_clear_cache(brw, &brw->surface_cache);
 }
 
 
@@ -527,5 +506,4 @@ void
 brw_destroy_caches(struct brw_context *brw)
 {
    brw_destroy_cache(brw, &brw->cache);
-   brw_destroy_cache(brw, &brw->surface_cache);
 }

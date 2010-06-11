@@ -203,19 +203,6 @@ intel_miptree_release(struct intel_context *intel,
 
       DBG("%s deleting %p\n", __FUNCTION__, *mt);
 
-#ifndef I915
-      /* Free up cached binding tables holding a reference on our buffer, to
-       * avoid excessive memory consumption.
-       *
-       * This isn't as aggressive as we could be, as we'd like to do
-       * it from any time we free the last ref on a region.  But intel_region.c
-       * is context-agnostic.  Perhaps our constant state cache should be, as
-       * well.
-       */
-      brw_state_cache_bo_delete(&brw_context(&intel->ctx)->surface_cache,
-				(*mt)->region->buffer);
-#endif
-
       intel_region_release(&((*mt)->region));
 
       for (i = 0; i < MAX_TEXTURE_LEVELS; i++) {

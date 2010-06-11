@@ -195,8 +195,9 @@ void *brw_state_batch(struct brw_context *brw,
 		      uint32_t *out_offset);
 
 /* brw_wm_surface_state.c */
-drm_intel_bo *
-brw_create_constant_surface( struct brw_context *brw,
-                             struct brw_surface_key *key );
+void brw_create_constant_surface(struct brw_context *brw,
+				 struct brw_surface_key *key,
+				 drm_intel_bo **out_bo,
+				 uint32_t *out_offset);
 
 #endif

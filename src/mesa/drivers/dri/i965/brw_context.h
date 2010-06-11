@@ -302,7 +302,6 @@ enum brw_cache_id {
    BRW_CLIP_VP,
    BRW_CLIP_UNIT,
    BRW_CLIP_PROG,
-   BRW_SS_SURFACE,
 
    BRW_MAX_CACHE
 };
@@ -376,7 +375,6 @@ struct brw_tracked_state {
 #define CACHE_NEW_CLIP_VP                (1<<BRW_CLIP_VP)
 #define CACHE_NEW_CLIP_UNIT              (1<<BRW_CLIP_UNIT)
 #define CACHE_NEW_CLIP_PROG              (1<<BRW_CLIP_PROG)
-#define CACHE_NEW_SURFACE                (1<<BRW_SS_SURFACE)
 
 struct brw_cached_batch_item {
    struct header *header;
@@ -463,8 +461,7 @@ struct brw_context
       int validated_bo_count;
    } state;
 
-   struct brw_cache cache;  /** non-surface items */
-   struct brw_cache surface_cache;  /* surface items */
+   struct brw_cache cache;
    struct brw_cached_batch_item *cached_batch_items;
 
    struct {
@@ -599,6 +596,7 @@ struct brw_context
       drm_intel_bo *bind_bo;
       uint32_t bind_bo_offset;
       drm_intel_bo *surf_bo[BRW_VS_MAX_SURF];
+      uint32_t surf_offset[BRW_VS_MAX_SURF];
       GLuint nr_surfaces;      
    } vs;
 
@@ -652,6 +650,7 @@ struct brw_context
       drm_intel_bo *bind_bo;
       uint32_t bind_bo_offset;
       drm_intel_bo *surf_bo[BRW_WM_MAX_SURF];
+      uint32_t surf_offset[BRW_WM_MAX_SURF];
 
       drm_intel_bo *prog_bo;
       drm_intel_bo *state_bo;

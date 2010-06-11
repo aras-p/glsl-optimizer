@@ -297,7 +297,6 @@ static struct dirty_bit_map cache_bits[] = {
    DEFINE_BIT(CACHE_NEW_CLIP_VP),
    DEFINE_BIT(CACHE_NEW_CLIP_UNIT),
    DEFINE_BIT(CACHE_NEW_CLIP_PROG),
-   DEFINE_BIT(CACHE_NEW_SURFACE),
    {0, 0, 0}
 };
 

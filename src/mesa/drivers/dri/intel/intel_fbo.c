@@ -296,12 +296,6 @@ intel_renderbuffer_set_region(struct intel_context *intel,
    old = rb->region;
    rb->region = NULL;
    intel_region_reference(&rb->region, region);
-#ifndef I915
-   if (old) {
-      brw_state_cache_bo_delete(&brw_context(&intel->ctx)->surface_cache,
-				old->buffer);
-   }
-#endif
    intel_region_release(&old);
 }
 

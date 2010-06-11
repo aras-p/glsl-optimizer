@@ -139,40 +139,24 @@ brw_update_vs_constant_surface( GLcontext *ctx,
           key.width, key.height, key.depth, key.cpp, key.pitch);
    */
 
-   drm_intel_bo_unreference(brw->vs.surf_bo[surf]);
-   brw->vs.surf_bo[surf] = brw_search_cache(&brw->surface_cache,
-                                            BRW_SS_SURFACE,
-                                            &key, sizeof(key),
-                                            &key.bo, 1,
-                                            NULL);
-   if (brw->vs.surf_bo[surf] == NULL) {
-      brw->vs.surf_bo[surf] = brw_create_constant_surface(brw, &key);
-   }
+   brw_create_constant_surface(brw, &key, &brw->vs.surf_bo[surf],
+			       &brw->vs.surf_offset[surf]);
 }
 
 
 static void
 prepare_vs_surfaces(struct brw_context *brw)
 {
-   GLcontext *ctx = &brw->intel.ctx;
-   int i;
    int nr_surfaces = 0;
 
-   brw_update_vs_constant_surface(ctx, SURF_INDEX_VERT_CONST_BUFFER);
-
-   for (i = 0; i < BRW_VS_MAX_SURF; i++) {
-      if (brw->vs.surf_bo[i] != NULL) {
-	 nr_surfaces = i + 1;
-      }
+   if (brw->vs.const_bo) {
+      brw_add_validated_bo(brw, brw->vs.const_bo);
+      nr_surfaces = 1;
    }
 
    if (brw->vs.nr_surfaces != nr_surfaces) {
       brw->state.dirty.brw |= BRW_NEW_NR_VS_SURFACES;
       brw->vs.nr_surfaces = nr_surfaces;
-   }
-
-   for (i = 0; i < BRW_VS_MAX_SURF; i++) {
-      brw_add_validated_bo(brw, brw->vs.surf_bo[i]);
    }
 }
 
@@ -185,6 +169,7 @@ prepare_vs_surfaces(struct brw_context *brw)
  */
 static void upload_vs_surfaces(struct brw_context *brw)
 {
+   GLcontext *ctx = &brw->intel.ctx;
    uint32_t *bind;
    int i;
 
@@ -198,6 +183,8 @@ static void upload_vs_surfaces(struct brw_context *brw)
       return;
    }
 
+   brw_update_vs_constant_surface(ctx, SURF_INDEX_VERT_CONST_BUFFER);
+
    /* Might want to calculate nr_surfaces first, to avoid taking up so much
     * space for the binding table. (once we have vs samplers)
     */
@@ -209,9 +196,9 @@ static void upload_vs_surfaces(struct brw_context *brw)
       if (brw->vs.surf_bo[i]) {
 	 drm_intel_bo_emit_reloc(brw->vs.bind_bo,
 				 brw->vs.bind_bo_offset + i * sizeof(uint32_t),
-				 brw->vs.surf_bo[i], 0,
+				 brw->vs.surf_bo[i], brw->vs.surf_offset[i],
 				 I915_GEM_DOMAIN_INSTRUCTION, 0);
-	 bind[i] = brw->vs.surf_bo[i]->offset;
+	 bind[i] = brw->vs.surf_bo[i]->offset + brw->vs.surf_offset[i];
       } else {
 	 bind[i] = 0;
       }
