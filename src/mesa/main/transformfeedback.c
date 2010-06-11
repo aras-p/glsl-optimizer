@@ -39,8 +39,8 @@
 #include "shaderobj.h"
 #include "main/dispatch.h"
 
-#include "shader/prog_parameter.h"
-//#include "shader/shader_api.h"
+#include "program/prog_parameter.h"
+//#include "program/shader_api.h"
 
 
 #if FEATURE_EXT_transform_feedback

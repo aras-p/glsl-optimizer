@@ -35,7 +35,7 @@
 #include "main/imports.h"
 #include "main/macros.h"
 #include "main/texformat.h"
-#include "shader/prog_instruction.h"
+#include "program/prog_instruction.h"
 
 #include "s_aatriangle.h"
 #include "s_context.h"

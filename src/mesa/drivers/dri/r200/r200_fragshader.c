@@ -30,7 +30,7 @@
 #include "main/macros.h"
 #include "main/enums.h"
 #include "tnl/t_context.h"
-#include "shader/program.h"
+#include "program/program.h"
 #include "r200_context.h"
 #include "r200_ioctl.h"
 #include "r200_tex.h"

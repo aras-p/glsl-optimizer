@@ -52,7 +52,7 @@
 #include "main/transformfeedback.h"
 #endif
 
-#include "shader/program.h"
+#include "program/program.h"
 #include "tnl/tnl.h"
 #include "swrast/swrast.h"
 

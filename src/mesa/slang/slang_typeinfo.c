@@ -29,7 +29,7 @@
  */
 
 #include "main/imports.h"
-#include "shader/prog_instruction.h"
+#include "program/prog_instruction.h"
 #include "slang_typeinfo.h"
 #include "slang_compile.h"
 #include "slang_log.h"

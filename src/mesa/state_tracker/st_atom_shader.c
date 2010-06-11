@@ -37,7 +37,7 @@
 
 #include "main/imports.h"
 #include "main/mtypes.h"
-#include "shader/program.h"
+#include "program/program.h"
 
 #include "pipe/p_context.h"
 #include "pipe/p_shader_tokens.h"

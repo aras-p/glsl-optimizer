@@ -528,7 +528,7 @@ update_texture_state( GLcontext *ctx )
       /* Get the bitmask of texture target enables.
        * enableBits will be a mask of the TEXTURE_*_BIT flags indicating
        * which texture targets are enabled (fixed function) or referenced
-       * by a fragment shader/program.  When multiple flags are set, we'll
+       * by a fragment program/program.  When multiple flags are set, we'll
        * settle on the one with highest priority (see below).
        */
       if (vprog) {

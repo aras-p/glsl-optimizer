@@ -29,7 +29,7 @@
 #include "main/colormac.h"
 #include "main/image.h"
 #include "main/imports.h"
-#include "shader/prog_instruction.h"
+#include "program/prog_instruction.h"
 
 #include "s_context.h"
 #include "s_texcombine.h"

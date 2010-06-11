@@ -130,8 +130,8 @@
 #include "version.h"
 #include "viewport.h"
 #include "vtxfmt.h"
-#include "shader/program.h"
-#include "shader/prog_print.h"
+#include "program/program.h"
+#include "program/prog_print.h"
 #if _HAVE_FULL_GL
 #include "math/m_matrix.h"
 #endif

@@ -38,7 +38,7 @@
 #endif
 #include "bufferobj.h"
 #include "shared.h"
-#include "shader/program.h"
+#include "program/program.h"
 #include "dlist.h"
 #include "shaderobj.h"
 #if FEATURE_ARB_sync

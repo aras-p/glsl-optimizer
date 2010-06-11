@@ -29,7 +29,7 @@
 #include "main/glheader.h"
 #include "main/imports.h"
 
-#include "shader/program.h"
+#include "program/program.h"
 #include "tnl/tnl.h"
 
 #include "r600_context.h"

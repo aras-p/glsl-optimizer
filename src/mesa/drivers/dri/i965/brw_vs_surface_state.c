@@ -31,7 +31,7 @@
 
 #include "main/mtypes.h"
 #include "main/texstore.h"
-#include "shader/prog_parameter.h"
+#include "program/prog_parameter.h"
 
 #include "brw_context.h"
 #include "brw_state.h"

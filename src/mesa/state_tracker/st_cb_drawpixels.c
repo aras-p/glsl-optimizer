@@ -36,8 +36,8 @@
 #include "main/macros.h"
 #include "main/texformat.h"
 #include "main/texstore.h"
-#include "shader/program.h"
-#include "shader/prog_print.h"
+#include "program/program.h"
+#include "program/prog_print.h"
 
 #include "st_debug.h"
 #include "st_context.h"
@@ -58,7 +58,7 @@
 #include "util/u_draw_quad.h"
 #include "util/u_format.h"
 #include "util/u_math.h"
-#include "shader/prog_instruction.h"
+#include "program/prog_instruction.h"
 #include "cso_cache/cso_context.h"
 
 

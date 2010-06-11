@@ -27,14 +27,14 @@
 
 #include "main/mtypes.h"
 #include "main/imports.h"
-#include "shader/program.h"
-#include "shader/prog_parameter.h"
-#include "shader/prog_parameter_layout.h"
-#include "shader/prog_statevars.h"
-#include "shader/prog_instruction.h"
+#include "program/program.h"
+#include "program/prog_parameter.h"
+#include "program/prog_parameter_layout.h"
+#include "program/prog_statevars.h"
+#include "program/prog_instruction.h"
 
-#include "shader/symbol_table.h"
-#include "shader/program_parser.h"
+#include "program/symbol_table.h"
+#include "program/program_parser.h"
 
 extern void *yy_scan_string(char *);
 extern void yy_delete_buffer(void *);

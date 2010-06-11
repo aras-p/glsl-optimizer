@@ -228,27 +228,27 @@ STATETRACKER_SOURCES = \
 	state_tracker/st_program.c \
 	state_tracker/st_texture.c
 
-SHADER_SOURCES = \
-	shader/arbprogparse.c \
-	shader/hash_table.c \
-	shader/lex.yy.c \
-	shader/nvfragparse.c \
-	shader/nvvertparse.c \
-	shader/program.c \
-	shader/program_parse.tab.c \
-	shader/program_parse_extra.c \
-	shader/prog_cache.c \
-	shader/prog_execute.c \
-	shader/prog_instruction.c \
-	shader/prog_noise.c \
-	shader/prog_optimize.c \
-	shader/prog_parameter.c \
-	shader/prog_parameter_layout.c \
-	shader/prog_print.c \
-	shader/prog_statevars.c \
-	shader/prog_uniform.c \
-	shader/programopt.c \
-	shader/symbol_table.c
+PROGRAM_SOURCES = \
+	program/arbprogparse.c \
+	program/hash_table.c \
+	program/lex.yy.c \
+	program/nvfragparse.c \
+	program/nvvertparse.c \
+	program/program.c \
+	program/program_parse.tab.c \
+	program/program_parse_extra.c \
+	program/prog_cache.c \
+	program/prog_execute.c \
+	program/prog_instruction.c \
+	program/prog_noise.c \
+	program/prog_optimize.c \
+	program/prog_parameter.c \
+	program/prog_parameter_layout.c \
+	program/prog_print.c \
+	program/prog_statevars.c \
+	program/prog_uniform.c \
+	program/programopt.c \
+	program/symbol_table.c
 
 SLANG_SOURCES =	\
 	slang/slang_builtin.c	\
@@ -320,7 +320,7 @@ MESA_SOURCES = \
 	$(MATH_XFORM_SOURCES)	\
 	$(VBO_SOURCES)		\
 	$(TNL_SOURCES)		\
-	$(SHADER_SOURCES)	\
+	$(PROGRAM_SOURCES)	\
 	$(SWRAST_SOURCES)	\
 	$(SWRAST_SETUP_SOURCES)	\
 	$(COMMON_DRIVER_SOURCES)\
@@ -333,7 +333,7 @@ MESA_GALLIUM_SOURCES = \
 	$(MATH_SOURCES)		\
 	$(VBO_SOURCES)		\
 	$(STATETRACKER_SOURCES)	\
-	$(SHADER_SOURCES)	\
+	$(PROGRAM_SOURCES)	\
 	ppc/common_ppc.c	\
 	x86/common_x86.c	\
 	$(SLANG_SOURCES)

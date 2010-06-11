@@ -62,7 +62,7 @@
 #include "main/texstate.h"
 #include "main/varray.h"
 #include "main/viewport.h"
-#include "shader/program.h"
+#include "program/program.h"
 #include "swrast/swrast.h"
 #include "drivers/common/meta.h"
 

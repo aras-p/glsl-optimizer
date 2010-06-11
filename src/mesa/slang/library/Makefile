@@ -1,4 +1,4 @@
-# src/mesa/shader/slang/library/Makefile
+# src/mesa/slang/library/Makefile
 
 TOP = ../../../..
 

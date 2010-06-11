@@ -27,8 +27,8 @@
 #include "main/context.h"
 #include "slang_ir.h"
 #include "slang_mem.h"
-#include "shader/prog_instruction.h"
-#include "shader/prog_print.h"
+#include "program/prog_instruction.h"
+#include "program/prog_print.h"
 
 
 static const slang_ir_info IrInfo[] = {

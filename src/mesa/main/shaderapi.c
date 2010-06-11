@@ -42,9 +42,9 @@
 #include "main/hash.h"
 #include "main/shaderapi.h"
 #include "main/shaderobj.h"
-#include "shader/program.h"
-#include "shader/prog_parameter.h"
-#include "shader/prog_uniform.h"
+#include "program/program.h"
+#include "program/prog_parameter.h"
+#include "program/prog_uniform.h"
 #include "slang/slang_compile.h"
 #include "slang/slang_link.h"
 

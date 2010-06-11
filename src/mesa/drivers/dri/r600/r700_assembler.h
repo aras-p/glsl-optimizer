@@ -28,7 +28,7 @@
 #define _R700_ASSEMBLER_H_
 
 #include "main/mtypes.h"
-#include "shader/prog_instruction.h"
+#include "program/prog_instruction.h"
 
 #include "r700_chip.h"
 #include "r700_shaderinst.h"

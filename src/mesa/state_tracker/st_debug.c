@@ -27,7 +27,7 @@
 
 
 #include "main/context.h"
-#include "shader/prog_print.h"
+#include "program/prog_print.h"
 
 #include "pipe/p_state.h"
 #include "pipe/p_shader_tokens.h"

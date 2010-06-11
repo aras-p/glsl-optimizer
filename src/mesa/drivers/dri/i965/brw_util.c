@@ -31,7 +31,7 @@
          
 
 #include "main/mtypes.h"
-#include "shader/prog_parameter.h"
+#include "program/prog_parameter.h"
 #include "brw_util.h"
 #include "brw_defines.h"
 

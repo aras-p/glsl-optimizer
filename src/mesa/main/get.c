@@ -667,7 +667,7 @@ static const struct value_desc values[] = {
    { GL_MAX_3D_TEXTURE_SIZE, LOC_CUSTOM, TYPE_INT,
      offsetof(GLcontext, Const.Max3DTextureLevels), NO_EXTRA },
 
-   /* GL_ARB_fragment_shader/OES_standard_derivatives */
+   /* GL_ARB_fragment_program/OES_standard_derivatives */
    { GL_FRAGMENT_SHADER_DERIVATIVE_HINT_ARB,
      CONTEXT_ENUM(Hint.FragmentShaderDerivative), extra_ARB_fragment_shader },
 #endif /* FEATURE_GL || FEATURE_ES2 */

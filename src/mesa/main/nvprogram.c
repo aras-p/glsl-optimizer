@@ -43,12 +43,12 @@
 #include "main/imports.h"
 #include "main/macros.h"
 #include "main/nvprogram.h"
-#include "shader/arbprogparse.h"
-#include "shader/nvfragparse.h"
-#include "shader/nvvertparse.h"
-#include "shader/program.h"
-#include "shader/prog_instruction.h"
-#include "shader/prog_parameter.h"
+#include "program/arbprogparse.h"
+#include "program/nvfragparse.h"
+#include "program/nvvertparse.h"
+#include "program/program.h"
+#include "program/prog_instruction.h"
+#include "program/prog_parameter.h"
 
 
 

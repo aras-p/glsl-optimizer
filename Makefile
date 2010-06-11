@@ -243,9 +243,9 @@ MAIN_FILES = \
 	$(DIRECTORY)/src/mesa/main/descrip.mms				\
 	$(DIRECTORY)/src/mesa/math/*.[ch]				\
 	$(DIRECTORY)/src/mesa/math/descrip.mms				\
-	$(DIRECTORY)/src/mesa/shader/*.[chly]				\
-	$(DIRECTORY)/src/mesa/shader/Makefile				\
-	$(DIRECTORY)/src/mesa/shader/descrip.mms			\
+	$(DIRECTORY)/src/mesa/program/*.[chly]				\
+	$(DIRECTORY)/src/mesa/program/Makefile				\
+	$(DIRECTORY)/src/mesa/program/descrip.mms			\
 	$(DIRECTORY)/src/mesa/slang/*.[ch]				\
 	$(DIRECTORY)/src/mesa/slang/descrip.mms				\
 	$(DIRECTORY)/src/mesa/slang/library/*.gc			\

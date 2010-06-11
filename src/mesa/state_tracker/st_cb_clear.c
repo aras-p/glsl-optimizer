@@ -36,7 +36,7 @@
 #include "main/glheader.h"
 #include "main/formats.h"
 #include "main/macros.h"
-#include "shader/prog_instruction.h"
+#include "program/prog_instruction.h"
 #include "st_context.h"
 #include "st_atom.h"
 #include "st_cb_accum.h"

@@ -41,9 +41,9 @@
 #include "main/shaderapi.h"
 #include "main/shaderobj.h"
 #include "main/uniforms.h"
-#include "shader/prog_parameter.h"
-#include "shader/prog_statevars.h"
-#include "shader/prog_uniform.h"
+#include "program/prog_parameter.h"
+#include "program/prog_statevars.h"
+#include "program/prog_uniform.h"
 
 
 

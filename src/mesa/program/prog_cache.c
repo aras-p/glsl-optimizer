@@ -29,8 +29,8 @@
 #include "main/glheader.h"
 #include "main/mtypes.h"
 #include "main/imports.h"
-#include "shader/prog_cache.h"
-#include "shader/program.h"
+#include "program/prog_cache.h"
+#include "program/program.h"
 
 
 struct cache_item

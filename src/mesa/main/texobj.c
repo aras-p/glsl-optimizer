@@ -40,7 +40,7 @@
 #include "teximage.h"
 #include "texobj.h"
 #include "mtypes.h"
-#include "shader/prog_instruction.h"
+#include "program/prog_instruction.h"
 
 
 

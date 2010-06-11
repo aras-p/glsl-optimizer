@@ -36,10 +36,10 @@
 #include "main/macros.h"
 #include "main/mtypes.h"
 #include "main/arbprogram.h"
-#include "shader/arbprogparse.h"
-#include "shader/nvfragparse.h"
-#include "shader/nvvertparse.h"
-#include "shader/program.h"
+#include "program/arbprogparse.h"
+#include "program/nvfragparse.h"
+#include "program/nvvertparse.h"
+#include "program/program.h"
 
 
 

@@ -27,7 +27,7 @@
 
 #include "main/glheader.h"
 
-#include "shader/program.h"
+#include "program/program.h"
 #include "tnl/tnl.h"
 #include "r300_context.h"
 #include "r300_fragprog_common.h"

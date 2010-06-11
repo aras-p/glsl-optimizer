@@ -35,9 +35,9 @@
 #include "main/enums.h"
 #include "main/shaderapi.h"
 #include "main/shaderobj.h"
-#include "shader/prog_instruction.h"
-#include "shader/prog_parameter.h"
-#include "shader/program.h"
+#include "program/prog_instruction.h"
+#include "program/prog_parameter.h"
+#include "program/program.h"
 
 #include "cso_cache/cso_context.h"
 #include "draw/draw_context.h"
