@@ -78,6 +78,10 @@ driver decides which window system to support, this example will enable two
 (sets of) EGL drivers.  One supports the X window system and the other supports
 bare KMS (kernel modesetting).</p>
 
+<p>The available displays are <code>x11</code>, <code>kms</code>,
+<code>fbdev</code>, and <code>gdi</code>.  The <code>gdi</code> display can
+only be built with SCons.</p>
+
 </li>
 
 <li><code>--with-state-trackers</code>
@@ -118,16 +122,10 @@ software rendering automatically.</p>
 
 <h2>Use EGL</h2>
 
-<p>There are demos for the client APIs supported by EGL.  They can be found in
-<code>progs/egl/</code>, You can use them to test your build.  For example,</p>
+<h3>Demos</h3>
 
-<pre>
-  $ cd progs/egl/eglut
-  $ make
-  $ cd ../opengles1
-  $ make
-  $ ./torus_x11
-</pre>
+<p>There are demos for the client APIs supported by EGL.  They can be found in
+mesa/demos repository.</p>
 
 <h3>Environment Variables</h3>
 
@@ -184,27 +182,27 @@ variable to true forces the use of software rendering.</p>
 
 <p>There are two categories of EGL drivers: Gallium and classic.</p>
 
-<p>Gallium EGL drivers supports all rendering APIs specified in EGL 1.4.  The
-support for optional EGL functions and EGL extensions is usually more complete
-than the classic ones.  These drivers depend on the <code>egl</code> state
-tracker to build.  The available drivers are</p>
+<p>Gallium EGL drivers supports all rendering APIs specified in EGL 1.4.  These
+drivers depend on the <code>egl</code> state tracker to build.  The available
+drivers are</p>
 
 <ul>
 <li><code>egl_&lt;dpy&gt;_i915</code></li>
 <li><code>egl_&lt;dpy&gt;_i965</code></li>
-<li><code>egl_&lt;dpy&gt;_radeon</code></li>
 <li><code>egl_&lt;dpy&gt;_nouveau</code></li>
+<li><code>egl_&lt;dpy&gt;_radeon</code></li>
 <li><code>egl_&lt;dpy&gt;_swrast</code></li>
 <li><code>egl_&lt;dpy&gt;_vmwgfx</code></li>
 </ul>
 
 <p><code>&lt;dpy&gt;</code> is given by <code>--with-egl-displays</code> at
-configuration time.  There will be one EGL driver for each combination of the
-displays listed and the hardware drivers enabled.</p>
+configuration time.  There is usually one EGL driver for each combination of
+the displays listed and the pipe drivers enabled.  When the display is pure
+software or pure hardware, non-working combinations will not be built.</p>
 
-<p>Classic EGL drivers, on the other hand, supports only OpenGL as its
-rendering API.  They can be found under <code>src/egl/drivers/</code>.  There
-are 3 of them</p>
+<p>Classic EGL drivers, on the other hand, support only a subset of the
+available rendering APIs.  They can be found under
+<code>src/egl/drivers/</code>.  There are 3 of them</p>
 
 <ul>
 <li><code>egl_glx</code>
