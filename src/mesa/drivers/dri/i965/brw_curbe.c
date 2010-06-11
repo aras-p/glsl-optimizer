@@ -182,8 +182,6 @@ static void prepare_constant_buffer(struct brw_context *brw)
    GLcontext *ctx = &brw->intel.ctx;
    const struct brw_vertex_program *vp =
       brw_vertex_program_const(brw->vertex_program);
-   const struct brw_fragment_program *fp =
-      brw_fragment_program_const(brw->fragment_program);
    const GLuint sz = brw->curbe.total_size;
    const GLuint bufsz = sz * 16 * sizeof(GLfloat);
    GLfloat *buf;

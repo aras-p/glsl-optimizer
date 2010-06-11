@@ -339,15 +339,6 @@ const struct brw_tracked_state brw_wm_constants = {
 };
 
 /**
- * Update the surface state for a WM constant buffer.
- * The constant buffer will be (re)allocated here if needed.
- */
-static void
-prepare_wm_constant_surface(GLcontext *ctx)
-{
-}
-
-/**
  * Updates surface / buffer for fragment shader constant buffer, if
  * one is required.
  *
