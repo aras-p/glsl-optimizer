@@ -57,6 +57,7 @@ MAIN_SOURCES = \
 	main/mipmap.c \
 	main/mm.c \
 	main/multisample.c \
+	main/nvprogram.c \
 	main/pixel.c \
 	main/pixelstore.c \
 	main/points.c \
@@ -232,7 +233,6 @@ SHADER_SOURCES = \
 	shader/hash_table.c \
 	shader/lex.yy.c \
 	shader/nvfragparse.c \
-	shader/nvprogram.c \
 	shader/nvvertparse.c \
 	shader/program.c \
 	shader/program_parse.tab.c \

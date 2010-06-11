@@ -62,7 +62,7 @@
 #include "arbprogram.h"
 #endif
 #if FEATURE_NV_vertex_program || FEATURE_NV_fragment_program
-#include "shader/nvprogram.h"
+#include "nvprogram.h"
 #endif
 
 #include "math/m_matrix.h"

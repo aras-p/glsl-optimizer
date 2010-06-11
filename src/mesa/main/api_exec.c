@@ -92,10 +92,10 @@
 #include "varray.h"
 #include "viewport.h"
 #if FEATURE_NV_vertex_program
-#include "shader/nvprogram.h"
+#include "nvprogram.h"
 #endif
 #if FEATURE_NV_fragment_program
-#include "shader/nvprogram.h"
+#include "nvprogram.h"
 #endif
 #if FEATURE_ARB_shader_objects
 #include "shaderapi.h"
