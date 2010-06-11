@@ -1031,7 +1031,7 @@ union ir_constant_data {
 
 class ir_constant : public ir_rvalue {
 public:
-   ir_constant(const struct glsl_type *type, const void *data);
+   ir_constant(const struct glsl_type *type, const ir_constant_data *data);
    ir_constant(bool b);
    ir_constant(unsigned int u);
    ir_constant(int i);

@@ -189,23 +189,14 @@ ir_constant::ir_constant()
    /* empty */
 }
 
-ir_constant::ir_constant(const struct glsl_type *type, const void *data)
+ir_constant::ir_constant(const struct glsl_type *type,
+			 const ir_constant_data *data)
 {
-   unsigned size = 0;
+   assert((type->base_type >= GLSL_TYPE_UINT)
+	  && (type->base_type <= GLSL_TYPE_BOOL));
 
    this->type = type;
-   switch (type->base_type) {
-   case GLSL_TYPE_UINT:  size = sizeof(this->value.u[0]); break;
-   case GLSL_TYPE_INT:   size = sizeof(this->value.i[0]); break;
-   case GLSL_TYPE_FLOAT: size = sizeof(this->value.f[0]); break;
-   case GLSL_TYPE_BOOL:  size = sizeof(this->value.b[0]); break;
-   default:
-      /* FINISHME: What to do?  Exceptions are not the answer.
-       */
-      break;
-   }
-
-   memcpy(& this->value, data, size * type->components());
+   memcpy(& this->value, data, sizeof(this->value));
 }
 
 ir_constant::ir_constant(float f)
