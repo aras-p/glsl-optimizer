@@ -669,6 +669,7 @@ struct brw_context
       drm_intel_bo *color_calc_state_bo;
 
       drm_intel_bo *state_bo;
+      uint32_t state_offset;
    } cc;
 
    struct {
