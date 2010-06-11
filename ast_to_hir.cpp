@@ -1028,25 +1028,35 @@ ast_expression::hir(exec_list *instructions,
 	 type = op[1]->type;
       }
 
-      ir_variable *const tmp = generate_temporary(type,
-						  instructions, state);
+      ir_constant *cond_val = op[0]->constant_expression_value();
+      ir_constant *then_val = op[1]->constant_expression_value();
+      ir_constant *else_val = op[2]->constant_expression_value();
 
-      ir_if *const stmt = new ir_if(op[0]);
-      instructions->push_tail(stmt);
+      if (then_instructions.is_empty()
+	  && else_instructions.is_empty()
+	  && (cond_val != NULL) && (then_val != NULL) && (else_val != NULL)) {
+	 result = (cond_val->value.b[0]) ? then_val : else_val;
+      } else {
+	 ir_variable *const tmp = generate_temporary(type,
+						     instructions, state);
 
-      then_instructions.move_nodes_to(& stmt->then_instructions);
-      ir_dereference *const then_deref = new ir_dereference_variable(tmp);
-      ir_assignment *const then_assign =
-	 new ir_assignment(then_deref, op[1], NULL);
-      stmt->then_instructions.push_tail(then_assign);
+	 ir_if *const stmt = new ir_if(op[0]);
+	 instructions->push_tail(stmt);
 
-      else_instructions.move_nodes_to(& stmt->else_instructions);
-      ir_dereference *const else_deref = new ir_dereference_variable(tmp);
-      ir_assignment *const else_assign =
-	 new ir_assignment(else_deref, op[2], NULL);
-      stmt->else_instructions.push_tail(else_assign);
+	 then_instructions.move_nodes_to(& stmt->then_instructions);
+	 ir_dereference *const then_deref = new ir_dereference_variable(tmp);
+	 ir_assignment *const then_assign =
+	    new ir_assignment(then_deref, op[1], NULL);
+	 stmt->then_instructions.push_tail(then_assign);
 
-      result = new ir_dereference_variable(tmp);
+	 else_instructions.move_nodes_to(& stmt->else_instructions);
+	 ir_dereference *const else_deref = new ir_dereference_variable(tmp);
+	 ir_assignment *const else_assign =
+	    new ir_assignment(else_deref, op[2], NULL);
+	 stmt->else_instructions.push_tail(else_assign);
+
+	 result = new ir_dereference_variable(tmp);
+      }
       break;
    }
 
