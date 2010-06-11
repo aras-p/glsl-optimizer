@@ -86,8 +86,9 @@ static void upload_MODES4(struct i915_context *i915)
 }
 
 const struct i915_tracked_state i915_upload_MODES4 = {
-   I915_NEW_BLEND | I915_NEW_DEPTH_STENCIL,
-   upload_MODES4
+   "MODES4",
+   upload_MODES4,
+   I915_NEW_BLEND | I915_NEW_DEPTH_STENCIL
 };
 
 
@@ -111,8 +112,9 @@ static void upload_BFO(struct i915_context *i915)
 }
 
 const struct i915_tracked_state i915_upload_BFO = {
-   I915_NEW_DEPTH_STENCIL,
-   upload_BFO
+   "BFO",
+   upload_BFO,
+   I915_NEW_DEPTH_STENCIL
 };
 
 
@@ -144,8 +146,9 @@ static void upload_BLENDCOLOR(struct i915_context *i915)
 }
 
 const struct i915_tracked_state i915_upload_BLENDCOLOR = {
-   I915_NEW_BLEND,
-   upload_BLENDCOLOR
+   "BLENDCOLOR",
+   upload_BLENDCOLOR,
+   I915_NEW_BLEND
 };
 
 
@@ -163,8 +166,9 @@ static void upload_IAB(struct i915_context *i915)
 }
 
 const struct i915_tracked_state i915_upload_IAB = {
-   I915_NEW_BLEND,
-   upload_IAB
+   "IAB",
+   upload_IAB,
+   I915_NEW_BLEND
 };
 
 
@@ -180,8 +184,9 @@ static void upload_DEPTHSCALE(struct i915_context *i915)
 }
 
 const struct i915_tracked_state i915_upload_DEPTHSCALE = {
-   I915_NEW_RASTERIZER,
-   upload_DEPTHSCALE
+   "DEPTHSCALE",
+   upload_DEPTHSCALE,
+   I915_NEW_RASTERIZER
 };
 
 
@@ -234,8 +239,9 @@ static void upload_STIPPLE(struct i915_context *i915)
 }
 
 const struct i915_tracked_state i915_upload_STIPPLE = {
-   I915_NEW_RASTERIZER | I915_NEW_STIPPLE,
-   upload_STIPPLE
+   "STIPPLE",
+   upload_STIPPLE,
+   I915_NEW_RASTERIZER | I915_NEW_STIPPLE
 };
 
 
@@ -281,8 +287,9 @@ static void upload_SCISSOR_RECT(struct i915_context *i915)
 }
 
 const struct i915_tracked_state i915_upload_SCISSOR_RECT = {
-   I915_NEW_SCISSOR,
-   upload_SCISSOR_RECT
+   "SCISSOR RECT",
+   upload_SCISSOR_RECT,
+   I915_NEW_SCISSOR
 };
 
 
@@ -303,7 +310,7 @@ static const struct i915_tracked_state *atoms[] = {
 /* These will be dynamic indirect state commands, but for now just end
  * up on the batch buffer with everything else.
  */
-void i915_update_dynamic(struct i915_context *i915)
+static void update_dynamic(struct i915_context *i915)
 {
    int i;
 
@@ -311,3 +318,9 @@ void i915_update_dynamic(struct i915_context *i915)
       if (i915->dirty & atoms[i]->dirty)
          atoms[i]->update(i915);
 }
+
+struct i915_tracked_state i915_hw_dynamic = {
+   "dynamic",
+   update_dynamic,
+   ~0 /* all state atoms, becuase we do internal checking */
+};

@@ -79,8 +79,9 @@ static void upload_S0S1(struct i915_context *i915)
 }
 
 const struct i915_tracked_state i915_upload_S0S1 = {
-   I915_NEW_VBO | I915_NEW_VERTEX_FORMAT,
-   upload_S0S1
+   "imm S0 S1",
+   upload_S0S1,
+   I915_NEW_VBO | I915_NEW_VERTEX_FORMAT
 };
 
 
@@ -115,8 +116,9 @@ static void upload_S2S4(struct i915_context *i915)
 }
 
 const struct i915_tracked_state i915_upload_S2S4 = {
-   I915_NEW_RASTERIZER | I915_NEW_VERTEX_FORMAT,
-   upload_S2S4
+   "imm S2 S4",
+   upload_S2S4,
+   I915_NEW_RASTERIZER | I915_NEW_VERTEX_FORMAT
 };
 
 
@@ -152,8 +154,9 @@ static void upload_S5(struct i915_context *i915)
 }
 
 const struct i915_tracked_state i915_upload_S5 = {
-   (I915_NEW_DEPTH_STENCIL | I915_NEW_BLEND | I915_NEW_RASTERIZER),
-   upload_S5
+   "imm S5",
+   upload_S5,
+   I915_NEW_DEPTH_STENCIL | I915_NEW_BLEND | I915_NEW_RASTERIZER
 };
 
 
@@ -184,8 +187,9 @@ static void upload_S6(struct i915_context *i915)
 }
 
 const struct i915_tracked_state i915_upload_S6 = {
-   I915_NEW_BLEND | I915_NEW_DEPTH_STENCIL | I915_NEW_FRAMEBUFFER,
-   upload_S6
+   "imm s6",
+   upload_S6,
+   I915_NEW_BLEND | I915_NEW_DEPTH_STENCIL | I915_NEW_FRAMEBUFFER
 };
 
 
@@ -207,8 +211,9 @@ static void upload_S7(struct i915_context *i915)
 }
 
 const struct i915_tracked_state i915_upload_S7 = {
-   I915_NEW_RASTERIZER,
-   upload_S7
+   "imm S7",
+   upload_S7,
+   I915_NEW_RASTERIZER
 };
 
 
@@ -223,7 +228,7 @@ static const struct i915_tracked_state *atoms[] = {
    &i915_upload_S7
 };
 
-void i915_update_immediate(struct i915_context *i915)
+static void update_immediate(struct i915_context *i915)
 {
    int i;
 
@@ -231,3 +236,9 @@ void i915_update_immediate(struct i915_context *i915)
       if (i915->dirty & atoms[i]->dirty)
          atoms[i]->update(i915);
 }
+
+struct i915_tracked_state i915_hw_immediate = {
+   "immediate",
+   update_immediate,
+   ~0 /* all state atoms, becuase we do internal checking */
+};

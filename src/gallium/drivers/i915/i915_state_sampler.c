@@ -140,7 +140,7 @@ static void update_sampler(struct i915_context *i915,
    state[1] |= (unit << SS3_TEXTUREMAP_INDEX_SHIFT);
 }
 
-void i915_update_samplers(struct i915_context *i915)
+static void update_samplers(struct i915_context *i915)
 {
    uint unit;
 
@@ -173,6 +173,11 @@ void i915_update_samplers(struct i915_context *i915)
    i915->hardware_dirty |= I915_HW_SAMPLER | I915_HW_MAP;
 }
 
+struct i915_tracked_state i915_hw_samplers = {
+   "sampler_views",
+   update_samplers,
+   I915_NEW_SAMPLER | I915_NEW_SAMPLER_VIEW
+};
 
 
 
@@ -291,7 +296,7 @@ static void update_texture(struct i915_context *i915,
        | ((depth - 1) << MS4_VOLUME_DEPTH_SHIFT));
 }
 
-void i915_update_textures(struct i915_context *i915)
+static void update_textures(struct i915_context *i915)
 {
    uint unit;
 
@@ -312,3 +317,9 @@ void i915_update_textures(struct i915_context *i915)
 
    i915->hardware_dirty |= I915_HW_MAP;
 }
+
+struct i915_tracked_state i915_hw_sampler_views = {
+   "sampler_views",
+   update_textures,
+   I915_NEW_SAMPLER_VIEW
+};

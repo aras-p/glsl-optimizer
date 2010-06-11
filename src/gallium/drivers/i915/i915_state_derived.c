@@ -36,11 +36,11 @@
 
 
 
-/**
+/***********************************************************************
  * Determine the hardware vertex layout.
  * Depends on vertex/fragment shader state.
  */
-static void calculate_vertex_layout( struct i915_context *i915 )
+static void calculate_vertex_layout(struct i915_context *i915)
 {
    const struct i915_fragment_shader *fs = i915->fs;
    const enum interp_mode colorInterp = i915->rasterizer->color_interp;
@@ -146,37 +146,68 @@ static void calculate_vertex_layout( struct i915_context *i915 )
    }
 }
 
+struct i915_tracked_state i915_update_vertex_layout = {
+   "vertex_layout",
+   calculate_vertex_layout,
+   I915_NEW_RASTERIZER | I915_NEW_FS | I915_NEW_VS
+};
 
 
 
-/* Hopefully this will remain quite simple, otherwise need to pull in
- * something like the state tracker mechanism.
+/***********************************************************************
+ * Update fragment state
  */
-void i915_update_derived( struct i915_context *i915 )
+static void update_fs(struct i915_context *i915)
 {
-   if (i915->dirty & (I915_NEW_RASTERIZER | I915_NEW_FS | I915_NEW_VS))
-      calculate_vertex_layout( i915 );
+   i915->hardware_dirty |= I915_HW_PROGRAM; /* XXX right? */
+}
 
-   if (i915->dirty & (I915_NEW_SAMPLER | I915_NEW_SAMPLER_VIEW))
-      i915_update_samplers(i915);
+struct i915_tracked_state i915_hw_fs = {
+   "fs",
+   update_fs,
+   I915_NEW_FS
+};
 
-   if (i915->dirty & I915_NEW_SAMPLER_VIEW)
-      i915_update_textures(i915);
 
-   if (i915->dirty)
-      i915_update_immediate( i915 );
 
-   if (i915->dirty)
-      i915_update_dynamic( i915 );
-
-   if (i915->dirty & I915_NEW_FS) {
-      i915->hardware_dirty |= I915_HW_PROGRAM; /* XXX right? */
-   }
-
+/***********************************************************************
+ * Update framebuffer state
+ */
+static void update_framebuffer(struct i915_context *i915)
+{
    /* HW emit currently references framebuffer state directly:
     */
-   if (i915->dirty & I915_NEW_FRAMEBUFFER)
-      i915->hardware_dirty |= I915_HW_STATIC;
+   i915->hardware_dirty |= I915_HW_STATIC;
+}
+
+struct i915_tracked_state i915_hw_framebuffer = {
+   "framebuffer",
+   update_framebuffer,
+   I915_NEW_FRAMEBUFFER
+};
+
+
+
+/***********************************************************************
+ */
+static struct i915_tracked_state *atoms[] = {
+   &i915_update_vertex_layout,
+   &i915_hw_samplers,
+   &i915_hw_sampler_views,
+   &i915_hw_immediate,
+   &i915_hw_dynamic,
+   &i915_hw_fs,
+   &i915_hw_framebuffer,
+   NULL,
+};
+
+void i915_update_derived(struct i915_context *i915)
+{
+   int i;
+
+   for (i = 0; atoms[i]; i++)
+      if (atoms[i]->dirty & i915->dirty)
+         atoms[i]->update(i915);
 
    i915->dirty = 0;
 }
