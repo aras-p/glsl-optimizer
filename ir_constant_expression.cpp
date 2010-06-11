@@ -557,9 +557,57 @@ ir_constant_visitor::visit(ir_dereference_variable *ir)
 void
 ir_constant_visitor::visit(ir_dereference_array *ir)
 {
-   (void) ir;
-   value = NULL;
-   /* FINISHME: Other dereference modes. */
+   ir_constant *array = ir->array->constant_expression_value();
+   ir_constant *idx = ir->array_index->constant_expression_value();
+
+   this->value = NULL;
+
+   if ((array != NULL) && (idx != NULL)) {
+      if (array->type->is_matrix()) {
+	 /* Array access of a matrix results in a vector.
+	  */
+	 const unsigned column = idx->value.u[0];
+
+	 const glsl_type *const column_type = array->type->column_type();
+
+	 /* Offset in the constant matrix to the first element of the column
+	  * to be extracted.
+	  */
+	 const unsigned mat_idx = column * column_type->vector_elements;
+
+	 union {
+	    unsigned u[4];
+	    float f[4];
+	 } data;
+
+	 switch (column_type->base_type) {
+	 case GLSL_TYPE_UINT:
+	 case GLSL_TYPE_INT:
+	    for (unsigned i = 0; i < column_type->vector_elements; i++)
+	       data.u[i] = array->value.u[mat_idx + i];
+
+	    break;
+
+	 case GLSL_TYPE_FLOAT:
+	    for (unsigned i = 0; i < column_type->vector_elements; i++)
+	       data.f[i] = array->value.f[mat_idx + i];
+
+	    break;
+
+	 default:
+	    assert(!"Should not get here.");
+	    break;
+	 }
+
+	 this->value = new ir_constant(column_type, &data);
+      } else if (array->type->is_vector()) {
+	 const unsigned component = idx->value.u[0];
+
+	 this->value = new ir_constant(array, component);
+      } else {
+	 /* FINISHME: Handle access of constant arrays. */
+      }
+   }
 }
 
 
