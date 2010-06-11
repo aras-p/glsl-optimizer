@@ -87,7 +87,7 @@ upload_sf_state(struct brw_context *brw)
    if (ctx->Polygon.CullFlag) {
       switch (ctx->Polygon.CullFaceMode) {
       case GL_FRONT:
-	 dw3 |= GEN6_SF_CULL_BOTH;
+	 dw3 |= GEN6_SF_CULL_FRONT;
 	 break;
       case GL_BACK:
 	 dw3 |= GEN6_SF_CULL_BACK;
