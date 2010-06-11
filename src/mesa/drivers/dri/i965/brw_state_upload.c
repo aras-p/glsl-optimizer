@@ -116,7 +116,6 @@ const struct brw_tracked_state *gen6_atoms[] =
 
    &gen6_clip_vp,
    &gen6_sf_vp,
-   &gen6_cc_vp,
 
    /* Command packets: */
    &brw_invarient_state,
@@ -129,9 +128,13 @@ const struct brw_tracked_state *gen6_atoms[] =
    &gen6_depth_stencil_state,	/* must do before cc unit */
    &gen6_cc_state_pointers,
 
+   &brw_vs_constants, /* Before vs_surfaces and constant_buffer */
+   &brw_wm_constants, /* Before wm_surfaces and constant_buffer */
+
    &brw_vs_surfaces,		/* must do before unit */
    &brw_wm_constant_surface,	/* must do before wm surfaces/bind bo */
    &brw_wm_surfaces,		/* must do before samplers and unit */
+   &brw_wm_binding_table,
 
    &brw_wm_samplers,
    &gen6_sampler_state,
