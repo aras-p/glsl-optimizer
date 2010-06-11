@@ -12,6 +12,7 @@ MAIN_SOURCES = \
 	main/api_noop.c \
 	main/api_validate.c \
 	main/accum.c \
+	main/arbprogram.c \
 	main/atifragshader.c \
 	main/attrib.c \
 	main/arrayobj.c \
@@ -228,7 +229,6 @@ STATETRACKER_SOURCES = \
 
 SHADER_SOURCES = \
 	shader/arbprogparse.c \
-	shader/arbprogram.c \
 	shader/hash_table.c \
 	shader/lex.yy.c \
 	shader/nvfragparse.c \

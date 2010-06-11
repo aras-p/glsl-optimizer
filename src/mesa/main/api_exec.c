@@ -34,7 +34,7 @@
 #include "api_loopback.h"
 #include "api_exec.h"
 #if FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program
-#include "shader/arbprogram.h"
+#include "arbprogram.h"
 #endif
 #include "atifragshader.h"
 #include "attrib.h"

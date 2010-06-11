@@ -34,6 +34,7 @@
 #include "main/glheader.h"
 #include "main/mtypes.h"
 #include "main/imports.h"
+#include "main/arbprogram.h"
 #include "main/arrayobj.h"
 #include "main/blend.h"
 #include "main/bufferobj.h"
@@ -62,7 +63,6 @@
 #include "main/varray.h"
 #include "main/viewport.h"
 #include "shader/program.h"
-#include "shader/arbprogram.h"
 #include "swrast/swrast.h"
 #include "drivers/common/meta.h"
 

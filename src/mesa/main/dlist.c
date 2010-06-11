@@ -59,7 +59,7 @@
 #include "mtypes.h"
 #include "varray.h"
 #if FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program
-#include "shader/arbprogram.h"
+#include "arbprogram.h"
 #endif
 #if FEATURE_NV_vertex_program || FEATURE_NV_fragment_program
 #include "shader/nvprogram.h"
