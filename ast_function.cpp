@@ -548,9 +548,6 @@ ast_function_expression::hir(exec_list *instructions,
 	     * constant representing the complete collection of parameters.
 	     */
 	    if (all_parameters_are_constant
-		&& (sig->return_type->is_scalar()
-		    || sig->return_type->is_vector()
-		    || sig->return_type->is_matrix())
 		&& (components_used >= type_components))
 	       return new ir_constant(sig->return_type, & actual_parameters);
 	    else
