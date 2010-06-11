@@ -170,8 +170,13 @@ convert_component(ir_rvalue *src, const glsl_type *desired_type)
       }
       break;
    case GLSL_TYPE_BOOL: {
-      int z = 0;
-      ir_constant *const zero = new ir_constant(src->type, &z);
+      ir_constant *zero = NULL;
+
+      switch (b) {
+      case GLSL_TYPE_UINT:  zero = new ir_constant(unsigned(0)); break;
+      case GLSL_TYPE_INT:   zero = new ir_constant(int(0));      break;
+      case GLSL_TYPE_FLOAT: zero = new ir_constant(0.0f);        break;
+      }
 
       result = new ir_expression(ir_binop_nequal, desired_type, src, zero);
    }
@@ -211,7 +216,7 @@ dereference_component(ir_rvalue *src, unsigned component)
        */
       const int c = component / src->type->column_type()->vector_elements;
       const int r = component % src->type->column_type()->vector_elements;
-      ir_constant *const col_index = new ir_constant(glsl_type::int_type, &c);
+      ir_constant *const col_index = new ir_constant(c);
       ir_dereference *const col = new ir_dereference_array(src, col_index);
 
       col->type = src->type->column_type();

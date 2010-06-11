@@ -1257,22 +1257,22 @@ ast_expression::hir(exec_list *instructions,
 
    case ast_int_constant:
       type = glsl_type::int_type;
-      result = new ir_constant(type, & this->primary_expression);
+      result = new ir_constant(this->primary_expression.int_constant);
       break;
 
    case ast_uint_constant:
       type = glsl_type::uint_type;
-      result = new ir_constant(type, & this->primary_expression);
+      result = new ir_constant(this->primary_expression.uint_constant);
       break;
 
    case ast_float_constant:
       type = glsl_type::float_type;
-      result = new ir_constant(type, & this->primary_expression);
+      result = new ir_constant(this->primary_expression.float_constant);
       break;
 
    case ast_bool_constant:
       type = glsl_type::bool_type;
-      result = new ir_constant(type, & this->primary_expression);
+      result = new ir_constant(bool(this->primary_expression.bool_constant));
       break;
 
    case ast_sequence: {

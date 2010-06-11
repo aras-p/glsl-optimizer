@@ -359,8 +359,7 @@ generate_mat_body_from_scalar(exec_list *instructions,
    inst = new ir_assignment(lhs, rhs, NULL);
    instructions->push_tail(inst);
 
-   const float z = 0.0f;
-   ir_constant *const zero = new ir_constant(glsl_type::float_type, &z);
+   ir_constant *const zero = new ir_constant(0.0f);
 
    for (unsigned i = 1; i < column_type->vector_elements; i++) {
       ir_dereference *const lhs_ref = new ir_dereference_variable(column);
@@ -382,7 +381,7 @@ generate_mat_body_from_scalar(exec_list *instructions,
                                        swiz[5 - i], swiz[6 - i],
 				       column_type->vector_elements);
 
-      ir_constant *const idx = new ir_constant(glsl_type::int_type, &i);
+      ir_constant *const idx = new ir_constant(int(i));
       ir_dereference *const lhs =
 	 new ir_dereference_array(declarations[16], idx);
 
@@ -413,7 +412,7 @@ generate_mat_body_from_N_scalars(exec_list *instructions,
     */
    for (unsigned i = 0; i < column_type->vector_elements; i++) {
       for (unsigned j = 0; j < row_type->vector_elements; j++) {
-	 ir_constant *row_index = new ir_constant(glsl_type::int_type, &i);
+	 ir_constant *row_index = new ir_constant(int(i));
 	 ir_dereference *const row_access =
 	    new ir_dereference_array(declarations[16], row_index);
 
