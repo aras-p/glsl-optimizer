@@ -89,6 +89,7 @@ MAIN_SOURCES = \
 	main/texstate.c \
 	main/texstore.c \
 	main/transformfeedback.c \
+	main/uniforms.c \
 	main/varray.c \
 	main/version.c \
 	main/viewport.c \
@@ -247,8 +248,7 @@ SHADER_SOURCES = \
 	shader/prog_statevars.c \
 	shader/prog_uniform.c \
 	shader/programopt.c \
-	shader/symbol_table.c \
-	shader/uniforms.c
+	shader/symbol_table.c
 
 SLANG_SOURCES =	\
 	shader/slang/slang_builtin.c	\

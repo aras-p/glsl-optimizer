@@ -40,7 +40,7 @@
 #include "main/dispatch.h"
 #include "main/shaderapi.h"
 #include "main/shaderobj.h"
-#include "uniforms.h"
+#include "main/uniforms.h"
 #include "shader/prog_parameter.h"
 #include "shader/prog_statevars.h"
 #include "shader/prog_uniform.h"

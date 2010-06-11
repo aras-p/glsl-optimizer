@@ -99,7 +99,7 @@
 #endif
 #if FEATURE_ARB_shader_objects
 #include "shaderapi.h"
-#include "shader/uniforms.h"
+#include "uniforms.h"
 #endif
 #if FEATURE_ARB_sync
 #include "syncobj.h"

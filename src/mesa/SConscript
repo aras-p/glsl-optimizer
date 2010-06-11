@@ -105,6 +105,7 @@ if env['platform'] != 'winddk':
 		'main/texstate.c',
 		'main/texstore.c',
 		'main/transformfeedback.c',
+		'main/uniforms.c',
 		'main/varray.c',
 		'main/version.c',
 		'main/viewport.c',
@@ -217,7 +218,6 @@ if env['platform'] != 'winddk':
 		'shader/prog_uniform.c',
 		'shader/programopt.c',
 		'shader/symbol_table.c',
-		'shader/uniforms.c',
 	]
 	
 	slang_sources = [
