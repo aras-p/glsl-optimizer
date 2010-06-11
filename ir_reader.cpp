@@ -750,10 +750,7 @@ read_constant(_mesa_glsl_parse_state *st, s_list *list)
 
    const glsl_type *const base_type = type->get_base_type();
 
-   unsigned u[16];
-   int i[16];
-   float f[16];
-   bool b[16];
+   ir_constant_data data;
 
    // Read in list of values (at most 16).
    int k = 0;
@@ -771,7 +768,7 @@ read_constant(_mesa_glsl_parse_state *st, s_list *list)
 	    ir_read_error(st, values, "expected numbers");
 	    return NULL;
 	 }
-	 f[k] = value->fvalue();
+	 data.f[k] = value->fvalue();
       } else {
 	 s_int *value = SX_AS_INT(expr);
 	 if (value == NULL) {
@@ -781,15 +778,15 @@ read_constant(_mesa_glsl_parse_state *st, s_list *list)
 
 	 switch (base_type->base_type) {
 	 case GLSL_TYPE_UINT: {
-	    u[k] = value->value();
+	    data.u[k] = value->value();
 	    break;
 	 }
 	 case GLSL_TYPE_INT: {
-	    i[k] = value->value();
+	    data.i[k] = value->value();
 	    break;
 	 }
 	 case GLSL_TYPE_BOOL: {
-	    b[k] = value->value();
+	    data.b[k] = value->value();
 	    break;
 	 }
 	 default:
@@ -799,17 +796,8 @@ read_constant(_mesa_glsl_parse_state *st, s_list *list)
       }
       ++k;
    }
-   switch (base_type->base_type) {
-   case GLSL_TYPE_UINT:
-      return new ir_constant(type, u);
-   case GLSL_TYPE_INT:
-      return new ir_constant(type, i);
-   case GLSL_TYPE_BOOL:
-      return new ir_constant(type, b);
-   case GLSL_TYPE_FLOAT:
-      return new ir_constant(type, f);
-   }
-   return NULL; // should not be reached
+
+   return new ir_constant(type, &data);
 }
 
 static ir_dereference *
