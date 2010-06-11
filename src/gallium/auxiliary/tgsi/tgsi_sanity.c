@@ -102,7 +102,6 @@ scan_register_src(scan_register *reg,
    if (src->Register.Dimension) {
       /*FIXME: right now we don't support indirect
        * multidimensional addressing */
-      debug_assert(!src->Dimension.Indirect);
       fill_scan_register2d(reg,
                            src->Register.File,
                            src->Register.Index,

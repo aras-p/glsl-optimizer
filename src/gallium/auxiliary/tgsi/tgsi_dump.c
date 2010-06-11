@@ -211,9 +211,24 @@ _dump_register_src(
 {
    ENM(src->Register.File, file_names);
    if (src->Register.Dimension) {
-      CHR('[');
-      SID(src->Dimension.Index);
-      CHR(']');
+      if (src->Dimension.Indirect) {
+         CHR( '[' );
+         ENM( src->DimIndirect.File, file_names );
+         CHR( '[' );
+         SID( src->DimIndirect.Index );
+         TXT( "]." );
+         ENM( src->DimIndirect.SwizzleX, swizzle_names );
+         if (src->Dimension.Index != 0) {
+            if (src->Dimension.Index > 0)
+               CHR( '+' );
+            SID( src->Dimension.Index );
+         }
+         CHR( ']' );
+      } else {
+         CHR('[');
+         SID(src->Dimension.Index);
+         CHR(']');
+      }
    }
    if (src->Register.Indirect) {
       CHR( '[' );

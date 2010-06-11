@@ -49,14 +49,18 @@ struct ureg_src
    unsigned SwizzleZ    : 2;  /* TGSI_SWIZZLE_ */
    unsigned SwizzleW    : 2;  /* TGSI_SWIZZLE_ */
    unsigned Indirect    : 1;  /* BOOL */
+   unsigned DimIndirect : 1;  /* BOOL */
    unsigned Dimension   : 1;  /* BOOL */
    unsigned Absolute    : 1;  /* BOOL */
    unsigned Negate      : 1;  /* BOOL */
    int      Index       : 16; /* SINT */
-   unsigned IndirectFile    : 4;  /* TGSI_FILE_ */
-   int      IndirectIndex   : 16; /* SINT */
-   unsigned IndirectSwizzle : 2;  /* TGSI_SWIZZLE_ */
-   int      DimensionIndex  : 16; /* SINT */
+   unsigned IndirectFile     : 4;  /* TGSI_FILE_ */
+   int      IndirectIndex    : 16; /* SINT */
+   unsigned IndirectSwizzle  : 2;  /* TGSI_SWIZZLE_ */
+   int      DimensionIndex   : 16; /* SINT */
+   unsigned DimIndFile       : 4;  /* TGSI_FILE_ */
+   int      DimIndIndex      : 16; /* SINT */
+   unsigned DimIndSwizzle    : 2;  /* TGSI_SWIZZLE_ */
 };
 
 /* Very similar to a tgsi_dst_register, removing unsupported fields
@@ -821,12 +825,28 @@ ureg_src_indirect( struct ureg_src reg, struct ureg_src addr )
    return reg;
 }
 
-static INLINE struct ureg_src 
+static INLINE struct ureg_src
 ureg_src_dimension( struct ureg_src reg, int index )
 {
    assert(reg.File != TGSI_FILE_NULL);
    reg.Dimension = 1;
+   reg.DimIndirect = 0;
    reg.DimensionIndex = index;
+   return reg;
+}
+
+
+static INLINE struct ureg_src
+ureg_src_dimension_indirect( struct ureg_src reg, struct ureg_src addr,
+                             int index )
+{
+   assert(reg.File != TGSI_FILE_NULL);
+   reg.Dimension = 1;
+   reg.DimIndirect = 1;
+   reg.DimensionIndex = index;
+   reg.DimIndFile = addr.File;
+   reg.DimIndIndex = addr.Index;
+   reg.DimIndSwizzle = addr.SwizzleX;
    return reg;
 }
 
@@ -874,6 +894,10 @@ ureg_src_register(unsigned file,
    src.Negate = 0;
    src.Dimension = 0;
    src.DimensionIndex = 0;
+   src.DimIndirect = 0;
+   src.DimIndFile = TGSI_FILE_NULL;
+   src.DimIndIndex = 0;
+   src.DimIndSwizzle = 0;
 
    return src;
 }
@@ -897,6 +921,10 @@ ureg_src( struct ureg_dst dst )
    src.Negate    = 0;
    src.Dimension = 0;
    src.DimensionIndex = 0;
+   src.DimIndirect = 0;
+   src.DimIndFile = TGSI_FILE_NULL;
+   src.DimIndIndex = 0;
+   src.DimIndSwizzle = 0;
 
    return src;
 }
@@ -944,7 +972,11 @@ ureg_src_undef( void )
    src.Negate    = 0;
    src.Dimension = 0;
    src.DimensionIndex = 0;
-   
+   src.DimIndirect = 0;
+   src.DimIndFile = TGSI_FILE_NULL;
+   src.DimIndIndex = 0;
+   src.DimIndSwizzle = 0;
+
    return src;
 }
 

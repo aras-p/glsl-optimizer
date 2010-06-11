@@ -1046,7 +1046,12 @@ fetch_src_file_channel(const struct tgsi_exec_machine *mach,
    case TGSI_FILE_INPUT:
    case TGSI_FILE_SYSTEM_VALUE:
       for (i = 0; i < QUAD_SIZE; i++) {
-         /* XXX: 2D indexing */
+         /*
+         if (TGSI_PROCESSOR_GEOMETRY == mach->Processor) {
+            debug_printf("Fetching Input[%d] (2d=%d, 1d=%d)\n",
+                         index2D->i[i] * TGSI_EXEC_MAX_INPUT_ATTRIBS + index->i[i],
+                         index2D->i[i], index->i[i]);
+                         }*/
          chan->u[i] = mach->Inputs[index2D->i[i] * TGSI_EXEC_MAX_INPUT_ATTRIBS + index->i[i]].xyzw[swizzle].u[i];
       }
       break;

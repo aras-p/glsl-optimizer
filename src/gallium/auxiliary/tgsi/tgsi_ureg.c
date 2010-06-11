@@ -732,11 +732,12 @@ ureg_DECL_immediate_int( struct ureg_program *ureg,
 }
 
 
-void 
+void
 ureg_emit_src( struct ureg_program *ureg,
                struct ureg_src src )
 {
-   unsigned size = 1 + (src.Indirect ? 1 : 0) + (src.Dimension ? 1 : 0);
+   unsigned size = 1 + (src.Indirect ? 1 : 0) +
+                   (src.Dimension ? (src.DimIndirect ? 2 : 1) : 0);
 
    union tgsi_any_token *out = get_tokens( ureg, DOMAIN_INSN, size );
    unsigned n = 0;
@@ -769,11 +770,27 @@ ureg_emit_src( struct ureg_program *ureg,
    }
 
    if (src.Dimension) {
-      out[0].src.Dimension = 1;
-      out[n].dim.Indirect = 0;
-      out[n].dim.Dimension = 0;
-      out[n].dim.Padding = 0;
-      out[n].dim.Index = src.DimensionIndex;
+      if (src.DimIndirect) {
+         out[0].src.Dimension = 1;
+         out[n].dim.Indirect = 1;
+         out[n].dim.Dimension = 0;
+         out[n].dim.Padding = 0;
+         out[n].dim.Index = src.DimensionIndex;
+         n++;
+         out[n].value = 0;
+         out[n].src.File = src.DimIndFile;
+         out[n].src.SwizzleX = src.DimIndSwizzle;
+         out[n].src.SwizzleY = src.DimIndSwizzle;
+         out[n].src.SwizzleZ = src.DimIndSwizzle;
+         out[n].src.SwizzleW = src.DimIndSwizzle;
+         out[n].src.Index = src.DimIndIndex;
+      } else {
+         out[0].src.Dimension = 1;
+         out[n].dim.Indirect = 0;
+         out[n].dim.Dimension = 0;
+         out[n].dim.Padding = 0;
+         out[n].dim.Index = src.DimensionIndex;
+      }
       n++;
    }
 
