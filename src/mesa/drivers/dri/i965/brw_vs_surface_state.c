@@ -42,41 +42,58 @@
  * Otherwise, constants go through the CURBEs using the brw_constant_buffer
  * state atom.
  */
-static drm_intel_bo *
-brw_vs_update_constant_buffer(struct brw_context *brw)
+static void
+prepare_vs_constants(struct brw_context *brw)
 {
+   GLcontext *ctx = &brw->intel.ctx;
    struct intel_context *intel = &brw->intel;
    struct brw_vertex_program *vp =
       (struct brw_vertex_program *) brw->vertex_program;
    const struct gl_program_parameter_list *params = vp->program.Base.Parameters;
    const int size = params->NumParameters * 4 * sizeof(GLfloat);
-   drm_intel_bo *const_buffer;
    int i;
 
-   /* BRW_NEW_VERTEX_PROGRAM */
-   if (!vp->use_const_buffer)
-      return NULL;
-
-   const_buffer = drm_intel_bo_alloc(intel->bufmgr, "vp_const_buffer",
-				     size, 64);
-
-   /* _NEW_PROGRAM_CONSTANTS */
+   if (vp->program.IsNVProgram)
+      _mesa_load_tracked_matrices(ctx);
 
    /* Updates the ParamaterValues[i] pointers for all parameters of the
     * basic type of PROGRAM_STATE_VAR.
     */
    _mesa_load_state_parameters(&brw->intel.ctx, vp->program.Base.Parameters);
 
-   drm_intel_gem_bo_map_gtt(const_buffer);
+   /* BRW_NEW_VERTEX_PROGRAM */
+   if (!vp->use_const_buffer) {
+      if (brw->vs.const_bo) {
+	 drm_intel_bo_unreference(brw->vs.const_bo);
+	 brw->vs.const_bo = NULL;
+	 brw->state.dirty.brw |= BRW_NEW_VS_CONSTBUF;
+      }
+      return;
+   }
+
+   /* _NEW_PROGRAM_CONSTANTS */
+   drm_intel_bo_unreference(brw->vs.const_bo);
+   brw->vs.const_bo = drm_intel_bo_alloc(intel->bufmgr, "vp_const_buffer",
+					 size, 64);
+
+   drm_intel_gem_bo_map_gtt(brw->vs.const_bo);
    for (i = 0; i < params->NumParameters; i++) {
-      memcpy(const_buffer->virtual + i * 4 * sizeof(float),
+      memcpy(brw->vs.const_bo->virtual + i * 4 * sizeof(float),
 	     params->ParameterValues[i],
 	     4 * sizeof(float));
    }
-   drm_intel_gem_bo_unmap_gtt(const_buffer);
-
-   return const_buffer;
+   drm_intel_gem_bo_unmap_gtt(brw->vs.const_bo);
+   brw->state.dirty.brw |= BRW_NEW_VS_CONSTBUF;
 }
+
+const struct brw_tracked_state brw_vs_constants = {
+   .dirty = {
+      .mesa = (_NEW_PROGRAM_CONSTANTS),
+      .brw = (BRW_NEW_VERTEX_PROGRAM),
+      .cache = 0
+   },
+   .prepare = prepare_vs_constants,
+};
 
 /**
  * Update the surface state for a VS constant buffer.
@@ -95,16 +112,10 @@ brw_update_vs_constant_surface( GLcontext *ctx,
 
    assert(surf == 0);
 
-   /* If we're in this state update atom, we need to update VS constants, so
-    * free the old buffer and create a new one for the new contents.
-    */
-   drm_intel_bo_unreference(vp->const_buffer);
-   vp->const_buffer = brw_vs_update_constant_buffer(brw);
-
    /* If there's no constant buffer, then no surface BO is needed to point at
     * it.
     */
-   if (vp->const_buffer == NULL) {
+   if (brw->vs.const_bo == NULL) {
       drm_intel_bo_unreference(brw->vs.surf_bo[surf]);
       brw->vs.surf_bo[surf] = NULL;
       return;
@@ -114,7 +125,7 @@ brw_update_vs_constant_surface( GLcontext *ctx,
 
    key.format = MESA_FORMAT_RGBA_FLOAT32;
    key.internal_format = GL_RGBA;
-   key.bo = vp->const_buffer;
+   key.bo = brw->vs.const_bo;
    key.depthmode = GL_NONE;
    key.pitch = params->NumParameters;
    key.width = params->NumParameters;
@@ -223,8 +234,8 @@ static void prepare_vs_surfaces(struct brw_context *brw )
 
 const struct brw_tracked_state brw_vs_surfaces = {
    .dirty = {
-      .mesa = (_NEW_PROGRAM_CONSTANTS),
-      .brw = (BRW_NEW_VERTEX_PROGRAM),
+      .mesa = 0,
+      .brw = (BRW_NEW_VS_CONSTBUF),
       .cache = 0
    },
    .prepare = prepare_vs_surfaces,

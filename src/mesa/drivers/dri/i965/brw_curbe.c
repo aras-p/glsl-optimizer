@@ -200,8 +200,6 @@ static void prepare_constant_buffer(struct brw_context *brw)
    if (brw->curbe.wm_size) {
       GLuint offset = brw->curbe.wm_start * 16;
 
-      _mesa_load_state_parameters(ctx, fp->program.Base.Parameters); 
-
       /* copy float constants */
       for (i = 0; i < brw->wm.prog_data->nr_params; i++) 
 	 buf[offset + i] = *brw->wm.prog_data->param[i];
@@ -243,14 +241,6 @@ static void prepare_constant_buffer(struct brw_context *brw)
    if (brw->curbe.vs_size) {
       GLuint offset = brw->curbe.vs_start * 16;
       GLuint nr = brw->vs.prog_data->nr_params / 4;
-
-      if (brw->vertex_program->IsNVProgram)
-	 _mesa_load_tracked_matrices(ctx);
-
-      /* Updates the ParamaterValues[i] pointers for all parameters of the
-       * basic type of PROGRAM_STATE_VAR.
-       */
-      _mesa_load_state_parameters(ctx, vp->program.Base.Parameters); 
 
       if (vp->use_const_buffer) {
 	 /* Load the subset of push constants that will get used when

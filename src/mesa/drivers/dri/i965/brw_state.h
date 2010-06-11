@@ -51,6 +51,8 @@ const struct brw_tracked_state brw_cc_unit;
 const struct brw_tracked_state brw_check_fallback;
 const struct brw_tracked_state brw_clip_prog;
 const struct brw_tracked_state brw_clip_unit;
+const struct brw_tracked_state brw_vs_constants;
+const struct brw_tracked_state brw_wm_constants;
 const struct brw_tracked_state brw_constant_buffer;
 const struct brw_tracked_state brw_curbe_offsets;
 const struct brw_tracked_state brw_invarient_state;

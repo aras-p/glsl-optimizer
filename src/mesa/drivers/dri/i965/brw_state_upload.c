@@ -63,6 +63,9 @@ static const struct brw_tracked_state *gen4_atoms[] =
 
    &brw_cc_unit,
 
+   &brw_vs_constants, /* Before vs_surfaces and constant_buffer */
+   &brw_wm_constants, /* Before wm_surfaces and constant_buffer */
+
    &brw_vs_surfaces,		/* must do before unit */
    &brw_wm_constant_surface,	/* must do before wm surfaces/bind bo */
    &brw_wm_surfaces,		/* must do before samplers and unit */

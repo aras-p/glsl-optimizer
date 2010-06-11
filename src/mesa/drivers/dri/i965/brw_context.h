@@ -143,6 +143,8 @@ struct brw_context;
 #define BRW_NEW_NR_WM_SURFACES		0x40000
 #define BRW_NEW_NR_VS_SURFACES		0x80000
 #define BRW_NEW_INDEX_BUFFER		0x100000
+#define BRW_NEW_VS_CONSTBUF		0x200000
+#define BRW_NEW_WM_CONSTBUF		0x200000
 
 struct brw_state_flags {
    /** State update flags signalled by mesa internals */
@@ -160,7 +162,6 @@ struct brw_state_flags {
 struct brw_vertex_program {
    struct gl_vertex_program program;
    GLuint id;
-   drm_intel_bo *const_buffer;    /** Program constant buffer/surface */
    GLboolean use_const_buffer;
 };
 
@@ -172,7 +173,6 @@ struct brw_fragment_program {
    GLboolean isGLSL;  /**< really, any IF/LOOP/CONT/BREAK instructions */
 
    GLboolean use_const_buffer;
-   drm_intel_bo *const_buffer;    /** Program constant buffer/surface */
 
    /** for debugging, which texture units are referenced */
    GLbitfield tex_units_used;
@@ -594,6 +594,7 @@ struct brw_context
 
       drm_intel_bo *prog_bo;
       drm_intel_bo *state_bo;
+      drm_intel_bo *const_bo;
 
       /** Binding table of pointers to surf_bo entries */
       drm_intel_bo *bind_bo;
@@ -653,6 +654,7 @@ struct brw_context
 
       drm_intel_bo *prog_bo;
       drm_intel_bo *state_bo;
+      drm_intel_bo *const_bo;
    } wm;
 
 
