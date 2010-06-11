@@ -1000,23 +1000,11 @@ ast_expression::hir(exec_list *instructions,
        * the if-statement assigns a value to the anonymous temporary.  This
        * temporary is the r-value of the expression.
        */
-      ir_variable *const tmp = generate_temporary(glsl_type::error_type,
-						  instructions, state);
+      exec_list then_instructions;
+      exec_list else_instructions;
 
-      ir_if *const stmt = new ir_if(op[0]);
-      instructions->push_tail(stmt);
-
-      op[1] = this->subexpressions[1]->hir(& stmt->then_instructions, state);
-      ir_dereference *const then_deref = new ir_dereference_variable(tmp);
-      ir_assignment *const then_assign =
-	 new ir_assignment(then_deref, op[1], NULL);
-      stmt->then_instructions.push_tail(then_assign);
-
-      op[2] = this->subexpressions[2]->hir(& stmt->else_instructions, state);
-      ir_dereference *const else_deref = new ir_dereference_variable(tmp);
-      ir_assignment *const else_assign =
-	 new ir_assignment(else_deref, op[2], NULL);
-      stmt->else_instructions.push_tail(else_assign);
+      op[1] = this->subexpressions[1]->hir(&then_instructions, state);
+      op[2] = this->subexpressions[2]->hir(&else_instructions, state);
 
       /* From page 59 (page 65 of the PDF) of the GLSL 1.50 spec:
        *
@@ -1035,12 +1023,30 @@ ast_expression::hir(exec_list *instructions,
 	 _mesa_glsl_error(& loc, state, "Second and third operands of ?: "
 			  "operator must have matching types.");
 	 error_emitted = true;
+	 type = glsl_type::error_type;
       } else {
-	 tmp->type = op[1]->type;
+	 type = op[1]->type;
       }
 
+      ir_variable *const tmp = generate_temporary(type,
+						  instructions, state);
+
+      ir_if *const stmt = new ir_if(op[0]);
+      instructions->push_tail(stmt);
+
+      then_instructions.move_nodes_to(& stmt->then_instructions);
+      ir_dereference *const then_deref = new ir_dereference_variable(tmp);
+      ir_assignment *const then_assign =
+	 new ir_assignment(then_deref, op[1], NULL);
+      stmt->then_instructions.push_tail(then_assign);
+
+      else_instructions.move_nodes_to(& stmt->else_instructions);
+      ir_dereference *const else_deref = new ir_dereference_variable(tmp);
+      ir_assignment *const else_assign =
+	 new ir_assignment(else_deref, op[2], NULL);
+      stmt->else_instructions.push_tail(else_assign);
+
       result = new ir_dereference_variable(tmp);
-      type = tmp->type;
       break;
    }
 
