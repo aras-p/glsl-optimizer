@@ -154,8 +154,9 @@ convert_component(ir_rvalue *src, const glsl_type *desired_type)
 	 return new ir_expression(ir_unop_f2i, desired_type, src, NULL);
       else {
 	 assert(b == GLSL_TYPE_BOOL);
-	 return new ir_expression(ir_unop_f2b, desired_type, src, NULL);
+	 return new ir_expression(ir_unop_b2i, desired_type, src, NULL);
       }
+      break;
    case GLSL_TYPE_FLOAT:
       switch (b) {
       case GLSL_TYPE_UINT:
