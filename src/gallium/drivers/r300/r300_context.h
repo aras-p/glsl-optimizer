@@ -504,8 +504,13 @@ void r300_init_render_functions(struct r300_context *r300);
 void r300_init_state_functions(struct r300_context* r300);
 void r300_init_resource_functions(struct r300_context* r300);
 
+/* r300_render_translate.c */
 void r300_begin_vertex_translate(struct r300_context *r300);
 void r300_end_vertex_translate(struct r300_context *r300);
+void r300_translate_index_buffer(struct r300_context *r300,
+                                 struct pipe_resource **index_buffer,
+                                 unsigned *index_size, unsigned index_offset,
+                                 unsigned *start, unsigned count);
 
 boolean r300_check_cs(struct r300_context *r300, unsigned size);
 void r300_finish(struct r300_context *r300);
