@@ -7,6 +7,26 @@
 
 struct radeon_compiler;
 
-void rc_emulate_loops(struct radeon_compiler *c, unsigned int max_instructions);
+struct loop_info {
+	struct rc_instruction * BeginLoop;
+	struct rc_instruction * Cond;
+	struct rc_instruction * If;
+	struct rc_instruction * Brk;
+	struct rc_instruction * EndIf;
+	struct rc_instruction * EndLoop;
+};
+
+struct emulate_loop_state {
+	struct radeon_compiler * C;
+	struct loop_info * Loops;
+	unsigned int LoopCount;
+	unsigned int LoopReserved;
+};
+
+void rc_transform_unroll_loops(struct radeon_compiler *c,
+					struct emulate_loop_state * s);
+
+void rc_emulate_loops(struct emulate_loop_state *s,
+					unsigned int max_instructions);
 
 #endif /* RADEON_EMULATE_LOOPS_H */

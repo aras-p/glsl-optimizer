@@ -97,6 +97,8 @@ static void debug_program_log(struct r300_fragment_program_compiler* c, const ch
 
 void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 {
+	struct emulate_loop_state loop_state;
+
 	rewrite_depth_out(c);
 
 	debug_program_log(c, "before compilation");
@@ -104,14 +106,11 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 	/* XXX Ideally this should be done only for r3xx, but since
 	 * we don't have branching support for r5xx, we use the emulation
 	 * on all chipsets. */
-	
-	if (c->Base.is_r500) {
-		rc_emulate_loops(&c->Base, R500_PFS_MAX_INST);
-	} else {
-		rc_emulate_loops(&c->Base, R300_PFS_MAX_ALU_INST);
-	}
-	debug_program_log(c, "after emulate loops");
 
+	rc_transform_unroll_loops(&c->Base, &loop_state);
+	
+	debug_program_log(c, "after transform loops");
+	
 	rc_emulate_branches(&c->Base);
 
 	debug_program_log(c, "after emulate branches");
@@ -160,6 +159,15 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 		return;
 
 	debug_program_log(c, "after deadcode");
+
+	if(c->Base.is_r500){
+		rc_emulate_loops(&loop_state, R500_PFS_MAX_INST);
+	}
+	else{
+		rc_emulate_loops(&loop_state, R300_PFS_MAX_ALU_INST);
+	}
+	
+	debug_program_log(c, "after emulate looops");
 
 	rc_optimize(&c->Base);
 
