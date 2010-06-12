@@ -36,7 +36,6 @@
 #include "r300_reg.h"
 #include "r300_screen.h"
 #include "r300_screen_buffer.h"
-#include "r300_state.h"
 #include "r300_state_inlines.h"
 #include "r300_fs.h"
 #include "r300_texture.h"

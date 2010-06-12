@@ -495,6 +495,9 @@ static INLINE struct r300_fragment_shader *r300_fs(struct r300_context *r300)
 struct pipe_context* r300_create_context(struct pipe_screen* screen,
                                          void *priv);
 
+boolean r300_check_cs(struct r300_context *r300, unsigned size);
+void r300_finish(struct r300_context *r300);
+
 /* Context initialization. */
 struct draw_stage* r300_draw_stage(struct r300_context* r300);
 void r300_init_blit_functions(struct r300_context *r300);
@@ -515,9 +518,12 @@ void r300_translate_index_buffer(struct r300_context *r300,
 /* r300_render_stencilref.c */
 void r300_plug_in_stencil_ref_fallback(struct r300_context *r300);
 
-boolean r300_check_cs(struct r300_context *r300, unsigned size);
-void r300_finish(struct r300_context *r300);
+/* r300_state.c */
+void r300_mark_fs_code_dirty(struct r300_context *r300);
+
+/* r300_debug.c */
 void r500_dump_rs_block(struct r300_rs_block *rs);
+
 
 static INLINE boolean CTX_DBG_ON(struct r300_context * ctx, unsigned flags)
 {

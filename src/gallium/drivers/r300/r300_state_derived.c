@@ -31,7 +31,6 @@
 #include "r300_hyperz.h"
 #include "r300_screen.h"
 #include "r300_shader_semantics.h"
-#include "r300_state.h"
 #include "r300_state_derived.h"
 #include "r300_state_inlines.h"
 #include "r300_texture.h"
