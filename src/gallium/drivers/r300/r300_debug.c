@@ -29,7 +29,6 @@
 static const struct debug_named_value debug_options[] = {
     { "fp", DBG_FP, "Fragment program handling (for debugging)" },
     { "vp", DBG_VP, "Vertex program handling (for debugging)" },
-    { "cs", DBG_CS, "Command submissions (for debugging)" },
     { "draw", DBG_DRAW, "Draw and emit (for debugging)" },
     { "tex", DBG_TEX, "Textures (for debugging)" },
     { "texalloc", DBG_TEXALLOC, "Texture allocation (for debugging)" },
