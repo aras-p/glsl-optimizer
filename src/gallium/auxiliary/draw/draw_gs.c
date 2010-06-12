@@ -367,9 +367,11 @@ int draw_geometry_shader_run(struct draw_geometry_shader *shader,
 
    gs_run(shader, pipe_prim, count);
 
-   memcpy(output, pipeline_verts->data,
-          shader->info.num_outputs * 4 * sizeof(float) +
-          vertex_size * (shader->emitted_vertices -1));
+   if (shader->emitted_vertices > 0) {
+      memcpy(output, pipeline_verts->data,
+             shader->info.num_outputs * 4 * sizeof(float) +
+             vertex_size * (shader->emitted_vertices -1));
+   }
 
    FREE(pipeline_verts);
    return shader->emitted_vertices;
