@@ -913,7 +913,7 @@ static void r300_render_draw_elements(struct vbuf_render* render,
     unsigned max_index = (r300render->vbo_size - r300render->vbo_offset) /
                          (r300render->r300->vertex_info.size * 4) - 1;
     unsigned short_count;
-    struct r300_cs_info cs_info;
+    unsigned free_dwords;
 
     CS_LOCALS(r300);
 
@@ -926,9 +926,9 @@ static void r300_render_draw_elements(struct vbuf_render* render,
         NULL, 256, 0, 0, &end_cs_dwords);
 
     while (count) {
-        r300->rws->get_cs_info(r300->rws, &cs_info);
+        free_dwords = r300->rws->get_cs_free_dwords(r300->rws);
 
-        short_count = MIN2(count, (cs_info.free - end_cs_dwords - 6) * 2);
+        short_count = MIN2(count, (free_dwords - end_cs_dwords - 6) * 2);
 
         BEGIN_CS(6 + (short_count+1)/2);
         OUT_CS_REG(R300_GA_COLOR_CONTROL,

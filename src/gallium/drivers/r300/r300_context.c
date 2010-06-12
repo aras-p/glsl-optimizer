@@ -242,10 +242,7 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
 
 boolean r300_check_cs(struct r300_context *r300, unsigned size)
 {
-    struct r300_cs_info cs_info;
-
-    r300->rws->get_cs_info(r300->rws, &cs_info);
-    return size <= cs_info.free;
+    return size <= r300->rws->get_cs_free_dwords(r300->rws);
 }
 
 void r300_finish(struct r300_context *r300)
