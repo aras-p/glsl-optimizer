@@ -23,6 +23,7 @@ r300compiler = env.ConvenienceLibrary(
         'radeon_pair_regalloc.c',
         'radeon_optimize.c',
         'radeon_emulate_branches.c',
+        'radeon_emulate_loops.c',
         'radeon_dataflow.c',
         'radeon_dataflow_deadcode.c',
         'radeon_dataflow_swizzles.c',
