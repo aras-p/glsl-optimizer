@@ -109,6 +109,20 @@ i915_vbuf_render(struct vbuf_render *render)
    return (struct i915_vbuf_render *)render;
 }
 
+static void
+i915_vbuf_update_vbo_state(struct vbuf_render *render)
+{
+   struct i915_vbuf_render *i915_render = i915_vbuf_render(render);
+   struct i915_context *i915 = i915_render->i915;
+
+   if (i915->vbo != i915_render->vbo ||
+       i915->vbo_offset != i915_render->vbo_offset) {
+      i915->vbo = i915_render->vbo;
+      i915->vbo_offset = i915_render->vbo_offset;
+      i915->dirty |= I915_NEW_VBO;
+   }
+}
+
 static const struct vertex_info *
 i915_vbuf_render_get_vertex_info(struct vbuf_render *render)
 {
@@ -195,11 +209,7 @@ i915_vbuf_render_allocate_vertices(struct vbuf_render *render,
                                    ushort nr_vertices)
 {
    struct i915_vbuf_render *i915_render = i915_vbuf_render(render);
-   struct i915_context *i915 = i915_render->i915;
    size_t size = (size_t)vertex_size * (size_t)nr_vertices;
-
-   /* FIXME: handle failure */
-   assert(!i915->vbo);
 
    if (!i915_vbuf_render_reserve(i915_render, size)) {
 #ifdef VBUF_USE_FIFO
@@ -211,9 +221,8 @@ i915_vbuf_render_allocate_vertices(struct vbuf_render *render,
    }
 
    i915_render->vertex_size = vertex_size;
-   i915->vbo = i915_render->vbo;
-   i915->vbo_offset = i915_render->vbo_offset;
-   i915->dirty |= I915_NEW_VBO;
+
+   i915_vbuf_update_vbo_state(render);
 
    if (!i915_render->vbo)
       return FALSE;
@@ -415,6 +424,7 @@ draw_arrays_fallback(struct vbuf_render *render,
          goto out;
       }
    }
+
    OUT_BATCH(_3DPRIMITIVE |
              PRIM_INDIRECT |
              i915_render->hwprim |
@@ -597,14 +607,15 @@ static void
 i915_vbuf_render_release_vertices(struct vbuf_render *render)
 {
    struct i915_vbuf_render *i915_render = i915_vbuf_render(render);
-   struct i915_context *i915 = i915_render->i915;
-
-   assert(i915->vbo);
 
    i915_render->vbo_offset += i915_render->vbo_max_used;
    i915_render->vbo_max_used = 0;
-   i915->vbo = NULL;
-   i915->dirty |= I915_NEW_VBO;
+
+   /*
+    * Micro optimization, by calling update here we the offset change
+    * will be picked up on the next pipe_context::draw_*.
+    */
+   i915_vbuf_update_vbo_state(render);
 }
 
 static void
