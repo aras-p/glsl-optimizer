@@ -56,6 +56,7 @@
     if (cs_count != 0) \
         debug_printf("r300: Warning: cs_count off by %d\n", cs_count); \
     cs_winsys->end_cs(cs_winsys, __FILE__, __FUNCTION__, __LINE__); \
+    cs_count = 0; \
 } while (0)
 
 
@@ -135,6 +136,17 @@
     cs_winsys->write_cs_dword(cs_winsys, count); \
     cs_winsys->write_cs_reloc(cs_winsys, bo, rd, wd, flags); \
     cs_count -= 4; \
+} while (0)
+
+
+/**
+ * Command buffer emission.
+ */
+
+/* It's recommended not to call begin_cs/end_cs before/after this macro. */
+#define WRITE_CS_TABLE(values, count) do { \
+    assert(cs_count == 0); \
+    cs_winsys->write_cs_table(cs_winsys, values, count); \
 } while (0)
 
 #endif /* R300_CS_H */
