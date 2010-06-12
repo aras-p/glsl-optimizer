@@ -52,7 +52,7 @@
 #include "i915_state.h"
 
 
-#undef VBUF_MAP_BUFFER
+#define VBUF_MAP_BUFFER
 
 /**
  * Primitive renderer for i915.
@@ -78,9 +78,12 @@ struct i915_vbuf_render {
    struct i915_winsys_buffer *vbo;
    size_t vbo_size; /**< current size of allocated buffer */
    size_t vbo_alloc_size; /**< minimum buffer size to allocate */
-   size_t vbo_offset;
+   size_t vbo_hw_offset; /**< offset that we program the hardware with */
+   size_t vbo_sw_offset; /**< offset that we work with */
+   size_t vbo_index; /**< index offset to be added to all indices */
    void *vbo_ptr;
    size_t vbo_max_used;
+   size_t vbo_max_index; /**< index offset to be added to all indices */
 
 #ifndef VBUF_MAP_BUFFER
    size_t map_used_start;
@@ -100,6 +103,14 @@ i915_vbuf_render(struct vbuf_render *render)
    return (struct i915_vbuf_render *)render;
 }
 
+/**
+ * If vbo state differs between renderer and context
+ * push state to the context. This function pushes
+ * hw_offset to i915->vbo_offset and vbo to i915->vbo.
+ *
+ * Side effects:
+ *    May updates context vbo_offset and vbo fields.
+ */
 static void
 i915_vbuf_update_vbo_state(struct vbuf_render *render)
 {
@@ -107,13 +118,20 @@ i915_vbuf_update_vbo_state(struct vbuf_render *render)
    struct i915_context *i915 = i915_render->i915;
 
    if (i915->vbo != i915_render->vbo ||
-       i915->vbo_offset != i915_render->vbo_offset) {
+       i915->vbo_offset != i915_render->vbo_hw_offset) {
       i915->vbo = i915_render->vbo;
-      i915->vbo_offset = i915_render->vbo_offset;
+      i915->vbo_offset = i915_render->vbo_hw_offset;
       i915->dirty |= I915_NEW_VBO;
    }
 }
 
+/**
+ * Callback exported to the draw module.
+ * Returns the current vertex_info.
+ *
+ * Side effects:
+ *    If state is dirty update derived state.
+ */
 static const struct vertex_info *
 i915_vbuf_render_get_vertex_info(struct vbuf_render *render)
 {
@@ -128,12 +146,18 @@ i915_vbuf_render_get_vertex_info(struct vbuf_render *render)
    return &i915->current.vertex_info;
 }
 
+/**
+ * Reserve space in the vbo for vertices.
+ *
+ * Side effects:
+ *    None.
+ */
 static boolean
 i915_vbuf_render_reserve(struct i915_vbuf_render *i915_render, size_t size)
 {
    struct i915_context *i915 = i915_render->i915;
 
-   if (i915_render->vbo_size < size + i915_render->vbo_offset)
+   if (i915_render->vbo_size < size + i915_render->vbo_sw_offset)
       return FALSE;
 
    if (i915->vbo_flushed)
@@ -142,6 +166,13 @@ i915_vbuf_render_reserve(struct i915_vbuf_render *i915_render, size_t size)
    return TRUE;
 }
 
+/**
+ * Allocate a new vbo buffer should there not be enough space for
+ * the requested number of vertices by the draw module.
+ *
+ * Side effects:
+ *    Updates hw_offset, sw_offset, index and allocates a new buffer.
+ */
 static void
 i915_vbuf_render_new_buf(struct i915_vbuf_render *i915_render, size_t size)
 {
@@ -154,7 +185,9 @@ i915_vbuf_render_new_buf(struct i915_vbuf_render *i915_render, size_t size)
    i915->vbo_flushed = 0;
 
    i915_render->vbo_size = MAX2(size, i915_render->vbo_alloc_size);
-   i915_render->vbo_offset = 0;
+   i915_render->vbo_hw_offset = 0;
+   i915_render->vbo_sw_offset = 0;
+   i915_render->vbo_index = 0;
 
 #ifndef VBUF_MAP_BUFFER
    if (i915_render->vbo_size > i915_render->map_size) {
@@ -168,6 +201,14 @@ i915_vbuf_render_new_buf(struct i915_vbuf_render *i915_render, size_t size)
                                          64, I915_NEW_VERTEX);
 }
 
+/**
+ * Callback exported to the draw module.
+ *
+ * Side effects:
+ *    Updates hw_offset, sw_offset, index and may allocate
+ *    a new buffer. Also updates may update the vbo state
+ *    on the i915 context.
+ */
 static boolean
 i915_vbuf_render_allocate_vertices(struct vbuf_render *render,
                                    ushort vertex_size,
@@ -175,9 +216,28 @@ i915_vbuf_render_allocate_vertices(struct vbuf_render *render,
 {
    struct i915_vbuf_render *i915_render = i915_vbuf_render(render);
    size_t size = (size_t)vertex_size * (size_t)nr_vertices;
+   size_t offset;
+
+   /*
+    * Align sw_offset with first multiple of vertex size from hw_offset.
+    * Set index to be the multiples from from hw_offset to sw_offset.
+    * i915_vbuf_render_new_buf will reset index, sw_offset, hw_offset
+    * when it allocates a new buffer this is correct.
+    */
+   {
+      offset = i915_render->vbo_sw_offset - i915_render->vbo_hw_offset;
+      offset = util_align_npot(offset, vertex_size);
+      i915_render->vbo_sw_offset = i915_render->vbo_hw_offset + offset;
+      i915_render->vbo_index = offset / vertex_size;
+   }
 
    if (!i915_vbuf_render_reserve(i915_render, size))
       i915_vbuf_render_new_buf(i915_render, size);
+
+   /*
+    * If a new buffer has been alocated sw_offset,
+    * hw_offset & index will be reset by new_buf
+    */
 
    i915_render->vertex_size = vertex_size;
 
@@ -200,7 +260,7 @@ i915_vbuf_render_map_vertices(struct vbuf_render *render)
 
 #ifdef VBUF_MAP_BUFFER
    i915_render->vbo_ptr = iws->buffer_map(iws, i915_render->vbo, TRUE);
-   return (unsigned char *)i915_render->vbo_ptr + i915_render->vbo_offset;
+   return (unsigned char *)i915_render->vbo_ptr + i915_render->vbo_sw_offset;
 #else
    (void)iws;
    return (unsigned char *)i915_render->vbo_ptr;
@@ -216,6 +276,7 @@ i915_vbuf_render_unmap_vertices(struct vbuf_render *render,
    struct i915_context *i915 = i915_render->i915;
    struct i915_winsys *iws = i915->iws;
 
+   i915_render->vbo_max_index = max_index;
    i915_render->vbo_max_used = MAX2(i915_render->vbo_max_used, i915_render->vertex_size * (max_index + 1));
 #ifdef VBUF_MAP_BUFFER
    iws->buffer_unmap(iws, i915_render->vbo);
@@ -223,11 +284,34 @@ i915_vbuf_render_unmap_vertices(struct vbuf_render *render,
    i915_render->map_used_start = i915_render->vertex_size * min_index;
    i915_render->map_used_end = i915_render->vertex_size * (max_index + 1);
    iws->buffer_write(iws, i915_render->vbo,
-                     i915_render->map_used_start + i915_render->vbo_offset,
+                     i915_render->map_used_start + i915_render->vbo_sw_offset,
                      i915_render->map_used_end - i915_render->map_used_start,
                      (unsigned char *)i915_render->vbo_ptr + i915_render->map_used_start);
 
 #endif
+}
+
+/**
+ * Ensure that the given max_index given is not larger ushort max.
+ * If it is larger then ushort max it advanced the hw_offset to the
+ * same position in the vbo as sw_offset and set index to zero.
+ *
+ * Side effects:
+ *    On failure update hw_offset and index.
+ */
+static void
+i915_vbuf_ensure_index_bounds(struct vbuf_render *render,
+                              unsigned max_index)
+{
+   struct i915_vbuf_render *i915_render = i915_vbuf_render(render);
+
+   if (max_index + i915_render->vbo_index < ((1 << 17) - 1))
+      return;
+
+   i915_render->vbo_hw_offset = i915_render->vbo_sw_offset;
+   i915_render->vbo_index = 0;
+
+   i915_vbuf_update_vbo_state(render);
 }
 
 static boolean
@@ -269,11 +353,11 @@ i915_vbuf_render_set_primitive(struct vbuf_render *render,
    case PIPE_PRIM_QUADS:
       i915_render->hwprim = PRIM3D_TRILIST;
       i915_render->fallback = PIPE_PRIM_QUADS;
-      return TRUE;
+      return FALSE;
    case PIPE_PRIM_QUAD_STRIP:
       i915_render->hwprim = PRIM3D_TRILIST;
       i915_render->fallback = PIPE_PRIM_QUAD_STRIP;
-      return TRUE;
+      return FALSE;
    case PIPE_PRIM_POLYGON:
       i915_render->hwprim = PRIM3D_POLY;
       i915_render->fallback = 0;
@@ -295,7 +379,9 @@ draw_arrays_generate_indices(struct vbuf_render *render,
    struct i915_vbuf_render *i915_render = i915_vbuf_render(render);
    struct i915_context *i915 = i915_render->i915;
    unsigned i;
-   unsigned end = start + nr;
+   unsigned end = start + nr + i915_render->vbo_index;
+   start += i915_render->vbo_index;
+
    switch(type) {
    case 0:
       for (i = start; i+1 < end; i += 2)
@@ -359,15 +445,17 @@ draw_arrays_fallback(struct vbuf_render *render,
    struct i915_context *i915 = i915_render->i915;
    unsigned nr_indices;
 
+   nr_indices = draw_arrays_calc_nr_indices(nr, i915_render->fallback);
+   if (!nr_indices)
+      return;
+
+   i915_vbuf_ensure_index_bounds(render, start + nr_indices);
+
    if (i915->dirty)
       i915_update_derived(i915);
 
    if (i915->hardware_dirty)
       i915_emit_hardware_state(i915);
-
-   nr_indices = draw_arrays_calc_nr_indices(nr, i915_render->fallback);
-   if (!nr_indices)
-      return;
 
    if (!BEGIN_BATCH(1 + (nr_indices + 1)/2, 1)) {
       FLUSH_BATCH(NULL);
@@ -408,6 +496,9 @@ i915_vbuf_render_draw_arrays(struct vbuf_render *render,
       draw_arrays_fallback(render, start, nr);
       return;
    }
+
+   i915_vbuf_ensure_index_bounds(render, start + nr);
+   start += i915_render->vbo_index;
 
    if (i915->dirty)
       i915_update_derived(i915);
@@ -454,35 +545,36 @@ draw_generate_indices(struct vbuf_render *render,
    struct i915_vbuf_render *i915_render = i915_vbuf_render(render);
    struct i915_context *i915 = i915_render->i915;
    unsigned i;
+   unsigned o = i915_render->vbo_index;
 
    switch(type) {
    case 0:
       for (i = 0; i + 1 < nr_indices; i += 2) {
-         OUT_BATCH(indices[i] | indices[i+1] << 16);
+         OUT_BATCH((o+indices[i]) | (o+indices[i+1]) << 16);
       }
       if (i < nr_indices) {
-         OUT_BATCH(indices[i]);
+         OUT_BATCH((o+indices[i]));
       }
       break;
    case PIPE_PRIM_LINE_LOOP:
       if (nr_indices >= 2) {
          for (i = 1; i < nr_indices; i++)
-            OUT_BATCH(indices[i-1] | indices[i] << 16);
-         OUT_BATCH(indices[i-1] | indices[0] << 16);
+            OUT_BATCH((o+indices[i-1]) | (o+indices[i]) << 16);
+         OUT_BATCH((o+indices[i-1]) | (o+indices[0]) << 16);
       }
       break;
    case PIPE_PRIM_QUADS:
       for (i = 0; i + 3 < nr_indices; i += 4) {
-         OUT_BATCH(indices[i+0] | indices[i+1] << 16);
-         OUT_BATCH(indices[i+3] | indices[i+1] << 16);
-         OUT_BATCH(indices[i+2] | indices[i+3] << 16);
+         OUT_BATCH((o+indices[i+0]) | (o+indices[i+1]) << 16);
+         OUT_BATCH((o+indices[i+3]) | (o+indices[i+1]) << 16);
+         OUT_BATCH((o+indices[i+2]) | (o+indices[i+3]) << 16);
       }
       break;
    case PIPE_PRIM_QUAD_STRIP:
       for (i = 0; i + 3 < nr_indices; i += 2) {
-         OUT_BATCH(indices[i+0] | indices[i+1] << 16);
-         OUT_BATCH(indices[i+3] | indices[i+2] << 16);
-         OUT_BATCH(indices[i+0] | indices[i+3] << 16);
+         OUT_BATCH((o+indices[i+0]) | (o+indices[i+1]) << 16);
+         OUT_BATCH((o+indices[i+3]) | (o+indices[i+2]) << 16);
+         OUT_BATCH((o+indices[i+0]) | (o+indices[i+3]) << 16);
       }
       break;
    default:
@@ -527,6 +619,8 @@ i915_vbuf_render_draw_elements(struct vbuf_render *render,
    if (!nr_indices)
       return;
 
+   i915_vbuf_ensure_index_bounds(render, i915_render->vbo_max_index);
+
    if (i915->dirty)
       i915_update_derived(i915);
 
@@ -567,7 +661,7 @@ i915_vbuf_render_release_vertices(struct vbuf_render *render)
 {
    struct i915_vbuf_render *i915_render = i915_vbuf_render(render);
 
-   i915_render->vbo_offset += i915_render->vbo_max_used;
+   i915_render->vbo_sw_offset += i915_render->vbo_max_used;
    i915_render->vbo_max_used = 0;
 
    /*
@@ -622,7 +716,8 @@ i915_vbuf_render_create(struct i915_context *i915)
    i915_render->vbo = NULL;
    i915_render->vbo_ptr = NULL;
    i915_render->vbo_size = 0;
-   i915_render->vbo_offset = 0;
+   i915_render->vbo_hw_offset = 0;
+   i915_render->vbo_sw_offset = 0;
    i915_render->vbo_alloc_size = i915_render->base.max_vertex_buffer_bytes * 4;
 
 #ifdef VBUF_USE_POOL
