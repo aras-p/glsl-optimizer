@@ -512,6 +512,9 @@ void r300_translate_index_buffer(struct r300_context *r300,
                                  unsigned *index_size, unsigned index_offset,
                                  unsigned *start, unsigned count);
 
+/* r300_render_stencilref.c */
+void r300_plug_in_stencil_ref_fallback(struct r300_context *r300);
+
 boolean r300_check_cs(struct r300_context *r300, unsigned size);
 void r300_finish(struct r300_context *r300);
 void r500_dump_rs_block(struct r300_rs_block *rs);
