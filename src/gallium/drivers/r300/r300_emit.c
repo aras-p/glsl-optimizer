@@ -464,18 +464,13 @@ void r300_emit_fb_state(struct r300_context* r300, unsigned size, void* state)
         R300_ZB_ZCACHE_CTLSTAT_ZC_FLUSH_FLUSH_AND_FREE |
         R300_ZB_ZCACHE_CTLSTAT_ZC_FREE_FREE);
 
-    /* Set the number of colorbuffers. */
-    if (fb->nr_cbufs > 1) {
-        if (r300->screen->caps.is_r500) {
-            OUT_CS_REG(R300_RB3D_CCTL,
-                R300_RB3D_CCTL_NUM_MULTIWRITES(fb->nr_cbufs) |
-                R300_RB3D_CCTL_INDEPENDENT_COLORFORMAT_ENABLE_ENABLE);
-        } else {
-            OUT_CS_REG(R300_RB3D_CCTL,
-                R300_RB3D_CCTL_NUM_MULTIWRITES(fb->nr_cbufs));
-        }
+    /* NUM_MULTIWRITES replicates COLOR[0] to all colorbuffers, which is not
+     * what we usually want. */
+    if (r300->screen->caps.is_r500) {
+        OUT_CS_REG(R300_RB3D_CCTL,
+            R300_RB3D_CCTL_INDEPENDENT_COLORFORMAT_ENABLE_ENABLE);
     } else {
-        OUT_CS_REG(R300_RB3D_CCTL, 0x0);
+        OUT_CS_REG(R300_RB3D_CCTL, 0);
     }
 
     /* Set up colorbuffers. */
