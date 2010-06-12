@@ -20,23 +20,25 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
+/**
+ * This file contains macros for immediate command submission.
+ */
+
 #ifndef R300_CS_H
 #define R300_CS_H
 
-#include "util/u_math.h"
-
 #include "r300_reg.h"
+#include "r300_context.h"
 #include "r300_winsys.h"
 
 /* Yes, I know macros are ugly. However, they are much prettier than the code
  * that they neatly hide away, and don't have the cost of function setup,so
  * we're going to use them. */
 
-/* XXX stolen from radeon_reg.h */
-#define RADEON_CP_PACKET0 0x0
 
-#define CP_PACKET0(register, count) \
-    (RADEON_CP_PACKET0 | ((count) << 16) | ((register) >> 2))
+/**
+ * Command submission setup.
+ */
 
 #define CS_LOCALS(context) \
     struct r300_context* const cs_context_copy = (context); \
@@ -49,6 +51,24 @@
             __FILE__, __FUNCTION__, __LINE__); \
     cs_count = size; \
 } while (0)
+
+#define END_CS do { \
+    if (cs_count != 0) \
+        debug_printf("r300: Warning: cs_count off by %d\n", cs_count); \
+    cs_winsys->end_cs(cs_winsys, __FILE__, __FUNCTION__, __LINE__); \
+} while (0)
+
+#define FLUSH_CS do { \
+    if (SCREEN_DBG_ON(r300->screen, DBG_STATS)) { \
+        r300->flush_counter++; \
+    } \
+    cs_winsys->flush_cs(cs_winsys); \
+} while (0)
+
+
+/**
+ * Writing pure DWORDs.
+ */
 
 #define OUT_CS(value) do { \
     cs_winsys->write_cs_dword(cs_winsys, (value)); \
@@ -80,13 +100,28 @@
     cs_count -= count; \
 } while (0)
 
+#define OUT_CS_ONE_REG(register, count) do { \
+    assert(register); \
+    cs_winsys->write_cs_dword(cs_winsys, CP_PACKET0((register), ((count) - 1)) | RADEON_ONE_REG_WR); \
+    cs_count--; \
+} while (0)
+
+#define OUT_CS_PKT3(op, count) do { \
+    cs_winsys->write_cs_dword(cs_winsys, CP_PACKET3(op, count)); \
+    cs_count--; \
+} while (0)
+
+
+/**
+ * Writing relocations.
+ */
+
 #define OUT_CS_BUF_RELOC(bo, offset, rd, wd, flags) do { \
     assert(bo); \
     cs_winsys->write_cs_dword(cs_winsys, offset); \
     r300_buffer_write_reloc(cs_winsys, r300_buffer(bo), rd, wd, flags);	\
     cs_count -= 3; \
 } while (0)
-
 
 #define OUT_CS_TEX_RELOC(tex, offset, rd, wd, flags) do { \
     assert(tex); \
@@ -95,40 +130,10 @@
     cs_count -= 3; \
 } while (0)
 
-
 #define OUT_CS_BUF_RELOC_NO_OFFSET(bo, rd, wd, flags) do { \
     assert(bo); \
     r300_buffer_write_reloc(cs_winsys, r300_buffer(bo), rd, wd, flags);	\
     cs_count -= 2; \
-} while (0)
-
-#define END_CS do { \
-    if (cs_count != 0) \
-        debug_printf("r300: Warning: cs_count off by %d\n", cs_count); \
-    cs_winsys->end_cs(cs_winsys, __FILE__, __FUNCTION__, __LINE__); \
-} while (0)
-
-#define FLUSH_CS do { \
-    if (SCREEN_DBG_ON(r300->screen, DBG_STATS)) { \
-        r300->flush_counter++; \
-    } \
-    cs_winsys->flush_cs(cs_winsys); \
-} while (0)
-
-#define RADEON_ONE_REG_WR        (1 << 15)
-
-#define OUT_CS_ONE_REG(register, count) do { \
-    assert(register); \
-    cs_winsys->write_cs_dword(cs_winsys, CP_PACKET0((register), ((count) - 1)) | RADEON_ONE_REG_WR); \
-    cs_count--; \
-} while (0)
-
-#define CP_PACKET3(op, count) \
-    (RADEON_CP_PACKET3 | (op) | ((count) << 16))
-
-#define OUT_CS_PKT3(op, count) do { \
-    cs_winsys->write_cs_dword(cs_winsys, CP_PACKET3(op, count)); \
-    cs_count--; \
 } while (0)
 
 #define OUT_CS_INDEX_RELOC(bo, offset, count, rd, wd, flags) do { \

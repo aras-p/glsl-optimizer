@@ -3437,9 +3437,18 @@ enum {
 #       define RADEON_WAIT_3D_IDLECLEAN     (1 << 17)
 #       define RADEON_WAIT_HOST_IDLECLEAN   (1 << 18)
 
+#define R200_3D_DRAW_IMMD_2      0xC0003500
+
+#define RADEON_CP_PACKET0 0x0 /* XXX stolen from radeon_reg.h */
 #define RADEON_CP_PACKET3                           0xC0000000
 
-#define R200_3D_DRAW_IMMD_2      0xC0003500
+#define RADEON_ONE_REG_WR        (1 << 15)
+
+#define CP_PACKET0(register, count) \
+    (RADEON_CP_PACKET0 | ((count) << 16) | ((register) >> 2))
+
+#define CP_PACKET3(op, count) \
+    (RADEON_CP_PACKET3 | (op) | ((count) << 16))
 
 #endif /* _R300_REG_H */
 
