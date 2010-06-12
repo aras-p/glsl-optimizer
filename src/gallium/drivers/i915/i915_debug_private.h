@@ -26,51 +26,20 @@
  **************************************************************************/
 
 /* Authors:  Keith Whitwell <keith@tungstengraphics.com>
- *           Jakob Bornecrantz <wallbraker@gmail.com>
  */
 
-#ifndef I915_DEBUG_H
-#define I915_DEBUG_H
+#ifndef I915_DEBUG_PRIVATE_H
+#define I915_DEBUG_PRIVATE_H
 
-#include "util/u_debug.h"
-
-struct i915_screen;
-struct i915_context;
-struct i915_winsys_batchbuffer;
-
-#define DBG_BLIT      0x1
-#define DBG_EMIT      0x2
-#define DBG_ATOMS     0x4
-#define DBG_FLUSH     0x8
-#define DBG_TEXTURE   0x10
-#define DBG_CONSTANTS 0x20
-
-extern unsigned i915_debug;
-
-static INLINE boolean
-I915_DBG_ON(unsigned flags)
+struct debug_stream 
 {
-   return i915_debug & flags;
-}
+   unsigned offset;		/* current gtt offset */
+   char *ptr;		/* pointer to gtt offset zero */
+   char *end;		/* pointer to gtt offset zero */
+   unsigned print_addresses;
+};
 
-static INLINE void
-I915_DBG(unsigned flags, const char *fmt, ...)
-{
-   if (I915_DBG_ON(flags)) {
-      va_list  args;
-
-      va_start(args, fmt);
-      debug_vprintf(fmt, args);
-      va_end(args);
-   }
-}
-
-void i915_debug_init(struct i915_screen *i915);
-
-void i915_dump_batchbuffer(struct i915_winsys_batchbuffer *i915);
-
-void i915_dump_dirty(struct i915_context *i915, const char *func);
-
-void i915_dump_hardware_dirty(struct i915_context *i915, const char *func);
+void i915_disassemble_program(struct debug_stream *stream, 
+			      const unsigned *program, unsigned sz);
 
 #endif

@@ -237,8 +237,6 @@ struct i915_context
 
    struct i915_state current;
    unsigned hardware_dirty;
-   
-   unsigned debug;
 };
 
 /* A flag for each state_tracker state object:

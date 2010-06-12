@@ -29,6 +29,7 @@
 #include "i915_reg.h"
 #include "i915_context.h"
 #include "i915_batch.h"
+#include "i915_debug.h"
 #include "i915_reg.h"
 #include "i915_resource.h"
 
@@ -111,14 +112,19 @@ i915_emit_hardware_state(struct i915_context *i915 )
                              3
                            ) * 3/2; /* plus 50% margin */
 
-#if 0
-   debug_printf("i915_emit_hardware_state: %d dwords, %d relocs\n", dwords, relocs);
-#endif
-   
+   uintptr_t save_ptr;
+   size_t save_relocs;
+
+   if (I915_DBG_ON(DBG_ATOMS))
+      i915_dump_hardware_dirty(i915, __FUNCTION__);
+
    if(!BEGIN_BATCH(dwords, relocs)) {
       FLUSH_BATCH(NULL);
       assert(BEGIN_BATCH(dwords, relocs));
    }
+
+   save_ptr = (uintptr_t)i915->batch->ptr;
+   save_relocs = i915->batch->relocs;
 
    /* 14 dwords, 0 relocs */
    if (i915->hardware_dirty & I915_HW_INVARIENT)
@@ -399,6 +405,9 @@ i915_emit_hardware_state(struct i915_context *i915 )
       OUT_BATCH(0);
    }
 
+   I915_DBG(DBG_EMIT, "%s: used %d dwords, %d relocs\n", __FUNCTION__,
+            ((uintptr_t)i915->batch->ptr - save_ptr) / 4,
+            i915->batch->relocs - save_relocs);
 
    i915->hardware_dirty = 0;
 }

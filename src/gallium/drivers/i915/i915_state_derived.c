@@ -32,6 +32,7 @@
 #include "draw/draw_vertex.h"
 #include "i915_context.h"
 #include "i915_state.h"
+#include "i915_debug.h"
 #include "i915_reg.h"
 
 
@@ -204,6 +205,9 @@ static struct i915_tracked_state *atoms[] = {
 void i915_update_derived(struct i915_context *i915)
 {
    int i;
+
+   if (I915_DBG_ON(DBG_ATOMS))
+      i915_dump_dirty(i915, __FUNCTION__);
 
    for (i = 0; atoms[i]; i++)
       if (atoms[i]->dirty & i915->dirty)

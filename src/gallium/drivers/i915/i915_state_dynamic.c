@@ -34,7 +34,6 @@
 #include "util/u_memory.h"
 #include "util/u_pack_color.h"
 
-#define FILE_DEBUG_FLAG DEBUG_STATE
 
 /* State that we have chosen to store in the DYNAMIC segment of the
  * i915 indirect state mechanism.

@@ -35,6 +35,7 @@
 #include "i915_context.h"
 #include "i915_reg.h"
 #include "i915_batch.h"
+#include "i915_debug.h"
 
 
 static void i915_flush( struct pipe_context *pipe,
@@ -76,9 +77,9 @@ static void i915_flush( struct pipe_context *pipe,
     */
    FLUSH_BATCH(fence);
    i915->vbo_flushed = 1;
+
+   I915_DBG(DBG_FLUSH, "%s: #####\n", __FUNCTION__);
 }
-
-
 
 void i915_init_flush_functions( struct i915_context *i915 )
 {
