@@ -89,6 +89,8 @@ softpipe_set_stream_output_buffers(struct pipe_context *pipe,
    void *map_buffers[PIPE_MAX_SO_BUFFERS];
 
    assert(num_buffers <= PIPE_MAX_SO_BUFFERS);
+   if (num_buffers > PIPE_MAX_SO_BUFFERS)
+      num_buffers = PIPE_MAX_SO_BUFFERS;
 
    softpipe->dirty |= SP_NEW_SO_BUFFERS;
 
@@ -99,7 +101,7 @@ softpipe_set_stream_output_buffers(struct pipe_context *pipe,
       if (!res) {
          /* the whole call is invalid, bail out */
          softpipe->so_target.num_buffers = 0;
-         draw_set_mapped_so_buffers(softpipe->draw, map_buffers, 0);
+         draw_set_mapped_so_buffers(softpipe->draw, 0, 0);
          return;
       }
 
