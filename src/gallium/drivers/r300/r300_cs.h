@@ -58,13 +58,6 @@
     cs_winsys->end_cs(cs_winsys, __FILE__, __FUNCTION__, __LINE__); \
 } while (0)
 
-#define FLUSH_CS do { \
-    if (SCREEN_DBG_ON(r300->screen, DBG_STATS)) { \
-        r300->flush_counter++; \
-    } \
-    cs_winsys->flush_cs(cs_winsys); \
-} while (0)
-
 
 /**
  * Writing pure DWORDs.
