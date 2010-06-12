@@ -93,25 +93,28 @@ int r300_upload_user_buffers(struct r300_context *r300)
     enum pipe_error ret = PIPE_OK;
     int i, nr;
 
-    nr = r300->vertex_buffer_count;
+    nr = r300->velems->count;
 
     for (i = 0; i < nr; i++) {
-	if (r300_buffer_is_user_buffer(r300->vertex_buffer[i].buffer)) {
-	    struct pipe_resource *upload_buffer = NULL;
-	    unsigned offset = 0; /*r300->vertex_buffer[i].buffer_offset * 4;*/
-	    unsigned size = r300->vertex_buffer[i].buffer->width0;
-	    unsigned upload_offset;
-	    ret = u_upload_buffer(r300->upload_vb,
-				  offset, size,
-				  r300->vertex_buffer[i].buffer,
-				  &upload_offset, &upload_buffer);
-	    if (ret)
-		return ret;
+        struct pipe_vertex_buffer *vb =
+            &r300->vertex_buffer[r300->velems->velem[i].vertex_buffer_index];
 
-	    pipe_resource_reference(&r300->vertex_buffer[i].buffer, NULL);
-	    r300->vertex_buffer[i].buffer = upload_buffer;
-	    r300->vertex_buffer[i].buffer_offset = upload_offset;
-	}
+        if (r300_buffer_is_user_buffer(vb->buffer)) {
+            struct pipe_resource *upload_buffer = NULL;
+            unsigned offset = 0; /*vb->buffer_offset * 4;*/
+            unsigned size = vb->buffer->width0;
+            unsigned upload_offset;
+            ret = u_upload_buffer(r300->upload_vb,
+                                  offset, size,
+                                  vb->buffer,
+                                  &upload_offset, &upload_buffer);
+            if (ret)
+                return ret;
+
+            pipe_resource_reference(&vb->buffer, NULL);
+            vb->buffer = upload_buffer;
+            vb->buffer_offset = upload_offset;
+        }
     }
     return ret;
 }
