@@ -52,7 +52,6 @@
 #include "i915_state.h"
 
 
-#undef VBUF_USE_FIFO
 #undef VBUF_MAP_BUFFER
 
 /**
@@ -87,14 +86,6 @@ struct i915_vbuf_render {
    size_t map_used_start;
    size_t map_used_end;
    size_t map_size;
-#endif
-
-#ifdef VBUF_USE_FIFO
-   /* Stuff for the pool */
-   struct util_fifo *pool_fifo;
-   unsigned pool_used;
-   unsigned pool_buffer_size;
-   boolean pool_not_used;
 #endif
 };
 
@@ -157,17 +148,8 @@ i915_vbuf_render_new_buf(struct i915_vbuf_render *i915_render, size_t size)
    struct i915_context *i915 = i915_render->i915;
    struct i915_winsys *iws = i915->iws;
 
-   if (i915_render->vbo) {
-#ifdef VBUF_USE_FIFO
-      if (i915_render->pool_not_used)
-         iws->buffer_destroy(iws, i915_render->vbo);
-      else
-         u_fifo_add(i915_render->pool_fifo, i915_render->vbo);
-      i915_render->vbo = NULL;
-#else
+   if (i915_render->vbo)
       iws->buffer_destroy(iws, i915_render->vbo);
-#endif
-   }
 
    i915->vbo_flushed = 0;
 
@@ -182,25 +164,8 @@ i915_vbuf_render_new_buf(struct i915_vbuf_render *i915_render, size_t size)
    }
 #endif
 
-#ifdef VBUF_USE_FIFO
-   if (i915_render->vbo_size != i915_render->pool_buffer_size) {
-      i915_render->pool_not_used = TRUE;
-      i915_render->vbo = iws->buffer_create(iws, i915_render->vbo_size, 64,
-            I915_NEW_VERTEX);
-   } else {
-      i915_render->pool_not_used = FALSE;
-
-      if (i915_render->pool_used >= 2) {
-         FLUSH_BATCH(NULL);
-         i915->vbo_flushed = 0;
-         i915_render->pool_used = 0;
-      }
-      u_fifo_pop(i915_render->pool_fifo, (void**)&i915_render->vbo);
-   }
-#else
    i915_render->vbo = iws->buffer_create(iws, i915_render->vbo_size,
                                          64, I915_NEW_VERTEX);
-#endif
 }
 
 static boolean
@@ -211,14 +176,8 @@ i915_vbuf_render_allocate_vertices(struct vbuf_render *render,
    struct i915_vbuf_render *i915_render = i915_vbuf_render(render);
    size_t size = (size_t)vertex_size * (size_t)nr_vertices;
 
-   if (!i915_vbuf_render_reserve(i915_render, size)) {
-#ifdef VBUF_USE_FIFO
-      /* incase we flushed reset the number of pool buffers used */
-      if (i915->vbo_flushed)
-         i915_render->pool_used = 0;
-#endif
+   if (!i915_vbuf_render_reserve(i915_render, size))
       i915_vbuf_render_new_buf(i915_render, size);
-   }
 
    i915_render->vertex_size = vertex_size;
 
