@@ -48,11 +48,8 @@
     struct r300_winsys_screen *cs_winsys = cs_context_copy->rws; \
     int cs_count = 0; (void) cs_count;
 
-#define CHECK_CS(size) \
-    assert(r300_check_cs(cs_context_copy, (size)))
-
 #define BEGIN_CS(size) do { \
-    CHECK_CS(size); \
+    assert(r300_check_cs(cs_context_copy, (size))); \
     if (VERY_VERBOSE_CS) { \
         DBG(cs_context_copy, DBG_CS, "r300: BEGIN_CS, count %d, in %s (%s:%d)\n", \
                 size, __FUNCTION__, __FILE__, __LINE__); \
