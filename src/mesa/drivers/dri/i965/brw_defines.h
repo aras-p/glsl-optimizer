@@ -998,7 +998,7 @@
 # define GEN6_WM_LINE_AA_WIDTH_2_0			(2 << 14)
 # define GEN6_WM_LINE_AA_WIDTH_4_0			(3 << 14)
 # define GEN6_WM_POLYGON_STIPPLE_ENABLE			(1 << 13)
-# define GEN6_WM_LINE_STIPPLE_ENABLE			(1 << 12)
+# define GEN6_WM_LINE_STIPPLE_ENABLE			(1 << 11)
 # define GEN6_WM_OMASK_TO_RENDER_TARGET			(1 << 9)
 # define GEN6_WM_USES_SOURCE_W				(1 << 8)
 # define GEN6_WM_DUAL_SOURCE_BLEND_ENABLE		(1 << 7)
