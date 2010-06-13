@@ -111,8 +111,8 @@ static void dump_wm_surface_state(struct brw_context *brw)
 	 continue;
       }
       drm_intel_bo_map(surf_bo, GL_FALSE);
-      surfoff = surf_bo->offset;
-      surf = (struct brw_surface_state *)(surf_bo->virtual);
+      surfoff = surf_bo->offset + brw->wm.surf_offset[i];
+      surf = (struct brw_surface_state *)(surf_bo->virtual + brw->wm.surf_offset[i]);
 
       sprintf(name, "WM SS%d", i);
       state_out(name, surf, surfoff, 0, "%s %s\n",
