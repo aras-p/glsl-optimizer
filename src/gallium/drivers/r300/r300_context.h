@@ -231,7 +231,7 @@ struct r300_ztop_state {
 
 struct r300_constant_buffer {
     /* Buffer of constants */
-    float constants[256][4];
+    uint32_t constants[256][4];
     /* Total number of constants */
     unsigned count;
 };

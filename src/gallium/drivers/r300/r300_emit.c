@@ -169,25 +169,16 @@ void r300_emit_fs(struct r300_context* r300, unsigned size, void *state)
 void r300_emit_fs_constants(struct r300_context* r300, unsigned size, void *state)
 {
     struct r300_fragment_shader *fs = r300_fs(r300);
-    struct rc_constant_list *constants = &fs->shader->code.constants;
     struct r300_constant_buffer *buf = (struct r300_constant_buffer*)state;
-    unsigned i, count = fs->shader->externals_count;
+    unsigned count = fs->shader->externals_count * 4;
     CS_LOCALS(r300);
 
     if (count == 0)
         return;
 
     BEGIN_CS(size);
-    OUT_CS_REG_SEQ(R300_PFS_PARAM_0_X, count * 4);
-    for(i = 0; i < count; ++i) {
-        const float *data;
-        assert(constants->Constants[i].Type == RC_CONSTANT_EXTERNAL);
-        data = buf->constants[i];
-        OUT_CS(pack_float24(data[0]));
-        OUT_CS(pack_float24(data[1]));
-        OUT_CS(pack_float24(data[2]));
-        OUT_CS(pack_float24(data[3]));
-    }
+    OUT_CS_REG_SEQ(R300_PFS_PARAM_0_X, count);
+    OUT_CS_TABLE(buf->constants, count);
     END_CS;
 }
 
@@ -199,6 +190,8 @@ void r300_emit_fs_rc_constant_state(struct r300_context* r300, unsigned size, vo
     unsigned count = fs->shader->rc_state_count;
     unsigned first = fs->shader->externals_count;
     unsigned end = constants->Count;
+    uint32_t cdata[4];
+    unsigned j;
     CS_LOCALS(r300);
 
     if (count == 0)
@@ -210,11 +203,11 @@ void r300_emit_fs_rc_constant_state(struct r300_context* r300, unsigned size, vo
             const float *data =
                     get_rc_constant_state(r300, &constants->Constants[i]);
 
+            for (j = 0; j < 4; j++)
+                cdata[i] = pack_float24(data[i]);
+
             OUT_CS_REG_SEQ(R300_PFS_PARAM_0_X + i * 16, 4);
-            OUT_CS(pack_float24(data[0]));
-            OUT_CS(pack_float24(data[1]));
-            OUT_CS(pack_float24(data[2]));
-            OUT_CS(pack_float24(data[3]));
+            OUT_CS_TABLE(cdata, 4);
         }
     }
     END_CS;
@@ -231,9 +224,8 @@ void r500_emit_fs(struct r300_context* r300, unsigned size, void *state)
 void r500_emit_fs_constants(struct r300_context* r300, unsigned size, void *state)
 {
     struct r300_fragment_shader *fs = r300_fs(r300);
-    struct rc_constant_list *constants = &fs->shader->code.constants;
     struct r300_constant_buffer *buf = (struct r300_constant_buffer*)state;
-    unsigned i, count = fs->shader->externals_count;
+    unsigned count = fs->shader->externals_count * 4;
     CS_LOCALS(r300);
 
     if (count == 0)
@@ -241,11 +233,8 @@ void r500_emit_fs_constants(struct r300_context* r300, unsigned size, void *stat
 
     BEGIN_CS(size);
     OUT_CS_REG(R500_GA_US_VECTOR_INDEX, R500_GA_US_VECTOR_INDEX_TYPE_CONST);
-    OUT_CS_ONE_REG(R500_GA_US_VECTOR_DATA, count * 4);
-    for(i = 0; i < count; ++i) {
-        assert(constants->Constants[i].Type == RC_CONSTANT_EXTERNAL);
-    }
-    OUT_CS_TABLE(buf->constants, count * 4);
+    OUT_CS_ONE_REG(R500_GA_US_VECTOR_DATA, count);
+    OUT_CS_TABLE(buf->constants, count);
     END_CS;
 }
 

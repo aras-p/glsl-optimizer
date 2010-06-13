@@ -1553,7 +1553,7 @@ static void r300_set_constant_buffer(struct pipe_context *pipe,
     struct r300_context* r300 = r300_context(pipe);
     struct r300_constant_buffer *cbuf;
     struct pipe_transfer *tr;
-    void *mapped;
+    float *mapped;
     int max_size = 0, max_size_bytes = 0, clamped_size = 0;
 
     switch (shader) {
@@ -1592,10 +1592,20 @@ static void r300_set_constant_buffer(struct pipe_context *pipe,
             fprintf(stderr, "r300: Max size of the constant buffer is "
                           "%i*4 floats.\n", max_size);
         }
-        clamped_size = MIN2(buf->width0, max_size_bytes);
 
-        memcpy(cbuf->constants, mapped, clamped_size);
+        clamped_size = MIN2(buf->width0, max_size_bytes);
         cbuf->count = clamped_size / (4 * sizeof(float));
+
+        if (shader == PIPE_SHADER_FRAGMENT && !r300->screen->caps.is_r500) {
+            unsigned i,j;
+
+            /* Convert constants to float24. */
+            for (i = 0; i < cbuf->count; i++)
+                for (j = 0; j < 4; j++)
+                    cbuf->constants[i][j] = pack_float24(mapped[i*4+j]);
+        } else {
+            memcpy(cbuf->constants, mapped, clamped_size);
+        }
     }
 
     if (shader == PIPE_SHADER_VERTEX) {
