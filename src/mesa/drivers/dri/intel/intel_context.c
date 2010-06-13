@@ -827,8 +827,6 @@ intelDestroyContext(__DRIcontext * driContextPriv)
 
    assert(intel);               /* should never be null */
    if (intel) {
-      GLboolean release_texture_heaps;
-
       INTEL_FIREVERTICES(intel);
 
       _mesa_meta_free(&intel->ctx);
@@ -837,7 +835,6 @@ intelDestroyContext(__DRIcontext * driContextPriv)
 
       intel->vtbl.destroy(intel);
 
-      release_texture_heaps = (intel->ctx.Shared->RefCount == 1);
       _swsetup_DestroyContext(&intel->ctx);
       _tnl_DestroyContext(&intel->ctx);
       _vbo_DestroyContext(&intel->ctx);
@@ -854,18 +851,6 @@ intelDestroyContext(__DRIcontext * driContextPriv)
       intel->prim.vb_bo = NULL;
       drm_intel_bo_unreference(intel->first_post_swapbuffers_batch);
       intel->first_post_swapbuffers_batch = NULL;
-
-      if (release_texture_heaps) {
-         /* Nothing is currently done here to free texture heaps;
-          * but we're not using the texture heap utilities, so I
-          * rather think we shouldn't.  I've taken a look, and can't
-          * find any private texture data hanging around anywhere, but
-          * I'm not yet certain there isn't any at all...
-          */
-         /* if (INTEL_DEBUG & DEBUG_TEXTURE)
-            fprintf(stderr, "do something to free texture heaps\n");
-          */
-      }
 
       driDestroyOptionCache(&intel->optionCache);
 
