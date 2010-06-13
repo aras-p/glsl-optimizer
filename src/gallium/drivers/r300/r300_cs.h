@@ -35,6 +35,11 @@
  * that they neatly hide away, and don't have the cost of function setup,so
  * we're going to use them. */
 
+#ifdef DEBUG
+#define CS_DEBUG(x) x
+#else
+#define CS_DEBUG(x)
+#endif
 
 /**
  * Command submission setup.
@@ -43,20 +48,20 @@
 #define CS_LOCALS(context) \
     struct r300_context* const cs_context_copy = (context); \
     struct r300_winsys_screen *cs_winsys = cs_context_copy->rws; \
-    int cs_count = 0; (void) cs_count;
+    CS_DEBUG(int cs_count = 0; (void) cs_count;)
 
 #define BEGIN_CS(size) do { \
     assert(r300_check_cs(cs_context_copy, (size))); \
     cs_winsys->begin_cs(cs_winsys, (size), \
             __FILE__, __FUNCTION__, __LINE__); \
-    cs_count = size; \
+    CS_DEBUG(cs_count = size;) \
 } while (0)
 
 #define END_CS do { \
-    if (cs_count != 0) \
-        debug_printf("r300: Warning: cs_count off by %d\n", cs_count); \
+    CS_DEBUG(if (cs_count != 0) \
+        debug_printf("r300: Warning: cs_count off by %d\n", cs_count);) \
     cs_winsys->end_cs(cs_winsys, __FILE__, __FUNCTION__, __LINE__); \
-    cs_count = 0; \
+    CS_DEBUG(cs_count = 0;) \
 } while (0)
 
 
@@ -66,19 +71,19 @@
 
 #define OUT_CS(value) do { \
     cs_winsys->write_cs_dword(cs_winsys, (value)); \
-    cs_count--; \
+    CS_DEBUG(cs_count--;) \
 } while (0)
 
 #define OUT_CS_32F(value) do { \
     cs_winsys->write_cs_dword(cs_winsys, fui(value)); \
-    cs_count--; \
+    CS_DEBUG(cs_count--;) \
 } while (0)
 
 #define OUT_CS_REG(register, value) do { \
     assert(register); \
     cs_winsys->write_cs_dword(cs_winsys, CP_PACKET0(register, 0)); \
     cs_winsys->write_cs_dword(cs_winsys, value); \
-    cs_count -= 2; \
+    CS_DEBUG(cs_count -= 2;) \
 } while (0)
 
 /* Note: This expects count to be the number of registers,
@@ -86,23 +91,23 @@
 #define OUT_CS_REG_SEQ(register, count) do { \
     assert(register); \
     cs_winsys->write_cs_dword(cs_winsys, CP_PACKET0((register), ((count) - 1))); \
-    cs_count--; \
+    CS_DEBUG(cs_count--;) \
 } while (0)
 
 #define OUT_CS_TABLE(values, count) do { \
     cs_winsys->write_cs_table(cs_winsys, values, count); \
-    cs_count -= count; \
+    CS_DEBUG(cs_count -= count;) \
 } while (0)
 
 #define OUT_CS_ONE_REG(register, count) do { \
     assert(register); \
     cs_winsys->write_cs_dword(cs_winsys, CP_PACKET0((register), ((count) - 1)) | RADEON_ONE_REG_WR); \
-    cs_count--; \
+    CS_DEBUG(cs_count--;) \
 } while (0)
 
 #define OUT_CS_PKT3(op, count) do { \
     cs_winsys->write_cs_dword(cs_winsys, CP_PACKET3(op, count)); \
-    cs_count--; \
+    CS_DEBUG(cs_count--;) \
 } while (0)
 
 
@@ -114,20 +119,20 @@
     assert(bo); \
     cs_winsys->write_cs_dword(cs_winsys, offset); \
     r300_buffer_write_reloc(cs_winsys, r300_buffer(bo), rd, wd, flags);	\
-    cs_count -= 3; \
+    CS_DEBUG(cs_count -= 3;) \
 } while (0)
 
 #define OUT_CS_TEX_RELOC(tex, offset, rd, wd, flags) do { \
     assert(tex); \
     cs_winsys->write_cs_dword(cs_winsys, offset); \
     r300_texture_write_reloc(cs_winsys, tex, rd, wd, flags);	\
-    cs_count -= 3; \
+    CS_DEBUG(cs_count -= 3;) \
 } while (0)
 
 #define OUT_CS_BUF_RELOC_NO_OFFSET(bo, rd, wd, flags) do { \
     assert(bo); \
     r300_buffer_write_reloc(cs_winsys, r300_buffer(bo), rd, wd, flags);	\
-    cs_count -= 2; \
+    CS_DEBUG(cs_count -= 2;) \
 } while (0)
 
 #define OUT_CS_INDEX_RELOC(bo, offset, count, rd, wd, flags) do { \
@@ -135,7 +140,7 @@
     cs_winsys->write_cs_dword(cs_winsys, offset); \
     cs_winsys->write_cs_dword(cs_winsys, count); \
     cs_winsys->write_cs_reloc(cs_winsys, bo, rd, wd, flags); \
-    cs_count -= 4; \
+    CS_DEBUG(cs_count -= 4;) \
 } while (0)
 
 
@@ -145,7 +150,7 @@
 
 /* It's recommended not to call begin_cs/end_cs before/after this macro. */
 #define WRITE_CS_TABLE(values, count) do { \
-    assert(cs_count == 0); \
+    CS_DEBUG(assert(cs_count == 0);) \
     cs_winsys->write_cs_table(cs_winsys, values, count); \
 } while (0)
 
