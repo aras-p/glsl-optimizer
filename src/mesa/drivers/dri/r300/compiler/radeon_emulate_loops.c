@@ -78,22 +78,13 @@ static int src_reg_is_immediate(struct rc_src_register * src,
 	c->Program.Constants.Constants[src->Index].Type==RC_CONSTANT_IMMEDIATE;
 }
 
-static unsigned int loop_count_instructions(struct loop_info * loop)
+static unsigned int loop_calc_iterations(struct emulate_loop_state *s, 
+			struct loop_info * loop, unsigned int max_instructions)
 {
-	unsigned int count = 0;
-	struct rc_instruction * inst = loop->BeginLoop->Next;
-	while(inst != loop->EndLoop){
-		count++;
-		inst = inst->Next;
-	}
-	return count;
-}
-
-static unsigned int loop_calc_iterations(struct loop_info * loop,
-		unsigned int loop_count, unsigned int max_instructions)
-{
-	unsigned int icount = loop_count_instructions(loop);
-	return max_instructions / (loop_count * icount);
+	unsigned int total_i = rc_recompute_ips(s->C);
+	unsigned int loop_i = (loop->EndLoop->IP - loop->BeginLoop->IP) - 1;
+	/* +1 because the program already has one iteration of the loop. */
+	return 1 + ((max_instructions - total_i) / (s->LoopCount * loop_i));
 }
 
 static void loop_unroll(struct emulate_loop_state * s,
@@ -439,8 +430,8 @@ void rc_emulate_loops(struct emulate_loop_state *s,
 		if(!s->Loops[i].EndLoop){
 			continue;
 		}
-		unsigned int iterations = loop_calc_iterations(&s->Loops[i],
-						s->LoopCount, max_instructions);
+		unsigned int iterations = loop_calc_iterations(s, &s->Loops[i],
+							max_instructions);
 		loop_unroll(s, &s->Loops[i], iterations);
 	}
 }
