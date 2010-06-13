@@ -67,11 +67,7 @@ struct r300_blend_state {
 };
 
 struct r300_blend_color_state {
-    /* RV515 and earlier */
-    uint32_t blend_color;            /* R300_RB3D_BLEND_COLOR: 0x4e10 */
-    /* R520 and newer */
-    uint32_t blend_color_red_alpha;  /* R500_RB3D_CONSTANT_COLOR_AR: 0x4ef8 */
-    uint32_t blend_color_green_blue; /* R500_RB3D_CONSTANT_COLOR_GB: 0x4efc */
+    uint32_t cb[3];
 };
 
 struct r300_dsa_state {

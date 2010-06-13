@@ -164,6 +164,19 @@ static void r300_setup_atoms(struct r300_context* r300)
     r300->texture_cache_inval.allow_null_state = TRUE;
 }
 
+/* Not every state tracker calls every driver function before the first draw
+ * call and we must initialize the command buffers somehow. */
+static void r300_init_states(struct pipe_context *pipe)
+{
+    struct pipe_blend_color bc = {{0}};
+    struct pipe_clip_state cs = {{{0}}};
+    struct pipe_scissor_state ss = {0};
+
+    pipe->set_blend_color(pipe, &bc);
+    pipe->set_clip_state(pipe, &cs);
+    pipe->set_scissor_state(pipe, &ss);
+}
+
 struct pipe_context* r300_create_context(struct pipe_screen* screen,
                                          void *priv)
 {
@@ -230,6 +243,8 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
         goto no_upload_vb;
 
     r300->tran.translate_cache = translate_cache_create();
+
+    r300_init_states(&r300->context);
 
     return &r300->context;
 

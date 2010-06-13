@@ -394,20 +394,26 @@ static void r300_set_blend_color(struct pipe_context* pipe,
     struct r300_context* r300 = r300_context(pipe);
     struct r300_blend_color_state* state =
         (struct r300_blend_color_state*)r300->blend_color_state.state;
-    union util_color uc;
+    CB_LOCALS;
 
-    util_pack_color(color->color, PIPE_FORMAT_B8G8R8A8_UNORM, &uc);
-    state->blend_color = uc.ui;
+    if (r300->screen->caps.is_r500) {
+        /* XXX if FP16 blending is enabled, we should use the FP16 format */
+        BEGIN_CB(state->cb, 3);
+        OUT_CB_REG_SEQ(R500_RB3D_CONSTANT_COLOR_AR, 2);
+        OUT_CB(float_to_fixed10(color->color[0]) |
+               (float_to_fixed10(color->color[3]) << 16));
+        OUT_CB(float_to_fixed10(color->color[2]) |
+               (float_to_fixed10(color->color[1]) << 16));
+        END_CB;
+    } else {
+        union util_color uc;
+        util_pack_color(color->color, PIPE_FORMAT_B8G8R8A8_UNORM, &uc);
 
-    /* XXX if FP16 blending is enabled, we should use the FP16 format */
-    state->blend_color_red_alpha =
-        float_to_fixed10(color->color[0]) |
-        (float_to_fixed10(color->color[3]) << 16);
-    state->blend_color_green_blue =
-        float_to_fixed10(color->color[2]) |
-        (float_to_fixed10(color->color[1]) << 16);
+        BEGIN_CB(state->cb, 2);
+        OUT_CB_REG(R300_RB3D_BLEND_COLOR, uc.ui);
+        END_CB;
+    }
 
-    r300->blend_color_state.size = r300->screen->caps.is_r500 ? 3 : 2;
     r300->blend_color_state.dirty = TRUE;
 }
 

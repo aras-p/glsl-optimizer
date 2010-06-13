@@ -56,17 +56,7 @@ void r300_emit_blend_color_state(struct r300_context* r300,
     struct r300_blend_color_state* bc = (struct r300_blend_color_state*)state;
     CS_LOCALS(r300);
 
-    if (r300->screen->caps.is_r500) {
-        BEGIN_CS(size);
-        OUT_CS_REG_SEQ(R500_RB3D_CONSTANT_COLOR_AR, 2);
-        OUT_CS(bc->blend_color_red_alpha);
-        OUT_CS(bc->blend_color_green_blue);
-        END_CS;
-    } else {
-        BEGIN_CS(size);
-        OUT_CS_REG(R300_RB3D_BLEND_COLOR, bc->blend_color);
-        END_CS;
-    }
+    WRITE_CS_TABLE(bc->cb, size);
 }
 
 void r300_emit_clip_state(struct r300_context* r300,
