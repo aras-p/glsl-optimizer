@@ -77,12 +77,18 @@ struct r300_clip_state {
 };
 
 struct r300_dsa_state {
+    /* This is actually a command buffer with named dwords. */
+    uint32_t cb_begin;
     uint32_t alpha_function;    /* R300_FG_ALPHA_FUNC: 0x4bd4 */
-    uint32_t alpha_reference;   /* R500_FG_ALPHA_VALUE: 0x4be0 */
+    uint32_t cb_reg_seq;
     uint32_t z_buffer_control;  /* R300_ZB_CNTL: 0x4f00 */
     uint32_t z_stencil_control; /* R300_ZB_ZSTENCILCNTL: 0x4f04 */
     uint32_t stencil_ref_mask;  /* R300_ZB_STENCILREFMASK: 0x4f08 */
+    uint32_t cb_reg;
     uint32_t stencil_ref_bf;    /* R500_ZB_STENCILREFMASK_BF: 0x4fd4 */
+
+    /* The second command buffer disables zbuffer reads and writes. */
+    uint32_t cb_no_readwrite[8];
 
     /* Whether a two-sided stencil is enabled. */
     boolean two_sided;

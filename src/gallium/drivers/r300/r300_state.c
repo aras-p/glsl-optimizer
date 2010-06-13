@@ -463,6 +463,7 @@ static void*
 {
     struct r300_capabilities *caps = &r300_screen(pipe->screen)->caps;
     struct r300_dsa_state* dsa = CALLOC_STRUCT(r300_dsa_state);
+    CB_LOCALS;
 
     /* Depth test setup. */
     if (state->depth.enabled) {
@@ -535,7 +536,41 @@ static void*
             dsa->alpha_function |= R500_FG_ALPHA_FUNC_8BIT;
     }
 
+    BEGIN_CB(&dsa->cb_begin, 8);
+    OUT_CB_REG(R300_FG_ALPHA_FUNC, dsa->alpha_function);
+    OUT_CB_REG_SEQ(R300_ZB_CNTL, 3);
+    OUT_CB(dsa->z_buffer_control);
+    OUT_CB(dsa->z_stencil_control);
+    OUT_CB(dsa->stencil_ref_mask);
+    OUT_CB_REG(R500_ZB_STENCILREFMASK_BF, dsa->stencil_ref_bf);
+    END_CB;
+
+    BEGIN_CB(dsa->cb_no_readwrite, 8);
+    OUT_CB_REG(R300_FG_ALPHA_FUNC, dsa->alpha_function);
+    OUT_CB_REG_SEQ(R300_ZB_CNTL, 3);
+    OUT_CB(0);
+    OUT_CB(0);
+    OUT_CB(0);
+    OUT_CB_REG(R500_ZB_STENCILREFMASK_BF, 0);
+    END_CB;
+
     return (void*)dsa;
+}
+
+static void r300_dsa_inject_stencilref(struct r300_context *r300)
+{
+    struct r300_dsa_state *dsa =
+            (struct r300_dsa_state*)r300->dsa_state.state;
+
+    if (!dsa)
+        return;
+
+    dsa->stencil_ref_mask =
+        (dsa->stencil_ref_mask & ~R300_STENCILREF_MASK) |
+        r300->stencil_ref.ref_value[0];
+    dsa->stencil_ref_bf =
+        (dsa->stencil_ref_bf & ~R300_STENCILREF_MASK) |
+        r300->stencil_ref.ref_value[1];
 }
 
 /* Bind DSA state. */
@@ -549,6 +584,8 @@ static void r300_bind_dsa_state(struct pipe_context* pipe,
     }
 
     UPDATE_STATE(state, r300->dsa_state);
+
+    r300_dsa_inject_stencilref(r300);
 }
 
 /* Free DSA state. */
@@ -564,6 +601,8 @@ static void r300_set_stencil_ref(struct pipe_context* pipe,
     struct r300_context* r300 = r300_context(pipe);
 
     r300->stencil_ref = *sr;
+
+    r300_dsa_inject_stencilref(r300);
     r300->dsa_state.dirty = TRUE;
 }
 

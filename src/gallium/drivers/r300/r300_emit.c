@@ -73,27 +73,13 @@ void r300_emit_dsa_state(struct r300_context* r300, unsigned size, void* state)
     struct r300_dsa_state* dsa = (struct r300_dsa_state*)state;
     struct pipe_framebuffer_state* fb =
         (struct pipe_framebuffer_state*)r300->fb_state.state;
-    struct pipe_stencil_ref stencil_ref = r300->stencil_ref;
     CS_LOCALS(r300);
 
-    BEGIN_CS(size);
-    OUT_CS_REG(R300_FG_ALPHA_FUNC, dsa->alpha_function);
-    OUT_CS_REG_SEQ(R300_ZB_CNTL, 3);
-
     if (fb->zsbuf) {
-        OUT_CS(dsa->z_buffer_control);
-        OUT_CS(dsa->z_stencil_control);
+        WRITE_CS_TABLE(&dsa->cb_begin, size);
     } else {
-        OUT_CS(0);
-        OUT_CS(0);
+        WRITE_CS_TABLE(dsa->cb_no_readwrite, size);
     }
-
-    OUT_CS(dsa->stencil_ref_mask | stencil_ref.ref_value[0]);
-
-    if (r300->screen->caps.is_r500) {
-        OUT_CS_REG(R500_ZB_STENCILREFMASK_BF, dsa->stencil_ref_bf | stencil_ref.ref_value[1]);
-    }
-    END_CS;
 }
 
 static const float * get_rc_constant_state(
