@@ -114,6 +114,34 @@ struct pipe_video_context
                         unsigned srcx, unsigned srcy,
                         unsigned width, unsigned height);
 
+   struct pipe_transfer *(*get_transfer)(struct pipe_video_context *vpipe,
+                                         struct pipe_resource *resource,
+                                         struct pipe_subresource subresource,
+                                         unsigned usage,  /* a combination of PIPE_TRANSFER_x */
+                                         const struct pipe_box *box);
+
+   void (*transfer_destroy)(struct pipe_video_context *vpipe,
+                            struct pipe_transfer *transfer);
+
+   void* (*transfer_map)(struct pipe_video_context *vpipe,
+                         struct pipe_transfer *transfer);
+
+   void (*transfer_flush_region)(struct pipe_video_context *vpipe,
+                                 struct pipe_transfer *transfer,
+                                 const struct pipe_box *box);
+
+   void (*transfer_unmap)(struct pipe_video_context *vpipe,
+                          struct pipe_transfer *transfer);
+
+   void (*transfer_inline_write)(struct pipe_video_context *vpipe,
+                                 struct pipe_resource *resource,
+                                 struct pipe_subresource subresource,
+                                 unsigned usage, /* a combination of PIPE_TRANSFER_x */
+                                 const struct pipe_box *box,
+                                 const void *data,
+                                 unsigned stride,
+                                 unsigned slice_stride);
+
    /*@}*/
 
    /**

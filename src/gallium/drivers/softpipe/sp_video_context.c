@@ -161,6 +161,94 @@ sp_mpeg12_surface_copy(struct pipe_video_context *vpipe,
       util_surface_copy(ctx->pipe, FALSE, dst, dstx, dsty, src, srcx, srcy, width, height);
 }
 
+static struct pipe_transfer*
+sp_mpeg12_get_transfer(struct pipe_video_context *vpipe,
+                       struct pipe_resource *resource,
+                       struct pipe_subresource subresource,
+                       unsigned usage,  /* a combination of PIPE_TRANSFER_x */
+                       const struct pipe_box *box)
+{
+   struct sp_mpeg12_context *ctx = (struct sp_mpeg12_context*)vpipe;
+
+   assert(vpipe);
+   assert(resource);
+   assert(box);
+
+   return ctx->pipe->get_transfer(ctx->pipe, resource, subresource, usage, box);
+}
+
+static void
+sp_mpeg12_transfer_destroy(struct pipe_video_context *vpipe,
+                           struct pipe_transfer *transfer)
+{
+   struct sp_mpeg12_context *ctx = (struct sp_mpeg12_context*)vpipe;
+
+   assert(vpipe);
+   assert(transfer);
+
+   ctx->pipe->transfer_destroy(ctx->pipe, transfer);
+}
+
+static void*
+sp_mpeg12_transfer_map(struct pipe_video_context *vpipe,
+                       struct pipe_transfer *transfer)
+{
+   struct sp_mpeg12_context *ctx = (struct sp_mpeg12_context*)vpipe;
+
+   assert(vpipe);
+   assert(transfer);
+
+   return ctx->pipe->transfer_map(ctx->pipe, transfer);
+}
+
+static void
+sp_mpeg12_transfer_flush_region(struct pipe_video_context *vpipe,
+                                struct pipe_transfer *transfer,
+                                const struct pipe_box *box)
+{
+   struct sp_mpeg12_context *ctx = (struct sp_mpeg12_context*)vpipe;
+
+   assert(vpipe);
+   assert(transfer);
+   assert(box);
+
+   ctx->pipe->transfer_flush_region(ctx->pipe, transfer, box);
+}
+
+static void
+sp_mpeg12_transfer_unmap(struct pipe_video_context *vpipe,
+                         struct pipe_transfer *transfer)
+{
+   struct sp_mpeg12_context *ctx = (struct sp_mpeg12_context*)vpipe;
+
+   assert(vpipe);
+   assert(transfer);
+
+   ctx->pipe->transfer_unmap(ctx->pipe, transfer);
+}
+
+static void
+sp_mpeg12_transfer_inline_write(struct pipe_video_context *vpipe,
+                                struct pipe_resource *resource,
+                                struct pipe_subresource subresource,
+                                unsigned usage, /* a combination of PIPE_TRANSFER_x */
+                                const struct pipe_box *box,
+                                const void *data,
+                                unsigned stride,
+                                unsigned slice_stride)
+{
+   struct sp_mpeg12_context *ctx = (struct sp_mpeg12_context*)vpipe;
+
+   assert(vpipe);
+   assert(resource);
+   assert(box);
+   assert(data);
+   assert(ctx->pipe->transfer_inline_write);
+
+   ctx->pipe->transfer_inline_write(ctx->pipe, resource, subresource, usage,
+                                    box, data, stride, slice_stride);
+}
+
 static void
 sp_mpeg12_render_picture(struct pipe_video_context     *vpipe,
                          struct pipe_surface           *src_surface,
@@ -346,6 +434,13 @@ sp_mpeg12_create(struct pipe_context *pipe, enum pipe_video_profile profile,
    ctx->base.render_picture = sp_mpeg12_render_picture;
    ctx->base.surface_fill = sp_mpeg12_surface_fill;
    ctx->base.surface_copy = sp_mpeg12_surface_copy;
+   ctx->base.get_transfer = sp_mpeg12_get_transfer;
+   ctx->base.transfer_destroy = sp_mpeg12_transfer_destroy;
+   ctx->base.transfer_map = sp_mpeg12_transfer_map;
+   ctx->base.transfer_flush_region = sp_mpeg12_transfer_flush_region;
+   ctx->base.transfer_unmap = sp_mpeg12_transfer_unmap;
+   if (pipe->transfer_inline_write)
+      ctx->base.transfer_inline_write = sp_mpeg12_transfer_inline_write;
    ctx->base.set_picture_background = sp_mpeg12_set_picture_background;
    ctx->base.set_picture_layers = sp_mpeg12_set_picture_layers;
    ctx->base.set_decode_target = sp_mpeg12_set_decode_target;
