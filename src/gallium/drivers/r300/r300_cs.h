@@ -52,15 +52,12 @@
 
 #define BEGIN_CS(size) do { \
     assert(r300_check_cs(cs_context_copy, (size))); \
-    cs_winsys->begin_cs(cs_winsys, (size), \
-            __FILE__, __FUNCTION__, __LINE__); \
     CS_DEBUG(cs_count = size;) \
 } while (0)
 
 #define END_CS do { \
     CS_DEBUG(if (cs_count != 0) \
         debug_printf("r300: Warning: cs_count off by %d\n", cs_count);) \
-    cs_winsys->end_cs(cs_winsys, __FILE__, __FUNCTION__, __LINE__); \
     CS_DEBUG(cs_count = 0;) \
 } while (0)
 
@@ -143,7 +140,6 @@
  * Command buffer emission.
  */
 
-/* It's recommended not to call begin_cs/end_cs before/after this macro. */
 #define WRITE_CS_TABLE(values, count) do { \
     CS_DEBUG(assert(cs_count == 0);) \
     cs_winsys->write_cs_table(cs_winsys, values, count); \
