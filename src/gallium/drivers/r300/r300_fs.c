@@ -28,7 +28,9 @@
 #include "tgsi/tgsi_dump.h"
 #include "tgsi/tgsi_ureg.h"
 
+#include "r300_cb.h"
 #include "r300_context.h"
+#include "r300_emit.h"
 #include "r300_screen.h"
 #include "r300_fs.h"
 #include "r300_reg.h"
@@ -229,6 +231,117 @@ static void r300_dummy_fragment_shader(
     ureg_destroy(ureg);
 }
 
+static void r300_emit_fs_code_to_buffer(
+    struct r300_context *r300,
+    struct r300_fragment_shader_code *shader)
+{
+    struct rX00_fragment_program_code *generic_code = &shader->code;
+    unsigned imm_count = shader->immediates_count;
+    unsigned imm_first = shader->externals_count;
+    unsigned imm_end = generic_code->constants.Count;
+    struct rc_constant *constants = generic_code->constants.Constants;
+    unsigned i;
+    CB_LOCALS;
+
+    if (r300->screen->caps.is_r500) {
+        struct r500_fragment_program_code *code = &generic_code->code.r500;
+
+        shader->cb_code_size = 17 +
+                               ((code->inst_end + 1) * 6) +
+                               imm_count * 7;
+
+        NEW_CB(shader->cb_code, shader->cb_code_size);
+        OUT_CB_REG(R500_US_CONFIG, R500_ZERO_TIMES_ANYTHING_EQUALS_ZERO);
+        OUT_CB_REG(R500_US_PIXSIZE, code->max_temp_idx);
+        OUT_CB_REG(R500_US_CODE_RANGE,
+                   R500_US_CODE_RANGE_ADDR(0) | R500_US_CODE_RANGE_SIZE(code->inst_end));
+        OUT_CB_REG(R500_US_CODE_OFFSET, 0);
+        OUT_CB_REG(R500_US_CODE_ADDR,
+                   R500_US_CODE_START_ADDR(0) | R500_US_CODE_END_ADDR(code->inst_end));
+
+        OUT_CB_REG(R500_GA_US_VECTOR_INDEX, R500_GA_US_VECTOR_INDEX_TYPE_INSTR);
+        OUT_CB_ONE_REG(R500_GA_US_VECTOR_DATA, (code->inst_end + 1) * 6);
+        for (i = 0; i <= code->inst_end; i++) {
+            OUT_CB(code->inst[i].inst0);
+            OUT_CB(code->inst[i].inst1);
+            OUT_CB(code->inst[i].inst2);
+            OUT_CB(code->inst[i].inst3);
+            OUT_CB(code->inst[i].inst4);
+            OUT_CB(code->inst[i].inst5);
+        }
+
+        /* Emit immediates. */
+        if (imm_count) {
+            for(i = imm_first; i < imm_end; ++i) {
+                if (constants[i].Type == RC_CONSTANT_IMMEDIATE) {
+                    const float *data = constants[i].u.Immediate;
+
+                    OUT_CB_REG(R500_GA_US_VECTOR_INDEX,
+                               R500_GA_US_VECTOR_INDEX_TYPE_CONST |
+                               (i & R500_GA_US_VECTOR_INDEX_MASK));
+                    OUT_CB_ONE_REG(R500_GA_US_VECTOR_DATA, 4);
+                    OUT_CB_TABLE(data, 4);
+                }
+            }
+        }
+    } else { /* r300 */
+        struct r300_fragment_program_code *code = &generic_code->code.r300;
+
+        shader->cb_code_size = 19 +
+                               code->alu.length * 4 +
+                               (code->tex.length ? (1 + code->tex.length) : 0) +
+                               imm_count * 5;
+
+        NEW_CB(shader->cb_code, shader->cb_code_size);
+        OUT_CB_REG(R300_US_CONFIG, code->config);
+        OUT_CB_REG(R300_US_PIXSIZE, code->pixsize);
+        OUT_CB_REG(R300_US_CODE_OFFSET, code->code_offset);
+
+        OUT_CB_REG_SEQ(R300_US_CODE_ADDR_0, 4);
+        OUT_CB_TABLE(code->code_addr, 4);
+
+        OUT_CB_REG_SEQ(R300_US_ALU_RGB_INST_0, code->alu.length);
+        for (i = 0; i < code->alu.length; i++)
+            OUT_CB(code->alu.inst[i].rgb_inst);
+
+        OUT_CB_REG_SEQ(R300_US_ALU_RGB_ADDR_0, code->alu.length);
+        for (i = 0; i < code->alu.length; i++)
+            OUT_CB(code->alu.inst[i].rgb_addr);
+
+        OUT_CB_REG_SEQ(R300_US_ALU_ALPHA_INST_0, code->alu.length);
+        for (i = 0; i < code->alu.length; i++)
+            OUT_CB(code->alu.inst[i].alpha_inst);
+
+        OUT_CB_REG_SEQ(R300_US_ALU_ALPHA_ADDR_0, code->alu.length);
+        for (i = 0; i < code->alu.length; i++)
+            OUT_CB(code->alu.inst[i].alpha_addr);
+
+        if (code->tex.length) {
+            OUT_CB_REG_SEQ(R300_US_TEX_INST_0, code->tex.length);
+            OUT_CB_TABLE(code->tex.inst, code->tex.length);
+        }
+
+        /* Emit immediates. */
+        if (imm_count) {
+            for(i = imm_first; i < imm_end; ++i) {
+                if (constants[i].Type == RC_CONSTANT_IMMEDIATE) {
+                    const float *data = constants[i].u.Immediate;
+
+                    OUT_CB_REG_SEQ(R300_PFS_PARAM_0_X + i * 16, 4);
+                    OUT_CB(pack_float24(data[0]));
+                    OUT_CB(pack_float24(data[1]));
+                    OUT_CB(pack_float24(data[2]));
+                    OUT_CB(pack_float24(data[3]));
+                }
+            }
+        }
+    }
+
+    OUT_CB_REG(R300_FG_DEPTH_SRC, shader->fg_depth_src);
+    OUT_CB_REG(R300_US_W_FMT, shader->us_out_w);
+    END_CB;
+}
+
 static void r300_translate_fragment_shader(
     struct r300_context* r300,
     struct r300_fragment_shader_code* shader,
@@ -338,6 +451,9 @@ static void r300_translate_fragment_shader(
 
     /* And, finally... */
     rc_destroy(&compiler.Base);
+
+    /* Build the command buffer. */
+    r300_emit_fs_code_to_buffer(r300, shader);
 }
 
 boolean r300_pick_fragment_shader(struct r300_context* r300)

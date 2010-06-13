@@ -29,6 +29,8 @@
 struct rX00_fragment_program_code;
 struct r300_vertex_program_code;
 
+uint32_t pack_float24(float f);
+
 void r300_emit_aos(struct r300_context* r300, int offset, boolean indexed);
 
 void r300_emit_blend_state(struct r300_context* r300,
@@ -43,15 +45,11 @@ void r300_emit_clip_state(struct r300_context* r300,
 void r300_emit_dsa_state(struct r300_context* r300,
                          unsigned size, void* state);
 
-unsigned r300_get_fs_atom_size(struct r300_context *r300);
-
 void r300_emit_fs(struct r300_context* r300, unsigned size, void *state);
 
 void r300_emit_fs_constants(struct r300_context* r300, unsigned size, void *state);
 
 void r300_emit_fs_rc_constant_state(struct r300_context* r300, unsigned size, void *state);
-
-unsigned r500_get_fs_atom_size(struct r300_context *r300);
 
 void r500_emit_fs(struct r300_context* r300, unsigned size, void *state);
 

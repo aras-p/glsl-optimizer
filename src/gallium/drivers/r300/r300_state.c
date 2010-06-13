@@ -759,13 +759,12 @@ void r300_mark_fs_code_dirty(struct r300_context *r300)
     r300->fs.dirty = TRUE;
     r300->fs_rc_constant_state.dirty = TRUE;
     r300->fs_constants.dirty = TRUE;
+    r300->fs.size = fs->shader->cb_code_size;
 
     if (r300->screen->caps.is_r500) {
-        r300->fs.size = r500_get_fs_atom_size(r300);
         r300->fs_rc_constant_state.size = fs->shader->rc_state_count * 7;
         r300->fs_constants.size = fs->shader->externals_count * 4 + 3;
     } else {
-        r300->fs.size = r300_get_fs_atom_size(r300);
         r300->fs_rc_constant_state.size = fs->shader->rc_state_count * 5;
         r300->fs_constants.size = fs->shader->externals_count * 4 + 1;
     }
@@ -799,6 +798,7 @@ static void r300_delete_fs_state(struct pipe_context* pipe, void* shader)
         tmp = ptr;
         ptr = ptr->next;
         rc_constants_destroy(&tmp->code.constants);
+        FREE(tmp->cb_code);
         FREE(tmp);
     }
     FREE((void*)fs->state.tokens);

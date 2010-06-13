@@ -127,7 +127,7 @@ static const float * get_rc_constant_state(
 /* Convert a normal single-precision float into the 7.16 format
  * used by the R300 fragment shader.
  */
-static uint32_t pack_float24(float f)
+uint32_t pack_float24(float f)
 {
     union {
         float fl;
@@ -158,77 +158,12 @@ static uint32_t pack_float24(float f)
     return float24;
 }
 
-unsigned r300_get_fs_atom_size(struct r300_context *r300)
-{
-    struct r300_fragment_shader *fs = r300_fs(r300);
-    unsigned imm_count = fs->shader->immediates_count;
-    struct r300_fragment_program_code *code = &fs->shader->code.code.r300;
-
-    return 19 +
-           code->alu.length * 4 +
-           (code->tex.length ? (1 + code->tex.length) : 0) +
-           (imm_count ? imm_count * 5 : 0);
-}
-
 void r300_emit_fs(struct r300_context* r300, unsigned size, void *state)
 {
     struct r300_fragment_shader *fs = r300_fs(r300);
-    struct rX00_fragment_program_code* generic_code = &fs->shader->code;
-    struct r300_fragment_program_code * code = &generic_code->code.r300;
-    unsigned i;
-    unsigned imm_count = fs->shader->immediates_count;
-    unsigned imm_first = fs->shader->externals_count;
-    unsigned imm_end = generic_code->constants.Count;
-    struct rc_constant *constants = generic_code->constants.Constants;
     CS_LOCALS(r300);
 
-    BEGIN_CS(size);
-    OUT_CS_REG(R300_US_CONFIG, code->config);
-    OUT_CS_REG(R300_US_PIXSIZE, code->pixsize);
-    OUT_CS_REG(R300_US_CODE_OFFSET, code->code_offset);
-
-    OUT_CS_REG_SEQ(R300_US_CODE_ADDR_0, 4);
-    OUT_CS_TABLE(code->code_addr, 4);
-
-    OUT_CS_REG_SEQ(R300_US_ALU_RGB_INST_0, code->alu.length);
-    for (i = 0; i < code->alu.length; i++)
-        OUT_CS(code->alu.inst[i].rgb_inst);
-
-    OUT_CS_REG_SEQ(R300_US_ALU_RGB_ADDR_0, code->alu.length);
-    for (i = 0; i < code->alu.length; i++)
-        OUT_CS(code->alu.inst[i].rgb_addr);
-
-    OUT_CS_REG_SEQ(R300_US_ALU_ALPHA_INST_0, code->alu.length);
-    for (i = 0; i < code->alu.length; i++)
-        OUT_CS(code->alu.inst[i].alpha_inst);
-
-    OUT_CS_REG_SEQ(R300_US_ALU_ALPHA_ADDR_0, code->alu.length);
-    for (i = 0; i < code->alu.length; i++)
-        OUT_CS(code->alu.inst[i].alpha_addr);
-
-    if (code->tex.length) {
-        OUT_CS_REG_SEQ(R300_US_TEX_INST_0, code->tex.length);
-        OUT_CS_TABLE(code->tex.inst, code->tex.length);
-    }
-
-    /* Emit immediates. */
-    if (imm_count) {
-        for(i = imm_first; i < imm_end; ++i) {
-            if (constants[i].Type == RC_CONSTANT_IMMEDIATE) {
-                const float *data = constants[i].u.Immediate;
-
-                OUT_CS_REG_SEQ(R300_PFS_PARAM_0_X + i * 16, 4);
-                OUT_CS(pack_float24(data[0]));
-                OUT_CS(pack_float24(data[1]));
-                OUT_CS(pack_float24(data[2]));
-                OUT_CS(pack_float24(data[3]));
-            }
-        }
-    }
-
-    OUT_CS_REG(R300_FG_DEPTH_SRC, fs->shader->fg_depth_src);
-    OUT_CS_REG(R300_US_W_FMT, fs->shader->us_out_w);
-    END_CS;
+    WRITE_CS_TABLE(fs->shader->cb_code, fs->shader->cb_code_size);
 }
 
 void r300_emit_fs_constants(struct r300_context* r300, unsigned size, void *state)
@@ -285,67 +220,12 @@ void r300_emit_fs_rc_constant_state(struct r300_context* r300, unsigned size, vo
     END_CS;
 }
 
-unsigned r500_get_fs_atom_size(struct r300_context *r300)
-{
-    struct r300_fragment_shader *fs = r300_fs(r300);
-    unsigned imm_count = fs->shader->immediates_count;
-    struct r500_fragment_program_code *code = &fs->shader->code.code.r500;
-
-    return 17 +
-           ((code->inst_end + 1) * 6) +
-           (imm_count ? imm_count * 7 : 0);
-}
-
 void r500_emit_fs(struct r300_context* r300, unsigned size, void *state)
 {
     struct r300_fragment_shader *fs = r300_fs(r300);
-    struct rX00_fragment_program_code* generic_code = &fs->shader->code;
-    struct r500_fragment_program_code * code = &generic_code->code.r500;
-    unsigned i;
-    unsigned imm_count = fs->shader->immediates_count;
-    unsigned imm_first = fs->shader->externals_count;
-    unsigned imm_end = generic_code->constants.Count;
-    struct rc_constant *constants = generic_code->constants.Constants;
     CS_LOCALS(r300);
 
-    BEGIN_CS(size);
-    OUT_CS_REG(R500_US_CONFIG, R500_ZERO_TIMES_ANYTHING_EQUALS_ZERO);
-    OUT_CS_REG(R500_US_PIXSIZE, code->max_temp_idx);
-    OUT_CS_REG(R500_US_CODE_RANGE,
-               R500_US_CODE_RANGE_ADDR(0) | R500_US_CODE_RANGE_SIZE(code->inst_end));
-    OUT_CS_REG(R500_US_CODE_OFFSET, 0);
-    OUT_CS_REG(R500_US_CODE_ADDR,
-               R500_US_CODE_START_ADDR(0) | R500_US_CODE_END_ADDR(code->inst_end));
-
-    OUT_CS_REG(R500_GA_US_VECTOR_INDEX, R500_GA_US_VECTOR_INDEX_TYPE_INSTR);
-    OUT_CS_ONE_REG(R500_GA_US_VECTOR_DATA, (code->inst_end + 1) * 6);
-    for (i = 0; i <= code->inst_end; i++) {
-        OUT_CS(code->inst[i].inst0);
-        OUT_CS(code->inst[i].inst1);
-        OUT_CS(code->inst[i].inst2);
-        OUT_CS(code->inst[i].inst3);
-        OUT_CS(code->inst[i].inst4);
-        OUT_CS(code->inst[i].inst5);
-    }
-
-    /* Emit immediates. */
-    if (imm_count) {
-        for(i = imm_first; i < imm_end; ++i) {
-            if (constants[i].Type == RC_CONSTANT_IMMEDIATE) {
-                const float *data = constants[i].u.Immediate;
-
-                OUT_CS_REG(R500_GA_US_VECTOR_INDEX,
-                           R500_GA_US_VECTOR_INDEX_TYPE_CONST |
-                           (i & R500_GA_US_VECTOR_INDEX_MASK));
-                OUT_CS_ONE_REG(R500_GA_US_VECTOR_DATA, 4);
-                OUT_CS_TABLE(data, 4);
-            }
-        }
-    }
-
-    OUT_CS_REG(R300_FG_DEPTH_SRC, fs->shader->fg_depth_src);
-    OUT_CS_REG(R300_US_W_FMT, fs->shader->us_out_w);
-    END_CS;
+    WRITE_CS_TABLE(fs->shader->cb_code, fs->shader->cb_code_size);
 }
 
 void r500_emit_fs_constants(struct r300_context* r300, unsigned size, void *state)

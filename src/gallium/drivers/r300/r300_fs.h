@@ -50,6 +50,9 @@ struct r300_fragment_shader_code {
     struct r300_fragment_program_external_state compare_state;
     struct rX00_fragment_program_code code;
 
+    unsigned cb_code_size;
+    uint32_t *cb_code;
+
     struct r300_fragment_shader_code* next;
 };
 
