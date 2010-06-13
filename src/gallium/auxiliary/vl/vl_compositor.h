@@ -47,7 +47,11 @@ struct vl_compositor
    void *sampler;
    struct pipe_sampler_view *sampler_view;
    void *vertex_shader;
-   void *fragment_shader;
+   struct
+   {
+      void *ycbcr_2_rgb;
+      void *rgb_2_rgb;
+   } fragment_shader;
    struct pipe_viewport_state viewport;
    struct pipe_vertex_buffer vertex_buf;
    void *vertex_elems_state;

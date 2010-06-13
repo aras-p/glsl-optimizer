@@ -423,7 +423,7 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
       XVMC_MSG(XVMC_TRACE, "[XvMC] Surface %p has subpicture %p.\n", surface, surface_priv->subpicture);
 
       assert(subpicture_priv->surface == surface);
-      vpipe->set_picture_layers(vpipe, &subpicture_priv->sfc, &src_rects, &dst_rects, 1);
+      vpipe->set_picture_layers(vpipe, &subpicture_priv->sfc, src_rects, dst_rects, 1);
 
       surface_priv->subpicture = NULL;
       subpicture_priv->surface = NULL;
@@ -432,7 +432,7 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
       vpipe->set_picture_layers(vpipe, NULL, NULL, NULL, 0);
 
    vpipe->render_picture(vpipe, surface_priv->pipe_vsfc, PictureToPipe(flags), &src_rect,
-                         drawable_surface, &dst_rect, surface_priv->disp_fence);
+                         drawable_surface, &dst_rect, &surface_priv->disp_fence);
 
    XVMC_MSG(XVMC_TRACE, "[XvMC] Submitted surface %p for display. Pushing to front buffer.\n", surface);
 

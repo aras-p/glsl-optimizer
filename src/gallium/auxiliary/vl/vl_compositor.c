@@ -98,7 +98,7 @@ create_vert_shader(struct vl_compositor *c)
 }
 
 static bool
-create_frag_shader(struct vl_compositor *c)
+create_frag_shader_ycbcr_2_rgb(struct vl_compositor *c)
 {
    struct ureg_program *shader;
    struct ureg_src tc;
@@ -130,8 +130,37 @@ create_frag_shader(struct vl_compositor *c)
    ureg_release_temporary(shader, texel);
    ureg_END(shader);
 
-   c->fragment_shader = ureg_create_shader_and_destroy(shader, c->pipe);
-   if (!c->fragment_shader)
+   c->fragment_shader.ycbcr_2_rgb = ureg_create_shader_and_destroy(shader, c->pipe);
+   if (!c->fragment_shader.ycbcr_2_rgb)
+      return false;
+
+   return true;
+}
+
+static bool
+create_frag_shader_rgb_2_rgb(struct vl_compositor *c)
+{
+   struct ureg_program *shader;
+   struct ureg_src tc;
+   struct ureg_src sampler;
+   struct ureg_dst fragment;
+
+   shader = ureg_create(TGSI_PROCESSOR_FRAGMENT);
+   if (!shader)
+      return false;
+
+   tc = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, 1, TGSI_INTERPOLATE_LINEAR);
+   sampler = ureg_DECL_sampler(shader, 0);
+   fragment = ureg_DECL_output(shader, TGSI_SEMANTIC_COLOR, 0);
+
+   /*
+    * fragment = tex(tc, sampler)
+    */
+   ureg_TEX(shader, fragment, TGSI_TEXTURE_2D, tc, sampler);
+   ureg_END(shader);
+
+   c->fragment_shader.rgb_2_rgb = ureg_create_shader_and_destroy(shader, c->pipe);
+   if (!c->fragment_shader.rgb_2_rgb)
       return false;
 
    return true;
@@ -178,8 +207,18 @@ init_shaders(struct vl_compositor *c)
 {
    assert(c);
 
-   create_vert_shader(c);
-   create_frag_shader(c);
+   if (!create_vert_shader(c)) {
+      debug_printf("Unable to create vertex shader.\n");
+      return false;
+   }
+   if (!create_frag_shader_ycbcr_2_rgb(c)) {
+      debug_printf("Unable to create YCbCr-to-RGB fragment shader.\n");
+      return false;
+   }
+   if (!create_frag_shader_rgb_2_rgb(c)) {
+      debug_printf("Unable to create RGB-to-RGB fragment shader.\n");
+      return false;
+   }
 
    return true;
 }
@@ -189,7 +228,8 @@ static void cleanup_shaders(struct vl_compositor *c)
    assert(c);
 
    c->pipe->delete_vs_state(c->pipe, c->vertex_shader);
-   c->pipe->delete_fs_state(c->pipe, c->fragment_shader);
+   c->pipe->delete_fs_state(c->pipe, c->fragment_shader.ycbcr_2_rgb);
+   c->pipe->delete_fs_state(c->pipe, c->fragment_shader.rgb_2_rgb);
 }
 
 static bool
@@ -362,6 +402,9 @@ void vl_compositor_set_layers(struct vl_compositor *compositor,
             compositor->layer_dst_rects[i] = *dst_rects[i];
          compositor->dirty_layers |= 1 << i;
       }
+
+      if (layers[i])
+         compositor->dirty_layers |= 1 << i;
    }
 
    for (; i < VL_COMPOSITOR_MAX_LAYERS; ++i)
@@ -416,7 +459,8 @@ static unsigned gen_data(struct vl_compositor *c,
                          struct pipe_surface *src_surface,
                          struct pipe_video_rect *src_rect,
                          struct pipe_video_rect *dst_rect,
-                         struct pipe_surface **textures)
+                         struct pipe_surface **textures,
+                         void **frag_shaders)
 {
    void *vb;
    struct pipe_transfer *buf_transfer;
@@ -440,6 +484,8 @@ static unsigned gen_data(struct vl_compositor *c,
       struct vertex2f bg_inv_size = {1.0f / c->bg->width, 1.0f / c->bg->height};
       gen_rect_verts(num_rects, &c->bg_src_rect, &bg_inv_size, NULL, NULL, vb);
       textures[num_rects] = c->bg;
+      /* XXX: Hack */
+      frag_shaders[num_rects] = c->fragment_shader.rgb_2_rgb;
       ++num_rects;
       c->dirty_bg = false;
    }
@@ -448,6 +494,8 @@ static unsigned gen_data(struct vl_compositor *c,
       struct vertex2f src_inv_size = { 1.0f / src_surface->width, 1.0f / src_surface->height};
       gen_rect_verts(num_rects, src_rect, &src_inv_size, dst_rect, &c->fb_inv_size, vb);
       textures[num_rects] = src_surface;
+      /* XXX: Hack, sort of */
+      frag_shaders[num_rects] = c->fragment_shader.ycbcr_2_rgb;
       ++num_rects;
    }
 
@@ -459,6 +507,8 @@ static unsigned gen_data(struct vl_compositor *c,
          gen_rect_verts(num_rects, &c->layer_src_rects[i], &layer_inv_size,
                         &c->layer_dst_rects[i], &c->fb_inv_size, vb);
          textures[num_rects] = c->layers[i];
+         /* XXX: Hack */
+         frag_shaders[num_rects] = c->fragment_shader.rgb_2_rgb;
          ++num_rects;
          c->dirty_layers &= ~(1 << i);
       }
@@ -476,6 +526,7 @@ static void draw_layers(struct vl_compositor *c,
 {
    unsigned num_rects;
    struct pipe_surface *src_surfaces[VL_COMPOSITOR_MAX_LAYERS + 2];
+   void *frag_shaders[VL_COMPOSITOR_MAX_LAYERS + 2];
    unsigned i;
 
    assert(c);
@@ -483,7 +534,7 @@ static void draw_layers(struct vl_compositor *c,
    assert(src_rect);
    assert(dst_rect);
 
-   num_rects = gen_data(c, src_surface, src_rect, dst_rect, src_surfaces);
+   num_rects = gen_data(c, src_surface, src_rect, dst_rect, src_surfaces, frag_shaders);
 
    for (i = 0; i < num_rects; ++i) {
       boolean delete_view = FALSE;
@@ -502,6 +553,7 @@ static void draw_layers(struct vl_compositor *c,
                                            surface_view, c->pipe);
       }
 
+      c->pipe->bind_fs_state(c->pipe, frag_shaders[i]);
       c->pipe->set_fragment_sampler_views(c->pipe, 1, &surface_view);
       c->pipe->draw_arrays(c->pipe, PIPE_PRIM_TRIANGLES, i * 6, 6);
 
@@ -554,7 +606,6 @@ void vl_compositor_render(struct vl_compositor          *compositor,
    compositor->pipe->set_viewport_state(compositor->pipe, &compositor->viewport);
    compositor->pipe->bind_fragment_sampler_states(compositor->pipe, 1, &compositor->sampler);
    compositor->pipe->bind_vs_state(compositor->pipe, compositor->vertex_shader);
-   compositor->pipe->bind_fs_state(compositor->pipe, compositor->fragment_shader);
    compositor->pipe->set_vertex_buffers(compositor->pipe, 1, &compositor->vertex_buf);
    compositor->pipe->bind_vertex_elements_state(compositor->pipe, compositor->vertex_elems_state);
    compositor->pipe->set_constant_buffer(compositor->pipe, PIPE_SHADER_FRAGMENT, 0, compositor->fs_const_buf);

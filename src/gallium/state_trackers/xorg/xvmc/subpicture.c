@@ -234,10 +234,12 @@ Status XvMCCompositeSubpicture(Display *dpy, XvMCSubpicture *subpicture, XvImage
 {
    XvMCSubpicturePrivate *subpicture_priv;
    XvMCContextPrivate *context_priv;
-   struct pipe_screen *screen;
+   struct pipe_video_context *vpipe;
    struct pipe_transfer *xfer;
-   unsigned char *src, *dst;
+   unsigned char *src, *dst, *dst_line;
    unsigned x, y;
+   struct pipe_box dst_box = {dstx, dsty, 0, width, height, 1};
+   struct pipe_subresource sr = {0, 0};
 
    XVMC_MSG(XVMC_TRACE, "[XvMC] Compositing subpicture %p.\n", subpicture);
 
@@ -257,20 +259,19 @@ Status XvMCCompositeSubpicture(Display *dpy, XvMCSubpicture *subpicture, XvImage
 
    subpicture_priv = subpicture->privData;
    context_priv = subpicture_priv->context->privData;
-   screen = context_priv->vctx->vpipe->screen;
+   vpipe = context_priv->vctx->vpipe;
 
    /* TODO: Assert rects are within bounds? Or clip? */
 
-#if 0
-   xfer = screen->get_tex_transfer(screen, subpicture_priv->sfc->texture, 0, 0, 0,
-                                   PIPE_TRANSFER_WRITE, dstx, dsty, width, height);
+   xfer = vpipe->get_transfer(vpipe, subpicture_priv->sfc->texture,
+                              sr, PIPE_TRANSFER_WRITE, &dst_box);
    if (!xfer)
       return BadAlloc;
 
    src = image->data;
-   dst = screen->transfer_map(screen, xfer);
+   dst = vpipe->transfer_map(vpipe, xfer);
    if (!dst) {
-      screen->tex_transfer_destroy(xfer);
+      vpipe->transfer_destroy(vpipe, xfer);
       return BadAlloc;
    }
 
@@ -278,21 +279,21 @@ Status XvMCCompositeSubpicture(Display *dpy, XvMCSubpicture *subpicture, XvImage
       case FOURCC_RGB:
          assert(subpicture_priv->sfc->format == XvIDToPipe(image->id));
          for (y = 0; y < height; ++y) {
-            for (x = 0; x < width; ++x, src += 3, dst += 4) {
-               /* TODO: Confirm or fix */
-               dst[0] = src[0];
-               dst[1] = src[1];
-               dst[2] = src[2];
+            dst_line = dst;
+            for (x = 0; x < width; ++x, src += 3, dst_line += 4) {
+               dst_line[0] = src[2]; /* B */
+               dst_line[1] = src[1]; /* G */
+               dst_line[2] = src[0]; /* R */
             }
+            dst += xfer->stride;
          }
          break;
       default:
          XVMC_MSG(XVMC_ERR, "[XvMC] Unrecognized Xv image ID 0x%08X.\n", image->id);
    }
 
-   screen->transfer_unmap(screen, xfer);
-   screen->tex_transfer_destroy(xfer);
-#endif
+   vpipe->transfer_unmap(vpipe, xfer);
+   vpipe->transfer_destroy(vpipe, xfer);
 
    XVMC_MSG(XVMC_TRACE, "[XvMC] Subpicture %p composited.\n", subpicture);
 
