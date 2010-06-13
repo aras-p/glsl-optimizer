@@ -286,6 +286,7 @@ static void brw_set_ff_sync_message(struct brw_context *brw,
 				    GLuint response_length,
 				    GLboolean end_of_thread)
 {
+	struct intel_context *intel = &brw->intel;
 	brw_set_src1(insn, brw_imm_d(0));
 
 	insn->bits3.urb_gen5.opcode = 1; /* FF_SYNC */
@@ -298,8 +299,12 @@ static void brw_set_ff_sync_message(struct brw_context *brw,
 	insn->bits3.urb_gen5.response_length = response_length; /* may be 1 or 0 */
 	insn->bits3.urb_gen5.msg_length = 1;
 	insn->bits3.urb_gen5.end_of_thread = end_of_thread;
-	insn->bits2.send_gen5.sfid = BRW_MESSAGE_TARGET_URB;
-	insn->bits2.send_gen5.end_of_thread = end_of_thread;
+	if (intel->gen >= 6) {
+	   insn->header.destreg__conditionalmod = BRW_MESSAGE_TARGET_URB;
+	} else {
+	   insn->bits2.send_gen5.sfid = BRW_MESSAGE_TARGET_URB;
+	   insn->bits2.send_gen5.end_of_thread = end_of_thread;
+	}
 }
 
 static void brw_set_urb_message( struct brw_context *brw,
