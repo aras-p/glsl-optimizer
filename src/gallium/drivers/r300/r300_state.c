@@ -31,6 +31,7 @@
 
 #include "pipe/p_config.h"
 
+#include "r300_cb.h"
 #include "r300_context.h"
 #include "r300_emit.h"
 #include "r300_reg.h"
@@ -182,6 +183,12 @@ static void* r300_create_blend_state(struct pipe_context* pipe,
 {
     struct r300_screen* r300screen = r300_screen(pipe->screen);
     struct r300_blend_state* blend = CALLOC_STRUCT(r300_blend_state);
+    uint32_t blend_control = 0;       /* R300_RB3D_CBLEND: 0x4e04 */
+    uint32_t alpha_blend_control = 0; /* R300_RB3D_ABLEND: 0x4e08 */
+    uint32_t color_channel_mask = 0;  /* R300_RB3D_COLOR_CHANNEL_MASK: 0x4e0c */
+    uint32_t rop = 0;                 /* R300_RB3D_ROPCNTL: 0x4e18 */
+    uint32_t dither = 0;              /* R300_RB3D_DITHER_CTL: 0x4e50 */
+    CB_LOCALS;
 
     if (state->rt[0].blend_enable)
     {
@@ -195,7 +202,7 @@ static void* r300_create_blend_state(struct pipe_context* pipe,
 
         /* despite the name, ALPHA_BLEND_ENABLE has nothing to do with alpha,
          * this is just the crappy D3D naming */
-        blend->blend_control = R300_ALPHA_BLEND_ENABLE |
+        blend_control = R300_ALPHA_BLEND_ENABLE |
             r300_translate_blend_function(eqRGB) |
             ( r300_translate_blend_factor(srcRGB) << R300_SRC_BLEND_SHIFT) |
             ( r300_translate_blend_factor(dstRGB) << R300_DST_BLEND_SHIFT);
@@ -219,7 +226,7 @@ static void* r300_create_blend_state(struct pipe_context* pipe,
             srcA == PIPE_BLENDFACTOR_INV_DST_ALPHA ||
             srcRGB == PIPE_BLENDFACTOR_SRC_ALPHA_SATURATE) {
             /* Enable reading from the colorbuffer. */
-            blend->blend_control |= R300_READ_ENABLE;
+            blend_control |= R300_READ_ENABLE;
 
             if (r300screen->caps.is_r500) {
                 /* Optimization: Depending on incoming pixels, we can
@@ -232,7 +239,7 @@ static void* r300_create_blend_state(struct pipe_context* pipe,
                         (dstA == PIPE_BLENDFACTOR_SRC_COLOR ||
                          dstA == PIPE_BLENDFACTOR_SRC_ALPHA ||
                          dstA == PIPE_BLENDFACTOR_ZERO)) {
-                         blend->blend_control |= R500_SRC_ALPHA_0_NO_READ;
+                         blend_control |= R500_SRC_ALPHA_0_NO_READ;
                     }
 
                     /* Disable reading if SRC_ALPHA == 1. */
@@ -241,7 +248,7 @@ static void* r300_create_blend_state(struct pipe_context* pipe,
                         (dstA == PIPE_BLENDFACTOR_INV_SRC_COLOR ||
                          dstA == PIPE_BLENDFACTOR_INV_SRC_ALPHA ||
                          dstA == PIPE_BLENDFACTOR_ZERO)) {
-                         blend->blend_control |= R500_SRC_ALPHA_1_NO_READ;
+                         blend_control |= R500_SRC_ALPHA_1_NO_READ;
                     }
                 }
             }
@@ -271,31 +278,31 @@ static void* r300_create_blend_state(struct pipe_context* pipe,
              * pixels.
              */
             if (blend_discard_if_src_alpha_0(srcRGB, srcA, dstRGB, dstA)) {
-                blend->blend_control |= R300_DISCARD_SRC_PIXELS_SRC_ALPHA_0;
+                blend_control |= R300_DISCARD_SRC_PIXELS_SRC_ALPHA_0;
             } else if (blend_discard_if_src_alpha_1(srcRGB, srcA,
                                                     dstRGB, dstA)) {
-                blend->blend_control |= R300_DISCARD_SRC_PIXELS_SRC_ALPHA_1;
+                blend_control |= R300_DISCARD_SRC_PIXELS_SRC_ALPHA_1;
             } else if (blend_discard_if_src_color_0(srcRGB, srcA,
                                                     dstRGB, dstA)) {
-                blend->blend_control |= R300_DISCARD_SRC_PIXELS_SRC_COLOR_0;
+                blend_control |= R300_DISCARD_SRC_PIXELS_SRC_COLOR_0;
             } else if (blend_discard_if_src_color_1(srcRGB, srcA,
                                                     dstRGB, dstA)) {
-                blend->blend_control |= R300_DISCARD_SRC_PIXELS_SRC_COLOR_1;
+                blend_control |= R300_DISCARD_SRC_PIXELS_SRC_COLOR_1;
             } else if (blend_discard_if_src_alpha_color_0(srcRGB, srcA,
                                                           dstRGB, dstA)) {
-                blend->blend_control |=
+                blend_control |=
                     R300_DISCARD_SRC_PIXELS_SRC_ALPHA_COLOR_0;
             } else if (blend_discard_if_src_alpha_color_1(srcRGB, srcA,
                                                           dstRGB, dstA)) {
-                blend->blend_control |=
+                blend_control |=
                     R300_DISCARD_SRC_PIXELS_SRC_ALPHA_COLOR_1;
             }
         }
 
         /* separate alpha */
         if (srcA != srcRGB || dstA != dstRGB || eqA != eqRGB) {
-            blend->blend_control |= R300_SEPARATE_ALPHA_ENABLE;
-            blend->alpha_blend_control =
+            blend_control |= R300_SEPARATE_ALPHA_ENABLE;
+            alpha_blend_control =
                 r300_translate_blend_function(eqA) |
                 (r300_translate_blend_factor(srcA) << R300_SRC_BLEND_SHIFT) |
                 (r300_translate_blend_factor(dstA) << R300_DST_BLEND_SHIFT);
@@ -304,21 +311,21 @@ static void* r300_create_blend_state(struct pipe_context* pipe,
 
     /* PIPE_LOGICOP_* don't need to be translated, fortunately. */
     if (state->logicop_enable) {
-        blend->rop = R300_RB3D_ROPCNTL_ROP_ENABLE |
+        rop = R300_RB3D_ROPCNTL_ROP_ENABLE |
                 (state->logicop_func) << R300_RB3D_ROPCNTL_ROP_SHIFT;
     }
 
     /* Color channel masks for all MRTs. */
-    blend->color_channel_mask = bgra_cmask(state->rt[0].colormask);
+    color_channel_mask = bgra_cmask(state->rt[0].colormask);
     if (r300screen->caps.is_r500 && state->independent_blend_enable) {
         if (state->rt[1].blend_enable) {
-            blend->color_channel_mask |= bgra_cmask(state->rt[1].colormask) << 4;
+            color_channel_mask |= bgra_cmask(state->rt[1].colormask) << 4;
         }
         if (state->rt[2].blend_enable) {
-            blend->color_channel_mask |= bgra_cmask(state->rt[2].colormask) << 8;
+            color_channel_mask |= bgra_cmask(state->rt[2].colormask) << 8;
         }
         if (state->rt[3].blend_enable) {
-            blend->color_channel_mask |= bgra_cmask(state->rt[3].colormask) << 12;
+            color_channel_mask |= bgra_cmask(state->rt[3].colormask) << 12;
         }
     }
 
@@ -329,10 +336,30 @@ static void* r300_create_blend_state(struct pipe_context* pipe,
      * This could be revisited if we ever get quality or conformance hints.
      *
     if (state->dither) {
-        blend->dither = R300_RB3D_DITHER_CTL_DITHER_MODE_LUT |
+        dither = R300_RB3D_DITHER_CTL_DITHER_MODE_LUT |
                         R300_RB3D_DITHER_CTL_ALPHA_DITHER_MODE_LUT;
     }
     */
+
+    /* Build a command buffer. */
+    BEGIN_CB(blend->cb, 8);
+    OUT_CB_REG(R300_RB3D_ROPCNTL, rop);
+    OUT_CB_REG_SEQ(R300_RB3D_CBLEND, 3);
+    OUT_CB(blend_control);
+    OUT_CB(alpha_blend_control);
+    OUT_CB(color_channel_mask);
+    OUT_CB_REG(R300_RB3D_DITHER_CTL, dither);
+    END_CB;
+
+    /* The same as above, but with no colorbuffer reads and writes. */
+    BEGIN_CB(blend->cb_no_readwrite, 8);
+    OUT_CB_REG(R300_RB3D_ROPCNTL, rop);
+    OUT_CB_REG_SEQ(R300_RB3D_CBLEND, 3);
+    OUT_CB(0);
+    OUT_CB(0);
+    OUT_CB(0);
+    OUT_CB_REG(R300_RB3D_DITHER_CTL, dither);
+    END_CB;
 
     return (void*)blend;
 }

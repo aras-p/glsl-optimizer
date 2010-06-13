@@ -43,21 +43,11 @@ void r300_emit_blend_state(struct r300_context* r300,
         (struct pipe_framebuffer_state*)r300->fb_state.state;
     CS_LOCALS(r300);
 
-    BEGIN_CS(size);
-    OUT_CS_REG(R300_RB3D_ROPCNTL, blend->rop);
-    OUT_CS_REG_SEQ(R300_RB3D_CBLEND, 3);
     if (fb->nr_cbufs) {
-        OUT_CS(blend->blend_control);
-        OUT_CS(blend->alpha_blend_control);
-        OUT_CS(blend->color_channel_mask);
+        WRITE_CS_TABLE(blend->cb, size);
     } else {
-        OUT_CS(0);
-        OUT_CS(0);
-        OUT_CS(0);
-        /* XXX also disable fastfill here once it's supported */
+        WRITE_CS_TABLE(blend->cb_no_readwrite, size);
     }
-    OUT_CS_REG(R300_RB3D_DITHER_CTL, blend->dither);
-    END_CS;
 }
 
 void r300_emit_blend_color_state(struct r300_context* r300,

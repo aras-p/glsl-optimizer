@@ -62,11 +62,8 @@ struct r300_atom {
 };
 
 struct r300_blend_state {
-    uint32_t blend_control;       /* R300_RB3D_CBLEND: 0x4e04 */
-    uint32_t alpha_blend_control; /* R300_RB3D_ABLEND: 0x4e08 */
-    uint32_t color_channel_mask;  /* R300_RB3D_COLOR_CHANNEL_MASK: 0x4e0c */
-    uint32_t rop;                 /* R300_RB3D_ROPCNTL: 0x4e18 */
-    uint32_t dither;              /* R300_RB3D_DITHER_CTL: 0x4e50 */
+    uint32_t cb[8];
+    uint32_t cb_no_readwrite[8];
 };
 
 struct r300_blend_color_state {
