@@ -78,6 +78,9 @@ enum LLVM_CodeGenOpt_Level {
 extern void
 lp_register_oprofile_jit_event_listener(LLVMExecutionEngineRef EE);
 
+extern void
+lp_set_target_options(void);
+
 
 void
 lp_build_init(void)
@@ -85,6 +88,8 @@ lp_build_init(void)
 #ifdef DEBUG
    gallivm_debug = debug_get_flags_option("GALLIVM_DEBUG", lp_bld_debug_flags, 0 );
 #endif
+
+   lp_set_target_options();
 
    LLVMInitializeNativeTarget();
 

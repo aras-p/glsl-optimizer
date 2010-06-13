@@ -36,6 +36,7 @@
 
 #include <llvm-c/Core.h>
 #include <llvm-c/ExecutionEngine.h>
+#include <llvm/Target/TargetOptions.h>
 #include <llvm/ExecutionEngine/ExecutionEngine.h>
 #include <llvm/ExecutionEngine/JITEventListener.h>
 
@@ -118,4 +119,29 @@ extern "C" void
 lp_register_oprofile_jit_event_listener(LLVMExecutionEngineRef EE)
 {
    llvm::unwrap(EE)->RegisterJITEventListener(llvm::createOProfileJITEventListener());
+}
+
+
+extern "C" void
+lp_set_target_options(void)
+{
+#if defined(DEBUG)
+#if HAVE_LLVM >= 0x0207
+   llvm::JITEmitDebugInfo = true;
+#endif
+#endif
+
+#if defined(DEBUG) || defined(PROFILE)
+   llvm::NoFramePointerElim = true;
+#if HAVE_LLVM >= 0x0207
+   llvm::NoFramePointerElimNonLeaf = true;
+#endif
+#endif
+
+   llvm::NoExcessFPPrecision = false;
+
+   /* XXX: Investigate this */
+#if 0
+   llvm::UnsafeFPMath = true;
+#endif
 }
