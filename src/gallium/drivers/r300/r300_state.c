@@ -421,18 +421,27 @@ static void r300_set_clip_state(struct pipe_context* pipe,
                                 const struct pipe_clip_state* state)
 {
     struct r300_context* r300 = r300_context(pipe);
+    struct r300_clip_state *clip =
+            (struct r300_clip_state*)r300->clip_state.state;
+    CB_LOCALS;
 
-    r300->clip = *state;
+    clip->clip = *state;
 
     if (r300->screen->caps.has_tcl) {
-        memcpy(r300->clip_state.state, state, sizeof(struct pipe_clip_state));
-        r300->clip_state.size = 29;
+        BEGIN_CB(clip->cb, 29);
+        OUT_CB_REG(R300_VAP_PVS_VECTOR_INDX_REG,
+                (r300->screen->caps.is_r500 ?
+                 R500_PVS_UCP_START : R300_PVS_UCP_START));
+        OUT_CB_ONE_REG(R300_VAP_PVS_UPLOAD_DATA, 6 * 4);
+        OUT_CB_TABLE(state->ucp, 6 * 4);
+        OUT_CB_REG(R300_VAP_CLIP_CNTL, ((1 << state->nr) - 1) |
+                R300_PS_UCP_MODE_CLIP_AS_TRIFAN);
+        END_CB;
 
         r300->clip_state.dirty = TRUE;
     } else {
         draw_flush(r300->draw);
         draw_set_clip_state(r300->draw, state);
-        r300->clip_state.size = 2;
     }
 }
 

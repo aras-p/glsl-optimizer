@@ -26,6 +26,7 @@
 #include "util/u_simple_list.h"
 #include "util/u_upload_mgr.h"
 
+#include "r300_cb.h"
 #include "r300_context.h"
 #include "r300_emit.h"
 #include "r300_screen.h"
@@ -143,7 +144,7 @@ static void r300_setup_atoms(struct r300_context* r300)
 
     /* Some non-CSO atoms need explicit space to store the state locally. */
     r300->blend_color_state.state = CALLOC_STRUCT(r300_blend_color_state);
-    r300->clip_state.state = CALLOC_STRUCT(pipe_clip_state);
+    r300->clip_state.state = CALLOC_STRUCT(r300_clip_state);
     r300->fb_state.state = CALLOC_STRUCT(pipe_framebuffer_state);
     r300->rs_block_state.state = CALLOC_STRUCT(r300_rs_block);
     r300->scissor_state.state = CALLOC_STRUCT(pipe_scissor_state);
@@ -171,10 +172,20 @@ static void r300_init_states(struct pipe_context *pipe)
     struct pipe_blend_color bc = {{0}};
     struct pipe_clip_state cs = {{{0}}};
     struct pipe_scissor_state ss = {0};
+    struct r300_clip_state *clip =
+            (struct r300_clip_state*)r300_context(pipe)->clip_state.state;
+    CB_LOCALS;
 
     pipe->set_blend_color(pipe, &bc);
-    pipe->set_clip_state(pipe, &cs);
     pipe->set_scissor_state(pipe, &ss);
+
+    if (r300_context(pipe)->screen->caps.has_tcl) {
+        pipe->set_clip_state(pipe, &cs);
+    } else {
+        BEGIN_CB(clip->cb, 2);
+        OUT_CB_REG(R300_VAP_CLIP_CNTL, R300_CLIP_DISABLE);
+        END_CB;
+    }
 }
 
 struct pipe_context* r300_create_context(struct pipe_screen* screen,

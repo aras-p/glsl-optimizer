@@ -70,6 +70,12 @@ struct r300_blend_color_state {
     uint32_t cb[3];
 };
 
+struct r300_clip_state {
+    struct pipe_clip_state clip;
+
+    uint32_t cb[29];
+};
+
 struct r300_dsa_state {
     uint32_t alpha_function;    /* R300_FG_ALPHA_FUNC: 0x4bd4 */
     uint32_t alpha_reference;   /* R500_FG_ALPHA_VALUE: 0x4be0 */
@@ -433,9 +439,6 @@ struct r300_context {
     struct vertex_info vertex_info;
 
     struct pipe_stencil_ref stencil_ref;
-
-    struct pipe_clip_state clip;
-
     struct pipe_viewport_state viewport;
 
     /* Stream locations for SWTCL. */

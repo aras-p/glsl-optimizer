@@ -62,24 +62,10 @@ void r300_emit_blend_color_state(struct r300_context* r300,
 void r300_emit_clip_state(struct r300_context* r300,
                           unsigned size, void* state)
 {
-    struct pipe_clip_state* clip = (struct pipe_clip_state*)state;
+    struct r300_clip_state* clip = (struct r300_clip_state*)state;
     CS_LOCALS(r300);
 
-    if (r300->screen->caps.has_tcl) {
-        BEGIN_CS(size);
-        OUT_CS_REG(R300_VAP_PVS_VECTOR_INDX_REG,
-                (r300->screen->caps.is_r500 ?
-                 R500_PVS_UCP_START : R300_PVS_UCP_START));
-        OUT_CS_ONE_REG(R300_VAP_PVS_UPLOAD_DATA, 6 * 4);
-        OUT_CS_TABLE(clip->ucp, 6 * 4);
-        OUT_CS_REG(R300_VAP_CLIP_CNTL, ((1 << clip->nr) - 1) |
-                R300_PS_UCP_MODE_CLIP_AS_TRIFAN);
-        END_CS;
-    } else {
-        BEGIN_CS(size);
-        OUT_CS_REG(R300_VAP_CLIP_CNTL, R300_CLIP_DISABLE);
-        END_CS;
-    }
+    WRITE_CS_TABLE(clip->cb, size);
 }
 
 void r300_emit_dsa_state(struct r300_context* r300, unsigned size, void* state)
