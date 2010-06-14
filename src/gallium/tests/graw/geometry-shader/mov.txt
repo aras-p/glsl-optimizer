@@ -11,7 +11,7 @@ MOV OUT[1], IN[0][1]
 EMIT
 
 MOV OUT[0], IN[1][0]
-MOV OUT[1], IN[0][1]
+MOV OUT[1], IN[1][1]
 EMIT
 
 MOV OUT[0], IN[2][0]
