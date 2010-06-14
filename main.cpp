@@ -33,7 +33,6 @@
 #include "glsl_parser.h"
 #include "ir_optimization.h"
 #include "ir_print_visitor.h"
-#include "ir_reader.h"
 
 
 static char *
@@ -104,11 +103,8 @@ main(int argc, char **argv)
    case 'f':
       state.target = fragment_shader;
       break;
-   case 'i':
-      state.target = ir_shader;
-      break;
    default:
-      printf("Usage: %s [v|g|f|i] <shader_file>\n", argv[0]);
+      printf("Usage: %s [v|g|f] <shader_file>\n", argv[0]);
       return EXIT_FAILURE;
    }
 
@@ -122,27 +118,17 @@ main(int argc, char **argv)
    state.loop_or_switch_nesting = NULL;
    state.ARB_texture_rectangle_enable = true;
 
-   if (state.target != ir_shader) {
-      _mesa_glsl_lexer_ctor(& state, shader, shader_len);
-      _mesa_glsl_parse(& state);
-      _mesa_glsl_lexer_dtor(& state);
+   _mesa_glsl_lexer_ctor(& state, shader, shader_len);
+   _mesa_glsl_parse(& state);
+   _mesa_glsl_lexer_dtor(& state);
 
-      foreach_list_const(n, &state.translation_unit) {
-	 ast_node *ast = exec_node_data(ast_node, n, link);
-	 ast->print();
-      }
-
-      if (!state.error && !state.translation_unit.is_empty())
-	 _mesa_ast_to_hir(&instructions, &state);
-   } else {
-      /* FINISHME: We should initialize this to the max GLSL version supported
-       * FINISHME: by the driver.  At the moment, we don't know what that is.
-       */
-      state.language_version = 130;
-      _mesa_glsl_initialize_types(&state);
-
-      _mesa_glsl_read_ir(&state, &instructions, shader);
+   foreach_list_const(n, &state.translation_unit) {
+      ast_node *ast = exec_node_data(ast_node, n, link);
+      ast->print();
    }
+
+   if (!state.error && !state.translation_unit.is_empty())
+      _mesa_ast_to_hir(&instructions, &state);
 
    /* Optimization passes */
    if (!state.error && !instructions.is_empty()) {
