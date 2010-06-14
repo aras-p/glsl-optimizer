@@ -270,9 +270,8 @@ void r500_emit_fs_rc_constant_state(struct r300_context* r300, unsigned size, vo
 void r300_emit_fb_state(struct r300_context* r300, unsigned size, void* state)
 {
     struct pipe_framebuffer_state* fb = (struct pipe_framebuffer_state*)state;
-    struct r300_texture* tex;
-    struct pipe_surface* surf;
-    int i;
+    struct r300_surface* surf;
+    unsigned i;
     CS_LOCALS(r300);
 
     BEGIN_CS(size);
@@ -296,18 +295,15 @@ void r300_emit_fb_state(struct r300_context* r300, unsigned size, void* state)
 
     /* Set up colorbuffers. */
     for (i = 0; i < fb->nr_cbufs; i++) {
-        surf = fb->cbufs[i];
-        tex = r300_texture(surf->texture);
-        assert(tex && tex->buffer && "cbuf is marked, but NULL!");
+        surf = r300_surface(fb->cbufs[i]);
 
         OUT_CS_REG_SEQ(R300_RB3D_COLOROFFSET0 + (4 * i), 1);
-        OUT_CS_TEX_RELOC(tex, surf->offset, 0, tex->domain, 0);
+        OUT_CS_RELOC(surf->buffer, surf->offset, 0, surf->domain, 0);
 
         OUT_CS_REG_SEQ(R300_RB3D_COLORPITCH0 + (4 * i), 1);
-        OUT_CS_TEX_RELOC(tex, tex->fb_state.colorpitch[surf->level],
-                     0, tex->domain, 0);
+        OUT_CS_RELOC(surf->buffer, surf->pitch, 0, surf->domain, 0);
 
-        OUT_CS_REG(R300_US_OUT_FMT_0 + (4 * i), tex->fb_state.us_out_fmt);
+        OUT_CS_REG(R300_US_OUT_FMT_0 + (4 * i), surf->format);
     }
     for (; i < 4; i++) {
         OUT_CS_REG(R300_US_OUT_FMT_0 + (4 * i), R300_US_OUT_FMT_UNUSED);
@@ -315,18 +311,15 @@ void r300_emit_fb_state(struct r300_context* r300, unsigned size, void* state)
 
     /* Set up a zbuffer. */
     if (fb->zsbuf) {
-        surf = fb->zsbuf;
-        tex = r300_texture(surf->texture);
-        assert(tex && tex->buffer && "zsbuf is marked, but NULL!");
+        surf = r300_surface(fb->zsbuf);
 
         OUT_CS_REG_SEQ(R300_ZB_DEPTHOFFSET, 1);
-        OUT_CS_TEX_RELOC(tex, surf->offset, 0, tex->domain, 0);
+        OUT_CS_RELOC(surf->buffer, surf->offset, 0, surf->domain, 0);
 
-        OUT_CS_REG(R300_ZB_FORMAT, tex->fb_state.zb_format);
+        OUT_CS_REG(R300_ZB_FORMAT, surf->format);
 
         OUT_CS_REG_SEQ(R300_ZB_DEPTHPITCH, 1);
-        OUT_CS_TEX_RELOC(tex, tex->fb_state.depthpitch[surf->level],
-                     0, tex->domain, 0);
+        OUT_CS_RELOC(surf->buffer, surf->pitch, 0, surf->domain, 0);
     }
 
     OUT_CS_REG_SEQ(R300_SC_SCISSORS_TL, 2);

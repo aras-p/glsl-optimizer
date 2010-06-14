@@ -173,13 +173,8 @@ struct r300_sampler_view {
 };
 
 struct r300_texture_fb_state {
-    /* Colorbuffer. */
-    uint32_t colorpitch[R300_MAX_TEXTURE_LEVELS]; /* R300_RB3D_COLORPITCH[0-3]*/
-    uint32_t us_out_fmt; /* R300_US_OUT_FMT[0-3] */
-
-    /* Zbuffer. */
-    uint32_t depthpitch[R300_MAX_TEXTURE_LEVELS]; /* R300_RB3D_DEPTHPITCH */
-    uint32_t zb_format; /* R300_ZB_FORMAT */
+    uint32_t pitch[R300_MAX_TEXTURE_LEVELS]; /* COLORPITCH or DEPTHPITCH. */
+    uint32_t format; /* US_OUT_FMT or R300_ZB_FORMAT */
 };
 
 struct r300_texture_sampler_state {
@@ -273,6 +268,19 @@ struct r300_fence {
     struct pipe_reference reference;
     struct r300_context *ctx;
     boolean signalled;
+};
+
+struct r300_surface {
+    struct pipe_surface base;
+
+    /* Winsys buffer backing the texture. */
+    struct r300_winsys_buffer *buffer;
+
+    enum r300_buffer_domain domain;
+
+    uint32_t offset;
+    uint32_t pitch;     /* COLORPITCH or DEPTHPITCH. */
+    uint32_t format;    /* US_OUT_FMT or R300_ZB_FORMAT. */
 };
 
 struct r300_texture {
@@ -477,6 +485,11 @@ struct r300_context {
 static INLINE struct r300_query* r300_query(struct pipe_query* q)
 {
     return (struct r300_query*)q;
+}
+
+static INLINE struct r300_surface* r300_surface(struct pipe_surface* surf)
+{
+    return (struct r300_surface*)surf;
 }
 
 static INLINE struct r300_texture* r300_texture(struct pipe_resource* tex)
