@@ -34,6 +34,7 @@
 
 
 #include "util/u_cpu_detect.h"
+#include "util/u_memory.h"
 #include "util/u_debug.h"
 
 #include "lp_bld_type.h"
@@ -381,6 +382,46 @@ lp_build_select(struct lp_build_context *bld,
    if (type.length == 1) {
       mask = LLVMBuildTrunc(bld->builder, mask, LLVMInt1Type(), "");
       res = LLVMBuildSelect(bld->builder, mask, a, b, "");
+   }
+   else if (util_cpu_caps.has_sse4_1 &&
+            type.width * type.length == 128 &&
+            !LLVMIsConstant(a) &&
+            !LLVMIsConstant(b) &&
+            !LLVMIsConstant(mask)) {
+      const char *intrinsic;
+      LLVMTypeRef arg_type;
+      LLVMValueRef args[3];
+
+      if (type.width == 64) {
+         intrinsic = "llvm.x86.sse41.blendvpd";
+         arg_type = LLVMVectorType(LLVMDoubleType(), 2);
+      } else if (type.width == 32) {
+         intrinsic = "llvm.x86.sse41.blendvps";
+         arg_type = LLVMVectorType(LLVMFloatType(), 4);
+      } else {
+         intrinsic = "llvm.x86.sse41.pblendvb";
+         arg_type = LLVMVectorType(LLVMInt8Type(), 16);
+      }
+
+      if (arg_type != bld->int_vec_type) {
+         mask = LLVMBuildBitCast(bld->builder, mask, arg_type, "");
+      }
+
+      if (arg_type != bld->vec_type) {
+         a = LLVMBuildBitCast(bld->builder, a, arg_type, "");
+         b = LLVMBuildBitCast(bld->builder, b, arg_type, "");
+      }
+
+      args[0] = b;
+      args[1] = a;
+      args[2] = mask;
+
+      res = lp_build_intrinsic(bld->builder, intrinsic,
+                               arg_type, args, Elements(args));
+
+      if (arg_type != bld->vec_type) {
+         res = LLVMBuildBitCast(bld->builder, res, bld->vec_type, "");
+      }
    }
    else {
       if(type.floating) {
