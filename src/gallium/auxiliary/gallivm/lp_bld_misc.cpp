@@ -133,9 +133,6 @@ lp_set_target_options(void)
 
 #if defined(DEBUG) || defined(PROFILE)
    llvm::NoFramePointerElim = true;
-#if HAVE_LLVM >= 0x0207
-   llvm::NoFramePointerElimNonLeaf = true;
-#endif
 #endif
 
    llvm::NoExcessFPPrecision = false;
