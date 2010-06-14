@@ -353,13 +353,14 @@ void r300_emit_query_start(struct r300_context *r300, unsigned size, void*state)
     OUT_CS_REG(R300_ZB_ZPASS_DATA, 0);
     END_CS;
     query->begin_emitted = TRUE;
+    query->flushed = FALSE;
 }
-
 
 static void r300_emit_query_end_frag_pipes(struct r300_context *r300,
                                            struct r300_query *query)
 {
     struct r300_capabilities* caps = &r300->screen->caps;
+    struct r300_winsys_buffer *buf = r300->query_current->buffer;
     CS_LOCALS(r300);
 
     assert(caps->num_frag_pipes);
@@ -378,28 +379,28 @@ static void r300_emit_query_end_frag_pipes(struct r300_context *r300,
             /* pipe 3 only */
             OUT_CS_REG(R300_SU_REG_DEST, 1 << 3);
             OUT_CS_REG_SEQ(R300_ZB_ZPASS_ADDR, 1);
-            OUT_CS_BUF_RELOC(r300->oqbo, query->offset + (sizeof(uint32_t) * 3),
-                    0, r300_buffer(r300->oqbo)->domain, 0);
+            OUT_CS_RELOC(buf, (query->num_results + 3) * 4,
+                    0, query->domain, 0);
         case 3:
             /* pipe 2 only */
             OUT_CS_REG(R300_SU_REG_DEST, 1 << 2);
             OUT_CS_REG_SEQ(R300_ZB_ZPASS_ADDR, 1);
-            OUT_CS_BUF_RELOC(r300->oqbo, query->offset + (sizeof(uint32_t) * 2),
-                    0, r300_buffer(r300->oqbo)->domain, 0);
+            OUT_CS_RELOC(buf, (query->num_results + 2) * 4,
+                    0, query->domain, 0);
         case 2:
             /* pipe 1 only */
             /* As mentioned above, accomodate RV380 and older. */
             OUT_CS_REG(R300_SU_REG_DEST,
                     1 << (caps->high_second_pipe ? 3 : 1));
             OUT_CS_REG_SEQ(R300_ZB_ZPASS_ADDR, 1);
-            OUT_CS_BUF_RELOC(r300->oqbo, query->offset + (sizeof(uint32_t) * 1),
-                    0, r300_buffer(r300->oqbo)->domain, 0);
+            OUT_CS_RELOC(buf, (query->num_results + 1) * 4,
+                    0, query->domain, 0);
         case 1:
             /* pipe 0 only */
             OUT_CS_REG(R300_SU_REG_DEST, 1 << 0);
             OUT_CS_REG_SEQ(R300_ZB_ZPASS_ADDR, 1);
-            OUT_CS_BUF_RELOC(r300->oqbo, query->offset + (sizeof(uint32_t) * 0),
-                    0, r300_buffer(r300->oqbo)->domain, 0);
+            OUT_CS_RELOC(buf, (query->num_results + 0) * 4,
+                    0, query->domain, 0);
             break;
         default:
             fprintf(stderr, "r300: Implementation error: Chipset reports %d"
@@ -415,12 +416,13 @@ static void r300_emit_query_end_frag_pipes(struct r300_context *r300,
 static void rv530_emit_query_end_single_z(struct r300_context *r300,
                                           struct r300_query *query)
 {
+    struct r300_winsys_buffer *buf = r300->query_current->buffer;
     CS_LOCALS(r300);
 
     BEGIN_CS(8);
     OUT_CS_REG(RV530_FG_ZBREG_DEST, RV530_FG_ZBREG_DEST_PIPE_SELECT_0);
     OUT_CS_REG_SEQ(R300_ZB_ZPASS_ADDR, 1);
-    OUT_CS_BUF_RELOC(r300->oqbo, query->offset, 0, r300_buffer(r300->oqbo)->domain, 0);
+    OUT_CS_RELOC(buf, query->num_results * 4, 0, query->domain, 0);
     OUT_CS_REG(RV530_FG_ZBREG_DEST, RV530_FG_ZBREG_DEST_PIPE_SELECT_ALL);
     END_CS;
 }
@@ -428,15 +430,16 @@ static void rv530_emit_query_end_single_z(struct r300_context *r300,
 static void rv530_emit_query_end_double_z(struct r300_context *r300,
                                           struct r300_query *query)
 {
+    struct r300_winsys_buffer *buf = r300->query_current->buffer;
     CS_LOCALS(r300);
 
     BEGIN_CS(14);
     OUT_CS_REG(RV530_FG_ZBREG_DEST, RV530_FG_ZBREG_DEST_PIPE_SELECT_0);
     OUT_CS_REG_SEQ(R300_ZB_ZPASS_ADDR, 1);
-    OUT_CS_BUF_RELOC(r300->oqbo, query->offset, 0, r300_buffer(r300->oqbo)->domain, 0);
+    OUT_CS_RELOC(buf, (query->num_results + 0) * 4, 0, query->domain, 0);
     OUT_CS_REG(RV530_FG_ZBREG_DEST, RV530_FG_ZBREG_DEST_PIPE_SELECT_1);
     OUT_CS_REG_SEQ(R300_ZB_ZPASS_ADDR, 1);
-    OUT_CS_BUF_RELOC(r300->oqbo, query->offset + sizeof(uint32_t), 0, r300_buffer(r300->oqbo)->domain, 0);
+    OUT_CS_RELOC(buf, (query->num_results + 1) * 4, 0, query->domain, 0);
     OUT_CS_REG(RV530_FG_ZBREG_DEST, RV530_FG_ZBREG_DEST_PIPE_SELECT_ALL);
     END_CS;
 }
@@ -461,6 +464,13 @@ void r300_emit_query_end(struct r300_context* r300)
         r300_emit_query_end_frag_pipes(r300, query);
 
     query->begin_emitted = FALSE;
+    query->num_results += query->num_pipes;
+
+    /* XXX grab all the results and reset the counter. */
+    if (query->num_results >= query->buffer_size / 4 - 4) {
+        query->num_results = (query->buffer_size / 4) / 2;
+        fprintf(stderr, "r300: Rewinding OQBO...\n");
+    }
 }
 
 void r300_emit_rs_state(struct r300_context* r300, unsigned size, void* state)
@@ -895,10 +905,9 @@ validate:
         }
     }
     /* ...occlusion query buffer... */
-    if (r300->query_start.dirty ||
-        (r300->query_current && r300->query_current->begin_emitted)) {
-        if (!r300_add_buffer(r300->rws, r300->oqbo,
-			     0, r300_buffer(r300->oqbo)->domain)) {
+    if (r300->query_current) {
+        if (!r300->rws->add_buffer(r300->rws, r300->query_current->buffer,
+                                   0, r300->query_current->domain)) {
             r300->context.flush(&r300->context, 0, NULL);
             goto validate;
         }

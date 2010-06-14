@@ -264,10 +264,6 @@ struct pipe_resource *r300_buffer_create(struct pipe_screen *screen,
     rbuf->b.vtbl = &r300_buffer_vtbl;
     pipe_reference_init(&rbuf->b.b.reference, 1);
     rbuf->b.b.screen = screen;
-
-    if (rbuf->b.b.bind & R300_BIND_OQBO)
-        alignment = 4096;
-
     rbuf->domain = R300_DOMAIN_GTT;
 
     rbuf->buf = r300screen->rws->buffer_create(r300screen->rws,

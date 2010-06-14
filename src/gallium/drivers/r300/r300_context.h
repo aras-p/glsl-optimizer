@@ -241,14 +241,23 @@ struct r300_constant_buffer {
 struct r300_query {
     /* The kind of query. Currently only OQ is supported. */
     unsigned type;
-    /* The current count of this query. Required to be at least 32 bits. */
-    unsigned int count;
-    /* The offset of this query into the query buffer, in bytes. */
-    unsigned offset;
+    /* The number of pipes where query results are stored. */
+    unsigned num_pipes;
+    /* How many results have been written, in dwords. It's incremented
+     * after end_query and flush. */
+    unsigned num_results;
     /* if we've flushed the query */
     boolean flushed;
     /* if begin has been emitted */
     boolean begin_emitted;
+
+    /* The buffer where query results are stored. */
+    struct r300_winsys_buffer *buffer;
+    /* The size of the buffer. */
+    unsigned buffer_size;
+    /* The domain of the buffer. */
+    enum r300_buffer_domain domain;
+
     /* Linked list members. */
     struct r300_query* prev;
     struct r300_query* next;
@@ -388,10 +397,11 @@ struct r300_context {
     /* Offset into the VBO. */
     size_t vbo_offset;
 
-    /* Occlusion query buffer. */
-    struct pipe_resource* oqbo;
-    /* Query list. */
+    /* The currently active query. */
     struct r300_query *query_current;
+    /* The saved query for blitter operations. */
+    struct r300_query *blitter_saved_query;
+    /* Query list. */
     struct r300_query query_list;
 
     /* Various CSO state objects. */
@@ -521,6 +531,11 @@ void r300_init_query_functions(struct r300_context* r300);
 void r300_init_render_functions(struct r300_context *r300);
 void r300_init_state_functions(struct r300_context* r300);
 void r300_init_resource_functions(struct r300_context* r300);
+
+/* r300_query.c */
+void r300_resume_query(struct r300_context *r300,
+                       struct r300_query *query);
+void r300_stop_query(struct r300_context *r300);
 
 /* r300_render_translate.c */
 void r300_begin_vertex_translate(struct r300_context *r300);

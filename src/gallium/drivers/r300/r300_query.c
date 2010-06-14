@@ -26,6 +26,7 @@
 #include "r300_context.h"
 #include "r300_screen.h"
 #include "r300_emit.h"
+#include "r300_winsys.h"
 
 #include <stdio.h>
 
@@ -34,30 +35,27 @@ static struct pipe_query *r300_create_query(struct pipe_context *pipe,
 {
     struct r300_context *r300 = r300_context(pipe);
     struct r300_screen *r300screen = r300->screen;
-    unsigned query_size;
-    struct r300_query *q, *qptr;
+    struct r300_query *q;
+
+    assert(query_type == PIPE_QUERY_OCCLUSION_COUNTER);
 
     q = CALLOC_STRUCT(r300_query);
+    if (!q)
+        return NULL;
 
     q->type = query_type;
-    assert(q->type == PIPE_QUERY_OCCLUSION_COUNTER);
+    q->domain = R300_DOMAIN_GTT;
+    q->buffer_size = 4096;
 
     if (r300screen->caps.family == CHIP_FAMILY_RV530)
-        query_size = r300screen->caps.num_z_pipes * sizeof(uint32_t);
+        q->num_pipes = r300screen->caps.num_z_pipes;
     else
-        query_size = r300screen->caps.num_frag_pipes * sizeof(uint32_t);
+        q->num_pipes = r300screen->caps.num_frag_pipes;
 
-    if (!is_empty_list(&r300->query_list)) {
-        qptr = last_elem(&r300->query_list);
-        q->offset = qptr->offset + query_size;
-    }
     insert_at_tail(&r300->query_list, q);
 
-    /* XXX */
-    if (q->offset >= 4096) {
-        q->offset = 0;
-        fprintf(stderr, "r300: Rewinding OQBO...\n");
-    }
+    /* Open up the occlusion query buffer. */
+    q->buffer = r300->rws->buffer_create(r300->rws, 4096, 0, q->domain, q->buffer_size);
 
     return (struct pipe_query*)q;
 }
@@ -65,18 +63,26 @@ static struct pipe_query *r300_create_query(struct pipe_context *pipe,
 static void r300_destroy_query(struct pipe_context* pipe,
                                struct pipe_query* query)
 {
-    struct r300_query* q = (struct r300_query*)query;
+    struct r300_context *r300 = r300_context(pipe);
+    struct r300_query* q = r300_query(query);
 
+    r300->rws->buffer_reference(r300->rws, &q->buffer, NULL);
     remove_from_list(q);
     FREE(query);
+}
+
+void r300_resume_query(struct r300_context *r300,
+                       struct r300_query *query)
+{
+    r300->query_current = query;
+    r300->query_start.dirty = TRUE;
 }
 
 static void r300_begin_query(struct pipe_context* pipe,
                              struct pipe_query* query)
 {
-    uint32_t value = ~0U;
     struct r300_context* r300 = r300_context(pipe);
-    struct r300_query* q = (struct r300_query*)query;
+    struct r300_query* q = r300_query(query);
 
     if (r300->query_current != NULL) {
         fprintf(stderr, "r300: begin_query: "
@@ -85,30 +91,29 @@ static void r300_begin_query(struct pipe_context* pipe,
         return;
     }
 
-    pipe_buffer_write(pipe,
-		      r300->oqbo,
-		      q->offset,
-		      sizeof value,
-		      &value);
+    q->num_results = 0;
+    r300_resume_query(r300, q);
+}
 
-    q->flushed = FALSE;
-    r300->query_current = q;
-    r300->query_start.dirty = TRUE;
+void r300_stop_query(struct r300_context *r300)
+{
+    r300_emit_query_end(r300);
+    r300->query_current = NULL;
 }
 
 static void r300_end_query(struct pipe_context* pipe,
 	                   struct pipe_query* query)
 {
     struct r300_context* r300 = r300_context(pipe);
+    struct r300_query *q = r300_query(query);
 
-    if ((struct r300_query*)query != r300->query_current) {
+    if (q != r300->query_current) {
         fprintf(stderr, "r300: end_query: Got invalid query.\n");
         assert(0);
         return;
     }
 
-    r300_emit_query_end(r300);
-    r300->query_current = NULL;
+    r300_stop_query(r300);
 }
 
 static boolean r300_get_query_result(struct pipe_context* pipe,
@@ -117,54 +122,28 @@ static boolean r300_get_query_result(struct pipe_context* pipe,
                                      void* vresult)
 {
     struct r300_context* r300 = r300_context(pipe);
-    struct r300_screen* r300screen = r300->screen;
-    struct r300_query *q = (struct r300_query*)query;
-    struct pipe_transfer *transfer;
-    unsigned flags = PIPE_TRANSFER_READ;
-    uint32_t* map;
-    uint32_t temp = 0;
-    unsigned i, num_results;
+    struct r300_query *q = r300_query(query);
+    unsigned flags, i;
+    uint32_t temp, *map;
     uint64_t *result = (uint64_t*)vresult;
 
-    if (q->flushed == FALSE)
+    if (!q->flushed)
         pipe->flush(pipe, 0, NULL);
-    if (!wait) {
-        flags |= PIPE_TRANSFER_DONTBLOCK;
-    }
 
-    map = pipe_buffer_map(pipe, r300->oqbo, flags, &transfer);
+    flags = PIPE_TRANSFER_READ | (!wait ? PIPE_TRANSFER_DONTBLOCK : 0);
+
+    map = r300->rws->buffer_map(r300->rws, q->buffer, flags);
     if (!map)
         return FALSE;
-    map += q->offset / 4;
 
-    if (r300screen->caps.family == CHIP_FAMILY_RV530)
-        num_results = r300screen->caps.num_z_pipes;
-    else
-        num_results = r300screen->caps.num_frag_pipes;
-
-    for (i = 0; i < num_results; i++) {
-        if (*map == ~0U) {
-            /* Looks like our results aren't ready yet. */
-            if (wait) {
-                fprintf(stderr, "r300: Despite waiting, OQ results haven't "
-                                "come in yet. This is a driver bug.\n"
-                                "r300: Returning bogus results to avoid "
-                                "a possible infinite loop...\n");
-                temp = 987654321;
-            } else {
-                temp = ~0U;
-            }
-            break;
-        }
+    /* Sum up the results. */
+    temp = 0;
+    for (i = 0; i < q->num_results; i++) {
         temp += *map;
         map++;
     }
-    pipe_buffer_unmap(pipe, r300->oqbo, transfer);
 
-    if (temp == ~0U) {
-        /* Our results haven't been written yet... */
-        return FALSE;
-    }
+    r300->rws->buffer_unmap(r300->rws, q->buffer);
 
     *result = temp;
     return TRUE;

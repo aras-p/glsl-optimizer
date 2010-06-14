@@ -32,12 +32,6 @@
 
 #define R300_INVALID_FORMAT 0xffff
 
-/* XXX: this is just a bandaid on larger problems in
- * r300_screen_buffer.h which doesn't seem to be fully ported to
- * gallium-resources.
- */
-#define R300_BIND_OQBO  (1<<21)
-
 /* Tiling flags. */
 enum r300_buffer_tiling {
     R300_BUFFER_LINEAR = 0,

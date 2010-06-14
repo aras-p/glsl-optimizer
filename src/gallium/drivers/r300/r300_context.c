@@ -39,7 +39,7 @@
 static void r300_destroy_context(struct pipe_context* context)
 {
     struct r300_context* r300 = r300_context(context);
-    struct r300_query* query, * temp;
+    struct r300_query *query, *temp;
     struct r300_atom *atom;
 
     util_blitter_destroy(r300->blitter);
@@ -54,9 +54,6 @@ static void r300_destroy_context(struct pipe_context* context)
                 atom->name, atom->counter);
         }
     }
-
-    /* Free the OQ BO. */
-    context->screen->resource_destroy(context->screen, r300->oqbo);
 
     /* If there are any queries pending or not destroyed, remove them now. */
     foreach_s(query, temp, &r300->query_list) {
@@ -221,9 +218,6 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
 
     r300_setup_atoms(r300);
 
-    /* Open up the OQ BO. */
-    r300->oqbo = pipe_buffer_create(screen,
-				    R300_BIND_OQBO, 4096);
     make_empty_list(&r300->query_list);
 
     r300_init_blit_functions(r300);
