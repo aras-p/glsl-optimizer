@@ -40,6 +40,7 @@
 
 #if HAVE_LLVM
 #include "gallivm/lp_bld_init.h"
+#include "draw_llvm.h"
 #endif
 
 struct draw_context *draw_create( struct pipe_context *pipe )
@@ -52,6 +53,7 @@ struct draw_context *draw_create( struct pipe_context *pipe )
    lp_build_init();
    assert(lp_build_engine);
    draw->engine = lp_build_engine;
+   draw->llvm = draw_llvm_create(draw);
 #endif
 
    if (!draw_init(draw))
@@ -132,6 +134,9 @@ void draw_destroy( struct draw_context *draw )
    draw_pt_destroy( draw );
    draw_vs_destroy( draw );
    draw_gs_destroy( draw );
+#ifdef HAVE_LLVM
+   draw_llvm_destroy( draw->llvm );
+#endif
 
    FREE( draw );
 }
@@ -600,4 +605,55 @@ draw_set_so_state(struct draw_context *draw,
    memcpy(&draw->so.state,
           state,
           sizeof(struct pipe_stream_output_state));
+}
+
+void
+draw_set_sampler_views(struct draw_context *draw,
+                       struct pipe_sampler_view **views,
+                       unsigned num)
+{
+   unsigned i;
+
+   debug_assert(num <= PIPE_MAX_VERTEX_SAMPLERS);
+
+   for (i = 0; i < num; ++i)
+      draw->sampler_views[i] = views[i];
+   for (i = num; i < PIPE_MAX_VERTEX_SAMPLERS; ++i)
+      draw->sampler_views[i] = NULL;
+
+   draw->num_sampler_views = num;
+}
+
+void
+draw_set_samplers(struct draw_context *draw,
+                  struct pipe_sampler_state **samplers,
+                  unsigned num)
+{
+   unsigned i;
+
+   debug_assert(num <= PIPE_MAX_VERTEX_SAMPLERS);
+
+   for (i = 0; i < num; ++i)
+      draw->samplers[i] = samplers[i];
+   for (i = num; i < PIPE_MAX_VERTEX_SAMPLERS; ++i)
+      draw->samplers[i] = NULL;
+
+   draw->num_samplers = num;
+}
+
+void
+draw_set_mapped_texture(struct draw_context *draw,
+                        unsigned sampler_idx,
+                        uint32_t width, uint32_t height, uint32_t depth,
+                        uint32_t last_level,
+                        uint32_t row_stride[DRAW_MAX_TEXTURE_LEVELS],
+                        uint32_t img_stride[DRAW_MAX_TEXTURE_LEVELS],
+                        const void *data[DRAW_MAX_TEXTURE_LEVELS])
+{
+#ifdef HAVE_LLVM
+   draw_llvm_set_mapped_texture(draw,
+                                sampler_idx,
+                                width, height, depth, last_level,
+                                row_stride, img_stride, data);
+#endif
 }

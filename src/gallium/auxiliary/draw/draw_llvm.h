@@ -25,12 +25,13 @@
  *
  **************************************************************************/
 
-#ifndef HAVE_LLVM_H
-#define HAVE_LLVM_H
+#ifndef DRAW_LLVM_H
+#define DRAW_LLVM_H
 
 #include "draw/draw_private.h"
 
 #include "draw/draw_vs.h"
+#include "gallivm/lp_bld_sample.h"
 
 #include "pipe/p_context.h"
 #include "util/u_simple_list.h"
@@ -40,6 +41,8 @@
 #include <llvm-c/Target.h>
 #include <llvm-c/ExecutionEngine.h>
 
+#define DRAW_MAX_TEXTURE_LEVELS 13  /* 4K x 4K for now */
+
 struct draw_llvm;
 struct llvm_vertex_shader;
 
@@ -47,15 +50,22 @@ struct draw_jit_texture
 {
    uint32_t width;
    uint32_t height;
-   uint32_t stride;
-   const void *data;
+   uint32_t depth;
+   uint32_t last_level;
+   uint32_t row_stride[DRAW_MAX_TEXTURE_LEVELS];
+   uint32_t img_stride[DRAW_MAX_TEXTURE_LEVELS];
+   const void *data[DRAW_MAX_TEXTURE_LEVELS];
 };
 
 enum {
    DRAW_JIT_TEXTURE_WIDTH = 0,
    DRAW_JIT_TEXTURE_HEIGHT,
-   DRAW_JIT_TEXTURE_STRIDE,
-   DRAW_JIT_TEXTURE_DATA
+   DRAW_JIT_TEXTURE_DEPTH,
+   DRAW_JIT_TEXTURE_LAST_LEVEL,
+   DRAW_JIT_TEXTURE_ROW_STRIDE,
+   DRAW_JIT_TEXTURE_IMG_STRIDE,
+   DRAW_JIT_TEXTURE_DATA,
+   DRAW_JIT_TEXTURE_NUM_FIELDS  /* number of fields above */
 };
 
 enum {
@@ -81,7 +91,7 @@ struct draw_jit_context
    const float *gs_constants;
 
 
-   struct draw_jit_texture textures[PIPE_MAX_SAMPLERS];
+   struct draw_jit_texture textures[PIPE_MAX_VERTEX_SAMPLERS];
 };
 
 
@@ -91,10 +101,10 @@ struct draw_jit_context
 #define draw_jit_context_gs_constants(_builder, _ptr) \
    lp_build_struct_get(_builder, _ptr, 1, "gs_constants")
 
-#define DRAW_JIT_CONTEXT_TEXTURES_INDEX 2
+#define DRAW_JIT_CTX_TEXTURES 2
 
 #define draw_jit_context_textures(_builder, _ptr) \
-   lp_build_struct_get_ptr(_builder, _ptr, DRAW_JIT_CONTEXT_TEXTURES_INDEX, "textures")
+   lp_build_struct_get_ptr(_builder, _ptr, DRAW_JIT_CTX_TEXTURES, "textures")
 
 
 
@@ -142,6 +152,7 @@ struct draw_llvm_variant_key
    struct pipe_vertex_element vertex_element[PIPE_MAX_ATTRIBS];
    unsigned                   nr_vertex_elements;
    struct pipe_shader_state   vs;
+   struct lp_sampler_static_state sampler[PIPE_MAX_VERTEX_SAMPLERS];
 };
 
 struct draw_llvm_variant_list_item
@@ -220,5 +231,18 @@ LLVMValueRef
 draw_llvm_translate_from(LLVMBuilderRef builder,
                          LLVMValueRef vbuffer,
                          enum pipe_format from_format);
+
+struct lp_build_sampler_soa *
+draw_llvm_sampler_soa_create(const struct lp_sampler_static_state *static_state,
+                             LLVMValueRef context_ptr);
+
+void
+draw_llvm_set_mapped_texture(struct draw_context *draw,
+                             unsigned sampler_idx,
+                             uint32_t width, uint32_t height, uint32_t depth,
+                             uint32_t last_level,
+                             uint32_t row_stride[DRAW_MAX_TEXTURE_LEVELS],
+                             uint32_t img_stride[DRAW_MAX_TEXTURE_LEVELS],
+                             const void *data[DRAW_MAX_TEXTURE_LEVELS]);
 
 #endif

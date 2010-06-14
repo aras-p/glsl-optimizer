@@ -116,6 +116,10 @@ struct lp_setup_context
       struct pipe_resource *current_tex[PIPE_MAX_SAMPLERS];
    } fs;
 
+   struct {
+      struct pipe_resource *current_tex[PIPE_MAX_VERTEX_SAMPLERS];
+   } vs;
+
    /** fragment shader constants */
    struct {
       struct pipe_resource *current;

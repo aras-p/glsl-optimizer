@@ -48,6 +48,7 @@
 
 #ifdef HAVE_LLVM
 #include <llvm-c/ExecutionEngine.h>
+struct draw_llvm;
 #endif
 
 
@@ -262,8 +263,14 @@ struct draw_context
    unsigned instance_id;
 
 #ifdef HAVE_LLVM
+   struct draw_llvm *llvm;
    LLVMExecutionEngineRef engine;
 #endif
+
+   struct pipe_sampler_view *sampler_views[PIPE_MAX_VERTEX_SAMPLERS];
+   unsigned num_sampler_views;
+   const struct pipe_sampler_state *samplers[PIPE_MAX_VERTEX_SAMPLERS];
+   unsigned num_samplers;
 
    void *driver_private;
 };

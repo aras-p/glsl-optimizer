@@ -47,6 +47,7 @@ struct draw_vertex_shader;
 struct draw_geometry_shader;
 struct tgsi_sampler;
 
+#define DRAW_MAX_TEXTURE_LEVELS 13  /* 4K x 4K for now */
 
 struct draw_context *draw_create( struct pipe_context *pipe );
 
@@ -101,6 +102,23 @@ draw_texture_samplers(struct draw_context *draw,
                       uint num_samplers,
                       struct tgsi_sampler **samplers);
 
+void
+draw_set_sampler_views(struct draw_context *draw,
+                       struct pipe_sampler_view **views,
+                       unsigned num);
+void
+draw_set_samplers(struct draw_context *draw,
+                  struct pipe_sampler_state **samplers,
+                  unsigned num);
+
+void
+draw_set_mapped_texture(struct draw_context *draw,
+                        unsigned sampler_idx,
+                        uint32_t width, uint32_t height, uint32_t depth,
+                        uint32_t last_level,
+                        uint32_t row_stride[DRAW_MAX_TEXTURE_LEVELS],
+                        uint32_t img_stride[DRAW_MAX_TEXTURE_LEVELS],
+                        const void *data[DRAW_MAX_TEXTURE_LEVELS]);
 
 
 /*

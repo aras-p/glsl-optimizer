@@ -100,6 +100,10 @@ llvmpipe_bind_vertex_sampler_states(struct pipe_context *pipe,
 
    llvmpipe->num_vertex_samplers = num_samplers;
 
+   draw_set_samplers(llvmpipe->draw,
+                     llvmpipe->vertex_samplers,
+                     llvmpipe->num_vertex_samplers);
+
    llvmpipe->dirty |= LP_NEW_SAMPLER;
 }
 
@@ -165,6 +169,10 @@ llvmpipe_set_vertex_sampler_views(struct pipe_context *pipe,
    }
 
    llvmpipe->num_vertex_sampler_views = num;
+
+   draw_set_sampler_views(llvmpipe->draw,
+                          llvmpipe->vertex_sampler_views,
+                          llvmpipe->num_vertex_sampler_views);
 
    llvmpipe->dirty |= LP_NEW_SAMPLER_VIEW;
 }

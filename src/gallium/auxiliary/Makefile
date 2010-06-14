@@ -171,7 +171,8 @@ GALLIVM_SOURCES = \
         draw/draw_llvm.c \
         draw/draw_vs_llvm.c \
         draw/draw_pt_fetch_shade_pipeline_llvm.c \
-        draw/draw_llvm_translate.c
+        draw/draw_llvm_translate.c \
+        draw/draw_llvm_sample.c
 
 GALLIVM_CPP_SOURCES = \
     gallivm/lp_bld_misc.cpp

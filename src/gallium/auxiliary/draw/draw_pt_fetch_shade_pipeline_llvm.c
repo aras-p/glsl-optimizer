@@ -392,9 +392,6 @@ static void llvm_middle_end_destroy( struct draw_pt_middle_end *middle )
    if (fpme->post_vs)
       draw_pt_post_vs_destroy( fpme->post_vs );
 
-   if (fpme->llvm)
-      draw_llvm_destroy( fpme->llvm );
-
    FREE(middle);
 }
 
@@ -436,7 +433,7 @@ draw_pt_fetch_pipeline_or_emit_llvm(struct draw_context *draw)
    if (!fpme->so_emit)
       goto fail;
 
-   fpme->llvm = draw_llvm_create(draw);
+   fpme->llvm = draw->llvm;
    if (!fpme->llvm)
       goto fail;
 
