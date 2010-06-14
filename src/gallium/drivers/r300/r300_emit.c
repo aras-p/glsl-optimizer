@@ -204,7 +204,7 @@ void r300_emit_fs_rc_constant_state(struct r300_context* r300, unsigned size, vo
                     get_rc_constant_state(r300, &constants->Constants[i]);
 
             for (j = 0; j < 4; j++)
-                cdata[i] = pack_float24(data[i]);
+                cdata[j] = pack_float24(data[j]);
 
             OUT_CS_REG_SEQ(R300_PFS_PARAM_0_X + i * 16, 4);
             OUT_CS_TABLE(cdata, 4);
