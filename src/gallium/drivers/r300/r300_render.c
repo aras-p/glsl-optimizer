@@ -1013,6 +1013,39 @@ struct draw_stage* r300_draw_stage(struct r300_context* r300)
     return stage;
 }
 
+/****************************************************************************
+ *                         End of SW TCL functions                          *
+ ***************************************************************************/
+
+static void r300_resource_resolve(struct pipe_context* pipe,
+                                  struct pipe_resource* dest,
+                                  struct pipe_subresource subdest,
+                                  struct pipe_resource* src,
+                                  struct pipe_subresource subsrc)
+{
+    struct r300_context* r300 = r300_context(pipe);
+    struct r300_texture* tex;
+    CS_LOCALS(r300);
+
+    assert(tex && tex->buffer && "resolvebuf is marked, but NULL!");
+
+    OUT_CS_REG_SEQ(R300_RB3D_AARESOLVE_OFFSET, 1);
+    OUT_CS_TEX_RELOC(tex, tex->offset, 0, RADEON_GEM_DOMAIN_VRAM, 0);
+
+    OUT_CS_REG_SEQ(R300_RB3D_AARESOLVE_PITCH, 1);
+    OUT_CS_TEX_RELOC(tex, tex->fb_state.colorpitch[tex->level],
+        0, RADEON_GEM_DOMAIN_VRAM, 0);
+
+    OUT_CS_REG(R300_RB3D_AARESOLVE_CTL,
+        R300_RB3D_AARESOLVE_CTL_AARESOLVE_MODE_RESOLVE |
+        R300_RB3D_AARESOLVE_CTL_AARESOLVE_ALPHA_AVERAGE);
+
+    r300->context.resource_fill_region(pipe,
+        src, subsrc, 0, 0, 0, src->width0, src->height0, 0x0);
+
+    OUT_CS_REG(R300_RB3D_AARESOLVE_CTL, 0x0);
+}
+
 void r300_init_render_functions(struct r300_context *r300)
 {
     /* Set generic functions. */
@@ -1026,6 +1059,8 @@ void r300_init_render_functions(struct r300_context *r300)
         r300->context.draw_arrays = r300_swtcl_draw_arrays;
         r300->context.draw_range_elements = r300_swtcl_draw_range_elements;
     }
+
+    r300->context.resource_resolve = r300_resource_resolve;
 
     /* Plug in the two-sided stencil reference value fallback if needed. */
     if (!r300->screen->caps.is_r500)
