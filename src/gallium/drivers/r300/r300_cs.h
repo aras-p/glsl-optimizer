@@ -115,32 +115,27 @@
  * Writing relocations.
  */
 
-#define OUT_CS_BUF_RELOC(bo, offset, rd, wd, flags) do { \
+#define OUT_CS_RELOC(bo, offset, rd, wd, flags) do { \
     assert(bo); \
     cs_winsys->write_cs_dword(cs_winsys, offset); \
-    r300_buffer_write_reloc(cs_winsys, r300_buffer(bo), rd, wd, flags);	\
+    cs_winsys->write_cs_reloc(cs_winsys, bo, rd, wd, flags); \
     CS_DEBUG(cs_count -= 3;) \
+} while (0)
+
+#define OUT_CS_BUF_RELOC(bo, offset, rd, wd, flags) do { \
+    assert(bo); \
+    OUT_CS_RELOC(r300_buffer(bo)->buf, offset, rd, wd, flags); \
 } while (0)
 
 #define OUT_CS_TEX_RELOC(tex, offset, rd, wd, flags) do { \
     assert(tex); \
-    cs_winsys->write_cs_dword(cs_winsys, offset); \
-    r300_texture_write_reloc(cs_winsys, tex, rd, wd, flags);	\
-    CS_DEBUG(cs_count -= 3;) \
+    OUT_CS_RELOC(tex->buffer, offset, rd, wd, flags); \
 } while (0)
 
 #define OUT_CS_BUF_RELOC_NO_OFFSET(bo, rd, wd, flags) do { \
     assert(bo); \
-    r300_buffer_write_reloc(cs_winsys, r300_buffer(bo), rd, wd, flags);	\
+    cs_winsys->write_cs_reloc(cs_winsys, r300_buffer(bo)->buf, rd, wd, flags); \
     CS_DEBUG(cs_count -= 2;) \
-} while (0)
-
-#define OUT_CS_INDEX_RELOC(bo, offset, count, rd, wd, flags) do { \
-    assert(bo); \
-    cs_winsys->write_cs_dword(cs_winsys, offset); \
-    cs_winsys->write_cs_dword(cs_winsys, count); \
-    cs_winsys->write_cs_reloc(cs_winsys, bo, rd, wd, flags); \
-    CS_DEBUG(cs_count -= 4;) \
 } while (0)
 
 
