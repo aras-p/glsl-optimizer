@@ -195,7 +195,7 @@ debug_get_flags_option(const char *name,
          namealign = MAX2(namealign, strlen(flags->name));
       for (flags = orig; flags->name; ++flags)
          debug_printf("| %*s [0x%0*lx]%s%s\n", namealign, flags->name,
-                      sizeof(unsigned long)*CHAR_BIT/4, flags->value,
+                      (int)sizeof(unsigned long)*CHAR_BIT/4, flags->value,
                       flags->desc ? " " : "", flags->desc ? flags->desc : "");
    }
    else {
