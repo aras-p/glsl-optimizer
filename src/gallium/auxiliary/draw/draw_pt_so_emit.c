@@ -133,10 +133,12 @@ void draw_pt_so_emit_prepare( struct pt_so_emit *emit,
 
 
 void draw_pt_so_emit( struct pt_so_emit *emit,
-		   const float (*vertex_data)[4],
-		   unsigned vertex_count,
-		   unsigned stride )
+                      const struct draw_vertex_info *vert_info,
+                      const struct draw_prim_info *prim_info )
 {
+   const float (*vertex_data)[4] = vert_info->verts;
+   unsigned vertex_count = vert_info->count;
+   unsigned stride = vert_info->stride;
    struct draw_context *draw = emit->draw;
    struct translate *translate = emit->translate;
    struct vbuf_render *render = draw->render;
@@ -166,8 +168,22 @@ void draw_pt_so_emit( struct pt_so_emit *emit,
 
    translate->set_buffer(translate, 0, vertex_data,
                          stride, ~0);
-   translate->run(translate, 0, vertex_count,
-                  draw->instance_id, so_buffer);
+   
+   for (start = i = 0;
+        i < prim_info->primitive_count;
+        start += prim_info->primitive_lengths[i], i++)
+   {
+      unsigned count = prim_info->primitive_lengths[i];
+      
+      if (prim_info->linear) {
+         translate->runXXX(translate, start, count,
+                           draw->instance_id, so_buffer);
+      }
+      else {
+         translate->runYYY(translate, start, count,
+                           draw->instance_id, so_buffer);
+      }
+   }
 
    render->set_stream_output_info(render, 0, vertex_count);
 }

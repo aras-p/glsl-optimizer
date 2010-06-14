@@ -256,25 +256,32 @@ static void do_triangle( struct draw_context *draw,
  * draw_vbuf.c code uses when it has to perform a flush.
  */
 void draw_pipeline_run( struct draw_context *draw,
-                        unsigned prim,
-                        struct vertex_header *vertices,
-                        unsigned vertex_count,
-                        unsigned stride,
-                        const ushort *elts,
-                        unsigned count )
+                        const struct draw_vertex_info *vert_info,
+                        const struct draw_prim_info *prim_info)
 {
-   char *verts = (char *)vertices;
+   unsigned i, start;
+   
+   draw->pipeline.verts = (char *)vert_info->verts;
+   draw->pipeline.vertex_stride = vert_info->stride;
+   draw->pipeline.vertex_count = vert_info->count;
 
-   draw->pipeline.verts = verts;
-   draw->pipeline.vertex_stride = stride;
-   draw->pipeline.vertex_count = vertex_count;
-   
-   pipe_run(draw, prim, vertices, stride, elts, count);
-   
+   for (start = i = 0;
+        i < prim_info->primitive_count;
+        start += prim_info->primitive_lengths[i], i++)
+   {
+      unsigned count = prim_info->primitive_lengths[i];
+
+      pipe_run(draw,
+               prim_info->prim,
+               vert_info->verts,
+               vert_info->stride,
+               prim_info->elts + start,
+               count);
+   }
+
    draw->pipeline.verts = NULL;
    draw->pipeline.vertex_count = 0;
 }
-
 
 
 /*
@@ -354,17 +361,27 @@ void draw_pipeline_run( struct draw_context *draw,
  * For drawing non-indexed primitives.
  */
 void draw_pipeline_run_linear( struct draw_context *draw,
-                               unsigned prim,
-                               struct vertex_header *vertices,
-                               unsigned count,
-                               unsigned stride )
+                               const struct draw_vertex_info *vert_info,
+                               const struct draw_prim_info *prim_info)
 {
-   char *verts = (char *)vertices;
-   draw->pipeline.verts = verts;
-   draw->pipeline.vertex_stride = stride;
-   draw->pipeline.vertex_count = count;
+   unsigned i, start;
 
-   pipe_run_linear(draw, prim, vertices, stride, count);
+   for (start = i = 0;
+        i < prim_info->primitive_count;
+        start += prim_info->primitive_lengths[i], i++)
+   {
+      unsigned count = prim_info->primitive_lengths[i];
+
+      draw->pipeline.verts = (char *)&vert_info->verts[start];
+      draw->pipeline.vertex_stride = vert_info->stride;
+      draw->pipeline.vertex_count = count;
+
+      pipe_run_linear(draw,
+                      prim_info->prim,
+                      &vert_info->verts[start],
+                      vert_info->stride,
+                      vert_info->count);
+   }
 
    draw->pipeline.verts = NULL;
    draw->pipeline.vertex_count = 0;

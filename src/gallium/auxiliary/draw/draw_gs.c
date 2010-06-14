@@ -327,28 +327,32 @@ static void gs_tri(struct draw_geometry_shader *shader,
 #include "draw_gs_tmp.h"
 
 int draw_geometry_shader_run(struct draw_geometry_shader *shader,
-                             unsigned pipe_prim,
-                             const float (*input)[4],
-                             float (*output)[4],
-                             const void *constants[PIPE_MAX_CONSTANT_BUFFERS],
-                             unsigned count,
-                             unsigned input_stride,
-                             unsigned vertex_size)
+                             const void *constants[PIPE_MAX_CONSTANT_BUFFERS], 
+                             const struct draw_vertex_info *input_verts,
+                             const struct draw_prim_info *input_prim,
+                             struct draw_vertex_info *output_verts,
+                             struct draw_prim_info *output_prims )
 {
+   const float (*input)[4] = input_verts->verts;
+   unsigned input_stride = input_verts->vertex_size;
+   unsigned vertex_size = input_verts->vertex_size;
    struct tgsi_exec_machine *machine = shader->machine;
    unsigned int i;
-   unsigned num_in_primitives =
-      u_gs_prims_for_vertices(pipe_prim, count);
-   unsigned alloc_count = draw_max_output_vertices(shader->draw,
-                                                   pipe_prim,
-                                                   count);
-   /* this is bad, but we can't be overwriting the output array
-    * because it's the same as input array here */
-   struct vertex_header *pipeline_verts =
-      (struct vertex_header *)MALLOC(vertex_size * alloc_count);
+   unsigned num_in_primitives = u_gs_prims_for_vertices(input_prim->prim,
+                                                        input_verts->count);
 
-   if (!pipeline_verts)
-      return 0;
+   output_verts->vertex_size = input_verts->vertex_size;
+   output_verts->stride = input_verts->vertex_size;
+
+   output_verts->count = draw_max_output_vertices(draw,
+                                                  input_prim->prim,
+                                                  input_verts->count);
+
+   output_verts->verts =
+         (struct vertex_header *)MALLOC(vert_info.vertex_size *
+                                        vert_info.count);
+
+
 
    if (0) debug_printf("%s count = %d (prims = %d)\n", __FUNCTION__,
                        count, num_in_primitives);
@@ -356,7 +360,7 @@ int draw_geometry_shader_run(struct draw_geometry_shader *shader,
    shader->emitted_vertices = 0;
    shader->emitted_primitives = 0;
    shader->vertex_size = vertex_size;
-   shader->tmp_output = (      float (*)[4])pipeline_verts->data;
+   shader->tmp_output = (float (*)[4])input_verts->verts->data;
    shader->in_prim_idx = 0;
    shader->input_vertex_stride = input_stride;
    shader->input = input;
@@ -373,7 +377,14 @@ int draw_geometry_shader_run(struct draw_geometry_shader *shader,
              vertex_size * (shader->emitted_vertices -1));
    }
 
-   FREE(pipeline_verts);
+   
+   /* Update prim_info: 
+    */
+   output_prims->linear = TRUE;
+   output_prims->elts = NULL;
+   output_prims->primitive_lengths = machine->foo;
+   output_prims->primitive_count = machine->bar;
+
    return shader->emitted_vertices;
 }
 

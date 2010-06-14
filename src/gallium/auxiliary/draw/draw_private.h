@@ -265,6 +265,39 @@ struct draw_context
    void *driver_private;
 };
 
+
+
+
+struct draw_fetch_info {
+   boolean linear;
+   unsigned start;
+   void *elts;
+   unsigned count;
+
+   
+};
+
+struct draw_vertex_info {
+   struct vertex_header *verts;
+   unsigned vertex_size;
+   unsigned stride;
+   unsigned count;
+};
+
+
+struct draw_prim_info {
+   boolean linear;
+   unsigned start;
+
+   ushort *elts;
+   unsigned count;
+
+   unsigned prim;
+   unsigned *primitive_lengths;
+   unsigned primitive_count;
+};
+
+
 /*******************************************************************************
  * Draw common initialization code
  */
@@ -342,18 +375,13 @@ void draw_pipeline_destroy( struct draw_context *draw );
 #define DRAW_PIPE_FLAG_MASK     (0xf<<12)
 
 void draw_pipeline_run( struct draw_context *draw,
-                        unsigned prim,
-                        struct vertex_header *vertices,
-                        unsigned vertex_count,
-                        unsigned stride,
-                        const ushort *elts,
-                        unsigned count );
+                        const struct draw_vertex_info *vert,
+                        const struct draw_prim_info *prim);
 
 void draw_pipeline_run_linear( struct draw_context *draw,
-                               unsigned prim,
-                               struct vertex_header *vertices,
-                               unsigned count,
-                               unsigned stride );
+                               const struct draw_vertex_info *vert,
+                               const struct draw_prim_info *prim);
+
 
 
 

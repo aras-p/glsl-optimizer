@@ -127,15 +127,17 @@ void draw_pt_emit_prepare( struct pt_emit *emit,
 
 
 void draw_pt_emit( struct pt_emit *emit,
-		   const float (*vertex_data)[4],
-		   unsigned vertex_count,
-		   unsigned stride,
-		   const ushort *elts,
-		   unsigned count )
+                         const struct draw_vertex_info *vert_info,
+                         const struct draw_prim_info *prim_info)
 {
+   const float (*vertex_data)[4] = (const float (*)[4])vert_info->verts->data;
+   unsigned vertex_count = vert_info->count;
+   unsigned stride = vert_info->stride;
+   const ushort *elts = prim_info->elts;
    struct draw_context *draw = emit->draw;
    struct translate *translate = emit->translate;
    struct vbuf_render *render = draw->render;
+   unsigned start, i;
    void *hw_verts;
 
    /* XXX: need to flush to get prim_vbuf.c to release its allocation?? 
@@ -190,23 +192,31 @@ void draw_pt_emit( struct pt_emit *emit,
                            0, 
                            vertex_count - 1 );
 
-   render->draw_elements(render,
-                         elts,
-                         count);
+   for (start = i = 0;
+        i < prim_info->primitive_count;
+        start += prim_info->primitive_lengths[i], i++)
+   {
+      render->draw_elements(render,
+                            elts + start,
+                            prim_info->primitive_lengths[i]);
+   }
 
    render->release_vertices(render);
 }
 
 
 void draw_pt_emit_linear(struct pt_emit *emit,
-                         const float (*vertex_data)[4],
-                         unsigned stride,
-                         unsigned count)
+                         const struct draw_vertex_info *vert_info,
+                         const struct draw_prim_info *prim_info)
 {
+   const float (*vertex_data)[4] = (const float (*)[4])vert_info->verts->data;
+   unsigned stride = vert_info->stride;
+   unsigned count = vert_info->count;
    struct draw_context *draw = emit->draw;
    struct translate *translate = emit->translate;
    struct vbuf_render *render = draw->render;
    void *hw_verts;
+   unsigned start, i;
 
 #if 0
    debug_printf("Linear emit\n");
@@ -258,7 +268,14 @@ void draw_pt_emit_linear(struct pt_emit *emit,
 
    render->unmap_vertices( render, 0, count - 1 );
 
-   render->draw_arrays(render, 0, count);
+   for (start = i = 0;
+        i < prim_info->primitive_count;
+        start += prim_info->primitive_lengths[i], i++)
+   {
+      render->draw_arrays(render,
+                          start,
+                          prim_info->primitive_lengths[i]);
+   }
 
    render->release_vertices(render);
 
