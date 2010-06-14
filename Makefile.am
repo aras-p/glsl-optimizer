@@ -24,6 +24,7 @@ AUTOMAKE_OPTIONS = foreign
 
 bin_PROGRAMS = glsl
 glsl_SOURCES = \
+	main.cpp \
 	builtin_types.h \
 	symbol_table.c hash_table.c glsl_types.cpp \
 	glsl_parser.ypp glsl_lexer.lpp glsl_parser_extras.cpp \
