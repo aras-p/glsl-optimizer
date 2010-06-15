@@ -350,23 +350,27 @@ softpipe_reset_sampler_varients(struct softpipe_context *softpipe)
       }
    }
 
-   for (i = 0; i <= softpipe->gs->max_sampler; i++) {
-      if (softpipe->geometry_samplers[i]) {
-         struct pipe_resource *texture = NULL;
+   if (softpipe->gs) {
+      for (i = 0; i <= softpipe->gs->max_sampler; i++) {
+         if (softpipe->geometry_samplers[i]) {
+            struct pipe_resource *texture = NULL;
 
-         if (softpipe->geometry_sampler_views[i]) {
-            texture = softpipe->geometry_sampler_views[i]->texture;
+            if (softpipe->geometry_sampler_views[i]) {
+               texture = softpipe->geometry_sampler_views[i]->texture;
+            }
+
+            softpipe->tgsi.geom_samplers_list[i] =
+               get_sampler_varient(
+                  i,
+                  sp_sampler(softpipe->geometry_samplers[i]),
+                  texture,
+                  TGSI_PROCESSOR_GEOMETRY );
+
+            sp_sampler_varient_bind_texture(
+               softpipe->tgsi.geom_samplers_list[i],
+               softpipe->geometry_tex_cache[i],
+               texture );
          }
-
-         softpipe->tgsi.geom_samplers_list[i] =
-            get_sampler_varient( i,
-                                 sp_sampler(softpipe->geometry_samplers[i]),
-                                 texture,
-                                 TGSI_PROCESSOR_GEOMETRY );
-
-         sp_sampler_varient_bind_texture( softpipe->tgsi.geom_samplers_list[i],
-                                          softpipe->geometry_tex_cache[i],
-                                          texture );
       }
    }
 
