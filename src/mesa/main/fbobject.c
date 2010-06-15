@@ -188,6 +188,14 @@ _mesa_get_attachment(GLcontext *ctx, struct gl_framebuffer *fb,
       /* fall-through / new in GL 3.0 */
    case GL_STENCIL_ATTACHMENT_EXT:
       return &fb->Attachment[BUFFER_STENCIL];
+   case GL_FRONT_LEFT:
+      return &fb->Attachment[BUFFER_FRONT_LEFT];
+   case GL_FRONT_RIGHT:
+      return &fb->Attachment[BUFFER_FRONT_RIGHT];
+   case GL_BACK_LEFT:
+      return &fb->Attachment[BUFFER_BACK_LEFT];
+   case GL_BACK_RIGHT:
+      return &fb->Attachment[BUFFER_BACK_RIGHT];
    default:
       return NULL;
    }
@@ -1874,12 +1882,6 @@ _mesa_GetFramebufferAttachmentParameterivEXT(GLenum target, GLenum attachment,
    default:
       _mesa_error(ctx, GL_INVALID_ENUM,
                   "glGetFramebufferAttachmentParameterivEXT(target)");
-      return;
-   }
-
-   if (buffer->Name == 0) {
-      _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glGetFramebufferAttachmentParameterivEXT");
       return;
    }
 
