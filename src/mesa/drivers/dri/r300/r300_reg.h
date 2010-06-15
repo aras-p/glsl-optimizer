@@ -3066,8 +3066,8 @@ enum {
 #   define R500_FC_B_OP0_NONE				(0 << 24)
 #   define R500_FC_B_OP0_DECR				(1 << 24)
 #   define R500_FC_B_OP0_INCR				(2 << 24)
-#   define R500_FC_B_OP1_DECR				(0 << 26)
-#   define R500_FC_B_OP1_NONE				(1 << 26)
+#   define R500_FC_B_OP1_NONE				(0 << 26)
+#   define R500_FC_B_OP1_DECR				(1 << 26)
 #   define R500_FC_B_OP1_INCR				(2 << 26)
 #   define R500_FC_IGNORE_UNCOVERED			(1 << 28)
 #define R500_US_FC_INT_CONST_0				0x4c00

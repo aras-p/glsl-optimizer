@@ -111,9 +111,10 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 	
 	debug_program_log(c, "after transform loops");
 	
-	rc_emulate_branches(&c->Base);
-
-	debug_program_log(c, "after emulate branches");
+	if (!c->Base.is_r500){
+		rc_emulate_branches(&c->Base);
+		debug_program_log(c, "after emulate branches");
+	}
 
 	if (c->Base.is_r500) {
 		struct radeon_program_transformation transformations[] = {
