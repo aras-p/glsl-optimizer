@@ -36,6 +36,7 @@
 #include "pipe/p_defines.h"
 
 #include "util/u_inlines.h"
+#include "util/u_cpu_detect.h"
 #include "util/u_format.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
@@ -898,13 +899,15 @@ static void
 alloc_image_data(struct llvmpipe_resource *lpr, unsigned level,
                  enum lp_texture_layout layout)
 {
+   uint alignment = MAX2(16, util_cpu_caps.cacheline);
+
    if (lpr->dt)
       assert(level == 0);
 
    if (layout == LP_TEX_LAYOUT_TILED) {
       /* tiled data is stored in regular memory */
       uint buffer_size = tex_image_size(lpr, level, layout);
-      lpr->tiled[level].data = align_malloc(buffer_size, 16);
+      lpr->tiled[level].data = align_malloc(buffer_size, alignment);
    }
    else {
       assert(layout == LP_TEX_LAYOUT_LINEAR);
@@ -920,7 +923,7 @@ alloc_image_data(struct llvmpipe_resource *lpr, unsigned level,
       else {
          /* not a display target - allocate regular memory */
          uint buffer_size = tex_image_size(lpr, level, LP_TEX_LAYOUT_LINEAR);
-         lpr->linear[level].data = align_malloc(buffer_size, 16);
+         lpr->linear[level].data = align_malloc(buffer_size, alignment);
       }
    }
 }
