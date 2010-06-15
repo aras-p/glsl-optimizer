@@ -1541,6 +1541,19 @@ emit_primitive(struct tgsi_exec_machine *mach)
    }
 }
 
+static void
+conditional_emit_primitive(struct tgsi_exec_machine *mach)
+{
+   if (TGSI_PROCESSOR_GEOMETRY == mach->Processor) {
+      int emitted_verts =
+         mach->Primitives[mach->Temps[TEMP_PRIMITIVE_I].xyzw[TEMP_PRIMITIVE_C].u[0]];
+      if (emitted_verts) {
+         emit_primitive(mach);
+      }
+   }
+}
+
+
 /*
  * Fetch four texture samples using STR texture coordinates.
  */
@@ -3190,6 +3203,9 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_END:
+      /* make sure we end primitives which haven't
+       * been explicitly emitted */
+      conditional_emit_primitive(mach);
       /* halt execution */
       *pc = -1;
       break;

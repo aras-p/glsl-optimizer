@@ -403,9 +403,4 @@ draw_get_rasterizer_no_cull( struct draw_context *draw,
                              boolean flatshade );
 
 
-int draw_max_output_vertices(struct draw_context *draw,
-                             unsigned pipe_prim,
-                             unsigned count);
-
-
 #endif /* DRAW_PRIVATE_H */

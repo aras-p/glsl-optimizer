@@ -416,10 +416,17 @@ int draw_geometry_shader_run(struct draw_geometry_shader *shader,
    output_prims->linear = TRUE;
    output_prims->elts = NULL;
    output_prims->start = 0;
+   output_prims->count = shader->emitted_vertices;
    output_prims->prim = shader->output_primitive;
    output_prims->primitive_lengths = shader->primitive_lengths;
    output_prims->primitive_count = shader->emitted_primitives;
    output_verts->count = shader->emitted_vertices;
+
+#if 0
+   debug_printf("GS finished, prims = %d, verts = %d\n",
+                output_prims->primitive_count,
+                output_verts->count);
+#endif
 
    return shader->emitted_vertices;
 }
@@ -439,25 +446,4 @@ void draw_geometry_shader_prepare(struct draw_geometry_shader *shader,
                                     draw->gs.num_samplers,
                                     draw->gs.samplers);
    }
-}
-
-int draw_max_output_vertices(struct draw_context *draw,
-                             unsigned pipe_prim,
-                             unsigned count)
-{
-   unsigned alloc_count = align( count, 4 );
-
-   if (draw->gs.geometry_shader) {
-      unsigned input_primitives = u_gs_prims_for_vertices(pipe_prim,
-                                                          count);
-      /* max GS output is number of input primitives * max output
-       * vertices per each invocation */
-      unsigned gs_max_verts = input_primitives *
-                              draw->gs.geometry_shader->max_output_vertices;
-      if (gs_max_verts > count)
-         alloc_count = align(gs_max_verts, 4);
-   }
-   /*debug_printf("------- alloc count = %d (input = %d)\n",
-                  alloc_count, count);*/
-   return alloc_count;
 }
