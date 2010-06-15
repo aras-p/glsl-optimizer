@@ -44,7 +44,8 @@ static const int HEIGHT = 250;
 static struct pipe_screen *screen = NULL;
 static struct pipe_context *ctx = NULL;
 static struct pipe_resource *rttex = NULL;
-static struct pipe_resource *constbuf = NULL;
+static struct pipe_resource *constbuf1 = NULL;
+static struct pipe_resource *constbuf2 = NULL;
 static struct pipe_surface *surf = NULL;
 static struct pipe_sampler_view *sv = NULL;
 static void *sampler = NULL;
@@ -94,7 +95,7 @@ static struct vertex vertices_strip[] =
      { -1, -1, 0, 1 } },
 };
 
-static float constants[] = 
+static float constants1[] =
 {  0.4, 0, 0,  1,
    1,   1, 1,  1,
    2,   2, 2,  2,
@@ -111,6 +112,25 @@ static float constants[] =
    0, 0, 0, 1,
 };
 
+
+static float constants2[] =
+{  1, 0, 0,  1,
+   0, 1, 0,  1,
+   0, 0, 1,  1,
+   0, 0, 0,  1,
+
+   1,  1, 0, 1,
+   1, .5, 0, 1,
+   0,  1, 1, 1,
+   1,  0, 1, 1,
+
+   1, 0, 0, 0.5,
+   0, 1, 0, 0.5,
+   0, 0, 1, 0,
+   0, 0, 0, 1,
+};
+
+
 static void init_fs_constbuf( void )
 {
    struct pipe_resource templat;
@@ -118,34 +138,54 @@ static void init_fs_constbuf( void )
 
    templat.target = PIPE_BUFFER;
    templat.format = PIPE_FORMAT_R8_UNORM;
-   templat.width0 = sizeof(constants);
+   templat.width0 = sizeof(constants1);
    templat.height0 = 1;
    templat.depth0 = 1;
    templat.last_level = 0;
    templat.nr_samples = 1;
    templat.bind = PIPE_BIND_CONSTANT_BUFFER;
 
-   constbuf = screen->resource_create(screen,
-                                      &templat);
-   if (constbuf == NULL)
+   constbuf1 = screen->resource_create(screen, &templat);
+   if (constbuf1 == NULL)
+      exit(4);
+   constbuf2 = screen->resource_create(screen, &templat);
+   if (constbuf2 == NULL)
       exit(4);
 
+   {
+      u_box_2d(0,0,sizeof(constants1),1, &box);
 
-   u_box_2d(0,0,sizeof(constants),1, &box);
-
-   ctx->transfer_inline_write(ctx,
-                              constbuf,
-                              u_subresource(0,0),
-                              PIPE_TRANSFER_WRITE,
-                              &box,
-                              constants,
-                              sizeof constants,
-                              sizeof constants);
+      ctx->transfer_inline_write(ctx,
+                                 constbuf1,
+                                 u_subresource(0,0),
+                                 PIPE_TRANSFER_WRITE,
+                                 &box,
+                                 constants1,
+                                 sizeof constants1,
+                                 sizeof constants1);
 
 
-   ctx->set_constant_buffer(ctx,
-                            PIPE_SHADER_FRAGMENT, 0,
-                            constbuf);
+      ctx->set_constant_buffer(ctx,
+                               PIPE_SHADER_GEOMETRY, 0,
+                               constbuf1);
+   }
+   {
+      u_box_2d(0,0,sizeof(constants2),1, &box);
+
+      ctx->transfer_inline_write(ctx,
+                                 constbuf2,
+                                 u_subresource(0,0),
+                                 PIPE_TRANSFER_WRITE,
+                                 &box,
+                                 constants2,
+                                 sizeof constants2,
+                                 sizeof constants2);
+
+
+      ctx->set_constant_buffer(ctx,
+                               PIPE_SHADER_GEOMETRY, 1,
+                               constbuf2);
+   }
 }
 
 
