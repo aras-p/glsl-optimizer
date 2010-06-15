@@ -371,14 +371,16 @@ void draw_pipeline_run_linear( struct draw_context *draw,
         start += prim_info->primitive_lengths[i], i++)
    {
       unsigned count = prim_info->primitive_lengths[i];
+      char *verts = ((char*)vert_info->verts) +
+                    (start * vert_info->stride);
 
-      draw->pipeline.verts = (char *)&vert_info->verts[start];
+      draw->pipeline.verts = verts;
       draw->pipeline.vertex_stride = vert_info->stride;
       draw->pipeline.vertex_count = count;
 
       pipe_run_linear(draw,
                       prim_info->prim,
-                      &vert_info->verts[start],
+                      (struct vertex_header*)verts,
                       vert_info->stride,
                       vert_info->count);
    }
