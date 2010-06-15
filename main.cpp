@@ -78,6 +78,14 @@ load_text_file(const char *file_name, size_t *size)
 }
 
 
+void
+usage_fail(const char *name)
+{
+      printf("%s <filename.frag|filename.vert>\n", name);
+      exit(EXIT_FAILURE);
+}
+
+
 int
 main(int argc, char **argv)
 {
@@ -86,29 +94,26 @@ main(int argc, char **argv)
    size_t shader_len;
    exec_list instructions;
 
-   if (argc < 3) {
-      printf("Usage: %s [v|g|f|i] <shader_file>\n", argv[0]);
-      return EXIT_FAILURE;
-   }
+   if (argc < 2)
+      usage_fail(argv[0]);
 
    memset(& state, 0, sizeof(state));
 
-   switch (argv[1][0]) {
-   case 'v':
-      state.target = vertex_shader;
-      break;
-   case 'g':
-      state.target = geometry_shader;
-      break;
-   case 'f':
-      state.target = fragment_shader;
-      break;
-   default:
-      printf("Usage: %s [v|g|f] <shader_file>\n", argv[0]);
-      return EXIT_FAILURE;
-   }
+   const unsigned len = strlen(argv[1]);
+   if (len < 6)
+      usage_fail(argv[0]);
 
-   shader = load_text_file(argv[2], & shader_len);
+   const char *const ext = & argv[1][len - 5];
+   if (strncmp(".vert", ext, 5) == 0)
+      state.target = vertex_shader;
+   else if (strncmp(".geom", ext, 5) == 0)
+      state.target = geometry_shader;
+   else if (strncmp(".frag", ext, 5) == 0)
+      state.target = fragment_shader;
+   else
+      usage_fail(argv[0]);
+
+   shader = load_text_file(argv[1], & shader_len);
 
    state.scanner = NULL;
    state.translation_unit.make_empty();
