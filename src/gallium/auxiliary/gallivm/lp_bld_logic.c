@@ -187,12 +187,10 @@ lp_build_compare(LLVMBuilderRef builder,
             return lp_build_undef(type);
          }
 
-         /* There are no signed byte and unsigned word/dword comparison
-          * instructions. So flip the sign bit so that the results match.
+         /* There are no unsigned comparison instructions. So flip the sign bit
+          * so that the results match.
           */
-         if(table[func].gt &&
-            ((type.width == 8 && type.sign) ||
-             (type.width != 8 && !type.sign))) {
+         if (table[func].gt && !type.sign) {
             LLVMValueRef msb = lp_build_const_int_vec(type, (unsigned long long)1 << (type.width - 1));
             a = LLVMBuildXor(builder, a, msb, "");
             b = LLVMBuildXor(builder, b, msb, "");
