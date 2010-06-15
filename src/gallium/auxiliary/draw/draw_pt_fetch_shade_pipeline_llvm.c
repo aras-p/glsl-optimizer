@@ -28,6 +28,7 @@
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "draw/draw_context.h"
+#include "draw/draw_gs.h"
 #include "draw/draw_vbuf.h"
 #include "draw/draw_vertex.h"
 #include "draw/draw_pt.h"
@@ -150,6 +151,117 @@ llvm_middle_end_prepare( struct draw_pt_middle_end *middle,
 }
 
 
+static void pipeline(struct llvm_middle_end *llvm,
+                     const struct draw_vertex_info *vert_info,
+                     const struct draw_prim_info *prim_info)
+{
+   if (prim_info->linear)
+      draw_pipeline_run_linear( llvm->draw,
+                                vert_info,
+                                prim_info);
+   else
+      draw_pipeline_run( llvm->draw,
+                         vert_info,
+                         prim_info );
+}
+
+static void emit(struct pt_emit *emit,
+                 const struct draw_vertex_info *vert_info,
+                 const struct draw_prim_info *prim_info)
+{
+   if (prim_info->linear) {
+      draw_pt_emit_linear(emit, vert_info, prim_info);
+   }
+   else {
+      draw_pt_emit(emit, vert_info, prim_info);
+   }
+}
+
+static void
+llvm_pipeline_generic( struct draw_pt_middle_end *middle,
+                       const struct draw_fetch_info *fetch_info,
+                       const struct draw_prim_info *prim_info )
+{
+   struct llvm_middle_end *fpme = (struct llvm_middle_end *)middle;
+   struct draw_context *draw = fpme->draw;
+   struct draw_geometry_shader *gshader = draw->gs.geometry_shader;
+   struct draw_prim_info gs_prim_info;
+   struct draw_vertex_info llvm_vert_info;
+   struct draw_vertex_info gs_vert_info;
+   struct draw_vertex_info *vert_info;
+   unsigned opt = fpme->opt;
+
+   llvm_vert_info.count = fetch_info->count;
+   llvm_vert_info.vertex_size = fpme->vertex_size;
+   llvm_vert_info.stride = fpme->vertex_size;
+   llvm_vert_info.verts =
+      (struct vertex_header *)MALLOC(fpme->vertex_size *
+                                     align(fetch_info->count,  4));
+   if (!llvm_vert_info.verts) {
+      assert(0);
+      return;
+   }
+
+   if (fetch_info->linear)
+      fpme->current_variant->jit_func( &fpme->llvm->jit_context,
+                                       llvm_vert_info.verts,
+                                       (const char **)draw->pt.user.vbuffer,
+                                       fetch_info->start,
+                                       fetch_info->count,
+                                       fpme->vertex_size,
+                                       draw->pt.vertex_buffer );
+   else
+      fpme->current_variant->jit_func_elts( &fpme->llvm->jit_context,
+                                            llvm_vert_info.verts,
+                                            (const char **)draw->pt.user.vbuffer,
+                                            fetch_info->elts,
+                                            fetch_info->count,
+                                            fpme->vertex_size,
+                                            draw->pt.vertex_buffer);
+
+   /* Finished with fetch and vs:
+    */
+   fetch_info = NULL;
+   vert_info = &llvm_vert_info;
+
+
+   if ((opt & PT_SHADE) && gshader) {
+      draw_geometry_shader_run(gshader,
+                               draw->pt.user.gs_constants,
+                               vert_info,
+                               prim_info,
+                               &gs_vert_info,
+                               &gs_prim_info);
+
+      FREE(vert_info->verts);
+      vert_info = &gs_vert_info;
+      prim_info = &gs_prim_info;
+   }
+
+   /* stream output needs to be done before clipping */
+   draw_pt_so_emit( fpme->so_emit,
+		    vert_info,
+                    prim_info );
+
+   if (draw_pt_post_vs_run( fpme->post_vs, vert_info )) {
+      opt |= PT_PIPELINE;
+   }
+
+   /* Do we need to run the pipeline?
+    */
+   if (opt & PT_PIPELINE) {
+      pipeline( fpme,
+                vert_info,
+                prim_info );
+   }
+   else {
+      emit( fpme->emit,
+            vert_info,
+            prim_info );
+   }
+   FREE(vert_info->verts);
+}
+
 
 static void llvm_middle_end_run( struct draw_pt_middle_end *middle,
                                  const unsigned *fetch_elts,
@@ -158,64 +270,23 @@ static void llvm_middle_end_run( struct draw_pt_middle_end *middle,
                                  unsigned draw_count )
 {
    struct llvm_middle_end *fpme = (struct llvm_middle_end *)middle;
-   struct draw_context *draw = fpme->draw;
-   unsigned opt = fpme->opt;
-   unsigned alloc_count = align( fetch_count, 4 );
+   struct draw_fetch_info fetch_info;
+   struct draw_prim_info prim_info;
 
-   struct vertex_header *pipeline_verts =
-      (struct vertex_header *)MALLOC(fpme->vertex_size * alloc_count);
+   fetch_info.linear = FALSE;
+   fetch_info.start = 0;
+   fetch_info.elts = fetch_elts;
+   fetch_info.count = fetch_count;
 
-   if (!pipeline_verts) {
-      /* Not much we can do here - just skip the rendering.
-       */
-      assert(0);
-      return;
-   }
+   prim_info.linear = FALSE;
+   prim_info.start = 0;
+   prim_info.count = draw_count;
+   prim_info.elts = draw_elts;
+   prim_info.prim = fpme->input_prim;
+   prim_info.primitive_count = 1;
+   prim_info.primitive_lengths = &draw_count;
 
-   fpme->current_variant->jit_func_elts( &fpme->llvm->jit_context,
-                                         pipeline_verts,
-                                         (const char **)draw->pt.user.vbuffer,
-                                         fetch_elts,
-                                         fetch_count,
-                                         fpme->vertex_size,
-                                         draw->pt.vertex_buffer );
-
-   /* stream output needs to be done before clipping */
-   draw_pt_so_emit( fpme->so_emit,
-		    (const float (*)[4])pipeline_verts->data,
-		    fetch_count,
-		    fpme->vertex_size );
-
-   if (draw_pt_post_vs_run( fpme->post_vs,
-			    pipeline_verts,
-			    fetch_count,
-			    fpme->vertex_size ))
-   {
-      opt |= PT_PIPELINE;
-   }
-
-   /* Do we need to run the pipeline?
-    */
-   if (opt & PT_PIPELINE) {
-      draw_pipeline_run( fpme->draw,
-                         fpme->output_prim,
-                         pipeline_verts,
-                         fetch_count,
-                         fpme->vertex_size,
-                         draw_elts,
-                         draw_count );
-   }
-   else {
-      draw_pt_emit( fpme->emit,
-		    (const float (*)[4])pipeline_verts->data,
-		    fetch_count,
-		    fpme->vertex_size,
-		    draw_elts,
-		    draw_count );
-   }
-
-
-   FREE(pipeline_verts);
+   llvm_pipeline_generic( middle, &fetch_info, &prim_info );
 }
 
 
@@ -224,63 +295,23 @@ static void llvm_middle_end_linear_run( struct draw_pt_middle_end *middle,
                                        unsigned count)
 {
    struct llvm_middle_end *fpme = (struct llvm_middle_end *)middle;
-   struct draw_context *draw = fpme->draw;
-   unsigned opt = fpme->opt;
-   unsigned alloc_count = align( count, 4 );
+   struct draw_fetch_info fetch_info;
+   struct draw_prim_info prim_info;
 
-   struct vertex_header *pipeline_verts =
-      (struct vertex_header *)MALLOC(fpme->vertex_size * alloc_count);
+   fetch_info.linear = TRUE;
+   fetch_info.start = start;
+   fetch_info.count = count;
+   fetch_info.elts = NULL;
 
-   if (!pipeline_verts) {
-      /* Not much we can do here - just skip the rendering.
-       */
-      assert(0);
-      return;
-   }
+   prim_info.linear = TRUE;
+   prim_info.start = 0;
+   prim_info.count = count;
+   prim_info.elts = NULL;
+   prim_info.prim = fpme->input_prim;
+   prim_info.primitive_count = 1;
+   prim_info.primitive_lengths = &count;
 
-#if 0
-   debug_printf("#### Pipeline = %p (data = %p)\n",
-                pipeline_verts, pipeline_verts->data);
-#endif
-   fpme->current_variant->jit_func( &fpme->llvm->jit_context,
-                                    pipeline_verts,
-                                    (const char **)draw->pt.user.vbuffer,
-                                    start,
-                                    count,
-                                    fpme->vertex_size,
-                                    draw->pt.vertex_buffer );
-
-   /* stream output needs to be done before clipping */
-   draw_pt_so_emit( fpme->so_emit,
-		    (const float (*)[4])pipeline_verts->data,
-		    count,
-		    fpme->vertex_size );
-
-   if (draw_pt_post_vs_run( fpme->post_vs,
-			    pipeline_verts,
-			    count,
-			    fpme->vertex_size ))
-   {
-      opt |= PT_PIPELINE;
-   }
-
-   /* Do we need to run the pipeline?
-    */
-   if (opt & PT_PIPELINE) {
-      draw_pipeline_run_linear( fpme->draw,
-                                fpme->output_prim,
-                                pipeline_verts,
-                                count,
-                                fpme->vertex_size);
-   }
-   else {
-      draw_pt_emit_linear( fpme->emit,
-                           (const float (*)[4])pipeline_verts->data,
-                           fpme->vertex_size,
-                           count );
-   }
-
-   FREE(pipeline_verts);
+   llvm_pipeline_generic( middle, &fetch_info, &prim_info );
 }
 
 
@@ -293,59 +324,24 @@ llvm_middle_end_linear_run_elts( struct draw_pt_middle_end *middle,
                                  unsigned draw_count )
 {
    struct llvm_middle_end *fpme = (struct llvm_middle_end *)middle;
-   struct draw_context *draw = fpme->draw;
-   unsigned opt = fpme->opt;
-   unsigned alloc_count = align( count, 4 );
+   struct draw_fetch_info fetch_info;
+   struct draw_prim_info prim_info;
 
-   struct vertex_header *pipeline_verts =
-      (struct vertex_header *)MALLOC(fpme->vertex_size * alloc_count);
+   fetch_info.linear = TRUE;
+   fetch_info.start = start;
+   fetch_info.count = count;
+   fetch_info.elts = NULL;
 
-   if (!pipeline_verts)
-      return FALSE;
+   prim_info.linear = FALSE;
+   prim_info.start = 0;
+   prim_info.count = draw_count;
+   prim_info.elts = draw_elts;
+   prim_info.prim = fpme->input_prim;
+   prim_info.primitive_count = 1;
+   prim_info.primitive_lengths = &draw_count;
 
-   fpme->current_variant->jit_func( &fpme->llvm->jit_context,
-                                    pipeline_verts,
-                                    (const char **)draw->pt.user.vbuffer,
-                                    start,
-                                    count,
-                                    fpme->vertex_size,
-                                    draw->pt.vertex_buffer );
+   llvm_pipeline_generic( middle, &fetch_info, &prim_info );
 
-   /* stream output needs to be done before clipping */
-   draw_pt_so_emit( fpme->so_emit,
-		    (const float (*)[4])pipeline_verts->data,
-		    count,
-		    fpme->vertex_size );
-
-   if (draw_pt_post_vs_run( fpme->post_vs,
-			    pipeline_verts,
-			    count,
-			    fpme->vertex_size ))
-   {
-      opt |= PT_PIPELINE;
-   }
-
-   /* Do we need to run the pipeline?
-    */
-   if (opt & PT_PIPELINE) {
-      draw_pipeline_run( fpme->draw,
-                         fpme->output_prim,
-                         pipeline_verts,
-                         count,
-                         fpme->vertex_size,
-                         draw_elts,
-                         draw_count );
-   }
-   else {
-      draw_pt_emit( fpme->emit,
-		    (const float (*)[4])pipeline_verts->data,
-		    count,
-		    fpme->vertex_size,
-		    draw_elts,
-		    draw_count );
-   }
-
-   FREE(pipeline_verts);
    return TRUE;
 }
 

@@ -136,13 +136,14 @@ void draw_pt_so_emit( struct pt_so_emit *emit,
                       const struct draw_vertex_info *vert_info,
                       const struct draw_prim_info *prim_info )
 {
-   const float (*vertex_data)[4] = vert_info->verts;
+   const float (*vertex_data)[4] = (const float (*)[4])vert_info->verts->data;
    unsigned vertex_count = vert_info->count;
    unsigned stride = vert_info->stride;
    struct draw_context *draw = emit->draw;
    struct translate *translate = emit->translate;
    struct vbuf_render *render = draw->render;
    void *so_buffer;
+   unsigned start, i;
 
    if (!emit->has_so)
       return;
@@ -168,20 +169,20 @@ void draw_pt_so_emit( struct pt_so_emit *emit,
 
    translate->set_buffer(translate, 0, vertex_data,
                          stride, ~0);
-   
-   for (start = i = 0;
-        i < prim_info->primitive_count;
+
+   for (start = i = 0; i < prim_info->primitive_count;
         start += prim_info->primitive_lengths[i], i++)
    {
       unsigned count = prim_info->primitive_lengths[i];
-      
+
       if (prim_info->linear) {
-         translate->runXXX(translate, start, count,
-                           draw->instance_id, so_buffer);
+         translate->run(translate, start, count,
+                        draw->instance_id, so_buffer);
       }
       else {
-         translate->runYYY(translate, start, count,
-                           draw->instance_id, so_buffer);
+         debug_assert(!"Stream output can't handle non-linear prims yet");
+         translate->run(translate, start, count,
+                        draw->instance_id, so_buffer);
       }
    }
 

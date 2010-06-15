@@ -223,9 +223,7 @@ struct pt_fetch *draw_pt_fetch_create( struct draw_context *draw );
 struct pt_post_vs;
 
 boolean draw_pt_post_vs_run( struct pt_post_vs *pvs,
-			     struct vertex_header *pipeline_verts,
-			     unsigned stride,
-			     unsigned count );
+			     struct draw_vertex_info *info );
 
 void draw_pt_post_vs_prepare( struct pt_post_vs *pvs,
 			      boolean bypass_clipping,

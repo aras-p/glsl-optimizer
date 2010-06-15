@@ -139,7 +139,7 @@ static void fetch( struct pt_fetch *fetch,
    }
    else {
       draw_pt_fetch_run( fetch,
-                         fetch_info->elts, 
+                         fetch_info->elts,
                          fetch_info->count,
                          output );
    }
@@ -207,12 +207,14 @@ static void fetch_pipeline_generic( struct draw_pt_middle_end *middle,
    struct draw_vertex_info vs_vert_info;
    struct draw_vertex_info gs_vert_info;
    struct draw_vertex_info *vert_info;
+   unsigned opt = fpme->opt;
 
    fetched_vert_info.count = fetch_info->count;
    fetched_vert_info.vertex_size = fpme->vertex_size;
+   fetched_vert_info.stride = fpme->vertex_size;
    fetched_vert_info.verts =
-      (struct vertex_header *)MALLOC(fetched_vert_info.vertex_size *
-                                     fetch_info->count);
+      (struct vertex_header *)MALLOC(fpme->vertex_size *
+                                     align(fetch_info->count,  4));
    if (!fetched_vert_info.verts) {
       assert(0);
       return;
@@ -230,7 +232,7 @@ static void fetch_pipeline_generic( struct draw_pt_middle_end *middle,
    /* Run the shader, note that this overwrites the data[] parts of
     * the pipeline verts.
     */
-   if (fpme->opt & PT_SHADE) { 
+   if (fpme->opt & PT_SHADE) {
       draw_vertex_shader_run(vshader,
                              draw->pt.user.vs_constants,
                              vert_info,
@@ -247,8 +249,7 @@ static void fetch_pipeline_generic( struct draw_pt_middle_end *middle,
                                prim_info,
                                &gs_vert_info,
                                &gs_prim_info);
-         
-         
+
       FREE(vert_info->verts);
       vert_info = &gs_vert_info;
       prim_info = &gs_prim_info;
@@ -273,7 +274,7 @@ static void fetch_pipeline_generic( struct draw_pt_middle_end *middle,
    /* Do we need to run the pipeline?
     */
    if (opt & PT_PIPELINE) {
-      pipeline( fpme->draw,
+      pipeline( fpme,
                 vert_info,
                 prim_info );
    }
@@ -282,7 +283,7 @@ static void fetch_pipeline_generic( struct draw_pt_middle_end *middle,
             vert_info,
             prim_info );
    }
-
+   FREE(vert_info->verts);
 }
 
 static void fetch_pipeline_run( struct draw_pt_middle_end *middle,
@@ -291,6 +292,7 @@ static void fetch_pipeline_run( struct draw_pt_middle_end *middle,
                                 const ushort *draw_elts,
                                 unsigned draw_count )
 {
+   struct fetch_pipeline_middle_end *fpme = (struct fetch_pipeline_middle_end *)middle;
    struct draw_fetch_info fetch_info;
    struct draw_prim_info prim_info;
 
@@ -303,6 +305,9 @@ static void fetch_pipeline_run( struct draw_pt_middle_end *middle,
    prim_info.start = 0;
    prim_info.count = draw_count;
    prim_info.elts = draw_elts;
+   prim_info.prim = fpme->input_prim;
+   prim_info.primitive_count = 1;
+   prim_info.primitive_lengths = &draw_count;
 
    fetch_pipeline_generic( middle, &fetch_info, &prim_info );
 }
@@ -312,6 +317,7 @@ static void fetch_pipeline_linear_run( struct draw_pt_middle_end *middle,
                                        unsigned start,
                                        unsigned count)
 {
+   struct fetch_pipeline_middle_end *fpme = (struct fetch_pipeline_middle_end *)middle;
    struct draw_fetch_info fetch_info;
    struct draw_prim_info prim_info;
 
@@ -324,6 +330,9 @@ static void fetch_pipeline_linear_run( struct draw_pt_middle_end *middle,
    prim_info.start = 0;
    prim_info.count = count;
    prim_info.elts = NULL;
+   prim_info.prim = fpme->input_prim;
+   prim_info.primitive_count = 1;
+   prim_info.primitive_lengths = &count;
 
    fetch_pipeline_generic( middle, &fetch_info, &prim_info );
 }
@@ -331,11 +340,12 @@ static void fetch_pipeline_linear_run( struct draw_pt_middle_end *middle,
 
 
 static boolean fetch_pipeline_linear_run_elts( struct draw_pt_middle_end *middle,
-                                            unsigned start,
-                                            unsigned count,
-                                            const ushort *draw_elts,
-                                            unsigned draw_count )
+                                               unsigned start,
+                                               unsigned count,
+                                               const ushort *draw_elts,
+                                               unsigned draw_count )
 {
+   struct fetch_pipeline_middle_end *fpme = (struct fetch_pipeline_middle_end *)middle;
    struct draw_fetch_info fetch_info;
    struct draw_prim_info prim_info;
 
@@ -348,8 +358,13 @@ static boolean fetch_pipeline_linear_run_elts( struct draw_pt_middle_end *middle
    prim_info.start = 0;
    prim_info.count = draw_count;
    prim_info.elts = draw_elts;
+   prim_info.prim = fpme->input_prim;
+   prim_info.primitive_count = 1;
+   prim_info.primitive_lengths = &draw_count;
 
    fetch_pipeline_generic( middle, &fetch_info, &prim_info );
+
+   return TRUE;
 }
 
 
@@ -403,7 +418,7 @@ struct draw_pt_middle_end *draw_pt_fetch_pipeline_or_emit( struct draw_context *
       goto fail;
 
    fpme->emit = draw_pt_emit_create( draw );
-   if (!fpme->emit) 
+   if (!fpme->emit)
       goto fail;
 
    fpme->so_emit = draw_pt_so_emit_create( draw );

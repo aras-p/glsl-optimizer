@@ -266,15 +266,11 @@ struct draw_context
 };
 
 
-
-
 struct draw_fetch_info {
    boolean linear;
    unsigned start;
-   void *elts;
+   const unsigned *elts;
    unsigned count;
-
-   
 };
 
 struct draw_vertex_info {
@@ -284,12 +280,11 @@ struct draw_vertex_info {
    unsigned count;
 };
 
-
 struct draw_prim_info {
    boolean linear;
    unsigned start;
 
-   ushort *elts;
+   const ushort *elts;
    unsigned count;
 
    unsigned prim;

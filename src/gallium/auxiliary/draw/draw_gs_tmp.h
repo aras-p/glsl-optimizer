@@ -1,18 +1,22 @@
 
 static void FUNC( struct draw_geometry_shader *shader,
-                  unsigned pipe_prim,
-                  unsigned count )
+                  const struct draw_prim_info *input_prims,
+                  const struct draw_vertex_info *input_verts,
+                  struct draw_prim_info *output_prims,
+                  struct draw_vertex_info *output_verts)
 {
    struct draw_context *draw = shader->draw;
 
    boolean flatfirst = (draw->rasterizer->flatshade &&
                         draw->rasterizer->flatshade_first);
    unsigned i;
+   unsigned count = input_prims->count;
 
    if (0) debug_printf("%s %d\n", __FUNCTION__, count);
 
+   debug_assert(input_prims->primitive_count == 1);
 
-   switch (pipe_prim) {
+   switch (input_prims->prim) {
    case PIPE_PRIM_POINTS:
       for (i = 0; i < count; i++) {
 	 POINT( shader, i + 0 );
@@ -93,16 +97,6 @@ static void FUNC( struct draw_geometry_shader *shader,
          /* These bitflags look a little odd because we submit the
           * vertices as (1,2,0) to satisfy flatshade requirements.
           */
-         ushort edge_next, edge_finish;
-
-         if (flatfirst) {
-            edge_next = DRAW_PIPE_EDGE_FLAG_2;
-            edge_finish = DRAW_PIPE_EDGE_FLAG_0;
-         }
-         else {
-            edge_next = DRAW_PIPE_EDGE_FLAG_0;
-            edge_finish = DRAW_PIPE_EDGE_FLAG_1;
-         }
 
 	 for (i = 0; i+2 < count; i++) {
 
@@ -117,7 +111,7 @@ static void FUNC( struct draw_geometry_shader *shader,
       break;
 
    default:
-      assert(0);
+      debug_assert(!"Unsupported primitive in geometry shader");
       break;
    }
 }

@@ -54,6 +54,7 @@ struct draw_geometry_shader {
    unsigned input_primitive;
    unsigned output_primitive;
 
+   unsigned *primitive_lengths;
    unsigned emitted_vertices;
    unsigned emitted_primitives;
 

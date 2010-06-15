@@ -36,9 +36,7 @@ struct pt_post_vs {
    struct draw_context *draw;
 
    boolean (*run)( struct pt_post_vs *pvs,
-		struct vertex_header *vertices,
-		unsigned count,
-		unsigned stride );
+                   struct draw_vertex_info *info );
 };
 
 
@@ -92,20 +90,18 @@ compute_clipmask_gl(const float *clip, /*const*/ float plane[][4], unsigned nr)
  * instructions
  */
 static boolean post_vs_cliptest_viewport_gl( struct pt_post_vs *pvs,
-					  struct vertex_header *vertices,
-					  unsigned count,
-					  unsigned stride )
+                                             struct draw_vertex_info *info )
 {
-   struct vertex_header *out = vertices;
+   struct vertex_header *out = info->verts;
    const float *scale = pvs->draw->viewport.scale;
    const float *trans = pvs->draw->viewport.translate;
    const unsigned pos = draw_current_shader_position_output(pvs->draw);
    unsigned clipped = 0;
    unsigned j;
 
-   if (0) debug_printf("%s count, %d\n", __FUNCTION__, count);
+   if (0) debug_printf("%s count, %d\n", __FUNCTION__, info->count);
 
-   for (j = 0; j < count; j++) {
+   for (j = 0; j < info->count; j++) {
       float *position = out->data[pos];
 
 #if 0
@@ -143,7 +139,7 @@ static boolean post_vs_cliptest_viewport_gl( struct pt_post_vs *pvs,
 #endif
       }
 
-      out = (struct vertex_header *)( (char *)out + stride );
+      out = (struct vertex_header *)( (char *)out + info->stride );
    }
 
    return clipped != 0;
@@ -153,29 +149,27 @@ static boolean post_vs_cliptest_viewport_gl( struct pt_post_vs *pvs,
 
 /* As above plus edgeflags
  */
-static boolean 
+static boolean
 post_vs_cliptest_viewport_gl_edgeflag(struct pt_post_vs *pvs,
-                                      struct vertex_header *vertices,
-                                      unsigned count,
-                                      unsigned stride )
+                                      struct draw_vertex_info *info)
 {
    unsigned j;
    boolean needpipe;
 
-   needpipe = post_vs_cliptest_viewport_gl( pvs, vertices, count, stride);
+   needpipe = post_vs_cliptest_viewport_gl(pvs, info);
 
    /* If present, copy edgeflag VS output into vertex header.
     * Otherwise, leave header as is.
     */
    if (pvs->draw->vs.edgeflag_output) {
-      struct vertex_header *out = vertices;
+      struct vertex_header *out = info->verts;
       int ef = pvs->draw->vs.edgeflag_output;
 
-      for (j = 0; j < count; j++) {
+      for (j = 0; j < info->count; j++) {
          const float *edgeflag = out->data[ef];
          out->edgeflag = !(edgeflag[0] != 1.0f);
          needpipe |= !out->edgeflag;
-         out = (struct vertex_header *)( (char *)out + stride );
+         out = (struct vertex_header *)( (char *)out + info->stride );
       }
    }
    return needpipe;
@@ -187,18 +181,16 @@ post_vs_cliptest_viewport_gl_edgeflag(struct pt_post_vs *pvs,
 /* If bypass_clipping is set, skip cliptest and rhw divide.
  */
 static boolean post_vs_viewport( struct pt_post_vs *pvs,
-			      struct vertex_header *vertices,
-			      unsigned count,
-			      unsigned stride )
+                                 struct draw_vertex_info *info )
 {
-   struct vertex_header *out = vertices;
+   struct vertex_header *out = info->verts;
    const float *scale = pvs->draw->viewport.scale;
    const float *trans = pvs->draw->viewport.translate;
    const unsigned pos = draw_current_shader_position_output(pvs->draw);
    unsigned j;
 
    if (0) debug_printf("%s\n", __FUNCTION__);
-   for (j = 0; j < count; j++) {
+   for (j = 0; j < info->count; j++) {
       float *position = out->data[pos];
 
       /* Viewport mapping only, no cliptest/rhw divide
@@ -207,9 +199,9 @@ static boolean post_vs_viewport( struct pt_post_vs *pvs,
       position[1] = position[1] * scale[1] + trans[1];
       position[2] = position[2] * scale[2] + trans[2];
 
-      out = (struct vertex_header *)((char *)out + stride);
+      out = (struct vertex_header *)((char *)out + info->stride);
    }
-   
+
    return FALSE;
 }
 
@@ -218,20 +210,16 @@ static boolean post_vs_viewport( struct pt_post_vs *pvs,
  * to do.
  */
 static boolean post_vs_none( struct pt_post_vs *pvs,
-			     struct vertex_header *vertices,
-			     unsigned count,
-			     unsigned stride )
+			     struct draw_vertex_info *info )
 {
    if (0) debug_printf("%s\n", __FUNCTION__);
    return FALSE;
 }
 
 boolean draw_pt_post_vs_run( struct pt_post_vs *pvs,
-			     struct vertex_header *pipeline_verts,
-			     unsigned count,
-			     unsigned stride )
+			     struct draw_vertex_info *info )
 {
-   return pvs->run( pvs, pipeline_verts, count, stride );
+   return pvs->run( pvs, info );
 }
 
 
@@ -272,7 +260,7 @@ struct pt_post_vs *draw_pt_post_vs_create( struct draw_context *draw )
       return NULL;
 
    pvs->draw = draw;
-   
+
    return pvs;
 }
 
