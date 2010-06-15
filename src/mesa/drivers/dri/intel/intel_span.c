@@ -257,6 +257,8 @@ intelSpanRenderStart(GLcontext * ctx)
    for (i = 0; i < ctx->Const.MaxTextureImageUnits; i++) {
       if (ctx->Texture.Unit[i]._ReallyEnabled) {
          struct gl_texture_object *texObj = ctx->Texture.Unit[i]._Current;
+
+         intel_finalize_mipmap_tree(intel, i);
          intel_tex_map_images(intel, intel_texture_object(texObj));
       }
    }
