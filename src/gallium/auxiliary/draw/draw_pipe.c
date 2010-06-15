@@ -382,7 +382,7 @@ void draw_pipeline_run_linear( struct draw_context *draw,
                       prim_info->prim,
                       (struct vertex_header*)verts,
                       vert_info->stride,
-                      vert_info->count);
+                      count);
    }
 
    draw->pipeline.verts = NULL;
