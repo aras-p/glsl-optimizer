@@ -88,9 +88,11 @@ usage_fail(const char *name)
 
 
 int dump_ast = 0;
+int dump_lir = 0;
 
 const struct option compiler_opts[] = {
    { "dump-ast", 0, &dump_ast, 1 },
+   { "dump-lir", 0, &dump_lir, 1 },
    { NULL, 0, NULL, 0 }
 };
 
@@ -172,7 +174,7 @@ main(int argc, char **argv)
    }
 
    /* Print out the resulting IR */
-   if (!state.error) {
+   if (!state.error && dump_lir) {
       _mesa_print_ir(&instructions, &state);
    }
 
