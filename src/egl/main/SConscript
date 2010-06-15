@@ -11,7 +11,7 @@ if env['platform'] != 'winddk':
 	env.Append(CPPDEFINES = [
 		'_EGL_DEFAULT_DISPLAY=\\"gdi\\"',
 		'_EGL_DRIVER_SEARCH_DIR=\\"\\"',
-		'_EGL_PLATFORM_WINDOWS',
+		'_EGL_OS_WINDOWS',
 		'KHRONOS_DLL_EXPORTS',
 	])
 

@@ -23,7 +23,7 @@
 #include "eglsurface.h"
 #include "eglimage.h"
 
-#if defined(_EGL_PLATFORM_POSIX)
+#if defined(_EGL_OS_UNIX)
 #include <dlfcn.h>
 #include <sys/types.h>
 #include <dirent.h>
@@ -34,7 +34,7 @@
 /**
  * Wrappers for dlopen/dlclose()
  */
-#if defined(_EGL_PLATFORM_WINDOWS)
+#if defined(_EGL_OS_WINDOWS)
 
 
 /* XXX Need to decide how to do dynamic name lookup on Windows */
@@ -64,7 +64,7 @@ library_suffix(void)
 }
 
 
-#elif defined(_EGL_PLATFORM_POSIX)
+#elif defined(_EGL_OS_UNIX)
 
 
 static const char *DefaultDriverNames[] = {
@@ -119,11 +119,11 @@ _eglOpenLibrary(const char *driverPath, lib_handle *handle)
    _eglLog(_EGL_DEBUG, "dlopen(%s)", driverPath);
    lib = open_library(driverPath);
 
-#if defined(_EGL_PLATFORM_WINDOWS)
+#if defined(_EGL_OS_WINDOWS)
    /* XXX untested */
    if (lib)
       mainFunc = (_EGLMain_t) GetProcAddress(lib, "_eglMain");
-#elif defined(_EGL_PLATFORM_POSIX)
+#elif defined(_EGL_OS_UNIX)
    if (lib) {
       union {
          _EGLMain_t func;
@@ -301,7 +301,7 @@ _eglLoaderFile(const char *dir, size_t len, void *loader_data)
 static EGLBoolean
 _eglLoaderPattern(const char *dir, size_t len, void *loader_data)
 {
-#if defined(_EGL_PLATFORM_POSIX)
+#if defined(_EGL_OS_UNIX)
    const char *prefix, *suffix;
    size_t prefix_len, suffix_len;
    DIR *dirp;
@@ -352,7 +352,7 @@ _eglLoaderPattern(const char *dir, size_t len, void *loader_data)
    closedir(dirp);
 
    return EGL_TRUE;
-#else /* _EGL_PLATFORM_POSIX */
+#else /* _EGL_OS_UNIX */
    /* stop immediately */
    return EGL_FALSE;
 #endif
@@ -397,20 +397,20 @@ _eglGetSearchPath(void)
 {
    static const char *search_path;
 
-#if defined(_EGL_PLATFORM_POSIX) || defined(_EGL_PLATFORM_WINDOWS)
+#if defined(_EGL_OS_UNIX) || defined(_EGL_OS_WINDOWS)
    if (!search_path) {
       static char buffer[1024];
       const char *p;
       int ret;
 
       p = getenv("EGL_DRIVERS_PATH");
-#if defined(_EGL_PLATFORM_POSIX)
+#if defined(_EGL_OS_UNIX)
       if (p && (geteuid() != getuid() || getegid() != getgid())) {
          _eglLog(_EGL_DEBUG,
                "ignore EGL_DRIVERS_PATH for setuid/setgid binaries");
          p = NULL;
       }
-#endif /* _EGL_PLATFORM_POSIX */
+#endif /* _EGL_OS_UNIX */
 
       if (p) {
          ret = _eglsnprintf(buffer, sizeof(buffer),
@@ -441,7 +441,7 @@ _eglPreloadUserDriver(void)
    char *env;
 
    env = getenv("EGL_DRIVER");
-#if defined(_EGL_PLATFORM_POSIX)
+#if defined(_EGL_OS_UNIX)
    if (env && strchr(env, '/')) {
       search_path = "";
       if ((geteuid() != getuid() || getegid() != getgid())) {
@@ -450,7 +450,7 @@ _eglPreloadUserDriver(void)
          env = NULL;
       }
    }
-#endif /* _EGL_PLATFORM_POSIX */
+#endif /* _EGL_OS_UNIX */
    if (!env)
       return EGL_FALSE;
 

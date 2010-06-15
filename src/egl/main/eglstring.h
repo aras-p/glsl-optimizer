@@ -3,7 +3,7 @@
 
 #include <string.h>
 
-#ifdef _EGL_PLATFORM_WINDOWS
+#ifdef _EGL_OS_WINDOWS
 #define _eglstrcasecmp _stricmp
 #define _eglsnprintf _snprintf
 #else

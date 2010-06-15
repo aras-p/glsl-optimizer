@@ -49,7 +49,7 @@ OBJECTS = $(SOURCES:.c=.o)
 
 
 # use dl*() to load drivers
-LOCAL_CFLAGS = -D_EGL_PLATFORM_POSIX=1
+LOCAL_CFLAGS = -D_EGL_OS_UNIX=1
 
 EGL_DEFAULT_DISPLAY = $(word 1, $(EGL_DISPLAYS))
 
