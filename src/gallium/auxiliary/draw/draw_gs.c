@@ -276,6 +276,11 @@ static void gs_flush(struct draw_geometry_shader *shader,
    out_prim_count =
       machine->Temps[TGSI_EXEC_TEMP_PRIMITIVE_I].xyzw[TGSI_EXEC_TEMP_PRIMITIVE_C].u[0];
 
+#if 0
+   debug_printf("PRIM emitted prims = %d (verts=%d), cur prim count = %d\n",
+                shader->emitted_primitives, shader->emitted_vertices,
+                out_prim_count);
+#endif
    draw_geometry_fetch_outputs(shader, out_prim_count,
                                &shader->tmp_output);
 }
@@ -326,7 +331,21 @@ static void gs_tri(struct draw_geometry_shader *shader,
 #define LINE(gs,i0,i1)  gs_line(gs,i0,i1)
 #define POINT(gs,i0)          gs_point(gs,i0)
 #define FUNC gs_run
+#define LOCAL_VARS
 #include "draw_gs_tmp.h"
+#undef LOCAL_VARS
+#undef FUNC
+
+
+#define TRIANGLE(gs,i0,i1,i2) gs_tri(gs,elts[i0],elts[i1],elts[i2])
+#define LINE(gs,i0,i1)        gs_line(gs,elts[i0],elts[i1])
+#define POINT(gs,i0)          gs_point(gs,elts[i0])
+#define FUNC gs_run_elts
+#define LOCAL_VARS                         \
+   const ushort *elts = input_prims->elts;
+#include "draw_gs_tmp.h"
+#undef LOCAL_VARS
+#undef FUNC
 
 int draw_geometry_shader_run(struct draw_geometry_shader *shader,
                              const void *constants[PIPE_MAX_CONSTANT_BUFFERS], 
@@ -340,28 +359,34 @@ int draw_geometry_shader_run(struct draw_geometry_shader *shader,
    unsigned vertex_size = input_verts->vertex_size;
    struct tgsi_exec_machine *machine = shader->machine;
    unsigned int i;
-   unsigned num_in_primitives = u_gs_prims_for_vertices(input_prim->prim,
-                                                        input_verts->count);
+   unsigned num_input_verts = input_prim->linear ?
+                              input_verts->count :
+                              input_prim->count;
+   unsigned num_in_primitives =
+      MAX2(u_gs_prims_for_vertices(input_prim->prim, num_input_verts),
+           u_gs_prims_for_vertices(shader->input_primitive, num_input_verts));
    unsigned max_out_prims = u_gs_prims_for_vertices(shader->output_primitive,
                                                     shader->max_output_vertices)
                             * num_in_primitives;
 
    output_verts->vertex_size = input_verts->vertex_size;
    output_verts->stride = input_verts->vertex_size;
-
-   output_verts->count = draw_max_output_vertices(shader->draw,
-                                                  input_prim->prim,
-                                                  input_verts->count);
-
    output_verts->verts =
       (struct vertex_header *)MALLOC(input_verts->vertex_size *
                                      num_in_primitives *
                                      shader->max_output_vertices);
 
 
-
-   if (0) debug_printf("%s count = %d (prims = %d)\n", __FUNCTION__,
-                       input_verts->count, num_in_primitives);
+#if 0
+   debug_printf("%s count = %d (in prims # = %d)\n",
+                __FUNCTION__, num_input_verts, num_in_primitives);
+   debug_printf("\tlinear = %d, prim_info->count = %d\n",
+                input_prim->linear, input_prim->count);
+   debug_printf("\tprimt pipe = %d, shader in = %d, shader out = %d, max out = %d\n",
+                input_prim->prim, shader->input_primitive,
+                shader->output_primitive,
+                shader->max_output_vertices);
+#endif
 
    shader->emitted_vertices = 0;
    shader->emitted_primitives = 0;
@@ -379,7 +404,12 @@ int draw_geometry_shader_run(struct draw_geometry_shader *shader,
       machine->Consts[i] = constants[i];
    }
 
-   gs_run(shader, input_prim, input_verts, output_prims, output_verts);
+   if (input_prim->linear)
+      gs_run(shader, input_prim, input_verts,
+             output_prims, output_verts);
+   else
+      gs_run_elts(shader, input_prim, input_verts,
+                  output_prims, output_verts);
 
    /* Update prim_info:
     */
@@ -389,6 +419,7 @@ int draw_geometry_shader_run(struct draw_geometry_shader *shader,
    output_prims->prim = shader->output_primitive;
    output_prims->primitive_lengths = shader->primitive_lengths;
    output_prims->primitive_count = shader->emitted_primitives;
+   output_verts->count = shader->emitted_vertices;
 
    return shader->emitted_vertices;
 }

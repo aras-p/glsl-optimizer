@@ -11,6 +11,7 @@ static void FUNC( struct draw_geometry_shader *shader,
                         draw->rasterizer->flatshade_first);
    unsigned i;
    unsigned count = input_prims->count;
+   LOCAL_VARS
 
    if (0) debug_printf("%s %d\n", __FUNCTION__, count);
 
