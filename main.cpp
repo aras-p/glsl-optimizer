@@ -97,24 +97,25 @@ main(int argc, char **argv)
    if (argc < 2)
       usage_fail(argv[0]);
 
-   memset(& state, 0, sizeof(state));
-
    const unsigned len = strlen(argv[1]);
    if (len < 6)
       usage_fail(argv[0]);
 
    const char *const ext = & argv[1][len - 5];
+   enum _mesa_glsl_parser_targets target;
    if (strncmp(".vert", ext, 5) == 0)
-      state.target = vertex_shader;
+      target = vertex_shader;
    else if (strncmp(".geom", ext, 5) == 0)
-      state.target = geometry_shader;
+      target = geometry_shader;
    else if (strncmp(".frag", ext, 5) == 0)
-      state.target = fragment_shader;
+      target = fragment_shader;
    else
       usage_fail(argv[0]);
 
    shader = load_text_file(argv[1], & shader_len);
 
+   memset(& state, 0, sizeof(state));
+   state.target = target;
    state.scanner = NULL;
    state.translation_unit.make_empty();
    state.symbols = new glsl_symbol_table;
@@ -131,6 +132,7 @@ main(int argc, char **argv)
       ast_node *ast = exec_node_data(ast_node, n, link);
       ast->print();
    }
+   printf("\n\n");
 
    if (!state.error && !state.translation_unit.is_empty())
       _mesa_ast_to_hir(&instructions, &state);
@@ -154,8 +156,6 @@ main(int argc, char **argv)
    }
 
    /* Print out the resulting IR */
-   printf("\n\n");
-
    if (!state.error) {
       _mesa_print_ir(&instructions, &state);
    }
