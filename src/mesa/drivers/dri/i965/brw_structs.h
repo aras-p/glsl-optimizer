@@ -278,7 +278,7 @@ struct brw_aa_line_parameters
    struct header header;
 
    struct {
-      GLuint aa_coverage_scope:8;
+      GLuint aa_coverage_slope:8;
       GLuint pad0:8;
       GLuint aa_coverage_bias:8;
       GLuint pad1:8;
