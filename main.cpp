@@ -22,6 +22,7 @@
  */
 #include <cstdlib>
 #include <cstdio>
+#include <getopt.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -86,6 +87,13 @@ usage_fail(const char *name)
 }
 
 
+int dump_ast = 0;
+
+const struct option compiler_opts[] = {
+   { "dump-ast", 0, &dump_ast, 1 },
+   { NULL, 0, NULL, 0 }
+};
+
 int
 main(int argc, char **argv)
 {
@@ -94,14 +102,20 @@ main(int argc, char **argv)
    size_t shader_len;
    exec_list instructions;
 
-   if (argc < 2)
+   int c;
+   int idx = 0;
+   while ((c = getopt_long(argc, argv, "", compiler_opts, &idx)) != -1)
+      /* empty */ ;
+
+
+   if (argc <= optind)
       usage_fail(argv[0]);
 
-   const unsigned len = strlen(argv[1]);
+   const unsigned len = strlen(argv[optind]);
    if (len < 6)
       usage_fail(argv[0]);
 
-   const char *const ext = & argv[1][len - 5];
+   const char *const ext = & argv[optind][len - 5];
    enum _mesa_glsl_parser_targets target;
    if (strncmp(".vert", ext, 5) == 0)
       target = vertex_shader;
@@ -112,7 +126,7 @@ main(int argc, char **argv)
    else
       usage_fail(argv[0]);
 
-   shader = load_text_file(argv[1], & shader_len);
+   shader = load_text_file(argv[optind], & shader_len);
 
    memset(& state, 0, sizeof(state));
    state.target = target;
@@ -128,11 +142,13 @@ main(int argc, char **argv)
    _mesa_glsl_parse(& state);
    _mesa_glsl_lexer_dtor(& state);
 
-   foreach_list_const(n, &state.translation_unit) {
-      ast_node *ast = exec_node_data(ast_node, n, link);
-      ast->print();
+   if (dump_ast) {
+      foreach_list_const(n, &state.translation_unit) {
+	 ast_node *ast = exec_node_data(ast_node, n, link);
+	 ast->print();
+      }
+      printf("\n\n");
    }
-   printf("\n\n");
 
    if (!state.error && !state.translation_unit.is_empty())
       _mesa_ast_to_hir(&instructions, &state);
