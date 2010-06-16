@@ -159,6 +159,9 @@ glcpp_parser_destroy (glcpp_parser_t *parser);
 int
 glcpp_lex_init_extra (glcpp_parser_t *parser, yyscan_t* scanner);
 
+void
+glcpp_lex_set_source_string(glcpp_parser_t *parser, const char *shader);
+
 int
 glcpp_lex (yyscan_t scanner);
 

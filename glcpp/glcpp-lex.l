@@ -201,3 +201,9 @@ NON_STARS_THEN_STARS	[^*]*[*]+
 }
 
 %%
+
+void
+glcpp_lex_set_source_string(glcpp_parser_t *parser, const char *shader)
+{
+	yy_scan_string(shader, parser->scanner);
+}
