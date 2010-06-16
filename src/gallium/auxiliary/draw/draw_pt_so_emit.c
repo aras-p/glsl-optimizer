@@ -124,14 +124,15 @@ static void so_emit_prim(struct pt_so_emit *so,
 
    for (i = 0; i < num_vertices; ++i) {
       const float (*input)[4];
+      unsigned total_written_compos = 0;
       /*debug_printf("%d) vertex index = %d (prim idx = %d)\n", i, indices[i], prim_idx);*/
       input = (const float (*)[4])(
          (const char *)input_ptr + (indices[i] * input_vertex_stride));
       for (slot = 0; slot < state->num_outputs; ++slot) {
          unsigned idx = state->register_index[slot];
          unsigned writemask = state->register_mask[slot];
-         unsigned compo;
          unsigned written_compos = 0;
+         unsigned compo;
 
          buffer = (float**)&so->buffers[state->output_buffer[slot]];
 
@@ -157,11 +158,16 @@ static void so_emit_prim(struct pt_so_emit *so,
                       input[idx][2],
                       input[idx][3]);
 #endif
-         if (!so->single_buffer)
-            *buffer += written_compos;
+         *buffer += written_compos;
+         total_written_compos += written_compos;
       }
-      if (so->single_buffer)
-         *buffer = (float*) (((char*)*buffer) + state->stride);
+      if (so->single_buffer) {
+         unsigned stride = state->stride -
+                           sizeof(float) * total_written_compos;
+
+         debug_assert(stride >= 0);
+         *buffer = (float*) (((char*)*buffer) + stride);
+      }
    }
    so->emitted_vertices += num_vertices;
    ++so->emitted_primitives;
