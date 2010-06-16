@@ -72,6 +72,7 @@ typedef struct YYLTYPE {
 struct token {
 	int type;
 	YYSTYPE value;
+	YYLTYPE location;
 };
 
 typedef struct token_node {

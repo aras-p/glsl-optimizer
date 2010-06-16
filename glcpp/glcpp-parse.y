@@ -391,18 +391,23 @@ pp_tokens:
 preprocessing_token:
 	IDENTIFIER {
 		$$ = _token_create_str (parser, IDENTIFIER, $1);
+		$$->location = yylloc;
 	}
 |	INTEGER_STRING {
 		$$ = _token_create_str (parser, INTEGER_STRING, $1);
+		$$->location = yylloc;
 	}
 |	operator {
 		$$ = _token_create_ival (parser, $1, $1);
+		$$->location = yylloc;
 	}
 |	OTHER {
 		$$ = _token_create_str (parser, OTHER, $1);
+		$$->location = yylloc;
 	}
 |	SPACE {
 		$$ = _token_create_ival (parser, SPACE, SPACE);
+		$$->location = yylloc;
 	}
 ;
 
@@ -781,6 +786,8 @@ _token_print (char **out, token_t *token)
 static token_t *
 _token_paste (glcpp_parser_t *parser, token_t *token, token_t *other)
 {
+	token_t *combined = NULL;
+
 	/* Pasting a placeholder onto anything makes no change. */
 	if (other->type == PLACEHOLDER)
 		return token;
@@ -794,32 +801,38 @@ _token_paste (glcpp_parser_t *parser, token_t *token, token_t *other)
 	switch (token->type) {
 	case '<':
 		if (other->type == '<')
-			return _token_create_ival (token, LEFT_SHIFT, LEFT_SHIFT);
+			combined = _token_create_ival (token, LEFT_SHIFT, LEFT_SHIFT);
 		else if (other->type == '=')
-			return _token_create_ival (token, LESS_OR_EQUAL, LESS_OR_EQUAL);
+			combined = _token_create_ival (token, LESS_OR_EQUAL, LESS_OR_EQUAL);
 		break;
 	case '>':
 		if (other->type == '>')
-			return _token_create_ival (token, RIGHT_SHIFT, RIGHT_SHIFT);
+			combined = _token_create_ival (token, RIGHT_SHIFT, RIGHT_SHIFT);
 		else if (other->type == '=')
-			return _token_create_ival (token, GREATER_OR_EQUAL, GREATER_OR_EQUAL);
+			combined = _token_create_ival (token, GREATER_OR_EQUAL, GREATER_OR_EQUAL);
 		break;
 	case '=':
 		if (other->type == '=')
-			return _token_create_ival (token, EQUAL, EQUAL);
+			combined = _token_create_ival (token, EQUAL, EQUAL);
 		break;
 	case '!':
 		if (other->type == '=')
-			return _token_create_ival (token, NOT_EQUAL, NOT_EQUAL);
+			combined = _token_create_ival (token, NOT_EQUAL, NOT_EQUAL);
 		break;
 	case '&':
 		if (other->type == '&')
-			return _token_create_ival (token, AND, AND);
+			combined = _token_create_ival (token, AND, AND);
 		break;
 	case '|':
 		if (other->type == '|')
-			return _token_create_ival (token, OR, OR);
+			combined = _token_create_ival (token, OR, OR);
 		break;
+	}
+
+	if (combined != NULL) {
+		/* Inherit the location from the first token */
+		combined->location = token->location;
+		return combined;
 	}
 
 	/* Two string-valued tokens can usually just be mashed
@@ -837,7 +850,9 @@ _token_paste (glcpp_parser_t *parser, token_t *token, token_t *other)
 
 		str = xtalloc_asprintf (token, "%s%s",
 					token->value.str, other->value.str);
-		return _token_create_str (token, token->type, str);
+		combined = _token_create_str (token, token->type, str);
+		combined->location = token->location;
+		return combined;
 	}
 
 	glcpp_print (parser->errors, "Error: Pasting \"");
