@@ -56,6 +56,7 @@ struct vertex {
    float position[4];
    float color[4];
    float texcoord[4];
+   float generic[4];
 };
 
 /* Vertex data matches progs/fp/fp-tri.c, but flipped in Y dimension
@@ -65,34 +66,48 @@ static struct vertex vertices[] =
 {
    { { 0.9, 0.9, 0.0, 1.0 },
      { 0, 0, 1, 1 },
-     { 1, 1, 0, 1 } },
+     { 1, 1, 0, 1 },
+     { 1, 0, 1, 0 }
+   },
 
    { { 0.9,  -0.9, 0.0, 1.0 },
      { 1, 0, 0, 1 },
-     { 1, -1, 0, 1 } },
+     { 1, -1, 0, 1 },
+     { 0, 1, 0, 1 }
+   },
 
    { {-0.9,  0.0, 0.0, 1.0 },
      { 0, 1, 0, 1 },
-     { -1, 0, 0, 1 } },
+     { -1, 0, 0, 1 },
+     { 0, 0, 1, 1 }
+   },
 };
 
 static struct vertex vertices_strip[] =
 {
    { { 0.9, 0.9, 0.0, 1.0 },
      { 0, 0, 1, 1 },
-     { 1, 1, 0, 1 } },
+     { 1, 1, 0, 1 },
+     { 1, 0, 0, 1 }
+   },
 
    { { 0.9,  -0.9, 0.0, 1.0 },
      { 1, 0, 0, 1 },
-     { 1, -1, 0, 1 } },
+     { 1, -1, 0, 1 },
+     { 0, 1, 0, 1 }
+   },
 
    { {-0.9,  0.9, 0.0, 1.0 },
      { 0, 1, 0, 1 },
-     { -1, 1, 0, 1 } },
+     { -1, 1, 0, 1 },
+     { 0, 0, 1, 1 }
+   },
 
    { {-0.9,  -0.9, 0.0, 1.0 },
      { 1, 1, 0, 1 },
-     { -1, -1, 0, 1 } },
+     { -1, -1, 0, 1 },
+     { 1, 1, 0, 1 }
+   },
 };
 
 static float constants1[] =
@@ -214,7 +229,7 @@ static void set_viewport( float x, float y,
 
 static void set_vertices( void )
 {
-   struct pipe_vertex_element ve[3];
+   struct pipe_vertex_element ve[4];
    struct pipe_vertex_buffer vbuf;
    void *handle;
 
@@ -226,10 +241,11 @@ static void set_vertices( void )
    ve[1].src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
    ve[2].src_offset = Offset(struct vertex, texcoord);
    ve[2].src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
+   ve[3].src_offset = Offset(struct vertex, generic);
+   ve[3].src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
 
-   handle = ctx->create_vertex_elements_state(ctx, 3, ve);
+   handle = ctx->create_vertex_elements_state(ctx, 4, ve);
    ctx->bind_vertex_elements_state(ctx, handle);
-
 
    vbuf.stride = sizeof( struct vertex );
    vbuf.buffer_offset = 0;
@@ -258,12 +274,15 @@ static void set_vertex_shader( void )
       "DCL IN[0]\n"
       "DCL IN[1]\n"
       "DCL IN[2]\n"
+      "DCL IN[3]\n"
       "DCL OUT[0], POSITION\n"
       "DCL OUT[1], COLOR[0]\n"
       "DCL OUT[2], GENERIC[0]\n"
+      "DCL OUT[3], GENERIC[1]\n"
       "  MOV OUT[0], IN[0]\n"
       "  MOV OUT[1], IN[1]\n"
       "  MOV OUT[2], IN[2]\n"
+      "  MOV OUT[3], IN[3]\n"
       "  END\n";
 
    handle = graw_parse_vertex_shader(ctx, text);
