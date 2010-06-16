@@ -123,7 +123,7 @@ struct vbuf_render {
     * Called after writing data to the stream out buffers
     */
    void (*set_stream_output_info)( struct vbuf_render *vbufr,
-                                   unsigned buffer_index,
+                                   unsigned primitive_count,
                                    unsigned vertices_count );
 };
 

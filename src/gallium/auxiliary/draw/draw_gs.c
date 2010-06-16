@@ -254,7 +254,6 @@ static void draw_fetch_gs_input(struct draw_geometry_shader *shader,
    }
 }
 
-
 static void gs_flush(struct draw_geometry_shader *shader,
                      unsigned input_primitives)
 {

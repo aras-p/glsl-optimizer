@@ -104,7 +104,7 @@ static void fetch_pipeline_prepare( struct draw_pt_middle_end *middle,
 			    (boolean)draw->rasterizer->gl_rasterization_rules,
 			    (draw->vs.edgeflag_output ? true : false) );
 
-   draw_pt_so_emit_prepare( fpme->so_emit, out_prim );
+   draw_pt_so_emit_prepare( fpme->so_emit );
 
    if (!(opt & PT_PIPELINE)) {
       draw_pt_emit_prepare( fpme->emit,

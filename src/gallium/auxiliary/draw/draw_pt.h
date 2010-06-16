@@ -182,8 +182,7 @@ struct pt_emit *draw_pt_emit_create( struct draw_context *draw );
  */
 struct pt_so_emit;
 
-void draw_pt_so_emit_prepare( struct pt_so_emit *emit,
-                              unsigned prim );
+void draw_pt_so_emit_prepare( struct pt_so_emit *emit );
 
 void draw_pt_so_emit( struct pt_so_emit *emit,
                       const struct draw_vertex_info *vert_info,
