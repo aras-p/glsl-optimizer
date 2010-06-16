@@ -20,17 +20,11 @@ INCLUDE_DIRS = \
 	-I$(TOP)/src/mesa \
 	-I$(TOP)/src/mesa/main
 
-# Standalone osmesa needs to be linked with core Mesa APIs
-ifeq ($(DRIVER_DIRS), osmesa)
 CORE_MESA = \
 	$(TOP)/src/mesa/libmesa.a \
 	$(TOP)/src/mapi/glapi/libglapi.a \
 	$(TOP)/src/glsl/cl/libglslcl.a \
 	$(TOP)/src/glsl/pp/libglslpp.a
-else
-CORE_MESA =
-endif
-
 
 .c.o:
 	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
