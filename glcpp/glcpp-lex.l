@@ -31,6 +31,7 @@
 
 %option reentrant noyywrap
 %option extra-type="glcpp_parser_t *"
+%option prefix="glcpp_"
 
 SPACE		[[:space:]]
 NONSPACE	[^[:space:]]
