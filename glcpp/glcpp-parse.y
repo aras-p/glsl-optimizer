@@ -1356,7 +1356,7 @@ _glcpp_parser_expand_token_list (glcpp_parser_t *parser,
 				else
 					list->head = last->next;
 				if (last == list->tail)
-					list->tail == NULL;
+					list->tail = NULL;
 			}
 		} else {
 			node_prev = node;
