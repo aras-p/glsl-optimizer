@@ -563,11 +563,15 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
 
     /* see if we need any point_sprite replacements, also increase num_interp
      * as there's no vp output for them */
-    for (i = FRAG_ATTRIB_TEX0; i<= FRAG_ATTRIB_TEX7; i++)
+    if (ctx->Point.PointSprite)
     {
-        if(ctx->Point.CoordReplace[i - FRAG_ATTRIB_TEX0] == GL_TRUE) {
-            ui++;
-            point_sprite = GL_TRUE;
+        for (i = FRAG_ATTRIB_TEX0; i<= FRAG_ATTRIB_TEX7; i++)
+        {
+            if (ctx->Point.CoordReplace[i - FRAG_ATTRIB_TEX0] == GL_TRUE)
+            {
+                ui++;
+                point_sprite = GL_TRUE;
+            }
         }
     }
 
@@ -670,8 +674,9 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
 
     for(i=0; i<8; i++)
     {
+	    GLboolean coord_replace = ctx->Point.PointSprite && ctx->Point.CoordReplace[i];
 	    unBit = 1 << (VERT_RESULT_TEX0 + i);
-	    if((OutputsWritten & unBit) || (ctx->Point.CoordReplace[i] == GL_TRUE))
+	    if ((OutputsWritten & unBit) || coord_replace)
 	    {
 		    ui = pAsm->uiFP_AttributeMap[FRAG_ATTRIB_TEX0 + i];
 		    SETbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, SEL_CENTROID_bit);
@@ -679,7 +684,7 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
 			     SEMANTIC_shift, SEMANTIC_mask);
 		    CLEARbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
 		    /* ARB_point_sprite */
-		    if(ctx->Point.CoordReplace[i] == GL_TRUE)
+		    if (coord_replace)
 		    {
 			     SETbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, PT_SPRITE_TEX_bit);
 		    }
