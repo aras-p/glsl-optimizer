@@ -141,6 +141,8 @@ struct glcpp_parser {
 	skip_node_t *skip_stack;
 	token_list_t *lex_from_list;
 	token_node_t *lex_from_node;
+	char *output;
+	char *errors;
 };
 
 glcpp_parser_t *

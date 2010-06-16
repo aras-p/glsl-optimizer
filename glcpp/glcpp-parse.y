@@ -29,8 +29,12 @@
 
 #include "glcpp.h"
 
+#define glcpp_print(stream, str) stream = talloc_strdup_append(stream, str)
+#define glcpp_printf(stream, fmt, args...) \
+	stream = talloc_asprintf_append(stream, fmt, args)
+
 static void
-yyerror (void *scanner, const char *error);
+yyerror (glcpp_parser_t *parser, const char *error);
 
 static void
 _define_object_macro (glcpp_parser_t *parser,
@@ -167,11 +171,11 @@ input:
 
 line:
 	control_line {
-		printf ("\n");
+		glcpp_print(parser->output, "\n");
 	}
 |	text_line {
 		_glcpp_parser_print_expanded_token_list (parser, $1);
-		printf ("\n");
+		glcpp_print(parser->output, "\n");
 		talloc_free ($1);
 	}
 |	expanded_line
@@ -704,60 +708,60 @@ _token_list_length (token_list_t *list)
 }
 
 static void
-_token_print (token_t *token)
+_token_print (char **out, token_t *token)
 {
 	if (token->type < 256) {
-		printf ("%c", token->type);
+		glcpp_printf (*out, "%c", token->type);
 		return;
 	}
 
 	switch (token->type) {
 	case INTEGER:
-		printf ("%" PRIxMAX, token->value.ival);
+		glcpp_printf (*out, "%" PRIxMAX, token->value.ival);
 		break;
 	case IDENTIFIER:
 	case INTEGER_STRING:
 	case OTHER:
-		printf ("%s", token->value.str);
+		glcpp_printf (*out, "%s", token->value.str);
 		break;
 	case SPACE:
-		printf (" ");
+		glcpp_print (*out, " ");
 		break;
 	case LEFT_SHIFT:
-		printf ("<<");
+		glcpp_print (*out, "<<");
 		break;
 	case RIGHT_SHIFT:
-		printf (">>");
+		glcpp_print (*out, ">>");
 		break;
 	case LESS_OR_EQUAL:
-		printf ("<=");
+		glcpp_print (*out, "<=");
 		break;
 	case GREATER_OR_EQUAL:
-		printf (">=");
+		glcpp_print (*out, ">=");
 		break;
 	case EQUAL:
-		printf ("==");
+		glcpp_print (*out, "==");
 		break;
 	case NOT_EQUAL:
-		printf ("!=");
+		glcpp_print (*out, "!=");
 		break;
 	case AND:
-		printf ("&&");
+		glcpp_print (*out, "&&");
 		break;
 	case OR:
-		printf ("||");
+		glcpp_print (*out, "||");
 		break;
 	case PASTE:
-		printf ("##");
+		glcpp_print (*out, "##");
 		break;
 	case COMMA_FINAL:
-		printf (",");
+		glcpp_print (*out, ",");
 		break;
 	case PLACEHOLDER:
 		/* Nothing to print. */
 		break;
 	default:
-		fprintf (stderr, "Error: Don't know how to print token type %d\n", token->type);
+		assert(!"Error: Don't know how to print token.");
 		break;
 	}
 }
@@ -769,7 +773,7 @@ _token_print (token_t *token)
  * Caution: Only very cursory error-checking is performed to see if
  * the final result is a valid single token. */
 static token_t *
-_token_paste (token_t *token, token_t *other)
+_token_paste (glcpp_parser_t *parser, token_t *token, token_t *other)
 {
 	/* Pasting a placeholder onto anything makes no change. */
 	if (other->type == PLACEHOLDER)
@@ -830,17 +834,17 @@ _token_paste (token_t *token, token_t *other)
 		return _token_create_str (token, token->type, str);
 	}
 
-	printf ("Error: Pasting \"");
-	_token_print (token);
-	printf ("\" and \"");
-	_token_print (other);
-	printf ("\" does not give a valid preprocessing token.\n");
+	glcpp_print (parser->errors, "Error: Pasting \"");
+	_token_print (&parser->errors, token);
+	glcpp_print (parser->errors, "\" and \"");
+	_token_print (&parser->errors, other);
+	glcpp_print (parser->errors, "\" does not give a valid preprocessing token.\n");
 
 	return token;
 }
 
 static void
-_token_list_print (token_list_t *list)
+_token_list_print (glcpp_parser_t *parser, token_list_t *list)
 {
 	token_node_t *node;
 
@@ -848,13 +852,13 @@ _token_list_print (token_list_t *list)
 		return;
 
 	for (node = list->head; node; node = node->next)
-		_token_print (node->token);
+		_token_print (&parser->output, node->token);
 }
 
 void
-yyerror (void *scanner, const char *error)
+yyerror (glcpp_parser_t *parser, const char *error)
 {
-	fprintf (stderr, "Parse error: %s\n", error);
+	glcpp_printf(parser->errors, "Parse error: %s\n", error);
 }
 
 glcpp_parser_t *
@@ -879,6 +883,9 @@ glcpp_parser_create (void)
 	parser->lex_from_list = NULL;
 	parser->lex_from_node = NULL;
 
+	parser->output = talloc_strdup(parser, "");
+	parser->errors = talloc_strdup(parser, "");
+
 	return parser;
 }
 
@@ -892,7 +899,7 @@ void
 glcpp_parser_destroy (glcpp_parser_t *parser)
 {
 	if (parser->skip_stack)
-		fprintf (stderr, "Error: Unterminated #if\n");
+		glcpp_print (parser->errors, "Error: Unterminated #if\n");
 	glcpp_lex_destroy (parser->scanner);
 	hash_table_dtor (parser->defines);
 	talloc_free (parser);
@@ -918,7 +925,7 @@ _glcpp_parser_evaluate_defined (glcpp_parser_t *parser,
 		while (next && next->token->type == SPACE)
 			next = next->next;
 		if (next == NULL || next->token->type != IDENTIFIER) {
-			fprintf (stderr, "Error: operator \"defined\" requires an identifier\n");
+			glcpp_print (parser->errors, "Error: operator \"defined\" requires an identifier\n");
 			exit (1);
 		}
 		macro = hash_table_find (parser->defines,
@@ -1065,8 +1072,8 @@ _glcpp_parser_expand_function (glcpp_parser_t *parser,
 	case FUNCTION_NOT_A_FUNCTION:
 		return NULL;
 	case FUNCTION_UNBALANCED_PARENTHESES:
-		fprintf (stderr, "Error: Macro %s call has unbalanced parentheses\n",
-			 identifier);
+		glcpp_printf (parser->errors, "Error: Macro %s call has unbalanced parentheses\n",
+			      identifier);
 		exit (1);
 		return NULL;
 	}
@@ -1082,11 +1089,11 @@ _glcpp_parser_expand_function (glcpp_parser_t *parser,
 		_argument_list_length (arguments) == 1 &&
 		arguments->head->argument->head == NULL)))
 	{
-		fprintf (stderr,
-			 "Error: macro %s invoked with %d arguments (expected %d)\n",
-			 identifier,
-			 _argument_list_length (arguments),
-			 _string_list_length (macro->parameters));
+		glcpp_printf (parser->errors,
+			      "Error: macro %s invoked with %d arguments (expected %d)\n",
+			      identifier,
+			      _argument_list_length (arguments),
+			      _string_list_length (macro->parameters));
 		return NULL;
 	}
 
@@ -1152,11 +1159,11 @@ _glcpp_parser_expand_function (glcpp_parser_t *parser,
 			next_non_space = next_non_space->next;
 
 		if (next_non_space == NULL) {
-			fprintf (stderr, "Error: '##' cannot appear at either end of a macro expansion\n");
+			glcpp_print (parser->errors, "Error: '##' cannot appear at either end of a macro expansion\n");
 			return NULL;
 		}
 
-		node->token = _token_paste (node->token, next_non_space->token);
+		node->token = _token_paste (parser, node->token, next_non_space->token);
 		node->next = next_non_space->next;
 		if (next_non_space == substituted->tail)
 			substituted->tail = node;
@@ -1381,21 +1388,21 @@ _glcpp_parser_print_expanded_token_list (glcpp_parser_t *parser,
 
 	_token_list_trim_trailing_space (list);
 
-	_token_list_print (list);
+	_token_list_print (parser, list);
 }
 
 void
-_check_for_reserved_macro_name (const char *identifier)
+_check_for_reserved_macro_name (glcpp_parser_t *parser, const char *identifier)
 {
 	/* According to the GLSL specification, macro names starting with "__"
 	 * or "GL_" are reserved for future use.  So, don't allow them.
 	 */
 	if (strncmp(identifier, "__", 2) == 0) {
-		fprintf (stderr, "Error: Macro names starting with \"__\" are reserved.\n");
+		glcpp_print (parser->errors, "Error: Macro names starting with \"__\" are reserved.\n");
 		exit(1);
 	}
 	if (strncmp(identifier, "GL_", 3) == 0) {
-		fprintf (stderr, "Error: Macro names starting with \"GL_\" are reserved.\n");
+		glcpp_print (parser->errors, "Error: Macro names starting with \"GL_\" are reserved.\n");
 		exit(1);
 	}
 }
@@ -1407,7 +1414,7 @@ _define_object_macro (glcpp_parser_t *parser,
 {
 	macro_t *macro;
 
-	_check_for_reserved_macro_name(identifier);
+	_check_for_reserved_macro_name(parser, identifier);
 
 	macro = xtalloc (parser, macro_t);
 
@@ -1427,7 +1434,7 @@ _define_function_macro (glcpp_parser_t *parser,
 {
 	macro_t *macro;
 
-	_check_for_reserved_macro_name(identifier);
+	_check_for_reserved_macro_name(parser, identifier);
 
 	macro = xtalloc (parser, macro_t);
 
@@ -1574,7 +1581,7 @@ _glcpp_parser_skip_stack_change_if (glcpp_parser_t *parser, const char *type,
 				    int condition)
 {
 	if (parser->skip_stack == NULL) {
-		fprintf (stderr, "Error: %s without #if\n", type);
+		glcpp_printf (parser->errors, "Error: %s without #if\n", type);
 		exit (1);
 	}
 
@@ -1592,7 +1599,7 @@ _glcpp_parser_skip_stack_pop (glcpp_parser_t *parser)
 	skip_node_t *node;
 
 	if (parser->skip_stack == NULL) {
-		fprintf (stderr, "Error: #endif without #if\n");
+		glcpp_print (parser->errors, "Error: #endif without #if\n");
 		exit (1);
 	}
 
