@@ -20,51 +20,26 @@
 # OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 # USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-AUTOMAKE_OPTIONS = foreign
+noinst_LTLIBRARIES = libglcpp.la
+libglcpp_la_SOURCES = \
+	glcpp-lex.l \
+	glcpp-parse.y \
+	glcpp.h \
+	hash_table.c \
+	xtalloc.c
 
-SUBDIRS = glcpp
-
-bin_PROGRAMS = glsl
-
-glsl_LDADD = ./glcpp/libglcpp.la
-glsl_LDFLAGS = @LDFLAGS@ $(talloc_LIBS)
-glsl_SOURCES = \
-	main.cpp \
-	builtin_types.h \
-	symbol_table.c hash_table.c glsl_types.cpp \
-	glsl_parser.ypp glsl_lexer.lpp glsl_parser_extras.cpp \
-	ast_expr.cpp ast_to_hir.cpp ast_function.cpp ast_type.cpp \
-	ir.cpp hir_field_selection.cpp builtin_function.cpp \
-	ir_print_visitor.cpp ir_variable.cpp ir_function.cpp \
-	ir_basic_block.cpp \
-	ir_basic_block.h \
-	ir_constant_expression.cpp \
-	ir_constant_folding.cpp \
-	ir_constant_variable.cpp \
-	ir_copy_propagation.cpp \
-	ir_copy_propagation.h \
-	ir_dead_code.cpp \
-	ir_dead_code.h \
-	ir_dead_code_local.cpp \
-	ir_expression_flattening.cpp \
-	ir_function_can_inline.cpp \
-	ir_function_inlining.cpp \
-	ir_if_simplification.cpp \
-	ir_optimization.h \
-	ir_reader.cpp s_expression.cpp \
-	ir_hv_accept.cpp \
-	ir_hierarchical_visitor.h \
-	ir_hierarchical_visitor.cpp \
-	ir_swizzle_swizzle.cpp \
-	ir_vec_index_to_swizzle.cpp \
-	linker.cpp
-
-BUILT_SOURCES = glsl_parser.h glsl_parser.cpp glsl_lexer.cpp
+BUILT_SOURCES = glcpp-parse.h glcpp-parse.c glcpp-lex.c
 CLEANFILES = $(BUILT_SOURCES)
 
-builtin_function.cpp: builtins/*/*
-	./builtins/tools/generate_builtins.pl > builtin_function.cpp
-glsl_parser.h: glsl_parser.cpp
+glcpp-parse.h: glcpp-parse.c
 
-.lpp.cpp:
+bin_PROGRAMS = glcpp
+glcpp_LDADD = libglcpp.la
+glcpp_LDFLAGS = @LDFLAGS@ $(talloc_LIBS)
+glcpp_SOURCES = glcpp.c
+
+.l.c:
 	$(LEXCOMPILE) --outfile="$@" $<
+
+test: glcpp
+	@(cd tests; ./glcpp-test)

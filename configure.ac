@@ -5,8 +5,10 @@ AC_PREREQ(2.61)
 AC_INIT(glsl, XXXXX, idr@freedesktop.org, glsl)
 AC_CONFIG_SRCDIR([Makefile.am])
 AM_CONFIG_HEADER([config.h])
+AC_CONFIG_FILES([glcpp/Makefile])
 
 AM_INIT_AUTOMAKE
+LT_INIT
 
 AM_MAINTAINER_MODE
 
