@@ -124,9 +124,17 @@ compile_shader(struct glsl_shader *shader)
    state.loop_or_switch_nesting = NULL;
    state.ARB_texture_rectangle_enable = true;
 
-   _mesa_glsl_lexer_ctor(& state, shader->Source, shader->SourceLen);
-   _mesa_glsl_parse(& state);
-   _mesa_glsl_lexer_dtor(& state);
+   /* Create a new context for the preprocessor output.  Ultimately, this
+    * should probably be the parser context, but there isn't one yet.
+   */
+   const char *source = shader->Source;
+   state.error = preprocess(shader, &source, &shader->SourceLen);
+
+   if (!state.error) {
+      _mesa_glsl_lexer_ctor(& state, source, shader->SourceLen);
+      _mesa_glsl_parse(& state);
+      _mesa_glsl_lexer_dtor(& state);
+   }
 
    if (dump_ast) {
       foreach_list_const(n, &state.translation_unit) {
