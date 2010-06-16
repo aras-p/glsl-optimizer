@@ -360,7 +360,9 @@ text_line:
 ;
 
 non_directive:
-	pp_tokens NEWLINE
+	pp_tokens NEWLINE {
+		yyerror (parser, "Invalid tokens after #");
+	}
 ;
 
 replacement_list:
