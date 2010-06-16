@@ -59,6 +59,8 @@ struct u_upload_mgr *u_upload_create( struct pipe_context *pipe,
                                       unsigned usage )
 {
    struct u_upload_mgr *upload = CALLOC_STRUCT( u_upload_mgr );
+   if (!upload)
+      return NULL;
 
    upload->pipe = pipe;
    upload->default_size = default_size;
