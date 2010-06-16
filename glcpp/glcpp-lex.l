@@ -61,6 +61,13 @@ NON_STARS_THEN_STARS	[^*]*[*]+
 		return SPACE;
 }
 
+	/* glcpp doesn't handle #extension, #version, or #pragma directives.
+	 * Simply pass them through to the main compiler's lexer/parser. */
+{HASH}(extension|version|pragma).*\n {
+	yylval.str = xtalloc_strdup (yyextra, yytext);
+	return OTHER;
+}
+
 {HASH}if/.*\n {
 	yyextra->lexing_if = 1;
 	yyextra->space_tokens = 0;
