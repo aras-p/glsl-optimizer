@@ -33,7 +33,7 @@ preprocess(void *talloc_ctx, const char **shader, size_t *shader_len)
 	glcpp_parser_parse (parser);
 
 	errors = parser->errors[0] != '\0';
-	fprintf(stderr, "%s", parser->errors);
+	printf("%s", parser->errors);
 
 	talloc_steal(talloc_ctx, parser->output);
 	*shader = parser->output;
