@@ -985,7 +985,7 @@ static void r300_bind_rs_state(struct pipe_context* pipe, void* state)
 
     UPDATE_STATE(state, r300->rs_state);
     r300->rs_state.size = 25 + (r300->polygon_offset_enabled ? 5 : 0 +
-        r300->rws->get_value(r300->rws, R300_VID_DRM_2_3_0) ? 6 : 0);
+        r300->rws->get_value(r300->rws, R300_VID_DRM_2_3_0) ? 5 : 0);
 
     if (last_sprite_coord_enable != r300->sprite_coord_enable ||
         last_two_sided_color != r300->two_sided_color) {
