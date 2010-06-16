@@ -6159,7 +6159,7 @@ GLboolean callPreSub(r700_AssemblerBase* pAsm,
     }
     if(uNumValidSrc > 0)
     {
-        prelude_cf_ptr     = pAsm->cf_current_alu_clause_ptr;
+        prelude_cf_ptr     = (R700ControlFlowGenericClause*) pAsm->cf_current_alu_clause_ptr;
         pAsm->alu_x_opcode = SQ_CF_INST_ALU;
     }
 
@@ -6279,7 +6279,7 @@ GLboolean callPreSub(r700_AssemblerBase* pAsm,
 
         next_ins(pAsm);        
 
-        pAsm->callers[pAsm->unCallerArrayPointer - 1].finale_cf_ptr  = pAsm->cf_current_alu_clause_ptr;
+        pAsm->callers[pAsm->unCallerArrayPointer - 1].finale_cf_ptr  = (R700ControlFlowGenericClause*) pAsm->cf_current_alu_clause_ptr;
         pAsm->callers[pAsm->unCallerArrayPointer - 1].prelude_cf_ptr = prelude_cf_ptr;
         pAsm->alu_x_opcode = SQ_CF_INST_ALU;
     }
