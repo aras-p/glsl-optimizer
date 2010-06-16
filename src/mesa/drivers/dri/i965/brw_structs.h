@@ -1064,6 +1064,15 @@ struct brw_sampler_default_color {
    GLfloat color[4];
 };
 
+struct gen5_sampler_default_color {
+   uint8_t ub[4];
+   float f[4];
+   uint16_t hf[4];
+   uint16_t us[4];
+   int16_t s[4];
+   uint8_t b[4];
+};
+
 struct brw_sampler_state
 {
    
