@@ -1024,32 +1024,28 @@ static void r300_resource_resolve(struct pipe_context* pipe,
                                   struct pipe_subresource subsrc)
 {
     struct r300_context* r300 = r300_context(pipe);
-    struct r300_texture* tex = r300_texture(dest);
-    struct pipe_surface* surf = dest->screen->get_tex_surface(dest->screen,
-        dest, subdest.face, subdest.level, 0, 0);
+    struct r300_surface* destsurf = r300_surface(
+        dest->screen->get_tex_surface(dest->screen,
+            dest, subdest.face, subdest.level, 0, 0));
+    struct pipe_surface* srcsurf = src->screen->get_tex_surface(src->screen,
+            src, subsrc.face, subsrc.level, 0, 0);
     float color[] = {0, 0, 0, 0};
     CS_LOCALS(r300);
 
     DBG(r300, DBG_DRAW, "r300: Resolving resource...\n");
 
-    assert(tex && tex->buffer && "resolvebuf is marked, but NULL!");
-
     OUT_CS_REG_SEQ(R300_RB3D_AARESOLVE_OFFSET, 1);
-    OUT_CS_TEX_RELOC(tex, surf->offset, 0, tex->domain, 0);
+    OUT_CS_RELOC(destsurf->buffer, destsurf->offset, 0, destsurf->domain, 0);
 
     OUT_CS_REG_SEQ(R300_RB3D_AARESOLVE_PITCH, 1);
-    OUT_CS_TEX_RELOC(tex, tex->fb_state.colorpitch[surf->level],
-        0, tex->domain, 0);
+    OUT_CS_RELOC(destsurf->buffer, destsurf->pitch, 0, destsurf->domain, 0);
 
     OUT_CS_REG(R300_RB3D_AARESOLVE_CTL,
         R300_RB3D_AARESOLVE_CTL_AARESOLVE_MODE_RESOLVE |
         R300_RB3D_AARESOLVE_CTL_AARESOLVE_ALPHA_AVERAGE);
 
-    surf = src->screen->get_tex_surface(src->screen,
-        src, subsrc.face, subsrc.level, 0, 0);
-
     r300->context.clear_render_target(pipe,
-        surf, color, 0, 0, src->width0, src->height0);
+        srcsurf, color, 0, 0, src->width0, src->height0);
 
     OUT_CS_REG(R300_RB3D_AARESOLVE_CTL, 0x0);
 }
