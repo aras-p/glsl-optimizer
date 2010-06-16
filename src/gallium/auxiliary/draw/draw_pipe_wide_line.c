@@ -202,8 +202,8 @@ static void wideline_destroy( struct draw_stage *stage )
 struct draw_stage *draw_wide_line_stage( struct draw_context *draw )
 {
    struct wideline_stage *wide = CALLOC_STRUCT(wideline_stage);
-
-   draw_alloc_temp_verts( &wide->stage, 4 );
+   if (wide == NULL)
+      goto fail;
 
    wide->stage.draw = draw;
    wide->stage.name = "wide-line";
@@ -215,5 +215,14 @@ struct draw_stage *draw_wide_line_stage( struct draw_context *draw )
    wide->stage.reset_stipple_counter = wideline_reset_stipple_counter;
    wide->stage.destroy = wideline_destroy;
 
+   if (!draw_alloc_temp_verts( &wide->stage, 4 ))
+      goto fail;
+
    return &wide->stage;
+
+fail:
+   if (wide)
+      wide->stage.destroy( &wide->stage );
+
+   return NULL;
 }

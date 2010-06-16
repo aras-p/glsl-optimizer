@@ -202,9 +202,6 @@ struct draw_stage *draw_unfilled_stage( struct draw_context *draw )
    if (unfilled == NULL)
       goto fail;
 
-   if (!draw_alloc_temp_verts( &unfilled->stage, 0 ))
-      goto fail;
-
    unfilled->stage.draw = draw;
    unfilled->stage.name = "unfilled";
    unfilled->stage.next = NULL;
@@ -215,6 +212,9 @@ struct draw_stage *draw_unfilled_stage( struct draw_context *draw )
    unfilled->stage.flush = unfilled_flush;
    unfilled->stage.reset_stipple_counter = unfilled_reset_stipple_counter;
    unfilled->stage.destroy = unfilled_destroy;
+
+   if (!draw_alloc_temp_verts( &unfilled->stage, 0 ))
+      goto fail;
 
    return &unfilled->stage;
 

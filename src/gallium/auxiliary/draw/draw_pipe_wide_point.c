@@ -324,9 +324,6 @@ struct draw_stage *draw_wide_point_stage( struct draw_context *draw )
    if (wide == NULL)
       goto fail;
 
-   if (!draw_alloc_temp_verts( &wide->stage, 4 ))
-      goto fail;
-
    wide->stage.draw = draw;
    wide->stage.name = "wide-point";
    wide->stage.next = NULL;
@@ -336,6 +333,9 @@ struct draw_stage *draw_wide_point_stage( struct draw_context *draw )
    wide->stage.flush = widepoint_flush;
    wide->stage.reset_stipple_counter = widepoint_reset_stipple_counter;
    wide->stage.destroy = widepoint_destroy;
+
+   if (!draw_alloc_temp_verts( &wide->stage, 4 ))
+      goto fail;
 
    return &wide->stage;
 

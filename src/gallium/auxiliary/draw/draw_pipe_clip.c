@@ -522,9 +522,6 @@ struct draw_stage *draw_clip_stage( struct draw_context *draw )
    if (clipper == NULL)
       goto fail;
 
-   if (!draw_alloc_temp_verts( &clipper->stage, MAX_CLIPPED_VERTICES+1 ))
-      goto fail;
-
    clipper->stage.draw = draw;
    clipper->stage.name = "clipper";
    clipper->stage.point = clip_point;
@@ -535,6 +532,9 @@ struct draw_stage *draw_clip_stage( struct draw_context *draw )
    clipper->stage.destroy = clip_destroy;
 
    clipper->plane = draw->plane;
+
+   if (!draw_alloc_temp_verts( &clipper->stage, MAX_CLIPPED_VERTICES+1 ))
+      goto fail;
 
    return &clipper->stage;
 

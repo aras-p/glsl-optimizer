@@ -257,9 +257,6 @@ struct draw_stage *draw_flatshade_stage( struct draw_context *draw )
    if (flatshade == NULL)
       goto fail;
 
-   if (!draw_alloc_temp_verts( &flatshade->stage, 2 ))
-      goto fail;
-
    flatshade->stage.draw = draw;
    flatshade->stage.name = "flatshade";
    flatshade->stage.next = NULL;
@@ -269,6 +266,9 @@ struct draw_stage *draw_flatshade_stage( struct draw_context *draw )
    flatshade->stage.flush = flatshade_flush;
    flatshade->stage.reset_stipple_counter = flatshade_reset_stipple_counter;
    flatshade->stage.destroy = flatshade_destroy;
+
+   if (!draw_alloc_temp_verts( &flatshade->stage, 2 ))
+      goto fail;
 
    return &flatshade->stage;
 

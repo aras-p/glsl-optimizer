@@ -780,9 +780,6 @@ draw_aapoint_stage(struct draw_context *draw)
    if (aapoint == NULL)
       goto fail;
 
-   if (!draw_alloc_temp_verts( &aapoint->stage, 4 ))
-      goto fail;
-
    aapoint->stage.draw = draw;
    aapoint->stage.name = "aapoint";
    aapoint->stage.next = NULL;
@@ -793,11 +790,14 @@ draw_aapoint_stage(struct draw_context *draw)
    aapoint->stage.reset_stipple_counter = aapoint_reset_stipple_counter;
    aapoint->stage.destroy = aapoint_destroy;
 
+   if (!draw_alloc_temp_verts( &aapoint->stage, 4 ))
+      goto fail;
+
    return aapoint;
 
  fail:
    if (aapoint)
-      aapoint_destroy(&aapoint->stage);
+      aapoint->stage.destroy(&aapoint->stage);
 
    return NULL;
 

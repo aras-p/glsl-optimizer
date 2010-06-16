@@ -607,8 +607,8 @@ static struct pstip_stage *
 draw_pstip_stage(struct draw_context *draw)
 {
    struct pstip_stage *pstip = CALLOC_STRUCT(pstip_stage);
-
-   draw_alloc_temp_verts( &pstip->stage, 8 );
+   if (pstip == NULL)
+      goto fail;
 
    pstip->stage.draw = draw;
    pstip->stage.name = "pstip";
@@ -620,7 +620,16 @@ draw_pstip_stage(struct draw_context *draw)
    pstip->stage.reset_stipple_counter = pstip_reset_stipple_counter;
    pstip->stage.destroy = pstip_destroy;
 
+   if (!draw_alloc_temp_verts( &pstip->stage, 8 ))
+      goto fail;
+
    return pstip;
+
+fail:
+   if (pstip)
+      pstip->stage.destroy( &pstip->stage );
+
+   return NULL;
 }
 
 

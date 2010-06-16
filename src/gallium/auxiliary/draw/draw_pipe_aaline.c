@@ -788,9 +788,6 @@ draw_aaline_stage(struct draw_context *draw)
    if (aaline == NULL)
       return NULL;
 
-   if (!draw_alloc_temp_verts( &aaline->stage, 8 ))
-      goto fail;
-
    aaline->stage.draw = draw;
    aaline->stage.name = "aaline";
    aaline->stage.next = NULL;
@@ -801,11 +798,14 @@ draw_aaline_stage(struct draw_context *draw)
    aaline->stage.reset_stipple_counter = aaline_reset_stipple_counter;
    aaline->stage.destroy = aaline_destroy;
 
+   if (!draw_alloc_temp_verts( &aaline->stage, 8 ))
+      goto fail;
+
    return aaline;
 
  fail:
    if (aaline)
-      aaline_destroy(&aaline->stage);
+      aaline->stage.destroy(&aaline->stage);
 
    return NULL;
 }

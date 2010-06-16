@@ -129,9 +129,6 @@ struct draw_stage *draw_cull_stage( struct draw_context *draw )
    if (cull == NULL)
       goto fail;
 
-   if (!draw_alloc_temp_verts( &cull->stage, 0 ))
-      goto fail;
-
    cull->stage.draw = draw;
    cull->stage.name = "cull";
    cull->stage.next = NULL;
@@ -141,6 +138,9 @@ struct draw_stage *draw_cull_stage( struct draw_context *draw )
    cull->stage.flush = cull_flush;
    cull->stage.reset_stipple_counter = cull_reset_stipple_counter;
    cull->stage.destroy = cull_destroy;
+
+   if (!draw_alloc_temp_verts( &cull->stage, 0 ))
+      goto fail;
 
    return &cull->stage;
 
