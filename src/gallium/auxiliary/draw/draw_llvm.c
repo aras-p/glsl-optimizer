@@ -173,6 +173,8 @@ draw_llvm_create(struct draw_context *draw)
 #endif
 
    llvm = CALLOC_STRUCT( draw_llvm );
+   if (!llvm)
+      return NULL;
 
    llvm->draw = draw;
    llvm->engine = draw->engine;
