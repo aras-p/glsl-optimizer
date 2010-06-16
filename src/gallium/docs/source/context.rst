@@ -120,7 +120,7 @@ will be cleared.
 color value. While it is only possible to clear one surface at a time (which can
 include several layers), this surface need not be bound to the framebuffer.
 
-``clear_depth_stencil``clears a single depth, stencil or depth/stencil surface
+``clear_depth_stencil`` clears a single depth, stencil or depth/stencil surface
 with the specified depth and stencil values (for combined depth/stencil buffers,
 is is also possible to only clear one or the other part). While it is only
 possible to clear one surface at a time (which can include several layers),
