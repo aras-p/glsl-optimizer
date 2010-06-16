@@ -218,6 +218,10 @@ main(int argc, char **argv)
 	 usage_fail(argv[0]);
 
       shader->Source = load_text_file(argv[optind], &shader->SourceLen);
+      if (shader->Source == NULL) {
+	 printf("File \"%s\" does not exist.\n", argv[optind]);
+	 exit(EXIT_FAILURE);
+      }
 
       compile_shader(shader);
 
