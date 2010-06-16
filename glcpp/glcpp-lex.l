@@ -29,7 +29,7 @@
 #include "glcpp-parse.h"
 %}
 
-%option reentrant noyywrap
+%option bison-bridge reentrant noyywrap
 %option extra-type="glcpp_parser_t *"
 %option prefix="glcpp_"
 
@@ -66,7 +66,7 @@ NON_STARS_THEN_STARS	[^*]*[*]+
 	/* glcpp doesn't handle #extension, #version, or #pragma directives.
 	 * Simply pass them through to the main compiler's lexer/parser. */
 {HASH}(extension|version|pragma).*\n {
-	yylval.str = xtalloc_strdup (yyextra, yytext);
+	yylval->str = xtalloc_strdup (yyextra, yytext);
 	return OTHER;
 }
 
@@ -130,17 +130,17 @@ NON_STARS_THEN_STARS	[^*]*[*]+
 }
 
 {DECIMAL_INTEGER} {
-	yylval.str = xtalloc_strdup (yyextra, yytext);
+	yylval->str = xtalloc_strdup (yyextra, yytext);
 	return INTEGER_STRING;
 }
 
 {OCTAL_INTEGER} {
-	yylval.str = xtalloc_strdup (yyextra, yytext);
+	yylval->str = xtalloc_strdup (yyextra, yytext);
 	return INTEGER_STRING;
 }
 
 {HEXADECIMAL_INTEGER} {
-	yylval.str = xtalloc_strdup (yyextra, yytext);
+	yylval->str = xtalloc_strdup (yyextra, yytext);
 	return INTEGER_STRING;
 }
 
@@ -185,7 +185,7 @@ NON_STARS_THEN_STARS	[^*]*[*]+
 }
 
 {IDENTIFIER} {
-	yylval.str = xtalloc_strdup (yyextra, yytext);
+	yylval->str = xtalloc_strdup (yyextra, yytext);
 	return IDENTIFIER;
 }
 
@@ -194,7 +194,7 @@ NON_STARS_THEN_STARS	[^*]*[*]+
 }
 
 {OTHER}+ {
-	yylval.str = xtalloc_strdup (yyextra, yytext);
+	yylval->str = xtalloc_strdup (yyextra, yytext);
 	return OTHER;
 }
 

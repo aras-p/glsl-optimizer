@@ -133,12 +133,14 @@ _glcpp_parser_skip_stack_pop (glcpp_parser_t *parser);
 #define yylex glcpp_parser_lex
 
 static int
-glcpp_parser_lex (glcpp_parser_t *parser);
+glcpp_parser_lex (YYSTYPE *yylval, glcpp_parser_t *parser);
 
 static void
 glcpp_parser_lex_from (glcpp_parser_t *parser, token_list_t *list);
 
 %}
+
+%pure-parser
 
 %parse-param {glcpp_parser_t *parser}
 %lex-param {glcpp_parser_t *parser}
@@ -1449,13 +1451,13 @@ _define_function_macro (glcpp_parser_t *parser,
 }
 
 static int
-glcpp_parser_lex (glcpp_parser_t *parser)
+glcpp_parser_lex (YYSTYPE *yylval, glcpp_parser_t *parser)
 {
 	token_node_t *node;
 	int ret;
 
 	if (parser->lex_from_list == NULL) {
-		ret = glcpp_lex (parser->scanner);
+		ret = glcpp_lex (yylval, parser->scanner);
 
 		/* XXX: This ugly block of code exists for the sole
 		 * purpose of converting a NEWLINE token into a SPACE
@@ -1501,7 +1503,7 @@ glcpp_parser_lex (glcpp_parser_t *parser)
 		{
 			macro_t *macro;
 			macro = hash_table_find (parser->defines,
-						 yylval.str);
+						 yylval->str);
 			if (macro && macro->is_function) {
 				parser->newline_as_space = 1;
 				parser->paren_count = 0;
@@ -1519,7 +1521,7 @@ glcpp_parser_lex (glcpp_parser_t *parser)
 		return NEWLINE;
 	}
 
-	yylval = node->token->value;
+	*yylval = node->token->value;
 	ret = node->token->type;
 
 	parser->lex_from_node = node->next;

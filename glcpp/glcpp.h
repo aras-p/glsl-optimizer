@@ -163,7 +163,7 @@ void
 glcpp_lex_set_source_string(glcpp_parser_t *parser, const char *shader);
 
 int
-glcpp_lex (yyscan_t scanner);
+glcpp_lex (YYSTYPE *lvalp, yyscan_t scanner);
 
 int
 glcpp_lex_destroy (yyscan_t scanner);
