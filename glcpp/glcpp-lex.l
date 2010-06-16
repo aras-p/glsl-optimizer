@@ -33,6 +33,8 @@
 %option extra-type="glcpp_parser_t *"
 %option prefix="glcpp_"
 
+%x DONE
+
 SPACE		[[:space:]]
 NONSPACE	[^[:space:]]
 NEWLINE		[\n]
@@ -203,6 +205,13 @@ NON_STARS_THEN_STARS	[^*]*[*]+
 }
 
 \n {
+	yyextra->lexing_if = 0;
+	return NEWLINE;
+}
+
+	/* Handle missing newline at EOF. */
+<INITIAL><<EOF>> {
+	BEGIN DONE; /* Don't keep matching this rule forever. */
 	yyextra->lexing_if = 0;
 	return NEWLINE;
 }
