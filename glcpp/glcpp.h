@@ -59,6 +59,16 @@ typedef union YYSTYPE
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
 
+typedef struct YYLTYPE {
+   int first_line;
+   int first_column;
+   int last_line;
+   int last_column;
+   unsigned source;
+} YYLTYPE;
+# define YYLTYPE_IS_DECLARED 1
+# define YYLTYPE_IS_TRIVIAL 1
+
 struct token {
 	int type;
 	YYSTYPE value;
@@ -163,7 +173,7 @@ void
 glcpp_lex_set_source_string(glcpp_parser_t *parser, const char *shader);
 
 int
-glcpp_lex (YYSTYPE *lvalp, yyscan_t scanner);
+glcpp_lex (YYSTYPE *lvalp, YYLTYPE *llocp, yyscan_t scanner);
 
 int
 glcpp_lex_destroy (yyscan_t scanner);

@@ -29,7 +29,7 @@
 #include "glcpp-parse.h"
 %}
 
-%option bison-bridge reentrant noyywrap
+%option bison-bridge bison-locations reentrant noyywrap
 %option extra-type="glcpp_parser_t *"
 %option prefix="glcpp_"
 

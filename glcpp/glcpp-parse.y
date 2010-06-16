@@ -34,7 +34,7 @@
 	stream = talloc_asprintf_append(stream, fmt, args)
 
 static void
-yyerror (glcpp_parser_t *parser, const char *error);
+yyerror (YYLTYPE *locp, glcpp_parser_t *parser, const char *error);
 
 static void
 _define_object_macro (glcpp_parser_t *parser,
@@ -133,7 +133,7 @@ _glcpp_parser_skip_stack_pop (glcpp_parser_t *parser);
 #define yylex glcpp_parser_lex
 
 static int
-glcpp_parser_lex (YYSTYPE *yylval, glcpp_parser_t *parser);
+glcpp_parser_lex (YYSTYPE *yylval, YYLTYPE *yylloc, glcpp_parser_t *parser);
 
 static void
 glcpp_parser_lex_from (glcpp_parser_t *parser, token_list_t *list);
@@ -142,6 +142,7 @@ glcpp_parser_lex_from (glcpp_parser_t *parser, token_list_t *list);
 
 %pure-parser
 %error-verbose
+%locations
 
 %parse-param {glcpp_parser_t *parser}
 %lex-param {glcpp_parser_t *parser}
@@ -364,7 +365,7 @@ text_line:
 
 non_directive:
 	pp_tokens NEWLINE {
-		yyerror (parser, "Invalid tokens after #");
+		yyerror (& @1, parser, "Invalid tokens after #");
 	}
 ;
 
@@ -861,9 +862,10 @@ _token_list_print (glcpp_parser_t *parser, token_list_t *list)
 }
 
 void
-yyerror (glcpp_parser_t *parser, const char *error)
+yyerror (YYLTYPE *locp, glcpp_parser_t *parser, const char *error)
 {
-	glcpp_printf(parser->errors, "Parse error: %s\n", error);
+	glcpp_printf(parser->errors, "%u:%u(%u): preprocessor error: %s\n",
+		     locp->source, locp->first_line, locp->first_column, error);
 }
 
 glcpp_parser_t *
@@ -1452,13 +1454,13 @@ _define_function_macro (glcpp_parser_t *parser,
 }
 
 static int
-glcpp_parser_lex (YYSTYPE *yylval, glcpp_parser_t *parser)
+glcpp_parser_lex (YYSTYPE *yylval, YYLTYPE *yylloc, glcpp_parser_t *parser)
 {
 	token_node_t *node;
 	int ret;
 
 	if (parser->lex_from_list == NULL) {
-		ret = glcpp_lex (yylval, parser->scanner);
+		ret = glcpp_lex (yylval, yylloc, parser->scanner);
 
 		/* XXX: This ugly block of code exists for the sole
 		 * purpose of converting a NEWLINE token into a SPACE
