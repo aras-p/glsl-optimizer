@@ -378,25 +378,28 @@ static void PIPE_CDECL generic_run_elts( struct translate *translate,
 	 char *dst = (vert + 
 		      tg->attrib[attr].output_offset);
 
-         if (tg->attrib[attr].instance_divisor) {
-            index = instance_id / tg->attrib[attr].instance_divisor;
+         if (tg->attrib[attr].type == TRANSLATE_ELEMENT_NORMAL) {
+            if (tg->attrib[attr].instance_divisor) {
+               index = instance_id / tg->attrib[attr].instance_divisor;
+            } else {
+               index = elt;
+            }
+
+            index = MIN2(index, tg->attrib[attr].max_index);
+
+            src = tg->attrib[attr].input_ptr +
+                  tg->attrib[attr].input_stride * index;
+
+            tg->attrib[attr].fetch( data, src, 0, 0 );
+
          } else {
-            index = elt;
+            data[0] = (float)instance_id;
          }
-
-         index = MIN2(index, tg->attrib[attr].max_index);
-
-         src = tg->attrib[attr].input_ptr +
-               tg->attrib[attr].input_stride * index;
-
-	 tg->attrib[attr].fetch( data, src, 0, 0 );
-
          if (0) debug_printf("vert %d/%d attr %d: %f %f %f %f\n",
                              i, elt, attr, data[0], data[1], data[2], data[3]);
 
 	 tg->attrib[attr].emit( data, dst );
       }
-      
       vert += tg->translate.key.output_stride;
    }
 }
