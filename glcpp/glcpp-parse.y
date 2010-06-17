@@ -951,7 +951,10 @@ _glcpp_parser_evaluate_defined (glcpp_parser_t *parser,
 			next = next->next;
 		if (next == NULL || next->token->type != IDENTIFIER) {
 			yyerror (&node->token->location, parser, "operator \"defined\" requires an identifier\n");
-			exit (1);
+			/* Already flagged an error; fake it. */
+			node->token->type = INTEGER;
+			node->token->value.ival = 0;
+			return;
 		}
 		macro = hash_table_find (parser->defines,
 					 next->token->value.str);
@@ -1098,7 +1101,6 @@ _glcpp_parser_expand_function (glcpp_parser_t *parser,
 		return NULL;
 	case FUNCTION_UNBALANCED_PARENTHESES:
 		glcpp_error (&node->token->location, parser, "Macro %s call has unbalanced parentheses\n", identifier);
-		exit (1);
 		return NULL;
 	}
 
@@ -1424,11 +1426,9 @@ _check_for_reserved_macro_name (glcpp_parser_t *parser, YYLTYPE *loc,
 	 */
 	if (strncmp(identifier, "__", 2) == 0) {
 		glcpp_error (loc, parser, "Macro names starting with \"__\" are reserved.\n");
-		exit(1);
 	}
 	if (strncmp(identifier, "GL_", 3) == 0) {
 		glcpp_error (loc, parser, "Macro names starting with \"GL_\" are reserved.\n");
-		exit(1);
 	}
 }
 
@@ -1611,7 +1611,7 @@ _glcpp_parser_skip_stack_change_if (glcpp_parser_t *parser, YYLTYPE *loc,
 {
 	if (parser->skip_stack == NULL) {
 		glcpp_error (loc, parser, "%s without #if\n", type);
-		exit (1);
+		return;
 	}
 
 	if (parser->skip_stack->type == SKIP_TO_ELSE) {
@@ -1629,7 +1629,7 @@ _glcpp_parser_skip_stack_pop (glcpp_parser_t *parser, YYLTYPE *loc)
 
 	if (parser->skip_stack == NULL) {
 		glcpp_error (loc, parser, "#endif without #if\n");
-		exit (1);
+		return;
 	}
 
 	node = parser->skip_stack;
