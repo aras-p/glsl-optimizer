@@ -49,20 +49,4 @@ struct native_probe {
    void (*destroy)(struct native_probe *nprobe);
 };
 
-/**
- * Return a probe object for the given display.
- *
- * Note that the returned object may be cached and used by different native
- * display modules.  It allows fast probing when multiple modules probe the
- * same display.
- */
-struct native_probe *
-native_create_probe(void *dpy);
-
-/**
- * Probe the probe object.
- */
-enum native_probe_result
-native_get_probe_result(struct native_probe *nprobe);
-
 #endif /* _NATIVE_PROBE_H_ */

@@ -207,10 +207,28 @@ native_attachment_mask_test(uint mask, enum native_attachment att)
    return !!(mask & (1 << att));
 }
 
-const char *
-native_get_name(void);
+struct native_platform {
+   const char *name;
 
-struct native_display *
-native_create_display(void *dpy, struct native_event_handler *handler);
+   /**
+    * Return a probe object for the given display.
+    *
+    * Note that the returned object may be cached and used by different native
+    * display modules.  It allows fast probing when multiple modules probe the
+    * same display.
+    */
+   struct native_probe *(*create_probe)(void *dpy);
+
+   /**
+    * Probe the probe object.
+    */
+   enum native_probe_result (*get_probe_result)(struct native_probe *nprobe);
+
+   struct native_display *(*create_display)(void *dpy,
+                                            struct native_event_handler *handler);
+};
+
+const struct native_platform *
+native_get_platform(void);
 
 #endif /* _NATIVE_H_ */

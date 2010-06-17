@@ -366,25 +366,7 @@ gdi_create_display(HDC hDC, struct pipe_screen *screen,
    return &gdpy->base;
 }
 
-struct native_probe *
-native_create_probe(void *dpy)
-{
-   return NULL;
-}
-
-enum native_probe_result
-native_get_probe_result(struct native_probe *nprobe)
-{
-   return NATIVE_PROBE_UNKNOWN;
-}
-
-const char *
-native_get_name(void)
-{
-   return "GDI";
-}
-
-struct native_display *
+static struct native_display *
 native_create_display(void *dpy, struct native_event_handler *event_handler)
 {
    struct sw_winsys *winsys;
@@ -402,4 +384,17 @@ native_create_display(void *dpy, struct native_event_handler *event_handler)
    }
 
    return gdi_create_display((HDC) dpy, screen, event_handler);
+}
+
+static const struct native_platform gdi_platform = {
+   "GDI", /* name */
+   NULL, /* create_probe */
+   NULL, /* get_probe_result */
+   native_create_display
+};
+
+const struct native_platform *
+native_get_platform(void)
+{
+   return &gdi_platform;
 }

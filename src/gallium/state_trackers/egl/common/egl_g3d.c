@@ -63,25 +63,44 @@ egl_g3d_init_st(_EGLDriver *drv)
 }
 
 /**
- * Get the probe object of the display.
+ * Get the native platform.
+ */
+static const struct native_platform *
+egl_g3d_get_platform(_EGLDriver *drv)
+{
+   struct egl_g3d_driver *gdrv = egl_g3d_driver(drv);
+
+   if (!gdrv->platform)
+      gdrv->platform = native_get_platform();
+
+   return gdrv->platform;
+}
+
+/**
+ * Get the probe result of the display.
  *
  * Note that this function may be called before the display is initialized.
  */
-static struct native_probe *
-egl_g3d_get_probe(_EGLDriver *drv, _EGLDisplay *dpy)
+static enum native_probe_result
+egl_g3d_get_probe_result(_EGLDriver *drv, _EGLDisplay *dpy)
 {
    struct egl_g3d_driver *gdrv = egl_g3d_driver(drv);
    struct native_probe *nprobe;
+   const struct native_platform *nplat;
+
+   nplat = egl_g3d_get_platform(drv);
+   if (!nplat || !nplat->create_probe)
+      return NATIVE_PROBE_UNKNOWN;
 
    nprobe = (struct native_probe *) _eglGetProbeCache(gdrv->probe_key);
    if (!nprobe || nprobe->display != dpy->PlatformDisplay) {
       if (nprobe)
          nprobe->destroy(nprobe);
-      nprobe = native_create_probe(dpy->PlatformDisplay);
+      nprobe = nplat->create_probe(dpy->PlatformDisplay);
       _eglSetProbeCache(gdrv->probe_key, (void *) nprobe);
    }
 
-   return nprobe;
+   return nplat->get_probe_result(nprobe);
 }
 
 /**
@@ -460,9 +479,14 @@ egl_g3d_initialize(_EGLDriver *drv, _EGLDisplay *dpy,
 {
    struct egl_g3d_driver *gdrv = egl_g3d_driver(drv);
    struct egl_g3d_display *gdpy;
+   const struct native_platform *nplat;
 
    /* the probe object is unlikely to be needed again */
    egl_g3d_destroy_probe(drv, dpy);
+
+   nplat = egl_g3d_get_platform(drv);
+   if (!nplat)
+      return EGL_FALSE;
 
    gdpy = CALLOC_STRUCT(egl_g3d_display);
    if (!gdpy) {
@@ -471,7 +495,8 @@ egl_g3d_initialize(_EGLDriver *drv, _EGLDisplay *dpy,
    }
    dpy->DriverData = gdpy;
 
-   gdpy->native = native_create_display(dpy->PlatformDisplay,
+   _eglLog(_EGL_INFO, "use %s for display %p", nplat->name, dpy->PlatformDisplay);
+   gdpy->native = nplat->create_display(dpy->PlatformDisplay,
          &egl_g3d_native_event_handler);
    if (!gdpy->native) {
       _eglError(EGL_NOT_INITIALIZED, "eglInitialize(no usable display)");
@@ -543,12 +568,10 @@ egl_g3d_get_proc_address(_EGLDriver *drv, const char *procname)
 static EGLint
 egl_g3d_probe(_EGLDriver *drv, _EGLDisplay *dpy)
 {
-   struct native_probe *nprobe;
    enum native_probe_result res;
    EGLint score;
 
-   nprobe = egl_g3d_get_probe(drv, dpy);
-   res = native_get_probe_result(nprobe);
+   res = egl_g3d_get_probe_result(drv, dpy);
 
    switch (res) {
    case NATIVE_PROBE_UNKNOWN:
@@ -582,11 +605,7 @@ egl_g3d_unload(_EGLDriver *drv)
 _EGLDriver *
 _eglMain(const char *args)
 {
-   static char driver_name[64];
    struct egl_g3d_driver *gdrv;
-
-   util_snprintf(driver_name, sizeof(driver_name),
-         "Gallium/%s", native_get_name());
 
    gdrv = CALLOC_STRUCT(egl_g3d_driver);
    if (!gdrv)
@@ -597,7 +616,7 @@ _eglMain(const char *args)
    gdrv->base.API.Terminate = egl_g3d_terminate;
    gdrv->base.API.GetProcAddress = egl_g3d_get_proc_address;
 
-   gdrv->base.Name = driver_name;
+   gdrv->base.Name = "Gallium";
    gdrv->base.Probe = egl_g3d_probe;
    gdrv->base.Unload = egl_g3d_unload;
 

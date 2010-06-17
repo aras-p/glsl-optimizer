@@ -768,37 +768,40 @@ kms_create_display(int fd, struct native_event_handler *event_handler)
    return &kdpy->base;
 }
 
-struct native_probe *
-native_create_probe(void *dpy)
-{
-   return NULL;
-}
-
-enum native_probe_result
-native_get_probe_result(struct native_probe *nprobe)
-{
-   return NATIVE_PROBE_UNKNOWN;
-}
-
-const char *
-native_get_name(void)
-{
-   static char kms_name[32];
-
-
-   util_snprintf(kms_name, sizeof(kms_name), "KMS/%s", driver_descriptor.name);
-
-   return kms_name;
-}
-
-struct native_display *
+static struct native_display *
 native_create_display(void *dpy, struct native_event_handler *event_handler)
 {
-   struct native_display *ndpy = NULL;
+   struct native_display *ndpy;
    int fd;
 
-   fd = (dpy != EGL_DEFAULT_DISPLAY) ? (int) pointer_to_intptr((void *) dpy) : -1;
+   /* well, this makes fd 0 being ignored */
+   fd = (dpy) ? (int) pointer_to_intptr(dpy) : -1;
    ndpy = kms_create_display(fd, event_handler);
 
    return ndpy;
+}
+
+static void
+kms_init_platform(struct native_platform *nplat)
+{
+   static char kms_name[32];
+
+   if (nplat->name)
+      return;
+
+   util_snprintf(kms_name, sizeof(kms_name), "KMS/%s", driver_descriptor.name);
+
+   nplat->name = kms_name;
+   nplat->create_probe = NULL;
+   nplat->get_probe_result = NULL;
+   nplat->create_display = native_create_display;
+}
+
+static struct native_platform kms_platform;
+
+const struct native_platform *
+native_get_platform(void)
+{
+   kms_init_platform(&kms_platform);
+   return &kms_platform;
 }

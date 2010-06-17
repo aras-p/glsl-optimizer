@@ -427,25 +427,7 @@ fbdev_display_create(int fd, struct native_event_handler *event_handler)
    return &fbdpy->base;
 }
 
-struct native_probe *
-native_create_probe(void *dpy)
-{
-   return NULL;
-}
-
-enum native_probe_result
-native_get_probe_result(struct native_probe *nprobe)
-{
-   return NATIVE_PROBE_UNKNOWN;
-}
-
-const char *
-native_get_name(void)
-{
-   return "FBDEV";
-}
-
-struct native_display *
+static struct native_display *
 native_create_display(void *dpy, struct native_event_handler *event_handler)
 {
    struct native_display *ndpy;
@@ -466,4 +448,17 @@ native_create_display(void *dpy, struct native_event_handler *event_handler)
       close(fd);
 
    return ndpy;
+}
+
+static const struct native_platform fbdev_platform = {
+   "FBDEV", /* name */
+   NULL, /* create_probe */
+   NULL, /* get_probe_result */
+   native_create_display
+};
+
+const struct native_platform *
+native_get_platform(void)
+{
+   return &fbdev_platform;
 }

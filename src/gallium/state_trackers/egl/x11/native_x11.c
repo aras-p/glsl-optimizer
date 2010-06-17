@@ -44,8 +44,8 @@ x11_probe_destroy(struct native_probe *nprobe)
    FREE(nprobe);
 }
 
-struct native_probe *
-native_create_probe(void *dpy)
+static struct native_probe *
+x11_create_probe(void *dpy)
 {
    struct native_probe *nprobe;
    struct x11_screen *xscr;
@@ -89,8 +89,8 @@ native_create_probe(void *dpy)
    return nprobe;
 }
 
-enum native_probe_result
-native_get_probe_result(struct native_probe *nprobe)
+static enum native_probe_result
+x11_get_probe_result(struct native_probe *nprobe)
 {
    if (!nprobe || nprobe->magic != X11_PROBE_MAGIC)
       return NATIVE_PROBE_UNKNOWN;
@@ -106,17 +106,7 @@ native_get_probe_result(struct native_probe *nprobe)
    return NATIVE_PROBE_EXACT;
 }
 
-const char *
-native_get_name(void)
-{
-   static char x11_name[32];
-
-   util_snprintf(x11_name, sizeof(x11_name), "X11/%s", driver_descriptor.name);
-
-   return x11_name;
-}
-
-struct native_display *
+static struct native_display *
 native_create_display(void *dpy, struct native_event_handler *event_handler)
 {
    struct native_display *ndpy = NULL;
@@ -138,4 +128,29 @@ native_create_display(void *dpy, struct native_event_handler *event_handler)
    }
 
    return ndpy;
+}
+
+static void
+x11_init_platform(struct native_platform *nplat)
+{
+   static char x11_name[32];
+
+   if (nplat->name)
+      return;
+
+   util_snprintf(x11_name, sizeof(x11_name), "X11/%s", driver_descriptor.name);
+
+   nplat->name = x11_name;
+   nplat->create_probe = x11_create_probe;
+   nplat->get_probe_result = x11_get_probe_result;
+   nplat->create_display = native_create_display;
+}
+
+static struct native_platform x11_platform;
+
+const struct native_platform *
+native_get_platform(void)
+{
+   x11_init_platform(&x11_platform);
+   return &x11_platform;
 }
