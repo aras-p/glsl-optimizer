@@ -100,12 +100,12 @@ const struct option compiler_opts[] = {
 };
 
 void
-compile_shader(struct glsl_shader *prog)
+compile_shader(struct glsl_shader *shader)
 {
    struct _mesa_glsl_parse_state state;
 
    memset(& state, 0, sizeof(state));
-   switch (prog->Type) {
+   switch (shader->Type) {
    case GL_VERTEX_SHADER:   state.target = vertex_shader; break;
    case GL_FRAGMENT_SHADER: state.target = fragment_shader; break;
    case GL_GEOMETRY_SHADER: state.target = geometry_shader; break;
@@ -119,7 +119,7 @@ compile_shader(struct glsl_shader *prog)
    state.loop_or_switch_nesting = NULL;
    state.ARB_texture_rectangle_enable = true;
 
-   _mesa_glsl_lexer_ctor(& state, prog->Source, prog->SourceLen);
+   _mesa_glsl_lexer_ctor(& state, shader->Source, shader->SourceLen);
    _mesa_glsl_parse(& state);
    _mesa_glsl_lexer_dtor(& state);
 
@@ -131,35 +131,35 @@ compile_shader(struct glsl_shader *prog)
       printf("\n\n");
    }
 
-   prog->ir.make_empty();
+   shader->ir.make_empty();
    if (!state.error && !state.translation_unit.is_empty())
-      _mesa_ast_to_hir(&prog->ir, &state);
+      _mesa_ast_to_hir(&shader->ir, &state);
 
    /* Optimization passes */
-   if (!state.error && !prog->ir.is_empty()) {
+   if (!state.error && !shader->ir.is_empty()) {
       bool progress;
       do {
 	 progress = false;
 
-	 progress = do_function_inlining(&prog->ir) || progress;
-	 progress = do_if_simplification(&prog->ir) || progress;
-	 progress = do_copy_propagation(&prog->ir) || progress;
-	 progress = do_dead_code_local(&prog->ir) || progress;
-	 progress = do_dead_code_unlinked(&prog->ir) || progress;
-	 progress = do_constant_variable_unlinked(&prog->ir) || progress;
-	 progress = do_constant_folding(&prog->ir) || progress;
-	 progress = do_vec_index_to_swizzle(&prog->ir) || progress;
-	 progress = do_swizzle_swizzle(&prog->ir) || progress;
+	 progress = do_function_inlining(&shader->ir) || progress;
+	 progress = do_if_simplification(&shader->ir) || progress;
+	 progress = do_copy_propagation(&shader->ir) || progress;
+	 progress = do_dead_code_local(&shader->ir) || progress;
+	 progress = do_dead_code_unlinked(&shader->ir) || progress;
+	 progress = do_constant_variable_unlinked(&shader->ir) || progress;
+	 progress = do_constant_folding(&shader->ir) || progress;
+	 progress = do_vec_index_to_swizzle(&shader->ir) || progress;
+	 progress = do_swizzle_swizzle(&shader->ir) || progress;
       } while (progress);
    }
 
    /* Print out the resulting IR */
    if (!state.error && dump_lir) {
-      _mesa_print_ir(&prog->ir, &state);
+      _mesa_print_ir(&shader->ir, &state);
    }
 
-   prog->symbols = state.symbols;
-   prog->CompileStatus = !state.error;
+   shader->symbols = state.symbols;
+   shader->CompileStatus = !state.error;
    return;
 }
 
@@ -186,10 +186,10 @@ main(int argc, char **argv)
 		 sizeof(struct glsl_shader *) * (whole_program.NumShaders + 1));
       assert(whole_program.Shaders != NULL);
 
-      struct glsl_shader *prog = new glsl_shader;
-      memset(prog, 0, sizeof(*prog));
+      struct glsl_shader *shader = new glsl_shader;
+      memset(shader, 0, sizeof(*shader));
 
-      whole_program.Shaders[whole_program.NumShaders] = prog;
+      whole_program.Shaders[whole_program.NumShaders] = shader;
       whole_program.NumShaders++;
 
       const unsigned len = strlen(argv[optind]);
@@ -198,19 +198,19 @@ main(int argc, char **argv)
 
       const char *const ext = & argv[optind][len - 5];
       if (strncmp(".vert", ext, 5) == 0)
-	 prog->Type = GL_VERTEX_SHADER;
+	 shader->Type = GL_VERTEX_SHADER;
       else if (strncmp(".geom", ext, 5) == 0)
-	 prog->Type = GL_GEOMETRY_SHADER;
+	 shader->Type = GL_GEOMETRY_SHADER;
       else if (strncmp(".frag", ext, 5) == 0)
-	 prog->Type = GL_FRAGMENT_SHADER;
+	 shader->Type = GL_FRAGMENT_SHADER;
       else
 	 usage_fail(argv[0]);
 
-      prog->Source = load_text_file(argv[optind], &prog->SourceLen);
+      shader->Source = load_text_file(argv[optind], &shader->SourceLen);
 
-      compile_shader(prog);
+      compile_shader(shader);
 
-      if (!prog->CompileStatus) {
+      if (!shader->CompileStatus) {
 	 status = EXIT_FAILURE;
 	 break;
       }
