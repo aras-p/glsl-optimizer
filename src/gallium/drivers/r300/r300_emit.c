@@ -512,8 +512,8 @@ void r300_emit_rs_state(struct r300_context* r300, unsigned size, void* state)
                     break;
                 default:
                     debug_printf("r300: Bad number of multisamples!\n");
-                    mspos0 = 0;
-                    mspos1 = 0;
+                    mspos0 = rs->multisample_position_0;
+                    mspos1 = rs->multisample_position_1;
                     break;
             }
 
