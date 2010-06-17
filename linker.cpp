@@ -104,6 +104,12 @@ private:
    bool found;             /**< Was a write to the variable found? */
 };
 
+
+/**
+ * Verify that a vertex shader executable meets all semantic requirements
+ *
+ * \param shader  Vertex shader executable to be verified
+ */
 bool
 validate_vertex_shader_executable(struct glsl_shader *shader)
 {
@@ -126,6 +132,11 @@ validate_vertex_shader_executable(struct glsl_shader *shader)
 }
 
 
+/**
+ * Verify that a fragment shader executable meets all semantic requirements
+ *
+ * \param shader  Fragment shader executable to be verified
+ */
 bool
 validate_fragment_shader_executable(struct glsl_shader *shader)
 {
