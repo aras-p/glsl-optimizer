@@ -118,6 +118,13 @@ static void FUNC( struct draw_geometry_shader *shader,
       }
       break;
 
+   case PIPE_PRIM_TRIANGLES_ADJACENCY:
+      for (i = 0; i+5 < count; i += 5) {
+         TRI_ADJ( shader, i + 0, i + 1, i + 2,
+                  i + 3, i + 4, i + 5);
+      }
+      break;
+
    default:
       debug_assert(!"Unsupported primitive in geometry shader");
       break;
@@ -126,6 +133,7 @@ static void FUNC( struct draw_geometry_shader *shader,
 
 
 #undef TRIANGLE
+#undef TRI_ADJ
 #undef POINT
 #undef LINE
 #undef LINE_ADJ
