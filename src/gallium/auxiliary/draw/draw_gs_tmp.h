@@ -112,6 +112,11 @@ static void FUNC( struct draw_geometry_shader *shader,
          LINE_ADJ( shader , i + 0 , i + 1, i + 2, i + 3 );
       }
       break;
+   case PIPE_PRIM_LINE_STRIP_ADJACENCY:
+      for (i = 1; i + 2 < count; i++) {
+         LINE( shader, i - 1, i, i + 1, i + 2 );
+      }
+      break;
 
    default:
       debug_assert(!"Unsupported primitive in geometry shader");
