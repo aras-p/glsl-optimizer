@@ -164,7 +164,7 @@ compile_shader(struct glsl_program *prog)
 int
 main(int argc, char **argv)
 {
-   struct _mesa_glsl_parse_state state;
+   int status = EXIT_SUCCESS;
 
    int c;
    int idx = 0;
@@ -175,26 +175,44 @@ main(int argc, char **argv)
    if (argc <= optind)
       usage_fail(argv[0]);
 
-   struct glsl_program *prog = new glsl_program;
-   memset(prog, 0, sizeof(*prog));
+   struct glsl_program **prog_list = NULL;
+   unsigned prog_list_len = 0;
 
-   const unsigned len = strlen(argv[optind]);
-   if (len < 6)
-      usage_fail(argv[0]);
+   for (/* empty */; argc > optind; optind++) {
+      prog_list = (struct glsl_program **)
+	 realloc(prog_list,
+		 sizeof(struct glsl_program *) * (prog_list_len + 1));
+      assert(prog_list != NULL);
 
-   const char *const ext = & argv[optind][len - 5];
-   if (strncmp(".vert", ext, 5) == 0)
-      prog->Type = GL_VERTEX_SHADER;
-   else if (strncmp(".geom", ext, 5) == 0)
-      prog->Type = GL_GEOMETRY_SHADER;
-   else if (strncmp(".frag", ext, 5) == 0)
-      prog->Type = GL_FRAGMENT_SHADER;
-   else
-      usage_fail(argv[0]);
+      struct glsl_program *prog = new glsl_program;
+      memset(prog, 0, sizeof(*prog));
 
-   prog->Source = load_text_file(argv[optind], &prog->SourceLen);
+      prog_list[prog_list_len] = prog;
+      prog_list_len++;
 
-   compile_shader(prog);
+      const unsigned len = strlen(argv[optind]);
+      if (len < 6)
+	 usage_fail(argv[0]);
 
-   return prog->CompileStatus ? EXIT_SUCCESS : EXIT_FAILURE;
+      const char *const ext = & argv[optind][len - 5];
+      if (strncmp(".vert", ext, 5) == 0)
+	 prog->Type = GL_VERTEX_SHADER;
+      else if (strncmp(".geom", ext, 5) == 0)
+	 prog->Type = GL_GEOMETRY_SHADER;
+      else if (strncmp(".frag", ext, 5) == 0)
+	 prog->Type = GL_FRAGMENT_SHADER;
+      else
+	 usage_fail(argv[0]);
+
+      prog->Source = load_text_file(argv[optind], &prog->SourceLen);
+
+      compile_shader(prog);
+
+      if (!prog->CompileStatus) {
+	 status = EXIT_FAILURE;
+	 break;
+      }
+   }
+
+   return status;
 }
