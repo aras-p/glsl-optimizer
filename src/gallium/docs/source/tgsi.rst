@@ -26,9 +26,11 @@ each of the components of *dst*. When this happens, the result is said to be
 Instruction Set
 ---------------
 
-From GL_NV_vertex_program
+Core ISA
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
+These opcodes are guaranteed to be available regardless of the driver being
+used.
 
 .. opcode:: ARL - Address Register Load
 
@@ -637,10 +639,6 @@ This instruction replicates its result.
    Considered for removal.
 
 
-From GL_NV_vertex_program2
-^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-
 .. opcode:: ARA - Address Register Add
 
   TBD
@@ -827,10 +825,13 @@ This instruction replicates its result.
    Considered for removal.
 
 
-From GL_NV_gpu_program4
+Compute ISA
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
+These opcodes are primarily provided for special-use computational shaders.
 Support for these opcodes indicated by a special pipe capability bit (TBD).
+
+XXX so let's discuss it, yeah?
 
 .. opcode:: CEIL - Ceiling
 
@@ -989,10 +990,17 @@ Support for these opcodes indicated by a special pipe capability bit (TBD).
 
   TBD
 
+.. note::
 
-From GL_NV_geometry_program4
+   Support for CONT is determined by a special capability bit,
+   ``TGSI_CONT_SUPPORTED``. See :ref:`Screen` for more information.
+
+
+Geometry ISA
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+These opcodes are only supported in geometry shaders; they have no meaning
+in any other type of shader.
 
 .. opcode:: EMIT - Emit
 
@@ -1004,9 +1012,11 @@ From GL_NV_geometry_program4
   TBD
 
 
-From GLSL
+GLSL ISA
 ^^^^^^^^^^
 
+These opcodes are part of :term:`GLSL`'s opcode set. Support for these
+opcodes is determined by a special capability bit, ``GLSL``.
 
 .. opcode:: BGNLOOP - Begin a Loop
 
@@ -1045,6 +1055,7 @@ This instruction replicates its result.
 ps_2_x
 ^^^^^^^^^^^^
 
+XXX wait what
 
 .. opcode:: CALLNZ - Subroutine Call If Not Zero
 
@@ -1062,7 +1073,7 @@ ps_2_x
 
 .. _doubleopcodes:
 
-Double Opcodes
+Double ISA
 ^^^^^^^^^^^^^^^
 
 .. opcode:: DADD - Add Double
