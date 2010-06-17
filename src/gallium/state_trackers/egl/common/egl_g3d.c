@@ -74,10 +74,10 @@ egl_g3d_get_probe(_EGLDriver *drv, _EGLDisplay *dpy)
    struct native_probe *nprobe;
 
    nprobe = (struct native_probe *) _eglGetProbeCache(gdrv->probe_key);
-   if (!nprobe || nprobe->display != dpy->NativeDisplay) {
+   if (!nprobe || nprobe->display != dpy->PlatformDisplay) {
       if (nprobe)
          nprobe->destroy(nprobe);
-      nprobe = native_create_probe(dpy->NativeDisplay);
+      nprobe = native_create_probe(dpy->PlatformDisplay);
       _eglSetProbeCache(gdrv->probe_key, (void *) nprobe);
    }
 
@@ -96,7 +96,7 @@ egl_g3d_destroy_probe(_EGLDriver *drv, _EGLDisplay *dpy)
    struct native_probe *nprobe;
 
    nprobe = (struct native_probe *) _eglGetProbeCache(gdrv->probe_key);
-   if (nprobe && (!dpy || nprobe->display == dpy->NativeDisplay)) {
+   if (nprobe && (!dpy || nprobe->display == dpy->PlatformDisplay)) {
       nprobe->destroy(nprobe);
       _eglSetProbeCache(gdrv->probe_key, NULL);
    }
@@ -479,7 +479,7 @@ egl_g3d_initialize(_EGLDriver *drv, _EGLDisplay *dpy,
    }
    dpy->DriverData = gdpy;
 
-   gdpy->native = native_create_display(dpy->NativeDisplay,
+   gdpy->native = native_create_display(dpy->PlatformDisplay,
          &egl_g3d_native_event_handler);
    if (!gdpy->native) {
       _eglError(EGL_NOT_INITIALIZED, "eglInitialize(no usable display)");

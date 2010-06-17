@@ -211,7 +211,6 @@ const char *
 native_get_name(void);
 
 struct native_display *
-native_create_display(EGLNativeDisplayType dpy,
-                      struct native_event_handler *handler);
+native_create_display(void *dpy, struct native_event_handler *handler);
 
 #endif /* _NATIVE_H_ */

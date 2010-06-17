@@ -7,6 +7,18 @@
 #include "eglmutex.h"
 
 
+enum _egl_platform_type {
+   _EGL_PLATFORM_WINDOWS,
+   _EGL_PLATFORM_X11,
+   _EGL_PLATFORM_DRM,
+   _EGL_PLATFORM_FBDEV,
+
+   _EGL_NUM_PLATFORMS,
+   _EGL_INVALID_PLATFORM = -1
+};
+typedef enum _egl_platform_type _EGLPlatformType;
+
+
 enum _egl_resource_type {
    _EGL_RESOURCE_CONTEXT,
    _EGL_RESOURCE_SURFACE,
@@ -53,14 +65,15 @@ struct _egl_extensions
 };
 
 
-struct _egl_display 
+struct _egl_display
 {
    /* used to link displays */
    _EGLDisplay *Next;
 
    _EGLMutex Mutex;
 
-   EGLNativeDisplayType NativeDisplay;
+   _EGLPlatformType Platform;
+   void *PlatformDisplay;
 
    EGLBoolean Initialized; /**< True if the display is initialized */
    _EGLDriver *Driver;
@@ -92,7 +105,7 @@ _eglFiniDisplay(void);
 
 
 extern _EGLDisplay *
-_eglFindDisplay(EGLNativeDisplayType displayName);
+_eglFindDisplay(_EGLPlatformType plat, void *plat_dpy);
 
 
 PUBLIC void

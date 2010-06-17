@@ -702,15 +702,18 @@ dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp,
    struct dri2_egl_display *dri2_dpy;
    unsigned int api_mask;
 
+   if (disp->Platform != _EGL_PLATFORM_X11)
+      return EGL_FALSE;
+
    dri2_dpy = malloc(sizeof *dri2_dpy);
    if (!dri2_dpy)
       return _eglError(EGL_BAD_ALLOC, "eglInitialize");
 
    disp->DriverData = (void *) dri2_dpy;
-   if (disp->NativeDisplay == NULL) {
+   if (disp->PlatformDisplay == NULL) {
       dri2_dpy->conn = xcb_connect(0, 0);
    } else {
-      dri2_dpy->conn = XGetXCBConnection(disp->NativeDisplay);
+      dri2_dpy->conn = XGetXCBConnection((Display *) disp->PlatformDisplay);
    }
 
    if (xcb_connection_has_error(dri2_dpy->conn)) {
@@ -815,7 +818,7 @@ dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp,
  cleanup_driver:
    dlclose(dri2_dpy->driver);
  cleanup_conn:
-   if (disp->NativeDisplay == NULL)
+   if (disp->PlatformDisplay == NULL)
       xcb_disconnect(dri2_dpy->conn);
  cleanup_dpy:
    free(dri2_dpy);
@@ -837,7 +840,7 @@ dri2_terminate(_EGLDriver *drv, _EGLDisplay *disp)
    dri2_dpy->core->destroyScreen(dri2_dpy->dri_screen);
    close(dri2_dpy->fd);
    dlclose(dri2_dpy->driver);
-   if (disp->NativeDisplay == NULL)
+   if (disp->PlatformDisplay == NULL)
       xcb_disconnect(dri2_dpy->conn);
    free(dri2_dpy);
    disp->DriverData = NULL;

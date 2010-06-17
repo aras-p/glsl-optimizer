@@ -581,6 +581,16 @@ _eglLoadDefaultDriver(EGLDisplay dpy, EGLint *major, EGLint *minor)
 
 
 /**
+ * Return the native platform.  It is the platform of the EGL native types.
+ */
+_EGLPlatformType
+_eglGetNativePlatform(void)
+{
+   return _EGL_NATIVE_PLATFORM;
+}
+
+
+/**
  * Plug all the available fallback routines into the given driver's
  * dispatch table.
  */

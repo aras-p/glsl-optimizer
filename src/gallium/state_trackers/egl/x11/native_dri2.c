@@ -741,7 +741,7 @@ dri2_display_hash_table_compare(void *key1, void *key2)
 }
 
 struct native_display *
-x11_create_dri2_display(EGLNativeDisplayType dpy,
+x11_create_dri2_display(Display *dpy,
                         struct native_event_handler *event_handler,
                         struct drm_api *api)
 {

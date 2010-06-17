@@ -49,16 +49,19 @@ _eglFiniDisplay(void)
  * new one.
  */
 _EGLDisplay *
-_eglFindDisplay(EGLNativeDisplayType nativeDisplay)
+_eglFindDisplay(_EGLPlatformType plat, void *plat_dpy)
 {
    _EGLDisplay *dpy;
+
+   if (plat == _EGL_INVALID_PLATFORM)
+      return NULL;
 
    _eglLockMutex(_eglGlobal.Mutex);
 
    /* search the display list first */
    dpy = _eglGlobal.DisplayList;
    while (dpy) {
-      if (dpy->NativeDisplay == nativeDisplay)
+      if (dpy->Platform == plat && dpy->PlatformDisplay == plat_dpy)
          break;
       dpy = dpy->Next;
    }
@@ -68,7 +71,8 @@ _eglFindDisplay(EGLNativeDisplayType nativeDisplay)
       dpy = (_EGLDisplay *) calloc(1, sizeof(_EGLDisplay));
       if (dpy) {
          _eglInitMutex(&dpy->Mutex);
-         dpy->NativeDisplay = nativeDisplay;
+         dpy->Platform = plat;
+         dpy->PlatformDisplay = plat_dpy;
 
          /* add to the display list */ 
          dpy->Next = _eglGlobal.DisplayList;

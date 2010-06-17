@@ -43,7 +43,7 @@ enum native_probe_result {
  */
 struct native_probe {
    int magic;
-   EGLNativeDisplayType display;
+   void *display;
    void *data;
 
    void (*destroy)(struct native_probe *nprobe);
@@ -57,7 +57,7 @@ struct native_probe {
  * same display.
  */
 struct native_probe *
-native_create_probe(EGLNativeDisplayType dpy);
+native_create_probe(void *dpy);
 
 /**
  * Probe the probe object.

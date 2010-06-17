@@ -428,7 +428,7 @@ fbdev_display_create(int fd, struct native_event_handler *event_handler)
 }
 
 struct native_probe *
-native_create_probe(EGLNativeDisplayType dpy)
+native_create_probe(void *dpy)
 {
    return NULL;
 }
@@ -446,18 +446,17 @@ native_get_name(void)
 }
 
 struct native_display *
-native_create_display(EGLNativeDisplayType dpy,
-                      struct native_event_handler *event_handler)
+native_create_display(void *dpy, struct native_event_handler *event_handler)
 {
    struct native_display *ndpy;
    int fd;
 
    /* well, this makes fd 0 being ignored */
-   if (dpy == EGL_DEFAULT_DISPLAY) {
+   if (!dpy) {
       fd = open("/dev/fb0", O_RDWR);
    }
    else {
-      fd = dup((int) pointer_to_intptr((void *) dpy));
+      fd = dup((int) pointer_to_intptr(dpy));
    }
    if (fd < 0)
       return NULL;

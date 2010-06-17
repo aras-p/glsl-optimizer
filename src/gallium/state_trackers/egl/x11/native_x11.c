@@ -46,7 +46,7 @@ x11_probe_destroy(struct native_probe *nprobe)
 }
 
 struct native_probe *
-native_create_probe(EGLNativeDisplayType dpy)
+native_create_probe(void *dpy)
 {
    struct native_probe *nprobe;
    struct x11_screen *xscr;
@@ -127,8 +127,7 @@ native_get_name(void)
 }
 
 struct native_display *
-native_create_display(EGLNativeDisplayType dpy,
-                      struct native_event_handler *event_handler)
+native_create_display(void *dpy, struct native_event_handler *event_handler)
 {
    struct native_display *ndpy = NULL;
    boolean force_sw;
@@ -138,14 +137,14 @@ native_create_display(EGLNativeDisplayType dpy,
 
    force_sw = debug_get_bool_option("EGL_SOFTWARE", FALSE);
    if (api && !force_sw) {
-      ndpy = x11_create_dri2_display(dpy, event_handler, api);
+      ndpy = x11_create_dri2_display((Display *) dpy, event_handler, api);
    }
 
    if (!ndpy) {
       EGLint level = (force_sw) ? _EGL_INFO : _EGL_WARNING;
 
       _eglLog(level, "use software fallback");
-      ndpy = x11_create_ximage_display(dpy, event_handler);
+      ndpy = x11_create_ximage_display((Display *) dpy, event_handler);
    }
 
    return ndpy;

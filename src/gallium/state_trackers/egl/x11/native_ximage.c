@@ -441,7 +441,7 @@ ximage_display_destroy(struct native_display *ndpy)
 }
 
 struct native_display *
-x11_create_ximage_display(EGLNativeDisplayType dpy,
+x11_create_ximage_display(Display *dpy,
                           struct native_event_handler *event_handler)
 {
    struct ximage_display *xdpy;
