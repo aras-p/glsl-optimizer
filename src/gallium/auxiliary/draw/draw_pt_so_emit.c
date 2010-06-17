@@ -57,6 +57,20 @@ void draw_pt_so_emit_prepare(struct pt_so_emit *emit)
 
    emit->has_so = (draw->so.state.num_outputs > 0);
 
+   /* if we have a state with outputs make sure we have
+    * buffers to output to */
+   if (emit->has_so) {
+      boolean has_valid_buffer = FALSE;
+      unsigned i;
+      for (i = 0; i < draw->so.num_buffers; ++i) {
+         if (draw->so.buffers[i]) {
+            has_valid_buffer = TRUE;
+            break;
+         }
+      }
+      emit->has_so = has_valid_buffer;
+   }
+
    if (!emit->has_so)
       return;
 
@@ -240,8 +254,9 @@ void draw_pt_so_emit( struct pt_so_emit *emit,
    emit->emitted_primitives = 0;
    emit->input_vertex_stride = input_verts->stride;
    emit->inputs = (const float (*)[4])input_verts->verts->data;
-   for (i = 0; i < draw->so.num_buffers; ++i)
+   for (i = 0; i < draw->so.num_buffers; ++i) {
       emit->buffers[i] = draw->so.buffers[i];
+   }
    emit->single_buffer = TRUE;
    for (i = 0; i < draw->so.state.num_outputs; ++i) {
       if (draw->so.state.output_buffer[i] != 0)
