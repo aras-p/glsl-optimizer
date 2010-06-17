@@ -126,11 +126,11 @@ static void
 _glcpp_parser_skip_stack_push_if (glcpp_parser_t *parser, int condition);
 
 static void
-_glcpp_parser_skip_stack_change_if (glcpp_parser_t *parser, const char *type,
-				    int condition);
+_glcpp_parser_skip_stack_change_if (glcpp_parser_t *parser, YYLTYPE *loc,
+				    const char *type, int condition);
 
 static void
-_glcpp_parser_skip_stack_pop (glcpp_parser_t *parser);
+_glcpp_parser_skip_stack_pop (glcpp_parser_t *parser, YYLTYPE *loc);
 
 #define yylex glcpp_parser_lex
 
@@ -193,7 +193,7 @@ expanded_line:
 		_glcpp_parser_skip_stack_push_if (parser, $2);
 	}
 |	ELIF_EXPANDED expression NEWLINE {
-		_glcpp_parser_skip_stack_change_if (parser, "elif", $2);
+		_glcpp_parser_skip_stack_change_if (parser, & @1, "elif", $2);
 	}
 ;
 
@@ -255,10 +255,10 @@ control_line:
 		glcpp_parser_lex_from (parser, expanded);
 	}
 |	HASH_ELSE NEWLINE {
-		_glcpp_parser_skip_stack_change_if (parser, "else", 1);
+		_glcpp_parser_skip_stack_change_if (parser, & @1, "else", 1);
 	}
 |	HASH_ENDIF NEWLINE {
-		_glcpp_parser_skip_stack_pop (parser);
+		_glcpp_parser_skip_stack_pop (parser, & @1);
 	}
 |	HASH NEWLINE
 ;
@@ -1603,11 +1603,11 @@ _glcpp_parser_skip_stack_push_if (glcpp_parser_t *parser, int condition)
 }
 
 static void
-_glcpp_parser_skip_stack_change_if (glcpp_parser_t *parser, const char *type,
-				    int condition)
+_glcpp_parser_skip_stack_change_if (glcpp_parser_t *parser, YYLTYPE *loc,
+				    const char *type, int condition)
 {
 	if (parser->skip_stack == NULL) {
-		glcpp_printf (parser->errors, "Error: %s without #if\n", type);
+		glcpp_error (loc, parser, "%s without #if\n", type);
 		exit (1);
 	}
 
@@ -1620,12 +1620,12 @@ _glcpp_parser_skip_stack_change_if (glcpp_parser_t *parser, const char *type,
 }
 
 static void
-_glcpp_parser_skip_stack_pop (glcpp_parser_t *parser)
+_glcpp_parser_skip_stack_pop (glcpp_parser_t *parser, YYLTYPE *loc)
 {
 	skip_node_t *node;
 
 	if (parser->skip_stack == NULL) {
-		glcpp_print (parser->errors, "Error: #endif without #if\n");
+		glcpp_error (loc, parser, "#endif without #if\n");
 		exit (1);
 	}
 
