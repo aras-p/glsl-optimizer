@@ -42,9 +42,6 @@
 #include "intel_fbo.h"
 #include "intel_mipmap_tree.h"
 #include "intel_regions.h"
-#ifndef I915
-#include "brw_state.h"
-#endif
 
 #define FILE_DEBUG_FLAG DEBUG_FBO
 

@@ -29,9 +29,6 @@
 #include "intel_mipmap_tree.h"
 #include "intel_regions.h"
 #include "intel_tex_layout.h"
-#ifndef I915
-#include "brw_state.h"
-#endif
 #include "main/enums.h"
 
 #define FILE_DEBUG_FLAG DEBUG_MIPTREE
