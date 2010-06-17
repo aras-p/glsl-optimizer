@@ -101,10 +101,10 @@ is_component_writable(unsigned mask,
    case TGSI_WRITEMASK_YZW:
       return compo == 1 || compo == 2 || compo == 4;
    case TGSI_WRITEMASK_XYZW:
-      return compo >= 0 && compo < 4;
+      return compo < 4;
    default:
       debug_assert(!"Unknown writemask in stream out");
-      return compo >= 0 && compo < 4;
+      return compo < 4;
    }
 }
 
@@ -162,8 +162,8 @@ static void so_emit_prim(struct pt_so_emit *so,
          total_written_compos += written_compos;
       }
       if (so->single_buffer) {
-         unsigned stride = state->stride -
-                           sizeof(float) * total_written_compos;
+         int stride = (int)state->stride -
+                      sizeof(float) * total_written_compos;
 
          debug_assert(stride >= 0);
          *buffer = (float*) (((char*)*buffer) + stride);
