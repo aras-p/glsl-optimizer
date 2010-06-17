@@ -23,6 +23,7 @@
 AUTOMAKE_OPTIONS = foreign
 
 bin_PROGRAMS = glsl
+glsl_LDFLAGS = @LDFLAGS@ $(talloc_LIBS)
 glsl_SOURCES = \
 	main.cpp \
 	builtin_types.h \

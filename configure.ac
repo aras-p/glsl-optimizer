@@ -28,6 +28,7 @@ m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 # Checks for library functions.
 AC_HEADER_STDC
 
+PKG_CHECK_MODULES([talloc], [talloc >= 2.0])
 
 AC_ARG_ENABLE([debug],
     [AS_HELP_STRING([--enable-debug],
