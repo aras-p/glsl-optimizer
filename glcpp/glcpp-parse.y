@@ -38,11 +38,13 @@ yyerror (YYLTYPE *locp, glcpp_parser_t *parser, const char *error);
 
 static void
 _define_object_macro (glcpp_parser_t *parser,
+		      YYLTYPE *loc,
 		      const char *macro,
 		      token_list_t *replacements);
 
 static void
 _define_function_macro (glcpp_parser_t *parser,
+			YYLTYPE *loc,
 			const char *macro,
 			string_list_t *parameters,
 			token_list_t *replacements);
@@ -197,13 +199,13 @@ expanded_line:
 
 control_line:
 	HASH_DEFINE_OBJ	IDENTIFIER replacement_list NEWLINE {
-		_define_object_macro (parser, $2, $3);
+		_define_object_macro (parser, & @2, $2, $3);
 	}
 |	HASH_DEFINE_FUNC IDENTIFIER '(' ')' replacement_list NEWLINE {
-		_define_function_macro (parser, $2, NULL, $5);
+		_define_function_macro (parser, & @2, $2, NULL, $5);
 	}
 |	HASH_DEFINE_FUNC IDENTIFIER '(' identifier_list ')' replacement_list NEWLINE {
-		_define_function_macro (parser, $2, $4, $6);
+		_define_function_macro (parser, & @2, $2, $4, $6);
 	}
 |	HASH_UNDEF IDENTIFIER NEWLINE {
 		macro_t *macro = hash_table_find (parser->defines, $2);
@@ -1413,29 +1415,31 @@ _glcpp_parser_print_expanded_token_list (glcpp_parser_t *parser,
 }
 
 void
-_check_for_reserved_macro_name (glcpp_parser_t *parser, const char *identifier)
+_check_for_reserved_macro_name (glcpp_parser_t *parser, YYLTYPE *loc,
+				const char *identifier)
 {
 	/* According to the GLSL specification, macro names starting with "__"
 	 * or "GL_" are reserved for future use.  So, don't allow them.
 	 */
 	if (strncmp(identifier, "__", 2) == 0) {
-		glcpp_print (parser->errors, "Error: Macro names starting with \"__\" are reserved.\n");
+		glcpp_error (loc, parser, "Macro names starting with \"__\" are reserved.\n");
 		exit(1);
 	}
 	if (strncmp(identifier, "GL_", 3) == 0) {
-		glcpp_print (parser->errors, "Error: Macro names starting with \"GL_\" are reserved.\n");
+		glcpp_error (loc, parser, "Macro names starting with \"GL_\" are reserved.\n");
 		exit(1);
 	}
 }
 
 void
 _define_object_macro (glcpp_parser_t *parser,
+		      YYLTYPE *loc,
 		      const char *identifier,
 		      token_list_t *replacements)
 {
 	macro_t *macro;
 
-	_check_for_reserved_macro_name(parser, identifier);
+	_check_for_reserved_macro_name(parser, loc, identifier);
 
 	macro = xtalloc (parser, macro_t);
 
@@ -1449,13 +1453,14 @@ _define_object_macro (glcpp_parser_t *parser,
 
 void
 _define_function_macro (glcpp_parser_t *parser,
+			YYLTYPE *loc,
 			const char *identifier,
 			string_list_t *parameters,
 			token_list_t *replacements)
 {
 	macro_t *macro;
 
-	_check_for_reserved_macro_name(parser, identifier);
+	_check_for_reserved_macro_name(parser, loc, identifier);
 
 	macro = xtalloc (parser, macro_t);
 
