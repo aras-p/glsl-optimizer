@@ -141,6 +141,7 @@ glcpp_parser_lex_from (glcpp_parser_t *parser, token_list_t *list);
 %}
 
 %pure-parser
+%error-verbose
 
 %parse-param {glcpp_parser_t *parser}
 %lex-param {glcpp_parser_t *parser}
