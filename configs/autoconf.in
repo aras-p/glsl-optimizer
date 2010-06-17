@@ -97,7 +97,7 @@ GALLIUM_DRIVERS = $(foreach DIR,$(GALLIUM_DRIVERS_DIRS),$(TOP)/src/gallium/drive
 
 # Driver specific build vars
 DRI_DIRS = @DRI_DIRS@ 
-EGL_DISPLAYS = @EGL_DISPLAYS@
+EGL_PLATFORMS = @EGL_PLATFORMS@
 EGL_CLIENT_APIS = @EGL_CLIENT_APIS@
 
 # Dependencies

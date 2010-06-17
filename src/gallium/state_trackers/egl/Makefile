@@ -42,9 +42,9 @@ ALL_OBJECTS = $(common_OBJECTS) $(x11_OBJECTS) $(kms_OBJECTS) $(fbdev_OBJECTS)
 
 ##### TARGETS #####
 
-EGL_DISPLAYS_MODS = $(foreach dpy, $(EGL_DISPLAYS), libegl$(dpy).a)
+EGL_PLATFORMS_MODS = $(foreach plat, $(EGL_PLATFORMS), libegl$(plat).a)
 
-default: depend $(EGL_DISPLAYS_MODS)
+default: depend $(EGL_PLATFORMS_MODS)
 
 
 libeglx11.a: $(x11_OBJECTS) $(common_OBJECTS) Makefile
@@ -63,7 +63,7 @@ depend:
 
 clean:
 	rm -f $(ALL_OBJECTS)
-	rm -f $(EGL_DISPLAYS_MODS)
+	rm -f $(EGL_PLATFORMS_MODS)
 	rm -f depend depend.bak
 
 # Dummy target

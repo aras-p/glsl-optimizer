@@ -464,24 +464,27 @@ _eglPreloadUserDriver(void)
 
 
 /**
- * Preload display drivers.
+ * Preload platform drivers.
  *
- * Display drivers are a set of drivers that support a certain display system.
- * The display system may be specified by EGL_DISPLAY.
+ * Platform drivers are a set of drivers that support a certain window system.
+ * The window system may be specified by EGL_PLATFORM.
  *
  * FIXME This makes libEGL a memory hog if an user driver is not specified and
- * there are many display drivers.
+ * there are many platform drivers.
  */
 static EGLBoolean
-_eglPreloadDisplayDrivers(void)
+_eglPreloadPlatformDrivers(void)
 {
    const char *dpy;
    char prefix[32];
    int ret;
 
-   dpy = getenv("EGL_DISPLAY");
+   dpy = getenv("EGL_PLATFORM");
+   /* try deprecated env variable */
    if (!dpy || !dpy[0])
-      dpy = _EGL_DEFAULT_DISPLAY;
+      dpy = getenv("EGL_DISPLAY");
+   if (!dpy || !dpy[0])
+      dpy = _EGL_DEFAULT_PLATFORM;
    if (!dpy || !dpy[0])
       return EGL_FALSE;
 
@@ -515,7 +518,7 @@ _eglPreloadDrivers(void)
    }
 
    loaded = (_eglPreloadUserDriver() ||
-             _eglPreloadDisplayDrivers());
+             _eglPreloadPlatformDrivers());
 
    _eglUnlockMutex(_eglGlobal.Mutex);
 

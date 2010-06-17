@@ -1301,18 +1301,22 @@ if test "x$HAVE_ST_XORG" = xyes; then
         HAVE_XEXTPROTO_71="no")
 fi
 
+AC_ARG_WITH([egl-platforms],
+    [AS_HELP_STRING([--with-egl-platforms@<:@=DIRS...@:>@],
+        [comma delimited native platforms libEGL supports, e.g.
+        "x11,kms" @<:@default=auto@:>@])],
+    [with_egl_platforms="$withval"],
+    [with_egl_platforms=yes])
 AC_ARG_WITH([egl-displays],
     [AS_HELP_STRING([--with-egl-displays@<:@=DIRS...@:>@],
-        [comma delimited native displays libEGL supports, e.g.
-        "x11,kms" @<:@default=auto@:>@])],
-    [with_egl_displays="$withval"],
-    [with_egl_displays=yes])
+        [DEPRECATED.  Use --with-egl-platforms instead])],
+    [with_egl_platforms="$withval"])
 
-EGL_DISPLAYS=""
-case "$with_egl_displays" in
+EGL_PLATFORMS=""
+case "$with_egl_platforms" in
 yes)
     if test "x$enable_egl" = xyes && test "x$mesa_driver" != xosmesa; then
-        EGL_DISPLAYS="x11"
+        EGL_PLATFORMS="x11"
     fi
     ;;
 *)
@@ -1320,18 +1324,18 @@ yes)
         AC_MSG_ERROR([cannot build egl state tracker without EGL library])
     fi
     # verify the requested driver directories exist
-    egl_displays=`IFS=', '; echo $with_egl_displays`
-    for dpy in $egl_displays; do
-        test -d "$srcdir/src/gallium/state_trackers/egl/$dpy" || \
-            AC_MSG_ERROR([EGL display '$dpy' does't exist])
-        if test "$dpy" = "fbdev"; then
+    egl_platforms=`IFS=', '; echo $with_egl_platforms`
+    for plat in $egl_platforms; do
+        test -d "$srcdir/src/gallium/state_trackers/egl/$plat" || \
+            AC_MSG_ERROR([EGL platform '$plat' does't exist])
+        if test "$plat" = "fbdev"; then
                 GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS sw/fbdev"
         fi
     done
-    EGL_DISPLAYS="$egl_displays"
+    EGL_PLATFORMS="$egl_platforms"
     ;;
 esac
-AC_SUBST([EGL_DISPLAYS])
+AC_SUBST([EGL_PLATFORMS])
 
 AC_ARG_WITH([egl-driver-dir],
     [AS_HELP_STRING([--with-egl-driver-dir=DIR],
@@ -1579,7 +1583,7 @@ echo "        Shared libs:     $enable_shared"
 echo "        Static libs:     $enable_static"
 if test "$enable_egl" = yes; then
     echo "        EGL:             $EGL_DRIVERS_DIRS"
-    echo "        EGL displays:    $EGL_DISPLAYS"
+    echo "        EGL platforms:   $EGL_PLATFORMS"
 else
     echo "        EGL:             no"
 fi

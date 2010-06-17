@@ -110,8 +110,8 @@ GALLIUM_WINSYS_DIRS = sw sw/xlib
 GALLIUM_TARGET_DIRS = libgl-xlib
 GALLIUM_STATE_TRACKERS_DIRS = glx vega
 
-# native displays EGL should support
-EGL_DISPLAYS = x11
+# native platforms EGL should support
+EGL_PLATFORMS = x11
 EGL_CLIENT_APIS = $(GL_LIB)
 
 # Library dependencies

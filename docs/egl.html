@@ -69,17 +69,17 @@ drivers will be installed to <code>${libdir}/egl</code>.</p>
 
 </li>
 
-<li><code>--with-egl-displays</code>
+<li><code>--with-egl-platforms</code>
 
-<p>List the window system(s) to support.  It is by default <code>x11</code>,
-which supports the X Window System.  Its argument is a comma separated string
-like, for example, <code>--with-egl-displays=x11,kms</code>.  Because an EGL
-driver decides which window system to support, this example will enable two
-(sets of) EGL drivers.  One supports the X window system and the other supports
-bare KMS (kernel modesetting).</p>
+<p>List the native platform window system(s) to support.  It is by default
+<code>x11</code>, which supports the X Window System.  Its argument is a comma
+separated string like, for example, <code>--with-egl-platforms=x11,kms</code>.
+Because an EGL driver decides which window system to support, this example will
+enable two (sets of) EGL drivers.  One supports the X window system and the
+other supports bare KMS (kernel modesetting).</p>
 
-<p>The available displays are <code>x11</code>, <code>kms</code>,
-<code>fbdev</code>, and <code>gdi</code>.  The <code>gdi</code> display can
+<p>The available platforms are <code>x11</code>, <code>kms</code>,
+<code>fbdev</code>, and <code>gdi</code>.  The <code>gdi</code> platform can
 only be built with SCons.</p>
 
 </li>
@@ -151,14 +151,14 @@ specific driver.  This variable is ignored for setuid/setgid binaries.</p>
 
 </li>
 
-<li><code>EGL_DISPLAY</code>
+<li><code>EGL_PLATFORM</code>
 
 <p>When <code>EGL_DRIVER</code> is not set, the main library loads <em>all</em>
-EGL drivers that support a certain window system.  <code>EGL_DISPLAY</code> can
-be used to specify the window system and the valid values are, for example,
+EGL drivers that support a certain window system.  <code>EGL_PLATFORM</code>
+can be used to specify the window system and the valid values are, for example,
 <code>x11</code> or <code>kms</code>.  When the variable is not set, the main
 library defaults the value to the first window system listed in
-<code>--with-egl-displays</code> at configuration time.
+<code>--with-egl-platforms</code> at configuration time.
 
 </li>
 
@@ -195,9 +195,9 @@ drivers are</p>
 <li><code>egl_&lt;dpy&gt;_vmwgfx</code></li>
 </ul>
 
-<p><code>&lt;dpy&gt;</code> is given by <code>--with-egl-displays</code> at
+<p><code>&lt;dpy&gt;</code> is given by <code>--with-egl-platforms</code> at
 configuration time.  There is usually one EGL driver for each combination of
-the displays listed and the pipe drivers enabled.  When the display is pure
+the platforms listed and the pipe drivers enabled.  When the platform is pure
 software or pure hardware, non-working combinations will not be built.</p>
 
 <p>Classic EGL drivers, on the other hand, support only a subset of the
@@ -322,7 +322,7 @@ should as well lock the display before using it.
 
 <ul>
 <li>Pass the conformance tests</li>
-<li>Better automatic driver selection: <code>EGL_DISPLAY</code> loads all
+<li>Better automatic driver selection: <code>EGL_PLATFORM</code> loads all
 drivers and might eat too much memory.</li>
 
 </ul>

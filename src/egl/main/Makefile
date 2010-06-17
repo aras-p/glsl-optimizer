@@ -7,7 +7,7 @@ include $(TOP)/configs/current
 EGL_MAJOR = 1
 EGL_MINOR = 0
 
-INCLUDE_DIRS = -I$(TOP)/include $(X11_CFLAGS)
+INCLUDE_DIRS = -I$(TOP)/include
 
 HEADERS = \
 	eglcompiler.h \
@@ -51,10 +51,10 @@ OBJECTS = $(SOURCES:.c=.o)
 # use dl*() to load drivers
 LOCAL_CFLAGS = -D_EGL_OS_UNIX=1
 
-EGL_DEFAULT_DISPLAY = $(word 1, $(EGL_DISPLAYS))
+EGL_DEFAULT_PLATFORM = $(firstword $(EGL_PLATFORMS))
 
 LOCAL_CFLAGS += \
-	-D_EGL_DEFAULT_DISPLAY=\"$(EGL_DEFAULT_DISPLAY)\" \
+	-D_EGL_DEFAULT_PLATFORM=\"$(EGL_DEFAULT_PLATFORM)\" \
 	-D_EGL_DRIVER_SEARCH_DIR=\"$(EGL_DRIVER_INSTALL_DIR)\"
 
 .c.o:
