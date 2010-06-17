@@ -33,7 +33,7 @@ struct glsl_shader {
    GLboolean DeletePending;
    GLboolean CompileStatus;
    const GLchar *Source;  /**< Source code string */
-   GLuint SourceLen;
+   size_t SourceLen;
    GLchar *InfoLog;
 
    struct exec_list ir;
