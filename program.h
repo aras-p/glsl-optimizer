@@ -24,9 +24,9 @@
 #include <GL/gl.h>
 
 /**
- * Based on gl_program in Mesa's mtypes.h.
+ * Based on gl_shader in Mesa's mtypes.h.
  */
-struct glsl_program {
+struct glsl_shader {
    GLenum Type;
    GLuint Name;
    GLint RefCount;

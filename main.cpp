@@ -98,7 +98,7 @@ const struct option compiler_opts[] = {
 };
 
 void
-compile_shader(struct glsl_program *prog)
+compile_shader(struct glsl_shader *prog)
 {
    struct _mesa_glsl_parse_state state;
 
@@ -175,16 +175,16 @@ main(int argc, char **argv)
    if (argc <= optind)
       usage_fail(argv[0]);
 
-   struct glsl_program **prog_list = NULL;
+   struct glsl_shader **prog_list = NULL;
    unsigned prog_list_len = 0;
 
    for (/* empty */; argc > optind; optind++) {
-      prog_list = (struct glsl_program **)
+      prog_list = (struct glsl_shader **)
 	 realloc(prog_list,
-		 sizeof(struct glsl_program *) * (prog_list_len + 1));
+		 sizeof(struct glsl_shader *) * (prog_list_len + 1));
       assert(prog_list != NULL);
 
-      struct glsl_program *prog = new glsl_program;
+      struct glsl_shader *prog = new glsl_shader;
       memset(prog, 0, sizeof(*prog));
 
       prog_list[prog_list_len] = prog;
