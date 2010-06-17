@@ -39,3 +39,28 @@ struct glsl_shader {
    struct exec_list ir;
    struct glsl_symbol_table *symbols;
 };
+
+
+struct gl_program_parameter_list;
+struct gl_uniform_list;
+
+/**
+ * Based on gl_shader_program in Mesa's mtypes.h.
+ */
+struct glsl_program {
+   GLenum Type;  /**< Always GL_SHADER_PROGRAM (internal token) */
+   GLuint Name;  /**< aka handle or ID */
+   GLint RefCount;  /**< Reference count */
+   GLboolean DeletePending;
+
+   GLuint NumShaders;          /**< number of attached shaders */
+   struct glsl_shader **Shaders; /**< List of attached the shaders */
+
+   /* post-link info: */
+   struct gl_uniform_list *Uniforms;
+   struct gl_program_parameter_list *Varying;
+   GLboolean LinkStatus;   /**< GL_LINK_STATUS */
+   GLboolean Validated;
+   GLboolean _Used;        /**< Ever used for drawing? */
+   GLchar *InfoLog;
+};
