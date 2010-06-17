@@ -93,7 +93,7 @@ public:
     * nodes can always be handled as variable declarations.  Code that used
     * non-hierarchical visitors had to set an "in a dereference" flag to
     * determine how to handle an ir_variable.  By forcing the visitor to
-    * handle the ir_variable within the ir_dereference_varaible visitor, this
+    * handle the ir_variable within the ir_dereference_variable visitor, this
     * kludge can be avoided.
     *
     * In addition, I can envision no use for having separate enter and leave

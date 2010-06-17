@@ -134,7 +134,7 @@ enum ir_variable_mode {
    ir_var_inout
 };
 
-enum ir_varaible_interpolation {
+enum ir_variable_interpolation {
    ir_var_smooth = 0,
    ir_var_flat,
    ir_var_noperspective
