@@ -30,6 +30,10 @@ m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 # Checks for library functions.
 AC_HEADER_STDC
 
+AH_TOP([#ifndef GLSL_CONFIG_H
+#define GLSL_CONFIG_H])
+AH_BOTTOM([#endif /* GLSL_CONFIG_H */])
+
 PKG_CHECK_MODULES([talloc], [talloc >= 2.0])
 
 AC_ARG_ENABLE([debug],
