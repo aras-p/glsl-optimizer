@@ -733,7 +733,7 @@ _token_print (char **out, token_t *token)
 	case IDENTIFIER:
 	case INTEGER_STRING:
 	case OTHER:
-		glcpp_printf (*out, "%s", token->value.str);
+		glcpp_print (*out, token->value.str);
 		break;
 	case SPACE:
 		glcpp_print (*out, " ");
@@ -855,7 +855,8 @@ _token_paste (glcpp_parser_t *parser, token_t *token, token_t *other)
 		return combined;
 	}
 
-	glcpp_print (parser->errors, "Error: Pasting \"");
+	glcpp_error (&token->location, parser, "");
+	glcpp_print (parser->errors, "Pasting \"");
 	_token_print (&parser->errors, token);
 	glcpp_print (parser->errors, "\" and \"");
 	_token_print (&parser->errors, other);
@@ -946,7 +947,7 @@ _glcpp_parser_evaluate_defined (glcpp_parser_t *parser,
 		while (next && next->token->type == SPACE)
 			next = next->next;
 		if (next == NULL || next->token->type != IDENTIFIER) {
-			glcpp_print (parser->errors, "Error: operator \"defined\" requires an identifier\n");
+			yyerror (&node->token->location, parser, "operator \"defined\" requires an identifier\n");
 			exit (1);
 		}
 		macro = hash_table_find (parser->defines,
@@ -1093,8 +1094,7 @@ _glcpp_parser_expand_function (glcpp_parser_t *parser,
 	case FUNCTION_NOT_A_FUNCTION:
 		return NULL;
 	case FUNCTION_UNBALANCED_PARENTHESES:
-		glcpp_printf (parser->errors, "Error: Macro %s call has unbalanced parentheses\n",
-			      identifier);
+		glcpp_error (&node->token->location, parser, "Macro %s call has unbalanced parentheses\n", identifier);
 		exit (1);
 		return NULL;
 	}
@@ -1110,7 +1110,7 @@ _glcpp_parser_expand_function (glcpp_parser_t *parser,
 		_argument_list_length (arguments) == 1 &&
 		arguments->head->argument->head == NULL)))
 	{
-		glcpp_printf (parser->errors,
+		glcpp_error (&node->token->location, parser,
 			      "Error: macro %s invoked with %d arguments (expected %d)\n",
 			      identifier,
 			      _argument_list_length (arguments),
@@ -1180,7 +1180,7 @@ _glcpp_parser_expand_function (glcpp_parser_t *parser,
 			next_non_space = next_non_space->next;
 
 		if (next_non_space == NULL) {
-			glcpp_print (parser->errors, "Error: '##' cannot appear at either end of a macro expansion\n");
+			yyerror (&node->token->location, parser, "'##' cannot appear at either end of a macro expansion\n");
 			return NULL;
 		}
 
