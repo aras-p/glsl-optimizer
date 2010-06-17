@@ -27,13 +27,22 @@
 
 #include "glcpp.h"
 #include "glcpp-parse.h"
+
+#define YY_USER_ACTION                                          \
+   do {                                                         \
+      yylloc->source = 0;                                       \
+      yylloc->first_column = yycolumn + 1;                      \
+      yylloc->first_line = yylineno + 1;                        \
+      yycolumn += yyleng;                                       \
+   } while(0);
 %}
 
 %option bison-bridge bison-locations reentrant noyywrap
 %option extra-type="glcpp_parser_t *"
 %option prefix="glcpp_"
+%option stack
 
-%x DONE
+%x DONE COMMENT
 
 SPACE		[[:space:]]
 NONSPACE	[^[:space:]]
@@ -48,17 +57,23 @@ DECIMAL_INTEGER		[1-9][0-9]*[uU]?
 OCTAL_INTEGER		0[0-7]*[uU]?
 HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 
-NON_STARS_THEN_STARS	[^*]*[*]+
-
 %%
 
 	/* Single-line comments */
 "//"[^\n]+\n {
+	yylineno++;
+	yycolumn = 0;
 	return NEWLINE;
 }
 
 	/* Multi-line comments */
-"/*"({NON_STARS_THEN_STARS}[^*/])*{NON_STARS_THEN_STARS}"/" {
+"/*"                    { yy_push_state(COMMENT, yyscanner); }
+<COMMENT>[^*\n]*
+<COMMENT>[^*\n]*\n      { yylineno++; yycolumn = 0; }
+<COMMENT>"*"+[^*/\n]*
+<COMMENT>"*"+[^*/\n]*\n { yylineno++; yycolumn = 0; }
+<COMMENT>"*"+"/"        {
+	yy_pop_state(yyscanner);
 	if (yyextra->space_tokens)
 		return SPACE;
 }
@@ -216,6 +231,8 @@ NON_STARS_THEN_STARS	[^*]*[*]+
 
 \n {
 	yyextra->lexing_if = 0;
+	yylineno++;
+	yycolumn = 0;
 	return NEWLINE;
 }
 
