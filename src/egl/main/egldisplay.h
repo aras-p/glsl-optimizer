@@ -101,6 +101,10 @@ struct _egl_display
 };
 
 
+extern _EGLPlatformType
+_eglGetNativePlatform(void);
+
+
 extern void
 _eglFiniDisplay(void);
 

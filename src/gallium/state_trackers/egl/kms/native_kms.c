@@ -800,7 +800,7 @@ kms_init_platform(struct native_platform *nplat)
 static struct native_platform kms_platform;
 
 const struct native_platform *
-native_get_platform(void)
+native_get_kms_platform(void)
 {
    kms_init_platform(&kms_platform);
    return &kms_platform;

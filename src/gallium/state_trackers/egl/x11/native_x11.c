@@ -149,7 +149,7 @@ x11_init_platform(struct native_platform *nplat)
 static struct native_platform x11_platform;
 
 const struct native_platform *
-native_get_platform(void)
+native_get_x11_platform(void)
 {
    x11_init_platform(&x11_platform);
    return &x11_platform;

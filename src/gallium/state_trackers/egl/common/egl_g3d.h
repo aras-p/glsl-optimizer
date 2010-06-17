@@ -47,7 +47,7 @@ struct egl_g3d_driver {
    struct st_api *stapis[ST_API_COUNT];
    EGLint api_mask;
 
-   const struct native_platform *platform;
+   const struct native_platform *platforms[_EGL_NUM_PLATFORMS];
    EGLint probe_key;
 };
 

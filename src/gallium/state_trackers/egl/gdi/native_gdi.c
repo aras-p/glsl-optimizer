@@ -394,7 +394,7 @@ static const struct native_platform gdi_platform = {
 };
 
 const struct native_platform *
-native_get_platform(void)
+native_get_gdi_platform(void)
 {
    return &gdi_platform;
 }

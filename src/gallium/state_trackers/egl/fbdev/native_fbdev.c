@@ -458,7 +458,7 @@ static const struct native_platform fbdev_platform = {
 };
 
 const struct native_platform *
-native_get_platform(void)
+native_get_fbdev_platform(void)
 {
    return &fbdev_platform;
 }

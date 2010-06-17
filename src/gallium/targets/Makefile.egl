@@ -12,36 +12,29 @@
 EGL_DRIVER_OBJECTS = $(EGL_DRIVER_SOURCES:.c=.o)
 
 common_LIBS = -ldrm -lm -ldl
-
-# ximage backend calls gallium_wrap_screen, which requires libidentity.a and
-# libtrace.a
-x11_ST = $(TOP)/src/gallium/state_trackers/egl/libeglx11.a \
-	 $(TOP)/src/gallium/winsys/sw/xlib/libws_xlib.a \
-	 $(TOP)/src/gallium/drivers/softpipe/libsoftpipe.a \
-	 $(TOP)/src/gallium/drivers/identity/libidentity.a \
-	 $(TOP)/src/gallium/drivers/trace/libtrace.a \
-	 $(TOP)/src/gallium/drivers/rbug/librbug.a
-
-x11_LIBS = $(common_LIBS) -lX11 -lXext -lXfixes
-
-kms_ST = $(TOP)/src/gallium/state_trackers/egl/libeglkms.a
-kms_LIBS = $(common_LIBS)
-
-fbdev_ST = \
-	$(TOP)/src/gallium/state_trackers/egl/libeglfbdev.a \
-	$(TOP)/src/gallium/winsys/sw/fbdev/libfbdev.a \
+common_ST = \
+	$(TOP)/src/gallium/state_trackers/egl/libegl.a \
 	$(TOP)/src/gallium/drivers/softpipe/libsoftpipe.a \
 	$(TOP)/src/gallium/drivers/identity/libidentity.a \
 	$(TOP)/src/gallium/drivers/trace/libtrace.a \
 	$(TOP)/src/gallium/drivers/rbug/librbug.a
-fbdev_LIBS = $(common_LIBS)
 
 ifeq ($(MESA_LLVM),1)
-x11_ST += $(TOP)/src/gallium/drivers/llvmpipe/libllvmpipe.a
-x11_LIBS += $(LLVM_LIBS)
-fbdev_ST += $(TOP)/src/gallium/drivers/llvmpipe/libllvmpipe.a
-fbdev_LIBS += $(LLVM_LIBS)
+common_ST += $(TOP)/src/gallium/drivers/llvmpipe/libllvmpipe.a
+common_LIBS += $(LLVM_LIBS)
 LDFLAGS += $(LLVM_LDFLAGS)
+endif
+
+ifeq ($(findstring x11, $(EGL_PLATFORMS)),x11)
+common_LIBS += -lX11 -lXext -lXfixes
+common_ST += $(TOP)/src/gallium/winsys/sw/xlib/libws_xlib.a
+endif
+
+ifeq ($(findstring kms, $(EGL_PLATFORMS)),kms)
+endif
+
+ifeq ($(findstring fbdev, $(EGL_PLATFORMS)),fbdev)
+common_ST += $(TOP)/src/gallium/winsys/sw/fbdev/libfbdev.a
 endif
 
 ### Include directories
@@ -62,47 +55,32 @@ INCLUDES = \
 
 ##### TARGETS #####
 
-ifeq ($(EGL_DRIVER_NAME),swrast)
-EGL_PLATFORMS := $(filter-out kms, $(EGL_PLATFORMS))
-else
-EGL_PLATFORMS := $(filter-out fbdev, $(EGL_PLATFORMS))
+EGL_LIB_DIR = $(TOP)/$(LIB_DIR)/egl
+
+# do not build the driver if the platform is KMS only and the driver is swrast
+ifneq ($(EGL_PLATFORMS)-$(EGL_DRIVER_NAME),kms-swrast)
+EGL_DRIVER = egl_gallium_$(EGL_DRIVER_NAME).so
 endif
 
-EGL_PLATFORM_DRIVERS = $(foreach plat, $(EGL_PLATFORMS), egl_$(plat)_$(EGL_DRIVER_NAME).so)
+default: $(EGL_LIB_DIR)/$(EGL_DRIVER)
 
-EGL_PLATFORM_LIBS = $(foreach drv, $(EGL_PLATFORM_DRIVERS), $(TOP)/$(LIB_DIR)/egl/$(drv))
+$(EGL_LIB_DIR)/$(EGL_DRIVER): $(EGL_DRIVER)
+	@$(INSTALL) -d $(EGL_LIB_DIR)
+	$(INSTALL) $< $(EGL_LIB_DIR)
 
-default: $(EGL_PLATFORM_LIBS)
-
-$(EGL_PLATFORM_LIBS): $(TOP)/$(LIB_DIR)/egl/%.so: %.so
-	@$(INSTALL) -d $(TOP)/$(LIB_DIR)/egl
-	$(INSTALL) $< $(TOP)/$(LIB_DIR)/egl
-
-define mklib-egl
-$(MKLIB) -o $@ -noprefix -linker '$(CC)' -ldflags '$(LDFLAGS)' \
-	$(MKLIB_OPTIONS) $(EGL_DRIVER_OBJECTS) \
-	-Wl,--start-group $($(1)_ST) $(EGL_DRIVER_PIPES) \
-	$(GALLIUM_AUXILIARIES) -Wl,--end-group \
-	$($(1)_LIBS) $(EGL_DRIVER_LIBS) -L$(TOP)/$(LIB_DIR) -l$(EGL_LIB)
-endef
-
-egl_x11_$(EGL_DRIVER_NAME).so: $(EGL_DRIVER_OBJECTS) $(x11_ST) $(EGL_DRIVER_PIPES) $(GALLIUM_AUXILIARIES) Makefile
-	$(call mklib-egl,x11)
-
-egl_kms_$(EGL_DRIVER_NAME).so: $(EGL_DRIVER_OBJECTS) $(kms_ST) $(EGL_DRIVER_PIPES) $(GALLIUM_AUXILIARIES) Makefile
-	$(call mklib-egl,kms)
-
-egl_fbdev_$(EGL_DRIVER_NAME).so: $(EGL_DRIVER_OBJECTS) $(fbdev_ST) $(EGL_DRIVER_PIPES) $(GALLIUM_AUXILIARIES) Makefile
-	$(call mklib-egl,fbdev)
+$(EGL_DRIVER): $(EGL_DRIVER_OBJECTS) $(common_ST) $(EGL_DRIVER_PIPES) $(GALLIUM_AUXILIARIES) Makefile
+	$(MKLIB) -o $@ -noprefix -linker '$(CC)' -ldflags '$(LDFLAGS)' \
+		$(MKLIB_OPTIONS) $(EGL_DRIVER_OBJECTS) \
+		-Wl,--start-group $(common_ST) $(EGL_DRIVER_PIPES) \
+		$(GALLIUM_AUXILIARIES) -Wl,--end-group \
+		$(common_LIBS) $(EGL_DRIVER_LIBS) -L$(TOP)/$(LIB_DIR) -l$(EGL_LIB)
 
 clean:
 	-rm -f $(EGL_DRIVER_OBJECTS)
-	-rm -f $(EGL_PLATFORM_DRIVERS)
+	-rm -f $(EGL_DRIVER)
 
-install: $(EGL_PLATFORM_LIBS)
+install: $(EGL_LIB_DIR)/$(EGL_DRIVER)
 	$(INSTALL) -d $(DESTDIR)$(EGL_DRIVER_INSTALL_DIR)
-	for lib in $(EGL_PLATFORM_LIBS); do \
-		$(MINSTALL) -m 755 "$$lib" $(DESTDIR)$(EGL_DRIVER_INSTALL_DIR); \
-	done
+	$(MINSTALL) -m 755 $< $(DESTDIR)$(EGL_DRIVER_INSTALL_DIR)
 
 depend:

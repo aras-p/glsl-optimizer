@@ -229,6 +229,15 @@ struct native_platform {
 };
 
 const struct native_platform *
-native_get_platform(void);
+native_get_gdi_platform(void);
+
+const struct native_platform *
+native_get_x11_platform(void);
+
+const struct native_platform *
+native_get_kms_platform(void);
+
+const struct native_platform *
+native_get_fbdev_platform(void);
 
 #endif /* _NATIVE_H_ */

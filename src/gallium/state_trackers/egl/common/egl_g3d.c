@@ -66,14 +66,50 @@ egl_g3d_init_st(_EGLDriver *drv)
  * Get the native platform.
  */
 static const struct native_platform *
-egl_g3d_get_platform(_EGLDriver *drv)
+egl_g3d_get_platform(_EGLDriver *drv, _EGLPlatformType plat)
 {
    struct egl_g3d_driver *gdrv = egl_g3d_driver(drv);
 
-   if (!gdrv->platform)
-      gdrv->platform = native_get_platform();
+   if (!gdrv->platforms[plat]) {
+      const char *plat_name = NULL;
+      const struct native_platform *nplat = NULL;
 
-   return gdrv->platform;
+      switch (plat) {
+      case _EGL_PLATFORM_WINDOWS:
+         plat_name = "Windows";
+#ifdef HAVE_GDI_BACKEND
+         nplat = native_get_gdi_platform();
+#endif
+         break;
+      case _EGL_PLATFORM_X11:
+         plat_name = "X11";
+#ifdef HAVE_X11_BACKEND
+         nplat = native_get_x11_platform();
+#endif
+         break;
+      case _EGL_PLATFORM_DRM:
+         plat_name = "DRM";
+#ifdef HAVE_KMS_BACKEND
+         nplat = native_get_kms_platform();
+#endif
+         break;
+      case _EGL_PLATFORM_FBDEV:
+         plat_name = "FBDEV";
+#ifdef HAVE_FBDEV_BACKEND
+         nplat = native_get_fbdev_platform();
+#endif
+         break;
+      default:
+         break;
+      }
+
+      if (!nplat)
+         _eglLog(_EGL_WARNING, "unsupported platform %s", plat_name);
+
+      gdrv->platforms[plat] = nplat;
+   }
+
+   return gdrv->platforms[plat];
 }
 
 /**
@@ -88,7 +124,7 @@ egl_g3d_get_probe_result(_EGLDriver *drv, _EGLDisplay *dpy)
    struct native_probe *nprobe;
    const struct native_platform *nplat;
 
-   nplat = egl_g3d_get_platform(drv);
+   nplat = egl_g3d_get_platform(drv, dpy->Platform);
    if (!nplat || !nplat->create_probe)
       return NATIVE_PROBE_UNKNOWN;
 
@@ -484,7 +520,7 @@ egl_g3d_initialize(_EGLDriver *drv, _EGLDisplay *dpy,
    /* the probe object is unlikely to be needed again */
    egl_g3d_destroy_probe(drv, dpy);
 
-   nplat = egl_g3d_get_platform(drv);
+   nplat = egl_g3d_get_platform(drv, dpy->Platform);
    if (!nplat)
       return EGL_FALSE;
 

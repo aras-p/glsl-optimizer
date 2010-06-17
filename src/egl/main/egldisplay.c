@@ -15,6 +15,62 @@
 
 
 /**
+ * Return the native platform by parsing EGL_PLATFORM.
+ */
+static _EGLPlatformType
+_eglGetNativePlatformFromEnv(void)
+{
+   /* map --with-egl-platforms names to platform types */
+   static const struct {
+      _EGLPlatformType platform;
+      const char *name;
+   } egl_platforms[_EGL_NUM_PLATFORMS] = {
+      { _EGL_PLATFORM_WINDOWS, "gdi" },
+      { _EGL_PLATFORM_X11, "x11" },
+      { _EGL_PLATFORM_DRM, "kms" },
+      { _EGL_PLATFORM_FBDEV, "fbdev" }
+   };
+   _EGLPlatformType plat = _EGL_INVALID_PLATFORM;
+   const char *plat_name;
+   EGLint i;
+
+   plat_name = getenv("EGL_PLATFORM");
+   /* try deprecated env variable */
+   if (!plat_name || !plat_name[0])
+      plat_name = getenv("EGL_DISPLAY");
+   if (!plat_name || !plat_name[0])
+      return _EGL_INVALID_PLATFORM;
+
+   for (i = 0; i < _EGL_NUM_PLATFORMS; i++) {
+      if (strcmp(egl_platforms[i].name, plat_name) == 0) {
+         plat = egl_platforms[i].platform;
+         break;
+      }
+   }
+
+   return plat;
+}
+
+
+/**
+ * Return the native platform.  It is the platform of the EGL native types.
+ */
+_EGLPlatformType
+_eglGetNativePlatform(void)
+{
+   static _EGLPlatformType native_platform = _EGL_INVALID_PLATFORM;
+
+   if (native_platform == _EGL_INVALID_PLATFORM) {
+      native_platform = _eglGetNativePlatformFromEnv();
+      if (native_platform == _EGL_INVALID_PLATFORM)
+         native_platform = _EGL_NATIVE_PLATFORM;
+   }
+
+   return native_platform;
+}
+
+
+/**
  * Finish display management.
  */
 void

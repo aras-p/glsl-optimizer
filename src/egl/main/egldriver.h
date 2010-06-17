@@ -3,7 +3,6 @@
 
 
 #include "egltypedefs.h"
-#include "egldisplay.h"
 #include "eglapi.h"
 
 
@@ -87,10 +86,6 @@ _eglUnloadDrivers(void);
 
 extern _EGLDriver *
 _eglLoadDefaultDriver(EGLDisplay dpy, EGLint *major, EGLint *minor);
-
-
-extern _EGLPlatformType
-_eglGetNativePlatform(void);
 
 
 PUBLIC void

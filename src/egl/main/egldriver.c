@@ -39,7 +39,7 @@
 
 /* XXX Need to decide how to do dynamic name lookup on Windows */
 static const char *DefaultDriverNames[] = {
-   "egl_gdi_swrast"
+   "egl_gallium_swrast"
 };
 
 typedef HMODULE lib_handle;
@@ -464,36 +464,16 @@ _eglPreloadUserDriver(void)
 
 
 /**
- * Preload platform drivers.
- *
- * Platform drivers are a set of drivers that support a certain window system.
- * The window system may be specified by EGL_PLATFORM.
+ * Preload Gallium drivers.
  *
  * FIXME This makes libEGL a memory hog if an user driver is not specified and
- * there are many platform drivers.
+ * there are many Gallium drivers
  */
 static EGLBoolean
-_eglPreloadPlatformDrivers(void)
+_eglPreloadGalliumDrivers(void)
 {
-   const char *dpy;
-   char prefix[32];
-   int ret;
-
-   dpy = getenv("EGL_PLATFORM");
-   /* try deprecated env variable */
-   if (!dpy || !dpy[0])
-      dpy = getenv("EGL_DISPLAY");
-   if (!dpy || !dpy[0])
-      dpy = _EGL_DEFAULT_PLATFORM;
-   if (!dpy || !dpy[0])
-      return EGL_FALSE;
-
-   ret = _eglsnprintf(prefix, sizeof(prefix), "egl_%s_", dpy);
-   if (ret < 0 || ret >= sizeof(prefix))
-      return EGL_FALSE;
-
    return (_eglPreloadForEach(_eglGetSearchPath(),
-            _eglLoaderPattern, (void *) prefix) > 0);
+            _eglLoaderPattern, (void *) "egl_gallium_") > 0);
 }
 
 
@@ -518,7 +498,7 @@ _eglPreloadDrivers(void)
    }
 
    loaded = (_eglPreloadUserDriver() ||
-             _eglPreloadPlatformDrivers());
+             _eglPreloadGalliumDrivers());
 
    _eglUnlockMutex(_eglGlobal.Mutex);
 
@@ -577,16 +557,6 @@ _eglLoadDefaultDriver(EGLDisplay dpy, EGLint *major, EGLint *minor)
    _eglUnlockMutex(_eglGlobal.Mutex);
 
    return _eglGlobal.NumDrivers > 0 ? drv : NULL;
-}
-
-
-/**
- * Return the native platform.  It is the platform of the EGL native types.
- */
-_EGLPlatformType
-_eglGetNativePlatform(void)
-{
-   return _EGL_NATIVE_PLATFORM;
 }
 
 
