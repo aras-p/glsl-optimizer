@@ -1125,19 +1125,29 @@ Support for these opcodes is XXX undecided. :T
 
 .. opcode:: DFRACEXP - Convert Number to Fractional and Integral Components
 
-.. math::
-
-  dst0.xy = frexp(src.xy, dst1.xy)
-
-  dst0.zw = frexp(src.zw, dst1.zw)
-
-.. opcode:: DLDEXP - Multiple Number by Integral Power of 2
+Like the ``frexp()`` routine in many math libraries, this opcode stores the
+exponent of its source to ``dst0``, and the significand to ``dst1``, such that
+:math:`dst1 \times 2^{dst0} = src` .
 
 .. math::
 
-  dst.xy = ldexp(src0.xy, src1.xy)
+  dst0.xy = exp(src.xy)
 
-  dst.zw = ldexp(src0.zw, src1.zw)
+  dst1.xy = frac(src.xy)
+
+  dst0.zw = exp(src.zw)
+
+  dst1.zw = frac(src.zw)
+
+.. opcode:: DLDEXP - Multiply Number by Integral Power of 2
+
+This opcode is the inverse of :opcode:`DFRACEXP`.
+
+.. math::
+
+  dst.xy = src0.xy \times 2^{src1.xy}
+
+  dst.zw = src0.zw \times 2^{src1.zw}
 
 .. opcode:: DMIN - Minimum
 
