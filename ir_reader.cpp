@@ -22,6 +22,11 @@
  */
 #include <cstdio>
 #include <cstdarg>
+
+extern "C" {
+#include <talloc.h>
+}
+
 #include "ir_reader.h"
 #include "glsl_parser_extras.h"
 #include "glsl_types.h"
@@ -86,17 +91,18 @@ ir_read_error(_mesa_glsl_parse_state *state, s_expression *expr,
 
    state->error = true;
 
-   printf("error: ");
+   state->info_log = talloc_strdup_append(state->info_log, "error: ");
 
    va_start(ap, fmt);
-   vprintf(fmt, ap);
+   state->info_log = talloc_vasprintf_append(state->info_log, fmt, ap);
    va_end(ap);
-   printf("\n");
+   state->info_log = talloc_strdup_append(state->info_log, "\n");
 
    if (expr != NULL) {
-      printf("...in this context:\n   ");
+      state->info_log = talloc_strdup_append(state->info_log,
+					     "...in this context:\n   ");
       expr->print();
-      printf("\n\n");
+      state->info_log = talloc_strdup_append(state->info_log, "\n\n");
    }
 }
 

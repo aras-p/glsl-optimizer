@@ -25,6 +25,10 @@
 #include <string.h>
 #include <assert.h>
 
+extern "C" {
+#include <talloc.h>
+}
+
 #include "ast.h"
 #include "glsl_parser_extras.h"
 #include "glsl_parser.h"
@@ -47,24 +51,20 @@ void
 _mesa_glsl_error(YYLTYPE *locp, _mesa_glsl_parse_state *state,
 		 const char *fmt, ...)
 {
-   char buf[1024];
-   int len;
    va_list ap;
 
    state->error = true;
 
-   len = snprintf(buf, sizeof(buf), "%u:%u(%u): error: ",
-		  locp->source, locp->first_line, locp->first_column);
-
+   assert(state->info_log != NULL);
+   state->info_log = talloc_asprintf_append(state->info_log,
+					    "%u:%u(%u): error: ",
+					    locp->source,
+					    locp->first_line,
+					    locp->first_column);
    va_start(ap, fmt);
-   vsnprintf(buf + len, sizeof(buf) - len, fmt, ap);
+   state->info_log = talloc_vasprintf_append(state->info_log, fmt, ap);
    va_end(ap);
-
-   printf("%s\n", buf);
-
-   if (state->info_log)
-      free(state->info_log);
-   state->info_log = strdup(buf);
+   state->info_log = talloc_strdup_append(state->info_log, "\n");
 }
 
 
@@ -72,22 +72,18 @@ void
 _mesa_glsl_warning(const YYLTYPE *locp, _mesa_glsl_parse_state *state,
 		   const char *fmt, ...)
 {
-   char buf[1024];
-   int len;
    va_list ap;
 
-   len = snprintf(buf, sizeof(buf), "%u:%u(%u): warning: ",
-		  locp->source, locp->first_line, locp->first_column);
-
+   assert(state->info_log != NULL);
+   state->info_log = talloc_asprintf_append(state->info_log,
+					    "%u:%u(%u): warning: ",
+					    locp->source,
+					    locp->first_line,
+					    locp->first_column);
    va_start(ap, fmt);
-   vsnprintf(buf + len, sizeof(buf) - len, fmt, ap);
+   state->info_log = talloc_vasprintf_append(state->info_log, fmt, ap);
    va_end(ap);
-
-   printf("%s\n", buf);
-
-   if (!state->info_log) {
-      state->info_log = strdup(buf);
-   }
+   state->info_log = talloc_strdup_append(state->info_log, "\n");
 }
 
 
