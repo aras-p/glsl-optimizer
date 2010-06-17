@@ -175,20 +175,20 @@ main(int argc, char **argv)
    if (argc <= optind)
       usage_fail(argv[0]);
 
-   struct glsl_shader **prog_list = NULL;
-   unsigned prog_list_len = 0;
+   struct glsl_program whole_program;
+   memset(&whole_program, 0, sizeof(whole_program));
 
    for (/* empty */; argc > optind; optind++) {
-      prog_list = (struct glsl_shader **)
-	 realloc(prog_list,
-		 sizeof(struct glsl_shader *) * (prog_list_len + 1));
-      assert(prog_list != NULL);
+      whole_program.Shaders = (struct glsl_shader **)
+	 realloc(whole_program.Shaders,
+		 sizeof(struct glsl_shader *) * (whole_program.NumShaders + 1));
+      assert(whole_program.Shaders != NULL);
 
       struct glsl_shader *prog = new glsl_shader;
       memset(prog, 0, sizeof(*prog));
 
-      prog_list[prog_list_len] = prog;
-      prog_list_len++;
+      whole_program.Shaders[whole_program.NumShaders] = prog;
+      whole_program.NumShaders++;
 
       const unsigned len = strlen(argv[optind]);
       if (len < 6)
