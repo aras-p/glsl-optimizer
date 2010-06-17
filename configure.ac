@@ -1324,6 +1324,9 @@ yes)
     for dpy in $egl_displays; do
         test -d "$srcdir/src/gallium/state_trackers/egl/$dpy" || \
             AC_MSG_ERROR([EGL display '$dpy' does't exist])
+        if test "$dpy" = "fbdev"; then
+                GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS sw/fbdev"
+        fi
     done
     EGL_DISPLAYS="$egl_displays"
     ;;
