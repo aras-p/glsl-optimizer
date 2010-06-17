@@ -70,6 +70,16 @@ NON_STARS_THEN_STARS	[^*]*[*]+
 	return OTHER;
 }
 
+{HASH}ifdef/.*\n {
+	yyextra->space_tokens = 0;
+	return HASH_IFDEF;
+}
+
+{HASH}ifndef/.*\n {
+	yyextra->space_tokens = 0;
+	return HASH_IFNDEF;
+}
+
 {HASH}if/.*\n {
 	yyextra->lexing_if = 1;
 	yyextra->space_tokens = 0;
