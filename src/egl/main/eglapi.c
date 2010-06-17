@@ -843,6 +843,9 @@ eglGetProcAddress(const char *procname)
       { "eglQueryScreenModeMESA", (_EGLProc) eglQueryScreenModeMESA },
       { "eglQueryModeStringMESA", (_EGLProc) eglQueryModeStringMESA },
 #endif /* EGL_MESA_screen_surface */
+#ifdef EGL_MESA_drm_display
+      { "eglGetDRMDisplayMESA", (_EGLProc) eglGetDRMDisplayMESA },
+#endif
 #ifdef EGL_KHR_image_base
       { "eglCreateImageKHR", (_EGLProc) eglCreateImageKHR },
       { "eglDestroyImageKHR", (_EGLProc) eglDestroyImageKHR },
@@ -1104,6 +1107,17 @@ eglQueryModeStringMESA(EGLDisplay dpy, EGLModeMESA mode)
 
 #endif /* EGL_MESA_screen_surface */
 
+
+#ifdef EGL_MESA_drm_display
+
+EGLDisplay EGLAPIENTRY
+eglGetDRMDisplayMESA(int fd)
+{
+   _EGLDisplay *dpy = _eglFindDisplay(_EGL_PLATFORM_DRM, (void *) fd);
+   return _eglGetDisplayHandle(dpy);
+}
+
+#endif /* EGL_MESA_drm_display */
 
 /**
  ** EGL 1.2
