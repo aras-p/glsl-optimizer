@@ -727,11 +727,13 @@ ir_swizzle::variable_referenced()
 
 ir_variable::ir_variable(const struct glsl_type *type, const char *name)
    : max_array_access(0), read_only(false), centroid(false), invariant(false),
-     mode(ir_var_auto), interpolation(ir_var_smooth)
+     shader_in(false), shader_out(false),
+     mode(ir_var_auto), interpolation(ir_var_smooth), array_lvalue(false)
 {
    this->type = type;
    this->name = name;
    this->location = -1;
+   this->warn_extension = NULL;
    this->constant_value = NULL;
 
    if (type && type->base_type == GLSL_TYPE_SAMPLER)
