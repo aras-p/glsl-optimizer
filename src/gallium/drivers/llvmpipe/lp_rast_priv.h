@@ -119,10 +119,12 @@ struct lp_rasterizer
 };
 
 
-void lp_rast_shade_quads( struct lp_rasterizer_task *task,
-                          const struct lp_rast_shader_inputs *inputs,
-                          unsigned x, unsigned y,
-                          int32_t c1, int32_t c2, int32_t c3);
+void
+lp_rast_shade_quads_mask(struct lp_rasterizer_task *task,
+                         const struct lp_rast_shader_inputs *inputs,
+                         unsigned x, unsigned y,
+                         unsigned mask);
+
 
 
 /**
@@ -158,6 +160,40 @@ lp_rast_get_depth_block_pointer(struct lp_rasterizer_task *task,
 
 
 /**
+ * Get pointer to the swizzled color tile
+ */
+static INLINE uint8_t *
+lp_rast_get_color_tile_pointer(struct lp_rasterizer_task *task,
+                               unsigned buf, enum lp_texture_usage usage)
+{
+   struct lp_rasterizer *rast = task->rast;
+
+   assert(task->x % TILE_SIZE == 0);
+   assert(task->y % TILE_SIZE == 0);
+   assert(buf < rast->state.nr_cbufs);
+
+   if (!task->color_tiles[buf]) {
+      struct pipe_surface *cbuf = rast->curr_scene->fb.cbufs[buf];
+      struct llvmpipe_resource *lpt;
+      assert(cbuf);
+      lpt = llvmpipe_resource(cbuf->texture);
+      task->color_tiles[buf] = llvmpipe_get_texture_tile(lpt,
+                                                         cbuf->face + cbuf->zslice,
+                                                         cbuf->level,
+                                                         usage,
+                                                         task->x,
+                                                         task->y);
+      if (!task->color_tiles[buf]) {
+         /* out of memory - use dummy tile memory */
+         return lp_get_dummy_tile();
+      }
+   }
+
+   return task->color_tiles[buf];
+}
+
+
+/**
  * Get the pointer to a 4x4 color block (within a 64x64 tile).
  * We'll map the color buffer on demand here.
  * Note that this may be called even when there's no color buffers - return
@@ -174,6 +210,7 @@ lp_rast_get_color_block_pointer(struct lp_rasterizer_task *task,
    assert((x % TILE_VECTOR_WIDTH) == 0);
    assert((y % TILE_VECTOR_HEIGHT) == 0);
 
+   color = lp_rast_get_color_tile_pointer(task, buf, LP_TEX_USAGE_READ_WRITE);
    color = task->color_tiles[buf];
    if (!color) {
       /* out of memory - use dummy tile memory */
@@ -217,15 +254,15 @@ lp_rast_shade_quads_all( struct lp_rasterizer_task *task,
 
    /* run shader on 4x4 block */
    variant->jit_function[RAST_WHOLE]( &state->jit_context,
-                                    x, y,
-                                    inputs->facing,
-                                    inputs->a0,
-                                    inputs->dadx,
-                                    inputs->dady,
-                                    color,
-                                    depth,
-                                    INT_MIN, INT_MIN, INT_MIN,
-                                    NULL, NULL, NULL, &task->vis_counter );
+                                      x, y,
+                                      inputs->facing,
+                                      inputs->a0,
+                                      inputs->dadx,
+                                      inputs->dady,
+                                      color,
+                                      depth,
+                                      0xffff,
+                                      &task->vis_counter );
 }
 
 

@@ -130,7 +130,6 @@ struct lp_setup_context
 
    struct {
       struct pipe_scissor_state current;
-      const void *stored;
    } scissor;
 
    unsigned dirty;   /**< bitmask of LP_SETUP_NEW_x bits */

@@ -31,9 +31,6 @@
  * Code generate the whole fragment pipeline.
  *
  * The fragment pipeline consists of the following stages:
- * - triangle edge in/out testing
- * - scissor test
- * - stipple (TBI)
  * - early depth test
  * - fragment shader
  * - alpha test
@@ -97,6 +94,7 @@
 #include "lp_state.h"
 #include "lp_tex_sample.h"
 #include "lp_flush.h"
+#include "lp_state_fs.h"
 
 
 #include <llvm-c/Analysis.h>
@@ -170,177 +168,63 @@ generate_depth_stencil(LLVMBuilderRef builder,
 
 
 /**
- * Generate the code to do inside/outside triangle testing for the
+ * Expand the relevent bits of mask_input to a 4-dword mask for the 
  * four pixels in a 2x2 quad.  This will set the four elements of the
  * quad mask vector to 0 or ~0.
- * \param i  which quad of the quad group to test, in [0,3]
+ *
+ * \param quad  which quad of the quad group to test, in [0,3]
+ * \param mask_input  bitwise mask for the whole 4x4 stamp
  */
-static void
-generate_tri_edge_mask(LLVMBuilderRef builder,
-                       unsigned i,
-                       LLVMValueRef *mask,      /* ivec4, out */
-                       LLVMValueRef c0,         /* int32 */
-                       LLVMValueRef c1,         /* int32 */
-                       LLVMValueRef c2,         /* int32 */
-                       LLVMValueRef step0_ptr,  /* ivec4 */
-                       LLVMValueRef step1_ptr,  /* ivec4 */
-                       LLVMValueRef step2_ptr)  /* ivec4 */
+static LLVMValueRef
+generate_quad_mask(LLVMBuilderRef builder,
+                   struct lp_type fs_type,
+                   unsigned quad,
+                   LLVMValueRef mask_input) /* int32 */
 {
-#define OPTIMIZE_IN_OUT_TEST 0
-#if OPTIMIZE_IN_OUT_TEST
-   struct lp_build_if_state ifctx;
-   LLVMValueRef not_draw_all;
-#endif
-   struct lp_build_flow_context *flow;
-   struct lp_type i32_type;
-   LLVMTypeRef i32vec4_type;
-   LLVMValueRef c0_vec, c1_vec, c2_vec;
-   LLVMValueRef in_out_mask;
-
-   assert(i < 4);
-   
-   /* int32 vector type */
-   memset(&i32_type, 0, sizeof i32_type);
-   i32_type.floating = FALSE; /* values are integers */
-   i32_type.sign = TRUE;      /* values are signed */
-   i32_type.norm = FALSE;     /* values are not normalized */
-   i32_type.width = 32;       /* 32-bit int values */
-   i32_type.length = 4;       /* 4 elements per vector */
-
-   i32vec4_type = lp_build_int32_vec4_type();
+   struct lp_type mask_type;
+   LLVMTypeRef i32t = LLVMInt32Type();
+   LLVMValueRef bits[4];
+   LLVMValueRef mask;
 
    /*
-    * Use a conditional here to do detailed pixel in/out testing.
-    * We only have to do this if c0 != INT_MIN.
+    * XXX: We'll need a different path for 16 x u8
     */
-   flow = lp_build_flow_create(builder);
-   lp_build_flow_scope_begin(flow);
+   assert(fs_type.width == 32);
+   assert(fs_type.length == 4);
+   mask_type = lp_int_type(fs_type);
 
-   {
-#if OPTIMIZE_IN_OUT_TEST
-      /* not_draw_all = (c0 != INT_MIN) */
-      not_draw_all = LLVMBuildICmp(builder,
-                                   LLVMIntNE,
-                                   c0,
-                                   LLVMConstInt(LLVMInt32Type(), INT_MIN, 0),
-                                   "");
-
-      in_out_mask = lp_build_const_int_vec(i32_type, ~0);
-
-
-      lp_build_flow_scope_declare(flow, &in_out_mask);
-
-      /* if (not_draw_all) {... */
-      lp_build_if(&ifctx, flow, builder, not_draw_all);
-#endif
-      {
-         LLVMValueRef step0_vec, step1_vec, step2_vec;
-         LLVMValueRef m0_vec, m1_vec, m2_vec;
-         LLVMValueRef index, m;
-
-         /* c0_vec = {c0, c0, c0, c0}
-          * Note that we emit this code four times but LLVM optimizes away
-          * three instances of it.
-          */
-         c0_vec = lp_build_broadcast(builder, i32vec4_type, c0);
-         c1_vec = lp_build_broadcast(builder, i32vec4_type, c1);
-         c2_vec = lp_build_broadcast(builder, i32vec4_type, c2);
-         lp_build_name(c0_vec, "edgeconst0vec");
-         lp_build_name(c1_vec, "edgeconst1vec");
-         lp_build_name(c2_vec, "edgeconst2vec");
-
-         /* load step0vec, step1, step2 vec from memory */
-         index = LLVMConstInt(LLVMInt32Type(), i, 0);
-         step0_vec = LLVMBuildLoad(builder, LLVMBuildGEP(builder, step0_ptr, &index, 1, ""), "");
-         step1_vec = LLVMBuildLoad(builder, LLVMBuildGEP(builder, step1_ptr, &index, 1, ""), "");
-         step2_vec = LLVMBuildLoad(builder, LLVMBuildGEP(builder, step2_ptr, &index, 1, ""), "");
-         lp_build_name(step0_vec, "step0vec");
-         lp_build_name(step1_vec, "step1vec");
-         lp_build_name(step2_vec, "step2vec");
-
-         /* m0_vec = step0_ptr[i] > c0_vec */
-         m0_vec = lp_build_compare(builder, i32_type, PIPE_FUNC_GREATER, step0_vec, c0_vec);
-         m1_vec = lp_build_compare(builder, i32_type, PIPE_FUNC_GREATER, step1_vec, c1_vec);
-         m2_vec = lp_build_compare(builder, i32_type, PIPE_FUNC_GREATER, step2_vec, c2_vec);
-
-         /* in_out_mask = m0_vec & m1_vec & m2_vec */
-         m = LLVMBuildAnd(builder, m0_vec, m1_vec, "");
-         in_out_mask = LLVMBuildAnd(builder, m, m2_vec, "");
-         lp_build_name(in_out_mask, "inoutmaskvec");
-      }
-#if OPTIMIZE_IN_OUT_TEST
-      lp_build_endif(&ifctx);
-#endif
-
-   }
-   lp_build_flow_scope_end(flow);
-   lp_build_flow_destroy(flow);
-
-   /* This is the initial alive/dead pixel mask for a quad of four pixels.
-    * It's an int[4] vector with each word set to 0 or ~0.
-    * Words will get cleared when pixels faile the Z test, etc.
+   /*
+    * mask_input >>= (quad * 4)
     */
-   *mask = in_out_mask;
-}
 
+   mask_input = LLVMBuildLShr(builder,
+                              mask_input,
+                              LLVMConstInt(i32t, quad * 4, 0),
+                              "");
 
-static LLVMValueRef
-generate_scissor_test(LLVMBuilderRef builder,
-                      LLVMValueRef context_ptr,
-                      const struct lp_build_interp_soa_context *interp,
-                      struct lp_type type)
-{
-   LLVMTypeRef vec_type = lp_build_vec_type(type);
-   LLVMValueRef xpos = interp->pos[0], ypos = interp->pos[1];
-   LLVMValueRef xmin, ymin, xmax, ymax;
-   LLVMValueRef m0, m1, m2, m3, m;
+   /*
+    * mask = { mask_input & (1 << i), for i in [0,3] }
+    */
 
-   /* xpos, ypos contain the window coords for the four pixels in the quad */
-   assert(xpos);
-   assert(ypos);
+   mask = lp_build_broadcast(builder, lp_build_vec_type(mask_type), mask_input);
 
-   /* get the current scissor bounds, convert to vectors */
-   xmin = lp_jit_context_scissor_xmin_value(builder, context_ptr);
-   xmin = lp_build_broadcast(builder, vec_type, xmin);
+   bits[0] = LLVMConstInt(i32t, 1 << 0, 0);
+   bits[1] = LLVMConstInt(i32t, 1 << 1, 0);
+   bits[2] = LLVMConstInt(i32t, 1 << 2, 0);
+   bits[3] = LLVMConstInt(i32t, 1 << 3, 0);
 
-   ymin = lp_jit_context_scissor_ymin_value(builder, context_ptr);
-   ymin = lp_build_broadcast(builder, vec_type, ymin);
+   mask = LLVMBuildAnd(builder, mask, LLVMConstVector(bits, 4), "");
 
-   xmax = lp_jit_context_scissor_xmax_value(builder, context_ptr);
-   xmax = lp_build_broadcast(builder, vec_type, xmax);
+   /*
+    * mask = mask != 0 ? ~0 : 0
+    */
 
-   ymax = lp_jit_context_scissor_ymax_value(builder, context_ptr);
-   ymax = lp_build_broadcast(builder, vec_type, ymax);
+   mask = lp_build_compare(builder,
+                           mask_type, PIPE_FUNC_NOTEQUAL,
+                           mask,
+                           lp_build_const_int_vec(mask_type, 0));
 
-   /* compare the fragment's position coordinates against the scissor bounds */
-   m0 = lp_build_compare(builder, type, PIPE_FUNC_GEQUAL, xpos, xmin);
-   m1 = lp_build_compare(builder, type, PIPE_FUNC_GEQUAL, ypos, ymin);
-   m2 = lp_build_compare(builder, type, PIPE_FUNC_LESS, xpos, xmax);
-   m3 = lp_build_compare(builder, type, PIPE_FUNC_LESS, ypos, ymax);
-
-   /* AND all the masks together */
-   m = LLVMBuildAnd(builder, m0, m1, "");
-   m = LLVMBuildAnd(builder, m, m2, "");
-   m = LLVMBuildAnd(builder, m, m3, "");
-
-   lp_build_name(m, "scissormask");
-
-   return m;
-}
-
-
-static LLVMValueRef
-build_int32_vec_const(int value)
-{
-   struct lp_type i32_type;
-
-   memset(&i32_type, 0, sizeof i32_type);
-   i32_type.floating = FALSE; /* values are integers */
-   i32_type.sign = TRUE;      /* values are signed */
-   i32_type.norm = FALSE;     /* values are not normalized */
-   i32_type.width = 32;       /* 32-bit int values */
-   i32_type.length = 4;       /* 4 elements per vector */
-   return lp_build_const_int_vec(i32_type, value);
+   return mask;
 }
 
 
@@ -348,7 +232,7 @@ build_int32_vec_const(int value)
 /**
  * Generate the fragment shader, depth/stencil test, and alpha tests.
  * \param i  which quad in the tile, in range [0,3]
- * \param do_tri_test  if 1, do triangle edge in/out testing
+ * \param partial_mask  if 1, do mask_input testing
  */
 static void
 generate_fs(struct llvmpipe_context *lp,
@@ -364,13 +248,8 @@ generate_fs(struct llvmpipe_context *lp,
             LLVMValueRef (*color)[4],
             LLVMValueRef depth_ptr,
             LLVMValueRef facing,
-            unsigned do_tri_test,
-            LLVMValueRef c0,
-            LLVMValueRef c1,
-            LLVMValueRef c2,
-            LLVMValueRef step0_ptr,
-            LLVMValueRef step1_ptr,
-            LLVMValueRef step2_ptr,
+            unsigned partial_mask,
+            LLVMValueRef mask_input,
             LLVMValueRef counter)
 {
    const struct tgsi_token *tokens = shader->base.tokens;
@@ -411,22 +290,16 @@ generate_fs(struct llvmpipe_context *lp,
    lp_build_flow_scope_declare(flow, &z);
 
    /* do triangle edge testing */
-   if (do_tri_test) {
-      generate_tri_edge_mask(builder, i, pmask,
-                             c0, c1, c2, step0_ptr, step1_ptr, step2_ptr);
+   if (partial_mask) {
+      *pmask = generate_quad_mask(builder, type,
+                                  i, mask_input);
    }
    else {
-      *pmask = build_int32_vec_const(~0);
+      *pmask = lp_build_const_int_vec(type, ~0);
    }
 
    /* 'mask' will control execution based on quad's pixel alive/killed state */
    lp_build_mask_begin(&mask, flow, type, *pmask);
-
-   if (key->scissor) {
-      LLVMValueRef smask =
-         generate_scissor_test(builder, context_ptr, interp, type);
-      lp_build_mask_update(&mask, smask);
-   }
 
    early_depth_stencil_test =
       (key->depth.enabled || key->stencil[0].enabled) &&
@@ -579,7 +452,7 @@ static void
 generate_fragment(struct llvmpipe_context *lp,
                   struct lp_fragment_shader *shader,
                   struct lp_fragment_shader_variant *variant,
-                  unsigned do_tri_test)
+                  unsigned partial_mask)
 {
    struct llvmpipe_screen *screen = llvmpipe_screen(lp->pipe.screen);
    const struct lp_fragment_shader_variant_key *key = &variant->key;
@@ -589,9 +462,8 @@ generate_fragment(struct llvmpipe_context *lp,
    LLVMTypeRef fs_elem_type;
    LLVMTypeRef fs_int_vec_type;
    LLVMTypeRef blend_vec_type;
-   LLVMTypeRef arg_types[16];
+   LLVMTypeRef arg_types[11];
    LLVMTypeRef func_type;
-   LLVMTypeRef int32_vec4_type = lp_build_int32_vec4_type();
    LLVMValueRef context_ptr;
    LLVMValueRef x;
    LLVMValueRef y;
@@ -600,7 +472,8 @@ generate_fragment(struct llvmpipe_context *lp,
    LLVMValueRef dady_ptr;
    LLVMValueRef color_ptr_ptr;
    LLVMValueRef depth_ptr;
-   LLVMValueRef c0, c1, c2, step0_ptr, step1_ptr, step2_ptr, counter = NULL;
+   LLVMValueRef mask_input;
+   LLVMValueRef counter = NULL;
    LLVMBasicBlockRef block;
    LLVMBuilderRef builder;
    struct lp_build_sampler_soa *sampler;
@@ -645,7 +518,7 @@ generate_fragment(struct llvmpipe_context *lp,
    blend_vec_type = lp_build_vec_type(blend_type);
 
    util_snprintf(func_name, sizeof(func_name), "fs%u_variant%u_%s", 
-		 shader->no, variant->no, do_tri_test ? "edge" : "whole");
+		 shader->no, variant->no, partial_mask ? "partial" : "whole");
 
    arg_types[0] = screen->context_ptr_type;            /* context */
    arg_types[1] = LLVMInt32Type();                     /* x */
@@ -656,23 +529,15 @@ generate_fragment(struct llvmpipe_context *lp,
    arg_types[6] = LLVMPointerType(fs_elem_type, 0);    /* dady */
    arg_types[7] = LLVMPointerType(LLVMPointerType(blend_vec_type, 0), 0);  /* color */
    arg_types[8] = LLVMPointerType(fs_int_vec_type, 0); /* depth */
-   arg_types[9] = LLVMInt32Type();                     /* c0 */
-   arg_types[10] = LLVMInt32Type();                    /* c1 */
-   arg_types[11] = LLVMInt32Type();                    /* c2 */
-   /* Note: the step arrays are built as int32[16] but we interpret
-    * them here as int32_vec4[4].
-    */
-   arg_types[12] = LLVMPointerType(int32_vec4_type, 0);/* step0 */
-   arg_types[13] = LLVMPointerType(int32_vec4_type, 0);/* step1 */
-   arg_types[14] = LLVMPointerType(int32_vec4_type, 0);/* step2 */
-   arg_types[15] = LLVMPointerType(LLVMInt32Type(), 0);/* counter */
+   arg_types[9] = LLVMInt32Type();                     /* mask_input */
+   arg_types[10] = LLVMPointerType(LLVMInt32Type(), 0);/* counter */
 
    func_type = LLVMFunctionType(LLVMVoidType(), arg_types, Elements(arg_types), 0);
 
    function = LLVMAddFunction(screen->module, func_name, func_type);
    LLVMSetFunctionCallConv(function, LLVMCCallConv);
 
-   variant->function[do_tri_test] = function;
+   variant->function[partial_mask] = function;
 
 
    /* XXX: need to propagate noalias down into color param now we are
@@ -691,12 +556,7 @@ generate_fragment(struct llvmpipe_context *lp,
    dady_ptr     = LLVMGetParam(function, 6);
    color_ptr_ptr = LLVMGetParam(function, 7);
    depth_ptr    = LLVMGetParam(function, 8);
-   c0           = LLVMGetParam(function, 9);
-   c1           = LLVMGetParam(function, 10);
-   c2           = LLVMGetParam(function, 11);
-   step0_ptr    = LLVMGetParam(function, 12);
-   step1_ptr    = LLVMGetParam(function, 13);
-   step2_ptr    = LLVMGetParam(function, 14);
+   mask_input   = LLVMGetParam(function, 9);
 
    lp_build_name(context_ptr, "context");
    lp_build_name(x, "x");
@@ -706,15 +566,10 @@ generate_fragment(struct llvmpipe_context *lp,
    lp_build_name(dady_ptr, "dady");
    lp_build_name(color_ptr_ptr, "color_ptr_ptr");
    lp_build_name(depth_ptr, "depth");
-   lp_build_name(c0, "c0");
-   lp_build_name(c1, "c1");
-   lp_build_name(c2, "c2");
-   lp_build_name(step0_ptr, "step0");
-   lp_build_name(step1_ptr, "step1");
-   lp_build_name(step2_ptr, "step2");
+   lp_build_name(mask_input, "mask_input");
 
    if (key->occlusion_count) {
-      counter = LLVMGetParam(function, 15);
+      counter = LLVMGetParam(function, 10);
       lp_build_name(counter, "counter");
    }
 
@@ -763,9 +618,9 @@ generate_fragment(struct llvmpipe_context *lp,
                   out_color,
                   depth_ptr_i,
                   facing,
-                  do_tri_test,
-                  c0, c1, c2,
-                  step0_ptr, step1_ptr, step2_ptr, counter);
+                  partial_mask,
+                  mask_input,
+                  counter);
 
       for(cbuf = 0; cbuf < key->nr_cbufs; cbuf++)
 	 for(chan = 0; chan < NUM_CHANNELS; ++chan)
@@ -792,9 +647,13 @@ generate_fragment(struct llvmpipe_context *lp,
 	 lp_build_name(blend_in_color[chan], "color%d.%c", cbuf, "rgba"[chan]);
       }
 
-      lp_build_conv_mask(builder, fs_type, blend_type,
-			 fs_mask, num_fs,
-			 &blend_mask, 1);
+      if (partial_mask || !variant->opaque) {
+         lp_build_conv_mask(builder, fs_type, blend_type,
+                            fs_mask, num_fs,
+                            &blend_mask, 1);
+      } else {
+         blend_mask = lp_build_const_int_vec(blend_type, ~0);
+      }
 
       color_ptr = LLVMBuildLoad(builder, 
 				LLVMBuildGEP(builder, color_ptr_ptr, &index, 1, ""),
@@ -832,8 +691,7 @@ generate_fragment(struct llvmpipe_context *lp,
 #endif
 
    /* Apply optimizations to LLVM IR */
-   if (1)
-      LLVMRunFunctionPassManager(screen->pass, function);
+   LLVMRunFunctionPassManager(screen->pass, function);
 
    if (gallivm_debug & GALLIVM_DEBUG_IR) {
       /* Print the LLVM IR to stderr */
@@ -847,7 +705,7 @@ generate_fragment(struct llvmpipe_context *lp,
    {
       void *f = LLVMGetPointerToGlobal(screen->engine, function);
 
-      variant->jit_function[do_tri_test] = (lp_jit_frag_func)pointer_to_func(f);
+      variant->jit_function[partial_mask] = (lp_jit_frag_func)pointer_to_func(f);
 
       if (gallivm_debug & GALLIVM_DEBUG_ASM) {
          lp_disassemble(f);
@@ -963,7 +821,6 @@ generate_variant(struct llvmpipe_context *lp,
          !key->stencil[0].enabled &&
          !key->alpha.enabled &&
          !key->depth.enabled &&
-         !key->scissor &&
          !shader->info.uses_kill
          ? TRUE : FALSE;
 
@@ -1182,7 +1039,6 @@ make_variant_key(struct llvmpipe_context *lp,
    /* alpha.ref_value is passed in jit_context */
 
    key->flatshade = lp->rasterizer->flatshade;
-   key->scissor = lp->rasterizer->scissor;
    if (lp->active_query_count) {
       key->occlusion_count = TRUE;
    }

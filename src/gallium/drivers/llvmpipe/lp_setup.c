@@ -287,7 +287,7 @@ lp_setup_flush( struct lp_setup_context *setup,
           * data to linear in the texture_unmap() function, which will
           * not be a parallel/threaded operation as here.
           */
-         lp_scene_bin_everywhere(scene, lp_rast_store_color, dummy);
+         lp_scene_bin_everywhere(scene, lp_rast_store_linear_color, dummy);
       }
 
 
@@ -747,28 +747,6 @@ lp_setup_update_state( struct lp_setup_context *setup )
          setup->blend_color.stored = stored;
 
          setup->fs.current.jit_context.blend_color = setup->blend_color.stored;
-      }
-
-      setup->dirty |= LP_SETUP_NEW_FS;
-   }
-
-   if (setup->dirty & LP_SETUP_NEW_SCISSOR) {
-      float *stored;
-
-      stored = lp_scene_alloc_aligned(scene, 4 * sizeof(int32_t), 16);
-
-      if (stored) {
-         stored[0] = (float) setup->scissor.current.minx;
-         stored[1] = (float) setup->scissor.current.miny;
-         stored[2] = (float) setup->scissor.current.maxx;
-         stored[3] = (float) setup->scissor.current.maxy;
-
-         setup->scissor.stored = stored;
-
-         setup->fs.current.jit_context.scissor_xmin = stored[0];
-         setup->fs.current.jit_context.scissor_ymin = stored[1];
-         setup->fs.current.jit_context.scissor_xmax = stored[2];
-         setup->fs.current.jit_context.scissor_ymax = stored[3];
       }
 
       setup->dirty |= LP_SETUP_NEW_FS;
