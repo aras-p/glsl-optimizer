@@ -9,7 +9,7 @@ static void FUNC( struct draw_geometry_shader *shader,
 
    boolean flatfirst = (draw->rasterizer->flatshade &&
                         draw->rasterizer->flatshade_first);
-   unsigned i;
+   unsigned i, j;
    unsigned count = input_prims->count;
    LOCAL_VARS
 
@@ -122,6 +122,17 @@ static void FUNC( struct draw_geometry_shader *shader,
       for (i = 0; i+5 < count; i += 5) {
          TRI_ADJ( shader, i + 0, i + 1, i + 2,
                   i + 3, i + 4, i + 5);
+      }
+      break;
+   case PIPE_PRIM_TRIANGLE_STRIP_ADJACENCY:
+      for (i = 0, j = 0; i+5 < count; i += 2, ++j) {
+         TRI_ADJ( shader,
+                  i + 0,
+                  i + 1 + 2*(j&1),
+                  i + 2 + 2*(j&1),
+                  i + 3 - 2*(j&1),
+                  i + 4 - 2*(j&1),
+                  i + 5);
       }
       break;
 
