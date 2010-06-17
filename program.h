@@ -64,3 +64,6 @@ struct glsl_program {
    GLboolean _Used;        /**< Ever used for drawing? */
    GLchar *InfoLog;
 };
+
+extern void
+link_shaders(struct glsl_program *prog);

@@ -214,5 +214,10 @@ main(int argc, char **argv)
       }
    }
 
+   if (status == EXIT_SUCCESS) {
+      link_shaders(&whole_program);
+      status = (whole_program.LinkStatus) ? EXIT_SUCCESS : EXIT_FAILURE;
+   }
+
    return status;
 }
