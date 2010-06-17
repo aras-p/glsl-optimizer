@@ -23,6 +23,20 @@
 
 #include "glcpp.h"
 
+void
+glcpp_error (YYLTYPE *locp, glcpp_parser_t *parser, const char *fmt, ...)
+{
+        parser->errors = talloc_asprintf_append(parser->errors, "%u:%u(%u): "
+						"preprocessor error: ",
+						locp->source, locp->first_line,
+						locp->first_column);
+        va_list ap;
+        va_start(ap, fmt);
+        parser->errors = talloc_vasprintf_append(parser->errors, fmt, ap);
+        va_end(ap);
+        parser->errors = talloc_strdup_append(parser->errors, "\n");
+}
+
 extern int
 preprocess(void *talloc_ctx, const char **shader, size_t *shader_len)
 {

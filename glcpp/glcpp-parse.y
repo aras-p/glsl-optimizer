@@ -879,8 +879,7 @@ _token_list_print (glcpp_parser_t *parser, token_list_t *list)
 void
 yyerror (YYLTYPE *locp, glcpp_parser_t *parser, const char *error)
 {
-	glcpp_printf(parser->errors, "%u:%u(%u): preprocessor error: %s\n",
-		     locp->source, locp->first_line, locp->first_column, error);
+	glcpp_error(locp, parser, "%s", error);
 }
 
 glcpp_parser_t *
