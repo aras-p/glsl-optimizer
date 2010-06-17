@@ -1048,6 +1048,9 @@ static void r300_resource_resolve(struct pipe_context* pipe,
         srcsurf, color, 0, 0, src->width0, src->height0);
 
     OUT_CS_REG(R300_RB3D_AARESOLVE_CTL, 0x0);
+
+    pipe_surface_reference((struct pipe_surface**)&srcsurf, NULL);
+    pipe_surface_reference((struct pipe_surface**)&destsurf, NULL);
 }
 
 void r300_init_render_functions(struct r300_context *r300)
