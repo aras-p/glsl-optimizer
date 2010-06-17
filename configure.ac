@@ -52,13 +52,6 @@ if test "x$enable_debug" = xyes; then
     fi
 fi
 
-
-if test "x$GCC" = xyes ; then
-	WARN="-Wall -Wextra -Wunsafe-loop-optimizations -Wstack-protector -Wunreadchable-code"
-else
-	WARN=""
-fi
-
 if test "x$GXX" = xyes ; then
 	WARN="-Wall -Wextra -Wunsafe-loop-optimizations -Wstack-protector"
 else
