@@ -123,7 +123,8 @@ _glcpp_parser_print_expanded_token_list (glcpp_parser_t *parser,
 					 token_list_t *list);
 
 static void
-_glcpp_parser_skip_stack_push_if (glcpp_parser_t *parser, int condition);
+_glcpp_parser_skip_stack_push_if (glcpp_parser_t *parser, YYLTYPE *loc,
+				  int condition);
 
 static void
 _glcpp_parser_skip_stack_change_if (glcpp_parser_t *parser, YYLTYPE *loc,
@@ -190,7 +191,7 @@ line:
 
 expanded_line:
 	IF_EXPANDED expression NEWLINE {
-		_glcpp_parser_skip_stack_push_if (parser, $2);
+		_glcpp_parser_skip_stack_push_if (parser, & @1, $2);
 	}
 |	ELIF_EXPANDED expression NEWLINE {
 		_glcpp_parser_skip_stack_change_if (parser, & @1, "elif", $2);
@@ -234,12 +235,12 @@ control_line:
 |	HASH_IFDEF IDENTIFIER NEWLINE {
 		macro_t *macro = hash_table_find (parser->defines, $2);
 		talloc_free ($2);
-		_glcpp_parser_skip_stack_push_if (parser, macro != NULL);
+		_glcpp_parser_skip_stack_push_if (parser, & @1, macro != NULL);
 	}
 |	HASH_IFNDEF IDENTIFIER NEWLINE {
 		macro_t *macro = hash_table_find (parser->defines, $2);
 		talloc_free ($2);
-		_glcpp_parser_skip_stack_push_if (parser, macro == NULL);
+		_glcpp_parser_skip_stack_push_if (parser, & @1, macro == NULL);
 	}
 |	HASH_ELIF pp_tokens NEWLINE {
 		token_list_t *expanded;
@@ -923,7 +924,7 @@ void
 glcpp_parser_destroy (glcpp_parser_t *parser)
 {
 	if (parser->skip_stack)
-		glcpp_print (parser->errors, "Error: Unterminated #if\n");
+		glcpp_error (&parser->skip_stack->loc, parser, "Unterminated #if\n");
 	glcpp_lex_destroy (parser->scanner);
 	hash_table_dtor (parser->defines);
 	talloc_free (parser);
@@ -1579,7 +1580,8 @@ glcpp_parser_lex_from (glcpp_parser_t *parser, token_list_t *list)
 }
 
 static void
-_glcpp_parser_skip_stack_push_if (glcpp_parser_t *parser, int condition)
+_glcpp_parser_skip_stack_push_if (glcpp_parser_t *parser, YYLTYPE *loc,
+				  int condition)
 {
 	skip_type_t current = SKIP_NO_SKIP;
 	skip_node_t *node;
@@ -1588,6 +1590,7 @@ _glcpp_parser_skip_stack_push_if (glcpp_parser_t *parser, int condition)
 		current = parser->skip_stack->type;
 
 	node = xtalloc (parser, skip_node_t);
+	node->loc = *loc;
 
 	if (current == SKIP_NO_SKIP) {
 		if (condition)
