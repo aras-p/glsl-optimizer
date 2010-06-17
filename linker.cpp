@@ -185,7 +185,7 @@ link_shaders(struct glsl_program *prog)
    unsigned num_frag_shaders = 0;
 
    vert_shader_list = (struct glsl_shader **)
-      malloc(sizeof(struct glsl_shader *) * 2 * prog->NumShaders);
+      calloc(2 * prog->NumShaders, sizeof(struct glsl_shader *));
    frag_shader_list =  &vert_shader_list[prog->NumShaders];
 
    for (unsigned i = 0; i < prog->NumShaders; i++) {
