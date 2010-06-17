@@ -1076,7 +1076,12 @@ XXX wait what
 Double ISA
 ^^^^^^^^^^^^^^^
 
-.. opcode:: DADD - Add Double
+The double-precision opcodes reinterpret four-component vectors into
+two-component vectors with doubled precision in each component.
+
+Support for these opcodes is XXX undecided. :T
+
+.. opcode:: DADD - Add
 
 .. math::
 
@@ -1085,7 +1090,7 @@ Double ISA
   dst.zw = src0.zw + src1.zw
 
 
-.. opcode:: DDIV - Divide Double
+.. opcode:: DDIV - Divide
 
 .. math::
 
@@ -1093,7 +1098,7 @@ Double ISA
 
   dst.zw = src0.zw / src1.zw
 
-.. opcode:: DSEQ - Set Double on Equal
+.. opcode:: DSEQ - Set on Equal
 
 .. math::
 
@@ -1101,7 +1106,7 @@ Double ISA
 
   dst.zw = src0.zw == src1.zw ? 1.0F : 0.0F
 
-.. opcode:: DSLT - Set Double on Less than
+.. opcode:: DSLT - Set on Less than
 
 .. math::
 
@@ -1109,7 +1114,7 @@ Double ISA
 
   dst.zw = src0.zw < src1.zw ? 1.0F : 0.0F
 
-.. opcode:: DFRAC - Double Fraction
+.. opcode:: DFRAC - Fraction
 
 .. math::
 
@@ -1118,7 +1123,7 @@ Double ISA
   dst.zw = src.zw - \lfloor src.zw\rfloor
 
 
-.. opcode:: DFRACEXP - Convert Double Number to Fractional and Integral Components
+.. opcode:: DFRACEXP - Convert Number to Fractional and Integral Components
 
 .. math::
 
@@ -1126,7 +1131,7 @@ Double ISA
 
   dst0.zw = frexp(src.zw, dst1.zw)
 
-.. opcode:: DLDEXP - Multiple Double Number by Integral Power of 2
+.. opcode:: DLDEXP - Multiple Number by Integral Power of 2
 
 .. math::
 
@@ -1134,7 +1139,7 @@ Double ISA
 
   dst.zw = ldexp(src0.zw, src1.zw)
 
-.. opcode:: DMIN - Minimum Double
+.. opcode:: DMIN - Minimum
 
 .. math::
 
@@ -1142,7 +1147,7 @@ Double ISA
 
   dst.zw = min(src0.zw, src1.zw)
 
-.. opcode:: DMAX - Maximum Double
+.. opcode:: DMAX - Maximum
 
 .. math::
 
@@ -1150,7 +1155,7 @@ Double ISA
 
   dst.zw = max(src0.zw, src1.zw)
 
-.. opcode:: DMUL - Multiply Double
+.. opcode:: DMUL - Multiply
 
 .. math::
 
@@ -1159,7 +1164,7 @@ Double ISA
   dst.zw = src0.zw \times src1.zw
 
 
-.. opcode:: DMAD - Multiply And Add Doubles
+.. opcode:: DMAD - Multiply And Add
 
 .. math::
 
@@ -1168,7 +1173,7 @@ Double ISA
   dst.zw = src0.zw \times src1.zw + src2.zw
 
 
-.. opcode:: DRCP - Reciprocal Double
+.. opcode:: DRCP - Reciprocal
 
 .. math::
 
@@ -1176,7 +1181,7 @@ Double ISA
 
    dst.zw = \frac{1}{src.zw}
 
-.. opcode:: DSQRT - Square root double
+.. opcode:: DSQRT - Square Root
 
 .. math::
 
