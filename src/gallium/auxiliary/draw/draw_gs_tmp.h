@@ -114,7 +114,7 @@ static void FUNC( struct draw_geometry_shader *shader,
       break;
    case PIPE_PRIM_LINE_STRIP_ADJACENCY:
       for (i = 1; i + 2 < count; i++) {
-         LINE( shader, i - 1, i, i + 1, i + 2 );
+         LINE_ADJ( shader, i - 1, i, i + 1, i + 2 );
       }
       break;
 
