@@ -95,10 +95,6 @@ static void FUNC( struct draw_geometry_shader *shader,
 
    case PIPE_PRIM_POLYGON:
       {
-         /* These bitflags look a little odd because we submit the
-          * vertices as (1,2,0) to satisfy flatshade requirements.
-          */
-
 	 for (i = 0; i+2 < count; i++) {
 
             if (flatfirst) {
@@ -108,6 +104,12 @@ static void FUNC( struct draw_geometry_shader *shader,
                TRIANGLE( shader, i + 1, i + 2, 0 );
             }
 	 }
+      }
+      break;
+
+   case PIPE_PRIM_LINES_ADJACENCY:
+      for (i = 0; i+3 < count; i += 4) {
+         LINE_ADJ( shader , i + 0 , i + 1, i + 2, i + 3 );
       }
       break;
 
@@ -121,4 +123,6 @@ static void FUNC( struct draw_geometry_shader *shader,
 #undef TRIANGLE
 #undef POINT
 #undef LINE
+#undef LINE_ADJ
 #undef FUNC
+#undef LOCAL_VARS

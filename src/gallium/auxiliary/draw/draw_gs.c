@@ -203,7 +203,7 @@ draw_geometry_fetch_outputs(struct draw_geometry_shader *shader,
          shader->emitted_primitives += num_primitives;
 }
 
-
+/*#define DEBUG_INPUTS 1*/
 static void draw_fetch_gs_input(struct draw_geometry_shader *shader,
                                 unsigned *indices,
                                 unsigned num_vertices,
@@ -218,19 +218,28 @@ static void draw_fetch_gs_input(struct draw_geometry_shader *shader,
 
    for (i = 0; i < num_vertices; ++i) {
       const float (*input)[4];
-      /*debug_printf("%d) vertex index = %d (prim idx = %d)\n", i, indices[i], prim_idx);*/
+#if DEBUG_INPUTS
+      debug_printf("%d) vertex index = %d (prim idx = %d)\n",
+                   i, indices[i], prim_idx);
+#endif
       input = (const float (*)[4])(
          (const char *)input_ptr + (indices[i] * input_vertex_stride));
       for (slot = 0, vs_slot = 0; slot < shader->info.num_inputs; ++slot) {
          unsigned idx = i * TGSI_EXEC_MAX_INPUT_ATTRIBS + slot;
          if (shader->info.input_semantic_name[slot] == TGSI_SEMANTIC_PRIMID) {
-            machine->Inputs[idx].xyzw[0].f[prim_idx] = (float)shader->in_prim_idx;
-            machine->Inputs[idx].xyzw[1].f[prim_idx] = (float)shader->in_prim_idx;
-            machine->Inputs[idx].xyzw[2].f[prim_idx] = (float)shader->in_prim_idx;
-            machine->Inputs[idx].xyzw[3].f[prim_idx] = (float)shader->in_prim_idx;
+            machine->Inputs[idx].xyzw[0].f[prim_idx] =
+               (float)shader->in_prim_idx;
+            machine->Inputs[idx].xyzw[1].f[prim_idx] =
+               (float)shader->in_prim_idx;
+            machine->Inputs[idx].xyzw[2].f[prim_idx] =
+               (float)shader->in_prim_idx;
+            machine->Inputs[idx].xyzw[3].f[prim_idx] =
+               (float)shader->in_prim_idx;
          } else {
-            /*debug_printf("\tSlot = %d, vs_slot = %d, idx = %d:\n",
-              slot, vs_slot, idx);*/
+#if DEBUG_INPUTS
+            debug_printf("\tSlot = %d, vs_slot = %d, idx = %d:\n",
+                         slot, vs_slot, idx);
+#endif
 #if 1
             assert(!util_is_inf_or_nan(input[vs_slot][0]));
             assert(!util_is_inf_or_nan(input[vs_slot][1]));
@@ -241,7 +250,7 @@ static void draw_fetch_gs_input(struct draw_geometry_shader *shader,
             machine->Inputs[idx].xyzw[1].f[prim_idx] = input[vs_slot][1];
             machine->Inputs[idx].xyzw[2].f[prim_idx] = input[vs_slot][2];
             machine->Inputs[idx].xyzw[3].f[prim_idx] = input[vs_slot][3];
-#if 0
+#if DEBUG_INPUTS
             debug_printf("\t\t%f %f %f %f\n",
                          machine->Inputs[idx].xyzw[0].f[prim_idx],
                          machine->Inputs[idx].xyzw[1].f[prim_idx],
@@ -311,6 +320,23 @@ static void gs_line(struct draw_geometry_shader *shader,
    gs_flush(shader, 1);
 }
 
+static void gs_line_adj(struct draw_geometry_shader *shader,
+                        int i0, int i1, int i2, int i3)
+{
+   unsigned indices[4];
+
+   indices[0] = i0;
+   indices[1] = i1;
+   indices[2] = i2;
+   indices[3] = i3;
+
+   draw_fetch_gs_input(shader, indices, 4, 0);
+   ++shader->in_prim_idx;
+
+   gs_flush(shader, 1);
+}
+
+
 static void gs_tri(struct draw_geometry_shader *shader,
                    int i0, int i1, int i2)
 {
@@ -327,24 +353,24 @@ static void gs_tri(struct draw_geometry_shader *shader,
 }
 
 #define TRIANGLE(gs,i0,i1,i2) gs_tri(gs,i0,i1,i2)
-#define LINE(gs,i0,i1)  gs_line(gs,i0,i1)
+#define LINE(gs,i0,i1)        gs_line(gs,i0,i1)
+#define LINE_ADJ(gs,i0,i1,i2,i3)    gs_line_adj(gs,i0,i1,i2,i3)
 #define POINT(gs,i0)          gs_point(gs,i0)
 #define FUNC gs_run
 #define LOCAL_VARS
 #include "draw_gs_tmp.h"
-#undef LOCAL_VARS
-#undef FUNC
 
 
 #define TRIANGLE(gs,i0,i1,i2) gs_tri(gs,elts[i0],elts[i1],elts[i2])
 #define LINE(gs,i0,i1)        gs_line(gs,elts[i0],elts[i1])
+#define LINE_ADJ(gs,i0,i1,i2,i3)  gs_line_adj(gs,elts[i0],      \
+                                              elts[i1],         \
+                                              elts[i2],elts[i3])
 #define POINT(gs,i0)          gs_point(gs,elts[i0])
 #define FUNC gs_run_elts
 #define LOCAL_VARS                         \
    const ushort *elts = input_prims->elts;
 #include "draw_gs_tmp.h"
-#undef LOCAL_VARS
-#undef FUNC
 
 int draw_geometry_shader_run(struct draw_geometry_shader *shader,
                              const void *constants[PIPE_MAX_CONSTANT_BUFFERS], 
