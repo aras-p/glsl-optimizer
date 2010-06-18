@@ -90,10 +90,12 @@ usage_fail(const char *name)
 
 int dump_ast = 0;
 int dump_lir = 0;
+int do_link = 0;
 
 const struct option compiler_opts[] = {
    { "dump-ast", 0, &dump_ast, 1 },
    { "dump-lir", 0, &dump_lir, 1 },
+   { "link",     0, &do_link,  1 },
    { NULL, 0, NULL, 0 }
 };
 
@@ -214,7 +216,7 @@ main(int argc, char **argv)
       }
    }
 
-   if (status == EXIT_SUCCESS) {
+   if ((status == EXIT_SUCCESS) && do_link)  {
       link_shaders(&whole_program);
       status = (whole_program.LinkStatus) ? EXIT_SUCCESS : EXIT_FAILURE;
    }
