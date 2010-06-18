@@ -38,6 +38,7 @@
 #include "lp_tex_sample.h"
 #include "lp_jit.h"
 #include "lp_setup.h"
+#include "lp_state_fs.h"
 
 
 struct llvmpipe_vbuf_render;
@@ -105,6 +106,8 @@ struct llvmpipe_context {
    unsigned tex_timestamp;
    boolean no_rast;
 
+   struct lp_fs_variant_list_item fs_variants_list;
+   unsigned nr_fs_variants;
 };
 
 

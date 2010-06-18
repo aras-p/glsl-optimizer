@@ -64,10 +64,16 @@ struct lp_fragment_shader_variant_key
    struct lp_sampler_static_state sampler[PIPE_MAX_SAMPLERS];
 };
 
+struct lp_fs_variant_list_item
+{
+   struct lp_fragment_shader_variant *base;
+   struct lp_fs_variant_list_item *next, *prev;
+};
 
 struct lp_fragment_shader_variant
 {
    struct lp_fragment_shader_variant_key key;
+   struct lp_fragment_shader *lpfs;
 
    boolean opaque;
 
@@ -75,7 +81,7 @@ struct lp_fragment_shader_variant
 
    lp_jit_frag_func jit_function[2];
 
-   struct lp_fragment_shader_variant *next;
+   struct lp_fs_variant_list_item list_item_global, list_item_local;
 
    /* For debugging/profiling purposes */
    unsigned no;
@@ -89,11 +95,12 @@ struct lp_fragment_shader
 
    struct tgsi_shader_info info;
 
-   struct lp_fragment_shader_variant *variants;
+   struct lp_fs_variant_list_item variants;
 
    /* For debugging/profiling purposes */
    unsigned no;
-   unsigned variant_no;
+   unsigned variants_created;
+   unsigned variants_cached;
 };
 
 

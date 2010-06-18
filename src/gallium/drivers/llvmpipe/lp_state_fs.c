@@ -68,6 +68,7 @@
 #include "util/u_format.h"
 #include "util/u_dump.h"
 #include "util/u_string.h"
+#include "util/u_simple_list.h"
 #include "os/os_time.h"
 #include "pipe/p_shader_tokens.h"
 #include "draw/draw_context.h"
@@ -95,6 +96,7 @@
 #include "lp_setup.h"
 #include "lp_state.h"
 #include "lp_tex_sample.h"
+#include "lp_flush.h"
 
 
 #include <llvm-c/Analysis.h>
@@ -936,7 +938,10 @@ generate_variant(struct llvmpipe_context *lp,
    if(!variant)
       return NULL;
 
-   variant->no = shader->variant_no++;
+   variant->lpfs = shader;
+   variant->list_item_global.base = variant;
+   variant->list_item_local.base = variant;
+   variant->no = shader->variants_created++;
 
    memcpy(&variant->key, key, sizeof *key);
 
@@ -962,10 +967,6 @@ generate_variant(struct llvmpipe_context *lp,
          !shader->info.uses_kill
          ? TRUE : FALSE;
 
-   /* insert new variant into linked list */
-   variant->next = shader->variants;
-   shader->variants = variant;
-
    return variant;
 }
 
@@ -981,6 +982,7 @@ llvmpipe_create_fs_state(struct pipe_context *pipe,
       return NULL;
 
    shader->no = fs_no++;
+   make_empty_list(&shader->variants);
 
    /* get/save the summary info for this shader */
    tgsi_scan_shader(templ->tokens, &shader->info);
@@ -1024,14 +1026,40 @@ llvmpipe_bind_fs_state(struct pipe_context *pipe, void *fs)
    llvmpipe->dirty |= LP_NEW_FS;
 }
 
+static void
+remove_shader_variant(struct llvmpipe_context *lp,
+                      struct lp_fragment_shader_variant *variant)
+{
+   struct llvmpipe_screen *screen = llvmpipe_screen(lp->pipe.screen);
+   unsigned i;
+
+   if (gallivm_debug & GALLIVM_DEBUG_IR) {
+      debug_printf("llvmpipe: del fs #%u var #%u v created #%u v cached #%u v total cached #%u\n",
+                    variant->lpfs->no, variant->no, variant->lpfs->variants_created,
+                    variant->lpfs->variants_cached, lp->nr_fs_variants);
+   }
+   for (i = 0; i < Elements(variant->function); i++) {
+      if (variant->function[i]) {
+         if (variant->jit_function[i])
+            LLVMFreeMachineCodeForFunction(screen->engine,
+                                           variant->function[i]);
+         LLVMDeleteFunction(variant->function[i]);
+      }
+   }
+   remove_from_list(&variant->list_item_local);
+   variant->lpfs->variants_cached--;
+   remove_from_list(&variant->list_item_global);
+   lp->nr_fs_variants--;
+   FREE(variant);
+}
 
 static void
 llvmpipe_delete_fs_state(struct pipe_context *pipe, void *fs)
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
-   struct llvmpipe_screen *screen = llvmpipe_screen(pipe->screen);
+   struct pipe_fence_handle *fence = NULL;
    struct lp_fragment_shader *shader = fs;
-   struct lp_fragment_shader_variant *variant;
+   struct lp_fs_variant_list_item *li;
 
    assert(fs != llvmpipe->fs);
    (void) llvmpipe;
@@ -1039,29 +1067,23 @@ llvmpipe_delete_fs_state(struct pipe_context *pipe, void *fs)
    /*
     * XXX: we need to flush the context until we have some sort of reference
     * counting in fragment shaders as they may still be binned
+    * Flushing alone might not sufficient we need to wait on it too.
     */
-   draw_flush(llvmpipe->draw);
-   lp_setup_flush(llvmpipe->setup, 0);
 
-   variant = shader->variants;
-   while(variant) {
-      struct lp_fragment_shader_variant *next = variant->next;
-      unsigned i;
+   llvmpipe_flush(pipe, 0, &fence);
 
-      for (i = 0; i < Elements(variant->function); i++) {
-         if (variant->function[i]) {
-            if (variant->jit_function[i])
-               LLVMFreeMachineCodeForFunction(screen->engine,
-                                              variant->function[i]);
-            LLVMDeleteFunction(variant->function[i]);
-         }
-      }
-
-      FREE(variant);
-
-      variant = next;
+   if (fence) {
+      pipe->screen->fence_finish(pipe->screen, fence, 0);
+      pipe->screen->fence_reference(pipe->screen, &fence, NULL);
    }
 
+   li = first_elem(&shader->variants);
+   while(!at_end(&shader->variants, li)) {
+      remove_shader_variant(llvmpipe, li->base);
+      li = next_elem(li);
+   }
+
+   assert(shader->variants_cached == 0);
    FREE((void *) shader->base.tokens);
    FREE(shader);
 }
@@ -1215,7 +1237,6 @@ make_variant_key(struct llvmpipe_context *lp,
          lp_sampler_static_state(&key->sampler[i], lp->fragment_sampler_views[i], lp->sampler[i]);
 }
 
-
 /**
  * Update fragment state.  This is called just prior to drawing
  * something when some fragment-related state has changed.
@@ -1225,21 +1246,47 @@ llvmpipe_update_fs(struct llvmpipe_context *lp)
 {
    struct lp_fragment_shader *shader = lp->fs;
    struct lp_fragment_shader_variant_key key;
-   struct lp_fragment_shader_variant *variant;
+   struct lp_fragment_shader_variant *variant = NULL;
+   struct lp_fs_variant_list_item *li;
 
    make_variant_key(lp, shader, &key);
 
-   variant = shader->variants;
-   while(variant) {
-      if(memcmp(&variant->key, &key, sizeof key) == 0)
+   li = first_elem(&shader->variants);
+   while(!at_end(&shader->variants, li)) {
+      if(memcmp(&li->base->key, &key, sizeof key) == 0) {
+         variant = li->base;
          break;
-
-      variant = variant->next;
+      }
+      li = next_elem(li);
    }
 
-   if (!variant) {
+   if (variant) {
+      move_to_head(&lp->fs_variants_list, &variant->list_item_global);
+   }
+   else {
       int64_t t0, t1;
       int64_t dt;
+      unsigned i;
+      if (lp->nr_fs_variants >= LP_MAX_SHADER_VARIANTS) {
+         struct pipe_context *pipe = &lp->pipe;
+         struct pipe_fence_handle *fence = NULL;
+
+         /*
+          * XXX: we need to flush the context until we have some sort of reference
+          * counting in fragment shaders as they may still be binned
+          * Flushing alone might not be sufficient we need to wait on it too.
+          */
+         llvmpipe_flush(pipe, 0, &fence);
+
+         if (fence) {
+            pipe->screen->fence_finish(pipe->screen, fence, 0);
+            pipe->screen->fence_reference(pipe->screen, &fence, NULL);
+         }
+         for (i = 0; i < LP_MAX_SHADER_VARIANTS / 4; i++) {
+            struct lp_fs_variant_list_item *item = last_elem(&lp->fs_variants_list);
+            remove_shader_variant(lp, item->base);
+         }
+      }
       t0 = os_time_get();
 
       variant = generate_variant(lp, shader, &key);
@@ -1248,6 +1295,13 @@ llvmpipe_update_fs(struct llvmpipe_context *lp)
       dt = t1 - t0;
       LP_COUNT_ADD(llvm_compile_time, dt);
       LP_COUNT_ADD(nr_llvm_compiles, 2);  /* emit vs. omit in/out test */
+
+      if (variant) {
+         insert_at_head(&shader->variants, &variant->list_item_local);
+         insert_at_head(&lp->fs_variants_list, &variant->list_item_global);
+         lp->nr_fs_variants++;
+         shader->variants_cached++;
+      }
    }
 
    lp_setup_set_fs_variant(lp->setup, variant);

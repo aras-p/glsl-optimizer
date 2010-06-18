@@ -36,6 +36,7 @@
 #include "util/u_inlines.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
+#include "util/u_simple_list.h"
 #include "lp_clear.h"
 #include "lp_context.h"
 #include "lp_flush.h"
@@ -93,6 +94,8 @@ llvmpipe_create_context( struct pipe_screen *screen, void *priv )
    util_init_math();
 
    memset(llvmpipe, 0, sizeof *llvmpipe);
+
+   make_empty_list(&llvmpipe->fs_variants_list);
 
    llvmpipe->pipe.winsys = screen->winsys;
    llvmpipe->pipe.screen = screen;
