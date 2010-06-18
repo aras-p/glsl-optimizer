@@ -280,7 +280,8 @@ static const char *file_names[TGSI_FILE_COUNT] =
    "ADDR",
    "IMM",
    "PRED",
-   "SV"
+   "SV",
+   "IMMX"
 };
 
 static boolean
@@ -985,6 +986,45 @@ static const char *interpolate_names[TGSI_INTERPOLATE_COUNT] =
    "PERSPECTIVE"
 };
 
+
+/* parses a 4-touple of the form {x, y, z, w}
+ * where x, y, z, w are numbers */
+static boolean parse_immediate_data(struct translate_ctx *ctx,
+                                    float *values)
+{
+   unsigned i;
+
+   eat_opt_white( &ctx->cur );
+   if (*ctx->cur != '{') {
+      report_error( ctx, "Expected `{'" );
+      return FALSE;
+   }
+   ctx->cur++;
+   for (i = 0; i < 4; i++) {
+      eat_opt_white( &ctx->cur );
+      if (i > 0) {
+         if (*ctx->cur != ',') {
+            report_error( ctx, "Expected `,'" );
+            return FALSE;
+         }
+         ctx->cur++;
+         eat_opt_white( &ctx->cur );
+      }
+      if (!parse_float( &ctx->cur, &values[i] )) {
+         report_error( ctx, "Expected literal floating point" );
+         return FALSE;
+      }
+   }
+   eat_opt_white( &ctx->cur );
+   if (*ctx->cur != '}') {
+      report_error( ctx, "Expected `}'" );
+      return FALSE;
+   }
+   ctx->cur++;
+
+   return TRUE;
+}
+
 static boolean parse_declaration( struct translate_ctx *ctx )
 {
    struct tgsi_full_declaration decl;
@@ -995,6 +1035,7 @@ static boolean parse_declaration( struct translate_ctx *ctx )
    const char *cur;
    uint advance;
    boolean is_vs_input;
+   boolean is_imm_array;
 
    assert(Elements(semantic_names) == TGSI_SEMANTIC_COUNT);
    assert(Elements(interpolate_names) == TGSI_INTERPOLATE_COUNT);
@@ -1025,6 +1066,7 @@ static boolean parse_declaration( struct translate_ctx *ctx )
 
    is_vs_input = (file == TGSI_FILE_INPUT && 
                   ctx->processor == TGSI_PROCESSOR_VERTEX);
+   is_imm_array = (file == TGSI_FILE_IMMEDIATE_ARRAY);
 
    cur = ctx->cur;
    eat_opt_white( &cur );
@@ -1067,6 +1109,44 @@ static boolean parse_declaration( struct translate_ctx *ctx )
             break;
          }
       }
+   } else if (is_imm_array) {
+      unsigned i;
+      float *vals_itr;
+      /* we have our immediate data */
+      if (*cur != '{') {
+         report_error( ctx, "Immediate array without data" );
+         return FALSE;
+      }
+      ++cur;
+      ctx->cur = cur;
+
+      decl.ImmediateData.u =
+         MALLOC(sizeof(union tgsi_immediate_data) * 4 *
+                (decl.Range.Last + 1));
+      vals_itr = (float*)decl.ImmediateData.u;
+      for (i = 0; i <= decl.Range.Last; ++i) {
+         if (!parse_immediate_data(ctx, vals_itr)) {
+            FREE(decl.ImmediateData.u);
+            return FALSE;
+         }
+         vals_itr += 4;
+         eat_opt_white( &ctx->cur );
+         if (*ctx->cur != ',') {
+            if (i !=  decl.Range.Last) {
+               report_error( ctx, "Not enough data in immediate array!" );
+               FREE(decl.ImmediateData.u);
+               return FALSE;
+            }
+         } else
+            ++ctx->cur;
+      }
+      eat_opt_white( &ctx->cur );
+      if (*ctx->cur != '}') {
+         FREE(decl.ImmediateData.u);
+         report_error( ctx, "Immediate array data missing closing '}'" );
+         return FALSE;
+      }
+      ++ctx->cur;
    }
 
    cur = ctx->cur;
@@ -1097,6 +1177,10 @@ static boolean parse_declaration( struct translate_ctx *ctx )
       ctx->tokens_cur,
       ctx->header,
       (uint) (ctx->tokens_end - ctx->tokens_cur) );
+
+   if (is_imm_array)
+      FREE(decl.ImmediateData.u);
+
    if (advance == 0)
       return FALSE;
    ctx->tokens_cur += advance;
@@ -1107,7 +1191,6 @@ static boolean parse_declaration( struct translate_ctx *ctx )
 static boolean parse_immediate( struct translate_ctx *ctx )
 {
    struct tgsi_full_immediate imm;
-   uint i;
    float values[4];
    uint advance;
 
@@ -1115,37 +1198,13 @@ static boolean parse_immediate( struct translate_ctx *ctx )
       report_error( ctx, "Syntax error" );
       return FALSE;
    }
-   if (!str_match_no_case( &ctx->cur, "FLT32" ) || is_digit_alpha_underscore( ctx->cur )) {
+   if (!str_match_no_case( &ctx->cur, "FLT32" ) ||
+       is_digit_alpha_underscore( ctx->cur )) {
       report_error( ctx, "Expected `FLT32'" );
       return FALSE;
    }
-   eat_opt_white( &ctx->cur );
-   if (*ctx->cur != '{') {
-      report_error( ctx, "Expected `{'" );
-      return FALSE;
-   }
-   ctx->cur++;
-   for (i = 0; i < 4; i++) {
-      eat_opt_white( &ctx->cur );
-      if (i > 0) {
-         if (*ctx->cur != ',') {
-            report_error( ctx, "Expected `,'" );
-            return FALSE;
-         }
-         ctx->cur++;
-         eat_opt_white( &ctx->cur );
-      }
-      if (!parse_float( &ctx->cur, &values[i] )) {
-         report_error( ctx, "Expected literal floating point" );
-         return FALSE;
-      }
-   }
-   eat_opt_white( &ctx->cur );
-   if (*ctx->cur != '}') {
-      report_error( ctx, "Expected `}'" );
-      return FALSE;
-   }
-   ctx->cur++;
+
+   parse_immediate_data(ctx, values);
 
    imm = tgsi_default_full_immediate();
    imm.Immediate.NrTokens += 4;

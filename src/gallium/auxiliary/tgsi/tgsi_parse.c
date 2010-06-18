@@ -117,6 +117,17 @@ tgsi_parse_token(
          next_token( ctx, &decl->Semantic );
       }
 
+      if (decl->Declaration.File == TGSI_FILE_IMMEDIATE_ARRAY) {
+         unsigned i, j;
+         decl->ImmediateData.u = (union tgsi_immediate_data*)
+                                 &ctx->Tokens[ctx->Position];
+         for (i = 0; i <= decl->Range.Last; ++i) {
+            for (j = 0; j < 4; ++j) {
+               ctx->Position++;
+            }
+         }
+      }
+
       break;
    }
 

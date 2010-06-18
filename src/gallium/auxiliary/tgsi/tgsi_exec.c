@@ -699,6 +699,19 @@ tgsi_exec_machine_bind_shader(
                ++mach->NumOutputs;
             }
          }
+         if (parse.FullToken.FullDeclaration.Declaration.File ==
+             TGSI_FILE_IMMEDIATE_ARRAY) {
+            unsigned reg;
+            struct tgsi_full_declaration *decl =
+               &parse.FullToken.FullDeclaration;
+            debug_assert(decl->Range.Last < TGSI_EXEC_NUM_IMMEDIATES);
+            for (reg = decl->Range.First; reg <= decl->Range.Last; ++reg) {
+               for( i = 0; i < 4; i++ ) {
+                  int idx = reg * 4 + i;
+                  mach->ImmArray[reg][i] = decl->ImmediateData.u[idx].Float;
+               }
+            }
+         }
          memcpy(declarations + numDeclarations,
                 &parse.FullToken.FullDeclaration,
                 sizeof(declarations[0]));
@@ -1071,6 +1084,14 @@ fetch_src_file_channel(const struct tgsi_exec_machine *mach,
          assert(index2D->i[i] == 0);
 
          chan->f[i] = mach->Imms[index->i[i]][swizzle];
+      }
+      break;
+
+   case TGSI_FILE_IMMEDIATE_ARRAY:
+      for (i = 0; i < QUAD_SIZE; i++) {
+         assert(index2D->i[i] == 0);
+
+         chan->f[i] = mach->ImmArray[index->i[i]][swizzle];
       }
       break;
 

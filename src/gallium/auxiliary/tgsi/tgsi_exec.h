@@ -240,6 +240,8 @@ struct tgsi_exec_machine
 
    float                         Imms[TGSI_EXEC_NUM_IMMEDIATES][4];
 
+   float                         ImmArray[TGSI_EXEC_NUM_IMMEDIATES][4];
+
    struct tgsi_exec_vector       Inputs[TGSI_MAX_PRIM_VERTICES * PIPE_MAX_ATTRIBS];
    struct tgsi_exec_vector       Outputs[TGSI_MAX_TOTAL_VERTICES];
 

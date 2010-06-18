@@ -101,7 +101,8 @@ static const char *file_names[TGSI_FILE_COUNT] =
    "ADDR",
    "IMM",
    "PRED",
-   "SV"
+   "SV",
+   "IMMX"
 };
 
 static const char *interpolate_names[] =
@@ -292,6 +293,39 @@ _dump_writemask(
    }
 }
 
+static void
+dump_imm_data(struct tgsi_iterate_context *iter,
+              union tgsi_immediate_data *data,
+              unsigned num_tokens,
+              unsigned data_type)
+{
+   struct dump_ctx *ctx = (struct dump_ctx *)iter;
+   unsigned i ;
+
+   TXT( " {" );
+
+   assert( num_tokens <= 4 );
+   for (i = 0; i < num_tokens; i++) {
+      switch (data_type) {
+      case TGSI_IMM_FLOAT32:
+         FLT( data[i].Float );
+         break;
+      case TGSI_IMM_UINT32:
+         UID(data[i].Uint);
+         break;
+      case TGSI_IMM_INT32:
+         SID(data[i].Int);
+         break;
+      default:
+         assert( 0 );
+      }
+
+      if (i < num_tokens - 1)
+         TXT( ", " );
+   }
+   TXT( "}" );
+}
+
 static boolean
 iter_declaration(
    struct tgsi_iterate_context *iter,
@@ -372,6 +406,43 @@ iter_declaration(
       }
    }
 
+   if (decl->Declaration.File == TGSI_FILE_IMMEDIATE_ARRAY) {
+      unsigned i;
+      char range_indent[4];
+
+      TXT(" {");
+
+      if (decl->Range.Last < 10)
+         range_indent[0] = '\0';
+      else if (decl->Range.Last < 100) {
+         range_indent[0] = ' ';
+         range_indent[1] = '\0';
+      } else if (decl->Range.Last < 1000) {
+         range_indent[0] = ' ';
+         range_indent[1] = ' ';
+         range_indent[2] = '\0';
+      } else {
+         range_indent[0] = ' ';
+         range_indent[1] = ' ';
+         range_indent[2] = ' ';
+         range_indent[3] = '\0';
+      }
+
+      dump_imm_data(iter, decl->ImmediateData.u,
+                    4, TGSI_IMM_FLOAT32);
+      for(i = 1; i <= decl->Range.Last; ++i) {
+         /* indent by strlen of:
+          *   "DCL IMMX[0..1] {" */
+         CHR('\n');
+         TXT( "                " );
+         TXT( range_indent );
+         dump_imm_data(iter, decl->ImmediateData.u + i,
+                       4, TGSI_IMM_FLOAT32);
+      }
+
+      TXT(" }");
+   }
+
    EOL();
 
    return TRUE;
@@ -445,33 +516,11 @@ iter_immediate(
 {
    struct dump_ctx *ctx = (struct dump_ctx *) iter;
 
-   uint i;
-
    TXT( "IMM " );
    ENM( imm->Immediate.DataType, immediate_type_names );
 
-   TXT( " { " );
-
-   assert( imm->Immediate.NrTokens <= 4 + 1 );
-   for (i = 0; i < imm->Immediate.NrTokens - 1; i++) {
-      switch (imm->Immediate.DataType) {
-      case TGSI_IMM_FLOAT32:
-         FLT( imm->u[i].Float );
-         break;
-      case TGSI_IMM_UINT32:
-         UID(imm->u[i].Uint);
-         break;
-      case TGSI_IMM_INT32:
-         SID(imm->u[i].Int);
-         break;
-      default:
-         assert( 0 );
-      }
-
-      if (i < imm->Immediate.NrTokens - 2)
-         TXT( ", " );
-   }
-   TXT( " }" );
+   dump_imm_data(iter, imm->u, imm->Immediate.NrTokens - 1,
+                 imm->Immediate.DataType);
 
    EOL();
 
@@ -502,12 +551,12 @@ iter_instruction(
 
    INSTID( instno );
    TXT( ": " );
-   
+
    ctx->indent -= info->pre_dedent;
    for(i = 0; (int)i < ctx->indent; ++i)
       TXT( "  " );
    ctx->indent += info->post_indent;
-   
+
    if (inst->Instruction.Predicate) {
       CHR( '(' );
 

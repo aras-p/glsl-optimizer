@@ -164,6 +164,7 @@ tgsi_default_full_declaration( void )
    full_declaration.Declaration  = tgsi_default_declaration();
    full_declaration.Range = tgsi_default_declaration_range();
    full_declaration.Semantic = tgsi_default_declaration_semantic();
+   full_declaration.ImmediateData.u = NULL;
 
    return full_declaration;
 }
@@ -180,7 +181,7 @@ tgsi_build_full_declaration(
    struct tgsi_declaration_range *dr;
 
    if( maxsize <= size )
-     return 0;
+      return 0;
    declaration = (struct tgsi_declaration *) &tokens[size];
    size++;
 
@@ -233,6 +234,24 @@ tgsi_build_full_declaration(
          full_decl->Semantic.Index,
          declaration,
          header );
+   }
+
+   if (full_decl->Declaration.File == TGSI_FILE_IMMEDIATE_ARRAY) {
+      unsigned i, j;
+      union tgsi_immediate_data *data;
+
+      for (i = 0; i <= dr->Last; ++i) {
+         for (j = 0; j < 4; ++j) {
+            unsigned idx = i*4 + j;
+            if (maxsize <= size)
+               return 0;
+            data = (union tgsi_immediate_data *) &tokens[size];
+            ++size;
+
+            *data = full_decl->ImmediateData.u[idx];
+            declaration_grow( declaration, header );
+         }
+      }
    }
 
    return size;
