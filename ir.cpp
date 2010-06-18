@@ -423,6 +423,62 @@ ir_constant::get_record_field(const char *name)
 }
 
 
+bool
+ir_constant::has_value(const ir_constant *c) const
+{
+   if (this->type != c->type)
+      return false;
+
+   /* FINISHME: This will probably also handle constant arrays as soon as those
+    * FINISHME: are supported.
+    */
+   if (this->type->base_type == GLSL_TYPE_STRUCT) {
+      const exec_node *a_node = this->components.head;
+      const exec_node *b_node = c->components.head;
+
+      while (!a_node->is_tail_sentinal()) {
+	 assert(!b_node->is_tail_sentinal());
+
+	 const ir_constant *const a_field = (ir_constant *) a_node;
+	 const ir_constant *const b_field = (ir_constant *) b_node;
+
+	 if (!a_field->has_value(b_field))
+	    return false;
+
+	 a_node = a_node->next;
+	 b_node = b_node->next;
+      }
+
+      return true;
+   }
+
+   for (unsigned i = 0; i < this->type->components(); i++) {
+      switch (this->type->base_type) {
+      case GLSL_TYPE_UINT:
+	 if (this->value.u[i] != c->value.u[i])
+	    return false;
+	 break;
+      case GLSL_TYPE_INT:
+	 if (this->value.i[i] != c->value.i[i])
+	    return false;
+	 break;
+      case GLSL_TYPE_FLOAT:
+	 if (this->value.f[i] != c->value.f[i])
+	    return false;
+	 break;
+      case GLSL_TYPE_BOOL:
+	 if (this->value.b[i] != c->value.b[i])
+	    return false;
+	 break;
+      default:
+	 assert(!"Should not get here.");
+	 return false;
+      }
+   }
+
+   return true;
+}
+
 ir_dereference_variable::ir_dereference_variable(ir_variable *var)
 {
    this->var = var;

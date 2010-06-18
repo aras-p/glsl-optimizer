@@ -1092,6 +1092,11 @@ public:
    ir_constant *get_record_field(const char *name);
 
    /**
+    * Determine whether a constant has the same value as another constant
+    */
+   bool has_value(const ir_constant *) const;
+
+   /**
     * Value of the constant.
     *
     * The field used to back the values supplied by the constant is determined
