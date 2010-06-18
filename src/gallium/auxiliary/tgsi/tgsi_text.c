@@ -281,7 +281,8 @@ static const char *file_names[TGSI_FILE_COUNT] =
    "IMM",
    "PRED",
    "SV",
-   "IMMX"
+   "IMMX",
+   "TEMPX"
 };
 
 static boolean
@@ -346,12 +347,68 @@ parse_opt_writemask(
    return TRUE;
 }
 
-static boolean
-parse_register_dst( struct translate_ctx *ctx,
-                    uint *file,
-                    int *index );
 
-struct parsed_src_bracket {
+/* <register_file_bracket> ::= <file> `['
+ */
+static boolean
+parse_register_file_bracket(
+   struct translate_ctx *ctx,
+   uint *file )
+{
+   if (!parse_file( &ctx->cur, file )) {
+      report_error( ctx, "Unknown register file" );
+      return FALSE;
+   }
+   eat_opt_white( &ctx->cur );
+   if (*ctx->cur != '[') {
+      report_error( ctx, "Expected `['" );
+      return FALSE;
+   }
+   ctx->cur++;
+   return TRUE;
+}
+
+/* <register_file_bracket_index> ::= <register_file_bracket> <uint>
+ */
+static boolean
+parse_register_file_bracket_index(
+   struct translate_ctx *ctx,
+   uint *file,
+   int *index )
+{
+   uint uindex;
+
+   if (!parse_register_file_bracket( ctx, file ))
+      return FALSE;
+   eat_opt_white( &ctx->cur );
+   if (!parse_uint( &ctx->cur, &uindex )) {
+      report_error( ctx, "Expected literal unsigned integer" );
+      return FALSE;
+   }
+   *index = (int) uindex;
+   return TRUE;
+}
+
+/* Parse simple 1d register operand.
+ *    <register_dst> ::= <register_file_bracket_index> `]'
+ */
+static boolean
+parse_register_1d(struct translate_ctx *ctx,
+                  uint *file,
+                  int *index )
+{
+   if (!parse_register_file_bracket_index( ctx, file, index ))
+      return FALSE;
+   eat_opt_white( &ctx->cur );
+   if (*ctx->cur != ']') {
+      report_error( ctx, "Expected `]'" );
+      return FALSE;
+   }
+   ctx->cur++;
+   return TRUE;
+}
+
+struct parsed_bracket {
    int index;
 
    uint ind_file;
@@ -361,21 +418,21 @@ struct parsed_src_bracket {
 
 
 static boolean
-parse_register_src_bracket(
+parse_register_bracket(
    struct translate_ctx *ctx,
-   struct parsed_src_bracket *brackets)
+   struct parsed_bracket *brackets)
 {
    const char *cur;
    uint uindex;
 
-   memset(brackets, 0, sizeof(struct parsed_src_bracket));
+   memset(brackets, 0, sizeof(struct parsed_bracket));
 
    eat_opt_white( &ctx->cur );
 
    cur = ctx->cur;
    if (parse_file( &cur, &brackets->ind_file )) {
-      if (!parse_register_dst( ctx, &brackets->ind_file,
-                               &brackets->ind_index ))
+      if (!parse_register_1d( ctx, &brackets->ind_file,
+                              &brackets->ind_index ))
          return FALSE;
       eat_opt_white( &ctx->cur );
 
@@ -444,7 +501,7 @@ parse_register_src_bracket(
 static boolean
 parse_opt_register_src_bracket(
    struct translate_ctx *ctx,
-   struct parsed_src_bracket *brackets,
+   struct parsed_bracket *brackets,
    int *parsed_brackets)
 {
    const char *cur = ctx->cur;
@@ -456,7 +513,7 @@ parse_opt_register_src_bracket(
       ++cur;
       ctx->cur = cur;
 
-      if (!parse_register_src_bracket(ctx, brackets))
+      if (!parse_register_bracket(ctx, brackets))
          return FALSE;
 
       *parsed_brackets = 1;
@@ -465,46 +522,6 @@ parse_opt_register_src_bracket(
    return TRUE;
 }
 
-/* <register_file_bracket> ::= <file> `['
- */
-static boolean
-parse_register_file_bracket(
-   struct translate_ctx *ctx,
-   uint *file )
-{
-   if (!parse_file( &ctx->cur, file )) {
-      report_error( ctx, "Unknown register file" );
-      return FALSE;
-   }
-   eat_opt_white( &ctx->cur );
-   if (*ctx->cur != '[') {
-      report_error( ctx, "Expected `['" );
-      return FALSE;
-   }
-   ctx->cur++;
-   return TRUE;
-}
-
-/* <register_file_bracket_index> ::= <register_file_bracket> <uint>
- */
-static boolean
-parse_register_file_bracket_index(
-   struct translate_ctx *ctx,
-   uint *file,
-   int *index )
-{
-   uint uindex;
-
-   if (!parse_register_file_bracket( ctx, file ))
-      return FALSE;
-   eat_opt_white( &ctx->cur );
-   if (!parse_uint( &ctx->cur, &uindex )) {
-      report_error( ctx, "Expected literal unsigned integer" );
-      return FALSE;
-   }
-   *index = (int) uindex;
-   return TRUE;
-}
 
 /* Parse source register operand.
  *    <register_src> ::= <register_file_bracket_index> `]' |
@@ -516,13 +533,12 @@ static boolean
 parse_register_src(
    struct translate_ctx *ctx,
    uint *file,
-   struct parsed_src_bracket *brackets)
+   struct parsed_bracket *brackets)
 {
-
    brackets->ind_comp = TGSI_SWIZZLE_X;
    if (!parse_register_file_bracket( ctx, file ))
       return FALSE;
-   if (!parse_register_src_bracket( ctx, brackets ))
+   if (!parse_register_bracket( ctx, brackets ))
        return FALSE;
 
    return TRUE;
@@ -630,23 +646,19 @@ parse_register_dcl(
 }
 
 
-/* Parse destination register operand.
- *    <register_dst> ::= <register_file_bracket_index> `]'
- */
+/* Parse destination register operand.*/
 static boolean
 parse_register_dst(
    struct translate_ctx *ctx,
    uint *file,
-   int *index )
+   struct parsed_bracket *brackets)
 {
-   if (!parse_register_file_bracket_index( ctx, file, index ))
+   brackets->ind_comp = TGSI_SWIZZLE_X;
+   if (!parse_register_file_bracket( ctx, file ))
       return FALSE;
-   eat_opt_white( &ctx->cur );
-   if (*ctx->cur != ']') {
-      report_error( ctx, "Expected `]'" );
-      return FALSE;
-   }
-   ctx->cur++;
+   if (!parse_register_bracket( ctx, brackets ))
+       return FALSE;
+
    return TRUE;
 }
 
@@ -656,11 +668,14 @@ parse_dst_operand(
    struct tgsi_full_dst_register *dst )
 {
    uint file;
-   int index;
    uint writemask;
    const char *cur;
+   struct parsed_bracket bracket[2];
+   int parsed_opt_brackets;
 
-   if (!parse_register_dst( ctx, &file, &index ))
+   if (!parse_register_dst( ctx, &file, &bracket[0] ))
+      return FALSE;
+   if (!parse_opt_register_src_bracket(ctx, &bracket[1], &parsed_opt_brackets))
       return FALSE;
 
    cur = ctx->cur;
@@ -670,8 +685,24 @@ parse_dst_operand(
       return FALSE;
 
    dst->Register.File = file;
-   dst->Register.Index = index;
+   if (parsed_opt_brackets) {
+      dst->Register.Dimension = 1;
+      dst->Dimension.Indirect = 0;
+      dst->Dimension.Dimension = 0;
+      dst->Dimension.Index = bracket[0].index;
+      bracket[0] = bracket[1];
+   }
+   dst->Register.Index = bracket[0].index;
    dst->Register.WriteMask = writemask;
+   if (bracket[0].ind_file != TGSI_FILE_NULL) {
+      dst->Register.Indirect = 1;
+      dst->Indirect.File = bracket[0].ind_file;
+      dst->Indirect.Index = bracket[0].ind_index;
+      dst->Indirect.SwizzleX = bracket[0].ind_comp;
+      dst->Indirect.SwizzleY = bracket[0].ind_comp;
+      dst->Indirect.SwizzleZ = bracket[0].ind_comp;
+      dst->Indirect.SwizzleW = bracket[0].ind_comp;
+   }
    return TRUE;
 }
 
@@ -720,7 +751,7 @@ parse_src_operand(
    uint file;
    uint swizzle[4];
    boolean parsed_swizzle;
-   struct parsed_src_bracket bracket[2];
+   struct parsed_bracket bracket[2];
    int parsed_opt_brackets;
 
    if (*ctx->cur == '-') {
@@ -836,7 +867,7 @@ parse_instruction(
          inst.Predicate.Negate = 1;
       }
 
-      if (!parse_register_dst( ctx, &file, &index ))
+      if (!parse_register_1d( ctx, &file, &index ))
          return FALSE;
 
       if (parse_optional_swizzle( ctx, swizzle, &parsed_swizzle )) {
@@ -1064,7 +1095,7 @@ static boolean parse_declaration( struct translate_ctx *ctx )
       decl.Dim.Index2D = brackets[0].first;
    }
 
-   is_vs_input = (file == TGSI_FILE_INPUT && 
+   is_vs_input = (file == TGSI_FILE_INPUT &&
                   ctx->processor == TGSI_PROCESSOR_VERTEX);
    is_imm_array = (file == TGSI_FILE_IMMEDIATE_ARRAY);
 

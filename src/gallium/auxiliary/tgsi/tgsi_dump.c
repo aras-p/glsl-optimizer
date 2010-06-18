@@ -102,7 +102,8 @@ static const char *file_names[TGSI_FILE_COUNT] =
    "IMM",
    "PRED",
    "SV",
-   "IMMX"
+   "IMMX",
+   "TEMPX"
 };
 
 static const char *interpolate_names[] =
@@ -192,20 +193,6 @@ static const char *fs_coord_pixel_center_names[] =
 
 
 static void
-_dump_register_dst(
-   struct dump_ctx *ctx,
-   uint file,
-   int index)
-{
-   ENM( file, file_names );
-
-   CHR( '[' );
-   SID( index );
-   CHR( ']' );
-}
-
-
-static void
 _dump_register_src(
    struct dump_ctx *ctx,
    const struct tgsi_full_src_register *src )
@@ -251,30 +238,52 @@ _dump_register_src(
    }
 }
 
-static void
-_dump_register_ind(
-   struct dump_ctx *ctx,
-   uint file,
-   int index,
-   uint ind_file,
-   int ind_index,
-   uint ind_swizzle )
-{
-   ENM( file, file_names );
-   CHR( '[' );
-   ENM( ind_file, file_names );
-   CHR( '[' );
-   SID( ind_index );
-   TXT( "]." );
-   ENM( ind_swizzle, swizzle_names );
-   if (index != 0) {
-      if (index > 0)
-         CHR( '+' );
-      SID( index );
-   }
-   CHR( ']' );
-}
 
+static void
+_dump_register_dst(
+   struct dump_ctx *ctx,
+   const struct tgsi_full_dst_register *dst )
+{
+   ENM(dst->Register.File, file_names);
+   if (dst->Register.Dimension) {
+      if (dst->Dimension.Indirect) {
+         CHR( '[' );
+         ENM( dst->DimIndirect.File, file_names );
+         CHR( '[' );
+         SID( dst->DimIndirect.Index );
+         TXT( "]." );
+         ENM( dst->DimIndirect.SwizzleX, swizzle_names );
+         if (dst->Dimension.Index != 0) {
+            if (dst->Dimension.Index > 0)
+               CHR( '+' );
+            SID( dst->Dimension.Index );
+         }
+         CHR( ']' );
+      } else {
+         CHR('[');
+         SID(dst->Dimension.Index);
+         CHR(']');
+      }
+   }
+   if (dst->Register.Indirect) {
+      CHR( '[' );
+      ENM( dst->Indirect.File, file_names );
+      CHR( '[' );
+      SID( dst->Indirect.Index );
+      TXT( "]." );
+      ENM( dst->Indirect.SwizzleX, swizzle_names );
+      if (dst->Register.Index != 0) {
+         if (dst->Register.Index > 0)
+            CHR( '+' );
+         SID( dst->Register.Index );
+      }
+      CHR( ']' );
+   } else {
+      CHR( '[' );
+      SID( dst->Register.Index );
+      CHR( ']' );
+   }
+}
 static void
 _dump_writemask(
    struct dump_ctx *ctx,
@@ -603,21 +612,7 @@ iter_instruction(
          CHR( ',' );
       CHR( ' ' );
 
-      if (dst->Register.Indirect) {
-         _dump_register_ind(
-            ctx,
-            dst->Register.File,
-            dst->Register.Index,
-            dst->Indirect.File,
-            dst->Indirect.Index,
-            dst->Indirect.SwizzleX );
-      }
-      else {
-         _dump_register_dst(
-            ctx,
-            dst->Register.File,
-            dst->Register.Index );
-      }
+      _dump_register_dst( ctx, dst );
       _dump_writemask( ctx, dst->Register.WriteMask );
 
       first_reg = FALSE;

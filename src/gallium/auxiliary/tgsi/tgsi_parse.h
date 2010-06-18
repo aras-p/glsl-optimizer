@@ -44,6 +44,8 @@ struct tgsi_full_dst_register
 {
    struct tgsi_dst_register               Register;
    struct tgsi_src_register               Indirect;
+   struct tgsi_dimension                  Dimension;
+   struct tgsi_src_register               DimIndirect;
 };
 
 struct tgsi_full_src_register

@@ -632,6 +632,7 @@ tgsi_build_full_instruction(
          reg->Register.File,
          reg->Register.WriteMask,
          reg->Register.Indirect,
+         reg->Register.Dimension,
          reg->Register.Index,
          instruction,
          header );
@@ -658,6 +659,46 @@ tgsi_build_full_instruction(
             reg->Indirect.Index,
             instruction,
             header );
+      }
+
+      if( reg->Register.Dimension ) {
+         struct  tgsi_dimension *dim;
+
+         assert( !reg->Dimension.Dimension );
+
+         if( maxsize <= size )
+            return 0;
+         dim = (struct tgsi_dimension *) &tokens[size];
+         size++;
+
+         *dim = tgsi_build_dimension(
+            reg->Dimension.Indirect,
+            reg->Dimension.Index,
+            instruction,
+            header );
+
+         if( reg->Dimension.Indirect ) {
+            struct tgsi_src_register *ind;
+
+            if( maxsize <= size )
+               return 0;
+            ind = (struct tgsi_src_register *) &tokens[size];
+            size++;
+
+            *ind = tgsi_build_src_register(
+               reg->DimIndirect.File,
+               reg->DimIndirect.SwizzleX,
+               reg->DimIndirect.SwizzleY,
+               reg->DimIndirect.SwizzleZ,
+               reg->DimIndirect.SwizzleW,
+               reg->DimIndirect.Negate,
+               reg->DimIndirect.Absolute,
+               reg->DimIndirect.Indirect,
+               reg->DimIndirect.Dimension,
+               reg->DimIndirect.Index,
+               instruction,
+               header );
+         }
       }
    }
 
@@ -978,6 +1019,7 @@ tgsi_build_dst_register(
    unsigned file,
    unsigned mask,
    unsigned indirect,
+   unsigned dimension,
    int index,
    struct tgsi_instruction *instruction,
    struct tgsi_header *header )
@@ -993,6 +1035,7 @@ tgsi_build_dst_register(
    dst_register.WriteMask = mask;
    dst_register.Index = index;
    dst_register.Indirect = indirect;
+   dst_register.Dimension = dimension;
 
    instruction_grow( instruction, header );
 
@@ -1006,6 +1049,8 @@ tgsi_default_full_dst_register( void )
 
    full_dst_register.Register = tgsi_default_dst_register();
    full_dst_register.Indirect = tgsi_default_src_register();
+   full_dst_register.Dimension = tgsi_default_dimension();
+   full_dst_register.DimIndirect = tgsi_default_src_register();
 
    return full_dst_register;
 }

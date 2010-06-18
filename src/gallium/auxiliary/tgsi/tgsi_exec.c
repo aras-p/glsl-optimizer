@@ -1065,7 +1065,9 @@ fetch_src_file_channel(const struct tgsi_exec_machine *mach,
                          index2D->i[i] * TGSI_EXEC_MAX_INPUT_ATTRIBS + index->i[i],
                          index2D->i[i], index->i[i]);
                          }*/
-         chan->u[i] = mach->Inputs[index2D->i[i] * TGSI_EXEC_MAX_INPUT_ATTRIBS + index->i[i]].xyzw[swizzle].u[i];
+         chan->u[i] = mach->Inputs[index2D->i[i] *
+                                   TGSI_EXEC_MAX_INPUT_ATTRIBS +
+                                   index->i[i]].xyzw[swizzle].u[i];
       }
       break;
 
@@ -1075,6 +1077,16 @@ fetch_src_file_channel(const struct tgsi_exec_machine *mach,
          assert(index2D->i[i] == 0);
 
          chan->u[i] = mach->Temps[index->i[i]].xyzw[swizzle].u[i];
+      }
+      break;
+
+   case TGSI_FILE_TEMPORARY_ARRAY:
+      for (i = 0; i < QUAD_SIZE; i++) {
+         assert(index->i[i] < TGSI_EXEC_NUM_TEMPS);
+         assert(index2D->i[i] < TGSI_EXEC_NUM_TEMP_ARRAYS);
+
+         chan->u[i] =
+            mach->TempArray[index2D->i[i]][index->i[i]].xyzw[swizzle].u[i];
       }
       break;
 
@@ -1306,6 +1318,7 @@ store_dest(struct tgsi_exec_machine *mach,
    uint i;
    union tgsi_exec_channel null;
    union tgsi_exec_channel *dst;
+   union tgsi_exec_channel index2D;
    uint execmask = mach->ExecMask;
    int offset = 0;  /* indirection offset */
    int index;
@@ -1351,6 +1364,77 @@ store_dest(struct tgsi_exec_machine *mach,
       offset = indir_index.i[0];
    }
 
+   /* There is an extra source register that is a second
+    * subscript to a register file. Effectively it means that
+    * the register file is actually a 2D array of registers.
+    *
+    *    file[3][1],
+    *    where:
+    *       [3] = Dimension.Index
+    */
+   if (reg->Register.Dimension) {
+      index2D.i[0] =
+      index2D.i[1] =
+      index2D.i[2] =
+      index2D.i[3] = reg->Dimension.Index;
+
+      /* Again, the second subscript index can be addressed indirectly
+       * identically to the first one.
+       * Nothing stops us from indirectly addressing the indirect register,
+       * but there is no need for that, so we won't exercise it.
+       *
+       *    file[ind[4].y+3][1],
+       *    where:
+       *       ind = DimIndirect.File
+       *       [4] = DimIndirect.Index
+       *       .y = DimIndirect.SwizzleX
+       */
+      if (reg->Dimension.Indirect) {
+         union tgsi_exec_channel index2;
+         union tgsi_exec_channel indir_index;
+         const uint execmask = mach->ExecMask;
+         unsigned swizzle;
+         uint i;
+
+         index2.i[0] =
+         index2.i[1] =
+         index2.i[2] =
+         index2.i[3] = reg->DimIndirect.Index;
+
+         swizzle = tgsi_util_get_src_register_swizzle( &reg->DimIndirect, CHAN_X );
+         fetch_src_file_channel(mach,
+                                reg->DimIndirect.File,
+                                swizzle,
+                                &index2,
+                                &ZeroVec,
+                                &indir_index);
+
+         index2D.i[0] += indir_index.i[0];
+         index2D.i[1] += indir_index.i[1];
+         index2D.i[2] += indir_index.i[2];
+         index2D.i[3] += indir_index.i[3];
+
+         /* for disabled execution channels, zero-out the index to
+          * avoid using a potential garbage value.
+          */
+         for (i = 0; i < QUAD_SIZE; i++) {
+            if ((execmask & (1 << i)) == 0) {
+               index2D.i[i] = 0;
+            }
+         }
+      }
+
+      /* If by any chance there was a need for a 3D array of register
+       * files, we would have to check whether Dimension is followed
+       * by a dimension register and continue the saga.
+       */
+   } else {
+      index2D.i[0] =
+      index2D.i[1] =
+      index2D.i[2] =
+      index2D.i[3] = 0;
+   }
+
    switch (reg->Register.File) {
    case TGSI_FILE_NULL:
       dst = &null;
@@ -1375,6 +1459,16 @@ store_dest(struct tgsi_exec_machine *mach,
       index = reg->Register.Index;
       assert( index < TGSI_EXEC_NUM_TEMPS );
       dst = &mach->Temps[offset + index].xyzw[chan_index];
+      break;
+
+   case TGSI_FILE_TEMPORARY_ARRAY:
+      index = reg->Register.Index;
+      assert( index < TGSI_EXEC_NUM_TEMPS );
+      assert( index2D.i[0] < TGSI_EXEC_NUM_TEMP_ARRAYS );
+      /* XXX we use index2D.i[0] here but somehow we might
+       * end up with someone trying to store indirectly in
+       * different buffers */
+      dst = &mach->TempArray[index2D.i[0]][offset + index].xyzw[chan_index];
       break;
 
    case TGSI_FILE_ADDRESS:

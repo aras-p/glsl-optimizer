@@ -93,6 +93,7 @@ struct tgsi_sampler
 
 #define TGSI_EXEC_NUM_TEMPS       128
 #define TGSI_EXEC_NUM_IMMEDIATES  256
+#define TGSI_EXEC_NUM_TEMP_ARRAYS 8
 
 /*
  * Locations of various utility registers (_I = Index, _C = Channel)
@@ -237,6 +238,7 @@ struct tgsi_exec_machine
     */
    struct tgsi_exec_vector       Temps[TGSI_EXEC_NUM_TEMPS +
                                        TGSI_EXEC_NUM_TEMP_EXTRAS];
+   struct tgsi_exec_vector       TempArray[TGSI_EXEC_NUM_TEMP_ARRAYS][TGSI_EXEC_NUM_TEMPS];
 
    float                         Imms[TGSI_EXEC_NUM_IMMEDIATES][4];
 

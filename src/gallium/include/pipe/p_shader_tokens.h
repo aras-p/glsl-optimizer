@@ -76,6 +76,7 @@ enum tgsi_file_type {
    TGSI_FILE_PREDICATE           =8,
    TGSI_FILE_SYSTEM_VALUE        =9,
    TGSI_FILE_IMMEDIATE_ARRAY     =10,
+   TGSI_FILE_TEMPORARY_ARRAY     =11,
    TGSI_FILE_COUNT      /**< how many TGSI_FILE_ types */
 };
 
