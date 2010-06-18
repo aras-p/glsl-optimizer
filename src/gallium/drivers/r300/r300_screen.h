@@ -76,6 +76,7 @@ static INLINE struct r300_screen* r300_screen(struct pipe_screen* screen) {
 #define DBG_ANISOHQ     (1 << 16)
 #define DBG_NO_TILING   (1 << 17)
 #define DBG_NO_IMMD     (1 << 18)
+#define DBG_FAKE_OCC    (1 << 19)
 /* Statistics. */
 #define DBG_STATS       (1 << 24)
 /*@}*/

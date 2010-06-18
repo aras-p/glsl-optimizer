@@ -38,6 +38,7 @@ static const struct debug_named_value debug_options[] = {
     { "anisohq", DBG_ANISOHQ, "High quality anisotropic filtering (for benchmarking)" },
     { "notiling", DBG_NO_TILING, "Disable tiling (for benchmarking)" },
     { "noimmd", DBG_NO_IMMD, "Disable immediate mode (for benchmarking)" },
+    { "fakeocc", DBG_FAKE_OCC, "Use fake occlusion queries (for lulz)" },
     { "stats", DBG_STATS, "Gather statistics (for lulz)" },
 
     /* must be last */
