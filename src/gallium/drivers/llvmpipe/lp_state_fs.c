@@ -1079,8 +1079,9 @@ llvmpipe_delete_fs_state(struct pipe_context *pipe, void *fs)
 
    li = first_elem(&shader->variants);
    while(!at_end(&shader->variants, li)) {
+      struct lp_fs_variant_list_item *next = next_elem(li);
       remove_shader_variant(llvmpipe, li->base);
-      li = next_elem(li);
+      li = next;
    }
 
    assert(shader->variants_cached == 0);
