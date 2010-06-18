@@ -56,6 +56,12 @@
   - Handle resizing of arrays.
   - Other?  We'll have to look at the spec.
 
+- Improve handling of constants and their initializers.  Constant initializers
+  should never generate any code.  This is trival for scalar constants.  It is
+  also trivial for arrays, matrices, and vectors that are accessed with
+  constant index values.  For others it is more complicated.  Perhaps these
+  cases should be silently converted to uniforms?
+
 1.30 features:
 
 - Implement AST-to-HIR conversion of bit-shift operators.
