@@ -3,14 +3,8 @@
 #include "state_tracker/drm_api.h"
 
 #include "i965_drm_winsys.h"
+#include "i965_drm_public.h"
 #include "util/u_memory.h"
-
-#include "i965/brw_context.h"        /* XXX: shouldn't be doing this */
-#include "i965/brw_screen.h"         /* XXX: shouldn't be doing this */
-
-#include "trace/tr_drm.h"
-
-#include "../../sw/drm/sw_drm_api.h"
 
 /*
  * Helper functions
@@ -52,8 +46,8 @@ i965_libdrm_winsys_destroy(struct brw_winsys_screen *iws)
    FREE(idws);
 }
 
-static struct pipe_screen *
-i965_libdrm_create_screen(struct drm_api *api, int drmFD)
+struct brw_winsys_screen *
+i965_drm_winsys_screen_create(int drmFD)
 {
    struct i965_libdrm_winsys *idws;
 
@@ -76,27 +70,5 @@ i965_libdrm_create_screen(struct drm_api *api, int drmFD)
 
    idws->send_cmd = !debug_get_bool_option("BRW_NO_HW", FALSE);
 
-   return brw_create_screen(&idws->base);
-}
-
-struct drm_api i965_libdrm_api =
-{
-   .name = "i965",
-   .driver_name = "i915",
-   .create_screen = i965_libdrm_create_screen,
-   .destroy = NULL,
-};
-
-struct drm_api *
-drm_api_create()
-{
-   struct drm_api *api = NULL;
-
-   if (api == NULL && debug_get_bool_option("BRW_SOFTPIPE", FALSE))
-      api = sw_drm_api_create(&i965_libdrm_api);
-
-   if (api == NULL)
-      api = &i965_libdrm_api;
-
-   return trace_drm_create(api);
+   return &idws->base;
 }

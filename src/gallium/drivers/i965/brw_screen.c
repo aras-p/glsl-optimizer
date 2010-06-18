@@ -34,6 +34,7 @@
 #include "brw_context.h"
 #include "brw_screen.h"
 #include "brw_winsys.h"
+#include "brw_public.h"
 #include "brw_debug.h"
 #include "brw_resource.h"
 
@@ -350,7 +351,7 @@ brw_destroy_screen(struct pipe_screen *screen)
  * Create a new brw_screen object
  */
 struct pipe_screen *
-brw_create_screen(struct brw_winsys_screen *sws)
+brw_screen_create(struct brw_winsys_screen *sws)
 {
    struct brw_screen *bscreen;
    struct brw_chipset chipset;

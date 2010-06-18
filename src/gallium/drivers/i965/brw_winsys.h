@@ -262,12 +262,6 @@ bo_reference(struct brw_winsys_buffer **ptr, struct brw_winsys_buffer *buf)
 }
 
 
-/**
- * Create brw pipe_screen.
- */
-struct pipe_screen *brw_create_screen(struct brw_winsys_screen *iws);
-
-
 
 /*************************************************************************
  * Cooperative dumping between winsys and driver.  TODO: make this

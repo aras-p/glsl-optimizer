@@ -1,7 +1,30 @@
 
-#include "target-helpers/drm_api_compat.h"
+#include "target-helpers/inline_wrapper_sw_helper.h"
+#include "state_tracker/drm_driver.h"
+#include "i965/drm/i965_drm_public.h"
+#include "i965/brw_public.h"
 
-DRM_API_COMPAT_STRUCT("i965", "i915")
+static struct pipe_screen *
+create_screen(int fd)
+{
+   struct brw_winsys_screen *bws;
+   struct pipe_screen *screen;
+
+   bws = i965_drm_winsys_screen_create(fd);
+   if (!bws)
+      return NULL;
+
+   screen = brw_screen_create(bws);
+   if (!screen)
+      return NULL;
+
+   if (debug_get_bool_option("BRW_SOFTPIPE", FALSE))
+      screen = sw_screen_wrap(screen);
+
+   return screen;
+}
+
+DRM_DRIVER_DESCRIPTOR("i915", "i965", create_screen)
 
 /* A poor man's --whole-archive for EGL drivers */
 void *_eglMain(void *);
