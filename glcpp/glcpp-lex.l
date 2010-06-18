@@ -32,7 +32,7 @@
    do {                                                         \
       yylloc->source = 0;                                       \
       yylloc->first_column = yycolumn + 1;                      \
-      yylloc->first_line = yylineno + 1;                        \
+      yylloc->first_line = yylineno;                            \
       yycolumn += yyleng;                                       \
    } while(0);
 %}
@@ -82,6 +82,8 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 	 * Simply pass them through to the main compiler's lexer/parser. */
 {HASH}(extension|version|pragma).*\n {
 	yylval->str = xtalloc_strdup (yyextra, yytext);
+	yylineno++;
+	yycolumn = 0;
 	return OTHER;
 }
 
@@ -126,6 +128,9 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 	 * We use the lexing_if flag to avoid skipping any part of an
 	 * if conditional expression. */
 [^\n]+/\n {
+	/* Since this rule always matches, YY_USER_ACTION gets called for it,
+	 * wrongly incrementing yycolumn.  We undo that effect here. */
+	yycolumn -= yyleng;
 	if (yyextra->lexing_if ||
 	    yyextra->skip_stack == NULL ||
 	    yyextra->skip_stack->type == SKIP_NO_SKIP)
