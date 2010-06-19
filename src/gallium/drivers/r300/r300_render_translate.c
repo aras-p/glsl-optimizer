@@ -49,12 +49,35 @@ void r300_begin_vertex_translate(struct r300_context *r300)
     for (i = 0; i < ve->count; i++) {
         struct pipe_vertex_buffer *vb =
                 &r300->vertex_buffer[ve->velem[i].vertex_buffer_index];
+        enum pipe_format output_format = ve->hw_format[i];
+        unsigned output_format_size = ve->hw_format_size[i];
 
         /* Check for support. */
         if (ve->velem[i].src_format == ve->hw_format[i] &&
             (vb->buffer_offset + ve->velem[i].src_offset) % 4 == 0 &&
             vb->stride % 4 == 0) {
             continue;
+        }
+
+        /* Workaround for translate: output floats instead of halfs. */
+        switch (output_format) {
+            case PIPE_FORMAT_R16_FLOAT:
+                output_format = PIPE_FORMAT_R32_FLOAT;
+                output_format_size = 4;
+                break;
+            case PIPE_FORMAT_R16G16_FLOAT:
+                output_format = PIPE_FORMAT_R32G32_FLOAT;
+                output_format_size = 8;
+                break;
+            case PIPE_FORMAT_R16G16B16_FLOAT:
+                output_format = PIPE_FORMAT_R32G32B32_FLOAT;
+                output_format_size = 12;
+                break;
+            case PIPE_FORMAT_R16G16B16A16_FLOAT:
+                output_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
+                output_format_size = 16;
+                break;
+            default:;
         }
 
         /* Add this vertex element. */
@@ -64,10 +87,10 @@ void r300_begin_vertex_translate(struct r300_context *r300)
         te->input_buffer = ve->velem[i].vertex_buffer_index;
         te->input_format = ve->velem[i].src_format;
         te->input_offset = vb->buffer_offset + ve->velem[i].src_offset;
-        te->output_format = ve->hw_format[i];
+        te->output_format = output_format;
         te->output_offset = key.output_stride;
 
-        key.output_stride += ve->hw_format_size[i];
+        key.output_stride += output_format_size;
         vb_translated[ve->velem[i].vertex_buffer_index] = TRUE;
         tr_elem_index[i] = key.nr_elements;
         key.nr_elements++;
