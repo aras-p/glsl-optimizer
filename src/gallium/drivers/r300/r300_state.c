@@ -1013,10 +1013,34 @@ static void*
 
     sampler->state = *state;
 
+    /* r300 doesn't handle CLAMP and MIRROR_CLAMP correctly when either MAG
+     * or MIN filter is NEAREST. Since texwrap produces same results
+     * for CLAMP and CLAMP_TO_EDGE, we use them instead. */
+    if (sampler->state.min_img_filter == PIPE_TEX_FILTER_NEAREST ||
+        sampler->state.mag_img_filter == PIPE_TEX_FILTER_NEAREST) {
+        /* Wrap S. */
+        if (sampler->state.wrap_s == PIPE_TEX_WRAP_CLAMP)
+            sampler->state.wrap_s = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
+        else if (sampler->state.wrap_s == PIPE_TEX_WRAP_MIRROR_CLAMP)
+            sampler->state.wrap_s = PIPE_TEX_WRAP_MIRROR_CLAMP_TO_EDGE;
+
+        /* Wrap T. */
+        if (sampler->state.wrap_t == PIPE_TEX_WRAP_CLAMP)
+            sampler->state.wrap_t = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
+        else if (sampler->state.wrap_t == PIPE_TEX_WRAP_MIRROR_CLAMP)
+            sampler->state.wrap_t = PIPE_TEX_WRAP_MIRROR_CLAMP_TO_EDGE;
+
+        /* Wrap R. */
+        if (sampler->state.wrap_r == PIPE_TEX_WRAP_CLAMP)
+            sampler->state.wrap_r = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
+        else if (sampler->state.wrap_r == PIPE_TEX_WRAP_MIRROR_CLAMP)
+            sampler->state.wrap_r = PIPE_TEX_WRAP_MIRROR_CLAMP_TO_EDGE;
+    }
+
     sampler->filter0 |=
-        (r300_translate_wrap(state->wrap_s) << R300_TX_WRAP_S_SHIFT) |
-        (r300_translate_wrap(state->wrap_t) << R300_TX_WRAP_T_SHIFT) |
-        (r300_translate_wrap(state->wrap_r) << R300_TX_WRAP_R_SHIFT);
+        (r300_translate_wrap(sampler->state.wrap_s) << R300_TX_WRAP_S_SHIFT) |
+        (r300_translate_wrap(sampler->state.wrap_t) << R300_TX_WRAP_T_SHIFT) |
+        (r300_translate_wrap(sampler->state.wrap_r) << R300_TX_WRAP_R_SHIFT);
 
     sampler->filter0 |= r300_translate_tex_filters(state->min_img_filter,
                                                    state->mag_img_filter,
