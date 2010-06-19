@@ -111,10 +111,6 @@ int
 _active_list_contains (active_list_t *list, const char *identifier);
 
 static void
-_glcpp_parser_evaluate_defined (glcpp_parser_t *parser,
-				token_list_t *list);
-
-static void
 _glcpp_parser_expand_token_list (glcpp_parser_t *parser,
 				 token_list_t *list);
 
@@ -155,8 +151,8 @@ glcpp_parser_lex_from (glcpp_parser_t *parser, token_list_t *list);
 %type <ival> expression INTEGER operator SPACE
 %type <str> IDENTIFIER INTEGER_STRING OTHER
 %type <string_list> identifier_list
-%type <token> preprocessing_token
-%type <token_list> pp_tokens replacement_list text_line
+%type <token> preprocessing_token conditional_token
+%type <token_list> pp_tokens replacement_list text_line conditional_tokens
 %left OR
 %left AND
 %left '|'
@@ -219,7 +215,7 @@ control_line:
 		}
 		talloc_free ($2);
 	}
-|	HASH_IF pp_tokens NEWLINE {
+|	HASH_IF conditional_tokens NEWLINE {
 		token_list_t *expanded;
 		token_t *token;
 
@@ -227,7 +223,6 @@ control_line:
 		token = _token_create_ival (parser, IF_EXPANDED, IF_EXPANDED);
 		_token_list_append (expanded, token);
 		talloc_unlink (parser, token);
-		_glcpp_parser_evaluate_defined (parser, $2);
 		_glcpp_parser_expand_token_list (parser, $2);
 		_token_list_append_list (expanded, $2);
 		glcpp_parser_lex_from (parser, expanded);
@@ -242,7 +237,7 @@ control_line:
 		talloc_free ($2);
 		_glcpp_parser_skip_stack_push_if (parser, & @1, macro == NULL);
 	}
-|	HASH_ELIF pp_tokens NEWLINE {
+|	HASH_ELIF conditional_tokens NEWLINE {
 		token_list_t *expanded;
 		token_t *token;
 
@@ -250,7 +245,6 @@ control_line:
 		token = _token_create_ival (parser, ELIF_EXPANDED, ELIF_EXPANDED);
 		_token_list_append (expanded, token);
 		talloc_unlink (parser, token);
-		_glcpp_parser_evaluate_defined (parser, $2);
 		_glcpp_parser_expand_token_list (parser, $2);
 		_token_list_append_list (expanded, $2);
 		glcpp_parser_lex_from (parser, expanded);
@@ -382,6 +376,35 @@ junk:
 |	pp_tokens {
 		glcpp_warning(&@1, parser, "extra tokens at end of directive");
 	}
+;
+
+conditional_token:
+	/* Handle "defined" operator */
+	DEFINED IDENTIFIER {
+		int v = hash_table_find (parser->defines, $2) ? 1 : 0;
+		$$ = _token_create_ival (parser, INTEGER, v);
+	}
+|	DEFINED '(' IDENTIFIER ')' {
+		int v = hash_table_find (parser->defines, $3) ? 1 : 0;
+		$$ = _token_create_ival (parser, INTEGER, v);
+	}
+|	preprocessing_token
+;
+
+conditional_tokens:
+	/* Exactly the same as pp_tokens, but using conditional_token */
+	conditional_token {
+		parser->space_tokens = 1;
+		$$ = _token_list_create (parser);
+		_token_list_append ($$, $1);
+		talloc_unlink (parser, $1);
+	}
+|	conditional_tokens conditional_token {
+		$$ = $1;
+		_token_list_append ($$, $2);
+		talloc_unlink (parser, $2);
+	}
+;
 
 pp_tokens:
 	preprocessing_token {
@@ -936,41 +959,6 @@ glcpp_parser_destroy (glcpp_parser_t *parser)
 	talloc_free (parser);
 }
 
-/* Replace any occurences of DEFINED tokens in 'list' with either a
- * '0' or '1' INTEGER token depending on whether the next token in the
- * list is defined or not. */
-static void
-_glcpp_parser_evaluate_defined (glcpp_parser_t *parser,
-				token_list_t *list)
-{
-	token_node_t *node, *next;
-	macro_t *macro;
-
-	if (list == NULL)
-		return;
-
-	for (node = list->head; node; node = node->next) {
-		if (node->token->type != DEFINED)
-			continue;
-		next = node->next;
-		while (next && next->token->type == SPACE)
-			next = next->next;
-		if (next == NULL || next->token->type != IDENTIFIER) {
-			yyerror (&node->token->location, parser, "operator \"defined\" requires an identifier\n");
-			/* Already flagged an error; fake it. */
-			node->token->type = INTEGER;
-			node->token->value.ival = 0;
-			return;
-		}
-		macro = hash_table_find (parser->defines,
-					 next->token->value.str);
-
-		node->token->type = INTEGER;
-		node->token->value.ival = (macro != NULL);
-		node->next = next->next;
-	}
-}
-	
 typedef enum function_status
 {
 	FUNCTION_STATUS_SUCCESS,
