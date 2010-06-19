@@ -104,7 +104,7 @@ generate_110_uniforms(exec_list *instructions,
     * FINISHME: for now.
     */
    const glsl_type *const mat4_array_type =
-      glsl_type::get_array_instance(glsl_type::mat4_type, 4);
+      glsl_type::get_array_instance(symtab, glsl_type::mat4_type, 4);
 
    add_variable("gl_TextureMatrix", ir_var_uniform, -1, mat4_array_type,
 		instructions, symtab);
@@ -122,7 +122,8 @@ generate_110_uniforms(exec_list *instructions,
     * FINISHME: at least 8, so hard-code 8 for now.
     */
    const glsl_type *const light_source_array_type =
-      glsl_type::get_array_instance(symtab->get_type("gl_LightSourceParameters"), 8);
+      glsl_type::get_array_instance(symtab,
+				    symtab->get_type("gl_LightSourceParameters"), 8);
 
    add_variable("gl_LightSource", ir_var_uniform, -1, light_source_array_type,
 		instructions, symtab);
@@ -157,7 +158,7 @@ generate_110_vs_variables(exec_list *instructions,
     * FINISHME: for now.
     */
    const glsl_type *const vec4_array_type =
-      glsl_type::get_array_instance(glsl_type::vec4_type, 4);
+      glsl_type::get_array_instance(symtab, glsl_type::vec4_type, 4);
 
    add_variable("gl_TexCoord", ir_var_out, VERT_RESULT_TEX0, vec4_array_type,
 		instructions, symtab);
@@ -179,6 +180,7 @@ static void
 generate_130_vs_variables(exec_list *instructions,
 			  glsl_symbol_table *symtab)
 {
+   void *ctx = symtab;
    generate_120_vs_variables(instructions, symtab);
 
    for (unsigned i = 0; i < Elements(builtin_130_vs_variables); i++) {
@@ -190,7 +192,7 @@ generate_130_vs_variables(exec_list *instructions,
     * FINISHME: the value of GL_MAX_CLIP_DISTANCES.
     */
    const glsl_type *const clip_distance_array_type =
-      glsl_type::get_array_instance(glsl_type::float_type, 8);
+      glsl_type::get_array_instance(ctx, glsl_type::float_type, 8);
 
    /* FINISHME: gl_ClipDistance needs a real location assigned. */
    add_variable("gl_ClipDistance", ir_var_out, -1, clip_distance_array_type,
@@ -240,7 +242,7 @@ generate_110_fs_variables(exec_list *instructions,
     * FINISHME: for now.
     */
    const glsl_type *const vec4_array_type =
-      glsl_type::get_array_instance(glsl_type::vec4_type, 4);
+      glsl_type::get_array_instance(symtab, glsl_type::vec4_type, 4);
 
    add_variable("gl_TexCoord", ir_var_in, FRAG_ATTRIB_TEX0, vec4_array_type,
 		instructions, symtab);
@@ -256,7 +258,7 @@ generate_ARB_draw_buffers_fs_variables(exec_list *instructions,
     * FINISHME: at least 1, so hard-code 1 for now.
     */
    const glsl_type *const vec4_array_type =
-      glsl_type::get_array_instance(glsl_type::vec4_type, 1);
+      glsl_type::get_array_instance(symtab, glsl_type::vec4_type, 1);
 
    ir_variable *const fd =
       add_variable("gl_FragData", ir_var_out, FRAG_RESULT_DATA0,
@@ -279,13 +281,14 @@ static void
 generate_130_fs_variables(exec_list *instructions,
 			  glsl_symbol_table *symtab)
 {
+   void *ctx = symtab;
    generate_120_fs_variables(instructions, symtab);
 
    /* FINISHME: The size of this array is implementation dependent based on
     * FINISHME: the value of GL_MAX_CLIP_DISTANCES.
     */
    const glsl_type *const clip_distance_array_type =
-      glsl_type::get_array_instance(glsl_type::float_type, 8);
+      glsl_type::get_array_instance(ctx, glsl_type::float_type, 8);
 
    /* FINISHME: gl_ClipDistance needs a real location assigned. */
    add_variable("gl_ClipDistance", ir_var_in, -1, clip_distance_array_type,

@@ -198,7 +198,8 @@ struct glsl_type {
    /**
     * Get the instance of an array type
     */
-   static const glsl_type *get_array_instance(const glsl_type *base,
+   static const glsl_type *get_array_instance(void *ctx,
+					      const glsl_type *base,
 					      unsigned elements);
 
    /**
@@ -387,7 +388,7 @@ private:
    /**
     * Constructor for array types
     */
-   glsl_type(const glsl_type *array, unsigned length);
+   glsl_type(void *ctx, const glsl_type *array, unsigned length);
 
    /** Hash table containing the known array types. */
    static struct hash_table *array_types;
