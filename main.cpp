@@ -36,9 +36,9 @@
 #include "ir_print_visitor.h"
 #include "program.h"
 
-
+/* Returned string will have 'ctx' as its talloc owner. */
 static char *
-load_text_file(const char *file_name, size_t *size)
+load_text_file(void *ctx, const char *file_name, size_t *size)
 {
 	char *text = NULL;
 	struct stat st;
@@ -51,7 +51,7 @@ load_text_file(const char *file_name, size_t *size)
 	}
 
 	if (fstat(fd, & st) == 0) {
-	   text = (char *) malloc(st.st_size + 1);
+	   text = (char *) talloc_size(ctx, st.st_size + 1);
 		if (text != NULL) {
 			do {
 				ssize_t bytes = read(fd, text + total_read,
@@ -229,7 +229,8 @@ main(int argc, char **argv)
       else
 	 usage_fail(argv[0]);
 
-      shader->Source = load_text_file(argv[optind], &shader->SourceLen);
+      shader->Source = load_text_file(whole_program,
+				      argv[optind], &shader->SourceLen);
       if (shader->Source == NULL) {
 	 printf("File \"%s\" does not exist.\n", argv[optind]);
 	 exit(EXIT_FAILURE);
