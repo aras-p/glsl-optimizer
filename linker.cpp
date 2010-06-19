@@ -170,6 +170,60 @@ validate_fragment_shader_executable(struct glsl_shader *shader)
 }
 
 
+/**
+ * Perform validation of uniforms used across multiple shader stages
+ */
+bool
+cross_validate_uniforms(struct glsl_shader **shaders, unsigned num_shaders)
+{
+   /* Examine all of the uniforms in all of the shaders and cross validate
+    * them.
+    */
+   glsl_symbol_table uniforms;
+   for (unsigned i = 0; i < num_shaders; i++) {
+      foreach_list(node, &shaders[i]->ir) {
+	 ir_variable *const var = ((ir_instruction *) node)->as_variable();
+
+	 if ((var == NULL) || (var->mode != ir_var_uniform))
+	    continue;
+
+	 /* If a uniform with this name has already been seen, verify that the
+	  * new instance has the same type.  In addition, if the uniforms have
+	  * initializers, the values of the initializers must be the same.
+	  */
+	 ir_variable *const existing = uniforms.get_variable(var->name);
+	 if (existing != NULL) {
+	    if (var->type != existing->type) {
+	       printf("error: uniform `%s' declared as type `%s' and "
+		      "type `%s'\n",
+		      var->name, var->type->name, existing->type->name);
+	       return false;
+	    }
+
+	    if (var->constant_value != NULL) {
+	       if (existing->constant_value != NULL) {
+		  if (!var->constant_value->has_value(existing->constant_value)) {
+		     printf("error: initializers for uniform `%s' have "
+			    "differing values\n",
+			    var->name);
+		     return false;
+		  }
+	       } else
+		  /* If the first-seen instance of a particular uniform did not
+		   * have an initializer but a later instance does, copy the
+		   * initializer to the version stored in the symbol table.
+		   */
+		  existing->constant_value = var->constant_value->clone();
+	    }
+	 } else
+	    uniforms.add_variable(var->name, var);
+      }
+   }
+
+   return true;
+}
+
+
 void
 link_shaders(struct glsl_program *prog)
 {
@@ -217,8 +271,22 @@ link_shaders(struct glsl_program *prog)
 
 
    /* FINISHME: Perform inter-stage linking. */
+   glsl_shader *shader_executables[2];
+   unsigned num_shader_executables;
 
-   prog->LinkStatus = true;
+   num_shader_executables = 0;
+   if (num_vert_shaders > 0) {
+      shader_executables[num_shader_executables] = vert_shader_list[0];
+      num_shader_executables++;
+   }
+
+   if (num_frag_shaders > 0) {
+      shader_executables[num_shader_executables] = frag_shader_list[0];
+      num_shader_executables++;
+   }
+
+   if (cross_validate_uniforms(shader_executables, num_shader_executables))
+      prog->LinkStatus = true;
 
 done:
    free(vert_shader_list);
