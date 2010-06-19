@@ -118,6 +118,7 @@ compile_shader(struct glsl_shader *shader)
    state.scanner = NULL;
    state.translation_unit.make_empty();
    state.symbols = new glsl_symbol_table;
+   state.info_log = talloc_strdup(shader, "");
    state.error = false;
    state.temp_index = 0;
    state.loop_or_switch_nesting = NULL;
@@ -164,6 +165,12 @@ compile_shader(struct glsl_shader *shader)
 
    shader->symbols = state.symbols;
    shader->CompileStatus = !state.error;
+
+   if (shader->InfoLog)
+      talloc_free(shader->InfoLog);
+
+   shader->InfoLog = state.info_log;
+
    return;
 }
 
