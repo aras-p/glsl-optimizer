@@ -386,6 +386,12 @@ struct rc_opcode_info rc_opcodes[MAX_RC_OPCODE] = {
 		.NumSrcRegs = 0,
 	},
 	{
+		.Opcode = RC_OPCODE_CONTINUE,
+		.Name = "CONTINUE",
+		.IsFlowControl = 1,
+		.NumSrcRegs = 0
+	},
+	{
 		.Opcode = RC_OPCODE_REPL_ALPHA,
 		.Name = "REPL_ALPHA",
 		.HasDstReg = 1

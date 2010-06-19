@@ -30,6 +30,7 @@
 #include <stdio.h>
 
 #include "../r300_reg.h"
+#include "radeon_emulate_loops.h"
 
 /**
  * Rewrite IF instructions to use the ALU result special register.
@@ -57,6 +58,31 @@ int r500_transform_IF(
 	inst->U.I.SrcReg[0].Negate = 0;
 
 	return 1;
+}
+
+/**
+ * Rewrite loops to make them easier to emit.  This is not a local
+ * transformation, because it modifies and reorders an entire block of code.
+ */
+void r500_transform_unroll_loops(struct radeon_compiler * c,
+						struct emulate_loop_state *s)
+{
+	int i;
+	
+	rc_transform_unroll_loops(c, s);
+	
+	for( i = s->LoopCount - 1; i >= 0; i-- ){
+		struct rc_instruction * inst_continue;
+		if(!s->Loops[i].EndLoop){
+			continue;
+		}
+		/* Insert a continue instruction at the end of the loop.  This
+		 * is required in order to emit loops correctly. */
+		inst_continue = rc_insert_new_instruction(c,
+						s->Loops[i].EndIf->Prev);
+		inst_continue->U.I.Opcode = RC_OPCODE_CONTINUE;
+	}
+
 }
 
 static int r500_swizzle_is_native(rc_opcode opcode, struct rc_src_register reg)
@@ -322,6 +348,11 @@ void r500FragmentProgramDump(struct rX00_fragment_program_code *c)
     case R500_INST_TYPE_FC:
       fprintf(stderr, "\t2:FC_INST    0x%08x:", code->inst[n].inst2);
       inst = code->inst[n].inst2;
+      /* JUMP_FUNC JUMP_ANY*/
+      fprintf(stderr, "0x%02x %1x ", inst >> 8 & 0xff,
+          (inst & R500_FC_JUMP_ANY) >> 5);
+      
+      /* OP */
       switch(inst & 0x7){
       case R500_FC_OP_JUMP:
       	fprintf(stderr, "JUMP");
@@ -348,9 +379,8 @@ void r500FragmentProgramDump(struct rX00_fragment_program_code *c)
         fprintf(stderr, "CONTINUE");
         break;
       }
-      fprintf(stderr, " B_ELSE: %1x, JUMP_ANY: %1x", (inst & R500_FC_B_ELSE) >> 4,
-                                                     (inst & R500_FC_JUMP_ANY) >> 5);
-      fprintf(stderr, ", A_OP: ");
+      fprintf(stderr," "); 
+      /* A_OP */
       switch(inst & (0x3 << 6)){
       case R500_FC_A_OP_NONE:
         fprintf(stderr, "NONE");
@@ -362,11 +392,9 @@ void r500FragmentProgramDump(struct rX00_fragment_program_code *c)
         fprintf(stderr, "PUSH");
         break;
       }
-      fprintf(stderr, "\n\tJUMP_FUNC    0x%02x, B_POP_CNT: %d",
-                                                        (inst >> 8) & 0xff,
-                                                        (inst >> 16) & 0x1f);
+      /* B_OP0 B_OP1 */
       for(i=0; i<2; i++){
-        fprintf(stderr, ", B_OP%d: ", i);
+        fprintf(stderr, " ");
         switch(inst & (0x3 << (24 + (i * 2)))){
         /* R500_FC_B_OP0_NONE 
 	 * R500_FC_B_OP1_NONE */
@@ -383,9 +411,17 @@ void r500FragmentProgramDump(struct rX00_fragment_program_code *c)
           break;
         }
       }
-      fprintf(stderr, ", IGN_UNC: %1x\n", inst & R500_FC_IGNORE_UNCOVERED);
+      /*POP_CNT B_ELSE */
+      fprintf(stderr, " %d %1x", (inst >> 16) & 0x1f, (inst & R500_FC_B_ELSE) >> 4);
       inst = code->inst[n].inst3;
-      fprintf(stderr, "\t3:FC_ADDR    0x%08x:", inst);
+      /* JUMP_ADDR */
+      fprintf(stderr, " %d", inst >> 16);
+      
+      if(code->inst[n].inst2 & R500_FC_IGNORE_UNCOVERED){
+        fprintf(stderr, " IGN_UNC");
+      }
+      inst = code->inst[n].inst3;
+      fprintf(stderr, "\n\t3:FC_ADDR    0x%08x:", inst);
       fprintf(stderr, "BOOL: 0x%02x, INT: 0x%02x, JUMP_ADDR: %d, JMP_GLBL: %1x\n",
       inst & 0x1f, (inst >> 8) & 0x1f, (inst >> 16) & 0x1ff, inst >> 31); 
       break;

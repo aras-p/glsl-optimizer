@@ -246,13 +246,14 @@ static void r300_emit_fs_code_to_buffer(
     if (r300->screen->caps.is_r500) {
         struct r500_fragment_program_code *code = &generic_code->code.r500;
 
-        shader->cb_code_size = 17 +
+        shader->cb_code_size = 19 +
                                ((code->inst_end + 1) * 6) +
                                imm_count * 7;
 
         NEW_CB(shader->cb_code, shader->cb_code_size);
         OUT_CB_REG(R500_US_CONFIG, R500_ZERO_TIMES_ANYTHING_EQUALS_ZERO);
         OUT_CB_REG(R500_US_PIXSIZE, code->max_temp_idx);
+        OUT_CB_REG(R500_US_FC_CTRL, code->us_fc_ctrl);
         OUT_CB_REG(R500_US_CODE_RANGE,
                    R500_US_CODE_RANGE_ADDR(0) | R500_US_CODE_RANGE_SIZE(code->inst_end));
         OUT_CB_REG(R500_US_CODE_OFFSET, 0);
