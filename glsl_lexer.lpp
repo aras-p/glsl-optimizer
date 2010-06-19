@@ -156,8 +156,22 @@ out		return OUT;
 inout		return INOUT;
 uniform		return UNIFORM;
 varying		return VARYING;
-centroid	return CENTROID;
-invariant	return INVARIANT;
+centroid	{
+		   if (yyextra->language_version >= 120) {
+		      return CENTROID;
+		   } else {
+		      yylval->identifier = strdup(yytext);
+		      return IDENTIFIER;
+		   }
+		}
+invariant	{
+		   if (yyextra->language_version >= 120) {
+		      return INVARIANT;
+		   } else {
+		      yylval->identifier = strdup(yytext);
+		      return IDENTIFIER;
+		   }
+		}
 
 flat		{
 		   if (yyextra->language_version >= 130) {
