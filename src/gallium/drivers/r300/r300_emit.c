@@ -276,6 +276,20 @@ void r300_emit_fb_state(struct r300_context* r300, unsigned size, void* state)
 
     BEGIN_CS(size);
 
+    /* Set up scissors.
+     * By writing to the SC registers, SC & US assert idle. */
+    OUT_CS_REG_SEQ(R300_SC_SCISSORS_TL, 2);
+    if (r300->screen->caps.is_r500) {
+        OUT_CS(0);
+        OUT_CS(((fb->width  - 1) << R300_SCISSORS_X_SHIFT) |
+               ((fb->height - 1) << R300_SCISSORS_Y_SHIFT));
+    } else {
+        OUT_CS((1440 << R300_SCISSORS_X_SHIFT) |
+               (1440 << R300_SCISSORS_Y_SHIFT));
+        OUT_CS(((fb->width  + 1440-1) << R300_SCISSORS_X_SHIFT) |
+               ((fb->height + 1440-1) << R300_SCISSORS_Y_SHIFT));
+    }
+
     /* Flush and free renderbuffer caches. */
     OUT_CS_REG(R300_RB3D_DSTCACHE_CTLSTAT,
         R300_RB3D_DSTCACHE_CTLSTAT_DC_FREE_FREE_3D_TAGS |
@@ -283,6 +297,11 @@ void r300_emit_fb_state(struct r300_context* r300, unsigned size, void* state)
     OUT_CS_REG(R300_ZB_ZCACHE_CTLSTAT,
         R300_ZB_ZCACHE_CTLSTAT_ZC_FLUSH_FLUSH_AND_FREE |
         R300_ZB_ZCACHE_CTLSTAT_ZC_FREE_FREE);
+
+    /* Wait until the GPU is idle.
+     * This fixes random pixels sometimes appearing probably caused
+     * by incomplete rendering. */
+    OUT_CS_REG(RADEON_WAIT_UNTIL, RADEON_WAIT_3D_IDLECLEAN);
 
     /* NUM_MULTIWRITES replicates COLOR[0] to all colorbuffers, which is not
      * what we usually want. */
@@ -320,18 +339,6 @@ void r300_emit_fb_state(struct r300_context* r300, unsigned size, void* state)
 
         OUT_CS_REG_SEQ(R300_ZB_DEPTHPITCH, 1);
         OUT_CS_RELOC(surf->buffer, surf->pitch, 0, surf->domain, 0);
-    }
-
-    OUT_CS_REG_SEQ(R300_SC_SCISSORS_TL, 2);
-    if (r300->screen->caps.is_r500) {
-        OUT_CS(0);
-        OUT_CS(((fb->width  - 1) << R300_SCISSORS_X_SHIFT) |
-               ((fb->height - 1) << R300_SCISSORS_Y_SHIFT));
-    } else {
-        OUT_CS((1440 << R300_SCISSORS_X_SHIFT) |
-               (1440 << R300_SCISSORS_Y_SHIFT));
-        OUT_CS(((fb->width  + 1440-1) << R300_SCISSORS_X_SHIFT) |
-               ((fb->height + 1440-1) << R300_SCISSORS_Y_SHIFT));
     }
     END_CS;
 }

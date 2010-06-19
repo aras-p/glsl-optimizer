@@ -709,7 +709,7 @@ static void
     memcpy(r300->fb_state.state, state, sizeof(struct pipe_framebuffer_state));
 
     r300->fb_state.size = (10 * state->nr_cbufs) + (2 * (4 - state->nr_cbufs)) +
-                          (state->zsbuf ? 10 : 0) + 9;
+                          (state->zsbuf ? 10 : 0) + 11;
 
     /* Polygon offset depends on the zbuffer bit depth. */
     if (state->zsbuf && r300->polygon_offset_enabled) {

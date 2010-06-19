@@ -57,22 +57,11 @@ static void r300_copy_from_tiled_texture(struct pipe_context *ctx,
     subdst.face = 0;
     subdst.level = 0;
 
-    /* XXX if we don't flush before copying the texture and mapping it,
-     * we get wrong pixels, i.e. it's like latest draw calls didn't happen,
-     * including this blit. Tests: e.g. piglit/provoking-vertex
-     *
-     * Since the flush immediately before mapping is implicit (the buffer is
-     * always referenced in resource_copy_region), every read transfer costs
-     * 2 flushes. That sucks. */
-    ctx->flush(ctx, 0, NULL);
-
     ctx->resource_copy_region(ctx, &r300transfer->detiled_texture->b.b, subdst,
 			      0, 0, 0,
 			      tex, transfer->sr,
 			      transfer->box.x, transfer->box.y, transfer->box.z,
 			      transfer->box.width, transfer->box.height);
-
-    /* Flushing after the copy is implicit, issued by winsys. */
 }
 
 /* Copy a detiled texture to a tiled one. */
@@ -91,9 +80,6 @@ static void r300_copy_into_tiled_texture(struct pipe_context *ctx,
 			      &r300transfer->detiled_texture->b.b, subsrc,
 			      0, 0, 0,
 			      transfer->box.width, transfer->box.height);
-
-    /* XXX this flush fixes a few piglit tests (e.g. glean/pixelFormats). */
-    ctx->flush(ctx, 0, NULL);
 }
 
 struct pipe_transfer*
