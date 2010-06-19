@@ -1471,11 +1471,27 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
 
    if (qual->uniform)
       var->shader_in = true;
-   if (qual->varying) {
-      if (qual->in)
+
+   /* Any 'in' or 'inout' variables at global scope must be marked as being
+    * shader inputs.  Likewise, any 'out' or 'inout' variables at global scope
+    * must be marked as being shader outputs.
+    */
+   if (state->current_function == NULL) {
+      switch (var->mode) {
+      case ir_var_in:
+      case ir_var_uniform:
 	 var->shader_in = true;
-      if (qual->out)
+	 break;
+      case ir_var_out:
 	 var->shader_out = true;
+	 break;
+      case ir_var_inout:
+	 var->shader_in = true;
+	 var->shader_out = true;
+	 break;
+      default:
+	 break;
+      }
    }
 
    if (qual->flat)
