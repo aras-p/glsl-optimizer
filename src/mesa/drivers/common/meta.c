@@ -2400,6 +2400,9 @@ _mesa_meta_GenerateMipmap(GLcontext *ctx, GLenum target,
          break;
       }
 
+      /* Set MaxLevel large enough to hold the new level when we allocate it  */
+      _mesa_TexParameteri(target, GL_TEXTURE_MAX_LEVEL, dstLevel);
+
       /* Create empty dest image */
       if (target == GL_TEXTURE_1D) {
          _mesa_TexImage1D(target, dstLevel, srcImage->InternalFormat,

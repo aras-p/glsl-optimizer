@@ -593,12 +593,7 @@ static int image_matches_texture_obj(struct gl_texture_object *texObj,
 	if (!baseImage)
 		return 0;
 
-	/* Check image level against object BaseLevel, but not MaxLevel. MaxLevel is not
-	 * the highest level that can be assigned to the miptree.
-	 */
-	const unsigned maxLevel = texObj->BaseLevel + baseImage->MaxLog2;
-	if (level < texObj->BaseLevel || level > maxLevel
-			|| level > RADEON_MIPTREE_MAX_TEXTURE_LEVELS)
+	if (level < texObj->BaseLevel || level > texObj->MaxLevel)
 		return 0;
 
 	const unsigned levelDiff = level - texObj->BaseLevel;
@@ -620,7 +615,9 @@ static void teximage_assign_miptree(radeonContextPtr rmesa,
 	radeonTexObj *t = radeon_tex_obj(texObj);
 	radeon_texture_image* image = get_radeon_texture_image(texImage);
 
-	/* check image for dimension and level compatibility with texture */
+	/* Since miptree holds only images for levels <BaseLevel..MaxLevel>
+	 * don't allocate the miptree if the teximage won't fit.
+	 */
 	if (!image_matches_texture_obj(texObj, texImage, level))
 		return;
 
