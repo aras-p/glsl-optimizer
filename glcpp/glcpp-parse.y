@@ -232,12 +232,12 @@ control_line:
 		_token_list_append_list (expanded, $2);
 		glcpp_parser_lex_from (parser, expanded);
 	}
-|	HASH_IFDEF IDENTIFIER NEWLINE {
+|	HASH_IFDEF IDENTIFIER junk NEWLINE {
 		macro_t *macro = hash_table_find (parser->defines, $2);
 		talloc_free ($2);
 		_glcpp_parser_skip_stack_push_if (parser, & @1, macro != NULL);
 	}
-|	HASH_IFNDEF IDENTIFIER NEWLINE {
+|	HASH_IFNDEF IDENTIFIER junk NEWLINE {
 		macro_t *macro = hash_table_find (parser->defines, $2);
 		talloc_free ($2);
 		_glcpp_parser_skip_stack_push_if (parser, & @1, macro == NULL);
@@ -376,6 +376,12 @@ replacement_list:
 	/* empty */ { $$ = NULL; }
 |	pp_tokens
 ;
+
+junk:
+	/* empty */
+|	pp_tokens {
+		glcpp_warning(&@1, parser, "extra tokens at end of directive");
+	}
 
 pp_tokens:
 	preprocessing_token {
