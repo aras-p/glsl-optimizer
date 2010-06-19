@@ -40,6 +40,22 @@ glcpp_error (YYLTYPE *locp, glcpp_parser_t *parser, const char *fmt, ...)
 	parser->info_log = talloc_strdup_append(parser->info_log, "\n");
 }
 
+void
+glcpp_warning (YYLTYPE *locp, glcpp_parser_t *parser, const char *fmt, ...)
+{
+	parser->info_log = talloc_asprintf_append(parser->info_log,
+						  "%u:%u(%u): "
+						  "preprocessor warning: ",
+						  locp->source,
+						  locp->first_line,
+						  locp->first_column);
+	va_list ap;
+	va_start(ap, fmt);
+	parser->info_log = talloc_vasprintf_append(parser->info_log, fmt, ap);
+	va_end(ap);
+	parser->info_log = talloc_strdup_append(parser->info_log, "\n");
+}
+
 extern int
 preprocess(void *talloc_ctx, const char **shader, size_t *shader_len)
 {
