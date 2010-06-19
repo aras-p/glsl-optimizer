@@ -29,6 +29,10 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+extern "C" {
+#include <talloc.h>
+}
+
 #include "ast.h"
 #include "glsl_parser_extras.h"
 #include "glsl_parser.h"
@@ -186,8 +190,8 @@ main(int argc, char **argv)
 		 sizeof(struct glsl_shader *) * (whole_program.NumShaders + 1));
       assert(whole_program.Shaders != NULL);
 
-      struct glsl_shader *shader = new glsl_shader;
-      memset(shader, 0, sizeof(*shader));
+      /* talloc context should probably be whole_program */
+      struct glsl_shader *shader = talloc_zero(NULL, glsl_shader);
 
       whole_program.Shaders[whole_program.NumShaders] = shader;
       whole_program.NumShaders++;
