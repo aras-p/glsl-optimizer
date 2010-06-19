@@ -224,6 +224,100 @@ cross_validate_uniforms(struct glsl_shader **shaders, unsigned num_shaders)
 }
 
 
+/**
+ * Validate that outputs from one stage match inputs of another
+ */
+bool
+cross_validate_outputs_to_inputs(glsl_shader *producer, glsl_shader *consumer)
+{
+   glsl_symbol_table parameters;
+   /* FINISHME: Figure these out dynamically. */
+   const char *const producer_stage = "vertex";
+   const char *const consumer_stage = "fragment";
+
+   /* Find all shader outputs in the "producer" stage.
+    */
+   foreach_list(node, &producer->ir) {
+      ir_variable *const var = ((ir_instruction *) node)->as_variable();
+
+      /* FINISHME: For geometry shaders, this should also look for inout
+       * FINISHME: variables.
+       */
+      if ((var == NULL) || (var->mode != ir_var_out))
+	 continue;
+
+      parameters.add_variable(var->name, var);
+   }
+
+
+   /* Find all shader inputs in the "consumer" stage.  Any variables that have
+    * matching outputs already in the symbol table must have the same type and
+    * qualifiers.
+    */
+   foreach_list(node, &consumer->ir) {
+      ir_variable *const input = ((ir_instruction *) node)->as_variable();
+
+      /* FINISHME: For geometry shaders, this should also look for inout
+       * FINISHME: variables.
+       */
+      if ((input == NULL) || (input->mode != ir_var_in))
+	 continue;
+
+      ir_variable *const output = parameters.get_variable(input->name);
+      if (output != NULL) {
+	 /* Check that the types match between stages.
+	  */
+	 if (input->type != output->type) {
+	    printf("error: %s shader output `%s' delcared as type `%s', but "
+		   "%s shader input declared as type `%s'\n",
+		   producer_stage, output->name, output->type->name,
+		   consumer_stage, input->type->name);
+	    return false;
+	 }
+
+	 /* Check that all of the qualifiers match between stages.
+	  */
+	 if (input->centroid != output->centroid) {
+	    printf("error: %s shader output `%s' %s centroid qualifier, but "
+		   "%s shader input %s centroid qualifier\n",
+		   producer_stage,
+		   output->name,
+		   (output->centroid) ? "has" : "lacks",
+		   consumer_stage,
+		   (input->centroid) ? "has" : "lacks");
+	    return false;
+	 }
+
+	 if (input->invariant != output->invariant) {
+	    printf("error: %s shader output `%s' %s invariant qualifier, but "
+		   "%s shader input %s invariant qualifier\n",
+		   producer_stage,
+		   output->name,
+		   (output->invariant) ? "has" : "lacks",
+		   consumer_stage,
+		   (input->invariant) ? "has" : "lacks");
+	    return false;
+	 }
+
+	 if (input->interpolation != output->interpolation) {
+	    printf("error: %s shader output `%s' specifies %s interpolation "
+		   "qualifier, "
+		   "but %s shader input specifies %s interpolation "
+		   "qualifier\n",
+		   producer_stage,
+		   output->name,
+		   output->interpolation_string(),
+		   consumer_stage,
+		   input->interpolation_string());
+	    return false;
+	 }
+      }
+   }
+
+   return true;
+}
+
+
 void
 link_shaders(struct glsl_program *prog)
 {
@@ -285,8 +379,18 @@ link_shaders(struct glsl_program *prog)
       num_shader_executables++;
    }
 
-   if (cross_validate_uniforms(shader_executables, num_shader_executables))
+   if (cross_validate_uniforms(shader_executables, num_shader_executables)) {
+      /* Validate the inputs of each stage with the output of the preceeding
+       * stage.
+       */
+      for (unsigned i = 1; i < num_shader_executables; i++) {
+	 if (!cross_validate_outputs_to_inputs(shader_executables[i - 1],
+					       shader_executables[i]))
+	    goto done;
+      }
+
       prog->LinkStatus = true;
+   }
 
 done:
    free(vert_shader_list);
