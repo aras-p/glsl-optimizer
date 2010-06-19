@@ -162,6 +162,11 @@ static void peephole(struct radeon_compiler * c, struct rc_instruction * inst_mo
 	for(struct rc_instruction * inst = inst_mov->Next;
 	    inst != &c->Program.Instructions;
 	    inst = inst->Next) {
+		/* XXX In the future we might be able to make the optimizer
+		 * smart enough to handle loops. */
+		if(inst->U.I.Opcode == RC_OPCODE_BGNLOOP){
+			return;
+		}
 		rc_for_all_reads_mask(inst, peephole_scan_read, &s);
 		rc_for_all_writes_mask(inst, peephole_scan_write, &s);
 		if (s.Conflict)
