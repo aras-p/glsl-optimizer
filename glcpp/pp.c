@@ -26,15 +26,17 @@
 void
 glcpp_error (YYLTYPE *locp, glcpp_parser_t *parser, const char *fmt, ...)
 {
-        parser->errors = talloc_asprintf_append(parser->errors, "%u:%u(%u): "
-						"preprocessor error: ",
-						locp->source, locp->first_line,
-						locp->first_column);
-        va_list ap;
-        va_start(ap, fmt);
-        parser->errors = talloc_vasprintf_append(parser->errors, fmt, ap);
-        va_end(ap);
-        parser->errors = talloc_strdup_append(parser->errors, "\n");
+	parser->info_log = talloc_asprintf_append(parser->info_log,
+						  "%u:%u(%u): "
+						  "preprocessor error: ",
+						  locp->source,
+						  locp->first_line,
+						  locp->first_column);
+	va_list ap;
+	va_start(ap, fmt);
+	parser->info_log = talloc_vasprintf_append(parser->info_log, fmt, ap);
+	va_end(ap);
+	parser->info_log = talloc_strdup_append(parser->info_log, "\n");
 }
 
 extern int
@@ -46,8 +48,8 @@ preprocess(void *talloc_ctx, const char **shader, size_t *shader_len)
 
 	glcpp_parser_parse (parser);
 
-	errors = parser->errors[0] != '\0';
-	printf("%s", parser->errors);
+	errors = parser->info_log[0] != '\0';
+	printf("%s", parser->info_log);
 
 	talloc_steal(talloc_ctx, parser->output);
 	*shader = parser->output;

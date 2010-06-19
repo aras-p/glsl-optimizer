@@ -36,7 +36,7 @@ main (void)
 	ret = glcpp_parser_parse (parser);
 
 	printf("%s", parser->output);
-	fprintf(stderr, "%s", parser->errors);
+	fprintf(stderr, "%s", parser->info_log);
 
 	glcpp_parser_destroy (parser);
 

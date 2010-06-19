@@ -859,11 +859,11 @@ _token_paste (glcpp_parser_t *parser, token_t *token, token_t *other)
 	}
 
 	glcpp_error (&token->location, parser, "");
-	glcpp_print (parser->errors, "Pasting \"");
-	_token_print (&parser->errors, token);
-	glcpp_print (parser->errors, "\" and \"");
-	_token_print (&parser->errors, other);
-	glcpp_print (parser->errors, "\" does not give a valid preprocessing token.\n");
+	glcpp_print (parser->info_log, "Pasting \"");
+	_token_print (&parser->info_log, token);
+	glcpp_print (parser->info_log, "\" and \"");
+	_token_print (&parser->info_log, other);
+	glcpp_print (parser->info_log, "\" does not give a valid preprocessing token.\n");
 
 	return token;
 }
@@ -909,7 +909,7 @@ glcpp_parser_create (void)
 	parser->lex_from_node = NULL;
 
 	parser->output = talloc_strdup(parser, "");
-	parser->errors = talloc_strdup(parser, "");
+	parser->info_log = talloc_strdup(parser, "");
 
 	return parser;
 }
