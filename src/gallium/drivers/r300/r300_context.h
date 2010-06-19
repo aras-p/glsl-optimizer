@@ -77,6 +77,8 @@ struct r300_clip_state {
 };
 
 struct r300_dsa_state {
+    struct pipe_depth_stencil_alpha_state dsa;
+
     /* This is actually a command buffer with named dwords. */
     uint32_t cb_begin;
     uint32_t alpha_function;    /* R300_FG_ALPHA_FUNC: 0x4bd4 */

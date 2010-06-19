@@ -465,6 +465,8 @@ static void*
     struct r300_dsa_state* dsa = CALLOC_STRUCT(r300_dsa_state);
     CB_LOCALS;
 
+    dsa->dsa = *state;
+
     /* Depth test setup. */
     if (state->depth.enabled) {
         dsa->z_buffer_control |= R300_Z_ENABLE;

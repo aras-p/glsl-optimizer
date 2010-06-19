@@ -31,27 +31,39 @@
 /* The ZTOP state                                                            */
 /*****************************************************************************/
 
-static boolean r300_dsa_writes_depth_stencil(struct r300_dsa_state* dsa)
+static boolean r300_dsa_writes_stencil(
+        struct pipe_stencil_state *s)
 {
-    /* We are interested only in the cases when a new depth or stencil value
-     * can be written and changed. */
-
-    /* We might optionally check for [Z func: never] and inspect the stencil
-     * state in a similar fashion, but it's not terribly important. */
-    return (dsa->z_buffer_control & R300_Z_WRITE_ENABLE) ||
-           (dsa->stencil_ref_mask & R300_STENCILWRITEMASK_MASK) ||
-           ((dsa->z_buffer_control & R500_STENCIL_REFMASK_FRONT_BACK) &&
-            (dsa->stencil_ref_bf & R300_STENCILWRITEMASK_MASK));
+    return s->enabled && s->writemask &&
+           (s->fail_op  != PIPE_STENCIL_OP_KEEP ||
+            s->zfail_op != PIPE_STENCIL_OP_KEEP ||
+            s->zpass_op != PIPE_STENCIL_OP_KEEP);
 }
 
-static boolean r300_dsa_alpha_test_enabled(struct r300_dsa_state* dsa)
+static boolean r300_dsa_writes_depth_stencil(
+        struct pipe_depth_stencil_alpha_state *dsa)
+{
+    /* We are interested only in the cases when a depth or stencil value
+     * can be changed. */
+
+    if (dsa->depth.enabled && dsa->depth.writemask &&
+        dsa->depth.func != PIPE_FUNC_NEVER)
+        return TRUE;
+
+    if (r300_dsa_writes_stencil(&dsa->stencil[0]) ||
+        r300_dsa_writes_stencil(&dsa->stencil[1]))
+        return TRUE;
+
+    return FALSE;
+}
+
+static boolean r300_dsa_alpha_test_enabled(
+        struct pipe_depth_stencil_alpha_state *dsa)
 {
     /* We are interested only in the cases when alpha testing can kill
      * a fragment. */
-    uint32_t af = dsa->alpha_function;
 
-    return (af & R300_FG_ALPHA_FUNC_ENABLE) &&
-           (af & R300_FG_ALPHA_FUNC_ALWAYS) != R300_FG_ALPHA_FUNC_ALWAYS;
+    return dsa->alpha.enabled && dsa->alpha.func != PIPE_FUNC_ALWAYS;
 }
 
 static void r300_update_ztop(struct r300_context* r300)
