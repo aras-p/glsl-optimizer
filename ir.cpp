@@ -738,6 +738,23 @@ ir_variable::ir_variable(const struct glsl_type *type, const char *name)
 }
 
 
+const char *
+ir_variable::interpolation_string() const
+{
+   if (!this->shader_in && !this->shader_out)
+      return "";
+
+   switch (this->interpolation) {
+   case ir_var_smooth:        return "smooth";
+   case ir_var_flat:          return "flat";
+   case ir_var_noperspective: return "noperspective";
+   }
+
+   assert(!"Should not get here.");
+   return "";
+}
+
+
 ir_function_signature::ir_function_signature(const glsl_type *return_type)
    : return_type(return_type), is_defined(false)
 {

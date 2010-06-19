@@ -177,6 +177,16 @@ public:
       return var;
    }
 
+   /**
+    * Get the string value for the interpolation qualifier
+    *
+    * \return
+    * If none of \c shader_in or \c shader_out is set, an empty string will
+    * be returned.  Otherwise the string that would be used in a shader to
+    * specify \c mode will be returned.
+    */
+   const char *interpolation_string() const;
+
    const char *name;
 
    /**
