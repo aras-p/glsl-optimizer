@@ -55,12 +55,16 @@
     CS_DEBUG(cs_count = size;) \
 } while (0)
 
+#ifdef DEBUG
 #define END_CS do { \
-    CS_DEBUG(if (cs_count != 0) \
-        debug_printf("r300: Warning: cs_count off by %d\n", cs_count);) \
-    CS_DEBUG(cs_count = 0;) \
+    if (cs_count != 0) \
+        debug_printf("r300: Warning: cs_count off by %d at (%s, %s:%i)\n", \
+                     cs_count, __FUNCTION__, __FILE__, __LINE__); \
+    cs_count = 0; \
 } while (0)
-
+#else
+#define END_CS
+#endif
 
 /**
  * Writing pure DWORDs.
