@@ -222,6 +222,7 @@ main(int argc, char **argv)
       compile_shader(shader);
 
       if (!shader->CompileStatus) {
+	 printf("Info log for %s:\n%s\n", argv[optind], shader->InfoLog);
 	 status = EXIT_FAILURE;
 	 break;
       }
