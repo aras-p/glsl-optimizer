@@ -159,6 +159,31 @@ varying		return VARYING;
 centroid	return CENTROID;
 invariant	return INVARIANT;
 
+flat		{
+		   if (yyextra->language_version >= 130) {
+		      return FLAT;
+		   } else {
+		      yylval->identifier = strdup(yytext);
+		      return IDENTIFIER;
+		   }
+		}
+smooth		{
+		   if (yyextra->language_version >= 130) {
+		      return SMOOTH;
+		   } else {
+		      yylval->identifier = strdup(yytext);
+		      return IDENTIFIER;
+		   }
+		}
+noperspective	{
+		   if (yyextra->language_version >= 130) {
+		      return NOPERSPECTIVE;
+		   } else {
+		      yylval->identifier = strdup(yytext);
+		      return IDENTIFIER;
+		   }
+		}
+
 sampler1D	return SAMPLER1D;
 sampler2D	return SAMPLER2D;
 sampler3D	return SAMPLER3D;
