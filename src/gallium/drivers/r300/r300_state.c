@@ -1126,7 +1126,10 @@ static uint32_t r300_assign_texture_cache_region(unsigned index, unsigned num)
      *
      * This simple trick works for all "num" <= 16.
      */
-    return R300_TX_CACHE(num + index);
+    if (num <= 1)
+        return R300_TX_CACHE(R300_TX_CACHE_WHOLE);
+    else
+        return R300_TX_CACHE(num + index);
 }
 
 static void r300_set_fragment_sampler_views(struct pipe_context* pipe,
