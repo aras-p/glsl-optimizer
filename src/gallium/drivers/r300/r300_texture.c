@@ -21,19 +21,22 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
-#include "pipe/p_screen.h"
+/* Always include headers in the reverse order!! ~ M. */
+#include "r300_texture.h"
+
+#include "r300_context.h"
+#include "r300_reg.h"
+#include "r300_transfer.h"
+#include "r300_screen.h"
+#include "r300_winsys.h"
 
 #include "util/u_format.h"
 #include "util/u_format_s3tc.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 
-#include "r300_context.h"
-#include "r300_reg.h"
-#include "r300_texture.h"
-#include "r300_transfer.h"
-#include "r300_screen.h"
-#include "r300_winsys.h"
+#include "pipe/p_screen.h"
+#include "state_tracker/drm_api.h"
 
 enum r300_dim {
     DIM_WIDTH  = 0,
