@@ -401,6 +401,10 @@ struct r300_context {
 
     /* Vertex buffer for rendering. */
     struct pipe_resource* vbo;
+    /* The KIL opcode needs the first texture unit to be enabled
+     * on r3xx-r4xx. In order to calm down the CS checker, we bind this
+     * dummy texture there. */
+    struct r300_sampler_view *texkill_sampler;
     /* Offset into the VBO. */
     size_t vbo_offset;
 

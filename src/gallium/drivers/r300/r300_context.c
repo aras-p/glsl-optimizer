@@ -23,6 +23,7 @@
 #include "draw/draw_context.h"
 
 #include "util/u_memory.h"
+#include "util/u_sampler.h"
 #include "util/u_simple_list.h"
 #include "util/u_upload_mgr.h"
 
@@ -41,6 +42,12 @@ static void r300_destroy_context(struct pipe_context* context)
     struct r300_context* r300 = r300_context(context);
     struct r300_query *query, *temp;
     struct r300_atom *atom;
+
+    if (r300->texkill_sampler) {
+        pipe_sampler_view_reference(
+                (struct pipe_sampler_view**)r300->texkill_sampler,
+                NULL);
+    }
 
     util_blitter_destroy(r300->blitter);
     draw_destroy(r300->draw);
@@ -250,6 +257,35 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     r300->tran.translate_cache = translate_cache_create();
 
     r300_init_states(&r300->context);
+
+    /* The KIL opcode needs the first texture unit to be enabled
+     * on r3xx-r4xx. In order to calm down the CS checker, we bind this
+     * dummy texture there. */
+    if (!r300->screen->caps.is_r500) {
+        struct pipe_resource *tex;
+        struct pipe_resource rtempl = {{0}};
+        struct pipe_sampler_view vtempl = {{0}};
+
+        rtempl.target = PIPE_TEXTURE_2D;
+        rtempl.format = PIPE_FORMAT_I8_UNORM;
+        rtempl.bind = PIPE_BIND_SAMPLER_VIEW;
+        rtempl.width0 = 1;
+        rtempl.height0 = 1;
+        rtempl.depth0 = 1;
+        tex = screen->resource_create(screen, &rtempl);
+
+        u_sampler_view_default_template(&vtempl, tex, tex->format);
+
+        r300->texkill_sampler = (struct r300_sampler_view*)
+            r300->context.create_sampler_view(&r300->context, tex, &vtempl);
+
+        pipe_resource_reference(&tex, NULL);
+
+        /* This will make sure that the dummy texture is set up
+         * from the beginning even if an application does not use
+         * textures. */
+        r300->textures_state.dirty = TRUE;
+    }
 
     return &r300->context;
 
