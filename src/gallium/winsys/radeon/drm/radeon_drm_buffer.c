@@ -267,16 +267,14 @@ static struct radeon_drm_buffer *get_drm_buffer(struct pb_buffer *_buf)
 boolean radeon_drm_bufmgr_get_handle(struct pb_buffer *_buf,
 				     struct winsys_handle *whandle)
 {
-    int retval, fd;
     struct drm_gem_flink flink;
     struct radeon_drm_buffer *buf = get_drm_buffer(_buf);
+
     if (whandle->type == DRM_API_HANDLE_TYPE_SHARED) {
 	if (!buf->flinked) {
-	    fd = buf->mgr->rws->fd;
 	    flink.handle = buf->bo->handle;
 
-	    retval = ioctl(fd, DRM_IOCTL_GEM_FLINK, &flink);
-	    if (retval) {
+            if (ioctl(buf->mgr->rws->fd, DRM_IOCTL_GEM_FLINK, &flink)) {
 		return FALSE;
 	    }
 

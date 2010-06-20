@@ -931,17 +931,14 @@ static boolean r300_texture_get_handle(struct pipe_screen* screen,
 {
     struct r300_winsys_screen *rws = (struct r300_winsys_screen *)screen->winsys;
     struct r300_texture* tex = (struct r300_texture*)texture;
-    unsigned stride;
 
     if (!tex) {
         return FALSE;
     }
 
-    stride = r300_texture_get_stride(r300_screen(screen), tex, 0);
+    whandle->stride = r300_texture_get_stride(r300_screen(screen), tex, 0);
 
-    rws->buffer_get_handle(rws, tex->buffer, stride, whandle);
-
-    return TRUE;
+    return rws->buffer_get_handle(rws, tex->buffer, whandle);
 }
 
 struct u_resource_vtbl r300_texture_vtbl = 
@@ -1075,7 +1072,6 @@ r300_texture_from_handle(struct pipe_screen* screen,
     struct r300_screen* rscreen = r300_screen(screen);
     struct r300_winsys_buffer *buffer;
     struct r300_texture* tex;
-    unsigned stride;
     boolean override_zb_flags;
 
     /* Support only 2D textures without mipmaps */
@@ -1085,7 +1081,7 @@ r300_texture_from_handle(struct pipe_screen* screen,
         return NULL;
     }
 
-    buffer = rws->buffer_from_handle(rws, screen, whandle, &stride);
+    buffer = rws->buffer_from_handle(rws, whandle->handle);
     if (!buffer) {
         return NULL;
     }
@@ -1101,7 +1097,7 @@ r300_texture_from_handle(struct pipe_screen* screen,
     tex->b.b.screen = screen;
     tex->domain = R300_DOMAIN_VRAM;
 
-    tex->stride_override = stride;
+    tex->stride_override = whandle->stride;
 
     /* one ref already taken */
     tex->buffer = buffer;
@@ -1113,7 +1109,7 @@ r300_texture_from_handle(struct pipe_screen* screen,
                "Pitch: % 4i, Dim: %ix%i, Format: %s\n",
                tex->macrotile ? "YES" : " NO",
                tex->microtile ? "YES" : " NO",
-               stride / util_format_get_blocksize(base->format),
+               whandle->stride / util_format_get_blocksize(base->format),
                base->width0, base->height0,
                util_format_short_name(base->format));
 

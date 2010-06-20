@@ -136,29 +136,21 @@ static boolean radeon_r300_winsys_is_buffer_referenced(struct r300_winsys_screen
 }
 
 static struct r300_winsys_buffer *radeon_r300_winsys_buffer_from_handle(struct r300_winsys_screen *rws,
-									struct pipe_screen *screen,
-									struct winsys_handle *whandle,
-									unsigned *stride)
+                                                                        unsigned handle)
 {
     struct radeon_libdrm_winsys *ws = radeon_winsys_screen(rws);
     struct pb_buffer *_buf;
 
-    _buf = radeon_drm_bufmgr_create_buffer_from_handle(ws->kman, whandle->handle);
-    *stride = whandle->stride;
+    _buf = radeon_drm_bufmgr_create_buffer_from_handle(ws->kman, handle);
     return radeon_libdrm_winsys_buffer(_buf);
 }
 
 static boolean radeon_r300_winsys_buffer_get_handle(struct r300_winsys_screen *rws,
 						    struct r300_winsys_buffer *buffer,
-						    unsigned stride,
-						    struct winsys_handle *whandle)
+                                                    struct winsys_handle *whandle)
 {
     struct pb_buffer *_buf = radeon_pb_buffer(buffer);
-    boolean ret;
-    ret = radeon_drm_bufmgr_get_handle(_buf, whandle);
-    if (ret)
-	whandle->stride = stride;
-    return ret;
+    return radeon_drm_bufmgr_get_handle(_buf, whandle);
 }
 
 static void radeon_set_flush_cb(struct r300_winsys_screen *rws,
