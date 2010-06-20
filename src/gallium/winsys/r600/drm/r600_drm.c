@@ -48,19 +48,22 @@ boolean r600_buffer_get_handle(struct radeon *rw,
 			       struct winsys_handle *whandle)
 {
 	struct drm_gem_flink flink;
-	struct r600_buffer* rbuffer;
-	int r;
+	struct r600_buffer* rbuffer = (struct r600_buffer*)buf;
 
-	rbuffer = (struct r600_buffer*)buf;
-	if (!rbuffer->flink) {
-		flink.handle = rbuffer->bo->handle;
-		r = ioctl(rw->fd, DRM_IOCTL_GEM_FLINK, &flink);
-		if (r) {
-			return FALSE;
+	if (whandle->type == DRM_API_HANDLE_TYPE_SHARED) {
+		if (!rbuffer->flink) {
+			flink.handle = rbuffer->bo->handle;
+
+			if (ioctl(rw->fd, DRM_IOCTL_GEM_FLINK, &flink)) {
+				return FALSE;
+			}
+
+			rbuffer->flink = flink.name;
 		}
-		rbuffer->flink = flink.name;
+		whandle->handle = rbuffer->flink;
+	} else if (whandle->type == DRM_API_HANDLE_TYPE_KMS) {
+		whandle->handle = rbuffer->bo->handle;
 	}
-	whandle->handle = rbuffer->flink;
 	return TRUE;
 }
 
