@@ -105,6 +105,8 @@ init_map(void)
 
 #else
 
+#include <stdlib.h>
+
 static int
 init_map(void)
 {
