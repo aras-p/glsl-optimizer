@@ -35,16 +35,9 @@
 #include "r300_screen.h"
 #include "r300_winsys.h"
 
-#define TILE_WIDTH 0
-#define TILE_HEIGHT 1
-
-static const unsigned microblock_table[5][3][2] = {
-    /*linear  tiled   square-tiled */
-    {{32, 1}, {8, 4}, {0, 0}}, /*   8 bits per pixel */
-    {{16, 1}, {8, 2}, {4, 4}}, /*  16 bits per pixel */
-    {{ 8, 1}, {4, 2}, {0, 0}}, /*  32 bits per pixel */
-    {{ 4, 1}, {0, 0}, {2, 2}}, /*  64 bits per pixel */
-    {{ 2, 1}, {0, 0}, {0, 0}}  /* 128 bits per pixel */
+enum r300_dim {
+    DIM_WIDTH  = 0,
+    DIM_HEIGHT = 1
 };
 
 unsigned r300_get_swizzle_combined(const unsigned char *swizzle_format,
@@ -650,36 +643,65 @@ unsigned r300_texture_get_offset(struct r300_texture* tex, unsigned level,
     }
 }
 
-/**
- * Return the width (dim==TILE_WIDTH) or height (dim==TILE_HEIGHT) of one tile
- * of the given texture.
- */
-static unsigned r300_texture_get_tile_size(struct r300_texture* tex,
-                                           int dim, boolean macrotile)
+/* Returns the number of pixels that the texture should be aligned to
+ * in the given dimension. */
+static unsigned r300_get_pixel_alignment(struct r300_texture *tex,
+                                         enum r300_buffer_tiling macrotile,
+                                         enum r300_dim dim)
 {
-    unsigned pixsize, tile_size;
+    static const unsigned table[2][5][3][2] =
+    {
+        {
+    /* Macro: linear    linear    linear
+       Micro: linear    tiled  square-tiled */
+            {{ 32, 1}, { 8,  4}, { 0,  0}}, /*   8 bits per pixel */
+            {{ 16, 1}, { 8,  2}, { 4,  4}}, /*  16 bits per pixel */
+            {{  8, 1}, { 4,  2}, { 0,  0}}, /*  32 bits per pixel */
+            {{  4, 1}, { 0,  0}, { 2,  2}}, /*  64 bits per pixel */
+            {{  2, 1}, { 0,  0}, { 0,  0}}  /* 128 bits per pixel */
+        },
+        {
+    /* Macro: tiled     tiled     tiled
+       Micro: linear    tiled  square-tiled */
+            {{256, 8}, {64, 32}, { 0,  0}}, /*   8 bits per pixel */
+            {{128, 8}, {64, 16}, {32, 32}}, /*  16 bits per pixel */
+            {{ 64, 8}, {32, 16}, { 0,  0}}, /*  32 bits per pixel */
+            {{ 32, 8}, { 0,  0}, {16, 16}}, /*  64 bits per pixel */
+            {{ 16, 8}, { 0,  0}, { 0,  0}}  /* 128 bits per pixel */
+        }
+    };
+    static const unsigned aa_block[2] = {4, 8};
+    unsigned res = 0;
+    unsigned pixsize = util_format_get_blocksize(tex->b.b.format);
 
-    pixsize = util_format_get_blocksize(tex->b.b.format);
-    tile_size = microblock_table[util_logbase2(pixsize)][tex->microtile][dim];
+    assert(macrotile <= R300_BUFFER_TILED);
+    assert(tex->microtile <= R300_BUFFER_SQUARETILED);
+    assert(pixsize <= 16);
+    assert(dim <= DIM_HEIGHT);
 
-    if (macrotile) {
-        tile_size *= 8;
+    if (tex->b.b.nr_samples > 1) {
+        /* Multisampled textures have their own alignment scheme. */
+        if (pixsize == 4)
+            res = aa_block[dim];
+    } else {
+        /* Standard alignment. */
+        res = table[macrotile][util_logbase2(pixsize)][tex->microtile][dim];
     }
 
-    assert(tile_size);
-    return tile_size;
+    assert(res);
+    return res;
 }
 
 /* Return true if macrotiling should be enabled on the miplevel. */
 static boolean r300_texture_macro_switch(struct r300_texture *tex,
                                          unsigned level,
                                          boolean rv350_mode,
-                                         int dim)
+                                         enum r300_dim dim)
 {
     unsigned tile, texdim;
 
-    tile = r300_texture_get_tile_size(tex, dim, TRUE);
-    if (dim == TILE_WIDTH) {
+    tile = r300_get_pixel_alignment(tex, R300_BUFFER_TILED, dim);
+    if (dim == DIM_WIDTH) {
         texdim = u_minify(tex->b.b.width0, level);
     } else {
         texdim = u_minify(tex->b.b.height0, level);
@@ -715,8 +737,8 @@ unsigned r300_texture_get_stride(struct r300_screen* screen,
     width = u_minify(tex->b.b.width0, level);
 
     if (util_format_is_plain(tex->b.b.format)) {
-        tile_width = r300_texture_get_tile_size(tex, TILE_WIDTH,
-                                                tex->mip_macrotile[level]);
+        tile_width = r300_get_pixel_alignment(tex, tex->mip_macrotile[level],
+                                              DIM_WIDTH);
         width = align(width, tile_width);
 
         stride = util_format_get_stride(tex->b.b.format, width);
@@ -745,8 +767,8 @@ static unsigned r300_texture_get_nblocksy(struct r300_texture* tex,
     height = u_minify(tex->b.b.height0, level);
 
     if (util_format_is_plain(tex->b.b.format)) {
-        tile_height = r300_texture_get_tile_size(tex, TILE_HEIGHT,
-                                                 tex->mip_macrotile[level]);
+        tile_height = r300_get_pixel_alignment(tex, tex->mip_macrotile[level],
+                                               DIM_HEIGHT);
         height = align(height, tile_height);
 
         /* This is needed for the kernel checker, unfortunately. */
@@ -794,8 +816,8 @@ static void r300_setup_miptree(struct r300_screen* screen,
         /* Let's see if this miplevel can be macrotiled. */
         tex->mip_macrotile[i] =
             (tex->macrotile == R300_BUFFER_TILED &&
-             r300_texture_macro_switch(tex, i, rv350_mode, TILE_WIDTH) &&
-             r300_texture_macro_switch(tex, i, rv350_mode, TILE_HEIGHT)) ?
+             r300_texture_macro_switch(tex, i, rv350_mode, DIM_WIDTH) &&
+             r300_texture_macro_switch(tex, i, rv350_mode, DIM_HEIGHT)) ?
              R300_BUFFER_TILED : R300_BUFFER_LINEAR;
 
         stride = r300_texture_get_stride(screen, tex, i);
@@ -871,8 +893,8 @@ static void r300_setup_tiling(struct pipe_screen *screen,
     }
 
     /* Set macrotiling. */
-    if (r300_texture_macro_switch(tex, 0, rv350_mode, TILE_WIDTH) &&
-        r300_texture_macro_switch(tex, 0, rv350_mode, TILE_HEIGHT)) {
+    if (r300_texture_macro_switch(tex, 0, rv350_mode, DIM_WIDTH) &&
+        r300_texture_macro_switch(tex, 0, rv350_mode, DIM_HEIGHT)) {
         tex->macrotile = R300_BUFFER_TILED;
     }
 }
