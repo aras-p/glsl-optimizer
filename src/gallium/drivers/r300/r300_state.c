@@ -1107,6 +1107,28 @@ static void r300_delete_sampler_state(struct pipe_context* pipe, void* state)
     FREE(state);
 }
 
+static uint32_t r300_assign_texture_cache_region(unsigned index, unsigned num)
+{
+    /* This looks like a hack, but I believe it's suppose to work like
+     * that. To illustrate how this works, let's assume you have 5 textures.
+     * From docs, 5 and the successive numbers are:
+     *
+     * FOURTH_1     = 5
+     * FOURTH_2     = 6
+     * FOURTH_3     = 7
+     * EIGHTH_0     = 8
+     * EIGHTH_1     = 9
+     *
+     * First 3 textures will get 3/4 of size of the cache, divived evenly
+     * between them. The last 1/4 of the cache must be divided between
+     * the last 2 textures, each will therefore get 1/8 of the cache.
+     * Why not just to use "5 + texture_index" ?
+     *
+     * This simple trick works for all "num" <= 16.
+     */
+    return R300_TX_CACHE(num + index);
+}
+
 static void r300_set_fragment_sampler_views(struct pipe_context* pipe,
                                             unsigned count,
                                             struct pipe_sampler_view** views)
@@ -1115,12 +1137,18 @@ static void r300_set_fragment_sampler_views(struct pipe_context* pipe,
     struct r300_textures_state* state =
         (struct r300_textures_state*)r300->textures_state.state;
     struct r300_texture *texture;
-    unsigned i;
+    unsigned i, real_num_views = 0, view_index = 0;
     unsigned tex_units = r300->screen->caps.num_tex_units;
     boolean dirty_tex = FALSE;
 
     if (count > tex_units) {
         return;
+    }
+
+    /* Calculate the real number of views. */
+    for (i = 0; i < count; i++) {
+        if (views[i])
+            real_num_views++;
     }
 
     for (i = 0; i < count; i++) {
@@ -1142,6 +1170,10 @@ static void r300_set_fragment_sampler_views(struct pipe_context* pipe,
             if (texture->uses_pitch) {
                 r300->fs_rc_constant_state.dirty = TRUE;
             }
+
+            state->sampler_views[i]->texcache_region =
+                r300_assign_texture_cache_region(view_index, real_num_views);
+            view_index++;
         }
     }
 

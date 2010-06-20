@@ -554,6 +554,9 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
             texstate->filter1 = sampler->filter1;
             texstate->border_color = sampler->border_color;
 
+            /* Assign a texture cache region. */
+            texstate->format.format1 |= view->texcache_region;
+
             /* If compare mode is disabled, the sampler view swizzles
              * are stored in the format.
              * Otherwise, swizzles must be applied after the compare mode

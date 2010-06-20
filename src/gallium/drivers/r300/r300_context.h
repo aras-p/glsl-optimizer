@@ -174,6 +174,9 @@ struct r300_sampler_view {
     /* Copy of r300_texture::texture_format_state with format-specific bits
      * added. */
     struct r300_texture_format_state format;
+
+    /* The texture cache region for this texture. */
+    uint32_t texcache_region;
 };
 
 struct r300_texture_fb_state {
