@@ -950,6 +950,7 @@ glcpp_parser_create (void)
 
 	parser->output = talloc_strdup(parser, "");
 	parser->info_log = talloc_strdup(parser, "");
+	parser->error = 0;
 
 	return parser;
 }
