@@ -218,6 +218,23 @@ public:
    unsigned array_lvalue:1;
 
    /**
+    * Storage location of the base of this variable
+    *
+    * The precise meaning of this field depends on the nature of the variable.
+    *
+    *   - Vertex shader input: one of the values from \c gl_vert_attrib.
+    *   - Vertex shader output: one of the values from \c gl_vert_result.
+    *   - Fragment shader input: one of the values from \c gl_frag_attrib.
+    *   - Fragment shader output: one of the values from \c gl_frag_result.
+    *   - Uniforms: Per-stage uniform slot number.
+    *   - Other: This field is not currently used.
+    *
+    * If the variable is a uniform, shader input, or shader output, and the
+    * slot has not been assigned, the value will be -1.
+    */
+   int location;
+
+   /**
     * Emit a warning if this variable is accessed.
     */
    const char *warn_extension;
