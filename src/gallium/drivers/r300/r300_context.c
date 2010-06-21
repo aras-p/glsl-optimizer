@@ -45,7 +45,7 @@ static void r300_destroy_context(struct pipe_context* context)
 
     if (r300->texkill_sampler) {
         pipe_sampler_view_reference(
-                (struct pipe_sampler_view**)r300->texkill_sampler,
+                (struct pipe_sampler_view**)&r300->texkill_sampler,
                 NULL);
     }
 
