@@ -57,7 +57,7 @@ glcpp_warning (YYLTYPE *locp, glcpp_parser_t *parser, const char *fmt, ...)
 }
 
 extern int
-preprocess(void *talloc_ctx, const char **shader, size_t *shader_len)
+preprocess(void *talloc_ctx, const char **shader)
 {
 	int errors;
 	glcpp_parser_t *parser = glcpp_parser_create ();
@@ -69,7 +69,6 @@ preprocess(void *talloc_ctx, const char **shader, size_t *shader_len)
 
 	talloc_steal(talloc_ctx, parser->output);
 	*shader = parser->output;
-	*shader_len = strlen(parser->output);
 
 	errors = parser->error;
 	glcpp_parser_destroy (parser);
