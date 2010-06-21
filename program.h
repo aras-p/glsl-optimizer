@@ -42,7 +42,40 @@ struct glsl_shader {
 
 
 struct gl_program_parameter_list;
-struct gl_uniform_list;
+
+/**
+ * Shader program uniform variable.
+ * The glGetUniformLocation() and glUniform() commands will use this
+ * information.
+ * Note that a uniform such as "binormal" might be used in both the
+ * vertex shader and the fragment shader.  When glUniform() is called to
+ * set the uniform's value, it must be updated in both the vertex and
+ * fragment shaders.  The uniform may be in different locations in the
+ * two shaders so we keep track of that here.
+ */
+struct gl_uniform
+{
+   const char *Name;        /**< Null-terminated string */
+   GLint VertPos;
+   GLint FragPos;
+   GLboolean Initialized;   /**< For debug.  Has this uniform been set? */
+#if 0
+   GLenum DataType;         /**< GL_FLOAT, GL_FLOAT_VEC2, etc */
+   GLuint Size;             /**< Number of components (1..4) */
+#endif
+};
+
+
+/**
+ * List of gl_uniforms
+ */
+struct gl_uniform_list
+{
+   GLuint Size;                 /**< allocated size of Uniforms array */
+   GLuint NumUniforms;          /**< number of uniforms in the array */
+   struct gl_uniform *Uniforms; /**< Array [Size] */
+};
+
 
 /**
  * Based on gl_shader_program in Mesa's mtypes.h.
