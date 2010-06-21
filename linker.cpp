@@ -69,7 +69,9 @@
 #include "glsl_symbol_table.h"
 #include "glsl_parser_extras.h"
 #include "ir.h"
+#include "ir_optimization.h"
 #include "program.h"
+#include "hash_table.h"
 
 /**
  * Visitor that determines whether or not a variable is ever written.
@@ -318,6 +320,101 @@ cross_validate_outputs_to_inputs(glsl_shader *producer, glsl_shader *consumer)
 }
 
 
+struct uniform_node {
+   exec_node link;
+   struct gl_uniform *u;
+   unsigned slots;
+};
+
+struct gl_uniform_list *
+assign_uniform_locations(struct glsl_shader **shaders, unsigned num_shaders)
+{
+   /* */
+   exec_list uniforms;
+   unsigned total_uniforms = 0;
+   hash_table *ht = hash_table_ctor(32, hash_table_string_hash,
+				    hash_table_string_compare);
+
+   for (unsigned i = 0; i < num_shaders; i++) {
+      unsigned next_position = 0;
+
+      foreach_list(node, &shaders[i]->ir) {
+	 ir_variable *const var = ((ir_instruction *) node)->as_variable();
+
+	 if ((var == NULL) || (var->mode != ir_var_uniform))
+	    continue;
+
+	 const unsigned vec4_slots = (var->component_slots() + 3) / 4;
+	 assert(vec4_slots != 0);
+
+	 uniform_node *n = (uniform_node *) hash_table_find(ht, var->name);
+	 if (n == NULL) {
+	    n = (uniform_node *) calloc(1, sizeof(struct uniform_node));
+	    n->u = (gl_uniform *) calloc(vec4_slots, sizeof(struct gl_uniform));
+	    n->slots = vec4_slots;
+
+	    n->u[0].Name = strdup(var->name);
+	    for (unsigned j = 1; j < vec4_slots; j++)
+	       n->u[j].Name = n->u[0].Name;
+
+	    hash_table_insert(ht, n, n->u[0].Name);
+	    uniforms.push_tail(& n->link);
+	    total_uniforms += vec4_slots;
+	 }
+
+	 if (var->constant_value != NULL)
+	    for (unsigned j = 0; j < vec4_slots; j++)
+	       n->u[j].Initialized = true;
+
+	 var->location = next_position;
+
+	 for (unsigned j = 0; j < vec4_slots; j++) {
+	    switch (shaders[i]->Type) {
+	    case GL_VERTEX_SHADER:
+	       n->u[j].VertPos = next_position;
+	       break;
+	    case GL_FRAGMENT_SHADER:
+	       n->u[j].FragPos = next_position;
+	       break;
+	    case GL_GEOMETRY_SHADER:
+	       /* FINISHME: Support geometry shaders. */
+	       assert(shaders[i]->Type != GL_GEOMETRY_SHADER);
+	       break;
+	    }
+
+	    next_position++;
+	 }
+      }
+   }
+
+   gl_uniform_list *ul = (gl_uniform_list *)
+      calloc(1, sizeof(gl_uniform_list));
+
+   ul->Size = total_uniforms;
+   ul->NumUniforms = total_uniforms;
+   ul->Uniforms = (gl_uniform *) calloc(total_uniforms, sizeof(gl_uniform));
+
+   unsigned idx = 0;
+   uniform_node *next;
+   for (uniform_node *node = (uniform_node *) uniforms.head
+	   ; node->link.next != NULL
+	   ; node = next) {
+      next = (uniform_node *) node->link.next;
+
+      node->link.remove();
+      memcpy(&ul->Uniforms[idx], node->u, sizeof(gl_uniform) * node->slots);
+      idx += node->slots;
+
+      free(node->u);
+      free(node);
+   }
+
+   hash_table_dtor(ht);
+
+   return ul;
+}
+
+
 void
 link_shaders(struct glsl_program *prog)
 {
@@ -394,7 +491,8 @@ link_shaders(struct glsl_program *prog)
 
    /* FINISHME: Perform whole-program optimization here. */
 
-   /* FINISHME: Assign uniform locations. */
+   prog->Uniforms = assign_uniform_locations(shader_executables,
+					     num_shader_executables);
 
    /* FINISHME: Assign vertex shader input locations. */
 
