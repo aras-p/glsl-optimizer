@@ -938,7 +938,7 @@ generate_variant(struct llvmpipe_context *lp,
    if(!variant)
       return NULL;
 
-   variant->lpfs = shader;
+   variant->shader = shader;
    variant->list_item_global.base = variant;
    variant->list_item_local.base = variant;
    variant->no = shader->variants_created++;
@@ -1035,8 +1035,8 @@ remove_shader_variant(struct llvmpipe_context *lp,
 
    if (gallivm_debug & GALLIVM_DEBUG_IR) {
       debug_printf("llvmpipe: del fs #%u var #%u v created #%u v cached #%u v total cached #%u\n",
-                    variant->lpfs->no, variant->no, variant->lpfs->variants_created,
-                    variant->lpfs->variants_cached, lp->nr_fs_variants);
+                    variant->shader->no, variant->no, variant->shader->variants_created,
+                    variant->shader->variants_cached, lp->nr_fs_variants);
    }
    for (i = 0; i < Elements(variant->function); i++) {
       if (variant->function[i]) {
@@ -1047,7 +1047,7 @@ remove_shader_variant(struct llvmpipe_context *lp,
       }
    }
    remove_from_list(&variant->list_item_local);
-   variant->lpfs->variants_cached--;
+   variant->shader->variants_cached--;
    remove_from_list(&variant->list_item_global);
    lp->nr_fs_variants--;
    FREE(variant);

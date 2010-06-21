@@ -73,7 +73,6 @@ struct lp_fs_variant_list_item
 struct lp_fragment_shader_variant
 {
    struct lp_fragment_shader_variant_key key;
-   struct lp_fragment_shader *lpfs;
 
    boolean opaque;
 
@@ -82,6 +81,7 @@ struct lp_fragment_shader_variant
    lp_jit_frag_func jit_function[2];
 
    struct lp_fs_variant_list_item list_item_global, list_item_local;
+   struct lp_fragment_shader *shader;
 
    /* For debugging/profiling purposes */
    unsigned no;
