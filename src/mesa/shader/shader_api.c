@@ -44,8 +44,6 @@
 #include "shader/prog_uniform.h"
 #include "shader/shader_api.h"
 #include "shader/uniforms.h"
-#include "shader/slang/slang_compile.h"
-#include "shader/slang/slang_link.h"
 
 
 /**
@@ -1100,7 +1098,7 @@ _mesa_compile_shader(GLcontext *ctx, GLuint shaderObj)
    /* this call will set the sh->CompileStatus field to indicate if
     * compilation was successful.
     */
-   (void) _slang_compile(ctx, sh);
+   _mesa_glsl_compile_shader(ctx, sh);
 }
 
 
@@ -1126,7 +1124,7 @@ _mesa_link_program(GLcontext *ctx, GLuint program)
 
    FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
-   _slang_link(ctx, program, shProg);
+   _mesa_glsl_link_shader(ctx, shProg);
 
    /* debug code */
    if (0) {

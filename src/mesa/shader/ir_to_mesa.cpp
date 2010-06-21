@@ -36,6 +36,7 @@
 #include "glsl_types.h"
 
 extern "C" {
+#include "main/mtypes.h"
 #include "shader/prog_instruction.h"
 #include "shader/prog_print.h"
 }

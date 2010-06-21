@@ -1,15 +1,129 @@
-# src/glsl/Makefile
+#src/glsl/pp/Makefile
 
 TOP = ../..
 
 include $(TOP)/configs/current
 
-SUBDIRS = pp cl apps
+LIBNAME = glsl
 
-default install clean:
-	@for dir in $(SUBDIRS) ; do \
-		if [ -d $$dir ] ; then \
-			(cd $$dir && $(MAKE) $@) || exit 1; \
-		fi \
-	done
+C_SOURCES = \
+	glcpp/glcpp.c \
+	glcpp/glcpp-lex.c \
+	glcpp/glcpp-parse.c \
+	glcpp/pp.c \
+	glcpp/xtalloc.c
 
+CXX_SOURCES = \
+	ast_expr.cpp \
+	ast_function.cpp \
+	ast_to_hir.cpp \
+	ast_type.cpp \
+	builtin_function.cpp \
+	glsl_lexer.cpp \
+	glsl_parser.cpp \
+	glsl_parser_extras.cpp \
+	glsl_types.cpp \
+	hir_field_selection.cpp \
+	ir_basic_block.cpp \
+	ir_clone.cpp \
+	ir_constant_expression.cpp \
+	ir_constant_folding.cpp \
+	ir_constant_variable.cpp \
+	ir_copy_propagation.cpp \
+	ir.cpp \
+	ir_dead_code.cpp \
+	ir_dead_code_local.cpp \
+	ir_expression_flattening.cpp \
+	ir_function_can_inline.cpp \
+	ir_function.cpp \
+	ir_function_inlining.cpp \
+	ir_hierarchical_visitor.cpp \
+	ir_hv_accept.cpp \
+	ir_if_simplification.cpp \
+	ir_print_visitor.cpp \
+	ir_reader.cpp \
+	ir_swizzle_swizzle.cpp \
+	ir_validate.cpp \
+	ir_variable.cpp \
+	ir_vec_index_to_swizzle.cpp \
+	linker.cpp \
+	s_expression.cpp
+
+LIBS = \
+	$(TOP)/src/glsl/libglsl.a \
+	$(shell pkg-config --libs talloc)
+
+APPS = glsl_compiler
+GLSL2_C_SOURCES = \
+	../mesa/shader/hash_table.c \
+	../mesa/shader/symbol_table.c
+GLSL2_CXX_SOURCES = \
+	main.cpp
+
+GLSL2_OBJECTS = \
+	$(GLSL2_C_SOURCES:.c=.o) \
+	$(GLSL2_CXX_SOURCES:.cpp=.o)
+
+### Basic defines ###
+
+OBJECTS = \
+	$(C_SOURCES:.c=.o) \
+	$(CXX_SOURCES:.cpp=.o)
+
+INCLUDES = \
+	-I. \
+	-I../mesa \
+	-I../mapi \
+	-I../mesa/shader \
+	$(LIBRARY_INCLUDES)
+
+
+##### TARGETS #####
+
+default: depend lib$(LIBNAME).a $(APPS)
+
+lib$(LIBNAME).a: $(OBJECTS) Makefile $(TOP)/src/glsl/Makefile.template
+	$(MKLIB) -cplusplus -o $(LIBNAME) -static $(OBJECTS)
+
+depend: $(CXX_SOURCES) $(GLSL2_CXX_SOURCES) $(GLSL2_C_SOURCES)
+	rm -f depend
+	touch depend
+	$(MKDEP) $(MKDEP_OPTIONS) $(INCLUDES) $@ 2> /dev/null
+
+# Remove .o and backup files
+clean:
+	rm -f $(OBJECTS) lib$(LIBNAME).a depend depend.bak
+	-rm -f $(APPS)
+
+# Dummy target
+install:
+	@echo -n ""
+
+
+##### RULES #####
+
+glsl_compiler: $(GLSL2_OBJECTS) libglsl.a
+	$(APP_CXX) $(INCLUDES) $(CFLAGS) $(LDFLAGS) $(GLSL2_OBJECTS) $(LIBS) -o $@
+
+.cpp.o:
+	$(CXX) -c $(INCLUDES) $(CXXFLAGS) $(LIBRARY_DEFINES) $< -o $@
+
+.c.o:
+	$(CC) -c $(INCLUDES) $(CFLAGS) $(LIBRARY_DEFINES) $< -o $@
+
+glsl_lexer.cpp: glsl_lexer.lpp
+	flex --never-interactive --outfile="$@"  $<
+
+glsl_parser.cpp: glsl_parser.ypp
+	bison -v -o "$@" --defines=glsl_parser.h $<
+
+glcpp/glcpp-lex.c: glcpp/glcpp-lex.l
+	flex --never-interactive --outfile="$@" $<
+
+glcpp/glcpp-parse.c: glcpp/glcpp-parse.y
+	bison -v -o "$@" --defines=glcpp/glcpp-parse.h $<
+
+builtin_function.cpp: builtins/*/*
+	./builtins/tools/generate_builtins.pl > builtin_function.cpp
+
+-include depend

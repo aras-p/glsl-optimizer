@@ -32,7 +32,7 @@ glsl_LDFLAGS = @LDFLAGS@ $(talloc_LIBS)
 glsl_SOURCES = \
 	main.cpp \
 	builtin_types.h \
-	symbol_table.c hash_table.c glsl_types.cpp \
+	glsl_types.cpp \
 	glsl_parser.ypp glsl_lexer.lpp glsl_parser_extras.cpp \
 	ast_expr.cpp ast_to_hir.cpp ast_function.cpp ast_type.cpp \
 	ir.cpp hir_field_selection.cpp builtin_function.cpp \
@@ -62,11 +62,7 @@ glsl_SOURCES = \
 	ir_to_mesa.h \
 	ir_validate.cpp \
 	ir_vec_index_to_swizzle.cpp \
-	linker.cpp \
-	mesa/shader/prog_instruction.c \
-	mesa/shader/prog_instruction.h \
-	mesa/shader/prog_print.c \
-	mesa/shader/prog_print.h
+	linker.cpp
 
 BUILT_SOURCES = glsl_parser.h glsl_parser.cpp glsl_lexer.cpp
 CLEANFILES = $(BUILT_SOURCES)
