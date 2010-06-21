@@ -1,0 +1,7 @@
+glcpp
+glcpp-lex.c
+glcpp-parse.c
+glcpp-parse.h
+*.o
+*~
+tests/*.out
