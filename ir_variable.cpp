@@ -31,7 +31,7 @@
 #endif
 
 static ir_variable *
-add_variable(const char *name, enum ir_variable_mode mode,
+add_variable(const char *name, enum ir_variable_mode mode, int slot,
 	     const glsl_type *type, exec_list *instructions,
 		     glsl_symbol_table *symtab)
 {
@@ -59,6 +59,8 @@ add_variable(const char *name, enum ir_variable_mode mode,
       break;
    }
 
+   var->location = slot;
+
    /* Once the variable is created an initialized, add it to the symbol table
     * and add the declaration to the IR stream.
     */
@@ -80,7 +82,8 @@ add_builtin_variable(const builtin_variable *proto, exec_list *instructions,
 
    assert(type != NULL);
 
-   add_variable(proto->name, proto->mode, type, instructions, symtab);
+   add_variable(proto->name, proto->mode, proto->slot, type, instructions,
+		symtab);
 }
 
 
@@ -103,7 +106,7 @@ generate_110_uniforms(exec_list *instructions,
    const glsl_type *const mat4_array_type =
       glsl_type::get_array_instance(glsl_type::mat4_type, 4);
 
-   add_variable("gl_TextureMatrix", ir_var_uniform, mat4_array_type,
+   add_variable("gl_TextureMatrix", ir_var_uniform, -1, mat4_array_type,
 		instructions, symtab);
 
    /* FINISHME: Add support for gl_DepthRangeParameters */
@@ -121,7 +124,7 @@ generate_110_uniforms(exec_list *instructions,
    const glsl_type *const light_source_array_type =
       glsl_type::get_array_instance(symtab->get_type("gl_LightSourceParameters"), 8);
 
-   add_variable("gl_LightSource", ir_var_uniform, light_source_array_type,
+   add_variable("gl_LightSource", ir_var_uniform, -1, light_source_array_type,
 		instructions, symtab);
 
    /* FINISHME: Add support for gl_LightModel */
@@ -156,8 +159,8 @@ generate_110_vs_variables(exec_list *instructions,
    const glsl_type *const vec4_array_type =
       glsl_type::get_array_instance(glsl_type::vec4_type, 4);
 
-   add_variable("gl_TexCoord", ir_var_out, vec4_array_type, instructions,
-		symtab);
+   add_variable("gl_TexCoord", ir_var_out, VERT_RESULT_TEX0, vec4_array_type,
+		instructions, symtab);
 }
 
 
@@ -188,7 +191,9 @@ generate_130_vs_variables(exec_list *instructions,
     */
    const glsl_type *const clip_distance_array_type =
       glsl_type::get_array_instance(glsl_type::float_type, 8);
-   add_variable("gl_ClipDistance", ir_var_out, clip_distance_array_type,
+
+   /* FINISHME: gl_ClipDistance needs a real location assigned. */
+   add_variable("gl_ClipDistance", ir_var_out, -1, clip_distance_array_type,
 		instructions, symtab);
 
 }
@@ -237,8 +242,8 @@ generate_110_fs_variables(exec_list *instructions,
    const glsl_type *const vec4_array_type =
       glsl_type::get_array_instance(glsl_type::vec4_type, 4);
 
-   add_variable("gl_TexCoord", ir_var_in, vec4_array_type, instructions,
-		symtab);
+   add_variable("gl_TexCoord", ir_var_in, FRAG_ATTRIB_TEX0, vec4_array_type,
+		instructions, symtab);
 }
 
 
@@ -254,8 +259,8 @@ generate_ARB_draw_buffers_fs_variables(exec_list *instructions,
       glsl_type::get_array_instance(glsl_type::vec4_type, 1);
 
    ir_variable *const fd =
-      add_variable("gl_FragData", ir_var_out, vec4_array_type, instructions,
-		   symtab);
+      add_variable("gl_FragData", ir_var_out, FRAG_RESULT_DATA0,
+		   vec4_array_type, instructions, symtab);
 
    if (warn)
       fd->warn_extension = "GL_ARB_draw_buffers";
@@ -281,7 +286,9 @@ generate_130_fs_variables(exec_list *instructions,
     */
    const glsl_type *const clip_distance_array_type =
       glsl_type::get_array_instance(glsl_type::float_type, 8);
-   add_variable("gl_ClipDistance", ir_var_in, clip_distance_array_type,
+
+   /* FINISHME: gl_ClipDistance needs a real location assigned. */
+   add_variable("gl_ClipDistance", ir_var_in, -1, clip_distance_array_type,
 		instructions, symtab);
 }
 
