@@ -187,6 +187,14 @@ public:
     */
    const char *interpolation_string() const;
 
+   /**
+    * Calculate the number of slots required to hold this variable
+    *
+    * This is used to determine how many uniform or varying locations a variable
+    * occupies.  The count is in units of floating point components.
+    */
+   unsigned component_slots() const;
+
    const char *name;
 
    /**
