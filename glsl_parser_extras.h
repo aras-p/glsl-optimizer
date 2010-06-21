@@ -102,7 +102,7 @@ extern void _mesa_glsl_warning(const YYLTYPE *locp,
 			       const char *fmt, ...);
 
 extern "C" {
-extern int preprocess(void *ctx, const char **shader);
+extern int preprocess(void *ctx, const char **shader, char **info_log);
 }
 
 extern void _mesa_glsl_lexer_ctor(struct _mesa_glsl_parse_state *state,

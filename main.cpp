@@ -128,7 +128,7 @@ compile_shader(struct glsl_shader *shader)
     * should probably be the parser context, but there isn't one yet.
    */
    const char *source = shader->Source;
-   state.error = preprocess(shader, &source);
+   state.error = preprocess(shader, &source, &state.info_log);
 
    if (!state.error) {
       _mesa_glsl_lexer_ctor(& state, source);
