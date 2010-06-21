@@ -326,8 +326,8 @@ struct uniform_node {
    unsigned slots;
 };
 
-struct gl_uniform_list *
-assign_uniform_locations(struct glsl_shader **shaders, unsigned num_shaders)
+void
+assign_uniform_locations(struct glsl_program *prog)
 {
    /* */
    exec_list uniforms;
@@ -335,10 +335,10 @@ assign_uniform_locations(struct glsl_shader **shaders, unsigned num_shaders)
    hash_table *ht = hash_table_ctor(32, hash_table_string_hash,
 				    hash_table_string_compare);
 
-   for (unsigned i = 0; i < num_shaders; i++) {
+   for (unsigned i = 0; i < prog->_NumLinkedShaders; i++) {
       unsigned next_position = 0;
 
-      foreach_list(node, &shaders[i]->ir) {
+      foreach_list(node, &prog->_LinkedShaders[i]->ir) {
 	 ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
 	 if ((var == NULL) || (var->mode != ir_var_uniform))
@@ -369,7 +369,7 @@ assign_uniform_locations(struct glsl_shader **shaders, unsigned num_shaders)
 	 var->location = next_position;
 
 	 for (unsigned j = 0; j < vec4_slots; j++) {
-	    switch (shaders[i]->Type) {
+	    switch (prog->_LinkedShaders[i]->Type) {
 	    case GL_VERTEX_SHADER:
 	       n->u[j].VertPos = next_position;
 	       break;
@@ -378,7 +378,7 @@ assign_uniform_locations(struct glsl_shader **shaders, unsigned num_shaders)
 	       break;
 	    case GL_GEOMETRY_SHADER:
 	       /* FINISHME: Support geometry shaders. */
-	       assert(shaders[i]->Type != GL_GEOMETRY_SHADER);
+	       assert(prog->_LinkedShaders[i]->Type != GL_GEOMETRY_SHADER);
 	       break;
 	    }
 
@@ -411,7 +411,7 @@ assign_uniform_locations(struct glsl_shader **shaders, unsigned num_shaders)
 
    hash_table_dtor(ht);
 
-   return ul;
+   prog->Uniforms = ul;
 }
 
 
@@ -462,27 +462,27 @@ link_shaders(struct glsl_program *prog)
 
 
    /* FINISHME: Perform inter-stage linking. */
-   glsl_shader *shader_executables[2];
-   unsigned num_shader_executables;
+   prog->_LinkedShaders = (struct glsl_shader **)
+      calloc(2, sizeof(struct glsl_shader *));
+   prog->_NumLinkedShaders = 0;
 
-   num_shader_executables = 0;
    if (num_vert_shaders > 0) {
-      shader_executables[num_shader_executables] = vert_shader_list[0];
-      num_shader_executables++;
+      prog->_LinkedShaders[prog->_NumLinkedShaders] = vert_shader_list[0];
+      prog->_NumLinkedShaders++;
    }
 
    if (num_frag_shaders > 0) {
-      shader_executables[num_shader_executables] = frag_shader_list[0];
-      num_shader_executables++;
+      prog->_LinkedShaders[prog->_NumLinkedShaders] = frag_shader_list[0];
+      prog->_NumLinkedShaders++;
    }
 
-   if (cross_validate_uniforms(shader_executables, num_shader_executables)) {
+   if (cross_validate_uniforms(prog->_LinkedShaders, prog->_NumLinkedShaders)) {
       /* Validate the inputs of each stage with the output of the preceeding
        * stage.
        */
-      for (unsigned i = 1; i < num_shader_executables; i++) {
-	 if (!cross_validate_outputs_to_inputs(shader_executables[i - 1],
-					       shader_executables[i]))
+      for (unsigned i = 1; i < prog->_NumLinkedShaders; i++) {
+	 if (!cross_validate_outputs_to_inputs(prog->_LinkedShaders[i - 1],
+					       prog->_LinkedShaders[i]))
 	    goto done;
       }
 
@@ -491,8 +491,7 @@ link_shaders(struct glsl_program *prog)
 
    /* FINISHME: Perform whole-program optimization here. */
 
-   prog->Uniforms = assign_uniform_locations(shader_executables,
-					     num_shader_executables);
+   assign_uniform_locations(prog);
 
    /* FINISHME: Assign vertex shader input locations. */
 

@@ -89,6 +89,14 @@ struct glsl_program {
    GLuint NumShaders;          /**< number of attached shaders */
    struct glsl_shader **Shaders; /**< List of attached the shaders */
 
+   /**
+    * Per-stage shaders resulting from the first stage of linking.
+    */
+   /*@{*/
+   unsigned _NumLinkedShaders;
+   struct glsl_shader **_LinkedShaders;
+   /*@}*/
+
    /* post-link info: */
    struct gl_uniform_list *Uniforms;
    struct gl_program_parameter_list *Varying;
