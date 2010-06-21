@@ -249,6 +249,17 @@ control_line:
 		_token_list_append_list (expanded, $2);
 		glcpp_parser_lex_from (parser, expanded);
 	}
+|	HASH_ELIF NEWLINE {
+		/* #elif without an expression results in a warning if the
+		 * condition doesn't matter (we just handled #if 1 or such)
+		 * but an error otherwise. */
+		if (parser->skip_stack != NULL && parser->skip_stack->type == SKIP_NO_SKIP) {
+			parser->skip_stack->type = SKIP_TO_ENDIF;
+			glcpp_warning(& @1, parser, "ignoring illegal #elif without expression");
+		} else {
+			glcpp_error(& @1, parser, "#elif needs an expression");
+		}
+	}
 |	HASH_ELSE NEWLINE {
 		_glcpp_parser_skip_stack_change_if (parser, & @1, "else", 1);
 	}
