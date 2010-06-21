@@ -732,3 +732,31 @@ glsl_type::field_index(const char *name) const
 
    return -1;
 }
+
+
+unsigned
+glsl_type::component_slots() const
+{
+   switch (this->base_type) {
+   case GLSL_TYPE_UINT:
+   case GLSL_TYPE_INT:
+   case GLSL_TYPE_FLOAT:
+   case GLSL_TYPE_BOOL:
+      return this->components();
+
+   case GLSL_TYPE_STRUCT: {
+      unsigned size = 0;
+
+      for (unsigned i = 0; i < this->length; i++)
+	 size += this->fields.structure[i].type->component_slots();
+
+      return size;
+   }
+
+   case GLSL_TYPE_ARRAY:
+      return this->length * this->fields.array->component_slots();
+
+   default:
+      return 0;
+   }
+}

@@ -215,6 +215,15 @@ struct glsl_type {
    }
 
    /**
+    * Calculate the number of components slots required to hold this type
+    *
+    * This is used to determine how many uniform or varying locations a type
+    * might occupy.
+    */
+   unsigned component_slots() const;
+
+
+   /**
     * Query whether or not a type is a scalar (non-vector and non-matrix).
     */
    bool is_scalar() const
