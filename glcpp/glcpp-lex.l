@@ -60,7 +60,7 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 %%
 
 	/* Single-line comments */
-"//"[^\n]+\n {
+"//"[^\n]*\n {
 	yylineno++;
 	yycolumn = 0;
 	return NEWLINE;
