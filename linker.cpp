@@ -392,6 +392,20 @@ link_shaders(struct glsl_program *prog)
       prog->LinkStatus = true;
    }
 
+   /* FINISHME: Perform whole-program optimization here. */
+
+   /* FINISHME: Assign uniform locations. */
+
+   /* FINISHME: Assign vertex shader input locations. */
+
+   /* FINISHME: Assign vertex shader output / fragment shader input
+    * FINISHME: locations.
+    */
+
+   /* FINISHME: Assign fragment shader output locations. */
+
+   /* FINISHME: Generate code here. */
+
 done:
    free(vert_shader_list);
 }
