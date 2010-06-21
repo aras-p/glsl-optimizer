@@ -41,9 +41,8 @@
 %option never-interactive
 %option prefix="_mesa_glsl_"
 %option extra-type="struct _mesa_glsl_parse_state *"
-%option stack
 
-%x PP COMMENT
+%x PP
 
 DEC_INT		[1-9][0-9]*
 HEX_INT		0[xX][0-9a-fA-F]+
@@ -54,14 +53,6 @@ SPCP		[ \t]+
 HASH		^{SPC}#{SPC}
 %%
 
-"/*"			{ yy_push_state(COMMENT, yyscanner); }
-<COMMENT>[^*\n]*
-<COMMENT>[^*\n]*\n	{ yylineno++; yycolumn = 0; }
-<COMMENT>"*"+[^*/\n]*
-<COMMENT>"*"+[^*/\n]*\n { yylineno++; yycolumn = 0; }
-<COMMENT>"*"+"/"        { yy_pop_state(yyscanner); }
-
-\/\/.*\n		{ yylineno++; yycolumn = 0; }
 [ \r\t]+		;
 
     /* Preprocessor tokens. */ 
