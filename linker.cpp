@@ -66,6 +66,7 @@
 #include <cstdlib>
 #include <cstdio>
 
+#include "main/mtypes.h"
 #include "glsl_symbol_table.h"
 #include "glsl_parser_extras.h"
 #include "ir.h"
@@ -105,6 +106,24 @@ private:
    const char *name;       /**< Find writes to a variable with this name. */
    bool found;             /**< Was a write to the variable found? */
 };
+
+
+void
+invalidate_variable_locations(glsl_shader *sh, enum ir_variable_mode mode,
+			      int generic_base)
+{
+   foreach_list(node, &sh->ir) {
+      ir_variable *const var = ((ir_instruction *) node)->as_variable();
+
+      if ((var == NULL) || (var->mode != (unsigned) mode))
+	 continue;
+
+      /* Only assign locations for generic attributes / varyings / etc.
+       */
+      if (var->location >= generic_base)
+	  var->location = -1;
+   }
+}
 
 
 /**
@@ -416,6 +435,66 @@ assign_uniform_locations(struct glsl_program *prog)
 
 
 void
+assign_attribute_locations(glsl_shader *sh,
+			   struct gl_program_parameter_list *attrib)
+{
+   unsigned used_locations = 0;
+
+   assert(sh->Type == GL_VERTEX_SHADER);
+
+   /* Operate in a total of three passes.
+    *
+    * 1. Invalidate the location assignments for all vertex shader inputs.
+    *
+    * 2. Assign locations for inputs that have user-defined (via
+    *    glBindVertexAttribLocation) locatoins.
+    *
+    * 3. Assign locations to any inputs without assigned locations.
+    */
+
+   invalidate_variable_locations(sh, ir_var_in, VERT_ATTRIB_GENERIC0);
+
+   if (attrib != NULL) {
+      for (unsigned i = 0; i < attrib->NumParameters; i++) {
+	 ir_variable *const var =
+	    sh->symbols->get_variable(attrib->Parameters[i].Name);
+
+	 if (var == NULL)
+	    continue;
+
+	 const int attr = attrib->Parameters[i].StateIndexes[0];
+
+	 var->location = VERT_ATTRIB_GENERIC0 + attr;
+	 used_locations |= (1 << attr);
+      }
+   }
+
+   foreach_list(node, &sh->ir) {
+      ir_variable *const var = ((ir_instruction *) node)->as_variable();
+
+      if ((var == NULL) || (var->mode != ir_var_in))
+	 continue;
+
+      /* The location was explicitly assigned, nothing to do here.
+       */
+      if (var->location != -1)
+	 continue;
+
+      /* Find an unused bit in used_locations and assign that as the
+       * attribute location.
+       */
+      for (unsigned i = 0; i < (8 * sizeof(used_locations)); i++) {
+	 if ((used_locations & (1 << i)) == 0) {
+	    var->location = VERT_ATTRIB_GENERIC0 + i;
+	    used_locations |= (1 << i);
+	    break;
+	 }
+      }
+   }
+}
+
+
+void
 link_shaders(struct glsl_program *prog)
 {
    prog->LinkStatus = false;
@@ -493,7 +572,9 @@ link_shaders(struct glsl_program *prog)
 
    assign_uniform_locations(prog);
 
-   /* FINISHME: Assign vertex shader input locations. */
+   if (prog->_LinkedShaders[0]->Type == GL_VERTEX_SHADER)
+      assign_attribute_locations(prog->_LinkedShaders[0],
+				 prog->Attributes);
 
    /* FINISHME: Assign vertex shader output / fragment shader input
     * FINISHME: locations.
