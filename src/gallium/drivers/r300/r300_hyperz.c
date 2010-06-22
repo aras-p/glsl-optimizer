@@ -70,6 +70,7 @@ static void r300_update_ztop(struct r300_context* r300)
 {
     struct r300_ztop_state* ztop_state =
         (struct r300_ztop_state*)r300->ztop_state.state;
+    uint32_t old_ztop = ztop_state->z_buffer_top;
 
     /* This is important enough that I felt it warranted a comment.
      *
@@ -111,7 +112,8 @@ static void r300_update_ztop(struct r300_context* r300)
         ztop_state->z_buffer_top = R300_ZTOP_ENABLE;
     }
 
-    r300->ztop_state.dirty = TRUE;
+    if (ztop_state->z_buffer_top != old_ztop)
+        r300->ztop_state.dirty = TRUE;
 }
 
 void r300_update_hyperz_state(struct r300_context* r300)
