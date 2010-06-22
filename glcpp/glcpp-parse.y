@@ -1312,7 +1312,7 @@ _glcpp_parser_expand_token_list (glcpp_parser_t *parser,
 				 token_list_t *list)
 {
 	token_node_t *node_prev;
-	token_node_t *node, *last;
+	token_node_t *node, *last = NULL;
 	token_list_t *expansion;
 
 	if (list == NULL)
