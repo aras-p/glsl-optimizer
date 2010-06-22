@@ -316,39 +316,37 @@ static void r300_emit_draw_arrays_immediate(struct r300_context *r300,
     /* Size of the vertex, in dwords. */
     unsigned vertex_size = r300->velems->vertex_size_dwords;
 
-    /* Offsets of the attribute, in dwords, from the start of the vertex. */
-    unsigned offset[PIPE_MAX_ATTRIBS];
-
     /* Size of the vertex element, in dwords. */
     unsigned size[PIPE_MAX_ATTRIBS];
 
     /* Stride to the same attrib in the next vertex in the vertex buffer,
      * in dwords. */
-    unsigned stride[PIPE_MAX_ATTRIBS] = {0};
+    unsigned stride[PIPE_MAX_ATTRIBS];
 
     /* Mapped vertex buffers. */
-    uint32_t* map[PIPE_MAX_ATTRIBS] = {0};
-    struct pipe_transfer* transfer[PIPE_MAX_ATTRIBS] = {NULL};
+    uint32_t* map[PIPE_MAX_ATTRIBS];
+    uint32_t* mapelem[PIPE_MAX_ATTRIBS];
+    struct pipe_transfer* transfer[PIPE_MAX_ATTRIBS] = {0};
 
     CB_LOCALS;
 
     /* Calculate the vertex size, offsets, strides etc. and map the buffers. */
     for (i = 0; i < vertex_element_count; i++) {
         velem = &r300->velems->velem[i];
-        offset[i] = velem->src_offset / 4;
         size[i] = r300->velems->hw_format_size[i] / 4;
         vbi = velem->vertex_buffer_index;
+        vbuf = &r300->vertex_buffer[vbi];
+        stride[i] = vbuf->stride / 4;
 
         /* Map the buffer. */
-        if (!map[vbi]) {
-            vbuf = &r300->vertex_buffer[vbi];
+        if (!transfer[vbi]) {
             map[vbi] = (uint32_t*)pipe_buffer_map(&r300->context,
                                                   vbuf->buffer,
                                                   PIPE_TRANSFER_READ,
 						  &transfer[vbi]);
-            stride[vbi] = vbuf->stride / 4;
-            map[vbi] += vbuf->buffer_offset / 4 + stride[vbi] * start;
+            map[vbi] += (vbuf->buffer_offset / 4) + stride[i] * start;
         }
+        mapelem[i] = map[vbi] + (velem->src_offset / 4);
     }
 
     dwords = 9 + count * vertex_size;
@@ -369,9 +367,7 @@ static void r300_emit_draw_arrays_immediate(struct r300_context *r300,
     /* Emit vertices. */
     for (v = 0; v < count; v++) {
         for (i = 0; i < vertex_element_count; i++) {
-            vbi = r300->velems->velem[i].vertex_buffer_index;
-
-            OUT_CB_TABLE(&map[vbi][offset[i] + stride[vbi] * v], size[i]);
+            OUT_CB_TABLE(&mapelem[i][stride[i] * v], size[i]);
         }
     }
     END_CB;
@@ -380,10 +376,10 @@ static void r300_emit_draw_arrays_immediate(struct r300_context *r300,
     for (i = 0; i < vertex_element_count; i++) {
         vbi = r300->velems->velem[i].vertex_buffer_index;
 
-        if (map[vbi]) {
+        if (transfer[vbi]) {
             vbuf = &r300->vertex_buffer[vbi];
             pipe_buffer_unmap(&r300->context, vbuf->buffer, transfer[vbi]);
-            map[vbi] = NULL;
+            transfer[vbi] = NULL;
         }
     }
 }
