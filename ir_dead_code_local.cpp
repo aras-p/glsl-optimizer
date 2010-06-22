@@ -34,7 +34,6 @@
  */
 
 #include "ir.h"
-#include "ir_print_visitor.h"
 #include "ir_basic_block.h"
 #include "ir_optimization.h"
 #include "glsl_types.h"
@@ -192,8 +191,7 @@ dead_code_local_basic_block(ir_instruction *first,
       ir_assignment *ir_assign = ir->as_assignment();
 
       if (debug) {
-	 ir_print_visitor v;
-	 ir->accept(&v);
+	 ir->print();
 	 printf("\n");
       }
 

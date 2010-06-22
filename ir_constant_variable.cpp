@@ -33,7 +33,6 @@
  */
 
 #include "ir.h"
-#include "ir_print_visitor.h"
 #include "ir_visitor.h"
 #include "ir_optimization.h"
 #include "glsl_types.h"

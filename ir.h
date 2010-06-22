@@ -45,6 +45,10 @@ public:
    const struct glsl_type *type;
 
    class ir_constant *constant_expression_value();
+
+   /** ir_print_visitor helper for debugging. */
+   void print(void);
+
    virtual void accept(ir_visitor *) = 0;
    virtual ir_visitor_status accept(ir_hierarchical_visitor *) = 0;
 

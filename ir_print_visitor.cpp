@@ -28,6 +28,13 @@
 static void print_type(const glsl_type *t);
 
 void
+ir_instruction::print(void)
+{
+   ir_print_visitor v;
+   accept(&v);
+}
+
+void
 _mesa_print_ir(exec_list *instructions,
 	       struct _mesa_glsl_parse_state *state)
 {
@@ -48,9 +55,7 @@ _mesa_print_ir(exec_list *instructions,
 
    printf("(\n");
    foreach_iter(exec_list_iterator, iter, *instructions) {
-      ir_print_visitor v;
-
-      ((ir_instruction *)iter.get())->accept(& v);
+      ((ir_instruction *)iter.get())->print();
       printf("\n");
    }
    printf("\n)");
