@@ -148,6 +148,8 @@ compile_shader(struct glsl_shader *shader)
    if (!state.error && !state.translation_unit.is_empty())
       _mesa_ast_to_hir(&shader->ir, &state);
 
+   validate_ir_tree(&shader->ir);
+
    /* Optimization passes */
    if (!state.error && !shader->ir.is_empty()) {
       bool progress;
@@ -165,6 +167,8 @@ compile_shader(struct glsl_shader *shader)
 	 progress = do_swizzle_swizzle(&shader->ir) || progress;
       } while (progress);
    }
+
+   validate_ir_tree(&shader->ir);
 
    /* Print out the resulting IR */
    if (!state.error && dump_lir) {

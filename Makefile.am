@@ -56,6 +56,7 @@ glsl_SOURCES = \
 	ir_hierarchical_visitor.h \
 	ir_hierarchical_visitor.cpp \
 	ir_swizzle_swizzle.cpp \
+	ir_validate.cpp \
 	ir_vec_index_to_swizzle.cpp \
 	linker.cpp
 

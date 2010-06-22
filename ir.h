@@ -1112,6 +1112,8 @@ private:
 void
 visit_exec_list(exec_list *list, ir_visitor *visitor);
 
+void validate_ir_tree(exec_list *instructions);
+
 extern void
 _mesa_glsl_initialize_variables(exec_list *instructions,
 				struct _mesa_glsl_parse_state *state);
