@@ -39,7 +39,6 @@
 #include "util/u_memory.h"
 #include "util/u_prim.h"
 
-#define MAX_PRIM_VERTICES 6
 /* fixme: move it from here */
 #define MAX_PRIMITIVES 64
 
@@ -76,6 +75,7 @@ draw_gs_set_constants(struct draw_context *draw,
                       const void *constants,
                       unsigned size)
 {
+   /* noop */
 }
 
 
