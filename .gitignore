@@ -11,6 +11,8 @@ ylwrap
 install-sh
 missing
 stamp-h1
+libtool
+ltmain.sh
 Makefile
 *.o
 *~

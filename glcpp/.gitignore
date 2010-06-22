@@ -2,6 +2,10 @@ glcpp
 glcpp-lex.c
 glcpp-parse.c
 glcpp-parse.h
+glcpp-parse.output
 *.o
+*.lo
+*.la
+.libs
 *~
 tests/*.out
