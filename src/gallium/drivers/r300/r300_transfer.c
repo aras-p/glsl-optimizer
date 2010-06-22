@@ -80,6 +80,8 @@ static void r300_copy_into_tiled_texture(struct pipe_context *ctx,
 			      &r300transfer->detiled_texture->b.b, subsrc,
 			      0, 0, 0,
 			      transfer->box.width, transfer->box.height);
+
+    ctx->flush(ctx, 0, NULL);
 }
 
 struct pipe_transfer*
