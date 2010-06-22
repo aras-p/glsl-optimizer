@@ -159,6 +159,55 @@ done:
 ir_visitor_status
 ir_texture::accept(ir_hierarchical_visitor *v)
 {
+   ir_visitor_status s = v->visit_enter(this);
+   if (s != visit_continue)
+      return (s == visit_continue_with_parent) ? visit_continue : s;
+
+   s = this->sampler->accept(v);
+   if (s != visit_continue)
+      return (s == visit_continue_with_parent) ? visit_continue : s;
+
+   s = this->coordinate->accept(v);
+   if (s != visit_continue)
+      return (s == visit_continue_with_parent) ? visit_continue : s;
+
+   if (this->projector) {
+      s = this->projector->accept(v);
+      if (s != visit_continue)
+	 return (s == visit_continue_with_parent) ? visit_continue : s;
+   }
+
+   if (this->shadow_comparitor) {
+      s = this->shadow_comparitor->accept(v);
+      if (s != visit_continue)
+	 return (s == visit_continue_with_parent) ? visit_continue : s;
+   }
+
+   switch (this->op) {
+   case ir_tex:
+      break;
+   case ir_txb:
+      s = this->lod_info.bias->accept(v);
+      if (s != visit_continue)
+	 return (s == visit_continue_with_parent) ? visit_continue : s;
+      break;
+   case ir_txl:
+   case ir_txf:
+      s = this->lod_info.lod->accept(v);
+      if (s != visit_continue)
+	 return (s == visit_continue_with_parent) ? visit_continue : s;
+      break;
+   case ir_txd:
+      s = this->lod_info.grad.dPdx->accept(v);
+      if (s != visit_continue)
+	 return (s == visit_continue_with_parent) ? visit_continue : s;
+
+      s = this->lod_info.grad.dPdy->accept(v);
+      if (s != visit_continue)
+	 return (s == visit_continue_with_parent) ? visit_continue : s;
+      break;
+   }
+
    return visit_continue_with_parent;
 }
 
