@@ -508,6 +508,12 @@ static void r300_draw_range_elements(struct pipe_context* pipe,
         return;
     }
 
+    /* Index buffer range checking. */
+    if ((start + count) * indexSize > indexBuffer->width0) {
+        fprintf(stderr, "r300: Invalid index buffer range. Skipping rendering.\n");
+        return;
+    }
+
     /* Set up fallback for incompatible vertex layout if needed. */
     if (r300->incompatible_vb_layout || r300->velems->incompatible_layout) {
         r300_begin_vertex_translate(r300);
