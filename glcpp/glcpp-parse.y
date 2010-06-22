@@ -93,9 +93,6 @@ _token_list_append (token_list_t *list, token_t *token);
 static void
 _token_list_append_list (token_list_t *list, token_list_t *tail);
 
-static int
-_token_list_length (token_list_t *list);
-
 static active_list_t *
 _active_list_push (active_list_t *list,
 		   const char *identifier,
@@ -729,21 +726,6 @@ _token_list_trim_trailing_space (token_list_t *list)
 			tail = next;
 		}
 	}
-}
-
-static int
-_token_list_length (token_list_t *list)
-{
-	int length = 0;
-	token_node_t *node;
-
-	if (list == NULL)
-		return 0;
-
-	for (node = list->head; node; node = node->next)
-		length++;
-
-	return length;
 }
 
 static void
