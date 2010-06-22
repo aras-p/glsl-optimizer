@@ -519,6 +519,7 @@ ast_function_expression::hir(exec_list *instructions,
 	    ast_node *ast = exec_node_data(ast_node, n, link);
 	    ir_rvalue *result =
 	       ast->hir(instructions, state)->as_rvalue();
+	    ir_variable *result_var = NULL;
 
 	    /* Attempt to convert the parameter to a constant valued expression.
 	     * After doing so, track whether or not all the parameters to the
@@ -559,6 +560,19 @@ ast_function_expression::hir(exec_list *instructions,
 	    else
 	       nonmatrix_parameters++;
 
+	    /* We can't use the same instruction node in the multiple
+	     * swizzle dereferences that happen, so assign it to a
+	     * variable and deref that.  Plus it saves computation for
+	     * complicated expressions and handles
+	     * glsl-vs-constructor-call.shader_test.
+	     */
+	    if (result->type->components() >= 1 && !result->as_constant()) {
+	       result_var = new ir_variable(result->type, "constructor_tmp");
+	       ir_dereference_variable *lhs;
+
+	       lhs = new ir_dereference_variable(result_var);
+	       instructions->push_tail(new ir_assignment(lhs, result, NULL));
+	    }
 
 	    /* Process each of the components of the parameter.  Dereference
 	     * each component individually, perform any type conversions, and
@@ -568,9 +582,15 @@ ast_function_expression::hir(exec_list *instructions,
 	       if (components_used >= type_components)
 		  break;
 
-	       ir_rvalue *const component =
-		  convert_component(dereference_component(result, i),
-				    base_type);
+	       ir_rvalue *component;
+
+	       if (result_var) {
+		  ir_dereference *d = new ir_dereference_variable(result_var);
+		  component = dereference_component(d, i);
+	       } else {
+		  component = dereference_component(result, i);
+	       }
+	       component = convert_component(component, base_type);
 
 	       /* All cases that could result in component->type being the
 		* error type should have already been caught above.
