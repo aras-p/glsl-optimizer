@@ -382,7 +382,8 @@ enum pipe_transfer_usage {
 #define PIPE_QUERY_PRIMITIVES_EMITTED    2
 #define PIPE_QUERY_TIME_ELAPSED          3
 #define PIPE_QUERY_SO_STATISTICS         5
-#define PIPE_QUERY_TYPES                 6
+#define PIPE_QUERY_GPU_FINISHED          6
+#define PIPE_QUERY_TYPES                 7
 
 
 /**
