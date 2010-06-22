@@ -20,7 +20,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-#include <cstdio>
+
 #include "ir_print_visitor.h"
 #include "glsl_types.h"
 #include "glsl_parser_extras.h"

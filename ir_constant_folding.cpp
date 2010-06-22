@@ -26,7 +26,6 @@
  * Replace constant-valued expressions with references to constant values.
  */
 
-#define NULL 0
 #include "ir.h"
 #include "ir_visitor.h"
 #include "ir_optimization.h"

@@ -48,7 +48,7 @@
  * As a result, my preference is to put as little C code as possible in the
  * parser (and lexer) sources.
  */
-#include <stdio.h>
+
 #include "main/imports.h"
 #include "glsl_symbol_table.h"
 #include "glsl_parser_extras.h"

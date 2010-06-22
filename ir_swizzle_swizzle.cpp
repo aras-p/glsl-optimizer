@@ -27,7 +27,6 @@
  * Eliminates the second swizzle in a swizzle chain.
  */
 
-#include <stdio.h>
 #include "ir.h"
 #include "ir_visitor.h"
 #include "ir_optimization.h"

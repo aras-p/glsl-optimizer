@@ -33,7 +33,6 @@
  * for assignments to variables that are never read.
  */
 
-#include <stdio.h>
 #include "ir.h"
 #include "ir_print_visitor.h"
 #include "ir_basic_block.h"

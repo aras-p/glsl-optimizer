@@ -28,7 +28,6 @@
  * instruction stream.
  */
 
-#define NULL 0
 #include "ir.h"
 
 class ir_if_simplification_visitor : public ir_hierarchical_visitor {

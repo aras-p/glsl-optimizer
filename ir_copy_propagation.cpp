@@ -32,7 +32,6 @@
  * help anyway by triggering other optimizations that live in the HIR.
  */
 
-#include <stdio.h>
 #include "ir.h"
 #include "ir_visitor.h"
 #include "ir_print_visitor.h"

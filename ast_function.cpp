@@ -21,7 +21,6 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include <cstdio>
 #include "glsl_symbol_table.h"
 #include "ast.h"
 #include "glsl_types.h"

@@ -26,6 +26,9 @@
 #ifndef IR_H
 #define IR_H
 
+#include <cstdio>
+#include <cstdlib>
+
 #include "list.h"
 #include "ir_visitor.h"
 #include "ir_hierarchical_visitor.h"

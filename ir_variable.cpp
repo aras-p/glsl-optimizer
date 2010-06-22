@@ -21,10 +21,9 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include <stdio.h>
+#include "ir.h"
 #include "glsl_parser_extras.h"
 #include "glsl_symbol_table.h"
-#include "ir.h"
 #include "builtin_variables.h"
 
 #ifndef Elements

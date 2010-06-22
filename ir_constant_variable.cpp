@@ -32,8 +32,6 @@
  * and calls to builtin functions.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
 #include "ir.h"
 #include "ir_print_visitor.h"
 #include "ir_visitor.h"

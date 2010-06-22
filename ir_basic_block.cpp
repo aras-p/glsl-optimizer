@@ -27,7 +27,6 @@
  * Basic block analysis of instruction streams.
  */
 
-#include <stdio.h>
 #include "ir.h"
 #include "ir_visitor.h"
 #include "ir_basic_block.h"

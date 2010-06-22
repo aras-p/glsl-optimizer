@@ -33,7 +33,6 @@
  *    * Initializers for \c const variables
  */
 
-#define NULL 0
 #include <math.h>
 #include "ir.h"
 #include "ir_visitor.h"

@@ -29,7 +29,6 @@
  * and codegen backends not have to worry about this case.
  */
 
-#include <stdio.h>
 #include "ir.h"
 #include "ir_visitor.h"
 #include "ir_optimization.h"

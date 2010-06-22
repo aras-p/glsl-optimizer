@@ -20,13 +20,13 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-#include <stdio.h>
+
+#include "ir.h"
 #include "main/imports.h"
 #include "symbol_table.h"
 #include "glsl_parser_extras.h"
 #include "ast.h"
 #include "glsl_types.h"
-#include "ir.h"
 
 struct ir_rvalue *
 _mesa_ast_field_selection_to_hir(const ast_expression *expr,

@@ -27,7 +27,6 @@
  * Eliminates dead assignments and variable declarations from the code.
  */
 
-#define NULL 0
 #include "ir.h"
 #include "ir_visitor.h"
 #include "ir_expression_flattening.h"
