@@ -63,6 +63,7 @@ struct llvmpipe_context {
    const struct lp_vertex_shader *vs;
    const struct lp_geometry_shader *gs;
    const struct lp_velems_state *velems;
+   const struct lp_so_state *so;
 
    /** Other rendering state */
    struct pipe_blend_color blend_color;
@@ -76,6 +77,12 @@ struct llvmpipe_context {
    struct pipe_sampler_view *vertex_sampler_views[PIPE_MAX_VERTEX_SAMPLERS];
    struct pipe_viewport_state viewport;
    struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
+   struct {
+      struct llvmpipe_resource *buffer[PIPE_MAX_SO_BUFFERS];
+      int offset[PIPE_MAX_SO_BUFFERS];
+      int so_count[PIPE_MAX_SO_BUFFERS];
+      int num_buffers;
+   } so_target;
 
    unsigned num_samplers;
    unsigned num_fragment_sampler_views;

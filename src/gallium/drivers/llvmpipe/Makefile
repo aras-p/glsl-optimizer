@@ -37,6 +37,7 @@ C_SOURCES = \
 	lp_state_gs.c \
 	lp_state_rasterizer.c \
 	lp_state_sampler.c \
+        lp_state_so.c \
 	lp_state_surface.c \
 	lp_state_vertex.c \
 	lp_state_vs.c \

@@ -54,6 +54,9 @@
 #define LP_NEW_QUERY         0x4000
 #define LP_NEW_BLEND_COLOR   0x8000
 #define LP_NEW_GS            0x10000
+#define LP_NEW_SO            0x20000
+#define LP_NEW_SO_BUFFERS    0x40000
+
 
 
 struct vertex_info;
@@ -80,6 +83,10 @@ struct lp_velems_state
 {
    unsigned count;
    struct pipe_vertex_element velem[PIPE_MAX_ATTRIBS];
+};
+
+struct lp_so_state {
+   struct pipe_stream_output_state base;
 };
 
 
@@ -119,6 +126,10 @@ llvmpipe_init_gs_funcs(struct llvmpipe_context *llvmpipe);
 
 void
 llvmpipe_init_rasterizer_funcs(struct llvmpipe_context *llvmpipe);
+
+void
+llvmpipe_init_so_funcs(struct llvmpipe_context *llvmpipe);
+
 
 
 #endif

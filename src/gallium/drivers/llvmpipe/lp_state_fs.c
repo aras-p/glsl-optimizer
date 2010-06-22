@@ -1111,9 +1111,10 @@ llvmpipe_set_constant_buffer(struct pipe_context *pipe,
    /* note: reference counting */
    pipe_resource_reference(&llvmpipe->constants[shader][index], constants);
 
-   if(shader == PIPE_SHADER_VERTEX) {
-      draw_set_mapped_constant_buffer(llvmpipe->draw, PIPE_SHADER_VERTEX, index,
-                                      data, size);
+   if(shader == PIPE_SHADER_VERTEX ||
+      shader == PIPE_SHADER_GEOMETRY) {
+      draw_set_mapped_constant_buffer(llvmpipe->draw, shader,
+                                      index, data, size);
    }
 
    llvmpipe->dirty |= LP_NEW_CONSTANTS;

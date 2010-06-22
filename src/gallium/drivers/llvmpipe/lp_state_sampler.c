@@ -105,6 +105,13 @@ llvmpipe_bind_vertex_sampler_states(struct pipe_context *pipe,
 
 
 static void
+llvmpipe_bind_geometry_sampler_states(struct pipe_context *pipe,
+                                      unsigned num, void **sampler)
+{
+   /* XXX: implementation missing */
+}
+
+static void
 llvmpipe_set_fragment_sampler_views(struct pipe_context *pipe,
                                     unsigned num,
                                     struct pipe_sampler_view **views)
@@ -163,6 +170,14 @@ llvmpipe_set_vertex_sampler_views(struct pipe_context *pipe,
 }
 
 
+static void
+llvmpipe_set_geometry_sampler_views(struct pipe_context *pipe,
+                                    unsigned num,
+                                    struct pipe_sampler_view **views)
+{
+   /*XXX: implementation missing */
+}
+
 static struct pipe_sampler_view *
 llvmpipe_create_sampler_view(struct pipe_context *pipe,
                             struct pipe_resource *texture,
@@ -206,8 +221,10 @@ llvmpipe_init_sampler_funcs(struct llvmpipe_context *llvmpipe)
 
    llvmpipe->pipe.bind_fragment_sampler_states  = llvmpipe_bind_sampler_states;
    llvmpipe->pipe.bind_vertex_sampler_states  = llvmpipe_bind_vertex_sampler_states;
+   llvmpipe->pipe.bind_geometry_sampler_states  = llvmpipe_bind_geometry_sampler_states;
    llvmpipe->pipe.set_fragment_sampler_views = llvmpipe_set_fragment_sampler_views;
    llvmpipe->pipe.set_vertex_sampler_views = llvmpipe_set_vertex_sampler_views;
+   llvmpipe->pipe.set_geometry_sampler_views = llvmpipe_set_geometry_sampler_views;
    llvmpipe->pipe.create_sampler_view = llvmpipe_create_sampler_view;
    llvmpipe->pipe.sampler_view_destroy = llvmpipe_sampler_view_destroy;
    llvmpipe->pipe.delete_sampler_state = llvmpipe_delete_sampler_state;
