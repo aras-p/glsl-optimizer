@@ -105,6 +105,11 @@ struct r300_winsys_screen {
     /* Return the number of free dwords in CS. */
     unsigned (*get_cs_free_dwords)(struct r300_winsys_screen *winsys);
 
+    /* Return the pointer to the first free dword in CS and assume a pipe
+     * driver wants to fill "count" dwords. */
+    uint32_t *(*get_cs_pointer)(struct r300_winsys_screen *winsys,
+                                unsigned count);
+
     /* Write a dword to the command buffer. */
     void (*write_cs_dword)(struct r300_winsys_screen* winsys, uint32_t dword);
 

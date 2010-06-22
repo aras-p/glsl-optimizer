@@ -1500,11 +1500,13 @@ static void* r300_create_vertex_elements_state(struct pipe_context* pipe,
 
             /* Align the formats to the size of DWORD.
              * We only care about the blocksizes of the formats since
-             * swizzles are already set up. */
+             * swizzles are already set up.
+             * Also compute the vertex size. */
             for (i = 0; i < count; i++) {
                 /* This is OK because we check for aligned strides too. */
                 velems->hw_format_size[i] =
                     align(util_format_get_blocksize(velems->hw_format[i]), 4);
+                velems->vertex_size_dwords += velems->hw_format_size[i] / 4;
             }
         }
     }

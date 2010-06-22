@@ -192,6 +192,17 @@ static unsigned radeon_get_cs_free_dwords(struct r300_winsys_screen *rws)
     return cs->ndw - cs->cdw;
 }
 
+static uint32_t *radeon_get_cs_pointer(struct r300_winsys_screen *rws,
+                                       unsigned count)
+{
+    struct radeon_libdrm_winsys *ws = radeon_winsys_screen(rws);
+    struct radeon_cs *cs = ws->cs;
+    uint32_t *ptr = cs->packets + cs->cdw;
+
+    cs->cdw += count;
+    return ptr;
+}
+
 static void radeon_write_cs_dword(struct r300_winsys_screen *rws,
                                   uint32_t dword)
 {
@@ -316,6 +327,7 @@ radeon_setup_winsys(int fd, struct radeon_libdrm_winsys* ws)
     ws->base.validate = radeon_validate;
     ws->base.destroy = radeon_winsys_destroy;
     ws->base.get_cs_free_dwords = radeon_get_cs_free_dwords;
+    ws->base.get_cs_pointer = radeon_get_cs_pointer;
     ws->base.write_cs_dword = radeon_write_cs_dword;
     ws->base.write_cs_table = radeon_write_cs_table;
     ws->base.write_cs_reloc = radeon_write_cs_reloc;

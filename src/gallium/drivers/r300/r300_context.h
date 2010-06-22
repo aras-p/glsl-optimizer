@@ -363,6 +363,9 @@ struct r300_vertex_element_state {
     enum pipe_format hw_format[PIPE_MAX_ATTRIBS];
     unsigned hw_format_size[PIPE_MAX_ATTRIBS];
 
+    /* The size of the vertex, in dwords. */
+    unsigned vertex_size_dwords;
+
     /* This might mean two things:
      * - src_format != hw_format, as discussed above.
      * - src_offset % 4 != 0. */
