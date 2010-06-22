@@ -41,7 +41,49 @@ struct glsl_shader {
 };
 
 
-struct gl_program_parameter_list;
+typedef int gl_register_file;
+typedef int gl_state_index;
+#define STATE_LENGTH 5
+
+/**
+ * Program parameter.
+ * Used by shaders/programs for uniforms, constants, varying vars, etc.
+ */
+struct gl_program_parameter
+{
+   const char *Name;        /**< Null-terminated string */
+   gl_register_file Type;   /**< PROGRAM_NAMED_PARAM, CONSTANT or STATE_VAR */
+   GLenum DataType;         /**< GL_FLOAT, GL_FLOAT_VEC2, etc */
+   /**
+    * Number of components (1..4), or more.
+    * If the number of components is greater than 4,
+    * this parameter is part of a larger uniform like a GLSL matrix or array.
+    * The next program parameter's Size will be Size-4 of this parameter.
+    */
+   GLuint Size;
+   GLboolean Used;          /**< Helper flag for GLSL uniform tracking */
+   GLboolean Initialized;   /**< Has the ParameterValue[] been set? */
+   GLbitfield Flags;        /**< Bitmask of PROG_PARAM_*_BIT */
+   /**
+    * A sequence of STATE_* tokens and integers to identify GL state.
+    */
+   gl_state_index StateIndexes[STATE_LENGTH];
+};
+
+
+/**
+ * List of gl_program_parameter instances.
+ */
+struct gl_program_parameter_list
+{
+   GLuint Size;           /**< allocated size of Parameters, ParameterValues */
+   GLuint NumParameters;  /**< number of parameters in arrays */
+   struct gl_program_parameter *Parameters; /**< Array [Size] */
+   GLfloat (*ParameterValues)[4];        /**< Array [Size] of GLfloat[4] */
+   GLbitfield StateFlags; /**< _NEW_* flags indicating which state changes
+                               might invalidate ParameterValues[] */
+};
+
 
 /**
  * Shader program uniform variable.
@@ -96,6 +138,9 @@ struct glsl_program {
    unsigned _NumLinkedShaders;
    struct glsl_shader **_LinkedShaders;
    /*@}*/
+
+   /** User-defined attribute bindings (glBindAttribLocation) */
+   struct gl_program_parameter_list *Attributes;
 
    /* post-link info: */
    struct gl_uniform_list *Uniforms;
