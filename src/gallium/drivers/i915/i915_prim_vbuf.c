@@ -353,11 +353,11 @@ i915_vbuf_render_set_primitive(struct vbuf_render *render,
    case PIPE_PRIM_QUADS:
       i915_render->hwprim = PRIM3D_TRILIST;
       i915_render->fallback = PIPE_PRIM_QUADS;
-      return FALSE;
+      return TRUE;
    case PIPE_PRIM_QUAD_STRIP:
       i915_render->hwprim = PRIM3D_TRILIST;
       i915_render->fallback = PIPE_PRIM_QUAD_STRIP;
-      return FALSE;
+      return TRUE;
    case PIPE_PRIM_POLYGON:
       i915_render->hwprim = PRIM3D_POLY;
       i915_render->fallback = 0;
