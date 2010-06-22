@@ -55,9 +55,6 @@ _string_list_create (void *ctx);
 static void
 _string_list_append_item (string_list_t *list, const char *str);
 
-static void
-_string_list_append_list (string_list_t *list, string_list_t *tail);
-
 static int
 _string_list_contains (string_list_t *list, const char *member, int *index);
 
@@ -501,18 +498,6 @@ _string_list_create (void *ctx)
 	list->tail = NULL;
 
 	return list;
-}
-
-void
-_string_list_append_list (string_list_t *list, string_list_t *tail)
-{
-	if (list->head == NULL) {
-		list->head = tail->head;
-	} else {
-		list->tail->next = tail->head;
-	}
-
-	list->tail = tail->tail;
 }
 
 void
