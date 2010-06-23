@@ -76,6 +76,8 @@ enum ir_visitor_status {
 
 class ir_hierarchical_visitor {
 public:
+   ir_hierarchical_visitor();
+
    /**
     * \name Visit methods for leaf-node classes
     */
@@ -136,6 +138,22 @@ public:
     * Utility function to process a linked list of instructions with a visitor
     */
    void run(struct exec_list *instructions);
+
+protected:
+   /**
+    * Callback function that is invoked on entry to each node visited.
+    *
+    * \warning
+    * Visitor classes derived from \c ir_hierarchical_visitor \b may \b not
+    * invoke this function.  This can be used, for example, to cause the
+    * callback to be invoked on every node type execpt one.
+    */
+   void (*callback)(class ir_instruction *ir, void *data);
+
+   /**
+    * Extra data parameter passed to the per-node callback function
+    */
+   void *data;
 };
 
 #endif /* IR_HIERARCHICAL_VISITOR_H */

@@ -24,38 +24,54 @@
 #include "ir.h"
 #include "ir_hierarchical_visitor.h"
 
+ir_hierarchical_visitor::ir_hierarchical_visitor()
+{
+   this->callback = NULL;
+   this->data = NULL;
+}
+
 ir_visitor_status
 ir_hierarchical_visitor::visit(ir_variable *ir)
 {
-   (void) ir;
+   if (this->callback != NULL)
+      this->callback(ir, this->data);
+
    return visit_continue;
 }
 
 ir_visitor_status
 ir_hierarchical_visitor::visit(ir_constant *ir)
 {
-   (void) ir;
+   if (this->callback != NULL)
+      this->callback(ir, this->data);
+
    return visit_continue;
 }
 
 ir_visitor_status
 ir_hierarchical_visitor::visit(ir_loop_jump *ir)
 {
-   (void) ir;
+   if (this->callback != NULL)
+      this->callback(ir, this->data);
+
    return visit_continue;
 }
 
 ir_visitor_status
 ir_hierarchical_visitor::visit(ir_dereference_variable *ir)
 {
-   (void) ir;
+   if (this->callback != NULL)
+      this->callback(ir, this->data);
+
    return visit_continue;
 }
 
 ir_visitor_status
 ir_hierarchical_visitor::visit_enter(ir_loop *ir)
 {
-   (void) ir;
+   if (this->callback != NULL)
+      this->callback(ir, this->data);
+
    return visit_continue;
 }
 
@@ -69,7 +85,9 @@ ir_hierarchical_visitor::visit_leave(ir_loop *ir)
 ir_visitor_status
 ir_hierarchical_visitor::visit_enter(ir_function_signature *ir)
 {
-   (void) ir;
+   if (this->callback != NULL)
+      this->callback(ir, this->data);
+
    return visit_continue;
 }
 
@@ -83,7 +101,9 @@ ir_hierarchical_visitor::visit_leave(ir_function_signature *ir)
 ir_visitor_status
 ir_hierarchical_visitor::visit_enter(ir_function *ir)
 {
-   (void) ir;
+   if (this->callback != NULL)
+      this->callback(ir, this->data);
+
    return visit_continue;
 }
 
@@ -97,7 +117,9 @@ ir_hierarchical_visitor::visit_leave(ir_function *ir)
 ir_visitor_status
 ir_hierarchical_visitor::visit_enter(ir_expression *ir)
 {
-   (void) ir;
+   if (this->callback != NULL)
+      this->callback(ir, this->data);
+
    return visit_continue;
 }
 
@@ -111,7 +133,9 @@ ir_hierarchical_visitor::visit_leave(ir_expression *ir)
 ir_visitor_status
 ir_hierarchical_visitor::visit_enter(ir_texture *ir)
 {
-   (void) ir;
+   if (this->callback != NULL)
+      this->callback(ir, this->data);
+
    return visit_continue;
 }
 
@@ -125,7 +149,9 @@ ir_hierarchical_visitor::visit_leave(ir_texture *ir)
 ir_visitor_status
 ir_hierarchical_visitor::visit_enter(ir_swizzle *ir)
 {
-   (void) ir;
+   if (this->callback != NULL)
+      this->callback(ir, this->data);
+
    return visit_continue;
 }
 
@@ -139,7 +165,9 @@ ir_hierarchical_visitor::visit_leave(ir_swizzle *ir)
 ir_visitor_status
 ir_hierarchical_visitor::visit_enter(ir_dereference_array *ir)
 {
-   (void) ir;
+   if (this->callback != NULL)
+      this->callback(ir, this->data);
+
    return visit_continue;
 }
 
@@ -153,7 +181,9 @@ ir_hierarchical_visitor::visit_leave(ir_dereference_array *ir)
 ir_visitor_status
 ir_hierarchical_visitor::visit_enter(ir_dereference_record *ir)
 {
-   (void) ir;
+   if (this->callback != NULL)
+      this->callback(ir, this->data);
+
    return visit_continue;
 }
 
@@ -167,7 +197,9 @@ ir_hierarchical_visitor::visit_leave(ir_dereference_record *ir)
 ir_visitor_status
 ir_hierarchical_visitor::visit_enter(ir_assignment *ir)
 {
-   (void) ir;
+   if (this->callback != NULL)
+      this->callback(ir, this->data);
+
    return visit_continue;
 }
 
@@ -181,7 +213,9 @@ ir_hierarchical_visitor::visit_leave(ir_assignment *ir)
 ir_visitor_status
 ir_hierarchical_visitor::visit_enter(ir_call *ir)
 {
-   (void) ir;
+   if (this->callback != NULL)
+      this->callback(ir, this->data);
+
    return visit_continue;
 }
 
@@ -195,7 +229,9 @@ ir_hierarchical_visitor::visit_leave(ir_call *ir)
 ir_visitor_status
 ir_hierarchical_visitor::visit_enter(ir_return *ir)
 {
-   (void) ir;
+   if (this->callback != NULL)
+      this->callback(ir, this->data);
+
    return visit_continue;
 }
 
@@ -209,7 +245,9 @@ ir_hierarchical_visitor::visit_leave(ir_return *ir)
 ir_visitor_status
 ir_hierarchical_visitor::visit_enter(ir_if *ir)
 {
-   (void) ir;
+   if (this->callback != NULL)
+      this->callback(ir, this->data);
+
    return visit_continue;
 }
 
