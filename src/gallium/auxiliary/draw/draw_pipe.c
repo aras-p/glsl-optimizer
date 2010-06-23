@@ -260,7 +260,7 @@ void draw_pipeline_run( struct draw_context *draw,
                         const struct draw_prim_info *prim_info)
 {
    unsigned i, start;
-   
+
    draw->pipeline.verts = (char *)vert_info->verts;
    draw->pipeline.vertex_stride = vert_info->stride;
    draw->pipeline.vertex_count = vert_info->count;
