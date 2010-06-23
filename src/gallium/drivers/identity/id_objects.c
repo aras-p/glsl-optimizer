@@ -120,7 +120,7 @@ identity_sampler_view_create(struct identity_context *id_context,
 
    assert(view->texture == id_resource->resource);
 
-   id_view = MALLOC(sizeof(struct identity_sampler_view));
+   id_view = CALLOC_STRUCT(identity_sampler_view);
 
    id_view->base = *view;
    id_view->base.reference.count = 1;

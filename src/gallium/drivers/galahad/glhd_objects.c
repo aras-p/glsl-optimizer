@@ -120,7 +120,7 @@ galahad_sampler_view_create(struct galahad_context *glhd_context,
 
    assert(view->texture == glhd_resource->resource);
 
-   glhd_view = MALLOC(sizeof(struct galahad_sampler_view));
+   glhd_view = CALLOC_STRUCT(galahad_sampler_view);
 
    glhd_view->base = *view;
    glhd_view->base.reference.count = 1;
