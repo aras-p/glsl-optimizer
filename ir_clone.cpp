@@ -238,3 +238,34 @@ ir_function_signature::clone(struct hash_table *ht) const
    /* FINISHME */
    abort();
 }
+
+ir_instruction *
+ir_constant::clone(struct hash_table *ht) const
+{
+   switch (this->type->base_type) {
+   case GLSL_TYPE_UINT:
+   case GLSL_TYPE_INT:
+   case GLSL_TYPE_FLOAT:
+   case GLSL_TYPE_BOOL:
+      return new ir_constant(this->type, &this->value);
+
+   case GLSL_TYPE_STRUCT: {
+      ir_constant *c = new ir_constant;
+
+      c->type = this->type;
+      for (exec_node *node = this->components.head
+	      ; !node->is_tail_sentinal()
+	      ; node = node->next) {
+	 ir_constant *const orig = (ir_constant *) node;
+
+	 c->components.push_tail(orig->clone(NULL));
+      }
+
+      return c;
+   }
+
+   default:
+      assert(!"Should not get here."); break;
+      return NULL;
+   }
+}
