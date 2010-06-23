@@ -359,10 +359,9 @@ generate_mat_body_from_scalar(exec_list *instructions,
    inst = new ir_assignment(lhs, rhs, NULL);
    instructions->push_tail(inst);
 
-   ir_constant *const zero = new ir_constant(0.0f);
-
    for (unsigned i = 1; i < column_type->vector_elements; i++) {
       ir_dereference *const lhs_ref = new ir_dereference_variable(column);
+      ir_constant *const zero = new ir_constant(0.0f);
 
       ir_swizzle *lhs = new ir_swizzle(lhs_ref, i, 0, 0, 0, 1);
 
