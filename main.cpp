@@ -200,20 +200,21 @@ main(int argc, char **argv)
    if (argc <= optind)
       usage_fail(argv[0]);
 
-   struct glsl_program whole_program;
-   memset(&whole_program, 0, sizeof(whole_program));
+   struct glsl_program *whole_program;
+
+   whole_program = talloc_zero (NULL, struct glsl_program);
+   assert(whole_program != NULL);
 
    for (/* empty */; argc > optind; optind++) {
-      whole_program.Shaders = (struct glsl_shader **)
-	 realloc(whole_program.Shaders,
-		 sizeof(struct glsl_shader *) * (whole_program.NumShaders + 1));
-      assert(whole_program.Shaders != NULL);
+      whole_program->Shaders = (struct glsl_shader **)
+	 realloc(whole_program->Shaders,
+		 sizeof(struct glsl_shader *) * (whole_program->NumShaders + 1));
+      assert(whole_program->Shaders != NULL);
 
-      /* talloc context should probably be whole_program */
-      struct glsl_shader *shader = talloc_zero(NULL, glsl_shader);
+      struct glsl_shader *shader = talloc_zero(whole_program, glsl_shader);
 
-      whole_program.Shaders[whole_program.NumShaders] = shader;
-      whole_program.NumShaders++;
+      whole_program->Shaders[whole_program->NumShaders] = shader;
+      whole_program->NumShaders++;
 
       const unsigned len = strlen(argv[optind]);
       if (len < 6)
@@ -245,9 +246,11 @@ main(int argc, char **argv)
    }
 
    if ((status == EXIT_SUCCESS) && do_link)  {
-      link_shaders(&whole_program);
-      status = (whole_program.LinkStatus) ? EXIT_SUCCESS : EXIT_FAILURE;
+      link_shaders(whole_program);
+      status = (whole_program->LinkStatus) ? EXIT_SUCCESS : EXIT_FAILURE;
    }
+
+   talloc_free(whole_program);
 
    return status;
 }
