@@ -18,7 +18,11 @@ env.Prepend(LIBS = [
 ])
 
 if True:
-    env.Append(CPPDEFINES = 'GALLIUM_SOFTPIPE')
+    env.Append(CPPDEFINES = [
+        'GALLIUM_SOFTPIPE',
+        'GALLIUM_RBUG',
+        'GALLIUM_TRACE',
+    ])
     env.Prepend(LIBS = [softpipe])
 
 if env['llvm']:
