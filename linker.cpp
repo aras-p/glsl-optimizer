@@ -814,7 +814,6 @@ link_shaders(struct glsl_program *prog)
       goto done;
 
 
-   /* FINISHME: Perform inter-stage linking. */
    prog->_LinkedShaders = (struct glsl_shader **)
       calloc(2, sizeof(struct glsl_shader *));
    prog->_NumLinkedShaders = 0;
@@ -829,6 +828,10 @@ link_shaders(struct glsl_program *prog)
       prog->_NumLinkedShaders++;
    }
 
+   /* Here begins the inter-stage linking phase.  Some initial validation is
+    * performed, then locations are assigned for uniforms, attributes, and
+    * varyings.
+    */
    if (cross_validate_uniforms(prog)) {
       /* Validate the inputs of each stage with the output of the preceeding
        * stage.
@@ -861,8 +864,6 @@ link_shaders(struct glsl_program *prog)
 			       prog->_LinkedShaders[i]);
 
    /* FINISHME: Assign fragment shader output locations. */
-
-   /* FINISHME: Generate code here. */
 
 done:
    free(vert_shader_list);
