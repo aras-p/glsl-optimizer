@@ -1,0 +1,14 @@
+Import('*')
+
+env = env.Clone()
+
+identity = env.ConvenienceLibrary(
+	target = 'identity',
+	source = [
+		'glhd_context.c',
+		'glhd_drm.c',
+		'glhd_objects.c',
+		'glhd_screen.c',
+	])
+
+Export('identity')
