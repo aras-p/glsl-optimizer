@@ -185,14 +185,6 @@ static void r300_resource_copy_region(struct pipe_context *pipe,
     enum pipe_format old_format = dst->format;
     enum pipe_format new_format = old_format;
 
-    if (dst->format != src->format) {
-        debug_printf("r300: Implementation error: Format mismatch in %s\n"
-            "    : src: %s dst: %s\n", __FUNCTION__,
-            util_format_short_name(src->format),
-            util_format_short_name(dst->format));
-        debug_assert(0);
-    }
-
     if (!pipe->screen->is_format_supported(pipe->screen,
                                            old_format, src->target,
                                            src->nr_samples,

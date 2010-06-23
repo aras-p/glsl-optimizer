@@ -27,6 +27,8 @@
 
 
 #include "pipe/p_context.h"
+
+#include "util/u_format.h"
 #include "util/u_memory.h"
 #include "util/u_inlines.h"
 
@@ -632,6 +634,12 @@ galahad_resource_copy_region(struct pipe_context *_pipe,
    struct pipe_context *pipe = glhd_pipe->pipe;
    struct pipe_resource *dst = glhd_resource_dst->resource;
    struct pipe_resource *src = glhd_resource_src->resource;
+
+   if (_dst->format != _src->format) {
+      glhd_warn("Format mismatch: Source is %s, destination is %s",
+         util_format_short_name(_src->format),
+         util_format_short_name(_dst->format));
+   }
 
    pipe->resource_copy_region(pipe,
                               dst,
