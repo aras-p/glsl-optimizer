@@ -1306,38 +1306,46 @@ Declaration Semantic
 TGSI_SEMANTIC_POSITION
 """"""""""""""""""""""
 
-Position, sometimes known as HPOS or WPOS for historical reasons, is the
-location of the vertex in space, in ``(x, y, z, w)`` format. ``x``, ``y``, and ``z``
-are the Cartesian coordinates, and ``w`` is the homogenous coordinate and used
-for the perspective divide, if enabled.
+For vertex shaders, TGSI_SEMANTIC_POSITION indicates the vertex shader
+output register which contains the homogeneous vertex position in the clip
+space coordinate system.  After clipping, the X, Y and Z components of the
+vertex will be divided by the W value to get normalized device coordinates.
 
-As a vertex shader output, position should be scaled to the viewport. When
-used in fragment shaders, position will be in window coordinates. The convention
-used depends on the FS_COORD_ORIGIN and FS_COORD_PIXEL_CENTER properties.
+For fragment shaders, TGSI_SEMANTIC_POSITION is used to indicate that
+fragment shader input contains the fragment's window position.  The X
+component starts at zero and always increases from left to right.
+The Y component starts at zero and always increases but Y=0 may either
+indicate the top of the window or the bottom depending on the fragment
+coordinate origin convention (see TGSI_PROPERTY_FS_COORD_ORIGIN).
+The Z coordinate ranges from 0 to 1 to represent depth from the front
+to the back of the Z buffer.  The W component contains the reciprocol
+of the interpolated vertex position W component.
 
-XXX additionally, is there a way to configure the perspective divide? it's
-accelerated on most chipsets AFAIK...
 
-Position, if not specified, usually defaults to ``(0, 0, 0, 1)``, and can
-be partially specified as ``(x, y, 0, 1)`` or ``(x, y, z, 1)``.
-
-XXX usually? can we solidify that?
 
 TGSI_SEMANTIC_COLOR
 """""""""""""""""""
 
-Colors are used to, well, color the primitives. Colors are always in
-``(r, g, b, a)`` format.
+For vertex shader outputs or fragment shader inputs/outputs, this
+label indicates that the resister contains an R,G,B,A color.
 
-If alpha is not specified, it defaults to 1.
+Several shader inputs/outputs may contain colors so the semantic index
+is used to distinguish them.  For example, color[0] may be the diffuse
+color while color[1] may be the specular color.
+
+This label is needed so that the flat/smooth shading can be applied
+to the right interpolants during rasterization.
+
+
 
 TGSI_SEMANTIC_BCOLOR
 """"""""""""""""""""
 
 Back-facing colors are only used for back-facing polygons, and are only valid
 in vertex shader outputs. After rasterization, all polygons are front-facing
-and COLOR and BCOLOR end up occupying the same slots in the fragment, so
-all BCOLORs effectively become regular COLORs in the fragment shader.
+and COLOR and BCOLOR end up occupying the same slots in the fragment shader,
+so all BCOLORs effectively become regular COLORs in the fragment shader.
+
 
 TGSI_SEMANTIC_FOG
 """""""""""""""""
