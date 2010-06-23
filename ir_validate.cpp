@@ -35,148 +35,64 @@
 
 #include <inttypes.h>
 #include "ir.h"
-#include "ir_visitor.h"
-#include "ir_optimization.h"
-#include "glsl_types.h"
+#include "ir_hierarchical_visitor.h"
 #include "hash_table.h"
 
-/**
- * Visitor class for replacing expressions with ir_constant values.
- */
-
-
-class ir_validate : public ir_hierarchical_visitor {
-public:
-   virtual ir_visitor_status visit_enter(class ir_constant *);
-   virtual ir_visitor_status visit_enter(class ir_loop *);
-   virtual ir_visitor_status visit_enter(class ir_function_signature *);
-   virtual ir_visitor_status visit_enter(class ir_function *);
-   virtual ir_visitor_status visit_enter(class ir_expression *);
-   virtual ir_visitor_status visit_enter(class ir_texture *);
-   virtual ir_visitor_status visit_enter(class ir_swizzle *);
-   virtual ir_visitor_status visit_enter(class ir_dereference_array *);
-   virtual ir_visitor_status visit_enter(class ir_dereference_record *);
-   virtual ir_visitor_status visit_enter(class ir_assignment *);
-   virtual ir_visitor_status visit_enter(class ir_call *);
-   virtual ir_visitor_status visit_enter(class ir_return *);
-   virtual ir_visitor_status visit_enter(class ir_if *);
-
-   void validate_ir(ir_instruction *ir);
-
-   struct hash_table *ht;
-};
-
-unsigned int hash_func(const void *key)
+static unsigned int hash_func(const void *key)
 {
    return (unsigned int)(uintptr_t)key;
 }
 
-int hash_compare_func(const void *key1, const void *key2)
+static int hash_compare_func(const void *key1, const void *key2)
 {
    return key1 == key2 ? 0 : 1;
 }
 
-void
-ir_validate::validate_ir(ir_instruction *ir)
+
+class ir_validate : public ir_hierarchical_visitor {
+public:
+   ir_validate()
+   {
+      this->ht = hash_table_ctor(0, hash_func, hash_compare_func);
+
+      this->callback = ir_validate::validate_ir;
+      this->data = ht;
+   }
+
+   ~ir_validate()
+   {
+      hash_table_dtor(this->ht);
+   }
+
+   virtual ir_visitor_status visit(ir_variable *v);
+
+   static void validate_ir(ir_instruction *ir, void *data);
+
+   struct hash_table *ht;
+};
+
+ir_visitor_status
+ir_validate::visit(ir_variable *ir)
 {
-   if (hash_table_find(this->ht, ir)) {
+   /* An ir_variable is the one thing that can (and will) appear multiple times
+    * in an IR tree.
+    */
+   (void) ir;
+   return visit_continue;
+}
+
+void
+ir_validate::validate_ir(ir_instruction *ir, void *data)
+{
+   struct hash_table *ht = (struct hash_table *) data;
+
+   if (hash_table_find(ht, ir)) {
       printf("Instruction node present twice in ir tree:\n");
       ir->print();
       printf("\n");
       abort();
    }
-   hash_table_insert(this->ht, ir, ir);
-}
-
-ir_visitor_status
-ir_validate::visit_enter(ir_constant *ir)
-{
-   validate_ir(ir);
-   return visit_continue;
-}
-
-ir_visitor_status
-ir_validate::visit_enter(ir_loop *ir)
-{
-   validate_ir(ir);
-   return visit_continue;
-}
-
-ir_visitor_status
-ir_validate::visit_enter(ir_function_signature *ir)
-{
-   validate_ir(ir);
-   return visit_continue;
-}
-
-ir_visitor_status
-ir_validate::visit_enter(ir_function *ir)
-{
-   validate_ir(ir);
-   return visit_continue;
-}
-
-ir_visitor_status
-ir_validate::visit_enter(ir_expression *ir)
-{
-   validate_ir(ir);
-   return visit_continue;
-}
-
-ir_visitor_status
-ir_validate::visit_enter(ir_texture *ir)
-{
-   validate_ir(ir);
-   return visit_continue;
-}
-
-ir_visitor_status
-ir_validate::visit_enter(ir_swizzle *ir)
-{
-   validate_ir(ir);
-   return visit_continue;
-}
-
-ir_visitor_status
-ir_validate::visit_enter(ir_dereference_array *ir)
-{
-   validate_ir(ir);
-   return visit_continue;
-}
-
-ir_visitor_status
-ir_validate::visit_enter(ir_dereference_record *ir)
-{
-   validate_ir(ir);
-   return visit_continue;
-}
-
-ir_visitor_status
-ir_validate::visit_enter(ir_assignment *ir)
-{
-   validate_ir(ir);
-   return visit_continue;
-}
-
-ir_visitor_status
-ir_validate::visit_enter(ir_call *ir)
-{
-   validate_ir(ir);
-   return visit_continue;
-}
-
-ir_visitor_status
-ir_validate::visit_enter(ir_return *ir)
-{
-   validate_ir(ir);
-   return visit_continue;
-}
-
-ir_visitor_status
-ir_validate::visit_enter(ir_if *ir)
-{
-   validate_ir(ir);
-   return visit_continue;
+   hash_table_insert(ht, ir, ir);
 }
 
 void
@@ -184,9 +100,5 @@ validate_ir_tree(exec_list *instructions)
 {
    ir_validate v;
 
-   v.ht = hash_table_ctor(0, hash_func, hash_compare_func);
-
    v.run(instructions);
-
-   hash_table_dtor(v.ht);
 }
