@@ -106,38 +106,39 @@ const struct option compiler_opts[] = {
 void
 compile_shader(struct glsl_shader *shader)
 {
-   struct _mesa_glsl_parse_state state;
+   struct _mesa_glsl_parse_state *state;
 
-   memset(& state, 0, sizeof(state));
+   state = talloc_zero(talloc_parent(shader), struct _mesa_glsl_parse_state);
+
    switch (shader->Type) {
-   case GL_VERTEX_SHADER:   state.target = vertex_shader; break;
-   case GL_FRAGMENT_SHADER: state.target = fragment_shader; break;
-   case GL_GEOMETRY_SHADER: state.target = geometry_shader; break;
+   case GL_VERTEX_SHADER:   state->target = vertex_shader; break;
+   case GL_FRAGMENT_SHADER: state->target = fragment_shader; break;
+   case GL_GEOMETRY_SHADER: state->target = geometry_shader; break;
    }
 
-   state.scanner = NULL;
-   state.translation_unit.make_empty();
-   state.symbols = new glsl_symbol_table;
-   state.info_log = talloc_strdup(shader, "");
-   state.error = false;
-   state.temp_index = 0;
-   state.loop_or_switch_nesting = NULL;
-   state.ARB_texture_rectangle_enable = true;
+   state->scanner = NULL;
+   state->translation_unit.make_empty();
+   state->symbols = new glsl_symbol_table;
+   state->info_log = talloc_strdup(shader, "");
+   state->error = false;
+   state->temp_index = 0;
+   state->loop_or_switch_nesting = NULL;
+   state->ARB_texture_rectangle_enable = true;
 
    /* Create a new context for the preprocessor output.  Ultimately, this
     * should probably be the parser context, but there isn't one yet.
    */
    const char *source = shader->Source;
-   state.error = preprocess(shader, &source, &state.info_log);
+   state->error = preprocess(shader, &source, &state->info_log);
 
-   if (!state.error) {
-      _mesa_glsl_lexer_ctor(& state, source);
-      _mesa_glsl_parse(& state);
-      _mesa_glsl_lexer_dtor(& state);
+   if (!state->error) {
+      _mesa_glsl_lexer_ctor(state, source);
+      _mesa_glsl_parse(state);
+      _mesa_glsl_lexer_dtor(state);
    }
 
    if (dump_ast) {
-      foreach_list_const(n, &state.translation_unit) {
+      foreach_list_const(n, &state->translation_unit) {
 	 ast_node *ast = exec_node_data(ast_node, n, link);
 	 ast->print();
       }
@@ -145,13 +146,13 @@ compile_shader(struct glsl_shader *shader)
    }
 
    shader->ir.make_empty();
-   if (!state.error && !state.translation_unit.is_empty())
-      _mesa_ast_to_hir(&shader->ir, &state);
+   if (!state->error && !state->translation_unit.is_empty())
+      _mesa_ast_to_hir(&shader->ir, state);
 
    validate_ir_tree(&shader->ir);
 
    /* Optimization passes */
-   if (!state.error && !shader->ir.is_empty()) {
+   if (!state->error && !shader->ir.is_empty()) {
       bool progress;
       do {
 	 progress = false;
@@ -171,17 +172,19 @@ compile_shader(struct glsl_shader *shader)
    validate_ir_tree(&shader->ir);
 
    /* Print out the resulting IR */
-   if (!state.error && dump_lir) {
-      _mesa_print_ir(&shader->ir, &state);
+   if (!state->error && dump_lir) {
+      _mesa_print_ir(&shader->ir, state);
    }
 
-   shader->symbols = state.symbols;
-   shader->CompileStatus = !state.error;
+   shader->symbols = state->symbols;
+   shader->CompileStatus = !state->error;
 
    if (shader->InfoLog)
       talloc_free(shader->InfoLog);
 
-   shader->InfoLog = state.info_log;
+   shader->InfoLog = state->info_log;
+
+   talloc_free(state);
 
    return;
 }
