@@ -6,7 +6,6 @@ identity = env.ConvenienceLibrary(
 	target = 'identity',
 	source = [
 		'id_context.c',
-		'id_drm.c',
 		'id_objects.c',
 		'id_screen.c',
 	])

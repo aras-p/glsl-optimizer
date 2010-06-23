@@ -28,7 +28,6 @@
 
 #include "pipe/p_compiler.h"
 #include "util/u_memory.h"
-#include "state_tracker/drm_api.h"
 #include "state_tracker/sw_winsys.h"
 #include "dri_sw_winsys.h"
 #include "trace/tr_public.h"
