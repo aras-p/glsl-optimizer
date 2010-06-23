@@ -21,24 +21,68 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
 #include "glcpp.h"
 
 extern int yydebug;
 
+static char *
+load_text_file(void *ctx, const char *file_name)
+{
+	char *text = NULL;
+	struct stat st;
+	ssize_t total_read = 0;
+	int fd = file_name == NULL ? STDIN_FILENO : open(file_name, O_RDONLY);
+
+	if (fd < 0) {
+		return NULL;
+	}
+
+	if (fstat(fd, & st) == 0) {
+		text = (char *) talloc_size(ctx, st.st_size + 1);
+		if (text != NULL) {
+			do {
+				ssize_t bytes = read(fd, text + total_read,
+						     st.st_size - total_read);
+				if (bytes < 0) {
+					text = NULL;
+					break;
+				}
+
+				if (bytes == 0) {
+					break;
+				}
+
+				total_read += bytes;
+			} while (total_read < st.st_size);
+
+			text[total_read] = '\0';
+		}
+	}
+
+	close(fd);
+
+	return text;
+}
+
+int
+preprocess(void *talloc_ctx, const char **shader, char **info_log);
+
 int
 main (void)
 {
-	glcpp_parser_t *parser;
-	int ret;
+	void *ctx = talloc(NULL, void*);
+	const char *shader = load_text_file(ctx, NULL);
+	char *info_log = talloc_strdup(ctx, "");
+	int ret = preprocess(ctx, &shader, &info_log);
 
-	parser = glcpp_parser_create ();
+	printf("%s", shader);
+	fprintf(stderr, "%s", info_log);
 
-	ret = glcpp_parser_parse (parser);
-
-	printf("%s", parser->output);
-	fprintf(stderr, "%s", parser->info_log);
-
-	glcpp_parser_destroy (parser);
+	talloc_free(ctx);
 
 	return ret;
 }
