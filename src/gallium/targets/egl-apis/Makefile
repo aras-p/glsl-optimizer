@@ -15,6 +15,12 @@ GLESv1_CM_INCLUDES := $(GL_INCLUDES)
 GLESv2_INCLUDES := $(GL_INCLUDES)
 OpenVG_INCLUDES := -I$(TOP)/src/gallium/state_trackers/vega -I$(TOP)/src/gallium/include
 
+# cflags
+GL_CFLAGS := $(API_DEFINES)
+GLESv1_CM_CFLAGS :=
+GLESv2_CFLAGS :=
+OpenVG_CFLAGS :=
+
 # system libs
 GL_SYS := -lpthread -lm -L$(TOP)/$(LIB_DIR) -l$(GL_LIB)
 GLESv1_CM_SYS := -lpthread -lm -L$(TOP)/$(LIB_DIR) -l$(GLESv1_CM_LIB)
@@ -46,7 +52,7 @@ OpenVG_OBJECTS := api_OpenVG.o
 default: $(OUTPUTS)
 
 api_%.o: api_%.c
-	$(CC) -c -o $@ $< $($*_INCLUDES) $(DEFINES) $(CFLAGS)
+	$(CC) -c -o $@ $< $($*_INCLUDES) $($*_CFLAGS) $(DEFINES) $(CFLAGS)
 
 define mklib
 $(MKLIB) -o $(notdir $@) -noprefix -linker '$(CC)' -ldflags '$(LDFLAGS)' \
