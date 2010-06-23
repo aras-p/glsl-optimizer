@@ -34,20 +34,37 @@
 #include "egllog.h"
 
 #include "state_tracker/st_api.h"
-#include "softpipe/sp_public.h"
-#include "llvmpipe/lp_public.h"
-#include "target-helpers/wrap_screen.h"
-#include "common/egl_g3d_loader.h"
 #include "state_tracker/drm_driver.h"
+#include "common/egl_g3d_loader.h"
 
 struct egl_g3d_loader egl_g3d_loader;
 
 static struct st_module {
    boolean initialized;
-   const char *name;
+   char *name;
    struct util_dl_library *lib;
    struct st_api *stapi;
 } st_modules[ST_API_COUNT];
+
+static struct pipe_module {
+   boolean initialized;
+   char *name;
+   struct util_dl_library *lib;
+   const struct drm_driver_descriptor *drmdd;
+   struct pipe_screen *(*swrast_create_screen)(struct sw_winsys *);
+} pipe_modules[16];
+
+static char *
+loader_strdup(const char *s)
+{
+   size_t len = (s) ? strlen(s) : 0;
+   char *t = MALLOC(len + 1);
+   if (t) {
+      memcpy(t, s, len);
+      t[len] = '\0';
+   }
+   return t;
+}
 
 static EGLBoolean
 dlopen_st_module_cb(const char *dir, size_t len, void *callback_data)
@@ -81,7 +98,7 @@ load_st_module(struct st_module *stmod,
 {
    struct st_api *(*create_api)(void);
 
-   stmod->name = name;
+   stmod->name = loader_strdup(name);
    if (stmod->name)
       _eglSearchPathForEach(dlopen_st_module_cb, (void *) stmod);
    else
@@ -99,10 +116,75 @@ load_st_module(struct st_module *stmod,
       }
    }
 
-   if (!stmod->stapi)
+   if (!stmod->stapi) {
+      FREE(stmod->name);
       stmod->name = NULL;
+   }
 
    return (stmod->stapi != NULL);
+}
+
+static EGLBoolean
+dlopen_pipe_module_cb(const char *dir, size_t len, void *callback_data)
+{
+   struct pipe_module *pmod = (struct pipe_module *) callback_data;
+   char path[1024];
+   int ret;
+
+   if (len) {
+      ret = util_snprintf(path, sizeof(path),
+            "%.*s/" PIPE_PREFIX "%s" UTIL_DL_EXT, len, dir, pmod->name);
+   }
+   else {
+      ret = util_snprintf(path, sizeof(path),
+            PIPE_PREFIX "%s" UTIL_DL_EXT, pmod->name);
+   }
+   if (ret > 0 && ret < sizeof(path)) {
+      pmod->lib = util_dl_open(path);
+      if (pmod->lib)
+         _eglLog(_EGL_DEBUG, "loaded %s", path);
+   }
+
+   return !(pmod->lib);
+}
+
+static boolean
+load_pipe_module(struct pipe_module *pmod, const char *name)
+{
+   pmod->name = loader_strdup(name);
+   if (!pmod->name)
+      return FALSE;
+
+   _eglSearchPathForEach(dlopen_pipe_module_cb, (void *) pmod);
+   if (pmod->lib) {
+      pmod->drmdd = (const struct drm_driver_descriptor *)
+         util_dl_get_proc_address(pmod->lib, "driver_descriptor");
+      if (pmod->drmdd) {
+         if (pmod->drmdd->driver_name) {
+            /* driver name mismatch */
+            if (strcmp(pmod->drmdd->driver_name, pmod->name) != 0)
+               pmod->drmdd = NULL;
+         }
+         else {
+            /* swrast */
+            pmod->swrast_create_screen =
+               (struct pipe_screen *(*)(struct sw_winsys *))
+               util_dl_get_proc_address(pmod->lib, "swrast_create_screen");
+            if (!pmod->swrast_create_screen)
+               pmod->drmdd = NULL;
+         }
+      }
+
+      if (!pmod->drmdd) {
+         util_dl_close(pmod->lib);
+         pmod->lib = NULL;
+      }
+   }
+
+   if (!pmod->drmdd)
+      pmod->name = NULL;
+
+   return (pmod->drmdd != NULL);
 }
 
 static struct st_api *
@@ -206,27 +288,47 @@ guess_gl_api(void)
    return stapi;
 }
 
+static struct pipe_module *
+get_pipe_module(const char *name)
+{
+   struct pipe_module *pmod = NULL;
+   int i;
+
+   if (!name)
+      return NULL;
+
+   for (i = 0; i < Elements(pipe_modules); i++) {
+      if (!pipe_modules[i].initialized ||
+          strcmp(pipe_modules[i].name, name) == 0) {
+         pmod = &pipe_modules[i];
+         break;
+      }
+   }
+   if (!pmod)
+      return NULL;
+
+   if (!pmod->initialized) {
+      load_pipe_module(pmod, name);
+      pmod->initialized = TRUE;
+   }
+
+   return pmod;
+}
+
 static struct pipe_screen *
 create_drm_screen(const char *name, int fd)
 {
-   return (driver_descriptor.driver_name && name &&
-           strcmp(driver_descriptor.driver_name, name) == 0) ?
-      driver_descriptor.create_screen(fd) : NULL;
+   struct pipe_module *pmod = get_pipe_module(name);
+   return (pmod && pmod->drmdd->create_screen) ?
+      pmod->drmdd->create_screen(fd) : NULL;
 }
 
 static struct pipe_screen *
 create_sw_screen(struct sw_winsys *ws)
 {
-   struct pipe_screen *screen = NULL;
-
-#if defined(GALLIUM_LLVMPIPE)
-   if (!screen && !debug_get_bool_option("GALLIUM_NO_LLVM", FALSE))
-      screen = llvmpipe_create_screen(ws);
-#endif
-   if (!screen)
-      screen = softpipe_create_screen(ws);
-
-   return (screen) ? gallium_wrap_screen(screen) : NULL;
+   struct pipe_module *pmod = get_pipe_module("swrast");
+   return (pmod && pmod->swrast_create_screen) ?
+      pmod->swrast_create_screen(ws) : NULL;
 }
 
 static const struct egl_g3d_loader *
@@ -273,8 +375,29 @@ loader_fini(void)
          util_dl_close(stmod->lib);
          stmod->lib = NULL;
       }
-      stmod->name = NULL;
+      if (stmod->name) {
+         FREE(stmod->name);
+         stmod->name = NULL;
+      }
       stmod->initialized = FALSE;
+   }
+   for (i = 0; i < Elements(pipe_modules); i++) {
+      struct pipe_module *pmod = &pipe_modules[i];
+
+      if (!pmod->initialized)
+         break;
+
+      pmod->drmdd = NULL;
+      pmod->swrast_create_screen = NULL;
+      if (pmod->lib) {
+         util_dl_close(pmod->lib);
+         pmod->lib = NULL;
+      }
+      if (pmod->name) {
+         FREE(pmod->name);
+         pmod->name = NULL;
+      }
+      pmod->initialized = FALSE;
    }
 }
 

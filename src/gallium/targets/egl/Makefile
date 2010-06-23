@@ -2,8 +2,9 @@
 #
 # This is the Makefile for EGL Gallium driver package.  The package consists of
 #
-#   egl_gallium_<HW>.so - EGL drivers
-#   st_<API>.so         - client API state trackers
+#   egl_gallium.so - EGL driver
+#   pipe_<HW>.so   - pipe drivers
+#   st_<API>.so    - client API state trackers
 #
 # The following variables are examined
 #
@@ -16,7 +17,7 @@ TOP = ../../../..
 include $(TOP)/configs/current
 
 ST_PREFIX := st_
-PIPE_PREFIX := egl_gallium_
+PIPE_PREFIX := pipe_
 
 common_CPPFLAGS := \
 	-I$(TOP)/src/gallium/auxiliary \
@@ -34,11 +35,9 @@ common_LIBS := \
 egl_CPPFLAGS := \
 	-I$(TOP)/src/gallium/state_trackers/egl \
 	-I$(TOP)/src/egl/main \
-	-DST_PREFIX=\"$(ST_PREFIX)\"
+	-DPIPE_PREFIX=\"$(PIPE_PREFIX)\" -DST_PREFIX=\"$(ST_PREFIX)\"
 egl_SYS := -lm -ldl -lEGL
-egl_LIBS := \
-	$(TOP)/src/gallium/state_trackers/egl/libegl.a \
-	$(TOP)/src/gallium/drivers/softpipe/libsoftpipe.a
+egl_LIBS := $(TOP)/src/gallium/state_trackers/egl/libegl.a
 
 ifneq ($(findstring x11, $(EGL_PLATFORMS)),)
 egl_SYS += -lX11 -lXext -lXfixes
@@ -66,13 +65,6 @@ ifneq ($(filter $(VG_LIB), $(EGL_CLIENT_APIS)),)
 egl_CPPFLAGS += -DFEATURE_VG=1
 endif
 egl_CPPFLAGS := $(sort $(egl_CPPFLAGS))
-
-# LLVM
-ifeq ($(MESA_LLVM),1)
-common_SYS += $(LLVM_LIBS)
-egl_LIBS += $(TOP)/src/gallium/drivers/llvmpipe/libllvmpipe.a
-LDFLAGS += $(LLVM_LDFLAGS)
-endif
 
 # i915 pipe driver
 i915_CPPFLAGS :=
@@ -112,9 +104,17 @@ vmwgfx_LIBS := \
 	$(TOP)/src/gallium/drivers/svga/libsvga.a
 
 # swrast (pseudo) pipe driver
-swrast_CPPFLAGS :=
-swrast_SYS :=
-swrast_LIBS :=
+swrast_CPPFLAGS := -DGALLIUM_SOFTPIPE -DGALLIUM_RBUG -DGALLIUM_TRACE
+swrast_SYS := -lm
+swrast_LIBS := $(TOP)/src/gallium/drivers/softpipe/libsoftpipe.a
+
+# LLVM
+ifeq ($(MESA_LLVM),1)
+common_SYS += $(LLVM_LIBS)
+swrast_CPPFLAGS += -DGALLIUM_LLVMPIPE
+swrast_LIBS += $(TOP)/src/gallium/drivers/llvmpipe/libllvmpipe.a
+LDFLAGS += $(LLVM_LDFLAGS)
+endif
 
 # OpenGL state tracker
 GL_CPPFLAGS := -I$(TOP)/src/mesa $(API_DEFINES)
@@ -158,20 +158,13 @@ endif
 OUTPUTS += swrast
 OUTPUTS := $(addprefix $(PIPE_PREFIX), $(OUTPUTS))
 
-# state trackers
-OUTPUTS += $(addprefix $(ST_PREFIX), $(EGL_CLIENT_APIS))
+# EGL driver and state trackers
+OUTPUTS += egl_gallium $(addprefix $(ST_PREFIX), $(EGL_CLIENT_APIS))
 
 OUTPUTS := $(addsuffix .so, $(OUTPUTS))
 OUTPUTS := $(addprefix $(OUTPUT_PATH)/, $(OUTPUTS))
 
 default: $(OUTPUTS)
-
-define mklib-egl
-$(MKLIB) -o $(notdir $@) -noprefix -linker '$(CC)' -ldflags '$(LDFLAGS)' \
-	-install $(OUTPUT_PATH) $(MKLIB_OPTIONS) $< egl.o \
-	-Wl,--start-group $(common_LIBS) $(egl_LIBS) $($(1)_LIBS) -Wl,--end-group \
-	$(common_SYS) $(egl_SYS) $($(1)_SYS)
-endef
 
 define mklib
 $(MKLIB) -o $(notdir $@) -noprefix -linker '$(CC)' -ldflags '$(LDFLAGS)' \
@@ -180,24 +173,28 @@ $(MKLIB) -o $(notdir $@) -noprefix -linker '$(CC)' -ldflags '$(LDFLAGS)' \
 	$(common_SYS) $($(1)_SYS)
 endef
 
-# EGL drivers
-$(OUTPUT_PATH)/$(PIPE_PREFIX)i915.so: pipe_i915.o egl.o $(egl_LIBS) $(i915_LIBS)
-	$(call mklib-egl,i915)
+# EGL driver
+$(OUTPUT_PATH)/egl_gallium.so: egl.o $(egl_LIBS)
+	$(call mklib,egl)
 
-$(OUTPUT_PATH)/$(PIPE_PREFIX)i965.so: pipe_i965.o egl.o $(egl_LIBS) $(i965_LIBS)
-	$(call mklib-egl,i965)
+# pipe drivers
+$(OUTPUT_PATH)/$(PIPE_PREFIX)i915.so: pipe_i915.o $(i915_LIBS)
+	$(call mklib,i915)
 
-$(OUTPUT_PATH)/$(PIPE_PREFIX)nouveau.so: pipe_nouveau.o egl.o $(egl_LIBS) $(nouveau_LIBS)
-	$(call mklib-egl,nouveau)
+$(OUTPUT_PATH)/$(PIPE_PREFIX)i965.so: pipe_i965.o $(i965_LIBS)
+	$(call mklib,i965)
 
-$(OUTPUT_PATH)/$(PIPE_PREFIX)radeon.so: pipe_radeon.o egl.o $(egl_LIBS) $(radeon_LIBS)
-	$(call mklib-egl,radeon)
+$(OUTPUT_PATH)/$(PIPE_PREFIX)nouveau.so: pipe_nouveau.o $(nouveau_LIBS)
+	$(call mklib,nouveau)
 
-$(OUTPUT_PATH)/$(PIPE_PREFIX)vmwgfx.so: pipe_vmwgfx.o egl.o $(egl_LIBS) $(vmwgfx_LIBS)
-	$(call mklib-egl,vmwgfx)
+$(OUTPUT_PATH)/$(PIPE_PREFIX)radeon.so: pipe_radeon.o $(radeon_LIBS)
+	$(call mklib,radeon)
 
-$(OUTPUT_PATH)/$(PIPE_PREFIX)swrast.so: pipe_swrast.o egl.o $(egl_LIBS) $(swrast_LIBS)
-	$(call mklib-egl,swrast)
+$(OUTPUT_PATH)/$(PIPE_PREFIX)vmwgfx.so: pipe_vmwgfx.o $(vmwgfx_LIBS)
+	$(call mklib,vmwgfx)
+
+$(OUTPUT_PATH)/$(PIPE_PREFIX)swrast.so: pipe_swrast.o $(swrast_LIBS)
+	$(call mklib,swrast)
 
 # state trackers
 $(OUTPUT_PATH)/$(ST_PREFIX)$(GL_LIB).so: st_GL.o $(GL_LIBS)

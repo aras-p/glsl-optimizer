@@ -25,13 +25,13 @@ if env['platform'] == 'windows':
         drivers += [llvmpipe]
     drivers += [identity, trace, rbug]
 
-    egl_gallium_swrast = env.SharedLibrary(
-        target ='egl_gallium_swrast',
+    egl_gallium = env.SharedLibrary(
+        target ='egl_gallium',
 	source = ['egl.c', 'pipe_swrast.c'],
         LIBS = st_egl_gdi + ws_gdi + drivers + gallium + egl + env['LIBS'],
     )
 
-    env.InstallSharedLibrary(egl_gallium_swrast)
+    env.InstallSharedLibrary(egl_gallium)
 
     api_libs = {
         'OpenVG': vgapi + st_vega,

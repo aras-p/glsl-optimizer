@@ -39,7 +39,7 @@
 
 /* XXX Need to decide how to do dynamic name lookup on Windows */
 static const char *DefaultDriverNames[] = {
-   "egl_gallium_swrast"
+   "egl_gallium"
 };
 
 typedef HMODULE lib_handle;
@@ -68,6 +68,7 @@ library_suffix(void)
 
 
 static const char *DefaultDriverNames[] = {
+   "egl_gallium",
    "egl_dri2",
    "egl_glx"
 };
@@ -295,71 +296,6 @@ _eglLoaderFile(const char *dir, size_t len, void *loader_data)
 
 
 /**
- * A loader function for use with _eglPreloadForEach.  The loader data is the
- * pattern (prefix) of the files to look for.
- */
-static EGLBoolean
-_eglLoaderPattern(const char *dir, size_t len, void *loader_data)
-{
-#if defined(_EGL_OS_UNIX)
-   const char *prefix, *suffix;
-   size_t prefix_len, suffix_len;
-   DIR *dirp;
-   struct dirent *dirent;
-   char path[1024];
-
-   if (len + 2 > sizeof(path))
-      return EGL_TRUE;
-   if (len) {
-      memcpy(path, dir, len);
-      path[len++] = '/';
-   }
-   path[len] = '\0';
-
-   dirp = opendir(path);
-   if (!dirp)
-      return EGL_TRUE;
-
-   prefix = (const char *) loader_data;
-   prefix_len = strlen(prefix);
-   suffix = library_suffix();
-   suffix_len = (suffix) ? strlen(suffix) : 0;
-
-   while ((dirent = readdir(dirp))) {
-      _EGLDriver *drv;
-      size_t dirent_len = strlen(dirent->d_name);
-      const char *p;
-
-      /* match the prefix */
-      if (strncmp(dirent->d_name, prefix, prefix_len) != 0)
-         continue;
-      /* match the suffix */
-      if (suffix) {
-         p = dirent->d_name + dirent_len - suffix_len;
-         if (p < dirent->d_name || strcmp(p, suffix) != 0)
-            continue;
-      }
-
-      /* make a full path and load the driver */
-      if (len + dirent_len + 1 <= sizeof(path)) {
-         strcpy(path + len, dirent->d_name);
-         drv = _eglLoadDriver(path, NULL);
-         if (drv)
-            _eglGlobal.Drivers[_eglGlobal.NumDrivers++] = drv;
-      }
-   }
-
-   closedir(dirp);
-
-   return EGL_TRUE;
-#else /* _EGL_OS_UNIX */
-   /* stop immediately */
-   return EGL_FALSE;
-#endif
-}
-
-
-/**
  * Run the preload function on each driver directory and return the number of
  * drivers loaded.
  *
@@ -464,20 +400,6 @@ _eglPreloadUserDriver(void)
 
 
 /**
- * Preload Gallium drivers.
- *
- * FIXME This makes libEGL a memory hog if an user driver is not specified and
- * there are many Gallium drivers
- */
-static EGLBoolean
-_eglPreloadGalliumDrivers(void)
-{
-   return (_eglPreloadForEach(_eglGetSearchPath(),
-            _eglLoaderPattern, (void *) "egl_gallium_") > 0);
-}
-
-
-/**
  * Preload drivers.
  *
  * This function loads the driver modules and creates the corresponding
@@ -497,8 +419,7 @@ _eglPreloadDrivers(void)
       return EGL_TRUE;
    }
 
-   loaded = (_eglPreloadUserDriver() ||
-             _eglPreloadGalliumDrivers());
+   loaded = _eglPreloadUserDriver();
 
    _eglUnlockMutex(_eglGlobal.Mutex);
 

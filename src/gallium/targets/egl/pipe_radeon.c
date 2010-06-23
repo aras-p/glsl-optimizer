@@ -23,4 +23,5 @@ create_screen(int fd)
    return screen;
 }
 
+PUBLIC
 DRM_DRIVER_DESCRIPTOR("radeon", "radeon", create_screen)

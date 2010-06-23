@@ -33,78 +33,6 @@
 
 #include "state_tracker/drm_driver.h"
 
-#define X11_PROBE_MAGIC 0x11980BE /* "X11PROBE" */
-
-static void
-x11_probe_destroy(struct native_probe *nprobe)
-{
-   if (nprobe->data)
-      FREE(nprobe->data);
-   FREE(nprobe);
-}
-
-static struct native_probe *
-x11_create_probe(void *dpy)
-{
-   struct native_probe *nprobe;
-   struct x11_screen *xscr;
-   int scr;
-   const char *driver_name = NULL;
-   Display *xdpy;
-
-   nprobe = CALLOC_STRUCT(native_probe);
-   if (!nprobe)
-      return NULL;
-
-   xdpy = dpy;
-   if (!xdpy) {
-      xdpy = XOpenDisplay(NULL);
-      if (!xdpy) {
-         FREE(nprobe);
-         return NULL;
-      }
-   }
-
-   scr = DefaultScreen(xdpy);
-   xscr = x11_screen_create(xdpy, scr);
-   if (xscr) {
-      if (x11_screen_support(xscr, X11_SCREEN_EXTENSION_DRI2)) {
-         driver_name = x11_screen_probe_dri2(xscr, NULL, NULL);
-         if (driver_name)
-            nprobe->data = strdup(driver_name);
-      }
-
-      x11_screen_destroy(xscr);
-   }
-
-   if (xdpy != dpy)
-      XCloseDisplay(xdpy);
-
-   nprobe->magic = X11_PROBE_MAGIC;
-   nprobe->display = dpy;
-
-   nprobe->destroy = x11_probe_destroy;
-
-   return nprobe;
-}
-
-static enum native_probe_result
-x11_get_probe_result(struct native_probe *nprobe)
-{
-   if (!nprobe || nprobe->magic != X11_PROBE_MAGIC)
-      return NATIVE_PROBE_UNKNOWN;
-
-   /* this is a software driver */
-   if (!driver_descriptor.create_screen)
-      return NATIVE_PROBE_SUPPORTED;
-
-   /* the display does not support DRI2 or the driver mismatches */
-   if (!nprobe->data || strcmp(driver_descriptor.name, (const char *) nprobe->data) != 0)
-      return NATIVE_PROBE_FALLBACK;
-
-   return NATIVE_PROBE_EXACT;
-}
-
 static struct native_display *
 native_create_display(void *dpy, struct native_event_handler *event_handler,
                       void *user_data)
@@ -131,8 +59,8 @@ native_create_display(void *dpy, struct native_event_handler *event_handler,
 
 static const struct native_platform x11_platform = {
    "X11", /* name */
-   x11_create_probe,
-   x11_get_probe_result,
+   NULL, /* create_probe */
+   NULL, /* get_probe_result */
    native_create_display
 };
 

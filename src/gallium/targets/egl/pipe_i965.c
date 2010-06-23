@@ -27,4 +27,5 @@ create_screen(int fd)
    return screen;
 }
 
+PUBLIC
 DRM_DRIVER_DESCRIPTOR("i965", "i965", create_screen)
