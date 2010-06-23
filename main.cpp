@@ -29,10 +29,6 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-extern "C" {
-#include <talloc.h>
-}
-
 #include "ast.h"
 #include "glsl_parser_extras.h"
 #include "glsl_parser.h"
@@ -118,7 +114,7 @@ compile_shader(struct glsl_shader *shader)
 
    state->scanner = NULL;
    state->translation_unit.make_empty();
-   state->symbols = new glsl_symbol_table;
+   state->symbols = new(shader) glsl_symbol_table;
    state->info_log = talloc_strdup(shader, "");
    state->error = false;
    state->temp_index = 0;

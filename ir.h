@@ -29,6 +29,10 @@
 #include <cstdio>
 #include <cstdlib>
 
+extern "C" {
+#include <talloc.h>
+}
+
 #include "list.h"
 #include "ir_visitor.h"
 #include "ir_hierarchical_visitor.h"
