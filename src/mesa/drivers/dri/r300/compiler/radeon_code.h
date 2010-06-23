@@ -236,7 +236,7 @@ struct rX00_fragment_program_code {
 
 
 #define VSF_MAX_FRAGMENT_LENGTH (255*4)
-#define VSF_MAX_FRAGMENT_TEMPS (14)
+#define R300_VS_MAX_TEMPS	32
 
 #define VSF_MAX_INPUTS 32
 #define VSF_MAX_OUTPUTS 32

@@ -405,7 +405,7 @@ static void allocate_temporary_registers(struct r300_vertex_program_compiler * c
 {
 	struct rc_instruction *inst;
 	unsigned int num_orig_temps = 0;
-	char hwtemps[VSF_MAX_FRAGMENT_TEMPS];
+	char hwtemps[R300_VS_MAX_TEMPS];
 	struct temporary_allocation * ta;
 	unsigned int i, j;
 
@@ -464,11 +464,11 @@ static void allocate_temporary_registers(struct r300_vertex_program_compiler * c
 				unsigned int orig = inst->U.I.DstReg.Index;
 
 				if (!ta[orig].Allocated) {
-					for(j = 0; j < VSF_MAX_FRAGMENT_TEMPS; ++j) {
+					for(j = 0; j < R300_VS_MAX_TEMPS; ++j) {
 						if (!hwtemps[j])
 							break;
 					}
-					if (j >= VSF_MAX_FRAGMENT_TEMPS) {
+					if (j >= R300_VS_MAX_TEMPS) {
 						fprintf(stderr, "Out of hw temporaries\n");
 					} else {
 						ta[orig].Allocated = 1;
