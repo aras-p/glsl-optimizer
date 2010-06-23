@@ -24,6 +24,32 @@ performed on all enabled render targets.
 
 XXX do lops still apply if blend_enable isn't set?
 
+For a source component `s` and destination component `d`, the logical
+operations are defined as taking the bits of each channel of each component,
+and performing one of the following operations per-channel:
+
+* ``CLEAR``: 0
+* ``NOR``: :math:`\lnot(s \lor d)`
+* ``AND_INVERTED``: :math:`\lnot s \land d`
+* ``COPY_INVERTED``: :math:`\lnot s`
+* ``AND_REVERSE``: :math:`s \land \lnot d`
+* ``INVERT``: :math:`\lnot d`
+* ``XOR``: :math:`s \oplus d`
+* ``NAND``: :math:`\lnot(s \land d)`
+* ``AND``: :math:`s \land d`
+* ``EQUIV``: :math:`\lnot(s \oplus d)`
+* ``NOOP``: :math:`d`
+* ``OR_INVERTED``: :math:`\lnot s \lor d`
+* ``COPY``: :math:`s`
+* ``OR_REVERSE``: :math:`s \lor \lnot d`
+* ``OR``: :math:`s \lor d`
+* ``SET``: 1
+
+.. note::
+   The logical operation names and definitions match those of the OpenGL API,
+   and are similar to the ROP2 and ROP3 definitions of GDI. This is
+   intentional, to ease transitions to Gallium.
+
 Members
 -------
 
