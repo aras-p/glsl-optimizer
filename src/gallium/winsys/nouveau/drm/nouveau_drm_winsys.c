@@ -4,7 +4,7 @@
 #include "util/u_memory.h"
 #include "util/u_inlines.h"
 
-#include "nouveau_drm_api.h"
+#include "nouveau_drm_winsys.h"
 
 #include "nouveau_drmif.h"
 #include "nouveau_channel.h"
