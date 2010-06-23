@@ -662,6 +662,79 @@ assign_attribute_locations(glsl_shader *sh,
 
 
 void
+assign_varying_locations(glsl_shader *producer, glsl_shader *consumer)
+{
+   /* FINISHME: Set dynamically when geometry shader support is added. */
+   unsigned output_index = VERT_RESULT_VAR0;
+   unsigned input_index = FRAG_ATTRIB_VAR0;
+
+   /* Operate in a total of three passes.
+    *
+    * 1. Assign locations for any matching inputs and outputs.
+    *
+    * 2. Mark output variables in the producer that do not have locations as
+    *    not being outputs.  This lets the optimizer eliminate them.
+    *
+    * 3. Mark input variables in the consumer that do not have locations as
+    *    not being inputs.  This lets the optimizer eliminate them.
+    */
+
+   invalidate_variable_locations(producer, ir_var_out, VERT_RESULT_VAR0);
+   invalidate_variable_locations(consumer, ir_var_in, FRAG_ATTRIB_VAR0);
+
+   foreach_list(node, &producer->ir) {
+      ir_variable *const output_var = ((ir_instruction *) node)->as_variable();
+
+      if ((output_var == NULL) || (output_var->mode != ir_var_out)
+	  || (output_var->location != -1))
+	 continue;
+
+      ir_variable *const input_var =
+	 consumer->symbols->get_variable(output_var->name);
+
+      if ((input_var == NULL) || (input_var->mode != ir_var_in))
+	 continue;
+
+      assert(input_var->location == -1);
+
+      /* FINISHME: Location assignment will need some changes when arrays,
+       * FINISHME: matrices, and structures are allowed as shader inputs /
+       * FINISHME: outputs.
+       */
+      output_var->location = output_index;
+      input_var->location = input_index;
+
+      output_index++;
+      input_index++;
+   }
+
+   foreach_list(node, &producer->ir) {
+      ir_variable *const var = ((ir_instruction *) node)->as_variable();
+
+      if ((var == NULL) || (var->mode != ir_var_out))
+	 continue;
+
+      /* An 'out' variable is only really a shader output if its value is read
+       * by the following stage.
+       */
+      var->shader_out = (var->location != -1);
+   }
+
+   foreach_list(node, &consumer->ir) {
+      ir_variable *const var = ((ir_instruction *) node)->as_variable();
+
+      if ((var == NULL) || (var->mode != ir_var_in))
+	 continue;
+
+      /* An 'in' variable is only really a shader input if its value is written
+       * by the previous stage.
+       */
+      var->shader_in = (var->location != -1);
+   }
+}
+
+
+void
 link_shaders(struct glsl_program *prog)
 {
    prog->LinkStatus = false;
@@ -750,9 +823,9 @@ link_shaders(struct glsl_program *prog)
 				      16))
 	 goto done;
 
-   /* FINISHME: Assign vertex shader output / fragment shader input
-    * FINISHME: locations.
-    */
+   for (unsigned i = 1; i < prog->_NumLinkedShaders; i++)
+      assign_varying_locations(prog->_LinkedShaders[i - 1],
+			       prog->_LinkedShaders[i]);
 
    /* FINISHME: Assign fragment shader output locations. */
 
