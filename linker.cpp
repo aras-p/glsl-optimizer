@@ -503,9 +503,13 @@ find_available_slots(unsigned used_mask, unsigned needed_count)
 
 bool
 assign_attribute_locations(glsl_shader *sh,
-			   struct gl_program_parameter_list *attrib)
+			   struct gl_program_parameter_list *attrib,
+			   unsigned max_attribute_index)
 {
-   unsigned used_locations = 0;
+   /* Mark invalid attribute locations as being used.
+    */
+   unsigned used_locations = (max_attribute_index >= 32)
+      ? ~0 : ~((1 << max_attribute_index) - 1);
 
    assert(sh->Type == GL_VERTEX_SHADER);
 
@@ -736,8 +740,14 @@ link_shaders(struct glsl_program *prog)
    assign_uniform_locations(prog);
 
    if (prog->_LinkedShaders[0]->Type == GL_VERTEX_SHADER)
+      /* FINISHME: The value of the max_attribute_index parameter is
+       * FINISHME: implementation dependent based on the value of
+       * FINISHME: GL_MAX_VERTEX_ATTRIBS.  GL_MAX_VERTEX_ATTRIBS must be
+       * FINISHME: at least 16, so hardcode 16 for now.
+       */
       if (!assign_attribute_locations(prog->_LinkedShaders[0],
-				      prog->Attributes))
+				      prog->Attributes,
+				      16))
 	 goto done;
 
    /* FINISHME: Assign vertex shader output / fragment shader input
