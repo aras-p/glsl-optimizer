@@ -555,21 +555,20 @@ static ir_rvalue *
 get_lvalue_copy(exec_list *instructions, ir_rvalue *lvalue)
 {
    ir_variable *var;
-   ir_rvalue *var_deref;
 
    /* FINISHME: Give unique names to the temporaries. */
-   var = new ir_variable(lvalue->type, "_internal_tmp");
+   var = new ir_variable(lvalue->type, "_post_incdec_tmp");
    var->mode = ir_var_auto;
 
-   var_deref = new ir_dereference_variable(var);
-   instructions->push_tail(new ir_assignment(var_deref, lvalue, NULL));
+   instructions->push_tail(new ir_assignment(new ir_dereference_variable(var),
+					     lvalue, NULL));
 
    /* Once we've created this temporary, mark it read only so it's no
     * longer considered an lvalue.
     */
    var->read_only = true;
 
-   return var_deref;
+   return new ir_dereference_variable(var);
 }
 
 
