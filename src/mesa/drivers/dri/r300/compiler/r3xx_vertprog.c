@@ -349,7 +349,8 @@ static void translate_vertex_program(struct r300_vertex_program_compiler * compi
 		if (!valid_dst(compiler->code, &vpi->DstReg))
 			continue;
 
-		if (compiler->code->length >= VSF_MAX_FRAGMENT_LENGTH) {
+		if (compiler->code->length >= R500_VS_MAX_ALU_DWORDS ||
+		    (compiler->code->length >= R300_VS_MAX_ALU_DWORDS && !compiler->Base.is_r500)) {
 			rc_error(&compiler->Base, "Vertex program has too many instructions\n");
 			return;
 		}

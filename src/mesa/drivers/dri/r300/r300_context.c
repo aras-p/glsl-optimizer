@@ -376,13 +376,12 @@ static void r300InitConstValues(GLcontext *ctx, radeonScreenPtr screen)
 	ctx->Const.MaxDrawBuffers = 1;
 	ctx->Const.MaxColorAttachments = 1;
 
-	/* currently bogus data */
 	if (r300->options.hw_tcl_enabled) {
-		ctx->Const.VertexProgram.MaxNativeInstructions = VSF_MAX_FRAGMENT_LENGTH / 4;
-		ctx->Const.VertexProgram.MaxNativeAluInstructions = VSF_MAX_FRAGMENT_LENGTH / 4;
-		ctx->Const.VertexProgram.MaxNativeAttribs = 16;	/* r420 */
+		ctx->Const.VertexProgram.MaxNativeInstructions = 255;
+		ctx->Const.VertexProgram.MaxNativeAluInstructions = 255;
+		ctx->Const.VertexProgram.MaxNativeAttribs = 16;
 		ctx->Const.VertexProgram.MaxNativeTemps = 32;
-		ctx->Const.VertexProgram.MaxNativeParameters = 256;	/* r420 */
+		ctx->Const.VertexProgram.MaxNativeParameters = 256;
 		ctx->Const.VertexProgram.MaxNativeAddressRegs = 1;
 	}
 
