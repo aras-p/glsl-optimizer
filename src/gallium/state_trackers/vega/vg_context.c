@@ -65,6 +65,32 @@ static void init_clear(struct vg_context *st)
    st->clear.fs =
       util_make_fragment_passthrough_shader(pipe);
 }
+
+/**
+ * A depth/stencil rb will be needed regardless of what the visual says.
+ */
+static boolean
+choose_depth_stencil_format(struct vg_context *ctx)
+{
+   struct pipe_screen *screen = ctx->pipe->screen;
+   enum pipe_format formats[] = {
+      PIPE_FORMAT_Z24_UNORM_S8_USCALED,
+      PIPE_FORMAT_S8_USCALED_Z24_UNORM,
+      PIPE_FORMAT_NONE
+   };
+   enum pipe_format *fmt;
+
+   for (fmt = formats; *fmt != PIPE_FORMAT_NONE; fmt++) {
+      if (screen->is_format_supported(screen, *fmt,
+               PIPE_TEXTURE_2D, 0, PIPE_BIND_DEPTH_STENCIL, 0))
+         break;
+   }
+
+   ctx->ds_format = *fmt;
+
+   return (ctx->ds_format != PIPE_FORMAT_NONE);
+}
+
 void vg_set_current_context(struct vg_context *ctx)
 {
    _vg_context = ctx;
@@ -81,6 +107,10 @@ struct vg_context * vg_create_context(struct pipe_context *pipe,
    ctx = CALLOC_STRUCT(vg_context);
 
    ctx->pipe = pipe;
+   if (!choose_depth_stencil_format(ctx)) {
+      FREE(ctx);
+      return NULL;
+   }
 
    ctx->dispatch = api_create_dispatch();
 

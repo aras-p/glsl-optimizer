@@ -448,8 +448,7 @@ vg_context_bind_framebuffers(struct st_context_iface *stctxi,
       /* free the existing fb */
       if (!stdrawi ||
           stfb->strb_att != strb_att ||
-          stfb->strb->format != stdrawi->visual->color_format ||
-          stfb->dsrb->format != stdrawi->visual->depth_stencil_format) {
+          stfb->strb->format != stdrawi->visual->color_format) {
          destroy_renderbuffer(stfb->strb);
          destroy_renderbuffer(stfb->dsrb);
          free(stfb);
@@ -476,7 +475,7 @@ vg_context_bind_framebuffers(struct st_context_iface *stctxi,
          return FALSE;
       }
 
-      stfb->dsrb = create_renderbuffer(stdrawi->visual->depth_stencil_format);
+      stfb->dsrb = create_renderbuffer(ctx->ds_format);
       if (!stfb->dsrb) {
          free(stfb->strb);
          free(stfb);
@@ -517,14 +516,6 @@ vg_api_get_current(struct st_api *stapi)
    return (ctx) ? &ctx->iface : NULL;
 }
 
-static boolean
-vg_api_is_visual_supported(struct st_api *stapi,
-                           const struct st_visual *visual)
-{
-   /* the impl requires a depth/stencil buffer */
-   return util_format_is_depth_and_stencil(visual->depth_stencil_format);
-}
-
 static st_proc_t
 vg_api_get_proc_address(struct st_api *stapi, const char *procname)
 {
@@ -539,7 +530,6 @@ vg_api_destroy(struct st_api *stapi)
 static const struct st_api vg_api = {
    vg_api_destroy,
    vg_api_get_proc_address,
-   vg_api_is_visual_supported,
    vg_api_create_context,
    vg_api_make_current,
    vg_api_get_current,

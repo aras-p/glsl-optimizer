@@ -369,12 +369,6 @@ struct st_api
    st_proc_t (*get_proc_address)(struct st_api *stapi, const char *procname);
 
    /**
-    * Return true if the visual is supported by the state tracker.
-    */
-   boolean (*is_visual_supported)(struct st_api *stapi,
-                                  const struct st_visual *visual);
-
-   /**
     * Create a rendering context.
     */
    struct st_context_iface *(*create_context)(struct st_api *stapi,

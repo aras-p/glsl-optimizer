@@ -94,6 +94,7 @@ struct vg_context
    struct mapi_table *dispatch;
 
    struct pipe_context *pipe;
+   enum pipe_format ds_format;
 
    struct {
       struct vg_state vg;

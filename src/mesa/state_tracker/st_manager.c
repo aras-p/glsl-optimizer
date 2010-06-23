@@ -707,13 +707,6 @@ st_api_get_current(struct st_api *stapi)
    return (st) ? &st->iface : NULL;
 }
 
-static boolean
-st_api_is_visual_supported(struct st_api *stapi,
-                           const struct st_visual *visual)
-{
-   return TRUE;
-}
-
 static st_proc_t
 st_api_get_proc_address(struct st_api *stapi, const char *procname)
 {
@@ -822,7 +815,6 @@ st_manager_add_color_renderbuffer(struct st_context *st, GLframebuffer *fb,
 struct st_api st_gl_api = {
    st_api_destroy,
    st_api_get_proc_address,
-   st_api_is_visual_supported,
    st_api_create_context,
    st_api_make_current,
    st_api_get_current,

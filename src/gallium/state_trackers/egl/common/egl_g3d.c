@@ -272,7 +272,6 @@ egl_g3d_init_config(_EGLDriver *drv, _EGLDisplay *dpy,
    struct egl_g3d_config *gconf = egl_g3d_config(conf);
    EGLint buffer_mask, api_mask;
    EGLBoolean valid;
-   EGLint i;
 
    buffer_mask = 0x0;
    if (nconf->buffer_mask & (1 << NATIVE_ATTACHMENT_FRONT_LEFT))
@@ -293,14 +292,7 @@ egl_g3d_init_config(_EGLDriver *drv, _EGLDisplay *dpy,
    gconf->stvis.render_buffer = (buffer_mask & ST_ATTACHMENT_BACK_LEFT_MASK) ?
       ST_ATTACHMENT_BACK_LEFT : ST_ATTACHMENT_FRONT_LEFT;
 
-   api_mask = 0;
-   for (i = 0; i < ST_API_COUNT; i++) {
-      struct st_api *stapi = gdrv->stapis[i];
-      if (stapi) {
-         if (stapi->is_visual_supported(stapi, &gconf->stvis))
-            api_mask |= egl_g3d_st_api_bit(i);
-      }
-   }
+   api_mask = gdrv->api_mask;;
    /* this is required by EGL, not by OpenGL ES */
    if (nconf->window_bit &&
        gconf->stvis.render_buffer != ST_ATTACHMENT_BACK_LEFT)
