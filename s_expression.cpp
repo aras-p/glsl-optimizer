@@ -34,23 +34,8 @@ s_symbol::s_symbol(const char *tmp)
    strcpy(this->str, tmp);
 }
 
-s_symbol::~s_symbol()
-{
-   delete [] this->str;
-   this->str = NULL;
-}
-
 s_list::s_list()
 {
-}
-
-s_list::~s_list()
-{
-   exec_list_iterator it(this->subexpressions.iterator());
-   while (it.has_next())
-      it.remove();
-
-   assert(this->subexpressions.is_empty());
 }
 
 unsigned

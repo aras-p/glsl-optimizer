@@ -46,8 +46,6 @@
 class s_expression : public exec_node
 {
 public:
-   virtual ~s_expression() { }
-
    /**
     * Read an S-Expression from the given string.
     * Advances the supplied pointer to just after the expression read.
@@ -73,8 +71,6 @@ protected:
 class s_number : public s_expression
 {
 public:
-   virtual ~s_number() { }
-
    bool is_number() const { return true; }
 
    virtual float fvalue() = 0;
@@ -87,7 +83,6 @@ class s_int : public s_number
 {
 public:
    s_int(int x) : val(x) { }
-   virtual ~s_int() { }
 
    bool is_int() const { return true; }
 
@@ -104,7 +99,6 @@ class s_float : public s_number
 {
 public:
    s_float(float x) : val(x) { }
-   virtual ~s_float() { }
 
    float fvalue() { return this->val; }
 
@@ -118,7 +112,6 @@ class s_symbol : public s_expression
 {
 public:
    s_symbol(const char *);
-   virtual ~s_symbol();
 
    bool is_symbol() const { return true; }
 
@@ -135,7 +128,6 @@ class s_list : public s_expression
 {
 public:
    s_list();
-   virtual ~s_list();
 
    virtual bool is_list() const { return true; }
    unsigned length() const;
