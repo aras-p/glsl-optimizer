@@ -46,7 +46,4 @@ boolean
 st_manager_add_color_renderbuffer(struct st_context *st, GLframebuffer *fb,
                                   gl_buffer_index idx);
 
-struct st_api *
-st_manager_create_api(void);
-
 #endif /* ST_MANAGER_H */
