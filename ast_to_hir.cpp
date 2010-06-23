@@ -509,10 +509,26 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
       }
    }
 
-   ir_instruction *tmp = new ir_assignment(lhs, rhs, NULL);
-   instructions->push_tail(tmp);
+   /* Most callers of do_assignment (assign, add_assign, pre_inc/dec,
+    * but not post_inc) need the converted assigned value as an rvalue
+    * to handle things like:
+    *
+    * i = j += 1;
+    *
+    * So we always just store the computed value being assigned to a
+    * temporary and return a deref of that temporary.  If the rvalue
+    * ends up not being used, the temp will get copy-propagated out.
+    */
+   ir_variable *var = new ir_variable(rhs->type, "assignment_tmp");
+   instructions->push_tail(new ir_assignment(new ir_dereference_variable(var),
+					     rhs,
+					     NULL));
 
-   return rhs;
+   instructions->push_tail(new ir_assignment(lhs,
+					     new ir_dereference_variable(var),
+					     NULL));
+
+   return new ir_dereference_variable(var);
 }
 
 
