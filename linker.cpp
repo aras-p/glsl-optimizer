@@ -250,15 +250,14 @@ validate_fragment_shader_executable(struct glsl_program *prog,
  * Perform validation of uniforms used across multiple shader stages
  */
 bool
-cross_validate_uniforms(struct glsl_program *prog,
-			struct glsl_shader **shaders, unsigned num_shaders)
+cross_validate_uniforms(struct glsl_program *prog)
 {
    /* Examine all of the uniforms in all of the shaders and cross validate
     * them.
     */
    glsl_symbol_table uniforms;
-   for (unsigned i = 0; i < num_shaders; i++) {
-      foreach_list(node, &shaders[i]->ir) {
+   for (unsigned i = 0; i < prog->_NumLinkedShaders; i++) {
+      foreach_list(node, &prog->_LinkedShaders[i]->ir) {
 	 ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
 	 if ((var == NULL) || (var->mode != ir_var_uniform))
@@ -829,8 +828,7 @@ link_shaders(struct glsl_program *prog)
       prog->_NumLinkedShaders++;
    }
 
-   if (cross_validate_uniforms(prog, prog->_LinkedShaders,
-			       prog->_NumLinkedShaders)) {
+   if (cross_validate_uniforms(prog)) {
       /* Validate the inputs of each stage with the output of the preceeding
        * stage.
        */
