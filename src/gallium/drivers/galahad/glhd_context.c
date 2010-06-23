@@ -269,6 +269,16 @@ galahad_create_rasterizer_state(struct pipe_context *_pipe,
    struct galahad_context *glhd_pipe = galahad_context(_pipe);
    struct pipe_context *pipe = glhd_pipe->pipe;
 
+   if (rasterizer->point_quad_rasterization) {
+       if (rasterizer->point_smooth) {
+           glhd_warn("Point smoothing requested but ignored");
+       }
+   } else {
+       if (rasterizer->sprite_coord_enable) {
+           glhd_warn("Point sprites requested but ignored");
+       }
+   }
+
    return pipe->create_rasterizer_state(pipe,
                                         rasterizer);
 }
