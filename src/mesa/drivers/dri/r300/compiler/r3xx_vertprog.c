@@ -30,6 +30,7 @@
 #include "radeon_program_alu.h"
 #include "radeon_swizzle.h"
 #include "radeon_emulate_branches.h"
+#include "radeon_emulate_loops.h"
 
 /*
  * Take an already-setup and valid source then swizzle it appropriately to
@@ -600,6 +601,13 @@ void r3xx_compile_vertex_program(struct r300_vertex_program_compiler* compiler)
 	/* XXX Ideally this should be done only for r3xx, but since
 	 * we don't have branching support for r5xx, we use the emulation
 	 * on all chipsets. */
+	if (compiler->Base.is_r500){
+		rc_emulate_loops(&compiler->Base, R500_VS_MAX_ALU);
+	} else {
+		rc_emulate_loops(&compiler->Base, R300_VS_MAX_ALU);
+	}
+	debug_program_log(compiler, "after emulate loops");
+
 	rc_emulate_branches(&compiler->Base);
 
 	debug_program_log(compiler, "after emulate branches");
