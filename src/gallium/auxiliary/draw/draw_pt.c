@@ -69,7 +69,6 @@ draw_pt_arrays(struct draw_context *draw,
    struct draw_pt_front_end *frontend = NULL;
    struct draw_pt_middle_end *middle = NULL;
    unsigned opt = 0;
-   unsigned out_prim = prim;
 
    /* Sanitize primitive length:
     */
@@ -80,18 +79,19 @@ draw_pt_arrays(struct draw_context *draw,
       if (count < first)
          return TRUE;
    }
-   if (draw->gs.geometry_shader) {
-      out_prim = draw->gs.geometry_shader->output_primitive;
-   }
 
    if (!draw->force_passthrough) {
+      unsigned gs_out_prim = (draw->gs.geometry_shader ? 
+                              draw->gs.geometry_shader->output_primitive :
+                              prim);
+
       if (!draw->render) {
          opt |= PT_PIPELINE;
       }
 
       if (draw_need_pipeline(draw,
                              draw->rasterizer,
-                             out_prim)) {
+                             gs_out_prim)) {
          opt |= PT_PIPELINE;
       }
 
@@ -122,7 +122,7 @@ draw_pt_arrays(struct draw_context *draw,
       frontend = draw->pt.front.varray;
    }
 
-   frontend->prepare( frontend, prim, out_prim, middle, opt );
+   frontend->prepare( frontend, prim, middle, opt );
 
    frontend->run(frontend,
                  draw_pt_elt_func(draw),

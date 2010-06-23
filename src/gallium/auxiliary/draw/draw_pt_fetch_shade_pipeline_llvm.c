@@ -49,7 +49,6 @@ struct llvm_middle_end {
    unsigned vertex_data_offset;
    unsigned vertex_size;
    unsigned input_prim;
-   unsigned output_prim;
    unsigned opt;
 
    struct draw_llvm *llvm;
@@ -62,7 +61,6 @@ struct llvm_middle_end {
 static void
 llvm_middle_end_prepare( struct draw_pt_middle_end *middle,
                          unsigned in_prim,
-                         unsigned out_prim,
                          unsigned opt,
                          unsigned *max_vertices )
 {
@@ -73,6 +71,11 @@ llvm_middle_end_prepare( struct draw_pt_middle_end *middle,
    struct draw_llvm_variant *variant = NULL;
    unsigned i;
    unsigned instance_id_index = ~0;
+
+
+   unsigned out_prim = (draw->gs.geometry_shader ? 
+                        draw->gs.geometry_shader->output_primitive :
+                        in_prim);
 
    /* Add one to num_outputs because the pipeline occasionally tags on
     * an additional texcoord, eg for AA lines.
@@ -90,7 +93,6 @@ llvm_middle_end_prepare( struct draw_pt_middle_end *middle,
    }
 
    fpme->input_prim = in_prim;
-   fpme->output_prim = out_prim;
    fpme->opt = opt;
 
    /* Always leave room for the vertex header whether we need it or

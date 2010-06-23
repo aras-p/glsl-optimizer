@@ -70,7 +70,6 @@ vcache_flush( struct vcache_frontend *vcache )
    if (vcache->middle_prim != vcache->output_prim) {
       vcache->middle_prim = vcache->output_prim;
       vcache->middle->prepare( vcache->middle,
-                               vcache->input_prim,
                                vcache->middle_prim,
                                vcache->opt,
                                &vcache->fetch_max );
@@ -368,7 +367,6 @@ vcache_check_run( struct draw_pt_front_end *frontend,
    if (vcache->middle_prim != vcache->input_prim) {
       vcache->middle_prim = vcache->input_prim;
       vcache->middle->prepare( vcache->middle,
-                               vcache->input_prim,
                                vcache->middle_prim,
                                vcache->opt,
                                &vcache->fetch_max );
@@ -472,7 +470,6 @@ vcache_check_run( struct draw_pt_front_end *frontend,
 static void
 vcache_prepare( struct draw_pt_front_end *frontend,
                 unsigned in_prim,
-                unsigned out_prim,
                 struct draw_pt_middle_end *middle,
                 unsigned opt )
 {
@@ -487,8 +484,14 @@ vcache_prepare( struct draw_pt_front_end *frontend,
       vcache->base.run = vcache_check_run;
    }
 
+   /* VCache will always emit the reduced version of its input
+    * primitive, ie STRIP/FANS become TRIS, etc.
+    *
+    * This is not to be confused with what the GS might be up to,
+    * which is a separate issue.
+    */
    vcache->input_prim = in_prim;
-   vcache->output_prim = u_reduced_prim(out_prim);
+   vcache->output_prim = u_reduced_prim(in_prim);
 
    vcache->middle = middle;
    vcache->opt = opt;
@@ -497,8 +500,9 @@ vcache_prepare( struct draw_pt_front_end *frontend,
     * doing so:
     */
    vcache->middle_prim = (opt & PT_PIPELINE) ? vcache->output_prim : vcache->input_prim;
-   middle->prepare( middle, vcache->input_prim,
-                    vcache->middle_prim, opt, &vcache->fetch_max );
+   middle->prepare( middle,
+                    vcache->middle_prim,
+                    opt, &vcache->fetch_max );
 }
 
 

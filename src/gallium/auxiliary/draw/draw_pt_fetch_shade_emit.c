@@ -68,8 +68,7 @@ struct fetch_shade_emit {
 
 
 static void fse_prepare( struct draw_pt_middle_end *middle,
-                         unsigned in_prim,
-                         unsigned out_prim,
+                         unsigned prim,
                          unsigned opt,
                          unsigned *max_vertices )
 {
@@ -80,9 +79,12 @@ static void fse_prepare( struct draw_pt_middle_end *middle,
    unsigned i;
    unsigned nr_vbs = 0;
 
+   /* Can't support geometry shader on this path.
+    */
+   assert(!draw->gs.geometry_shader);
 
    if (!draw->render->set_primitive( draw->render,
-                                     out_prim )) {
+                                     prim )) {
       assert(0);
       return;
    }

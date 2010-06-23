@@ -36,6 +36,7 @@
 #include "draw/draw_vbuf.h"
 #include "draw/draw_vertex.h"
 #include "draw/draw_pt.h"
+#include "draw/draw_gs.h"
 #include "translate/translate.h"
 #include "translate/translate_cache.h"
 
@@ -90,7 +91,6 @@ struct fetch_emit_middle_end {
 
 static void fetch_emit_prepare( struct draw_pt_middle_end *middle,
                                 unsigned prim,
-                                unsigned out_prim,
 				unsigned opt,
                                 unsigned *max_vertices )
 {
@@ -101,9 +101,14 @@ static void fetch_emit_prepare( struct draw_pt_middle_end *middle,
    boolean ok;
    struct translate_key key;
 
+   unsigned gs_out_prim = (draw->gs.geometry_shader ? 
+                           draw->gs.geometry_shader->output_primitive :
+                           prim);
+
+
 
    ok = draw->render->set_primitive( draw->render, 
-                                     out_prim );
+                                     gs_out_prim );
    if (!ok) {
       assert(0);
       return;
