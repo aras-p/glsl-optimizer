@@ -29,7 +29,6 @@
 #include "lp_state.h"
 #include "lp_texture.h"
 
-#include "util/u_format.h"
 #include "util/u_memory.h"
 #include "draw/draw_context.h"
 
