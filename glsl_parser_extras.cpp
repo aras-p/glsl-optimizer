@@ -155,13 +155,6 @@ _mesa_glsl_process_extension(const char *name, YYLTYPE *name_locp,
    return true;
 }
 
-
-ast_node::~ast_node()
-{
-   /* empty */
-}
-
-
 void
 _mesa_ast_type_qualifier_print(const struct ast_type_qualifier *q)
 {

@@ -36,7 +36,6 @@ struct YYLTYPE;
 
 class ast_node {
 public:
-   virtual ~ast_node();
    virtual void print(void) const;
    virtual ir_rvalue *hir(exec_list *instructions,
 			  struct _mesa_glsl_parse_state *state);
