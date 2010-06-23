@@ -180,7 +180,7 @@ galahad_transfer_destroy(struct galahad_context *glhd_context,
                           struct galahad_transfer *glhd_transfer)
 {
    pipe_resource_reference(&glhd_transfer->base.resource, NULL);
-   glhd_transfer->pipe->transfer_destroy(glhd_context->pipe,
-                                       glhd_transfer->transfer);
+   glhd_context->pipe->transfer_destroy(glhd_context->pipe,
+                                        glhd_transfer->transfer);
    FREE(glhd_transfer);
 }

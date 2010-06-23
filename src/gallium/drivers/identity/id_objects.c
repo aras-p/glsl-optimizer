@@ -180,8 +180,8 @@ identity_transfer_destroy(struct identity_context *id_context,
                           struct identity_transfer *id_transfer)
 {
    pipe_resource_reference(&id_transfer->base.resource, NULL);
-   id_transfer->pipe->transfer_destroy(id_context->pipe,
-                                       id_transfer->transfer);
+   id_context->pipe->transfer_destroy(id_context->pipe,
+                                      id_transfer->transfer);
    FREE(id_transfer);
 }
 
