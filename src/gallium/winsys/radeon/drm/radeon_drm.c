@@ -34,6 +34,8 @@
 #include "radeon_buffer.h"
 
 #include "r300_winsys.h"
+
+#include "galahad/glhd_drm.h"
 #include "trace/tr_drm.h"
 
 #include "util/u_memory.h"
@@ -188,5 +190,5 @@ static struct drm_api radeon_drm_api_hooks = {
 
 struct drm_api* drm_api_create()
 {
-    return trace_drm_create(&radeon_drm_api_hooks);
+    return galahad_drm_create(trace_drm_create(&radeon_drm_api_hooks));
 }

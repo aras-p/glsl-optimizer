@@ -1,7 +1,7 @@
 TOP = ../../../..
 include $(TOP)/configs/current
 
-LIBNAME = identity
+LIBNAME = galahad
 
 C_SOURCES = \
 	glhd_objects.c \
