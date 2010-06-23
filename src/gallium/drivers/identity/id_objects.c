@@ -127,6 +127,7 @@ identity_sampler_view_create(struct identity_context *id_context,
    id_view->base.texture = NULL;
    pipe_resource_reference(&id_view->base.texture, id_resource->resource);
    id_view->base.context = id_context->pipe;
+   id_view->sampler_view = view;
 
    return &id_view->base;
 error:

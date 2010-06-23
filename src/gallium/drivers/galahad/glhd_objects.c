@@ -127,6 +127,7 @@ galahad_sampler_view_create(struct galahad_context *glhd_context,
    glhd_view->base.texture = NULL;
    pipe_resource_reference(&glhd_view->base.texture, glhd_resource->resource);
    glhd_view->base.context = glhd_context->pipe;
+   glhd_view->sampler_view = view;
 
    return &glhd_view->base;
 error:
