@@ -269,12 +269,6 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
                             format == PIPE_FORMAT_R16G16B16_FLOAT ||
                             format == PIPE_FORMAT_R16G16B16A16_FLOAT;
 
-    if (target >= PIPE_MAX_TEXTURE_TYPES) {
-        fprintf(stderr, "r300: Implementation error: Received bogus texture "
-            "target %d in %s\n", target, __FUNCTION__);
-        return FALSE;
-    }
-
     switch (sample_count) {
         case 0:
         case 1:

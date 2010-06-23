@@ -99,6 +99,10 @@ galahad_screen_is_format_supported(struct pipe_screen *_screen,
    struct galahad_screen *glhd_screen = galahad_screen(_screen);
    struct pipe_screen *screen = glhd_screen->screen;
 
+   if (target >= PIPE_MAX_TEXTURE_TYPES) {
+      glhd_warn("Received bogus texture target %d", target);
+   }
+
    return screen->is_format_supported(screen,
                                       format,
                                       target,
