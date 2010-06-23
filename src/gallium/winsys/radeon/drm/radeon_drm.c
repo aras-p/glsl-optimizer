@@ -190,5 +190,6 @@ static struct drm_api radeon_drm_api_hooks = {
 
 struct drm_api* drm_api_create()
 {
-    return galahad_drm_create(trace_drm_create(&radeon_drm_api_hooks));
+    //return galahad_drm_create(trace_drm_create(&radeon_drm_api_hooks));
+    return trace_drm_create(&radeon_drm_api_hooks);
 }
