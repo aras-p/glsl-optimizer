@@ -530,15 +530,14 @@ find_available_slots(unsigned used_mask, unsigned needed_count)
 
 
 bool
-assign_attribute_locations(glsl_shader *sh,
-			   struct gl_program_parameter_list *attrib,
-			   unsigned max_attribute_index)
+assign_attribute_locations(glsl_program *prog, unsigned max_attribute_index)
 {
    /* Mark invalid attribute locations as being used.
     */
    unsigned used_locations = (max_attribute_index >= 32)
       ? ~0 : ~((1 << max_attribute_index) - 1);
 
+   glsl_shader *const sh = prog->_LinkedShaders[0];
    assert(sh->Type == GL_VERTEX_SHADER);
 
    /* Operate in a total of four passes.
@@ -558,10 +557,10 @@ assign_attribute_locations(glsl_shader *sh,
 
    invalidate_variable_locations(sh, ir_var_in, VERT_ATTRIB_GENERIC0);
 
-   if (attrib != NULL) {
-      for (unsigned i = 0; i < attrib->NumParameters; i++) {
+   if (prog->Attributes != NULL) {
+      for (unsigned i = 0; i < prog->Attributes->NumParameters; i++) {
 	 ir_variable *const var =
-	    sh->symbols->get_variable(attrib->Parameters[i].Name);
+	    sh->symbols->get_variable(prog->Attributes->Parameters[i].Name);
 
 	 /* Note: attributes that occupy multiple slots, such as arrays or
 	  * matrices, may appear in the attrib array multiple times.
@@ -599,7 +598,7 @@ assign_attribute_locations(glsl_shader *sh,
 	 /* FINISHME: The code as currently written does not support attribute
 	  * FINISHME: location aliasing (see comment above).
 	  */
-	 const int attr = attrib->Parameters[i].StateIndexes[0];
+	 const int attr = prog->Attributes->Parameters[i].StateIndexes[0];
 	 const unsigned slots = count_attribute_slots(var->type);
 
 	 /* Mask representing the contiguous slots that will be used by this
@@ -611,9 +610,10 @@ assign_attribute_locations(glsl_shader *sh,
 	  * attribute overlaps any previously allocated bits.
 	  */
 	 if ((~(use_mask << attr) & used_locations) != used_locations) {
-	    printf("error: insufficient contiguous attribute locations "
-		   "available for vertex shader input `%s'",
-		   var->name);
+	    linker_error_printf(prog,
+				"insufficient contiguous attribute locations "
+				"available for vertex shader input `%s'",
+				var->name);
 	    return false;
 	 }
 
@@ -675,9 +675,10 @@ assign_attribute_locations(glsl_shader *sh,
       int location = find_available_slots(used_locations, to_assign[i].slots);
 
       if (location < 0) {
-	 printf("error: insufficient contiguous attribute locations "
-		"available for vertex shader input `%s'",
-		to_assign[i].var->name);
+	 linker_error_printf(prog,
+			     "insufficient contiguous attribute locations "
+			     "available for vertex shader input `%s'",
+			     to_assign[i].var->name);
 	 return false;
       }
 
@@ -852,9 +853,7 @@ link_shaders(struct glsl_program *prog)
        * FINISHME: GL_MAX_VERTEX_ATTRIBS.  GL_MAX_VERTEX_ATTRIBS must be
        * FINISHME: at least 16, so hardcode 16 for now.
        */
-      if (!assign_attribute_locations(prog->_LinkedShaders[0],
-				      prog->Attributes,
-				      16))
+      if (!assign_attribute_locations(prog, 16))
 	 goto done;
 
    for (unsigned i = 1; i < prog->_NumLinkedShaders; i++)
