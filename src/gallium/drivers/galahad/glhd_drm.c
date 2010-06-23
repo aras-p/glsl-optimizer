@@ -75,6 +75,9 @@ galahad_drm_create(struct drm_api *api)
    if (!api)
       goto error;
 
+   if (!debug_get_option("GALAHAD", FALSE))
+      goto error;
+
    glhd_api = CALLOC_STRUCT(galahad_drm_api);
 
    if (!glhd_api)
