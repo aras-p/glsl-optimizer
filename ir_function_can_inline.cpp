@@ -39,27 +39,13 @@ class ir_function_can_inline_visitor : public ir_hierarchical_visitor {
 public:
    ir_function_can_inline_visitor()
    {
-      this->can_inline = true;
       this->num_returns = 0;
    }
 
-   virtual ir_visitor_status visit_enter(ir_loop *);
    virtual ir_visitor_status visit_enter(ir_return *);
-   virtual ir_visitor_status visit_enter(ir_if *);
 
-   bool can_inline;
    int num_returns;
 };
-
-ir_visitor_status
-ir_function_can_inline_visitor::visit_enter(ir_loop *ir)
-{
-   /* FINISHME: Implement loop cloning in ir_function_inlining.cpp */
-   (void) ir;
-   this->can_inline = false;
-   return visit_stop;
-}
-
 
 ir_visitor_status
 ir_function_can_inline_visitor::visit_enter(ir_return *ir)
@@ -67,16 +53,6 @@ ir_function_can_inline_visitor::visit_enter(ir_return *ir)
    (void) ir;
    this->num_returns++;
    return visit_continue;
-}
-
-
-ir_visitor_status
-ir_function_can_inline_visitor::visit_enter(ir_if *ir)
-{
-   /* FINISHME: Implement if cloning in ir_function_inlining.cpp. */
-   (void) ir;
-   this->can_inline = false;
-   return visit_stop;
 }
 
 bool
@@ -91,5 +67,5 @@ can_inline(ir_call *call)
    if (last && !last->as_return())
       v.num_returns++;
 
-   return v.can_inline && v.num_returns == 1;
+   return v.num_returns == 1;
 }
