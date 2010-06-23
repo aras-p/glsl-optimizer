@@ -14,21 +14,46 @@ in other modern and legacy drawing APIs.
 
 XXX blurb about dual-source blends
 
+Logical Operations
+------------------
+
+Logical operations, also known as logicops, lops, or rops, are supported.
+Only two-operand logicops are available. When logicops are enabled, all other
+blend state is ignored, including per-render-target state, so logicops are
+performed on all enabled render targets.
+
+XXX do lops still apply if blend_enable isn't set?
+
 Members
 -------
+
+These members affect all render targets.
+
+dither
+%%%%%%
+
+Whether dithering is enabled.
+
+.. note::
+   Dithering is completely implementation-dependent. It may be ignored by
+   drivers for any reason, and some render targets may always or never be
+   dithered depending on their format or usage flags.
+
+logicop_enable
+%%%%%%%%%%%%%%
+
+Whether the blender should perform a logicop instead of blending.
+
+logicop_func
+%%%%%%%%%%%%
+
+The logicop to use. One of ``PIPE_LOGICOP``.
 
 independent_blend_enable
    If enabled, blend state is different for each render target, and
    for each render target set in the respective member of the rt array.
    If disabled, blend state is the same for all render targets, and only
    the first member of the rt array contains valid data.
-logicop_enable
-   Enables logic ops. Cannot be enabled at the same time as blending, and
-   is always the same for all render targets.
-logicop_func
-   The logic operation to use if logic ops are enabled. One of PIPE_LOGICOP.
-dither
-   Whether dithering is enabled. Note: Dithering is implementation-dependent.
 rt
    Contains the per-rendertarget blend state.
 
