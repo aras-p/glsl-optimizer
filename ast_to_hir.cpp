@@ -536,8 +536,7 @@ generate_temporary(const glsl_type *type, exec_list *instructions,
 
 
 static ir_rvalue *
-get_lvalue_copy(exec_list *instructions, struct _mesa_glsl_parse_state *state,
-		ir_rvalue *lvalue, YYLTYPE loc)
+get_lvalue_copy(exec_list *instructions, ir_rvalue *lvalue)
 {
    ir_variable *var;
    ir_rvalue *var_deref;
@@ -547,7 +546,7 @@ get_lvalue_copy(exec_list *instructions, struct _mesa_glsl_parse_state *state,
    var->mode = ir_var_auto;
 
    var_deref = new ir_dereference_variable(var);
-   do_assignment(instructions, state, var_deref, lvalue, loc);
+   instructions->push_tail(new ir_assignment(var_deref, lvalue, NULL));
 
    /* Once we've created this temporary, mark it read only so it's no
     * longer considered an lvalue.
@@ -1103,9 +1102,7 @@ ast_expression::hir(exec_list *instructions,
       /* Get a temporary of a copy of the lvalue before it's modified.
        * This may get thrown away later.
        */
-      result = get_lvalue_copy(instructions, state,
-			       (ir_rvalue *)op[0]->clone(NULL),
-			       this->subexpressions[0]->get_location());
+      result = get_lvalue_copy(instructions, (ir_rvalue *)op[0]->clone(NULL));
 
       (void)do_assignment(instructions, state,
 			  (ir_rvalue *)op[0]->clone(NULL), temp_rhs,
