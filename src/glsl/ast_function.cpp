@@ -444,6 +444,98 @@ generate_constructor_vector(const glsl_type *type, ir_constant *initializer,
 }
 
 
+/**
+ * Determine if a list consists of a single scalar r-value
+ */
+bool
+single_scalar_parameter(exec_list *parameters)
+{
+   const ir_rvalue *const p = (ir_rvalue *) parameters->head;
+   assert(((ir_rvalue *)p)->as_rvalue() != NULL);
+
+   return (p->type->is_scalar() && p->next->is_tail_sentinal());
+}
+
+
+/**
+ * Generate inline code for a vector constructor
+ *
+ * The generated constructor code will consist of a temporary variable
+ * declaration of the same type as the constructor.  A sequence of assignments
+ * from constructor parameters to the temporary will follow.
+ *
+ * \return
+ * An \c ir_dereference_variable of the temprorary generated in the constructor
+ * body.
+ */
+ir_rvalue *
+emit_inline_vector_constructor(const glsl_type *type,
+			       exec_list *instructions,
+			       exec_list *parameters,
+			       void *ctx)
+{
+   assert(!parameters->is_empty());
+
+   ir_variable *var = new(ctx) ir_variable(type, strdup("vec_ctor"));
+   instructions->push_tail(var);
+
+   /* There are two kinds of vector constructors.
+    *
+    *  - Construct a vector from a single scalar by replicating that scalar to
+    *    all components of the vector.
+    *
+    *  - Construct a vector from an arbirary combination of vectors and
+    *    scalars.  The components of the constructor parameters are assigned
+    *    to the vector in order until the vector is full.
+    */
+   const unsigned lhs_components = type->components();
+   if (single_scalar_parameter(parameters)) {
+      ir_rvalue *first_param = (ir_rvalue *)parameters->head;
+      ir_rvalue *rhs = new(ctx) ir_swizzle(first_param, 0, 0, 0, 0,
+					   lhs_components);
+      ir_dereference_variable *lhs = new(ctx) ir_dereference_variable(var);
+
+      assert(rhs->type == lhs->type);
+
+      ir_instruction *inst = new(ctx) ir_assignment(lhs, rhs, NULL);
+      instructions->push_tail(inst);
+   } else {
+      unsigned base_component = 0;
+      foreach_list(node, parameters) {
+	 ir_rvalue *rhs = (ir_rvalue *) node;
+	 unsigned rhs_components = rhs->type->components();
+
+	 /* Do not try to assign more components to the vector than it has!
+	  */
+	 if ((rhs_components + base_component) > lhs_components) {
+	    rhs_components = lhs_components - base_component;
+	 }
+
+	 /* Emit an assignment of the constructor parameter to the next set of
+	  * components in the temporary variable.
+	  */
+	 unsigned mask[4] = { 0, 0, 0, 0 };
+	 for (unsigned i = 0; i < rhs_components; i++) {
+	    mask[i] = i + base_component;
+	 }
+
+
+	 ir_rvalue *lhs_ref = new(ctx) ir_dereference_variable(var);
+	 ir_swizzle *lhs = new(ctx) ir_swizzle(lhs_ref, mask, rhs_components);
+
+	 ir_instruction *inst = new(ctx) ir_assignment(lhs, rhs, NULL);
+	 instructions->push_tail(inst);
+
+	 /* Advance the component index by the number of components that were
+	  * just assigned.
+	  */
+	 base_component += rhs_components;
+      }
+   }
+   return new(ctx) ir_dereference_variable(var);
+}
+
+
 ir_rvalue *
 ast_function_expression::hir(exec_list *instructions,
 			     struct _mesa_glsl_parse_state *state)
@@ -708,8 +800,15 @@ ast_function_expression::hir(exec_list *instructions,
 					      &data);
 
 	       return new(ctx) ir_constant(sig->return_type, &data);
-	    } else
+	    } else if (constructor_type->is_vector()) {
+	       return emit_inline_vector_constructor(constructor_type,
+						     instructions,
+						     &actual_parameters,
+						     ctx);
+	    } else {
+	       assert(constructor_type->is_matrix());
 	       return new(ctx) ir_call(sig, & actual_parameters);
+	    }
 	 } else {
 	    /* FINISHME: Log a better error message here.  G++ will show the
 	     * FINSIHME: types of the actual parameters and the set of
