@@ -103,7 +103,7 @@ static void fetch_pipeline_prepare( struct draw_pt_middle_end *middle,
 			    (boolean)draw->bypass_clipping,
 			    (boolean)draw->identity_viewport,
 			    (boolean)draw->rasterizer->gl_rasterization_rules,
-			    (draw->vs.edgeflag_output ? true : false) );
+			    (draw->vs.edgeflag_output ? TRUE : FALSE) );
 
    draw_pt_so_emit_prepare( fpme->so_emit );
 
