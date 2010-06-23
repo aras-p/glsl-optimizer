@@ -5,8 +5,8 @@ env = env.Clone()
 env.ParseConfig('pkg-config --cflags libdrm')
 
 i965drm_sources = [
-    'i965_drm_api.c',
     'i965_drm_buffer.c',
+    'i965_drm_winsys.c',
 ]
 
 i965drm = env.ConvenienceLibrary(
