@@ -65,6 +65,11 @@
  */
 #include <cstdlib>
 #include <cstdio>
+#include <cstdarg>
+
+extern "C" {
+#include <talloc.h>
+}
 
 #include "main/mtypes.h"
 #include "glsl_symbol_table.h"
@@ -106,6 +111,18 @@ private:
    const char *name;       /**< Find writes to a variable with this name. */
    bool found;             /**< Was a write to the variable found? */
 };
+
+
+void
+linker_error_printf(glsl_program *prog, const char *fmt, ...)
+{
+   va_list ap;
+
+   prog->InfoLog = talloc_strdup_append(prog->InfoLog, "error: ");
+   va_start(ap, fmt);
+   prog->InfoLog = talloc_vasprintf_append(prog->InfoLog, fmt, ap);
+   va_end(ap);
+}
 
 
 void
@@ -167,20 +184,22 @@ count_attribute_slots(const glsl_type *t)
  * \param shader  Vertex shader executable to be verified
  */
 bool
-validate_vertex_shader_executable(struct glsl_shader *shader)
+validate_vertex_shader_executable(struct glsl_program *prog,
+				  struct glsl_shader *shader)
 {
    if (shader == NULL)
       return true;
 
    if (!shader->symbols->get_function("main")) {
-      printf("error: vertex shader lacks `main'\n");
+      linker_error_printf(prog, "vertex shader lacks `main'\n");
       return false;
    }
 
    find_assignment_visitor find("gl_Position");
    find.run(&shader->ir);
    if (!find.variable_found()) {
-      printf("error: vertex shader does not write to `gl_Position'\n");
+      linker_error_printf(prog,
+			  "vertex shader does not write to `gl_Position'\n");
       return false;
    }
 
@@ -194,13 +213,14 @@ validate_vertex_shader_executable(struct glsl_shader *shader)
  * \param shader  Fragment shader executable to be verified
  */
 bool
-validate_fragment_shader_executable(struct glsl_shader *shader)
+validate_fragment_shader_executable(struct glsl_program *prog,
+				    struct glsl_shader *shader)
 {
    if (shader == NULL)
       return true;
 
    if (!shader->symbols->get_function("main")) {
-      printf("error: fragment shader lacks `main'\n");
+      linker_error_printf(prog, "fragment shader lacks `main'\n");
       return false;
    }
 
@@ -211,14 +231,14 @@ validate_fragment_shader_executable(struct glsl_shader *shader)
    frag_data.run(&shader->ir);
 
    if (!frag_color.variable_found() && !frag_data.variable_found()) {
-      printf("error: fragment shader does not write to `gl_FragColor' or "
-	     "`gl_FragData'\n");
+      linker_error_printf(prog, "fragment shader does not write to "
+			  "`gl_FragColor' or `gl_FragData'\n");
       return false;
    }
 
    if (frag_color.variable_found() && frag_data.variable_found()) {
-      printf("error: fragment shader write to both `gl_FragColor' and "
-	     "`gl_FragData'\n");
+      linker_error_printf(prog,  "fragment shader writes to both "
+			  "`gl_FragColor' and `gl_FragData'\n");
       return false;
    }
 
@@ -230,7 +250,8 @@ validate_fragment_shader_executable(struct glsl_shader *shader)
  * Perform validation of uniforms used across multiple shader stages
  */
 bool
-cross_validate_uniforms(struct glsl_shader **shaders, unsigned num_shaders)
+cross_validate_uniforms(struct glsl_program *prog,
+			struct glsl_shader **shaders, unsigned num_shaders)
 {
    /* Examine all of the uniforms in all of the shaders and cross validate
     * them.
@@ -250,18 +271,19 @@ cross_validate_uniforms(struct glsl_shader **shaders, unsigned num_shaders)
 	 ir_variable *const existing = uniforms.get_variable(var->name);
 	 if (existing != NULL) {
 	    if (var->type != existing->type) {
-	       printf("error: uniform `%s' declared as type `%s' and "
-		      "type `%s'\n",
-		      var->name, var->type->name, existing->type->name);
+	       linker_error_printf(prog, "uniform `%s' declared as type "
+				   "`%s' and type `%s'\n",
+				   var->name, var->type->name,
+				   existing->type->name);
 	       return false;
 	    }
 
 	    if (var->constant_value != NULL) {
 	       if (existing->constant_value != NULL) {
 		  if (!var->constant_value->has_value(existing->constant_value)) {
-		     printf("error: initializers for uniform `%s' have "
-			    "differing values\n",
-			    var->name);
+		     linker_error_printf(prog, "initializers for uniform "
+					 "`%s' have differing values\n",
+					 var->name);
 		     return false;
 		  }
 	       } else
@@ -284,7 +306,8 @@ cross_validate_uniforms(struct glsl_shader **shaders, unsigned num_shaders)
  * Validate that outputs from one stage match inputs of another
  */
 bool
-cross_validate_outputs_to_inputs(glsl_shader *producer, glsl_shader *consumer)
+cross_validate_outputs_to_inputs(struct glsl_program *prog,
+				 glsl_shader *producer, glsl_shader *consumer)
 {
    glsl_symbol_table parameters;
    /* FINISHME: Figure these out dynamically. */
@@ -324,47 +347,53 @@ cross_validate_outputs_to_inputs(glsl_shader *producer, glsl_shader *consumer)
 	 /* Check that the types match between stages.
 	  */
 	 if (input->type != output->type) {
-	    printf("error: %s shader output `%s' delcared as type `%s', but "
-		   "%s shader input declared as type `%s'\n",
-		   producer_stage, output->name, output->type->name,
-		   consumer_stage, input->type->name);
+	    linker_error_printf(prog,
+				"%s shader output `%s' delcared as "
+				"type `%s', but %s shader input declared "
+				"as type `%s'\n",
+				producer_stage, output->name,
+				output->type->name,
+				consumer_stage, input->type->name);
 	    return false;
 	 }
 
 	 /* Check that all of the qualifiers match between stages.
 	  */
 	 if (input->centroid != output->centroid) {
-	    printf("error: %s shader output `%s' %s centroid qualifier, but "
-		   "%s shader input %s centroid qualifier\n",
-		   producer_stage,
-		   output->name,
-		   (output->centroid) ? "has" : "lacks",
-		   consumer_stage,
-		   (input->centroid) ? "has" : "lacks");
+	    linker_error_printf(prog,
+				"%s shader output `%s' %s centroid qualifier, "
+				"but %s shader input %s centroid qualifier\n",
+				producer_stage,
+				output->name,
+				(output->centroid) ? "has" : "lacks",
+				consumer_stage,
+				(input->centroid) ? "has" : "lacks");
 	    return false;
 	 }
 
 	 if (input->invariant != output->invariant) {
-	    printf("error: %s shader output `%s' %s invariant qualifier, but "
-		   "%s shader input %s invariant qualifier\n",
-		   producer_stage,
-		   output->name,
-		   (output->invariant) ? "has" : "lacks",
-		   consumer_stage,
-		   (input->invariant) ? "has" : "lacks");
+	    linker_error_printf(prog,
+				"%s shader output `%s' %s invariant qualifier, "
+				"but %s shader input %s invariant qualifier\n",
+				producer_stage,
+				output->name,
+				(output->invariant) ? "has" : "lacks",
+				consumer_stage,
+				(input->invariant) ? "has" : "lacks");
 	    return false;
 	 }
 
 	 if (input->interpolation != output->interpolation) {
-	    printf("error: %s shader output `%s' specifies %s interpolation "
-		   "qualifier, "
-		   "but %s shader input specifies %s interpolation "
-		   "qualifier\n",
-		   producer_stage,
-		   output->name,
-		   output->interpolation_string(),
-		   consumer_stage,
-		   input->interpolation_string());
+	    linker_error_printf(prog,
+				"%s shader output `%s' specifies %s "
+				"interpolation qualifier, "
+				"but %s shader input specifies %s "
+				"interpolation qualifier\n",
+				producer_stage,
+				output->name,
+				output->interpolation_string(),
+				consumer_stage,
+				input->interpolation_string());
 	    return false;
 	 }
       }
@@ -741,6 +770,11 @@ link_shaders(struct glsl_program *prog)
    prog->Validated = false;
    prog->_Used = false;
 
+   if (prog->InfoLog != NULL)
+      talloc_free(prog->InfoLog);
+
+   prog->InfoLog = talloc_strdup(NULL, "");
+
    /* Separate the shaders into groups based on their type.
     */
    struct glsl_shader **vert_shader_list;
@@ -775,8 +809,8 @@ link_shaders(struct glsl_program *prog)
 
    /* Verify that each of the per-target executables is valid.
     */
-   if (!validate_vertex_shader_executable(vert_shader_list[0])
-       || !validate_fragment_shader_executable(frag_shader_list[0]))
+   if (!validate_vertex_shader_executable(prog, vert_shader_list[0])
+       || !validate_fragment_shader_executable(prog, frag_shader_list[0]))
       goto done;
 
 
@@ -795,12 +829,14 @@ link_shaders(struct glsl_program *prog)
       prog->_NumLinkedShaders++;
    }
 
-   if (cross_validate_uniforms(prog->_LinkedShaders, prog->_NumLinkedShaders)) {
+   if (cross_validate_uniforms(prog, prog->_LinkedShaders,
+			       prog->_NumLinkedShaders)) {
       /* Validate the inputs of each stage with the output of the preceeding
        * stage.
        */
       for (unsigned i = 1; i < prog->_NumLinkedShaders; i++) {
-	 if (!cross_validate_outputs_to_inputs(prog->_LinkedShaders[i - 1],
+	 if (!cross_validate_outputs_to_inputs(prog,
+					       prog->_LinkedShaders[i - 1],
 					       prog->_LinkedShaders[i]))
 	    goto done;
       }
