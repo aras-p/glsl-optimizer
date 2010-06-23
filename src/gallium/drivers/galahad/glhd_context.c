@@ -119,6 +119,16 @@ galahad_create_query(struct pipe_context *_pipe,
    struct galahad_context *glhd_pipe = galahad_context(_pipe);
    struct pipe_context *pipe = glhd_pipe->pipe;
 
+   if (query_type == PIPE_QUERY_OCCLUSION_COUNTER &&
+      !pipe->screen->get_param(pipe->screen, PIPE_CAP_OCCLUSION_QUERY)) {
+      glhd_error("Occlusion query requested but not supported");
+   }
+
+   if (query_type == PIPE_QUERY_TIME_ELAPSED &&
+      !pipe->screen->get_param(pipe->screen, PIPE_CAP_TIMER_QUERY)) {
+      glhd_error("Timer query requested but not supported");
+   }
+
    return pipe->create_query(pipe,
                              query_type);
 }

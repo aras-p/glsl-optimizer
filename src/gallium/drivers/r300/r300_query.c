@@ -37,7 +37,9 @@ static struct pipe_query *r300_create_query(struct pipe_context *pipe,
     struct r300_screen *r300screen = r300->screen;
     struct r300_query *q;
 
-    assert(query_type == PIPE_QUERY_OCCLUSION_COUNTER);
+    if (query_type != PIPE_QUERY_OCCLUSION_COUNTER) {
+        return NULL;
+    }
 
     q = CALLOC_STRUCT(r300_query);
     if (!q)
