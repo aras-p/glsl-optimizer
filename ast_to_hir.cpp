@@ -932,7 +932,8 @@ ast_expression::hir(exec_list *instructions,
       ir_rvalue *temp_rhs = new ir_expression(operations[this->oper], type,
 				              op[0], op[1]);
 
-      result = do_assignment(instructions, state, op[0], temp_rhs,
+      result = do_assignment(instructions, state,
+			     (ir_rvalue *)op[0]->clone(NULL), temp_rhs,
 			     this->subexpressions[0]->get_location());
       type = result->type;
       error_emitted = (op[0]->type->is_error());
@@ -957,7 +958,8 @@ ast_expression::hir(exec_list *instructions,
       temp_rhs = new ir_expression(operations[this->oper], type,
 				   op[0], op[1]);
 
-      result = do_assignment(instructions, state, op[0], temp_rhs,
+      result = do_assignment(instructions, state,
+			     (ir_rvalue *)op[0]->clone(NULL), temp_rhs,
 			     this->subexpressions[0]->get_location());
       type = result->type;
       error_emitted = type->is_error();
@@ -1074,7 +1076,8 @@ ast_expression::hir(exec_list *instructions,
       temp_rhs = new ir_expression(operations[this->oper], type,
 				   op[0], op[1]);
 
-      result = do_assignment(instructions, state, op[0], temp_rhs,
+      result = do_assignment(instructions, state,
+			     (ir_rvalue *)op[0]->clone(NULL), temp_rhs,
 			     this->subexpressions[0]->get_location());
       type = result->type;
       error_emitted = op[0]->type->is_error();
@@ -1100,10 +1103,12 @@ ast_expression::hir(exec_list *instructions,
       /* Get a temporary of a copy of the lvalue before it's modified.
        * This may get thrown away later.
        */
-      result = get_lvalue_copy(instructions, state, op[0],
+      result = get_lvalue_copy(instructions, state,
+			       (ir_rvalue *)op[0]->clone(NULL),
 			       this->subexpressions[0]->get_location());
 
-      (void)do_assignment(instructions, state, op[0], temp_rhs,
+      (void)do_assignment(instructions, state,
+			  (ir_rvalue *)op[0]->clone(NULL), temp_rhs,
 			  this->subexpressions[0]->get_location());
 
       type = result->type;
