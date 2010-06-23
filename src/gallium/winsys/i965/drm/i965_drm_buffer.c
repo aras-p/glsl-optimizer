@@ -322,7 +322,7 @@ i965_libdrm_bo_subdata(struct brw_winsys_buffer *buffer,
 		   nr_reloc);
 
    if (BRW_DUMP)
-      brw_dump_data( idws->id,
+      brw_dump_data( idws->base.pci_id,
 		     data_type,
 		     buf->bo->offset + offset, 
 		     data, size );
@@ -460,7 +460,7 @@ i965_libdrm_bo_flush_range(struct brw_winsys_buffer *buffer,
 		   offset, length);
 
    if (BRW_DUMP)
-      brw_dump_data( idws->id,
+      brw_dump_data( idws->base.pci_id,
 		     buf->data_type,
 		     buf->bo->offset + offset, 
 		     (char*)buf->bo->virtual + offset, 

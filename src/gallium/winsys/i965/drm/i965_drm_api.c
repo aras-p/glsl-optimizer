@@ -56,7 +56,6 @@ static struct pipe_screen *
 i965_libdrm_create_screen(struct drm_api *api, int drmFD)
 {
    struct i965_libdrm_winsys *idws;
-   unsigned int deviceID;
 
    debug_printf("%s\n", __FUNCTION__);
 
@@ -64,12 +63,11 @@ i965_libdrm_create_screen(struct drm_api *api, int drmFD)
    if (!idws)
       return NULL;
 
-   i965_libdrm_get_device_id(&deviceID);
+   i965_libdrm_get_device_id(&idws->base.pci_id);
 
    i965_libdrm_winsys_init_buffer_functions(idws);
 
    idws->fd = drmFD;
-   idws->id = deviceID;
 
    idws->base.destroy = i965_libdrm_winsys_destroy;
 
@@ -78,7 +76,7 @@ i965_libdrm_create_screen(struct drm_api *api, int drmFD)
 
    idws->send_cmd = !debug_get_bool_option("BRW_NO_HW", FALSE);
 
-   return brw_create_screen(&idws->base, deviceID);
+   return brw_create_screen(&idws->base);
 }
 
 struct drm_api i965_libdrm_api =

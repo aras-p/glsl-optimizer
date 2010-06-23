@@ -22,8 +22,6 @@ struct i965_libdrm_winsys
    boolean send_cmd;
 
    int fd; /**< Drm file discriptor */
-
-   unsigned id;
 };
 
 static INLINE struct i965_libdrm_winsys *
