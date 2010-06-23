@@ -1,4 +1,5 @@
 
+#include "target-helpers/inline_debug_helper.h"
 #include "state_tracker/drm_driver.h"
 #include "nouveau/drm/nouveau_drm_public.h"
 
@@ -10,6 +11,8 @@ create_screen(int fd)
    screen = nouveau_drm_screen_create(fd);
    if (!screen)
       return NULL;
+
+   screen = debug_screen_wrap(screen);
 
    return screen;
 }

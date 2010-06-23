@@ -1,5 +1,6 @@
 
 #include "state_tracker/drm_driver.h"
+#include "target-helpers/inline_debug_helper.h"
 #include "r600/drm/r600_drm_public.h"
 #include "r600/r600_public.h"
 
@@ -16,6 +17,8 @@ create_screen(int fd)
    screen = r600_screen_create(rw);
    if (!screen)
       return NULL;
+
+   screen = debug_screen_wrap(screen);
 
    return screen;
 }

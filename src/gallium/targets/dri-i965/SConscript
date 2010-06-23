@@ -8,7 +8,11 @@ env = drienv.Clone()
 
 env.ParseConfig('pkg-config --cflags --libs libdrm_intel')
 
-env.Append(CPPDEFINES = 'GALLIUM_SOFTPIPE')
+env.Append(CPPDEFINES = [
+    'GALLIUM_SOFTPIPE',
+    'GALLIUM_RBUG',
+    'GALLIUM_TRACE'
+])
 
 env.Prepend(LIBS = [
     st_dri,

@@ -8,7 +8,8 @@ C_SOURCES = \
 	intel_xorg.c
 
 DRIVER_DEFINES = \
-	-DHAVE_CONFIG_H -DGALLIUM_SOFTPIPE
+	-DHAVE_CONFIG_H -DGALLIUM_SOFTPIPE \
+	-DGALLIUM_RBUG -DGALLIUM_TRACE
 
 DRIVER_LINKS = \
 	$(TOP)/src/gallium/state_trackers/xorg/libxorgtracker.a \

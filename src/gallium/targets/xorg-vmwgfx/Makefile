@@ -16,7 +16,10 @@ DRIVER_INCLUDES = \
 
 DRIVER_DEFINES = \
 	-std=gnu99 \
+	-DGALLIUM_RBUG \
+	-DGALLIUM_TRACE \
 	-DHAVE_CONFIG_H
+
 
 DRIVER_LINKS = \
 	$(TOP)/src/gallium/state_trackers/xorg/libxorgtracker.a \

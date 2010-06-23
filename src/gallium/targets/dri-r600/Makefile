@@ -16,6 +16,9 @@ C_SOURCES = \
 	$(COMMON_GALLIUM_SOURCES) \
 	$(DRIVER_SOURCES)
 
+DRIVER_DEFINES = \
+	-DGALLIUM_RBUG -DGALLIUM_TRACE
+
 include ../Makefile.dri
 
 DRI_LIB_DEPS += -ldrm_radeon
