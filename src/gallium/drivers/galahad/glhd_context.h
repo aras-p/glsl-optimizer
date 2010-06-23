@@ -28,6 +28,8 @@
 #ifndef GLHD_CONTEXT_H
 #define GLHD_CONTEXT_H
 
+#include <stdio.h>
+
 #include "pipe/p_state.h"
 #include "pipe/p_context.h"
 
@@ -48,5 +50,12 @@ galahad_context(struct pipe_context *pipe)
 {
    return (struct galahad_context *)pipe;
 }
+
+#define glhd_warn(...) \
+do { \
+    fprintf(stderr, "galahad: %s: ", __FUNCTION__); \
+    fprintf(stderr, __VA_ARGS__); \
+    fprintf(stderr, "\n"); \
+} while (0)
 
 #endif /* GLHD_CONTEXT_H */
