@@ -127,6 +127,41 @@ invalidate_variable_locations(glsl_shader *sh, enum ir_variable_mode mode,
 
 
 /**
+ * Determine the number of attribute slots required for a particular type
+ *
+ * This code is here because it implements the language rules of a specific
+ * GLSL version.  Since it's a property of the language and not a property of
+ * types in general, it doesn't really belong in glsl_type.
+ */
+unsigned
+count_attribute_slots(const glsl_type *t)
+{
+   /* From page 31 (page 37 of the PDF) of the GLSL 1.50 spec:
+    *
+    *     "A scalar input counts the same amount against this limit as a vec4,
+    *     so applications may want to consider packing groups of four
+    *     unrelated float inputs together into a vector to better utilize the
+    *     capabilities of the underlying hardware. A matrix input will use up
+    *     multiple locations.  The number of locations used will equal the
+    *     number of columns in the matrix."
+    *
+    * The spec does not explicitly say how arrays are counted.  However, it
+    * should be safe to assume the total number of slots consumed by an array
+    * is the number of entries in the array multiplied by the number of slots
+    * consumed by a single element of the array.
+    */
+
+   if (t->is_array())
+      return t->array_size() * count_attribute_slots(t->element_type());
+
+   if (t->is_matrix())
+      return t->matrix_columns;
+
+   return 1;
+}
+
+
+/**
  * Verify that a vertex shader executable meets all semantic requirements
  *
  * \param shader  Vertex shader executable to be verified
@@ -434,7 +469,39 @@ assign_uniform_locations(struct glsl_program *prog)
 }
 
 
-void
+/**
+ * Find a contiguous set of available bits in a bitmask
+ *
+ * \param used_mask     Bits representing used (1) and unused (0) locations
+ * \param needed_count  Number of contiguous bits needed.
+ *
+ * \return
+ * Base location of the available bits on success or -1 on failure.
+ */
+int
+find_available_slots(unsigned used_mask, unsigned needed_count)
+{
+   unsigned needed_mask = (1 << needed_count) - 1;
+   const int max_bit_to_test = (8 * sizeof(used_mask)) - needed_count;
+
+   /* The comparison to 32 is redundant, but without it GCC emits "warning:
+    * cannot optimize possibly infinite loops" for the loop below.
+    */
+   if ((needed_count == 0) || (max_bit_to_test < 0) || (max_bit_to_test > 32))
+      return -1;
+
+   for (int i = 0; i <= max_bit_to_test; i++) {
+      if ((needed_mask & ~used_mask) == needed_mask)
+	 return i;
+
+      needed_mask <<= 1;
+   }
+
+   return -1;
+}
+
+
+bool
 assign_attribute_locations(glsl_shader *sh,
 			   struct gl_program_parameter_list *attrib)
 {
@@ -442,14 +509,19 @@ assign_attribute_locations(glsl_shader *sh,
 
    assert(sh->Type == GL_VERTEX_SHADER);
 
-   /* Operate in a total of three passes.
+   /* Operate in a total of four passes.
     *
     * 1. Invalidate the location assignments for all vertex shader inputs.
     *
     * 2. Assign locations for inputs that have user-defined (via
     *    glBindVertexAttribLocation) locatoins.
     *
-    * 3. Assign locations to any inputs without assigned locations.
+    * 3. Sort the attributes without assigned locations by number of slots
+    *    required in decreasing order.  Fragmentation caused by attribute
+    *    locations assigned by the application may prevent large attributes
+    *    from having enough contiguous space.
+    *
+    * 4. Assign locations to any inputs without assigned locations.
     */
 
    invalidate_variable_locations(sh, ir_var_in, VERT_ATTRIB_GENERIC0);
@@ -459,15 +531,83 @@ assign_attribute_locations(glsl_shader *sh,
 	 ir_variable *const var =
 	    sh->symbols->get_variable(attrib->Parameters[i].Name);
 
-	 if (var == NULL)
+	 /* Note: attributes that occupy multiple slots, such as arrays or
+	  * matrices, may appear in the attrib array multiple times.
+	  */
+	 if ((var == NULL) || (var->location != -1))
 	    continue;
 
+	 /* From page 61 of the OpenGL 4.0 spec:
+	  *
+	  *     "LinkProgram will fail if the attribute bindings assigned by
+	  *     BindAttribLocation do not leave not enough space to assign a
+	  *     location for an active matrix attribute or an active attribute
+	  *     array, both of which require multiple contiguous generic
+	  *     attributes."
+	  *
+	  * Previous versions of the spec contain similar language but omit the
+	  * bit about attribute arrays.
+	  *
+	  * Page 61 of the OpenGL 4.0 spec also says:
+	  *
+	  *     "It is possible for an application to bind more than one
+	  *     attribute name to the same location. This is referred to as
+	  *     aliasing. This will only work if only one of the aliased
+	  *     attributes is active in the executable program, or if no path
+	  *     through the shader consumes more than one attribute of a set
+	  *     of attributes aliased to the same location. A link error can
+	  *     occur if the linker determines that every path through the
+	  *     shader consumes multiple aliased attributes, but
+	  *     implementations are not required to generate an error in this
+	  *     case."
+	  *
+	  * These two paragraphs are either somewhat contradictory, or I don't
+	  * fully understand one or both of them.
+	  */
+	 /* FINISHME: The code as currently written does not support attribute
+	  * FINISHME: location aliasing (see comment above).
+	  */
 	 const int attr = attrib->Parameters[i].StateIndexes[0];
+	 const unsigned slots = count_attribute_slots(var->type);
+
+	 /* Mask representing the contiguous slots that will be used by this
+	  * attribute.
+	  */
+	 const unsigned use_mask = (1 << slots) - 1;
+
+	 /* Generate a link error if the set of bits requested for this
+	  * attribute overlaps any previously allocated bits.
+	  */
+	 if ((~(use_mask << attr) & used_locations) != used_locations) {
+	    printf("error: insufficient contiguous attribute locations "
+		   "available for vertex shader input `%s'",
+		   var->name);
+	    return false;
+	 }
 
 	 var->location = VERT_ATTRIB_GENERIC0 + attr;
-	 used_locations |= (1 << attr);
+	 used_locations |= (use_mask << attr);
       }
    }
+
+   /* Temporary storage for the set of attributes that need locations assigned.
+    */
+   struct temp_attr {
+      unsigned slots;
+      ir_variable *var;
+
+      /* Used below in the call to qsort. */
+      static int compare(const void *a, const void *b)
+      {
+	 const temp_attr *const l = (const temp_attr *) a;
+	 const temp_attr *const r = (const temp_attr *) b;
+
+	 /* Reversed because we want a descending order sort below. */
+	 return r->slots - l->slots;
+      }
+   } to_assign[16];
+
+   unsigned num_attr = 0;
 
    foreach_list(node, &sh->ir) {
       ir_variable *const var = ((ir_instruction *) node)->as_variable();
@@ -480,17 +620,40 @@ assign_attribute_locations(glsl_shader *sh,
       if (var->location != -1)
 	 continue;
 
-      /* Find an unused bit in used_locations and assign that as the
-       * attribute location.
-       */
-      for (unsigned i = 0; i < (8 * sizeof(used_locations)); i++) {
-	 if ((used_locations & (1 << i)) == 0) {
-	    var->location = VERT_ATTRIB_GENERIC0 + i;
-	    used_locations |= (1 << i);
-	    break;
-	 }
-      }
+      to_assign[num_attr].slots = count_attribute_slots(var->type);
+      to_assign[num_attr].var = var;
+      num_attr++;
    }
+
+   /* If all of the attributes were assigned locations by the application (or
+    * are built-in attributes with fixed locations), return early.  This should
+    * be the common case.
+    */
+   if (num_attr == 0)
+      return true;
+
+   qsort(to_assign, num_attr, sizeof(to_assign[0]), temp_attr::compare);
+
+   for (unsigned i = 0; i < num_attr; i++) {
+      /* Mask representing the contiguous slots that will be used by this
+       * attribute.
+       */
+      const unsigned use_mask = (1 << to_assign[i].slots) - 1;
+
+      int location = find_available_slots(used_locations, to_assign[i].slots);
+
+      if (location < 0) {
+	 printf("error: insufficient contiguous attribute locations "
+		"available for vertex shader input `%s'",
+		to_assign[i].var->name);
+	 return false;
+      }
+
+      to_assign[i].var->location = VERT_ATTRIB_GENERIC0 + location;
+      used_locations |= (use_mask << location);
+   }
+
+   return true;
 }
 
 
@@ -573,8 +736,9 @@ link_shaders(struct glsl_program *prog)
    assign_uniform_locations(prog);
 
    if (prog->_LinkedShaders[0]->Type == GL_VERTEX_SHADER)
-      assign_attribute_locations(prog->_LinkedShaders[0],
-				 prog->Attributes);
+      if (!assign_attribute_locations(prog->_LinkedShaders[0],
+				      prog->Attributes))
+	 goto done;
 
    /* FINISHME: Assign vertex shader output / fragment shader input
     * FINISHME: locations.
