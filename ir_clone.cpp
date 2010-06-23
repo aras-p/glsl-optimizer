@@ -242,6 +242,8 @@ ir_function_signature::clone(struct hash_table *ht) const
 ir_instruction *
 ir_constant::clone(struct hash_table *ht) const
 {
+   (void)ht;
+
    switch (this->type->base_type) {
    case GLSL_TYPE_UINT:
    case GLSL_TYPE_INT:
