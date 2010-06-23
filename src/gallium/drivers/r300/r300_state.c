@@ -668,12 +668,6 @@ static void
     unsigned max_width, max_height, i;
     uint32_t zbuffer_bpp = 0;
 
-    if (state->nr_cbufs > 4) {
-        fprintf(stderr, "r300: Implementation error: Too many MRTs in %s, "
-            "refusing to bind framebuffer state!\n", __FUNCTION__);
-        return;
-    }
-
     if (r300->screen->caps.is_r500) {
         max_width = max_height = 4096;
     } else if (r300->screen->caps.is_r400) {

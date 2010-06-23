@@ -58,4 +58,7 @@ do { \
     fprintf(stderr, "\n"); \
 } while (0)
 
+#define glhd_error(...) \
+    glhd_warn(__VA_ARGS__);
+
 #endif /* GLHD_CONTEXT_H */

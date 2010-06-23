@@ -497,6 +497,16 @@ galahad_set_framebuffer_state(struct pipe_context *_pipe,
    struct pipe_framebuffer_state *state = NULL;
    unsigned i;
 
+   if (_state->nr_cbufs > PIPE_MAX_COLOR_BUFS) {
+      glhd_error("%d render targets bound, but only %d are permitted by API",
+         _state->nr_cbufs, PIPE_MAX_COLOR_BUFS);
+   } else if (_state->nr_cbufs >
+      pipe->screen->get_param(pipe->screen, PIPE_CAP_MAX_RENDER_TARGETS)) {
+      glhd_warn("%d render targets bound, but only %d are supported",
+         _state->nr_cbufs,
+         pipe->screen->get_param(pipe->screen, PIPE_CAP_MAX_RENDER_TARGETS));
+   }
+
    /* unwrap the input state */
    if (_state) {
       memcpy(&unwrapped_state, _state, sizeof(unwrapped_state));
