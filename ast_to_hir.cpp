@@ -2171,8 +2171,7 @@ ast_jump_statement::hir(exec_list *instructions,
 
 	 if (loop != NULL) {
 	    ir_loop_jump *const jump =
-	       new ir_loop_jump(loop,
-				(mode == ast_break)
+	       new ir_loop_jump((mode == ast_break)
 				? ir_loop_jump::jump_break
 				: ir_loop_jump::jump_continue);
 	    instructions->push_tail(jump);
@@ -2251,7 +2250,7 @@ ast_iteration_statement::condition_to_hir(ir_loop *stmt,
 	 ir_if *const if_stmt = new ir_if(not_cond);
 
 	 ir_jump *const break_stmt =
-	    new ir_loop_jump(stmt, ir_loop_jump::jump_break);
+	    new ir_loop_jump(ir_loop_jump::jump_break);
 
 	 if_stmt->then_instructions.push_tail(break_stmt);
 	 stmt->body_instructions.push_tail(if_stmt);

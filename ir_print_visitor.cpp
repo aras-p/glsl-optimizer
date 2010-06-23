@@ -28,10 +28,12 @@
 static void print_type(const glsl_type *t);
 
 void
-ir_instruction::print(void)
+ir_instruction::print(void) const
 {
+   ir_instruction *deconsted = const_cast<ir_instruction *>(this);
+
    ir_print_visitor v;
-   accept(&v);
+   deconsted->accept(&v);
 }
 
 void

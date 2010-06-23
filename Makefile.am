@@ -38,6 +38,7 @@ glsl_SOURCES = \
 	ir_print_visitor.cpp ir_variable.cpp ir_function.cpp \
 	ir_basic_block.cpp \
 	ir_basic_block.h \
+	ir_clone.cpp \
 	ir_constant_expression.cpp \
 	ir_constant_folding.cpp \
 	ir_constant_variable.cpp \

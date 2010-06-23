@@ -334,9 +334,9 @@ read_instruction(_mesa_glsl_parse_state *st, s_expression *expr,
    s_symbol *symbol = SX_AS_SYMBOL(expr);
    if (symbol != NULL) {
       if (strcmp(symbol->value(), "break") == 0 && loop_ctx != NULL)
-	 return new ir_loop_jump(loop_ctx, ir_loop_jump::jump_break);
+	 return new ir_loop_jump(ir_loop_jump::jump_break);
       if (strcmp(symbol->value(), "continue") == 0 && loop_ctx != NULL)
-	 return new ir_loop_jump(loop_ctx, ir_loop_jump::jump_continue);
+	 return new ir_loop_jump(ir_loop_jump::jump_continue);
    }
 
    s_list *list = SX_AS_LIST(expr);

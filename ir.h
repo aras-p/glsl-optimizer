@@ -47,10 +47,11 @@ public:
    class ir_constant *constant_expression_value();
 
    /** ir_print_visitor helper for debugging. */
-   void print(void);
+   void print(void) const;
 
    virtual void accept(ir_visitor *) = 0;
    virtual ir_visitor_status accept(ir_hierarchical_visitor *) = 0;
+   virtual ir_instruction *clone(struct hash_table *ht) const = 0;
 
    /**
     * \name IR instruction downcast functions
@@ -144,6 +145,8 @@ class ir_variable : public ir_instruction {
 public:
    ir_variable(const struct glsl_type *, const char *);
 
+   virtual ir_instruction *clone(struct hash_table *ht) const;
+
    virtual ir_variable *as_variable()
    {
       return this;
@@ -156,26 +159,6 @@ public:
 
    virtual ir_visitor_status accept(ir_hierarchical_visitor *);
 
-   /**
-    * Duplicate an IR variable
-    *
-    * \note
-    * This will probably be made \c virtual and moved to the base class
-    * eventually.
-    */
-   ir_variable *clone() const
-   {
-      ir_variable *var = new ir_variable(type, name);
-
-      var->max_array_access = this->max_array_access;
-      var->read_only = this->read_only;
-      var->centroid = this->centroid;
-      var->invariant = this->invariant;
-      var->mode = this->mode;
-      var->interpolation = this->interpolation;
-
-      return var;
-   }
 
    /**
     * Get the string value for the interpolation qualifier
@@ -266,6 +249,8 @@ class ir_function_signature : public ir_instruction {
 public:
    ir_function_signature(const glsl_type *return_type);
 
+   virtual ir_instruction *clone(struct hash_table *ht) const;
+
    virtual void accept(ir_visitor *v)
    {
       v->visit(this);
@@ -329,6 +314,8 @@ private:
 class ir_function : public ir_instruction {
 public:
    ir_function(const char *name);
+
+   virtual ir_instruction *clone(struct hash_table *ht) const;
 
    virtual ir_function *as_function()
    {
@@ -398,6 +385,8 @@ public:
       /* empty */
    }
 
+   virtual ir_instruction *clone(struct hash_table *ht) const;
+
    virtual ir_if *as_if()
    {
       return this;
@@ -427,6 +416,8 @@ public:
    {
       /* empty */
    }
+
+   virtual ir_instruction *clone(struct hash_table *ht) const;
 
    virtual void accept(ir_visitor *v)
    {
@@ -466,6 +457,8 @@ public:
 class ir_assignment : public ir_rvalue {
 public:
    ir_assignment(ir_rvalue *lhs, ir_rvalue *rhs, ir_rvalue *condition);
+
+   virtual ir_instruction *clone(struct hash_table *ht) const;
 
    virtual void accept(ir_visitor *v)
    {
@@ -589,8 +582,10 @@ public:
    ir_expression(int op, const struct glsl_type *type,
 		 ir_rvalue *, ir_rvalue *);
 
+   virtual ir_instruction *clone(struct hash_table *ht) const;
+
    static unsigned int get_num_operands(ir_expression_operation);
-   unsigned int get_num_operands()
+   unsigned int get_num_operands() const
    {
       return get_num_operands(operation);
    }
@@ -612,8 +607,6 @@ public:
 
    virtual ir_visitor_status accept(ir_hierarchical_visitor *);
 
-   ir_expression *clone();
-
    ir_expression_operation operation;
    ir_rvalue *operands[2];
 };
@@ -631,6 +624,8 @@ public:
       type = callee->return_type;
       actual_parameters->move_nodes_to(& this->actual_parameters);
    }
+
+   virtual ir_instruction *clone(struct hash_table *ht) const;
 
    virtual ir_call *as_call()
    {
@@ -718,6 +713,8 @@ public:
       /* empty */
    }
 
+   virtual ir_instruction *clone(struct hash_table *) const;
+
    virtual ir_return *as_return()
    {
       return this;
@@ -754,11 +751,13 @@ public:
       jump_continue
    };
 
-   ir_loop_jump(ir_loop *loop, jump_mode mode)
-      : loop(loop), mode(mode)
+   ir_loop_jump(jump_mode mode)
+      : mode(mode)
    {
       /* empty */
    }
+
+   virtual ir_instruction *clone(struct hash_table *) const;
 
    virtual void accept(ir_visitor *v)
    {
@@ -778,9 +777,6 @@ public:
    }
 
 private:
-   /** Loop containing this break instruction. */
-   ir_loop *loop;
-
    /** Mode selector for the jump instruction. */
    enum jump_mode mode;
 };
@@ -824,6 +820,8 @@ public:
    {
       /* empty */
    }
+
+   virtual ir_instruction *clone(struct hash_table *) const;
 
    virtual void accept(ir_visitor *v)
    {
@@ -910,14 +908,11 @@ public:
               unsigned count);
    ir_swizzle(ir_rvalue *val, ir_swizzle_mask mask);
 
+   virtual ir_instruction *clone(struct hash_table *) const;
+
    virtual ir_swizzle *as_swizzle()
    {
       return this;
-   }
-
-   ir_swizzle *clone()
-   {
-      return new ir_swizzle(this->val, this->mask);
    }
 
    /**
@@ -967,6 +962,8 @@ class ir_dereference_variable : public ir_dereference {
 public:
    ir_dereference_variable(ir_variable *var);
 
+   virtual ir_instruction *clone(struct hash_table *) const;
+
    /**
     * Get the variable that is ultimately referenced by an r-value
     */
@@ -1006,6 +1003,8 @@ public:
 
    ir_dereference_array(ir_variable *var, ir_rvalue *array_index);
 
+   virtual ir_instruction *clone(struct hash_table *) const;
+
    virtual ir_dereference_array *as_dereference_array()
    {
       return this;
@@ -1039,6 +1038,8 @@ public:
    ir_dereference_record(ir_rvalue *value, const char *field);
 
    ir_dereference_record(ir_variable *var, const char *field);
+
+   virtual ir_instruction *clone(struct hash_table *) const;
 
    /**
     * Get the variable that is ultimately referenced by an r-value
@@ -1096,6 +1097,8 @@ public:
     */
    ir_constant(const ir_constant *c, unsigned i);
 
+   virtual ir_instruction *clone(struct hash_table *) const;
+
    virtual ir_constant *as_constant()
    {
       return this;
@@ -1107,8 +1110,6 @@ public:
    }
 
    virtual ir_visitor_status accept(ir_hierarchical_visitor *);
-
-   ir_constant *clone();
 
    /**
     * Get a particular component of a constant as a specific type

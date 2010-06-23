@@ -290,7 +290,8 @@ cross_validate_uniforms(struct glsl_program *prog)
 		   * have an initializer but a later instance does, copy the
 		   * initializer to the version stored in the symbol table.
 		   */
-		  existing->constant_value = var->constant_value->clone();
+		  existing->constant_value =
+		     (ir_constant *)var->constant_value->clone(NULL);
 	    }
 	 } else
 	    uniforms.add_variable(var->name, var);

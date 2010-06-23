@@ -297,8 +297,8 @@ ir_constant::ir_constant(const struct glsl_type *type, exec_list *value_list)
    }
 }
 
-ir_constant *
-ir_constant::clone()
+ir_instruction *
+ir_constant::clone(struct hash_table *ht) const
 {
    switch (this->type->base_type) {
    case GLSL_TYPE_UINT:
@@ -316,7 +316,7 @@ ir_constant::clone()
 	      ; node = node->next) {
 	 ir_constant *const orig = (ir_constant *) node;
 
-	 c->components.push_tail(orig->clone());
+	 c->components.push_tail(orig->clone(NULL));
       }
 
       return c;
