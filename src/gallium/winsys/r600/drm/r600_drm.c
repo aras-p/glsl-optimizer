@@ -26,21 +26,18 @@
  *      Joakim Sindholt <opensource@zhasha.com>
  */
 #include <sys/ioctl.h>
-#include "trace/tr_drm.h"
 #include "util/u_inlines.h"
 #include "util/u_debug.h"
-#include "state_tracker/drm_api.h"
 #include "radeon_priv.h"
 #include "r600_screen.h"
 #include "r600_texture.h"
+#include "r600_public.h"
+#include "r600_drm_public.h"
+#include "state_tracker/drm_driver.h"
 
-static struct pipe_screen *r600_drm_create_screen(struct drm_api* api, int drmfd)
+struct radeon *r600_drm_winsys_create(int drmfd)
 {
-	struct radeon *rw = radeon_new(drmfd, 0);
-
-	if (rw == NULL)
-		return NULL;
-	return radeon_create_screen(rw);
+	return radeon_new(drmfd, 0);
 }
 
 boolean r600_buffer_get_handle(struct radeon *rw,
@@ -62,25 +59,4 @@ boolean r600_buffer_get_handle(struct radeon *rw,
 	}
 	whandle->handle = rbuffer->flink;
 	return TRUE;
-}
-
-static void r600_drm_api_destroy(struct drm_api *api)
-{
-	return;
-}
-
-struct drm_api drm_api_hooks = {
-	.name = "r600",
-	.driver_name = "r600",
-	.create_screen = r600_drm_create_screen,
-	.destroy = r600_drm_api_destroy,
-};
-
-struct drm_api* drm_api_create()
-{
-#ifdef DEBUG
-	return trace_drm_create(&drm_api_hooks);
-#else
-	return &drm_api_hooks;
-#endif
 }

@@ -31,6 +31,7 @@
 #include "r600_screen.h"
 #include "r600_texture.h"
 #include "r600_context.h"
+#include "r600_public.h"
 #include <stdio.h>
 
 static const char* r600_get_vendor(struct pipe_screen* pscreen)
@@ -240,7 +241,7 @@ static void r600_destroy_screen(struct pipe_screen* pscreen)
 	FREE(rscreen);
 }
 
-struct pipe_screen *radeon_create_screen(struct radeon *rw)
+struct pipe_screen *r600_screen_create(struct radeon *rw)
 {
 	struct r600_screen* rscreen;
 
