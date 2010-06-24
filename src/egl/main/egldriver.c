@@ -460,6 +460,7 @@ _EGLDriver *
 _eglLoadDefaultDriver(EGLDisplay dpy, EGLint *major, EGLint *minor)
 {
    _EGLDriver *drv = NULL;
+   EGLBoolean ok;
    int i;
 
    _eglLockMutex(_eglGlobal.Mutex);
@@ -470,10 +471,15 @@ _eglLoadDefaultDriver(EGLDisplay dpy, EGLint *major, EGLint *minor)
       if (_eglGlobal.NumDrivers == 0)
 	 continue;
       drv = _eglGlobal.Drivers[0];
-      if (drv->API.Initialize(drv, dpy, major, minor))
-	 break;
+
+      _eglUnlockMutex(_eglGlobal.Mutex);
+      ok = drv->API.Initialize(drv, dpy, major, minor);
+      _eglLockMutex(_eglGlobal.Mutex);
+      if (ok)
+         break;
+
       _eglUnloadDrivers();
-   }      
+   }
 
    _eglUnlockMutex(_eglGlobal.Mutex);
 
