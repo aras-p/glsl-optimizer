@@ -127,6 +127,7 @@ ir_constant_visitor::visit(ir_function *ir)
 void
 ir_constant_visitor::visit(ir_expression *ir)
 {
+   void *ctx = talloc_parent(ir);
    value = NULL;
    ir_constant *op[2];
    unsigned int operand, c;
@@ -497,7 +498,7 @@ ir_constant_visitor::visit(ir_expression *ir)
       return;
    }
 
-   this->value = new ir_constant(ir->type, &data);
+   this->value = new(ctx) ir_constant(ir->type, &data);
 }
 
 
@@ -513,6 +514,7 @@ ir_constant_visitor::visit(ir_texture *ir)
 void
 ir_constant_visitor::visit(ir_swizzle *ir)
 {
+   void *ctx = talloc_parent(ir);
    ir_constant *v = ir->val->constant_expression_value();
 
    this->value = NULL;
@@ -534,7 +536,7 @@ ir_constant_visitor::visit(ir_swizzle *ir)
 	 }
       }
 
-      this->value = new ir_constant(ir->type, &data);
+      this->value = new(ctx) ir_constant(ir->type, &data);
    }
 }
 
@@ -553,6 +555,7 @@ ir_constant_visitor::visit(ir_dereference_variable *ir)
 void
 ir_constant_visitor::visit(ir_dereference_array *ir)
 {
+   void *ctx = talloc_parent(ir);
    ir_constant *array = ir->array->constant_expression_value();
    ir_constant *idx = ir->array_index->constant_expression_value();
 
@@ -592,11 +595,11 @@ ir_constant_visitor::visit(ir_dereference_array *ir)
 	    break;
 	 }
 
-	 this->value = new ir_constant(column_type, &data);
+	 this->value = new(ctx) ir_constant(column_type, &data);
       } else if (array->type->is_vector()) {
 	 const unsigned component = idx->value.u[0];
 
-	 this->value = new ir_constant(array, component);
+	 this->value = new(ctx) ir_constant(array, component);
       } else {
 	 /* FINISHME: Handle access of constant arrays. */
       }

@@ -94,13 +94,14 @@ do_function_inlining(exec_list *instructions)
 static void
 replace_return_with_assignment(ir_instruction *ir, void *data)
 {
+   void *ctx = talloc_parent(ir);
    ir_variable *retval = (ir_variable *)data;
    ir_return *ret = ir->as_return();
 
    if (ret) {
       if (ret->value) {
-	 ir_rvalue *lhs = new ir_dereference_variable(retval);
-	 ret->insert_before(new ir_assignment(lhs, ret->value, NULL));
+	 ir_rvalue *lhs = new(ctx) ir_dereference_variable(retval);
+	 ret->insert_before(new(ctx) ir_assignment(lhs, ret->value, NULL));
 	 ret->remove();
       } else {
 	 /* un-valued return has to be the last return, or we shouldn't
@@ -114,6 +115,7 @@ replace_return_with_assignment(ir_instruction *ir, void *data)
 ir_rvalue *
 ir_call::generate_inline(ir_instruction *next_ir)
 {
+   void *ctx = talloc_parent(this);
    ir_variable **parameters;
    int num_parameters;
    int i;
@@ -130,7 +132,7 @@ ir_call::generate_inline(ir_instruction *next_ir)
 
    /* Generate storage for the return value. */
    if (this->callee->return_type) {
-      retval = new ir_variable(this->callee->return_type, "__retval");
+      retval = new(ctx) ir_variable(this->callee->return_type, "__retval");
       next_ir->insert_before(retval);
    }
 
@@ -154,8 +156,8 @@ ir_call::generate_inline(ir_instruction *next_ir)
 	  sig_param->mode == ir_var_inout) {
 	 ir_assignment *assign;
 
-	 assign = new ir_assignment(new ir_dereference_variable(parameters[i]),
-				    param, NULL);
+	 assign = new(ctx) ir_assignment(new(ctx) ir_dereference_variable(parameters[i]),
+					 param, NULL);
 	 next_ir->insert_before(assign);
       }
 
@@ -185,9 +187,9 @@ ir_call::generate_inline(ir_instruction *next_ir)
 	  parameters[i]->mode == ir_var_inout) {
 	 ir_assignment *assign;
 
-	 assign = new ir_assignment(param->as_rvalue(),
-				    new ir_dereference_variable(parameters[i]),
-				    NULL);
+	 assign = new(ctx) ir_assignment(param->as_rvalue(),
+					 new(ctx) ir_dereference_variable(parameters[i]),
+					 NULL);
 	 next_ir->insert_before(assign);
       }
 
@@ -199,7 +201,7 @@ ir_call::generate_inline(ir_instruction *next_ir)
    hash_table_dtor(ht);
 
    if (retval)
-      return new ir_dereference_variable(retval);
+      return new(ctx) ir_dereference_variable(retval);
    else
       return NULL;
 }

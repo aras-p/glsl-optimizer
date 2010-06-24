@@ -29,6 +29,10 @@
 #include <cstring>
 #include <cassert>
 
+extern "C" {
+#include <talloc.h>
+}
+
 #define GLSL_TYPE_UINT          0
 #define GLSL_TYPE_INT           1
 #define GLSL_TYPE_FLOAT         2
@@ -60,6 +64,25 @@ struct glsl_type {
 				* only \c GLSL_TYPE_FLOAT, \c GLSL_TYPE_INT,
 				* and \c GLSL_TYPE_UINT are valid.
 				*/
+
+   /* Callers of this talloc-based new need not call delete. It's
+    * easier to just talloc_free 'ctx' (or any of its ancestors). */
+   static void* operator new(size_t size, void *ctx)
+   {
+      void *type;
+
+      type = talloc_size(ctx, size);
+      assert(type != NULL);
+
+      return type;
+   }
+
+   /* If the user *does* call delete, that's OK, we will just
+    * talloc_free in that case. */
+   static void operator delete(void *type)
+   {
+      talloc_free(type);
+   }
 
    /**
     * \name Vector and matrix element counts
@@ -198,7 +221,8 @@ struct glsl_type {
    /**
     * Get the instance of an array type
     */
-   static const glsl_type *get_array_instance(const glsl_type *base,
+   static const glsl_type *get_array_instance(void *ctx,
+					      const glsl_type *base,
 					      unsigned elements);
 
    /**
@@ -387,7 +411,7 @@ private:
    /**
     * Constructor for array types
     */
-   glsl_type(const glsl_type *array, unsigned length);
+   glsl_type(void *ctx, const glsl_type *array, unsigned length);
 
    /** Hash table containing the known array types. */
    static struct hash_table *array_types;

@@ -70,7 +70,8 @@ void
 _mesa_glsl_read_ir(_mesa_glsl_parse_state *state, exec_list *instructions,
 		   const char *src)
 {
-   s_expression *expr = s_expression::read_expression(src);
+   void *ctx = talloc_parent(state);
+   s_expression *expr = s_expression::read_expression(ctx, src);
    if (expr == NULL) {
       ir_read_error(state, NULL, "couldn't parse S-Expression.");
       return;
@@ -137,7 +138,7 @@ read_type(_mesa_glsl_parse_state *st, s_expression *expr)
 	    return NULL;
 	 }
 
-	 return glsl_type::get_array_instance(base_type, size->value());
+	 return glsl_type::get_array_instance(st, base_type, size->value());
       } else if (strcmp(type_sym->value(), "struct") == 0) {
 	 assert(false); // FINISHME
       } else {
@@ -190,6 +191,7 @@ scan_for_prototypes(_mesa_glsl_parse_state *st, exec_list *instructions,
 static ir_function *
 read_function(_mesa_glsl_parse_state *st, s_list *list, bool skip_body)
 {
+   void *ctx = talloc_parent(st);
    if (list->length() < 3) {
       ir_read_error(st, list, "Expected (function <name> (signature ...) ...)");
       return NULL;
@@ -203,7 +205,7 @@ read_function(_mesa_glsl_parse_state *st, s_list *list, bool skip_body)
 
    ir_function *f = st->symbols->get_function(name->value());
    if (f == NULL) {
-      f = new ir_function(name->value());
+      f = new(ctx) ir_function(name->value());
       bool added = st->symbols->add_function(name->value(), f);
       assert(added);
    }
@@ -233,6 +235,7 @@ static void
 read_function_sig(_mesa_glsl_parse_state *st, ir_function *f, s_list *list,
 		  bool skip_body)
 {
+   void *ctx = talloc_parent(st);
    if (list->length() != 4) {
       ir_read_error(st, list, "Expected (signature <type> (parameters ...) "
 			      "(<instruction> ...))");
@@ -286,7 +289,7 @@ read_function_sig(_mesa_glsl_parse_state *st, ir_function *f, s_list *list,
 	 return;
       }
    } else {
-      sig = new ir_function_signature(return_type);
+      sig = new(ctx) ir_function_signature(return_type);
       f->add_signature(sig);
    }
 
@@ -331,12 +334,13 @@ static ir_instruction *
 read_instruction(_mesa_glsl_parse_state *st, s_expression *expr,
 	         ir_loop *loop_ctx)
 {
+   void *ctx = talloc_parent(st);
    s_symbol *symbol = SX_AS_SYMBOL(expr);
    if (symbol != NULL) {
       if (strcmp(symbol->value(), "break") == 0 && loop_ctx != NULL)
-	 return new ir_loop_jump(ir_loop_jump::jump_break);
+	 return new(ctx) ir_loop_jump(ir_loop_jump::jump_break);
       if (strcmp(symbol->value(), "continue") == 0 && loop_ctx != NULL)
-	 return new ir_loop_jump(ir_loop_jump::jump_continue);
+	 return new(ctx) ir_loop_jump(ir_loop_jump::jump_continue);
    }
 
    s_list *list = SX_AS_LIST(expr);
@@ -372,6 +376,7 @@ read_instruction(_mesa_glsl_parse_state *st, s_expression *expr,
 static ir_variable *
 read_declaration(_mesa_glsl_parse_state *st, s_list *list)
 {
+   void *ctx = talloc_parent(st);
    if (list->length() != 4) {
       ir_read_error(st, list, "expected (declare (<qualifiers>) <type> "
 			      "<name>)");
@@ -395,7 +400,7 @@ read_declaration(_mesa_glsl_parse_state *st, s_list *list)
       return NULL;
    }
 
-   ir_variable *var = new ir_variable(type, var_name->value());
+   ir_variable *var = new(ctx) ir_variable(type, var_name->value());
 
    foreach_iter(exec_list_iterator, it, quals->subexpressions) {
       s_symbol *qualifier = SX_AS_SYMBOL(it.get());
@@ -443,6 +448,7 @@ read_declaration(_mesa_glsl_parse_state *st, s_list *list)
 static ir_if *
 read_if(_mesa_glsl_parse_state *st, s_list *list, ir_loop *loop_ctx)
 {
+   void *ctx = talloc_parent(st);
    if (list->length() != 4) {
       ir_read_error(st, list, "expected (if <condition> (<then> ...) "
                           "(<else> ...))");
@@ -459,7 +465,7 @@ read_if(_mesa_glsl_parse_state *st, s_list *list, ir_loop *loop_ctx)
    s_expression *then_expr = (s_expression*) cond_expr->next;
    s_expression *else_expr = (s_expression*) then_expr->next;
 
-   ir_if *iff = new ir_if(condition);
+   ir_if *iff = new(ctx) ir_if(condition);
 
    read_instructions(st, &iff->then_instructions, then_expr, loop_ctx);
    read_instructions(st, &iff->else_instructions, else_expr, loop_ctx);
@@ -474,6 +480,7 @@ read_if(_mesa_glsl_parse_state *st, s_list *list, ir_loop *loop_ctx)
 static ir_loop *
 read_loop(_mesa_glsl_parse_state *st, s_list *list)
 {
+   void *ctx = talloc_parent(st);
    if (list->length() != 6) {
       ir_read_error(st, list, "expected (loop <counter> <from> <to> "
 			      "<increment> <body>)");
@@ -488,7 +495,7 @@ read_loop(_mesa_glsl_parse_state *st, s_list *list)
 
    // FINISHME: actually read the count/from/to fields.
 
-   ir_loop *loop = new ir_loop;
+   ir_loop *loop = new(ctx) ir_loop;
    read_instructions(st, &loop->body_instructions, body_expr, loop);
    if (st->error) {
       delete loop;
@@ -501,6 +508,7 @@ read_loop(_mesa_glsl_parse_state *st, s_list *list)
 static ir_return *
 read_return(_mesa_glsl_parse_state *st, s_list *list)
 {
+   void *ctx = talloc_parent(st);
    if (list->length() != 2) {
       ir_read_error(st, list, "expected (return <rvalue>)");
       return NULL;
@@ -514,7 +522,7 @@ read_return(_mesa_glsl_parse_state *st, s_list *list)
       return NULL;
    }
 
-   return new ir_return(retval);
+   return new(ctx) ir_return(retval);
 }
 
 
@@ -556,6 +564,7 @@ read_rvalue(_mesa_glsl_parse_state *st, s_expression *expr)
 static ir_assignment *
 read_assignment(_mesa_glsl_parse_state *st, s_list *list)
 {
+   void *ctx = talloc_parent(st);
    if (list->length() != 4) {
       ir_read_error(st, list, "expected (assign <condition> <lhs> <rhs>)");
       return NULL;
@@ -584,12 +593,13 @@ read_assignment(_mesa_glsl_parse_state *st, s_list *list)
       return NULL;
    }
 
-   return new ir_assignment(lhs, rhs, condition);
+   return new(ctx) ir_assignment(lhs, rhs, condition);
 }
 
 static ir_call *
 read_call(_mesa_glsl_parse_state *st, s_list *list)
 {
+   void *ctx = talloc_parent(st);
    if (list->length() != 3) {
       ir_read_error(st, list, "expected (call <name> (<param> ...))");
       return NULL;
@@ -628,12 +638,13 @@ read_call(_mesa_glsl_parse_state *st, s_list *list)
       return NULL;
    }
 
-   return new ir_call(callee, &parameters);
+   return new(ctx) ir_call(callee, &parameters);
 }
 
 static ir_expression *
 read_expression(_mesa_glsl_parse_state *st, s_list *list)
 {
+   void *ctx = talloc_parent(st);
    const unsigned list_length = list->length();
    if (list_length < 4) {
       ir_read_error(st, list, "expected (expression <type> <operator> "
@@ -693,7 +704,7 @@ read_expression(_mesa_glsl_parse_state *st, s_list *list)
       }
    }
 
-   return new ir_expression(op, type, arg1, arg2);
+   return new(ctx) ir_expression(op, type, arg1, arg2);
 }
 
 static ir_swizzle *
@@ -738,6 +749,7 @@ read_swizzle(_mesa_glsl_parse_state *st, s_list *list)
 static ir_constant *
 read_constant(_mesa_glsl_parse_state *st, s_list *list)
 {
+   void *ctx = talloc_parent(st);
    if (list->length() != 3) {
       ir_read_error(st, list, "expected (constant <type> (<num> ... <num>))");
       return NULL;
@@ -803,7 +815,7 @@ read_constant(_mesa_glsl_parse_state *st, s_list *list)
       ++k;
    }
 
-   return new ir_constant(type, &data);
+   return new(ctx) ir_constant(type, &data);
 }
 
 static ir_dereference *
@@ -828,6 +840,7 @@ read_dereference(_mesa_glsl_parse_state *st, s_expression *expr)
 static ir_dereference *
 read_var_ref(_mesa_glsl_parse_state *st, s_list *list)
 {
+   void *ctx = talloc_parent(st);
    if (list->length() != 2) {
       ir_read_error(st, list, "expected (var_ref <variable name>)");
       return NULL;
@@ -844,12 +857,13 @@ read_var_ref(_mesa_glsl_parse_state *st, s_list *list)
       return NULL;
    }
 
-   return new ir_dereference_variable(var);
+   return new(ctx) ir_dereference_variable(var);
 }
 
 static ir_dereference *
 read_array_ref(_mesa_glsl_parse_state *st, s_list *list)
 {
+   void *ctx = talloc_parent(st);
    if (list->length() != 3) {
       ir_read_error(st, list, "expected (array_ref <rvalue> <index>)");
       return NULL;
@@ -864,12 +878,13 @@ read_array_ref(_mesa_glsl_parse_state *st, s_list *list)
 
    s_expression *idx_expr = (s_expression*) subj_expr->next;
    ir_rvalue *idx = read_rvalue(st, idx_expr);
-   return new ir_dereference_array(subject, idx);
+   return new(ctx) ir_dereference_array(subject, idx);
 }
 
 static ir_dereference *
 read_record_ref(_mesa_glsl_parse_state *st, s_list *list)
 {
+   void *ctx = talloc_parent(st);
    if (list->length() != 3) {
       ir_read_error(st, list, "expected (record_ref <rvalue> <field>)");
       return NULL;
@@ -887,7 +902,7 @@ read_record_ref(_mesa_glsl_parse_state *st, s_list *list)
       ir_read_error(st, list, "expected (record_ref ... <field name>)");
       return NULL;
    }
-   return new ir_dereference_record(subject, field->value());
+   return new(ctx) ir_dereference_record(subject, field->value());
 }
 
 static bool
@@ -905,6 +920,7 @@ valid_texture_list_length(ir_texture_opcode op, s_list *list)
 static ir_texture *
 read_texture(_mesa_glsl_parse_state *st, s_list *list)
 {
+   void *ctx = talloc_parent(st);
    s_symbol *tag = SX_AS_SYMBOL(list->subexpressions.head);
    assert(tag != NULL);
 
@@ -917,7 +933,7 @@ read_texture(_mesa_glsl_parse_state *st, s_list *list)
       return NULL;
    }
 
-   ir_texture *tex = new ir_texture(op);
+   ir_texture *tex = new(ctx) ir_texture(op);
 
    // Read sampler (must be a deref)
    s_expression *sampler_expr = (s_expression *) tag->next;

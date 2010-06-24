@@ -54,6 +54,8 @@ process_call(exec_list *instructions, ir_function *f,
 	     YYLTYPE *loc, exec_list *actual_parameters,
 	     struct _mesa_glsl_parse_state *state)
 {
+   void *ctx = talloc_parent(state);
+
    const ir_function_signature *sig =
       f->matching_signature(actual_parameters);
 
@@ -93,7 +95,7 @@ process_call(exec_list *instructions, ir_function *f,
       /* FINISHME: The list of actual parameters needs to be modified to
        * FINISHME: include any necessary conversions.
        */
-      return new ir_call(sig, actual_parameters);
+      return new(ctx) ir_call(sig, actual_parameters);
    } else {
       /* FINISHME: Log a better error message here.  G++ will show the types
        * FINISHME: of the actual parameters and the set of candidate
@@ -102,7 +104,7 @@ process_call(exec_list *instructions, ir_function *f,
        */
       _mesa_glsl_error(loc, state, "no matching function for call to `%s'",
 		       f->name);
-      return ir_call::get_error_instruction();
+      return ir_call::get_error_instruction(ctx);
    }
 }
 
@@ -112,11 +114,12 @@ match_function_by_name(exec_list *instructions, const char *name,
 		       YYLTYPE *loc, exec_list *actual_parameters,
 		       struct _mesa_glsl_parse_state *state)
 {
+   void *ctx = talloc_parent(state);
    ir_function *f = state->symbols->get_function(name);
 
    if (f == NULL) {
       _mesa_glsl_error(loc, state, "function `%s' undeclared", name);
-      return ir_call::get_error_instruction();
+      return ir_call::get_error_instruction(ctx);
    }
 
    /* Once we've determined that the function being called might exist, try
@@ -132,6 +135,7 @@ match_function_by_name(exec_list *instructions, const char *name,
 static ir_rvalue *
 convert_component(ir_rvalue *src, const glsl_type *desired_type)
 {
+   void *ctx = talloc_parent(src);
    const unsigned a = desired_type->base_type;
    const unsigned b = src->type->base_type;
    ir_expression *result = NULL;
@@ -149,22 +153,22 @@ convert_component(ir_rvalue *src, const glsl_type *desired_type)
    case GLSL_TYPE_UINT:
    case GLSL_TYPE_INT:
       if (b == GLSL_TYPE_FLOAT)
-	 result = new ir_expression(ir_unop_f2i, desired_type, src, NULL);
+	 result = new(ctx) ir_expression(ir_unop_f2i, desired_type, src, NULL);
       else {
 	 assert(b == GLSL_TYPE_BOOL);
-	 result = new ir_expression(ir_unop_b2i, desired_type, src, NULL);
+	 result = new(ctx) ir_expression(ir_unop_b2i, desired_type, src, NULL);
       }
       break;
    case GLSL_TYPE_FLOAT:
       switch (b) {
       case GLSL_TYPE_UINT:
-	 result = new ir_expression(ir_unop_u2f, desired_type, src, NULL);
+	 result = new(ctx) ir_expression(ir_unop_u2f, desired_type, src, NULL);
 	 break;
       case GLSL_TYPE_INT:
-	 result = new ir_expression(ir_unop_i2f, desired_type, src, NULL);
+	 result = new(ctx) ir_expression(ir_unop_i2f, desired_type, src, NULL);
 	 break;
       case GLSL_TYPE_BOOL:
-	 result = new ir_expression(ir_unop_b2f, desired_type, src, NULL);
+	 result = new(ctx) ir_expression(ir_unop_b2f, desired_type, src, NULL);
 	 break;
       }
       break;
@@ -172,12 +176,12 @@ convert_component(ir_rvalue *src, const glsl_type *desired_type)
       ir_constant *zero = NULL;
 
       switch (b) {
-      case GLSL_TYPE_UINT:  zero = new ir_constant(unsigned(0)); break;
-      case GLSL_TYPE_INT:   zero = new ir_constant(int(0));      break;
-      case GLSL_TYPE_FLOAT: zero = new ir_constant(0.0f);        break;
+      case GLSL_TYPE_UINT:  zero = new(ctx) ir_constant(unsigned(0)); break;
+      case GLSL_TYPE_INT:   zero = new(ctx) ir_constant(int(0));      break;
+      case GLSL_TYPE_FLOAT: zero = new(ctx) ir_constant(0.0f);        break;
       }
 
-      result = new ir_expression(ir_binop_nequal, desired_type, src, zero);
+      result = new(ctx) ir_expression(ir_binop_nequal, desired_type, src, zero);
    }
    }
 
@@ -194,6 +198,7 @@ convert_component(ir_rvalue *src, const glsl_type *desired_type)
 static ir_rvalue *
 dereference_component(ir_rvalue *src, unsigned component)
 {
+   void *ctx = talloc_parent(src);
    assert(component < src->type->components());
 
    /* If the source is a constant, just create a new constant instead of a
@@ -201,12 +206,12 @@ dereference_component(ir_rvalue *src, unsigned component)
     */
    ir_constant *constant = src->as_constant();
    if (constant)
-      return new ir_constant(constant, component);
+      return new(ctx) ir_constant(constant, component);
 
    if (src->type->is_scalar()) {
       return src;
    } else if (src->type->is_vector()) {
-      return new ir_swizzle(src, component, 0, 0, 0, 1);
+      return new(ctx) ir_swizzle(src, component, 0, 0, 0, 1);
    } else {
       assert(src->type->is_matrix());
 
@@ -215,8 +220,8 @@ dereference_component(ir_rvalue *src, unsigned component)
        */
       const int c = component / src->type->column_type()->vector_elements;
       const int r = component % src->type->column_type()->vector_elements;
-      ir_constant *const col_index = new ir_constant(c);
-      ir_dereference *const col = new ir_dereference_array(src, col_index);
+      ir_constant *const col_index = new(ctx) ir_constant(c);
+      ir_dereference *const col = new(ctx) ir_dereference_array(src, col_index);
 
       col->type = src->type->column_type();
 
@@ -234,6 +239,7 @@ process_array_constructor(exec_list *instructions,
 			  YYLTYPE *loc, exec_list *parameters,
 			  struct _mesa_glsl_parse_state *state)
 {
+   void *ctx = talloc_parent(state);
    /* Array constructors come in two forms: sized and unsized.  Sized array
     * constructors look like 'vec4[2](a, b)', where 'a' and 'b' are vec4
     * variables.  In this case the number of parameters must exactly match the
@@ -268,12 +274,13 @@ process_array_constructor(exec_list *instructions,
 		       "parameter%s",
 		       (constructor_type->length != 0) ? "at least" : "exactly",
 		       min_param, (min_param <= 1) ? "" : "s");
-      return ir_call::get_error_instruction();
+      return ir_call::get_error_instruction(ctx);
    }
 
    if (constructor_type->length == 0) {
       constructor_type =
-	 glsl_type::get_array_instance(constructor_type->element_type(),
+	 glsl_type::get_array_instance(state,
+				       constructor_type->element_type(),
 				       parameter_count);
       assert(constructor_type != NULL);
       assert(constructor_type->length == parameter_count);
@@ -306,6 +313,7 @@ constant_record_constructor(const glsl_type *constructor_type,
 			    YYLTYPE *loc, exec_list *parameters,
 			    struct _mesa_glsl_parse_state *state)
 {
+   void *ctx = talloc_parent(state);
    bool all_parameters_are_constant = true;
 
    exec_node *node = parameters->head;
@@ -338,7 +346,7 @@ constant_record_constructor(const glsl_type *constructor_type,
    if (!all_parameters_are_constant)
       return NULL;
 
-   return new ir_constant(constructor_type, parameters);
+   return new(ctx) ir_constant(constructor_type, parameters);
 }
 
 
@@ -440,6 +448,7 @@ ir_rvalue *
 ast_function_expression::hir(exec_list *instructions,
 			     struct _mesa_glsl_parse_state *state)
 {
+   void *ctx = talloc_parent(state);
    /* There are three sorts of function calls.
     *
     * 1. contstructors - The first subexpression is an ast_type_specifier.
@@ -462,14 +471,14 @@ ast_function_expression::hir(exec_list *instructions,
       if (constructor_type->is_sampler()) {
 	 _mesa_glsl_error(& loc, state, "cannot construct sampler type `%s'",
 			  constructor_type->name);
-	 return ir_call::get_error_instruction();
+	 return ir_call::get_error_instruction(ctx);
       }
 
       if (constructor_type->is_array()) {
 	 if (state->language_version <= 110) {
 	    _mesa_glsl_error(& loc, state,
 			     "array constructors forbidden in GLSL 1.10");
-	    return ir_call::get_error_instruction();
+	    return ir_call::get_error_instruction(ctx);
 	 }
 
 	 return process_array_constructor(instructions, constructor_type,
@@ -519,7 +528,7 @@ ast_function_expression::hir(exec_list *instructions,
 	    _mesa_glsl_error(& loc, state, "too few components to construct "
 			     "`%s'",
 			     constructor_type->name);
-	    return ir_call::get_error_instruction();
+	    return ir_call::get_error_instruction(ctx);
 	 }
 
 	 foreach_list (n, &this->expressions) {
@@ -549,14 +558,14 @@ ast_function_expression::hir(exec_list *instructions,
 	       _mesa_glsl_error(& loc, state, "too many parameters to `%s' "
 				"constructor",
 				constructor_type->name);
-	       return ir_call::get_error_instruction();
+	       return ir_call::get_error_instruction(ctx);
 	    }
 
 	    if (!result->type->is_numeric() && !result->type->is_boolean()) {
 	       _mesa_glsl_error(& loc, state, "cannot construct `%s' from a "
 				"non-numeric data type",
 				constructor_type->name);
-	       return ir_call::get_error_instruction();
+	       return ir_call::get_error_instruction(ctx);
 	    }
 
 	    /* Count the number of matrix and nonmatrix parameters.  This
@@ -574,11 +583,13 @@ ast_function_expression::hir(exec_list *instructions,
 	     * glsl-vs-constructor-call.shader_test.
 	     */
 	    if (result->type->components() >= 1 && !result->as_constant()) {
-	       result_var = new ir_variable(result->type, "constructor_tmp");
+	       result_var = new(ctx) ir_variable(result->type,
+						 "constructor_tmp");
 	       ir_dereference_variable *lhs;
 
-	       lhs = new ir_dereference_variable(result_var);
-	       instructions->push_tail(new ir_assignment(lhs, result, NULL));
+	       lhs = new(ctx) ir_dereference_variable(result_var);
+	       instructions->push_tail(new(ctx) ir_assignment(lhs,
+							      result, NULL));
 	    }
 
 	    /* Process each of the components of the parameter.  Dereference
@@ -592,7 +603,7 @@ ast_function_expression::hir(exec_list *instructions,
 	       ir_rvalue *component;
 
 	       if (result_var) {
-		  ir_dereference *d = new ir_dereference_variable(result_var);
+		  ir_dereference *d = new(ctx) ir_dereference_variable(result_var);
 		  component = dereference_component(d, i);
 	       } else {
 		  component = dereference_component(result, i);
@@ -629,7 +640,7 @@ ast_function_expression::hir(exec_list *instructions,
 	    _mesa_glsl_error(& loc, state, "cannot construct `%s' from a "
 			     "matrix in GLSL 1.10",
 			     constructor_type->name);
-	    return ir_call::get_error_instruction();
+	    return ir_call::get_error_instruction(ctx);
 	 }
 
 	 /* From page 50 (page 56 of the PDF) of the GLSL 1.50 spec:
@@ -643,7 +654,7 @@ ast_function_expression::hir(exec_list *instructions,
 	    _mesa_glsl_error(& loc, state, "for matrix `%s' constructor, "
 			     "matrix must be only parameter",
 			     constructor_type->name);
-	    return ir_call::get_error_instruction();
+	    return ir_call::get_error_instruction(ctx);
 	 }
 
 	 /* From page 28 (page 34 of the PDF) of the GLSL 1.10 spec:
@@ -656,14 +667,14 @@ ast_function_expression::hir(exec_list *instructions,
 	    _mesa_glsl_error(& loc, state, "too few components to construct "
 			     "`%s'",
 			     constructor_type->name);
-	    return ir_call::get_error_instruction();
+	    return ir_call::get_error_instruction(ctx);
 	 }
 
 	 ir_function *f = state->symbols->get_function(constructor_type->name);
 	 if (f == NULL) {
 	    _mesa_glsl_error(& loc, state, "no constructor for type `%s'",
 			     constructor_type->name);
-	    return ir_call::get_error_instruction();
+	    return ir_call::get_error_instruction(ctx);
 	 }
 
 	 const ir_function_signature *sig =
@@ -674,7 +685,8 @@ ast_function_expression::hir(exec_list *instructions,
 	     */
 	    if (all_parameters_are_constant) {
 	       if (components_used >= type_components)
-		  return new ir_constant(sig->return_type, & actual_parameters);
+		  return new(ctx) ir_constant(sig->return_type,
+					      & actual_parameters);
 
 	       assert(sig->return_type->is_vector()
 		      || sig->return_type->is_matrix());
@@ -695,9 +707,9 @@ ast_function_expression::hir(exec_list *instructions,
 		  generate_constructor_vector(sig->return_type, initializer,
 					      &data);
 
-	       return new ir_constant(sig->return_type, &data);
+	       return new(ctx) ir_constant(sig->return_type, &data);
 	    } else
-	       return new ir_call(sig, & actual_parameters);
+	       return new(ctx) ir_call(sig, & actual_parameters);
 	 } else {
 	    /* FINISHME: Log a better error message here.  G++ will show the
 	     * FINSIHME: types of the actual parameters and the set of
@@ -706,11 +718,11 @@ ast_function_expression::hir(exec_list *instructions,
 	     */
 	    _mesa_glsl_error(& loc, state, "no matching constructor for `%s'",
 			     constructor_type->name);
-	    return ir_call::get_error_instruction();
+	    return ir_call::get_error_instruction(ctx);
 	 }
       }
 
-      return ir_call::get_error_instruction();
+      return ir_call::get_error_instruction(ctx);
    } else {
       const ast_expression *id = subexpressions[0];
       YYLTYPE loc = id->get_location();
@@ -735,5 +747,5 @@ ast_function_expression::hir(exec_list *instructions,
 				    &actual_parameters, state);
    }
 
-   return ir_call::get_error_instruction();
+   return ir_call::get_error_instruction(ctx);
 }

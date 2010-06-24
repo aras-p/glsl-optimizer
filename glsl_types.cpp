@@ -150,14 +150,16 @@ const glsl_type *glsl_type::get_base_type() const
 ir_function *
 glsl_type::generate_constructor(glsl_symbol_table *symtab) const
 {
+   void *ctx = symtab;
+
    /* Generate the function name and add it to the symbol table.
     */
-   ir_function *const f = new ir_function(name);
+   ir_function *const f = new(ctx) ir_function(name);
 
    bool added = symtab->add_function(name, f);
    assert(added);
 
-   ir_function_signature *const sig = new ir_function_signature(this);
+   ir_function_signature *const sig = new(ctx) ir_function_signature(this);
    f->add_signature(sig);
 
    ir_variable **declarations =
@@ -168,8 +170,8 @@ glsl_type::generate_constructor(glsl_symbol_table *symtab) const
       snprintf(param_name, 10, "p%08X", i);
 
       ir_variable *var = (this->base_type == GLSL_TYPE_ARRAY)
-	 ? new ir_variable(fields.array, param_name)
-	 : new ir_variable(fields.structure[i].type, param_name);
+	 ? new(ctx) ir_variable(fields.array, param_name)
+	 : new(ctx) ir_variable(fields.structure[i].type, param_name);
 
       var->mode = ir_var_in;
       declarations[i] = var;
@@ -181,24 +183,26 @@ glsl_type::generate_constructor(glsl_symbol_table *symtab) const
     * the same type as the constructor.  After initializing __retval,
     * __retval is returned.
     */
-   ir_variable *retval = new ir_variable(this, "__retval");
+   ir_variable *retval = new(ctx) ir_variable(this, "__retval");
    sig->body.push_tail(retval);
 
    for (unsigned i = 0; i < length; i++) {
       ir_dereference *const lhs = (this->base_type == GLSL_TYPE_ARRAY)
-	 ? (ir_dereference *) new ir_dereference_array(retval, new ir_constant(i))
-	 : (ir_dereference *) new ir_dereference_record(retval, fields.structure[i].name);
+	 ? (ir_dereference *) new(ctx) ir_dereference_array(retval,
+							    new(ctx) ir_constant(i))
+	 : (ir_dereference *) new(ctx) ir_dereference_record(retval,
+							     fields.structure[i].name);
 
-      ir_dereference *const rhs = new ir_dereference_variable(declarations[i]);
-      ir_instruction *const assign = new ir_assignment(lhs, rhs, NULL);
+      ir_dereference *const rhs = new(ctx) ir_dereference_variable(declarations[i]);
+      ir_instruction *const assign = new(ctx) ir_assignment(lhs, rhs, NULL);
 
       sig->body.push_tail(assign);
    }
 
    free(declarations);
 
-   ir_dereference *const retref = new ir_dereference_variable(retval);
-   ir_instruction *const inst = new ir_return(retref);
+   ir_dereference *const retref = new(ctx) ir_dereference_variable(retval);
+   ir_instruction *const inst = new(ctx) ir_return(retref);
    sig->body.push_tail(inst);
 
    return f;
@@ -220,7 +224,8 @@ glsl_type::generate_constructor(glsl_symbol_table *symtab) const
  *                     the symbol table.
  */
 static ir_function_signature *
-generate_constructor_intro(const glsl_type *type, unsigned parameter_count,
+generate_constructor_intro(void *ctx,
+			   const glsl_type *type, unsigned parameter_count,
 			   ir_variable **declarations)
 {
    /* Names of parameters used in vector and matrix constructors
@@ -234,10 +239,10 @@ generate_constructor_intro(const glsl_type *type, unsigned parameter_count,
 
    const glsl_type *const parameter_type = type->get_base_type();
 
-   ir_function_signature *const signature = new ir_function_signature(type);
+   ir_function_signature *const signature = new(ctx) ir_function_signature(type);
 
    for (unsigned i = 0; i < parameter_count; i++) {
-      ir_variable *var = new ir_variable(parameter_type, names[i]);
+      ir_variable *var = new(ctx) ir_variable(parameter_type, names[i]);
 
       var->mode = ir_var_in;
       signature->parameters.push_tail(var);
@@ -245,7 +250,7 @@ generate_constructor_intro(const glsl_type *type, unsigned parameter_count,
       declarations[i] = var;
    }
 
-   ir_variable *retval = new ir_variable(type, "__retval");
+   ir_variable *retval = new(ctx) ir_variable(type, "__retval");
    signature->body.push_tail(retval);
 
    declarations[16] = retval;
@@ -257,7 +262,8 @@ generate_constructor_intro(const glsl_type *type, unsigned parameter_count,
  * Generate the body of a vector constructor that takes a single scalar
  */
 static void
-generate_vec_body_from_scalar(exec_list *instructions,
+generate_vec_body_from_scalar(void *ctx,
+			      exec_list *instructions,
 			      ir_variable **declarations)
 {
    ir_instruction *inst;
@@ -266,20 +272,20 @@ generate_vec_body_from_scalar(exec_list *instructions,
     * __retval.xxxx for however many vector components there are.
     */
    ir_dereference *const lhs_ref =
-      new ir_dereference_variable(declarations[16]);
-   ir_dereference *const rhs = new ir_dereference_variable(declarations[0]);
+      new(ctx) ir_dereference_variable(declarations[16]);
+   ir_dereference *const rhs = new(ctx) ir_dereference_variable(declarations[0]);
 
-   ir_swizzle *lhs = new ir_swizzle(lhs_ref, 0, 0, 0, 0, 1);
+   ir_swizzle *lhs = new(ctx) ir_swizzle(lhs_ref, 0, 0, 0, 0, 1);
 
-   inst = new ir_assignment(lhs, rhs, NULL);
+   inst = new(ctx) ir_assignment(lhs, rhs, NULL);
    instructions->push_tail(inst);
 
-   ir_dereference *const retref = new ir_dereference_variable(declarations[16]);
+   ir_dereference *const retref = new(ctx) ir_dereference_variable(declarations[16]);
 
-   ir_swizzle *retval = new ir_swizzle(retref, 0, 0, 0, 0,
-                                       declarations[16]->type->vector_elements);
+   ir_swizzle *retval = new(ctx) ir_swizzle(retref, 0, 0, 0, 0,
+					    declarations[16]->type->vector_elements);
 
-   inst = new ir_return(retval);
+   inst = new(ctx) ir_return(retval);
    instructions->push_tail(inst);
 }
 
@@ -288,30 +294,30 @@ generate_vec_body_from_scalar(exec_list *instructions,
  * Generate the body of a vector constructor that takes multiple scalars
  */
 static void
-generate_vec_body_from_N_scalars(exec_list *instructions,
+generate_vec_body_from_N_scalars(void *ctx,
+				 exec_list *instructions,
 				 ir_variable **declarations)
 {
    ir_instruction *inst;
    const glsl_type *const vec_type = declarations[16]->type;
-
 
    /* Generate an assignment of each parameter to a single component of
     * __retval.x and return __retval.
     */
    for (unsigned i = 0; i < vec_type->vector_elements; i++) {
       ir_dereference *const lhs_ref =
-	 new ir_dereference_variable(declarations[16]);
-      ir_dereference *const rhs = new ir_dereference_variable(declarations[i]);
+	 new(ctx) ir_dereference_variable(declarations[16]);
+      ir_dereference *const rhs = new(ctx) ir_dereference_variable(declarations[i]);
 
-      ir_swizzle *lhs = new ir_swizzle(lhs_ref, i, 0, 0, 0, 1);
+      ir_swizzle *lhs = new(ctx) ir_swizzle(lhs_ref, i, 0, 0, 0, 1);
 
-      inst = new ir_assignment(lhs, rhs, NULL);
+      inst = new(ctx) ir_assignment(lhs, rhs, NULL);
       instructions->push_tail(inst);
    }
 
-   ir_dereference *retval = new ir_dereference_variable(declarations[16]);
+   ir_dereference *retval = new(ctx) ir_dereference_variable(declarations[16]);
 
-   inst = new ir_return(retval);
+   inst = new(ctx) ir_return(retval);
    instructions->push_tail(inst);
 }
 
@@ -320,7 +326,8 @@ generate_vec_body_from_N_scalars(exec_list *instructions,
  * Generate the body of a matrix constructor that takes a single scalar
  */
 static void
-generate_mat_body_from_scalar(exec_list *instructions,
+generate_mat_body_from_scalar(void *ctx,
+			      exec_list *instructions,
 			      ir_variable **declarations)
 {
    ir_instruction *inst;
@@ -347,49 +354,50 @@ generate_mat_body_from_scalar(exec_list *instructions,
     */
    const glsl_type *const column_type = declarations[16]->type->column_type();
    const glsl_type *const row_type = declarations[16]->type->row_type();
-   ir_variable *const column = new ir_variable(column_type, "v");
+
+   ir_variable *const column = new(ctx) ir_variable(column_type, "v");
 
    instructions->push_tail(column);
 
-   ir_dereference *const lhs_ref = new ir_dereference_variable(column);
-   ir_dereference *const rhs = new ir_dereference_variable(declarations[0]);
+   ir_dereference *const lhs_ref = new(ctx) ir_dereference_variable(column);
+   ir_dereference *const rhs = new(ctx) ir_dereference_variable(declarations[0]);
 
-   ir_swizzle *lhs = new ir_swizzle(lhs_ref, 0, 0, 0, 0, 1);
+   ir_swizzle *lhs = new(ctx) ir_swizzle(lhs_ref, 0, 0, 0, 0, 1);
 
-   inst = new ir_assignment(lhs, rhs, NULL);
+   inst = new(ctx) ir_assignment(lhs, rhs, NULL);
    instructions->push_tail(inst);
 
    for (unsigned i = 1; i < column_type->vector_elements; i++) {
-      ir_dereference *const lhs_ref = new ir_dereference_variable(column);
-      ir_constant *const zero = new ir_constant(0.0f);
+      ir_dereference *const lhs_ref = new(ctx) ir_dereference_variable(column);
+      ir_constant *const zero = new(ctx) ir_constant(0.0f);
 
-      ir_swizzle *lhs = new ir_swizzle(lhs_ref, i, 0, 0, 0, 1);
+      ir_swizzle *lhs = new(ctx) ir_swizzle(lhs_ref, i, 0, 0, 0, 1);
 
-      inst = new ir_assignment(lhs, zero, NULL);
+      inst = new(ctx) ir_assignment(lhs, zero, NULL);
       instructions->push_tail(inst);
    }
 
 
    for (unsigned i = 0; i < row_type->vector_elements; i++) {
       static const unsigned swiz[] = { 1, 1, 1, 0, 1, 1, 1 };
-      ir_dereference *const rhs_ref = new ir_dereference_variable(column);
+      ir_dereference *const rhs_ref = new(ctx) ir_dereference_variable(column);
 
       /* This will be .xyyy when i=0, .yxyy when i=1, etc.
        */
-      ir_swizzle *rhs = new ir_swizzle(rhs_ref, swiz[3 - i], swiz[4 - i],
-                                       swiz[5 - i], swiz[6 - i],
-				       column_type->vector_elements);
+      ir_swizzle *rhs = new(ctx) ir_swizzle(rhs_ref, swiz[3 - i], swiz[4 - i],
+					    swiz[5 - i], swiz[6 - i],
+					    column_type->vector_elements);
 
-      ir_constant *const idx = new ir_constant(int(i));
+      ir_constant *const idx = new(ctx) ir_constant(int(i));
       ir_dereference *const lhs =
-	 new ir_dereference_array(declarations[16], idx);
+	 new(ctx) ir_dereference_array(declarations[16], idx);
 
-      inst = new ir_assignment(lhs, rhs, NULL);
+      inst = new(ctx) ir_assignment(lhs, rhs, NULL);
       instructions->push_tail(inst);
    }
 
-   ir_dereference *const retval = new ir_dereference_variable(declarations[16]);
-   inst = new ir_return(retval);
+   ir_dereference *const retval = new(ctx) ir_dereference_variable(declarations[16]);
+   inst = new(ctx) ir_return(retval);
    instructions->push_tail(inst);
 }
 
@@ -398,38 +406,38 @@ generate_mat_body_from_scalar(exec_list *instructions,
  * Generate the body of a vector constructor that takes multiple scalars
  */
 static void
-generate_mat_body_from_N_scalars(exec_list *instructions,
+generate_mat_body_from_N_scalars(void *ctx,
+				 exec_list *instructions,
 				 ir_variable **declarations)
 {
    ir_instruction *inst;
    const glsl_type *const row_type = declarations[16]->type->row_type();
    const glsl_type *const column_type = declarations[16]->type->column_type();
 
-
    /* Generate an assignment of each parameter to a single component of
     * of a particular column of __retval and return __retval.
     */
    for (unsigned i = 0; i < column_type->vector_elements; i++) {
       for (unsigned j = 0; j < row_type->vector_elements; j++) {
-	 ir_constant *row_index = new ir_constant(int(i));
+	 ir_constant *row_index = new(ctx) ir_constant(int(i));
 	 ir_dereference *const row_access =
-	    new ir_dereference_array(declarations[16], row_index);
+	    new(ctx) ir_dereference_array(declarations[16], row_index);
 
-	 ir_swizzle *component_access = new ir_swizzle(row_access,
-	                                               j, 0, 0, 0, 1);
+	 ir_swizzle *component_access = new(ctx) ir_swizzle(row_access,
+							    j, 0, 0, 0, 1);
 
 	 const unsigned param = (i * row_type->vector_elements) + j;
 	 ir_dereference *const rhs =
-	    new ir_dereference_variable(declarations[param]);
+	    new(ctx) ir_dereference_variable(declarations[param]);
 
-	 inst = new ir_assignment(component_access, rhs, NULL);
+	 inst = new(ctx) ir_assignment(component_access, rhs, NULL);
 	 instructions->push_tail(inst);
       }
    }
 
-   ir_dereference *retval = new ir_dereference_variable(declarations[16]);
+   ir_dereference *retval = new(ctx) ir_dereference_variable(declarations[16]);
 
-   inst = new ir_return(retval);
+   inst = new(ctx) ir_return(retval);
    instructions->push_tail(inst);
 }
 
@@ -444,6 +452,7 @@ static void
 generate_constructor(glsl_symbol_table *symtab, const struct glsl_type *types,
 		     unsigned num_types, exec_list *instructions)
 {
+   void *ctx = symtab;
    ir_variable *declarations[17];
 
    for (unsigned i = 0; i < num_types; i++) {
@@ -459,7 +468,7 @@ generate_constructor(glsl_symbol_table *symtab, const struct glsl_type *types,
 
       /* Generate the function block, add it to the symbol table, and emit it.
        */
-      ir_function *const f = new ir_function(types[i].name);
+      ir_function *const f = new(ctx) ir_function(types[i].name);
 
       bool added = symtab->add_function(types[i].name, f);
       assert(added);
@@ -484,31 +493,33 @@ generate_constructor(glsl_symbol_table *symtab, const struct glsl_type *types,
        * appropriate from-scalars constructor.
        */
       ir_function_signature *const sig =
-         generate_constructor_intro(&types[i], 1, declarations);
+         generate_constructor_intro(ctx, &types[i], 1, declarations);
       f->add_signature(sig);
 
       if (types[i].is_vector()) {
-	 generate_vec_body_from_scalar(&sig->body, declarations);
+	 generate_vec_body_from_scalar(ctx, &sig->body, declarations);
 
 	 ir_function_signature *const vec_sig =
-	    generate_constructor_intro(&types[i], types[i].vector_elements,
+	    generate_constructor_intro(ctx,
+				       &types[i], types[i].vector_elements,
 				       declarations);
 	 f->add_signature(vec_sig);
 
-	 generate_vec_body_from_N_scalars(&vec_sig->body, declarations);
+	 generate_vec_body_from_N_scalars(ctx, &vec_sig->body, declarations);
       } else {
 	 assert(types[i].is_matrix());
 
-	 generate_mat_body_from_scalar(&sig->body, declarations);
+	 generate_mat_body_from_scalar(ctx, &sig->body, declarations);
 
 	 ir_function_signature *const mat_sig =
-	    generate_constructor_intro(&types[i],
+	    generate_constructor_intro(ctx,
+				       &types[i],
 				       (types[i].vector_elements
 					* types[i].matrix_columns),
 				       declarations);
 	 f->add_signature(mat_sig);
 
-	 generate_mat_body_from_N_scalars(&mat_sig->body, declarations);
+	 generate_mat_body_from_N_scalars(ctx, &mat_sig->body, declarations);
       }
    }
 }
@@ -563,7 +574,7 @@ _mesa_glsl_initialize_constructors(exec_list *instructions,
 }
 
 
-glsl_type::glsl_type(const glsl_type *array, unsigned length) :
+glsl_type::glsl_type(void *ctx, const glsl_type *array, unsigned length) :
    base_type(GLSL_TYPE_ARRAY),
    sampler_dimensionality(0), sampler_shadow(0), sampler_array(0),
    sampler_type(0),
@@ -577,7 +588,7 @@ glsl_type::glsl_type(const glsl_type *array, unsigned length) :
     * NUL.
     */
    const unsigned name_length = strlen(array->name) + 10 + 3;
-   char *const n = (char *) malloc(name_length);
+   char *const n = (char *) talloc_size(ctx, name_length);
 
    if (length == 0)
       snprintf(n, name_length, "%s[]", array->name);
@@ -680,9 +691,10 @@ glsl_type::array_key_hash(const void *a)
 
 
 const glsl_type *
-glsl_type::get_array_instance(const glsl_type *base, unsigned array_size)
+glsl_type::get_array_instance(void *ctx, const glsl_type *base,
+			      unsigned array_size)
 {
-   const glsl_type key(base, array_size);
+   const glsl_type key(ctx, base, array_size);
 
    if (array_types == NULL) {
       array_types = hash_table_ctor(64, array_key_hash, array_key_compare);
@@ -690,7 +702,7 @@ glsl_type::get_array_instance(const glsl_type *base, unsigned array_size)
 
    const glsl_type *t = (glsl_type *) hash_table_find(array_types, & key);
    if (t == NULL) {
-      t = new glsl_type(base, array_size);
+      t = new(ctx) glsl_type(ctx, base, array_size);
 
       hash_table_insert(array_types, (void *) t, t);
    }

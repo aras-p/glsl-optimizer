@@ -29,10 +29,6 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-extern "C" {
-#include <talloc.h>
-}
-
 #include "ast.h"
 #include "glsl_parser_extras.h"
 #include "glsl_parser.h"
@@ -40,9 +36,9 @@ extern "C" {
 #include "ir_print_visitor.h"
 #include "program.h"
 
-
+/* Returned string will have 'ctx' as its talloc owner. */
 static char *
-load_text_file(const char *file_name, size_t *size)
+load_text_file(void *ctx, const char *file_name, size_t *size)
 {
 	char *text = NULL;
 	struct stat st;
@@ -55,7 +51,7 @@ load_text_file(const char *file_name, size_t *size)
 	}
 
 	if (fstat(fd, & st) == 0) {
-	   text = (char *) malloc(st.st_size + 1);
+	   text = (char *) talloc_size(ctx, st.st_size + 1);
 		if (text != NULL) {
 			do {
 				ssize_t bytes = read(fd, text + total_read,
@@ -106,38 +102,39 @@ const struct option compiler_opts[] = {
 void
 compile_shader(struct glsl_shader *shader)
 {
-   struct _mesa_glsl_parse_state state;
+   struct _mesa_glsl_parse_state *state;
 
-   memset(& state, 0, sizeof(state));
+   state = talloc_zero(talloc_parent(shader), struct _mesa_glsl_parse_state);
+
    switch (shader->Type) {
-   case GL_VERTEX_SHADER:   state.target = vertex_shader; break;
-   case GL_FRAGMENT_SHADER: state.target = fragment_shader; break;
-   case GL_GEOMETRY_SHADER: state.target = geometry_shader; break;
+   case GL_VERTEX_SHADER:   state->target = vertex_shader; break;
+   case GL_FRAGMENT_SHADER: state->target = fragment_shader; break;
+   case GL_GEOMETRY_SHADER: state->target = geometry_shader; break;
    }
 
-   state.scanner = NULL;
-   state.translation_unit.make_empty();
-   state.symbols = new glsl_symbol_table;
-   state.info_log = talloc_strdup(shader, "");
-   state.error = false;
-   state.temp_index = 0;
-   state.loop_or_switch_nesting = NULL;
-   state.ARB_texture_rectangle_enable = true;
+   state->scanner = NULL;
+   state->translation_unit.make_empty();
+   state->symbols = new(shader) glsl_symbol_table;
+   state->info_log = talloc_strdup(shader, "");
+   state->error = false;
+   state->temp_index = 0;
+   state->loop_or_switch_nesting = NULL;
+   state->ARB_texture_rectangle_enable = true;
 
    /* Create a new context for the preprocessor output.  Ultimately, this
     * should probably be the parser context, but there isn't one yet.
    */
    const char *source = shader->Source;
-   state.error = preprocess(shader, &source, &state.info_log);
+   state->error = preprocess(shader, &source, &state->info_log);
 
-   if (!state.error) {
-      _mesa_glsl_lexer_ctor(& state, source);
-      _mesa_glsl_parse(& state);
-      _mesa_glsl_lexer_dtor(& state);
+   if (!state->error) {
+      _mesa_glsl_lexer_ctor(state, source);
+      _mesa_glsl_parse(state);
+      _mesa_glsl_lexer_dtor(state);
    }
 
    if (dump_ast) {
-      foreach_list_const(n, &state.translation_unit) {
+      foreach_list_const(n, &state->translation_unit) {
 	 ast_node *ast = exec_node_data(ast_node, n, link);
 	 ast->print();
       }
@@ -145,13 +142,13 @@ compile_shader(struct glsl_shader *shader)
    }
 
    shader->ir.make_empty();
-   if (!state.error && !state.translation_unit.is_empty())
-      _mesa_ast_to_hir(&shader->ir, &state);
+   if (!state->error && !state->translation_unit.is_empty())
+      _mesa_ast_to_hir(&shader->ir, state);
 
    validate_ir_tree(&shader->ir);
 
    /* Optimization passes */
-   if (!state.error && !shader->ir.is_empty()) {
+   if (!state->error && !shader->ir.is_empty()) {
       bool progress;
       do {
 	 progress = false;
@@ -171,17 +168,19 @@ compile_shader(struct glsl_shader *shader)
    validate_ir_tree(&shader->ir);
 
    /* Print out the resulting IR */
-   if (!state.error && dump_lir) {
-      _mesa_print_ir(&shader->ir, &state);
+   if (!state->error && dump_lir) {
+      _mesa_print_ir(&shader->ir, state);
    }
 
-   shader->symbols = state.symbols;
-   shader->CompileStatus = !state.error;
+   shader->symbols = state->symbols;
+   shader->CompileStatus = !state->error;
 
    if (shader->InfoLog)
       talloc_free(shader->InfoLog);
 
-   shader->InfoLog = state.info_log;
+   shader->InfoLog = state->info_log;
+
+   talloc_free(state);
 
    return;
 }
@@ -200,20 +199,21 @@ main(int argc, char **argv)
    if (argc <= optind)
       usage_fail(argv[0]);
 
-   struct glsl_program whole_program;
-   memset(&whole_program, 0, sizeof(whole_program));
+   struct glsl_program *whole_program;
+
+   whole_program = talloc_zero (NULL, struct glsl_program);
+   assert(whole_program != NULL);
 
    for (/* empty */; argc > optind; optind++) {
-      whole_program.Shaders = (struct glsl_shader **)
-	 realloc(whole_program.Shaders,
-		 sizeof(struct glsl_shader *) * (whole_program.NumShaders + 1));
-      assert(whole_program.Shaders != NULL);
+      whole_program->Shaders = (struct glsl_shader **)
+	 talloc_realloc(whole_program, whole_program->Shaders,
+			struct glsl_shader *, whole_program->NumShaders + 1);
+      assert(whole_program->Shaders != NULL);
 
-      /* talloc context should probably be whole_program */
-      struct glsl_shader *shader = talloc_zero(NULL, glsl_shader);
+      struct glsl_shader *shader = talloc_zero(whole_program, glsl_shader);
 
-      whole_program.Shaders[whole_program.NumShaders] = shader;
-      whole_program.NumShaders++;
+      whole_program->Shaders[whole_program->NumShaders] = shader;
+      whole_program->NumShaders++;
 
       const unsigned len = strlen(argv[optind]);
       if (len < 6)
@@ -229,7 +229,8 @@ main(int argc, char **argv)
       else
 	 usage_fail(argv[0]);
 
-      shader->Source = load_text_file(argv[optind], &shader->SourceLen);
+      shader->Source = load_text_file(whole_program,
+				      argv[optind], &shader->SourceLen);
       if (shader->Source == NULL) {
 	 printf("File \"%s\" does not exist.\n", argv[optind]);
 	 exit(EXIT_FAILURE);
@@ -245,9 +246,11 @@ main(int argc, char **argv)
    }
 
    if ((status == EXIT_SUCCESS) && do_link)  {
-      link_shaders(&whole_program);
-      status = (whole_program.LinkStatus) ? EXIT_SUCCESS : EXIT_FAILURE;
+      link_shaders(whole_program);
+      status = (whole_program->LinkStatus) ? EXIT_SUCCESS : EXIT_FAILURE;
    }
+
+   talloc_free(whole_program);
 
    return status;
 }

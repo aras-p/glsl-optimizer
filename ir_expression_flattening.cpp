@@ -80,18 +80,19 @@ do_expression_flattening(exec_list *instructions,
 static ir_rvalue *
 operand_to_temp(ir_instruction *base_ir, ir_rvalue *ir)
 {
+   void *ctx = talloc_parent(base_ir);
    ir_variable *var;
    ir_assignment *assign;
 
-   var = new ir_variable(ir->type, "flattening_tmp");
+   var = new(ctx) ir_variable(ir->type, "flattening_tmp");
    base_ir->insert_before(var);
 
-   assign = new ir_assignment(new ir_dereference_variable(var),
-			      ir,
-			      NULL);
+   assign = new(ctx) ir_assignment(new(ctx) ir_dereference_variable(var),
+				   ir,
+				   NULL);
    base_ir->insert_before(assign);
 
-   return new ir_dereference_variable(var);
+   return new(ctx) ir_dereference_variable(var);
 }
 
 ir_visitor_status

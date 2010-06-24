@@ -33,6 +33,7 @@ _mesa_ast_field_selection_to_hir(const ast_expression *expr,
 				 exec_list *instructions,
 				 struct _mesa_glsl_parse_state *state)
 {
+   void *ctx = talloc_parent(state);
    ir_rvalue *result = NULL;
    ir_rvalue *op;
 
@@ -62,8 +63,8 @@ _mesa_ast_field_selection_to_hir(const ast_expression *expr,
 			  expr->primary_expression.identifier);
       }
    } else if (op->type->base_type == GLSL_TYPE_STRUCT) {
-      result = new ir_dereference_record(op,
-					 expr->primary_expression.identifier);
+      result = new(ctx) ir_dereference_record(op,
+					      expr->primary_expression.identifier);
 
       if (result->type->is_error()) {
 	 _mesa_glsl_error(& loc, state, "Cannot access field `%s' of "
@@ -76,5 +77,5 @@ _mesa_ast_field_selection_to_hir(const ast_expression *expr,
 		       expr->primary_expression.identifier);
    }
 
-   return result ? result : ir_call::get_error_instruction();
+   return result ? result : ir_call::get_error_instruction(ctx);
 }

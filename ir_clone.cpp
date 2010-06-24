@@ -36,7 +36,8 @@
 ir_instruction *
 ir_variable::clone(struct hash_table *ht) const
 {
-   ir_variable *var = new ir_variable(type, name);
+   void *ctx = talloc_parent(this);
+   ir_variable *var = new(ctx) ir_variable(type, name);
 
    var->max_array_access = this->max_array_access;
    var->read_only = this->read_only;
@@ -55,32 +56,36 @@ ir_variable::clone(struct hash_table *ht) const
 ir_instruction *
 ir_swizzle::clone(struct hash_table *ht) const
 {
-   return new ir_swizzle((ir_rvalue *)this->val->clone(ht), this->mask);
+   void *ctx = talloc_parent(this);
+   return new(ctx) ir_swizzle((ir_rvalue *)this->val->clone(ht), this->mask);
 }
 
 ir_instruction *
 ir_return::clone(struct hash_table *ht) const
 {
+   void *ctx = talloc_parent(this);
    ir_rvalue *new_value = NULL;
 
    if (this->value)
       new_value = (ir_rvalue *)this->value->clone(ht);
 
-   return new ir_return(new_value);
+   return new(ctx) ir_return(new_value);
 }
 
 ir_instruction *
 ir_loop_jump::clone(struct hash_table *ht) const
 {
+   void *ctx = talloc_parent(this);
    (void)ht;
 
-   return new ir_loop_jump(this->mode);
+   return new(ctx) ir_loop_jump(this->mode);
 }
 
 ir_instruction *
 ir_if::clone(struct hash_table *ht) const
 {
-   ir_if *new_if = new ir_if((ir_rvalue *)this->condition->clone(ht));
+   void *ctx = talloc_parent(this);
+   ir_if *new_if = new(ctx) ir_if((ir_rvalue *)this->condition->clone(ht));
 
    foreach_iter(exec_list_iterator, iter, this->then_instructions) {
       ir_instruction *ir = (ir_instruction *)iter.get();
@@ -98,7 +103,8 @@ ir_if::clone(struct hash_table *ht) const
 ir_instruction *
 ir_loop::clone(struct hash_table *ht) const
 {
-   ir_loop *new_loop = new ir_loop();
+   void *ctx = talloc_parent(this);
+   ir_loop *new_loop = new(ctx) ir_loop();
 
    if (this->from)
       new_loop->from = (ir_rvalue *)this->from->clone(ht);
@@ -119,6 +125,7 @@ ir_loop::clone(struct hash_table *ht) const
 ir_instruction *
 ir_call::clone(struct hash_table *ht) const
 {
+   void *ctx = talloc_parent(this);
    exec_list new_parameters;
 
    foreach_iter(exec_list_iterator, iter, this->actual_parameters) {
@@ -126,12 +133,13 @@ ir_call::clone(struct hash_table *ht) const
       new_parameters.push_tail(ir->clone(ht));
    }
 
-   return new ir_call(this->callee, &new_parameters);
+   return new(ctx) ir_call(this->callee, &new_parameters);
 }
 
 ir_instruction *
 ir_expression::clone(struct hash_table *ht) const
 {
+   void *ctx = talloc_parent(this);
    ir_rvalue *op[2] = {NULL, NULL};
    unsigned int i;
 
@@ -139,12 +147,13 @@ ir_expression::clone(struct hash_table *ht) const
       op[i] = (ir_rvalue *)this->operands[i]->clone(ht);
    }
 
-   return new ir_expression(this->operation, this->type, op[0], op[1]);
+   return new(ctx) ir_expression(this->operation, this->type, op[0], op[1]);
 }
 
 ir_instruction *
 ir_dereference_variable::clone(struct hash_table *ht) const
 {
+   void *ctx = talloc_parent(this);
    ir_variable *new_var;
 
    if (ht) {
@@ -155,27 +164,30 @@ ir_dereference_variable::clone(struct hash_table *ht) const
       new_var = this->var;
    }
 
-   return new ir_dereference_variable(new_var);
+   return new(ctx) ir_dereference_variable(new_var);
 }
 
 ir_instruction *
 ir_dereference_array::clone(struct hash_table *ht) const
 {
-   return new ir_dereference_array((ir_rvalue *)this->array->clone(ht),
-				   (ir_rvalue *)this->array_index->clone(ht));
+   void *ctx = talloc_parent(this);
+   return new(ctx) ir_dereference_array((ir_rvalue *)this->array->clone(ht),
+					(ir_rvalue *)this->array_index->clone(ht));
 }
 
 ir_instruction *
 ir_dereference_record::clone(struct hash_table *ht) const
 {
-   return new ir_dereference_record((ir_rvalue *)this->record->clone(ht),
-				    this->field);
+   void *ctx = talloc_parent(this);
+   return new(ctx) ir_dereference_record((ir_rvalue *)this->record->clone(ht),
+					 this->field);
 }
 
 ir_instruction *
 ir_texture::clone(struct hash_table *ht) const
 {
-   ir_texture *new_tex = new ir_texture(this->op);
+   void *ctx = talloc_parent(this);
+   ir_texture *new_tex = new(ctx) ir_texture(this->op);
 
    new_tex->sampler = (ir_dereference *)this->sampler->clone(ht);
    new_tex->coordinate = (ir_rvalue *)this->coordinate->clone(ht);
@@ -218,9 +230,10 @@ ir_assignment::clone(struct hash_table *ht) const
    if (this->condition)
       new_condition = (ir_rvalue *)this->condition->clone(ht);
 
-   return new ir_assignment((ir_rvalue *)this->lhs->clone(ht),
-			    (ir_rvalue *)this->rhs->clone(ht),
-			    new_condition);
+   void *ctx = talloc_parent(this);
+   return new(ctx) ir_assignment((ir_rvalue *)this->lhs->clone(ht),
+				 (ir_rvalue *)this->rhs->clone(ht),
+				 new_condition);
 }
 
 ir_instruction *
@@ -242,6 +255,7 @@ ir_function_signature::clone(struct hash_table *ht) const
 ir_instruction *
 ir_constant::clone(struct hash_table *ht) const
 {
+   void *ctx = talloc_parent(this);
    (void)ht;
 
    switch (this->type->base_type) {
@@ -249,10 +263,10 @@ ir_constant::clone(struct hash_table *ht) const
    case GLSL_TYPE_INT:
    case GLSL_TYPE_FLOAT:
    case GLSL_TYPE_BOOL:
-      return new ir_constant(this->type, &this->value);
+      return new(ctx) ir_constant(this->type, &this->value);
 
    case GLSL_TYPE_STRUCT: {
-      ir_constant *c = new ir_constant;
+      ir_constant *c = new(ctx) ir_constant;
 
       c->type = this->type;
       for (exec_node *node = this->components.head
