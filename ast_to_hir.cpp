@@ -520,6 +520,7 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
     * ends up not being used, the temp will get copy-propagated out.
     */
    ir_variable *var = new ir_variable(rhs->type, "assignment_tmp");
+   instructions->push_tail(var);
    instructions->push_tail(new ir_assignment(new ir_dereference_variable(var),
 					     rhs,
 					     NULL));
