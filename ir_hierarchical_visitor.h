@@ -139,7 +139,6 @@ public:
     */
    void run(struct exec_list *instructions);
 
-protected:
    /**
     * Callback function that is invoked on entry to each node visited.
     *
@@ -155,5 +154,9 @@ protected:
     */
    void *data;
 };
+
+void visit_tree(ir_instruction *ir,
+		void (*callback)(class ir_instruction *ir, void *data),
+		void *data);
 
 #endif /* IR_HIERARCHICAL_VISITOR_H */

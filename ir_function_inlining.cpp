@@ -91,6 +91,26 @@ do_function_inlining(exec_list *instructions)
    return v.progress;
 }
 
+static void
+replace_return_with_assignment(ir_instruction *ir, void *data)
+{
+   ir_variable *retval = (ir_variable *)data;
+   ir_return *ret = ir->as_return();
+
+   if (ret) {
+      if (ret->value) {
+	 ir_rvalue *lhs = new ir_dereference_variable(retval);
+	 ret->insert_before(new ir_assignment(lhs, ret->value, NULL));
+	 ret->remove();
+      } else {
+	 /* un-valued return has to be the last return, or we shouldn't
+	  * have reached here. (see can_inline()).
+	  */
+	 assert(!ret->next->is_tail_sentinal());
+      }
+   }
+}
+
 ir_rvalue *
 ir_call::generate_inline(ir_instruction *next_ir)
 {
@@ -145,8 +165,10 @@ ir_call::generate_inline(ir_instruction *next_ir)
    /* Generate the inlined body of the function. */
    foreach_iter(exec_list_iterator, iter, callee->body) {
       ir_instruction *ir = (ir_instruction *)iter.get();
+      ir_instruction *new_ir = ir->clone(ht);
 
-      next_ir->insert_before(ir->clone(ht));
+      next_ir->insert_before(new_ir);
+      visit_tree(new_ir, replace_return_with_assignment, retval);
    }
 
    /* Copy back the value of any 'out' parameters from the function body

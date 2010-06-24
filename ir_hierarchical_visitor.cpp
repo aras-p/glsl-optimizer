@@ -268,3 +268,17 @@ ir_hierarchical_visitor::run(exec_list *instructions)
 	 break;
    }
 }
+
+
+void
+visit_tree(ir_instruction *ir,
+	   void (*callback)(class ir_instruction *ir, void *data),
+	   void *data)
+{
+   ir_hierarchical_visitor v;
+
+   v.callback = callback;
+   v.data = data;
+
+   ir->accept(&v);
+}
