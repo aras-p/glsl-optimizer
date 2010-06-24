@@ -87,6 +87,7 @@ static bool
 apply_implicit_conversion(const glsl_type *to, ir_rvalue * &from,
 			  struct _mesa_glsl_parse_state *state)
 {
+   void *ctx = talloc_parent(state);
    if (to->base_type == from->type->base_type)
       return true;
 
@@ -111,13 +112,13 @@ apply_implicit_conversion(const glsl_type *to, ir_rvalue * &from,
 
    switch (from->type->base_type) {
    case GLSL_TYPE_INT:
-      from = new ir_expression(ir_unop_i2f, to, from, NULL);
+      from = new(ctx) ir_expression(ir_unop_i2f, to, from, NULL);
       break;
    case GLSL_TYPE_UINT:
-      from = new ir_expression(ir_unop_u2f, to, from, NULL);
+      from = new(ctx) ir_expression(ir_unop_u2f, to, from, NULL);
       break;
    case GLSL_TYPE_BOOL:
-      from = new ir_expression(ir_unop_b2f, to, from, NULL);
+      from = new(ctx) ir_expression(ir_unop_b2f, to, from, NULL);
       break;
    default:
       assert(0);
@@ -467,6 +468,7 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
 	      ir_rvalue *lhs, ir_rvalue *rhs,
 	      YYLTYPE lhs_loc)
 {
+   void *ctx = talloc_parent(state);
    bool error_emitted = (lhs->type->is_error() || rhs->type->is_error());
 
    if (!error_emitted) {
@@ -519,16 +521,16 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
     * temporary and return a deref of that temporary.  If the rvalue
     * ends up not being used, the temp will get copy-propagated out.
     */
-   ir_variable *var = new ir_variable(rhs->type, "assignment_tmp");
-   instructions->push_tail(new ir_assignment(new ir_dereference_variable(var),
-					     rhs,
-					     NULL));
+   ir_variable *var = new(ctx) ir_variable(rhs->type, "assignment_tmp");
+   instructions->push_tail(new(ctx) ir_assignment(new(ctx) ir_dereference_variable(var),
+						  rhs,
+						  NULL));
 
-   instructions->push_tail(new ir_assignment(lhs,
-					     new ir_dereference_variable(var),
-					     NULL));
+   instructions->push_tail(new(ctx) ir_assignment(lhs,
+						  new(ctx) ir_dereference_variable(var),
+						  NULL));
 
-   return new ir_dereference_variable(var);
+   return new(ctx) ir_dereference_variable(var);
 }
 
 
@@ -539,12 +541,13 @@ static ir_variable *
 generate_temporary(const glsl_type *type, exec_list *instructions,
 		   struct _mesa_glsl_parse_state *state)
 {
+   void *ctx = talloc_parent(state);
    char *name = (char *) malloc(sizeof(char) * 13);
 
    snprintf(name, 13, "tmp_%08X", state->temp_index);
    state->temp_index++;
 
-   ir_variable *const var = new ir_variable(type, name);
+   ir_variable *const var = new(ctx) ir_variable(type, name);
    instructions->push_tail(var);
 
    return var;
@@ -554,21 +557,22 @@ generate_temporary(const glsl_type *type, exec_list *instructions,
 static ir_rvalue *
 get_lvalue_copy(exec_list *instructions, ir_rvalue *lvalue)
 {
+   void *ctx = talloc_parent(lvalue);
    ir_variable *var;
 
    /* FINISHME: Give unique names to the temporaries. */
-   var = new ir_variable(lvalue->type, "_post_incdec_tmp");
+   var = new(ctx) ir_variable(lvalue->type, "_post_incdec_tmp");
    var->mode = ir_var_auto;
 
-   instructions->push_tail(new ir_assignment(new ir_dereference_variable(var),
-					     lvalue, NULL));
+   instructions->push_tail(new(ctx) ir_assignment(new(ctx) ir_dereference_variable(var),
+						  lvalue, NULL));
 
    /* Once we've created this temporary, mark it read only so it's no
     * longer considered an lvalue.
     */
    var->read_only = true;
 
-   return new ir_dereference_variable(var);
+   return new(ctx) ir_dereference_variable(var);
 }
 
 
@@ -587,6 +591,7 @@ ir_rvalue *
 ast_expression::hir(exec_list *instructions,
 		    struct _mesa_glsl_parse_state *state)
 {
+   void *ctx = talloc_parent(state);
    static const int operations[AST_NUM_OPERATORS] = {
       -1,               /* ast_assign doesn't convert to ir_expression. */
       -1,               /* ast_plus doesn't convert to ir_expression. */
@@ -679,8 +684,8 @@ ast_expression::hir(exec_list *instructions,
 
       error_emitted = type->is_error();
 
-      result = new ir_expression(operations[this->oper], type,
-				 op[0], NULL);
+      result = new(ctx) ir_expression(operations[this->oper], type,
+				      op[0], NULL);
       break;
 
    case ast_add:
@@ -695,8 +700,8 @@ ast_expression::hir(exec_list *instructions,
 				    state, & loc);
       error_emitted = type->is_error();
 
-      result = new ir_expression(operations[this->oper], type,
-				 op[0], op[1]);
+      result = new(ctx) ir_expression(operations[this->oper], type,
+				      op[0], op[1]);
       break;
 
    case ast_mod:
@@ -707,8 +712,8 @@ ast_expression::hir(exec_list *instructions,
 
       assert(operations[this->oper] == ir_binop_mod);
 
-      result = new ir_expression(operations[this->oper], type,
-				 op[0], op[1]);
+      result = new(ctx) ir_expression(operations[this->oper], type,
+				      op[0], op[1]);
       error_emitted = type->is_error();
       break;
 
@@ -734,8 +739,8 @@ ast_expression::hir(exec_list *instructions,
 	     || ((type->base_type == GLSL_TYPE_BOOL)
 		 && type->is_scalar()));
 
-      result = new ir_expression(operations[this->oper], type,
-				 op[0], op[1]);
+      result = new(ctx) ir_expression(operations[this->oper], type,
+				      op[0], op[1]);
       error_emitted = type->is_error();
       break;
 
@@ -766,8 +771,8 @@ ast_expression::hir(exec_list *instructions,
 	 error_emitted = true;
       }
 
-      result = new ir_expression(operations[this->oper], glsl_type::bool_type,
-				 op[0], op[1]);
+      result = new(ctx) ir_expression(operations[this->oper], glsl_type::bool_type,
+				      op[0], op[1]);
       type = glsl_type::bool_type;
 
       assert(result->type == glsl_type::bool_type);
@@ -811,7 +816,7 @@ ast_expression::hir(exec_list *instructions,
 	 }
 	 type = glsl_type::bool_type;
       } else {
-	 ir_if *const stmt = new ir_if(op[0]);
+	 ir_if *const stmt = new(ctx) ir_if(op[0]);
 	 instructions->push_tail(stmt);
 
 	 op[1] = this->subexpressions[1]->hir(&stmt->then_instructions, state);
@@ -828,17 +833,17 @@ ast_expression::hir(exec_list *instructions,
 	 ir_variable *const tmp = generate_temporary(glsl_type::bool_type,
 						     instructions, state);
 
-	 ir_dereference *const then_deref = new ir_dereference_variable(tmp);
+	 ir_dereference *const then_deref = new(ctx) ir_dereference_variable(tmp);
 	 ir_assignment *const then_assign =
-	    new ir_assignment(then_deref, op[1], NULL);
+	    new(ctx) ir_assignment(then_deref, op[1], NULL);
 	 stmt->then_instructions.push_tail(then_assign);
 
-	 ir_dereference *const else_deref = new ir_dereference_variable(tmp);
+	 ir_dereference *const else_deref = new(ctx) ir_dereference_variable(tmp);
 	 ir_assignment *const else_assign =
-	    new ir_assignment(else_deref, new ir_constant(false), NULL);
+	    new(ctx) ir_assignment(else_deref, new(ctx) ir_constant(false), NULL);
 	 stmt->else_instructions.push_tail(else_assign);
 
-	 result = new ir_dereference_variable(tmp);
+	 result = new(ctx) ir_dereference_variable(tmp);
 	 type = tmp->type;
       }
       break;
@@ -874,7 +879,7 @@ ast_expression::hir(exec_list *instructions,
 	 }
 	 type = glsl_type::bool_type;
       } else {
-	 ir_if *const stmt = new ir_if(op[0]);
+	 ir_if *const stmt = new(ctx) ir_if(op[0]);
 	 instructions->push_tail(stmt);
 
 	 ir_variable *const tmp = generate_temporary(glsl_type::bool_type,
@@ -890,17 +895,17 @@ ast_expression::hir(exec_list *instructions,
 	    error_emitted = true;
 	 }
 
-	 ir_dereference *const then_deref = new ir_dereference_variable(tmp);
+	 ir_dereference *const then_deref = new(ctx) ir_dereference_variable(tmp);
 	 ir_assignment *const then_assign =
-	    new ir_assignment(then_deref, new ir_constant(true), NULL);
+	    new(ctx) ir_assignment(then_deref, new(ctx) ir_constant(true), NULL);
 	 stmt->then_instructions.push_tail(then_assign);
 
-	 ir_dereference *const else_deref = new ir_dereference_variable(tmp);
+	 ir_dereference *const else_deref = new(ctx) ir_dereference_variable(tmp);
 	 ir_assignment *const else_assign =
-	    new ir_assignment(else_deref, op[1], NULL);
+	    new(ctx) ir_assignment(else_deref, op[1], NULL);
 	 stmt->else_instructions.push_tail(else_assign);
 
-	 result = new ir_dereference_variable(tmp);
+	 result = new(ctx) ir_dereference_variable(tmp);
 	 type = tmp->type;
       }
       break;
@@ -911,8 +916,8 @@ ast_expression::hir(exec_list *instructions,
       op[1] = this->subexpressions[1]->hir(instructions, state);
 
 
-      result = new ir_expression(operations[this->oper], glsl_type::bool_type,
-				 op[0], op[1]);
+      result = new(ctx) ir_expression(operations[this->oper], glsl_type::bool_type,
+				      op[0], op[1]);
       type = glsl_type::bool_type;
       break;
 
@@ -927,8 +932,8 @@ ast_expression::hir(exec_list *instructions,
 	 error_emitted = true;
       }
 
-      result = new ir_expression(operations[this->oper], glsl_type::bool_type,
-				 op[0], NULL);
+      result = new(ctx) ir_expression(operations[this->oper], glsl_type::bool_type,
+				      op[0], NULL);
       type = glsl_type::bool_type;
       break;
 
@@ -943,8 +948,8 @@ ast_expression::hir(exec_list *instructions,
 				    (this->oper == ast_mul_assign),
 				    state, & loc);
 
-      ir_rvalue *temp_rhs = new ir_expression(operations[this->oper], type,
-				              op[0], op[1]);
+      ir_rvalue *temp_rhs = new(ctx) ir_expression(operations[this->oper], type,
+						   op[0], op[1]);
 
       result = do_assignment(instructions, state,
 			     (ir_rvalue *)op[0]->clone(NULL), temp_rhs,
@@ -969,8 +974,8 @@ ast_expression::hir(exec_list *instructions,
       assert(operations[this->oper] == ir_binop_mod);
 
       struct ir_rvalue *temp_rhs;
-      temp_rhs = new ir_expression(operations[this->oper], type,
-				   op[0], op[1]);
+      temp_rhs = new(ctx) ir_expression(operations[this->oper], type,
+					op[0], op[1]);
 
       result = do_assignment(instructions, state,
 			     (ir_rvalue *)op[0]->clone(NULL), temp_rhs,
@@ -1056,22 +1061,24 @@ ast_expression::hir(exec_list *instructions,
 	 ir_variable *const tmp = generate_temporary(type,
 						     instructions, state);
 
-	 ir_if *const stmt = new ir_if(op[0]);
+	 ir_if *const stmt = new(ctx) ir_if(op[0]);
 	 instructions->push_tail(stmt);
 
 	 then_instructions.move_nodes_to(& stmt->then_instructions);
-	 ir_dereference *const then_deref = new ir_dereference_variable(tmp);
+	 ir_dereference *const then_deref =
+	    new(ctx) ir_dereference_variable(tmp);
 	 ir_assignment *const then_assign =
-	    new ir_assignment(then_deref, op[1], NULL);
+	    new(ctx) ir_assignment(then_deref, op[1], NULL);
 	 stmt->then_instructions.push_tail(then_assign);
 
 	 else_instructions.move_nodes_to(& stmt->else_instructions);
-	 ir_dereference *const else_deref = new ir_dereference_variable(tmp);
+	 ir_dereference *const else_deref =
+	    new(ctx) ir_dereference_variable(tmp);
 	 ir_assignment *const else_assign =
-	    new ir_assignment(else_deref, op[2], NULL);
+	    new(ctx) ir_assignment(else_deref, op[2], NULL);
 	 stmt->else_instructions.push_tail(else_assign);
 
-	 result = new ir_dereference_variable(tmp);
+	 result = new(ctx) ir_dereference_variable(tmp);
       }
       break;
    }
@@ -1080,15 +1087,15 @@ ast_expression::hir(exec_list *instructions,
    case ast_pre_dec: {
       op[0] = this->subexpressions[0]->hir(instructions, state);
       if (op[0]->type->base_type == GLSL_TYPE_FLOAT)
-	 op[1] = new ir_constant(1.0f);
+	 op[1] = new(ctx) ir_constant(1.0f);
       else
-	 op[1] = new ir_constant(1);
+	 op[1] = new(ctx) ir_constant(1);
 
       type = arithmetic_result_type(op[0], op[1], false, state, & loc);
 
       struct ir_rvalue *temp_rhs;
-      temp_rhs = new ir_expression(operations[this->oper], type,
-				   op[0], op[1]);
+      temp_rhs = new(ctx) ir_expression(operations[this->oper], type,
+					op[0], op[1]);
 
       result = do_assignment(instructions, state,
 			     (ir_rvalue *)op[0]->clone(NULL), temp_rhs,
@@ -1102,17 +1109,17 @@ ast_expression::hir(exec_list *instructions,
    case ast_post_dec: {
       op[0] = this->subexpressions[0]->hir(instructions, state);
       if (op[0]->type->base_type == GLSL_TYPE_FLOAT)
-	 op[1] = new ir_constant(1.0f);
+	 op[1] = new(ctx) ir_constant(1.0f);
       else
-	 op[1] = new ir_constant(1);
+	 op[1] = new(ctx) ir_constant(1);
 
       error_emitted = op[0]->type->is_error() || op[1]->type->is_error();
 
       type = arithmetic_result_type(op[0], op[1], false, state, & loc);
 
       struct ir_rvalue *temp_rhs;
-      temp_rhs = new ir_expression(operations[this->oper], type,
-				   op[0], op[1]);
+      temp_rhs = new(ctx) ir_expression(operations[this->oper], type,
+					op[0], op[1]);
 
       /* Get a temporary of a copy of the lvalue before it's modified.
        * This may get thrown away later.
@@ -1143,7 +1150,7 @@ ast_expression::hir(exec_list *instructions,
 
       ir_rvalue *const array = op[0];
 
-      result = new ir_dereference_array(op[0], op[1]);
+      result = new(ctx) ir_dereference_array(op[0], op[1]);
 
       /* Do not use op[0] after this point.  Use array.
        */
@@ -1259,7 +1266,7 @@ ast_expression::hir(exec_list *instructions,
       ir_variable *var = 
 	 state->symbols->get_variable(this->primary_expression.identifier);
 
-      result = new ir_dereference_variable(var);
+      result = new(ctx) ir_dereference_variable(var);
 
       if (var != NULL) {
 	 type = result->type;
@@ -1274,22 +1281,22 @@ ast_expression::hir(exec_list *instructions,
 
    case ast_int_constant:
       type = glsl_type::int_type;
-      result = new ir_constant(this->primary_expression.int_constant);
+      result = new(ctx) ir_constant(this->primary_expression.int_constant);
       break;
 
    case ast_uint_constant:
       type = glsl_type::uint_type;
-      result = new ir_constant(this->primary_expression.uint_constant);
+      result = new(ctx) ir_constant(this->primary_expression.uint_constant);
       break;
 
    case ast_float_constant:
       type = glsl_type::float_type;
-      result = new ir_constant(this->primary_expression.float_constant);
+      result = new(ctx) ir_constant(this->primary_expression.float_constant);
       break;
 
    case ast_bool_constant:
       type = glsl_type::bool_type;
-      result = new ir_constant(bool(this->primary_expression.bool_constant));
+      result = new(ctx) ir_constant(bool(this->primary_expression.bool_constant));
       break;
 
    case ast_sequence: {
@@ -1528,6 +1535,7 @@ ir_rvalue *
 ast_declarator_list::hir(exec_list *instructions,
 			 struct _mesa_glsl_parse_state *state)
 {
+   void *ctx = talloc_parent(state);
    const struct glsl_type *decl_type;
    const char *type_name = NULL;
    ir_rvalue *result = NULL;
@@ -1588,7 +1596,7 @@ ast_declarator_list::hir(exec_list *instructions,
 	 var_type = decl_type;
       }
 
-      var = new ir_variable(var_type, decl->identifier);
+      var = new(ctx) ir_variable(var_type, decl->identifier);
 
       /* From page 22 (page 28 of the PDF) of the GLSL 1.10 specification;
        *
@@ -1788,7 +1796,7 @@ ast_declarator_list::hir(exec_list *instructions,
 			     ? "attribute" : "varying");
 	 }
 
-	 ir_dereference *const lhs = new ir_dereference_variable(var);
+	 ir_dereference *const lhs = new(ctx) ir_dereference_variable(var);
 	 ir_rvalue *rhs = decl->initializer->hir(instructions, state);
 
 	 /* Calculate the constant value if this is a const or uniform
@@ -1866,6 +1874,7 @@ ir_rvalue *
 ast_parameter_declarator::hir(exec_list *instructions,
 			      struct _mesa_glsl_parse_state *state)
 {
+   void *ctx = talloc_parent(state);
    const struct glsl_type *type;
    const char *name = NULL;
    YYLTYPE loc = this->get_location();
@@ -1913,7 +1922,7 @@ ast_parameter_declarator::hir(exec_list *instructions,
    }
 
    is_void = false;
-   ir_variable *var = new ir_variable(type, this->identifier);
+   ir_variable *var = new(ctx) ir_variable(type, this->identifier);
 
    /* FINISHME: Handle array declarations.  Note that this requires
     * FINISHME: complete handling of constant expressions.
@@ -1966,6 +1975,7 @@ ir_rvalue *
 ast_function::hir(exec_list *instructions,
 		  struct _mesa_glsl_parse_state *state)
 {
+   void *ctx = talloc_parent(state);
    ir_function *f = NULL;
    ir_function_signature *sig = NULL;
    exec_list hir_parameters;
@@ -2025,7 +2035,7 @@ ast_function::hir(exec_list *instructions,
 		       "non-function", name);
       sig = NULL;
    } else {
-      f = new ir_function(name);
+      f = new(ctx) ir_function(name);
       state->symbols->add_function(f->name, f);
 
       /* Emit the new function header */
@@ -2050,7 +2060,7 @@ ast_function::hir(exec_list *instructions,
    /* Finish storing the information about this new function in its signature.
     */
    if (sig == NULL) {
-      sig = new ir_function_signature(return_type);
+      sig = new(ctx) ir_function_signature(return_type);
       f->add_signature(sig);
    }
 
@@ -2115,6 +2125,7 @@ ir_rvalue *
 ast_jump_statement::hir(exec_list *instructions,
 			struct _mesa_glsl_parse_state *state)
 {
+   void *ctx = talloc_parent(state);
 
    switch (mode) {
    case ast_return: {
@@ -2140,7 +2151,7 @@ ast_jump_statement::hir(exec_list *instructions,
 	  * FINISHME: type of the enclosing function.
 	  */
 
-	 inst = new ir_return(ret);
+	 inst = new(ctx) ir_return(ret);
       } else {
 	 if (state->current_function->return_type->base_type !=
 	     GLSL_TYPE_VOID) {
@@ -2151,7 +2162,7 @@ ast_jump_statement::hir(exec_list *instructions,
 			     "non-void",
 			     state->current_function->function_name());
 	 }
-	 inst = new ir_return;
+	 inst = new(ctx) ir_return;
       }
 
       instructions->push_tail(inst);
@@ -2188,9 +2199,9 @@ ast_jump_statement::hir(exec_list *instructions,
 
 	 if (loop != NULL) {
 	    ir_loop_jump *const jump =
-	       new ir_loop_jump((mode == ast_break)
-				? ir_loop_jump::jump_break
-				: ir_loop_jump::jump_continue);
+	       new(ctx) ir_loop_jump((mode == ast_break)
+				     ? ir_loop_jump::jump_break
+				     : ir_loop_jump::jump_continue);
 	    instructions->push_tail(jump);
 	 }
       }
@@ -2208,6 +2219,8 @@ ir_rvalue *
 ast_selection_statement::hir(exec_list *instructions,
 			     struct _mesa_glsl_parse_state *state)
 {
+   void *ctx = talloc_parent(state);
+
    ir_rvalue *const condition = this->condition->hir(instructions, state);
 
    /* From page 66 (page 72 of the PDF) of the GLSL 1.50 spec:
@@ -2226,7 +2239,7 @@ ast_selection_statement::hir(exec_list *instructions,
 		       "boolean");
    }
 
-   ir_if *const stmt = new ir_if(condition);
+   ir_if *const stmt = new(ctx) ir_if(condition);
 
    if (then_statement != NULL)
       then_statement->hir(& stmt->then_instructions, state);
@@ -2246,6 +2259,8 @@ void
 ast_iteration_statement::condition_to_hir(ir_loop *stmt,
 					  struct _mesa_glsl_parse_state *state)
 {
+   void *ctx = talloc_parent(state);
+
    if (condition != NULL) {
       ir_rvalue *const cond =
 	 condition->hir(& stmt->body_instructions, state);
@@ -2261,13 +2276,13 @@ ast_iteration_statement::condition_to_hir(ir_loop *stmt,
 	  * like 'if (!condition) break;' as the loop termination condition.
 	  */
 	 ir_rvalue *const not_cond =
-	    new ir_expression(ir_unop_logic_not, glsl_type::bool_type, cond,
-			      NULL);
+	    new(ctx) ir_expression(ir_unop_logic_not, glsl_type::bool_type, cond,
+				   NULL);
 
-	 ir_if *const if_stmt = new ir_if(not_cond);
+	 ir_if *const if_stmt = new(ctx) ir_if(not_cond);
 
 	 ir_jump *const break_stmt =
-	    new ir_loop_jump(ir_loop_jump::jump_break);
+	    new(ctx) ir_loop_jump(ir_loop_jump::jump_break);
 
 	 if_stmt->then_instructions.push_tail(break_stmt);
 	 stmt->body_instructions.push_tail(if_stmt);
@@ -2280,6 +2295,8 @@ ir_rvalue *
 ast_iteration_statement::hir(exec_list *instructions,
 			     struct _mesa_glsl_parse_state *state)
 {
+   void *ctx = talloc_parent(state);
+
    /* For-loops and while-loops start a new scope, but do-while loops do not.
     */
    if (mode != ast_do_while)
@@ -2288,7 +2305,7 @@ ast_iteration_statement::hir(exec_list *instructions,
    if (init_statement != NULL)
       init_statement->hir(instructions, state);
 
-   ir_loop *const stmt = new ir_loop();
+   ir_loop *const stmt = new(ctx) ir_loop();
    instructions->push_tail(stmt);
 
    /* Track the current loop and / or switch-statement nesting.

@@ -49,8 +49,10 @@ public:
    /**
     * Read an S-Expression from the given string.
     * Advances the supplied pointer to just after the expression read.
+    *
+    * Any allocation will be performed with 'ctx' as the talloc owner.
     */
-   static s_expression *read_expression(const char *&src);
+   static s_expression *read_expression(void *ctx, const char *&src);
 
    /**
     * Print out an S-Expression.  Useful for debugging.

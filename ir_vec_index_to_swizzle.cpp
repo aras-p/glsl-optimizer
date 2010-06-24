@@ -60,6 +60,7 @@ public:
 ir_rvalue *
 ir_vec_index_to_swizzle_visitor::convert_vec_index_to_swizzle(ir_rvalue *ir)
 {
+   void *ctx = talloc_parent(ir);
    ir_dereference_array *deref = ir->as_dereference_array();
    ir_constant *ir_constant;
 
@@ -75,7 +76,8 @@ ir_vec_index_to_swizzle_visitor::convert_vec_index_to_swizzle(ir_rvalue *ir)
       return ir;
 
    this->progress = true;
-   return new ir_swizzle(deref->array, ir_constant->value.i[0], 0, 0, 0, 1);
+   return new(ctx) ir_swizzle(deref->array,
+			      ir_constant->value.i[0], 0, 0, 0, 1);
 }
 
 ir_visitor_status

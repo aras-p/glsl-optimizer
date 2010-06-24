@@ -300,15 +300,17 @@ ir_constant::ir_constant(const struct glsl_type *type, exec_list *value_list)
 ir_instruction *
 ir_constant::clone(struct hash_table *ht) const
 {
+   void *ctx = talloc_parent(this);
+
    switch (this->type->base_type) {
    case GLSL_TYPE_UINT:
    case GLSL_TYPE_INT:
    case GLSL_TYPE_FLOAT:
    case GLSL_TYPE_BOOL:
-      return new ir_constant(this->type, &this->value);
+      return new(ctx) ir_constant(this->type, &this->value);
 
    case GLSL_TYPE_STRUCT: {
-      ir_constant *c = new ir_constant;
+      ir_constant *c = new(ctx)ir_constant;
 
       c->type = this->type;
       for (exec_node *node = this->components.head
@@ -497,8 +499,10 @@ ir_dereference_array::ir_dereference_array(ir_rvalue *value,
 ir_dereference_array::ir_dereference_array(ir_variable *var,
 					   ir_rvalue *array_index)
 {
+   void *ctx = talloc_parent(var);
+
    this->array_index = array_index;
-   this->set_array(new ir_dereference_variable(var));
+   this->set_array(new(ctx) ir_dereference_variable(var));
 }
 
 
@@ -535,7 +539,9 @@ ir_dereference_record::ir_dereference_record(ir_rvalue *value,
 ir_dereference_record::ir_dereference_record(ir_variable *var,
 					     const char *field)
 {
-   this->record = new ir_dereference_variable(var);
+   void *ctx = talloc_parent(var);
+
+   this->record = new(ctx) ir_dereference_variable(var);
    this->field = field;
    this->type = (this->record != NULL)
       ? this->record->type->field_type(field) : glsl_type::error_type;
@@ -646,6 +652,8 @@ ir_swizzle::ir_swizzle(ir_rvalue *val, ir_swizzle_mask mask)
 ir_swizzle *
 ir_swizzle::create(ir_rvalue *val, const char *str, unsigned vector_length)
 {
+   void *ctx = talloc_parent(val);
+
    /* For each possible swizzle character, this table encodes the value in
     * \c idx_map that represents the 0th element of the vector.  For invalid
     * swizzle characters (e.g., 'k'), a special value is used that will allow
@@ -710,8 +718,8 @@ ir_swizzle::create(ir_rvalue *val, const char *str, unsigned vector_length)
    if (str[i] != '\0')
 	 return NULL;
 
-   return new ir_swizzle(val, swiz_idx[0], swiz_idx[1], swiz_idx[2],
-                         swiz_idx[3], i);
+   return new(ctx) ir_swizzle(val, swiz_idx[0], swiz_idx[1], swiz_idx[2],
+			      swiz_idx[3], i);
 }
 
 #undef X
@@ -811,7 +819,6 @@ ir_function_signature::replace_parameters(exec_list *new_params)
       assert(((ir_instruction *) iter.get())->as_variable() != NULL);
 
       iter.remove();
-      delete (ir_instruction*) iter.get();
    }
 
    new_params->move_nodes_to(&parameters);
@@ -828,7 +835,9 @@ ir_function::ir_function(const char *name)
 ir_call *
 ir_call::get_error_instruction()
 {
-   ir_call *call = new ir_call;
+   /* NULL is wrong and leaks */
+   void *ctx = NULL;
+   ir_call *call = new(ctx) ir_call;
 
    call->type = glsl_type::error_type;
    return call;

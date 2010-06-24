@@ -49,7 +49,7 @@ s_list::length() const
 }
 
 static s_expression *
-read_atom(const char *& src)
+read_atom(void *ctx, const char *& src)
 {
    char buf[101];
    int n;
@@ -65,20 +65,20 @@ read_atom(const char *& src)
       int i = strtol(buf, &int_end, 10);
       // If strtod matched more characters, it must have a decimal part
       if (float_end > int_end)
-	 return new s_float(f);
+	 return new(ctx) s_float(f);
 
-      return new s_int(i);
+      return new(ctx) s_int(i);
    }
    // Not a number; return a symbol.
-   return new s_symbol(buf);
+   return new(ctx) s_symbol(buf);
 }
 
 s_expression *
-s_expression::read_expression(const char *&src)
+s_expression::read_expression(void *ctx, const char *&src)
 {
    assert(src != NULL);
 
-   s_expression *atom = read_atom(src);
+   s_expression *atom = read_atom(ctx, src);
    if (atom != NULL)
       return atom;
 
@@ -87,10 +87,10 @@ s_expression::read_expression(const char *&src)
    if (sscanf(src, " %c%n", &c, &n) == 1 && c == '(') {
       src += n;
 
-      s_list *list = new s_list;
+      s_list *list = new(ctx) s_list;
       s_expression *expr;
 
-      while ((expr = read_expression(src)) != NULL) {
+      while ((expr = read_expression(ctx, src)) != NULL) {
 	 list->subexpressions.push_tail(expr);
       }
       if (sscanf(src, " %c%n", &c, &n) != 1 || c != ')') {

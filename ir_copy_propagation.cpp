@@ -197,6 +197,7 @@ kill_invalidated_copies(ir_assignment *ir, exec_list *acp)
 static void
 add_copy(ir_assignment *ir, exec_list *acp)
 {
+   void *ctx = talloc_parent(ir);
    acp_entry *entry;
 
    if (ir->condition) {
@@ -209,7 +210,7 @@ add_copy(ir_assignment *ir, exec_list *acp)
    ir_variable *rhs_var = ir->rhs->whole_variable_referenced();
 
    if ((lhs_var != NULL) && (rhs_var != NULL)) {
-      entry = new acp_entry(lhs_var, rhs_var);
+      entry = new(ctx) acp_entry(lhs_var, rhs_var);
       acp->push_tail(entry);
    }
 }

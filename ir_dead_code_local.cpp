@@ -113,6 +113,7 @@ public:
 static bool
 process_assignment(ir_assignment *ir, exec_list *assignments)
 {
+   void *ctx = talloc_parent(ir);
    ir_variable *var = NULL;
    bool progress = false;
    kill_for_derefs_visitor v(assignments);
@@ -157,7 +158,7 @@ process_assignment(ir_assignment *ir, exec_list *assignments)
    }
 
    /* Add this instruction to the assignment list. */
-   assignment_entry *entry = new assignment_entry(var, ir);
+   assignment_entry *entry = new(ctx) assignment_entry(var, ir);
    assignments->push_tail(entry);
 
    if (debug) {
