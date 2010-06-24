@@ -1,6 +1,6 @@
 
 #include <stdio.h>
-#include "state_tracker/drm_api.h"
+#include "state_tracker/drm_driver.h"
 
 #include "i965_drm_winsys.h"
 #include "i965_drm_public.h"
