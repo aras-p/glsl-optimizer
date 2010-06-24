@@ -146,6 +146,11 @@
 #define PIPE_OS_UNIX
 #endif
 
+#if defined(__GNU__)
+#define PIPE_OS_HURD
+#define PIPE_OS_UNIX
+#endif
+
 #if defined(__sun)
 #define PIPE_OS_SOLARIS
 #define PIPE_OS_UNIX
