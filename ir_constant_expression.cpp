@@ -127,7 +127,6 @@ ir_constant_visitor::visit(ir_function *ir)
 void
 ir_constant_visitor::visit(ir_expression *ir)
 {
-   void *ctx = talloc_parent(ir);
    value = NULL;
    ir_constant *op[2];
    unsigned int operand, c;
@@ -498,6 +497,7 @@ ir_constant_visitor::visit(ir_expression *ir)
       return;
    }
 
+   void *ctx = talloc_parent(ir);
    this->value = new(ctx) ir_constant(ir->type, &data);
 }
 
@@ -514,7 +514,6 @@ ir_constant_visitor::visit(ir_texture *ir)
 void
 ir_constant_visitor::visit(ir_swizzle *ir)
 {
-   void *ctx = talloc_parent(ir);
    ir_constant *v = ir->val->constant_expression_value();
 
    this->value = NULL;
@@ -536,6 +535,7 @@ ir_constant_visitor::visit(ir_swizzle *ir)
 	 }
       }
 
+      void *ctx = talloc_parent(ir);
       this->value = new(ctx) ir_constant(ir->type, &data);
    }
 }

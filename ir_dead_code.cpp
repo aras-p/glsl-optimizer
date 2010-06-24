@@ -77,13 +77,14 @@ public:
 variable_entry *
 ir_dead_code_visitor::get_variable_entry(ir_variable *var)
 {
-   void *ctx = talloc_parent(var);
    assert(var);
    foreach_iter(exec_list_iterator, iter, this->variable_list) {
       variable_entry *entry = (variable_entry *)iter.get();
       if (entry->var == var)
 	 return entry;
    }
+
+   void *ctx = talloc_parent(var);
 
    variable_entry *entry = new(ctx) variable_entry(var);
    this->variable_list.push_tail(entry);
