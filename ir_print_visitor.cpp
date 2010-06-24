@@ -92,7 +92,7 @@ void ir_print_visitor::visit(ir_variable *ir)
 	  cent, inv, mode[ir->mode], interp[ir->interpolation]);
 
    print_type(ir->type);
-   printf(" %s)", ir->name);
+   printf(" %s@%p)", ir->name, ir);
 }
 
 
@@ -220,7 +220,8 @@ void ir_print_visitor::visit(ir_swizzle *ir)
 
 void ir_print_visitor::visit(ir_dereference_variable *ir)
 {
-   printf("(var_ref %s) ", ir->variable_referenced()->name);
+   ir_variable *var = ir->variable_referenced();
+   printf("(var_ref %s@%p) ", var->name, var);
 }
 
 
