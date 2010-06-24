@@ -21,3 +21,5 @@ glsl_parser.output
 glsl_parser.cpp
 glsl_parser.h
 glsl
+mesa_codegen.cpp
+mesa_codegen.h

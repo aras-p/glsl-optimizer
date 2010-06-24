@@ -21,6 +21,7 @@
 # USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 AUTOMAKE_OPTIONS = foreign
+AM_CPPFLAGS = -I mesa
 
 SUBDIRS = glcpp
 
@@ -57,9 +58,15 @@ glsl_SOURCES = \
 	ir_hierarchical_visitor.h \
 	ir_hierarchical_visitor.cpp \
 	ir_swizzle_swizzle.cpp \
+	ir_to_mesa.cpp \
+	ir_to_mesa.h \
 	ir_validate.cpp \
 	ir_vec_index_to_swizzle.cpp \
-	linker.cpp
+	linker.cpp \
+	mesa/shader/prog_instruction.c \
+	mesa/shader/prog_instruction.h \
+	mesa/shader/prog_print.c \
+	mesa/shader/prog_print.h
 
 BUILT_SOURCES = glsl_parser.h glsl_parser.cpp glsl_lexer.cpp
 CLEANFILES = $(BUILT_SOURCES)

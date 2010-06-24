@@ -22,6 +22,7 @@
  */
 
 #include <GL/gl.h>
+#include "main/mtypes.h"
 
 /**
  * Based on gl_shader in Mesa's mtypes.h.
@@ -41,7 +42,6 @@ struct glsl_shader {
 };
 
 
-typedef int gl_register_file;
 typedef int gl_state_index;
 #define STATE_LENGTH 5
 
