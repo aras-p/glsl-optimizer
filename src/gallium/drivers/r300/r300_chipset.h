@@ -42,6 +42,8 @@ struct r300_capabilities {
     unsigned num_tex_units;
     /* Whether or not TCL is physically present */
     boolean has_tcl;
+    /* Some chipsets do not have HiZ RAM. */
+    boolean has_hiz;
     /* Whether or not this is RV350 or newer, including all r400 and r500
      * chipsets. The differences compared to the oldest r300 chips are:
      * - Blend LTE/GTE thresholds

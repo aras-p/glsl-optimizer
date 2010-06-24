@@ -2673,6 +2673,24 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* Z Buffer Clear Value */
 #define R300_ZB_DEPTHCLEARVALUE                  0x4f28
 
+/* Z Mask RAM is a Z compression buffer.
+ * Each dword of the Z Mask contains compression info for 16 4x4 pixel blocks,
+ * that is 2 bits for each block.
+ * On chips with 2 Z pipes, every other dword maps to a different pipe.
+ */
+
+/* The dword offset into Z mask RAM (bits 18:4) */
+#define R300_ZB_ZMASK_OFFSET                     0x4f30
+
+/* Z Mask Pitch. */
+#define R300_ZB_ZMASK_PITCH                      0x4f34
+
+/* Access to Z Mask RAM in a manner similar to HiZ RAM.
+ * The indices are autoincrementing. */
+#define R300_ZB_ZMASK_WRINDEX                    0x4f38
+#define R300_ZB_ZMASK_DWORD                      0x4f3c
+#define R300_ZB_ZMASK_RDINDEX                    0x4f40
+
 /* Hierarchical Z Memory Offset */
 #define R300_ZB_HIZ_OFFSET                       0x4f44
 
