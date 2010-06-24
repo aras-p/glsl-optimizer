@@ -303,6 +303,13 @@ void r300_emit_fb_state(struct r300_context* r300, unsigned size, void* state)
      * by incomplete rendering. */
     OUT_CS_REG(RADEON_WAIT_UNTIL, RADEON_WAIT_3D_IDLECLEAN);
 
+    /* XXX unpipelined regs
+    rb3d_aaresolve_ctl
+    rb3d_aaresolve_offset
+    rb3d_aaresolve_pitch
+    gb_aa_config
+    */
+
     /* NUM_MULTIWRITES replicates COLOR[0] to all colorbuffers, which is not
      * what we usually want. */
     if (r300->screen->caps.is_r500) {
@@ -321,24 +328,42 @@ void r300_emit_fb_state(struct r300_context* r300, unsigned size, void* state)
 
         OUT_CS_REG_SEQ(R300_RB3D_COLORPITCH0 + (4 * i), 1);
         OUT_CS_RELOC(surf->buffer, surf->pitch, 0, surf->domain, 0);
-
-        OUT_CS_REG(R300_US_OUT_FMT_0 + (4 * i), surf->format);
-    }
-    for (; i < 4; i++) {
-        OUT_CS_REG(R300_US_OUT_FMT_0 + (4 * i), R300_US_OUT_FMT_UNUSED);
     }
 
     /* Set up a zbuffer. */
     if (fb->zsbuf) {
         surf = r300_surface(fb->zsbuf);
 
+        OUT_CS_REG(R300_ZB_FORMAT, surf->format);
+        OUT_CS_REG(R300_ZB_BW_CNTL, 0);
+
         OUT_CS_REG_SEQ(R300_ZB_DEPTHOFFSET, 1);
         OUT_CS_RELOC(surf->buffer, surf->offset, 0, surf->domain, 0);
 
-        OUT_CS_REG(R300_ZB_FORMAT, surf->format);
-
         OUT_CS_REG_SEQ(R300_ZB_DEPTHPITCH, 1);
         OUT_CS_RELOC(surf->buffer, surf->pitch, 0, surf->domain, 0);
+
+        OUT_CS_REG(R300_ZB_DEPTHCLEARVALUE, 0);
+
+        /* HiZ RAM. */
+        if (r300->screen->caps.has_hiz) {
+            OUT_CS_REG(R300_ZB_HIZ_OFFSET, 0);
+            OUT_CS_REG(R300_ZB_HIZ_PITCH, 0);
+        }
+
+        /* Z Mask RAM. (compressed zbuffer) */
+        OUT_CS_REG(R300_ZB_ZMASK_OFFSET, 0);
+        OUT_CS_REG(R300_ZB_ZMASK_PITCH, 0);
+    }
+
+    /* Colorbuffer format in the US block.
+     * (must be written after unpipelined regs) */
+    OUT_CS_REG_SEQ(R300_US_OUT_FMT_0, 4);
+    for (i = 0; i < fb->nr_cbufs; i++) {
+        OUT_CS(r300_surface(fb->cbufs[i])->format);
+    }
+    for (; i < 4; i++) {
+        OUT_CS(R300_US_OUT_FMT_UNUSED);
     }
     END_CS;
 }
@@ -813,6 +838,17 @@ void r300_emit_vs_state(struct r300_context* r300, unsigned size, void* state)
     CS_LOCALS(r300);
 
     BEGIN_CS(size);
+    /* Amount of time to wait for vertex fetches in PVS */
+    OUT_CS_REG(VAP_PVS_VTX_TIMEOUT_REG, 0xffff);
+
+    OUT_CS_REG_SEQ(R300_VAP_GB_VERT_CLIP_ADJ, 4);
+    OUT_CS_32F(1.0);
+    OUT_CS_32F(1.0);
+    OUT_CS_32F(1.0);
+    OUT_CS_32F(1.0);
+
+    OUT_CS_REG(R300_VAP_PSC_SGN_NORM_CNTL, R300_SGN_NORM_NO_ZERO);
+
     /* R300_VAP_PVS_CODE_CNTL_0
      * R300_VAP_PVS_CONST_CNTL
      * R300_VAP_PVS_CODE_CNTL_1

@@ -38,74 +38,23 @@ void r300_emit_invariant_state(struct r300_context* r300,
 {
     CS_LOCALS(r300);
 
-    BEGIN_CS(12 + (r300->screen->caps.has_tcl ? 2 : 0));
+    BEGIN_CS(20 + (r300->screen->caps.is_rv350 ? 4 : 0));
 
-    /*** Graphics Backend (GB) ***/
-    /* Source of fog depth */
-    OUT_CS_REG(R300_GB_SELECT, R300_GB_FOG_SELECT_1_1_W);
-
-    /*** Fog (FG) ***/
-    OUT_CS_REG(R300_FG_FOG_BLEND, 0x0);
-    OUT_CS_REG(R300_FG_FOG_COLOR_R, 0x0);
-    OUT_CS_REG(R300_FG_FOG_COLOR_G, 0x0);
-    OUT_CS_REG(R300_FG_FOG_COLOR_B, 0x0);
-
-    /*** VAP ***/
-    /* Sign/normalize control */
-    OUT_CS_REG(R300_VAP_PSC_SGN_NORM_CNTL, R300_SGN_NORM_NO_ZERO);
-    /* TCL-only stuff */
-    if (r300->screen->caps.has_tcl) {
-        /* Amount of time to wait for vertex fetches in PVS */
-        OUT_CS_REG(VAP_PVS_VTX_TIMEOUT_REG, 0xffff);
-    }
-
-    END_CS;
-
-    /* XXX unsorted stuff from surface_fill */
-    BEGIN_CS(38 + (r300->screen->caps.has_tcl ? 7 : 0) +
-             (r300->screen->caps.is_rv350 ? 4 : 0) +
-             (r300->screen->caps.is_r400 ? 2 : 0));
-
-    if (r300->screen->caps.has_tcl) {
-        /*Flushing PVS is required before the VAP_GB registers can be changed*/
-        OUT_CS_REG(R300_VAP_PVS_STATE_FLUSH_REG, 0);
-        OUT_CS_REG_SEQ(R300_VAP_GB_VERT_CLIP_ADJ, 4);
-        OUT_CS_32F(1.0);
-        OUT_CS_32F(1.0);
-        OUT_CS_32F(1.0);
-        OUT_CS_32F(1.0);
-    }
-    /* XXX line tex stuffing */
-    OUT_CS_REG_SEQ(R300_GA_LINE_S0, 1);
-    OUT_CS_32F(0.0);
-    OUT_CS_REG_SEQ(R300_GA_LINE_S1, 1);
-    OUT_CS_32F(1.0);
-    OUT_CS_REG(R300_GA_TRIANGLE_STIPPLE, 0x5 |
-        (0x5 << R300_GA_TRIANGLE_STIPPLE_Y_SHIFT_SHIFT));
-    /* XXX this big chunk should be refactored into rs_state */
-    OUT_CS_REG(R300_GA_SOLID_RG, 0x00000000);
-    OUT_CS_REG(R300_GA_SOLID_BA, 0x00000000);
-    OUT_CS_REG(R300_GA_ROUND_MODE, 0x00000001);
-    OUT_CS_REG(R300_GA_OFFSET, 0x00000000);
-    OUT_CS_REG(R300_GA_FOG_SCALE, 0x3DBF1412);
-    OUT_CS_REG(R300_GA_FOG_OFFSET, 0x00000000);
-    OUT_CS_REG(R300_SU_TEX_WRAP, 0x00000000);
+    OUT_CS_REG(R300_RB3D_AARESOLVE_CTL, 0);
+    OUT_CS_REG(R300_GB_SELECT, 0);
+    OUT_CS_REG(R300_FG_FOG_BLEND, 0);
+    OUT_CS_REG(R300_GA_ROUND_MODE, 1);
+    OUT_CS_REG(R300_GA_OFFSET, 0);
+    OUT_CS_REG(R300_SU_TEX_WRAP, 0);
     OUT_CS_REG(R300_SU_DEPTH_SCALE, 0x4B7FFFFF);
-    OUT_CS_REG(R300_SU_DEPTH_OFFSET, 0x00000000);
-    OUT_CS_REG(R300_SC_HYPERZ, 0x0000001C);
+    OUT_CS_REG(R300_SU_DEPTH_OFFSET, 0);
+    OUT_CS_REG(R300_SC_HYPERZ, 0x1C);
     OUT_CS_REG(R300_SC_EDGERULE, 0x2DA49525);
-    OUT_CS_REG(R300_RB3D_AARESOLVE_CTL, 0x00000000);
 
     if (r300->screen->caps.is_rv350) {
         OUT_CS_REG(R500_RB3D_DISCARD_SRC_PIXEL_LTE_THRESHOLD, 0x01010101);
         OUT_CS_REG(R500_RB3D_DISCARD_SRC_PIXEL_GTE_THRESHOLD, 0xFEFEFEFE);
     }
 
-    OUT_CS_REG(R300_ZB_BW_CNTL, 0x00000000);
-    OUT_CS_REG(R300_ZB_DEPTHCLEARVALUE, 0x00000000);
-    OUT_CS_REG(R300_ZB_HIZ_OFFSET, 0x00000000);
-    OUT_CS_REG(R300_ZB_HIZ_PITCH, 0x00000000);
-    if (r300->screen->caps.is_r400)
-        OUT_CS_REG(R400_US_CODE_BANK, 0);
     END_CS;
 }

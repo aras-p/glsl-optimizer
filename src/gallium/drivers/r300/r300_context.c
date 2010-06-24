@@ -117,27 +117,34 @@ static void r300_setup_atoms(struct r300_context* r300)
      * Some atoms never change size, others change every emit - those have
      * the size of 0 here. */
     make_empty_list(&r300->atom_list);
+    /* XXX unsorted. */
     R300_INIT_ATOM(invariant_state, 71);
+    /* RB3D (unpipelined), ZB (unpipelined), US, SC. */
+    R300_INIT_ATOM(fb_state, 0);
     R300_INIT_ATOM(ztop_state, 2);
-    R300_INIT_ATOM(query_start, 4);
+    R300_INIT_ATOM(dsa_state, is_r500 ? 8 : 6);
     R300_INIT_ATOM(blend_state, 8);
     R300_INIT_ATOM(blend_color_state, is_r500 ? 3 : 2);
-    R300_INIT_ATOM(clip_state, has_tcl ? 5 + (6 * 4) : 2);
-    R300_INIT_ATOM(dsa_state, is_r500 ? 8 : 6);
-    R300_INIT_ATOM(fb_state, 0);
-    R300_INIT_ATOM(rs_state, 0);
     R300_INIT_ATOM(scissor_state, 3);
+    /* VAP. */
     R300_INIT_ATOM(viewport_state, 9);
-    R300_INIT_ATOM(rs_block_state, 0);
-    R300_INIT_ATOM(vertex_stream_state, 0);
     R300_INIT_ATOM(pvs_flush, 2);
+    R300_INIT_ATOM(vertex_stream_state, 0);
     R300_INIT_ATOM(vs_state, 0);
     R300_INIT_ATOM(vs_constants, 0);
-    R300_INIT_ATOM(texture_cache_inval, 2);
-    R300_INIT_ATOM(textures_state, 0);
+    R300_INIT_ATOM(clip_state, has_tcl ? 5 + (6 * 4) : 2);
+    /* VAP, RS, GA, GB. */
+    R300_INIT_ATOM(rs_block_state, 0);
+    R300_INIT_ATOM(rs_state, 0);
+    /* US. */
     R300_INIT_ATOM(fs, 0);
     R300_INIT_ATOM(fs_rc_constant_state, 0);
     R300_INIT_ATOM(fs_constants, 0);
+    /* TX. */
+    R300_INIT_ATOM(texture_cache_inval, 2);
+    R300_INIT_ATOM(textures_state, 0);
+    /* ZB (unpipelined), SU. */
+    R300_INIT_ATOM(query_start, 4);
 
     /* Replace emission functions for r500. */
     if (r300->screen->caps.is_r500) {

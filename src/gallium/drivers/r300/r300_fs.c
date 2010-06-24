@@ -288,11 +288,16 @@ static void r300_emit_fs_code_to_buffer(
         struct r300_fragment_program_code *code = &generic_code->code.r300;
 
         shader->cb_code_size = 19 +
+                               (r300->screen->caps.is_r400 ? 2 : 0) +
                                code->alu.length * 4 +
                                (code->tex.length ? (1 + code->tex.length) : 0) +
                                imm_count * 5;
 
         NEW_CB(shader->cb_code, shader->cb_code_size);
+
+        if (r300->screen->caps.is_r400)
+            OUT_CB_REG(R400_US_CODE_BANK, 0);
+
         OUT_CB_REG(R300_US_CONFIG, code->config);
         OUT_CB_REG(R300_US_PIXSIZE, code->pixsize);
         OUT_CB_REG(R300_US_CODE_OFFSET, code->code_offset);

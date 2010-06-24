@@ -702,8 +702,10 @@ static void
 
     memcpy(r300->fb_state.state, state, sizeof(struct pipe_framebuffer_state));
 
-    r300->fb_state.size = (10 * state->nr_cbufs) + (2 * (4 - state->nr_cbufs)) +
-                          (state->zsbuf ? 10 : 0) + 11;
+    r300->fb_state.size =
+            16 +
+            (8 * state->nr_cbufs) +
+            (state->zsbuf ? (r300->screen->caps.has_hiz ? 22 : 18) : 0);
 
     /* Polygon offset depends on the zbuffer bit depth. */
     if (state->zsbuf && r300->polygon_offset_enabled) {
@@ -1575,7 +1577,7 @@ static void r300_bind_vs_state(struct pipe_context* pipe, void* shader)
     if (r300->screen->caps.has_tcl) {
         r300->vs_state.dirty = TRUE;
         r300->vs_state.size =
-                vs->code.length + 9 +
+                vs->code.length + 18 +
                 (vs->immediates_count ? vs->immediates_count * 4 + 3 : 0);
 
         if (vs->externals_count) {
