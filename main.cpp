@@ -206,8 +206,8 @@ main(int argc, char **argv)
 
    for (/* empty */; argc > optind; optind++) {
       whole_program->Shaders = (struct glsl_shader **)
-	 realloc(whole_program->Shaders,
-		 sizeof(struct glsl_shader *) * (whole_program->NumShaders + 1));
+	 talloc_realloc(whole_program, whole_program->Shaders,
+			struct glsl_shader *, whole_program->NumShaders + 1);
       assert(whole_program->Shaders != NULL);
 
       struct glsl_shader *shader = talloc_zero(whole_program, glsl_shader);
