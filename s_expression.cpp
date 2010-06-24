@@ -30,8 +30,8 @@
 
 s_symbol::s_symbol(const char *tmp)
 {
-   this->str = new char [strlen(tmp) + 1];
-   strcpy(this->str, tmp);
+   this->str = talloc_strdup (this, tmp);
+   assert(this->str != NULL);
 }
 
 s_list::s_list()
