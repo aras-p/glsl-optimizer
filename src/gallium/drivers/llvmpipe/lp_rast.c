@@ -627,7 +627,7 @@ void
 lp_rast_begin_query(struct lp_rasterizer_task *task,
                     const union lp_rast_cmd_arg arg)
 {
-   /* Reset the the per-task counter */
+   /* Reset the per-task counter */
    task->vis_counter = 0;
 }
  
