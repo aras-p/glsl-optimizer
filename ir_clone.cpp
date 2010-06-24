@@ -46,7 +46,7 @@ ir_variable::clone(struct hash_table *ht) const
    var->interpolation = this->interpolation;
 
    if (ht) {
-      hash_table_insert(ht, (void *)const_cast<ir_variable *>(this), var);
+      hash_table_insert(ht, var, (void *)const_cast<ir_variable *>(this));
    }
 
    return var;
