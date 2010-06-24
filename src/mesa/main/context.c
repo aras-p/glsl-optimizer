@@ -1462,6 +1462,8 @@ _mesa_make_current( GLcontext *newCtx, GLframebuffer *drawBuffer,
       if (newCtx->FirstTimeCurrent) {
          _mesa_compute_version(newCtx);
 
+         newCtx->Extensions.String = _mesa_make_extension_string(newCtx);
+
          check_context_limits(newCtx);
 
          /* We can use this to help debug user's problems.  Tell them to set
