@@ -98,6 +98,10 @@ struct r300_dsa_state {
     boolean two_sided_stencil_ref;
 };
 
+struct r300_gpu_flush {
+    uint32_t cb_flush_clean[6];
+};
+
 struct r300_rs_state {
     /* Original rasterizer state. */
     struct pipe_rasterizer_state rs;
@@ -461,6 +465,8 @@ struct r300_context {
     struct r300_atom pvs_flush;
     /* Texture cache invalidate. */
     struct r300_atom texture_cache_inval;
+    /* GPU flush. */
+    struct r300_atom gpu_flush;
 
     /* Invariant state. This must be emitted to get the engine started. */
     struct r300_atom invariant_state;

@@ -267,11 +267,11 @@ void r500_emit_fs_rc_constant_state(struct r300_context* r300, unsigned size, vo
     END_CS;
 }
 
-void r300_emit_fb_state(struct r300_context* r300, unsigned size, void* state)
+void r300_emit_gpu_flush(struct r300_context *r300, unsigned size, void *state)
 {
-    struct pipe_framebuffer_state* fb = (struct pipe_framebuffer_state*)state;
-    struct r300_surface* surf;
-    unsigned i;
+    struct r300_gpu_flush *gpuflush = (struct r300_gpu_flush*)state;
+    struct pipe_framebuffer_state* fb =
+            (struct pipe_framebuffer_state*)r300->fb_state.state;
     CS_LOCALS(r300);
 
     BEGIN_CS(size);
@@ -290,18 +290,19 @@ void r300_emit_fb_state(struct r300_context* r300, unsigned size, void* state)
                ((fb->height + 1440-1) << R300_SCISSORS_Y_SHIFT));
     }
 
-    /* Flush and free renderbuffer caches. */
-    OUT_CS_REG(R300_RB3D_DSTCACHE_CTLSTAT,
-        R300_RB3D_DSTCACHE_CTLSTAT_DC_FREE_FREE_3D_TAGS |
-        R300_RB3D_DSTCACHE_CTLSTAT_DC_FLUSH_FLUSH_DIRTY_3D);
-    OUT_CS_REG(R300_ZB_ZCACHE_CTLSTAT,
-        R300_ZB_ZCACHE_CTLSTAT_ZC_FLUSH_FLUSH_AND_FREE |
-        R300_ZB_ZCACHE_CTLSTAT_ZC_FREE_FREE);
+    /* Flush CB & ZB caches and wait until the 3D engine is idle and clean. */
+    OUT_CS_TABLE(gpuflush->cb_flush_clean, 6);
+    END_CS;
+}
 
-    /* Wait until the GPU is idle.
-     * This fixes random pixels sometimes appearing probably caused
-     * by incomplete rendering. */
-    OUT_CS_REG(RADEON_WAIT_UNTIL, RADEON_WAIT_3D_IDLECLEAN);
+void r300_emit_fb_state(struct r300_context* r300, unsigned size, void* state)
+{
+    struct pipe_framebuffer_state* fb = (struct pipe_framebuffer_state*)state;
+    struct r300_surface* surf;
+    unsigned i;
+    CS_LOCALS(r300);
+
+    BEGIN_CS(size);
 
     /* XXX unpipelined regs
     rb3d_aaresolve_ctl

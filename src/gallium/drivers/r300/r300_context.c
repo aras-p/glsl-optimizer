@@ -76,6 +76,7 @@ static void r300_destroy_context(struct pipe_context* context)
     FREE(r300->blend_color_state.state);
     FREE(r300->clip_state.state);
     FREE(r300->fb_state.state);
+    FREE(r300->gpu_flush.state);
     FREE(r300->rs_block_state.state);
     FREE(r300->scissor_state.state);
     FREE(r300->textures_state.state);
@@ -120,6 +121,7 @@ static void r300_setup_atoms(struct r300_context* r300)
     /* XXX unsorted. */
     R300_INIT_ATOM(invariant_state, 71);
     /* RB3D (unpipelined), ZB (unpipelined), US, SC. */
+    R300_INIT_ATOM(gpu_flush, 9);
     R300_INIT_ATOM(fb_state, 0);
     R300_INIT_ATOM(ztop_state, 2);
     R300_INIT_ATOM(dsa_state, is_r500 ? 8 : 6);
@@ -157,6 +159,7 @@ static void r300_setup_atoms(struct r300_context* r300)
     r300->blend_color_state.state = CALLOC_STRUCT(r300_blend_color_state);
     r300->clip_state.state = CALLOC_STRUCT(r300_clip_state);
     r300->fb_state.state = CALLOC_STRUCT(pipe_framebuffer_state);
+    r300->gpu_flush.state = CALLOC_STRUCT(pipe_framebuffer_state);
     r300->rs_block_state.state = CALLOC_STRUCT(r300_rs_block);
     r300->scissor_state.state = CALLOC_STRUCT(pipe_scissor_state);
     r300->textures_state.state = CALLOC_STRUCT(r300_textures_state);
@@ -180,21 +183,44 @@ static void r300_setup_atoms(struct r300_context* r300)
  * call and we must initialize the command buffers somehow. */
 static void r300_init_states(struct pipe_context *pipe)
 {
+    struct r300_context *r300 = r300_context(pipe);
     struct pipe_blend_color bc = {{0}};
     struct pipe_clip_state cs = {{{0}}};
     struct pipe_scissor_state ss = {0};
     struct r300_clip_state *clip =
-            (struct r300_clip_state*)r300_context(pipe)->clip_state.state;
+            (struct r300_clip_state*)r300->clip_state.state;
+    struct r300_gpu_flush *gpuflush =
+            (struct r300_gpu_flush*)r300->gpu_flush.state;
     CB_LOCALS;
 
     pipe->set_blend_color(pipe, &bc);
     pipe->set_scissor_state(pipe, &ss);
 
+    /* Initialize the clip state. */
     if (r300_context(pipe)->screen->caps.has_tcl) {
         pipe->set_clip_state(pipe, &cs);
     } else {
         BEGIN_CB(clip->cb, 2);
         OUT_CB_REG(R300_VAP_CLIP_CNTL, R300_CLIP_DISABLE);
+        END_CB;
+    }
+
+    /* Initialize the GPU flush. */
+    {
+        BEGIN_CB(gpuflush->cb_flush_clean, 6);
+
+        /* Flush and free renderbuffer caches. */
+        OUT_CB_REG(R300_RB3D_DSTCACHE_CTLSTAT,
+            R300_RB3D_DSTCACHE_CTLSTAT_DC_FREE_FREE_3D_TAGS |
+            R300_RB3D_DSTCACHE_CTLSTAT_DC_FLUSH_FLUSH_DIRTY_3D);
+        OUT_CB_REG(R300_ZB_ZCACHE_CTLSTAT,
+            R300_ZB_ZCACHE_CTLSTAT_ZC_FLUSH_FLUSH_AND_FREE |
+            R300_ZB_ZCACHE_CTLSTAT_ZC_FREE_FREE);
+
+        /* Wait until the GPU is idle.
+         * This fixes random pixels sometimes appearing probably caused
+         * by incomplete rendering. */
+        OUT_CB_REG(RADEON_WAIT_UNTIL, RADEON_WAIT_3D_IDLECLEAN);
         END_CB;
     }
 }

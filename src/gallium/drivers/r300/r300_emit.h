@@ -59,6 +59,8 @@ void r500_emit_fs_rc_constant_state(struct r300_context* r300, unsigned size, vo
 
 void r300_emit_fb_state(struct r300_context* r300, unsigned size, void* state);
 
+void r300_emit_gpu_flush(struct r300_context *r300, unsigned size, void *state);
+
 void r300_emit_query_start(struct r300_context *r300, unsigned size, void *state);
 
 void r300_emit_query_end(struct r300_context* r300);

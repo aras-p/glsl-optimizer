@@ -686,6 +686,7 @@ static void
         draw_flush(r300->draw);
     }
 
+    r300->gpu_flush.dirty = TRUE;
     r300->fb_state.dirty = TRUE;
 
     /* If nr_cbufs is changed from zero to non-zero or vice versa... */
@@ -703,7 +704,7 @@ static void
     memcpy(r300->fb_state.state, state, sizeof(struct pipe_framebuffer_state));
 
     r300->fb_state.size =
-            16 +
+            7 +
             (8 * state->nr_cbufs) +
             (state->zsbuf ? (r300->screen->caps.has_hiz ? 22 : 18) : 0);
 
