@@ -20,9 +20,11 @@ Logical Operations
 Logical operations, also known as logicops, lops, or rops, are supported.
 Only two-operand logicops are available. When logicops are enabled, all other
 blend state is ignored, including per-render-target state, so logicops are
-performed on all enabled render targets.
+performed on all render targets.
 
-XXX do lops still apply if blend_enable isn't set?
+.. warning::
+   The blend_enable flag is ignored for all render targets when logical
+   operations are enabled.
 
 For a source component `s` and destination component `d`, the logical
 operations are defined as taking the bits of each channel of each component,
