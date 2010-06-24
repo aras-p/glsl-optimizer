@@ -1286,6 +1286,8 @@ wrapping rules.
 Declaration Semantic
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
+  Vertex and fragment shader input and output registers may be labeled
+  with semantic information consisting of a name and index.
 
   Follows Declaration token if Semantic bit is set.
 
@@ -1321,6 +1323,10 @@ The Z coordinate ranges from 0 to 1 to represent depth from the front
 to the back of the Z buffer.  The W component contains the reciprocol
 of the interpolated vertex position W component.
 
+Fragment shaders may also declare an output register with
+TGSI_SEMANTIC_POSITION.  Only the Z component is writable.  This allows
+the fragment shader to change the fragment's Z position.
+
 
 
 TGSI_SEMANTIC_COLOR
@@ -1350,49 +1356,54 @@ so all BCOLORs effectively become regular COLORs in the fragment shader.
 TGSI_SEMANTIC_FOG
 """""""""""""""""
 
-The fog coordinate historically has been used to replace the depth coordinate
-for generation of fog in dedicated fog blocks. Gallium, however, does not use
-dedicated fog acceleration, placing it entirely in the fragment shader
-instead.
+Vertex shader inputs and outputs and fragment shader inputs may be
+labeled with TGSI_SEMANTIC_FOG to indicate that the register contains
+a fog coordinate in the form (F, 0, 0, 1).  Typically, the fragment
+shader will use the fog coordinate to compute a fog blend factor which
+is used to blend the normal fragment color with a constant fog color.
 
-The fog coordinate should be written in ``(f, 0, 0, 1)`` format. Only the first
-component matters when writing from the vertex shader; the driver will ensure
-that the coordinate is in this format when used as a fragment shader input.
+Only the first component matters when writing from the vertex shader;
+the driver will ensure that the coordinate is in this format when used
+as a fragment shader input.
+
 
 TGSI_SEMANTIC_PSIZE
 """""""""""""""""""
 
-PSIZE, or point size, is used to specify point sizes per-vertex. It should
-be in ``(s, 0, 0, 1)`` format, where ``s`` is the (possibly clamped) point size.
-Only the first component matters when writing from the vertex shader.
+Vertex shader input and output registers may be labeled with
+TGIS_SEMANTIC_PSIZE to indicate that the register contains a point size
+in the form (S, 0, 0, 1).  The point size controls the width or diameter
+of points for rasterization.  This label cannot be used in fragment
+shaders.
 
 When using this semantic, be sure to set the appropriate state in the
 :ref:`rasterizer` first.
 
+
 TGSI_SEMANTIC_GENERIC
 """""""""""""""""""""
 
-Generic semantics are nearly always used for texture coordinate attributes,
-in ``(s, t, r, q)`` format. ``t`` and ``r`` may be unused for certain kinds
-of lookups, and ``q`` is the level-of-detail bias for biased sampling.
+All vertex/fragment shader inputs/outputs not labeled with any other
+semantic label can be considered to be generic attributes.  Typical
+uses of generic inputs/outputs are texcoords and user-defined values.
 
-These attributes are called "generic" because they may be used for anything
-else, including parameters, texture generation information, or anything that
-can be stored inside a four-component vector.
 
 TGSI_SEMANTIC_NORMAL
 """"""""""""""""""""
 
-Vertex normal; could be used to implement per-pixel lighting for legacy APIs
-that allow mixing fixed-function and programmable stages.
+Indicates that a vertex shader input is a normal vector.  This is
+typically only used for legacy graphics APIs.
+
 
 TGSI_SEMANTIC_FACE
 """"""""""""""""""
 
-FACE is the facing bit, to store the facing information for the fragment
-shader. ``(f, 0, 0, 1)`` is the format. The first component will be positive
-when the fragment is front-facing, and negative when the component is
-back-facing.
+This label applies to fragment shader inputs only and indicates that
+the register contains front/back-face information of the form (F, 0,
+0, 1).  The first component will be positive when the fragment belongs
+to a front-facing polygon, and negative when the fragment belongs to a
+back-facing polygon.
+
 
 TGSI_SEMANTIC_EDGEFLAG
 """"""""""""""""""""""
