@@ -1,0 +1,7 @@
+#!/bin/sh
+
+for test in *.c; do
+    echo "Testing $test"
+    ../glcpp < $test > $test.out
+    diff -u $test.expected $test.out
+done

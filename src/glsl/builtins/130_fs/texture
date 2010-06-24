@@ -1,0 +1,128 @@
+((function texture
+   (signature vec4
+     (parameters
+       (declare (in) sampler1D sampler)
+       (declare (in) float P) 
+       (declare (in) float bias) )
+     ((return (txb (var_ref sampler) (var_ref P) (0 0 0) 1 () (var_ref bias) ))))
+
+   (signature ivec4
+     (parameters
+       (declare (in) isampler1D sampler)
+       (declare (in) float P) 
+       (declare (in) float bias) )
+     ((return (txb (var_ref sampler) (var_ref P) (0 0 0) 1 () (var_ref bias) ))))
+
+   (signature uvec4
+     (parameters
+       (declare (in) usampler1D sampler)
+       (declare (in) float P) 
+       (declare (in) float bias) )
+     ((return (txb (var_ref sampler) (var_ref P) (0 0 0) 1 () (var_ref bias) ))))
+
+   (signature vec4
+     (parameters
+       (declare (in) sampler2D sampler)
+       (declare (in) vec2 P) 
+       (declare (in) float bias) )
+     ((return (txb (var_ref sampler) (var_ref P) (0 0 0) 1 () (var_ref bias) ))))
+
+   (signature ivec4
+     (parameters
+       (declare (in) isampler2D sampler)
+       (declare (in) vec2 P) 
+       (declare (in) float bias) )
+     ((return (txb (var_ref sampler) (var_ref P) (0 0 0) 1 () (var_ref bias) ))))
+
+   (signature uvec4
+     (parameters
+       (declare (in) usampler2D sampler)
+       (declare (in) vec2 P) 
+       (declare (in) float bias) )
+     ((return (txb (var_ref sampler) (var_ref P) (0 0 0) 1 () (var_ref bias) ))))
+
+   (signature vec4
+     (parameters
+       (declare (in) sampler3D sampler)
+       (declare (in) vec3 P) 
+       (declare (in) float bias) )
+     ((return (txb (var_ref sampler) (var_ref P) (0 0 0) 1 () (var_ref bias) ))))
+
+   (signature ivec4
+     (parameters
+       (declare (in) isampler3D sampler)
+       (declare (in) vec3 P) 
+       (declare (in) float bias) )
+     ((return (txb (var_ref sampler) (var_ref P) (0 0 0) 1 () (var_ref bias) ))))
+
+   (signature uvec4
+     (parameters
+       (declare (in) usampler3D sampler)
+       (declare (in) vec3 P) 
+       (declare (in) float bias) )
+     ((return (txb (var_ref sampler) (var_ref P) (0 0 0) 1 () (var_ref bias) ))))
+
+   (signature vec4
+     (parameters
+       (declare (in) samplerCube sampler)
+       (declare (in) vec3 P) 
+       (declare (in) float bias) )
+     ((return (txb (var_ref sampler) (var_ref P) (0 0 0) 1 () (var_ref bias) ))))
+
+   (signature ivec4
+     (parameters
+       (declare (in) isamplerCube sampler)
+       (declare (in) vec3 P) 
+       (declare (in) float bias) )
+     ((return (txb (var_ref sampler) (var_ref P) (0 0 0) 1 () (var_ref bias) ))))
+
+   (signature uvec4
+     (parameters
+       (declare (in) usamplerCube sampler)
+       (declare (in) vec3 P) 
+       (declare (in) float bias) )
+     ((return (txb (var_ref sampler) (var_ref P) (0 0 0) 1 () (var_ref bias) ))))
+
+   (signature vec4
+     (parameters
+       (declare (in) sampler1DArray sampler)
+       (declare (in) vec2 P) 
+       (declare (in) float bias) )
+     ((return (txb (var_ref sampler) (var_ref P) (0 0 0) 1 () (var_ref bias) ))))
+
+   (signature ivec4
+     (parameters
+       (declare (in) isampler1DArray sampler)
+       (declare (in) vec2 P) 
+       (declare (in) float bias) )
+     ((return (txb (var_ref sampler) (var_ref P) (0 0 0) 1 () (var_ref bias) ))))
+
+   (signature uvec4
+     (parameters
+       (declare (in) usampler1DArray sampler)
+       (declare (in) vec2 P) 
+       (declare (in) float bias) )
+     ((return (txb (var_ref sampler) (var_ref P) (0 0 0) 1 () (var_ref bias) ))))
+
+   (signature vec4
+     (parameters
+       (declare (in) sampler2DArray sampler)
+       (declare (in) vec3 P) 
+       (declare (in) float bias) )
+     ((return (txb (var_ref sampler) (var_ref P) (0 0 0) 1 () (var_ref bias) ))))
+
+   (signature ivec4
+     (parameters
+       (declare (in) isampler2DArray sampler)
+       (declare (in) vec3 P) 
+       (declare (in) float bias) )
+     ((return (txb (var_ref sampler) (var_ref P) (0 0 0) 1 () (var_ref bias) ))))
+
+   (signature uvec4
+     (parameters
+       (declare (in) usampler2DArray sampler)
+       (declare (in) vec3 P) 
+       (declare (in) float bias) )
+     ((return (txb (var_ref sampler) (var_ref P) (0 0 0) 1 () (var_ref bias) ))))
+
+))

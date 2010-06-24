@@ -1,0 +1,7 @@
+((function ftransform
+   (signature vec4
+     (parameters)
+    ((return (expression vec4 *
+	      (var_ref gl_ModelViewProjectionMatrix)
+	      (var_ref gl_Vertex)))))
+))

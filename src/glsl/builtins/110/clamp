@@ -1,0 +1,62 @@
+((function clamp
+   (signature float
+     (parameters
+       (declare (in) float arg0)
+       (declare (in) float arg1)
+       (declare (in) float arg2))
+     ((return (expression float max (expression float min (var_ref arg0) (var_ref arg2)) (var_ref arg1)))))
+
+   (signature vec2
+     (parameters
+       (declare (in) vec2 arg0)
+       (declare (in) vec2 arg1)
+       (declare (in) vec2 arg2))
+     ((return (expression vec2 max (expression vec2 min (var_ref arg0) (var_ref arg2)) (var_ref arg1)))))
+
+   (signature vec3
+     (parameters
+       (declare (in) vec3 arg0)
+       (declare (in) vec3 arg1)
+       (declare (in) vec3 arg2))
+     ((return (expression vec3 max (expression vec3 min (var_ref arg0) (var_ref arg2)) (var_ref arg1)))))
+
+   (signature vec4
+     (parameters
+       (declare (in) vec4 arg0)
+       (declare (in) vec4 arg1)
+       (declare (in) vec4 arg2))
+     ((return (expression vec4 max (expression vec4 min (var_ref arg0) (var_ref arg2)) (var_ref arg1)))))
+
+   (signature vec2
+     (parameters
+       (declare (in) vec2  arg0)
+       (declare (in) float arg1)
+       (declare (in) float arg2))
+     ((declare () vec2 result)
+      (assign (constant bool (1)) (swiz x (var_ref result)) (expression vec4 max (expression vec4 min (swiz x (var_ref arg0)) (var_ref arg2)) (var_ref arg1)))
+      (assign (constant bool (1)) (swiz y (var_ref result)) (expression vec4 max (expression vec4 min (swiz y (var_ref arg0)) (var_ref arg2)) (var_ref arg1)))
+      (return (var_ref result))))
+
+   (signature vec3
+     (parameters
+       (declare (in) vec3  arg0)
+       (declare (in) float arg1)
+       (declare (in) float arg2))
+     ((declare () vec3 result)
+      (assign (constant bool (1)) (swiz x (var_ref result)) (expression vec4 max (expression vec4 min (swiz x (var_ref arg0)) (var_ref arg2)) (var_ref arg1)))
+      (assign (constant bool (1)) (swiz y (var_ref result)) (expression vec4 max (expression vec4 min (swiz y (var_ref arg0)) (var_ref arg2)) (var_ref arg1)))
+      (assign (constant bool (1)) (swiz z (var_ref result)) (expression vec4 max (expression vec4 min (swiz z (var_ref arg0)) (var_ref arg2)) (var_ref arg1)))
+      (return (var_ref result))))
+
+   (signature vec4
+     (parameters
+       (declare (in) vec4  arg0)
+       (declare (in) float arg1)
+       (declare (in) float arg2))
+     ((declare () vec4 result)
+      (assign (constant bool (1)) (swiz x (var_ref result)) (expression vec4 max (expression vec4 min (swiz x (var_ref arg0)) (var_ref arg2)) (var_ref arg1)))
+      (assign (constant bool (1)) (swiz y (var_ref result)) (expression vec4 max (expression vec4 min (swiz y (var_ref arg0)) (var_ref arg2)) (var_ref arg1)))
+      (assign (constant bool (1)) (swiz z (var_ref result)) (expression vec4 max (expression vec4 min (swiz z (var_ref arg0)) (var_ref arg2)) (var_ref arg1)))
+      (assign (constant bool (1)) (swiz w (var_ref result)) (expression vec4 max (expression vec4 min (swiz w (var_ref arg0)) (var_ref arg2)) (var_ref arg1)))
+      (return (var_ref result))))
+))

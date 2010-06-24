@@ -1,0 +1,154 @@
+((function atan
+   (signature float
+     (parameters
+       (declare (in) float x))
+     ((return (call asin ((expression float *
+			   (var_ref x)
+			   (expression float rsq
+			    (expression float +
+			     (expression float *
+			      (var_ref x)
+			      (var_ref x))
+			     (constant float (1.0))))))))))
+
+   (signature vec2
+     (parameters
+       (declare (in) vec2 y_over_x))
+     ((return (call asin ((expression vec2 *
+			   (var_ref y_over_x)
+			   (expression vec2 rsq
+			    (expression vec2 +
+			     (expression vec2 *
+			      (var_ref y_over_x)
+			      (var_ref y_over_x))
+			     (constant float (1.0))))))))))
+
+   (signature vec3
+     (parameters
+       (declare (in) vec3 y_over_x))
+     ((return (call asin ((expression vec3 *
+			   (var_ref y_over_x)
+			   (expression vec3 rsq
+			    (expression vec3 +
+			     (expression vec3 *
+			      (var_ref y_over_x)
+			      (var_ref y_over_x))
+			     (constant float (1.0))))))))))
+
+   (signature vec4
+     (parameters
+       (declare (in) vec4 y_over_x))
+     ((return (call asin ((expression vec4 *
+			   (var_ref y_over_x)
+			   (expression vec4 rsq
+			    (expression vec4 +
+			     (expression vec4 *
+			      (var_ref y_over_x)
+			      (var_ref y_over_x))
+			     (constant float (1.0))))))))))
+
+   (signature float
+     (parameters
+       (declare (in) float y)
+       (declare (in) float x))
+     ((declare () float r)
+      (if (expression bool >
+	   (expression float abs (var_ref x))
+	   (constant float (.0001)))
+       ((assign (constant bool (1))
+	 (var_ref r) (call atan ((expression float /
+				  (var_ref y)
+				  (var_ref x)))))
+	(if (expression bool <
+	     (var_ref x)
+	     (constant float (0.0)))
+	 ((assign (constant bool (1))
+	   (var_ref r)
+	   (expression float +
+	    (var_ref r)
+	    (expression float *
+	     (expression int sign (var_ref y))
+	     (constant float (3.1415926))))))
+	 ()))
+       ())
+      (return (var_ref r))))
+
+   (signature vec2
+     (parameters
+       (declare (in) vec2 y)
+       (declare (in) vec2 x))
+     ((declare () vec2 r)
+      (if (expression bool >
+	   (expression vec2 abs (var_ref x))
+	   (constant float (.0001)))
+       ((assign (constant bool (1))
+	 (var_ref r) (call atan ((expression vec2 /
+				  (var_ref y)
+				  (var_ref x)))))
+	(if (expression bool <
+	     (var_ref x)
+	     (constant float (0.0)))
+	 ((assign (constant bool (1))
+	   (var_ref r)
+	   (expression vec2 +
+	    (var_ref r)
+	    (expression vec2 *
+	     (expression int sign (var_ref y))
+	     (constant float (3.1415926))))))
+	 ()))
+       ())
+      (return (var_ref r))))
+
+   (signature vec3
+     (parameters
+       (declare (in) vec3 y)
+       (declare (in) vec3 x))
+     ((declare () vec3 r)
+      (if (expression bool >
+	   (expression vec3 abs (var_ref x))
+	   (constant float (.0001)))
+       ((assign (constant bool (1))
+	 (var_ref r) (call atan ((expression vec3 /
+				  (var_ref y)
+				  (var_ref x)))))
+	(if (expression bool <
+	     (var_ref x)
+	     (constant float (0.0)))
+	 ((assign (constant bool (1))
+	   (var_ref r)
+	   (expression vec3 +
+	    (var_ref r)
+	    (expression vec3 *
+	     (expression int sign (var_ref y))
+	     (constant float (3.1415926))))))
+	 ()))
+       ())
+      (return (var_ref r))))
+
+   (signature vec4
+     (parameters
+       (declare (in) vec4 y)
+       (declare (in) vec4 x))
+     ((declare () vec4 r)
+      (if (expression bool >
+	   (expression vec4 abs (var_ref x))
+	   (constant float (.0001)))
+       ((assign (constant bool (1))
+	 (var_ref r) (call atan ((expression vec4 /
+				  (var_ref y)
+				  (var_ref x)))))
+	(if (expression bool <
+	     (var_ref x)
+	     (constant float (0.0)))
+	 ((assign (constant bool (1))
+	   (var_ref r)
+	   (expression vec4 +
+	    (var_ref r)
+	    (expression vec4 *
+	     (expression int sign (var_ref y))
+	     (constant float (3.1415926))))))
+	 ()))
+       ())
+      (return (var_ref r))))
+
+))

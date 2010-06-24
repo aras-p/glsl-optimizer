@@ -1,0 +1,34 @@
+((function sign
+   (signature float
+     (parameters
+       (declare (in) float x))
+     ((return (expression float sign (var_ref x)))))
+
+   (signature vec2
+     (parameters
+       (declare (in) vec2 x))
+     ((declare () vec2 t)
+      (assign (constant bool (1)) (swiz x (var_ref t)) (expression float sign (swiz x (var_ref x))))
+      (assign (constant bool (1)) (swiz y (var_ref t)) (expression float sign (swiz y (var_ref x))))
+      (return (var_ref t))))
+
+   (signature vec3
+     (parameters
+       (declare (in) vec3 x))
+     ((declare () vec3 t)
+      (assign (constant bool (1)) (swiz x (var_ref t)) (expression float sign (swiz x (var_ref x))))
+      (assign (constant bool (1)) (swiz y (var_ref t)) (expression float sign (swiz y (var_ref x))))
+      (assign (constant bool (1)) (swiz z (var_ref t)) (expression float sign (swiz z (var_ref x))))
+      (return (var_ref t))))
+
+   (signature vec4
+     (parameters
+       (declare (in) vec4 x))
+     ((declare () vec4 t)
+      (assign (constant bool (1)) (swiz x (var_ref t)) (expression float sign (swiz x (var_ref x))))
+      (assign (constant bool (1)) (swiz y (var_ref t)) (expression float sign (swiz y (var_ref x))))
+      (assign (constant bool (1)) (swiz z (var_ref t)) (expression float sign (swiz z (var_ref x))))
+      (assign (constant bool (1)) (swiz w (var_ref t)) (expression float sign (swiz w (var_ref x))))
+      (return (var_ref t))))
+))
+

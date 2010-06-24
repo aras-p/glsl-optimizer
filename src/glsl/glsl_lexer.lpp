@@ -1,0 +1,336 @@
+%{
+/*
+ * Copyright © 2008, 2009 Intel Corporation
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice (including the next
+ * paragraph) shall be included in all copies or substantial portions of the
+ * Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ */
+#include <ctype.h>
+#include "ast.h"
+#include "glsl_parser_extras.h"
+#include "glsl_parser.h"
+
+#define YY_USER_ACTION						\
+   do {								\
+      yylloc->source = 0;					\
+      yylloc->first_column = yycolumn + 1;			\
+      yylloc->first_line = yylineno + 1;			\
+      yycolumn += yyleng;					\
+   } while(0);
+
+%}
+
+%option bison-bridge bison-locations reentrant noyywrap
+%option nounput noyy_top_state
+%option never-interactive
+%option prefix="_mesa_glsl_"
+%option extra-type="struct _mesa_glsl_parse_state *"
+
+%x PP
+
+DEC_INT		[1-9][0-9]*
+HEX_INT		0[xX][0-9a-fA-F]+
+OCT_INT		0[0-7]*
+INT		({DEC_INT}|{HEX_INT}|{OCT_INT})
+SPC		[ \t]*
+SPCP		[ \t]+
+HASH		^{SPC}#{SPC}
+%%
+
+[ \r\t]+		;
+
+    /* Preprocessor tokens. */ 
+^[ \t]*#[ \t]*$			;
+^[ \t]*#[ \t]*version		{ BEGIN PP; return VERSION; }
+^[ \t]*#[ \t]*extension		{ BEGIN PP; return EXTENSION; }
+{HASH}line{SPCP}{INT}{SPCP}{INT}{SPC}$ {
+				   /* Eat characters until the first digit is
+				    * encountered
+				    */
+				   char *ptr = yytext;
+				   while (!isdigit(*ptr))
+				      ptr++;
+
+				   /* Subtract one from the line number because
+				    * yylineno is zero-based instead of
+				    * one-based.
+				    */
+				   yylineno = strtol(ptr, &ptr, 0) - 1;
+				   yylloc->source = strtol(ptr, NULL, 0);
+				}
+{HASH}line{SPCP}{INT}{SPC}$	{
+				   /* Eat characters until the first digit is
+				    * encountered
+				    */
+				   char *ptr = yytext;
+				   while (!isdigit(*ptr))
+				      ptr++;
+
+				   /* Subtract one from the line number because
+				    * yylineno is zero-based instead of
+				    * one-based.
+				    */
+				   yylineno = strtol(ptr, &ptr, 0) - 1;
+				}
+^[ \t]*#[ \t]*pragma		{ BEGIN PP; return PRAGMA; }
+<PP>\/\/[^\n]*			{ }
+<PP>[ \t\r]*			{ }
+<PP>:				return COLON;
+<PP>[_a-zA-Z][_a-zA-Z0-9]*	{
+				   yylval->identifier = strdup(yytext);
+				   return IDENTIFIER;
+				}
+<PP>[1-9][0-9]*			{
+				    yylval->n = strtol(yytext, NULL, 10);
+				    return INTCONSTANT;
+				}
+<PP>\n				{ BEGIN 0; yylineno++; yycolumn = 0; return EOL; }
+
+\n		{ yylineno++; yycolumn = 0; }
+
+attribute	return ATTRIBUTE;
+const		return CONST;
+bool		return BOOL;
+float		return FLOAT;
+int		return INT;
+
+break		return BREAK;
+continue	return CONTINUE;
+do		return DO;
+while		return WHILE;
+else		return ELSE;
+for		return FOR;
+if		return IF;
+discard		return DISCARD;
+return		return RETURN;
+
+bvec2		return BVEC2;
+bvec3		return BVEC3;
+bvec4		return BVEC4;
+ivec2		return IVEC2;
+ivec3		return IVEC3;
+ivec4		return IVEC4;
+vec2		return VEC2;
+vec3		return VEC3;
+vec4		return VEC4;
+mat2		return MAT2;
+mat3		return MAT3;
+mat4		return MAT4;
+mat2x2		return MAT2X2;
+mat2x3		return MAT2X3;
+mat2x4		return MAT2X4;
+mat3x2		return MAT3X2;
+mat3x3		return MAT3X3;
+mat3x4		return MAT3X4;
+mat4x2		return MAT4X2;
+mat4x3		return MAT4X3;
+mat4x4		return MAT4X4;
+
+in		return IN;
+out		return OUT;
+inout		return INOUT;
+uniform		return UNIFORM;
+varying		return VARYING;
+centroid	{
+		   if (yyextra->language_version >= 120) {
+		      return CENTROID;
+		   } else {
+		      yylval->identifier = strdup(yytext);
+		      return IDENTIFIER;
+		   }
+		}
+invariant	{
+		   if (yyextra->language_version >= 120) {
+		      return INVARIANT;
+		   } else {
+		      yylval->identifier = strdup(yytext);
+		      return IDENTIFIER;
+		   }
+		}
+
+flat		{
+		   if (yyextra->language_version >= 130) {
+		      return FLAT;
+		   } else {
+		      yylval->identifier = strdup(yytext);
+		      return IDENTIFIER;
+		   }
+		}
+smooth		{
+		   if (yyextra->language_version >= 130) {
+		      return SMOOTH;
+		   } else {
+		      yylval->identifier = strdup(yytext);
+		      return IDENTIFIER;
+		   }
+		}
+noperspective	{
+		   if (yyextra->language_version >= 130) {
+		      return NOPERSPECTIVE;
+		   } else {
+		      yylval->identifier = strdup(yytext);
+		      return IDENTIFIER;
+		   }
+		}
+
+sampler1D	return SAMPLER1D;
+sampler2D	return SAMPLER2D;
+sampler3D	return SAMPLER3D;
+samplerCube	return SAMPLERCUBE;
+sampler1DShadow	return SAMPLER1DSHADOW;
+sampler2DShadow	return SAMPLER2DSHADOW;
+
+struct		return STRUCT;
+void		return VOID;
+
+\+\+		return INC_OP;
+--		return DEC_OP;
+\<=		return LE_OP;
+>=		return GE_OP;
+==		return EQ_OP;
+!=		return NE_OP;
+&&		return AND_OP;
+\|\|		return OR_OP;
+"^^"		return XOR_OP;
+
+\*=		return MUL_ASSIGN;
+\/=		return DIV_ASSIGN;
+\+=		return ADD_ASSIGN;
+\%=		return MOD_ASSIGN;
+\<\<=		return LEFT_ASSIGN;
+>>=		return RIGHT_ASSIGN;
+&=		return AND_ASSIGN;
+^=		return XOR_ASSIGN;
+\|=		return OR_ASSIGN;
+-=		return SUB_ASSIGN;
+
+[1-9][0-9]*		{
+			    yylval->n = strtol(yytext, NULL, 10);
+			    return INTCONSTANT;
+			}
+0[xX][0-9a-fA-F]+	{
+			    yylval->n = strtol(yytext + 2, NULL, 16);
+			    return INTCONSTANT;
+			}
+0[0-7]*			{
+			    yylval->n = strtol(yytext + 2, NULL, 8);
+			    return INTCONSTANT;
+			}
+
+[0-9]+\.[0-9]+([eE][+-]?[0-9]+)?[fF]?	{
+			    yylval->real = strtod(yytext, NULL);
+			    return FLOATCONSTANT;
+			}
+\.[0-9]+([eE][+-]?[0-9]+)?[fF]?		{
+			    yylval->real = strtod(yytext, NULL);
+			    return FLOATCONSTANT;
+			}
+[0-9]+\.([eE][+-]?[0-9]+)?[fF]?		{
+			    yylval->real = strtod(yytext, NULL);
+			    return FLOATCONSTANT;
+			}
+[0-9]+[eE][+-]?[0-9]+[fF]?		{
+			    yylval->real = strtod(yytext, NULL);
+			    return FLOATCONSTANT;
+			}
+
+true			{
+			    yylval->n = 1;
+			    return BOOLCONSTANT;
+			}
+false			{
+			    yylval->n = 0;
+			    return BOOLCONSTANT;
+			}
+
+
+    /* Reserved words in GLSL 1.10. */
+asm		return ASM;
+class		return CLASS;
+union		return UNION;
+enum		return ENUM;
+typedef		return TYPEDEF;
+template	return TEMPLATE;
+this		return THIS;
+packed		return PACKED;
+goto		return GOTO;
+switch		return SWITCH;
+default		return DEFAULT;
+inline		return INLINE;
+noinline	return NOINLINE;
+volatile	return VOLATILE;
+public		return PUBLIC;
+static		return STATIC;
+extern		return EXTERN;
+external	return EXTERNAL;
+interface	return INTERFACE;
+long		return LONG;
+short		return SHORT;
+double		return DOUBLE;
+half		return HALF;
+fixed		return FIXED;
+unsigned	return UNSIGNED;
+input		return INPUT;
+output		return OUTPUT;
+hvec2		return HVEC2;
+hvec3		return HVEC3;
+hvec4		return HVEC4;
+dvec2		return DVEC2;
+dvec3		return DVEC3;
+dvec4		return DVEC4;
+fvec2		return FVEC2;
+fvec3		return FVEC3;
+fvec4		return FVEC4;
+sampler2DRect		return SAMPLER2DRECT;
+sampler3DRect		return SAMPLER3DRECT;
+sampler2DRectShadow	return SAMPLER2DRECTSHADOW;
+sizeof		return SIZEOF;
+cast		return CAST;
+namespace	return NAMESPACE;
+using		return USING;
+
+    /* Additional reserved words in GLSL 1.20. */
+lowp		return LOWP;
+mediump		return MEDIUMP;
+highp		return HIGHP;
+precision	return PRECISION;
+
+[_a-zA-Z][_a-zA-Z0-9]*	{
+			    struct _mesa_glsl_parse_state *state = yyextra;
+			    void *ctx = talloc_parent(state);	
+			    yylval->identifier = talloc_strdup(ctx, yytext);
+			    return IDENTIFIER;
+			}
+
+.			{ return yytext[0]; }
+
+%%
+
+void
+_mesa_glsl_lexer_ctor(struct _mesa_glsl_parse_state *state, const char *string)
+{
+   yylex_init_extra(state, & state->scanner);
+   yy_scan_string(string, state->scanner);
+}
+
+void
+_mesa_glsl_lexer_dtor(struct _mesa_glsl_parse_state *state)
+{
+   yylex_destroy(state->scanner);
+}
