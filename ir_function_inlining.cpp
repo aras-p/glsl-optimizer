@@ -146,11 +146,12 @@ ir_call::generate_inline(ir_instruction *next_ir)
 
       /* Generate a new variable for the parameter. */
       parameters[i] = (ir_variable *)sig_param->clone(ht);
+      parameters[i]->mode = ir_var_auto;
       next_ir->insert_before(parameters[i]);
 
       /* Move the actual param into our param variable if it's an 'in' type. */
-      if (parameters[i]->mode == ir_var_in ||
-	  parameters[i]->mode == ir_var_inout) {
+      if (sig_param->mode == ir_var_in ||
+	  sig_param->mode == ir_var_inout) {
 	 ir_assignment *assign;
 
 	 assign = new ir_assignment(new ir_dereference_variable(parameters[i]),
