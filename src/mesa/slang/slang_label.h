@@ -3,7 +3,7 @@
 
 #include "main/imports.h"
 #include "main/mtypes.h"
-#include "shader/prog_instruction.h"
+#include "program/prog_instruction.h"
 
 
 struct slang_label_

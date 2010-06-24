@@ -32,8 +32,8 @@
  */
 
 #include "main/imports.h"
-#include "shader/prog_parameter.h"
-#include "shader/prog_print.h"
+#include "program/prog_parameter.h"
+#include "program/prog_print.h"
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"

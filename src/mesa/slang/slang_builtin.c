@@ -31,12 +31,12 @@
 
 #include "main/imports.h"
 #include "main/mtypes.h"
-#include "shader/program.h"
-#include "shader/prog_instruction.h"
-#include "shader/prog_parameter.h"
-#include "shader/prog_statevars.h"
-#include "shader/slang/slang_ir.h"
-#include "shader/slang/slang_builtin.h"
+#include "program/program.h"
+#include "program/prog_instruction.h"
+#include "program/prog_parameter.h"
+#include "program/prog_statevars.h"
+#include "slang/slang_ir.h"
+#include "slang/slang_builtin.h"
 
 
 /** special state token (see below) */

@@ -29,7 +29,7 @@
 #define ST_CONTEXT_H
 
 #include "main/mtypes.h"
-#include "shader/prog_cache.h"
+#include "program/prog_cache.h"
 #include "pipe/p_state.h"
 #include "state_tracker/st_api.h"
 

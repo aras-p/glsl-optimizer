@@ -31,10 +31,10 @@
   
 #include "main/imports.h"
 #include "main/enums.h"
-#include "shader/prog_parameter.h"
-#include "shader/program.h"
-#include "shader/programopt.h"
-#include "shader/shader_api.h"
+#include "main/shaderobj.h"
+#include "program/prog_parameter.h"
+#include "program/program.h"
+#include "program/programopt.h"
 #include "tnl/tnl.h"
 
 #include "brw_context.h"

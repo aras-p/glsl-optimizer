@@ -32,13 +32,15 @@
 #include "main/imports.h"
 #include "main/context.h"
 #include "main/macros.h"
-#include "shader/program.h"
-#include "shader/prog_instruction.h"
-#include "shader/prog_parameter.h"
-#include "shader/prog_print.h"
-#include "shader/prog_statevars.h"
-#include "shader/prog_uniform.h"
-#include "shader/shader_api.h"
+#include "main/shaderapi.h"
+#include "main/shaderobj.h"
+#include "main/uniforms.h"
+#include "program/program.h"
+#include "program/prog_instruction.h"
+#include "program/prog_parameter.h"
+#include "program/prog_print.h"
+#include "program/prog_statevars.h"
+#include "program/prog_uniform.h"
 #include "slang_builtin.h"
 #include "slang_link.h"
 
@@ -873,7 +875,7 @@ get_main_shader(GLcontext *ctx,
           !shader->Main ||
           shader->UnresolvedRefs) {
          link_error(shProg, "Unresolved symbols");
-         _mesa_free_shader(ctx, shader);
+         ctx->Driver.DeleteShader(ctx, shader);
          return NULL;
       }
    }

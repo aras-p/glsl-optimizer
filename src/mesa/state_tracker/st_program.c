@@ -33,8 +33,8 @@
 
 #include "main/imports.h"
 #include "main/mtypes.h"
-#include "shader/prog_print.h"
-#include "shader/programopt.h"
+#include "program/prog_print.h"
+#include "program/programopt.h"
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"

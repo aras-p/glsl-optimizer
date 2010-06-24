@@ -1,7 +1,7 @@
 
 #include "main/imports.h"
-#include "shader/program.h"
-#include "shader/prog_print.h"
+#include "program/program.h"
+#include "program/prog_print.h"
 #include "slang_compile.h"
 #include "slang_compile_variable.h"
 #include "slang_emit.h"

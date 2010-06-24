@@ -35,11 +35,11 @@
 #include "main/imports.h"
 #include "main/macros.h"
 #include "main/mtypes.h"
-#include "arbprogram.h"
-#include "arbprogparse.h"
-#include "nvfragparse.h"
-#include "nvvertparse.h"
-#include "program.h"
+#include "main/arbprogram.h"
+#include "program/arbprogparse.h"
+#include "program/nvfragparse.h"
+#include "program/nvvertparse.h"
+#include "program/program.h"
 
 
 

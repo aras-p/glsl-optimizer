@@ -36,9 +36,9 @@
 #include "main/context.h"
 #include "main/macros.h"
 #include "main/imports.h"
-#include "shader/prog_instruction.h"
-#include "shader/prog_statevars.h"
-#include "shader/prog_execute.h"
+#include "program/prog_instruction.h"
+#include "program/prog_statevars.h"
+#include "program/prog_execute.h"
 #include "swrast/s_context.h"
 
 #include "tnl/tnl.h"

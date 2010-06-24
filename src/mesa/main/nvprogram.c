@@ -42,13 +42,13 @@
 #include "main/hash.h"
 #include "main/imports.h"
 #include "main/macros.h"
-#include "program.h"
-#include "prog_parameter.h"
-#include "prog_instruction.h"
-#include "nvfragparse.h"
-#include "nvvertparse.h"
-#include "arbprogparse.h"
-#include "nvprogram.h"
+#include "main/nvprogram.h"
+#include "program/arbprogparse.h"
+#include "program/nvfragparse.h"
+#include "program/nvvertparse.h"
+#include "program/program.h"
+#include "program/prog_instruction.h"
+#include "program/prog_parameter.h"
 
 
 

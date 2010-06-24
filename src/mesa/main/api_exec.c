@@ -34,9 +34,9 @@
 #include "api_loopback.h"
 #include "api_exec.h"
 #if FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program
-#include "shader/arbprogram.h"
+#include "arbprogram.h"
 #endif
-#include "shader/atifragshader.h"
+#include "atifragshader.h"
 #include "attrib.h"
 #include "blend.h"
 #if FEATURE_ARB_vertex_buffer_object
@@ -92,13 +92,14 @@
 #include "varray.h"
 #include "viewport.h"
 #if FEATURE_NV_vertex_program
-#include "shader/nvprogram.h"
+#include "nvprogram.h"
 #endif
 #if FEATURE_NV_fragment_program
-#include "shader/nvprogram.h"
+#include "nvprogram.h"
 #endif
 #if FEATURE_ARB_shader_objects
-#include "shaders.h"
+#include "shaderapi.h"
+#include "uniforms.h"
 #endif
 #if FEATURE_ARB_sync
 #include "syncobj.h"
@@ -347,6 +348,7 @@ _mesa_create_exec_table(void)
 
 #if FEATURE_ARB_shader_objects
    _mesa_init_shader_dispatch(exec);
+   _mesa_init_shader_uniform_dispatch(exec);
 #endif
 
    /* 2. GL_EXT_blend_color */

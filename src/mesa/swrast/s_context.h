@@ -44,7 +44,7 @@
 #define S_CONTEXT_H
 
 #include "main/mtypes.h"
-#include "shader/prog_execute.h"
+#include "program/prog_execute.h"
 #include "swrast.h"
 #include "s_span.h"
 

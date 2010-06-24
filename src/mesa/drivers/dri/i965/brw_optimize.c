@@ -26,8 +26,8 @@
  */
 
 #include "main/macros.h"
-#include "shader/program.h"
-#include "shader/prog_print.h"
+#include "program/program.h"
+#include "program/prog_print.h"
 #include "brw_context.h"
 #include "brw_defines.h"
 #include "brw_eu.h"

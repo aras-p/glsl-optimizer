@@ -31,9 +31,9 @@
             
 
 #include "main/macros.h"
-#include "shader/program.h"
-#include "shader/prog_parameter.h"
-#include "shader/prog_print.h"
+#include "program/program.h"
+#include "program/prog_parameter.h"
+#include "program/prog_print.h"
 #include "brw_context.h"
 #include "brw_vs.h"
 

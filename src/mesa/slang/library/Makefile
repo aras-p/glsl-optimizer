@@ -1,6 +1,6 @@
-# src/mesa/shader/slang/library/Makefile
+# src/mesa/slang/library/Makefile
 
-TOP = ../../../../..
+TOP = ../../../..
 
 include $(TOP)/configs/current
 

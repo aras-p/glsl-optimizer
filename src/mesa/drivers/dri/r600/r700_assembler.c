@@ -32,7 +32,7 @@
 
 #include "main/mtypes.h"
 #include "main/imports.h"
-#include "shader/prog_parameter.h"
+#include "program/prog_parameter.h"
 
 #include "radeon_debug.h"
 #include "r600_context.h"

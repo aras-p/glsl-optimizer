@@ -1,7 +1,8 @@
 /*
  * Mesa 3-D graphics library
+ * Version:  6.5.3
  *
- * Copyright (C) 2010  VMware, Inc.  All Rights Reserved.
+ * Copyright (C) 2005-2007  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -16,18 +17,48 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+ * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
 
-#ifndef UNIFORMS_H
-#define UNIFORMS_H
+#ifndef SLANG_BUILTIN_H
+#define SLANG_BUILTIN_H
+
+#include "program/prog_parameter.h"
+#include "slang_utility.h"
+#include "slang_ir.h"
 
 
-extern void
-_mesa_init_uniform_functions(struct dd_function_table *driver);
+extern GLint
+_slang_alloc_statevar(slang_ir_node *n,
+                      struct gl_program_parameter_list *paramList,
+                      GLboolean *direct);
 
 
-#endif /* UNIFORMS_H */
+extern GLint
+_slang_input_index(const char *name, GLenum target, GLuint *swizzleOut);
+
+extern GLint
+_slang_output_index(const char *name, GLenum target);
+
+
+extern const char *
+_slang_vert_attrib_name(GLuint attrib);
+
+extern GLenum
+_slang_vert_attrib_type(GLuint attrib);
+
+
+const char *
+_slang_vertex_output_name(gl_vert_result index);
+
+const char *
+_slang_fragment_output_name(gl_frag_result index);
+
+GLenum
+_slang_vertex_output_type(gl_vert_result index);
+
+
+#endif /* SLANG_BUILTIN_H */

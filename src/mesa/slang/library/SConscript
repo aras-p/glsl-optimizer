@@ -28,25 +28,25 @@ env['BUILDERS']['bld_vert'] = bld_vert
 
 # Generate GLSL builtin library binaries
 env.bld_frag(
-	'#src/mesa/shader/slang/library/slang_core_gc.h',
-	'#src/mesa/shader/slang/library/slang_core.gc')
+	'#src/mesa/slang/library/slang_core_gc.h',
+	'#src/mesa/slang/library/slang_core.gc')
 env.bld_frag(
-	'#src/mesa/shader/slang/library/slang_common_builtin_gc.h',
-	'#src/mesa/shader/slang/library/slang_common_builtin.gc')
+	'#src/mesa/slang/library/slang_common_builtin_gc.h',
+	'#src/mesa/slang/library/slang_common_builtin.gc')
 env.bld_frag(
-	'#src/mesa/shader/slang/library/slang_fragment_builtin_gc.h',
-	'#src/mesa/shader/slang/library/slang_fragment_builtin.gc')
+	'#src/mesa/slang/library/slang_fragment_builtin_gc.h',
+	'#src/mesa/slang/library/slang_fragment_builtin.gc')
 env.bld_vert(
-	'#src/mesa/shader/slang/library/slang_vertex_builtin_gc.h',
-	'#src/mesa/shader/slang/library/slang_vertex_builtin.gc')
+	'#src/mesa/slang/library/slang_vertex_builtin_gc.h',
+	'#src/mesa/slang/library/slang_vertex_builtin.gc')
 
 # Generate GLSL 1.20 builtin library binaries
 env.bld_frag(
-	'#src/mesa/shader/slang/library/slang_120_core_gc.h',
-	'#src/mesa/shader/slang/library/slang_120_core.gc')
+	'#src/mesa/slang/library/slang_120_core_gc.h',
+	'#src/mesa/slang/library/slang_120_core.gc')
 env.bld_frag(
-	'#src/mesa/shader/slang/library/slang_builtin_120_common_gc.h',
-	'#src/mesa/shader/slang/library/slang_builtin_120_common.gc')
+	'#src/mesa/slang/library/slang_builtin_120_common_gc.h',
+	'#src/mesa/slang/library/slang_builtin_120_common.gc')
 env.bld_frag(
-	'#src/mesa/shader/slang/library/slang_builtin_120_fragment_gc.h',
-	'#src/mesa/shader/slang/library/slang_builtin_120_fragment.gc')
+	'#src/mesa/slang/library/slang_builtin_120_fragment_gc.h',
+	'#src/mesa/slang/library/slang_builtin_120_fragment.gc')

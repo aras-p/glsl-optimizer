@@ -27,6 +27,10 @@
 #define ARBPROGRAM_H
 
 
+#include "compiler.h"
+#include "glheader.h"
+
+
 extern void GLAPIENTRY
 _mesa_BindProgram(GLenum target, GLuint id);
 

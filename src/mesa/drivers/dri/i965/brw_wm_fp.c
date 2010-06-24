@@ -37,9 +37,9 @@
 #include "brw_wm.h"
 #include "brw_util.h"
 
-#include "shader/prog_parameter.h"
-#include "shader/prog_print.h"
-#include "shader/prog_statevars.h"
+#include "program/prog_parameter.h"
+#include "program/prog_print.h"
+#include "program/prog_statevars.h"
 
 
 /** An invalid texture target */

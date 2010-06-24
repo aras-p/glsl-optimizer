@@ -34,8 +34,8 @@
 #include "brw_vs.h"
 #include "brw_util.h"
 #include "brw_state.h"
-#include "shader/prog_print.h"
-#include "shader/prog_parameter.h"
+#include "program/prog_print.h"
+#include "program/prog_parameter.h"
 
 
 

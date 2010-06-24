@@ -35,7 +35,7 @@
 #define ST_PROGRAM_H
 
 #include "main/mtypes.h"
-#include "shader/program.h"
+#include "program/program.h"
 #include "pipe/p_shader_tokens.h"
 
 
