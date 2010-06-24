@@ -47,7 +47,6 @@ struct egl_g3d_driver {
    _EGLDriver base;
    const struct egl_g3d_loader *loader;
    const struct native_platform *platforms[_EGL_NUM_PLATFORMS];
-   EGLint probe_key;
 };
 
 struct egl_g3d_display {

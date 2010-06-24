@@ -59,8 +59,6 @@ native_create_display(void *dpy, struct native_event_handler *event_handler,
 
 static const struct native_platform x11_platform = {
    "X11", /* name */
-   NULL, /* create_probe */
-   NULL, /* get_probe_result */
    native_create_display
 };
 

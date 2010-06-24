@@ -457,8 +457,6 @@ native_create_display(void *dpy, struct native_event_handler *event_handler,
 
 static const struct native_platform fbdev_platform = {
    "FBDEV", /* name */
-   NULL, /* create_probe */
-   NULL, /* get_probe_result */
    native_create_display
 };
 

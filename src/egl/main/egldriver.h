@@ -97,12 +97,4 @@ _eglSearchPathForEach(EGLBoolean (*callback)(const char *, size_t, void *),
                       void *callback_data);
 
 
-PUBLIC void
-_eglSetProbeCache(EGLint key, const void *val);
-
-
-PUBLIC const void *
-_eglGetProbeCache(EGLint key);
-
-
 #endif /* EGLDRIVER_INCLUDED */

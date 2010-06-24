@@ -767,8 +767,6 @@ native_create_display(void *dpy, struct native_event_handler *event_handler,
 
 static const struct native_platform kms_platform = {
    "KMS", /* name */
-   NULL, /* create_probe */
-   NULL, /* get_probe_result */
    native_create_display
 };
 

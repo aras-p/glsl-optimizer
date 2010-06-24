@@ -34,7 +34,6 @@
 #include "pipe/p_state.h"
 #include "state_tracker/sw_winsys.h"
 
-#include "native_probe.h"
 #include "native_modeset.h"
 
 /**
@@ -215,20 +214,6 @@ native_attachment_mask_test(uint mask, enum native_attachment att)
 
 struct native_platform {
    const char *name;
-
-   /**
-    * Return a probe object for the given display.
-    *
-    * Note that the returned object may be cached and used by different native
-    * display modules.  It allows fast probing when multiple modules probe the
-    * same display.
-    */
-   struct native_probe *(*create_probe)(void *dpy);
-
-   /**
-    * Probe the probe object.
-    */
-   enum native_probe_result (*get_probe_result)(struct native_probe *nprobe);
 
    struct native_display *(*create_display)(void *dpy,
                                             struct native_event_handler *handler,

@@ -88,51 +88,6 @@ egl_g3d_get_platform(_EGLDriver *drv, _EGLPlatformType plat)
    return gdrv->platforms[plat];
 }
 
-/**
- * Get the probe result of the display.
- *
- * Note that this function may be called before the display is initialized.
- */
-static enum native_probe_result
-egl_g3d_get_probe_result(_EGLDriver *drv, _EGLDisplay *dpy)
-{
-   struct egl_g3d_driver *gdrv = egl_g3d_driver(drv);
-   struct native_probe *nprobe;
-   const struct native_platform *nplat;
-
-   nplat = egl_g3d_get_platform(drv, dpy->Platform);
-   if (!nplat || !nplat->create_probe)
-      return NATIVE_PROBE_UNKNOWN;
-
-   nprobe = (struct native_probe *) _eglGetProbeCache(gdrv->probe_key);
-   if (!nprobe || nprobe->display != dpy->PlatformDisplay) {
-      if (nprobe)
-         nprobe->destroy(nprobe);
-      nprobe = nplat->create_probe(dpy->PlatformDisplay);
-      _eglSetProbeCache(gdrv->probe_key, (void *) nprobe);
-   }
-
-   return nplat->get_probe_result(nprobe);
-}
-
-/**
- * Destroy the probe object of the display.  The display may be NULL.
- *
- * Note that this function may be called before the display is initialized.
- */
-static void
-egl_g3d_destroy_probe(_EGLDriver *drv, _EGLDisplay *dpy)
-{
-   struct egl_g3d_driver *gdrv = egl_g3d_driver(drv);
-   struct native_probe *nprobe;
-
-   nprobe = (struct native_probe *) _eglGetProbeCache(gdrv->probe_key);
-   if (nprobe && (!dpy || nprobe->display == dpy->PlatformDisplay)) {
-      nprobe->destroy(nprobe);
-      _eglSetProbeCache(gdrv->probe_key, NULL);
-   }
-}
-
 #ifdef EGL_MESA_screen_surface
 
 static void
@@ -510,9 +465,6 @@ egl_g3d_initialize(_EGLDriver *drv, _EGLDisplay *dpy,
    struct egl_g3d_display *gdpy;
    const struct native_platform *nplat;
 
-   /* the probe object is unlikely to be needed again */
-   egl_g3d_destroy_probe(drv, dpy);
-
    nplat = egl_g3d_get_platform(drv, dpy->Platform);
    if (!nplat)
       return EGL_FALSE;
@@ -595,28 +547,7 @@ egl_g3d_get_proc_address(_EGLDriver *drv, const char *procname)
 static EGLint
 egl_g3d_probe(_EGLDriver *drv, _EGLDisplay *dpy)
 {
-   enum native_probe_result res;
-   EGLint score;
-
-   res = egl_g3d_get_probe_result(drv, dpy);
-
-   switch (res) {
-   case NATIVE_PROBE_UNKNOWN:
-   default:
-      score = 0;
-      break;
-   case NATIVE_PROBE_FALLBACK:
-      score = 40;
-      break;
-   case NATIVE_PROBE_SUPPORTED:
-      score = 50;
-      break;
-   case NATIVE_PROBE_EXACT:
-      score = 100;
-      break;
-   }
-
-   return score;
+   return (egl_g3d_get_platform(drv, dpy->Platform)) ? 90 : 0;
 }
 
 _EGLDriver *
@@ -636,9 +567,6 @@ egl_g3d_create_driver(const struct egl_g3d_loader *loader)
    gdrv->base.API.GetProcAddress = egl_g3d_get_proc_address;
 
    gdrv->base.Probe = egl_g3d_probe;
-
-   /* the key is " EGL G3D" */
-   gdrv->probe_key = 0x0E61063D;
 
    /* to be filled by the caller */
    gdrv->base.Name = NULL;
