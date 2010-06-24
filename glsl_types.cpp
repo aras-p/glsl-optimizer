@@ -224,11 +224,10 @@ glsl_type::generate_constructor(glsl_symbol_table *symtab) const
  *                     the symbol table.
  */
 static ir_function_signature *
-generate_constructor_intro(const glsl_type *type, unsigned parameter_count,
+generate_constructor_intro(void *ctx,
+			   const glsl_type *type, unsigned parameter_count,
 			   ir_variable **declarations)
 {
-   /* NULL is wrong here and leaks. */
-   void *ctx = NULL;
    /* Names of parameters used in vector and matrix constructors
     */
    static const char *const names[] = {
@@ -263,11 +262,10 @@ generate_constructor_intro(const glsl_type *type, unsigned parameter_count,
  * Generate the body of a vector constructor that takes a single scalar
  */
 static void
-generate_vec_body_from_scalar(exec_list *instructions,
+generate_vec_body_from_scalar(void *ctx,
+			      exec_list *instructions,
 			      ir_variable **declarations)
 {
-   /* NULL is wrong here and leaks. */
-   void *ctx = NULL;
    ir_instruction *inst;
 
    /* Generate a single assignment of the parameter to __retval.x and return
@@ -296,11 +294,10 @@ generate_vec_body_from_scalar(exec_list *instructions,
  * Generate the body of a vector constructor that takes multiple scalars
  */
 static void
-generate_vec_body_from_N_scalars(exec_list *instructions,
+generate_vec_body_from_N_scalars(void *ctx,
+				 exec_list *instructions,
 				 ir_variable **declarations)
 {
-   /* NULL is wrong here and leaks. */
-   void *ctx = NULL;
    ir_instruction *inst;
    const glsl_type *const vec_type = declarations[16]->type;
 
@@ -329,11 +326,10 @@ generate_vec_body_from_N_scalars(exec_list *instructions,
  * Generate the body of a matrix constructor that takes a single scalar
  */
 static void
-generate_mat_body_from_scalar(exec_list *instructions,
+generate_mat_body_from_scalar(void *ctx,
+			      exec_list *instructions,
 			      ir_variable **declarations)
 {
-   /* NULL is wrong here and leaks. */
-   void *ctx = NULL;
    ir_instruction *inst;
 
    /* Generate an assignment of the parameter to the X component of a
@@ -410,11 +406,10 @@ generate_mat_body_from_scalar(exec_list *instructions,
  * Generate the body of a vector constructor that takes multiple scalars
  */
 static void
-generate_mat_body_from_N_scalars(exec_list *instructions,
+generate_mat_body_from_N_scalars(void *ctx,
+				 exec_list *instructions,
 				 ir_variable **declarations)
 {
-   /* NULL is wrong here and leaks. */
-   void *ctx = NULL;
    ir_instruction *inst;
    const glsl_type *const row_type = declarations[16]->type->row_type();
    const glsl_type *const column_type = declarations[16]->type->column_type();
@@ -498,31 +493,33 @@ generate_constructor(glsl_symbol_table *symtab, const struct glsl_type *types,
        * appropriate from-scalars constructor.
        */
       ir_function_signature *const sig =
-         generate_constructor_intro(&types[i], 1, declarations);
+         generate_constructor_intro(ctx, &types[i], 1, declarations);
       f->add_signature(sig);
 
       if (types[i].is_vector()) {
-	 generate_vec_body_from_scalar(&sig->body, declarations);
+	 generate_vec_body_from_scalar(ctx, &sig->body, declarations);
 
 	 ir_function_signature *const vec_sig =
-	    generate_constructor_intro(&types[i], types[i].vector_elements,
+	    generate_constructor_intro(ctx,
+				       &types[i], types[i].vector_elements,
 				       declarations);
 	 f->add_signature(vec_sig);
 
-	 generate_vec_body_from_N_scalars(&vec_sig->body, declarations);
+	 generate_vec_body_from_N_scalars(ctx, &vec_sig->body, declarations);
       } else {
 	 assert(types[i].is_matrix());
 
-	 generate_mat_body_from_scalar(&sig->body, declarations);
+	 generate_mat_body_from_scalar(ctx, &sig->body, declarations);
 
 	 ir_function_signature *const mat_sig =
-	    generate_constructor_intro(&types[i],
+	    generate_constructor_intro(ctx,
+				       &types[i],
 				       (types[i].vector_elements
 					* types[i].matrix_columns),
 				       declarations);
 	 f->add_signature(mat_sig);
 
-	 generate_mat_body_from_N_scalars(&mat_sig->body, declarations);
+	 generate_mat_body_from_N_scalars(ctx, &mat_sig->body, declarations);
       }
    }
 }
