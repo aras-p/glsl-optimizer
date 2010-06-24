@@ -1028,33 +1028,35 @@ static void r300_resource_resolve(struct pipe_context* pipe,
                                   struct pipe_subresource subsrc)
 {
     struct r300_context* r300 = r300_context(pipe);
-    struct r300_surface* destsurf = r300_surface(
-        dest->screen->get_tex_surface(dest->screen,
-            dest, subdest.face, subdest.level, 0, 0));
+    struct r300_aa_state *aa = (struct r300_aa_state*)r300->aa_state.state;
     struct pipe_surface* srcsurf = src->screen->get_tex_surface(src->screen,
             src, subsrc.face, subsrc.level, 0, 0);
     float color[] = {0, 0, 0, 0};
-    CS_LOCALS(r300);
 
     DBG(r300, DBG_DRAW, "r300: Resolving resource...\n");
 
-    OUT_CS_REG_SEQ(R300_RB3D_AARESOLVE_OFFSET, 1);
-    OUT_CS_RELOC(destsurf->buffer, destsurf->offset, 0, destsurf->domain, 0);
+    /* Enable AA resolve. */
+    aa->dest = r300_surface(
+            dest->screen->get_tex_surface(dest->screen, dest, subdest.face,
+                                          subdest.level, 0, 0));
 
-    OUT_CS_REG_SEQ(R300_RB3D_AARESOLVE_PITCH, 1);
-    OUT_CS_RELOC(destsurf->buffer, destsurf->pitch, 0, destsurf->domain, 0);
-
-    OUT_CS_REG(R300_RB3D_AARESOLVE_CTL,
+    aa->aaresolve_ctl =
         R300_RB3D_AARESOLVE_CTL_AARESOLVE_MODE_RESOLVE |
-        R300_RB3D_AARESOLVE_CTL_AARESOLVE_ALPHA_AVERAGE);
+        R300_RB3D_AARESOLVE_CTL_AARESOLVE_ALPHA_AVERAGE;
+    r300->aa_state.size = 12;
+    r300->aa_state.dirty = TRUE;
 
+    /* Resolve the surface. */
     r300->context.clear_render_target(pipe,
         srcsurf, color, 0, 0, src->width0, src->height0);
 
-    OUT_CS_REG(R300_RB3D_AARESOLVE_CTL, 0x0);
+    /* Disable AA resolve. */
+    aa->aaresolve_ctl = 0;
+    r300->aa_state.size = 4;
+    r300->aa_state.dirty = TRUE;
 
     pipe_surface_reference((struct pipe_surface**)&srcsurf, NULL);
-    pipe_surface_reference((struct pipe_surface**)&destsurf, NULL);
+    pipe_surface_reference((struct pipe_surface**)&aa->dest, NULL);
 }
 
 void r300_init_render_functions(struct r300_context *r300)

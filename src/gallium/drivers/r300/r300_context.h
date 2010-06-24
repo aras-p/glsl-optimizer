@@ -61,6 +61,13 @@ struct r300_atom {
     boolean allow_null_state;
 };
 
+struct r300_aa_state {
+    struct r300_surface *dest;
+
+    uint32_t aa_config;
+    uint32_t aaresolve_ctl;
+};
+
 struct r300_blend_state {
     uint32_t cb[8];
     uint32_t cb_no_readwrite[8];
@@ -111,7 +118,6 @@ struct r300_rs_state {
     uint32_t vap_control_status;    /* R300_VAP_CNTL_STATUS: 0x2140 */
     uint32_t multisample_position_0;/* R300_GB_MSPOS0: 0x4010 */
     uint32_t multisample_position_1;/* R300_GB_MSPOS1: 0x4014 */
-    uint32_t antialiasing_config;   /* R300_GB_AA_CONFIG: 0x4020 */
     uint32_t point_size;            /* R300_GA_POINT_SIZE: 0x421c */
     uint32_t point_minmax;          /* R300_GA_POINT_MINMAX: 0x4230 */
     uint32_t line_control;          /* R300_GA_LINE_CNTL: 0x4234 */
@@ -425,6 +431,8 @@ struct r300_context {
     /* Various CSO state objects. */
     /* Beginning of atom list. */
     struct r300_atom atom_list;
+    /* Anti-aliasing (MSAA) state. */
+    struct r300_atom aa_state;
     /* Blend state. */
     struct r300_atom blend_state;
     /* Blend color state. */

@@ -73,6 +73,7 @@ static void r300_destroy_context(struct pipe_context* context)
 
     translate_cache_destroy(r300->tran.translate_cache);
 
+    FREE(r300->aa_state.state);
     FREE(r300->blend_color_state.state);
     FREE(r300->clip_state.state);
     FREE(r300->fb_state.state);
@@ -118,16 +119,17 @@ static void r300_setup_atoms(struct r300_context* r300)
      * Some atoms never change size, others change every emit - those have
      * the size of 0 here. */
     make_empty_list(&r300->atom_list);
-    /* XXX unsorted. */
-    R300_INIT_ATOM(invariant_state, 71);
     /* RB3D (unpipelined), ZB (unpipelined), US, SC. */
     R300_INIT_ATOM(gpu_flush, 9);
+    R300_INIT_ATOM(aa_state, 4);
     R300_INIT_ATOM(fb_state, 0);
     R300_INIT_ATOM(ztop_state, 2);
     R300_INIT_ATOM(dsa_state, is_r500 ? 8 : 6);
     R300_INIT_ATOM(blend_state, 8);
     R300_INIT_ATOM(blend_color_state, is_r500 ? 3 : 2);
     R300_INIT_ATOM(scissor_state, 3);
+    /* All sorts of things. */
+    R300_INIT_ATOM(invariant_state, 22);
     /* VAP. */
     R300_INIT_ATOM(viewport_state, 9);
     R300_INIT_ATOM(pvs_flush, 2);
@@ -156,6 +158,7 @@ static void r300_setup_atoms(struct r300_context* r300)
     }
 
     /* Some non-CSO atoms need explicit space to store the state locally. */
+    r300->aa_state.state = CALLOC_STRUCT(r300_aa_state);
     r300->blend_color_state.state = CALLOC_STRUCT(r300_blend_color_state);
     r300->clip_state.state = CALLOC_STRUCT(r300_clip_state);
     r300->fb_state.state = CALLOC_STRUCT(pipe_framebuffer_state);

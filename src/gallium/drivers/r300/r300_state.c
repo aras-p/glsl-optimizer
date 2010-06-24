@@ -664,6 +664,7 @@ static void
                                const struct pipe_framebuffer_state* state)
 {
     struct r300_context* r300 = r300_context(pipe);
+    struct r300_aa_state *aa = (struct r300_aa_state*)r300->aa_state.state;
     struct pipe_framebuffer_state *old_state = r300->fb_state.state;
     unsigned max_width, max_height, i;
     uint32_t zbuffer_bpp = 0;
@@ -687,6 +688,7 @@ static void
     }
 
     r300->gpu_flush.dirty = TRUE;
+    r300->aa_state.dirty = TRUE;
     r300->fb_state.dirty = TRUE;
 
     /* If nr_cbufs is changed from zero to non-zero or vice versa... */
@@ -722,6 +724,30 @@ static void
         if (r300->zbuffer_bpp != zbuffer_bpp) {
             r300->zbuffer_bpp = zbuffer_bpp;
             r300->rs_state.dirty = TRUE;
+        }
+    }
+
+    /* Set up AA config. */
+    if (r300->rws->get_value(r300->rws, R300_VID_DRM_2_3_0)) {
+        if (state->nr_cbufs && state->cbufs[0]->texture->nr_samples > 1) {
+            aa->aa_config = R300_GB_AA_CONFIG_AA_ENABLE;
+
+            switch (state->cbufs[0]->texture->nr_samples) {
+                case 2:
+                    aa->aa_config |= R300_GB_AA_CONFIG_NUM_AA_SUBSAMPLES_2;
+                    break;
+                case 3:
+                    aa->aa_config |= R300_GB_AA_CONFIG_NUM_AA_SUBSAMPLES_3;
+                    break;
+                case 4:
+                    aa->aa_config |= R300_GB_AA_CONFIG_NUM_AA_SUBSAMPLES_4;
+                    break;
+                case 6:
+                    aa->aa_config |= R300_GB_AA_CONFIG_NUM_AA_SUBSAMPLES_6;
+                    break;
+            }
+        } else {
+            aa->aa_config = 0;
         }
     }
 
@@ -984,7 +1010,7 @@ static void r300_bind_rs_state(struct pipe_context* pipe, void* state)
 
     UPDATE_STATE(state, r300->rs_state);
     r300->rs_state.size = 25 + (r300->polygon_offset_enabled ? 5 : 0) +
-        (r300->rws->get_value(r300->rws, R300_VID_DRM_2_3_0) ? 5 : 0);
+        (r300->rws->get_value(r300->rws, R300_VID_DRM_2_3_0) ? 3 : 0);
 
     if (last_sprite_coord_enable != r300->sprite_coord_enable ||
         last_two_sided_color != r300->two_sided_color) {

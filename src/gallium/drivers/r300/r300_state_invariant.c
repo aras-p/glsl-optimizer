@@ -38,9 +38,8 @@ void r300_emit_invariant_state(struct r300_context* r300,
 {
     CS_LOCALS(r300);
 
-    BEGIN_CS(20 + (r300->screen->caps.is_rv350 ? 4 : 0));
+    BEGIN_CS(18 + (r300->screen->caps.is_rv350 ? 4 : 0));
 
-    OUT_CS_REG(R300_RB3D_AARESOLVE_CTL, 0);
     OUT_CS_REG(R300_GB_SELECT, 0);
     OUT_CS_REG(R300_FG_FOG_BLEND, 0);
     OUT_CS_REG(R300_GA_ROUND_MODE, 1);
