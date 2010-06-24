@@ -611,7 +611,8 @@ do_triangle_ccw(struct lp_setup_context *setup,
                /* triangle covers the whole tile- shade whole tile */
                LP_COUNT(nr_fully_covered_64);
 	       in = TRUE;
-	       if (setup->fs.current.variant->opaque) {
+	       if (setup->fs.current.variant->opaque &&
+	           !setup->fb.zsbuf) {
 	          lp_scene_bin_reset( scene, x, y );
 	          lp_scene_bin_command( scene, x, y,
 	                                lp_rast_set_state,
