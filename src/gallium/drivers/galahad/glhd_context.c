@@ -188,6 +188,13 @@ galahad_create_blend_state(struct pipe_context *_pipe,
    struct galahad_context *glhd_pipe = galahad_context(_pipe);
    struct pipe_context *pipe = glhd_pipe->pipe;
 
+   if (blend->logicop_enable) {
+      if (blend->rt[0].blend_enable) {
+         glhd_warn("Blending enabled for render target 0, but logicops "
+            "are enabled");
+      }
+   }
+
    return pipe->create_blend_state(pipe,
                                    blend);
 }
