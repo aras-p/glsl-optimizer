@@ -104,7 +104,7 @@ process_call(exec_list *instructions, ir_function *f,
        */
       _mesa_glsl_error(loc, state, "no matching function for call to `%s'",
 		       f->name);
-      return ir_call::get_error_instruction();
+      return ir_call::get_error_instruction(ctx);
    }
 }
 
@@ -114,11 +114,12 @@ match_function_by_name(exec_list *instructions, const char *name,
 		       YYLTYPE *loc, exec_list *actual_parameters,
 		       struct _mesa_glsl_parse_state *state)
 {
+   void *ctx = talloc_parent(state);
    ir_function *f = state->symbols->get_function(name);
 
    if (f == NULL) {
       _mesa_glsl_error(loc, state, "function `%s' undeclared", name);
-      return ir_call::get_error_instruction();
+      return ir_call::get_error_instruction(ctx);
    }
 
    /* Once we've determined that the function being called might exist, try
@@ -238,6 +239,7 @@ process_array_constructor(exec_list *instructions,
 			  YYLTYPE *loc, exec_list *parameters,
 			  struct _mesa_glsl_parse_state *state)
 {
+   void *ctx = talloc_parent(state);
    /* Array constructors come in two forms: sized and unsized.  Sized array
     * constructors look like 'vec4[2](a, b)', where 'a' and 'b' are vec4
     * variables.  In this case the number of parameters must exactly match the
@@ -272,7 +274,7 @@ process_array_constructor(exec_list *instructions,
 		       "parameter%s",
 		       (constructor_type->length != 0) ? "at least" : "exactly",
 		       min_param, (min_param <= 1) ? "" : "s");
-      return ir_call::get_error_instruction();
+      return ir_call::get_error_instruction(ctx);
    }
 
    if (constructor_type->length == 0) {
@@ -468,14 +470,14 @@ ast_function_expression::hir(exec_list *instructions,
       if (constructor_type->is_sampler()) {
 	 _mesa_glsl_error(& loc, state, "cannot construct sampler type `%s'",
 			  constructor_type->name);
-	 return ir_call::get_error_instruction();
+	 return ir_call::get_error_instruction(ctx);
       }
 
       if (constructor_type->is_array()) {
 	 if (state->language_version <= 110) {
 	    _mesa_glsl_error(& loc, state,
 			     "array constructors forbidden in GLSL 1.10");
-	    return ir_call::get_error_instruction();
+	    return ir_call::get_error_instruction(ctx);
 	 }
 
 	 return process_array_constructor(instructions, constructor_type,
@@ -525,7 +527,7 @@ ast_function_expression::hir(exec_list *instructions,
 	    _mesa_glsl_error(& loc, state, "too few components to construct "
 			     "`%s'",
 			     constructor_type->name);
-	    return ir_call::get_error_instruction();
+	    return ir_call::get_error_instruction(ctx);
 	 }
 
 	 foreach_list (n, &this->expressions) {
@@ -555,14 +557,14 @@ ast_function_expression::hir(exec_list *instructions,
 	       _mesa_glsl_error(& loc, state, "too many parameters to `%s' "
 				"constructor",
 				constructor_type->name);
-	       return ir_call::get_error_instruction();
+	       return ir_call::get_error_instruction(ctx);
 	    }
 
 	    if (!result->type->is_numeric() && !result->type->is_boolean()) {
 	       _mesa_glsl_error(& loc, state, "cannot construct `%s' from a "
 				"non-numeric data type",
 				constructor_type->name);
-	       return ir_call::get_error_instruction();
+	       return ir_call::get_error_instruction(ctx);
 	    }
 
 	    /* Count the number of matrix and nonmatrix parameters.  This
@@ -637,7 +639,7 @@ ast_function_expression::hir(exec_list *instructions,
 	    _mesa_glsl_error(& loc, state, "cannot construct `%s' from a "
 			     "matrix in GLSL 1.10",
 			     constructor_type->name);
-	    return ir_call::get_error_instruction();
+	    return ir_call::get_error_instruction(ctx);
 	 }
 
 	 /* From page 50 (page 56 of the PDF) of the GLSL 1.50 spec:
@@ -651,7 +653,7 @@ ast_function_expression::hir(exec_list *instructions,
 	    _mesa_glsl_error(& loc, state, "for matrix `%s' constructor, "
 			     "matrix must be only parameter",
 			     constructor_type->name);
-	    return ir_call::get_error_instruction();
+	    return ir_call::get_error_instruction(ctx);
 	 }
 
 	 /* From page 28 (page 34 of the PDF) of the GLSL 1.10 spec:
@@ -664,14 +666,14 @@ ast_function_expression::hir(exec_list *instructions,
 	    _mesa_glsl_error(& loc, state, "too few components to construct "
 			     "`%s'",
 			     constructor_type->name);
-	    return ir_call::get_error_instruction();
+	    return ir_call::get_error_instruction(ctx);
 	 }
 
 	 ir_function *f = state->symbols->get_function(constructor_type->name);
 	 if (f == NULL) {
 	    _mesa_glsl_error(& loc, state, "no constructor for type `%s'",
 			     constructor_type->name);
-	    return ir_call::get_error_instruction();
+	    return ir_call::get_error_instruction(ctx);
 	 }
 
 	 const ir_function_signature *sig =
@@ -715,11 +717,11 @@ ast_function_expression::hir(exec_list *instructions,
 	     */
 	    _mesa_glsl_error(& loc, state, "no matching constructor for `%s'",
 			     constructor_type->name);
-	    return ir_call::get_error_instruction();
+	    return ir_call::get_error_instruction(ctx);
 	 }
       }
 
-      return ir_call::get_error_instruction();
+      return ir_call::get_error_instruction(ctx);
    } else {
       const ast_expression *id = subexpressions[0];
       YYLTYPE loc = id->get_location();
@@ -744,5 +746,5 @@ ast_function_expression::hir(exec_list *instructions,
 				    &actual_parameters, state);
    }
 
-   return ir_call::get_error_instruction();
+   return ir_call::get_error_instruction(ctx);
 }

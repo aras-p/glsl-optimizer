@@ -77,5 +77,5 @@ _mesa_ast_field_selection_to_hir(const ast_expression *expr,
 		       expr->primary_expression.identifier);
    }
 
-   return result ? result : ir_call::get_error_instruction();
+   return result ? result : ir_call::get_error_instruction(ctx);
 }

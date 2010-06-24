@@ -833,10 +833,8 @@ ir_function::ir_function(const char *name)
 
 
 ir_call *
-ir_call::get_error_instruction()
+ir_call::get_error_instruction(void *ctx)
 {
-   /* NULL is wrong and leaks */
-   void *ctx = NULL;
    ir_call *call = new(ctx) ir_call;
 
    call->type = glsl_type::error_type;

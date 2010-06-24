@@ -645,8 +645,10 @@ public:
 
    /**
     * Get a generic ir_call object when an error occurs
+    *
+    * Any allocation will be performed with 'ctx' as talloc owner.
     */
-   static ir_call *get_error_instruction();
+   static ir_call *get_error_instruction(void *ctx);
 
    /**
     * Get an iterator for the set of acutal parameters
