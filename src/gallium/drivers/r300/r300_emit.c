@@ -324,13 +324,6 @@ void r300_emit_fb_state(struct r300_context* r300, unsigned size, void* state)
 
     BEGIN_CS(size);
 
-    /* XXX unpipelined regs
-    rb3d_aaresolve_ctl
-    rb3d_aaresolve_offset
-    rb3d_aaresolve_pitch
-    gb_aa_config
-    */
-
     /* NUM_MULTIWRITES replicates COLOR[0] to all colorbuffers, which is not
      * what we usually want. */
     if (r300->screen->caps.is_r500) {
