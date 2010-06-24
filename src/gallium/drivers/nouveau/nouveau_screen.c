@@ -15,7 +15,7 @@
 #include "nouveau_screen.h"
 
 /* XXX this should go away */
-#include "state_tracker/drm_api.h"
+#include "state_tracker/drm_driver.h"
 #include "util/u_simple_screen.h"
 
 static const char *
