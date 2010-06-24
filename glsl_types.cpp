@@ -702,7 +702,7 @@ glsl_type::get_array_instance(void *ctx, const glsl_type *base,
 
    const glsl_type *t = (glsl_type *) hash_table_find(array_types, & key);
    if (t == NULL) {
-      t = new glsl_type(ctx, base, array_size);
+      t = new(ctx) glsl_type(ctx, base, array_size);
 
       hash_table_insert(array_types, (void *) t, t);
    }
