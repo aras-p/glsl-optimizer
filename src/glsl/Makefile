@@ -77,6 +77,11 @@ INCLUDES = \
 	-I../mesa/shader \
 	$(LIBRARY_INCLUDES)
 
+ALL_SOURCES = \
+	$(C_SOURCES) \
+	$(CXX_SOURCES) \
+	$(GLSL2_CXX_SOURCES) \
+	$(GLSL2_C_SOURCES)
 
 ##### TARGETS #####
 
@@ -85,10 +90,10 @@ default: depend lib$(LIBNAME).a $(APPS)
 lib$(LIBNAME).a: $(OBJECTS) Makefile $(TOP)/src/glsl/Makefile.template
 	$(MKLIB) -cplusplus -o $(LIBNAME) -static $(OBJECTS)
 
-depend: $(CXX_SOURCES) $(GLSL2_CXX_SOURCES) $(GLSL2_C_SOURCES)
+depend: $(ALL_SOURCES) Makefile
 	rm -f depend
 	touch depend
-	$(MKDEP) $(MKDEP_OPTIONS) $(INCLUDES) $@ 2> /dev/null
+	$(MKDEP) $(MKDEP_OPTIONS) $(INCLUDES) $(ALL_SOURCES) 2> /dev/null
 
 # Remove .o and backup files
 clean:
