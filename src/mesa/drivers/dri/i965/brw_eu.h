@@ -520,6 +520,20 @@ static INLINE struct brw_reg brw_acc_reg( void )
 		       0);
 }
 
+static INLINE struct brw_reg brw_notification_1_reg(void)
+{
+
+   return brw_reg(BRW_ARCHITECTURE_REGISTER_FILE,
+		  BRW_ARF_NOTIFICATION_COUNT,
+		  1,
+		  BRW_REGISTER_TYPE_UD,
+		  BRW_VERTICAL_STRIDE_0,
+		  BRW_WIDTH_1,
+		  BRW_HORIZONTAL_STRIDE_0,
+		  BRW_SWIZZLE_XXXX,
+		  WRITEMASK_X);
+}
+
 
 static INLINE struct brw_reg brw_flag_reg( void )
 {
@@ -918,6 +932,8 @@ void brw_land_fwd_jump(struct brw_compile *p,
 
 
 void brw_NOP(struct brw_compile *p);
+
+void brw_WAIT(struct brw_compile *p);
 
 /* Special case: there is never a destination, execution size will be
  * taken from src0:

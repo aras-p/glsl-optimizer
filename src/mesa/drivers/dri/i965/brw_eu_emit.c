@@ -906,6 +906,20 @@ void brw_CMP(struct brw_compile *p,
    }
 }
 
+/* Issue 'wait' instruction for n1, host could program MMIO
+   to wake up thread. */
+void brw_WAIT (struct brw_compile *p)
+{
+   struct brw_instruction *insn = next_insn(p, BRW_OPCODE_WAIT);
+   struct brw_reg src = brw_notification_1_reg();
+
+   brw_set_dest(insn, src);
+   brw_set_src0(insn, src);
+   brw_set_src1(insn, brw_null_reg());
+   insn->header.execution_size = 0; /* must */
+   insn->header.predicate_control = 0;
+   insn->header.compression_control = 0;
+}
 
 
 /***********************************************************************
