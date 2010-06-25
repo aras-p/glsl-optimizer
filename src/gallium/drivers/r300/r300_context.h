@@ -224,6 +224,10 @@ struct r300_vertex_stream_state {
     unsigned count;
 };
 
+struct r300_invariant_state {
+    uint32_t cb[22];
+};
+
 struct r300_vap_invariant_state {
     uint32_t cb[9];
 };

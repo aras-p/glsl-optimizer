@@ -32,7 +32,6 @@
 #include "r300_emit.h"
 #include "r300_screen.h"
 #include "r300_screen_buffer.h"
-#include "r300_state_invariant.h"
 #include "r300_winsys.h"
 
 #include <inttypes.h>
@@ -78,6 +77,7 @@ static void r300_destroy_context(struct pipe_context* context)
     FREE(r300->clip_state.state);
     FREE(r300->fb_state.state);
     FREE(r300->gpu_flush.state);
+    FREE(r300->invariant_state.state);
     FREE(r300->rs_block_state.state);
     FREE(r300->scissor_state.state);
     FREE(r300->textures_state.state);
@@ -109,6 +109,7 @@ static void r300_flush_cb(void *data)
 
 static void r300_setup_atoms(struct r300_context* r300)
 {
+    boolean is_rv350 = r300->screen->caps.is_rv350;
     boolean is_r500 = r300->screen->caps.is_r500;
     boolean has_tcl = r300->screen->caps.has_tcl;
 
@@ -133,7 +134,7 @@ static void r300_setup_atoms(struct r300_context* r300)
     /* SC. */
     R300_INIT_ATOM(scissor_state, 3);
     /* GB, FG, GA, SU, SC, RB3D. */
-    R300_INIT_ATOM(invariant_state, 22);
+    R300_INIT_ATOM(invariant_state, 18 + (is_rv350 ? 4 : 0));
     /* VAP. */
     R300_INIT_ATOM(viewport_state, 9);
     R300_INIT_ATOM(pvs_flush, 2);
@@ -168,6 +169,7 @@ static void r300_setup_atoms(struct r300_context* r300)
     r300->clip_state.state = CALLOC_STRUCT(r300_clip_state);
     r300->fb_state.state = CALLOC_STRUCT(pipe_framebuffer_state);
     r300->gpu_flush.state = CALLOC_STRUCT(pipe_framebuffer_state);
+    r300->invariant_state.state = CALLOC_STRUCT(r300_invariant_state);
     r300->rs_block_state.state = CALLOC_STRUCT(r300_rs_block);
     r300->scissor_state.state = CALLOC_STRUCT(pipe_scissor_state);
     r300->textures_state.state = CALLOC_STRUCT(r300_textures_state);
@@ -181,7 +183,6 @@ static void r300_setup_atoms(struct r300_context* r300)
     }
 
     /* Some non-CSO atoms don't use the state pointer. */
-    r300->invariant_state.allow_null_state = TRUE;
     r300->fs_rc_constant_state.allow_null_state = TRUE;
     r300->pvs_flush.allow_null_state = TRUE;
     r300->query_start.allow_null_state = TRUE;
@@ -210,6 +211,8 @@ static void r300_init_states(struct pipe_context *pipe)
             (struct r300_gpu_flush*)r300->gpu_flush.state;
     struct r300_vap_invariant_state *vap_invariant =
             (struct r300_vap_invariant_state*)r300->vap_invariant_state.state;
+    struct r300_invariant_state *invariant =
+            (struct r300_invariant_state*)r300->invariant_state.state;
     CB_LOCALS;
 
     pipe->set_blend_color(pipe, &bc);
@@ -253,6 +256,26 @@ static void r300_init_states(struct pipe_context *pipe)
         OUT_CB_32F(1.0);
         OUT_CB_32F(1.0);
         OUT_CB_REG(R300_VAP_PSC_SGN_NORM_CNTL, R300_SGN_NORM_NO_ZERO);
+        END_CB;
+    }
+
+    /* Initialize the invariant state. */
+    {
+        BEGIN_CB(invariant->cb, r300->invariant_state.size);
+        OUT_CB_REG(R300_GB_SELECT, 0);
+        OUT_CB_REG(R300_FG_FOG_BLEND, 0);
+        OUT_CB_REG(R300_GA_ROUND_MODE, 1);
+        OUT_CB_REG(R300_GA_OFFSET, 0);
+        OUT_CB_REG(R300_SU_TEX_WRAP, 0);
+        OUT_CB_REG(R300_SU_DEPTH_SCALE, 0x4B7FFFFF);
+        OUT_CB_REG(R300_SU_DEPTH_OFFSET, 0);
+        OUT_CB_REG(R300_SC_HYPERZ, 0x1C);
+        OUT_CB_REG(R300_SC_EDGERULE, 0x2DA49525);
+
+        if (r300->screen->caps.is_rv350) {
+            OUT_CB_REG(R500_RB3D_DISCARD_SRC_PIXEL_LTE_THRESHOLD, 0x01010101);
+            OUT_CB_REG(R500_RB3D_DISCARD_SRC_PIXEL_GTE_THRESHOLD, 0xFEFEFEFE);
+        }
         END_CB;
     }
 }

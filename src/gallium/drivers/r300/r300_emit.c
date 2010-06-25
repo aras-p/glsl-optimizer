@@ -519,6 +519,13 @@ void r300_emit_query_end(struct r300_context* r300)
     }
 }
 
+void r300_emit_invariant_state(struct r300_context *r300,
+                               unsigned size, void *state)
+{
+    CS_LOCALS(r300);
+    WRITE_CS_TABLE(state, size);
+}
+
 void r300_emit_rs_state(struct r300_context* r300, unsigned size, void* state)
 {
     struct r300_rs_state* rs = state;
