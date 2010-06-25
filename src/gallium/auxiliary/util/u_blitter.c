@@ -260,9 +260,7 @@ void util_blitter_destroy(struct blitter_context *blitter)
       if (ctx->sampler_state[i])
          pipe->delete_sampler_state(pipe, ctx->sampler_state[i]);
 
-   if (ctx->sampler_view) {
-      pipe_sampler_view_reference(&ctx->sampler_view, NULL);
-   }
+   pipe_sampler_view_reference(&ctx->sampler_view, NULL);
 
    pipe_resource_reference(&ctx->vbuf, NULL);
    FREE(ctx);
@@ -736,10 +734,7 @@ void util_blitter_copy_region(struct blitter_context *blitter,
    u_sampler_view_default_template(&viewTempl, src, src->format);
    view = pipe->create_sampler_view(pipe, src, &viewTempl);
 
-   if (ctx->sampler_view) {
-      pipe_sampler_view_reference(&ctx->sampler_view, NULL);
-   }
-   ctx->sampler_view = view;
+   pipe_sampler_view_reference(&ctx->sampler_view, view);
 
    /* Set rasterizer state, shaders, and textures. */
    pipe->bind_rasterizer_state(pipe, ctx->rs_state);
