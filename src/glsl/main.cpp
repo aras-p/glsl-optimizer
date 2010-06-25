@@ -89,11 +89,13 @@ usage_fail(const char *name)
 
 
 int dump_ast = 0;
+int dump_hir = 0;
 int dump_lir = 0;
 int do_link = 0;
 
 const struct option compiler_opts[] = {
    { "dump-ast", 0, &dump_ast, 1 },
+   { "dump-hir", 0, &dump_hir, 1 },
    { "dump-lir", 0, &dump_lir, 1 },
    { "link",     0, &do_link,  1 },
    { NULL, 0, NULL, 0 }
@@ -146,6 +148,11 @@ compile_shader(struct glsl_shader *shader)
       _mesa_ast_to_hir(&shader->ir, state);
 
    validate_ir_tree(&shader->ir);
+
+   /* Print out the unoptimized IR. */
+   if (!state->error && dump_hir) {
+      _mesa_print_ir(&shader->ir, state);
+   }
 
    /* Optimization passes */
    if (!state->error && !shader->ir.is_empty()) {
