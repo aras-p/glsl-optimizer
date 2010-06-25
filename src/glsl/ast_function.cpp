@@ -172,17 +172,17 @@ convert_component(ir_rvalue *src, const glsl_type *desired_type)
 	 break;
       }
       break;
-   case GLSL_TYPE_BOOL: {
-      ir_constant *zero = NULL;
-
+   case GLSL_TYPE_BOOL:
       switch (b) {
-      case GLSL_TYPE_UINT:  zero = new(ctx) ir_constant(unsigned(0)); break;
-      case GLSL_TYPE_INT:   zero = new(ctx) ir_constant(int(0));      break;
-      case GLSL_TYPE_FLOAT: zero = new(ctx) ir_constant(0.0f);        break;
+      case GLSL_TYPE_UINT:
+      case GLSL_TYPE_INT:
+	 result = new(ctx) ir_expression(ir_unop_i2b, desired_type, src, NULL);
+	 break;
+      case GLSL_TYPE_FLOAT:
+	 result = new(ctx) ir_expression(ir_unop_f2b, desired_type, src, NULL);
+	 break;
       }
-
-      result = new(ctx) ir_expression(ir_binop_nequal, desired_type, src, zero);
-   }
+      break;
    }
 
    assert(result != NULL);
