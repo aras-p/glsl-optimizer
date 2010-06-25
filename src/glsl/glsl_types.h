@@ -30,6 +30,7 @@
 #include <cassert>
 
 extern "C" {
+#include "GL/gl.h"
 #include <talloc.h>
 }
 
@@ -55,6 +56,7 @@ enum glsl_sampler_dim {
 
 
 struct glsl_type {
+   GLenum gl_type;
    unsigned base_type:4;
 
    unsigned sampler_dimensionality:3;
@@ -151,8 +153,10 @@ struct glsl_type {
    /*@}*/
 
 
-   glsl_type(unsigned base_type, unsigned vector_elements,
+   glsl_type(GLenum gl_type,
+	     unsigned base_type, unsigned vector_elements,
 	     unsigned matrix_columns, const char *name) :
+      gl_type(gl_type),
       base_type(base_type), 
       sampler_dimensionality(0), sampler_shadow(0), sampler_array(0),
       sampler_type(0),
@@ -166,8 +170,10 @@ struct glsl_type {
       memset(& fields, 0, sizeof(fields));
    }
 
-   glsl_type(enum glsl_sampler_dim dim, bool shadow, bool array,
+   glsl_type(GLenum gl_type,
+	     enum glsl_sampler_dim dim, bool shadow, bool array,
 	     unsigned type, const char *name) :
+      gl_type(gl_type),
       base_type(GLSL_TYPE_SAMPLER),
       sampler_dimensionality(dim), sampler_shadow(shadow),
       sampler_array(array), sampler_type(type),
