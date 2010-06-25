@@ -111,9 +111,8 @@ public:
  * of a variable to a variable.
  */
 static bool
-process_assignment(ir_assignment *ir, exec_list *assignments)
+process_assignment(void *ctx, ir_assignment *ir, exec_list *assignments)
 {
-   void *ctx = talloc_parent(ir);
    ir_variable *var = NULL;
    bool progress = false;
    kill_for_derefs_visitor v(assignments);
@@ -186,6 +185,7 @@ dead_code_local_basic_block(ir_instruction *first,
    bool *out_progress = (bool *)data;
    bool progress = false;
 
+   void *ctx = talloc(NULL, void*);
    /* Safe looping, since process_assignment */
    for (ir = first, ir_next = (ir_instruction *)first->next;;
 	ir = ir_next, ir_next = (ir_instruction *)ir->next) {
@@ -197,7 +197,7 @@ dead_code_local_basic_block(ir_instruction *first,
       }
 
       if (ir_assign) {
-	 progress = process_assignment(ir_assign, &assignments) || progress;
+	 progress = process_assignment(ctx, ir_assign, &assignments) || progress;
       } else {
 	 kill_for_derefs_visitor kill(&assignments);
 	 ir->accept(&kill);
@@ -207,6 +207,7 @@ dead_code_local_basic_block(ir_instruction *first,
 	 break;
    }
    *out_progress = progress;
+   talloc_free(ctx);
 }
 
 /**
