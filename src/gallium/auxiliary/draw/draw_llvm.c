@@ -1,3 +1,30 @@
+/**************************************************************************
+ *
+ * Copyright 2010 VMware, Inc.
+ * All Rights Reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sub license, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice (including the
+ * next paragraph) shall be included in all copies or substantial portions
+ * of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ **************************************************************************/
+
 #include "draw_llvm.h"
 
 #include "draw_context.h"
@@ -219,6 +246,9 @@ draw_llvm_create(struct draw_context *draw)
       LLVMDumpModule(llvm->module);
    }
 
+   llvm->nr_variants = 0;
+   make_empty_list(&llvm->vs_variants_list);
+
    return llvm;
 }
 
@@ -231,9 +261,13 @@ draw_llvm_destroy(struct draw_llvm *llvm)
 }
 
 struct draw_llvm_variant *
-draw_llvm_prepare(struct draw_llvm *llvm, int num_inputs)
+draw_llvm_create_variant(struct draw_llvm *llvm, int num_inputs)
 {
    struct draw_llvm_variant *variant = MALLOC(sizeof(struct draw_llvm_variant));
+   struct llvm_vertex_shader *shader =
+      llvm_vertex_shader(llvm->draw->vs.vertex_shader);
+
+   variant->llvm = llvm;
 
    draw_llvm_make_variant_key(llvm, &variant->key);
 
@@ -241,6 +275,12 @@ draw_llvm_prepare(struct draw_llvm *llvm, int num_inputs)
 
    draw_llvm_generate(llvm, variant);
    draw_llvm_generate_elts(llvm, variant);
+
+   variant->shader = shader;
+   variant->list_item_global.base = variant;
+   variant->list_item_local.base = variant;
+   /*variant->no = */shader->variants_created++;
+   variant->list_item_global.base = variant;
 
    return variant;
 }
@@ -896,4 +936,31 @@ draw_llvm_make_variant_key(struct draw_llvm *llvm,
    memcpy(&key->vs,
           &llvm->draw->vs.vertex_shader->state,
           sizeof(struct pipe_shader_state));
+}
+
+void
+draw_llvm_destroy_variant(struct draw_llvm_variant *variant)
+{
+   struct draw_llvm *llvm = variant->llvm;
+   struct draw_context *draw = llvm->draw;
+
+   if (variant->function_elts) {
+      if (variant->function_elts)
+         LLVMFreeMachineCodeForFunction(draw->engine,
+                                        variant->function_elts);
+      LLVMDeleteFunction(variant->function_elts);
+   }
+
+   if (variant->function) {
+      if (variant->function)
+         LLVMFreeMachineCodeForFunction(draw->engine,
+                                        variant->function);
+      LLVMDeleteFunction(variant->function);
+   }
+
+   remove_from_list(&variant->list_item_local);
+   variant->shader->variants_cached--;
+   remove_from_list(&variant->list_item_global);
+   llvm->nr_variants--;
+   FREE(variant);
 }

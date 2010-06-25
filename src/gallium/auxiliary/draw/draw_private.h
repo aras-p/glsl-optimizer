@@ -81,6 +81,9 @@ struct vertex_header {
 #define UNDEFINED_VERTEX_ID 0xffff
 
 
+/* maximum number of shader variants we can cache */
+#define DRAW_MAX_SHADER_VARIANTS 1024
+
 /**
  * Private context for the drawing module.
  */

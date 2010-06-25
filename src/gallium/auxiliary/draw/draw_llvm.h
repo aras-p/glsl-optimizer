@@ -1,14 +1,47 @@
+/**************************************************************************
+ *
+ * Copyright 2010 VMware, Inc.
+ * All Rights Reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sub license, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice (including the
+ * next paragraph) shall be included in all copies or substantial portions
+ * of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ **************************************************************************/
+
 #ifndef HAVE_LLVM_H
 #define HAVE_LLVM_H
 
 #include "draw/draw_private.h"
 
+#include "draw/draw_vs.h"
+
 #include "pipe/p_context.h"
+#include "util/u_simple_list.h"
 
 #include <llvm-c/Core.h>
 #include <llvm-c/Analysis.h>
 #include <llvm-c/Target.h>
 #include <llvm-c/ExecutionEngine.h>
+
+struct draw_llvm;
+struct llvm_vertex_shader;
 
 struct draw_jit_texture
 {
@@ -104,10 +137,49 @@ typedef void
                            unsigned stride,
                            struct pipe_vertex_buffer *vertex_buffers);
 
+struct draw_llvm_variant_key
+{
+   struct pipe_vertex_element vertex_element[PIPE_MAX_ATTRIBS];
+   unsigned                   nr_vertex_elements;
+   struct pipe_shader_state   vs;
+};
+
+struct draw_llvm_variant_list_item
+{
+   struct draw_llvm_variant *base;
+   struct draw_llvm_variant_list_item *next, *prev;
+};
+
+struct draw_llvm_variant
+{
+   struct draw_llvm_variant_key key;
+   LLVMValueRef function;
+   LLVMValueRef function_elts;
+   draw_jit_vert_func jit_func;
+   draw_jit_vert_func_elts jit_func_elts;
+
+   struct llvm_vertex_shader *shader;
+
+   struct draw_llvm *llvm;
+   struct draw_llvm_variant_list_item list_item_global;
+   struct draw_llvm_variant_list_item list_item_local;
+};
+
+struct llvm_vertex_shader {
+   struct draw_vertex_shader base;
+
+   struct draw_llvm_variant_list_item variants;
+   unsigned variants_created;
+   unsigned variants_cached;
+};
+
 struct draw_llvm {
    struct draw_context *draw;
 
    struct draw_jit_context jit_context;
+
+   struct draw_llvm_variant_list_item vs_variants_list;
+   int nr_variants;
 
    LLVMModuleRef module;
    LLVMExecutionEngineRef engine;
@@ -121,23 +193,12 @@ struct draw_llvm {
    LLVMTypeRef vb_ptr_type;
 };
 
-struct draw_llvm_variant_key
+static struct llvm_vertex_shader *
+llvm_vertex_shader(struct draw_vertex_shader *vs)
 {
-   struct pipe_vertex_element vertex_element[PIPE_MAX_ATTRIBS];
-   unsigned                   nr_vertex_elements;
-   struct pipe_shader_state   vs;
-};
+   return (struct llvm_vertex_shader *)vs;
+}
 
-struct draw_llvm_variant
-{
-   struct draw_llvm_variant_key key;
-   LLVMValueRef function;
-   LLVMValueRef function_elts;
-   draw_jit_vert_func jit_func;
-   draw_jit_vert_func_elts jit_func_elts;
-
-   struct draw_llvm_variant *next;
-};
 
 struct draw_llvm *
 draw_llvm_create(struct draw_context *draw);
@@ -146,7 +207,10 @@ void
 draw_llvm_destroy(struct draw_llvm *llvm);
 
 struct draw_llvm_variant *
-draw_llvm_prepare(struct draw_llvm *llvm, int num_inputs);
+draw_llvm_create_variant(struct draw_llvm *llvm, int num_inputs);
+
+void
+draw_llvm_destroy_variant(struct draw_llvm_variant *variant);
 
 void
 draw_llvm_make_variant_key(struct draw_llvm *llvm,
@@ -156,4 +220,5 @@ LLVMValueRef
 draw_llvm_translate_from(LLVMBuilderRef builder,
                          LLVMValueRef vbuffer,
                          enum pipe_format from_format);
+
 #endif

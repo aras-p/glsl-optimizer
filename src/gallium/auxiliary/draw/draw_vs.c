@@ -98,6 +98,11 @@ draw_create_vertex_shader(struct draw_context *draw,
       vs = draw_create_vs_ppc( draw, shader );
 #endif
    }
+#if HAVE_LLVM
+   else {
+      vs = draw_create_vs_llvm(draw, shader);
+   }
+#endif
 
    if (!vs) {
       vs = draw_create_vs_exec( draw, shader );
