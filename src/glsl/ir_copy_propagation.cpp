@@ -195,9 +195,8 @@ kill_invalidated_copies(ir_assignment *ir, exec_list *acp)
  * of a variable to a variable.
  */
 static void
-add_copy(ir_assignment *ir, exec_list *acp)
+add_copy(void *ctx, ir_assignment *ir, exec_list *acp)
 {
-   void *ctx = talloc_parent(ir);
    acp_entry *entry;
 
    if (ir->condition) {
@@ -226,6 +225,7 @@ copy_propagation_basic_block(ir_instruction *first,
    bool *out_progress = (bool *)data;
    bool progress = false;
 
+   void *ctx = talloc(NULL, void*);
    for (ir = first;; ir = (ir_instruction *)ir->next) {
       ir_assignment *ir_assign = ir->as_assignment();
 
@@ -234,12 +234,13 @@ copy_propagation_basic_block(ir_instruction *first,
       if (ir_assign) {
 	 kill_invalidated_copies(ir_assign, &acp);
 
-	 add_copy(ir_assign, &acp);
+	 add_copy(ctx, ir_assign, &acp);
       }
       if (ir == last)
 	 break;
    }
    *out_progress = progress;
+   talloc_free(ctx);
 }
 
 /**
