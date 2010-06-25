@@ -99,8 +99,6 @@ public:
    struct gl_program *prog;
 
    int next_temp;
-   int next_constant;
-   int next_uniform;
 
    temp_entry *find_variable_storage(ir_variable *var);
 
@@ -768,17 +766,27 @@ ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
 {
    ir_to_mesa_src_reg src_reg;
    temp_entry *entry = find_variable_storage(ir->var);
-   unsigned int i;
+   unsigned int i, loc;
    bool var_in;
 
    if (!entry) {
       switch (ir->var->mode) {
       case ir_var_uniform:
-	 entry = new(mem_ctx) temp_entry(ir->var, PROGRAM_UNIFORM,
-					 this->next_uniform);
-	 this->variable_storage.push_tail(entry);
+	 /* FINISHME: Fix up uniform name for arrays and things */
+	 assert(ir->var->type->gl_type != 0 &&
+		ir->var->type->gl_type != GL_INVALID_ENUM);
+	 loc = _mesa_add_uniform(this->prog->Parameters,
+				 ir->var->name,
+				 type_size(ir->var->type) * 4,
+				 ir->var->type->gl_type,
+				 NULL);
+	 /* Always mark the uniform used at this point.  If it isn't
+	  * used, dead code elimination should have nuked the decl already.
+	  */
+	 this->prog->Parameters->Parameters[loc].Used = GL_TRUE;
 
-	 this->next_uniform += type_size(ir->var->type);
+	 entry = new(mem_ctx) temp_entry(ir->var, PROGRAM_UNIFORM, loc);
+	 this->variable_storage.push_tail(entry);
 	 break;
       case ir_var_in:
       case ir_var_out:
@@ -993,8 +1001,6 @@ ir_to_mesa_visitor::visit(ir_constant *ir)
    src_reg.reladdr = false;
    src_reg.negate = 0;
 
-   this->next_constant += type_size(ir->type);
-
    this->result = src_reg;
 }
 
@@ -1055,8 +1061,6 @@ ir_to_mesa_visitor::ir_to_mesa_visitor()
 {
    result.file = PROGRAM_UNDEFINED;
    next_temp = 1;
-   next_constant = 0;
-   next_uniform = 0;
 }
 
 static struct prog_src_register
@@ -1201,6 +1205,29 @@ count_resources(struct gl_program *prog)
 	 default:
 	    break;
 	 }
+      }
+   }
+}
+
+/* Each stage has some uniforms in its Parameters list.  The Uniforms
+ * list for the linked shader program has a pointer to these uniforms
+ * in each of the stage's Parameters list, so that their values can be
+ * updated when a uniform is set.
+ */
+static void
+link_uniforms_to_shared_uniform_list(struct gl_uniform_list *uniforms,
+				     struct gl_program *prog)
+{
+   unsigned int i;
+
+   for (i = 0; i < prog->Parameters->NumParameters; i++) {
+      const struct gl_program_parameter *p = prog->Parameters->Parameters + i;
+
+      if (p->Type == PROGRAM_UNIFORM || p->Type == PROGRAM_SAMPLER) {
+	 struct gl_uniform *uniform =
+	    _mesa_append_uniform(uniforms, p->Name, prog->Target, i);
+	 if (uniform)
+	    uniform->Initialized = p->Initialized;
       }
    }
 }
@@ -1409,6 +1436,8 @@ _mesa_glsl_link_shader(GLcontext *ctx, struct gl_shader_program *prog)
 					whole_program->Shaders[i]);
 	 count_resources(linked_prog);
 
+	 link_uniforms_to_shared_uniform_list(prog->Uniforms, linked_prog);
+
 	 switch (whole_program->Shaders[i]->Type) {
 	 case GL_VERTEX_SHADER:
 	    _mesa_reference_vertprog(ctx, &prog->VertexProgram,
@@ -1421,6 +1450,7 @@ _mesa_glsl_link_shader(GLcontext *ctx, struct gl_shader_program *prog)
 	 }
       }
    }
+   ctx->Shader.Flags |= GLSL_UNIFORMS;
 
    talloc_free(whole_program);
 }
