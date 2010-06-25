@@ -23,8 +23,11 @@
 
 #include <GL/gl.h>
 #include "main/mtypes.h"
+
+extern "C" {
 #include "shader/prog_parameter.h"
 #include "shader/prog_uniform.h"
+}
 
 /**
  * Based on gl_shader in Mesa's mtypes.h.
@@ -41,6 +44,7 @@ struct glsl_shader {
 
    struct exec_list ir;
    struct glsl_symbol_table *symbols;
+   struct gl_shader *mesa_shader;
 };
 
 /**

@@ -30,7 +30,7 @@
 
 #include "main/glheader.h"
 #include "main/mtypes.h"
-
+#include "ir_to_mesa.h"
 
 /**
  * Internal functions

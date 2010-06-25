@@ -36,6 +36,8 @@ MESA_INCLUDES := $(INCLUDE_DIRS)
 ES1_INCLUDES := -I$(TOP)/src/mapi/es1api $(INCLUDE_DIRS)
 ES2_INCLUDES := -I$(TOP)/src/mapi/es2api $(INCLUDE_DIRS)
 MESA_INCLUDES := -I$(TOP)/src/glsl $(MESA_INCLUDES)
+# For symbol_table.h in glsl compiler headers.
+MESA_INCLUDES := -I$(TOP)/src/mesa/shader $(MESA_INCLUDES)
 
 define mesa-cc-c
 	@mkdir -p $(dir $@)

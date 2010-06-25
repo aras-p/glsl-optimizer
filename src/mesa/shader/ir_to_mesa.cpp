@@ -34,11 +34,19 @@
 #include "ir_print_visitor.h"
 #include "ir_expression_flattening.h"
 #include "glsl_types.h"
+#include "glsl_parser_extras.h"
+#include "../glsl/program.h"
+#include "ir_optimization.h"
+#include "ast.h"
 
 extern "C" {
 #include "main/mtypes.h"
 #include "shader/prog_instruction.h"
 #include "shader/prog_print.h"
+#include "shader/program.h"
+#include "shader/prog_uniform.h"
+#include "shader/prog_parameter.h"
+#include "shader/shader_api.h"
 }
 
 /**
@@ -86,6 +94,9 @@ public:
 class ir_to_mesa_visitor : public ir_visitor {
 public:
    ir_to_mesa_visitor();
+
+   GLcontext *ctx;
+   struct gl_program *prog;
 
    int next_temp;
    int next_constant;
@@ -154,8 +165,7 @@ public:
 				   ir_to_mesa_dst_reg dst,
 				   ir_to_mesa_src_reg src0);
 
-   /* talloc context (the ) */
-   void *ctx;
+   void *mem_ctx;
 };
 
 ir_to_mesa_src_reg ir_to_mesa_undef = {
@@ -240,7 +250,7 @@ ir_to_mesa_visitor::ir_to_mesa_emit_op3(ir_instruction *ir,
 					ir_to_mesa_src_reg src1,
 					ir_to_mesa_src_reg src2)
 {
-   ir_to_mesa_instruction *inst = new(ctx) ir_to_mesa_instruction();
+   ir_to_mesa_instruction *inst = new(mem_ctx) ir_to_mesa_instruction();
 
    inst->op = op;
    inst->dst_reg = dst;
@@ -770,8 +780,8 @@ ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
    if (!entry) {
       switch (ir->var->mode) {
       case ir_var_uniform:
-	 entry = new(ctx)  temp_entry(ir->var, PROGRAM_UNIFORM,
-				      this->next_uniform);
+	 entry = new(mem_ctx) temp_entry(ir->var, PROGRAM_UNIFORM,
+					 this->next_uniform);
 	 this->variable_storage.push_tail(entry);
 
 	 this->next_uniform += type_size(ir->var->type);
@@ -795,13 +805,13 @@ ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
 		   ir->var->name);
 	    abort();
 	 }
-	 entry = new(ctx)  temp_entry(ir->var,
-				      builtin_var_to_mesa_reg[i].file,
-				      builtin_var_to_mesa_reg[i].index);
+	 entry = new(mem_ctx) temp_entry(ir->var,
+					 builtin_var_to_mesa_reg[i].file,
+					 builtin_var_to_mesa_reg[i].index);
 	 break;
       case ir_var_auto:
-	 entry = new(ctx) temp_entry(ir->var, PROGRAM_TEMPORARY,
-				     this->next_temp);
+	 entry = new(mem_ctx) temp_entry(ir->var, PROGRAM_TEMPORARY,
+					 this->next_temp);
 	 this->variable_storage.push_tail(entry);
 
 	 next_temp += type_size(ir->var->type);
@@ -1162,16 +1172,36 @@ print_program(struct prog_instruction *mesa_instructions,
    }
 }
 
-void
-do_ir_to_mesa(exec_list *instructions)
+struct gl_program *
+get_mesa_program(GLcontext *ctx, void *mem_ctx, struct glsl_shader *shader)
 {
    ir_to_mesa_visitor v;
    struct prog_instruction *mesa_instructions, *mesa_inst;
    ir_instruction **mesa_instruction_annotation;
    int i;
+   exec_list *instructions = &shader->ir;
+   struct gl_program *prog;
+   GLenum target;
 
-   v.ctx = talloc_new(NULL);
+   switch (shader->Type) {
+   case GL_VERTEX_SHADER:   target = GL_VERTEX_PROGRAM_ARB; break;
+   case GL_FRAGMENT_SHADER: target = GL_FRAGMENT_PROGRAM_ARB; break;
+   default: assert(!"should not be reached"); break;
+   }
+
+   prog = ctx->Driver.NewProgram(ctx, target, 1);
+   if (!prog)
+      return NULL;
+   prog->Parameters = _mesa_new_parameter_list();
+   prog->Varying = _mesa_new_parameter_list();
+   prog->Attributes = _mesa_new_parameter_list();
+   v.ctx = ctx;
+   v.prog = prog;
+
+   v.mem_ctx = talloc_new(NULL);
    visit_exec_list(instructions, &v);
+
+   prog->NumTemporaries = v.next_temp;
 
    int num_instructions = 0;
    foreach_iter(exec_list_iterator, iter, v.instructions) {
@@ -1181,9 +1211,8 @@ do_ir_to_mesa(exec_list *instructions)
    mesa_instructions =
       (struct prog_instruction *)calloc(num_instructions,
 					sizeof(*mesa_instructions));
-   mesa_instruction_annotation =
-      (ir_instruction **)calloc(num_instructions,
-				sizeof(*mesa_instruction_annotation));
+   mesa_instruction_annotation = talloc_array(mem_ctx, ir_instruction *,
+					      num_instructions);
 
    mesa_inst = mesa_instructions;
    i = 0;
@@ -1205,8 +1234,159 @@ do_ir_to_mesa(exec_list *instructions)
    }
 
    set_branchtargets(mesa_instructions, num_instructions);
-   print_program(mesa_instructions, mesa_instruction_annotation, num_instructions);
+   if (0) {
+      print_program(mesa_instructions, mesa_instruction_annotation,
+		    num_instructions);
+   }
 
-   free(mesa_instruction_annotation);
-   talloc_free(v.ctx);
+   prog->Instructions = mesa_instructions;
+   prog->NumInstructions = num_instructions;
+
+   _mesa_reference_program(ctx, &shader->mesa_shader->Program, prog);
+
+   return prog;
 }
+
+/* Takes a Mesa gl shader structure and compiles it, returning our Mesa-like
+ * structure with the IR and such attached.
+ */
+static struct glsl_shader *
+_mesa_get_glsl_shader(GLcontext *ctx, void *mem_ctx, struct gl_shader *sh)
+{
+   struct glsl_shader *shader = talloc_zero(mem_ctx, struct glsl_shader);
+   struct _mesa_glsl_parse_state *state;
+
+   shader->Type = sh->Type;
+   shader->Name = sh->Name;
+   shader->RefCount = 1;
+   shader->Source = sh->Source;
+   shader->SourceLen = strlen(sh->Source);
+   shader->mesa_shader = sh;
+
+   state = talloc_zero(shader, struct _mesa_glsl_parse_state);
+   switch (shader->Type) {
+   case GL_VERTEX_SHADER:   state->target = vertex_shader; break;
+   case GL_FRAGMENT_SHADER: state->target = fragment_shader; break;
+   case GL_GEOMETRY_SHADER: state->target = geometry_shader; break;
+   }
+
+   state->scanner = NULL;
+   state->translation_unit.make_empty();
+   state->symbols = new(mem_ctx) glsl_symbol_table;
+   state->info_log = talloc_strdup(shader, "");
+   state->error = false;
+   state->temp_index = 0;
+   state->loop_or_switch_nesting = NULL;
+   state->ARB_texture_rectangle_enable = true;
+
+   _mesa_glsl_lexer_ctor(state, shader->Source);
+   _mesa_glsl_parse(state);
+   _mesa_glsl_lexer_dtor(state);
+
+   shader->ir.make_empty();
+   if (!state->error && !state->translation_unit.is_empty())
+      _mesa_ast_to_hir(&shader->ir, state);
+
+   /* Optimization passes */
+   if (!state->error && !shader->ir.is_empty()) {
+      bool progress;
+      do {
+	 progress = false;
+
+	 progress = do_function_inlining(&shader->ir) || progress;
+	 progress = do_if_simplification(&shader->ir) || progress;
+	 progress = do_copy_propagation(&shader->ir) || progress;
+	 progress = do_dead_code_local(&shader->ir) || progress;
+	 progress = do_dead_code_unlinked(&shader->ir) || progress;
+	 progress = do_constant_variable_unlinked(&shader->ir) || progress;
+	 progress = do_constant_folding(&shader->ir) || progress;
+	 progress = do_vec_index_to_swizzle(&shader->ir) || progress;
+	 progress = do_swizzle_swizzle(&shader->ir) || progress;
+      } while (progress);
+   }
+
+   shader->symbols = state->symbols;
+
+   shader->CompileStatus = !state->error;
+   shader->InfoLog = state->info_log;
+
+   talloc_free(state);
+
+   return shader;
+}
+
+extern "C" {
+
+void
+_mesa_glsl_compile_shader(GLcontext *ctx, struct gl_shader *sh)
+{
+   struct glsl_shader *shader;
+   TALLOC_CTX *mem_ctx = talloc_new(NULL);
+
+   shader = _mesa_get_glsl_shader(ctx, mem_ctx, sh);
+
+   sh->CompileStatus = shader->CompileStatus;
+   sh->InfoLog = strdup(shader->InfoLog);
+   talloc_free(mem_ctx);
+ }
+
+void
+_mesa_glsl_link_shader(GLcontext *ctx, struct gl_shader_program *prog)
+{
+   struct glsl_program *whole_program;
+   unsigned int i;
+
+   _mesa_clear_shader_program_data(ctx, prog);
+
+   whole_program = talloc_zero(NULL, struct glsl_program);
+   whole_program->LinkStatus = GL_TRUE;
+   whole_program->NumShaders = prog->NumShaders;
+   whole_program->Shaders = talloc_array(whole_program, struct glsl_shader *,
+					 prog->NumShaders);
+
+   for (i = 0; i < prog->NumShaders; i++) {
+      whole_program->Shaders[i] = _mesa_get_glsl_shader(ctx, whole_program,
+							prog->Shaders[i]);
+      if (!whole_program->Shaders[i]->CompileStatus) {
+	 whole_program->InfoLog =
+	    talloc_asprintf_append(whole_program->InfoLog,
+				   "linking with uncompiled shader");
+	 whole_program->LinkStatus = GL_FALSE;
+      }
+   }
+
+   prog->Uniforms = _mesa_new_uniform_list();
+   prog->Varying = _mesa_new_parameter_list();
+   _mesa_reference_vertprog(ctx, &prog->VertexProgram, NULL);
+   _mesa_reference_fragprog(ctx, &prog->FragmentProgram, NULL);
+
+   if (whole_program->LinkStatus)
+      link_shaders(whole_program);
+
+   prog->LinkStatus = whole_program->LinkStatus;
+
+   /* FINISHME: This should use the linker-generated code */
+   if (prog->LinkStatus) {
+      for (i = 0; i < prog->NumShaders; i++) {
+	 struct gl_program *linked_prog;
+
+	 linked_prog = get_mesa_program(ctx, whole_program,
+					whole_program->Shaders[i]);
+
+	 switch (whole_program->Shaders[i]->Type) {
+	 case GL_VERTEX_SHADER:
+	    _mesa_reference_vertprog(ctx, &prog->VertexProgram,
+				     (struct gl_vertex_program *)linked_prog);
+	    break;
+	 case GL_FRAGMENT_SHADER:
+	    _mesa_reference_fragprog(ctx, &prog->FragmentProgram,
+				     (struct gl_fragment_program *)linked_prog);
+	    break;
+	 }
+      }
+   }
+
+   talloc_free(whole_program);
+}
+
+} /* extern "C" */
