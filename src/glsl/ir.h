@@ -918,6 +918,9 @@ class ir_swizzle : public ir_rvalue {
 public:
    ir_swizzle(ir_rvalue *, unsigned x, unsigned y, unsigned z, unsigned w,
               unsigned count);
+
+   ir_swizzle(ir_rvalue *val, const unsigned *components, unsigned count);
+
    ir_swizzle(ir_rvalue *val, ir_swizzle_mask mask);
 
    virtual ir_instruction *clone(struct hash_table *) const;
@@ -951,6 +954,14 @@ public:
 
    ir_rvalue *val;
    ir_swizzle_mask mask;
+
+private:
+   /**
+    * Initialize the mask component of a swizzle
+    *
+    * This is used by the \c ir_swizzle constructors.
+    */
+   void init_mask(const unsigned *components, unsigned count);
 };
 
 

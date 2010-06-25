@@ -573,34 +573,61 @@ ir_texture::set_sampler(ir_dereference *sampler)
 }
 
 
-ir_swizzle::ir_swizzle(ir_rvalue *val, unsigned x, unsigned y, unsigned z,
-		       unsigned w, unsigned count)
-   : val(val)
+void
+ir_swizzle::init_mask(const unsigned *comp, unsigned count)
 {
    assert((count >= 1) && (count <= 4));
 
-   const unsigned dup_mask = 0
-      | ((count > 1) ? ((1U << y) & ((1U << x)                        )) : 0)
-      | ((count > 2) ? ((1U << z) & ((1U << x) | (1U << y)            )) : 0)
-      | ((count > 3) ? ((1U << w) & ((1U << x) | (1U << y) | (1U << z))) : 0);
+   memset(&this->mask, 0, sizeof(this->mask));
+   this->mask.num_components = count;
 
-   assert(x <= 3);
-   assert(y <= 3);
-   assert(z <= 3);
-   assert(w <= 3);
+   unsigned dup_mask = 0;
+   switch (count) {
+   case 4:
+      assert(comp[3] <= 3);
+      dup_mask |= (1U << comp[3])
+	 & ((1U << comp[0]) | (1U << comp[1]) | (1U << comp[2]));
+      this->mask.w = comp[3];
 
-   mask.x = x;
-   mask.y = y;
-   mask.z = z;
-   mask.w = w;
-   mask.num_components = count;
-   mask.has_duplicates = dup_mask != 0;
+   case 3:
+      assert(comp[2] <= 3);
+      dup_mask |= (1U << comp[2])
+	 & ((1U << comp[0]) | (1U << comp[1]));
+      this->mask.z = comp[2];
+
+   case 2:
+      assert(comp[1] <= 3);
+      dup_mask |= (1U << comp[1])
+	 & ((1U << comp[0]));
+      this->mask.y = comp[1];
+
+   case 1:
+      assert(comp[0] <= 3);
+      this->mask.x = comp[0];
+   }
+
+   this->mask.has_duplicates = dup_mask != 0;
 
    /* Based on the number of elements in the swizzle and the base type
     * (i.e., float, int, unsigned, or bool) of the vector being swizzled,
     * generate the type of the resulting value.
     */
    type = glsl_type::get_instance(val->type->base_type, mask.num_components, 1);
+}
+
+ir_swizzle::ir_swizzle(ir_rvalue *val, unsigned x, unsigned y, unsigned z,
+		       unsigned w, unsigned count)
+   : val(val)
+{
+   const unsigned components[4] = { x, y, z, w };
+   this->init_mask(components, count);
+}
+
+ir_swizzle::ir_swizzle(ir_rvalue *val, const unsigned *comp,
+		       unsigned count)
+   : val(val)
+{
+   this->init_mask(comp, count);
 }
 
 ir_swizzle::ir_swizzle(ir_rvalue *val, ir_swizzle_mask mask)
