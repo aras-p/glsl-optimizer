@@ -56,7 +56,7 @@ extern "C" {
 typedef struct ir_to_mesa_src_reg {
    int file; /**< PROGRAM_* from Mesa */
    int index; /**< temporary index, VERT_ATTRIB_*, FRAG_ATTRIB_*, etc. */
-   int swizzle; /**< SWIZZLE_XYZWONEZERO swizzles from Mesa. */
+   GLuint swizzle; /**< SWIZZLE_XYZWONEZERO swizzles from Mesa. */
    int negate; /**< NEGATE_XYZW mask from mesa */
    bool reladdr; /**< Register index should be offset by address reg. */
 } ir_to_mesa_src_reg;
@@ -319,14 +319,14 @@ ir_to_mesa_visitor::ir_to_mesa_emit_scalar_op1(ir_instruction *ir,
     * dst channels.
     */
    for (i = 0; i < 4; i++) {
-      int this_mask = (1 << i);
+      GLuint this_mask = (1 << i);
       ir_to_mesa_instruction *inst;
       ir_to_mesa_src_reg src = src0;
 
       if (done_mask & this_mask)
 	 continue;
 
-      int src_swiz = GET_SWZ(src.swizzle, i);
+      GLuint src_swiz = GET_SWZ(src.swizzle, i);
       for (j = i + 1; j < 4; j++) {
 	 if (!(done_mask & (1 << j)) && GET_SWZ(src.swizzle, j) == src_swiz) {
 	    this_mask |= (1 << j);
@@ -348,15 +348,9 @@ ir_to_mesa_visitor::src_reg_for_float(float val)
 {
    ir_to_mesa_src_reg src_reg;
 
-   /* FINISHME: This will end up being _mesa_add_unnamed_constant,
-    * which handles sharing values and sharing channels of vec4
-    * constants for small values.
-    */
-   /* FINISHME: Do something with the constant values for now.
-    */
-   (void)val;
    src_reg.file = PROGRAM_CONSTANT;
-   src_reg.index = this->next_constant++;
+   src_reg.index = _mesa_add_unnamed_constant(this->prog->Parameters,
+					      &val, 1, &src_reg.swizzle);
    src_reg.swizzle = SWIZZLE_NOOP;
 
    return src_reg;
@@ -985,15 +979,17 @@ ir_to_mesa_visitor::visit(ir_constant *ir)
 	  ir->type->base_type == GLSL_TYPE_INT ||
 	  ir->type->base_type == GLSL_TYPE_BOOL);
 
-   /* FINISHME: This will end up being _mesa_add_unnamed_constant,
-    * which handles sharing values and sharing channels of vec4
-    * constants for small values.
-    */
-   /* FINISHME: Do something with the constant values for now.
-    */
-   src_reg.file = PROGRAM_CONSTANT;
-   src_reg.index = this->next_constant;
-   src_reg.swizzle = SWIZZLE_NOOP;
+   if (ir->type->base_type == GLSL_TYPE_FLOAT &&
+       !ir->type->is_matrix() && !ir->type->is_array()) {
+      src_reg.file = PROGRAM_CONSTANT;
+      src_reg.index =
+	 _mesa_add_unnamed_constant(this->prog->Parameters,
+				    &ir->value.f[0], ir->type->vector_elements,
+				    &src_reg.swizzle);
+      src_reg.swizzle = SWIZZLE_NOOP;
+   } else {
+      assert(!"FINISHME: non-float constants");
+   }
    src_reg.reladdr = false;
    src_reg.negate = 0;
 
