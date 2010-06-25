@@ -267,8 +267,22 @@ static int transform_const_loop(struct emulate_loop_state * s,
 	 * simple, since we only support increment and decrement loops.
 	 */
 	limit_value = get_constant_value(s->C, limit, 0);
-	iterations = (int) ((limit_value - counter_value.Value) /
+	DBG("Limit is %f.\n", limit_value);
+	switch(loop->Cond->U.I.Opcode){
+	case RC_OPCODE_SGT:
+	case RC_OPCODE_SLT:
+		iterations = (int) ceilf((limit_value - counter_value.Value) /
 							count_inst.Amount);
+		break;
+
+	case RC_OPCODE_SLE:
+	case RC_OPCODE_SGE:
+		iterations = (int) floorf((limit_value - counter_value.Value) /
+							count_inst.Amount) + 1;
+		break;
+	default:
+		return 0;
+	}
 
 	DBG("Loop will have %d iterations.\n", iterations);
 	
