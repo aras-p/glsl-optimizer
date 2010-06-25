@@ -218,7 +218,15 @@ static boolean post_vs_viewport( struct pt_post_vs *pvs,
 static boolean post_vs_none( struct pt_post_vs *pvs,
 			     struct draw_vertex_info *info )
 {
+   struct vertex_header *out = info->verts;
+
    if (0) debug_printf("%s\n", __FUNCTION__);
+   /* just initialize the vertex_id in all headers */
+   for (j = 0; j < info->count; j++) {
+      initialize_vertex_header(out);
+
+      out = (struct vertex_header *)((char *)out + info->stride);
+   }
    return FALSE;
 }
 
