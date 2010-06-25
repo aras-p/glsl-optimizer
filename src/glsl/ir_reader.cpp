@@ -70,8 +70,7 @@ void
 _mesa_glsl_read_ir(_mesa_glsl_parse_state *state, exec_list *instructions,
 		   const char *src)
 {
-   void *ctx = talloc_parent(state);
-   s_expression *expr = s_expression::read_expression(ctx, src);
+   s_expression *expr = s_expression::read_expression(state, src);
    if (expr == NULL) {
       ir_read_error(state, NULL, "couldn't parse S-Expression.");
       return;
@@ -82,6 +81,7 @@ _mesa_glsl_read_ir(_mesa_glsl_parse_state *state, exec_list *instructions,
       return;
 
    read_instructions(state, instructions, expr, NULL);
+   talloc_free(expr);
 }
 
 static void
