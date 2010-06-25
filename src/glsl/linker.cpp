@@ -77,7 +77,9 @@ extern "C" {
 #include "ir.h"
 #include "ir_optimization.h"
 #include "program.h"
+extern "C" {
 #include "hash_table.h"
+}
 
 /**
  * Visitor that determines whether or not a variable is ever written.

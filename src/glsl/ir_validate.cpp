@@ -36,7 +36,9 @@
 #include <inttypes.h>
 #include "ir.h"
 #include "ir_hierarchical_visitor.h"
+extern "C" {
 #include "hash_table.h"
+}
 
 static unsigned int hash_func(const void *key)
 {
