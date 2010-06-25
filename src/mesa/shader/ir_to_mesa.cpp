@@ -1650,6 +1650,12 @@ get_mesa_program(GLcontext *ctx, void *mem_ctx, struct gl_shader *shader)
 
 extern "C" {
 
+static void
+steal_memory(ir_instruction *ir, void *new_ctx)
+{
+   talloc_steal(new_ctx, ir);
+}
+
 void
 _mesa_glsl_compile_shader(GLcontext *ctx, struct gl_shader *shader)
 {
@@ -1711,6 +1717,11 @@ _mesa_glsl_compile_shader(GLcontext *ctx, struct gl_shader *shader)
 
    shader->CompileStatus = !state->error;
    shader->InfoLog = state->info_log;
+
+   /* Retain any live IR, but trash the rest. */
+   foreach_list(node, shader->ir) {
+      visit_tree((ir_instruction *) node, steal_memory, shader);
+   }
 
    talloc_free(state);
  }

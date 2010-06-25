@@ -99,6 +99,12 @@ const struct option compiler_opts[] = {
    { NULL, 0, NULL, 0 }
 };
 
+static void
+steal_memory(ir_instruction *ir, void *new_ctx)
+{
+   talloc_steal(new_ctx, ir);
+}
+
 void
 compile_shader(struct gl_shader *shader)
 {
@@ -186,6 +192,11 @@ compile_shader(struct gl_shader *shader)
       talloc_free(shader->InfoLog);
 
    shader->InfoLog = state->info_log;
+
+   /* Retain any live IR, but trash the rest. */
+   foreach_list(node, shader->ir) {
+      visit_tree((ir_instruction *) node, steal_memory, shader);
+   }
 
    talloc_free(state);
 
