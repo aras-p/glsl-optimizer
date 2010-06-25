@@ -115,31 +115,19 @@ struct r300_rs_state {
     /* Draw-specific rasterizer state. */
     struct pipe_rasterizer_state rs_draw;
 
-    uint32_t vap_control_status;    /* R300_VAP_CNTL_STATUS: 0x2140 */
-    uint32_t point_size;            /* R300_GA_POINT_SIZE: 0x421c */
-    uint32_t point_minmax;          /* R300_GA_POINT_MINMAX: 0x4230 */
-    uint32_t line_control;          /* R300_GA_LINE_CNTL: 0x4234 */
-    float depth_scale;            /* R300_SU_POLY_OFFSET_FRONT_SCALE: 0x42a4 */
-                                  /* R300_SU_POLY_OFFSET_BACK_SCALE: 0x42ac */
-    float depth_offset;           /* R300_SU_POLY_OFFSET_FRONT_OFFSET: 0x42a8 */
-                                  /* R300_SU_POLY_OFFSET_BACK_OFFSET: 0x42b0 */
-    uint32_t polygon_offset_enable; /* R300_SU_POLY_OFFSET_ENABLE: 0x42b4 */
-    uint32_t cull_mode;             /* R300_SU_CULL_MODE: 0x42b8 */
-    uint32_t line_stipple_config;   /* R300_GA_LINE_STIPPLE_CONFIG: 0x4328 */
-    uint32_t line_stipple_value;    /* R300_GA_LINE_STIPPLE_VALUE: 0x4260 */
+    /* Command buffers. */
+    uint32_t cb_main[25];
+    uint32_t cb_poly_offset_zb16[5];
+    uint32_t cb_poly_offset_zb24[5];
+
+    /* The index to cb_main where the cull_mode register value resides. */
+    unsigned cull_mode_index;
+
+    /* Whether polygon offset is enabled. */
+    boolean polygon_offset_enable;
+
+    /* This is emitted in the draw function. */
     uint32_t color_control;         /* R300_GA_COLOR_CONTROL: 0x4278 */
-    uint32_t polygon_mode;          /* R300_GA_POLY_MODE: 0x4288 */
-    uint32_t clip_rule;             /* R300_SC_CLIP_RULE: 0x43D0 */
-
-    /* Specifies top of Raster pipe specific enable controls,
-     * i.e. texture coordinates stuffing for points, lines, triangles */
-    uint32_t stuffing_enable;       /* R300_GB_ENABLE: 0x4008 */
-
-    /* Point sprites texture coordinates, 0: lower left, 1: upper right */
-    float point_texcoord_left;      /* R300_GA_POINT_S0: 0x4200 */
-    float point_texcoord_bottom;    /* R300_GA_POINT_T0: 0x4204 */
-    float point_texcoord_right;     /* R300_GA_POINT_S1: 0x4208 */
-    float point_texcoord_top;       /* R300_GA_POINT_T1: 0x420c */
 };
 
 struct r300_rs_block {

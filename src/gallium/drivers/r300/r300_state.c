@@ -850,6 +850,27 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
     struct r300_rs_state* rs = CALLOC_STRUCT(r300_rs_state);
     int i;
     float psiz;
+    uint32_t vap_control_status;    /* R300_VAP_CNTL_STATUS: 0x2140 */
+    uint32_t point_size;            /* R300_GA_POINT_SIZE: 0x421c */
+    uint32_t point_minmax;          /* R300_GA_POINT_MINMAX: 0x4230 */
+    uint32_t line_control;          /* R300_GA_LINE_CNTL: 0x4234 */
+    uint32_t polygon_offset_enable; /* R300_SU_POLY_OFFSET_ENABLE: 0x42b4 */
+    uint32_t cull_mode;             /* R300_SU_CULL_MODE: 0x42b8 */
+    uint32_t line_stipple_config;   /* R300_GA_LINE_STIPPLE_CONFIG: 0x4328 */
+    uint32_t line_stipple_value;    /* R300_GA_LINE_STIPPLE_VALUE: 0x4260 */
+    uint32_t polygon_mode;          /* R300_GA_POLY_MODE: 0x4288 */
+    uint32_t clip_rule;             /* R300_SC_CLIP_RULE: 0x43D0 */
+
+    /* Specifies top of Raster pipe specific enable controls,
+     * i.e. texture coordinates stuffing for points, lines, triangles */
+    uint32_t stuffing_enable;       /* R300_GB_ENABLE: 0x4008 */
+
+    /* Point sprites texture coordinates, 0: lower left, 1: upper right */
+    float point_texcoord_left;      /* R300_GA_POINT_S0: 0x4200 */
+    float point_texcoord_bottom;    /* R300_GA_POINT_T0: 0x4204 */
+    float point_texcoord_right;     /* R300_GA_POINT_S1: 0x4208 */
+    float point_texcoord_top;       /* R300_GA_POINT_T1: 0x420c */
+    CB_LOCALS;
 
     /* Copy rasterizer state. */
     rs->rs = *state;
@@ -859,18 +880,18 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
     rs->rs_draw.sprite_coord_enable = 0; /* We can do this in HW. */
 
 #ifdef PIPE_ARCH_LITTLE_ENDIAN
-    rs->vap_control_status = R300_VC_NO_SWAP;
+    vap_control_status = R300_VC_NO_SWAP;
 #else
-    rs->vap_control_status = R300_VC_32BIT_SWAP;
+    vap_control_status = R300_VC_32BIT_SWAP;
 #endif
 
     /* If no TCL engine is present, turn off the HW TCL. */
     if (!r300_screen(pipe->screen)->caps.has_tcl) {
-        rs->vap_control_status |= R300_VAP_TCL_BYPASS;
+        vap_control_status |= R300_VAP_TCL_BYPASS;
     }
 
     /* Point size width and height. */
-    rs->point_size =
+    point_size =
         pack_float_16_6x(state->point_size) |
         (pack_float_16_6x(state->point_size) << R300_POINTSIZE_X_SHIFT);
 
@@ -880,68 +901,67 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
          * Clamp to [0, max FB size] */
         psiz = pipe->screen->get_paramf(pipe->screen,
                                         PIPE_CAP_MAX_POINT_WIDTH);
-        rs->point_minmax =
+        point_minmax =
             pack_float_16_6x(psiz) << R300_GA_POINT_MINMAX_MAX_SHIFT;
     } else {
         /* We cannot disable the point-size vertex output,
          * so clamp it. */
         psiz = state->point_size;
-        rs->point_minmax =
+        point_minmax =
             (pack_float_16_6x(psiz) << R300_GA_POINT_MINMAX_MIN_SHIFT) |
             (pack_float_16_6x(psiz) << R300_GA_POINT_MINMAX_MAX_SHIFT);
     }
 
     /* Line control. */
-    rs->line_control = pack_float_16_6x(state->line_width) |
+    line_control = pack_float_16_6x(state->line_width) |
         R300_GA_LINE_CNTL_END_TYPE_COMP;
 
     /* Enable polygon mode */
+    polygon_mode = 0;
     if (state->fill_front != PIPE_POLYGON_MODE_FILL ||
         state->fill_back != PIPE_POLYGON_MODE_FILL) {
-        rs->polygon_mode = R300_GA_POLY_MODE_DUAL;
+        polygon_mode = R300_GA_POLY_MODE_DUAL;
     }
 
     /* Front face */
     if (state->front_ccw) 
-        rs->cull_mode = R300_FRONT_FACE_CCW;
+        cull_mode = R300_FRONT_FACE_CCW;
     else
-        rs->cull_mode = R300_FRONT_FACE_CW;
+        cull_mode = R300_FRONT_FACE_CW;
 
     /* Polygon offset */
+    polygon_offset_enable = 0;
     if (util_get_offset(state, state->fill_front)) {
-       rs->polygon_offset_enable |= R300_FRONT_ENABLE;
+       polygon_offset_enable |= R300_FRONT_ENABLE;
     }
     if (util_get_offset(state, state->fill_back)) {
-       rs->polygon_offset_enable |= R300_BACK_ENABLE;
+       polygon_offset_enable |= R300_BACK_ENABLE;
     }
 
+    rs->polygon_offset_enable = polygon_offset_enable != 0;
+
     /* Polygon mode */
-    if (rs->polygon_mode) {
-       rs->polygon_mode |=
+    if (polygon_mode) {
+       polygon_mode |=
           r300_translate_polygon_mode_front(state->fill_front);
-       rs->polygon_mode |=
+       polygon_mode |=
           r300_translate_polygon_mode_back(state->fill_back);
     }
 
     if (state->cull_face & PIPE_FACE_FRONT) {
-        rs->cull_mode |= R300_CULL_FRONT;
+        cull_mode |= R300_CULL_FRONT;
     }
     if (state->cull_face & PIPE_FACE_BACK) {
-        rs->cull_mode |= R300_CULL_BACK;
-    }
-
-    if (rs->polygon_offset_enable) {
-        rs->depth_offset = state->offset_units;
-        rs->depth_scale = state->offset_scale;
+        cull_mode |= R300_CULL_BACK;
     }
 
     if (state->line_stipple_enable) {
-        rs->line_stipple_config =
+        line_stipple_config =
             R300_GA_LINE_STIPPLE_CONFIG_LINE_RESET_LINE |
             (fui((float)state->line_stipple_factor) &
                 R300_GA_LINE_STIPPLE_CONFIG_STIPPLE_SCALE_MASK);
         /* XXX this might need to be scaled up */
-        rs->line_stipple_value = state->line_stipple_pattern;
+        line_stipple_value = state->line_stipple_pattern;
     }
 
     if (state->flatshade) {
@@ -950,30 +970,78 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
         rs->color_control = R300_SHADE_MODEL_SMOOTH;
     }
 
-    rs->clip_rule = state->scissor ? 0xAAAA : 0xFFFF;
+    clip_rule = state->scissor ? 0xAAAA : 0xFFFF;
 
     /* Point sprites */
+    stuffing_enable = 0;
     if (state->sprite_coord_enable) {
-        rs->stuffing_enable = R300_GB_POINT_STUFF_ENABLE;
+        stuffing_enable = R300_GB_POINT_STUFF_ENABLE;
 	for (i = 0; i < 8; i++) {
 	    if (state->sprite_coord_enable & (1 << i))
-		rs->stuffing_enable |=
+                stuffing_enable |=
 		    R300_GB_TEX_STR << (R300_GB_TEX0_SOURCE_SHIFT + (i*2));
 	}
 
-        rs->point_texcoord_left = 0.0f;
-        rs->point_texcoord_right = 1.0f;
+        point_texcoord_left = 0.0f;
+        point_texcoord_right = 1.0f;
 
         switch (state->sprite_coord_mode) {
             case PIPE_SPRITE_COORD_UPPER_LEFT:
-                rs->point_texcoord_top = 0.0f;
-                rs->point_texcoord_bottom = 1.0f;
+                point_texcoord_top = 0.0f;
+                point_texcoord_bottom = 1.0f;
                 break;
             case PIPE_SPRITE_COORD_LOWER_LEFT:
-                rs->point_texcoord_top = 1.0f;
-                rs->point_texcoord_bottom = 0.0f;
+                point_texcoord_top = 1.0f;
+                point_texcoord_bottom = 0.0f;
                 break;
         }
+    }
+
+    /* Build the main command buffer. */
+    BEGIN_CB(rs->cb_main, 25);
+    OUT_CB_REG(R300_VAP_CNTL_STATUS, vap_control_status);
+    OUT_CB_REG(R300_GA_POINT_SIZE, point_size);
+    OUT_CB_REG_SEQ(R300_GA_POINT_MINMAX, 2);
+    OUT_CB(point_minmax);
+    OUT_CB(line_control);
+    OUT_CB_REG_SEQ(R300_SU_POLY_OFFSET_ENABLE, 2);
+    OUT_CB(polygon_offset_enable);
+    rs->cull_mode_index = 25 - cs_count;
+    OUT_CB(cull_mode);
+    OUT_CB_REG(R300_GA_LINE_STIPPLE_CONFIG, line_stipple_config);
+    OUT_CB_REG(R300_GA_LINE_STIPPLE_VALUE, line_stipple_value);
+    OUT_CB_REG(R300_GA_POLY_MODE, polygon_mode);
+    OUT_CB_REG(R300_SC_CLIP_RULE, clip_rule);
+    OUT_CB_REG(R300_GB_ENABLE, stuffing_enable);
+    OUT_CB_REG_SEQ(R300_GA_POINT_S0, 4);
+    OUT_CB_32F(point_texcoord_left);
+    OUT_CB_32F(point_texcoord_bottom);
+    OUT_CB_32F(point_texcoord_right);
+    OUT_CB_32F(point_texcoord_top);
+    END_CB;
+
+    /* Build the two command buffers for polygon offset setup. */
+    if (polygon_offset_enable) {
+        float scale = state->offset_scale * 12;
+        float offset = state->offset_units * 4;
+
+        BEGIN_CB(rs->cb_poly_offset_zb16, 5);
+        OUT_CB_REG_SEQ(R300_SU_POLY_OFFSET_FRONT_SCALE, 4);
+        OUT_CB_32F(scale);
+        OUT_CB_32F(offset);
+        OUT_CB_32F(scale);
+        OUT_CB_32F(offset);
+        END_CB;
+
+        offset = state->offset_units * 2;
+
+        BEGIN_CB(rs->cb_poly_offset_zb24, 5);
+        OUT_CB_REG_SEQ(R300_SU_POLY_OFFSET_FRONT_SCALE, 4);
+        OUT_CB_32F(scale);
+        OUT_CB_32F(offset);
+        OUT_CB_32F(scale);
+        OUT_CB_32F(offset);
+        END_CB;
     }
 
     return (void*)rs;

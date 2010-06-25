@@ -565,49 +565,17 @@ void r300_emit_invariant_state(struct r300_context *r300,
 void r300_emit_rs_state(struct r300_context* r300, unsigned size, void* state)
 {
     struct r300_rs_state* rs = state;
-    float scale, offset;
     CS_LOCALS(r300);
 
     BEGIN_CS(size);
-    OUT_CS_REG(R300_VAP_CNTL_STATUS, rs->vap_control_status);
-    OUT_CS_REG(R300_GA_POINT_SIZE, rs->point_size);
-    OUT_CS_REG_SEQ(R300_GA_POINT_MINMAX, 2);
-    OUT_CS(rs->point_minmax);
-    OUT_CS(rs->line_control);
-
+    OUT_CS_TABLE(rs->cb_main, 25);
     if (rs->polygon_offset_enable) {
-        scale = rs->depth_scale * 12;
-        offset = rs->depth_offset;
-
-        switch (r300->zbuffer_bpp) {
-            case 16:
-                offset *= 4;
-                break;
-            case 24:
-                offset *= 2;
-                break;
+        if (r300->zbuffer_bpp == 16) {
+            OUT_CS_TABLE(rs->cb_poly_offset_zb16, 5);
+        } else {
+            OUT_CS_TABLE(rs->cb_poly_offset_zb24, 5);
         }
-
-        OUT_CS_REG_SEQ(R300_SU_POLY_OFFSET_FRONT_SCALE, 4);
-        OUT_CS_32F(scale);
-        OUT_CS_32F(offset);
-        OUT_CS_32F(scale);
-        OUT_CS_32F(offset);
     }
-
-    OUT_CS_REG_SEQ(R300_SU_POLY_OFFSET_ENABLE, 2);
-    OUT_CS(rs->polygon_offset_enable);
-    OUT_CS(rs->cull_mode);
-    OUT_CS_REG(R300_GA_LINE_STIPPLE_CONFIG, rs->line_stipple_config);
-    OUT_CS_REG(R300_GA_LINE_STIPPLE_VALUE, rs->line_stipple_value);
-    OUT_CS_REG(R300_GA_POLY_MODE, rs->polygon_mode);
-    OUT_CS_REG(R300_SC_CLIP_RULE, rs->clip_rule);
-    OUT_CS_REG(R300_GB_ENABLE, rs->stuffing_enable);
-    OUT_CS_REG_SEQ(R300_GA_POINT_S0, 4);
-    OUT_CS_32F(rs->point_texcoord_left);
-    OUT_CS_32F(rs->point_texcoord_bottom);
-    OUT_CS_32F(rs->point_texcoord_right);
-    OUT_CS_32F(rs->point_texcoord_top);
     END_CS;
 }
 
