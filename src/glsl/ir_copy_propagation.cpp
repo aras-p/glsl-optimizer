@@ -225,7 +225,7 @@ copy_propagation_basic_block(ir_instruction *first,
    bool *out_progress = (bool *)data;
    bool progress = false;
 
-   void *ctx = talloc(NULL, void*);
+   void *ctx = talloc_new(NULL);
    for (ir = first;; ir = (ir_instruction *)ir->next) {
       ir_assignment *ir_assign = ir->as_assignment();
 
