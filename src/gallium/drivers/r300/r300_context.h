@@ -116,8 +116,6 @@ struct r300_rs_state {
     struct pipe_rasterizer_state rs_draw;
 
     uint32_t vap_control_status;    /* R300_VAP_CNTL_STATUS: 0x2140 */
-    uint32_t multisample_position_0;/* R300_GB_MSPOS0: 0x4010 */
-    uint32_t multisample_position_1;/* R300_GB_MSPOS1: 0x4014 */
     uint32_t point_size;            /* R300_GA_POINT_SIZE: 0x421c */
     uint32_t point_minmax;          /* R300_GA_POINT_MINMAX: 0x4230 */
     uint32_t line_control;          /* R300_GA_LINE_CNTL: 0x4234 */

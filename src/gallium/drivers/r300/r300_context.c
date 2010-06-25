@@ -143,7 +143,7 @@ static void r300_setup_atoms(struct r300_context* r300)
     R300_INIT_ATOM(vs_state, 0);
     R300_INIT_ATOM(vs_constants, 0);
     R300_INIT_ATOM(clip_state, has_tcl ? 5 + (6 * 4) : 2);
-    /* VAP, RS, GA, GB. */
+    /* VAP, RS, GA, GB, SU, SC. */
     R300_INIT_ATOM(rs_block_state, 0);
     R300_INIT_ATOM(rs_state, 0);
     /* US. */

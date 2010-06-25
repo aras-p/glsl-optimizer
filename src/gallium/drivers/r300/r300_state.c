@@ -708,7 +708,8 @@ static void
     r300->fb_state.size =
             7 +
             (8 * state->nr_cbufs) +
-            (state->zsbuf ? (r300->screen->caps.has_hiz ? 22 : 18) : 0);
+            (state->zsbuf ? (r300->screen->caps.has_hiz ? 22 : 18) : 0) +
+            (r300->rws->get_value(r300->rws, R300_VID_DRM_2_3_0) ? 3 : 0);
 
     /* Polygon offset depends on the zbuffer bit depth. */
     if (state->zsbuf && r300->polygon_offset_enabled) {
@@ -975,11 +976,6 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
         }
     }
 
-    if (state->gl_rasterization_rules) {
-        rs->multisample_position_0 = 0x66666666;
-        rs->multisample_position_1 = 0x6666666;
-    }
-
     return (void*)rs;
 }
 
@@ -1009,8 +1005,7 @@ static void r300_bind_rs_state(struct pipe_context* pipe, void* state)
     }
 
     UPDATE_STATE(state, r300->rs_state);
-    r300->rs_state.size = 25 + (r300->polygon_offset_enabled ? 5 : 0) +
-        (r300->rws->get_value(r300->rws, R300_VID_DRM_2_3_0) ? 3 : 0);
+    r300->rs_state.size = 25 + (r300->polygon_offset_enabled ? 5 : 0);
 
     if (last_sprite_coord_enable != r300->sprite_coord_enable ||
         last_two_sided_color != r300->two_sided_color) {
