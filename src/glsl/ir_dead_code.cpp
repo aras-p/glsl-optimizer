@@ -71,6 +71,8 @@ public:
 
    /* List of variable_entry */
    exec_list variable_list;
+
+   void *mem_ctx;
 };
 
 
@@ -84,9 +86,7 @@ ir_dead_code_visitor::get_variable_entry(ir_variable *var)
 	 return entry;
    }
 
-   void *ctx = talloc_parent(var);
-
-   variable_entry *entry = new(ctx) variable_entry(var);
+   variable_entry *entry = new(mem_ctx) variable_entry(var);
    this->variable_list.push_tail(entry);
    return entry;
 }
@@ -147,11 +147,13 @@ ir_dead_code_visitor::visit_leave(ir_assignment *ir)
  * for usage on an unlinked instruction stream.
  */
 bool
-do_dead_code(exec_list *instructions)
+do_dead_code(struct _mesa_glsl_parse_state *state,
+	     exec_list *instructions)
 {
    ir_dead_code_visitor v;
    bool progress = false;
 
+   v.mem_ctx = state;
    v.run(instructions);
 
    foreach_iter(exec_list_iterator, iter, v.variable_list) {
@@ -198,7 +200,8 @@ do_dead_code(exec_list *instructions)
  * with global scope.
  */
 bool
-do_dead_code_unlinked(exec_list *instructions)
+do_dead_code_unlinked(struct _mesa_glsl_parse_state *state,
+		      exec_list *instructions)
 {
    bool progress = false;
 
@@ -209,7 +212,7 @@ do_dead_code_unlinked(exec_list *instructions)
 	 foreach_iter(exec_list_iterator, sigiter, *f) {
 	    ir_function_signature *sig =
 	       (ir_function_signature *) sigiter.get();
-	    if (do_dead_code(&sig->body))
+	    if (do_dead_code(state, &sig->body))
 	       progress = true;
 	 }
       }

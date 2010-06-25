@@ -157,7 +157,7 @@ compile_shader(struct glsl_shader *shader)
 	 progress = do_if_simplification(&shader->ir) || progress;
 	 progress = do_copy_propagation(&shader->ir) || progress;
 	 progress = do_dead_code_local(&shader->ir) || progress;
-	 progress = do_dead_code_unlinked(&shader->ir) || progress;
+	 progress = do_dead_code_unlinked(state, &shader->ir) || progress;
 	 progress = do_constant_variable_unlinked(&shader->ir) || progress;
 	 progress = do_constant_folding(&shader->ir) || progress;
 	 progress = do_vec_index_to_swizzle(&shader->ir) || progress;
