@@ -313,7 +313,7 @@ precision	return PRECISION;
 
 [_a-zA-Z][_a-zA-Z0-9]*	{
 			    struct _mesa_glsl_parse_state *state = yyextra;
-			    void *ctx = talloc_parent(state);	
+			    void *ctx = state;	
 			    yylval->identifier = talloc_strdup(ctx, yytext);
 			    return IDENTIFIER;
 			}

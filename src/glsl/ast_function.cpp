@@ -59,7 +59,7 @@ process_call(exec_list *instructions, ir_function *f,
 	     YYLTYPE *loc, exec_list *actual_parameters,
 	     struct _mesa_glsl_parse_state *state)
 {
-   void *ctx = talloc_parent(state);
+   void *ctx = state;
 
    const ir_function_signature *sig =
       f->matching_signature(actual_parameters);
@@ -119,7 +119,7 @@ match_function_by_name(exec_list *instructions, const char *name,
 		       YYLTYPE *loc, exec_list *actual_parameters,
 		       struct _mesa_glsl_parse_state *state)
 {
-   void *ctx = talloc_parent(state);
+   void *ctx = state;
    ir_function *f = state->symbols->get_function(name);
 
    if (f == NULL) {
@@ -244,7 +244,7 @@ process_array_constructor(exec_list *instructions,
 			  YYLTYPE *loc, exec_list *parameters,
 			  struct _mesa_glsl_parse_state *state)
 {
-   void *ctx = talloc_parent(state);
+   void *ctx = state;
    /* Array constructors come in two forms: sized and unsized.  Sized array
     * constructors look like 'vec4[2](a, b)', where 'a' and 'b' are vec4
     * variables.  In this case the number of parameters must exactly match the
@@ -318,7 +318,7 @@ constant_record_constructor(const glsl_type *constructor_type,
 			    YYLTYPE *loc, exec_list *parameters,
 			    struct _mesa_glsl_parse_state *state)
 {
-   void *ctx = talloc_parent(state);
+   void *ctx = state;
    bool all_parameters_are_constant = true;
 
    exec_node *node = parameters->head;
@@ -862,7 +862,7 @@ ir_rvalue *
 ast_function_expression::hir(exec_list *instructions,
 			     struct _mesa_glsl_parse_state *state)
 {
-   void *ctx = talloc_parent(state);
+   void *ctx = state;
    /* There are three sorts of function calls.
     *
     * 1. contstructors - The first subexpression is an ast_type_specifier.

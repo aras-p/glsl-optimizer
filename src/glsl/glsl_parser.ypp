@@ -255,35 +255,35 @@ variable_identifier:
 primary_expression:
 	variable_identifier
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_expression(ast_identifier, NULL, NULL, NULL);
 	   $$->set_location(yylloc);
 	   $$->primary_expression.identifier = $1;
 	}
 	| INTCONSTANT
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_expression(ast_int_constant, NULL, NULL, NULL);
 	   $$->set_location(yylloc);
 	   $$->primary_expression.int_constant = $1;
 	}
 	| UINTCONSTANT
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_expression(ast_uint_constant, NULL, NULL, NULL);
 	   $$->set_location(yylloc);
 	   $$->primary_expression.uint_constant = $1;
 	}
 	| FLOATCONSTANT
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_expression(ast_float_constant, NULL, NULL, NULL);
 	   $$->set_location(yylloc);
 	   $$->primary_expression.float_constant = $1;
 	}
 	| BOOLCONSTANT
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_expression(ast_bool_constant, NULL, NULL, NULL);
 	   $$->set_location(yylloc);
 	   $$->primary_expression.bool_constant = $1;
@@ -298,7 +298,7 @@ postfix_expression:
 	primary_expression
 	| postfix_expression '[' integer_expression ']'
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_expression(ast_array_index, $1, $3, NULL);
 	   $$->set_location(yylloc);
 	}
@@ -314,20 +314,20 @@ postfix_expression:
 	}
 	| postfix_expression '.' IDENTIFIER
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_expression(ast_field_selection, $1, NULL, NULL);
 	   $$->set_location(yylloc);
 	   $$->primary_expression.identifier = $3;
 	}
 	| postfix_expression INC_OP
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_expression(ast_post_inc, $1, NULL, NULL);
 	   $$->set_location(yylloc);
 	}
 	| postfix_expression DEC_OP
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_expression(ast_post_dec, $1, NULL, NULL);
 	   $$->set_location(yylloc);
 	}
@@ -345,7 +345,7 @@ function_call_or_method:
 	function_call_generic
 	| postfix_expression '.' function_call_generic
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_expression(ast_field_selection, $1, $3, NULL);
 	   $$->set_location(yylloc);
 	}
@@ -386,20 +386,20 @@ function_call_header:
 function_identifier:
 	type_specifier
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_function_expression($1);
 	   $$->set_location(yylloc);
    	}
 	| IDENTIFIER
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   ast_expression *callee = new(ctx) ast_expression($1);
 	   $$ = new(ctx) ast_function_expression(callee);
 	   $$->set_location(yylloc);
    	}
 	| FIELD_SELECTION
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   ast_expression *callee = new(ctx) ast_expression($1);
 	   $$ = new(ctx) ast_function_expression(callee);
 	   $$->set_location(yylloc);
@@ -411,19 +411,19 @@ unary_expression:
 	postfix_expression
 	| INC_OP unary_expression
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_expression(ast_pre_inc, $2, NULL, NULL);
 	   $$->set_location(yylloc);
 	}
 	| DEC_OP unary_expression
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_expression(ast_pre_dec, $2, NULL, NULL);
 	   $$->set_location(yylloc);
 	}
 	| unary_operator unary_expression
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_expression($1, $2, NULL, NULL);
 	   $$->set_location(yylloc);
 	}
@@ -441,19 +441,19 @@ multiplicative_expression:
 	unary_expression
 	| multiplicative_expression '*' unary_expression
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_expression_bin(ast_mul, $1, $3);
 	   $$->set_location(yylloc);
 	}
 	| multiplicative_expression '/' unary_expression
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_expression_bin(ast_div, $1, $3);
 	   $$->set_location(yylloc);
 	}
 	| multiplicative_expression '%' unary_expression
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_expression_bin(ast_mod, $1, $3);
 	   $$->set_location(yylloc);
 	}
@@ -463,13 +463,13 @@ additive_expression:
 	multiplicative_expression
 	| additive_expression '+' multiplicative_expression
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_expression_bin(ast_add, $1, $3);
 	   $$->set_location(yylloc);
 	}
 	| additive_expression '-' multiplicative_expression
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_expression_bin(ast_sub, $1, $3);
 	   $$->set_location(yylloc);
 	}
@@ -479,13 +479,13 @@ shift_expression:
 	additive_expression
 	| shift_expression LEFT_OP additive_expression
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_expression_bin(ast_lshift, $1, $3);
 	   $$->set_location(yylloc);
 	}
 	| shift_expression RIGHT_OP additive_expression
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_expression_bin(ast_rshift, $1, $3);
 	   $$->set_location(yylloc);
 	}
@@ -495,25 +495,25 @@ relational_expression:
 	shift_expression
 	| relational_expression '<' shift_expression
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_expression_bin(ast_less, $1, $3);
 	   $$->set_location(yylloc);
 	}
 	| relational_expression '>' shift_expression
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_expression_bin(ast_greater, $1, $3);
 	   $$->set_location(yylloc);
 	}
 	| relational_expression LE_OP shift_expression
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_expression_bin(ast_lequal, $1, $3);
 	   $$->set_location(yylloc);
 	}
 	| relational_expression GE_OP shift_expression
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_expression_bin(ast_gequal, $1, $3);
 	   $$->set_location(yylloc);
 	}
@@ -523,13 +523,13 @@ equality_expression:
 	relational_expression
 	| equality_expression EQ_OP relational_expression
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_expression_bin(ast_equal, $1, $3);
 	   $$->set_location(yylloc);
 	}
 	| equality_expression NE_OP relational_expression
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_expression_bin(ast_nequal, $1, $3);
 	   $$->set_location(yylloc);
 	}
@@ -539,7 +539,7 @@ and_expression:
 	equality_expression
 	| and_expression '&' equality_expression
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_expression_bin(ast_bit_or, $1, $3);
 	   $$->set_location(yylloc);
 	}
@@ -549,7 +549,7 @@ exclusive_or_expression:
 	and_expression
 	| exclusive_or_expression '^' and_expression
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_expression_bin(ast_bit_xor, $1, $3);
 	   $$->set_location(yylloc);
 	}
@@ -559,7 +559,7 @@ inclusive_or_expression:
 	exclusive_or_expression
 	| inclusive_or_expression '|' exclusive_or_expression
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_expression_bin(ast_bit_or, $1, $3);
 	   $$->set_location(yylloc);
 	}
@@ -569,7 +569,7 @@ logical_and_expression:
 	inclusive_or_expression
 	| logical_and_expression AND_OP inclusive_or_expression
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_expression_bin(ast_logic_and, $1, $3);
 	   $$->set_location(yylloc);
 	}
@@ -579,7 +579,7 @@ logical_xor_expression:
 	logical_and_expression
 	| logical_xor_expression XOR_OP logical_and_expression
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_expression_bin(ast_logic_xor, $1, $3);
 	   $$->set_location(yylloc);
 	}
@@ -589,7 +589,7 @@ logical_or_expression:
 	logical_xor_expression
 	| logical_or_expression OR_OP logical_xor_expression
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_expression_bin(ast_logic_or, $1, $3);
 	   $$->set_location(yylloc);
 	}
@@ -599,7 +599,7 @@ conditional_expression:
 	logical_or_expression
 	| logical_or_expression '?' expression ':' assignment_expression
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_expression(ast_conditional, $1, $3, $5);
 	   $$->set_location(yylloc);
 	}
@@ -609,7 +609,7 @@ assignment_expression:
 	conditional_expression
 	| unary_expression assignment_operator assignment_expression
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_expression($2, $1, $3, NULL);
 	   $$->set_location(yylloc);
 	}
@@ -636,7 +636,7 @@ expression:
 	}
 	| expression ',' assignment_expression
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   if ($1->oper != ast_sequence) {
 	      $$ = new(ctx) ast_expression(ast_sequence, NULL, NULL, NULL);
 	      $$->set_location(yylloc);
@@ -700,7 +700,7 @@ function_header_with_parameters:
 function_header:
 	fully_specified_type IDENTIFIER '('
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_function();
 	   $$->set_location(yylloc);
 	   $$->return_type = $1;
@@ -711,7 +711,7 @@ function_header:
 parameter_declarator:
 	type_specifier IDENTIFIER
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_parameter_declarator();
 	   $$->set_location(yylloc);
 	   $$->type = new(ctx) ast_fully_specified_type();
@@ -721,7 +721,7 @@ parameter_declarator:
 	}
 	| type_specifier IDENTIFIER '[' constant_expression ']'
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_parameter_declarator();
 	   $$->set_location(yylloc);
 	   $$->type = new(ctx) ast_fully_specified_type();
@@ -748,7 +748,7 @@ parameter_declaration:
 	}
 	| parameter_type_qualifier parameter_qualifier parameter_type_specifier
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $1.i |= $2.i;
 
 	   $$ = new(ctx) ast_parameter_declarator();
@@ -759,7 +759,7 @@ parameter_declaration:
 	}
 	| parameter_qualifier parameter_type_specifier
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_parameter_declarator();
 	   $$->set_location(yylloc);
 	   $$->type = new(ctx) ast_fully_specified_type();
@@ -783,7 +783,7 @@ init_declarator_list:
 	single_declaration
 	| init_declarator_list ',' IDENTIFIER
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   ast_declaration *decl = new(ctx) ast_declaration($3, false, NULL, NULL);
 	   decl->set_location(yylloc);
 
@@ -792,7 +792,7 @@ init_declarator_list:
 	}
 	| init_declarator_list ',' IDENTIFIER '[' ']'
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   ast_declaration *decl = new(ctx) ast_declaration($3, true, NULL, NULL);
 	   decl->set_location(yylloc);
 
@@ -801,7 +801,7 @@ init_declarator_list:
 	}
 	| init_declarator_list ',' IDENTIFIER '[' constant_expression ']'
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   ast_declaration *decl = new(ctx) ast_declaration($3, true, $5, NULL);
 	   decl->set_location(yylloc);
 
@@ -810,7 +810,7 @@ init_declarator_list:
 	}
 	| init_declarator_list ',' IDENTIFIER '[' ']' '=' initializer
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   ast_declaration *decl = new(ctx) ast_declaration($3, true, NULL, $7);
 	   decl->set_location(yylloc);
 
@@ -819,7 +819,7 @@ init_declarator_list:
 	}
 	| init_declarator_list ',' IDENTIFIER '[' constant_expression ']' '=' initializer
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   ast_declaration *decl = new(ctx) ast_declaration($3, true, $5, $8);
 	   decl->set_location(yylloc);
 
@@ -828,7 +828,7 @@ init_declarator_list:
 	}
 	| init_declarator_list ',' IDENTIFIER '=' initializer
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   ast_declaration *decl = new(ctx) ast_declaration($3, false, NULL, $5);
 	   decl->set_location(yylloc);
 
@@ -841,7 +841,7 @@ init_declarator_list:
 single_declaration:
 	fully_specified_type
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   if ($1->specifier->type_specifier != ast_struct) {
 	      _mesa_glsl_error(& @1, state, "empty declaration list\n");
 	      YYERROR;
@@ -852,7 +852,7 @@ single_declaration:
 	}
 	| fully_specified_type IDENTIFIER
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   ast_declaration *decl = new(ctx) ast_declaration($2, false, NULL, NULL);
 
 	   $$ = new(ctx) ast_declarator_list($1);
@@ -861,7 +861,7 @@ single_declaration:
 	}
 	| fully_specified_type IDENTIFIER '[' ']'
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   ast_declaration *decl = new(ctx) ast_declaration($2, true, NULL, NULL);
 
 	   $$ = new(ctx) ast_declarator_list($1);
@@ -870,7 +870,7 @@ single_declaration:
 	}
 	| fully_specified_type IDENTIFIER '[' constant_expression ']'
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   ast_declaration *decl = new(ctx) ast_declaration($2, true, $4, NULL);
 
 	   $$ = new(ctx) ast_declarator_list($1);
@@ -879,7 +879,7 @@ single_declaration:
 	}
 	| fully_specified_type IDENTIFIER '[' ']' '=' initializer
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   ast_declaration *decl = new(ctx) ast_declaration($2, true, NULL, $6);
 
 	   $$ = new(ctx) ast_declarator_list($1);
@@ -888,7 +888,7 @@ single_declaration:
 	}
 	| fully_specified_type IDENTIFIER '[' constant_expression ']' '=' initializer
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   ast_declaration *decl = new(ctx) ast_declaration($2, true, $4, $7);
 
 	   $$ = new(ctx) ast_declarator_list($1);
@@ -897,7 +897,7 @@ single_declaration:
 	}
 	| fully_specified_type IDENTIFIER '=' initializer
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   ast_declaration *decl = new(ctx) ast_declaration($2, false, NULL, $4);
 
 	   $$ = new(ctx) ast_declarator_list($1);
@@ -906,7 +906,7 @@ single_declaration:
 	}
 	| INVARIANT IDENTIFIER // Vertex only.
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   ast_declaration *decl = new(ctx) ast_declaration($2, false, NULL, NULL);
 
 	   $$ = new(ctx) ast_declarator_list(NULL);
@@ -920,14 +920,14 @@ single_declaration:
 fully_specified_type:
 	type_specifier
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_fully_specified_type();
 	   $$->set_location(yylloc);
 	   $$->specifier = $1;
 	}
 	| type_qualifier type_specifier
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_fully_specified_type();
 	   $$->set_location(yylloc);
 	   $$->qualifier = $1.q;
@@ -998,19 +998,19 @@ type_specifier_no_prec:
 type_specifier_nonarray:
 	basic_type_specifier_nonarray
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_type_specifier($1);
 	   $$->set_location(yylloc);
 	}
 	| struct_specifier
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_type_specifier($1);
 	   $$->set_location(yylloc);
 	}
 	| IDENTIFIER
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_type_specifier($1);
 	   $$->set_location(yylloc);
 	}
@@ -1112,13 +1112,13 @@ precision_qualifier:
 struct_specifier:
 	STRUCT IDENTIFIER '{' struct_declaration_list '}'
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_struct_specifier($2, $4);
 	   $$->set_location(yylloc);
 	}
 	| STRUCT '{' struct_declaration_list '}'
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_struct_specifier(NULL, $3);
 	   $$->set_location(yylloc);
 	}
@@ -1140,7 +1140,7 @@ struct_declaration_list:
 struct_declaration:
 	type_specifier struct_declarator_list ';'
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   ast_fully_specified_type *type = new(ctx) ast_fully_specified_type();
 	   type->set_location(yylloc);
 
@@ -1168,13 +1168,13 @@ struct_declarator_list:
 struct_declarator:
 	IDENTIFIER
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_declaration($1, false, NULL, NULL);
 	   $$->set_location(yylloc);
 	}
 	| IDENTIFIER '[' constant_expression ']'
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_declaration($1, true, $3, NULL);
 	   $$->set_location(yylloc);
 	}
@@ -1217,13 +1217,13 @@ simple_statement:
 compound_statement:
 	'{' '}'
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_compound_statement(true, NULL);
 	   $$->set_location(yylloc);
 	}
 	| '{' statement_list '}'
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_compound_statement(true, $2);
 	   $$->set_location(yylloc);
 	}
@@ -1237,13 +1237,13 @@ statement_no_new_scope:
 compound_statement_no_new_scope:
 	'{' '}'
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_compound_statement(false, NULL);
 	   $$->set_location(yylloc);
 	}
 	| '{' statement_list '}'
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_compound_statement(false, $2);
 	   $$->set_location(yylloc);
 	}
@@ -1274,13 +1274,13 @@ statement_list:
 expression_statement:
 	';'
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_expression_statement(NULL);
 	   $$->set_location(yylloc);
 	}
 	| expression ';'
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_expression_statement($1);
 	   $$->set_location(yylloc);
 	}
@@ -1289,7 +1289,7 @@ expression_statement:
 selection_statement_matched:
 	IF '(' expression ')' statement_matched ELSE statement_matched
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_selection_statement($3, $5, $7);
 	   $$->set_location(yylloc);
 	}
@@ -1298,19 +1298,19 @@ selection_statement_matched:
 selection_statement_unmatched:
 	IF '(' expression ')' statement_matched
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_selection_statement($3, $5, NULL);
 	   $$->set_location(yylloc);
 	}
 	| IF '(' expression ')' statement_unmatched
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_selection_statement($3, $5, NULL);
 	   $$->set_location(yylloc);
 	}
 	| IF '(' expression ')' statement_matched ELSE statement_unmatched
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_selection_statement($3, $5, $7);
 	   $$->set_location(yylloc);
 	}
@@ -1323,7 +1323,7 @@ condition:
 	}
 	| fully_specified_type IDENTIFIER '=' initializer
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   ast_declaration *decl = new(ctx) ast_declaration($2, false, NULL, $4);
 	   ast_declarator_list *declarator = new(ctx) ast_declarator_list($1);
 	   decl->set_location(yylloc);
@@ -1346,21 +1346,21 @@ case_label:
 iteration_statement:
 	WHILE '(' condition ')' statement_no_new_scope
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_iteration_statement(ast_iteration_statement::ast_while,
 	   					    NULL, $3, NULL, $5);
 	   $$->set_location(yylloc);
 	}
 	| DO statement WHILE '(' expression ')' ';'
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_iteration_statement(ast_iteration_statement::ast_do_while,
 						    NULL, $5, NULL, $2);
 	   $$->set_location(yylloc);
 	}
 	| FOR '(' for_init_statement for_rest_statement ')' statement_no_new_scope
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_iteration_statement(ast_iteration_statement::ast_for,
 						    $3, $4.cond, $4.rest, $6);
 	   $$->set_location(yylloc);
@@ -1397,31 +1397,31 @@ for_rest_statement:
 jump_statement:
 	CONTINUE ';' 
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_jump_statement(ast_jump_statement::ast_continue, NULL);
 	   $$->set_location(yylloc);
 	}
 	| BREAK ';'
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_jump_statement(ast_jump_statement::ast_break, NULL);
 	   $$->set_location(yylloc);
 	}
 	| RETURN ';'
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_jump_statement(ast_jump_statement::ast_return, NULL);
 	   $$->set_location(yylloc);
 	}
 	| RETURN expression ';'
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_jump_statement(ast_jump_statement::ast_return, $2);
 	   $$->set_location(yylloc);
 	}
 	| DISCARD ';' // Fragment shader only.
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_jump_statement(ast_jump_statement::ast_discard, NULL);
 	   $$->set_location(yylloc);
 	}
@@ -1435,7 +1435,7 @@ external_declaration:
 function_definition:
 	function_prototype compound_statement_no_new_scope
 	{
-	   void *ctx = talloc_parent(state);
+	   void *ctx = state;
 	   $$ = new(ctx) ast_function_definition();
 	   $$->set_location(yylloc);
 	   $$->prototype = $1;

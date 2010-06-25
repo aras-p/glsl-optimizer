@@ -86,7 +86,7 @@ static bool
 apply_implicit_conversion(const glsl_type *to, ir_rvalue * &from,
 			  struct _mesa_glsl_parse_state *state)
 {
-   void *ctx = talloc_parent(state);
+   void *ctx = state;
    if (to->base_type == from->type->base_type)
       return true;
 
@@ -473,7 +473,7 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
 	      ir_rvalue *lhs, ir_rvalue *rhs,
 	      YYLTYPE lhs_loc)
 {
-   void *ctx = talloc_parent(state);
+   void *ctx = state;
    bool error_emitted = (lhs->type->is_error() || rhs->type->is_error());
 
    if (!error_emitted) {
@@ -550,7 +550,7 @@ static ir_variable *
 generate_temporary(const glsl_type *type, exec_list *instructions,
 		   struct _mesa_glsl_parse_state *state)
 {
-   void *ctx = talloc_parent(state);
+   void *ctx = state;
    char *name = (char *) malloc(sizeof(char) * 13);
 
    snprintf(name, 13, "tmp_%08X", state->temp_index);
@@ -600,7 +600,7 @@ ir_rvalue *
 ast_expression::hir(exec_list *instructions,
 		    struct _mesa_glsl_parse_state *state)
 {
-   void *ctx = talloc_parent(state);
+   void *ctx = state;
    static const int operations[AST_NUM_OPERATORS] = {
       -1,               /* ast_assign doesn't convert to ir_expression. */
       -1,               /* ast_plus doesn't convert to ir_expression. */
@@ -1544,7 +1544,7 @@ ir_rvalue *
 ast_declarator_list::hir(exec_list *instructions,
 			 struct _mesa_glsl_parse_state *state)
 {
-   void *ctx = talloc_parent(state);
+   void *ctx = state;
    const struct glsl_type *decl_type;
    const char *type_name = NULL;
    ir_rvalue *result = NULL;
@@ -1883,7 +1883,7 @@ ir_rvalue *
 ast_parameter_declarator::hir(exec_list *instructions,
 			      struct _mesa_glsl_parse_state *state)
 {
-   void *ctx = talloc_parent(state);
+   void *ctx = state;
    const struct glsl_type *type;
    const char *name = NULL;
    YYLTYPE loc = this->get_location();
@@ -1984,7 +1984,7 @@ ir_rvalue *
 ast_function::hir(exec_list *instructions,
 		  struct _mesa_glsl_parse_state *state)
 {
-   void *ctx = talloc_parent(state);
+   void *ctx = state;
    ir_function *f = NULL;
    ir_function_signature *sig = NULL;
    exec_list hir_parameters;
@@ -2152,7 +2152,7 @@ ir_rvalue *
 ast_jump_statement::hir(exec_list *instructions,
 			struct _mesa_glsl_parse_state *state)
 {
-   void *ctx = talloc_parent(state);
+   void *ctx = state;
 
    switch (mode) {
    case ast_return: {
@@ -2255,7 +2255,7 @@ ir_rvalue *
 ast_selection_statement::hir(exec_list *instructions,
 			     struct _mesa_glsl_parse_state *state)
 {
-   void *ctx = talloc_parent(state);
+   void *ctx = state;
 
    ir_rvalue *const condition = this->condition->hir(instructions, state);
 
@@ -2295,7 +2295,7 @@ void
 ast_iteration_statement::condition_to_hir(ir_loop *stmt,
 					  struct _mesa_glsl_parse_state *state)
 {
-   void *ctx = talloc_parent(state);
+   void *ctx = state;
 
    if (condition != NULL) {
       ir_rvalue *const cond =
@@ -2331,7 +2331,7 @@ ir_rvalue *
 ast_iteration_statement::hir(exec_list *instructions,
 			     struct _mesa_glsl_parse_state *state)
 {
-   void *ctx = talloc_parent(state);
+   void *ctx = state;
 
    /* For-loops and while-loops start a new scope, but do-while loops do not.
     */

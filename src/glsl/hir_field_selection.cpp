@@ -33,7 +33,7 @@ _mesa_ast_field_selection_to_hir(const ast_expression *expr,
 				 exec_list *instructions,
 				 struct _mesa_glsl_parse_state *state)
 {
-   void *ctx = talloc_parent(state);
+   void *ctx = state;
    ir_rvalue *result = NULL;
    ir_rvalue *op;
 

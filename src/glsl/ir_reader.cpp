@@ -191,7 +191,7 @@ scan_for_prototypes(_mesa_glsl_parse_state *st, exec_list *instructions,
 static ir_function *
 read_function(_mesa_glsl_parse_state *st, s_list *list, bool skip_body)
 {
-   void *ctx = talloc_parent(st);
+   void *ctx = st;
    if (list->length() < 3) {
       ir_read_error(st, list, "Expected (function <name> (signature ...) ...)");
       return NULL;
@@ -235,7 +235,7 @@ static void
 read_function_sig(_mesa_glsl_parse_state *st, ir_function *f, s_list *list,
 		  bool skip_body)
 {
-   void *ctx = talloc_parent(st);
+   void *ctx = st;
    if (list->length() != 4) {
       ir_read_error(st, list, "Expected (signature <type> (parameters ...) "
 			      "(<instruction> ...))");
@@ -334,7 +334,7 @@ static ir_instruction *
 read_instruction(_mesa_glsl_parse_state *st, s_expression *expr,
 	         ir_loop *loop_ctx)
 {
-   void *ctx = talloc_parent(st);
+   void *ctx = st;
    s_symbol *symbol = SX_AS_SYMBOL(expr);
    if (symbol != NULL) {
       if (strcmp(symbol->value(), "break") == 0 && loop_ctx != NULL)
@@ -376,7 +376,7 @@ read_instruction(_mesa_glsl_parse_state *st, s_expression *expr,
 static ir_variable *
 read_declaration(_mesa_glsl_parse_state *st, s_list *list)
 {
-   void *ctx = talloc_parent(st);
+   void *ctx = st;
    if (list->length() != 4) {
       ir_read_error(st, list, "expected (declare (<qualifiers>) <type> "
 			      "<name>)");
@@ -448,7 +448,7 @@ read_declaration(_mesa_glsl_parse_state *st, s_list *list)
 static ir_if *
 read_if(_mesa_glsl_parse_state *st, s_list *list, ir_loop *loop_ctx)
 {
-   void *ctx = talloc_parent(st);
+   void *ctx = st;
    if (list->length() != 4) {
       ir_read_error(st, list, "expected (if <condition> (<then> ...) "
                           "(<else> ...))");
@@ -480,7 +480,7 @@ read_if(_mesa_glsl_parse_state *st, s_list *list, ir_loop *loop_ctx)
 static ir_loop *
 read_loop(_mesa_glsl_parse_state *st, s_list *list)
 {
-   void *ctx = talloc_parent(st);
+   void *ctx = st;
    if (list->length() != 6) {
       ir_read_error(st, list, "expected (loop <counter> <from> <to> "
 			      "<increment> <body>)");
@@ -508,7 +508,7 @@ read_loop(_mesa_glsl_parse_state *st, s_list *list)
 static ir_return *
 read_return(_mesa_glsl_parse_state *st, s_list *list)
 {
-   void *ctx = talloc_parent(st);
+   void *ctx = st;
    if (list->length() != 2) {
       ir_read_error(st, list, "expected (return <rvalue>)");
       return NULL;
@@ -564,7 +564,7 @@ read_rvalue(_mesa_glsl_parse_state *st, s_expression *expr)
 static ir_assignment *
 read_assignment(_mesa_glsl_parse_state *st, s_list *list)
 {
-   void *ctx = talloc_parent(st);
+   void *ctx = st;
    if (list->length() != 4) {
       ir_read_error(st, list, "expected (assign <condition> <lhs> <rhs>)");
       return NULL;
@@ -599,7 +599,7 @@ read_assignment(_mesa_glsl_parse_state *st, s_list *list)
 static ir_call *
 read_call(_mesa_glsl_parse_state *st, s_list *list)
 {
-   void *ctx = talloc_parent(st);
+   void *ctx = st;
    if (list->length() != 3) {
       ir_read_error(st, list, "expected (call <name> (<param> ...))");
       return NULL;
@@ -644,7 +644,7 @@ read_call(_mesa_glsl_parse_state *st, s_list *list)
 static ir_expression *
 read_expression(_mesa_glsl_parse_state *st, s_list *list)
 {
-   void *ctx = talloc_parent(st);
+   void *ctx = st;
    const unsigned list_length = list->length();
    if (list_length < 4) {
       ir_read_error(st, list, "expected (expression <type> <operator> "
@@ -749,7 +749,7 @@ read_swizzle(_mesa_glsl_parse_state *st, s_list *list)
 static ir_constant *
 read_constant(_mesa_glsl_parse_state *st, s_list *list)
 {
-   void *ctx = talloc_parent(st);
+   void *ctx = st;
    if (list->length() != 3) {
       ir_read_error(st, list, "expected (constant <type> (<num> ... <num>))");
       return NULL;
@@ -840,7 +840,7 @@ read_dereference(_mesa_glsl_parse_state *st, s_expression *expr)
 static ir_dereference *
 read_var_ref(_mesa_glsl_parse_state *st, s_list *list)
 {
-   void *ctx = talloc_parent(st);
+   void *ctx = st;
    if (list->length() != 2) {
       ir_read_error(st, list, "expected (var_ref <variable name>)");
       return NULL;
@@ -863,7 +863,7 @@ read_var_ref(_mesa_glsl_parse_state *st, s_list *list)
 static ir_dereference *
 read_array_ref(_mesa_glsl_parse_state *st, s_list *list)
 {
-   void *ctx = talloc_parent(st);
+   void *ctx = st;
    if (list->length() != 3) {
       ir_read_error(st, list, "expected (array_ref <rvalue> <index>)");
       return NULL;
@@ -884,7 +884,7 @@ read_array_ref(_mesa_glsl_parse_state *st, s_list *list)
 static ir_dereference *
 read_record_ref(_mesa_glsl_parse_state *st, s_list *list)
 {
-   void *ctx = talloc_parent(st);
+   void *ctx = st;
    if (list->length() != 3) {
       ir_read_error(st, list, "expected (record_ref <rvalue> <field>)");
       return NULL;
@@ -920,7 +920,7 @@ valid_texture_list_length(ir_texture_opcode op, s_list *list)
 static ir_texture *
 read_texture(_mesa_glsl_parse_state *st, s_list *list)
 {
-   void *ctx = talloc_parent(st);
+   void *ctx = st;
    s_symbol *tag = SX_AS_SYMBOL(list->subexpressions.head);
    assert(tag != NULL);
 
