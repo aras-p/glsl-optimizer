@@ -186,6 +186,14 @@ static void r300_setup_atoms(struct r300_context* r300)
     r300->pvs_flush.allow_null_state = TRUE;
     r300->query_start.allow_null_state = TRUE;
     r300->texture_cache_inval.allow_null_state = TRUE;
+
+    /* Some states must be marked dirty here to properly set up
+     * hardware in the first command stream. */
+    r300->invariant_state.dirty = TRUE;
+    r300->pvs_flush.dirty = TRUE;
+    r300->vap_invariant_state.dirty = TRUE;
+    r300->texture_cache_inval.dirty = TRUE;
+    r300->textures_state.dirty = TRUE;
 }
 
 /* Not every state tracker calls every driver function before the first draw
@@ -291,8 +299,6 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     r300_init_state_functions(r300);
     r300_init_resource_functions(r300);
 
-    r300->invariant_state.dirty = TRUE;
-
     rws->set_flush_cb(r300->rws, r300_flush_cb, r300);
     r300->dirty_hw++;
 
@@ -337,11 +343,6 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
             r300->context.create_sampler_view(&r300->context, tex, &vtempl);
 
         pipe_resource_reference(&tex, NULL);
-
-        /* This will make sure that the dummy texture is set up
-         * from the beginning even if an application does not use
-         * textures. */
-        r300->textures_state.dirty = TRUE;
     }
 
     return &r300->context;
