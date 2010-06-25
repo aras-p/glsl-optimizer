@@ -184,7 +184,7 @@ static void draw_vertex_shader_run(struct draw_vertex_shader *vshader,
    output_verts->count = input_verts->count;
    output_verts->verts =
       (struct vertex_header *)MALLOC(output_verts->vertex_size *
-                                     output_verts->count);
+                                     align(output_verts->count, 4));
 
    vshader->run_linear(vshader,
                        (const float (*)[4])input_verts->verts->data,
