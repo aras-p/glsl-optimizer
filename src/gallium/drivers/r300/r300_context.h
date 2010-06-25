@@ -224,6 +224,10 @@ struct r300_vertex_stream_state {
     unsigned count;
 };
 
+struct r300_vap_invariant_state {
+    uint32_t cb[9];
+};
+
 struct r300_viewport_state {
     float xscale;         /* R300_VAP_VPORT_XSCALE:  0x2098 */
     float xoffset;        /* R300_VAP_VPORT_XOFFSET: 0x209c */
@@ -471,6 +475,8 @@ struct r300_context {
     struct r300_atom ztop_state;
     /* PVS flush. */
     struct r300_atom pvs_flush;
+    /* VAP invariant state. */
+    struct r300_atom vap_invariant_state;
     /* Texture cache invalidate. */
     struct r300_atom texture_cache_inval;
     /* GPU flush. */

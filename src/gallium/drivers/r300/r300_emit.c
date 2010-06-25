@@ -819,6 +819,13 @@ void r300_emit_pvs_flush(struct r300_context* r300, unsigned size, void* state)
     END_CS;
 }
 
+void r300_emit_vap_invariant_state(struct r300_context *r300,
+                                   unsigned size, void *state)
+{
+    CS_LOCALS(r300);
+    WRITE_CS_TABLE(state, size);
+}
+
 void r300_emit_vs_state(struct r300_context* r300, unsigned size, void* state)
 {
     struct r300_vertex_shader* vs = (struct r300_vertex_shader*)state;
@@ -843,16 +850,6 @@ void r300_emit_vs_state(struct r300_context* r300, unsigned size, void* state)
     CS_LOCALS(r300);
 
     BEGIN_CS(size);
-    /* Amount of time to wait for vertex fetches in PVS */
-    OUT_CS_REG(VAP_PVS_VTX_TIMEOUT_REG, 0xffff);
-
-    OUT_CS_REG_SEQ(R300_VAP_GB_VERT_CLIP_ADJ, 4);
-    OUT_CS_32F(1.0);
-    OUT_CS_32F(1.0);
-    OUT_CS_32F(1.0);
-    OUT_CS_32F(1.0);
-
-    OUT_CS_REG(R300_VAP_PSC_SGN_NORM_CNTL, R300_SGN_NORM_NO_ZERO);
 
     /* R300_VAP_PVS_CODE_CNTL_0
      * R300_VAP_PVS_CONST_CNTL

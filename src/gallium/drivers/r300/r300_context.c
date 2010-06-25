@@ -81,6 +81,7 @@ static void r300_destroy_context(struct pipe_context* context)
     FREE(r300->rs_block_state.state);
     FREE(r300->scissor_state.state);
     FREE(r300->textures_state.state);
+    FREE(r300->vap_invariant_state.state);
     FREE(r300->viewport_state.state);
     FREE(r300->ztop_state.state);
     FREE(r300->fs_constants.state);
@@ -119,20 +120,24 @@ static void r300_setup_atoms(struct r300_context* r300)
      * Some atoms never change size, others change every emit - those have
      * the size of 0 here. */
     make_empty_list(&r300->atom_list);
-    /* RB3D (unpipelined), ZB (unpipelined), US, SC. */
+    /* GB (unpipelined), RB3D (unpipelined), ZB (unpipelined), US, SC. */
     R300_INIT_ATOM(gpu_flush, 9);
     R300_INIT_ATOM(aa_state, 4);
     R300_INIT_ATOM(fb_state, 0);
     R300_INIT_ATOM(ztop_state, 2);
+    /* ZB, FG. */
     R300_INIT_ATOM(dsa_state, is_r500 ? 8 : 6);
+    /* RB3D. */
     R300_INIT_ATOM(blend_state, 8);
     R300_INIT_ATOM(blend_color_state, is_r500 ? 3 : 2);
+    /* SC. */
     R300_INIT_ATOM(scissor_state, 3);
-    /* All sorts of things. */
+    /* GB, FG, GA, SU, SC, RB3D. */
     R300_INIT_ATOM(invariant_state, 22);
     /* VAP. */
     R300_INIT_ATOM(viewport_state, 9);
     R300_INIT_ATOM(pvs_flush, 2);
+    R300_INIT_ATOM(vap_invariant_state, 9);
     R300_INIT_ATOM(vertex_stream_state, 0);
     R300_INIT_ATOM(vs_state, 0);
     R300_INIT_ATOM(vs_constants, 0);
@@ -166,6 +171,7 @@ static void r300_setup_atoms(struct r300_context* r300)
     r300->rs_block_state.state = CALLOC_STRUCT(r300_rs_block);
     r300->scissor_state.state = CALLOC_STRUCT(pipe_scissor_state);
     r300->textures_state.state = CALLOC_STRUCT(r300_textures_state);
+    r300->vap_invariant_state.state = CALLOC_STRUCT(r300_vap_invariant_state);
     r300->viewport_state.state = CALLOC_STRUCT(r300_viewport_state);
     r300->ztop_state.state = CALLOC_STRUCT(r300_ztop_state);
     r300->fs_constants.state = CALLOC_STRUCT(r300_constant_buffer);
@@ -194,6 +200,8 @@ static void r300_init_states(struct pipe_context *pipe)
             (struct r300_clip_state*)r300->clip_state.state;
     struct r300_gpu_flush *gpuflush =
             (struct r300_gpu_flush*)r300->gpu_flush.state;
+    struct r300_vap_invariant_state *vap_invariant =
+            (struct r300_vap_invariant_state*)r300->vap_invariant_state.state;
     CB_LOCALS;
 
     pipe->set_blend_color(pipe, &bc);
@@ -224,6 +232,19 @@ static void r300_init_states(struct pipe_context *pipe)
          * This fixes random pixels sometimes appearing probably caused
          * by incomplete rendering. */
         OUT_CB_REG(RADEON_WAIT_UNTIL, RADEON_WAIT_3D_IDLECLEAN);
+        END_CB;
+    }
+
+    /* Initialize the VAP invariant state. */
+    {
+        BEGIN_CB(vap_invariant->cb, 9);
+        OUT_CB_REG(VAP_PVS_VTX_TIMEOUT_REG, 0xffff);
+        OUT_CB_REG_SEQ(R300_VAP_GB_VERT_CLIP_ADJ, 4);
+        OUT_CB_32F(1.0);
+        OUT_CB_32F(1.0);
+        OUT_CB_32F(1.0);
+        OUT_CB_32F(1.0);
+        OUT_CB_REG(R300_VAP_PSC_SGN_NORM_CNTL, R300_SGN_NORM_NO_ZERO);
         END_CB;
     }
 }

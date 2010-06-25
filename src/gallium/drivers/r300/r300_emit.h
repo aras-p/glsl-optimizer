@@ -80,6 +80,9 @@ void r300_emit_textures_state(struct r300_context *r300,
 
 void r300_emit_aos_swtcl(struct r300_context *r300, boolean indexed);
 
+void r300_emit_vap_invariant_state(struct r300_context *r300,
+                                   unsigned size, void *state);
+
 void r300_emit_vertex_stream_state(struct r300_context* r300,
                                    unsigned size, void* state);
 

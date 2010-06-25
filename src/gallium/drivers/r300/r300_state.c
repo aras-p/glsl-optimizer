@@ -1567,7 +1567,6 @@ static void* r300_create_vs_state(struct pipe_context* pipe,
                                   const struct pipe_shader_state* shader)
 {
     struct r300_context* r300 = r300_context(pipe);
-
     struct r300_vertex_shader* vs = CALLOC_STRUCT(r300_vertex_shader);
 
     /* Copy state directly into shader. */
@@ -1604,7 +1603,7 @@ static void r300_bind_vs_state(struct pipe_context* pipe, void* shader)
     if (r300->screen->caps.has_tcl) {
         r300->vs_state.dirty = TRUE;
         r300->vs_state.size =
-                vs->code.length + 18 +
+                vs->code.length + 9 +
                 (vs->immediates_count ? vs->immediates_count * 4 + 3 : 0);
 
         if (vs->externals_count) {
