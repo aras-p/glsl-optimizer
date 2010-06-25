@@ -1172,6 +1172,43 @@ print_program(struct prog_instruction *mesa_instructions,
    }
 }
 
+static void
+count_resources(struct gl_program *prog)
+{
+   prog->InputsRead = 0;
+   prog->OutputsWritten = 0;
+   unsigned int i;
+
+   for (i = 0; i < prog->NumInstructions; i++) {
+      struct prog_instruction *inst = &prog->Instructions[i];
+      unsigned int reg;
+
+      switch (inst->DstReg.File) {
+      case PROGRAM_OUTPUT:
+	 prog->OutputsWritten |= BITFIELD64_BIT(inst->DstReg.Index);
+	 break;
+      case PROGRAM_INPUT:
+	 prog->InputsRead |= BITFIELD64_BIT(inst->DstReg.Index);
+	 break;
+      default:
+	 break;
+      }
+
+      for (reg = 0; reg < _mesa_num_inst_src_regs(inst->Opcode); reg++) {
+	 switch (inst->SrcReg[reg].File) {
+	 case PROGRAM_OUTPUT:
+	    prog->OutputsWritten |= BITFIELD64_BIT(inst->DstReg.Index);
+	    break;
+	 case PROGRAM_INPUT:
+	    prog->InputsRead |= BITFIELD64_BIT(inst->DstReg.Index);
+	    break;
+	 default:
+	    break;
+	 }
+      }
+   }
+}
+
 struct gl_program *
 get_mesa_program(GLcontext *ctx, void *mem_ctx, struct glsl_shader *shader)
 {
@@ -1372,6 +1409,7 @@ _mesa_glsl_link_shader(GLcontext *ctx, struct gl_shader_program *prog)
 
 	 linked_prog = get_mesa_program(ctx, whole_program,
 					whole_program->Shaders[i]);
+	 count_resources(linked_prog);
 
 	 switch (whole_program->Shaders[i]->Type) {
 	 case GL_VERTEX_SHADER:
