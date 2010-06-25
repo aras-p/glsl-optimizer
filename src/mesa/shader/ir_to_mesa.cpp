@@ -1233,6 +1233,8 @@ get_mesa_program(GLcontext *ctx, void *mem_ctx, struct glsl_shader *shader)
 
    v.mem_ctx = talloc_new(NULL);
    visit_exec_list(instructions, &v);
+   v.ir_to_mesa_emit_op1(NULL, OPCODE_END,
+			 ir_to_mesa_undef_dst, ir_to_mesa_undef);
 
    prog->NumTemporaries = v.next_temp;
 
