@@ -26,6 +26,11 @@
 #include "glsl_types.h"
 #include "ir.h"
 
+inline unsigned min(unsigned a, unsigned b)
+{
+   return (a < b) ? a : b;
+}
+
 static unsigned
 process_parameters(exec_list *instructions, exec_list *actual_parameters,
 		   exec_list *parameters,
@@ -536,6 +541,318 @@ emit_inline_vector_constructor(const glsl_type *type,
 }
 
 
+/**
+ * Generate assignment of a portion of a vector to a portion of a matrix column
+ *
+ * \param src_base  First component of the source to be used in assignment
+ * \param column    Column of destination to be assiged
+ * \param row_base  First component of the destination column to be assigned
+ * \param count     Number of components to be assigned
+ *
+ * \note
+ * \c src_base + \c count must be less than or equal to the number of components
+ * in the source vector.
+ */
+ir_instruction *
+assign_to_matrix_column(ir_variable *var, unsigned column, unsigned row_base,
+			ir_rvalue *src, unsigned src_base, unsigned count,
+			TALLOC_CTX *ctx)
+{
+   const unsigned mask[8] = { 0, 1, 2, 3, 0, 0, 0, 0 };
+
+   ir_constant *col_idx = new(ctx) ir_constant(column);
+   ir_rvalue *column_ref = new(ctx) ir_dereference_array(var, col_idx);
+
+   assert(column_ref->type->components() >= (row_base + count));
+   ir_rvalue *lhs = new(ctx) ir_swizzle(column_ref, &mask[row_base], count);
+
+   assert(src->type->components() >= (src_base + count));
+   ir_rvalue *rhs = new(ctx) ir_swizzle(src, &mask[src_base], count);
+
+   return new(ctx) ir_assignment(lhs, rhs, NULL);
+}
+
+
+/**
+ * Generate inline code for a matrix constructor
+ *
+ * The generated constructor code will consist of a temporary variable
+ * declaration of the same type as the constructor.  A sequence of assignments
+ * from constructor parameters to the temporary will follow.
+ *
+ * \return
+ * An \c ir_dereference_variable of the temprorary generated in the constructor
+ * body.
+ */
+ir_rvalue *
+emit_inline_matrix_constructor(const glsl_type *type,
+			       exec_list *instructions,
+			       exec_list *parameters,
+			       void *ctx)
+{
+   assert(!parameters->is_empty());
+
+   ir_variable *var = new(ctx) ir_variable(type, strdup("mat_ctor"));
+   instructions->push_tail(var);
+
+   /* There are three kinds of matrix constructors.
+    *
+    *  - Construct a matrix from a single scalar by replicating that scalar to
+    *    along the diagonal of the matrix and setting all other components to
+    *    zero.
+    *
+    *  - Construct a matrix from an arbirary combination of vectors and
+    *    scalars.  The components of the constructor parameters are assigned
+    *    to the matrix in colum-major order until the matrix is full.
+    *
+    *  - Construct a matrix from a single matrix.  The source matrix is copied
+    *    to the upper left portion of the constructed matrix, and the remaining
+    *    elements take values from the identity matrix.
+    */
+   ir_rvalue *const first_param = (ir_rvalue *) parameters->head;
+   if (single_scalar_parameter(parameters)) {
+      /* Assign the scalar to the X component of a vec4, and fill the remaining
+       * components with zero.
+       */
+      ir_variable *rhs_var = new(ctx) ir_variable(glsl_type::vec4_type,
+						  strdup("mat_ctor_vec"));
+      instructions->push_tail(rhs_var);
+
+      ir_constant_data zero;
+      zero.f[0] = 0.0;
+      zero.f[1] = 0.0;
+      zero.f[2] = 0.0;
+      zero.f[3] = 0.0;
+
+      ir_instruction *inst =
+	 new(ctx) ir_assignment(new(ctx) ir_dereference_variable(rhs_var),
+				new(ctx) ir_constant(rhs_var->type, &zero),
+				NULL);
+      instructions->push_tail(inst);
+
+      ir_rvalue *const rhs_ref = new(ctx) ir_dereference_variable(rhs_var);
+      ir_rvalue *const x_of_rhs = new(ctx) ir_swizzle(rhs_ref, 0, 0, 0, 0, 1);
+
+      inst = new(ctx) ir_assignment(x_of_rhs, first_param, NULL);
+      instructions->push_tail(inst);
+
+      /* Assign the temporary vector to each column of the destination matrix
+       * with a swizzle that puts the X component on the diagonal of the
+       * matrix.  In some cases this may mean that the X component does not
+       * get assigned into the column at all (i.e., when the matrix has more
+       * columns than rows).
+       */
+      static const unsigned rhs_swiz[4][4] = {
+	 { 0, 1, 1, 1 },
+	 { 1, 0, 1, 1 },
+	 { 1, 1, 0, 1 },
+	 { 1, 1, 1, 0 }
+      };
+
+      const unsigned cols_to_init = min(type->matrix_columns,
+					type->vector_elements);
+      for (unsigned i = 0; i < cols_to_init; i++) {
+	 ir_constant *const col_idx = new(ctx) ir_constant(i);
+	 ir_rvalue *const col_ref = new(ctx) ir_dereference_array(var, col_idx);
+
+	 ir_rvalue *const rhs_ref = new(ctx) ir_dereference_variable(rhs_var);
+	 ir_rvalue *const rhs = new(ctx) ir_swizzle(rhs_ref, rhs_swiz[i],
+						    type->vector_elements);
+
+	 inst = new(ctx) ir_assignment(col_ref, rhs, NULL);
+	 instructions->push_tail(inst);
+      }
+
+      for (unsigned i = cols_to_init; i < type->matrix_columns; i++) {
+	 ir_constant *const col_idx = new(ctx) ir_constant(i);
+	 ir_rvalue *const col_ref = new(ctx) ir_dereference_array(var, col_idx);
+
+	 ir_rvalue *const rhs_ref = new(ctx) ir_dereference_variable(rhs_var);
+	 ir_rvalue *const rhs = new(ctx) ir_swizzle(rhs_ref, 1, 1, 1, 1,
+						    type->vector_elements);
+
+	 inst = new(ctx) ir_assignment(col_ref, rhs, NULL);
+	 instructions->push_tail(inst);
+      }
+   } else if (first_param->type->is_matrix()) {
+      /* From page 50 (56 of the PDF) of the GLSL 1.50 spec:
+       *
+       *     "If a matrix is constructed from a matrix, then each component
+       *     (column i, row j) in the result that has a corresponding
+       *     component (column i, row j) in the argument will be initialized
+       *     from there. All other components will be initialized to the
+       *     identity matrix. If a matrix argument is given to a matrix
+       *     constructor, it is an error to have any other arguments."
+       */
+      assert(first_param->next->is_tail_sentinal());
+      ir_rvalue *const src_matrix = first_param;
+
+      /* If the source matrix is smaller, pre-initialize the relavent parts of
+       * the destination matrix to the identity matrix.
+       */
+      if ((src_matrix->type->matrix_columns < var->type->matrix_columns)
+	  || (src_matrix->type->vector_elements < var->type->vector_elements)) {
+
+	 /* If the source matrix has fewer rows, every column of the destination
+	  * must be initialized.  Otherwise only the columns in the destination
+	  * that do not exist in the source must be initialized.
+	  */
+	 unsigned col =
+	    (src_matrix->type->vector_elements < var->type->vector_elements)
+	    ? 0 : src_matrix->type->matrix_columns;
+
+	 const glsl_type *const col_type = var->type->column_type();
+	 for (/* empty */; col < var->type->matrix_columns; col++) {
+	    ir_constant_data ident;
+
+	    ident.f[0] = 0.0;
+	    ident.f[1] = 0.0;
+	    ident.f[2] = 0.0;
+	    ident.f[3] = 0.0;
+
+	    ident.f[col] = 1.0;
+
+	    ir_rvalue *const rhs = new(ctx) ir_constant(col_type, &ident);
+
+	    ir_rvalue *const lhs =
+	       new(ctx) ir_dereference_array(var, new(ctx) ir_constant(col));
+
+	    ir_instruction *inst = new(ctx) ir_assignment(lhs, rhs, NULL);
+	    instructions->push_tail(inst);
+	 }
+      }
+
+      /* Assign columns from the source matrix to the destination matrix.
+       *
+       * Since the parameter will be used in the RHS of multiple assignments,
+       * generate a temporary and copy the paramter there.
+       */
+      ir_variable *const rhs_var = new(ctx) ir_variable(first_param->type,
+							strdup("mat_ctor_mat"));
+      instructions->push_tail(rhs_var);
+
+      ir_dereference *const rhs_var_ref =
+	 new(ctx) ir_dereference_variable(rhs_var);
+      ir_instruction *const inst =
+	 new(ctx) ir_assignment(rhs_var_ref, first_param, NULL);
+      instructions->push_tail(inst);
+
+
+      const unsigned swiz[4] = { 0, 1, 2, 3 };
+      const unsigned last_col = min(src_matrix->type->matrix_columns,
+				    var->type->matrix_columns);
+      for (unsigned i = 0; i < last_col; i++) {
+	 ir_rvalue *const lhs_col =
+	    new(ctx) ir_dereference_array(var, new(ctx) ir_constant(i));
+	 ir_rvalue *const rhs_col =
+	    new(ctx) ir_dereference_array(rhs_var, new(ctx) ir_constant(i));
+
+	 /* If one matrix has columns that are smaller than the columns of the
+	  * other matrix, wrap the column access of the larger with a swizzle
+	  * so that the LHS and RHS of the assignment have the same size (and
+	  * therefore have the same type).
+	  *
+	  * It would be perfectly valid to unconditionally generate the
+	  * swizzles, this this will typically result in a more compact IR tree.
+	  */
+	 ir_rvalue *lhs;
+	 ir_rvalue *rhs;
+	 if (lhs_col->type->vector_elements < rhs_col->type->vector_elements) {
+	    lhs = lhs_col;
+
+	    rhs = new(ctx) ir_swizzle(rhs_col, swiz,
+				      lhs_col->type->vector_elements);
+	 } else if (lhs_col->type->vector_elements
+		    > rhs_col->type->vector_elements) {
+	    lhs = new(ctx) ir_swizzle(lhs_col, swiz,
+				      rhs_col->type->vector_elements);
+	    rhs = rhs_col;
+	 } else {
+	    lhs = lhs_col;
+	    rhs = rhs_col;
+	 }
+
+	 assert(lhs->type == rhs->type);
+
+	 ir_instruction *inst = new(ctx) ir_assignment(lhs, rhs, NULL);
+	 instructions->push_tail(inst);
+      }
+   } else {
+      const unsigned rows = type->matrix_columns;
+      const unsigned cols = type->vector_elements;
+      unsigned col_idx = 0;
+      unsigned row_idx = 0;
+
+      foreach_list (node, parameters) {
+	 ir_rvalue *const rhs = (ir_rvalue *) node;
+	 const unsigned components_remaining_this_column = rows - row_idx;
+	 unsigned rhs_components = rhs->type->components();
+	 unsigned rhs_base = 0;
+
+	 /* Since the parameter might be used in the RHS of two assignments,
+	  * generate a temporary and copy the paramter there.
+	  */
+	 ir_variable *rhs_var = new(ctx) ir_variable(rhs->type,
+						     strdup("mat_ctor_vec"));
+	 instructions->push_tail(rhs_var);
+
+	 ir_dereference *rhs_var_ref =
+	    new(ctx) ir_dereference_variable(rhs_var);
+	 ir_instruction *inst = new(ctx) ir_assignment(rhs_var_ref, rhs, NULL);
+	 instructions->push_tail(inst);
+
+	 /* Assign the current parameter to as many components of the matrix
+	  * as it will fill.
+	  *
+	  * NOTE: A single vector parameter can span two matrix columns.  A
+	  * single vec4, for example, can completely fill a mat2.
+	  */
+	 if (rhs_components >= components_remaining_this_column) {
+	    const unsigned count = min(rhs_components,
+				       components_remaining_this_column);
+
+	    rhs_var_ref = new(ctx) ir_dereference_variable(rhs_var);
+
+	    ir_instruction *inst = assign_to_matrix_column(var, col_idx,
+							   row_idx,
+							   rhs_var_ref, 0,
+							   count, ctx);
+	    instructions->push_tail(inst);
+
+	    rhs_base = count;
+
+	    col_idx++;
+	    row_idx = 0;
+	 }
+
+	 /* If there is data left in the parameter and components left to be
+	  * set in the destination, emit another assignment.  It is possible
+	  * that the assignment could be of a vec4 to the last element of the
+	  * matrix.  In this case col_idx==cols, but there is still data
+	  * left in the source parameter.  Obviously, don't emit an assignment
+	  * to data outside the destination matrix.
+	  */
+	 if ((col_idx < cols) && (rhs_base < rhs_components)) {
+	    const unsigned count = rhs_components - rhs_base;
+
+	    rhs_var_ref = new(ctx) ir_dereference_variable(rhs_var);
+
+	    ir_instruction *inst = assign_to_matrix_column(var, col_idx,
+							   row_idx,
+							   rhs_var_ref,
+							   rhs_base,
+							   count, ctx);
+	    instructions->push_tail(inst);
+
+	    row_idx += count;
+	 }
+      }
+   }
+
+   return new(ctx) ir_dereference_variable(var);
+}
+
+
 ir_rvalue *
 ast_function_expression::hir(exec_list *instructions,
 			     struct _mesa_glsl_parse_state *state)
@@ -807,7 +1124,10 @@ ast_function_expression::hir(exec_list *instructions,
 						     ctx);
 	    } else {
 	       assert(constructor_type->is_matrix());
-	       return new(ctx) ir_call(sig, & actual_parameters);
+	       return emit_inline_matrix_constructor(constructor_type,
+						     instructions,
+						     &actual_parameters,
+						     ctx);
 	    }
 	 } else {
 	    /* FINISHME: Log a better error message here.  G++ will show the
