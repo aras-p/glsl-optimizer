@@ -1448,7 +1448,6 @@ _mesa_glsl_link_shader(GLcontext *ctx, struct gl_shader_program *prog)
 	 }
       }
    }
-   ctx->Shader.Flags |= GLSL_UNIFORMS;
 
    talloc_free(whole_program);
 }
