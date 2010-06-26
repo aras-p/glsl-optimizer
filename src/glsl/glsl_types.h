@@ -440,10 +440,6 @@ extern "C" {
 extern void
 _mesa_glsl_initialize_types(struct _mesa_glsl_parse_state *state);
 
-extern void
-_mesa_glsl_initialize_constructors(struct exec_list *instructions,
-				   struct _mesa_glsl_parse_state *state);
-
 #ifdef __cplusplus
 }
 #endif
