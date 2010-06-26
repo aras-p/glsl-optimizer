@@ -31,7 +31,6 @@
 
 #include "main/glheader.h"
 #include "main/context.h"
-#include "main/dispatch.h"
 #include "main/hash.h"
 #include "main/shaderobj.h"
 #include "program/program.h"
