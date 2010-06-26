@@ -36,17 +36,52 @@
 
 #include <inttypes.h>
 
-static void r300_destroy_context(struct pipe_context* context)
+static void r300_release_referenced_objects(struct r300_context *r300)
 {
-    struct r300_context* r300 = r300_context(context);
+    struct pipe_framebuffer_state *fb =
+            (struct pipe_framebuffer_state*)r300->fb_state.state;
+    struct r300_textures_state *textures =
+            (struct r300_textures_state*)r300->textures_state.state;
     struct r300_query *query, *temp;
-    struct r300_atom *atom;
+    unsigned i;
 
+    /* Framebuffer state. */
+    for (i = 0; i < fb->nr_cbufs; i++) {
+        pipe_surface_reference(&fb->cbufs[i], NULL);
+    }
+    pipe_surface_reference(&fb->zsbuf, NULL);
+
+    /* Textures. */
+    for (i = 0; i < textures->sampler_view_count; i++)
+        pipe_sampler_view_reference(
+                (struct pipe_sampler_view**)&textures->sampler_views[i], NULL);
+
+    /* The special dummy texture for texkill. */
     if (r300->texkill_sampler) {
         pipe_sampler_view_reference(
                 (struct pipe_sampler_view**)&r300->texkill_sampler,
                 NULL);
     }
+
+    /* The SWTCL VBO. */
+    pipe_resource_reference(&r300->vbo, NULL);
+
+    /* Vertex buffers. */
+    for (i = 0; i < r300->vertex_buffer_count; i++) {
+        pipe_resource_reference(&r300->vertex_buffer[i].buffer, NULL);
+    }
+
+    /* If there are any queries pending or not destroyed, remove them now. */
+    foreach_s(query, temp, &r300->query_list) {
+        remove_from_list(query);
+        FREE(query);
+    }
+}
+
+static void r300_destroy_context(struct pipe_context* context)
+{
+    struct r300_context* r300 = r300_context(context);
+    struct r300_atom *atom;
 
     util_blitter_destroy(r300->blitter);
     draw_destroy(r300->draw);
@@ -61,16 +96,12 @@ static void r300_destroy_context(struct pipe_context* context)
         }
     }
 
-    /* If there are any queries pending or not destroyed, remove them now. */
-    foreach_s(query, temp, &r300->query_list) {
-        remove_from_list(query);
-        FREE(query);
-    }
-
     u_upload_destroy(r300->upload_vb);
     u_upload_destroy(r300->upload_ib);
 
     translate_cache_destroy(r300->tran.translate_cache);
+
+    r300_release_referenced_objects(r300);
 
     FREE(r300->aa_state.state);
     FREE(r300->blend_color_state.state);
