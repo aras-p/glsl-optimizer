@@ -659,6 +659,24 @@ static void r300_print_fb_surf_info(struct pipe_surface *surf, unsigned index,
             tex->last_level, util_format_short_name(tex->format));
 }
 
+static void copy_framebuffer_state(struct pipe_framebuffer_state *dst,
+                                   const struct pipe_framebuffer_state *src)
+{
+    unsigned i;
+
+    for (i = 0; i < src->nr_cbufs; i++) {
+        pipe_surface_reference(&dst->cbufs[i], src->cbufs[i]);
+    }
+    for (; i < dst->nr_cbufs; i++) {
+        pipe_surface_reference(&dst->cbufs[i], NULL);
+    }
+    pipe_surface_reference(&dst->zsbuf, src->zsbuf);
+
+    dst->nr_cbufs = src->nr_cbufs;
+    dst->width = src->width;
+    dst->height = src->height;
+}
+
 static void
     r300_set_framebuffer_state(struct pipe_context* pipe,
                                const struct pipe_framebuffer_state* state)
@@ -703,7 +721,7 @@ static void
     /* The tiling flags are dependent on the surface miplevel, unfortunately. */
     r300_fb_set_tiling_flags(r300, r300->fb_state.state, state);
 
-    memcpy(r300->fb_state.state, state, sizeof(struct pipe_framebuffer_state));
+    copy_framebuffer_state(r300->fb_state.state, state);
 
     r300->fb_state.size =
             7 +
