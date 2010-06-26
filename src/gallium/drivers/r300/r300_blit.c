@@ -25,11 +25,11 @@
 
 #include "util/u_format.h"
 
-enum r300_blitter_op
+enum r300_blitter_op /* bitmask */
 {
-    R300_CLEAR,
-    R300_CLEAR_SURFACE,
-    R300_COPY
+    R300_CLEAR         = 1,
+    R300_CLEAR_SURFACE = 2,
+    R300_COPY          = 4
 };
 
 static void r300_blitter_begin(struct r300_context* r300, enum r300_blitter_op op)
