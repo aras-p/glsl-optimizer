@@ -219,6 +219,7 @@ static boolean post_vs_none( struct pt_post_vs *pvs,
 			     struct draw_vertex_info *info )
 {
    struct vertex_header *out = info->verts;
+   unsigned j;
 
    if (0) debug_printf("%s\n", __FUNCTION__);
    /* just initialize the vertex_id in all headers */
