@@ -167,6 +167,7 @@ GALLIVM_SOURCES = \
         gallivm/lp_bld_tgsi_soa.c \
         gallivm/lp_bld_type.c \
         draw/draw_llvm.c \
+        draw/draw_vs_llvm.c \
         draw/draw_pt_fetch_shade_pipeline_llvm.c \
         draw/draw_llvm_translate.c
 
