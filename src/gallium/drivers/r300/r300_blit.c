@@ -86,24 +86,37 @@ static void r300_clear(struct pipe_context* pipe,
                        double depth,
                        unsigned stencil)
 {
-    /* XXX Implement fastfill.
+    /* My notes about fastfill:
      *
-     * If fastfill is enabled, a few facts should be considered:
+     * 1) Only the zbuffer is cleared.
      *
-     * 1) Zbuffer must be micro-tiled and whole microtiles must be
-     *    written.
+     * 2) The zbuffer must be micro-tiled and whole microtiles must be
+     *    written. If microtiling is disabled, it locks up.
      *
-     * 2) ZB_DEPTHCLEARVALUE is used to clear a zbuffer and Z Mask must be
-     *    equal to 0.
+     * 3) There is Z Mask RAM which contains a compressed zbuffer and
+     *    it interacts with fastfill. We should figure out how to use it
+     *    to get more performance.
+     *    This is what we know about the Z Mask:
      *
-     * 3) For 16-bit integer buffering, compression causes a hung with one or
+     *       Each dword of the Z Mask contains compression information
+     *       for 16 4x4 pixel blocks, that is 2 bits for each block.
+     *       On chips with 2 Z pipes, every other dword maps to a different
+     *       pipe.
+     *
+     * 4) ZB_DEPTHCLEARVALUE is used to clear the zbuffer and the Z Mask must
+     *    be equal to 0. (clear the Z Mask RAM with zeros)
+     *
+     * 5) For 16-bit zbuffer, compression causes a hung with one or
      *    two samples and should not be used.
      *
-     * 4) Fastfill must not be used if reading of compressed Z data is disabled
+     * 6) FORCE_COMPRESSED_STENCIL_VALUE should be enabled for stencil clears
+     *    to avoid needless decompression.
+     *
+     * 7) Fastfill must not be used if reading of compressed Z data is disabled
      *    and writing of compressed Z data is enabled (RD/WR_COMP_ENABLE),
      *    i.e. it cannot be used to compress the zbuffer.
-     *    (what the hell does that mean and how does it fit in clearing
-     *    the buffers?)
+     *
+     * 8) ZB_CB_CLEAR does not interact with fastfill in any way.
      *
      * - Marek
      */

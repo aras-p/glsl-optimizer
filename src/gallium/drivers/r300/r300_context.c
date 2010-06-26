@@ -151,7 +151,7 @@ static void r300_setup_atoms(struct r300_context* r300)
     R300_INIT_ATOM(query_start, 4);
 
     /* Replace emission functions for r500. */
-    if (r300->screen->caps.is_r500) {
+    if (is_r500) {
         r300->fs.emit = r500_emit_fs;
         r300->fs_rc_constant_state.emit = r500_emit_fs_rc_constant_state;
         r300->fs_constants.emit = r500_emit_fs_constants;
