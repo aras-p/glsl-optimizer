@@ -980,22 +980,41 @@ void
 ir_to_mesa_visitor::visit(ir_constant *ir)
 {
    ir_to_mesa_src_reg src_reg;
+   GLfloat stack_vals[4];
+   GLfloat *values = stack_vals;
+   unsigned int i;
 
-   assert(ir->type->base_type == GLSL_TYPE_FLOAT ||
-	  ir->type->base_type == GLSL_TYPE_UINT ||
-	  ir->type->base_type == GLSL_TYPE_INT ||
-	  ir->type->base_type == GLSL_TYPE_BOOL);
-
-   if (ir->type->base_type == GLSL_TYPE_FLOAT &&
-       !ir->type->is_matrix() && !ir->type->is_array()) {
-      src_reg.file = PROGRAM_CONSTANT;
-      src_reg.index =
-	 _mesa_add_unnamed_constant(this->prog->Parameters,
-				    &ir->value.f[0], ir->type->vector_elements,
-				    &src_reg.swizzle);
-   } else {
-      assert(!"FINISHME: non-float constants");
+   if (ir->type->is_matrix() || ir->type->is_array()) {
+      assert(!"FINISHME: array/matrix constants");
    }
+
+   src_reg.file = PROGRAM_CONSTANT;
+   switch (ir->type->base_type) {
+   case GLSL_TYPE_FLOAT:
+      values = &ir->value.f[0];
+      break;
+   case GLSL_TYPE_UINT:
+      for (i = 0; i < ir->type->vector_elements; i++) {
+	 values[i] = ir->value.u[i];
+      }
+      break;
+   case GLSL_TYPE_INT:
+      for (i = 0; i < ir->type->vector_elements; i++) {
+	 values[i] = ir->value.i[i];
+      }
+      break;
+   case GLSL_TYPE_BOOL:
+      for (i = 0; i < ir->type->vector_elements; i++) {
+	 values[i] = ir->value.b[i];
+      }
+      break;
+   default:
+      assert(!"Non-float/uint/int/bool constant");
+   }
+
+   src_reg.index = _mesa_add_unnamed_constant(this->prog->Parameters,
+					      values, ir->type->vector_elements,
+					      &src_reg.swizzle);
    src_reg.reladdr = false;
    src_reg.negate = 0;
 
