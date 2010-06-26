@@ -34,9 +34,7 @@
 #include "main/macros.h"
 #include "main/enums.h"
 #include "main/shaderapi.h"
-#include "main/shaderobj.h"
 #include "program/prog_instruction.h"
-#include "program/prog_parameter.h"
 #include "program/program.h"
 
 #include "cso_cache/cso_context.h"
