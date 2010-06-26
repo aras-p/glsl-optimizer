@@ -903,19 +903,6 @@ ast_function_expression::hir(exec_list *instructions,
        * matching rules as functions.
        */
       if (constructor_type->is_numeric() || constructor_type->is_boolean()) {
-	 /* Constructing a numeric type has a couple steps.  First all values
-	  * passed to the constructor are broken into individual parameters
-	  * and type converted to the base type of the thing being constructed.
-	  *
-	  * At that point we have some number of values that match the base
-	  * type of the thing being constructed.  Now the constructor can be
-	  * treated like a function call.  Each numeric type has a small set
-	  * of constructor functions.  The set of new parameters will either
-	  * match one of those functions or the original constructor is
-	  * invalid.
-	  */
-	 const glsl_type *const base_type = constructor_type->get_base_type();
-
 	 /* Total number of components of the type being constructed.
 	  */
 	 const unsigned type_components = constructor_type->components();
@@ -944,19 +931,6 @@ ast_function_expression::hir(exec_list *instructions,
 	    ast_node *ast = exec_node_data(ast_node, n, link);
 	    ir_rvalue *result =
 	       ast->hir(instructions, state)->as_rvalue();
-	    ir_variable *result_var = NULL;
-
-	    /* Attempt to convert the parameter to a constant valued expression.
-	     * After doing so, track whether or not all the parameters to the
-	     * constructor are trivially constant valued expressions.
-	     */
-	    ir_rvalue *const constant =
-	       result->constant_expression_value();
-
-	    if (constant != NULL)
-	       result = constant;
-	    else
-	       all_parameters_are_constant = false;
 
 	    /* From page 50 (page 56 of the PDF) of the GLSL 1.50 spec:
 	     *
@@ -985,58 +959,28 @@ ast_function_expression::hir(exec_list *instructions,
 	    else
 	       nonmatrix_parameters++;
 
-	    /* We can't use the same instruction node in the multiple
-	     * swizzle dereferences that happen, so assign it to a
-	     * variable and deref that.  Plus it saves computation for
-	     * complicated expressions and handles
-	     * glsl-vs-constructor-call.shader_test.
+	    /* Type cast the parameter and add it to the parameter list for
+	     * the constructor.
 	     */
-	    if (result->type->components() >= 1 && !result->as_constant()) {
-	       result_var = new(ctx) ir_variable(result->type,
-						 "constructor_tmp");
-	       ir_dereference_variable *lhs;
+	    const glsl_type *desired_type =
+	       glsl_type::get_instance(constructor_type->base_type,
+				       result->type->vector_elements,
+				       result->type->matrix_columns);
+	    result = convert_component(result, desired_type);
 
-	       lhs = new(ctx) ir_dereference_variable(result_var);
-	       instructions->push_tail(new(ctx) ir_assignment(lhs,
-							      result, NULL));
-	    }
-
-	    /* Process each of the components of the parameter.  Dereference
-	     * each component individually, perform any type conversions, and
-	     * add it to the parameter list for the constructor.
+	    /* Attempt to convert the parameter to a constant valued expression.
+	     * After doing so, track whether or not all the parameters to the
+	     * constructor are trivially constant valued expressions.
 	     */
-	    for (unsigned i = 0; i < result->type->components(); i++) {
-	       if (components_used >= type_components)
-		  break;
+	    ir_rvalue *const constant = result->constant_expression_value();
 
-	       ir_rvalue *component;
+	    if (constant != NULL)
+	       result = constant;
+	    else
+	       all_parameters_are_constant = false;
 
-	       if (result_var) {
-		  ir_dereference *d = new(ctx) ir_dereference_variable(result_var);
-		  component = dereference_component(d, i);
-	       } else {
-		  component = dereference_component(result, i);
-	       }
-	       component = convert_component(component, base_type);
-
-	       /* All cases that could result in component->type being the
-		* error type should have already been caught above.
-		*/
-	       assert(component->type == base_type);
-
-	       if (component->as_constant() == NULL)
-		  all_parameters_are_constant = false;
-
-	       /* Don't actually generate constructor calls for scalars.
-		* Instead, do the usual component selection and conversion,
-		* and return the single component.
-		*/
-	       if (constructor_type->is_scalar())
-		  return component;
-
-	       actual_parameters.push_tail(component);
-	       components_used++;
-	    }
+	    actual_parameters.push_tail(result);
+	    components_used += result->type->components();
 	 }
 
 	 /* From page 28 (page 34 of the PDF) of the GLSL 1.10 spec:
@@ -1079,65 +1023,51 @@ ast_function_expression::hir(exec_list *instructions,
 	    return ir_call::get_error_instruction(ctx);
 	 }
 
-	 ir_function *f = state->symbols->get_function(constructor_type->name);
-	 if (f == NULL) {
-	    _mesa_glsl_error(& loc, state, "no constructor for type `%s'",
-			     constructor_type->name);
-	    return ir_call::get_error_instruction(ctx);
-	 }
 
-	 const ir_function_signature *sig =
-	    f->matching_signature(& actual_parameters);
-	 if (sig != NULL) {
-	    /* If all of the parameters are trivially constant, create a
-	     * constant representing the complete collection of parameters.
+	 /* If all of the parameters are trivially constant, create a
+	  * constant representing the complete collection of parameters.
+	  */
+	 if (all_parameters_are_constant) {
+	    if (components_used >= type_components)
+	       return new(ctx) ir_constant(constructor_type,
+					   & actual_parameters);
+
+	    /* The above case must handle all scalar constructors.
 	     */
-	    if (all_parameters_are_constant) {
-	       if (components_used >= type_components)
-		  return new(ctx) ir_constant(sig->return_type,
-					      & actual_parameters);
+	    assert(constructor_type->is_vector()
+		   || constructor_type->is_matrix());
 
-	       assert(sig->return_type->is_vector()
-		      || sig->return_type->is_matrix());
+	    /* Constructors with exactly one component are special for
+	     * vectors and matrices.  For vectors it causes all elements of
+	     * the vector to be filled with the value.  For matrices it
+	     * causes the matrix to be filled with 0 and the diagonal to be
+	     * filled with the value.
+	     */
+	    ir_constant_data data;
+	    ir_constant *const initializer =
+	       (ir_constant *) actual_parameters.head;
+	    if (constructor_type->is_matrix())
+	       generate_constructor_matrix(constructor_type, initializer,
+					   &data);
+	    else
+	       generate_constructor_vector(constructor_type, initializer,
+					   &data);
 
-	       /* Constructors with exactly one component are special for
-		* vectors and matrices.  For vectors it causes all elements of
-		* the vector to be filled with the value.  For matrices it
-		* causes the matrix to be filled with 0 and the diagonal to be
-		* filled with the value.
-		*/
-	       ir_constant_data data;
-	       ir_constant *const initializer =
-		  (ir_constant *) actual_parameters.head;
-	       if (sig->return_type->is_matrix())
-		  generate_constructor_matrix(sig->return_type, initializer,
-					      &data);
-	       else
-		  generate_constructor_vector(sig->return_type, initializer,
-					      &data);
-
-	       return new(ctx) ir_constant(sig->return_type, &data);
-	    } else if (constructor_type->is_vector()) {
-	       return emit_inline_vector_constructor(constructor_type,
-						     instructions,
-						     &actual_parameters,
-						     ctx);
-	    } else {
-	       assert(constructor_type->is_matrix());
-	       return emit_inline_matrix_constructor(constructor_type,
-						     instructions,
-						     &actual_parameters,
-						     ctx);
-	    }
+	    return new(ctx) ir_constant(constructor_type, &data);
+	 } else if (constructor_type->is_scalar()) {
+	    return dereference_component((ir_rvalue *) actual_parameters.head,
+					 0);
+	 } else if (constructor_type->is_vector()) {
+	    return emit_inline_vector_constructor(constructor_type,
+						  instructions,
+						  &actual_parameters,
+						  ctx);
 	 } else {
-	    /* FINISHME: Log a better error message here.  G++ will show the
-	     * FINSIHME: types of the actual parameters and the set of
-	     * FINSIHME: candidate functions.  A different error should also be
-	     * FINSIHME: logged when multiple functions match.
-	     */
-	    _mesa_glsl_error(& loc, state, "no matching constructor for `%s'",
-			     constructor_type->name);
-	    return ir_call::get_error_instruction(ctx);
+	    assert(constructor_type->is_matrix());
+	    return emit_inline_matrix_constructor(constructor_type,
+						  instructions,
+						  &actual_parameters,
+						  ctx);
 	 }
       }
 
