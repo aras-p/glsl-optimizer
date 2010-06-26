@@ -349,7 +349,6 @@ ir_to_mesa_visitor::src_reg_for_float(float val)
    src_reg.file = PROGRAM_CONSTANT;
    src_reg.index = _mesa_add_unnamed_constant(this->prog->Parameters,
 					      &val, 1, &src_reg.swizzle);
-   src_reg.swizzle = SWIZZLE_NOOP;
 
    return src_reg;
 }
@@ -994,7 +993,6 @@ ir_to_mesa_visitor::visit(ir_constant *ir)
 	 _mesa_add_unnamed_constant(this->prog->Parameters,
 				    &ir->value.f[0], ir->type->vector_elements,
 				    &src_reg.swizzle);
-      src_reg.swizzle = SWIZZLE_NOOP;
    } else {
       assert(!"FINISHME: non-float constants");
    }
