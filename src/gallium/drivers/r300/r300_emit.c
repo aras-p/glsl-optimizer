@@ -590,9 +590,18 @@ void r300_emit_rs_block_state(struct r300_context* r300,
 
     if (SCREEN_DBG_ON(r300->screen, DBG_DRAW)) {
         r500_dump_rs_block(rs);
-    }
 
-    DBG(r300, DBG_DRAW, "r300: RS emit:\n");
+        fprintf(stderr, "r300: RS emit:\n");
+
+        for (i = 0; i < count; i++)
+            fprintf(stderr, "    : ip %d: 0x%08x\n", i, rs->ip[i]);
+
+        for (i = 0; i < count; i++)
+            fprintf(stderr, "    : inst %d: 0x%08x\n", i, rs->inst[i]);
+
+        fprintf(stderr, "    : count: 0x%08x inst_count: 0x%08x\n",
+            rs->count, rs->inst_count);
+    }
 
     BEGIN_CS(size);
     OUT_CS_REG_SEQ(R300_VAP_VTX_STATE_CNTL, 2);
@@ -608,9 +617,6 @@ void r300_emit_rs_block_state(struct r300_context* r300,
         OUT_CS_REG_SEQ(R300_RS_IP_0, count);
     }
     OUT_CS_TABLE(rs->ip, count);
-    for (i = 0; i < count; i++) {
-        DBG(r300, DBG_DRAW, "    : ip %d: 0x%08x\n", i, rs->ip[i]);
-    }
 
     OUT_CS_REG_SEQ(R300_RS_COUNT, 2);
     OUT_CS(rs->count);
@@ -622,13 +628,6 @@ void r300_emit_rs_block_state(struct r300_context* r300,
         OUT_CS_REG_SEQ(R300_RS_INST_0, count);
     }
     OUT_CS_TABLE(rs->inst, count);
-    for (i = 0; i < count; i++) {
-        DBG(r300, DBG_DRAW, "    : inst %d: 0x%08x\n", i, rs->inst[i]);
-    }
-
-    DBG(r300, DBG_DRAW, "    : count: 0x%08x inst_count: 0x%08x\n",
-        rs->count, rs->inst_count);
-
     END_CS;
 }
 
@@ -762,21 +761,25 @@ void r300_emit_vertex_stream_state(struct r300_context* r300,
     unsigned i;
     CS_LOCALS(r300);
 
-    DBG(r300, DBG_DRAW, "r300: PSC emit:\n");
+    if (DBG_ON(r300, DBG_DRAW)) {
+        fprintf(stderr, "r300: PSC emit:\n");
+
+        for (i = 0; i < streams->count; i++) {
+            fprintf(stderr, "    : prog_stream_cntl%d: 0x%08x\n", i,
+                   streams->vap_prog_stream_cntl[i]);
+        }
+
+        for (i = 0; i < streams->count; i++) {
+            fprintf(stderr, "    : prog_stream_cntl_ext%d: 0x%08x\n", i,
+                   streams->vap_prog_stream_cntl_ext[i]);
+        }
+    }
 
     BEGIN_CS(size);
     OUT_CS_REG_SEQ(R300_VAP_PROG_STREAM_CNTL_0, streams->count);
     OUT_CS_TABLE(streams->vap_prog_stream_cntl, streams->count);
-    for (i = 0; i < streams->count; i++) {
-        DBG(r300, DBG_DRAW, "    : prog_stream_cntl%d: 0x%08x\n", i,
-               streams->vap_prog_stream_cntl[i]);
-    }
     OUT_CS_REG_SEQ(R300_VAP_PROG_STREAM_CNTL_EXT_0, streams->count);
     OUT_CS_TABLE(streams->vap_prog_stream_cntl_ext, streams->count);
-    for (i = 0; i < streams->count; i++) {
-        DBG(r300, DBG_DRAW, "    : prog_stream_cntl_ext%d: 0x%08x\n", i,
-               streams->vap_prog_stream_cntl_ext[i]);
-    }
     END_CS;
 }
 
