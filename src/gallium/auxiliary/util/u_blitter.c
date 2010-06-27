@@ -97,8 +97,6 @@ struct blitter_context_priv
    /* Rasterizer state. */
    void *rs_state;
 
-   struct pipe_sampler_view *sampler_view;
-
    /* Viewport state. */
    struct pipe_viewport_state viewport;
 
@@ -259,8 +257,6 @@ void util_blitter_destroy(struct blitter_context *blitter)
    for (i = 0; i < PIPE_MAX_TEXTURE_LEVELS; i++)
       if (ctx->sampler_state[i])
          pipe->delete_sampler_state(pipe, ctx->sampler_state[i]);
-
-   pipe_sampler_view_reference(&ctx->sampler_view, NULL);
 
    pipe_resource_reference(&ctx->vbuf, NULL);
    FREE(ctx);
@@ -734,8 +730,6 @@ void util_blitter_copy_region(struct blitter_context *blitter,
    u_sampler_view_default_template(&viewTempl, src, src->format);
    view = pipe->create_sampler_view(pipe, src, &viewTempl);
 
-   pipe_sampler_view_reference(&ctx->sampler_view, view);
-
    /* Set rasterizer state, shaders, and textures. */
    pipe->bind_rasterizer_state(pipe, ctx->rs_state);
    pipe->bind_vs_state(pipe, ctx->vs_tex);
@@ -771,6 +765,7 @@ void util_blitter_copy_region(struct blitter_context *blitter,
    blitter_restore_CSOs(ctx);
 
    pipe_surface_reference(&dstsurf, NULL);
+   pipe_sampler_view_reference(&view, NULL);
 }
 
 /* Clear a region of a color surface to a constant value. */
