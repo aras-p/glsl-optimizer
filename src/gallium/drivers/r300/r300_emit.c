@@ -349,15 +349,12 @@ void r300_emit_fb_state(struct r300_context* r300, unsigned size, void* state)
         surf = r300_surface(fb->zsbuf);
 
         OUT_CS_REG(R300_ZB_FORMAT, surf->format);
-        OUT_CS_REG(R300_ZB_BW_CNTL, 0);
 
         OUT_CS_REG_SEQ(R300_ZB_DEPTHOFFSET, 1);
         OUT_CS_RELOC(surf->buffer, surf->offset, 0, surf->domain, 0);
 
         OUT_CS_REG_SEQ(R300_ZB_DEPTHPITCH, 1);
         OUT_CS_RELOC(surf->buffer, surf->pitch, 0, surf->domain, 0);
-
-        OUT_CS_REG(R300_ZB_DEPTHCLEARVALUE, 0);
 
         /* HiZ RAM. */
         if (r300->screen->caps.has_hiz) {
@@ -369,6 +366,26 @@ void r300_emit_fb_state(struct r300_context* r300, unsigned size, void* state)
         OUT_CS_REG(R300_ZB_ZMASK_OFFSET, 0);
         OUT_CS_REG(R300_ZB_ZMASK_PITCH, 0);
     }
+
+    END_CS;
+}
+
+void r300_emit_hyperz_state(struct r300_context *r300,
+                            unsigned size, void *state)
+{
+    CS_LOCALS(r300);
+    WRITE_CS_TABLE(state, size);
+}
+
+void r300_emit_fb_state_pipelined(struct r300_context *r300,
+                                  unsigned size, void *state)
+{
+    struct pipe_framebuffer_state* fb =
+            (struct pipe_framebuffer_state*)r300->fb_state.state;
+    unsigned i;
+    CS_LOCALS(r300);
+
+    BEGIN_CS(size);
 
     /* Colorbuffer format in the US block.
      * (must be written after unpipelined regs) */

@@ -708,6 +708,8 @@ static void
     r300->gpu_flush.dirty = TRUE;
     r300->aa_state.dirty = TRUE;
     r300->fb_state.dirty = TRUE;
+    r300->hyperz_state.dirty = TRUE;
+    r300->fb_state_pipelined.dirty = TRUE;
 
     /* If nr_cbufs is changed from zero to non-zero or vice versa... */
     if (!!old_state->nr_cbufs != !!state->nr_cbufs) {
@@ -724,10 +726,9 @@ static void
     copy_framebuffer_state(r300->fb_state.state, state);
 
     r300->fb_state.size =
-            7 +
+            2 +
             (8 * state->nr_cbufs) +
-            (state->zsbuf ? (r300->screen->caps.has_hiz ? 22 : 18) : 0) +
-            (r300->rws->get_value(r300->rws, R300_VID_DRM_2_3_0) ? 3 : 0);
+            (state->zsbuf ? (r300->screen->caps.has_hiz ? 18 : 14) : 0);
 
     /* Polygon offset depends on the zbuffer bit depth. */
     if (state->zsbuf && r300->polygon_offset_enabled) {

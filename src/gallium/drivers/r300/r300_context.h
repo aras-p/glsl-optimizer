@@ -105,6 +105,16 @@ struct r300_dsa_state {
     boolean two_sided_stencil_ref;
 };
 
+struct r300_hyperz_state {
+    /* This is actually a command buffer with named dwords. */
+    uint32_t cb_begin;
+    uint32_t zb_bw_cntl;            /* R300_ZB_BW_CNTL */
+    uint32_t cb_reg1;
+    uint32_t zb_depthclearvalue;    /* R300_ZB_DEPTHCLEARVALUE */
+    uint32_t cb_reg2;
+    uint32_t sc_hyperz;             /* R300_SC_HYPERZ */
+};
+
 struct r300_gpu_flush {
     uint32_t cb_flush_clean[6];
 };
@@ -211,7 +221,7 @@ struct r300_vertex_stream_state {
 };
 
 struct r300_invariant_state {
-    uint32_t cb[22];
+    uint32_t cb[20];
 };
 
 struct r300_vap_invariant_state {
@@ -443,6 +453,10 @@ struct r300_context {
     struct r300_atom fs_constants;
     /* Framebuffer state. */
     struct r300_atom fb_state;
+    /* Framebuffer state (pipelined regs). */
+    struct r300_atom fb_state_pipelined;
+    /* HyperZ state (various SC/ZB bits). */
+    struct r300_atom hyperz_state;
     /* Occlusion query. */
     struct r300_atom query_start;
     /* Rasterizer state. */
