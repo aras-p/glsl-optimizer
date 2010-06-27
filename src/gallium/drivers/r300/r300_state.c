@@ -1025,7 +1025,7 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
     OUT_CB(line_control);
     OUT_CB_REG_SEQ(R300_SU_POLY_OFFSET_ENABLE, 2);
     OUT_CB(polygon_offset_enable);
-    rs->cull_mode_index = 25 - cs_count;
+    rs->cull_mode_index = 9;
     OUT_CB(cull_mode);
     OUT_CB_REG(R300_GA_LINE_STIPPLE_CONFIG, line_stipple_config);
     OUT_CB_REG(R300_GA_LINE_STIPPLE_VALUE, line_stipple_value);
