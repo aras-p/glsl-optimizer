@@ -67,6 +67,7 @@ typedef struct ir_to_mesa_dst_reg {
    int file; /**< PROGRAM_* from Mesa */
    int index; /**< temporary index, VERT_ATTRIB_*, FRAG_ATTRIB_*, etc. */
    int writemask; /**< Bitfield of WRITEMASK_[XYZW] */
+   GLuint cond_mask:4;
 } ir_to_mesa_dst_reg;
 
 extern ir_to_mesa_src_reg ir_to_mesa_undef;
@@ -78,6 +79,7 @@ public:
    ir_to_mesa_src_reg src_reg[3];
    /** Pointer to the ir source this tree came from for debugging */
    ir_instruction *ir;
+   GLboolean cond_update;
 };
 
 class temp_entry : public exec_node {
@@ -293,6 +295,7 @@ ir_to_mesa_dst_reg_from_src(ir_to_mesa_src_reg reg)
    dst_reg.file = reg.file;
    dst_reg.index = reg.index;
    dst_reg.writemask = WRITEMASK_XYZW;
+   dst_reg.cond_mask = COND_TR;
 
    return dst_reg;
 }
@@ -1142,14 +1145,24 @@ ir_to_mesa_visitor::visit(ir_return *ir)
 void
 ir_to_mesa_visitor::visit(ir_if *ir)
 {
-   ir_to_mesa_instruction *if_inst, *else_inst = NULL;
+   ir_to_mesa_instruction *cond_inst, *if_inst, *else_inst = NULL;
 
    ir->condition->accept(this);
    assert(this->result.file != PROGRAM_UNDEFINED);
 
-   if_inst = ir_to_mesa_emit_op1(ir->condition,
-				 OPCODE_IF, ir_to_mesa_undef_dst,
-				 this->result);
+   if (ctx->Shader.EmitCondCodes) {
+      cond_inst = (ir_to_mesa_instruction *)this->instructions.get_tail();
+      cond_inst->cond_update = GL_TRUE;
+
+      if_inst = ir_to_mesa_emit_op1(ir->condition,
+				    OPCODE_IF, ir_to_mesa_undef_dst,
+				    ir_to_mesa_undef);
+      if_inst->dst_reg.cond_mask = COND_NE;
+   } else {
+      if_inst = ir_to_mesa_emit_op1(ir->condition,
+				    OPCODE_IF, ir_to_mesa_undef_dst,
+				    this->result);
+   }
 
    this->instructions.push_tail(if_inst);
 
@@ -1391,9 +1404,10 @@ get_mesa_program(GLcontext *ctx, void *mem_ctx, struct glsl_shader *shader)
       ir_to_mesa_instruction *inst = (ir_to_mesa_instruction *)iter.get();
 
       mesa_inst->Opcode = inst->op;
+      mesa_inst->CondUpdate = inst->cond_update;
       mesa_inst->DstReg.File = inst->dst_reg.file;
       mesa_inst->DstReg.Index = inst->dst_reg.index;
-      mesa_inst->DstReg.CondMask = COND_TR;
+      mesa_inst->DstReg.CondMask = inst->dst_reg.cond_mask;
       mesa_inst->DstReg.WriteMask = inst->dst_reg.writemask;
       mesa_inst->SrcReg[0] = mesa_src_reg_from_ir_src_reg(inst->src_reg[0]);
       mesa_inst->SrcReg[1] = mesa_src_reg_from_ir_src_reg(inst->src_reg[1]);
