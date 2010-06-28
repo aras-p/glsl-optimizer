@@ -1146,12 +1146,26 @@ void
 ir_to_mesa_visitor::visit(ir_if *ir)
 {
    ir_to_mesa_instruction *cond_inst, *if_inst, *else_inst = NULL;
+   ir_to_mesa_instruction *prev_inst;
+
+   prev_inst = (ir_to_mesa_instruction *)this->instructions.get_tail();
 
    ir->condition->accept(this);
    assert(this->result.file != PROGRAM_UNDEFINED);
 
    if (ctx->Shader.EmitCondCodes) {
       cond_inst = (ir_to_mesa_instruction *)this->instructions.get_tail();
+
+      /* See if we actually generated any instruction for generating
+       * the condition.  If not, then cook up a move to a temp so we
+       * have something to set cond_update on.
+       */
+      if (cond_inst == prev_inst) {
+	 ir_to_mesa_src_reg temp = get_temp(glsl_type::bool_type);
+	 cond_inst = ir_to_mesa_emit_op1(ir->condition, OPCODE_MOV,
+					 ir_to_mesa_dst_reg_from_src(temp),
+					 result);
+      }
       cond_inst->cond_update = GL_TRUE;
 
       if_inst = ir_to_mesa_emit_op1(ir->condition,
