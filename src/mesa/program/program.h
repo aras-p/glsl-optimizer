@@ -74,6 +74,11 @@ _mesa_init_fragment_program(GLcontext *ctx,
                             GLenum target, GLuint id);
 
 extern struct gl_program *
+_mesa_init_geometry_program(GLcontext *ctx,
+                            struct gl_geometry_program *prog,
+                            GLenum target, GLuint id);
+
+extern struct gl_program *
 _mesa_new_program(GLcontext *ctx, GLenum target, GLuint id);
 
 extern void
@@ -105,6 +110,15 @@ _mesa_reference_fragprog(GLcontext *ctx,
                            (struct gl_program *) prog);
 }
 
+static INLINE void
+_mesa_reference_geomprog(GLcontext *ctx,
+                         struct gl_geometry_program **ptr,
+                         struct gl_geometry_program *prog)
+{
+   _mesa_reference_program(ctx, (struct gl_program **) ptr,
+                           (struct gl_program *) prog);
+}
+
 extern struct gl_program *
 _mesa_clone_program(GLcontext *ctx, const struct gl_program *prog);
 
@@ -115,6 +129,12 @@ _mesa_clone_vertex_program(GLcontext *ctx,
    return (struct gl_vertex_program *) _mesa_clone_program(ctx, &prog->Base);
 }
 
+static INLINE struct gl_geometry_program *
+_mesa_clone_geometry_program(GLcontext *ctx,
+                             const struct gl_geometry_program *prog)
+{
+   return (struct gl_geometry_program *) _mesa_clone_program(ctx, &prog->Base);
+}
 
 static INLINE struct gl_fragment_program *
 _mesa_clone_fragment_program(GLcontext *ctx,

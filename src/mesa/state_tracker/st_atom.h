@@ -48,6 +48,7 @@ extern const struct st_tracked_state st_update_framebuffer;
 extern const struct st_tracked_state st_update_clip;
 extern const struct st_tracked_state st_update_depth_stencil_alpha;
 extern const struct st_tracked_state st_update_fp;
+extern const struct st_tracked_state st_update_gp;
 extern const struct st_tracked_state st_update_vp;
 extern const struct st_tracked_state st_update_rasterizer;
 extern const struct st_tracked_state st_update_polygon_stipple;
@@ -59,6 +60,7 @@ extern const struct st_tracked_state st_update_sampler;
 extern const struct st_tracked_state st_update_texture;
 extern const struct st_tracked_state st_finalize_textures;
 extern const struct st_tracked_state st_update_fs_constants;
+extern const struct st_tracked_state st_update_gs_constants;
 extern const struct st_tracked_state st_update_vs_constants;
 extern const struct st_tracked_state st_update_pixel_transfer;
 

@@ -250,6 +250,7 @@ update_program(GLcontext *ctx)
    const struct gl_shader_program *shProg = ctx->Shader.CurrentProgram;
    const struct gl_vertex_program *prevVP = ctx->VertexProgram._Current;
    const struct gl_fragment_program *prevFP = ctx->FragmentProgram._Current;
+   const struct gl_geometry_program *prevGP = ctx->GeometryProgram._Current;
    GLbitfield new_state = 0x0;
 
    /*
@@ -291,6 +292,15 @@ update_program(GLcontext *ctx)
       _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._Current, NULL);
    }
 
+   if (shProg && shProg->LinkStatus && shProg->GeometryProgram) {
+      /* Use shader programs */
+      _mesa_reference_geomprog(ctx, &ctx->GeometryProgram._Current,
+                               shProg->GeometryProgram);
+   } else {
+      /* no fragment program */
+      _mesa_reference_geomprog(ctx, &ctx->GeometryProgram._Current, NULL);
+   }
+
    /* Examine vertex program after fragment program as
     * _mesa_get_fixed_func_vertex_program() needs to know active
     * fragprog inputs.
@@ -327,7 +337,15 @@ update_program(GLcontext *ctx)
                           (struct gl_program *) ctx->FragmentProgram._Current);
       }
    }
-   
+
+   if (ctx->GeometryProgram._Current != prevGP) {
+      new_state |= _NEW_PROGRAM;
+      if (ctx->Driver.BindProgram) {
+         ctx->Driver.BindProgram(ctx, MESA_GEOMETRY_PROGRAM,
+                            (struct gl_program *) ctx->GeometryProgram._Current);
+      }
+   }
+
    if (ctx->VertexProgram._Current != prevVP) {
       new_state |= _NEW_PROGRAM;
       if (ctx->Driver.BindProgram) {
@@ -352,6 +370,16 @@ update_program_constants(GLcontext *ctx)
       const struct gl_program_parameter_list *params =
          ctx->FragmentProgram._Current->Base.Parameters;
       if (params && params->StateFlags & ctx->NewState) {
+         new_state |= _NEW_PROGRAM_CONSTANTS;
+      }
+   }
+
+   if (ctx->GeometryProgram._Current) {
+      const struct gl_program_parameter_list *params =
+         ctx->GeometryProgram._Current->Base.Parameters;
+      /*FIXME: StateFlags is always 0 because we have unnamed constant
+       *       not state changes */
+      if (params /*&& params->StateFlags & ctx->NewState*/) {
          new_state |= _NEW_PROGRAM_CONSTANTS;
       }
    }

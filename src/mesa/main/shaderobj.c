@@ -96,7 +96,8 @@ static struct gl_shader *
 _mesa_new_shader(GLcontext *ctx, GLuint name, GLenum type)
 {
    struct gl_shader *shader;
-   assert(type == GL_FRAGMENT_SHADER || type == GL_VERTEX_SHADER);
+   assert(type == GL_FRAGMENT_SHADER || type == GL_VERTEX_SHADER ||
+          type == GL_GEOMETRY_SHADER_ARB);
    shader = CALLOC_STRUCT(gl_shader);
    if (shader) {
       shader->Type = type;
@@ -254,6 +255,7 @@ _mesa_clear_shader_program_data(GLcontext *ctx,
 {
    _mesa_reference_vertprog(ctx, &shProg->VertexProgram, NULL);
    _mesa_reference_fragprog(ctx, &shProg->FragmentProgram, NULL);
+   _mesa_reference_geomprog(ctx, &shProg->GeometryProgram, NULL);
 
    if (shProg->Uniforms) {
       _mesa_free_uniform_list(shProg->Uniforms);

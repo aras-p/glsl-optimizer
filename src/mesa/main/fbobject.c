@@ -2299,3 +2299,25 @@ _mesa_BlitFramebufferEXT(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
                                mask, filter);
 }
 #endif /* FEATURE_EXT_framebuffer_blit */
+
+#if FEATURE_ARB_geometry_shader4
+void GLAPIENTRY
+_mesa_FramebufferTextureARB(GLenum target, GLenum attachment,
+                            GLuint texture, GLint level)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   _mesa_error(ctx, GL_INVALID_OPERATION,
+               "glFramebufferTextureARB "
+               "not implemented!");
+}
+
+void GLAPIENTRY
+_mesa_FramebufferTextureFaceARB(GLenum target, GLenum attachment,
+                                GLuint texture, GLint level, GLenum face)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   _mesa_error(ctx, GL_INVALID_OPERATION,
+               "glFramebufferTextureFaceARB "
+               "not implemented!");
+}
+#endif /* FEATURE_ARB_geometry_shader4 */

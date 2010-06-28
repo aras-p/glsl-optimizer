@@ -170,7 +170,9 @@ typedef enum prog_opcode {
    OPCODE_DPH,       /*   X        X       1.1                   */
    OPCODE_DST,       /*   X        X       X       X             */
    OPCODE_ELSE,      /*                                      X   */
+   OPCODE_EMIT_VERTEX,  /*                                      X   */
    OPCODE_END,       /*   X        X       X       X        opt  */
+   OPCODE_END_PRIMITIVE,/*                                      X   */
    OPCODE_ENDIF,     /*                                     opt  */
    OPCODE_ENDLOOP,   /*                                     opt  */
    OPCODE_ENDSUB,    /*                                     opt  */

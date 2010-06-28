@@ -10,21 +10,28 @@ env = env.Clone()
 def glsl_compile_emitter(target, source, env):
 	env.Depends(target, glsl_compile)
 	return (target, source)
- 
+
 bld_frag = Builder(
 	action = Action(glsl_compile[0].abspath + ' fragment $SOURCE $TARGET', '$CODEGENCODESTR'),
 	emitter = glsl_compile_emitter,
 	suffix = '.gc',
 	src_suffix = '_gc.h')
-	
+
 bld_vert = Builder(
 	action = Action(glsl_compile[0].abspath + ' vertex $SOURCE $TARGET', '$CODEGENCODESTR'),
 	emitter = glsl_compile_emitter,
 	suffix = '.gc',
 	src_suffix = '_gc.h')
 
+bld_geom = Builder(
+	action = Action(glsl_compile[0].abspath + ' geometry $SOURCE $TARGET', '$CODEGENCODESTR'),
+	emitter = glsl_compile_emitter,
+	suffix = '.gc',
+	src_suffix = '_gc.h')
+
 env['BUILDERS']['bld_frag'] = bld_frag
 env['BUILDERS']['bld_vert'] = bld_vert
+env['BUILDERS']['bld_geom'] = bld_geom
 
 # Generate GLSL builtin library binaries
 env.bld_frag(
@@ -39,6 +46,9 @@ env.bld_frag(
 env.bld_vert(
 	'#src/mesa/slang/library/slang_vertex_builtin_gc.h',
 	'#src/mesa/slang/library/slang_vertex_builtin.gc')
+env.bld_geom(
+	'#src/mesa/slang/library/slang_geometry_builtin_gc.h',
+	'#src/mesa/slang/library/slang_geometry_builtin.gc')
 
 # Generate GLSL 1.20 builtin library binaries
 env.bld_frag(

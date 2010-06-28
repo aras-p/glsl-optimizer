@@ -162,5 +162,8 @@ extern void GLAPIENTRY
 _mesa_ShaderBinary(GLint n, const GLuint *shaders, GLenum binaryformat,
                    const void* binary, GLint length);
 
+extern void GLAPIENTRY
+_mesa_ProgramParameteriARB(GLuint program, GLenum pname,
+                           GLint value);
 
 #endif /* SHADERAPI_H */

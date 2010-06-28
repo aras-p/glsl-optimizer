@@ -773,6 +773,12 @@ _mesa_fprint_instruction_opt(FILE *f,
          fprintf(f, "# %s\n", inst->Comment);
       }
       break;
+   case OPCODE_EMIT_VERTEX:
+      fprintf(f, "EMIT_VERTEX\n");
+      break;
+   case OPCODE_END_PRIMITIVE:
+      fprintf(f, "END_PRIMITIVE\n");
+      break;
    /* XXX may need other special-case instructions */
    default:
       if (inst->Opcode < MAX_OPCODE) {
@@ -842,6 +848,8 @@ _mesa_fprint_program_opt(FILE *f,
       else
          fprintf(f, "# Fragment Program/Shader %u\n", prog->Id);
       break;
+   case MESA_GEOMETRY_PROGRAM:
+      fprintf(f, "# Geometry Shader\n");
    }
 
    for (i = 0; i < prog->NumInstructions; i++) {
@@ -996,8 +1004,10 @@ _mesa_write_shader_to_file(const struct gl_shader *shader)
 
    if (shader->Type == GL_FRAGMENT_SHADER)
       type = "frag";
-   else
+   else if (shader->Type == GL_VERTEX_SHADER)
       type = "vert";
+   else
+      type = "geom";
 
    _mesa_snprintf(filename, sizeof(filename), "shader_%u.%s", shader->Name, type);
    f = fopen(filename, "w");

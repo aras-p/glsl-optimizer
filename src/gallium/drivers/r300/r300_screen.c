@@ -207,6 +207,8 @@ static int r300_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
             return 1; /* XXX guessed */
         case PIPE_CAP_MAX_VS_PREDS:
             return is_r500 ? 4 : 0; /* XXX guessed. */
+        case PIPE_CAP_GEOMETRY_SHADER4:
+            return 0;
 
         default:
             fprintf(stderr, "r300: Implementation error: Bad param %d\n",

@@ -379,6 +379,7 @@ create_shader(GLcontext *ctx, GLenum type)
    switch (type) {
    case GL_FRAGMENT_SHADER:
    case GL_VERTEX_SHADER:
+   case GL_GEOMETRY_SHADER_ARB:
       sh = ctx->Driver.NewShader(ctx, name, type);
       break;
    default:
@@ -1503,6 +1504,77 @@ _mesa_ShaderBinary(GLint n, const GLuint* shaders, GLenum binaryformat,
 
 #endif /* FEATURE_ES2 */
 
+#if FEATURE_ARB_geometry_shader4
+
+static struct gl_geometry_program *
+_mesa_geometry_from_shader(GLuint program)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   struct gl_shader_program *shProg = NULL;
+   struct gl_shader *sh = NULL;
+   GLuint i;
+
+   shProg = _mesa_lookup_shader_program(ctx, program);
+
+   if (!ctx->Extensions.ARB_geometry_shader4) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glProgramParameteriARB");
+      return NULL;
+   }
+
+   if (!shProg) {
+      _mesa_error(ctx, GL_INVALID_ENUM, "glProgramParameteriARB");
+      return NULL;
+   }
+   for (i = 0; i < shProg->NumShaders; ++i) {
+      if (shProg->Shaders[i]->Type == GL_GEOMETRY_SHADER_ARB) {
+         sh = shProg->Shaders[i];
+      }
+   }
+   if (!sh || !sh->Program) {
+      _mesa_error(ctx, GL_INVALID_ENUM, "glProgramParameteriARB");
+      return NULL;
+   }
+   return (struct gl_geometry_program *) sh->Program;
+}
+
+static void
+_mesa_program_parameteri(GLcontext *ctx, GLuint program,
+                         GLenum pname, GLint value)
+{
+   struct gl_geometry_program *gprog;
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   switch (pname) {
+   case GL_GEOMETRY_VERTICES_OUT_ARB:
+      gprog = _mesa_geometry_from_shader(program);
+      if (gprog)
+         gprog->VerticesOut = value;
+      break;
+   case GL_GEOMETRY_INPUT_TYPE_ARB:
+      gprog = _mesa_geometry_from_shader(program);
+      if (gprog)
+         gprog->InputType = value;
+      break;
+   case GL_GEOMETRY_OUTPUT_TYPE_ARB:
+      gprog = _mesa_geometry_from_shader(program);
+      if (gprog)
+         gprog->OutputType = value;
+      break;
+   default:
+      _mesa_error(ctx, GL_INVALID_ENUM, "glProgramParameteriARB");
+      break;
+   }
+}
+
+void GLAPIENTRY
+_mesa_ProgramParameteriARB(GLuint program, GLenum pname,
+                           GLint value)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   _mesa_program_parameteri(ctx, program, pname, value);
+}
+
+#endif
 
 /**
  * Plug in shader-related functions into API dispatch table.
@@ -1547,6 +1619,10 @@ _mesa_init_shader_dispatch(struct _glapi_table *exec)
    SET_BindAttribLocationARB(exec, _mesa_BindAttribLocationARB);
    SET_GetActiveAttribARB(exec, _mesa_GetActiveAttribARB);
    SET_GetAttribLocationARB(exec, _mesa_GetAttribLocationARB);
+#endif
+
+#if FEATURE_ARB_geometry_shader4
+   SET_ProgramParameteriARB(exec, _mesa_ProgramParameteriARB);
 #endif
 }
 

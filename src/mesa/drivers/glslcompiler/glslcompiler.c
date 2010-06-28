@@ -72,6 +72,7 @@ struct options {
    gl_prog_print_mode Mode;
    const char *VertFile;
    const char *FragFile;
+   const char *GeoFile;
    const char *OutputFile;
    GLboolean Params;
    struct gl_sl_pragmas Pragmas;
@@ -251,7 +252,8 @@ CompileShader(const char *filename, GLenum type)
    GLuint shader;
 
    assert(type == GL_FRAGMENT_SHADER ||
-          type == GL_VERTEX_SHADER);
+          type == GL_VERTEX_SHADER ||
+          type == GL_GEOMETRY_SHADER_ARB);
 
    shader = _mesa_CreateShader(type);
    ReadShader(shader, filename);
@@ -267,6 +269,7 @@ Usage(void)
    printf("Usage:\n");
    printf("  --vs FILE          vertex shader input filename\n");
    printf("  --fs FILE          fragment shader input filename\n");
+   printf("  --gs FILE          geometry shader input filename\n");
    printf("  --arb              emit ARB-style instructions\n");
    printf("  --nv               emit NV-style instructions\n");
    printf("  --link             run linker\n");
@@ -290,6 +293,7 @@ ParseOptions(int argc, char *argv[])
    Options.Mode = PROG_PRINT_DEBUG;
    Options.VertFile = NULL;
    Options.FragFile = NULL;
+   Options.GeoFile = NULL;
    Options.OutputFile = NULL;
    Options.Params = GL_FALSE;
    Options.Pragmas.IgnoreOptimize = GL_FALSE;
@@ -309,6 +313,10 @@ ParseOptions(int argc, char *argv[])
       }
       else if (strcmp(argv[i], "--fs") == 0) {
          Options.FragFile = argv[i + 1];
+         i++;
+      }
+      else if (strcmp(argv[i], "--gs") == 0) {
+         Options.GeoFile = argv[i + 1];
          i++;
       }
       else if (strcmp(argv[i], "--arb") == 0) {
@@ -369,7 +377,7 @@ ParseOptions(int argc, char *argv[])
 int
 main(int argc, char *argv[])
 {
-   GLuint v_shader = 0, f_shader = 0;
+   GLuint v_shader = 0, f_shader = 0, g_shader = 0;
 
    ParseOptions(argc, argv);
 
@@ -386,7 +394,12 @@ main(int argc, char *argv[])
       f_shader = CompileShader(Options.FragFile, GL_FRAGMENT_SHADER);
    }
 
-   if (v_shader || f_shader) {
+   if (Options.GeoFile) {
+      g_shader = CompileShader(Options.GeoFile, GL_GEOMETRY_SHADER_ARB);
+   }
+
+
+   if (v_shader || f_shader || g_shader) {
       if (Options.OutputFile) {
          fclose(stdout);
          /*stdout =*/ freopen(Options.OutputFile, "w", stdout);
@@ -396,6 +409,9 @@ main(int argc, char *argv[])
       }
       if (stdout && f_shader) {
          PrintShaderInstructions(f_shader, stdout);
+      }
+      if (stdout && g_shader) {
+         PrintShaderInstructions(g_shader, stdout);
       }
       if (Options.OutputFile) {
          fclose(stdout);

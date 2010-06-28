@@ -172,6 +172,11 @@ _mesa_get_active_uniform(GLcontext *ctx, GLuint program, GLuint index,
       progPos = shProg->Uniforms->Uniforms[index].FragPos;
       if (progPos >= 0) {
          prog = &shProg->FragmentProgram->Base;
+      } else {
+         progPos = shProg->Uniforms->Uniforms[index].GeomPos;
+         if (progPos >= 0) {
+            prog = &shProg->GeometryProgram->Base;
+         }
       }
    }
 

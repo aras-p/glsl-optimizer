@@ -733,6 +733,12 @@ _mesa_create_exec_table(void)
    SET_GetObjectParameterivAPPLE(exec, _mesa_GetObjectParameterivAPPLE);
 #endif
 
+#if FEATURE_ARB_geometry_shader4
+   SET_FramebufferTextureARB(exec, _mesa_FramebufferTextureARB);
+   SET_FramebufferTextureFaceARB(exec, _mesa_FramebufferTextureFaceARB);
+#endif
+
+
    return exec;
 }
 

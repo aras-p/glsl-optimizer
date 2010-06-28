@@ -503,6 +503,9 @@ static slang_asm_info AsmInfo[] = {
    { "float_noise3", IR_NOISE3, 1, 1},
    { "float_noise4", IR_NOISE4, 1, 1},
 
+   { "emit_vertex", IR_EMIT_VERTEX, 0, 0},
+   { "end_primitive", IR_END_PRIMITIVE, 0, 0},
+
    { NULL, IR_NOP, 0, 0 }
 };
 
@@ -4239,7 +4242,8 @@ is_store_writable(const slang_assemble_ctx *A, const slang_ir_storage *store)
    if (!(store->File == PROGRAM_OUTPUT ||
          store->File == PROGRAM_TEMPORARY ||
          (store->File == PROGRAM_VARYING &&
-          A->program->Target == GL_VERTEX_PROGRAM_ARB))) {
+          (A->program->Target == GL_VERTEX_PROGRAM_ARB ||
+           A->program->Target == MESA_GEOMETRY_PROGRAM)))) {
       return GL_FALSE;
    }
    else {
@@ -5148,8 +5152,7 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
             assert(index < FRAG_ATTRIB_MAX);
             store = _slang_new_ir_storage_swz(PROGRAM_INPUT, index,
                                               size, swizzle);
-         }
-         else {
+         } else if (type == SLANG_UNIT_VERTEX_BUILTIN) {
             /* vertex program output */
             GLint index = _slang_output_index(varName, GL_VERTEX_PROGRAM_ARB);
             GLuint swizzle = _slang_var_swizzle(size, 0);
@@ -5158,6 +5161,27 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
             assert(type == SLANG_UNIT_VERTEX_BUILTIN);
             store = _slang_new_ir_storage_swz(PROGRAM_OUTPUT, index,
                                               size, swizzle);
+         } else {
+            /* geometry program input */
+            GLuint swizzle;
+            GLint index = _slang_input_index(varName, MESA_GEOMETRY_PROGRAM,
+                                             &swizzle);
+            if (index < 0) {
+               /* geometry program output */
+               index = _slang_output_index(varName, MESA_GEOMETRY_PROGRAM);
+               swizzle = _slang_var_swizzle(size, 0);
+
+               assert(index >= 0);
+               assert(index < GEOM_RESULT_MAX);
+
+               store = _slang_new_ir_storage_swz(PROGRAM_OUTPUT, index,
+                                                 size, swizzle);
+            } else {
+               assert(index >= 0);
+               /* assert(index < GEOM_ATTRIB_MAX); */
+               store = _slang_new_ir_storage_swz(PROGRAM_INPUT, index,
+                                                 size, swizzle);
+            }
          }
          if (dbg) printf("V/F ");
       }
@@ -5193,20 +5217,30 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
    }
    else if (var->type.qualifier == SLANG_QUAL_FIXEDINPUT) {
       GLuint swizzle = SWIZZLE_XYZW; /* silence compiler warning */
-      GLint index = _slang_input_index(varName, GL_FRAGMENT_PROGRAM_ARB,
-                                       &swizzle);
-      store = _slang_new_ir_storage_swz(PROGRAM_INPUT, index, size, swizzle);
+      if (type == SLANG_UNIT_FRAGMENT_BUILTIN) {
+         GLint index = _slang_input_index(varName, GL_FRAGMENT_PROGRAM_ARB,
+                                          &swizzle);
+         store = _slang_new_ir_storage_swz(PROGRAM_INPUT, index, size, swizzle);
+      } else if (type == SLANG_UNIT_GEOMETRY_BUILTIN) {
+         GLint index = _slang_input_index(varName, MESA_GEOMETRY_PROGRAM,
+                                          &swizzle);
+         store = _slang_new_ir_storage_swz(PROGRAM_INPUT, index, size, swizzle);
+      }
       if (dbg) printf("INPUT ");
    }
    else if (var->type.qualifier == SLANG_QUAL_FIXEDOUTPUT) {
       if (type == SLANG_UNIT_VERTEX_BUILTIN) {
          GLint index = _slang_output_index(varName, GL_VERTEX_PROGRAM_ARB);
          store = _slang_new_ir_storage(PROGRAM_OUTPUT, index, size);
-      }
-      else {
+      } else if (type == SLANG_UNIT_FRAGMENT_BUILTIN) {
          GLint index = _slang_output_index(varName, GL_FRAGMENT_PROGRAM_ARB);
          GLint specialSize = 4; /* treat all fragment outputs as float[4] */
          assert(type == SLANG_UNIT_FRAGMENT_BUILTIN);
+         store = _slang_new_ir_storage(PROGRAM_OUTPUT, index, specialSize);
+      } else {
+         GLint index = _slang_output_index(varName, MESA_GEOMETRY_PROGRAM);
+         GLint specialSize = 4; /* treat all fragment outputs as float[4] */
+         assert(type == SLANG_UNIT_GEOMETRY_BUILTIN);
          store = _slang_new_ir_storage(PROGRAM_OUTPUT, index, specialSize);
       }
       if (dbg) printf("OUTPUT ");

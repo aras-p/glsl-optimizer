@@ -51,6 +51,7 @@ struct bitmap_cache;
 #define ST_NEW_VERTEX_PROGRAM          0x4
 #define ST_NEW_FRAMEBUFFER             0x8
 #define ST_NEW_EDGEFLAGS_DATA          0x10
+#define ST_NEW_GEOMETRY_PROGRAM        0x20
 
 
 struct st_state_flags {
@@ -95,7 +96,7 @@ struct st_context
       struct pipe_sampler_state             samplers[PIPE_MAX_SAMPLERS];
       struct pipe_sampler_state             *sampler_list[PIPE_MAX_SAMPLERS];
       struct pipe_clip_state clip;
-      struct pipe_resource *constants[2];
+      struct pipe_resource *constants[PIPE_SHADER_TYPES];
       struct pipe_framebuffer_state framebuffer;
       struct pipe_sampler_view *sampler_views[PIPE_MAX_SAMPLERS];
       struct pipe_scissor_state scissor;
@@ -130,6 +131,7 @@ struct st_context
 
    struct st_vertex_program *vp;    /**< Currently bound vertex program */
    struct st_fragment_program *fp;  /**< Currently bound fragment program */
+   struct st_geometry_program *gp;  /**< Currently bound geometry program */
 
    struct st_vp_varient *vp_varient;
 

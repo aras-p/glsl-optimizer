@@ -98,6 +98,13 @@ _mesa_init_program(GLcontext *ctx)
    ctx->FragmentProgram.Cache = _mesa_new_program_cache();
 #endif
 
+#if FEATURE_ARB_geometry_shader4
+   ctx->GeometryProgram.Enabled = GL_FALSE;
+   /* right now by default we don't have a geometry program */
+   _mesa_reference_geomprog(ctx, &ctx->GeometryProgram.Current,
+                            NULL);
+   ctx->GeometryProgram.Cache = _mesa_new_program_cache();
+#endif
 
    /* XXX probably move this stuff */
 #if FEATURE_ATI_fragment_shader
@@ -122,6 +129,10 @@ _mesa_free_program_data(GLcontext *ctx)
 #if FEATURE_NV_fragment_program || FEATURE_ARB_fragment_program
    _mesa_reference_fragprog(ctx, &ctx->FragmentProgram.Current, NULL);
    _mesa_delete_program_cache(ctx, ctx->FragmentProgram.Cache);
+#endif
+#if FEATURE_ARB_geometry_shader4
+   _mesa_reference_geomprog(ctx, &ctx->GeometryProgram.Current, NULL);
+   _mesa_delete_program_cache(ctx, ctx->GeometryProgram.Cache);
 #endif
    /* XXX probably move this stuff */
 #if FEATURE_ATI_fragment_shader
@@ -156,6 +167,12 @@ _mesa_update_default_objects_program(GLcontext *ctx)
                             (struct gl_fragment_program *)
                             ctx->Shared->DefaultFragmentProgram);
    assert(ctx->FragmentProgram.Current);
+#endif
+
+#if FEATURE_ARB_geometry_shader4
+   _mesa_reference_geomprog(ctx, &ctx->GeometryProgram.Current,
+                            (struct gl_geometry_program *)
+                            ctx->Shared->DefaultGeometryProgram);
 #endif
 
    /* XXX probably move this stuff */
@@ -286,6 +303,20 @@ _mesa_init_vertex_program( GLcontext *ctx, struct gl_vertex_program *prog,
 
 
 /**
+ * Initialize a new geometry program object.
+ */
+struct gl_program *
+_mesa_init_geometry_program( GLcontext *ctx, struct gl_geometry_program *prog,
+                             GLenum target, GLuint id)
+{
+   if (prog)
+      return _mesa_init_program_struct( ctx, &prog->Base, target, id );
+   else
+      return NULL;
+}
+
+
+/**
  * Allocate and initialize a new fragment/vertex program object but
  * don't put it into the program hash table.  Called via
  * ctx->Driver.NewProgram.  May be overridden (ie. replaced) by a
@@ -312,6 +343,11 @@ _mesa_new_program(GLcontext *ctx, GLenum target, GLuint id)
       prog =_mesa_init_fragment_program(ctx,
                                          CALLOC_STRUCT(gl_fragment_program),
                                          target, id );
+      break;
+   case MESA_GEOMETRY_PROGRAM:
+      prog = _mesa_init_geometry_program(ctx,
+                                         CALLOC_STRUCT(gl_geometry_program),
+                                         target, id);
       break;
    default:
       _mesa_problem(ctx, "bad target in _mesa_new_program");
@@ -387,6 +423,8 @@ _mesa_reference_program(GLcontext *ctx,
       else if ((*ptr)->Target == GL_FRAGMENT_PROGRAM_ARB)
          ASSERT(prog->Target == GL_FRAGMENT_PROGRAM_ARB ||
                 prog->Target == GL_FRAGMENT_PROGRAM_NV);
+      else if ((*ptr)->Target == MESA_GEOMETRY_PROGRAM)
+         ASSERT(prog->Target == MESA_GEOMETRY_PROGRAM);
    }
    if (*ptr == prog) {
       return;  /* no change */
@@ -398,7 +436,8 @@ _mesa_reference_program(GLcontext *ctx,
 #if 0
       printf("Program %p ID=%u Target=%s  Refcount-- to %d\n",
              *ptr, (*ptr)->Id,
-             ((*ptr)->Target == GL_VERTEX_PROGRAM_ARB ? "VP" : "FP"),
+             ((*ptr)->Target == GL_VERTEX_PROGRAM_ARB ? "VP" :
+              ((*ptr)->Target == MESA_GEOMETRY_PROGRAM ? "GP" : "FP")),
              (*ptr)->RefCount - 1);
 #endif
       ASSERT((*ptr)->RefCount > 0);
@@ -422,7 +461,8 @@ _mesa_reference_program(GLcontext *ctx,
 #if 0
       printf("Program %p ID=%u Target=%s  Refcount++ to %d\n",
              prog, prog->Id,
-             (prog->Target == GL_VERTEX_PROGRAM_ARB ? "VP" : "FP"),
+             (prog->Target == GL_VERTEX_PROGRAM_ARB ? "VP" :
+              (prog->Target == MESA_GEOMETRY_PROGRAM ? "GP" : "FP")),
              prog->RefCount);
 #endif
       /*_glthread_UNLOCK_MUTEX(prog->Mutex);*/
@@ -508,6 +548,16 @@ _mesa_clone_program(GLcontext *ctx, const struct gl_program *prog)
          fpc->UsesKill = fp->UsesKill;
          fpc->OriginUpperLeft = fp->OriginUpperLeft;
          fpc->PixelCenterInteger = fp->PixelCenterInteger;
+      }
+      break;
+   case MESA_GEOMETRY_PROGRAM:
+      {
+         const struct gl_geometry_program *gp
+            = (const struct gl_geometry_program *) prog;
+         struct gl_geometry_program *gpc = (struct gl_geometry_program *) clone;
+         gpc->VerticesOut = gp->VerticesOut;
+         gpc->InputType = gp->InputType;
+         gpc->OutputType = gp->OutputType;
       }
       break;
    default:

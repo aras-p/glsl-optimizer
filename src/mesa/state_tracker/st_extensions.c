@@ -392,4 +392,8 @@ void st_init_extensions(struct st_context *st)
       ctx->Extensions.ARB_draw_buffers_blend = GL_TRUE;
    }
 #endif
+
+   if (screen->get_param(screen, PIPE_CAP_GEOMETRY_SHADER4)) {
+      ctx->Extensions.ARB_geometry_shader4 = GL_TRUE;
+   }
 }

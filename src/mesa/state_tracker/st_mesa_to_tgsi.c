@@ -522,6 +522,10 @@ translate_opcode( unsigned op )
       return TGSI_OPCODE_DST;
    case OPCODE_ELSE:
       return TGSI_OPCODE_ELSE;
+   case OPCODE_EMIT_VERTEX:
+      return TGSI_OPCODE_EMIT;
+   case OPCODE_END_PRIMITIVE:
+      return TGSI_OPCODE_ENDPRIM;
    case OPCODE_ENDIF:
       return TGSI_OPCODE_ENDIF;
    case OPCODE_ENDLOOP:
@@ -983,6 +987,20 @@ st_translate_mesa_program(
             debug_assert(0);
             return 0;
          }
+      }
+   }
+   else if (procType == TGSI_PROCESSOR_GEOMETRY) {
+      for (i = 0; i < numInputs; i++) {
+         t->inputs[i] = ureg_DECL_gs_input(ureg,
+                                           i,
+                                           inputSemanticName[i],
+                                           inputSemanticIndex[i]);
+      }
+
+      for (i = 0; i < numOutputs; i++) {
+         t->outputs[i] = ureg_DECL_output( ureg,
+                                           outputSemanticName[i],
+                                           outputSemanticIndex[i] );
       }
    }
    else {

@@ -952,6 +952,40 @@ parse_type_precision(slang_parse_ctx *C,
    }
 }
 
+
+/* parameter qualifier */
+#define PARAM_QUALIFIER_IN 0
+#define PARAM_QUALIFIER_OUT 1
+#define PARAM_QUALIFIER_INOUT 2
+#define PARAM_QUALIFIER_NONE 3
+static int
+parse_varying_qualifier(slang_parse_ctx * C, slang_fully_specified_type *type)
+{
+   int param_qual = *C->I++;
+
+   if (type->qualifier != SLANG_QUAL_VARYING &&
+       param_qual != PARAM_QUALIFIER_NONE) {
+      slang_info_log_error(C->L, "Invalid type qualifier.");
+      RETURN0;
+   }
+   switch (param_qual) {
+   case PARAM_QUALIFIER_IN:
+   case PARAM_QUALIFIER_NONE:
+      type->varying_kind = SLANG_VARYING_IN;
+      break;
+   case PARAM_QUALIFIER_OUT:
+      type->varying_kind = SLANG_VARYING_OUT;
+      break;
+   case PARAM_QUALIFIER_INOUT:
+      slang_info_log_error(C->L, "Invalid type qualifier.");
+      RETURN0;
+      break;
+   default:
+      RETURN0;
+   }
+   return 1;
+}
+
 static int
 parse_fully_specified_type(slang_parse_ctx * C, slang_output_ctx * O,
                            slang_fully_specified_type * type)
@@ -966,6 +1000,9 @@ parse_fully_specified_type(slang_parse_ctx * C, slang_output_ctx * O,
       RETURN0;
 
    if (!parse_type_qualifier(C, &type->qualifier))
+      RETURN0;
+
+   if (!parse_varying_qualifier(C, type))
       RETURN0;
 
    if (!parse_type_precision(C, &type->precision))
@@ -1684,11 +1721,6 @@ parse_expression(slang_parse_ctx * C, slang_output_ctx * O,
    return 1;
 }
 
-/* parameter qualifier */
-#define PARAM_QUALIFIER_IN 0
-#define PARAM_QUALIFIER_OUT 1
-#define PARAM_QUALIFIER_INOUT 2
-
 /* function parameter array presence */
 #define PARAMETER_ARRAY_NOT_PRESENT 0
 #define PARAMETER_ARRAY_PRESENT 1
@@ -1729,6 +1761,9 @@ parse_parameter_declaration(slang_parse_ctx * C, slang_output_ctx * O,
          slang_info_log_error(C->L, "Invalid type qualifier.");
          RETURN0;
       }
+      break;
+   case PARAM_QUALIFIER_NONE:
+      /* like IN but doesn't throw error */
       break;
    default:
       RETURN0;
@@ -2154,6 +2189,7 @@ parse_init_declarator(slang_parse_ctx * C, slang_output_ctx * O,
       var->type.variant = type->variant;
       var->type.layout = type->layout;
       var->type.array_len = type->array_len;
+      var->type.varying_kind = type->varying_kind;
       var->a_name = a_name;
       if (var->a_name == SLANG_ATOM_NULL)
          RETURN0;
@@ -2499,7 +2535,7 @@ init_default_precision(slang_output_ctx *O, slang_unit_type type)
 #endif
    }
 
-   if (type == SLANG_UNIT_VERTEX_SHADER) {
+   if (type == SLANG_UNIT_VERTEX_SHADER || type == SLANG_UNIT_GEOMETRY_SHADER) {
       O->default_precision[TYPE_SPECIFIER_FLOAT] = PRECISION_HIGH;
       O->default_precision[TYPE_SPECIFIER_INT] = PRECISION_HIGH;
    }
@@ -2547,10 +2583,13 @@ parse_code_unit(slang_parse_ctx * C, slang_code_unit * unit,
        unit->type == SLANG_UNIT_FRAGMENT_SHADER) {
       maxRegs = ctx->Const.FragmentProgram.MaxTemps;
    }
-   else {
-      assert(unit->type == SLANG_UNIT_VERTEX_BUILTIN ||
-             unit->type == SLANG_UNIT_VERTEX_SHADER);
+   else if (unit->type == SLANG_UNIT_VERTEX_BUILTIN ||
+            unit->type == SLANG_UNIT_VERTEX_SHADER) {
       maxRegs = ctx->Const.VertexProgram.MaxTemps;
+   } else {
+      assert(unit->type == SLANG_UNIT_GEOMETRY_BUILTIN ||
+             unit->type == SLANG_UNIT_GEOMETRY_SHADER);
+      maxRegs = ctx->Const.GeometryProgram.MaxTemps;
    }
 
    /* setup output context */
@@ -2829,6 +2868,10 @@ static const unsigned char slang_vertex_builtin_gc[] = {
 #include "library/slang_vertex_builtin_gc.h"
 };
 
+static const unsigned char slang_geometry_builtin_gc[] = {
+#include "library/slang_geometry_builtin_gc.h"
+};
+
 static GLboolean
 compile_object(const char *source,
                slang_code_object *object,
@@ -2853,7 +2896,8 @@ compile_object(const char *source,
    parsing_builtin = 1;
 
    /* if parsing user-specified shader, load built-in library */
-   if (type == SLANG_UNIT_FRAGMENT_SHADER || type == SLANG_UNIT_VERTEX_SHADER) {
+   if (type == SLANG_UNIT_FRAGMENT_SHADER || type == SLANG_UNIT_VERTEX_SHADER ||
+       type == SLANG_UNIT_GEOMETRY_SHADER) {
       /* compile core functionality first */
       if (!compile_binary(slang_core_gc,
                           &object->builtin[SLANG_BUILTIN_CORE],
@@ -2913,6 +2957,16 @@ compile_object(const char *source,
                              &object->builtin[SLANG_BUILTIN_COMMON], NULL))
             return GL_FALSE;
       }
+#if FEATURE_ARB_geometry_shader4
+      else if (type == SLANG_UNIT_GEOMETRY_SHADER) {
+         if (!compile_binary(slang_geometry_builtin_gc,
+                             &object->builtin[SLANG_BUILTIN_TARGET],
+                             base_version,
+                             SLANG_UNIT_GEOMETRY_BUILTIN, infolog, NULL,
+                             &object->builtin[SLANG_BUILTIN_COMMON], NULL))
+            return GL_FALSE;
+      }
+#endif
 
       /* disable language extensions */
       parsing_builtin = 0;
@@ -2945,9 +2999,11 @@ _slang_compile(GLcontext *ctx, struct gl_shader *shader)
    if (shader->Type == GL_VERTEX_SHADER) {
       type = SLANG_UNIT_VERTEX_SHADER;
    }
-   else {
-      assert(shader->Type == GL_FRAGMENT_SHADER);
+   else if (shader->Type == GL_FRAGMENT_SHADER) {
       type = SLANG_UNIT_FRAGMENT_SHADER;
+   } else {
+      assert(shader->Type == GL_GEOMETRY_SHADER_ARB);
+      type = SLANG_UNIT_GEOMETRY_SHADER;
    }
 
    if (!shader->Source)
@@ -2963,8 +3019,10 @@ _slang_compile(GLcontext *ctx, struct gl_shader *shader)
    /* allocate new GPU program, parameter lists, etc. */
    if (shader->Type == GL_VERTEX_SHADER)
       progTarget = GL_VERTEX_PROGRAM_ARB;
-   else
+   else if (shader->Type == GL_FRAGMENT_SHADER)
       progTarget = GL_FRAGMENT_PROGRAM_ARB;
+   else
+      progTarget = MESA_GEOMETRY_PROGRAM;
    shader->Program = ctx->Driver.NewProgram(ctx, progTarget, 1);
    shader->Program->Parameters = _mesa_new_parameter_list();
    shader->Program->Varying = _mesa_new_parameter_list();

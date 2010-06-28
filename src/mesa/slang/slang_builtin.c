@@ -746,6 +746,21 @@ static const struct input_info vertInputs[] = {
    { NULL, 0, GL_NONE, SWIZZLE_NOOP }
 };
 
+static const struct input_info geomInputs[] = {
+   { "gl_VerticesIn", GEOM_ATTRIB_VERTICES, GL_FLOAT, SWIZZLE_NOOP },
+   { "gl_PrimitiveIDIn", GEOM_ATTRIB_PRIMITIVE_ID, GL_FLOAT, SWIZZLE_NOOP },
+   { "gl_FrontColorIn", GEOM_ATTRIB_COLOR0, GL_FLOAT_VEC4, SWIZZLE_NOOP },
+   { "gl_BackColorIn", GEOM_ATTRIB_COLOR1, GL_FLOAT_VEC4, SWIZZLE_NOOP },
+   { "gl_FrontSecondaryColorIn", GEOM_ATTRIB_SECONDARY_COLOR0, GL_FLOAT_VEC4, SWIZZLE_NOOP },
+   { "gl_BackSecondaryColorIn", GEOM_ATTRIB_SECONDARY_COLOR1, GL_FLOAT_VEC4, SWIZZLE_NOOP },
+   { "gl_TexCoordIn", GEOM_ATTRIB_TEX_COORD, GL_FLOAT_VEC4, SWIZZLE_NOOP },
+   { "gl_FogFragCoordIn", GEOM_ATTRIB_FOG_FRAG_COORD, GL_FLOAT, SWIZZLE_NOOP },
+   { "gl_PositionIn", GEOM_ATTRIB_POSITION, GL_FLOAT_VEC4, SWIZZLE_NOOP },
+   { "gl_ClipVertexIn", GEOM_ATTRIB_CLIP_VERTEX, GL_FLOAT_VEC4, SWIZZLE_NOOP },
+   { "gl_PointSizeIn", GEOM_ATTRIB_POINT_SIZE, GL_FLOAT, SWIZZLE_NOOP },
+   { NULL, 0, GL_NONE, SWIZZLE_NOOP }
+};
+
 /** Predefined fragment shader inputs */
 static const struct input_info fragInputs[] = {
    { "gl_FragCoord", FRAG_ATTRIB_WPOS, GL_FLOAT_VEC4, SWIZZLE_NOOP },
@@ -778,7 +793,9 @@ _slang_input_index(const char *name, GLenum target, GLuint *swizzleOut)
    case GL_FRAGMENT_PROGRAM_ARB:
       inputs = fragInputs;
       break;
-   /* XXX geom program */
+   case MESA_GEOMETRY_PROGRAM:
+      inputs = geomInputs;
+      break;
    default:
       _mesa_problem(NULL, "bad target in _slang_input_index");
       return -1;
@@ -854,6 +871,22 @@ static const struct output_info vertOutputs[] = {
    { NULL, 0, GL_NONE }
 };
 
+/** Predefined geometry shader outputs */
+static const struct output_info geomOutputs[] = {
+   { "gl_Position", GEOM_RESULT_POS, GL_FLOAT_VEC4 },
+   { "gl_FrontColor", GEOM_RESULT_COL0, GL_FLOAT_VEC4  },
+   { "gl_BackColor", GEOM_RESULT_COL1, GL_FLOAT_VEC4  },
+   { "gl_FrontSecondaryColor", GEOM_RESULT_SCOL0, GL_FLOAT_VEC4  },
+   { "gl_BackSecondaryColor", GEOM_RESULT_SCOL1, GL_FLOAT_VEC4  },
+   { "gl_TexCoord", GEOM_RESULT_TEX0, GL_FLOAT_VEC4  },
+   { "gl_FogFragCoord", GEOM_RESULT_FOGC, GL_FLOAT  },
+   { "gl_ClipVertex", GEOM_RESULT_CLPV, GL_FLOAT_VEC4  },
+   { "gl_PointSize", GEOM_RESULT_PSIZ, GL_FLOAT  },
+   { "gl_PrimitiveID", GEOM_RESULT_PRID, GL_FLOAT  },
+   { "gl_Layer", GEOM_RESULT_LAYR, GL_FLOAT  },
+   { NULL, 0, GL_NONE }
+};
+
 /** Predefined fragment shader outputs */
 static const struct output_info fragOutputs[] = {
    { "gl_FragColor", FRAG_RESULT_COLOR, GL_FLOAT_VEC4 },
@@ -864,7 +897,7 @@ static const struct output_info fragOutputs[] = {
 
 
 /**
- * Return the VERT_RESULT_* or FRAG_RESULT_* value that corresponds to
+ * Return the VERT_RESULT_*, GEOM_RESULT_* or FRAG_RESULT_* value that corresponds to
  * a vertex or fragment program output variable.  Return -1 for an invalid
  * output name.
  */
@@ -881,7 +914,9 @@ _slang_output_index(const char *name, GLenum target)
    case GL_FRAGMENT_PROGRAM_ARB:
       outputs = fragOutputs;
       break;
-   /* XXX geom program */
+   case MESA_GEOMETRY_PROGRAM:
+      outputs = geomOutputs;
+      break;
    default:
       _mesa_problem(NULL, "bad target in _slang_output_index");
       return -1;
@@ -905,6 +940,19 @@ _slang_vertex_output_name(gl_vert_result index)
 {
    if (index < Elements(vertOutputs))
       return vertOutputs[index].Name;
+   else
+      return NULL;
+}
+
+
+/**
+ * Given a GEOM_RESULT_x index, return the corresponding string name.
+ */
+const char *
+_slang_geometry_output_name(gl_geom_result index)
+{
+   if (index < Elements(geomOutputs))
+      return geomOutputs[index].Name;
    else
       return NULL;
 }

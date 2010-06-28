@@ -103,6 +103,8 @@ static const slang_ir_info IrInfo[] = {
    { IR_ELEMENT, "IR_ELEMENT", OPCODE_NOP, 0, 0 },
    { IR_SWIZZLE, "IR_SWIZZLE", OPCODE_NOP, 0, 0 },
    { IR_NOP, "IR_NOP", OPCODE_NOP, 0, 0 },
+   { IR_EMIT_VERTEX, "IR_EMIT_VERTEX", OPCODE_EMIT_VERTEX, 0, 0 },
+   { IR_END_PRIMITIVE, "IR_END_PRIMITIVE", OPCODE_END_PRIMITIVE, 0, 0 },
    { 0, NULL, 0, 0, 0 }
 };
 

@@ -62,6 +62,12 @@ fragment_program(struct gl_program *prog)
    return (struct gl_fragment_program *) prog;
 }
 
+static struct gl_geometry_program *
+geometry_program(struct gl_program *prog)
+{
+   assert(prog->Target == MESA_GEOMETRY_PROGRAM);
+   return (struct gl_geometry_program *)prog;
+}
 
 /**
  * Record a linking error.
@@ -103,6 +109,18 @@ update_varying_var_list(GLcontext *ctx, struct gl_shader_program *shProg)
       for (i = 0; written && i < VERT_RESULT_MAX; i++) {
          if (written & BITFIELD64_BIT(i)) {
             const char *name = _slang_vertex_output_name(i);            
+            if (name)
+               _mesa_add_varying(shProg->Varying, name, 1, GL_FLOAT_VEC4, 0x0);
+            written &= ~BITFIELD64_BIT(i);
+         }
+      }
+   }
+   if (shProg->GeometryProgram) {
+      GLbitfield64 written = shProg->GeometryProgram->Base.OutputsWritten;
+      GLuint i;
+      for (i = 0; written && i < GEOM_RESULT_MAX; i++) {
+         if (written & BITFIELD64_BIT(i)) {
+            const char *name = _slang_geometry_output_name(i);
             if (name)
                _mesa_add_varying(shProg->Varying, name, 1, GL_FLOAT_VEC4, 0x0);
             written &= ~BITFIELD64_BIT(i);
@@ -203,7 +221,7 @@ static GLboolean
 link_varying_vars(GLcontext *ctx,
                   struct gl_shader_program *shProg, struct gl_program *prog)
 {
-   GLuint *map, i, firstVarying, newFile;
+   GLuint *map, i, firstSrcVarying, firstDstVarying, newSrcFile, newDstFile;
    GLbitfield *inOutFlags;
 
    map = (GLuint *) malloc(prog->Varying->NumParameters * sizeof(GLuint));
@@ -216,14 +234,20 @@ link_varying_vars(GLcontext *ctx,
     * Also, replace File=PROGRAM_VARYING with File=PROGRAM_INPUT/OUTPUT.
     */
    if (prog->Target == GL_VERTEX_PROGRAM_ARB) {
-      firstVarying = VERT_RESULT_VAR0;
-      newFile = PROGRAM_OUTPUT;
+      firstSrcVarying = firstDstVarying = VERT_RESULT_VAR0;
+      newSrcFile = newDstFile = PROGRAM_OUTPUT;
       inOutFlags = prog->OutputFlags;
+   }
+   else if (prog->Target == MESA_GEOMETRY_PROGRAM) {
+      firstSrcVarying = GEOM_ATTRIB_VAR0;
+      newSrcFile = PROGRAM_INPUT;
+      firstDstVarying = GEOM_RESULT_VAR0;
+      newDstFile = PROGRAM_OUTPUT;
    }
    else {
       assert(prog->Target == GL_FRAGMENT_PROGRAM_ARB);
-      firstVarying = FRAG_ATTRIB_VAR0;
-      newFile = PROGRAM_INPUT;
+      firstSrcVarying = firstDstVarying = FRAG_ATTRIB_VAR0;
+      newSrcFile = newDstFile = PROGRAM_INPUT;
       inOutFlags = prog->InputFlags;
    }
 
@@ -275,7 +299,7 @@ link_varying_vars(GLcontext *ctx,
       {
          GLint sz = var->Size;
          while (sz > 0) {
-            inOutFlags[firstVarying + j] = var->Flags;
+            inOutFlags[firstDstVarying + j] = var->Flags;
             /*printf("Link varying from %d to %d\n", i, j);*/
             map[i++] = j++;
             sz -= 4;
@@ -293,14 +317,14 @@ link_varying_vars(GLcontext *ctx,
       GLuint j;
 
       if (inst->DstReg.File == PROGRAM_VARYING) {
-         inst->DstReg.File = newFile;
-         inst->DstReg.Index = map[ inst->DstReg.Index ] + firstVarying;
+         inst->DstReg.File = newDstFile;
+         inst->DstReg.Index = map[ inst->DstReg.Index ] + firstDstVarying;
       }
 
       for (j = 0; j < 3; j++) {
          if (inst->SrcReg[j].File == PROGRAM_VARYING) {
-            inst->SrcReg[j].File = newFile;
-            inst->SrcReg[j].Index = map[ inst->SrcReg[j].Index ] + firstVarying;
+            inst->SrcReg[j].File = newSrcFile;
+            inst->SrcReg[j].Index = map[ inst->SrcReg[j].Index ] + firstSrcVarying;
          }
       }
    }
@@ -634,6 +658,16 @@ get_inputs_read_mask(GLenum target, GLuint index, GLboolean relAddr)
             ; /* a non-array input attribute */
          }
       }
+      else if (target == MESA_GEOMETRY_PROGRAM) {
+         switch (index) {
+         case GEOM_ATTRIB_VAR0:
+            mask = ((1U << (GEOM_ATTRIB_VAR0 + MAX_VARYING)) - 1)
+                   - ((1U << GEOM_ATTRIB_VAR0) - 1);
+            break;
+         default:
+            ; /* a non-array input attribute */
+         }
+      }
       else {
          assert(0 && "bad program target");
       }
@@ -680,6 +714,21 @@ get_outputs_written_mask(GLenum target, GLuint index, GLboolean relAddr)
             mask = BITFIELD64_RANGE(FRAG_RESULT_DATA0,
                                     (FRAG_RESULT_DATA0
                                      + MAX_DRAW_BUFFERS - 1));
+            break;
+         default:
+            ; /* a non-array output attribute */
+         }
+      }
+      else if (target == MESA_GEOMETRY_PROGRAM) {
+         switch (index) {
+         case GEOM_RESULT_TEX0:
+            mask = BITFIELD64_RANGE(GEOM_RESULT_TEX0,
+                                    (GEOM_RESULT_TEX0
+                                     + MAX_TEXTURE_COORD_UNITS - 1));
+            break;
+         case GEOM_RESULT_VAR0:
+            mask = BITFIELD64_RANGE(GEOM_RESULT_VAR0,
+                                    (GEOM_RESULT_VAR0 + MAX_VARYING - 1));
             break;
          default:
             ; /* a non-array output attribute */
@@ -902,7 +951,8 @@ _slang_link(GLcontext *ctx,
 {
    const struct gl_vertex_program *vertProg = NULL;
    const struct gl_fragment_program *fragProg = NULL;
-   GLboolean vertNotify = GL_TRUE, fragNotify = GL_TRUE;
+   const struct gl_geometry_program *geomProg = NULL;
+   GLboolean vertNotify = GL_TRUE, fragNotify = GL_TRUE, geomNotify = GL_TRUE;
    GLuint numSamplers = 0;
    GLuint i;
 
@@ -926,11 +976,15 @@ _slang_link(GLcontext *ctx,
     * Find the vertex and fragment shaders which define main()
     */
    {
-      struct gl_shader *vertShader, *fragShader;
+      struct gl_shader *vertShader, *fragShader, *geomShader;
       vertShader = get_main_shader(ctx, shProg, GL_VERTEX_SHADER);
+      geomShader = get_main_shader(ctx, shProg, GL_GEOMETRY_SHADER_ARB);
       fragShader = get_main_shader(ctx, shProg, GL_FRAGMENT_SHADER);
+
       if (vertShader)
          vertProg = vertex_program(vertShader->Program);
+      if (geomShader)
+         geomProg = geometry_program(geomShader->Program);
       if (fragShader)
          fragProg = fragment_program(fragShader->Program);
       if (!shProg->LinkStatus)
@@ -964,7 +1018,14 @@ _slang_link(GLcontext *ctx,
       shProg->VertexProgram->Base.Id = shProg->Name;
       ASSERT(shProg->VertexProgram->Base.RefCount == 1);
    }
-
+   _mesa_reference_geomprog(ctx, &shProg->GeometryProgram, NULL);
+   if (geomProg) {
+      struct gl_geometry_program *linked_gprog =
+         _mesa_clone_geometry_program(ctx, geomProg);
+      shProg->GeometryProgram = linked_gprog; /* refcount OK */
+      shProg->GeometryProgram->Base.Id = shProg->Name;
+      ASSERT(shProg->GeometryProgram->Base.RefCount == 1);
+   }
    _mesa_reference_fragprog(ctx, &shProg->FragmentProgram, NULL);
    if (fragProg) {
       struct gl_fragment_program *linked_fprog = 
@@ -980,6 +1041,10 @@ _slang_link(GLcontext *ctx,
       if (!link_varying_vars(ctx, shProg, &shProg->VertexProgram->Base))
          return;
    }
+   if (shProg->GeometryProgram) {
+      if (!link_varying_vars(ctx, shProg, &shProg->GeometryProgram->Base))
+         return;
+   }
    if (shProg->FragmentProgram) {
       if (!link_varying_vars(ctx, shProg, &shProg->FragmentProgram->Base))
          return;
@@ -988,6 +1053,12 @@ _slang_link(GLcontext *ctx,
    /* link uniform vars */
    if (shProg->VertexProgram) {
       if (!link_uniform_vars(ctx, shProg, &shProg->VertexProgram->Base,
+                             &numSamplers)) {
+         return;
+      }
+   }
+   if (shProg->GeometryProgram) {
+      if (!link_uniform_vars(ctx, shProg, &shProg->GeometryProgram->Base,
                              &numSamplers)) {
          return;
       }
@@ -1018,6 +1089,21 @@ _slang_link(GLcontext *ctx,
                     "gl_Position was not written by vertex shader\n");
          return;
       }
+   }
+   if (shProg->GeometryProgram) {
+      if (!shProg->VertexProgram) {
+         link_error(shProg,
+                    "Geometry shader without a vertex shader is illegal!\n");
+         return;
+      }
+      if (shProg->GeometryProgram->VerticesOut == 0) {
+         link_error(shProg,
+                    "GEOMETRY_VERTICES_OUT is zero\n");
+         return;
+      }
+
+      _slang_count_temporaries(&shProg->GeometryProgram->Base);
+      _slang_update_inputs_outputs(&shProg->GeometryProgram->Base);
    }
    if (shProg->FragmentProgram) {
       _slang_count_temporaries(&shProg->FragmentProgram->Base);
@@ -1076,6 +1162,24 @@ _slang_link(GLcontext *ctx,
       }
    }
 
+   if (geomProg && shProg->GeometryProgram) {
+      /* Compute initial program's TexturesUsed info */
+      _mesa_update_shader_textures_used(&shProg->GeometryProgram->Base);
+
+      /* notify driver that a new fragment program has been compiled/linked */
+      geomNotify = ctx->Driver.ProgramStringNotify(ctx, MESA_GEOMETRY_PROGRAM,
+                                                   &shProg->GeometryProgram->Base);
+      if (ctx->Shader.Flags & GLSL_DUMP) {
+         printf("Mesa pre-link geometry program:\n");
+         _mesa_print_program(&geomProg->Base);
+         _mesa_print_program_parameters(ctx, &geomProg->Base);
+
+         printf("Mesa post-link geometry program:\n");
+         _mesa_print_program(&shProg->GeometryProgram->Base);
+         _mesa_print_program_parameters(ctx, &shProg->GeometryProgram->Base);
+      }
+   }
+
    if (vertProg && shProg->VertexProgram) {
       /* Compute initial program's TexturesUsed info */
       _mesa_update_shader_textures_used(&shProg->VertexProgram->Base);
@@ -1110,11 +1214,11 @@ _slang_link(GLcontext *ctx,
       }
    }
 
-   if (!vertNotify || !fragNotify) {
+   if (!vertNotify || !fragNotify || !geomNotify) {
       /* driver rejected one/both of the vertex/fragment programs */
       if (!shProg->InfoLog) {
 	 link_error(shProg,
-		    "Vertex and/or fragment program rejected by driver\n");
+		    "Vertex, geometry and/or fragment program rejected by driver\n");
       }
    }
    else {

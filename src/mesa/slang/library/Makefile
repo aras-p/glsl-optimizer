@@ -23,7 +23,7 @@ builtin: builtin_110 builtin_120
 # builtin library sources
 #
 
-builtin_110: slang_common_builtin_gc.h slang_core_gc.h slang_fragment_builtin_gc.h slang_vertex_builtin_gc.h
+builtin_110: slang_common_builtin_gc.h slang_core_gc.h slang_fragment_builtin_gc.h slang_vertex_builtin_gc.h slang_geometry_builtin_gc.h
 
 builtin_120: slang_120_core_gc.h slang_builtin_120_common_gc.h slang_builtin_120_fragment_gc.h
 
@@ -48,4 +48,7 @@ slang_fragment_builtin_gc.h: slang_fragment_builtin.gc
 
 slang_vertex_builtin_gc.h: slang_vertex_builtin.gc
 	$(GLSL_CL) vertex slang_vertex_builtin.gc slang_vertex_builtin_gc.h
+
+slang_geometry_builtin_gc.h: slang_geometry_builtin.gc
+	$(GLSL_CL) geometry slang_geometry_builtin.gc slang_geometry_builtin_gc.h
 

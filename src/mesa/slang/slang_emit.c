@@ -2506,6 +2506,11 @@ emit(slang_emit_info *emitInfo, slang_ir_node *n)
    case IR_NOP:
       return NULL;
 
+   case IR_EMIT_VERTEX:
+      return new_instruction(emitInfo, OPCODE_EMIT_VERTEX);
+   case IR_END_PRIMITIVE:
+      return new_instruction(emitInfo, OPCODE_END_PRIMITIVE);
+
    default:
       _mesa_problem(NULL, "Unexpected IR opcode in emit()\n");
    }
@@ -2630,9 +2635,11 @@ _slang_emit_code(slang_ir_node *n, slang_var_table *vt,
    if (prog->Target == GL_FRAGMENT_PROGRAM_ARB) {
       maxUniforms = ctx->Const.FragmentProgram.MaxUniformComponents / 4;
    }
-   else {
-      assert(prog->Target == GL_VERTEX_PROGRAM_ARB);
+   else if (prog->Target == GL_VERTEX_PROGRAM_ARB) {
       maxUniforms = ctx->Const.VertexProgram.MaxUniformComponents / 4;
+   } else {
+      assert(prog->Target == MESA_GEOMETRY_PROGRAM);
+      maxUniforms = ctx->Const.GeometryProgram.MaxUniformComponents / 4;
    }
    if (prog->Parameters->NumParameters > maxUniforms) {
       slang_info_log_error(log, "Constant/uniform register limit exceeded "

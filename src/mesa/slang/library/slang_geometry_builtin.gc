@@ -1,8 +1,5 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.3
- *
- * Copyright (C) 2005-2007  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -22,46 +19,38 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+const int _mesa_VerticesInMax = 6;
 
-#ifndef SLANG_BUILTIN_H
-#define SLANG_BUILTIN_H
-
-#include "program/prog_parameter.h"
-#include "slang_utility.h"
-#include "slang_ir.h"
-
-
-extern GLint
-_slang_alloc_statevar(slang_ir_node *n,
-                      struct gl_program_parameter_list *paramList,
-                      GLboolean *direct);
+__fixed_input int gl_VerticesIn;
+__fixed_input int gl_PrimitiveIDIn;
+__fixed_output int gl_PrimitiveID;
+__fixed_output int gl_Layer;
 
 
-extern GLint
-_slang_input_index(const char *name, GLenum target, GLuint *swizzleOut);
+varying in vec4 gl_FrontColorIn[_mesa_VerticesInMax];
+varying in vec4 gl_BackColorIn[_mesa_VerticesInMax];
+varying in vec4 gl_FrontSecondaryColorIn[_mesa_VerticesInMax];
+varying in vec4 gl_BackSecondaryColorIn[_mesa_VerticesInMax];
+/*varying in vec4 gl_TexCoordIn[_mesa_VerticesInMax][gl_MaxTextureCoords];*/
+varying in float gl_FogFragCoordIn[_mesa_VerticesInMax];
+varying in vec4 gl_PositionIn[_mesa_VerticesInMax];
+varying in float gl_PointSizeIn[_mesa_VerticesInMax];
+varying in vec4 gl_ClipVertexIn[_mesa_VerticesInMax];
 
-extern GLint
-_slang_output_index(const char *name, GLenum target);
+varying out vec4 gl_Position;
+varying out vec4 gl_FrontColor;
+varying out vec4 gl_BackColor;
+varying out vec4 gl_FrontSecondaryColor;
+varying out vec4 gl_BackSecondaryColor;
+varying out vec4 gl_TexCoord[gl_MaxTextureCoords];
+varying out float gl_FogFragCoord;
 
+void EmitVertex()
+{
+    __asm emit_vertex;
+}
 
-extern const char *
-_slang_vert_attrib_name(GLuint attrib);
-
-extern GLenum
-_slang_vert_attrib_type(GLuint attrib);
-
-
-const char *
-_slang_vertex_output_name(gl_vert_result index);
-
-const char *
-_slang_fragment_output_name(gl_frag_result index);
-
-const char *
-_slang_geometry_output_name(gl_geom_result index);
-
-GLenum
-_slang_vertex_output_type(gl_vert_result index);
-
-
-#endif /* SLANG_BUILTIN_H */
+void EndPrimitive()
+{
+    __asm end_primitive;
+}
