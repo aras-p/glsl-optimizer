@@ -579,7 +579,7 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
    case ir_binop_mul:
       if (ir->operands[0]->type->is_matrix() &&
 	  !ir->operands[1]->type->is_matrix()) {
-	 if (ir->operands[0]->type->is_scalar()) {
+	 if (ir->operands[1]->type->is_scalar()) {
 	    ir_to_mesa_dst_reg dst_column = result_dst;
 	    ir_to_mesa_src_reg src_column = op[0];
 	    for (int i = 0; i < ir->operands[0]->type->matrix_columns; i++) {
