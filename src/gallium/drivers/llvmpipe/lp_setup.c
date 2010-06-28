@@ -297,6 +297,11 @@ lp_setup_bind_framebuffer( struct lp_setup_context *setup,
     */
    set_scene_state( setup, SETUP_FLUSHED );
 
+   /*
+    * Ensure the old scene is not reused.
+    */
+   assert(!setup->scene);
+
    /* Set new state.  This will be picked up later when we next need a
     * scene.
     */
@@ -933,6 +938,8 @@ lp_setup_begin_query(struct lp_setup_context *setup,
 
    memset(pq->count, 0, sizeof(pq->count));  /* reset all counters */
 
+   set_scene_state( setup, SETUP_ACTIVE );
+
    cmd_arg.query_obj = pq;
    lp_scene_bin_everywhere(scene, lp_rast_begin_query, cmd_arg);
    pq->binned = TRUE;
@@ -947,6 +954,8 @@ lp_setup_end_query(struct lp_setup_context *setup, struct llvmpipe_query *pq)
 {
    struct lp_scene * scene = lp_setup_get_current_scene(setup);
    union lp_rast_cmd_arg cmd_arg;
+
+   set_scene_state( setup, SETUP_ACTIVE );
 
    cmd_arg.query_obj = pq;
    lp_scene_bin_everywhere(scene, lp_rast_end_query, cmd_arg);
