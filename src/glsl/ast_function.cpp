@@ -481,7 +481,8 @@ emit_inline_vector_constructor(const glsl_type *type,
 {
    assert(!parameters->is_empty());
 
-   ir_variable *var = new(ctx) ir_variable(type, strdup("vec_ctor"));
+   ir_variable *var = new(ctx) ir_variable(type,
+					   talloc_strdup(ctx, "vec_ctor"));
    instructions->push_tail(var);
 
    /* There are two kinds of vector constructors.
@@ -592,7 +593,8 @@ emit_inline_matrix_constructor(const glsl_type *type,
 {
    assert(!parameters->is_empty());
 
-   ir_variable *var = new(ctx) ir_variable(type, strdup("mat_ctor"));
+   ir_variable *var = new(ctx) ir_variable(type,
+					   talloc_strdup(ctx, "mat_ctor"));
    instructions->push_tail(var);
 
    /* There are three kinds of matrix constructors.
@@ -614,8 +616,9 @@ emit_inline_matrix_constructor(const glsl_type *type,
       /* Assign the scalar to the X component of a vec4, and fill the remaining
        * components with zero.
        */
-      ir_variable *rhs_var = new(ctx) ir_variable(glsl_type::vec4_type,
-						  strdup("mat_ctor_vec"));
+      ir_variable *rhs_var =
+	 new(ctx) ir_variable(glsl_type::vec4_type,
+			      talloc_strdup(ctx, "mat_ctor_vec"));
       instructions->push_tail(rhs_var);
 
       ir_constant_data zero;
@@ -727,8 +730,9 @@ emit_inline_matrix_constructor(const glsl_type *type,
        * Since the parameter will be used in the RHS of multiple assignments,
        * generate a temporary and copy the paramter there.
        */
-      ir_variable *const rhs_var = new(ctx) ir_variable(first_param->type,
-							strdup("mat_ctor_mat"));
+      ir_variable *const rhs_var =
+	 new(ctx) ir_variable(first_param->type,
+			      talloc_strdup(ctx, "mat_ctor_mat"));
       instructions->push_tail(rhs_var);
 
       ir_dereference *const rhs_var_ref =
@@ -792,8 +796,9 @@ emit_inline_matrix_constructor(const glsl_type *type,
 	 /* Since the parameter might be used in the RHS of two assignments,
 	  * generate a temporary and copy the paramter there.
 	  */
-	 ir_variable *rhs_var = new(ctx) ir_variable(rhs->type,
-						     strdup("mat_ctor_vec"));
+	 ir_variable *rhs_var =
+	    new(ctx) ir_variable(rhs->type,
+				 talloc_strdup(ctx, "mat_ctor_vec"));
 	 instructions->push_tail(rhs_var);
 
 	 ir_dereference *rhs_var_ref =
