@@ -302,6 +302,7 @@ static void blitter_restore_CSOs(struct blitter_context_priv *ctx)
     */
    if (ctx->blitter.saved_fb_state.nr_cbufs != ~0) {
       pipe->set_framebuffer_state(pipe, &ctx->blitter.saved_fb_state);
+      util_assign_framebuffer_state(&ctx->blitter.saved_fb_state, NULL);
       ctx->blitter.saved_fb_state.nr_cbufs = ~0;
    }
 
@@ -316,6 +317,11 @@ static void blitter_restore_CSOs(struct blitter_context_priv *ctx)
       pipe->set_fragment_sampler_views(pipe,
                                        ctx->blitter.saved_num_sampler_views,
                                        ctx->blitter.saved_sampler_views);
+
+      for (i = 0; i < ctx->blitter.saved_num_sampler_views; i++)
+         pipe_sampler_view_reference(&ctx->blitter.saved_sampler_views[i],
+                                     NULL);
+
       ctx->blitter.saved_num_sampler_views = ~0;
    }
 

@@ -46,10 +46,7 @@ static void r300_release_referenced_objects(struct r300_context *r300)
     unsigned i;
 
     /* Framebuffer state. */
-    for (i = 0; i < fb->nr_cbufs; i++) {
-        pipe_surface_reference(&fb->cbufs[i], NULL);
-    }
-    pipe_surface_reference(&fb->zsbuf, NULL);
+    util_assign_framebuffer_state(fb, NULL);
 
     /* Textures. */
     for (i = 0; i < textures->sampler_view_count; i++)
