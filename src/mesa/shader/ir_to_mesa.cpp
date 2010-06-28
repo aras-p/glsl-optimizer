@@ -706,7 +706,10 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
       break;
    case ir_unop_sqrt:
       ir_to_mesa_emit_scalar_op1(ir, OPCODE_RSQ, result_dst, op[0]);
-      ir_to_mesa_emit_op1(ir, OPCODE_RCP, result_dst, result_src);
+      ir_to_mesa_emit_scalar_op1(ir, OPCODE_RCP, result_dst, result_src);
+      /* For incoming channels < 0, set the result to 0. */
+      ir_to_mesa_emit_op3(ir, OPCODE_CMP, result_dst,
+			  op[0], src_reg_for_float(0.0), result_src);
       break;
    case ir_unop_rsq:
       ir_to_mesa_emit_scalar_op1(ir, OPCODE_RSQ, result_dst, op[0]);
