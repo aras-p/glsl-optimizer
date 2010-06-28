@@ -33,6 +33,37 @@ extern "C" {
 
 hash_table *glsl_type::array_types = NULL;
 
+glsl_type::glsl_type(GLenum gl_type,
+		     unsigned base_type, unsigned vector_elements,
+		     unsigned matrix_columns, const char *name) :
+   gl_type(gl_type),
+   base_type(base_type),
+   sampler_dimensionality(0), sampler_shadow(0), sampler_array(0),
+   sampler_type(0),
+   vector_elements(vector_elements), matrix_columns(matrix_columns),
+   name(name),
+   length(0)
+{
+   /* Neither dimension is zero or both dimensions are zero.
+    */
+   assert((vector_elements == 0) == (matrix_columns == 0));
+   memset(& fields, 0, sizeof(fields));
+}
+
+glsl_type::glsl_type(GLenum gl_type,
+		     enum glsl_sampler_dim dim, bool shadow, bool array,
+		     unsigned type, const char *name) :
+   gl_type(gl_type),
+   base_type(GLSL_TYPE_SAMPLER),
+   sampler_dimensionality(dim), sampler_shadow(shadow),
+   sampler_array(array), sampler_type(type),
+   vector_elements(0), matrix_columns(0),
+   name(name),
+   length(0)
+{
+   memset(& fields, 0, sizeof(fields));
+}
+
 static void
 add_types_to_symbol_table(glsl_symbol_table *symtab,
 			  const struct glsl_type *types,

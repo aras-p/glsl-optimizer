@@ -158,37 +158,6 @@ struct glsl_type {
    /*@}*/
 
 
-   glsl_type(GLenum gl_type,
-	     unsigned base_type, unsigned vector_elements,
-	     unsigned matrix_columns, const char *name) :
-      gl_type(gl_type),
-      base_type(base_type), 
-      sampler_dimensionality(0), sampler_shadow(0), sampler_array(0),
-      sampler_type(0),
-      vector_elements(vector_elements), matrix_columns(matrix_columns),
-      name(name),
-      length(0)
-   {
-      /* Neither dimension is zero or both dimensions are zero.
-       */
-      assert((vector_elements == 0) == (matrix_columns == 0));
-      memset(& fields, 0, sizeof(fields));
-   }
-
-   glsl_type(GLenum gl_type,
-	     enum glsl_sampler_dim dim, bool shadow, bool array,
-	     unsigned type, const char *name) :
-      gl_type(gl_type),
-      base_type(GLSL_TYPE_SAMPLER),
-      sampler_dimensionality(dim), sampler_shadow(shadow),
-      sampler_array(array), sampler_type(type),
-      vector_elements(0), matrix_columns(0),
-      name(name),
-      length(0)
-   {
-      memset(& fields, 0, sizeof(fields));
-   }
-
    glsl_type(const glsl_struct_field *fields, unsigned num_fields,
 	     const char *name) :
       base_type(GLSL_TYPE_STRUCT),
@@ -419,9 +388,17 @@ struct glsl_type {
    }
 
 private:
-   /**
-    * Constructor for array types
-    */
+   /** Constructor for vector and matrix types */
+   glsl_type(GLenum gl_type,
+	     unsigned base_type, unsigned vector_elements,
+	     unsigned matrix_columns, const char *name);
+
+   /** Constructor for sampler types */
+   glsl_type(GLenum gl_type,
+	     enum glsl_sampler_dim dim, bool shadow, bool array,
+	     unsigned type, const char *name);
+
+   /** Constructor for array types */
    glsl_type(void *ctx, const glsl_type *array, unsigned length);
 
    /** Hash table containing the known array types. */
