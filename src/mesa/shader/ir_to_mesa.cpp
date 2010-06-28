@@ -1,4 +1,6 @@
 /*
+ * Copyright (C) 2005-2007  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2008  VMware, Inc.   All Rights Reserved.
  * Copyright © 2010 Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -760,6 +762,86 @@ ir_to_mesa_visitor::visit(ir_swizzle *ir)
    this->result = src_reg;
 }
 
+static temp_entry *
+get_builtin_matrix_ref(void *mem_ctx, struct gl_program *prog, ir_variable *var)
+{
+   /*
+    * NOTE: The ARB_vertex_program extension specified that matrices get
+    * loaded in registers in row-major order.  With GLSL, we want column-
+    * major order.  So, we need to transpose all matrices here...
+    */
+   static const struct {
+      const char *name;
+      int matrix;
+      int modifier;
+   } matrices[] = {
+      { "gl_ModelViewMatrix", STATE_MODELVIEW_MATRIX, STATE_MATRIX_TRANSPOSE },
+      { "gl_ModelViewMatrixInverse", STATE_MODELVIEW_MATRIX, STATE_MATRIX_INVTRANS },
+      { "gl_ModelViewMatrixTranspose", STATE_MODELVIEW_MATRIX, 0 },
+      { "gl_ModelViewMatrixInverseTranspose", STATE_MODELVIEW_MATRIX, STATE_MATRIX_INVERSE },
+
+      { "gl_ProjectionMatrix", STATE_PROJECTION_MATRIX, STATE_MATRIX_TRANSPOSE },
+      { "gl_ProjectionMatrixInverse", STATE_PROJECTION_MATRIX, STATE_MATRIX_INVTRANS },
+      { "gl_ProjectionMatrixTranspose", STATE_PROJECTION_MATRIX, 0 },
+      { "gl_ProjectionMatrixInverseTranspose", STATE_PROJECTION_MATRIX, STATE_MATRIX_INVERSE },
+
+      { "gl_ModelViewProjectionMatrix", STATE_MVP_MATRIX, STATE_MATRIX_TRANSPOSE },
+      { "gl_ModelViewProjectionMatrixInverse", STATE_MVP_MATRIX, STATE_MATRIX_INVTRANS },
+      { "gl_ModelViewProjectionMatrixTranspose", STATE_MVP_MATRIX, 0 },
+      { "gl_ModelViewProjectionMatrixInverseTranspose", STATE_MVP_MATRIX, STATE_MATRIX_INVERSE },
+
+      { "gl_TextureMatrix", STATE_TEXTURE_MATRIX, STATE_MATRIX_TRANSPOSE },
+      { "gl_TextureMatrixInverse", STATE_TEXTURE_MATRIX, STATE_MATRIX_INVTRANS },
+      { "gl_TextureMatrixTranspose", STATE_TEXTURE_MATRIX, 0 },
+      { "gl_TextureMatrixInverseTranspose", STATE_TEXTURE_MATRIX, STATE_MATRIX_INVERSE },
+
+      { "gl_NormalMatrix", STATE_MODELVIEW_MATRIX, STATE_MATRIX_INVERSE },
+
+   };
+   unsigned int i;
+   temp_entry *entry;
+
+   /* C++ gets angry when we try to use an int as a gl_state_index, so we use
+    * ints for gl_state_index.  Make sure they're compatible.
+    */
+   assert(sizeof(gl_state_index) == sizeof(int));
+
+   for (i = 0; i < Elements(matrices); i++) {
+      if (strcmp(var->name, matrices[i].name) == 0) {
+	 int j;
+	 int last_pos = -1, base_pos = -1;
+	 int tokens[STATE_LENGTH];
+
+	 tokens[0] = matrices[i].matrix;
+	 tokens[1] = 0; /* array index! */
+	 tokens[4] = matrices[i].modifier;
+
+	 /* Add a ref for each column.  It looks like the reason we do
+	  * it this way is that _mesa_add_state_reference doesn't work
+	  * for things that aren't vec4s, so the tokens[2]/tokens[3]
+	  * range has to be equal.
+	  */
+	 for (j = 0; j < 4; j++) {
+	    tokens[2] = j;
+	    tokens[3] = j;
+	    int pos = _mesa_add_state_reference(prog->Parameters,
+						(gl_state_index *)tokens);
+	    assert(last_pos == -1 || last_pos == base_pos + j);
+	    if (base_pos == -1)
+	       base_pos = pos;
+	 }
+
+	 entry = new(mem_ctx) temp_entry(var,
+					 PROGRAM_STATE_VAR,
+					 base_pos);
+
+	 return entry;
+      }
+   }
+
+   return NULL;
+}
+
 void
 ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
 {
@@ -771,6 +853,10 @@ ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
    if (!entry) {
       switch (ir->var->mode) {
       case ir_var_uniform:
+	 entry = get_builtin_matrix_ref(this->mem_ctx, this->prog, ir->var);
+	 if (entry)
+	    break;
+
 	 /* FINISHME: Fix up uniform name for arrays and things */
 	 assert(ir->var->type->gl_type != 0 &&
 		ir->var->type->gl_type != GL_INVALID_ENUM);
