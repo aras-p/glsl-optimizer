@@ -366,7 +366,7 @@ ir_to_mesa_visitor::ir_to_mesa_emit_scalar_op1(ir_instruction *ir,
 					       ir_to_mesa_dst_reg dst,
 					       ir_to_mesa_src_reg src0)
 {
-   ir_to_mesa_src_reg undef;
+   ir_to_mesa_src_reg undef = ir_to_mesa_undef;
 
    undef.swizzle = SWIZZLE_XXXX;
 
