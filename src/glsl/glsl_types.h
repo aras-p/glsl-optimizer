@@ -74,11 +74,16 @@ struct glsl_type {
 
    /* Callers of this talloc-based new need not call delete. It's
     * easier to just talloc_free 'ctx' (or any of its ancestors). */
-   static void* operator new(size_t size, void *ctx)
+   static void* operator new(size_t size)
    {
+      if (glsl_type::ctx == NULL) {
+	 glsl_type::ctx = talloc_init("glsl_type");
+	 assert(glsl_type::ctx != NULL);
+      }
+
       void *type;
 
-      type = talloc_size(ctx, size);
+      type = talloc_size(glsl_type::ctx, size);
       assert(type != NULL);
 
       return type;
@@ -382,6 +387,13 @@ struct glsl_type {
    }
 
 private:
+   /**
+    * talloc context for all glsl_type allocations
+    *
+    * Set on the first call to \c glsl_type::new.
+    */
+   static TALLOC_CTX *ctx;
+
    /** Constructor for vector and matrix types */
    glsl_type(GLenum gl_type,
 	     unsigned base_type, unsigned vector_elements,

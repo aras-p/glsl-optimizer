@@ -33,6 +33,7 @@ extern "C" {
 
 hash_table *glsl_type::array_types = NULL;
 hash_table *glsl_type::record_types = NULL;
+void *glsl_type::ctx = NULL;
 
 glsl_type::glsl_type(GLenum gl_type,
 		     unsigned base_type, unsigned vector_elements,
@@ -384,7 +385,7 @@ glsl_type::get_array_instance(void *ctx, const glsl_type *base,
 
    const glsl_type *t = (glsl_type *) hash_table_find(array_types, & key);
    if (t == NULL) {
-      t = new(ctx) glsl_type(ctx, base, array_size);
+      t = new glsl_type(ctx, base, array_size);
 
       hash_table_insert(array_types, (void *) t, t);
    }
@@ -455,7 +456,7 @@ glsl_type::get_record_instance(const glsl_struct_field *fields,
 
    const glsl_type *t = (glsl_type *) hash_table_find(record_types, & key);
    if (t == NULL) {
-      t = new(NULL) glsl_type(fields, num_fields, name);
+      t = new glsl_type(fields, num_fields, name);
 
       hash_table_insert(record_types, (void *) t, t);
    }
