@@ -65,6 +65,18 @@ glsl_type::glsl_type(GLenum gl_type,
    memset(& fields, 0, sizeof(fields));
 }
 
+glsl_type::glsl_type(const glsl_struct_field *fields, unsigned num_fields,
+		     const char *name) :
+   base_type(GLSL_TYPE_STRUCT),
+   sampler_dimensionality(0), sampler_shadow(0), sampler_array(0),
+   sampler_type(0),
+   vector_elements(0), matrix_columns(0),
+   name(name),
+   length(num_fields)
+{
+   this->fields.structure = fields;
+}
+
 static void
 add_types_to_symbol_table(glsl_symbol_table *symtab,
 			  const struct glsl_type *types,

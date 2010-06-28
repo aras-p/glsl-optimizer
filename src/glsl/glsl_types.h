@@ -158,18 +158,6 @@ struct glsl_type {
    /*@}*/
 
 
-   glsl_type(const glsl_struct_field *fields, unsigned num_fields,
-	     const char *name) :
-      base_type(GLSL_TYPE_STRUCT),
-      sampler_dimensionality(0), sampler_shadow(0), sampler_array(0),
-      sampler_type(0),
-      vector_elements(0), matrix_columns(0),
-      name(name),
-      length(num_fields)
-   {
-      this->fields.structure = fields;
-   }
-
    /**
     * For numeric and boolean derrived types returns the basic scalar type
     *
@@ -403,6 +391,10 @@ private:
    glsl_type(GLenum gl_type,
 	     enum glsl_sampler_dim dim, bool shadow, bool array,
 	     unsigned type, const char *name);
+
+   /** Constructor for record types */
+   glsl_type(const glsl_struct_field *fields, unsigned num_fields,
+	     const char *name);
 
    /** Constructor for array types */
    glsl_type(void *ctx, const glsl_type *array, unsigned length);
