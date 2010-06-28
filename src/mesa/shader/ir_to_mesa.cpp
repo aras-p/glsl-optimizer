@@ -1159,7 +1159,7 @@ ir_to_mesa_visitor::visit(ir_if *ir)
       else_inst = ir_to_mesa_emit_op1(ir->condition, OPCODE_ELSE,
 				      ir_to_mesa_undef_dst,
 				      ir_to_mesa_undef);
-      visit_exec_list(&ir->then_instructions, this);
+      visit_exec_list(&ir->else_instructions, this);
    }
 
    if_inst = ir_to_mesa_emit_op1(ir->condition, OPCODE_ENDIF,
