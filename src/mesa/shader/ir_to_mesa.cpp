@@ -1609,10 +1609,14 @@ _mesa_glsl_link_shader(GLcontext *ctx, struct gl_shader_program *prog)
 	 case GL_VERTEX_SHADER:
 	    _mesa_reference_vertprog(ctx, &prog->VertexProgram,
 				     (struct gl_vertex_program *)linked_prog);
+	    ctx->Driver.ProgramStringNotify(ctx, GL_VERTEX_PROGRAM_ARB,
+					    linked_prog);
 	    break;
 	 case GL_FRAGMENT_SHADER:
 	    _mesa_reference_fragprog(ctx, &prog->FragmentProgram,
 				     (struct gl_fragment_program *)linked_prog);
+	    ctx->Driver.ProgramStringNotify(ctx, GL_FRAGMENT_PROGRAM_ARB,
+					    linked_prog);
 	    break;
 	 }
       }
