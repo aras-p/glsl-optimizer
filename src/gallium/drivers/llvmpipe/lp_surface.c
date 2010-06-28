@@ -106,19 +106,27 @@ lp_resource_copy(struct pipe_context *pipe,
       unsigned x, y;
       enum lp_texture_usage usage;
 
-      /* XXX for the tiles which are completely contained by the
-       * dest rectangle, we could set the usage mode to WRITE_ALL.
-       * Just test for the case of replacing the whole dest region for now.
-       */
-      if (width == dst_tex->base.width0 && height == dst_tex->base.height0)
-         usage = LP_TEX_USAGE_WRITE_ALL;
-      else
-         usage = LP_TEX_USAGE_READ_WRITE;
-
       adjust_to_tile_bounds(dstx, dsty, width, height, &tx, &ty, &tw, &th);
 
       for (y = 0; y < th; y += TILE_SIZE) {
+         boolean contained_y = ty + y >= dsty &&
+                               ty + y + TILE_SIZE <= dsty + height ?
+                               TRUE : FALSE;
+
          for (x = 0; x < tw; x += TILE_SIZE) {
+            boolean contained_x = tx + x >= dstx &&
+                                  tx + x + TILE_SIZE <= dstx + width ?
+                                  TRUE : FALSE;
+
+            /*
+             * Set the usage mode to WRITE_ALL for the tiles which are
+             * completely contained by the dest rectangle.
+             */
+            if (contained_y && contained_x)
+               usage = LP_TEX_USAGE_WRITE_ALL;
+            else
+               usage = LP_TEX_USAGE_READ_WRITE;
+
             (void) llvmpipe_get_texture_tile_linear(dst_tex,
                                                     subdst.face, subdst.level,
                                                     usage,
