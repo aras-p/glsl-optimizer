@@ -8,7 +8,7 @@ C_SOURCES = \
 	radeon_xorg.c
 
 DRIVER_DEFINES = \
-	-DHAVE_CONFIG_H -DGALLIUM_RBUG -DGALLIUM_TRACE
+	-DHAVE_CONFIG_H -DGALLIUM_RBUG -DGALLIUM_TRACE -DGALLIUM_GALAHAD
 
 DRIVER_LINKS = \
         $(TOP)/src/gallium/state_trackers/xorg/libxorgtracker.a \
