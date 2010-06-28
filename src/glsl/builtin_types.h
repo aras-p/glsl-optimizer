@@ -25,13 +25,13 @@
 #define Elements(x) (sizeof(x)/sizeof(*(x)))
 #endif
 
-static const struct glsl_type _error_type =
+const glsl_type glsl_type::_error_type =
    glsl_type(GL_INVALID_ENUM, GLSL_TYPE_ERROR, 0, 0, "");
 
-static const struct glsl_type void_type =
+const glsl_type glsl_type::void_type =
    glsl_type(GL_INVALID_ENUM, GLSL_TYPE_VOID, 0, 0, "void");
 
-const glsl_type *const glsl_type::error_type = & _error_type;
+const glsl_type *const glsl_type::error_type = & glsl_type::_error_type;
 
 /** \name Core built-in types
  *
@@ -39,7 +39,7 @@ const glsl_type *const glsl_type::error_type = & _error_type;
  */
 /*@{*/
 
-static const struct glsl_type builtin_core_types[] = {
+const glsl_type glsl_type::builtin_core_types[] = {
    glsl_type(GL_BOOL,         GLSL_TYPE_BOOL, 1, 1, "bool"),
    glsl_type(GL_BOOL_VEC2,    GLSL_TYPE_BOOL, 2, 1, "bvec2"),
    glsl_type(GL_BOOL_VEC3,    GLSL_TYPE_BOOL, 3, 1, "bvec3"),
@@ -91,7 +91,7 @@ static const struct glsl_struct_field gl_DepthRangeParameters_fields[] = {
    { glsl_type::float_type, "diff" },
 };
 
-static const struct glsl_type builtin_structure_types[] = {
+const glsl_type glsl_type::builtin_structure_types[] = {
    glsl_type(gl_DepthRangeParameters_fields,
              Elements(gl_DepthRangeParameters_fields),
              "gl_DepthRangeParameters"),
@@ -157,7 +157,7 @@ static const struct glsl_struct_field gl_FogParameters_fields[] = {
    { glsl_type::float_type, "scale" },
 };
 
-static const struct glsl_type builtin_110_deprecated_structure_types[] = {
+const glsl_type glsl_type::builtin_110_deprecated_structure_types[] = {
    glsl_type(gl_PointParameters_fields,
              Elements(gl_PointParameters_fields),
              "gl_PointParameters"),
@@ -186,7 +186,7 @@ static const struct glsl_type builtin_110_deprecated_structure_types[] = {
  */
 /*@{*/
 
-static const struct glsl_type builtin_120_types[] = {
+const glsl_type glsl_type::builtin_120_types[] = {
    glsl_type(GL_FLOAT_MAT2x3, GLSL_TYPE_FLOAT, 3, 2, "mat2x3"),
    glsl_type(GL_FLOAT_MAT2x4, GLSL_TYPE_FLOAT, 4, 2, "mat2x4"),
    glsl_type(GL_FLOAT_MAT3x2, GLSL_TYPE_FLOAT, 2, 3, "mat3x2"),
@@ -206,7 +206,7 @@ const glsl_type *const glsl_type::mat4x3_type = & builtin_120_types[5];
  */
 /*@{*/
 
-static const struct glsl_type builtin_130_types[] = {
+const glsl_type glsl_type::builtin_130_types[] = {
    glsl_type(GL_UNSIGNED_INT,      GLSL_TYPE_UINT, 1, 1, "uint"),
    glsl_type(GL_UNSIGNED_INT_VEC2, GLSL_TYPE_UINT, 2, 1, "uvec2"),
    glsl_type(GL_UNSIGNED_INT_VEC3, GLSL_TYPE_UINT, 3, 1, "uvec3"),
@@ -261,7 +261,7 @@ const glsl_type *const glsl_type::uvec4_type = & builtin_130_types[3];
  */
 /*@{*/
 
-static const struct glsl_type builtin_ARB_texture_rectangle_types[] = {
+const glsl_type glsl_type::builtin_ARB_texture_rectangle_types[] = {
    glsl_type(GL_SAMPLER_2D_RECT,
 	     GLSL_SAMPLER_DIM_RECT, 0, 0, GLSL_TYPE_FLOAT, "sampler2DRect"),
    glsl_type(GL_SAMPLER_2D_RECT_SHADOW,
@@ -273,7 +273,7 @@ static const struct glsl_type builtin_ARB_texture_rectangle_types[] = {
  */
 /*@{*/
 
-static const struct glsl_type builtin_EXT_texture_array_types[] = {
+const glsl_type glsl_type::builtin_EXT_texture_array_types[] = {
    glsl_type(GL_SAMPLER_1D_ARRAY,
 	     GLSL_SAMPLER_DIM_1D, 0, 1, GLSL_TYPE_FLOAT, "sampler1DArray"),
    glsl_type(GL_SAMPLER_1D_ARRAY_SHADOW,
@@ -289,7 +289,7 @@ static const struct glsl_type builtin_EXT_texture_array_types[] = {
  */
 /*@{*/
 
-static const struct glsl_type builtin_EXT_texture_buffer_object_types[] = {
+const glsl_type glsl_type::builtin_EXT_texture_buffer_object_types[] = {
    glsl_type(GL_SAMPLER_BUFFER,
 	     GLSL_SAMPLER_DIM_BUF, 0, 0, GLSL_TYPE_FLOAT, "samplerBuffer"),
    glsl_type(GL_INT_SAMPLER_BUFFER,

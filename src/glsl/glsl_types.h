@@ -34,6 +34,11 @@ extern "C" {
 #include <talloc.h>
 }
 
+struct _mesa_glsl_parse_state;
+
+extern "C" void
+_mesa_glsl_initialize_types(struct _mesa_glsl_parse_state *state);
+
 #define GLSL_TYPE_UINT          0
 #define GLSL_TYPE_INT           1
 #define GLSL_TYPE_FLOAT         2
@@ -424,24 +429,50 @@ private:
 
    static int array_key_compare(const void *a, const void *b);
    static unsigned array_key_hash(const void *key);
+
+   /**
+    * \name Pointers to various type singletons
+    */
+   /*@{*/
+   static const glsl_type _error_type;
+   static const glsl_type void_type;
+   static const glsl_type builtin_core_types[];
+   static const glsl_type builtin_structure_types[];
+   static const glsl_type builtin_110_deprecated_structure_types[];
+   static const glsl_type builtin_120_types[];
+   static const glsl_type builtin_130_types[];
+   static const glsl_type builtin_ARB_texture_rectangle_types[];
+   static const glsl_type builtin_EXT_texture_array_types[];
+   static const glsl_type builtin_EXT_texture_buffer_object_types[];
+   /*@}*/
+
+   /**
+    * \name Methods to populate a symbol table with built-in types.
+    *
+    * \internal
+    * This is one of the truely annoying things about C++.  Methods that are
+    * completely internal and private to a type still have to be advertised to
+    * the world in a public header file.
+    */
+   /*@{*/
+   static void generate_110_types(class glsl_symbol_table *);
+   static void generate_120_types(class glsl_symbol_table *);
+   static void generate_130_types(class glsl_symbol_table *);
+   static void generate_ARB_texture_rectangle_types(class glsl_symbol_table *,
+						    bool);
+   static void generate_EXT_texture_array_types(class glsl_symbol_table *,
+						bool);
+   /**
+    * This function is a friend because it needs to call the various
+    * generate_*_types functions and it has C linkage.
+    */
+   friend void _mesa_glsl_initialize_types(struct _mesa_glsl_parse_state *);
+   /*@}*/
 };
 
 struct glsl_struct_field {
    const struct glsl_type *type;
    const char *name;
 };
-
-struct _mesa_glsl_parse_state;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-extern void
-_mesa_glsl_initialize_types(struct _mesa_glsl_parse_state *state);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* GLSL_TYPES_H */

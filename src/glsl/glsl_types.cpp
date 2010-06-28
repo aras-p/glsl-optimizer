@@ -46,8 +46,8 @@ add_types_to_symbol_table(glsl_symbol_table *symtab,
 }
 
 
-static void
-generate_110_types(glsl_symbol_table *symtab)
+void
+glsl_type::generate_110_types(glsl_symbol_table *symtab)
 {
    add_types_to_symbol_table(symtab, builtin_core_types,
 			     Elements(builtin_core_types),
@@ -62,8 +62,8 @@ generate_110_types(glsl_symbol_table *symtab)
 }
 
 
-static void
-generate_120_types(glsl_symbol_table *symtab)
+void
+glsl_type::generate_120_types(glsl_symbol_table *symtab)
 {
    generate_110_types(symtab);
 
@@ -72,8 +72,8 @@ generate_120_types(glsl_symbol_table *symtab)
 }
 
 
-static void
-generate_130_types(glsl_symbol_table *symtab)
+void
+glsl_type::generate_130_types(glsl_symbol_table *symtab)
 {
    generate_120_types(symtab);
 
@@ -82,8 +82,9 @@ generate_130_types(glsl_symbol_table *symtab)
 }
 
 
-static void
-generate_ARB_texture_rectangle_types(glsl_symbol_table *symtab, bool warn)
+void
+glsl_type::generate_ARB_texture_rectangle_types(glsl_symbol_table *symtab,
+						bool warn)
 {
    add_types_to_symbol_table(symtab, builtin_ARB_texture_rectangle_types,
 			     Elements(builtin_ARB_texture_rectangle_types),
@@ -91,8 +92,9 @@ generate_ARB_texture_rectangle_types(glsl_symbol_table *symtab, bool warn)
 }
 
 
-static void
-generate_EXT_texture_array_types(glsl_symbol_table *symtab, bool warn)
+void
+glsl_type::generate_EXT_texture_array_types(glsl_symbol_table *symtab,
+					    bool warn)
 {
    add_types_to_symbol_table(symtab, builtin_EXT_texture_array_types,
 			     Elements(builtin_EXT_texture_array_types),
@@ -105,13 +107,13 @@ _mesa_glsl_initialize_types(struct _mesa_glsl_parse_state *state)
 {
    switch (state->language_version) {
    case 110:
-      generate_110_types(state->symbols);
+      glsl_type::generate_110_types(state->symbols);
       break;
    case 120:
-      generate_120_types(state->symbols);
+      glsl_type::generate_120_types(state->symbols);
       break;
    case 130:
-      generate_130_types(state->symbols);
+      glsl_type::generate_130_types(state->symbols);
       break;
    default:
       /* error */
@@ -119,13 +121,13 @@ _mesa_glsl_initialize_types(struct _mesa_glsl_parse_state *state)
    }
 
    if (state->ARB_texture_rectangle_enable) {
-      generate_ARB_texture_rectangle_types(state->symbols,
+      glsl_type::generate_ARB_texture_rectangle_types(state->symbols,
 					   state->ARB_texture_rectangle_warn);
    }
 
    if (state->EXT_texture_array_enable && state->language_version < 130) {
       // These are already included in 130; don't create twice.
-      generate_EXT_texture_array_types(state->symbols,
+      glsl_type::generate_EXT_texture_array_types(state->symbols,
 				       state->EXT_texture_array_warn);
    }
 }
