@@ -18,6 +18,10 @@
 #include "rbug/rbug_public.h"
 #endif
 
+#ifdef GALLIUM_GALAHAD
+#include "galahad/glhd_public.h"
+#endif
+
 static INLINE struct pipe_screen *
 debug_screen_wrap(struct pipe_screen *screen)
 {
@@ -28,6 +32,10 @@ debug_screen_wrap(struct pipe_screen *screen)
 
 #if defined(GALLIUM_TRACE)
    screen = trace_screen_create(screen);
+#endif
+
+#if defined(GALLIUM_GALAHAD)
+   screen = galahad_screen_create(screen);
 #endif
 
    return screen;

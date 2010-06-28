@@ -36,6 +36,7 @@
 #include "glhd_context.h"
 #include "glhd_objects.h"
 
+DEBUG_GET_ONCE_BOOL_OPTION(galahad, "GALLIUM_GALAHAD", FALSE)
 
 static void
 galahad_screen_destroy(struct pipe_screen *_screen)
@@ -298,9 +299,12 @@ galahad_screen_create(struct pipe_screen *screen)
 {
    struct galahad_screen *glhd_screen;
 
+   if (!debug_get_option_galahad())
+      return screen;
+
    glhd_screen = CALLOC_STRUCT(galahad_screen);
    if (!glhd_screen) {
-      return NULL;
+      return screen;
    }
 
    glhd_screen->base.winsys = NULL;
