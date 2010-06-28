@@ -206,6 +206,12 @@ struct glsl_type {
 					      unsigned elements);
 
    /**
+    * Get the instance of a record type
+    */
+   static const glsl_type *get_record_instance(const glsl_struct_field *fields,
+					       unsigned num_fields,
+					       const char *name);
+   /**
     * Generate the constructor for this type and add it to the symbol table
     */
    class ir_function *generate_constructor(class glsl_symbol_table *) const;
@@ -406,6 +412,12 @@ private:
 
    static int array_key_compare(const void *a, const void *b);
    static unsigned array_key_hash(const void *key);
+
+   /** Hash table containing the known record types. */
+   static struct hash_table *record_types;
+
+   static int record_key_compare(const void *a, const void *b);
+   static unsigned record_key_hash(const void *key);
 
    /**
     * \name Pointers to various type singletons

@@ -2383,7 +2383,6 @@ ir_rvalue *
 ast_struct_specifier::hir(exec_list *instructions,
 			  struct _mesa_glsl_parse_state *state)
 {
-   void *ctx = talloc_parent(state);
    unsigned decl_count = 0;
 
    /* Make an initial pass over the list of structure fields to determine how
@@ -2446,7 +2445,8 @@ ast_struct_specifier::hir(exec_list *instructions,
       name = this->name;
    }
 
-   glsl_type *t = new(ctx) glsl_type(fields, decl_count, name);
+   const glsl_type *t =
+      glsl_type::get_record_instance(fields, decl_count, name);
 
    YYLTYPE loc = this->get_location();
    if (!state->symbols->add_type(name, t)) {
