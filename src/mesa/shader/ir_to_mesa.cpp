@@ -167,6 +167,12 @@ public:
 				   ir_to_mesa_dst_reg dst,
 				   ir_to_mesa_src_reg src0);
 
+   void ir_to_mesa_emit_scalar_op2(ir_instruction *ir,
+				   enum prog_opcode op,
+				   ir_to_mesa_dst_reg dst,
+				   ir_to_mesa_src_reg src0,
+				   ir_to_mesa_src_reg src1);
+
    void *mem_ctx;
 };
 
@@ -309,10 +315,11 @@ ir_to_mesa_dst_reg_from_src(ir_to_mesa_src_reg reg)
  * to produce dest channels.
  */
 void
-ir_to_mesa_visitor::ir_to_mesa_emit_scalar_op1(ir_instruction *ir,
+ir_to_mesa_visitor::ir_to_mesa_emit_scalar_op2(ir_instruction *ir,
 					       enum prog_opcode op,
 					       ir_to_mesa_dst_reg dst,
-					       ir_to_mesa_src_reg src0)
+					       ir_to_mesa_src_reg orig_src0,
+					       ir_to_mesa_src_reg orig_src1)
 {
    int i, j;
    int done_mask = ~dst.writemask;
@@ -324,26 +331,46 @@ ir_to_mesa_visitor::ir_to_mesa_emit_scalar_op1(ir_instruction *ir,
    for (i = 0; i < 4; i++) {
       GLuint this_mask = (1 << i);
       ir_to_mesa_instruction *inst;
-      ir_to_mesa_src_reg src = src0;
+      ir_to_mesa_src_reg src0 = orig_src0;
+      ir_to_mesa_src_reg src1 = orig_src1;
 
       if (done_mask & this_mask)
 	 continue;
 
-      GLuint src_swiz = GET_SWZ(src.swizzle, i);
+      GLuint src0_swiz = GET_SWZ(src0.swizzle, i);
+      GLuint src1_swiz = GET_SWZ(src1.swizzle, i);
       for (j = i + 1; j < 4; j++) {
-	 if (!(done_mask & (1 << j)) && GET_SWZ(src.swizzle, j) == src_swiz) {
+	 if (!(done_mask & (1 << j)) &&
+	     GET_SWZ(src0.swizzle, j) == src0_swiz &&
+	     GET_SWZ(src1.swizzle, j) == src1_swiz) {
 	    this_mask |= (1 << j);
 	 }
       }
-      src.swizzle = MAKE_SWIZZLE4(src_swiz, src_swiz,
-				  src_swiz, src_swiz);
+      src0.swizzle = MAKE_SWIZZLE4(src0_swiz, src0_swiz,
+				   src0_swiz, src0_swiz);
+      src1.swizzle = MAKE_SWIZZLE4(src1_swiz, src1_swiz,
+				  src1_swiz, src1_swiz);
 
-      inst = ir_to_mesa_emit_op1(ir, op,
+      inst = ir_to_mesa_emit_op2(ir, op,
 				 dst,
-				 src);
+				 src0,
+				 src1);
       inst->dst_reg.writemask = this_mask;
       done_mask |= this_mask;
    }
+}
+
+void
+ir_to_mesa_visitor::ir_to_mesa_emit_scalar_op1(ir_instruction *ir,
+					       enum prog_opcode op,
+					       ir_to_mesa_dst_reg dst,
+					       ir_to_mesa_src_reg src0)
+{
+   ir_to_mesa_src_reg undef;
+
+   undef.swizzle = SWIZZLE_XXXX;
+
+   ir_to_mesa_emit_scalar_op2(ir, op, dst, src0, undef);
 }
 
 struct ir_to_mesa_src_reg
@@ -710,6 +737,9 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
       break;
    case ir_binop_max:
       ir_to_mesa_emit_op2(ir, OPCODE_MAX, result_dst, op[0], op[1]);
+      break;
+   case ir_binop_pow:
+      ir_to_mesa_emit_scalar_op2(ir, OPCODE_POW, result_dst, op[0], op[1]);
       break;
    default:
       ir_print_visitor v;
