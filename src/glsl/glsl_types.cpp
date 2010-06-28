@@ -195,6 +195,26 @@ const glsl_type *glsl_type::get_base_type() const
 }
 
 
+void
+_mesa_glsl_release_types(void)
+{
+   if (glsl_type::array_types != NULL) {
+      hash_table_dtor(glsl_type::array_types);
+      glsl_type::array_types = NULL;
+   }
+
+   if (glsl_type::record_types != NULL) {
+      hash_table_dtor(glsl_type::record_types);
+      glsl_type::record_types = NULL;
+   }
+
+   if (glsl_type::ctx != NULL) {
+      talloc_free(glsl_type::ctx);
+      glsl_type::ctx = NULL;
+   }
+}
+
+
 ir_function *
 glsl_type::generate_constructor(glsl_symbol_table *symtab) const
 {

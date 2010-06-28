@@ -258,6 +258,7 @@ main(int argc, char **argv)
    }
 
    talloc_free(whole_program);
+   _mesa_glsl_release_types();
 
    return status;
 }

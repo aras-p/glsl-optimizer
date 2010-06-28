@@ -39,6 +39,9 @@ struct _mesa_glsl_parse_state;
 extern "C" void
 _mesa_glsl_initialize_types(struct _mesa_glsl_parse_state *state);
 
+extern "C" void
+_mesa_glsl_release_types(void);
+
 #define GLSL_TYPE_UINT          0
 #define GLSL_TYPE_INT           1
 #define GLSL_TYPE_FLOAT         2
@@ -455,11 +458,18 @@ private:
 						    bool);
    static void generate_EXT_texture_array_types(class glsl_symbol_table *,
 						bool);
+   /*@}*/
+
    /**
-    * This function is a friend because it needs to call the various
-    * generate_*_types functions and it has C linkage.
+    * \name Friend functions.
+    *
+    * These functions are friends because they must have C linkage and the
+    * need to call various private methods or access various private static
+    * data.
     */
+   /*@{*/
    friend void _mesa_glsl_initialize_types(struct _mesa_glsl_parse_state *);
+   friend void _mesa_glsl_release_types(void);
    /*@}*/
 };
 
