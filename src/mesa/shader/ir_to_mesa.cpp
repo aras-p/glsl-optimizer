@@ -929,15 +929,29 @@ ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
 		!(var_in ^ in))
 	       break;
 	 }
-	 if (i == ARRAY_SIZE(builtin_var_to_mesa_reg)) {
-	    printf("Failed to find builtin for %s variable %s\n",
-		   var_in ? "in" : "out",
-		   ir->var->name);
-	    abort();
+	 if (i != ARRAY_SIZE(builtin_var_to_mesa_reg)) {
+	    entry = new(mem_ctx) temp_entry(ir->var,
+					    builtin_var_to_mesa_reg[i].file,
+					    builtin_var_to_mesa_reg[i].index);
+	    break;
 	 }
-	 entry = new(mem_ctx) temp_entry(ir->var,
-					 builtin_var_to_mesa_reg[i].file,
-					 builtin_var_to_mesa_reg[i].index);
+
+	 /* If no builtin, then it's a user-generated varying
+	  * (FINISHME: or a function argument!)
+	  */
+	 /* The linker-assigned location is VERT_RESULT_* or FRAG_ATTRIB*
+	  */
+	 assert(ir->var->location != -1);
+	 if (var_in) {
+	    entry = new(mem_ctx) temp_entry(ir->var,
+					    PROGRAM_INPUT,
+					    ir->var->location);
+	 } else {
+	    entry = new(mem_ctx) temp_entry(ir->var,
+					    PROGRAM_OUTPUT,
+					    ir->var->location);
+	 }
+
 	 break;
       case ir_var_auto:
 	 entry = new(mem_ctx) temp_entry(ir->var, PROGRAM_TEMPORARY,
