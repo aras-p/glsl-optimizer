@@ -67,14 +67,14 @@ lp_resource_copy(struct pipe_context *pipe,
                            dst, subdst.face, subdst.level,
                            0, /* flush_flags */
                            FALSE, /* read_only */
-                           FALSE, /* cpu_access */
+                           TRUE, /* cpu_access */
                            FALSE); /* do_not_block */
 
    llvmpipe_flush_resource(pipe,
                            src, subsrc.face, subsrc.level,
                            0, /* flush_flags */
                            TRUE, /* read_only */
-                           FALSE, /* cpu_access */
+                           TRUE, /* cpu_access */
                            FALSE); /* do_not_block */
 
    /*
