@@ -385,35 +385,6 @@ ir_to_mesa_visitor::src_reg_for_float(float val)
    return src_reg;
 }
 
-/**
- * In the initial pass of codegen, we assign temporary numbers to
- * intermediate results.  (not SSA -- variable assignments will reuse
- * storage).  Actual register allocation for the Mesa VM occurs in a
- * pass over the Mesa IR later.
- */
-ir_to_mesa_src_reg
-ir_to_mesa_visitor::get_temp(const glsl_type *type)
-{
-   ir_to_mesa_src_reg src_reg;
-   int swizzle[4];
-   int i;
-
-   assert(!type->is_array());
-
-   src_reg.file = PROGRAM_TEMPORARY;
-   src_reg.index = type->matrix_columns;
-   src_reg.reladdr = false;
-
-   for (i = 0; i < type->vector_elements; i++)
-      swizzle[i] = i;
-   for (; i < 4; i++)
-      swizzle[i] = type->vector_elements - 1;
-   src_reg.swizzle = MAKE_SWIZZLE4(swizzle[0], swizzle[1],
-				   swizzle[2], swizzle[3]);
-
-   return src_reg;
-}
-
 static int
 type_size(const struct glsl_type *type)
 {
@@ -446,6 +417,36 @@ type_size(const struct glsl_type *type)
    default:
       assert(0);
    }
+}
+
+/**
+ * In the initial pass of codegen, we assign temporary numbers to
+ * intermediate results.  (not SSA -- variable assignments will reuse
+ * storage).  Actual register allocation for the Mesa VM occurs in a
+ * pass over the Mesa IR later.
+ */
+ir_to_mesa_src_reg
+ir_to_mesa_visitor::get_temp(const glsl_type *type)
+{
+   ir_to_mesa_src_reg src_reg;
+   int swizzle[4];
+   int i;
+
+   assert(!type->is_array());
+
+   src_reg.file = PROGRAM_TEMPORARY;
+   src_reg.index = next_temp;
+   src_reg.reladdr = false;
+   next_temp += type_size(type);
+
+   for (i = 0; i < type->vector_elements; i++)
+      swizzle[i] = i;
+   for (; i < 4; i++)
+      swizzle[i] = type->vector_elements - 1;
+   src_reg.swizzle = MAKE_SWIZZLE4(swizzle[0], swizzle[1],
+				   swizzle[2], swizzle[3]);
+
+   return src_reg;
 }
 
 temp_entry *
