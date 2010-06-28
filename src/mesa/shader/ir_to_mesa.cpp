@@ -1214,10 +1214,10 @@ count_resources(struct gl_program *prog)
       for (reg = 0; reg < _mesa_num_inst_src_regs(inst->Opcode); reg++) {
 	 switch (inst->SrcReg[reg].File) {
 	 case PROGRAM_OUTPUT:
-	    prog->OutputsWritten |= BITFIELD64_BIT(inst->DstReg.Index);
+	    prog->OutputsWritten |= BITFIELD64_BIT(inst->SrcReg[reg].Index);
 	    break;
 	 case PROGRAM_INPUT:
-	    prog->InputsRead |= BITFIELD64_BIT(inst->DstReg.Index);
+	    prog->InputsRead |= BITFIELD64_BIT(inst->SrcReg[reg].Index);
 	    break;
 	 default:
 	    break;
