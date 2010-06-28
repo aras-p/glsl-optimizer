@@ -30,14 +30,14 @@
 #include "util/u_format.h"
 #include "vmw_screen.h"
 
-#include "trace/tr_drm.h"
-
 #include "vmw_screen.h"
 #include "vmw_surface.h"
 #include "vmw_fence.h"
 #include "vmw_context.h"
+#include "svga_drm_public.h"
 
-#include <state_tracker/drm_api.h>
+#include "state_tracker/drm_driver.h"
+
 #include "vmwgfx_drm.h"
 #include <xf86drm.h>
 
@@ -84,15 +84,13 @@ vmw_dri1_check_version(const struct dri1_api_version *cur,
    return FALSE;
 }
 
-/* This is actually the entrypoint to the entire driver, called by the
- * libGL (or EGL, or ...) code via the drm_api_hooks table at the
- * bottom of the file.
+/* This is actually the entrypoint to the entire driver,
+ * called by the target bootstrap code.
  */
-static struct pipe_screen *
-vmw_drm_create_screen(struct drm_api *drm_api, int fd)
+struct svga_winsys_screen *
+svga_drm_winsys_screen_create(int fd)
 {
    struct vmw_winsys_screen *vws;
-   struct pipe_screen *screen;
    boolean use_old_scanout_flag = FALSE;
 
    struct dri1_api_version drm_ver;
@@ -123,16 +121,7 @@ vmw_drm_create_screen(struct drm_api *drm_api, int fd)
    vws->base.surface_from_handle = vmw_drm_surface_from_handle;
    vws->base.surface_get_handle = vmw_drm_surface_get_handle;
 
-   screen = svga_screen_create( &vws->base );
-   if (!screen)
-      goto out_no_screen;
-
-   return screen;
-
-   /* Failure cases:
-    */
-out_no_screen:
-   vmw_winsys_destroy( vws );
+   return &vws->base;
 
 out_no_vws:
    return NULL;
@@ -252,16 +241,4 @@ vmw_drm_surface_get_handle(struct svga_winsys_screen *sws,
     whandle->stride = stride;
 
     return TRUE;
-}
-
-static struct drm_api vmw_drm_api_hooks = {
-   .name = "vmwgfx",
-   .driver_name = "vmwgfx",
-   .create_screen = vmw_drm_create_screen,
-   .destroy = NULL,
-};
-
-struct drm_api* drm_api_create()
-{
-   return trace_drm_create(&vmw_drm_api_hooks);
 }

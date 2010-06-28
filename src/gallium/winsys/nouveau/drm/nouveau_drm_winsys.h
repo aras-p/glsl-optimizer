@@ -1,7 +1,5 @@
-#ifndef __NOUVEAU_DRM_API_H__
-#define __NOUVEAU_DRM_API_H__
-
-#include "state_tracker/drm_api.h"
+#ifndef __NOUVEAU_DRM_WINSYS_H__
+#define __NOUVEAU_DRM_WINSYS_H__
 
 #include "util/u_simple_screen.h"
 

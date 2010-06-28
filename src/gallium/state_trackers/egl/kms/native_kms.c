@@ -33,6 +33,7 @@
 #include "egllog.h"
 
 #include "native_kms.h"
+#include "state_tracker/drm_driver.h"
 
 static boolean
 kms_surface_validate(struct native_surface *nsurf, uint attachment_mask,
@@ -657,8 +658,6 @@ kms_display_destroy(struct native_display *ndpy)
    if (kdpy->fd >= 0)
       drmClose(kdpy->fd);
 
-   if (kdpy->api && kdpy->api->destroy)
-      kdpy->api->destroy(kdpy->api);
    FREE(kdpy);
 }
 
@@ -674,7 +673,7 @@ kms_display_init_screen(struct native_display *ndpy)
    fd = kdpy->fd;
    if (fd >= 0) {
       drmVersionPtr version = drmGetVersion(fd);
-      if (!version || strcmp(version->name, kdpy->api->driver_name)) {
+      if (!version || strcmp(version->name, driver_descriptor.driver_name)) {
          if (version) {
             _eglLog(_EGL_WARNING, "unknown driver name %s", version->name);
             drmFreeVersion(version);
@@ -689,7 +688,7 @@ kms_display_init_screen(struct native_display *ndpy)
       drmFreeVersion(version);
    }
    else {
-      fd = drmOpen(kdpy->api->driver_name, NULL);
+      fd = drmOpen(driver_descriptor.driver_name, NULL);
    }
 
    if (fd < 0) {
@@ -704,7 +703,7 @@ kms_display_init_screen(struct native_display *ndpy)
    }
 #endif
 
-   kdpy->base.screen = kdpy->api->create_screen(kdpy->api, fd);
+   kdpy->base.screen = driver_descriptor.create_screen(fd);
    if (!kdpy->base.screen) {
       _eglLog(_EGL_WARNING, "failed to create DRM screen");
       drmClose(fd);
@@ -724,8 +723,7 @@ static struct native_display_modeset kms_display_modeset = {
 };
 
 static struct native_display *
-kms_create_display(int fd, struct native_event_handler *event_handler,
-                   struct drm_api *api)
+kms_create_display(int fd, struct native_event_handler *event_handler)
 {
    struct kms_display *kdpy;
 
@@ -734,14 +732,6 @@ kms_create_display(int fd, struct native_event_handler *event_handler,
       return NULL;
 
    kdpy->event_handler = event_handler;
-
-   kdpy->api = api;
-   if (!kdpy->api) {
-      _eglLog(_EGL_WARNING, "failed to create DRM API");
-      FREE(kdpy);
-      return NULL;
-   }
-
    kdpy->fd = fd;
    if (!kms_display_init_screen(&kdpy->base)) {
       kms_display_destroy(&kdpy->base);
@@ -790,21 +780,13 @@ native_get_probe_result(struct native_probe *nprobe)
    return NATIVE_PROBE_UNKNOWN;
 }
 
-/* the api is destroyed with the native display */
-static struct drm_api *drm_api;
-
 const char *
 native_get_name(void)
 {
    static char kms_name[32];
 
-   if (!drm_api)
-      drm_api = drm_api_create();
 
-   if (drm_api)
-      util_snprintf(kms_name, sizeof(kms_name), "KMS/%s", drm_api->name);
-   else
-      util_snprintf(kms_name, sizeof(kms_name), "KMS");
+   util_snprintf(kms_name, sizeof(kms_name), "KMS/%s", driver_descriptor.name);
 
    return kms_name;
 }
@@ -815,15 +797,8 @@ native_create_display(void *dpy, struct native_event_handler *event_handler)
    struct native_display *ndpy = NULL;
    int fd;
 
-   if (!drm_api)
-      drm_api = drm_api_create();
-
-   if (drm_api) {
-      /* well, this makes fd 0 being ignored */
-      fd = (dpy != EGL_DEFAULT_DISPLAY) ?
-         (int) pointer_to_intptr((void *) dpy) : -1;
-      ndpy = kms_create_display(fd, event_handler, drm_api);
-   }
+   fd = (dpy != EGL_DEFAULT_DISPLAY) ? (int) pointer_to_intptr((void *) dpy) : -1;
+   ndpy = kms_create_display(fd, event_handler);
 
    return ndpy;
 }

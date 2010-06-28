@@ -13,6 +13,7 @@ drienv.Replace(CPPPATH = [
 	'#src/gallium/include',
 	'#src/gallium/auxiliary',
 	'#src/gallium/drivers',
+	'#src/gallium/winsys',
 	'#src/mesa',
 	'#src/mesa/main',
 	'#src/mesa/glapi',

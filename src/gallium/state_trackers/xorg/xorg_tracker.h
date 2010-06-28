@@ -49,7 +49,6 @@
 #include "pipe/p_screen.h"
 #include "util/u_inlines.h"
 #include "util/u_debug.h"
-#include "state_tracker/drm_api.h"
 
 #define DRV_ERROR(msg)	xf86DrvMsg(pScrn->scrnIndex, X_ERROR, msg);
 
@@ -125,7 +124,6 @@ typedef struct _modesettingRec
     struct kms_bo *root_bo;
 
     /* gallium */
-    struct drm_api *api;
     struct pipe_screen *screen;
     struct pipe_context *ctx;
     boolean d_depth_bits_last;

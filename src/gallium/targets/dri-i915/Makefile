@@ -13,8 +13,12 @@ PIPE_DRIVERS = \
 	$(TOP)/src/gallium/drivers/i915/libi915.a
 
 C_SOURCES = \
+	target.c \
 	$(COMMON_GALLIUM_SOURCES) \
 	$(DRIVER_SOURCES)
+
+DRIVER_DEFINES = \
+	-DGALLIUM_RBUG -DGALLIUM_TRACE
 
 include ../Makefile.dri
 

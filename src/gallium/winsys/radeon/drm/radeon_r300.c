@@ -25,7 +25,7 @@
 
 #include "radeon_bo_gem.h"
 #include "radeon_cs_gem.h"
-#include "state_tracker/drm_api.h"
+#include "state_tracker/drm_driver.h"
 
 static struct r300_winsys_buffer *
 radeon_r300_winsys_buffer_create(struct r300_winsys_screen *rws,

@@ -36,7 +36,9 @@
 #include "util/u_memory.h"
 
 #include "pipe/p_screen.h"
-#include "state_tracker/drm_api.h"
+
+/* XXX NO! just no! */
+#include "state_tracker/drm_driver.h"
 
 enum r300_dim {
     DIM_WIDTH  = 0,
@@ -1081,6 +1083,7 @@ r300_texture_from_handle(struct pipe_screen* screen,
         return NULL;
     }
 
+    /* XXX make the winsys return the stride_override, see i915_resource_texture.c:830 */
     buffer = rws->buffer_from_handle(rws, whandle->handle);
     if (!buffer) {
         return NULL;

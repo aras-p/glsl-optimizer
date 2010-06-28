@@ -3,7 +3,9 @@ include $(TOP)/configs/current
 
 LIBNAME = swrastg_dri.so
 
-DRIVER_DEFINES = -D__NOT_HAVE_DRM_H -DGALLIUM_SOFTPIPE
+DRIVER_DEFINES = \
+	-D__NOT_HAVE_DRM_H -DGALLIUM_SOFTPIPE \
+	-DGALLIUM_RBUG -DGALLIUM_TRACE
 
 PIPE_DRIVERS = \
 	$(TOP)/src/gallium/state_trackers/dri/sw/libdrisw.a \

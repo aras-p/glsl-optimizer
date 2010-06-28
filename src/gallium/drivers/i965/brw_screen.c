@@ -34,6 +34,7 @@
 #include "brw_context.h"
 #include "brw_screen.h"
 #include "brw_winsys.h"
+#include "brw_public.h"
 #include "brw_debug.h"
 #include "brw_resource.h"
 
@@ -350,7 +351,7 @@ brw_destroy_screen(struct pipe_screen *screen)
  * Create a new brw_screen object
  */
 struct pipe_screen *
-brw_create_screen(struct brw_winsys_screen *sws, uint pci_id)
+brw_screen_create(struct brw_winsys_screen *sws)
 {
    struct brw_screen *bscreen;
    struct brw_chipset chipset;
@@ -365,9 +366,9 @@ brw_create_screen(struct brw_winsys_screen *sws, uint pci_id)
 
    memset(&chipset, 0, sizeof chipset);
 
-   chipset.pci_id = pci_id;
+   chipset.pci_id = sws->pci_id;
 
-   switch (pci_id) {
+   switch (chipset.pci_id) {
    case PCI_CHIP_I965_G:
    case PCI_CHIP_I965_Q:
    case PCI_CHIP_I965_G_1:
@@ -393,7 +394,7 @@ brw_create_screen(struct brw_winsys_screen *sws, uint pci_id)
 
    default:
       debug_printf("%s: unknown pci id 0x%x, cannot create screen\n", 
-                   __FUNCTION__, pci_id);
+                   __FUNCTION__, chipset.pci_id);
       return NULL;
    }
 

@@ -23,12 +23,20 @@
  *
  **********************************************************/
 
+/**
+ * @file
+ * VMware SVGA public interface. Used by targets to create a stack.
+ *
+ * @author Jakob Bornecrantz Fonseca <jakob@vmware.com>
+ */
 
-#ifndef SW_DRM_API_H
-#define SW_DRM_API_H
+#ifndef SVGA_PUBLIC_H_
+#define SVGA_PUBLIC_H_
 
-struct drm_api;
+struct pipe_screen;
+struct svga_winsys_screen;
 
-struct drm_api * sw_drm_api_create(struct drm_api *api);
+struct pipe_screen *
+svga_screen_create(struct svga_winsys_screen *sws);
 
-#endif
+#endif /* SVGA_PUBLIC_H_ */

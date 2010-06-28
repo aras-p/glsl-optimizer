@@ -2,8 +2,11 @@ TOP = ../../../..
 include $(TOP)/configs/current
 
 EGL_DRIVER_NAME = radeon
-EGL_DRIVER_SOURCES = dummy.c
+EGL_DRIVER_SOURCES = target.c
 EGL_DRIVER_LIBS = -ldrm_radeon
+
+EGL_DRIVER_DEFINES = \
+	-DGALLIUM_RBUG -DGALLIUM_TRACE
 
 EGL_DRIVER_PIPES = \
 	$(TOP)/src/gallium/winsys/radeon/drm/libradeonwinsys.a \

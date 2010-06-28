@@ -8,6 +8,8 @@ env = drienv.Clone()
 
 env.ParseConfig('pkg-config --cflags --libs libdrm_radeon')
 
+env.Append(CPPDEFINES = ['GALLIUM_RBUG', 'GALLIUM_TRACE'])
+
 env.Prepend(LIBS = [
     st_dri,
     r600drm,
@@ -22,6 +24,6 @@ env.Prepend(LIBS = [
 
 env.SharedLibrary(
     target ='r600_dri.so',
-    source = 'dummy.c',
+    source = 'target.c',
     SHLIBPREFIX = '',
 )

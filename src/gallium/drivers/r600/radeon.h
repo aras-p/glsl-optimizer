@@ -28,8 +28,6 @@ typedef uint8_t			u8;
 
 struct radeon;
 
-struct pipe_screen *radeon_create_screen(struct radeon *rw);
-
 enum radeon_family {
 	CHIP_UNKNOWN,
 	CHIP_R100,

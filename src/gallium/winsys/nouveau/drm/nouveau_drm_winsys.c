@@ -4,7 +4,8 @@
 #include "util/u_memory.h"
 #include "util/u_inlines.h"
 
-#include "nouveau_drm_api.h"
+#include "nouveau_drm_winsys.h"
+#include "nouveau_drm_public.h"
 
 #include "nouveau_drmif.h"
 #include "nouveau_channel.h"
@@ -22,8 +23,8 @@ nouveau_drm_destroy_winsys(struct pipe_winsys *s)
 	FREE(nv_winsys);
 }
 
-static struct pipe_screen *
-nouveau_drm_create_screen(struct drm_api *api, int fd)
+struct pipe_screen *
+nouveau_drm_screen_create(int fd)
 {
 	struct nouveau_winsys *nvws;
 	struct pipe_winsys *ws;
@@ -70,16 +71,3 @@ nouveau_drm_create_screen(struct drm_api *api, int fd)
 
 	return nvws->pscreen;
 }
-
-static struct drm_api nouveau_drm_api_hooks = {
-	.name = "nouveau",
-	.driver_name = "nouveau",
-	.create_screen = nouveau_drm_create_screen,
-	.destroy = NULL,
-};
-
-struct drm_api *
-drm_api_create() {
-	return &nouveau_drm_api_hooks;
-}
-

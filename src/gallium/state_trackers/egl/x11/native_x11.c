@@ -27,15 +27,14 @@
 #include "util/u_debug.h"
 #include "util/u_memory.h"
 #include "util/u_string.h"
-#include "state_tracker/drm_api.h"
 #include "egllog.h"
 
 #include "native_x11.h"
 #include "x11_screen.h"
 
-#define X11_PROBE_MAGIC 0x11980BE /* "X11PROBE" */
+#include "state_tracker/drm_driver.h"
 
-static struct drm_api *api;
+#define X11_PROBE_MAGIC 0x11980BE /* "X11PROBE" */
 
 static void
 x11_probe_destroy(struct native_probe *nprobe)
@@ -96,15 +95,12 @@ native_get_probe_result(struct native_probe *nprobe)
    if (!nprobe || nprobe->magic != X11_PROBE_MAGIC)
       return NATIVE_PROBE_UNKNOWN;
 
-   if (!api)
-      api = drm_api_create();
-
    /* this is a software driver */
-   if (!api)
+   if (!driver_descriptor.create_screen)
       return NATIVE_PROBE_SUPPORTED;
 
    /* the display does not support DRI2 or the driver mismatches */
-   if (!nprobe->data || strcmp(api->name, (const char *) nprobe->data) != 0)
+   if (!nprobe->data || strcmp(driver_descriptor.name, (const char *) nprobe->data) != 0)
       return NATIVE_PROBE_FALLBACK;
 
    return NATIVE_PROBE_EXACT;
@@ -115,13 +111,7 @@ native_get_name(void)
 {
    static char x11_name[32];
 
-   if (!api)
-      api = drm_api_create();
-
-   if (api)
-      util_snprintf(x11_name, sizeof(x11_name), "X11/%s", api->name);
-   else
-      util_snprintf(x11_name, sizeof(x11_name), "X11");
+   util_snprintf(x11_name, sizeof(x11_name), "X11/%s", driver_descriptor.name);
 
    return x11_name;
 }
@@ -132,12 +122,12 @@ native_create_display(void *dpy, struct native_event_handler *event_handler)
    struct native_display *ndpy = NULL;
    boolean force_sw;
 
-   if (!api)
-      api = drm_api_create();
-
    force_sw = debug_get_bool_option("EGL_SOFTWARE", FALSE);
-   if (api && !force_sw) {
-      ndpy = x11_create_dri2_display((Display *) dpy, event_handler, api);
+   if (!driver_descriptor.create_screen)
+      force_sw = TRUE;
+
+   if (!force_sw) {
+      ndpy = x11_create_dri2_display((Display *) dpy, event_handler);
    }
 
    if (!ndpy) {

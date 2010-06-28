@@ -8,6 +8,7 @@ C_SOURCES = \
 	vmw_video.c \
 	vmw_ioctl.c \
 	vmw_ctrl.c \
+	vmw_target.c \
 	vmw_screen.c
 
 DRIVER_INCLUDES = \
@@ -15,7 +16,10 @@ DRIVER_INCLUDES = \
 
 DRIVER_DEFINES = \
 	-std=gnu99 \
+	-DGALLIUM_RBUG \
+	-DGALLIUM_TRACE \
 	-DHAVE_CONFIG_H
+
 
 DRIVER_LINKS = \
 	$(TOP)/src/gallium/state_trackers/xorg/libxorgtracker.a \

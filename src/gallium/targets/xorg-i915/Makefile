@@ -4,10 +4,11 @@ include $(TOP)/configs/current
 LIBNAME = modesetting_drv.so
 
 C_SOURCES = \
+	intel_target.c \
 	intel_xorg.c
 
 DRIVER_DEFINES = \
-	-DHAVE_CONFIG_H
+	-DHAVE_CONFIG_H -DGALLIUM_RBUG -DGALLIUM_TRACE
 
 DRIVER_LINKS = \
 	$(TOP)/src/gallium/state_trackers/xorg/libxorgtracker.a \

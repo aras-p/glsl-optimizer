@@ -39,7 +39,6 @@
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
 #include "state_tracker/st_api.h"
-#include "state_tracker/drm_api.h"
 
 struct dri_context;
 struct dri_drawable;
@@ -75,7 +74,6 @@ struct dri_screen
                              enum st_attachment_type statt);
 
    /* gallium */
-   struct drm_api *api;
    boolean d_depth_bits_last;
    boolean sd_depth_bits_last;
    boolean auto_fake_front;
