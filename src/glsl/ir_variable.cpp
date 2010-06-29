@@ -30,8 +30,9 @@
 #define Elements(x) (sizeof(x)/sizeof(*(x)))
 #endif
 
-static void generate_ARB_draw_buffers_fs_variables(exec_list *,
-    struct _mesa_glsl_parse_state *, bool);
+static void generate_ARB_draw_buffers_variables(exec_list *,
+						struct _mesa_glsl_parse_state *,
+						bool, _mesa_glsl_parser_targets);
 
 static ir_variable *
 add_variable(const char *name, enum ir_variable_mode mode, int slot,
@@ -143,20 +144,20 @@ generate_110_uniforms(exec_list *instructions,
 
 static void
 generate_110_vs_variables(exec_list *instructions,
-			  glsl_symbol_table *symtab)
+			  struct _mesa_glsl_parse_state *state)
 {
    for (unsigned i = 0; i < Elements(builtin_core_vs_variables); i++) {
       add_builtin_variable(& builtin_core_vs_variables[i],
-			   instructions, symtab);
+			   instructions, state->symbols);
    }
 
    for (unsigned i = 0
 	   ; i < Elements(builtin_110_deprecated_vs_variables)
 	   ; i++) {
       add_builtin_variable(& builtin_110_deprecated_vs_variables[i],
-			   instructions, symtab);
+			   instructions, state->symbols);
    }
-   generate_110_uniforms(instructions, symtab);
+   generate_110_uniforms(instructions, state->symbols);
 
    /* FINISHME: The size of this array is implementation dependent based on the
     * FINISHME: value of GL_MAX_TEXTURE_COORDS.  Every platform that supports
@@ -164,34 +165,37 @@ generate_110_vs_variables(exec_list *instructions,
     * FINISHME: for now.
     */
    const glsl_type *const vec4_array_type =
-      glsl_type::get_array_instance(symtab, glsl_type::vec4_type, 4);
+      glsl_type::get_array_instance(state->symbols, glsl_type::vec4_type, 4);
 
    add_variable("gl_TexCoord", ir_var_out, VERT_RESULT_TEX0, vec4_array_type,
-		instructions, symtab);
+		instructions, state->symbols);
+
+   generate_ARB_draw_buffers_variables(instructions, state, false,
+				       vertex_shader);
 }
 
 
 static void
 generate_120_vs_variables(exec_list *instructions,
-			  glsl_symbol_table *symtab)
+			  struct _mesa_glsl_parse_state *state)
 {
    /* GLSL version 1.20 did not add any built-in variables in the vertex
     * shader.
     */
-   generate_110_vs_variables(instructions, symtab);
+   generate_110_vs_variables(instructions, state);
 }
 
 
 static void
 generate_130_vs_variables(exec_list *instructions,
-			  glsl_symbol_table *symtab)
+			  struct _mesa_glsl_parse_state *state)
 {
-   void *ctx = symtab;
-   generate_120_vs_variables(instructions, symtab);
+   void *ctx = state->symbols;
+   generate_120_vs_variables(instructions, state);
 
    for (unsigned i = 0; i < Elements(builtin_130_vs_variables); i++) {
       add_builtin_variable(& builtin_130_vs_variables[i],
-			   instructions, symtab);
+			   instructions, state->symbols);
    }
 
    /* FINISHME: The size of this array is implementation dependent based on
@@ -202,7 +206,7 @@ generate_130_vs_variables(exec_list *instructions,
 
    /* FINISHME: gl_ClipDistance needs a real location assigned. */
    add_variable("gl_ClipDistance", ir_var_out, -1, clip_distance_array_type,
-		instructions, symtab);
+		instructions, state->symbols);
 
 }
 
@@ -214,13 +218,13 @@ initialize_vs_variables(exec_list *instructions,
 
    switch (state->language_version) {
    case 110:
-      generate_110_vs_variables(instructions, state->symbols);
+      generate_110_vs_variables(instructions, state);
       break;
    case 120:
-      generate_120_vs_variables(instructions, state->symbols);
+      generate_120_vs_variables(instructions, state);
       break;
    case 130:
-      generate_130_vs_variables(instructions, state->symbols);
+      generate_130_vs_variables(instructions, state);
       break;
    }
 }
@@ -253,17 +257,18 @@ generate_110_fs_variables(exec_list *instructions,
    add_variable("gl_TexCoord", ir_var_in, FRAG_ATTRIB_TEX0, vec4_array_type,
 		instructions, state->symbols);
 
-   generate_ARB_draw_buffers_fs_variables(instructions, state, false);
+   generate_ARB_draw_buffers_variables(instructions, state, false,
+				       fragment_shader);
 }
 
 
 static void
-generate_ARB_draw_buffers_fs_variables(exec_list *instructions,
-				       struct _mesa_glsl_parse_state *state,
-				       bool warn)
+generate_ARB_draw_buffers_variables(exec_list *instructions,
+				    struct _mesa_glsl_parse_state *state,
+				    bool warn, _mesa_glsl_parser_targets target)
 {
-   assert(state->Const.MaxDrawBuffers >= 1);
-
+   /* gl_MaxDrawBuffers is available in all shader stages.
+    */
    ir_variable *const mdb =
       add_variable("gl_MaxDrawBuffers", ir_var_auto, -1,
 		   glsl_type::int_type, instructions, state->symbols);
@@ -274,16 +279,21 @@ generate_ARB_draw_buffers_fs_variables(exec_list *instructions,
    mdb->constant_value = new(mdb)
       ir_constant(int(state->Const.MaxDrawBuffers));
 
-   const glsl_type *const vec4_array_type =
-      glsl_type::get_array_instance(state->symbols, glsl_type::vec4_type,
-				    state->Const.MaxDrawBuffers);
 
-   ir_variable *const fd =
-      add_variable("gl_FragData", ir_var_out, FRAG_RESULT_DATA0,
-		   vec4_array_type, instructions, state->symbols);
+   /* gl_FragData is only available in the fragment shader.
+    */
+   if (target == fragment_shader) {
+      const glsl_type *const vec4_array_type =
+	 glsl_type::get_array_instance(state->symbols, glsl_type::vec4_type,
+				       state->Const.MaxDrawBuffers);
 
-   if (warn)
-      fd->warn_extension = "GL_ARB_draw_buffers";
+      ir_variable *const fd =
+	 add_variable("gl_FragData", ir_var_out, FRAG_RESULT_DATA0,
+		      vec4_array_type, instructions, state->symbols);
+
+      if (warn)
+	 fd->warn_extension = "GL_ARB_draw_buffers";
+   }
 }
 
 
