@@ -43,10 +43,7 @@
   - Care must be taken to handle both the 1.10 rules and the 1.20+ rules.  In
     1.10, built-in functions cannot be constant expressions.
 
-- Detect non-void functions that lack a return statement
-
-- Detect return statements with a type not matching the funciton's
-  return type.
+- Detect code paths in non-void functions that don't reach a return statement
 
 - Handle over-riding built-in functions
   - Is the overload per-compilation unit or per-linked shader?
