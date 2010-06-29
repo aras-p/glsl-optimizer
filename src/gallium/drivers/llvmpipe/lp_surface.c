@@ -146,13 +146,15 @@ lp_resource_copy(struct pipe_context *pipe,
                                               subdst.level,
                                               LP_TEX_LAYOUT_LINEAR);
 
-      util_copy_rect(dst_linear_ptr, format,
-                     llvmpipe_resource_stride(&dst_tex->base, subdst.level),
-                     dstx, dsty,
-                     width, height,
-                     src_linear_ptr,
-                     llvmpipe_resource_stride(&src_tex->base, subsrc.level),
-                     srcx, srcy);
+      if (dst_linear_ptr && src_linear_ptr) {
+         util_copy_rect(dst_linear_ptr, format,
+                        llvmpipe_resource_stride(&dst_tex->base, subdst.level),
+                        dstx, dsty,
+                        width, height,
+                        src_linear_ptr,
+                        llvmpipe_resource_stride(&src_tex->base, subsrc.level),
+                        srcx, srcy);
+      }
    }
 }
 

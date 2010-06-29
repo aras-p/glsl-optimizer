@@ -172,7 +172,8 @@ lp_rast_get_color_block_pointer(struct lp_rasterizer_task *task,
    assert((y % TILE_VECTOR_HEIGHT) == 0);
 
    color = task->color_tiles[buf];
-   assert(color);
+   if (!color)
+      return NULL;
 
    px = x % TILE_SIZE;
    py = y % TILE_SIZE;
