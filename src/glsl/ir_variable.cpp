@@ -30,6 +30,9 @@
 #define Elements(x) (sizeof(x)/sizeof(*(x)))
 #endif
 
+static void generate_ARB_draw_buffers_fs_variables(exec_list *,
+    struct _mesa_glsl_parse_state *, bool);
+
 static ir_variable *
 add_variable(const char *name, enum ir_variable_mode mode, int slot,
 	     const glsl_type *type, exec_list *instructions,
@@ -246,6 +249,8 @@ generate_110_fs_variables(exec_list *instructions,
 
    add_variable("gl_TexCoord", ir_var_in, FRAG_ATTRIB_TEX0, vec4_array_type,
 		instructions, state->symbols);
+
+   generate_ARB_draw_buffers_fs_variables(instructions, state, false);
 }
 
 
@@ -272,7 +277,6 @@ generate_120_fs_variables(exec_list *instructions,
 			  struct _mesa_glsl_parse_state *state)
 {
    generate_110_fs_variables(instructions, state);
-   generate_ARB_draw_buffers_fs_variables(instructions, state, false);
 }
 
 static void
@@ -308,17 +312,6 @@ initialize_fs_variables(exec_list *instructions,
    case 130:
       generate_130_fs_variables(instructions, state);
       break;
-   }
-
-
-   /* Since GL_ARB_draw_buffers is included in GLSL 1.20 and later, we
-    * can basically ignore any extension settings for it.
-    */
-   if (state->language_version < 120) {
-      if (state->ARB_draw_buffers_enable) {
-	 generate_ARB_draw_buffers_fs_variables(instructions, state,
-						state->ARB_draw_buffers_warn);
-      }
    }
 }
 
