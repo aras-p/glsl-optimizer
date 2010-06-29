@@ -418,6 +418,7 @@ public:
 class ast_fully_specified_type : public ast_node {
 public:
    virtual void print(void) const;
+   bool has_qualifiers() const;
 
    ast_type_qualifier qualifier;
    ast_type_specifier *specifier;

@@ -110,3 +110,13 @@ ast_type_specifier::ast_type_specifier(int specifier)
 
    type_name = names[specifier];
 }
+
+bool
+ast_fully_specified_type::has_qualifiers() const
+{
+   return qualifier.invariant || qualifier.constant || qualifier.attribute
+			      || qualifier.varying || qualifier.in
+			      || qualifier.out || qualifier.centroid
+			      || qualifier.uniform || qualifier.smooth
+			      || qualifier.flat || qualifier.noperspective;
+}
