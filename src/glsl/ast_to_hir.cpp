@@ -1984,6 +1984,7 @@ ast_function::hir(exec_list *instructions,
    ir_function_signature *sig = NULL;
    exec_list hir_parameters;
 
+   const char *const name = identifier;
 
    /* Convert the list of function parameters to HIR now so that they can be
     * used below to compare this function's signature with previously seen
@@ -1999,11 +2000,19 @@ ast_function::hir(exec_list *instructions,
 
    assert(return_type != NULL);
 
+   /* From page 56 (page 62 of the PDF) of the GLSL 1.30 spec:
+    * "No qualifier is allowed on the return type of a function."
+    */
+   if (this->return_type->has_qualifiers()) {
+      YYLTYPE loc = this->get_location();
+      _mesa_glsl_error(& loc, state,
+		       "function `%s' return type has qualifiers", name);
+   }
+
    /* Verify that this function's signature either doesn't match a previously
     * seen signature for a function with the same name, or, if a match is found,
     * that the previously seen signature does not have an associated definition.
     */
-   const char *const name = identifier;
    f = state->symbols->get_function(name);
    if (f != NULL) {
       ir_function_signature *sig = f->exact_matching_signature(&hir_parameters);
