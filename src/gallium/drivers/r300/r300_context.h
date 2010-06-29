@@ -564,6 +564,7 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
 
 boolean r300_check_cs(struct r300_context *r300, unsigned size);
 void r300_finish(struct r300_context *r300);
+void r300_flush_cb(void *data);
 
 /* Context initialization. */
 struct draw_stage* r300_draw_stage(struct r300_context* r300);

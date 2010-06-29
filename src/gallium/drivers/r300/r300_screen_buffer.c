@@ -178,7 +178,14 @@ r300_buffer_transfer_map( struct pipe_context *pipe,
 	    }
 	}
     }
+
 just_map:
+    /* XXX buffer_map might flush.
+     * We cannot flush here because there is a buffer manager between
+     * the context and winsys, and it does some magic to make the driver
+     * fast. This is a workaround for the case of multiple contexts. */
+    rws->set_flush_cb(rws, r300_flush_cb, pipe);
+
     map = rws->buffer_map(rws, rbuf->buf, transfer->usage);
 
     if (map == NULL)

@@ -121,7 +121,7 @@ static void r300_destroy_context(struct pipe_context* context)
     FREE(r300);
 }
 
-static void r300_flush_cb(void *data)
+void r300_flush_cb(void *data)
 {
     struct r300_context* const cs_context_copy = data;
 
