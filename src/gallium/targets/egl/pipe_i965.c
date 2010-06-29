@@ -27,7 +27,7 @@ create_screen(int fd)
    return screen;
 }
 
-DRM_DRIVER_DESCRIPTOR("i915", "i965", create_screen)
+DRM_DRIVER_DESCRIPTOR("i965", "i965", create_screen)
 
 /* A poor man's --whole-archive for EGL drivers */
 void *_eglMain(void *);

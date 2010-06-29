@@ -40,7 +40,7 @@ ALL_INCLUDES = $(common_INCLUDES) $(x11_INCLUDES) $(kms_INCLUDES) $(fbdev_INCLUD
 ALL_SOURCES = $(common_SOURCES) $(x11_SOURCES) $(kms_SOURCES) $(fbdev_SOURCES)
 
 EGL_OBJECTS = $(common_OBJECTS)
-EGL_CPPFLAGS = $(common_INCLUDES)
+EGL_CPPFLAGS = $(common_INCLUDES) -DST_MODULE_PREFIX=\"st_\"
 
 # add backends
 ifneq ($(findstring x11, $(EGL_PLATFORMS)),)

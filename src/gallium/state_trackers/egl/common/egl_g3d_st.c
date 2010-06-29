@@ -133,24 +133,24 @@ egl_g3d_init_st_apis(struct st_api *stapis[ST_API_COUNT])
       case ST_API_OPENGL:
          skip_checks[api] = "glColor4d";
          symbols[api] = ST_CREATE_OPENGL_SYMBOL;
-         filenames[api][count++] = "api_GL" ST_MODULE_SUFFIX;
+         filenames[api][count++] = ST_MODULE_PREFIX "GL" ST_MODULE_SUFFIX;
          break;
       case ST_API_OPENGL_ES1:
          skip_checks[api] = "glColor4x";
          symbols[api] = ST_CREATE_OPENGL_ES1_SYMBOL;
-         filenames[api][count++] = "api_GLESv1_CM" ST_MODULE_SUFFIX;
-         filenames[api][count++] = "api_GL" ST_MODULE_SUFFIX;
+         filenames[api][count++] = ST_MODULE_PREFIX "GLESv1_CM" ST_MODULE_SUFFIX;
+         filenames[api][count++] = ST_MODULE_PREFIX "GL" ST_MODULE_SUFFIX;
          break;
       case ST_API_OPENGL_ES2:
          skip_checks[api] = "glShaderBinary";
          symbols[api] = ST_CREATE_OPENGL_ES2_SYMBOL;
-         filenames[api][count++] = "api_GLESv2" ST_MODULE_SUFFIX;
-         filenames[api][count++] = "api_GL" ST_MODULE_SUFFIX;
+         filenames[api][count++] = ST_MODULE_PREFIX "GLESv2" ST_MODULE_SUFFIX;
+         filenames[api][count++] = ST_MODULE_PREFIX "GL" ST_MODULE_SUFFIX;
          break;
       case ST_API_OPENVG:
          skip_checks[api] = "vgClear";
          symbols[api] = ST_CREATE_OPENVG_SYMBOL;
-         filenames[api][count++]= "api_OpenVG" ST_MODULE_SUFFIX;
+         filenames[api][count++]= ST_MODULE_PREFIX "OpenVG" ST_MODULE_SUFFIX;
          break;
       default:
          assert(!"Unknown API Type\n");

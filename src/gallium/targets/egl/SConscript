@@ -20,14 +20,27 @@ if env['platform'] == 'windows':
 
     env['no_import_lib'] = 1
 
+    drivers = [softpipe]
+    if env['llvm']:
+        drivers += [llvmpipe]
+    drivers += [identity, trace, rbug]
+
+    egl_gallium_swrast = env.SharedLibrary(
+        target ='egl_gallium_swrast',
+	source = 'pipe_swrast.c',
+        LIBS = st_egl_gdi + ws_gdi + drivers + gallium + egl + env['LIBS'],
+    )
+
+    env.InstallSharedLibrary(egl_gallium_swrast)
+
     api_libs = {
         'OpenVG': vgapi + st_vega,
     }
 
     for name in api_libs.keys():
         api = env.SharedLibrary(
-            target = 'api_' + name,
-            source = ['api_' + name + '.c'],
+            target = 'st_' + name,
+            source = ['st_' + name + '.c'],
             LIBS = api_libs[name] + gallium + env['LIBS'],
         )
         env.InstallSharedLibrary(api)

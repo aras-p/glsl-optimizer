@@ -1292,7 +1292,7 @@ AC_SUBST([VG_LIB_DEPS])
 AC_SUBST([EGL_CLIENT_APIS])
 
 if test "x$HAVE_ST_EGL" = xyes; then
-	GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS egl-apis"
+	GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS egl"
 fi
 
 if test "x$HAVE_ST_XORG" = xyes; then
@@ -1399,17 +1399,14 @@ dnl
 dnl Gallium helper functions
 dnl
 gallium_check_st() {
-    if test "x$HAVE_ST_DRI" = xyes || test "x$HAVE_ST_EGL" = xyes || test "x$HAVE_ST_XORG" = xyes; then
+    if test "x$HAVE_ST_DRI" = xyes || test "x$HAVE_ST_XORG" = xyes; then
          GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS $1"
     fi
     if test "x$HAVE_ST_DRI" = xyes && test "x$2" != x; then
          GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $2"
     fi
-    if test "x$HAVE_ST_EGL" = xyes && test "x$3" != x; then
+    if test "x$HAVE_ST_XORG" = xyes && test "x$3" != x; then
          GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $3"
-    fi
-    if test "x$HAVE_ST_XORG" = xyes && test "x$4" != x; then
-         GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $4"
     fi
 }
 
@@ -1424,7 +1421,7 @@ AC_ARG_ENABLE([gallium-svga],
     [enable_gallium_svga=auto])
 if test "x$enable_gallium_svga" = xyes; then
     GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS svga"
-    gallium_check_st "svga/drm" "dri-vmwgfx" "egl-vmwgfx" "xorg-vmwgfx"
+    gallium_check_st "svga/drm" "dri-vmwgfx" "xorg-vmwgfx"
 elif test "x$enable_gallium_svga" = xauto; then
     GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS svga"
 fi
@@ -1440,7 +1437,7 @@ AC_ARG_ENABLE([gallium-i915],
 if test "x$enable_gallium_i915" = xyes; then
     GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS i915/sw"
     GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS i915"
-    gallium_check_st "i915/drm" "dri-i915" "egl-i915" "xorg-i915"
+    gallium_check_st "i915/drm" "dri-i915" "xorg-i915"
 elif test "x$enable_gallium_i915" = xauto; then
     GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS i915/sw"
     GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS i915"
@@ -1456,7 +1453,7 @@ AC_ARG_ENABLE([gallium-i965],
     [enable_gallium_i965=auto])
 if test "x$enable_gallium_i965" = xyes; then
     GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS i965"
-    gallium_check_st "i965/drm" "dri-i965" "egl-i965" "xorg-i965"
+    gallium_check_st "i965/drm" "dri-i965" "xorg-i965"
 elif test "x$enable_gallium_i965" = xauto; then
     GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS i965"
 fi
@@ -1471,7 +1468,7 @@ AC_ARG_ENABLE([gallium-radeon],
     [enable_gallium_radeon=auto])
 if test "x$enable_gallium_radeon" = xyes; then
     GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS r300"
-    gallium_check_st "radeon/drm" "dri-radeong" "egl-radeon" "xorg-radeon"
+    gallium_check_st "radeon/drm" "dri-radeong" "xorg-radeon"
 elif test "x$enable_gallium_radeon" = xauto; then
     GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS r300"
 fi
@@ -1499,7 +1496,7 @@ AC_ARG_ENABLE([gallium-nouveau],
     [enable_gallium_nouveau=no])
 if test "x$enable_gallium_nouveau" = xyes; then
     GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS nouveau nvfx nv50"
-    gallium_check_st "nouveau/drm" "dri-nouveau" "egl-nouveau" "xorg-nouveau"
+    gallium_check_st "nouveau/drm" "dri-nouveau" "xorg-nouveau"
 fi
 
 dnl
@@ -1513,9 +1510,6 @@ AC_ARG_ENABLE([gallium-swrast],
 if test "x$enable_gallium_swrast" = xyes || test "x$enable_gallium_swrast" = xauto; then
     if test "x$HAVE_ST_DRI" = xyes; then
         GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS dri-swrast"
-    fi
-    if test "x$HAVE_ST_EGL" = xyes; then
-        GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS egl-swrast"
     fi
 fi
 
