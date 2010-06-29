@@ -129,11 +129,8 @@ compile_shader(struct gl_shader *shader)
 
    state->Const.MaxDrawBuffers = 2;
 
-   /* Create a new context for the preprocessor output.  Ultimately, this
-    * should probably be the parser context, but there isn't one yet.
-   */
    const char *source = shader->Source;
-   state->error = preprocess(shader, &source, &state->info_log);
+   state->error = preprocess(state, &source, &state->info_log);
 
    if (!state->error) {
       _mesa_glsl_lexer_ctor(state, source);
