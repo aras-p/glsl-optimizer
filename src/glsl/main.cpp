@@ -123,6 +123,8 @@ compile_shader(struct glsl_shader *shader)
    state->loop_or_switch_nesting = NULL;
    state->ARB_texture_rectangle_enable = true;
 
+   state->Const.MaxDrawBuffers = 2;
+
    /* Create a new context for the preprocessor output.  Ultimately, this
     * should probably be the parser context, but there isn't one yet.
    */

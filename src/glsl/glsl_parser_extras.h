@@ -44,6 +44,15 @@ struct _mesa_glsl_parse_state {
    enum _mesa_glsl_parser_targets target;
 
    /**
+    * Implementation defined limits that affect built-in variables, etc.
+    *
+    * \sa struct gl_constants (in mtypes.h)
+    */
+   struct {
+      unsigned MaxDrawBuffers;
+   } Const;
+
+   /**
     * During AST to IR conversion, pointer to current IR function
     *
     * Will be \c NULL whenever the AST to IR conversion is not inside a

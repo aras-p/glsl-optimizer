@@ -221,20 +221,20 @@ initialize_vs_variables(exec_list *instructions,
 
 static void
 generate_110_fs_variables(exec_list *instructions,
-			  glsl_symbol_table *symtab)
+			  struct _mesa_glsl_parse_state *state)
 {
    for (unsigned i = 0; i < Elements(builtin_core_fs_variables); i++) {
       add_builtin_variable(& builtin_core_fs_variables[i],
-			   instructions, symtab);
+			   instructions, state->symbols);
    }
 
    for (unsigned i = 0
 	   ; i < Elements(builtin_110_deprecated_fs_variables)
 	   ; i++) {
       add_builtin_variable(& builtin_110_deprecated_fs_variables[i],
-			   instructions, symtab);
+			   instructions, state->symbols);
    }
-   generate_110_uniforms(instructions, symtab);
+   generate_110_uniforms(instructions, state->symbols);
 
    /* FINISHME: The size of this array is implementation dependent based on the
     * FINISHME: value of GL_MAX_TEXTURE_COORDS.  Every platform that supports
@@ -242,27 +242,25 @@ generate_110_fs_variables(exec_list *instructions,
     * FINISHME: for now.
     */
    const glsl_type *const vec4_array_type =
-      glsl_type::get_array_instance(symtab, glsl_type::vec4_type, 4);
+      glsl_type::get_array_instance(state->symbols, glsl_type::vec4_type, 4);
 
    add_variable("gl_TexCoord", ir_var_in, FRAG_ATTRIB_TEX0, vec4_array_type,
-		instructions, symtab);
+		instructions, state->symbols);
 }
 
 
 static void
 generate_ARB_draw_buffers_fs_variables(exec_list *instructions,
-				       glsl_symbol_table *symtab, bool warn)
+				       struct _mesa_glsl_parse_state *state,
+				       bool warn)
 {
-   /* FINISHME: The size of this array is implementation dependent based on the
-    * FINISHME: value of GL_MAX_DRAW_BUFFERS.  GL_MAX_DRAW_BUFFERS must be
-    * FINISHME: at least 1, so hard-code 1 for now.
-    */
    const glsl_type *const vec4_array_type =
-      glsl_type::get_array_instance(symtab, glsl_type::vec4_type, 1);
+      glsl_type::get_array_instance(state->symbols, glsl_type::vec4_type,
+				    state->Const.MaxDrawBuffers);
 
    ir_variable *const fd =
       add_variable("gl_FragData", ir_var_out, FRAG_RESULT_DATA0,
-		   vec4_array_type, instructions, symtab);
+		   vec4_array_type, instructions, state->symbols);
 
    if (warn)
       fd->warn_extension = "GL_ARB_draw_buffers";
@@ -271,18 +269,18 @@ generate_ARB_draw_buffers_fs_variables(exec_list *instructions,
 
 static void
 generate_120_fs_variables(exec_list *instructions,
-			  glsl_symbol_table *symtab)
+			  struct _mesa_glsl_parse_state *state)
 {
-   generate_110_fs_variables(instructions, symtab);
-   generate_ARB_draw_buffers_fs_variables(instructions, symtab, false);
+   generate_110_fs_variables(instructions, state);
+   generate_ARB_draw_buffers_fs_variables(instructions, state, false);
 }
 
 static void
 generate_130_fs_variables(exec_list *instructions,
-			  glsl_symbol_table *symtab)
+			  struct _mesa_glsl_parse_state *state)
 {
-   void *ctx = symtab;
-   generate_120_fs_variables(instructions, symtab);
+   void *ctx = state->symbols;
+   generate_120_fs_variables(instructions, state);
 
    /* FINISHME: The size of this array is implementation dependent based on
     * FINISHME: the value of GL_MAX_CLIP_DISTANCES.
@@ -292,7 +290,7 @@ generate_130_fs_variables(exec_list *instructions,
 
    /* FINISHME: gl_ClipDistance needs a real location assigned. */
    add_variable("gl_ClipDistance", ir_var_in, -1, clip_distance_array_type,
-		instructions, symtab);
+		instructions, state->symbols);
 }
 
 static void
@@ -302,13 +300,13 @@ initialize_fs_variables(exec_list *instructions,
 
    switch (state->language_version) {
    case 110:
-      generate_110_fs_variables(instructions, state->symbols);
+      generate_110_fs_variables(instructions, state);
       break;
    case 120:
-      generate_120_fs_variables(instructions, state->symbols);
+      generate_120_fs_variables(instructions, state);
       break;
    case 130:
-      generate_130_fs_variables(instructions, state->symbols);
+      generate_130_fs_variables(instructions, state);
       break;
    }
 
@@ -318,7 +316,7 @@ initialize_fs_variables(exec_list *instructions,
     */
    if (state->language_version < 120) {
       if (state->ARB_draw_buffers_enable) {
-	 generate_ARB_draw_buffers_fs_variables(instructions, state->symbols,
+	 generate_ARB_draw_buffers_fs_variables(instructions, state,
 						state->ARB_draw_buffers_warn);
       }
    }

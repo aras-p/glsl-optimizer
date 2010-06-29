@@ -1526,6 +1526,8 @@ _mesa_get_glsl_shader(GLcontext *ctx, void *mem_ctx, struct gl_shader *sh)
    state->loop_or_switch_nesting = NULL;
    state->ARB_texture_rectangle_enable = true;
 
+   state->Const.MaxDrawBuffers = ctx->Const.MaxDrawBuffers;
+
    /* Create a new context for the preprocessor output.  Ultimately, this
     * should probably be the parser context, but there isn't one yet.
     */
