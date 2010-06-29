@@ -8,14 +8,14 @@
 static struct pipe_screen *
 create_screen(int fd)
 {
-   struct brw_winsys_screen *bws;
+   struct i915_winsys *iws;
    struct pipe_screen *screen;
 
-   bws = i915_drm_winsys_screen_create(fd);
-   if (!bws)
+   iws = i915_drm_winsys_create(fd);
+   if (!iws)
       return NULL;
 
-   screen = i915_screen_create(bws);
+   screen = i915_screen_create(iws);
    if (!screen)
       return NULL;
 
