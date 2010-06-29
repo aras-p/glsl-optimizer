@@ -109,6 +109,12 @@ apply_implicit_conversion(const glsl_type *to, ir_rvalue * &from,
    if (!to->is_float() || !from->type->is_numeric())
       return false;
 
+   /* Convert to a floating point type with the same number of components
+    * as the original type - i.e. int to float, not int to vec4.
+    */
+   to = glsl_type::get_instance(GLSL_TYPE_FLOAT, from->type->vector_elements,
+			        from->type->matrix_columns);
+
    switch (from->type->base_type) {
    case GLSL_TYPE_INT:
       from = new(ctx) ir_expression(ir_unop_i2f, to, from, NULL);
