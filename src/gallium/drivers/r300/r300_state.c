@@ -609,32 +609,42 @@ static void r300_set_stencil_ref(struct pipe_context* pipe,
     r300->dsa_state.dirty = TRUE;
 }
 
+static void r300_tex_set_tiling_flags(struct r300_context *r300,
+                                      struct r300_texture *tex, unsigned level)
+{
+    /* Check if the macrotile flag needs to be changed.
+     * Skip changing the flags otherwise. */
+    if (tex->mip_macrotile[tex->surface_level] != tex->mip_macrotile[level]) {
+        /* Tiling determines how DRM treats the buffer data.
+         * We must flush CS when changing it if the buffer is referenced. */
+        if (r300->rws->is_buffer_referenced(r300->rws, tex->buffer, R300_REF_CS))
+            r300->context.flush(&r300->context, 0, NULL);
+
+        r300->rws->buffer_set_tiling(r300->rws, tex->buffer,
+                tex->pitch[0] * util_format_get_blocksize(tex->b.b.format),
+                tex->microtile,
+                tex->mip_macrotile[level]);
+
+        tex->surface_level = level;
+    }
+}
+
 /* This switcheroo is needed just because of goddamned MACRO_SWITCH. */
 static void r300_fb_set_tiling_flags(struct r300_context *r300,
-                               const struct pipe_framebuffer_state *old_state,
-                               const struct pipe_framebuffer_state *new_state)
+                               const struct pipe_framebuffer_state *state)
 {
-    struct r300_texture *tex;
-    unsigned i, level;
+    unsigned i;
 
     /* Set tiling flags for new surfaces. */
-    for (i = 0; i < new_state->nr_cbufs; i++) {
-        tex = r300_texture(new_state->cbufs[i]->texture);
-        level = new_state->cbufs[i]->level;
-
-        r300->rws->buffer_set_tiling(r300->rws, tex->buffer,
-                tex->pitch[0] * util_format_get_blocksize(tex->b.b.format),
-                tex->microtile,
-                tex->mip_macrotile[level]);
+    for (i = 0; i < state->nr_cbufs; i++) {
+        r300_tex_set_tiling_flags(r300,
+                                  r300_texture(state->cbufs[i]->texture),
+                                  state->cbufs[i]->level);
     }
-    if (new_state->zsbuf) {
-        tex = r300_texture(new_state->zsbuf->texture);
-        level = new_state->zsbuf->level;
-
-        r300->rws->buffer_set_tiling(r300->rws, tex->buffer,
-                tex->pitch[0] * util_format_get_blocksize(tex->b.b.format),
-                tex->microtile,
-                tex->mip_macrotile[level]);
+    if (state->zsbuf) {
+        r300_tex_set_tiling_flags(r300,
+                                  r300_texture(state->zsbuf->texture),
+                                  state->zsbuf->level);
     }
 }
 
@@ -704,7 +714,7 @@ static void
     }
 
     /* The tiling flags are dependent on the surface miplevel, unfortunately. */
-    r300_fb_set_tiling_flags(r300, r300->fb_state.state, state);
+    r300_fb_set_tiling_flags(r300, state);
 
     util_assign_framebuffer_state(r300->fb_state.state, state);
 

@@ -22,8 +22,6 @@ struct radeon_drm_buffer {
 
     boolean flinked;
     uint32_t flink;
-    uint32_t tileflags;
-    uint32_t pitch;
 
     struct radeon_drm_buffer *next, *prev;
 };
@@ -297,9 +295,6 @@ void radeon_drm_bufmgr_get_tiling(struct pb_buffer *_buf,
 
     radeon_bo_get_tiling(buf->bo, &flags, &pitch);
 
-    buf->tileflags = flags;
-    buf->pitch = pitch;
-
     *microtiled = R300_BUFFER_LINEAR;
     *macrotiled = R300_BUFFER_LINEAR;
     if (flags & RADEON_BO_FLAGS_MICRO_TILE)
@@ -326,15 +321,7 @@ void radeon_drm_bufmgr_set_tiling(struct pb_buffer *_buf,
     if (macrotiled == R300_BUFFER_TILED)
         flags |= RADEON_BO_FLAGS_MACRO_TILE;
 
-    if (flags != buf->tileflags || pitch != buf->pitch) {
-        /* Tiling determines how DRM treats the buffer data.
-         * We must flush CS when changing it if the buffer is referenced. */
-        if (radeon_bo_is_referenced_by_cs(buf->bo,  buf->mgr->rws->cs)) {
-	    buf->mgr->rws->flush_cb(buf->mgr->rws->flush_data);
-        }
-
-        radeon_bo_set_tiling(buf->bo, flags, pitch);
-    }
+    radeon_bo_set_tiling(buf->bo, flags, pitch);
 }
 
 static uint32_t gem_domain(enum r300_buffer_domain dom)

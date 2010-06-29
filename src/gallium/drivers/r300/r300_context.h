@@ -365,6 +365,10 @@ struct r300_texture {
 
     /* Buffer tiling */
     enum r300_buffer_tiling microtile, macrotile;
+
+    /* This is the level tiling flags were last time set for.
+     * It's used to prevent redundant tiling-flags changes from happening.*/
+    unsigned surface_level;
 };
 
 struct r300_vertex_element_state {
