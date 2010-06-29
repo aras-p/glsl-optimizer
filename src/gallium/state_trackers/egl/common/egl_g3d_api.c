@@ -35,6 +35,7 @@
 #include "egl_g3d_api.h"
 #include "egl_g3d_image.h"
 #include "egl_g3d_st.h"
+#include "egl_g3d_loader.h"
 #include "native.h"
 
 /**
@@ -44,7 +45,6 @@ static struct st_api *
 egl_g3d_choose_st(_EGLDriver *drv, _EGLContext *ctx)
 {
    struct egl_g3d_driver *gdrv = egl_g3d_driver(drv);
-   struct st_api *stapi;
    EGLint idx = -1;
 
    switch (ctx->ClientAPI) {
@@ -73,8 +73,7 @@ egl_g3d_choose_st(_EGLDriver *drv, _EGLContext *ctx)
       break;
    }
 
-   stapi = (idx >= 0) ? gdrv->stapis[idx] : NULL;
-   return stapi;
+   return (idx >= 0) ? gdrv->loader->get_st_api(idx) : NULL;
 }
 
 static _EGLContext *

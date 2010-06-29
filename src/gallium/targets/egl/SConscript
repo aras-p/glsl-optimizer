@@ -27,7 +27,7 @@ if env['platform'] == 'windows':
 
     egl_gallium_swrast = env.SharedLibrary(
         target ='egl_gallium_swrast',
-	source = 'pipe_swrast.c',
+	source = ['egl.c', 'pipe_swrast.c'],
         LIBS = st_egl_gdi + ws_gdi + drivers + gallium + egl + env['LIBS'],
     )
 

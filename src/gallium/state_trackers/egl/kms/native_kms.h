@@ -32,6 +32,7 @@
 #include "pipe/p_compiler.h"
 #include "util/u_format.h"
 #include "pipe/p_state.h"
+#include "state_tracker/drm_driver.h"
 
 #include "common/native.h"
 #include "common/native_helper.h"

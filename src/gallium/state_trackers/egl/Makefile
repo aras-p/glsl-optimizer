@@ -5,13 +5,11 @@ common_INCLUDES = \
 	-I. \
 	-I$(TOP)/src/gallium/include \
 	-I$(TOP)/src/gallium/auxiliary \
-	-I$(TOP)/src/gallium/drivers \
 	-I$(TOP)/src/egl/main \
 	-I$(TOP)/include
 
 common_SOURCES = $(wildcard common/*.c)
 common_OBJECTS = $(common_SOURCES:.c=.o)
-
 
 x11_INCLUDES = \
 	-I$(TOP)/src/gallium/drivers \
@@ -31,7 +29,7 @@ kms_SOURCES = $(wildcard kms/*.c)
 kms_OBJECTS = $(kms_SOURCES:.c=.o)
 
 
-fbdev_INCLUDES = -I$(TOP)/src/gallium/winsys/sw -I$(TOP)/src/gallium/drivers
+fbdev_INCLUDES = -I$(TOP)/src/gallium/winsys/sw
 fbdev_SOURCES = $(wildcard fbdev/*.c)
 fbdev_OBJECTS = $(fbdev_SOURCES:.c=.o)
 
@@ -40,7 +38,7 @@ ALL_INCLUDES = $(common_INCLUDES) $(x11_INCLUDES) $(kms_INCLUDES) $(fbdev_INCLUD
 ALL_SOURCES = $(common_SOURCES) $(x11_SOURCES) $(kms_SOURCES) $(fbdev_SOURCES)
 
 EGL_OBJECTS = $(common_OBJECTS)
-EGL_CPPFLAGS = $(common_INCLUDES) -DST_MODULE_PREFIX=\"st_\"
+EGL_CPPFLAGS = $(common_INCLUDES)
 
 # add backends
 ifneq ($(findstring x11, $(EGL_PLATFORMS)),)

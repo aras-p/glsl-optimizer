@@ -15,6 +15,9 @@
 TOP = ../../../..
 include $(TOP)/configs/current
 
+ST_PREFIX := st_
+PIPE_PREFIX := egl_gallium_
+
 common_CPPFLAGS := \
 	-I$(TOP)/src/gallium/auxiliary \
 	-I$(TOP)/src/gallium/drivers \
@@ -30,7 +33,8 @@ common_LIBS := \
 # EGL driver
 egl_CPPFLAGS := \
 	-I$(TOP)/src/gallium/state_trackers/egl \
-	-I$(TOP)/src/egl/main
+	-I$(TOP)/src/egl/main \
+	-DST_PREFIX=\"$(ST_PREFIX)\"
 egl_SYS := -lm -ldl -lEGL
 egl_LIBS := \
 	$(TOP)/src/gallium/state_trackers/egl/libegl.a \
@@ -46,6 +50,22 @@ endif
 ifneq ($(findstring fbdev, $(EGL_PLATFORMS)),)
 egl_LIBS += $(TOP)/src/gallium/winsys/sw/fbdev/libfbdev.a
 endif
+
+# EGL_RENDERABLE_TYPE is a compile time attribute
+egl_CPPFLAGS += $(API_DEFINES)
+ifneq ($(filter $(GL_LIB), $(EGL_CLIENT_APIS)),)
+egl_CPPFLAGS += -DFEATURE_GL=1
+endif
+ifneq ($(filter $(GLESv1_CM_LIB), $(EGL_CLIENT_APIS)),)
+egl_CPPFLAGS += -DFEATURE_ES1=1
+endif
+ifneq ($(filter $(GLESv2_LIB), $(EGL_CLIENT_APIS)),)
+egl_CPPFLAGS += -DFEATURE_ES2=1
+endif
+ifneq ($(filter $(VG_LIB), $(EGL_CLIENT_APIS)),)
+egl_CPPFLAGS += -DFEATURE_VG=1
+endif
+egl_CPPFLAGS := $(sort $(egl_CPPFLAGS))
 
 # LLVM
 ifeq ($(MESA_LLVM),1)
@@ -136,10 +156,10 @@ ifneq ($(findstring svga,$(GALLIUM_WINSYS_DIRS)),)
 OUTPUTS += vmwgfx
 endif
 OUTPUTS += swrast
-OUTPUTS := $(addprefix egl_gallium_, $(OUTPUTS))
+OUTPUTS := $(addprefix $(PIPE_PREFIX), $(OUTPUTS))
 
 # state trackers
-OUTPUTS += $(addprefix st_, $(EGL_CLIENT_APIS))
+OUTPUTS += $(addprefix $(ST_PREFIX), $(EGL_CLIENT_APIS))
 
 OUTPUTS := $(addsuffix .so, $(OUTPUTS))
 OUTPUTS := $(addprefix $(OUTPUT_PATH)/, $(OUTPUTS))
@@ -148,7 +168,7 @@ default: $(OUTPUTS)
 
 define mklib-egl
 $(MKLIB) -o $(notdir $@) -noprefix -linker '$(CC)' -ldflags '$(LDFLAGS)' \
-	-install $(OUTPUT_PATH) $(MKLIB_OPTIONS) $< \
+	-install $(OUTPUT_PATH) $(MKLIB_OPTIONS) $< egl.o \
 	-Wl,--start-group $(common_LIBS) $(egl_LIBS) $($(1)_LIBS) -Wl,--end-group \
 	$(common_SYS) $(egl_SYS) $($(1)_SYS)
 endef
@@ -161,36 +181,39 @@ $(MKLIB) -o $(notdir $@) -noprefix -linker '$(CC)' -ldflags '$(LDFLAGS)' \
 endef
 
 # EGL drivers
-$(OUTPUT_PATH)/egl_gallium_i915.so: pipe_i915.o $(egl_LIBS) $(i915_LIBS)
+$(OUTPUT_PATH)/$(PIPE_PREFIX)i915.so: pipe_i915.o egl.o $(egl_LIBS) $(i915_LIBS)
 	$(call mklib-egl,i915)
 
-$(OUTPUT_PATH)/egl_gallium_i965.so: pipe_i965.o $(egl_LIBS) $(i965_LIBS)
+$(OUTPUT_PATH)/$(PIPE_PREFIX)i965.so: pipe_i965.o egl.o $(egl_LIBS) $(i965_LIBS)
 	$(call mklib-egl,i965)
 
-$(OUTPUT_PATH)/egl_gallium_nouveau.so: pipe_nouveau.o $(egl_LIBS) $(nouveau_LIBS)
+$(OUTPUT_PATH)/$(PIPE_PREFIX)nouveau.so: pipe_nouveau.o egl.o $(egl_LIBS) $(nouveau_LIBS)
 	$(call mklib-egl,nouveau)
 
-$(OUTPUT_PATH)/egl_gallium_radeon.so: pipe_radeon.o $(egl_LIBS) $(radeon_LIBS)
+$(OUTPUT_PATH)/$(PIPE_PREFIX)radeon.so: pipe_radeon.o egl.o $(egl_LIBS) $(radeon_LIBS)
 	$(call mklib-egl,radeon)
 
-$(OUTPUT_PATH)/egl_gallium_vmwgfx.so: pipe_vmwgfx.o $(egl_LIBS) $(vmwgfx_LIBS)
+$(OUTPUT_PATH)/$(PIPE_PREFIX)vmwgfx.so: pipe_vmwgfx.o egl.o $(egl_LIBS) $(vmwgfx_LIBS)
 	$(call mklib-egl,vmwgfx)
 
-$(OUTPUT_PATH)/egl_gallium_swrast.so: pipe_swrast.o $(egl_LIBS) $(swrast_LIBS)
+$(OUTPUT_PATH)/$(PIPE_PREFIX)swrast.so: pipe_swrast.o egl.o $(egl_LIBS) $(swrast_LIBS)
 	$(call mklib-egl,swrast)
 
 # state trackers
-$(OUTPUT_PATH)/st_$(GL_LIB).so: st_GL.o $(GL_LIBS)
+$(OUTPUT_PATH)/$(ST_PREFIX)$(GL_LIB).so: st_GL.o $(GL_LIBS)
 	$(call mklib,GL)
 
-$(OUTPUT_PATH)/st_$(GLESv1_CM_LIB).so: st_GLESv1_CM.o $(GLESv1_CM_LIBS)
+$(OUTPUT_PATH)/$(ST_PREFIX)$(GLESv1_CM_LIB).so: st_GLESv1_CM.o $(GLESv1_CM_LIBS)
 	$(call mklib,GLESv1_CM)
 
-$(OUTPUT_PATH)/st_$(GLESv2_LIB).so: st_GLESv2.o $(GLESv2_LIBS)
+$(OUTPUT_PATH)/$(ST_PREFIX)$(GLESv2_LIB).so: st_GLESv2.o $(GLESv2_LIBS)
 	$(call mklib,GLESv2)
 
-$(OUTPUT_PATH)/st_$(VG_LIB).so: st_OpenVG.o $(OpenVG_LIBS)
+$(OUTPUT_PATH)/$(ST_PREFIX)$(VG_LIB).so: st_OpenVG.o $(OpenVG_LIBS)
 	$(call mklib,OpenVG)
+
+egl.o: egl.c
+	$(CC) -c -o $@ $< $(common_CPPFLAGS) $(egl_CPPFLAGS) $(DEFINES) $(CFLAGS)
 
 pipe_%.o: pipe_%.c
 	$(CC) -c -o $@ $< $(common_CPPFLAGS) $($*_CPPFLAGS) $(DEFINES) $(CFLAGS)

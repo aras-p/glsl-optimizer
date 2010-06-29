@@ -23,7 +23,6 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include <string.h>
 #include "util/u_debug.h"
 #include "util/u_memory.h"
 #include "util/u_string.h"
@@ -107,50 +106,38 @@ x11_get_probe_result(struct native_probe *nprobe)
 }
 
 static struct native_display *
-native_create_display(void *dpy, struct native_event_handler *event_handler)
+native_create_display(void *dpy, struct native_event_handler *event_handler,
+                      void *user_data)
 {
    struct native_display *ndpy = NULL;
    boolean force_sw;
 
    force_sw = debug_get_bool_option("EGL_SOFTWARE", FALSE);
-   if (!driver_descriptor.create_screen)
-      force_sw = TRUE;
-
    if (!force_sw) {
-      ndpy = x11_create_dri2_display((Display *) dpy, event_handler);
+      ndpy = x11_create_dri2_display((Display *) dpy,
+            event_handler, user_data);
    }
 
    if (!ndpy) {
       EGLint level = (force_sw) ? _EGL_INFO : _EGL_WARNING;
 
       _eglLog(level, "use software fallback");
-      ndpy = x11_create_ximage_display((Display *) dpy, event_handler);
+      ndpy = x11_create_ximage_display((Display *) dpy,
+            event_handler, user_data);
    }
 
    return ndpy;
 }
 
-static void
-x11_init_platform(struct native_platform *nplat)
-{
-   static char x11_name[32];
-
-   if (nplat->name)
-      return;
-
-   util_snprintf(x11_name, sizeof(x11_name), "X11/%s", driver_descriptor.name);
-
-   nplat->name = x11_name;
-   nplat->create_probe = x11_create_probe;
-   nplat->get_probe_result = x11_get_probe_result;
-   nplat->create_display = native_create_display;
-}
-
-static struct native_platform x11_platform;
+static const struct native_platform x11_platform = {
+   "X11", /* name */
+   x11_create_probe,
+   x11_get_probe_result,
+   native_create_display
+};
 
 const struct native_platform *
 native_get_x11_platform(void)
 {
-   x11_init_platform(&x11_platform);
    return &x11_platform;
 }

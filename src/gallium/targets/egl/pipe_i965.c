@@ -28,7 +28,3 @@ create_screen(int fd)
 }
 
 DRM_DRIVER_DESCRIPTOR("i965", "i965", create_screen)
-
-/* A poor man's --whole-archive for EGL drivers */
-void *_eglMain(void *);
-void *_eglWholeArchive = (void *) _eglMain;

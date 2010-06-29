@@ -32,6 +32,7 @@
 #include "pipe/p_screen.h"
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
+#include "state_tracker/sw_winsys.h"
 
 #include "native_probe.h"
 #include "native_modeset.h"
@@ -196,6 +197,11 @@ struct native_event_handler {
    void (*invalid_surface)(struct native_display *ndpy,
                            struct native_surface *nsurf,
                            unsigned int seq_num);
+
+   struct pipe_screen *(*new_drm_screen)(struct native_display *ndpy,
+                                         const char *name, int fd);
+   struct pipe_screen *(*new_sw_screen)(struct native_display *ndpy,
+                                        struct sw_winsys *ws);
 };
 
 /**
@@ -225,7 +231,8 @@ struct native_platform {
    enum native_probe_result (*get_probe_result)(struct native_probe *nprobe);
 
    struct native_display *(*create_display)(void *dpy,
-                                            struct native_event_handler *handler);
+                                            struct native_event_handler *handler,
+                                            void *user_data);
 };
 
 const struct native_platform *

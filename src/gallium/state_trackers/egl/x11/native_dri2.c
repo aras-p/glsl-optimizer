@@ -692,7 +692,6 @@ static boolean
 dri2_display_init_screen(struct native_display *ndpy)
 {
    struct dri2_display *dri2dpy = dri2_display(ndpy);
-   const char *driver = driver_descriptor.name;
    int fd;
 
    if (!x11_screen_support(dri2dpy->xscr, X11_SCREEN_EXTENSION_DRI2) ||
@@ -703,19 +702,15 @@ dri2_display_init_screen(struct native_display *ndpy)
 
    dri2dpy->dri_driver = x11_screen_probe_dri2(dri2dpy->xscr,
          &dri2dpy->dri_major, &dri2dpy->dri_minor);
-   if (!dri2dpy->dri_driver || !driver ||
-       strcmp(dri2dpy->dri_driver, driver) != 0) {
-      _eglLog(_EGL_WARNING, "Driver mismatch: %s != %s",
-            dri2dpy->dri_driver, driver);
-      return FALSE;
-   }
 
    fd = x11_screen_enable_dri2(dri2dpy->xscr,
          dri2_display_invalidate_buffers, &dri2dpy->base);
    if (fd < 0)
       return FALSE;
 
-   dri2dpy->base.screen = driver_descriptor.create_screen(fd);
+   dri2dpy->base.screen =
+      dri2dpy->event_handler->new_drm_screen(&dri2dpy->base,
+            dri2dpy->dri_driver, fd);
    if (!dri2dpy->base.screen) {
       _eglLog(_EGL_WARNING, "failed to create DRM screen");
       return FALSE;
@@ -739,7 +734,8 @@ dri2_display_hash_table_compare(void *key1, void *key2)
 
 struct native_display *
 x11_create_dri2_display(Display *dpy,
-                        struct native_event_handler *event_handler)
+                        struct native_event_handler *event_handler,
+                        void *user_data)
 {
    struct dri2_display *dri2dpy;
 
@@ -748,6 +744,7 @@ x11_create_dri2_display(Display *dpy,
       return NULL;
 
    dri2dpy->event_handler = event_handler;
+   dri2dpy->base.user_data = user_data;
 
    dri2dpy->dpy = dpy;
    if (!dri2dpy->dpy) {
