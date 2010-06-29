@@ -2151,9 +2151,17 @@ ast_jump_statement::hir(exec_list *instructions,
 	    opt_return_value->hir(instructions, state);
 	 assert(ret != NULL);
 
-	 /* FINISHME: Make sure the type of the return value matches the return
-	  * FINISHME: type of the enclosing function.
-	  */
+	 /* Implicit conversions are not allowed for return values. */
+	 if (state->current_function->return_type != ret->type) {
+	    YYLTYPE loc = this->get_location();
+
+	    _mesa_glsl_error(& loc, state,
+			     "`return' with wrong type %s, in function `%s' "
+			     "returning %s",
+			     ret->type->name,
+			     state->current_function->function_name(),
+			     state->current_function->return_type->name);
+	 }
 
 	 inst = new(ctx) ir_return(ret);
       } else {
