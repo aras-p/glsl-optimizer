@@ -2097,6 +2097,7 @@ ast_function_definition::hir(exec_list *instructions,
 
    assert(state->current_function == NULL);
    state->current_function = signature;
+   state->found_return = false;
 
    /* Duplicate parameters declared in the prototype as concrete variables.
     * Add these to the symbol table.
@@ -2127,6 +2128,14 @@ ast_function_definition::hir(exec_list *instructions,
 
    assert(state->current_function == signature);
    state->current_function = NULL;
+
+   if (!signature->return_type->is_void() && !state->found_return) {
+      YYLTYPE loc = this->get_location();
+      _mesa_glsl_error(& loc, state, "function `%s' has non-void return type "
+		       "%s, but no return statement",
+		       signature->function_name(),
+		       signature->return_type->name);
+   }
 
    /* Function definitions do not have r-values.
     */
@@ -2186,6 +2195,7 @@ ast_jump_statement::hir(exec_list *instructions,
 	 inst = new(ctx) ir_return;
       }
 
+      state->found_return = true;
       instructions->push_tail(inst);
       break;
    }

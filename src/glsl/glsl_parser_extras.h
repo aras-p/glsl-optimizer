@@ -51,6 +51,9 @@ struct _mesa_glsl_parse_state {
     */
    class ir_function_signature *current_function;
 
+   /** Have we found a return statement in this function? */
+   bool found_return;
+
    /** Was there an error during compilation? */
    bool error;
 
