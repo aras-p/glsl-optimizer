@@ -628,6 +628,14 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
    case ir_unop_cos:
       ir_to_mesa_emit_scalar_op1(ir, OPCODE_COS, result_dst, op[0]);
       break;
+
+   case ir_unop_dFdx:
+      ir_to_mesa_emit_op1(ir, OPCODE_DDX, result_dst, op[0]);
+      break;
+   case ir_unop_dFdy:
+      ir_to_mesa_emit_op1(ir, OPCODE_DDY, result_dst, op[0]);
+      break;
+
    case ir_binop_add:
       ir_to_mesa_emit_op2(ir, OPCODE_ADD, result_dst, op[0], op[1]);
       break;
