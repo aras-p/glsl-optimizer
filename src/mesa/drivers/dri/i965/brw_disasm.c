@@ -836,10 +836,12 @@ int brw_disasm (FILE *file, struct brw_instruction *inst, int gen)
     if (inst->header.opcode == BRW_OPCODE_SEND) {
 	int target;
 
-	if (gen >= 5)
-	   target = inst->bits2.send_gen5.sfid;
+	if (gen >= 6)
+	    target = inst->header.destreg__conditionalmod;
+	else if (gen == 5)
+	    target = inst->bits2.send_gen5.sfid;
 	else
-	   target = inst->bits3.generic.msg_target;
+	    target = inst->bits3.generic.msg_target;
 
 	newline (file);
 	pad (file, 16);
@@ -869,12 +871,22 @@ int brw_disasm (FILE *file, struct brw_instruction *inst, int gen)
 	    string (file, ")");
 	    break;
 	case BRW_MESSAGE_TARGET_DATAPORT_WRITE:
-	    format (file, " (%d, %d, %d, %d)",
-		    inst->bits3.dp_write.binding_table_index,
-		    (inst->bits3.dp_write.pixel_scoreboard_clear << 3) |
-		    inst->bits3.dp_write.msg_control,
-		    inst->bits3.dp_write.msg_type,
-		    inst->bits3.dp_write.send_commit_msg);
+	    if (gen >= 6) {
+		format (file, " (%d, %d, %d, %d, %d, %d)",
+			inst->bits3.dp_render_cache.binding_table_index,
+			inst->bits3.dp_render_cache.msg_control,
+			inst->bits3.dp_render_cache.msg_type,
+			inst->bits3.dp_render_cache.send_commit_msg,
+			inst->bits3.dp_render_cache.msg_length,
+			inst->bits3.dp_render_cache.response_length);
+	    } else {
+		format (file, " (%d, %d, %d, %d)",
+			inst->bits3.dp_write.binding_table_index,
+			(inst->bits3.dp_write.pixel_scoreboard_clear << 3) |
+			inst->bits3.dp_write.msg_control,
+			inst->bits3.dp_write.msg_type,
+			inst->bits3.dp_write.send_commit_msg);
+	    }
 	    break;
 	case BRW_MESSAGE_TARGET_URB:
 	    if (gen >= 5) {
