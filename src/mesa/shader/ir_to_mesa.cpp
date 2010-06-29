@@ -589,15 +589,21 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
 	       src_column.index++;
 	    }
 	 } else {
-	    ir_to_mesa_dst_reg dst_chan = result_dst;
 	    ir_to_mesa_src_reg src_column = op[0];
 	    ir_to_mesa_src_reg src_chan = op[1];
-	    for (int i = 0; i < ir->operands[0]->type->matrix_columns; i++) {
-	       dst_chan.writemask = (1 << i);
-	       src_chan.swizzle = MAKE_SWIZZLE4(i, i, i, i);
-	       ir_to_mesa_emit_op2(ir, OPCODE_MUL,
-				   dst_chan, src_column, src_chan);
-	       src_column.index++;
+	    assert(!ir->operands[1]->type->is_matrix() ||
+		    !"FINISHME: matrix * matrix");
+	     for (int i = 0; i < ir->operands[0]->type->matrix_columns; i++) {
+		src_chan.swizzle = MAKE_SWIZZLE4(i, i, i, i);
+		if (i == 0) {
+		   ir_to_mesa_emit_op2(ir, OPCODE_MUL,
+				       result_dst, src_column, src_chan);
+		} else {
+		   ir_to_mesa_emit_op3(ir, OPCODE_MAD,
+				       result_dst, src_column, src_chan,
+				       result_src);
+		}
+		src_column.index++;
 	    }
 	 }
       } else {
