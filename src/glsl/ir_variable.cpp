@@ -42,6 +42,9 @@ add_variable(const char *name, enum ir_variable_mode mode, int slot,
 
    var->mode = mode;
    switch (var->mode) {
+   case ir_var_auto:
+      var->read_only = true;
+      break;
    case ir_var_in:
       var->shader_in = true;
       var->read_only = true;
@@ -259,6 +262,18 @@ generate_ARB_draw_buffers_fs_variables(exec_list *instructions,
 				       struct _mesa_glsl_parse_state *state,
 				       bool warn)
 {
+   assert(state->Const.MaxDrawBuffers >= 1);
+
+   ir_variable *const mdb =
+      add_variable("gl_MaxDrawBuffers", ir_var_auto, -1,
+		   glsl_type::int_type, instructions, state->symbols);
+
+   if (warn)
+      mdb->warn_extension = "GL_ARB_draw_buffers";
+
+   mdb->constant_value = new(mdb)
+      ir_constant(int(state->Const.MaxDrawBuffers));
+
    const glsl_type *const vec4_array_type =
       glsl_type::get_array_instance(state->symbols, glsl_type::vec4_type,
 				    state->Const.MaxDrawBuffers);
