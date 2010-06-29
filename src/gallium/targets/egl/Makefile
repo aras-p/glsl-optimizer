@@ -20,6 +20,7 @@ ST_PREFIX := st_
 PIPE_PREFIX := pipe_
 
 common_CPPFLAGS := \
+	-I$(TOP)/include \
 	-I$(TOP)/src/gallium/auxiliary \
 	-I$(TOP)/src/gallium/drivers \
 	-I$(TOP)/src/gallium/include \
@@ -36,7 +37,7 @@ egl_CPPFLAGS := \
 	-I$(TOP)/src/gallium/state_trackers/egl \
 	-I$(TOP)/src/egl/main \
 	-DPIPE_PREFIX=\"$(PIPE_PREFIX)\" -DST_PREFIX=\"$(ST_PREFIX)\"
-egl_SYS := -lm -ldl -lEGL
+egl_SYS := -lm -ldl -L$(TOP)/$(LIB_DIR) -lEGL
 egl_LIBS := $(TOP)/src/gallium/state_trackers/egl/libegl.a
 
 ifneq ($(findstring x11, $(EGL_PLATFORMS)),)
