@@ -193,7 +193,7 @@ struct draw_llvm {
    LLVMTypeRef vb_ptr_type;
 };
 
-static struct llvm_vertex_shader *
+static INLINE struct llvm_vertex_shader *
 llvm_vertex_shader(struct draw_vertex_shader *vs)
 {
    return (struct llvm_vertex_shader *)vs;
