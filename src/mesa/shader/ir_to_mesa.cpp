@@ -80,6 +80,8 @@ public:
    /** Pointer to the ir source this tree came from for debugging */
    ir_instruction *ir;
    GLboolean cond_update;
+   int sampler; /**< sampler index */
+   int tex_target; /**< One of TEXTURE_*_INDEX */
 };
 
 class temp_entry : public exec_node {
@@ -172,6 +174,12 @@ public:
 				   ir_to_mesa_dst_reg dst,
 				   ir_to_mesa_src_reg src0,
 				   ir_to_mesa_src_reg src1);
+
+   int *sampler_map;
+   int sampler_map_size;
+
+   void map_sampler(int location, int sampler);
+   int get_sampler_number(int location);
 
    void *mem_ctx;
 };
@@ -291,6 +299,25 @@ ir_to_mesa_visitor::ir_to_mesa_emit_op1(ir_instruction *ir,
 {
    return ir_to_mesa_emit_op3(ir, op, dst,
 			      src0, ir_to_mesa_undef, ir_to_mesa_undef);
+}
+
+void
+ir_to_mesa_visitor::map_sampler(int location, int sampler)
+{
+   if (this->sampler_map_size <= location) {
+      this->sampler_map = talloc_realloc(this->mem_ctx, this->sampler_map,
+					 int, location + 1);
+      this->sampler_map_size = location + 1;
+   }
+
+   this->sampler_map[location] = sampler;
+}
+
+int
+ir_to_mesa_visitor::get_sampler_number(int location)
+{
+   assert(location < this->sampler_map_size);
+   return this->sampler_map[location];
 }
 
 inline ir_to_mesa_dst_reg
@@ -901,6 +928,21 @@ ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
 	    break;
 
 	 /* FINISHME: Fix up uniform name for arrays and things */
+	 if (ir->var->type->base_type == GLSL_TYPE_SAMPLER) {
+	    /* FINISHME: we whack the location of the var here, which
+	     * is probably not expected.  But we need to communicate
+	     * mesa's sampler number to the tex instruction.
+	     */
+	    int sampler = _mesa_add_sampler(this->prog->Parameters,
+					    ir->var->name,
+					    ir->var->type->gl_type);
+	    map_sampler(ir->var->location, sampler);
+
+	    entry = new(mem_ctx) temp_entry(ir->var, PROGRAM_SAMPLER, sampler);
+	    this->variable_storage.push_tail(entry);
+	    break;
+	 }
+
 	 assert(ir->var->type->gl_type != 0 &&
 		ir->var->type->gl_type != GL_INVALID_ENUM);
 	 loc = _mesa_add_uniform(this->prog->Parameters,
@@ -908,6 +950,7 @@ ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
 				 type_size(ir->var->type) * 4,
 				 ir->var->type->gl_type,
 				 NULL);
+
 	 /* Always mark the uniform used at this point.  If it isn't
 	  * used, dead code elimination should have nuked the decl already.
 	  */
@@ -1176,9 +1219,77 @@ ir_to_mesa_visitor::visit(ir_call *ir)
 void
 ir_to_mesa_visitor::visit(ir_texture *ir)
 {
-   assert(0);
+   ir_to_mesa_src_reg result_src, coord;
+   ir_to_mesa_dst_reg result_dst, lod_info;
+   ir_to_mesa_instruction *inst = NULL;
 
    ir->coordinate->accept(this);
+   coord = this->result;
+
+   /* Storage for our result.  Ideally for an assignment we'd be using
+    * the actual storage for the result here, instead.
+    */
+   result_src = get_temp(glsl_type::vec4_type);
+   result_dst = ir_to_mesa_dst_reg_from_src(result_src);
+
+   switch (ir->op) {
+   case ir_tex:
+      inst = ir_to_mesa_emit_op1(ir, OPCODE_TEX, result_dst, coord);
+      break;
+   case ir_txb:
+      /* Mesa IR stores bias in the last channel of the coords. */
+      lod_info = ir_to_mesa_dst_reg_from_src(coord);
+      lod_info.writemask = WRITEMASK_W;
+      ir->lod_info.bias->accept(this);
+      ir_to_mesa_emit_op1(ir, OPCODE_MOV, lod_info, this->result);
+
+      inst = ir_to_mesa_emit_op1(ir, OPCODE_TXB, result_dst, coord);
+      break;
+   case ir_txl:
+      /* Mesa IR stores lod in the last channel of the coords. */
+      lod_info = ir_to_mesa_dst_reg_from_src(coord);
+      lod_info.writemask = WRITEMASK_W;
+      ir->lod_info.lod->accept(this);
+      ir_to_mesa_emit_op1(ir, OPCODE_MOV, lod_info, this->result);
+
+      inst = ir_to_mesa_emit_op1(ir, OPCODE_TXL, result_dst, coord);
+      break;
+   case ir_txd:
+   case ir_txf:
+      assert(!"GLSL 1.30 features unsupported");
+      break;
+   }
+
+   ir_dereference_variable *sampler = ir->sampler->as_dereference_variable();
+   assert(sampler); /* FINISHME: sampler arrays */
+   /* generate the mapping, remove when we generate storage at
+    * declaration time
+    */
+   sampler->accept(this);
+
+   inst->sampler = get_sampler_number(sampler->var->location);
+
+   switch (sampler->type->sampler_dimensionality) {
+   case GLSL_SAMPLER_DIM_1D:
+      inst->tex_target = TEXTURE_1D_INDEX;
+      break;
+   case GLSL_SAMPLER_DIM_2D:
+      inst->tex_target = TEXTURE_2D_INDEX;
+      break;
+   case GLSL_SAMPLER_DIM_3D:
+      inst->tex_target = TEXTURE_3D_INDEX;
+      break;
+   case GLSL_SAMPLER_DIM_CUBE:
+      inst->tex_target = TEXTURE_CUBE_INDEX;
+      break;
+   default:
+      assert(!"FINISHME: other texture targets");
+   }
+
+   assert(!ir->projector); /* FINISHME */
+   assert(!ir->shadow_comparitor); /* FINISHME */
+
+   this->result = result_src;
 }
 
 void
@@ -1245,6 +1356,8 @@ ir_to_mesa_visitor::ir_to_mesa_visitor()
 {
    result.file = PROGRAM_UNDEFINED;
    next_temp = 1;
+   sampler_map = NULL;
+   sampler_map_size = 0;
 }
 
 static struct prog_src_register
@@ -1359,9 +1472,11 @@ print_program(struct prog_instruction *mesa_instructions,
 static void
 count_resources(struct gl_program *prog)
 {
+   unsigned int i;
+
    prog->InputsRead = 0;
    prog->OutputsWritten = 0;
-   unsigned int i;
+   prog->SamplersUsed = 0;
 
    for (i = 0; i < prog->NumInstructions; i++) {
       struct prog_instruction *inst = &prog->Instructions[i];
@@ -1390,7 +1505,24 @@ count_resources(struct gl_program *prog)
 	    break;
 	 }
       }
+
+      /* Instead of just using the uniform's value to map to a
+       * sampler, Mesa first allocates a separate number for the
+       * sampler (_mesa_add_sampler), then we reindex it down to a
+       * small integer (sampler_map[], SamplersUsed), then that gets
+       * mapped to the uniform's value, and we get an actual sampler.
+       */
+      if (_mesa_is_tex_instruction(inst->Opcode)) {
+	 prog->SamplerTargets[inst->TexSrcUnit] =
+	    (gl_texture_index)inst->TexSrcTarget;
+	 prog->SamplersUsed |= 1 << inst->TexSrcUnit;
+	 if (inst->TexShadow) {
+	    prog->ShadowSamplers |= 1 << inst->TexSrcUnit;
+	 }
+      }
    }
+
+   _mesa_update_shader_textures_used(prog);
 }
 
 /* Each stage has some uniforms in its Parameters list.  The Uniforms
@@ -1474,6 +1606,8 @@ get_mesa_program(GLcontext *ctx, void *mem_ctx, struct glsl_shader *shader)
       mesa_inst->SrcReg[0] = mesa_src_reg_from_ir_src_reg(inst->src_reg[0]);
       mesa_inst->SrcReg[1] = mesa_src_reg_from_ir_src_reg(inst->src_reg[1]);
       mesa_inst->SrcReg[2] = mesa_src_reg_from_ir_src_reg(inst->src_reg[2]);
+      mesa_inst->TexSrcUnit = inst->sampler;
+      mesa_inst->TexSrcTarget = inst->tex_target;
       mesa_instruction_annotation[i] = inst->ir;
 
       mesa_inst++;

@@ -73,6 +73,7 @@ public:
    virtual class ir_function *          as_function()         { return NULL; }
    virtual class ir_dereference *       as_dereference()      { return NULL; }
    virtual class ir_dereference_array *	as_dereference_array() { return NULL; }
+   virtual class ir_dereference_variable *as_dereference_variable() { return NULL; }
    virtual class ir_rvalue *            as_rvalue()           { return NULL; }
    virtual class ir_loop *              as_loop()             { return NULL; }
    virtual class ir_assignment *        as_assignment()       { return NULL; }
@@ -986,6 +987,11 @@ public:
    ir_dereference_variable(ir_variable *var);
 
    virtual ir_instruction *clone(struct hash_table *) const;
+
+   virtual ir_dereference_variable *as_dereference_variable()
+   {
+      return this;
+   }
 
    /**
     * Get the variable that is ultimately referenced by an r-value
