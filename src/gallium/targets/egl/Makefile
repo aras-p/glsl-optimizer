@@ -141,19 +141,19 @@ OpenVG_LIBS := $(TOP)/src/gallium/state_trackers/vega/libvega.a
 OUTPUT_PATH := $(TOP)/$(LIB_DIR)/egl
 
 # determine the outputs
-ifneq ($(findstring i915,$(GALLIUM_WINSYS_DIRS)),)
+ifneq ($(findstring i915/drm,$(GALLIUM_WINSYS_DIRS)),)
 OUTPUTS += i915
 endif
-ifneq ($(findstring i965,$(GALLIUM_WINSYS_DIRS)),)
+ifneq ($(findstring i965/drm,$(GALLIUM_WINSYS_DIRS)),)
 OUTPUTS += i965
 endif
-ifneq ($(findstring nouveau,$(GALLIUM_WINSYS_DIRS)),)
+ifneq ($(findstring nouveau/drm,$(GALLIUM_WINSYS_DIRS)),)
 OUTPUTS += nouveau
 endif
-ifneq ($(findstring r300,$(GALLIUM_WINSYS_DIRS)),)
+ifneq ($(findstring radeon/drm,$(GALLIUM_WINSYS_DIRS)),)
 OUTPUTS += radeon
 endif
-ifneq ($(findstring svga,$(GALLIUM_WINSYS_DIRS)),)
+ifneq ($(findstring svga/drm,$(GALLIUM_WINSYS_DIRS)),)
 OUTPUTS += vmwgfx
 endif
 OUTPUTS += swrast
