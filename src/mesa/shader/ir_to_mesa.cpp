@@ -817,23 +817,23 @@ ir_to_mesa_visitor::visit(ir_swizzle *ir)
       if (i < ir->type->vector_elements) {
 	 switch (i) {
 	 case 0:
-	    swizzle[i] = ir->mask.x;
+	    swizzle[i] = GET_SWZ(src_reg.swizzle, ir->mask.x);
 	    break;
 	 case 1:
-	    swizzle[i] = ir->mask.y;
+	    swizzle[i] = GET_SWZ(src_reg.swizzle, ir->mask.y);
 	    break;
 	 case 2:
-	    swizzle[i] = ir->mask.z;
+	    swizzle[i] = GET_SWZ(src_reg.swizzle, ir->mask.z);
 	    break;
 	 case 3:
-	    swizzle[i] = ir->mask.w;
+	    swizzle[i] = GET_SWZ(src_reg.swizzle, ir->mask.w);
 	    break;
 	 }
       } else {
 	 /* If the type is smaller than a vec4, replicate the last
 	  * channel out.
 	  */
-	 swizzle[i] = ir->type->vector_elements - 1;
+	 swizzle[i] = swizzle[ir->type->vector_elements - 1];
       }
    }
 
