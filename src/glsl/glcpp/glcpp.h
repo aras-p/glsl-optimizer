@@ -158,8 +158,10 @@ struct glcpp_parser {
 	int error;
 };
 
+struct gl_extensions;
+
 glcpp_parser_t *
-glcpp_parser_create (void);
+glcpp_parser_create (const struct gl_extensions *extensions);
 
 int
 glcpp_parser_parse (glcpp_parser_t *parser);
@@ -168,7 +170,8 @@ void
 glcpp_parser_destroy (glcpp_parser_t *parser);
 
 int
-preprocess(void *talloc_ctx, const char **shader, char **info_log);
+preprocess(void *talloc_ctx, const char **shader, char **info_log,
+	   const struct gl_extensions *extensions);
 
 /* Functions for writing to the info log */
 

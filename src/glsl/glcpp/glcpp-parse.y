@@ -28,6 +28,7 @@
 #include <inttypes.h>
 
 #include "glcpp.h"
+#include "main/mtypes.h"
 
 #define glcpp_print(stream, str) stream = talloc_strdup_append(stream, str)
 #define glcpp_printf(stream, fmt, args...) \
@@ -894,7 +895,7 @@ yyerror (YYLTYPE *locp, glcpp_parser_t *parser, const char *error)
 }
 
 glcpp_parser_t *
-glcpp_parser_create (void)
+glcpp_parser_create (const struct gl_extensions *extensions)
 {
 	glcpp_parser_t *parser;
 	token_t *tok;
@@ -931,6 +932,13 @@ glcpp_parser_create (void)
 	list = _token_list_create(parser);
 	_token_list_append(list, tok);
 	_define_object_macro(parser, NULL, "GL_ARB_texture_rectangle", list);
+
+	if ((extensions != NULL) && extensions->EXT_texture_array) {
+		list = _token_list_create(parser);
+		_token_list_append(list, tok);
+		_define_object_macro(parser, NULL,
+				     "GL_EXT_texture_array", list);
+	}
 
 	talloc_unlink(parser, tok);
 

@@ -109,6 +109,7 @@ void
 compile_shader(struct gl_shader *shader)
 {
    struct _mesa_glsl_parse_state *state;
+   struct gl_extensions ext;
 
    state = talloc_zero(talloc_parent(shader), struct _mesa_glsl_parse_state);
 
@@ -127,11 +128,12 @@ compile_shader(struct gl_shader *shader)
    state->loop_or_switch_nesting = NULL;
    state->ARB_texture_rectangle_enable = true;
 
+   memset(&ext, 0, sizeof(ext));
    state->Const.MaxDrawBuffers = 2;
    state->Const.MaxTextureCoords = 4;
 
    const char *source = shader->Source;
-   state->error = preprocess(state, &source, &state->info_log);
+   state->error = preprocess(state, &source, &state->info_log, &ext);
 
    if (!state->error) {
       _mesa_glsl_lexer_ctor(state, source);

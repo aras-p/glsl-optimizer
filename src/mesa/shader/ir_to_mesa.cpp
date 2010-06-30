@@ -1713,7 +1713,8 @@ _mesa_glsl_compile_shader(GLcontext *ctx, struct gl_shader *shader)
    state->Const.MaxTextureCoords = ctx->Const.MaxTextureCoordUnits;
 
    const char *source = shader->Source;
-   state->error = preprocess(state, &source, &state->info_log);
+   state->error = preprocess(state, &source, &state->info_log,
+			     &ctx->Extensions);
 
    if (!state->error) {
      _mesa_glsl_lexer_ctor(state, source);
