@@ -473,6 +473,7 @@ ir_to_mesa_visitor::get_temp(const glsl_type *type)
       swizzle[i] = type->vector_elements - 1;
    src_reg.swizzle = MAKE_SWIZZLE4(swizzle[0], swizzle[1],
 				   swizzle[2], swizzle[3]);
+   src_reg.negate = 0;
 
    return src_reg;
 }
@@ -1399,6 +1400,7 @@ mesa_src_reg_from_ir_src_reg(ir_to_mesa_src_reg reg)
    mesa_reg.Index = reg.index;
    mesa_reg.Swizzle = reg.swizzle;
    mesa_reg.RelAddr = reg.reladdr;
+   mesa_reg.Negate = reg.negate;
 
    return mesa_reg;
 }
