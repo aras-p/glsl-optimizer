@@ -733,7 +733,7 @@ ir_variable::ir_variable(const struct glsl_type *type, const char *name)
      mode(ir_var_auto), interpolation(ir_var_smooth), array_lvalue(false)
 {
    this->type = type;
-   this->name = name;
+   this->name = talloc_strdup(this, name);
    this->location = -1;
    this->warn_extension = NULL;
    this->constant_value = NULL;
@@ -820,9 +820,8 @@ ir_function_signature::replace_parameters(exec_list *new_params)
 
 
 ir_function::ir_function(const char *name)
-   : name(name)
 {
-   /* empty */
+   this->name = talloc_strdup(this, name);
 }
 
 
