@@ -388,7 +388,7 @@ destroy_renderbuffer(struct st_renderbuffer *strb)
 {
    pipe_surface_reference(&strb->surface, NULL);
    pipe_resource_reference(&strb->texture, NULL);
-   free(strb);
+   FREE(strb);
 }
 
 /**
@@ -451,7 +451,7 @@ vg_context_bind_framebuffers(struct st_context_iface *stctxi,
           stfb->strb->format != stdrawi->visual->color_format) {
          destroy_renderbuffer(stfb->strb);
          destroy_renderbuffer(stfb->dsrb);
-         free(stfb);
+         FREE(stfb);
 
          ctx->draw_buffer = NULL;
       }
@@ -471,14 +471,14 @@ vg_context_bind_framebuffers(struct st_context_iface *stctxi,
 
       stfb->strb = create_renderbuffer(stdrawi->visual->color_format);
       if (!stfb->strb) {
-         free(stfb);
+         FREE(stfb);
          return FALSE;
       }
 
       stfb->dsrb = create_renderbuffer(ctx->ds_format);
       if (!stfb->dsrb) {
-         free(stfb->strb);
-         free(stfb);
+         FREE(stfb->strb);
+         FREE(stfb);
          return FALSE;
       }
 

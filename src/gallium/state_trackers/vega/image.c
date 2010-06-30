@@ -355,7 +355,7 @@ void image_destroy(struct vg_image *img)
    }
 
    pipe_sampler_view_reference(&img->sampler_view, NULL);
-   free(img);
+   FREE(img);
 }
 
 void image_clear(struct vg_image *img,

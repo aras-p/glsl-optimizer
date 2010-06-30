@@ -221,7 +221,7 @@ void vg_destroy_context(struct vg_context *ctx)
 
    api_destroy_dispatch(ctx->dispatch);
 
-   free(ctx);
+   FREE(ctx);
 }
 
 void vg_init_object(struct vg_object *obj, struct vg_context *ctx, enum vg_object_type type)

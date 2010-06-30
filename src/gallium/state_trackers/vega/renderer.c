@@ -203,7 +203,7 @@ void renderer_destroy(struct renderer *ctx)
       ctx->fs = NULL;
    }
 #endif
-   free(ctx);
+   FREE(ctx);
 }
 
 void renderer_draw_quad(struct renderer *r,

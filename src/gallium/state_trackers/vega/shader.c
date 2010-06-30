@@ -68,7 +68,7 @@ struct shader * shader_create(struct vg_context *ctx)
 
 void shader_destroy(struct shader *shader)
 {
-   free(shader);
+   FREE(shader);
 }
 
 void shader_set_masking(struct shader *shader, VGboolean set)
