@@ -29,37 +29,5 @@ extern "C" {
 #include "shader/prog_uniform.h"
 }
 
-/**
- * Based on gl_shader_program in Mesa's mtypes.h.
- */
-struct glsl_program {
-   GLenum Type;  /**< Always GL_SHADER_PROGRAM (internal token) */
-   GLuint Name;  /**< aka handle or ID */
-   GLint RefCount;  /**< Reference count */
-   GLboolean DeletePending;
-
-   GLuint NumShaders;          /**< number of attached shaders */
-   struct gl_shader **Shaders; /**< List of attached the shaders */
-
-   /**
-    * Per-stage shaders resulting from the first stage of linking.
-    */
-   /*@{*/
-   unsigned _NumLinkedShaders;
-   struct gl_shader **_LinkedShaders;
-   /*@}*/
-
-   /** User-defined attribute bindings (glBindAttribLocation) */
-   struct gl_program_parameter_list *Attributes;
-
-   /* post-link info: */
-   struct gl_uniform_list *Uniforms;
-   struct gl_program_parameter_list *Varying;
-   GLboolean LinkStatus;   /**< GL_LINK_STATUS */
-   GLboolean Validated;
-   GLboolean _Used;        /**< Ever used for drawing? */
-   GLchar *InfoLog;
-};
-
 extern void
-link_shaders(struct glsl_program *prog);
+link_shaders(struct gl_shader_program *prog);

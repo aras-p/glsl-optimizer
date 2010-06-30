@@ -116,7 +116,7 @@ private:
 
 
 void
-linker_error_printf(glsl_program *prog, const char *fmt, ...)
+linker_error_printf(gl_shader_program *prog, const char *fmt, ...)
 {
    va_list ap;
 
@@ -186,7 +186,7 @@ count_attribute_slots(const glsl_type *t)
  * \param shader  Vertex shader executable to be verified
  */
 bool
-validate_vertex_shader_executable(struct glsl_program *prog,
+validate_vertex_shader_executable(struct gl_shader_program *prog,
 				  struct gl_shader *shader)
 {
    if (shader == NULL)
@@ -215,7 +215,7 @@ validate_vertex_shader_executable(struct glsl_program *prog,
  * \param shader  Fragment shader executable to be verified
  */
 bool
-validate_fragment_shader_executable(struct glsl_program *prog,
+validate_fragment_shader_executable(struct gl_shader_program *prog,
 				    struct gl_shader *shader)
 {
    if (shader == NULL)
@@ -252,7 +252,7 @@ validate_fragment_shader_executable(struct glsl_program *prog,
  * Perform validation of uniforms used across multiple shader stages
  */
 bool
-cross_validate_uniforms(struct glsl_program *prog)
+cross_validate_uniforms(struct gl_shader_program *prog)
 {
    /* Examine all of the uniforms in all of the shaders and cross validate
     * them.
@@ -308,7 +308,7 @@ cross_validate_uniforms(struct glsl_program *prog)
  * Validate that outputs from one stage match inputs of another
  */
 bool
-cross_validate_outputs_to_inputs(struct glsl_program *prog,
+cross_validate_outputs_to_inputs(struct gl_shader_program *prog,
 				 gl_shader *producer, gl_shader *consumer)
 {
    glsl_symbol_table parameters;
@@ -412,7 +412,7 @@ struct uniform_node {
 };
 
 void
-assign_uniform_locations(struct glsl_program *prog)
+assign_uniform_locations(struct gl_shader_program *prog)
 {
    /* */
    exec_list uniforms;
@@ -533,7 +533,7 @@ find_available_slots(unsigned used_mask, unsigned needed_count)
 
 
 bool
-assign_attribute_locations(glsl_program *prog, unsigned max_attribute_index)
+assign_attribute_locations(gl_shader_program *prog, unsigned max_attribute_index)
 {
    /* Mark invalid attribute locations as being used.
     */
@@ -767,7 +767,7 @@ assign_varying_locations(gl_shader *producer, gl_shader *consumer)
 
 
 void
-link_shaders(struct glsl_program *prog)
+link_shaders(struct gl_shader_program *prog)
 {
    prog->LinkStatus = false;
    prog->Validated = false;

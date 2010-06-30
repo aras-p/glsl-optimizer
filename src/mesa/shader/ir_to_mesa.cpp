@@ -1709,48 +1709,49 @@ _mesa_glsl_compile_shader(GLcontext *ctx, struct gl_shader *shader)
 void
 _mesa_glsl_link_shader(GLcontext *ctx, struct gl_shader_program *prog)
 {
-   struct glsl_program *whole_program;
    unsigned int i;
+
    _mesa_clear_shader_program_data(ctx, prog);
 
-   whole_program = talloc_zero(NULL, struct glsl_program);
-   whole_program->LinkStatus = GL_TRUE;
-   whole_program->NumShaders = prog->NumShaders;
-   whole_program->Shaders = talloc_array(whole_program, struct gl_shader *,
-					 prog->NumShaders);
+   prog->LinkStatus = GL_TRUE;
 
    for (i = 0; i < prog->NumShaders; i++) {
-      whole_program->Shaders[i] = prog->Shaders[i];
-      if (!whole_program->Shaders[i]->CompileStatus) {
-	 whole_program->InfoLog =
-	    talloc_asprintf_append(whole_program->InfoLog,
+      if (!prog->Shaders[i]->CompileStatus) {
+	 prog->InfoLog =
+	    talloc_asprintf_append(prog->InfoLog,
 				   "linking with uncompiled shader");
-	 whole_program->LinkStatus = GL_FALSE;
+	 prog->LinkStatus = GL_FALSE;
       }
    }
 
-   prog->Uniforms = _mesa_new_uniform_list();
    prog->Varying = _mesa_new_parameter_list();
    _mesa_reference_vertprog(ctx, &prog->VertexProgram, NULL);
    _mesa_reference_fragprog(ctx, &prog->FragmentProgram, NULL);
 
-   if (whole_program->LinkStatus)
-      link_shaders(whole_program);
+   if (prog->LinkStatus) {
+      link_shaders(prog);
 
-   prog->LinkStatus = whole_program->LinkStatus;
+      /* We don't use the linker's uniforms list, and cook up our own at
+       * generate time.
+       */
+      free(prog->Uniforms);
+      prog->Uniforms = _mesa_new_uniform_list();
+   }
+
+   prog->LinkStatus = prog->LinkStatus;
 
    /* FINISHME: This should use the linker-generated code */
    if (prog->LinkStatus) {
       for (i = 0; i < prog->NumShaders; i++) {
 	 struct gl_program *linked_prog;
 
-	 linked_prog = get_mesa_program(ctx, whole_program,
-					whole_program->Shaders[i]);
+	 linked_prog = get_mesa_program(ctx, prog,
+					prog->Shaders[i]);
 	 count_resources(linked_prog);
 
 	 link_uniforms_to_shared_uniform_list(prog->Uniforms, linked_prog);
 
-	 switch (whole_program->Shaders[i]->Type) {
+	 switch (prog->Shaders[i]->Type) {
 	 case GL_VERTEX_SHADER:
 	    _mesa_reference_vertprog(ctx, &prog->VertexProgram,
 				     (struct gl_vertex_program *)linked_prog);
@@ -1766,8 +1767,6 @@ _mesa_glsl_link_shader(GLcontext *ctx, struct gl_shader_program *prog)
 	 }
       }
    }
-
-   talloc_free(whole_program);
 }
 
 } /* extern "C" */

@@ -53,7 +53,7 @@ static struct gl_shader_program *
 _mesa_new_shader_program(GLcontext *ctx, GLuint name)
 {
    struct gl_shader_program *shProg;
-   shProg = CALLOC_STRUCT(gl_shader_program);
+   shProg = talloc_zero(NULL, struct gl_shader_program);
    if (shProg) {
       shProg->Type = GL_SHADER_PROGRAM_MESA;
       shProg->Name = name;
@@ -117,7 +117,7 @@ _mesa_free_shader_program_data(GLcontext *ctx,
    }
 
    if (shProg->InfoLog) {
-      free(shProg->InfoLog);
+      talloc_free(shProg->InfoLog);
       shProg->InfoLog = NULL;
    }
 
@@ -139,7 +139,7 @@ _mesa_free_shader_program(GLcontext *ctx, struct gl_shader_program *shProg)
 {
    _mesa_free_shader_program_data(ctx, shProg);
 
-   free(shProg);
+   talloc_free(shProg);
 }
 
 

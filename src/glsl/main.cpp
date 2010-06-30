@@ -206,9 +206,9 @@ main(int argc, char **argv)
    if (argc <= optind)
       usage_fail(argv[0]);
 
-   struct glsl_program *whole_program;
+   struct gl_shader_program *whole_program;
 
-   whole_program = talloc_zero (NULL, struct glsl_program);
+   whole_program = talloc_zero (NULL, struct gl_shader_program);
    assert(whole_program != NULL);
 
    for (/* empty */; argc > optind; optind++) {

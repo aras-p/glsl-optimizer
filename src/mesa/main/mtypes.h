@@ -2005,6 +2005,9 @@ struct gl_shader_program
    GLboolean Validated;
    GLboolean _Used;        /**< Ever used for drawing? */
    GLchar *InfoLog;
+
+   GLuint _NumLinkedShaders;
+   struct gl_shader **_LinkedShaders;
 };   
 
 
