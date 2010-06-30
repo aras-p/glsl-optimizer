@@ -242,42 +242,72 @@ validate_fragment_shader_executable(struct gl_shader_program *prog,
 
 
 /**
- * Perform validation of uniforms used across multiple shader stages
+ * Generate a string describing the mode of a variable
+ */
+static const char *
+mode_string(const ir_variable *var)
+{
+   switch (var->mode) {
+   case ir_var_auto:
+      return (var->read_only) ? "global constant" : "global variable";
+
+   case ir_var_uniform: return "uniform";
+   case ir_var_in:      return "shader input";
+   case ir_var_out:     return "shader output";
+   case ir_var_inout:   return "shader inout";
+   default:
+      assert(!"Should not get here.");
+      return "invalid variable";
+   }
+}
+
+
+/**
+ * Perform validation of global variables used across multiple shaders
  */
 bool
-cross_validate_uniforms(struct gl_shader_program *prog)
+cross_validate_globals(struct gl_shader_program *prog,
+		       struct gl_shader **shader_list,
+		       unsigned num_shaders,
+		       bool uniforms_only)
 {
    /* Examine all of the uniforms in all of the shaders and cross validate
     * them.
     */
-   glsl_symbol_table uniforms;
-   for (unsigned i = 0; i < prog->_NumLinkedShaders; i++) {
-      foreach_list(node, prog->_LinkedShaders[i]->ir) {
+   glsl_symbol_table variables;
+   for (unsigned i = 0; i < num_shaders; i++) {
+      foreach_list(node, shader_list[i]->ir) {
 	 ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
-	 if ((var == NULL) || (var->mode != ir_var_uniform))
+	 if (var == NULL)
 	    continue;
 
-	 /* If a uniform with this name has already been seen, verify that the
-	  * new instance has the same type.  In addition, if the uniforms have
+	 if (uniforms_only && (var->mode != ir_var_uniform))
+	    continue;
+
+	 /* If a global with this name has already been seen, verify that the
+	  * new instance has the same type.  In addition, if the globals have
 	  * initializers, the values of the initializers must be the same.
 	  */
-	 ir_variable *const existing = uniforms.get_variable(var->name);
+	 ir_variable *const existing = variables.get_variable(var->name);
 	 if (existing != NULL) {
 	    if (var->type != existing->type) {
-	       linker_error_printf(prog, "uniform `%s' declared as type "
+	       linker_error_printf(prog, "%s `%s' declared as type "
 				   "`%s' and type `%s'\n",
+				   mode_string(var),
 				   var->name, var->type->name,
 				   existing->type->name);
 	       return false;
 	    }
 
+	    /* FINISHME: Handle non-constant initializers.
+	     */
 	    if (var->constant_value != NULL) {
 	       if (existing->constant_value != NULL) {
 		  if (!var->constant_value->has_value(existing->constant_value)) {
-		     linker_error_printf(prog, "initializers for uniform "
+		     linker_error_printf(prog, "initializers for %s "
 					 "`%s' have differing values\n",
-					 var->name);
+					 mode_string(var), var->name);
 		     return false;
 		  }
 	       } else
@@ -289,11 +319,22 @@ cross_validate_uniforms(struct gl_shader_program *prog)
 		     (ir_constant *)var->constant_value->clone(NULL);
 	    }
 	 } else
-	    uniforms.add_variable(var->name, var);
+	    variables.add_variable(var->name, var);
       }
    }
 
    return true;
+}
+
+
+/**
+ * Perform validation of uniforms used across multiple shader stages
+ */
+bool
+cross_validate_uniforms(struct gl_shader_program *prog)
+{
+   return cross_validate_globals(prog, prog->_LinkedShaders,
+				 prog->_NumLinkedShaders, true);
 }
 
 
