@@ -786,6 +786,17 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
    case ir_binop_pow:
       ir_to_mesa_emit_scalar_op2(ir, OPCODE_POW, result_dst, op[0], op[1]);
       break;
+
+   case ir_unop_bit_not:
+   case ir_unop_u2f:
+   case ir_binop_lshift:
+   case ir_binop_rshift:
+   case ir_binop_bit_and:
+   case ir_binop_bit_xor:
+   case ir_binop_bit_or:
+      assert(!"GLSL 1.30 features unsupported");
+      break;
+
    default:
       ir_print_visitor v;
       printf("Failed to get tree for expression:\n");
