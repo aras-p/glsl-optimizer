@@ -47,8 +47,12 @@
 #define GLU_TESS_DEFAULT_TOLERANCE 0.0
 #define GLU_TESS_MESH		100112	/* void (*)(GLUmesh *mesh)	    */
 
+#ifndef TRUE
 #define TRUE 1
+#endif
+#ifndef FALSE
 #define FALSE 0
+#endif
 
 /*ARGSUSED*/ static void GLAPIENTRY noBegin( GLenum type ) {}
 /*ARGSUSED*/ static void GLAPIENTRY noEdgeFlag( GLboolean boundaryEdge ) {}

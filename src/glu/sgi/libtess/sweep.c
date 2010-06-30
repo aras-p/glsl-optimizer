@@ -46,8 +46,12 @@
 #include "memalloc.h"
 #include "sweep.h"
 
+#ifndef TRUE
 #define TRUE 1
+#endif
+#ifndef FALSE
 #define FALSE 0
+#endif
 
 #ifdef FOR_TRITE_TEST_PROGRAM
 extern void DebugEvent( GLUtesselator *tess );
