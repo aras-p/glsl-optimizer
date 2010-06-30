@@ -222,7 +222,7 @@ static const struct {
    {"gl_FragCoord", PROGRAM_INPUT, FRAG_ATTRIB_WPOS},
    {"gl_FrontFacing", PROGRAM_INPUT, FRAG_ATTRIB_FACE},
    {"gl_FragColor", PROGRAM_OUTPUT, FRAG_ATTRIB_COL0},
-   {"gl_FragDepth", PROGRAM_UNDEFINED, FRAG_ATTRIB_WPOS}, /* FINISHME: WPOS.z */
+   {"gl_FragDepth", PROGRAM_OUTPUT, FRAG_RESULT_DEPTH},
 
    /* 110_deprecated_fs */
    {"gl_Color", PROGRAM_INPUT, FRAG_ATTRIB_COL0},
