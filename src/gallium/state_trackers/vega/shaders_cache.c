@@ -410,7 +410,7 @@ struct vg_shader * shader_create_from_text(struct pipe_context *pipe,
                                            const char *txt, int num_tokens,
                                            int type)
 {
-   struct vg_shader *shader = (struct vg_shader *)malloc(
+   struct vg_shader *shader = (struct vg_shader *)MALLOC(
       sizeof(struct vg_shader));
    struct tgsi_token *tokens = tokens_from_assembly(txt, num_tokens);
    struct pipe_shader_state state;
