@@ -26,6 +26,7 @@ _eglGrowArray(_EGLArray *array)
    }
 
    array->Elements = elems;
+   array->MaxSize = new_size;
 
    return EGL_TRUE;
 }
