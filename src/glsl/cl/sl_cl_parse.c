@@ -2191,9 +2191,8 @@ _parse_asm_statement(struct parse_context *ctx,
    if (_parse_identifier(ctx, &p)) {
       return -1;
    }
-   if (_parse_asm_arguments(ctx, &p)) {
-      return -1;
-   }
+   /* optional arguments */
+   _parse_asm_arguments(ctx, &p);
    if (_parse_token(ctx, SL_PP_SEMICOLON, &p)) {
       return -1;
    }

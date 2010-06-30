@@ -489,7 +489,6 @@ st_translate_geometry_program(struct st_context *st,
       return;
    }
 
-   assert(0);
    /* which vertex output goes to the first geometry input */
    if (inputsRead & GEOM_BIT_VERTICES)
       vslot = 0;
