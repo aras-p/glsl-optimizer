@@ -1709,6 +1709,7 @@ _mesa_glsl_compile_shader(GLcontext *ctx, struct gl_shader *shader)
    state->loop_or_switch_nesting = NULL;
    state->ARB_texture_rectangle_enable = true;
 
+   state->extensions = &ctx->Extensions;
    state->Const.MaxDrawBuffers = ctx->Const.MaxDrawBuffers;
    state->Const.MaxTextureCoords = ctx->Const.MaxTextureCoordUnits;
 

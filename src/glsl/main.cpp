@@ -129,6 +129,7 @@ compile_shader(struct gl_shader *shader)
    state->ARB_texture_rectangle_enable = true;
 
    memset(&ext, 0, sizeof(ext));
+   state->extensions = &ext;
    state->Const.MaxDrawBuffers = 2;
    state->Const.MaxTextureCoords = 4;
 

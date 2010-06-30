@@ -27,6 +27,7 @@
 
 extern "C" {
 #include <talloc.h>
+#include "main/mtypes.h"
 }
 
 #include "ast.h"
@@ -135,6 +136,11 @@ _mesa_glsl_process_extension(const char *name, YYLTYPE *name_locp,
    } else if (strcmp(name, "GL_ARB_texture_rectangle") == 0) {
       state->ARB_texture_rectangle_enable = (ext_mode != extension_disable);
       state->ARB_texture_rectangle_warn = (ext_mode == extension_warn);
+   } else if (strcmp(name, "GL_EXT_texture_array") == 0) {
+      state->EXT_texture_array_enable = (ext_mode != extension_disable);
+      state->EXT_texture_array_warn = (ext_mode == extension_warn);
+
+      unsupported = !state->extensions->EXT_texture_array;
    } else {
       unsupported = true;
    }

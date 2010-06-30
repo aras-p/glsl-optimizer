@@ -90,6 +90,9 @@ struct _mesa_glsl_parse_state {
    unsigned EXT_texture_array_enable:1;
    unsigned EXT_texture_array_warn:1;
    /*@}*/
+
+   /** Extensions supported by the OpenGL implementation. */
+   const struct gl_extensions *extensions;
 };
 
 typedef struct YYLTYPE {
