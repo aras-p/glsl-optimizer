@@ -287,6 +287,7 @@ ir_function_signature::clone(struct hash_table *ht) const
       new(mem_ctx) ir_function_signature(this->return_type);
 
    copy->is_defined = this->is_defined;
+   copy->is_built_in = this->is_built_in;
 
    /* Clone the parameter list.
     */

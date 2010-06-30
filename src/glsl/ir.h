@@ -324,6 +324,9 @@ public:
    /** Whether or not this function has a body (which may be empty). */
    unsigned is_defined:1;
 
+   /** Whether or not this function signature is a built-in. */
+   unsigned is_built_in:1;
+
    /** Body of instructions in the function. */
    struct exec_list body;
 

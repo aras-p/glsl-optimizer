@@ -291,6 +291,7 @@ read_function_sig(_mesa_glsl_parse_state *st, ir_function *f, s_list *list,
       }
    } else {
       sig = new(ctx) ir_function_signature(return_type);
+      sig->is_built_in = true;
       f->add_signature(sig);
    }
 

@@ -473,8 +473,64 @@ link_intrastage_shaders(struct gl_shader_program *prog,
 			struct gl_shader **shader_list,
 			unsigned num_shaders)
 {
-   (void) prog;
-   assert(num_shaders == 1);
+   /* Check that global variables defined in multiple shaders are consistent.
+    */
+   if (!cross_validate_globals(prog, shader_list, num_shaders, false))
+      return NULL;
+
+   /* Check that there is only a single definition of each function signature
+    * across all shaders.
+    */
+   for (unsigned i = 0; i < (num_shaders - 1); i++) {
+      foreach_list(node, shader_list[i]->ir) {
+	 ir_function *const f = ((ir_instruction *) node)->as_function();
+
+	 if (f == NULL)
+	    continue;
+
+	 for (unsigned j = i + 1; j < num_shaders; j++) {
+	    ir_function *const other =
+	       shader_list[j]->symbols->get_function(f->name);
+
+	    /* If the other shader has no function (and therefore no function
+	     * signatures) with the same name, skip to the next shader.
+	     */
+	    if (other == NULL)
+	       continue;
+
+	    foreach_iter (exec_list_iterator, iter, *f) {
+	       ir_function_signature *sig =
+		  (ir_function_signature *) iter.get();
+
+	       if (!sig->is_defined || sig->is_built_in)
+		  continue;
+
+	       ir_function_signature *other_sig =
+		  other->exact_matching_signature(& sig->parameters);
+
+	       if ((other_sig != NULL) && other_sig->is_defined
+		   && !other_sig->is_built_in) {
+		  linker_error_printf(prog,
+				      "function `%s' is multiply defined",
+				      f->name);
+		  return NULL;
+	       }
+	    }
+	 }
+      }
+   }
+
+   /* Find the shader that defines main, and make a clone of it.
+    *
+    * Starting with the clone, search for undefined references.  If one is
+    * found, find the shader that defines it.  Clone the reference and add
+    * it to the shader.  Repeat until there are no undefined references or
+    * until a reference cannot be resolved.
+    */
+
+
+   /* Resolve initializers for global variables in the linked shader.
+    */
 
    gl_shader *const linked = _mesa_new_shader(NULL, 0, shader_list[0]->Type);
    linked->ir = new(linked) exec_list;
