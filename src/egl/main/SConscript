@@ -21,6 +21,7 @@ if env['platform'] != 'winddk':
 
 	egl_sources = [
 		'eglapi.c',
+		'eglarray.c',
 		'eglconfig.c',
 		'eglconfigutil.c',
 		'eglcontext.c',

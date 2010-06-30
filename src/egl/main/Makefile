@@ -30,6 +30,7 @@ HEADERS = \
 
 SOURCES = \
 	eglapi.c \
+	eglarray.c \
 	eglconfig.c \
 	eglconfigutil.c \
 	eglcontext.c \
