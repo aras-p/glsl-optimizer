@@ -63,15 +63,7 @@ struct lp_scene *
 lp_setup_get_current_scene(struct lp_setup_context *setup)
 {
    if (!setup->scene) {
-
-      /* wait for a free/empty scene
-       */
-      setup->scene = lp_scene_dequeue(setup->empty_scenes, TRUE);
-
-      assert(lp_scene_is_empty(setup->scene));
-
-      lp_scene_begin_binning(setup->scene,
-                             &setup->fb );
+      set_scene_state( setup, SETUP_EMPTY );
    }
    return setup->scene;
 }
@@ -233,22 +225,36 @@ set_scene_state( struct lp_setup_context *setup,
    LP_DBG(DEBUG_SETUP, "%s old %d new %d\n", __FUNCTION__, old_state, new_state);
 
    switch (new_state) {
-   case SETUP_ACTIVE:
-      begin_binning( setup );
+   case SETUP_EMPTY:
+      assert(old_state == SETUP_FLUSHED);
+      assert(setup->scene == NULL);
+
+      /* wait for a free/empty scene
+       */
+      setup->scene = lp_scene_dequeue(setup->empty_scenes, TRUE);
+      assert(lp_scene_is_empty(setup->scene));
+      lp_scene_begin_binning(setup->scene,
+                             &setup->fb );
       break;
 
    case SETUP_CLEARED:
-      if (old_state == SETUP_ACTIVE) {
-         assert(0);
-         return;
-      }
+      assert(old_state == SETUP_EMPTY);
+      assert(setup->scene != NULL);
       break;
-      
+
+   case SETUP_ACTIVE:
+      assert(old_state == SETUP_EMPTY ||
+             old_state == SETUP_CLEARED);
+      assert(setup->scene != NULL);
+      begin_binning( setup );
+      break;
+
    case SETUP_FLUSHED:
       if (old_state == SETUP_CLEARED)
          execute_clears( setup );
       else
          lp_setup_rasterize_scene( setup );
+      assert(setup->scene == NULL);
       break;
 
    default:

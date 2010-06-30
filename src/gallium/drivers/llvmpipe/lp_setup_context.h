@@ -101,9 +101,10 @@ struct lp_setup_context
    } clear;
 
    enum setup_state {
-      SETUP_FLUSHED,
-      SETUP_CLEARED,
-      SETUP_ACTIVE
+      SETUP_FLUSHED,    /**< scene is null */
+      SETUP_EMPTY,      /**< scene exists but has only state changes */
+      SETUP_CLEARED,    /**< scene exists but has only clears */
+      SETUP_ACTIVE      /**< scene exists and has at least one draw/query */
    } state;
    
    struct {
