@@ -591,7 +591,7 @@ _mesa_lookup_parameter_constant(const struct gl_program_parameter_list *list,
              if (vSize == 1) {
                 /* look for v[0] anywhere within float[4] value */
                 GLuint j;
-                for (j = 0; j < 4; j++) {
+                for (j = 0; j < list->Parameters[i].Size; j++) {
                    if (list->ParameterValues[i][j] == v[0]) {
                       /* found it */
                       *posOut = i;
