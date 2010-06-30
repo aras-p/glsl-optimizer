@@ -81,7 +81,6 @@ lp_rast_begin( struct lp_rasterizer *rast,
                                              zsbuf->zslice,
                                              LP_TEX_USAGE_READ_WRITE,
                                              LP_TEX_LAYOUT_NONE);
-      assert(rast->zsbuf.map);
    }
 
    lp_scene_bin_iter_begin( scene );
@@ -188,7 +187,7 @@ lp_rast_tile_begin(struct lp_rasterizer_task *task,
          /* Get actual pointer to the tile data.  Note that depth/stencil
           * data is tiled differently than color data.
           */
-         task->depth_tile = lp_rast_get_depth_block_pointer(rast, x, y);
+         task->depth_tile = lp_rast_get_depth_block_pointer(task, x, y);
 
          assert(task->depth_tile);
       }
@@ -286,7 +285,10 @@ lp_rast_clear_zstencil(struct lp_rasterizer_task *task,
 
    dst = task->depth_tile;
 
-   assert(dst == lp_rast_get_depth_block_pointer(rast, task->x, task->y));
+   if (lp_is_dummy_tile(dst))
+      return;
+
+   assert(dst == lp_rast_get_depth_block_pointer(task, task->x, task->y));
 
    switch (block_size) {
    case 1:
@@ -442,7 +444,7 @@ lp_rast_shade_tile(struct lp_rasterizer_task *task,
                                                        tile_x + x, tile_y + y);
 
          /* depth buffer */
-         depth = lp_rast_get_depth_block_pointer(rast, tile_x + x, tile_y + y);
+         depth = lp_rast_get_depth_block_pointer(task, tile_x + x, tile_y + y);
 
          /* run shader on 4x4 block */
          variant->jit_function[RAST_WHOLE]( &state->jit_context,
@@ -494,7 +496,7 @@ void lp_rast_shade_quads( struct lp_rasterizer_task *task,
    }
 
    /* depth buffer */
-   depth = lp_rast_get_depth_block_pointer(rast, x, y);
+   depth = lp_rast_get_depth_block_pointer(task, x, y);
 
 
    assert(lp_check_alignment(state->jit_context.blend_color, 16));

@@ -31,6 +31,7 @@
 #include "os/os_thread.h"
 #include "util/u_format.h"
 #include "gallivm/lp_bld_debug.h"
+#include "lp_memory.h"
 #include "lp_rast.h"
 #include "lp_scene.h"
 #include "lp_state.h"
@@ -132,18 +133,20 @@ void lp_rast_shade_quads( struct lp_rasterizer_task *task,
  * \param x, y location of 4x4 block in window coords
  */
 static INLINE void *
-lp_rast_get_depth_block_pointer(const struct lp_rasterizer *rast,
+lp_rast_get_depth_block_pointer(struct lp_rasterizer_task *task,
                                 unsigned x, unsigned y)
 {
+   const struct lp_rasterizer *rast = task->rast;
    void *depth;
 
    assert((x % TILE_VECTOR_WIDTH) == 0);
    assert((y % TILE_VECTOR_HEIGHT) == 0);
 
-   assert(rast->zsbuf.map || !rast->curr_scene->fb.zsbuf);
-
-   if (!rast->zsbuf.map)
-      return NULL;
+   if (!rast->zsbuf.map && (task->current_state->variant->key.depth.enabled ||
+                            task->current_state->variant->key.stencil[0].enabled)) {
+      /* out of memory - use dummy tile memory */
+      return lp_get_dummy_tile();
+   }
 
    depth = (rast->zsbuf.map +
             rast->zsbuf.stride * y +
@@ -172,8 +175,10 @@ lp_rast_get_color_block_pointer(struct lp_rasterizer_task *task,
    assert((y % TILE_VECTOR_HEIGHT) == 0);
 
    color = task->color_tiles[buf];
-   if (!color)
-      return NULL;
+   if (!color) {
+      /* out of memory - use dummy tile memory */
+      return lp_get_dummy_tile();
+   }
 
    px = x % TILE_SIZE;
    py = y % TILE_SIZE;
@@ -197,7 +202,7 @@ lp_rast_shade_quads_all( struct lp_rasterizer_task *task,
                          const struct lp_rast_shader_inputs *inputs,
                          unsigned x, unsigned y )
 {
-   struct lp_rasterizer *rast = task->rast;
+   const struct lp_rasterizer *rast = task->rast;
    const struct lp_rast_state *state = task->current_state;
    struct lp_fragment_shader_variant *variant = state->variant;
    uint8_t *color[PIPE_MAX_COLOR_BUFS];
@@ -208,7 +213,7 @@ lp_rast_shade_quads_all( struct lp_rasterizer_task *task,
    for (i = 0; i < rast->state.nr_cbufs; i++)
       color[i] = lp_rast_get_color_block_pointer(task, i, x, y);
 
-   depth = lp_rast_get_depth_block_pointer(rast, x, y);
+   depth = lp_rast_get_depth_block_pointer(task, x, y);
 
    /* run shader on 4x4 block */
    variant->jit_function[RAST_WHOLE]( &state->jit_context,
