@@ -425,6 +425,13 @@ static struct native_event_handler egl_g3d_native_event_handler = {
 };
 
 static void
+egl_g3d_free_config(void *conf)
+{
+   struct egl_g3d_config *gconf = egl_g3d_config((_EGLConfig *) conf);
+   FREE(gconf);
+}
+
+static void
 egl_g3d_free_screen(void *scr)
 {
    struct egl_g3d_screen *gscr = egl_g3d_screen((_EGLScreen *) scr);
@@ -438,15 +445,20 @@ egl_g3d_terminate(_EGLDriver *drv, _EGLDisplay *dpy)
    struct egl_g3d_display *gdpy = egl_g3d_display(dpy);
 
    _eglReleaseDisplayResources(drv, dpy);
-   _eglCleanupDisplay(dpy);
 
    if (gdpy->pipe)
       gdpy->pipe->destroy(gdpy->pipe);
 
+   if (dpy->Configs) {
+      _eglDestroyArray(dpy->Configs, egl_g3d_free_config);
+      dpy->Configs = NULL;
+   }
    if (dpy->Screens) {
       _eglDestroyArray(dpy->Screens, egl_g3d_free_screen);
       dpy->Screens = NULL;
    }
+
+   _eglCleanupDisplay(dpy);
 
    if (gdpy->smapi)
       egl_g3d_destroy_st_manager(gdpy->smapi);
