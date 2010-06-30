@@ -68,6 +68,7 @@ public:
    virtual void visit(ir_constant *);
    virtual void visit(ir_call *);
    virtual void visit(ir_return *);
+   virtual void visit(ir_discard *);
    virtual void visit(ir_if *);
    virtual void visit(ir_loop *);
    virtual void visit(ir_loop_jump *);
@@ -185,6 +186,13 @@ ir_constant_folding_visitor::visit(ir_call *ir)
 
 void
 ir_constant_folding_visitor::visit(ir_return *ir)
+{
+   (void) ir;
+}
+
+
+void
+ir_constant_folding_visitor::visit(ir_discard *ir)
 {
    (void) ir;
 }

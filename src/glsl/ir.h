@@ -793,6 +793,33 @@ private:
    /** Loop containing this break instruction. */
    ir_loop *loop;
 };
+
+/**
+ * IR instruction representing discard statements.
+ */
+class ir_discard : public ir_jump {
+public:
+   ir_discard()
+   {
+      this->condition = NULL;
+   }
+
+   ir_discard(ir_rvalue *cond)
+   {
+      this->condition = cond;
+   }
+
+   virtual ir_instruction *clone(struct hash_table *ht) const;
+
+   virtual void accept(ir_visitor *v)
+   {
+      v->visit(this);
+   }
+
+   virtual ir_visitor_status accept(ir_hierarchical_visitor *);
+
+   ir_rvalue *condition;
+};
 /*@}*/
 
 

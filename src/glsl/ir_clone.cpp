@@ -75,6 +75,18 @@ ir_return::clone(struct hash_table *ht) const
 }
 
 ir_instruction *
+ir_discard::clone(struct hash_table *ht) const
+{
+   void *ctx = talloc_parent(this);
+   ir_rvalue *new_condition = NULL;
+
+   if (this->condition != NULL)
+      new_condition = (ir_rvalue *) this->condition->clone(ht);
+
+   return new(ctx) ir_discard(new_condition);
+}
+
+ir_instruction *
 ir_loop_jump::clone(struct hash_table *ht) const
 {
    void *ctx = talloc_parent(this);

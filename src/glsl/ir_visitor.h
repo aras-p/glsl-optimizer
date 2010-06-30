@@ -57,6 +57,7 @@ public:
    virtual void visit(class ir_constant *) = 0;
    virtual void visit(class ir_call *) = 0;
    virtual void visit(class ir_return *) = 0;
+   virtual void visit(class ir_discard *) = 0;
    virtual void visit(class ir_if *) = 0;
    virtual void visit(class ir_loop *) = 0;
    virtual void visit(class ir_loop_jump *) = 0;

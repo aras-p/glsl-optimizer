@@ -315,6 +315,20 @@ ir_print_visitor::visit(ir_return *ir)
 
 
 void
+ir_print_visitor::visit(ir_discard *ir)
+{
+   printf("(discard ");
+
+   if (ir->condition != NULL) {
+      printf(" ");
+      ir->condition->accept(this);
+   }
+
+   printf(")");
+}
+
+
+void
 ir_print_visitor::visit(ir_if *ir)
 {
    printf("(if ");

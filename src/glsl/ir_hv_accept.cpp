@@ -322,6 +322,23 @@ ir_return::accept(ir_hierarchical_visitor *v)
 
 
 ir_visitor_status
+ir_discard::accept(ir_hierarchical_visitor *v)
+{
+   ir_visitor_status s = v->visit_enter(this);
+   if (s != visit_continue)
+      return (s == visit_continue_with_parent) ? visit_continue : s;
+
+   if (this->condition != NULL) {
+      s = this->condition->accept(v);
+      if (s != visit_continue)
+	 return (s == visit_continue_with_parent) ? visit_continue : s;
+   }
+
+   return v->visit_leave(this);
+}
+
+
+ir_visitor_status
 ir_if::accept(ir_hierarchical_visitor *v)
 {
    ir_visitor_status s = v->visit_enter(this);

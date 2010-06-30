@@ -134,6 +134,7 @@ public:
    virtual void visit(ir_constant *);
    virtual void visit(ir_call *);
    virtual void visit(ir_return *);
+   virtual void visit(ir_discard *);
    virtual void visit(ir_texture *);
    virtual void visit(ir_if *);
    /*@}*/
@@ -1321,6 +1322,13 @@ ir_to_mesa_visitor::visit(ir_return *ir)
    ir->get_value()->accept(this);
 }
 
+void
+ir_to_mesa_visitor::visit(ir_discard *ir)
+{
+   assert(0);
+
+   ir->condition->accept(this);
+}
 
 void
 ir_to_mesa_visitor::visit(ir_if *ir)

@@ -129,6 +129,8 @@ public:
    virtual ir_visitor_status visit_leave(class ir_call *);
    virtual ir_visitor_status visit_enter(class ir_return *);
    virtual ir_visitor_status visit_leave(class ir_return *);
+   virtual ir_visitor_status visit_enter(class ir_discard *);
+   virtual ir_visitor_status visit_leave(class ir_discard *);
    virtual ir_visitor_status visit_enter(class ir_if *);
    virtual ir_visitor_status visit_leave(class ir_if *);
    /*@}*/
