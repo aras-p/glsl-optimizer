@@ -823,8 +823,6 @@ link_shaders(struct gl_shader_program *prog)
       goto done;
 
 
-   prog->_LinkedShaders = (struct gl_shader **)
-      calloc(2, sizeof(struct gl_shader *));
    prog->_NumLinkedShaders = 0;
 
    if (num_vert_shaders > 0) {

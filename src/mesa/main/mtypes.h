@@ -2006,8 +2006,13 @@ struct gl_shader_program
    GLboolean _Used;        /**< Ever used for drawing? */
    GLchar *InfoLog;
 
+   /**
+    * Per-stage shaders resulting from the first stage of linking.
+    */
+   /*@{*/
    GLuint _NumLinkedShaders;
-   struct gl_shader **_LinkedShaders;
+   struct gl_shader *_LinkedShaders[2];
+   /*@}*/
 };   
 
 
