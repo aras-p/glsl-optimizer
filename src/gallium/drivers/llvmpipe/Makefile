@@ -18,6 +18,7 @@ C_SOURCES = \
 	lp_fence.c \
 	lp_flush.c \
 	lp_jit.c \
+	lp_memory.c \
 	lp_perf.c \
 	lp_query.c \
 	lp_rast.c \
