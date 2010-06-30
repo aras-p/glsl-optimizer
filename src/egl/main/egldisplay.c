@@ -179,15 +179,9 @@ _eglReleaseDisplayResources(_EGLDriver *drv, _EGLDisplay *display)
 void
 _eglCleanupDisplay(_EGLDisplay *disp)
 {
-   EGLint i;
-
    if (disp->Configs) {
-      for (i = 0; i < disp->NumConfigs; i++)
-         free(disp->Configs[i]);
-      free(disp->Configs);
+      _eglDestroyArray(disp->Configs, free);
       disp->Configs = NULL;
-      disp->NumConfigs = 0;
-      disp->MaxConfigs = 0;
    }
 
    /* XXX incomplete */

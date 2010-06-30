@@ -773,13 +773,13 @@ egl_g3d_find_pixmap_config(_EGLDisplay *dpy, EGLNativePixmapType pix)
    struct egl_g3d_config *gconf;
    EGLint i;
 
-   for (i = 0; i < dpy->NumConfigs; i++) {
-      gconf = egl_g3d_config(dpy->Configs[i]);
+   for (i = 0; i < dpy->Configs->Size; i++) {
+      gconf = egl_g3d_config((_EGLConfig *) dpy->Configs->Elements[i]);
       if (gdpy->native->is_pixmap_supported(gdpy->native, pix, gconf->native))
          break;
    }
 
-   return (i < dpy->NumConfigs) ? &gconf->base : NULL;
+   return (i < dpy->Configs->Size) ? &gconf->base : NULL;
 }
 
 void

@@ -5,6 +5,7 @@
 #include "egltypedefs.h"
 #include "egldefines.h"
 #include "eglmutex.h"
+#include "eglarray.h"
 
 
 enum _egl_platform_type {
@@ -92,9 +93,7 @@ struct _egl_display
    EGLint NumScreens;
    _EGLScreen **Screens;  /* array [NumScreens] */
 
-   EGLint MaxConfigs;
-   EGLint NumConfigs;
-   _EGLConfig **Configs;  /* array [NumConfigs] of ptr to _EGLConfig */
+   _EGLArray *Configs;
 
    /* lists of resources */
    _EGLResource *ResourceLists[_EGL_NUM_RESOURCES];

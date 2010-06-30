@@ -620,7 +620,7 @@ dri2_add_configs_for_visuals(struct dri2_egl_display *dri2_dpy,
       xcb_depth_next(&d);      
    }
 
-   if (!disp->NumConfigs) {
+   if (!_eglGetArraySize(disp->Configs)) {
       _eglLog(_EGL_WARNING, "DRI2: failed to create any config");
       return EGL_FALSE;
    }

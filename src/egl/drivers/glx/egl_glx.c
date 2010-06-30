@@ -527,7 +527,7 @@ GLX_eglInitialize(_EGLDriver *drv, _EGLDisplay *disp,
    check_quirks(GLX_dpy, DefaultScreen(GLX_dpy->dpy));
 
    create_configs(disp, GLX_dpy, DefaultScreen(GLX_dpy->dpy));
-   if (!disp->NumConfigs) {
+   if (!_eglGetArraySize(disp->Configs)) {
       _eglLog(_EGL_WARNING, "GLX: failed to create any config");
       if (!disp->PlatformDisplay)
          XCloseDisplay(GLX_dpy->dpy);
