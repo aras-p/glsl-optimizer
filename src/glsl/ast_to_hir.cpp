@@ -1851,7 +1851,7 @@ ast_declarator_list::hir(exec_list *instructions,
 			  "const declaration of `%s' must be initialized");
       }
 
-      /* Add the vairable to the symbol table after processing the initializer.
+      /* Add the variable to the symbol table after processing the initializer.
        * This differs from most C-like languages, but it follows the GLSL
        * specification.  From page 28 (page 34 of the PDF) of the GLSL 1.50
        * spec:
@@ -1861,7 +1861,7 @@ ast_declarator_list::hir(exec_list *instructions,
        *     being declared if not."
        */
       const bool added_variable =
-	 state->symbols->add_variable(decl->identifier, var);
+	 state->symbols->add_variable(var->name, var);
       assert(added_variable);
    }
 
