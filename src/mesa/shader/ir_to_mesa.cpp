@@ -1001,6 +1001,15 @@ ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
 	    entry = new(mem_ctx) temp_entry(ir->var,
 					    PROGRAM_INPUT,
 					    ir->var->location);
+
+	    if (this->prog->Target == GL_VERTEX_PROGRAM_ARB &&
+		ir->var->location >= VERT_ATTRIB_GENERIC0) {
+	       _mesa_add_attribute(prog->Attributes,
+				   ir->var->name,
+				   type_size(ir->var->type) * 4,
+				   ir->var->type->gl_type,
+				   ir->var->location);
+	    }
 	 } else {
 	    entry = new(mem_ctx) temp_entry(ir->var,
 					    PROGRAM_OUTPUT,
