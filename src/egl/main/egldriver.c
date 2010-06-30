@@ -425,6 +425,7 @@ _eglPreloadDrivers(void)
 void
 _eglUnloadDrivers(void)
 {
+#if defined(_EGL_OS_UNIX)
    EGLint i;
 
    /* this is called at atexit time */
@@ -447,6 +448,9 @@ _eglUnloadDrivers(void)
    }
 
    _eglGlobal.NumDrivers = 0;
+#elif defined(_EGL_OS_WINDOWS)
+   /* XXX Windows unloads DLLs before atexit */
+#endif
 }
 
 _EGLDriver *
