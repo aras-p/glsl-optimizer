@@ -1008,7 +1008,7 @@ ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
 				   ir->var->name,
 				   type_size(ir->var->type) * 4,
 				   ir->var->type->gl_type,
-				   ir->var->location);
+				   ir->var->location - VERT_ATTRIB_GENERIC0);
 	    }
 	 } else {
 	    entry = new(mem_ctx) temp_entry(ir->var,
