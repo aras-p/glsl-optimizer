@@ -897,6 +897,8 @@ glcpp_parser_t *
 glcpp_parser_create (void)
 {
 	glcpp_parser_t *parser;
+	token_t *tok;
+	token_list_t *list;
 
 	parser = xtalloc (NULL, glcpp_parser_t);
 
@@ -918,6 +920,19 @@ glcpp_parser_create (void)
 	parser->output = talloc_strdup(parser, "");
 	parser->info_log = talloc_strdup(parser, "");
 	parser->error = 0;
+
+	/* Add pre-defined macros. */
+	tok = _token_create_ival (parser, INTEGER, 1);
+
+	list = _token_list_create(parser);
+	_token_list_append(list, tok);
+	_define_object_macro(parser, NULL, "GL_ARB_draw_buffers", list);
+
+	list = _token_list_create(parser);
+	_token_list_append(list, tok);
+	_define_object_macro(parser, NULL, "GL_ARB_texture_rectangle", list);
+
+	talloc_unlink(parser, tok);
 
 	return parser;
 }
@@ -1413,7 +1428,8 @@ _define_object_macro (glcpp_parser_t *parser,
 {
 	macro_t *macro;
 
-	_check_for_reserved_macro_name(parser, loc, identifier);
+	if (loc != NULL)
+		_check_for_reserved_macro_name(parser, loc, identifier);
 
 	macro = xtalloc (parser, macro_t);
 
