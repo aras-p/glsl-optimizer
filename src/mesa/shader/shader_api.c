@@ -44,7 +44,7 @@
 #include "shader/prog_uniform.h"
 #include "shader/shader_api.h"
 #include "shader/uniforms.h"
-
+#include "talloc.h"
 
 /**
  * Allocate a new gl_shader_program object, initialize it.
@@ -253,7 +253,7 @@ _mesa_new_shader(GLcontext *ctx, GLuint name, GLenum type)
 {
    struct gl_shader *shader;
    assert(type == GL_FRAGMENT_SHADER || type == GL_VERTEX_SHADER);
-   shader = CALLOC_STRUCT(gl_shader);
+   shader = talloc_zero(NULL, struct gl_shader);
    if (shader) {
       shader->Type = type;
       shader->Name = name;
@@ -268,10 +268,8 @@ _mesa_free_shader(GLcontext *ctx, struct gl_shader *sh)
 {
    if (sh->Source)
       free((void *) sh->Source);
-   if (sh->InfoLog)
-      free(sh->InfoLog);
    _mesa_reference_program(ctx, &sh->Program, NULL);
-   free(sh);
+   talloc_free(sh);
 }
 
 

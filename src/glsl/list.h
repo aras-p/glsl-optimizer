@@ -272,6 +272,25 @@ struct exec_list {
    struct exec_node *tail_pred;
 
 #ifdef __cplusplus
+   /* Callers of this talloc-based new need not call delete. It's
+    * easier to just talloc_free 'ctx' (or any of its ancestors). */
+   static void* operator new(size_t size, void *ctx)
+   {
+      void *node;
+
+      node = talloc_size(ctx, size);
+      assert(node != NULL);
+
+      return node;
+   }
+
+   /* If the user *does* call delete, that's OK, we will just
+    * talloc_free in that case. */
+   static void operator delete(void *node)
+   {
+      talloc_free(node);
+   }
+
    exec_list()
    {
       make_empty();

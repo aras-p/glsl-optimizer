@@ -1966,6 +1966,9 @@ struct gl_shader
    struct gl_program *Program;  /**< Post-compile assembly code */
    GLchar *InfoLog;
    struct gl_sl_pragmas Pragmas;
+
+   struct exec_list *ir;
+   struct glsl_symbol_table *symbols;
 };
 
 

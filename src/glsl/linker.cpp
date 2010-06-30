@@ -128,10 +128,10 @@ linker_error_printf(glsl_program *prog, const char *fmt, ...)
 
 
 void
-invalidate_variable_locations(glsl_shader *sh, enum ir_variable_mode mode,
+invalidate_variable_locations(gl_shader *sh, enum ir_variable_mode mode,
 			      int generic_base)
 {
-   foreach_list(node, &sh->ir) {
+   foreach_list(node, sh->ir) {
       ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
       if ((var == NULL) || (var->mode != (unsigned) mode))
@@ -187,7 +187,7 @@ count_attribute_slots(const glsl_type *t)
  */
 bool
 validate_vertex_shader_executable(struct glsl_program *prog,
-				  struct glsl_shader *shader)
+				  struct gl_shader *shader)
 {
    if (shader == NULL)
       return true;
@@ -198,7 +198,7 @@ validate_vertex_shader_executable(struct glsl_program *prog,
    }
 
    find_assignment_visitor find("gl_Position");
-   find.run(&shader->ir);
+   find.run(shader->ir);
    if (!find.variable_found()) {
       linker_error_printf(prog,
 			  "vertex shader does not write to `gl_Position'\n");
@@ -216,7 +216,7 @@ validate_vertex_shader_executable(struct glsl_program *prog,
  */
 bool
 validate_fragment_shader_executable(struct glsl_program *prog,
-				    struct glsl_shader *shader)
+				    struct gl_shader *shader)
 {
    if (shader == NULL)
       return true;
@@ -229,8 +229,8 @@ validate_fragment_shader_executable(struct glsl_program *prog,
    find_assignment_visitor frag_color("gl_FragColor");
    find_assignment_visitor frag_data("gl_FragData");
 
-   frag_color.run(&shader->ir);
-   frag_data.run(&shader->ir);
+   frag_color.run(shader->ir);
+   frag_data.run(shader->ir);
 
    if (!frag_color.variable_found() && !frag_data.variable_found()) {
       linker_error_printf(prog, "fragment shader does not write to "
@@ -259,7 +259,7 @@ cross_validate_uniforms(struct glsl_program *prog)
     */
    glsl_symbol_table uniforms;
    for (unsigned i = 0; i < prog->_NumLinkedShaders; i++) {
-      foreach_list(node, &prog->_LinkedShaders[i]->ir) {
+      foreach_list(node, prog->_LinkedShaders[i]->ir) {
 	 ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
 	 if ((var == NULL) || (var->mode != ir_var_uniform))
@@ -309,7 +309,7 @@ cross_validate_uniforms(struct glsl_program *prog)
  */
 bool
 cross_validate_outputs_to_inputs(struct glsl_program *prog,
-				 glsl_shader *producer, glsl_shader *consumer)
+				 gl_shader *producer, gl_shader *consumer)
 {
    glsl_symbol_table parameters;
    /* FINISHME: Figure these out dynamically. */
@@ -318,7 +318,7 @@ cross_validate_outputs_to_inputs(struct glsl_program *prog,
 
    /* Find all shader outputs in the "producer" stage.
     */
-   foreach_list(node, &producer->ir) {
+   foreach_list(node, producer->ir) {
       ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
       /* FINISHME: For geometry shaders, this should also look for inout
@@ -335,7 +335,7 @@ cross_validate_outputs_to_inputs(struct glsl_program *prog,
     * matching outputs already in the symbol table must have the same type and
     * qualifiers.
     */
-   foreach_list(node, &consumer->ir) {
+   foreach_list(node, consumer->ir) {
       ir_variable *const input = ((ir_instruction *) node)->as_variable();
 
       /* FINISHME: For geometry shaders, this should also look for inout
@@ -423,7 +423,7 @@ assign_uniform_locations(struct glsl_program *prog)
    for (unsigned i = 0; i < prog->_NumLinkedShaders; i++) {
       unsigned next_position = 0;
 
-      foreach_list(node, &prog->_LinkedShaders[i]->ir) {
+      foreach_list(node, prog->_LinkedShaders[i]->ir) {
 	 ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
 	 if ((var == NULL) || (var->mode != ir_var_uniform))
@@ -540,7 +540,7 @@ assign_attribute_locations(glsl_program *prog, unsigned max_attribute_index)
    unsigned used_locations = (max_attribute_index >= 32)
       ? ~0 : ~((1 << max_attribute_index) - 1);
 
-   glsl_shader *const sh = prog->_LinkedShaders[0];
+   gl_shader *const sh = prog->_LinkedShaders[0];
    assert(sh->Type == GL_VERTEX_SHADER);
 
    /* Operate in a total of four passes.
@@ -644,7 +644,7 @@ assign_attribute_locations(glsl_program *prog, unsigned max_attribute_index)
 
    unsigned num_attr = 0;
 
-   foreach_list(node, &sh->ir) {
+   foreach_list(node, sh->ir) {
       ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
       if ((var == NULL) || (var->mode != ir_var_in))
@@ -694,7 +694,7 @@ assign_attribute_locations(glsl_program *prog, unsigned max_attribute_index)
 
 
 void
-assign_varying_locations(glsl_shader *producer, glsl_shader *consumer)
+assign_varying_locations(gl_shader *producer, gl_shader *consumer)
 {
    /* FINISHME: Set dynamically when geometry shader support is added. */
    unsigned output_index = VERT_RESULT_VAR0;
@@ -714,7 +714,7 @@ assign_varying_locations(glsl_shader *producer, glsl_shader *consumer)
    invalidate_variable_locations(producer, ir_var_out, VERT_RESULT_VAR0);
    invalidate_variable_locations(consumer, ir_var_in, FRAG_ATTRIB_VAR0);
 
-   foreach_list(node, &producer->ir) {
+   foreach_list(node, producer->ir) {
       ir_variable *const output_var = ((ir_instruction *) node)->as_variable();
 
       if ((output_var == NULL) || (output_var->mode != ir_var_out)
@@ -740,7 +740,7 @@ assign_varying_locations(glsl_shader *producer, glsl_shader *consumer)
       input_index++;
    }
 
-   foreach_list(node, &producer->ir) {
+   foreach_list(node, producer->ir) {
       ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
       if ((var == NULL) || (var->mode != ir_var_out))
@@ -752,7 +752,7 @@ assign_varying_locations(glsl_shader *producer, glsl_shader *consumer)
       var->shader_out = (var->location != -1);
    }
 
-   foreach_list(node, &consumer->ir) {
+   foreach_list(node, consumer->ir) {
       ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
       if ((var == NULL) || (var->mode != ir_var_in))
@@ -780,13 +780,13 @@ link_shaders(struct glsl_program *prog)
 
    /* Separate the shaders into groups based on their type.
     */
-   struct glsl_shader **vert_shader_list;
+   struct gl_shader **vert_shader_list;
    unsigned num_vert_shaders = 0;
-   struct glsl_shader **frag_shader_list;
+   struct gl_shader **frag_shader_list;
    unsigned num_frag_shaders = 0;
 
-   vert_shader_list = (struct glsl_shader **)
-      calloc(2 * prog->NumShaders, sizeof(struct glsl_shader *));
+   vert_shader_list = (struct gl_shader **)
+      calloc(2 * prog->NumShaders, sizeof(struct gl_shader *));
    frag_shader_list =  &vert_shader_list[prog->NumShaders];
 
    for (unsigned i = 0; i < prog->NumShaders; i++) {
@@ -817,8 +817,8 @@ link_shaders(struct glsl_program *prog)
       goto done;
 
 
-   prog->_LinkedShaders = (struct glsl_shader **)
-      calloc(2, sizeof(struct glsl_shader *));
+   prog->_LinkedShaders = (struct gl_shader **)
+      calloc(2, sizeof(struct gl_shader *));
    prog->_NumLinkedShaders = 0;
 
    if (num_vert_shaders > 0) {

@@ -30,24 +30,6 @@ extern "C" {
 }
 
 /**
- * Based on gl_shader in Mesa's mtypes.h.
- */
-struct glsl_shader {
-   GLenum Type;
-   GLuint Name;
-   GLint RefCount;
-   GLboolean DeletePending;
-   GLboolean CompileStatus;
-   const GLchar *Source;  /**< Source code string */
-   size_t SourceLen;
-   GLchar *InfoLog;
-
-   struct exec_list ir;
-   struct glsl_symbol_table *symbols;
-   struct gl_shader *mesa_shader;
-};
-
-/**
  * Based on gl_shader_program in Mesa's mtypes.h.
  */
 struct glsl_program {
@@ -57,14 +39,14 @@ struct glsl_program {
    GLboolean DeletePending;
 
    GLuint NumShaders;          /**< number of attached shaders */
-   struct glsl_shader **Shaders; /**< List of attached the shaders */
+   struct gl_shader **Shaders; /**< List of attached the shaders */
 
    /**
     * Per-stage shaders resulting from the first stage of linking.
     */
    /*@{*/
    unsigned _NumLinkedShaders;
-   struct glsl_shader **_LinkedShaders;
+   struct gl_shader **_LinkedShaders;
    /*@}*/
 
    /** User-defined attribute bindings (glBindAttribLocation) */

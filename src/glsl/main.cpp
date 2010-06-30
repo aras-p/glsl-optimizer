@@ -38,14 +38,13 @@
 
 /* Returned string will have 'ctx' as its talloc owner. */
 static char *
-load_text_file(void *ctx, const char *file_name, size_t *size)
+load_text_file(void *ctx, const char *file_name)
 {
 	char *text = NULL;
 	struct stat st;
 	ssize_t total_read = 0;
 	int fd = open(file_name, O_RDONLY);
 
-	*size = 0;
 	if (fd < 0) {
 		return NULL;
 	}
@@ -70,7 +69,6 @@ load_text_file(void *ctx, const char *file_name, size_t *size)
 			} while (total_read < st.st_size);
 
 			text[total_read] = '\0';
-			*size = total_read;
 		}
 	}
 
@@ -102,7 +100,7 @@ const struct option compiler_opts[] = {
 };
 
 void
-compile_shader(struct glsl_shader *shader)
+compile_shader(struct gl_shader *shader)
 {
    struct _mesa_glsl_parse_state *state;
 
@@ -145,40 +143,40 @@ compile_shader(struct glsl_shader *shader)
       printf("\n\n");
    }
 
-   shader->ir.make_empty();
+   shader->ir = new(shader) exec_list;
    if (!state->error && !state->translation_unit.is_empty())
-      _mesa_ast_to_hir(&shader->ir, state);
+      _mesa_ast_to_hir(shader->ir, state);
 
-   validate_ir_tree(&shader->ir);
+   validate_ir_tree(shader->ir);
 
    /* Print out the unoptimized IR. */
    if (!state->error && dump_hir) {
-      _mesa_print_ir(&shader->ir, state);
+      _mesa_print_ir(shader->ir, state);
    }
 
    /* Optimization passes */
-   if (!state->error && !shader->ir.is_empty()) {
+   if (!state->error && !shader->ir->is_empty()) {
       bool progress;
       do {
 	 progress = false;
 
-	 progress = do_function_inlining(&shader->ir) || progress;
-	 progress = do_if_simplification(&shader->ir) || progress;
-	 progress = do_copy_propagation(&shader->ir) || progress;
-	 progress = do_dead_code_local(&shader->ir) || progress;
-	 progress = do_dead_code_unlinked(state, &shader->ir) || progress;
-	 progress = do_constant_variable_unlinked(&shader->ir) || progress;
-	 progress = do_constant_folding(&shader->ir) || progress;
-	 progress = do_vec_index_to_swizzle(&shader->ir) || progress;
-	 progress = do_swizzle_swizzle(&shader->ir) || progress;
+	 progress = do_function_inlining(shader->ir) || progress;
+	 progress = do_if_simplification(shader->ir) || progress;
+	 progress = do_copy_propagation(shader->ir) || progress;
+	 progress = do_dead_code_local(shader->ir) || progress;
+	 progress = do_dead_code_unlinked(state, shader->ir) || progress;
+	 progress = do_constant_variable_unlinked(shader->ir) || progress;
+	 progress = do_constant_folding(shader->ir) || progress;
+	 progress = do_vec_index_to_swizzle(shader->ir) || progress;
+	 progress = do_swizzle_swizzle(shader->ir) || progress;
       } while (progress);
    }
 
-   validate_ir_tree(&shader->ir);
+   validate_ir_tree(shader->ir);
 
    /* Print out the resulting IR */
    if (!state->error && dump_lir) {
-      _mesa_print_ir(&shader->ir, state);
+      _mesa_print_ir(shader->ir, state);
    }
 
    shader->symbols = state->symbols;
@@ -214,12 +212,12 @@ main(int argc, char **argv)
    assert(whole_program != NULL);
 
    for (/* empty */; argc > optind; optind++) {
-      whole_program->Shaders = (struct glsl_shader **)
+      whole_program->Shaders = (struct gl_shader **)
 	 talloc_realloc(whole_program, whole_program->Shaders,
-			struct glsl_shader *, whole_program->NumShaders + 1);
+			struct gl_shader *, whole_program->NumShaders + 1);
       assert(whole_program->Shaders != NULL);
 
-      struct glsl_shader *shader = talloc_zero(whole_program, glsl_shader);
+      struct gl_shader *shader = talloc_zero(whole_program, gl_shader);
 
       whole_program->Shaders[whole_program->NumShaders] = shader;
       whole_program->NumShaders++;
@@ -238,8 +236,7 @@ main(int argc, char **argv)
       else
 	 usage_fail(argv[0]);
 
-      shader->Source = load_text_file(whole_program,
-				      argv[optind], &shader->SourceLen);
+      shader->Source = load_text_file(whole_program, argv[optind]);
       if (shader->Source == NULL) {
 	 printf("File \"%s\" does not exist.\n", argv[optind]);
 	 exit(EXIT_FAILURE);

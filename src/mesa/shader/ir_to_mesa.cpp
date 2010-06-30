@@ -1561,13 +1561,12 @@ link_uniforms_to_shared_uniform_list(struct gl_uniform_list *uniforms,
 }
 
 struct gl_program *
-get_mesa_program(GLcontext *ctx, void *mem_ctx, struct glsl_shader *shader)
+get_mesa_program(GLcontext *ctx, void *mem_ctx, struct gl_shader *shader)
 {
    ir_to_mesa_visitor v;
    struct prog_instruction *mesa_instructions, *mesa_inst;
    ir_instruction **mesa_instruction_annotation;
    int i;
-   exec_list *instructions = &shader->ir;
    struct gl_program *prog;
    GLenum target;
 
@@ -1587,7 +1586,7 @@ get_mesa_program(GLcontext *ctx, void *mem_ctx, struct glsl_shader *shader)
    v.prog = prog;
 
    v.mem_ctx = talloc_new(NULL);
-   visit_exec_list(instructions, &v);
+   visit_exec_list(shader->ir, &v);
    v.ir_to_mesa_emit_op1(NULL, OPCODE_END,
 			 ir_to_mesa_undef_dst, ir_to_mesa_undef);
 
@@ -1635,26 +1634,17 @@ get_mesa_program(GLcontext *ctx, void *mem_ctx, struct glsl_shader *shader)
    prog->Instructions = mesa_instructions;
    prog->NumInstructions = num_instructions;
 
-   _mesa_reference_program(ctx, &shader->mesa_shader->Program, prog);
+   _mesa_reference_program(ctx, &shader->Program, prog);
 
    return prog;
 }
 
-/* Takes a Mesa gl shader structure and compiles it, returning our Mesa-like
- * structure with the IR and such attached.
- */
-static struct glsl_shader *
-_mesa_get_glsl_shader(GLcontext *ctx, void *mem_ctx, struct gl_shader *sh)
-{
-   struct glsl_shader *shader = talloc_zero(mem_ctx, struct glsl_shader);
-   struct _mesa_glsl_parse_state *state;
+extern "C" {
 
-   shader->Type = sh->Type;
-   shader->Name = sh->Name;
-   shader->RefCount = 1;
-   shader->Source = sh->Source;
-   shader->SourceLen = strlen(sh->Source);
-   shader->mesa_shader = sh;
+void
+_mesa_glsl_compile_shader(GLcontext *ctx, struct gl_shader *shader)
+{
+   struct _mesa_glsl_parse_state *state;
 
    state = talloc_zero(shader, struct _mesa_glsl_parse_state);
    switch (shader->Type) {
@@ -1665,7 +1655,7 @@ _mesa_get_glsl_shader(GLcontext *ctx, void *mem_ctx, struct gl_shader *sh)
 
    state->scanner = NULL;
    state->translation_unit.make_empty();
-   state->symbols = new(mem_ctx) glsl_symbol_table;
+   state->symbols = new(shader) glsl_symbol_table;
    state->info_log = talloc_strdup(shader, "");
    state->error = false;
    state->temp_index = 0;
@@ -1686,25 +1676,25 @@ _mesa_get_glsl_shader(GLcontext *ctx, void *mem_ctx, struct gl_shader *sh)
      _mesa_glsl_lexer_dtor(state);
    }
 
-   shader->ir.make_empty();
+   shader->ir = new(shader) exec_list;
    if (!state->error && !state->translation_unit.is_empty())
-      _mesa_ast_to_hir(&shader->ir, state);
+      _mesa_ast_to_hir(shader->ir, state);
 
    /* Optimization passes */
-   if (!state->error && !shader->ir.is_empty()) {
+   if (!state->error && !shader->ir->is_empty()) {
       bool progress;
       do {
 	 progress = false;
 
-	 progress = do_function_inlining(&shader->ir) || progress;
-	 progress = do_if_simplification(&shader->ir) || progress;
-	 progress = do_copy_propagation(&shader->ir) || progress;
-	 progress = do_dead_code_local(&shader->ir) || progress;
-	 progress = do_dead_code_unlinked(state, &shader->ir) || progress;
-	 progress = do_constant_variable_unlinked(&shader->ir) || progress;
-	 progress = do_constant_folding(&shader->ir) || progress;
-	 progress = do_vec_index_to_swizzle(&shader->ir) || progress;
-	 progress = do_swizzle_swizzle(&shader->ir) || progress;
+	 progress = do_function_inlining(shader->ir) || progress;
+	 progress = do_if_simplification(shader->ir) || progress;
+	 progress = do_copy_propagation(shader->ir) || progress;
+	 progress = do_dead_code_local(shader->ir) || progress;
+	 progress = do_dead_code_unlinked(state, shader->ir) || progress;
+	 progress = do_constant_variable_unlinked(shader->ir) || progress;
+	 progress = do_constant_folding(shader->ir) || progress;
+	 progress = do_vec_index_to_swizzle(shader->ir) || progress;
+	 progress = do_swizzle_swizzle(shader->ir) || progress;
       } while (progress);
    }
 
@@ -1714,23 +1704,6 @@ _mesa_get_glsl_shader(GLcontext *ctx, void *mem_ctx, struct gl_shader *sh)
    shader->InfoLog = state->info_log;
 
    talloc_free(state);
-
-   return shader;
-}
-
-extern "C" {
-
-void
-_mesa_glsl_compile_shader(GLcontext *ctx, struct gl_shader *sh)
-{
-   struct glsl_shader *shader;
-   TALLOC_CTX *mem_ctx = talloc_new(NULL);
-
-   shader = _mesa_get_glsl_shader(ctx, mem_ctx, sh);
-
-   sh->CompileStatus = shader->CompileStatus;
-   sh->InfoLog = strdup(shader->InfoLog);
-   talloc_free(mem_ctx);
  }
 
 void
@@ -1738,18 +1711,16 @@ _mesa_glsl_link_shader(GLcontext *ctx, struct gl_shader_program *prog)
 {
    struct glsl_program *whole_program;
    unsigned int i;
-
    _mesa_clear_shader_program_data(ctx, prog);
 
    whole_program = talloc_zero(NULL, struct glsl_program);
    whole_program->LinkStatus = GL_TRUE;
    whole_program->NumShaders = prog->NumShaders;
-   whole_program->Shaders = talloc_array(whole_program, struct glsl_shader *,
+   whole_program->Shaders = talloc_array(whole_program, struct gl_shader *,
 					 prog->NumShaders);
 
    for (i = 0; i < prog->NumShaders; i++) {
-      whole_program->Shaders[i] = _mesa_get_glsl_shader(ctx, whole_program,
-							prog->Shaders[i]);
+      whole_program->Shaders[i] = prog->Shaders[i];
       if (!whole_program->Shaders[i]->CompileStatus) {
 	 whole_program->InfoLog =
 	    talloc_asprintf_append(whole_program->InfoLog,
