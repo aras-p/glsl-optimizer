@@ -363,7 +363,7 @@ gdi_create_display(HDC hDC, struct native_event_handler *event_handler,
       return NULL;
    }
 
-   gdpy->base.screen = gdpy->event_handler->create_sw_screen(winsys);
+   gdpy->base.screen = gdpy->event_handler->new_sw_screen(&gdpy->base, winsys);
    if (!gdpy->base.screen) {
       if (winsys->destroy)
          winsys->destroy(winsys);
