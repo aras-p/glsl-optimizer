@@ -669,6 +669,12 @@ assign_attribute_locations(gl_shader_program *prog, unsigned max_attribute_index
 
    qsort(to_assign, num_attr, sizeof(to_assign[0]), temp_attr::compare);
 
+   /* VERT_ATTRIB_GENERIC0 is a psdueo-alias for VERT_ATTRIB_POS.  It can only
+    * be explicitly assigned by via glBindAttribLocation.  Mark it as reserved
+    * to prevent it from being automatically allocated below.
+    */
+   used_locations |= VERT_BIT_GENERIC0;
+
    for (unsigned i = 0; i < num_attr; i++) {
       /* Mask representing the contiguous slots that will be used by this
        * attribute.
