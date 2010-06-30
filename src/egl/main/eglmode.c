@@ -22,9 +22,12 @@ _eglLookupMode(EGLModeMESA mode, _EGLDisplay *disp)
 {
    EGLint scrnum;
 
+   if (!disp->Screens)
+      return NULL;
+
    /* loop over all screens on the display */
-   for (scrnum = 0; scrnum < disp->NumScreens; scrnum++) {
-      const _EGLScreen *scrn = disp->Screens[scrnum];
+   for (scrnum = 0; scrnum < disp->Screens->Size; scrnum++) {
+      const _EGLScreen *scrn = disp->Screens->Elements[scrnum];
       EGLint i;
       /* search list of modes for handle */
       for (i = 0; i < scrn->NumModes; i++) {

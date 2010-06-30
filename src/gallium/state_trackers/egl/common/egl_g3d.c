@@ -424,11 +424,18 @@ static struct native_event_handler egl_g3d_native_event_handler = {
    egl_g3d_new_sw_screen
 };
 
+static void
+egl_g3d_free_screen(void *scr)
+{
+   struct egl_g3d_screen *gscr = egl_g3d_screen((_EGLScreen *) scr);
+   FREE(gscr->native_modes);
+   FREE(gscr);
+}
+
 static EGLBoolean
 egl_g3d_terminate(_EGLDriver *drv, _EGLDisplay *dpy)
 {
    struct egl_g3d_display *gdpy = egl_g3d_display(dpy);
-   EGLint i;
 
    _eglReleaseDisplayResources(drv, dpy);
    _eglCleanupDisplay(dpy);
@@ -437,12 +444,8 @@ egl_g3d_terminate(_EGLDriver *drv, _EGLDisplay *dpy)
       gdpy->pipe->destroy(gdpy->pipe);
 
    if (dpy->Screens) {
-      for (i = 0; i < dpy->NumScreens; i++) {
-         struct egl_g3d_screen *gscr = egl_g3d_screen(dpy->Screens[i]);
-         FREE(gscr->native_modes);
-         FREE(gscr);
-      }
-      FREE(dpy->Screens);
+      _eglDestroyArray(dpy->Screens, egl_g3d_free_screen);
+      dpy->Screens = NULL;
    }
 
    if (gdpy->smapi)

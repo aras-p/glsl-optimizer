@@ -90,9 +90,7 @@ struct _egl_display
 
    _EGLExtensions Extensions;
 
-   EGLint NumScreens;
-   _EGLScreen **Screens;  /* array [NumScreens] */
-
+   _EGLArray *Screens;
    _EGLArray *Configs;
 
    /* lists of resources */
