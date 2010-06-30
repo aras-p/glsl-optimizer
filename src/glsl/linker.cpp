@@ -232,12 +232,6 @@ validate_fragment_shader_executable(struct gl_shader_program *prog,
    frag_color.run(shader->ir);
    frag_data.run(shader->ir);
 
-   if (!frag_color.variable_found() && !frag_data.variable_found()) {
-      linker_error_printf(prog, "fragment shader does not write to "
-			  "`gl_FragColor' or `gl_FragData'\n");
-      return false;
-   }
-
    if (frag_color.variable_found() && frag_data.variable_found()) {
       linker_error_printf(prog,  "fragment shader writes to both "
 			  "`gl_FragColor' and `gl_FragData'\n");
