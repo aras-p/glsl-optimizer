@@ -1135,7 +1135,7 @@ llvmpipe_get_texture_tile_linear(struct llvmpipe_resource *lpr,
    layout_logic(cur_layout, LP_TEX_LAYOUT_LINEAR, usage,
                 &new_layout, &convert);
 
-   if (convert) {
+   if (convert && tiled_image && linear_image) {
       lp_tiled_to_linear(tiled_image, linear_image,
                          x, y, TILE_SIZE, TILE_SIZE, lpr->base.format,
                          lpr->row_stride[level],
