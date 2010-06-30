@@ -70,7 +70,7 @@
    } for_rest_statement;
 }
 
-%token ATTRIBUTE CONST BOOL FLOAT INT UINT
+%token ATTRIBUTE CONST_TOK BOOL FLOAT INT UINT
 %token BREAK CONTINUE DO ELSE FOR IF DISCARD RETURN SWITCH CASE DEFAULT
 %token BVEC2 BVEC3 BVEC4 IVEC2 IVEC3 IVEC4 UVEC2 UVEC3 UVEC4 VEC2 VEC3 VEC4
 %token MAT2 MAT3 MAT4 CENTROID IN OUT INOUT UNIFORM VARYING
@@ -101,7 +101,7 @@
    /* Reserved words that are not actually used in the grammar.
     */
 %token ASM CLASS UNION ENUM TYPEDEF TEMPLATE THIS PACKED GOTO
-%token INLINE NOINLINE VOLATILE PUBLIC STATIC EXTERN EXTERNAL
+%token INLINE_TOK NOINLINE VOLATILE PUBLIC_TOK STATIC EXTERN EXTERNAL
 %token LONG SHORT DOUBLE HALF FIXED UNSIGNED INPUT OUPTUT
 %token HVEC2 HVEC3 HVEC4 DVEC2 DVEC3 DVEC4 FVEC2 FVEC3 FVEC4
 %token SAMPLER2DRECT SAMPLER3DRECT SAMPLER2DRECTSHADOW
@@ -942,7 +942,7 @@ interpolation_qualifier:
 	;
 
 parameter_type_qualifier:
-	CONST		{ $$.i = 0; $$.q.constant = 1; }
+	CONST_TOK	{ $$.i = 0; $$.q.constant = 1; }
 	;
 
 type_qualifier:
@@ -959,7 +959,7 @@ type_qualifier:
 	;
 
 storage_qualifier:
-	CONST			{ $$.i = 0; $$.q.constant = 1; }
+	CONST_TOK		{ $$.i = 0; $$.q.constant = 1; }
 	| ATTRIBUTE 		{ $$.i = 0; $$.q.attribute = 1; }
 	| VARYING		{ $$.i = 0; $$.q.varying = 1; }
 	| CENTROID VARYING	{ $$.i = 0; $$.q.centroid = 1; $$.q.varying = 1; }

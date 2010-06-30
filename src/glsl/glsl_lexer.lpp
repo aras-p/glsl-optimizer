@@ -105,7 +105,7 @@ HASH		^{SPC}#{SPC}
 \n		{ yylineno++; yycolumn = 0; }
 
 attribute	return ATTRIBUTE;
-const		return CONST;
+const		return CONST_TOK;
 bool		return BOOL;
 float		return FLOAT;
 int		return INT;
@@ -272,10 +272,10 @@ packed		return PACKED;
 goto		return GOTO;
 switch		return SWITCH;
 default		return DEFAULT;
-inline		return INLINE;
+inline		return INLINE_TOK;
 noinline	return NOINLINE;
 volatile	return VOLATILE;
-public		return PUBLIC;
+public		return PUBLIC_TOK;
 static		return STATIC;
 extern		return EXTERN;
 external	return EXTERNAL;
