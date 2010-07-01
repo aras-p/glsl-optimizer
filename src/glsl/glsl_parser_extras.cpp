@@ -198,6 +198,13 @@ _mesa_glsl_process_extension(const char *name, YYLTYPE *name_locp,
 	 state->ARB_draw_buffers_enable = (ext_mode != extension_disable);
 	 state->ARB_draw_buffers_warn = (ext_mode == extension_warn);
       }
+   } else if (strcmp(name, "GL_ARB_fragment_coord_conventions") == 0) {
+      state->ARB_fragment_coord_conventions_enable =
+	 (ext_mode != extension_disable);
+      state->ARB_fragment_coord_conventions_warn =
+	 (ext_mode == extension_warn);
+
+      unsupported = !state->extensions->ARB_fragment_coord_conventions;
    } else if (strcmp(name, "GL_ARB_texture_rectangle") == 0) {
       state->ARB_texture_rectangle_enable = (ext_mode != extension_disable);
       state->ARB_texture_rectangle_warn = (ext_mode == extension_warn);

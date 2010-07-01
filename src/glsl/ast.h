@@ -302,6 +302,12 @@ struct ast_type_qualifier {
    unsigned smooth:1;
    unsigned flat:1;
    unsigned noperspective:1;
+
+   /** \name Layout qualifiers for GL_ARB_fragment_coord_conventions */
+   /*@{*/
+   unsigned origin_upper_left:1;
+   unsigned pixel_center_integer:1;
+   /*@}*/
 };
 
 class ast_struct_specifier : public ast_node {

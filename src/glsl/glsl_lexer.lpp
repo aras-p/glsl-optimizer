@@ -201,6 +201,16 @@ sampler2DShadow	return SAMPLER2DSHADOW;
 struct		return STRUCT;
 void		return VOID;
 
+layout		{
+		  if ((yyextra->language_version >= 140)
+		      || (yyextra->ARB_fragment_coord_conventions_enable)){
+		      return LAYOUT_TOK;
+		   } else {
+		      yylval->identifier = strdup(yytext);
+		      return IDENTIFIER;
+		   }
+		}
+
 \+\+		return INC_OP;
 --		return DEC_OP;
 \<=		return LE_OP;
