@@ -112,7 +112,7 @@ st_NewTextureObject(GLcontext * ctx, GLuint name, GLenum target)
    return &obj->base;
 }
 
-/** called via ctx->Driver.DeleteTextureImage() */
+/** called via ctx->Driver.DeleteTextureObject() */
 static void 
 st_DeleteTextureObject(GLcontext *ctx,
                        struct gl_texture_object *texObj)
