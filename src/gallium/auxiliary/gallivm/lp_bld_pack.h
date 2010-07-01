@@ -92,4 +92,12 @@ lp_build_pack(LLVMBuilderRef builder,
               const LLVMValueRef *src, unsigned num_srcs);
 
 
+void
+lp_build_resize(LLVMBuilderRef builder,
+                struct lp_type src_type,
+                struct lp_type dst_type,
+                const LLVMValueRef *src, unsigned num_srcs,
+                LLVMValueRef *dst, unsigned num_dsts);
+
+
 #endif /* !LP_BLD_PACK_H */
