@@ -2032,6 +2032,9 @@ struct gl_query_state
    struct gl_query_object *PrimitivesGenerated;
    struct gl_query_object *PrimitivesWritten;
 
+   /** GL_ARB_timer_query */
+   struct gl_query_object *TimeElapsed;
+
    GLenum CondRenderMode;
 };
 
@@ -2592,6 +2595,7 @@ struct gl_constants
 struct gl_extensions
 {
    GLboolean dummy;  /* don't remove this! */
+   GLboolean ARB_blend_func_extended;
    GLboolean ARB_copy_buffer;
    GLboolean ARB_depth_texture;
    GLboolean ARB_depth_clamp;
@@ -2603,23 +2607,28 @@ struct gl_extensions
    GLboolean ARB_fragment_program_shadow;
    GLboolean ARB_fragment_shader;
    GLboolean ARB_framebuffer_object;
+   GLboolean ARB_explicit_attrib_location;
    GLboolean ARB_geometry_shader4;
    GLboolean ARB_half_float_pixel;
    GLboolean ARB_half_float_vertex;
    GLboolean ARB_imaging;
+   GLboolean ARB_instanced_arrays;
    GLboolean ARB_map_buffer_range;
    GLboolean ARB_multisample;
    GLboolean ARB_multitexture;
    GLboolean ARB_occlusion_query;
+   GLboolean ARB_occlusion_query2;
    GLboolean ARB_point_sprite;
+   GLboolean ARB_sampler_objects;
    GLboolean ARB_seamless_cube_map;
    GLboolean ARB_shader_objects;
    GLboolean ARB_shading_language_100;
    GLboolean ARB_shading_language_120;
    GLboolean ARB_shadow;
-   GLboolean ARB_shadow_ambient; /* or GL_ARB_shadow_ambient */
+   GLboolean ARB_shadow_ambient;
    GLboolean ARB_sync;
    GLboolean ARB_texture_border_clamp;
+   GLboolean ARB_texture_buffer_object;
    GLboolean ARB_texture_compression;
    GLboolean ARB_texture_cube_map;
    GLboolean ARB_texture_env_combine;
@@ -2627,13 +2636,18 @@ struct gl_extensions
    GLboolean ARB_texture_env_dot3;
    GLboolean ARB_texture_float;
    GLboolean ARB_texture_mirrored_repeat;
+   GLboolean ARB_texture_multisample;
    GLboolean ARB_texture_non_power_of_two;
+   GLboolean ARB_texture_rgb10_a2ui;
+   GLboolean ARB_timer_query;
    GLboolean ARB_transform_feedback2;
    GLboolean ARB_transpose_matrix;
+   GLboolean ARB_uniform_buffer_object;
    GLboolean ARB_vertex_array_object;
    GLboolean ARB_vertex_buffer_object;
    GLboolean ARB_vertex_program;
    GLboolean ARB_vertex_shader;
+   GLboolean ARB_vertex_type_2_10_10_10_rev;
    GLboolean ARB_window_pos;
    GLboolean EXT_abgr;
    GLboolean EXT_bgra;
@@ -2655,11 +2669,13 @@ struct gl_extensions
    GLboolean EXT_framebuffer_blit;
    GLboolean EXT_framebuffer_multisample;
    GLboolean EXT_framebuffer_object;
+   GLboolean EXT_framebuffer_sRGB;
    GLboolean EXT_gpu_program_parameters;
    GLboolean EXT_histogram;
    GLboolean EXT_multi_draw_arrays;
    GLboolean EXT_paletted_texture;
    GLboolean EXT_packed_depth_stencil;
+   GLboolean EXT_packed_float;
    GLboolean EXT_packed_pixels;
    GLboolean EXT_pixel_buffer_object;
    GLboolean EXT_point_parameters;
@@ -2669,6 +2685,7 @@ struct gl_extensions
    GLboolean EXT_shadow_funcs;
    GLboolean EXT_secondary_color;
    GLboolean EXT_separate_specular_color;
+   GLboolean EXT_shared_exponent;
    GLboolean EXT_shared_texture_palette;
    GLboolean EXT_stencil_wrap;
    GLboolean EXT_stencil_two_side;
@@ -2678,10 +2695,12 @@ struct gl_extensions
    GLboolean EXT_texture3D;
    GLboolean EXT_texture_array;
    GLboolean EXT_texture_compression_s3tc;
+   GLboolean EXT_texture_compression_rgtc;
    GLboolean EXT_texture_env_add;
    GLboolean EXT_texture_env_combine;
    GLboolean EXT_texture_env_dot3;
    GLboolean EXT_texture_filter_anisotropic;
+   GLboolean EXT_texture_integer;
    GLboolean EXT_texture_lod_bias;
    GLboolean EXT_texture_mirror_clamp;
    GLboolean EXT_texture_sRGB;
@@ -2715,6 +2734,7 @@ struct gl_extensions
    GLboolean NV_fragment_program_option;
    GLboolean NV_light_max_exponent;
    GLboolean NV_point_sprite;
+   GLboolean NV_primitive_restart;
    GLboolean NV_texgen_reflection;
    GLboolean NV_texture_env_combine4;
    GLboolean NV_texture_rectangle;
