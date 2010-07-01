@@ -485,6 +485,23 @@ static void emit_cmp( struct brw_compile *p,
    brw_set_predicate_control(p, BRW_PREDICATE_NONE);
 }
 
+static void emit_sign(struct brw_vs_compile *c,
+		      struct brw_reg dst,
+		      struct brw_reg arg0)
+{
+   struct brw_compile *p = &c->func;
+
+   brw_MOV(p, dst, brw_imm_f(0));
+
+   brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_L, arg0, brw_imm_f(0));
+   brw_MOV(p, dst, brw_imm_f(-1.0));
+   brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+
+   brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_G, arg0, brw_imm_f(0));
+   brw_MOV(p, dst, brw_imm_f(1.0));
+   brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+}
+
 static void emit_max( struct brw_compile *p, 
 		      struct brw_reg dst,
 		      struct brw_reg arg0,
@@ -1718,6 +1735,9 @@ void brw_vs_emit(struct brw_vs_compile *c )
 	 break;
       case OPCODE_SLE:
          unalias2(c, dst, args[0], args[1], emit_sle);
+         break;
+      case OPCODE_SSG:
+         unalias1(c, dst, args[0], emit_sign);
          break;
       case OPCODE_SUB:
 	 brw_ADD(p, dst, args[0], negate(args[1]));

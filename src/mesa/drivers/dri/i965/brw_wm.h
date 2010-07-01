@@ -425,6 +425,10 @@ void emit_sop(struct brw_compile *p,
 	      GLuint cond,
 	      const struct brw_reg *arg0,
 	      const struct brw_reg *arg1);
+void emit_sign(struct brw_compile *p,
+	       const struct brw_reg *dst,
+	       GLuint mask,
+	       const struct brw_reg *arg0);
 void emit_tex(struct brw_wm_compile *c,
 	      struct brw_reg *dst,
 	      GLuint dst_flags,

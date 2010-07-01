@@ -668,6 +668,28 @@ void emit_cmp(struct brw_compile *p,
    }
 }
 
+void emit_sign(struct brw_compile *p,
+	       const struct brw_reg *dst,
+	       GLuint mask,
+	       const struct brw_reg *arg0)
+{
+   GLuint i;
+
+   for (i = 0; i < 4; i++) {
+      if (mask & (1<<i)) {
+	 brw_MOV(p, dst[i], brw_imm_f(0.0));
+
+	 brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_L, arg0[i], brw_imm_f(0));
+	 brw_MOV(p, dst[i], brw_imm_f(-1.0));
+	 brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+
+	 brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_G, arg0[i], brw_imm_f(0));
+	 brw_MOV(p, dst[i], brw_imm_f(1.0));
+	 brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+      }
+   }
+}
+
 void emit_max(struct brw_compile *p,
 	      const struct brw_reg *dst,
 	      GLuint mask,
@@ -1672,6 +1694,10 @@ void brw_wm_emit( struct brw_wm_compile *c )
       case OPCODE_SNE:
 	 emit_sne(p, dst, dst_flags, args[0], args[1]);
 	break;
+
+      case OPCODE_SSG:
+	 emit_sign(p, dst, dst_flags, args[0]);
+	 break;
 
       case OPCODE_LIT:
 	 emit_lit(c, dst, dst_flags, args[0]);

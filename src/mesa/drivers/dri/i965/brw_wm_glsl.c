@@ -1971,6 +1971,9 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 		emit_sop(p, dst, dst_flags,
 			 BRW_CONDITIONAL_NEQ, args[0], args[1]);
 		break;
+	    case OPCODE_SSG:
+		emit_sign(p, dst, dst_flags, args[0]);
+		break;
 	    case OPCODE_MUL:
 		emit_alu2(p, brw_MUL, dst, dst_flags, args[0], args[1]);
 		break;
