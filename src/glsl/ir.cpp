@@ -72,6 +72,7 @@ ir_expression::get_num_operands(ir_expression_operation op)
       1, /* ir_unop_trunc */
       1, /* ir_unop_ceil */
       1, /* ir_unop_floor */
+      1, /* ir_unop_fract */
 
       1, /* ir_unop_sin */
       1, /* ir_unop_cos */
@@ -137,6 +138,7 @@ static const char *const operator_strs[] = {
    "trunc",
    "ceil",
    "floor",
+   "fract",
    "sin",
    "cos",
    "dFdx",

@@ -528,6 +528,7 @@ enum ir_expression_operation {
    ir_unop_trunc,
    ir_unop_ceil,
    ir_unop_floor,
+   ir_unop_fract,
    /*@}*/
 
    /**

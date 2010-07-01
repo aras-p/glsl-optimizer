@@ -782,6 +782,10 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
    case ir_unop_floor:
       ir_to_mesa_emit_op1(ir, OPCODE_FLR, result_dst, op[0]);
       break;
+   case ir_unop_fract:
+      ir_to_mesa_emit_op1(ir, OPCODE_FRC, result_dst, op[0]);
+      break;
+
    case ir_binop_min:
       ir_to_mesa_emit_op2(ir, OPCODE_MIN, result_dst, op[0], op[1]);
       break;

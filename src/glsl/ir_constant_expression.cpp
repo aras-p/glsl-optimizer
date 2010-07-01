@@ -187,6 +187,24 @@ ir_constant_visitor::visit(ir_expression *ir)
       }
       break;
 
+   case ir_unop_fract:
+      for (c = 0; c < ir->operands[0]->type->components(); c++) {
+	 switch (ir->type->base_type) {
+	 case GLSL_TYPE_UINT:
+	    data.u[c] = 0;
+	    break;
+	 case GLSL_TYPE_INT:
+	    data.i[c] = 0;
+	    break;
+	 case GLSL_TYPE_FLOAT:
+	    data.f[c] = op[0]->value.f[c] - floor(op[0]->value.f[c]);
+	    break;
+	 default:
+	    assert(0);
+	 }
+      }
+      break;
+
    case ir_unop_neg:
       for (c = 0; c < ir->operands[0]->type->components(); c++) {
 	 switch (ir->type->base_type) {
