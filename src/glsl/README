@@ -68,7 +68,8 @@ Q: How is the IR structured?
 A: The best way to get started seeing it would be to run the
 standalone compiler against a shader:
 
-./glsl --dump-lir ~/src/piglit/tests/shaders/glsl-orangebook-ch06-bump.frag
+./glsl_compiler --dump-lir \
+	~/src/piglit/tests/shaders/glsl-orangebook-ch06-bump.frag
 
 So for example one of the ir_instructions in main() contains:
 
@@ -151,3 +152,39 @@ significantly by the target architecture.  For now, targeting the Mesa
 IR backend, SSA does not appear to be that important to producing
 excellent code, but we do expect to do some SSA-based optimizations
 for the 965 fragment shader backend when that is developed.
+
+Q: How should I expand instructions that take multiple backend instructions?
+
+Sometimes you'll have to do the expansion in your code generation --
+see, for example, ir_to_mesa.cpp's handling of ir_binop_mul for
+matrices.  However, in many cases you'll want to do a pass over the IR
+to convert non-native instructions to a series of native instructions.
+For example, for the Mesa backend we have ir_div_to_mul_rcp.cpp because
+Mesa IR (and many hardware backends) only have a reciprocal
+instruction, not a divide.  Implementing non-native instructions this
+way gives the chance for constant folding to occur, so (a / 2.0)
+becomes (a * 0.5) after codegen instead of (a * (1.0 / 2.0))
+
+Q: How shoud I handle my special hardware instructions with respect to IR?
+
+Our current theory is that if multiple targets have an instruction for
+some operation, then we should probably be able to represent that in
+the IR.  Generally this is in the form of an ir_{bin,un}op expression
+type.  For example, we initially implemented fract() using (a -
+floor(a)), but both 945 and 965 have instructions to give that result,
+and it would also simplify the implementation of mod(), so
+ir_unop_fract was added.  The following areas need updating to add a
+new expression type:
+
+ir.h (new enum)
+ir.cpp:get_num_operands() (used for ir_reader)
+ir.cpp:operator_strs (used for ir_reader)
+ir_constant_expression.cpp (you probably want to be able to constant fold)
+
+You may also need to update the backends if they will see the new expr type:
+
+../mesa/shaders/ir_to_mesa.cpp
+
+You can then use the new expression from builtins (if all backends
+would rather see it), or scan the IR and convert to use your new
+expression type (see ir_mod_to_fract, for example).
