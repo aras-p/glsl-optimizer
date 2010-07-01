@@ -1542,6 +1542,19 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
    else
       var->interpolation = ir_var_smooth;
 
+   /* FINISHME: Apply the fragment coord convetion layout qualifiers.
+    */
+   if ((qual->origin_upper_left || qual->pixel_center_integer)
+       && (strcmp(var->name, "gl_FragCoord") != 0)) {
+      const char *const qual_string = (qual->origin_upper_left)
+	 ? "origin_upper_left" : "pixel_center_integer";
+
+      _mesa_glsl_error(loc, state,
+		       "layout qualifier `%s' can only be applied to "
+		       "fragment shader input `gl_FragCoord'",
+		       qual_string);
+   }
+
    if (var->type->is_array() && (state->language_version >= 120)) {
       var->array_lvalue = true;
    }
