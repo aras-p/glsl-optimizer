@@ -1636,67 +1636,6 @@ ast_declarator_list::hir(exec_list *instructions,
       apply_type_qualifier_to_variable(& this->type->qualifier, var, state,
 				       & loc);
 
-      /* Attempt to add the variable to the symbol table.  If this fails, it
-       * means the variable has already been declared at this scope.  Arrays
-       * fudge this rule a little bit.
-       *
-       * From page 24 (page 30 of the PDF) of the GLSL 1.50 spec,
-       *
-       *    "It is legal to declare an array without a size and then
-       *    later re-declare the same name as an array of the same
-       *    type and specify a size."
-       */
-      if (state->symbols->name_declared_this_scope(decl->identifier)) {
-	 ir_variable *const earlier =
-	    state->symbols->get_variable(decl->identifier);
-
-	 if ((earlier != NULL)
-	     && (earlier->type->array_size() == 0)
-	     && var->type->is_array()
-	     && (var->type->element_type() == earlier->type->element_type())) {
-	    /* FINISHME: This doesn't match the qualifiers on the two
-	     * FINISHME: declarations.  It's not 100% clear whether this is
-	     * FINISHME: required or not.
-	     */
-
-	    if (var->type->array_size() <= (int)earlier->max_array_access) {
-	       YYLTYPE loc = this->get_location();
-
-	       _mesa_glsl_error(& loc, state, "array size must be > %u due to "
-				"previous access",
-				earlier->max_array_access);
-	    }
-
-	    earlier->type = var->type;
-	    delete var;
-	    var = NULL;
-	 } else {
-	    YYLTYPE loc = this->get_location();
-
-	    _mesa_glsl_error(& loc, state, "`%s' redeclared",
-			     decl->identifier);
-	 }
-
-	 continue;
-      }
-
-      /* From page 15 (page 21 of the PDF) of the GLSL 1.10 spec,
-       *
-       *   "Identifiers starting with "gl_" are reserved for use by
-       *   OpenGL, and may not be declared in a shader as either a
-       *   variable or a function."
-       */
-      if (strncmp(decl->identifier, "gl_", 3) == 0) {
-	 /* FINISHME: This should only trigger if we're not redefining
-	  * FINISHME: a builtin (to add a qualifier, for example).
-	  */
-	 _mesa_glsl_error(& loc, state,
-			  "identifier `%s' uses reserved `gl_' prefix",
-			  decl->identifier);
-      }
-
-      instructions->push_tail(var);
-
       if (state->current_function != NULL) {
 	 const char *mode = NULL;
 	 const char *extra = "";
@@ -1850,6 +1789,67 @@ ast_declarator_list::hir(exec_list *instructions,
 	 _mesa_glsl_error(& loc, state,
 			  "const declaration of `%s' must be initialized");
       }
+
+      /* Attempt to add the variable to the symbol table.  If this fails, it
+       * means the variable has already been declared at this scope.  Arrays
+       * fudge this rule a little bit.
+       *
+       * From page 24 (page 30 of the PDF) of the GLSL 1.50 spec,
+       *
+       *    "It is legal to declare an array without a size and then
+       *    later re-declare the same name as an array of the same
+       *    type and specify a size."
+       */
+      if (state->symbols->name_declared_this_scope(decl->identifier)) {
+	 ir_variable *const earlier =
+	    state->symbols->get_variable(decl->identifier);
+
+	 if ((earlier != NULL)
+	     && (earlier->type->array_size() == 0)
+	     && var->type->is_array()
+	     && (var->type->element_type() == earlier->type->element_type())) {
+	    /* FINISHME: This doesn't match the qualifiers on the two
+	     * FINISHME: declarations.  It's not 100% clear whether this is
+	     * FINISHME: required or not.
+	     */
+
+	    if (var->type->array_size() <= (int)earlier->max_array_access) {
+	       YYLTYPE loc = this->get_location();
+
+	       _mesa_glsl_error(& loc, state, "array size must be > %u due to "
+				"previous access",
+				earlier->max_array_access);
+	    }
+
+	    earlier->type = var->type;
+	    delete var;
+	    var = NULL;
+	 } else {
+	    YYLTYPE loc = this->get_location();
+
+	    _mesa_glsl_error(& loc, state, "`%s' redeclared",
+			     decl->identifier);
+	 }
+
+	 continue;
+      }
+
+      /* From page 15 (page 21 of the PDF) of the GLSL 1.10 spec,
+       *
+       *   "Identifiers starting with "gl_" are reserved for use by
+       *   OpenGL, and may not be declared in a shader as either a
+       *   variable or a function."
+       */
+      if (strncmp(decl->identifier, "gl_", 3) == 0) {
+	 /* FINISHME: This should only trigger if we're not redefining
+	  * FINISHME: a builtin (to add a qualifier, for example).
+	  */
+	 _mesa_glsl_error(& loc, state,
+			  "identifier `%s' uses reserved `gl_' prefix",
+			  decl->identifier);
+      }
+
+      instructions->push_tail(var);
 
       /* Add the variable to the symbol table after processing the initializer.
        * This differs from most C-like languages, but it follows the GLSL
