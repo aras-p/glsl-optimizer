@@ -189,6 +189,7 @@ _mesa_free_transform_feedback(GLcontext *ctx)
 
    /* Delete all feedback objects */
    _mesa_HashDeleteAll(ctx->TransformFeedback.Objects, delete_cb, ctx);
+   _mesa_DeleteHashTable(ctx->TransformFeedback.Objects);
 
    /* Delete the default feedback object */
    assert(ctx->Driver.DeleteTransformFeedback);
