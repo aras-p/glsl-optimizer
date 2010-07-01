@@ -1813,7 +1813,24 @@ ast_declarator_list::hir(exec_list *instructions,
 	     * FINISHME: required or not.
 	     */
 
-	    if (var->type->array_size() <= (int)earlier->max_array_access) {
+	    /* From page 54 (page 60 of the PDF) of the GLSL 1.20 spec:
+	     *
+	     *     "The size [of gl_TexCoord] can be at most
+	     *     gl_MaxTextureCoords."
+	     *
+	     * FINISHME: Every platform that supports GLSL sets
+	     * FINISHME: gl_MaxTextureCoords to at least 4, so hard-code 4
+	     * FINISHME: for now.
+	     */
+	    if ((strcmp("gl_TexCoord", var->name) == 0)
+		&& (var->type->array_size() > 4)) {
+	       YYLTYPE loc = this->get_location();
+
+	       _mesa_glsl_error(& loc, state, "`gl_TexCoord' array size cannot "
+				"be larger than gl_MaxTextureCoords (%u)\n",
+				4);
+	    } else if (var->type->array_size() <=
+		       (int)earlier->max_array_access) {
 	       YYLTYPE loc = this->get_location();
 
 	       _mesa_glsl_error(& loc, state, "array size must be > %u due to "

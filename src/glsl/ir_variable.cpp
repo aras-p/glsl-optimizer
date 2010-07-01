@@ -159,13 +159,16 @@ generate_110_vs_variables(exec_list *instructions,
    }
    generate_110_uniforms(instructions, state->symbols);
 
-   /* FINISHME: The size of this array is implementation dependent based on the
-    * FINISHME: value of GL_MAX_TEXTURE_COORDS.  Every platform that supports
-    * FINISHME: GLSL sets GL_MAX_TEXTURE_COORDS to at least 4, so hard-code 4
-    * FINISHME: for now.
+   /* From page 54 (page 60 of the PDF) of the GLSL 1.20 spec:
+    *
+    *     "As with all arrays, indices used to subscript gl_TexCoord must
+    *     either be an integral constant expressions, or this array must be
+    *     re-declared by the shader with a size. The size can be at most
+    *     gl_MaxTextureCoords. Using indexes close to 0 may aid the
+    *     implementation in preserving varying resources."
     */
    const glsl_type *const vec4_array_type =
-      glsl_type::get_array_instance(state->symbols, glsl_type::vec4_type, 4);
+      glsl_type::get_array_instance(state->symbols, glsl_type::vec4_type, 0);
 
    add_variable("gl_TexCoord", ir_var_out, VERT_RESULT_TEX0, vec4_array_type,
 		instructions, state->symbols);
@@ -246,13 +249,16 @@ generate_110_fs_variables(exec_list *instructions,
    }
    generate_110_uniforms(instructions, state->symbols);
 
-   /* FINISHME: The size of this array is implementation dependent based on the
-    * FINISHME: value of GL_MAX_TEXTURE_COORDS.  Every platform that supports
-    * FINISHME: GLSL sets GL_MAX_TEXTURE_COORDS to at least 4, so hard-code 4
-    * FINISHME: for now.
+   /* From page 54 (page 60 of the PDF) of the GLSL 1.20 spec:
+    *
+    *     "As with all arrays, indices used to subscript gl_TexCoord must
+    *     either be an integral constant expressions, or this array must be
+    *     re-declared by the shader with a size. The size can be at most
+    *     gl_MaxTextureCoords. Using indexes close to 0 may aid the
+    *     implementation in preserving varying resources."
     */
    const glsl_type *const vec4_array_type =
-      glsl_type::get_array_instance(state->symbols, glsl_type::vec4_type, 4);
+      glsl_type::get_array_instance(state->symbols, glsl_type::vec4_type, 0);
 
    add_variable("gl_TexCoord", ir_var_in, FRAG_ATTRIB_TEX0, vec4_array_type,
 		instructions, state->symbols);
