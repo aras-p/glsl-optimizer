@@ -324,8 +324,6 @@ lp_build_fetch_rgba_soa(LLVMBuilderRef builder,
 
       unsigned k, chan;
 
-      assert(type.floating);
-
       for (chan = 0; chan < 4; ++chan) {
          rgba_out[chan] = lp_build_undef(type);
       }
@@ -345,7 +343,7 @@ lp_build_fetch_rgba_soa(LLVMBuilderRef builder,
          j_elem = LLVMBuildExtractElement(builder, j, index, "");
 
          /* Get a single float[4]={R,G,B,A} pixel */
-         tmp = lp_build_fetch_rgba_aos(builder, format_desc, ptr,
+         tmp = lp_build_fetch_rgba_aos(builder, format_desc, type, ptr,
                                        i_elem, j_elem);
 
          /*
