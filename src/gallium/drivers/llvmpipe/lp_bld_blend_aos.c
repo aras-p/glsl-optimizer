@@ -190,30 +190,27 @@ lp_build_blend_swizzle(struct lp_build_blend_aos_context *bld,
                        enum lp_build_blend_swizzle rgb_swizzle,
                        unsigned alpha_swizzle)
 {
-   if(rgb == alpha) {
-      if(rgb_swizzle == LP_BUILD_BLEND_SWIZZLE_RGBA)
-         return rgb;
-      if(rgb_swizzle == LP_BUILD_BLEND_SWIZZLE_AAAA)
-         return lp_build_broadcast_aos(&bld->base, rgb, alpha_swizzle);
+   LLVMValueRef swizzled_rgb;
+
+   switch (rgb_swizzle) {
+   case LP_BUILD_BLEND_SWIZZLE_RGBA:
+      swizzled_rgb = rgb;
+      break;
+   case LP_BUILD_BLEND_SWIZZLE_AAAA:
+      swizzled_rgb = lp_build_broadcast_aos(&bld->base, rgb, alpha_swizzle);
+      break;
+   default:
+      assert(0);
+      swizzled_rgb = bld->base.undef;
    }
-   else {
-      if(rgb_swizzle == LP_BUILD_BLEND_SWIZZLE_RGBA) {
-         boolean cond[4] = {0, 0, 0, 0};
-         cond[alpha_swizzle] = 1;
-         return lp_build_select_aos(&bld->base, alpha, rgb, cond);
-      }
-      if(rgb_swizzle == LP_BUILD_BLEND_SWIZZLE_AAAA) {
-         unsigned char swizzle[4];
-         swizzle[0] = alpha_swizzle;
-         swizzle[1] = alpha_swizzle;
-         swizzle[2] = alpha_swizzle;
-         swizzle[3] = alpha_swizzle;
-         swizzle[alpha_swizzle] += 4;
-         return lp_build_swizzle2_aos(&bld->base, rgb, alpha, swizzle);
-      }
+
+   if (rgb != alpha) {
+      boolean cond[4] = {0, 0, 0, 0};
+      cond[alpha_swizzle] = 1;
+      swizzled_rgb = lp_build_select_aos(&bld->base, alpha, swizzled_rgb, cond);
    }
-   assert(0);
-   return bld->base.undef;
+
+   return swizzled_rgb;
 }
 
 
