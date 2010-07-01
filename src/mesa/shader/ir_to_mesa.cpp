@@ -1724,6 +1724,9 @@ _mesa_glsl_compile_shader(GLcontext *ctx, struct gl_shader *shader)
    if (!state->error && !state->translation_unit.is_empty())
       _mesa_ast_to_hir(shader->ir, state);
 
+   /* Lowering */
+   do_mod_to_fract(shader->ir);
+
    /* Optimization passes */
    if (!state->error && !shader->ir->is_empty()) {
       bool progress;

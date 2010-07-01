@@ -551,6 +551,15 @@ enum ir_expression_operation {
    ir_binop_sub,
    ir_binop_mul,
    ir_binop_div,
+
+   /**
+    * Takes one of two combinations of arguments:
+    *
+    * - mod(vecN, vecN)
+    * - mod(vecN, float)
+    *
+    * Does not take integer types.
+    */
    ir_binop_mod,
 
    /**

@@ -141,6 +141,16 @@ public:
     */
    void run(struct exec_list *instructions);
 
+   /* Some visitors may need to insert new variable declarations and
+    * assignments for portions of a subtree, which means they need a
+    * pointer to the current instruction in the stream, not just their
+    * node in the tree rooted at that instruction.
+    *
+    * This is implemented by visit_list_elements -- if the visitor is
+    * not called by it, nothing good will happen.
+    */
+   class ir_instruction *base_ir;
+
    /**
     * Callback function that is invoked on entry to each node visited.
     *
@@ -160,5 +170,7 @@ public:
 void visit_tree(ir_instruction *ir,
 		void (*callback)(class ir_instruction *ir, void *data),
 		void *data);
+
+ir_visitor_status visit_list_elements(ir_hierarchical_visitor *v, exec_list *l);
 
 #endif /* IR_HIERARCHICAL_VISITOR_H */

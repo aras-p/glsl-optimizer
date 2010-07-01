@@ -277,12 +277,7 @@ ir_hierarchical_visitor::visit_leave(ir_if *ir)
 void
 ir_hierarchical_visitor::run(exec_list *instructions)
 {
-   foreach_list(n, instructions) {
-      ir_instruction *ir = (ir_instruction *) n;
-
-      if (ir->accept(this) != visit_continue)
-	 break;
-   }
+   visit_list_elements(this, instructions);
 }
 
 

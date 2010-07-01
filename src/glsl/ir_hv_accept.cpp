@@ -37,20 +37,23 @@
  * from list.  However, if nodes are added to the list after the node being
  * processed, some of the added noded may not be processed.
  */
-static ir_visitor_status
+ir_visitor_status
 visit_list_elements(ir_hierarchical_visitor *v, exec_list *l)
 {
    exec_node *next;
+   ir_instruction *prev_base_ir = v->base_ir;
 
    for (exec_node *n = l->head; n->next != NULL; n = next) {
       next = n->next;
 
       ir_instruction *const ir = (ir_instruction *) n;
+      v->base_ir = ir;
       ir_visitor_status s = ir->accept(v);
 
       if (s != visit_continue)
 	 return s;
    }
+   v->base_ir = prev_base_ir;
 
    return visit_continue;
 }
