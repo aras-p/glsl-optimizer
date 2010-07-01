@@ -37,8 +37,6 @@
 
 #ifndef _GLX_client_h_
 #define _GLX_client_h_
-#define NEED_REPLIES
-#define NEED_EVENTS
 #include <X11/Xproto.h>
 #include <X11/Xlibint.h>
 #include <X11/extensions/extutil.h>

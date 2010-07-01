@@ -33,7 +33,6 @@
 
 #ifdef GLX_DIRECT_RENDERING
 
-#define NEED_REPLIES
 #include <stdio.h>
 #include <X11/Xlibint.h>
 #include <X11/extensions/Xext.h>
