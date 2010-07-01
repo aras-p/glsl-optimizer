@@ -615,6 +615,9 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
    case ir_unop_abs:
       ir_to_mesa_emit_op1(ir, OPCODE_ABS, result_dst, op[0]);
       break;
+   case ir_unop_sign:
+      ir_to_mesa_emit_op1(ir, OPCODE_SSG, result_dst, op[0]);
+      break;
 
    case ir_unop_exp:
       ir_to_mesa_emit_scalar_op1(ir, OPCODE_EXP, result_dst, op[0]);
