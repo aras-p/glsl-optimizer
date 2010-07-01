@@ -1826,7 +1826,7 @@ ast_declarator_list::hir(exec_list *instructions,
 	       _mesa_glsl_error(& loc, state, "`gl_TexCoord' array size cannot "
 				"be larger than gl_MaxTextureCoords (%u)\n",
 				state->Const.MaxTextureCoords);
-	    } else if (size <= earlier->max_array_access) {
+	    } else if ((size > 0) && (size <= earlier->max_array_access)) {
 	       YYLTYPE loc = this->get_location();
 
 	       _mesa_glsl_error(& loc, state, "array size must be > %u due to "
