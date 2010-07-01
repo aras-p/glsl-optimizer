@@ -430,7 +430,10 @@ lp_build_pack(LLVMBuilderRef builder,
 
 
 /**
- * Truncate or expand the bitwidth
+ * Truncate or expand the bitwidth.
+ *
+ * NOTE: Getting the right sign flags is crucial here, as we employ some
+ * intrinsics that do saturation.
  */
 void
 lp_build_resize(LLVMBuilderRef builder,
@@ -442,7 +445,18 @@ lp_build_resize(LLVMBuilderRef builder,
    LLVMValueRef tmp[LP_MAX_VECTOR_LENGTH];
    unsigned i;
 
-   assert(!src_type.floating || src_type.width == dst_type.width);
+   /*
+    * We don't support float <-> int conversion here. That must be done
+    * before/after calling this function.
+    */
+   assert(src_type.floating == dst_type.floating);
+
+   /*
+    * We don't support double <-> float conversion yet, although it could be
+    * added with little effort.
+    */
+   assert((!src_type.floating && !dst_type.floating) ||
+          src_type.width == dst_type.width);
 
    /* We must not loose or gain channels. Only precision */
    assert(src_type.length * num_srcs == dst_type.length * num_dsts);

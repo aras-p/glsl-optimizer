@@ -330,15 +330,24 @@ lp_build_conv(LLVMBuilderRef builder,
 
    /*
     * Truncate or expand bit width
+    *
+    * No data conversion should happen here, although the sign bits are
+    * crucial to avoid bad clamping.
     */
 
-   assert(!tmp_type.floating || tmp_type.width == dst_type.width);
+   {
+      struct lp_type new_type;
 
-   lp_build_resize(builder, tmp_type, dst_type, tmp, num_srcs, tmp, num_dsts);
+      new_type = tmp_type;
+      new_type.sign   = dst_type.sign;
+      new_type.width  = dst_type.width;
+      new_type.length = dst_type.length;
 
-   tmp_type.width  = dst_type.width;
-   tmp_type.length = dst_type.length;
-   num_tmps        = num_dsts;
+      lp_build_resize(builder, tmp_type, new_type, tmp, num_srcs, tmp, num_dsts);
+
+      tmp_type = new_type;
+      num_tmps = num_dsts;
+   }
 
    /*
     * Scale to the widest range

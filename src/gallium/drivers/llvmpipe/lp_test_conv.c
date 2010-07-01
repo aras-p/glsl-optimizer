@@ -167,7 +167,7 @@ test_one(unsigned verbose,
    unsigned i, j;
    void *code;
 
-   if (src_type.width * src_type.length != dst_type.width * dst_type.length ||
+   if (src_type.width * src_type.length != dst_type.width * dst_type.length &&
        src_type.length != dst_type.length) {
       return TRUE;
    }
