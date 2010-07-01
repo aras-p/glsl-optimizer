@@ -67,7 +67,6 @@ public:
    variable_entry *get_variable_entry(ir_variable *var);
 
    bool (*predicate)(ir_instruction *ir);
-   ir_instruction *base_ir;
 
    /* List of variable_entry */
    exec_list variable_list;
