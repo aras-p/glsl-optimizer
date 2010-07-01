@@ -694,6 +694,9 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
       ir_to_mesa_emit_scalar_op1(ir, OPCODE_RCP, result_dst, op[1]);
       ir_to_mesa_emit_op2(ir, OPCODE_MUL, result_dst, op[0], result_src);
       break;
+   case ir_binop_mod:
+      assert(!"ir_binop_mod should have been converted to b * fract(a/b)");
+      break;
 
    case ir_binop_less:
       ir_to_mesa_emit_op2(ir, OPCODE_SLT, result_dst, op[0], op[1]);
@@ -771,6 +774,7 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
       ir_to_mesa_emit_op1(ir, OPCODE_TRUNC, result_dst, op[0]);
       break;
    case ir_unop_f2b:
+   case ir_unop_i2b:
       ir_to_mesa_emit_op2(ir, OPCODE_SNE, result_dst,
 			  result_src, src_reg_for_float(0.0));
       break;
@@ -807,13 +811,6 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
    case ir_binop_bit_xor:
    case ir_binop_bit_or:
       assert(!"GLSL 1.30 features unsupported");
-      break;
-
-   default:
-      ir_print_visitor v;
-      printf("Failed to get tree for expression:\n");
-      ir->accept(&v);
-      exit(1);
       break;
    }
 
