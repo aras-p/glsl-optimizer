@@ -1710,6 +1710,7 @@ _mesa_glsl_compile_shader(GLcontext *ctx, struct gl_shader *shader)
    state->ARB_texture_rectangle_enable = true;
 
    state->Const.MaxDrawBuffers = ctx->Const.MaxDrawBuffers;
+   state->Const.MaxTextureCoords = ctx->Const.MaxTextureCoordUnits;
 
    const char *source = shader->Source;
    state->error = preprocess(state, &source, &state->info_log);

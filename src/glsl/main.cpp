@@ -128,6 +128,7 @@ compile_shader(struct gl_shader *shader)
    state->ARB_texture_rectangle_enable = true;
 
    state->Const.MaxDrawBuffers = 2;
+   state->Const.MaxTextureCoords = 4;
 
    const char *source = shader->Source;
    state->error = preprocess(state, &source, &state->info_log);

@@ -96,25 +96,28 @@ add_builtin_variable(const builtin_variable *proto, exec_list *instructions,
 
 static void
 generate_110_uniforms(exec_list *instructions,
-		      glsl_symbol_table *symtab)
+		      struct _mesa_glsl_parse_state *state)
 {
    for (unsigned i = 0
 	   ; i < Elements(builtin_110_deprecated_uniforms)
 	   ; i++) {
       add_builtin_variable(& builtin_110_deprecated_uniforms[i],
-			   instructions, symtab);
+			   instructions, state->symbols);
    }
 
-   /* FINISHME: The size of this array is implementation dependent based on the
-    * FINISHME: value of GL_MAX_TEXTURE_COORDS.  Every platform that supports
-    * FINISHME: GLSL sets GL_MAX_TEXTURE_COORDS to at least 4, so hard-code 4
-    * FINISHME: for now.
-    */
+   ir_variable *const mtc = add_variable("gl_MaxTextureCoords", ir_var_auto,
+					 -1, glsl_type::int_type,
+					 instructions, state->symbols);
+   mtc->constant_value = new(mtc)
+      ir_constant(int(state->Const.MaxTextureCoords));
+
+
    const glsl_type *const mat4_array_type =
-      glsl_type::get_array_instance(symtab, glsl_type::mat4_type, 4);
+      glsl_type::get_array_instance(state->symbols, glsl_type::mat4_type,
+				    state->Const.MaxTextureCoords);
 
    add_variable("gl_TextureMatrix", ir_var_uniform, -1, mat4_array_type,
-		instructions, symtab);
+		instructions, state->symbols);
 
    /* FINISHME: Add support for gl_DepthRangeParameters */
    /* FINISHME: Add support for gl_ClipPlane[] */
@@ -129,11 +132,11 @@ generate_110_uniforms(exec_list *instructions,
     * FINISHME: at least 8, so hard-code 8 for now.
     */
    const glsl_type *const light_source_array_type =
-      glsl_type::get_array_instance(symtab,
-				    symtab->get_type("gl_LightSourceParameters"), 8);
+      glsl_type::get_array_instance(state->symbols,
+				    state->symbols->get_type("gl_LightSourceParameters"), 8);
 
    add_variable("gl_LightSource", ir_var_uniform, -1, light_source_array_type,
-		instructions, symtab);
+		instructions, state->symbols);
 
    /* FINISHME: Add support for gl_LightModel */
    /* FINISHME: Add support for gl_FrontLightProduct[], gl_BackLightProduct[] */
@@ -157,7 +160,7 @@ generate_110_vs_variables(exec_list *instructions,
       add_builtin_variable(& builtin_110_deprecated_vs_variables[i],
 			   instructions, state->symbols);
    }
-   generate_110_uniforms(instructions, state->symbols);
+   generate_110_uniforms(instructions, state);
 
    /* From page 54 (page 60 of the PDF) of the GLSL 1.20 spec:
     *
@@ -247,7 +250,7 @@ generate_110_fs_variables(exec_list *instructions,
       add_builtin_variable(& builtin_110_deprecated_fs_variables[i],
 			   instructions, state->symbols);
    }
-   generate_110_uniforms(instructions, state->symbols);
+   generate_110_uniforms(instructions, state);
 
    /* From page 54 (page 60 of the PDF) of the GLSL 1.20 spec:
     *

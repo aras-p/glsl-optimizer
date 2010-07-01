@@ -50,6 +50,7 @@ struct _mesa_glsl_parse_state {
     */
    struct {
       unsigned MaxDrawBuffers;
+      unsigned MaxTextureCoords;
    } Const;
 
    /**
