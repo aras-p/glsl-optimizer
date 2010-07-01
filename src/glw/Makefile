@@ -17,7 +17,7 @@ OBJECTS = $(GLW_SOURCES:.c=.o)
 ##### RULES #####
 
 .c.o:
-	$(CC) -c $(INCDIRS) $(CFLAGS) $<
+	$(CC) -c $(INCDIRS) $(CFLAGS) $(GLW_CFLAGS) $<
 
 
 
