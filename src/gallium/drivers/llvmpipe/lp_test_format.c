@@ -146,13 +146,15 @@ test_format_float(unsigned verbose, FILE *fp,
    boolean first = TRUE;
    boolean success = TRUE;
    unsigned i, j, k, l;
+   void *f;
 
    fetch = add_fetch_rgba_test(verbose, desc, lp_float32_vec4_type());
 
-   fetch_ptr = (fetch_ptr_t)pointer_to_func(LLVMGetPointerToGlobal(lp_build_engine, fetch));
+   f = LLVMGetPointerToGlobal(lp_build_engine, fetch);
+   fetch_ptr = (fetch_ptr_t) pointer_to_func(f);
 
    if (verbose >= 2) {
-      lp_disassemble(fetch_ptr);
+      lp_disassemble(f);
    }
 
    for (l = 0; l < util_format_nr_test_cases; ++l) {
@@ -225,13 +227,15 @@ test_format_unorm8(unsigned verbose, FILE *fp,
    boolean first = TRUE;
    boolean success = TRUE;
    unsigned i, j, k, l;
+   void *f;
 
    fetch = add_fetch_rgba_test(verbose, desc, lp_unorm8_vec4_type());
 
-   fetch_ptr = (fetch_ptr_t)pointer_to_func(LLVMGetPointerToGlobal(lp_build_engine, fetch));
+   f = LLVMGetPointerToGlobal(lp_build_engine, fetch);
+   fetch_ptr = (fetch_ptr_t) pointer_to_func(f);
 
    if (verbose >= 2) {
-      lp_disassemble(fetch_ptr);
+      lp_disassemble(f);
    }
 
    for (l = 0; l < util_format_nr_test_cases; ++l) {
