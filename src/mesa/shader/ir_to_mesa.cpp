@@ -1342,9 +1342,10 @@ ir_to_mesa_visitor::visit(ir_return *ir)
 void
 ir_to_mesa_visitor::visit(ir_discard *ir)
 {
-   assert(0);
+   assert(ir->condition == NULL); /* FINISHME */
 
-   ir->condition->accept(this);
+   ir_to_mesa_emit_op1(ir, OPCODE_KIL_NV,
+		       ir_to_mesa_undef_dst, ir_to_mesa_undef);
 }
 
 void
