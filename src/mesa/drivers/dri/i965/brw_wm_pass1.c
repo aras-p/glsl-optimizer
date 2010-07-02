@@ -255,6 +255,11 @@ void brw_wm_pass1( struct brw_wm_compile *c )
 	 read2 = WRITEMASK_W; /* pixel w */
 	 break;
 
+      case OPCODE_DP2:
+	 read0 = WRITEMASK_XY;
+	 read1 = WRITEMASK_XY;
+	 break;
+
       case OPCODE_DP3:	
 	 read0 = WRITEMASK_XYZ;
 	 read1 = WRITEMASK_XYZ;

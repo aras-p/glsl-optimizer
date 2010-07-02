@@ -1903,6 +1903,9 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 	    case OPCODE_SWZ:
 		emit_alu1(p, brw_MOV, dst, dst_flags, args[0]);
 		break;
+	    case OPCODE_DP2:
+		emit_dp2(p, dst, dst_flags, args[0], args[1]);
+		break;
 	    case OPCODE_DP3:
 		emit_dp3(p, dst, dst_flags, args[0], args[1]);
 		break;

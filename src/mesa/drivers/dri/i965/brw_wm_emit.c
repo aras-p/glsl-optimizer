@@ -731,6 +731,27 @@ void emit_min(struct brw_compile *p,
 }
 
 
+void emit_dp2(struct brw_compile *p,
+	      const struct brw_reg *dst,
+	      GLuint mask,
+	      const struct brw_reg *arg0,
+	      const struct brw_reg *arg1)
+{
+   int dst_chan = _mesa_ffs(mask & WRITEMASK_XYZW) - 1;
+
+   if (!(mask & WRITEMASK_XYZW))
+      return; /* Do not emit dead code */
+
+   assert(is_power_of_two(mask & WRITEMASK_XYZW));
+
+   brw_MUL(p, brw_null_reg(), arg0[0], arg1[0]);
+
+   brw_set_saturate(p, (mask & SATURATE) ? 1 : 0);
+   brw_MAC(p, dst[dst_chan], arg0[1], arg1[1]);
+   brw_set_saturate(p, 0);
+}
+
+
 void emit_dp3(struct brw_compile *p,
 	      const struct brw_reg *dst,
 	      GLuint mask,
@@ -1582,6 +1603,10 @@ void brw_wm_emit( struct brw_wm_compile *c )
 
       case OPCODE_DDY:
 	 emit_ddxy(p, dst, dst_flags, GL_FALSE, args[0]);
+	 break;
+
+      case OPCODE_DP2:
+	 emit_dp2(p, dst, dst_flags, args[0], args[1]);
 	 break;
 
       case OPCODE_DP3:
