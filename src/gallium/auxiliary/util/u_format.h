@@ -663,6 +663,9 @@ util_format_write_4ub(enum pipe_format format,
  * Generic format conversion;
  */
 
+boolean
+util_format_fits_8unorm(const struct util_format_description *format_desc);
+
 void
 util_format_translate(enum pipe_format dst_format,
                       void *dst, unsigned dst_stride,
