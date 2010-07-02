@@ -86,6 +86,7 @@ add_fetch_rgba_test(unsigned verbose,
    LLVMTypeRef args[4];
    LLVMValueRef func;
    LLVMValueRef packed_ptr;
+   LLVMValueRef offset = LLVMConstNull(LLVMInt32Type());
    LLVMValueRef rgba_ptr;
    LLVMValueRef i;
    LLVMValueRef j;
@@ -112,7 +113,8 @@ add_fetch_rgba_test(unsigned verbose,
    builder = LLVMCreateBuilder();
    LLVMPositionBuilderAtEnd(builder, block);
 
-   rgba = lp_build_fetch_rgba_aos(builder, desc, type, packed_ptr, i, j);
+   rgba = lp_build_fetch_rgba_aos(builder, desc, type,
+                                  packed_ptr, offset, i, j);
 
    LLVMBuildStore(builder, rgba, rgba_ptr);
 

@@ -495,5 +495,5 @@ draw_llvm_translate_from(LLVMBuilderRef builder,
 
    format_desc = util_format_description(from_format);
    zero = LLVMConstNull(LLVMInt32Type());
-   return lp_build_fetch_rgba_aos(builder, format_desc, type, vbuffer, zero, zero);
+   return lp_build_fetch_rgba_aos(builder, format_desc, type, vbuffer, zero, zero, zero);
 }

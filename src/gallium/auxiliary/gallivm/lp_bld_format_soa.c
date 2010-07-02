@@ -346,18 +346,49 @@ lp_build_fetch_rgba_soa(LLVMBuilderRef builder,
                                format_desc,
                                type,
                                packed, rgba_out);
+      return;
    }
-   else {
-      /*
-       * Fallback to calling lp_build_fetch_rgba_aos for each pixel.
-       *
-       * This is not the most efficient way of fetching pixels, as we
-       * miss some opportunities to do vectorization, but this is
-       * convenient for formats or scenarios for which there was no
-       * opportunity or incentive to optimize.
-       */
 
+   /*
+    * Try calling lp_build_fetch_rgba_aos for all pixels.
+    */
+
+   if (util_format_fits_8unorm(format_desc) &&
+       type.floating && type.width == 32 && type.length == 4) {
+      struct lp_type tmp_type;
+      LLVMValueRef tmp;
+
+      memset(&tmp_type, 0, sizeof tmp_type);
+      tmp_type.width = 8;
+      tmp_type.length = type.length * 4;
+      tmp_type.norm = TRUE;
+
+      tmp = lp_build_fetch_rgba_aos(builder, format_desc, tmp_type,
+                                    base_ptr, offset, i, j);
+
+      lp_build_rgba8_to_f32_soa(builder,
+                                type,
+                                tmp,
+                                rgba_out);
+
+      return;
+   }
+
+   /*
+    * Fallback to calling lp_build_fetch_rgba_aos for each pixel.
+    *
+    * This is not the most efficient way of fetching pixels, as we
+    * miss some opportunities to do vectorization, but this is
+    * convenient for formats or scenarios for which there was no
+    * opportunity or incentive to optimize.
+    */
+
+   {
       unsigned k, chan;
+      struct lp_type tmp_type;
+
+      tmp_type = type;
+      tmp_type.length = 4;
 
       for (chan = 0; chan < 4; ++chan) {
          rgba_out[chan] = lp_build_undef(type);
@@ -367,18 +398,17 @@ lp_build_fetch_rgba_soa(LLVMBuilderRef builder,
       for(k = 0; k < type.length; ++k) {
          LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), k, 0);
          LLVMValueRef offset_elem;
-         LLVMValueRef ptr;
          LLVMValueRef i_elem, j_elem;
          LLVMValueRef tmp;
 
          offset_elem = LLVMBuildExtractElement(builder, offset, index, "");
-         ptr = LLVMBuildGEP(builder, base_ptr, &offset_elem, 1, "");
 
          i_elem = LLVMBuildExtractElement(builder, i, index, "");
          j_elem = LLVMBuildExtractElement(builder, j, index, "");
 
          /* Get a single float[4]={R,G,B,A} pixel */
-         tmp = lp_build_fetch_rgba_aos(builder, format_desc, type, ptr,
+         tmp = lp_build_fetch_rgba_aos(builder, format_desc, tmp_type,
+                                       base_ptr, offset_elem,
                                        i_elem, j_elem);
 
          /*

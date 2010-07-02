@@ -102,7 +102,9 @@ format_matches_type(const struct util_format_description *desc,
    assert(type.length % 4 == 0);
 
    if (desc->layout != UTIL_FORMAT_LAYOUT_PLAIN ||
-       desc->colorspace != UTIL_FORMAT_COLORSPACE_RGB) {
+       desc->colorspace != UTIL_FORMAT_COLORSPACE_RGB ||
+       desc->block.width != 1 ||
+       desc->block.height != 1) {
       return FALSE;
    }
 
@@ -137,18 +139,15 @@ format_matches_type(const struct util_format_description *desc,
  * Unpack a single pixel into its RGBA components.
  *
  * @param desc  the pixel format for the packed pixel value
- * @param type  the desired return type (float[4] vs. ubyte[4])
  * @param packed integer pixel in a format such as PIPE_FORMAT_B8G8R8A8_UNORM
  *
  * @return RGBA in a float[4] or ubyte[4] or ushort[4] vector.
  */
 static INLINE LLVMValueRef
-lp_build_unpack_rgba_aos(const struct util_format_description *desc,
-                         struct lp_build_context *bld,
-                         LLVMValueRef packed)
+lp_build_unpack_arith_rgba_aos(LLVMBuilderRef builder,
+                               const struct util_format_description *desc,
+                               LLVMValueRef packed)
 {
-   LLVMBuilderRef builder = bld->builder;
-   struct lp_type type = bld->type;
    LLVMValueRef shifted, casted, scaled, masked;
    LLVMValueRef shifts[4];
    LLVMValueRef masks[4];
@@ -167,8 +166,7 @@ lp_build_unpack_rgba_aos(const struct util_format_description *desc,
 
    /* Do the intermediate integer computations with 32bit integers since it
     * matches floating point size */
-   if (desc->block.bits < 32)
-      packed = LLVMBuildZExt(builder, packed, LLVMInt32Type(), "");
+   assert (LLVMTypeOf(packed) == LLVMInt32Type());
 
    /* Broadcast the packed value to all four channels
     * before: packed = BGRA
@@ -245,20 +243,6 @@ lp_build_unpack_rgba_aos(const struct util_format_description *desc,
       scaled = LLVMBuildMul(builder, casted, LLVMConstVector(scales, 4), "");
    else
       scaled = casted;
-
-   /*
-    * Type conversion.
-    *
-    * TODO: We could avoid floating conversion for integer to
-    * integer conversions.
-    */
-
-   lp_build_conv(builder,
-                 lp_float32_vec4_type(),
-                 type,
-                 &scaled, 1, &scaled, 1);
-
-   scaled = lp_build_format_swizzle_aos(desc, bld, scaled);
 
    return scaled;
 }
@@ -382,16 +366,50 @@ LLVMValueRef
 lp_build_fetch_rgba_aos(LLVMBuilderRef builder,
                         const struct util_format_description *format_desc,
                         struct lp_type type,
-                        LLVMValueRef ptr,
+                        LLVMValueRef base_ptr,
+                        LLVMValueRef offset,
                         LLVMValueRef i,
                         LLVMValueRef j)
 {
+   unsigned num_pixels = type.length / 4;
    struct lp_build_context bld;
 
-   /* XXX: For now we only support one pixel at a time */
-   assert(type.length == 4);
+   assert(type.length <= LP_MAX_VECTOR_LENGTH);
+   assert(type.length % 4 == 0);
 
    lp_build_context_init(&bld, builder, type);
+
+   /*
+    * Trivial case
+    *
+    * The format matches the type (apart of a swizzle) so no need for
+    * scaling or converting.
+    */
+
+   if (format_matches_type(format_desc, type) &&
+       format_desc->block.bits <= type.width * 4 &&
+       util_is_pot(format_desc->block.bits)) {
+      LLVMValueRef packed;
+
+      /*
+       * The format matches the type (apart of a swizzle) so no need for
+       * scaling or converting.
+       */
+
+      packed = lp_build_gather(builder, type.length/4,
+                               format_desc->block.bits, type.width*4,
+                               base_ptr, offset);
+
+      assert(format_desc->block.bits <= type.width * type.length);
+
+      packed = LLVMBuildBitCast(builder, packed, lp_build_vec_type(type), "");
+
+      return lp_build_format_swizzle_aos(format_desc, &bld, packed);
+   }
+
+   /*
+    * Bit arithmetic
+    */
 
    if (format_desc->layout == UTIL_FORMAT_LAYOUT_PLAIN &&
        (format_desc->colorspace == UTIL_FORMAT_COLORSPACE_RGB ||
@@ -403,56 +421,74 @@ lp_build_fetch_rgba_aos(LLVMBuilderRef builder,
        format_desc->is_bitmask &&
        !format_desc->is_mixed &&
        (format_desc->channel[0].type == UTIL_FORMAT_TYPE_UNSIGNED ||
-        format_desc->channel[1].type == UTIL_FORMAT_TYPE_UNSIGNED))
-   {
-      LLVMValueRef packed;
+        format_desc->channel[1].type == UTIL_FORMAT_TYPE_UNSIGNED)) {
 
-      ptr = LLVMBuildBitCast(builder, ptr,
-                             LLVMPointerType(LLVMIntType(format_desc->block.bits), 0) ,
-                             "");
+      LLVMValueRef tmps[LP_MAX_VECTOR_LENGTH/4];
+      LLVMValueRef res;
+      unsigned k;
 
-      packed = LLVMBuildLoad(builder, ptr, "packed");
+      /*
+       * Unpack a pixel at a time into a <4 x float> RGBA vector
+       */
 
-      if (format_matches_type(format_desc, type)) {
-         /*
-          * The format matches the type (apart of a swizzle) so no need for
-          * scaling or converting.
-          */
+      for (k = 0; k < num_pixels; ++k) {
+         LLVMValueRef packed;
 
-         assert(format_desc->block.bits <= type.width * type.length);
-         if (format_desc->block.bits < type.width * type.length) {
-            packed = LLVMBuildZExt(builder, packed,
-                                   LLVMIntType(type.width * type.length), "");
-         }
+         packed = lp_build_gather_elem(builder, num_pixels,
+                                       format_desc->block.bits, 32,
+                                       base_ptr, offset, k);
 
-         packed = LLVMBuildBitCast(builder, packed, lp_build_vec_type(type), "");
-
-         return lp_build_format_swizzle_aos(format_desc, &bld, packed);
-      } else {
-         return lp_build_unpack_rgba_aos(format_desc, &bld, packed);
+         tmps[k] = lp_build_unpack_arith_rgba_aos(builder, format_desc,
+                                                  packed);
       }
-   }
-   else if (format_desc->layout == UTIL_FORMAT_LAYOUT_SUBSAMPLED) {
-      LLVMValueRef packed;
-      LLVMValueRef rgba;
 
-      ptr = LLVMBuildBitCast(builder, ptr,
-                             LLVMPointerType(LLVMInt32Type(), 0),
-                             "packed_ptr");
-
-      packed = LLVMBuildLoad(builder, ptr, "packed");
-
-      rgba = lp_build_unpack_subsampled_to_rgba_aos(builder, format_desc,
-                                                    1, packed, i, j);
+      /*
+       * Type conversion.
+       *
+       * TODO: We could avoid floating conversion for integer to
+       * integer conversions.
+       */
 
       lp_build_conv(builder,
-                    lp_unorm8_vec4_type(),
+                    lp_float32_vec4_type(),
                     type,
-                    &rgba, 1, &rgba, 1);
+                    tmps, num_pixels, &res, 1);
 
-      return rgba;
+      return lp_build_format_swizzle_aos(format_desc, &bld, res);
    }
-   else if (format_desc->fetch_rgba_float) {
+
+   /*
+    * YUV / subsampled formats
+    */
+
+   if (format_desc->layout == UTIL_FORMAT_LAYOUT_SUBSAMPLED) {
+      struct lp_type tmp_type;
+      LLVMValueRef tmp;
+
+      memset(&tmp_type, 0, sizeof tmp_type);
+      tmp_type.width = 8;
+      tmp_type.length = num_pixels * 4;
+      tmp_type.norm = TRUE;
+
+      tmp = lp_build_fetch_subsampled_rgba_aos(builder,
+                                               format_desc,
+                                               num_pixels,
+                                               base_ptr,
+                                               offset,
+                                               i, j);
+
+      lp_build_conv(builder,
+                    tmp_type, type,
+                    &tmp, 1, &tmp, 1);
+
+      return tmp;
+   }
+
+   /*
+    * Fallback to util_format_description::fetch_rgba_float().
+    */
+
+   if (format_desc->fetch_rgba_float) {
       /*
        * Fallback to calling util_format_description::fetch_rgba_float.
        *
@@ -469,8 +505,9 @@ lp_build_fetch_rgba_aos(LLVMBuilderRef builder,
       LLVMTypeRef pf32t = LLVMPointerType(f32t, 0);
       LLVMValueRef function;
       LLVMValueRef tmp_ptr;
-      LLVMValueRef tmp_val;
-      LLVMValueRef args[4];
+      LLVMValueRef tmps[LP_MAX_VECTOR_LENGTH/4];
+      LLVMValueRef res;
+      unsigned k;
 
       util_snprintf(name, sizeof name, "util_format_%s_fetch_rgba_float",
                     format_desc->short_name);
@@ -508,28 +545,43 @@ lp_build_fetch_rgba_aos(LLVMBuilderRef builder,
        * in the SoA vectors.
        */
 
-      args[0] = LLVMBuildBitCast(builder, tmp_ptr, pf32t, "");
-      args[1] = ptr;
-      args[2] = i;
-      args[3] = j;
+      for (k = 0; k < num_pixels; ++k) {
+         LLVMValueRef args[4];
 
-      LLVMBuildCall(builder, function, args, Elements(args), "");
+         args[0] = LLVMBuildBitCast(builder, tmp_ptr, pf32t, "");
+         args[1] = lp_build_gather_elem_ptr(builder, num_pixels,
+                                            base_ptr, offset, k);
 
-      tmp_val = LLVMBuildLoad(builder, tmp_ptr, "");
+         if (num_pixels == 1) {
+            args[2] = i;
+            args[3] = j;
+         }
+         else {
+            LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), k, 0);
+            args[2] = LLVMBuildExtractElement(builder, i, index, "");
+            args[3] = LLVMBuildExtractElement(builder, j, index, "");
+         }
 
-      if (type.floating) {
-         /* No further conversion necessary */
-      } else {
-         lp_build_conv(builder,
-                       lp_float32_vec4_type(),
-                       type,
-                       &tmp_val, 1, &tmp_val, 1);
+         LLVMBuildCall(builder, function, args, Elements(args), "");
+
+         tmps[k] = LLVMBuildLoad(builder, tmp_ptr, "");
       }
 
-      return tmp_val;
+      /*
+       * Type conversion.
+       *
+       * TODO: We could avoid floating conversion for integer to
+       * integer conversions.
+       */
+
+      lp_build_conv(builder,
+                    lp_float32_vec4_type(),
+                    type,
+                    tmps, num_pixels, &res, 1);
+
+      return res;
    }
-   else {
-      assert(0);
-      return lp_build_undef(type);
-   }
+
+   assert(0);
+   return lp_build_undef(type);
 }

@@ -35,9 +35,6 @@
 
 
 #include "util/u_format.h"
-#include "util/u_memory.h"
-#include "util/u_math.h"
-#include "util/u_string.h"
 
 #include "lp_bld_arit.h"
 #include "lp_bld_init.h"
@@ -359,16 +356,23 @@ grgb_to_rgba_aos(LLVMBuilderRef builder,
  * @return  a <4*n x i8> vector with the pixel RGBA values in AoS
  */
 LLVMValueRef
-lp_build_unpack_subsampled_to_rgba_aos(LLVMBuilderRef builder,
-                                       const struct util_format_description *format_desc,
-                                       unsigned n,
-                                       LLVMValueRef packed,
-                                       LLVMValueRef i,
-                                       LLVMValueRef j)
+lp_build_fetch_subsampled_rgba_aos(LLVMBuilderRef builder,
+                                   const struct util_format_description *format_desc,
+                                   unsigned n,
+                                   LLVMValueRef base_ptr,
+                                   LLVMValueRef offset,
+                                   LLVMValueRef i,
+                                   LLVMValueRef j)
 {
+   LLVMValueRef packed;
    LLVMValueRef rgba;
 
    assert(format_desc->layout == UTIL_FORMAT_LAYOUT_SUBSAMPLED);
+   assert(format_desc->block.bits == 32);
+   assert(format_desc->block.width == 2);
+   assert(format_desc->block.height == 1);
+
+   packed = lp_build_gather(builder, n, 32, 32, base_ptr, offset);
 
    (void)j;
 
