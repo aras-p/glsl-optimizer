@@ -1546,7 +1546,7 @@ static void
 set_branchtargets(struct prog_instruction *mesa_instructions,
 		  int num_instructions)
 {
-   int if_count = 0, loop_count;
+   int if_count = 0, loop_count = 0;
    int *if_stack, *loop_stack;
    int if_stack_pos = 0, loop_stack_pos = 0;
    int i, j;
