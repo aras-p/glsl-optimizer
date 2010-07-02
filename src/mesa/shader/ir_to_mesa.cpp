@@ -1287,12 +1287,22 @@ ir_to_mesa_visitor::visit(ir_call *ir)
 void
 ir_to_mesa_visitor::visit(ir_texture *ir)
 {
-   ir_to_mesa_src_reg result_src, coord, projector;
-   ir_to_mesa_dst_reg result_dst, lod_info;
+   ir_to_mesa_src_reg result_src, coord, lod_info, projector;
+   ir_to_mesa_dst_reg result_dst, coord_dst;
    ir_to_mesa_instruction *inst = NULL;
+   prog_opcode opcode = OPCODE_NOP;
 
    ir->coordinate->accept(this);
-   coord = this->result;
+
+   /* Put our coords in a temp.  We'll need to modify them for shadow,
+    * projection, or LOD, so the only case we'd use it as is is if
+    * we're doing plain old texturing.  Mesa IR optimization should
+    * handle cleaning up our mess in that case.
+    */
+   coord = get_temp(glsl_type::vec4_type);
+   coord_dst = ir_to_mesa_dst_reg_from_src(coord);
+   ir_to_mesa_emit_op1(ir, OPCODE_MOV, coord_dst,
+		       this->result);
 
    if (ir->projector) {
       ir->projector->accept(this);
@@ -1307,42 +1317,58 @@ ir_to_mesa_visitor::visit(ir_texture *ir)
 
    switch (ir->op) {
    case ir_tex:
-      if (ir->projector) {
-	 /* Compute new coord as vec4(texcoord.xyz, projector) */
-	 ir_to_mesa_emit_op1(ir, OPCODE_MOV, result_dst, coord);
-	 result_dst.writemask = WRITEMASK_W;
-	 ir_to_mesa_emit_op1(ir, OPCODE_MOV, result_dst, projector);
-	 result_dst.writemask = WRITEMASK_XYZW;
-	 inst = ir_to_mesa_emit_op1(ir, OPCODE_TXP, result_dst, result_src);
-      } else {
-	 inst = ir_to_mesa_emit_op1(ir, OPCODE_TEX, result_dst, coord);
-      }
+      opcode = OPCODE_TEX;
       break;
    case ir_txb:
-      /* Mesa IR stores bias in the last channel of the coords. */
-      lod_info = ir_to_mesa_dst_reg_from_src(coord);
-      lod_info.writemask = WRITEMASK_W;
+      opcode = OPCODE_TXB;
       ir->lod_info.bias->accept(this);
-      ir_to_mesa_emit_op1(ir, OPCODE_MOV, lod_info, this->result);
-
-      inst = ir_to_mesa_emit_op1(ir, OPCODE_TXB, result_dst, coord);
-      assert(!ir->projector); /* FINISHME */
+      lod_info = this->result;
       break;
    case ir_txl:
-      /* Mesa IR stores lod in the last channel of the coords. */
-      lod_info = ir_to_mesa_dst_reg_from_src(coord);
-      lod_info.writemask = WRITEMASK_W;
+      opcode = OPCODE_TXL;
       ir->lod_info.lod->accept(this);
-      ir_to_mesa_emit_op1(ir, OPCODE_MOV, lod_info, this->result);
-
-      inst = ir_to_mesa_emit_op1(ir, OPCODE_TXL, result_dst, coord);
-      assert(!ir->projector); /* FINISHME */
+      lod_info = this->result;
       break;
    case ir_txd:
    case ir_txf:
       assert(!"GLSL 1.30 features unsupported");
       break;
    }
+
+   if (ir->projector) {
+      if (opcode == OPCODE_TEX) {
+	 /* Slot the projector in as the last component of the coord. */
+	 coord_dst.writemask = WRITEMASK_W;
+	 ir_to_mesa_emit_op1(ir, OPCODE_MOV, coord_dst, projector);
+	 coord_dst.writemask = WRITEMASK_XYZW;
+	 opcode = OPCODE_TXP;
+      } else {
+	 ir_to_mesa_src_reg coord_w = coord;
+	 coord_w.swizzle = SWIZZLE_WWWW;
+
+	 /* For the other TEX opcodes there's no projective version
+	  * since the last slot is taken up by lod info.  Do the
+	  * projective divide now.
+	  */
+	 coord_dst.writemask = WRITEMASK_W;
+	 ir_to_mesa_emit_op1(ir, OPCODE_RCP, coord_dst, projector);
+
+	 coord_dst.writemask = WRITEMASK_XYZ;
+	 ir_to_mesa_emit_op2(ir, OPCODE_MUL, coord_dst, coord, coord_w);
+
+	 coord_dst.writemask = WRITEMASK_XYZW;
+	 coord.swizzle = SWIZZLE_XYZW;
+      }
+   }
+
+   if (opcode == OPCODE_TXL || opcode == OPCODE_TXB) {
+      /* Mesa IR stores lod or lod bias in the last channel of the coords. */
+      coord_dst.writemask = WRITEMASK_W;
+      ir_to_mesa_emit_op1(ir, OPCODE_MOV, coord_dst, lod_info);
+      coord_dst.writemask = WRITEMASK_XYZW;
+   }
+
+   inst = ir_to_mesa_emit_op1(ir, opcode, result_dst, coord);
 
    ir_dereference_variable *sampler = ir->sampler->as_dereference_variable();
    assert(sampler); /* FINISHME: sampler arrays */
