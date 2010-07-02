@@ -266,6 +266,9 @@ main(int argc, char **argv)
    if ((status == EXIT_SUCCESS) && do_link)  {
       link_shaders(whole_program);
       status = (whole_program->LinkStatus) ? EXIT_SUCCESS : EXIT_FAILURE;
+
+      if (strlen(whole_program->InfoLog) > 0)
+	 printf("Info log for linking:\n%s\n", whole_program->InfoLog);
    }
 
    talloc_free(whole_program);
