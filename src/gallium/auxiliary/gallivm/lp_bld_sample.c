@@ -125,57 +125,6 @@ lp_sampler_static_state(struct lp_sampler_static_state *state,
 
 
 /**
- * Gather elements from scatter positions in memory into a single vector.
- * Use for fetching texels from a texture.
- * For SSE, typical values are length=4, src_width=32, dst_width=32.
- *
- * @param length length of the offsets
- * @param src_width src element width in bits
- * @param dst_width result element width in bits (src will be expanded to fit)
- * @param base_ptr base pointer, should be a i8 pointer type.
- * @param offsets vector with offsets
- */
-LLVMValueRef
-lp_build_gather(LLVMBuilderRef builder,
-                unsigned length,
-                unsigned src_width,
-                unsigned dst_width,
-                LLVMValueRef base_ptr,
-                LLVMValueRef offsets)
-{
-   LLVMTypeRef src_type = LLVMIntType(src_width);
-   LLVMTypeRef src_ptr_type = LLVMPointerType(src_type, 0);
-   LLVMTypeRef dst_elem_type = LLVMIntType(dst_width);
-   LLVMTypeRef dst_vec_type = LLVMVectorType(dst_elem_type, length);
-   LLVMValueRef res;
-   unsigned i;
-
-   res = LLVMGetUndef(dst_vec_type);
-   for(i = 0; i < length; ++i) {
-      LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), i, 0);
-      LLVMValueRef elem_offset;
-      LLVMValueRef elem_ptr;
-      LLVMValueRef elem;
-
-      elem_offset = LLVMBuildExtractElement(builder, offsets, index, "");
-      elem_ptr = LLVMBuildGEP(builder, base_ptr, &elem_offset, 1, "");
-      elem_ptr = LLVMBuildBitCast(builder, elem_ptr, src_ptr_type, "");
-      elem = LLVMBuildLoad(builder, elem_ptr, "");
-
-      assert(src_width <= dst_width);
-      if(src_width > dst_width)
-         elem = LLVMBuildTrunc(builder, elem, dst_elem_type, "");
-      if(src_width < dst_width)
-         elem = LLVMBuildZExt(builder, elem, dst_elem_type, "");
-
-      res = LLVMBuildInsertElement(builder, res, elem, index, "");
-   }
-
-   return res;
-}
-
-
-/**
  * Compute the offset of a pixel block.
  *
  * x, y, z, y_stride, z_stride are vectors, and they refer to pixel blocks, as

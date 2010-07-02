@@ -44,6 +44,7 @@
 #include "lp_bld_type.h"
 #include "lp_bld_const.h"
 #include "lp_bld_conv.h"
+#include "lp_bld_gather.h"
 #include "lp_bld_format.h"
 
 

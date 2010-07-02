@@ -147,15 +147,6 @@ lp_sampler_static_state(struct lp_sampler_static_state *state,
 
 
 LLVMValueRef
-lp_build_gather(LLVMBuilderRef builder,
-                unsigned length,
-                unsigned src_width,
-                unsigned dst_width,
-                LLVMValueRef base_ptr,
-                LLVMValueRef offsets);
-
-
-LLVMValueRef
 lp_build_sample_offset(struct lp_build_context *bld,
                        const struct util_format_description *format_desc,
                        LLVMValueRef x,

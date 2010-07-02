@@ -50,6 +50,7 @@
 #include "lp_bld_swizzle.h"
 #include "lp_bld_pack.h"
 #include "lp_bld_flow.h"
+#include "lp_bld_gather.h"
 #include "lp_bld_format.h"
 #include "lp_bld_sample.h"
 
