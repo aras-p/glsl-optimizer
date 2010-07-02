@@ -1550,29 +1550,73 @@ ast_declarator_list::hir(exec_list *instructions,
    ir_rvalue *result = NULL;
    YYLTYPE loc = this->get_location();
 
+   /* From page 46 (page 52 of the PDF) of the GLSL 1.50 spec:
+    *
+    *     "To ensure that a particular output variable is invariant, it is
+    *     necessary to use the invariant qualifier. It can either be used to
+    *     qualify a previously declared variable as being invariant
+    *
+    *         invariant gl_Position; // make existing gl_Position be invariant"
+    *
+    * In these cases the parser will set the 'invariant' flag in the declarator
+    * list, and the type will be NULL.
+    */
+   if (this->invariant) {
+      assert(this->type == NULL);
+
+      if (state->current_function != NULL) {
+	 _mesa_glsl_error(& loc, state,
+			  "All uses of `invariant' keyword must be at global "
+			  "scope\n");
+      }
+
+      foreach_list_typed (ast_declaration, decl, link, &this->declarations) {
+	 assert(!decl->is_array);
+	 assert(decl->array_size == NULL);
+	 assert(decl->initializer == NULL);
+
+	 ir_variable *const earlier =
+	    state->symbols->get_variable(decl->identifier);
+	 if (earlier == NULL) {
+	    _mesa_glsl_error(& loc, state,
+			     "Undeclared variable `%s' cannot be marked "
+			     "invariant\n", decl->identifier);
+	 } else if ((state->target == vertex_shader)
+	       && (earlier->mode != ir_var_out)) {
+	    _mesa_glsl_error(& loc, state,
+			     "`%s' cannot be marked invariant, vertex shader "
+			     "outputs only\n", decl->identifier);
+	 } else if ((state->target == fragment_shader)
+	       && (earlier->mode != ir_var_in)) {
+	    _mesa_glsl_error(& loc, state,
+			     "`%s' cannot be marked invariant, fragment shader "
+			     "inputs only\n", decl->identifier);
+	 } else {
+	    earlier->invariant = true;
+	 }
+      }
+
+      /* Invariant redeclarations do not have r-values.
+       */
+      return NULL;
+   }
+
+   assert(this->type != NULL);
+   assert(!this->invariant);
+
    /* The type specifier may contain a structure definition.  Process that
     * before any of the variable declarations.
     */
    (void) this->type->specifier->hir(instructions, state);
 
-   /* FINISHME: Handle vertex shader "invariant" declarations that do not
-    * FINISHME: include a type.  These re-declare built-in variables to be
-    * FINISHME: invariant.
-    */
-
    decl_type = this->type->specifier->glsl_type(& type_name, state);
    if (this->declarations.is_empty()) {
-      /* There are only two valid cases where the declaration list can be
-       * empty.
-       *
-       * 1. The declaration is setting the default precision of a built-in
-       *    type (e.g., 'precision highp vec4;').
-       *
-       * 2. Adding 'invariant' to an existing vertex shader output.
+      /* The only valid case where the declaration list can be empty is when
+       * the declaration is setting the default precision of a built-in type
+       * (e.g., 'precision highp vec4;').
        */
 
-      if (this->type->qualifier.invariant) {
-      } else if (decl_type != NULL) {
+      if (decl_type != NULL) {
       } else {
 	    _mesa_glsl_error(& loc, state, "incomplete declaration");
       }
@@ -1635,6 +1679,18 @@ ast_declarator_list::hir(exec_list *instructions,
 
       apply_type_qualifier_to_variable(& this->type->qualifier, var, state,
 				       & loc);
+
+      if (this->type->qualifier.invariant) {
+	 if ((state->target == vertex_shader) && !var->shader_out) {
+	    _mesa_glsl_error(& loc, state,
+			     "`%s' cannot be marked invariant, vertex shader "
+			     "outputs only\n", var->name);
+	 } else if ((state->target == fragment_shader) && !var->shader_in) {
+	    _mesa_glsl_error(& loc, state,
+			     "`%s' cannot be marked invariant, fragment shader "
+			     "inputs only\n", var->name);
+	 }
+      }
 
       if (state->current_function != NULL) {
 	 const char *mode = NULL;
