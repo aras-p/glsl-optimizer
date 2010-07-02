@@ -24,6 +24,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 
 #include "glcpp.h"
 #include "glcpp-parse.h"
@@ -137,6 +138,13 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 	{
 		REJECT;
 	}
+}
+
+{HASH}error.* {
+	char *p;
+	for (p = yytext; !isalpha(p[0]); p++); /* skip "  #   " */
+	p += 5; /* skip "error" */
+	glcpp_error(yylloc, yyextra, "#error%s", p);
 }
 
 {HASH}define{HSPACE}+/{IDENTIFIER}"(" {
