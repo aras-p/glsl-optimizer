@@ -290,7 +290,8 @@ void cso_release_all( struct cso_context *ctx )
       ctx->pipe->bind_vs_state( ctx->pipe, NULL );
       ctx->pipe->bind_vertex_elements_state( ctx->pipe, NULL );
       ctx->pipe->set_fragment_sampler_views(ctx->pipe, 0, NULL);
-      ctx->pipe->set_vertex_sampler_views(ctx->pipe, 0, NULL);
+      if (ctx->pipe->set_vertex_sampler_views)
+         ctx->pipe->set_vertex_sampler_views(ctx->pipe, 0, NULL);
    }
 
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
