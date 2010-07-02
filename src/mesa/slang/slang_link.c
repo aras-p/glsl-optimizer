@@ -1096,7 +1096,7 @@ _slang_link(GLcontext *ctx,
                     "Geometry shader without a vertex shader is illegal!\n");
          return;
       }
-      if (shProg->GeometryProgram->VerticesOut == 0) {
+      if (shProg->Geom.VerticesOut == 0) {
          link_error(shProg,
                     "GEOMETRY_VERTICES_OUT is zero\n");
          return;
@@ -1165,6 +1165,11 @@ _slang_link(GLcontext *ctx,
    if (geomProg && shProg->GeometryProgram) {
       /* Compute initial program's TexturesUsed info */
       _mesa_update_shader_textures_used(&shProg->GeometryProgram->Base);
+
+      /* Copy some per-shader-program fields to per-shader object */
+      shProg->GeometryProgram->VerticesOut = shProg->Geom.VerticesOut;
+      shProg->GeometryProgram->InputType = shProg->Geom.InputType;
+      shProg->GeometryProgram->OutputType = shProg->Geom.OutputType;
 
       /* notify driver that a new fragment program has been compiled/linked */
       geomNotify = ctx->Driver.ProgramStringNotify(ctx, MESA_GEOMETRY_PROGRAM,

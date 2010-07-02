@@ -661,6 +661,17 @@ get_programiv(GLcontext *ctx, GLuint program, GLenum pname, GLint *params)
       *params = shProg->TransformFeedback.BufferMode;
       break;
 #endif
+#if FEATURE_ARB_geometry_shader4
+   case GL_GEOMETRY_VERTICES_OUT_ARB:
+      *params = shProg->Geom.VerticesOut;
+      break;
+   case GL_GEOMETRY_INPUT_TYPE_ARB:
+      *params = shProg->Geom.InputType;
+      break;
+   case GL_GEOMETRY_OUTPUT_TYPE_ARB:
+      *params = shProg->Geom.OutputType;
+      break;
+#endif
    default:
       _mesa_error(ctx, GL_INVALID_ENUM, "glGetProgramiv(pname)");
       return;
@@ -1505,55 +1516,22 @@ _mesa_ShaderBinary(GLint n, const GLuint* shaders, GLenum binaryformat,
 
 #endif /* FEATURE_ES2 */
 
+
 #if FEATURE_ARB_geometry_shader4
 
-/**
- * Look up a geometry program given a shader ID.
- * An error will be recorded if the ID is invalid, etc.
- */
-static struct gl_geometry_program *
-_mesa_geometry_from_shader(GLuint program)
+void GLAPIENTRY
+_mesa_ProgramParameteriARB(GLuint program, GLenum pname,
+                           GLint value)
 {
+   struct gl_shader_program *shProg;
    GET_CURRENT_CONTEXT(ctx);
-   struct gl_shader_program *shProg = NULL;
-   struct gl_shader *sh = NULL;
-   GLuint i;
 
-   shProg = _mesa_lookup_shader_program(ctx, program);
-
-   if (!ctx->Extensions.ARB_geometry_shader4) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glProgramParameteriARB");
-      return NULL;
-   }
-
-   if (!shProg) {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glProgramParameteriARB");
-      return NULL;
-   }
-   for (i = 0; i < shProg->NumShaders; ++i) {
-      if (shProg->Shaders[i]->Type == GL_GEOMETRY_SHADER_ARB) {
-         sh = shProg->Shaders[i];
-      }
-   }
-   if (!sh || !sh->Program) {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glProgramParameteriARB");
-      return NULL;
-   }
-   return (struct gl_geometry_program *) sh->Program;
-}
-
-static void
-_mesa_program_parameteri(GLcontext *ctx, GLuint program,
-                         GLenum pname, GLint value)
-{
-   struct gl_geometry_program *gprog;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   gprog = _mesa_geometry_from_shader(program);
-   if (!gprog) {
-      /* error will have been recorded */
+   shProg = _mesa_lookup_shader_program_err(ctx, program,
+                                            "glProgramParameteri");
+   if (!shProg)
       return;
-   }
 
    switch (pname) {
    case GL_GEOMETRY_VERTICES_OUT_ARB:
@@ -1564,7 +1542,7 @@ _mesa_program_parameteri(GLcontext *ctx, GLuint program,
                      value);
          return;
       }
-      gprog->VerticesOut = value;
+      shProg->Geom.VerticesOut = value;
       break;
    case GL_GEOMETRY_INPUT_TYPE_ARB:
       switch (value) {
@@ -1573,7 +1551,7 @@ _mesa_program_parameteri(GLcontext *ctx, GLuint program,
       case GL_LINES_ADJACENCY_ARB:
       case GL_TRIANGLES:
       case GL_TRIANGLES_ADJACENCY_ARB:
-         gprog->InputType = value;
+         shProg->Geom.InputType = value;
          break;
       default:
          _mesa_error(ctx, GL_INVALID_VALUE,
@@ -1587,7 +1565,7 @@ _mesa_program_parameteri(GLcontext *ctx, GLuint program,
       case GL_POINTS:
       case GL_LINE_STRIP:
       case GL_TRIANGLE_STRIP:
-         gprog->OutputType = value;
+         shProg->Geom.OutputType = value;
          break;
       default:
          _mesa_error(ctx, GL_INVALID_VALUE,
@@ -1603,15 +1581,8 @@ _mesa_program_parameteri(GLcontext *ctx, GLuint program,
    }
 }
 
-void GLAPIENTRY
-_mesa_ProgramParameteriARB(GLuint program, GLenum pname,
-                           GLint value)
-{
-   GET_CURRENT_CONTEXT(ctx);
-   _mesa_program_parameteri(ctx, program, pname, value);
-}
-
 #endif
+
 
 /**
  * Plug in shader-related functions into API dispatch table.

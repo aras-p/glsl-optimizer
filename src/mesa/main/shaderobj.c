@@ -241,6 +241,11 @@ _mesa_new_shader_program(GLcontext *ctx, GLuint name)
       shProg->Name = name;
       shProg->RefCount = 1;
       shProg->Attributes = _mesa_new_parameter_list();
+#if FEATURE_ARB_geometry_shader4
+      shProg->Geom.VerticesOut = 0;
+      shProg->Geom.InputType = GL_TRIANGLES;
+      shProg->Geom.OutputType = GL_TRIANGLE_STRIP;
+#endif
    }
    return shProg;
 }

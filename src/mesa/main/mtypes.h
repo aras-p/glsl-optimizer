@@ -2109,6 +2109,14 @@ struct gl_shader_program
       GLchar **VaryingNames;  /**< Array [NumVarying] of char * */
    } TransformFeedback;
 
+   /** Geometry shader state - copied into gl_geometry_program at link time */
+   struct {
+      GLint VerticesOut;
+      GLenum InputType;  /**< GL_POINTS, GL_LINES, GL_LINES_ADJACENCY_ARB,
+                              GL_TRIANGLES, or GL_TRIANGLES_ADJACENCY_ARB */
+      GLenum OutputType; /**< GL_POINTS, GL_LINE_STRIP or GL_TRIANGLE_STRIP */
+   } Geom;
+
    /* post-link info: */
    struct gl_vertex_program *VertexProgram;     /**< Linked vertex program */
    struct gl_fragment_program *FragmentProgram; /**< Linked fragment prog */
