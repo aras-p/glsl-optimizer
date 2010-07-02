@@ -208,7 +208,7 @@ logicop_quad(struct quad_stage *qs,
          res4[j] = ~0;
       break;
    default:
-      assert(0);
+      assert(0 && "invalid logicop mode");
    }
 
    for (j = 0; j < 4; j++) {
@@ -395,7 +395,7 @@ blend_quad(struct quad_stage *qs,
       assert(0); /* to do */
       break;
    default:
-      assert(0);
+      assert(0 && "invalid rgb src factor");
    }
 
    /*
@@ -469,7 +469,7 @@ blend_quad(struct quad_stage *qs,
    }
    break;
    default:
-      assert(0);
+      assert(0 && "invalid alpha src factor");
    }
 
 
@@ -625,7 +625,7 @@ blend_quad(struct quad_stage *qs,
       assert(0);
       break;
    default:
-      assert(0);
+      assert(0 && "invalid rgb dst factor");
    }
 
    /*
@@ -696,7 +696,7 @@ blend_quad(struct quad_stage *qs,
    }
    break;
    default:
-      assert(0);
+      assert(0 && "invalid alpha dst factor");
    }
 
    /*
@@ -729,7 +729,7 @@ blend_quad(struct quad_stage *qs,
       VEC4_MAX(quadColor[2], source[2], dest[2]); /* B */
       break;
    default:
-      assert(0);
+      assert(0 && "invalid rgb blend func");
    }
 
    /*
@@ -752,7 +752,7 @@ blend_quad(struct quad_stage *qs,
       VEC4_MAX(quadColor[3], source[3], dest[3]); /* A */
       break;
    default:
-      assert(0);
+      assert(0 && "invalid alpha blend func");
    }
 }
 
