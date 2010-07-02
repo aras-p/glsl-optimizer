@@ -233,8 +233,10 @@ lp_build_conv(LLVMBuilderRef builder,
    assert(num_dsts <= LP_MAX_VECTOR_LENGTH);
 
    tmp_type = src_type;
-   for(i = 0; i < num_srcs; ++i)
+   for(i = 0; i < num_srcs; ++i) {
+      assert(lp_check_value(src_type, src[i]));
       tmp[i] = src[i];
+   }
    num_tmps = num_srcs;
 
    /*
@@ -405,8 +407,10 @@ lp_build_conv(LLVMBuilderRef builder,
        }
     }
 
-   for(i = 0; i < num_dsts; ++i)
+   for(i = 0; i < num_dsts; ++i) {
       dst[i] = tmp[i];
+      assert(lp_check_value(dst_type, dst[i]));
+   }
 }
 
 
