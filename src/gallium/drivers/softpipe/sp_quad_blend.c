@@ -221,11 +221,18 @@ logicop_quad(struct quad_stage *qs,
 
 
 
+/**
+ * Do blending for a 2x2 quad for one color buffer.
+ * \param quadColor  the incoming quad colors
+ * \param dest  the destination/framebuffer quad colors
+ * \param blend_index  which set of blending terms to use
+ * \param has_dst_alpha  does the dest color buffer have an alpha channel?
+ */
 static void
 blend_quad(struct quad_stage *qs, 
            float (*quadColor)[4],
            float (*dest)[4],
-           unsigned cbuf,
+           unsigned blend_index,
            boolean has_dst_alpha)
 {
    static const float zero[4] = { 0, 0, 0, 0 };
@@ -236,7 +243,7 @@ blend_quad(struct quad_stage *qs,
    /*
     * Compute src/first term RGB
     */
-   switch (softpipe->blend->rt[cbuf].rgb_src_factor) {
+   switch (softpipe->blend->rt[blend_index].rgb_src_factor) {
    case PIPE_BLENDFACTOR_ONE:
       VEC4_COPY(source[0], quadColor[0]); /* R */
       VEC4_COPY(source[1], quadColor[1]); /* G */
@@ -401,7 +408,7 @@ blend_quad(struct quad_stage *qs,
    /*
     * Compute src/first term A
     */
-   switch (softpipe->blend->rt[cbuf].alpha_src_factor) {
+   switch (softpipe->blend->rt[blend_index].alpha_src_factor) {
    case PIPE_BLENDFACTOR_ONE:
       VEC4_COPY(source[3], quadColor[3]); /* A */
       break;
@@ -476,7 +483,7 @@ blend_quad(struct quad_stage *qs,
    /*
     * Compute dest/second term RGB
     */
-   switch (softpipe->blend->rt[cbuf].rgb_dst_factor) {
+   switch (softpipe->blend->rt[blend_index].rgb_dst_factor) {
    case PIPE_BLENDFACTOR_ONE:
       /* dest = dest * 1   NO-OP, leave dest as-is */
       break;
@@ -631,7 +638,7 @@ blend_quad(struct quad_stage *qs,
    /*
     * Compute dest/second term A
     */
-   switch (softpipe->blend->rt[cbuf].alpha_dst_factor) {
+   switch (softpipe->blend->rt[blend_index].alpha_dst_factor) {
    case PIPE_BLENDFACTOR_ONE:
       /* dest = dest * 1   NO-OP, leave dest as-is */
       break;
@@ -702,7 +709,7 @@ blend_quad(struct quad_stage *qs,
    /*
     * Combine RGB terms
     */
-   switch (softpipe->blend->rt[cbuf].rgb_func) {
+   switch (softpipe->blend->rt[blend_index].rgb_func) {
    case PIPE_BLEND_ADD:
       VEC4_ADD_SAT(quadColor[0], source[0], dest[0]); /* R */
       VEC4_ADD_SAT(quadColor[1], source[1], dest[1]); /* G */
@@ -735,7 +742,7 @@ blend_quad(struct quad_stage *qs,
    /*
     * Combine A terms
     */
-   switch (softpipe->blend->rt[cbuf].alpha_func) {
+   switch (softpipe->blend->rt[blend_index].alpha_func) {
    case PIPE_BLEND_ADD:
       VEC4_ADD_SAT(quadColor[3], source[3], dest[3]); /* A */
       break;
@@ -822,7 +829,7 @@ blend_fallback(struct quad_stage *qs,
             logicop_quad( qs, quadColor, dest );
          }
          else if (blend->rt[blend_buf].blend_enable) {
-            blend_quad( qs, quadColor, dest, cbuf, has_dst_alpha );
+            blend_quad( qs, quadColor, dest, blend_buf, has_dst_alpha );
          }
 
          if (blend->rt[blend_buf].colormask != 0xf)
