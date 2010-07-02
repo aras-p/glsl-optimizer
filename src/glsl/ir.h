@@ -276,6 +276,23 @@ public:
    const char *function_name() const;
 
    /**
+    * Get a handle to the function for which this is a signature
+    *
+    * There is no setter function, this function returns a \c const pointer,
+    * and \c ir_function_signature::_function is private for a reason.  The
+    * only way to make a connection between a function and function signature
+    * is via \c ir_function::add_signature.  This helps ensure that certain
+    * invariants (i.e., a function signature is in the list of signatures for
+    * its \c _function) are met.
+    *
+    * \sa ir_function::add_signature
+    */
+   inline const class ir_function *function() const
+   {
+      return this->_function;
+   }
+
+   /**
     * Check whether the qualifiers match between this signature's parameters
     * and the supplied parameter list.  If not, returns the name of the first
     * parameter with mismatched qualifiers (for use in error messages).
@@ -312,7 +329,7 @@ public:
 
 private:
    /** Function of which this signature is one overload. */
-   class ir_function *function;
+   class ir_function *_function;
 
    friend class ir_function;
 };
@@ -343,8 +360,8 @@ public:
 
    void add_signature(ir_function_signature *sig)
    {
-      sig->function = this;
-      signatures.push_tail(sig);
+      sig->_function = this;
+      this->signatures.push_tail(sig);
    }
 
    /**
@@ -381,7 +398,7 @@ private:
 
 inline const char *ir_function_signature::function_name() const
 {
-   return function->name;
+   return this->_function->name;
 }
 /*@}*/
 

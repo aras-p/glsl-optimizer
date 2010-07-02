@@ -771,7 +771,7 @@ ir_variable::component_slots() const
 
 
 ir_function_signature::ir_function_signature(const glsl_type *return_type)
-   : return_type(return_type), is_defined(false)
+   : return_type(return_type), is_defined(false), _function(NULL)
 {
    /* empty */
 }
