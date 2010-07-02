@@ -366,6 +366,8 @@ lp_build_pack_rgba_aos(LLVMBuilderRef builder,
 }
 
 
+
+
 /**
  * Fetch a pixel into a 4 float AoS.
  *
@@ -428,6 +430,26 @@ lp_build_fetch_rgba_aos(LLVMBuilderRef builder,
       } else {
          return lp_build_unpack_rgba_aos(format_desc, &bld, packed);
       }
+   }
+   else if (format_desc->layout == UTIL_FORMAT_LAYOUT_SUBSAMPLED) {
+      LLVMValueRef packed;
+      LLVMValueRef rgba;
+
+      ptr = LLVMBuildBitCast(builder, ptr,
+                             LLVMPointerType(LLVMInt32Type(), 0),
+                             "packed_ptr");
+
+      packed = LLVMBuildLoad(builder, ptr, "packed");
+
+      rgba = lp_build_unpack_subsampled_to_rgba_aos(builder, format_desc,
+                                                    1, packed, i, j);
+
+      lp_build_conv(builder,
+                    lp_unorm8_vec4_type(),
+                    type,
+                    &rgba, 1, &rgba, 1);
+
+      return rgba;
    }
    else if (format_desc->fetch_rgba_float) {
       /*
