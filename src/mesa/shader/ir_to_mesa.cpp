@@ -686,6 +686,42 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
 		src_column.index++;
 	    }
 	 }
+      } else if (ir->operands[1]->type->is_matrix()) {
+	 if (ir->operands[0]->type->is_scalar()) {
+	    ir_to_mesa_dst_reg dst_column = result_dst;
+	    ir_to_mesa_src_reg src_column = op[1];
+	    for (int i = 0; i < ir->operands[1]->type->matrix_columns; i++) {
+	       ir_to_mesa_emit_op2(ir, OPCODE_MUL,
+				   dst_column, src_column, op[0]);
+	       dst_column.index++;
+	       src_column.index++;
+	    }
+	 } else {
+	    ir_to_mesa_src_reg src_column = op[1];
+	    ir_to_mesa_dst_reg dst_chan = result_dst;
+
+	    /* FINISHME here and above: non-square matrices */
+	    assert(ir->operands[1]->type->vector_elements ==
+		   ir->operands[1]->type->matrix_columns);
+
+	    for (int i = 0; i < ir->operands[0]->type->vector_elements; i++) {
+	       dst_chan.writemask = (1 << i);
+	       switch (ir->operands[0]->type->vector_elements) {
+	       case 2:
+		  ir_to_mesa_emit_op2(ir, OPCODE_DP2, dst_chan, op[0], src_column);
+		  break;
+	       case 3:
+		  ir_to_mesa_emit_op2(ir, OPCODE_DP3, dst_chan, op[0], src_column);
+		  break;
+	       case 4:
+		  ir_to_mesa_emit_op2(ir, OPCODE_DP4, dst_chan, op[0], src_column);
+		  break;
+	       default:
+		  assert(0);
+	       }
+	       src_column.index++;
+	    }
+	 }
       } else {
 	 assert(!ir->operands[0]->type->is_matrix());
 	 assert(!ir->operands[1]->type->is_matrix());
