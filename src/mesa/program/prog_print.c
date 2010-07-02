@@ -909,7 +909,8 @@ _mesa_fprint_program_parameters(FILE *f,
    fprintf(f, "InputsRead: 0x%x (0b%s)\n",
                  prog->InputsRead, binary(prog->InputsRead));
    fprintf(f, "OutputsWritten: 0x%llx (0b%s)\n",
-                 prog->OutputsWritten, binary(prog->OutputsWritten));
+                 (unsigned long long)prog->OutputsWritten, 
+		 binary(prog->OutputsWritten));
    fprintf(f, "NumInstructions=%d\n", prog->NumInstructions);
    fprintf(f, "NumTemporaries=%d\n", prog->NumTemporaries);
    fprintf(f, "NumParameters=%d\n", prog->NumParameters);
