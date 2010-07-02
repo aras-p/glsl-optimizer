@@ -132,12 +132,17 @@ def write_format_table(formats):
         if format.colorspace != ZS:
             print "   &util_format_%s_unpack_rgba_8unorm," % format.short_name() 
             print "   &util_format_%s_pack_rgba_8unorm," % format.short_name() 
+            if format.layout == 's3tc':
+                print "   &util_format_%s_fetch_rgba_8unorm," % format.short_name()
+            else:
+                print "   NULL, /* fetch_rgba_8unorm */" 
             print "   &util_format_%s_unpack_rgba_float," % format.short_name() 
             print "   &util_format_%s_pack_rgba_float," % format.short_name() 
             print "   &util_format_%s_fetch_rgba_float," % format.short_name()
         else:
             print "   NULL, /* unpack_rgba_8unorm */" 
             print "   NULL, /* pack_rgba_8unorm */" 
+            print "   NULL, /* fetch_rgba_8unorm */" 
             print "   NULL, /* unpack_rgba_float */" 
             print "   NULL, /* pack_rgba_float */" 
             print "   NULL, /* fetch_rgba_float */" 
