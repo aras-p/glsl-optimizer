@@ -265,35 +265,11 @@ lp_build_sample_texel_soa(struct lp_build_sample_context *bld,
       }
    }
 
-   /*
-    * Describe the coordinates in terms of pixel blocks.
-    *
-    * TODO: pixel blocks are power of two. LLVM should convert rem/div to
-    * bit arithmetic. Verify this.
-    */
-
-   if (bld->format_desc->block.width == 1) {
-      i = bld->uint_coord_bld.zero;
-   }
-   else {
-      LLVMValueRef block_width = lp_build_const_int_vec(bld->uint_coord_bld.type, bld->format_desc->block.width);
-      i = LLVMBuildURem(bld->builder, x, block_width, "");
-      x = LLVMBuildUDiv(bld->builder, x, block_width, "");
-   }
-
-   if (bld->format_desc->block.height == 1) {
-      j = bld->uint_coord_bld.zero;
-   }
-   else {
-      LLVMValueRef block_height = lp_build_const_int_vec(bld->uint_coord_bld.type, bld->format_desc->block.height);
-      j = LLVMBuildURem(bld->builder, y, block_height, "");
-      y = LLVMBuildUDiv(bld->builder, y, block_height, "");
-   }
-
    /* convert x,y,z coords to linear offset from start of texture, in bytes */
-   offset = lp_build_sample_offset(&bld->uint_coord_bld,
-                                   bld->format_desc,
-                                   x, y, z, y_stride, z_stride);
+   lp_build_sample_offset(&bld->uint_coord_bld,
+                          bld->format_desc,
+                          x, y, z, y_stride, z_stride,
+                          &offset, &i, &j);
 
    if (use_border) {
       /* If we can sample the border color, it means that texcoords may
@@ -345,6 +321,9 @@ lp_build_sample_texel_soa(struct lp_build_sample_context *bld,
 }
 
 
+/**
+ * Fetch the texels as <4n x i8> in AoS form.
+ */
 static LLVMValueRef
 lp_build_sample_packed(struct lp_build_sample_context *bld,
                        LLVMValueRef x,
@@ -352,25 +331,46 @@ lp_build_sample_packed(struct lp_build_sample_context *bld,
                        LLVMValueRef y_stride,
                        LLVMValueRef data_array)
 {
-   LLVMValueRef offset;
+   LLVMValueRef offset, i, j;
    LLVMValueRef data_ptr;
+   LLVMValueRef res;
 
-   offset = lp_build_sample_offset(&bld->uint_coord_bld,
-                                   bld->format_desc,
-                                   x, y, NULL, y_stride, NULL);
-
-   assert(bld->format_desc->block.width == 1);
-   assert(bld->format_desc->block.height == 1);
-   assert(bld->format_desc->block.bits <= bld->texel_type.width);
+   /* convert x,y,z coords to linear offset from start of texture, in bytes */
+   lp_build_sample_offset(&bld->uint_coord_bld,
+                          bld->format_desc,
+                          x, y, NULL, y_stride, NULL,
+                          &offset, &i, &j);
 
    /* get pointer to mipmap level 0 data */
    data_ptr = lp_build_get_const_mipmap_level(bld, data_array, 0);
 
-   return lp_build_gather(bld->builder,
-                          bld->texel_type.length,
-                          bld->format_desc->block.bits,
-                          bld->texel_type.width,
-                          data_ptr, offset);
+   if (util_format_is_rgba8_variant(bld->format_desc)) {
+      /* Just fetch the data directly without swizzling */
+      assert(bld->format_desc->block.width == 1);
+      assert(bld->format_desc->block.height == 1);
+      assert(bld->format_desc->block.bits <= bld->texel_type.width);
+
+      res = lp_build_gather(bld->builder,
+                            bld->texel_type.length,
+                            bld->format_desc->block.bits,
+                            bld->texel_type.width,
+                            data_ptr, offset);
+   }
+   else {
+      struct lp_type type;
+
+      assert(bld->texel_type.width == 32);
+
+      memset(&type, 0, sizeof type);
+      type.width = 8;
+      type.length = bld->texel_type.length*4;
+      type.norm = TRUE;
+
+      res = lp_build_fetch_rgba_aos(bld->builder, bld->format_desc, type,
+                                    data_ptr, offset, i, j);
+   }
+
+   return res;
 }
 
 
@@ -1910,9 +1910,16 @@ lp_build_sample_2d_linear_aos(struct lp_build_sample_context *bld,
                              bld->texel_type,
                              packed, unswizzled);
 
-   lp_build_format_swizzle_soa(bld->format_desc,
-                               &bld->texel_bld,
-                               unswizzled, texel_out);
+   if (util_format_is_rgba8_variant(bld->format_desc)) {
+      lp_build_format_swizzle_soa(bld->format_desc,
+                                  &bld->texel_bld,
+                                  unswizzled, texel_out);
+   } else {
+      texel_out[0] = unswizzled[0];
+      texel_out[1] = unswizzled[1];
+      texel_out[2] = unswizzled[2];
+      texel_out[3] = unswizzled[3];
+   }
 
    apply_sampler_swizzle(bld, texel_out);
 }
@@ -2048,7 +2055,8 @@ lp_build_sample_soa(LLVMBuilderRef builder,
       /* For debug: no-op texture sampling */
       lp_build_sample_nop(&bld, texel_out);
    }
-   else if (util_format_is_rgba8_variant(bld.format_desc) &&
+   else if (util_format_fits_8unorm(bld.format_desc) &&
+            bld.format_desc->nr_channels > 1 &&
             static_state->target == PIPE_TEXTURE_2D &&
             static_state->min_img_filter == PIPE_TEX_FILTER_LINEAR &&
             static_state->mag_img_filter == PIPE_TEX_FILTER_LINEAR &&

@@ -127,20 +127,51 @@ lp_sampler_static_state(struct lp_sampler_static_state *state,
 /**
  * Compute the offset of a pixel block.
  *
- * x, y, z, y_stride, z_stride are vectors, and they refer to pixel blocks, as
- * per format description, and not individual pixels.
+ * x, y, z, y_stride, z_stride are vectors, and they refer to pixels.
+ *
+ * Returns the relative offset and i,j sub-block coordinates
  */
-LLVMValueRef
+void
 lp_build_sample_offset(struct lp_build_context *bld,
                        const struct util_format_description *format_desc,
                        LLVMValueRef x,
                        LLVMValueRef y,
                        LLVMValueRef z,
                        LLVMValueRef y_stride,
-                       LLVMValueRef z_stride)
+                       LLVMValueRef z_stride,
+                       LLVMValueRef *out_offset,
+                       LLVMValueRef *out_i,
+                       LLVMValueRef *out_j)
 {
    LLVMValueRef x_stride;
    LLVMValueRef offset;
+   LLVMValueRef i;
+   LLVMValueRef j;
+
+   /*
+    * Describe the coordinates in terms of pixel blocks.
+    *
+    * TODO: pixel blocks are power of two. LLVM should convert rem/div to
+    * bit arithmetic. Verify this.
+    */
+
+   if (format_desc->block.width == 1) {
+      i = bld->zero;
+   }
+   else {
+      LLVMValueRef block_width = lp_build_const_int_vec(bld->type, format_desc->block.width);
+      i = LLVMBuildURem(bld->builder, x, block_width, "");
+      x = LLVMBuildUDiv(bld->builder, x, block_width, "");
+   }
+
+   if (format_desc->block.height == 1) {
+      j = bld->zero;
+   }
+   else {
+      LLVMValueRef block_height = lp_build_const_int_vec(bld->type, format_desc->block.height);
+      j = LLVMBuildURem(bld->builder, y, block_height, "");
+      y = LLVMBuildUDiv(bld->builder, y, block_height, "");
+   }
 
    x_stride = lp_build_const_vec(bld->type, format_desc->block.bits/8);
    offset = lp_build_mul(bld, x, x_stride);
@@ -155,5 +186,7 @@ lp_build_sample_offset(struct lp_build_context *bld,
       offset = lp_build_add(bld, offset, z_offset);
    }
 
-   return offset;
+   *out_offset = offset;
+   *out_i = i;
+   *out_j = j;
 }
