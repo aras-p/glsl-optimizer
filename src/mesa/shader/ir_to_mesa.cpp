@@ -1287,12 +1287,17 @@ ir_to_mesa_visitor::visit(ir_call *ir)
 void
 ir_to_mesa_visitor::visit(ir_texture *ir)
 {
-   ir_to_mesa_src_reg result_src, coord;
+   ir_to_mesa_src_reg result_src, coord, projector;
    ir_to_mesa_dst_reg result_dst, lod_info;
    ir_to_mesa_instruction *inst = NULL;
 
    ir->coordinate->accept(this);
    coord = this->result;
+
+   if (ir->projector) {
+      ir->projector->accept(this);
+      projector = this->result;
+   }
 
    /* Storage for our result.  Ideally for an assignment we'd be using
     * the actual storage for the result here, instead.
@@ -1302,7 +1307,16 @@ ir_to_mesa_visitor::visit(ir_texture *ir)
 
    switch (ir->op) {
    case ir_tex:
-      inst = ir_to_mesa_emit_op1(ir, OPCODE_TEX, result_dst, coord);
+      if (ir->projector) {
+	 /* Compute new coord as vec4(texcoord.xyz, projector) */
+	 ir_to_mesa_emit_op1(ir, OPCODE_MOV, result_dst, coord);
+	 result_dst.writemask = WRITEMASK_W;
+	 ir_to_mesa_emit_op1(ir, OPCODE_MOV, result_dst, projector);
+	 result_dst.writemask = WRITEMASK_XYZW;
+	 inst = ir_to_mesa_emit_op1(ir, OPCODE_TXP, result_dst, result_src);
+      } else {
+	 inst = ir_to_mesa_emit_op1(ir, OPCODE_TEX, result_dst, coord);
+      }
       break;
    case ir_txb:
       /* Mesa IR stores bias in the last channel of the coords. */
@@ -1312,6 +1326,7 @@ ir_to_mesa_visitor::visit(ir_texture *ir)
       ir_to_mesa_emit_op1(ir, OPCODE_MOV, lod_info, this->result);
 
       inst = ir_to_mesa_emit_op1(ir, OPCODE_TXB, result_dst, coord);
+      assert(!ir->projector); /* FINISHME */
       break;
    case ir_txl:
       /* Mesa IR stores lod in the last channel of the coords. */
@@ -1321,6 +1336,7 @@ ir_to_mesa_visitor::visit(ir_texture *ir)
       ir_to_mesa_emit_op1(ir, OPCODE_MOV, lod_info, this->result);
 
       inst = ir_to_mesa_emit_op1(ir, OPCODE_TXL, result_dst, coord);
+      assert(!ir->projector); /* FINISHME */
       break;
    case ir_txd:
    case ir_txf:
@@ -1354,7 +1370,6 @@ ir_to_mesa_visitor::visit(ir_texture *ir)
       assert(!"FINISHME: other texture targets");
    }
 
-   assert(!ir->projector); /* FINISHME */
    assert(!ir->shadow_comparitor); /* FINISHME */
 
    this->result = result_src;
