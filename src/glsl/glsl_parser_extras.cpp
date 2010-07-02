@@ -484,6 +484,7 @@ ast_declarator_list::print(void) const
 ast_declarator_list::ast_declarator_list(ast_fully_specified_type *type)
 {
    this->type = type;
+   this->invariant = false;
 }
 
 void
