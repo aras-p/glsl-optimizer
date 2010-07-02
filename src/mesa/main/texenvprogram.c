@@ -98,6 +98,7 @@ struct state_key {
    GLuint fog_enabled:1;
    GLuint fog_mode:2;          /**< FOG_x */
    GLuint inputs_available:12;
+   GLuint num_draw_buffers:4;
 
    /* NOTE: This array of structs must be last! (see "keySize" below) */
    struct {
@@ -484,6 +485,9 @@ static GLuint make_state_key( GLcontext *ctx,  struct state_key *key )
       key->fog_mode = translate_fog_mode(ctx->Fog.Mode);
       inputs_referenced |= FRAG_BIT_FOGC; /* maybe */
    }
+
+   /* _NEW_BUFFERS */
+   key->num_draw_buffers = ctx->DrawBuffer->_NumColorDrawBuffers;
 
    key->inputs_available = (inputs_available & inputs_referenced);
 
@@ -1438,10 +1442,10 @@ create_new_program(GLcontext *ctx, struct state_key *key,
    p.program->Base.Parameters = _mesa_new_parameter_list();
    p.program->Base.InputsRead = 0x0;
 
-   if (ctx->DrawBuffer->_NumColorDrawBuffers == 1)
+   if (key->num_draw_buffers == 1)
       p.program->Base.OutputsWritten = 1 << FRAG_RESULT_COLOR;
    else {
-      for (i = 0; i < ctx->DrawBuffer->_NumColorDrawBuffers; i++)
+      for (i = 0; i < key->num_draw_buffers; i++)
 	 p.program->Base.OutputsWritten |= (1 << (FRAG_RESULT_DATA0 + i));
    }
 
@@ -1493,8 +1497,8 @@ create_new_program(GLcontext *ctx, struct state_key *key,
 
    cf = get_source( &p, SRC_PREVIOUS, 0 );
 
-   for (i = 0; i < ctx->DrawBuffer->_NumColorDrawBuffers; i++) {
-      if (ctx->DrawBuffer->_NumColorDrawBuffers == 1)
+   for (i = 0; i < key->num_draw_buffers; i++) {
+      if (key->num_draw_buffers == 1)
 	 out = make_ureg( PROGRAM_OUTPUT, FRAG_RESULT_COLOR );
       else {
 	 out = make_ureg( PROGRAM_OUTPUT, FRAG_RESULT_DATA0 + i );
