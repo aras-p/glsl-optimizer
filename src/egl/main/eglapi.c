@@ -965,7 +965,7 @@ eglCopyContextMESA(EGLDisplay dpy, EGLContext source, EGLContext dest,
 }
 
 
-EGLBoolean
+EGLBoolean EGLAPIENTRY
 eglGetScreensMESA(EGLDisplay dpy, EGLScreenMESA *screens,
                   EGLint max_screens, EGLint *num_screens)
 {
@@ -980,7 +980,7 @@ eglGetScreensMESA(EGLDisplay dpy, EGLScreenMESA *screens,
 }
 
 
-EGLSurface
+EGLSurface EGLAPIENTRY
 eglCreateScreenSurfaceMESA(EGLDisplay dpy, EGLConfig config,
                            const EGLint *attrib_list)
 {
@@ -999,7 +999,7 @@ eglCreateScreenSurfaceMESA(EGLDisplay dpy, EGLConfig config,
 }
 
 
-EGLBoolean
+EGLBoolean EGLAPIENTRY
 eglShowScreenSurfaceMESA(EGLDisplay dpy, EGLint screen,
                          EGLSurface surface, EGLModeMESA mode)
 {
@@ -1022,7 +1022,7 @@ eglShowScreenSurfaceMESA(EGLDisplay dpy, EGLint screen,
 }
 
 
-EGLBoolean
+EGLBoolean EGLAPIENTRY
 eglScreenPositionMESA(EGLDisplay dpy, EGLScreenMESA screen, EGLint x, EGLint y)
 {
    _EGLDisplay *disp = _eglLockDisplay(dpy);
@@ -1037,7 +1037,7 @@ eglScreenPositionMESA(EGLDisplay dpy, EGLScreenMESA screen, EGLint x, EGLint y)
 }
 
 
-EGLBoolean
+EGLBoolean EGLAPIENTRY
 eglQueryScreenMESA(EGLDisplay dpy, EGLScreenMESA screen,
                    EGLint attribute, EGLint *value)
 {
@@ -1053,7 +1053,7 @@ eglQueryScreenMESA(EGLDisplay dpy, EGLScreenMESA screen,
 }
 
 
-EGLBoolean
+EGLBoolean EGLAPIENTRY
 eglQueryScreenSurfaceMESA(EGLDisplay dpy, EGLScreenMESA screen,
                           EGLSurface *surface)
 {
@@ -1072,7 +1072,7 @@ eglQueryScreenSurfaceMESA(EGLDisplay dpy, EGLScreenMESA screen,
 }
 
 
-EGLBoolean
+EGLBoolean EGLAPIENTRY
 eglQueryScreenModeMESA(EGLDisplay dpy, EGLScreenMESA screen, EGLModeMESA *mode)
 {
    _EGLDisplay *disp = _eglLockDisplay(dpy);
@@ -1090,7 +1090,7 @@ eglQueryScreenModeMESA(EGLDisplay dpy, EGLScreenMESA screen, EGLModeMESA *mode)
 }
 
 
-const char *
+const char * EGLAPIENTRY
 eglQueryModeStringMESA(EGLDisplay dpy, EGLModeMESA mode)
 {
    _EGLDisplay *disp = _eglLockDisplay(dpy);
@@ -1137,7 +1137,7 @@ eglGetDRMDisplayMESA(int fd)
  *  eglWaitNative()
  * See section 3.7 "Rendering Context" in the EGL specification for details.
  */
-EGLBoolean
+EGLBoolean EGLAPIENTRY
 eglBindAPI(EGLenum api)
 {
    _EGLThreadInfo *t = _eglGetCurrentThread();
@@ -1157,7 +1157,7 @@ eglBindAPI(EGLenum api)
 /**
  * Return the last value set with eglBindAPI().
  */
-EGLenum
+EGLenum EGLAPIENTRY
 eglQueryAPI(void)
 {
    _EGLThreadInfo *t = _eglGetCurrentThread();
@@ -1170,7 +1170,7 @@ eglQueryAPI(void)
 }
 
 
-EGLSurface
+EGLSurface EGLAPIENTRY
 eglCreatePbufferFromClientBuffer(EGLDisplay dpy, EGLenum buftype,
                                  EGLClientBuffer buffer, EGLConfig config,
                                  const EGLint *attrib_list)
@@ -1191,7 +1191,7 @@ eglCreatePbufferFromClientBuffer(EGLDisplay dpy, EGLenum buftype,
 }
 
 
-EGLBoolean
+EGLBoolean EGLAPIENTRY
 eglReleaseThread(void)
 {
    /* unbind current contexts */
@@ -1230,7 +1230,7 @@ eglReleaseThread(void)
 #ifdef EGL_KHR_image_base
 
 
-EGLImageKHR
+EGLImageKHR EGLAPIENTRY
 eglCreateImageKHR(EGLDisplay dpy, EGLContext ctx, EGLenum target,
                   EGLClientBuffer buffer, const EGLint *attr_list)
 {
@@ -1252,7 +1252,7 @@ eglCreateImageKHR(EGLDisplay dpy, EGLContext ctx, EGLenum target,
 }
 
 
-EGLBoolean
+EGLBoolean EGLAPIENTRY
 eglDestroyImageKHR(EGLDisplay dpy, EGLImageKHR image)
 {
    _EGLDisplay *disp = _eglLockDisplay(dpy);
@@ -1276,7 +1276,7 @@ eglDestroyImageKHR(EGLDisplay dpy, EGLImageKHR image)
 
 #ifdef EGL_NOK_swap_region
 
-EGLBoolean
+EGLBoolean EGLAPIENTRY
 eglSwapBuffersRegionNOK(EGLDisplay dpy, EGLSurface surface,
 			EGLint numRects, const EGLint *rects)
 {
