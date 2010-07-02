@@ -46,6 +46,8 @@ public:
       this->ht = hash_table_ctor(0, hash_table_pointer_hash,
 				 hash_table_pointer_compare);
 
+      this->current_function = NULL;
+
       this->callback = ir_validate::validate_ir;
       this->data = ht;
    }
@@ -57,10 +59,68 @@ public:
 
    virtual ir_visitor_status visit(ir_variable *v);
 
+   virtual ir_visitor_status visit_enter(ir_function *ir);
+   virtual ir_visitor_status visit_leave(ir_function *ir);
+   virtual ir_visitor_status visit_enter(ir_function_signature *ir);
+
    static void validate_ir(ir_instruction *ir, void *data);
+
+   ir_function *current_function;
 
    struct hash_table *ht;
 };
+
+ir_visitor_status
+ir_validate::visit_enter(ir_function *ir)
+{
+   /* Function definitions cannot be nested.
+    */
+   if (this->current_function != NULL) {
+      printf("Function definition nested inside another function "
+	     "definition:\n");
+      printf("%s %p inside %s %p\n",
+	     ir->name, ir,
+	     this->current_function->name, this->current_function);
+      abort();
+   }
+
+   /* Store the current function hierarchy being traversed.  This is used
+    * by the function signature visitor to ensure that the signatures are
+    * linked with the correct functions.
+    */
+   this->current_function = ir;
+
+   this->validate_ir(ir, this->data);
+
+   return visit_continue;
+}
+
+ir_visitor_status
+ir_validate::visit_leave(ir_function *ir)
+{
+   (void) ir;
+
+   this->current_function = NULL;
+   return visit_continue;
+}
+
+ir_visitor_status
+ir_validate::visit_enter(ir_function_signature *ir)
+{
+   if (this->current_function != ir->function()) {
+      printf("Function signature nested inside wrong function "
+	     "definition:\n");
+      printf("%p inside %s %p instead of %s %p\n",
+	     ir,
+	     this->current_function->name, this->current_function,
+	     ir->function_name(), ir->function());
+      abort();
+   }
+
+   this->validate_ir(ir, this->data);
+
+   return visit_continue;
+}
 
 ir_visitor_status
 ir_validate::visit(ir_variable *ir)
