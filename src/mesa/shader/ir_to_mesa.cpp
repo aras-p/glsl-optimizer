@@ -1175,6 +1175,29 @@ get_assignment_lhs(ir_instruction *ir, ir_to_mesa_visitor *v)
    return dst_reg;
 }
 
+static GLuint
+reswizzle_for_writemask(GLuint writemask, GLuint swizzle)
+{
+   int new_swizzle[4], pos = 0;
+   int i;
+
+   /* reswizzle the rhs so the components are in place for the
+    * components we'll assign to the lhs.
+    */
+   for (i = 0; i < 4; i++) {
+      if (writemask & (1 << i)) {
+	 new_swizzle[i] = GET_SWZ(swizzle, pos++);
+      } else {
+	 new_swizzle[i] = GET_SWZ(swizzle, 0);
+      }
+   }
+
+   return MAKE_SWIZZLE4(new_swizzle[0],
+			new_swizzle[1],
+			new_swizzle[2],
+			new_swizzle[3]);
+}
+
 void
 ir_to_mesa_visitor::visit(ir_assignment *ir)
 {
@@ -1189,6 +1212,9 @@ ir_to_mesa_visitor::visit(ir_assignment *ir)
 
    ir->rhs->accept(this);
    r = this->result;
+
+   r.swizzle = reswizzle_for_writemask(l.writemask, r.swizzle);
+
    assert(l.file != PROGRAM_UNDEFINED);
    assert(r.file != PROGRAM_UNDEFINED);
 
