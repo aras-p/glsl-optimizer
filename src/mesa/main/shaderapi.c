@@ -39,6 +39,7 @@
 #include "main/glheader.h"
 #include "main/context.h"
 #include "main/dispatch.h"
+#include "main/enums.h"
 #include "main/hash.h"
 #include "main/shaderapi.h"
 #include "main/shaderobj.h"
@@ -1506,6 +1507,10 @@ _mesa_ShaderBinary(GLint n, const GLuint* shaders, GLenum binaryformat,
 
 #if FEATURE_ARB_geometry_shader4
 
+/**
+ * Look up a geometry program given a shader ID.
+ * An error will be recorded if the ID is invalid, etc.
+ */
 static struct gl_geometry_program *
 _mesa_geometry_from_shader(GLuint program)
 {
@@ -1544,24 +1549,56 @@ _mesa_program_parameteri(GLcontext *ctx, GLuint program,
    struct gl_geometry_program *gprog;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
+   gprog = _mesa_geometry_from_shader(program);
+   if (!gprog) {
+      /* error will have been recorded */
+      return;
+   }
+
    switch (pname) {
    case GL_GEOMETRY_VERTICES_OUT_ARB:
-      gprog = _mesa_geometry_from_shader(program);
-      if (gprog)
-         gprog->VerticesOut = value;
+      if (value < 1 ||
+          value > ctx->Const.GeometryProgram.MaxGeometryOutputVertices) {
+         _mesa_error(ctx, GL_INVALID_VALUE,
+                     "glProgramParameteri(GL_GEOMETRY_VERTICES_OUT_ARB=%d",
+                     value);
+         return;
+      }
+      gprog->VerticesOut = value;
       break;
    case GL_GEOMETRY_INPUT_TYPE_ARB:
-      gprog = _mesa_geometry_from_shader(program);
-      if (gprog)
+      switch (value) {
+      case GL_POINTS:
+      case GL_LINES:
+      case GL_LINES_ADJACENCY_ARB:
+      case GL_TRIANGLES:
+      case GL_TRIANGLES_ADJACENCY_ARB:
          gprog->InputType = value;
+         break;
+      default:
+         _mesa_error(ctx, GL_INVALID_VALUE,
+                     "glProgramParameteri(geometry input type = %s",
+                     _mesa_lookup_enum_by_nr(value));
+         return;
+      }
       break;
    case GL_GEOMETRY_OUTPUT_TYPE_ARB:
-      gprog = _mesa_geometry_from_shader(program);
-      if (gprog)
+      switch (value) {
+      case GL_POINTS:
+      case GL_LINE_STRIP:
+      case GL_TRIANGLE_STRIP:
          gprog->OutputType = value;
+         break;
+      default:
+         _mesa_error(ctx, GL_INVALID_VALUE,
+                     "glProgramParameteri(geometry output type = %s",
+                     _mesa_lookup_enum_by_nr(value));
+         return;
+      }
       break;
    default:
-      _mesa_error(ctx, GL_INVALID_ENUM, "glProgramParameteriARB");
+      _mesa_error(ctx, GL_INVALID_ENUM, "glProgramParameteriARB(pname=%s)",
+                  _mesa_lookup_enum_by_nr(pname));
       break;
    }
 }
