@@ -485,6 +485,106 @@ lp_build_fetch_rgba_aos(LLVMBuilderRef builder,
    }
 
    /*
+    * Fallback to util_format_description::fetch_rgba_8unorm().
+    */
+
+   if (format_desc->fetch_rgba_8unorm &&
+       !type.floating && type.width == 8 && !type.sign && type.norm) {
+      /*
+       * Fallback to calling util_format_description::fetch_rgba_8unorm.
+       *
+       * This is definitely not the most efficient way of fetching pixels, as
+       * we miss the opportunity to do vectorization, but this it is a
+       * convenient for formats or scenarios for which there was no opportunity
+       * or incentive to optimize.
+       */
+
+      LLVMModuleRef module = LLVMGetGlobalParent(LLVMGetBasicBlockParent(LLVMGetInsertBlock(builder)));
+      char name[256];
+      LLVMTypeRef i8t = LLVMInt8Type();
+      LLVMTypeRef pi8t = LLVMPointerType(i8t, 0);
+      LLVMTypeRef i32t = LLVMInt32Type();
+      LLVMValueRef function;
+      LLVMValueRef tmp_ptr;
+      LLVMValueRef tmp;
+      LLVMValueRef res;
+      unsigned k;
+
+      util_snprintf(name, sizeof name, "util_format_%s_fetch_rgba_8unorm",
+                    format_desc->short_name);
+
+      /*
+       * Declare and bind format_desc->fetch_rgba_8unorm().
+       */
+
+      function = LLVMGetNamedFunction(module, name);
+      if (!function) {
+         LLVMTypeRef ret_type;
+         LLVMTypeRef arg_types[4];
+         LLVMTypeRef function_type;
+
+         ret_type = LLVMVoidType();
+         arg_types[0] = pi8t;
+         arg_types[1] = pi8t;
+         arg_types[3] = arg_types[2] = LLVMIntType(sizeof(unsigned) * 8);
+         function_type = LLVMFunctionType(ret_type, arg_types, Elements(arg_types), 0);
+         function = LLVMAddFunction(module, name, function_type);
+
+         LLVMSetFunctionCallConv(function, LLVMCCallConv);
+         LLVMSetLinkage(function, LLVMExternalLinkage);
+
+         assert(LLVMIsDeclaration(function));
+
+         LLVMAddGlobalMapping(lp_build_engine, function,
+                              func_to_pointer((func_pointer)format_desc->fetch_rgba_8unorm));
+      }
+
+      tmp_ptr = lp_build_alloca(builder, i32t, "");
+
+      res = LLVMGetUndef(LLVMVectorType(i32t, num_pixels));
+
+      /*
+       * Invoke format_desc->fetch_rgba_8unorm() for each pixel and insert the result
+       * in the SoA vectors.
+       */
+
+      for (k = 0; k < num_pixels; ++k) {
+         LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), k, 0);
+         LLVMValueRef args[4];
+
+         args[0] = LLVMBuildBitCast(builder, tmp_ptr, pi8t, "");
+         args[1] = lp_build_gather_elem_ptr(builder, num_pixels,
+                                            base_ptr, offset, k);
+
+         if (num_pixels == 1) {
+            args[2] = i;
+            args[3] = j;
+         }
+         else {
+            args[2] = LLVMBuildExtractElement(builder, i, index, "");
+            args[3] = LLVMBuildExtractElement(builder, j, index, "");
+         }
+
+         LLVMBuildCall(builder, function, args, Elements(args), "");
+
+         tmp = LLVMBuildLoad(builder, tmp_ptr, "");
+
+         if (num_pixels == 1) {
+            res = tmp;
+         }
+         else {
+            res = LLVMBuildInsertElement(builder, res, tmp, index, "");
+         }
+      }
+
+      /* Bitcast from <n x i32> to <4n x i8> */
+      res = LLVMBuildBitCast(builder, res, bld.vec_type, "");
+
+      return res;
+   }
+
+
+   /*
     * Fallback to util_format_description::fetch_rgba_float().
     */
 
@@ -566,13 +666,6 @@ lp_build_fetch_rgba_aos(LLVMBuilderRef builder,
 
          tmps[k] = LLVMBuildLoad(builder, tmp_ptr, "");
       }
-
-      /*
-       * Type conversion.
-       *
-       * TODO: We could avoid floating conversion for integer to
-       * integer conversions.
-       */
 
       lp_build_conv(builder,
                     lp_float32_vec4_type(),
