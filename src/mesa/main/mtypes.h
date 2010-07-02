@@ -1850,8 +1850,9 @@ struct gl_geometry_program
    struct gl_program Base;   /**< base class */
 
    GLint VerticesOut;
-   GLint InputType;
-   GLint OutputType;
+   GLenum InputType;  /**< GL_POINTS, GL_LINES, GL_LINES_ADJACENCY_ARB,
+                           GL_TRIANGLES, or GL_TRIANGLES_ADJACENCY_ARB */
+   GLenum OutputType; /**< GL_POINTS, GL_LINE_STRIP or GL_TRIANGLE_STRIP */
 };
 
 
