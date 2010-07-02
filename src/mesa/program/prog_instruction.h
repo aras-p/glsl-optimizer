@@ -139,8 +139,7 @@
 
 
 /**
- * Program instruction opcodes, for both vertex and fragment programs.
- * \note changes to this opcode list must be reflected in t_vb_arbprogram.c
+ * Program instruction opcodes for vertex, fragment and geometry programs.
  */
 typedef enum prog_opcode {
                      /* ARB_vp   ARB_fp   NV_vp   NV_fp     GLSL */
@@ -170,9 +169,9 @@ typedef enum prog_opcode {
    OPCODE_DPH,       /*   X        X       1.1                   */
    OPCODE_DST,       /*   X        X       X       X             */
    OPCODE_ELSE,      /*                                      X   */
-   OPCODE_EMIT_VERTEX,  /*                                      X   */
+   OPCODE_EMIT_VERTEX,/*                                     X   */
    OPCODE_END,       /*   X        X       X       X        opt  */
-   OPCODE_END_PRIMITIVE,/*                                      X   */
+   OPCODE_END_PRIMITIVE,/*                                   X   */
    OPCODE_ENDIF,     /*                                     opt  */
    OPCODE_ENDLOOP,   /*                                     opt  */
    OPCODE_ENDSUB,    /*                                     opt  */
