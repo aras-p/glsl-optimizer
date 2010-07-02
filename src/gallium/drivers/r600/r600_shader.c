@@ -133,7 +133,7 @@ struct r600_pipe_shader *r600_pipe_shader_create(struct pipe_context *ctx, unsig
 	if (rpshader == NULL)
 		return NULL;
 	rpshader->type = type;
-	c_list_init(&rshader->nodes);
+	LIST_INITHEAD(&rshader->nodes);
 	fprintf(stderr, "<<\n");
 	tgsi_dump(tokens, 0);
 	fprintf(stderr, "--------------------------------------------------------------\n");

@@ -34,7 +34,7 @@ struct c_vector *c_vector_new(void)
 	if (v == NULL) {
 		return NULL;
 	}
-	c_list_init(v);
+	LIST_INITHEAD(&v->head);
 	return v;
 }
 
@@ -184,10 +184,10 @@ static unsigned c_opcode_is_alu(unsigned opcode)
 void c_node_init(struct c_node *node)
 {
 	memset(node, 0, sizeof(struct c_node));
-	c_list_init(&node->predecessors);
-	c_list_init(&node->successors);
-	c_list_init(&node->childs);
-	c_list_init(&node->insts);
+	LIST_INITHEAD(&node->predecessors);
+	LIST_INITHEAD(&node->successors);
+	LIST_INITHEAD(&node->childs);
+	LIST_INITHEAD(&node->insts);
 	node->parent = NULL;
 }
 
@@ -198,7 +198,7 @@ static struct c_node_link *c_node_link_new(struct c_node *node)
 	link = calloc(1, sizeof(struct c_node_link));
 	if (link == NULL)
 		return NULL;
-	c_list_init(link);
+	LIST_INITHEAD(&link->head);
 	link->node = node;
 	return link;
 }
@@ -214,30 +214,31 @@ int c_node_cfg_link(struct c_node *predecessor, struct c_node *successor)
 		free(pedge);
 		return -ENOMEM;
 	}
-	c_list_add_tail(pedge, &predecessor->successors);
-	c_list_add_tail(sedge, &successor->predecessors);
+	LIST_ADDTAIL(&pedge->head, &predecessor->successors);
+	LIST_ADDTAIL(&sedge->head, &successor->predecessors);
+
 	return 0;
 }
 
 int c_node_add_new_instruction_head(struct c_node *node, struct c_instruction *instruction)
 {
-	struct c_instruction *inst = calloc(1, sizeof(struct c_instruction));
+	struct c_instruction *inst = malloc(sizeof(struct c_instruction));
 
 	if (inst == NULL)
 		return -ENOMEM;
 	memcpy(inst, instruction, sizeof(struct c_instruction));
-	c_list_add(inst, &node->insts);
+	LIST_ADD(&inst->head, &node->insts);
 	return 0;
 }
 
 int c_node_add_new_instruction(struct c_node *node, struct c_instruction *instruction)
 {
-	struct c_instruction *inst = calloc(1, sizeof(struct c_instruction));
+	struct c_instruction *inst = malloc(sizeof(struct c_instruction));
 
 	if (inst == NULL)
 		return -ENOMEM;
 	memcpy(inst, instruction, sizeof(struct c_instruction));
-	c_list_add_tail(inst, &node->insts);
+	LIST_ADDTAIL(&inst->head, &node->insts);
 	return 0;
 }
 
@@ -252,7 +253,7 @@ struct c_node *c_shader_cfg_new_node_after(struct c_shader *shader, struct c_nod
 		free(node);
 		return NULL;
 	}
-	c_list_add_tail(node, &shader->nodes);
+	LIST_ADDTAIL(&node->head, &shader->nodes);
 	return node;
 }
 
@@ -264,9 +265,9 @@ int c_shader_init(struct c_shader *shader, unsigned type)
 	shader->type = type;
 	for (i = 0; i < C_FILE_COUNT; i++) {
 		shader->files[i].nvectors = 0;
-		c_list_init(&shader->files[i].vectors);
+		LIST_INITHEAD(&shader->files[i].vectors);
 	}
-	c_list_init(&shader->nodes);
+	LIST_INITHEAD(&shader->nodes);
 	c_node_init(&shader->entry);
 	c_node_init(&shader->end);
 	shader->entry.opcode = C_OPCODE_ENTRY;
@@ -297,7 +298,7 @@ struct c_vector *c_shader_vector_new(struct c_shader *shader, unsigned file, uns
 	v->sid = sid;
 	shader->files[v->file].nvectors++;
 	v->id = shader->nvectors++;
-	c_list_add_tail(v, &shader->files[v->file].vectors);
+	LIST_ADDTAIL(&v->head, &shader->files[v->file].vectors);
 	return v;
 out_err:
 	for (i = 0; i < 4; i++) {
@@ -307,13 +308,13 @@ out_err:
 	return NULL;
 }
 
-static void c_node_remove_link(struct c_node_link *head, struct c_node *node)
+static void c_node_remove_link(struct list_head *head, struct c_node *node)
 {
 	struct c_node_link *link, *tmp;
 
-	c_list_for_each_safe(link, tmp, head) {
+	LIST_FOR_EACH_ENTRY_SAFE(link, tmp, head, head) {
 		if (link->node == node) {
-			c_list_del(link);
+			LIST_DEL(&link->head);
 			free(link);
 		}
 	}
@@ -324,26 +325,26 @@ static void c_node_destroy(struct c_node *node)
 	struct c_instruction *i, *ni;
 	struct c_node_link *link, *tmp;
 
-	c_list_for_each_safe(i, ni, &node->insts) {
-		c_list_del(i);
+	LIST_FOR_EACH_ENTRY_SAFE(i, ni, &node->insts, head) {
+		LIST_DEL(&i->head);
 		free(i);
 	}
 	if (node->parent)
 		c_node_remove_link(&node->parent->childs, node);
 	node->parent = NULL;
-	c_list_for_each_safe(link, tmp, &node->predecessors) {
+	LIST_FOR_EACH_ENTRY_SAFE(link, tmp, &node->predecessors, head) {
 		c_node_remove_link(&link->node->successors, node);
-		c_list_del(link);
+		LIST_DEL(&link->head);
 		free(link);
 	}
-	c_list_for_each_safe(link, tmp, &node->successors) {
+	LIST_FOR_EACH_ENTRY_SAFE(link, tmp, &node->successors, head) {
 		c_node_remove_link(&link->node->predecessors, node);
-		c_list_del(link);
+		LIST_DEL(&link->head);
 		free(link);
 	}
-	c_list_for_each_safe(link, tmp, &node->childs) {
+	LIST_FOR_EACH_ENTRY_SAFE(link, tmp, &node->childs, head) {
 		link->node->parent = NULL;
-		c_list_del(link);
+		LIST_DEL(&link->head);
 		free(link);
 	}
 }
@@ -356,8 +357,8 @@ void c_shader_destroy(struct c_shader *shader)
 
 	for (i = 0; i < C_FILE_COUNT; i++) {
 		shader->files[i].nvectors = 0;
-		c_list_for_each_safe(v, nv, &shader->files[i].vectors) {
-			c_list_del(v);
+		LIST_FOR_EACH_ENTRY_SAFE(v, nv, &shader->files[i].vectors, head) {
+			LIST_DEL(&v->head);
 			free(v->channel[0]);
 			free(v->channel[1]);
 			free(v->channel[2]);
@@ -365,8 +366,8 @@ void c_shader_destroy(struct c_shader *shader)
 			free(v);
 		}
 	}
-	c_list_for_each_safe(n, nn, &shader->nodes) {
-		c_list_del(n);
+	LIST_FOR_EACH_ENTRY_SAFE(n, nn, &shader->nodes, head) {
+		LIST_DEL(&n->head);
 		c_node_destroy(n);
 	}
 	memset(shader, 0, sizeof(struct c_shader));
@@ -379,7 +380,7 @@ static void c_shader_dfs_without_rec(struct c_node *entry, struct c_node *node)
 	if (entry == node || entry->visited)
 		return;
 	entry->visited = 1;
-	c_list_for_each(link, &entry->successors) {
+	LIST_FOR_EACH_ENTRY(link, &entry->successors, head) {
 		c_shader_dfs_without_rec(link->node, node);
 	}
 }
@@ -390,7 +391,7 @@ static void c_shader_dfs_without(struct c_shader *shader, struct c_node *node)
 
 	shader->entry.visited = 0;
 	shader->end.visited = 0;
-	c_list_for_each(n, &shader->nodes) {
+	LIST_FOR_EACH_ENTRY(n, &shader->nodes, head) {
 		n->visited = 0;
 	}
 	c_shader_dfs_without_rec(&shader->entry, node);
@@ -405,7 +406,7 @@ static int c_shader_build_dominator_tree_rec(struct c_shader *shader, struct c_n
 	if (node->done)
 		return 0;
 	node->done = 1;
-	c_list_for_each(link, &node->predecessors) {
+	LIST_FOR_EACH_ENTRY(link, &node->predecessors, head) {
 		/* if we remove this predecessor can we reach the current node ? */
 		c_shader_dfs_without(shader, link->node);
 		if (node->visited == 0) {
@@ -417,7 +418,7 @@ static int c_shader_build_dominator_tree_rec(struct c_shader *shader, struct c_n
 			nlink = c_node_link_new(node);
 			if (nlink == NULL)
 				return -ENOMEM;
-			c_list_add_tail(nlink, &link->node->childs);
+			LIST_ADDTAIL(&nlink->head, &link->node->childs);
 			found = 1;
 			break;
 		}
@@ -428,7 +429,7 @@ static int c_shader_build_dominator_tree_rec(struct c_shader *shader, struct c_n
 			node, node->opcode);
 		return -EINVAL;
 	}
-	c_list_for_each(link, &node->predecessors) {
+	LIST_FOR_EACH_ENTRY(link, &node->predecessors, head) {
 		r = c_shader_build_dominator_tree_rec(shader, link->node);
 		if (r)
 			return r;
@@ -439,7 +440,7 @@ static int c_shader_build_dominator_tree_rec(struct c_shader *shader, struct c_n
 int c_shader_build_dominator_tree(struct c_shader *shader)
 {
 	struct c_node *node;
-	c_list_for_each(node, &shader->nodes) {
+	LIST_FOR_EACH_ENTRY(node, &shader->nodes, head) {
 		node->done = 0;
 	}
 	return c_shader_build_dominator_tree_rec(shader, &shader->end);

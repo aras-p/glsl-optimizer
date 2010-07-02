@@ -53,7 +53,7 @@ int r600_shader_insert_fetch(struct c_shader *shader)
 	vi = c_shader_vector_new(shader, C_FILE_INPUT, C_SEMANTIC_VERTEXID, -1);
 	if (vi == NULL)
 		return -ENOMEM;
-	c_list_for_each_safe(v, nv, &shader->files[C_FILE_INPUT].vectors) {
+	LIST_FOR_EACH_ENTRY_SAFE(v, nv, &shader->files[C_FILE_INPUT].vectors, head) {
 		if (v == vi)
 			continue;
 		vr = c_shader_vector_new(shader, C_FILE_RESOURCE, C_SEMANTIC_GENERIC, -1);
@@ -88,9 +88,9 @@ int r600_shader_insert_fetch(struct c_shader *shader)
 		r = c_node_add_new_instruction_head(&shader->entry, &instruction);
 		if (r)
 			return r;
-		c_list_del(v);
+		LIST_DEL(&v->head);
 		shader->files[C_FILE_INPUT].nvectors--;
-		c_list_add_tail(v, &shader->files[C_FILE_TEMPORARY].vectors);
+		LIST_ADDTAIL(&v->head, &shader->files[C_FILE_TEMPORARY].vectors);
 		shader->files[C_FILE_TEMPORARY].nvectors++;
 		v->file = C_FILE_TEMPORARY;
 	}
@@ -113,14 +113,14 @@ void r600_shader_cleanup(struct r600_shader *rshader)
 		free(rshader->gpr);
 		rshader->gpr = NULL;
 	}
-	c_list_for_each_safe(n, nn, &rshader->nodes) {
-		c_list_del(n);
-		c_list_for_each_safe(vf, nvf, &n->vfetch) {
-			c_list_del(vf);
+	LIST_FOR_EACH_ENTRY_SAFE(n, nn, &rshader->nodes, head) {
+		LIST_DEL(&n->head);
+		LIST_FOR_EACH_ENTRY_SAFE(vf, nvf, &n->vfetch, head) {
+			LIST_DEL(&vf->head);
 			free(vf);
 		}
-		c_list_for_each_safe(alu, nalu, &n->alu) {
-			c_list_del(alu);
+		LIST_FOR_EACH_ENTRY_SAFE(alu, nalu, &n->alu,  head) {
+			LIST_DEL(&alu->head);
 			free(alu);
 		}
 		free(n);
@@ -161,8 +161,8 @@ int r600_shader_update(struct r600_shader *rshader, enum pipe_format *resource_f
 
 	memcpy(rshader->resource_format, resource_format,
 		rshader->nresource * sizeof(enum pipe_format));
-	c_list_for_each(rnode, &rshader->nodes) {
-		c_list_for_each(vfetch, &rnode->vfetch) {
+	LIST_FOR_EACH_ENTRY(rnode, &rshader->nodes, head) {
+		LIST_FOR_EACH_ENTRY(vfetch, &rnode->vfetch, head) {
 			const struct util_format_description *desc;
 			i = vfetch->cf_addr + 1;
 			rshader->bcode[i] &= C_SQ_VTX_WORD1_DST_SEL_X;
@@ -197,7 +197,7 @@ int r600_shader_register(struct r600_shader *rshader)
 	cid = 0;
 	rid = 0;
 	/* alloc input first */
-	c_list_for_each(v, &rshader->cshader.files[C_FILE_INPUT].vectors) {
+	LIST_FOR_EACH_ENTRY(v, &rshader->cshader.files[C_FILE_INPUT].vectors, head) {
 		nv = c_vector_new();
 		if (nv == NULL) {
 			return -ENOMEM;
@@ -209,7 +209,7 @@ int r600_shader_register(struct r600_shader *rshader)
 	for (i = 0; i < C_FILE_COUNT; i++) {
 		if (i == C_FILE_INPUT || i == C_FILE_IMMEDIATE)
 			continue;
-		c_list_for_each(v, &rshader->cshader.files[i].vectors) {
+		LIST_FOR_EACH_ENTRY(v, &rshader->cshader.files[i].vectors, head) {
 			switch (v->file) {
 			case C_FILE_OUTPUT:
 			case C_FILE_TEMPORARY:
@@ -315,9 +315,9 @@ static struct r600_shader_node *r600_shader_new_node(struct r600_shader *rshader
 	if (rnode == NULL)
 		return NULL;
 	rnode->node = node;
-	c_list_init(&rnode->vfetch);
-	c_list_init(&rnode->alu);
-	c_list_add_tail(rnode, &rshader->nodes);
+	LIST_INITHEAD(&rnode->vfetch);
+	LIST_INITHEAD(&rnode->alu);
+	LIST_ADDTAIL(&rnode->head, &rshader->nodes);
 	return rnode;
 }
 
@@ -333,7 +333,7 @@ static int r600_shader_add_vfetch(struct r600_shader *rshader,
 		return 0;
 	if (instruction->op[0].opcode != C_OPCODE_VFETCH)
 		return 0;
-	if (!c_list_empty(&node->alu)) {
+	if (!LIST_IS_EMPTY(&node->alu)) {
 		rnode = r600_shader_new_node(rshader, node->node);
 		if (rnode == NULL)
 			return -ENOMEM;
@@ -355,7 +355,7 @@ static int r600_shader_add_vfetch(struct r600_shader *rshader,
 	vfetch->dst[1].chan = C_SWIZZLE_Y;
 	vfetch->dst[2].chan = C_SWIZZLE_Z;
 	vfetch->dst[3].chan = C_SWIZZLE_W;
-	c_list_add_tail(vfetch, &node->vfetch);
+	LIST_ADDTAIL(&vfetch->head, &node->vfetch);
 	node->nslot += 2;
 	return 0;
 }
@@ -369,7 +369,7 @@ static int r600_node_translate(struct r600_shader *rshader, struct c_node *node)
 	rnode = r600_shader_new_node(rshader, node);
 	if (rnode == NULL)
 		return -ENOMEM;
-	c_list_for_each(instruction, &node->insts) {
+	LIST_FOR_EACH_ENTRY(instruction, &node->insts, head) {
 		switch (instruction->op[0].opcode) {
 		case C_OPCODE_VFETCH:
 			r = r600_shader_add_vfetch(rshader, rnode, instruction);
@@ -400,7 +400,7 @@ int r600_shader_translate_rec(struct r600_shader *rshader, struct c_node *node)
 	r = r600_node_translate(rshader, node);
 	if (r)
 		return r;
-	c_list_for_each(link, &node->childs) {
+	LIST_FOR_EACH_ENTRY(link, &node->childs, head) {
 		r = r600_shader_translate_rec(rshader, link->node);
 		if (r)
 			return r;
@@ -425,7 +425,7 @@ static struct r600_shader_alu *r600_shader_insert_alu(struct r600_shader *rshade
 	alu->alu[2].opcode = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP;
 	alu->alu[3].opcode = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP;
 	alu->alu[4].opcode = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP;
-	c_list_add_tail(alu, &node->alu);
+	LIST_ADDTAIL(&alu->head, &node->alu);
 	return alu;
 }
 
@@ -437,7 +437,7 @@ static int r600_shader_alu_translate(struct r600_shader *rshader,
 	struct r600_shader_alu *alu;
 	int i, j, r, comp, litteral_lastcomp = -1;
 
-	if (!c_list_empty(&node->vfetch)) {
+	if (!LIST_IS_EMPTY(&node->vfetch)) {
 		rnode = r600_shader_new_node(rshader, node->node);
 		if (rnode == NULL) {
 			fprintf(stderr, "%s %d new node failed\n", __func__, __LINE__);
@@ -541,17 +541,17 @@ void r600_shader_node_place(struct r600_shader *rshader)
 
 	rshader->ncf = 0;
 	rshader->nslot = 0;
-	c_list_for_each_safe(node, nnode, &rshader->nodes) {
-		c_list_for_each_safe(alu, nalu, &node->alu) {
+	LIST_FOR_EACH_ENTRY_SAFE(node, nnode, &rshader->nodes, head) {
+		LIST_FOR_EACH_ENTRY_SAFE(alu, nalu, &node->alu, head) {
 			node->nslot += alu->nalu;
 			node->nslot += alu->nliteral >> 1;
 		}
 		node->nfetch = 0;
-		c_list_for_each_safe(vfetch, nvfetch, &node->vfetch) {
+		LIST_FOR_EACH_ENTRY_SAFE(vfetch, nvfetch, &node->vfetch, head) {
 			node->nslot += 2;
 			node->nfetch += 1;
 		}
-		if (!c_list_empty(&node->vfetch)) {
+		if (!LIST_IS_EMPTY(&node->vfetch)) {
 			/* fetch node need to be 16 bytes aligned*/
 			cf_addr += 1;
 			cf_addr &= 0xFFFFFFFEUL;
@@ -563,7 +563,7 @@ void r600_shader_node_place(struct r600_shader *rshader)
 		rshader->ncf++;
 	}
 	rshader->nslot = cf_addr;
-	c_list_for_each_safe(node, nnode, &rshader->nodes) {
+	LIST_FOR_EACH_ENTRY_SAFE(node, nnode, &rshader->nodes, head) {
 		node->cf_addr += cf_id * 2;
 	}
 	rshader->ncf += rshader->cshader.files[C_FILE_OUTPUT].nvectors;
@@ -584,7 +584,7 @@ static int r600_cshader_legalize_rec(struct c_shader *shader, struct c_node *nod
 	unsigned k;
 	int r;
 
-	c_list_for_each(i, &node->insts) {
+	LIST_FOR_EACH_ENTRY(i, &node->insts, head) {
 		for (k = 0; k < i->nop; k++) {
 			switch (i->op[k].opcode) {
 			case C_OPCODE_SLT:
@@ -598,7 +598,7 @@ static int r600_cshader_legalize_rec(struct c_shader *shader, struct c_node *nod
 			}
 		}
 	}
-	c_list_for_each(link, &node->childs) {
+	LIST_FOR_EACH_ENTRY(link, &node->childs, head) {
 		r = r600_cshader_legalize_rec(shader, link->node);
 		if (r) {
 			return r;

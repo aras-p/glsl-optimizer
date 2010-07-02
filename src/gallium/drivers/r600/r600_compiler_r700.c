@@ -172,14 +172,14 @@ int r700_shader_translate(struct r600_shader *rshader)
 	rshader->bcode = malloc(rshader->ndw * 4);
 	if (rshader->bcode == NULL)
 		return -ENOMEM;
-	c_list_for_each(rnode, &rshader->nodes) {
+	LIST_FOR_EACH_ENTRY(rnode, &rshader->nodes, head) {
 		id = rnode->cf_addr;
-		c_list_for_each(vfetch, &rnode->vfetch) {
+		LIST_FOR_EACH_ENTRY(vfetch, &rnode->vfetch, head) {
 			r = r600_shader_vfetch_bytecode(rshader, rnode, vfetch, &id);
 			if (r)
 				return r;
 		}
-		c_list_for_each(alu, &rnode->alu) {
+		LIST_FOR_EACH_ENTRY(alu, &rnode->alu, head) {
 			for (i = 0; i < alu->nalu; i++) {
 				r = r700_shader_alu_bytecode(rshader, rnode, &alu->alu[i], &id);
 				if (r)
@@ -191,20 +191,20 @@ int r700_shader_translate(struct r600_shader *rshader)
 		}
 	}
 	id = 0;
-	c_list_for_each(rnode, &rshader->nodes) {
+	LIST_FOR_EACH_ENTRY(rnode, &rshader->nodes, head) {
 		r = r700_shader_cf_node_bytecode(rshader, rnode, &id);
 		if (r)
 			return r;
 	}
-	c_list_for_each(v, &rshader->cshader.files[C_FILE_OUTPUT].vectors) {
+	LIST_FOR_EACH_ENTRY(v, &rshader->cshader.files[C_FILE_OUTPUT].vectors, head) {
 		end = 0;
-		if (v->next == &rshader->cshader.files[C_FILE_OUTPUT].vectors)
+		if (v->head.next == &rshader->cshader.files[C_FILE_OUTPUT].vectors)
 			end = 1;
 		r = r700_shader_cf_output_bytecode(rshader, v, &id, end);
 		if (r)
 			return r;
 	}
-	c_list_for_each(v, &rshader->cshader.files[C_FILE_INPUT].vectors) {
+	LIST_FOR_EACH_ENTRY(v, &rshader->cshader.files[C_FILE_INPUT].vectors, head) {
 		rshader->input[rshader->ninput].gpr = rshader->ninput;
 		rshader->input[rshader->ninput].sid = v->sid;
 		rshader->input[rshader->ninput].name = v->name;

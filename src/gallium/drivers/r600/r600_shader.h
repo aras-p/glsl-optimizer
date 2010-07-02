@@ -35,8 +35,7 @@ struct r600_shader_operand {
 };
 
 struct r600_shader_vfetch {
-	struct r600_shader_vfetch	*next;
-	struct r600_shader_vfetch	*prev;
+	struct list_head                head;
 	unsigned			cf_addr;
 	struct r600_shader_operand	src[2];
 	struct r600_shader_operand	dst[4];
@@ -52,8 +51,7 @@ struct r600_shader_inst {
 };
 
 struct r600_shader_alu {
-	struct r600_shader_alu		*next;
-	struct r600_shader_alu		*prev;
+	struct list_head                head;
 	unsigned			nalu;
 	unsigned			nliteral;
 	unsigned			nconstant;
@@ -62,15 +60,14 @@ struct r600_shader_alu {
 };
 
 struct r600_shader_node {
-	struct r600_shader_node		*next;
-	struct r600_shader_node		*prev;
+	struct list_head                head;
 	unsigned			cf_id;		/**< cf index (in dw) in byte code */
 	unsigned			cf_addr;	/**< instructions index (in dw) in byte code */
 	unsigned			nslot;		/**< number of slot (2 dw) needed by this node */
 	unsigned			nfetch;
 	struct c_node			*node;		/**< compiler node from which this node originate */
-	struct r600_shader_vfetch	vfetch;		/**< list of vfetch instructions */
-	struct r600_shader_alu		alu;		/**< list of alu instructions */
+	struct list_head                vfetch;         /**< list of vfetch instructions */
+	struct list_head                alu;            /**< list of alu instructions */
 };
 
 struct r600_shader_io {
@@ -90,7 +87,7 @@ struct r600_shader {
 	unsigned			ncf;			/**< total number of cf clauses */
 	unsigned			nslot;			/**< total number of slots (2 dw) */
 	unsigned			flat_shade;		/**< are we flat shading */
-	struct r600_shader_node		nodes;			/**< list of node */
+	struct list_head		nodes;			/**< list of node */
 	struct r600_shader_io		input[32];
 	struct r600_shader_io		output[32];
 	/* TODO replace GPR by some better register allocator */

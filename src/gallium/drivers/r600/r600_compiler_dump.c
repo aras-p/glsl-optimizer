@@ -232,7 +232,7 @@ static void c_node_dump(struct c_node *node, unsigned indent)
 	unsigned j, k;
 
 	pindent(indent); fprintf(stderr, "# node %s\n", c_get_name(c_opcode_str, node->opcode));
-	c_list_for_each(i, &node->insts) {
+	LIST_FOR_EACH_ENTRY(i, &node->insts, head) {
 		for (k = 0; k < i->nop; k++) {
 			pindent(indent);
 			fprintf(stderr, "%s", c_get_name(c_opcode_str, i->op[k].opcode));
@@ -256,7 +256,7 @@ static void c_shader_dump_rec(struct c_shader *shader, struct c_node *node, unsi
 	struct c_node_link *link;
 
 	c_node_dump(node, indent);
-	c_list_for_each(link, &node->childs) {
+	LIST_FOR_EACH_ENTRY(link, &node->childs, head) {
 		c_shader_dump_rec(shader, link->node, indent + 1);
 	}
 }

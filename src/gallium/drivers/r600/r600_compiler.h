@@ -23,12 +23,13 @@
 #ifndef R600_COMPILER_H
 #define R600_COMPILER_H
 
+#include "util/u_double_list.h"
+
 struct c_vector;
 
 /* operand are the basic source/destination of each operation */
 struct c_channel {
-	struct c_channel	*next;
-	struct c_channel	*prev;
+	struct list_head        head;
 	unsigned		vindex;		/**< index in vector X,Y,Z,W (0,1,2,3) */
 	unsigned		value;		/**< immediate value 32bits */
 	struct c_vector		*vector;	/**< vector to which it belongs */
@@ -39,24 +40,13 @@ struct c_channel {
  * operand into a same vector
  */
 struct c_vector {
-	struct c_vector		*next;
-	struct c_vector		*prev;
+	struct list_head        head;
 	unsigned		id;		/**< vector uniq id */
 	unsigned		name;		/**< semantic name */
 	unsigned		file;		/**< operand file C_FILE_* */
 	int			sid;		/**< semantic id */
 	struct c_channel	*channel[4];	/**< operands */
 };
-
-#define c_list_init(e) do { (e)->next = e; (e)->prev = e; } while(0)
-#define c_list_add(e, h) do { (e)->next = (h)->next; (e)->prev = h;  (h)->next = e; (e)->next->prev = e; } while(0)
-#define c_list_add_tail(e, h) do { (e)->next = h; (e)->prev = (h)->prev;  (h)->prev = e; (e)->prev->next = e; } while(0)
-#define c_list_del(e) do { (e)->next->prev = (e)->prev; (e)->prev->next = (e)->next; c_list_init(e); } while(0)
-#define c_list_for_each(p, h) for (p = (h)->next; p != (h); p = p->next)
-#define c_list_for_each_from(p, s, h) for (p = s; p != (h); p = p->next)
-#define c_list_for_each_safe(p, n, h) for (p = (h)->next, n = p->next; p != (h); p = n, n = p->next)
-#define c_list_empty(h) ((h)->next == h)
-
 
 #define C_PROGRAM_TYPE_VS	0
 #define C_PROGRAM_TYPE_FS	1
@@ -259,7 +249,7 @@ struct c_op {
 };
 
 struct c_instruction {
-	struct c_instruction	*next, *prev;
+	struct list_head        head;
 	unsigned		nop;
 	struct c_op		op[5];
 };
@@ -267,8 +257,7 @@ struct c_instruction {
 struct c_node;
 
 struct c_node_link {
-	struct c_node_link	*next;
-	struct c_node_link	*prev;
+	struct list_head        head;
 	struct c_node		*node;
 };
 
@@ -285,12 +274,12 @@ struct c_node_link {
  * @childs:		child nodes in the depth first walk tree
  */
 struct c_node {
-	struct c_node		*next, *prev;
-	struct c_node_link	predecessors;
-	struct c_node_link	successors;
+	struct list_head        head;
+	struct list_head        predecessors;
+	struct list_head        successors;
+	struct list_head        childs;
 	struct c_node		*parent;
-	struct c_node_link	childs;
-	struct c_instruction	insts;
+	struct list_head        insts;
 	unsigned		opcode;
 	unsigned		visited;
 	unsigned		done;
@@ -299,13 +288,13 @@ struct c_node {
 
 struct c_file {
 	unsigned		nvectors;
-	struct c_vector		vectors;
+	struct list_head        vectors;
 };
 
 struct c_shader {
 	unsigned			nvectors;
 	struct c_file			files[C_FILE_COUNT];
-	struct c_node			nodes;
+	struct list_head                nodes;
 	struct c_node			entry;
 	struct c_node			end;
 	unsigned			type;

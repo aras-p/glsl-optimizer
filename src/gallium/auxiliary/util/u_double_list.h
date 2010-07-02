@@ -98,5 +98,20 @@ struct list_head
 #define LIST_IS_EMPTY(__list)                   \
     ((__list)->next == (__list))
 
+#ifndef container_of
+#define container_of(ptr, sample, member)				\
+    (void *)((char *)(ptr)						\
+	     - ((char *)&(sample)->member - (char *)(sample)))
+#endif
 
+#define LIST_FOR_EACH_ENTRY(pos, head, member)				\
+   for (pos = container_of((head)->next, pos, member);			\
+	&pos->member != (head);						\
+	pos = container_of(pos->member.next, pos, member))
+
+#define LIST_FOR_EACH_ENTRY_SAFE(pos, storage, head, member)	\
+   for (pos = container_of((head)->next, pos, member),			\
+	storage = container_of(pos->member.next, pos, member);	\
+	&pos->member != (head);						\
+	pos = storage, storage = container_of(storage->member.next, storage, member))
 #endif /*_U_DOUBLE_LIST_H_*/
