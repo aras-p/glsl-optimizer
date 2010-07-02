@@ -1203,11 +1203,14 @@ emit_texenv(struct texenv_fragment_program *p, GLuint unit)
    else
       alpha_saturate = GL_FALSE;
 
-   /* If this is the very last calculation, emit direct to output reg:
+   /* If this is the very last calculation (and various other conditions
+    * are met), emit directly to the color output register.  Otherwise,
+    * emit to a temporary register.
     */
    if (key->separate_specular ||
        unit != p->last_tex_stage ||
        alpha_shift ||
+       key->num_draw_buffers != 1 ||
        rgb_shift)
       dest = get_temp( p );
    else
