@@ -83,6 +83,7 @@ public:
    GLboolean cond_update;
    int sampler; /**< sampler index */
    int tex_target; /**< One of TEXTURE_*_INDEX */
+   GLboolean tex_shadow;
 };
 
 class temp_entry : public exec_node {
@@ -1361,6 +1362,16 @@ ir_to_mesa_visitor::visit(ir_texture *ir)
       }
    }
 
+   if (ir->shadow_comparitor) {
+      /* Slot the shadow value in as the second to last component of the
+       * coord.
+       */
+      ir->shadow_comparitor->accept(this);
+      coord_dst.writemask = WRITEMASK_Z;
+      ir_to_mesa_emit_op1(ir, OPCODE_MOV, coord_dst, this->result);
+      coord_dst.writemask = WRITEMASK_XYZW;
+   }
+
    if (opcode == OPCODE_TXL || opcode == OPCODE_TXB) {
       /* Mesa IR stores lod or lod bias in the last channel of the coords. */
       coord_dst.writemask = WRITEMASK_W;
@@ -1369,6 +1380,9 @@ ir_to_mesa_visitor::visit(ir_texture *ir)
    }
 
    inst = ir_to_mesa_emit_op1(ir, opcode, result_dst, coord);
+
+   if (ir->shadow_comparitor)
+      inst->tex_shadow = GL_TRUE;
 
    ir_dereference_variable *sampler = ir->sampler->as_dereference_variable();
    assert(sampler); /* FINISHME: sampler arrays */
@@ -1395,8 +1409,6 @@ ir_to_mesa_visitor::visit(ir_texture *ir)
    default:
       assert(!"FINISHME: other texture targets");
    }
-
-   assert(!ir->shadow_comparitor); /* FINISHME */
 
    this->result = result_src;
 }
@@ -1726,6 +1738,7 @@ get_mesa_program(GLcontext *ctx, void *mem_ctx, struct gl_shader *shader)
       mesa_inst->SrcReg[2] = mesa_src_reg_from_ir_src_reg(inst->src_reg[2]);
       mesa_inst->TexSrcUnit = inst->sampler;
       mesa_inst->TexSrcTarget = inst->tex_target;
+      mesa_inst->TexShadow = inst->tex_shadow;
       mesa_instruction_annotation[i] = inst->ir;
 
       mesa_inst++;
