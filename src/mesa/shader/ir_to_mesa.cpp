@@ -691,9 +691,7 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
       }
       break;
    case ir_binop_div:
-      ir_to_mesa_emit_scalar_op1(ir, OPCODE_RCP, result_dst, op[1]);
-      ir_to_mesa_emit_op2(ir, OPCODE_MUL, result_dst, op[0], result_src);
-      break;
+      assert(!"not reached: should be handled by ir_div_to_mul_rcp");
    case ir_binop_mod:
       assert(!"ir_binop_mod should have been converted to b * fract(a/b)");
       break;
@@ -1729,6 +1727,7 @@ _mesa_glsl_compile_shader(GLcontext *ctx, struct gl_shader *shader)
 
    /* Lowering */
    do_mod_to_fract(shader->ir);
+   do_div_to_mul_rcp(shader->ir);
 
    /* Optimization passes */
    if (!state->error && !shader->ir->is_empty()) {
