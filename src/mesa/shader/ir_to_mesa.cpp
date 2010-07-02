@@ -44,6 +44,7 @@
 extern "C" {
 #include "main/mtypes.h"
 #include "shader/prog_instruction.h"
+#include "shader/prog_optimize.h"
 #include "shader/prog_print.h"
 #include "shader/program.h"
 #include "shader/prog_uniform.h"
@@ -1674,6 +1675,10 @@ get_mesa_program(GLcontext *ctx, void *mem_ctx, struct gl_shader *shader)
    prog->NumInstructions = num_instructions;
 
    _mesa_reference_program(ctx, &shader->Program, prog);
+
+   if ((ctx->Shader.Flags & GLSL_NO_OPT) == 0) {
+      _mesa_optimize_program(ctx, prog);
+   }
 
    return prog;
 }
