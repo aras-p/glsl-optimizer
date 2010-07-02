@@ -251,6 +251,41 @@ lp_build_unpack_rgba_soa(LLVMBuilderRef builder,
 }
 
 
+void
+lp_build_rgba8_to_f32_soa(LLVMBuilderRef builder,
+                          struct lp_type dst_type,
+                          LLVMValueRef packed,
+                          LLVMValueRef *rgba)
+{
+   LLVMValueRef mask = lp_build_const_int_vec(dst_type, 0xff);
+   unsigned chan;
+
+   packed = LLVMBuildBitCast(builder, packed,
+                             lp_build_int_vec_type(dst_type), "");
+
+   /* Decode the input vector components */
+   for (chan = 0; chan < 4; ++chan) {
+      unsigned start = chan*8;
+      unsigned stop = start + 8;
+      LLVMValueRef input;
+
+      input = packed;
+
+      if (start)
+         input = LLVMBuildLShr(builder, input,
+                               lp_build_const_int_vec(dst_type, start), "");
+
+      if (stop < 32)
+         input = LLVMBuildAnd(builder, input, mask, "");
+
+      input = lp_build_unsigned_norm_to_float(builder, 8, dst_type, input);
+
+      rgba[chan] = input;
+   }
+}
+
+
+
 /**
  * Fetch a texels from a texture, returning them in SoA layout.
  *

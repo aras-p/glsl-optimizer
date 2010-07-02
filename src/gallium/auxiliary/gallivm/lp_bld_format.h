@@ -83,6 +83,11 @@ lp_build_unpack_rgba_soa(LLVMBuilderRef builder,
                          LLVMValueRef packed,
                          LLVMValueRef rgba_out[4]);
 
+void
+lp_build_rgba8_to_f32_soa(LLVMBuilderRef builder,
+                          struct lp_type dst_type,
+                          LLVMValueRef packed,
+                          LLVMValueRef *rgba);
 
 void
 lp_build_fetch_rgba_soa(LLVMBuilderRef builder,

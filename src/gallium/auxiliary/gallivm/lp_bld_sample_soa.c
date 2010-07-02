@@ -1713,36 +1713,6 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
 
 
 static void
-lp_build_rgba8_to_f32_soa(LLVMBuilderRef builder,
-                          struct lp_type dst_type,
-                          LLVMValueRef packed,
-                          LLVMValueRef *rgba)
-{
-   LLVMValueRef mask = lp_build_const_int_vec(dst_type, 0xff);
-   unsigned chan;
-
-   /* Decode the input vector components */
-   for (chan = 0; chan < 4; ++chan) {
-      unsigned start = chan*8;
-      unsigned stop = start + 8;
-      LLVMValueRef input;
-
-      input = packed;
-
-      if(start)
-         input = LLVMBuildLShr(builder, input, lp_build_const_int_vec(dst_type, start), "");
-
-      if(stop < 32)
-         input = LLVMBuildAnd(builder, input, mask, "");
-
-      input = lp_build_unsigned_norm_to_float(builder, 8, dst_type, input);
-
-      rgba[chan] = input;
-   }
-}
-
-
-static void
 lp_build_sample_2d_linear_aos(struct lp_build_sample_context *bld,
                               LLVMValueRef s,
                               LLVMValueRef t,
@@ -1935,8 +1905,6 @@ lp_build_sample_2d_linear_aos(struct lp_build_sample_context *bld,
    /*
     * Convert to SoA and swizzle.
     */
-
-   packed = LLVMBuildBitCast(builder, packed, i32_vec_type, "");
 
    lp_build_rgba8_to_f32_soa(bld->builder,
                              bld->texel_type,
