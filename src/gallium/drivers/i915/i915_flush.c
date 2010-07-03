@@ -38,9 +38,9 @@
 #include "i915_debug.h"
 
 
-static void i915_flush( struct pipe_context *pipe,
-                        unsigned flags,
-                        struct pipe_fence_handle **fence )
+static void i915_flush_pipe( struct pipe_context *pipe,
+                             unsigned flags,
+                             struct pipe_fence_handle **fence )
 {
    struct i915_context *i915 = i915_context(pipe);
 
@@ -81,5 +81,17 @@ static void i915_flush( struct pipe_context *pipe,
 
 void i915_init_flush_functions( struct i915_context *i915 )
 {
-   i915->base.flush = i915_flush;
+   i915->base.flush = i915_flush_pipe;
+}
+
+/**
+ * Here we handle all the notifications that needs to go out on a flush.
+ * XXX might move above function to i915_pipe_flush.c and leave this here.
+ */
+void i915_flush(struct i915_context *i915, struct pipe_fence_handle **fence)
+{
+   struct i915_winsys_batchbuffer *batch = i915->batch;
+
+   batch->iws->batchbuffer_flush(batch, fence);
+   i915->hardware_dirty = ~0;
 }
