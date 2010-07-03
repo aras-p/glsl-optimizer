@@ -129,7 +129,7 @@ void
 ir_constant_visitor::visit(ir_expression *ir)
 {
    value = NULL;
-   ir_constant *op[2];
+   ir_constant *op[2] = { NULL, NULL };
    unsigned int operand, c;
    ir_constant_data data;
 
