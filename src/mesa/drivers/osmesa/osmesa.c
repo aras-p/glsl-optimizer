@@ -1328,6 +1328,7 @@ OSMesaMakeCurrent( OSMesaContext osmesa, void *buffer, GLenum type,
     * size.
     */
    osmesa->rb = new_osmesa_renderbuffer(&osmesa->mesa, osmesa->format, type);
+   _mesa_remove_renderbuffer(osmesa->gl_buffer, BUFFER_FRONT_LEFT);
    _mesa_add_renderbuffer(osmesa->gl_buffer, BUFFER_FRONT_LEFT, osmesa->rb);
    assert(osmesa->rb->RefCount == 2);
 
