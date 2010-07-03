@@ -24,6 +24,7 @@ i915 = env.ConvenienceLibrary(
 		'i915_state.c',
 		'i915_state_derived.c',
 		'i915_state_dynamic.c',
+		'i915_state_fpc.c',
 		'i915_state_emit.c',
 		'i915_state_immediate.c',
 		'i915_state_sampler.c',

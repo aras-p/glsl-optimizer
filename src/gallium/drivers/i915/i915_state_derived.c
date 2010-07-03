@@ -156,22 +156,6 @@ struct i915_tracked_state i915_update_vertex_layout = {
 
 
 /***********************************************************************
- * Update fragment state
- */
-static void update_fs(struct i915_context *i915)
-{
-   i915->hardware_dirty |= I915_HW_PROGRAM; /* XXX right? */
-}
-
-struct i915_tracked_state i915_hw_fs = {
-   "fs",
-   update_fs,
-   I915_NEW_FS
-};
-
-
-
-/***********************************************************************
  */
 static struct i915_tracked_state *atoms[] = {
    &i915_update_vertex_layout,
@@ -181,6 +165,7 @@ static struct i915_tracked_state *atoms[] = {
    &i915_hw_dynamic,
    &i915_hw_fs,
    &i915_hw_framebuffer,
+   &i915_hw_constants,
    NULL,
 };
 

@@ -339,7 +339,7 @@ i915_emit_hardware_state(struct i915_context *i915 )
 
    /* constants */
    /* 2 + I915_MAX_CONSTANT*4 dwords, 0 relocs */
-   if (i915->hardware_dirty & I915_HW_PROGRAM)
+   if (i915->hardware_dirty & I915_HW_CONSTANTS)
    {
       /* Collate the user-defined constants with the fragment shader's
        * immediates according to the constant_flags[] array.
