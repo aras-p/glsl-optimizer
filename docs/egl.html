@@ -32,7 +32,7 @@ cards.</p>
 the Gallium driver for your hardware.  For example</p>
 
 <pre>
-  $ ./configure --enable-gles-overlay --with-state-trackers=egl,vega --enable-gallium-{swrast,intel}
+  $ ./configure --enable-gles-overlay --with-state-trackers=egl,vega --enable-gallium-intel
 </pre>
 
 <p>The main library and OpenGL is enabled by default.  The first option enables
@@ -71,12 +71,12 @@ drivers will be installed to <code>${libdir}/egl</code>.</p>
 
 <li><code>--with-egl-platforms</code>
 
-<p>List the native platform window system(s) to support.  It is by default
-<code>x11</code>, which supports the X Window System.  Its argument is a comma
-separated string like, for example, <code>--with-egl-platforms=x11,kms</code>.
-Because an EGL driver decides which window system to support, this example will
-enable two (sets of) EGL drivers.  One supports the X window system and the
-other supports bare KMS (kernel modesetting).</p>
+<p>List the platforms (window systems) to support.  Its argument is a comma
+seprated string such as <code>--with-egl-platforms=x11,kms</code>.  It decides
+the platforms a driver may support.  The first listed platform is also used by
+the main library to decide the native platform: the platform the EGL native
+types such as <code>EGLNativeDisplayType</code> or
+<code>EGLNativeWindowType</code> defined for.</p>
 
 <p>The available platforms are <code>x11</code>, <code>kms</code>,
 <code>fbdev</code>, and <code>gdi</code>.  The <code>gdi</code> platform can
@@ -87,9 +87,8 @@ only be built with SCons.</p>
 <li><code>--with-state-trackers</code>
 
 <p>The argument is a comma separated string.  It is usually used to specify the
-rendering APIs, such as OpenVG, to build.  But it should be noted that a number
-of EGL drivers depend on the <code>egl</code> state tracker.  They will
-<em>not</em> be built without the <code>egl</code> state tracker.</p>
+rendering APIs, such as OpenVG, to build.  But it is also used to specify
+<code>egl</code> state tracker that <code>egl_gallium</code> depends on.</p>
 
 </li>
 
@@ -105,19 +104,10 @@ ES, this option must be explicitly given.</p>
 
 <p>Unlike <code>--enable-gles-overlay</code>, which builds one library for each
 rendering API, these options enable OpenGL ES support in OpenGL.  The result is
-one big library that supports multiple APIs.  This is used by DRI drivers and
-<code>egl_dri2</code> EGL driver.
+one big library that supports multiple APIs.</p>
 
 </li>
 
-<li><code>--enable-gallium-swrast</code>
-
-<p>This option is not specific to EGL.  But if there is no driver for your
-hardware, or you are experiencing problems with the hardware driver, you can
-enable the swrast DRM driver.  It is a dummy driver and EGL will fallback to
-software rendering automatically.</p>
-
-</li>
 </ul>
 
 <h2>Use EGL</h2>
@@ -153,12 +143,10 @@ specific driver.  This variable is ignored for setuid/setgid binaries.</p>
 
 <li><code>EGL_PLATFORM</code>
 
-<p>When <code>EGL_DRIVER</code> is not set, the main library loads <em>all</em>
-EGL drivers that support a certain window system.  <code>EGL_PLATFORM</code>
-can be used to specify the window system and the valid values are, for example,
-<code>x11</code> or <code>kms</code>.  When the variable is not set, the main
-library defaults the value to the first window system listed in
-<code>--with-egl-platforms</code> at configuration time.
+<p>This variable specifies the native platform.  The valid values are the same
+as those for <code>--with-egl-platforms</code>.  When the variable is not set,
+the main library uses the first platform listed in
+<code>--with-egl-platforms</code> as the native platform</p>
 
 </li>
 
@@ -180,31 +168,15 @@ variable to true forces the use of software rendering.</p>
 
 <h2>EGL Drivers</h2>
 
-<p>There are two categories of EGL drivers: Gallium and classic.</p>
-
-<p>Gallium EGL drivers supports all rendering APIs specified in EGL 1.4.  These
-drivers depend on the <code>egl</code> state tracker to build.  The available
-drivers are</p>
-
 <ul>
-<li><code>egl_&lt;dpy&gt;_i915</code></li>
-<li><code>egl_&lt;dpy&gt;_i965</code></li>
-<li><code>egl_&lt;dpy&gt;_nouveau</code></li>
-<li><code>egl_&lt;dpy&gt;_radeon</code></li>
-<li><code>egl_&lt;dpy&gt;_swrast</code></li>
-<li><code>egl_&lt;dpy&gt;_vmwgfx</code></li>
-</ul>
+<li><code>egl_gallium</code>
 
-<p><code>&lt;dpy&gt;</code> is given by <code>--with-egl-platforms</code> at
-configuration time.  There is usually one EGL driver for each combination of
-the platforms listed and the pipe drivers enabled.  When the platform is pure
-software or pure hardware, non-working combinations will not be built.</p>
+<p>This driver is based on Gallium3D.  It supports all rendering APIs and
+hardwares supported by Gallium3D.  It is the only driver that supports OpenVG.
+The supported platforms are X11, KMS, FBDEV, and GDI.</p>
 
-<p>Classic EGL drivers, on the other hand, support only a subset of the
-available rendering APIs.  They can be found under
-<code>src/egl/drivers/</code>.  There are 3 of them</p>
+</li>
 
-<ul>
 <li><code>egl_glx</code>
 
 <p>This driver provides a wrapper to GLX.  It uses exclusively GLX to implement
@@ -230,9 +202,6 @@ are phasing out, it might eventually be replaced by <code>egl_dri2</code>.</p>
 
 </li>
 </ul>
-
-<p>To use the classic drivers, one must manually set <code>EGL_DRIVER</code> at
-runtime.</p>
 
 <h2>Developers</h2>
 
