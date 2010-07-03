@@ -170,17 +170,28 @@ typedef CRITICAL_SECTION pipe_mutex;
 
 
 /* pipe_condvar (XXX FIX THIS)
+ * See http://www.cs.wustl.edu/~schmidt/win32-cv-1.html
+ * for potential pitfalls in implementation.
  */
-typedef unsigned pipe_condvar;
+typedef DWORD pipe_condvar;
+
+#define pipe_static_condvar(cond) \
+   /*static*/ pipe_condvar cond = 1
 
 #define pipe_condvar_init(cond) \
-   (void) cond
+   (void) (cond = 1)
 
 #define pipe_condvar_destroy(cond) \
    (void) cond
 
+/* Poor man's pthread_cond_wait():
+   Just release the mutex and sleep for one millisecond.
+   The caller's while() loop does all the work. */
 #define pipe_condvar_wait(cond, mutex) \
-   (void) cond; (void) mutex
+   do { pipe_mutex_unlock(mutex); \
+        Sleep(cond); \
+        pipe_mutex_lock(mutex); \
+   } while (0)
 
 #define pipe_condvar_signal(cond) \
    (void) cond
@@ -190,6 +201,8 @@ typedef unsigned pipe_condvar;
 
 
 #else
+
+#include "os/os_time.h"
 
 /** Dummy definitions */
 
@@ -214,7 +227,6 @@ static INLINE int pipe_thread_destroy( pipe_thread thread )
 }
 
 typedef unsigned pipe_mutex;
-typedef unsigned pipe_condvar;
 
 #define pipe_static_mutex(mutex) \
    static pipe_mutex mutex = 0
@@ -231,17 +243,25 @@ typedef unsigned pipe_condvar;
 #define pipe_mutex_unlock(mutex) \
    (void) mutex
 
+typedef int64_t pipe_condvar;
+
 #define pipe_static_condvar(condvar) \
-   static unsigned condvar = 0
+   static pipe_condvar condvar = 1000
 
 #define pipe_condvar_init(condvar) \
-   (void) condvar
+   (void) (condvar = 1000)
 
 #define pipe_condvar_destroy(condvar) \
    (void) condvar
 
+/* Poor man's pthread_cond_wait():
+   Just release the mutex and sleep for one millisecond.
+   The caller's while() loop does all the work. */
 #define pipe_condvar_wait(condvar, mutex) \
-   (void) condvar
+   do { pipe_mutex_unlock(mutex); \
+        os_time_sleep(condvar); \
+        pipe_mutex_lock(mutex); \
+   } while (0)
 
 #define pipe_condvar_signal(condvar) \
    (void) condvar
