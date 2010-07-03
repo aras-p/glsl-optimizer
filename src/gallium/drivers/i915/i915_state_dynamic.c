@@ -30,7 +30,7 @@
 #include "i915_context.h"
 #include "i915_reg.h"
 #include "i915_state.h"
-#include "util/u_math.h"
+
 #include "util/u_memory.h"
 #include "util/u_pack_color.h"
 
@@ -52,6 +52,9 @@ static INLINE void set_dynamic_indirect(struct i915_context *i915,
                                         unsigned dwords)
 {
    unsigned i;
+
+   if (!memcmp(src, &i915->current.dynamic[offset], dwords * 4))
+      return;
 
    for (i = 0; i < dwords; i++)
       i915->current.dynamic[offset + i] = src[i];
