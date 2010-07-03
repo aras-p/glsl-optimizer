@@ -625,7 +625,8 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
       break;
 
    case ir_unop_exp:
-      ir_to_mesa_emit_scalar_op1(ir, OPCODE_EXP, result_dst, op[0]);
+      ir_to_mesa_emit_scalar_op2(ir, OPCODE_POW, result_dst,
+				 src_reg_for_float(M_E), op[0]);
       break;
    case ir_unop_exp2:
       ir_to_mesa_emit_scalar_op1(ir, OPCODE_EX2, result_dst, op[0]);
