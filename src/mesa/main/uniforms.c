@@ -1293,6 +1293,7 @@ _mesa_GetActiveUniformARB(GLhandleARB program, GLuint index,
 void
 _mesa_init_shader_uniform_dispatch(struct _glapi_table *exec)
 {
+#if FEATURE_GL
    SET_Uniform1fARB(exec, _mesa_Uniform1fARB);
    SET_Uniform2fARB(exec, _mesa_Uniform2fARB);
    SET_Uniform3fARB(exec, _mesa_Uniform3fARB);
@@ -1336,4 +1337,5 @@ _mesa_init_shader_uniform_dispatch(struct _glapi_table *exec)
    (void) _mesa_Uniform2uiv;
    (void) _mesa_Uniform3uiv;
    (void) _mesa_Uniform4uiv;
+#endif /* FEATURE_GL */
 }

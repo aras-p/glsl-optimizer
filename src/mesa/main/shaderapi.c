@@ -1590,6 +1590,7 @@ _mesa_ProgramParameteriARB(GLuint program, GLenum pname,
 void
 _mesa_init_shader_dispatch(struct _glapi_table *exec)
 {
+#if FEATURE_GL
    /* GL_ARB_vertex/fragment_shader */
    SET_DeleteObjectARB(exec, _mesa_DeleteObjectARB);
    SET_GetHandleARB(exec, _mesa_GetHandleARB);
@@ -1632,5 +1633,6 @@ _mesa_init_shader_dispatch(struct _glapi_table *exec)
 #if FEATURE_ARB_geometry_shader4
    SET_ProgramParameteriARB(exec, _mesa_ProgramParameteriARB);
 #endif
+#endif /* FEATURE_GL */
 }
 
