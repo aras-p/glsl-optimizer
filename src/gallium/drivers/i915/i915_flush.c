@@ -67,11 +67,9 @@ static void i915_flush( struct pipe_context *pipe,
    }
 #endif
 
-#if 0
    if (i915->batch->map == i915->batch->ptr) {
       return;
    }
-#endif
 
    /* If there are no flags, just flush pending commands to hardware:
     */
