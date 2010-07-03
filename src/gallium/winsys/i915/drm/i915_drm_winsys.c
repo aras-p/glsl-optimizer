@@ -71,6 +71,7 @@ i915_drm_winsys_create(int drmFD)
    drm_intel_bufmgr_gem_enable_reuse(idws->pools.gem);
 
    idws->dump_cmd = debug_get_bool_option("INTEL_DUMP_CMD", FALSE);
+   idws->send_cmd = !debug_get_bool_option("INTEL_NO_HW", FALSE);
 
    return &idws->base;
 }

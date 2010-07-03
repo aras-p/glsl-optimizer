@@ -186,7 +186,10 @@ i915_drm_batchbuffer_flush(struct i915_winsys_batchbuffer *ibatch,
 #endif
 
    /* Do the sending to HW */
-   ret = drm_intel_bo_exec(batch->bo, used, NULL, 0, 0);
+   if (i915_drm_winsys(ibatch->iws)->send_cmd)
+      ret = drm_intel_bo_exec(batch->bo, used, NULL, 0, 0);
+   else
+      ret = 0;
 
    if (ret != 0 || i915_drm_winsys(ibatch->iws)->dump_cmd) {
 #ifdef INTEL_MAP_BATCHBUFFER
