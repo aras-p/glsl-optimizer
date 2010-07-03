@@ -879,9 +879,9 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
 
     /* Point sprites texture coordinates, 0: lower left, 1: upper right */
     float point_texcoord_left;      /* R300_GA_POINT_S0: 0x4200 */
-    float point_texcoord_bottom;    /* R300_GA_POINT_T0: 0x4204 */
+    float point_texcoord_bottom = 0;/* R300_GA_POINT_T0: 0x4204 */
     float point_texcoord_right;     /* R300_GA_POINT_S1: 0x4208 */
-    float point_texcoord_top;       /* R300_GA_POINT_T1: 0x420c */
+    float point_texcoord_top = 0;   /* R300_GA_POINT_T1: 0x420c */
     CB_LOCALS;
 
     /* Copy rasterizer state. */
@@ -974,6 +974,9 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
                 R300_GA_LINE_STIPPLE_CONFIG_STIPPLE_SCALE_MASK);
         /* XXX this might need to be scaled up */
         line_stipple_value = state->line_stipple_pattern;
+    } else {
+        line_stipple_config = 0;
+        line_stipple_value = 0;
     }
 
     if (state->flatshade) {
