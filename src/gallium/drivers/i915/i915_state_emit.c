@@ -175,7 +175,7 @@ i915_emit_hardware_state(struct i915_context *i915 )
       OUT_BATCH(_3DSTATE_LOAD_INDIRECT | 0);
       OUT_BATCH(0);
    }
-   
+
    /* 7 dwords, 1 relocs */
    if (i915->hardware_dirty & I915_HW_IMMEDIATE)
    {
@@ -201,7 +201,8 @@ i915_emit_hardware_state(struct i915_context *i915 )
       OUT_BATCH(i915->current.immediate[I915_IMMEDIATE_S5]);
       OUT_BATCH(i915->current.immediate[I915_IMMEDIATE_S6]);
    } 
-   
+
+#if 01
    /* I915_MAX_DYNAMIC dwords, 0 relocs */
    if (i915->hardware_dirty & I915_HW_DYNAMIC) 
    {
@@ -210,7 +211,9 @@ i915_emit_hardware_state(struct i915_context *i915 )
          OUT_BATCH(i915->current.dynamic[i]);
       }
    }
-   
+#endif
+
+#if 01
    /* 8 dwords, 2 relocs */
    if (i915->hardware_dirty & I915_HW_STATIC)
    {
@@ -259,10 +262,10 @@ i915_emit_hardware_state(struct i915_context *i915 )
                    I915_USAGE_RENDER,
                    depth_surface->offset);
       }
-   
+
       {
          unsigned cformat, zformat = 0;
-      
+
          if (cbuf_surface)
             cformat = cbuf_surface->format;
          else
@@ -281,6 +284,7 @@ i915_emit_hardware_state(struct i915_context *i915 )
                    zformat );
       }
    }
+#endif
 
 #if 01
       /* texture images */
@@ -320,7 +324,7 @@ i915_emit_hardware_state(struct i915_context *i915 )
    {
       if (i915->current.sampler_enable_nr) {
          int i;
-         
+
          OUT_BATCH( _3DSTATE_SAMPLER_STATE | 
                     (3 * i915->current.sampler_enable_nr) );
 
@@ -337,6 +341,7 @@ i915_emit_hardware_state(struct i915_context *i915 )
    }
 #endif
 
+#if 01
    /* constants */
    /* 2 + I915_MAX_CONSTANT*4 dwords, 0 relocs */
    if (i915->hardware_dirty & I915_HW_CONSTANTS)
@@ -376,7 +381,9 @@ i915_emit_hardware_state(struct i915_context *i915 )
          }
       }
    }
+#endif
 
+#if 01
    /* Fragment program */
    /* i915->current.program_len dwords, 0 relocs */
    if (i915->hardware_dirty & I915_HW_PROGRAM)
@@ -388,7 +395,9 @@ i915_emit_hardware_state(struct i915_context *i915 )
          OUT_BATCH(i915->fs->program[i]);
       }
    }
+#endif
 
+#if 01
    /* drawing surface size */
    /* 6 dwords, 0 relocs */
    {
@@ -404,6 +413,7 @@ i915_emit_hardware_state(struct i915_context *i915 )
       OUT_BATCH(0);
       OUT_BATCH(0);
    }
+#endif
 
    I915_DBG(DBG_EMIT, "%s: used %d dwords, %d relocs\n", __FUNCTION__,
             ((uintptr_t)i915->batch->ptr - save_ptr) / 4,

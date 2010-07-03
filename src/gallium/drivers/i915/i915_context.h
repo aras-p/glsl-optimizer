@@ -316,8 +316,6 @@ struct pipe_context *i915_create_context(struct pipe_screen *screen,
 					 void *priv);
 
 
-
-
 /***********************************************************************
  * Inline conversion functions.  These are better-typed than the
  * macros used previously:
@@ -327,7 +325,6 @@ i915_context( struct pipe_context *pipe )
 {
    return (struct i915_context *)pipe;
 }
-
 
 
 #endif
