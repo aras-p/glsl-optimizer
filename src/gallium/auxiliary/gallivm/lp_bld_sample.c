@@ -40,7 +40,6 @@
 #include "lp_bld_const.h"
 #include "lp_bld_arit.h"
 #include "lp_bld_type.h"
-#include "lp_bld_format.h"
 #include "lp_bld_sample.h"
 
 
