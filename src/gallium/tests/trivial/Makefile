@@ -12,7 +12,9 @@ INCLUDES = \
 	$(PROG_INCLUDES)
 
 LINKS = \
+	$(TOP)/src/gallium/drivers/rbug/librbug.a \
 	$(TOP)/src/gallium/drivers/trace/libtrace.a \
+	$(TOP)/src/gallium/drivers/galahad/libgalahad.a \
 	$(TOP)/src/gallium/winsys/sw/null/libws_null.a \
 	$(TOP)/src/gallium/drivers/softpipe/libsoftpipe.a \
 	$(GALLIUM_AUXILIARIES) \
@@ -25,6 +27,9 @@ SOURCES = \
 OBJECTS = $(SOURCES:.c=.o)
 
 PROGS = $(OBJECTS:.o=)
+
+PROG_DEFINES = \
+	-DGALLIUM_SOFTPIPE -DGALLIUM_RBUG -DGALLIUM_TRACE -DGALLIUM_GALAHAD
 
 ##### TARGETS #####
 
