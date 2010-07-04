@@ -29,9 +29,6 @@
 #include "egllog.h"
 
 #include "native_x11.h"
-#include "x11_screen.h"
-
-#include "state_tracker/drm_driver.h"
 
 static struct native_display *
 native_create_display(void *dpy, struct native_event_handler *event_handler,
