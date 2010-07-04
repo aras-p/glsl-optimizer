@@ -264,46 +264,24 @@ EGLBoolean EGLAPIENTRY
 eglInitialize(EGLDisplay dpy, EGLint *major, EGLint *minor)
 {
    _EGLDisplay *disp = _eglLockDisplay(dpy);
-   EGLint major_int = 0, minor_int = 0;
 
    if (!disp)
       RETURN_EGL_ERROR(NULL, EGL_BAD_DISPLAY, EGL_FALSE);
 
    if (!disp->Initialized) {
-      _EGLDriver *drv = disp->Driver;
+      if (!_eglMatchDriver(disp, EGL_FALSE))
+         RETURN_EGL_ERROR(disp, EGL_NOT_INITIALIZED, EGL_FALSE);
 
-      if (!drv) {
-         _eglPreloadDrivers();
-         drv = _eglMatchDriver(disp);
-	 /* Initialize the particular display now */
-	 if (drv && !drv->API.Initialize(drv, disp, &major_int, &minor_int))
-	    RETURN_EGL_ERROR(disp, EGL_NOT_INITIALIZED, EGL_FALSE);
-      }
-      if (!drv)
-	 /* Load and initialize the first default driver that works */
-	 drv = _eglLoadDefaultDriver(disp, &major_int, &minor_int);
-      if (!drv)
-	 RETURN_EGL_ERROR(disp, EGL_NOT_INITIALIZED, EGL_FALSE);
-
-      disp->APImajor = major_int;
-      disp->APIminor = minor_int;
-      _eglsnprintf(disp->Version, sizeof(disp->Version),
-               "%d.%d (%s)", major_int, minor_int, drv->Name);
-
+      _eglsnprintf(disp->Version, sizeof(disp->Version), "%d.%d (%s)",
+            disp->APImajor, disp->APIminor, disp->Driver->Name);
       /* limit to APIs supported by core */
       disp->ClientAPIsMask &= _EGL_API_ALL_BITS;
-
-      disp->Driver = drv;
-      disp->Initialized = EGL_TRUE;
-   } else {
-      major_int = disp->APImajor;
-      minor_int = disp->APIminor;
    }
 
    /* Update applications version of major and minor if not NULL */
    if ((major != NULL) && (minor != NULL)) {
-      *major = major_int;
-      *minor = minor_int;
+      *major = disp->APImajor;
+      *minor = disp->APIminor;
    }
 
    RETURN_EGL_SUCCESS(disp, EGL_TRUE);
@@ -870,18 +848,8 @@ eglGetProcAddress(const char *procname)
          }
       }
    }
-   if (ret)
-      RETURN_EGL_SUCCESS(NULL, ret);
-
-   _eglPreloadDrivers();
-
-   /* now loop over drivers to query their procs */
-   for (i = 0; i < _eglGlobal.NumDrivers; i++) {
-      _EGLDriver *drv = _eglGlobal.Drivers[i];
-      ret = drv->API.GetProcAddress(drv, procname);
-      if (ret)
-         break;
-   }
+   if (!ret)
+      ret = _eglGetDriverProc(procname);
 
    RETURN_EGL_SUCCESS(NULL, ret);
 }

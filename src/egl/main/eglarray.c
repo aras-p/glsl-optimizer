@@ -84,6 +84,22 @@ _eglAppendArray(_EGLArray *array, void *elem)
 
 
 /**
+ * Erase an element from an array.
+ */
+void
+_eglEraseArray(_EGLArray *array, EGLint i, void (*free_cb)(void *))
+{
+   if (free_cb)
+      free_cb(array->Elements[i]);
+   if (i < array->Size - 1) {
+      memmove(&array->Elements[i], &array->Elements[i + 1],
+            (array->Size - i - 1) * sizeof(array->Elements[0]));
+   }
+   array->Size--;
+}
+
+
+/**
  * Find in an array for the given element.
  */
 void *

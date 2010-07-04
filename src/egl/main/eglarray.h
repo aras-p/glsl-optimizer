@@ -29,6 +29,10 @@ extern void
 _eglAppendArray(_EGLArray *array, void *elem);
 
 
+extern void
+_eglEraseArray(_EGLArray *array, EGLint i, void (*free_cb)(void *));
+
+
 void *
 _eglFindArray(_EGLArray *array, void *elem);
 
