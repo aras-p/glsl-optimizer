@@ -172,24 +172,6 @@ struct i915_tracked_state i915_hw_fs = {
 
 
 /***********************************************************************
- * Update framebuffer state
- */
-static void update_framebuffer(struct i915_context *i915)
-{
-   /* HW emit currently references framebuffer state directly:
-    */
-   i915->hardware_dirty |= I915_HW_STATIC;
-}
-
-struct i915_tracked_state i915_hw_framebuffer = {
-   "framebuffer",
-   update_framebuffer,
-   I915_NEW_FRAMEBUFFER
-};
-
-
-
-/***********************************************************************
  */
 static struct i915_tracked_state *atoms[] = {
    &i915_update_vertex_layout,
