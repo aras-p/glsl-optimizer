@@ -58,11 +58,11 @@
  * changes.
  */
 
-static void update_texture(struct i915_context *i915,
-                           uint unit,
-                           const struct i915_texture *tex,
-                           const struct i915_sampler_state *sampler,
-                           uint state[6]);
+static void update_map(struct i915_context *i915,
+                       uint unit,
+                       const struct i915_texture *tex,
+                       const struct i915_sampler_state *sampler,
+                       uint state[2]);
 
 
 
@@ -159,11 +159,11 @@ static void update_samplers(struct i915_context *i915)
                         i915->sampler[unit],          /* sampler state */
                         texture,                      /* texture */
                         i915->current.sampler[unit]); /* the result */
-         update_texture(i915,
-                        unit,
-                        texture,                        /* texture */
-                        i915->sampler[unit],            /* sampler state */
-                        i915->current.texbuffer[unit]); /* the result */
+         update_map(i915,
+                    unit,
+                    texture,                        /* texture */
+                    i915->sampler[unit],            /* sampler state */
+                    i915->current.texbuffer[unit]); /* the result */
 
          i915->current.sampler_enable_nr++;
          i915->current.sampler_enable_flags |= (1 << unit);
@@ -174,7 +174,7 @@ static void update_samplers(struct i915_context *i915)
 }
 
 struct i915_tracked_state i915_hw_samplers = {
-   "sampler_views",
+   "samplers",
    update_samplers,
    I915_NEW_SAMPLER | I915_NEW_SAMPLER_VIEW
 };
@@ -243,11 +243,11 @@ static uint translate_texture_format(enum pipe_format pipeFormat)
    }
 }
 
-static void update_texture(struct i915_context *i915,
-                           uint unit,
-                           const struct i915_texture *tex,
-                           const struct i915_sampler_state *sampler,
-                           uint state[6])
+static void update_map(struct i915_context *i915,
+                       uint unit,
+                       const struct i915_texture *tex,
+                       const struct i915_sampler_state *sampler,
+                       uint state[2])
 {
    const struct pipe_resource *pt = &tex->b.b;
    uint format, pitch;
@@ -296,7 +296,7 @@ static void update_texture(struct i915_context *i915,
        | ((depth - 1) << MS4_VOLUME_DEPTH_SHIFT));
 }
 
-static void update_textures(struct i915_context *i915)
+static void update_maps(struct i915_context *i915)
 {
    uint unit;
 
@@ -307,11 +307,11 @@ static void update_textures(struct i915_context *i915)
       if (i915->fragment_sampler_views[unit]) {
          struct i915_texture *texture = i915_texture(i915->fragment_sampler_views[unit]->texture);
 
-         update_texture(i915,
-                        unit,
-                        texture,                      /* texture */
-                        i915->sampler[unit],          /* sampler state */
-                        i915->current.texbuffer[unit]);
+         update_map(i915,
+                    unit,
+                    texture,                      /* texture */
+                    i915->sampler[unit],          /* sampler state */
+                    i915->current.texbuffer[unit]);
       }
    }
 
@@ -320,6 +320,6 @@ static void update_textures(struct i915_context *i915)
 
 struct i915_tracked_state i915_hw_sampler_views = {
    "sampler_views",
-   update_textures,
+   update_maps,
    I915_NEW_SAMPLER_VIEW
 };
