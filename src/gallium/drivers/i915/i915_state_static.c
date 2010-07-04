@@ -26,7 +26,6 @@
 
 #include "i915_reg.h"
 #include "i915_context.h"
-#include "i915_resource.h"
 #include "i915_state.h"
 
 
