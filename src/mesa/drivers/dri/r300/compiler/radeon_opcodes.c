@@ -399,6 +399,10 @@ struct rc_opcode_info rc_opcodes[MAX_RC_OPCODE] = {
 	{
 		.Opcode = RC_OPCODE_BEGIN_TEX,
 		.Name = "BEGIN_TEX"
+	},
+	{
+		.Opcode = RC_OPCODE_KILP,
+		.Name = "KILP",
 	}
 };
 

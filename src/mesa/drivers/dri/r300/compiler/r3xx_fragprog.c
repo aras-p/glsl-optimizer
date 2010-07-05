@@ -101,6 +101,10 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 
 	rewrite_depth_out(c);
 
+	/* This transformation needs to be done before any of the IF
+	 * instructions are modified. */
+	radeonTransformKILP(&c->Base);
+
 	debug_program_log(c, "before compilation");
 
 	if (c->Base.is_r500){

@@ -199,6 +199,9 @@ typedef enum {
 	 * can run simultaneously. */
 	RC_OPCODE_BEGIN_TEX,
 
+	/** Stop execution of the shader (GLSL discard) */
+	RC_OPCODE_KILP,
+
 	MAX_RC_OPCODE
 } rc_opcode;
 

@@ -973,3 +973,32 @@ int radeonTransformDeriv(struct radeon_compiler* c,
 
 	return 1;
 }
+
+/**
+ * IF Temp[0].x -\
+ * KILP         - > KIL -abs(Temp[0].x)
+ * ENDIF        -/
+ *
+ * This needs to be done in its own pass, because it modifies the instructions
+ * before and after KILP.
+ */
+void radeonTransformKILP(struct radeon_compiler * c)
+{
+	struct rc_instruction * inst;
+	for (inst = c->Program.Instructions.Next;
+			inst != &c->Program.Instructions; inst = inst->Next) {
+
+		if (inst->U.I.Opcode != RC_OPCODE_KILP
+			|| inst->Prev->U.I.Opcode != RC_OPCODE_IF
+			|| inst->Next->U.I.Opcode != RC_OPCODE_ENDIF) {
+			continue;
+		}
+		inst->U.I.Opcode = RC_OPCODE_KIL;
+		inst->U.I.SrcReg[0] = negate(absolute(inst->Prev->U.I.SrcReg[0]));
+
+		/* Remove IF */
+		rc_remove_instruction(inst->Prev);
+		/* Remove ENDIF */
+		rc_remove_instruction(inst->Next);
+	}
+}
