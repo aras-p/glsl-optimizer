@@ -48,7 +48,7 @@ static struct llvmpipe_query *llvmpipe_query( struct pipe_query *p )
 
 static struct pipe_query *
 llvmpipe_create_query(struct pipe_context *pipe, 
-		      unsigned type)
+                      unsigned type)
 {
    struct llvmpipe_query *pq;
 
@@ -67,6 +67,16 @@ static void
 llvmpipe_destroy_query(struct pipe_context *pipe, struct pipe_query *q)
 {
    struct llvmpipe_query *pq = llvmpipe_query(q);
+   /* query might still be in process if we never waited for the result */
+   if (!pq->done) {
+     struct pipe_fence_handle *fence = NULL;
+     llvmpipe_flush(pipe, 0, &fence);
+     if (fence) {
+         pipe->screen->fence_finish(pipe->screen, fence, 0);
+         pipe->screen->fence_reference(pipe->screen, &fence, NULL);
+      }
+   }
+
    pipe_mutex_destroy(pq->mutex);
    FREE(pq);
 }
@@ -74,16 +84,26 @@ llvmpipe_destroy_query(struct pipe_context *pipe, struct pipe_query *q)
 
 static boolean
 llvmpipe_get_query_result(struct pipe_context *pipe, 
-			  struct pipe_query *q,
-			  boolean wait,
-			  void *vresult)
+                          struct pipe_query *q,
+                          boolean wait,
+                          void *vresult)
 {
-   struct llvmpipe_context *llvmpipe = llvmpipe_context( pipe );
    struct llvmpipe_query *pq = llvmpipe_query(q);
    uint64_t *result = (uint64_t *)vresult;
 
    if (!pq->done) {
-      lp_setup_flush(llvmpipe->setup, 0);
+      if (wait) {
+         struct pipe_fence_handle *fence = NULL;
+         llvmpipe_flush(pipe, 0, &fence);
+         if (fence) {
+            pipe->screen->fence_finish(pipe->screen, fence, 0);
+            pipe->screen->fence_reference(pipe->screen, &fence, NULL);
+         }
+      }
+      /* this is a bit inconsequent but should be ok */
+      else {
+         llvmpipe_flush(pipe, 0, NULL);
+      }
    }
 
    if (pq->done) {
