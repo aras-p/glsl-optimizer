@@ -190,11 +190,11 @@ debug_get_flags_option(const char *name,
       result = dfault;
    else if (!util_strcmp(str, "help")) {
       result = dfault;
-      debug_printf("%s: help for %s:\n", __FUNCTION__, name);
+      _debug_printf("%s: help for %s:\n", __FUNCTION__, name);
       for (; flags->name; ++flags)
          namealign = MAX2(namealign, strlen(flags->name));
       for (flags = orig; flags->name; ++flags)
-         debug_printf("| %*s [0x%0*lx]%s%s\n", namealign, flags->name,
+         _debug_printf("| %*s [0x%0*lx]%s%s\n", namealign, flags->name,
                       (int)sizeof(unsigned long)*CHAR_BIT/4, flags->value,
                       flags->desc ? " " : "", flags->desc ? flags->desc : "");
    }
