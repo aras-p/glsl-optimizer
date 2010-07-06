@@ -362,6 +362,7 @@ ir_constant_visitor::visit(ir_expression *ir)
 
       break;
    case ir_binop_mul:
+      /* Check for equal types, or unequal types involving scalars */
       if ((op[0]->type == op[1]->type && !op[0]->type->is_matrix())
 	  || op0_scalar || op1_scalar) {
 	 for (unsigned c = 0, c0 = 0, c1 = 0;
@@ -382,9 +383,30 @@ ir_constant_visitor::visit(ir_expression *ir)
 	       assert(0);
 	    }
 	 }
-      } else
-	 /* FINISHME: Support vector/matrix and matrix multiplication. */
-	 return;
+      } else {
+	 assert(op[0]->type->is_matrix() || op[1]->type->is_matrix());
+
+	 /* Multiply an N-by-M matrix with an M-by-P matrix.  Since either
+	  * matrix can be a GLSL vector, either N or P can be 1.
+	  *
+	  * For vec*mat, the vector is treated as a row vector.  This
+	  * means the vector is a 1-row x M-column matrix.
+	  *
+	  * For mat*vec, the vector is treated as a column vector.  Since
+	  * matrix_columns is 1 for vectors, this just works.
+	  */
+	 const unsigned n = op[0]->type->is_vector()
+	    ? 1 : op[0]->type->vector_elements;
+	 const unsigned m = op[1]->type->vector_elements;
+	 const unsigned p = op[1]->type->matrix_columns;
+	 for (unsigned j = 0; j < p; j++) {
+	    for (unsigned i = 0; i < n; i++) {
+	       for (unsigned k = 0; k < m; k++) {
+		  data.f[i+n*j] += op[0]->value.f[i+n*k]*op[1]->value.f[k+m*j];
+	       }
+	    }
+	 }
+      }
 
       break;
    case ir_binop_div:
