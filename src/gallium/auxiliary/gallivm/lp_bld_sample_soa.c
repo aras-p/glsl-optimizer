@@ -961,7 +961,7 @@ lp_build_nearest_mip_level(struct lp_build_sample_context *bld,
                                                bld->builder, unit);
 
    /* convert float lod to integer */
-   level = lp_build_iround(float_bld, lod);
+   level = lp_build_itrunc(float_bld, lod);
 
    /* clamp level to legal range of levels */
    *level_out = lp_build_clamp(int_bld, level, zero, last_level);
