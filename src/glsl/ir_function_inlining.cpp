@@ -33,9 +33,7 @@
 #include "ir_function_inlining.h"
 #include "ir_expression_flattening.h"
 #include "glsl_types.h"
-extern "C" {
 #include "hash_table.h"
-}
 
 class ir_function_inlining_visitor : public ir_hierarchical_visitor {
 public:
@@ -59,16 +57,6 @@ public:
    bool progress;
 };
 
-
-unsigned int hash_func(const void *key)
-{
-   return (unsigned int)(uintptr_t)key;
-}
-
-int hash_compare_func(const void *key1, const void *key2)
-{
-   return key1 == key2 ? 0 : 1;
-}
 
 bool
 automatic_inlining_predicate(ir_instruction *ir)
@@ -124,7 +112,7 @@ ir_call::generate_inline(ir_instruction *next_ir)
    ir_variable *retval = NULL;
    struct hash_table *ht;
 
-   ht = hash_table_ctor(0, hash_func, hash_compare_func);
+   ht = hash_table_ctor(0, hash_table_pointer_hash, hash_table_pointer_compare);
 
    num_parameters = 0;
    foreach_iter(exec_list_iterator, iter_sig, this->callee->parameters)

@@ -36,26 +36,15 @@
 #include <inttypes.h>
 #include "ir.h"
 #include "ir_hierarchical_visitor.h"
-extern "C" {
 #include "hash_table.h"
-}
-
-static unsigned int hash_func(const void *key)
-{
-   return (unsigned int)(uintptr_t)key;
-}
-
-static int hash_compare_func(const void *key1, const void *key2)
-{
-   return key1 == key2 ? 0 : 1;
-}
 
 
 class ir_validate : public ir_hierarchical_visitor {
 public:
    ir_validate()
    {
-      this->ht = hash_table_ctor(0, hash_func, hash_compare_func);
+      this->ht = hash_table_ctor(0, hash_table_pointer_hash,
+				 hash_table_pointer_compare);
 
       this->callback = ir_validate::validate_ir;
       this->data = ht;

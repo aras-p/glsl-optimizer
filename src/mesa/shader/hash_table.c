@@ -157,3 +157,17 @@ hash_table_string_hash(const void *key)
 
     return hash;
 }
+
+
+unsigned
+hash_table_pointer_hash(const void *key)
+{
+   return (unsigned)((uintptr_t) key / sizeof(void *));
+}
+
+
+int
+hash_table_pointer_compare(const void *key1, const void *key2)
+{
+   return key1 == key2 ? 0 : 1;
+}
