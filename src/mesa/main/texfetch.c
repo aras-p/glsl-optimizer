@@ -552,6 +552,54 @@ texfetch_funcs[MESA_FORMAT_COUNT] =
       fetch_texel_3d_f_intensity_f16,
       store_texel_intensity_f16
    },
+
+   /* non-normalized, signed int */
+   {
+      MESA_FORMAT_RGBA_INT8,
+      fetch_texel_1d_rgba_int8,
+      fetch_texel_2d_rgba_int8,
+      fetch_texel_3d_rgba_int8,
+      store_texel_rgba_int8
+   },
+   {
+      MESA_FORMAT_RGBA_INT16,
+      fetch_texel_1d_rgba_int16,
+      fetch_texel_2d_rgba_int16,
+      fetch_texel_3d_rgba_int16,
+      store_texel_rgba_int16
+   },
+   {
+      MESA_FORMAT_RGBA_INT32,
+      fetch_texel_1d_rgba_int32,
+      fetch_texel_2d_rgba_int32,
+      fetch_texel_3d_rgba_int32,
+      store_texel_rgba_int32
+   },
+
+   /* non-normalized, unsigned int */
+   {
+      MESA_FORMAT_RGBA_UINT8,
+      fetch_texel_1d_rgba_uint8,
+      fetch_texel_2d_rgba_uint8,
+      fetch_texel_3d_rgba_uint8,
+      store_texel_rgba_uint8
+   },
+   {
+      MESA_FORMAT_RGBA_UINT16,
+      fetch_texel_1d_rgba_uint16,
+      fetch_texel_2d_rgba_uint16,
+      fetch_texel_3d_rgba_uint16,
+      store_texel_rgba_uint16
+   },
+   {
+      MESA_FORMAT_RGBA_UINT32,
+      fetch_texel_1d_rgba_uint32,
+      fetch_texel_2d_rgba_uint32,
+      fetch_texel_3d_rgba_uint32,
+      store_texel_rgba_uint32
+   },
+
+   /* dudv */
    {
       MESA_FORMAT_DUDV8,
       fetch_texel_1d_dudv8,
@@ -559,6 +607,8 @@ texfetch_funcs[MESA_FORMAT_COUNT] =
       fetch_texel_3d_dudv8,
       NULL
    },
+
+   /* signed, normalized */
    {
       MESA_FORMAT_SIGNED_R8,
       fetch_texel_1d_signed_r8,

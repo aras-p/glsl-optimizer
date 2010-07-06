@@ -130,6 +130,22 @@ typedef enum
    MESA_FORMAT_INTENSITY_FLOAT16,
    /*@}*/
 
+   /**
+    * \name Non-normalized signed integer formats.
+    * XXX Note: these are just stand-ins for some better hardware
+    * formats TBD such as BGRA or ARGB.
+    */
+   MESA_FORMAT_RGBA_INT8,
+   MESA_FORMAT_RGBA_INT16,
+   MESA_FORMAT_RGBA_INT32,
+
+   /**
+    * \name Non-normalized unsigned integer formats.
+    */
+   MESA_FORMAT_RGBA_UINT8,
+   MESA_FORMAT_RGBA_UINT16,
+   MESA_FORMAT_RGBA_UINT32,
+
                                   /* msb <------ TEXEL BITS -----------> lsb */
                                   /* ---- ---- ---- ---- ---- ---- ---- ---- */
    /**
