@@ -1,13 +1,3 @@
-- Implement AST-to-HIR conversion of discard instructions.
-
-- Handle constant expressions of (matrix {+,-,*,/} scalar)
-
-- Handle constant expressions of (vector {+,-,*,/} scalar)
-
-- Handle constant expressions of (matrix * vector)
-
-- Handle constant expressions of (matrix * matrix)
-
 - Handle currently unsupported constant expression types
   - ir_unop_sign
   - ir_unop_exp2
@@ -18,7 +8,6 @@
   - ir_unop_floor
   - ir_unop_sin
   - ir_unop_cos
-  - ir_binop_dot
   - ir_binop_min
   - ir_binop_max
   - ir_binop_pow
@@ -79,3 +68,6 @@
   - ir_binop_bit_and
   - ir_binop_bit_xor
   - ir_binop_bit_or
+
+- Implement support for 1.30 style shadow compares which only return a float
+  instead of a vec4.
