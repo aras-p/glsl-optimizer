@@ -134,10 +134,8 @@ _mesa_validate_transform_feedback_buffers(GLcontext *ctx)
 void
 _mesa_init_transform_feedback(GLcontext *ctx)
 {
-   if (!ctx->Driver.NewTransformFeedback) {
-      /* this feature/extension may not be supported by the driver */
-      return;
-   }
+   /* core mesa expects this, even a dummy one, to be available */
+   ASSERT(ctx->Driver.NewTransformFeedback);
 
    ctx->TransformFeedback.DefaultObject =
       ctx->Driver.NewTransformFeedback(ctx, 0);
@@ -178,10 +176,8 @@ delete_cb(GLuint key, void *data, void *userData)
 void
 _mesa_free_transform_feedback(GLcontext *ctx)
 {
-   if (!ctx->Driver.NewTransformFeedback) {
-      /* this feature/extension may not be supported by the driver */
-      return;
-   }
+   /* core mesa expects this, even a dummy one, to be available */
+   ASSERT(ctx->Driver.NewTransformFeedback);
 
    _mesa_reference_buffer_object(ctx,
                                  &ctx->TransformFeedback.CurrentBuffer,
@@ -198,6 +194,40 @@ _mesa_free_transform_feedback(GLcontext *ctx)
 
    ctx->TransformFeedback.CurrentObject = NULL;
 }
+
+
+#else /* FEATURE_EXT_transform_feedback */
+
+/* forward declarations */
+static struct gl_transform_feedback_object *
+new_transform_feedback(GLcontext *ctx, GLuint name);
+
+static void
+delete_transform_feedback(GLcontext *ctx,
+                          struct gl_transform_feedback_object *obj);
+
+/* dummy per-context init/clean-up for transform feedback */
+void
+_mesa_init_transform_feedback(GLcontext *ctx)
+{
+   ctx->TransformFeedback.DefaultObject = new_transform_feedback(ctx, 0);
+   ctx->TransformFeedback.CurrentObject = ctx->TransformFeedback.DefaultObject;
+   _mesa_reference_buffer_object(ctx,
+                                 &ctx->TransformFeedback.CurrentBuffer,
+                                 ctx->Shared->NullBufferObj);
+}
+
+void
+_mesa_free_transform_feedback(GLcontext *ctx)
+{
+   _mesa_reference_buffer_object(ctx,
+                                 &ctx->TransformFeedback.CurrentBuffer,
+                                 NULL);
+   ctx->TransformFeedback.CurrentObject = NULL;
+   delete_transform_feedback(ctx, ctx->TransformFeedback.DefaultObject);
+}
+
+#endif /* FEATURE_EXT_transform_feedback */
 
 
 /** Default fallback for ctx->Driver.NewTransformFeedback() */
@@ -226,6 +256,10 @@ delete_transform_feedback(GLcontext *ctx,
 
    free(obj);
 }
+
+
+#if FEATURE_EXT_transform_feedback
+
 
 /** Default fallback for ctx->Driver.BeginTransformFeedback() */
 static void

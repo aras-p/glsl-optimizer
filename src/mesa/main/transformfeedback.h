@@ -28,6 +28,12 @@
 #include "main/mtypes.h"
 
 
+extern void
+_mesa_init_transform_feedback(GLcontext *ctx);
+
+extern void
+_mesa_free_transform_feedback(GLcontext *ctx);
+
 #if FEATURE_EXT_transform_feedback
 
 extern GLboolean
@@ -35,12 +41,6 @@ _mesa_validate_primitive_mode(GLcontext *ctx, GLenum mode);
 
 extern GLboolean
 _mesa_validate_transform_feedback_buffers(GLcontext *ctx);
-
-extern void
-_mesa_init_transform_feedback(GLcontext *ctx);
-
-extern void
-_mesa_free_transform_feedback(GLcontext *ctx);
 
 
 extern void
@@ -115,16 +115,6 @@ static INLINE GLboolean
 _mesa_validate_transform_feedback_buffers(GLcontext *ctx)
 {
    return GL_TRUE;
-}
-
-static INLINE void
-_mesa_init_transform_feedback(GLcontext *ctx)
-{
-}
-
-static INLINE void
-_mesa_free_transform_feedback(GLcontext *ctx)
-{
 }
 
 static INLINE void
