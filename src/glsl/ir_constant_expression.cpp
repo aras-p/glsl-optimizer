@@ -141,6 +141,9 @@ ir_constant_visitor::visit(ir_expression *ir)
 	 return;
    }
 
+   if (op[1] != NULL)
+      assert(op[0]->type->base_type == op[1]->type->base_type);
+
    switch (ir->operation) {
    case ir_unop_logic_not:
       assert(op[0]->type->base_type == GLSL_TYPE_BOOL);
