@@ -130,6 +130,12 @@ llvmpipe_init_rasterizer_funcs(struct llvmpipe_context *llvmpipe);
 void
 llvmpipe_init_so_funcs(struct llvmpipe_context *llvmpipe);
 
+void
+llvmpipe_prepare_vertex_sampling(struct llvmpipe_context *ctx,
+                                 unsigned num,
+                                 struct pipe_sampler_view **views);
+void
+llvmpipe_cleanup_vertex_sampling(struct llvmpipe_context *ctx);
 
 
 #endif

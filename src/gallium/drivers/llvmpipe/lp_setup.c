@@ -657,75 +657,6 @@ lp_setup_set_fragment_sampler_views(struct lp_setup_context *setup,
 
 
 /**
- * Called during state validation when LP_NEW_SAMPLER_VIEW is set.
- */
-void
-lp_setup_set_vertex_sampler_views(struct lp_setup_context *setup,
-                                  unsigned num,
-                                  struct pipe_sampler_view **views)
-{
-   unsigned i;
-   uint32_t row_stride[DRAW_MAX_TEXTURE_LEVELS];
-   uint32_t img_stride[DRAW_MAX_TEXTURE_LEVELS];
-   const void *data[DRAW_MAX_TEXTURE_LEVELS];
-   struct lp_scene *scene;
-   struct llvmpipe_context *lp;
-
-   LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
-
-   assert(num <= PIPE_MAX_VERTEX_SAMPLERS);
-
-   scene = lp_setup_get_current_scene(setup);
-   lp = llvmpipe_context(scene->pipe);
-
-   for (i = 0; i < PIPE_MAX_VERTEX_SAMPLERS; i++) {
-      struct pipe_sampler_view *view = i < num ? views[i] : NULL;
-
-      if (view) {
-         struct pipe_resource *tex = view->texture;
-         struct llvmpipe_resource *lp_tex = llvmpipe_resource(tex);
-
-         /* We're referencing the texture's internal data, so save a
-          * reference to it.
-          */
-         pipe_resource_reference(&setup->vs.current_tex[i], tex);
-
-         if (!lp_tex->dt) {
-            /* regular texture - setup array of mipmap level pointers */
-            int j;
-            for (j = 0; j <= tex->last_level; j++) {
-               data[j] =
-                  llvmpipe_get_texture_image_all(lp_tex, j, LP_TEX_USAGE_READ,
-                                                 LP_TEX_LAYOUT_LINEAR);
-               row_stride[j] = lp_tex->row_stride[j];
-               img_stride[j] = lp_tex->img_stride[j];
-            }
-         }
-         else {
-            /* display target texture/surface */
-            /*
-             * XXX: Where should this be unmapped?
-             */
-            struct llvmpipe_screen *screen = llvmpipe_screen(tex->screen);
-            struct sw_winsys *winsys = screen->winsys;
-            data[0] = winsys->displaytarget_map(winsys, lp_tex->dt,
-                                                PIPE_TRANSFER_READ);
-            row_stride[0] = lp_tex->row_stride[0];
-            img_stride[0] = lp_tex->img_stride[0];
-            assert(data[0]);
-         }
-         draw_set_mapped_texture(lp->draw,
-                                 i,
-                                 tex->width0, tex->height0, tex->depth0,
-                                 tex->last_level,
-                                 row_stride, img_stride, data);
-      }
-   }
-}
-
-
-
-/**
  * Is the given texture referenced by any scene?
  * Note: we have to check all scenes including any scenes currently
  * being rendered and the current scene being built.
@@ -918,9 +849,6 @@ lp_setup_destroy( struct lp_setup_context *setup )
 
    util_unreference_framebuffer_state(&setup->fb);
 
-   for (i = 0; i < Elements(setup->vs.current_tex); i++) {
-      pipe_resource_reference(&setup->vs.current_tex[i], NULL);
-   }
    for (i = 0; i < Elements(setup->fs.current_tex); i++) {
       pipe_resource_reference(&setup->fs.current_tex[i], NULL);
    }

@@ -83,6 +83,7 @@ struct llvmpipe_context {
       int so_count[PIPE_MAX_SO_BUFFERS];
       int num_buffers;
    } so_target;
+   struct pipe_resource *mapped_vs_tex[PIPE_MAX_VERTEX_SAMPLERS];
 
    unsigned num_samplers;
    unsigned num_fragment_sampler_views;

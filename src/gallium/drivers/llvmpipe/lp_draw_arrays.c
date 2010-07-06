@@ -84,6 +84,9 @@ llvmpipe_draw_range_elements(struct pipe_context *pipe,
       draw_set_mapped_element_buffer_range(draw, 0, 0, start,
                                            start + count - 1, NULL);
    }
+   llvmpipe_prepare_vertex_sampling(lp,
+                                    lp->num_vertex_sampler_views,
+                                    lp->vertex_sampler_views);
 
    /* draw! */
    draw_arrays(draw, mode, start, count);
@@ -97,6 +100,7 @@ llvmpipe_draw_range_elements(struct pipe_context *pipe,
    if (indexBuffer) {
       draw_set_mapped_element_buffer(draw, 0, 0, NULL);
    }
+   llvmpipe_cleanup_vertex_sampling(lp);
 
    /*
     * TODO: Flush only when a user vertex/index buffer is present
