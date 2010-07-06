@@ -1236,6 +1236,15 @@ visit_exec_list(exec_list *list, ir_visitor *visitor);
 
 void validate_ir_tree(exec_list *instructions);
 
+/**
+ * Make a clone of each IR instruction in a list
+ *
+ * \param in   List of IR instructions that are to be cloned
+ * \param out  List to hold the cloned instructions
+ */
+void
+clone_ir_list(exec_list *out, const exec_list *in);
+
 extern void
 _mesa_glsl_initialize_variables(exec_list *instructions,
 				struct _mesa_glsl_parse_state *state);

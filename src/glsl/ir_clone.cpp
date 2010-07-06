@@ -344,3 +344,63 @@ ir_constant::clone(struct hash_table *ht) const
       return NULL;
    }
 }
+
+
+class fixup_ir_call_visitor : public ir_hierarchical_visitor {
+public:
+   fixup_ir_call_visitor(struct hash_table *ht)
+   {
+      this->ht = ht;
+   }
+
+   virtual ir_visitor_status visit_enter(ir_call *ir)
+   {
+      /* Try to find the function signature referenced by the ir_call in the
+       * table.  If it is found, replace it with the value from the table.
+       */
+      const ir_function_signature *const sig =
+	 (ir_function_signature *) hash_table_find(this->ht, ir->get_callee());
+      if (sig != NULL)
+	 ir->set_callee(sig);
+
+      /* Since this may be used before function call parameters are flattened,
+       * the children also need to be processed.
+       */
+      return visit_continue;
+   }
+
+private:
+   struct hash_table *ht;
+};
+
+
+static void
+fixup_function_calls(struct hash_table *ht, exec_list *instructions)
+{
+   fixup_ir_call_visitor v(ht);
+   v.run(instructions);
+}
+
+
+void
+clone_ir_list(exec_list *out, const exec_list *in)
+{
+   struct hash_table *ht =
+      hash_table_ctor(0, hash_table_pointer_hash, hash_table_pointer_compare);
+
+   foreach_list_const(node, in) {
+      const ir_instruction *const original = (ir_instruction *) node;
+      ir_instruction *copy = original->clone(ht);
+
+      out->push_tail(copy);
+   }
+
+   /* Make a pass over the cloned tree to fix up ir_call nodes to point to the
+    * cloned ir_function_signature nodes.  This cannot be done automatically
+    * during cloning because the ir_call might be a forward reference (i.e.,
+    * the function signature that it references may not have been cloned yet).
+    */
+   fixup_function_calls(ht, out);
+
+   hash_table_dtor(ht);
+}
