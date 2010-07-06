@@ -16,6 +16,8 @@
 
 #include "glxinit.h"
 
+#ifdef GLX_DIRECT_RENDERING
+
 typedef struct GLXGenericGetString
 {
    CARD8 reqType;
@@ -680,3 +682,5 @@ __glXInitialize(Display * dpy)
 
    return dpyPriv;
 }
+
+#endif /* GLX_DIRECT_RENDERING */

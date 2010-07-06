@@ -680,7 +680,7 @@ AC_SUBST([DRI_DRIVER_SEARCH_DIR])
 dnl Direct rendering or just indirect rendering
 AC_ARG_ENABLE([driglx-direct],
     [AS_HELP_STRING([--disable-driglx-direct],
-        [enable direct rendering in GLX for DRI @<:@default=enabled@:>@])],
+        [enable direct rendering in GLX and EGL for DRI @<:@default=enabled@:>@])],
     [driglx_direct="$enableval"],
     [driglx_direct="yes"])
 dnl Which drivers to build - default is chosen by platform
@@ -1292,6 +1292,10 @@ AC_SUBST([EGL_CLIENT_APIS])
 
 if test "x$HAVE_ST_EGL" = xyes; then
 	GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS egl"
+	# define GLX_DIRECT_RENDERING even when the driver is not dri
+	if test "x$mesa_driver" != xdri -a "x$driglx_direct" = xyes; then
+            DEFINES="$DEFINES -DGLX_DIRECT_RENDERING"
+	fi
 fi
 
 if test "x$HAVE_ST_XORG" = xyes; then

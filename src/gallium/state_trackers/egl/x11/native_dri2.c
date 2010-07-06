@@ -38,6 +38,8 @@
 #include "native_x11.h"
 #include "x11_screen.h"
 
+#ifdef GLX_DIRECT_RENDERING
+
 enum dri2_surface_type {
    DRI2_SURFACE_TYPE_WINDOW,
    DRI2_SURFACE_TYPE_PIXMAP,
@@ -784,3 +786,15 @@ x11_create_dri2_display(Display *dpy,
 
    return &dri2dpy->base;
 }
+
+#else /* GLX_DIRECT_RENDERING */
+
+struct native_display *
+x11_create_dri2_display(Display *dpy,
+                        struct native_event_handler *event_handler,
+                        void *user_data)
+{
+   return NULL;
+}
+
+#endif /* GLX_DIRECT_RENDERING */

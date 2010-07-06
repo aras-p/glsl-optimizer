@@ -39,8 +39,10 @@
 #include "glxinit.h"
 
 struct x11_screen {
+#ifdef GLX_DIRECT_RENDERING
    /* dummy base class */
    struct __GLXDRIdisplayRec base;
+#endif
 
    Display *dpy;
    int number;
@@ -103,14 +105,18 @@ x11_screen_destroy(struct x11_screen *xscr)
    if (xscr->dri_device)
       Xfree(xscr->dri_device);
 
+#ifdef GLX_DIRECT_RENDERING
    /* xscr->glx_dpy will be destroyed with the X display */
    if (xscr->glx_dpy)
       xscr->glx_dpy->dri2Display = NULL;
+#endif
 
    if (xscr->visuals)
       XFree(xscr->visuals);
    FREE(xscr);
 }
+
+#ifdef GLX_DIRECT_RENDERING
 
 static boolean
 x11_screen_init_dri2(struct x11_screen *xscr)
@@ -133,6 +139,8 @@ x11_screen_init_glx(struct x11_screen *xscr)
    return (xscr->glx_dpy != NULL);
 }
 
+#endif /* GLX_DIRECT_RENDERING */
+
 /**
  * Return true if the screen supports the extension.
  */
@@ -145,12 +153,14 @@ x11_screen_support(struct x11_screen *xscr, enum x11_screen_extension ext)
    case X11_SCREEN_EXTENSION_XSHM:
       supported = XShmQueryExtension(xscr->dpy);
       break;
+#ifdef GLX_DIRECT_RENDERING
    case X11_SCREEN_EXTENSION_GLX:
       supported = x11_screen_init_glx(xscr);
       break;
    case X11_SCREEN_EXTENSION_DRI2:
       supported = x11_screen_init_dri2(xscr);
       break;
+#endif
    default:
       break;
    }
@@ -175,6 +185,39 @@ x11_screen_get_visuals(struct x11_screen *xscr, int *num_visuals)
       *num_visuals = xscr->num_visuals;
    return xscr->visuals;
 }
+
+/**
+ * Return the depth of a drawable.
+ *
+ * Unlike other drawable functions, the drawable needs not be a DRI2 drawable.
+ */
+uint
+x11_drawable_get_depth(struct x11_screen *xscr, Drawable drawable)
+{
+   unsigned int depth;
+
+   if (drawable != xscr->last_drawable) {
+      Window root;
+      int x, y;
+      unsigned int w, h, border;
+      Status ok;
+
+      ok = XGetGeometry(xscr->dpy, drawable, &root,
+            &x, &y, &w, &h, &border, &depth);
+      if (!ok)
+         depth = 0;
+
+      xscr->last_drawable = drawable;
+      xscr->last_depth = depth;
+   }
+   else {
+      depth = xscr->last_depth;
+   }
+
+   return depth;
+}
+
+#ifdef GLX_DIRECT_RENDERING
 
 /**
  * Return the GLX fbconfigs.
@@ -335,37 +378,6 @@ x11_drawable_get_buffers(struct x11_screen *xscr, Drawable drawable,
 }
 
 /**
- * Return the depth of a drawable.
- *
- * Unlike other drawable functions, the drawable needs not be a DRI2 drawable.
- */
-uint
-x11_drawable_get_depth(struct x11_screen *xscr, Drawable drawable)
-{
-   unsigned int depth;
-
-   if (drawable != xscr->last_drawable) {
-      Window root;
-      int x, y;
-      unsigned int w, h, border;
-      Status ok;
-
-      ok = XGetGeometry(xscr->dpy, drawable, &root,
-            &x, &y, &w, &h, &border, &depth);
-      if (!ok)
-         depth = 0;
-
-      xscr->last_drawable = drawable;
-      xscr->last_depth = depth;
-   }
-   else {
-      depth = xscr->last_depth;
-   }
-
-   return depth;
-}
-
-/**
  * Create a mode list of the given size.
  */
 __GLcontextModes *
@@ -432,3 +444,5 @@ dri2InvalidateBuffers(Display *dpy, XID drawable)
 
    xscr->dri_invalidate_buffers(xscr, drawable, xscr->dri_user_data);
 }
+
+#endif /* GLX_DIRECT_RENDERING */
