@@ -307,11 +307,12 @@ generate_vs(struct draw_llvm *llvm,
             LLVMValueRef (*outputs)[NUM_CHANNELS],
             const LLVMValueRef (*inputs)[NUM_CHANNELS],
             LLVMValueRef context_ptr,
-            struct lp_build_sampler_soa *sampler)
+            struct lp_build_sampler_soa *draw_sampler)
 {
    const struct tgsi_token *tokens = llvm->draw->vs.vertex_shader->state.tokens;
    struct lp_type vs_type;
    LLVMValueRef consts_ptr = draw_jit_context_vs_constants(builder, context_ptr);
+   struct lp_build_sampler_soa *sampler = 0;
 
    memset(&vs_type, 0, sizeof vs_type);
    vs_type.floating = TRUE; /* floating point values */
@@ -326,6 +327,10 @@ generate_vs(struct draw_llvm *llvm,
    if (gallivm_debug & GALLIVM_DEBUG_IR) {
       tgsi_dump(tokens, 0);
    }
+
+   if (llvm->draw->num_sampler_views &&
+       llvm->draw->num_samplers)
+      sampler = draw_sampler;
 
    lp_build_tgsi_soa(builder,
                      tokens,
@@ -972,12 +977,16 @@ draw_llvm_make_variant_key(struct draw_llvm *llvm,
           &llvm->draw->vs.vertex_shader->state,
           sizeof(struct pipe_shader_state));
 
-   for(i = 0; i < PIPE_MAX_VERTEX_SAMPLERS; ++i) {
-      struct draw_vertex_shader *shader = llvm->draw->vs.vertex_shader;
-      if(shader->info.file_mask[TGSI_FILE_SAMPLER] & (1 << i))
-         lp_sampler_static_state(&key->sampler[i],
-                                 llvm->draw->sampler_views[i],
-                                 llvm->draw->samplers[i]);
+   /* if the driver implemented the sampling hooks then
+    * setup our sampling state */
+   if (llvm->draw->num_sampler_views && llvm->draw->num_samplers) {
+      for(i = 0; i < PIPE_MAX_VERTEX_SAMPLERS; ++i) {
+         struct draw_vertex_shader *shader = llvm->draw->vs.vertex_shader;
+         if(shader->info.file_mask[TGSI_FILE_SAMPLER] & (1 << i))
+            lp_sampler_static_state(&key->sampler[i],
+                                    llvm->draw->sampler_views[i],
+                                    llvm->draw->samplers[i]);
+      }
    }
 }
 
