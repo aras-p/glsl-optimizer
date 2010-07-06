@@ -38,7 +38,6 @@
 #include "gallivm/lp_bld_tgsi.h"
 
 
-#include "util/u_cpu_detect.h"
 #include "util/u_debug.h"
 #include "util/u_memory.h"
 #include "util/u_pointer.h"
