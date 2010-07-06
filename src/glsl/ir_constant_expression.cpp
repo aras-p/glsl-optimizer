@@ -133,6 +133,8 @@ ir_constant_visitor::visit(ir_expression *ir)
    unsigned int operand, c;
    ir_constant_data data;
 
+   memset(&data, 0, sizeof(data));
+
    for (operand = 0; operand < ir->get_num_operands(); operand++) {
       op[operand] = ir->operands[operand]->constant_expression_value();
       if (!op[operand])
