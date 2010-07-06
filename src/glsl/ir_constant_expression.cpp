@@ -340,25 +340,25 @@ ir_constant_visitor::visit(ir_expression *ir)
 
       break;
    case ir_binop_sub:
-      if (ir->operands[0]->type == ir->operands[1]->type) {
-	 for (c = 0; c < ir->operands[0]->type->components(); c++) {
-	    switch (ir->operands[0]->type->base_type) {
-	    case GLSL_TYPE_UINT:
-	       data.u[c] = op[0]->value.u[c] - op[1]->value.u[c];
-	       break;
-	    case GLSL_TYPE_INT:
-	       data.i[c] = op[0]->value.i[c] - op[1]->value.i[c];
-	       break;
-	    case GLSL_TYPE_FLOAT:
-	       data.f[c] = op[0]->value.f[c] - op[1]->value.f[c];
-	       break;
-	    default:
-	       assert(0);
-	    }
+      assert(op[0]->type == op[1]->type || op0_scalar || op1_scalar);
+      for (unsigned c = 0, c0 = 0, c1 = 0;
+	   c < components;
+	   c0 += c0_inc, c1 += c1_inc, c++) {
+
+	 switch (ir->operands[0]->type->base_type) {
+	 case GLSL_TYPE_UINT:
+	    data.u[c] = op[0]->value.u[c0] - op[1]->value.u[c1];
+	    break;
+	 case GLSL_TYPE_INT:
+	    data.i[c] = op[0]->value.i[c0] - op[1]->value.i[c1];
+	    break;
+	 case GLSL_TYPE_FLOAT:
+	    data.f[c] = op[0]->value.f[c0] - op[1]->value.f[c1];
+	    break;
+	 default:
+	    assert(0);
 	 }
-      } else
-	 /* FINISHME: Support operations with non-equal types. */
-	 return;
+      }
 
       break;
    case ir_binop_mul:
