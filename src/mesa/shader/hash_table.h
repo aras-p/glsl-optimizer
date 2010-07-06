@@ -38,6 +38,10 @@ struct hash_table;
 typedef unsigned (*hash_func_t)(const void *key);
 typedef int (*hash_compare_func_t)(const void *key1, const void *key2);
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Hash table constructor
  *
@@ -114,4 +118,7 @@ extern unsigned hash_table_string_hash(const void *key);
  */
 #define hash_table_string_compare ((hash_compare_func_t) strcmp)
 
+#ifdef __cplusplus
+};
+#endif
 #endif /* HASH_TABLE_H */
