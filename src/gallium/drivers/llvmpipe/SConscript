@@ -80,6 +80,7 @@ if env['platform'] != 'embedded':
         'blend',
         'conv',
 	'printf',
+	'round',
 	'sincos',
     ]
 
