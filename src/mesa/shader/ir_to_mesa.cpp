@@ -211,56 +211,6 @@ static int swizzle_for_size(int size)
    return size_swizzles[size - 1];
 }
 
-/* This list should match up with builtin_variables.h */
-static const struct {
-   const char *name;
-   int file;
-   int index;
-} builtin_var_to_mesa_reg[] = {
-   /* core_vs */
-   {"gl_Position", PROGRAM_OUTPUT, VERT_RESULT_HPOS},
-   {"gl_PointSize", PROGRAM_OUTPUT, VERT_RESULT_PSIZ},
-
-   /* core_fs */
-   {"gl_FragCoord", PROGRAM_INPUT, FRAG_ATTRIB_WPOS},
-   {"gl_FrontFacing", PROGRAM_INPUT, FRAG_ATTRIB_FACE},
-   {"gl_FragColor", PROGRAM_OUTPUT, FRAG_ATTRIB_COL0},
-   {"gl_FragDepth", PROGRAM_OUTPUT, FRAG_RESULT_DEPTH},
-
-   /* 110_deprecated_fs */
-   {"gl_Color", PROGRAM_INPUT, FRAG_ATTRIB_COL0},
-   {"gl_SecondaryColor", PROGRAM_INPUT, FRAG_ATTRIB_COL1},
-   {"gl_FogFragCoord", PROGRAM_INPUT, FRAG_ATTRIB_FOGC},
-   {"gl_TexCoord", PROGRAM_INPUT, FRAG_ATTRIB_TEX0}, /* array */
-
-   /* 110_deprecated_vs */
-   {"gl_Vertex", PROGRAM_INPUT, VERT_ATTRIB_POS},
-   {"gl_Normal", PROGRAM_INPUT, VERT_ATTRIB_NORMAL},
-   {"gl_Color", PROGRAM_INPUT, VERT_ATTRIB_COLOR0},
-   {"gl_SecondaryColor", PROGRAM_INPUT, VERT_ATTRIB_COLOR1},
-   {"gl_MultiTexCoord0", PROGRAM_INPUT, VERT_ATTRIB_TEX0},
-   {"gl_MultiTexCoord1", PROGRAM_INPUT, VERT_ATTRIB_TEX1},
-   {"gl_MultiTexCoord2", PROGRAM_INPUT, VERT_ATTRIB_TEX2},
-   {"gl_MultiTexCoord3", PROGRAM_INPUT, VERT_ATTRIB_TEX3},
-   {"gl_MultiTexCoord4", PROGRAM_INPUT, VERT_ATTRIB_TEX4},
-   {"gl_MultiTexCoord5", PROGRAM_INPUT, VERT_ATTRIB_TEX5},
-   {"gl_MultiTexCoord6", PROGRAM_INPUT, VERT_ATTRIB_TEX6},
-   {"gl_MultiTexCoord7", PROGRAM_INPUT, VERT_ATTRIB_TEX7},
-   {"gl_TexCoord", PROGRAM_OUTPUT, VERT_RESULT_TEX0}, /* array */
-   {"gl_FogCoord", PROGRAM_INPUT, VERT_RESULT_FOGC},
-   /*{"gl_ClipVertex", PROGRAM_OUTPUT, VERT_ATTRIB_FOGC},*/ /* FINISHME */
-   {"gl_FrontColor", PROGRAM_OUTPUT, VERT_RESULT_COL0},
-   {"gl_BackColor", PROGRAM_OUTPUT, VERT_RESULT_BFC0},
-   {"gl_FrontSecondaryColor", PROGRAM_OUTPUT, VERT_RESULT_COL1},
-   {"gl_BackSecondaryColor", PROGRAM_OUTPUT, VERT_RESULT_BFC1},
-   {"gl_FogFragCoord", PROGRAM_OUTPUT, VERT_RESULT_FOGC},
-
-   /* 130_vs */
-   /*{"gl_VertexID", PROGRAM_INPUT, VERT_ATTRIB_FOGC},*/ /* FINISHME */
-
-   {"gl_FragData", PROGRAM_OUTPUT, FRAG_RESULT_DATA0}, /* array */
-};
-
 ir_to_mesa_instruction *
 ir_to_mesa_visitor::ir_to_mesa_emit_op3(ir_instruction *ir,
 					enum prog_opcode op,
@@ -988,8 +938,7 @@ ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
 {
    ir_to_mesa_src_reg src_reg;
    temp_entry *entry = find_variable_storage(ir->var);
-   unsigned int i, loc;
-   bool var_in;
+   unsigned int loc;
 
    if (!entry) {
       switch (ir->var->mode) {
@@ -1033,30 +982,16 @@ ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
       case ir_var_in:
       case ir_var_out:
       case ir_var_inout:
-	 var_in = (ir->var->mode == ir_var_in ||
-		   ir->var->mode == ir_var_inout);
-
-	 for (i = 0; i < ARRAY_SIZE(builtin_var_to_mesa_reg); i++) {
-	    bool in = builtin_var_to_mesa_reg[i].file == PROGRAM_INPUT;
-
-	    if (strcmp(ir->var->name, builtin_var_to_mesa_reg[i].name) == 0 &&
-		!(var_in ^ in))
-	       break;
-	 }
-	 if (i != ARRAY_SIZE(builtin_var_to_mesa_reg)) {
-	    entry = new(mem_ctx) temp_entry(ir->var,
-					    builtin_var_to_mesa_reg[i].file,
-					    builtin_var_to_mesa_reg[i].index);
-	    break;
-	 }
-
-	 /* If no builtin, then it's a user-generated varying
-	  * (FINISHME: or a function argument!)
-	  */
-	 /* The linker-assigned location is VERT_RESULT_* or FRAG_ATTRIB*
+	 /* The linker assigns locations for varyings and attributes,
+	  * including deprecated builtins (like gl_Color), user-assign
+	  * generic attributes (glBindVertexLocation), and
+	  * user-defined varyings.
+	  *
+	  * FINISHME: We would hit this path for function arguments.  Fix!
 	  */
 	 assert(ir->var->location != -1);
-	 if (var_in) {
+	 if (ir->var->mode == ir_var_in ||
+	     ir->var->mode == ir_var_inout) {
 	    entry = new(mem_ctx) temp_entry(ir->var,
 					    PROGRAM_INPUT,
 					    ir->var->location);
