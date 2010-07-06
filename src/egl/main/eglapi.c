@@ -61,7 +61,6 @@
 #include "eglcontext.h"
 #include "egldisplay.h"
 #include "egltypedefs.h"
-#include "eglglobals.h"
 #include "eglcurrent.h"
 #include "egldriver.h"
 #include "eglsurface.h"

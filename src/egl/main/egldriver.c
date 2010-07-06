@@ -259,7 +259,6 @@ _eglFreeModule(void *module)
    free(mod);
 }
 
-#include <errno.h>
 
 /**
  * A loader function for use with _eglPreloadForEach.  The loader data is the
