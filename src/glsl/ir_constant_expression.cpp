@@ -144,6 +144,16 @@ ir_constant_visitor::visit(ir_expression *ir)
    if (op[1] != NULL)
       assert(op[0]->type->base_type == op[1]->type->base_type);
 
+   bool op0_scalar = op[0]->type->is_scalar();
+   bool op1_scalar = op[1] != NULL && op[1]->type->is_scalar();
+
+   /* When iterating over a vector or matrix's components, we want to increase
+    * the loop counter.  However, for scalars, we want to stay at 0.
+    */
+   unsigned c0_inc = op0_scalar ? 1 : 0;
+   unsigned c1_inc = op1_scalar ? 1 : 0;
+   unsigned components = op[op1_scalar ? 0 : 1]->type->components();
+
    switch (ir->operation) {
    case ir_unop_logic_not:
       assert(op[0]->type->base_type == GLSL_TYPE_BOOL);
@@ -308,25 +318,25 @@ ir_constant_visitor::visit(ir_expression *ir)
       break;
 
    case ir_binop_add:
-      if (ir->operands[0]->type == ir->operands[1]->type) {
-	 for (c = 0; c < ir->operands[0]->type->components(); c++) {
-	    switch (ir->operands[0]->type->base_type) {
-	    case GLSL_TYPE_UINT:
-	       data.u[c] = op[0]->value.u[c] + op[1]->value.u[c];
-	       break;
-	    case GLSL_TYPE_INT:
-	       data.i[c] = op[0]->value.i[c] + op[1]->value.i[c];
-	       break;
-	    case GLSL_TYPE_FLOAT:
-	       data.f[c] = op[0]->value.f[c] + op[1]->value.f[c];
-	       break;
-	    default:
-	       assert(0);
-	    }
+      assert(op[0]->type == op[1]->type || op0_scalar || op1_scalar);
+      for (unsigned c = 0, c0 = 0, c1 = 0;
+	   c < components;
+	   c0 += c0_inc, c1 += c1_inc, c++) {
+
+	 switch (ir->operands[0]->type->base_type) {
+	 case GLSL_TYPE_UINT:
+	    data.u[c] = op[0]->value.u[c0] + op[1]->value.u[c1];
+	    break;
+	 case GLSL_TYPE_INT:
+	    data.i[c] = op[0]->value.i[c0] + op[1]->value.i[c1];
+	    break;
+	 case GLSL_TYPE_FLOAT:
+	    data.f[c] = op[0]->value.f[c0] + op[1]->value.f[c1];
+	    break;
+	 default:
+	    assert(0);
 	 }
-      } else
-	 /* FINISHME: Support operations with non-equal types. */
-	 return;
+      }
 
       break;
    case ir_binop_sub:
