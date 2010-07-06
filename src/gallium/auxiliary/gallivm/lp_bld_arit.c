@@ -847,6 +847,11 @@ lp_build_round_sse41(struct lp_build_context *bld,
 }
 
 
+/**
+ * Return the integer part of a float (vector) value.  The returned value is
+ * a float (vector).
+ * Ex: trunc(-1.5) = 1.0
+ */
 LLVMValueRef
 lp_build_trunc(struct lp_build_context *bld,
                LLVMValueRef a)
@@ -869,6 +874,12 @@ lp_build_trunc(struct lp_build_context *bld,
 }
 
 
+/**
+ * Return float (vector) rounded to nearest integer (vector).  The returned
+ * value is a float (vector).
+ * Ex: round(0.9) = 1.0
+ * Ex: round(-1.5) = -2.0
+ */
 LLVMValueRef
 lp_build_round(struct lp_build_context *bld,
                LLVMValueRef a)
@@ -890,6 +901,11 @@ lp_build_round(struct lp_build_context *bld,
 }
 
 
+/**
+ * Return floor of float (vector), result is a float (vector)
+ * Ex: floor(1.1) = 1.0
+ * Ex: floor(-1.1) = -2.0
+ */
 LLVMValueRef
 lp_build_floor(struct lp_build_context *bld,
                LLVMValueRef a)
@@ -911,6 +927,11 @@ lp_build_floor(struct lp_build_context *bld,
 }
 
 
+/**
+ * Return ceiling of float (vector), returning float (vector).
+ * Ex: ceil( 1.1) = 2.0
+ * Ex: ceil(-1.1) = -1.0
+ */
 LLVMValueRef
 lp_build_ceil(struct lp_build_context *bld,
               LLVMValueRef a)
@@ -933,7 +954,7 @@ lp_build_ceil(struct lp_build_context *bld,
 
 
 /**
- * Return fractional part of 'a' computed as a - floor(f)
+ * Return fractional part of 'a' computed as a - floor(a)
  * Typically used in texture coord arithmetic.
  */
 LLVMValueRef
@@ -946,8 +967,9 @@ lp_build_fract(struct lp_build_context *bld,
 
 
 /**
- * Convert to integer, through whichever rounding method that's fastest,
- * typically truncating toward zero.
+ * Return the integer part of a float (vector) value.  The returned value is
+ * an integer (vector).
+ * Ex: itrunc(-1.5) = 1
  */
 LLVMValueRef
 lp_build_itrunc(struct lp_build_context *bld,
@@ -964,7 +986,10 @@ lp_build_itrunc(struct lp_build_context *bld,
 
 
 /**
- * Convert float[] to int[] with round().
+ * Return float (vector) rounded to nearest integer (vector).  The returned
+ * value is an integer (vector).
+ * Ex: iround(0.9) = 1
+ * Ex: iround(-1.5) = -2
  */
 LLVMValueRef
 lp_build_iround(struct lp_build_context *bld,
@@ -1007,7 +1032,9 @@ lp_build_iround(struct lp_build_context *bld,
 
 
 /**
- * Convert float[] to int[] with floor().
+ * Return floor of float (vector), result is an int (vector)
+ * Ex: ifloor(1.1) = 1.0
+ * Ex: ifloor(-1.1) = -2.0
  */
 LLVMValueRef
 lp_build_ifloor(struct lp_build_context *bld,
@@ -1034,29 +1061,31 @@ lp_build_ifloor(struct lp_build_context *bld,
       /* sign = a < 0 ? ~0 : 0 */
       sign = LLVMBuildBitCast(bld->builder, a, int_vec_type, "");
       sign = LLVMBuildAnd(bld->builder, sign, mask, "");
-      sign = LLVMBuildAShr(bld->builder, sign, lp_build_const_int_vec(type, type.width - 1), "");
-      lp_build_name(sign, "floor.sign");
+      sign = LLVMBuildAShr(bld->builder, sign, lp_build_const_int_vec(type, type.width - 1), "ifloor.sign");
 
       /* offset = -0.99999(9)f */
-      offset = lp_build_const_vec(type, -(double)(((unsigned long long)1 << mantissa) - 1)/((unsigned long long)1 << mantissa));
+      offset = lp_build_const_vec(type, -(double)(((unsigned long long)1 << mantissa) - 10)/((unsigned long long)1 << mantissa));
       offset = LLVMConstBitCast(offset, int_vec_type);
 
-      /* offset = a < 0 ? -0.99999(9)f : 0.0f */
+      /* offset = a < 0 ? offset : 0.0f */
       offset = LLVMBuildAnd(bld->builder, offset, sign, "");
-      offset = LLVMBuildBitCast(bld->builder, offset, vec_type, "");
-      lp_build_name(offset, "floor.offset");
+      offset = LLVMBuildBitCast(bld->builder, offset, vec_type, "ifloor.offset");
 
-      res = LLVMBuildAdd(bld->builder, a, offset, "");
-      lp_build_name(res, "floor.res");
+      res = LLVMBuildAdd(bld->builder, a, offset, "ifloor.res");
    }
 
-   res = LLVMBuildFPToSI(bld->builder, res, int_vec_type, "");
-   lp_build_name(res, "floor");
+   /* round to nearest (toward zero) */
+   res = LLVMBuildFPToSI(bld->builder, res, int_vec_type, "ifloor.res");
 
    return res;
 }
 
 
+/**
+ * Return ceiling of float (vector), returning int (vector).
+ * Ex: iceil( 1.1) = 2
+ * Ex: iceil(-1.1) = -1
+ */
 LLVMValueRef
 lp_build_iceil(struct lp_build_context *bld,
                LLVMValueRef a)
@@ -1072,12 +1101,31 @@ lp_build_iceil(struct lp_build_context *bld,
       res = lp_build_round_sse41(bld, a, LP_BUILD_ROUND_SSE41_CEIL);
    }
    else {
-      /* TODO: mimic lp_build_ifloor() here */
-      assert(0);
-      res = bld->undef;
+      LLVMTypeRef vec_type = lp_build_vec_type(type);
+      unsigned mantissa = lp_mantissa(type);
+      LLVMValueRef mask = lp_build_const_int_vec(type, (unsigned long long)1 << (type.width - 1));
+      LLVMValueRef sign;
+      LLVMValueRef offset;
+
+      /* sign = a < 0 ? 0 : ~0 */
+      sign = LLVMBuildBitCast(bld->builder, a, int_vec_type, "");
+      sign = LLVMBuildAnd(bld->builder, sign, mask, "");
+      sign = LLVMBuildAShr(bld->builder, sign, lp_build_const_int_vec(type, type.width - 1), "iceil.sign");
+      sign = LLVMBuildNot(bld->builder, sign, "iceil.not");
+
+      /* offset = 0.99999(9)f */
+      offset = lp_build_const_vec(type, (double)(((unsigned long long)1 << mantissa) - 10)/((unsigned long long)1 << mantissa));
+      offset = LLVMConstBitCast(offset, int_vec_type);
+
+      /* offset = a < 0 ? 0.0 : offset */
+      offset = LLVMBuildAnd(bld->builder, offset, sign, "");
+      offset = LLVMBuildBitCast(bld->builder, offset, vec_type, "iceil.offset");
+
+      res = LLVMBuildAdd(bld->builder, a, offset, "iceil.res");
    }
 
-   res = LLVMBuildFPToSI(bld->builder, res, int_vec_type, "");
+   /* round to nearest (toward zero) */
+   res = LLVMBuildFPToSI(bld->builder, res, int_vec_type, "iceil.res");
 
    return res;
 }
