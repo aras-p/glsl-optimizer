@@ -1821,6 +1821,7 @@ _mesa_glsl_compile_shader(GLcontext *ctx, struct gl_shader *shader)
 	 progress = do_dead_code_unlinked(state, shader->ir) || progress;
 	 progress = do_constant_variable_unlinked(shader->ir) || progress;
 	 progress = do_constant_folding(shader->ir) || progress;
+	 progress = do_if_return(shader->ir) || progress;
 
 	 progress = do_vec_index_to_swizzle(shader->ir) || progress;
 	 /* Do this one after the previous to let the easier pass handle
