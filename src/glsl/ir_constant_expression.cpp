@@ -151,7 +151,12 @@ ir_constant_visitor::visit(ir_expression *ir)
     */
    unsigned c0_inc = op0_scalar ? 1 : 0;
    unsigned c1_inc = op1_scalar ? 1 : 0;
-   unsigned components = op[op1_scalar ? 0 : 1]->type->components();
+   unsigned components;
+   if (op1_scalar || !op[1]) {
+      components = op[0]->type->components();
+   } else {
+      components = op[1]->type->components();
+   }
 
    switch (ir->operation) {
    case ir_unop_logic_not:
