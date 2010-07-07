@@ -64,7 +64,7 @@
 		        (expression float dot (var_ref n) (var_ref i))
 		        (expression float dot (var_ref n) (var_ref i))))))))
       (if (expression bool < (var_ref k) (constant float (0.0)))
-          ((return (constant vec3 (0.0 0.0))))
+          ((return (constant vec3 (0.0 0.0 0.0))))
 	  ((return (expression vec3 -
 	             (expression vec3 * (var_ref eta) (var_ref i))
 		     (expression vec3 *
@@ -89,7 +89,7 @@
 		        (expression float dot (var_ref n) (var_ref i))
 		        (expression float dot (var_ref n) (var_ref i))))))))
       (if (expression bool < (var_ref k) (constant float (0.0)))
-          ((return (constant vec4 (0.0 0.0))))
+          ((return (constant vec4 (0.0 0.0 0.0 0.0))))
 	  ((return (expression vec4 -
 	             (expression vec4 * (var_ref eta) (var_ref i))
 		     (expression vec4 *
