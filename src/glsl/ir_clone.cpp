@@ -261,17 +261,54 @@ ir_assignment::clone(struct hash_table *ht) const
 ir_function *
 ir_function::clone(struct hash_table *ht) const
 {
-   (void)ht;
-   /* FINISHME */
-   abort();
+   void *mem_ctx = talloc_parent(this);
+   ir_function *copy = new(mem_ctx) ir_function(this->name);
+
+   foreach_list_const(node, &this->signatures) {
+      const ir_function_signature *const sig =
+	 (const ir_function_signature *const) node;
+
+      ir_function_signature *sig_copy = sig->clone(ht);
+      copy->add_signature(sig_copy);
+
+      if (ht != NULL)
+	 hash_table_insert(ht, sig_copy,
+			   (void *)const_cast<ir_function_signature *>(sig));
+   }
+
+   return copy;
 }
 
 ir_function_signature *
 ir_function_signature::clone(struct hash_table *ht) const
 {
-   (void)ht;
-   /* FINISHME */
-   abort();
+   void *mem_ctx = talloc_parent(this);
+   ir_function_signature *copy =
+      new(mem_ctx) ir_function_signature(this->return_type);
+
+   copy->is_defined = this->is_defined;
+
+   /* Clone the parameter list.
+    */
+   foreach_list_const(node, &this->parameters) {
+      const ir_variable *const param = (const ir_variable *) node;
+
+      assert(const_cast<ir_variable *>(param)->as_variable() != NULL);
+
+      ir_variable *const param_copy = param->clone(ht);
+      copy->parameters.push_tail(param_copy);
+   }
+
+   /* Clone the instruction list.
+    */
+   foreach_list_const(node, &this->body) {
+      const ir_instruction *const inst = (const ir_instruction *) node;
+
+      ir_instruction *const inst_copy = inst->clone(ht);
+      copy->body.push_tail(inst_copy);
+   }
+
+   return copy;
 }
 
 ir_constant *
