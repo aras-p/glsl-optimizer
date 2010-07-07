@@ -746,7 +746,6 @@ static const struct input_info vertInputs[] = {
 };
 
 static const struct input_info geomInputs[] = {
-   { "gl_VerticesIn", GEOM_ATTRIB_VERTICES, GL_FLOAT, SWIZZLE_NOOP },
    { "gl_PrimitiveIDIn", GEOM_ATTRIB_PRIMITIVE_ID, GL_FLOAT, SWIZZLE_NOOP },
    { "gl_FrontColorIn", GEOM_ATTRIB_COLOR0, GL_FLOAT_VEC4, SWIZZLE_NOOP },
    { "gl_BackColorIn", GEOM_ATTRIB_COLOR1, GL_FLOAT_VEC4, SWIZZLE_NOOP },

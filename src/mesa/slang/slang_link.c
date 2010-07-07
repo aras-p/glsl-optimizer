@@ -661,8 +661,8 @@ get_inputs_read_mask(GLenum target, GLuint index, GLboolean relAddr)
       else if (target == MESA_GEOMETRY_PROGRAM) {
          switch (index) {
          case GEOM_ATTRIB_VAR0:
-            mask = ((1U << (GEOM_ATTRIB_VAR0 + MAX_VARYING)) - 1)
-                   - ((1U << GEOM_ATTRIB_VAR0) - 1);
+            mask = ((1ULL << (GEOM_ATTRIB_VAR0 + MAX_VARYING)) - 1)
+                   - ((1ULL << GEOM_ATTRIB_VAR0) - 1);
             break;
          default:
             ; /* a non-array input attribute */
@@ -810,7 +810,25 @@ remove_extra_version_directives(GLchar *source)
    }
 }
 
-
+static int
+vertices_per_prim(int prim)
+{
+   switch (prim) {
+   case GL_POINTS:
+      return 1;
+   case GL_LINES:
+      return 2;
+   case GL_TRIANGLES:
+      return 3;
+   case GL_LINES_ADJACENCY_ARB:
+      return 4;
+   case GL_TRIANGLES_ADJACENCY_ARB:
+      return 6;
+   default:
+      ASSERT(!"Bad primitive");
+      return 3;
+   }
+}
 
 /**
  * Return a new shader whose source code is the concatenation of
@@ -847,6 +865,10 @@ concat_shaders(struct gl_shader_program *shProg, GLenum shaderType)
       return NULL;
    }
 
+   if (shaderType == GL_GEOMETRY_SHADER_ARB) {
+      totalLen += 32;
+   }
+
    source = (GLchar *) malloc(totalLen + 1);
    if (!source) {
       free(shaderLengths);
@@ -860,6 +882,14 @@ concat_shaders(struct gl_shader_program *shProg, GLenum shaderType)
          memcpy(source + len, shader->Source, shaderLengths[i]);
          len += shaderLengths[i];
       }
+   }
+   if (shaderType == GL_GEOMETRY_SHADER_ARB) {
+      GLchar gs_pre[32];
+      GLuint num_verts = vertices_per_prim(shProg->Geom.InputType);
+      _mesa_snprintf(gs_pre, 31,
+                     "const int gl_VerticesIn = %d;\n", num_verts);
+      memcpy(source + len, gs_pre, strlen(gs_pre));
+      len += strlen(gs_pre);
    }
    source[len] = '\0';
    /*
@@ -882,7 +912,6 @@ concat_shaders(struct gl_shader_program *shProg, GLenum shaderType)
 
    return newShader;
 }
-
 
 /**
  * Search the shader program's list of shaders to find the one that

@@ -21,7 +21,6 @@
 
 const int _mesa_VerticesInMax = 6;
 
-__fixed_input int gl_VerticesIn;
 __fixed_input int gl_PrimitiveIDIn;
 __fixed_output int gl_PrimitiveID;
 __fixed_output int gl_Layer;

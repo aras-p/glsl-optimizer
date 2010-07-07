@@ -490,10 +490,7 @@ st_translate_geometry_program(struct st_context *st,
    }
 
    /* which vertex output goes to the first geometry input */
-   if (inputsRead & GEOM_BIT_VERTICES)
-      vslot = 0;
-   else
-      vslot = 1;
+   vslot = 0;
 
    /*
     * Convert Mesa program inputs to TGSI input register semantics.
@@ -511,8 +508,7 @@ st_translate_geometry_program(struct st_context *st,
          stgp->index_to_input[vslot] = attr;
          ++vslot;
 
-         if (attr != GEOM_ATTRIB_VERTICES &&
-             attr != GEOM_ATTRIB_PRIMITIVE_ID) {
+         if (attr != GEOM_ATTRIB_PRIMITIVE_ID) {
             gs_array_offset += 2;
          } else
             ++gs_builtin_inputs;
@@ -523,9 +519,6 @@ st_translate_geometry_program(struct st_context *st,
 #endif
 
          switch (attr) {
-         case GEOM_ATTRIB_VERTICES:
-            debug_assert(0);
-            break;
          case GEOM_ATTRIB_PRIMITIVE_ID:
             stgp->input_semantic_name[slot] = TGSI_SEMANTIC_PRIMID;
             stgp->input_semantic_index[slot] = 0;

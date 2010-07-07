@@ -4191,6 +4191,11 @@ _slang_gen_variable(slang_assemble_ctx * A, slang_operation *oper)
    slang_variable *var = _slang_variable_locate(oper->locals, name, GL_TRUE);
    slang_ir_node *n;
    if (!var || !var->declared) {
+      if (A->program->Target == MESA_GEOMETRY_PROGRAM &&
+          !strcmp((char*)name, "gl_VerticesIn") ){
+         A->UnresolvedRefs = GL_TRUE;
+         return NULL;
+      }
       slang_info_log_error(A->log, "undefined variable '%s'", (char *) name);
       return NULL;
    }
