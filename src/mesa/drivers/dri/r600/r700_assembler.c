@@ -293,7 +293,9 @@ GLuint GetSurfaceFormat(GLenum eType, GLuint nChannels, GLuint * pClient_size)
                 case 2:
                     format = FMT_16_16; break;
                 case 3:
-                    format = FMT_16_16_16; break;
+                    /* 3 comp GL_SHORT vertex format doesnt work on r700
+                       4 somehow works, test - sauerbraten  */
+                    format = FMT_16_16_16_16; break;
                 case 4:
                     format = FMT_16_16_16_16; break;
                 default:
