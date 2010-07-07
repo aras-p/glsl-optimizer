@@ -1522,7 +1522,7 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
                         LLVMValueRef *colors_out)
 {
    struct lp_build_context *float_bld = &bld->float_bld;
-   /*const*/ unsigned mip_filter = bld->static_state->min_mip_filter;
+   const unsigned mip_filter = bld->static_state->min_mip_filter;
    const unsigned min_filter = bld->static_state->min_img_filter;
    const unsigned mag_filter = bld->static_state->mag_img_filter;
    const int dims = texture_dims(bld->static_state->target);
