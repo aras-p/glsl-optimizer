@@ -32,6 +32,9 @@
 #include "main/mtypes.h"
 #include "ir_to_mesa.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 /**
  * Internal functions
  */
@@ -109,5 +112,8 @@ _mesa_validate_shader_program(GLcontext *ctx,
 extern void
 _mesa_init_glsl_driver_functions(struct dd_function_table *driver);
 
+#ifdef __cplusplus
+};
+#endif
 
 #endif /* SHADER_API_H */
