@@ -80,9 +80,11 @@ if env['platform'] != 'embedded':
         'blend',
         'conv',
 	'printf',
-	'round',
 	'sincos',
     ]
+
+    if not msvc:
+        tests.append('round')
 
     for test in tests:
         target = env.Program(
