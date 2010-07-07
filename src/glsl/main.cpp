@@ -175,6 +175,7 @@ compile_shader(struct gl_shader *shader)
 	 progress = do_constant_variable_unlinked(shader->ir) || progress;
 	 progress = do_constant_folding(shader->ir) || progress;
 	 progress = do_vec_index_to_swizzle(shader->ir) || progress;
+	 progress = do_vec_index_to_cond_assign(shader->ir) || progress;
 	 progress = do_swizzle_swizzle(shader->ir) || progress;
       } while (progress);
    }
