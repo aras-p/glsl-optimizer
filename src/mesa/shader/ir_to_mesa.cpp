@@ -192,11 +192,11 @@ ir_to_mesa_src_reg ir_to_mesa_undef = {
 };
 
 ir_to_mesa_dst_reg ir_to_mesa_undef_dst = {
-   PROGRAM_UNDEFINED, 0, SWIZZLE_NOOP
+   PROGRAM_UNDEFINED, 0, SWIZZLE_NOOP, COND_TR
 };
 
 ir_to_mesa_dst_reg ir_to_mesa_address_reg = {
-   PROGRAM_ADDRESS, 0, WRITEMASK_X
+   PROGRAM_ADDRESS, 0, WRITEMASK_X, COND_TR
 };
 
 static int swizzle_for_size(int size)
@@ -375,6 +375,8 @@ ir_to_mesa_visitor::src_reg_for_float(float val)
    src_reg.file = PROGRAM_CONSTANT;
    src_reg.index = _mesa_add_unnamed_constant(this->prog->Parameters,
 					      &val, 1, &src_reg.swizzle);
+   src_reg.reladdr = GL_FALSE;
+   src_reg.negate = 0;
 
    return src_reg;
 }
