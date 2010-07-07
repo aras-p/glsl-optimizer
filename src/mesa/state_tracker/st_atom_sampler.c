@@ -199,7 +199,8 @@ update_samplers(struct st_context *st)
          if (sampler->min_lod < texobj->BaseLevel)
             sampler->min_lod = texobj->BaseLevel;
 
-         sampler->max_lod = MIN2((GLfloat) texobj->MaxLevel, texobj->MaxLod);
+         sampler->max_lod = MIN2((GLfloat) texobj->MaxLevel,
+                                 (texobj->MaxLod + texobj->BaseLevel));
          if (sampler->max_lod < sampler->min_lod) {
             /* The GL spec doesn't seem to specify what to do in this case.
              * Swap the values.
