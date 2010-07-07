@@ -107,8 +107,8 @@ ir_vec_index_to_cond_assign_visitor::convert_vec_index_to_cond_assign(ir_rvalue 
       /* Just clone the rest of the deref chain when trying to get at the
        * underlying variable.
        */
-      deref = (ir_dereference *)orig_deref->array->clone(NULL);
-      swizzle = new(base_ir) ir_swizzle(deref, i, 0, 0, 0, 1);
+      swizzle = new(base_ir) ir_swizzle(orig_deref->array->clone(NULL),
+					i, 0, 0, 0, 1);
 
       deref = new(base_ir) ir_dereference_variable(var);
       assign = new(base_ir) ir_assignment(deref, swizzle, condition);
