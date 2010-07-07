@@ -286,6 +286,20 @@ ir_to_mesa_dst_reg_from_src(ir_to_mesa_src_reg reg)
    return dst_reg;
 }
 
+inline ir_to_mesa_src_reg
+ir_to_mesa_src_reg_from_dst(ir_to_mesa_dst_reg reg)
+{
+   ir_to_mesa_src_reg src_reg;
+
+   src_reg.file = reg.file;
+   src_reg.index = reg.index;
+   src_reg.swizzle = SWIZZLE_XYZW;
+   src_reg.negate = 0;
+   src_reg.reladdr = 0;
+
+   return src_reg;
+}
+
 /**
  * Emits Mesa scalar opcodes to produce unique answers across channels.
  *
@@ -1192,14 +1206,22 @@ ir_to_mesa_visitor::visit(ir_assignment *ir)
    assert(r.file != PROGRAM_UNDEFINED);
 
    if (ir->condition) {
-	 ir_constant *condition_constant;
+      ir_to_mesa_src_reg condition;
 
-	 condition_constant = ir->condition->constant_expression_value();
+      ir->condition->accept(this);
+      condition = this->result;
 
-	 assert(condition_constant && condition_constant->value.b[0]);
+      /* We use the OPCODE_CMP (a < 0 ? b : c) for conditional moves,
+       * and the condition we produced is 0.0 or 1.0.  By flipping the
+       * sign, we can choose which value OPCODE_CMP produces without
+       * an extra computing the condition.
+       */
+      condition.negate = ~condition.negate;
+      ir_to_mesa_emit_op3(ir, OPCODE_CMP, l,
+			  condition, r, ir_to_mesa_src_reg_from_dst(l));
+   } else {
+      ir_to_mesa_emit_op1(ir, OPCODE_MOV, l, r);
    }
-
-   ir_to_mesa_emit_op1(ir, OPCODE_MOV, l, r);
 }
 
 
