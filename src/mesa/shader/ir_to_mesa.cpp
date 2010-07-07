@@ -1268,6 +1268,7 @@ ir_to_mesa_visitor::visit(ir_assignment *ir)
 {
    struct ir_to_mesa_dst_reg l;
    struct ir_to_mesa_src_reg r;
+   int i;
 
    assert(!ir->lhs->type->is_matrix());
    assert(!ir->lhs->type->is_array());
@@ -1295,10 +1296,18 @@ ir_to_mesa_visitor::visit(ir_assignment *ir)
        * an extra computing the condition.
        */
       condition.negate = ~condition.negate;
-      ir_to_mesa_emit_op3(ir, OPCODE_CMP, l,
-			  condition, r, ir_to_mesa_src_reg_from_dst(l));
+      for (i = 0; i < type_size(ir->lhs->type); i++) {
+	 ir_to_mesa_emit_op3(ir, OPCODE_CMP, l,
+			     condition, r, ir_to_mesa_src_reg_from_dst(l));
+	 l.index++;
+	 r.index++;
+      }
    } else {
-      ir_to_mesa_emit_op1(ir, OPCODE_MOV, l, r);
+      for (i = 0; i < type_size(ir->lhs->type); i++) {
+	 ir_to_mesa_emit_op1(ir, OPCODE_MOV, l, r);
+	 l.index++;
+	 r.index++;
+      }
    }
 }
 
