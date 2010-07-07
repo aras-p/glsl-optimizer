@@ -94,6 +94,8 @@ protected:
 
 class ir_rvalue : public ir_instruction {
 public:
+   virtual ir_rvalue *clone(struct hash_table *) const = 0;
+
    virtual ir_rvalue * as_rvalue()
    {
       return this;
@@ -154,7 +156,7 @@ class ir_variable : public ir_instruction {
 public:
    ir_variable(const struct glsl_type *, const char *);
 
-   virtual ir_instruction *clone(struct hash_table *ht) const;
+   virtual ir_variable *clone(struct hash_table *ht) const;
 
    virtual ir_variable *as_variable()
    {
@@ -258,7 +260,7 @@ class ir_function_signature : public ir_instruction {
 public:
    ir_function_signature(const glsl_type *return_type);
 
-   virtual ir_instruction *clone(struct hash_table *ht) const;
+   virtual ir_function_signature *clone(struct hash_table *ht) const;
 
    virtual void accept(ir_visitor *v)
    {
@@ -324,7 +326,7 @@ class ir_function : public ir_instruction {
 public:
    ir_function(const char *name);
 
-   virtual ir_instruction *clone(struct hash_table *ht) const;
+   virtual ir_function *clone(struct hash_table *ht) const;
 
    virtual ir_function *as_function()
    {
@@ -394,7 +396,7 @@ public:
       /* empty */
    }
 
-   virtual ir_instruction *clone(struct hash_table *ht) const;
+   virtual ir_if *clone(struct hash_table *ht) const;
 
    virtual ir_if *as_if()
    {
@@ -426,7 +428,7 @@ public:
       /* empty */
    }
 
-   virtual ir_instruction *clone(struct hash_table *ht) const;
+   virtual ir_loop *clone(struct hash_table *ht) const;
 
    virtual void accept(ir_visitor *v)
    {
@@ -467,7 +469,7 @@ class ir_assignment : public ir_rvalue {
 public:
    ir_assignment(ir_rvalue *lhs, ir_rvalue *rhs, ir_rvalue *condition);
 
-   virtual ir_instruction *clone(struct hash_table *ht) const;
+   virtual ir_assignment *clone(struct hash_table *ht) const;
 
    virtual void accept(ir_visitor *v)
    {
@@ -601,7 +603,7 @@ public:
    ir_expression(int op, const struct glsl_type *type,
 		 ir_rvalue *, ir_rvalue *);
 
-   virtual ir_instruction *clone(struct hash_table *ht) const;
+   virtual ir_expression *clone(struct hash_table *ht) const;
 
    static unsigned int get_num_operands(ir_expression_operation);
    unsigned int get_num_operands() const
@@ -644,7 +646,7 @@ public:
       actual_parameters->move_nodes_to(& this->actual_parameters);
    }
 
-   virtual ir_instruction *clone(struct hash_table *ht) const;
+   virtual ir_call *clone(struct hash_table *ht) const;
 
    virtual ir_call *as_call()
    {
@@ -734,7 +736,7 @@ public:
       /* empty */
    }
 
-   virtual ir_instruction *clone(struct hash_table *) const;
+   virtual ir_return *clone(struct hash_table *) const;
 
    virtual ir_return *as_return()
    {
@@ -778,7 +780,7 @@ public:
       this->loop = loop;
    }
 
-   virtual ir_instruction *clone(struct hash_table *) const;
+   virtual ir_loop_jump *clone(struct hash_table *) const;
 
    virtual void accept(ir_visitor *v)
    {
@@ -819,7 +821,7 @@ public:
       this->condition = cond;
    }
 
-   virtual ir_instruction *clone(struct hash_table *ht) const;
+   virtual ir_discard *clone(struct hash_table *ht) const;
 
    virtual void accept(ir_visitor *v)
    {
@@ -871,7 +873,7 @@ public:
       /* empty */
    }
 
-   virtual ir_instruction *clone(struct hash_table *) const;
+   virtual ir_texture *clone(struct hash_table *) const;
 
    virtual void accept(ir_visitor *v)
    {
@@ -961,7 +963,7 @@ public:
 
    ir_swizzle(ir_rvalue *val, ir_swizzle_mask mask);
 
-   virtual ir_instruction *clone(struct hash_table *) const;
+   virtual ir_swizzle *clone(struct hash_table *) const;
 
    virtual ir_swizzle *as_swizzle()
    {
@@ -1005,6 +1007,8 @@ private:
 
 class ir_dereference : public ir_rvalue {
 public:
+   virtual ir_dereference *clone(struct hash_table *) const = 0;
+
    virtual ir_dereference *as_dereference()
    {
       return this;
@@ -1023,7 +1027,7 @@ class ir_dereference_variable : public ir_dereference {
 public:
    ir_dereference_variable(ir_variable *var);
 
-   virtual ir_instruction *clone(struct hash_table *) const;
+   virtual ir_dereference_variable *clone(struct hash_table *) const;
 
    virtual ir_dereference_variable *as_dereference_variable()
    {
@@ -1069,7 +1073,7 @@ public:
 
    ir_dereference_array(ir_variable *var, ir_rvalue *array_index);
 
-   virtual ir_instruction *clone(struct hash_table *) const;
+   virtual ir_dereference_array *clone(struct hash_table *) const;
 
    virtual ir_dereference_array *as_dereference_array()
    {
@@ -1105,7 +1109,7 @@ public:
 
    ir_dereference_record(ir_variable *var, const char *field);
 
-   virtual ir_instruction *clone(struct hash_table *) const;
+   virtual ir_dereference_record *clone(struct hash_table *) const;
 
    /**
     * Get the variable that is ultimately referenced by an r-value
@@ -1163,7 +1167,7 @@ public:
     */
    ir_constant(const ir_constant *c, unsigned i);
 
-   virtual ir_instruction *clone(struct hash_table *) const;
+   virtual ir_constant *clone(struct hash_table *) const;
 
    virtual ir_constant *as_constant()
    {

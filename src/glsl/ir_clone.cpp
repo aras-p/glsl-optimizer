@@ -35,7 +35,7 @@ extern "C" {
  * This will probably be made \c virtual and moved to the base class
  * eventually.
  */
-ir_instruction *
+ir_variable *
 ir_variable::clone(struct hash_table *ht) const
 {
    void *ctx = talloc_parent(this);
@@ -55,14 +55,14 @@ ir_variable::clone(struct hash_table *ht) const
    return var;
 }
 
-ir_instruction *
+ir_swizzle *
 ir_swizzle::clone(struct hash_table *ht) const
 {
    void *ctx = talloc_parent(this);
    return new(ctx) ir_swizzle((ir_rvalue *)this->val->clone(ht), this->mask);
 }
 
-ir_instruction *
+ir_return *
 ir_return::clone(struct hash_table *ht) const
 {
    void *ctx = talloc_parent(this);
@@ -74,7 +74,7 @@ ir_return::clone(struct hash_table *ht) const
    return new(ctx) ir_return(new_value);
 }
 
-ir_instruction *
+ir_discard *
 ir_discard::clone(struct hash_table *ht) const
 {
    void *ctx = talloc_parent(this);
@@ -86,7 +86,7 @@ ir_discard::clone(struct hash_table *ht) const
    return new(ctx) ir_discard(new_condition);
 }
 
-ir_instruction *
+ir_loop_jump *
 ir_loop_jump::clone(struct hash_table *ht) const
 {
    void *ctx = talloc_parent(this);
@@ -95,7 +95,7 @@ ir_loop_jump::clone(struct hash_table *ht) const
    return new(ctx) ir_loop_jump(this->mode);
 }
 
-ir_instruction *
+ir_if *
 ir_if::clone(struct hash_table *ht) const
 {
    void *ctx = talloc_parent(this);
@@ -114,7 +114,7 @@ ir_if::clone(struct hash_table *ht) const
    return new_if;
 }
 
-ir_instruction *
+ir_loop *
 ir_loop::clone(struct hash_table *ht) const
 {
    void *ctx = talloc_parent(this);
@@ -136,7 +136,7 @@ ir_loop::clone(struct hash_table *ht) const
    return new_loop;
 }
 
-ir_instruction *
+ir_call *
 ir_call::clone(struct hash_table *ht) const
 {
    void *ctx = talloc_parent(this);
@@ -150,7 +150,7 @@ ir_call::clone(struct hash_table *ht) const
    return new(ctx) ir_call(this->callee, &new_parameters);
 }
 
-ir_instruction *
+ir_expression *
 ir_expression::clone(struct hash_table *ht) const
 {
    void *ctx = talloc_parent(this);
@@ -164,7 +164,7 @@ ir_expression::clone(struct hash_table *ht) const
    return new(ctx) ir_expression(this->operation, this->type, op[0], op[1]);
 }
 
-ir_instruction *
+ir_dereference_variable *
 ir_dereference_variable::clone(struct hash_table *ht) const
 {
    void *ctx = talloc_parent(this);
@@ -181,7 +181,7 @@ ir_dereference_variable::clone(struct hash_table *ht) const
    return new(ctx) ir_dereference_variable(new_var);
 }
 
-ir_instruction *
+ir_dereference_array *
 ir_dereference_array::clone(struct hash_table *ht) const
 {
    void *ctx = talloc_parent(this);
@@ -189,7 +189,7 @@ ir_dereference_array::clone(struct hash_table *ht) const
 					(ir_rvalue *)this->array_index->clone(ht));
 }
 
-ir_instruction *
+ir_dereference_record *
 ir_dereference_record::clone(struct hash_table *ht) const
 {
    void *ctx = talloc_parent(this);
@@ -197,7 +197,7 @@ ir_dereference_record::clone(struct hash_table *ht) const
 					 this->field);
 }
 
-ir_instruction *
+ir_texture *
 ir_texture::clone(struct hash_table *ht) const
 {
    void *ctx = talloc_parent(this);
@@ -236,7 +236,7 @@ ir_texture::clone(struct hash_table *ht) const
    return new_tex;
 }
 
-ir_instruction *
+ir_assignment *
 ir_assignment::clone(struct hash_table *ht) const
 {
    ir_rvalue *new_condition = NULL;
@@ -250,7 +250,7 @@ ir_assignment::clone(struct hash_table *ht) const
 				 new_condition);
 }
 
-ir_instruction *
+ir_function *
 ir_function::clone(struct hash_table *ht) const
 {
    (void)ht;
@@ -258,7 +258,7 @@ ir_function::clone(struct hash_table *ht) const
    abort();
 }
 
-ir_instruction *
+ir_function_signature *
 ir_function_signature::clone(struct hash_table *ht) const
 {
    (void)ht;
@@ -266,7 +266,7 @@ ir_function_signature::clone(struct hash_table *ht) const
    abort();
 }
 
-ir_instruction *
+ir_constant *
 ir_constant::clone(struct hash_table *ht) const
 {
    void *ctx = talloc_parent(this);

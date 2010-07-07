@@ -137,7 +137,7 @@ ir_call::generate_inline(ir_instruction *next_ir)
       ir_rvalue *param = (ir_rvalue *) param_iter.get();
 
       /* Generate a new variable for the parameter. */
-      parameters[i] = (ir_variable *)sig_param->clone(ht);
+      parameters[i] = sig_param->clone(ht);
       parameters[i]->mode = ir_var_auto;
       next_ir->insert_before(parameters[i]);
 
