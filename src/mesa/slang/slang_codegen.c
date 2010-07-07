@@ -4191,6 +4191,9 @@ _slang_gen_variable(slang_assemble_ctx * A, slang_operation *oper)
    slang_variable *var = _slang_variable_locate(oper->locals, name, GL_TRUE);
    slang_ir_node *n;
    if (!var || !var->declared) {
+      /* Geometry shader set gl_VerticesIn at link time
+       * so we need to way with resolving this variable
+       * until then */
       if (A->program->Target == MESA_GEOMETRY_PROGRAM &&
           !strcmp((char*)name, "gl_VerticesIn") ){
          A->UnresolvedRefs = GL_TRUE;

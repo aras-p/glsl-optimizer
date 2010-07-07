@@ -810,6 +810,12 @@ remove_extra_version_directives(GLchar *source)
    }
 }
 
+/* Returns the number of vertices per geometry shader
+ * input primitive.
+ * XXX: duplicated in Gallium in u_vertices_per_prim
+ * method. Once Mesa core will start using Gallium
+ * this should be removed
+ */
 static int
 vertices_per_prim(int prim)
 {
@@ -865,6 +871,8 @@ concat_shaders(struct gl_shader_program *shProg, GLenum shaderType)
       return NULL;
    }
 
+   /* Geometry shader will inject definition of
+    * const int gl_VerticesIn */
    if (shaderType == GL_GEOMETRY_SHADER_ARB) {
       totalLen += 32;
    }
@@ -883,6 +891,10 @@ concat_shaders(struct gl_shader_program *shProg, GLenum shaderType)
          len += shaderLengths[i];
       }
    }
+   /* if it's geometry shader we need to inject definition
+    * of "const int gl_VerticesIn = X;" where X is the number
+    * of vertices per input primitive
+    */
    if (shaderType == GL_GEOMETRY_SHADER_ARB) {
       GLchar gs_pre[32];
       GLuint num_verts = vertices_per_prim(shProg->Geom.InputType);
