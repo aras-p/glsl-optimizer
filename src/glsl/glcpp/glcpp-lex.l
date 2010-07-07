@@ -36,6 +36,7 @@
       yylloc->first_line = yylineno;                            \
       yycolumn += yyleng;                                       \
    } while(0);
+#define YY_USER_INIT yylineno = 0; yycolumn = 0;
 %}
 
 %option bison-bridge bison-locations reentrant noyywrap
