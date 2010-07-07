@@ -44,6 +44,7 @@ static const struct debug_named_value debug_options[] = {
     { "notiling", DBG_NO_TILING, "Disable tiling (for benchmarking)" },
     { "noimmd", DBG_NO_IMMD, "Disable immediate mode (for benchmarking)" },
     { "stats", DBG_STATS, "Gather statistics" },
+    { "hyperz", DBG_HYPERZ, "HyperZ (for debugging)" },
 
     /* must be last */
     DEBUG_NAMED_VALUE_END

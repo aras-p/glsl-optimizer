@@ -25,6 +25,7 @@
 
 #include "util/u_format.h"
 #include "util/u_math.h"
+#include "util/u_mm.h"
 #include "util/u_simple_list.h"
 
 #include "r300_context.h"
@@ -329,6 +330,7 @@ void r300_emit_fb_state(struct r300_context* r300, unsigned size, void* state)
     struct pipe_framebuffer_state* fb = (struct pipe_framebuffer_state*)state;
     struct r300_surface* surf;
     unsigned i;
+    boolean has_hyperz = r300->rws->get_value(r300->rws, R300_CAN_HYPERZ);
     CS_LOCALS(r300);
 
     BEGIN_CS(size);
@@ -364,6 +366,10 @@ void r300_emit_fb_state(struct r300_context* r300, unsigned size, void* state)
 
         OUT_CS_REG_SEQ(R300_ZB_DEPTHPITCH, 1);
         OUT_CS_RELOC(surf->buffer, surf->cbzb_pitch, 0, surf->domain);
+
+        DBG(r300, DBG_CBZB,
+            "CBZB clearing cbuf %08x %08x\n", surf->cbzb_format,
+            surf->cbzb_pitch);
     }
     /* Set up a zbuffer. */
     else if (fb->zsbuf) {
@@ -377,15 +383,32 @@ void r300_emit_fb_state(struct r300_context* r300, unsigned size, void* state)
         OUT_CS_REG_SEQ(R300_ZB_DEPTHPITCH, 1);
         OUT_CS_RELOC(surf->buffer, surf->pitch, 0, surf->domain);
 
-        /* HiZ RAM. */
-        if (r300->screen->caps.has_hiz) {
-            OUT_CS_REG(R300_ZB_HIZ_OFFSET, 0);
-            OUT_CS_REG(R300_ZB_HIZ_PITCH, 0);
-        }
+        if (has_hyperz) {
+            uint32_t surf_pitch;
+            struct r300_texture *tex;
+            int level = surf->base.level;
+            tex = r300_texture(surf->base.texture);
 
-        /* Z Mask RAM. (compressed zbuffer) */
-        OUT_CS_REG(R300_ZB_ZMASK_OFFSET, 0);
-        OUT_CS_REG(R300_ZB_ZMASK_PITCH, 0);
+            surf_pitch = surf->pitch & R300_DEPTHPITCH_MASK;
+            /* HiZ RAM. */
+            if (r300->screen->caps.hiz_ram) {
+                if (tex->hiz_mem[level]) {
+                    OUT_CS_REG(R300_ZB_HIZ_OFFSET, tex->hiz_mem[level]->ofs);
+                    OUT_CS_REG(R300_ZB_HIZ_PITCH, surf_pitch);
+                } else {
+                    OUT_CS_REG(R300_ZB_HIZ_OFFSET, 0);
+                    OUT_CS_REG(R300_ZB_HIZ_PITCH, 0);
+                }
+            }
+            /* Z Mask RAM. (compressed zbuffer) */
+            if (tex->zmask_mem[level]) {
+                OUT_CS_REG(R300_ZB_ZMASK_OFFSET, tex->zmask_mem[level]->ofs);
+                OUT_CS_REG(R300_ZB_ZMASK_PITCH, surf_pitch);
+            } else {
+                OUT_CS_REG(R300_ZB_ZMASK_OFFSET, 0);
+                OUT_CS_REG(R300_ZB_ZMASK_PITCH, 0);
+            }
+        }
     }
 
     END_CS;
@@ -394,8 +417,12 @@ void r300_emit_fb_state(struct r300_context* r300, unsigned size, void* state)
 void r300_emit_hyperz_state(struct r300_context *r300,
                             unsigned size, void *state)
 {
+    struct r300_hyperz_state *z = state;
     CS_LOCALS(r300);
-    WRITE_CS_TABLE(state, size);
+    if (z->flush)
+        WRITE_CS_TABLE(&z->cb_flush_begin, size);
+    else
+        WRITE_CS_TABLE(&z->cb_begin, size - 2);
 }
 
 void r300_emit_hyperz_end(struct r300_context *r300)
@@ -403,9 +430,11 @@ void r300_emit_hyperz_end(struct r300_context *r300)
     struct r300_hyperz_state z =
             *(struct r300_hyperz_state*)r300->hyperz_state.state;
 
+    z.flush = 1;
     z.zb_bw_cntl = 0;
     z.zb_depthclearvalue = 0;
     z.sc_hyperz = R300_SC_HYPERZ_ADJ_2;
+    z.gb_z_peq_config = 0;
 
     r300_emit_hyperz_state(r300, r300->hyperz_state.size, &z);
 }
@@ -941,6 +970,101 @@ void r300_emit_viewport_state(struct r300_context* r300,
     OUT_CS_TABLE(&viewport->xscale, 6);
     OUT_CS_REG(R300_VAP_VTE_CNTL, viewport->vte_control);
     END_CS;
+}
+
+static void r300_emit_hiz_line_clear(struct r300_context *r300, int start, uint16_t count, uint32_t val)
+{
+    CS_LOCALS(r300);
+    BEGIN_CS(4);
+    OUT_CS_PKT3(R300_PACKET3_3D_CLEAR_HIZ, 2);
+    OUT_CS(start);
+    OUT_CS(count);
+    OUT_CS(val);
+    END_CS;
+}
+
+static void r300_emit_zmask_line_clear(struct r300_context *r300, int start, uint16_t count, uint32_t val)
+{
+    CS_LOCALS(r300);
+    BEGIN_CS(4);
+    OUT_CS_PKT3(R300_PACKET3_3D_CLEAR_ZMASK, 2);
+    OUT_CS(start);
+    OUT_CS(count);
+    OUT_CS(val);
+    END_CS;
+}
+
+#define ALIGN_DIVUP(x, y) (((x) + (y) - 1) / (y))
+
+void r300_emit_hiz_clear(struct r300_context *r300, unsigned size, void *state)
+{
+    struct pipe_framebuffer_state *fb =
+        (struct pipe_framebuffer_state*)r300->fb_state.state;
+    struct r300_hyperz_state *z =
+        (struct r300_hyperz_state*)r300->hyperz_state.state;
+    struct r300_screen* r300screen = r300->screen;
+    uint32_t stride, offset = 0, height, offset_shift;
+    struct r300_texture* tex;
+    int i;
+
+    tex = r300_texture(fb->zsbuf->texture);
+    stride = tex->desc.stride_in_pixels[fb->zsbuf->level];
+
+    /* convert from pixels to 4x4 blocks */
+    stride = ALIGN_DIVUP(stride, 4);
+
+    stride = ALIGN_DIVUP(stride, r300screen->caps.num_frag_pipes);    
+    /* there are 4 blocks per dwords */
+    stride = ALIGN_DIVUP(stride, 4);
+
+    height = ALIGN_DIVUP(fb->zsbuf->height, 4);
+
+    offset_shift = 2;
+    offset_shift += (r300screen->caps.num_frag_pipes / 2);
+
+    for (i = 0; i < height; i++) {
+        offset = i * stride;
+        offset <<= offset_shift;
+        r300_emit_hiz_line_clear(r300, offset, stride, 0xffffffff);
+    }
+    z->current_func = -1;
+}
+
+void r300_emit_zmask_clear(struct r300_context *r300, unsigned size, void *state)
+{
+    struct pipe_framebuffer_state *fb =
+        (struct pipe_framebuffer_state*)r300->fb_state.state;
+    struct r300_screen* r300screen = r300->screen;
+    uint32_t stride, offset = 0;
+    struct r300_texture* tex;
+    uint32_t i, height;
+    int mult, offset_shift;
+
+    tex = r300_texture(fb->zsbuf->texture);
+    stride = tex->desc.stride_in_pixels[fb->zsbuf->level];
+
+    if (r300->z_compression == RV350_Z_COMPRESS_88)
+        mult = 8;
+    else
+        mult = 4;
+
+    height = ALIGN_DIVUP(fb->zsbuf->height, mult);
+
+    offset_shift = 4;
+    offset_shift += (r300screen->caps.num_frag_pipes / 2);
+    stride = ALIGN_DIVUP(stride, r300screen->caps.num_frag_pipes);
+
+    /* okay have width in pixels - divide by block width */
+    stride = ALIGN_DIVUP(stride, mult);
+    /* have width in blocks - divide by number of fragment pipes screen width */
+    /* 16 blocks per dword */
+    stride = ALIGN_DIVUP(stride, 16);
+
+    for (i = 0; i < height; i++) {
+        offset = i * stride;
+        offset <<= offset_shift;
+        r300_emit_zmask_line_clear(r300, offset, stride, 0x0);//0xffffffff);
+    }
 }
 
 void r300_emit_ztop_state(struct r300_context* r300,

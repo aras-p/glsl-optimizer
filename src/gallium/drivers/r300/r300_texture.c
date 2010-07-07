@@ -35,6 +35,7 @@
 #include "util/u_format_s3tc.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
+#include "util/u_mm.h"
 
 #include "pipe/p_screen.h"
 
@@ -645,8 +646,16 @@ static void r300_texture_destroy(struct pipe_screen *screen,
 {
     struct r300_texture* tex = (struct r300_texture*)texture;
     struct r300_winsys_screen *rws = (struct r300_winsys_screen *)texture->screen->winsys;
+    int i;
 
     rws->buffer_reference(rws, &tex->buffer, NULL);
+    for (i = 0; i < R300_MAX_TEXTURE_LEVELS; i++) {
+        if (tex->hiz_mem[i])
+            u_mmFreeMem(tex->hiz_mem[i]);
+        if (tex->zmask_mem[i])
+            u_mmFreeMem(tex->zmask_mem[i]);
+    }
+
     FREE(tex);
 }
 

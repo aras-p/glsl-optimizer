@@ -35,6 +35,7 @@
 #include "r300_state_inlines.h"
 #include "r300_texture.h"
 #include "r300_vs.h"
+#include "r300_winsys.h"
 
 /* r300_state_derived: Various bits of state which are dependent upon
  * currently bound CSO data. */
@@ -693,5 +694,6 @@ void r300_update_derived_state(struct r300_context* r300)
         }
     }
 
-    r300_update_hyperz_state(r300);
+    if (r300->rws->get_value(r300->rws, R300_CAN_HYPERZ))
+        r300_update_hyperz_state(r300);
 }

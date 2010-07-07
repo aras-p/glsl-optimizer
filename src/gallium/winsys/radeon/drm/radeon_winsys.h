@@ -65,6 +65,9 @@ struct radeon_libdrm_winsys {
      */
     boolean drm_2_3_0;
 
+    /* hyperz user */
+    boolean hyperz;
+
     /* DRM FD */
     int fd;
 

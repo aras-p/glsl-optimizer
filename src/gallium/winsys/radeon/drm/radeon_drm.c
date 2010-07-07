@@ -130,6 +130,16 @@ static void do_ioctls(int fd, struct radeon_libdrm_winsys* winsys)
     }
     winsys->z_pipes = target;
 
+    winsys->hyperz = FALSE;
+#ifndef RADEON_INFO_WANT_HYPERZ
+#define RADEON_INFO_WANT_HYPERZ 7
+#endif
+    info.request = RADEON_INFO_WANT_HYPERZ;
+    retval = drmCommandWriteRead(fd, DRM_RADEON_INFO, &info, sizeof(info));
+    if (!retval && target == 1) {
+        winsys->hyperz = TRUE;
+    }
+
     retval = drmCommandWriteRead(fd, DRM_RADEON_GEM_INFO,
             &gem_info, sizeof(gem_info));
     if (retval) {

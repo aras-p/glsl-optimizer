@@ -25,6 +25,7 @@
 
 #include "util/u_blitter.h"
 #include "util/u_math.h"
+#include "util/u_mm.h"
 #include "util/u_memory.h"
 #include "util/u_pack_color.h"
 
@@ -43,6 +44,7 @@
 #include "r300_texture.h"
 #include "r300_vs.h"
 #include "r300_winsys.h"
+#include "r300_hyperz.h"
 
 /* r300_state: Functions used to intialize state context by translating
  * Gallium state objects into semi-native r300 state objects. */
@@ -472,13 +474,13 @@ static void*
 
     dsa->dsa = *state;
 
-    /* Depth test setup. */
+    /* Depth test setup. - separate write mask depth for decomp flush */
+    if (state->depth.writemask) {
+        dsa->z_buffer_control |= R300_Z_WRITE_ENABLE;
+    }
+
     if (state->depth.enabled) {
         dsa->z_buffer_control |= R300_Z_ENABLE;
-
-        if (state->depth.writemask) {
-            dsa->z_buffer_control |= R300_Z_WRITE_ENABLE;
-        }
 
         dsa->z_stencil_control |=
             (r300_translate_depth_stencil_function(state->depth.func) <<
@@ -592,6 +594,7 @@ static void r300_bind_dsa_state(struct pipe_context* pipe,
 
     UPDATE_STATE(state, r300->dsa_state);
 
+    r300->hyperz_state.dirty = TRUE; /* Will be updated before the emission. */
     r300_dsa_inject_stencilref(r300);
 }
 
@@ -685,7 +688,8 @@ void r300_mark_fb_state_dirty(struct r300_context *r300,
     /* What is marked as dirty depends on the enum r300_fb_state_change. */
     r300->gpu_flush.dirty = TRUE;
     r300->fb_state.dirty = TRUE;
-    r300->hyperz_state.dirty = TRUE;
+    if (r300->rws->get_value(r300->rws, R300_CAN_HYPERZ))
+        r300->hyperz_state.dirty = TRUE;
 
     if (change == R300_CHANGED_FB_STATE) {
         r300->aa_state.dirty = TRUE;
@@ -698,7 +702,7 @@ void r300_mark_fb_state_dirty(struct r300_context *r300,
     if (r300->cbzb_clear)
         r300->fb_state.size += 10;
     else if (state->zsbuf)
-        r300->fb_state.size += r300->screen->caps.has_hiz ? 18 : 14;
+        r300->fb_state.size += r300->screen->caps.hiz_ram ? 18 : 14;
 
     /* The size of the rest of atoms stays the same. */
 }
@@ -710,8 +714,10 @@ static void
     struct r300_context* r300 = r300_context(pipe);
     struct r300_aa_state *aa = (struct r300_aa_state*)r300->aa_state.state;
     struct pipe_framebuffer_state *old_state = r300->fb_state.state;
+    boolean has_hyperz = r300->rws->get_value(r300->rws, R300_CAN_HYPERZ);
     unsigned max_width, max_height, i;
     uint32_t zbuffer_bpp = 0;
+    int blocksize;
 
     if (r300->screen->caps.is_r500) {
         max_width = max_height = 4096;
@@ -743,17 +749,52 @@ static void
 
     r300_mark_fb_state_dirty(r300, R300_CHANGED_FB_STATE);
 
-    /* Polygon offset depends on the zbuffer bit depth. */
+    r300->hiz_enable = false;
+    r300->z_fastfill = false;
+    r300->z_compression = false;
+    
     if (state->zsbuf) {
-        switch (util_format_get_blocksize(state->zsbuf->texture->format)) {
-            case 2:
-                zbuffer_bpp = 16;
-                break;
-            case 4:
-                zbuffer_bpp = 24;
-                break;
+        blocksize = util_format_get_blocksize(state->zsbuf->texture->format);
+        switch (blocksize) {
+        case 2:
+            zbuffer_bpp = 16;
+            break;
+        case 4:
+            zbuffer_bpp = 24;
+            break;
         }
+        if (has_hyperz) {
+            struct r300_surface *zs_surf = r300_surface(state->zsbuf);
+            struct r300_texture *tex;
+            int compress = r300->screen->caps.is_rv350 ? RV350_Z_COMPRESS_88 : R300_Z_COMPRESS_44;
+            int level = zs_surf->base.level;
 
+            tex = r300_texture(zs_surf->base.texture);
+
+            /* work out whether we can support hiz on this buffer */
+            r300_hiz_alloc_block(r300, zs_surf);
+        
+            /* work out whether we can support zmask features on this buffer */
+            r300_zmask_alloc_block(r300, zs_surf, compress);
+
+            if (tex->hiz_mem[level]) {
+                r300->hiz_enable = 1;
+            }
+
+            if (tex->zmask_mem[level]) {
+                r300->z_fastfill = 1;
+                /* compression causes hangs on 16-bit */
+                if (zbuffer_bpp == 24)
+                    r300->z_compression = compress;
+            }
+            DBG(r300, DBG_HYPERZ,
+                "hyper-z features: hiz: %d @ %08x z-compression: %d z-fastfill: %d @ %08x\n", r300->hiz_enable,
+                tex->hiz_mem[level] ? tex->hiz_mem[level]->ofs : 0xdeadbeef,
+                r300->z_compression, r300->z_fastfill,
+                tex->zmask_mem[level] ? tex->zmask_mem[level]->ofs : 0xdeadbeef);
+        }
+            
+        /* Polygon offset depends on the zbuffer bit depth. */
         if (r300->zbuffer_bpp != zbuffer_bpp) {
             r300->zbuffer_bpp = zbuffer_bpp;
 
