@@ -869,8 +869,34 @@ ir_to_mesa_visitor::visit(ir_swizzle *ir)
    this->result = src_reg;
 }
 
+static int
+add_matrix_ref(struct gl_program *prog, int *tokens)
+{
+   int base_pos = -1;
+   int i;
+
+   /* Add a ref for each column.  It looks like the reason we do
+    * it this way is that _mesa_add_state_reference doesn't work
+    * for things that aren't vec4s, so the tokens[2]/tokens[3]
+    * range has to be equal.
+    */
+   for (i = 0; i < 4; i++) {
+      tokens[2] = i;
+      tokens[3] = i;
+      int pos = _mesa_add_state_reference(prog->Parameters,
+					  (gl_state_index *)tokens);
+      if (base_pos == -1)
+	 base_pos = pos;
+      else
+	 assert(base_pos + i == pos);
+   }
+
+   return base_pos;
+}
+
 static temp_entry *
-get_builtin_matrix_ref(void *mem_ctx, struct gl_program *prog, ir_variable *var)
+get_builtin_matrix_ref(void *mem_ctx, struct gl_program *prog, ir_variable *var,
+		       ir_rvalue *array_index)
 {
    /*
     * NOTE: The ARB_vertex_program extension specified that matrices get
@@ -915,28 +941,31 @@ get_builtin_matrix_ref(void *mem_ctx, struct gl_program *prog, ir_variable *var)
 
    for (i = 0; i < Elements(matrices); i++) {
       if (strcmp(var->name, matrices[i].name) == 0) {
-	 int j;
-	 int last_pos = -1, base_pos = -1;
 	 int tokens[STATE_LENGTH];
+	 int base_pos = -1;
 
 	 tokens[0] = matrices[i].matrix;
-	 tokens[1] = 0; /* array index! */
 	 tokens[4] = matrices[i].modifier;
-
-	 /* Add a ref for each column.  It looks like the reason we do
-	  * it this way is that _mesa_add_state_reference doesn't work
-	  * for things that aren't vec4s, so the tokens[2]/tokens[3]
-	  * range has to be equal.
-	  */
-	 for (j = 0; j < 4; j++) {
-	    tokens[2] = j;
-	    tokens[3] = j;
-	    int pos = _mesa_add_state_reference(prog->Parameters,
-						(gl_state_index *)tokens);
-	    assert(last_pos == -1 || last_pos == base_pos + j);
-	    if (base_pos == -1)
-	       base_pos = pos;
+	 if (matrices[i].matrix == STATE_TEXTURE_MATRIX) {
+	    ir_constant *index = array_index->constant_expression_value();
+	    if (index) {
+	       tokens[1] = index->value.i[0];
+	       base_pos = add_matrix_ref(prog, tokens);
+	    } else {
+	       for (i = 0; i < var->type->length; i++) {
+		  tokens[1] = i;
+		  int pos = add_matrix_ref(prog, tokens);
+		  if (base_pos == -1)
+		     base_pos = pos;
+		  else
+		     assert(base_pos + (int)i * 4 == pos);
+	       }
+	    }
+	 } else {
+	    tokens[1] = 0; /* unused array index */
+	    base_pos = add_matrix_ref(prog, tokens);
 	 }
+	 tokens[4] = matrices[i].modifier;
 
 	 entry = new(mem_ctx) temp_entry(var,
 					 PROGRAM_STATE_VAR,
@@ -959,7 +988,8 @@ ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
    if (!entry) {
       switch (ir->var->mode) {
       case ir_var_uniform:
-	 entry = get_builtin_matrix_ref(this->mem_ctx, this->prog, ir->var);
+	 entry = get_builtin_matrix_ref(this->mem_ctx, this->prog, ir->var,
+					NULL);
 	 if (entry)
 	    break;
 
@@ -1057,8 +1087,43 @@ ir_to_mesa_visitor::visit(ir_dereference_array *ir)
 {
    ir_constant *index;
    ir_to_mesa_src_reg src_reg;
+   ir_dereference_variable *deref_var = ir->array->as_dereference_variable();
 
    index = ir->array_index->constant_expression_value();
+
+   if (deref_var && strncmp(deref_var->var->name,
+			    "gl_TextureMatrix",
+			    strlen("gl_TextureMatrix")) == 0) {
+      ir_to_mesa_src_reg src_reg;
+      struct temp_entry *entry;
+
+      entry = get_builtin_matrix_ref(this->mem_ctx, this->prog, deref_var->var,
+				     ir->array_index);
+      assert(entry);
+
+      src_reg.file = entry->file;
+      src_reg.index = entry->index;
+      src_reg.swizzle = swizzle_for_size(ir->type->vector_elements);
+      src_reg.negate = 0;
+
+      if (index) {
+	 src_reg.reladdr = GL_FALSE;
+      } else {
+	 ir_to_mesa_src_reg index_reg = get_temp(glsl_type::float_type);
+
+	 ir->array_index->accept(this);
+	 ir_to_mesa_emit_op2(ir, OPCODE_MUL,
+			     ir_to_mesa_dst_reg_from_src(index_reg),
+			     this->result, src_reg_for_float(4.0));
+
+	 src_reg.reladdr = true;
+	 ir_to_mesa_emit_op1(ir, OPCODE_ARL, ir_to_mesa_address_reg,
+			     index_reg);
+      }
+
+      this->result = src_reg;
+      return;
+   }
 
    /* By the time we make it to this stage, matrices should be broken down
     * to vectors.
