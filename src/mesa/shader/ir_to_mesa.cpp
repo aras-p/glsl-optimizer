@@ -393,7 +393,7 @@ type_size(const struct glsl_type *type)
    case GLSL_TYPE_FLOAT:
    case GLSL_TYPE_BOOL:
       if (type->is_matrix()) {
-	 return 4; /* FINISHME: Not all matrices are 4x4. */
+	 return type->matrix_columns;
       } else {
 	 /* Regardless of size of vector, it gets a vec4. This is bad
 	  * packing for things like floats, but otherwise arrays become a
