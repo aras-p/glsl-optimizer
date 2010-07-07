@@ -45,8 +45,16 @@ ir_variable::clone(struct hash_table *ht) const
    var->read_only = this->read_only;
    var->centroid = this->centroid;
    var->invariant = this->invariant;
+   var->shader_in = this->shader_in;
+   var->shader_out = this->shader_out;
    var->mode = this->mode;
    var->interpolation = this->interpolation;
+   var->array_lvalue = this->array_lvalue;
+   var->location = this->location;
+   var->warn_extension = this->warn_extension;
+
+   if (this->constant_value)
+      var->constant_value = this->constant_value->clone(ht);
 
    if (ht) {
       hash_table_insert(ht, var, (void *)const_cast<ir_variable *>(this));
