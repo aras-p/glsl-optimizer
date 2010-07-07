@@ -742,8 +742,7 @@ static const struct input_info vertInputs[] = {
    { "gl_MultiTexCoord4", VERT_ATTRIB_TEX4, GL_FLOAT_VEC4, SWIZZLE_NOOP },
    { "gl_MultiTexCoord5", VERT_ATTRIB_TEX5, GL_FLOAT_VEC4, SWIZZLE_NOOP },
    { "gl_MultiTexCoord6", VERT_ATTRIB_TEX6, GL_FLOAT_VEC4, SWIZZLE_NOOP },
-   { "gl_MultiTexCoord7", VERT_ATTRIB_TEX7, GL_FLOAT_VEC4, SWIZZLE_NOOP },
-   { NULL, 0, GL_NONE, SWIZZLE_NOOP }
+   { "gl_MultiTexCoord7", VERT_ATTRIB_TEX7, GL_FLOAT_VEC4, SWIZZLE_NOOP }
 };
 
 static const struct input_info geomInputs[] = {
@@ -757,8 +756,7 @@ static const struct input_info geomInputs[] = {
    { "gl_FogFragCoordIn", GEOM_ATTRIB_FOG_FRAG_COORD, GL_FLOAT, SWIZZLE_NOOP },
    { "gl_PositionIn", GEOM_ATTRIB_POSITION, GL_FLOAT_VEC4, SWIZZLE_NOOP },
    { "gl_ClipVertexIn", GEOM_ATTRIB_CLIP_VERTEX, GL_FLOAT_VEC4, SWIZZLE_NOOP },
-   { "gl_PointSizeIn", GEOM_ATTRIB_POINT_SIZE, GL_FLOAT, SWIZZLE_NOOP },
-   { NULL, 0, GL_NONE, SWIZZLE_NOOP }
+   { "gl_PointSizeIn", GEOM_ATTRIB_POINT_SIZE, GL_FLOAT, SWIZZLE_NOOP }
 };
 
 /** Predefined fragment shader inputs */
@@ -769,8 +767,7 @@ static const struct input_info fragInputs[] = {
    { "gl_TexCoord", FRAG_ATTRIB_TEX0, GL_FLOAT_VEC4, SWIZZLE_NOOP },
    { "gl_FogFragCoord", FRAG_ATTRIB_FOGC, GL_FLOAT, SWIZZLE_XXXX },
    { "gl_FrontFacing", FRAG_ATTRIB_FACE, GL_FLOAT, SWIZZLE_XXXX },
-   { "gl_PointCoord", FRAG_ATTRIB_PNTC, GL_FLOAT_VEC2, SWIZZLE_XYZW },
-   { NULL, 0, GL_NONE, SWIZZLE_NOOP }
+   { "gl_PointCoord", FRAG_ATTRIB_PNTC, GL_FLOAT_VEC2, SWIZZLE_XYZW }
 };
 
 
@@ -784,17 +781,20 @@ GLint
 _slang_input_index(const char *name, GLenum target, GLuint *swizzleOut)
 {
    const struct input_info *inputs;
-   GLuint i;
+   GLuint i, n;
 
    switch (target) {
    case GL_VERTEX_PROGRAM_ARB:
       inputs = vertInputs;
+      n = Elements(vertInputs);
       break;
    case GL_FRAGMENT_PROGRAM_ARB:
       inputs = fragInputs;
+      n = Elements(fragInputs);
       break;
    case MESA_GEOMETRY_PROGRAM:
       inputs = geomInputs;
+      n = Elements(geomInputs);
       break;
    default:
       _mesa_problem(NULL, "bad target in _slang_input_index");
@@ -803,7 +803,7 @@ _slang_input_index(const char *name, GLenum target, GLuint *swizzleOut)
 
    ASSERT(MAX_TEXTURE_COORD_UNITS == 8); /* if this fails, fix vertInputs above */
 
-   for (i = 0; inputs[i].Name; i++) {
+   for (i = 0; i < n; i++) {
       if (strcmp(inputs[i].Name, name) == 0) {
          /* found */
          *swizzleOut = inputs[i].Swizzle;
@@ -822,7 +822,7 @@ _slang_vert_attrib_name(GLuint attrib)
 {
    GLuint i;
    assert(attrib < VERT_ATTRIB_GENERIC0);
-   for (i = 0; vertInputs[i].Name; i++) {
+   for (i = 0; Elements(vertInputs); i++) {
       if (vertInputs[i].Attrib == attrib)
          return vertInputs[i].Name;
    }
@@ -839,7 +839,7 @@ _slang_vert_attrib_type(GLuint attrib)
 {
    GLuint i;
    assert(attrib < VERT_ATTRIB_GENERIC0);
-   for (i = 0; vertInputs[i].Name; i++) {
+   for (i = 0; Elements(vertInputs); i++) {
       if (vertInputs[i].Attrib == attrib)
          return vertInputs[i].Type;
    }
@@ -867,8 +867,7 @@ static const struct output_info vertOutputs[] = {
    { "gl_BackSecondaryColor", VERT_RESULT_BFC1, GL_FLOAT_VEC4 },
    { "gl_TexCoord", VERT_RESULT_TEX0, GL_FLOAT_VEC4 },
    { "gl_FogFragCoord", VERT_RESULT_FOGC, GL_FLOAT },
-   { "gl_PointSize", VERT_RESULT_PSIZ, GL_FLOAT },
-   { NULL, 0, GL_NONE }
+   { "gl_PointSize", VERT_RESULT_PSIZ, GL_FLOAT }
 };
 
 /** Predefined geometry shader outputs */
@@ -883,46 +882,47 @@ static const struct output_info geomOutputs[] = {
    { "gl_ClipVertex", GEOM_RESULT_CLPV, GL_FLOAT_VEC4  },
    { "gl_PointSize", GEOM_RESULT_PSIZ, GL_FLOAT  },
    { "gl_PrimitiveID", GEOM_RESULT_PRID, GL_FLOAT  },
-   { "gl_Layer", GEOM_RESULT_LAYR, GL_FLOAT  },
-   { NULL, 0, GL_NONE }
+   { "gl_Layer", GEOM_RESULT_LAYR, GL_FLOAT  }
 };
 
 /** Predefined fragment shader outputs */
 static const struct output_info fragOutputs[] = {
    { "gl_FragColor", FRAG_RESULT_COLOR, GL_FLOAT_VEC4 },
    { "gl_FragDepth", FRAG_RESULT_DEPTH, GL_FLOAT },
-   { "gl_FragData", FRAG_RESULT_DATA0, GL_FLOAT_VEC4 },
-   { NULL, 0, GL_NONE }
+   { "gl_FragData", FRAG_RESULT_DATA0, GL_FLOAT_VEC4 }
 };
 
 
 /**
- * Return the VERT_RESULT_*, GEOM_RESULT_* or FRAG_RESULT_* value that corresponds to
- * a vertex or fragment program output variable.  Return -1 for an invalid
+ * Return the VERT_RESULT_*, GEOM_RESULT_* or FRAG_RESULT_* value that corresponds
+ * to a vertex or fragment program output variable.  Return -1 for an invalid
  * output name.
  */
 GLint
 _slang_output_index(const char *name, GLenum target)
 {
    const struct output_info *outputs;
-   GLuint i;
+   GLuint i, n;
 
    switch (target) {
    case GL_VERTEX_PROGRAM_ARB:
       outputs = vertOutputs;
+      n = Elements(vertOutputs);
       break;
    case GL_FRAGMENT_PROGRAM_ARB:
       outputs = fragOutputs;
+      n = Elements(fragOutputs);
       break;
    case MESA_GEOMETRY_PROGRAM:
       outputs = geomOutputs;
+      n = Elements(geomOutputs);
       break;
    default:
       _mesa_problem(NULL, "bad target in _slang_output_index");
       return -1;
    }
 
-   for (i = 0; outputs[i].Name; i++) {
+   for (i = 0; i < n; i++) {
       if (strcmp(outputs[i].Name, name) == 0) {
          /* found */
          return outputs[i].Attrib;
