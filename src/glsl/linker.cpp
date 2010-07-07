@@ -667,7 +667,7 @@ assign_attribute_locations(gl_shader_program *prog, unsigned max_attribute_index
     * be explicitly assigned by via glBindAttribLocation.  Mark it as reserved
     * to prevent it from being automatically allocated below.
     */
-   used_locations |= VERT_BIT_GENERIC0;
+   used_locations |= (1 << 0);
 
    for (unsigned i = 0; i < num_attr; i++) {
       /* Mask representing the contiguous slots that will be used by this
