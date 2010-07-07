@@ -1772,6 +1772,8 @@ ast_declarator_list::hir(exec_list *instructions,
 	 }
       }
 
+      instructions->push_tail(var);
+
       if (decl->initializer != NULL) {
 	 YYLTYPE initializer_loc = decl->initializer->get_location();
 
@@ -1917,8 +1919,6 @@ ast_declarator_list::hir(exec_list *instructions,
 			  "identifier `%s' uses reserved `gl_' prefix",
 			  decl->identifier);
       }
-
-      instructions->push_tail(var);
 
       /* Add the variable to the symbol table after processing the initializer.
        * This differs from most C-like languages, but it follows the GLSL
