@@ -53,6 +53,7 @@
 #include "lp_bld_gather.h"
 #include "lp_bld_format.h"
 #include "lp_bld_sample.h"
+#include "lp_bld_quad.h"
 
 
 /**
@@ -818,9 +819,8 @@ lp_build_minify(struct lp_build_sample_context *bld,
 
 /**
  * Generate code to compute texture level of detail (lambda).
- * \param s  vector of texcoord s values
- * \param t  vector of texcoord t values
- * \param r  vector of texcoord r values
+ * \param ddx  partial derivatives of (s, t, r, q) with respect to X
+ * \param ddy  partial derivatives of (s, t, r, q) with respect to Y
  * \param lod_bias  optional float vector with the shader lod bias
  * \param explicit_lod  optional float vector with the explicit lod
  * \param width  scalar int texture width
@@ -832,11 +832,8 @@ lp_build_minify(struct lp_build_sample_context *bld,
  */
 static LLVMValueRef
 lp_build_lod_selector(struct lp_build_sample_context *bld,
-                      LLVMValueRef s,
-                      LLVMValueRef t,
-                      LLVMValueRef r,
-                      const LLVMValueRef *ddx,
-                      const LLVMValueRef *ddy,
+                      const LLVMValueRef ddx[4],
+                      const LLVMValueRef ddy[4],
                       LLVMValueRef lod_bias, /* optional */
                       LLVMValueRef explicit_lod, /* optional */
                       LLVMValueRef width,
@@ -871,14 +868,6 @@ lp_build_lod_selector(struct lp_build_sample_context *bld,
          LLVMValueRef dtdx = NULL, dtdy = NULL, drdx = NULL, drdy = NULL;
          LLVMValueRef rho;
 
-         /*
-          * dsdx = abs(s[1] - s[0]);
-          * dsdy = abs(s[2] - s[0]);
-          * dtdx = abs(t[1] - t[0]);
-          * dtdy = abs(t[2] - t[0]);
-          * drdx = abs(r[1] - r[0]);
-          * drdy = abs(r[2] - r[0]);
-          */
          dsdx = LLVMBuildExtractElement(bld->builder, ddx[0], index0, "dsdx");
          dsdx = lp_build_abs(float_bld, dsdx);
          dsdy = LLVMBuildExtractElement(bld->builder, ddy[0], index0, "dsdy");
@@ -961,7 +950,7 @@ lp_build_nearest_mip_level(struct lp_build_sample_context *bld,
                                                bld->builder, unit);
 
    /* convert float lod to integer */
-   level = lp_build_itrunc(float_bld, lod);
+   level = lp_build_iround(float_bld, lod);
 
    /* clamp level to legal range of levels */
    *level_out = lp_build_clamp(int_bld, level, zero, last_level);
@@ -1288,7 +1277,7 @@ lp_build_cube_face(struct lp_build_sample_context *bld,
 
 
 /**
- * Generate code to do cube face selection and per-face texcoords.
+ * Generate code to do cube face selection and compute per-face texcoords.
  */
 static void
 lp_build_cube_lookup(struct lp_build_sample_context *bld,
@@ -1412,7 +1401,6 @@ lp_build_cube_lookup(struct lp_build_sample_context *bld,
          lp_build_endif(&if_ctx2);
          lp_build_flow_scope_end(flow_ctx2);
          lp_build_flow_destroy(flow_ctx2);
-
          *face_s = face_s2;
          *face_t = face_t2;
          *face = face2;
@@ -1458,13 +1446,14 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
    int chan;
 
    if (img_filter == PIPE_TEX_FILTER_NEAREST) {
+      /* sample the first mipmap level */
       lp_build_sample_image_nearest(bld,
                                     width0_vec, height0_vec, depth0_vec,
                                     row_stride0_vec, img_stride0_vec,
                                     data_ptr0, s, t, r, colors0);
 
       if (mip_filter == PIPE_TEX_MIPFILTER_LINEAR) {
-         /* sample the second mipmap level, and interp */
+         /* sample the second mipmap level */
          lp_build_sample_image_nearest(bld,
                                        width1_vec, height1_vec, depth1_vec,
                                        row_stride1_vec, img_stride1_vec,
@@ -1474,13 +1463,14 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
    else {
       assert(img_filter == PIPE_TEX_FILTER_LINEAR);
 
+      /* sample the first mipmap level */
       lp_build_sample_image_linear(bld,
                                    width0_vec, height0_vec, depth0_vec,
                                    row_stride0_vec, img_stride0_vec,
                                    data_ptr0, s, t, r, colors0);
 
       if (mip_filter == PIPE_TEX_MIPFILTER_LINEAR) {
-         /* sample the second mipmap level, and interp */
+         /* sample the second mipmap level */
          lp_build_sample_image_linear(bld,
                                       width1_vec, height1_vec, depth1_vec,
                                       row_stride1_vec, img_stride1_vec,
@@ -1532,7 +1522,7 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
                         LLVMValueRef *colors_out)
 {
    struct lp_build_context *float_bld = &bld->float_bld;
-   const unsigned mip_filter = bld->static_state->min_mip_filter;
+   /*const*/ unsigned mip_filter = bld->static_state->min_mip_filter;
    const unsigned min_filter = bld->static_state->min_img_filter;
    const unsigned mag_filter = bld->static_state->mag_img_filter;
    const int dims = texture_dims(bld->static_state->target);
@@ -1543,11 +1533,36 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
    LLVMValueRef row_stride0_vec = NULL, row_stride1_vec = NULL;
    LLVMValueRef img_stride0_vec = NULL, img_stride1_vec = NULL;
    LLVMValueRef data_ptr0, data_ptr1 = NULL;
+   LLVMValueRef face_ddx[4], face_ddy[4];
 
    /*
    printf("%s mip %d  min %d  mag %d\n", __FUNCTION__,
           mip_filter, min_filter, mag_filter);
    */
+
+   /*
+    * Choose cube face, recompute texcoords and derivatives for the chosen face.
+    */
+   if (bld->static_state->target == PIPE_TEXTURE_CUBE) {
+      LLVMValueRef face, face_s, face_t;
+      lp_build_cube_lookup(bld, s, t, r, &face, &face_s, &face_t);
+      s = face_s; /* vec */
+      t = face_t; /* vec */
+      /* use 'r' to indicate cube face */
+      r = lp_build_broadcast_scalar(&bld->int_coord_bld, face); /* vec */
+
+      /* recompute ddx, ddy using the new (s,t) face texcoords */
+      face_ddx[0] = lp_build_ddx(&bld->coord_bld, s);
+      face_ddx[1] = lp_build_ddx(&bld->coord_bld, t);
+      face_ddx[2] = NULL;
+      face_ddx[3] = NULL;
+      face_ddy[0] = lp_build_ddy(&bld->coord_bld, s);
+      face_ddy[1] = lp_build_ddy(&bld->coord_bld, t);
+      face_ddy[2] = NULL;
+      face_ddy[3] = NULL;
+      ddx = face_ddx;
+      ddy = face_ddy;
+   }
 
    /*
     * Compute the level of detail (float).
@@ -1557,7 +1572,7 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
       /* Need to compute lod either to choose mipmap levels or to
        * distinguish between minification/magnification with one mipmap level.
        */
-      lod = lp_build_lod_selector(bld, s, t, r, ddx, ddy,
+      lod = lp_build_lod_selector(bld, ddx, ddy,
                                   lod_bias, explicit_lod,
                                   width, height, depth);
    }
@@ -1567,9 +1582,20 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
     */
    if (mip_filter == PIPE_TEX_MIPFILTER_NONE) {
       /* always use mip level 0 */
-      ilevel0 = LLVMConstInt(LLVMInt32Type(), 0, 0);
+      if (bld->static_state->target == PIPE_TEXTURE_CUBE) {
+         /* XXX this is a work-around for an apparent bug in LLVM 2.7.
+          * We should be able to set ilevel0 = const(0) but that causes
+          * bad x86 code to be emitted.
+          */
+         lod = lp_build_const_elem(bld->coord_bld.type, 0.0);
+         lp_build_nearest_mip_level(bld, unit, lod, &ilevel0);
+      }
+      else {
+         ilevel0 = LLVMConstInt(LLVMInt32Type(), 0, 0);
+      }
    }
    else {
+      assert(lod);
       if (mip_filter == PIPE_TEX_MIPFILTER_NEAREST) {
          lp_build_nearest_mip_level(bld, unit, lod, &ilevel0);
       }
@@ -1621,18 +1647,6 @@ lp_build_sample_general(struct lp_build_sample_context *bld,
             }
          }
       }
-   }
-
-   /*
-    * Choose cube face, recompute per-face texcoords.
-    */
-   if (bld->static_state->target == PIPE_TEXTURE_CUBE) {
-      LLVMValueRef face, face_s, face_t;
-      lp_build_cube_lookup(bld, s, t, r, &face, &face_s, &face_t);
-      s = face_s; /* vec */
-      t = face_t; /* vec */
-      /* use 'r' to indicate cube face */
-      r = lp_build_broadcast_scalar(&bld->int_coord_bld, face); /* vec */
    }
 
    /*
@@ -1983,6 +1997,8 @@ lp_build_sample_nop(struct lp_build_sample_context *bld,
  * 'texel' will return a vector of four LLVMValueRefs corresponding to
  * R, G, B, A.
  * \param type  vector float type to use for coords, etc.
+ * \param ddx  partial derivatives of (s,t,r,q) with respect to x
+ * \param ddy  partial derivatives of (s,t,r,q) with respect to y
  */
 void
 lp_build_sample_soa(LLVMBuilderRef builder,
@@ -1992,8 +2008,8 @@ lp_build_sample_soa(LLVMBuilderRef builder,
                     unsigned unit,
                     unsigned num_coords,
                     const LLVMValueRef *coords,
-                    const LLVMValueRef *ddx,
-                    const LLVMValueRef *ddy,
+                    const LLVMValueRef ddx[4],
+                    const LLVMValueRef ddy[4],
                     LLVMValueRef lod_bias, /* optional */
                     LLVMValueRef explicit_lod, /* optional */
                     LLVMValueRef texel_out[4])
