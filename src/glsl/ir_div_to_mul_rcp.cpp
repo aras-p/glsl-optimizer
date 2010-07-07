@@ -33,6 +33,7 @@
  */
 
 #include "ir.h"
+#include "glsl_types.h"
 
 class ir_div_to_mul_rcp_visitor : public ir_hierarchical_visitor {
 public:
@@ -61,16 +62,53 @@ ir_div_to_mul_rcp_visitor::visit_leave(ir_expression *ir)
    if (ir->operation != ir_binop_div)
       return visit_continue;
 
-   /* New expression for the 1.0 / op1 */
-   ir_rvalue *expr;
-   expr = new(ir) ir_expression(ir_unop_rcp,
-				ir->operands[1]->type,
-				ir->operands[1],
-				NULL);
+   if (ir->operands[1]->type->base_type != GLSL_TYPE_INT &&
+       ir->operands[1]->type->base_type != GLSL_TYPE_UINT) {
+      /* New expression for the 1.0 / op1 */
+      ir_rvalue *expr;
+      expr = new(ir) ir_expression(ir_unop_rcp,
+				   ir->operands[1]->type,
+				   ir->operands[1],
+				   NULL);
 
-   /* op0 / op1 -> op0 * (1.0 / op1) */
-   ir->operation = ir_binop_mul;
-   ir->operands[1] = expr;
+      /* op0 / op1 -> op0 * (1.0 / op1) */
+      ir->operation = ir_binop_mul;
+      ir->operands[1] = expr;
+   } else {
+      /* Be careful with integer division -- we need to do it as a
+       * float and re-truncate, since rcp(n > 1) of an integer would
+       * just be 0.
+       */
+      ir_rvalue *op0, *op1;
+      const struct glsl_type *vec_type;
+
+      vec_type = glsl_type::get_instance(GLSL_TYPE_FLOAT,
+					 ir->operands[1]->type->vector_elements,
+					 ir->operands[1]->type->matrix_columns);
+
+      if (ir->operands[1]->type->base_type == GLSL_TYPE_INT)
+	 op1 = new(ir) ir_expression(ir_unop_i2f, vec_type, ir->operands[1], NULL);
+      else
+	 op1 = new(ir) ir_expression(ir_unop_u2f, vec_type, ir->operands[1], NULL);
+
+      op1 = new(ir) ir_expression(ir_unop_rcp, op1->type, op1, NULL);
+
+      vec_type = glsl_type::get_instance(GLSL_TYPE_FLOAT,
+					 ir->operands[0]->type->vector_elements,
+					 ir->operands[0]->type->matrix_columns);
+
+      if (ir->operands[0]->type->base_type == GLSL_TYPE_INT)
+	 op0 = new(ir) ir_expression(ir_unop_i2f, vec_type, ir->operands[0], NULL);
+      else
+	 op0 = new(ir) ir_expression(ir_unop_u2f, vec_type, ir->operands[0], NULL);
+
+      op0 = new(ir) ir_expression(ir_binop_mul, vec_type, op0, op1);
+
+      ir->operation = ir_unop_f2i;
+      ir->operands[0] = op0;
+      ir->operands[1] = NULL;
+   }
+
    this->made_progress = true;
 
    return visit_continue;
