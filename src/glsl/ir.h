@@ -695,6 +695,11 @@ public:
    }
 
    /**
+    * Set the function call target
+    */
+   void set_callee(const ir_function_signature *sig);
+
+   /**
     * Generates an inline version of the function before @ir,
     * returning the return value of the function.
     */

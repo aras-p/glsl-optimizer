@@ -837,6 +837,14 @@ ir_call::get_error_instruction(void *ctx)
 }
 
 void
+ir_call::set_callee(const ir_function_signature *sig)
+{
+   assert((this->type == NULL) || (this->type == sig->return_type));
+
+   this->callee = sig;
+}
+
+void
 visit_exec_list(exec_list *list, ir_visitor *visitor)
 {
    foreach_iter(exec_list_iterator, iter, *list) {
