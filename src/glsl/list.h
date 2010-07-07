@@ -385,6 +385,30 @@ struct exec_list {
       }
    }
 
+   /**
+    * Append all nodes from the source list to the target list
+    */
+   void
+   append_list(exec_list *source)
+   {
+      if (source->is_empty())
+	 return;
+
+      /* Link the first node of the source with the last node of the target list.
+       */
+      this->tail_pred->next = source->head;
+      source->head->prev = this->tail_pred;
+
+      /* Make the tail of the source list be the tail of the target list.
+       */
+      this->tail_pred = source->tail_pred;
+      this->tail_pred->next = (exec_node *) &this->tail;
+
+      /* Make the source list empty for good measure.
+       */
+      source->make_empty();
+   }
+
    exec_list_iterator iterator()
    {
       return exec_list_iterator(head);
