@@ -149,8 +149,8 @@ ir_constant_visitor::visit(ir_expression *ir)
    /* When iterating over a vector or matrix's components, we want to increase
     * the loop counter.  However, for scalars, we want to stay at 0.
     */
-   unsigned c0_inc = op0_scalar ? 1 : 0;
-   unsigned c1_inc = op1_scalar ? 1 : 0;
+   unsigned c0_inc = op0_scalar ? 0 : 1;
+   unsigned c1_inc = op1_scalar ? 0 : 1;
    unsigned components;
    if (op1_scalar || !op[1]) {
       components = op[0]->type->components();
