@@ -192,6 +192,7 @@ static ir_function *
 read_function(_mesa_glsl_parse_state *st, s_list *list, bool skip_body)
 {
    void *ctx = st;
+   bool added = false;
    if (list->length() < 3) {
       ir_read_error(st, list, "Expected (function <name> (signature ...) ...)");
       return NULL;
@@ -206,7 +207,7 @@ read_function(_mesa_glsl_parse_state *st, s_list *list, bool skip_body)
    ir_function *f = st->symbols->get_function(name->value());
    if (f == NULL) {
       f = new(ctx) ir_function(name->value());
-      bool added = st->symbols->add_function(f->name, f);
+      added = st->symbols->add_function(f->name, f);
       assert(added);
    }
 
@@ -228,7 +229,7 @@ read_function(_mesa_glsl_parse_state *st, s_list *list, bool skip_body)
 
       read_function_sig(st, f, siglist, skip_body);
    }
-   return f;
+   return added ? f : NULL;
 }
 
 static void
@@ -321,11 +322,8 @@ read_instructions(_mesa_glsl_parse_state *st, exec_list *instructions,
    foreach_iter(exec_list_iterator, it, list->subexpressions) {
       s_expression *sub = (s_expression*) it.get();
       ir_instruction *ir = read_instruction(st, sub, loop_ctx);
-      if (ir == NULL) {
-	 ir_read_error(st, sub, "Invalid instruction.\n");
-	 return;
-      }
-      instructions->push_tail(ir);
+      if (ir != NULL)
+	 instructions->push_tail(ir);
    }
 }
 
@@ -344,8 +342,10 @@ read_instruction(_mesa_glsl_parse_state *st, s_expression *expr,
    }
 
    s_list *list = SX_AS_LIST(expr);
-   if (list == NULL || list->subexpressions.is_empty())
+   if (list == NULL || list->subexpressions.is_empty()) {
+      ir_read_error(st, expr, "Invalid instruction.\n");
       return NULL;
+   }
 
    s_symbol *tag = SX_AS_SYMBOL(list->subexpressions.get_head());
    if (tag == NULL) {
