@@ -1772,6 +1772,13 @@ ast_declarator_list::hir(exec_list *instructions,
 	 }
       }
 
+      /* Process the initializer and add its instructions to a temporary
+       * list.  This list will be added to the instruction stream (below) after
+       * the declaration is added.  This is done because in some cases (such as
+       * redeclarations) the declaration may not actually be added to the
+       * instruction stream.
+       */
+      exec_list intializer_instructions;
       if (decl->initializer != NULL) {
 	 YYLTYPE initializer_loc = decl->initializer->get_location();
 
@@ -1801,7 +1808,8 @@ ast_declarator_list::hir(exec_list *instructions,
 	 }
 
 	 ir_dereference *const lhs = new(ctx) ir_dereference_variable(var);
-	 ir_rvalue *rhs = decl->initializer->hir(instructions, state);
+	 ir_rvalue *rhs = decl->initializer->hir(&intializer_instructions,
+						 state);
 
 	 /* Calculate the constant value if this is a const or uniform
 	  * declaration.
@@ -1829,7 +1837,7 @@ ast_declarator_list::hir(exec_list *instructions,
 	    /* Never emit code to initialize a uniform.
 	     */
 	    if (!this->type->qualifier.uniform)
-	       result = do_assignment(instructions, state, lhs, rhs,
+	       result = do_assignment(&intializer_instructions, state, lhs, rhs,
 				      this->get_location());
 	    var->read_only = temp;
 	 }
@@ -1919,6 +1927,7 @@ ast_declarator_list::hir(exec_list *instructions,
       }
 
       instructions->push_tail(var);
+      instructions->append_list(&intializer_instructions);
 
       /* Add the variable to the symbol table after processing the initializer.
        * This differs from most C-like languages, but it follows the GLSL
