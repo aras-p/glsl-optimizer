@@ -571,6 +571,7 @@ get_lvalue_copy(exec_list *instructions, ir_rvalue *lvalue)
 
    /* FINISHME: Give unique names to the temporaries. */
    var = new(ctx) ir_variable(lvalue->type, "_post_incdec_tmp");
+   instructions->push_tail(var);
    var->mode = ir_var_auto;
 
    instructions->push_tail(new(ctx) ir_assignment(new(ctx) ir_dereference_variable(var),
