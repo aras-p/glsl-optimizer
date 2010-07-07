@@ -623,9 +623,9 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
    case ir_binop_sub:
       ir_to_mesa_emit_op2(ir, OPCODE_SUB, result_dst, op[0], op[1]);
       break;
+
    case ir_binop_mul:
-      if (ir->operands[0]->type->is_matrix() &&
-	  !ir->operands[1]->type->is_matrix()) {
+      if (ir->operands[0]->type->is_matrix()) {
 	 if (ir->operands[1]->type->is_scalar()) {
 	    ir_to_mesa_dst_reg dst_column = result_dst;
 	    ir_to_mesa_src_reg src_column = op[0];
@@ -636,21 +636,32 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
 	       src_column.index++;
 	    }
 	 } else {
-	    ir_to_mesa_src_reg src_column = op[0];
+	    /* matrix * vec or matrix * matrix */
+	    int op1_col;
+	    ir_to_mesa_dst_reg dst_column = result_dst;
+	    ir_to_mesa_src_reg dst_column_src;
 	    ir_to_mesa_src_reg src_chan = op[1];
-	    assert(!ir->operands[1]->type->is_matrix() ||
-		    !"FINISHME: matrix * matrix");
-	     for (int i = 0; i < ir->operands[0]->type->matrix_columns; i++) {
-		src_chan.swizzle = MAKE_SWIZZLE4(i, i, i, i);
-		if (i == 0) {
-		   ir_to_mesa_emit_op2(ir, OPCODE_MUL,
-				       result_dst, src_column, src_chan);
-		} else {
-		   ir_to_mesa_emit_op3(ir, OPCODE_MAD,
-				       result_dst, src_column, src_chan,
-				       result_src);
-		}
-		src_column.index++;
+
+	    dst_column_src = ir_to_mesa_src_reg_from_dst(result_dst);
+	    for (op1_col = 0; op1_col < ir->operands[1]->type->matrix_columns;
+		 op1_col++) {
+	       ir_to_mesa_src_reg src_column = op[0];
+
+	       for (int i = 0; i < ir->operands[0]->type->matrix_columns; i++) {
+		  src_chan.swizzle = MAKE_SWIZZLE4(i, i, i, i);
+		  if (i == 0) {
+		     ir_to_mesa_emit_op2(ir, OPCODE_MUL,
+					 dst_column, src_column, src_chan);
+		  } else {
+		     ir_to_mesa_emit_op3(ir, OPCODE_MAD,
+					 dst_column, src_column, src_chan,
+					 dst_column_src);
+		  }
+		  src_column.index++;
+	       }
+	       src_chan.index++;
+	       dst_column.index++;
+	       dst_column_src.index++;
 	    }
 	 }
       } else if (ir->operands[1]->type->is_matrix()) {
