@@ -728,14 +728,32 @@ sort_interval_list_by_start(struct interval_list *list)
 #endif
 }
 
+struct loop_info
+{
+   GLuint Start, End;  /**< Start, end instructions of loop */
+};
 
 /**
  * Update the intermediate interval info for register 'index' and
  * instruction 'ic'.
  */
 static void
-update_interval(GLint intBegin[], GLint intEnd[], GLuint index, GLuint ic)
+update_interval(GLint intBegin[], GLint intEnd[],
+		struct loop_info *loopStack, GLuint loopStackDepth,
+		GLuint index, GLuint ic)
 {
+   int i;
+
+   /* If the register is used in a loop, extend its lifetime through the end
+    * of the outermost loop that doesn't contain its definition.
+    */
+   for (i = 0; i < loopStackDepth; i++) {
+      if (intBegin[index] < loopStack[i].Start) {
+	 ic = loopStack[i].End;
+	 break;
+      }
+   }
+
    ASSERT(index < MAX_PROGRAM_TEMPS);
    if (intBegin[index] == -1) {
       ASSERT(intEnd[index] == -1);
@@ -756,10 +774,6 @@ _mesa_find_temp_intervals(const struct prog_instruction *instructions,
                           GLint intBegin[MAX_PROGRAM_TEMPS],
                           GLint intEnd[MAX_PROGRAM_TEMPS])
 {
-   struct loop_info
-   {
-      GLuint Start, End;  /**< Start, end instructions of loop */
-   };
    struct loop_info loopStack[MAX_LOOP_NESTING];
    GLuint loopStackDepth = 0;
    GLuint i;
@@ -790,24 +804,16 @@ _mesa_find_temp_intervals(const struct prog_instruction *instructions,
                const GLuint index = inst->SrcReg[j].Index;
                if (inst->SrcReg[j].RelAddr)
                   return GL_FALSE;
-               update_interval(intBegin, intEnd, index, i);
-               if (loopStackDepth > 0) {
-                  /* extend temp register's interval to end of loop */
-                  GLuint loopEnd = loopStack[loopStackDepth - 1].End;
-                  update_interval(intBegin, intEnd, index, loopEnd);
-               }
+               update_interval(intBegin, intEnd, loopStack, loopStackDepth,
+			       index, i);
             }
          }
          if (inst->DstReg.File == PROGRAM_TEMPORARY) {
             const GLuint index = inst->DstReg.Index;
             if (inst->DstReg.RelAddr)
                return GL_FALSE;
-            update_interval(intBegin, intEnd, index, i);
-            if (loopStackDepth > 0) {
-               /* extend temp register's interval to end of loop */
-               GLuint loopEnd = loopStack[loopStackDepth - 1].End;
-               update_interval(intBegin, intEnd, index, loopEnd);
-            }
+            update_interval(intBegin, intEnd, loopStack, loopStackDepth,
+			    index, i);
          }
       }
    }
