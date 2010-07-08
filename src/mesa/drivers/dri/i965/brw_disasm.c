@@ -917,10 +917,17 @@ int brw_disasm (FILE *file, struct brw_instruction *inst, int gen)
 	}
 	if (space)
 	    string (file, " ");
-	format (file, "mlen %d",
-		inst->bits3.generic.msg_length);
-	format (file, " rlen %d",
-		inst->bits3.generic.response_length);
+	if (gen == 5) {
+	   format (file, "mlen %d",
+		   inst->bits3.generic_gen5.msg_length);
+	   format (file, " rlen %d",
+		   inst->bits3.generic_gen5.response_length);
+	} else {
+	   format (file, "mlen %d",
+		   inst->bits3.generic.msg_length);
+	   format (file, " rlen %d",
+		   inst->bits3.generic.response_length);
+	}
     }
     pad (file, 64);
     if (inst->header.opcode != BRW_OPCODE_NOP) {
