@@ -1270,7 +1270,6 @@ ir_to_mesa_visitor::visit(ir_assignment *ir)
    struct ir_to_mesa_src_reg r;
    int i;
 
-   assert(!ir->lhs->type->is_matrix());
    assert(!ir->lhs->type->is_array());
    assert(ir->lhs->type->base_type != GLSL_TYPE_STRUCT);
 
