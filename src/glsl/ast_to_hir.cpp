@@ -542,27 +542,6 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
    return new(ctx) ir_dereference_variable(var);
 }
 
-
-/**
- * Generate a new temporary and add its declaration to the instruction stream
- */
-static ir_variable *
-generate_temporary(const glsl_type *type, exec_list *instructions,
-		   struct _mesa_glsl_parse_state *state)
-{
-   void *ctx = state;
-   char *name = (char *) malloc(sizeof(char) * 13);
-
-   snprintf(name, 13, "tmp_%08X", state->temp_index);
-   state->temp_index++;
-
-   ir_variable *const var = new(ctx) ir_variable(type, name);
-   instructions->push_tail(var);
-
-   return var;
-}
-
-
 static ir_rvalue *
 get_lvalue_copy(exec_list *instructions, ir_rvalue *lvalue)
 {
@@ -840,8 +819,8 @@ ast_expression::hir(exec_list *instructions,
 	    error_emitted = true;
 	 }
 
-	 ir_variable *const tmp = generate_temporary(glsl_type::bool_type,
-						     instructions, state);
+	 ir_variable *const tmp = new(ctx) ir_variable(glsl_type::bool_type,
+						       "and_tmp");
 
 	 ir_dereference *const then_deref = new(ctx) ir_dereference_variable(tmp);
 	 ir_assignment *const then_assign =
@@ -892,8 +871,8 @@ ast_expression::hir(exec_list *instructions,
 	 ir_if *const stmt = new(ctx) ir_if(op[0]);
 	 instructions->push_tail(stmt);
 
-	 ir_variable *const tmp = generate_temporary(glsl_type::bool_type,
-						     instructions, state);
+	 ir_variable *const tmp = new(ctx) ir_variable(glsl_type::bool_type,
+						       "or_tmp");
 
 	 op[1] = this->subexpressions[1]->hir(&stmt->then_instructions, state);
 
@@ -1068,8 +1047,7 @@ ast_expression::hir(exec_list *instructions,
 	  && (cond_val != NULL) && (then_val != NULL) && (else_val != NULL)) {
 	 result = (cond_val->value.b[0]) ? then_val : else_val;
       } else {
-	 ir_variable *const tmp = generate_temporary(type,
-						     instructions, state);
+	 ir_variable *const tmp = new(ctx) ir_variable(type, "conditional_tmp");
 
 	 ir_if *const stmt = new(ctx) ir_if(op[0]);
 	 instructions->push_tail(stmt);
