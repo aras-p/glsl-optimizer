@@ -922,6 +922,9 @@ st_translate_mesa_program(
    unsigned i;
    enum pipe_error ret = PIPE_OK;
 
+   assert(numInputs <= Elements(t->inputs));
+   assert(numOutputs <= Elements(t->outputs));
+
    t = &translate;
    memset(t, 0, sizeof *t);
 
@@ -1004,6 +1007,8 @@ st_translate_mesa_program(
       }
    }
    else {
+      assert(procType == TGSI_PROCESSOR_VERTEX);
+
       for (i = 0; i < numInputs; i++) {
          t->inputs[i] = ureg_DECL_vs_input(ureg, i);
       }
