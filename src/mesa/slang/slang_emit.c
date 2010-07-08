@@ -2361,7 +2361,10 @@ emit(slang_emit_info *emitInfo, slang_ir_node *n)
 #if 0
       assert(!n->Store);
 #endif
-      n->Store = n->Children[1]->Store;
+      if (n->Children[1]->Store)
+         n->Store = n->Children[1]->Store;
+      else
+         n->Store = n->Children[0]->Store;
       return inst;
 
    case IR_SCOPE:
@@ -2369,6 +2372,7 @@ emit(slang_emit_info *emitInfo, slang_ir_node *n)
       _slang_push_var_table(emitInfo->vt);
       inst = emit(emitInfo, n->Children[0]);
       _slang_pop_var_table(emitInfo->vt);
+      n->Store = n->Children[0]->Store;
       return inst;
 
    case IR_VAR_DECL:
