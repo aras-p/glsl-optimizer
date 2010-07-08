@@ -148,11 +148,13 @@ struct r300_winsys_screen {
 			  enum r300_value_id vid);
 
     struct r300_winsys_buffer *(*buffer_from_handle)(struct r300_winsys_screen *winsys,
-                                                     unsigned handle);
+                                                     struct winsys_handle *whandle,
+                                                     unsigned *stride);
 
     boolean (*buffer_get_handle)(struct r300_winsys_screen *winsys,
 				 struct r300_winsys_buffer *buffer,
-				 struct winsys_handle *whandle);
+                                 struct winsys_handle *whandle,
+                                 unsigned stride);
 
     boolean (*is_buffer_referenced)(struct r300_winsys_screen *winsys,
                                     struct r300_winsys_buffer *buffer,

@@ -37,9 +37,6 @@
 
 #include "pipe/p_screen.h"
 
-/* XXX NO! just no! */
-#include "state_tracker/drm_driver.h"
-
 enum r300_dim {
     DIM_WIDTH  = 0,
     DIM_HEIGHT = 1
@@ -938,9 +935,8 @@ static boolean r300_texture_get_handle(struct pipe_screen* screen,
         return FALSE;
     }
 
-    whandle->stride = r300_texture_get_stride(r300_screen(screen), tex, 0);
-
-    return rws->buffer_get_handle(rws, tex->buffer, whandle);
+    return rws->buffer_get_handle(rws, tex->buffer, whandle,
+                    r300_texture_get_stride(r300_screen(screen), tex, 0));
 }
 
 struct u_resource_vtbl r300_texture_vtbl = 
@@ -1074,6 +1070,7 @@ r300_texture_from_handle(struct pipe_screen* screen,
     struct r300_screen* rscreen = r300_screen(screen);
     struct r300_winsys_buffer *buffer;
     struct r300_texture* tex;
+    unsigned stride;
     boolean override_zb_flags;
 
     /* Support only 2D textures without mipmaps */
@@ -1083,8 +1080,7 @@ r300_texture_from_handle(struct pipe_screen* screen,
         return NULL;
     }
 
-    /* XXX make the winsys return the stride_override, see i915_resource_texture.c:830 */
-    buffer = rws->buffer_from_handle(rws, whandle->handle);
+    buffer = rws->buffer_from_handle(rws, whandle, &stride);
     if (!buffer) {
         return NULL;
     }
@@ -1100,7 +1096,7 @@ r300_texture_from_handle(struct pipe_screen* screen,
     tex->b.b.screen = screen;
     tex->domain = R300_DOMAIN_VRAM;
 
-    tex->stride_override = whandle->stride;
+    tex->stride_override = stride;
 
     /* one ref already taken */
     tex->buffer = buffer;
@@ -1112,7 +1108,7 @@ r300_texture_from_handle(struct pipe_screen* screen,
                "Pitch: % 4i, Dim: %ix%i, Format: %s\n",
                tex->macrotile ? "YES" : " NO",
                tex->microtile ? "YES" : " NO",
-               whandle->stride / util_format_get_blocksize(base->format),
+               stride / util_format_get_blocksize(base->format),
                base->width0, base->height0,
                util_format_short_name(base->format));
 
