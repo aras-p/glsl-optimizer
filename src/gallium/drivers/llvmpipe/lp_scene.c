@@ -32,6 +32,7 @@
 #include "util/u_simple_list.h"
 #include "lp_scene.h"
 #include "lp_scene_queue.h"
+#include "lp_fence.h"
 
 
 /** List of texture references */
@@ -197,6 +198,8 @@ lp_scene_reset(struct lp_scene *scene )
       }
       make_empty_list(ref_list);
    }
+
+   lp_fence_reference(&scene->fence, NULL);
 
    scene->scene_size = 0;
 

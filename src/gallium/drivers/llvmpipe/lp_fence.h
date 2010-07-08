@@ -32,6 +32,7 @@
 
 #include "os/os_thread.h"
 #include "pipe/p_state.h"
+#include "util/u_inlines.h"
 
 
 struct pipe_screen;
@@ -59,6 +60,23 @@ lp_fence_signal(struct lp_fence *fence);
 
 void
 llvmpipe_init_screen_fence_funcs(struct pipe_screen *screen);
+
+
+void
+lp_fence_destroy(struct lp_fence *fence);
+
+static INLINE void
+lp_fence_reference(struct lp_fence **ptr,
+                   struct lp_fence *f)
+{
+   struct lp_fence *old = *ptr;
+
+   if (pipe_reference(&old->reference, &f->reference)) {
+      lp_fence_destroy(old);
+   }
+   
+   *ptr = f;
+}
 
 
 #endif /* LP_FENCE_H */

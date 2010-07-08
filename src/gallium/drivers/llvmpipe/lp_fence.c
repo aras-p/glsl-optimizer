@@ -28,7 +28,6 @@
 
 #include "pipe/p_screen.h"
 #include "util/u_memory.h"
-#include "util/u_inlines.h"
 #include "lp_debug.h"
 #include "lp_fence.h"
 
@@ -59,7 +58,7 @@ lp_fence_create(unsigned rank)
 
 
 /** Destroy a fence.  Called when refcount hits zero. */
-static void
+void
 lp_fence_destroy(struct lp_fence *fence)
 {
    pipe_mutex_destroy(fence->mutex);
@@ -77,12 +76,10 @@ llvmpipe_fence_reference(struct pipe_screen *screen,
                          struct pipe_fence_handle **ptr,
                          struct pipe_fence_handle *fence)
 {
-   struct lp_fence *old = (struct lp_fence *) *ptr;
+   struct lp_fence **old = (struct lp_fence **) ptr;
    struct lp_fence *f = (struct lp_fence *) fence;
 
-   if (pipe_reference(&old->reference, &f->reference)) {
-      lp_fence_destroy(old);
-   }
+   lp_fence_reference(old, f);
 }
 
 

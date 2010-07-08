@@ -815,6 +815,10 @@ rasterize_scene(struct lp_rasterizer_task *task,
       }
    }
 #endif
+
+   if (scene->fence) {
+      lp_rast_fence(task, lp_rast_arg_fence(scene->fence));
+   }
 }
 
 

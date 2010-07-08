@@ -271,7 +271,8 @@ set_scene_state( struct lp_setup_context *setup,
  */
 void
 lp_setup_flush( struct lp_setup_context *setup,
-                unsigned flags )
+                unsigned flags,
+                struct pipe_fence_handle **fence)
 {
    LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
 
@@ -288,6 +289,15 @@ lp_setup_flush( struct lp_setup_context *setup,
           */
          lp_scene_bin_everywhere(scene, lp_rast_store_color, dummy);
       }
+
+
+      if (fence) {
+         /* if we're going to flush the setup/rasterization modules, emit
+          * a fence.
+          */
+         *fence = lp_setup_fence( setup );
+      }
+
    }
 
    set_scene_state( setup, SETUP_FLUSHED );
@@ -433,24 +443,27 @@ lp_setup_clear( struct lp_setup_context *setup,
 struct pipe_fence_handle *
 lp_setup_fence( struct lp_setup_context *setup )
 {
-   if (setup->num_threads == 0) {
+   if (setup->scene == NULL)
       return NULL;
-   }
-   else {
+   else if (setup->num_threads == 0)
+      return NULL;
+   else
+   {
       struct lp_scene *scene = lp_setup_get_current_scene(setup);
-      const unsigned rank = lp_scene_get_num_bins( scene ); /* xxx */
-      struct lp_fence *fence = lp_fence_create(rank);
+      const unsigned rank = setup->num_threads;
+
+      set_scene_state( setup, SETUP_ACTIVE );
+      
+      assert(scene->fence == NULL);
+
+      /* The caller gets a reference, we keep a copy too, so need to
+       * bump the refcount:
+       */
+      lp_fence_reference(&scene->fence, lp_fence_create(rank));
 
       LP_DBG(DEBUG_SETUP, "%s rank %u\n", __FUNCTION__, rank);
 
-      set_scene_state( setup, SETUP_ACTIVE );
-
-      /* insert the fence into all command bins */
-      lp_scene_bin_everywhere( scene,
-                               lp_rast_fence,
-                               lp_rast_arg_fence(fence) );
-
-      return (struct pipe_fence_handle *) fence;
+      return (struct pipe_fence_handle *) scene->fence;
    }
 }
 

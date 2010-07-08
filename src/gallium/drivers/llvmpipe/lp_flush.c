@@ -51,16 +51,8 @@ llvmpipe_flush( struct pipe_context *pipe,
 
    draw_flush(llvmpipe->draw);
 
-   if (fence) {
-      /* if we're going to flush the setup/rasterization modules, emit
-       * a fence.
-       * XXX this (and the code below) may need fine tuning...
-       */
-      *fence = lp_setup_fence( llvmpipe->setup );
-   }
-
    /* ask the setup module to flush */
-   lp_setup_flush(llvmpipe->setup, flags);
+   lp_setup_flush(llvmpipe->setup, flags, fence);
 
    /* Enable to dump BMPs of the color/depth buffers each frame */
    if (0) {

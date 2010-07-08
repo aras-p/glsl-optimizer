@@ -112,6 +112,7 @@ struct resource_ref {
  */
 struct lp_scene {
    struct pipe_context *pipe;
+   struct lp_fence *fence;
 
    /** the framebuffer to render the scene into */
    struct pipe_framebuffer_state fb;
