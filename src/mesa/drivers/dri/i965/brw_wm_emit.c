@@ -1294,6 +1294,7 @@ void emit_fb_write(struct brw_wm_compile *c,
 {
    struct brw_compile *p = &c->func;
    struct brw_context *brw = p->brw;
+   struct intel_context *intel = &brw->intel;
    GLuint nr = 2;
    GLuint channel;
 
@@ -1308,8 +1309,30 @@ void emit_fb_write(struct brw_wm_compile *c,
    brw_push_insn_state(p);
 
    for (channel = 0; channel < 4; channel++) {
-      if (c->dispatch_width == 16 && brw->has_compr4) {
-	 /* By setting the high bit of the MRF register number, we indicate
+      if (intel->gen >= 6) {
+	 /* gen6 SIMD16 single source DP write looks like:
+	  * m + 0: r0
+	  * m + 1: r1
+	  * m + 2: g0
+	  * m + 3: g1
+	  * m + 4: b0
+	  * m + 5: b1
+	  * m + 6: a0
+	  * m + 7: a1
+	  */
+	 brw_MOV(p, brw_message_reg(nr + channel * 2), arg0[channel]);
+      } else if (c->dispatch_width == 16 && brw->has_compr4) {
+	 /* pre-gen6 SIMD16 single source DP write looks like:
+	  * m + 0: r0
+	  * m + 1: g0
+	  * m + 2: b0
+	  * m + 3: a0
+	  * m + 4: r1
+	  * m + 5: g1
+	  * m + 6: b1
+	  * m + 7: a1
+	  *
+	  * By setting the high bit of the MRF register number, we indicate
 	  * that we want COMPR4 mode - instead of doing the usual destination
 	  * + 1 for the second half we get destination + 4.
 	  */
