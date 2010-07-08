@@ -2606,8 +2606,9 @@ struct gl_extensions
    GLboolean dummy;  /* don't remove this! */
    GLboolean ARB_blend_func_extended;
    GLboolean ARB_copy_buffer;
-   GLboolean ARB_depth_texture;
+   GLboolean ARB_depth_buffer_float;
    GLboolean ARB_depth_clamp;
+   GLboolean ARB_depth_texture;
    GLboolean ARB_draw_buffers;
    GLboolean ARB_draw_elements_base_vertex;
    GLboolean ARB_draw_instanced;
@@ -2647,6 +2648,7 @@ struct gl_extensions
    GLboolean ARB_texture_mirrored_repeat;
    GLboolean ARB_texture_multisample;
    GLboolean ARB_texture_non_power_of_two;
+   GLboolean ARB_texture_rg;
    GLboolean ARB_texture_rgb10_a2ui;
    GLboolean ARB_timer_query;
    GLboolean ARB_transform_feedback2;
@@ -2694,7 +2696,6 @@ struct gl_extensions
    GLboolean EXT_shadow_funcs;
    GLboolean EXT_secondary_color;
    GLboolean EXT_separate_specular_color;
-   GLboolean EXT_shared_exponent;
    GLboolean EXT_shared_texture_palette;
    GLboolean EXT_stencil_wrap;
    GLboolean EXT_stencil_two_side;
@@ -2712,6 +2713,7 @@ struct gl_extensions
    GLboolean EXT_texture_integer;
    GLboolean EXT_texture_lod_bias;
    GLboolean EXT_texture_mirror_clamp;
+   GLboolean EXT_texture_shared_exponent;
    GLboolean EXT_texture_sRGB;
    GLboolean EXT_texture_swizzle;
    GLboolean EXT_transform_feedback;

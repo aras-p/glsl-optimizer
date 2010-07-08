@@ -91,6 +91,7 @@ compute_version(GLcontext *ctx)
                               ctx->Extensions.ARB_half_float_pixel &&
                               ctx->Extensions.ARB_map_buffer_range &&
                               ctx->Extensions.ARB_texture_float &&
+                              ctx->Extensions.ARB_texture_rg &&
                               ctx->Extensions.APPLE_vertex_array_object &&
                               ctx->Extensions.EXT_draw_buffers2 &&
                               ctx->Extensions.EXT_framebuffer_blit &&
@@ -99,10 +100,10 @@ compute_version(GLcontext *ctx)
                               ctx->Extensions.EXT_framebuffer_sRGB &&
                               ctx->Extensions.EXT_packed_depth_stencil &&
                               ctx->Extensions.EXT_packed_float &&
-                              ctx->Extensions.EXT_shared_exponent &&
                               ctx->Extensions.EXT_texture_array &&
                               ctx->Extensions.EXT_texture_compression_rgtc &&
                               ctx->Extensions.EXT_texture_integer &&
+                              ctx->Extensions.EXT_texture_shared_exponent &&
                               ctx->Extensions.EXT_transform_feedback &&
                               ctx->Extensions.NV_conditional_render);
    const GLboolean ver_3_1 = (ver_3_0 &&

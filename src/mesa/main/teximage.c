@@ -402,6 +402,81 @@ _mesa_base_tex_format( GLcontext *ctx, GLint internalFormat )
       }
    }
 
+   if (ctx->Extensions.ARB_texture_rg) {
+      switch (internalFormat) {
+      case GL_R8:
+      case GL_R16:
+      case GL_R16F:
+      case GL_R32F:
+      case GL_R8I:
+      case GL_R8UI:
+      case GL_R16I:
+      case GL_R16UI:
+      case GL_R32I:
+      case GL_R32UI:
+         return GL_R;
+      case GL_RG:
+      case GL_RG_INTEGER:
+      case GL_RG8:
+      case GL_RG16:
+      case GL_RG16F:
+      case GL_RG32F:
+      case GL_RG8I:
+      case GL_RG8UI:
+      case GL_RG16I:
+      case GL_RG16UI:
+      case GL_RG32I:
+      case GL_RG32UI:
+         return GL_RG;
+      default:
+         ; /* fallthrough */
+      }
+   }
+
+   if (ctx->Extensions.EXT_texture_shared_exponent) {
+      switch (internalFormat) {
+      case GL_RGB9_E5_EXT:
+         return GL_RGB;
+      default:
+         ; /* fallthrough */
+      }
+   }
+
+   if (ctx->Extensions.EXT_packed_float) {
+      switch (internalFormat) {
+      case GL_R11F_G11F_B10F_EXT:
+         return GL_RGB;
+      default:
+         ; /* fallthrough */
+      }
+   }
+
+   if (ctx->Extensions.ARB_depth_buffer_float) {
+      switch (internalFormat) {
+      case GL_DEPTH_COMPONENT32F:
+         return GL_DEPTH_COMPONENT;
+      case GL_DEPTH32F_STENCIL8:
+         return GL_DEPTH_STENCIL;
+      default:
+         ; /* fallthrough */
+      }
+   }
+
+   if (ctx->Extensions.EXT_texture_compression_rgtc) {
+      switch (internalFormat) {
+      case GL_COMPRESSED_RED:
+      case GL_COMPRESSED_RED_RGTC1_EXT:
+      case GL_COMPRESSED_SIGNED_RED_RGTC1_EXT:
+         return GL_RED;
+      case GL_COMPRESSED_RG:
+      case GL_COMPRESSED_RED_GREEN_RGTC2_EXT:
+      case GL_COMPRESSED_SIGNED_RED_GREEN_RGTC2_EXT:
+         return GL_RG;
+      default:
+         ; /* fallthrough */
+      }
+   }
+
    return -1; /* error */
 }
 
