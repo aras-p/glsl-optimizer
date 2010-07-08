@@ -70,6 +70,10 @@ static const builtin_variable builtin_110_deprecated_vs_variables[] = {
    { ir_var_out, VERT_RESULT_FOGC,   "float", "gl_FogFragCoord" },
 };
 
+static const builtin_variable builtin_120_fs_variables[] = {
+   { ir_var_in,  FRAG_ATTRIB_PNTC,   "vec2",   "gl_PointCoord" },
+};
+
 static const builtin_variable builtin_130_vs_variables[] = {
    { ir_var_in,  -1,                 "int",   "gl_VertexID" },
 };

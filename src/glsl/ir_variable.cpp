@@ -311,6 +311,13 @@ generate_120_fs_variables(exec_list *instructions,
 			  struct _mesa_glsl_parse_state *state)
 {
    generate_110_fs_variables(instructions, state);
+
+   for (unsigned i = 0
+	   ; i < Elements(builtin_120_fs_variables)
+	   ; i++) {
+      add_builtin_variable(& builtin_120_fs_variables[i],
+			   instructions, state->symbols);
+   }
 }
 
 static void
