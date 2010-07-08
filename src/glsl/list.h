@@ -421,6 +421,20 @@ struct exec_list {
 #endif
 };
 
+/**
+ * This version is safe even if the current node is removed.  If you insert
+ * new nodes before the current node, they will be processed next.
+ *
+ * \note
+ * The extra test for \c __node being \c NULL is required because after the
+ * iteration \c __prev coupld be the last node in the list.  The loop increment
+ * then causes \c __prev to point to the sentinal and \c __node to be \c NULL.
+ */ 
+#define foreach_list_safe(__node, __list)		\
+   for (exec_node * __prev = (exec_node *) (__list), * __node = (__list)->head \
+        ; __node != NULL && (__node)->next != NULL	\
+	; __prev = (__prev)->next, __node = (__prev)->next)
+
 #define foreach_list(__node, __list)			\
    for (exec_node * __node = (__list)->head		\
 	; (__node)->next != NULL 			\
