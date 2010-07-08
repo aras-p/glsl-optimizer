@@ -204,7 +204,7 @@ r300_texture_get_transfer(struct pipe_context *ctx,
                 r300_texture_get_stride(r300screen, tex, sr.level);
         trans->offset = r300_texture_get_offset(tex, sr.level, box->z, sr.face);
 
-        if (referenced_cs && (usage & PIPE_TRANSFER_READ))
+        if (referenced_cs)
             ctx->flush(ctx, PIPE_FLUSH_RENDER_CACHE, NULL);
         return &trans->transfer;
     }
