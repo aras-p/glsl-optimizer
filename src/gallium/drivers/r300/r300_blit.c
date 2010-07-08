@@ -122,9 +122,10 @@ static void r300_clear(struct pipe_context* pipe,
      */
 
     struct r300_context* r300 = r300_context(pipe);
-    struct pipe_framebuffer_state* fb =
+    struct pipe_framebuffer_state *fb =
         (struct pipe_framebuffer_state*)r300->fb_state.state;
 
+    /* Clear. */
     r300_blitter_begin(r300, R300_CLEAR);
     util_blitter_clear(r300->blitter,
                        fb->width,

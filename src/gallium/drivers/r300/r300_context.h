@@ -308,9 +308,9 @@ struct r300_surface {
 
     enum r300_buffer_domain domain;
 
-    uint32_t offset;
+    uint32_t offset;    /* COLOROFFSET or DEPTHOFFSET. */
     uint32_t pitch;     /* COLORPITCH or DEPTHPITCH. */
-    uint32_t format;    /* US_OUT_FMT or R300_ZB_FORMAT. */
+    uint32_t format;    /* US_OUT_FMT or ZB_FORMAT. */
 };
 
 struct r300_texture {

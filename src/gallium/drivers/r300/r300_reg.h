@@ -2617,7 +2617,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R300_WR_COMP_DISABLE                          (0 << 4)
 #	define R300_WR_COMP_ENABLE                           (1 << 4)
 #	define R300_ZB_CB_CLEAR_RMW                          (0 << 5)
-#	define R300_ZB_CB_CLEAR_CACHE_LINEAR                 (1 << 5)
+#	define R300_ZB_CB_CLEAR_CACHE_LINE_WRITE_ONLY        (1 << 5)
 #	define R300_FORCE_COMPRESSED_STENCIL_VALUE_DISABLE   (0 << 6)
 #	define R300_FORCE_COMPRESSED_STENCIL_VALUE_ENABLE    (1 << 6)
 

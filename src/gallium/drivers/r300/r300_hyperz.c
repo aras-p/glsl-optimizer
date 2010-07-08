@@ -21,9 +21,8 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
-
-#include "r300_hyperz.h"
 #include "r300_context.h"
+#include "r300_hyperz.h"
 #include "r300_reg.h"
 #include "r300_fs.h"
 
