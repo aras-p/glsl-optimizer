@@ -1686,7 +1686,7 @@ struct brw_instruction
       } dp_render_cache;
 
       struct {
-	 GLuint pad:16;
+	 GLuint function_control:16;
 	 GLuint response_length:4;
 	 GLuint msg_length:4;
 	 GLuint msg_target:4;
@@ -1694,8 +1694,9 @@ struct brw_instruction
 	 GLuint end_of_thread:1;
       } generic;
 
+      /* Of this struct, only end_of_thread is not present for gen6. */
       struct {
-	 GLuint pad:19;
+	 GLuint function_control:19;
 	 GLuint header_present:1;
 	 GLuint response_length:5;
 	 GLuint msg_length:4;
