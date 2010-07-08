@@ -1355,8 +1355,39 @@ ir_to_mesa_visitor::visit(ir_constant *ir)
    GLfloat *values = stack_vals;
    unsigned int i;
 
-   if (ir->type->is_matrix() || ir->type->is_array()) {
-      assert(!"FINISHME: array/matrix constants");
+   if (ir->type->is_array()) {
+      ir->print();
+      printf("\n");
+      assert(!"FINISHME: array constants");
+   }
+
+   if (ir->type->is_matrix()) {
+      /* Unfortunately, 4 floats is all we can get into
+       * _mesa_add_unnamed_constant.  So, make a temp to store the
+       * matrix and move each constant value into it.  If we get
+       * lucky, copy propagation will eliminate the extra moves.
+       */
+      ir_to_mesa_src_reg mat = get_temp(glsl_type::vec4_type);
+      ir_to_mesa_dst_reg mat_column = ir_to_mesa_dst_reg_from_src(mat);
+
+      for (i = 0; i < ir->type->matrix_columns; i++) {
+	 src_reg.file = PROGRAM_CONSTANT;
+
+	 assert(ir->type->base_type == GLSL_TYPE_FLOAT);
+	 values = &ir->value.f[i * ir->type->vector_elements];
+
+	 src_reg.index = _mesa_add_unnamed_constant(this->prog->Parameters,
+						    values,
+						    ir->type->vector_elements,
+						    &src_reg.swizzle);
+	 src_reg.reladdr = false;
+	 src_reg.negate = 0;
+	 ir_to_mesa_emit_op1(ir, OPCODE_MOV, mat_column, src_reg);
+
+	 mat_column.index++;
+      }
+
+      this->result = mat;
    }
 
    src_reg.file = PROGRAM_CONSTANT;
