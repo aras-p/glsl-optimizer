@@ -233,7 +233,7 @@ static void r300_setup_atoms(struct r300_context* r300)
     r300->query_start.allow_null_state = TRUE;
     r300->texture_cache_inval.allow_null_state = TRUE;
 
-    /* Some states must be marked dirty here to properly set up
+    /* Some states must be marked as dirty here to properly set up
      * hardware in the first command stream. */
     r300->invariant_state.dirty = TRUE;
     r300->pvs_flush.dirty = TRUE;

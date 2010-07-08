@@ -670,6 +670,30 @@ static void r300_print_fb_surf_info(struct pipe_surface *surf, unsigned index,
             tex->last_level, util_format_short_name(tex->format));
 }
 
+void r300_mark_fb_state_dirty(struct r300_context *r300,
+                              enum r300_fb_state_change change)
+{
+    struct pipe_framebuffer_state *state = r300->fb_state.state;
+
+    /* What is marked as dirty depends on the enum r300_fb_state_change. */
+    r300->gpu_flush.dirty = TRUE;
+    r300->fb_state.dirty = TRUE;
+    r300->hyperz_state.dirty = TRUE;
+
+    if (change == R300_CHANGED_FB_STATE) {
+        r300->aa_state.dirty = TRUE;
+        r300->fb_state_pipelined.dirty = TRUE;
+    }
+
+    /* Now compute the fb_state atom size. */
+    r300->fb_state.size = 2 + (8 * state->nr_cbufs);
+
+    if (state->zsbuf)
+        r300->fb_state.size += r300->screen->caps.has_hiz ? 18 : 14;
+
+    /* The size of the rest of atoms stays the same. */
+}
+
 static void
     r300_set_framebuffer_state(struct pipe_context* pipe,
                                const struct pipe_framebuffer_state* state)
@@ -698,12 +722,6 @@ static void
         draw_flush(r300->draw);
     }
 
-    r300->gpu_flush.dirty = TRUE;
-    r300->aa_state.dirty = TRUE;
-    r300->fb_state.dirty = TRUE;
-    r300->hyperz_state.dirty = TRUE;
-    r300->fb_state_pipelined.dirty = TRUE;
-
     /* If nr_cbufs is changed from zero to non-zero or vice versa... */
     if (!!old_state->nr_cbufs != !!state->nr_cbufs) {
         r300->blend_state.dirty = TRUE;
@@ -718,10 +736,7 @@ static void
 
     util_assign_framebuffer_state(r300->fb_state.state, state);
 
-    r300->fb_state.size =
-            2 +
-            (8 * state->nr_cbufs) +
-            (state->zsbuf ? (r300->screen->caps.has_hiz ? 18 : 14) : 0);
+    r300_mark_fb_state_dirty(r300, R300_CHANGED_FB_STATE);
 
     /* Polygon offset depends on the zbuffer bit depth. */
     if (state->zsbuf && r300->polygon_offset_enabled) {

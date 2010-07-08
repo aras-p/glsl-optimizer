@@ -592,6 +592,12 @@ void r300_translate_index_buffer(struct r300_context *r300,
 void r300_plug_in_stencil_ref_fallback(struct r300_context *r300);
 
 /* r300_state.c */
+enum r300_fb_state_change {
+    R300_CHANGED_FB_STATE = 0
+};
+
+void r300_mark_fb_state_dirty(struct r300_context *r300,
+                              enum r300_fb_state_change change);
 void r300_mark_fs_code_dirty(struct r300_context *r300);
 
 /* r300_debug.c */
