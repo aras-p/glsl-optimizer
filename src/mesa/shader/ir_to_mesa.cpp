@@ -1247,8 +1247,16 @@ static struct ir_to_mesa_dst_reg
 get_assignment_lhs(ir_instruction *ir, ir_to_mesa_visitor *v)
 {
    struct ir_to_mesa_dst_reg dst_reg;
-   ir_dereference *deref;
    ir_swizzle *swiz;
+
+   ir_dereference_array *deref_array = ir->as_dereference_array();
+   /* This should have been handled by ir_vec_index_to_cond_assign */
+   if (deref_array) {
+      assert(!deref_array->array->type->is_vector());
+
+      /* We don't handle relative addressing on the LHS yet. */
+      assert(deref_array->array_index->constant_expression_value() != NULL);
+   }
 
    /* Use the rvalue deref handler for the most part.  We'll ignore
     * swizzles in it and write swizzles using writemask, though.
@@ -1256,12 +1264,7 @@ get_assignment_lhs(ir_instruction *ir, ir_to_mesa_visitor *v)
    ir->accept(v);
    dst_reg = ir_to_mesa_dst_reg_from_src(v->result);
 
-   if ((deref = ir->as_dereference())) {
-      ir_dereference_array *deref_array = ir->as_dereference_array();
-      assert(!deref_array || deref_array->array->type->is_array());
-
-      ir->accept(v);
-   } else if ((swiz = ir->as_swizzle())) {
+   if ((swiz = ir->as_swizzle())) {
       dst_reg.writemask = 0;
       if (swiz->mask.num_components >= 1)
 	 dst_reg.writemask |= (1 << swiz->mask.x);
