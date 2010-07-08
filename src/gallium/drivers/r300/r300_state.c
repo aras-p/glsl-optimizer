@@ -1172,7 +1172,7 @@ static void*
 
     lod_bias = CLAMP((int)(state->lod_bias * 32 + 1), -(1 << 9), (1 << 9) - 1);
 
-    sampler->filter1 |= lod_bias << R300_LOD_BIAS_SHIFT;
+    sampler->filter1 |= (lod_bias << R300_LOD_BIAS_SHIFT) & R300_LOD_BIAS_MASK;
 
     /* This is very high quality anisotropic filtering for R5xx.
      * It's good for benchmarking the performance of texturing but
