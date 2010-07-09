@@ -206,6 +206,13 @@ ir_constant_visitor::visit(ir_expression *ir)
       }
       break;
 
+   case ir_unop_trunc:
+      assert(op[0]->type->base_type == GLSL_TYPE_FLOAT);
+      for (unsigned c = 0; c < ir->operands[0]->type->components(); c++) {
+	 data.f[c] = truncf(op[0]->value.f[c]);
+      }
+      break;
+
    case ir_unop_fract:
       for (unsigned c = 0; c < ir->operands[0]->type->components(); c++) {
 	 switch (ir->type->base_type) {
