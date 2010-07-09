@@ -399,7 +399,7 @@ lookup_statevar(const char *var, GLint index1, GLint index2, const char *field,
    }
 
    if (isMatrix) {
-      /* load all four columns of matrix */
+      /* load all four rows (or columns) of matrix */
       GLint pos[4];
       GLuint j;
       for (j = 0; j < 4; j++) {
@@ -489,9 +489,26 @@ emit_statevars(const char *name, int array_len,
          tokens[0] = STATE_TEXGEN;
          tokens[2] = STATE_TEXGEN_OBJECT_Q;
       }
+      else if (strcmp(name, "gl_TextureMatrix") == 0) {
+         tokens[0] = STATE_TEXTURE_MATRIX;
+         tokens[4] = STATE_MATRIX_TRANSPOSE;
+      }
+      else if (strcmp(name, "gl_TextureMatrixInverse") == 0) {
+         tokens[0] = STATE_TEXTURE_MATRIX;
+         tokens[4] = STATE_MATRIX_INVTRANS;
+      }
+      else if (strcmp(name, "gl_TextureMatrixTranspose") == 0) {
+         tokens[0] = STATE_TEXTURE_MATRIX;
+         tokens[4] = 0;
+      }
+      else if (strcmp(name, "gl_TextureMatrixInverseTranspose") == 0) {
+         tokens[0] = STATE_TEXTURE_MATRIX;
+         tokens[4] = STATE_MATRIX_INVERSE;
+      }
       else {
          return -1; /* invalid array name */
       }
+      /* emit state vars for each array element */
       for (i = 0; i < array_len; i++) {
          GLint p;
          tokens[1] = i;
@@ -509,6 +526,19 @@ emit_statevars(const char *name, int array_len,
          GLint p = emit_statevars(var->a_name, 0, &var->type.specifier,
                                   tokens, paramList);
          if (i == 0)
+            pos = p;
+      }
+      return pos;
+   }
+   else if (type->type == SLANG_SPEC_MAT4) {
+      /* unroll/emit 4 array rows (or columns) */
+      slang_type_specifier vec4;
+      GLint i, p, pos = -1;
+      vec4.type = SLANG_SPEC_VEC4;
+      for (i = 0; i < 4; i++) {
+         tokens[2] = tokens[3] = i; /* row[i] (or column[i]) of matrix */
+         p = emit_statevars(NULL, 0, &vec4, tokens, paramList);
+         if (pos == -1)
             pos = p;
       }
       return pos;
