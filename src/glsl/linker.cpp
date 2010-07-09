@@ -77,9 +77,8 @@ extern "C" {
 #include "ir.h"
 #include "ir_optimization.h"
 #include "program.h"
-extern "C" {
 #include "hash_table.h"
-}
+#include "shader_api.h"
 
 /**
  * Visitor that determines whether or not a variable is ever written.
@@ -396,6 +395,53 @@ cross_validate_outputs_to_inputs(struct gl_shader_program *prog,
    }
 
    return true;
+}
+
+
+/**
+ * Populates a shaders symbol table with all global declarations
+ */
+static void
+populate_symbol_table(gl_shader *sh)
+{
+   sh->symbols = new(sh) glsl_symbol_table;
+
+   foreach_list(node, sh->ir) {
+      ir_instruction *const inst = (ir_instruction *) node;
+      ir_variable *var;
+      ir_function *func;
+
+      if ((func = inst->as_function()) != NULL) {
+	 sh->symbols->add_function(func->name, func);
+      } else if ((var = inst->as_variable()) != NULL) {
+	 sh->symbols->add_variable(var->name, var);
+      }
+   }
+}
+
+
+/**
+ * Combine a group of shaders for a single stage to generate a linked shader
+ *
+ * \note
+ * If this function is supplied a single shader, it is cloned, and the new
+ * shader is returned.
+ */
+static struct gl_shader *
+link_intrastage_shaders(struct gl_shader_program *prog,
+			struct gl_shader **shader_list,
+			unsigned num_shaders)
+{
+   (void) prog;
+   assert(num_shaders == 1);
+
+   gl_shader *const linked = _mesa_new_shader(NULL, 0, shader_list[0]->Type);
+   linked->ir = new(linked) exec_list;
+   clone_ir_list(linked->ir, shader_list[0]->ir);
+
+   populate_symbol_table(linked);
+
+   return linked;
 }
 
 
@@ -807,25 +853,32 @@ link_shaders(struct gl_shader_program *prog)
    }
 
    /* FINISHME: Implement intra-stage linking. */
-   assert(num_vert_shaders <= 1);
-   assert(num_frag_shaders <= 1);
-
-   /* Verify that each of the per-target executables is valid.
-    */
-   if (!validate_vertex_shader_executable(prog, vert_shader_list[0])
-       || !validate_fragment_shader_executable(prog, frag_shader_list[0]))
-      goto done;
-
-
    prog->_NumLinkedShaders = 0;
-
    if (num_vert_shaders > 0) {
-      prog->_LinkedShaders[prog->_NumLinkedShaders] = vert_shader_list[0];
+      gl_shader *const sh =
+	 link_intrastage_shaders(prog, vert_shader_list, num_vert_shaders);
+
+      if (sh == NULL)
+	 goto done;
+
+      if (!validate_vertex_shader_executable(prog, sh))
+	  goto done;
+
+      prog->_LinkedShaders[prog->_NumLinkedShaders] = sh;
       prog->_NumLinkedShaders++;
    }
 
    if (num_frag_shaders > 0) {
-      prog->_LinkedShaders[prog->_NumLinkedShaders] = frag_shader_list[0];
+      gl_shader *const sh =
+	 link_intrastage_shaders(prog, frag_shader_list, num_frag_shaders);
+
+      if (sh == NULL)
+	 goto done;
+
+      if (!validate_fragment_shader_executable(prog, sh))
+	  goto done;
+
+      prog->_LinkedShaders[prog->_NumLinkedShaders] = sh;
       prog->_NumLinkedShaders++;
    }
 

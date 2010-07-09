@@ -36,6 +36,25 @@
 #include "ir_print_visitor.h"
 #include "program.h"
 
+extern "C" struct gl_shader *
+_mesa_new_shader(GLcontext *ctx, GLuint name, GLenum type);
+
+/* Copied from shader_api.c for the stand-alone compiler.
+ */
+struct gl_shader *
+_mesa_new_shader(GLcontext *ctx, GLuint name, GLenum type)
+{
+   struct gl_shader *shader;
+   assert(type == GL_FRAGMENT_SHADER || type == GL_VERTEX_SHADER);
+   shader = talloc_zero(NULL, struct gl_shader);
+   if (shader) {
+      shader->Type = type;
+      shader->Name = name;
+      shader->RefCount = 1;
+   }
+   return shader;
+}
+
 /* Returned string will have 'ctx' as its talloc owner. */
 static char *
 load_text_file(void *ctx, const char *file_name)
@@ -270,6 +289,9 @@ main(int argc, char **argv)
       if (strlen(whole_program->InfoLog) > 0)
 	 printf("Info log for linking:\n%s\n", whole_program->InfoLog);
    }
+
+   for (unsigned i = 0; i < whole_program->_NumLinkedShaders; i++)
+      talloc_free(whole_program->_LinkedShaders[i]);
 
    talloc_free(whole_program);
    _mesa_glsl_release_types();

@@ -1998,20 +1998,17 @@ _mesa_glsl_link_shader(GLcontext *ctx, struct gl_shader_program *prog)
       prog->Uniforms = _mesa_new_uniform_list();
    }
 
-   prog->LinkStatus = prog->LinkStatus;
-
-   /* FINISHME: This should use the linker-generated code */
    if (prog->LinkStatus) {
-      for (i = 0; i < prog->NumShaders; i++) {
+      for (i = 0; i < prog->_NumLinkedShaders; i++) {
 	 struct gl_program *linked_prog;
 
 	 linked_prog = get_mesa_program(ctx, prog,
-					prog->Shaders[i]);
+					prog->_LinkedShaders[i]);
 	 count_resources(linked_prog);
 
 	 link_uniforms_to_shared_uniform_list(prog->Uniforms, linked_prog);
 
-	 switch (prog->Shaders[i]->Type) {
+	 switch (prog->_LinkedShaders[i]->Type) {
 	 case GL_VERTEX_SHADER:
 	    _mesa_reference_vertprog(ctx, &prog->VertexProgram,
 				     (struct gl_vertex_program *)linked_prog);
