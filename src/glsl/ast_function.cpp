@@ -923,15 +923,6 @@ ast_function_expression::hir(exec_list *instructions,
 
 	 bool all_parameters_are_constant = true;
 
-	 /* This handles invalid constructor calls such as 'vec4 v = vec4();'
-	  */
-	 if (this->expressions.is_empty()) {
-	    _mesa_glsl_error(& loc, state, "too few components to construct "
-			     "`%s'",
-			     constructor_type->name);
-	    return ir_call::get_error_instruction(ctx);
-	 }
-
 	 foreach_list (n, &this->expressions) {
 	    ast_node *ast = exec_node_data(ast_node, n, link);
 	    ir_rvalue *result =
