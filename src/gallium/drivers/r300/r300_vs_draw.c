@@ -185,7 +185,7 @@ static void transform_decl(struct tgsi_transform_context *ctx,
                 if (decl->Semantic.Index == 1 && !vsctx->bcolor_used[0]) {
                     insert_output(ctx, decl, TGSI_SEMANTIC_BCOLOR, 0,
                                   TGSI_INTERPOLATE_LINEAR);
-                    vsctx->color_used[2] = TRUE;
+                    vsctx->bcolor_used[0] = TRUE;
                 }
                 /* One more case is handled in insert_trailing_bcolor. */
                 break;
