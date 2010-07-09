@@ -323,6 +323,13 @@ ir_constant_visitor::visit(ir_expression *ir)
       }
       break;
 
+   case ir_unop_exp2:
+      assert(op[0]->type->base_type == GLSL_TYPE_FLOAT);
+      for (unsigned c = 0; c < ir->operands[0]->type->components(); c++) {
+	 data.f[c] = exp2f(op[0]->value.f[c]);
+      }
+      break;
+
    case ir_unop_log:
       assert(op[0]->type->base_type == GLSL_TYPE_FLOAT);
       for (unsigned c = 0; c < ir->operands[0]->type->components(); c++) {
