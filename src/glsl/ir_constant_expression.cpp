@@ -243,7 +243,6 @@ ir_constant_visitor::visit(ir_expression *ir)
       break;
 
    case ir_unop_abs:
-      assert(op[0]->type->base_type == GLSL_TYPE_FLOAT);
       for (unsigned c = 0; c < ir->operands[0]->type->components(); c++) {
 	 switch (ir->type->base_type) {
 	 case GLSL_TYPE_UINT:
