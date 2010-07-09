@@ -38,6 +38,9 @@
 #include "ir_visitor.h"
 #include "glsl_types.h"
 
+#define min(x,y) (x) < (y) ? (x) : (y)
+#define max(x,y) (x) > (y) ? (x) : (y)
+
 /**
  * Visitor class for evaluating constant expressions
  */
@@ -407,6 +410,50 @@ ir_constant_visitor::visit(ir_expression *ir)
 	    break;
 	 case GLSL_TYPE_FLOAT:
 	    data.f[0] += op[0]->value.f[c] * op[1]->value.f[c];
+	    break;
+	 default:
+	    assert(0);
+	 }
+      }
+
+      break;
+   case ir_binop_min:
+      assert(op[0]->type == op[1]->type || op0_scalar || op1_scalar);
+      for (unsigned c = 0, c0 = 0, c1 = 0;
+	   c < components;
+	   c0 += c0_inc, c1 += c1_inc, c++) {
+
+	 switch (ir->operands[0]->type->base_type) {
+	 case GLSL_TYPE_UINT:
+	    data.u[c] = min(op[0]->value.u[c0], op[1]->value.u[c1]);
+	    break;
+	 case GLSL_TYPE_INT:
+	    data.i[c] = min(op[0]->value.i[c0], op[1]->value.i[c1]);
+	    break;
+	 case GLSL_TYPE_FLOAT:
+	    data.f[c] = min(op[0]->value.f[c0], op[1]->value.f[c1]);
+	    break;
+	 default:
+	    assert(0);
+	 }
+      }
+
+      break;
+   case ir_binop_max:
+      assert(op[0]->type == op[1]->type || op0_scalar || op1_scalar);
+      for (unsigned c = 0, c0 = 0, c1 = 0;
+	   c < components;
+	   c0 += c0_inc, c1 += c1_inc, c++) {
+
+	 switch (ir->operands[0]->type->base_type) {
+	 case GLSL_TYPE_UINT:
+	    data.u[c] = max(op[0]->value.u[c0], op[1]->value.u[c1]);
+	    break;
+	 case GLSL_TYPE_INT:
+	    data.i[c] = max(op[0]->value.i[c0], op[1]->value.i[c1]);
+	    break;
+	 case GLSL_TYPE_FLOAT:
+	    data.f[c] = max(op[0]->value.f[c0], op[1]->value.f[c1]);
 	    break;
 	 default:
 	    assert(0);
