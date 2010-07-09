@@ -922,8 +922,6 @@ ast_function_expression::hir(exec_list *instructions,
       unsigned nonmatrix_parameters = 0;
       exec_list actual_parameters;
 
-      bool all_parameters_are_constant = true;
-
       foreach_list (n, &this->expressions) {
 	 ast_node *ast = exec_node_data(ast_node, n, link);
 	 ir_rvalue *result = ast->hir(instructions, state)->as_rvalue();
@@ -954,26 +952,6 @@ ast_function_expression::hir(exec_list *instructions,
 	    matrix_parameters++;
 	 else
 	    nonmatrix_parameters++;
-
-	 /* Type cast the parameter and add it to the parameter list for
-	  * the constructor.
-	  */
-	 const glsl_type *desired_type =
-	    glsl_type::get_instance(constructor_type->base_type,
-				    result->type->vector_elements,
-				    result->type->matrix_columns);
-	 result = convert_component(result, desired_type);
-
-	 /* Attempt to convert the parameter to a constant valued expression.
-	  * After doing so, track whether or not all the parameters to the
-	  * constructor are trivially constant valued expressions.
-	  */
-	 ir_rvalue *const constant = result->constant_expression_value();
-
-	 if (constant != NULL)
-	    result = constant;
-	 else
-	    all_parameters_are_constant = false;
 
 	 actual_parameters.push_tail(result);
 	 components_used += result->type->components();
@@ -1019,6 +997,61 @@ ast_function_expression::hir(exec_list *instructions,
 	 return ir_call::get_error_instruction(ctx);
       }
 
+      /* Later, we cast each parameter to the same base type as the
+       * constructor.  Since there are no non-floating point matrices, we
+       * need to break them up into a series of column vectors.
+       */
+      if (constructor_type->base_type != GLSL_TYPE_FLOAT) {
+	 foreach_list_safe(n, &actual_parameters) {
+	    ir_rvalue *matrix = (ir_rvalue *) n;
+
+	    if (!matrix->type->is_matrix())
+	       continue;
+
+	    /* Create a temporary containing the matrix. */
+	    ir_variable *var = new(ctx) ir_variable(matrix->type, "matrix_tmp");
+	    instructions->push_tail(var);
+	    instructions->push_tail(new(ctx) ir_assignment(new(ctx)
+	       ir_dereference_variable(var), matrix, NULL));
+	    var->constant_value = matrix->constant_expression_value();
+
+	    /* Replace the matrix with dereferences of its columns. */
+	    for (int i = 0; i < matrix->type->matrix_columns; i++) {
+	       matrix->insert_before(new (ctx) ir_dereference_array(var,
+		  new(ctx) ir_constant(i)));
+	    }
+	    matrix->remove();
+	 }
+      }
+
+      bool all_parameters_are_constant = true;
+
+      /* Type cast each parameter and, if possible, fold constants.*/
+      foreach_list_safe(n, &actual_parameters) {
+	 ir_rvalue *ir = (ir_rvalue *) n;
+
+	 const glsl_type *desired_type =
+	    glsl_type::get_instance(constructor_type->base_type,
+				    ir->type->vector_elements,
+				    ir->type->matrix_columns);
+	 ir_rvalue *result = convert_component(ir, desired_type);
+
+	 /* Attempt to convert the parameter to a constant valued expression.
+	  * After doing so, track whether or not all the parameters to the
+	  * constructor are trivially constant valued expressions.
+	  */
+	 ir_rvalue *const constant = result->constant_expression_value();
+
+	 if (constant != NULL)
+	    result = constant;
+	 else
+	    all_parameters_are_constant = false;
+
+	 if (result != ir) {
+	    ir->insert_before(result);
+	    ir->remove();
+	 }
+      }
 
       /* If all of the parameters are trivially constant, create a
        * constant representing the complete collection of parameters.
