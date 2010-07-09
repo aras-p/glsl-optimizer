@@ -462,6 +462,33 @@ populate_symbol_table(gl_shader *sh)
 
 
 /**
+ * Get the function signature for main from a shader
+ */
+static ir_function_signature *
+get_main_function_signature(gl_shader *sh)
+{
+   ir_function *const f = sh->symbols->get_function("main");
+   if (f != NULL) {
+      exec_list void_parameters;
+
+      /* Look for the 'void main()' signature and ensure that it's defined.
+       * This keeps the linker from accidentally pick a shader that just
+       * contains a prototype for main.
+       *
+       * We don't have to check for multiple definitions of main (in multiple
+       * shaders) because that would have already been caught above.
+       */
+      ir_function_signature *sig = f->matching_signature(&void_parameters);
+      if ((sig != NULL) && sig->is_defined) {
+	 return sig;
+      }
+   }
+
+   return NULL;
+}
+
+
+/**
  * Combine a group of shaders for a single stage to generate a linked shader
  *
  * \note
@@ -527,16 +554,29 @@ link_intrastage_shaders(struct gl_shader_program *prog,
     * it to the shader.  Repeat until there are no undefined references or
     * until a reference cannot be resolved.
     */
+   gl_shader *main = NULL;
+   for (unsigned i = 0; i < num_shaders; i++) {
+      if (get_main_function_signature(shader_list[i]) != NULL) {
+	 main = shader_list[i];
+	 break;
+      }
+   }
 
+   if (main == NULL) {
+      linker_error_printf(prog, "%s shader lacks `main'\n",
+			  (shader_list[0]->Type == GL_VERTEX_SHADER)
+			  ? "vertex" : "fragment");
+      return NULL;
+   }
+
+   gl_shader *const linked = _mesa_new_shader(NULL, 0, main->Type);
+   linked->ir = new(linked) exec_list;
+   clone_ir_list(linked->ir, main->ir);
+
+   populate_symbol_table(linked);
 
    /* Resolve initializers for global variables in the linked shader.
     */
-
-   gl_shader *const linked = _mesa_new_shader(NULL, 0, shader_list[0]->Type);
-   linked->ir = new(linked) exec_list;
-   clone_ir_list(linked->ir, shader_list[0]->ir);
-
-   populate_symbol_table(linked);
 
    return linked;
 }
