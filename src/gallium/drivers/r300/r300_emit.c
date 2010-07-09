@@ -959,7 +959,8 @@ validate:
     for (i = 0; i < fb->nr_cbufs; i++) {
         tex = r300_texture(fb->cbufs[i]->texture);
         assert(tex && tex->buffer && "cbuf is marked, but NULL!");
-        if (!r300_add_texture(r300->rws, tex, 0, tex->domain)) {
+        if (!r300_add_texture(r300->rws, tex, 0,
+                              r300_surface(fb->cbufs[i])->domain)) {
             r300->context.flush(&r300->context, 0, NULL);
             goto validate;
         }
@@ -968,8 +969,8 @@ validate:
     if (fb->zsbuf) {
         tex = r300_texture(fb->zsbuf->texture);
         assert(tex && tex->buffer && "zsbuf is marked, but NULL!");
-        if (!r300_add_texture(r300->rws, tex,
-			      0, tex->domain)) {
+        if (!r300_add_texture(r300->rws, tex, 0,
+                              r300_surface(fb->zsbuf)->domain)) {
             r300->context.flush(&r300->context, 0, NULL);
             goto validate;
         }

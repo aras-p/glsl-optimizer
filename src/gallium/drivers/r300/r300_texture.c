@@ -1001,8 +1001,9 @@ struct pipe_resource* r300_texture_create(struct pipe_screen* screen,
                tex->size,
                util_format_short_name(base->format));
 
-    tex->domain = base->flags & R300_RESOURCE_FLAG_TRANSFER ? R300_DOMAIN_GTT :
-                                                              R300_DOMAIN_VRAM;
+    tex->domain = base->flags & R300_RESOURCE_FLAG_TRANSFER ?
+                  R300_DOMAIN_GTT :
+                  R300_DOMAIN_VRAM | R300_DOMAIN_GTT;
 
     tex->buffer = rws->buffer_create(rws, 2048, base->bind, tex->domain,
                                      tex->size);
@@ -1044,7 +1045,12 @@ struct pipe_surface* r300_get_tex_surface(struct pipe_screen* screen,
         surface->base.level = level;
 
         surface->buffer = tex->buffer;
+
+        /* Prefer VRAM if there are multiple domains to choose from. */
         surface->domain = tex->domain;
+        if (surface->domain & R300_DOMAIN_VRAM)
+            surface->domain &= ~R300_DOMAIN_GTT;
+
         surface->offset = r300_texture_get_offset(tex, level, zslice, face);
         surface->pitch = tex->fb_state.pitch[level];
         surface->format = tex->fb_state.format;
