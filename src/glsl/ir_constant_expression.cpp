@@ -387,6 +387,13 @@ ir_constant_visitor::visit(ir_expression *ir)
       }
       break;
 
+   case ir_binop_pow:
+      assert(op[0]->type->base_type == GLSL_TYPE_FLOAT);
+      for (unsigned c = 0; c < ir->operands[0]->type->components(); c++) {
+	 data.f[c] = powf(op[0]->value.f[c], op[1]->value.f[c]);
+      }
+      break;
+
    case ir_binop_dot:
       assert(op[0]->type->is_vector() && op[1]->type->is_vector());
       data.f[0] = 0;
