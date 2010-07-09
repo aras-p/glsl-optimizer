@@ -57,8 +57,6 @@
 #include "tnl/t_context.h"
 #include "tnl/t_pipeline.h"
 #include "swrast/swrast.h"
-#include "swrast/s_context.h"
-#include "swrast/s_triangle.h"
 #include "swrast_setup/swrast_setup.h"
 #include "vbo/vbo.h"
 
