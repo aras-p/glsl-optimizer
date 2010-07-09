@@ -44,6 +44,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/texobj.h"
 #include "main/imports.h"
 #include "main/texobj.h"
+#include "main/macros.h"
 
 #include "xmlpool.h"
 
