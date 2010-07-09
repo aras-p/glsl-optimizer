@@ -27,40 +27,19 @@
      (parameters
        (declare (in) ivec2  arg0)
        (declare (in) int arg1))
-     ((declare () ivec2 result)
-      (assign (constant bool (1)) (swiz x (var_ref result))
-              (expression int max (swiz x (var_ref arg0)) (var_ref arg1)))
-      (assign (constant bool (1)) (swiz y (var_ref result))
-              (expression int max (swiz y (var_ref arg0)) (var_ref arg1)))
-      (return (var_ref result))))
+     ((return (expression ivec2 max (var_ref arg0) (var_ref arg1)))))
 
    (signature ivec3
      (parameters
        (declare (in) ivec3  arg0)
        (declare (in) int arg1))
-     ((declare () ivec3 result)
-      (assign (constant bool (1)) (swiz x (var_ref result))
-              (expression int max (swiz x (var_ref arg0)) (var_ref arg1)))
-      (assign (constant bool (1)) (swiz y (var_ref result))
-              (expression int max (swiz y (var_ref arg0)) (var_ref arg1)))
-      (assign (constant bool (1)) (swiz z (var_ref result))
-              (expression int max (swiz z (var_ref arg0)) (var_ref arg1)))
-      (return (var_ref result))))
+     ((return (expression ivec3 max (var_ref arg0) (var_ref arg1)))))
 
    (signature ivec4
      (parameters
        (declare (in) ivec4  arg0)
        (declare (in) int arg1))
-     ((declare () ivec4 result)
-      (assign (constant bool (1)) (swiz x (var_ref result))
-              (expression int max (swiz x (var_ref arg0)) (var_ref arg1)))
-      (assign (constant bool (1)) (swiz y (var_ref result))
-              (expression int max (swiz y (var_ref arg0)) (var_ref arg1)))
-      (assign (constant bool (1)) (swiz z (var_ref result))
-              (expression int max (swiz z (var_ref arg0)) (var_ref arg1)))
-      (assign (constant bool (1)) (swiz w (var_ref result))
-              (expression int max (swiz w (var_ref arg0)) (var_ref arg1)))
-      (return (var_ref result))))
+     ((return (expression ivec4 max (var_ref arg0) (var_ref arg1)))))
 
    (signature uint
      (parameters
@@ -90,38 +69,17 @@
      (parameters
        (declare (in) uvec2  arg0)
        (declare (in) uint arg1))
-     ((declare () uvec2 result)
-      (assign (constant bool (1)) (swiz x (var_ref result))
-              (expression uint max (swiz x (var_ref arg0)) (var_ref arg1)))
-      (assign (constant bool (1)) (swiz y (var_ref result))
-              (expression uint max (swiz y (var_ref arg0)) (var_ref arg1)))
-      (return (var_ref result))))
+     ((return (expression uvec2 max (var_ref arg0) (var_ref arg1)))))
 
    (signature uvec3
      (parameters
        (declare (in) uvec3  arg0)
        (declare (in) uint arg1))
-     ((declare () uvec3 result)
-      (assign (constant bool (1)) (swiz x (var_ref result))
-              (expression uint max (swiz x (var_ref arg0)) (var_ref arg1)))
-      (assign (constant bool (1)) (swiz y (var_ref result))
-              (expression uint max (swiz y (var_ref arg0)) (var_ref arg1)))
-      (assign (constant bool (1)) (swiz z (var_ref result))
-              (expression uint max (swiz z (var_ref arg0)) (var_ref arg1)))
-      (return (var_ref result))))
+     ((return (expression uvec3 max (var_ref arg0) (var_ref arg1)))))
 
    (signature uvec4
      (parameters
        (declare (in) uvec4  arg0)
        (declare (in) uint arg1))
-     ((declare () uvec4 result)
-      (assign (constant bool (1)) (swiz x (var_ref result))
-              (expression uint max (swiz x (var_ref arg0)) (var_ref arg1)))
-      (assign (constant bool (1)) (swiz y (var_ref result))
-              (expression uint max (swiz y (var_ref arg0)) (var_ref arg1)))
-      (assign (constant bool (1)) (swiz z (var_ref result))
-              (expression uint max (swiz z (var_ref arg0)) (var_ref arg1)))
-      (assign (constant bool (1)) (swiz w (var_ref result))
-              (expression uint max (swiz w (var_ref arg0)) (var_ref arg1)))
-      (return (var_ref result))))
+     ((return (expression uvec4 max (var_ref arg0) (var_ref arg1)))))
 ))

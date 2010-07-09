@@ -27,38 +27,17 @@
      (parameters
        (declare (in) vec2  arg0)
        (declare (in) float arg1))
-     ((declare () vec2 result)
-      (assign (constant bool (1))   (swiz x (var_ref result))
-              (expression float min (swiz x (var_ref arg0)) (var_ref arg1)))
-      (assign (constant bool (1))   (swiz y (var_ref result))
-              (expression float min (swiz y (var_ref arg0)) (var_ref arg1)))
-      (return (var_ref result))))
+     ((return (expression vec2 min (var_ref arg0) (var_ref arg1)))))
 
    (signature vec3
      (parameters
        (declare (in) vec3  arg0)
        (declare (in) float arg1))
-     ((declare () vec3 result)
-      (assign (constant bool (1))   (swiz x (var_ref result))
-              (expression float min (swiz x (var_ref arg0)) (var_ref arg1)))
-      (assign (constant bool (1))   (swiz y (var_ref result))
-              (expression float min (swiz y (var_ref arg0)) (var_ref arg1)))
-      (assign (constant bool (1))   (swiz z (var_ref result))
-              (expression float min (swiz z (var_ref arg0)) (var_ref arg1)))
-      (return (var_ref result))))
+     ((return (expression vec3 min (var_ref arg0) (var_ref arg1)))))
 
    (signature vec4
      (parameters
        (declare (in) vec4  arg0)
        (declare (in) float arg1))
-     ((declare () vec4 result)
-      (assign (constant bool (1))   (swiz x (var_ref result))
-              (expression float min (swiz x (var_ref arg0)) (var_ref arg1)))
-      (assign (constant bool (1))   (swiz y (var_ref result))
-              (expression float min (swiz y (var_ref arg0)) (var_ref arg1)))
-      (assign (constant bool (1))   (swiz z (var_ref result))
-              (expression float min (swiz z (var_ref arg0)) (var_ref arg1)))
-      (assign (constant bool (1))   (swiz w (var_ref result))
-              (expression float min (swiz w (var_ref arg0)) (var_ref arg1)))
-      (return (var_ref result))))
+     ((return (expression vec4 min (var_ref arg0) (var_ref arg1)))))
 ))
