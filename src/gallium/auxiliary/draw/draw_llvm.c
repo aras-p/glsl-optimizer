@@ -1002,7 +1002,7 @@ draw_llvm_set_mapped_texture(struct draw_context *draw,
    unsigned j;
    struct draw_jit_texture *jit_tex;
 
-   assert(sampler_idx <= PIPE_MAX_VERTEX_SAMPLERS);
+   assert(sampler_idx < PIPE_MAX_VERTEX_SAMPLERS);
 
 
    jit_tex = &draw->llvm->jit_context.textures[sampler_idx];
