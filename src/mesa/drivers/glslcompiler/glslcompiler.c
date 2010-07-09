@@ -125,6 +125,7 @@ CreateContext(void)
          _mesa_destroy_visual(vis);
       if (buf)
          _mesa_destroy_framebuffer(buf);
+      free(cc);
       return GL_FALSE;
    }
 
@@ -142,6 +143,7 @@ CreateContext(void)
        !_tnl_CreateContext( ctx ) ||
        !_swsetup_CreateContext( ctx )) {
       _mesa_destroy_visual(vis);
+      _mesa_destroy_framebuffer(buf);
       _mesa_free_context_data(ctx);
       free(cc);
       return GL_FALSE;
