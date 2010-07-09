@@ -206,6 +206,7 @@ char *compr_ctrl[4] = {
     [0] = "",
     [1] = "sechalf",
     [2] = "compr",
+    [3] = "compr4",
 };
 
 char *dep_ctrl[4] = {
@@ -423,6 +424,11 @@ static int print_opcode (FILE *file, int id)
 static int reg (FILE *file, GLuint _reg_file, GLuint _reg_nr)
 {
     int	err = 0;
+
+    /* Clear the Compr4 instruction compression bit. */
+    if (_reg_file == BRW_MESSAGE_REGISTER_FILE)
+       _reg_nr &= ~(1 << 7);
+
     if (_reg_file == BRW_ARCHITECTURE_REGISTER_FILE) {
 	switch (_reg_nr & 0xf0) {
 	case BRW_ARF_NULL:
@@ -957,7 +963,16 @@ int brw_disasm (FILE *file, struct brw_instruction *inst, int gen)
 	err |= control(file, "access mode", access_mode, inst->header.access_mode, &space);
 	err |= control (file, "mask control", mask_ctrl, inst->header.mask_control, &space);
 	err |= control (file, "dependency control", dep_ctrl, inst->header.dependency_control, &space);
-	err |= control (file, "compression control", compr_ctrl, inst->header.compression_control, &space);
+
+	if (inst->header.compression_control == BRW_COMPRESSION_COMPRESSED &&
+	    opcode[inst->header.opcode].ndst > 0 &&
+	    inst->bits1.da1.dest_reg_file == BRW_MESSAGE_REGISTER_FILE &&
+	    inst->bits1.da1.dest_reg_nr & (1 << 7)) {
+	   format (file, " compr4");
+	} else {
+	   err |= control (file, "compression control", compr_ctrl,
+			   inst->header.compression_control, &space);
+	}
 	err |= control (file, "thread control", thread_ctrl, inst->header.thread_control, &space);
 	if (inst->header.opcode == BRW_OPCODE_SEND)
 	    err |= control (file, "end of thread", end_of_thread,
