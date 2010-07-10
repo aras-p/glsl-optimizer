@@ -42,6 +42,7 @@
 #include "radeon_debug.h"
 #include "r600_context.h"
 #include "r600_cmdbuf.h"
+#include "r600_emit.h"
 #include "program/programopt.h"
 
 #include "r700_debug.h"

@@ -38,6 +38,7 @@
 
 #include "r600_context.h"
 #include "r600_cmdbuf.h"
+#include "r600_emit.h"
 
 #include "r700_fragprog.h"
 
