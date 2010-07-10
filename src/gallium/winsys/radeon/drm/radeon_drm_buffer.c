@@ -361,8 +361,8 @@ void radeon_drm_bufmgr_write_reloc(struct pb_buffer *_buf,
     retval = radeon_cs_write_reloc(buf->mgr->rws->cs,
 				   buf->bo, gem_rd, gem_wd, flags);
     if (retval) {
-        debug_printf("radeon: Relocation of %p (%d, %d, %d) failed!\n",
-		     buf, gem_rd, gem_wd, flags);
+        fprintf(stderr, "radeon: Relocation of %p (%d, %d, %d) failed!\n",
+                buf, gem_rd, gem_wd, flags);
     }
 }
 

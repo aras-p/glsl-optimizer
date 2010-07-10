@@ -252,8 +252,13 @@ static void radeon_flush_cs(struct r300_winsys_screen *rws)
     /* Emit the CS. */
     retval = radeon_cs_emit(ws->cs);
     if (retval) {
-        debug_printf("radeon: Bad CS, dumping...\n");
-        radeon_cs_print(ws->cs, stderr);
+        if (debug_get_bool_option("RADEON_DUMP_CS", FALSE)) {
+            fprintf(stderr, "radeon: The kernel rejected CS, dumping...\n");
+            radeon_cs_print(ws->cs, stderr);
+        } else {
+            fprintf(stderr, "radeon: The kernel rejected CS, "
+                            "see dmesg for more information.\n");
+        }
     }
 
     /* Reset CS.
