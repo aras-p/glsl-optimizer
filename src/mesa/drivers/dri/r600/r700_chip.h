@@ -27,7 +27,9 @@
 #ifndef _R700_CHIP_H_
 #define _R700_CHIP_H_
 
-#include "r600_context.h"
+#include <GL/gl.h>
+
+#include "radeon_common_context.h"
 
 #include "r600_reg.h"
 #include "r600_reg_auto_r6xx.h"
