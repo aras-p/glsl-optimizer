@@ -53,8 +53,6 @@ struct lp_rasterizer_task
    uint8_t *color_tiles[PIPE_MAX_COLOR_BUFS];
    uint8_t *depth_tile;
 
-   const struct lp_rast_state *current_state;
-
    /** "back" pointer */
    struct lp_rasterizer *rast;
 
@@ -144,10 +142,13 @@ lp_rast_get_depth_block_pointer(struct lp_rasterizer_task *task,
    assert((x % TILE_VECTOR_WIDTH) == 0);
    assert((y % TILE_VECTOR_HEIGHT) == 0);
 
-   if (!rast->zsbuf.map && (task->current_state->variant->key.depth.enabled ||
-                            task->current_state->variant->key.stencil[0].enabled)) {
-      /* out of memory - use dummy tile memory */
-      return lp_get_dummy_tile();
+   if (!rast->zsbuf.map) {
+      /* Either out of memory or no zsbuf.  Can't tell without access
+       * to the state.  Just use dummy tile memory, but don't print
+       * the oom warning as this most likely because there is no
+       * zsbuf.
+       */
+      return lp_get_dummy_tile_silent();
    }
 
    depth = (rast->zsbuf.map +
@@ -240,7 +241,7 @@ lp_rast_shade_quads_all( struct lp_rasterizer_task *task,
                          unsigned x, unsigned y )
 {
    const struct lp_rasterizer *rast = task->rast;
-   const struct lp_rast_state *state = task->current_state;
+   const struct lp_rast_state *state = inputs->state;
    struct lp_fragment_shader_variant *variant = state->variant;
    uint8_t *color[PIPE_MAX_COLOR_BUFS];
    void *depth;

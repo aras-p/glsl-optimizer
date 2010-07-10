@@ -35,6 +35,8 @@
 extern uint8_t *
 lp_get_dummy_tile(void);
 
+uint8_t *
+lp_get_dummy_tile_silent(void);
 
 extern boolean
 lp_is_dummy_tile(void *tile);

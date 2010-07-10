@@ -83,6 +83,8 @@ struct lp_rast_shader_inputs {
    float (*a0)[4];
    float (*dadx)[4];
    float (*dady)[4];
+
+   const struct lp_rast_state *state;
 };
 
 struct lp_rast_clearzs {
@@ -224,9 +226,6 @@ void lp_rast_clear_color( struct lp_rasterizer_task *,
 
 void lp_rast_clear_zstencil( struct lp_rasterizer_task *, 
                              const union lp_rast_cmd_arg );
-
-void lp_rast_set_state( struct lp_rasterizer_task *, 
-                        const union lp_rast_cmd_arg );
 
 void lp_rast_triangle_1( struct lp_rasterizer_task *, 
                          const union lp_rast_cmd_arg );

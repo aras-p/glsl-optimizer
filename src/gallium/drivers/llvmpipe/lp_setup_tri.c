@@ -535,6 +535,7 @@ do_triangle_ccw(struct lp_setup_context *setup,
    setup_tri_coefficients( setup, tri, &info );
 
    tri->inputs.facing = frontfacing ? 1.0F : -1.0F;
+   tri->inputs.state = setup->fs.stored;
 
 
   
@@ -774,9 +775,6 @@ do_triangle_ccw(struct lp_setup_context *setup,
 	       if (variant->opaque &&
 	           !setup->fb.zsbuf) {
 	          lp_scene_bin_reset( scene, x, y );
-	          lp_scene_bin_command( scene, x, y,
-	                                lp_rast_set_state,
-	                                lp_rast_arg_state(setup->fs.stored) );
 	       }
                lp_scene_bin_command( scene, x, y,
 				     lp_rast_shade_tile,

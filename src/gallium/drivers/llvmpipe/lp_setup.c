@@ -805,11 +805,6 @@ lp_setup_update_state( struct lp_setup_context *setup )
                    &setup->fs.current,
                    sizeof setup->fs.current);
             setup->fs.stored = stored;
-
-            /* put the state-set command into all bins */
-            lp_scene_bin_state_command( scene,
-					lp_rast_set_state, 
-					lp_rast_arg_state(setup->fs.stored) );
          }
 
          /* The scene now references the textures in the rasterization

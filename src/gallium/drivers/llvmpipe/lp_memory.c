@@ -45,6 +45,12 @@ lp_get_dummy_tile(void)
    return lp_dummy_tile;
 }
 
+uint8_t *
+lp_get_dummy_tile_silent(void)
+{
+   return lp_dummy_tile;
+}
+
 
 boolean
 lp_is_dummy_tile(void *tile)

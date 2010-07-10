@@ -383,21 +383,6 @@ lp_rast_store_linear_color( struct lp_rasterizer_task *task,
 }
 
 
-/**
- * This is a bin command called during bin processing.
- */
-void
-lp_rast_set_state(struct lp_rasterizer_task *task,
-                  const union lp_rast_cmd_arg arg)
-{
-   const struct lp_rast_state *state = arg.set_state;
-
-   LP_DBG(DEBUG_RAST, "%s %p\n", __FUNCTION__, (void *) state);
-
-   /* just set the current state pointer for this rasterizer */
-   task->current_state = state;
-}
-
 
 /**
  * Run the shader on all blocks in a tile.  This is used when a tile is
@@ -409,8 +394,8 @@ lp_rast_shade_tile(struct lp_rasterizer_task *task,
                    const union lp_rast_cmd_arg arg)
 {
    struct lp_rasterizer *rast = task->rast;
-   const struct lp_rast_state *state = task->current_state;
    const struct lp_rast_shader_inputs *inputs = arg.shade_tile;
+   const struct lp_rast_state *state = inputs->state;
    struct lp_fragment_shader_variant *variant = state->variant;
    const unsigned tile_x = task->x, tile_y = task->y;
    unsigned x, y;
@@ -483,7 +468,7 @@ lp_rast_shade_quads_mask(struct lp_rasterizer_task *task,
                          unsigned x, unsigned y,
                          unsigned mask)
 {
-   const struct lp_rast_state *state = task->current_state;
+   const struct lp_rast_state *state = inputs->state;
    struct lp_fragment_shader_variant *variant = state->variant;
    struct lp_rasterizer *rast = task->rast;
    uint8_t *color[PIPE_MAX_COLOR_BUFS];
@@ -730,7 +715,6 @@ static struct {
    RAST(triangle_7),
    RAST(shade_tile),
    RAST(shade_tile_opaque),
-   RAST(set_state),
    RAST(store_linear_color),
    RAST(fence),
    RAST(begin_query),
@@ -786,8 +770,7 @@ is_empty_bin( const struct cmd_bin *bin )
    }
 
    for (i = 0; i < head->count; i++)
-      if (head->cmd[i] != lp_rast_set_state &&
-          head->cmd[i] != lp_rast_store_linear_color) {
+      if (head->cmd[i] != lp_rast_store_linear_color) {
          return FALSE;
       }
 
