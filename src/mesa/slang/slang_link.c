@@ -761,9 +761,15 @@ _slang_update_inputs_outputs(struct gl_program *prog)
       const GLuint numSrc = _mesa_num_inst_src_regs(inst->Opcode);
       for (j = 0; j < numSrc; j++) {
          if (inst->SrcReg[j].File == PROGRAM_INPUT) {
-            prog->InputsRead |= get_inputs_read_mask(prog->Target,
-                                                     inst->SrcReg[j].Index,
-                                                     inst->SrcReg[j].RelAddr);
+            if (prog->Target == MESA_GEOMETRY_PROGRAM &&
+                inst->SrcReg[j].HasIndex2D)
+               prog->InputsRead |= get_inputs_read_mask(prog->Target,
+                                                        inst->SrcReg[j].Index2D,
+                                                        inst->SrcReg[j].RelAddr2D);
+            else
+               prog->InputsRead |= get_inputs_read_mask(prog->Target,
+                                                        inst->SrcReg[j].Index,
+                                                        inst->SrcReg[j].RelAddr);
          }
          else if (inst->SrcReg[j].File == PROGRAM_ADDRESS) {
             maxAddrReg = MAX2(maxAddrReg, (GLuint) (inst->SrcReg[j].Index + 1));

@@ -102,7 +102,7 @@ draw_pt_arrays(struct draw_context *draw,
       opt |= PT_SHADE;
    }
 
-   if (draw->pt.middle.llvm && !draw->gs.geometry_shader) {
+   if (draw->pt.middle.llvm) {
       middle = draw->pt.middle.llvm;
    } else {
       if (opt == 0)

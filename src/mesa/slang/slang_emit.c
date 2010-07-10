@@ -2320,7 +2320,13 @@ emit_var_ref(slang_emit_info *emitInfo, slang_ir_node *n)
    }
    else if (n->Store->File == PROGRAM_INPUT) {
       assert(n->Store->Index >= 0);
-      emitInfo->prog->InputsRead |= (1 << n->Store->Index);
+      /* geometry shaders have the input index in the second
+       * index */
+      if (emitInfo->prog->Target == MESA_GEOMETRY_PROGRAM &&
+          n->Store->Is2D) {
+         emitInfo->prog->InputsRead |= (1 << n->Store->Index2D);
+      } else
+         emitInfo->prog->InputsRead |= (1 << n->Store->Index);
    }
 
    if (n->Store->Index < 0) {
