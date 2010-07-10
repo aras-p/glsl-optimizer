@@ -401,8 +401,12 @@ main(int argc, char *argv[])
 
    if (v_shader || f_shader || g_shader) {
       if (Options.OutputFile) {
+         FILE *f;
          fclose(stdout);
-         /*stdout =*/ freopen(Options.OutputFile, "w", stdout);
+         /*stdout =*/ f = freopen(Options.OutputFile, "w", stdout);
+         if (!f) {
+            fprintf(stderr, "freopen error\n");
+         }
       }
       if (stdout && v_shader) {
          PrintShaderInstructions(v_shader, stdout);
