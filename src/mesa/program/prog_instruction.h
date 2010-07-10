@@ -271,6 +271,12 @@ struct prog_src_register
     * instruction which allows per-component negation.
     */
    GLuint Negate:4;
+
+   GLuint HasIndex2D:1;
+   GLuint RelAddr2D:1;
+   GLint Index2D:(INST_INDEX_BITS+1); /**< Extra bit here for sign bit.
+                                       * May be negative for relative
+                                       * addressing. */
 };
 
 

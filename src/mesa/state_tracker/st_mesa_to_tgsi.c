@@ -330,6 +330,14 @@ translate_src( struct st_translate *t,
       }
    }
 
+   if (SrcReg->HasIndex2D) {
+      if (SrcReg->RelAddr2D)
+         src = ureg_src_dimension_indirect( src, ureg_src(t->address[0]),
+                                            SrcReg->Index2D);
+      else
+         src = ureg_src_dimension( src, SrcReg->Index2D);
+   }
+
    return src;
 }
 
