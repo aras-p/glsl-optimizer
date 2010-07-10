@@ -379,6 +379,9 @@ storage_to_src_reg(struct prog_src_register *src, const slang_ir_storage *st)
    assert(GET_SWZ(swizzle, 3) <= SWIZZLE_W);
    src->Swizzle = swizzle;
 
+   src->HasIndex2D = st->Is2D;
+   src->Index2D = st->Index2D;
+
    src->RelAddr = relAddr;
 }
 
