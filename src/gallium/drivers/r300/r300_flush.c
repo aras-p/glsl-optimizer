@@ -50,9 +50,7 @@ static void r300_flush(struct pipe_context* pipe,
     if (r300->dirty_hw) {
         r300_emit_query_end(r300);
 
-        if (SCREEN_DBG_ON(r300->screen, DBG_STATS)) {
-            r300->flush_counter++;
-        }
+        r300->flush_counter++;
         r300->rws->flush_cs(r300->rws);
         r300->dirty_hw = 0;
 

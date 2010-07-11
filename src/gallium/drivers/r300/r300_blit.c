@@ -133,6 +133,10 @@ static void r300_clear(struct pipe_context* pipe,
                        fb->nr_cbufs,
                        buffers, rgba, depth, stencil);
     r300_blitter_end(r300);
+
+    /* XXX this flush "fixes" a hardlock in the cubestorm xscreensaver */
+    if (r300->flush_counter == 0)
+        pipe->flush(pipe, 0, NULL);
 }
 
 /* Clear a region of a color surface to a constant value. */
