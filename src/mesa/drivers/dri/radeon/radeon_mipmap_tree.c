@@ -602,7 +602,7 @@ int radeon_validate_texture_miptree(GLcontext * ctx, struct gl_texture_object *t
 			__FUNCTION__, texObj ,t->minLod, t->maxLod);
 
 	radeon_mipmap_tree *dst_miptree;
-	dst_miptree = get_biggest_matching_miptree(t, t->minLod, t->maxLod);
+	dst_miptree = get_biggest_matching_miptree(t, t->base.BaseLevel, t->base.MaxLevel);
 
 	radeon_miptree_unreference(&t->mt);
 	if (!dst_miptree) {
