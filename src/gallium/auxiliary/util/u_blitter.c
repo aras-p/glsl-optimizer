@@ -107,6 +107,14 @@ struct blitter_context_priv
    unsigned dst_height;
 };
 
+static void blitter_draw_rectangle(struct blitter_context *blitter,
+                                   unsigned x, unsigned y,
+                                   unsigned width, unsigned height,
+                                   float depth,
+                                   enum blitter_attrib_type type,
+                                   const float attrib[4]);
+
+
 struct blitter_context *util_blitter_create(struct pipe_context *pipe)
 {
    struct blitter_context_priv *ctx;
@@ -122,6 +130,7 @@ struct blitter_context *util_blitter_create(struct pipe_context *pipe)
       return NULL;
 
    ctx->base.pipe = pipe;
+   ctx->base.draw_rectangle = blitter_draw_rectangle;
 
    /* init state objects for them to be considered invalid */
    ctx->base.saved_blend_state = INVALID_PTR;
@@ -604,6 +613,31 @@ void *blitter_get_fs_texfetch_depth(struct blitter_context_priv *ctx,
    return ctx->fs_texfetch_depth[tex_target];
 }
 
+static void blitter_draw_rectangle(struct blitter_context *blitter,
+                                   unsigned x1, unsigned y1,
+                                   unsigned x2, unsigned y2,
+                                   float depth,
+                                   enum blitter_attrib_type type,
+                                   const float attrib[4])
+{
+   struct blitter_context_priv *ctx = (struct blitter_context_priv*)blitter;
+
+   switch (type) {
+      case UTIL_BLITTER_ATTRIB_COLOR:
+         blitter_set_clear_color(ctx, attrib);
+         break;
+
+      case UTIL_BLITTER_ATTRIB_TEXCOORD:
+         set_texcoords_in_vertices(attrib, &ctx->vertices[0][1][0], 8);
+         break;
+
+      default:;
+   }
+
+   blitter_set_rectangle(ctx, x1, y1, x2, y2, depth);
+   blitter_draw_quad(ctx);
+}
+
 void util_blitter_clear(struct blitter_context *blitter,
                         unsigned width, unsigned height,
                         unsigned num_cbufs,
@@ -647,9 +681,8 @@ void util_blitter_clear(struct blitter_context *blitter,
    pipe->bind_vs_state(pipe, ctx->vs_col);
 
    blitter_set_dst_dimensions(ctx, width, height);
-   blitter_set_clear_color(ctx, rgba);
-   blitter_set_rectangle(ctx, 0, 0, width, height, depth);
-   blitter_draw_quad(ctx);
+   blitter->draw_rectangle(blitter, 0, 0, width, height, depth,
+                           UTIL_BLITTER_ATTRIB_COLOR, rgba);
    blitter_restore_CSOs(ctx);
 }
 
@@ -762,29 +795,45 @@ void util_blitter_copy_region(struct blitter_context *blitter,
    pipe->set_fragment_sampler_views(pipe, 1, &view);
    pipe->set_framebuffer_state(pipe, &fb_state);
 
-   /* Set texture coordinates. */
+   blitter_set_dst_dimensions(ctx, dstsurf->width, dstsurf->height);
+
    switch (src->target) {
+      /* Draw the quad with the draw_rectangle callback. */
       case PIPE_TEXTURE_1D:
       case PIPE_TEXTURE_2D:
-         blitter_set_texcoords_2d(ctx, src, subsrc,
-                                  srcx, srcy, srcx+width, srcy+height);
+         {
+            /* Set texture coordinates. */
+            float coord[4];
+            get_normalized_texcoords(src, subsrc, srcx, srcy,
+                                     srcx+width, srcy+height, coord);
+
+            /* Draw. */
+            blitter->draw_rectangle(blitter, dstx, dsty, dstx+width, dsty+height, 0,
+                                    UTIL_BLITTER_ATTRIB_TEXCOORD, coord);
+         }
          break;
+
+      /* Draw the quad with the generic codepath. */
       case PIPE_TEXTURE_3D:
-         blitter_set_texcoords_3d(ctx, src, subsrc, srcz,
-                                  srcx, srcy, srcx+width, srcy+height);
-         break;
       case PIPE_TEXTURE_CUBE:
-         blitter_set_texcoords_cube(ctx, src, subsrc,
-                                    srcx, srcy, srcx+width, srcy+height);
+         /* Set texture coordinates. */
+         if (src->target == PIPE_TEXTURE_3D)
+            blitter_set_texcoords_3d(ctx, src, subsrc, srcz,
+                                     srcx, srcy, srcx+width, srcy+height);
+         else
+            blitter_set_texcoords_cube(ctx, src, subsrc,
+                                       srcx, srcy, srcx+width, srcy+height);
+
+         /* Draw. */
+         blitter_set_rectangle(ctx, dstx, dsty, dstx+width, dsty+height, 0);
+         blitter_draw_quad(ctx);
          break;
+
       default:
          assert(0);
          return;
    }
 
-   blitter_set_dst_dimensions(ctx, dstsurf->width, dstsurf->height);
-   blitter_set_rectangle(ctx, dstx, dsty, dstx+width, dsty+height, 0);
-   blitter_draw_quad(ctx);
    blitter_restore_CSOs(ctx);
 
    pipe_surface_reference(&dstsurf, NULL);
@@ -827,9 +876,8 @@ void util_blitter_clear_render_target(struct blitter_context *blitter,
    pipe->set_framebuffer_state(pipe, &fb_state);
 
    blitter_set_dst_dimensions(ctx, dstsurf->width, dstsurf->height);
-   blitter_set_clear_color(ctx, rgba);
-   blitter_set_rectangle(ctx, dstx, dsty, dstx+width, dsty+height, 0);
-   blitter_draw_quad(ctx);
+   blitter->draw_rectangle(blitter, dstx, dsty, dstx+width, dsty+height, 0,
+                           UTIL_BLITTER_ATTRIB_COLOR, rgba);
    blitter_restore_CSOs(ctx);
 }
 
@@ -888,7 +936,7 @@ void util_blitter_clear_depth_stencil(struct blitter_context *blitter,
    pipe->set_framebuffer_state(pipe, &fb_state);
 
    blitter_set_dst_dimensions(ctx, dstsurf->width, dstsurf->height);
-   blitter_set_rectangle(ctx, dstx, dsty, dstx+width, dsty+height, depth);
-   blitter_draw_quad(ctx);
+   blitter->draw_rectangle(blitter, dstx, dsty, dstx+width, dsty+height, depth,
+                           UTIL_BLITTER_ATTRIB_NONE, NULL);
    blitter_restore_CSOs(ctx);
 }

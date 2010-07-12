@@ -39,8 +39,45 @@ extern "C" {
 
 struct pipe_context;
 
+enum blitter_attrib_type {
+   UTIL_BLITTER_ATTRIB_NONE,
+   UTIL_BLITTER_ATTRIB_COLOR,
+   UTIL_BLITTER_ATTRIB_TEXCOORD
+};
+
 struct blitter_context
 {
+   /**
+    * Draw a rectangle.
+    *
+    * \param x1      An X coordinate of the top-left corner.
+    * \param y1      A Y coordinate of the top-left corner.
+    * \param x2      An X coordinate of the bottom-right corner.
+    * \param y2      A Y coordinate of the bottom-right corner.
+    * \param depth  A depth which the rectangle is rendered at.
+    *
+    * \param type   Semantics of the attributes "attrib".
+    *               If type is UTIL_BLITTER_ATTRIB_NONE, ignore them.
+    *               If type is UTIL_BLITTER_ATTRIB_COLOR, the attributes
+    *               make up a constant RGBA color, and should go to the COLOR0
+    *               varying slot of a fragment shader.
+    *               If type is UTIL_BLITTER_ATTRIB_TEXCOORD, {a1, a2} and
+    *               {a3, a4} specify top-left and bottom-right texture
+    *               coordinates of the rectangle, respectively, and should go
+    *               to the GENERIC0 varying slot of a fragment shader.
+    *
+    * \param attrib See type.
+    *
+    * \note A driver may optionally override this callback to implement
+    *       a specialized hardware path for drawing a rectangle, e.g. using
+    *       a rectangular point sprite.
+    */
+   void (*draw_rectangle)(struct blitter_context *blitter,
+                          unsigned x1, unsigned y1, unsigned x2, unsigned y2,
+                          float depth,
+                          enum blitter_attrib_type type,
+                          const float attrib[4]);
+
    /* Private members, really. */
    struct pipe_context *pipe; /**< pipe context */
 
