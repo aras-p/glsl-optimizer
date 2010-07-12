@@ -82,7 +82,7 @@ do_expression_flattening(exec_list *instructions,
 ir_rvalue *
 ir_expression_flattening_visitor::operand_to_temp(ir_rvalue *ir)
 {
-   void *ctx = talloc_parent(base_ir);
+   void *ctx = base_ir;
    ir_variable *var;
    ir_assignment *assign;
 
