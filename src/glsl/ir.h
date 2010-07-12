@@ -71,8 +71,6 @@ public:
    enum ir_node_type ir_type;
    const struct glsl_type *type;
 
-   class ir_constant *constant_expression_value();
-
    /** ir_print_visitor helper for debugging. */
    void print(void) const;
 
@@ -114,6 +112,8 @@ protected:
 
 class ir_rvalue : public ir_instruction {
 public:
+   class ir_constant *constant_expression_value();
+
    virtual ir_rvalue *clone(struct hash_table *) const = 0;
 
    virtual ir_rvalue * as_rvalue()

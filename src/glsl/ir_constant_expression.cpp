@@ -96,7 +96,7 @@ public:
 
 
 ir_constant *
-ir_instruction::constant_expression_value()
+ir_rvalue::constant_expression_value()
 {
    ir_constant_visitor visitor;
 
