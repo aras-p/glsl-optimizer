@@ -102,7 +102,8 @@ static void r300_draw_emit_all_attribs(struct r300_context* r300)
      * they won't be rasterized. */
     gen_count = 0;
     for (i = 0; i < ATTR_GENERIC_COUNT && gen_count < 8; i++) {
-        if (vs_outputs->generic[i] != ATTR_UNUSED) {
+        if (vs_outputs->generic[i] != ATTR_UNUSED &&
+            !(r300->sprite_coord_enable & (1 << i))) {
             r300_draw_emit_attrib(r300, EMIT_4F, INTERP_PERSPECTIVE,
                                   vs_outputs->generic[i]);
             gen_count++;
@@ -147,8 +148,10 @@ static void r300_swtcl_vertex_psc(struct r300_context *r300)
                vinfo->attrib[i].interp_mode, vinfo->attrib[i].emit,
                vs_output_tab[i]);
 
-        /* Make sure we have a proper destination for our attribute. */
-        assert(vs_output_tab[i] != -1);
+        if (vs_output_tab[i] == -1) {
+            assert(0);
+            abort();
+        }
 
         format = draw_translate_vinfo_format(vinfo->attrib[i].emit);
 
