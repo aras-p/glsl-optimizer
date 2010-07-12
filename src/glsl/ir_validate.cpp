@@ -88,6 +88,8 @@ ir_validate::visit(ir_dereference_variable *ir)
       abort();
    }
 
+   this->validate_ir(ir, this->data);
+
    return visit_continue;
 }
 
