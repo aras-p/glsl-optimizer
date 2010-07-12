@@ -403,29 +403,45 @@ static void blitter_set_clear_color(struct blitter_context_priv *ctx,
    }
 }
 
+static void get_normalized_texcoords(struct pipe_resource *src,
+                                     struct pipe_subresource subsrc,
+                                     unsigned x1, unsigned y1,
+                                     unsigned x2, unsigned y2,
+                                     float out[4])
+{
+   out[0] = x1 / (float)u_minify(src->width0,  subsrc.level);
+   out[1] = y1 / (float)u_minify(src->height0, subsrc.level);
+   out[2] = x2 / (float)u_minify(src->width0,  subsrc.level);
+   out[3] = y2 / (float)u_minify(src->height0, subsrc.level);
+}
+
+static void set_texcoords_in_vertices(const float coord[4],
+                                      float *out, unsigned stride)
+{
+   out[0] = coord[0]; /*t0.s*/
+   out[1] = coord[1]; /*t0.t*/
+   out += stride;
+   out[0] = coord[2]; /*t1.s*/
+   out[1] = coord[1]; /*t1.t*/
+   out += stride;
+   out[0] = coord[2]; /*t2.s*/
+   out[1] = coord[3]; /*t2.t*/
+   out += stride;
+   out[0] = coord[0]; /*t3.s*/
+   out[1] = coord[3]; /*t3.t*/
+}
+
 static void blitter_set_texcoords_2d(struct blitter_context_priv *ctx,
                                      struct pipe_resource *src,
                                      struct pipe_subresource subsrc,
                                      unsigned x1, unsigned y1,
                                      unsigned x2, unsigned y2)
 {
-   int i;
-   float s1 = x1 / (float)u_minify(src->width0,  subsrc.level);
-   float t1 = y1 / (float)u_minify(src->height0, subsrc.level);
-   float s2 = x2 / (float)u_minify(src->width0,  subsrc.level);
-   float t2 = y2 / (float)u_minify(src->height0, subsrc.level);
+   unsigned i;
+   float coord[4];
 
-   ctx->vertices[0][1][0] = s1; /*t0.s*/
-   ctx->vertices[0][1][1] = t1; /*t0.t*/
-
-   ctx->vertices[1][1][0] = s2; /*t1.s*/
-   ctx->vertices[1][1][1] = t1; /*t1.t*/
-
-   ctx->vertices[2][1][0] = s2; /*t2.s*/
-   ctx->vertices[2][1][1] = t2; /*t2.t*/
-
-   ctx->vertices[3][1][0] = s1; /*t3.s*/
-   ctx->vertices[3][1][1] = t2; /*t3.t*/
+   get_normalized_texcoords(src, subsrc, x1, y1, x2, y2, coord);
+   set_texcoords_in_vertices(coord, &ctx->vertices[0][1][0], 8);
 
    for (i = 0; i < 4; i++) {
       ctx->vertices[i][1][2] = 0; /*r*/
@@ -456,20 +472,11 @@ static void blitter_set_texcoords_cube(struct blitter_context_priv *ctx,
                                        unsigned x2, unsigned y2)
 {
    int i;
-   float s1 = x1 / (float)u_minify(src->width0,  subsrc.level);
-   float t1 = y1 / (float)u_minify(src->height0, subsrc.level);
-   float s2 = x2 / (float)u_minify(src->width0,  subsrc.level);
-   float t2 = y2 / (float)u_minify(src->height0, subsrc.level);
+   float coord[4];
    float st[4][2];
 
-   st[0][0] = s1;
-   st[0][1] = t1;
-   st[1][0] = s2;
-   st[1][1] = t1;
-   st[2][0] = s2;
-   st[2][1] = t2;
-   st[3][0] = s1;
-   st[3][1] = t2;
+   get_normalized_texcoords(src, subsrc, x1, y1, x2, y2, coord);
+   set_texcoords_in_vertices(coord, &st[0][0], 2);
 
    util_map_texcoords2d_onto_cubemap(subsrc.face,
                                      /* pointer, stride in floats */
