@@ -56,7 +56,7 @@ public:
 
    virtual ir_visitor_status visit_enter(ir_expression *);
    virtual ir_visitor_status visit_enter(ir_swizzle *);
-   virtual ir_visitor_status visit_enter(ir_assignment *);
+   virtual ir_visitor_status visit_leave(ir_assignment *);
    virtual ir_visitor_status visit_enter(ir_return *);
    virtual ir_visitor_status visit_enter(ir_call *);
    virtual ir_visitor_status visit_enter(ir_if *);
@@ -144,10 +144,64 @@ ir_vec_index_to_cond_assign_visitor::visit_enter(ir_swizzle *ir)
 }
 
 ir_visitor_status
-ir_vec_index_to_cond_assign_visitor::visit_enter(ir_assignment *ir)
+ir_vec_index_to_cond_assign_visitor::visit_leave(ir_assignment *ir)
 {
-   /* FINISHME: Handle it on the LHS. */
+   ir_variable *index, *var;
+   ir_dereference_variable *deref;
+   ir_assignment *assign;
+   int i;
+
    ir->rhs = convert_vec_index_to_cond_assign(ir->rhs);
+   if (ir->condition)
+      ir->condition = convert_vec_index_to_cond_assign(ir->condition);
+
+   /* Last, handle the LHS */
+   ir_dereference_array *orig_deref = ir->lhs->as_dereference_array();
+
+   if (!orig_deref ||
+       orig_deref->array->type->is_matrix() ||
+       orig_deref->array->type->is_array())
+      return visit_continue;
+
+   assert(orig_deref->array_index->type->base_type == GLSL_TYPE_INT);
+
+   /* Store the index to a temporary to avoid reusing its tree. */
+   index = new(ir) ir_variable(glsl_type::int_type, "vec_index_tmp_i");
+   ir->insert_before(index);
+   deref = new(ir) ir_dereference_variable(index);
+   assign = new(ir) ir_assignment(deref, orig_deref->array_index, NULL);
+   ir->insert_before(assign);
+
+   /* Store the RHS to a temporary to avoid reusing its tree. */
+   var = new(ir) ir_variable(ir->rhs->type, "vec_index_tmp_v");
+   ir->insert_before(var);
+   deref = new(ir) ir_dereference_variable(var);
+   assign = new(ir) ir_assignment(deref, ir->rhs, NULL);
+   ir->insert_before(assign);
+
+   /* Generate a conditional move of each vector element to the temp. */
+   for (i = 0; i < orig_deref->array->type->vector_elements; i++) {
+      ir_rvalue *condition, *swizzle;
+
+      deref = new(ir) ir_dereference_variable(index);
+      condition = new(ir) ir_expression(ir_binop_equal,
+					glsl_type::bool_type,
+					deref,
+					new(ir) ir_constant(i));
+
+      /* Just clone the rest of the deref chain when trying to get at the
+       * underlying variable.
+       */
+      swizzle = new(ir) ir_swizzle(orig_deref->array->clone(NULL),
+				   i, 0, 0, 0, 1);
+
+      deref = new(ir) ir_dereference_variable(var);
+      assign = new(ir) ir_assignment(swizzle, deref, condition);
+      ir->insert_before(assign);
+   }
+   ir->remove();
+
+   this->progress = true;
 
    return visit_continue;
 }
