@@ -74,6 +74,7 @@ public:
    virtual class ir_dereference *       as_dereference()      { return NULL; }
    virtual class ir_dereference_array *	as_dereference_array() { return NULL; }
    virtual class ir_dereference_variable *as_dereference_variable() { return NULL; }
+   virtual class ir_expression *        as_expression()       { return NULL; }
    virtual class ir_rvalue *            as_rvalue()           { return NULL; }
    virtual class ir_loop *              as_loop()             { return NULL; }
    virtual class ir_assignment *        as_assignment()       { return NULL; }
@@ -602,6 +603,11 @@ class ir_expression : public ir_rvalue {
 public:
    ir_expression(int op, const struct glsl_type *type,
 		 ir_rvalue *, ir_rvalue *);
+
+   virtual ir_expression *as_expression()
+   {
+      return this;
+   }
 
    virtual ir_expression *clone(struct hash_table *ht) const;
 

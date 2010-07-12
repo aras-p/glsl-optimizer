@@ -42,6 +42,7 @@ CXX_SOURCES = \
 	ir_hv_accept.cpp \
 	ir_if_return.cpp \
 	ir_if_simplification.cpp \
+	ir_mat_op_to_vec.cpp \
 	ir_mod_to_fract.cpp \
 	ir_print_visitor.cpp \
 	ir_reader.cpp \

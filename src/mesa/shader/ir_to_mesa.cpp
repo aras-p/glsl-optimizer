@@ -1960,6 +1960,7 @@ _mesa_glsl_compile_shader(GLcontext *ctx, struct gl_shader *shader)
       _mesa_ast_to_hir(shader->ir, state);
 
    /* Lowering */
+   do_mat_op_to_vec(shader->ir);
    do_mod_to_fract(shader->ir);
    do_div_to_mul_rcp(shader->ir);
 
