@@ -96,9 +96,29 @@ ir_copy_propagation_visitor::visit_enter(ir_function_signature *ir)
 ir_visitor_status
 ir_copy_propagation_visitor::visit_enter(ir_assignment *ir)
 {
-   (void) ir;
+   ir_visitor_status s;
+
+   /* Inline the rest of ir_assignment::accept(ir_hv *v), wrapping the
+    * LHS part with setting in_lhs so that we can avoid copy
+    * propagating into the LHS.
+    *
+    * Note that this means we won't copy propagate into the derefs of
+    * an array index.  Oh well.
+    */
    this->in_lhs = true;
-   return visit_continue;
+   s = ir->lhs->accept(this);
+   this->in_lhs = false;
+   if (s != visit_continue)
+      return (s == visit_continue_with_parent) ? visit_continue : s;
+
+   s = ir->rhs->accept(this);
+   if (s != visit_continue)
+      return (s == visit_continue_with_parent) ? visit_continue : s;
+
+   if (ir->condition)
+      s = ir->condition->accept(this);
+
+   return (s == visit_stop) ? s : visit_continue_with_parent;
 }
 
 ir_visitor_status
@@ -122,7 +142,6 @@ ir_copy_propagation_visitor::visit(ir_dereference_variable *ir)
     * other storage!
     */
    if (this->in_lhs) {
-      this->in_lhs = false;
       return visit_continue;
    }
 
