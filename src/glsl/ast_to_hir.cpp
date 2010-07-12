@@ -805,6 +805,10 @@ ast_expression::hir(exec_list *instructions,
 	 }
 	 type = glsl_type::bool_type;
       } else {
+	 ir_variable *const tmp = new(ctx) ir_variable(glsl_type::bool_type,
+						       "and_tmp");
+	 instructions->push_tail(tmp);
+
 	 ir_if *const stmt = new(ctx) ir_if(op[0]);
 	 instructions->push_tail(stmt);
 
@@ -818,10 +822,6 @@ ast_expression::hir(exec_list *instructions,
 			     operator_string(this->oper));
 	    error_emitted = true;
 	 }
-
-	 ir_variable *const tmp = new(ctx) ir_variable(glsl_type::bool_type,
-						       "and_tmp");
-	 instructions->push_tail(tmp);
 
 	 ir_dereference *const then_deref = new(ctx) ir_dereference_variable(tmp);
 	 ir_assignment *const then_assign =
@@ -869,12 +869,12 @@ ast_expression::hir(exec_list *instructions,
 	 }
 	 type = glsl_type::bool_type;
       } else {
-	 ir_if *const stmt = new(ctx) ir_if(op[0]);
-	 instructions->push_tail(stmt);
-
 	 ir_variable *const tmp = new(ctx) ir_variable(glsl_type::bool_type,
 						       "or_tmp");
 	 instructions->push_tail(tmp);
+
+	 ir_if *const stmt = new(ctx) ir_if(op[0]);
+	 instructions->push_tail(stmt);
 
 	 op[1] = this->subexpressions[1]->hir(&stmt->then_instructions, state);
 
