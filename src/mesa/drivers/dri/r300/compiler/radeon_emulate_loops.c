@@ -191,7 +191,7 @@ static void get_incr_amount(void * data, struct rc_instruction * inst,
 static int transform_const_loop(struct emulate_loop_state * s,
 						struct loop_info * loop)
 {
-	int end_loops = 1;
+	int end_loops;
 	int iterations;
 	struct count_inst count_inst;
 	float limit_value;
@@ -235,6 +235,7 @@ static int transform_const_loop(struct emulate_loop_state * s,
 	count_inst.Swz = counter->Swizzle;
 	count_inst.Amount = 0.0f;
 	count_inst.Unknown = 0;
+	end_loops = 1;
 	for(inst = loop->BeginLoop->Next; end_loops > 0; inst = inst->Next){
 		switch(inst->U.I.Opcode){
 		/* XXX In the future we might want to try to unroll nested
@@ -245,6 +246,16 @@ static int transform_const_loop(struct emulate_loop_state * s,
 		case RC_OPCODE_ENDLOOP:
 			loop->EndLoop = inst;
 			end_loops--;
+			break;
+		case RC_OPCODE_BRK:
+			/* Don't unroll loops if it has a BRK instruction
+			 * other one used when testing the main conditional
+			 * of the loop. */
+
+			/* Make sure we haven't entered a nested loops. */
+			if(inst != loop->Brk && end_loops == 1) {
+				return 0;
+			}
 			break;
 		/* XXX Check if the counter is modified within an if statement.
 		 */
