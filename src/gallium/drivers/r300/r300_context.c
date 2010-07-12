@@ -373,13 +373,15 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     r300_init_blit_functions(r300);
     r300_init_flush_functions(r300);
     r300_init_query_functions(r300);
-    r300_init_render_functions(r300);
     r300_init_state_functions(r300);
     r300_init_resource_functions(r300);
 
-    rws->set_flush_cb(r300->rws, r300_flush_cb, r300);
-
     r300->blitter = util_blitter_create(&r300->context);
+
+    /* Render functions must be initialized after blitter. */
+    r300_init_render_functions(r300);
+
+    rws->set_flush_cb(r300->rws, r300_flush_cb, r300);
 
     r300->upload_ib = u_upload_create(&r300->context,
 				      32 * 1024, 16,
