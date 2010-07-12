@@ -58,6 +58,7 @@ public:
    }
 
    virtual ir_visitor_status visit(ir_variable *v);
+   virtual ir_visitor_status visit(ir_dereference_variable *ir);
 
    virtual ir_visitor_status visit_enter(ir_function *ir);
    virtual ir_visitor_status visit_leave(ir_function *ir);
@@ -69,6 +70,27 @@ public:
 
    struct hash_table *ht;
 };
+
+
+ir_visitor_status
+ir_validate::visit(ir_dereference_variable *ir)
+{
+   if ((ir->var == NULL) || (ir->var->as_variable() == NULL)) {
+      printf("ir_dereference_variable @ %p does not specify a variable %p\n",
+	     ir, ir->var);
+      abort();
+   }
+
+   if (hash_table_find(ht, ir->var) == NULL) {
+      printf("ir_dereference_variable @ %p specifies undeclared variable "
+	     "`%s' @ %p\n",
+	     ir, ir->var->name, ir->var);
+      abort();
+   }
+
+   return visit_continue;
+}
+
 
 ir_visitor_status
 ir_validate::visit_enter(ir_function *ir)
@@ -126,9 +148,11 @@ ir_visitor_status
 ir_validate::visit(ir_variable *ir)
 {
    /* An ir_variable is the one thing that can (and will) appear multiple times
-    * in an IR tree.
+    * in an IR tree.  It is added to the hashtable so that it can be used
+    * in the ir_dereference_variable handler to ensure that a variable is
+    * declared before it is dereferenced.
     */
-   (void) ir;
+   hash_table_insert(ht, ir, ir);
    return visit_continue;
 }
 
