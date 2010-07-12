@@ -278,13 +278,16 @@ static boolean immd_is_good_idea(struct r300_context *r300,
 
     /* We shouldn't map buffers referenced by CS, busy buffers,
      * and ones placed in VRAM. */
-    /* XXX Check for VRAM buffers. */
     for (i = 0; i < vertex_element_count; i++) {
         velem = &r300->velems->velem[i];
         vbi = velem->vertex_buffer_index;
 
         if (!checked[vbi]) {
             vbuf = &r300->vertex_buffer[vbi];
+
+            if (!(r300_buffer(vbuf->buffer)->domain & R300_DOMAIN_GTT)) {
+                return FALSE;
+            }
 
             if (r300_buffer_is_referenced(&r300->context,
                                           vbuf->buffer,
@@ -299,8 +302,7 @@ static boolean immd_is_good_idea(struct r300_context *r300,
 }
 
 /*****************************************************************************
- * The emission of draw packets for r500. Older GPUs may use these functions *
- * after resolving fallback issues (e.g. stencil ref two-sided).             *
+ * The HWTCL draw functions.                                                 *
  ****************************************************************************/
 
 static void r300_emit_draw_arrays_immediate(struct r300_context *r300,

@@ -378,7 +378,6 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     r300_init_resource_functions(r300);
 
     rws->set_flush_cb(r300->rws, r300_flush_cb, r300);
-    r300->dirty_hw++;
 
     r300->blitter = util_blitter_create(&r300->context);
 
