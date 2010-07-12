@@ -32,7 +32,6 @@
 #include "r300_emit.h"
 #include "r300_fs.h"
 #include "r300_screen.h"
-#include "r300_texture.h"
 #include "r300_screen_buffer.h"
 #include "r300_vs.h"
 
