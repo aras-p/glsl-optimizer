@@ -75,13 +75,13 @@ def generate_format_read(format, dst_channel, dst_native_type, dst_suffix):
     src_native_type = native_type(format)
 
     print 'static void'
-    print 'lp_tile_%s_swizzle_%s(%s *dst, const uint8_t *src, unsigned src_stride, unsigned x0, unsigned y0, unsigned w, unsigned h)' % (name, dst_suffix, dst_native_type)
+    print 'lp_tile_%s_swizzle_%s(%s *dst, const uint8_t *src, unsigned src_stride, unsigned x0, unsigned y0)' % (name, dst_suffix, dst_native_type)
     print '{'
     print '   unsigned x, y;'
     print '   const uint8_t *src_row = src + y0*src_stride;'
-    print '   for (y = 0; y < h; ++y) {'
+    print '   for (y = 0; y < TILE_SIZE; ++y) {'
     print '      const %s *src_pixel = (const %s *)(src_row + x0*%u);' % (src_native_type, src_native_type, format.stride())
-    print '      for (x = 0; x < w; ++x) {'
+    print '      for (x = 0; x < TILE_SIZE; ++x) {'
 
     names = ['']*4
     if format.colorspace in ('rgb', 'srgb'):
@@ -202,9 +202,9 @@ def emit_unrolled_unswizzle_code(format, src_channel):
     print '   %s *dstpix = (%s *) dst;' % (dst_native_type, dst_native_type)
     print '   unsigned int qx, qy, i;'
     print
-    print '   for (qy = 0; qy < h; qy += TILE_VECTOR_HEIGHT) {'
+    print '   for (qy = 0; qy < TILE_SIZE; qy += TILE_VECTOR_HEIGHT) {'
     print '      const unsigned py = y0 + qy;'
-    print '      for (qx = 0; qx < w; qx += TILE_VECTOR_WIDTH) {'
+    print '      for (qx = 0; qx < TILE_SIZE; qx += TILE_VECTOR_WIDTH) {'
     print '         const unsigned px = x0 + qx;'
     print '         const uint8_t *r = src + 0 * TILE_C_STRIDE;'
     print '         const uint8_t *g = src + 1 * TILE_C_STRIDE;'
@@ -231,9 +231,9 @@ def emit_tile_pixel_unswizzle_code(format, src_channel):
 
     print '   unsigned x, y;'
     print '   uint8_t *dst_row = dst + y0*dst_stride;'
-    print '   for (y = 0; y < h; ++y) {'
+    print '   for (y = 0; y < TILE_SIZE; ++y) {'
     print '      %s *dst_pixel = (%s *)(dst_row + x0*%u);' % (dst_native_type, dst_native_type, format.stride())
-    print '      for (x = 0; x < w; ++x) {'
+    print '      for (x = 0; x < TILE_SIZE; ++x) {'
 
     if format.layout == PLAIN:
         if not format.is_array():
@@ -273,7 +273,7 @@ def generate_format_write(format, src_channel, src_native_type, src_suffix):
     name = format.short_name()
 
     print 'static void'
-    print 'lp_tile_%s_unswizzle_%s(const %s *src, uint8_t *dst, unsigned dst_stride, unsigned x0, unsigned y0, unsigned w, unsigned h)' % (name, src_suffix, src_native_type)
+    print 'lp_tile_%s_unswizzle_%s(const %s *src, uint8_t *dst, unsigned dst_stride, unsigned x0, unsigned y0)' % (name, src_suffix, src_native_type)
     print '{'
     if format.layout == PLAIN \
         and format.colorspace == 'rgb' \
@@ -297,9 +297,9 @@ def generate_swizzle(formats, dst_channel, dst_native_type, dst_suffix):
             generate_format_read(format, dst_channel, dst_native_type, dst_suffix)
 
     print 'void'
-    print 'lp_tile_swizzle_%s(enum pipe_format format, %s *dst, const void *src, unsigned src_stride, unsigned x, unsigned y, unsigned w, unsigned h)' % (dst_suffix, dst_native_type)
+    print 'lp_tile_swizzle_%s(enum pipe_format format, %s *dst, const void *src, unsigned src_stride, unsigned x, unsigned y)' % (dst_suffix, dst_native_type)
     print '{'
-    print '   void (*func)(%s *dst, const uint8_t *src, unsigned src_stride, unsigned x0, unsigned y0, unsigned w, unsigned h);' % dst_native_type
+    print '   void (*func)(%s *dst, const uint8_t *src, unsigned src_stride, unsigned x0, unsigned y0);' % dst_native_type
     print '#ifdef DEBUG'
     print '   lp_tile_swizzle_count += 1;'
     print '#endif'
@@ -313,7 +313,7 @@ def generate_swizzle(formats, dst_channel, dst_native_type, dst_suffix):
     print '      debug_printf("%s: unsupported format %s\\n", __FUNCTION__, util_format_name(format));'
     print '      return;'
     print '   }'
-    print '   func(dst, (const uint8_t *)src, src_stride, x, y, w, h);'
+    print '   func(dst, (const uint8_t *)src, src_stride, x, y);'
     print '}'
     print
 
@@ -326,10 +326,10 @@ def generate_unswizzle(formats, src_channel, src_native_type, src_suffix):
             generate_format_write(format, src_channel, src_native_type, src_suffix)
 
     print 'void'
-    print 'lp_tile_unswizzle_%s(enum pipe_format format, const %s *src, void *dst, unsigned dst_stride, unsigned x, unsigned y, unsigned w, unsigned h)' % (src_suffix, src_native_type)
+    print 'lp_tile_unswizzle_%s(enum pipe_format format, const %s *src, void *dst, unsigned dst_stride, unsigned x, unsigned y)' % (src_suffix, src_native_type)
     
     print '{'
-    print '   void (*func)(const %s *src, uint8_t *dst, unsigned dst_stride, unsigned x0, unsigned y0, unsigned w, unsigned h);' % src_native_type
+    print '   void (*func)(const %s *src, uint8_t *dst, unsigned dst_stride, unsigned x0, unsigned y0);' % src_native_type
     print '#ifdef DEBUG'
     print '   lp_tile_unswizzle_count += 1;'
     print '#endif'
@@ -343,7 +343,7 @@ def generate_unswizzle(formats, src_channel, src_native_type, src_suffix):
     print '      debug_printf("%s: unsupported format %s\\n", __FUNCTION__, util_format_name(format));'
     print '      return;'
     print '   }'
-    print '   func(src, (uint8_t *)dst, dst_stride, x, y, w, h);'
+    print '   func(src, (uint8_t *)dst, dst_stride, x, y);'
     print '}'
     print
 

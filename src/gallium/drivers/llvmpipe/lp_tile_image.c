@@ -204,7 +204,7 @@ lp_tiled_to_linear(const void *src, void *dst,
             lp_tile_unswizzle_4ub(format,
                               src_tile,
                               dst, dst_stride,
-                              ii, jj, tile_w, tile_h);
+                              ii, jj);
          }
       }
    }
@@ -293,7 +293,7 @@ lp_linear_to_tiled(const void *src, void *dst,
             lp_tile_swizzle_4ub(format,
                              dst_tile,
                              src, src_stride,
-                             ii, jj, tile_w, tile_h);
+                             ii, jj);
          }
       }
    }
