@@ -233,6 +233,12 @@ ir_visitor_status
 ir_function_inlining_visitor::visit_enter(ir_call *ir)
 {
    if (can_inline(ir)) {
+      /* If the call was part of some tree, then it should have been
+       * flattened out or we shouldn't have seen it because of a
+       * visit_continue_with_parent in this visitor.
+       */
+      assert(ir == base_ir);
+
       (void) ir->generate_inline(ir);
       ir->remove();
       this->progress = true;
