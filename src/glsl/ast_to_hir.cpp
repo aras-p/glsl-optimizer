@@ -821,6 +821,7 @@ ast_expression::hir(exec_list *instructions,
 
 	 ir_variable *const tmp = new(ctx) ir_variable(glsl_type::bool_type,
 						       "and_tmp");
+	 instructions->push_tail(tmp);
 
 	 ir_dereference *const then_deref = new(ctx) ir_dereference_variable(tmp);
 	 ir_assignment *const then_assign =
@@ -873,6 +874,7 @@ ast_expression::hir(exec_list *instructions,
 
 	 ir_variable *const tmp = new(ctx) ir_variable(glsl_type::bool_type,
 						       "or_tmp");
+	 instructions->push_tail(tmp);
 
 	 op[1] = this->subexpressions[1]->hir(&stmt->then_instructions, state);
 
@@ -1048,6 +1050,7 @@ ast_expression::hir(exec_list *instructions,
 	 result = (cond_val->value.b[0]) ? then_val : else_val;
       } else {
 	 ir_variable *const tmp = new(ctx) ir_variable(type, "conditional_tmp");
+	 instructions->push_tail(tmp);
 
 	 ir_if *const stmt = new(ctx) ir_if(op[0]);
 	 instructions->push_tail(stmt);
