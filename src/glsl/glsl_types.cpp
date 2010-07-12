@@ -285,6 +285,11 @@ glsl_type::glsl_type(void *ctx, const glsl_type *array, unsigned length) :
    name(NULL), length(length)
 {
    this->fields.array = array;
+   /* Inherit the gl type of the base. The GL type is used for
+    * uniform/statevar handling in Mesa and the arrayness of the type
+    * is represented by the size rather than the type.
+    */
+   this->gl_type = array->gl_type;
 
    /* Allow a maximum of 10 characters for the array size.  This is enough
     * for 32-bits of ~0.  The extra 3 are for the '[', ']', and terminating
