@@ -42,6 +42,8 @@ struct pipe_context;
 struct blitter_context
 {
    /* Private members, really. */
+   struct pipe_context *pipe; /**< pipe context */
+
    void *saved_blend_state;   /**< blend state */
    void *saved_dsa_state;     /**< depth stencil alpha state */
    void *saved_velem_state;   /**< vertex elements state */
@@ -72,6 +74,15 @@ struct blitter_context *util_blitter_create(struct pipe_context *pipe);
  * Destroy a blitter context.
  */
 void util_blitter_destroy(struct blitter_context *blitter);
+
+/**
+ * Return the pipe context associated with a blitter context.
+ */
+static INLINE
+struct pipe_context *util_blitter_get_pipe(struct blitter_context *blitter)
+{
+   return blitter->pipe;
+}
 
 /*
  * These CSOs must be saved before any of the following functions is called:
