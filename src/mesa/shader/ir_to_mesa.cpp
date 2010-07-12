@@ -178,13 +178,6 @@ public:
 				   ir_to_mesa_src_reg src0,
 				   ir_to_mesa_src_reg src1);
 
-   void ir_to_mesa_emit_addsub(ir_expression *ir,
-			       enum prog_opcode opcode,
-			       struct ir_to_mesa_src_reg result_src,
-			       struct ir_to_mesa_dst_reg result_dst,
-			       struct ir_to_mesa_src_reg op0,
-			       struct ir_to_mesa_src_reg op1);
-
    int *sampler_map;
    int sampler_map_size;
 
@@ -538,32 +531,6 @@ ir_to_mesa_visitor::visit(ir_function *ir)
 }
 
 void
-ir_to_mesa_visitor::ir_to_mesa_emit_addsub(ir_expression *ir,
-					   enum prog_opcode opcode,
-					   struct ir_to_mesa_src_reg result_src,
-					   struct ir_to_mesa_dst_reg result_dst,
-					   struct ir_to_mesa_src_reg op0,
-					   struct ir_to_mesa_src_reg op1)
-{
-   ir_to_mesa_dst_reg dst_column = result_dst;
-   int matrix_columns;
-
-   if (ir->operands[0]->type->is_matrix())
-      matrix_columns = ir->operands[0]->type->matrix_columns;
-   else
-      matrix_columns = ir->operands[1]->type->matrix_columns;
-
-   for (int i = 0; i < matrix_columns; i++) {
-      ir_to_mesa_emit_op2(ir, opcode, dst_column, op0, op1);
-      dst_column.index++;
-      if (ir->operands[0]->type->is_matrix())
-	 op0.index++;
-      if (ir->operands[1]->type->is_matrix())
-	 op1.index++;
-   }
-}
-
-void
 ir_to_mesa_visitor::visit(ir_expression *ir)
 {
    unsigned int operand;
@@ -587,8 +554,7 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
 
       /* Only expression implemented for matrices yet */
       assert(!ir->operands[operand]->type->is_matrix() ||
-	     ir->operation == ir_binop_mul ||
-	     ir->operation == ir_binop_add);
+	     ir->operation == ir_binop_mul);
    }
 
    this->result.file = PROGRAM_UNDEFINED;
@@ -652,12 +618,10 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
       break;
 
    case ir_binop_add:
-      ir_to_mesa_emit_addsub(ir, OPCODE_ADD,
-			     result_src, result_dst, op[0], op[1]);
+      ir_to_mesa_emit_op2(ir, OPCODE_ADD, result_dst, op[0], op[1]);
       break;
    case ir_binop_sub:
-      ir_to_mesa_emit_addsub(ir, OPCODE_SUB,
-			     result_src, result_dst, op[0], op[1]);
+      ir_to_mesa_emit_op2(ir, OPCODE_SUB, result_dst, op[0], op[1]);
       break;
 
    case ir_binop_mul:
