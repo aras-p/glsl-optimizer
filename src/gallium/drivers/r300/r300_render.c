@@ -1022,8 +1022,7 @@ struct draw_stage* r300_draw_stage(struct r300_context* r300)
 
 /* If we used a quad to draw a rectangle, the pixels on the main diagonal
  * would be computed and stored twice, which makes the clear/copy codepaths
- * somewhat inefficient. Instead we use a rectangular point sprite with TCL
- * turned off. */
+ * somewhat inefficient. Instead we use a rectangular point sprite. */
 static void r300_blitter_draw_rectangle(struct blitter_context *blitter,
                                         unsigned x1, unsigned y1,
                                         unsigned x2, unsigned y2,
@@ -1032,37 +1031,15 @@ static void r300_blitter_draw_rectangle(struct blitter_context *blitter,
                                         const float attrib[4])
 {
     struct r300_context *r300 = r300_context(util_blitter_get_pipe(blitter));
+    unsigned last_sprite_coord_enable = r300->sprite_coord_enable;
     unsigned width = x2 - x1;
     unsigned height = y2 - y1;
-    unsigned i, dwords;
-    unsigned vertex_size = type == UTIL_BLITTER_ATTRIB_COLOR ? 7 : 3;
-    unsigned last_sprite_coord_enable = r300->sprite_coord_enable;
-    uint32_t vap_cntl_status;
+    unsigned vertex_size =
+            type == UTIL_BLITTER_ATTRIB_COLOR || !r300->draw ? 8 : 4;
+    unsigned dwords = 13 + vertex_size +
+                      (type == UTIL_BLITTER_ATTRIB_TEXCOORD ? 7 : 0);
+    const float zeros[4] = {0, 0, 0, 0};
     CB_LOCALS;
-
-    /* Compute the number of dwords. */
-    dwords = r300->draw ? 0 : 4;
-    switch (type) {
-        case UTIL_BLITTER_ATTRIB_COLOR:
-            dwords += 29;
-            break;
-
-        case UTIL_BLITTER_ATTRIB_TEXCOORD:
-            dwords += 32;
-            break;
-
-        case UTIL_BLITTER_ATTRIB_NONE:
-            dwords += 25;
-            break;
-    }
-
-    /* Initialize the VAP control. */
-    vap_cntl_status = R300_VAP_TCL_BYPASS;
-#ifdef PIPE_ARCH_LITTLE_ENDIAN
-    vap_cntl_status |= R300_VC_NO_SWAP;
-#else
-    vap_cntl_status |= R300_VC_32BIT_SWAP);
-#endif
 
     if (type == UTIL_BLITTER_ATTRIB_TEXCOORD)
         r300->sprite_coord_enable = 1;
@@ -1070,11 +1047,8 @@ static void r300_blitter_draw_rectangle(struct blitter_context *blitter,
     r300_update_derived_state(r300);
 
     /* Mark some states we don't care about as non-dirty. */
-    r300->viewport_state.dirty = FALSE;
     r300->clip_state.dirty = FALSE;
-    r300->vertex_stream_state.dirty = FALSE;
-    r300->vs_state.dirty = FALSE;
-    r300->vs_constants.dirty = FALSE;
+    r300->viewport_state.dirty = FALSE;
 
     r300_prepare_for_rendering(r300, PREP_FIRST_DRAW, NULL, dwords, 0, 0, NULL);
 
@@ -1082,51 +1056,18 @@ static void r300_blitter_draw_rectangle(struct blitter_context *blitter,
     /* Set up GA. */
     OUT_CB_REG(R300_GA_POINT_SIZE, (height * 6) | ((width * 6) << 16));
 
-    switch (type) {
-        case UTIL_BLITTER_ATTRIB_COLOR:
-            /* Set up the VAP output. */
-            OUT_CB_REG(R300_VAP_VSM_VTX_ASSM,
-                       R300_INPUT_CNTL_POS | R300_INPUT_CNTL_COLOR);
-            OUT_CB_REG_SEQ(R300_VAP_OUTPUT_VTX_FMT_0, 2);
-            OUT_CB(R300_VAP_OUTPUT_VTX_FMT_0__POS_PRESENT |
-                   R300_VAP_OUTPUT_VTX_FMT_0__COLOR_0_PRESENT);
-            OUT_CB(0);
-            /* Set up PSC. */
-            OUT_CB_REG(R300_VAP_PROG_STREAM_CNTL_0,
-                       R300_DATA_TYPE_FLOAT_3 |
-                       ((R300_DATA_TYPE_FLOAT_4 | (2 << R300_DST_VEC_LOC_SHIFT) |
-                         R300_LAST_VEC) << 16));
-            OUT_CB_REG(R300_VAP_PROG_STREAM_CNTL_EXT_0,
-                       R300_VAP_SWIZZLE_XYZ1 | (R300_VAP_SWIZZLE_XYZW << 16));
-            break;
-
-        case UTIL_BLITTER_ATTRIB_TEXCOORD:
-            /* Set up the GA to generate texcoords. */
-            OUT_CB_REG(R300_GB_ENABLE, R300_GB_POINT_STUFF_ENABLE |
-                       (R300_GB_TEX_STR << R300_GB_TEX0_SOURCE_SHIFT));
-            OUT_CB_REG_SEQ(R300_GA_POINT_S0, 4);
-            OUT_CB_32F(attrib[0]);
-            OUT_CB_32F(attrib[3]);
-            OUT_CB_32F(attrib[2]);
-            OUT_CB_32F(attrib[1]);
-            /* Pass-through. */
-
-        case UTIL_BLITTER_ATTRIB_NONE:
-            /* Set up the VAP output. */
-            OUT_CB_REG(R300_VAP_VSM_VTX_ASSM, R300_INPUT_CNTL_POS);
-            OUT_CB_REG_SEQ(R300_VAP_OUTPUT_VTX_FMT_0, 2);
-            OUT_CB(R300_VAP_OUTPUT_VTX_FMT_0__POS_PRESENT);
-            OUT_CB(0);
-            /* Set up PSC. */
-            OUT_CB_REG(R300_VAP_PROG_STREAM_CNTL_0,
-                       R300_DATA_TYPE_FLOAT_3 | R300_LAST_VEC);
-            OUT_CB_REG(R300_VAP_PROG_STREAM_CNTL_EXT_0, R300_VAP_SWIZZLE_XYZ1);
-            break;
+    if (type == UTIL_BLITTER_ATTRIB_TEXCOORD) {
+        /* Set up the GA to generate texcoords. */
+        OUT_CB_REG(R300_GB_ENABLE, R300_GB_POINT_STUFF_ENABLE |
+                   (R300_GB_TEX_STR << R300_GB_TEX0_SOURCE_SHIFT));
+        OUT_CB_REG_SEQ(R300_GA_POINT_S0, 4);
+        OUT_CB_32F(attrib[0]);
+        OUT_CB_32F(attrib[3]);
+        OUT_CB_32F(attrib[2]);
+        OUT_CB_32F(attrib[1]);
     }
 
     /* Set up VAP controls. */
-    if (!r300->draw)
-        OUT_CB_REG(R300_VAP_CNTL_STATUS, vap_cntl_status);
     OUT_CB_REG(R300_VAP_CLIP_CNTL, R300_CLIP_DISABLE);
     OUT_CB_REG(R300_VAP_VTE_CNTL, R300_VTX_XY_FMT | R300_VTX_Z_FMT);
     OUT_CB_REG(R300_VAP_VTX_SIZE, vertex_size);
@@ -1142,26 +1083,19 @@ static void r300_blitter_draw_rectangle(struct blitter_context *blitter,
     OUT_CB_32F(x1 + width * 0.5f);
     OUT_CB_32F(y1 + height * 0.5f);
     OUT_CB_32F(depth);
+    OUT_CB_32F(1);
 
-    if (type == UTIL_BLITTER_ATTRIB_COLOR)
-        for (i = 0; i < 4; i++)
-            OUT_CB_32F(attrib[i]);
-
-    /* If we do not re-enable VAP immediately after the draw packet,
-     * it goes crazy. Sometimes I wish this hardware didn't do random shit. */
-    if (!r300->draw)
-        OUT_CB_REG(R300_VAP_CNTL_STATUS,
-                   vap_cntl_status & ~R300_VAP_TCL_BYPASS);
+    if (vertex_size == 8) {
+        if (!attrib)
+            attrib = zeros;
+        OUT_CB_TABLE(attrib, 4);
+    }
     END_CB;
 
     /* Restore the state. */
     r300->clip_state.dirty = TRUE;
-    r300->rs_block_state.dirty = TRUE;
     r300->rs_state.dirty = TRUE;
-    r300->vertex_stream_state.dirty = TRUE;
     r300->viewport_state.dirty = TRUE;
-    r300->vs_state.dirty = TRUE;
-    r300->vs_constants.dirty = TRUE;
 
     r300->sprite_coord_enable = last_sprite_coord_enable;
 }
