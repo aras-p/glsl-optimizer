@@ -24,6 +24,7 @@
 #include "r300_texture.h"
 
 #include "util/u_format.h"
+#include "util/u_pack_color.h"
 
 enum r300_blitter_op /* bitmask */
 {
@@ -79,6 +80,48 @@ static void r300_blitter_end(struct r300_context *r300)
     }
 }
 
+static uint32_t r300_depth_clear_cb_value(enum pipe_format format,
+					  const float* rgba)
+{
+    union util_color uc;
+    util_pack_color(rgba, format, &uc);
+
+    if (util_format_get_blocksizebits(format) == 32)
+        return uc.ui;
+    else
+        return uc.us | (uc.us << 16);
+}
+
+static boolean r300_cbzb_clear_allowed(struct r300_context *r300,
+                                       unsigned clear_buffers)
+{
+    struct pipe_framebuffer_state *fb =
+        (struct pipe_framebuffer_state*)r300->fb_state.state;
+    struct r300_surface *surf = r300_surface(fb->cbufs[0]);
+    unsigned bpp;
+
+    /* Only color clear allowed, and only one colorbuffer. */
+    if (clear_buffers != PIPE_CLEAR_COLOR || fb->nr_cbufs != 1)
+        return FALSE;
+
+    /* The colorbuffer must be point-sampled. */
+    if (surf->base.texture->nr_samples > 1)
+        return FALSE;
+
+    bpp = util_format_get_blocksizebits(surf->base.format);
+
+    /* ZB can only work with the two pixel sizes. */
+    if (bpp != 16 && bpp != 32)
+        return FALSE;
+
+    /* If the midpoint ZB offset is not aligned to 2048, it returns garbage
+     * with certain texture sizes. Macrotiling ensures the alignment. */
+    if (!r300_texture(surf->base.texture)->mip_macrotile[surf->base.level])
+        return FALSE;
+
+    return TRUE;
+}
+
 /* Clear currently bound buffers. */
 static void r300_clear(struct pipe_context* pipe,
                        unsigned buffers,
@@ -124,15 +167,39 @@ static void r300_clear(struct pipe_context* pipe,
     struct r300_context* r300 = r300_context(pipe);
     struct pipe_framebuffer_state *fb =
         (struct pipe_framebuffer_state*)r300->fb_state.state;
+    struct r300_hyperz_state *hyperz =
+        (struct r300_hyperz_state*)r300->hyperz_state.state;
+    uint32_t width = fb->width;
+    uint32_t height = fb->height;
+
+    /* Enable CBZB clear. */
+    if (r300_cbzb_clear_allowed(r300, buffers)) {
+        struct r300_surface *surf = r300_surface(fb->cbufs[0]);
+
+        hyperz->zb_depthclearvalue =
+                r300_depth_clear_cb_value(surf->base.format, rgba);
+
+        width = surf->cbzb_width;
+        height = surf->cbzb_height;
+
+        r300->cbzb_clear = TRUE;
+        r300_mark_fb_state_dirty(r300, R300_CHANGED_CBZB_FLAG);
+    }
 
     /* Clear. */
     r300_blitter_begin(r300, R300_CLEAR);
     util_blitter_clear(r300->blitter,
-                       fb->width,
-                       fb->height,
+                       width,
+                       height,
                        fb->nr_cbufs,
                        buffers, rgba, depth, stencil);
     r300_blitter_end(r300);
+
+    /* Disable CBZB clear. */
+    if (r300->cbzb_clear) {
+        r300->cbzb_clear = FALSE;
+        r300_mark_fb_state_dirty(r300, R300_CHANGED_CBZB_FLAG);
+    }
 
     /* XXX this flush "fixes" a hardlock in the cubestorm xscreensaver */
     if (r300->flush_counter == 0)

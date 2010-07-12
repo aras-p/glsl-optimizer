@@ -32,6 +32,7 @@
 #include "r300_emit.h"
 #include "r300_fs.h"
 #include "r300_screen.h"
+#include "r300_texture.h"
 #include "r300_screen_buffer.h"
 #include "r300_vs.h"
 
@@ -272,7 +273,16 @@ void r300_emit_gpu_flush(struct r300_context *r300, unsigned size, void *state)
     struct r300_gpu_flush *gpuflush = (struct r300_gpu_flush*)state;
     struct pipe_framebuffer_state* fb =
             (struct pipe_framebuffer_state*)r300->fb_state.state;
+    uint32_t height = fb->height;
+    uint32_t width = fb->width;
     CS_LOCALS(r300);
+
+    if (r300->cbzb_clear) {
+        struct r300_surface *surf = r300_surface(fb->cbufs[0]);
+
+        height = surf->cbzb_height;
+        width = surf->cbzb_width;
+    }
 
     BEGIN_CS(size);
 
@@ -281,13 +291,13 @@ void r300_emit_gpu_flush(struct r300_context *r300, unsigned size, void *state)
     OUT_CS_REG_SEQ(R300_SC_SCISSORS_TL, 2);
     if (r300->screen->caps.is_r500) {
         OUT_CS(0);
-        OUT_CS(((fb->width  - 1) << R300_SCISSORS_X_SHIFT) |
-               ((fb->height - 1) << R300_SCISSORS_Y_SHIFT));
+        OUT_CS(((width  - 1) << R300_SCISSORS_X_SHIFT) |
+               ((height - 1) << R300_SCISSORS_Y_SHIFT));
     } else {
         OUT_CS((1440 << R300_SCISSORS_X_SHIFT) |
                (1440 << R300_SCISSORS_Y_SHIFT));
-        OUT_CS(((fb->width  + 1440-1) << R300_SCISSORS_X_SHIFT) |
-               ((fb->height + 1440-1) << R300_SCISSORS_Y_SHIFT));
+        OUT_CS(((width  + 1440-1) << R300_SCISSORS_X_SHIFT) |
+               ((height + 1440-1) << R300_SCISSORS_Y_SHIFT));
     }
 
     /* Flush CB & ZB caches and wait until the 3D engine is idle and clean. */
@@ -344,8 +354,20 @@ void r300_emit_fb_state(struct r300_context* r300, unsigned size, void* state)
         OUT_CS_RELOC(surf->buffer, surf->pitch, 0, surf->domain, 0);
     }
 
+    /* Set up the ZB part of the CBZB clear. */
+    if (r300->cbzb_clear) {
+        surf = r300_surface(fb->cbufs[0]);
+
+        OUT_CS_REG(R300_ZB_FORMAT, surf->cbzb_format);
+
+        OUT_CS_REG_SEQ(R300_ZB_DEPTHOFFSET, 1);
+        OUT_CS_RELOC(surf->buffer, surf->cbzb_midpoint_offset, 0, surf->domain, 0);
+
+        OUT_CS_REG_SEQ(R300_ZB_DEPTHPITCH, 1);
+        OUT_CS_RELOC(surf->buffer, surf->cbzb_pitch, 0, surf->domain, 0);
+    }
     /* Set up a zbuffer. */
-    if (fb->zsbuf) {
+    else if (fb->zsbuf) {
         surf = r300_surface(fb->zsbuf);
 
         OUT_CS_REG(R300_ZB_FORMAT, surf->format);
@@ -375,6 +397,18 @@ void r300_emit_hyperz_state(struct r300_context *r300,
 {
     CS_LOCALS(r300);
     WRITE_CS_TABLE(state, size);
+}
+
+void r300_emit_hyperz_end(struct r300_context *r300)
+{
+    struct r300_hyperz_state z =
+            *(struct r300_hyperz_state*)r300->hyperz_state.state;
+
+    z.zb_bw_cntl = 0;
+    z.zb_depthclearvalue = 0;
+    z.sc_hyperz = R300_SC_HYPERZ_ADJ_2;
+
+    r300_emit_hyperz_state(r300, r300->hyperz_state.size, &z);
 }
 
 void r300_emit_fb_state_pipelined(struct r300_context *r300,

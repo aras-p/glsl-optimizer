@@ -330,7 +330,7 @@ static void r300_init_states(struct pipe_context *pipe)
         BEGIN_CB(&hyperz->cb_begin, r300->hyperz_state.size);
         OUT_CB_REG(R300_ZB_BW_CNTL, 0);
         OUT_CB_REG(R300_ZB_DEPTHCLEARVALUE, 0);
-        OUT_CB_REG(R300_SC_HYPERZ, 0x1C);
+        OUT_CB_REG(R300_SC_HYPERZ, R300_SC_HYPERZ_ADJ_2);
         END_CB;
     }
 }

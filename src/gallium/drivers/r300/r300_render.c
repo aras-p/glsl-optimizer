@@ -224,6 +224,7 @@ static void r300_prepare_for_rendering(struct r300_context *r300,
 
     /* Emitted in flush. */
     end_dwords += 26; /* emit_query_end */
+    end_dwords += r300->hyperz_state.size; /* emit_hyperz_end */
 
     cs_dwords += end_dwords;
 

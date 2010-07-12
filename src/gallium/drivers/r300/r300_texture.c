@@ -1034,6 +1034,8 @@ struct pipe_surface* r300_get_tex_surface(struct pipe_screen* screen,
     struct r300_surface* surface = CALLOC_STRUCT(r300_surface);
 
     if (surface) {
+        uint32_t stride, offset, tile_height;
+
         pipe_reference_init(&surface->base.reference, 1);
         pipe_resource_reference(&surface->base.texture, texture);
         surface->base.format = texture->format;
@@ -1054,6 +1056,34 @@ struct pipe_surface* r300_get_tex_surface(struct pipe_screen* screen,
         surface->offset = r300_texture_get_offset(tex, level, zslice, face);
         surface->pitch = tex->fb_state.pitch[level];
         surface->format = tex->fb_state.format;
+
+        /* Parameters for the CBZB clear. */
+        surface->cbzb_width = align(surface->base.width, 64);
+
+        /* Height must be aligned to the size of a tile. */
+        tile_height = r300_get_pixel_alignment(tex, tex->mip_macrotile[level],
+                                               DIM_HEIGHT);
+        surface->cbzb_height = align((surface->base.height + 1) / 2,
+                                     tile_height);
+
+        /* Offset must be aligned to 2K and must point at the beginning
+         * of a scanline. */
+        stride = r300_texture_get_stride(r300_screen(screen), tex, level);
+        offset = surface->offset + stride * surface->cbzb_height;
+        surface->cbzb_midpoint_offset = offset & ~2047;
+
+        surface->cbzb_pitch = surface->pitch & 0x1ffffc;
+
+        if (util_format_get_blocksizebits(surface->base.format) == 32)
+            surface->cbzb_format = R300_DEPTHFORMAT_24BIT_INT_Z_8BIT_STENCIL;
+        else
+            surface->cbzb_format = R300_DEPTHFORMAT_16BIT_INT_Z;
+
+        SCREEN_DBG(r300_screen(screen), DBG_TEX,
+                   "CBZB Dim: %ix%i, Misalignment: %i, Macro: %s\n",
+                   surface->cbzb_width, surface->cbzb_height,
+                   offset & 2047,
+                   tex->mip_macrotile[level] ? "YES" : " NO");
     }
 
     return &surface->base;

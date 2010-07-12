@@ -311,6 +311,13 @@ struct r300_surface {
     uint32_t offset;    /* COLOROFFSET or DEPTHOFFSET. */
     uint32_t pitch;     /* COLORPITCH or DEPTHPITCH. */
     uint32_t format;    /* US_OUT_FMT or ZB_FORMAT. */
+
+    /* Parameters dedicated to the CBZB clear. */
+    uint32_t cbzb_width;            /* Aligned width. */
+    uint32_t cbzb_height;           /* Half of the height. */
+    uint32_t cbzb_midpoint_offset;  /* DEPTHOFFSET. */
+    uint32_t cbzb_pitch;            /* DEPTHPITCH. */
+    uint32_t cbzb_format;           /* ZB_FORMAT. */
 };
 
 struct r300_texture {
@@ -525,6 +532,7 @@ struct r300_context {
     /* Incompatible vertex buffer layout? (misaligned stride or buffer_offset) */
     boolean incompatible_vb_layout;
 
+    boolean cbzb_clear;
     /* upload managers */
     struct u_upload_mgr *upload_vb;
     struct u_upload_mgr *upload_ib;
@@ -593,7 +601,8 @@ void r300_plug_in_stencil_ref_fallback(struct r300_context *r300);
 
 /* r300_state.c */
 enum r300_fb_state_change {
-    R300_CHANGED_FB_STATE = 0
+    R300_CHANGED_FB_STATE = 0,
+    R300_CHANGED_CBZB_FLAG
 };
 
 void r300_mark_fb_state_dirty(struct r300_context *r300,

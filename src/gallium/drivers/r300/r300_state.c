@@ -688,7 +688,9 @@ void r300_mark_fb_state_dirty(struct r300_context *r300,
     /* Now compute the fb_state atom size. */
     r300->fb_state.size = 2 + (8 * state->nr_cbufs);
 
-    if (state->zsbuf)
+    if (r300->cbzb_clear)
+        r300->fb_state.size += 10;
+    else if (state->zsbuf)
         r300->fb_state.size += r300->screen->caps.has_hiz ? 18 : 14;
 
     /* The size of the rest of atoms stays the same. */
