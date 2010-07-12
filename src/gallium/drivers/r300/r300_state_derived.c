@@ -119,7 +119,7 @@ static void r300_draw_emit_all_attribs(struct r300_context* r300)
 
     /* WPOS. */
     if (r300_fs(r300)->shader->inputs.wpos != ATTR_UNUSED && gen_count < 8) {
-        DBG(r300, DBG_DRAW, "draw_emit_attrib: WPOS, index: %i\n",
+        DBG(r300, DBG_SWTCL, "draw_emit_attrib: WPOS, index: %i\n",
             vs_outputs->wpos);
         r300_draw_emit_attrib(r300, EMIT_4F, INTERP_PERSPECTIVE,
                               vs_outputs->wpos);
@@ -141,19 +141,18 @@ static void r300_swtcl_vertex_psc(struct r300_context *r300)
     /* For each Draw attribute, route it to the fragment shader according
      * to the vs_output_tab. */
     attrib_count = vinfo->num_attribs;
-    DBG(r300, DBG_DRAW, "r300: attrib count: %d\n", attrib_count);
+    DBG(r300, DBG_SWTCL, "r300: attrib count: %d\n", attrib_count);
     for (i = 0; i < attrib_count; i++) {
-        DBG(r300, DBG_DRAW, "r300: attrib: index %d, interp %d, emit %d,"
-               " vs_output_tab %d\n", vinfo->attrib[i].src_index,
-               vinfo->attrib[i].interp_mode, vinfo->attrib[i].emit,
-               vs_output_tab[i]);
-
         if (vs_output_tab[i] == -1) {
             assert(0);
             abort();
         }
 
         format = draw_translate_vinfo_format(vinfo->attrib[i].emit);
+
+        DBG(r300, DBG_SWTCL,
+            "r300: swtcl_vertex_psc [%i] <- %s\n",
+            vs_output_tab[i], util_format_short_name(format));
 
         /* Obtain the type of data in this attribute. */
         type = r300_translate_vertex_data_type(format);

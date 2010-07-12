@@ -870,13 +870,12 @@ static void r300_render_draw_arrays(struct vbuf_render* render,
     unsigned dwords = 6;
 
     CS_LOCALS(r300);
-
     (void) i; (void) ptr;
 
     r300_prepare_for_rendering(r300, PREP_FIRST_DRAW | PREP_EMIT_AOS_SWTCL,
                                NULL, dwords, 0, 0, NULL);
 
-    DBG(r300, DBG_DRAW, "r300: Doing vbuf render, count %d\n", count);
+    DBG(r300, DBG_DRAW, "r300: render_draw_arrays (count: %d)\n", count);
 
     /* Uncomment to dump all VBOs rendered through this interface.
      * Slow and noisy!
@@ -919,6 +918,7 @@ static void r300_render_draw_elements(struct vbuf_render* render,
     unsigned free_dwords;
 
     CS_LOCALS(r300);
+    DBG(r300, DBG_DRAW, "r300: render_draw_elements (count: %d)\n", count);
 
     /* Reserve at least 256 dwords.
      *
@@ -1051,6 +1051,8 @@ static void r300_blitter_draw_rectangle(struct blitter_context *blitter,
     r300->viewport_state.dirty = FALSE;
 
     r300_prepare_for_rendering(r300, PREP_FIRST_DRAW, NULL, dwords, 0, 0, NULL);
+
+    DBG(r300, DBG_DRAW, "r300: draw_rectangle\n");
 
     BEGIN_CS_AS_CB(r300, dwords);
     /* Set up GA. */

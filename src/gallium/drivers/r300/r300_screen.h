@@ -61,17 +61,19 @@ static INLINE struct r300_screen* r300_screen(struct pipe_screen* screen) {
  * those changes.
  */
 /*@{*/
-#define DBG_HELP        (1 << 0)
+
 /* Logging. */
+#define DBG_PSC         (1 << 0)
 #define DBG_FP          (1 << 1)
 #define DBG_VP          (1 << 2)
-/* The bit (1 << 3) is unused. */
+#define DBG_SWTCL       (1 << 3)
 #define DBG_DRAW        (1 << 4)
 #define DBG_TEX         (1 << 5)
 #define DBG_TEXALLOC    (1 << 6)
 #define DBG_RS          (1 << 7)
 #define DBG_FALL        (1 << 8)
 #define DBG_FB          (1 << 9)
+#define DBG_RS_BLOCK    (1 << 10)
 /* Features. */
 #define DBG_ANISOHQ     (1 << 16)
 #define DBG_NO_TILING   (1 << 17)

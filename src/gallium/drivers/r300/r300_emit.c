@@ -638,7 +638,7 @@ void r300_emit_rs_block_state(struct r300_context* r300,
     unsigned count = (rs->inst_count & R300_RS_INST_COUNT_MASK) + 1;
     CS_LOCALS(r300);
 
-    if (SCREEN_DBG_ON(r300->screen, DBG_DRAW)) {
+    if (DBG_ON(r300, DBG_RS_BLOCK)) {
         r500_dump_rs_block(rs);
 
         fprintf(stderr, "r300: RS emit:\n");
@@ -783,7 +783,7 @@ void r300_emit_aos_swtcl(struct r300_context *r300, boolean indexed)
 {
     CS_LOCALS(r300);
 
-    DBG(r300, DBG_DRAW, "r300: Preparing vertex buffer %p for render, "
+    DBG(r300, DBG_SWTCL, "r300: Preparing vertex buffer %p for render, "
             "vertex size %d\n", r300->vbo,
             r300->vertex_info.size);
     /* Set the pointer to our vertex buffer. The emitted values are this:
@@ -811,7 +811,7 @@ void r300_emit_vertex_stream_state(struct r300_context* r300,
     unsigned i;
     CS_LOCALS(r300);
 
-    if (DBG_ON(r300, DBG_DRAW)) {
+    if (DBG_ON(r300, DBG_PSC)) {
         fprintf(stderr, "r300: PSC emit:\n");
 
         for (i = 0; i < streams->count; i++) {
