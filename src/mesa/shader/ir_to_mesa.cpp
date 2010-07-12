@@ -1099,6 +1099,7 @@ ir_to_mesa_visitor::visit(ir_dereference_array *ir)
    ir_constant *index;
    ir_to_mesa_src_reg src_reg;
    ir_dereference_variable *deref_var = ir->array->as_dereference_variable();
+   int element_size = type_size(ir->type);
 
    index = ir->array_index->constant_expression_value();
 
@@ -1125,7 +1126,7 @@ ir_to_mesa_visitor::visit(ir_dereference_array *ir)
 	 ir->array_index->accept(this);
 	 ir_to_mesa_emit_op2(ir, OPCODE_MUL,
 			     ir_to_mesa_dst_reg_from_src(index_reg),
-			     this->result, src_reg_for_float(4.0));
+			     this->result, src_reg_for_float(element_size));
 
 	 src_reg.reladdr = true;
 	 ir_to_mesa_emit_op1(ir, OPCODE_ARL, ir_to_mesa_address_reg,
@@ -1135,11 +1136,6 @@ ir_to_mesa_visitor::visit(ir_dereference_array *ir)
       this->result = src_reg;
       return;
    }
-
-   /* By the time we make it to this stage, matrices should be broken down
-    * to vectors.
-    */
-   assert(!ir->type->is_matrix());
 
    ir->array->accept(this);
    src_reg = this->result;
@@ -1151,7 +1147,7 @@ ir_to_mesa_visitor::visit(ir_dereference_array *ir)
       src_reg.index += index->value.i[0];
    } else {
       if (index) {
-	 src_reg.index += index->value.i[0];
+	 src_reg.index += index->value.i[0] * element_size;
       } else {
 	 ir_to_mesa_src_reg array_base = this->result;
 	 /* Variable index array dereference.  It eats the "vec4" of the
@@ -1160,12 +1156,24 @@ ir_to_mesa_visitor::visit(ir_dereference_array *ir)
 	  */
 	 ir->array_index->accept(this);
 
+	 ir_to_mesa_src_reg index_reg;
+
+	 if (element_size == 1) {
+	    index_reg = this->result;
+	 } else {
+	    index_reg = get_temp(glsl_type::float_type);
+
+	    ir_to_mesa_emit_op2(ir, OPCODE_MUL,
+				ir_to_mesa_dst_reg_from_src(index_reg),
+				this->result, src_reg_for_float(element_size));
+	 }
+
 	 /* FINISHME: This doesn't work when we're trying to do the LHS
 	  * of an assignment.
 	  */
 	 src_reg.reladdr = true;
 	 ir_to_mesa_emit_op1(ir, OPCODE_ARL, ir_to_mesa_address_reg,
-			     this->result);
+			     index_reg);
 
 	 this->result = get_temp(ir->type);
 	 ir_to_mesa_emit_op1(ir, OPCODE_MOV,
