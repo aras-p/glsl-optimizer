@@ -609,6 +609,7 @@ radeon_validate_framebuffer(GLcontext *ctx, struct gl_framebuffer *fb)
 
 void radeon_fbo_init(struct radeon_context *radeon)
 {
+#if FEATURE_EXT_framebuffer_object
   radeon->glCtx->Driver.NewFramebuffer = radeon_new_framebuffer;
   radeon->glCtx->Driver.NewRenderbuffer = radeon_new_renderbuffer;
   radeon->glCtx->Driver.BindFramebuffer = radeon_bind_framebuffer;
@@ -617,7 +618,10 @@ void radeon_fbo_init(struct radeon_context *radeon)
   radeon->glCtx->Driver.FinishRenderTexture = radeon_finish_render_texture;
   radeon->glCtx->Driver.ResizeBuffers = radeon_resize_buffers;
   radeon->glCtx->Driver.ValidateFramebuffer = radeon_validate_framebuffer;
+#endif
+#if FEATURE_EXT_framebuffer_blit
   radeon->glCtx->Driver.BlitFramebuffer = _mesa_meta_BlitFramebuffer;
+#endif
 }
 
   
