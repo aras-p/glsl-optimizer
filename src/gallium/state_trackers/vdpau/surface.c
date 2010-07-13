@@ -94,6 +94,7 @@ vlVdpVideoSurfaceCreate(VdpDevice device,
 
 no_handle:
    FREE(p_surf->psurface);
+inv_device:
 no_surf:
    FREE(p_surf);
 no_res:
