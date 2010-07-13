@@ -146,7 +146,8 @@ static unsigned long t_src(struct r300_vertex_program_code *vp,
 			       t_swizzle(GET_SWZ(src->Swizzle, 2)),
 			       t_swizzle(GET_SWZ(src->Swizzle, 3)),
 			       t_src_class(src->File),
-			       src->Negate) | (src->RelAddr << 4);
+			       src->Negate) |
+	       (src->RelAddr << 4) | (src->Abs << 3);
 }
 
 static unsigned long t_src_scalar(struct r300_vertex_program_code *vp,
@@ -162,7 +163,7 @@ static unsigned long t_src_scalar(struct r300_vertex_program_code *vp,
 			       t_swizzle(GET_SWZ(src->Swizzle, 0)),
 			       t_src_class(src->File),
 			       src->Negate ? RC_MASK_XYZW : RC_MASK_NONE) |
-	    (src->RelAddr << 4);
+	       (src->RelAddr << 4) | (src->Abs << 3);
 }
 
 static int valid_dst(struct r300_vertex_program_code *vp,
@@ -487,6 +488,44 @@ static void allocate_temporary_registers(struct r300_vertex_program_compiler * c
 	}
 }
 
+/**
+ * R3xx-R4xx vertex engine does not support the Absolute source operand modifier
+ * and the Saturate opcode modifier. Only Absolute is currently transformed.
+ */
+static int transform_nonnative_modifiers(
+	struct radeon_compiler *c,
+	struct rc_instruction *inst,
+	void* unused)
+{
+	const struct rc_opcode_info *opcode = rc_get_opcode_info(inst->U.I.Opcode);
+	unsigned i;
+
+	/* Transform ABS(a) to MAX(a, -a). */
+	for (i = 0; i < opcode->NumSrcRegs; i++) {
+		if (inst->U.I.SrcReg[i].Abs) {
+			struct rc_instruction *new_inst;
+			unsigned temp;
+
+			inst->U.I.SrcReg[i].Abs = 0;
+
+			temp = rc_find_free_temporary(c);
+
+			new_inst = rc_insert_new_instruction(c, inst->Prev);
+			new_inst->U.I.Opcode = RC_OPCODE_MAX;
+			new_inst->U.I.DstReg.File = RC_FILE_TEMPORARY;
+			new_inst->U.I.DstReg.Index = temp;
+			new_inst->U.I.SrcReg[0] = inst->U.I.SrcReg[i];
+			new_inst->U.I.SrcReg[1] = inst->U.I.SrcReg[i];
+			new_inst->U.I.SrcReg[1].Negate ^= RC_MASK_XYZW;
+
+			inst->U.I.SrcReg[i].File = RC_FILE_TEMPORARY;
+			inst->U.I.SrcReg[i].Index = temp;
+			inst->U.I.SrcReg[i].Negate = 0;
+			inst->U.I.SrcReg[i].RelAddr = 0;
+		}
+	}
+	return 1;
+}
 
 /**
  * Vertex engine cannot read two inputs or two constants at the same time.
@@ -625,15 +664,27 @@ void r3xx_compile_vertex_program(struct r300_vertex_program_compiler* compiler)
 			{ &r300_transform_trig_scale_vertex, 0 }
 		};
 		radeonLocalTransform(&compiler->Base, 2, transformations);
+
+		debug_program_log(compiler, "after native rewrite");
 	} else {
 		struct radeon_program_transformation transformations[] = {
 			{ &r300_transform_vertex_alu, 0 },
 			{ &radeonTransformTrigSimple, 0 }
 		};
 		radeonLocalTransform(&compiler->Base, 2, transformations);
-	}
 
-	debug_program_log(compiler, "after native rewrite");
+		debug_program_log(compiler, "after native rewrite");
+
+		/* Note: This pass has to be done seperately from ALU rewrite,
+		 * because it needs to check every instruction.
+		 */
+		struct radeon_program_transformation transformations2[] = {
+			{ &transform_nonnative_modifiers, 0 },
+		};
+		radeonLocalTransform(&compiler->Base, 1, transformations2);
+
+		debug_program_log(compiler, "after emulate modifiers");
+	}
 
 	{
 		/* Note: This pass has to be done seperately from ALU rewrite,
