@@ -87,6 +87,8 @@ public:
    int sampler; /**< sampler index */
    int tex_target; /**< One of TEXTURE_*_INDEX */
    GLboolean tex_shadow;
+
+   class function_entry *function; /* Set on OPCODE_CAL or OPCODE_BGNSUB */
 };
 
 class temp_entry : public exec_node {
@@ -102,9 +104,44 @@ public:
    ir_variable *var; /* variable that maps to this, if any */
 };
 
+class function_entry : public exec_node {
+public:
+   ir_function_signature *sig;
+
+   /**
+    * identifier of this function signature used by the program.
+    *
+    * At the point that Mesa instructions for function calls are
+    * generated, we don't know the address of the first instruction of
+    * the function body.  So we make the BranchTarget that is called a
+    * small integer and rewrite them during set_branchtargets().
+    */
+   int sig_id;
+
+   /**
+    * Pointer to first instruction of the function body.
+    *
+    * Set during function body emits after main() is processed.
+    */
+   ir_to_mesa_instruction *bgn_inst;
+
+   /**
+    * Index of the first instruction of the function body in actual
+    * Mesa IR.
+    *
+    * Set after convertion from ir_to_mesa_instruction to prog_instruction.
+    */
+   int inst;
+
+   /** Storage for the return value. */
+   ir_to_mesa_src_reg return_reg;
+};
+
 class ir_to_mesa_visitor : public ir_visitor {
 public:
    ir_to_mesa_visitor();
+
+   function_entry *current_function;
 
    GLcontext *ctx;
    struct gl_program *prog;
@@ -112,6 +149,8 @@ public:
    int next_temp;
 
    temp_entry *find_variable_storage(ir_variable *var);
+
+   function_entry *get_function_signature(ir_function_signature *sig);
 
    ir_to_mesa_src_reg get_temp(const glsl_type *type);
    void reladdr_to_temp(ir_instruction *ir,
@@ -150,6 +189,10 @@ public:
 
    /** List of temp_entry */
    exec_list variable_storage;
+
+   /** List of function_entry */
+   exec_list function_signatures;
+   int next_signature_id;
 
    /** List of ir_to_mesa_instruction */
    exec_list instructions;
@@ -260,6 +303,8 @@ ir_to_mesa_visitor::ir_to_mesa_emit_op3(ir_instruction *ir,
    inst->src_reg[1] = src1;
    inst->src_reg[2] = src2;
    inst->ir = ir;
+
+   inst->function = NULL;
 
    this->instructions.push_tail(inst);
 
@@ -1396,12 +1441,128 @@ ir_to_mesa_visitor::visit(ir_constant *ir)
    this->result = src_reg;
 }
 
+function_entry *
+ir_to_mesa_visitor::get_function_signature(ir_function_signature *sig)
+{
+   function_entry *entry;
+
+   foreach_iter(exec_list_iterator, iter, this->function_signatures) {
+      entry = (function_entry *)iter.get();
+
+      if (entry->sig == sig)
+	 return entry;
+   }
+
+   entry = talloc(mem_ctx, function_entry);
+   entry->sig = sig;
+   entry->sig_id = this->next_signature_id++;
+   entry->bgn_inst = NULL;
+
+   /* Allocate storage for all the parameters. */
+   foreach_iter(exec_list_iterator, iter, sig->parameters) {
+      ir_variable *param = (ir_variable *)iter.get();
+      temp_entry *storage;
+
+      storage = find_variable_storage(param);
+      assert(!storage);
+
+      storage = new(mem_ctx) temp_entry(param, PROGRAM_TEMPORARY,
+					this->next_temp);
+      this->variable_storage.push_tail(storage);
+
+      this->next_temp += type_size(param->type);
+      break;
+   }
+
+   if (sig->return_type) {
+      entry->return_reg = get_temp(sig->return_type);
+   } else {
+      entry->return_reg = ir_to_mesa_undef;
+   }
+
+   this->function_signatures.push_tail(entry);
+   return entry;
+}
 
 void
 ir_to_mesa_visitor::visit(ir_call *ir)
 {
-   printf("Can't support call to %s\n", ir->callee_name());
-   exit(1);
+   ir_to_mesa_instruction *call_inst;
+   ir_function_signature *sig = ir->get_callee();
+   function_entry *entry = get_function_signature(sig);
+   int i;
+
+   /* Process in parameters. */
+   exec_list_iterator sig_iter = sig->parameters.iterator();
+   foreach_iter(exec_list_iterator, iter, *ir) {
+      ir_rvalue *param_rval = (ir_rvalue *)iter.get();
+      ir_variable *param = (ir_variable *)sig_iter.get();
+
+      if (param->mode == ir_var_in ||
+	  param->mode == ir_var_inout) {
+	 temp_entry *storage = find_variable_storage(param);
+	 assert(storage);
+
+	 param_rval->accept(this);
+	 ir_to_mesa_src_reg r = this->result;
+
+	 ir_to_mesa_dst_reg l;
+	 l.file = storage->file;
+	 l.index = storage->index;
+	 l.reladdr = NULL;
+	 l.writemask = WRITEMASK_XYZW;
+	 l.cond_mask = COND_TR;
+
+	 for (i = 0; i < type_size(param->type); i++) {
+	    ir_to_mesa_emit_op1(ir, OPCODE_MOV, l, r);
+	    l.index++;
+	    r.index++;
+	 }
+      }
+
+      sig_iter.next();
+   }
+   assert(!sig_iter.has_next());
+
+   /* Emit call instruction */
+   call_inst = ir_to_mesa_emit_op1(ir, OPCODE_CAL,
+				   ir_to_mesa_undef_dst, ir_to_mesa_undef);
+   call_inst->function = entry;
+
+   /* Process out parameters. */
+   sig_iter = sig->parameters.iterator();
+   foreach_iter(exec_list_iterator, iter, *ir) {
+      ir_rvalue *param_rval = (ir_rvalue *)iter.get();
+      ir_variable *param = (ir_variable *)sig_iter.get();
+
+      if (param->mode == ir_var_out ||
+	  param->mode == ir_var_inout) {
+	 temp_entry *storage = find_variable_storage(param);
+	 assert(storage);
+
+	 ir_to_mesa_src_reg r;
+	 r.file = storage->file;
+	 r.index = storage->index;
+	 r.reladdr = NULL;
+	 r.swizzle = SWIZZLE_NOOP;
+	 r.negate = 0;
+
+	 param_rval->accept(this);
+	 ir_to_mesa_dst_reg l = ir_to_mesa_dst_reg_from_src(this->result);
+
+	 for (i = 0; i < type_size(param->type); i++) {
+	    ir_to_mesa_emit_op1(ir, OPCODE_MOV, l, r);
+	    l.index++;
+	    r.index++;
+	 }
+      }
+
+      sig_iter.next();
+   }
+   assert(!sig_iter.has_next());
+
+   /* Process return value. */
+   this->result = entry->return_reg;
 }
 
 
@@ -1536,9 +1697,25 @@ ir_to_mesa_visitor::visit(ir_texture *ir)
 void
 ir_to_mesa_visitor::visit(ir_return *ir)
 {
-   assert(0);
+   assert(current_function);
 
-   ir->get_value()->accept(this);
+   if (ir->get_value()) {
+      ir_to_mesa_dst_reg l;
+      int i;
+
+      ir->get_value()->accept(this);
+      ir_to_mesa_src_reg r = this->result;
+
+      l = ir_to_mesa_dst_reg_from_src(current_function->return_reg);
+
+      for (i = 0; i < type_size(current_function->sig->return_type); i++) {
+	 ir_to_mesa_emit_op1(ir, OPCODE_MOV, l, r);
+	 l.index++;
+	 r.index++;
+      }
+   }
+
+   ir_to_mesa_emit_op0(ir, OPCODE_RET);
 }
 
 void
@@ -1600,8 +1777,10 @@ ir_to_mesa_visitor::ir_to_mesa_visitor()
 {
    result.file = PROGRAM_UNDEFINED;
    next_temp = 1;
+   next_signature_id = 1;
    sampler_map = NULL;
    sampler_map_size = 0;
+   current_function = NULL;
 }
 
 static struct prog_src_register
@@ -1621,7 +1800,8 @@ mesa_src_reg_from_ir_src_reg(ir_to_mesa_src_reg reg)
 }
 
 static void
-set_branchtargets(struct prog_instruction *mesa_instructions,
+set_branchtargets(ir_to_mesa_visitor *v,
+		  struct prog_instruction *mesa_instructions,
 		  int num_instructions)
 {
    int if_count = 0, loop_count = 0;
@@ -1684,6 +1864,17 @@ set_branchtargets(struct prog_instruction *mesa_instructions,
 	 /* The loop ends point at each other. */
 	 mesa_instructions[i].BranchTarget = loop_stack[loop_stack_pos];
 	 mesa_instructions[loop_stack[loop_stack_pos]].BranchTarget = i;
+	 break;
+      case OPCODE_CAL:
+	 foreach_iter(exec_list_iterator, iter, v->function_signatures) {
+	    function_entry *entry = (function_entry *)iter.get();
+
+	    if (entry->sig_id == mesa_instructions[i].BranchTarget) {
+	       mesa_instructions[i].BranchTarget = entry->inst;
+	       break;
+	    }
+	 }
+	 break;
       default:
 	 break;
       }
@@ -1842,6 +2033,7 @@ get_mesa_program(GLcontext *ctx, void *mem_ctx, struct gl_shader *shader)
    int i;
    struct gl_program *prog;
    GLenum target;
+   GLboolean progress;
 
    switch (shader->Type) {
    case GL_VERTEX_SHADER:   target = GL_VERTEX_PROGRAM_ARB; break;
@@ -1859,8 +2051,32 @@ get_mesa_program(GLcontext *ctx, void *mem_ctx, struct gl_shader *shader)
    v.prog = prog;
 
    v.mem_ctx = talloc_new(NULL);
+
+   /* Emit Mesa IR for main(). */
    visit_exec_list(shader->ir, &v);
    v.ir_to_mesa_emit_op0(NULL, OPCODE_END);
+
+   /* Now emit bodies for any functions that were used. */
+   do {
+      progress = GL_FALSE;
+
+      foreach_iter(exec_list_iterator, iter, v.function_signatures) {
+	 function_entry *entry = (function_entry *)iter.get();
+
+	 if (!entry->bgn_inst) {
+	    v.current_function = entry;
+
+	    entry->bgn_inst = v.ir_to_mesa_emit_op0(NULL, OPCODE_BGNSUB);
+	    entry->bgn_inst->function = entry;
+
+	    visit_exec_list(&entry->sig->body, &v);
+
+	    entry->bgn_inst = v.ir_to_mesa_emit_op0(NULL, OPCODE_RET);
+	    entry->bgn_inst = v.ir_to_mesa_emit_op0(NULL, OPCODE_ENDSUB);
+	    progress = GL_TRUE;
+	 }
+      }
+   } while (progress);
 
    prog->NumTemporaries = v.next_temp;
 
@@ -1895,11 +2111,16 @@ get_mesa_program(GLcontext *ctx, void *mem_ctx, struct gl_shader *shader)
       mesa_inst->TexShadow = inst->tex_shadow;
       mesa_instruction_annotation[i] = inst->ir;
 
+      if (mesa_inst->Opcode == OPCODE_BGNSUB)
+	 inst->function->inst = i;
+      else if (mesa_inst->Opcode == OPCODE_CAL)
+	 mesa_inst->BranchTarget = inst->function->sig_id; /* rewritten later */
+
       mesa_inst++;
       i++;
    }
 
-   set_branchtargets(mesa_instructions, num_instructions);
+   set_branchtargets(&v, mesa_instructions, num_instructions);
    if (0) {
       print_program(mesa_instructions, mesa_instruction_annotation,
 		    num_instructions);
