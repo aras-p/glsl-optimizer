@@ -155,7 +155,7 @@ parameter_lists_match(exec_list *list_a, exec_list *list_b)
 }
 
 
-const ir_function_signature *
+ir_function_signature *
 ir_function::matching_signature(exec_list *actual_parameters)
 {
    ir_function_signature *match = NULL;
