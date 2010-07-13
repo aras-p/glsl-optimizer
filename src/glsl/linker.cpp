@@ -1052,7 +1052,10 @@ assign_varying_locations(gl_shader *producer, gl_shader *consumer)
       /* An 'out' variable is only really a shader output if its value is read
        * by the following stage.
        */
-      var->shader_out = (var->location != -1);
+      if (var->location == -1) {
+	 var->shader_out = false;
+	 var->mode = ir_var_auto;
+      }
    }
 
    foreach_list(node, consumer->ir) {
