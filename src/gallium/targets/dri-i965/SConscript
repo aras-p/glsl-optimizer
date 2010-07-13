@@ -17,7 +17,6 @@ env.Append(CPPDEFINES = [
 env.Prepend(LIBS = [
     st_dri,
     i965drm,
-    ws_drm,
     ws_wrapper,
     i965,
     trace,
