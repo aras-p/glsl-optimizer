@@ -781,6 +781,11 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
 			     op[0], op[1]);
       }
       break;
+
+   case ir_binop_cross:
+      ir_to_mesa_emit_op2(ir, OPCODE_XPD, result_dst, op[0], op[1]);
+      break;
+
    case ir_unop_sqrt:
       ir_to_mesa_emit_scalar_op1(ir, OPCODE_RSQ, result_dst, op[0]);
       ir_to_mesa_emit_scalar_op1(ir, OPCODE_RCP, result_dst, result_src);

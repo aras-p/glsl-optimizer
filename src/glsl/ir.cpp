@@ -104,6 +104,7 @@ ir_expression::get_num_operands(ir_expression_operation op)
       2, /* ir_binop_logic_or */
 
       2, /* ir_binop_dot */
+      2, /* ir_binop_cross */
       2, /* ir_binop_min */
       2, /* ir_binop_max */
 
@@ -163,6 +164,7 @@ static const char *const operator_strs[] = {
    "^^",
    "||",
    "dot",
+   "cross",
    "min",
    "max",
    "pow",

@@ -486,17 +486,7 @@ static const char *builtins_110_cross = {
    "     (parameters\n"
    "       (declare (in) vec3 arg0)\n"
    "       (declare (in) vec3 arg1))\n"
-   "     ((declare () vec3 t)\n"
-   "      (assign (constant bool (1)) (swiz x (var_ref t))\n"
-   "              (expression float - (expression float * (swiz y (var_ref arg0)) (swiz z (var_ref arg1)))\n"
-   "	                          (expression float * (swiz y (var_ref arg1)) (swiz z (var_ref arg0)))))\n"
-   "      (assign (constant bool (1)) (swiz y (var_ref t))\n"
-   "              (expression float - (expression float * (swiz z (var_ref arg0)) (swiz x (var_ref arg1)))\n"
-   "	                          (expression float * (swiz z (var_ref arg1)) (swiz x (var_ref arg0)))))\n"
-   "      (assign (constant bool (1)) (swiz z (var_ref t))\n"
-   "              (expression float - (expression float * (swiz x (var_ref arg0)) (swiz y (var_ref arg1)))\n"
-   "	                          (expression float * (swiz x (var_ref arg1)) (swiz y (var_ref arg0)))))\n"
-   "      (return (var_ref t))))\n"
+   "     ((return (expression vec3 cross (var_ref arg0) (var_ref arg1)))))\n"
    "))\n"
 };
 
