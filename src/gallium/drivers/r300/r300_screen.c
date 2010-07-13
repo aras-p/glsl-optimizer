@@ -256,7 +256,6 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
     uint32_t retval = 0;
     boolean is_r500 = r300_screen(screen)->caps.is_r500;
     boolean is_r400 = r300_screen(screen)->caps.is_r400;
-    boolean is_rv350 = r300_screen(screen)->caps.is_rv350;
     boolean is_z24 = format == PIPE_FORMAT_X8Z24_UNORM ||
                      format == PIPE_FORMAT_S8_USCALED_Z24_UNORM;
     boolean is_color2101010 = format == PIPE_FORMAT_R10G10B10A2_UNORM ||
@@ -272,6 +271,7 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
                             format == PIPE_FORMAT_R16G16B16_FLOAT ||
                             format == PIPE_FORMAT_R16G16B16A16_FLOAT;
 
+    /* Check multisampling support. */
     switch (sample_count) {
         case 0:
         case 1:
@@ -326,7 +326,7 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
     /* Check vertex buffer format support. */
     if (usage & PIPE_BIND_VERTEX_BUFFER &&
         /* Half float is supported on >= RV350. */
-        (is_rv350 || !is_half_float) &&
+        (is_r400 || is_r500 || !is_half_float) &&
         r300_translate_vertex_data_type(format) != R300_INVALID_FORMAT) {
         retval |= PIPE_BIND_VERTEX_BUFFER;
     }
