@@ -40,11 +40,11 @@
 
 /**
  * \param flags  bitmask of PIPE_FLUSH_x flags
- * \param fence  if non-null, returns pointer to a fench which can be waited on
+ * \param fence  if non-null, returns pointer to a fence which can be waited on
  */
 void
 llvmpipe_flush( struct pipe_context *pipe,
-		unsigned flags,
+                unsigned flags,
                 struct pipe_fence_handle **fence )
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
