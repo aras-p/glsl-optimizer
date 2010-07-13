@@ -61,7 +61,8 @@ typedef struct ir_to_mesa_src_reg {
    int index; /**< temporary index, VERT_ATTRIB_*, FRAG_ATTRIB_*, etc. */
    GLuint swizzle; /**< SWIZZLE_XYZWONEZERO swizzles from Mesa. */
    int negate; /**< NEGATE_XYZW mask from mesa */
-   bool reladdr; /**< Register index should be offset by address reg. */
+   /** Register index should be offset by the integer in this reg. */
+   ir_to_mesa_src_reg *reladdr;
 } ir_to_mesa_src_reg;
 
 typedef struct ir_to_mesa_dst_reg {
@@ -69,6 +70,8 @@ typedef struct ir_to_mesa_dst_reg {
    int index; /**< temporary index, VERT_ATTRIB_*, FRAG_ATTRIB_*, etc. */
    int writemask; /**< Bitfield of WRITEMASK_[XYZW] */
    GLuint cond_mask:4;
+   /** Register index should be offset by the integer in this reg. */
+   ir_to_mesa_src_reg *reladdr;
 } ir_to_mesa_dst_reg;
 
 extern ir_to_mesa_src_reg ir_to_mesa_undef;
@@ -111,6 +114,8 @@ public:
    temp_entry *find_variable_storage(ir_variable *var);
 
    ir_to_mesa_src_reg get_temp(const glsl_type *type);
+   void reladdr_to_temp(ir_instruction *ir,
+			ir_to_mesa_src_reg *reg, int *num_reladdr);
 
    struct ir_to_mesa_src_reg src_reg_for_float(float val);
 
@@ -191,15 +196,15 @@ public:
 };
 
 ir_to_mesa_src_reg ir_to_mesa_undef = {
-   PROGRAM_UNDEFINED, 0, SWIZZLE_NOOP, NEGATE_NONE, false,
+   PROGRAM_UNDEFINED, 0, SWIZZLE_NOOP, NEGATE_NONE, NULL,
 };
 
 ir_to_mesa_dst_reg ir_to_mesa_undef_dst = {
-   PROGRAM_UNDEFINED, 0, SWIZZLE_NOOP, COND_TR
+   PROGRAM_UNDEFINED, 0, SWIZZLE_NOOP, COND_TR, NULL,
 };
 
 ir_to_mesa_dst_reg ir_to_mesa_address_reg = {
-   PROGRAM_ADDRESS, 0, WRITEMASK_X, COND_TR
+   PROGRAM_ADDRESS, 0, WRITEMASK_X, COND_TR, NULL
 };
 
 static int swizzle_for_size(int size)
@@ -223,6 +228,28 @@ ir_to_mesa_visitor::ir_to_mesa_emit_op3(ir_instruction *ir,
 					ir_to_mesa_src_reg src2)
 {
    ir_to_mesa_instruction *inst = new(mem_ctx) ir_to_mesa_instruction();
+   int num_reladdr = 0;
+
+   /* If we have to do relative addressing, we want to load the ARL
+    * reg directly for one of the regs, and preload the other reladdr
+    * sources into temps.
+    */
+   num_reladdr += dst.reladdr != NULL;
+   num_reladdr += src0.reladdr != NULL;
+   num_reladdr += src1.reladdr != NULL;
+   num_reladdr += src2.reladdr != NULL;
+
+   reladdr_to_temp(ir, &src2, &num_reladdr);
+   reladdr_to_temp(ir, &src1, &num_reladdr);
+   reladdr_to_temp(ir, &src0, &num_reladdr);
+
+   if (dst.reladdr) {
+      ir_to_mesa_emit_op1(ir, OPCODE_ARL, ir_to_mesa_address_reg,
+                          *dst.reladdr);
+
+      num_reladdr--;
+   }
+   assert(num_reladdr == 0);
 
    inst->op = op;
    inst->dst_reg = dst;
@@ -285,6 +312,7 @@ ir_to_mesa_dst_reg_from_src(ir_to_mesa_src_reg reg)
    dst_reg.index = reg.index;
    dst_reg.writemask = WRITEMASK_XYZW;
    dst_reg.cond_mask = COND_TR;
+   dst_reg.reladdr = reg.reladdr;
 
    return dst_reg;
 }
@@ -298,7 +326,7 @@ ir_to_mesa_src_reg_from_dst(ir_to_mesa_dst_reg reg)
    src_reg.index = reg.index;
    src_reg.swizzle = SWIZZLE_XYZW;
    src_reg.negate = 0;
-   src_reg.reladdr = 0;
+   src_reg.reladdr = reg.reladdr;
 
    return src_reg;
 }
@@ -378,7 +406,7 @@ ir_to_mesa_visitor::src_reg_for_float(float val)
    src_reg.file = PROGRAM_CONSTANT;
    src_reg.index = _mesa_add_unnamed_constant(this->prog->Parameters,
 					      &val, 1, &src_reg.swizzle);
-   src_reg.reladdr = GL_FALSE;
+   src_reg.reladdr = NULL;
    src_reg.negate = 0;
 
    return src_reg;
@@ -435,7 +463,7 @@ ir_to_mesa_visitor::get_temp(const glsl_type *type)
 
    src_reg.file = PROGRAM_TEMPORARY;
    src_reg.index = next_temp;
-   src_reg.reladdr = false;
+   src_reg.reladdr = NULL;
    next_temp += type_size(type);
 
    for (i = 0; i < type->vector_elements; i++)
@@ -555,6 +583,26 @@ ir_to_mesa_visitor::try_emit_mad(ir_expression *ir, int mul_operand)
 		       ir_to_mesa_dst_reg_from_src(this->result), a, b, c);
 
    return true;
+}
+
+void
+ir_to_mesa_visitor::reladdr_to_temp(ir_instruction *ir,
+				    ir_to_mesa_src_reg *reg, int *num_reladdr)
+{
+   if (!reg->reladdr)
+      return;
+
+   ir_to_mesa_emit_op1(ir, OPCODE_ARL, ir_to_mesa_address_reg, *reg->reladdr);
+
+   if (*num_reladdr != 1) {
+      ir_to_mesa_src_reg temp = get_temp(glsl_type::vec4_type);
+
+      ir_to_mesa_emit_op1(ir, OPCODE_MOV,
+			  ir_to_mesa_dst_reg_from_src(temp), *reg);
+      *reg = temp;
+   }
+
+   (*num_reladdr)--;
 }
 
 void
@@ -1045,7 +1093,7 @@ ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
    src_reg.index = entry->index;
    /* If the type is smaller than a vec4, replicate the last channel out. */
    src_reg.swizzle = swizzle_for_size(ir->var->type->vector_elements);
-   src_reg.reladdr = false;
+   src_reg.reladdr = NULL;
    src_reg.negate = 0;
 
    this->result = src_reg;
@@ -1077,7 +1125,7 @@ ir_to_mesa_visitor::visit(ir_dereference_array *ir)
       src_reg.negate = 0;
 
       if (index) {
-	 src_reg.reladdr = GL_FALSE;
+	 src_reg.reladdr = NULL;
       } else {
 	 ir_to_mesa_src_reg index_reg = get_temp(glsl_type::float_type);
 
@@ -1086,9 +1134,8 @@ ir_to_mesa_visitor::visit(ir_dereference_array *ir)
 			     ir_to_mesa_dst_reg_from_src(index_reg),
 			     this->result, src_reg_for_float(element_size));
 
-	 src_reg.reladdr = true;
-	 ir_to_mesa_emit_op1(ir, OPCODE_ARL, ir_to_mesa_address_reg,
-			     index_reg);
+	 src_reg.reladdr = talloc(mem_ctx, ir_to_mesa_src_reg);
+	 memcpy(src_reg.reladdr, &index_reg, sizeof(index_reg));
       }
 
       this->result = src_reg;
@@ -1126,17 +1173,10 @@ ir_to_mesa_visitor::visit(ir_dereference_array *ir)
 				this->result, src_reg_for_float(element_size));
 	 }
 
-	 /* FINISHME: This doesn't work when we're trying to do the LHS
-	  * of an assignment.
-	  */
-	 src_reg.reladdr = true;
-	 ir_to_mesa_emit_op1(ir, OPCODE_ARL, ir_to_mesa_address_reg,
-			     index_reg);
+	 src_reg.reladdr = talloc(mem_ctx, ir_to_mesa_src_reg);
+	 memcpy(src_reg.reladdr, &index_reg, sizeof(index_reg));
 
-	 this->result = get_temp(ir->type);
-	 ir_to_mesa_emit_op1(ir, OPCODE_MOV,
-			     ir_to_mesa_dst_reg_from_src(this->result),
-			     src_reg);
+	 this->result = src_reg;
       }
    }
 
@@ -1183,9 +1223,6 @@ get_assignment_lhs(ir_instruction *ir, ir_to_mesa_visitor *v)
    /* This should have been handled by ir_vec_index_to_cond_assign */
    if (deref_array) {
       assert(!deref_array->array->type->is_vector());
-
-      /* We don't handle relative addressing on the LHS yet. */
-      assert(deref_array->array_index->constant_expression_value() != NULL);
    }
 
    /* Use the rvalue deref handler for the most part.  We'll ignore
@@ -1313,7 +1350,7 @@ ir_to_mesa_visitor::visit(ir_constant *ir)
 						    values,
 						    ir->type->vector_elements,
 						    &src_reg.swizzle);
-	 src_reg.reladdr = false;
+	 src_reg.reladdr = NULL;
 	 src_reg.negate = 0;
 	 ir_to_mesa_emit_op1(ir, OPCODE_MOV, mat_column, src_reg);
 
@@ -1350,7 +1387,7 @@ ir_to_mesa_visitor::visit(ir_constant *ir)
    src_reg.index = _mesa_add_unnamed_constant(this->prog->Parameters,
 					      values, ir->type->vector_elements,
 					      &src_reg.swizzle);
-   src_reg.reladdr = false;
+   src_reg.reladdr = NULL;
    src_reg.negate = 0;
 
    this->result = src_reg;
@@ -1578,7 +1615,7 @@ mesa_src_reg_from_ir_src_reg(ir_to_mesa_src_reg reg)
    assert(reg.index < (1 << INST_INDEX_BITS) - 1);
    mesa_reg.Index = reg.index;
    mesa_reg.Swizzle = reg.swizzle;
-   mesa_reg.RelAddr = reg.reladdr;
+   mesa_reg.RelAddr = reg.reladdr != NULL;
    mesa_reg.Negate = reg.negate;
    mesa_reg.Abs = 0;
 
@@ -1813,6 +1850,7 @@ get_mesa_program(GLcontext *ctx, void *mem_ctx, struct gl_shader *shader)
       mesa_inst->DstReg.Index = inst->dst_reg.index;
       mesa_inst->DstReg.CondMask = inst->dst_reg.cond_mask;
       mesa_inst->DstReg.WriteMask = inst->dst_reg.writemask;
+      mesa_inst->DstReg.RelAddr = inst->dst_reg.reladdr != NULL;
       mesa_inst->SrcReg[0] = mesa_src_reg_from_ir_src_reg(inst->src_reg[0]);
       mesa_inst->SrcReg[1] = mesa_src_reg_from_ir_src_reg(inst->src_reg[1]);
       mesa_inst->SrcReg[2] = mesa_src_reg_from_ir_src_reg(inst->src_reg[2]);
