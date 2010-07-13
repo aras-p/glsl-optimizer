@@ -28,6 +28,14 @@ INCLUDES = \
 
 LIBNAME_STAGING = $(TOP)/$(LIB_DIR)/gallium/$(TARGET)
 
+ifeq ($(MESA_LLVM),1)
+LD = g++
+LDFLAGS += $(LLVM_LDFLAGS)
+USE_CXX=1
+DRIVER_PIPES += $(TOP)/src/gallium/drivers/llvmpipe/libllvmpipe.a
+DRIVER_LINKS += $(LLVM_LIBS) -lm -ldl
+endif
+
 
 ##### TARGETS #####
 
