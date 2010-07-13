@@ -178,6 +178,9 @@ public:
 				   ir_to_mesa_src_reg src0,
 				   ir_to_mesa_src_reg src1);
 
+   GLboolean try_emit_mad(ir_expression *ir,
+			  int mul_operand);
+
    int *sampler_map;
    int sampler_map_size;
 
@@ -530,6 +533,30 @@ ir_to_mesa_visitor::visit(ir_function *ir)
    }
 }
 
+GLboolean
+ir_to_mesa_visitor::try_emit_mad(ir_expression *ir, int mul_operand)
+{
+   int nonmul_operand = 1 - mul_operand;
+   ir_to_mesa_src_reg a, b, c;
+
+   ir_expression *expr = ir->operands[mul_operand]->as_expression();
+   if (!expr || expr->operation != ir_binop_mul)
+      return false;
+
+   expr->operands[0]->accept(this);
+   a = this->result;
+   expr->operands[1]->accept(this);
+   b = this->result;
+   ir->operands[nonmul_operand]->accept(this);
+   c = this->result;
+
+   this->result = get_temp(ir->type);
+   ir_to_mesa_emit_op3(ir, OPCODE_MAD,
+		       ir_to_mesa_dst_reg_from_src(this->result), a, b, c);
+
+   return true;
+}
+
 void
 ir_to_mesa_visitor::visit(ir_expression *ir)
 {
@@ -540,6 +567,15 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
    const glsl_type *vec4_type = glsl_type::get_instance(GLSL_TYPE_FLOAT, 4, 1);
    const glsl_type *vec3_type = glsl_type::get_instance(GLSL_TYPE_FLOAT, 3, 1);
    const glsl_type *vec2_type = glsl_type::get_instance(GLSL_TYPE_FLOAT, 2, 1);
+
+   /* Quick peephole: Emit OPCODE_MAD(a, b, c) instead of ADD(MUL(a, b), c)
+    */
+   if (ir->operation == ir_binop_add) {
+      if (try_emit_mad(ir, 1))
+	 return;
+      if (try_emit_mad(ir, 0))
+	 return;
+   }
 
    for (operand = 0; operand < ir->get_num_operands(); operand++) {
       this->result.file = PROGRAM_UNDEFINED;
