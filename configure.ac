@@ -1261,6 +1261,7 @@ yes)
             HAVE_ST_EGL="yes"
             ;;
         xorg)
+            PKG_CHECK_MODULES([XORG], [xorg-server >= 1.6.0])
             PKG_CHECK_MODULES([LIBDRM_XORG], [libdrm >= $LIBDRM_XORG_REQUIRED])
             PKG_CHECK_MODULES([LIBKMS_XORG], [libkms >= $LIBKMS_XORG_REQUIRED])
             HAVE_ST_XORG="yes"
