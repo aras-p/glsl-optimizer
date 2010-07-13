@@ -1145,39 +1145,30 @@ ir_to_mesa_visitor::visit(ir_dereference_array *ir)
    ir->array->accept(this);
    src_reg = this->result;
 
-   if (src_reg.file == PROGRAM_INPUT ||
-       src_reg.file == PROGRAM_OUTPUT) {
-      assert(index); /* FINISHME: Handle variable indexing of builtins. */
-
-      src_reg.index += index->value.i[0];
+   if (index) {
+      src_reg.index += index->value.i[0] * element_size;
    } else {
-      if (index) {
-	 src_reg.index += index->value.i[0] * element_size;
+      ir_to_mesa_src_reg array_base = this->result;
+      /* Variable index array dereference.  It eats the "vec4" of the
+       * base of the array and an index that offsets the Mesa register
+       * index.
+       */
+      ir->array_index->accept(this);
+
+      ir_to_mesa_src_reg index_reg;
+
+      if (element_size == 1) {
+	 index_reg = this->result;
       } else {
-	 ir_to_mesa_src_reg array_base = this->result;
-	 /* Variable index array dereference.  It eats the "vec4" of the
-	  * base of the array and an index that offsets the Mesa register
-	  * index.
-	  */
-	 ir->array_index->accept(this);
+	 index_reg = get_temp(glsl_type::float_type);
 
-	 ir_to_mesa_src_reg index_reg;
-
-	 if (element_size == 1) {
-	    index_reg = this->result;
-	 } else {
-	    index_reg = get_temp(glsl_type::float_type);
-
-	    ir_to_mesa_emit_op2(ir, OPCODE_MUL,
-				ir_to_mesa_dst_reg_from_src(index_reg),
-				this->result, src_reg_for_float(element_size));
-	 }
-
-	 src_reg.reladdr = talloc(mem_ctx, ir_to_mesa_src_reg);
-	 memcpy(src_reg.reladdr, &index_reg, sizeof(index_reg));
-
-	 this->result = src_reg;
+	 ir_to_mesa_emit_op2(ir, OPCODE_MUL,
+			     ir_to_mesa_dst_reg_from_src(index_reg),
+			     this->result, src_reg_for_float(element_size));
       }
+
+      src_reg.reladdr = talloc(mem_ctx, ir_to_mesa_src_reg);
+      memcpy(src_reg.reladdr, &index_reg, sizeof(index_reg));
    }
 
    /* If the type is smaller than a vec4, replicate the last channel out. */
@@ -1718,6 +1709,44 @@ print_program(struct prog_instruction *mesa_instructions,
 }
 
 static void
+mark_input(struct gl_program *prog,
+	   int index,
+	   GLboolean reladdr)
+{
+   prog->InputsRead |= BITFIELD64_BIT(index);
+   int i;
+
+   if (reladdr) {
+      if (index >= FRAG_ATTRIB_TEX0 && index <= FRAG_ATTRIB_TEX7) {
+	 for (i = 0; i < 8; i++) {
+	    prog->InputsRead |= BITFIELD64_BIT(FRAG_ATTRIB_TEX0 + i);
+	 }
+      } else {
+	 assert(!"FINISHME: Mark InputsRead for varying arrays");
+      }
+   }
+}
+
+static void
+mark_output(struct gl_program *prog,
+	   int index,
+	   GLboolean reladdr)
+{
+   prog->OutputsWritten |= BITFIELD64_BIT(index);
+   int i;
+
+   if (reladdr) {
+      if (index >= VERT_RESULT_TEX0 && index <= VERT_RESULT_TEX7) {
+	 for (i = 0; i < 8; i++) {
+	    prog->OutputsWritten |= BITFIELD64_BIT(FRAG_ATTRIB_TEX0 + i);
+	 }
+      } else {
+	 assert(!"FINISHME: Mark OutputsWritten for varying arrays");
+      }
+   }
+}
+
+static void
 count_resources(struct gl_program *prog)
 {
    unsigned int i;
@@ -1732,10 +1761,10 @@ count_resources(struct gl_program *prog)
 
       switch (inst->DstReg.File) {
       case PROGRAM_OUTPUT:
-	 prog->OutputsWritten |= BITFIELD64_BIT(inst->DstReg.Index);
+	 mark_output(prog, inst->DstReg.Index, inst->DstReg.RelAddr);
 	 break;
       case PROGRAM_INPUT:
-	 prog->InputsRead |= BITFIELD64_BIT(inst->DstReg.Index);
+	 mark_input(prog, inst->DstReg.Index, inst->DstReg.RelAddr);
 	 break;
       default:
 	 break;
@@ -1744,10 +1773,11 @@ count_resources(struct gl_program *prog)
       for (reg = 0; reg < _mesa_num_inst_src_regs(inst->Opcode); reg++) {
 	 switch (inst->SrcReg[reg].File) {
 	 case PROGRAM_OUTPUT:
-	    prog->OutputsWritten |= BITFIELD64_BIT(inst->SrcReg[reg].Index);
+	    mark_output(prog, inst->SrcReg[reg].Index,
+			inst->SrcReg[reg].RelAddr);
 	    break;
 	 case PROGRAM_INPUT:
-	    prog->InputsRead |= BITFIELD64_BIT(inst->SrcReg[reg].Index);
+	    mark_input(prog, inst->SrcReg[reg].Index, inst->SrcReg[reg].RelAddr);
 	    break;
 	 default:
 	    break;
