@@ -154,6 +154,9 @@ public:
    /** List of ir_to_mesa_instruction */
    exec_list instructions;
 
+   ir_to_mesa_instruction *ir_to_mesa_emit_op0(ir_instruction *ir,
+					       enum prog_opcode op);
+
    ir_to_mesa_instruction *ir_to_mesa_emit_op1(ir_instruction *ir,
 					       enum prog_opcode op,
 					       ir_to_mesa_dst_reg dst,
@@ -282,6 +285,16 @@ ir_to_mesa_visitor::ir_to_mesa_emit_op1(ir_instruction *ir,
 {
    return ir_to_mesa_emit_op3(ir, op, dst,
 			      src0, ir_to_mesa_undef, ir_to_mesa_undef);
+}
+
+ir_to_mesa_instruction *
+ir_to_mesa_visitor::ir_to_mesa_emit_op0(ir_instruction *ir,
+					enum prog_opcode op)
+{
+   return ir_to_mesa_emit_op3(ir, op, ir_to_mesa_undef_dst,
+			      ir_to_mesa_undef,
+			      ir_to_mesa_undef,
+			      ir_to_mesa_undef);
 }
 
 void
@@ -507,13 +520,9 @@ ir_to_mesa_visitor::visit(ir_loop *ir)
    assert(!ir->increment);
    assert(!ir->counter);
 
-   ir_to_mesa_emit_op1(NULL, OPCODE_BGNLOOP,
-		       ir_to_mesa_undef_dst, ir_to_mesa_undef);
-
+   ir_to_mesa_emit_op0(NULL, OPCODE_BGNLOOP);
    visit_exec_list(&ir->body_instructions, this);
-
-   ir_to_mesa_emit_op1(NULL, OPCODE_ENDLOOP,
-		       ir_to_mesa_undef_dst, ir_to_mesa_undef);
+   ir_to_mesa_emit_op0(NULL, OPCODE_ENDLOOP);
 }
 
 void
@@ -521,12 +530,10 @@ ir_to_mesa_visitor::visit(ir_loop_jump *ir)
 {
    switch (ir->mode) {
    case ir_loop_jump::jump_break:
-      ir_to_mesa_emit_op1(NULL, OPCODE_BRK,
-			  ir_to_mesa_undef_dst, ir_to_mesa_undef);
+      ir_to_mesa_emit_op0(NULL, OPCODE_BRK);
       break;
    case ir_loop_jump::jump_continue:
-      ir_to_mesa_emit_op1(NULL, OPCODE_CONT,
-			  ir_to_mesa_undef_dst, ir_to_mesa_undef);
+      ir_to_mesa_emit_op0(NULL, OPCODE_CONT);
       break;
    }
 }
@@ -1534,8 +1541,7 @@ ir_to_mesa_visitor::visit(ir_discard *ir)
 {
    assert(ir->condition == NULL); /* FINISHME */
 
-   ir_to_mesa_emit_op1(ir, OPCODE_KIL_NV,
-		       ir_to_mesa_undef_dst, ir_to_mesa_undef);
+   ir_to_mesa_emit_op0(ir, OPCODE_KIL_NV);
 }
 
 void
@@ -1564,9 +1570,7 @@ ir_to_mesa_visitor::visit(ir_if *ir)
       }
       cond_inst->cond_update = GL_TRUE;
 
-      if_inst = ir_to_mesa_emit_op1(ir->condition,
-				    OPCODE_IF, ir_to_mesa_undef_dst,
-				    ir_to_mesa_undef);
+      if_inst = ir_to_mesa_emit_op0(ir->condition, OPCODE_IF);
       if_inst->dst_reg.cond_mask = COND_NE;
    } else {
       if_inst = ir_to_mesa_emit_op1(ir->condition,
@@ -1579,9 +1583,7 @@ ir_to_mesa_visitor::visit(ir_if *ir)
    visit_exec_list(&ir->then_instructions, this);
 
    if (!ir->else_instructions.is_empty()) {
-      else_inst = ir_to_mesa_emit_op1(ir->condition, OPCODE_ELSE,
-				      ir_to_mesa_undef_dst,
-				      ir_to_mesa_undef);
+      else_inst = ir_to_mesa_emit_op0(ir->condition, OPCODE_ELSE);
       visit_exec_list(&ir->else_instructions, this);
    }
 
@@ -1853,8 +1855,7 @@ get_mesa_program(GLcontext *ctx, void *mem_ctx, struct gl_shader *shader)
 
    v.mem_ctx = talloc_new(NULL);
    visit_exec_list(shader->ir, &v);
-   v.ir_to_mesa_emit_op1(NULL, OPCODE_END,
-			 ir_to_mesa_undef_dst, ir_to_mesa_undef);
+   v.ir_to_mesa_emit_op0(NULL, OPCODE_END);
 
    prog->NumTemporaries = v.next_temp;
 
