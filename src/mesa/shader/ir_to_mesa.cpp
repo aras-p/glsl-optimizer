@@ -588,9 +588,10 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
       }
       op[operand] = this->result;
 
-      /* Only expression implemented for matrices yet */
-      assert(!ir->operands[operand]->type->is_matrix() ||
-	     ir->operation == ir_binop_mul);
+      /* Matrix expression operands should have been broken down to vector
+       * operations already.
+       */
+      assert(!ir->operands[operand]->type->is_matrix());
    }
 
    this->result.file = PROGRAM_UNDEFINED;
@@ -661,86 +662,7 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
       break;
 
    case ir_binop_mul:
-      if (ir->operands[0]->type->is_matrix()) {
-	 if (ir->operands[1]->type->is_scalar()) {
-	    ir_to_mesa_dst_reg dst_column = result_dst;
-	    ir_to_mesa_src_reg src_column = op[0];
-	    for (int i = 0; i < ir->operands[0]->type->matrix_columns; i++) {
-	       ir_to_mesa_emit_op2(ir, OPCODE_MUL,
-				   dst_column, src_column, op[1]);
-	       dst_column.index++;
-	       src_column.index++;
-	    }
-	 } else {
-	    /* matrix * vec or matrix * matrix */
-	    int op1_col;
-	    ir_to_mesa_dst_reg dst_column = result_dst;
-	    ir_to_mesa_src_reg dst_column_src;
-	    ir_to_mesa_src_reg src_chan = op[1];
-
-	    dst_column_src = ir_to_mesa_src_reg_from_dst(result_dst);
-	    for (op1_col = 0; op1_col < ir->operands[1]->type->matrix_columns;
-		 op1_col++) {
-	       ir_to_mesa_src_reg src_column = op[0];
-
-	       for (int i = 0; i < ir->operands[0]->type->matrix_columns; i++) {
-		  src_chan.swizzle = MAKE_SWIZZLE4(i, i, i, i);
-		  if (i == 0) {
-		     ir_to_mesa_emit_op2(ir, OPCODE_MUL,
-					 dst_column, src_column, src_chan);
-		  } else {
-		     ir_to_mesa_emit_op3(ir, OPCODE_MAD,
-					 dst_column, src_column, src_chan,
-					 dst_column_src);
-		  }
-		  src_column.index++;
-	       }
-	       src_chan.index++;
-	       dst_column.index++;
-	       dst_column_src.index++;
-	    }
-	 }
-      } else if (ir->operands[1]->type->is_matrix()) {
-	 if (ir->operands[0]->type->is_scalar()) {
-	    ir_to_mesa_dst_reg dst_column = result_dst;
-	    ir_to_mesa_src_reg src_column = op[1];
-	    for (int i = 0; i < ir->operands[1]->type->matrix_columns; i++) {
-	       ir_to_mesa_emit_op2(ir, OPCODE_MUL,
-				   dst_column, src_column, op[0]);
-	       dst_column.index++;
-	       src_column.index++;
-	    }
-	 } else {
-	    ir_to_mesa_src_reg src_column = op[1];
-	    ir_to_mesa_dst_reg dst_chan = result_dst;
-
-	    /* FINISHME here and above: non-square matrices */
-	    assert(ir->operands[1]->type->vector_elements ==
-		   ir->operands[1]->type->matrix_columns);
-
-	    for (int i = 0; i < ir->operands[0]->type->vector_elements; i++) {
-	       dst_chan.writemask = (1 << i);
-	       switch (ir->operands[0]->type->vector_elements) {
-	       case 2:
-		  ir_to_mesa_emit_op2(ir, OPCODE_DP2, dst_chan, op[0], src_column);
-		  break;
-	       case 3:
-		  ir_to_mesa_emit_op2(ir, OPCODE_DP3, dst_chan, op[0], src_column);
-		  break;
-	       case 4:
-		  ir_to_mesa_emit_op2(ir, OPCODE_DP4, dst_chan, op[0], src_column);
-		  break;
-	       default:
-		  assert(0);
-	       }
-	       src_column.index++;
-	    }
-	 }
-      } else {
-	 assert(!ir->operands[0]->type->is_matrix());
-	 assert(!ir->operands[1]->type->is_matrix());
-	 ir_to_mesa_emit_op2(ir, OPCODE_MUL, result_dst, op[0], op[1]);
-      }
+      ir_to_mesa_emit_op2(ir, OPCODE_MUL, result_dst, op[0], op[1]);
       break;
    case ir_binop_div:
       assert(!"not reached: should be handled by ir_div_to_mul_rcp");
