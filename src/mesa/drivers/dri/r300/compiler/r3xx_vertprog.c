@@ -518,10 +518,10 @@ static int transform_nonnative_modifiers(
 			new_inst->U.I.SrcReg[1] = inst->U.I.SrcReg[i];
 			new_inst->U.I.SrcReg[1].Negate ^= RC_MASK_XYZW;
 
+			memset(&inst->U.I.SrcReg[i], 0, sizeof(inst->U.I.SrcReg[i]));
 			inst->U.I.SrcReg[i].File = RC_FILE_TEMPORARY;
 			inst->U.I.SrcReg[i].Index = temp;
-			inst->U.I.SrcReg[i].Negate = 0;
-			inst->U.I.SrcReg[i].RelAddr = 0;
+			inst->U.I.SrcReg[i].Swizzle = RC_SWIZZLE_XYZW;
 		}
 	}
 	return 1;
