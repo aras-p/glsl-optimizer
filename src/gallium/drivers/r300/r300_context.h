@@ -416,6 +416,8 @@ struct r300_context {
 
     /* The interface to the windowing system, etc. */
     struct r300_winsys_screen *rws;
+    /* The command stream. */
+    struct r300_winsys_cs *cs;
     /* Screen. */
     struct r300_screen *screen;
     /* Draw module. Used mostly for SW TCL. */
@@ -570,7 +572,6 @@ static INLINE struct r300_fragment_shader *r300_fs(struct r300_context *r300)
 struct pipe_context* r300_create_context(struct pipe_screen* screen,
                                          void *priv);
 
-boolean r300_check_cs(struct r300_context *r300, unsigned size);
 void r300_finish(struct r300_context *r300);
 void r300_flush_cb(void *data);
 

@@ -57,7 +57,9 @@ static struct pipe_query *r300_create_query(struct pipe_context *pipe,
     insert_at_tail(&r300->query_list, q);
 
     /* Open up the occlusion query buffer. */
-    q->buffer = r300->rws->buffer_create(r300->rws, 4096, 0, q->domain, q->buffer_size);
+    q->buffer = r300->rws->buffer_create(r300->rws, q->buffer_size, 4096,
+                                         PIPE_BIND_CUSTOM, PIPE_USAGE_STREAM,
+                                         q->domain);
 
     return (struct pipe_query*)q;
 }
@@ -134,7 +136,7 @@ static boolean r300_get_query_result(struct pipe_context* pipe,
 
     flags = PIPE_TRANSFER_READ | (!wait ? PIPE_TRANSFER_DONTBLOCK : 0);
 
-    map = r300->rws->buffer_map(r300->rws, q->buffer, flags);
+    map = r300->rws->buffer_map(r300->rws, q->buffer, r300->cs, flags);
     if (!map)
         return FALSE;
 

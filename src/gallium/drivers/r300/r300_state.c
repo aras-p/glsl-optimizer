@@ -617,13 +617,13 @@ static void r300_tex_set_tiling_flags(struct r300_context *r300,
     if (tex->mip_macrotile[tex->surface_level] != tex->mip_macrotile[level]) {
         /* Tiling determines how DRM treats the buffer data.
          * We must flush CS when changing it if the buffer is referenced. */
-        if (r300->rws->is_buffer_referenced(r300->rws, tex->buffer, R300_REF_CS))
+        if (r300->rws->cs_is_buffer_referenced(r300->cs,
+                                               tex->buffer, R300_REF_CS))
             r300->context.flush(&r300->context, 0, NULL);
 
         r300->rws->buffer_set_tiling(r300->rws, tex->buffer,
-                tex->pitch[0] * util_format_get_blocksize(tex->b.b.format),
-                tex->microtile,
-                tex->mip_macrotile[level]);
+                tex->microtile, tex->mip_macrotile[level],
+                tex->pitch[0] * util_format_get_blocksize(tex->b.b.format));
 
         tex->surface_level = level;
     }

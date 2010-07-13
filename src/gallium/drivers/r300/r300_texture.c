@@ -908,7 +908,8 @@ static unsigned r300_texture_is_referenced(struct pipe_context *context,
     struct r300_context *r300 = r300_context(context);
     struct r300_texture *rtex = (struct r300_texture *)texture;
 
-    if (r300->rws->is_buffer_referenced(r300->rws, rtex->buffer, R300_REF_CS))
+    if (r300->rws->cs_is_buffer_referenced(r300->cs,
+                                           rtex->buffer, R300_REF_CS))
         return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
 
     return PIPE_UNREFERENCED;
@@ -935,8 +936,9 @@ static boolean r300_texture_get_handle(struct pipe_screen* screen,
         return FALSE;
     }
 
-    return rws->buffer_get_handle(rws, tex->buffer, whandle,
-                    r300_texture_get_stride(r300_screen(screen), tex, 0));
+    return rws->buffer_get_handle(rws, tex->buffer,
+                    r300_texture_get_stride(r300_screen(screen), tex, 0),
+                    whandle);
 }
 
 struct u_resource_vtbl r300_texture_vtbl = 
@@ -1005,8 +1007,8 @@ struct pipe_resource* r300_texture_create(struct pipe_screen* screen,
                   R300_DOMAIN_GTT :
                   R300_DOMAIN_VRAM | R300_DOMAIN_GTT;
 
-    tex->buffer = rws->buffer_create(rws, 2048, base->bind, tex->domain,
-                                     tex->size);
+    tex->buffer = rws->buffer_create(rws, tex->size, 2048, base->bind,
+                                     base->usage, tex->domain);
 
     if (!tex->buffer) {
 	FREE(tex);
@@ -1014,9 +1016,8 @@ struct pipe_resource* r300_texture_create(struct pipe_screen* screen,
     }
 
     rws->buffer_set_tiling(rws, tex->buffer,
-            tex->pitch[0] * util_format_get_blocksize(tex->b.b.format),
-            tex->microtile,
-            tex->macrotile);
+            tex->microtile, tex->macrotile,
+            tex->pitch[0] * util_format_get_blocksize(tex->b.b.format));
 
     return (struct pipe_resource*)tex;
 }
@@ -1176,9 +1177,8 @@ r300_texture_from_handle(struct pipe_screen* screen,
 
     if (override_zb_flags) {
         rws->buffer_set_tiling(rws, tex->buffer,
-                tex->pitch[0] * util_format_get_blocksize(tex->b.b.format),
-                tex->microtile,
-                tex->macrotile);
+                tex->microtile, tex->macrotile,
+                tex->pitch[0] * util_format_get_blocksize(tex->b.b.format));
     }
     return (struct pipe_resource*)tex;
 }

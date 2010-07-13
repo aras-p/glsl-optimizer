@@ -89,9 +89,6 @@
     CB_DEBUG(cs_count = size;) \
 } while (0)
 
-#define BEGIN_CS_AS_CB(r300, size) \
-    BEGIN_CB(r300->rws->get_cs_pointer(r300->rws, size), size)
-
 #define END_CB do { \
     CB_DEBUG(if (cs_count != 0) \
         debug_printf("r300: Warning: cs_count off by %d at (%s, %s:%i)\n", \

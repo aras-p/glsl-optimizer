@@ -97,23 +97,4 @@ static INLINE boolean r300_buffer_is_user_buffer(struct pipe_resource *buffer)
     return r300_buffer(buffer)->user_buffer ? true : false;
 }
 
-static INLINE boolean r300_add_buffer(struct r300_winsys_screen *rws,
-				      struct pipe_resource *buffer,
-				      int rd, int wr)
-{
-    struct r300_buffer *buf = r300_buffer(buffer);
-
-    if (!buf->buf)
-	return true;
-
-    return rws->add_buffer(rws, buf->buf, rd, wr);
-}
-
-static INLINE boolean r300_add_texture(struct r300_winsys_screen *rws,
-				       struct r300_texture *tex,
-				       int rd, int wr)
-{
-    return rws->add_buffer(rws, tex->buffer, rd, wr);
-}
-
 #endif

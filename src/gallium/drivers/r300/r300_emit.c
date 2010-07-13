@@ -314,10 +314,10 @@ void r300_emit_aa_state(struct r300_context *r300, unsigned size, void *state)
 
     if (aa->dest) {
         OUT_CS_REG_SEQ(R300_RB3D_AARESOLVE_OFFSET, 1);
-        OUT_CS_RELOC(aa->dest->buffer, aa->dest->offset, 0, aa->dest->domain, 0);
+        OUT_CS_RELOC(aa->dest->buffer, aa->dest->offset, 0, aa->dest->domain);
 
         OUT_CS_REG_SEQ(R300_RB3D_AARESOLVE_PITCH, 1);
-        OUT_CS_RELOC(aa->dest->buffer, aa->dest->pitch, 0, aa->dest->domain, 0);
+        OUT_CS_RELOC(aa->dest->buffer, aa->dest->pitch, 0, aa->dest->domain);
     }
 
     OUT_CS_REG(R300_RB3D_AARESOLVE_CTL, aa->aaresolve_ctl);
@@ -347,10 +347,10 @@ void r300_emit_fb_state(struct r300_context* r300, unsigned size, void* state)
         surf = r300_surface(fb->cbufs[i]);
 
         OUT_CS_REG_SEQ(R300_RB3D_COLOROFFSET0 + (4 * i), 1);
-        OUT_CS_RELOC(surf->buffer, surf->offset, 0, surf->domain, 0);
+        OUT_CS_RELOC(surf->buffer, surf->offset, 0, surf->domain);
 
         OUT_CS_REG_SEQ(R300_RB3D_COLORPITCH0 + (4 * i), 1);
-        OUT_CS_RELOC(surf->buffer, surf->pitch, 0, surf->domain, 0);
+        OUT_CS_RELOC(surf->buffer, surf->pitch, 0, surf->domain);
     }
 
     /* Set up the ZB part of the CBZB clear. */
@@ -360,10 +360,10 @@ void r300_emit_fb_state(struct r300_context* r300, unsigned size, void* state)
         OUT_CS_REG(R300_ZB_FORMAT, surf->cbzb_format);
 
         OUT_CS_REG_SEQ(R300_ZB_DEPTHOFFSET, 1);
-        OUT_CS_RELOC(surf->buffer, surf->cbzb_midpoint_offset, 0, surf->domain, 0);
+        OUT_CS_RELOC(surf->buffer, surf->cbzb_midpoint_offset, 0, surf->domain);
 
         OUT_CS_REG_SEQ(R300_ZB_DEPTHPITCH, 1);
-        OUT_CS_RELOC(surf->buffer, surf->cbzb_pitch, 0, surf->domain, 0);
+        OUT_CS_RELOC(surf->buffer, surf->cbzb_pitch, 0, surf->domain);
     }
     /* Set up a zbuffer. */
     else if (fb->zsbuf) {
@@ -372,10 +372,10 @@ void r300_emit_fb_state(struct r300_context* r300, unsigned size, void* state)
         OUT_CS_REG(R300_ZB_FORMAT, surf->format);
 
         OUT_CS_REG_SEQ(R300_ZB_DEPTHOFFSET, 1);
-        OUT_CS_RELOC(surf->buffer, surf->offset, 0, surf->domain, 0);
+        OUT_CS_RELOC(surf->buffer, surf->offset, 0, surf->domain);
 
         OUT_CS_REG_SEQ(R300_ZB_DEPTHPITCH, 1);
-        OUT_CS_RELOC(surf->buffer, surf->pitch, 0, surf->domain, 0);
+        OUT_CS_RELOC(surf->buffer, surf->pitch, 0, surf->domain);
 
         /* HiZ RAM. */
         if (r300->screen->caps.has_hiz) {
@@ -512,13 +512,13 @@ static void r300_emit_query_end_frag_pipes(struct r300_context *r300,
             OUT_CS_REG(R300_SU_REG_DEST, 1 << 3);
             OUT_CS_REG_SEQ(R300_ZB_ZPASS_ADDR, 1);
             OUT_CS_RELOC(buf, (query->num_results + 3) * 4,
-                    0, query->domain, 0);
+                    0, query->domain);
         case 3:
             /* pipe 2 only */
             OUT_CS_REG(R300_SU_REG_DEST, 1 << 2);
             OUT_CS_REG_SEQ(R300_ZB_ZPASS_ADDR, 1);
             OUT_CS_RELOC(buf, (query->num_results + 2) * 4,
-                    0, query->domain, 0);
+                    0, query->domain);
         case 2:
             /* pipe 1 only */
             /* As mentioned above, accomodate RV380 and older. */
@@ -526,13 +526,13 @@ static void r300_emit_query_end_frag_pipes(struct r300_context *r300,
                     1 << (caps->high_second_pipe ? 3 : 1));
             OUT_CS_REG_SEQ(R300_ZB_ZPASS_ADDR, 1);
             OUT_CS_RELOC(buf, (query->num_results + 1) * 4,
-                    0, query->domain, 0);
+                    0, query->domain);
         case 1:
             /* pipe 0 only */
             OUT_CS_REG(R300_SU_REG_DEST, 1 << 0);
             OUT_CS_REG_SEQ(R300_ZB_ZPASS_ADDR, 1);
             OUT_CS_RELOC(buf, (query->num_results + 0) * 4,
-                    0, query->domain, 0);
+                    0, query->domain);
             break;
         default:
             fprintf(stderr, "r300: Implementation error: Chipset reports %d"
@@ -554,7 +554,7 @@ static void rv530_emit_query_end_single_z(struct r300_context *r300,
     BEGIN_CS(8);
     OUT_CS_REG(RV530_FG_ZBREG_DEST, RV530_FG_ZBREG_DEST_PIPE_SELECT_0);
     OUT_CS_REG_SEQ(R300_ZB_ZPASS_ADDR, 1);
-    OUT_CS_RELOC(buf, query->num_results * 4, 0, query->domain, 0);
+    OUT_CS_RELOC(buf, query->num_results * 4, 0, query->domain);
     OUT_CS_REG(RV530_FG_ZBREG_DEST, RV530_FG_ZBREG_DEST_PIPE_SELECT_ALL);
     END_CS;
 }
@@ -568,10 +568,10 @@ static void rv530_emit_query_end_double_z(struct r300_context *r300,
     BEGIN_CS(14);
     OUT_CS_REG(RV530_FG_ZBREG_DEST, RV530_FG_ZBREG_DEST_PIPE_SELECT_0);
     OUT_CS_REG_SEQ(R300_ZB_ZPASS_ADDR, 1);
-    OUT_CS_RELOC(buf, (query->num_results + 0) * 4, 0, query->domain, 0);
+    OUT_CS_RELOC(buf, (query->num_results + 0) * 4, 0, query->domain);
     OUT_CS_REG(RV530_FG_ZBREG_DEST, RV530_FG_ZBREG_DEST_PIPE_SELECT_1);
     OUT_CS_REG_SEQ(R300_ZB_ZPASS_ADDR, 1);
-    OUT_CS_RELOC(buf, (query->num_results + 1) * 4, 0, query->domain, 0);
+    OUT_CS_RELOC(buf, (query->num_results + 1) * 4, 0, query->domain);
     OUT_CS_REG(RV530_FG_ZBREG_DEST, RV530_FG_ZBREG_DEST_PIPE_SELECT_ALL);
     END_CS;
 }
@@ -731,7 +731,7 @@ void r300_emit_textures_state(struct r300_context *r300,
 
             OUT_CS_REG_SEQ(R300_TX_OFFSET_0 + (i * 4), 1);
             OUT_CS_TEX_RELOC(tex, texstate->format.tile_config, tex->domain,
-                             0, 0);
+                             0);
         }
     }
     END_CS;
@@ -774,7 +774,7 @@ void r300_emit_aos(struct r300_context* r300, int offset, boolean indexed)
 
     for (i = 0; i < aos_count; i++) {
         buf = r300_buffer(vbuf[velem[i].vertex_buffer_index].buffer);
-        OUT_CS_BUF_RELOC_NO_OFFSET(&buf->b.b, buf->domain, 0, 0);
+        OUT_CS_BUF_RELOC_NO_OFFSET(&buf->b.b, buf->domain, 0);
     }
     END_CS;
 }
@@ -799,7 +799,7 @@ void r300_emit_aos_swtcl(struct r300_context *r300, boolean indexed)
     OUT_CS(r300->vertex_info.size |
             (r300->vertex_info.size << 8));
     OUT_CS(r300->vbo_offset);
-    OUT_CS_BUF_RELOC(r300->vbo, 0, r300_buffer(r300->vbo)->domain, 0, 0);
+    OUT_CS_BUF_RELOC(r300->vbo, 0, r300_buffer(r300->vbo)->domain, 0);
     END_CS;
 }
 
@@ -985,28 +985,22 @@ void r300_emit_buffer_validate(struct r300_context *r300,
     }
 
     /* Clean out BOs. */
-    r300->rws->reset_bos(r300->rws);
+    r300->rws->cs_reset_buffers(r300->cs);
 
 validate:
     /* Color buffers... */
     for (i = 0; i < fb->nr_cbufs; i++) {
         tex = r300_texture(fb->cbufs[i]->texture);
         assert(tex && tex->buffer && "cbuf is marked, but NULL!");
-        if (!r300_add_texture(r300->rws, tex, 0,
-                              r300_surface(fb->cbufs[i])->domain)) {
-            r300->context.flush(&r300->context, 0, NULL);
-            goto validate;
-        }
+        r300->rws->cs_add_buffer(r300->cs, tex->buffer, 0,
+                                 r300_surface(fb->cbufs[i])->domain);
     }
     /* ...depth buffer... */
     if (fb->zsbuf) {
         tex = r300_texture(fb->zsbuf->texture);
         assert(tex && tex->buffer && "zsbuf is marked, but NULL!");
-        if (!r300_add_texture(r300->rws, tex, 0,
-                              r300_surface(fb->zsbuf)->domain)) {
-            r300->context.flush(&r300->context, 0, NULL);
-            goto validate;
-        }
+        r300->rws->cs_add_buffer(r300->cs, tex->buffer, 0,
+                                 r300_surface(fb->zsbuf)->domain);
     }
     /* ...textures... */
     for (i = 0; i < texstate->count; i++) {
@@ -1015,48 +1009,31 @@ validate:
         }
 
         tex = r300_texture(texstate->sampler_views[i]->base.texture);
-        if (!r300_add_texture(r300->rws, tex, tex->domain, 0)) {
-            r300->context.flush(&r300->context, 0, NULL);
-            goto validate;
-        }
+        r300->rws->cs_add_buffer(r300->cs, tex->buffer, tex->domain, 0);
     }
     /* ...occlusion query buffer... */
-    if (r300->query_current) {
-        if (!r300->rws->add_buffer(r300->rws, r300->query_current->buffer,
-                                   0, r300->query_current->domain)) {
-            r300->context.flush(&r300->context, 0, NULL);
-            goto validate;
-        }
-    }
+    if (r300->query_current)
+        r300->rws->cs_add_buffer(r300->cs, r300->query_current->buffer,
+                                 0, r300->query_current->domain);
     /* ...vertex buffer for SWTCL path... */
-    if (r300->vbo) {
-        if (!r300_add_buffer(r300->rws, r300->vbo,
-			     r300_buffer(r300->vbo)->domain, 0)) {
-            r300->context.flush(&r300->context, 0, NULL);
-            goto validate;
-        }
-    }
+    if (r300->vbo)
+        r300->rws->cs_add_buffer(r300->cs, r300_buffer(r300->vbo)->buf,
+                                 r300_buffer(r300->vbo)->domain, 0);
     /* ...vertex buffers for HWTCL path... */
     if (do_validate_vertex_buffers) {
         for (i = 0; i < r300->velems->count; i++) {
             pbuf = vbuf[velem[i].vertex_buffer_index].buffer;
 
-            if (!r300_add_buffer(r300->rws, pbuf,
-				 r300_buffer(pbuf)->domain, 0)) {
-		r300->context.flush(&r300->context, 0, NULL);
-                goto validate;
-            }
+            r300->rws->cs_add_buffer(r300->cs, r300_buffer(pbuf)->buf,
+                                     r300_buffer(pbuf)->domain, 0);
         }
     }
     /* ...and index buffer for HWTCL path. */
-    if (index_buffer) {
-        if (!r300_add_buffer(r300->rws, index_buffer,
-			     r300_buffer(index_buffer)->domain, 0)) {
-            r300->context.flush(&r300->context, 0, NULL);
-            goto validate;
-        }
-    }
-    if (!r300->rws->validate(r300->rws)) {
+    if (index_buffer)
+        r300->rws->cs_add_buffer(r300->cs, r300_buffer(index_buffer)->buf,
+                                 r300_buffer(index_buffer)->domain, 0);
+
+    if (!r300->rws->cs_validate(r300->cs)) {
         r300->context.flush(&r300->context, 0, NULL);
         if (invalid) {
             /* Well, hell. */

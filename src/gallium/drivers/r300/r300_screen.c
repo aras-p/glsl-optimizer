@@ -420,9 +420,3 @@ struct pipe_screen* r300_screen_create(struct r300_winsys_screen *rws)
 
     return &r300screen->screen;
 }
-
-struct r300_winsys_screen *
-r300_winsys_screen(struct pipe_screen *screen)
-{
-    return r300_screen(screen)->rws;
-}

@@ -52,7 +52,7 @@ static void r300_flush(struct pipe_context* pipe,
         r300_emit_query_end(r300);
 
         r300->flush_counter++;
-        r300->rws->flush_cs(r300->rws);
+        r300->rws->cs_flush(r300->cs);
         r300->dirty_hw = 0;
 
         /* New kitchen sink, baby. */

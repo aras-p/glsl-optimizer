@@ -30,6 +30,8 @@
 
 #include <stdio.h>
 
+struct r300_winsys_screen;
+
 struct r300_screen {
     /* Parent class */
     struct pipe_screen screen;
@@ -44,9 +46,14 @@ struct r300_screen {
 };
 
 
-/* Convenience cast wrapper. */
+/* Convenience cast wrappers. */
 static INLINE struct r300_screen* r300_screen(struct pipe_screen* screen) {
     return (struct r300_screen*)screen;
+}
+
+static INLINE struct r300_winsys_screen *
+r300_winsys_screen(struct pipe_screen *screen) {
+    return r300_screen(screen)->rws;
 }
 
 /* Debug functionality. */

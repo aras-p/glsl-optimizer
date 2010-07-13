@@ -91,19 +91,22 @@ r300_texture_get_transfer(struct pipe_context *ctx,
 			  unsigned usage,
 			  const struct pipe_box *box)
 {
+    struct r300_context *r300 = r300_context(ctx);
     struct r300_texture *tex = r300_texture(texture);
     struct r300_screen *r300screen = r300_screen(ctx->screen);
     struct r300_transfer *trans;
     struct pipe_resource base;
     boolean referenced_cs, referenced_hw, blittable;
 
-    referenced_cs = r300screen->rws->is_buffer_referenced(
-                                r300screen->rws, tex->buffer, R300_REF_CS);
+    referenced_cs =
+        r300->rws->cs_is_buffer_referenced(r300->cs,
+                                           tex->buffer, R300_REF_CS);
     if (referenced_cs) {
         referenced_hw = TRUE;
     } else {
-        referenced_hw = r300screen->rws->is_buffer_referenced(
-                                r300screen->rws, tex->buffer, R300_REF_HW);
+        referenced_hw =
+            r300->rws->cs_is_buffer_referenced(r300->cs,
+                                               tex->buffer, R300_REF_HW);
     }
 
     blittable = ctx->screen->is_format_supported(
@@ -231,6 +234,7 @@ void r300_texture_transfer_destroy(struct pipe_context *ctx,
 void* r300_texture_transfer_map(struct pipe_context *ctx,
 				struct pipe_transfer *transfer)
 {
+    struct r300_context *r300 = r300_context(ctx);
     struct r300_winsys_screen *rws = (struct r300_winsys_screen *)ctx->winsys;
     struct r300_transfer *r300transfer = r300_transfer(transfer);
     struct r300_texture *tex = r300_texture(transfer->resource);
@@ -242,10 +246,11 @@ void* r300_texture_transfer_map(struct pipe_context *ctx,
          * (no offset needed). */
         return rws->buffer_map(rws,
                                r300transfer->detiled_texture->buffer,
+                               r300->cs,
                                transfer->usage);
     } else {
         /* Tiling is disabled. */
-        map = rws->buffer_map(rws, tex->buffer,
+        map = rws->buffer_map(rws, tex->buffer, r300->cs,
                               transfer->usage);
 
         if (!map) {

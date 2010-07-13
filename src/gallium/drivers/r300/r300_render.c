@@ -229,7 +229,7 @@ static void r300_prepare_for_rendering(struct r300_context *r300,
     cs_dwords += end_dwords;
 
     /* Reserve requested CS space. */
-    if (!r300_check_cs(r300, cs_dwords)) {
+    if (cs_dwords > (r300->cs->ndw - r300->cs->cdw)) {
         r300->context.flush(&r300->context, 0, NULL);
         flushed = TRUE;
     }
@@ -331,7 +331,7 @@ static void r300_emit_draw_arrays_immediate(struct r300_context *r300,
     uint32_t* mapelem[PIPE_MAX_ATTRIBS];
     struct pipe_transfer* transfer[PIPE_MAX_ATTRIBS] = {0};
 
-    CB_LOCALS;
+    CS_LOCALS(r300);
 
     /* Calculate the vertex size, offsets, strides etc. and map the buffers. */
     for (i = 0; i < vertex_element_count; i++) {
@@ -356,24 +356,24 @@ static void r300_emit_draw_arrays_immediate(struct r300_context *r300,
 
     r300_prepare_for_rendering(r300, PREP_FIRST_DRAW, NULL, dwords, 0, 0, NULL);
 
-    BEGIN_CS_AS_CB(r300, dwords);
-    OUT_CB_REG(R300_GA_COLOR_CONTROL,
+    BEGIN_CS(dwords);
+    OUT_CS_REG(R300_GA_COLOR_CONTROL,
             r300_provoking_vertex_fixes(r300, mode));
-    OUT_CB_REG(R300_VAP_VTX_SIZE, vertex_size);
-    OUT_CB_REG_SEQ(R300_VAP_VF_MAX_VTX_INDX, 2);
-    OUT_CB(count - 1);
-    OUT_CB(0);
-    OUT_CB_PKT3(R300_PACKET3_3D_DRAW_IMMD_2, count * vertex_size);
-    OUT_CB(R300_VAP_VF_CNTL__PRIM_WALK_VERTEX_EMBEDDED | (count << 16) |
+    OUT_CS_REG(R300_VAP_VTX_SIZE, vertex_size);
+    OUT_CS_REG_SEQ(R300_VAP_VF_MAX_VTX_INDX, 2);
+    OUT_CS(count - 1);
+    OUT_CS(0);
+    OUT_CS_PKT3(R300_PACKET3_3D_DRAW_IMMD_2, count * vertex_size);
+    OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_VERTEX_EMBEDDED | (count << 16) |
             r300_translate_primitive(mode));
 
     /* Emit vertices. */
     for (v = 0; v < count; v++) {
         for (i = 0; i < vertex_element_count; i++) {
-            OUT_CB_TABLE(&mapelem[i][stride[i] * v], size[i]);
+            OUT_CS_TABLE(&mapelem[i][stride[i] * v], size[i]);
         }
     }
-    END_CB;
+    END_CS;
 
     /* Unmap buffers. */
     for (i = 0; i < vertex_element_count; i++) {
@@ -474,7 +474,7 @@ static void r300_emit_draw_elements(struct r300_context *r300,
            (0 << R300_INDX_BUFFER_SKIP_SHIFT));
     OUT_CS(offset_dwords << 2);
     OUT_CS_BUF_RELOC(indexBuffer, count_dwords,
-		     r300_buffer(indexBuffer)->domain, 0, 0);
+                     r300_buffer(indexBuffer)->domain, 0);
 
     END_CS;
 }
@@ -929,7 +929,7 @@ static void r300_render_draw_elements(struct vbuf_render* render,
         NULL, 256, 0, 0, &end_cs_dwords);
 
     while (count) {
-        free_dwords = r300->rws->get_cs_free_dwords(r300->rws);
+        free_dwords = r300->cs->ndw - r300->cs->cdw;
 
         short_count = MIN2(count, (free_dwords - end_cs_dwords - 6) * 2);
 
@@ -1039,7 +1039,7 @@ static void r300_blitter_draw_rectangle(struct blitter_context *blitter,
     unsigned dwords = 13 + vertex_size +
                       (type == UTIL_BLITTER_ATTRIB_TEXCOORD ? 7 : 0);
     const float zeros[4] = {0, 0, 0, 0};
-    CB_LOCALS;
+    CS_LOCALS(r300);
 
     if (type == UTIL_BLITTER_ATTRIB_TEXCOORD)
         r300->sprite_coord_enable = 1;
@@ -1054,45 +1054,45 @@ static void r300_blitter_draw_rectangle(struct blitter_context *blitter,
 
     DBG(r300, DBG_DRAW, "r300: draw_rectangle\n");
 
-    BEGIN_CS_AS_CB(r300, dwords);
+    BEGIN_CS(dwords);
     /* Set up GA. */
-    OUT_CB_REG(R300_GA_POINT_SIZE, (height * 6) | ((width * 6) << 16));
+    OUT_CS_REG(R300_GA_POINT_SIZE, (height * 6) | ((width * 6) << 16));
 
     if (type == UTIL_BLITTER_ATTRIB_TEXCOORD) {
         /* Set up the GA to generate texcoords. */
-        OUT_CB_REG(R300_GB_ENABLE, R300_GB_POINT_STUFF_ENABLE |
+        OUT_CS_REG(R300_GB_ENABLE, R300_GB_POINT_STUFF_ENABLE |
                    (R300_GB_TEX_STR << R300_GB_TEX0_SOURCE_SHIFT));
-        OUT_CB_REG_SEQ(R300_GA_POINT_S0, 4);
-        OUT_CB_32F(attrib[0]);
-        OUT_CB_32F(attrib[3]);
-        OUT_CB_32F(attrib[2]);
-        OUT_CB_32F(attrib[1]);
+        OUT_CS_REG_SEQ(R300_GA_POINT_S0, 4);
+        OUT_CS_32F(attrib[0]);
+        OUT_CS_32F(attrib[3]);
+        OUT_CS_32F(attrib[2]);
+        OUT_CS_32F(attrib[1]);
     }
 
     /* Set up VAP controls. */
-    OUT_CB_REG(R300_VAP_CLIP_CNTL, R300_CLIP_DISABLE);
-    OUT_CB_REG(R300_VAP_VTE_CNTL, R300_VTX_XY_FMT | R300_VTX_Z_FMT);
-    OUT_CB_REG(R300_VAP_VTX_SIZE, vertex_size);
-    OUT_CB_REG_SEQ(R300_VAP_VF_MAX_VTX_INDX, 2);
-    OUT_CB(1);
-    OUT_CB(0);
+    OUT_CS_REG(R300_VAP_CLIP_CNTL, R300_CLIP_DISABLE);
+    OUT_CS_REG(R300_VAP_VTE_CNTL, R300_VTX_XY_FMT | R300_VTX_Z_FMT);
+    OUT_CS_REG(R300_VAP_VTX_SIZE, vertex_size);
+    OUT_CS_REG_SEQ(R300_VAP_VF_MAX_VTX_INDX, 2);
+    OUT_CS(1);
+    OUT_CS(0);
 
     /* Draw. */
-    OUT_CB_PKT3(R300_PACKET3_3D_DRAW_IMMD_2, vertex_size);
-    OUT_CB(R300_VAP_VF_CNTL__PRIM_WALK_VERTEX_EMBEDDED | (1 << 16) |
+    OUT_CS_PKT3(R300_PACKET3_3D_DRAW_IMMD_2, vertex_size);
+    OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_VERTEX_EMBEDDED | (1 << 16) |
            R300_VAP_VF_CNTL__PRIM_POINTS);
 
-    OUT_CB_32F(x1 + width * 0.5f);
-    OUT_CB_32F(y1 + height * 0.5f);
-    OUT_CB_32F(depth);
-    OUT_CB_32F(1);
+    OUT_CS_32F(x1 + width * 0.5f);
+    OUT_CS_32F(y1 + height * 0.5f);
+    OUT_CS_32F(depth);
+    OUT_CS_32F(1);
 
     if (vertex_size == 8) {
         if (!attrib)
             attrib = zeros;
-        OUT_CB_TABLE(attrib, 4);
+        OUT_CS_TABLE(attrib, 4);
     }
-    END_CB;
+    END_CS;
 
     /* Restore the state. */
     r300->clip_state.dirty = TRUE;

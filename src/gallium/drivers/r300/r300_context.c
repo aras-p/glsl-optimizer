@@ -100,6 +100,8 @@ static void r300_destroy_context(struct pipe_context* context)
 
     r300_release_referenced_objects(r300);
 
+    r300->rws->cs_destroy(r300->cs);
+
     FREE(r300->aa_state.state);
     FREE(r300->blend_color_state.state);
     FREE(r300->clip_state.state);
@@ -354,6 +356,8 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
 
     r300->context.destroy = r300_destroy_context;
 
+    r300->cs = rws->cs_create(rws);
+
     if (!r300screen->caps.has_tcl) {
         /* Create a Draw. This is used for SW TCL. */
         r300->draw = draw_create(&r300->context);
@@ -381,7 +385,7 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     /* Render functions must be initialized after blitter. */
     r300_init_render_functions(r300);
 
-    rws->set_flush_cb(r300->rws, r300_flush_cb, r300);
+    rws->cs_set_flush(r300->cs, r300_flush_cb, r300);
 
     r300->upload_ib = u_upload_create(&r300->context,
 				      32 * 1024, 16,
@@ -431,11 +435,6 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
  no_upload_vb:
     FREE(r300);
     return NULL;
-}
-
-boolean r300_check_cs(struct r300_context *r300, unsigned size)
-{
-    return size <= r300->rws->get_cs_free_dwords(r300->rws);
 }
 
 void r300_finish(struct r300_context *r300)

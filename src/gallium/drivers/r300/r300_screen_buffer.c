@@ -43,7 +43,7 @@ unsigned r300_buffer_is_referenced(struct pipe_context *context,
     if (r300_buffer_is_user_buffer(buf))
  	return PIPE_UNREFERENCED;
 
-    if (r300->rws->is_buffer_referenced(r300->rws, rbuf->buf, domain))
+    if (r300->rws->cs_is_buffer_referenced(r300->cs, rbuf->buf, domain))
         return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
 
     return PIPE_UNREFERENCED;
@@ -144,6 +144,7 @@ static void *
 r300_buffer_transfer_map( struct pipe_context *pipe,
 			  struct pipe_transfer *transfer )
 {
+    struct r300_context *r300 = r300_context(pipe);
     struct r300_screen *r300screen = r300_screen(pipe->screen);
     struct r300_winsys_screen *rws = r300screen->rws;
     struct r300_buffer *rbuf = r300_buffer(transfer->resource);
@@ -170,23 +171,19 @@ r300_buffer_transfer_map( struct pipe_context *pipe,
 		rws->buffer_reference(rws, &rbuf->buf, NULL);
 
 		rbuf->num_ranges = 0;
-		rbuf->buf = r300screen->rws->buffer_create(r300screen->rws, 16,
-						      rbuf->b.b.bind,
-                                                      rbuf->domain,
-						      rbuf->b.b.width0);
+                rbuf->buf =
+                    r300screen->rws->buffer_create(r300screen->rws,
+                                                   rbuf->b.b.width0, 16,
+                                                   rbuf->b.b.bind,
+                                                   rbuf->b.b.usage,
+                                                   rbuf->domain);
 		break;
 	    }
 	}
     }
 
 just_map:
-    /* XXX buffer_map might flush.
-     * We cannot flush here because there is a buffer manager between
-     * the context and winsys, and it does some magic to make the driver
-     * fast. This is a workaround for the case of multiple contexts. */
-    rws->set_flush_cb(rws, r300_flush_cb, pipe);
-
-    map = rws->buffer_map(rws, rbuf->buf, transfer->usage);
+    map = rws->buffer_map(rws, rbuf->buf, r300->cs, transfer->usage);
 
     if (map == NULL)
         return NULL;
@@ -273,11 +270,11 @@ struct pipe_resource *r300_buffer_create(struct pipe_screen *screen,
     rbuf->b.b.screen = screen;
     rbuf->domain = R300_DOMAIN_GTT;
 
-    rbuf->buf = r300screen->rws->buffer_create(r300screen->rws,
-					  alignment,
-					  rbuf->b.b.bind,
-                                          rbuf->domain,
-					  rbuf->b.b.width0);
+    rbuf->buf =
+        r300screen->rws->buffer_create(r300screen->rws,
+                                       rbuf->b.b.width0, alignment,
+                                       rbuf->b.b.bind, rbuf->b.b.usage,
+                                       rbuf->domain);
 
     if (!rbuf->buf)
 	goto error2;
