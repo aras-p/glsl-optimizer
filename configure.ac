@@ -1255,12 +1255,19 @@ yes)
             # mesa/es is required to build es state tracker
             CORE_DIRS="$CORE_DIRS mesa/es"
             ;;
-        xorg/xvmc)
-            # Check for libXvMC?
+	xorg/xvmc)
+            # Check for xvmc?
             if test "x$enable_gallium_g3dvl" != xyes; then
                 AC_MSG_ERROR([cannot build XvMC state tracker without --enable-gallium-g3dvl])
             fi
             HAVE_ST_XVMC="yes"
+            ;;
+        vdpau)
+            # Check for libvdpau?
+            if test "x$enable_gallium_g3dvl" != xyes; then
+                AC_MSG_ERROR([cannot build vdpau state tracker without --enable-gallium-g3dvl])
+            fi
+            HAVE_ST_VDPAU="yes"
             ;;
         esac
     done
@@ -1365,7 +1372,7 @@ dnl
 dnl Gallium helper functions
 dnl
 gallium_check_st() {
-    if test "x$HAVE_ST_DRI" = xyes || test "x$HAVE_ST_EGL" = xyes || test "x$HAVE_ST_XORG" = xyes || test "x$HAVE_ST_XVMC" = xyes; then
+    if test "x$HAVE_ST_DRI" = xyes || test "x$HAVE_ST_EGL" = xyes || test "x$HAVE_ST_XORG" = xyes || test "x$HAVE_ST_XVMC" = xyes || test "x$HAVE_ST_VDPAU" = xyes; then
          GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS $1"
     fi
     if test "x$HAVE_ST_DRI" = xyes && test "x$2" != x; then
@@ -1379,6 +1386,9 @@ gallium_check_st() {
     fi
     if test "x$HAVE_ST_XVMC" = xyes && test "x$5" != x; then
          GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $5"
+    fi
+    if test "x$HAVE_ST_VDPAU" = xyes && test "x$6" != x; then
+         GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $6"
     fi
 }
 
@@ -1454,13 +1464,20 @@ AC_ARG_ENABLE([gallium-g3dvl],
 if test "x$enable_gallium_g3dvl" = xyes; then
     case "$mesa_driver" in
     xlib)
-        GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS xvmc-softpipe"
+        GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS vdpau-softpipe"
         ;;
     dri)
         GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS g3dvl/dri"
         ;;
     esac
 fi
+dnl Directory for VDPAU libs
+AC_ARG_WITH([vdpau-libdir],
+    [AS_HELP_STRING([--with-vdpau-libdir=DIR],
+        [directory for the VDPAU libraries @<:@default=${libdir}/vdpau@:>@])],
+    [VDPAU_LIB_INSTALL_DIR="$withval"],
+    [VDPAU_LIB_INSTALL_DIR='${libdir}/vdpau'])
+AC_SUBST([VDPAU_LIB_INSTALL_DIR])
 
 dnl
 dnl Gallium swrast configuration

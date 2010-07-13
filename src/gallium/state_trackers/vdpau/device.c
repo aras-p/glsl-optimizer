@@ -37,7 +37,8 @@ PUBLIC VdpStatus
 vdp_imp_device_create_x11(Display *display, int screen, VdpDevice *device, VdpGetProcAddress **get_proc_address)
 {
    VdpStatus    ret;
-   vlVdpDevice *dev;
+   vlVdpDevice *dev = NULL;
+   struct vl_screen *vlscreen = NULL;
 
    if (!(display && device && get_proc_address))
       return VDP_STATUS_INVALID_POINTER;
@@ -47,11 +48,14 @@ vdp_imp_device_create_x11(Display *display, int screen, VdpDevice *device, VdpGe
       goto no_htab;
    }
 
-   dev = CALLOC(1, sizeof(vlVdpDevice));
+   dev = CALLOC(0, sizeof(vlVdpDevice));
    if (!dev) {
       ret = VDP_STATUS_RESOURCES;
       goto no_dev;
    }
+   dev->display = display;
+   dev->screen = screen;
+
 
    *device = vlAddDataHTAB(dev);
    if (*device == 0) {

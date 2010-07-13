@@ -26,6 +26,11 @@
  **************************************************************************/
 
 #include "vdpau_private.h"
+#include <vl_winsys.h>
+#include <assert.h>
+#include <pipe/p_screen.h>
+#include <math.h>
+
 
 VdpStatus
 vlVdpGetApiVersion(uint32_t *api_version)
@@ -43,7 +48,7 @@ vlVdpGetInformationString(char const **information_string)
    if (!information_string)
       return VDP_STATUS_INVALID_POINTER;
 
-   *information_string = "VDPAU-G3DVL";
+   *information_string = INFORMATION_STRING;
    return VDP_STATUS_OK;
 }
 
@@ -51,10 +56,40 @@ VdpStatus
 vlVdpVideoSurfaceQueryCapabilities(VdpDevice device, VdpChromaType surface_chroma_type,
                                    VdpBool *is_supported, uint32_t *max_width, uint32_t *max_height)
 {
+   uint32_t max_2d_texture_level;
+   VdpStatus ret;
+
    if (!(is_supported && max_width && max_height))
       return VDP_STATUS_INVALID_POINTER;
 
-   return VDP_STATUS_NO_IMPLEMENTATION;
+   vlVdpDevice *dev = vlGetDataHTAB(device);
+   if (!dev)
+      return VDP_STATUS_INVALID_HANDLE;
+   
+   if (!dev->vlscreen)
+   dev->vlscreen = vl_screen_create(dev->display, dev->screen);
+   if (!dev->vlscreen)
+      return VDP_STATUS_RESOURCES;
+
+   /* XXX: Current limits */ 
+   *is_supported = true;
+   if (surface_chroma_type != VDP_CHROMA_TYPE_420)  {
+	  *is_supported = false;
+	  goto no_sup;
+   }
+
+   max_2d_texture_level = dev->vlscreen->pscreen->get_param( dev->vlscreen->pscreen, PIPE_CAP_MAX_TEXTURE_2D_LEVELS );
+   if (!max_2d_texture_level)  {
+      ret = VDP_STATUS_RESOURCES;
+	  goto no_sup;
+   }
+
+   /* I am not quite sure if it is max_2d_texture_level-1 or just max_2d_texture_level */
+   *max_width = *max_height = pow(2,max_2d_texture_level-1);
+   
+   return VDP_STATUS_OK;
+   no_sup:
+   return ret;
 }
 
 VdpStatus
@@ -65,7 +100,23 @@ vlVdpVideoSurfaceQueryGetPutBitsYCbCrCapabilities(VdpDevice device, VdpChromaTyp
    if (!is_supported)
       return VDP_STATUS_INVALID_POINTER;
 
-   return VDP_STATUS_NO_IMPLEMENTATION;
+   vlVdpDevice *dev = vlGetDataHTAB(device);
+   if (!dev)
+      return VDP_STATUS_INVALID_HANDLE;
+
+   if (!dev->vlscreen)
+   dev->vlscreen = vl_screen_create(dev->display, dev->screen);
+   if (!dev->vlscreen)
+      return VDP_STATUS_RESOURCES;
+
+   if (bits_ycbcr_format != VDP_YCBCR_FORMAT_Y8U8V8A8) 
+	                               *is_supported = dev->vlscreen->pscreen->is_format_supported(dev->vlscreen->pscreen,
+                                   FormatToPipe(bits_ycbcr_format),
+                                   PIPE_TEXTURE_2D,
+                                   PIPE_BIND_RENDER_TARGET, 
+                                   PIPE_TEXTURE_GEOM_NON_SQUARE );
+								   
+   return VDP_STATUS_OK;
 }
 
 VdpStatus
