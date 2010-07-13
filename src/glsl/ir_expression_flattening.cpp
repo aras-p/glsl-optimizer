@@ -176,9 +176,7 @@ ir_expression_flattening_visitor::visit_enter(ir_call *ir)
 ir_visitor_status
 ir_expression_flattening_visitor::visit_enter(ir_return *ir)
 {
-   /* FINISHME: Why not process the return value? (Same behavior as original
-    * FINISHME: code.)
-    */
-   (void) ir;
-   return visit_continue_with_parent;
+   if (ir->value)
+      ir->value = operand_to_temp(ir->value);
+   return visit_continue;
 }
