@@ -97,7 +97,7 @@ tags:
 	etags `find . -name \*.[ch]` $(TOP)/include/GL/*.h
 
 clean:
-	-rm -f *.o
+	-rm -f *.o depend
 
 
 include depend
