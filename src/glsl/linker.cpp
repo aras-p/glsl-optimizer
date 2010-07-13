@@ -462,6 +462,111 @@ populate_symbol_table(gl_shader *sh)
 
 
 /**
+ * Remap variables referenced in an instruction tree
+ *
+ * This is used when instruction trees are cloned from one shader and placed in
+ * another.  These trees will contain references to \c ir_variable nodes that
+ * do not exist in the target shader.  This function finds these \c ir_variable
+ * references and replaces the references with matching variables in the target
+ * shader.
+ *
+ * If there is no matching variable in the target shader, a clone of the
+ * \c ir_variable is made and added to the target shader.  The new variable is
+ * added to \b both the instruction stream and the symbol table.
+ *
+ * \param inst         IR tree that is to be processed.
+ * \param symbols      Symbol table containing global scope symbols in the
+ *                     linked shader.
+ * \param instructions Instruction stream where new variable declarations
+ *                     should be added.
+ */
+void
+remap_variables(ir_instruction *inst, glsl_symbol_table *symbols,
+		exec_list *instructions)
+{
+   class remap_visitor : public ir_hierarchical_visitor {
+   public:
+      remap_visitor(glsl_symbol_table *symbols, exec_list *instructions)
+      {
+	 this->symbols = symbols;
+	 this->instructions = instructions;
+      }
+
+      virtual ir_visitor_status visit(ir_dereference_variable *ir)
+      {
+	 ir_variable *const existing =
+	    this->symbols->get_variable(ir->var->name);
+	 if (existing != NULL)
+	    ir->var = existing;
+	 else {
+	    ir_variable *copy = ir->var->clone(NULL);
+
+	    this->symbols->add_variable(copy->name, copy);
+	    this->instructions->push_head(copy);
+	 }
+
+	 return visit_continue;
+      }
+
+   private:
+      glsl_symbol_table *symbols;
+      exec_list *instructions;
+   };
+
+   remap_visitor v(symbols, instructions);
+
+   inst->accept(&v);
+}
+
+
+/**
+ * Move non-declarations from one instruction stream to another
+ *
+ * The intended usage pattern of this function is to pass the pointer to the
+ * head sentinal of a list (i.e., a pointer to the list cast to an \c exec_node
+ * pointer) for \c last and \c false for \c make_copies on the first
+ * call.  Successive calls pass the return value of the previous call for
+ * \c last and \c true for \c make_copies.
+ *
+ * \param instructions Source instruction stream
+ * \param last         Instruction after which new instructions should be
+ *                     inserted in the target instruction stream
+ * \param make_copies  Flag selecting whether instructions in \c instructions
+ *                     should be copied (via \c ir_instruction::clone) into the
+ *                     target list or moved.
+ *
+ * \return
+ * The new "last" instruction in the target instruction stream.  This pointer
+ * is suitable for use as the \c last parameter of a later call to this
+ * function.
+ */
+exec_node *
+move_non_declarations(exec_list *instructions, exec_node *last,
+		      bool make_copies, gl_shader *target)
+{
+   foreach_list(node, instructions) {
+      ir_instruction *inst = (ir_instruction *) node;
+
+      if (inst->as_variable() || inst->as_function())
+	 continue;
+
+      assert(inst->as_assignment());
+
+      if (make_copies) {
+	 inst = inst->clone(NULL);
+	 remap_variables(inst, target->symbols, target->ir);
+      } else {
+	 inst->remove();
+      }
+
+      last->insert_after(inst);
+      last = inst;
+   }
+
+   return last;
+}
+
+/**
  * Get the function signature for main from a shader
  */
 static ir_function_signature *
@@ -574,6 +679,22 @@ link_intrastage_shaders(struct gl_shader_program *prog,
    clone_ir_list(linked->ir, main->ir);
 
    populate_symbol_table(linked);
+
+   /* The a pointer to the main function in the final linked shader (i.e., the
+    * copy of the original shader that contained the main function).
+    */
+   ir_function_signature *const main_sig = get_main_function_signature(linked);
+
+   /* Move any instructions other than variable declarations or function
+    * declarations into main.
+    */
+   exec_node *insertion_point = (exec_node *) &main_sig->body;
+   for (unsigned i = 0; i < num_shaders; i++) {
+      insertion_point = move_non_declarations(shader_list[i]->ir,
+					      insertion_point,
+					      (shader_list[i] != main),
+					      linked);
+   }
 
    /* Resolve initializers for global variables in the linked shader.
     */
