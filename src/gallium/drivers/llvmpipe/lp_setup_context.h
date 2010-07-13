@@ -81,7 +81,6 @@ struct lp_setup_context
     */
    struct draw_stage *vbuf;
    unsigned num_threads;
-   struct lp_rasterizer *rast;
    struct lp_scene *scenes[MAX_SCENES];  /**< all the scenes */
    struct lp_scene *scene;               /**< current scene being built */
    struct lp_scene_queue *empty_scenes;  /**< queue of empty scenes */

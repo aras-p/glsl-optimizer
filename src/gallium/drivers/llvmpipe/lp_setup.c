@@ -152,8 +152,11 @@ static void
 lp_setup_rasterize_scene( struct lp_setup_context *setup )
 {
    struct lp_scene *scene = lp_setup_get_current_scene(setup);
+   struct llvmpipe_screen *screen = llvmpipe_screen(scene->pipe->screen);
 
-   lp_scene_rasterize(scene, setup->rast);
+   pipe_mutex_lock(screen->rast_mutex);
+   lp_scene_rasterize(scene, screen->rast);
+   pipe_mutex_unlock(screen->rast_mutex);
 
    reset_context( setup );
 
@@ -851,8 +854,6 @@ lp_setup_destroy( struct lp_setup_context *setup )
 
    lp_scene_queue_destroy(setup->empty_scenes);
 
-   lp_rast_destroy( setup->rast );
-
    FREE( setup );
 }
 
@@ -879,13 +880,7 @@ lp_setup_create( struct pipe_context *pipe,
    if (!setup->empty_scenes)
       goto fail;
 
-   /* XXX: move this to the screen and share between contexts:
-    */
    setup->num_threads = screen->num_threads;
-   setup->rast = lp_rast_create(screen->num_threads);
-   if (!setup->rast) 
-      goto fail;
-
    setup->vbuf = draw_vbuf_stage(draw, &setup->base);
    if (!setup->vbuf)
       goto fail;
@@ -909,9 +904,6 @@ lp_setup_create( struct pipe_context *pipe,
    return setup;
 
 fail:
-   if (setup->rast)
-      lp_rast_destroy( setup->rast );
-   
    if (setup->vbuf)
       ;
 
