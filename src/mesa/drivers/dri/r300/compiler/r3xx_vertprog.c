@@ -619,10 +619,16 @@ void r3xx_compile_vertex_program(struct r300_vertex_program_compiler* compiler)
 
 	debug_program_log(compiler, "after emulate branches");
 
-	{
+	if (compiler->Base.is_r500) {
 		struct radeon_program_transformation transformations[] = {
 			{ &r300_transform_vertex_alu, 0 },
 			{ &r300_transform_trig_scale_vertex, 0 }
+		};
+		radeonLocalTransform(&compiler->Base, 2, transformations);
+	} else {
+		struct radeon_program_transformation transformations[] = {
+			{ &r300_transform_vertex_alu, 0 },
+			{ &radeonTransformTrigSimple, 0 }
 		};
 		radeonLocalTransform(&compiler->Base, 2, transformations);
 	}
