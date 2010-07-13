@@ -67,7 +67,7 @@ ir_swizzle *
 ir_swizzle::clone(struct hash_table *ht) const
 {
    void *ctx = talloc_parent(this);
-   return new(ctx) ir_swizzle((ir_rvalue *)this->val->clone(ht), this->mask);
+   return new(ctx) ir_swizzle(this->val->clone(ht), this->mask);
 }
 
 ir_return *
@@ -77,7 +77,7 @@ ir_return::clone(struct hash_table *ht) const
    ir_rvalue *new_value = NULL;
 
    if (this->value)
-      new_value = (ir_rvalue *)this->value->clone(ht);
+      new_value = this->value->clone(ht);
 
    return new(ctx) ir_return(new_value);
 }
@@ -89,7 +89,7 @@ ir_discard::clone(struct hash_table *ht) const
    ir_rvalue *new_condition = NULL;
 
    if (this->condition != NULL)
-      new_condition = (ir_rvalue *) this->condition->clone(ht);
+      new_condition = this->condition->clone(ht);
 
    return new(ctx) ir_discard(new_condition);
 }
@@ -107,7 +107,7 @@ ir_if *
 ir_if::clone(struct hash_table *ht) const
 {
    void *ctx = talloc_parent(this);
-   ir_if *new_if = new(ctx) ir_if((ir_rvalue *)this->condition->clone(ht));
+   ir_if *new_if = new(ctx) ir_if(this->condition->clone(ht));
 
    foreach_iter(exec_list_iterator, iter, this->then_instructions) {
       ir_instruction *ir = (ir_instruction *)iter.get();
@@ -129,11 +129,11 @@ ir_loop::clone(struct hash_table *ht) const
    ir_loop *new_loop = new(ctx) ir_loop();
 
    if (this->from)
-      new_loop->from = (ir_rvalue *)this->from->clone(ht);
+      new_loop->from = this->from->clone(ht);
    if (this->to)
-      new_loop->to = (ir_rvalue *)this->to->clone(ht);
+      new_loop->to = this->to->clone(ht);
    if (this->increment)
-      new_loop->increment = (ir_rvalue *)this->increment->clone(ht);
+      new_loop->increment = this->increment->clone(ht);
    new_loop->counter = counter;
 
    foreach_iter(exec_list_iterator, iter, this->body_instructions) {
@@ -166,7 +166,7 @@ ir_expression::clone(struct hash_table *ht) const
    unsigned int i;
 
    for (i = 0; i < get_num_operands(); i++) {
-      op[i] = (ir_rvalue *)this->operands[i]->clone(ht);
+      op[i] = this->operands[i]->clone(ht);
    }
 
    return new(ctx) ir_expression(this->operation, this->type, op[0], op[1]);
@@ -193,15 +193,15 @@ ir_dereference_array *
 ir_dereference_array::clone(struct hash_table *ht) const
 {
    void *ctx = talloc_parent(this);
-   return new(ctx) ir_dereference_array((ir_rvalue *)this->array->clone(ht),
-					(ir_rvalue *)this->array_index->clone(ht));
+   return new(ctx) ir_dereference_array(this->array->clone(ht),
+					this->array_index->clone(ht));
 }
 
 ir_dereference_record *
 ir_dereference_record::clone(struct hash_table *ht) const
 {
    void *ctx = talloc_parent(this);
-   return new(ctx) ir_dereference_record((ir_rvalue *)this->record->clone(ht),
+   return new(ctx) ir_dereference_record(this->record->clone(ht),
 					 this->field);
 }
 
@@ -211,13 +211,12 @@ ir_texture::clone(struct hash_table *ht) const
    void *ctx = talloc_parent(this);
    ir_texture *new_tex = new(ctx) ir_texture(this->op);
 
-   new_tex->sampler = (ir_dereference *)this->sampler->clone(ht);
-   new_tex->coordinate = (ir_rvalue *)this->coordinate->clone(ht);
+   new_tex->sampler = this->sampler->clone(ht);
+   new_tex->coordinate = this->coordinate->clone(ht);
    if (this->projector)
-      new_tex->projector = (ir_rvalue *)this->projector->clone(ht);
+      new_tex->projector = this->projector->clone(ht);
    if (this->shadow_comparitor) {
-      new_tex->shadow_comparitor =
-	 (ir_rvalue *)this->shadow_comparitor->clone(ht);
+      new_tex->shadow_comparitor = this->shadow_comparitor->clone(ht);
    }
 
    for (int i = 0; i < 3; i++)
@@ -227,17 +226,15 @@ ir_texture::clone(struct hash_table *ht) const
    case ir_tex:
       break;
    case ir_txb:
-      new_tex->lod_info.bias = (ir_rvalue *)this->lod_info.bias->clone(ht);
+      new_tex->lod_info.bias = this->lod_info.bias->clone(ht);
       break;
    case ir_txl:
    case ir_txf:
-      new_tex->lod_info.lod = (ir_rvalue *)this->lod_info.lod->clone(ht);
+      new_tex->lod_info.lod = this->lod_info.lod->clone(ht);
       break;
    case ir_txd:
-      new_tex->lod_info.grad.dPdx =
-	 (ir_rvalue *)this->lod_info.grad.dPdx->clone(ht);
-      new_tex->lod_info.grad.dPdy =
-	 (ir_rvalue *)this->lod_info.grad.dPdy->clone(ht);
+      new_tex->lod_info.grad.dPdx = this->lod_info.grad.dPdx->clone(ht);
+      new_tex->lod_info.grad.dPdy = this->lod_info.grad.dPdy->clone(ht);
       break;
    }
 
@@ -250,11 +247,11 @@ ir_assignment::clone(struct hash_table *ht) const
    ir_rvalue *new_condition = NULL;
 
    if (this->condition)
-      new_condition = (ir_rvalue *)this->condition->clone(ht);
+      new_condition = this->condition->clone(ht);
 
    void *ctx = talloc_parent(this);
-   return new(ctx) ir_assignment((ir_rvalue *)this->lhs->clone(ht),
-				 (ir_rvalue *)this->rhs->clone(ht),
+   return new(ctx) ir_assignment(this->lhs->clone(ht),
+				 this->rhs->clone(ht),
 				 new_condition);
 }
 

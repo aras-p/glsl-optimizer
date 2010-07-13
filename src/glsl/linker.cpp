@@ -315,8 +315,7 @@ cross_validate_globals(struct gl_shader_program *prog,
 		   * have an initializer but a later instance does, copy the
 		   * initializer to the version stored in the symbol table.
 		   */
-		  existing->constant_value =
-		     (ir_constant *)var->constant_value->clone(NULL);
+		  existing->constant_value = var->constant_value->clone(NULL);
 	    }
 	 } else
 	    variables.add_variable(var->name, var);
