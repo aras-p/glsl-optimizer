@@ -165,11 +165,18 @@ ir_expression_flattening_visitor::visit_leave(ir_swizzle *ir)
 ir_visitor_status
 ir_expression_flattening_visitor::visit_enter(ir_call *ir)
 {
-   /* FINISHME: Why not process the call parameters? (Same behavior as original
-    * FINISHME: code.)
-    */
-   (void) ir;
-   return visit_continue_with_parent;
+   /* Reminder: iterating ir_call iterates its parameters. */
+   foreach_iter(exec_list_iterator, iter, *ir) {
+      ir_rvalue *ir = (ir_rvalue *)iter.get();
+      ir_rvalue *new_ir = operand_to_temp(ir);
+
+      if (new_ir != ir) {
+	 ir->insert_before(new_ir);
+	 ir->remove();
+      }
+   }
+
+   return visit_continue;
 }
 
 
