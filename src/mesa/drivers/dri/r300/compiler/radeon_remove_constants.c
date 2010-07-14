@@ -27,6 +27,16 @@
 
 #include "radeon_remove_constants.h"
 
+static void remap_regs(void * userdata, struct rc_instruction * inst,
+			rc_register_file * pfile, unsigned int * pindex)
+{
+        unsigned *inv_remap_table = userdata;
+
+        if (*pfile == RC_FILE_CONSTANT) {
+                *pindex = inv_remap_table[*pindex];
+        }
+}
+
 void rc_remove_unused_constants(struct radeon_compiler *c, void *user)
 {
 	unsigned **out_remap_table = (unsigned**)user;
@@ -51,6 +61,10 @@ void rc_remove_unused_constants(struct radeon_compiler *c, void *user)
              inst != &c->Program.Instructions; inst = inst->Next) {
                 const struct rc_opcode_info *opcode = rc_get_opcode_info(inst->U.I.Opcode);
 
+                /* XXX: This loop and the if statement after it should be
+                 * replaced by a call to one of the rc_for_all_reads_* functions.
+                 * The reason it does not use one of those functions now is
+                 * because none of them have RelAddr as an argument. */
                 for (unsigned i = 0; i < opcode->NumSrcRegs; i++) {
                         if (inst->U.I.SrcReg[i].File == RC_FILE_CONSTANT) {
                                 if (inst->U.I.SrcReg[i].RelAddr) {
@@ -60,6 +74,18 @@ void rc_remove_unused_constants(struct radeon_compiler *c, void *user)
                                 }
                         }
                 }
+                if (inst->U.I.PreSub.Opcode != RC_PRESUB_NONE) {
+			unsigned int i;
+			unsigned int srcp_regs = rc_presubtract_src_reg_count(
+							inst->U.I.PreSub.Opcode);
+			for( i = 0; i < srcp_regs; i++) {
+                                if (inst->U.I.PreSub.SrcReg[i].File ==
+                                                        RC_FILE_CONSTANT) {
+                                        const_used[
+                                            inst->U.I.PreSub.SrcReg[i].Index] = 1;
+                                }
+                        }
+		}
         }
 
         /* Pass 2: If there is relative addressing, mark all externals as used. */
@@ -100,13 +126,7 @@ void rc_remove_unused_constants(struct radeon_compiler *c, void *user)
         if (!is_identity) {
                 for (struct rc_instruction *inst = c->Program.Instructions.Next;
                      inst != &c->Program.Instructions; inst = inst->Next) {
-                        const struct rc_opcode_info *opcode = rc_get_opcode_info(inst->U.I.Opcode);
-
-                        for (unsigned i = 0; i < opcode->NumSrcRegs; i++) {
-                                if (inst->U.I.SrcReg[i].File == RC_FILE_CONSTANT) {
-                                        inst->U.I.SrcReg[i].Index = inv_remap_table[inst->U.I.SrcReg[i].Index];
-                                }
-                        }
+                        rc_remap_registers(inst, remap_regs, inv_remap_table);
                 }
 
 	}

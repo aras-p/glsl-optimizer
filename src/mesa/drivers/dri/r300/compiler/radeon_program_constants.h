@@ -79,7 +79,13 @@ typedef enum {
 	/**
 	 * Indicates a special register, see RC_SPECIAL_xxx.
 	 */
-	RC_FILE_SPECIAL
+	RC_FILE_SPECIAL,
+
+	/**
+	 * Indicates this register should use the result of the presubtract
+	 * operation.
+	 */
+	RC_FILE_PRESUB
 } rc_register_file;
 
 enum {
@@ -147,4 +153,32 @@ typedef enum {
 	RC_ALURESULT_W
 } rc_write_aluresult;
 
+typedef enum {
+	RC_PRESUB_NONE = 0,
+
+	/** 1 - 2 * src0 */
+	RC_PRESUB_BIAS,
+
+	/** src1 - src0 */
+	RC_PRESUB_SUB,
+
+	/** src1 + src0 */
+	RC_PRESUB_ADD,
+
+	/** 1 - src0 */
+	RC_PRESUB_INV
+} rc_presubtract_op;
+
+static inline int rc_presubtract_src_reg_count(rc_presubtract_op op){
+	switch(op){
+	case RC_PRESUB_BIAS:
+	case RC_PRESUB_INV:
+		return 1;
+	case RC_PRESUB_ADD:
+	case RC_PRESUB_SUB:
+		return 2;
+	default:
+		return 0;
+	}
+}
 #endif /* RADEON_PROGRAM_CONSTANTS_H */

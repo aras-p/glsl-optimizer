@@ -127,6 +127,18 @@ static void classify_instruction(struct rc_sub_instruction * inst,
 	}
 }
 
+static void src_uses(struct rc_src_register src, unsigned int * rgb,
+							unsigned int * alpha)
+{
+	int j;
+	for(j = 0; j < 4; ++j) {
+		unsigned int swz = GET_SWZ(src.Swizzle, j);
+		if (swz < 3)
+			*rgb = 1;
+		else if (swz < 4)
+			*alpha = 1;
+	}
+}
 
 /**
  * Fill the given ALU instruction's opcodes and source operands into the given pair,
@@ -158,12 +170,51 @@ static void set_pair_instruction(struct r300_fragment_program_compiler *c,
 	const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->Opcode);
 	int i;
 
+	/* Presubtract handling:
+	 * We need to make sure that the values used by the presubtract
+	 * operation end up in src0 or src1. */
+	if(inst->PreSub.Opcode != RC_PRESUB_NONE) {
+		/* rc_pair_alloc_source() will fill in data for
+		 * pair->{RGB,ALPHA}.Src[RC_PAIR_PRESUB_SRC] */
+		int j;
+		for(j = 0; j < 3; j++) {
+			int src_regs;
+			if(inst->SrcReg[j].File != RC_FILE_PRESUB)
+				continue;
+
+			src_regs = rc_presubtract_src_reg_count(
+							inst->PreSub.Opcode);
+			for(i = 0; i < src_regs; i++) {
+				unsigned int rgb = 0;
+				unsigned int alpha = 0;
+				src_uses(inst->SrcReg[j], &rgb, &alpha);
+				if(rgb) {
+					pair->RGB.Src[i].File =
+						inst->PreSub.SrcReg[i].File;
+					pair->RGB.Src[i].Index =
+						inst->PreSub.SrcReg[i].Index;
+					pair->RGB.Src[i].Used = 1;
+				}
+				if(alpha) {
+					pair->Alpha.Src[i].File =
+						inst->PreSub.SrcReg[i].File;
+					pair->Alpha.Src[i].Index =
+						inst->PreSub.SrcReg[i].Index;
+					pair->Alpha.Src[i].Used = 1;
+				}
+			}
+		}
+	}
+
 	for(i = 0; i < opcode->NumSrcRegs; ++i) {
 		int source;
 		if (needrgb && !istranscendent) {
 			unsigned int srcrgb = 0;
 			unsigned int srcalpha = 0;
 			int j;
+			/* We don't care about the alpha channel here.  We only
+			 * want the part of the swizzle that writes to rgb,
+			 * since we are creating an rgb instruction. */
 			for(j = 0; j < 3; ++j) {
 				unsigned int swz = GET_SWZ(inst->SrcReg[i].Swizzle, j);
 				if (swz < 3)
@@ -173,6 +224,7 @@ static void set_pair_instruction(struct r300_fragment_program_compiler *c,
 			}
 			source = rc_pair_alloc_source(pair, srcrgb, srcalpha,
 							inst->SrcReg[i].File, inst->SrcReg[i].Index);
+			assert(source != -1);
 			pair->RGB.Arg[i].Source = source;
 			pair->RGB.Arg[i].Swizzle = inst->SrcReg[i].Swizzle & 0x1ff;
 			pair->RGB.Arg[i].Abs = inst->SrcReg[i].Abs;
@@ -188,6 +240,7 @@ static void set_pair_instruction(struct r300_fragment_program_compiler *c,
 				srcalpha = 1;
 			source = rc_pair_alloc_source(pair, srcrgb, srcalpha,
 							inst->SrcReg[i].File, inst->SrcReg[i].Index);
+			assert(source != -1);
 			pair->Alpha.Arg[i].Source = source;
 			pair->Alpha.Arg[i].Swizzle = swz;
 			pair->Alpha.Arg[i].Abs = inst->SrcReg[i].Abs;

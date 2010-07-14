@@ -279,11 +279,118 @@ static int destructive_merge_instructions(
 		struct rc_pair_instruction * rgb,
 		struct rc_pair_instruction * alpha)
 {
+	const struct rc_opcode_info * opcode;
 	assert(rgb->Alpha.Opcode == RC_OPCODE_NOP);
 	assert(alpha->RGB.Opcode == RC_OPCODE_NOP);
 
+	/* Presubtract registers need to be merged first so that registers
+	 * needed by the presubtract operation can be placed in src0 and/or
+	 * src1. */
+
+	/* Merge the rgb presubtract registers. */
+	const struct rc_opcode_info * rgb_info =
+					rc_get_opcode_info(rgb->RGB.Opcode);
+	if (alpha->RGB.Src[RC_PAIR_PRESUB_SRC].Used) {
+		unsigned int srcp_src;
+		unsigned int srcp_regs;
+		if (rgb->RGB.Src[RC_PAIR_PRESUB_SRC].Used)
+			return 0;
+		srcp_regs = rc_presubtract_src_reg_count(
+				alpha->RGB.Src[RC_PAIR_PRESUB_SRC].Index);
+		for(srcp_src = 0; srcp_src < srcp_regs; srcp_src++) {
+			unsigned int arg;
+			int free_source;
+			struct radeon_pair_instruction_source srcp =
+						alpha->RGB.Src[srcp_src];
+			struct radeon_pair_instruction_source temp;
+			/* 2nd arg of 1 means this is an rgb source.
+			 * 3rd arg of 0 means this is not an alpha source. */
+			free_source = rc_pair_alloc_source(rgb, 1, 0,
+							srcp.File, srcp.Index);
+			/* If free_source == srcp_src, then either the
+			 * presubtract source is already in the correct place. */
+			if (free_source == srcp_src)
+				continue;
+			/* If free_source < 0 then there are no free source
+			 * slots. */
+			if (free_source < 0)
+				return 0;
+			/* Shuffle the sources, so we can put the
+			 * presubtract source in the correct place. */
+			for (arg = 0; arg < rgb_info->NumSrcRegs; arg++) {
+				/*If this arg does not read from an rgb source,
+				 * do nothing. */
+				if (rc_source_type_that_arg_reads(
+					rgb->RGB.Arg[arg].Source,
+					rgb->RGB.Arg[arg].Swizzle, 3)
+							!= RC_PAIR_SOURCE_RGB) {
+					continue;
+				}
+				if (rgb->RGB.Arg[arg].Source == srcp_src)
+					rgb->RGB.Arg[arg].Source = free_source;
+				/* We need to do this just in case register
+				 * is one of the sources already, but in the
+				 * wrong spot. */
+				else if(rgb->RGB.Arg[arg].Source == free_source)
+					rgb->RGB.Arg[arg].Source = srcp_src;
+			}
+			temp = rgb->RGB.Src[srcp_src];
+			rgb->RGB.Src[srcp_src] = rgb->RGB.Src[free_source];
+			rgb->RGB.Src[free_source] = temp;
+		}
+	}
+
+	/* Merge the alpha presubtract registers */
+	if (alpha->Alpha.Src[RC_PAIR_PRESUB_SRC].Used) {
+		unsigned int srcp_src;
+		unsigned int srcp_regs;
+		if(rgb->Alpha.Src[RC_PAIR_PRESUB_SRC].Used)
+			return 0;
+
+		srcp_regs = rc_presubtract_src_reg_count(
+			alpha->Alpha.Src[RC_PAIR_PRESUB_SRC].Index);
+		for(srcp_src = 0; srcp_src < srcp_regs; srcp_src++) {
+			unsigned int arg;
+			int free_source;
+			struct radeon_pair_instruction_source srcp =
+						alpha->Alpha.Src[srcp_src];
+			struct radeon_pair_instruction_source temp;
+			/* 2nd arg of 0 means this is not an rgb source.
+			 * 3rd arg of 1 means this is an alpha source. */
+			free_source = rc_pair_alloc_source(rgb, 0, 1,
+							srcp.File, srcp.Index);
+			/* If free_source == srcp_src, then either the
+			 * presubtract source is already in the correct place. */
+			if (free_source == srcp_src)
+				continue;
+			/* If free_source < 0 then there are no free source
+			 * slots. */
+			if (free_source < 0)
+				return 0;
+			/* Shuffle the sources, so we can put the
+			 * presubtract source in the correct place. */
+			for(arg = 0; arg < rgb_info->NumSrcRegs; arg++) {
+				/*If this arg does not read from an alpha
+				 * source, do nothing. */
+				if (rc_source_type_that_arg_reads(
+					rgb->RGB.Arg[arg].Source,
+					rgb->RGB.Arg[arg].Swizzle, 3)
+						!= RC_PAIR_SOURCE_ALPHA) {
+					continue;
+				}
+				if (rgb->RGB.Arg[arg].Source == srcp_src)
+					rgb->RGB.Arg[arg].Source = free_source;
+				else if (rgb->RGB.Arg[arg].Source == free_source)
+					rgb->RGB.Arg[arg].Source = srcp_src;
+			}
+			temp = rgb->Alpha.Src[srcp_src];
+			rgb->Alpha.Src[srcp_src] = rgb->Alpha.Src[free_source];
+			rgb->Alpha.Src[free_source] = temp;
+		}
+	}
+
 	/* Copy alpha args into rgb */
-	const struct rc_opcode_info * opcode = rc_get_opcode_info(alpha->Alpha.Opcode);
+	opcode = rc_get_opcode_info(alpha->Alpha.Opcode);
 
 	for(unsigned int arg = 0; arg < opcode->NumSrcRegs; ++arg) {
 		unsigned int srcrgb = 0;
@@ -351,7 +458,52 @@ static int merge_instructions(struct rc_pair_instruction * rgb, struct rc_pair_i
 	return 0;
 }
 
+static void presub_nop(struct rc_instruction * emitted) {
+	int prev_rgb_index, prev_alpha_index, i, num_src;
 
+	/* We don't need a nop if the previous instruction is a TEX. */
+	if (emitted->Prev->Type != RC_INSTRUCTION_PAIR) {
+		return;
+	}
+	if (emitted->Prev->U.P.RGB.WriteMask)
+		prev_rgb_index = emitted->Prev->U.P.RGB.DestIndex;
+	else
+		prev_rgb_index = -1;
+	if (emitted->Prev->U.P.Alpha.WriteMask)
+		prev_alpha_index = emitted->Prev->U.P.Alpha.DestIndex;
+	else
+		prev_alpha_index = 1;
+
+	/* Check the previous rgb instruction */
+	if (emitted->U.P.RGB.Src[RC_PAIR_PRESUB_SRC].Used) {
+		num_src = rc_presubtract_src_reg_count(
+				emitted->U.P.RGB.Src[RC_PAIR_PRESUB_SRC].Index);
+		for (i = 0; i < num_src; i++) {
+			unsigned int index = emitted->U.P.RGB.Src[i].Index;
+			if (emitted->U.P.RGB.Src[i].File == RC_FILE_TEMPORARY
+			    && (index  == prev_rgb_index
+				|| index == prev_alpha_index)) {
+				emitted->Prev->U.P.Nop = 1;
+				return;
+			}
+		}
+	}
+
+	/* Check the previous alpha instruction. */
+	if (!emitted->U.P.Alpha.Src[RC_PAIR_PRESUB_SRC].Used)
+		return;
+
+	num_src = rc_presubtract_src_reg_count(
+				emitted->U.P.Alpha.Src[RC_PAIR_PRESUB_SRC].Index);
+	for (i = 0; i < num_src; i++) {
+		unsigned int index = emitted->U.P.Alpha.Src[i].Index;
+		if(emitted->U.P.Alpha.Src[i].File == RC_FILE_TEMPORARY
+		   && (index == prev_rgb_index || index == prev_alpha_index)) {
+			emitted->Prev->U.P.Nop = 1;
+			return;
+		}
+	}
+}
 /**
  * Find a good ALU instruction or pair of ALU instruction and emit it.
  *
@@ -408,6 +560,10 @@ static void emit_one_alu(struct schedule_state *s, struct rc_instruction * befor
 		commit_alu_instruction(s, sinst);
 	success: ;
 	}
+	/* If the instruction we just emitted uses a presubtract value, and
+	 * the presubtract sources were written by the previous intstruction,
+	 * the previous instruction needs a nop. */
+	presub_nop(before->Prev);
 }
 
 static void scan_read(void * data, struct rc_instruction * inst,

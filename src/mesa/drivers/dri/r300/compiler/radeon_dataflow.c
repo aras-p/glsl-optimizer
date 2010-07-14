@@ -29,6 +29,25 @@
 
 #include "radeon_program.h"
 
+static void reads_normal_callback(
+	rc_read_write_chan_fn cb,
+	struct rc_instruction * fullinst,
+	struct rc_src_register src,
+	void * userdata)
+{
+	unsigned int refmask = 0;
+	unsigned int chan;
+	for(chan = 0; chan < 4; chan++) {
+		refmask |= 1 << GET_SWZ(src.Swizzle, chan);
+	}
+	refmask &= RC_MASK_XYZW;
+
+	if (refmask)
+		cb(userdata, fullinst, src.File, src.Index, refmask);
+
+	if (refmask && src.RelAddr)
+		cb(userdata, fullinst, RC_FILE_ADDRESS, 0, RC_MASK_X);
+}
 
 static void reads_normal(struct rc_instruction * fullinst, rc_read_write_chan_fn cb, void * userdata)
 {
@@ -36,21 +55,60 @@ static void reads_normal(struct rc_instruction * fullinst, rc_read_write_chan_fn
 	const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->Opcode);
 
 	for(unsigned int src = 0; src < opcode->NumSrcRegs; ++src) {
-		unsigned int refmask = 0;
 
 		if (inst->SrcReg[src].File == RC_FILE_NONE)
 			return;
 
-		for(unsigned int chan = 0; chan < 4; ++chan)
-			refmask |= 1 << GET_SWZ(inst->SrcReg[src].Swizzle, chan);
+		if (inst->SrcReg[src].File == RC_FILE_PRESUB) {
+			unsigned int i;
+			unsigned int srcp_regs = rc_presubtract_src_reg_count(
+							inst->PreSub.Opcode);
+			for( i = 0; i < srcp_regs; i++) {
+				reads_normal_callback(cb, fullinst,
+						inst->PreSub.SrcReg[i],
+						userdata);
+			}
+		} else {
+			reads_normal_callback(cb, fullinst,
+						inst->SrcReg[src], userdata);
+		}
+	}
+}
 
-		refmask &= RC_MASK_XYZW;
+static void pair_get_src_refmasks(unsigned int * refmasks,
+					struct rc_pair_instruction * inst,
+					unsigned int swz, unsigned int src)
+{
+	if (swz >= 4)
+		return;
 
-		if (refmask)
-			cb(userdata, fullinst, inst->SrcReg[src].File, inst->SrcReg[src].Index, refmask);
+	if (swz == RC_SWIZZLE_X || swz == RC_SWIZZLE_Y || swz == RC_SWIZZLE_Z) {
+		if(src == RC_PAIR_PRESUB_SRC) {
+			unsigned int i;
+			int srcp_regs =
+				rc_presubtract_src_reg_count(
+				inst->RGB.Src[src].Index);
+			for(i = 0; i < srcp_regs; i++) {
+				refmasks[i] |= 1 << swz;
+			}
+		}
+		else {
+			refmasks[src] |= 1 << swz;
+		}
+	}
 
-		if (refmask && inst->SrcReg[src].RelAddr)
-			cb(userdata, fullinst, RC_FILE_ADDRESS, 0, RC_MASK_X);
+	if (swz == RC_SWIZZLE_W) {
+		if (src == RC_PAIR_PRESUB_SRC) {
+			unsigned int i;
+			int srcp_regs = rc_presubtract_src_reg_count(
+					inst->Alpha.Src[src].Index);
+			for(i = 0; i < srcp_regs; i++) {
+				refmasks[i] |= 1 << swz;
+			}
+		}
+		else {
+			refmasks[src] |= 1 << swz;
+		}
 	}
 }
 
@@ -59,24 +117,19 @@ static void reads_pair(struct rc_instruction * fullinst,  rc_read_write_mask_fn 
 	struct rc_pair_instruction * inst = &fullinst->U.P;
 	unsigned int refmasks[3] = { 0, 0, 0 };
 
-	if (inst->RGB.Opcode != RC_OPCODE_NOP) {
-		const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->RGB.Opcode);
+	unsigned int arg;
 
-		for(unsigned int arg = 0; arg < opcode->NumSrcRegs; ++arg) {
-			for(unsigned int chan = 0; chan < 3; ++chan) {
-				unsigned int swz = GET_SWZ(inst->RGB.Arg[arg].Swizzle, chan);
-				if (swz < 4)
-					refmasks[inst->RGB.Arg[arg].Source] |= 1 << swz;
-			}
-		}
-	}
-
-	if (inst->Alpha.Opcode != RC_OPCODE_NOP) {
-		const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->Alpha.Opcode);
-
-		for(unsigned int arg = 0; arg < opcode->NumSrcRegs; ++arg) {
-			if (inst->Alpha.Arg[arg].Swizzle < 4)
-				refmasks[inst->Alpha.Arg[arg].Source] |= 1 << inst->Alpha.Arg[arg].Swizzle;
+	for(arg = 0; arg < 3; ++arg) {
+		unsigned int chan;
+		for(chan = 0; chan < 3; ++chan) {
+			unsigned int swz_rgb =
+				GET_SWZ(inst->RGB.Arg[arg].Swizzle, chan);
+			unsigned int swz_alpha =
+				GET_SWZ(inst->Alpha.Arg[arg].Swizzle, chan);
+			pair_get_src_refmasks(refmasks, inst, swz_rgb,
+						inst->RGB.Arg[arg].Source);
+			pair_get_src_refmasks(refmasks, inst, swz_alpha,
+						inst->Alpha.Arg[arg].Source);
 		}
 	}
 
@@ -212,10 +265,25 @@ static void remap_normal_instruction(struct rc_instruction * fullinst,
 		rc_register_file file = inst->SrcReg[src].File;
 		unsigned int index = inst->SrcReg[src].Index;
 
-		cb(userdata, fullinst, &file, &index);
+		if (file == RC_FILE_PRESUB) {
+			unsigned int i;
+			unsigned int srcp_srcs = rc_presubtract_src_reg_count(
+						inst->PreSub.Opcode);
+			for(i = 0; i < srcp_srcs; i++) {
+				file = inst->PreSub.SrcReg[i].File;
+				index = inst->PreSub.SrcReg[i].Index;
+				cb(userdata, fullinst, &file, &index);
+				inst->PreSub.SrcReg[i].File = file;
+				inst->PreSub.SrcReg[i].Index = index;
+			}
 
-		inst->SrcReg[src].File = file;
-		inst->SrcReg[src].Index = index;
+		}
+		else {
+			cb(userdata, fullinst, &file, &index);
+
+			inst->SrcReg[src].File = file;
+			inst->SrcReg[src].Index = index;
+		}
 	}
 }
 

@@ -164,6 +164,53 @@ static int emit_alu(struct r300_emit_state * emit, struct rc_pair_instruction* i
 		code->alu.inst[ip].alpha_inst |= arg << (7*j);
 	}
 
+	/* Presubtract */
+	if (inst->RGB.Src[RC_PAIR_PRESUB_SRC].Used) {
+		switch(inst->RGB.Src[RC_PAIR_PRESUB_SRC].Index) {
+		case RC_PRESUB_BIAS:
+			code->alu.inst[ip].rgb_inst |=
+						R300_ALU_SRCP_1_MINUS_2_SRC0;
+			break;
+		case RC_PRESUB_ADD:
+			code->alu.inst[ip].rgb_inst |=
+						R300_ALU_SRCP_SRC1_PLUS_SRC0;
+			break;
+		case RC_PRESUB_SUB:
+			code->alu.inst[ip].rgb_inst |=
+						R300_ALU_SRCP_SRC1_MINUS_SRC0;
+			break;
+		case RC_PRESUB_INV:
+			code->alu.inst[ip].rgb_inst |=
+						R300_ALU_SRCP_1_MINUS_SRC0;
+			break;
+		default:
+			break;
+		}
+	}
+
+	if (inst->Alpha.Src[RC_PAIR_PRESUB_SRC].Used) {
+		switch(inst->Alpha.Src[RC_PAIR_PRESUB_SRC].Index) {
+		case RC_PRESUB_BIAS:
+			code->alu.inst[ip].alpha_inst |=
+						R300_ALU_SRCP_1_MINUS_2_SRC0;
+			break;
+		case RC_PRESUB_ADD:
+			code->alu.inst[ip].alpha_inst |=
+						R300_ALU_SRCP_SRC1_PLUS_SRC0;
+			break;
+		case RC_PRESUB_SUB:
+			code->alu.inst[ip].alpha_inst |=
+						R300_ALU_SRCP_SRC1_MINUS_SRC0;
+			break;
+		case RC_PRESUB_INV:
+			code->alu.inst[ip].alpha_inst |=
+						R300_ALU_SRCP_1_MINUS_SRC0;
+			break;
+		default:
+			break;
+		}
+	}
+
 	if (inst->RGB.Saturate)
 		code->alu.inst[ip].rgb_inst |= R300_ALU_OUTC_CLAMP;
 	if (inst->Alpha.Saturate)
@@ -198,6 +245,8 @@ static int emit_alu(struct r300_emit_state * emit, struct rc_pair_instruction* i
 		emit->node_flags |= R300_W_OUT;
 		c->code->writes_depth = 1;
 	}
+	if (inst->Nop)
+		code->alu.inst[ip].rgb_inst |= R300_ALU_INSERT_NOP;
 
 	return 1;
 }

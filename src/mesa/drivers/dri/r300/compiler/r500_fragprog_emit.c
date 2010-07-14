@@ -260,6 +260,9 @@ static void emit_paired(struct r300_fragment_program_compiler *c, struct rc_pair
 
 	code->inst[ip].inst0 |= (inst->RGB.WriteMask << 11) | (inst->Alpha.WriteMask << 14);
 	code->inst[ip].inst0 |= (inst->RGB.OutputWriteMask << 15) | (inst->Alpha.OutputWriteMask << 18);
+	if (inst->Nop) {
+		code->inst[ip].inst0 |= R500_INST_NOP;
+	}
 	if (inst->Alpha.DepthWriteMask) {
 		code->inst[ip].inst4 |= R500_ALPHA_W_OMASK;
 		c->code->writes_depth = 1;
@@ -274,6 +277,40 @@ static void emit_paired(struct r300_fragment_program_compiler *c, struct rc_pair
 		code->inst[ip].inst0 |= R500_INST_RGB_CLAMP;
 	if (inst->Alpha.Saturate)
 		code->inst[ip].inst0 |= R500_INST_ALPHA_CLAMP;
+
+	/* Set the presubtract operation. */
+	switch(inst->RGB.Src[RC_PAIR_PRESUB_SRC].Index) {
+		case RC_PRESUB_BIAS:
+			code->inst[ip].inst1 |= R500_RGB_SRCP_OP_1_MINUS_2RGB0;
+			break;
+		case RC_PRESUB_SUB:
+			code->inst[ip].inst1 |= R500_RGB_SRCP_OP_RGB1_MINUS_RGB0;
+			break;
+		case RC_PRESUB_ADD:
+			code->inst[ip].inst1 |= R500_RGB_SRCP_OP_RGB1_PLUS_RGB0;
+			break;
+		case RC_PRESUB_INV:
+			code->inst[ip].inst1 |= R500_RGB_SRCP_OP_1_MINUS_RGB0;
+			break;
+		default:
+			break;
+	}
+	switch(inst->Alpha.Src[RC_PAIR_PRESUB_SRC].Index) {
+		case RC_PRESUB_BIAS:
+			code->inst[ip].inst2 |= R500_ALPHA_SRCP_OP_1_MINUS_2A0;
+			break;
+		case RC_PRESUB_SUB:
+			code->inst[ip].inst2 |= R500_ALPHA_SRCP_OP_A1_MINUS_A0;
+			break;
+		case RC_PRESUB_ADD:
+			code->inst[ip].inst2 |= R500_ALPHA_SRCP_OP_A1_PLUS_A0;
+			break;
+		case RC_PRESUB_INV:
+			code->inst[ip].inst2 |= R500_ALPHA_SRCP_OP_1_MINUS_A0;
+			break;
+		default:
+			break;
+	}
 
 	code->inst[ip].inst1 |= R500_RGB_ADDR0(use_source(code, inst->RGB.Src[0]));
 	code->inst[ip].inst1 |= R500_RGB_ADDR1(use_source(code, inst->RGB.Src[1]));

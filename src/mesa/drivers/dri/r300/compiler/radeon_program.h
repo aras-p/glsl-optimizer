@@ -39,7 +39,7 @@
 struct radeon_compiler;
 
 struct rc_src_register {
-	unsigned int File:3;
+	unsigned int File:4;
 
 	/** Negative values may be used for relative addressing. */
 	signed int Index:(RC_REGISTER_INDEX_BITS+1);
@@ -62,6 +62,11 @@ struct rc_dst_register {
 	unsigned int RelAddr:1;
 
 	unsigned int WriteMask:4;
+};
+
+struct rc_presub_instruction {
+	rc_presubtract_op Opcode;
+	struct rc_src_register SrcReg[2];
 };
 
 /**
@@ -108,6 +113,10 @@ struct rc_sub_instruction {
 	/** True if tex instruction should do shadow comparison */
 	unsigned int TexShadow:1;
 	/*@}*/
+
+	/** This holds information about the presubtract operation used by
+	 * this instruction. */
+	struct rc_presub_instruction PreSub;
 };
 
 typedef enum {
