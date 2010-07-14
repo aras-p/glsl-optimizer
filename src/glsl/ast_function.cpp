@@ -31,6 +31,9 @@ inline unsigned min(unsigned a, unsigned b)
    return (a < b) ? a : b;
 }
 
+static ir_rvalue *
+convert_component(ir_rvalue *src, const glsl_type *desired_type);
+
 static unsigned
 process_parameters(exec_list *instructions, exec_list *actual_parameters,
 		   exec_list *parameters,
@@ -93,13 +96,15 @@ process_call(exec_list *instructions, ir_function *f,
 	    }
 	 }
 
+	 if (formal->type->is_numeric() || formal->type->is_boolean()) {
+	    ir_rvalue *converted = convert_component(actual, formal->type);
+	    actual->replace_with(converted);
+	 }
+
 	 actual_iter.next();
 	 formal_iter.next();
       }
 
-      /* FINISHME: The list of actual parameters needs to be modified to
-       * FINISHME: include any necessary conversions.
-       */
       return new(ctx) ir_call(sig, actual_parameters);
    } else {
       /* FINISHME: Log a better error message here.  G++ will show the types
