@@ -314,6 +314,14 @@ cross_validate_globals(struct gl_shader_program *prog,
 		   * have an initializer but a later instance does, copy the
 		   * initializer to the version stored in the symbol table.
 		   */
+		  /* FINISHME: This is wrong.  The constant_value field should
+		   * FINISHME: not be modified!  Imagine a case where a shader
+		   * FINISHME: without an initializer is linked in two different
+		   * FINISHME: programs with shaders that have differing
+		   * FINISHME: initializers.  Linking with the first will
+		   * FINISHME: modify the shader, and linking with the second
+		   * FINISHME: will fail.
+		   */
 		  existing->constant_value = var->constant_value->clone(NULL);
 	    }
 	 } else
