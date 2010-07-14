@@ -575,6 +575,33 @@ ir_constant_visitor::visit(ir_expression *ir)
       }
 
       break;
+   case ir_binop_mod:
+      assert(op[0]->type == op[1]->type || op0_scalar || op1_scalar);
+      for (unsigned c = 0, c0 = 0, c1 = 0;
+	   c < components;
+	   c0 += c0_inc, c1 += c1_inc, c++) {
+
+	 switch (ir->operands[0]->type->base_type) {
+	 case GLSL_TYPE_UINT:
+	    data.u[c] = op[0]->value.u[c0] % op[1]->value.u[c1];
+	    break;
+	 case GLSL_TYPE_INT:
+	    data.i[c] = op[0]->value.i[c0] % op[1]->value.i[c1];
+	    break;
+	 case GLSL_TYPE_FLOAT:
+	    /* We don't use fmod because it rounds toward zero; GLSL specifies
+	     * the use of floor.
+	     */
+	    data.f[c] = (op[0]->value.f[c0] - op[1]->value.f[c1])
+	       * floorf(op[0]->value.f[c0] / op[1]->value.f[c1]);
+	    break;
+	 default:
+	    assert(0);
+	 }
+      }
+
+      break;
+
    case ir_binop_logic_and:
       assert(op[0]->type->base_type == GLSL_TYPE_BOOL);
       for (unsigned c = 0; c < ir->operands[0]->type->components(); c++)
