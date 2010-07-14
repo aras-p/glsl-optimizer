@@ -25,7 +25,6 @@ libglcpp_la_SOURCES = \
 	glcpp-lex.l \
 	glcpp-parse.y \
 	glcpp.h \
-	hash_table.c \
 	pp.c \
 	xtalloc.c
 
