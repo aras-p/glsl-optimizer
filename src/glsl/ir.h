@@ -746,6 +746,9 @@ public:
     */
    ir_rvalue *generate_inline(ir_instruction *ir);
 
+   /* List of ir_rvalue of paramaters passed in this call. */
+   exec_list actual_parameters;
+
 private:
    ir_call()
       : callee(NULL)
@@ -754,9 +757,6 @@ private:
    }
 
    ir_function_signature *callee;
-
-   /* List of ir_rvalue of paramaters passed in this call. */
-   exec_list actual_parameters;
 };
 
 
