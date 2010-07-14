@@ -86,8 +86,10 @@ ChangeDrawableAttribute(Display * dpy, GLXDrawable drawable,
                         const CARD32 * attribs, size_t num_attribs)
 {
    __GLXdisplayPrivate *priv = __glXInitialize(dpy);
+   __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable, NULL);
    CARD32 *output;
    CARD8 opcode;
+   int i;
 
    if ((dpy == NULL) || (drawable == 0)) {
       return;
@@ -128,6 +130,15 @@ ChangeDrawableAttribute(Display * dpy, GLXDrawable drawable,
 
    UnlockDisplay(dpy);
    SyncHandle();
+
+   for (i = 0; i < num_attribs; i++) {
+      switch(attribs[i * 2]) {
+      case GLX_EVENT_MASK:
+	 /* Keep a local copy for masking out DRI2 proto events as needed */
+	 pdraw->eventMask = attribs[i * 2 + 1];
+	 break;
+      }
+   }
 
    return;
 }
