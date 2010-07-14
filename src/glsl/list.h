@@ -165,6 +165,17 @@ struct exec_node {
       this->prev->next = before;
       this->prev = before;
    }
+   /**
+    * Replace the current node with the given node.
+    */
+   void replace_with(exec_node *replacement)
+   {
+      replacement->prev = this->prev;
+      replacement->next = this->next;
+
+      this->prev->next = replacement;
+      this->next->prev = replacement;
+   }
 
    /**
     * Is this the sentinal at the tail of the list?
