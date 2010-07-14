@@ -193,7 +193,7 @@ _mesa_validate_DrawElements(GLcontext *ctx,
       return GL_FALSE;
    }
 
-   if (mode > GL_POLYGON) {
+   if (mode > GL_TRIANGLE_STRIP_ADJACENCY_ARB) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glDrawElements(mode)" );
       return GL_FALSE;
    }
@@ -250,7 +250,7 @@ _mesa_validate_DrawRangeElements(GLcontext *ctx, GLenum mode,
       return GL_FALSE;
    }
 
-   if (mode > GL_POLYGON) {
+   if (mode > GL_TRIANGLE_STRIP_ADJACENCY_ARB) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glDrawRangeElements(mode)" );
       return GL_FALSE;
    }
@@ -309,7 +309,7 @@ _mesa_validate_DrawArrays(GLcontext *ctx,
       return GL_FALSE;
    }
 
-   if (mode > GL_POLYGON) {
+   if (mode > GL_TRIANGLE_STRIP_ADJACENCY_ARB) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glDrawArrays(mode)" );
       return GL_FALSE;
    }
@@ -339,7 +339,7 @@ _mesa_validate_DrawArraysInstanced(GLcontext *ctx, GLenum mode, GLint first,
       return GL_FALSE;
    }
 
-   if (mode > GL_POLYGON) {
+   if (mode > GL_TRIANGLE_STRIP_ADJACENCY_ARB) {
       _mesa_error(ctx, GL_INVALID_ENUM,
                   "glDrawArraysInstanced(mode=0x%x)", mode);
       return GL_FALSE;
@@ -384,7 +384,7 @@ _mesa_validate_DrawElementsInstanced(GLcontext *ctx,
       return GL_FALSE;
    }
 
-   if (mode > GL_POLYGON) {
+   if (mode > GL_TRIANGLE_STRIP_ADJACENCY_ARB) {
       _mesa_error(ctx, GL_INVALID_ENUM,
                   "glDrawElementsInstanced(mode = 0x%x)", mode);
       return GL_FALSE;

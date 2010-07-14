@@ -61,7 +61,8 @@ _mesa_append_uniform(struct gl_uniform_list *list,
    GLint index;
 
    assert(target == GL_VERTEX_PROGRAM_ARB ||
-          target == GL_FRAGMENT_PROGRAM_ARB);
+          target == GL_FRAGMENT_PROGRAM_ARB ||
+          target == MESA_GEOMETRY_PROGRAM);
 
    index = _mesa_lookup_uniform(list, name);
    if (index < 0) {
@@ -90,6 +91,7 @@ _mesa_append_uniform(struct gl_uniform_list *list,
       uniform->Name = _mesa_strdup(name);
       uniform->VertPos = -1;
       uniform->FragPos = -1;
+      uniform->GeomPos = -1;
       uniform->Initialized = GL_FALSE;
 
       list->NumUniforms++;
@@ -106,13 +108,18 @@ _mesa_append_uniform(struct gl_uniform_list *list,
          return GL_FALSE;
       }
       uniform->VertPos = progPos;
-   }
-   else {
+   } else if (target == GL_FRAGMENT_PROGRAM_ARB) {
       if (uniform->FragPos != -1) {
          /* this uniform is already in the list - that shouldn't happen */
          return GL_FALSE;
       }
       uniform->FragPos = progPos;
+   } else {
+      if (uniform->GeomPos != -1) {
+         /* this uniform is already in the list - that shouldn't happen */
+         return GL_FALSE;
+      }
+      uniform->GeomPos = progPos;
    }
 
    return uniform;
@@ -156,10 +163,11 @@ _mesa_print_uniforms(const struct gl_uniform_list *list)
    GLuint i;
    printf("Uniform list %p:\n", (void *) list);
    for (i = 0; i < list->NumUniforms; i++) {
-      printf("%d: %s %d %d\n",
+      printf("%d: %s %d %d %d\n",
              i,
              list->Uniforms[i].Name,
              list->Uniforms[i].VertPos,
-             list->Uniforms[i].FragPos);
+             list->Uniforms[i].FragPos,
+             list->Uniforms[i].GeomPos);
    }
 }

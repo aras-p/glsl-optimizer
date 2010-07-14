@@ -189,6 +189,11 @@ struct slang_ir_storage_
    GLuint IndirectSwizzle;
    GLuint TexTarget;  /**< If File==PROGRAM_SAMPLER, one of TEXTURE_x_INDEX */
 
+   /* Is the register two-dimensional and
+    * if so what's the second index */
+   GLboolean Is2D;
+   GLint Index2;
+
    /** If Parent is non-null, Index is relative to parent.
     * The other fields are ignored.
     */
@@ -250,6 +255,10 @@ _slang_new_ir_storage(gl_register_file file, GLint index, GLint size);
 extern slang_ir_storage *
 _slang_new_ir_storage_swz(gl_register_file file, GLint index, GLint size,
                           GLuint swizzle);
+
+extern slang_ir_storage *
+_slang_new_ir_storage_2d(gl_register_file file, GLint index, GLint index2d,
+                         GLint size, GLuint swizzle);
 
 extern slang_ir_storage *
 _slang_new_ir_storage_relative(GLint index, GLint size,

@@ -132,6 +132,11 @@ get_uniform_parameter(const struct gl_shader_program *shProg, GLuint index)
       progPos = shProg->Uniforms->Uniforms[index].FragPos;
       if (progPos >= 0) {
          prog = &shProg->FragmentProgram->Base;
+      } else {
+         progPos = shProg->Uniforms->Uniforms[index].GeomPos;
+         if (progPos >= 0) {
+            prog = &shProg->GeometryProgram->Base;
+         }
       }
    }
 
@@ -315,6 +320,11 @@ lookup_uniform_parameter(GLcontext *ctx, GLuint program, GLint location,
             progPos = shProg->Uniforms->Uniforms[location].FragPos;
             if (progPos >= 0) {
                prog = &shProg->FragmentProgram->Base;
+            } else {
+               progPos = shProg->Uniforms->Uniforms[location].GeomPos;
+               if (progPos >= 0) {
+                  prog = &shProg->GeometryProgram->Base;
+               }
             }
          }
       }
@@ -829,6 +839,15 @@ _mesa_uniform(GLcontext *ctx, GLint location, GLsizei count,
       }
    }
 
+   if (shProg->GeometryProgram) {
+      /* convert uniform location to program parameter index */
+      GLint index = uniform->GeomPos;
+      if (index >= 0) {
+         set_program_uniform(ctx, &shProg->GeometryProgram->Base,
+                             index, offset, type, count, elems, values);
+      }
+   }
+
    uniform->Initialized = GL_TRUE;
 }
 
@@ -957,6 +976,16 @@ _mesa_uniform_matrix(GLcontext *ctx, GLint cols, GLint rows,
       GLint index = uniform->FragPos;
       if (index >= 0) {
          set_program_uniform_matrix(ctx, &shProg->FragmentProgram->Base,
+                                    index, offset,
+                                    count, rows, cols, transpose, values);
+      }
+   }
+
+   if (shProg->GeometryProgram) {
+      /* convert uniform location to program parameter index */
+      GLint index = uniform->GeomPos;
+      if (index >= 0) {
+         set_program_uniform_matrix(ctx, &shProg->GeometryProgram->Base,
                                     index, offset,
                                     count, rows, cols, transpose, values);
       }

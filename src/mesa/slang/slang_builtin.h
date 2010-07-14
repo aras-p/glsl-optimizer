@@ -38,7 +38,8 @@ _slang_alloc_statevar(slang_ir_node *n,
 
 
 extern GLint
-_slang_input_index(const char *name, GLenum target, GLuint *swizzleOut);
+_slang_input_index(const char *name, GLenum target, GLuint *swizzleOut,
+                   GLboolean *is_array);
 
 extern GLint
 _slang_output_index(const char *name, GLenum target);

@@ -176,7 +176,11 @@ static const char *primitive_names[] =
    "TRIANGLE_FAN",
    "QUADS",
    "QUAD_STRIP",
-   "POLYGON"
+   "POLYGON",
+   "LINES_ADJACENCY",
+   "LINE_STRIP_ADJACENCY",
+   "TRIANGLES_ADJACENCY",
+   "TRIANGLE_STRIP_ADJACENCY"
 };
 
 static const char *fs_coord_origin_names[] =

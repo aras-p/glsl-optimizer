@@ -271,6 +271,22 @@ struct prog_src_register
     * instruction which allows per-component negation.
     */
    GLuint Negate:4;
+
+   /**
+    * Is the register two-dimensional.
+    * Two dimensional registers are of the
+    * REGISTER[index][index2] format.
+    * They are used by the geometry shaders where
+    * the first index is the index within an array
+    * and the second index is the semantic of the
+    * array, e.g. gl_PositionIn[index] would become
+    * INPUT[index][gl_PositionIn]
+    */
+   GLuint HasIndex2:1;
+   GLuint RelAddr2:1;
+   GLint Index2:(INST_INDEX_BITS+1); /**< Extra bit here for sign bit.
+                                       * May be negative for relative
+                                       * addressing. */
 };
 
 

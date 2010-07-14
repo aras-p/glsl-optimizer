@@ -120,17 +120,21 @@ static void varray_fan_segment(struct varray_frontend *varray,
 #define FUNC varray_run
 #include "draw_pt_varray_tmp_linear.h"
 
-static unsigned decompose_prim[PIPE_PRIM_POLYGON + 1] = {
+static unsigned decompose_prim[PIPE_PRIM_TRIANGLE_STRIP_ADJACENCY + 1] = {
    PIPE_PRIM_POINTS,
    PIPE_PRIM_LINES,
    PIPE_PRIM_LINE_STRIP,        /* decomposed LINELOOP */
    PIPE_PRIM_LINE_STRIP,
    PIPE_PRIM_TRIANGLES,
    PIPE_PRIM_TRIANGLE_STRIP,
-   PIPE_PRIM_TRIANGLE_FAN, 
+   PIPE_PRIM_TRIANGLE_FAN,
    PIPE_PRIM_QUADS,
    PIPE_PRIM_QUAD_STRIP,
-   PIPE_PRIM_POLYGON
+   PIPE_PRIM_POLYGON,
+   PIPE_PRIM_LINES_ADJACENCY,
+   PIPE_PRIM_LINE_STRIP_ADJACENCY,
+   PIPE_PRIM_TRIANGLES_ADJACENCY,
+   PIPE_PRIM_TRIANGLE_STRIP_ADJACENCY
 };
 
 
@@ -145,6 +149,7 @@ static void varray_prepare(struct draw_pt_front_end *frontend,
    varray->base.run = varray_run;
 
    varray->input_prim = in_prim;
+   assert(in_prim < Elements(decompose_prim));
    varray->output_prim = decompose_prim[in_prim];
 
    varray->middle = middle;

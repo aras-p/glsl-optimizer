@@ -756,47 +756,48 @@ struct input_info
    GLuint Attrib;
    GLenum Type;
    GLuint Swizzle;
+   GLboolean Array;
 };
 
 /** Predefined vertex shader inputs/attributes */
 static const struct input_info vertInputs[] = {
-   { "gl_Vertex", VERT_ATTRIB_POS, GL_FLOAT_VEC4, SWIZZLE_NOOP },
-   { "gl_Normal", VERT_ATTRIB_NORMAL, GL_FLOAT_VEC3, SWIZZLE_NOOP },
-   { "gl_Color", VERT_ATTRIB_COLOR0, GL_FLOAT_VEC4, SWIZZLE_NOOP },
-   { "gl_SecondaryColor", VERT_ATTRIB_COLOR1, GL_FLOAT_VEC4, SWIZZLE_NOOP },
-   { "gl_FogCoord", VERT_ATTRIB_FOG, GL_FLOAT, SWIZZLE_XXXX },
-   { "gl_MultiTexCoord0", VERT_ATTRIB_TEX0, GL_FLOAT_VEC4, SWIZZLE_NOOP },
-   { "gl_MultiTexCoord1", VERT_ATTRIB_TEX1, GL_FLOAT_VEC4, SWIZZLE_NOOP },
-   { "gl_MultiTexCoord2", VERT_ATTRIB_TEX2, GL_FLOAT_VEC4, SWIZZLE_NOOP },
-   { "gl_MultiTexCoord3", VERT_ATTRIB_TEX3, GL_FLOAT_VEC4, SWIZZLE_NOOP },
-   { "gl_MultiTexCoord4", VERT_ATTRIB_TEX4, GL_FLOAT_VEC4, SWIZZLE_NOOP },
-   { "gl_MultiTexCoord5", VERT_ATTRIB_TEX5, GL_FLOAT_VEC4, SWIZZLE_NOOP },
-   { "gl_MultiTexCoord6", VERT_ATTRIB_TEX6, GL_FLOAT_VEC4, SWIZZLE_NOOP },
-   { "gl_MultiTexCoord7", VERT_ATTRIB_TEX7, GL_FLOAT_VEC4, SWIZZLE_NOOP }
+   { "gl_Vertex", VERT_ATTRIB_POS, GL_FLOAT_VEC4, SWIZZLE_NOOP, GL_FALSE },
+   { "gl_Normal", VERT_ATTRIB_NORMAL, GL_FLOAT_VEC3, SWIZZLE_NOOP, GL_FALSE },
+   { "gl_Color", VERT_ATTRIB_COLOR0, GL_FLOAT_VEC4, SWIZZLE_NOOP, GL_FALSE },
+   { "gl_SecondaryColor", VERT_ATTRIB_COLOR1, GL_FLOAT_VEC4, SWIZZLE_NOOP, GL_FALSE },
+   { "gl_FogCoord", VERT_ATTRIB_FOG, GL_FLOAT, SWIZZLE_XXXX, GL_FALSE },
+   { "gl_MultiTexCoord0", VERT_ATTRIB_TEX0, GL_FLOAT_VEC4, SWIZZLE_NOOP, GL_FALSE },
+   { "gl_MultiTexCoord1", VERT_ATTRIB_TEX1, GL_FLOAT_VEC4, SWIZZLE_NOOP, GL_FALSE },
+   { "gl_MultiTexCoord2", VERT_ATTRIB_TEX2, GL_FLOAT_VEC4, SWIZZLE_NOOP, GL_FALSE },
+   { "gl_MultiTexCoord3", VERT_ATTRIB_TEX3, GL_FLOAT_VEC4, SWIZZLE_NOOP, GL_FALSE },
+   { "gl_MultiTexCoord4", VERT_ATTRIB_TEX4, GL_FLOAT_VEC4, SWIZZLE_NOOP, GL_FALSE },
+   { "gl_MultiTexCoord5", VERT_ATTRIB_TEX5, GL_FLOAT_VEC4, SWIZZLE_NOOP, GL_FALSE },
+   { "gl_MultiTexCoord6", VERT_ATTRIB_TEX6, GL_FLOAT_VEC4, SWIZZLE_NOOP, GL_FALSE },
+   { "gl_MultiTexCoord7", VERT_ATTRIB_TEX7, GL_FLOAT_VEC4, SWIZZLE_NOOP, GL_FALSE }
 };
 
 static const struct input_info geomInputs[] = {
-   { "gl_PrimitiveIDIn", GEOM_ATTRIB_PRIMITIVE_ID, GL_FLOAT, SWIZZLE_NOOP },
-   { "gl_FrontColorIn", GEOM_ATTRIB_COLOR0, GL_FLOAT_VEC4, SWIZZLE_NOOP },
-   { "gl_BackColorIn", GEOM_ATTRIB_COLOR1, GL_FLOAT_VEC4, SWIZZLE_NOOP },
-   { "gl_FrontSecondaryColorIn", GEOM_ATTRIB_SECONDARY_COLOR0, GL_FLOAT_VEC4, SWIZZLE_NOOP },
-   { "gl_BackSecondaryColorIn", GEOM_ATTRIB_SECONDARY_COLOR1, GL_FLOAT_VEC4, SWIZZLE_NOOP },
-   { "gl_TexCoordIn", GEOM_ATTRIB_TEX_COORD, GL_FLOAT_VEC4, SWIZZLE_NOOP },
-   { "gl_FogFragCoordIn", GEOM_ATTRIB_FOG_FRAG_COORD, GL_FLOAT, SWIZZLE_NOOP },
-   { "gl_PositionIn", GEOM_ATTRIB_POSITION, GL_FLOAT_VEC4, SWIZZLE_NOOP },
-   { "gl_ClipVertexIn", GEOM_ATTRIB_CLIP_VERTEX, GL_FLOAT_VEC4, SWIZZLE_NOOP },
-   { "gl_PointSizeIn", GEOM_ATTRIB_POINT_SIZE, GL_FLOAT, SWIZZLE_NOOP }
+   { "gl_PrimitiveIDIn", GEOM_ATTRIB_PRIMITIVE_ID, GL_FLOAT, SWIZZLE_NOOP, GL_FALSE },
+   { "gl_FrontColorIn", GEOM_ATTRIB_COLOR0, GL_FLOAT_VEC4, SWIZZLE_NOOP, GL_TRUE },
+   { "gl_BackColorIn", GEOM_ATTRIB_COLOR1, GL_FLOAT_VEC4, SWIZZLE_NOOP, GL_TRUE },
+   { "gl_FrontSecondaryColorIn", GEOM_ATTRIB_SECONDARY_COLOR0, GL_FLOAT_VEC4, SWIZZLE_NOOP, GL_TRUE },
+   { "gl_BackSecondaryColorIn", GEOM_ATTRIB_SECONDARY_COLOR1, GL_FLOAT_VEC4, SWIZZLE_NOOP, GL_TRUE },
+   { "gl_TexCoordIn", GEOM_ATTRIB_TEX_COORD, GL_FLOAT_VEC4, SWIZZLE_NOOP, GL_TRUE },
+   { "gl_FogFragCoordIn", GEOM_ATTRIB_FOG_FRAG_COORD, GL_FLOAT, SWIZZLE_NOOP, GL_TRUE },
+   { "gl_PositionIn", GEOM_ATTRIB_POSITION, GL_FLOAT_VEC4, SWIZZLE_NOOP, GL_TRUE },
+   { "gl_ClipVertexIn", GEOM_ATTRIB_CLIP_VERTEX, GL_FLOAT_VEC4, SWIZZLE_NOOP, GL_TRUE },
+   { "gl_PointSizeIn", GEOM_ATTRIB_POINT_SIZE, GL_FLOAT, SWIZZLE_NOOP, GL_TRUE }
 };
 
 /** Predefined fragment shader inputs */
 static const struct input_info fragInputs[] = {
-   { "gl_FragCoord", FRAG_ATTRIB_WPOS, GL_FLOAT_VEC4, SWIZZLE_NOOP },
-   { "gl_Color", FRAG_ATTRIB_COL0, GL_FLOAT_VEC4, SWIZZLE_NOOP },
-   { "gl_SecondaryColor", FRAG_ATTRIB_COL1, GL_FLOAT_VEC4, SWIZZLE_NOOP },
-   { "gl_TexCoord", FRAG_ATTRIB_TEX0, GL_FLOAT_VEC4, SWIZZLE_NOOP },
-   { "gl_FogFragCoord", FRAG_ATTRIB_FOGC, GL_FLOAT, SWIZZLE_XXXX },
-   { "gl_FrontFacing", FRAG_ATTRIB_FACE, GL_FLOAT, SWIZZLE_XXXX },
-   { "gl_PointCoord", FRAG_ATTRIB_PNTC, GL_FLOAT_VEC2, SWIZZLE_XYZW }
+   { "gl_FragCoord", FRAG_ATTRIB_WPOS, GL_FLOAT_VEC4, SWIZZLE_NOOP, GL_FALSE },
+   { "gl_Color", FRAG_ATTRIB_COL0, GL_FLOAT_VEC4, SWIZZLE_NOOP, GL_FALSE },
+   { "gl_SecondaryColor", FRAG_ATTRIB_COL1, GL_FLOAT_VEC4, SWIZZLE_NOOP, GL_FALSE },
+   { "gl_TexCoord", FRAG_ATTRIB_TEX0, GL_FLOAT_VEC4, SWIZZLE_NOOP, GL_FALSE },
+   { "gl_FogFragCoord", FRAG_ATTRIB_FOGC, GL_FLOAT, SWIZZLE_XXXX, GL_FALSE },
+   { "gl_FrontFacing", FRAG_ATTRIB_FACE, GL_FLOAT, SWIZZLE_XXXX, GL_FALSE },
+   { "gl_PointCoord", FRAG_ATTRIB_PNTC, GL_FLOAT_VEC2, SWIZZLE_XYZW, GL_FALSE }
 };
 
 
@@ -807,7 +808,8 @@ static const struct input_info fragInputs[] = {
  * XXX return size too
  */
 GLint
-_slang_input_index(const char *name, GLenum target, GLuint *swizzleOut)
+_slang_input_index(const char *name, GLenum target, GLuint *swizzleOut,
+                   GLboolean *is_array)
 {
    const struct input_info *inputs;
    GLuint i, n;
@@ -836,6 +838,8 @@ _slang_input_index(const char *name, GLenum target, GLuint *swizzleOut)
       if (strcmp(inputs[i].Name, name) == 0) {
          /* found */
          *swizzleOut = inputs[i].Swizzle;
+         if (is_array)
+            *is_array = inputs[i].Array;
          return inputs[i].Attrib;
       }
    }

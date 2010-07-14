@@ -265,7 +265,8 @@ arb_output_attrib_string(GLint index, GLenum progType)
  */
 static const char *
 reg_string(gl_register_file f, GLint index, gl_prog_print_mode mode,
-           GLboolean relAddr, const struct gl_program *prog)
+           GLboolean relAddr, const struct gl_program *prog,
+           GLboolean hasIndex2, GLboolean relAddr2, GLint index2)
 {
    static char str[100];
    const char *addr = relAddr ? "ADDR+" : "";
@@ -275,6 +276,11 @@ reg_string(gl_register_file f, GLint index, gl_prog_print_mode mode,
    switch (mode) {
    case PROG_PRINT_DEBUG:
       sprintf(str, "%s[%s%d]", file_string(f, mode), addr, index);
+      if (hasIndex2) {
+         int offset = strlen(str);
+         const char *addr2 = relAddr2 ? "ADDR+" : "";
+         sprintf(str+offset, "[%s%d]", addr2, index2);
+      }
       break;
 
    case PROG_PRINT_ARB:
@@ -478,7 +484,8 @@ fprint_dst_reg(FILE * f,
 {
    fprintf(f, "%s%s",
 	   reg_string((gl_register_file) dstReg->File,
-		      dstReg->Index, mode, dstReg->RelAddr, prog),
+		      dstReg->Index, mode, dstReg->RelAddr, prog,
+                      GL_FALSE, GL_FALSE, 0),
 	   _mesa_writemask_string(dstReg->WriteMask));
    
    if (dstReg->CondMask != COND_TR) {
@@ -508,7 +515,8 @@ fprint_src_reg(FILE *f,
    fprintf(f, "%s%s%s%s",
 	   abs,
 	   reg_string((gl_register_file) srcReg->File,
-		      srcReg->Index, mode, srcReg->RelAddr, prog),
+		      srcReg->Index, mode, srcReg->RelAddr, prog,
+                      srcReg->HasIndex2, srcReg->RelAddr2, srcReg->Index2),
 	   _mesa_swizzle_string(srcReg->Swizzle,
 				srcReg->Negate, GL_FALSE),
 	   abs);

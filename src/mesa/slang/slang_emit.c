@@ -379,6 +379,9 @@ storage_to_src_reg(struct prog_src_register *src, const slang_ir_storage *st)
    assert(GET_SWZ(swizzle, 3) <= SWIZZLE_W);
    src->Swizzle = swizzle;
 
+   src->HasIndex2 = st->Is2D;
+   src->Index2 = st->Index2;
+
    src->RelAddr = relAddr;
 }
 
@@ -2317,7 +2320,13 @@ emit_var_ref(slang_emit_info *emitInfo, slang_ir_node *n)
    }
    else if (n->Store->File == PROGRAM_INPUT) {
       assert(n->Store->Index >= 0);
-      emitInfo->prog->InputsRead |= (1 << n->Store->Index);
+      /* geometry shaders have the input index in the second
+       * index */
+      if (emitInfo->prog->Target == MESA_GEOMETRY_PROGRAM &&
+          n->Store->Is2D) {
+         emitInfo->prog->InputsRead |= (1 << n->Store->Index2);
+      } else
+         emitInfo->prog->InputsRead |= (1 << n->Store->Index);
    }
 
    if (n->Store->Index < 0) {
