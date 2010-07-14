@@ -57,6 +57,9 @@ PROGS := lp_test_format	\
 	 lp_test_round \
          lp_test_sincos
 
+# Need this for the lp_test_*.o files
+CLEAN_EXTRA = *.o
+
 lp_test_sincos.o : sse_mathfun.h
 
 PROGS_DEPS := ../../auxiliary/libgallium.a
