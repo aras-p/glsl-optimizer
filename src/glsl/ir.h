@@ -41,10 +41,6 @@ extern "C" {
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
 #endif
 
-struct ir_program {
-   void *bong_hits;
-};
-
 /**
  * Base class of all IR instructions
  */
