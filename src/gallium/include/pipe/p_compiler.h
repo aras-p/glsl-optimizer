@@ -60,6 +60,11 @@
 #include <stdbool.h>
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 #if !defined(__HAIKU__) && !defined(__USE_MISC)
 typedef unsigned int       uint;
 typedef unsigned short     ushort;
@@ -242,5 +247,11 @@ void _ReadWriteBarrier(void);
 #define likely(x) !!(x)
 #define unlikely(x) !!(x)
 #endif
+
+
+#if defined(__cplusplus)
+}
+#endif
+
 
 #endif /* P_COMPILER_H */
