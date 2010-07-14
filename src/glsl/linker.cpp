@@ -77,6 +77,7 @@ extern "C" {
 #include "program.h"
 #include "hash_table.h"
 #include "shader_api.h"
+#include "linker.h"
 
 /**
  * Visitor that determines whether or not a variable is ever written.
@@ -699,6 +700,7 @@ link_intrastage_shaders(struct gl_shader_program *prog,
 
    /* Resolve initializers for global variables in the linked shader.
     */
+   link_function_calls(prog, linked, shader_list, num_shaders);
 
    return linked;
 }

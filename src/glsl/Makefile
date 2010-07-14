@@ -53,6 +53,7 @@ CXX_SOURCES = \
 	ir_vec_index_to_cond_assign.cpp \
 	ir_vec_index_to_swizzle.cpp \
 	linker.cpp \
+	link_functions.cpp \
 	s_expression.cpp
 
 LIBS = \
