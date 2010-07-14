@@ -117,7 +117,7 @@ struct lp_rast_plane {
  */
 struct lp_rast_triangle {
    /* inputs for the shader */
-   PIPE_ALIGN_VAR(16) struct lp_rast_shader_inputs inputs;
+   struct lp_rast_shader_inputs inputs;
 
    int step[3][16];
 

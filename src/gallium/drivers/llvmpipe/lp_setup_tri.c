@@ -342,8 +342,6 @@ alloc_triangle(struct lp_scene *scene,
    unsigned tri_bytes, bytes;
    char *inputs;
 
-   assert(sizeof(*tri) % 16 == 0);
-
    tri_bytes = align(Offset(struct lp_rast_triangle, plane[nr_planes]), 16);
    bytes = tri_bytes + (3 * input_array_sz);
 
