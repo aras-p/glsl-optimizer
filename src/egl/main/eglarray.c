@@ -166,8 +166,11 @@ _eglFlattenArray(_EGLArray *array, void *buffer, EGLint elem_size, EGLint size,
    if (!array)
       return 0;
 
-   count = (size < array->Size) ? size : array->Size;
+   count = array->Size;
    if (buffer) {
+      /* do not exceed buffer size */
+      if (count > size)
+         count = size;
       for (i = 0; i < count; i++)
          flatten(array->Elements[i],
                (void *) ((char *) buffer + elem_size * i));
