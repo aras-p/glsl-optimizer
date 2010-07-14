@@ -305,9 +305,9 @@ translate_src( struct st_translate *t,
 {
    struct ureg_src src = src_register( t, SrcReg->File, SrcReg->Index );
 
-   if (t->procType == TGSI_PROCESSOR_GEOMETRY && SrcReg->HasIndex2D) {
-      src = src_register( t, SrcReg->File, SrcReg->Index2D );
-      if (SrcReg->RelAddr2D)
+   if (t->procType == TGSI_PROCESSOR_GEOMETRY && SrcReg->HasIndex2) {
+      src = src_register( t, SrcReg->File, SrcReg->Index2 );
+      if (SrcReg->RelAddr2)
          src = ureg_src_dimension_indirect( src, ureg_src(t->address[0]),
                                             SrcReg->Index);
       else

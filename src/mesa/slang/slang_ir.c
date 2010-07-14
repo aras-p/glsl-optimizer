@@ -134,7 +134,7 @@ _slang_init_ir_storage(slang_ir_storage *st,
    st->Parent = NULL;
    st->IsIndirect = GL_FALSE;
    st->Is2D = GL_FALSE;
-   st->Index2D = 0;
+   st->Index2 = 0;
 }
 
 
@@ -154,7 +154,7 @@ _slang_new_ir_storage(gl_register_file file, GLint index, GLint size)
       st->Parent = NULL;
       st->IsIndirect = GL_FALSE;
       st->Is2D = GL_FALSE;
-      st->Index2D = 0;
+      st->Index2 = 0;
    }
    return st;
 }
@@ -177,7 +177,7 @@ _slang_new_ir_storage_swz(gl_register_file file, GLint index, GLint size,
       st->Parent = NULL;
       st->IsIndirect = GL_FALSE;
       st->Is2D = GL_FALSE;
-      st->Index2D = 0;
+      st->Index2 = 0;
    }
    return st;
 }
@@ -187,7 +187,7 @@ _slang_new_ir_storage_swz(gl_register_file file, GLint index, GLint size,
  */
 slang_ir_storage *
 _slang_new_ir_storage_2d(gl_register_file file,
-                         GLint index, GLint index2d,
+                         GLint index, GLint index2,
                          GLint size, GLuint swizzle)
 {
    slang_ir_storage *st;
@@ -200,7 +200,7 @@ _slang_new_ir_storage_2d(gl_register_file file,
       st->Parent = NULL;
       st->IsIndirect = GL_FALSE;
       st->Is2D = GL_TRUE;
-      st->Index2D = index2d;
+      st->Index2 = index2;
    }
    return st;
 }
@@ -224,7 +224,7 @@ _slang_new_ir_storage_relative(GLint index, GLint size,
       st->Parent = parent;
       st->IsIndirect = GL_FALSE;
       st->Is2D = GL_FALSE;
-      st->Index2D = 0;
+      st->Index2 = 0;
    }
    return st;
 }
@@ -250,7 +250,7 @@ _slang_new_ir_storage_indirect(gl_register_file file,
       st->IndirectIndex = indirectIndex;
       st->IndirectSwizzle = indirectSwizzle;
       st->Is2D = GL_FALSE;
-      st->Index2D = 0;
+      st->Index2 = 0;
    }
    return st;
 }

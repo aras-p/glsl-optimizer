@@ -762,10 +762,10 @@ _slang_update_inputs_outputs(struct gl_program *prog)
       for (j = 0; j < numSrc; j++) {
          if (inst->SrcReg[j].File == PROGRAM_INPUT) {
             if (prog->Target == MESA_GEOMETRY_PROGRAM &&
-                inst->SrcReg[j].HasIndex2D)
+                inst->SrcReg[j].HasIndex2)
                prog->InputsRead |= get_inputs_read_mask(prog->Target,
-                                                        inst->SrcReg[j].Index2D,
-                                                        inst->SrcReg[j].RelAddr2D);
+                                                        inst->SrcReg[j].Index2,
+                                                        inst->SrcReg[j].RelAddr2);
             else
                prog->InputsRead |= get_inputs_read_mask(prog->Target,
                                                         inst->SrcReg[j].Index,
