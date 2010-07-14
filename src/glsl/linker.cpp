@@ -73,9 +73,7 @@ extern "C" {
 
 #include "main/mtypes.h"
 #include "glsl_symbol_table.h"
-#include "glsl_parser_extras.h"
 #include "ir.h"
-#include "ir_optimization.h"
 #include "program.h"
 #include "hash_table.h"
 #include "shader_api.h"
