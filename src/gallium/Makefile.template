@@ -45,7 +45,7 @@ tags:
 
 # Remove .o and backup files
 clean:
-	rm -f $(OBJECTS) $(GENERATED_SOURCES) $(PROGS) lib$(LIBNAME).a depend depend.bak
+	rm -f $(OBJECTS) $(GENERATED_SOURCES) $(PROGS) lib$(LIBNAME).a depend depend.bak $(CLEAN_EXTRA)
 
 # Dummy target
 install:
