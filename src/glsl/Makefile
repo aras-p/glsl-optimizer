@@ -6,12 +6,18 @@ include $(TOP)/configs/current
 
 LIBNAME = glsl
 
-C_SOURCES = \
-	glcpp/glcpp.c \
+LIBGLCPP_SOURCES = \
 	glcpp/glcpp-lex.c \
 	glcpp/glcpp-parse.c \
 	glcpp/pp.c \
 	glcpp/xtalloc.c
+
+GLCPP_SOURCES = \
+	$(LIBGLCPP_SOURCES) \
+	glcpp/glcpp.c
+
+C_SOURCES = \
+	$(LIBGLCPP_SOURCES)
 
 CXX_SOURCES = \
 	ast_expr.cpp \
@@ -60,7 +66,8 @@ LIBS = \
 	$(TOP)/src/glsl/libglsl.a \
 	$(shell pkg-config --libs talloc)
 
-APPS = glsl_compiler
+APPS = glsl_compiler glcpp/glcpp
+
 GLSL2_C_SOURCES = \
 	../mesa/shader/hash_table.c \
 	../mesa/shader/symbol_table.c
@@ -72,6 +79,10 @@ GLSL2_OBJECTS = \
 	$(GLSL2_CXX_SOURCES:.cpp=.o)
 
 ### Basic defines ###
+
+GLCPP_OBJECTS = \
+	$(GLCPP_SOURCES:.c=.o) \
+	../mesa/shader/hash_table.o
 
 OBJECTS = \
 	$(C_SOURCES:.c=.o) \
@@ -116,6 +127,9 @@ install:
 
 glsl_compiler: $(GLSL2_OBJECTS) libglsl.a
 	$(APP_CXX) $(INCLUDES) $(CFLAGS) $(LDFLAGS) $(GLSL2_OBJECTS) $(LIBS) -o $@
+
+glcpp/glcpp: $(GLCPP_OBJECTS) libglsl.a
+	$(APP_CC) $(INCLUDES) $(CFLAGS) $(LDFLAGS) $(GLCPP_OBJECTS) $(LIBS) -o $@
 
 .cpp.o:
 	$(CXX) -c $(INCLUDES) $(CXXFLAGS) $(LIBRARY_DEFINES) $< -o $@
