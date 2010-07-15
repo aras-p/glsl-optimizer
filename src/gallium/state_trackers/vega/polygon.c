@@ -301,8 +301,7 @@ static void draw_polygon(struct vg_context *ctx,
    cso_set_vertex_elements(ctx->cso_context, 1, &velement);
 
    /* draw */
-   pipe->draw_arrays(pipe, PIPE_PRIM_TRIANGLE_FAN, 
-                     0, poly->num_verts);
+   util_draw_arrays(pipe, PIPE_PRIM_TRIANGLE_FAN, 0, (uint) poly->num_verts);
 }
 
 void polygon_fill(struct polygon *poly, struct vg_context *ctx)

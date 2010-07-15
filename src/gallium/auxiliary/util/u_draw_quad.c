@@ -60,7 +60,7 @@ util_draw_vertex_buffer(struct pipe_context *pipe,
    /* note: vertex elements already set by caller */
 
    /* draw */
-   pipe->draw_arrays(pipe, prim_type, 0, num_verts);
+   util_draw_arrays(pipe, prim_type, 0, num_verts);
 }
 
 
