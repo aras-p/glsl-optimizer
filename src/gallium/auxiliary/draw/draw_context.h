@@ -53,6 +53,8 @@ struct draw_context *draw_create( struct pipe_context *pipe );
 
 void draw_destroy( struct draw_context *draw );
 
+void draw_flush(struct draw_context *draw);
+
 void draw_set_viewport_state( struct draw_context *draw,
                               const struct pipe_viewport_state *viewport );
 
@@ -191,7 +193,7 @@ draw_set_so_state(struct draw_context *draw,
 
 
 /***********************************************************************
- * draw_prim.c 
+ * draw_pt.c 
  */
 
 void draw_arrays(struct draw_context *draw, unsigned prim,
@@ -204,8 +206,6 @@ draw_arrays_instanced(struct draw_context *draw,
                       unsigned count,
                       unsigned startInstance,
                       unsigned instanceCount);
-
-void draw_flush(struct draw_context *draw);
 
 
 /*******************************************************************************
