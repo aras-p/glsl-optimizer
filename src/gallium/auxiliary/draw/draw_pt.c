@@ -297,11 +297,8 @@ draw_print_arrays(struct draw_context *draw, uint prim, int start, uint count)
 
 
 /**
- * Draw vertex arrays
- * This is the main entrypoint into the drawing module.
- * \param prim  one of PIPE_PRIM_x
- * \param start  index of first vertex to draw
- * \param count  number of vertices to draw
+ * Non-instanced drawing.
+ * \sa draw_arrays_instanced
  */
 void
 draw_arrays(struct draw_context *draw, unsigned prim,
@@ -310,6 +307,20 @@ draw_arrays(struct draw_context *draw, unsigned prim,
    draw_arrays_instanced(draw, prim, start, count, 0, 1);
 }
 
+
+/**
+ * Draw vertex arrays.
+ * This is the main entrypoint into the drawing module.
+ * If drawing an indexed primitive, the draw_set_mapped_element_buffer_range()
+ * function should have already been called to specify the element/index buffer
+ * information.
+ *
+ * \param prim  one of PIPE_PRIM_x
+ * \param start  index of first vertex to draw
+ * \param count  number of vertices to draw
+ * \param startInstance  number for the first primitive instance (usually 0).
+ * \param instanceCount  number of instances to draw (1=non-instanced)
+ */
 void
 draw_arrays_instanced(struct draw_context *draw,
                       unsigned mode,
