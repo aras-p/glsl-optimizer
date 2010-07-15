@@ -212,7 +212,6 @@ lp_rast_get_color_block_pointer(struct lp_rasterizer_task *task,
    assert((y % TILE_VECTOR_HEIGHT) == 0);
 
    color = lp_rast_get_color_tile_pointer(task, buf, LP_TEX_USAGE_READ_WRITE);
-   color = task->color_tiles[buf];
    if (!color) {
       /* out of memory - use dummy tile memory */
       return lp_get_dummy_tile();
