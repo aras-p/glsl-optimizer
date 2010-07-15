@@ -57,6 +57,7 @@
 #include "pipe/p_defines.h"
 #include "util/u_inlines.h"
 #include "util/u_format.h"
+#include "util/u_prim.h"
 #include "draw/draw_context.h"
 #include "cso_cache/cso_context.h"
 
@@ -517,10 +518,21 @@ check_uniforms(GLcontext *ctx)
 }
 
 
-static unsigned translate_prim( GLcontext *ctx,
-                                unsigned prim )
+/**
+ * Translate OpenGL primtive type (GL_POINTS, GL_TRIANGLE_STRIP, etc) to
+ * the corresponding Gallium type.
+ */
+static unsigned
+translate_prim(const GLcontext *ctx, unsigned prim)
 {
+   /* GL prims should match Gallium prims, spot-check a few */
+   assert(GL_POINTS == PIPE_PRIM_POINTS);
+   assert(GL_QUADS == PIPE_PRIM_QUADS);
+   assert(GL_TRIANGLE_STRIP_ADJACENCY == PIPE_PRIM_TRIANGLE_STRIP_ADJACENCY);
+
    /* Avoid quadstrips if it's easy to do so:
+    * Note: it's imporant to do the correct trimming if we change the prim type!
+    * We do that wherever this function is called.
     */
    if (prim == GL_QUAD_STRIP &&
        ctx->Light.ShadeModel != GL_FLAT &&
@@ -530,6 +542,8 @@ static unsigned translate_prim( GLcontext *ctx,
 
    return prim;
 }
+
+
 
 /**
  * This function gets plugged into the VBO module and is called when
@@ -639,7 +653,6 @@ st_draw_vbo(GLcontext *ctx,
       struct gl_buffer_object *bufobj = ib->obj;
       struct pipe_resource *indexBuf = NULL;
       unsigned indexSize, indexOffset, i;
-      unsigned prim;
 
       switch (ib->type) {
       case GL_UNSIGNED_INT:
@@ -678,27 +691,40 @@ st_draw_vbo(GLcontext *ctx,
           * need a bit of work...
           */
          for (i = 0; i < nr_prims; i++) {
-            prim = translate_prim( ctx, prims[i].mode );
+            unsigned vcount = prims[i].count;
+            unsigned prim = translate_prim(ctx, prims[i].mode);
 
-            pipe->draw_range_elements(pipe, indexBuf, indexSize, 0,
-                                      min_index, max_index, prim,
-                                      prims[i].start + indexOffset, prims[i].count);
+            if (u_trim_pipe_prim(prims[i].mode, &vcount)) {
+               pipe->draw_range_elements(pipe, indexBuf, indexSize, 0,
+                                         min_index, max_index, prim,
+                                         prims[i].start + indexOffset, vcount);
+            }
          }
       }
       else {
          for (i = 0; i < nr_prims; i++) {
-            prim = translate_prim( ctx, prims[i].mode );
+            unsigned vcount = prims[i].count;
+            unsigned prim = translate_prim(ctx, prims[i].mode);
             
-            if (prims[i].num_instances == 1) {
-               pipe->draw_elements(pipe, indexBuf, indexSize, 0, prim,
-                                   prims[i].start + indexOffset,
-                                   prims[i].count);
-            }
-            else {
-               pipe->draw_elements_instanced(pipe, indexBuf, indexSize, 0, prim,
-                                             prims[i].start + indexOffset,
-                                             prims[i].count,
-                                             0, prims[i].num_instances);
+            if (u_trim_pipe_prim(prims[i].mode, &vcount)) {
+               if (prims[i].num_instances == 1) {
+                  pipe->draw_elements(pipe, indexBuf,
+                                      indexSize,
+                                      0, /* indexBias */
+                                      prim,
+                                      prims[i].start + indexOffset,
+                                      vcount);
+               }
+               else {
+                  pipe->draw_elements_instanced(pipe, indexBuf,
+                                                indexSize,
+                                                0, /* indexBias */
+                                                prim,
+                                                prims[i].start + indexOffset,
+                                                vcount,
+                                                0, /* startInstance */
+                                                prims[i].num_instances);
+               }
             }
          }
       }
@@ -708,18 +734,22 @@ st_draw_vbo(GLcontext *ctx,
    else {
       /* non-indexed */
       GLuint i;
-      GLuint prim;
 
       for (i = 0; i < nr_prims; i++) {
-         prim = translate_prim( ctx, prims[i].mode );
+         unsigned vcount = prims[i].count;
+         unsigned prim = translate_prim(ctx, prims[i].mode);
 
-         if (prims[i].num_instances == 1) {
-            pipe->draw_arrays(pipe, prim, prims[i].start, prims[i].count);
-         }
-         else {
-            pipe->draw_arrays_instanced(pipe, prim, prims[i].start,
-                                        prims[i].count,
-                                        0, prims[i].num_instances);
+         if (u_trim_pipe_prim(prims[i].mode, &vcount)) {
+            if (prims[i].num_instances == 1) {
+               pipe->draw_arrays(pipe, prim, prims[i].start, vcount);
+            }
+            else {
+               pipe->draw_arrays_instanced(pipe, prim,
+                                           prims[i].start,
+                                           vcount,
+                                           0, /* startInstance */
+                                           prims[i].num_instances);
+            }
          }
       }
    }
