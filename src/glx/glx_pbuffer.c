@@ -86,7 +86,7 @@ ChangeDrawableAttribute(Display * dpy, GLXDrawable drawable,
                         const CARD32 * attribs, size_t num_attribs)
 {
    __GLXdisplayPrivate *priv = __glXInitialize(dpy);
-   __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable, NULL);
+   __GLXDRIdrawable *pdraw;
    CARD32 *output;
    CARD8 opcode;
    int i;
@@ -94,6 +94,8 @@ ChangeDrawableAttribute(Display * dpy, GLXDrawable drawable,
    if ((dpy == NULL) || (drawable == 0)) {
       return;
    }
+
+   pdraw = GetGLXDRIDrawable(dpy, drawable, NULL);
 
    opcode = __glXSetupForCommand(dpy);
    if (!opcode)
