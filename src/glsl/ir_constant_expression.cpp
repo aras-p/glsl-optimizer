@@ -44,14 +44,13 @@
 ir_constant *
 ir_expression::constant_expression_value()
 {
-   ir_expression *ir = this;
    ir_constant *op[2] = { NULL, NULL };
    ir_constant_data data;
 
    memset(&data, 0, sizeof(data));
 
-   for (unsigned operand = 0; operand < ir->get_num_operands(); operand++) {
-      op[operand] = ir->operands[operand]->constant_expression_value();
+   for (unsigned operand = 0; operand < this->get_num_operands(); operand++) {
+      op[operand] = this->operands[operand]->constant_expression_value();
       if (!op[operand])
 	 return NULL;
    }
@@ -74,23 +73,23 @@ ir_expression::constant_expression_value()
       components = op[1]->type->components();
    }
 
-   switch (ir->operation) {
+   switch (this->operation) {
    case ir_unop_logic_not:
       assert(op[0]->type->base_type == GLSL_TYPE_BOOL);
-      for (unsigned c = 0; c < ir->operands[0]->type->components(); c++)
+      for (unsigned c = 0; c < op[0]->type->components(); c++)
 	 data.b[c] = !op[0]->value.b[c];
       break;
 
    case ir_unop_f2i:
       assert(op[0]->type->base_type == GLSL_TYPE_FLOAT);
-      for (unsigned c = 0; c < ir->operands[0]->type->components(); c++) {
+      for (unsigned c = 0; c < op[0]->type->components(); c++) {
 	 data.i[c] = op[0]->value.f[c];
       }
       break;
    case ir_unop_i2f:
       assert(op[0]->type->base_type == GLSL_TYPE_UINT ||
 	     op[0]->type->base_type == GLSL_TYPE_INT);
-      for (unsigned c = 0; c < ir->operands[0]->type->components(); c++) {
+      for (unsigned c = 0; c < op[0]->type->components(); c++) {
 	 if (op[0]->type->base_type == GLSL_TYPE_INT)
 	    data.f[c] = op[0]->value.i[c];
 	 else
@@ -99,53 +98,53 @@ ir_expression::constant_expression_value()
       break;
    case ir_unop_b2f:
       assert(op[0]->type->base_type == GLSL_TYPE_BOOL);
-      for (unsigned c = 0; c < ir->operands[0]->type->components(); c++) {
+      for (unsigned c = 0; c < op[0]->type->components(); c++) {
 	 data.f[c] = op[0]->value.b[c] ? 1.0 : 0.0;
       }
       break;
    case ir_unop_f2b:
       assert(op[0]->type->base_type == GLSL_TYPE_FLOAT);
-      for (unsigned c = 0; c < ir->operands[0]->type->components(); c++) {
+      for (unsigned c = 0; c < op[0]->type->components(); c++) {
 	 data.b[c] = bool(op[0]->value.f[c]);
       }
       break;
    case ir_unop_b2i:
       assert(op[0]->type->base_type == GLSL_TYPE_BOOL);
-      for (unsigned c = 0; c < ir->operands[0]->type->components(); c++) {
+      for (unsigned c = 0; c < op[0]->type->components(); c++) {
 	 data.u[c] = op[0]->value.b[c] ? 1 : 0;
       }
       break;
    case ir_unop_i2b:
       assert(op[0]->type->is_integer());
-      for (unsigned c = 0; c < ir->operands[0]->type->components(); c++) {
+      for (unsigned c = 0; c < op[0]->type->components(); c++) {
 	 data.b[c] = bool(op[0]->value.u[c]);
       }
       break;
 
    case ir_unop_trunc:
       assert(op[0]->type->base_type == GLSL_TYPE_FLOAT);
-      for (unsigned c = 0; c < ir->operands[0]->type->components(); c++) {
+      for (unsigned c = 0; c < op[0]->type->components(); c++) {
 	 data.f[c] = truncf(op[0]->value.f[c]);
       }
       break;
 
    case ir_unop_ceil:
       assert(op[0]->type->base_type == GLSL_TYPE_FLOAT);
-      for (unsigned c = 0; c < ir->operands[0]->type->components(); c++) {
+      for (unsigned c = 0; c < op[0]->type->components(); c++) {
 	 data.f[c] = ceilf(op[0]->value.f[c]);
       }
       break;
 
    case ir_unop_floor:
       assert(op[0]->type->base_type == GLSL_TYPE_FLOAT);
-      for (unsigned c = 0; c < ir->operands[0]->type->components(); c++) {
+      for (unsigned c = 0; c < op[0]->type->components(); c++) {
 	 data.f[c] = floorf(op[0]->value.f[c]);
       }
       break;
 
    case ir_unop_fract:
-      for (unsigned c = 0; c < ir->operands[0]->type->components(); c++) {
-	 switch (ir->type->base_type) {
+      for (unsigned c = 0; c < op[0]->type->components(); c++) {
+	 switch (this->type->base_type) {
 	 case GLSL_TYPE_UINT:
 	    data.u[c] = 0;
 	    break;
@@ -163,21 +162,21 @@ ir_expression::constant_expression_value()
 
    case ir_unop_sin:
       assert(op[0]->type->base_type == GLSL_TYPE_FLOAT);
-      for (unsigned c = 0; c < ir->operands[0]->type->components(); c++) {
+      for (unsigned c = 0; c < op[0]->type->components(); c++) {
 	 data.f[c] = sinf(op[0]->value.f[c]);
       }
       break;
 
    case ir_unop_cos:
       assert(op[0]->type->base_type == GLSL_TYPE_FLOAT);
-      for (unsigned c = 0; c < ir->operands[0]->type->components(); c++) {
+      for (unsigned c = 0; c < op[0]->type->components(); c++) {
 	 data.f[c] = cosf(op[0]->value.f[c]);
       }
       break;
 
    case ir_unop_neg:
-      for (unsigned c = 0; c < ir->operands[0]->type->components(); c++) {
-	 switch (ir->type->base_type) {
+      for (unsigned c = 0; c < op[0]->type->components(); c++) {
+	 switch (this->type->base_type) {
 	 case GLSL_TYPE_UINT:
 	    data.u[c] = -op[0]->value.u[c];
 	    break;
@@ -194,8 +193,8 @@ ir_expression::constant_expression_value()
       break;
 
    case ir_unop_abs:
-      for (unsigned c = 0; c < ir->operands[0]->type->components(); c++) {
-	 switch (ir->type->base_type) {
+      for (unsigned c = 0; c < op[0]->type->components(); c++) {
+	 switch (this->type->base_type) {
 	 case GLSL_TYPE_UINT:
 	    data.u[c] = op[0]->value.u[c];
 	    break;
@@ -214,8 +213,8 @@ ir_expression::constant_expression_value()
       break;
 
    case ir_unop_sign:
-      for (unsigned c = 0; c < ir->operands[0]->type->components(); c++) {
-	 switch (ir->type->base_type) {
+      for (unsigned c = 0; c < op[0]->type->components(); c++) {
+	 switch (this->type->base_type) {
 	 case GLSL_TYPE_UINT:
 	    data.u[c] = op[0]->value.i[c] > 0;
 	    break;
@@ -233,8 +232,8 @@ ir_expression::constant_expression_value()
 
    case ir_unop_rcp:
       assert(op[0]->type->base_type == GLSL_TYPE_FLOAT);
-      for (unsigned c = 0; c < ir->operands[0]->type->components(); c++) {
-	 switch (ir->type->base_type) {
+      for (unsigned c = 0; c < op[0]->type->components(); c++) {
+	 switch (this->type->base_type) {
 	 case GLSL_TYPE_UINT:
 	    if (op[0]->value.u[c] != 0.0)
 	       data.u[c] = 1 / op[0]->value.u[c];
@@ -255,42 +254,42 @@ ir_expression::constant_expression_value()
 
    case ir_unop_rsq:
       assert(op[0]->type->base_type == GLSL_TYPE_FLOAT);
-      for (unsigned c = 0; c < ir->operands[0]->type->components(); c++) {
+      for (unsigned c = 0; c < op[0]->type->components(); c++) {
 	 data.f[c] = 1.0 / sqrtf(op[0]->value.f[c]);
       }
       break;
 
    case ir_unop_sqrt:
       assert(op[0]->type->base_type == GLSL_TYPE_FLOAT);
-      for (unsigned c = 0; c < ir->operands[0]->type->components(); c++) {
+      for (unsigned c = 0; c < op[0]->type->components(); c++) {
 	 data.f[c] = sqrtf(op[0]->value.f[c]);
       }
       break;
 
    case ir_unop_exp:
       assert(op[0]->type->base_type == GLSL_TYPE_FLOAT);
-      for (unsigned c = 0; c < ir->operands[0]->type->components(); c++) {
+      for (unsigned c = 0; c < op[0]->type->components(); c++) {
 	 data.f[c] = expf(op[0]->value.f[c]);
       }
       break;
 
    case ir_unop_exp2:
       assert(op[0]->type->base_type == GLSL_TYPE_FLOAT);
-      for (unsigned c = 0; c < ir->operands[0]->type->components(); c++) {
+      for (unsigned c = 0; c < op[0]->type->components(); c++) {
 	 data.f[c] = exp2f(op[0]->value.f[c]);
       }
       break;
 
    case ir_unop_log:
       assert(op[0]->type->base_type == GLSL_TYPE_FLOAT);
-      for (unsigned c = 0; c < ir->operands[0]->type->components(); c++) {
+      for (unsigned c = 0; c < op[0]->type->components(); c++) {
 	 data.f[c] = logf(op[0]->value.f[c]);
       }
       break;
 
    case ir_unop_log2:
       assert(op[0]->type->base_type == GLSL_TYPE_FLOAT);
-      for (unsigned c = 0; c < ir->operands[0]->type->components(); c++) {
+      for (unsigned c = 0; c < op[0]->type->components(); c++) {
 	 data.f[c] = log2f(op[0]->value.f[c]);
       }
       break;
@@ -298,14 +297,14 @@ ir_expression::constant_expression_value()
    case ir_unop_dFdx:
    case ir_unop_dFdy:
       assert(op[0]->type->base_type == GLSL_TYPE_FLOAT);
-      for (unsigned c = 0; c < ir->operands[0]->type->components(); c++) {
+      for (unsigned c = 0; c < op[0]->type->components(); c++) {
 	 data.f[c] = 0.0;
       }
       break;
 
    case ir_binop_pow:
       assert(op[0]->type->base_type == GLSL_TYPE_FLOAT);
-      for (unsigned c = 0; c < ir->operands[0]->type->components(); c++) {
+      for (unsigned c = 0; c < op[0]->type->components(); c++) {
 	 data.f[c] = powf(op[0]->value.f[c], op[1]->value.f[c]);
       }
       break;
@@ -314,7 +313,7 @@ ir_expression::constant_expression_value()
       assert(op[0]->type->is_vector() && op[1]->type->is_vector());
       data.f[0] = 0;
       for (unsigned c = 0; c < op[0]->type->components(); c++) {
-	 switch (ir->operands[0]->type->base_type) {
+	 switch (op[0]->type->base_type) {
 	 case GLSL_TYPE_UINT:
 	    data.u[0] += op[0]->value.u[c] * op[1]->value.u[c];
 	    break;
@@ -336,7 +335,7 @@ ir_expression::constant_expression_value()
 	   c < components;
 	   c0 += c0_inc, c1 += c1_inc, c++) {
 
-	 switch (ir->operands[0]->type->base_type) {
+	 switch (op[0]->type->base_type) {
 	 case GLSL_TYPE_UINT:
 	    data.u[c] = min(op[0]->value.u[c0], op[1]->value.u[c1]);
 	    break;
@@ -358,7 +357,7 @@ ir_expression::constant_expression_value()
 	   c < components;
 	   c0 += c0_inc, c1 += c1_inc, c++) {
 
-	 switch (ir->operands[0]->type->base_type) {
+	 switch (op[0]->type->base_type) {
 	 case GLSL_TYPE_UINT:
 	    data.u[c] = max(op[0]->value.u[c0], op[1]->value.u[c1]);
 	    break;
@@ -391,7 +390,7 @@ ir_expression::constant_expression_value()
 	   c < components;
 	   c0 += c0_inc, c1 += c1_inc, c++) {
 
-	 switch (ir->operands[0]->type->base_type) {
+	 switch (op[0]->type->base_type) {
 	 case GLSL_TYPE_UINT:
 	    data.u[c] = op[0]->value.u[c0] + op[1]->value.u[c1];
 	    break;
@@ -413,7 +412,7 @@ ir_expression::constant_expression_value()
 	   c < components;
 	   c0 += c0_inc, c1 += c1_inc, c++) {
 
-	 switch (ir->operands[0]->type->base_type) {
+	 switch (op[0]->type->base_type) {
 	 case GLSL_TYPE_UINT:
 	    data.u[c] = op[0]->value.u[c0] - op[1]->value.u[c1];
 	    break;
@@ -437,7 +436,7 @@ ir_expression::constant_expression_value()
 	      c < components;
 	      c0 += c0_inc, c1 += c1_inc, c++) {
 
-	    switch (ir->operands[0]->type->base_type) {
+	    switch (op[0]->type->base_type) {
 	    case GLSL_TYPE_UINT:
 	       data.u[c] = op[0]->value.u[c0] * op[1]->value.u[c1];
 	       break;
@@ -483,7 +482,7 @@ ir_expression::constant_expression_value()
 	   c < components;
 	   c0 += c0_inc, c1 += c1_inc, c++) {
 
-	 switch (ir->operands[0]->type->base_type) {
+	 switch (op[0]->type->base_type) {
 	 case GLSL_TYPE_UINT:
 	    data.u[c] = op[0]->value.u[c0] / op[1]->value.u[c1];
 	    break;
@@ -505,7 +504,7 @@ ir_expression::constant_expression_value()
 	   c < components;
 	   c0 += c0_inc, c1 += c1_inc, c++) {
 
-	 switch (ir->operands[0]->type->base_type) {
+	 switch (op[0]->type->base_type) {
 	 case GLSL_TYPE_UINT:
 	    data.u[c] = op[0]->value.u[c0] % op[1]->value.u[c1];
 	    break;
@@ -528,22 +527,22 @@ ir_expression::constant_expression_value()
 
    case ir_binop_logic_and:
       assert(op[0]->type->base_type == GLSL_TYPE_BOOL);
-      for (unsigned c = 0; c < ir->operands[0]->type->components(); c++)
+      for (unsigned c = 0; c < op[0]->type->components(); c++)
 	 data.b[c] = op[0]->value.b[c] && op[1]->value.b[c];
       break;
    case ir_binop_logic_xor:
       assert(op[0]->type->base_type == GLSL_TYPE_BOOL);
-      for (unsigned c = 0; c < ir->operands[0]->type->components(); c++)
+      for (unsigned c = 0; c < op[0]->type->components(); c++)
 	 data.b[c] = op[0]->value.b[c] ^ op[1]->value.b[c];
       break;
    case ir_binop_logic_or:
       assert(op[0]->type->base_type == GLSL_TYPE_BOOL);
-      for (unsigned c = 0; c < ir->operands[0]->type->components(); c++)
+      for (unsigned c = 0; c < op[0]->type->components(); c++)
 	 data.b[c] = op[0]->value.b[c] || op[1]->value.b[c];
       break;
 
    case ir_binop_less:
-      switch (ir->operands[0]->type->base_type) {
+      switch (op[0]->type->base_type) {
       case GLSL_TYPE_UINT:
 	 data.b[0] = op[0]->value.u[0] < op[1]->value.u[0];
 	 break;
@@ -558,7 +557,7 @@ ir_expression::constant_expression_value()
       }
       break;
    case ir_binop_greater:
-      switch (ir->operands[0]->type->base_type) {
+      switch (op[0]->type->base_type) {
       case GLSL_TYPE_UINT:
 	 data.b[0] = op[0]->value.u[0] > op[1]->value.u[0];
 	 break;
@@ -573,7 +572,7 @@ ir_expression::constant_expression_value()
       }
       break;
    case ir_binop_lequal:
-      switch (ir->operands[0]->type->base_type) {
+      switch (op[0]->type->base_type) {
       case GLSL_TYPE_UINT:
 	 data.b[0] = op[0]->value.u[0] <= op[1]->value.u[0];
 	 break;
@@ -588,7 +587,7 @@ ir_expression::constant_expression_value()
       }
       break;
    case ir_binop_gequal:
-      switch (ir->operands[0]->type->base_type) {
+      switch (op[0]->type->base_type) {
       case GLSL_TYPE_UINT:
 	 data.b[0] = op[0]->value.u[0] >= op[1]->value.u[0];
 	 break;
@@ -605,8 +604,8 @@ ir_expression::constant_expression_value()
 
    case ir_binop_equal:
       data.b[0] = true;
-      for (unsigned c = 0; c < ir->operands[0]->type->components(); c++) {
-	 switch (ir->operands[0]->type->base_type) {
+      for (unsigned c = 0; c < op[0]->type->components(); c++) {
+	 switch (op[0]->type->base_type) {
 	 case GLSL_TYPE_UINT:
 	    data.b[0] = data.b[0] && op[0]->value.u[c] == op[1]->value.u[c];
 	    break;
@@ -626,8 +625,8 @@ ir_expression::constant_expression_value()
       break;
    case ir_binop_nequal:
       data.b[0] = false;
-      for (unsigned c = 0; c < ir->operands[0]->type->components(); c++) {
-	 switch (ir->operands[0]->type->base_type) {
+      for (unsigned c = 0; c < op[0]->type->components(); c++) {
+	 switch (op[0]->type->base_type) {
 	 case GLSL_TYPE_UINT:
 	    data.b[0] = data.b[0] || op[0]->value.u[c] != op[1]->value.u[c];
 	    break;
@@ -651,8 +650,8 @@ ir_expression::constant_expression_value()
       return NULL;
    }
 
-   void *ctx = talloc_parent(ir);
-   return new(ctx) ir_constant(ir->type, &data);
+   void *ctx = talloc_parent(this);
+   return new(ctx) ir_constant(this->type, &data);
 }
 
 
@@ -667,17 +666,16 @@ ir_texture::constant_expression_value()
 ir_constant *
 ir_swizzle::constant_expression_value()
 {
-   ir_swizzle *ir = this;
-   ir_constant *v = ir->val->constant_expression_value();
+   ir_constant *v = this->val->constant_expression_value();
 
    if (v != NULL) {
       ir_constant_data data;
 
       const unsigned swiz_idx[4] = {
-	 ir->mask.x, ir->mask.y, ir->mask.z, ir->mask.w
+	 this->mask.x, this->mask.y, this->mask.z, this->mask.w
       };
 
-      for (unsigned i = 0; i < ir->mask.num_components; i++) {
+      for (unsigned i = 0; i < this->mask.num_components; i++) {
 	 switch (v->type->base_type) {
 	 case GLSL_TYPE_UINT:
 	 case GLSL_TYPE_INT:   data.u[i] = v->value.u[swiz_idx[i]]; break;
@@ -687,8 +685,8 @@ ir_swizzle::constant_expression_value()
 	 }
       }
 
-      void *ctx = talloc_parent(ir);
-      return new(ctx) ir_constant(ir->type, &data);
+      void *ctx = talloc_parent(this);
+      return new(ctx) ir_constant(this->type, &data);
    }
    return NULL;
 }
@@ -707,10 +705,9 @@ ir_dereference_variable::constant_expression_value()
 ir_constant *
 ir_dereference_array::constant_expression_value()
 {
-   ir_dereference_array *ir = this;
-   void *ctx = talloc_parent(ir);
-   ir_constant *array = ir->array->constant_expression_value();
-   ir_constant *idx = ir->array_index->constant_expression_value();
+   void *ctx = talloc_parent(this);
+   ir_constant *array = this->array->constant_expression_value();
+   ir_constant *idx = this->array_index->constant_expression_value();
 
    if ((array != NULL) && (idx != NULL)) {
       if (array->type->is_matrix()) {
@@ -762,10 +759,9 @@ ir_dereference_array::constant_expression_value()
 ir_constant *
 ir_dereference_record::constant_expression_value()
 {
-   ir_dereference_record *ir = this;
-   ir_constant *v = ir->record->constant_expression_value();
+   ir_constant *v = this->record->constant_expression_value();
 
-   return (v != NULL) ? v->get_record_field(ir->field) : NULL;
+   return (v != NULL) ? v->get_record_field(this->field) : NULL;
 }
 
 
