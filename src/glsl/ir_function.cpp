@@ -87,23 +87,25 @@ type_compare(const glsl_type *a, const glsl_type *b)
 
 
 static int
-parameter_lists_match(exec_list *list_a, exec_list *list_b)
+parameter_lists_match(const exec_list *list_a, const exec_list *list_b)
 {
-   exec_list_iterator iter_a = list_a->iterator();
-   exec_list_iterator iter_b = list_b->iterator();
+   const exec_node *node_a = list_a->head;
+   const exec_node *node_b = list_b->head;
    int total_score = 0;
 
-   for (/* empty */ ; iter_a.has_next(); iter_a.next(), iter_b.next()) {
+   for (/* empty */
+	; !node_a->is_tail_sentinal()
+	; node_a = node_a->next, node_b = node_b->next) {
       /* If all of the parameters from the other parameter list have been
        * exhausted, the lists have different length and, by definition,
        * do not match.
        */
-      if (!iter_b.has_next())
+      if (node_b->is_tail_sentinal())
 	 return -1;
 
 
-      const ir_variable *const param = (ir_variable *) iter_a.get();
-      const ir_instruction *const actual = (ir_instruction *) iter_b.get();
+      const ir_variable *const param = (ir_variable *) node_a;
+      const ir_instruction *const actual = (ir_instruction *) node_b;
 
       /* Determine whether or not the types match.  If the types are an
        * exact match, the match score is zero.  If the types don't match
@@ -148,7 +150,7 @@ parameter_lists_match(exec_list *list_a, exec_list *list_b)
     * exhausted, the lists have different length and, by definition, do not
     * match.
     */
-   if (iter_b.has_next())
+   if (!node_b->is_tail_sentinal())
       return -1;
 
    return total_score;
@@ -156,7 +158,7 @@ parameter_lists_match(exec_list *list_a, exec_list *list_b)
 
 
 ir_function_signature *
-ir_function::matching_signature(exec_list *actual_parameters)
+ir_function::matching_signature(const exec_list *actual_parameters)
 {
    ir_function_signature *match = NULL;
 
@@ -183,36 +185,32 @@ ir_function::matching_signature(exec_list *actual_parameters)
 
 
 static bool
-parameter_lists_match_exact(exec_list *list_a, exec_list *list_b)
+parameter_lists_match_exact(const exec_list *list_a, const exec_list *list_b)
 {
-   exec_list_iterator iter_a = list_a->iterator();
-   exec_list_iterator iter_b = list_b->iterator();
+   const exec_node *node_a = list_a->head;
+   const exec_node *node_b = list_b->head;
 
-   while (iter_a.has_next() && iter_b.has_next()) {
-      ir_variable *a = (ir_variable *)iter_a.get();
-      ir_variable *b = (ir_variable *)iter_b.get();
+   for (/* empty */
+	; !node_a->is_tail_sentinal() && !node_b->is_tail_sentinal()
+	; node_a = node_a->next, node_b = node_b->next) {
+      ir_variable *a = (ir_variable *) node_a;
+      ir_variable *b = (ir_variable *) node_b;
 
       /* If the types of the parameters do not match, the parameters lists
        * are different.
        */
       if (a->type != b->type)
          return false;
-
-      iter_a.next();
-      iter_b.next();
    }
 
    /* Unless both lists are exhausted, they differ in length and, by
     * definition, do not match.
     */
-   if (iter_a.has_next() != iter_b.has_next())
-      return false;
-
-   return true;
+   return (node_a->is_tail_sentinal() == node_b->is_tail_sentinal());
 }
 
 ir_function_signature *
-ir_function::exact_matching_signature(exec_list *actual_parameters)
+ir_function::exact_matching_signature(const exec_list *actual_parameters)
 {
    foreach_iter(exec_list_iterator, iter, signatures) {
       ir_function_signature *const sig =
