@@ -576,6 +576,7 @@ struct brw_context
        */
       struct pipe_resource *index_buffer;
       unsigned index_size;
+      unsigned index_offset;
 
       /* Updates are signalled by PIPE_NEW_INDEX_RANGE:
        */

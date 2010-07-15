@@ -88,3 +88,17 @@ softpipe_set_vertex_buffers(struct pipe_context *pipe,
 
    draw_set_vertex_buffers(softpipe->draw, count, buffers);
 }
+
+void
+softpipe_set_index_buffer(struct pipe_context *pipe,
+                          const struct pipe_index_buffer *ib)
+{
+   struct softpipe_context *softpipe = softpipe_context(pipe);
+
+   if (ib)
+      memcpy(&softpipe->index_buffer, ib, sizeof(softpipe->index_buffer));
+   else
+      memset(&softpipe->index_buffer, 0, sizeof(softpipe->index_buffer));
+
+   /* TODO make this more like a state */
+}

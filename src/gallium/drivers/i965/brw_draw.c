@@ -29,6 +29,7 @@
 #include "util/u_inlines.h"
 #include "util/u_prim.h"
 #include "util/u_upload_mgr.h"
+#include "util/u_draw_quad.h"
 
 #include "brw_draw.h"
 #include "brw_defines.h"
@@ -142,7 +143,7 @@ static int brw_emit_prim(struct brw_context *brw,
  */
 static int
 try_draw_range_elements(struct brw_context *brw,
-			struct pipe_resource *index_buffer,
+			boolean indexed,
 			unsigned hw_prim, 
 			unsigned start, unsigned count)
 {
@@ -165,7 +166,7 @@ try_draw_range_elements(struct brw_context *brw,
    if (ret)
       return ret;
    
-   ret = brw_emit_prim(brw, start, count, index_buffer != NULL, hw_prim);
+   ret = brw_emit_prim(brw, start, count, indexed, hw_prim);
    if (ret)
       return ret;
 
@@ -177,6 +178,49 @@ try_draw_range_elements(struct brw_context *brw,
 
 
 static void
+brw_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
+{
+   struct brw_context *brw = brw_context(pipe);
+   int ret;
+   uint32_t hw_prim;
+
+   hw_prim = brw_set_prim(brw, info->mode);
+
+   if (BRW_DEBUG & DEBUG_PRIMS)
+      debug_printf("PRIM: %s start %d count %d index_buffer %p\n",
+                   u_prim_name(info->mode), info->start, info->count,
+                   (void *) brw->curr.index_buffer);
+
+   assert(info->index_bias == 0);
+
+   /* Potentially trigger upload of new index buffer range.
+    * XXX: do we really care?
+    */
+   if (brw->curr.min_index != info->min_index ||
+       brw->curr.max_index != info->max_index) 
+   { 
+      brw->curr.min_index = info->min_index;
+      brw->curr.max_index = info->max_index;
+      brw->state.dirty.mesa |= PIPE_NEW_INDEX_RANGE;
+   }
+
+
+   /* Make a first attempt at drawing:
+    */
+   ret = try_draw_range_elements(brw, info->indexed,
+         hw_prim, info->start, info->count);
+
+   /* Otherwise, flush and retry:
+    */
+   if (ret != 0) {
+      brw_context_flush( brw );
+      ret = try_draw_range_elements(brw, info->indexed,
+            hw_prim, info->start, info->count);
+      assert(ret == 0);
+   }
+}
+
+static void
 brw_draw_range_elements(struct pipe_context *pipe,
 			struct pipe_resource *index_buffer,
 			unsigned index_size, int index_bias,
@@ -185,51 +229,33 @@ brw_draw_range_elements(struct pipe_context *pipe,
 			unsigned mode, unsigned start, unsigned count)
 {
    struct brw_context *brw = brw_context(pipe);
-   int ret;
-   uint32_t hw_prim;
+   struct pipe_draw_info info;
+   struct pipe_index_buffer saved_ib, ib;
 
-   hw_prim = brw_set_prim(brw, mode);
+   util_draw_init_info(&info);
+   info.mode = mode;
+   info.start = start;
+   info.count = count;
+   info.index_bias = index_bias;
+   info.min_index = min_index;
+   info.max_index = max_index;
 
-   if (BRW_DEBUG & DEBUG_PRIMS)
-      debug_printf("PRIM: %s start %d count %d index_buffer %p\n",
-                   u_prim_name(mode), start, count, (void *)index_buffer);
+   if (index_buffer) {
+      info.indexed = TRUE;
+      saved_ib.buffer = brw->curr.index_buffer;
+      saved_ib.offset = brw->curr.index_offset;
+      saved_ib.index_size = brw->curr.index_size;
 
-   assert(index_bias == 0);
-
-   /* Potentially trigger upload of new index buffer.
-    *
-    * XXX: do we need to go through state validation to achieve this?
-    * Could just call upload code directly.
-    */
-   if (brw->curr.index_buffer != index_buffer ||
-       brw->curr.index_size != index_size) {
-      pipe_resource_reference( &brw->curr.index_buffer, index_buffer );
-      brw->curr.index_size = index_size;
-      brw->state.dirty.mesa |= PIPE_NEW_INDEX_BUFFER;
+      ib.buffer = index_buffer;
+      ib.offset = 0;
+      ib.index_size = index_size;
+      pipe->set_index_buffer(pipe, &ib);
    }
 
-   /* XXX: do we really care?
-    */
-   if (brw->curr.min_index != min_index ||
-       brw->curr.max_index != max_index) 
-   { 
-      brw->curr.min_index = min_index;
-      brw->curr.max_index = max_index;
-      brw->state.dirty.mesa |= PIPE_NEW_INDEX_RANGE;
-   }
+   brw_draw_vbo(pipe, &info);
 
-
-   /* Make a first attempt at drawing:
-    */
-   ret = try_draw_range_elements(brw, index_buffer, hw_prim, start, count );
-
-   /* Otherwise, flush and retry:
-    */
-   if (ret != 0) {
-      brw_context_flush( brw );
-      ret = try_draw_range_elements(brw, index_buffer, hw_prim, start, count );
-      assert(ret == 0);
-   }
+   if (index_buffer)
+      pipe->set_index_buffer(pipe, &saved_ib);
 }
 
 static void
@@ -262,6 +288,7 @@ boolean brw_draw_init( struct brw_context *brw )
    brw->base.draw_arrays = brw_draw_arrays;
    brw->base.draw_elements = brw_draw_elements;
    brw->base.draw_range_elements = brw_draw_range_elements;
+   brw->base.draw_vbo = brw_draw_vbo;
 
    /* Create helpers for uploading data in user buffers:
     */

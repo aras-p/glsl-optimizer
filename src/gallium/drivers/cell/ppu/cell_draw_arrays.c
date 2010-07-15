@@ -34,6 +34,7 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_context.h"
 #include "util/u_inlines.h"
+#include "util/u_draw_quad.h"
 
 #include "cell_context.h"
 #include "cell_draw_arrays.h"
@@ -56,16 +57,11 @@
  * XXX should the element buffer be specified/bound with a separate function?
  */
 static void
-cell_draw_range_elements(struct pipe_context *pipe,
-                         struct pipe_resource *indexBuffer,
-                         unsigned indexSize,
-                         int indexBias,
-                         unsigned min_index,
-                         unsigned max_index,
-                         unsigned mode, unsigned start, unsigned count)
+cell_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
 {
    struct cell_context *cell = cell_context(pipe);
    struct draw_context *draw = cell->draw;
+   void *mapped_indices = NULL;
    unsigned i;
 
    if (cell->dirty)
@@ -83,18 +79,20 @@ cell_draw_range_elements(struct pipe_context *pipe,
       draw_set_mapped_vertex_buffer(draw, i, buf);
    }
    /* Map index buffer, if present */
-   if (indexBuffer) {
-      void *mapped_indexes = cell_resource(indexBuffer)->data;
-      draw_set_mapped_element_buffer(draw, indexSize, indexBias, mapped_indexes);
-   }
-   else {
-      /* no index/element buffer */
-      draw_set_mapped_element_buffer(draw, 0, 0, NULL);
+   if (info->indexed && cell->index_buffer.buffer) {
+      mapped_indices = cell_resource(cell->index_buffer.buffer)->data;
+      mapped_indices += cell->index_buffer.offset;
    }
 
+   draw_set_mapped_element_buffer_range(draw, (mapped_indices) ?
+                                        lp->index_buffer.index_size : 0,
+                                        info->index_bias,
+                                        info->min_index,
+                                        info->max_index,
+                                        mapped_indices);
 
    /* draw! */
-   draw_arrays(draw, mode, start, count);
+   draw_arrays(draw, info->mode, info->start, info->count);
 
    /*
     * unmap vertex/index buffers - will cause draw module to flush
@@ -102,7 +100,7 @@ cell_draw_range_elements(struct pipe_context *pipe,
    for (i = 0; i < cell->num_vertex_buffers; i++) {
       draw_set_mapped_vertex_buffer(draw, i, NULL);
    }
-   if (indexBuffer) {
+   if (mapped_indices) {
       draw_set_mapped_element_buffer(draw, 0, 0, NULL);
    }
 
@@ -112,6 +110,44 @@ cell_draw_range_elements(struct pipe_context *pipe,
     * internally when this condition is seen?)
     */
    draw_flush(draw);
+}
+
+
+static void
+cell_draw_range_elements(struct pipe_context *pipe,
+                         struct pipe_resource *indexBuffer,
+                         unsigned indexSize,
+                         int indexBias,
+                         unsigned min_index,
+                         unsigned max_index,
+                         unsigned mode, unsigned start, unsigned count)
+{
+   struct cell_context *cell = cell_context(pipe);
+   struct pipe_draw_info info;
+   struct pipe_index_buffer saved_ib, ib;
+
+   util_draw_init_info(&info);
+   info.mode = mode;
+   info.start = start;
+   info.count = count;
+   info.index_bias = indexBias;
+   info.min_index = min_index;
+   info.max_index = max_index;
+
+   if (indexBuffer) {
+      info.indexed = TRUE;
+      saved_ib = cell->index_buffer;
+
+      ib.buffer = indexBuffer;
+      ib.offset = 0;
+      ib.index_size = indexSize;
+      pipe->set_index_buffer(pipe, &ib);
+   }
+
+   cell_draw_vbo(pipe, &info);
+
+   if (indexBuffer)
+      pipe->set_index_buffer(pipe, &saved_ib);
 }
 
 
@@ -142,5 +178,6 @@ cell_init_draw_functions(struct cell_context *cell)
    cell->pipe.draw_arrays = cell_draw_arrays;
    cell->pipe.draw_elements = cell_draw_elements;
    cell->pipe.draw_range_elements = cell_draw_range_elements;
+   cell->pipe.draw_vbo = cell_draw_vbo;
 }
 

@@ -35,6 +35,7 @@
 #include "pipe/p_context.h"
 #include "util/u_inlines.h"
 #include "util/u_prim.h"
+#include "util/u_draw_quad.h"
 
 #include "sp_context.h"
 #include "sp_query.h"
@@ -111,27 +112,19 @@ softpipe_draw_stream_output(struct pipe_context *pipe, unsigned mode)
  * When the min/max element indexes aren't known, minIndex should be 0
  * and maxIndex should be ~0.
  */
-static void
-softpipe_draw_range_elements_instanced(struct pipe_context *pipe,
-                                       struct pipe_resource *indexBuffer,
-                                       unsigned indexSize,
-                                       int indexBias,
-                                       unsigned minIndex,
-                                       unsigned maxIndex,
-                                       unsigned mode,
-                                       unsigned start,
-                                       unsigned count,
-                                       unsigned startInstance,
-                                       unsigned instanceCount)
+void
+softpipe_draw_vbo(struct pipe_context *pipe,
+                  const struct pipe_draw_info *info)
 {
    struct softpipe_context *sp = softpipe_context(pipe);
    struct draw_context *draw = sp->draw;
+   void *mapped_indices = NULL;
    unsigned i;
 
    if (!softpipe_check_render_cond(sp))
       return;
 
-   sp->reduced_api_prim = u_reduced_prim(mode);
+   sp->reduced_api_prim = u_reduced_prim(info->mode);
 
    if (sp->dirty) {
       softpipe_update_derived(sp);
@@ -146,31 +139,27 @@ softpipe_draw_range_elements_instanced(struct pipe_context *pipe,
    }
 
    /* Map index buffer, if present */
-   if (indexBuffer) {
-      void *mapped_indexes = softpipe_resource(indexBuffer)->data;
-      draw_set_mapped_element_buffer_range(draw,
-                                           indexSize,
-                                           indexBias,
-                                           minIndex,
-                                           maxIndex,
-                                           mapped_indexes);
-   } else {
-      /* no index/element buffer */
-      draw_set_mapped_element_buffer_range(draw,
-                                           0, 0,
-                                           start,
-                                           start + count - 1,
-                                           NULL);
+   if (info->indexed && sp->index_buffer.buffer) {
+      mapped_indices = softpipe_resource(sp->index_buffer.buffer)->data;
+      mapped_indices += sp->index_buffer.offset;
    }
 
+   draw_set_mapped_element_buffer_range(draw, (mapped_indices) ?
+                                        sp->index_buffer.index_size : 0,
+                                        info->index_bias,
+                                        info->min_index,
+                                        info->max_index,
+                                        mapped_indices);
+
    /* draw! */
-   draw_arrays_instanced(draw, mode, start, count, startInstance, instanceCount);
+   draw_arrays_instanced(draw, info->mode, info->start, info->count,
+         info->start_instance, info->instance_count);
 
    /* unmap vertex/index buffers - will cause draw module to flush */
    for (i = 0; i < sp->num_vertex_buffers; i++) {
       draw_set_mapped_vertex_buffer(draw, i, NULL);
    }
-   if (indexBuffer) {
+   if (mapped_indices) {
       draw_set_mapped_element_buffer(draw, 0, 0, NULL);
    }
 
@@ -183,6 +172,49 @@ softpipe_draw_range_elements_instanced(struct pipe_context *pipe,
 
    /* Note: leave drawing surfaces mapped */
    sp->dirty_render_cache = TRUE;
+}
+
+static void
+softpipe_draw_range_elements_instanced(struct pipe_context *pipe,
+                                       struct pipe_resource *indexBuffer,
+                                       unsigned indexSize,
+                                       int indexBias,
+                                       unsigned minIndex,
+                                       unsigned maxIndex,
+                                       unsigned mode,
+                                       unsigned start,
+                                       unsigned count,
+                                       unsigned startInstance,
+                                       unsigned instanceCount)
+{
+   struct softpipe_context *sp = softpipe_context(pipe);
+   struct pipe_draw_info info;
+   struct pipe_index_buffer saved_ib, ib;
+
+   util_draw_init_info(&info);
+   info.mode = mode;
+   info.start = start;
+   info.count = count;
+   info.start_instance = startInstance;
+   info.instance_count = instanceCount;
+   info.index_bias = indexBias;
+   info.min_index = minIndex;
+   info.max_index = maxIndex;
+
+   if (indexBuffer) {
+      info.indexed = TRUE;
+
+      saved_ib = sp->index_buffer;
+      ib.buffer = indexBuffer;
+      ib.offset = 0;
+      ib.index_size = indexSize;
+      pipe->set_index_buffer(pipe, &ib);
+   }
+
+   softpipe_draw_vbo(pipe, &info);
+
+   if (indexBuffer)
+      pipe->set_index_buffer(pipe, &saved_ib);
 }
 
 

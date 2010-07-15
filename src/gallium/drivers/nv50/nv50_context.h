@@ -148,6 +148,7 @@ struct nv50_context {
 	struct pipe_resource *constbuf[PIPE_SHADER_TYPES];
 	struct pipe_vertex_buffer vtxbuf[PIPE_MAX_ATTRIBS];
 	unsigned vtxbuf_nr;
+	struct pipe_index_buffer idxbuf;
 	struct nv50_vtxelt_stateobj *vtxelt;
 	struct nv50_sampler_stateobj *sampler[3][PIPE_MAX_SAMPLERS];
 	unsigned sampler_nr[3];
@@ -197,6 +198,8 @@ extern void nv50_draw_elements_instanced(struct pipe_context *pipe,
 					 unsigned count,
 					 unsigned startInstance,
 					 unsigned instanceCount);
+extern void nv50_draw_vbo(struct pipe_context *pipe,
+                          const struct pipe_draw_info *info);
 extern void nv50_vtxelt_construct(struct nv50_vtxelt_stateobj *cso);
 extern struct nouveau_stateobj *nv50_vbo_validate(struct nv50_context *nv50);
 

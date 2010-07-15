@@ -82,6 +82,7 @@ struct softpipe_context {
    struct pipe_sampler_view *geometry_sampler_views[PIPE_MAX_GEOMETRY_SAMPLERS];
    struct pipe_viewport_state viewport;
    struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
+   struct pipe_index_buffer index_buffer;
    struct {
       struct softpipe_resource *buffer[PIPE_MAX_SO_BUFFERS];
       int offset[PIPE_MAX_SO_BUFFERS];

@@ -185,6 +185,21 @@ rbug_draw_range_elements(struct pipe_context *_pipe,
    pipe_mutex_unlock(rb_pipe->draw_mutex);
 }
 
+static void
+rbug_draw_vbo(struct pipe_context *_pipe, const struct pipe_draw_info *info)
+{
+   struct rbug_context *rb_pipe = rbug_context(_pipe);
+   struct pipe_context *pipe = rb_pipe->pipe;
+
+   pipe_mutex_lock(rb_pipe->draw_mutex);
+   rbug_draw_block_locked(rb_pipe, RBUG_BLOCK_BEFORE);
+
+   pipe->draw_vbo(pipe, info);
+
+   rbug_draw_block_locked(rb_pipe, RBUG_BLOCK_AFTER);
+   pipe_mutex_unlock(rb_pipe->draw_mutex);
+}
+
 static struct pipe_query *
 rbug_create_query(struct pipe_context *_pipe,
                   unsigned query_type)
@@ -745,6 +760,23 @@ rbug_set_vertex_buffers(struct pipe_context *_pipe,
 }
 
 static void
+rbug_set_index_buffer(struct pipe_context *_pipe,
+                      const struct pipe_index_buffer *_ib)
+{
+   struct rbug_context *rb_pipe = rbug_context(_pipe);
+   struct pipe_context *pipe = rb_pipe->pipe;
+   struct pipe_index_buffer unwrapped_ib, *ib = NULL;
+
+   if (_ib) {
+      unwrapped_ib = *_ib;
+      unwrapped_ib.buffer = rbug_resource_unwrap(_ib->buffer);
+      ib = &unwrapped_ib;
+   }
+
+   pipe->set_index_buffer(pipe, ib);
+}
+
+static void
 rbug_set_sample_mask(struct pipe_context *_pipe,
                      unsigned sample_mask)
 {
@@ -1043,6 +1075,7 @@ rbug_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
    rb_pipe->base.draw_arrays = rbug_draw_arrays;
    rb_pipe->base.draw_elements = rbug_draw_elements;
    rb_pipe->base.draw_range_elements = rbug_draw_range_elements;
+   rb_pipe->base.draw_vbo = rbug_draw_vbo;
    rb_pipe->base.create_query = rbug_create_query;
    rb_pipe->base.destroy_query = rbug_destroy_query;
    rb_pipe->base.begin_query = rbug_begin_query;
@@ -1084,6 +1117,7 @@ rbug_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
    rb_pipe->base.set_fragment_sampler_views = rbug_set_fragment_sampler_views;
    rb_pipe->base.set_vertex_sampler_views = rbug_set_vertex_sampler_views;
    rb_pipe->base.set_vertex_buffers = rbug_set_vertex_buffers;
+   rb_pipe->base.set_index_buffer = rbug_set_index_buffer;
    rb_pipe->base.set_sample_mask = rbug_set_sample_mask;
    rb_pipe->base.resource_copy_region = rbug_resource_copy_region;
    rb_pipe->base.clear = rbug_clear;

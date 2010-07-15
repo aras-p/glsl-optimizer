@@ -132,6 +132,7 @@ struct cell_context
    struct pipe_viewport_state viewport;
    struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
    uint num_vertex_buffers;
+   struct pipe_index_buffer index_buffer;
 
    ubyte *cbuf_map[PIPE_MAX_COLOR_BUFS];
    ubyte *zsbuf_map;

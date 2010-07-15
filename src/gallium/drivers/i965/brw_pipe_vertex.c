@@ -274,10 +274,41 @@ static void brw_set_vertex_buffers(struct pipe_context *pipe,
 }
 
 
+static void brw_set_index_buffer(struct pipe_context *pipe,
+                                 const struct pipe_index_buffer *ib)
+{
+   struct brw_context *brw = brw_context(pipe);
+
+   if (ib) {
+      if (brw->curr.index_buffer == ib->buffer &&
+          brw->curr.index_offset == ib->offset &&
+          brw->curr.index_size == ib->index_size)
+         return;
+
+      pipe_resource_reference(&brw->curr.index_buffer, ib->buffer);
+      brw->curr.index_offset = ib->offset;
+      brw->curr.index_size = ib->index_size;
+   }
+   else {
+      if (!brw->curr.index_buffer &&
+          !brw->curr.index_offset &&
+          !brw->curr.index_size)
+         return;
+
+      pipe_resource_reference(&brw->curr.index_buffer, NULL);
+      brw->curr.index_offset = 0;
+      brw->curr.index_size = 0;
+   }
+
+   brw->state.dirty.mesa |= PIPE_NEW_INDEX_BUFFER;
+}
+
+
 void 
 brw_pipe_vertex_init( struct brw_context *brw )
 {
    brw->base.set_vertex_buffers = brw_set_vertex_buffers;
+   brw->base.set_index_buffer = brw_set_index_buffer;
    brw->base.create_vertex_elements_state = brw_create_vertex_elements_state;
    brw->base.bind_vertex_elements_state = brw_bind_vertex_elements_state;
    brw->base.delete_vertex_elements_state = brw_delete_vertex_elements_state;

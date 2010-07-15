@@ -29,11 +29,41 @@
 #define U_DRAWQUAD_H
 
 
+#include "pipe/p_compiler.h"
+#include "pipe/p_context.h"
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 struct pipe_resource;
+
+
+static INLINE void
+util_draw_init_info(struct pipe_draw_info *info)
+{
+   memset(info, 0, sizeof(*info));
+   info->instance_count = 1;
+   info->max_index = 0xffffffff;
+}
+
+
+static INLINE void
+util_draw_arrays(struct pipe_context *pipe, uint mode, uint start, uint count)
+{
+   struct pipe_draw_info info;
+
+   util_draw_init_info(&info);
+   info.mode = mode;
+   info.start = start;
+   info.count = count;
+   info.min_index = start;
+   info.max_index = start + count - 1;
+
+   pipe->draw_vbo(pipe, &info);
+}
+
 
 extern void 
 util_draw_vertex_buffer(struct pipe_context *pipe,

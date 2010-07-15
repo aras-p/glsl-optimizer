@@ -221,6 +221,9 @@ void softpipe_set_vertex_buffers(struct pipe_context *,
                                  unsigned count,
                                  const struct pipe_vertex_buffer *);
 
+void softpipe_set_index_buffer(struct pipe_context *,
+                               const struct pipe_index_buffer *);
+
 
 void softpipe_update_derived( struct softpipe_context *softpipe );
 
@@ -259,6 +262,10 @@ softpipe_draw_elements_instanced(struct pipe_context *pipe,
                                  unsigned count,
                                  unsigned startInstance,
                                  unsigned instanceCount);
+
+void
+softpipe_draw_vbo(struct pipe_context *pipe,
+                  const struct pipe_draw_info *info);
 
 void softpipe_draw_stream_output(struct pipe_context *pipe, unsigned mode);
 

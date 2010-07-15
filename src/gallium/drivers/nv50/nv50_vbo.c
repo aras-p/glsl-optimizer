@@ -473,6 +473,37 @@ nv50_draw_elements(struct pipe_context *pipe,
 				     mode, start, count, 0, 1);
 }
 
+void
+nv50_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
+{
+	struct nv50_context *nv50 = nv50_context(pipe);
+
+	if (info->indexed && nv50->idxbuf.buffer) {
+		unsigned offset;
+
+		assert(nv50->idxbuf.offset % nv50->idxbuf.index_size == 0);
+		offset = nv50->idxbuf.offset / nv50->idxbuf.index_size;
+
+		nv50_draw_elements_instanced(pipe,
+					     nv50->idxbuf.buffer,
+					     nv50->idxbuf.index_size,
+					     info->index_bias,
+					     info->mode,
+					     info->start + offset,
+					     info->count,
+					     info->start_instance,
+					     info->instance_count);
+	}
+	else {
+		nv50_draw_arrays_instanced(pipe,
+					   info->mode,
+					   info->start,
+					   info->count,
+					   info->start_instance,
+					   info->instance_count);
+	}
+}
+
 static INLINE boolean
 nv50_vbo_static_attrib(struct nv50_context *nv50, unsigned attrib,
 		       struct nouveau_stateobj **pso,

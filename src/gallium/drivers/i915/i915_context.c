@@ -36,6 +36,7 @@
 #include "pipe/p_defines.h"
 #include "util/u_inlines.h"
 #include "util/u_memory.h"
+#include "util/u_draw_quad.h"
 #include "pipe/p_screen.h"
 
 
@@ -45,16 +46,11 @@
 
 
 static void
-i915_draw_range_elements(struct pipe_context *pipe,
-                         struct pipe_resource *indexBuffer,
-                         unsigned indexSize,
-                         int indexBias,
-                         unsigned min_index,
-                         unsigned max_index,
-                         unsigned prim, unsigned start, unsigned count)
+i915_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
 {
    struct i915_context *i915 = i915_context(pipe);
    struct draw_context *draw = i915->draw;
+   void *mapped_indices = NULL;
    unsigned i;
 
    if (i915->dirty)
@@ -71,15 +67,17 @@ i915_draw_range_elements(struct pipe_context *pipe,
    /*
     * Map index buffer, if present
     */
-   if (indexBuffer) {
-      void *mapped_indexes = i915_buffer(indexBuffer)->data;
-      draw_set_mapped_element_buffer_range(draw, indexSize, indexBias,
-                                           min_index,
-                                           max_index,
-                                           mapped_indexes);
-   } else {
-      draw_set_mapped_element_buffer(draw, 0, 0, NULL);
+   if (info->indexed && i915->index_buffer.buffer) {
+      mapped_indices = i915_buffer(i915->index_buffer.buffer)->data;
+      mapped_indices += i915->index_buffer.offset;
    }
+
+   draw_set_mapped_element_buffer_range(draw, (mapped_indices) ?
+                                        i915->index_buffer.index_size : 0,
+                                        info->index_bias,
+                                        info->min_index,
+                                        info->max_index,
+                                        mapped_indices);
 
 
    draw_set_mapped_constant_buffer(draw, PIPE_SHADER_VERTEX, 0,
@@ -90,7 +88,7 @@ i915_draw_range_elements(struct pipe_context *pipe,
    /*
     * Do the drawing
     */
-   draw_arrays(i915->draw, prim, start, count);
+   draw_arrays(i915->draw, info->mode, info->start, info->count);
 
    /*
     * unmap vertex/index buffers
@@ -99,9 +97,46 @@ i915_draw_range_elements(struct pipe_context *pipe,
       draw_set_mapped_vertex_buffer(draw, i, NULL);
    }
 
-   if (indexBuffer) {
+   if (mapped_indices) {
       draw_set_mapped_element_buffer(draw, 0, 0, NULL);
    }
+}
+
+static void
+i915_draw_range_elements(struct pipe_context *pipe,
+                         struct pipe_resource *indexBuffer,
+                         unsigned indexSize,
+                         int indexBias,
+                         unsigned min_index,
+                         unsigned max_index,
+                         unsigned prim, unsigned start, unsigned count)
+{
+   struct i915_context *i915 = i915_context(pipe);
+   struct pipe_draw_info info;
+   struct pipe_index_buffer saved_ib, ib;
+
+   util_draw_init_info(&info);
+   info.mode = prim;
+   info.start = start;
+   info.count = count;
+   info.index_bias = indexBias;
+   info.min_index = min_index;
+   info.max_index = max_index;
+
+   if (indexBuffer) {
+      info.indexed = TRUE;
+      saved_ib = i915->index_buffer;
+
+      ib.buffer = indexBuffer;
+      ib.offset = 0;
+      ib.index_size = indexSize;
+      pipe->set_index_buffer(pipe, &ib);
+   }
+
+   i915_draw_vbo(pipe, &info);
+
+   if (indexBuffer)
+      pipe->set_index_buffer(pipe, &saved_ib);
 }
 
 static void
@@ -171,6 +206,7 @@ i915_create_context(struct pipe_screen *screen, void *priv)
    i915->base.draw_arrays = i915_draw_arrays;
    i915->base.draw_elements = i915_draw_elements;
    i915->base.draw_range_elements = i915_draw_range_elements;
+   i915->base.draw_vbo = i915_draw_vbo;
 
    /*
     * Create drawing context and plug our rendering stage into it.

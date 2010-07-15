@@ -157,6 +157,7 @@ struct r600_context {
 	struct r600_context_state	*vs_sampler_view[PIPE_MAX_ATTRIBS];
 	struct r600_vertex_element	*vertex_elements;
 	struct pipe_vertex_buffer	vertex_buffer[PIPE_MAX_ATTRIBS];
+	struct pipe_index_buffer	index_buffer;
 };
 
 #if 0
@@ -201,6 +202,8 @@ void r600_draw_range_elements(struct pipe_context *ctx,
 		unsigned index_size, int index_bias, unsigned min_index,
 		unsigned max_index, unsigned mode,
 		unsigned start, unsigned count);
+void r600_draw_vbo(struct pipe_context *ctx,
+                   const struct pipe_draw_info *info);
 
 void r600_init_blit_functions(struct r600_context *rctx);
 void r600_init_state_functions(struct r600_context *rctx);

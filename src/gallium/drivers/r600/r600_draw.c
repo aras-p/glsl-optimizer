@@ -225,3 +225,30 @@ void r600_draw_arrays(struct pipe_context *ctx, unsigned mode,
 	draw.index_buffer = NULL;
 	r600_draw_common(&draw);
 }
+
+void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
+{
+	struct r600_context *rctx = r600_context(ctx);
+	struct r600_draw draw;
+
+	assert(info->index_bias == 0);
+
+	draw.ctx = ctx;
+	draw.mode = info->mode;
+	draw.start = info->start;
+	draw.count = info->count;
+	if (info->indexed && rctx->index_buffer.buffer) {
+		draw.index_size = rctx->index_buffer.index_size;
+		draw.index_buffer = rctx->index_buffer.buffer;
+
+		assert(rctx->index_buffer.offset %
+				rctx->index_buffer.index_size == 0);
+		draw.start += rctx->index_buffer.offset /
+			rctx->index_buffer.index_size;
+	}
+	else {
+		draw.index_size = 0;
+		draw.index_buffer = NULL;
+	}
+	r600_draw_common(&draw);
+}

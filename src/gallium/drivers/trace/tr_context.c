@@ -167,6 +167,32 @@ trace_context_draw_range_elements(struct pipe_context *_pipe,
 }
 
 
+static INLINE void
+trace_context_draw_vbo(struct pipe_context *_pipe,
+                       const struct pipe_draw_info *info)
+{
+   struct trace_context *tr_ctx = trace_context(_pipe);
+   struct pipe_context *pipe = tr_ctx->pipe;
+
+   trace_dump_call_begin("pipe_context", "draw_vbo");
+
+   trace_dump_arg(ptr,  pipe);
+   trace_dump_arg(bool, info->indexed);
+   trace_dump_arg(uint, info->mode);
+   trace_dump_arg(uint, info->start);
+   trace_dump_arg(uint, info->count);
+   trace_dump_arg(uint, info->start_instance);
+   trace_dump_arg(uint, info->instance_count);
+   trace_dump_arg(int,  info->index_bias);
+   trace_dump_arg(uint, info->min_index);
+   trace_dump_arg(uint, info->max_index);
+
+   pipe->draw_vbo(pipe, info);
+
+   trace_dump_call_end();
+}
+
+
 static INLINE struct pipe_query *
 trace_context_create_query(struct pipe_context *_pipe,
                            unsigned query_type)
@@ -1045,6 +1071,30 @@ trace_context_set_vertex_buffers(struct pipe_context *_pipe,
 
 
 static INLINE void
+trace_context_set_index_buffer(struct pipe_context *_pipe,
+                               const struct pipe_index_buffer *_ib)
+{
+   struct trace_context *tr_ctx = trace_context(_pipe);
+   struct pipe_context *pipe = tr_ctx->pipe;
+   struct pipe_index_buffer unwrapped_ib, *ib = NULL;
+
+   if (_ib) {
+      unwrapped_ib = *_ib;
+      unwrapped_ib.buffer = trace_resource_unwrap(tr_ctx, _ib->buffer);
+      ib = &unwrapped_ib;
+   }
+
+   trace_dump_call_begin("pipe_context", "set_index_buffer");
+
+   trace_dump_arg(ptr, pipe);
+   trace_dump_arg(index_buffer, ib);
+
+   pipe->set_index_buffer(pipe, ib);
+
+   trace_dump_call_end();
+}
+
+static INLINE void
 trace_context_resource_copy_region(struct pipe_context *_pipe,
                                    struct pipe_resource *dst,
                                    struct pipe_subresource subdst,
@@ -1436,6 +1486,7 @@ trace_context_create(struct trace_screen *tr_scr,
    tr_ctx->base.draw_arrays = trace_context_draw_arrays;
    tr_ctx->base.draw_elements = trace_context_draw_elements;
    tr_ctx->base.draw_range_elements = trace_context_draw_range_elements;
+   tr_ctx->base.draw_vbo = trace_context_draw_vbo;
    tr_ctx->base.create_query = trace_context_create_query;
    tr_ctx->base.destroy_query = trace_context_destroy_query;
    tr_ctx->base.begin_query = trace_context_begin_query;
@@ -1477,6 +1528,7 @@ trace_context_create(struct trace_screen *tr_scr,
    tr_ctx->base.create_sampler_view = trace_create_sampler_view;
    tr_ctx->base.sampler_view_destroy = trace_sampler_view_destroy;
    tr_ctx->base.set_vertex_buffers = trace_context_set_vertex_buffers;
+   tr_ctx->base.set_index_buffer = trace_context_set_index_buffer;
    tr_ctx->base.resource_copy_region = trace_context_resource_copy_region;
    tr_ctx->base.clear = trace_context_clear;
    tr_ctx->base.clear_render_target = trace_context_clear_render_target;

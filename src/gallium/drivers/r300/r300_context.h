@@ -524,6 +524,8 @@ struct r300_context {
     struct r300_vertex_element_state *velems;
     bool any_user_vbs;
 
+    struct pipe_index_buffer index_buffer;
+
     /* Vertex info for Draw. */
     struct vertex_info vertex_info;
 

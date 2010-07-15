@@ -33,6 +33,7 @@
 #include "util/u_memory.h"
 #include "util/u_upload_mgr.h"
 #include "util/u_prim.h"
+#include "util/u_draw_quad.h"
 
 #include "r300_cs.h"
 #include "r300_context.h"
@@ -638,26 +639,56 @@ static void r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
     }
 }
 
+static void r300_draw_vbo(struct pipe_context* pipe,
+                          const struct pipe_draw_info *info)
+{
+    struct r300_context* r300 = r300_context(pipe);
+
+    if (info->indexed && r300->index_buffer.buffer) {
+        unsigned offset;
+
+        assert(r300->index_buffer.offset % r300->index_buffer.index_size == 0);
+        offset = r300->index_buffer.offset / r300->index_buffer.index_size;
+
+        r300_draw_range_elements(pipe,
+                                 r300->index_buffer.buffer,
+                                 r300->index_buffer.index_size,
+                                 info->index_bias,
+                                 info->min_index,
+                                 info->max_index,
+                                 info->mode,
+                                 info->start + offset,
+                                 info->count);
+    }
+    else {
+        r300_draw_arrays(pipe,
+                         info->mode,
+                         info->start,
+                         info->count);
+    }
+}
+
 /****************************************************************************
  * The rest of this file is for SW TCL rendering only. Please be polite and *
  * keep these functions separated so that they are easier to locate. ~C.    *
  ***************************************************************************/
 
-/* SW TCL arrays, using Draw. */
-static void r300_swtcl_draw_arrays(struct pipe_context* pipe,
-                                   unsigned mode,
-                                   unsigned start,
-                                   unsigned count)
+/* SW TCL elements, using Draw. */
+static void r300_swtcl_draw_vbo(struct pipe_context* pipe,
+                                const struct pipe_draw_info *info)
 {
     struct r300_context* r300 = r300_context(pipe);
     struct pipe_transfer *vb_transfer[PIPE_MAX_ATTRIBS];
+    struct pipe_transfer *ib_transfer;
+    unsigned count = info->count;
     int i;
+    void* indices = NULL;
 
     if (r300->skip_rendering) {
         return;
     }
 
-    if (!u_trim_pipe_prim(mode, &count)) {
+    if (!u_trim_pipe_prim(info->mode, &count)) {
         return;
     }
 
@@ -667,13 +698,25 @@ static void r300_swtcl_draw_arrays(struct pipe_context* pipe,
         void* buf = pipe_buffer_map(pipe,
                                     r300->vertex_buffer[i].buffer,
                                     PIPE_TRANSFER_READ,
-				    &vb_transfer[i]);
+                                    &vb_transfer[i]);
         draw_set_mapped_vertex_buffer(r300->draw, i, buf);
     }
 
-    draw_set_mapped_element_buffer(r300->draw, 0, 0, NULL);
+    if (info->indexed && r300->index_buffer.buffer) {
+        indices = pipe_buffer_map(pipe, r300->index_buffer.buffer,
+                                  PIPE_TRANSFER_READ, &ib_transfer);
+        if (indices)
+            indices += r300->index_buffer.offset;
+    }
 
-    draw_arrays(r300->draw, mode, start, count);
+    draw_set_mapped_element_buffer_range(r300->draw, (indices) ?
+                                         r300->index_buffer.index_size : 0,
+                                         info->index_bias,
+                                         info->min_index,
+                                         info->max_index,
+                                         indices);
+
+    draw_arrays(r300->draw, info->mode, info->start, count);
 
     /* XXX Not sure whether this is the best fix.
      * It prevents CS from being rejected and weird assertion failures. */
@@ -681,8 +724,14 @@ static void r300_swtcl_draw_arrays(struct pipe_context* pipe,
 
     for (i = 0; i < r300->vertex_buffer_count; i++) {
         pipe_buffer_unmap(pipe, r300->vertex_buffer[i].buffer,
-			  vb_transfer[i]);
+                          vb_transfer[i]);
         draw_set_mapped_vertex_buffer(r300->draw, i, NULL);
+    }
+
+    if (ib_transfer) {
+        pipe_buffer_unmap(pipe, r300->index_buffer.buffer, ib_transfer);
+        draw_set_mapped_element_buffer_range(r300->draw, 0, 0, info->start,
+                info->start + count - 1, NULL);
     }
 }
 
@@ -698,51 +747,40 @@ static void r300_swtcl_draw_range_elements(struct pipe_context* pipe,
                                            unsigned count)
 {
     struct r300_context* r300 = r300_context(pipe);
-    struct pipe_transfer *vb_transfer[PIPE_MAX_ATTRIBS];
-    struct pipe_transfer *ib_transfer;
-    int i;
-    void* indices;
+    struct pipe_draw_info info;
+    struct pipe_index_buffer saved_ib, ib;
 
-    if (r300->skip_rendering) {
-        return;
+    util_draw_init_info(&info);
+    info.mode = mode;
+    info.start = start;
+    info.count = count;
+    info.index_bias = indexBias;
+    info.min_index = minIndex;
+    info.max_index = maxIndex;
+
+    if (indexBuffer) {
+       info.indexed = TRUE;
+
+       saved_ib = r300->index_buffer;
+       ib.buffer = indexBuffer;
+       ib.offset = 0;
+       ib.index_size = indexSize;
+       pipe->set_index_buffer(pipe, &ib);
     }
 
-    if (!u_trim_pipe_prim(mode, &count)) {
-        return;
-    }
+    r300_swtcl_draw_vbo(pipe, &info);
 
-    r300_update_derived_state(r300);
+    if (indexBuffer)
+       pipe->set_index_buffer(pipe, &saved_ib);
+}
 
-    for (i = 0; i < r300->vertex_buffer_count; i++) {
-        void* buf = pipe_buffer_map(pipe,
-                                    r300->vertex_buffer[i].buffer,
-                                    PIPE_TRANSFER_READ,
-				    &vb_transfer[i]);
-        draw_set_mapped_vertex_buffer(r300->draw, i, buf);
-    }
-
-    indices = pipe_buffer_map(pipe, indexBuffer,
-                              PIPE_TRANSFER_READ, &ib_transfer);
-    draw_set_mapped_element_buffer_range(r300->draw, indexSize, indexBias,
-                                         minIndex, maxIndex, indices);
-
-    draw_arrays(r300->draw, mode, start, count);
-
-    /* XXX Not sure whether this is the best fix.
-     * It prevents CS from being rejected and weird assertion failures. */
-    draw_flush(r300->draw);
-
-    for (i = 0; i < r300->vertex_buffer_count; i++) {
-        pipe_buffer_unmap(pipe, r300->vertex_buffer[i].buffer,
-			  vb_transfer[i]);
-        draw_set_mapped_vertex_buffer(r300->draw, i, NULL);
-    }
-
-    pipe_buffer_unmap(pipe, indexBuffer,
-		      ib_transfer);
-    draw_set_mapped_element_buffer_range(r300->draw, 0, 0,
-                                         start, start + count - 1,
-                                         NULL);
+static void r300_swtcl_draw_arrays(struct pipe_context* pipe,
+                                   unsigned mode,
+                                   unsigned start,
+                                   unsigned count)
+{
+   r300_swtcl_draw_range_elements(pipe, NULL, 0, 0,
+           start, start + count -1, mode, start, count);
 }
 
 /* Object for rendering using Draw. */
@@ -1148,9 +1186,11 @@ void r300_init_render_functions(struct r300_context *r300)
     if (r300->screen->caps.has_tcl) {
         r300->context.draw_arrays = r300_draw_arrays;
         r300->context.draw_range_elements = r300_draw_range_elements;
+        r300->context.draw_vbo = r300_draw_vbo;
     } else {
         r300->context.draw_arrays = r300_swtcl_draw_arrays;
         r300->context.draw_range_elements = r300_swtcl_draw_range_elements;
+        r300->context.draw_vbo = r300_swtcl_draw_vbo;
     }
 
     r300->context.resource_resolve = r300_resource_resolve;

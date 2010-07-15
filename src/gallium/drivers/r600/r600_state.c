@@ -404,6 +404,23 @@ static void r600_set_vertex_buffers(struct pipe_context *ctx,
 	rctx->nvertex_buffer = count;
 }
 
+static void r600_set_index_buffer(struct pipe_context *ctx,
+				  const struct pipe_index_buffer *ib)
+{
+	struct r600_context *rctx = r600_context(ctx);
+
+	if (ib) {
+		pipe_resource_reference(&rctx->index_buffer.buffer, ib->buffer);
+		memcpy(&rctx->index_buffer, ib, sizeof(rctx->index_buffer));
+	}
+	else {
+		pipe_resource_reference(&rctx->index_buffer.buffer, NULL);
+		memset(&rctx->index_buffer, 0, sizeof(rctx->index_buffer));
+	}
+
+	/* TODO make this more like a state */
+}
+
 static void r600_set_viewport_state(struct pipe_context *ctx,
 					const struct pipe_viewport_state *state)
 {
@@ -449,6 +466,7 @@ void r600_init_state_functions(struct r600_context *rctx)
 	rctx->context.set_scissor_state = r600_set_scissor_state;
 	rctx->context.set_stencil_ref = r600_set_stencil_ref;
 	rctx->context.set_vertex_buffers = r600_set_vertex_buffers;
+	rctx->context.set_index_buffer = r600_set_index_buffer;
 	rctx->context.set_vertex_sampler_views = r600_set_vs_sampler_view;
 	rctx->context.set_viewport_state = r600_set_viewport_state;
 	rctx->context.sampler_view_destroy = r600_sampler_view_destroy;

@@ -1505,6 +1505,23 @@ static void r300_set_vertex_buffers(struct pipe_context* pipe,
     r300->vertex_buffer_count = count;
 }
 
+static void r300_set_index_buffer(struct pipe_context* pipe,
+                                  const struct pipe_index_buffer *ib)
+{
+    struct r300_context* r300 = r300_context(pipe);
+
+    if (ib) {
+        pipe_resource_reference(&r300->index_buffer.buffer, ib->buffer);
+        memcpy(&r300->index_buffer, ib, sizeof(r300->index_buffer));
+    }
+    else {
+        pipe_resource_reference(&r300->index_buffer.buffer, NULL);
+        memset(&r300->index_buffer, 0, sizeof(r300->index_buffer));
+    }
+
+    /* TODO make this more like a state */
+}
+
 /* Initialize the PSC tables. */
 static void r300_vertex_psc(struct r300_vertex_element_state *velems)
 {
@@ -1852,6 +1869,7 @@ void r300_init_state_functions(struct r300_context* r300)
     r300->context.set_viewport_state = r300_set_viewport_state;
 
     r300->context.set_vertex_buffers = r300_set_vertex_buffers;
+    r300->context.set_index_buffer = r300_set_index_buffer;
 
     r300->context.create_vertex_elements_state = r300_create_vertex_elements_state;
     r300->context.bind_vertex_elements_state = r300_bind_vertex_elements_state;
