@@ -300,10 +300,10 @@ void radeonDestroyContext(__DRIcontext *driContextPriv )
 	_mesa_meta_free(radeon->glCtx);
 
 	if (radeon == current) {
-		radeon_firevertices(radeon);
 		_mesa_make_current(NULL, NULL, NULL);
 	}
 
+	radeon_firevertices(radeon);
 	if (!is_empty_list(&radeon->dma.reserved)) {
 		rcommonFlushCmdBuf( radeon, __FUNCTION__ );
 	}
