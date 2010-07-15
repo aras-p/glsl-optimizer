@@ -112,9 +112,9 @@ protected:
 
 class ir_rvalue : public ir_instruction {
 public:
-   class ir_constant *constant_expression_value();
-
    virtual ir_rvalue *clone(struct hash_table *) const = 0;
+
+   virtual ir_constant *constant_expression_value() = 0;
 
    virtual ir_rvalue * as_rvalue()
    {
@@ -511,6 +511,8 @@ public:
 
    virtual ir_assignment *clone(struct hash_table *ht) const;
 
+   virtual ir_constant *constant_expression_value();
+
    virtual void accept(ir_visitor *v)
    {
       v->visit(this);
@@ -651,6 +653,8 @@ public:
 
    virtual ir_expression *clone(struct hash_table *ht) const;
 
+   virtual ir_constant *constant_expression_value();
+
    static unsigned int get_num_operands(ir_expression_operation);
    unsigned int get_num_operands() const
    {
@@ -694,6 +698,8 @@ public:
    }
 
    virtual ir_call *clone(struct hash_table *ht) const;
+
+   virtual ir_constant *constant_expression_value();
 
    virtual ir_call *as_call()
    {
@@ -929,6 +935,8 @@ public:
 
    virtual ir_texture *clone(struct hash_table *) const;
 
+   virtual ir_constant *constant_expression_value();
+
    virtual void accept(ir_visitor *v)
    {
       v->visit(this);
@@ -1019,6 +1027,8 @@ public:
 
    virtual ir_swizzle *clone(struct hash_table *) const;
 
+   virtual ir_constant *constant_expression_value();
+
    virtual ir_swizzle *as_swizzle()
    {
       return this;
@@ -1083,6 +1093,8 @@ public:
 
    virtual ir_dereference_variable *clone(struct hash_table *) const;
 
+   virtual ir_constant *constant_expression_value();
+
    virtual ir_dereference_variable *as_dereference_variable()
    {
       return this;
@@ -1129,6 +1141,8 @@ public:
 
    virtual ir_dereference_array *clone(struct hash_table *) const;
 
+   virtual ir_constant *constant_expression_value();
+
    virtual ir_dereference_array *as_dereference_array()
    {
       return this;
@@ -1164,6 +1178,8 @@ public:
    ir_dereference_record(ir_variable *var, const char *field);
 
    virtual ir_dereference_record *clone(struct hash_table *) const;
+
+   virtual ir_constant *constant_expression_value();
 
    /**
     * Get the variable that is ultimately referenced by an r-value
@@ -1222,6 +1238,8 @@ public:
    ir_constant(const ir_constant *c, unsigned i);
 
    virtual ir_constant *clone(struct hash_table *) const;
+
+   virtual ir_constant *constant_expression_value();
 
    virtual ir_constant *as_constant()
    {

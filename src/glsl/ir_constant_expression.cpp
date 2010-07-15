@@ -41,97 +41,10 @@
 #define min(x,y) (x) < (y) ? (x) : (y)
 #define max(x,y) (x) > (y) ? (x) : (y)
 
-/**
- * Visitor class for evaluating constant expressions
- */
-class ir_constant_visitor : public ir_visitor {
-public:
-   ir_constant_visitor()
-      : value(NULL)
-   {
-      /* empty */
-   }
-
-   virtual ~ir_constant_visitor()
-   {
-      /* empty */
-   }
-
-   /**
-    * \name Visit methods
-    *
-    * As typical for the visitor pattern, there must be one \c visit method for
-    * each concrete subclass of \c ir_instruction.  Virtual base classes within
-    * the hierarchy should not have \c visit methods.
-    */
-   /*@{*/
-   virtual void visit(ir_variable *);
-   virtual void visit(ir_function_signature *);
-   virtual void visit(ir_function *);
-   virtual void visit(ir_expression *);
-   virtual void visit(ir_texture *);
-   virtual void visit(ir_swizzle *);
-   virtual void visit(ir_dereference_variable *);
-   virtual void visit(ir_dereference_array *);
-   virtual void visit(ir_dereference_record *);
-   virtual void visit(ir_assignment *);
-   virtual void visit(ir_constant *);
-   virtual void visit(ir_call *);
-   virtual void visit(ir_return *);
-   virtual void visit(ir_discard *);
-   virtual void visit(ir_if *);
-   virtual void visit(ir_loop *);
-   virtual void visit(ir_loop_jump *);
-   /*@}*/
-
-   /**
-    * Value of the constant expression.
-    *
-    * \note
-    * This field will be \c NULL if the expression is not constant valued.
-    */
-   /* FINIHSME: This cannot hold values for constant arrays or structures. */
-   ir_constant *value;
-};
-
-
 ir_constant *
-ir_rvalue::constant_expression_value()
+ir_expression::constant_expression_value()
 {
-   ir_constant_visitor visitor;
-
-   this->accept(& visitor);
-   return visitor.value;
-}
-
-
-void
-ir_constant_visitor::visit(ir_variable *ir)
-{
-   (void) ir;
-   value = NULL;
-}
-
-
-void
-ir_constant_visitor::visit(ir_function_signature *ir)
-{
-   (void) ir;
-   value = NULL;
-}
-
-
-void
-ir_constant_visitor::visit(ir_function *ir)
-{
-   (void) ir;
-   value = NULL;
-}
-
-void
-ir_constant_visitor::visit(ir_expression *ir)
-{
-   value = NULL;
+   ir_expression *ir = this;
    ir_constant *op[2] = { NULL, NULL };
    ir_constant_data data;
 
@@ -140,7 +53,7 @@ ir_constant_visitor::visit(ir_expression *ir)
    for (unsigned operand = 0; operand < ir->get_num_operands(); operand++) {
       op[operand] = ir->operands[operand]->constant_expression_value();
       if (!op[operand])
-	 return;
+	 return NULL;
    }
 
    if (op[1] != NULL)
@@ -735,29 +648,27 @@ ir_constant_visitor::visit(ir_expression *ir)
 
    default:
       /* FINISHME: Should handle all expression types. */
-      return;
+      return NULL;
    }
 
    void *ctx = talloc_parent(ir);
-   this->value = new(ctx) ir_constant(ir->type, &data);
+   return new(ctx) ir_constant(ir->type, &data);
 }
 
 
-void
-ir_constant_visitor::visit(ir_texture *ir)
+ir_constant *
+ir_texture::constant_expression_value()
 {
-   // FINISHME: Do stuff with texture lookups
-   (void) ir;
-   value = NULL;
+   /* texture lookups aren't constant expressions */
+   return NULL;
 }
 
 
-void
-ir_constant_visitor::visit(ir_swizzle *ir)
+ir_constant *
+ir_swizzle::constant_expression_value()
 {
+   ir_swizzle *ir = this;
    ir_constant *v = ir->val->constant_expression_value();
-
-   this->value = NULL;
 
    if (v != NULL) {
       ir_constant_data data;
@@ -777,30 +688,29 @@ ir_constant_visitor::visit(ir_swizzle *ir)
       }
 
       void *ctx = talloc_parent(ir);
-      this->value = new(ctx) ir_constant(ir->type, &data);
+      return new(ctx) ir_constant(ir->type, &data);
    }
+   return NULL;
 }
 
 
-void
-ir_constant_visitor::visit(ir_dereference_variable *ir)
+ir_constant *
+ir_dereference_variable::constant_expression_value()
 {
-   value = NULL;
-
-   ir_variable *var = ir->variable_referenced();
+   ir_variable *var = this->variable_referenced();
    if (var && var->constant_value)
-      value = var->constant_value->clone(NULL);
+      return var->constant_value->clone(NULL);
+   return NULL;
 }
 
 
-void
-ir_constant_visitor::visit(ir_dereference_array *ir)
+ir_constant *
+ir_dereference_array::constant_expression_value()
 {
+   ir_dereference_array *ir = this;
    void *ctx = talloc_parent(ir);
    ir_constant *array = ir->array->constant_expression_value();
    ir_constant *idx = ir->array_index->constant_expression_value();
-
-   this->value = NULL;
 
    if ((array != NULL) && (idx != NULL)) {
       if (array->type->is_matrix()) {
@@ -836,85 +746,48 @@ ir_constant_visitor::visit(ir_dereference_array *ir)
 	    break;
 	 }
 
-	 this->value = new(ctx) ir_constant(column_type, &data);
+	 return new(ctx) ir_constant(column_type, &data);
       } else if (array->type->is_vector()) {
 	 const unsigned component = idx->value.u[0];
 
-	 this->value = new(ctx) ir_constant(array, component);
+	 return new(ctx) ir_constant(array, component);
       } else {
 	 /* FINISHME: Handle access of constant arrays. */
       }
    }
+   return NULL;
 }
 
 
-void
-ir_constant_visitor::visit(ir_dereference_record *ir)
+ir_constant *
+ir_dereference_record::constant_expression_value()
 {
+   ir_dereference_record *ir = this;
    ir_constant *v = ir->record->constant_expression_value();
 
-   this->value = (v != NULL) ? v->get_record_field(ir->field) : NULL;
+   return (v != NULL) ? v->get_record_field(ir->field) : NULL;
 }
 
 
-void
-ir_constant_visitor::visit(ir_assignment *ir)
+ir_constant *
+ir_assignment::constant_expression_value()
 {
-   (void) ir;
-   value = NULL;
+   /* FINISHME: Handle CEs involving assignment (return RHS) */
+   return NULL;
 }
 
 
-void
-ir_constant_visitor::visit(ir_constant *ir)
+ir_constant *
+ir_constant::constant_expression_value()
 {
-   value = ir;
+   return this;
 }
 
 
-void
-ir_constant_visitor::visit(ir_call *ir)
+ir_constant *
+ir_call::constant_expression_value()
 {
-   (void) ir;
-   value = NULL;
+   /* FINISHME: Handle CEs involving builtin function calls. */
+   return NULL;
 }
 
-
-void
-ir_constant_visitor::visit(ir_return *ir)
-{
-   (void) ir;
-   value = NULL;
-}
-
-
-void
-ir_constant_visitor::visit(ir_discard *ir)
-{
-   (void) ir;
-   value = NULL;
-}
-
-
-void
-ir_constant_visitor::visit(ir_if *ir)
-{
-   (void) ir;
-   value = NULL;
-}
-
-
-void
-ir_constant_visitor::visit(ir_loop *ir)
-{
-   (void) ir;
-   value = NULL;
-}
-
-
-void
-ir_constant_visitor::visit(ir_loop_jump *ir)
-{
-   (void) ir;
-   value = NULL;
-}
