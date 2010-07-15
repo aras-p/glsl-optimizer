@@ -14,6 +14,7 @@ env.Prepend(LIBS = ['graw'] + gallium)
 progs = [
     'clear',
     'tri',
+    'tri-instanced',
     'quad-tex',
     'fs-test',
     'vs-test',
