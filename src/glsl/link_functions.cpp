@@ -37,6 +37,10 @@ extern "C" {
 #include "hash_table.h"
 #include "linker.h"
 
+static ir_function_signature *
+find_matching_signature(const char *name, const exec_list *actual_parameters,
+			gl_shader **shader_list, unsigned num_shaders);
+
 class call_link_visitor : public ir_hierarchical_visitor {
 public:
    call_link_visitor(gl_shader_program *prog, gl_shader **shader_list,
@@ -66,8 +70,9 @@ public:
 
       const char *const name = callee->function_name();
 
-      ir_function_signature *sig = const_cast<ir_function_signature *>
-	 (this->find_matching_signature(name, &ir->actual_parameters));
+      ir_function_signature *sig =
+	 find_matching_signature(name, &ir->actual_parameters, shader_list,
+				 num_shaders);
       if (sig == NULL) {
 	 /* FINISHME: Log the full signature of unresolved function.
 	  */
@@ -138,31 +143,32 @@ private:
    /** Number of shaders available for linking. */
    unsigned num_shaders;
 
-   /**
-    * Searches all shaders for a particular function definition
-    */
-   const ir_function_signature *
-   find_matching_signature(const char *name, exec_list *actual_parameters)
-   {
-      for (unsigned i = 0; i < this->num_shaders; i++) {
-	 ir_function *const f =
-	    this->shader_list[i]->symbols->get_function(name);
-
-	 if (f == NULL)
-	    continue;
-
-	 const ir_function_signature *sig =
-	    f->matching_signature(actual_parameters);
-
-	 if ((sig == NULL) || !sig->is_defined)
-	    continue;
-
-	 return sig;
-      }
-
-      return NULL;
-   }
 };
+
+
+/**
+ * Searches a list of shaders for a particular function definition
+ */
+ir_function_signature *
+find_matching_signature(const char *name, const exec_list *actual_parameters,
+			gl_shader **shader_list, unsigned num_shaders)
+{
+   for (unsigned i = 0; i < num_shaders; i++) {
+      ir_function *const f = shader_list[i]->symbols->get_function(name);
+
+      if (f == NULL)
+	 continue;
+
+      ir_function_signature *sig = f->matching_signature(actual_parameters);
+
+      if ((sig == NULL) || !sig->is_defined)
+	 continue;
+
+      return sig;
+   }
+
+   return NULL;
+}
 
 
 bool
