@@ -695,10 +695,7 @@ ir_swizzle::constant_expression_value()
 ir_constant *
 ir_dereference_variable::constant_expression_value()
 {
-   ir_variable *var = this->variable_referenced();
-   if (var && var->constant_value)
-      return var->constant_value->clone(NULL);
-   return NULL;
+   return var->constant_value ? var->constant_value->clone(NULL) : NULL;
 }
 
 
