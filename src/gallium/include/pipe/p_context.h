@@ -102,6 +102,9 @@ struct pipe_context {
                                 unsigned start, 
                                 unsigned count);
 
+   void (*draw_vbo)( struct pipe_context *pipe,
+                     const struct pipe_draw_info *info );
+
    /**
     * Draw the stream output buffer at index 0
     */
@@ -248,6 +251,9 @@ struct pipe_context {
    void (*set_vertex_buffers)( struct pipe_context *,
                                unsigned num_buffers,
                                const struct pipe_vertex_buffer * );
+
+   void (*set_index_buffer)( struct pipe_context *pipe,
+                             const struct pipe_index_buffer * );
 
    void (*set_stream_output_buffers)(struct pipe_context *,
                                      struct pipe_resource **buffers,
