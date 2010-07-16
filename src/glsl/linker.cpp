@@ -192,11 +192,6 @@ validate_vertex_shader_executable(struct gl_shader_program *prog,
    if (shader == NULL)
       return true;
 
-   if (!shader->symbols->get_function("main")) {
-      linker_error_printf(prog, "vertex shader lacks `main'\n");
-      return false;
-   }
-
    find_assignment_visitor find("gl_Position");
    find.run(shader->ir);
    if (!find.variable_found()) {
@@ -220,11 +215,6 @@ validate_fragment_shader_executable(struct gl_shader_program *prog,
 {
    if (shader == NULL)
       return true;
-
-   if (!shader->symbols->get_function("main")) {
-      linker_error_printf(prog, "fragment shader lacks `main'\n");
-      return false;
-   }
 
    find_assignment_visitor frag_color("gl_FragColor");
    find_assignment_visitor frag_data("gl_FragData");
