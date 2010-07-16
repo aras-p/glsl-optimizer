@@ -158,7 +158,7 @@ nvfx_vbo_static_attrib(struct nvfx_context *nvfx,
 	pipe_buffer_unmap(&nvfx->pipe, vb->buffer, transfer);
 }
 
-void
+static void
 nvfx_draw_arrays(struct pipe_context *pipe,
 		 unsigned mode, unsigned start, unsigned count)
 {
@@ -463,7 +463,7 @@ nvfx_draw_elements_vbo(struct pipe_context *pipe,
 	}
 }
 
-void
+static void
 nvfx_draw_elements(struct pipe_context *pipe,
 		   struct pipe_resource *indexBuffer,
 		   unsigned indexSize, int indexBias,

@@ -180,24 +180,6 @@ nv50_surface_do_copy(struct nv50_screen *screen, struct pipe_surface *dst,
 extern struct draw_stage *nv50_draw_render_stage(struct nv50_context *nv50);
 
 /* nv50_vbo.c */
-extern void nv50_draw_arrays(struct pipe_context *, unsigned mode,
-				unsigned start, unsigned count);
-extern void nv50_draw_arrays_instanced(struct pipe_context *, unsigned mode,
-					unsigned start, unsigned count,
-					unsigned startInstance,
-					unsigned instanceCount);
-extern void nv50_draw_elements(struct pipe_context *pipe,
-				  struct pipe_resource *indexBuffer,
-				  unsigned indexSize, int indexBias,
-				  unsigned mode, unsigned start,
-				  unsigned count);
-extern void nv50_draw_elements_instanced(struct pipe_context *pipe,
-					 struct pipe_resource *indexBuffer,
-					 unsigned indexSize, int indexBias,
-					 unsigned mode, unsigned start,
-					 unsigned count,
-					 unsigned startInstance,
-					 unsigned instanceCount);
 extern void nv50_draw_vbo(struct pipe_context *pipe,
                           const struct pipe_draw_info *info);
 extern void nv50_vtxelt_construct(struct nv50_vtxelt_stateobj *cso);

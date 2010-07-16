@@ -28,7 +28,6 @@
 
 #include "pipe/p_defines.h"
 #include "util/u_memory.h"
-#include "util/u_draw_quad.h"
 #include "pipe/p_context.h"
 
 #include "fo_context.h"
@@ -88,47 +87,6 @@ static void failover_draw_vbo( struct pipe_context *pipe,
    }
 }
 
-
-static void failover_draw_elements( struct pipe_context *pipe,
-                                    struct pipe_resource *indexResource,
-                                    unsigned indexSize,
-                                    int indexBias,
-                                    unsigned prim, 
-                                    unsigned start, 
-                                    unsigned count)
-{
-   struct failover_context *failover = failover_context( pipe );
-   struct pipe_draw_info info;
-   struct pipe_index_buffer saved_ib, ib;
-
-   util_draw_init_info(&info);
-   info.mode = prim;
-   info.start = start;
-   info.count = count;
-
-   if (indexResource) {
-      info.indexed = TRUE;
-      saved_ib = failover->index_buffer;
-
-      ib.buffer = indexResource;
-      ib.offset = 0;
-      ib.index_size = indexSize;
-      pipe->set_index_buffer(pipe, &ib);
-   }
-
-   failover_draw_vbo(pipe, &info);
-
-   if (indexResource)
-      pipe->set_index_buffer(pipe, &saved_ib);
-}
-
-
-static void failover_draw_arrays( struct pipe_context *pipe,
-				     unsigned prim, unsigned start, unsigned count)
-{
-   failover_draw_elements(pipe, NULL, 0, 0, prim, start, count);
-}
-
 static unsigned int
 failover_is_resource_referenced( struct pipe_context *_pipe,
 				 struct pipe_resource *resource,
@@ -161,8 +119,6 @@ struct pipe_context *failover_create( struct pipe_context *hw,
    failover->pipe.get_paramf = hw->get_paramf;
 #endif
 
-   failover->pipe.draw_arrays = failover_draw_arrays;
-   failover->pipe.draw_elements = failover_draw_elements;
    failover->pipe.draw_vbo = failover_draw_vbo;
    failover->pipe.clear = hw->clear;
    failover->pipe.clear_render_target = hw->clear_render_target;

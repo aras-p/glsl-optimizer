@@ -36,7 +36,6 @@
 #include "pipe/p_defines.h"
 #include "util/u_inlines.h"
 #include "util/u_memory.h"
-#include "util/u_draw_quad.h"
 #include "pipe/p_screen.h"
 
 
@@ -102,64 +101,6 @@ i915_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
    }
 }
 
-static void
-i915_draw_range_elements(struct pipe_context *pipe,
-                         struct pipe_resource *indexBuffer,
-                         unsigned indexSize,
-                         int indexBias,
-                         unsigned min_index,
-                         unsigned max_index,
-                         unsigned prim, unsigned start, unsigned count)
-{
-   struct i915_context *i915 = i915_context(pipe);
-   struct pipe_draw_info info;
-   struct pipe_index_buffer saved_ib, ib;
-
-   util_draw_init_info(&info);
-   info.mode = prim;
-   info.start = start;
-   info.count = count;
-   info.index_bias = indexBias;
-   info.min_index = min_index;
-   info.max_index = max_index;
-
-   if (indexBuffer) {
-      info.indexed = TRUE;
-      saved_ib = i915->index_buffer;
-
-      ib.buffer = indexBuffer;
-      ib.offset = 0;
-      ib.index_size = indexSize;
-      pipe->set_index_buffer(pipe, &ib);
-   }
-
-   i915_draw_vbo(pipe, &info);
-
-   if (indexBuffer)
-      pipe->set_index_buffer(pipe, &saved_ib);
-}
-
-static void
-i915_draw_elements(struct pipe_context *pipe,
-                   struct pipe_resource *indexBuffer,
-                   unsigned indexSize, int indexBias,
-                   unsigned prim, unsigned start, unsigned count)
-{
-   i915_draw_range_elements(pipe, indexBuffer,
-                            indexSize, indexBias,
-                            0, 0xffffffff,
-                            prim, start, count);
-}
-
-static void
-i915_draw_arrays(struct pipe_context *pipe,
-                 unsigned prim, unsigned start, unsigned count)
-{
-   i915_draw_elements(pipe, NULL, 0, 0, prim, start, count);
-}
-
-
-
 
 /*
  * Generic context functions
@@ -203,9 +144,6 @@ i915_create_context(struct pipe_screen *screen, void *priv)
 
    i915->base.clear = i915_clear;
 
-   i915->base.draw_arrays = i915_draw_arrays;
-   i915->base.draw_elements = i915_draw_elements;
-   i915->base.draw_range_elements = i915_draw_range_elements;
    i915->base.draw_vbo = i915_draw_vbo;
 
    /*

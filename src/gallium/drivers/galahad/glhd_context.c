@@ -48,71 +48,6 @@ galahad_destroy(struct pipe_context *_pipe)
 }
 
 static void
-galahad_draw_arrays(struct pipe_context *_pipe,
-                     unsigned prim,
-                     unsigned start,
-                     unsigned count)
-{
-   struct galahad_context *glhd_pipe = galahad_context(_pipe);
-   struct pipe_context *pipe = glhd_pipe->pipe;
-
-   pipe->draw_arrays(pipe,
-                     prim,
-                     start,
-                     count);
-}
-
-static void
-galahad_draw_elements(struct pipe_context *_pipe,
-                       struct pipe_resource *_indexResource,
-                       unsigned indexSize,
-                       int indexBias,
-                       unsigned prim,
-                       unsigned start,
-                       unsigned count)
-{
-   struct galahad_context *glhd_pipe = galahad_context(_pipe);
-   struct galahad_resource *glhd_resource = galahad_resource(_indexResource);
-   struct pipe_context *pipe = glhd_pipe->pipe;
-   struct pipe_resource *indexResource = glhd_resource->resource;
-
-   pipe->draw_elements(pipe,
-                       indexResource,
-                       indexSize,
-                       indexBias,
-                       prim,
-                       start,
-                       count);
-}
-
-static void
-galahad_draw_range_elements(struct pipe_context *_pipe,
-                             struct pipe_resource *_indexResource,
-                             unsigned indexSize,
-                             int indexBias,
-                             unsigned minIndex,
-                             unsigned maxIndex,
-                             unsigned mode,
-                             unsigned start,
-                             unsigned count)
-{
-   struct galahad_context *glhd_pipe = galahad_context(_pipe);
-   struct galahad_resource *glhd_resource = galahad_resource(_indexResource);
-   struct pipe_context *pipe = glhd_pipe->pipe;
-   struct pipe_resource *indexResource = glhd_resource->resource;
-
-   pipe->draw_range_elements(pipe,
-                             indexResource,
-                             indexSize,
-                             indexBias,
-                             minIndex,
-                             maxIndex,
-                             mode,
-                             start,
-                             count);
-}
-
-static void
 galahad_draw_vbo(struct pipe_context *_pipe,
                  const struct pipe_draw_info *info)
 {
@@ -979,9 +914,6 @@ galahad_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
    glhd_pipe->base.draw = NULL;
 
    glhd_pipe->base.destroy = galahad_destroy;
-   glhd_pipe->base.draw_arrays = galahad_draw_arrays;
-   glhd_pipe->base.draw_elements = galahad_draw_elements;
-   glhd_pipe->base.draw_range_elements = galahad_draw_range_elements;
    glhd_pipe->base.draw_vbo = galahad_draw_vbo;
    glhd_pipe->base.create_query = galahad_create_query;
    glhd_pipe->base.destroy_query = galahad_destroy_query;

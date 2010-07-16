@@ -313,9 +313,6 @@ struct pipe_context *r600_create_context(struct pipe_screen *screen, void *priv)
 	rctx->context.screen = screen;
 	rctx->context.priv = priv;
 	rctx->context.destroy = r600_destroy_context;
-	rctx->context.draw_arrays = r600_draw_arrays;
-	rctx->context.draw_elements = r600_draw_elements;
-	rctx->context.draw_range_elements = r600_draw_range_elements;
 	rctx->context.draw_vbo = r600_draw_vbo;
 	rctx->context.flush = r600_flush;
 

@@ -29,7 +29,6 @@
 #include "util/u_inlines.h"
 #include "util/u_prim.h"
 #include "util/u_upload_mgr.h"
-#include "util/u_draw_quad.h"
 
 #include "brw_draw.h"
 #include "brw_defines.h"
@@ -220,74 +219,11 @@ brw_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
    }
 }
 
-static void
-brw_draw_range_elements(struct pipe_context *pipe,
-			struct pipe_resource *index_buffer,
-			unsigned index_size, int index_bias,
-			unsigned min_index,
-			unsigned max_index,
-			unsigned mode, unsigned start, unsigned count)
-{
-   struct brw_context *brw = brw_context(pipe);
-   struct pipe_draw_info info;
-   struct pipe_index_buffer saved_ib, ib;
-
-   util_draw_init_info(&info);
-   info.mode = mode;
-   info.start = start;
-   info.count = count;
-   info.index_bias = index_bias;
-   info.min_index = min_index;
-   info.max_index = max_index;
-
-   if (index_buffer) {
-      info.indexed = TRUE;
-      saved_ib.buffer = brw->curr.index_buffer;
-      saved_ib.offset = brw->curr.index_offset;
-      saved_ib.index_size = brw->curr.index_size;
-
-      ib.buffer = index_buffer;
-      ib.offset = 0;
-      ib.index_size = index_size;
-      pipe->set_index_buffer(pipe, &ib);
-   }
-
-   brw_draw_vbo(pipe, &info);
-
-   if (index_buffer)
-      pipe->set_index_buffer(pipe, &saved_ib);
-}
-
-static void
-brw_draw_elements(struct pipe_context *pipe,
-		  struct pipe_resource *index_buffer,
-		  unsigned index_size, int index_bias,
-		  unsigned mode, 
-		  unsigned start, unsigned count)
-{
-   brw_draw_range_elements( pipe, index_buffer,
-                            index_size, index_bias,
-                            0, 0xffffffff,
-                            mode, 
-                            start, count );
-}
-
-static void
-brw_draw_arrays(struct pipe_context *pipe, unsigned mode,
-                     unsigned start, unsigned count)
-{
-   brw_draw_elements(pipe, NULL, 0, 0, mode, start, count);
-}
-
-
 
 boolean brw_draw_init( struct brw_context *brw )
 {
    /* Register our drawing function: 
     */
-   brw->base.draw_arrays = brw_draw_arrays;
-   brw->base.draw_elements = brw_draw_elements;
-   brw->base.draw_range_elements = brw_draw_range_elements;
    brw->base.draw_vbo = brw_draw_vbo;
 
    /* Create helpers for uploading data in user buffers:

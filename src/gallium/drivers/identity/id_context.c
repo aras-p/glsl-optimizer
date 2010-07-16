@@ -46,71 +46,6 @@ identity_destroy(struct pipe_context *_pipe)
 }
 
 static void
-identity_draw_arrays(struct pipe_context *_pipe,
-                     unsigned prim,
-                     unsigned start,
-                     unsigned count)
-{
-   struct identity_context *id_pipe = identity_context(_pipe);
-   struct pipe_context *pipe = id_pipe->pipe;
-
-   pipe->draw_arrays(pipe,
-                     prim,
-                     start,
-                     count);
-}
-
-static void
-identity_draw_elements(struct pipe_context *_pipe,
-                       struct pipe_resource *_indexResource,
-                       unsigned indexSize,
-                       int indexBias,
-                       unsigned prim,
-                       unsigned start,
-                       unsigned count)
-{
-   struct identity_context *id_pipe = identity_context(_pipe);
-   struct identity_resource *id_resource = identity_resource(_indexResource);
-   struct pipe_context *pipe = id_pipe->pipe;
-   struct pipe_resource *indexResource = id_resource->resource;
-
-   pipe->draw_elements(pipe,
-                       indexResource,
-                       indexSize,
-                       indexBias,
-                       prim,
-                       start,
-                       count);
-}
-
-static void
-identity_draw_range_elements(struct pipe_context *_pipe,
-                             struct pipe_resource *_indexResource,
-                             unsigned indexSize,
-                             int indexBias,
-                             unsigned minIndex,
-                             unsigned maxIndex,
-                             unsigned mode,
-                             unsigned start,
-                             unsigned count)
-{
-   struct identity_context *id_pipe = identity_context(_pipe);
-   struct identity_resource *id_resource = identity_resource(_indexResource);
-   struct pipe_context *pipe = id_pipe->pipe;
-   struct pipe_resource *indexResource = id_resource->resource;
-
-   pipe->draw_range_elements(pipe,
-                             indexResource,
-                             indexSize,
-                             indexBias,
-                             minIndex,
-                             maxIndex,
-                             mode,
-                             start,
-                             count);
-}
-
-static void
 identity_draw_vbo(struct pipe_context *_pipe,
                   const struct pipe_draw_info *info)
 {
@@ -917,9 +852,6 @@ identity_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
    id_pipe->base.draw = NULL;
 
    id_pipe->base.destroy = identity_destroy;
-   id_pipe->base.draw_arrays = identity_draw_arrays;
-   id_pipe->base.draw_elements = identity_draw_elements;
-   id_pipe->base.draw_range_elements = identity_draw_range_elements;
    id_pipe->base.draw_vbo = identity_draw_vbo;
    id_pipe->base.create_query = identity_create_query;
    id_pipe->base.destroy_query = identity_destroy_query;

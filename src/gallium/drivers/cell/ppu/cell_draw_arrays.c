@@ -34,7 +34,6 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_context.h"
 #include "util/u_inlines.h"
-#include "util/u_draw_quad.h"
 
 #include "cell_context.h"
 #include "cell_draw_arrays.h"
@@ -113,71 +112,9 @@ cell_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
 }
 
 
-static void
-cell_draw_range_elements(struct pipe_context *pipe,
-                         struct pipe_resource *indexBuffer,
-                         unsigned indexSize,
-                         int indexBias,
-                         unsigned min_index,
-                         unsigned max_index,
-                         unsigned mode, unsigned start, unsigned count)
-{
-   struct cell_context *cell = cell_context(pipe);
-   struct pipe_draw_info info;
-   struct pipe_index_buffer saved_ib, ib;
-
-   util_draw_init_info(&info);
-   info.mode = mode;
-   info.start = start;
-   info.count = count;
-   info.index_bias = indexBias;
-   info.min_index = min_index;
-   info.max_index = max_index;
-
-   if (indexBuffer) {
-      info.indexed = TRUE;
-      saved_ib = cell->index_buffer;
-
-      ib.buffer = indexBuffer;
-      ib.offset = 0;
-      ib.index_size = indexSize;
-      pipe->set_index_buffer(pipe, &ib);
-   }
-
-   cell_draw_vbo(pipe, &info);
-
-   if (indexBuffer)
-      pipe->set_index_buffer(pipe, &saved_ib);
-}
-
-
-static void
-cell_draw_elements(struct pipe_context *pipe,
-                   struct pipe_resource *indexBuffer,
-                   unsigned indexSize, int indexBias,
-                   unsigned mode, unsigned start, unsigned count)
-{
-   cell_draw_range_elements( pipe, indexBuffer,
-                             indexSize, indexBias,
-                             0, 0xffffffff,
-                             mode, start, count );
-}
-
-
-static void
-cell_draw_arrays(struct pipe_context *pipe, unsigned mode,
-                     unsigned start, unsigned count)
-{
-   cell_draw_elements(pipe, NULL, 0, 0, mode, start, count);
-}
-
-
 void
 cell_init_draw_functions(struct cell_context *cell)
 {
-   cell->pipe.draw_arrays = cell_draw_arrays;
-   cell->pipe.draw_elements = cell_draw_elements;
-   cell->pipe.draw_range_elements = cell_draw_range_elements;
    cell->pipe.draw_vbo = cell_draw_vbo;
 }
 

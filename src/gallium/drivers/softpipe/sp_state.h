@@ -228,41 +228,6 @@ void softpipe_set_index_buffer(struct pipe_context *,
 void softpipe_update_derived( struct softpipe_context *softpipe );
 
 
-void softpipe_draw_arrays(struct pipe_context *pipe, unsigned mode,
-                          unsigned start, unsigned count);
-
-void softpipe_draw_elements(struct pipe_context *pipe,
-                            struct pipe_resource *indexBuffer,
-                            unsigned indexSize, int indexBias,
-                            unsigned mode, unsigned start, unsigned count);
-void
-softpipe_draw_range_elements(struct pipe_context *pipe,
-                             struct pipe_resource *indexBuffer,
-                             unsigned indexSize,
-                             int indexBias,
-                             unsigned min_index,
-                             unsigned max_index,
-                             unsigned mode, unsigned start, unsigned count);
-
-void
-softpipe_draw_arrays_instanced(struct pipe_context *pipe,
-                               unsigned mode,
-                               unsigned start,
-                               unsigned count,
-                               unsigned startInstance,
-                               unsigned instanceCount);
-
-void
-softpipe_draw_elements_instanced(struct pipe_context *pipe,
-                                 struct pipe_resource *indexBuffer,
-                                 unsigned indexSize,
-                                 int indexBias,
-                                 unsigned mode,
-                                 unsigned start,
-                                 unsigned count,
-                                 unsigned startInstance,
-                                 unsigned instanceCount);
-
 void
 softpipe_draw_vbo(struct pipe_context *pipe,
                   const struct pipe_draw_info *info);

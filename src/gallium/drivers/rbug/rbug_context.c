@@ -103,89 +103,6 @@ rbug_draw_block_locked(struct rbug_context *rb_pipe, int flag)
 }
 
 static void
-rbug_draw_arrays(struct pipe_context *_pipe,
-                 unsigned prim,
-                 unsigned start,
-                 unsigned count)
-{
-   struct rbug_context *rb_pipe = rbug_context(_pipe);
-   struct pipe_context *pipe = rb_pipe->pipe;
-
-   pipe_mutex_lock(rb_pipe->draw_mutex);
-   rbug_draw_block_locked(rb_pipe, RBUG_BLOCK_BEFORE);
-
-   pipe->draw_arrays(pipe,
-                     prim,
-                     start,
-                     count);
-
-   rbug_draw_block_locked(rb_pipe, RBUG_BLOCK_AFTER);
-   pipe_mutex_unlock(rb_pipe->draw_mutex);
-}
-
-static void
-rbug_draw_elements(struct pipe_context *_pipe,
-                   struct pipe_resource *_indexResource,
-                   unsigned indexSize,
-                   int indexBias,
-                   unsigned prim,
-                   unsigned start,
-                   unsigned count)
-{
-   struct rbug_context *rb_pipe = rbug_context(_pipe);
-   struct rbug_resource *rb_resource = rbug_resource(_indexResource);
-   struct pipe_context *pipe = rb_pipe->pipe;
-   struct pipe_resource *indexResource = rb_resource->resource;
-
-   pipe_mutex_lock(rb_pipe->draw_mutex);
-   rbug_draw_block_locked(rb_pipe, RBUG_BLOCK_BEFORE);
-
-   pipe->draw_elements(pipe,
-                       indexResource,
-                       indexSize,
-                       indexBias,
-                       prim,
-                       start,
-                       count);
-
-   rbug_draw_block_locked(rb_pipe, RBUG_BLOCK_AFTER);
-   pipe_mutex_unlock(rb_pipe->draw_mutex);
-}
-
-static void
-rbug_draw_range_elements(struct pipe_context *_pipe,
-                         struct pipe_resource *_indexResource,
-                         unsigned indexSize,
-                         int indexBias,
-                         unsigned minIndex,
-                         unsigned maxIndex,
-                         unsigned mode,
-                         unsigned start,
-                         unsigned count)
-{
-   struct rbug_context *rb_pipe = rbug_context(_pipe);
-   struct rbug_resource *rb_resource = rbug_resource(_indexResource);
-   struct pipe_context *pipe = rb_pipe->pipe;
-   struct pipe_resource *indexResource = rb_resource->resource;
-
-   pipe_mutex_lock(rb_pipe->draw_mutex);
-   rbug_draw_block_locked(rb_pipe, RBUG_BLOCK_BEFORE);
-
-   pipe->draw_range_elements(pipe,
-                             indexResource,
-                             indexSize,
-                             indexBias,
-                             minIndex,
-                             maxIndex,
-                             mode,
-                             start,
-                             count);
-
-   rbug_draw_block_locked(rb_pipe, RBUG_BLOCK_AFTER);
-   pipe_mutex_unlock(rb_pipe->draw_mutex);
-}
-
-static void
 rbug_draw_vbo(struct pipe_context *_pipe, const struct pipe_draw_info *info)
 {
    struct rbug_context *rb_pipe = rbug_context(_pipe);
@@ -1072,9 +989,6 @@ rbug_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
    rb_pipe->base.draw = NULL;
 
    rb_pipe->base.destroy = rbug_destroy;
-   rb_pipe->base.draw_arrays = rbug_draw_arrays;
-   rb_pipe->base.draw_elements = rbug_draw_elements;
-   rb_pipe->base.draw_range_elements = rbug_draw_range_elements;
    rb_pipe->base.draw_vbo = rbug_draw_vbo;
    rb_pipe->base.create_query = rbug_create_query;
    rb_pipe->base.destroy_query = rbug_destroy_query;

@@ -227,28 +227,6 @@ svga_draw_range_elements( struct pipe_context *pipe,
 
 
 static void
-svga_draw_elements( struct pipe_context *pipe,
-                    struct pipe_resource *index_buffer,
-                    unsigned index_size, int index_bias,
-                    unsigned prim, unsigned start, unsigned count)
-{
-   svga_draw_range_elements( pipe, index_buffer,
-                             index_size, index_bias,
-                             0, 0xffffffff,
-                             prim, start, count );
-}
-
-static void
-svga_draw_arrays( struct pipe_context *pipe,
-                  unsigned prim, unsigned start, unsigned count)
-{
-   svga_draw_range_elements(pipe, NULL, 0, 0,
-                            start, start + count - 1, 
-                            prim, 
-                            start, count);
-}
-
-static void
 svga_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
 {
    struct svga_context *svga = svga_context(pipe);
@@ -274,8 +252,5 @@ svga_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
 
 void svga_init_draw_functions( struct svga_context *svga )
 {
-   svga->pipe.draw_arrays = svga_draw_arrays;
-   svga->pipe.draw_elements = svga_draw_elements;
-   svga->pipe.draw_range_elements = svga_draw_range_elements;
    svga->pipe.draw_vbo = svga_draw_vbo;
 }

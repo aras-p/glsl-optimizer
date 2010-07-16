@@ -33,7 +33,6 @@
 #include "util/u_memory.h"
 #include "util/u_upload_mgr.h"
 #include "util/u_prim.h"
-#include "util/u_draw_quad.h"
 
 #include "r300_cs.h"
 #include "r300_context.h"
@@ -567,19 +566,6 @@ static void r300_draw_range_elements(struct pipe_context* pipe,
     }
 }
 
-/* Simple helpers for context setup. Should probably be moved to util. */
-static void r300_draw_elements(struct pipe_context* pipe,
-                               struct pipe_resource* indexBuffer,
-                               unsigned indexSize, int indexBias, unsigned mode,
-                               unsigned start, unsigned count)
-{
-    struct r300_context *r300 = r300_context(pipe);
-
-    pipe->draw_range_elements(pipe, indexBuffer, indexSize, indexBias,
-                              0, r300->vertex_buffer_max_index,
-                              mode, start, count);
-}
-
 static void r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
                              unsigned start, unsigned count)
 {
@@ -733,54 +719,6 @@ static void r300_swtcl_draw_vbo(struct pipe_context* pipe,
         draw_set_mapped_element_buffer_range(r300->draw, 0, 0, info->start,
                 info->start + count - 1, NULL);
     }
-}
-
-/* SW TCL elements, using Draw. */
-static void r300_swtcl_draw_range_elements(struct pipe_context* pipe,
-                                           struct pipe_resource* indexBuffer,
-                                           unsigned indexSize,
-                                           int indexBias,
-                                           unsigned minIndex,
-                                           unsigned maxIndex,
-                                           unsigned mode,
-                                           unsigned start,
-                                           unsigned count)
-{
-    struct r300_context* r300 = r300_context(pipe);
-    struct pipe_draw_info info;
-    struct pipe_index_buffer saved_ib, ib;
-
-    util_draw_init_info(&info);
-    info.mode = mode;
-    info.start = start;
-    info.count = count;
-    info.index_bias = indexBias;
-    info.min_index = minIndex;
-    info.max_index = maxIndex;
-
-    if (indexBuffer) {
-       info.indexed = TRUE;
-
-       saved_ib = r300->index_buffer;
-       ib.buffer = indexBuffer;
-       ib.offset = 0;
-       ib.index_size = indexSize;
-       pipe->set_index_buffer(pipe, &ib);
-    }
-
-    r300_swtcl_draw_vbo(pipe, &info);
-
-    if (indexBuffer)
-       pipe->set_index_buffer(pipe, &saved_ib);
-}
-
-static void r300_swtcl_draw_arrays(struct pipe_context* pipe,
-                                   unsigned mode,
-                                   unsigned start,
-                                   unsigned count)
-{
-   r300_swtcl_draw_range_elements(pipe, NULL, 0, 0,
-           start, start + count -1, mode, start, count);
 }
 
 /* Object for rendering using Draw. */
@@ -1179,17 +1117,10 @@ static void r300_resource_resolve(struct pipe_context* pipe,
 
 void r300_init_render_functions(struct r300_context *r300)
 {
-    /* Set generic functions. */
-    r300->context.draw_elements = r300_draw_elements;
-
     /* Set draw functions based on presence of HW TCL. */
     if (r300->screen->caps.has_tcl) {
-        r300->context.draw_arrays = r300_draw_arrays;
-        r300->context.draw_range_elements = r300_draw_range_elements;
         r300->context.draw_vbo = r300_draw_vbo;
     } else {
-        r300->context.draw_arrays = r300_swtcl_draw_arrays;
-        r300->context.draw_range_elements = r300_swtcl_draw_range_elements;
         r300->context.draw_vbo = r300_swtcl_draw_vbo;
     }
 

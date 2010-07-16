@@ -236,13 +236,6 @@ extern void nvfx_init_transfer_functions(struct nvfx_context *nvfx);
 /* nvfx_vbo.c */
 extern boolean nvfx_vbo_validate(struct nvfx_context *nvfx);
 extern void nvfx_vbo_relocate(struct nvfx_context *nvfx);
-extern void nvfx_draw_arrays(struct pipe_context *, unsigned mode,
-				unsigned start, unsigned count);
-extern void nvfx_draw_elements(struct pipe_context *pipe,
-                               struct pipe_resource *indexBuffer,
-                               unsigned indexSize, int indexBias,
-                               unsigned mode, unsigned start,
-                               unsigned count);
 extern void nvfx_draw_vbo(struct pipe_context *pipe,
                           const struct pipe_draw_info *info);
 

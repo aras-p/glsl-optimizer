@@ -176,56 +176,6 @@ static int r600_draw_common(struct r600_draw *draw)
 	return 0;
 }
 
-void r600_draw_range_elements(struct pipe_context *ctx,
-		struct pipe_resource *index_buffer,
-		unsigned index_size, int index_bias, unsigned min_index,
-		unsigned max_index, unsigned mode,
-		unsigned start, unsigned count)
-{
-	struct r600_draw draw;
-	assert(index_bias == 0);
-
-	draw.ctx = ctx;
-	draw.mode = mode;
-	draw.start = start;
-	draw.count = count;
-	draw.index_size = index_size;
-	draw.index_buffer = index_buffer;
-printf("index_size %d min %d max %d  start %d  count %d\n", index_size, min_index, max_index, start, count);
-	r600_draw_common(&draw);
-}
-
-void r600_draw_elements(struct pipe_context *ctx,
-		struct pipe_resource *index_buffer,
-		unsigned index_size, int index_bias, unsigned mode,
-		unsigned start, unsigned count)
-{
-	struct r600_draw draw;
-	assert(index_bias == 0);
-
-	draw.ctx = ctx;
-	draw.mode = mode;
-	draw.start = start;
-	draw.count = count;
-	draw.index_size = index_size;
-	draw.index_buffer = index_buffer;
-	r600_draw_common(&draw);
-}
-
-void r600_draw_arrays(struct pipe_context *ctx, unsigned mode,
-			unsigned start, unsigned count)
-{
-	struct r600_draw draw;
-
-	draw.ctx = ctx;
-	draw.mode = mode;
-	draw.start = start;
-	draw.count = count;
-	draw.index_size = 0;
-	draw.index_buffer = NULL;
-	r600_draw_common(&draw);
-}
-
 void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 {
 	struct r600_context *rctx = r600_context(ctx);
