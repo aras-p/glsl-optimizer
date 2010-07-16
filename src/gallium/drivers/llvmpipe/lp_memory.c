@@ -29,32 +29,17 @@
 #include "lp_limits.h"
 #include "lp_memory.h"
 
-
-/** 32bpp RGBA dummy tile to use in out of memory conditions */
-static PIPE_ALIGN_VAR(16) uint8_t lp_dummy_tile[TILE_SIZE * TILE_SIZE * 4];
-
-static unsigned lp_out_of_memory = 0;
-
-
-uint8_t *
-lp_get_dummy_tile(void)
-{
-   if (lp_out_of_memory++ < 10) {
-      debug_printf("llvmpipe: out of memory.  Using dummy tile memory.\n");
-   }
-   return lp_dummy_tile;
-}
-
-uint8_t *
-lp_get_dummy_tile_silent(void)
-{
-   return lp_dummy_tile;
-}
+/**
+ * 32bpp RGBA swizzled tiles.  One for for each thread and each
+ * possible colorbuf.  Adds up to quite a bit 8*8*64*64*4 == 1MB.
+ * Several schemes exist to reduce this, such as scaling back the
+ * number of threads or using a smaller tilesize when multiple
+ * colorbuffers are bound.
+ */
+PIPE_ALIGN_VAR(16) uint8_t lp_swizzled_cbuf[LP_MAX_THREADS][PIPE_MAX_COLOR_BUFS][TILE_SIZE * TILE_SIZE * 4];
 
 
-boolean
-lp_is_dummy_tile(void *tile)
-{
-   return tile == lp_dummy_tile;
-}
+/* A single dummy tile used in a couple of out-of-memory situations. 
+ */
+PIPE_ALIGN_VAR(16) uint8_t lp_dummy_tile[TILE_SIZE * TILE_SIZE * 4];
 

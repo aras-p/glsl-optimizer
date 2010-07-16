@@ -30,16 +30,11 @@
 
 
 #include "pipe/p_compiler.h"
+#include "pipe/p_state.h"
+#include "lp_limits.h"
 
+extern PIPE_ALIGN_VAR(16) uint8_t lp_swizzled_cbuf[LP_MAX_THREADS][PIPE_MAX_COLOR_BUFS][TILE_SIZE * TILE_SIZE * 4];
 
-extern uint8_t *
-lp_get_dummy_tile(void);
-
-uint8_t *
-lp_get_dummy_tile_silent(void);
-
-extern boolean
-lp_is_dummy_tile(void *tile);
-
+extern PIPE_ALIGN_VAR(16) uint8_t lp_dummy_tile[TILE_SIZE * TILE_SIZE * 4];
 
 #endif /* LP_MEMORY_H */

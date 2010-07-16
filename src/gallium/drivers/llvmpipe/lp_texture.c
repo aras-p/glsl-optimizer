@@ -1209,6 +1209,94 @@ llvmpipe_get_texture_tile(struct llvmpipe_resource *lpr,
 
 
 /**
+ * Get pointer to tiled data for rendering.
+ * \return pointer to the tiled data at the given tile position
+ */
+void
+llvmpipe_unswizzle_cbuf_tile(struct llvmpipe_resource *lpr,
+                             unsigned face_slice, unsigned level,
+                             unsigned x, unsigned y,
+                             uint8_t *tile)
+{
+   struct llvmpipe_texture_image *linear_img = &lpr->linear[level];
+   const unsigned tx = x / TILE_SIZE, ty = y / TILE_SIZE;
+   uint8_t *linear_image;
+
+   assert(x % TILE_SIZE == 0);
+   assert(y % TILE_SIZE == 0);
+
+   if (!linear_img->data) {
+      /* allocate memory for the linear image now */
+      alloc_image_data(lpr, level, LP_TEX_LAYOUT_LINEAR);
+   }
+
+   /* compute address of the slice/face of the image that contains the tile */
+   linear_image = llvmpipe_get_texture_image_address(lpr, face_slice, level,
+                                                     LP_TEX_LAYOUT_LINEAR);
+
+   {
+      uint ii = x, jj = y;
+      uint tile_offset = jj / TILE_SIZE + ii / TILE_SIZE;
+      uint byte_offset = tile_offset * TILE_SIZE * TILE_SIZE * 4;
+      
+      /* Note that lp_tiled_to_linear expects the tile parameter to
+       * point at the first tile in a whole-image sized array.  In
+       * this code, we have only a single tile and have to do some
+       * pointer arithmetic to figure out where the "image" would have
+       * started.
+       */
+      lp_tiled_to_linear(tile - byte_offset, linear_image,
+                         x, y, TILE_SIZE, TILE_SIZE,
+                         lpr->base.format,
+                         lpr->row_stride[level],
+                         1);       /* tiles per row */
+   }
+
+   llvmpipe_set_texture_tile_layout(lpr, face_slice, level, tx, ty,
+                                    LP_TEX_LAYOUT_LINEAR);
+}
+
+
+/**
+ * Get pointer to tiled data for rendering.
+ * \return pointer to the tiled data at the given tile position
+ */
+void
+llvmpipe_swizzle_cbuf_tile(struct llvmpipe_resource *lpr,
+                           unsigned face_slice, unsigned level,
+                           unsigned x, unsigned y,
+                           uint8_t *tile)
+{
+   uint8_t *linear_image;
+
+   assert(x % TILE_SIZE == 0);
+   assert(y % TILE_SIZE == 0);
+
+   /* compute address of the slice/face of the image that contains the tile */
+   linear_image = llvmpipe_get_texture_image_address(lpr, face_slice, level,
+                                                     LP_TEX_LAYOUT_LINEAR);
+
+   if (linear_image) {
+      uint ii = x, jj = y;
+      uint tile_offset = jj / TILE_SIZE + ii / TILE_SIZE;
+      uint byte_offset = tile_offset * TILE_SIZE * TILE_SIZE * 4;
+
+      /* Note that lp_linear_to_tiled expects the tile parameter to
+       * point at the first tile in a whole-image sized array.  In
+       * this code, we have only a single tile and have to do some
+       * pointer arithmetic to figure out where the "image" would have
+       * started.
+       */
+      lp_linear_to_tiled(linear_image, tile - byte_offset,
+                         x, y, TILE_SIZE, TILE_SIZE,
+                         lpr->base.format,
+                         lpr->row_stride[level],
+                         1);       /* tiles per row */
+   }
+}
+
+
+/**
  * Return size of resource in bytes
  */
 unsigned

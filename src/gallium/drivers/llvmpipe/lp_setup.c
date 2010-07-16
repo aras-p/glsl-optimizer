@@ -280,20 +280,6 @@ lp_setup_flush( struct lp_setup_context *setup,
    LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
 
    if (setup->scene) {
-      struct lp_scene *scene = lp_setup_get_current_scene(setup);
-      union lp_rast_cmd_arg dummy = {0};
-
-      if (flags & (PIPE_FLUSH_SWAPBUFFERS |
-                   PIPE_FLUSH_FRAME)) {
-         /* Store colors in the linear color buffer(s).
-          * If we don't do this here, we'll end up converting the tiled
-          * data to linear in the texture_unmap() function, which will
-          * not be a parallel/threaded operation as here.
-          */
-         lp_scene_bin_everywhere(scene, lp_rast_store_linear_color, dummy);
-      }
-
-
       if (fence) {
          /* if we're going to flush the setup/rasterization modules, emit
           * a fence.
@@ -642,7 +628,7 @@ lp_setup_set_fragment_sampler_views(struct lp_setup_context *setup,
 
                if (!jit_tex->data[j]) {
                   /* out of memory - use dummy tile memory */
-                  jit_tex->data[j] = lp_get_dummy_tile();
+                  jit_tex->data[j] = lp_dummy_tile;
                   jit_tex->width = TILE_SIZE;
                   jit_tex->height = TILE_SIZE;
                   jit_tex->depth = 1;

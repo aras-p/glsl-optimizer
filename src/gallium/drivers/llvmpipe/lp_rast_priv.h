@@ -148,7 +148,7 @@ lp_rast_get_depth_block_pointer(struct lp_rasterizer_task *task,
        * the oom warning as this most likely because there is no
        * zsbuf.
        */
-      return lp_get_dummy_tile_silent();
+      return lp_dummy_tile;
    }
 
    depth = (rast->zsbuf.map +
@@ -178,15 +178,14 @@ lp_rast_get_color_tile_pointer(struct lp_rasterizer_task *task,
       struct llvmpipe_resource *lpt;
       assert(cbuf);
       lpt = llvmpipe_resource(cbuf->texture);
-      task->color_tiles[buf] = llvmpipe_get_texture_tile(lpt,
-                                                         cbuf->face + cbuf->zslice,
-                                                         cbuf->level,
-                                                         usage,
-                                                         task->x,
-                                                         task->y);
-      if (!task->color_tiles[buf]) {
-         /* out of memory - use dummy tile memory */
-         return lp_get_dummy_tile();
+      task->color_tiles[buf] = lp_swizzled_cbuf[task->thread_index][buf];
+
+      if (usage != LP_TEX_USAGE_WRITE_ALL) {
+         llvmpipe_swizzle_cbuf_tile(lpt,
+                                    cbuf->face + cbuf->zslice,
+                                    cbuf->level,
+                                    task->x, task->y,
+                                    task->color_tiles[buf]);
       }
    }
 
@@ -212,10 +211,7 @@ lp_rast_get_color_block_pointer(struct lp_rasterizer_task *task,
    assert((y % TILE_VECTOR_HEIGHT) == 0);
 
    color = lp_rast_get_color_tile_pointer(task, buf, LP_TEX_USAGE_READ_WRITE);
-   if (!color) {
-      /* out of memory - use dummy tile memory */
-      return lp_get_dummy_tile();
-   }
+   assert(color);
 
    px = x % TILE_SIZE;
    py = y % TILE_SIZE;
