@@ -5593,7 +5593,7 @@ static void shove565(const GLfloat shoveComponents[],
 static void extract565rev(int isSwap,
 			  const void *packedPixel, GLfloat extractComponents[])
 {
-   GLushort ushort= *(const GLushort *)packedPixel;
+   GLushort ushort;
 
    if (isSwap) {
      ushort= __GLU_SWAP_2_BYTES(packedPixel);
