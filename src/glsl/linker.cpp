@@ -1135,7 +1135,8 @@ link_shaders(struct gl_shader_program *prog)
 
    prog->Version = max_version;
 
-   /* FINISHME: Implement intra-stage linking. */
+   /* Link all shaders for a particular stage and validate the result.
+    */
    prog->_NumLinkedShaders = 0;
    if (num_vert_shaders > 0) {
       gl_shader *const sh =
