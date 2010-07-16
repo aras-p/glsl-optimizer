@@ -83,9 +83,7 @@ radeon_r300_winsys_buffer_create(struct r300_winsys_screen *rws,
     desc.usage = get_pb_usage_from_create_flags(bind, usage, domain);
 
     /* Assign a buffer manager. */
-    if (bind & PIPE_BIND_CONSTANT_BUFFER)
-        provider = ws->mman;
-    else if (bind & (PIPE_BIND_VERTEX_BUFFER | PIPE_BIND_INDEX_BUFFER))
+    if (bind & (PIPE_BIND_VERTEX_BUFFER | PIPE_BIND_INDEX_BUFFER))
 	provider = ws->cman;
     else
         provider = ws->kman;
@@ -251,7 +249,6 @@ static void radeon_winsys_destroy(struct r300_winsys_screen *rws)
 
     ws->cman->destroy(ws->cman);
     ws->kman->destroy(ws->kman);
-    ws->mman->destroy(ws->mman);
 
     radeon_bo_manager_gem_dtor(ws->bom);
     radeon_cs_manager_gem_dtor(ws->csm);
@@ -271,10 +268,6 @@ boolean radeon_setup_winsys(int fd, struct radeon_libdrm_winsys* ws)
 
     ws->cman = pb_cache_manager_create(ws->kman, 100000);
     if (!ws->cman)
-	goto fail;
-
-    ws->mman = pb_malloc_bufmgr_create();
-    if (!ws->mman)
 	goto fail;
 
     ws->base.destroy = radeon_winsys_destroy;
@@ -312,8 +305,6 @@ fail:
 	ws->cman->destroy(ws->cman);
     if (ws->kman)
 	ws->kman->destroy(ws->kman);
-    if (ws->mman)
-	ws->mman->destroy(ws->mman);
 
     return FALSE;
 }

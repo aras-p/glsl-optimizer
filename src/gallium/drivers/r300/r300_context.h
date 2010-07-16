@@ -247,8 +247,8 @@ struct r300_ztop_state {
 
 struct r300_constant_buffer {
     /* Buffer of constants */
-    uint32_t constants[256][4];
-    /* Total number of constants */
+    uint32_t *ptr;
+    /* Total number of vec4s */
     unsigned count;
 };
 

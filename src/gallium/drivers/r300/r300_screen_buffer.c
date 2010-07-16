@@ -136,6 +136,9 @@ static void r300_buffer_destroy(struct pipe_screen *screen,
     struct r300_screen *r300screen = r300_screen(screen);
     struct r300_buffer *rbuf = r300_buffer(buf);
 
+    if (rbuf->constant_buffer)
+        FREE(rbuf->constant_buffer);
+
     r300_winsys_buffer_destroy(r300screen, rbuf);
     FREE(rbuf);
 }
@@ -154,10 +157,8 @@ r300_buffer_transfer_map( struct pipe_context *pipe,
 
     if (rbuf->user_buffer)
         return (uint8_t *) rbuf->user_buffer + transfer->box.x;
-
-    if (rbuf->b.b.bind & PIPE_BIND_CONSTANT_BUFFER) {
-	goto just_map;
-    }
+    if (rbuf->constant_buffer)
+        return (uint8_t *) rbuf->constant_buffer + transfer->box.x;
 
     /* check if the mapping is to a range we already flushed */
     if (transfer->usage & PIPE_TRANSFER_DISCARD) {
@@ -182,7 +183,6 @@ r300_buffer_transfer_map( struct pipe_context *pipe,
 	}
     }
 
-just_map:
     map = rws->buffer_map(rws, rbuf->buf, r300->cs, transfer->usage);
 
     if (map == NULL)
@@ -208,9 +208,8 @@ static void r300_buffer_transfer_flush_region( struct pipe_context *pipe,
 
     if (rbuf->user_buffer)
 	return;
-
-    if (rbuf->b.b.bind & PIPE_BIND_CONSTANT_BUFFER)
-	return;
+    if (rbuf->constant_buffer)
+        return;
 
     /* mark the range as used */
     for(i = 0; i < rbuf->num_ranges; ++i) {
@@ -269,6 +268,12 @@ struct pipe_resource *r300_buffer_create(struct pipe_screen *screen,
     pipe_reference_init(&rbuf->b.b.reference, 1);
     rbuf->b.b.screen = screen;
     rbuf->domain = R300_DOMAIN_GTT;
+
+    /* Alloc constant buffers in RAM. */
+    if (templ->bind & PIPE_BIND_CONSTANT_BUFFER) {
+        rbuf->constant_buffer = MALLOC(templ->width0);
+        return &rbuf->b.b;
+    }
 
     rbuf->buf =
         r300screen->rws->buffer_create(r300screen->rws,

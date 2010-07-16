@@ -1738,8 +1738,7 @@ static void r300_set_constant_buffer(struct pipe_context *pipe,
 {
     struct r300_context* r300 = r300_context(pipe);
     struct r300_constant_buffer *cbuf;
-    struct pipe_transfer *tr;
-    float *mapped;
+    uint32_t *mapped = r300_buffer(buf)->user_buffer;
     int max_size = 0, max_size_bytes = 0, clamped_size = 0;
 
     switch (shader) {
@@ -1762,8 +1761,7 @@ static void r300_set_constant_buffer(struct pipe_context *pipe,
     max_size_bytes = max_size * 4 * sizeof(float);
 
     if (buf == NULL || buf->width0 == 0 ||
-        (mapped = pipe_buffer_map(pipe, buf, PIPE_TRANSFER_READ, &tr)) == NULL)
-    {
+        (mapped = r300_buffer(buf)->constant_buffer) == NULL) {
         cbuf->count = 0;
         return;
     }
@@ -1781,17 +1779,7 @@ static void r300_set_constant_buffer(struct pipe_context *pipe,
 
         clamped_size = MIN2(buf->width0, max_size_bytes);
         cbuf->count = clamped_size / (4 * sizeof(float));
-
-        if (shader == PIPE_SHADER_FRAGMENT && !r300->screen->caps.is_r500) {
-            unsigned i,j;
-
-            /* Convert constants to float24. */
-            for (i = 0; i < cbuf->count; i++)
-                for (j = 0; j < 4; j++)
-                    cbuf->constants[i][j] = pack_float24(mapped[i*4+j]);
-        } else {
-            memcpy(cbuf->constants, mapped, clamped_size);
-        }
+        cbuf->ptr = mapped;
     }
 
     if (shader == PIPE_SHADER_VERTEX) {
@@ -1807,8 +1795,6 @@ static void r300_set_constant_buffer(struct pipe_context *pipe,
     } else if (shader == PIPE_SHADER_FRAGMENT) {
         r300->fs_constants.dirty = TRUE;
     }
-
-    pipe_buffer_unmap(pipe, buf, tr);
 }
 
 void r300_init_state_functions(struct r300_context* r300)

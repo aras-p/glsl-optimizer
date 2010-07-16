@@ -171,6 +171,7 @@ void r300_emit_fs_constants(struct r300_context* r300, unsigned size, void *stat
     struct r300_fragment_shader *fs = r300_fs(r300);
     struct r300_constant_buffer *buf = (struct r300_constant_buffer*)state;
     unsigned count = fs->shader->externals_count * 4;
+    unsigned i, j;
     CS_LOCALS(r300);
 
     if (count == 0)
@@ -178,7 +179,9 @@ void r300_emit_fs_constants(struct r300_context* r300, unsigned size, void *stat
 
     BEGIN_CS(size);
     OUT_CS_REG_SEQ(R300_PFS_PARAM_0_X, count);
-    OUT_CS_TABLE(buf->constants, count);
+    for (i = 0; i < count; i++)
+        for (j = 0; j < 4; j++)
+            OUT_CS(pack_float24(buf->ptr[i*4+j]));
     END_CS;
 }
 
@@ -190,7 +193,6 @@ void r300_emit_fs_rc_constant_state(struct r300_context* r300, unsigned size, vo
     unsigned count = fs->shader->rc_state_count;
     unsigned first = fs->shader->externals_count;
     unsigned end = constants->Count;
-    uint32_t cdata[4];
     unsigned j;
     CS_LOCALS(r300);
 
@@ -203,11 +205,9 @@ void r300_emit_fs_rc_constant_state(struct r300_context* r300, unsigned size, vo
             const float *data =
                     get_rc_constant_state(r300, &constants->Constants[i]);
 
-            for (j = 0; j < 4; j++)
-                cdata[j] = pack_float24(data[j]);
-
             OUT_CS_REG_SEQ(R300_PFS_PARAM_0_X + i * 16, 4);
-            OUT_CS_TABLE(cdata, 4);
+            for (j = 0; j < 4; j++)
+                OUT_CS(pack_float24(data[j]));
         }
     }
     END_CS;
@@ -234,7 +234,7 @@ void r500_emit_fs_constants(struct r300_context* r300, unsigned size, void *stat
     BEGIN_CS(size);
     OUT_CS_REG(R500_GA_US_VECTOR_INDEX, R500_GA_US_VECTOR_INDEX_TYPE_CONST);
     OUT_CS_ONE_REG(R500_GA_US_VECTOR_DATA, count);
-    OUT_CS_TABLE(buf->constants, count);
+    OUT_CS_TABLE(buf->ptr, count);
     END_CS;
 }
 
@@ -926,7 +926,7 @@ void r300_emit_vs_constants(struct r300_context* r300,
                (r300->screen->caps.is_r500 ?
                R500_PVS_CONST_START : R300_PVS_CONST_START));
     OUT_CS_ONE_REG(R300_VAP_PVS_UPLOAD_DATA, count * 4);
-    OUT_CS_TABLE(buf->constants, count * 4);
+    OUT_CS_TABLE(buf->ptr, count * 4);
     END_CS;
 }
 

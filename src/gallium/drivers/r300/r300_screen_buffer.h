@@ -55,6 +55,7 @@ struct r300_buffer
     enum r300_buffer_domain domain;
 
     void *user_buffer;
+    void *constant_buffer;
     struct r300_buffer_range ranges[R300_BUFFER_MAX_RANGES];
     unsigned num_ranges;
 };
