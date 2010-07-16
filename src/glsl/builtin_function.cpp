@@ -4748,6 +4748,10 @@ static const char *functions_for_EXT_texture_array_fs [] = {
    builtins_EXT_texture_array_fs_textures,
 };
 
+#ifndef Elements
+#define Elements(x) (sizeof(x)/sizeof(*(x)))
+#endif
+
 void
 _mesa_glsl_initialize_functions(exec_list *instructions,
 			        struct _mesa_glsl_parse_state *state)
@@ -4755,46 +4759,46 @@ _mesa_glsl_initialize_functions(exec_list *instructions,
    if (state->language_version >= 110)
       read_builtins(state, instructions,
                     functions_for_110,
-                    sizeof(functions_for_110) / sizeof(const char *));
+                    Elements(functions_for_110));
 
    if (state->target == fragment_shader && state->language_version >= 110)
       read_builtins(state, instructions,
                     functions_for_110_fs,
-                    sizeof(functions_for_110_fs) / sizeof(const char *));
+                    Elements(functions_for_110_fs));
 
    if (state->target == vertex_shader && state->language_version >= 110)
       read_builtins(state, instructions,
                     functions_for_110_vs,
-                    sizeof(functions_for_110_vs) / sizeof(const char *));
+                    Elements(functions_for_110_vs));
 
    if (state->language_version >= 120)
       read_builtins(state, instructions,
                     functions_for_120,
-                    sizeof(functions_for_120) / sizeof(const char *));
+                    Elements(functions_for_120));
 
    if (state->language_version >= 130)
       read_builtins(state, instructions,
                     functions_for_130,
-                    sizeof(functions_for_130) / sizeof(const char *));
+                    Elements(functions_for_130));
 
    if (state->target == fragment_shader && state->language_version >= 130)
       read_builtins(state, instructions,
                     functions_for_130_fs,
-                    sizeof(functions_for_130_fs) / sizeof(const char *));
+                    Elements(functions_for_130_fs));
 
    if (state->ARB_texture_rectangle_enable)
       read_builtins(state, instructions,
                     functions_for_ARB_texture_rectangle,
-                    sizeof(functions_for_ARB_texture_rectangle) / sizeof(const char *));
+                    Elements(functions_for_ARB_texture_rectangle));
 
    if (state->EXT_texture_array_enable)
       read_builtins(state, instructions,
                     functions_for_EXT_texture_array,
-                    sizeof(functions_for_EXT_texture_array) / sizeof(const char *));
+                    Elements(functions_for_EXT_texture_array));
 
    if (state->target == fragment_shader && state->EXT_texture_array_enable)
       read_builtins(state, instructions,
                     functions_for_EXT_texture_array_fs,
-                    sizeof(functions_for_EXT_texture_array_fs) / sizeof(const char *));
+                    Elements(functions_for_EXT_texture_array_fs));
 
 }

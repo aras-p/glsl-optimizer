@@ -91,6 +91,10 @@ foreach $version (@versions) {
 }
 
 print << 'EOF';
+#ifndef Elements
+#define Elements(x) (sizeof(x)/sizeof(*(x)))
+#endif
+
 void
 _mesa_glsl_initialize_functions(exec_list *instructions,
 			        struct _mesa_glsl_parse_state *state)
@@ -116,8 +120,7 @@ foreach $version_xs (@versions) {
    print "   if ($check)\n";
    print "      read_builtins(state, instructions,\n";
    print "                    functions_for_$version_xs,\n";
-   print "                    sizeof(functions_for_$version_xs) / ";
-   print "sizeof(const char *));\n\n"
+   print "                    Elements(functions_for_$version_xs));\n\n"
 }
 
 print "}\n";
