@@ -51,6 +51,20 @@ public:
       this->num_shaders = num_shaders;
       this->success = true;
       this->linked = linked;
+
+      this->locals = hash_table_ctor(0, hash_table_pointer_hash,
+				     hash_table_pointer_compare);
+   }
+
+   ~call_link_visitor()
+   {
+      hash_table_dtor(this->locals);
+   }
+
+   virtual ir_visitor_status visit(ir_variable *ir)
+   {
+      hash_table_insert(locals, ir, ir);
+      return visit_continue;
    }
 
    virtual ir_visitor_status visit_enter(ir_call *ir)
@@ -143,12 +157,36 @@ public:
       }
 
       linked_sig->is_defined = true;
-
-      /* FINISHME: Patch references inside the function to things outside the
-       * FINISHME: function (i.e., function calls and global variables).
-       */
-
       hash_table_dtor(ht);
+
+      /* Patch references inside the function to things outside the function
+       * (i.e., function calls and global variables).
+       */
+      linked_sig->accept(this);
+
+      return visit_continue;
+   }
+
+   virtual ir_visitor_status visit(ir_dereference_variable *ir)
+   {
+      if (hash_table_find(locals, ir->var) == NULL) {
+	 /* The non-function variable must be a global, so try to find the
+	  * variable in the shader's symbol table.  If the variable is not
+	  * found, then it's a global that *MUST* be defined in the original
+	  * shader.
+	  */
+	 ir_variable *var = linked->symbols->get_variable(ir->var->name);
+	 if (var == NULL) {
+	    /* Clone the ir_variable that the dereference already has and add
+	     * it to the linked shader.
+	     */
+	    var = ir->var->clone(NULL);
+	    linked->symbols->add_variable(var->name, var);
+	    linked->ir->push_head(var);
+	 }
+
+	 ir->var = var;
+      }
 
       return visit_continue;
    }
@@ -178,6 +216,11 @@ private:
     * global variables from the shader where the function originated.
     */
    gl_shader *linked;
+
+   /**
+    * Table of variables local to the function.
+    */
+   hash_table *locals;
 };
 
 
