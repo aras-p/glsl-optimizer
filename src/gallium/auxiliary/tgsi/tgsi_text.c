@@ -732,7 +732,7 @@ parse_optional_swizzle(
          else if (uprcase( *cur ) == 'W')
             swizzle[i] = TGSI_SWIZZLE_W;
          else {
-	    report_error( ctx, "Expected register swizzle component `x', `y', `z', `w', `0' or `1'" );
+	    report_error( ctx, "Expected register swizzle component `x', `y', `z' or `w'" );
 	    return FALSE;
          }
          cur++;
