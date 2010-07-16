@@ -3205,6 +3205,10 @@ compressed_texture_error_check(GLcontext *ctx, GLint dimensions,
       /* 3D compressed textures not allowed */
       return GL_INVALID_ENUM;
    }
+   else {
+      assert(0);
+      return GL_INVALID_ENUM;
+   }
 
    maxTextureSize = 1 << (maxLevels - 1);
 
