@@ -1958,7 +1958,7 @@ _mesa_RenderObjectUnpurgeable(GLcontext *ctx, GLuint name, GLenum option)
    if (ctx->Driver.RenderObjectUnpurgeable)
       retval = ctx->Driver.RenderObjectUnpurgeable(ctx, bufObj, option);
 
-   return option;
+   return retval;
 }
 
 
