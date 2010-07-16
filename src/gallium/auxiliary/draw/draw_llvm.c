@@ -368,7 +368,8 @@ generate_fetch(LLVMBuilderRef builder,
                LLVMValueRef *res,
                struct pipe_vertex_element *velem,
                LLVMValueRef vbuf,
-               LLVMValueRef index)
+               LLVMValueRef index,
+               unsigned instance_id)
 {
    LLVMValueRef indices = LLVMConstInt(LLVMInt64Type(), velem->vertex_buffer_index, 0);
    LLVMValueRef vbuffer_ptr = LLVMBuildGEP(builder, vbuffers_ptr,
@@ -393,6 +394,11 @@ generate_fetch(LLVMBuilderRef builder,
    stride = LLVMBuildAdd(builder, stride,
                          LLVMConstInt(LLVMInt32Type(), velem->src_offset, 0),
                          "");
+   if (velem->instance_divisor) {
+      stride = LLVMBuildMul(builder, stride,
+                            LLVMConstInt(LLVMInt32Type(), instance_id, 0),
+                            "");
+   }
 
    /*lp_build_printf(builder, "vbuf index = %d, stride is %d\n", indices, stride);*/
    vbuffer_ptr = LLVMBuildGEP(builder, vbuffer_ptr, &stride, 1, "");
@@ -745,7 +751,8 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant)
             LLVMValueRef vb = LLVMBuildGEP(builder, vb_ptr,
                                            &vb_index, 1, "");
             generate_fetch(builder, vbuffers_ptr,
-                           &aos_attribs[j][i], velem, vb, true_index);
+                           &aos_attribs[j][i], velem, vb, true_index,
+                           draw->instance_id);
          }
       }
       convert_to_soa(builder, aos_attribs, inputs,
@@ -908,7 +915,8 @@ draw_llvm_generate_elts(struct draw_llvm *llvm, struct draw_llvm_variant *varian
             LLVMValueRef vb = LLVMBuildGEP(builder, vb_ptr,
                                            &vb_index, 1, "");
             generate_fetch(builder, vbuffers_ptr,
-                           &aos_attribs[j][i], velem, vb, true_index);
+                           &aos_attribs[j][i], velem, vb, true_index,
+                           draw->instance_id);
          }
       }
       convert_to_soa(builder, aos_attribs, inputs,
