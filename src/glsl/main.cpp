@@ -207,6 +207,7 @@ compile_shader(struct gl_shader *shader)
 
    shader->symbols = state->symbols;
    shader->CompileStatus = !state->error;
+   shader->Version = state->language_version;
 
    if (shader->InfoLog)
       talloc_free(shader->InfoLog);

@@ -66,12 +66,14 @@
 #include <cstdlib>
 #include <cstdio>
 #include <cstdarg>
+#include <climits>
 
 extern "C" {
 #include <talloc.h>
 }
 
 #include "main/mtypes.h"
+#include "main/macros.h"
 #include "glsl_symbol_table.h"
 #include "ir.h"
 #include "program.h"
@@ -1107,7 +1109,12 @@ link_shaders(struct gl_shader_program *prog)
       calloc(2 * prog->NumShaders, sizeof(struct gl_shader *));
    frag_shader_list =  &vert_shader_list[prog->NumShaders];
 
+   unsigned min_version = UINT_MAX;
+   unsigned max_version = 0;
    for (unsigned i = 0; i < prog->NumShaders; i++) {
+      min_version = MIN2(min_version, prog->Shaders[i]->Version);
+      max_version = MAX2(max_version, prog->Shaders[i]->Version);
+
       switch (prog->Shaders[i]->Type) {
       case GL_VERTEX_SHADER:
 	 vert_shader_list[num_vert_shaders] = prog->Shaders[i];
@@ -1123,6 +1130,20 @@ link_shaders(struct gl_shader_program *prog)
 	 break;
       }
    }
+
+   /* Previous to GLSL version 1.30, different compilation units could mix and
+    * match shading language versions.  With GLSL 1.30 and later, the versions
+    * of all shaders must match.
+    */
+   assert(min_version >= 110);
+   assert(max_version <= 130);
+   if ((max_version >= 130) && (min_version != max_version)) {
+      linker_error_printf(prog, "all shaders must use same shading "
+			  "language version\n");
+      goto done;
+   }
+
+   prog->Version = max_version;
 
    /* FINISHME: Implement intra-stage linking. */
    prog->_NumLinkedShaders = 0;

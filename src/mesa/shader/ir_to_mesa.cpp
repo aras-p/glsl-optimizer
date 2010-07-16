@@ -2234,6 +2234,7 @@ _mesa_glsl_compile_shader(GLcontext *ctx, struct gl_shader *shader)
 
    shader->CompileStatus = !state->error;
    shader->InfoLog = state->info_log;
+   shader->Version = state->language_version;
 
    /* Retain any live IR, but trash the rest. */
    foreach_list(node, shader->ir) {
