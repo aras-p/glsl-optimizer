@@ -119,27 +119,19 @@ int r300_upload_user_buffers(struct r300_context *r300)
     return ret;
 }
 
-static void r300_winsys_buffer_destroy(struct r300_screen *r300screen,
-				       struct r300_buffer *rbuf)
-{
-    struct r300_winsys_screen *rws = r300screen->rws;
-
-    if (rbuf->buf) {
-	rws->buffer_reference(rws, &rbuf->buf, NULL);
-	rbuf->buf = NULL;
-    }
-}
-
 static void r300_buffer_destroy(struct pipe_screen *screen,
 				struct pipe_resource *buf)
 {
     struct r300_screen *r300screen = r300_screen(screen);
     struct r300_buffer *rbuf = r300_buffer(buf);
+    struct r300_winsys_screen *rws = r300screen->rws;
 
     if (rbuf->constant_buffer)
         FREE(rbuf->constant_buffer);
 
-    r300_winsys_buffer_destroy(r300screen, rbuf);
+    if (rbuf->buf)
+        rws->buffer_reference(rws, &rbuf->buf, NULL);
+
     FREE(rbuf);
 }
 
