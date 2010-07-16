@@ -961,20 +961,21 @@ if test "x$enable_egl" = xyes; then
             EGL_DRIVERS_DIRS="glx"
         fi
 
-        # build egl_dri2 when xcb-dri2 is available
-        PKG_CHECK_MODULES([XCB_DRI2], [x11-xcb xcb-dri2 xcb-xfixes],
-			  [have_xcb_dri2=yes],[have_xcb_dri2=no])
-	PKG_CHECK_MODULES([LIBUDEV], [libudev > 150],
-			  [have_libudev=yes],[have_libudev=no])
-
-        if test "$have_xcb_dri2" = yes; then
-	    EGL_DRIVER_DRI2=dri2
-            DEFINES="$DEFINES -DHAVE_XCB_DRI2"
-	    if test "$have_libudev" = yes; then
-	        DEFINES="$DEFINES -DHAVE_LIBUDEV"
-	    fi
-        fi
-
+        if test "$mesa_driver" = dri; then
+            # build egl_dri2 when xcb-dri2 is available
+            PKG_CHECK_MODULES([XCB_DRI2], [x11-xcb xcb-dri2 xcb-xfixes],
+            		  [have_xcb_dri2=yes],[have_xcb_dri2=no])
+            PKG_CHECK_MODULES([LIBUDEV], [libudev > 150],
+            		  [have_libudev=yes],[have_libudev=no])
+            
+            if test "$have_xcb_dri2" = yes; then
+                EGL_DRIVER_DRI2=dri2
+                DEFINES="$DEFINES -DHAVE_XCB_DRI2"
+                if test "$have_libudev" = yes; then
+                    DEFINES="$DEFINES -DHAVE_LIBUDEV"
+                fi
+            fi
+	fi
 
         EGL_DRIVERS_DIRS="$EGL_DRIVERS_DIRS $EGL_DRIVER_DRI2"
     fi
