@@ -970,12 +970,11 @@ if test "x$enable_egl" = xyes; then
         if test "$have_xcb_dri2" = yes; then
 	    EGL_DRIVER_DRI2=dri2
             DEFINES="$DEFINES -DHAVE_XCB_DRI2"
+	    if test "$have_libudev" = yes; then
+	        DEFINES="$DEFINES -DHAVE_LIBUDEV"
+	    fi
         fi
 
-        if test "$have_libudev" = yes; then
-	    EGL_DRIVER_DRI2=dri2
-            DEFINES="$DEFINES -DHAVE_LIBUDEV"
-        fi
 
         EGL_DRIVERS_DIRS="$EGL_DRIVERS_DIRS $EGL_DRIVER_DRI2"
     fi
