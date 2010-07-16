@@ -37,7 +37,7 @@ egl_CPPFLAGS := \
 	-I$(TOP)/src/gallium/state_trackers/egl \
 	-I$(TOP)/src/egl/main \
 	-DPIPE_PREFIX=\"$(PIPE_PREFIX)\" -DST_PREFIX=\"$(ST_PREFIX)\"
-egl_SYS := -lm -ldl -L$(TOP)/$(LIB_DIR) -lEGL
+egl_SYS := -lm $(DLOPEN_LIBS) -L$(TOP)/$(LIB_DIR) -lEGL
 egl_LIBS := $(TOP)/src/gallium/state_trackers/egl/libegl.a
 
 ifneq ($(findstring x11, $(EGL_PLATFORMS)),)

@@ -131,6 +131,8 @@ VG_LIB_DEPS    = $(EXTRA_LIB_PATH) -lpthread
 APP_LIB_DEPS = -lm
 X11_LIBS = -lX11
 
+DLOPEN_LIBS = -ldl
+
 # Installation directories (for make install)
 INSTALL_DIR = /usr/local
 INSTALL_LIB_DIR = $(INSTALL_DIR)/$(LIB_DIR)
