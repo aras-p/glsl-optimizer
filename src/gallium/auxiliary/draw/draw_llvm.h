@@ -135,7 +135,8 @@ typedef void
                       unsigned start,
                       unsigned count,
                       unsigned stride,
-                      struct pipe_vertex_buffer *vertex_buffers);
+                      struct pipe_vertex_buffer *vertex_buffers,
+                      unsigned instance_id);
 
 
 typedef void
@@ -145,7 +146,8 @@ typedef void
                            const unsigned *fetch_elts,
                            unsigned fetch_count,
                            unsigned stride,
-                           struct pipe_vertex_buffer *vertex_buffers);
+                           struct pipe_vertex_buffer *vertex_buffers,
+                           unsigned instance_id);
 
 struct draw_llvm_variant_key
 {

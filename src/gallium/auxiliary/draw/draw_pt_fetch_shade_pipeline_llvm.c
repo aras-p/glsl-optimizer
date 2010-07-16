@@ -233,7 +233,8 @@ llvm_pipeline_generic( struct draw_pt_middle_end *middle,
                                        fetch_info->start,
                                        fetch_info->count,
                                        fpme->vertex_size,
-                                       draw->pt.vertex_buffer );
+                                       draw->pt.vertex_buffer,
+                                       draw->instance_id);
    else
       fpme->current_variant->jit_func_elts( &fpme->llvm->jit_context,
                                             llvm_vert_info.verts,
@@ -241,7 +242,8 @@ llvm_pipeline_generic( struct draw_pt_middle_end *middle,
                                             fetch_info->elts,
                                             fetch_info->count,
                                             fpme->vertex_size,
-                                            draw->pt.vertex_buffer);
+                                            draw->pt.vertex_buffer,
+                                            draw->instance_id);
 
    /* Finished with fetch and vs:
     */
