@@ -282,6 +282,9 @@ def generate(env):
                 ccflags += [
                     '-mmmx', '-msse', '-msse2', # enable SIMD intrinsics
                 ]
+            if platform == 'windows':
+                # Workaround http://gcc.gnu.org/bugzilla/show_bug.cgi?id=37216
+                ccflags += ['-fno-common']
             if distutils.version.LooseVersion(ccversion) >= distutils.version.LooseVersion('4.2'):
                 ccflags += [
                     '-mstackrealign', # ensure stack is aligned
