@@ -291,9 +291,36 @@ def generate_format_write(format, src_channel, src_native_type, src_suffix):
 
 def generate_ssse3():
     print '''
-#ifdef PIPE_ARCH_SSSE3
+#if defined(PIPE_ARCH_SSE)
+
+
+#if defined(PIPE_ARCH_SSSE3)
 
 #include <tmmintrin.h>
+
+#else
+
+#include <emmintrin.h>
+
+/**
+ * Describe _mm_shuffle_epi8() with gcc extended inline assembly, for cases
+ * where -mssse3 is not supported/enabled.
+ *
+ * MSVC will never get in here as its intrinsics support do not rely on
+ * compiler command line options.
+ */
+static __inline __m128i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+_mm_shuffle_epi8(__m128i a, __m128i mask)
+{
+    __m128i result;
+    __asm__("pshufb %1, %0"
+            : "=x" (result)
+            : "xm" (mask), "0" (a));
+    return result;
+}
+
+#endif
+
 
 static void
 lp_tile_b8g8r8a8_unorm_swizzle_4ub_ssse3(uint8_t *dst,
@@ -478,7 +505,7 @@ def generate_swizzle(formats, dst_channel, dst_native_type, dst_suffix):
             print '   case %s:' % format.name
             func_name = 'lp_tile_%s_swizzle_%s' % (format.short_name(), dst_suffix)
             if format.name == 'PIPE_FORMAT_B8G8R8A8_UNORM':
-                print '#ifdef PIPE_ARCH_SSSE3'
+                print '#ifdef PIPE_ARCH_SSE'
                 print '      func = util_cpu_caps.has_ssse3 ? %s_ssse3 : %s;' % (func_name, func_name)
                 print '#else'
                 print '      func = %s;' % (func_name,)
@@ -516,7 +543,7 @@ def generate_unswizzle(formats, src_channel, src_native_type, src_suffix):
             print '   case %s:' % format.name
             func_name = 'lp_tile_%s_unswizzle_%s' % (format.short_name(), src_suffix)
             if format.name == 'PIPE_FORMAT_B8G8R8A8_UNORM':
-                print '#ifdef PIPE_ARCH_SSSE3'
+                print '#ifdef PIPE_ARCH_SSE'
                 print '      func = util_cpu_caps.has_ssse3 ? %s_ssse3 : %s;' % (func_name, func_name)
                 print '#else'
                 print '      func = %s;' % (func_name,)
