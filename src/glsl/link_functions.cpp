@@ -43,36 +43,43 @@ find_matching_signature(const char *name, const exec_list *actual_parameters,
 
 class call_link_visitor : public ir_hierarchical_visitor {
 public:
-   call_link_visitor(gl_shader_program *prog, gl_shader **shader_list,
-		     unsigned num_shaders)
+   call_link_visitor(gl_shader_program *prog, gl_shader *linked,
+		     gl_shader **shader_list, unsigned num_shaders)
    {
       this->prog = prog;
       this->shader_list = shader_list;
       this->num_shaders = num_shaders;
       this->success = true;
+      this->linked = linked;
    }
 
    virtual ir_visitor_status visit_enter(ir_call *ir)
    {
-      /* If the function call references a function signature that does not
-       * have a definition, try to find the definition in one of the other
-       * shaders.
+      /* If ir is an ir_call from a function that was imported from another
+       * shader callee will point to an ir_function_signature in the original
+       * shader.  In this case the function signature MUST NOT BE MODIFIED.
+       * Doing so will modify the original shader.  This may prevent that
+       * shader from being linkable in other programs.
        */
-      ir_function_signature *callee =
-	 const_cast<ir_function_signature *>(ir->get_callee());
+      const ir_function_signature *const callee = ir->get_callee();
       assert(callee != NULL);
-
-      if (callee->is_defined)
-	 /* FINISHME: Do children need to be processed, or are all parameters
-	  * FINISHME: with function calls already flattend?
-	  */
-	 return visit_continue;
-
       const char *const name = callee->function_name();
 
+      /* Determine if the requested function signature already exists in the
+       * final linked shader.  If it does, use it as the target of the call.
+       */
       ir_function_signature *sig =
-	 find_matching_signature(name, &ir->actual_parameters, shader_list,
-				 num_shaders);
+	 find_matching_signature(name, &callee->parameters, &linked, 1);
+      if (sig != NULL) {
+	 ir->set_callee(sig);
+	 return visit_continue;
+      }
+
+      /* Try to find the signature in one of the other shaders that is being
+       * linked.  If it's not found there, return an error.
+       */
+      sig = find_matching_signature(name, &ir->actual_parameters, shader_list,
+				    num_shaders);
       if (sig == NULL) {
 	 /* FINISHME: Log the full signature of unresolved function.
 	  */
@@ -82,6 +89,27 @@ public:
 	 return visit_stop;
       }
 
+      /* Find the prototype information in the linked shader.  Generate any
+       * details that may be missing.
+       */
+      ir_function *f = linked->symbols->get_function(name);
+      if (f == NULL)
+	 f = new(linked) ir_function(name);
+
+      ir_function_signature *linked_sig =
+	 f->matching_signature(&callee->parameters);
+      if (linked_sig == NULL) {
+	 linked_sig = new(linked) ir_function_signature(callee->return_type);
+	 f->add_signature(linked_sig);
+      }
+
+      /* At this point linked_sig and called may be the same.  If ir is an
+       * ir_call from linked then linked_sig and callee will be
+       * ir_function_signatures that have no definitions (is_defined is false).
+       */
+      assert(!linked_sig->is_defined);
+      assert(linked_sig->body.is_empty());
+
       /* Create an in-place clone of the function definition.  This multistep
        * process introduces some complexity here, but it has some advantages.
        * The parameter list and the and function body are cloned separately.
@@ -90,9 +118,9 @@ public:
        *
        * The big advantage is that the ir_function_signature does not change.
        * This means that we don't have to process the rest of the IR tree to
-       * patch ir_call nodes.  In addition, there is no way to remove or replace
-       * signature stored in a function.  One could easily be added, but this
-       * avoids the need.
+       * patch ir_call nodes.  In addition, there is no way to remove or
+       * replace signature stored in a function.  One could easily be added,
+       * but this avoids the need.
        */
       struct hash_table *ht = hash_table_ctor(0, hash_table_pointer_hash,
 					      hash_table_pointer_compare);
@@ -105,17 +133,16 @@ public:
 	 formal_parameters.push_tail(copy);
       }
 
-      callee->replace_parameters(&formal_parameters);
+      linked_sig->replace_parameters(&formal_parameters);
 
-      assert(callee->body.is_empty());
       foreach_list_const(node, &sig->body) {
 	 const ir_instruction *const original = (ir_instruction *) node;
 
 	 ir_instruction *copy = original->clone(ht);
-	 callee->body.push_tail(copy);
+	 linked_sig->body.push_tail(copy);
       }
 
-      callee->is_defined = true;
+      linked_sig->is_defined = true;
 
       /* FINISHME: Patch references inside the function to things outside the
        * FINISHME: function (i.e., function calls and global variables).
@@ -143,6 +170,14 @@ private:
    /** Number of shaders available for linking. */
    unsigned num_shaders;
 
+   /**
+    * Final linked shader
+    *
+    * This is used two ways.  It is used to find global variables in the
+    * linked shader that are accessed by the function.  It is also used to add
+    * global variables from the shader where the function originated.
+    */
+   gl_shader *linked;
 };
 
 
@@ -175,7 +210,7 @@ bool
 link_function_calls(gl_shader_program *prog, gl_shader *main,
 		    gl_shader **shader_list, unsigned num_shaders)
 {
-   call_link_visitor v(prog, shader_list, num_shaders);
+   call_link_visitor v(prog, main, shader_list, num_shaders);
 
    v.run(main->ir);
    return v.success;
