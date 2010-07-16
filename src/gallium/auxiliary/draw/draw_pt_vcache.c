@@ -344,10 +344,10 @@ vcache_check_run( struct draw_pt_front_end *frontend,
 {
    struct vcache_frontend *vcache = (struct vcache_frontend *)frontend; 
    struct draw_context *draw = vcache->draw;
-   unsigned min_index = draw->pt.user.min_index;
-   unsigned max_index = draw->pt.user.max_index;
-   unsigned index_size = draw->pt.user.eltSize;
-   unsigned fetch_count = max_index + 1 - min_index;
+   const unsigned min_index = draw->pt.user.min_index;
+   const unsigned max_index = draw->pt.user.max_index;
+   const unsigned index_size = draw->pt.user.eltSize;
+   const unsigned fetch_count = max_index + 1 - min_index;
    const ushort *transformed_elts;
    ushort *storage = NULL;
    boolean ok = FALSE;
@@ -356,6 +356,26 @@ vcache_check_run( struct draw_pt_front_end *frontend,
    if (0) debug_printf("fetch_count %d fetch_max %d draw_count %d\n", fetch_count, 
                        vcache->fetch_max,
                        draw_count);
+
+   /* debug: verify indexes are in range [min_index, max_index] */
+   if (0) {
+      unsigned i;
+      for (i = 0; i < draw_count; i++) {
+         if (index_size == 1) {
+            assert( ((const ubyte *) elts)[i] >= min_index);
+            assert( ((const ubyte *) elts)[i] <= max_index);
+         }
+         else if (index_size == 2) {
+            assert( ((const ushort *) elts)[i] >= min_index);
+            assert( ((const ushort *) elts)[i] <= max_index);
+         }
+         else {
+            assert(index_size == 4);
+            assert( ((const uint *) elts)[i] >= min_index);
+            assert( ((const uint *) elts)[i] <= max_index);
+         }
+      }
+   }
 
    if (elt_bias + max_index >= DRAW_PIPE_MAX_VERTICES ||
        fetch_count >= UNDEFINED_VERTEX_ID ||
