@@ -35,7 +35,6 @@
 #include "util/u_prim.h"
 
 #include "r300_cs.h"
-#include "r300_cb.h"
 #include "r300_context.h"
 #include "r300_screen_buffer.h"
 #include "r300_emit.h"
