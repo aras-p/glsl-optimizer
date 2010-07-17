@@ -21,7 +21,7 @@
 #include "nv50_program.h"
 
 #define NOUVEAU_ERR(fmt, args...) \
-	fprintf(stderr, "%s:%d -  "fmt, __func__, __LINE__, ##args);
+	fprintf(stderr, "%s:%d -  "fmt, __FUNCTION__, __LINE__, ##args);
 #define NOUVEAU_MSG(fmt, args...) \
 	fprintf(stderr, "nouveau: "fmt, ##args);
 
