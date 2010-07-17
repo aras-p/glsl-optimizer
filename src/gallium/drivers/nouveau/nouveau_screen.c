@@ -6,6 +6,7 @@
 #include "util/u_inlines.h"
 #include "util/u_format.h"
 #include "util/u_format_s3tc.h"
+#include "util/u_string.h"
 
 #include <stdio.h>
 #include <errno.h>
@@ -24,7 +25,7 @@ nouveau_screen_get_name(struct pipe_screen *pscreen)
 	struct nouveau_device *dev = nouveau_screen(pscreen)->device;
 	static char buffer[128];
 
-	snprintf(buffer, sizeof(buffer), "NV%02X", dev->chipset);
+	util_snprintf(buffer, sizeof(buffer), "NV%02X", dev->chipset);
 	return buffer;
 }
 
