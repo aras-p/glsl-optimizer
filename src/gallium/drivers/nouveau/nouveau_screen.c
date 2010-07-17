@@ -182,7 +182,7 @@ nouveau_screen_bo_from_handle(struct pipe_screen *pscreen,
 	ret = nouveau_bo_handle_ref(dev, whandle->handle, &bo);
 	if (ret) {
 		debug_printf("%s: ref name 0x%08x failed with %d\n",
-			     __func__, whandle->handle, ret);
+			     __FUNCTION__, whandle->handle, ret);
 		return NULL;
 	}
 
