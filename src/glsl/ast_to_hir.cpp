@@ -1233,6 +1233,8 @@ ast_expression::hir(exec_list *instructions,
 	    if ((v != NULL) && (unsigned(idx) > v->max_array_access))
 	       v->max_array_access = idx;
 	 }
+      } else if (array->type->array_size() == 0) {
+	 _mesa_glsl_error(&loc, state, "unsized array index must be constant");
       }
 
       if (error_emitted)
