@@ -170,7 +170,7 @@ void r300_emit_fs_constants(struct r300_context* r300, unsigned size, void *stat
 {
     struct r300_fragment_shader *fs = r300_fs(r300);
     struct r300_constant_buffer *buf = (struct r300_constant_buffer*)state;
-    unsigned count = fs->shader->externals_count * 4;
+    unsigned count = fs->shader->externals_count;
     unsigned i, j;
     CS_LOCALS(r300);
 
