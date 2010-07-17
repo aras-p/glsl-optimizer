@@ -108,7 +108,6 @@ test_sincos(unsigned verbose, FILE *fp)
    test_sincos_t sin_func;
    test_sincos_t cos_func;
    float unpacked[4];
-   unsigned packed;
    boolean success = TRUE;
 
    module = LLVMModuleCreateWithName("test");
@@ -149,7 +148,6 @@ test_sincos(unsigned verbose, FILE *fp)
    cos_func = (test_sincos_t)LLVMGetPointerToGlobal(engine, test_cos);
 
    memset(unpacked, 0, sizeof unpacked);
-   packed = 0;
 
 
    // LLVMDumpModule(module);
