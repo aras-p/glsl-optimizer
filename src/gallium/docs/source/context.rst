@@ -45,6 +45,7 @@ buffers, surfaces) are bound to the driver.
 
 * ``set_vertex_buffers``
 
+* ``set_index_buffer``
 
 Non-CSO State
 ^^^^^^^^^^^^^
@@ -132,50 +133,26 @@ this surface need not be bound to the framebuffer.
 Drawing
 ^^^^^^^
 
-``draw_arrays`` draws a specified primitive.
+``draw_vbo`` draws a specified primitive.  The primitive mode and other
+properties are described by ``pipe_draw_info``.
 
-This command is equivalent to calling ``draw_arrays_instanced``
-with ``startInstance`` set to 0 and ``instanceCount`` set to 1.
+The ``mode``, ``start``, and ``count`` fields of ``pipe_draw_info`` specify the
+the mode of the primitive and the vertices to be fetched, in the range between
+``start`` to ``start``+``count``-1, inclusive.
 
-``draw_elements`` draws a specified primitive using an optional
-index buffer.
+Every instance with instanceID in the range between ``start_instance`` and
+``start_instance``+``instance_count``-1, inclusive, will be drawn.
 
-This command is equivalent to calling ``draw_elements_instanced``
-with ``startInstance`` set to 0 and ``instanceCount`` set to 1.
+All vertex indices must fall inside the range given by ``min_index`` and
+``max_index``.  In case non-indexed draw, ``min_index`` should be set to
+``start`` and ``max_index`` should be set to ``start``+``count``-1.
 
-``draw_range_elements``
+``index_bias`` is a value added to every vertex index before fetching vertex
+attributes.  It does not affect ``min_index`` and ``max_index``.
 
-XXX: this is (probably) a temporary entrypoint, as the range
-information should be available from the vertex_buffer state.
-Using this to quickly evaluate a specialized path in the draw
-module.
-
-``draw_arrays_instanced`` draws multiple instances of the same primitive.
-
-This command is equivalent to calling ``draw_elements_instanced``
-with ``indexBuffer`` set to NULL and ``indexSize`` set to 0.
-
-``draw_elements_instanced`` draws multiple instances of the same primitive
-using an optional index buffer.
-
-For instanceID in the range between ``startInstance``
-and ``startInstance``+``instanceCount``-1, inclusive, draw a primitive
-specified by ``mode`` and sequential numbers in the range between ``start``
-and ``start``+``count``-1, inclusive.
-
-If ``indexBuffer`` is not NULL, it specifies an index buffer with index
-byte size of ``indexSize``. The sequential numbers are used to lookup
-the index buffer and the resulting indices in turn are used to fetch
-vertex attributes.
-
-If ``indexBuffer`` is NULL, the sequential numbers are used directly
-as indices to fetch vertex attributes.
-
-``indexBias`` is a value which is added to every index read from the index 
-buffer before fetching vertex attributes.
-
-``minIndex`` and ``maxIndex`` describe minimum and maximum index contained in
-the index buffer.
+If there is an index buffer bound, and ``indexed`` field is true, all vertex
+indices will be looked up in the index buffer.  ``min_index``, ``max_index``,
+and ``index_bias`` apply after index lookup.
 
 If a given vertex element has ``instance_divisor`` set to 0, it is said
 it contains per-vertex data and effective vertex attribute address needs
