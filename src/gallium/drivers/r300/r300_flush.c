@@ -25,6 +25,7 @@
 #include "draw/draw_private.h"
 
 #include "util/u_simple_list.h"
+#include "util/u_upload_mgr.h"
 
 #include "r300_context.h"
 #include "r300_cs.h"
@@ -38,6 +39,9 @@ static void r300_flush(struct pipe_context* pipe,
     struct r300_query *query;
     struct r300_atom *atom;
     struct r300_fence **rfence = (struct r300_fence**)fence;
+
+    u_upload_flush(r300->upload_vb);
+    u_upload_flush(r300->upload_ib);
 
     /* We probably need to flush Draw, but we may have been called from
      * within Draw. This feels kludgy, but it might be the best thing.

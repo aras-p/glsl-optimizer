@@ -497,6 +497,7 @@ static void r300_draw_range_elements(struct pipe_context* pipe,
     unsigned short_count;
     int buffer_offset = 0, index_offset = 0; /* for index bias emulation */
     boolean translate = FALSE;
+    unsigned new_offset;
 
     if (r300->skip_rendering) {
         return;
@@ -526,18 +527,17 @@ static void r300_draw_range_elements(struct pipe_context* pipe,
                                 &start, count);
 
     r300_update_derived_state(r300);
-    r300_upload_index_buffer(r300, &indexBuffer, indexSize, start, count);
+    r300_upload_index_buffer(r300, &indexBuffer, indexSize, start, count, &new_offset);
 
+    start = new_offset;
     /* 15 dwords for emit_draw_elements */
     r300_prepare_for_rendering(r300,
         PREP_FIRST_DRAW | PREP_VALIDATE_VBOS | PREP_EMIT_AOS | PREP_INDEXED,
         indexBuffer, 15, buffer_offset, indexBias, NULL);
 
-    u_upload_flush(r300->upload_vb);
-    u_upload_flush(r300->upload_ib);
     if (alt_num_verts || count <= 65535) {
         r300_emit_draw_elements(r300, indexBuffer, indexSize,
-                                 minIndex, maxIndex, mode, start, count);
+				minIndex, maxIndex, mode, start, count);
     } else {
         do {
             short_count = MIN2(count, 65534);
