@@ -67,9 +67,7 @@ struct draw_pt_front_end {
 		    unsigned opt );
 
    void (*run)( struct draw_pt_front_end *,
-                pt_elt_func elt_func,
-                const void *elt_ptr,
-                int elt_bias,
+                unsigned start,
                 unsigned count );
 
    void (*finish)( struct draw_pt_front_end * );

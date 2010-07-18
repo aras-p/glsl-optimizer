@@ -126,11 +126,7 @@ draw_pt_arrays(struct draw_context *draw,
 
    frontend->prepare( frontend, prim, middle, opt );
 
-   frontend->run(frontend,
-                 draw_pt_elt_func(draw),
-                 draw_pt_elt_ptr(draw, start),
-                 draw->pt.user.eltBias,
-                 count);
+   frontend->run(frontend, start, count);
 
    frontend->finish( frontend );
 

@@ -9,18 +9,13 @@ static unsigned trim( unsigned count, unsigned first, unsigned incr )
 }
 
 static void FUNC(struct draw_pt_front_end *frontend,
-                 pt_elt_func get_elt,
-                 const void *elts,
-                 int elt_bias,
+                 unsigned start,
                  unsigned count)
 {
    struct varray_frontend *varray = (struct varray_frontend *)frontend;
-   unsigned start = (unsigned) ((char *) elts - (char *) NULL);
 
    unsigned j;
    unsigned first, incr;
-
-   assert(elt_bias == 0);
 
    draw_pt_split_prim(varray->input_prim, &first, &incr);
    

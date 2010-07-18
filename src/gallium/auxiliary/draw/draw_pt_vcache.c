@@ -369,9 +369,7 @@ any_instance_divisors(const struct draw_context *draw)
 
 static INLINE void 
 vcache_check_run( struct draw_pt_front_end *frontend, 
-                  pt_elt_func get_elt,
-                  const void *elts,
-                  int elt_bias,
+                  unsigned draw_start,
                   unsigned draw_count )
 {
    struct vcache_frontend *vcache = (struct vcache_frontend *)frontend; 
@@ -379,10 +377,12 @@ vcache_check_run( struct draw_pt_front_end *frontend,
    const unsigned min_index = draw->pt.user.min_index;
    const unsigned max_index = draw->pt.user.max_index;
    const unsigned index_size = draw->pt.user.eltSize;
+   const int elt_bias = draw->pt.user.eltBias;
    unsigned fetch_count;
    const ushort *transformed_elts;
    ushort *storage = NULL;
    boolean ok = FALSE;
+   const void *elts = draw_pt_elt_ptr(draw, draw_start);
 
    /* debug: verify indexes are in range [min_index, max_index] */
    if (0) {
@@ -521,7 +521,7 @@ vcache_check_run( struct draw_pt_front_end *frontend,
                 fetch_count, draw_count);
 
 fail:
-   vcache_run( frontend, get_elt, elts, elt_bias, draw_count );
+   vcache_run( frontend, draw_start, draw_count );
 }
 
 
