@@ -93,6 +93,7 @@ INCLUDES = \
 	-I../mesa \
 	-I../mapi \
 	-I../mesa/shader \
+	-I../../include \
 	$(LIBRARY_INCLUDES)
 
 ALL_SOURCES = \

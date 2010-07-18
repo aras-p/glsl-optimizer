@@ -34,6 +34,47 @@ extern "C" {
 #include "glsl_parser_extras.h"
 #include "glsl_parser.h"
 
+_mesa_glsl_parse_state::_mesa_glsl_parse_state(struct __GLcontextRec *ctx,
+					       GLenum target, void *mem_ctx)
+{
+   switch (target) {
+   case GL_VERTEX_SHADER:   this->target = vertex_shader; break;
+   case GL_FRAGMENT_SHADER: this->target = fragment_shader; break;
+   case GL_GEOMETRY_SHADER: this->target = geometry_shader; break;
+   }
+
+   this->scanner = NULL;
+   this->translation_unit.make_empty();
+   this->symbols = new(mem_ctx) glsl_symbol_table;
+   this->info_log = talloc_strdup(mem_ctx, "");
+   this->error = false;
+   this->loop_or_switch_nesting = NULL;
+   this->ARB_texture_rectangle_enable = true;
+
+   if (ctx != NULL) {
+      this->extensions = &ctx->Extensions;
+
+      this->Const.MaxLights = ctx->Const.MaxLights;
+      this->Const.MaxClipPlanes = ctx->Const.MaxClipPlanes;
+      this->Const.MaxTextureUnits = ctx->Const.MaxTextureUnits;
+      this->Const.MaxTextureCoords = ctx->Const.MaxTextureCoordUnits;
+      this->Const.MaxVertexAttribs = ctx->Const.VertexProgram.MaxAttribs;
+      this->Const.MaxVertexUniformComponents = ctx->Const.VertexProgram.MaxUniformComponents;
+      this->Const.MaxVaryingFloats = ctx->Const.MaxVarying * 4;
+      this->Const.MaxVertexTextureImageUnits = ctx->Const.MaxVertexTextureImageUnits;
+      this->Const.MaxCombinedTextureImageUnits = ctx->Const.MaxCombinedTextureImageUnits;
+      this->Const.MaxTextureImageUnits = ctx->Const.MaxTextureImageUnits;
+      this->Const.MaxFragmentUniformComponents = ctx->Const.FragmentProgram.MaxUniformComponents;
+
+      this->Const.MaxDrawBuffers = ctx->Const.MaxDrawBuffers;
+   } else {
+      static struct gl_extensions null_extensions;
+
+      memset(&null_extensions, 0, sizeof(null_extensions));
+      this->extensions = &null_extensions;
+   }
+}
+
 const char *
 _mesa_glsl_shader_target_name(enum _mesa_glsl_parser_targets target)
 {
