@@ -71,6 +71,28 @@ _mesa_ast_field_selection_to_hir(const ast_expression *expr,
 			  "structure",
 			  expr->primary_expression.identifier);
       }
+   } else if (expr->subexpressions[1] != NULL) {
+      /* Handle "method calls" in GLSL 1.20 - namely, array.length() */
+      if (state->language_version < 120)
+	 _mesa_glsl_error(&loc, state, "Methods not supported in GLSL 1.10.");
+
+      ast_expression *call = expr->subexpressions[1];
+      assert(call->oper == ast_function_call);
+
+      const char *method;
+      method = call->subexpressions[0]->primary_expression.identifier;
+
+      if (op->type->is_array() && strcmp(method, "length") == 0) {
+	 if (!call->expressions.is_empty())
+	    _mesa_glsl_error(&loc, state, "length method takes no arguments.");
+
+	 if (op->type->array_size() == 0)
+	    _mesa_glsl_error(&loc, state, "length called on unsized array.");
+
+	 result = new(ctx) ir_constant(op->type->array_size());
+      } else {
+	 _mesa_glsl_error(&loc, state, "Unknown method: `%s'.", method);
+      }
    } else {
       _mesa_glsl_error(& loc, state, "Cannot access field `%s' of "
 		       "non-structure / non-vector.",
