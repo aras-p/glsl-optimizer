@@ -275,9 +275,6 @@ drisw_init_screen(__DRIscreen * sPriv)
 
    screen->sPriv = sPriv;
    screen->fd = -1;
-   screen->allocate_textures = drisw_allocate_textures;
-   screen->update_drawable_info = drisw_update_drawable_info;
-   screen->flush_frontbuffer = drisw_flush_frontbuffer;
 
    swrast_no_present = debug_get_option_swrast_no_present();
 
@@ -298,21 +295,40 @@ fail:
    return NULL;
 }
 
+static boolean
+drisw_create_buffer(__DRIscreen * sPriv,
+                    __DRIdrawable * dPriv,
+                    const __GLcontextModes * visual, boolean isPixmap)
+{
+   struct dri_drawable *drawable = NULL;
+
+   if (!dri_create_buffer(sPriv, dPriv, visual, isPixmap))
+      return FALSE;
+
+   drawable = dPriv->driverPrivate;
+
+   drawable->allocate_textures = drisw_allocate_textures;
+   drawable->update_drawable_info = drisw_update_drawable_info;
+   drawable->flush_frontbuffer = drisw_flush_frontbuffer;
+
+   return TRUE;
+}
+
 /**
  * DRI driver virtual function table.
  *
  * DRI versions differ in their implementation of init_screen and swap_buffers.
  */
 const struct __DriverAPIRec driDriverAPI = {
+   .InitScreen = drisw_init_screen,
    .DestroyScreen = dri_destroy_screen,
    .CreateContext = dri_create_context,
    .DestroyContext = dri_destroy_context,
-   .CreateBuffer = dri_create_buffer,
+   .CreateBuffer = drisw_create_buffer,
    .DestroyBuffer = dri_destroy_buffer,
    .MakeCurrent = dri_make_current,
    .UnbindContext = dri_unbind_context,
 
-   .InitScreen = drisw_init_screen,
    .SwapBuffers = drisw_swap_buffers,
 };
 

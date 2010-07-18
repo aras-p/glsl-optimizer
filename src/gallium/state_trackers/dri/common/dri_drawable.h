@@ -55,6 +55,16 @@ struct dri_drawable
 
    /* used only by DRISW */
    struct pipe_surface *drisw_surface;
+
+   /* hooks filled in by dri2 & drisw */
+   void (*allocate_textures)(struct dri_drawable *drawable,
+                             const enum st_attachment_type *statts,
+                             unsigned count);
+
+   void (*update_drawable_info)(struct dri_drawable *drawable);
+
+   void (*flush_frontbuffer)(struct dri_drawable *drawable,
+                             enum st_attachment_type statt);
 };
 
 static INLINE struct dri_drawable *

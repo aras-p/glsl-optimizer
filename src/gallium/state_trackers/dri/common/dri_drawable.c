@@ -67,10 +67,10 @@ dri_st_framebuffer_validate(struct st_framebuffer_iface *stfbi,
    new_stamp = (drawable->texture_stamp != drawable->dPriv->lastStamp);
 
    if (new_stamp || new_mask || screen->broken_invalidate) {
-      if (new_stamp && screen->update_drawable_info)
-         screen->update_drawable_info(drawable);
+      if (new_stamp && drawable->update_drawable_info)
+         drawable->update_drawable_info(drawable);
 
-      screen->allocate_textures(drawable, statts, count);
+      drawable->allocate_textures(drawable, statts, count);
 
       /* add existing textures */
       for (i = 0; i < ST_ATTACHMENT_COUNT; i++) {
@@ -99,10 +99,9 @@ dri_st_framebuffer_flush_front(struct st_framebuffer_iface *stfbi,
 {
    struct dri_drawable *drawable =
       (struct dri_drawable *) stfbi->st_manager_private;
-   struct dri_screen *screen = dri_screen(drawable->sPriv);
 
    /* XXX remove this and just set the correct one on the framebuffer */
-   screen->flush_frontbuffer(drawable, statt);
+   drawable->flush_frontbuffer(drawable, statt);
 
    return TRUE;
 }
