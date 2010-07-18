@@ -489,6 +489,7 @@ static const __DRIextension *dri_screen_extensions[] = {
    &dri2TexBufferExtension.base,
    &dri2FlushExtension.base,
    &dri2ImageExtension.base,
+   &dri2ConfigQueryExtension.base,
    NULL
 };
 
