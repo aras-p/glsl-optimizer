@@ -157,7 +157,7 @@ llvmpipe_create_context( struct pipe_screen *screen, void *priv )
 
    /* convert points and lines into triangles: */
    draw_wide_point_threshold(llvmpipe->draw, 0.0);
-   draw_wide_line_threshold(llvmpipe->draw, 0.0);
+   draw_wide_line_threshold(llvmpipe->draw, 10000.0);
 
 #if USE_DRAW_STAGE_PSTIPPLE
    /* Do polygon stipple w/ texture map + frag prog? */

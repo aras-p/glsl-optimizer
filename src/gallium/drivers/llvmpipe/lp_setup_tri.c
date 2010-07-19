@@ -68,11 +68,11 @@ fixed_to_float(int a)
  * \param nr_inputs  number of fragment shader inputs
  * \return pointer to triangle space
  */
-static INLINE struct lp_rast_triangle *
-alloc_triangle(struct lp_scene *scene,
-               unsigned nr_inputs,
-               unsigned nr_planes,
-               unsigned *tri_size)
+struct lp_rast_triangle *
+lp_setup_alloc_triangle(struct lp_scene *scene,
+                        unsigned nr_inputs,
+                        unsigned nr_planes,
+                        unsigned *tri_size)
 {
    unsigned input_array_sz = NUM_CHANNELS * (nr_inputs + 1) * sizeof(float);
    struct lp_rast_triangle *tri;
@@ -160,7 +160,7 @@ lp_setup_print_triangle(struct lp_setup_context *setup,
 }
 
 
-lp_rast_cmd lp_rast_tri_tab[8] = {
+lp_rast_cmd lp_rast_tri_tab[9] = {
    NULL,               /* should be impossible */
    lp_rast_triangle_1,
    lp_rast_triangle_2,
@@ -168,7 +168,8 @@ lp_rast_cmd lp_rast_tri_tab[8] = {
    lp_rast_triangle_4,
    lp_rast_triangle_5,
    lp_rast_triangle_6,
-   lp_rast_triangle_7
+   lp_rast_triangle_7,
+   lp_rast_triangle_8
 };
 
 /**
@@ -254,10 +255,10 @@ do_triangle_ccw(struct lp_setup_context *setup,
 
    u_rect_find_intersection(&setup->draw_region, &bbox);
 
-   tri = alloc_triangle(scene,
-                        setup->fs.nr_inputs,
-                        nr_planes,
-                        &tri_bytes);
+   tri = lp_setup_alloc_triangle(scene,
+                                 setup->fs.nr_inputs,
+                                 nr_planes,
+                                 &tri_bytes);
    if (!tri)
       return;
 

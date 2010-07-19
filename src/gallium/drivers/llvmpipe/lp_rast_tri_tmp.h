@@ -32,7 +32,7 @@
 
 
 /**
- * Prototype for a 7 plane rasterizer function.  Will codegenerate
+ * Prototype for a 8 plane rasterizer function.  Will codegenerate
  * several of these.
  *
  * XXX: Varients for more/fewer planes.

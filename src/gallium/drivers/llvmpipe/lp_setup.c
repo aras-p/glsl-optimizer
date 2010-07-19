@@ -485,7 +485,14 @@ lp_setup_set_triangle_state( struct lp_setup_context *setup,
    }
 }
 
+void 
+lp_setup_set_line_state( struct lp_setup_context *setup,
+			 float line_width)
+{
+   LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
 
+   setup->line_width = line_width;
+}
 
 void
 lp_setup_set_fs_inputs( struct lp_setup_context *setup,

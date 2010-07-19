@@ -31,7 +31,7 @@
 
 #include "lp_setup_context.h"
 
-static void point_nop( struct lp_setup_context *setup,
+static void lp_setup_point( struct lp_setup_context *setup,
                        const float (*v0)[4] )
 {
 }
@@ -40,7 +40,7 @@ static void point_nop( struct lp_setup_context *setup,
 void 
 lp_setup_choose_point( struct lp_setup_context *setup )
 {
-   setup->point = point_nop;
+   setup->point = lp_setup_point;
 }
 
 

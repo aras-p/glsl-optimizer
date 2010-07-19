@@ -157,6 +157,10 @@ build_mask_linear(int c, int dcdx, int dcdy)
 #define NR_PLANES 7
 #include "lp_rast_tri_tmp.h"
 
+#define TAG(x) x##_8
+#define NR_PLANES 8
+#include "lp_rast_tri_tmp.h"
+
 
 /* Special case for 3 plane triangle which is contained entirely
  * within a 16x16 block.
