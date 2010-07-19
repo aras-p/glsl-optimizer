@@ -41,16 +41,84 @@
 #include "st_format.h"
 #include "st_cb_texture.h"
 #include "pipe/p_context.h"
+#include "util/u_format.h"
 #include "util/u_inlines.h"
 #include "cso_cache/cso_context.h"
 
-static boolean check_sampler_swizzle(struct pipe_sampler_view *sv,
-				   uint32_t _swizzle)
+/**
+ * Combine depth texture mode with "swizzle" so that depth mode swizzling
+ * takes place before texture swizzling, and return the resulting swizzle.
+ * If the format is not a depth format, return "swizzle" unchanged.
+ *
+ * \param format     PIPE_FORMAT_*.
+ * \param swizzle    Texture swizzle, a bitmask computed using MAKE_SWIZZLE4.
+ * \param depthmode  One of GL_LUMINANCE, GL_INTENSITY, GL_ALPHA.
+ */
+static GLuint apply_depthmode(enum pipe_format format,
+                              GLuint swizzle, GLenum depthmode)
 {
-   if ((sv->swizzle_r != GET_SWZ(_swizzle, 0)) ||
-       (sv->swizzle_g != GET_SWZ(_swizzle, 1)) ||
-       (sv->swizzle_b != GET_SWZ(_swizzle, 2)) ||
-       (sv->swizzle_a != GET_SWZ(_swizzle, 3)))
+   const struct util_format_description *desc =
+         util_format_description(format);
+   unsigned char swiz[4];
+   unsigned i;
+
+   if (desc->colorspace != UTIL_FORMAT_COLORSPACE_ZS ||
+       desc->swizzle[0] == UTIL_FORMAT_SWIZZLE_NONE) {
+      /* Not a depth format. */
+      return swizzle;
+   }
+
+   for (i = 0; i < 4; i++)
+      swiz[i] = GET_SWZ(swizzle, i);
+
+   switch (depthmode) {
+      case GL_LUMINANCE:
+         /* Rewrite reads from W to ONE, and reads from XYZ to XXX. */
+         for (i = 0; i < 4; i++)
+            if (swiz[i] == SWIZZLE_W)
+               swiz[i] = SWIZZLE_ONE;
+            else if (swiz[i] < SWIZZLE_W)
+               swiz[i] = SWIZZLE_X;
+         break;
+
+      case GL_INTENSITY:
+         /* Rewrite reads from XYZW to XXXX. */
+         for (i = 0; i < 4; i++)
+            if (swiz[i] <= SWIZZLE_W)
+               swiz[i] = SWIZZLE_X;
+         break;
+
+      case GL_ALPHA:
+         /* Rewrite reads from W to X, and reads from XYZ to 000. */
+         for (i = 0; i < 4; i++)
+            if (swiz[i] == SWIZZLE_W)
+               swiz[i] = SWIZZLE_X;
+            else if (swiz[i] < SWIZZLE_W)
+               swiz[i] = SWIZZLE_ZERO;
+         break;
+   }
+
+   return MAKE_SWIZZLE4(swiz[0], swiz[1], swiz[2], swiz[3]);
+}
+
+/**
+ * Return TRUE if the swizzling described by "swizzle" and
+ * "depthmode" (for depth textures only) is different from the swizzling
+ * set in the given sampler view.
+ *
+ * \param sv         A sampler view.
+ * \param swizzle    Texture swizzle, a bitmask computed using MAKE_SWIZZLE4.
+ * \param depthmode  One of GL_LUMINANCE, GL_INTENSITY, GL_ALPHA.
+ */
+static boolean check_sampler_swizzle(struct pipe_sampler_view *sv,
+                                     GLuint swizzle, GLenum depthmode)
+{
+   swizzle = apply_depthmode(sv->texture->format, swizzle, depthmode);
+
+   if ((sv->swizzle_r != GET_SWZ(swizzle, 0)) ||
+       (sv->swizzle_g != GET_SWZ(swizzle, 1)) ||
+       (sv->swizzle_b != GET_SWZ(swizzle, 2)) ||
+       (sv->swizzle_a != GET_SWZ(swizzle, 3)))
       return true;
    return false;
 }
@@ -62,16 +130,19 @@ st_create_texture_sampler_view_from_stobj(struct pipe_context *pipe,
 					  
 {
    struct pipe_sampler_view templ;
+   GLuint swizzle = apply_depthmode(stObj->pt->format,
+                                    stObj->base._Swizzle,
+                                    stObj->base.DepthMode);
 
    u_sampler_view_default_template(&templ,
                                    stObj->pt,
                                    format);
 
-   if (stObj->base._Swizzle != SWIZZLE_NOOP) {
-      templ.swizzle_r = GET_SWZ(stObj->base._Swizzle, 0);
-      templ.swizzle_g = GET_SWZ(stObj->base._Swizzle, 1);
-      templ.swizzle_b = GET_SWZ(stObj->base._Swizzle, 2);
-      templ.swizzle_a = GET_SWZ(stObj->base._Swizzle, 3);
+   if (swizzle != SWIZZLE_NOOP) {
+      templ.swizzle_r = GET_SWZ(swizzle, 0);
+      templ.swizzle_g = GET_SWZ(swizzle, 1);
+      templ.swizzle_b = GET_SWZ(swizzle, 2);
+      templ.swizzle_a = GET_SWZ(swizzle, 3);
    }
 
    return pipe->create_sampler_view(pipe, stObj->pt, &templ);
@@ -150,7 +221,10 @@ update_textures(struct st_context *st)
 
 	 /* if sampler view has changed dereference it */
 	 if (stObj->sampler_view)
-	    if (check_sampler_swizzle(stObj->sampler_view, stObj->base._Swizzle) || (st_view_format != stObj->sampler_view->format))
+            if (check_sampler_swizzle(stObj->sampler_view,
+                                      stObj->base._Swizzle,
+                                      stObj->base.DepthMode) ||
+                (st_view_format != stObj->sampler_view->format))
 	       pipe_sampler_view_reference(&stObj->sampler_view, NULL);
 
          sampler_view = st_get_texture_sampler_view_from_stobj(stObj, pipe, st_view_format);
