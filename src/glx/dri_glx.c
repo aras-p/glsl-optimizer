@@ -63,7 +63,8 @@ struct dri_screen
 {
    __GLXscreenConfigs base;
 
-   __GLXDRIscreen driScreen;
+   __DRIscreen *driScreen;
+   __GLXDRIscreen vtable;
    const __DRIlegacyExtension *legacy;
    const __DRIcoreExtension *core;
    const __DRIswapControlExtension *swapControl;
@@ -551,7 +552,7 @@ driCreateContext(__GLXscreenConfigs *base,
    }
 
    pcp->driContext =
-      (*psc->legacy->createNewContext) (psc->base.__driScreen,
+      (*psc->legacy->createNewContext) (psc->driScreen,
                                         config->driConfig,
                                         renderType, shared, hwContext, pcp);
    if (pcp->driContext == NULL) {
@@ -607,7 +608,7 @@ driCreateDrawable(__GLXscreenConfigs *base,
 
    /* Create a new drawable */
    pdraw->driDrawable =
-      (*psc->legacy->createNewDrawable) (psc->base.__driScreen,
+      (*psc->legacy->createNewDrawable) (psc->driScreen,
                                          config->driConfig,
                                          hwDrawable,
                                          GLX_WINDOW_BIT,
@@ -648,9 +649,9 @@ driDestroyScreen(__GLXscreenConfigs *base)
    struct dri_screen *psc = (struct dri_screen *) base;
 
    /* Free the direct rendering per screen data */
-   if (psc->base.__driScreen)
-      (*psc->core->destroyScreen) (psc->base.__driScreen);
-   psc->base.__driScreen = NULL;
+   if (psc->driScreen)
+      (*psc->core->destroyScreen) (psc->driScreen);
+   psc->driScreen = NULL;
    if (psc->driver)
       dlclose(psc->driver);
 }
@@ -820,19 +821,19 @@ driCreateScreen(int screen, __GLXdisplayPrivate *priv)
    }
 
    pdp = (struct dri_display *) priv->driDisplay;
-   psc->base.__driScreen =
+   psc->driScreen =
       CallCreateNewScreen(psc->base.dpy, screen, psc, pdp);
-   if (psc->base.__driScreen == NULL) {
+   if (psc->driScreen == NULL) {
       dlclose(psc->driver);
       Xfree(psc);
       return NULL;
    }
 
-   extensions = psc->core->getExtensions(psc->base.__driScreen);
+   extensions = psc->core->getExtensions(psc->driScreen);
    driBindExtensions(psc, extensions);
    driBindCommonExtensions(&psc->base, extensions);
 
-   psp = &psc->driScreen;
+   psp = &psc->vtable;
    psc->base.driScreen = psp;
    if (psc->base.driCopySubBuffer)
       psp->copySubBuffer = driCopySubBuffer;

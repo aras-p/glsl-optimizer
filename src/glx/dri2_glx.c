@@ -78,7 +78,8 @@ struct dri2_display
 struct dri2_screen {
    __GLXscreenConfigs base;
 
-   __GLXDRIscreen driScreen;
+   __DRIscreen *driScreen;
+   __GLXDRIscreen vtable;
    const __DRIdri2Extension *dri2;
    const __DRIcoreExtension *core;
 
@@ -161,7 +162,7 @@ dri2CreateContext(__GLXscreenConfigs *base,
 
    pcp->psc = &psc->base;
    pcp->driContext =
-      (*psc->dri2->createNewContext) (psc->base.__driScreen,
+      (*psc->dri2->createNewContext) (psc->driScreen,
                                       config->driConfig, shared, pcp);
    gc->__driContext = pcp->driContext;
 
@@ -217,7 +218,7 @@ dri2CreateDrawable(__GLXscreenConfigs *base, XID xDrawable,
    pdraw->have_back = 0;
 
    if (psc->config)
-      psc->config->configQueryi(psc->base.__driScreen,
+      psc->config->configQueryi(psc->driScreen,
 				"vblank_mode", &vblank_mode);
 
    switch (vblank_mode) {
@@ -238,7 +239,7 @@ dri2CreateDrawable(__GLXscreenConfigs *base, XID xDrawable,
    pdp = (struct dri2_display *)dpyPriv->dri2Display;;
    /* Create a new drawable */
    pdraw->base.driDrawable =
-      (*psc->dri2->createNewDrawable) (psc->base.__driScreen,
+      (*psc->dri2->createNewDrawable) (psc->driScreen,
                                        config->driConfig, pdraw);
 
    if (!pdraw->base.driDrawable) {
@@ -400,9 +401,8 @@ dri2DestroyScreen(__GLXscreenConfigs *base)
    struct dri2_screen *psc = (struct dri2_screen *) base;
 
    /* Free the direct rendering per screen data */
-   (*psc->core->destroyScreen) (psc->base.__driScreen);
+   (*psc->core->destroyScreen) (psc->driScreen);
    close(psc->fd);
-   base->__driScreen = NULL;
    Xfree(psc);
 }
 
@@ -530,7 +530,7 @@ dri2SetSwapInterval(__GLXDRIdrawable *pdraw, int interval)
    struct dri2_screen *psc = (struct dri2_screen *) priv->base.psc;
 
    if (psc->config)
-      psc->config->configQueryi(psc->base.__driScreen,
+      psc->config->configQueryi(psc->driScreen,
 				"vblank_mode", &vblank_mode);
 
    switch (vblank_mode) {
@@ -737,18 +737,18 @@ dri2CreateScreen(int screen, __GLXdisplayPrivate * priv)
    /* If the server does not support the protocol for
     * DRI2GetBuffersWithFormat, don't supply that interface to the driver.
     */
-   psc->base.__driScreen =
+   psc->driScreen =
       psc->dri2->createNewScreen(screen, psc->fd,
 				 (const __DRIextension **)
 				 &pdp->loader_extensions[0],
 				 &driver_configs, psc);
 
-   if (psc->base.__driScreen == NULL) {
+   if (psc->driScreen == NULL) {
       ErrorMessageF("failed to create dri screen\n");
       goto handle_error;
    }
 
-   extensions = psc->core->getExtensions(psc->base.__driScreen);
+   extensions = psc->core->getExtensions(psc->driScreen);
    driBindCommonExtensions(&psc->base, extensions);
    dri2BindExtensions(psc, extensions);
 
@@ -759,7 +759,7 @@ dri2CreateScreen(int screen, __GLXdisplayPrivate * priv)
 
    psc->base.driver_configs = driver_configs;
 
-   psp = &psc->driScreen;
+   psp = &psc->vtable;
    psc->base.driScreen = psp;
    psp->destroyScreen = dri2DestroyScreen;
    psp->createContext = dri2CreateContext;

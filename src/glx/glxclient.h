@@ -528,7 +528,6 @@ struct __GLXscreenConfigsRec
     /**
      * Per screen direct rendering interface functions and data.
      */
-   __DRIscreen *__driScreen;
    __glxHashTable *drawHash;
    Display *dpy;
    int scr;

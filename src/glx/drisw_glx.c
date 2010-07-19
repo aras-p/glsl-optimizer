@@ -44,7 +44,8 @@ struct drisw_screen
 {
    __GLXscreenConfigs base;
 
-   __GLXDRIscreen driScreen;
+   __DRIscreen *driScreen;
+   __GLXDRIscreen vtable;
    const __DRIcoreExtension *core;
    const __DRIswrastExtension *swrast;
    void *driver;
@@ -290,7 +291,7 @@ driCreateContext(__GLXscreenConfigs *base,
 
    pcp->psc = &psc->base;
    pcp->driContext =
-      (*psc->core->createNewContext) (psc->base.__driScreen,
+      (*psc->core->createNewContext) (psc->driScreen,
 				      config->driConfig, shared, pcp);
    if (pcp->driContext == NULL) {
       Xfree(pcp);
@@ -344,7 +345,7 @@ driCreateDrawable(__GLXscreenConfigs *base, XID xDrawable,
 
    /* Create a new drawable */
    pdraw->driDrawable =
-      (*swrast->createNewDrawable) (psc->base.__driScreen,
+      (*swrast->createNewDrawable) (psc->driScreen,
 				    config->driConfig, pdp);
 
    if (!pdraw->driDrawable) {
@@ -380,8 +381,8 @@ driDestroyScreen(__GLXscreenConfigs *base)
    struct drisw_screen *psc = (struct drisw_screen *) base;
 
    /* Free the direct rendering per screen data */
-   (*psc->core->destroyScreen) (psc->base.__driScreen);
-   psc->base.__driScreen = NULL;
+   (*psc->core->destroyScreen) (psc->driScreen);
+   psc->driScreen = NULL;
    if (psc->driver)
       dlclose(psc->driver);
 }
@@ -439,15 +440,15 @@ driCreateScreen(int screen, __GLXdisplayPrivate *priv)
       goto handle_error;
    }
 
-   psc->base.__driScreen =
+   psc->driScreen =
       psc->swrast->createNewScreen(screen, loader_extensions,
 				   &driver_configs, psc);
-   if (psc->base.__driScreen == NULL) {
+   if (psc->driScreen == NULL) {
       ErrorMessageF("failed to create dri screen\n");
       goto handle_error;
    }
 
-   extensions = psc->core->getExtensions(psc->base.__driScreen);
+   extensions = psc->core->getExtensions(psc->driScreen);
    driBindCommonExtensions(&psc->base, extensions);
 
    psc->base.configs =
@@ -457,7 +458,7 @@ driCreateScreen(int screen, __GLXdisplayPrivate *priv)
 
    psc->base.driver_configs = driver_configs;
 
-   psp = &psc->driScreen;
+   psp = &psc->vtable;
    psc->base.driScreen = psp;
    psp->destroyScreen = driDestroyScreen;
    psp->createContext = driCreateContext;
