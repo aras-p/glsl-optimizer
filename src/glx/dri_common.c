@@ -421,13 +421,6 @@ driBindCommonExtensions(__GLXscreenConfigs *psc,
       }
 #endif
 
-#ifdef __DRI_ALLOCATE
-      if (strcmp(extensions[i]->name, __DRI_ALLOCATE) == 0) {
-	 psc->allocate = (__DRIallocateExtension *) extensions[i];
-	 __glXEnableDirectExtension(psc, "GLX_MESA_allocate_memory");
-      }
-#endif
-
 #ifdef __DRI_FRAME_TRACKING
       if (strcmp(extensions[i]->name, __DRI_FRAME_TRACKING) == 0) {
 	 psc->frameTracking = (__DRIframeTrackingExtension *) extensions[i];

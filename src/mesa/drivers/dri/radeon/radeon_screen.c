@@ -338,12 +338,6 @@ static const __DRItexBufferExtension radeonTexBufferExtension = {
 #endif
 
 #if defined(RADEON_R200)
-static const __DRIallocateExtension r200AllocateExtension = {
-    { __DRI_ALLOCATE, __DRI_ALLOCATE_VERSION },
-    r200AllocateMemoryMESA,
-    r200FreeMemoryMESA,
-    r200GetMemoryOffsetMESA
-};
 
 static const __DRItexOffsetExtension r200texOffsetExtension = {
     { __DRI_TEX_OFFSET, __DRI_TEX_OFFSET_VERSION },
@@ -1222,9 +1216,6 @@ radeonCreateScreen( __DRIscreen *sPriv )
 #endif
 
 #if defined(RADEON_R200)
-   if (IS_R200_CLASS(screen))
-      screen->extensions[i++] = &r200AllocateExtension.base;
-
    screen->extensions[i++] = &r200texOffsetExtension.base;
 #endif
 
@@ -1380,9 +1371,6 @@ radeonCreateScreen2(__DRIscreen *sPriv)
 #endif
 
 #if defined(RADEON_R200)
-   if (IS_R200_CLASS(screen))
-       screen->extensions[i++] = &r200AllocateExtension.base;
-
    screen->extensions[i++] = &r200TexBufferExtension.base;
 #endif
 

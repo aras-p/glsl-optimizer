@@ -2804,72 +2804,6 @@ __glXWaitForSbcOML(Display * dpy, GLXDrawable drawable,
    return False;
 }
 
-
-/**
- * GLX_MESA_allocate_memory
- */
-/*@{*/
-
-PUBLIC void *
-glXAllocateMemoryMESA(Display * dpy, int scrn,
-                      size_t size, float readFreq,
-                      float writeFreq, float priority)
-{
-#ifdef __DRI_ALLOCATE
-   __GLXscreenConfigs *const psc = GetGLXScreenConfigs(dpy, scrn);
-
-   if (psc && psc->allocate)
-      return (*psc->allocate->allocateMemory) (psc->__driScreen, size,
-                                               readFreq, writeFreq, priority);
-
-#else
-   (void) dpy;
-   (void) scrn;
-   (void) size;
-   (void) readFreq;
-   (void) writeFreq;
-   (void) priority;
-#endif /* __DRI_ALLOCATE */
-
-   return NULL;
-}
-
-
-PUBLIC void
-glXFreeMemoryMESA(Display * dpy, int scrn, void *pointer)
-{
-#ifdef __DRI_ALLOCATE
-   __GLXscreenConfigs *const psc = GetGLXScreenConfigs(dpy, scrn);
-
-   if (psc && psc->allocate)
-      (*psc->allocate->freeMemory) (psc->__driScreen, pointer);
-
-#else
-   (void) dpy;
-   (void) scrn;
-   (void) pointer;
-#endif /* __DRI_ALLOCATE */
-}
-
-
-PUBLIC GLuint
-glXGetMemoryOffsetMESA(Display * dpy, int scrn, const void *pointer)
-{
-#ifdef __DRI_ALLOCATE
-   __GLXscreenConfigs *const psc = GetGLXScreenConfigs(dpy, scrn);
-
-   if (psc && psc->allocate)
-      return (*psc->allocate->memoryOffset) (psc->__driScreen, pointer);
-
-#else
-   (void) dpy;
-   (void) scrn;
-   (void) pointer;
-#endif /* GLX_DIRECT_RENDERING */
-
-   return ~0L;
-}
-
 /*@}*/
 
 
@@ -3232,11 +3166,6 @@ static const struct name_address_pair GLX_functions[] = {
    /*** GLX_SGIX_swap_barrier ***/
    GLX_FUNCTION2(glXBindSwapBarrierSGIX, __glXBindSwapBarrierSGIX),
    GLX_FUNCTION2(glXQueryMaxSwapBarriersSGIX, __glXQueryMaxSwapBarriersSGIX),
-
-   /*** GLX_MESA_allocate_memory ***/
-   GLX_FUNCTION(glXAllocateMemoryMESA),
-   GLX_FUNCTION(glXFreeMemoryMESA),
-   GLX_FUNCTION(glXGetMemoryOffsetMESA),
 
    /*** GLX_MESA_copy_sub_buffer ***/
    GLX_FUNCTION2(glXCopySubBufferMESA, __glXCopySubBufferMESA),

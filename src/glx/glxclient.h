@@ -545,10 +545,6 @@ struct __GLXscreenConfigsRec
    const __DRIswapControlExtension *swapControl;
 #endif
 
-#ifdef __DRI_ALLOCATE
-   const __DRIallocateExtension *allocate;
-#endif
-
 #ifdef __DRI_FRAME_TRACKING
    const __DRIframeTrackingExtension *frameTracking;
 #endif
