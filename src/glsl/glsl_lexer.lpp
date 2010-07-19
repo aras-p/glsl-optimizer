@@ -231,7 +231,7 @@ void		return VOID;
 			    return INTCONSTANT;
 			}
 0[0-7]*			{
-			    yylval->n = strtol(yytext + 2, NULL, 8);
+			    yylval->n = strtol(yytext, NULL, 8);
 			    return INTCONSTANT;
 			}
 
