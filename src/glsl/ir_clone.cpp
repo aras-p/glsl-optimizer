@@ -356,7 +356,7 @@ public:
       /* Try to find the function signature referenced by the ir_call in the
        * table.  If it is found, replace it with the value from the table.
        */
-      const ir_function_signature *const sig =
+      ir_function_signature *sig =
 	 (ir_function_signature *) hash_table_find(this->ht, ir->get_callee());
       if (sig != NULL)
 	 ir->set_callee(sig);

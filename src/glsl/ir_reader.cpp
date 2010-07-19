@@ -632,7 +632,7 @@ read_call(_mesa_glsl_parse_state *st, s_list *list)
       return NULL;
    }
 
-   const ir_function_signature *callee = f->matching_signature(&parameters);
+   ir_function_signature *callee = f->matching_signature(&parameters);
    if (callee == NULL) {
       ir_read_error(st, list, "couldn't find matching signature for function "
                     "%s", name->value());

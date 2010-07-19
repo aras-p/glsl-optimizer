@@ -839,7 +839,7 @@ ir_call::get_error_instruction(void *ctx)
 }
 
 void
-ir_call::set_callee(const ir_function_signature *sig)
+ir_call::set_callee(ir_function_signature *sig)
 {
    assert((this->type == NULL) || (this->type == sig->return_type));
 

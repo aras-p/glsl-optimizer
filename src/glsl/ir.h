@@ -661,7 +661,7 @@ public:
  */
 class ir_call : public ir_rvalue {
 public:
-   ir_call(const ir_function_signature *callee, exec_list *actual_parameters)
+   ir_call(ir_function_signature *callee, exec_list *actual_parameters)
       : callee(callee)
    {
       assert(callee->return_type != NULL);
@@ -706,7 +706,7 @@ public:
       return callee->function_name();
    }
 
-   const ir_function_signature *get_callee()
+   ir_function_signature *get_callee()
    {
       return callee;
    }
@@ -714,7 +714,7 @@ public:
    /**
     * Set the function call target
     */
-   void set_callee(const ir_function_signature *sig);
+   void set_callee(ir_function_signature *sig);
 
    /**
     * Generates an inline version of the function before @ir,
@@ -729,7 +729,7 @@ private:
       /* empty */
    }
 
-   const ir_function_signature *callee;
+   ir_function_signature *callee;
 
    /* List of ir_rvalue of paramaters passed in this call. */
    exec_list actual_parameters;
