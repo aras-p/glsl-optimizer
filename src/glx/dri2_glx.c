@@ -57,11 +57,7 @@
 #undef DRI2_MINOR
 #define DRI2_MINOR 1
 
-typedef struct __GLXDRIdisplayPrivateRec __GLXDRIdisplayPrivate;
-typedef struct __GLXDRIcontextPrivateRec __GLXDRIcontextPrivate;
-typedef struct __GLXDRIdrawablePrivateRec __GLXDRIdrawablePrivate;
-
-struct __GLXDRIdisplayPrivateRec
+struct dri2_display
 {
    __GLXDRIdisplay base;
 
@@ -79,14 +75,14 @@ struct __GLXDRIdisplayPrivateRec
    const __DRIextension *loader_extensions[4];
 };
 
-struct __GLXDRIcontextPrivateRec
+struct dri2_context
 {
    __GLXDRIcontext base;
    __DRIcontext *driContext;
    __GLXscreenConfigs *psc;
 };
 
-struct __GLXDRIdrawablePrivateRec
+struct dri2_drawable
 {
    __GLXDRIdrawable base;
    __DRIbuffer buffers[5];
@@ -101,7 +97,7 @@ static void
 dri2DestroyContext(__GLXDRIcontext * context,
                    __GLXscreenConfigs * psc, Display * dpy)
 {
-   __GLXDRIcontextPrivate *pcp = (__GLXDRIcontextPrivate *) context;
+   struct dri2_context *pcp = (struct dri2_context *) context;
    const __DRIcoreExtension *core = pcp->psc->core;
 
    (*core->destroyContext) (pcp->driContext);
@@ -113,7 +109,7 @@ static Bool
 dri2BindContext(__GLXDRIcontext * context,
                 __GLXDRIdrawable * draw, __GLXDRIdrawable * read)
 {
-   __GLXDRIcontextPrivate *pcp = (__GLXDRIcontextPrivate *) context;
+   struct dri2_context *pcp = (struct dri2_context *) context;
    const __DRIcoreExtension *core = pcp->psc->core;
 
    return (*core->bindContext) (pcp->driContext,
@@ -123,7 +119,7 @@ dri2BindContext(__GLXDRIcontext * context,
 static void
 dri2UnbindContext(__GLXDRIcontext * context)
 {
-   __GLXDRIcontextPrivate *pcp = (__GLXDRIcontextPrivate *) context;
+   struct dri2_context *pcp = (struct dri2_context *) context;
    const __DRIcoreExtension *core = pcp->psc->core;
 
    (*core->unbindContext) (pcp->driContext);
@@ -134,12 +130,12 @@ dri2CreateContext(__GLXscreenConfigs * psc,
                   const __GLcontextModes * mode,
                   GLXContext gc, GLXContext shareList, int renderType)
 {
-   __GLXDRIcontextPrivate *pcp, *pcp_shared;
+   struct dri2_context *pcp, *pcp_shared;
    __GLXDRIconfigPrivate *config = (__GLXDRIconfigPrivate *) mode;
    __DRIcontext *shared = NULL;
 
    if (shareList) {
-      pcp_shared = (__GLXDRIcontextPrivate *) shareList->driContext;
+      pcp_shared = (struct dri2_context *) shareList->driContext;
       shared = pcp_shared->driContext;
    }
 
@@ -170,10 +166,10 @@ dri2DestroyDrawable(__GLXDRIdrawable *pdraw)
 {
    const __DRIcoreExtension *core = pdraw->psc->core;
    __GLXdisplayPrivate *dpyPriv;
-   __GLXDRIdisplayPrivate *pdp;
+   struct dri2_display *pdp;
 
    dpyPriv = __glXInitialize(pdraw->psc->dpy);
-   pdp = (__GLXDRIdisplayPrivate *)dpyPriv->dri2Display;
+   pdp = (struct dri2_display *)dpyPriv->dri2Display;
 
    __glxHashDelete(pdp->dri2Hash, pdraw->xDrawable);
    (*core->destroyDrawable) (pdraw->driDrawable);
@@ -186,10 +182,10 @@ dri2CreateDrawable(__GLXscreenConfigs * psc,
                    XID xDrawable,
                    GLXDrawable drawable, const __GLcontextModes * modes)
 {
-   __GLXDRIdrawablePrivate *pdraw;
+   struct dri2_drawable *pdraw;
    __GLXDRIconfigPrivate *config = (__GLXDRIconfigPrivate *) modes;
    __GLXdisplayPrivate *dpyPriv;
-   __GLXDRIdisplayPrivate *pdp;
+   struct dri2_display *pdp;
    GLint vblank_mode = DRI_CONF_VBLANK_DEF_INTERVAL_1;
 
    pdraw = Xmalloc(sizeof(*pdraw));
@@ -222,7 +218,7 @@ dri2CreateDrawable(__GLXscreenConfigs * psc,
    DRI2CreateDrawable(psc->dpy, xDrawable);
 
    dpyPriv = __glXInitialize(psc->dpy);
-   pdp = (__GLXDRIdisplayPrivate *)dpyPriv->dri2Display;;
+   pdp = (struct dri2_display *)dpyPriv->dri2Display;;
    /* Create a new drawable */
    pdraw->base.driDrawable =
       (*psc->dri2->createNewDrawable) (psc->__driScreen,
@@ -289,7 +285,7 @@ dri2WaitForSBC(__GLXDRIdrawable *pdraw, int64_t target_sbc, int64_t *ust,
 static void
 dri2CopySubBuffer(__GLXDRIdrawable *pdraw, int x, int y, int width, int height)
 {
-   __GLXDRIdrawablePrivate *priv = (__GLXDRIdrawablePrivate *) pdraw;
+   struct dri2_drawable *priv = (struct dri2_drawable *) pdraw;
    XRectangle xrect;
    XserverRegion region;
 
@@ -321,7 +317,7 @@ dri2CopySubBuffer(__GLXDRIdrawable *pdraw, int x, int y, int width, int height)
 }
 
 static void
-dri2_copy_drawable(__GLXDRIdrawablePrivate *priv, int dest, int src)
+dri2_copy_drawable(struct dri2_drawable *priv, int dest, int src)
 {
    XRectangle xrect;
    XserverRegion region;
@@ -346,7 +342,7 @@ dri2_copy_drawable(__GLXDRIdrawablePrivate *priv, int dest, int src)
 static void
 dri2WaitX(__GLXDRIdrawable *pdraw)
 {
-   __GLXDRIdrawablePrivate *priv = (__GLXDRIdrawablePrivate *) pdraw;
+   struct dri2_drawable *priv = (struct dri2_drawable *) pdraw;
 
    if (!priv->have_fake_front)
       return;
@@ -357,7 +353,7 @@ dri2WaitX(__GLXDRIdrawable *pdraw)
 static void
 dri2WaitGL(__GLXDRIdrawable * pdraw)
 {
-   __GLXDRIdrawablePrivate *priv = (__GLXDRIdrawablePrivate *) pdraw;
+   struct dri2_drawable *priv = (struct dri2_drawable *) pdraw;
 
    if (!priv->have_fake_front)
       return;
@@ -368,9 +364,9 @@ dri2WaitGL(__GLXDRIdrawable * pdraw)
 static void
 dri2FlushFrontBuffer(__DRIdrawable *driDrawable, void *loaderPrivate)
 {
-   __GLXDRIdrawablePrivate *pdraw = loaderPrivate;
+   struct dri2_drawable *pdraw = loaderPrivate;
    __GLXdisplayPrivate *priv = __glXInitialize(pdraw->base.psc->dpy);
-   __GLXDRIdisplayPrivate *pdp = (__GLXDRIdisplayPrivate *)priv->dri2Display;
+   struct dri2_display *pdp = (struct dri2_display *)priv->dri2Display;
 
    /* Old servers don't send invalidate events */
    if (!pdp->invalidateAvailable)
@@ -396,7 +392,7 @@ dri2DestroyScreen(__GLXscreenConfigs * psc)
  * \c DRI2GetBuffers or \c DRI2GetBuffersWithFormat.
  */
 static void
-process_buffers(__GLXDRIdrawablePrivate * pdraw, DRI2Buffer * buffers,
+process_buffers(struct dri2_drawable * pdraw, DRI2Buffer * buffers,
                 unsigned count)
 {
    int i;
@@ -425,10 +421,10 @@ static int64_t
 dri2SwapBuffers(__GLXDRIdrawable *pdraw, int64_t target_msc, int64_t divisor,
 		int64_t remainder)
 {
-    __GLXDRIdrawablePrivate *priv = (__GLXDRIdrawablePrivate *) pdraw;
+    struct dri2_drawable *priv = (struct dri2_drawable *) pdraw;
     __GLXdisplayPrivate *dpyPriv = __glXInitialize(priv->base.psc->dpy);
-    __GLXDRIdisplayPrivate *pdp =
-	(__GLXDRIdisplayPrivate *)dpyPriv->dri2Display;
+    struct dri2_display *pdp =
+	(struct dri2_display *)dpyPriv->dri2Display;
     int64_t ret;
 
 #ifdef __DRI2_FLUSH
@@ -460,7 +456,7 @@ dri2GetBuffers(__DRIdrawable * driDrawable,
                unsigned int *attachments, int count,
                int *out_count, void *loaderPrivate)
 {
-   __GLXDRIdrawablePrivate *pdraw = loaderPrivate;
+   struct dri2_drawable *pdraw = loaderPrivate;
    DRI2Buffer *buffers;
 
    buffers = DRI2GetBuffers(pdraw->base.psc->dpy, pdraw->base.xDrawable,
@@ -483,7 +479,7 @@ dri2GetBuffersWithFormat(__DRIdrawable * driDrawable,
                          unsigned int *attachments, int count,
                          int *out_count, void *loaderPrivate)
 {
-   __GLXDRIdrawablePrivate *pdraw = loaderPrivate;
+   struct dri2_drawable *pdraw = loaderPrivate;
    DRI2Buffer *buffers;
 
    buffers = DRI2GetBuffersWithFormat(pdraw->base.psc->dpy,
@@ -508,7 +504,7 @@ static void
 dri2SetSwapInterval(__GLXDRIdrawable *pdraw, int interval)
 {
    __GLXscreenConfigs *psc = pdraw->psc;
-   __GLXDRIdrawablePrivate *priv =  (__GLXDRIdrawablePrivate *) pdraw;
+   struct dri2_drawable *priv =  (struct dri2_drawable *) pdraw;
    GLint vblank_mode = DRI_CONF_VBLANK_DEF_INTERVAL_1;
 
    if (psc->config)
@@ -532,7 +528,7 @@ dri2SetSwapInterval(__GLXDRIdrawable *pdraw, int interval)
 static unsigned int
 dri2GetSwapInterval(__GLXDRIdrawable *pdraw)
 {
-   __GLXDRIdrawablePrivate *priv =  (__GLXDRIdrawablePrivate *) pdraw;
+   struct dri2_drawable *priv =  (struct dri2_drawable *) pdraw;
 
   return priv->swap_interval;
 }
@@ -579,8 +575,8 @@ dri2_bind_tex_image(Display * dpy,
    GLXContext gc = __glXGetCurrentContext();
    __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable, NULL);
     __GLXdisplayPrivate *dpyPriv = __glXInitialize(dpy);
-    __GLXDRIdisplayPrivate *pdp =
-	(__GLXDRIdisplayPrivate *) dpyPriv->dri2Display;
+    struct dri2_display *pdp =
+	(struct dri2_display *) dpyPriv->dri2Display;
 
    if (pdraw != NULL) {
 
@@ -620,7 +616,7 @@ dri2CreateScreen(__GLXscreenConfigs * psc, int screen,
 {
    const __DRIconfig **driver_configs;
    const __DRIextension **extensions;
-   const __GLXDRIdisplayPrivate *const pdp = (__GLXDRIdisplayPrivate *)
+   const struct dri2_display *const pdp = (struct dri2_display *)
       priv->dri2Display;
    __GLXDRIscreen *psp;
    char *driverName, *deviceName;
@@ -763,7 +759,7 @@ _X_HIDDEN __GLXDRIdrawable *
 dri2GetGlxDrawableFromXDrawableId(Display *dpy, XID id)
 {
    __GLXdisplayPrivate *d = __glXInitialize(dpy);
-   __GLXDRIdisplayPrivate *pdp = (__GLXDRIdisplayPrivate *) d->dri2Display;
+   struct dri2_display *pdp = (struct dri2_display *) d->dri2Display;
    __GLXDRIdrawable *pdraw;
 
    if (__glxHashLookup(pdp->dri2Hash, id, (void *) &pdraw) == 0)
@@ -780,7 +776,7 @@ dri2GetGlxDrawableFromXDrawableId(Display *dpy, XID id)
 _X_HIDDEN __GLXDRIdisplay *
 dri2CreateDisplay(Display * dpy)
 {
-   __GLXDRIdisplayPrivate *pdp;
+   struct dri2_display *pdp;
    int eventBase, errorBase, i;
 
    if (!DRI2QueryExtension(dpy, &eventBase, &errorBase))

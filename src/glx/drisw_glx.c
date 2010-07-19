@@ -28,23 +28,19 @@
 #include <dlfcn.h>
 #include "dri_common.h"
 
-typedef struct __GLXDRIdisplayPrivateRec __GLXDRIdisplayPrivate;
-typedef struct __GLXDRIcontextPrivateRec __GLXDRIcontextPrivate;
-typedef struct __GLXDRIdrawablePrivateRec __GLXDRIdrawablePrivate;
-
-struct __GLXDRIdisplayPrivateRec
+struct drisw_display
 {
    __GLXDRIdisplay base;
 };
 
-struct __GLXDRIcontextPrivateRec
+struct drisw_context
 {
    __GLXDRIcontext base;
    __DRIcontext *driContext;
    __GLXscreenConfigs *psc;
 };
 
-struct __GLXDRIdrawablePrivateRec
+struct drisw_drawable
 {
    __GLXDRIdrawable base;
 
@@ -56,7 +52,7 @@ struct __GLXDRIdrawablePrivateRec
 };
 
 static Bool
-XCreateDrawable(__GLXDRIdrawablePrivate * pdp,
+XCreateDrawable(struct drisw_drawable * pdp,
                 Display * dpy, XID drawable, int visualid)
 {
    XGCValues gcvalues;
@@ -94,7 +90,7 @@ XCreateDrawable(__GLXDRIdrawablePrivate * pdp,
 }
 
 static void
-XDestroyDrawable(__GLXDRIdrawablePrivate * pdp, Display * dpy, XID drawable)
+XDestroyDrawable(struct drisw_drawable * pdp, Display * dpy, XID drawable)
 {
    XDestroyImage(pdp->ximage);
    XFree(pdp->visinfo);
@@ -112,7 +108,7 @@ swrastGetDrawableInfo(__DRIdrawable * draw,
                       int *x, int *y, int *w, int *h,
                       void *loaderPrivate)
 {
-   __GLXDRIdrawablePrivate *pdp = loaderPrivate;
+   struct drisw_drawable *pdp = loaderPrivate;
    __GLXDRIdrawable *pdraw = &(pdp->base);
    Display *dpy = pdraw->psc->dpy;
    Drawable drawable;
@@ -156,7 +152,7 @@ swrastPutImage(__DRIdrawable * draw, int op,
                int x, int y, int w, int h,
                char *data, void *loaderPrivate)
 {
-   __GLXDRIdrawablePrivate *pdp = loaderPrivate;
+   struct drisw_drawable *pdp = loaderPrivate;
    __GLXDRIdrawable *pdraw = &(pdp->base);
    Display *dpy = pdraw->psc->dpy;
    Drawable drawable;
@@ -192,7 +188,7 @@ swrastGetImage(__DRIdrawable * read,
                int x, int y, int w, int h,
                char *data, void *loaderPrivate)
 {
-   __GLXDRIdrawablePrivate *prp = loaderPrivate;
+   struct drisw_drawable *prp = loaderPrivate;
    __GLXDRIdrawable *pread = &(prp->base);
    Display *dpy = pread->psc->dpy;
    Drawable readable;
@@ -232,7 +228,7 @@ static void
 driDestroyContext(__GLXDRIcontext * context,
                   __GLXscreenConfigs * psc, Display * dpy)
 {
-   __GLXDRIcontextPrivate *pcp = (__GLXDRIcontextPrivate *) context;
+   struct drisw_context *pcp = (struct drisw_context *) context;
    const __DRIcoreExtension *core = pcp->psc->core;
 
    (*core->destroyContext) (pcp->driContext);
@@ -244,7 +240,7 @@ static Bool
 driBindContext(__GLXDRIcontext * context,
                __GLXDRIdrawable * draw, __GLXDRIdrawable * read)
 {
-   __GLXDRIcontextPrivate *pcp = (__GLXDRIcontextPrivate *) context;
+   struct drisw_context *pcp = (struct drisw_context *) context;
    const __DRIcoreExtension *core = pcp->psc->core;
 
    return (*core->bindContext) (pcp->driContext,
@@ -254,7 +250,7 @@ driBindContext(__GLXDRIcontext * context,
 static void
 driUnbindContext(__GLXDRIcontext * context)
 {
-   __GLXDRIcontextPrivate *pcp = (__GLXDRIcontextPrivate *) context;
+   struct drisw_context *pcp = (struct drisw_context *) context;
    const __DRIcoreExtension *core = pcp->psc->core;
 
    (*core->unbindContext) (pcp->driContext);
@@ -265,7 +261,7 @@ driCreateContext(__GLXscreenConfigs * psc,
                  const __GLcontextModes * mode,
                  GLXContext gc, GLXContext shareList, int renderType)
 {
-   __GLXDRIcontextPrivate *pcp, *pcp_shared;
+   struct drisw_context *pcp, *pcp_shared;
    __GLXDRIconfigPrivate *config = (__GLXDRIconfigPrivate *) mode;
    const __DRIcoreExtension *core;
    __DRIcontext *shared = NULL;
@@ -276,7 +272,7 @@ driCreateContext(__GLXscreenConfigs * psc,
    core = psc->core;
 
    if (shareList) {
-      pcp_shared = (__GLXDRIcontextPrivate *) shareList->driContext;
+      pcp_shared = (struct drisw_context *) shareList->driContext;
       shared = pcp_shared->driContext;
    }
 
@@ -303,7 +299,7 @@ driCreateContext(__GLXscreenConfigs * psc,
 static void
 driDestroyDrawable(__GLXDRIdrawable * pdraw)
 {
-   __GLXDRIdrawablePrivate *pdp = (__GLXDRIdrawablePrivate *) pdraw;
+   struct drisw_drawable *pdp = (struct drisw_drawable *) pdraw;
    const __DRIcoreExtension *core = pdraw->psc->core;
 
    (*core->destroyDrawable) (pdraw->driDrawable);
@@ -318,7 +314,7 @@ driCreateDrawable(__GLXscreenConfigs * psc,
                   GLXDrawable drawable, const __GLcontextModes * modes)
 {
    __GLXDRIdrawable *pdraw;
-   __GLXDRIdrawablePrivate *pdp;
+   struct drisw_drawable *pdp;
    __GLXDRIconfigPrivate *config = (__GLXDRIconfigPrivate *) modes;
    const __DRIswrastExtension *swrast = psc->swrast;
 
@@ -476,7 +472,7 @@ driDestroyDisplay(__GLXDRIdisplay * dpy)
 _X_HIDDEN __GLXDRIdisplay *
 driswCreateDisplay(Display * dpy)
 {
-   __GLXDRIdisplayPrivate *pdpyp;
+   struct drisw_display *pdpyp;
 
    pdpyp = Xmalloc(sizeof *pdpyp);
    if (pdpyp == NULL)

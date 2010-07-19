@@ -47,10 +47,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "xf86drm.h"
 #include "dri_common.h"
 
-typedef struct __GLXDRIdisplayPrivateRec __GLXDRIdisplayPrivate;
-typedef struct __GLXDRIcontextPrivateRec __GLXDRIcontextPrivate;
-
-struct __GLXDRIdisplayPrivateRec
+struct dri_display
 {
    __GLXDRIdisplay base;
 
@@ -62,7 +59,7 @@ struct __GLXDRIdisplayPrivateRec
    int driPatch;
 };
 
-struct __GLXDRIcontextPrivateRec
+struct dri_context
 {
    __GLXDRIcontext base;
    __DRIcontext *driContext;
@@ -294,7 +291,7 @@ static const __DRIextension *loader_extensions[] = {
  */
 static void *
 CallCreateNewScreen(Display * dpy, int scrn, __GLXscreenConfigs * psc,
-                    __GLXDRIdisplayPrivate * driDpy)
+                    struct dri_display * driDpy)
 {
    void *psp = NULL;
    drm_handle_t hSAREA;
@@ -477,7 +474,7 @@ static void
 driDestroyContext(__GLXDRIcontext * context,
                   __GLXscreenConfigs * psc, Display * dpy)
 {
-   __GLXDRIcontextPrivate *pcp = (__GLXDRIcontextPrivate *) context;
+   struct dri_context *pcp = (struct dri_context *) context;
 
    (*psc->core->destroyContext) (pcp->driContext);
 
@@ -489,7 +486,7 @@ static Bool
 driBindContext(__GLXDRIcontext * context,
                __GLXDRIdrawable * draw, __GLXDRIdrawable * read)
 {
-   __GLXDRIcontextPrivate *pcp = (__GLXDRIcontextPrivate *) context;
+   struct dri_context *pcp = (struct dri_context *) context;
    const __DRIcoreExtension *core = pcp->psc->core;
 
    return (*core->bindContext) (pcp->driContext,
@@ -499,7 +496,7 @@ driBindContext(__GLXDRIcontext * context,
 static void
 driUnbindContext(__GLXDRIcontext * context)
 {
-   __GLXDRIcontextPrivate *pcp = (__GLXDRIcontextPrivate *) context;
+   struct dri_context *pcp = (struct dri_context *) context;
    const __DRIcoreExtension *core = pcp->psc->core;
 
    (*core->unbindContext) (pcp->driContext);
@@ -510,7 +507,7 @@ driCreateContext(__GLXscreenConfigs * psc,
                  const __GLcontextModes * mode,
                  GLXContext gc, GLXContext shareList, int renderType)
 {
-   __GLXDRIcontextPrivate *pcp, *pcp_shared;
+   struct dri_context *pcp, *pcp_shared;
    drm_context_t hwContext;
    __DRIcontext *shared = NULL;
    __GLXDRIconfigPrivate *config = (__GLXDRIconfigPrivate *) mode;
@@ -519,7 +516,7 @@ driCreateContext(__GLXscreenConfigs * psc,
       return NULL;
 
    if (shareList) {
-      pcp_shared = (__GLXDRIcontextPrivate *) shareList->driContext;
+      pcp_shared = (struct dri_context *) shareList->driContext;
       shared = pcp_shared->driContext;
    }
 
@@ -643,7 +640,7 @@ static __GLXDRIscreen *
 driCreateScreen(__GLXscreenConfigs * psc, int screen,
                 __GLXdisplayPrivate * priv)
 {
-   __GLXDRIdisplayPrivate *pdp;
+   struct dri_display *pdp;
    __GLXDRIscreen *psp;
    const __DRIextension **extensions;
    char *driverName;
@@ -684,7 +681,7 @@ driCreateScreen(__GLXscreenConfigs * psc, int screen,
       return NULL;
    }
 
-   pdp = (__GLXDRIdisplayPrivate *) priv->driDisplay;
+   pdp = (struct dri_display *) priv->driDisplay;
    psc->__driScreen = CallCreateNewScreen(psc->dpy, screen, psc, pdp);
    if (psc->__driScreen == NULL) {
       dlclose(psc->driver);
@@ -726,7 +723,7 @@ driDestroyDisplay(__GLXDRIdisplay * dpy)
 _X_HIDDEN __GLXDRIdisplay *
 driCreateDisplay(Display * dpy)
 {
-   __GLXDRIdisplayPrivate *pdpyp;
+   struct dri_display *pdpyp;
    int eventBase, errorBase;
    int major, minor, patch;
 
