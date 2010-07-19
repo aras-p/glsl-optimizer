@@ -543,7 +543,7 @@ exec_node *
 move_non_declarations(exec_list *instructions, exec_node *last,
 		      bool make_copies, gl_shader *target)
 {
-   foreach_list(node, instructions) {
+   foreach_list_safe(node, instructions) {
       ir_instruction *inst = (ir_instruction *) node;
 
       if (inst->as_variable() || inst->as_function())
