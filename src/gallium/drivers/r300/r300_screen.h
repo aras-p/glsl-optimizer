@@ -28,6 +28,8 @@
 
 #include "r300_chipset.h"
 
+#include "util/u_mempool.h"
+
 #include <stdio.h>
 
 struct r300_winsys_screen;
@@ -41,8 +43,15 @@ struct r300_screen {
     /* Chipset capabilities */
     struct r300_capabilities caps;
 
+    /* Memory pools. */
+    struct util_mempool pool_buffers;
+
     /** Combination of DBG_xxx flags */
     unsigned debug;
+
+    /* The number of created contexts to know whether we have multiple
+     * contexts or not. */
+    int num_contexts;
 };
 
 

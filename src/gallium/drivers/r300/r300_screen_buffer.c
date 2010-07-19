@@ -136,7 +136,39 @@ static void r300_buffer_destroy(struct pipe_screen *screen,
     if (rbuf->buf)
         rws->buffer_reference(rws, &rbuf->buf, NULL);
 
-    FREE(rbuf);
+    util_mempool_free(&r300screen->pool_buffers, rbuf);
+}
+
+static struct pipe_transfer*
+r300_default_get_transfer(struct pipe_context *context,
+                          struct pipe_resource *resource,
+                          struct pipe_subresource sr,
+                          unsigned usage,
+                          const struct pipe_box *box)
+{
+   struct r300_context *r300 = r300_context(context);
+   struct pipe_transfer *transfer =
+         util_mempool_malloc(&r300->pool_transfers);
+
+   transfer->resource = resource;
+   transfer->sr = sr;
+   transfer->usage = usage;
+   transfer->box = *box;
+   transfer->stride = 0;
+   transfer->slice_stride = 0;
+   transfer->data = NULL;
+
+   /* Note strides are zero, this is ok for buffers, but not for
+    * textures 2d & higher at least.
+    */
+   return transfer;
+}
+
+static void r300_default_transfer_destroy(struct pipe_context *pipe,
+                                          struct pipe_transfer *transfer)
+{
+   struct r300_context *r300 = r300_context(pipe);
+   util_mempool_free(&r300->pool_transfers, transfer);
 }
 
 static void *
@@ -236,14 +268,14 @@ static void r300_buffer_transfer_unmap( struct pipe_context *pipe,
 struct u_resource_vtbl r300_buffer_vtbl = 
 {
    u_default_resource_get_handle,      /* get_handle */
-   r300_buffer_destroy,		     /* resource_destroy */
-   r300_buffer_is_referenced_by_cs,  /* is_buffer_referenced */
-   u_default_get_transfer,	     /* get_transfer */
-   u_default_transfer_destroy,	     /* transfer_destroy */
-   r300_buffer_transfer_map,	     /* transfer_map */
+   r300_buffer_destroy,                /* resource_destroy */
+   r300_buffer_is_referenced_by_cs,    /* is_buffer_referenced */
+   r300_default_get_transfer,          /* get_transfer */
+   r300_default_transfer_destroy,      /* transfer_destroy */
+   r300_buffer_transfer_map,           /* transfer_map */
    r300_buffer_transfer_flush_region,  /* transfer_flush_region */
-   r300_buffer_transfer_unmap,	     /* transfer_unmap */
-   u_default_transfer_inline_write   /* transfer_inline_write */
+   r300_buffer_transfer_unmap,         /* transfer_unmap */
+   u_default_transfer_inline_write     /* transfer_inline_write */
 };
 
 struct pipe_resource *r300_buffer_create(struct pipe_screen *screen,
@@ -253,9 +285,7 @@ struct pipe_resource *r300_buffer_create(struct pipe_screen *screen,
     struct r300_buffer *rbuf;
     unsigned alignment = 16;
 
-    rbuf = CALLOC_STRUCT(r300_buffer);
-    if (!rbuf)
-	goto error1;
+    rbuf = util_mempool_malloc(&r300screen->pool_buffers);
 
     rbuf->magic = R300_BUFFER_MAGIC;
 
@@ -264,6 +294,10 @@ struct pipe_resource *r300_buffer_create(struct pipe_screen *screen,
     pipe_reference_init(&rbuf->b.b.reference, 1);
     rbuf->b.b.screen = screen;
     rbuf->domain = R300_DOMAIN_GTT;
+    rbuf->num_ranges = 0;
+    rbuf->buf = NULL;
+    rbuf->constant_buffer = NULL;
+    rbuf->user_buffer = NULL;
 
     /* Alloc constant buffers in RAM. */
     if (templ->bind & PIPE_BIND_CONSTANT_BUFFER) {
@@ -277,14 +311,12 @@ struct pipe_resource *r300_buffer_create(struct pipe_screen *screen,
                                        rbuf->b.b.bind, rbuf->b.b.usage,
                                        rbuf->domain);
 
-    if (!rbuf->buf)
-	goto error2;
+    if (!rbuf->buf) {
+        util_mempool_free(&r300screen->pool_buffers, rbuf);
+        return NULL;
+    }
 
     return &rbuf->b.b;
-error2:
-    FREE(rbuf);
-error1:
-    return NULL;
 }
 
 struct pipe_resource *r300_user_buffer_create(struct pipe_screen *screen,
@@ -292,28 +324,28 @@ struct pipe_resource *r300_user_buffer_create(struct pipe_screen *screen,
 					      unsigned bytes,
 					      unsigned bind)
 {
+    struct r300_screen *r300screen = r300_screen(screen);
     struct r300_buffer *rbuf;
 
-    rbuf = CALLOC_STRUCT(r300_buffer);
-    if (!rbuf)
-	goto no_rbuf;
+    rbuf = util_mempool_malloc(&r300screen->pool_buffers);
 
     rbuf->magic = R300_BUFFER_MAGIC;
 
     pipe_reference_init(&rbuf->b.b.reference, 1);
     rbuf->b.vtbl = &r300_buffer_vtbl;
     rbuf->b.b.screen = screen;
+    rbuf->b.b.target = PIPE_BUFFER;
     rbuf->b.b.format = PIPE_FORMAT_R8_UNORM;
     rbuf->b.b.usage = PIPE_USAGE_IMMUTABLE;
     rbuf->b.b.bind = bind;
     rbuf->b.b.width0 = bytes;
     rbuf->b.b.height0 = 1;
     rbuf->b.b.depth0 = 1;
+    rbuf->b.b.flags = 0;
     rbuf->domain = R300_DOMAIN_GTT;
-
+    rbuf->num_ranges = 0;
+    rbuf->buf = NULL;
+    rbuf->constant_buffer = NULL;
     rbuf->user_buffer = ptr;
     return &rbuf->b.b;
-
-no_rbuf:
-    return NULL;
 }

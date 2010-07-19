@@ -36,6 +36,24 @@
 
 #include <inttypes.h>
 
+static void r300_update_num_contexts(struct r300_screen *r300screen,
+                                     int diff)
+{
+    if (diff > 0) {
+        p_atomic_dec(&r300screen->num_contexts);
+
+        if (r300screen->num_contexts > 1)
+            util_mempool_set_thread_safety(&r300screen->pool_buffers,
+                                           UTIL_MEMPOOL_MULTITHREADED);
+    } else {
+        p_atomic_dec(&r300screen->num_contexts);
+
+        if (r300screen->num_contexts <= 1)
+            util_mempool_set_thread_safety(&r300screen->pool_buffers,
+                                           UTIL_MEMPOOL_SINGLETHREADED);
+    }
+}
+
 static void r300_release_referenced_objects(struct r300_context *r300)
 {
     struct pipe_framebuffer_state *fb =
@@ -102,6 +120,8 @@ static void r300_destroy_context(struct pipe_context* context)
 
     r300->rws->cs_destroy(r300->cs);
 
+    util_mempool_destroy(&r300->pool_transfers);
+
     FREE(r300->aa_state.state);
     FREE(r300->blend_color_state.state);
     FREE(r300->clip_state.state);
@@ -121,6 +141,8 @@ static void r300_destroy_context(struct pipe_context* context)
         FREE(r300->vertex_stream_state.state);
     }
     FREE(r300);
+
+    r300_update_num_contexts(r300->screen, -1);
 }
 
 void r300_flush_cb(void *data)
@@ -347,6 +369,8 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     if (!r300)
         return NULL;
 
+    r300_update_num_contexts(r300screen, 1);
+
     r300->rws = rws;
     r300->screen = r300screen;
 
@@ -357,6 +381,10 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     r300->context.destroy = r300_destroy_context;
 
     r300->cs = rws->cs_create(rws);
+
+    util_mempool_create(&r300->pool_transfers,
+                        sizeof(struct pipe_transfer), 64,
+                        UTIL_MEMPOOL_SINGLETHREADED);
 
     if (!r300screen->caps.has_tcl) {
         /* Create a Draw. This is used for SW TCL. */
