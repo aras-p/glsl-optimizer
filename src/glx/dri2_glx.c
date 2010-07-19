@@ -101,6 +101,7 @@ struct dri2_context
 struct dri2_drawable
 {
    __GLXDRIdrawable base;
+   __DRIdrawable *driDrawable;
    __DRIbuffer buffers[5];
    int bufferCount;
    int width, height;
@@ -127,9 +128,11 @@ dri2BindContext(__GLXDRIcontext *context,
 {
    struct dri2_context *pcp = (struct dri2_context *) context;
    struct dri2_screen *psc = (struct dri2_screen *) pcp->psc;
+   struct dri2_drawable *pdr = (struct dri2_drawable *) draw;
+   struct dri2_drawable *prd = (struct dri2_drawable *) read;
 
    return (*psc->core->bindContext) (pcp->driContext,
-				     draw->driDrawable, read->driDrawable);
+				     pdr->driDrawable, prd->driDrawable);
 }
 
 static void
@@ -179,18 +182,19 @@ dri2CreateContext(__GLXscreenConfigs *base,
 }
 
 static void
-dri2DestroyDrawable(__GLXDRIdrawable *pdraw)
+dri2DestroyDrawable(__GLXDRIdrawable *base)
 {
-   struct dri2_screen *psc = (struct dri2_screen *) pdraw->psc;
+   struct dri2_screen *psc = (struct dri2_screen *) base->psc;
+   struct dri2_drawable *pdraw = (struct dri2_drawable *) base;
    __GLXdisplayPrivate *dpyPriv;
    struct dri2_display *pdp;
 
-   dpyPriv = __glXInitialize(pdraw->psc->dpy);
+   dpyPriv = __glXInitialize(base->psc->dpy);
    pdp = (struct dri2_display *)dpyPriv->dri2Display;
 
-   __glxHashDelete(pdp->dri2Hash, pdraw->xDrawable);
+   __glxHashDelete(pdp->dri2Hash, pdraw->base.xDrawable);
    (*psc->core->destroyDrawable) (pdraw->driDrawable);
-   DRI2DestroyDrawable(psc->base.dpy, pdraw->xDrawable);
+   DRI2DestroyDrawable(psc->base.dpy, pdraw->base.xDrawable);
    Xfree(pdraw);
 }
 
@@ -238,18 +242,18 @@ dri2CreateDrawable(__GLXscreenConfigs *base, XID xDrawable,
    dpyPriv = __glXInitialize(psc->base.dpy);
    pdp = (struct dri2_display *)dpyPriv->dri2Display;;
    /* Create a new drawable */
-   pdraw->base.driDrawable =
+   pdraw->driDrawable =
       (*psc->dri2->createNewDrawable) (psc->driScreen,
                                        config->driConfig, pdraw);
 
-   if (!pdraw->base.driDrawable) {
+   if (!pdraw->driDrawable) {
       DRI2DestroyDrawable(psc->base.dpy, xDrawable);
       Xfree(pdraw);
       return NULL;
    }
 
    if (__glxHashInsert(pdp->dri2Hash, xDrawable, pdraw)) {
-      (*psc->core->destroyDrawable) (pdraw->base.driDrawable);
+      (*psc->core->destroyDrawable) (pdraw->driDrawable);
       DRI2DestroyDrawable(psc->base.dpy, xDrawable);
       Xfree(pdraw);
       return None;
@@ -319,7 +323,7 @@ dri2CopySubBuffer(__GLXDRIdrawable *pdraw, int x, int y, int width, int height)
 
 #ifdef __DRI2_FLUSH
    if (psc->f)
-      (*psc->f->flush) (pdraw->driDrawable);
+      (*psc->f->flush) (priv->driDrawable);
 #endif
 
    region = XFixesCreateRegion(psc->base.dpy, &xrect, 1);
@@ -349,7 +353,7 @@ dri2_copy_drawable(struct dri2_drawable *priv, int dest, int src)
 
 #ifdef __DRI2_FLUSH
    if (psc->f)
-      (*psc->f->flush) (priv->base.driDrawable);
+      (*psc->f->flush) (priv->driDrawable);
 #endif
 
    region = XFixesCreateRegion(psc->base.dpy, &xrect, 1);
@@ -451,7 +455,7 @@ dri2SwapBuffers(__GLXDRIdrawable *pdraw, int64_t target_msc, int64_t divisor,
 
 #ifdef __DRI2_FLUSH
     if (psc->f)
-    	(*psc->f->flush)(pdraw->driDrawable);
+    	(*psc->f->flush)(priv->driDrawable);
 #endif
 
     /* Old servers don't send invalidate events */
@@ -586,10 +590,11 @@ dri2InvalidateBuffers(Display *dpy, XID drawable)
    __GLXDRIdrawable *pdraw =
       dri2GetGlxDrawableFromXDrawableId(dpy, drawable);
    struct dri2_screen *psc = (struct dri2_screen *) pdraw->psc;
+   struct dri2_drawable *pdp = (struct dri2_drawable *) pdraw;
 
 #if __DRI2_FLUSH_VERSION >= 3
    if (pdraw && psc->f)
-       psc->f->invalidate(pdraw->driDrawable);
+       psc->f->invalidate(pdp->driDrawable);
 #endif
 }
 
@@ -599,11 +604,12 @@ dri2_bind_tex_image(Display * dpy,
 		    int buffer, const int *attrib_list)
 {
    GLXContext gc = __glXGetCurrentContext();
-   __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable, NULL);
-    __GLXdisplayPrivate *dpyPriv = __glXInitialize(dpy);
-    struct dri2_display *pdp =
-	(struct dri2_display *) dpyPriv->dri2Display;
-   struct dri2_screen *psc = (struct dri2_screen *) pdraw->psc;
+   __GLXDRIdrawable *base = GetGLXDRIDrawable(dpy, drawable, NULL);
+   __GLXdisplayPrivate *dpyPriv = __glXInitialize(dpy);
+   struct dri2_drawable *pdraw = (struct dri2_drawable *) base;
+   struct dri2_display *pdp =
+      (struct dri2_display *) dpyPriv->dri2Display;
+   struct dri2_screen *psc = (struct dri2_screen *) base->psc;
 
    if (pdraw != NULL) {
 
@@ -615,13 +621,13 @@ dri2_bind_tex_image(Display * dpy,
       if (psc->texBuffer->base.version >= 2 &&
 	  psc->texBuffer->setTexBuffer2 != NULL) {
 	 (*psc->texBuffer->setTexBuffer2) (gc->__driContext,
-					   pdraw->textureTarget,
-					   pdraw->textureFormat,
+					   pdraw->base.textureTarget,
+					   pdraw->base.textureFormat,
 					   pdraw->driDrawable);
       }
       else {
 	 (*psc->texBuffer->setTexBuffer) (gc->__driContext,
-					  pdraw->textureTarget,
+					  pdraw->base.textureTarget,
 					  pdraw->driDrawable);
       }
    }

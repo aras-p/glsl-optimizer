@@ -58,6 +58,7 @@ struct drisw_drawable
    GC gc;
    GC swapgc;
 
+   __DRIdrawable *driDrawable;
    XVisualInfo *visinfo;
    XImage *ximage;
 };
@@ -253,9 +254,11 @@ driBindContext(__GLXDRIcontext * context,
 {
    struct drisw_context *pcp = (struct drisw_context *) context;
    struct drisw_screen *psc = (struct drisw_screen *) pcp->psc;
+   struct drisw_drawable *pdr = (struct drisw_drawable *) draw;
+   struct drisw_drawable *prd = (struct drisw_drawable *) read;
 
    return (*psc->core->bindContext) (pcp->driContext,
-				     draw->driDrawable, read->driDrawable);
+				     pdr->driDrawable, prd->driDrawable);
 }
 
 static void
@@ -311,7 +314,7 @@ driDestroyDrawable(__GLXDRIdrawable * pdraw)
    struct drisw_drawable *pdp = (struct drisw_drawable *) pdraw;
    struct drisw_screen *psc = (struct drisw_screen *) pdp->base.psc;
 
-   (*psc->core->destroyDrawable) (pdraw->driDrawable);
+   (*psc->core->destroyDrawable) (pdp->driDrawable);
 
    XDestroyDrawable(pdp, pdraw->psc->dpy, pdraw->drawable);
    Xfree(pdp);
@@ -321,7 +324,6 @@ static __GLXDRIdrawable *
 driCreateDrawable(__GLXscreenConfigs *base, XID xDrawable,
 		  GLXDrawable drawable, const __GLcontextModes * modes)
 {
-   __GLXDRIdrawable *pdraw;
    struct drisw_drawable *pdp;
    __GLXDRIconfigPrivate *config = (__GLXDRIconfigPrivate *) modes;
    struct drisw_screen *psc = (struct drisw_screen *) base;
@@ -336,27 +338,25 @@ driCreateDrawable(__GLXscreenConfigs *base, XID xDrawable,
    if (!pdp)
       return NULL;
 
-   pdraw = &(pdp->base);
-   pdraw->xDrawable = xDrawable;
-   pdraw->drawable = drawable;
-   pdraw->psc = &psc->base;
+   pdp->base.xDrawable = xDrawable;
+   pdp->base.drawable = drawable;
+   pdp->base.psc = &psc->base;
 
    XCreateDrawable(pdp, psc->base.dpy, xDrawable, modes->visualID);
 
    /* Create a new drawable */
-   pdraw->driDrawable =
-      (*swrast->createNewDrawable) (psc->driScreen,
-				    config->driConfig, pdp);
+   pdp->driDrawable =
+      (*swrast->createNewDrawable) (psc->driScreen, config->driConfig, pdp);
 
-   if (!pdraw->driDrawable) {
+   if (!pdp->driDrawable) {
       XDestroyDrawable(pdp, psc->base.dpy, xDrawable);
       Xfree(pdp);
       return NULL;
    }
 
-   pdraw->destroyDrawable = driDestroyDrawable;
+   pdp->base.destroyDrawable = driDestroyDrawable;
 
-   return pdraw;
+   return &pdp->base;
 }
 
 static int64_t
@@ -370,7 +370,7 @@ driSwapBuffers(__GLXDRIdrawable * pdraw,
    (void) divisor;
    (void) remainder;
 
-   (*psc->core->swapBuffers) (pdraw->driDrawable);
+   (*psc->core->swapBuffers) (pdp->driDrawable);
 
    return 0;
 }

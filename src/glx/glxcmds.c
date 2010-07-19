@@ -2481,7 +2481,7 @@ __glXGetMscRateOML(Display * dpy, GLXDrawable drawable,
    if (draw == NULL)
       return False;
 
-   return __driGetMscRateOML(draw->driDrawable, numerator, denominator, draw);
+   return __driGetMscRateOML(NULL, numerator, denominator, draw);
 #else
    (void) dpy;
    (void) drawable;
