@@ -40,7 +40,7 @@ static void r300_update_num_contexts(struct r300_screen *r300screen,
                                      int diff)
 {
     if (diff > 0) {
-        p_atomic_dec(&r300screen->num_contexts);
+        p_atomic_inc(&r300screen->num_contexts);
 
         if (r300screen->num_contexts > 1)
             util_mempool_set_thread_safety(&r300screen->pool_buffers,
