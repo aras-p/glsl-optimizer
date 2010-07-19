@@ -122,6 +122,8 @@ static void r300_destroy_context(struct pipe_context* context)
 
     util_mempool_destroy(&r300->pool_transfers);
 
+    r300_update_num_contexts(r300->screen, -1);
+
     FREE(r300->aa_state.state);
     FREE(r300->blend_color_state.state);
     FREE(r300->clip_state.state);
@@ -141,8 +143,6 @@ static void r300_destroy_context(struct pipe_context* context)
         FREE(r300->vertex_stream_state.state);
     }
     FREE(r300);
-
-    r300_update_num_contexts(r300->screen, -1);
 }
 
 void r300_flush_cb(void *data)
