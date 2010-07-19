@@ -173,9 +173,24 @@ ir_validate::validate_ir(ir_instruction *ir, void *data)
 }
 
 void
+check_node_type(ir_instruction *ir, void *data)
+{
+   if (ir->ir_type <= ir_type_unset || ir->ir_type >= ir_type_max) {
+      printf("Instruction node with unset type\n");
+      ir->print(); printf("\n");
+   }
+}
+
+void
 validate_ir_tree(exec_list *instructions)
 {
    ir_validate v;
 
    v.run(instructions);
+
+   foreach_iter(exec_list_iterator, iter, *instructions) {
+      ir_instruction *ir = (ir_instruction *)iter.get();
+
+      visit_tree(ir, check_node_type, NULL);
+   }
 }

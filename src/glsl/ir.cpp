@@ -29,6 +29,7 @@
 ir_assignment::ir_assignment(ir_rvalue *lhs, ir_rvalue *rhs,
 			     ir_rvalue *condition)
 {
+   this->ir_type = ir_type_assignment;
    this->lhs = lhs;
    this->rhs = rhs;
    this->condition = condition;
@@ -38,6 +39,7 @@ ir_assignment::ir_assignment(ir_rvalue *lhs, ir_rvalue *rhs,
 ir_expression::ir_expression(int op, const struct glsl_type *type,
 			     ir_rvalue *op0, ir_rvalue *op1)
 {
+   this->ir_type = ir_type_expression;
    this->type = type;
    this->operation = ir_expression_operation(op);
    this->operands[0] = op0;
@@ -190,7 +192,7 @@ ir_expression::get_operator(const char *str)
 
 ir_constant::ir_constant()
 {
-   /* empty */
+   this->ir_type = ir_type_constant;
 }
 
 ir_constant::ir_constant(const struct glsl_type *type,
@@ -199,36 +201,42 @@ ir_constant::ir_constant(const struct glsl_type *type,
    assert((type->base_type >= GLSL_TYPE_UINT)
 	  && (type->base_type <= GLSL_TYPE_BOOL));
 
+   this->ir_type = ir_type_constant;
    this->type = type;
    memcpy(& this->value, data, sizeof(this->value));
 }
 
 ir_constant::ir_constant(float f)
 {
+   this->ir_type = ir_type_constant;
    this->type = glsl_type::float_type;
    this->value.f[0] = f;
 }
 
 ir_constant::ir_constant(unsigned int u)
 {
+   this->ir_type = ir_type_constant;
    this->type = glsl_type::uint_type;
    this->value.u[0] = u;
 }
 
 ir_constant::ir_constant(int i)
 {
+   this->ir_type = ir_type_constant;
    this->type = glsl_type::int_type;
    this->value.i[0] = i;
 }
 
 ir_constant::ir_constant(bool b)
 {
+   this->ir_type = ir_type_constant;
    this->type = glsl_type::bool_type;
    this->value.b[0] = b;
 }
 
 ir_constant::ir_constant(const ir_constant *c, unsigned i)
 {
+   this->ir_type = ir_type_constant;
    this->type = c->type->get_base_type();
 
    switch (this->type->base_type) {
@@ -242,6 +250,7 @@ ir_constant::ir_constant(const ir_constant *c, unsigned i)
 
 ir_constant::ir_constant(const struct glsl_type *type, exec_list *value_list)
 {
+   this->ir_type = ir_type_constant;
    this->type = type;
 
    /* FINISHME: Support array types. */
@@ -454,6 +463,7 @@ ir_constant::has_value(const ir_constant *c) const
 
 ir_dereference_variable::ir_dereference_variable(ir_variable *var)
 {
+   this->ir_type = ir_type_dereference_variable;
    this->var = var;
    this->type = (var != NULL) ? var->type : glsl_type::error_type;
 }
@@ -462,6 +472,7 @@ ir_dereference_variable::ir_dereference_variable(ir_variable *var)
 ir_dereference_array::ir_dereference_array(ir_rvalue *value,
 					   ir_rvalue *array_index)
 {
+   this->ir_type = ir_type_dereference_array;
    this->array_index = array_index;
    this->set_array(value);
 }
@@ -472,6 +483,7 @@ ir_dereference_array::ir_dereference_array(ir_variable *var,
 {
    void *ctx = talloc_parent(var);
 
+   this->ir_type = ir_type_dereference_array;
    this->array_index = array_index;
    this->set_array(new(ctx) ir_dereference_variable(var));
 }
@@ -500,6 +512,7 @@ ir_dereference_array::set_array(ir_rvalue *value)
 ir_dereference_record::ir_dereference_record(ir_rvalue *value,
 					     const char *field)
 {
+   this->ir_type = ir_type_dereference_record;
    this->record = value;
    this->field = field;
    this->type = (this->record != NULL)
@@ -512,6 +525,7 @@ ir_dereference_record::ir_dereference_record(ir_variable *var,
 {
    void *ctx = talloc_parent(var);
 
+   this->ir_type = ir_type_dereference_record;
    this->record = new(ctx) ir_dereference_variable(var);
    this->field = field;
    this->type = (this->record != NULL)
@@ -624,6 +638,7 @@ ir_swizzle::ir_swizzle(ir_rvalue *val, unsigned x, unsigned y, unsigned z,
    : val(val)
 {
    const unsigned components[4] = { x, y, z, w };
+   this->ir_type = ir_type_swizzle;
    this->init_mask(components, count);
 }
 
@@ -631,11 +646,13 @@ ir_swizzle::ir_swizzle(ir_rvalue *val, const unsigned *comp,
 		       unsigned count)
    : val(val)
 {
+   this->ir_type = ir_type_swizzle;
    this->init_mask(comp, count);
 }
 
 ir_swizzle::ir_swizzle(ir_rvalue *val, ir_swizzle_mask mask)
 {
+   this->ir_type = ir_type_swizzle;
    this->val = val;
    this->mask = mask;
    this->type = glsl_type::get_instance(val->type->base_type,
@@ -736,6 +753,7 @@ ir_variable::ir_variable(const struct glsl_type *type, const char *name)
      shader_in(false), shader_out(false),
      mode(ir_var_auto), interpolation(ir_var_smooth), array_lvalue(false)
 {
+   this->ir_type = ir_type_variable;
    this->type = type;
    this->name = talloc_strdup(this, name);
    this->location = -1;
@@ -775,7 +793,7 @@ ir_variable::component_slots() const
 ir_function_signature::ir_function_signature(const glsl_type *return_type)
    : return_type(return_type), is_defined(false), _function(NULL)
 {
-   /* empty */
+   this->ir_type = ir_type_function_signature;
 }
 
 
@@ -825,6 +843,7 @@ ir_function_signature::replace_parameters(exec_list *new_params)
 
 ir_function::ir_function(const char *name)
 {
+   this->ir_type = ir_type_function;
    this->name = talloc_strdup(this, name);
 }
 

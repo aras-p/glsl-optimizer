@@ -41,11 +41,34 @@ extern "C" {
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
 #endif
 
+enum ir_node_type {
+   ir_type_unset,
+   ir_type_variable,
+   ir_type_assignment,
+   ir_type_call,
+   ir_type_constant,
+   ir_type_dereference_array,
+   ir_type_dereference_record,
+   ir_type_dereference_variable,
+   ir_type_discard,
+   ir_type_expression,
+   ir_type_function,
+   ir_type_function_signature,
+   ir_type_if,
+   ir_type_loop,
+   ir_type_loop_jump,
+   ir_type_return,
+   ir_type_swizzle,
+   ir_type_texture,
+   ir_type_max, /**< maximum ir_type enum number, for validation */
+};
+
 /**
  * Base class of all IR instructions
  */
 class ir_instruction : public exec_node {
 public:
+   enum ir_node_type ir_type;
    const struct glsl_type *type;
 
    class ir_constant *constant_expression_value();
@@ -84,7 +107,7 @@ public:
 protected:
    ir_instruction()
    {
-      /* empty */
+      ir_type = ir_type_unset;
    }
 };
 
@@ -410,7 +433,7 @@ public:
    ir_if(ir_rvalue *condition)
       : condition(condition)
    {
-      /* empty */
+      ir_type = ir_type_if;
    }
 
    virtual ir_if *clone(struct hash_table *ht) const;
@@ -442,7 +465,7 @@ class ir_loop : public ir_instruction {
 public:
    ir_loop() : from(NULL), to(NULL), increment(NULL), counter(NULL)
    {
-      /* empty */
+      ir_type = ir_type_loop;
    }
 
    virtual ir_loop *clone(struct hash_table *ht) const;
@@ -664,6 +687,7 @@ public:
    ir_call(ir_function_signature *callee, exec_list *actual_parameters)
       : callee(callee)
    {
+      ir_type = ir_type_call;
       assert(callee->return_type != NULL);
       type = callee->return_type;
       actual_parameters->move_nodes_to(& this->actual_parameters);
@@ -726,7 +750,7 @@ private:
    ir_call()
       : callee(NULL)
    {
-      /* empty */
+      this->ir_type = ir_type_call;
    }
 
    ir_function_signature *callee;
@@ -746,7 +770,7 @@ class ir_jump : public ir_instruction {
 protected:
    ir_jump()
    {
-      /* empty */
+      ir_type = ir_type_unset;
    }
 };
 
@@ -755,13 +779,13 @@ public:
    ir_return()
       : value(NULL)
    {
-      /* empty */
+      this->ir_type = ir_type_return;
    }
 
    ir_return(ir_rvalue *value)
       : value(value)
    {
-      /* empty */
+      this->ir_type = ir_type_return;
    }
 
    virtual ir_return *clone(struct hash_table *) const;
@@ -804,6 +828,7 @@ public:
 
    ir_loop_jump(jump_mode mode)
    {
+      this->ir_type = ir_type_loop_jump;
       this->mode = mode;
       this->loop = loop;
    }
@@ -841,6 +866,7 @@ class ir_discard : public ir_jump {
 public:
    ir_discard()
    {
+      this->ir_type = ir_type_discard;
       this->condition = NULL;
    }
 
@@ -898,7 +924,7 @@ public:
    ir_texture(enum ir_texture_opcode op)
       : op(op), projector(NULL), shadow_comparitor(NULL)
    {
-      /* empty */
+      this->ir_type = ir_type_texture;
    }
 
    virtual ir_texture *clone(struct hash_table *) const;
