@@ -69,6 +69,7 @@ static void util_mempool_add_new_page(struct util_mempool *pool)
 
    block = util_mempool_get_block(pool, page, pool->num_blocks-1);
    block->next_free = pool->first_free;
+   block->magic = UTIL_MEMPOOL_MAGIC;
    pool->first_free = util_mempool_get_block(pool, page, 0);
    pool->num_pages++;
 
