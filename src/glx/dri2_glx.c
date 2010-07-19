@@ -522,7 +522,7 @@ dri2GetBuffersWithFormat(__DRIdrawable * driDrawable,
 
 #ifdef X_DRI2SwapInterval
 
-static void
+static int
 dri2SetSwapInterval(__GLXDRIdrawable *pdraw, int interval)
 {
    struct dri2_drawable *priv =  (struct dri2_drawable *) pdraw;
@@ -535,10 +535,10 @@ dri2SetSwapInterval(__GLXDRIdrawable *pdraw, int interval)
 
    switch (vblank_mode) {
    case DRI_CONF_VBLANK_NEVER:
-      return;
+      return GLX_BAD_VALUE;
    case DRI_CONF_VBLANK_ALWAYS_SYNC:
       if (interval <= 0)
-	 return;
+	 return GLX_BAD_VALUE;
       break;
    default:
       break;
@@ -546,6 +546,8 @@ dri2SetSwapInterval(__GLXDRIdrawable *pdraw, int interval)
 
    DRI2SwapInterval(priv->base.psc->dpy, priv->base.xDrawable, interval);
    priv->swap_interval = interval;
+
+   return 0;
 }
 
 static unsigned int

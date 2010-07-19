@@ -151,7 +151,7 @@ struct __GLXDRIscreenRec {
 		     int64_t *msc, int64_t *sbc);
    int (*waitForSBC)(__GLXDRIdrawable *pdraw, int64_t target_sbc, int64_t *ust,
 		     int64_t *msc, int64_t *sbc);
-   void (*setSwapInterval)(__GLXDRIdrawable *pdraw, int interval);
+   int (*setSwapInterval)(__GLXDRIdrawable *pdraw, int interval);
    int (*getSwapInterval)(__GLXDRIdrawable *pdraw);
 };
 
@@ -541,16 +541,8 @@ struct __GLXscreenConfigsRec
    const __DRIcopySubBufferExtension *driCopySubBuffer;
 #endif
 
-#ifdef __DRI_SWAP_CONTROL
-   const __DRIswapControlExtension *swapControl;
-#endif
-
 #ifdef __DRI_FRAME_TRACKING
    const __DRIframeTrackingExtension *frameTracking;
-#endif
-
-#ifdef __DRI_MEDIA_STREAM_COUNTER
-   const __DRImediaStreamCounterExtension *msc;
 #endif
 
 #endif

@@ -2038,22 +2038,6 @@ __glXSwapIntervalSGI(int interval)
       return GLX_BAD_VALUE;
    }
 
-#ifdef __DRI_SWAP_CONTROL
-   if (gc->driContext) {
-      __GLXscreenConfigs * const psc = GetGLXScreenConfigs( gc->currentDpy,
-							    gc->screen );
-      __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(gc->currentDpy,
-						  gc->currentDrawable,
-						  NULL);
-      if (psc->swapControl != NULL && pdraw != NULL) {
-	 psc->swapControl->setSwapInterval(pdraw->driDrawable, interval);
-	 return 0;
-      }
-      else if (pdraw == NULL) {
-	 return GLX_BAD_CONTEXT;
-      }
-   }
-#endif
    psc = GetGLXScreenConfigs( gc->currentDpy, gc->screen);
 
 #ifdef GLX_DIRECT_RENDERING
@@ -2097,25 +2081,9 @@ __glXSwapIntervalSGI(int interval)
 static int
 __glXSwapIntervalMESA(unsigned int interval)
 {
+#ifdef GLX_DIRECT_RENDERING
    GLXContext gc = __glXGetCurrentContext();
 
-#ifdef __DRI_SWAP_CONTROL
-   if (gc != NULL && gc->driContext) {
-      __GLXscreenConfigs *const psc = GetGLXScreenConfigs(gc->currentDpy,
-                                                          gc->screen);
-
-      if ((psc != NULL) && (psc->driScreen != NULL)) {
-         __GLXDRIdrawable *pdraw =
-            GetGLXDRIDrawable(gc->currentDpy, gc->currentDrawable, NULL);
-         if (psc->swapControl != NULL && pdraw != NULL) {
-            psc->swapControl->setSwapInterval(pdraw->driDrawable, interval);
-            return 0;
-         }
-      }
-   }
-#endif
-
-#ifdef GLX_DIRECT_RENDERING
    if (gc != NULL && gc->driContext) {
       __GLXscreenConfigs *psc;
 
@@ -2123,8 +2091,7 @@ __glXSwapIntervalMESA(unsigned int interval)
       if (psc->driScreen && psc->driScreen->setSwapInterval) {
          __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(gc->currentDpy,
 						     gc->currentDrawable, NULL);
-	 psc->driScreen->setSwapInterval(pdraw, interval);
-	 return 0;
+	 return psc->driScreen->setSwapInterval(pdraw, interval);
       }
    }
 #endif
@@ -2136,24 +2103,9 @@ __glXSwapIntervalMESA(unsigned int interval)
 static int
 __glXGetSwapIntervalMESA(void)
 {
-#ifdef __DRI_SWAP_CONTROL
+#ifdef GLX_DIRECT_RENDERING
    GLXContext gc = __glXGetCurrentContext();
 
-   if (gc != NULL && gc->driContext) {
-      __GLXscreenConfigs *const psc = GetGLXScreenConfigs(gc->currentDpy,
-                                                          gc->screen);
-
-      if ((psc != NULL) && (psc->driScreen != NULL)) {
-         __GLXDRIdrawable *pdraw =
-            GetGLXDRIDrawable(gc->currentDpy, gc->currentDrawable, NULL);
-         if (psc->swapControl != NULL && pdraw != NULL) {
-            return psc->swapControl->getSwapInterval(pdraw->driDrawable);
-         }
-      }
-   }
-#endif
-
-#ifdef GLX_DIRECT_RENDERING
    if (gc != NULL && gc->driContext) {
       __GLXscreenConfigs *psc;
 
@@ -2302,16 +2254,6 @@ __glXGetVideoSyncSGI(unsigned int *count)
     * FIXME: there should be a GLX encoding for this call.  I can find no
     * FIXME: documentation for the GLX encoding.
     */
-#ifdef __DRI_MEDIA_STREAM_COUNTER
-   if ( psc->msc && psc->driScreen ) {
-      ret = (*psc->msc->getDrawableMSC)(psc->__driScreen,
-					pdraw->driDrawable, &msc);
-      *count = (unsigned) msc;
-
-      return (ret == 0) ? 0 : GLX_BAD_CONTEXT;
-   }
-#endif
-
 #ifdef GLX_DIRECT_RENDERING
    if (psc->driScreen && psc->driScreen->getDrawableMSC) {
       ret = psc->driScreen->getDrawableMSC(psc, pdraw, &ust, &msc, &sbc);
@@ -2348,15 +2290,6 @@ __glXWaitVideoSyncSGI(int divisor, int remainder, unsigned int *count)
    psc = GetGLXScreenConfigs( gc->currentDpy, gc->screen);
 #ifdef GLX_DIRECT_RENDERING
    pdraw = GetGLXDRIDrawable(gc->currentDpy, gc->currentDrawable, NULL);
-#endif
-
-#ifdef __DRI_MEDIA_STREAM_COUNTER
-   if (psc->msc != NULL && psc->driScreen ) {
-      ret = (*psc->msc->waitForMSC)(pdraw->driDrawable, 0,
-				    divisor, remainder, &msc, &sbc);
-      *count = (unsigned) msc;
-      return (ret == 0) ? 0 : GLX_BAD_CONTEXT;
-   }
 #endif
 
 #ifdef GLX_DIRECT_RENDERING
@@ -2543,18 +2476,7 @@ __glXGetSyncValuesOML(Display * dpy, GLXDrawable drawable,
 
 #ifdef GLX_DIRECT_RENDERING
    pdraw = GetGLXDRIDrawable(dpy, drawable, &i);
-#endif
    psc = priv->screenConfigs[i];
-
-#if defined(__DRI_SWAP_BUFFER_COUNTER) && defined(__DRI_MEDIA_STREAM_COUNTER)
-   if (pdraw && psc->sbc && psc->msc)
-      return ( (pdraw && psc->sbc && psc->msc)
-	       && ((*psc->msc->getMSC)(psc->driScreen, msc) == 0)
-	       && ((*psc->sbc->getSBC)(pdraw->driDrawable, sbc) == 0)
-	       && (__glXGetUST(ust) == 0) );
-#endif
-
-#ifdef GLX_DIRECT_RENDERING
    if (pdraw && psc && psc->driScreen && psc->driScreen->getDrawableMSC) {
       ret = psc->driScreen->getDrawableMSC(psc, pdraw, ust, msc, sbc);
       return ret;
@@ -2703,12 +2625,6 @@ __glXSwapBuffersMscOML(Display * dpy, GLXDrawable drawable,
    if (target_msc == 0 && divisor == 0 && remainder == 0)
       remainder = 1;
 
-#ifdef __DRI_SWAP_BUFFER_COUNTER
-   if (psc->counters != NULL)
-      return (*psc->sbc->swapBuffersMSC)(pdraw->driDrawable, target_msc,
-					 divisor, remainder);
-#endif
-
 #ifdef GLX_DIRECT_RENDERING
    if (psc->driScreen && psc->driScreen->swapBuffers)
       return (*psc->driScreen->swapBuffers)(pdraw, target_msc, divisor,
@@ -2741,18 +2657,6 @@ __glXWaitForMscOML(Display * dpy, GLXDrawable drawable,
    if (divisor > 0 && remainder >= divisor)
       return False;
 
-#ifdef __DRI_MEDIA_STREAM_COUNTER
-   if (pdraw != NULL && psc->msc != NULL) {
-      ret = (*psc->msc->waitForMSC) (pdraw->driDrawable, target_msc,
-                                     divisor, remainder, msc, sbc);
-
-      /* __glXGetUST returns zero on success and non-zero on failure.
-       * This function returns True on success and False on failure.
-       */
-      return ((ret == 0) && (__glXGetUST(ust) == 0));
-   }
-#endif
-
 #ifdef GLX_DIRECT_RENDERING
    if (pdraw && psc->driScreen && psc->driScreen->waitForMSC) {
       ret = psc->driScreen->waitForMSC(pdraw, target_msc, divisor, remainder,
@@ -2782,17 +2686,6 @@ __glXWaitForSbcOML(Display * dpy, GLXDrawable drawable,
     */
    if (target_sbc < 0)
       return False;
-#ifdef __DRI_SWAP_BUFFER_COUNTER
-   if (pdraw != NULL && psc->sbc != NULL) {
-      ret =
-         (*psc->sbc->waitForSBC) (pdraw->driDrawable, target_sbc, msc, sbc);
-
-      /* __glXGetUST returns zero on success and non-zero on failure.
-       * This function returns True on success and False on failure.
-       */
-      return ((ret == 0) && (__glXGetUST(ust) == 0));
-   }
-#endif
 
 #ifdef GLX_DIRECT_RENDERING
    if (pdraw && psc->driScreen && psc->driScreen->waitForSBC) {

@@ -336,40 +336,6 @@ driConvertConfigs(const __DRIcoreExtension * core,
    return head.next;
 }
 
-/* Bind DRI1 specific extensions */
-_X_HIDDEN void
-driBindExtensions(__GLXscreenConfigs *psc, const __DRIextension **extensions)
-{
-   int i;
-
-   for (i = 0; extensions[i]; i++) {
-#ifdef __DRI_SWAP_CONTROL
-      /* No DRI2 support for swap_control at the moment, since SwapBuffers
-       * is done by the X server */
-      if (strcmp(extensions[i]->name, __DRI_SWAP_CONTROL) == 0) {
-	 psc->swapControl = (__DRIswapControlExtension *) extensions[i];
-	 __glXEnableDirectExtension(psc, "GLX_SGI_swap_control");
-	 __glXEnableDirectExtension(psc, "GLX_MESA_swap_control");
-      }
-#endif
-
-#ifdef __DRI_MEDIA_STREAM_COUNTER
-      if (strcmp(extensions[i]->name, __DRI_MEDIA_STREAM_COUNTER) == 0) {
-         psc->msc = (__DRImediaStreamCounterExtension *) extensions[i];
-         __glXEnableDirectExtension(psc, "GLX_SGI_video_sync");
-      }
-#endif
-
-#ifdef __DRI_SWAP_BUFFER_COUNTER
-      /* No driver supports this at this time and the extension is
-       * not defined in dri_interface.h.  Will enable
-       * GLX_OML_sync_control if implemented. */
-#endif
-
-      /* Ignore unknown extensions */
-   }
-}
-
 /* Bind extensions common to DRI1 and DRI2 */
 _X_HIDDEN void
 driBindCommonExtensions(__GLXscreenConfigs *psc,

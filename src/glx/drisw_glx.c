@@ -448,7 +448,6 @@ driCreateScreen(int screen, __GLXdisplayPrivate *priv)
    }
 
    extensions = psc->core->getExtensions(psc->base.__driScreen);
-   driBindExtensions(&psc->base, extensions);
    driBindCommonExtensions(&psc->base, extensions);
 
    psc->base.configs =

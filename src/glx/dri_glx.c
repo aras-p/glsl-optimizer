@@ -66,6 +66,9 @@ struct dri_screen
    __GLXDRIscreen driScreen;
    const __DRIlegacyExtension *legacy;
    const __DRIcoreExtension *core;
+   const __DRIswapControlExtension *swapControl;
+   const __DRImediaStreamCounterExtension *msc;
+
    void *driver;
    int fd;
 };
@@ -657,6 +660,116 @@ static const struct glx_context_vtable dri_context_vtable = {
    NULL,
 };
 
+#ifdef __DRI_SWAP_BUFFER_COUNTER
+
+static int
+driDrawableGetMSC(__GLXscreenConfigs *base, __GLXDRIdrawable *pdraw,
+		   int64_t *ust, int64_t *msc, int64_t *sbc)
+{
+   struct dri_screen *psc = (struct dri_screen *) base;
+
+   if (pdraw && psc->sbc && psc->msc)
+      return ( (*psc->msc->getMSC)(psc->driScreen, msc) == 0 &&
+	       (*psc->sbc->getSBC)(pdraw->driDrawable, sbc) == 0 && 
+	       __glXGetUST(ust) == 0 );
+}
+
+static int
+driWaitForMSC(__GLXDRIdrawable *pdraw, int64_t target_msc, int64_t divisor,
+	       int64_t remainder, int64_t *ust, int64_t *msc, int64_t *sbc)
+{
+   struct dri_screen *psc = (struct dri_screen *) pdraw->psc;
+
+   if (pdraw != NULL && psc->msc != NULL) {
+      ret = (*psc->msc->waitForMSC) (pdraw->driDrawable, target_msc,
+				     divisor, remainder, msc, sbc);
+
+      /* __glXGetUST returns zero on success and non-zero on failure.
+       * This function returns True on success and False on failure.
+       */
+      return ret == 0 && __glXGetUST(ust) == 0;
+   }
+}
+
+static int
+driWaitForSBC(__GLXDRIdrawable *pdraw, int64_t target_sbc, int64_t *ust,
+	       int64_t *msc, int64_t *sbc)
+{
+   if (pdraw != NULL && psc->sbc != NULL) {
+      ret =
+         (*psc->sbc->waitForSBC) (pdraw->driDrawable, target_sbc, msc, sbc);
+
+      /* __glXGetUST returns zero on success and non-zero on failure.
+       * This function returns True on success and False on failure.
+       */
+      return ((ret == 0) && (__glXGetUST(ust) == 0));
+   }
+
+   return DRI2WaitSBC(pdraw->psc->dpy, pdraw->xDrawable, target_sbc, ust, msc,
+		      sbc);
+}
+
+#endif
+
+static int
+driSetSwapInterval(__GLXDRIdrawable *pdraw, int interval)
+{
+   GLXContext gc = __glXGetCurrentContext();
+   struct dri_screen *psc;
+
+   if (gc->driContext) {
+      psc = (struct dri_screen *) pdraw->psc;
+
+      if (psc->swapControl != NULL && pdraw != NULL) {
+	 psc->swapControl->setSwapInterval(pdraw->driDrawable, interval);
+	 return 0;
+      }
+   }
+
+   return GLX_BAD_CONTEXT;
+}
+
+static int
+driGetSwapInterval(__GLXDRIdrawable *pdraw)
+{
+   GLXContext gc = __glXGetCurrentContext();
+   struct dri_screen *psc;
+
+   if (gc != NULL && gc->driContext) {
+      psc = (struct dri_screen *) pdraw->psc;
+
+      if (psc->swapControl != NULL && pdraw != NULL) {
+	 return psc->swapControl->getSwapInterval(pdraw->driDrawable);
+      }
+   }
+
+   return 0;
+}
+
+/* Bind DRI1 specific extensions */
+static void
+driBindExtensions(struct dri_screen *psc, const __DRIextension **extensions)
+{
+   int i;
+
+   for (i = 0; extensions[i]; i++) {
+      /* No DRI2 support for swap_control at the moment, since SwapBuffers
+       * is done by the X server */
+      if (strcmp(extensions[i]->name, __DRI_SWAP_CONTROL) == 0) {
+	 psc->swapControl = (__DRIswapControlExtension *) extensions[i];
+	 __glXEnableDirectExtension(&psc->base, "GLX_SGI_swap_control");
+	 __glXEnableDirectExtension(&psc->base, "GLX_MESA_swap_control");
+      }
+
+      if (strcmp(extensions[i]->name, __DRI_MEDIA_STREAM_COUNTER) == 0) {
+         psc->msc = (__DRImediaStreamCounterExtension *) extensions[i];
+         __glXEnableDirectExtension(&psc->base, "GLX_SGI_video_sync");
+      }
+
+      /* Ignore unknown extensions */
+   }
+}
+
 static __GLXscreenConfigs *
 driCreateScreen(int screen, __GLXdisplayPrivate *priv)
 {
@@ -716,7 +829,7 @@ driCreateScreen(int screen, __GLXdisplayPrivate *priv)
    }
 
    extensions = psc->core->getExtensions(psc->base.__driScreen);
-   driBindExtensions(&psc->base, extensions);
+   driBindExtensions(psc, extensions);
    driBindCommonExtensions(&psc->base, extensions);
 
    psp = &psc->driScreen;
@@ -730,6 +843,15 @@ driCreateScreen(int screen, __GLXdisplayPrivate *priv)
    psp->swapBuffers = driSwapBuffers;
    psp->waitX = NULL;
    psp->waitGL = NULL;
+
+#ifdef __DRI_SWAP_BUFFER_COUNTER
+   psp->getDrawableMSC = driDrawableGetMSC;
+   psp->waitForMSC = driWaitForMSC;
+   psp->waitForSBC = driWaitForSBC;
+#endif
+
+   psp->setSwapInterval = driSetSwapInterval;
+   psp->getSwapInterval = driGetSwapInterval;
 
    psc->base.direct_context_vtable = &dri_context_vtable;
 
