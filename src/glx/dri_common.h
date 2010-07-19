@@ -58,8 +58,6 @@ extern void *driOpenDriver(const char *driverName);
 
 extern void driBindExtensions(__GLXscreenConfigs * psc,
 			      const __DRIextension **extensions);
-extern void dri2BindExtensions(__GLXscreenConfigs * psc,
-			       const __DRIextension **extensions);
 extern void driBindCommonExtensions(__GLXscreenConfigs * psc,
 				    const __DRIextension **extensions);
 

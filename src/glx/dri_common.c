@@ -370,42 +370,6 @@ driBindExtensions(__GLXscreenConfigs *psc, const __DRIextension **extensions)
    }
 }
 
-/* Bind DRI2 specific extensions */
-_X_HIDDEN void
-dri2BindExtensions(__GLXscreenConfigs *psc,
-		   const __DRIextension **extensions)
-{
-   int i;
-
-   for (i = 0; extensions[i]; i++) {
-#ifdef __DRI_TEX_BUFFER
-      if ((strcmp(extensions[i]->name, __DRI_TEX_BUFFER) == 0)) {
-	 psc->texBuffer = (__DRItexBufferExtension *) extensions[i];
-	 __glXEnableDirectExtension(psc, "GLX_EXT_texture_from_pixmap");
-      }
-#endif
-
-      __glXEnableDirectExtension(psc, "GLX_SGI_video_sync");
-      __glXEnableDirectExtension(psc, "GLX_SGI_swap_control");
-      __glXEnableDirectExtension(psc, "GLX_MESA_swap_control");
-
-      /* FIXME: if DRI2 version supports it... */
-      __glXEnableDirectExtension(psc, "INTEL_swap_event");
-
-#ifdef __DRI2_FLUSH
-      if ((strcmp(extensions[i]->name, __DRI2_FLUSH) == 0)) {
-	 psc->f = (__DRI2flushExtension *) extensions[i];
-	 /* internal driver extension, no GL extension exposed */
-      }
-#endif
-
-#ifdef __DRI2_CONFIG_QUERY
-      if ((strcmp(extensions[i]->name, __DRI2_CONFIG_QUERY) == 0))
-	 psc->config = (__DRI2configQueryExtension *) extensions[i];
-#endif
-   }
-}
-
 /* Bind extensions common to DRI1 and DRI2 */
 _X_HIDDEN void
 driBindCommonExtensions(__GLXscreenConfigs *psc,

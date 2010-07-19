@@ -553,18 +553,6 @@ struct __GLXscreenConfigsRec
    const __DRImediaStreamCounterExtension *msc;
 #endif
 
-#ifdef __DRI_TEX_BUFFER
-   const __DRItexBufferExtension *texBuffer;
-#endif
-
-#ifdef __DRI2_FLUSH
-   const __DRI2flushExtension *f;
-#endif
-
-#ifdef __DRI2_CONFIG_QUERY
-   const __DRI2configQueryExtension *config;
-#endif
-
 #endif
 
     /**

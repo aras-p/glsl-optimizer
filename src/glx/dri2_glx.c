@@ -81,6 +81,11 @@ struct dri2_screen {
    __GLXDRIscreen driScreen;
    const __DRIdri2Extension *dri2;
    const __DRIcoreExtension *core;
+
+   const __DRI2flushExtension *f;
+   const __DRI2configQueryExtension *config;
+   const __DRItexBufferExtension *texBuffer;
+
    void *driver;
    int fd;
 };
@@ -211,9 +216,9 @@ dri2CreateDrawable(__GLXscreenConfigs *base, XID xDrawable,
    pdraw->swap_interval = 1; /* default may be overridden below */
    pdraw->have_back = 0;
 
-   if (psc->base.config)
-      psc->base.config->configQueryi(psc->base.__driScreen,
-				     "vblank_mode", &vblank_mode);
+   if (psc->config)
+      psc->config->configQueryi(psc->base.__driScreen,
+				"vblank_mode", &vblank_mode);
 
    switch (vblank_mode) {
    case DRI_CONF_VBLANK_NEVER:
@@ -298,6 +303,7 @@ static void
 dri2CopySubBuffer(__GLXDRIdrawable *pdraw, int x, int y, int width, int height)
 {
    struct dri2_drawable *priv = (struct dri2_drawable *) pdraw;
+   struct dri2_screen *psc = (struct dri2_screen *) pdraw->psc;
    XRectangle xrect;
    XserverRegion region;
 
@@ -311,21 +317,21 @@ dri2CopySubBuffer(__GLXDRIdrawable *pdraw, int x, int y, int width, int height)
    xrect.height = height;
 
 #ifdef __DRI2_FLUSH
-   if (pdraw->psc->f)
-      (*pdraw->psc->f->flush) (pdraw->driDrawable);
+   if (psc->f)
+      (*psc->f->flush) (pdraw->driDrawable);
 #endif
 
-   region = XFixesCreateRegion(pdraw->psc->dpy, &xrect, 1);
-   DRI2CopyRegion(pdraw->psc->dpy, pdraw->xDrawable, region,
+   region = XFixesCreateRegion(psc->base.dpy, &xrect, 1);
+   DRI2CopyRegion(psc->base.dpy, pdraw->xDrawable, region,
                   DRI2BufferFrontLeft, DRI2BufferBackLeft);
-   XFixesDestroyRegion(pdraw->psc->dpy, region);
+   XFixesDestroyRegion(psc->base.dpy, region);
 
    /* Refresh the fake front (if present) after we just damaged the real
     * front.
     */
-   DRI2CopyRegion(pdraw->psc->dpy, pdraw->xDrawable, region,
+   DRI2CopyRegion(psc->base.dpy, pdraw->xDrawable, region,
 		  DRI2BufferFakeFrontLeft, DRI2BufferFrontLeft);
-   XFixesDestroyRegion(pdraw->psc->dpy, region);
+   XFixesDestroyRegion(psc->base.dpy, region);
 }
 
 static void
@@ -333,7 +339,7 @@ dri2_copy_drawable(struct dri2_drawable *priv, int dest, int src)
 {
    XRectangle xrect;
    XserverRegion region;
-   __GLXscreenConfigs *const psc = priv->base.psc;
+   struct dri2_screen *psc = (struct dri2_screen *) priv->base.psc;
 
    xrect.x = 0;
    xrect.y = 0;
@@ -345,9 +351,9 @@ dri2_copy_drawable(struct dri2_drawable *priv, int dest, int src)
       (*psc->f->flush) (priv->base.driDrawable);
 #endif
 
-   region = XFixesCreateRegion(psc->dpy, &xrect, 1);
-   DRI2CopyRegion(psc->dpy, priv->base.xDrawable, region, dest, src);
-   XFixesDestroyRegion(psc->dpy, region);
+   region = XFixesCreateRegion(psc->base.dpy, &xrect, 1);
+   DRI2CopyRegion(psc->base.dpy, priv->base.xDrawable, region, dest, src);
+   XFixesDestroyRegion(psc->base.dpy, region);
 
 }
 
@@ -438,13 +444,14 @@ dri2SwapBuffers(__GLXDRIdrawable *pdraw, int64_t target_msc, int64_t divisor,
 {
     struct dri2_drawable *priv = (struct dri2_drawable *) pdraw;
     __GLXdisplayPrivate *dpyPriv = __glXInitialize(priv->base.psc->dpy);
+    struct dri2_screen *psc = (struct dri2_screen *) priv->base.psc;
     struct dri2_display *pdp =
 	(struct dri2_display *)dpyPriv->dri2Display;
     int64_t ret;
 
 #ifdef __DRI2_FLUSH
-    if (pdraw->psc->f)
-    	(*pdraw->psc->f->flush)(pdraw->driDrawable);
+    if (psc->f)
+    	(*psc->f->flush)(pdraw->driDrawable);
 #endif
 
     /* Old servers don't send invalidate events */
@@ -458,7 +465,7 @@ dri2SwapBuffers(__GLXDRIdrawable *pdraw, int64_t target_msc, int64_t divisor,
     }
 
 #ifdef X_DRI2SwapBuffers
-    DRI2SwapBuffers(pdraw->psc->dpy, pdraw->xDrawable, target_msc, divisor,
+    DRI2SwapBuffers(psc->base.dpy, pdraw->xDrawable, target_msc, divisor,
 		    remainder, &ret);
 #endif
 
@@ -518,12 +525,13 @@ dri2GetBuffersWithFormat(__DRIdrawable * driDrawable,
 static void
 dri2SetSwapInterval(__GLXDRIdrawable *pdraw, int interval)
 {
-   __GLXscreenConfigs *psc = pdraw->psc;
    struct dri2_drawable *priv =  (struct dri2_drawable *) pdraw;
    GLint vblank_mode = DRI_CONF_VBLANK_DEF_INTERVAL_1;
+   struct dri2_screen *psc = (struct dri2_screen *) priv->base.psc;
 
    if (psc->config)
-      psc->config->configQueryi(psc->__driScreen, "vblank_mode", &vblank_mode);
+      psc->config->configQueryi(psc->base.__driScreen,
+				"vblank_mode", &vblank_mode);
 
    switch (vblank_mode) {
    case DRI_CONF_VBLANK_NEVER:
@@ -536,7 +544,7 @@ dri2SetSwapInterval(__GLXDRIdrawable *pdraw, int interval)
       break;
    }
 
-   DRI2SwapInterval(priv->base.psc->dpy, pdraw->xDrawable, interval);
+   DRI2SwapInterval(priv->base.psc->dpy, priv->base.xDrawable, interval);
    priv->swap_interval = interval;
 }
 
@@ -575,10 +583,11 @@ dri2InvalidateBuffers(Display *dpy, XID drawable)
 {
    __GLXDRIdrawable *pdraw =
       dri2GetGlxDrawableFromXDrawableId(dpy, drawable);
+   struct dri2_screen *psc = (struct dri2_screen *) pdraw->psc;
 
 #if __DRI2_FLUSH_VERSION >= 3
-   if (pdraw && pdraw->psc->f)
-       pdraw->psc->f->invalidate(pdraw->driDrawable);
+   if (pdraw && psc->f)
+       psc->f->invalidate(pdraw->driDrawable);
 #endif
 }
 
@@ -592,25 +601,26 @@ dri2_bind_tex_image(Display * dpy,
     __GLXdisplayPrivate *dpyPriv = __glXInitialize(dpy);
     struct dri2_display *pdp =
 	(struct dri2_display *) dpyPriv->dri2Display;
+   struct dri2_screen *psc = (struct dri2_screen *) pdraw->psc;
 
    if (pdraw != NULL) {
 
 #if __DRI2_FLUSH_VERSION >= 3
-      if (!pdp->invalidateAvailable && pdraw->psc->f)
-	 pdraw->psc->f->invalidate(pdraw->driDrawable);
+      if (!pdp->invalidateAvailable && psc->f)
+	 psc->f->invalidate(pdraw->driDrawable);
 #endif
 
-      if (pdraw->psc->texBuffer->base.version >= 2 &&
-	  pdraw->psc->texBuffer->setTexBuffer2 != NULL) {
-	 (*pdraw->psc->texBuffer->setTexBuffer2) (gc->__driContext,
-						  pdraw->textureTarget,
-						  pdraw->textureFormat,
-						  pdraw->driDrawable);
+      if (psc->texBuffer->base.version >= 2 &&
+	  psc->texBuffer->setTexBuffer2 != NULL) {
+	 (*psc->texBuffer->setTexBuffer2) (gc->__driContext,
+					   pdraw->textureTarget,
+					   pdraw->textureFormat,
+					   pdraw->driDrawable);
       }
       else {
-	 (*pdraw->psc->texBuffer->setTexBuffer) (gc->__driContext,
-						 pdraw->textureTarget,
-						 pdraw->driDrawable);
+	 (*psc->texBuffer->setTexBuffer) (gc->__driContext,
+					  pdraw->textureTarget,
+					  pdraw->driDrawable);
       }
    }
 }
@@ -624,6 +634,35 @@ static const struct glx_context_vtable dri2_context_vtable = {
    dri2_bind_tex_image,
    dri2_release_tex_image,
 };
+
+static void
+dri2BindExtensions(struct dri2_screen *psc, const __DRIextension **extensions)
+{
+   int i;
+
+   __glXEnableDirectExtension(&psc->base, "GLX_SGI_video_sync");
+   __glXEnableDirectExtension(&psc->base, "GLX_SGI_swap_control");
+   __glXEnableDirectExtension(&psc->base, "GLX_MESA_swap_control");
+
+   /* FIXME: if DRI2 version supports it... */
+   __glXEnableDirectExtension(&psc->base, "INTEL_swap_event");
+
+   for (i = 0; extensions[i]; i++) {
+      if ((strcmp(extensions[i]->name, __DRI_TEX_BUFFER) == 0)) {
+	 psc->texBuffer = (__DRItexBufferExtension *) extensions[i];
+	 __glXEnableDirectExtension(&psc->base, "GLX_EXT_texture_from_pixmap");
+      }
+
+      if ((strcmp(extensions[i]->name, __DRI2_FLUSH) == 0)) {
+	 psc->f = (__DRI2flushExtension *) extensions[i];
+	 /* internal driver extension, no GL extension exposed */
+      }
+
+      if ((strcmp(extensions[i]->name, __DRI2_CONFIG_QUERY) == 0))
+	 psc->config = (__DRI2configQueryExtension *) extensions[i];
+   }
+}
+
 
 static __GLXscreenConfigs *
 dri2CreateScreen(int screen, __GLXdisplayPrivate * priv)
@@ -709,7 +748,7 @@ dri2CreateScreen(int screen, __GLXdisplayPrivate * priv)
 
    extensions = psc->core->getExtensions(psc->base.__driScreen);
    driBindCommonExtensions(&psc->base, extensions);
-   dri2BindExtensions(&psc->base, extensions);
+   dri2BindExtensions(psc, extensions);
 
    psc->base.configs =
       driConvertConfigs(psc->core, psc->base.configs, driver_configs);
