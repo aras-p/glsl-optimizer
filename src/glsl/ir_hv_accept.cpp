@@ -32,9 +32,10 @@
 /**
  * Process a list of nodes using a hierarchical vistor
  *
+ * \warning
  * This function will operate correctly if a node being processed is removed
- * from the list.  If nodes are inserted before the current node, they will be
- * processed next.
+ * from the list.  However, if nodes are added to the list after the node being
+ * processed, some of the added nodes may not be processed.
  */
 ir_visitor_status
 visit_list_elements(ir_hierarchical_visitor *v, exec_list *l)
