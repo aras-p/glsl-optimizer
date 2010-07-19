@@ -687,12 +687,16 @@ link_intrastage_shaders(struct gl_shader_program *prog,
    /* Move any instructions other than variable declarations or function
     * declarations into main.
     */
-   exec_node *insertion_point = (exec_node *) &main_sig->body;
+   exec_node *insertion_point =
+      move_non_declarations(linked->ir, (exec_node *) &main_sig->body, false,
+			    linked);
+
    for (unsigned i = 0; i < num_shaders; i++) {
+      if (shader_list[i] == main)
+	 continue;
+
       insertion_point = move_non_declarations(shader_list[i]->ir,
-					      insertion_point,
-					      (shader_list[i] != main),
-					      linked);
+					      insertion_point, true, linked);
    }
 
    /* Resolve initializers for global variables in the linked shader.
