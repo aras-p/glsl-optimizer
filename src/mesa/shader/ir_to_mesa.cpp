@@ -91,9 +91,9 @@ public:
    class function_entry *function; /* Set on OPCODE_CAL or OPCODE_BGNSUB */
 };
 
-class temp_entry : public exec_node {
+class variable_storage : public exec_node {
 public:
-   temp_entry(ir_variable *var, int file, int index)
+   variable_storage(ir_variable *var, int file, int index)
       : file(file), index(index), var(var)
    {
       /* empty */
@@ -148,7 +148,7 @@ public:
 
    int next_temp;
 
-   temp_entry *find_variable_storage(ir_variable *var);
+   variable_storage *find_variable_storage(ir_variable *var);
 
    function_entry *get_function_signature(ir_function_signature *sig);
 
@@ -187,8 +187,8 @@ public:
 
    struct ir_to_mesa_src_reg result;
 
-   /** List of temp_entry */
-   exec_list variable_storage;
+   /** List of variable_storage */
+   exec_list variables;
 
    /** List of function_entry */
    exec_list function_signatures;
@@ -535,14 +535,14 @@ ir_to_mesa_visitor::get_temp(const glsl_type *type)
    return src_reg;
 }
 
-temp_entry *
+variable_storage *
 ir_to_mesa_visitor::find_variable_storage(ir_variable *var)
 {
    
-   temp_entry *entry;
+   variable_storage *entry;
 
-   foreach_iter(exec_list_iterator, iter, this->variable_storage) {
-      entry = (temp_entry *)iter.get();
+   foreach_iter(exec_list_iterator, iter, this->variables) {
+      entry = (variable_storage *)iter.get();
 
       if (entry->var == var)
 	 return entry;
@@ -968,7 +968,7 @@ add_matrix_ref(struct gl_program *prog, int *tokens)
    return base_pos;
 }
 
-static temp_entry *
+static variable_storage *
 get_builtin_matrix_ref(void *mem_ctx, struct gl_program *prog, ir_variable *var,
 		       ir_rvalue *array_index)
 {
@@ -1006,7 +1006,7 @@ get_builtin_matrix_ref(void *mem_ctx, struct gl_program *prog, ir_variable *var,
 
    };
    unsigned int i;
-   temp_entry *entry;
+   variable_storage *entry;
 
    /* C++ gets angry when we try to use an int as a gl_state_index, so we use
     * ints for gl_state_index.  Make sure they're compatible.
@@ -1041,9 +1041,9 @@ get_builtin_matrix_ref(void *mem_ctx, struct gl_program *prog, ir_variable *var,
 	 }
 	 tokens[4] = matrices[i].modifier;
 
-	 entry = new(mem_ctx) temp_entry(var,
-					 PROGRAM_STATE_VAR,
-					 base_pos);
+	 entry = new(mem_ctx) variable_storage(var,
+					       PROGRAM_STATE_VAR,
+					       base_pos);
 
 	 return entry;
       }
@@ -1056,7 +1056,7 @@ void
 ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
 {
    ir_to_mesa_src_reg src_reg;
-   temp_entry *entry = find_variable_storage(ir->var);
+   variable_storage *entry = find_variable_storage(ir->var);
    unsigned int loc;
 
    if (!entry) {
@@ -1078,8 +1078,9 @@ ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
 					    ir->var->type->gl_type);
 	    map_sampler(ir->var->location, sampler);
 
-	    entry = new(mem_ctx) temp_entry(ir->var, PROGRAM_SAMPLER, sampler);
-	    this->variable_storage.push_tail(entry);
+	    entry = new(mem_ctx) variable_storage(ir->var, PROGRAM_SAMPLER,
+						  sampler);
+	    this->variables.push_tail(entry);
 	    break;
 	 }
 
@@ -1096,8 +1097,8 @@ ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
 	  */
 	 this->prog->Parameters->Parameters[loc].Used = GL_TRUE;
 
-	 entry = new(mem_ctx) temp_entry(ir->var, PROGRAM_UNIFORM, loc);
-	 this->variable_storage.push_tail(entry);
+	 entry = new(mem_ctx) variable_storage(ir->var, PROGRAM_UNIFORM, loc);
+	 this->variables.push_tail(entry);
 	 break;
       case ir_var_in:
       case ir_var_out:
@@ -1112,9 +1113,9 @@ ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
 	 assert(ir->var->location != -1);
 	 if (ir->var->mode == ir_var_in ||
 	     ir->var->mode == ir_var_inout) {
-	    entry = new(mem_ctx) temp_entry(ir->var,
-					    PROGRAM_INPUT,
-					    ir->var->location);
+	    entry = new(mem_ctx) variable_storage(ir->var,
+						  PROGRAM_INPUT,
+						  ir->var->location);
 
 	    if (this->prog->Target == GL_VERTEX_PROGRAM_ARB &&
 		ir->var->location >= VERT_ATTRIB_GENERIC0) {
@@ -1125,16 +1126,16 @@ ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
 				   ir->var->location - VERT_ATTRIB_GENERIC0);
 	    }
 	 } else {
-	    entry = new(mem_ctx) temp_entry(ir->var,
-					    PROGRAM_OUTPUT,
-					    ir->var->location);
+	    entry = new(mem_ctx) variable_storage(ir->var,
+						  PROGRAM_OUTPUT,
+						  ir->var->location);
 	 }
 
 	 break;
       case ir_var_auto:
-	 entry = new(mem_ctx) temp_entry(ir->var, PROGRAM_TEMPORARY,
-					 this->next_temp);
-	 this->variable_storage.push_tail(entry);
+	 entry = new(mem_ctx) variable_storage(ir->var, PROGRAM_TEMPORARY,
+					       this->next_temp);
+	 this->variables.push_tail(entry);
 
 	 next_temp += type_size(ir->var->type);
 	 break;
@@ -1170,7 +1171,7 @@ ir_to_mesa_visitor::visit(ir_dereference_array *ir)
 			    "gl_TextureMatrix",
 			    strlen("gl_TextureMatrix")) == 0) {
       ir_to_mesa_src_reg src_reg;
-      struct temp_entry *entry;
+      struct variable_storage *entry;
 
       entry = get_builtin_matrix_ref(this->mem_ctx, this->prog, deref_var->var,
 				     ir->array_index);
@@ -1461,14 +1462,14 @@ ir_to_mesa_visitor::get_function_signature(ir_function_signature *sig)
    /* Allocate storage for all the parameters. */
    foreach_iter(exec_list_iterator, iter, sig->parameters) {
       ir_variable *param = (ir_variable *)iter.get();
-      temp_entry *storage;
+      variable_storage *storage;
 
       storage = find_variable_storage(param);
       assert(!storage);
 
-      storage = new(mem_ctx) temp_entry(param, PROGRAM_TEMPORARY,
-					this->next_temp);
-      this->variable_storage.push_tail(storage);
+      storage = new(mem_ctx) variable_storage(param, PROGRAM_TEMPORARY,
+					      this->next_temp);
+      this->variables.push_tail(storage);
 
       this->next_temp += type_size(param->type);
       break;
@@ -1500,7 +1501,7 @@ ir_to_mesa_visitor::visit(ir_call *ir)
 
       if (param->mode == ir_var_in ||
 	  param->mode == ir_var_inout) {
-	 temp_entry *storage = find_variable_storage(param);
+	 variable_storage *storage = find_variable_storage(param);
 	 assert(storage);
 
 	 param_rval->accept(this);
@@ -1537,7 +1538,7 @@ ir_to_mesa_visitor::visit(ir_call *ir)
 
       if (param->mode == ir_var_out ||
 	  param->mode == ir_var_inout) {
-	 temp_entry *storage = find_variable_storage(param);
+	 variable_storage *storage = find_variable_storage(param);
 	 assert(storage);
 
 	 ir_to_mesa_src_reg r;
