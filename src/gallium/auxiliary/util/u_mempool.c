@@ -30,7 +30,7 @@
 
 #define UTIL_MEMPOOL_MAGIC 0xcafe4321
 
-struct util_mempool_block_body {};
+struct util_mempool_block_body { char dummy; };
 
 /* The block is either allocated memory or free space. */
 struct util_mempool_block {

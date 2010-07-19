@@ -43,7 +43,7 @@ enum util_mempool_threading {
    UTIL_MEMPOOL_MULTITHREADED = TRUE
 };
 
-struct util_mempool_page_body {};
+struct util_mempool_page_body { char dummy; };
 
 /* The page is an array of blocks (allocations). */
 struct util_mempool_page {
