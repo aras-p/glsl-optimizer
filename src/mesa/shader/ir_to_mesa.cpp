@@ -2026,8 +2026,10 @@ link_uniforms_to_shared_uniform_list(struct gl_uniform_list *uniforms,
 }
 
 struct gl_program *
-get_mesa_program(GLcontext *ctx, void *mem_ctx, struct gl_shader *shader)
+get_mesa_program(GLcontext *ctx, struct gl_shader_program *shader_program,
+		 struct gl_shader *shader)
 {
+   void *mem_ctx = shader_program;
    ir_to_mesa_visitor v;
    struct prog_instruction *mesa_instructions, *mesa_inst;
    ir_instruction **mesa_instruction_annotation;
@@ -2111,6 +2113,13 @@ get_mesa_program(GLcontext *ctx, void *mem_ctx, struct gl_shader *shader)
       mesa_inst->TexSrcTarget = inst->tex_target;
       mesa_inst->TexShadow = inst->tex_shadow;
       mesa_instruction_annotation[i] = inst->ir;
+
+      if (ctx->Shader.EmitNoIfs && mesa_inst->Opcode == OPCODE_IF) {
+	 shader_program->InfoLog =
+	    talloc_asprintf_append(shader_program->InfoLog,
+				   "Couldn't flatten if statement\n");
+	 shader_program->LinkStatus = false;
+      }
 
       if (mesa_inst->Opcode == OPCODE_BGNSUB)
 	 inst->function->inst = i;
@@ -2206,6 +2215,8 @@ _mesa_glsl_compile_shader(GLcontext *ctx, struct gl_shader *shader)
 	 progress = do_constant_variable_unlinked(shader->ir) || progress;
 	 progress = do_constant_folding(shader->ir) || progress;
 	 progress = do_if_return(shader->ir) || progress;
+	 if (ctx->Shader.EmitNoIfs)
+	    progress = do_if_to_cond_assign(shader->ir) || progress;
 
 	 progress = do_vec_index_to_swizzle(shader->ir) || progress;
 	 /* Do this one after the previous to let the easier pass handle

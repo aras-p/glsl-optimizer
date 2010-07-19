@@ -431,6 +431,7 @@ _mesa_init_shader_state(GLcontext * ctx)
    ctx->Shader.EmitContReturn = GL_TRUE;
    ctx->Shader.EmitCondCodes = GL_FALSE;
    ctx->Shader.EmitComments = GL_FALSE;
+   ctx->Shader.EmitNoIfs = GL_FALSE;
    ctx->Shader.Flags = get_shader_flags();
 
    /* Default pragma settings */

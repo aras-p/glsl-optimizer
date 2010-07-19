@@ -2038,6 +2038,11 @@ struct gl_shader_state
    GLboolean EmitCondCodes;             /**< Use condition codes? */
    GLboolean EmitComments;              /**< Annotated instructions */
    GLboolean EmitNVTempInitialization;  /**< 0-fill NV temp registers */
+   /**
+    * Attempts to flatten all ir_if (OPCODE_IF) for GPUs that can't
+    * support control flow.
+    */
+   GLboolean EmitNoIfs;
    void *MemPool;
    GLbitfield Flags;                    /**< Mask of GLSL_x flags */
    struct gl_sl_pragmas DefaultPragmas; /**< Default #pragma settings */

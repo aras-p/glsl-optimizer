@@ -174,6 +174,8 @@ i915CreateContext(int api,
 
    ctx->FragmentProgram._MaintainTexEnvProgram = GL_TRUE;
 
+   ctx->Shader.EmitNoIfs = GL_TRUE;
+
    ctx->Const.MaxDrawBuffers = 1;
 
    _tnl_init_vertices(ctx, ctx->Const.MaxArrayLockSize + 12,
