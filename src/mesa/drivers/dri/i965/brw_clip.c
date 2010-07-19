@@ -83,11 +83,16 @@ static void compile_clip_prog( struct brw_context *brw,
       }
 
    c.nr_attrs = brw_count_bits(c.key.attrs);
-   
+
+   /* The vertex attributes start at a URB row-aligned offset after
+    * the 8-20 dword vertex header, and continue for a URB row-aligned
+    * length.  nr_regs determines the urb_read_length from the start
+    * of the header to the end of the vertex data.
+    */
    if (intel->gen == 5)
-       c.nr_regs = (c.nr_attrs + 1) / 2 + 3;  /* are vertices packed, or reg-aligned? */
+       c.nr_regs = 3 + (c.nr_attrs + 1) / 2;
    else
-       c.nr_regs = (c.nr_attrs + 1) / 2 + 1;  /* are vertices packed, or reg-aligned? */
+       c.nr_regs = 1 + (c.nr_attrs + 1) / 2;
 
    c.nr_bytes = c.nr_regs * REG_SIZE;
 
