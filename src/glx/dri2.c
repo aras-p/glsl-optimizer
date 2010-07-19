@@ -99,9 +99,10 @@ DRI2WireToEvent(Display *dpy, XEvent *event, xEvent *wire)
    {
       GLXBufferSwapComplete *aevent = (GLXBufferSwapComplete *)event;
       xDRI2BufferSwapComplete *awire = (xDRI2BufferSwapComplete *)wire;
-      __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, awire->drawable, NULL);
+      __GLXDRIdrawable *pdraw;
 
       /* Ignore swap events if we're not looking for them */
+      pdraw = dri2GetGlxDrawableFromXDrawableId(dpy, awire->drawable);
       if (!(pdraw->eventMask & GLX_BUFFER_SWAP_COMPLETE_INTEL_MASK))
 	 return False;
 

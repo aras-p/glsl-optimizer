@@ -650,6 +650,8 @@ struct __GLXdisplayPrivateRec
 #endif
 };
 
+extern __GLXDRIdrawable *
+dri2GetGlxDrawableFromXDrawableId(Display *dpy, XID id);
 
 extern GLubyte *__glXFlushRenderBuffer(__GLXcontext *, GLubyte *);
 

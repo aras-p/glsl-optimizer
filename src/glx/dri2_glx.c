@@ -74,6 +74,8 @@ struct __GLXDRIdisplayPrivateRec
    int swapAvailable;
    int invalidateAvailable;
 
+   __glxHashTable *dri2Hash;
+
    const __DRIextension *loader_extensions[4];
 };
 
@@ -166,10 +168,16 @@ dri2CreateContext(__GLXscreenConfigs * psc,
 }
 
 static void
-dri2DestroyDrawable(__GLXDRIdrawable * pdraw)
+dri2DestroyDrawable(__GLXDRIdrawable *pdraw)
 {
    const __DRIcoreExtension *core = pdraw->psc->core;
+   __GLXdisplayPrivate *dpyPriv;
+   __GLXDRIdisplayPrivate *pdp;
 
+   dpyPriv = __glXInitialize(pdraw->psc->dpy);
+   pdp = (__GLXDRIdisplayPrivate *)dpyPriv->dri2Display;
+
+   __glxHashDelete(pdp->dri2Hash, pdraw->xDrawable);
    (*core->destroyDrawable) (pdraw->driDrawable);
    DRI2DestroyDrawable(pdraw->psc->dpy, pdraw->xDrawable);
    Xfree(pdraw);
@@ -227,6 +235,14 @@ dri2CreateDrawable(__GLXscreenConfigs * psc,
       Xfree(pdraw);
       return NULL;
    }
+
+   if (__glxHashInsert(pdp->dri2Hash, xDrawable, pdraw)) {
+      (*psc->core->destroyDrawable) (pdraw->base.driDrawable);
+      DRI2DestroyDrawable(psc->dpy, xDrawable);
+      Xfree(pdraw);
+      return None;
+   }
+
 
 #ifdef X_DRI2SwapInterval
    /*
@@ -555,7 +571,8 @@ static const __DRIuseInvalidateExtension dri2UseInvalidate = {
 _X_HIDDEN void
 dri2InvalidateBuffers(Display *dpy, XID drawable)
 {
-   __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable, NULL);
+   __GLXDRIdrawable *pdraw =
+      dri2GetGlxDrawableFromXDrawableId(dpy, drawable);
 
 #if __DRI2_FLUSH_VERSION >= 3
    if (pdraw && pdraw->psc->f)
@@ -751,6 +768,19 @@ dri2DestroyDisplay(__GLXDRIdisplay * dpy)
    Xfree(dpy);
 }
 
+_X_HIDDEN __GLXDRIdrawable *
+dri2GetGlxDrawableFromXDrawableId(Display *dpy, XID id)
+{
+   __GLXdisplayPrivate *d = __glXInitialize(dpy);
+   __GLXDRIdisplayPrivate *pdp = (__GLXDRIdisplayPrivate *) d->dri2Display;
+   __GLXDRIdrawable *pdraw;
+
+   if (__glxHashLookup(pdp->dri2Hash, id, (void *) &pdraw) == 0)
+      return pdraw;
+
+   return NULL;
+}
+
 /*
  * Allocate, initialize and return a __DRIdisplayPrivate object.
  * This is called from __glXInitialize() when we are given a new
@@ -793,6 +823,12 @@ dri2CreateDisplay(Display * dpy)
    pdp->loader_extensions[i++] = &dri2UseInvalidate.base;
 #endif
    pdp->loader_extensions[i++] = NULL;
+
+   pdp->dri2Hash = __glxHashCreate();
+   if (pdp->dri2Hash == NULL) {
+      Xfree(pdp);
+      return NULL;
+   }
 
    return &pdp->base;
 }
