@@ -45,6 +45,7 @@ _mesa_glsl_shader_target_name(enum _mesa_glsl_parser_targets target)
    }
 
    assert(!"Should not get here.");
+   return "unknown";
 }
 
 
