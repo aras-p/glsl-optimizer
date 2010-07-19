@@ -43,15 +43,10 @@ enum util_mempool_threading {
    UTIL_MEMPOOL_MULTITHREADED = TRUE
 };
 
-struct util_mempool_page_body { char dummy; };
-
 /* The page is an array of blocks (allocations). */
 struct util_mempool_page {
    /* The header (linked-list pointers). */
    struct util_mempool_page *prev, *next;
-
-   /* The page begins here. */
-   struct util_mempool_page_body body;
 
    /* Memory after the last member is dedicated to the page itself.
     * The allocated size is always larger than this structure. */

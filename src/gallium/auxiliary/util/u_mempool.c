@@ -30,8 +30,6 @@
 
 #define UTIL_MEMPOOL_MAGIC 0xcafe4321
 
-struct util_mempool_block_body { char dummy; };
-
 /* The block is either allocated memory or free space. */
 struct util_mempool_block {
    /* The header. */
@@ -39,9 +37,6 @@ struct util_mempool_block {
    struct util_mempool_block *next_free;
 
    intptr_t magic;
-
-   /* The block begins here. */
-   struct util_mempool_block_body body;
 
    /* Memory after the last member is dedicated to the block itself.
     * The allocated size is always larger than this structure. */
@@ -52,7 +47,8 @@ util_mempool_get_block(struct util_mempool *pool,
                        struct util_mempool_page *page, unsigned index)
 {
    return (struct util_mempool_block*)
-         ((uint8_t*)&page->body + (pool->block_size * index));
+          ((uint8_t*)page + sizeof(struct util_mempool_page) +
+           (pool->block_size * index));
 }
 
 static void util_mempool_add_new_page(struct util_mempool *pool)
@@ -92,15 +88,14 @@ static void *util_mempool_malloc_st(struct util_mempool *pool)
    assert(block->magic == UTIL_MEMPOOL_MAGIC);
    pool->first_free = block->next_free;
 
-   return &block->body;
+   return (uint8_t*)block + sizeof(struct util_mempool_block);
 }
 
 static void util_mempool_free_st(struct util_mempool *pool, void *ptr)
 {
-   struct util_mempool_block dummy;
    struct util_mempool_block *block =
          (struct util_mempool_block*)
-         ((uint8_t*)ptr - ((uint8_t*)&dummy.body - (uint8_t*)&dummy));
+         ((uint8_t*)ptr - sizeof(struct util_mempool_block));
 
    assert(block->magic == UTIL_MEMPOOL_MAGIC);
    block->next_free = pool->first_free;
