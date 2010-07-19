@@ -67,7 +67,7 @@
 	   (expression float +
 	    (var_ref r)
 	    (expression float *
-	     (expression int sign (var_ref y))
+	     (expression float sign (var_ref y))
 	     (constant float (3.1415926))))))
 	 ()))
        ())
@@ -93,7 +93,7 @@
 	   (expression vec2 +
 	    (var_ref r)
 	    (expression vec2 *
-	     (expression int sign (var_ref y))
+	     (expression float sign (var_ref y))
 	     (constant float (3.1415926))))))
 	 ()))
        ())
@@ -119,7 +119,7 @@
 	   (expression vec3 +
 	    (var_ref r)
 	    (expression vec3 *
-	     (expression int sign (var_ref y))
+	     (expression float sign (var_ref y))
 	     (constant float (3.1415926))))))
 	 ()))
        ())
@@ -145,7 +145,7 @@
 	   (expression vec4 +
 	    (var_ref r)
 	    (expression vec4 *
-	     (expression int sign (var_ref y))
+	     (expression float sign (var_ref y))
 	     (constant float (3.1415926))))))
 	 ()))
        ())
