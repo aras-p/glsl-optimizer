@@ -2186,6 +2186,8 @@ _mesa_glsl_compile_shader(GLcontext *ctx, struct gl_shader *shader)
       _mesa_ast_to_hir(shader->ir, state);
 
    if (!state->error && !shader->ir->is_empty()) {
+      validate_ir_tree(shader->ir);
+
       /* Lowering */
       do_mat_op_to_vec(shader->ir);
       do_mod_to_fract(shader->ir);
@@ -2213,6 +2215,8 @@ _mesa_glsl_compile_shader(GLcontext *ctx, struct gl_shader *shader)
 
 	 progress = do_swizzle_swizzle(shader->ir) || progress;
       } while (progress);
+
+      validate_ir_tree(shader->ir);
    }
 
    shader->symbols = state->symbols;
