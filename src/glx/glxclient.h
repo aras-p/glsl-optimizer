@@ -540,10 +540,6 @@ struct __GLXscreenConfigsRec
    const __DRIcopySubBufferExtension *driCopySubBuffer;
 #endif
 
-#ifdef __DRI_FRAME_TRACKING
-   const __DRIframeTrackingExtension *frameTracking;
-#endif
-
 #endif
 
     /**

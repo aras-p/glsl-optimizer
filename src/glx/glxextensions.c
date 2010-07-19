@@ -94,10 +94,8 @@ static const struct extension_info known_glx_extensions[] = {
    { GLX(MESA_release_buffers),        VER(0,0), N, N, N, N }, /* Deprecated */
 #ifdef GLX_USE_APPLEGL
    { GLX(MESA_swap_control),           VER(0,0), N, N, N, N },
-   { GLX(MESA_swap_frame_usage),       VER(0,0), N, N, N, N },
 #else
    { GLX(MESA_swap_control),           VER(0,0), Y, N, N, Y },
-   { GLX(MESA_swap_frame_usage),       VER(0,0), Y, N, N, Y },
 #endif
    { GLX(NV_float_buffer),             VER(0,0), N, N, N, N },
    { GLX(NV_render_depth_texture),     VER(0,0), N, N, N, N },

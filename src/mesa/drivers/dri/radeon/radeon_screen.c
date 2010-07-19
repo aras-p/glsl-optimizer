@@ -1203,7 +1203,6 @@ radeonCreateScreen( __DRIscreen *sPriv )
 
    i = 0;
    screen->extensions[i++] = &driCopySubBufferExtension.base;
-   screen->extensions[i++] = &driFrameTrackingExtension.base;
    screen->extensions[i++] = &driReadDrawableExtension;
 
    if ( screen->irq != 0 ) {
@@ -1357,7 +1356,6 @@ radeonCreateScreen2(__DRIscreen *sPriv)
 
    i = 0;
    screen->extensions[i++] = &driCopySubBufferExtension.base;
-   screen->extensions[i++] = &driFrameTrackingExtension.base;
    screen->extensions[i++] = &driReadDrawableExtension;
    screen->extensions[i++] = &dri2ConfigQueryExtension.base;
 

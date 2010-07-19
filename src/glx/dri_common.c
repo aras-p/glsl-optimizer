@@ -351,13 +351,6 @@ driBindCommonExtensions(__GLXscreenConfigs *psc,
       }
 #endif
 
-#ifdef __DRI_FRAME_TRACKING
-      if (strcmp(extensions[i]->name, __DRI_FRAME_TRACKING) == 0) {
-	 psc->frameTracking = (__DRIframeTrackingExtension *) extensions[i];
-	 __glXEnableDirectExtension(psc, "GLX_MESA_swap_frame_usage");
-      }
-#endif
-
 #ifdef __DRI_READ_DRAWABLE
       if (strcmp(extensions[i]->name, __DRI_READ_DRAWABLE) == 0) {
 	 __glXEnableDirectExtension(psc, "GLX_SGI_make_current_read");

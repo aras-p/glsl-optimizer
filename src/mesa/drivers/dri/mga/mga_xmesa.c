@@ -182,7 +182,6 @@ mgaFillInModes( __DRIscreen *psp,
 const __DRIextension *mgaScreenExtensions[] = {
     &driReadDrawableExtension,
     &driSwapControlExtension.base,
-    &driFrameTrackingExtension.base,
     &driMediaStreamCounterExtension.base,
     NULL
 };

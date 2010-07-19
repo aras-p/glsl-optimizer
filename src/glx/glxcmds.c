@@ -2123,107 +2123,6 @@ __glXGetSwapIntervalMESA(void)
 
 
 /*
-** GLX_MESA_swap_frame_usage
-*/
-
-static GLint
-__glXBeginFrameTrackingMESA(Display * dpy, GLXDrawable drawable)
-{
-   int status = GLX_BAD_CONTEXT;
-#ifdef __DRI_FRAME_TRACKING
-   int screen = 0;
-   __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable, &screen);
-   __GLXscreenConfigs *const psc = GetGLXScreenConfigs(dpy, screen);
-
-   if (pdraw != NULL && psc->frameTracking != NULL)
-      status = psc->frameTracking->frameTracking(pdraw->driDrawable, GL_TRUE);
-#else
-   (void) dpy;
-   (void) drawable;
-#endif
-   return status;
-}
-
-
-static GLint
-__glXEndFrameTrackingMESA(Display * dpy, GLXDrawable drawable)
-{
-   int status = GLX_BAD_CONTEXT;
-#ifdef __DRI_FRAME_TRACKING
-   int screen = 0;
-   __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable, &screen);
-   __GLXscreenConfigs *psc = GetGLXScreenConfigs(dpy, screen);
-
-   if (pdraw != NULL && psc->frameTracking != NULL)
-      status = psc->frameTracking->frameTracking(pdraw->driDrawable,
-                                                 GL_FALSE);
-#else
-   (void) dpy;
-   (void) drawable;
-#endif
-   return status;
-}
-
-
-static GLint
-__glXGetFrameUsageMESA(Display * dpy, GLXDrawable drawable, GLfloat * usage)
-{
-   int status = GLX_BAD_CONTEXT;
-#ifdef __DRI_FRAME_TRACKING
-   int screen = 0;
-   __GLXDRIdrawable *const pdraw = GetGLXDRIDrawable(dpy, drawable, &screen);
-   __GLXscreenConfigs *const psc = GetGLXScreenConfigs(dpy, screen);
-
-   if (pdraw != NULL && psc->frameTracking != NULL) {
-      int64_t sbc, missedFrames;
-      float lastMissedUsage;
-
-      status = psc->frameTracking->queryFrameTracking(pdraw->driDrawable,
-                                                      &sbc,
-                                                      &missedFrames,
-                                                      &lastMissedUsage,
-                                                      usage);
-   }
-#else
-   (void) dpy;
-   (void) drawable;
-   (void) usage;
-#endif
-   return status;
-}
-
-
-static GLint
-__glXQueryFrameTrackingMESA(Display * dpy, GLXDrawable drawable,
-                            int64_t * sbc, int64_t * missedFrames,
-                            GLfloat * lastMissedUsage)
-{
-   int status = GLX_BAD_CONTEXT;
-#ifdef __DRI_FRAME_TRACKING
-   int screen = 0;
-   __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable, &screen);
-   __GLXscreenConfigs *const psc = GetGLXScreenConfigs(dpy, screen);
-
-   if (pdraw != NULL && psc->frameTracking != NULL) {
-      float usage;
-
-      status = psc->frameTracking->queryFrameTracking(pdraw->driDrawable,
-                                                      sbc, missedFrames,
-                                                      lastMissedUsage,
-                                                      &usage);
-   }
-#else
-   (void) dpy;
-   (void) drawable;
-   (void) sbc;
-   (void) missedFrames;
-   (void) lastMissedUsage;
-#endif
-   return status;
-}
-
-
-/*
 ** GLX_SGI_video_sync
 */
 static int
@@ -3072,12 +2971,6 @@ static const struct name_address_pair GLX_functions[] = {
    /*** GLX_MESA_swap_control ***/
    GLX_FUNCTION2(glXSwapIntervalMESA, __glXSwapIntervalMESA),
    GLX_FUNCTION2(glXGetSwapIntervalMESA, __glXGetSwapIntervalMESA),
-
-   /*** GLX_MESA_swap_frame_usage ***/
-   GLX_FUNCTION2(glXBeginFrameTrackingMESA, __glXBeginFrameTrackingMESA),
-   GLX_FUNCTION2(glXEndFrameTrackingMESA, __glXEndFrameTrackingMESA),
-   GLX_FUNCTION2(glXGetFrameUsageMESA, __glXGetFrameUsageMESA),
-   GLX_FUNCTION2(glXQueryFrameTrackingMESA, __glXQueryFrameTrackingMESA),
 #endif
 
    /*** GLX_ARB_get_proc_address ***/
