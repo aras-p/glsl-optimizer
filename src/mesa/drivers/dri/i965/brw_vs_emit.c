@@ -218,7 +218,7 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
    c->first_overflow_output = 0;
 
    if (intel->gen >= 6)
-      mrf = 6;
+      mrf = 4;
    else if (intel->gen == 5)
       mrf = 8;
    else
@@ -318,8 +318,11 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
     */
    attributes_in_vue = MAX2(c->nr_outputs, c->nr_inputs);
 
+   /* See emit_vertex_write() for where the VUE's overhead on top of the
+    * attributes comes from.
+    */
    if (intel->gen >= 6)
-      c->prog_data.urb_entry_size = (attributes_in_vue + 4 + 7) / 8;
+      c->prog_data.urb_entry_size = (attributes_in_vue + 2 + 7) / 8;
    else if (intel->gen == 5)
       c->prog_data.urb_entry_size = (attributes_in_vue + 6 + 3) / 4;
    else
@@ -1364,16 +1367,19 @@ static void emit_vertex_write( struct brw_vs_compile *c)
     */
    brw_set_access_mode(p, BRW_ALIGN_1);
 
+   /* The VUE layout is documented in Volume 2a. */
    if (intel->gen >= 6) {
-      /* There are 16 DWs (D0-D15) in VUE header on Sandybridge:
+      /* There are 8 or 16 DWs (D0-D15) in VUE header on Sandybridge:
        * dword 0-3 (m1) of the header is indices, point width, clip flags.
        * dword 4-7 (m2) is the 4D space position
-       * dword 8-15 (m3,m4) of the vertex header is the user clip distance.
-       * m5 is the first vertex data we fill, which is the vertex position.
+       * dword 8-15 (m3,m4) of the vertex header is the user clip distance if
+       * enabled.  We don't use it, so skip it.
+       * m3 is the first vertex element data we fill, which is the vertex
+       * position.
        */
       brw_MOV(p, offset(m0, 2), pos);
-      brw_MOV(p, offset(m0, 5), pos);
-      len_vertex_header = 4;
+      brw_MOV(p, offset(m0, 3), pos);
+      len_vertex_header = 2;
    } else if (intel->gen == 5) {
       /* There are 20 DWs (D0-D19) in VUE header on Ironlake:
        * dword 0-3 (m1) of the header is indices, point width, clip flags.
