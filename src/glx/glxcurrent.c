@@ -295,7 +295,7 @@ FetchDRIDrawable(Display * dpy, GLXDrawable glxDrawable, GLXContext gc)
    if (priv == NULL)
       return NULL;
 
-   psc = &priv->screenConfigs[gc->screen];
+   psc = priv->screenConfigs[gc->screen];
    if (psc->drawHash == NULL)
       return NULL;
 

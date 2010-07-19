@@ -121,8 +121,7 @@ struct __GLXDRIdisplayRec
      */
    void (*destroyDisplay) (__GLXDRIdisplay * display);
 
-   __GLXDRIscreen *(*createScreen) (__GLXscreenConfigs * psc, int screen,
-                                    __GLXdisplayPrivate * priv);
+   __GLXscreenConfigs *(*createScreen)(int screen, __GLXdisplayPrivate * priv);
 };
 
 struct __GLXDRIscreenRec {
@@ -530,14 +529,9 @@ struct __GLXscreenConfigsRec
      * Per screen direct rendering interface functions and data.
      */
    __DRIscreen *__driScreen;
-   const __DRIcoreExtension *core;
-   const __DRIlegacyExtension *legacy;
-   const __DRIswrastExtension *swrast;
-   const __DRIdri2Extension *dri2;
    __glxHashTable *drawHash;
    Display *dpy;
-   int scr, fd;
-   void *driver;
+   int scr;
 
    __GLXDRIscreen *driScreen;
 
@@ -638,7 +632,7 @@ struct __GLXdisplayPrivateRec
      * Also, per screen data which now includes the server \c GLX_EXTENSION
      * string.
      */
-   __GLXscreenConfigs *screenConfigs;
+   __GLXscreenConfigs **screenConfigs;
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
     /**
@@ -649,6 +643,10 @@ struct __GLXdisplayPrivateRec
    __GLXDRIdisplay *dri2Display;
 #endif
 };
+
+extern int
+glx_screen_init(__GLXscreenConfigs *psc,
+		int screen, __GLXdisplayPrivate * priv);
 
 extern __GLXDRIdrawable *
 dri2GetGlxDrawableFromXDrawableId(Display *dpy, XID id);

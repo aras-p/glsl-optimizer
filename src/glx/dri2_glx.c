@@ -75,6 +75,16 @@ struct dri2_display
    const __DRIextension *loader_extensions[4];
 };
 
+struct dri2_screen {
+   __GLXscreenConfigs base;
+
+   __GLXDRIscreen driScreen;
+   const __DRIdri2Extension *dri2;
+   const __DRIcoreExtension *core;
+   void *driver;
+   int fd;
+};
+
 struct dri2_context
 {
    __GLXDRIcontext base;
@@ -94,43 +104,44 @@ struct dri2_drawable
 };
 
 static void
-dri2DestroyContext(__GLXDRIcontext * context,
-                   __GLXscreenConfigs * psc, Display * dpy)
+dri2DestroyContext(__GLXDRIcontext *context,
+		   __GLXscreenConfigs *base, Display *dpy)
 {
    struct dri2_context *pcp = (struct dri2_context *) context;
-   const __DRIcoreExtension *core = pcp->psc->core;
+   struct dri2_screen *psc = (struct dri2_screen *) base;
 
-   (*core->destroyContext) (pcp->driContext);
+   (*psc->core->destroyContext) (pcp->driContext);
 
    Xfree(pcp);
 }
 
 static Bool
-dri2BindContext(__GLXDRIcontext * context,
-                __GLXDRIdrawable * draw, __GLXDRIdrawable * read)
+dri2BindContext(__GLXDRIcontext *context,
+		__GLXDRIdrawable *draw, __GLXDRIdrawable *read)
 {
    struct dri2_context *pcp = (struct dri2_context *) context;
-   const __DRIcoreExtension *core = pcp->psc->core;
+   struct dri2_screen *psc = (struct dri2_screen *) pcp->psc;
 
-   return (*core->bindContext) (pcp->driContext,
-                                draw->driDrawable, read->driDrawable);
+   return (*psc->core->bindContext) (pcp->driContext,
+				     draw->driDrawable, read->driDrawable);
 }
 
 static void
-dri2UnbindContext(__GLXDRIcontext * context)
+dri2UnbindContext(__GLXDRIcontext *context)
 {
    struct dri2_context *pcp = (struct dri2_context *) context;
-   const __DRIcoreExtension *core = pcp->psc->core;
+   struct dri2_screen *psc = (struct dri2_screen *) pcp->psc;
 
-   (*core->unbindContext) (pcp->driContext);
+   (*psc->core->unbindContext) (pcp->driContext);
 }
 
 static __GLXDRIcontext *
-dri2CreateContext(__GLXscreenConfigs * psc,
+dri2CreateContext(__GLXscreenConfigs *base,
                   const __GLcontextModes * mode,
                   GLXContext gc, GLXContext shareList, int renderType)
 {
    struct dri2_context *pcp, *pcp_shared;
+   struct dri2_screen *psc = (struct dri2_screen *) base;
    __GLXDRIconfigPrivate *config = (__GLXDRIconfigPrivate *) mode;
    __DRIcontext *shared = NULL;
 
@@ -143,9 +154,9 @@ dri2CreateContext(__GLXscreenConfigs * psc,
    if (pcp == NULL)
       return NULL;
 
-   pcp->psc = psc;
+   pcp->psc = &psc->base;
    pcp->driContext =
-      (*psc->dri2->createNewContext) (psc->__driScreen,
+      (*psc->dri2->createNewContext) (psc->base.__driScreen,
                                       config->driConfig, shared, pcp);
    gc->__driContext = pcp->driContext;
 
@@ -164,7 +175,7 @@ dri2CreateContext(__GLXscreenConfigs * psc,
 static void
 dri2DestroyDrawable(__GLXDRIdrawable *pdraw)
 {
-   const __DRIcoreExtension *core = pdraw->psc->core;
+   struct dri2_screen *psc = (struct dri2_screen *) pdraw->psc;
    __GLXdisplayPrivate *dpyPriv;
    struct dri2_display *pdp;
 
@@ -172,17 +183,17 @@ dri2DestroyDrawable(__GLXDRIdrawable *pdraw)
    pdp = (struct dri2_display *)dpyPriv->dri2Display;
 
    __glxHashDelete(pdp->dri2Hash, pdraw->xDrawable);
-   (*core->destroyDrawable) (pdraw->driDrawable);
-   DRI2DestroyDrawable(pdraw->psc->dpy, pdraw->xDrawable);
+   (*psc->core->destroyDrawable) (pdraw->driDrawable);
+   DRI2DestroyDrawable(psc->base.dpy, pdraw->xDrawable);
    Xfree(pdraw);
 }
 
 static __GLXDRIdrawable *
-dri2CreateDrawable(__GLXscreenConfigs * psc,
-                   XID xDrawable,
-                   GLXDrawable drawable, const __GLcontextModes * modes)
+dri2CreateDrawable(__GLXscreenConfigs *base, XID xDrawable,
+		   GLXDrawable drawable, const __GLcontextModes * modes)
 {
    struct dri2_drawable *pdraw;
+   struct dri2_screen *psc = (struct dri2_screen *) base;
    __GLXDRIconfigPrivate *config = (__GLXDRIconfigPrivate *) modes;
    __GLXdisplayPrivate *dpyPriv;
    struct dri2_display *pdp;
@@ -195,13 +206,14 @@ dri2CreateDrawable(__GLXscreenConfigs * psc,
    pdraw->base.destroyDrawable = dri2DestroyDrawable;
    pdraw->base.xDrawable = xDrawable;
    pdraw->base.drawable = drawable;
-   pdraw->base.psc = psc;
+   pdraw->base.psc = &psc->base;
    pdraw->bufferCount = 0;
    pdraw->swap_interval = 1; /* default may be overridden below */
    pdraw->have_back = 0;
 
-   if (psc->config)
-      psc->config->configQueryi(psc->__driScreen, "vblank_mode", &vblank_mode);
+   if (psc->base.config)
+      psc->base.config->configQueryi(psc->base.__driScreen,
+				     "vblank_mode", &vblank_mode);
 
    switch (vblank_mode) {
    case DRI_CONF_VBLANK_NEVER:
@@ -215,24 +227,24 @@ dri2CreateDrawable(__GLXscreenConfigs * psc,
       break;
    }
 
-   DRI2CreateDrawable(psc->dpy, xDrawable);
+   DRI2CreateDrawable(psc->base.dpy, xDrawable);
 
-   dpyPriv = __glXInitialize(psc->dpy);
+   dpyPriv = __glXInitialize(psc->base.dpy);
    pdp = (struct dri2_display *)dpyPriv->dri2Display;;
    /* Create a new drawable */
    pdraw->base.driDrawable =
-      (*psc->dri2->createNewDrawable) (psc->__driScreen,
+      (*psc->dri2->createNewDrawable) (psc->base.__driScreen,
                                        config->driConfig, pdraw);
 
    if (!pdraw->base.driDrawable) {
-      DRI2DestroyDrawable(psc->dpy, xDrawable);
+      DRI2DestroyDrawable(psc->base.dpy, xDrawable);
       Xfree(pdraw);
       return NULL;
    }
 
    if (__glxHashInsert(pdp->dri2Hash, xDrawable, pdraw)) {
       (*psc->core->destroyDrawable) (pdraw->base.driDrawable);
-      DRI2DestroyDrawable(psc->dpy, xDrawable);
+      DRI2DestroyDrawable(psc->base.dpy, xDrawable);
       Xfree(pdraw);
       return None;
    }
@@ -244,7 +256,7 @@ dri2CreateDrawable(__GLXscreenConfigs * psc,
     * drawable.
     */
    if (pdp->swapAvailable)
-      DRI2SwapInterval(psc->dpy, xDrawable, pdraw->swap_interval);
+      DRI2SwapInterval(psc->base.dpy, xDrawable, pdraw->swap_interval);
 #endif
 
    return &pdraw->base;
@@ -377,12 +389,15 @@ dri2FlushFrontBuffer(__DRIdrawable *driDrawable, void *loaderPrivate)
 
 
 static void
-dri2DestroyScreen(__GLXscreenConfigs * psc)
+dri2DestroyScreen(__GLXscreenConfigs *base)
 {
+   struct dri2_screen *psc = (struct dri2_screen *) base;
+
    /* Free the direct rendering per screen data */
-   (*psc->core->destroyScreen) (psc->__driScreen);
+   (*psc->core->destroyScreen) (psc->base.__driScreen);
    close(psc->fd);
-   psc->__driScreen = NULL;
+   base->__driScreen = NULL;
+   Xfree(psc);
 }
 
 /**
@@ -610,26 +625,30 @@ static const struct glx_context_vtable dri2_context_vtable = {
    dri2_release_tex_image,
 };
 
-static __GLXDRIscreen *
-dri2CreateScreen(__GLXscreenConfigs * psc, int screen,
-                 __GLXdisplayPrivate * priv)
+static __GLXscreenConfigs *
+dri2CreateScreen(int screen, __GLXdisplayPrivate * priv)
 {
    const __DRIconfig **driver_configs;
    const __DRIextension **extensions;
    const struct dri2_display *const pdp = (struct dri2_display *)
       priv->dri2Display;
+   struct dri2_screen *psc;
    __GLXDRIscreen *psp;
    char *driverName, *deviceName;
    drm_magic_t magic;
    int i;
 
-   psp = Xmalloc(sizeof *psp);
-   if (psp == NULL)
+   psc = Xmalloc(sizeof *psc);
+   if (psc == NULL)
       return NULL;
 
-   if (!DRI2Connect(psc->dpy, RootWindow(psc->dpy, screen),
+   memset(psc, 0, sizeof *psc);
+   if (!glx_screen_init(&psc->base, screen, priv))
+       return NULL;
+
+   if (!DRI2Connect(priv->dpy, RootWindow(priv->dpy, screen),
 		    &driverName, &deviceName)) {
-      XFree(psp);
+      XFree(psc);
       return NULL;
    }
 
@@ -668,7 +687,7 @@ dri2CreateScreen(__GLXscreenConfigs * psc, int screen,
       goto handle_error;
    }
 
-   if (!DRI2Authenticate(psc->dpy, RootWindow(psc->dpy, screen), magic)) {
+   if (!DRI2Authenticate(priv->dpy, RootWindow(priv->dpy, screen), magic)) {
       ErrorMessageF("failed to authenticate magic %d\n", magic);
       goto handle_error;
    }
@@ -677,25 +696,30 @@ dri2CreateScreen(__GLXscreenConfigs * psc, int screen,
    /* If the server does not support the protocol for
     * DRI2GetBuffersWithFormat, don't supply that interface to the driver.
     */
-   psc->__driScreen =
+   psc->base.__driScreen =
       psc->dri2->createNewScreen(screen, psc->fd,
 				 (const __DRIextension **)
 				 &pdp->loader_extensions[0],
 				 &driver_configs, psc);
 
-   if (psc->__driScreen == NULL) {
+   if (psc->base.__driScreen == NULL) {
       ErrorMessageF("failed to create dri screen\n");
       goto handle_error;
    }
 
-   driBindCommonExtensions(psc);
-   dri2BindExtensions(psc);
+   extensions = psc->core->getExtensions(psc->base.__driScreen);
+   driBindCommonExtensions(&psc->base, extensions);
+   dri2BindExtensions(&psc->base, extensions);
 
-   psc->configs = driConvertConfigs(psc->core, psc->configs, driver_configs);
-   psc->visuals = driConvertConfigs(psc->core, psc->visuals, driver_configs);
+   psc->base.configs =
+      driConvertConfigs(psc->core, psc->base.configs, driver_configs);
+   psc->base.visuals =
+      driConvertConfigs(psc->core, psc->base.visuals, driver_configs);
 
-   psc->driver_configs = driver_configs;
+   psc->base.driver_configs = driver_configs;
 
+   psp = &psc->driScreen;
+   psc->base.driScreen = psp;
    psp->destroyScreen = dri2DestroyScreen;
    psp->createContext = dri2CreateContext;
    psp->createDrawable = dri2CreateDrawable;
@@ -721,26 +745,26 @@ dri2CreateScreen(__GLXscreenConfigs * psc, int screen,
       psp->getSwapInterval = dri2GetSwapInterval;
 #endif
 #if defined(X_DRI2GetMSC) && defined(X_DRI2WaitMSC) && defined(X_DRI2SwapInterval)
-      __glXEnableDirectExtension(psc, "GLX_OML_sync_control");
+      __glXEnableDirectExtension(&psc->base, "GLX_OML_sync_control");
 #endif
    }
 
    /* DRI2 suports SubBuffer through DRI2CopyRegion, so it's always
     * available.*/
    psp->copySubBuffer = dri2CopySubBuffer;
-   __glXEnableDirectExtension(psc, "GLX_MESA_copy_sub_buffer");
+   __glXEnableDirectExtension(&psc->base, "GLX_MESA_copy_sub_buffer");
 
-   psc->direct_context_vtable = &dri2_context_vtable;
+   psc->base.direct_context_vtable = &dri2_context_vtable;
 
    Xfree(driverName);
    Xfree(deviceName);
 
-   return psp;
+   return &psc->base;
 
 handle_error:
    Xfree(driverName);
    Xfree(deviceName);
-   XFree(psp);
+   XFree(psc);
 
    /* FIXME: clean up here */
 

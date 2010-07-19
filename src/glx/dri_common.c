@@ -338,12 +338,9 @@ driConvertConfigs(const __DRIcoreExtension * core,
 
 /* Bind DRI1 specific extensions */
 _X_HIDDEN void
-driBindExtensions(__GLXscreenConfigs *psc)
+driBindExtensions(__GLXscreenConfigs *psc, const __DRIextension **extensions)
 {
-   const __DRIextension **extensions;
    int i;
-
-   extensions = psc->core->getExtensions(psc->__driScreen);
 
    for (i = 0; extensions[i]; i++) {
 #ifdef __DRI_SWAP_CONTROL
@@ -375,12 +372,10 @@ driBindExtensions(__GLXscreenConfigs *psc)
 
 /* Bind DRI2 specific extensions */
 _X_HIDDEN void
-dri2BindExtensions(__GLXscreenConfigs *psc)
+dri2BindExtensions(__GLXscreenConfigs *psc,
+		   const __DRIextension **extensions)
 {
-   const __DRIextension **extensions;
    int i;
-
-   extensions = psc->core->getExtensions(psc->__driScreen);
 
    for (i = 0; extensions[i]; i++) {
 #ifdef __DRI_TEX_BUFFER
@@ -413,12 +408,10 @@ dri2BindExtensions(__GLXscreenConfigs *psc)
 
 /* Bind extensions common to DRI1 and DRI2 */
 _X_HIDDEN void
-driBindCommonExtensions(__GLXscreenConfigs *psc)
+driBindCommonExtensions(__GLXscreenConfigs *psc,
+			const __DRIextension **extensions)
 {
-   const __DRIextension **extensions;
    int i;
-
-   extensions = psc->core->getExtensions(psc->__driScreen);
 
    for (i = 0; extensions[i]; i++) {
 #ifdef __DRI_COPY_SUB_BUFFER

@@ -191,7 +191,7 @@ CreateDRIDrawable(Display *dpy, const __GLcontextModes *fbconfig,
    __GLXDRIdrawable *pdraw;
    __GLXscreenConfigs *psc;
 
-   psc = &priv->screenConfigs[fbconfig->screen];
+   psc = priv->screenConfigs[fbconfig->screen];
    if (psc->driScreen == NULL)
       return;
 
@@ -217,7 +217,7 @@ DestroyDRIDrawable(Display *dpy, GLXDrawable drawable, int destroy_xdrawable)
    int screen;
    __GLXdisplayPrivate *const priv = __glXInitialize(dpy);
    __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable, &screen);
-   __GLXscreenConfigs *psc = &priv->screenConfigs[screen];
+   __GLXscreenConfigs *psc = priv->screenConfigs[screen];
 
    if (pdraw != NULL) {
       if (destroy_xdrawable)

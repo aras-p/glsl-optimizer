@@ -244,9 +244,9 @@ FreeScreenConfigs(__GLXdisplayPrivate * priv)
    GLint i, screens;
 
    /* Free screen configuration information */
-   psc = priv->screenConfigs;
    screens = ScreenCount(priv->dpy);
-   for (i = 0; i < screens; i++, psc++) {
+   for (i = 0; i < screens; i++) {
+      psc = priv->screenConfigs[i];
       if (psc->configs) {
          _gl_context_modes_destroy(psc->configs);
          if (psc->effectiveGLXexts)
@@ -268,11 +268,14 @@ FreeScreenConfigs(__GLXdisplayPrivate * priv)
          psc->driver_configs = NULL;
       }
       if (psc->driScreen) {
-         psc->driScreen->destroyScreen(psc);
          __glxHashDestroy(psc->drawHash);
-         XFree(psc->driScreen);
+         psc->driScreen->destroyScreen(psc);
          psc->driScreen = NULL;
+      } else {
+	 Xfree(psc);
       }
+#else
+      Xfree(psc);
 #endif
    }
    XFree((char *) priv->screenConfigs);
@@ -672,15 +675,15 @@ createConfigsFromProperties(Display * dpy, int nvisuals, int nprops,
 }
 
 static GLboolean
-getVisualConfigs(Display * dpy, __GLXdisplayPrivate * priv, int screen)
+getVisualConfigs(__GLXscreenConfigs *psc,
+		 __GLXdisplayPrivate *priv, int screen)
 {
    xGLXGetVisualConfigsReq *req;
-   __GLXscreenConfigs *psc;
    xGLXGetVisualConfigsReply reply;
+   Display *dpy = priv->dpy;
 
    LockDisplay(dpy);
 
-   psc = priv->screenConfigs + screen;
    psc->visuals = NULL;
    GetReq(GLXGetVisualConfigs, req);
    req->reqType = priv->majorOpcode;
@@ -701,15 +704,14 @@ getVisualConfigs(Display * dpy, __GLXdisplayPrivate * priv, int screen)
 }
 
 static GLboolean
-getFBConfigs(Display * dpy, __GLXdisplayPrivate * priv, int screen)
+getFBConfigs(__GLXscreenConfigs *psc, __GLXdisplayPrivate *priv, int screen)
 {
    xGLXGetFBConfigsReq *fb_req;
    xGLXGetFBConfigsSGIXReq *sgi_req;
    xGLXVendorPrivateWithReplyReq *vpreq;
    xGLXGetFBConfigsReply reply;
-   __GLXscreenConfigs *psc;
+   Display *dpy = priv->dpy;
 
-   psc = priv->screenConfigs + screen;
    psc->serverGLXexts =
       __glXQueryServerString(dpy, priv->majorOpcode, screen, GLX_EXTENSIONS);
 
@@ -748,6 +750,35 @@ getFBConfigs(Display * dpy, __GLXdisplayPrivate * priv, int screen)
    return psc->configs != NULL;
 }
 
+_X_HIDDEN Bool
+glx_screen_init(__GLXscreenConfigs *psc,
+		int screen, __GLXdisplayPrivate * priv)
+{
+   /* Initialize per screen dynamic client GLX extensions */
+   psc->ext_list_first_time = GL_TRUE;
+   psc->scr = screen;
+   psc->dpy = priv->dpy;
+   psc->drawHash = __glxHashCreate();
+   if (psc->drawHash == NULL)
+      return GL_FALSE;
+
+   getVisualConfigs(psc, priv, screen);
+   getFBConfigs(psc, priv, screen);
+
+   return GL_TRUE;
+}
+
+static __GLXscreenConfigs *
+createIndirectScreen()
+{
+   __GLXscreenConfigs *psc;
+
+   psc = Xmalloc(sizeof *psc);
+   memset(psc, 0, sizeof *psc);
+
+   return psc;
+}
+
 /*
 ** Allocate the memory for the per screen configs for each screen.
 ** If that works then fetch the per screen configs data.
@@ -762,12 +793,9 @@ AllocAndFetchScreenConfigs(Display * dpy, __GLXdisplayPrivate * priv)
     ** First allocate memory for the array of per screen configs.
     */
    screens = ScreenCount(dpy);
-   psc = (__GLXscreenConfigs *) Xmalloc(screens * sizeof(__GLXscreenConfigs));
-   if (!psc) {
+   priv->screenConfigs = Xmalloc(screens * sizeof *priv->screenConfigs);
+   if (!priv->screenConfigs)
       return GL_FALSE;
-   }
-   memset(psc, 0, screens * sizeof(__GLXscreenConfigs));
-   priv->screenConfigs = psc;
 
    priv->serverGLXversion =
       __glXQueryServerString(dpy, priv->majorOpcode, 0, GLX_VERSION);
@@ -777,33 +805,22 @@ AllocAndFetchScreenConfigs(Display * dpy, __GLXdisplayPrivate * priv)
    }
 
    for (i = 0; i < screens; i++, psc++) {
-      getVisualConfigs(dpy, priv, i);
-      getFBConfigs(dpy, priv, i);
-
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
-      psc->scr = i;
-      psc->dpy = dpy;
-      psc->drawHash = __glxHashCreate();
-      if (psc->drawHash == NULL)
-         continue;
-
-      /* Initialize per screen dynamic client GLX extensions */
-      psc->ext_list_first_time = GL_TRUE;
-
       if (priv->dri2Display)
-         psc->driScreen = (*priv->dri2Display->createScreen) (psc, i, priv);
+	 psc = (*priv->dri2Display->createScreen) (i, priv);
+      if (psc == NULL && priv->driDisplay)
+	 psc = (*priv->driDisplay->createScreen) (i, priv);
+      if (psc == NULL && priv->driswDisplay)
+	 psc = (*priv->driswDisplay->createScreen) (i, priv);
+      if (psc == NULL)
+	 psc = createIndirectScreen (i, priv);
 
-      if (psc->driScreen == NULL && priv->driDisplay)
-         psc->driScreen = (*priv->driDisplay->createScreen) (psc, i, priv);
-
-      if (psc->driScreen == NULL && priv->driswDisplay)
-         psc->driScreen = (*priv->driswDisplay->createScreen) (psc, i, priv);
-
-      if (psc->driScreen == NULL) {
+      if (psc == NULL) {
          __glxHashDestroy(psc->drawHash);
          psc->drawHash = NULL;
       }
 #endif
+      priv->screenConfigs[i] = psc;
    }
    SyncHandle();
    return GL_TRUE;

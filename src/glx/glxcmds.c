@@ -137,7 +137,7 @@ GetGLXDRIDrawable(Display * dpy, GLXDrawable drawable, int *const scrn_num)
       return NULL;
 
    for (i = 0; i < screen_count; i++) {
-      psc = &priv->screenConfigs[i];
+      psc = priv->screenConfigs[i];
       if (psc->drawHash == NULL)
          continue;
 
@@ -175,7 +175,7 @@ GetGLXScreenConfigs(Display * dpy, int scrn)
 
    return (priv
            && priv->screenConfigs !=
-           NULL) ? &priv->screenConfigs[scrn] : NULL;
+           NULL) ? priv->screenConfigs[scrn] : NULL;
 }
 
 
@@ -202,7 +202,7 @@ GetGLXPrivScreenConfig(Display * dpy, int scrn, __GLXdisplayPrivate ** ppriv,
    }
 
    /* Check to see if the GL is supported on this screen */
-   *ppsc = &((*ppriv)->screenConfigs[scrn]);
+   *ppsc = (*ppriv)->screenConfigs[scrn];
    if ((*ppsc)->configs == NULL) {
       /* No support for GL on this screen regardless of visual */
       return GLX_BAD_VISUAL;
@@ -233,7 +233,7 @@ ValidateGLXFBConfig(Display * dpy, GLXFBConfig config)
 
    if (priv != NULL) {
       for (i = 0; i < num_screens; i++) {
-         for (modes = priv->screenConfigs[i].configs; modes != NULL;
+         for (modes = priv->screenConfigs[i]->configs; modes != NULL;
               modes = modes->next) {
             if (modes == (__GLcontextModes *) config) {
                return (__GLcontextModes *) config;
@@ -992,7 +992,7 @@ glXCreateGLXPixmap(Display * dpy, XVisualInfo * vis, Pixmap pixmap)
       __GLXscreenConfigs *psc;
       __GLcontextModes *modes;
 
-      psc = &priv->screenConfigs[vis->screen];
+      psc = priv->screenConfigs[vis->screen];
       if (psc->driScreen == NULL)
          break;
       modes = _gl_context_modes_find_visual(psc->visuals, vis->visualid);
@@ -1045,7 +1045,7 @@ glXDestroyGLXPixmap(Display * dpy, GLXPixmap glxpixmap)
       int screen;
       __GLXdisplayPrivate *const priv = __glXInitialize(dpy);
       __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, glxpixmap, &screen);
-      __GLXscreenConfigs *psc = &priv->screenConfigs[screen];
+      __GLXscreenConfigs *psc = priv->screenConfigs[screen];
 
       if (pdraw != NULL) {
          (*pdraw->destroyDrawable) (pdraw);
@@ -1958,14 +1958,14 @@ glXGetFBConfigs(Display * dpy, int screen, int *nelements)
    *nelements = 0;
    if (priv && (priv->screenConfigs != NULL)
        && (screen >= 0) && (screen <= ScreenCount(dpy))
-       && (priv->screenConfigs[screen].configs != NULL)
-       && (priv->screenConfigs[screen].configs->fbconfigID
+       && (priv->screenConfigs[screen]->configs != NULL)
+       && (priv->screenConfigs[screen]->configs->fbconfigID
 	   != (int) GLX_DONT_CARE)) {
       unsigned num_configs = 0;
       __GLcontextModes *modes;
 
 
-      for (modes = priv->screenConfigs[screen].configs; modes != NULL;
+      for (modes = priv->screenConfigs[screen]->configs; modes != NULL;
            modes = modes->next) {
          if (modes->fbconfigID != (int) GLX_DONT_CARE) {
             num_configs++;
@@ -1977,7 +1977,7 @@ glXGetFBConfigs(Display * dpy, int screen, int *nelements)
       if (config != NULL) {
          *nelements = num_configs;
          i = 0;
-         for (modes = priv->screenConfigs[screen].configs; modes != NULL;
+         for (modes = priv->screenConfigs[screen]->configs; modes != NULL;
               modes = modes->next) {
             if (modes->fbconfigID != (int) GLX_DONT_CARE) {
                config[i] = modes;
@@ -2544,7 +2544,7 @@ __glXGetSyncValuesOML(Display * dpy, GLXDrawable drawable,
 #ifdef GLX_DIRECT_RENDERING
    pdraw = GetGLXDRIDrawable(dpy, drawable, &i);
 #endif
-   psc = &priv->screenConfigs[i];
+   psc = priv->screenConfigs[i];
 
 #if defined(__DRI_SWAP_BUFFER_COUNTER) && defined(__DRI_MEDIA_STREAM_COUNTER)
    if (pdraw && psc->sbc && psc->msc)
