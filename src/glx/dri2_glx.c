@@ -308,7 +308,6 @@ dri2CopySubBuffer(__GLXDRIdrawable *pdraw, int x, int y, int width, int height)
 #endif
 
    region = XFixesCreateRegion(pdraw->psc->dpy, &xrect, 1);
-   /* should get a fence ID back from here at some point */
    DRI2CopyRegion(pdraw->psc->dpy, pdraw->xDrawable, region,
                   DRI2BufferFrontLeft, DRI2BufferBackLeft);
    XFixesDestroyRegion(pdraw->psc->dpy, region);
@@ -322,15 +321,11 @@ dri2CopySubBuffer(__GLXDRIdrawable *pdraw, int x, int y, int width, int height)
 }
 
 static void
-dri2WaitX(__GLXDRIdrawable *pdraw)
+dri2_copy_drawable(__GLXDRIdrawablePrivate *priv, int dest, int src)
 {
-   __GLXDRIdrawablePrivate *priv = (__GLXDRIdrawablePrivate *) pdraw;
    XRectangle xrect;
    XserverRegion region;
-
-   /* Check we have the right attachments */
-   if (!priv->have_fake_front)
-      return;
+   __GLXscreenConfigs *const psc = priv->base.psc;
 
    xrect.x = 0;
    xrect.y = 0;
@@ -338,40 +333,36 @@ dri2WaitX(__GLXDRIdrawable *pdraw)
    xrect.height = priv->height;
 
 #ifdef __DRI2_FLUSH
-   if (pdraw->psc->f)
-      (*pdraw->psc->f->flush) (pdraw->driDrawable);
+   if (psc->f)
+      (*psc->f->flush) (priv->base.driDrawable);
 #endif
 
-   region = XFixesCreateRegion(pdraw->psc->dpy, &xrect, 1);
-   DRI2CopyRegion(pdraw->psc->dpy, pdraw->xDrawable, region,
-                  DRI2BufferFakeFrontLeft, DRI2BufferFrontLeft);
-   XFixesDestroyRegion(pdraw->psc->dpy, region);
+   region = XFixesCreateRegion(psc->dpy, &xrect, 1);
+   DRI2CopyRegion(psc->dpy, priv->base.xDrawable, region, dest, src);
+   XFixesDestroyRegion(psc->dpy, region);
+
+}
+
+static void
+dri2WaitX(__GLXDRIdrawable *pdraw)
+{
+   __GLXDRIdrawablePrivate *priv = (__GLXDRIdrawablePrivate *) pdraw;
+
+   if (!priv->have_fake_front)
+      return;
+
+   dri2_copy_drawable(priv, DRI2BufferFakeFrontLeft, DRI2BufferFrontLeft);
 }
 
 static void
 dri2WaitGL(__GLXDRIdrawable * pdraw)
 {
    __GLXDRIdrawablePrivate *priv = (__GLXDRIdrawablePrivate *) pdraw;
-   XRectangle xrect;
-   XserverRegion region;
 
    if (!priv->have_fake_front)
       return;
 
-   xrect.x = 0;
-   xrect.y = 0;
-   xrect.width = priv->width;
-   xrect.height = priv->height;
-
-#ifdef __DRI2_FLUSH
-   if (pdraw->psc->f)
-      (*pdraw->psc->f->flush) (pdraw->driDrawable);
-#endif
-
-   region = XFixesCreateRegion(pdraw->psc->dpy, &xrect, 1);
-   DRI2CopyRegion(pdraw->psc->dpy, pdraw->xDrawable, region,
-                  DRI2BufferFrontLeft, DRI2BufferFakeFrontLeft);
-   XFixesDestroyRegion(pdraw->psc->dpy, region);
+   dri2_copy_drawable(priv, DRI2BufferFrontLeft, DRI2BufferFakeFrontLeft);
 }
 
 static void
