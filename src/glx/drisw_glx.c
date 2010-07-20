@@ -48,6 +48,8 @@ struct drisw_screen
    __GLXDRIscreen vtable;
    const __DRIcoreExtension *core;
    const __DRIswrastExtension *swrast;
+   const __DRIconfig **driver_configs;
+
    void *driver;
 };
 
@@ -382,6 +384,7 @@ driDestroyScreen(__GLXscreenConfigs *base)
 
    /* Free the direct rendering per screen data */
    (*psc->core->destroyScreen) (psc->driScreen);
+   driDestroyConfigs(psc->driver_configs);
    psc->driScreen = NULL;
    if (psc->driver)
       dlclose(psc->driver);
@@ -456,7 +459,7 @@ driCreateScreen(int screen, __GLXdisplayPrivate *priv)
    psc->base.visuals =
       driConvertConfigs(psc->core, psc->base.visuals, driver_configs);
 
-   psc->base.driver_configs = driver_configs;
+   psc->driver_configs = driver_configs;
 
    psp = &psc->vtable;
    psc->base.driScreen = psp;

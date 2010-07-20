@@ -69,6 +69,7 @@ struct dri_screen
    const __DRIcoreExtension *core;
    const __DRIswapControlExtension *swapControl;
    const __DRImediaStreamCounterExtension *msc;
+   const __DRIconfig **driver_configs;
 
    void *driver;
    int fd;
@@ -448,7 +449,7 @@ CallCreateNewScreen(Display *dpy, int scrn, struct dri_screen *psc,
    psc->base.visuals =
       driConvertConfigs(psc->core, psc->base.visuals, driver_configs);
 
-   psc->base.driver_configs = driver_configs;
+   psc->driver_configs = driver_configs;
 
    /* Visuals with depth != screen depth are subject to automatic compositing
     * in the X server, so DRI1 can't render to them properly. Mark them as
@@ -664,6 +665,7 @@ driDestroyScreen(__GLXscreenConfigs *base)
    /* Free the direct rendering per screen data */
    if (psc->driScreen)
       (*psc->core->destroyScreen) (psc->driScreen);
+   driDestroyConfigs(psc->driver_configs);
    psc->driScreen = NULL;
    if (psc->driver)
       dlclose(psc->driver);

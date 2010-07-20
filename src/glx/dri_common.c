@@ -336,6 +336,16 @@ driConvertConfigs(const __DRIcoreExtension * core,
    return head.next;
 }
 
+_X_HIDDEN void
+driDestroyConfigs(const __DRIconfig **configs)
+{
+   int i;
+
+   for (i = 0; configs[i]; i++)
+      free((__DRIconfig *) configs[i]);
+   free(configs);
+}
+
 /* Bind extensions common to DRI1 and DRI2 */
 _X_HIDDEN void
 driBindCommonExtensions(__GLXscreenConfigs *psc,

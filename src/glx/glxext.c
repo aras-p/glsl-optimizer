@@ -260,13 +260,6 @@ FreeScreenConfigs(__GLXdisplayPrivate * priv)
       Xfree((char *) psc->serverGLXexts);
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
-      if (psc->driver_configs) {
-         unsigned int j;
-         for (j = 0; psc->driver_configs[j]; j++)
-            free((__DRIconfig *) psc->driver_configs[j]);
-         free(psc->driver_configs);
-         psc->driver_configs = NULL;
-      }
       if (psc->driScreen) {
          psc->driScreen->destroyScreen(psc);
          psc->driScreen = NULL;

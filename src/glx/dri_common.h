@@ -48,6 +48,8 @@ extern __GLcontextModes *driConvertConfigs(const __DRIcoreExtension * core,
                                            __GLcontextModes * modes,
                                            const __DRIconfig ** configs);
 
+extern void driDestroyConfigs(const __DRIconfig **configs);
+
 extern const __DRIsystemTimeExtension systemTimeExtension;
 
 extern void InfoMessageF(const char *f, ...);

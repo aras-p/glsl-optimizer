@@ -86,6 +86,7 @@ struct dri2_screen {
    const __DRI2flushExtension *f;
    const __DRI2configQueryExtension *config;
    const __DRItexBufferExtension *texBuffer;
+   const __DRIconfig **driver_configs;
 
    void *driver;
    int fd;
@@ -428,6 +429,7 @@ dri2DestroyScreen(__GLXscreenConfigs *base)
 
    /* Free the direct rendering per screen data */
    (*psc->core->destroyScreen) (psc->driScreen);
+   driDestroyConfigs(psc->driver_configs);
    close(psc->fd);
    Xfree(psc);
 }
@@ -785,7 +787,7 @@ dri2CreateScreen(int screen, __GLXdisplayPrivate * priv)
    psc->base.visuals =
       driConvertConfigs(psc->core, psc->base.visuals, driver_configs);
 
-   psc->base.driver_configs = driver_configs;
+   psc->driver_configs = driver_configs;
 
    psp = &psc->vtable;
    psc->base.driScreen = psp;
