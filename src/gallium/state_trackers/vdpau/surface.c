@@ -29,6 +29,7 @@
 #include <pipe/p_screen.h>
 #include <pipe/p_state.h>
 #include <util/u_memory.h>
+#include <util/u_format.h>
 
 VdpStatus
 vlVdpVideoSurfaceCreate(VdpDevice device,
@@ -52,16 +53,10 @@ vlVdpVideoSurfaceCreate(VdpDevice device,
        goto no_htab;
     }
 
-   p_surf = CALLOC(0, sizeof(p_surf));
+   p_surf = CALLOC(1, sizeof(p_surf));
    if (!p_surf) {
       ret = VDP_STATUS_RESOURCES;
       goto no_res;
-   }
-
-   p_surf->psurface = CALLOC(0,sizeof(struct pipe_surface));
-   if (!p_surf->psurface)  {
-	   ret = VDP_STATUS_RESOURCES;
-	   goto no_surf;
    }
 
    vlVdpDevice *dev = vlGetDataHTAB(device);
@@ -70,19 +65,8 @@ vlVdpVideoSurfaceCreate(VdpDevice device,
       goto inv_device;
    }
 
-   if (!dev->vlscreen)
-   dev->vlscreen = vl_screen_create(dev->display, dev->screen);
-   if (!dev->vlscreen)   {
-      ret = VDP_STATUS_RESOURCES;
-      goto inv_device;
-   }
-
-   p_surf->psurface->height = height;
-   p_surf->psurface->width = width;
-   p_surf->psurface->level = 0;
-   p_surf->psurface->usage = PIPE_USAGE_DEFAULT;
    p_surf->chroma_format = FormatToPipe(chroma_type);
-   p_surf->vlscreen = dev->vlscreen;
+   p_surf->device = dev;
     
    *surface = vlAddDataHTAB(p_surf);
    if (*surface == 0) {
@@ -113,9 +97,12 @@ vlVdpVideoSurfaceDestroy  ( VdpVideoSurface surface )
    if (!p_surf)
        return VDP_STATUS_INVALID_HANDLE;
 
-   if (p_surf->psurface)
-	   p_surf->vlscreen->pscreen->tex_surface_destroy(p_surf->psurface);
-	   
+   if (p_surf->psurface)  {
+	   if (p_surf->psurface->texture)  {
+		   if (p_surf->psurface->texture->screen)
+				p_surf->psurface->texture->screen->tex_surface_destroy(p_surf->psurface);
+	   }
+   }
    FREE(p_surf);
    return VDP_STATUS_OK;
 }
@@ -130,21 +117,17 @@ vlVdpVideoSurfaceGetParameters ( VdpVideoSurface surface,
    if (!(width && height && chroma_type))  
       return VDP_STATUS_INVALID_POINTER; 
    
-
-   if (!vlCreateHTAB()) 
-      return VDP_STATUS_RESOURCES;
-
-
+   
    vlVdpSurface *p_surf = vlGetDataHTAB(surface);
    if (!p_surf) 
       return VDP_STATUS_INVALID_HANDLE;
 
 
-   if (!(p_surf->psurface && p_surf->chroma_format))  
-      return VDP_STATUS_INVALID_HANDLE;
+   if (!(p_surf->chroma_format > 0 && p_surf->chroma_format < 3))  
+      return VDP_STATUS_INVALID_CHROMA_TYPE;
 
-   *width = p_surf->psurface->width;
-   *height = p_surf->psurface->height;
+   *width = p_surf->width;
+   *height = p_surf->height;
    *chroma_type = PipeToType(p_surf->chroma_format);
 
    return VDP_STATUS_OK;
@@ -157,6 +140,50 @@ vlVdpVideoSurfaceGetBitsYCbCr ( VdpVideoSurface surface,
 				uint32_t const *destination_pitches
 )
 {
+    if (!vlCreateHTAB()) 
+      return VDP_STATUS_RESOURCES;
+
+
+    vlVdpSurface *p_surf = vlGetDataHTAB(surface);
+    if (!p_surf) 
+       return VDP_STATUS_INVALID_HANDLE;
+	  
+	if (!p_surf->psurface)
+		return VDP_STATUS_RESOURCES;
    
+   
+	return VDP_STATUS_OK;
+}
+
+VdpStatus
+vlVdpVideoSurfacePutBitsYCbCr ( VdpVideoSurface surface, 
+								VdpYCbCrFormat source_ycbcr_format, 
+								void const *const *source_data, 
+								uint32_t const *source_pitches
+)
+{
+	uint32_t size_surface_bytes;
+	const struct util_format_description *format_desc;
+	enum pipe_format pformat = FormatToPipe(source_ycbcr_format);
+	
+	if (!vlCreateHTAB()) 
+      return VDP_STATUS_RESOURCES;
+
+
+    vlVdpSurface *p_surf = vlGetDataHTAB(surface);
+    if (!p_surf) 
+       return VDP_STATUS_INVALID_HANDLE;
+	   
+	
+	//size_surface_bytes =  ( source_pitches[0] * p_surf->height util_format_get_blockheight(pformat) );   
+	/*util_format_translate(enum pipe_format dst_format,
+                      void *dst, unsigned dst_stride,
+                      unsigned dst_x, unsigned dst_y,
+                      enum pipe_format src_format,
+                      const void *src, unsigned src_stride,
+                      unsigned src_x, unsigned src_y,
+                      unsigned width, unsigned height);*/
+	
+	return VDP_STATUS_NO_IMPLEMENTATION;
 
 }

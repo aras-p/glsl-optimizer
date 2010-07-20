@@ -15,7 +15,8 @@ C_SOURCES = htab.c \
 	    ftab.c \
 	    device.c \
 	    query.c \
-	    surface.c
+	    surface.c \
+	    decode.c
 
 
 include ../../Makefile.template

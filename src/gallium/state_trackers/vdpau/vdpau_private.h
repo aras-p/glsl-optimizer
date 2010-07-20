@@ -31,6 +31,7 @@
 
 #include <vdpau/vdpau.h>
 #include <pipe/p_compiler.h>
+#include <pipe/p_video_context.h>
 #include <vl_winsys.h>
 #include <assert.h>
 
@@ -116,20 +117,53 @@ static VdpYCbCrFormat PipeToFormat(enum pipe_format p_format)
    return -1;
 }
 
+static enum pipe_video_profile ProfileToPipe(VdpDecoderProfile vdpau_profile)
+{
+   switch (vdpau_profile) {
+      case VDP_DECODER_PROFILE_MPEG1:
+         return PIPE_VIDEO_PROFILE_MPEG1;
+      case VDP_DECODER_PROFILE_MPEG2_SIMPLE:
+         return PIPE_VIDEO_PROFILE_MPEG2_SIMPLE;
+      case VDP_DECODER_PROFILE_MPEG2_MAIN:
+         return PIPE_VIDEO_PROFILE_MPEG2_MAIN;
+      case VDP_DECODER_PROFILE_H264_BASELINE:
+         return PIPE_VIDEO_PROFILE_MPEG4_AVC_BASELINE;
+      case VDP_DECODER_PROFILE_H264_MAIN: /* Not defined in p_format.h */
+         return PIPE_VIDEO_PROFILE_MPEG4_AVC_MAIN;
+      case VDP_DECODER_PROFILE_H264_HIGH:
+	     return PIPE_VIDEO_PROFILE_MPEG4_AVC_HIGH;
+      default:
+         PIPE_VIDEO_PROFILE_UNKNOWN;
+   }
+
+   return -1;
+}
+
 typedef struct
 {
    void *display;
    int screen;
-   struct vl_screen *vlscreen;
-   struct vl_context *vctx;
 } vlVdpDevice;
 
 typedef struct
 {
-   struct vl_screen *vlscreen;
+   vlVdpDevice *device;
+   uint32_t width;
+   uint32_t height;
+   uint32_t pitch;
    struct pipe_surface *psurface;
-   enum pipe_video_chroma_format chroma_format; 
+   enum pipe_format format;
+   enum pipe_video_chroma_format chroma_format;
+   uint8_t *data;
 } vlVdpSurface;
+
+typedef struct
+{
+	vlVdpDevice *device;
+	struct vl_screen *vlscreen;
+    struct vl_context *vctx;
+	enum pipe_video_chroma_format chroma_format;
+} vlVdpDecoder;
 
 typedef uint32_t vlHandle;
 
@@ -160,5 +194,8 @@ VdpVideoSurfaceDestroy vlVdpVideoSurfaceDestroy;
 VdpVideoSurfaceGetParameters vlVdpVideoSurfaceGetParameters;
 VdpVideoSurfaceGetBitsYCbCr vlVdpVideoSurfaceGetBitsYCbCr;
 VdpVideoSurfacePutBitsYCbCr vlVdpVideoSurfacePutBitsYCbCr;
+VdpDecoderCreate vlVdpDecoderCreate;
+VdpDecoderDestroy vlVdpDecoderDestroy;
+VdpDecoderRender vlVdpDecoderRender;
 
 #endif // VDPAU_PRIVATE_H

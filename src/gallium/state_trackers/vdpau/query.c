@@ -29,6 +29,7 @@
 #include <vl_winsys.h>
 #include <assert.h>
 #include <pipe/p_screen.h>
+#include <pipe/p_defines.h>
 #include <math.h>
 
 
@@ -56,6 +57,7 @@ VdpStatus
 vlVdpVideoSurfaceQueryCapabilities(VdpDevice device, VdpChromaType surface_chroma_type,
                                    VdpBool *is_supported, uint32_t *max_width, uint32_t *max_height)
 {
+   struct vl_screen *vlscreen;
    uint32_t max_2d_texture_level;
    VdpStatus ret;
 
@@ -66,9 +68,8 @@ vlVdpVideoSurfaceQueryCapabilities(VdpDevice device, VdpChromaType surface_chrom
    if (!dev)
       return VDP_STATUS_INVALID_HANDLE;
    
-   if (!dev->vlscreen)
-   dev->vlscreen = vl_screen_create(dev->display, dev->screen);
-   if (!dev->vlscreen)
+   vlscreen = vl_screen_create(dev->display, dev->screen);
+   if (!vlscreen)
       return VDP_STATUS_RESOURCES;
 
    /* XXX: Current limits */ 
@@ -78,7 +79,7 @@ vlVdpVideoSurfaceQueryCapabilities(VdpDevice device, VdpChromaType surface_chrom
 	  goto no_sup;
    }
 
-   max_2d_texture_level = dev->vlscreen->pscreen->get_param( dev->vlscreen->pscreen, PIPE_CAP_MAX_TEXTURE_2D_LEVELS );
+   max_2d_texture_level = vlscreen->pscreen->get_param( vlscreen->pscreen, PIPE_CAP_MAX_TEXTURE_2D_LEVELS );
    if (!max_2d_texture_level)  {
       ret = VDP_STATUS_RESOURCES;
 	  goto no_sup;
@@ -86,6 +87,8 @@ vlVdpVideoSurfaceQueryCapabilities(VdpDevice device, VdpChromaType surface_chrom
 
    /* I am not quite sure if it is max_2d_texture_level-1 or just max_2d_texture_level */
    *max_width = *max_height = pow(2,max_2d_texture_level-1);
+   
+   vl_screen_destroy(vlscreen);
    
    return VDP_STATUS_OK;
    no_sup:
@@ -97,6 +100,8 @@ vlVdpVideoSurfaceQueryGetPutBitsYCbCrCapabilities(VdpDevice device, VdpChromaTyp
                                                   VdpYCbCrFormat bits_ycbcr_format,
                                                   VdpBool *is_supported)
 {
+	struct vl_screen *vlscreen;
+	
    if (!is_supported)
       return VDP_STATUS_INVALID_POINTER;
 
@@ -104,17 +109,18 @@ vlVdpVideoSurfaceQueryGetPutBitsYCbCrCapabilities(VdpDevice device, VdpChromaTyp
    if (!dev)
       return VDP_STATUS_INVALID_HANDLE;
 
-   if (!dev->vlscreen)
-   dev->vlscreen = vl_screen_create(dev->display, dev->screen);
-   if (!dev->vlscreen)
+   vlscreen = vl_screen_create(dev->display, dev->screen);
+   if (!vlscreen)
       return VDP_STATUS_RESOURCES;
 
    if (bits_ycbcr_format != VDP_YCBCR_FORMAT_Y8U8V8A8) 
-	                               *is_supported = dev->vlscreen->pscreen->is_format_supported(dev->vlscreen->pscreen,
+	                               *is_supported = vlscreen->pscreen->is_format_supported(vlscreen->pscreen,
                                    FormatToPipe(bits_ycbcr_format),
                                    PIPE_TEXTURE_2D,
                                    PIPE_BIND_RENDER_TARGET, 
                                    PIPE_TEXTURE_GEOM_NON_SQUARE );
+								   
+   vl_screen_destroy(vlscreen);
 								   
    return VDP_STATUS_OK;
 }
@@ -124,10 +130,49 @@ vlVdpDecoderQueryCapabilities(VdpDevice device, VdpDecoderProfile profile,
                               VdpBool *is_supported, uint32_t *max_level, uint32_t *max_macroblocks,
                               uint32_t *max_width, uint32_t *max_height)
 {
+   enum pipe_video_profile p_profile;
+   uint32_t max_decode_width;
+   uint32_t max_decode_height;
+   uint32_t max_2d_texture_level;
+   struct vl_screen *vlscreen;
+	
    if (!(is_supported && max_level && max_macroblocks && max_width && max_height))
       return VDP_STATUS_INVALID_POINTER;
+	  
+   vlVdpDevice *dev = vlGetDataHTAB(device);
+   if (!dev)
+      return VDP_STATUS_INVALID_HANDLE;
+   
+   vlscreen = vl_screen_create(dev->display, dev->screen);
+   if (!vlscreen)
+      return VDP_STATUS_RESOURCES;
 
-   return VDP_STATUS_NO_IMPLEMENTATION;
+   p_profile = ProfileToPipe(profile);
+   if (p_profile == PIPE_VIDEO_PROFILE_UNKNOWN)	{
+	   *is_supported = false;
+	   return VDP_STATUS_OK;
+   }
+   
+   if (p_profile != PIPE_VIDEO_PROFILE_MPEG2_SIMPLE && p_profile != PIPE_VIDEO_PROFILE_MPEG2_MAIN)  {
+	   *is_supported = false;
+	   return VDP_STATUS_OK;
+   }
+	   
+   /* XXX hack, need to implement something more sane when the decoders have been implemented */
+   max_2d_texture_level = vlscreen->pscreen->get_param( vlscreen->pscreen, PIPE_CAP_MAX_TEXTURE_2D_LEVELS );
+   max_decode_width = max_decode_height = pow(2,max_2d_texture_level-2);
+   if (!(max_decode_width && max_decode_height))  
+      return VDP_STATUS_RESOURCES;
+	
+   *is_supported = true;
+   *max_width = max_decode_width;
+   *max_height = max_decode_height;
+   *max_level = 16;
+   *max_macroblocks = (max_decode_width/16) * (max_decode_height/16);
+   
+   vl_screen_destroy(vlscreen);
+
+   return VDP_STATUS_OK;
 }
 
 VdpStatus

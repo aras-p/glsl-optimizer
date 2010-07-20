@@ -48,7 +48,7 @@ vdp_imp_device_create_x11(Display *display, int screen, VdpDevice *device, VdpGe
       goto no_htab;
    }
 
-   dev = CALLOC(0, sizeof(vlVdpDevice));
+   dev = CALLOC(1, sizeof(vlVdpDevice));
    if (!dev) {
       ret = VDP_STATUS_RESOURCES;
       goto no_dev;

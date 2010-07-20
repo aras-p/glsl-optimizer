@@ -627,8 +627,8 @@ void vl_compositor_set_csc_matrix(struct vl_compositor *compositor, const float 
       pipe_buffer_map(compositor->pipe, compositor->fs_const_buf,
                       PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
                       &buf_transfer),
-      mat,
-      sizeof(struct fragment_shader_consts)
+		mat,
+		sizeof(struct fragment_shader_consts)
    );
 
    pipe_buffer_unmap(compositor->pipe, compositor->fs_const_buf,
