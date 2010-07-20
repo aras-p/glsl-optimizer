@@ -1804,6 +1804,16 @@ ast_declarator_list::hir(exec_list *instructions,
 	  * declaration.
 	  */
 	 if (this->type->qualifier.constant || this->type->qualifier.uniform) {
+	    ir_rvalue *new_rhs = validate_assignment(state, var->type, rhs);
+	    if (new_rhs != NULL) {
+	       rhs = new_rhs;
+	    } else {
+	       _mesa_glsl_error(&initializer_loc, state,
+			        "initializer of type %s cannot be assigned to "
+				"variable of type %s",
+				rhs->type->name, var->type->name);
+	    }
+
 	    ir_constant *constant_value = rhs->constant_expression_value();
 	    if (!constant_value) {
 	       _mesa_glsl_error(& initializer_loc, state,
