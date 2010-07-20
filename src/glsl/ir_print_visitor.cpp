@@ -272,7 +272,7 @@ void ir_print_visitor::visit(ir_constant *ir)
 
    for (unsigned i = 0; i < ir->type->components(); i++) {
       if (i != 0)
-	 printf(", ");
+	 printf(" ");
 
       switch (base_type->base_type) {
       case GLSL_TYPE_UINT:  printf("%u", ir->value.u[i]); break;
