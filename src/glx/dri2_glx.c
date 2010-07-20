@@ -278,7 +278,16 @@ static int
 dri2DrawableGetMSC(__GLXscreenConfigs *psc, __GLXDRIdrawable *pdraw,
 		   int64_t *ust, int64_t *msc, int64_t *sbc)
 {
-   return DRI2GetMSC(psc->dpy, pdraw->xDrawable, ust, msc, sbc);
+   CARD64 dri2_ust, dri2_msc, dri2_sbc;
+   int ret;
+
+   ret = DRI2GetMSC(psc->dpy, pdraw->xDrawable,
+		    &dri2_ust, &dri2_msc, &dri2_sbc);
+   *ust = dri2_ust;
+   *msc = dri2_msc;
+   *sbc = dri2_sbc;
+
+   return ret;
 }
 
 #endif
@@ -290,16 +299,32 @@ static int
 dri2WaitForMSC(__GLXDRIdrawable *pdraw, int64_t target_msc, int64_t divisor,
 	       int64_t remainder, int64_t *ust, int64_t *msc, int64_t *sbc)
 {
-   return DRI2WaitMSC(pdraw->psc->dpy, pdraw->xDrawable, target_msc, divisor,
-		      remainder, ust, msc, sbc);
+   CARD64 dri2_ust, dri2_msc, dri2_sbc;
+   int ret;
+
+   ret = DRI2WaitMSC(pdraw->psc->dpy, pdraw->xDrawable, target_msc, divisor,
+		     remainder, &dri2_ust, &dri2_msc, &dri2_sbc);
+   *ust = dri2_ust;
+   *msc = dri2_msc;
+   *sbc = dri2_sbc;
+
+   return ret;
 }
 
 static int
 dri2WaitForSBC(__GLXDRIdrawable *pdraw, int64_t target_sbc, int64_t *ust,
 	       int64_t *msc, int64_t *sbc)
 {
-   return DRI2WaitSBC(pdraw->psc->dpy, pdraw->xDrawable, target_sbc, ust, msc,
-		      sbc);
+   CARD64 dri2_ust, dri2_msc, dri2_sbc;
+   int ret;
+
+   ret = DRI2WaitSBC(pdraw->psc->dpy, pdraw->xDrawable,
+		     target_sbc, &dri2_ust, &dri2_msc, &dri2_sbc);
+   *ust = dri2_ust;
+   *msc = dri2_msc;
+   *sbc = dri2_sbc;
+
+   return ret;
 }
 
 #endif /* X_DRI2WaitMSC */
@@ -451,7 +476,7 @@ dri2SwapBuffers(__GLXDRIdrawable *pdraw, int64_t target_msc, int64_t divisor,
     struct dri2_screen *psc = (struct dri2_screen *) priv->base.psc;
     struct dri2_display *pdp =
 	(struct dri2_display *)dpyPriv->dri2Display;
-    int64_t ret;
+    CARD64 ret;
 
 #ifdef __DRI2_FLUSH
     if (psc->f)
@@ -554,7 +579,7 @@ dri2SetSwapInterval(__GLXDRIdrawable *pdraw, int interval)
    return 0;
 }
 
-static unsigned int
+static int
 dri2GetSwapInterval(__GLXDRIdrawable *pdraw)
 {
    struct dri2_drawable *priv =  (struct dri2_drawable *) pdraw;
