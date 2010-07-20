@@ -87,13 +87,15 @@ ir_expression::constant_expression_value()
       }
       break;
    case ir_unop_i2f:
-      assert(op[0]->type->base_type == GLSL_TYPE_UINT ||
-	     op[0]->type->base_type == GLSL_TYPE_INT);
+      assert(op[0]->type->base_type == GLSL_TYPE_INT);
       for (unsigned c = 0; c < op[0]->type->components(); c++) {
-	 if (op[0]->type->base_type == GLSL_TYPE_INT)
-	    data.f[c] = op[0]->value.i[c];
-	 else
-	    data.f[c] = op[0]->value.u[c];
+	 data.f[c] = op[0]->value.i[c];
+      }
+      break;
+   case ir_unop_u2f:
+      assert(op[0]->type->base_type == GLSL_TYPE_UINT);
+      for (unsigned c = 0; c < op[0]->type->components(); c++) {
+	 data.f[c] = op[0]->value.u[c];
       }
       break;
    case ir_unop_b2f:
