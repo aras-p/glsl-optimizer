@@ -1263,7 +1263,8 @@ ir_to_mesa_visitor::visit(ir_dereference_record *ir)
  * those, then go use ir_dereference to handle the rest.
  */
 static struct ir_to_mesa_dst_reg
-get_assignment_lhs(ir_instruction *ir, ir_to_mesa_visitor *v)
+get_assignment_lhs(ir_instruction *ir, ir_to_mesa_visitor *v,
+		   ir_to_mesa_src_reg *r)
 {
    struct ir_to_mesa_dst_reg dst_reg;
    ir_swizzle *swiz;
@@ -1281,41 +1282,35 @@ get_assignment_lhs(ir_instruction *ir, ir_to_mesa_visitor *v)
    dst_reg = ir_to_mesa_dst_reg_from_src(v->result);
 
    if ((swiz = ir->as_swizzle())) {
+      int swizzles[4] = {
+	 swiz->mask.x,
+	 swiz->mask.y,
+	 swiz->mask.z,
+	 swiz->mask.w
+      };
+      int new_r_swizzle[4];
+      int orig_r_swizzle = r->swizzle;
+      int i;
+
+      for (i = 0; i < 4; i++) {
+	 new_r_swizzle[i] = GET_SWZ(orig_r_swizzle, 0);
+      }
+
       dst_reg.writemask = 0;
-      if (swiz->mask.num_components >= 1)
-	 dst_reg.writemask |= (1 << swiz->mask.x);
-      if (swiz->mask.num_components >= 2)
-	 dst_reg.writemask |= (1 << swiz->mask.y);
-      if (swiz->mask.num_components >= 3)
-	 dst_reg.writemask |= (1 << swiz->mask.z);
-      if (swiz->mask.num_components >= 4)
-	 dst_reg.writemask |= (1 << swiz->mask.w);
+      for (i = 0; i < 4; i++) {
+	 if (i < swiz->mask.num_components) {
+	    dst_reg.writemask |= 1 << swizzles[i];
+	    new_r_swizzle[swizzles[i]] = GET_SWZ(orig_r_swizzle, i);
+	 }
+      }
+
+      r->swizzle = MAKE_SWIZZLE4(new_r_swizzle[0],
+				 new_r_swizzle[1],
+				 new_r_swizzle[2],
+				 new_r_swizzle[3]);
    }
 
    return dst_reg;
-}
-
-static GLuint
-reswizzle_for_writemask(GLuint writemask, GLuint swizzle)
-{
-   int new_swizzle[4], pos = 0;
-   int i;
-
-   /* reswizzle the rhs so the components are in place for the
-    * components we'll assign to the lhs.
-    */
-   for (i = 0; i < 4; i++) {
-      if (writemask & (1 << i)) {
-	 new_swizzle[i] = GET_SWZ(swizzle, pos++);
-      } else {
-	 new_swizzle[i] = GET_SWZ(swizzle, 0);
-      }
-   }
-
-   return MAKE_SWIZZLE4(new_swizzle[0],
-			new_swizzle[1],
-			new_swizzle[2],
-			new_swizzle[3]);
 }
 
 void
@@ -1328,12 +1323,10 @@ ir_to_mesa_visitor::visit(ir_assignment *ir)
    assert(!ir->lhs->type->is_array());
    assert(ir->lhs->type->base_type != GLSL_TYPE_STRUCT);
 
-   l = get_assignment_lhs(ir->lhs, this);
-
    ir->rhs->accept(this);
    r = this->result;
 
-   r.swizzle = reswizzle_for_writemask(l.writemask, r.swizzle);
+   l = get_assignment_lhs(ir->lhs, this, &r);
 
    assert(l.file != PROGRAM_UNDEFINED);
    assert(r.file != PROGRAM_UNDEFINED);
