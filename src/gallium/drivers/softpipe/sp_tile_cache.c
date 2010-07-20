@@ -284,7 +284,11 @@ sp_tile_cache_flush_clear(struct softpipe_tile_cache *tc)
 
    assert(pt->resource);
    /* clear the scratch tile to the clear value */
-   clear_tile(&tc->tile, pt->resource->format, tc->clear_val);
+   if (tc->depth_stencil) {
+      clear_tile(&tc->tile, pt->resource->format, tc->clear_val);
+   } else {
+      clear_tile_rgba(&tc->tile, pt->resource->format, tc->clear_color);
+   }
 
    /* push the tile to all positions marked as clear */
    for (y = 0; y < h; y += TILE_SIZE) {
@@ -292,10 +296,11 @@ sp_tile_cache_flush_clear(struct softpipe_tile_cache *tc)
          union tile_address addr = tile_address(x, y);
 
          if (is_clear_flag_set(tc->clear_flags, addr)) {
+            /* write the scratch tile to the surface */
             pipe_put_tile_raw(tc->pipe,
                               pt,
                               x, y, TILE_SIZE, TILE_SIZE,
-                              tc->tile.data.color32, 0/*STRIDE*/);
+                              tc->tile.data.any, 0/*STRIDE*/);
 
             numCleared++;
          }
