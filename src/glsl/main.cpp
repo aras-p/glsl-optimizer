@@ -172,10 +172,9 @@ compile_shader(struct gl_shader *shader)
    if (!state->error && !state->translation_unit.is_empty())
       _mesa_ast_to_hir(shader->ir, state);
 
-   validate_ir_tree(shader->ir);
-
    /* Print out the unoptimized IR. */
    if (!state->error && dump_hir) {
+      validate_ir_tree(shader->ir);
       _mesa_print_ir(shader->ir, state);
    }
 
@@ -196,9 +195,10 @@ compile_shader(struct gl_shader *shader)
 	 progress = do_vec_index_to_cond_assign(shader->ir) || progress;
 	 progress = do_swizzle_swizzle(shader->ir) || progress;
       } while (progress);
+
+      validate_ir_tree(shader->ir);
    }
 
-   validate_ir_tree(shader->ir);
 
    /* Print out the resulting IR */
    if (!state->error && dump_lir) {
