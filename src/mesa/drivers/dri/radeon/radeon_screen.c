@@ -52,7 +52,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_tex.h"
 #elif defined(RADEON_R200)
 #include "r200_context.h"
-#include "r200_ioctl.h"
 #include "r200_tex.h"
 #elif defined(RADEON_R300)
 #include "r300_context.h"
