@@ -1377,8 +1377,8 @@ static void emit_vertex_write( struct brw_vs_compile *c)
        * m3 is the first vertex element data we fill, which is the vertex
        * position.
        */
-      brw_MOV(p, offset(m0, 2), pos);
-      brw_MOV(p, offset(m0, 3), pos);
+      brw_MOV(p, brw_message_reg(2), pos);
+      brw_MOV(p, brw_message_reg(3), pos);
       len_vertex_header = 2;
    } else if (intel->gen == 5) {
       /* There are 20 DWs (D0-D19) in VUE header on Ironlake:
@@ -1389,9 +1389,9 @@ static void emit_vertex_write( struct brw_vs_compile *c)
        * m6 is a pad so that the vertex element data is aligned
        * m7 is the first vertex data we fill, which is the vertex position.
        */
-      brw_MOV(p, offset(m0, 2), ndc);
-      brw_MOV(p, offset(m0, 3), pos);
-      brw_MOV(p, offset(m0, 7), pos);
+      brw_MOV(p, brw_message_reg(2), ndc);
+      brw_MOV(p, brw_message_reg(3), pos);
+      brw_MOV(p, brw_message_reg(7), pos);
       len_vertex_header = 6;
    } else {
       /* There are 8 dwords in VUE header pre-Ironlake:
@@ -1401,8 +1401,8 @@ static void emit_vertex_write( struct brw_vs_compile *c)
        * dword 8-11 (m3) is the first vertex data, which we always have be the
        * vertex position.
        */
-      brw_MOV(p, offset(m0, 2), ndc);
-      brw_MOV(p, offset(m0, 3), pos);
+      brw_MOV(p, brw_message_reg(2), ndc);
+      brw_MOV(p, brw_message_reg(3), pos);
       len_vertex_header = 2;
    }
 
