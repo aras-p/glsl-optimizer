@@ -380,12 +380,15 @@ generate_fetch(LLVMBuilderRef builder,
    LLVMValueRef cond;
    LLVMValueRef stride;
 
-   cond = LLVMBuildICmp(builder, LLVMIntULE, index, vb_max_index, "");
-
    if (velem->instance_divisor) {
-      index = instance_id;
+      /* array index = instance_id / instance_divisor */
+      index = LLVMBuildUDiv(builder, instance_id,
+                            LLVMConstInt(LLVMInt32Type(), velem->instance_divisor, 0),
+                            "instance_divisor");
    }
 
+   /* limit index to min(inex, vb_max_index) */
+   cond = LLVMBuildICmp(builder, LLVMIntULE, index, vb_max_index, "");
    index = LLVMBuildSelect(builder, cond, index, vb_max_index, "");
 
    stride = LLVMBuildMul(builder, vb_stride, index, "");
