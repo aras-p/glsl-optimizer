@@ -218,8 +218,7 @@ ir_vec_index_to_cond_assign_visitor::visit_enter(ir_call *ir)
       ir_rvalue *new_param = convert_vec_index_to_cond_assign(param);
 
       if (new_param != param) {
-	 param->insert_before(new_param);
-	 param->remove();
+	 param->replace_with(new_param);
       }
    }
 

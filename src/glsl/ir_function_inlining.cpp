@@ -91,8 +91,7 @@ replace_return_with_assignment(ir_instruction *ir, void *data)
    if (ret) {
       if (ret->value) {
 	 ir_rvalue *lhs = new(ctx) ir_dereference_variable(retval);
-	 ret->insert_before(new(ctx) ir_assignment(lhs, ret->value, NULL));
-	 ret->remove();
+	 ret->replace_with(new(ctx) ir_assignment(lhs, ret->value, NULL));
       } else {
 	 /* un-valued return has to be the last return, or we shouldn't
 	  * have reached here. (see can_inline()).

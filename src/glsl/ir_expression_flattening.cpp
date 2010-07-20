@@ -171,8 +171,7 @@ ir_expression_flattening_visitor::visit_enter(ir_call *ir)
       ir_rvalue *new_ir = operand_to_temp(ir);
 
       if (new_ir != ir) {
-	 ir->insert_before(new_ir);
-	 ir->remove();
+	 ir->replace_with(new_ir);
       }
    }
 

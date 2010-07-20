@@ -1081,8 +1081,7 @@ ast_function_expression::hir(exec_list *instructions,
 	    all_parameters_are_constant = false;
 
 	 if (result != ir) {
-	    ir->insert_before(result);
-	    ir->remove();
+	    ir->replace_with(result);
 	 }
       }
 

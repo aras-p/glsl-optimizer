@@ -108,13 +108,11 @@ ir_if_return_visitor::visit_enter(ir_if *ir)
 
       assign = new(ir) ir_assignment(new(ir) ir_dereference_variable(new_var),
 				     then_return->value, NULL);
-      then_return->insert_before(assign);
-      then_return->remove();
+      then_return->replace_with(assign);
 
       assign = new(ir) ir_assignment(new(ir) ir_dereference_variable(new_var),
 				     else_return->value, NULL);
-      else_return->insert_before(assign);
-      else_return->remove();
+      else_return->replace_with(assign);
 
       ir_dereference_variable *deref = new(ir) ir_dereference_variable(new_var);
       ir->insert_after(new(ir) ir_return(deref));
