@@ -34,6 +34,8 @@
 int glcpp_get_column  (yyscan_t yyscanner);
 void glcpp_set_column (int  column_no , yyscan_t yyscanner);
 
+#define YY_NO_INPUT
+
 #define YY_USER_ACTION                                          \
    do {                                                         \
       yylloc->source = 0;                                       \
@@ -49,7 +51,7 @@ void glcpp_set_column (int  column_no , yyscan_t yyscanner);
 %option prefix="glcpp_"
 %option stack
 
-%x DONE COMMENT
+%x DONE COMMENT UNREACHABLE
 
 SPACE		[[:space:]]
 NONSPACE	[^[:space:]]
@@ -262,6 +264,15 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 	BEGIN DONE; /* Don't keep matching this rule forever. */
 	yyextra->lexing_if = 0;
 	return NEWLINE;
+}
+
+	/* We don't actually use the UNREACHABLE start condition. We
+	only have this action here so that we can pretend to call some
+	generated functions, (to avoid "defined but not used"
+	warnings. */
+<UNREACHABLE>. {
+	unput('.');
+	yy_top_state(yyextra);
 }
 
 %%
