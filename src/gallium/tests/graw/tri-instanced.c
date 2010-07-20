@@ -2,6 +2,9 @@
  * Test draw instancing.
  */
 
+#include <stdio.h>
+#include <string.h>
+
 #include "state_tracker/graw.h"
 #include "pipe/p_screen.h"
 #include "pipe/p_context.h"
@@ -10,6 +13,7 @@
 
 #include "util/u_debug.h"       /* debug_dump_surface_bmp() */
 #include "util/u_memory.h"      /* Offset() */
+
 
 enum pipe_format formats[] = {
    PIPE_FORMAT_R8G8B8A8_UNORM,
@@ -23,12 +27,16 @@ static const int HEIGHT = 300;
 static struct pipe_screen *screen = NULL;
 static struct pipe_context *ctx = NULL;
 static struct pipe_surface *surf = NULL;
+static struct pipe_resource *indexBuffer = NULL;
 static void *window = NULL;
 
 struct vertex {
    float position[4];
    float color[4];
 };
+
+
+static int draw_elements = 0;
 
 
 /**
@@ -64,6 +72,9 @@ static float inst_data[NUM_INST][4] =
    { 0.25f, 0.1f, 0.0f, 0.0f },
    { 0.50f, 0.3f, 0.0f, 0.0f }
 };
+
+
+static ushort indices[3] = { 0, 2, 1 };
 
 
 static void set_viewport( float x, float y,
@@ -138,6 +149,14 @@ static void set_vertices( void )
 
 
    ctx->set_vertex_buffers(ctx, 2, vbuf);
+
+   /* index data */
+   indexBuffer = screen->user_buffer_create(screen,
+                                            indices,
+                                            sizeof(indices),
+                                            PIPE_BIND_VERTEX_BUFFER);
+
+
 }
 
 static void set_vertex_shader( void )
@@ -178,8 +197,17 @@ static void draw( void )
    float clear_color[4] = {1,0,1,1};
 
    ctx->clear(ctx, PIPE_CLEAR_COLOR, clear_color, 0, 0);
+
    /* draw NUM_INST triangles */
-   ctx->draw_arrays_instanced(ctx, PIPE_PRIM_TRIANGLES, 0, 3, 0, NUM_INST);
+   if (draw_elements)
+      ctx->draw_elements_instanced(ctx, indexBuffer, 2,
+                                   0, /* indexBias */
+                                   PIPE_PRIM_TRIANGLES,
+                                   0, 3, /* start, count */
+                                   0, NUM_INST); /* startInst, instCount */
+   else
+      ctx->draw_arrays_instanced(ctx, PIPE_PRIM_TRIANGLES, 0, 3, 0, NUM_INST);
+
    ctx->flush(ctx, PIPE_FLUSH_RENDER_CACHE, NULL);
 
 #if 0
@@ -286,8 +314,24 @@ static void init( void )
 }
 
 
+static void options(int argc, char *argv[])
+{
+   int i;
+   for (i = 1; i < argc; i++) {
+      if (strcmp(argv[i], "-e") == 0)
+         draw_elements = 1;
+   }
+   if (draw_elements)
+      printf("Using pipe_context::draw_elements_instanced()\n");
+   else
+      printf("Using pipe_context::draw_arrays_instanced()\n");
+}
+
+
 int main( int argc, char *argv[] )
 {
+   options(argc, argv);
+
    init();
 
    graw_set_display_func( draw );
