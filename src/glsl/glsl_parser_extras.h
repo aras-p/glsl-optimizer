@@ -49,8 +49,21 @@ struct _mesa_glsl_parse_state {
     * \sa struct gl_constants (in mtypes.h)
     */
    struct {
-      unsigned MaxDrawBuffers;
+      /* 1.10 */
+      unsigned MaxLights;
+      unsigned MaxClipPlanes;
+      unsigned MaxTextureUnits;
       unsigned MaxTextureCoords;
+      unsigned MaxVertexAttribs;
+      unsigned MaxVertexUniformComponents;
+      unsigned MaxVaryingFloats;
+      unsigned MaxVertexTextureImageUnits;
+      unsigned MaxCombinedTextureImageUnits;
+      unsigned MaxTextureImageUnits;
+      unsigned MaxFragmentUniformComponents;
+
+      /* ARB_draw_buffers */
+      unsigned MaxDrawBuffers;
    } Const;
 
    /**

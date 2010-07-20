@@ -148,8 +148,25 @@ compile_shader(struct gl_shader *shader)
 
    memset(&ext, 0, sizeof(ext));
    state->extensions = &ext;
-   state->Const.MaxDrawBuffers = 2;
+   /* 1.10 minimums. */
+   state->Const.MaxLights = 8;
+   state->Const.MaxClipPlanes = 8;
+   state->Const.MaxTextureUnits = 2;
+
+   /* More than the 1.10 minimum to appease parser tests taken from
+    * apps that (hopefully) already checked the number of coords.
+    */
    state->Const.MaxTextureCoords = 4;
+
+   state->Const.MaxVertexAttribs = 16;
+   state->Const.MaxVertexUniformComponents = 512;
+   state->Const.MaxVaryingFloats = 32;
+   state->Const.MaxVertexTextureImageUnits = 0;
+   state->Const.MaxCombinedTextureImageUnits = 2;
+   state->Const.MaxTextureImageUnits = 2;
+   state->Const.MaxFragmentUniformComponents = 64;
+
+   state->Const.MaxDrawBuffers = 2;
 
    const char *source = shader->Source;
    state->error = preprocess(state, &source, &state->info_log, &ext);

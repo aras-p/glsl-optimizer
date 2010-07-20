@@ -93,6 +93,16 @@ add_builtin_variable(const builtin_variable *proto, exec_list *instructions,
 		symtab);
 }
 
+static void
+add_builtin_constant(exec_list *instructions,
+		     struct _mesa_glsl_parse_state *state,
+		     const char *name, int value)
+{
+   ir_variable *const var = add_variable(name, ir_var_auto,
+					 -1, glsl_type::int_type,
+					 instructions, state->symbols);
+   var->constant_value = new(var) ir_constant(value);
+}
 
 static void
 generate_110_uniforms(exec_list *instructions,
@@ -105,12 +115,28 @@ generate_110_uniforms(exec_list *instructions,
 			   instructions, state->symbols);
    }
 
-   ir_variable *const mtc = add_variable("gl_MaxTextureCoords", ir_var_auto,
-					 -1, glsl_type::int_type,
-					 instructions, state->symbols);
-   mtc->constant_value = new(mtc)
-      ir_constant(int(state->Const.MaxTextureCoords));
-
+   add_builtin_constant(instructions, state, "gl_MaxLights",
+			state->Const.MaxLights);
+   add_builtin_constant(instructions, state, "gl_MaxClipPlanes",
+			state->Const.MaxClipPlanes);
+   add_builtin_constant(instructions, state, "gl_MaxTextureUnits",
+			state->Const.MaxTextureUnits);
+   add_builtin_constant(instructions, state, "gl_MaxTextureCoords",
+			state->Const.MaxTextureCoords);
+   add_builtin_constant(instructions, state, "gl_MaxVertexAttribs",
+			state->Const.MaxVertexAttribs);
+   add_builtin_constant(instructions, state, "gl_MaxVertexUniformComponents",
+			state->Const.MaxVertexUniformComponents);
+   add_builtin_constant(instructions, state, "gl_MaxVaryingFloats",
+			state->Const.MaxVaryingFloats);
+   add_builtin_constant(instructions, state, "gl_MaxVertexTextureImageUnits",
+			state->Const.MaxVertexTextureImageUnits);
+   add_builtin_constant(instructions, state, "gl_MaxCombinedTextureImageUnits",
+			state->Const.MaxCombinedTextureImageUnits);
+   add_builtin_constant(instructions, state, "gl_MaxTextureImageUnits",
+			state->Const.MaxTextureImageUnits);
+   add_builtin_constant(instructions, state, "gl_MaxFragmentUniformComponents",
+			state->Const.MaxFragmentUniformComponents);
 
    const glsl_type *const mat4_array_type =
       glsl_type::get_array_instance(state->symbols, glsl_type::mat4_type,

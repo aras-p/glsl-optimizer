@@ -2170,8 +2170,20 @@ _mesa_glsl_compile_shader(GLcontext *ctx, struct gl_shader *shader)
    state->ARB_texture_rectangle_enable = true;
 
    state->extensions = &ctx->Extensions;
-   state->Const.MaxDrawBuffers = ctx->Const.MaxDrawBuffers;
+
+   state->Const.MaxLights = ctx->Const.MaxLights;
+   state->Const.MaxClipPlanes = ctx->Const.MaxClipPlanes;
+   state->Const.MaxTextureUnits = ctx->Const.MaxTextureUnits;
    state->Const.MaxTextureCoords = ctx->Const.MaxTextureCoordUnits;
+   state->Const.MaxVertexAttribs = ctx->Const.VertexProgram.MaxAttribs;
+   state->Const.MaxVertexUniformComponents = ctx->Const.VertexProgram.MaxUniformComponents;
+   state->Const.MaxVaryingFloats = ctx->Const.MaxVarying * 4;
+   state->Const.MaxVertexTextureImageUnits = ctx->Const.MaxVertexTextureImageUnits;
+   state->Const.MaxCombinedTextureImageUnits = ctx->Const.MaxCombinedTextureImageUnits;
+   state->Const.MaxTextureImageUnits = ctx->Const.MaxTextureImageUnits;
+   state->Const.MaxFragmentUniformComponents = ctx->Const.FragmentProgram.MaxUniformComponents;
+
+   state->Const.MaxDrawBuffers = ctx->Const.MaxDrawBuffers;
 
    const char *source = shader->Source;
    state->error = preprocess(state, &source, &state->info_log,
