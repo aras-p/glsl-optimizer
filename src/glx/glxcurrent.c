@@ -296,15 +296,15 @@ FetchDRIDrawable(Display * dpy, GLXDrawable glxDrawable, GLXContext gc)
       return NULL;
 
    psc = priv->screenConfigs[gc->screen];
-   if (psc->drawHash == NULL)
+   if (priv->drawHash == NULL)
       return NULL;
 
-   if (__glxHashLookup(psc->drawHash, glxDrawable, (void *) &pdraw) == 0)
+   if (__glxHashLookup(priv->drawHash, glxDrawable, (void *) &pdraw) == 0)
       return pdraw;
 
    pdraw = psc->driScreen->createDrawable(psc, glxDrawable,
                                           glxDrawable, gc->mode);
-   if (__glxHashInsert(psc->drawHash, glxDrawable, pdraw)) {
+   if (__glxHashInsert(priv->drawHash, glxDrawable, pdraw)) {
       (*pdraw->destroyDrawable) (pdraw);
       return NULL;
    }

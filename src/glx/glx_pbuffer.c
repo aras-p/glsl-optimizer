@@ -202,7 +202,7 @@ CreateDRIDrawable(Display *dpy, const __GLcontextModes *fbconfig,
       return;
    }
 
-   if (__glxHashInsert(psc->drawHash, glxdrawable, pdraw)) {
+   if (__glxHashInsert(priv->drawHash, glxdrawable, pdraw)) {
       (*pdraw->destroyDrawable) (pdraw);
       return; /* FIXME: Check what we're supposed to do here... */
    }
@@ -223,7 +223,7 @@ DestroyDRIDrawable(Display *dpy, GLXDrawable drawable, int destroy_xdrawable)
       if (destroy_xdrawable)
          XFreePixmap(psc->dpy, pdraw->xDrawable);
       (*pdraw->destroyDrawable) (pdraw);
-      __glxHashDelete(psc->drawHash, drawable);
+      __glxHashDelete(priv->drawHash, drawable);
    }
 }
 

@@ -86,32 +86,33 @@ windowExistsErrorHandler(Display * dpy, XErrorEvent * xerr)
  * \param screen Screen number to destroy drawables for
  */
 static void
-GarbageCollectDRIDrawables(Display * dpy, __GLXscreenConfigs * sc)
+GarbageCollectDRIDrawables(__GLXscreenConfigs * sc)
 {
    XID draw;
    __GLXDRIdrawable *pdraw;
+   __GLXdisplayPrivate *priv = sc->display;
    XWindowAttributes xwa;
    int (*oldXErrorHandler) (Display *, XErrorEvent *);
 
    /* Set no-op error handler so Xlib doesn't bail out if the windows
     * has alreay been destroyed on the server. */
-   XSync(dpy, GL_FALSE);
+   XSync(priv->dpy, GL_FALSE);
    oldXErrorHandler = XSetErrorHandler(windowExistsErrorHandler);
 
-   if (__glxHashFirst(sc->drawHash, &draw, (void *) &pdraw) == 1) {
+   if (__glxHashFirst(priv->drawHash, &draw, (void *) &pdraw) == 1) {
       do {
          windowExistsFlag = GL_TRUE;
-         XGetWindowAttributes(dpy, draw, &xwa); /* dummy request */
+         XGetWindowAttributes(priv->dpy, draw, &xwa); /* dummy request */
          if (!windowExistsFlag) {
             /* Destroy the local drawable data, if the drawable no
                longer exists in the Xserver */
             (*pdraw->destroyDrawable) (pdraw);
-            __glxHashDelete(sc->drawHash, draw);
+            __glxHashDelete(priv->drawHash, draw);
          }
-      } while (__glxHashNext(sc->drawHash, &draw, (void *) &pdraw) == 1);
+      } while (__glxHashNext(priv->drawHash, &draw, (void *) &pdraw) == 1);
    }
 
-   XSync(dpy, GL_FALSE);
+   XSync(priv->dpy, GL_FALSE);
    XSetErrorHandler(oldXErrorHandler);
 }
 
@@ -129,23 +130,14 @@ GetGLXDRIDrawable(Display * dpy, GLXDrawable drawable, int *const scrn_num)
 {
    __GLXdisplayPrivate *priv = __glXInitialize(dpy);
    __GLXDRIdrawable *pdraw;
-   const unsigned screen_count = ScreenCount(dpy);
-   unsigned i;
-   __GLXscreenConfigs *psc;
 
    if (priv == NULL)
       return NULL;
 
-   for (i = 0; i < screen_count; i++) {
-      psc = priv->screenConfigs[i];
-      if (psc->drawHash == NULL)
-         continue;
-
-      if (__glxHashLookup(psc->drawHash, drawable, (void *) &pdraw) == 0) {
-         if (scrn_num != NULL)
-            *scrn_num = i;
-         return pdraw;
-      }
+   if (__glxHashLookup(priv->drawHash, drawable, (void *) &pdraw) == 0) {
+      if (scrn_num != NULL)
+	 *scrn_num = pdraw->psc->scr;
+      return pdraw;
    }
 
    return NULL;
@@ -583,7 +575,7 @@ DestroyContext(Display * dpy, GLXContext gc)
    if (gc->driContext) {
       (*gc->driContext->destroyContext) (gc->driContext, gc->psc, dpy);
       gc->driContext = NULL;
-      GarbageCollectDRIDrawables(dpy, gc->psc);
+      GarbageCollectDRIDrawables(gc->psc);
    }
 #endif
 
@@ -1002,7 +994,7 @@ glXCreateGLXPixmap(Display * dpy, XVisualInfo * vis, Pixmap pixmap)
          break;
       }
 
-      if (__glxHashInsert(psc->drawHash, req->glxpixmap, pdraw)) {
+      if (__glxHashInsert(priv->drawHash, req->glxpixmap, pdraw)) {
          (*pdraw->destroyDrawable) (pdraw);
          return None;           /* FIXME: Check what we're supposed to do here... */
       }
@@ -1042,14 +1034,12 @@ glXDestroyGLXPixmap(Display * dpy, GLXPixmap glxpixmap)
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
    {
-      int screen;
       __GLXdisplayPrivate *const priv = __glXInitialize(dpy);
-      __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, glxpixmap, &screen);
-      __GLXscreenConfigs *psc = priv->screenConfigs[screen];
+      __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, glxpixmap, NULL);
 
       if (pdraw != NULL) {
          (*pdraw->destroyDrawable) (pdraw);
-         __glxHashDelete(psc->drawHash, glxpixmap);
+         __glxHashDelete(priv->drawHash, glxpixmap);
       }
    }
 #endif

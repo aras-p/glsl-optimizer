@@ -268,7 +268,6 @@ FreeScreenConfigs(__GLXdisplayPrivate * priv)
          psc->driver_configs = NULL;
       }
       if (psc->driScreen) {
-         __glxHashDestroy(psc->drawHash);
          psc->driScreen->destroyScreen(psc);
          psc->driScreen = NULL;
       } else {
@@ -301,6 +300,8 @@ __glXFreeDisplayPrivate(XExtData * extension)
       Xfree((char *) priv->serverGLXversion);
       priv->serverGLXversion = 0x0;     /* to protect against double free's */
    }
+
+   __glxHashDestroy(priv->drawHash);
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
    /* Free the direct rendering per display data */
@@ -758,10 +759,7 @@ glx_screen_init(__GLXscreenConfigs *psc,
    psc->ext_list_first_time = GL_TRUE;
    psc->scr = screen;
    psc->dpy = priv->dpy;
-   psc->drawHash = __glxHashCreate();
    psc->display = priv;
-   if (psc->drawHash == NULL)
-      return GL_FALSE;
 
    getVisualConfigs(psc, priv, screen);
    getFBConfigs(psc, priv, screen);
@@ -815,11 +813,6 @@ AllocAndFetchScreenConfigs(Display * dpy, __GLXdisplayPrivate * priv)
 	 psc = (*priv->driswDisplay->createScreen) (i, priv);
       if (psc == NULL)
 	 psc = createIndirectScreen (i, priv);
-
-      if (psc == NULL) {
-         __glxHashDestroy(psc->drawHash);
-         psc->drawHash = NULL;
-      }
 #endif
       priv->screenConfigs[i] = psc;
    }
@@ -898,6 +891,8 @@ __glXInitialize(Display * dpy)
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
    glx_direct = (getenv("LIBGL_ALWAYS_INDIRECT") == NULL);
    glx_accel = (getenv("LIBGL_ALWAYS_SOFTWARE") == NULL);
+
+   dpyPriv->drawHash = __glxHashCreate();
 
    /*
     ** Initialize the direct rendering per display data and functions.

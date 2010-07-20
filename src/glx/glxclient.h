@@ -529,7 +529,6 @@ struct __GLXscreenConfigsRec
     /**
      * Per screen direct rendering interface functions and data.
      */
-   __glxHashTable *drawHash;
    Display *dpy;
    int scr;
 
@@ -607,6 +606,8 @@ struct __GLXdisplayPrivateRec
    __GLXscreenConfigs **screenConfigs;
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
+   __glxHashTable *drawHash;
+
     /**
      * Per display direct rendering interface functions and data.
      */
