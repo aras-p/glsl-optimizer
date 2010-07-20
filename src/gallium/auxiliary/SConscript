@@ -34,14 +34,14 @@ env.CodeGenerate(
     target = 'util/u_format_table.c',
     script = '#src/gallium/auxiliary/util/u_format_table.py',
     source = ['#src/gallium/auxiliary/util/u_format.csv'],
-    command = 'python $SCRIPT $SOURCE > $TARGET'
+    command = python_cmd + ' $SCRIPT $SOURCE > $TARGET'
 )
 
 env.CodeGenerate(
     target = 'util/u_half.c',
     script = 'util/u_half.py',
     source = [],
-    command = 'python $SCRIPT > $TARGET'
+    command = python_cmd + ' $SCRIPT > $TARGET'
 )
 
 env.Depends('util/u_format_table.c', [
