@@ -270,16 +270,20 @@ void ir_print_visitor::visit(ir_constant *ir)
    print_type(ir->type);
    printf(" (");
 
-   for (unsigned i = 0; i < ir->type->components(); i++) {
-      if (i != 0)
-	 printf(" ");
-
-      switch (base_type->base_type) {
-      case GLSL_TYPE_UINT:  printf("%u", ir->value.u[i]); break;
-      case GLSL_TYPE_INT:   printf("%d", ir->value.i[i]); break;
-      case GLSL_TYPE_FLOAT: printf("%f", ir->value.f[i]); break;
-      case GLSL_TYPE_BOOL:  printf("%d", ir->value.b[i]); break;
-      default: assert(0);
+   if (ir->type->is_array()) {
+      for (unsigned i = 0; i < ir->type->length; i++)
+	 ir->get_array_element(i)->accept(this);
+   } else {
+      for (unsigned i = 0; i < ir->type->components(); i++) {
+	 if (i != 0)
+	    printf(" ");
+	 switch (base_type->base_type) {
+	 case GLSL_TYPE_UINT:  printf("%u", ir->value.u[i]); break;
+	 case GLSL_TYPE_INT:   printf("%d", ir->value.i[i]); break;
+	 case GLSL_TYPE_FLOAT: printf("%f", ir->value.f[i]); break;
+	 case GLSL_TYPE_BOOL:  printf("%d", ir->value.b[i]); break;
+	 default: assert(0);
+	 }
       }
    }
    printf(")) ");
