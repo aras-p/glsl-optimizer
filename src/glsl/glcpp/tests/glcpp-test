@@ -1,7 +1,27 @@
 #!/bin/sh
 
+total=0
+pass=0
+
 for test in *.c; do
-    echo "Testing $test"
+    echo -n "Testing $test..."
     ../glcpp < $test > $test.out
-    diff -u $test.expected $test.out
+    total=$((total+1))
+    if cmp $test.expected $test.out; then
+	echo "PASS"
+	pass=$((pass+1))
+    else
+	echo "FAIL"
+	diff -u $test.expected $test.out
+    fi
 done
+
+echo "$pass/$total tests returned correct results"
+echo ""
+
+if [ "$pass" = "$total" ] ; then
+    exit 0
+else
+    exit 1
+fi
+
