@@ -337,6 +337,17 @@ ir_constant::clone(struct hash_table *ht) const
       return c;
    }
 
+   case GLSL_TYPE_ARRAY: {
+      ir_constant *c = new(ctx) ir_constant;
+
+      c->type = this->type;
+      c->array_elements = talloc_array(c, ir_constant *, this->type->length);
+      for (unsigned i = 0; i < this->type->length; i++) {
+	 c->array_elements[i] = this->array_elements[i]->clone(NULL);
+      }
+      return c;
+   }
+
    default:
       assert(!"Should not get here."); break;
       return NULL;

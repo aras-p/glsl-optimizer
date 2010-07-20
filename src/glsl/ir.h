@@ -1268,6 +1268,8 @@ public:
    unsigned get_uint_component(unsigned i) const;
    /*@}*/
 
+   ir_constant *get_array_element(unsigned i) const;
+
    ir_constant *get_record_field(const char *name);
 
    /**
@@ -1284,6 +1286,10 @@ public:
     */
    union ir_constant_data value;
 
+   /* Array elements */
+   ir_constant **array_elements;
+
+   /* Structure fields */
    exec_list components;
 
 private:

@@ -358,9 +358,8 @@ process_array_constructor(exec_list *instructions,
       ir->replace_with(result);
    }
 
-   if (all_parameters_are_constant) {
-      /* FINISHME: Add support for generating constant arrays. */
-   }
+   if (all_parameters_are_constant)
+      return new(ctx) ir_constant(constructor_type, &actual_parameters);
 
    ir_variable *var = new(ctx) ir_variable(constructor_type, "array_ctor",
 					   ir_var_temporary);

@@ -253,9 +253,20 @@ ir_constant::ir_constant(const struct glsl_type *type, exec_list *value_list)
    this->ir_type = ir_type_constant;
    this->type = type;
 
-   /* FINISHME: Support array types. */
    assert(type->is_scalar() || type->is_vector() || type->is_matrix()
-	  || type->is_record());
+	  || type->is_record() || type->is_array());
+
+   if (type->is_array()) {
+      this->array_elements = talloc_array(this, ir_constant *, type->length);
+      unsigned i = 0;
+      foreach_list(node, value_list) {
+	 ir_constant *value = (ir_constant *) node;
+	 assert(value->as_constant() != NULL);
+
+	 this->array_elements[i++] = value;
+      }
+      return;
+   }
 
    /* If the constant is a record, the types of each of the entries in
     * value_list must be a 1-for-1 match with the structure components.  Each
@@ -378,6 +389,14 @@ ir_constant::get_uint_component(unsigned i) const
    return 0;
 }
 
+ir_constant *
+ir_constant::get_array_element(unsigned i) const
+{
+   assert(this->type->is_array());
+   assert(i < this->type->length);
+
+   return array_elements[i];
+}
 
 ir_constant *
 ir_constant::get_record_field(const char *name)
