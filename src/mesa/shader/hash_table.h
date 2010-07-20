@@ -94,6 +94,10 @@ extern void *hash_table_find(struct hash_table *ht, const void *key);
 extern void hash_table_insert(struct hash_table *ht, void *data,
     const void *key);
 
+/**
+ * Remove a specific element from a hash table.
+ */
+extern void hash_table_remove(struct hash_table *ht, const void *key);
 
 /**
  * Compute hash value of a string
