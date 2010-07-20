@@ -1048,6 +1048,19 @@ _arguments_parse (argument_list_t *arguments,
 	return FUNCTION_STATUS_SUCCESS;
 }
 
+static token_list_t *
+_token_list_create_with_one_space (void *ctx)
+{
+	token_list_t *list;
+	token_t *space;
+
+	list = _token_list_create (ctx);
+	space = _token_create_ival (list, SPACE, SPACE);
+	_token_list_append (list, space);
+
+	return list;
+}
+
 /* This is a helper function that's essentially part of the
  * implementation of _glcpp_parser_expand_node. It shouldn't be called
  * except for by that function.
@@ -1097,9 +1110,10 @@ _glcpp_parser_expand_function (glcpp_parser_t *parser,
 		return NULL;
 	}
 
+	/* Replace a macro defined as empty with a SPACE token. */
 	if (macro->replacements == NULL) {
 		talloc_free (arguments);
-		return _token_list_create (parser);
+		return _token_list_create_with_one_space (parser);
 	}
 
 	if (! ((_argument_list_length (arguments) == 
@@ -1203,7 +1217,7 @@ _glcpp_parser_expand_function (glcpp_parser_t *parser,
  *
  * Otherwise, returns the token list that results from the expansion
  * and sets *last to the last node in the list that was consumed by
- * the expansion. Specificallty, *last will be set as follows:
+ * the expansion. Specifically, *last will be set as follows:
  *
  *	As 'node' in the case of object-like macro expansion.
  *
@@ -1262,8 +1276,9 @@ _glcpp_parser_expand_node (glcpp_parser_t *parser,
 	{
 		*last = node;
 
+		/* Replace a macro defined as empty with a SPACE token. */
 		if (macro->replacements == NULL)
-			return _token_list_create (parser);
+			return _token_list_create_with_one_space (parser);
 
 		return _token_list_copy (parser, macro->replacements);
 	}
