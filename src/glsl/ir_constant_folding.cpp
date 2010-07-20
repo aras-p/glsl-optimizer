@@ -167,6 +167,19 @@ ir_constant_folding_visitor::visit(ir_assignment *ir)
       ir->rhs = const_val;
    else
       ir->rhs->accept(this);
+
+   if (ir->condition) {
+      /* If the condition is constant, either remove the condition or
+       * remove the never-executed assignment.
+       */
+      const_val = ir->condition->constant_expression_value();
+      if (const_val) {
+	 if (const_val->value.b[0])
+	    ir->condition = NULL;
+	 else
+	    ir->remove();
+      }
+   }
 }
 
 
