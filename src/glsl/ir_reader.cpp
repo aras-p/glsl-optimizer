@@ -753,7 +753,7 @@ read_constant(_mesa_glsl_parse_state *st, s_list *list)
 {
    void *ctx = st;
    if (list->length() != 3) {
-      ir_read_error(st, list, "expected (constant <type> (<num> ... <num>))");
+      ir_read_error(st, list, "expected (constant <type> (...))");
       return NULL;
    }
 
@@ -764,8 +764,33 @@ read_constant(_mesa_glsl_parse_state *st, s_list *list)
 
    s_list *values = SX_AS_LIST(type_expr->next);
    if (values == NULL) {
-      ir_read_error(st, list, "expected (constant <type> (<num> ... <num>))");
+      ir_read_error(st, list, "expected (constant <type> (...))");
       return NULL;
+   }
+
+   if (type->is_array()) {
+      const unsigned elements_supplied = values->length();
+      if (elements_supplied != type->length) {
+	 ir_read_error(st, values, "expected exactly %u array elements, "
+		       "given %u", type->length, elements_supplied);
+	 return NULL;
+      }
+
+      exec_list elements;
+      foreach_iter(exec_list_iterator, it, values->subexpressions) {
+	 s_expression *expr = (s_expression *) it.get();
+	 s_list *elt = SX_AS_LIST(expr);
+	 if (elt == NULL) {
+	    ir_read_error(st, expr, "expected (constant ...) array element");
+	    return NULL;
+	 }
+
+	 ir_constant *ir_elt = read_constant(st, elt);
+	 if (ir_elt == NULL)
+	    return NULL;
+	 elements.push_tail(ir_elt);
+      }
+      return new(ctx) ir_constant(type, &elements);
    }
 
    const glsl_type *const base_type = type->get_base_type();
