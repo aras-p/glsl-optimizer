@@ -692,7 +692,7 @@ _token_list_append_list (token_list_t *list, token_list_t *tail)
 	list->non_space_tail = tail->non_space_tail;
 }
 
-token_list_t *
+static token_list_t *
 _token_list_copy (void *ctx, token_list_t *other)
 {
 	token_list_t *copy;
@@ -708,7 +708,7 @@ _token_list_copy (void *ctx, token_list_t *other)
 	return copy;
 }
 
-void
+static void
 _token_list_trim_trailing_space (token_list_t *list)
 {
 	token_node_t *tail, *next;
@@ -1410,7 +1410,7 @@ _glcpp_parser_print_expanded_token_list (glcpp_parser_t *parser,
 	_token_list_print (parser, list);
 }
 
-void
+static void
 _check_for_reserved_macro_name (glcpp_parser_t *parser, YYLTYPE *loc,
 				const char *identifier)
 {
