@@ -603,46 +603,10 @@ ir_expression::constant_expression_value()
       break;
 
    case ir_binop_equal:
-      data.b[0] = true;
-      for (unsigned c = 0; c < op[0]->type->components(); c++) {
-	 switch (op[0]->type->base_type) {
-	 case GLSL_TYPE_UINT:
-	    data.b[0] = data.b[0] && op[0]->value.u[c] == op[1]->value.u[c];
-	    break;
-	 case GLSL_TYPE_INT:
-	    data.b[0] = data.b[0] && op[0]->value.i[c] == op[1]->value.i[c];
-	    break;
-	 case GLSL_TYPE_FLOAT:
-	    data.b[0] = data.b[0] && op[0]->value.f[c] == op[1]->value.f[c];
-	    break;
-	 case GLSL_TYPE_BOOL:
-	    data.b[0] = data.b[0] && op[0]->value.b[c] == op[1]->value.b[c];
-	    break;
-	 default:
-	    assert(0);
-	 }
-      }
+      data.b[0] = op[0]->has_value(op[1]);
       break;
    case ir_binop_nequal:
-      data.b[0] = false;
-      for (unsigned c = 0; c < op[0]->type->components(); c++) {
-	 switch (op[0]->type->base_type) {
-	 case GLSL_TYPE_UINT:
-	    data.b[0] = data.b[0] || op[0]->value.u[c] != op[1]->value.u[c];
-	    break;
-	 case GLSL_TYPE_INT:
-	    data.b[0] = data.b[0] || op[0]->value.i[c] != op[1]->value.i[c];
-	    break;
-	 case GLSL_TYPE_FLOAT:
-	    data.b[0] = data.b[0] || op[0]->value.f[c] != op[1]->value.f[c];
-	    break;
-	 case GLSL_TYPE_BOOL:
-	    data.b[0] = data.b[0] || op[0]->value.b[c] != op[1]->value.b[c];
-	    break;
-	 default:
-	    assert(0);
-	 }
-      }
+      data.b[0] = !op[0]->has_value(op[1]);
       break;
 
    default:
