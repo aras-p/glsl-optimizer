@@ -99,7 +99,7 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 	return HASH_IFNDEF;
 }
 
-{HASH}if{HSPACE}/.*\n {
+{HASH}if{HSPACE}*/[^_a-zA-Z0-9].*\n {
 	yyextra->lexing_if = 1;
 	yyextra->space_tokens = 0;
 	return HASH_IF;
