@@ -2570,12 +2570,6 @@ copy_tex_image(GLcontext *ctx, GLuint dims, GLenum target, GLint level,
       return;
    }
 
-   if (texImage->TexFormat == MESA_FORMAT_NONE)
-      texImage->TexFormat = ctx->Driver.ChooseTextureFormat(ctx,
-                                                            internalFormat,
-                                                            format,
-                                                            type);
-
    _mesa_unlock_texture(ctx, texObj); /* need to unlock first */
 
    /*
@@ -2603,6 +2597,9 @@ copy_tex_image(GLcontext *ctx, GLuint dims, GLenum target, GLint level,
    _mesa_init_teximage_fields(ctx, target, texImage,
                               postConvWidth, postConvHeight, 1,
                               border, internalFormat);
+
+   _mesa_choose_texture_format(ctx, texObj, texImage, target, level,
+                               internalFormat, GL_NONE, GL_NONE);
 
    /*
     * Store texture data (with pixel transfer ops)
