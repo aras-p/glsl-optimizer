@@ -90,16 +90,18 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 }
 
 {HASH}ifdef/.*\n {
+	yyextra->lexing_if = 1;
 	yyextra->space_tokens = 0;
 	return HASH_IFDEF;
 }
 
 {HASH}ifndef/.*\n {
+	yyextra->lexing_if = 1;
 	yyextra->space_tokens = 0;
 	return HASH_IFNDEF;
 }
 
-{HASH}if{HSPACE}*/[^_a-zA-Z0-9].*\n {
+{HASH}if/[^_a-zA-Z0-9].*\n {
 	yyextra->lexing_if = 1;
 	yyextra->space_tokens = 0;
 	return HASH_IF;
@@ -122,7 +124,7 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 }
 
 	/* When skipping (due to an #if 0 or similar) consume anything
-	 * up to a newline. We do this less priroty than any
+	 * up to a newline. We do this with less priority than any
 	 * #if-related directive (#if, #elif, #else, #endif), but with
 	 * more priority than any other directive or token to avoid
 	 * any side-effects from skipped content.
