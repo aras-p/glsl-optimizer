@@ -2471,8 +2471,8 @@ ast_struct_specifier::hir(exec_list *instructions,
     * the types to HIR.  This ensures that structure definitions embedded in
     * other structure definitions are processed.
     */
-   glsl_struct_field *const fields = (glsl_struct_field *)
-      malloc(sizeof(*fields) * decl_count);
+   glsl_struct_field *const fields = talloc_array(state, glsl_struct_field,
+						  decl_count);
 
    unsigned i = 0;
    foreach_list_typed (ast_declarator_list, decl_list, link,

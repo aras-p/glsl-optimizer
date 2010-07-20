@@ -75,7 +75,20 @@ glsl_type::glsl_type(const glsl_struct_field *fields, unsigned num_fields,
    name(name),
    length(num_fields)
 {
-   this->fields.structure = fields;
+   unsigned int i;
+
+   if (glsl_type::ctx == NULL) {
+      glsl_type::ctx = talloc_init("glsl_type");
+      assert(glsl_type::ctx != NULL);
+   }
+
+   this->fields.structure = talloc_array(glsl_type::ctx,
+					 glsl_struct_field, length);
+   for (i = 0; i < length; i++) {
+      this->fields.structure[i].type = fields[i].type;
+      this->fields.structure[i].name = talloc_strdup(this->fields.structure,
+						     fields[i].name);
+   }
 }
 
 static void

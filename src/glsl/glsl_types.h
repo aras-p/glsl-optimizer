@@ -136,7 +136,7 @@ struct glsl_type {
    union {
       const struct glsl_type *array;            /**< Type of array elements. */
       const struct glsl_type *parameters;       /**< Parameters to function. */
-      const struct glsl_struct_field *structure;/**< List of struct fields. */
+      struct glsl_struct_field *structure;      /**< List of struct fields. */
    } fields;
 
 
