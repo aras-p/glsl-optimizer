@@ -2207,6 +2207,9 @@ _mesa_glsl_compile_shader(GLcontext *ctx, struct gl_shader *shader)
    shader->CompileStatus = !state->error;
    shader->InfoLog = state->info_log;
    shader->Version = state->language_version;
+   memcpy(shader->builtins_to_link, state->builtins_to_link,
+	  sizeof(shader->builtins_to_link[0]) * state->num_builtins_to_link);
+   shader->num_builtins_to_link = state->num_builtins_to_link;
 
    /* Retain any live IR, but trash the rest. */
    reparent_ir(shader->ir, shader);

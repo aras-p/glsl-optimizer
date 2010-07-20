@@ -739,7 +739,28 @@ link_intrastage_shaders(struct gl_shader_program *prog,
 
    /* Resolve initializers for global variables in the linked shader.
     */
-   link_function_calls(prog, linked, shader_list, num_shaders);
+   unsigned num_linking_shaders = num_shaders;
+   for (unsigned i = 0; i < num_shaders; i++)
+      num_linking_shaders += shader_list[i]->num_builtins_to_link;
+
+   gl_shader **linking_shaders =
+      (gl_shader **) calloc(num_linking_shaders, sizeof(gl_shader *));
+
+   memcpy(linking_shaders, shader_list,
+	  sizeof(linking_shaders[0]) * num_shaders);
+
+   unsigned idx = num_shaders;
+   for (unsigned i = 0; i < num_shaders; i++) {
+      memcpy(&linking_shaders[idx], shader_list[i]->builtins_to_link,
+	     sizeof(linking_shaders[0]) * shader_list[i]->num_builtins_to_link);
+      idx += shader_list[i]->num_builtins_to_link;
+   }
+
+   assert(idx == num_linking_shaders);
+
+   link_function_calls(prog, linked, linking_shaders, num_linking_shaders);
+
+   free(linking_shaders);
 
    return linked;
 }

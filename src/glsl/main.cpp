@@ -219,6 +219,9 @@ compile_shader(struct gl_shader *shader)
    shader->symbols = state->symbols;
    shader->CompileStatus = !state->error;
    shader->Version = state->language_version;
+   memcpy(shader->builtins_to_link, state->builtins_to_link,
+	  sizeof(shader->builtins_to_link[0]) * state->num_builtins_to_link);
+   shader->num_builtins_to_link = state->num_builtins_to_link;
 
    if (shader->InfoLog)
       talloc_free(shader->InfoLog);
@@ -305,6 +308,7 @@ main(int argc, char **argv)
 
    talloc_free(whole_program);
    _mesa_glsl_release_types();
+   _mesa_glsl_release_functions();
 
    return status;
 }

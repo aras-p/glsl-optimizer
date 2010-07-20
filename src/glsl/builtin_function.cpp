@@ -25,22 +25,41 @@
 #include <stdio.h>
 #include "glsl_parser_extras.h"
 #include "ir_reader.h"
+#include "program.h"
 
-void
-read_builtins(_mesa_glsl_parse_state *st, exec_list *instructions,
-	      const char **functions, unsigned count)
+extern "C" struct gl_shader *
+_mesa_new_shader(GLcontext *ctx, GLuint name, GLenum type);
+
+gl_shader *
+read_builtins(GLenum target, const char **functions, unsigned count)
 {
-   if (st->error)
-      return;
+   gl_shader *sh = _mesa_new_shader(NULL, 0, target);
+   struct _mesa_glsl_parse_state *st =
+      new(sh) _mesa_glsl_parse_state(NULL, target, sh);
+
+   st->language_version = 130;
+   st->ARB_texture_rectangle_enable = true;
+   st->EXT_texture_array_enable = true;
+   _mesa_glsl_initialize_types(st);
+
+   sh->ir = new(sh) exec_list;
+   sh->symbols = st->symbols;
 
    for (unsigned i = 0; i < count; i++) {
-      _mesa_glsl_read_ir(st, instructions, functions[i]);
+      _mesa_glsl_read_ir(st, sh->ir, functions[i]);
 
       if (st->error) {
 	 printf("error reading builtin: %.35s ...\n", functions[i]);
-         return;
+	 delete st;
+	 talloc_free(sh);
+         return NULL;
       }
    }
+
+   reparent_ir(sh->ir, sh);
+   delete st;
+
+   return sh;
 }
 
 /* 110 builtins */
@@ -2580,7 +2599,9 @@ static const char *functions_for_110_fs [] = {
 /* 110_vs builtins */
 
 static const char *builtins_110_vs_ftransform = {
-   "((function ftransform\n"
+   "((declare (uniform) mat4 gl_ModelViewProjectionMatrix)\n"
+   " (declare (in) vec4 gl_Vertex)\n"
+   " (function ftransform\n"
    "   (signature vec4\n"
    "     (parameters)\n"
    "    ((return (expression vec4 *\n"
@@ -4760,53 +4781,146 @@ static const char *functions_for_EXT_texture_array_fs [] = {
 #define Elements(x) (sizeof(x)/sizeof(*(x)))
 #endif
 
+void *builtin_mem_ctx = NULL;
+
+void
+_mesa_glsl_release_functions(void)
+{
+    talloc_free(builtin_mem_ctx);
+}
+
 void
 _mesa_glsl_initialize_functions(exec_list *instructions,
 			        struct _mesa_glsl_parse_state *state)
 {
-   if (state->language_version >= 110)
-      read_builtins(state, instructions,
-                    functions_for_110,
-                    Elements(functions_for_110));
+   if (builtin_mem_ctx == NULL)
+      builtin_mem_ctx = talloc_init("GLSL built-in functions");
 
-   if (state->target == fragment_shader && state->language_version >= 110)
-      read_builtins(state, instructions,
-                    functions_for_110_fs,
-                    Elements(functions_for_110_fs));
+   state->num_builtins_to_link = 0;
+   if (state->language_version >= 110) {
+      static gl_shader *sh = NULL;
 
-   if (state->target == vertex_shader && state->language_version >= 110)
-      read_builtins(state, instructions,
-                    functions_for_110_vs,
-                    Elements(functions_for_110_vs));
+      if (sh == NULL) {
+	 sh = read_builtins(GL_VERTEX_SHADER, functions_for_110,
+			    Elements(functions_for_110));
+	 talloc_steal(builtin_mem_ctx, sh);
+      }
 
-   if (state->language_version >= 120)
-      read_builtins(state, instructions,
-                    functions_for_120,
-                    Elements(functions_for_120));
+      import_prototypes(sh->ir, instructions, state->symbols, state);
+      state->builtins_to_link[state->num_builtins_to_link] = sh;
+      state->num_builtins_to_link++;
+   }
 
-   if (state->language_version >= 130)
-      read_builtins(state, instructions,
-                    functions_for_130,
-                    Elements(functions_for_130));
+   if (state->target == fragment_shader && state->language_version >= 110) {
+      static gl_shader *sh = NULL;
 
-   if (state->target == fragment_shader && state->language_version >= 130)
-      read_builtins(state, instructions,
-                    functions_for_130_fs,
-                    Elements(functions_for_130_fs));
+      if (sh == NULL) {
+	 sh = read_builtins(GL_VERTEX_SHADER, functions_for_110_fs,
+			    Elements(functions_for_110_fs));
+	 talloc_steal(builtin_mem_ctx, sh);
+      }
 
-   if (state->ARB_texture_rectangle_enable)
-      read_builtins(state, instructions,
-                    functions_for_ARB_texture_rectangle,
-                    Elements(functions_for_ARB_texture_rectangle));
+      import_prototypes(sh->ir, instructions, state->symbols, state);
+      state->builtins_to_link[state->num_builtins_to_link] = sh;
+      state->num_builtins_to_link++;
+   }
 
-   if (state->EXT_texture_array_enable)
-      read_builtins(state, instructions,
-                    functions_for_EXT_texture_array,
-                    Elements(functions_for_EXT_texture_array));
+   if (state->target == vertex_shader && state->language_version >= 110) {
+      static gl_shader *sh = NULL;
 
-   if (state->target == fragment_shader && state->EXT_texture_array_enable)
-      read_builtins(state, instructions,
-                    functions_for_EXT_texture_array_fs,
-                    Elements(functions_for_EXT_texture_array_fs));
+      if (sh == NULL) {
+	 sh = read_builtins(GL_VERTEX_SHADER, functions_for_110_vs,
+			    Elements(functions_for_110_vs));
+	 talloc_steal(builtin_mem_ctx, sh);
+      }
+
+      import_prototypes(sh->ir, instructions, state->symbols, state);
+      state->builtins_to_link[state->num_builtins_to_link] = sh;
+      state->num_builtins_to_link++;
+   }
+
+   if (state->language_version >= 120) {
+      static gl_shader *sh = NULL;
+
+      if (sh == NULL) {
+	 sh = read_builtins(GL_VERTEX_SHADER, functions_for_120,
+			    Elements(functions_for_120));
+	 talloc_steal(builtin_mem_ctx, sh);
+      }
+
+      import_prototypes(sh->ir, instructions, state->symbols, state);
+      state->builtins_to_link[state->num_builtins_to_link] = sh;
+      state->num_builtins_to_link++;
+   }
+
+   if (state->language_version >= 130) {
+      static gl_shader *sh = NULL;
+
+      if (sh == NULL) {
+	 sh = read_builtins(GL_VERTEX_SHADER, functions_for_130,
+			    Elements(functions_for_130));
+	 talloc_steal(builtin_mem_ctx, sh);
+      }
+
+      import_prototypes(sh->ir, instructions, state->symbols, state);
+      state->builtins_to_link[state->num_builtins_to_link] = sh;
+      state->num_builtins_to_link++;
+   }
+
+   if (state->target == fragment_shader && state->language_version >= 130) {
+      static gl_shader *sh = NULL;
+
+      if (sh == NULL) {
+	 sh = read_builtins(GL_VERTEX_SHADER, functions_for_130_fs,
+			    Elements(functions_for_130_fs));
+	 talloc_steal(builtin_mem_ctx, sh);
+      }
+
+      import_prototypes(sh->ir, instructions, state->symbols, state);
+      state->builtins_to_link[state->num_builtins_to_link] = sh;
+      state->num_builtins_to_link++;
+   }
+
+   if (state->ARB_texture_rectangle_enable) {
+      static gl_shader *sh = NULL;
+
+      if (sh == NULL) {
+	 sh = read_builtins(GL_VERTEX_SHADER, functions_for_ARB_texture_rectangle,
+			    Elements(functions_for_ARB_texture_rectangle));
+	 talloc_steal(builtin_mem_ctx, sh);
+      }
+
+      import_prototypes(sh->ir, instructions, state->symbols, state);
+      state->builtins_to_link[state->num_builtins_to_link] = sh;
+      state->num_builtins_to_link++;
+   }
+
+   if (state->EXT_texture_array_enable) {
+      static gl_shader *sh = NULL;
+
+      if (sh == NULL) {
+	 sh = read_builtins(GL_VERTEX_SHADER, functions_for_EXT_texture_array,
+			    Elements(functions_for_EXT_texture_array));
+	 talloc_steal(builtin_mem_ctx, sh);
+      }
+
+      import_prototypes(sh->ir, instructions, state->symbols, state);
+      state->builtins_to_link[state->num_builtins_to_link] = sh;
+      state->num_builtins_to_link++;
+   }
+
+   if (state->target == fragment_shader && state->EXT_texture_array_enable) {
+      static gl_shader *sh = NULL;
+
+      if (sh == NULL) {
+	 sh = read_builtins(GL_VERTEX_SHADER, functions_for_EXT_texture_array_fs,
+			    Elements(functions_for_EXT_texture_array_fs));
+	 talloc_steal(builtin_mem_ctx, sh);
+      }
+
+      import_prototypes(sh->ir, instructions, state->symbols, state);
+      state->builtins_to_link[state->num_builtins_to_link] = sh;
+      state->num_builtins_to_link++;
+   }
 
 }

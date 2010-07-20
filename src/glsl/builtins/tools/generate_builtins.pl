@@ -64,22 +64,41 @@ print << 'EOF';
 #include <stdio.h>
 #include "glsl_parser_extras.h"
 #include "ir_reader.h"
+#include "program.h"
 
-void
-read_builtins(_mesa_glsl_parse_state *st, exec_list *instructions,
-	      const char **functions, unsigned count)
+extern "C" struct gl_shader *
+_mesa_new_shader(GLcontext *ctx, GLuint name, GLenum type);
+
+gl_shader *
+read_builtins(GLenum target, const char **functions, unsigned count)
 {
-   if (st->error)
-      return;
+   gl_shader *sh = _mesa_new_shader(NULL, 0, target);
+   struct _mesa_glsl_parse_state *st =
+      new(sh) _mesa_glsl_parse_state(NULL, target, sh);
+
+   st->language_version = 130;
+   st->ARB_texture_rectangle_enable = true;
+   st->EXT_texture_array_enable = true;
+   _mesa_glsl_initialize_types(st);
+
+   sh->ir = new(sh) exec_list;
+   sh->symbols = st->symbols;
 
    for (unsigned i = 0; i < count; i++) {
-      _mesa_glsl_read_ir(st, instructions, functions[i]);
+      _mesa_glsl_read_ir(st, sh->ir, functions[i]);
 
       if (st->error) {
 	 printf("error reading builtin: %.35s ...\n", functions[i]);
-         return;
+	 delete st;
+	 talloc_free(sh);
+         return NULL;
       }
    }
+
+   reparent_ir(sh->ir, sh);
+   delete st;
+
+   return sh;
 }
 
 EOF
@@ -95,10 +114,22 @@ print << 'EOF';
 #define Elements(x) (sizeof(x)/sizeof(*(x)))
 #endif
 
+void *builtin_mem_ctx = NULL;
+
+void
+_mesa_glsl_release_functions(void)
+{
+    talloc_free(builtin_mem_ctx);
+}
+
 void
 _mesa_glsl_initialize_functions(exec_list *instructions,
 			        struct _mesa_glsl_parse_state *state)
 {
+   if (builtin_mem_ctx == NULL)
+      builtin_mem_ctx = talloc_init("GLSL built-in functions");
+
+   state->num_builtins_to_link = 0;
 EOF
 
 foreach $version_xs (@versions) {
@@ -117,10 +148,20 @@ foreach $version_xs (@versions) {
       # Not a version...an extension name
       $check = "${check}state->${version}_enable";
    }
-   print "   if ($check)\n";
-   print "      read_builtins(state, instructions,\n";
-   print "                    functions_for_$version_xs,\n";
-   print "                    Elements(functions_for_$version_xs));\n\n"
+   print "   if ($check) {\n";
+   print "      static gl_shader *sh = NULL;\n";
+   print "\n";
+   print "      if (sh == NULL) {\n";
+   print "	 sh = read_builtins(GL_VERTEX_SHADER, functions_for_$version_xs,\n";
+   print "			    Elements(functions_for_$version_xs));\n";
+   print "	 talloc_steal(builtin_mem_ctx, sh);\n";
+   print "      }\n";
+   print "\n";
+   print "      import_prototypes(sh->ir, instructions, state->symbols, state);\n";
+   print "      state->builtins_to_link[state->num_builtins_to_link] = sh;\n";
+   print "      state->num_builtins_to_link++;\n";
+   print "   }\n";
+   print "\n";
 }
 
 print "}\n";
