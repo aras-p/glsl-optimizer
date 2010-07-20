@@ -527,7 +527,8 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
     * temporary and return a deref of that temporary.  If the rvalue
     * ends up not being used, the temp will get copy-propagated out.
     */
-   ir_variable *var = new(ctx) ir_variable(rhs->type, "assignment_tmp");
+   ir_variable *var = new(ctx) ir_variable(rhs->type, "assignment_tmp",
+					   ir_var_temporary);
    ir_dereference_variable *deref_var = new(ctx) ir_dereference_variable(var);
    instructions->push_tail(var);
    instructions->push_tail(new(ctx) ir_assignment(deref_var,
@@ -549,7 +550,8 @@ get_lvalue_copy(exec_list *instructions, ir_rvalue *lvalue)
    ir_variable *var;
 
    /* FINISHME: Give unique names to the temporaries. */
-   var = new(ctx) ir_variable(lvalue->type, "_post_incdec_tmp");
+   var = new(ctx) ir_variable(lvalue->type, "_post_incdec_tmp",
+			      ir_var_temporary);
    instructions->push_tail(var);
    var->mode = ir_var_auto;
 
@@ -806,7 +808,8 @@ ast_expression::hir(exec_list *instructions,
 	 type = glsl_type::bool_type;
       } else {
 	 ir_variable *const tmp = new(ctx) ir_variable(glsl_type::bool_type,
-						       "and_tmp");
+						       "and_tmp",
+						       ir_var_temporary);
 	 instructions->push_tail(tmp);
 
 	 ir_if *const stmt = new(ctx) ir_if(op[0]);
@@ -870,7 +873,8 @@ ast_expression::hir(exec_list *instructions,
 	 type = glsl_type::bool_type;
       } else {
 	 ir_variable *const tmp = new(ctx) ir_variable(glsl_type::bool_type,
-						       "or_tmp");
+						       "or_tmp",
+						       ir_var_temporary);
 	 instructions->push_tail(tmp);
 
 	 ir_if *const stmt = new(ctx) ir_if(op[0]);
@@ -1049,7 +1053,8 @@ ast_expression::hir(exec_list *instructions,
 	  && (cond_val != NULL) && (then_val != NULL) && (else_val != NULL)) {
 	 result = (cond_val->value.b[0]) ? then_val : else_val;
       } else {
-	 ir_variable *const tmp = new(ctx) ir_variable(type, "conditional_tmp");
+	 ir_variable *const tmp =
+	    new(ctx) ir_variable(type, "conditional_tmp", ir_var_temporary);
 	 instructions->push_tail(tmp);
 
 	 ir_if *const stmt = new(ctx) ir_if(op[0]);
@@ -1474,6 +1479,9 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
       }
    }
 
+   /* If there is no qualifier that changes the mode of the variable, leave
+    * the setting alone.
+    */
    if (qual->in && qual->out)
       var->mode = ir_var_inout;
    else if (qual->attribute || qual->in
@@ -1483,8 +1491,6 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
       var->mode = ir_var_out;
    else if (qual->uniform)
       var->mode = ir_var_uniform;
-   else
-      var->mode = ir_var_auto;
 
    if (qual->uniform)
       var->shader_in = true;
@@ -1633,7 +1639,7 @@ ast_declarator_list::hir(exec_list *instructions,
 	 var_type = decl_type;
       }
 
-      var = new(ctx) ir_variable(var_type, decl->identifier);
+      var = new(ctx) ir_variable(var_type, decl->identifier, ir_var_auto);
 
       /* From page 22 (page 28 of the PDF) of the GLSL 1.10 specification;
        *
@@ -1993,7 +1999,7 @@ ast_parameter_declarator::hir(exec_list *instructions,
    }
 
    is_void = false;
-   ir_variable *var = new(ctx) ir_variable(type, this->identifier);
+   ir_variable *var = new(ctx) ir_variable(type, this->identifier, ir_var_in);
 
    /* FINISHME: Handle array declarations.  Note that this requires
     * FINISHME: complete handling of constant expressions.
@@ -2003,8 +2009,6 @@ ast_parameter_declarator::hir(exec_list *instructions,
     * for function parameters the default mode is 'in'.
     */
    apply_type_qualifier_to_variable(& this->type->qualifier, var, state, & loc);
-   if (var->mode == ir_var_auto)
-      var->mode = ir_var_in;
 
    instructions->push_tail(var);
 

@@ -116,6 +116,7 @@ parameter_lists_match(const exec_list *list_a, const exec_list *list_b)
       switch ((enum ir_variable_mode)(param->mode)) {
       case ir_var_auto:
       case ir_var_uniform:
+      case ir_var_temporary:
 	 /* These are all error conditions.  It is invalid for a parameter to
 	  * a function to be declared as auto (not in, out, or inout) or
 	  * as uniform.

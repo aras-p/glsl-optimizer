@@ -1133,6 +1133,7 @@ ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
 
 	 break;
       case ir_var_auto:
+      case ir_var_temporary:
 	 entry = new(mem_ctx) variable_storage(ir->var, PROGRAM_TEMPORARY,
 					       this->next_temp);
 	 this->variables.push_tail(entry);

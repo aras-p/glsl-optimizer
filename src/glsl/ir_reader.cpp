@@ -401,7 +401,8 @@ read_declaration(_mesa_glsl_parse_state *st, s_list *list)
       return NULL;
    }
 
-   ir_variable *var = new(ctx) ir_variable(type, var_name->value());
+   ir_variable *var = new(ctx) ir_variable(type, var_name->value(),
+					   ir_var_auto);
 
    foreach_iter(exec_list_iterator, it, quals->subexpressions) {
       s_symbol *qualifier = SX_AS_SYMBOL(it.get());

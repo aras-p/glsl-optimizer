@@ -298,7 +298,8 @@ ir_mat_op_to_vec_visitor::visit_leave(ir_assignment *assign)
       ir_assignment *assign;
 
       op_var[i] = new(base_ir) ir_variable(expr->operands[i]->type,
-					   "mat_op_to_vec");
+					   "mat_op_to_vec",
+					   ir_var_temporary);
       base_ir->insert_before(op_var[i]);
 
       lhs_deref = new(base_ir) ir_dereference_variable(op_var[i]);

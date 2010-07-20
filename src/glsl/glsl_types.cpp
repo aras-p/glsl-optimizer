@@ -251,10 +251,9 @@ glsl_type::generate_constructor(glsl_symbol_table *symtab) const
       snprintf(param_name, 10, "p%08X", i);
 
       ir_variable *var = (this->base_type == GLSL_TYPE_ARRAY)
-	 ? new(ctx) ir_variable(fields.array, param_name)
-	 : new(ctx) ir_variable(fields.structure[i].type, param_name);
+	 ? new(ctx) ir_variable(fields.array, param_name, ir_var_in)
+	 : new(ctx) ir_variable(fields.structure[i].type, param_name, ir_var_in);
 
-      var->mode = ir_var_in;
       declarations[i] = var;
       sig->parameters.push_tail(var);
    }
@@ -264,7 +263,7 @@ glsl_type::generate_constructor(glsl_symbol_table *symtab) const
     * the same type as the constructor.  After initializing __retval,
     * __retval is returned.
     */
-   ir_variable *retval = new(ctx) ir_variable(this, "__retval");
+   ir_variable *retval = new(ctx) ir_variable(this, "__retval", ir_var_auto);
    sig->body.push_tail(retval);
 
    for (unsigned i = 0; i < length; i++) {

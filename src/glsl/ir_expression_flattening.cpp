@@ -89,7 +89,7 @@ ir_expression_flattening_visitor::operand_to_temp(ir_rvalue *ir)
    if (!this->predicate(ir))
       return ir;
 
-   var = new(ctx) ir_variable(ir->type, "flattening_tmp");
+   var = new(ctx) ir_variable(ir->type, "flattening_tmp", ir_var_temporary);
    base_ir->insert_before(var);
 
    assign = new(ctx) ir_assignment(new(ctx) ir_dereference_variable(var),

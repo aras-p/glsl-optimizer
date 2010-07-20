@@ -86,14 +86,16 @@ ir_vec_index_to_cond_assign_visitor::convert_vec_index_to_cond_assign(ir_rvalue 
 
    /* Store the index to a temporary to avoid reusing its tree. */
    index = new(base_ir) ir_variable(glsl_type::int_type,
-				    "vec_index_tmp_i");
+				    "vec_index_tmp_i",
+				    ir_var_temporary);
    base_ir->insert_before(index);
    deref = new(base_ir) ir_dereference_variable(index);
    assign = new(base_ir) ir_assignment(deref, orig_deref->array_index, NULL);
    base_ir->insert_before(assign);
 
    /* Temporary where we store whichever value we swizzle out. */
-   var = new(base_ir) ir_variable(ir->type, "vec_index_tmp_v");
+   var = new(base_ir) ir_variable(ir->type, "vec_index_tmp_v",
+				  ir_var_temporary);
    base_ir->insert_before(var);
 
    /* Generate a conditional move of each vector element to the temp. */
@@ -166,14 +168,16 @@ ir_vec_index_to_cond_assign_visitor::visit_leave(ir_assignment *ir)
    assert(orig_deref->array_index->type->base_type == GLSL_TYPE_INT);
 
    /* Store the index to a temporary to avoid reusing its tree. */
-   index = new(ir) ir_variable(glsl_type::int_type, "vec_index_tmp_i");
+   index = new(ir) ir_variable(glsl_type::int_type, "vec_index_tmp_i",
+			       ir_var_temporary);
    ir->insert_before(index);
    deref = new(ir) ir_dereference_variable(index);
    assign = new(ir) ir_assignment(deref, orig_deref->array_index, NULL);
    ir->insert_before(assign);
 
    /* Store the RHS to a temporary to avoid reusing its tree. */
-   var = new(ir) ir_variable(ir->rhs->type, "vec_index_tmp_v");
+   var = new(ir) ir_variable(ir->rhs->type, "vec_index_tmp_v",
+			     ir_var_temporary);
    ir->insert_before(var);
    deref = new(ir) ir_dereference_variable(var);
    assign = new(ir) ir_assignment(deref, ir->rhs, NULL);

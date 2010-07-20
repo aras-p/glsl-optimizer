@@ -39,7 +39,8 @@ ir_variable *
 ir_variable::clone(struct hash_table *ht) const
 {
    void *ctx = talloc_parent(this);
-   ir_variable *var = new(ctx) ir_variable(type, name);
+   ir_variable *var = new(ctx) ir_variable(this->type, this->name,
+					   (ir_variable_mode) this->mode);
 
    var->max_array_access = this->max_array_access;
    var->read_only = this->read_only;
@@ -47,7 +48,6 @@ ir_variable::clone(struct hash_table *ht) const
    var->invariant = this->invariant;
    var->shader_in = this->shader_in;
    var->shader_out = this->shader_out;
-   var->mode = this->mode;
    var->interpolation = this->interpolation;
    var->array_lvalue = this->array_lvalue;
    var->location = this->location;

@@ -246,6 +246,8 @@ mode_string(const ir_variable *var)
    case ir_var_in:      return "shader input";
    case ir_var_out:     return "shader output";
    case ir_var_inout:   return "shader inout";
+
+   case ir_var_temporary:
    default:
       assert(!"Should not get here.");
       return "invalid variable";
@@ -274,6 +276,12 @@ cross_validate_globals(struct gl_shader_program *prog,
 	    continue;
 
 	 if (uniforms_only && (var->mode != ir_var_uniform))
+	    continue;
+
+	 /* Don't cross validate temporaries that are at global scope.  These
+	  * will eventually get pulled into the shaders 'main'.
+	  */
+	 if (var->mode == ir_var_temporary)
 	    continue;
 
 	 /* If a global with this name has already been seen, verify that the
@@ -480,18 +488,28 @@ populate_symbol_table(gl_shader *sh)
  */
 void
 remap_variables(ir_instruction *inst, glsl_symbol_table *symbols,
-		exec_list *instructions)
+		exec_list *instructions, hash_table *temps)
 {
    class remap_visitor : public ir_hierarchical_visitor {
    public:
-      remap_visitor(glsl_symbol_table *symbols, exec_list *instructions)
+      remap_visitor(glsl_symbol_table *symbols, exec_list *instructions,
+		    hash_table *temps)
       {
 	 this->symbols = symbols;
 	 this->instructions = instructions;
+	 this->temps = temps;
       }
 
       virtual ir_visitor_status visit(ir_dereference_variable *ir)
       {
+	 if (ir->var->mode == ir_var_temporary) {
+	    ir_variable *var = (ir_variable *) hash_table_find(temps, ir->var);
+
+	    assert(var != NULL);
+	    ir->var = var;
+	    return visit_continue;
+	 }
+
 	 ir_variable *const existing =
 	    this->symbols->get_variable(ir->var->name);
 	 if (existing != NULL)
@@ -501,6 +519,7 @@ remap_variables(ir_instruction *inst, glsl_symbol_table *symbols,
 
 	    this->symbols->add_variable(copy->name, copy);
 	    this->instructions->push_head(copy);
+	    ir->var = copy;
 	 }
 
 	 return visit_continue;
@@ -509,9 +528,10 @@ remap_variables(ir_instruction *inst, glsl_symbol_table *symbols,
    private:
       glsl_symbol_table *symbols;
       exec_list *instructions;
+      hash_table *temps;
    };
 
-   remap_visitor v(symbols, instructions);
+   remap_visitor v(symbols, instructions, temps);
 
    inst->accept(&v);
 }
@@ -542,17 +562,32 @@ exec_node *
 move_non_declarations(exec_list *instructions, exec_node *last,
 		      bool make_copies, gl_shader *target)
 {
+   hash_table *temps = NULL;
+
+   if (make_copies)
+      temps = hash_table_ctor(0, hash_table_pointer_hash,
+			      hash_table_pointer_compare);
+
    foreach_list_safe(node, instructions) {
       ir_instruction *inst = (ir_instruction *) node;
 
-      if (inst->as_variable() || inst->as_function())
+      if (inst->as_function())
 	 continue;
 
-      assert(inst->as_assignment());
+      ir_variable *var = inst->as_variable();
+      if ((var != NULL) && (var->mode != ir_var_temporary))
+	 continue;
+
+      assert(inst->as_assignment()
+	     || ((var != NULL) && (var->mode == ir_var_temporary)));
 
       if (make_copies) {
 	 inst = inst->clone(NULL);
-	 remap_variables(inst, target->symbols, target->ir);
+
+	 if (var != NULL)
+	    hash_table_insert(temps, inst, var);
+	 else
+	    remap_variables(inst, target->symbols, target->ir, temps);
       } else {
 	 inst->remove();
       }
@@ -560,6 +595,9 @@ move_non_declarations(exec_list *instructions, exec_node *last,
       last->insert_after(inst);
       last = inst;
    }
+
+   if (make_copies)
+      hash_table_dtor(temps);
 
    return last;
 }

@@ -60,7 +60,8 @@ ir_mod_to_fract_visitor::visit_leave(ir_expression *ir)
    if (ir->operation != ir_binop_mod)
       return visit_continue;
 
-   ir_variable *temp = new(ir) ir_variable(ir->operands[1]->type, "mod_b");
+   ir_variable *temp = new(ir) ir_variable(ir->operands[1]->type, "mod_b",
+					   ir_var_temporary);
    this->base_ir->insert_before(temp);
 
    ir_assignment *assign;

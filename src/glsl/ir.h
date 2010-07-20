@@ -162,7 +162,8 @@ enum ir_variable_mode {
    ir_var_uniform,
    ir_var_in,
    ir_var_out,
-   ir_var_inout
+   ir_var_inout,
+   ir_var_temporary	/**< Temporary variable generated during compilation. */
 };
 
 enum ir_variable_interpolation {
@@ -174,7 +175,7 @@ enum ir_variable_interpolation {
 
 class ir_variable : public ir_instruction {
 public:
-   ir_variable(const struct glsl_type *, const char *);
+   ir_variable(const struct glsl_type *, const char *, ir_variable_mode);
 
    virtual ir_variable *clone(struct hash_table *ht) const;
 

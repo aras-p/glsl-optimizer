@@ -748,10 +748,12 @@ ir_swizzle::variable_referenced()
    return this->val->variable_referenced();
 }
 
-ir_variable::ir_variable(const struct glsl_type *type, const char *name)
+
+ir_variable::ir_variable(const struct glsl_type *type, const char *name,
+			 ir_variable_mode mode)
    : max_array_access(0), read_only(false), centroid(false), invariant(false),
      shader_in(false), shader_out(false),
-     mode(ir_var_auto), interpolation(ir_var_smooth), array_lvalue(false)
+     mode(mode), interpolation(ir_var_smooth), array_lvalue(false)
 {
    this->ir_type = ir_type_variable;
    this->type = type;

@@ -145,7 +145,8 @@ ir_if_to_cond_assign_visitor::visit_leave(ir_if *ir)
     * simpler.
     */
    cond_var = new(mem_ctx) ir_variable(glsl_type::bool_type,
-				       "if_to_cond_assign_condition");
+				       "if_to_cond_assign_condition",
+				       ir_var_temporary);
    ir->insert_before(cond_var);
 
    deref = new(mem_ctx) ir_dereference_variable(cond_var);

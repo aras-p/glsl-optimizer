@@ -102,7 +102,8 @@ ir_if_return_visitor::visit_enter(ir_if *ir)
    } else {
       ir_assignment *assign;
       ir_variable *new_var = new(ir) ir_variable(then_return->value->type,
-					     "if_return_tmp");
+						 "if_return_tmp",
+						 ir_var_temporary);
       ir->insert_before(new_var);
 
       assign = new(ir) ir_assignment(new(ir) ir_dereference_variable(new_var),
