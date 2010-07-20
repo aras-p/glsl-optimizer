@@ -186,11 +186,8 @@ dri2DestroyDrawable(__GLXDRIdrawable *base)
 {
    struct dri2_screen *psc = (struct dri2_screen *) base->psc;
    struct dri2_drawable *pdraw = (struct dri2_drawable *) base;
-   __GLXdisplayPrivate *dpyPriv;
-   struct dri2_display *pdp;
-
-   dpyPriv = __glXInitialize(base->psc->dpy);
-   pdp = (struct dri2_display *)dpyPriv->dri2Display;
+   __GLXdisplayPrivate *dpyPriv = psc->base.display;
+   struct dri2_display *pdp = (struct dri2_display *)dpyPriv->dri2Display;
 
    __glxHashDelete(pdp->dri2Hash, pdraw->base.xDrawable);
    (*psc->core->destroyDrawable) (pdraw->driDrawable);

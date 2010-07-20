@@ -523,6 +523,8 @@ struct __GLXscreenConfigsRec
     */
    const struct glx_context_vtable *direct_context_vtable;
 
+   __GLXdisplayPrivate *display;
+
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
     /**
      * Per screen direct rendering interface functions and data.

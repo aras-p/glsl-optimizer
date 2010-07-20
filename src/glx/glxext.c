@@ -759,6 +759,7 @@ glx_screen_init(__GLXscreenConfigs *psc,
    psc->scr = screen;
    psc->dpy = priv->dpy;
    psc->drawHash = __glxHashCreate();
+   psc->display = priv;
    if (psc->drawHash == NULL)
       return GL_FALSE;
 
