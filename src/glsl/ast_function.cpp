@@ -321,22 +321,64 @@ process_array_constructor(exec_list *instructions,
       assert(constructor_type->length == parameter_count);
    }
 
-   ir_function *f = state->symbols->get_function(constructor_type->name);
+   bool all_parameters_are_constant = true;
 
-   /* If the constructor for this type of array does not exist, generate the
-    * prototype and add it to the symbol table.
-    */
-   if (f == NULL) {
-      f = constructor_type->generate_constructor(state->symbols);
+   /* Type cast each parameter and, if possible, fold constants. */
+   foreach_list_safe(n, &actual_parameters) {
+      ir_rvalue *ir = (ir_rvalue *) n;
+      ir_rvalue *result = ir;
+
+      /* Apply implicit conversions (not the scalar constructor rules!) */
+      if (constructor_type->element_type()->is_float()) {
+	 const glsl_type *desired_type =
+	    glsl_type::get_instance(GLSL_TYPE_FLOAT,
+				    ir->type->vector_elements,
+				    ir->type->matrix_columns);
+	 result = convert_component(ir, desired_type);
+      }
+
+      if (result->type != constructor_type->element_type()) {
+	 _mesa_glsl_error(loc, state, "type error in array constructor: "
+			  "expected: %s, found %s",
+			  constructor_type->element_type()->name,
+			  result->type->name);
+      }
+
+      /* Attempt to convert the parameter to a constant valued expression.
+       * After doing so, track whether or not all the parameters to the
+       * constructor are trivially constant valued expressions.
+       */
+      ir_rvalue *const constant = result->constant_expression_value();
+
+      if (constant != NULL)
+         result = constant;
+      else
+         all_parameters_are_constant = false;
+
+      ir->replace_with(result);
    }
 
-   ir_rvalue *const r =
-      process_call(instructions, f, loc, &actual_parameters, state);
+   if (all_parameters_are_constant) {
+      /* FINISHME: Add support for generating constant arrays. */
+   }
 
-   assert(r != NULL);
-   assert(r->type->is_error() || (r->type == constructor_type));
+   ir_variable *var = new(ctx) ir_variable(constructor_type, "array_ctor",
+					   ir_var_temporary);
+   instructions->push_tail(var);
 
-   return r;
+   int i = 0;
+   foreach_list(node, &actual_parameters) {
+      ir_rvalue *rhs = (ir_rvalue *) node;
+      ir_rvalue *lhs = new(ctx) ir_dereference_array(var,
+						     new(ctx) ir_constant(i));
+
+      ir_instruction *assignment = new(ctx) ir_assignment(lhs, rhs, NULL);
+      instructions->push_tail(assignment);
+
+      i++;
+   }
+
+   return new(ctx) ir_dereference_variable(var);
 }
 
 
