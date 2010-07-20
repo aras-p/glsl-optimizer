@@ -352,13 +352,14 @@ dri2CopySubBuffer(__GLXDRIdrawable *pdraw, int x, int y, int width, int height)
    region = XFixesCreateRegion(psc->base.dpy, &xrect, 1);
    DRI2CopyRegion(psc->base.dpy, pdraw->xDrawable, region,
                   DRI2BufferFrontLeft, DRI2BufferBackLeft);
-   XFixesDestroyRegion(psc->base.dpy, region);
 
    /* Refresh the fake front (if present) after we just damaged the real
     * front.
     */
-   DRI2CopyRegion(psc->base.dpy, pdraw->xDrawable, region,
-		  DRI2BufferFakeFrontLeft, DRI2BufferFrontLeft);
+   if (priv->have_fake_front)
+      DRI2CopyRegion(psc->base.dpy, pdraw->xDrawable, region,
+		     DRI2BufferFakeFrontLeft, DRI2BufferFrontLeft);
+
    XFixesDestroyRegion(psc->base.dpy, region);
 }
 
