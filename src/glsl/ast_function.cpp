@@ -104,7 +104,30 @@ process_call(exec_list *instructions, ir_function *f,
 	 formal_iter.next();
       }
 
-      return new(ctx) ir_call(sig, actual_parameters);
+      /* Always insert the call in the instruction stream, and return a deref
+       * of its return val if it returns a value, since we don't know if
+       * the rvalue is going to be assigned to anything or not.
+       */
+      ir_call *call = new(ctx) ir_call(sig, actual_parameters);
+      if (!sig->return_type->is_void()) {
+	 ir_variable *var;
+	 ir_dereference_variable *deref;
+
+	 var = new(ctx) ir_variable(sig->return_type,
+				    talloc_asprintf(ctx, "%s_retval",
+						    sig->function_name()));
+	 instructions->push_tail(var);
+
+	 deref = new(ctx) ir_dereference_variable(var);
+	 ir_assignment *assign = new(ctx) ir_assignment(deref, call, NULL);
+	 instructions->push_tail(assign);
+
+	 deref = new(ctx) ir_dereference_variable(var);
+	 return deref;
+      } else {
+	 instructions->push_tail(call);
+	 return NULL;
+      }
    } else {
       /* FINISHME: Log a better error message here.  G++ will show the types
        * FINISHME: of the actual parameters and the set of candidate
