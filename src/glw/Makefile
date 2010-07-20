@@ -71,4 +71,4 @@ depend: $(GLW_SOURCES)
 		$(X11_INCLUDES) > /dev/null
 
 
-include depend
+-include depend
