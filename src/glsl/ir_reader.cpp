@@ -138,7 +138,7 @@ read_type(_mesa_glsl_parse_state *st, s_expression *expr)
 	    return NULL;
 	 }
 
-	 return glsl_type::get_array_instance(st, base_type, size->value());
+	 return glsl_type::get_array_instance(base_type, size->value());
       } else if (strcmp(type_sym->value(), "struct") == 0) {
 	 assert(false); // FINISHME
       } else {

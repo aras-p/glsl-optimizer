@@ -289,7 +289,7 @@ glsl_type::generate_constructor(glsl_symbol_table *symtab) const
 }
 
 
-glsl_type::glsl_type(void *ctx, const glsl_type *array, unsigned length) :
+glsl_type::glsl_type(const glsl_type *array, unsigned length) :
    base_type(GLSL_TYPE_ARRAY),
    sampler_dimensionality(0), sampler_shadow(0), sampler_array(0),
    sampler_type(0),
@@ -308,7 +308,7 @@ glsl_type::glsl_type(void *ctx, const glsl_type *array, unsigned length) :
     * NUL.
     */
    const unsigned name_length = strlen(array->name) + 10 + 3;
-   char *const n = (char *) talloc_size(ctx, name_length);
+   char *const n = (char *) talloc_size(this->ctx, name_length);
 
    if (length == 0)
       snprintf(n, name_length, "%s[]", array->name);
@@ -411,10 +411,9 @@ glsl_type::array_key_hash(const void *a)
 
 
 const glsl_type *
-glsl_type::get_array_instance(void *ctx, const glsl_type *base,
-			      unsigned array_size)
+glsl_type::get_array_instance(const glsl_type *base, unsigned array_size)
 {
-   const glsl_type key(ctx, base, array_size);
+   const glsl_type key(base, array_size);
 
    if (array_types == NULL) {
       array_types = hash_table_ctor(64, array_key_hash, array_key_compare);
@@ -422,7 +421,7 @@ glsl_type::get_array_instance(void *ctx, const glsl_type *base,
 
    const glsl_type *t = (glsl_type *) hash_table_find(array_types, & key);
    if (t == NULL) {
-      t = new glsl_type(ctx, base, array_size);
+      t = new glsl_type(base, array_size);
 
       hash_table_insert(array_types, (void *) t, t);
    }

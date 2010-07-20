@@ -511,8 +511,7 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
 			     var->max_array_access);
 	 }
 
-	 var->type = glsl_type::get_array_instance(state,
-						   lhs->type->element_type(),
+	 var->type = glsl_type::get_array_instance(lhs->type->element_type(),
 						   rhs->type->array_size());
       }
    }
@@ -1407,7 +1406,7 @@ process_array_type(const glsl_type *base, ast_node *array_size,
       }
    }
 
-   return glsl_type::get_array_instance(state, base, length);
+   return glsl_type::get_array_instance(base, length);
 }
 
 

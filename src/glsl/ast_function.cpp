@@ -312,8 +312,7 @@ process_array_constructor(exec_list *instructions,
 
    if (constructor_type->length == 0) {
       constructor_type =
-	 glsl_type::get_array_instance(state,
-				       constructor_type->element_type(),
+	 glsl_type::get_array_instance(constructor_type->element_type(),
 				       parameter_count);
       assert(constructor_type != NULL);
       assert(constructor_type->length == parameter_count);

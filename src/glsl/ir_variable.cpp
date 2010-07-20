@@ -138,7 +138,7 @@ generate_110_uniforms(exec_list *instructions,
 			state->Const.MaxFragmentUniformComponents);
 
    const glsl_type *const mat4_array_type =
-      glsl_type::get_array_instance(state->symbols, glsl_type::mat4_type,
+      glsl_type::get_array_instance(glsl_type::mat4_type,
 				    state->Const.MaxTextureCoords);
 
    add_variable("gl_TextureMatrix", ir_var_uniform, -1, mat4_array_type,
@@ -157,8 +157,7 @@ generate_110_uniforms(exec_list *instructions,
     * FINISHME: at least 8, so hard-code 8 for now.
     */
    const glsl_type *const light_source_array_type =
-      glsl_type::get_array_instance(state->symbols,
-				    state->symbols->get_type("gl_LightSourceParameters"), 8);
+      glsl_type::get_array_instance(state->symbols->get_type("gl_LightSourceParameters"), 8);
 
    add_variable("gl_LightSource", ir_var_uniform, -1, light_source_array_type,
 		instructions, state->symbols);
@@ -196,7 +195,7 @@ generate_110_vs_variables(exec_list *instructions,
     *     implementation in preserving varying resources."
     */
    const glsl_type *const vec4_array_type =
-      glsl_type::get_array_instance(state->symbols, glsl_type::vec4_type, 0);
+      glsl_type::get_array_instance(glsl_type::vec4_type, 0);
 
    add_variable("gl_TexCoord", ir_var_out, VERT_RESULT_TEX0, vec4_array_type,
 		instructions, state->symbols);
@@ -221,7 +220,6 @@ static void
 generate_130_vs_variables(exec_list *instructions,
 			  struct _mesa_glsl_parse_state *state)
 {
-   void *ctx = state->symbols;
    generate_120_vs_variables(instructions, state);
 
    for (unsigned i = 0; i < Elements(builtin_130_vs_variables); i++) {
@@ -233,7 +231,7 @@ generate_130_vs_variables(exec_list *instructions,
     * FINISHME: the value of GL_MAX_CLIP_DISTANCES.
     */
    const glsl_type *const clip_distance_array_type =
-      glsl_type::get_array_instance(ctx, glsl_type::float_type, 8);
+      glsl_type::get_array_instance(glsl_type::float_type, 8);
 
    /* FINISHME: gl_ClipDistance needs a real location assigned. */
    add_variable("gl_ClipDistance", ir_var_out, -1, clip_distance_array_type,
@@ -286,7 +284,7 @@ generate_110_fs_variables(exec_list *instructions,
     *     implementation in preserving varying resources."
     */
    const glsl_type *const vec4_array_type =
-      glsl_type::get_array_instance(state->symbols, glsl_type::vec4_type, 0);
+      glsl_type::get_array_instance(glsl_type::vec4_type, 0);
 
    add_variable("gl_TexCoord", ir_var_in, FRAG_ATTRIB_TEX0, vec4_array_type,
 		instructions, state->symbols);
@@ -318,7 +316,7 @@ generate_ARB_draw_buffers_variables(exec_list *instructions,
     */
    if (target == fragment_shader) {
       const glsl_type *const vec4_array_type =
-	 glsl_type::get_array_instance(state->symbols, glsl_type::vec4_type,
+	 glsl_type::get_array_instance(glsl_type::vec4_type,
 				       state->Const.MaxDrawBuffers);
 
       ir_variable *const fd =
@@ -349,14 +347,13 @@ static void
 generate_130_fs_variables(exec_list *instructions,
 			  struct _mesa_glsl_parse_state *state)
 {
-   void *ctx = state->symbols;
    generate_120_fs_variables(instructions, state);
 
    /* FINISHME: The size of this array is implementation dependent based on
     * FINISHME: the value of GL_MAX_CLIP_DISTANCES.
     */
    const glsl_type *const clip_distance_array_type =
-      glsl_type::get_array_instance(ctx, glsl_type::float_type, 8);
+      glsl_type::get_array_instance(glsl_type::float_type, 8);
 
    /* FINISHME: gl_ClipDistance needs a real location assigned. */
    add_variable("gl_ClipDistance", ir_var_in, -1, clip_distance_array_type,
