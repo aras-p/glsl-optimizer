@@ -1315,4 +1315,7 @@ extern void
 _mesa_glsl_initialize_functions(exec_list *instructions,
 				struct _mesa_glsl_parse_state *state);
 
+extern void
+reparent_ir(exec_list *list, void *mem_ctx);
+
 #endif /* IR_H */

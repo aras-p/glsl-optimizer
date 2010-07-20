@@ -875,3 +875,18 @@ visit_exec_list(exec_list *list, ir_visitor *visitor)
    }
 }
 
+
+static void
+steal_memory(ir_instruction *ir, void *new_ctx)
+{
+   talloc_steal(new_ctx, ir);
+}
+
+
+void
+reparent_ir(exec_list *list, void *mem_ctx)
+{
+   foreach_list(node, list) {
+      visit_tree((ir_instruction *) node, steal_memory, mem_ctx);
+   }
+}
