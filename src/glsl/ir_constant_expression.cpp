@@ -73,6 +73,22 @@ ir_expression::constant_expression_value()
       components = op[1]->type->components();
    }
 
+   void *ctx = talloc_parent(this);
+
+   /* Handle array operations here, rather than below. */
+   if (op[0]->type->is_array()) {
+      assert(op[1] != NULL && op[1]->type->is_array());
+      switch (this->operation) {
+      case ir_binop_equal:
+	 return new(ctx) ir_constant(op[0]->has_value(op[1]));
+      case ir_binop_nequal:
+	 return new(ctx) ir_constant(!op[0]->has_value(op[1]));
+      default:
+	 break;
+      }
+      return NULL;
+   }
+
    switch (this->operation) {
    case ir_unop_logic_not:
       assert(op[0]->type->base_type == GLSL_TYPE_BOOL);
@@ -616,7 +632,6 @@ ir_expression::constant_expression_value()
       return NULL;
    }
 
-   void *ctx = talloc_parent(this);
    return new(ctx) ir_constant(this->type, &data);
 }
 

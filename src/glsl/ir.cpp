@@ -430,9 +430,14 @@ ir_constant::has_value(const ir_constant *c) const
    if (this->type != c->type)
       return false;
 
-   /* FINISHME: This will probably also handle constant arrays as soon as those
-    * FINISHME: are supported.
-    */
+   if (this->type->is_array()) {
+      for (unsigned i = 0; i < this->type->length; i++) {
+	 if (this->array_elements[i]->has_value(c->array_elements[i]))
+	    return false;
+      }
+      return true;
+   }
+
    if (this->type->base_type == GLSL_TYPE_STRUCT) {
       const exec_node *a_node = this->components.head;
       const exec_node *b_node = c->components.head;
