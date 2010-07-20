@@ -238,12 +238,25 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
 	    mrf++;		/* just a placeholder?  XXX fix later stages & remove this */
 	 }
 	 else {
-            if (mrf < 16) {
+	    /* Two restrictions on our compute-to-MRF here.  The
+	     * message length for all SEND messages is restricted to
+	     * [1,15], so we can't use mrf 15, as that means a length
+	     * of 16.
+	     *
+	     * Additionally, URB writes are aligned to URB rows, so we
+	     * need to put an even number of registers of URB data in
+	     * each URB write so that the later write is aligned.  A
+	     * message length of 15 means 1 message header reg plus 14
+	     * regs of URB data.
+	     *
+	     * For attributes beyond the compute-to-MRF, we compute to
+	     * GRFs and they will be written in the second URB_WRITE.
+	     */
+            if (mrf < 15) {
                c->regs[PROGRAM_OUTPUT][i] = brw_message_reg(mrf);
                mrf++;
             }
             else {
-               /* too many vertex results to fit in MRF, use GRF for overflow */
                if (!c->first_overflow_output)
                   c->first_overflow_output = i;
                c->regs[PROGRAM_OUTPUT][i] = brw_vec8_grf(reg, 0);
@@ -1426,29 +1439,26 @@ static void emit_vertex_write( struct brw_vs_compile *c)
        * Move the overflowed attributes from the GRF to the MRF and
        * issue another brw_urb_WRITE().
        */
-      /* XXX I'm not 100% sure about which MRF regs to use here.  Starting
-       * at mrf[4] atm...
-       */
-      GLuint i, mrf = 0;
+      GLuint i, mrf = 1;
       for (i = c->first_overflow_output; i < VERT_RESULT_MAX; i++) {
          if (c->prog_data.outputs_written & BITFIELD64_BIT(i)) {
             /* move from GRF to MRF */
-            brw_MOV(p, brw_message_reg(4+mrf), c->regs[PROGRAM_OUTPUT][i]);
+            brw_MOV(p, brw_message_reg(mrf), c->regs[PROGRAM_OUTPUT][i]);
             mrf++;
          }
       }
 
       brw_urb_WRITE(p,
                     brw_null_reg(), /* dest */
-                    4,              /* starting mrf reg nr */
+                    0,              /* starting mrf reg nr */
                     c->r0,          /* src */
                     0,              /* allocate */
                     1,              /* used */
-                    mrf+1,          /* msg len */
+                    mrf,            /* msg len */
                     0,              /* response len */
                     1,              /* eot */
                     1,              /* writes complete */
-                    BRW_MAX_MRF-1,  /* urb destination offset */
+                    14 / 2,  /* urb destination offset */
                     BRW_URB_SWIZZLE_INTERLEAVE);
    }
 }
