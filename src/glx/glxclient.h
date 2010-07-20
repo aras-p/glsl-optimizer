@@ -614,8 +614,10 @@ extern int
 glx_screen_init(__GLXscreenConfigs *psc,
 		int screen, __GLXdisplayPrivate * priv);
 
+#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
 extern __GLXDRIdrawable *
 dri2GetGlxDrawableFromXDrawableId(Display *dpy, XID id);
+#endif
 
 extern GLubyte *__glXFlushRenderBuffer(__GLXcontext *, GLubyte *);
 
