@@ -169,21 +169,24 @@ ir_call::generate_inline(ir_instruction *next_ir)
     */
    i = 0;
    param_iter = this->actual_parameters.iterator();
+   sig_param_iter = this->callee->parameters.iterator();
    for (i = 0; i < num_parameters; i++) {
       ir_instruction *const param = (ir_instruction *) param_iter.get();
+      const ir_variable *const sig_param = (ir_variable *) sig_param_iter.get();
 
       /* Move our param variable into the actual param if it's an 'out' type. */
-      if (parameters[i]->mode == ir_var_out ||
-	  parameters[i]->mode == ir_var_inout) {
+      if (sig_param->mode == ir_var_out ||
+	  sig_param->mode == ir_var_inout) {
 	 ir_assignment *assign;
 
-	 assign = new(ctx) ir_assignment(param->as_rvalue(),
+	 assign = new(ctx) ir_assignment(param->clone(NULL)->as_rvalue(),
 					 new(ctx) ir_dereference_variable(parameters[i]),
 					 NULL);
 	 next_ir->insert_before(assign);
       }
 
       param_iter.next();
+      sig_param_iter.next();
    }
 
    delete [] parameters;
