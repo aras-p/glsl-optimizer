@@ -70,6 +70,7 @@ struct dri_screen
    const __DRIswapControlExtension *swapControl;
    const __DRImediaStreamCounterExtension *msc;
    const __DRIconfig **driver_configs;
+   const __DRIcopySubBufferExtension *driCopySubBuffer;
 
    void *driver;
    int fd;
@@ -652,9 +653,10 @@ driCopySubBuffer(__GLXDRIdrawable * pdraw,
                  int x, int y, int width, int height)
 {
    struct dri_drawable *pdp = (struct dri_drawable *) pdraw;
+   struct dri_screen *psc = (struct dri_screen *) pdp->base.psc;
 
-   (*pdp->base.psc->driCopySubBuffer->copySubBuffer) (pdp->driDrawable,
-						      x, y, width, height);
+   (*psc->driCopySubBuffer->copySubBuffer) (pdp->driDrawable,
+					    x, y, width, height);
 }
 
 static void
@@ -788,6 +790,14 @@ driBindExtensions(struct dri_screen *psc, const __DRIextension **extensions)
          __glXEnableDirectExtension(&psc->base, "GLX_SGI_video_sync");
       }
 
+      if (strcmp(extensions[i]->name, __DRI_COPY_SUB_BUFFER) == 0) {
+	 psc->driCopySubBuffer = (__DRIcopySubBufferExtension *) extensions[i];
+	 __glXEnableDirectExtension(&psc->base, "GLX_MESA_copy_sub_buffer");
+      }
+
+      if (strcmp(extensions[i]->name, __DRI_READ_DRAWABLE) == 0) {
+	 __glXEnableDirectExtension(&psc->base, "GLX_SGI_make_current_read");
+      }
       /* Ignore unknown extensions */
    }
 }
@@ -852,11 +862,10 @@ driCreateScreen(int screen, __GLXdisplayPrivate *priv)
 
    extensions = psc->core->getExtensions(psc->driScreen);
    driBindExtensions(psc, extensions);
-   driBindCommonExtensions(&psc->base, extensions);
 
    psp = &psc->vtable;
    psc->base.driScreen = psp;
-   if (psc->base.driCopySubBuffer)
+   if (psc->driCopySubBuffer)
       psp->copySubBuffer = driCopySubBuffer;
 
    psp->destroyScreen = driDestroyScreen;

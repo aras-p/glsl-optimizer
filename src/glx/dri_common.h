@@ -58,7 +58,4 @@ extern void ErrorMessageF(const char *f, ...);
 
 extern void *driOpenDriver(const char *driverName);
 
-extern void driBindCommonExtensions(__GLXscreenConfigs * psc,
-				    const __DRIextension **extensions);
-
 #endif /* _DRI_COMMON_H */

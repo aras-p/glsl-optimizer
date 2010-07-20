@@ -533,11 +533,6 @@ struct __GLXscreenConfigsRec
    int scr;
 
    __GLXDRIscreen *driScreen;
-
-#ifdef __DRI_COPY_SUB_BUFFER
-   const __DRIcopySubBufferExtension *driCopySubBuffer;
-#endif
-
 #endif
 
     /**

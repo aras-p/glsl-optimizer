@@ -346,29 +346,4 @@ driDestroyConfigs(const __DRIconfig **configs)
    free(configs);
 }
 
-/* Bind extensions common to DRI1 and DRI2 */
-_X_HIDDEN void
-driBindCommonExtensions(__GLXscreenConfigs *psc,
-			const __DRIextension **extensions)
-{
-   int i;
-
-   for (i = 0; extensions[i]; i++) {
-#ifdef __DRI_COPY_SUB_BUFFER
-      if (strcmp(extensions[i]->name, __DRI_COPY_SUB_BUFFER) == 0) {
-	 psc->driCopySubBuffer = (__DRIcopySubBufferExtension *) extensions[i];
-	 __glXEnableDirectExtension(psc, "GLX_MESA_copy_sub_buffer");
-      }
-#endif
-
-#ifdef __DRI_READ_DRAWABLE
-      if (strcmp(extensions[i]->name, __DRI_READ_DRAWABLE) == 0) {
-	 __glXEnableDirectExtension(psc, "GLX_SGI_make_current_read");
-      }
-#endif
-
-      /* Ignore unknown extensions */
-   }
-}
-
 #endif /* GLX_DIRECT_RENDERING */

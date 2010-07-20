@@ -675,6 +675,7 @@ dri2BindExtensions(struct dri2_screen *psc, const __DRIextension **extensions)
    __glXEnableDirectExtension(&psc->base, "GLX_SGI_video_sync");
    __glXEnableDirectExtension(&psc->base, "GLX_SGI_swap_control");
    __glXEnableDirectExtension(&psc->base, "GLX_MESA_swap_control");
+   __glXEnableDirectExtension(&psc->base, "GLX_SGI_make_current_read");
 
    /* FIXME: if DRI2 version supports it... */
    __glXEnableDirectExtension(&psc->base, "INTEL_swap_event");
@@ -779,7 +780,6 @@ dri2CreateScreen(int screen, __GLXdisplayPrivate * priv)
    }
 
    extensions = psc->core->getExtensions(psc->driScreen);
-   driBindCommonExtensions(&psc->base, extensions);
    dri2BindExtensions(psc, extensions);
 
    psc->base.configs =
