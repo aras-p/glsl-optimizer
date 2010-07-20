@@ -21,7 +21,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include <talloc.h>
+#include "glcpp.h"
 
 void *
 xtalloc_named_const (const void *context, size_t size, const char *name)
