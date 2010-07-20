@@ -438,10 +438,13 @@ glsl_type::record_key_compare(const void *a, const void *b)
    if (key1->length != key2->length)
       return 1;
 
-   for (unsigned i = 0; i < key1->length; i++)
-      /* FINISHME: Is the name of the structure field also significant? */
+   for (unsigned i = 0; i < key1->length; i++) {
       if (key1->fields.structure[i].type != key2->fields.structure[i].type)
 	 return 1;
+      if (strcmp(key1->fields.structure[i].name,
+		 key2->fields.structure[i].name) != 0)
+	 return 1;
+   }
 
    return 0;
 }
