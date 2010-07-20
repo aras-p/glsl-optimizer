@@ -202,10 +202,7 @@ control_line:
 |	HASH_UNDEF IDENTIFIER NEWLINE {
 		macro_t *macro = hash_table_find (parser->defines, $2);
 		if (macro) {
-			/* XXX: Need hash table to support a real way
-			 * to remove an element rather than prefixing
-			 * a new node with data of NULL like this. */
-			hash_table_insert (parser->defines, NULL, $2);
+			hash_table_remove (parser->defines, $2);
 			talloc_free (macro);
 		}
 		talloc_free ($2);
