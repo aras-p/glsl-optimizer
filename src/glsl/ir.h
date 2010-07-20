@@ -1318,4 +1318,10 @@ _mesa_glsl_initialize_functions(exec_list *instructions,
 extern void
 reparent_ir(exec_list *list, void *mem_ctx);
 
+class glsl_symbol_table;
+
+extern void
+import_prototypes(const exec_list *source, exec_list *dest,
+		  class glsl_symbol_table *symbols, void *mem_ctx);
+
 #endif /* IR_H */
