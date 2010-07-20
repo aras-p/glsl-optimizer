@@ -484,7 +484,6 @@ static const __DRIextension *dri_screen_extensions[] = {
    &driReadDrawableExtension,
    &driCopySubBufferExtension.base,
    &driSwapControlExtension.base,
-   &driFrameTrackingExtension.base,
    &driMediaStreamCounterExtension.base,
    &dri2TexBufferExtension.base,
    &dri2FlushExtension.base,
