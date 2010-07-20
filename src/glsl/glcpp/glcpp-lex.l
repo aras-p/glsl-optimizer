@@ -29,6 +29,11 @@
 #include "glcpp.h"
 #include "glcpp-parse.h"
 
+/* Flex annoyingly generates some functions without making them
+ * static. Let's declare them here. */
+int glcpp_get_column  (yyscan_t yyscanner);
+void glcpp_set_column (int  column_no , yyscan_t yyscanner);
+
 #define YY_USER_ACTION                                          \
    do {                                                         \
       yylloc->source = 0;                                       \
