@@ -226,7 +226,7 @@ const __GLcontextModes *
 x11_screen_get_glx_configs(struct x11_screen *xscr)
 {
    return (x11_screen_init_glx(xscr))
-      ? xscr->glx_dpy->screenConfigs[xscr->number].configs
+      ? xscr->glx_dpy->screenConfigs[xscr->number]->configs
       : NULL;
 }
 
@@ -237,7 +237,7 @@ const __GLcontextModes *
 x11_screen_get_glx_visuals(struct x11_screen *xscr)
 {
    return (x11_screen_init_glx(xscr))
-      ? xscr->glx_dpy->screenConfigs[xscr->number].visuals
+      ? xscr->glx_dpy->screenConfigs[xscr->number]->visuals
       : NULL;
 }
 
