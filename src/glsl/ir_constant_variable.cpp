@@ -47,6 +47,7 @@ struct assignment_entry {
 class ir_constant_variable_visitor : public ir_hierarchical_visitor {
 public:
    virtual ir_visitor_status visit_enter(ir_assignment *);
+   virtual ir_visitor_status visit_enter(ir_call *);
 
    exec_list list;
 };
@@ -104,6 +105,28 @@ ir_constant_variable_visitor::visit_enter(ir_assignment *ir)
     */
    entry->constval = constval;
 
+   return visit_continue;
+}
+
+ir_visitor_status
+ir_constant_variable_visitor::visit_enter(ir_call *ir)
+{
+   exec_list_iterator sig_iter = ir->get_callee()->parameters.iterator();
+   foreach_iter(exec_list_iterator, iter, *ir) {
+      ir_rvalue *param_rval = (ir_rvalue *)iter.get();
+      ir_variable *param = (ir_variable *)sig_iter.get();
+
+      if (param->mode == ir_var_out ||
+	  param->mode == ir_var_inout) {
+	 ir_variable *var = param_rval->variable_referenced();
+	 struct assignment_entry *entry;
+
+	 assert(var);
+	 entry = get_assignment_entry(var, &this->list);
+	 entry->assignment_count++;
+      }
+      sig_iter.next();
+   }
    return visit_continue;
 }
 
