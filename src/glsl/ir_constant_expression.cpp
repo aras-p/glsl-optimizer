@@ -712,7 +712,8 @@ ir_dereference_array::constant_expression_value()
 
 	 return new(ctx) ir_constant(array, component);
       } else {
-	 /* FINISHME: Handle access of constant arrays. */
+	 const unsigned index = idx->value.u[0];
+	 return array->get_array_element(index)->clone(NULL);
       }
    }
    return NULL;
