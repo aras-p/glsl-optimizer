@@ -316,6 +316,7 @@ static struct r600_shader_node *r600_shader_new_node(struct r600_shader *rshader
 		return NULL;
 	rnode->node = node;
 	LIST_INITHEAD(&rnode->vfetch);
+fprintf(stderr, "------------------------ new node (%p %p)\n", &rnode->vfetch, rnode->vfetch.next);
 	LIST_INITHEAD(&rnode->alu);
 	LIST_ADDTAIL(&rnode->head, &rshader->nodes);
 	return rnode;
@@ -425,6 +426,9 @@ static struct r600_shader_alu *r600_shader_insert_alu(struct r600_shader *rshade
 	alu->alu[2].opcode = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP;
 	alu->alu[3].opcode = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP;
 	alu->alu[4].opcode = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP;
+	alu->alu[1].dst.chan = 1;
+	alu->alu[2].dst.chan = 2;
+	alu->alu[3].dst.chan = 3;
 	LIST_ADDTAIL(&alu->head, &node->alu);
 	return alu;
 }
@@ -435,9 +439,10 @@ static int r600_shader_alu_translate(struct r600_shader *rshader,
 {
 	struct r600_shader_node *rnode;
 	struct r600_shader_alu *alu;
-	int i, j, r, comp, litteral_lastcomp = -1;
+	int i, j, r, litteral_lastcomp = -1;
 
 	if (!LIST_IS_EMPTY(&node->vfetch)) {
+fprintf(stderr, "------------------------ add node (%p %p)\n", &node->vfetch, node->vfetch.next);
 		rnode = r600_shader_new_node(rshader, node->node);
 		if (rnode == NULL) {
 			fprintf(stderr, "%s %d new node failed\n", __func__, __LINE__);
@@ -468,7 +473,7 @@ static int r600_shader_alu_translate(struct r600_shader *rshader,
 		case C_SWIZZLE_0:
 		case C_SWIZZLE_1:
 		default:
-			fprintf(stderr, "%s %d invalid output\n", __func__, __LINE__);
+			fprintf(stderr, "%s %d invalid output %d\n", __func__, __LINE__, comp);
 			return -EINVAL;
 		}
 		alu->alu[comp].inst = ainfo->instruction;
@@ -521,8 +526,7 @@ static int r600_shader_alu_translate(struct r600_shader *rshader,
 	default:
 		break;
 	}
-printf("nliteral: %d\n", alu->nliteral);
-	for (i = instruction->nop; i >= 0; i--) {
+	for (i = 4; i >= 0; i--) {
 		if (alu->alu[i].inst != INST_NOP) {
 			alu->alu[i].last = 1;
 			alu->nalu = i + 1;
@@ -579,9 +583,9 @@ int r600_shader_legalize(struct r600_shader *rshader)
 static int r600_cshader_legalize_rec(struct c_shader *shader, struct c_node *node)
 {
 	struct c_node_link *link;
-	struct c_instruction *i;
+	struct c_instruction *i, *n;
 	struct c_operand operand;
-	unsigned k;
+	unsigned k, inst;
 	int r;
 
 	LIST_FOR_EACH_ENTRY(i, &node->insts, head) {
@@ -595,6 +599,18 @@ static int r600_cshader_legalize_rec(struct c_shader *shader, struct c_node *nod
 				break;
 			default:
 				break;
+			}
+			inst = r600_alu_instruction[i->op[k].opcode].instruction;
+			if (r600_instruction_info[inst].is_trans && k < (i->nop -1)) {
+				/* split trans opcode */
+				n = CALLOC_STRUCT(c_instruction);
+				if (n == NULL)
+					return -ENOMEM;
+				for (n->nop = 0, k = k + 1; k < i->nop; k++, n->nop++) {
+					memcpy(&n->op[n->nop - 0], &i->op[k], sizeof(struct c_op));
+				}
+				i->nop -= n->nop;
+				LIST_ADD(&n->head, &i->head);
 			}
 		}
 	}
