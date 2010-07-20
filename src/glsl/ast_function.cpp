@@ -164,6 +164,9 @@ match_function_by_name(exec_list *instructions, const char *name,
 
 /**
  * Perform automatic type conversion of constructor parameters
+ *
+ * This implements the rules in the "Conversion and Scalar Constructors"
+ * section (GLSL 1.10 section 5.4.1), not the "Implicit Conversions" rules.
  */
 static ir_rvalue *
 convert_component(ir_rvalue *src, const glsl_type *desired_type)
@@ -220,10 +223,10 @@ convert_component(ir_rvalue *src, const glsl_type *desired_type)
 
    assert(result != NULL);
 
+   /* Try constant folding; it may fold in the conversion we just added. */
    ir_constant *const constant = result->constant_expression_value();
    return (constant != NULL) ? (ir_rvalue *) constant : (ir_rvalue *) result;
 }
-
 
 /**
  * Dereference a specific component from a scalar, vector, or matrix
