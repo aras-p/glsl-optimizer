@@ -764,7 +764,152 @@ ir_constant::constant_expression_value()
 ir_constant *
 ir_call::constant_expression_value()
 {
-   /* FINISHME: Handle CEs involving builtin function calls. */
-   return NULL;
-}
+   if (this->type == glsl_type::error_type)
+      return NULL;
 
+   /* From the GLSL 1.20 spec, page 23:
+    * "Function calls to user-defined functions (non-built-in functions)
+    *  cannot be used to form constant expressions."
+    */
+   if (!this->callee->is_built_in)
+      return NULL;
+
+   unsigned num_parameters = 0;
+
+   /* Check if all parameters are constant */
+   ir_constant *op[3];
+   foreach_list(n, &this->actual_parameters) {
+      ir_constant *constant = ((ir_rvalue *) n)->constant_expression_value();
+      if (constant == NULL)
+	 return NULL;
+
+      op[num_parameters] = constant;
+
+      assert(num_parameters < 3);
+      num_parameters++;
+   }
+
+   /* Individual cases below can either:
+    * - Assign "expr" a new ir_expression to evaluate (for basic opcodes)
+    * - Fill "data" with appopriate constant data
+    * - Return an ir_constant directly.
+    */
+   void *mem_ctx = talloc_parent(this);
+   ir_expression *expr = NULL;
+
+   ir_constant_data data;
+   memset(&data, 0, sizeof(data));
+
+   const char *callee = this->callee_name();
+   if (strcmp(callee, "abs") == 0) {
+      return NULL; /* FINISHME: implement this */
+   } else if (strcmp(callee, "all") == 0) {
+      return NULL; /* FINISHME: implement this */
+   } else if (strcmp(callee, "any") == 0) {
+      return NULL; /* FINISHME: implement this */
+   } else if (strcmp(callee, "asin") == 0) {
+      return NULL; /* FINISHME: implement this */
+   } else if (strcmp(callee, "atan") == 0) {
+      return NULL; /* FINISHME: implement this */
+   } else if (strcmp(callee, "dFdx") == 0 || strcmp(callee, "dFdy") == 0) {
+      return NULL; /* FINISHME: implement this */
+   } else if (strcmp(callee, "ceil") == 0) {
+      return NULL; /* FINISHME: implement this */
+   } else if (strcmp(callee, "clamp") == 0) {
+      return NULL; /* FINISHME: implement this */
+   } else if (strcmp(callee, "cos") == 0) {
+      return NULL; /* FINISHME: implement this */
+   } else if (strcmp(callee, "cosh") == 0) {
+      return NULL; /* FINISHME: implement this */
+   } else if (strcmp(callee, "cross") == 0) {
+      return NULL; /* FINISHME: implement this */
+   } else if (strcmp(callee, "degrees") == 0) {
+      return NULL; /* FINISHME: implement this */
+   } else if (strcmp(callee, "distance") == 0) {
+      return NULL; /* FINISHME: implement this */
+   } else if (strcmp(callee, "dot") == 0) {
+      return NULL; /* FINISHME: implement this */
+   } else if (strcmp(callee, "equal") == 0) {
+      return NULL; /* FINISHME: implement this */
+   } else if (strcmp(callee, "exp") == 0) {
+      return NULL; /* FINISHME: implement this */
+   } else if (strcmp(callee, "exp2") == 0) {
+      return NULL; /* FINISHME: implement this */
+   } else if (strcmp(callee, "faceforward") == 0) {
+      return NULL; /* FINISHME: implement this */
+   } else if (strcmp(callee, "floor") == 0) {
+      return NULL; /* FINISHME: implement this */
+   } else if (strcmp(callee, "fract") == 0) {
+      return NULL; /* FINISHME: implement this */
+   } else if (strcmp(callee, "fwidth") == 0) {
+      return NULL; /* FINISHME: implement this */
+   } else if (strcmp(callee, "greaterThan") == 0) {
+      return NULL; /* FINISHME: implement this */
+   } else if (strcmp(callee, "greaterThanEqual") == 0) {
+      return NULL; /* FINISHME: implement this */
+   } else if (strcmp(callee, "inversesqrt") == 0) {
+      return NULL; /* FINISHME: implement this */
+   } else if (strcmp(callee, "length") == 0) {
+      return NULL; /* FINISHME: implement this */
+   } else if (strcmp(callee, "lessThan") == 0) {
+      return NULL; /* FINISHME: implement this */
+   } else if (strcmp(callee, "lessThanEqual") == 0) {
+      return NULL; /* FINISHME: implement this */
+   } else if (strcmp(callee, "log") == 0) {
+      return NULL; /* FINISHME: implement this */
+   } else if (strcmp(callee, "log2") == 0) {
+      return NULL; /* FINISHME: implement this */
+   } else if (strcmp(callee, "matrixCompMult") == 0) {
+      return NULL; /* FINISHME: implement this */
+   } else if (strcmp(callee, "max") == 0) {
+      return NULL; /* FINISHME: implement this */
+   } else if (strcmp(callee, "min") == 0) {
+      return NULL; /* FINISHME: implement this */
+   } else if (strcmp(callee, "mix") == 0) {
+      return NULL; /* FINISHME: implement this */
+   } else if (strcmp(callee, "mod") == 0) {
+      return NULL; /* FINISHME: implement this */
+   } else if (strcmp(callee, "normalize") == 0) {
+      return NULL; /* FINISHME: implement this */
+   } else if (strcmp(callee, "not") == 0) {
+      return NULL; /* FINISHME: implement this */
+   } else if (strcmp(callee, "notEqual") == 0) {
+      return NULL; /* FINISHME: implement this */
+   } else if (strcmp(callee, "outerProduct") == 0) {
+      return NULL; /* FINISHME: implement this */
+   } else if (strcmp(callee, "pow") == 0) {
+      return NULL; /* FINISHME: implement this */
+   } else if (strcmp(callee, "radians") == 0) {
+      return NULL; /* FINISHME: implement this */
+   } else if (strcmp(callee, "reflect") == 0) {
+      return NULL; /* FINISHME: implement this */
+   } else if (strcmp(callee, "refract") == 0) {
+      return NULL; /* FINISHME: implement this */
+   } else if (strcmp(callee, "sign") == 0) {
+      return NULL; /* FINISHME: implement this */
+   } else if (strcmp(callee, "sin") == 0) {
+      return NULL; /* FINISHME: implement this */
+   } else if (strcmp(callee, "sinh") == 0) {
+      return NULL; /* FINISHME: implement this */
+   } else if (strcmp(callee, "smoothstep") == 0) {
+      return NULL; /* FINISHME: implement this */
+   } else if (strcmp(callee, "sqrt") == 0) {
+      return NULL; /* FINISHME: implement this */
+   } else if (strcmp(callee, "step") == 0) {
+      return NULL; /* FINISHME: implement this */
+   } else if (strcmp(callee, "tan") == 0) {
+      return NULL; /* FINISHME: implement this */
+   } else if (strcmp(callee, "tanh") == 0) {
+      return NULL; /* FINISHME: implement this */
+   } else if (strcmp(callee, "transpose") == 0) {
+      return NULL; /* FINISHME: implement this */
+   } else {
+      /* Unsupported builtin - some are not allowed in constant expressions. */
+      return NULL;
+   }
+
+   if (expr != NULL)
+      return expr->constant_expression_value();
+
+   return new(mem_ctx) ir_constant(this->type, &data);
+}
