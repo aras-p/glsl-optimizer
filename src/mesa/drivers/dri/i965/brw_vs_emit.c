@@ -1297,7 +1297,6 @@ static void emit_vertex_write( struct brw_vs_compile *c)
    struct brw_compile *p = &c->func;
    struct brw_context *brw = p->brw;
    struct intel_context *intel = &brw->intel;
-   struct brw_reg m0 = brw_message_reg(0);
    struct brw_reg pos = c->regs[PROGRAM_OUTPUT][VERT_RESULT_HPOS];
    struct brw_reg ndc;
    int eot;
