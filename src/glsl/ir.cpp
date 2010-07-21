@@ -514,7 +514,7 @@ ir_dereference_record::ir_dereference_record(ir_rvalue *value,
 {
    this->ir_type = ir_type_dereference_record;
    this->record = value;
-   this->field = field;
+   this->field = talloc_strdup(this, field);
    this->type = (this->record != NULL)
       ? this->record->type->field_type(field) : glsl_type::error_type;
 }
@@ -527,7 +527,7 @@ ir_dereference_record::ir_dereference_record(ir_variable *var,
 
    this->ir_type = ir_type_dereference_record;
    this->record = new(ctx) ir_dereference_variable(var);
-   this->field = field;
+   this->field = talloc_strdup(this, field);
    this->type = (this->record != NULL)
       ? this->record->type->field_type(field) : glsl_type::error_type;
 }
