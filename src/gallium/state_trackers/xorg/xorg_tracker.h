@@ -83,6 +83,9 @@ typedef struct _CustomizerRec
     void (*winsys_context_throttle)(struct _CustomizerRec *cust,
 				    struct pipe_context *pipe,
 				    enum xorg_throttling_reason reason);
+    Bool (*winsys_check_fb_size) (struct _CustomizerRec *cust,
+				  unsigned long pitch,
+				  unsigned long height);
 } CustomizerRec, *CustomizerPtr;
 
 typedef struct _modesettingRec

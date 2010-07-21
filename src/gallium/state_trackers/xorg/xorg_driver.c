@@ -190,6 +190,7 @@ drv_crtc_resize(ScrnInfoPtr pScrn, int width, int height)
 {
     xf86CrtcConfigPtr xf86_config = XF86_CRTC_CONFIG_PTR(pScrn);
     modesettingPtr ms = modesettingPTR(pScrn);
+    CustomizerPtr cust = ms->cust;
     ScreenPtr pScreen = pScrn->pScreen;
     int old_width, old_height;
     PixmapPtr rootPixmap;
@@ -197,6 +198,16 @@ drv_crtc_resize(ScrnInfoPtr pScrn, int width, int height)
 
     if (width == pScrn->virtualX && height == pScrn->virtualY)
 	return TRUE;
+
+    if (cust && cust->winsys_check_fb_size &&
+	!cust->winsys_check_fb_size(cust, width*pScrn->bitsPerPixel / 8,
+				    height)) {
+	xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+		   "Requested framebuffer size %dx%dx%d will not fit "
+		   "in display memory.\n",
+		   width, height, pScrn->bitsPerPixel);
+	return FALSE;
+    }
 
     old_width = pScrn->virtualX;
     old_height = pScrn->virtualY;
