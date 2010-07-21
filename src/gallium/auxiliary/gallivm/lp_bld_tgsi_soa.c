@@ -405,6 +405,15 @@ static void lp_exec_mask_endsub(struct lp_exec_mask *mask, int *pc)
    lp_exec_mask_update(mask);
 }
 
+
+/**
+ * Return pointer to a temporary register channel (src or dest).
+ * \param index  which temporary register
+ * \param chan  which channel of the temp register.
+ * \param is_indirect  if true, add 'addr' to the index
+ * \param addr  indirect addressing offset (should already have been
+ *              multiplied by four).
+ */
 static LLVMValueRef
 get_temp_ptr(struct lp_build_tgsi_soa_context *bld,
              unsigned index,
@@ -413,14 +422,15 @@ get_temp_ptr(struct lp_build_tgsi_soa_context *bld,
              LLVMValueRef addr)
 {
    assert(chan < 4);
-   if (!bld->has_indirect_addressing) {
-      return bld->temps[index][chan];
-   } else {
+   if (bld->has_indirect_addressing) {
       LLVMValueRef lindex =
          LLVMConstInt(LLVMInt32Type(), index * 4 + chan, 0);
       if (is_indirect)
          lindex = lp_build_add(&bld->base, lindex, addr);
       return LLVMBuildGEP(bld->base.builder, bld->temps_array, &lindex, 1, "");
+   }
+   else {
+      return bld->temps[index][chan];
    }
 }
 
