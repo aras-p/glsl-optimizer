@@ -460,6 +460,38 @@ build_gather(struct lp_build_tgsi_soa_context *bld,
 
 
 /**
+ * Read the current value of the ADDR register, convert the floats to
+ * ints, multiply by four and return the vector of offsets.
+ * The offsets will be used to index into the constant buffer or
+ * temporary register file.
+ */
+static LLVMValueRef
+get_indirect_offsets(struct lp_build_tgsi_soa_context *bld,
+                     const struct tgsi_src_register *indirect_reg)
+{
+   /* always use X component of address register */
+   const int x = indirect_reg->SwizzleX;
+   LLVMTypeRef int_vec_type = lp_build_int_vec_type(bld->base.type);
+   uint swizzle = tgsi_util_get_src_register_swizzle(indirect_reg, x);
+   LLVMValueRef vec4 = lp_build_const_int_vec(bld->int_bld.type, 4); 
+   LLVMValueRef addr_vec;
+
+   addr_vec = LLVMBuildLoad(bld->base.builder,
+                            bld->addr[indirect_reg->Index][swizzle],
+                            "load addr reg");
+
+   /* for indexing we want integers */
+   addr_vec = LLVMBuildFPToSI(bld->base.builder, addr_vec,
+                              int_vec_type, "");
+
+   /* addr_vec = addr_vec * 4 */
+   addr_vec = lp_build_mul(&bld->base, addr_vec, vec4);
+
+   return addr_vec;
+}
+
+
+/**
  * Register fetch.
  */
 static LLVMValueRef
@@ -481,29 +513,7 @@ emit_fetch(
    }
 
    if (reg->Register.Indirect) {
-      /*
-       * Compute addr_vec: a vector of offsets into the register file
-       * from which we need to gather elements.  Recall that the ADDR
-       * register's elements can all be different.
-       */
-
-      LLVMTypeRef int_vec_type = lp_build_int_vec_type(bld->base.type);
-      unsigned swizzle = tgsi_util_get_src_register_swizzle( &reg->Indirect, chan_index );
-
-      LLVMValueRef vec4 = lp_build_const_int_vec(bld->int_bld.type, 4); 
-
-      assert(bld->has_indirect_addressing);
-
-      addr_vec = LLVMBuildLoad(bld->base.builder,
-                               bld->addr[reg->Indirect.Index][swizzle],
-                               "load addr");
-
-      /* for indexing we want integers */
-      addr_vec = LLVMBuildFPToSI(bld->base.builder, addr_vec,
-                                 int_vec_type, "");
-
-      /* addr_vec = addr_vec * 4 */
-      addr_vec = lp_build_mul(&bld->base, addr_vec, vec4);
+      addr_vec = get_indirect_offsets(bld, &reg->Indirect);
    }
 
    switch (reg->Register.File) {
@@ -741,6 +751,7 @@ emit_store(
    }
 
    if (reg->Register.Indirect) {
+      /* XXX use get_indirect_offsets() here eventually */
       LLVMTypeRef int_vec_type = lp_build_int_vec_type(bld->base.type);
       unsigned swizzle = tgsi_util_get_src_register_swizzle( &reg->Indirect, chan_index );
       addr = LLVMBuildLoad(bld->base.builder,
