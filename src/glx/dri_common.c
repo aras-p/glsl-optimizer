@@ -159,10 +159,20 @@ driOpenDriver(const char *driverName)
    return handle;
 }
 
+static GLboolean
+__driGetMSCRate(__DRIdrawable *draw,
+		int32_t * numerator, int32_t * denominator,
+		void *loaderPrivate)
+{
+   __GLXDRIdrawable *glxDraw = loaderPrivate;
+
+   return __glxGetMscRate(glxDraw, numerator, denominator);
+}
+
 _X_HIDDEN const __DRIsystemTimeExtension systemTimeExtension = {
    {__DRI_SYSTEM_TIME, __DRI_SYSTEM_TIME_VERSION},
    __glXGetUST,
-   __driGetMscRateOML
+   __driGetMSCRate
 };
 
 #define __ATTRIB(attrib, field) \

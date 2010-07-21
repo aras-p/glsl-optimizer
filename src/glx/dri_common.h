@@ -36,6 +36,8 @@
 #ifndef _DRI_COMMON_H
 #define _DRI_COMMON_H
 
+#include <GL/internal/dri_interface.h>
+
 typedef struct __GLXDRIconfigPrivateRec __GLXDRIconfigPrivate;
 
 struct __GLXDRIconfigPrivateRec

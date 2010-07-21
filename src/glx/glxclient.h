@@ -101,8 +101,6 @@ extern void DRI_glXUseXFont(Font font, int first, int count, int listbase);
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
 
-#include <GL/internal/dri_interface.h>
-
 /**
  * Display dependent methods.  This structure is initialized during the
  * \c driCreateDisplay call.
@@ -786,9 +784,9 @@ extern GLboolean __glXGetMscRateOML(Display * dpy, GLXDrawable drawable,
                                     int32_t * denominator);
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
-GLboolean
-__driGetMscRateOML(__DRIdrawable * draw,
-                   int32_t * numerator, int32_t * denominator, void *private);
+extern GLboolean
+__glxGetMscRate(__GLXDRIdrawable *glxDraw,
+		int32_t * numerator, int32_t * denominator);
 
 /* So that dri2.c:DRI2WireToEvent() can access
  * glx_info->codes->first_event */
