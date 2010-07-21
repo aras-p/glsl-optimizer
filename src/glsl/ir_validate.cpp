@@ -37,7 +37,7 @@
 #include "ir.h"
 #include "ir_hierarchical_visitor.h"
 #include "hash_table.h"
-
+#include "glsl_types.h"
 
 class ir_validate : public ir_hierarchical_visitor {
 public:
@@ -179,6 +179,7 @@ check_node_type(ir_instruction *ir, void *data)
       printf("Instruction node with unset type\n");
       ir->print(); printf("\n");
    }
+   assert(ir->type != glsl_type::error_type);
 }
 
 void
