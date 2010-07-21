@@ -802,7 +802,7 @@ ir_call::constant_expression_value()
 
    const char *callee = this->callee_name();
    if (strcmp(callee, "abs") == 0) {
-      return NULL; /* FINISHME: implement this */
+      expr = new(mem_ctx) ir_expression(ir_unop_abs, type, op[0], NULL);
    } else if (strcmp(callee, "all") == 0) {
       return NULL; /* FINISHME: implement this */
    } else if (strcmp(callee, "any") == 0) {
@@ -814,33 +814,33 @@ ir_call::constant_expression_value()
    } else if (strcmp(callee, "dFdx") == 0 || strcmp(callee, "dFdy") == 0) {
       return ir_constant::zero(mem_ctx, this->type);
    } else if (strcmp(callee, "ceil") == 0) {
-      return NULL; /* FINISHME: implement this */
+      expr = new(mem_ctx) ir_expression(ir_unop_ceil, type, op[0], NULL);
    } else if (strcmp(callee, "clamp") == 0) {
       return NULL; /* FINISHME: implement this */
    } else if (strcmp(callee, "cos") == 0) {
-      return NULL; /* FINISHME: implement this */
+      expr = new(mem_ctx) ir_expression(ir_unop_cos, type, op[0], NULL);
    } else if (strcmp(callee, "cosh") == 0) {
       return NULL; /* FINISHME: implement this */
    } else if (strcmp(callee, "cross") == 0) {
-      return NULL; /* FINISHME: implement this */
+      expr = new(mem_ctx) ir_expression(ir_binop_cross, type, op[0], op[1]);
    } else if (strcmp(callee, "degrees") == 0) {
       return NULL; /* FINISHME: implement this */
    } else if (strcmp(callee, "distance") == 0) {
       return NULL; /* FINISHME: implement this */
    } else if (strcmp(callee, "dot") == 0) {
-      return NULL; /* FINISHME: implement this */
+      expr = new(mem_ctx) ir_expression(ir_binop_dot, type, op[0], op[1]);
    } else if (strcmp(callee, "equal") == 0) {
       return NULL; /* FINISHME: implement this */
    } else if (strcmp(callee, "exp") == 0) {
-      return NULL; /* FINISHME: implement this */
+      expr = new(mem_ctx) ir_expression(ir_unop_exp, type, op[0], NULL);
    } else if (strcmp(callee, "exp2") == 0) {
-      return NULL; /* FINISHME: implement this */
+      expr = new(mem_ctx) ir_expression(ir_unop_exp2, type, op[0], NULL);
    } else if (strcmp(callee, "faceforward") == 0) {
       return NULL; /* FINISHME: implement this */
    } else if (strcmp(callee, "floor") == 0) {
-      return NULL; /* FINISHME: implement this */
+      expr = new(mem_ctx) ir_expression(ir_unop_floor, type, op[0], NULL);
    } else if (strcmp(callee, "fract") == 0) {
-      return NULL; /* FINISHME: implement this */
+      expr = new(mem_ctx) ir_expression(ir_unop_fract, type, op[0], NULL);
    } else if (strcmp(callee, "fwidth") == 0) {
       return ir_constant::zero(mem_ctx, this->type);
    } else if (strcmp(callee, "greaterThan") == 0) {
@@ -848,7 +848,7 @@ ir_call::constant_expression_value()
    } else if (strcmp(callee, "greaterThanEqual") == 0) {
       return NULL; /* FINISHME: implement this */
    } else if (strcmp(callee, "inversesqrt") == 0) {
-      return NULL; /* FINISHME: implement this */
+      expr = new(mem_ctx) ir_expression(ir_unop_rsq, type, op[0], NULL);
    } else if (strcmp(callee, "length") == 0) {
       return NULL; /* FINISHME: implement this */
    } else if (strcmp(callee, "lessThan") == 0) {
@@ -856,29 +856,29 @@ ir_call::constant_expression_value()
    } else if (strcmp(callee, "lessThanEqual") == 0) {
       return NULL; /* FINISHME: implement this */
    } else if (strcmp(callee, "log") == 0) {
-      return NULL; /* FINISHME: implement this */
+      expr = new(mem_ctx) ir_expression(ir_unop_log, type, op[0], NULL);
    } else if (strcmp(callee, "log2") == 0) {
-      return NULL; /* FINISHME: implement this */
+      expr = new(mem_ctx) ir_expression(ir_unop_log2, type, op[0], NULL);
    } else if (strcmp(callee, "matrixCompMult") == 0) {
       return NULL; /* FINISHME: implement this */
    } else if (strcmp(callee, "max") == 0) {
-      return NULL; /* FINISHME: implement this */
+      expr = new(mem_ctx) ir_expression(ir_binop_max, type, op[0], op[1]);
    } else if (strcmp(callee, "min") == 0) {
-      return NULL; /* FINISHME: implement this */
+      expr = new(mem_ctx) ir_expression(ir_binop_min, type, op[0], op[1]);
    } else if (strcmp(callee, "mix") == 0) {
       return NULL; /* FINISHME: implement this */
    } else if (strcmp(callee, "mod") == 0) {
-      return NULL; /* FINISHME: implement this */
+      expr = new(mem_ctx) ir_expression(ir_binop_mod, type, op[0], op[1]);
    } else if (strcmp(callee, "normalize") == 0) {
       return NULL; /* FINISHME: implement this */
    } else if (strcmp(callee, "not") == 0) {
-      return NULL; /* FINISHME: implement this */
+      expr = new(mem_ctx) ir_expression(ir_unop_logic_not, type, op[0], NULL);
    } else if (strcmp(callee, "notEqual") == 0) {
       return NULL; /* FINISHME: implement this */
    } else if (strcmp(callee, "outerProduct") == 0) {
       return NULL; /* FINISHME: implement this */
    } else if (strcmp(callee, "pow") == 0) {
-      return NULL; /* FINISHME: implement this */
+      expr = new(mem_ctx) ir_expression(ir_binop_pow, type, op[0], op[1]);
    } else if (strcmp(callee, "radians") == 0) {
       return NULL; /* FINISHME: implement this */
    } else if (strcmp(callee, "reflect") == 0) {
@@ -886,15 +886,15 @@ ir_call::constant_expression_value()
    } else if (strcmp(callee, "refract") == 0) {
       return NULL; /* FINISHME: implement this */
    } else if (strcmp(callee, "sign") == 0) {
-      return NULL; /* FINISHME: implement this */
+      expr = new(mem_ctx) ir_expression(ir_unop_sign, type, op[0], NULL);
    } else if (strcmp(callee, "sin") == 0) {
-      return NULL; /* FINISHME: implement this */
+      expr = new(mem_ctx) ir_expression(ir_unop_sin, type, op[0], NULL);
    } else if (strcmp(callee, "sinh") == 0) {
       return NULL; /* FINISHME: implement this */
    } else if (strcmp(callee, "smoothstep") == 0) {
       return NULL; /* FINISHME: implement this */
    } else if (strcmp(callee, "sqrt") == 0) {
-      return NULL; /* FINISHME: implement this */
+      expr = new(mem_ctx) ir_expression(ir_unop_sqrt, type, op[0], NULL);
    } else if (strcmp(callee, "step") == 0) {
       return NULL; /* FINISHME: implement this */
    } else if (strcmp(callee, "tan") == 0) {
