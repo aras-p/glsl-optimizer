@@ -481,6 +481,12 @@ emit_fetch(
    }
 
    if (reg->Register.Indirect) {
+      /*
+       * Compute addr_vec: a vector of offsets into the register file
+       * from which we need to gather elements.  Recall that the ADDR
+       * register's elements can all be different.
+       */
+
       LLVMTypeRef int_vec_type = lp_build_int_vec_type(bld->base.type);
       unsigned swizzle = tgsi_util_get_src_register_swizzle( &reg->Indirect, chan_index );
 
