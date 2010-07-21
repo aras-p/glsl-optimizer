@@ -155,6 +155,7 @@ struct pipe_clip_state
 {
    float ucp[PIPE_MAX_CLIP_PLANES][4];
    unsigned nr;
+   unsigned depth_clamp:1;
 };
 
 
