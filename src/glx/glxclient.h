@@ -418,7 +418,6 @@ struct __GLXcontextRec
    Bool do_destroy;
 #else
    __GLXDRIcontext *driContext;
-   __DRIcontext *__driContext;
 #endif
 #endif
 

@@ -168,7 +168,6 @@ dri2CreateContext(__GLXscreenConfigs *base,
    pcp->driContext =
       (*psc->dri2->createNewContext) (psc->driScreen,
                                       config->driConfig, shared, pcp);
-   gc->__driContext = pcp->driContext;
 
    if (pcp->driContext == NULL) {
       Xfree(pcp);
@@ -635,6 +634,7 @@ dri2_bind_tex_image(Display * dpy,
    struct dri2_display *pdp =
       (struct dri2_display *) dpyPriv->dri2Display;
    struct dri2_screen *psc = (struct dri2_screen *) base->psc;
+   struct dri2_context *pcp = (struct dri2_context *) gc->driContext;
 
    if (pdraw != NULL) {
 
@@ -645,13 +645,13 @@ dri2_bind_tex_image(Display * dpy,
 
       if (psc->texBuffer->base.version >= 2 &&
 	  psc->texBuffer->setTexBuffer2 != NULL) {
-	 (*psc->texBuffer->setTexBuffer2) (gc->__driContext,
+	 (*psc->texBuffer->setTexBuffer2) (pcp->driContext,
 					   pdraw->base.textureTarget,
 					   pdraw->base.textureFormat,
 					   pdraw->driDrawable);
       }
       else {
-	 (*psc->texBuffer->setTexBuffer) (gc->__driContext,
+	 (*psc->texBuffer->setTexBuffer) (pcp->driContext,
 					  pdraw->base.textureTarget,
 					  pdraw->driDrawable);
       }
