@@ -81,6 +81,81 @@
 #define PKT3(op, count) (PKT_TYPE_S(3) | PKT3_IT_OPCODE_S(op) | PKT_COUNT_S(count))
 
 /* Registers */
+#define R_008C00_SQ_CONFIG                           0x00008C00
+#define   S_008C00_VC_ENABLE(x)                        (((x) & 0x1) << 0)
+#define   G_008C00_VC_ENABLE(x)                        (((x) >> 0) & 0x1)
+#define   C_008C00_VC_ENABLE(x)                        0xFFFFFFFE
+#define   S_008C00_EXPORT_SRC_C(x)                     (((x) & 0x1) << 1)
+#define   G_008C00_EXPORT_SRC_C(x)                     (((x) >> 1) & 0x1)
+#define   C_008C00_EXPORT_SRC_C(x)                     0xFFFFFFFD
+#define   S_008C00_DX9_CONSTS(x)                       (((x) & 0x1) << 2)
+#define   G_008C00_DX9_CONSTS(x)                       (((x) >> 2) & 0x1)
+#define   C_008C00_DX9_CONSTS(x)                       0xFFFFFFFB
+#define   S_008C00_ALU_INST_PREFER_VECTOR(x)           (((x) & 0x1) << 3)
+#define   G_008C00_ALU_INST_PREFER_VECTOR(x)           (((x) >> 3) & 0x1)
+#define   C_008C00_ALU_INST_PREFER_VECTOR(x)           0xFFFFFFF7
+#define   S_008C00_DX10_CLAMP(x)                       (((x) & 0x1) << 4)
+#define   G_008C00_DX10_CLAMP(x)                       (((x) >> 4) & 0x1)
+#define   C_008C00_DX10_CLAMP(x)                       0xFFFFFFEF
+#define   S_008C00_CLAUSE_SEQ_PRIO(x)                  (((x) & 0x3) << 8)
+#define   G_008C00_CLAUSE_SEQ_PRIO(x)                  (((x) >> 8) & 0x3)
+#define   C_008C00_CLAUSE_SEQ_PRIO(x)                  0xFFFFFCFF
+#define   S_008C00_PS_PRIO(x)                          (((x) & 0x3) << 24)
+#define   G_008C00_PS_PRIO(x)                          (((x) >> 24) & 0x3)
+#define   C_008C00_PS_PRIO(x)                          0xFCFFFFFF
+#define   S_008C00_VS_PRIO(x)                          (((x) & 0x3) << 26)
+#define   G_008C00_VS_PRIO(x)                          (((x) >> 26) & 0x3)
+#define   C_008C00_VS_PRIO(x)                          0xF3FFFFFF
+#define   S_008C00_GS_PRIO(x)                          (((x) & 0x3) << 28)
+#define   G_008C00_GS_PRIO(x)                          (((x) >> 28) & 0x3)
+#define   C_008C00_GS_PRIO(x)                          0xCFFFFFFF
+#define   S_008C00_ES_PRIO(x)                          (((x) & 0x3) << 30)
+#define   G_008C00_ES_PRIO(x)                          (((x) >> 30) & 0x3)
+#define   C_008C00_ES_PRIO(x)                          0x3FFFFFFF
+#define R_008C04_SQ_GPR_RESOURCE_MGMT_1              0x00008C04
+#define   S_008C04_NUM_PS_GPRS(x)                      (((x) & 0xFF) << 0)
+#define   G_008C04_NUM_PS_GPRS(x)                      (((x) >> 0) & 0xFF)
+#define   C_008C04_NUM_PS_GPRS(x)                      0xFFFFFF00
+#define   S_008C04_NUM_VS_GPRS(x)                      (((x) & 0xFF) << 16)
+#define   G_008C04_NUM_VS_GPRS(x)                      (((x) >> 16) & 0xFF)
+#define   C_008C04_NUM_VS_GPRS(x)                      0xFF00FFFF
+#define   S_008C04_NUM_CLAUSE_TEMP_GPRS(x)             (((x) & 0xF) << 28)
+#define   G_008C04_NUM_CLAUSE_TEMP_GPRS(x)             (((x) >> 28) & 0xF)
+#define   C_008C04_NUM_CLAUSE_TEMP_GPRS(x)             0x0FFFFFFF
+#define R_008C08_SQ_GPR_RESOURCE_MGMT_2              0x00008C08
+#define   S_008C08_NUM_GS_GPRS(x)                      (((x) & 0xFF) << 0)
+#define   G_008C08_NUM_GS_GPRS(x)                      (((x) >> 0) & 0xFF)
+#define   C_008C08_NUM_GS_GPRS(x)                      0xFFFFFF00
+#define   S_008C08_NUM_ES_GPRS(x)                      (((x) & 0xFF) << 16)
+#define   G_008C08_NUM_ES_GPRS(x)                      (((x) >> 16) & 0xFF)
+#define   C_008C08_NUM_ES_GPRS(x)                      0xFF00FFFF
+#define R_008C0C_SQ_THREAD_RESOURCE_MGMT             0x00008C0C
+#define   S_008C0C_NUM_PS_THREADS(x)                   (((x) & 0xFF) << 0)
+#define   G_008C0C_NUM_PS_THREADS(x)                   (((x) >> 0) & 0xFF)
+#define   C_008C0C_NUM_PS_THREADS(x)                   0xFFFFFF00
+#define   S_008C0C_NUM_VS_THREADS(x)                   (((x) & 0xFF) << 8)
+#define   G_008C0C_NUM_VS_THREADS(x)                   (((x) >> 8) & 0xFF)
+#define   C_008C0C_NUM_VS_THREADS(x)                   0xFFFF00FF
+#define   S_008C0C_NUM_GS_THREADS(x)                   (((x) & 0xFF) << 16)
+#define   G_008C0C_NUM_GS_THREADS(x)                   (((x) >> 16) & 0xFF)
+#define   C_008C0C_NUM_GS_THREADS(x)                   0xFF00FFFF
+#define   S_008C0C_NUM_ES_THREADS(x)                   (((x) & 0xFF) << 24)
+#define   G_008C0C_NUM_ES_THREADS(x)                   (((x) >> 24) & 0xFF)
+#define   C_008C0C_NUM_ES_THREADS(x)                   0x00FFFFFF
+#define R_008C10_SQ_STACK_RESOURCE_MGMT_1            0x00008C10
+#define   S_008C10_NUM_PS_STACK_ENTRIES(x)             (((x) & 0xFFF) << 0)
+#define   G_008C10_NUM_PS_STACK_ENTRIES(x)             (((x) >> 0) & 0xFFF)
+#define   C_008C10_NUM_PS_STACK_ENTRIES(x)             0xFFFFF000
+#define   S_008C10_NUM_VS_STACK_ENTRIES(x)             (((x) & 0xFFF) << 16)
+#define   G_008C10_NUM_VS_STACK_ENTRIES(x)             (((x) >> 16) & 0xFFF)
+#define   C_008C10_NUM_VS_STACK_ENTRIES(x)             0xF000FFFF
+#define R_008C14_SQ_STACK_RESOURCE_MGMT_2            0x00008C14
+#define   S_008C14_NUM_GS_STACK_ENTRIES(x)             (((x) & 0xFFF) << 0)
+#define   G_008C14_NUM_GS_STACK_ENTRIES(x)             (((x) >> 0) & 0xFFF)
+#define   C_008C14_NUM_GS_STACK_ENTRIES(x)             0xFFFFF000
+#define   S_008C14_NUM_ES_STACK_ENTRIES(x)             (((x) & 0xFFF) << 16)
+#define   G_008C14_NUM_ES_STACK_ENTRIES(x)             (((x) >> 16) & 0xFFF)
+#define   C_008C14_NUM_ES_STACK_ENTRIES(x)             0xF000FFFF
 #define R_0280A0_CB_COLOR0_INFO                      0x0280A0
 #define   S_0280A0_ENDIAN(x)                           (((x) & 0x3) << 0)
 #define   G_0280A0_ENDIAN(x)                           (((x) >> 0) & 0x3)
