@@ -222,7 +222,7 @@ link_varying_vars(GLcontext *ctx,
                   struct gl_shader_program *shProg, struct gl_program *prog)
 {
    GLuint *map, i, firstSrcVarying, firstDstVarying, newSrcFile, newDstFile;
-   GLbitfield *inOutFlags;
+   GLbitfield *inOutFlags = NULL;
 
    map = (GLuint *) malloc(prog->Varying->NumParameters * sizeof(GLuint));
    if (!map)
