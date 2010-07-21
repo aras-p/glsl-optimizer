@@ -1564,7 +1564,7 @@ ir_to_mesa_visitor::visit(ir_call *ir)
 void
 ir_to_mesa_visitor::visit(ir_texture *ir)
 {
-   ir_to_mesa_src_reg result_src, coord, lod_info, projector;
+   ir_to_mesa_src_reg result_src, coord, lod_info = { 0 }, projector;
    ir_to_mesa_dst_reg result_dst, coord_dst;
    ir_to_mesa_instruction *inst = NULL;
    prog_opcode opcode = OPCODE_NOP;
