@@ -1091,10 +1091,10 @@ void brw_dp_WRITE_16( struct brw_compile *p,
        * spilling within a thread.
        */
       if (intel->gen >= 6) {
-	 dest = retype(brw_null_reg(), BRW_REGISTER_TYPE_UW);
+	 dest = retype(vec16(brw_null_reg()), BRW_REGISTER_TYPE_UW);
 	 send_commit_msg = 0;
       } else {
-	 dest = retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UW);
+	 dest = brw_uw16_grf(0, 0);
 	 send_commit_msg = 1;
       }
 
