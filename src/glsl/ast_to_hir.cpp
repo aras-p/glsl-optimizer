@@ -660,9 +660,9 @@ ast_expression::hir(exec_list *instructions,
    case ast_plus:
       op[0] = this->subexpressions[0]->hir(instructions, state);
 
-      error_emitted = op[0]->type->is_error();
-      if (type->is_error())
-	 op[0]->type = type;
+      type = unary_arithmetic_result_type(op[0]->type, state, & loc);
+
+      error_emitted = type->is_error();
 
       result = op[0];
       break;
