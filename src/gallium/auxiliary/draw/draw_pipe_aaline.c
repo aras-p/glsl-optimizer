@@ -425,7 +425,8 @@ aaline_create_texture(struct aaline_stage *aaline)
 
    /* Fill in mipmap images.
     * Basically each level is solid opaque, except for the outermost
-    * texels which are zero.  Special case the 1x1 and 2x2 levels.
+    * texels which are zero.  Special case the 1x1 and 2x2 levels
+    * (though, those levels shouldn't be used - see the max_lod setting).
     */
    for (level = 0; level <= MAX_TEXTURE_LEVEL; level++) {
       struct pipe_transfer *transfer;
@@ -497,7 +498,8 @@ aaline_create_sampler(struct aaline_stage *aaline)
    sampler.mag_img_filter = PIPE_TEX_FILTER_LINEAR;
    sampler.normalized_coords = 1;
    sampler.min_lod = 0.0f;
-   sampler.max_lod = MAX_TEXTURE_LEVEL;
+   /* avoid using the 1x1 and 2x2 mipmap levels */
+   sampler.max_lod = MAX_TEXTURE_LEVEL - 2;
 
    aaline->sampler_cso = pipe->create_sampler_state(pipe, &sampler);
    if (aaline->sampler_cso == NULL)
@@ -669,8 +671,8 @@ aaline_first_line(struct draw_stage *stage, struct prim_header *header)
 
    assert(draw->rasterizer->line_smooth);
 
-   if (draw->rasterizer->line_width <= 3.0)
-      aaline->half_line_width = 1.5f;
+   if (draw->rasterizer->line_width <= 2.2)
+      aaline->half_line_width = 1.1f;
    else
       aaline->half_line_width = 0.5f * draw->rasterizer->line_width;
 
