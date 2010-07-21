@@ -297,11 +297,17 @@ sp_tile_cache_flush_clear(struct softpipe_tile_cache *tc)
 
          if (is_clear_flag_set(tc->clear_flags, addr)) {
             /* write the scratch tile to the surface */
-            pipe_put_tile_raw(tc->pipe,
-                              pt,
-                              x, y, TILE_SIZE, TILE_SIZE,
-                              tc->tile.data.any, 0/*STRIDE*/);
-
+            if (tc->depth_stencil) {
+               pipe_put_tile_raw(tc->pipe,
+                                 pt,
+                                 x, y, TILE_SIZE, TILE_SIZE,
+                                 tc->tile.data.any, 0/*STRIDE*/);
+            }
+            else {
+               pipe_put_tile_rgba(tc->pipe, pt,
+                                  x, y, TILE_SIZE, TILE_SIZE,
+                                  (float *) tc->tile.data.color);
+            }
             numCleared++;
          }
       }
