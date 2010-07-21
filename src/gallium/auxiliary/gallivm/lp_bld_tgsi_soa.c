@@ -549,22 +549,40 @@ emit_fetch(
       break;
 
    case TGSI_FILE_TEMPORARY:
-      {
-         LLVMValueRef addr = NULL;
+      if (reg->Register.Indirect) {
+         LLVMValueRef vec_len =
+            lp_build_const_int_vec(bld->int_bld.type, bld->base.type.length);
+         LLVMValueRef index_vec;  /* index into the const buffer */
+         LLVMValueRef temps_array;
+         LLVMTypeRef float4_ptr_type;
+
+         assert(bld->has_indirect_addressing);
+
+         /* index_vec = broadcast(reg->Register.Index * 4 + swizzle) */
+         index_vec = lp_build_const_int_vec(bld->int_bld.type,
+                                            reg->Register.Index * 4 + swizzle);
+
+         /* index_vec += addr_vec */
+         index_vec = lp_build_add(&bld->int_bld, index_vec, addr_vec);
+
+         /* index_vec *= vector_length */
+         index_vec = lp_build_mul(&bld->int_bld, index_vec, vec_len);
+
+         /* cast temps_array pointer to float* */
+         float4_ptr_type = LLVMPointerType(LLVMFloatType(), 0);
+         temps_array = LLVMBuildBitCast(bld->int_bld.builder, bld->temps_array,
+                                        float4_ptr_type, "");
+
+         /* Gather values from the temporary register array */
+         res = build_gather(bld, temps_array, index_vec);
+      }
+      else {
          LLVMValueRef temp_ptr;
-
-         if (reg->Register.Indirect) {
-            LLVMValueRef zero = lp_build_const_int32(0);
-            addr = LLVMBuildExtractElement(bld->base.builder,
-                                           addr_vec, zero, "");
-         }
-
          temp_ptr = get_temp_ptr(bld, reg->Register.Index,
                                  swizzle,
-                                 reg->Register.Indirect,
-                                 addr);
+                                 FALSE, NULL);
          res = LLVMBuildLoad(bld->base.builder, temp_ptr, "");
-         if(!res)
+         if (!res)
             return bld->base.undef;
       }
       break;
