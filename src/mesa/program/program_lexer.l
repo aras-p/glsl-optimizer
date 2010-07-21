@@ -140,6 +140,12 @@ handle_ident(struct asm_parser_state *state, const char *text, YYSTYPE *lval)
    } while(0);
 
 #define YY_EXTRA_TYPE struct asm_parser_state *
+
+/* Flex defines a couple of functions with no declarations nor the
+static keyword. Declare them here to avoid a compiler warning. */
+int yyget_column  (yyscan_t yyscanner);
+void yyset_column (int  column_no , yyscan_t yyscanner);
+
 %}
 
 num    [0-9]+
