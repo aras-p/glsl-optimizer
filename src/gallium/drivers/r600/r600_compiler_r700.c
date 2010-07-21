@@ -143,14 +143,37 @@ static int r700_shader_alu_bytecode(struct r600_shader *rshader,
 	return 0;
 }
 
+static int r700_shader_alu_translate(struct r600_shader *rshader,
+				     struct r600_shader_node *rnode,
+				     unsigned *cid)
+				     
+{
+	struct r600_shader_alu *alu;
+	unsigned id = *cid;
+	int i;
+	int r = 0;
+	LIST_FOR_EACH_ENTRY(alu, &rnode->alu, head) {
+		for (i = 0; i < alu->nalu; i++) {
+			r = r700_shader_alu_bytecode(rshader, rnode, &alu->alu[i], &id);
+			if (r)
+				goto out;
+		}
+		for (i = 0; i < alu->nliteral; i++) {
+			rshader->bcode[id++] = alu->literal[i];
+		}
+	}
+ out:
+	*cid = id;
+	return r;
+}
+
 int r700_shader_translate(struct r600_shader *rshader)
 {
 	struct c_shader *shader = &rshader->cshader;
 	struct r600_shader_node *rnode;
 	struct r600_shader_vfetch *vfetch;
-	struct r600_shader_alu *alu;
 	struct c_vector *v;
-	unsigned id, i, end;
+	unsigned id, end;
 	int r;
 
 	r = r600_shader_register(rshader);
@@ -179,16 +202,12 @@ int r700_shader_translate(struct r600_shader *rshader)
 			if (r)
 				return r;
 		}
-		LIST_FOR_EACH_ENTRY(alu, &rnode->alu, head) {
-			for (i = 0; i < alu->nalu; i++) {
-				r = r700_shader_alu_bytecode(rshader, rnode, &alu->alu[i], &id);
-				if (r)
-					return r;
-			}
-			for (i = 0; i < alu->nliteral; i++) {
-				rshader->bcode[id++] = alu->literal[i];
-			}
-		}
+		if (rshader->r6xx_compile)
+			r = r6xx_shader_alu_translate(rshader, rnode, &id);
+		else
+			r = r700_shader_alu_translate(rshader, rnode, &id);
+		if (r)
+			return r;
 	}
 	id = 0;
 	LIST_FOR_EACH_ENTRY(rnode, &rshader->nodes, head) {

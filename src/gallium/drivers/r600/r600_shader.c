@@ -126,15 +126,19 @@ static int r600_pipe_shader(struct pipe_context *ctx, struct r600_pipe_shader *r
 
 struct r600_pipe_shader *r600_pipe_shader_create(struct pipe_context *ctx, unsigned type, const struct tgsi_token *tokens)
 {
+	struct r600_screen *rscreen = r600_screen(ctx->screen);
 	struct r600_pipe_shader *rpshader = CALLOC_STRUCT(r600_pipe_shader);
 	struct r600_shader *rshader = &rpshader->shader;
 	int r;
+	enum radeon_family family;
 
 	if (rpshader == NULL)
 		return NULL;
 	rpshader->type = type;
+	family = radeon_get_family(rscreen->rw);
+	rshader->r6xx_compile = (family >= CHIP_R600 && family < CHIP_RV770);
 	LIST_INITHEAD(&rshader->nodes);
-	fprintf(stderr, "<<\n");
+	fprintf(stderr, "<< %s\n", rshader->r6xx_compile ? "R600" : "R700");
 	tgsi_dump(tokens, 0);
 	fprintf(stderr, "--------------------------------------------------------------\n");
 	r = c_shader_from_tgsi(&rshader->cshader, type, tokens);

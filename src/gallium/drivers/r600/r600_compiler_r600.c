@@ -905,3 +905,68 @@ struct r600_alu_instruction r600_alu_instruction[C_OPCODE_LAST] = {
 	{C_OPCODE_ENTRY,	INST_NOP},
 	{C_OPCODE_ARL,		INST_NOP},
 };
+
+
+static int r600_shader_alu_bytecode(struct r600_shader *rshader,
+					struct r600_shader_node *rnode,
+					struct r600_shader_inst *alu,
+					unsigned *cid)
+{
+	unsigned id = *cid;
+
+	/* don't replace gpr by pv or ps for destination register */
+	if (alu->is_op3) {
+		rshader->bcode[id++] = S_SQ_ALU_WORD0_SRC0_SEL(alu->src[0].sel) |
+					S_SQ_ALU_WORD0_SRC0_CHAN(alu->src[0].chan) |
+					S_SQ_ALU_WORD0_SRC1_SEL(alu->src[1].sel) |
+					S_SQ_ALU_WORD0_SRC1_CHAN(alu->src[1].chan) |
+					S_SQ_ALU_WORD0_LAST(alu->last);
+		rshader->bcode[id++] = S_SQ_ALU_WORD1_DST_GPR(alu->dst.sel) |
+					S_SQ_ALU_WORD1_DST_CHAN(alu->dst.chan) |
+					S_SQ_ALU_WORD1_OP3_SRC2_SEL(alu->src[2].sel) |
+					S_SQ_ALU_WORD1_OP3_SRC2_CHAN(alu->src[2].chan) |
+					S_SQ_ALU_WORD1_OP3_SRC2_NEG(alu->src[2].neg) |
+					S_SQ_ALU_WORD1_OP3_ALU_INST(alu->opcode) |
+					S_SQ_ALU_WORD1_BANK_SWIZZLE(0);
+	} else {
+		rshader->bcode[id++] = S_SQ_ALU_WORD0_SRC0_SEL(alu->src[0].sel) |
+					S_SQ_ALU_WORD0_SRC0_CHAN(alu->src[0].chan) |
+					S_SQ_ALU_WORD0_SRC0_NEG(alu->src[0].neg) |
+					S_SQ_ALU_WORD0_SRC1_SEL(alu->src[1].sel) |
+					S_SQ_ALU_WORD0_SRC1_CHAN(alu->src[1].chan) |
+					S_SQ_ALU_WORD0_SRC1_NEG(alu->src[1].neg) |
+					S_SQ_ALU_WORD0_LAST(alu->last);
+		rshader->bcode[id++] = S_SQ_ALU_WORD1_DST_GPR(alu->dst.sel) |
+					S_SQ_ALU_WORD1_DST_CHAN(alu->dst.chan) |
+					S_SQ_ALU_WORD1_OP2_SRC0_ABS(alu->src[0].abs) |
+					S_SQ_ALU_WORD1_OP2_SRC1_ABS(alu->src[1].abs) |
+					S_SQ_ALU_WORD1_OP2_WRITE_MASK(1) |
+					S_SQ_ALU_WORD1_OP2_ALU_INST(alu->opcode) |
+					S_SQ_ALU_WORD1_BANK_SWIZZLE(0);
+	}
+	*cid = id;
+	return 0;
+}
+
+int r6xx_shader_alu_translate(struct r600_shader *rshader,
+			      struct r600_shader_node *rnode,
+			      unsigned *cid)
+{
+	struct r600_shader_alu *alu;
+	unsigned id = *cid;
+	int i;
+	int r = 0;
+	LIST_FOR_EACH_ENTRY(alu, &rnode->alu, head) {
+		for (i = 0; i < alu->nalu; i++) {
+			r = r600_shader_alu_bytecode(rshader, rnode, &alu->alu[i], &id);
+			if (r)
+				goto out;
+		}
+		for (i = 0; i < alu->nliteral; i++) {
+			rshader->bcode[id++] = alu->literal[i];
+		}
+	}
+out:
+	*cid = id;
+	return r;
+}

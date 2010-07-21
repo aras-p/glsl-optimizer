@@ -96,6 +96,7 @@ struct r600_shader {
 	u32				*bcode;			/**< bytes code */
 	enum pipe_format		resource_format[160];	/**< format of resource */
 	struct c_shader			cshader;
+	boolean r6xx_compile;
 };
 
 void r600_shader_cleanup(struct r600_shader *rshader);
@@ -121,6 +122,10 @@ int r600_shader_register(struct r600_shader *rshader);
 int r600_shader_translate_rec(struct r600_shader *rshader, struct c_node *node);
 int r700_shader_translate(struct r600_shader *rshader);
 int r600_shader_insert_fetch(struct c_shader *shader);
+
+int r6xx_shader_alu_translate(struct r600_shader *rshader,
+			      struct r600_shader_node *rnode,
+			      unsigned *cid);
 
 enum r600_instruction {
 	INST_ADD			= 0,
