@@ -139,6 +139,13 @@ handle_ident(struct asm_parser_state *state, const char *text, YYSTYPE *lval)
       }									\
    } while(0);
 
+#define YY_NO_INPUT
+
+/* Yes, this is intentionally doing nothing. We have this line of code
+here only to avoid the compiler complaining about an unput function
+that is defined, but never called. */
+#define YY_USER_INIT while (0) { unput(0); }
+
 #define YY_EXTRA_TYPE struct asm_parser_state *
 
 /* Flex defines a couple of functions with no declarations nor the
