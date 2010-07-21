@@ -30,6 +30,7 @@
 #include <pipe/p_state.h>
 #include <util/u_memory.h>
 #include <util/u_format.h>
+#include <stdio.h>
 
 VdpStatus
 vlVdpVideoSurfaceCreate(VdpDevice device,
@@ -38,6 +39,8 @@ vlVdpVideoSurfaceCreate(VdpDevice device,
 			uint32_t height, 
 			VdpVideoSurface *surface)
 {
+	printf("[VDPAU] Creating a surface\n");
+	
     vlVdpSurface *p_surf;
     VdpStatus ret;
 
