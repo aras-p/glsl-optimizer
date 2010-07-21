@@ -419,7 +419,7 @@ struct pipe_vertex_element
    /** Which vertex_buffer (as given to pipe->set_vertex_buffer()) does
     * this attribute live in?
     */
-   unsigned vertex_buffer_index:8;
+   unsigned vertex_buffer_index;
  
    enum pipe_format src_format;
 };
