@@ -133,10 +133,14 @@ struct lp_build_tgsi_soa_context
    LLVMValueRef addr[LP_MAX_TGSI_ADDRS][NUM_CHANNELS];
    LLVMValueRef preds[LP_MAX_TGSI_PREDS][NUM_CHANNELS];
 
-   /* we allocate an array of temps if we have indirect
-    * addressing and then the temps above is unused */
+   /* We allocate/use this array of temps if (1 << TGSI_FILE_TEMPORARY) is
+    * set in the indirect_files field.
+    * The temps[] array above is unused then.
+    */
    LLVMValueRef temps_array;
-   boolean has_indirect_addressing;
+
+   /** bitmask indicating which register files are accessed indirectly */
+   unsigned indirect_files;
 
    struct lp_build_mask_context *mask;
    struct lp_exec_mask exec_mask;
@@ -418,7 +422,7 @@ get_temp_ptr(struct lp_build_tgsi_soa_context *bld,
              unsigned chan)
 {
    assert(chan < 4);
-   if (bld->has_indirect_addressing) {
+   if (bld->indirect_files & (1 << TGSI_FILE_TEMPORARY)) {
       LLVMValueRef lindex = lp_build_const_int32(index * 4 + chan);
       return LLVMBuildGEP(bld->base.builder, bld->temps_array, &lindex, 1, "");
    }
@@ -513,6 +517,7 @@ emit_fetch(
    }
 
    if (reg->Register.Indirect) {
+      assert(bld->indirect_files);
       addr_vec = get_indirect_offsets(bld, &reg->Indirect);
    }
 
@@ -520,6 +525,8 @@ emit_fetch(
    case TGSI_FILE_CONSTANT:
       if (reg->Register.Indirect) {
          LLVMValueRef index_vec;  /* index into the const buffer */
+
+         assert(bld->indirect_files & (1 << TGSI_FILE_CONSTANT));
 
          /* index_vec = broadcast(reg->Register.Index * 4 + swizzle) */
          index_vec = lp_build_const_int_vec(bld->int_bld.type,
@@ -563,7 +570,7 @@ emit_fetch(
          LLVMValueRef temps_array;
          LLVMTypeRef float4_ptr_type;
 
-         assert(bld->has_indirect_addressing);
+         assert(bld->indirect_files & (1 << TGSI_FILE_TEMPORARY));
 
          /* index_vec = broadcast(reg->Register.Index * 4 + swizzle) */
          index_vec = lp_build_const_int_vec(bld->int_bld.type,
@@ -754,6 +761,9 @@ emit_store(
       /* XXX use get_indirect_offsets() here eventually */
       LLVMTypeRef int_vec_type = lp_build_int_vec_type(bld->base.type);
       unsigned swizzle = tgsi_util_get_src_register_swizzle( &reg->Indirect, chan_index );
+
+      assert(bld->indirect_files);
+
       addr = LLVMBuildLoad(bld->base.builder,
                            bld->addr[reg->Indirect.Index][swizzle],
                            "");
@@ -1001,7 +1011,7 @@ emit_declaration(
       switch (decl->Declaration.File) {
       case TGSI_FILE_TEMPORARY:
          assert(idx < LP_MAX_TGSI_TEMPS);
-         if (bld->has_indirect_addressing) {
+         if (bld->indirect_files & (1 << TGSI_FILE_TEMPORARY)) {
             LLVMValueRef array_size = LLVMConstInt(LLVMInt32Type(),
                                                    last*4 + 4, 0);
             bld->temps_array = lp_build_array_alloca(bld->base.builder,
@@ -2025,8 +2035,7 @@ lp_build_tgsi_soa(LLVMBuilderRef builder,
    bld.outputs = outputs;
    bld.consts_ptr = consts_ptr;
    bld.sampler = sampler;
-   bld.has_indirect_addressing = info->opcode_count[TGSI_OPCODE_ARR] > 0 ||
-                                 info->opcode_count[TGSI_OPCODE_ARL] > 0;
+   bld.indirect_files = info->indirect_files;
    bld.instructions = (struct tgsi_full_instruction *)
                       MALLOC( LP_MAX_INSTRUCTIONS * sizeof(struct tgsi_full_instruction) );
    bld.max_instructions = LP_MAX_INSTRUCTIONS;
