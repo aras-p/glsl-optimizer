@@ -1248,6 +1248,11 @@ public:
     */
    ir_constant(const ir_constant *c, unsigned i);
 
+   /**
+    * Return a new ir_constant of the specified type containing all zeros.
+    */
+   static ir_constant *zero(void *mem_ctx, const glsl_type *type);
+
    virtual ir_constant *clone(struct hash_table *) const;
 
    virtual ir_constant *constant_expression_value();

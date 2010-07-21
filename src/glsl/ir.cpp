@@ -326,6 +326,18 @@ ir_constant::ir_constant(const struct glsl_type *type, exec_list *value_list)
    }
 }
 
+ir_constant *
+ir_constant::zero(void *mem_ctx, const glsl_type *type)
+{
+   assert(type->is_numeric());
+
+   ir_constant *c = new(mem_ctx) ir_constant;
+   c->type = type;
+   memset(&c->value, 0, sizeof(c->value));
+
+   return c;
+}
+
 bool
 ir_constant::get_bool_component(unsigned i) const
 {
