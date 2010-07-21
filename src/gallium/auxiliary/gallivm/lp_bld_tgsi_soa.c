@@ -463,10 +463,10 @@ static LLVMValueRef
 emit_fetch(
    struct lp_build_tgsi_soa_context *bld,
    const struct tgsi_full_instruction *inst,
-   unsigned index,
+   unsigned src_op,
    const unsigned chan_index )
 {
-   const struct tgsi_full_src_register *reg = &inst->Src[index];
+   const struct tgsi_full_src_register *reg = &inst->Src[src_op];
    const unsigned swizzle =
       tgsi_util_get_full_src_register_swizzle(reg, chan_index);
    LLVMValueRef res;
