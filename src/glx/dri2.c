@@ -88,6 +88,7 @@ static Bool
 DRI2WireToEvent(Display *dpy, XEvent *event, xEvent *wire)
 {
    XExtDisplayInfo *info = DRI2FindDisplay(dpy);
+   XExtDisplayInfo *glx_info = __glXFindDisplay(dpy);
 
    XextCheckExtension(dpy, info, dri2ExtensionName, False);
 
