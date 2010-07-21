@@ -213,6 +213,10 @@ static const GLuint __driNConfigOptions = 17;
 
 static int getSwapInfo( __DRIdrawable *dPriv, __DRIswapInfo * sInfo );
 
+#ifndef RADEON_INFO_TILE_CONFIG
+#define RADEON_INFO_TILE_CONFIG 0x6
+#endif
+
 static int
 radeonGetParam(__DRIscreen *sPriv, int param, void *value)
 {
@@ -231,6 +235,9 @@ radeonGetParam(__DRIscreen *sPriv, int param, void *value)
           break;
       case RADEON_PARAM_NUM_Z_PIPES:
           info.request = RADEON_INFO_NUM_Z_PIPES;
+          break;
+      case RADEON_INFO_TILE_CONFIG:
+	  info.request = RADEON_INFO_TILE_CONFIG;
           break;
       default:
           return -EINVAL;
@@ -1319,6 +1326,56 @@ radeonCreateScreen2(__DRIscreen *sPriv)
 	   screen->chip_flags |= RADEON_CLASS_R300;
    else
 	   screen->chip_flags |= RADEON_CLASS_R600;
+
+   /* r6xx+ tiling */
+   if (IS_R600_CLASS(screen) && (sPriv->drm_version.minor >= 5)) {
+	   ret = radeonGetParam(sPriv, RADEON_INFO_TILE_CONFIG, &temp);
+	   if (ret)
+		   fprintf(stderr, "failed to get tiling info\n");
+	   else {
+		   screen->tile_config = temp;
+		   screen->r7xx_bank_op = 0;
+		   switch((screen->tile_config & 0xe) >> 1) {
+		   case 0:
+			   screen->num_channels = 1;
+			   break;
+		   case 1:
+			   screen->num_channels = 2;
+			   break;
+		   case 2:
+			   screen->num_channels = 4;
+			   break;
+		   case 3:
+			   screen->num_channels = 8;
+			   break;
+		   default:
+			   fprintf(stderr, "bad channels\n");
+			   break;
+		   }
+		   switch((screen->tile_config & 0x30) >> 4) {
+		   case 0:
+			   screen->num_banks = 4;
+			   break;
+		   case 1:
+			   screen->num_banks = 8;
+			   break;
+		   default:
+			   fprintf(stderr, "bad banks\n");
+			   break;
+		   }
+		   switch((screen->tile_config & 0xc0) >> 6) {
+		   case 0:
+			   screen->group_bytes = 256;
+			   break;
+		   case 1:
+			   screen->group_bytes = 512;
+			   break;
+		   default:
+			   fprintf(stderr, "bad group_bytes\n");
+			   break;
+		   }
+	   }
+   }
 
    if (IS_R300_CLASS(screen)) {
        ret = radeonGetParam(sPriv, RADEON_PARAM_NUM_GB_PIPES, &temp);
