@@ -2037,6 +2037,8 @@ get_mesa_program(GLcontext *ctx, struct gl_shader_program *shader_program,
    default: assert(!"should not be reached"); break;
    }
 
+   validate_ir_tree(shader->ir);
+
    prog = ctx->Driver.NewProgram(ctx, target, 1);
    if (!prog)
       return NULL;
