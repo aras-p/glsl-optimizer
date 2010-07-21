@@ -1151,7 +1151,7 @@ void brw_dp_READ_16( struct brw_compile *p,
       brw_set_dp_read_message(p->brw,
 			      insn,
 			      255, /* binding table index (255=stateless) */
-			      3,  /* msg_control (3 means 4 Owords) */
+			      BRW_DATAPORT_OWORD_BLOCK_4_OWORDS,
 			      BRW_DATAPORT_READ_MESSAGE_OWORD_BLOCK_READ, /* msg_type */
 			      1, /* target cache (render/scratch) */
 			      1, /* msg_length */
