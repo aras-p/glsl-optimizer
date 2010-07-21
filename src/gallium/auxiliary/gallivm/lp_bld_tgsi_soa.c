@@ -502,32 +502,30 @@ emit_fetch(
 
    switch (reg->Register.File) {
    case TGSI_FILE_CONSTANT:
-      {
-         if (reg->Register.Indirect) {
-            LLVMValueRef index_vec;  /* index into the const buffer */
+      if (reg->Register.Indirect) {
+         LLVMValueRef index_vec;  /* index into the const buffer */
 
-            /* index_vec = broadcast(reg->Register.Index * 4 + swizzle) */
-            index_vec = lp_build_const_int_vec(bld->int_bld.type,
-                                   reg->Register.Index * 4 + swizzle);
+         /* index_vec = broadcast(reg->Register.Index * 4 + swizzle) */
+         index_vec = lp_build_const_int_vec(bld->int_bld.type,
+                                            reg->Register.Index * 4 + swizzle);
 
-            /* index_vec = index_vec + addr_vec */
-            index_vec = lp_build_add(&bld->base, index_vec, addr_vec);
+         /* index_vec = index_vec + addr_vec */
+         index_vec = lp_build_add(&bld->base, index_vec, addr_vec);
 
-            /* Gather values from the constant buffer */
-            res = build_gather(bld, bld->consts_ptr, index_vec);
-         }
-         else {
-            LLVMValueRef index;  /* index into the const buffer */
-            LLVMValueRef scalar, scalar_ptr;
+         /* Gather values from the constant buffer */
+         res = build_gather(bld, bld->consts_ptr, index_vec);
+      }
+      else {
+         LLVMValueRef index;  /* index into the const buffer */
+         LLVMValueRef scalar, scalar_ptr;
 
-            index = lp_build_const_int32(reg->Register.Index*4 + swizzle);
+         index = lp_build_const_int32(reg->Register.Index*4 + swizzle);
 
-            scalar_ptr = LLVMBuildGEP(bld->base.builder, bld->consts_ptr,
-                                      &index, 1, "");
-            scalar = LLVMBuildLoad(bld->base.builder, scalar_ptr, "");
+         scalar_ptr = LLVMBuildGEP(bld->base.builder, bld->consts_ptr,
+                                   &index, 1, "");
+         scalar = LLVMBuildLoad(bld->base.builder, scalar_ptr, "");
 
-            res = lp_build_broadcast_scalar(&bld->base, scalar);
-         }
+         res = lp_build_broadcast_scalar(&bld->base, scalar);
       }
       break;
 
