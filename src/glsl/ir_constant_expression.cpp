@@ -812,7 +812,7 @@ ir_call::constant_expression_value()
    } else if (strcmp(callee, "atan") == 0) {
       return NULL; /* FINISHME: implement this */
    } else if (strcmp(callee, "dFdx") == 0 || strcmp(callee, "dFdy") == 0) {
-      return NULL; /* FINISHME: implement this */
+      return ir_constant::zero(mem_ctx, this->type);
    } else if (strcmp(callee, "ceil") == 0) {
       return NULL; /* FINISHME: implement this */
    } else if (strcmp(callee, "clamp") == 0) {
@@ -842,7 +842,7 @@ ir_call::constant_expression_value()
    } else if (strcmp(callee, "fract") == 0) {
       return NULL; /* FINISHME: implement this */
    } else if (strcmp(callee, "fwidth") == 0) {
-      return NULL; /* FINISHME: implement this */
+      return ir_constant::zero(mem_ctx, this->type);
    } else if (strcmp(callee, "greaterThan") == 0) {
       return NULL; /* FINISHME: implement this */
    } else if (strcmp(callee, "greaterThanEqual") == 0) {
