@@ -41,6 +41,7 @@
 #define FETCH_MAX 256
 #define DRAW_MAX (16*1024)
 
+
 struct vcache_frontend {
    struct draw_pt_front_end base;
    struct draw_context *draw;
@@ -63,6 +64,7 @@ struct vcache_frontend {
    unsigned middle_prim;
    unsigned opt;
 };
+
 
 static INLINE void
 vcache_flush( struct vcache_frontend *vcache )
@@ -88,12 +90,12 @@ vcache_flush( struct vcache_frontend *vcache )
    vcache->draw_count = 0;
 }
 
+
 static INLINE void 
 vcache_check_flush( struct vcache_frontend *vcache )
 {
-   if ( vcache->draw_count + 6 >= DRAW_MAX ||
-        vcache->fetch_count + 4 >= FETCH_MAX )
-   {
+   if (vcache->draw_count + 6 >= DRAW_MAX ||
+       vcache->fetch_count + 4 >= FETCH_MAX) {
       vcache_flush( vcache );
    }
 }
@@ -145,6 +147,7 @@ vcache_triangle_flags( struct vcache_frontend *vcache,
    vcache_check_flush(vcache);
 }
 
+
 static INLINE void 
 vcache_line( struct vcache_frontend *vcache,
              unsigned i0,
@@ -176,6 +179,7 @@ vcache_point( struct vcache_frontend *vcache,
    vcache_check_flush(vcache);
 }
 
+
 static INLINE void 
 vcache_quad( struct vcache_frontend *vcache,
              unsigned i0,
@@ -194,6 +198,7 @@ vcache_quad( struct vcache_frontend *vcache,
       vcache_triangle( vcache, i1, i2, i3 );
    }
 }
+
 
 static INLINE void 
 vcache_ef_quad( struct vcache_frontend *vcache,
@@ -230,6 +235,7 @@ vcache_ef_quad( struct vcache_frontend *vcache,
    }
 }
 
+
 /* At least for now, we're back to using a template include file for
  * this.  The two paths aren't too different though - it may be
  * possible to reunify them.
@@ -255,22 +261,22 @@ rebase_uint_elts( const unsigned *src,
                   ushort *dest )
 {
    unsigned i;
-
    for (i = 0; i < count; i++) 
       dest[i] = (ushort)(src[i] + delta);
 }
+
 
 static INLINE void 
 rebase_ushort_elts( const ushort *src,
                     unsigned count,
                     int delta,
-                                ushort *dest )
+                    ushort *dest )
 {
    unsigned i;
-
    for (i = 0; i < count; i++) 
       dest[i] = (ushort)(src[i] + delta);
 }
+
 
 static INLINE void 
 rebase_ubyte_elts( const ubyte *src,
@@ -279,11 +285,9 @@ rebase_ubyte_elts( const ubyte *src,
                    ushort *dest )
 {
    unsigned i;
-
    for (i = 0; i < count; i++) 
       dest[i] = (ushort)(src[i] + delta);
 }
-
 
 
 static INLINE void 
@@ -292,10 +296,10 @@ translate_uint_elts( const unsigned *src,
                      ushort *dest )
 {
    unsigned i;
-
    for (i = 0; i < count; i++) 
       dest[i] = (ushort)(src[i]);
 }
+
 
 static INLINE void 
 translate_ushort_elts( const ushort *src,
@@ -303,10 +307,10 @@ translate_ushort_elts( const ushort *src,
                        ushort *dest )
 {
    unsigned i;
-
    for (i = 0; i < count; i++) 
       dest[i] = (ushort)(src[i]);
 }
+
 
 static INLINE void 
 translate_ubyte_elts( const ubyte *src,
@@ -314,7 +318,6 @@ translate_ubyte_elts( const ubyte *src,
                       ushort *dest )
 {
    unsigned i;
-
    for (i = 0; i < count; i++) 
       dest[i] = (ushort)(src[i]);
 }
@@ -334,6 +337,7 @@ format_from_get_elt( pt_elt_func get_elt )
    }
 }
 #endif
+
 
 static INLINE void 
 vcache_check_run( struct draw_pt_front_end *frontend, 
@@ -400,17 +404,14 @@ vcache_check_run( struct draw_pt_front_end *frontend,
                                &vcache->fetch_max );
    }
 
-
    assert((elt_bias >= 0 && min_index + elt_bias >= min_index) ||
           (elt_bias <  0 && min_index + elt_bias <  min_index));
 
    if (min_index == 0 &&
-       index_size == 2)
-   {
+       index_size == 2) {
       transformed_elts = (const ushort *)elts;
    }
-   else 
-   {
+   else {
       storage = MALLOC( draw_count * sizeof(ushort) );
       if (!storage)
          goto fail;
@@ -445,23 +446,23 @@ vcache_check_run( struct draw_pt_front_end *frontend,
          switch(index_size) {
          case 1:
             rebase_ubyte_elts( (const ubyte *)elts,
-                                  draw_count,
-                                  0 - (int)min_index,
-                                  storage );
+                               draw_count,
+                               0 - (int)min_index,
+                               storage );
             break;
 
          case 2:
             rebase_ushort_elts( (const ushort *)elts,
-                                   draw_count,
-                                   0 - (int)min_index,
-                                   storage );
+                                draw_count,
+                                0 - (int)min_index,
+                                storage );
             break;
 
          case 4:
             rebase_uint_elts( (const uint *)elts,
-                                 draw_count,
-                                 0 - (int)min_index,
-                                 storage );
+                              draw_count,
+                              0 - (int)min_index,
+                              storage );
             break;
 
          default:
@@ -488,7 +489,7 @@ vcache_check_run( struct draw_pt_front_end *frontend,
    debug_printf("failed to execute atomic draw elts for %d/%d, splitting up\n",
                 fetch_count, draw_count);
 
- fail:
+fail:
    vcache_run( frontend, get_elt, elts, elt_bias, draw_count );
 }
 
@@ -503,12 +504,10 @@ vcache_prepare( struct draw_pt_front_end *frontend,
 {
    struct vcache_frontend *vcache = (struct vcache_frontend *)frontend;
 
-   if (opt & PT_PIPELINE)
-   {
+   if (opt & PT_PIPELINE) {
       vcache->base.run = vcache_run_extras;
    }
-   else
-   {
+   else {
       vcache->base.run = vcache_check_run;
    }
 
@@ -527,13 +526,13 @@ vcache_prepare( struct draw_pt_front_end *frontend,
    /* Have to run prepare here, but try and guess a good prim for
     * doing so:
     */
-   vcache->middle_prim = (opt & PT_PIPELINE) ? vcache->output_prim : vcache->input_prim;
+   vcache->middle_prim = (opt & PT_PIPELINE)
+      ? vcache->output_prim : vcache->input_prim;
+
    middle->prepare( middle,
                     vcache->middle_prim,
                     opt, &vcache->fetch_max );
 }
-
-
 
 
 static void 
@@ -543,6 +542,7 @@ vcache_finish( struct draw_pt_front_end *frontend )
    vcache->middle->finish( vcache->middle );
    vcache->middle = NULL;
 }
+
 
 static void 
 vcache_destroy( struct draw_pt_front_end *frontend )
