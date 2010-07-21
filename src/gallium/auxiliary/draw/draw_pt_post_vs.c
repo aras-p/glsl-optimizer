@@ -57,7 +57,8 @@ dot4(const float *a, const float *b)
 }
 
 static INLINE unsigned
-compute_clipmask_gl(const float *clip, /*const*/ float plane[][4], unsigned nr)
+compute_clipmask_gl(const float *clip, /*const*/ float plane[][4], unsigned nr,
+                    boolean clip_depth)
 {
    unsigned mask = 0x0;
    unsigned i;
@@ -74,8 +75,10 @@ compute_clipmask_gl(const float *clip, /*const*/ float plane[][4], unsigned nr)
    if ( clip[0] + clip[3] < 0) mask |= (1<<1);
    if (-clip[1] + clip[3] < 0) mask |= (1<<2);
    if ( clip[1] + clip[3] < 0) mask |= (1<<3);
-   if ( clip[2] + clip[3] < 0) mask |= (1<<4); /* match mesa clipplane numbering - for now */
-   if (-clip[2] + clip[3] < 0) mask |= (1<<5); /* match mesa clipplane numbering - for now */
+   if (clip_depth) {
+      if ( clip[2] + clip[3] < 0) mask |= (1<<4); /* match mesa clipplane numbering - for now */
+      if (-clip[2] + clip[3] < 0) mask |= (1<<5); /* match mesa clipplane numbering - for now */
+   }
 
    /* Followed by any remaining ones:
     */
@@ -120,9 +123,11 @@ static boolean post_vs_cliptest_viewport_gl( struct pt_post_vs *pvs,
       out->clip[3] = position[3];
 
       out->vertex_id = 0xffff;
+      /* Disable depth clipping if depth clamping is enabled. */
       out->clipmask = compute_clipmask_gl(out->clip, 
 					  pvs->draw->plane,
-					  pvs->draw->nr_planes);
+                                          pvs->draw->nr_planes,
+                                          !pvs->draw->depth_clamp);
       clipped += out->clipmask;
 
       if (out->clipmask == 0)

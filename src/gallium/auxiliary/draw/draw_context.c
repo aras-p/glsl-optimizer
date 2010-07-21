@@ -216,6 +216,7 @@ void draw_set_clip_state( struct draw_context *draw,
    assert(clip->nr <= PIPE_MAX_CLIP_PLANES);
    memcpy(&draw->plane[6], clip->ucp, clip->nr * sizeof(clip->ucp[0]));
    draw->nr_planes = 6 + clip->nr;
+   draw->depth_clamp = clip->depth_clamp;
 }
 
 
