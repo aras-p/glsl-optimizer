@@ -41,7 +41,13 @@ static const char* r600_get_vendor(struct pipe_screen* pscreen)
 
 static const char* r600_get_name(struct pipe_screen* pscreen)
 {
-	return "R600/R700 (HD2XXX,HD3XXX,HD4XXX)";
+	struct r600_screen *screen = r600_screen(pscreen);
+	enum radeon_family family = radeon_get_family(screen->rw);
+
+	if (family >= CHIP_R600 && family < CHIP_RV770)
+		return "R600 (HD2XXX,HD3XXX)";
+	else
+		return "R700 (HD4XXX)";
 }
 
 static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)

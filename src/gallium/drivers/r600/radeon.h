@@ -77,6 +77,8 @@ enum radeon_family {
 	CHIP_LAST,
 };
 
+enum radeon_family radeon_get_family(struct radeon *rw);
+
 /*
  * radeon object functions
  */
