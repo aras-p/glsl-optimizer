@@ -1032,6 +1032,7 @@ static INLINE void
 clip_state_cpy(struct pipe_clip_state *dst,
                const struct pipe_clip_state *src)
 {
+   dst->depth_clamp = src->depth_clamp;
    dst->nr = src->nr;
    if (src->nr) {
       memcpy(dst->ucp, src->ucp, src->nr * sizeof(src->ucp[0]));
@@ -1042,6 +1043,9 @@ static INLINE int
 clip_state_cmp(const struct pipe_clip_state *a,
                const struct pipe_clip_state *b)
 {
+   if (a->depth_clamp != b->depth_clamp) {
+      return 1;
+   }
    if (a->nr != b->nr) {
       return 1;
    }
