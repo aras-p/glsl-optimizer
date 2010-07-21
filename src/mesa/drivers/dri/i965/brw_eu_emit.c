@@ -364,7 +364,8 @@ static void brw_set_dp_write_message( struct brw_context *brw,
 				      GLuint msg_length,
 				      GLuint pixel_scoreboard_clear,
 				      GLuint response_length,
-				      GLuint end_of_thread )
+				      GLuint end_of_thread,
+				      GLuint send_commit_msg)
 {
    struct intel_context *intel = &brw->intel;
    brw_set_src1(insn, brw_imm_d(0));
@@ -374,7 +375,7 @@ static void brw_set_dp_write_message( struct brw_context *brw,
        insn->bits3.dp_write_gen5.msg_control = msg_control;
        insn->bits3.dp_write_gen5.pixel_scoreboard_clear = pixel_scoreboard_clear;
        insn->bits3.dp_write_gen5.msg_type = msg_type;
-       insn->bits3.dp_write_gen5.send_commit_msg = 0;
+       insn->bits3.dp_write_gen5.send_commit_msg = send_commit_msg;
        insn->bits3.dp_write_gen5.header_present = 1;
        insn->bits3.dp_write_gen5.response_length = response_length;
        insn->bits3.dp_write_gen5.msg_length = msg_length;
@@ -386,7 +387,7 @@ static void brw_set_dp_write_message( struct brw_context *brw,
        insn->bits3.dp_write.msg_control = msg_control;
        insn->bits3.dp_write.pixel_scoreboard_clear = pixel_scoreboard_clear;
        insn->bits3.dp_write.msg_type = msg_type;
-       insn->bits3.dp_write.send_commit_msg = 0;
+       insn->bits3.dp_write.send_commit_msg = send_commit_msg;
        insn->bits3.dp_write.response_length = response_length;
        insn->bits3.dp_write.msg_length = msg_length;
        insn->bits3.dp_write.msg_target = BRW_MESSAGE_TARGET_DATAPORT_WRITE;
@@ -1054,6 +1055,7 @@ void brw_dp_WRITE_16( struct brw_compile *p,
 		      struct brw_reg src,
 		      GLuint scratch_offset )
 {
+   struct intel_context *intel = &p->brw->intel;
    GLuint msg_reg_nr = 1;
    {
       brw_push_insn_state(p);
@@ -1070,13 +1072,32 @@ void brw_dp_WRITE_16( struct brw_compile *p,
 
    {
       GLuint msg_length = 3;
-      struct brw_reg dest = retype(brw_null_reg(), BRW_REGISTER_TYPE_UW);
+      struct brw_reg dest;
       struct brw_instruction *insn = next_insn(p, BRW_OPCODE_SEND);
-   
+      int send_commit_msg;
+
       insn->header.predicate_control = 0; /* XXX */
       insn->header.compression_control = BRW_COMPRESSION_NONE; 
       insn->header.destreg__conditionalmod = msg_reg_nr;
-  
+
+      /* Until gen6, writes followed by reads from the same location
+       * are not guaranteed to be ordered unless write_commit is set.
+       * If set, then a no-op write is issued to the destination
+       * register to set a dependency, and a read from the destination
+       * can be used to ensure the ordering.
+       *
+       * For gen6, only writes between different threads need ordering
+       * protection.  Our use of DP writes is all about register
+       * spilling within a thread.
+       */
+      if (intel->gen >= 6) {
+	 dest = retype(brw_null_reg(), BRW_REGISTER_TYPE_UW);
+	 send_commit_msg = 0;
+      } else {
+	 dest = retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UW);
+	 send_commit_msg = 1;
+      }
+
       brw_set_dest(insn, dest);
       brw_set_src0(insn, src);
 
@@ -1087,8 +1108,9 @@ void brw_dp_WRITE_16( struct brw_compile *p,
 			       BRW_DATAPORT_WRITE_MESSAGE_OWORD_BLOCK_WRITE, /* msg_type */
 			       msg_length,
 			       0, /* pixel scoreboard */
-			       0, /* response_length */
-			       0); /* eot */
+			       send_commit_msg, /* response_length */
+			       0, /* eot */
+			       send_commit_msg);
    }
 }
 
@@ -1295,7 +1317,8 @@ void brw_fb_WRITE(struct brw_compile *p,
 			    msg_length,
 			    1,	/* pixel scoreboard */
 			    response_length, 
-			    eot);
+			    eot,
+			    0 /* send_commit_msg */);
 }
 
 
