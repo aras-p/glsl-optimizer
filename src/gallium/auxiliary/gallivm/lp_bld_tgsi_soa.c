@@ -408,25 +408,18 @@ static void lp_exec_mask_endsub(struct lp_exec_mask *mask, int *pc)
 
 /**
  * Return pointer to a temporary register channel (src or dest).
+ * Note that indirect addressing cannot be handled here.
  * \param index  which temporary register
  * \param chan  which channel of the temp register.
- * \param is_indirect  if true, add 'addr' to the index
- * \param addr  indirect addressing offset (should already have been
- *              multiplied by four).
  */
 static LLVMValueRef
 get_temp_ptr(struct lp_build_tgsi_soa_context *bld,
              unsigned index,
-             unsigned chan,
-             boolean is_indirect,
-             LLVMValueRef addr)
+             unsigned chan)
 {
    assert(chan < 4);
    if (bld->has_indirect_addressing) {
-      LLVMValueRef lindex =
-         LLVMConstInt(LLVMInt32Type(), index * 4 + chan, 0);
-      if (is_indirect)
-         lindex = lp_build_add(&bld->base, lindex, addr);
+      LLVMValueRef lindex = lp_build_const_int32(index * 4 + chan);
       return LLVMBuildGEP(bld->base.builder, bld->temps_array, &lindex, 1, "");
    }
    else {
@@ -578,9 +571,7 @@ emit_fetch(
       }
       else {
          LLVMValueRef temp_ptr;
-         temp_ptr = get_temp_ptr(bld, reg->Register.Index,
-                                 swizzle,
-                                 FALSE, NULL);
+         temp_ptr = get_temp_ptr(bld, reg->Register.Index, swizzle);
          res = LLVMBuildLoad(bld->base.builder, temp_ptr, "");
          if (!res)
             return bld->base.undef;
@@ -766,14 +757,18 @@ emit_store(
                          bld->outputs[reg->Register.Index][chan_index]);
       break;
 
-   case TGSI_FILE_TEMPORARY: {
-      LLVMValueRef temp_ptr = get_temp_ptr(bld, reg->Register.Index,
-                                           chan_index,
-                                           reg->Register.Indirect,
-                                           addr);
-      lp_exec_mask_store(&bld->exec_mask, pred, value, temp_ptr);
+   case TGSI_FILE_TEMPORARY:
+      if (reg->Register.Indirect) {
+         /* XXX not done yet */
+         debug_printf("WARNING: LLVM scatter store of temp regs"
+                      " not implemented\n");
+      }
+      else {
+         LLVMValueRef temp_ptr = get_temp_ptr(bld, reg->Register.Index,
+                                              chan_index);
+         lp_exec_mask_store(&bld->exec_mask, pred, value, temp_ptr);
+      }
       break;
-   }
 
    case TGSI_FILE_ADDRESS:
       lp_exec_mask_store(&bld->exec_mask, pred, value,
