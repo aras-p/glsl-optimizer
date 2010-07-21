@@ -55,6 +55,8 @@ static void update_clip( struct st_context *st )
 	 clip.nr++;
       }
    }
+
+   clip.depth_clamp = st->ctx->Transform.DepthClamp != GL_FALSE;
       
    if (memcmp(&clip, &st->state.clip, sizeof(clip)) != 0) {
       st->state.clip = clip;

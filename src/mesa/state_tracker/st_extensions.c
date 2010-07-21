@@ -397,4 +397,8 @@ void st_init_extensions(struct st_context *st)
    if (screen->get_param(screen, PIPE_CAP_GEOMETRY_SHADER4)) {
       ctx->Extensions.ARB_geometry_shader4 = GL_TRUE;
    }
+
+   if (screen->get_param(screen, PIPE_CAP_DEPTH_CLAMP)) {
+      ctx->Extensions.ARB_depth_clamp = GL_TRUE;
+   }
 }
