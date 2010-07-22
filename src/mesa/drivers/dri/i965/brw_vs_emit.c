@@ -868,8 +868,6 @@ get_constant(struct brw_vs_compile *c,
    assert(argIndex < 3);
 
    if (c->current_const[argIndex].index != src->Index) {
-      struct brw_reg addrReg = c->regs[PROGRAM_ADDRESS][0];
-
       /* Keep track of the last constant loaded in this slot, for reuse. */
       c->current_const[argIndex].index = src->Index;
 
@@ -882,7 +880,7 @@ get_constant(struct brw_vs_compile *c,
                        const_reg,                     /* writeback dest */
                        0,                             /* oword */
                        0,                             /* relative indexing? */
-                       addrReg,                       /* address register */
+                       brw_null_reg(),                /* address register */
                        16 * src->Index,               /* byte offset */
                        SURF_INDEX_VERT_CONST_BUFFER   /* binding table index */
                        );
