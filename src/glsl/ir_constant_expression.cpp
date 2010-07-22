@@ -893,7 +893,22 @@ ir_call::constant_expression_value()
    } else if (strcmp(callee, "fwidth") == 0) {
       return ir_constant::zero(mem_ctx, this->type);
    } else if (strcmp(callee, "greaterThan") == 0) {
-      return NULL; /* FINISHME: implement this */
+      assert(op[0]->type->is_vector() && op[1] && op[1]->type->is_vector());
+      for (unsigned c = 0; c < op[0]->type->components(); c++) {
+	 switch (op[0]->type->base_type) {
+	 case GLSL_TYPE_UINT:
+	    data.b[c] = op[0]->value.u[c] > op[1]->value.u[c];
+	    break;
+	 case GLSL_TYPE_INT:
+	    data.b[c] = op[0]->value.i[c] > op[1]->value.i[c];
+	    break;
+	 case GLSL_TYPE_FLOAT:
+	    data.b[c] = op[0]->value.f[c] > op[1]->value.f[c];
+	    break;
+	 default:
+	    assert(!"Should not get here.");
+	 }
+      }
    } else if (strcmp(callee, "greaterThanEqual") == 0) {
       return NULL; /* FINISHME: implement this */
    } else if (strcmp(callee, "inversesqrt") == 0) {
