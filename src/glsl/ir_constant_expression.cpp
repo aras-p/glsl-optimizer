@@ -906,7 +906,9 @@ ir_call::constant_expression_value()
    } else if (strcmp(callee, "pow") == 0) {
       expr = new(mem_ctx) ir_expression(ir_binop_pow, type, op[0], op[1]);
    } else if (strcmp(callee, "radians") == 0) {
-      return NULL; /* FINISHME: implement this */
+      assert(op[0]->type->is_float());
+      for (unsigned c = 0; c < op[0]->type->components(); c++)
+	 data.f[c] = M_PI/180.0 * op[0]->value.f[c];
    } else if (strcmp(callee, "reflect") == 0) {
       return NULL; /* FINISHME: implement this */
    } else if (strcmp(callee, "refract") == 0) {
