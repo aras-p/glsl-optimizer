@@ -133,17 +133,27 @@ ir_call::generate_inline(ir_instruction *next_ir)
    exec_list_iterator sig_param_iter = this->callee->parameters.iterator();
    exec_list_iterator param_iter = this->actual_parameters.iterator();
    for (i = 0; i < num_parameters; i++) {
-      const ir_variable *const sig_param = (ir_variable *) sig_param_iter.get();
+      ir_variable *sig_param = (ir_variable *) sig_param_iter.get();
       ir_rvalue *param = (ir_rvalue *) param_iter.get();
 
       /* Generate a new variable for the parameter. */
-      parameters[i] = sig_param->clone(ht);
-      parameters[i]->mode = ir_var_auto;
-      next_ir->insert_before(parameters[i]);
+      if (sig_param->type->base_type == GLSL_TYPE_SAMPLER) {
+	 /* For samplers, we want the inlined sampler references
+	  * referencing the passed in sampler variable, since that
+	  * will have the location information, which an assignment of
+	  * a sampler wouldn't.
+	  */
+	 parameters[i] = NULL;
+	 hash_table_insert(ht, param->variable_referenced(), sig_param);
+      } else {
+	 parameters[i] = sig_param->clone(ht);
+	 parameters[i]->mode = ir_var_auto;
+	 next_ir->insert_before(parameters[i]);
+      }
 
       /* Move the actual param into our param variable if it's an 'in' type. */
-      if (sig_param->mode == ir_var_in ||
-	  sig_param->mode == ir_var_inout) {
+      if (parameters[i] && (sig_param->mode == ir_var_in ||
+			    sig_param->mode == ir_var_inout)) {
 	 ir_assignment *assign;
 
 	 assign = new(ctx) ir_assignment(new(ctx) ir_dereference_variable(parameters[i]),
@@ -175,8 +185,8 @@ ir_call::generate_inline(ir_instruction *next_ir)
       const ir_variable *const sig_param = (ir_variable *) sig_param_iter.get();
 
       /* Move our param variable into the actual param if it's an 'out' type. */
-      if (sig_param->mode == ir_var_out ||
-	  sig_param->mode == ir_var_inout) {
+      if (parameters[i] && (sig_param->mode == ir_var_out ||
+			    sig_param->mode == ir_var_inout)) {
 	 ir_assignment *assign;
 
 	 assign = new(ctx) ir_assignment(param->clone(NULL)->as_rvalue(),
