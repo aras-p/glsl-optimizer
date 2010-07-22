@@ -55,7 +55,17 @@ public:
    virtual ir_visitor_status visit_enter(ir_function *ir)
    {
       assert(this->function == NULL);
-      this->function = new(this->mem_ctx) ir_function(ir->name);
+
+      this->function = this->symbols->get_function(ir->name);
+      if (!this->function) {
+	 this->function = new(this->mem_ctx) ir_function(ir->name);
+
+	 list->push_tail(this->function);
+
+	 /* Add the new function to the symbol table.
+	  */
+	 this->symbols->add_function(this->function->name, this->function);
+      }
       return visit_continue;
    }
 
@@ -63,15 +73,6 @@ public:
    {
       (void) ir;
       assert(this->function != NULL);
-
-      /* Add the new function (and all its signatures) to the end of the
-       * instruction stream.
-       */
-      list->push_tail(this->function);
-
-      /* Add the new function to the symbol table.
-       */
-      this->symbols->add_function(this->function->name, this->function);
 
       this->function = NULL;
       return visit_continue;
