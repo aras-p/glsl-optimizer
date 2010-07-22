@@ -1226,68 +1226,53 @@ void brw_dp_READ_4( struct brw_compile *p,
  */
 void brw_dp_READ_4_vs(struct brw_compile *p,
                       struct brw_reg dest,
-                      GLuint oword,
-                      GLboolean relAddr,
-                      struct brw_reg addrReg,
                       GLuint location,
                       GLuint bind_table_index)
 {
+   struct brw_instruction *insn;
    GLuint msg_reg_nr = 1;
+   struct brw_reg b;
 
-   assert(oword < 2);
    /*
    printf("vs const read msg, location %u, msg_reg_nr %d\n",
           location, msg_reg_nr);
    */
 
    /* Setup MRF[1] with location/offset into const buffer */
-   {
-      struct brw_reg b;
+   brw_push_insn_state(p);
+   brw_set_compression_control(p, BRW_COMPRESSION_NONE);
+   brw_set_mask_control(p, BRW_MASK_DISABLE);
+   brw_set_predicate_control(p, BRW_PREDICATE_NONE);
 
-      brw_push_insn_state(p);
-      brw_set_compression_control(p, BRW_COMPRESSION_NONE);
-      brw_set_mask_control(p, BRW_MASK_DISABLE);
-      brw_set_predicate_control(p, BRW_PREDICATE_NONE);
-      /*brw_set_access_mode(p, BRW_ALIGN_16);*/
+   /* XXX I think we're setting all the dwords of MRF[1] to 'location'.
+    * when the docs say only dword[2] should be set.  Hmmm.  But it works.
+    */
+   b = brw_message_reg(msg_reg_nr);
+   b = retype(b, BRW_REGISTER_TYPE_UD);
+   /*b = get_element_ud(b, 2);*/
+   brw_MOV(p, b, brw_imm_ud(location));
 
-      /* XXX I think we're setting all the dwords of MRF[1] to 'location'.
-       * when the docs say only dword[2] should be set.  Hmmm.  But it works.
-       */
-      b = brw_message_reg(msg_reg_nr);
-      b = retype(b, BRW_REGISTER_TYPE_UD);
-      /*b = get_element_ud(b, 2);*/
-      if (relAddr) {
-         brw_ADD(p, b, addrReg, brw_imm_ud(location));
-      }
-      else {
-         brw_MOV(p, b, brw_imm_ud(location));
-      }
+   brw_pop_insn_state(p);
 
-      brw_pop_insn_state(p);
-   }
+   insn = next_insn(p, BRW_OPCODE_SEND);
 
-   {
-      struct brw_instruction *insn = next_insn(p, BRW_OPCODE_SEND);
-   
-      insn->header.predicate_control = BRW_PREDICATE_NONE;
-      insn->header.compression_control = BRW_COMPRESSION_NONE; 
-      insn->header.destreg__conditionalmod = msg_reg_nr;
-      insn->header.mask_control = BRW_MASK_DISABLE;
-      /*insn->header.access_mode = BRW_ALIGN_16;*/
-  
-      brw_set_dest(insn, dest);
-      brw_set_src0(insn, brw_null_reg());
+   insn->header.predicate_control = BRW_PREDICATE_NONE;
+   insn->header.compression_control = BRW_COMPRESSION_NONE;
+   insn->header.destreg__conditionalmod = msg_reg_nr;
+   insn->header.mask_control = BRW_MASK_DISABLE;
 
-      brw_set_dp_read_message(p->brw,
-			      insn,
-			      bind_table_index,
-			      oword,  /* 0 = lower Oword, 1 = upper Oword */
-			      BRW_DATAPORT_READ_MESSAGE_OWORD_BLOCK_READ, /* msg_type */
-			      0, /* source cache = data cache */
-			      1, /* msg_length */
-			      1, /* response_length (1 Oword) */
-			      0); /* eot */
-   }
+   brw_set_dest(insn, dest);
+   brw_set_src0(insn, brw_null_reg());
+
+   brw_set_dp_read_message(p->brw,
+			   insn,
+			   bind_table_index,
+			   0,
+			   BRW_DATAPORT_READ_MESSAGE_OWORD_BLOCK_READ, /* msg_type */
+			   0, /* source cache = data cache */
+			   1, /* msg_length */
+			   1, /* response_length (1 Oword) */
+			   0); /* eot */
 }
 
 /**

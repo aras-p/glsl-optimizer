@@ -878,9 +878,6 @@ get_constant(struct brw_vs_compile *c,
       /* need to fetch the constant now */
       brw_dp_READ_4_vs(p,
                        const_reg,                     /* writeback dest */
-                       0,                             /* oword */
-                       0,                             /* relative indexing? */
-                       brw_null_reg(),                /* address register */
                        16 * src->Index,               /* byte offset */
                        SURF_INDEX_VERT_CONST_BUFFER   /* binding table index */
                        );
