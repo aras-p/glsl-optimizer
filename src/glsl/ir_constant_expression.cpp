@@ -881,7 +881,10 @@ ir_call::constant_expression_value()
    } else if (strcmp(callee, "exp2") == 0) {
       expr = new(mem_ctx) ir_expression(ir_unop_exp2, type, op[0], NULL);
    } else if (strcmp(callee, "faceforward") == 0) {
-      return NULL; /* FINISHME: implement this */
+      if (dot(op[2], op[1]) < 0)
+	 return op[0];
+      for (unsigned c = 0; c < op[0]->type->components(); c++)
+	 data.f[c] = -op[0]->value.f[c];
    } else if (strcmp(callee, "floor") == 0) {
       expr = new(mem_ctx) ir_expression(ir_unop_floor, type, op[0], NULL);
    } else if (strcmp(callee, "fract") == 0) {
