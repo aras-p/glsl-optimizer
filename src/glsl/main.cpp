@@ -121,49 +121,12 @@ const struct option compiler_opts[] = {
 void
 compile_shader(struct gl_shader *shader)
 {
-   struct _mesa_glsl_parse_state *state;
-   struct gl_extensions ext;
-
-   state = talloc_zero(talloc_parent(shader), struct _mesa_glsl_parse_state);
-
-   switch (shader->Type) {
-   case GL_VERTEX_SHADER:   state->target = vertex_shader; break;
-   case GL_FRAGMENT_SHADER: state->target = fragment_shader; break;
-   case GL_GEOMETRY_SHADER: state->target = geometry_shader; break;
-   }
-
-   state->scanner = NULL;
-   state->translation_unit.make_empty();
-   state->symbols = new(shader) glsl_symbol_table;
-   state->info_log = talloc_strdup(shader, "");
-   state->error = false;
-   state->loop_or_switch_nesting = NULL;
-   state->ARB_texture_rectangle_enable = true;
-
-   memset(&ext, 0, sizeof(ext));
-   state->extensions = &ext;
-   /* 1.10 minimums. */
-   state->Const.MaxLights = 8;
-   state->Const.MaxClipPlanes = 8;
-   state->Const.MaxTextureUnits = 2;
-
-   /* More than the 1.10 minimum to appease parser tests taken from
-    * apps that (hopefully) already checked the number of coords.
-    */
-   state->Const.MaxTextureCoords = 4;
-
-   state->Const.MaxVertexAttribs = 16;
-   state->Const.MaxVertexUniformComponents = 512;
-   state->Const.MaxVaryingFloats = 32;
-   state->Const.MaxVertexTextureImageUnits = 0;
-   state->Const.MaxCombinedTextureImageUnits = 2;
-   state->Const.MaxTextureImageUnits = 2;
-   state->Const.MaxFragmentUniformComponents = 64;
-
-   state->Const.MaxDrawBuffers = 2;
+   struct _mesa_glsl_parse_state *state =
+      new(shader) _mesa_glsl_parse_state(NULL, shader->Type, shader);
 
    const char *source = shader->Source;
-   state->error = preprocess(state, &source, &state->info_log, &ext);
+   state->error = preprocess(state, &source, &state->info_log,
+			     state->extensions);
 
    if (!state->error) {
       _mesa_glsl_lexer_ctor(state, source);

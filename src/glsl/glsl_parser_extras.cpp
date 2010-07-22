@@ -68,10 +68,33 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct __GLcontextRec *ctx,
 
       this->Const.MaxDrawBuffers = ctx->Const.MaxDrawBuffers;
    } else {
+      /* If there is no GL context (standalone compiler), fill in constants
+       * with the minimum required values.
+       */
       static struct gl_extensions null_extensions;
 
       memset(&null_extensions, 0, sizeof(null_extensions));
       this->extensions = &null_extensions;
+
+      /* 1.10 minimums. */
+      this->Const.MaxLights = 8;
+      this->Const.MaxClipPlanes = 8;
+      this->Const.MaxTextureUnits = 2;
+
+      /* More than the 1.10 minimum to appease parser tests taken from
+       * apps that (hopefully) already checked the number of coords.
+       */
+      this->Const.MaxTextureCoords = 4;
+
+      this->Const.MaxVertexAttribs = 16;
+      this->Const.MaxVertexUniformComponents = 512;
+      this->Const.MaxVaryingFloats = 32;
+      this->Const.MaxVertexTextureImageUnits = 0;
+      this->Const.MaxCombinedTextureImageUnits = 2;
+      this->Const.MaxTextureImageUnits = 2;
+      this->Const.MaxFragmentUniformComponents = 64;
+
+      this->Const.MaxDrawBuffers = 2;
    }
 }
 
