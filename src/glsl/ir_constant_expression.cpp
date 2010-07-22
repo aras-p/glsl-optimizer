@@ -925,7 +925,7 @@ ir_call::constant_expression_value()
    } else if (strcmp(callee, "inversesqrt") == 0) {
       expr = new(mem_ctx) ir_expression(ir_unop_rsq, type, op[0], NULL);
    } else if (strcmp(callee, "length") == 0) {
-      return NULL; /* FINISHME: implement this */
+      return new(mem_ctx) ir_constant(sqrtf(dot(op[0], op[0])));
    } else if (strcmp(callee, "lessThan") == 0) {
       assert(op[0]->type->is_vector() && op[1] && op[1]->type->is_vector());
       for (unsigned c = 0; c < op[0]->type->components(); c++) {
