@@ -1885,19 +1885,29 @@ print_program(struct prog_instruction *mesa_instructions,
 {
    ir_instruction *last_ir = NULL;
    int i;
+   int indent = 0;
 
    for (i = 0; i < num_instructions; i++) {
       struct prog_instruction *mesa_inst = mesa_instructions + i;
       ir_instruction *ir = mesa_instruction_annotation[i];
 
+      fprintf(stdout, "%3d: ", i);
+
       if (last_ir != ir && ir) {
-	 ir_print_visitor print;
-	 ir->accept(&print);
+	 int j;
+
+	 for (j = 0; j < indent; j++) {
+	    fprintf(stdout, " ");
+	 }
+	 ir->print();
 	 printf("\n");
 	 last_ir = ir;
+
+	 fprintf(stdout, "     "); /* line number spacing. */
       }
 
-      _mesa_print_instruction(mesa_inst);
+      indent = _mesa_fprint_instruction_opt(stdout, mesa_inst, indent,
+					    PROG_PRINT_DEBUG, NULL);
    }
 }
 
