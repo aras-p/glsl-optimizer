@@ -854,7 +854,13 @@ ir_call::constant_expression_value()
       for (unsigned c = 0; c < op[0]->type->components(); c++)
 	 data.f[c] = 180.0/M_PI * op[0]->value.f[c];
    } else if (strcmp(callee, "distance") == 0) {
-      return NULL; /* FINISHME: implement this */
+      assert(op[0]->type->is_float() && op[1]->type->is_float());
+      float length_squared = 0.0;
+      for (unsigned c = 0; c < op[0]->type->components(); c++) {
+	 float t = op[0]->value.f[c] - op[1]->value.f[c];
+	 length_squared += t * t;
+      }
+      return new(mem_ctx) ir_constant(sqrtf(length_squared));
    } else if (strcmp(callee, "dot") == 0) {
       expr = new(mem_ctx) ir_expression(ir_binop_dot, type, op[0], op[1]);
    } else if (strcmp(callee, "equal") == 0) {
