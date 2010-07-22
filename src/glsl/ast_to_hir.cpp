@@ -898,7 +898,7 @@ ast_expression::hir(exec_list *instructions,
 	 ir_if *const stmt = new(ctx) ir_if(op[0]);
 	 instructions->push_tail(stmt);
 
-	 op[1] = this->subexpressions[1]->hir(&stmt->then_instructions, state);
+	 op[1] = this->subexpressions[1]->hir(&stmt->else_instructions, state);
 
 	 if (!op[1]->type->is_boolean() || !op[1]->type->is_scalar()) {
 	    YYLTYPE loc = this->subexpressions[1]->get_location();
