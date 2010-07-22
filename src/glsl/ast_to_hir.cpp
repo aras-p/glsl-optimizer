@@ -531,6 +531,7 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
 
 	 var->type = glsl_type::get_array_instance(lhs->type->element_type(),
 						   rhs->type->array_size());
+	 d->type = var->type;
       }
    }
 
