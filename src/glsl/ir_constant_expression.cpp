@@ -965,7 +965,9 @@ ir_call::constant_expression_value()
    } else if (strcmp(callee, "log2") == 0) {
       expr = new(mem_ctx) ir_expression(ir_unop_log2, type, op[0], NULL);
    } else if (strcmp(callee, "matrixCompMult") == 0) {
-      return NULL; /* FINISHME: implement this */
+      assert(op[0]->type->is_float() && op[1]->type->is_float());
+      for (unsigned c = 0; c < op[0]->type->components(); c++)
+	 data.f[c] = op[0]->value.f[c] * op[1]->value.f[c];
    } else if (strcmp(callee, "max") == 0) {
       expr = new(mem_ctx) ir_expression(ir_binop_max, type, op[0], op[1]);
    } else if (strcmp(callee, "min") == 0) {
