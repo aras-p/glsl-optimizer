@@ -2308,6 +2308,16 @@ ast_jump_statement::hir(exec_list *instructions,
       } else {
 	 ir_loop *const loop = state->loop_or_switch_nesting->as_loop();
 
+	 /* Inline the for loop expression again, since we don't know
+	  * where near the end of the loop body the normal copy of it
+	  * is going to be placed.
+	  */
+	 if (mode == ast_continue &&
+	     state->loop_or_switch_nesting_ast->rest_expression) {
+	    state->loop_or_switch_nesting_ast->rest_expression->hir(instructions,
+								    state);
+	 }
+
 	 if (loop != NULL) {
 	    ir_loop_jump *const jump =
 	       new(ctx) ir_loop_jump((mode == ast_break)
@@ -2422,7 +2432,10 @@ ast_iteration_statement::hir(exec_list *instructions,
    /* Track the current loop and / or switch-statement nesting.
     */
    ir_instruction *const nesting = state->loop_or_switch_nesting;
+   ast_iteration_statement *nesting_ast = state->loop_or_switch_nesting_ast;
+
    state->loop_or_switch_nesting = stmt;
+   state->loop_or_switch_nesting_ast = this;
 
    if (mode != ast_do_while)
       condition_to_hir(stmt, state);
@@ -2442,6 +2455,7 @@ ast_iteration_statement::hir(exec_list *instructions,
    /* Restore previous nesting before returning.
     */
    state->loop_or_switch_nesting = nesting;
+   state->loop_or_switch_nesting_ast = nesting_ast;
 
    /* Loops do not have r-values.
     */

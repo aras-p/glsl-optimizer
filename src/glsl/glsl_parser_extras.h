@@ -104,6 +104,7 @@ struct _mesa_glsl_parse_state {
 
    /** Loop or switch statement containing the current instructions. */
    class ir_instruction *loop_or_switch_nesting;
+   class ast_iteration_statement *loop_or_switch_nesting_ast;
 
    /** List of structures defined in user code. */
    const glsl_type **user_structures;
