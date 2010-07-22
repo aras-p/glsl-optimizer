@@ -811,7 +811,12 @@ ir_call::constant_expression_value()
       }
       return new(mem_ctx) ir_constant(true);
    } else if (strcmp(callee, "any") == 0) {
-      return NULL; /* FINISHME: implement this */
+      assert(op[0]->type->is_boolean());
+      for (unsigned c = 0; c < op[0]->type->components(); c++) {
+	 if (op[0]->value.b[c])
+	    return new(mem_ctx) ir_constant(true);
+      }
+      return new(mem_ctx) ir_constant(false);
    } else if (strcmp(callee, "asin") == 0) {
       return NULL; /* FINISHME: implement this */
    } else if (strcmp(callee, "atan") == 0) {
