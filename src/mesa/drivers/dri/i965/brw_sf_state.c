@@ -130,7 +130,7 @@ struct brw_sf_unit_key {
    unsigned scissor:1;
    unsigned line_smooth:1;
    unsigned point_sprite:1;
-   unsigned point_attenuated:1;
+   unsigned use_vs_point_size:1;
    unsigned render_to_fbo:1;
    float line_width;
    float point_size;
@@ -164,7 +164,8 @@ sf_unit_populate_key(struct brw_context *brw, struct brw_sf_unit_key *key)
 
    key->point_sprite = ctx->Point.PointSprite;
    key->point_size = CLAMP(ctx->Point.Size, ctx->Point.MinSize, ctx->Point.MaxSize);
-   key->point_attenuated = ctx->Point._Attenuated;
+   key->use_vs_point_size = (ctx->VertexProgram.PointSizeEnabled ||
+			     ctx->Point._Attenuated);
 
    /* _NEW_LIGHT */
    key->pv_first = (ctx->Light.ProvokingVertex == GL_FIRST_VERTEX_CONVENTION);
@@ -296,7 +297,7 @@ sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
    /* _NEW_POINT */
    sf.sf7.sprite_point = key->point_sprite;
    sf.sf7.point_size = CLAMP(rint(key->point_size), 1, 255) * (1<<3);
-   sf.sf7.use_point_size_state = !key->point_attenuated;
+   sf.sf7.use_point_size_state = !key->use_vs_point_size;
    sf.sf7.aa_line_distance_mode = 0;
 
    /* might be BRW_NEW_PRIMITIVE if we have to adjust pv for polygons:
