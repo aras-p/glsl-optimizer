@@ -1096,7 +1096,14 @@ ir_call::constant_expression_value()
       for (unsigned c = 0; c < op[0]->type->components(); c++)
 	 data.f[c] = tanhf(op[0]->value.f[c]);
    } else if (strcmp(callee, "transpose") == 0) {
-      return NULL; /* FINISHME: implement this */
+      assert(op[0]->type->is_matrix());
+      const unsigned n = op[0]->type->vector_elements;
+      const unsigned m = op[0]->type->matrix_columns;
+      for (unsigned j = 0; j < m; j++) {
+	 for (unsigned i = 0; i < n; i++) {
+	    data.f[m*i+j] += op[0]->value.f[i+n*j];
+	 }
+      }
    } else {
       /* Unsupported builtin - some are not allowed in constant expressions. */
       return NULL;
