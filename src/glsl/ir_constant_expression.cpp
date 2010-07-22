@@ -926,7 +926,9 @@ ir_call::constant_expression_value()
    } else if (strcmp(callee, "step") == 0) {
       return NULL; /* FINISHME: implement this */
    } else if (strcmp(callee, "tan") == 0) {
-      return NULL; /* FINISHME: implement this */
+      assert(op[0]->type->is_float());
+      for (unsigned c = 0; c < op[0]->type->components(); c++)
+	 data.f[c] = tanf(op[0]->value.f[c]);
    } else if (strcmp(callee, "tanh") == 0) {
       return NULL; /* FINISHME: implement this */
    } else if (strcmp(callee, "transpose") == 0) {
