@@ -1018,7 +1018,17 @@ ir_call::constant_expression_value()
       for (unsigned c = 0; c < op[0]->type->components(); c++)
 	 data.f[c] = op[0]->value.f[c] - 2 * dot_NI * op[1]->value.f[c];
    } else if (strcmp(callee, "refract") == 0) {
-      return NULL; /* FINISHME: implement this */
+      const float eta = op[2]->value.f[0];
+      const float dot_NI = dot(op[1], op[0]);
+      const float k = 1.0 - eta * eta * (1.0 - dot_NI * dot_NI);
+      if (k < 0.0) {
+	 return ir_constant::zero(mem_ctx, this->type);
+      } else {
+	 for (unsigned c = 0; c < type->components(); c++) {
+	    data.f[c] = eta * op[0]->value.f[c] - (eta * dot_NI + sqrtf(k))
+			    * op[1]->value.f[c];
+	 }
+      }
    } else if (strcmp(callee, "sign") == 0) {
       expr = new(mem_ctx) ir_expression(ir_unop_sign, type, op[0], NULL);
    } else if (strcmp(callee, "sin") == 0) {
