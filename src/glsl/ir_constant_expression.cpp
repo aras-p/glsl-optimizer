@@ -977,7 +977,14 @@ ir_call::constant_expression_value()
    } else if (strcmp(callee, "mod") == 0) {
       expr = new(mem_ctx) ir_expression(ir_binop_mod, type, op[0], op[1]);
    } else if (strcmp(callee, "normalize") == 0) {
-      return NULL; /* FINISHME: implement this */
+      assert(op[0]->type->is_float());
+      float length = sqrtf(dot(op[0], op[0]));
+
+      if (length == 0)
+	 return ir_constant::zero(mem_ctx, this->type);
+
+      for (unsigned c = 0; c < op[0]->type->components(); c++)
+	 data.f[c] = op[0]->value.f[c] / length;
    } else if (strcmp(callee, "not") == 0) {
       expr = new(mem_ctx) ir_expression(ir_unop_logic_not, type, op[0], NULL);
    } else if (strcmp(callee, "notEqual") == 0) {
