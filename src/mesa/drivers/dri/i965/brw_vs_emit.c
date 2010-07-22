@@ -972,7 +972,7 @@ static struct brw_reg deref( struct brw_vs_compile *c,
    struct brw_reg tmp = vec4(get_tmp(c));
    struct brw_reg addr_reg = c->regs[PROGRAM_ADDRESS][0];
    struct brw_reg vp_address = retype(vec1(addr_reg), BRW_REGISTER_TYPE_UW);
-   GLuint byte_offset = arg.nr * 32 + arg.subnr + offset * 16;
+   GLuint byte_offset = arg.nr * 32 + arg.subnr + offset * reg_size;
    struct brw_reg indirect = brw_vec4_indirect(0,0);
    struct brw_reg acc = retype(brw_acc_reg(), BRW_REGISTER_TYPE_D);
 
