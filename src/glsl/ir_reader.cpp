@@ -357,6 +357,8 @@ read_instruction(_mesa_glsl_parse_state *st, s_expression *expr,
    ir_instruction *inst = NULL;
    if (strcmp(tag->value(), "declare") == 0) {
       inst = read_declaration(st, list);
+   } else if (strcmp(tag->value(), "assign") == 0) {
+      inst = read_assignment(st, list);
    } else if (strcmp(tag->value(), "if") == 0) {
       inst = read_if(st, list, loop_ctx);
    } else if (strcmp(tag->value(), "loop") == 0) {
@@ -546,8 +548,6 @@ read_rvalue(_mesa_glsl_parse_state *st, s_expression *expr)
       return rvalue;
    else if (strcmp(tag->value(), "swiz") == 0) {
       rvalue = read_swizzle(st, list);
-   } else if (strcmp(tag->value(), "assign") == 0) {
-      rvalue = read_assignment(st, list);
    } else if (strcmp(tag->value(), "expression") == 0) {
       rvalue = read_expression(st, list);
    } else if (strcmp(tag->value(), "call") == 0) {
