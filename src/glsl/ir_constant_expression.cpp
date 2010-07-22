@@ -39,6 +39,18 @@
 #include "ir_visitor.h"
 #include "glsl_types.h"
 
+static float
+dot(ir_constant *op0, ir_constant *op1)
+{
+   assert(op0->type->is_float() && op1->type->is_float());
+
+   float result = 0;
+   for (unsigned c = 0; c < op0->type->components(); c++)
+      result += op0->value.f[c] * op1->value.f[c];
+
+   return result;
+}
+
 ir_constant *
 ir_expression::constant_expression_value()
 {
@@ -326,14 +338,9 @@ ir_expression::constant_expression_value()
       break;
 
    case ir_binop_dot:
-      assert(op[0]->type->is_vector() && op[1]->type->is_vector());
-      assert(op[0]->type->is_float() && op[1]->type->is_float());
-      data.f[0] = 0;
-      for (unsigned c = 0; c < op[0]->type->components(); c++) {
-	 data.f[0] += op[0]->value.f[c] * op[1]->value.f[c];
-      }
-
+      data.f[0] = dot(op[0], op[1]);
       break;
+
    case ir_binop_min:
       assert(op[0]->type == op[1]->type || op0_scalar || op1_scalar);
       for (unsigned c = 0, c0 = 0, c1 = 0;
