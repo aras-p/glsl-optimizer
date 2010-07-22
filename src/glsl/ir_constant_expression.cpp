@@ -818,7 +818,9 @@ ir_call::constant_expression_value()
       }
       return new(mem_ctx) ir_constant(false);
    } else if (strcmp(callee, "asin") == 0) {
-      return NULL; /* FINISHME: implement this */
+      assert(op[0]->type->is_float());
+      for (unsigned c = 0; c < op[0]->type->components(); c++)
+	 data.f[c] = asinf(op[0]->value.f[c]);
    } else if (strcmp(callee, "atan") == 0) {
       return NULL; /* FINISHME: implement this */
    } else if (strcmp(callee, "dFdx") == 0 || strcmp(callee, "dFdy") == 0) {
