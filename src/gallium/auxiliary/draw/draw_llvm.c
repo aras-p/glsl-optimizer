@@ -238,9 +238,22 @@ draw_llvm_create(struct draw_context *draw)
       /* These are the passes currently listed in llvm-c/Transforms/Scalar.h,
        * but there are more on SVN. */
       /* TODO: Add more passes */
+
       LLVMAddCFGSimplificationPass(llvm->pass);
-      LLVMAddPromoteMemoryToRegisterPass(llvm->pass);
-      LLVMAddConstantPropagationPass(llvm->pass);
+
+      if (HAVE_LLVM >= 0x207 && sizeof(void*) == 4) {
+         /* For LLVM >= 2.7 and 32-bit build, use this order of passes to
+          * avoid generating bad code.
+          * Test with piglit glsl-vs-sqrt-zero test.
+          */
+         LLVMAddConstantPropagationPass(llvm->pass);
+         LLVMAddPromoteMemoryToRegisterPass(llvm->pass);
+      }
+      else {
+         LLVMAddPromoteMemoryToRegisterPass(llvm->pass);
+         LLVMAddConstantPropagationPass(llvm->pass);
+      }
+
       if(util_cpu_caps.has_sse4_1) {
          /* FIXME: There is a bug in this pass, whereby the combination of fptosi
           * and sitofp (necessary for trunc/floor/ceil/round implementation)
