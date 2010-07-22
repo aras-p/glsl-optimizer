@@ -1075,7 +1075,7 @@ _token_list_create_with_one_space (void *ctx)
  *
  * Returns the token list that results from the expansion and sets
  * *last to the last node in the list that was consumed by the
- * expansion. Specificallty, *last will be set as follows: as the
+ * expansion. Specifically, *last will be set as follows: as the
  * token of the closing right parenthesis.
  */
 static token_list_t *
@@ -1147,9 +1147,13 @@ _glcpp_parser_expand_function (glcpp_parser_t *parser,
 			 * tokens, or append a placeholder token for
 			 * an empty argument. */
 			if (argument->head) {
+				token_list_t *expanded_argument;
+				expanded_argument = _token_list_copy (parser,
+								      argument);
 				_glcpp_parser_expand_token_list (parser,
-								 argument);
-				_token_list_append_list (substituted, argument);
+								 expanded_argument);
+				_token_list_append_list (substituted,
+							 expanded_argument);
 			} else {
 				token_t *new_token;
 
