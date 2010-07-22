@@ -1151,7 +1151,10 @@ ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
    src_reg.file = entry->file;
    src_reg.index = entry->index;
    /* If the type is smaller than a vec4, replicate the last channel out. */
-   src_reg.swizzle = swizzle_for_size(ir->var->type->vector_elements);
+   if (ir->type->is_scalar() || ir->type->is_vector())
+      src_reg.swizzle = swizzle_for_size(ir->var->type->vector_elements);
+   else
+      src_reg.swizzle = SWIZZLE_NOOP;
    src_reg.reladdr = NULL;
    src_reg.negate = 0;
 
@@ -1231,7 +1234,10 @@ ir_to_mesa_visitor::visit(ir_dereference_array *ir)
    }
 
    /* If the type is smaller than a vec4, replicate the last channel out. */
-   src_reg.swizzle = swizzle_for_size(ir->type->vector_elements);
+   if (ir->type->is_scalar() || ir->type->is_vector())
+      src_reg.swizzle = swizzle_for_size(ir->type->vector_elements);
+   else
+      src_reg.swizzle = SWIZZLE_NOOP;
 
    this->result = src_reg;
 }
@@ -1250,6 +1256,7 @@ ir_to_mesa_visitor::visit(ir_dereference_record *ir)
 	 break;
       offset += type_size(struct_type->fields.structure[i].type);
    }
+   this->result.swizzle = swizzle_for_size(ir->type->vector_elements);
    this->result.index += offset;
 }
 
@@ -1322,7 +1329,6 @@ ir_to_mesa_visitor::visit(ir_assignment *ir)
    int i;
 
    assert(!ir->lhs->type->is_array());
-   assert(ir->lhs->type->base_type != GLSL_TYPE_STRUCT);
 
    ir->rhs->accept(this);
    r = this->result;
