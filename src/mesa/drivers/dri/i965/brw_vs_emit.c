@@ -969,34 +969,35 @@ static struct brw_reg deref( struct brw_vs_compile *c,
 			     GLuint reg_size )
 {
    struct brw_compile *p = &c->func;
-   struct brw_reg tmp = vec4(get_tmp(c));
+   struct brw_reg tmp = get_tmp(c);
    struct brw_reg addr_reg = c->regs[PROGRAM_ADDRESS][0];
-   struct brw_reg vp_address = retype(vec1(addr_reg), BRW_REGISTER_TYPE_UW);
+   struct brw_reg vp_address = retype(vec1(addr_reg), BRW_REGISTER_TYPE_D);
    GLuint byte_offset = arg.nr * 32 + arg.subnr + offset * reg_size;
    struct brw_reg indirect = brw_vec4_indirect(0,0);
-   struct brw_reg acc = retype(brw_acc_reg(), BRW_REGISTER_TYPE_D);
+   struct brw_reg acc = retype(vec1(get_tmp(c)), BRW_REGISTER_TYPE_UW);
+
+   /* Set the vertical stride on the register access so that the first
+    * 4 components come from a0.0 and the second 4 from a0.1.
+    */
+   indirect.vstride = BRW_VERTICAL_STRIDE_ONE_DIMENSIONAL;
 
    {
       brw_push_insn_state(p);
       brw_set_access_mode(p, BRW_ALIGN_1);
 
-      /* This is pretty clunky - load the address register twice and
-       * fetch each 4-dword value in turn.  There must be a way to do
-       * this in a single pass, but I couldn't get it to work.
-       */
-      brw_MUL(p, acc, vp_address, brw_imm_d(reg_size));
-      brw_ADD(p, brw_address_reg(0), acc, brw_imm_d(byte_offset));
-      brw_MOV(p, tmp, indirect);
+      brw_MUL(p, acc, vp_address, brw_imm_uw(reg_size));
+      brw_ADD(p, brw_address_reg(0), acc, brw_imm_uw(byte_offset));
 
-      brw_MUL(p, acc, suboffset(vp_address, 8), brw_imm_d(reg_size));
-      brw_ADD(p, brw_address_reg(0), acc, brw_imm_d(byte_offset));
-      brw_MOV(p, suboffset(tmp, 4), indirect);
+      brw_MUL(p, acc, suboffset(vp_address, 4), brw_imm_uw(reg_size));
+      brw_ADD(p, brw_address_reg(1), acc, brw_imm_uw(byte_offset));
+
+      brw_MOV(p, tmp, indirect);
 
       brw_pop_insn_state(p);
    }
-   
+
    /* NOTE: tmp not released */
-   return vec8(tmp);
+   return tmp;
 }
 
 
