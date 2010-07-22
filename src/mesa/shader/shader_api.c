@@ -1380,9 +1380,9 @@ _mesa_validate_program(GLcontext *ctx, GLuint program)
    if (!shProg->Validated) {
       /* update info log */
       if (shProg->InfoLog) {
-         free(shProg->InfoLog);
+         talloc_free(shProg->InfoLog);
       }
-      shProg->InfoLog = _mesa_strdup(errMsg);
+      shProg->InfoLog = talloc_strdup(shProg, errMsg);
    }
 }
 
