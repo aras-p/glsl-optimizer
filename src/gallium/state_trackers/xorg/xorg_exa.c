@@ -881,7 +881,6 @@ ExaModifyPixmapHeader(PixmapPtr pPixmap, int width, int height,
 
 	if (priv->tex) {
 	    struct pipe_subresource subdst, subsrc;
-	    struct pipe_surface *src_surf;
 
 	    subdst.face = 0;
 	    subdst.level = 0;

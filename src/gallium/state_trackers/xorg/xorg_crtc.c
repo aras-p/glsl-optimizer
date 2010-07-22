@@ -94,7 +94,8 @@ crtc_set_mode_major(xf86CrtcPtr crtc, DisplayModePtr mode,
     struct crtc_private *crtcp = crtc->driver_private;
     drmModeCrtcPtr drm_crtc = crtcp->drm_crtc;
     drmModeModeInfo drm_mode;
-    int i, ret, connector_id;
+    int i, ret;
+    unsigned int connector_id;
 
     for (i = 0; i < config->num_output; output = NULL, i++) {
 	output = config->output[i];
