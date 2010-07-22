@@ -106,6 +106,7 @@ protected:
    ir_instruction()
    {
       ir_type = ir_type_unset;
+      type = NULL;
    }
 };
 
@@ -150,10 +151,7 @@ public:
    }
 
 protected:
-   ir_rvalue()
-   {
-      /* empty */
-   }
+   ir_rvalue();
 };
 
 

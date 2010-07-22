@@ -26,6 +26,11 @@
 #include "ir_visitor.h"
 #include "glsl_types.h"
 
+ir_rvalue::ir_rvalue()
+{
+   this->type = glsl_type::error_type;
+}
+
 ir_assignment::ir_assignment(ir_rvalue *lhs, ir_rvalue *rhs,
 			     ir_rvalue *condition)
 {
