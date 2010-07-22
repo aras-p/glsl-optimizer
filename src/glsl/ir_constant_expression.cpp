@@ -34,12 +34,10 @@
  */
 
 #include <math.h>
+#include "main/macros.h"
 #include "ir.h"
 #include "ir_visitor.h"
 #include "glsl_types.h"
-
-#define min(x,y) (x) < (y) ? (x) : (y)
-#define max(x,y) (x) > (y) ? (x) : (y)
 
 ir_constant *
 ir_expression::constant_expression_value()
@@ -355,13 +353,13 @@ ir_expression::constant_expression_value()
 
 	 switch (op[0]->type->base_type) {
 	 case GLSL_TYPE_UINT:
-	    data.u[c] = min(op[0]->value.u[c0], op[1]->value.u[c1]);
+	    data.u[c] = MIN2(op[0]->value.u[c0], op[1]->value.u[c1]);
 	    break;
 	 case GLSL_TYPE_INT:
-	    data.i[c] = min(op[0]->value.i[c0], op[1]->value.i[c1]);
+	    data.i[c] = MIN2(op[0]->value.i[c0], op[1]->value.i[c1]);
 	    break;
 	 case GLSL_TYPE_FLOAT:
-	    data.f[c] = min(op[0]->value.f[c0], op[1]->value.f[c1]);
+	    data.f[c] = MIN2(op[0]->value.f[c0], op[1]->value.f[c1]);
 	    break;
 	 default:
 	    assert(0);
@@ -377,13 +375,13 @@ ir_expression::constant_expression_value()
 
 	 switch (op[0]->type->base_type) {
 	 case GLSL_TYPE_UINT:
-	    data.u[c] = max(op[0]->value.u[c0], op[1]->value.u[c1]);
+	    data.u[c] = MAX2(op[0]->value.u[c0], op[1]->value.u[c1]);
 	    break;
 	 case GLSL_TYPE_INT:
-	    data.i[c] = max(op[0]->value.i[c0], op[1]->value.i[c1]);
+	    data.i[c] = MAX2(op[0]->value.i[c0], op[1]->value.i[c1]);
 	    break;
 	 case GLSL_TYPE_FLOAT:
-	    data.f[c] = max(op[0]->value.f[c0], op[1]->value.f[c1]);
+	    data.f[c] = MAX2(op[0]->value.f[c0], op[1]->value.f[c1]);
 	    break;
 	 default:
 	    assert(0);
