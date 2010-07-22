@@ -2030,12 +2030,21 @@ get_mesa_program(GLcontext *ctx, struct gl_shader_program *shader_program,
    int i;
    struct gl_program *prog;
    GLenum target;
+   const char *target_string;
    GLboolean progress;
 
    switch (shader->Type) {
-   case GL_VERTEX_SHADER:   target = GL_VERTEX_PROGRAM_ARB; break;
-   case GL_FRAGMENT_SHADER: target = GL_FRAGMENT_PROGRAM_ARB; break;
-   default: assert(!"should not be reached"); break;
+   case GL_VERTEX_SHADER:
+      target = GL_VERTEX_PROGRAM_ARB;
+      target_string = "vertex";
+      break;
+   case GL_FRAGMENT_SHADER:
+      target = GL_FRAGMENT_PROGRAM_ARB;
+      target_string = "fragment";
+      break;
+   default:
+      assert(!"should not be reached");
+      break;
    }
 
    validate_ir_tree(shader->ir);
@@ -2127,7 +2136,8 @@ get_mesa_program(GLcontext *ctx, struct gl_shader_program *shader_program,
    }
 
    set_branchtargets(&v, mesa_instructions, num_instructions);
-   if (0) {
+   if (ctx->Shader.Flags & GLSL_DUMP) {
+      printf("Mesa %s program:\n", target_string);
       print_program(mesa_instructions, mesa_instruction_annotation,
 		    num_instructions);
    }
