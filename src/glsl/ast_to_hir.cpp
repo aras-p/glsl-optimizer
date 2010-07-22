@@ -282,8 +282,17 @@ arithmetic_result_type(ir_rvalue * &value_a, ir_rvalue * &value_b,
 	  * means the vector type of a row from A must be the same as the
 	  * vector the type of B.
 	  */
-	 if (type_a->row_type() == type_b)
-	    return type_b;
+	 if (type_a->row_type() == type_b) {
+	    /* The resulting vector has a number of elements equal to
+	     * the number of rows of matrix A. */
+	    const glsl_type *const type =
+	       glsl_type::get_instance(type_a->base_type,
+				       type_a->column_type()->vector_elements,
+				       1);
+	    assert(type != glsl_type::error_type);
+
+	    return type;
+	 }
       } else {
 	 assert(type_b->is_matrix());
 
@@ -292,8 +301,17 @@ arithmetic_result_type(ir_rvalue * &value_a, ir_rvalue * &value_b,
 	  * the type of A must be the same as the vector type of a column from
 	  * B.
 	  */
-	 if (type_a == type_b->column_type())
-	    return type_a;
+	 if (type_a == type_b->column_type()) {
+	    /* The resulting vector has a number of elements equal to
+	     * the number of columns of matrix B. */
+	    const glsl_type *const type =
+	       glsl_type::get_instance(type_a->base_type,
+				       type_b->row_type()->vector_elements,
+				       1);
+	    assert(type != glsl_type::error_type);
+
+	    return type;
+	 }
       }
 
       _mesa_glsl_error(loc, state, "size mismatch for matrix multiplication");
