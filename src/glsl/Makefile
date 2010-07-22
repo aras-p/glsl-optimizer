@@ -81,6 +81,10 @@ GLSL2_OBJECTS = \
 
 ### Basic defines ###
 
+DEFINES = \
+	$(LIBRARY_DEFINES) \
+	$(API_DEFINES)
+
 GLCPP_OBJECTS = \
 	$(GLCPP_SOURCES:.c=.o) \
 	../mesa/shader/hash_table.o
@@ -134,10 +138,10 @@ glcpp/glcpp: $(GLCPP_OBJECTS) libglsl.a
 	$(APP_CC) $(INCLUDES) $(CFLAGS) $(LDFLAGS) $(GLCPP_OBJECTS) $(LIBS) -o $@
 
 .cpp.o:
-	$(CXX) -c $(INCLUDES) $(CXXFLAGS) $(LIBRARY_DEFINES) $< -o $@
+	$(CXX) -c $(INCLUDES) $(CXXFLAGS) $(DEFINES) $< -o $@
 
 .c.o:
-	$(CC) -c $(INCLUDES) $(CFLAGS) $(LIBRARY_DEFINES) $< -o $@
+	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
 
 glsl_lexer.cpp: glsl_lexer.lpp
 	flex --never-interactive --outfile="$@"  $<
