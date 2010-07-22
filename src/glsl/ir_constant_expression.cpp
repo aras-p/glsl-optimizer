@@ -916,7 +916,9 @@ ir_call::constant_expression_value()
    } else if (strcmp(callee, "sin") == 0) {
       expr = new(mem_ctx) ir_expression(ir_unop_sin, type, op[0], NULL);
    } else if (strcmp(callee, "sinh") == 0) {
-      return NULL; /* FINISHME: implement this */
+      assert(op[0]->type->is_float());
+      for (unsigned c = 0; c < op[0]->type->components(); c++)
+	 data.f[c] = sinhf(op[0]->value.f[c]);
    } else if (strcmp(callee, "smoothstep") == 0) {
       return NULL; /* FINISHME: implement this */
    } else if (strcmp(callee, "sqrt") == 0) {
