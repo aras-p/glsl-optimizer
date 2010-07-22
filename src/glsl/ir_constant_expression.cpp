@@ -1013,7 +1013,10 @@ ir_call::constant_expression_value()
       for (unsigned c = 0; c < op[0]->type->components(); c++)
 	 data.f[c] = M_PI/180.0 * op[0]->value.f[c];
    } else if (strcmp(callee, "reflect") == 0) {
-      return NULL; /* FINISHME: implement this */
+      assert(op[0]->type->is_float());
+      float dot_NI = dot(op[1], op[0]);
+      for (unsigned c = 0; c < op[0]->type->components(); c++)
+	 data.f[c] = op[0]->value.f[c] - 2 * dot_NI * op[1]->value.f[c];
    } else if (strcmp(callee, "refract") == 0) {
       return NULL; /* FINISHME: implement this */
    } else if (strcmp(callee, "sign") == 0) {
