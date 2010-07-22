@@ -210,6 +210,7 @@ ir_texture::clone(struct hash_table *ht) const
 {
    void *ctx = talloc_parent(this);
    ir_texture *new_tex = new(ctx) ir_texture(this->op);
+   new_tex->type = this->type;
 
    new_tex->sampler = this->sampler->clone(ht);
    new_tex->coordinate = this->coordinate->clone(ht);
