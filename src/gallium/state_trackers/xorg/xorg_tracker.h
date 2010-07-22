@@ -76,7 +76,8 @@ typedef struct _CustomizerRec
     Bool dirty_throttling;
     Bool swap_throttling;
     Bool no_3d;
-    Bool (*winsys_screen_init)(struct _CustomizerRec *cust, int fd);
+    Bool (*winsys_pre_init) (struct _CustomizerRec *cust, int fd);
+    Bool (*winsys_screen_init)(struct _CustomizerRec *cust);
     Bool (*winsys_screen_close)(struct _CustomizerRec *cust);
     Bool (*winsys_enter_vt)(struct _CustomizerRec *cust);
     Bool (*winsys_leave_vt)(struct _CustomizerRec *cust);

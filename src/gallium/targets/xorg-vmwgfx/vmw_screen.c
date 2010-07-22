@@ -111,13 +111,22 @@ vmw_context_no_throttle(CustomizerPtr cust,
 }
 
 static Bool
-vmw_screen_init(CustomizerPtr cust, int fd)
+vmw_pre_init(CustomizerPtr cust, int fd)
+{
+    struct vmw_customizer *vmw = vmw_customizer(cust);
+
+    vmw->fd = fd;
+
+    return TRUE;
+}
+
+static Bool
+vmw_screen_init(CustomizerPtr cust)
 {
     struct vmw_customizer *vmw = vmw_customizer(cust);
     drmVersionPtr ver;
 
-    vmw->fd = fd;
-    ver = drmGetVersion(fd);
+    ver = drmGetVersion(vmw->fd);
     if (ver == NULL ||
 	(ver->version_major == 1 && ver->version_minor < 1)) {
 	cust->swap_throttling = TRUE;
@@ -199,6 +208,7 @@ vmw_screen_pre_init(ScrnInfoPtr pScrn, int flags)
 
     cust = &vmw->base;
 
+    cust->winsys_pre_init = vmw_pre_init;
     cust->winsys_screen_init = vmw_screen_init;
     cust->winsys_screen_close = vmw_screen_close;
     cust->winsys_enter_vt = vmw_screen_enter_vt;

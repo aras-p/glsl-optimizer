@@ -480,6 +480,9 @@ drv_pre_init(ScrnInfoPtr pScrn, int flags)
     xorg_crtc_init(pScrn);
     xorg_output_init(pScrn);
 
+    if (cust && cust->winsys_pre_init && !cust->winsys_pre_init(cust, ms->fd))
+	return FALSE;
+
     if (!xf86InitialConfiguration(pScrn, TRUE)) {
 	xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "No valid modes.\n");
 	return FALSE;
@@ -739,7 +742,7 @@ drv_screen_init(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     ms->debug_fallback = xf86ReturnOptValBool(ms->Options, OPTION_DEBUG_FALLBACK, ms->accelerate_2d);
 
     if (cust && cust->winsys_screen_init)
-	cust->winsys_screen_init(cust, ms->fd);
+	cust->winsys_screen_init(cust);
 
     ms->swapThrottling = cust ?  cust->swap_throttling : TRUE;
     from_st = xf86GetOptValBool(ms->Options, OPTION_THROTTLE_SWAP,
