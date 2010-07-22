@@ -1045,7 +1045,11 @@ ir_call::constant_expression_value()
    } else if (strcmp(callee, "sqrt") == 0) {
       expr = new(mem_ctx) ir_expression(ir_unop_sqrt, type, op[0], NULL);
    } else if (strcmp(callee, "step") == 0) {
-      return NULL; /* FINISHME: implement this */
+      assert(op[0]->type->is_float() && op[1]->type->is_float());
+      /* op[0] (edge) may be either a scalar or a vector */
+      const unsigned c0_inc = op[0]->type->is_scalar() ? 0 : 1;
+      for (unsigned c = 0, c0 = 0; c < type->components(); c0 += c0_inc, c++)
+	 data.f[c] = (op[1]->value.f[c] < op[0]->value.f[c0]) ? 0.0 : 1.0;
    } else if (strcmp(callee, "tan") == 0) {
       assert(op[0]->type->is_float());
       for (unsigned c = 0; c < op[0]->type->components(); c++)
