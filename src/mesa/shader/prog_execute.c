@@ -1788,7 +1788,11 @@ _mesa_execute_program(GLcontext * ctx,
 
       numExec++;
       if (numExec > maxExec) {
-         _mesa_problem(ctx, "Infinite loop detected in fragment program");
+	 static GLboolean reported = GL_FALSE;
+	 if (!reported) {
+	    _mesa_problem(ctx, "Infinite loop detected in fragment program");
+	    reported = GL_TRUE;
+	 }
          return GL_TRUE;
       }
 
