@@ -817,6 +817,10 @@ ir_call::constant_expression_value()
 	    return new(mem_ctx) ir_constant(true);
       }
       return new(mem_ctx) ir_constant(false);
+   } else if (strcmp(callee, "acos") == 0) {
+      assert(op[0]->type->is_float());
+      for (unsigned c = 0; c < op[0]->type->components(); c++)
+	 data.f[c] = acosf(op[0]->value.f[c]);
    } else if (strcmp(callee, "asin") == 0) {
       assert(op[0]->type->is_float());
       for (unsigned c = 0; c < op[0]->type->components(); c++)
