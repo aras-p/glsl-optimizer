@@ -1290,6 +1290,60 @@ void brw_dp_READ_4_vs(struct brw_compile *p,
    }
 }
 
+/**
+ * Read a float[4] constant per vertex from VS constant buffer, with
+ * relative addressing.
+ */
+void brw_dp_READ_4_vs_relative(struct brw_compile *p,
+			       struct brw_reg dest,
+			       struct brw_reg addr_reg,
+			       GLuint offset,
+			       GLuint bind_table_index)
+{
+   struct intel_context *intel = &p->brw->intel;
+   int msg_type;
+
+   /* Setup MRF[1] with offset into const buffer */
+   brw_push_insn_state(p);
+   brw_set_compression_control(p, BRW_COMPRESSION_NONE);
+   brw_set_mask_control(p, BRW_MASK_DISABLE);
+   brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+
+   /* M1.0 is block offset 0, M1.4 is block offset 1, all other
+    * fields ignored.
+    */
+   brw_ADD(p, retype(brw_message_reg(1), BRW_REGISTER_TYPE_UD),
+	   addr_reg, brw_imm_d(offset));
+   brw_pop_insn_state(p);
+
+   struct brw_instruction *insn = next_insn(p, BRW_OPCODE_SEND);
+
+   insn->header.predicate_control = BRW_PREDICATE_NONE;
+   insn->header.compression_control = BRW_COMPRESSION_NONE;
+   insn->header.destreg__conditionalmod = 0;
+   insn->header.mask_control = BRW_MASK_DISABLE;
+
+   brw_set_dest(insn, dest);
+   brw_set_src0(insn, brw_vec8_grf(0, 0));
+
+   if (intel->gen == 6)
+      msg_type = GEN6_DATAPORT_READ_MESSAGE_OWORD_DUAL_BLOCK_READ;
+   else if (intel->gen == 5 || intel->is_g4x)
+      msg_type = G45_DATAPORT_READ_MESSAGE_OWORD_DUAL_BLOCK_READ;
+   else
+      msg_type = BRW_DATAPORT_READ_MESSAGE_OWORD_DUAL_BLOCK_READ;
+
+   brw_set_dp_read_message(p->brw,
+			   insn,
+			   bind_table_index,
+			   BRW_DATAPORT_OWORD_DUAL_BLOCK_1OWORD,
+			   msg_type,
+			   0, /* source cache = data cache */
+			   2, /* msg_length */
+			   1, /* response_length */
+			   0); /* eot */
+}
+
 
 
 void brw_fb_WRITE(struct brw_compile *p,

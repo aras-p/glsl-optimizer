@@ -901,7 +901,6 @@ get_reladdr_constant(struct brw_vs_compile *c,
    const struct prog_src_register *src = &inst->SrcReg[argIndex];
    struct brw_compile *p = &c->func;
    struct brw_reg const_reg = c->current_const[argIndex].reg;
-   struct brw_reg const2_reg;
    struct brw_reg addrReg = c->regs[PROGRAM_ADDRESS][0];
 
    assert(argIndex < 3);
@@ -915,36 +914,12 @@ get_reladdr_constant(struct brw_vs_compile *c,
 #endif
 
    /* fetch the first vec4 */
-   brw_dp_READ_4_vs(p,
-		    const_reg,                     /* writeback dest */
-		    0,                             /* oword */
-		    1,                             /* relative indexing? */
-		    addrReg,                       /* address register */
-		    16 * src->Index,               /* byte offset */
-		    SURF_INDEX_VERT_CONST_BUFFER   /* binding table index */
-		    );
-   /* second vec4 */
-   const2_reg = get_tmp(c);
-
-   /* use upper half of address reg for second read */
-   addrReg = stride(addrReg, 0, 4, 0);
-   addrReg.subnr = 16;
-
-   brw_dp_READ_4_vs(p,
-		    const2_reg,              /* writeback dest */
-		    1,                       /* oword */
-		    1,                       /* relative indexing? */
-		    addrReg,                 /* address register */
-		    16 * src->Index,         /* byte offset */
-		    SURF_INDEX_VERT_CONST_BUFFER
-		    );
-
-   /* merge the two Owords into the constant register */
-   /* const_reg[7..4] = const2_reg[7..4] */
-   brw_MOV(p,
-	   suboffset(stride(const_reg, 0, 4, 1), 4),
-	   suboffset(stride(const2_reg, 0, 4, 1), 4));
-   release_tmp(c, const2_reg);
+   brw_dp_READ_4_vs_relative(p,
+			     const_reg,                     /* writeback dest */
+			     addrReg,                       /* address register */
+			     16 * src->Index,               /* byte offset */
+			     SURF_INDEX_VERT_CONST_BUFFER   /* binding table index */
+			     );
 
    return const_reg;
 }

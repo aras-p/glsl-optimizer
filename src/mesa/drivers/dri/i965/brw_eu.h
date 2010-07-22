@@ -897,6 +897,12 @@ void brw_dp_READ_4_vs( struct brw_compile *p,
                        GLuint location,
                        GLuint bind_table_index );
 
+void brw_dp_READ_4_vs_relative(struct brw_compile *p,
+			       struct brw_reg dest,
+			       struct brw_reg addrReg,
+			       GLuint offset,
+			       GLuint bind_table_index);
+
 void brw_dp_WRITE_16( struct brw_compile *p,
 		      struct brw_reg src,
 		      GLuint scratch_offset );
