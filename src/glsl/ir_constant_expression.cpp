@@ -836,7 +836,30 @@ ir_call::constant_expression_value()
    } else if (strcmp(callee, "ceil") == 0) {
       expr = new(mem_ctx) ir_expression(ir_unop_ceil, type, op[0], NULL);
    } else if (strcmp(callee, "clamp") == 0) {
-      return NULL; /* FINISHME: implement this */
+      assert(num_parameters == 3);
+      unsigned c1_inc = op[1]->type->is_scalar() ? 0 : 1;
+      unsigned c2_inc = op[2]->type->is_scalar() ? 0 : 1;
+      for (unsigned c = 0, c1 = 0, c2 = 0;
+	   c < op[0]->type->components();
+	   c1 += c1_inc, c2 += c2_inc, c++) {
+
+	 switch (op[0]->type->base_type) {
+	 case GLSL_TYPE_UINT:
+	    data.u[c] = CLAMP(op[0]->value.u[c], op[1]->value.u[c1],
+			      op[2]->value.u[c2]);
+	    break;
+	 case GLSL_TYPE_INT:
+	    data.i[c] = CLAMP(op[0]->value.i[c], op[1]->value.i[c1],
+			      op[2]->value.u[c2]);
+	    break;
+	 case GLSL_TYPE_FLOAT:
+	    data.f[c] = CLAMP(op[0]->value.f[c], op[1]->value.f[c1],
+			      op[2]->value.f[c2]);
+	    break;
+	 default:
+	    assert(!"Should not get here.");
+	 }
+      }
    } else if (strcmp(callee, "cos") == 0) {
       expr = new(mem_ctx) ir_expression(ir_unop_cos, type, op[0], NULL);
    } else if (strcmp(callee, "cosh") == 0) {
