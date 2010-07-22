@@ -2,7 +2,7 @@
    (signature int
      (parameters
        (declare (in) int x))
-     ((return (expression int / (var_ref x) (expression int abs (var_ref x))))))
+     ((return (expression int sign (var_ref x)))))
 
    (signature ivec2
      (parameters
