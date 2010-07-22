@@ -1047,8 +1047,10 @@ slang_substitute(slang_assemble_ctx *A, slang_operation *oper,
 	 GLuint i;
          v = _slang_variable_locate(oper->locals, id, GL_TRUE);
 	 if (!v) {
+#if 0
             if (strcmp((char *) oper->a_id, "__notRetFlag"))
                _mesa_problem(NULL, "var %s not found!\n", (char *) oper->a_id);
+#endif
             return;
 	 }
 
