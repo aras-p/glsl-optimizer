@@ -899,6 +899,7 @@ get_reladdr_constant(struct brw_vs_compile *c,
    struct brw_compile *p = &c->func;
    struct brw_reg const_reg = c->current_const[argIndex].reg;
    struct brw_reg addrReg = c->regs[PROGRAM_ADDRESS][0];
+   struct brw_reg byte_addr_reg = get_tmp(c);
 
    assert(argIndex < 3);
 
@@ -910,10 +911,12 @@ get_reladdr_constant(struct brw_vs_compile *c,
 	  src->Index, argIndex, c->current_const[argIndex].reg.nr);
 #endif
 
+   brw_MUL(p, byte_addr_reg, addrReg, brw_imm_ud(16));
+
    /* fetch the first vec4 */
    brw_dp_READ_4_vs_relative(p,
 			     const_reg,                     /* writeback dest */
-			     addrReg,                       /* address register */
+			     byte_addr_reg,                 /* address register */
 			     16 * src->Index,               /* byte offset */
 			     SURF_INDEX_VERT_CONST_BUFFER   /* binding table index */
 			     );
@@ -962,7 +965,8 @@ static struct brw_reg get_reg( struct brw_vs_compile *c,
  */
 static struct brw_reg deref( struct brw_vs_compile *c,
 			     struct brw_reg arg,
-			     GLint offset)
+			     GLint offset,
+			     GLuint reg_size )
 {
    struct brw_compile *p = &c->func;
    struct brw_reg tmp = vec4(get_tmp(c));
@@ -970,6 +974,7 @@ static struct brw_reg deref( struct brw_vs_compile *c,
    struct brw_reg vp_address = retype(vec1(addr_reg), BRW_REGISTER_TYPE_UW);
    GLuint byte_offset = arg.nr * 32 + arg.subnr + offset * 16;
    struct brw_reg indirect = brw_vec4_indirect(0,0);
+   struct brw_reg acc = retype(brw_acc_reg(), BRW_REGISTER_TYPE_D);
 
    {
       brw_push_insn_state(p);
@@ -979,10 +984,12 @@ static struct brw_reg deref( struct brw_vs_compile *c,
        * fetch each 4-dword value in turn.  There must be a way to do
        * this in a single pass, but I couldn't get it to work.
        */
-      brw_ADD(p, brw_address_reg(0), vp_address, brw_imm_d(byte_offset));
+      brw_MUL(p, acc, vp_address, brw_imm_d(reg_size));
+      brw_ADD(p, brw_address_reg(0), acc, brw_imm_d(byte_offset));
       brw_MOV(p, tmp, indirect);
 
-      brw_ADD(p, brw_address_reg(0), suboffset(vp_address, 8), brw_imm_d(byte_offset));
+      brw_MUL(p, acc, suboffset(vp_address, 8), brw_imm_d(reg_size));
+      brw_ADD(p, brw_address_reg(0), acc, brw_imm_d(byte_offset));
       brw_MOV(p, suboffset(tmp, 4), indirect);
 
       brw_pop_insn_state(p);
@@ -1060,7 +1067,7 @@ get_src_reg( struct brw_vs_compile *c,
    case PROGRAM_INPUT:
    case PROGRAM_OUTPUT:
       if (relAddr) {
-         return deref(c, c->regs[file][0], index);
+         return deref(c, c->regs[file][0], index, 32);
       }
       else {
          assert(c->regs[file][index].nr != 0);
@@ -1082,7 +1089,7 @@ get_src_reg( struct brw_vs_compile *c,
 	    return get_constant(c, inst, argIndex);
       }
       else if (relAddr) {
-         return deref(c, c->regs[PROGRAM_STATE_VAR][0], index);
+         return deref(c, c->regs[PROGRAM_STATE_VAR][0], index, 16);
       }
       else {
          assert(c->regs[PROGRAM_STATE_VAR][index].nr != 0);
@@ -1102,26 +1109,6 @@ get_src_reg( struct brw_vs_compile *c,
       return brw_null_reg();
    }
 }
-
-
-static void emit_arl( struct brw_vs_compile *c,
-		      struct brw_reg dst,
-		      struct brw_reg arg0 )
-{
-   struct brw_compile *p = &c->func;
-   struct brw_reg tmp = dst;
-   GLboolean need_tmp = (dst.file != BRW_GENERAL_REGISTER_FILE);
-   
-   if (need_tmp) 
-      tmp = get_tmp(c);
-
-   brw_RNDD(p, tmp, arg0);               /* tmp = round(arg0) */
-   brw_MUL(p, dst, tmp, brw_imm_d(16));  /* dst = tmp * 16 */
-
-   if (need_tmp)
-      release_tmp(c, tmp);
-}
-
 
 /**
  * Return the brw reg for the given instruction's src argument.
@@ -1633,7 +1620,7 @@ void brw_vs_emit(struct brw_vs_compile *c )
 	 emit_math1(c, BRW_MATH_FUNCTION_EXP, dst, args[0], BRW_MATH_PRECISION_FULL);
 	 break;
       case OPCODE_ARL:
-	 emit_arl(c, dst, args[0]);
+	 brw_RNDD(p, dst, args[0]);
 	 break;
       case OPCODE_FLR:
 	 brw_RNDD(p, dst, args[0]);
