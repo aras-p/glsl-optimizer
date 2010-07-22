@@ -858,7 +858,7 @@ ir_call::constant_expression_value()
       }
       return new(mem_ctx) ir_constant(sqrtf(length_squared));
    } else if (strcmp(callee, "dot") == 0) {
-      expr = new(mem_ctx) ir_expression(ir_binop_dot, type, op[0], op[1]);
+      return new(mem_ctx) ir_constant(dot(op[0], op[1]));
    } else if (strcmp(callee, "equal") == 0) {
       assert(op[0]->type->is_vector() && op[1] && op[1]->type->is_vector());
       for (unsigned c = 0; c < op[0]->type->components(); c++) {
