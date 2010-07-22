@@ -59,6 +59,7 @@ public:
 
    virtual ir_visitor_status visit(ir_variable *v);
    virtual ir_visitor_status visit(ir_dereference_variable *ir);
+   virtual ir_visitor_status visit(ir_if *ir);
 
    virtual ir_visitor_status visit_enter(ir_function *ir);
    virtual ir_visitor_status visit_leave(ir_function *ir);
@@ -91,6 +92,18 @@ ir_validate::visit(ir_dereference_variable *ir)
    this->validate_ir(ir, this->data);
 
    return visit_continue;
+}
+
+ir_visitor_status
+ir_validate::visit(ir_if *ir)
+{
+   if (ir->condition->type != glsl_type::bool_type) {
+      printf("ir_if condition %s type instead of bool.\n",
+	     ir->condition->type->name);
+      ir->print();
+      printf("\n");
+      abort();
+   }
 }
 
 
