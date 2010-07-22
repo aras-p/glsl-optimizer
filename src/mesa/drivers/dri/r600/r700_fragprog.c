@@ -587,7 +587,9 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
         SETfield(r700->SPI_INTERP_CONTROL_0.u32All, SPI_PNT_SPRITE_SEL_T, PNT_SPRITE_OVRD_Y_shift, PNT_SPRITE_OVRD_Y_mask);
         SETfield(r700->SPI_INTERP_CONTROL_0.u32All, SPI_PNT_SPRITE_SEL_0, PNT_SPRITE_OVRD_Z_shift, PNT_SPRITE_OVRD_Z_mask);
         SETfield(r700->SPI_INTERP_CONTROL_0.u32All, SPI_PNT_SPRITE_SEL_1, PNT_SPRITE_OVRD_W_shift, PNT_SPRITE_OVRD_W_mask);
-        if(ctx->Point.SpriteOrigin == GL_LOWER_LEFT)
+        /* Like e.g. viewport and winding, point sprite coordinates are
+         * inverted when rendering to FBO. */
+        if ((ctx->Point.SpriteOrigin == GL_LOWER_LEFT) == !ctx->DrawBuffer->Name)
             SETbit(r700->SPI_INTERP_CONTROL_0.u32All, PNT_SPRITE_TOP_1_bit);
         else
             CLEARbit(r700->SPI_INTERP_CONTROL_0.u32All, PNT_SPRITE_TOP_1_bit);
