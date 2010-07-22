@@ -598,7 +598,7 @@ static int src_da16 (FILE *file,
 	format (file, ".%d", _subreg_nr);
     string (file, "<");
     err |= control (file, "vert stride", vert_stride, _vert_stride, NULL);
-    string (file, ",1,1>");
+    string (file, ",4,1>");
     err |= control (file, "src da16 reg type", reg_encoding, _reg_type, NULL);
     /*
      * Three kinds of swizzle display:
