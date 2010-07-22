@@ -327,21 +327,10 @@ ir_expression::constant_expression_value()
 
    case ir_binop_dot:
       assert(op[0]->type->is_vector() && op[1]->type->is_vector());
+      assert(op[0]->type->is_float() && op[1]->type->is_float());
       data.f[0] = 0;
       for (unsigned c = 0; c < op[0]->type->components(); c++) {
-	 switch (op[0]->type->base_type) {
-	 case GLSL_TYPE_UINT:
-	    data.u[0] += op[0]->value.u[c] * op[1]->value.u[c];
-	    break;
-	 case GLSL_TYPE_INT:
-	    data.i[0] += op[0]->value.i[c] * op[1]->value.i[c];
-	    break;
-	 case GLSL_TYPE_FLOAT:
-	    data.f[0] += op[0]->value.f[c] * op[1]->value.f[c];
-	    break;
-	 default:
-	    assert(0);
-	 }
+	 data.f[0] += op[0]->value.f[c] * op[1]->value.f[c];
       }
 
       break;
