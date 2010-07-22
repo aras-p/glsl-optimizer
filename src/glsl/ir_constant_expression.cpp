@@ -1064,7 +1064,21 @@ ir_call::constant_expression_value()
       for (unsigned c = 0; c < op[0]->type->components(); c++)
 	 data.f[c] = sinhf(op[0]->value.f[c]);
    } else if (strcmp(callee, "smoothstep") == 0) {
-      return NULL; /* FINISHME: implement this */
+      assert(num_parameters == 3);
+      assert(op[1]->type == op[0]->type);
+      unsigned edge_inc = op[0]->type->is_scalar() ? 0 : 1;
+      for (unsigned c = 0, e = 0; c < type->components(); e += edge_inc, c++) {
+	 const float edge0 = op[0]->value.f[e];
+	 const float edge1 = op[1]->value.f[e];
+	 if (edge0 == edge1) {
+	    data.f[c] = 0.0; /* Avoid a crash - results are undefined anyway */
+	 } else {
+	    const float numerator = op[2]->value.f[c] - edge0;
+	    const float denominator = edge1 - edge0;
+	    const float t = CLAMP(numerator/denominator, 0, 1);
+	    data.f[c] = t * t * (3 - 2 * t);
+	 }
+      }
    } else if (strcmp(callee, "sqrt") == 0) {
       expr = new(mem_ctx) ir_expression(ir_unop_sqrt, type, op[0], NULL);
    } else if (strcmp(callee, "step") == 0) {
