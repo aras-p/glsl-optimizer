@@ -676,6 +676,11 @@ generate_fragment(struct llvmpipe_context *lp,
 		     color_ptr);
    }
 
+#ifdef PIPE_ARCH_X86
+   /* Avoid corrupting the FPU stack on 32bit OSes. */
+   lp_build_intrinsic(builder, "llvm.x86.mmx.emms", LLVMVoidType(), NULL, 0);
+#endif
+
    LLVMBuildRetVoid(builder);
 
    LLVMDisposeBuilder(builder);
