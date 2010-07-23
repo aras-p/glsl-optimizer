@@ -647,13 +647,13 @@ dri2_bind_tex_image(Display * dpy,
 		    int buffer, const int *attrib_list)
 {
    GLXContext gc = __glXGetCurrentContext();
+   struct dri2_context *pcp = (struct dri2_context *) gc;
    __GLXDRIdrawable *base = GetGLXDRIDrawable(dpy, drawable);
    __GLXdisplayPrivate *dpyPriv = __glXInitialize(dpy);
    struct dri2_drawable *pdraw = (struct dri2_drawable *) base;
    struct dri2_display *pdp =
       (struct dri2_display *) dpyPriv->dri2Display;
    struct dri2_screen *psc = (struct dri2_screen *) base->psc;
-   struct dri2_context *pcp = (struct dri2_context *) gc->driContext;
 
    if (pdraw != NULL) {
 
