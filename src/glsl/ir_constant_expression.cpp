@@ -533,7 +533,7 @@ ir_expression::constant_expression_value()
 	    /* We don't use fmod because it rounds toward zero; GLSL specifies
 	     * the use of floor.
 	     */
-	    data.f[c] = (op[0]->value.f[c0] - op[1]->value.f[c1])
+	    data.f[c] = op[0]->value.f[c0] - op[1]->value.f[c1]
 	       * floorf(op[0]->value.f[c0] / op[1]->value.f[c1]);
 	    break;
 	 default:
