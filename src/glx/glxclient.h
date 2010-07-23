@@ -557,6 +557,10 @@ struct __GLXscreenConfigsRec
  */
 struct __GLXdisplayPrivateRec
 {
+   /* The extension protocol codes */
+   XExtCodes *codes;
+   struct __GLXdisplayPrivateRec *next;
+
     /**
      * Back pointer to the display
      */

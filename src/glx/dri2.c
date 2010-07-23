@@ -88,7 +88,7 @@ static Bool
 DRI2WireToEvent(Display *dpy, XEvent *event, xEvent *wire)
 {
    XExtDisplayInfo *info = DRI2FindDisplay(dpy);
-   XExtDisplayInfo *glx_info = __glXFindDisplay(dpy);
+   __GLXdisplayPrivate *glx_dpy = __glXInitialize(dpy);
 
    XextCheckExtension(dpy, info, dri2ExtensionName, False);
 
@@ -107,7 +107,7 @@ DRI2WireToEvent(Display *dpy, XEvent *event, xEvent *wire)
 	 return False;
 
       aevent->serial = _XSetLastRequestRead(dpy, (xGenericReply *) wire);
-      aevent->type = glx_info->codes->first_event + GLX_BufferSwapComplete;
+      aevent->type = glx_dpy->codes->first_event + GLX_BufferSwapComplete;
       aevent->send_event = (awire->type & 0x80) != 0;
       aevent->display = dpy;
       aevent->drawable = awire->drawable;
