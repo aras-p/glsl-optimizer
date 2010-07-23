@@ -1043,7 +1043,14 @@ ir_call::constant_expression_value()
 	 }
       }
    } else if (strcmp(callee, "outerProduct") == 0) {
-      return NULL; /* FINISHME: implement this */
+      assert(op[0]->type->is_vector() && op[1]->type->is_vector());
+      const unsigned m = op[0]->type->vector_elements;
+      const unsigned n = op[1]->type->vector_elements;
+      for (unsigned j = 0; j < n; j++) {
+	 for (unsigned i = 0; i < m; i++) {
+	    data.f[i+m*j] = op[0]->value.f[i] * op[1]->value.f[j];
+	 }
+      }
    } else if (strcmp(callee, "pow") == 0) {
       expr = new(mem_ctx) ir_expression(ir_binop_pow, type, op[0], op[1]);
    } else if (strcmp(callee, "radians") == 0) {
