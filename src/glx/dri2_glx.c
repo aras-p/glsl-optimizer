@@ -423,12 +423,13 @@ dri2FlushFrontBuffer(__DRIdrawable *driDrawable, void *loaderPrivate)
    struct dri2_drawable *pdraw = loaderPrivate;
    __GLXdisplayPrivate *priv = __glXInitialize(pdraw->base.psc->dpy);
    struct dri2_display *pdp = (struct dri2_display *)priv->dri2Display;
+   GLXContext gc = __glXGetCurrentContext();
 
    /* Old servers don't send invalidate events */
    if (!pdp->invalidateAvailable)
        dri2InvalidateBuffers(priv->dpy, pdraw->base.drawable);
 
-   dri2_copy_drawable(pdraw, DRI2BufferFrontLeft, DRI2BufferFakeFrontLeft);
+   dri2_wait_gl(gc);
 }
 
 
