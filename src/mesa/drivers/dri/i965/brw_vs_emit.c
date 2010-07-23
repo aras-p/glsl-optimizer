@@ -1000,6 +1000,36 @@ static struct brw_reg deref( struct brw_vs_compile *c,
    return tmp;
 }
 
+static void
+move_to_reladdr_dst(struct brw_vs_compile *c,
+		    const struct prog_instruction *inst,
+		    struct brw_reg val)
+{
+   struct brw_compile *p = &c->func;
+   int reg_size = 32;
+   struct brw_reg addr_reg = c->regs[PROGRAM_ADDRESS][0];
+   struct brw_reg vp_address = retype(vec1(addr_reg), BRW_REGISTER_TYPE_D);
+   struct brw_reg temp_base = c->regs[inst->DstReg.File][0];
+   GLuint byte_offset = temp_base.nr * 32 + temp_base.subnr;
+   struct brw_reg indirect = brw_vec4_indirect(0,0);
+   struct brw_reg acc = retype(vec1(get_tmp(c)), BRW_REGISTER_TYPE_UW);
+
+   byte_offset += inst->DstReg.Index * reg_size;
+
+   brw_push_insn_state(p);
+   brw_set_access_mode(p, BRW_ALIGN_1);
+
+   brw_MUL(p, acc, vp_address, brw_imm_uw(reg_size));
+   brw_ADD(p, brw_address_reg(0), acc, brw_imm_uw(byte_offset));
+   brw_MOV(p, indirect, val);
+
+   brw_MUL(p, acc, suboffset(vp_address, 4), brw_imm_uw(reg_size));
+   brw_ADD(p, brw_address_reg(0), acc,
+	   brw_imm_uw(byte_offset + reg_size / 2));
+   brw_MOV(p, indirect, suboffset(val, 4));
+
+   brw_pop_insn_state(p);
+}
 
 /**
  * Get brw reg corresponding to the instruction's [argIndex] src reg.
@@ -1155,8 +1185,17 @@ static struct brw_reg get_dst( struct brw_vs_compile *c,
    switch (dst.File) {
    case PROGRAM_TEMPORARY:
    case PROGRAM_OUTPUT:
-      assert(c->regs[dst.File][dst.Index].nr != 0);
-      reg = c->regs[dst.File][dst.Index];
+      /* register-indirect addressing is only 1x1, not VxH, for
+       * destination regs.  So, for RelAddr we'll return a temporary
+       * for the dest and do a move of the result to the RelAddr
+       * register after the instruction emit.
+       */
+      if (dst.RelAddr) {
+	 reg = get_tmp(c);
+      } else {
+	 assert(c->regs[dst.File][dst.Index].nr != 0);
+	 reg = c->regs[dst.File][dst.Index];
+      }
       break;
    case PROGRAM_ADDRESS:
       assert(dst.Index == 0);
@@ -1841,6 +1880,14 @@ void brw_vs_emit(struct brw_vs_compile *c )
              || (inst->DstReg.Index == VERT_RESULT_BFC1)) {
             p->store[p->nr_insn-1].header.saturate = 1;
          }
+      }
+
+      if (inst->DstReg.RelAddr && inst->DstReg.File == PROGRAM_TEMPORARY) {
+	 /* We don't do RelAddr of PROGRAM_OUTPUT yet, because of the
+	  * compute-to-mrf and the fact that we are allocating
+	  * registers for only the used PROGRAM_OUTPUTs.
+	  */
+	 move_to_reladdr_dst(c, inst, dst);
       }
 
       release_tmps(c);
