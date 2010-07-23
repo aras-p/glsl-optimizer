@@ -184,8 +184,8 @@ llvmpipe_displaytarget_layout(struct llvmpipe_screen *screen,
     */
    const unsigned width = align(lpr->base.width0, TILE_SIZE);
    const unsigned height = align(lpr->base.height0, TILE_SIZE);
-   const unsigned width_t = align(width, TILE_SIZE) / TILE_SIZE;
-   const unsigned height_t = align(height, TILE_SIZE) / TILE_SIZE;
+   const unsigned width_t = width / TILE_SIZE;
+   const unsigned height_t = height / TILE_SIZE;
 
    lpr->tiles_per_row[0] = width_t;
    lpr->tiles_per_image[0] = width_t * height_t;
