@@ -174,8 +174,35 @@ static GLboolean brwProgramStringNotify( GLcontext *ctx,
 	 shader_error(ctx, prog,
 		      "i965 driver doesn't yet support uninlined function "
 		      "calls.  Move to using a single return statement at "
-		      "the end of the function to work around it.");
+		      "the end of the function to work around it.\n");
 	 return GL_FALSE;
+      }
+      if (prog->Instructions[i].DstReg.RelAddr &&
+	  prog->Instructions[i].DstReg.File == PROGRAM_INPUT) {
+	 shader_error(ctx, prog,
+		      "Variable indexing of shader inputs unsupported\n");
+	 return GL_FALSE;
+      }
+      if (prog->Instructions[i].DstReg.RelAddr &&
+	  prog->Instructions[i].DstReg.File == PROGRAM_OUTPUT) {
+	 shader_error(ctx, prog,
+		      "Variable indexing of shader outputs unsupported\n");
+	 return GL_FALSE;
+      }
+      if (target == GL_FRAGMENT_PROGRAM_ARB) {
+	 if ((prog->Instructions[i].DstReg.RelAddr &&
+	      prog->Instructions[i].DstReg.File == PROGRAM_TEMPORARY) ||
+	     (prog->Instructions[i].SrcReg[0].RelAddr &&
+	      prog->Instructions[i].SrcReg[0].File == PROGRAM_TEMPORARY) ||
+	     (prog->Instructions[i].SrcReg[1].RelAddr &&
+	      prog->Instructions[i].SrcReg[1].File == PROGRAM_TEMPORARY) ||
+	     (prog->Instructions[i].SrcReg[2].RelAddr &&
+	      prog->Instructions[i].SrcReg[2].File == PROGRAM_TEMPORARY)) {
+	    shader_error(ctx, prog,
+			 "Variable indexing of variable arrays in the FS "
+			 "unsupported\n");
+	    return GL_FALSE;
+	 }
       }
    }
 
