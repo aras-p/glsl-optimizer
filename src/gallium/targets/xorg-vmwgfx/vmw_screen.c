@@ -35,6 +35,7 @@
 #include <pipe/p_context.h>
 
 #include "cursorstr.h"
+#include "../../winsys/svga/drm/vmwgfx_drm.h"
 
 void vmw_winsys_screen_set_throttling(struct pipe_screen *screen,
 				      uint32_t throttle_us);
@@ -111,20 +112,27 @@ vmw_context_no_throttle(CustomizerPtr cust,
 }
 
 static Bool
-vmw_pre_init(CustomizerPtr cust, int fd)
+vmw_check_fb_size(CustomizerPtr cust,
+		  unsigned long pitch,
+		  unsigned long height)
 {
     struct vmw_customizer *vmw = vmw_customizer(cust);
 
-    vmw->fd = fd;
+    /**
+     *  1) Is there a pitch alignment?
+     *  2) The 1024 byte pad is an arbitrary value to be on
+     */
 
-    return TRUE;
+    return ((uint64_t) pitch * height + 1024ULL < vmw->max_fb_size);
 }
 
 static Bool
-vmw_screen_init(CustomizerPtr cust)
+vmw_pre_init(CustomizerPtr cust, int fd)
 {
     struct vmw_customizer *vmw = vmw_customizer(cust);
     drmVersionPtr ver;
+
+    vmw->fd = fd;
 
     ver = drmGetVersion(vmw->fd);
     if (ver == NULL ||
@@ -137,10 +145,33 @@ vmw_screen_init(CustomizerPtr cust)
 	cust->dirty_throttling = FALSE;
 	cust->winsys_context_throttle = vmw_context_throttle;
 	debug_printf("%s: Enabling kernel throttling.\n", __func__);
+
+	if (ver->version_major > 1 ||
+	    (ver->version_major == 1 && ver->version_minor >= 3)) {
+	    struct drm_vmw_getparam_arg arg;
+	    int ret;
+
+	    arg.param = DRM_VMW_PARAM_MAX_FB_SIZE;
+	    ret = drmCommandWriteRead(fd, DRM_VMW_GET_PARAM, &arg,
+				      sizeof(arg));
+	    if (!ret) {
+		vmw->max_fb_size = arg.value;
+		cust->winsys_check_fb_size = vmw_check_fb_size;
+		debug_printf("%s: Enabling fb size check.\n", __func__);
+	    }
+	}
     }
 
     if (ver)
 	drmFreeVersion(ver);
+
+    return TRUE;
+}
+
+static Bool
+vmw_screen_init(CustomizerPtr cust)
+{
+    struct vmw_customizer *vmw = vmw_customizer(cust);
 
     vmw_screen_cursor_init(vmw);
 

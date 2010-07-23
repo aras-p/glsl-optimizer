@@ -59,6 +59,7 @@ struct vmw_customizer
 
     /* vmw_video.c */
     void *video_priv;
+    uint64_t max_fb_size;
 };
 
 static INLINE struct vmw_customizer *
