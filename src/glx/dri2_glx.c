@@ -394,22 +394,24 @@ dri2_copy_drawable(struct dri2_drawable *priv, int dest, int src)
 }
 
 static void
-dri2WaitX(__GLXDRIdrawable *pdraw)
+dri2_wait_x(__GLXcontext *gc)
 {
-   struct dri2_drawable *priv = (struct dri2_drawable *) pdraw;
+   struct dri2_drawable *priv = (struct dri2_drawable *)
+      GetGLXDRIDrawable(gc->currentDpy, gc->currentDrawable, NULL);
 
-   if (!priv->have_fake_front)
+   if (priv == NULL || !priv->have_fake_front)
       return;
 
    dri2_copy_drawable(priv, DRI2BufferFakeFrontLeft, DRI2BufferFrontLeft);
 }
 
 static void
-dri2WaitGL(__GLXDRIdrawable * pdraw)
+dri2_wait_gl(__GLXcontext *gc)
 {
-   struct dri2_drawable *priv = (struct dri2_drawable *) pdraw;
+   struct dri2_drawable *priv = (struct dri2_drawable *)
+      GetGLXDRIDrawable(gc->currentDpy, gc->currentDrawable, NULL);
 
-   if (!priv->have_fake_front)
+   if (priv == NULL || !priv->have_fake_front)
       return;
 
    dri2_copy_drawable(priv, DRI2BufferFrontLeft, DRI2BufferFakeFrontLeft);
@@ -426,7 +428,7 @@ dri2FlushFrontBuffer(__DRIdrawable *driDrawable, void *loaderPrivate)
    if (!pdp->invalidateAvailable)
        dri2InvalidateBuffers(priv->dpy, pdraw->base.drawable);
 
-   dri2WaitGL(loaderPrivate);
+   dri2_copy_drawable(pdraw, DRI2BufferFrontLeft, DRI2BufferFakeFrontLeft);
 }
 
 
@@ -672,6 +674,9 @@ dri2_release_tex_image(Display * dpy, GLXDrawable drawable, int buffer)
 }
 
 static const struct glx_context_vtable dri2_context_vtable = {
+   dri2_wait_gl,
+   dri2_wait_x,
+   DRI_glXUseXFont,
    dri2_bind_tex_image,
    dri2_release_tex_image,
 };
@@ -804,8 +809,6 @@ dri2CreateScreen(int screen, __GLXdisplayPrivate * priv)
    psp->createContext = dri2CreateContext;
    psp->createDrawable = dri2CreateDrawable;
    psp->swapBuffers = dri2SwapBuffers;
-   psp->waitGL = dri2WaitGL;
-   psp->waitX = dri2WaitX;
    psp->getDrawableMSC = NULL;
    psp->waitForMSC = NULL;
    psp->waitForSBC = NULL;

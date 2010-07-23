@@ -272,6 +272,14 @@ driUnbindContext(__GLXcontext * context)
    (*psc->core->unbindContext) (pcp->driContext);
 }
 
+static const struct glx_context_vtable drisw_context_vtable = {
+   NULL,
+   NULL,
+   DRI_glXUseXFont,
+   NULL,
+   NULL,
+};
+
 static __GLXcontext *
 driCreateContext(__GLXscreenConfigs *base,
 		 const __GLcontextModes *mode,
@@ -308,6 +316,7 @@ driCreateContext(__GLXscreenConfigs *base,
       return NULL;
    }
 
+   pcp->base.vtable = &drisw_context_vtable;
    pcp->base.driContext = &pcp->dri_vtable;
    pcp->dri_vtable.destroyContext = driDestroyContext;
    pcp->dri_vtable.bindContext = driBindContext;
@@ -472,8 +481,6 @@ driCreateScreen(int screen, __GLXdisplayPrivate *priv)
    psp->createContext = driCreateContext;
    psp->createDrawable = driCreateDrawable;
    psp->swapBuffers = driSwapBuffers;
-   psp->waitX = NULL;
-   psp->waitGL = NULL;
 
    return &psc->base;
 

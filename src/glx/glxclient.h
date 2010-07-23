@@ -95,7 +95,8 @@ typedef struct _glapi_table __GLapi;
 #define containerOf(ptr, type, member)              \
     (type *)( (char *)ptr - offsetof(type,member) )
 
-extern void DRI_glXUseXFont(Font font, int first, int count, int listbase);
+extern void DRI_glXUseXFont(GLXContext CC,
+			    Font font, int first, int count, int listbase);
 
 #endif
 
@@ -139,8 +140,6 @@ struct __GLXDRIscreenRec {
 			  int64_t divisor, int64_t remainder);
    void (*copySubBuffer)(__GLXDRIdrawable *pdraw,
 			 int x, int y, int width, int height);
-   void (*waitX)(__GLXDRIdrawable *pdraw);
-   void (*waitGL)(__GLXDRIdrawable *pdraw);
    int (*getDrawableMSC)(__GLXscreenConfigs *psc, __GLXDRIdrawable *pdraw,
 			 int64_t *ust, int64_t *msc, int64_t *sbc);
    int (*waitForMSC)(__GLXDRIdrawable *pdraw, int64_t target_msc,
@@ -242,6 +241,10 @@ typedef struct __GLXattributeMachineRec
 } __GLXattributeMachine;
 
 struct glx_context_vtable {
+   void (*wait_gl)(__GLXcontext *ctx);
+   void (*wait_x)(__GLXcontext *ctx);
+   void (*use_x_font)(__GLXcontext *ctx,
+		      Font font, int first, int count, int listBase);
    void (*bind_tex_image)(Display * dpy,
 			  GLXDrawable drawable,
 			  int buffer, const int *attrib_list);

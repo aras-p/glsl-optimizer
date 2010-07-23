@@ -672,42 +672,14 @@ glXQueryExtension(Display * dpy, int *errorBase, int *eventBase)
    return rv;
 }
 
-/*
-** Put a barrier in the token stream that forces the GL to finish its
-** work before X can proceed.
-*/
-PUBLIC void
-glXWaitGL(void)
+static void
+indirect_wait_gl(__GLXcontext *gc)
 {
-#ifndef GLX_USE_APPLEGL
    xGLXWaitGLReq *req;
-#endif
-   GLXContext gc = __glXGetCurrentContext();
    Display *dpy = gc->currentDpy;
-
-   if (!dpy)
-      return;
 
    /* Flush any pending commands out */
    __glXFlushRenderBuffer(gc, gc->pc);
-#ifdef GLX_USE_APPLEGL
-   glFinish();
-#else
-#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
-   if (gc->driContext) {
-      int screen;
-      __GLXDRIdrawable *pdraw =
-         GetGLXDRIDrawable(dpy, gc->currentDrawable, &screen);
-
-      if (pdraw != NULL) {
-         __GLXscreenConfigs *const psc = GetGLXScreenConfigs(dpy, screen);
-         glFlush();
-         if (psc->driScreen->waitGL != NULL)
-            (*psc->driScreen->waitGL) (pdraw);
-      }
-      return;
-   }
-#endif
 
    /* Send the glXWaitGL request */
    LockDisplay(dpy);
@@ -717,7 +689,37 @@ glXWaitGL(void)
    req->contextTag = gc->currentContextTag;
    UnlockDisplay(dpy);
    SyncHandle();
-#endif /* GLX_USE_APPLEGL */
+}
+
+/*
+** Put a barrier in the token stream that forces the GL to finish its
+** work before X can proceed.
+*/
+PUBLIC void
+glXWaitGL(void)
+{
+   GLXContext gc = __glXGetCurrentContext();
+
+   if (gc && gc->vtable->use_x_font)
+      gc->vtable->wait_gl(gc);
+}
+
+static void
+indirect_wait_x(__GLXcontext *gc)
+{
+   xGLXWaitXReq *req;
+   Display *dpy = gc->currentDpy;
+
+   /* Flush any pending commands out */
+   __glXFlushRenderBuffer(gc, gc->pc);
+
+   LockDisplay(dpy);
+   GetReq(GLXWaitX, req);
+   req->reqType = gc->majorOpcode;
+   req->glxCode = X_GLXWaitX;
+   req->contextTag = gc->currentContextTag;
+   UnlockDisplay(dpy);
+   SyncHandle();
 }
 
 /*
@@ -727,74 +729,21 @@ glXWaitGL(void)
 PUBLIC void
 glXWaitX(void)
 {
-#ifndef GLX_USE_APPLEGL
-   xGLXWaitXReq *req;
-#endif
    GLXContext gc = __glXGetCurrentContext();
-   Display *dpy = gc->currentDpy;
 
-   if (!dpy)
-      return;
+   if (gc && gc->vtable->use_x_font)
+      gc->vtable->wait_x(gc);
+}
+
+static void
+indirect_use_x_font(__GLXcontext *gc,
+		    Font font, int first, int count, int listBase)
+{
+   xGLXUseXFontReq *req;
+   Display *dpy = gc->currentDpy;
 
    /* Flush any pending commands out */
    __glXFlushRenderBuffer(gc, gc->pc);
-
-#ifdef GLX_USE_APPLEGL
-   apple_glx_waitx(dpy, gc->driContext);
-#else
-#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
-   if (gc->driContext) {
-      int screen;
-      __GLXDRIdrawable *pdraw =
-         GetGLXDRIDrawable(dpy, gc->currentDrawable, &screen);
-
-      if (pdraw != NULL) {
-         __GLXscreenConfigs *const psc = GetGLXScreenConfigs(dpy, screen);
-         if (psc->driScreen->waitX != NULL)
-            (*psc->driScreen->waitX) (pdraw);
-      }
-      else
-         XSync(dpy, False);
-      return;
-   }
-#endif
-
-   /*
-    ** Send the glXWaitX request.
-    */
-   LockDisplay(dpy);
-   GetReq(GLXWaitX, req);
-   req->reqType = gc->majorOpcode;
-   req->glxCode = X_GLXWaitX;
-   req->contextTag = gc->currentContextTag;
-   UnlockDisplay(dpy);
-   SyncHandle();
-#endif /* GLX_USE_APPLEGL */
-}
-
-PUBLIC void
-glXUseXFont(Font font, int first, int count, int listBase)
-{
-#ifndef GLX_USE_APPLEGL
-   xGLXUseXFontReq *req;
-#endif
-   GLXContext gc = __glXGetCurrentContext();
-   Display *dpy = gc->currentDpy;
-
-   if (!dpy)
-      return;
-
-   /* Flush any pending commands out */
-   (void) __glXFlushRenderBuffer(gc, gc->pc);
-#ifdef GLX_USE_APPLEGL
-   DRI_glXUseXFont(font, first, count, listBase); 
-#else
-#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
-   if (gc->driContext) {
-      DRI_glXUseXFont(font, first, count, listBase);
-      return;
-   }
-#endif
 
    /* Send the glXUseFont request */
    LockDisplay(dpy);
@@ -808,7 +757,39 @@ glXUseXFont(Font font, int first, int count, int listBase)
    req->listBase = listBase;
    UnlockDisplay(dpy);
    SyncHandle();
-#endif /* GLX_USE_APPLEGL */
+}
+
+#ifdef GLX_USE_APPLEGL
+
+static void
+applegl_wait_gl(__GLXcontext *gc)
+{
+   glFinish();
+}
+
+static void
+applegl_wait_x(__GLXcontext *gc)
+{
+   apple_glx_waitx(gc->dpy, gc->driContext);
+}
+
+static const struct glx_context_vtable applegl_context_vtable = {
+   applegl_wait_gl,
+   applegl_wait_x,
+   DRI_glXUseXFont,
+   NULL, /* bind_tex_image, */
+   NULL, /* release_tex_image, */
+};
+
+#endif
+
+PUBLIC void
+glXUseXFont(Font font, int first, int count, int listBase)
+{
+   GLXContext gc = __glXGetCurrentContext();
+
+   if (gc && gc->vtable->use_x_font)
+      gc->vtable->use_x_font(gc, font, first, count, listBase);
 }
 
 /************************************************************************/
@@ -2800,6 +2781,9 @@ indirect_release_tex_image(Display * dpy, GLXDrawable drawable, int buffer)
 }
 
 static const struct glx_context_vtable indirect_context_vtable = {
+   indirect_wait_gl,
+   indirect_wait_x,
+   indirect_use_x_font,
    indirect_bind_tex_image,
    indirect_release_tex_image,
 };

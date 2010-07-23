@@ -95,6 +95,9 @@ struct dri_drawable
 static const struct glx_context_vtable dri_context_vtable = {
    NULL,
    NULL,
+   DRI_glXUseXFont,
+   NULL,
+   NULL,
 };
 
 /*
@@ -879,8 +882,6 @@ driCreateScreen(int screen, __GLXdisplayPrivate *priv)
    psp->createContext = driCreateContext;
    psp->createDrawable = driCreateDrawable;
    psp->swapBuffers = driSwapBuffers;
-   psp->waitX = NULL;
-   psp->waitGL = NULL;
 
 #ifdef __DRI_SWAP_BUFFER_COUNTER
    psp->getDrawableMSC = driDrawableGetMSC;
