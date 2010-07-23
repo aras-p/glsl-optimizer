@@ -999,7 +999,19 @@ ir_call::constant_expression_value()
    } else if (strcmp(callee, "min") == 0) {
       expr = new(mem_ctx) ir_expression(ir_binop_min, type, op[0], op[1]);
    } else if (strcmp(callee, "mix") == 0) {
-      return NULL; /* FINISHME: implement this */
+      assert(op[0]->type->is_float() && op[1]->type->is_float());
+      if (op[2]->type->is_float()) {
+	 unsigned c2_inc = op[2]->type->is_scalar() ? 0 : 1;
+	 unsigned components = op[0]->type->components();
+	 for (unsigned c = 0, c2 = 0; c < components; c2 += c2_inc, c++) {
+	    data.f[c] = op[0]->value.f[c] * (1 - op[2]->value.f[c2]) +
+			op[1]->value.f[c] * op[2]->value.f[c2];
+	 }
+      } else {
+	 assert(op[2]->type->is_boolean());
+	 for (unsigned c = 0; c < op[0]->type->components(); c++)
+	    data.f[c] = op[op[2]->value.b[c] ? 1 : 0]->value.f[c];
+      }
    } else if (strcmp(callee, "mod") == 0) {
       expr = new(mem_ctx) ir_expression(ir_binop_mod, type, op[0], op[1]);
    } else if (strcmp(callee, "normalize") == 0) {
