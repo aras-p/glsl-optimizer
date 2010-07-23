@@ -153,7 +153,6 @@ struct __GLXDRIscreenRec {
 
 struct __GLXDRIcontextRec
 {
-   void (*destroyContext) (__GLXcontext *context);
    Bool(*bindContext) (__GLXcontext *context, __GLXDRIdrawable *pdraw,
 		       __GLXDRIdrawable *pread);
    void (*unbindContext) (__GLXcontext *context);
@@ -241,6 +240,7 @@ typedef struct __GLXattributeMachineRec
 } __GLXattributeMachine;
 
 struct glx_context_vtable {
+   void (*destroy)(__GLXcontext *ctx);
    void (*wait_gl)(__GLXcontext *ctx);
    void (*wait_x)(__GLXcontext *ctx);
    void (*use_x_font)(__GLXcontext *ctx,
@@ -251,6 +251,9 @@ struct glx_context_vtable {
    void (*release_tex_image)(Display * dpy, GLXDrawable drawable, int buffer);
    
 };
+
+extern void
+glx_send_destroy_context(Display *dpy, XID xid);
 
 /**
  * GLX state that needs to be kept on the client.  One of these records
@@ -660,8 +663,6 @@ extern __GLXcontext *__glXcurrentContext;
 
 extern void __glXSetCurrentContextNull(void);
 
-extern void __glXFreeContext(__GLXcontext *);
-
 
 /*
 ** Global lock for all threads in this address space using the GLX
@@ -789,6 +790,9 @@ __glxGetMscRate(__GLXDRIdrawable *glxDraw,
 /* So that dri2.c:DRI2WireToEvent() can access
  * glx_info->codes->first_event */
 XExtDisplayInfo *__glXFindDisplay (Display *dpy);
+
+extern void
+GarbageCollectDRIDrawables(__GLXscreenConfigs *psc);
 
 extern __GLXDRIdrawable *
 GetGLXDRIDrawable(Display *dpy, GLXDrawable drawable);

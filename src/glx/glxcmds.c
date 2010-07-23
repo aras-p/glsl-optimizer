@@ -85,7 +85,7 @@ windowExistsErrorHandler(Display * dpy, XErrorEvent * xerr)
  * \param dpy    Display to destroy drawables for
  * \param screen Screen number to destroy drawables for
  */
-static void
+_X_HIDDEN void
 GarbageCollectDRIDrawables(__GLXscreenConfigs * sc)
 {
    XID draw;
@@ -480,7 +480,7 @@ CreateContext(Display * dpy, int generic_id,
                                shareList ? shareList->driContext : NULL,
                                &errorcode, &x11error)) {
       __glXSendError(dpy, errorcode, 0, X_GLXCreateContext, x11error);
-      __glXFreeContext(gc);
+      gc->vtable->destroy(gc);
       return NULL;
    }
    
@@ -524,8 +524,28 @@ glXCreateContext(Display * dpy, XVisualInfo * vis,
 }
 
 _X_HIDDEN void
-__glXFreeContext(__GLXcontext * gc)
+glx_send_destroy_context(Display *dpy, XID xid)
 {
+   CARD8 opcode = __glXSetupForCommand(dpy);
+   xGLXDestroyContextReq *req;
+
+   LockDisplay(dpy);
+   GetReq(GLXDestroyContext, req);
+   req->reqType = opcode;
+   req->glxCode = X_GLXDestroyContext;
+   req->context = xid;
+   UnlockDisplay(dpy);
+   SyncHandle();
+}
+
+static void
+indirect_destroy_context(__GLXcontext *gc)
+{
+   if (!gc->imported)
+      glx_send_destroy_context(gc->psc->dpy, gc->xid);
+
+   __glXFreeVertexArrayState(gc);
+
    if (gc->vendor)
       XFree((char *) gc->vendor);
    if (gc->renderer)
@@ -538,7 +558,6 @@ __glXFreeContext(__GLXcontext * gc)
    XFree((char *) gc->buf);
    Xfree((char *) gc->client_state_private);
    XFree((char *) gc);
-
 }
 
 /*
@@ -547,81 +566,24 @@ __glXFreeContext(__GLXcontext * gc)
 static void
 DestroyContext(Display * dpy, GLXContext gc)
 {
-#ifndef GLX_USE_APPLEGL /* TODO: darwin: indirect */
-   xGLXDestroyContextReq *req;
-   GLXContextID xid;
-   CARD8 opcode;
-   GLboolean imported;
-
-   opcode = __glXSetupForCommand(dpy);
-   if (!opcode || !gc) {
+   if (!gc)
       return;
-   }
 
    __glXLock();
-   xid = gc->xid;
-   imported = gc->imported;
-   gc->xid = None;
-
    if (gc->currentDpy) {
       /* This context is bound to some thread.  According to the man page,
        * we should not actually delete the context until it's unbound.
        * Note that we set gc->xid = None above.  In MakeContextCurrent()
        * we check for that and delete the context there.
        */
+      gc->xid = None;
       __glXUnlock();
       return;
    }
+   __glXUnlock();
 
-#if defined(GLX_DIRECT_RENDERING)
-   /* Destroy the direct rendering context */
-   if (gc->driContext) {
-      GarbageCollectDRIDrawables(gc->psc);
-      if (gc->extensions)
-	 XFree((char *) gc->extensions);
-      (*gc->driContext->destroyContext) (gc);
-   }
-   else
-#endif
-   {
-      __glXFreeVertexArrayState(gc);
-      __glXFreeContext(gc);
-   }
-
-   if (!imported) {
-      /*
-       ** This dpy also created the server side part of the context.
-       ** Send the glXDestroyContext request.
-       */
-      LockDisplay(dpy);
-      GetReq(GLXDestroyContext, req);
-      req->reqType = opcode;
-      req->glxCode = X_GLXDestroyContext;
-      req->context = xid;
-      UnlockDisplay(dpy);
-      SyncHandle();
-   }
-
-#else
-
-   __glXLock();
-   if (gc->currentDpy) {
-      /* 
-       * Set the Bool that indicates that we should destroy this GLX context
-       * when the context is no longer current.
-       */
-      gc->do_destroy = True;
-      /* Have to free later cuz it's in use now */
-      __glXUnlock();
-   }
-   else {
-      /* Destroy the handle if not current to anybody */
-      __glXUnlock();
-      if(gc->driContext)
-	 apple_glx_destroy_context(&gc->driContext, dpy);
-      __glXFreeContext(gc);
-   }
-#endif
+   if (gc->vtable->destroy)
+      gc->vtable->destroy(gc);
 }
 
 PUBLIC void
@@ -759,6 +721,12 @@ indirect_use_x_font(__GLXcontext *gc,
 #ifdef GLX_USE_APPLEGL
 
 static void
+applegl_destroy_context(__GLXcontext *gc)
+{
+   apple_glx_destroy_context(&gc->driContext, gc->currentDpy);
+}
+
+static void
 applegl_wait_gl(__GLXcontext *gc)
 {
    glFinish();
@@ -771,6 +739,7 @@ applegl_wait_x(__GLXcontext *gc)
 }
 
 static const struct glx_context_vtable applegl_context_vtable = {
+   applegl_destroy_context,
    applegl_wait_gl,
    applegl_wait_x,
    DRI_glXUseXFont,
@@ -1857,7 +1826,7 @@ glXImportContextEXT(Display * dpy, GLXContextID contextID)
       ctx->imported = GL_TRUE;
 
       if (Success != __glXQueryContextInfo(dpy, ctx)) {
-	 __glXFreeContext(ctx);
+	 ctx->vtable->destroy(ctx);
 	 ctx = NULL;
       }
    }
@@ -2773,6 +2742,7 @@ indirect_release_tex_image(Display * dpy, GLXDrawable drawable, int buffer)
 }
 
 static const struct glx_context_vtable indirect_context_vtable = {
+   indirect_destroy_context,
    indirect_wait_gl,
    indirect_wait_x,
    indirect_use_x_font,

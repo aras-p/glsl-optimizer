@@ -240,10 +240,17 @@ static const __DRIextension *loader_extensions[] = {
  */
 
 static void
-driDestroyContext(__GLXcontext *context)
+drisw_destroy_context(__GLXcontext *context)
 {
    struct drisw_context *pcp = (struct drisw_context *) context;
    struct drisw_screen *psc = (struct drisw_screen *) context->psc;
+
+   glx_send_destroy_context(psc->base.dpy, context->xid);
+
+   if (context->extensions)
+      XFree((char *) context->extensions);
+
+   GarbageCollectDRIDrawables(context->psc);
 
    (*psc->core->destroyContext) (pcp->driContext);
 
@@ -273,6 +280,7 @@ driUnbindContext(__GLXcontext * context)
 }
 
 static const struct glx_context_vtable drisw_context_vtable = {
+   drisw_destroy_context,
    NULL,
    NULL,
    DRI_glXUseXFont,
@@ -318,7 +326,6 @@ driCreateContext(__GLXscreenConfigs *base,
 
    pcp->base.vtable = &drisw_context_vtable;
    pcp->base.driContext = &pcp->dri_vtable;
-   pcp->dri_vtable.destroyContext = driDestroyContext;
    pcp->dri_vtable.bindContext = driBindContext;
    pcp->dri_vtable.unbindContext = driUnbindContext;
 

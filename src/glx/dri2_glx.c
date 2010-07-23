@@ -114,10 +114,17 @@ struct dri2_drawable
 static const struct glx_context_vtable dri2_context_vtable;
 
 static void
-dri2DestroyContext(__GLXcontext *context)
+dri2_destroy_context(__GLXcontext *context)
 {
    struct dri2_context *pcp = (struct dri2_context *) context;
    struct dri2_screen *psc = (struct dri2_screen *) context->psc;
+
+   glx_send_destroy_context(psc->base.dpy, context->xid);
+
+   if (context->extensions)
+      XFree((char *) context->extensions);
+
+   GarbageCollectDRIDrawables(context->psc);
 
    (*psc->core->destroyContext) (pcp->driContext);
 
@@ -182,7 +189,6 @@ dri2CreateContext(__GLXscreenConfigs *base,
 
    pcp->base.vtable = &dri2_context_vtable;
    pcp->base.driContext = &pcp->dri_vtable;
-   pcp->dri_vtable.destroyContext = dri2DestroyContext;
    pcp->dri_vtable.bindContext = dri2BindContext;
    pcp->dri_vtable.unbindContext = dri2UnbindContext;
 
@@ -675,6 +681,7 @@ dri2_release_tex_image(Display * dpy, GLXDrawable drawable, int buffer)
 }
 
 static const struct glx_context_vtable dri2_context_vtable = {
+   dri2_destroy_context,
    dri2_wait_gl,
    dri2_wait_x,
    DRI_glXUseXFont,

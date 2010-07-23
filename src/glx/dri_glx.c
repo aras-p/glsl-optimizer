@@ -92,13 +92,7 @@ struct dri_drawable
    __DRIdrawable *driDrawable;
 };
 
-static const struct glx_context_vtable dri_context_vtable = {
-   NULL,
-   NULL,
-   DRI_glXUseXFont,
-   NULL,
-   NULL,
-};
+static const struct glx_context_vtable dri_context_vtable;
 
 /*
  * Given a display pointer and screen number, determine the name of
@@ -506,10 +500,17 @@ CallCreateNewScreen(Display *dpy, int scrn, struct dri_screen *psc,
 }
 
 static void
-driDestroyContext(__GLXcontext * context)
+dri_destroy_context(__GLXcontext * context)
 {
    struct dri_context *pcp = (struct dri_context *) context;
    struct dri_screen *psc = (struct dri_screen *) context->psc;
+
+   glx_send_destroy_context(psc->base.dpy, context->xid);
+
+   if (context->extensions)
+      XFree((char *) context->extensions);
+
+   GarbageCollectDRIDrawables(context->psc);
 
    (*psc->core->destroyContext) (pcp->driContext);
 
@@ -538,6 +539,15 @@ driUnbindContext(__GLXcontext * context)
 
    (*psc->core->unbindContext) (pcp->driContext);
 }
+
+static const struct glx_context_vtable dri_context_vtable = {
+   dri_destroy_context,
+   NULL,
+   NULL,
+   DRI_glXUseXFont,
+   NULL,
+   NULL,
+};
 
 static __GLXcontext *
 driCreateContext(__GLXscreenConfigs *base,
@@ -587,7 +597,6 @@ driCreateContext(__GLXscreenConfigs *base,
 
    pcp->base.vtable = &dri_context_vtable;
    pcp->base.driContext = &pcp->dri_vtable;
-   pcp->dri_vtable.destroyContext = driDestroyContext;
    pcp->dri_vtable.bindContext = driBindContext;
    pcp->dri_vtable.unbindContext = driUnbindContext;
 

@@ -263,8 +263,8 @@ __glXCloseDisplay(Display * dpy, XExtCodes * codes)
 
    gc = __glXGetCurrentContext();
    if (dpy == gc->currentDpy) {
+      gc->vtable->destroy(gc);
       __glXSetCurrentContextNull();
-      __glXFreeContext(gc);
    }
 
    FreeScreenConfigs(priv);

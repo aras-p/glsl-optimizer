@@ -468,32 +468,13 @@ MakeContextCurrent(Display * dpy, GLXDrawable draw,
          oldGC->currentReadable = None;
          oldGC->currentContextTag = 0;
          oldGC->thread_id = 0;
-#ifdef GLX_USE_APPLEGL
-         
-         /*
-          * At this point we should check if the context has been
-          * through glXDestroyContext, and redestroy it if so.
-          */
-         if(oldGC->do_destroy) {
-            __glXUnlock();
-            /* glXDestroyContext uses the same global lock. */
-            glXDestroyContext(dpy, oldGC);
-            __glXLock();
-#else
+
          if (oldGC->xid == None) {
             /* We are switching away from a context that was
              * previously destroyed, so we need to free the memory
              * for the old handle.
              */
-#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
-            /* Destroy the old direct rendering context */
-            if (oldGC->driContext) {
-               oldGC->driContext->destroyContext(oldGC);
-               oldGC->driContext = NULL;
-            }
-#endif
-            __glXFreeContext(oldGC);
-#endif /* GLX_USE_APPLEGL */
+	    oldGC->vtable->destroy(oldGC);
          }
       }
       if (gc) {
