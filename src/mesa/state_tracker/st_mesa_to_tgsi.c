@@ -741,9 +741,8 @@ emit_adjusted_wpos( struct st_translate *t,
    /* Note that we bias X and Y and pass Z and W through unchanged.
     * The shader might also use gl_FragCoord.w and .z.
     */
-   ureg_ADD(ureg,
-            ureg_writemask(wpos_temp, TGSI_WRITEMASK_XYZW),
-            wpos_input, ureg_imm4f(ureg, value, value, 0.0f, 0.0f));
+   ureg_ADD(ureg, wpos_temp, wpos_input,
+            ureg_imm4f(ureg, value, value, 0.0f, 0.0f));
 
    t->inputs[t->inputMapping[FRAG_ATTRIB_WPOS]] = ureg_src(wpos_temp);
 }
