@@ -40,7 +40,6 @@ struct r600_vertex_elements_state
 };
 
 struct r600_pipe_shader {
-	unsigned				type;
 	struct r600_shader			shader;
 	struct radeon_bo			*bo;
 	struct radeon_state			*state;
@@ -92,8 +91,10 @@ struct pipe_context *r600_create_context(struct pipe_screen *screen, void *priv)
 
 void r600_pipe_shader_destroy(struct pipe_context *ctx, struct r600_pipe_shader *rpshader);
 struct r600_pipe_shader *r600_pipe_shader_create(struct pipe_context *ctx,
-						unsigned type,
 						const struct tgsi_token *tokens);
 int r600_pipe_shader_update(struct pipe_context *ctx, struct r600_pipe_shader *rpshader);
+
+#define R600_ERR(fmt, args...) \
+	fprintf(stderr, "EE %s/%s:%d - "fmt, __FILE__, __func__, __LINE__, ##args)
 
 #endif

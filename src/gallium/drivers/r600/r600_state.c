@@ -151,7 +151,7 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 static void *r600_create_fs_state(struct pipe_context *ctx,
 					const struct pipe_shader_state *shader)
 {
-	return r600_pipe_shader_create(ctx, C_PROGRAM_TYPE_FS, shader->tokens);
+	return r600_pipe_shader_create(ctx, shader->tokens);
 }
 
 static void r600_bind_fs_state(struct pipe_context *ctx, void *state)
@@ -164,7 +164,7 @@ static void r600_bind_fs_state(struct pipe_context *ctx, void *state)
 static void *r600_create_vs_state(struct pipe_context *ctx,
 					const struct pipe_shader_state *shader)
 {
-	return r600_pipe_shader_create(ctx, C_PROGRAM_TYPE_VS, shader->tokens);
+	return r600_pipe_shader_create(ctx, shader->tokens);
 }
 
 static void r600_bind_vs_state(struct pipe_context *ctx, void *state)
