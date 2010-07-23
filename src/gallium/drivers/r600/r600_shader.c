@@ -541,18 +541,6 @@ static int tgsi_op2(struct r600_shader_ctx *ctx)
 		case TGSI_OPCODE_SUB:
 			alu.src[1].neg = 1;
 			break;
-		case TGSI_OPCODE_DP2:
-			if (i > 1) {
-				alu.src[0].sel = alu.src[1].sel = 248;
-				alu.src[0].chan = alu.src[1].chan = 0;
-			}
-			break;
-		case TGSI_OPCODE_DP3:
-			if (i > 2) {
-				alu.src[0].sel = alu.src[1].sel = 248;
-				alu.src[0].chan = alu.src[1].chan = 0;
-			}
-			break;
 		default:
 			break;
 		}
@@ -625,31 +613,11 @@ static int tgsi_trans(struct r600_shader_ctx *ctx)
 	return 0;
 }
 
-static int tgsi_op3(struct r600_shader_ctx *ctx)
+static int tgsi_helper_copy(struct r600_shader_ctx *ctx, struct tgsi_full_instruction *inst)
 {
-	struct tgsi_full_instruction *inst = &ctx->parse.FullToken.FullInstruction;
 	struct r600_bc_alu alu;
-	int i, j, r;
+	int i, r;
 
-	/* do it in 2 step as op3 doesn't support writemask */
-	for (i = 0; i < 4; i++) {
-		memset(&alu, 0, sizeof(struct r600_bc_alu));
-		alu.inst = ctx->inst_info->r600_opcode;
-		for (j = 0; j < inst->Instruction.NumSrcRegs; j++) {
-			r = tgsi_src(ctx, &inst->Src[j], i, &alu.src[j]);
-			if (r)
-				return r;
-		}
-		alu.dst.sel = ctx->temp_reg;
-		alu.dst.chan = i;
-		alu.is_op3 = 1;
-		if (i == 3) {
-			alu.last = 1;
-		}
-		r = r600_bc_add_alu(ctx->bc, &alu);
-		if (r)
-			return r;
-	}
 	for (i = 0; i < 4; i++) {
 		memset(&alu, 0, sizeof(struct r600_bc_alu));
 		if (!(inst->Dst[0].Register.WriteMask & (1 << i))) {
@@ -672,6 +640,79 @@ static int tgsi_op3(struct r600_shader_ctx *ctx)
 	return 0;
 }
 
+static int tgsi_op3(struct r600_shader_ctx *ctx)
+{
+	struct tgsi_full_instruction *inst = &ctx->parse.FullToken.FullInstruction;
+	struct r600_bc_alu alu;
+	int i, j, r;
+
+	/* do it in 2 step as op3 doesn't support writemask */
+	for (i = 0; i < 4; i++) {
+		memset(&alu, 0, sizeof(struct r600_bc_alu));
+		alu.inst = ctx->inst_info->r600_opcode;
+		for (j = 0; j < inst->Instruction.NumSrcRegs; j++) {
+			r = tgsi_src(ctx, &inst->Src[j], i, &alu.src[j]);
+			if (r)
+				return r;
+		}
+		alu.dst.sel = ctx->temp_reg;
+		alu.dst.chan = i;
+		alu.dst.write = 1;
+		alu.is_op3 = 1;
+		if (i == 3) {
+			alu.last = 1;
+		}
+		r = r600_bc_add_alu(ctx->bc, &alu);
+		if (r)
+			return r;
+	}
+	return tgsi_helper_copy(ctx, inst);
+}
+
+static int tgsi_dp(struct r600_shader_ctx *ctx)
+{
+	struct tgsi_full_instruction *inst = &ctx->parse.FullToken.FullInstruction;
+	struct r600_bc_alu alu;
+	int i, j, r;
+
+	for (i = 0; i < 4; i++) {
+		memset(&alu, 0, sizeof(struct r600_bc_alu));
+		alu.inst = ctx->inst_info->r600_opcode;
+		for (j = 0; j < inst->Instruction.NumSrcRegs; j++) {
+			r = tgsi_src(ctx, &inst->Src[j], i, &alu.src[j]);
+			if (r)
+				return r;
+		}
+		alu.dst.sel = ctx->temp_reg;
+		alu.dst.chan = i;
+		alu.dst.write = 1;
+		/* handle some special cases */
+		switch (ctx->inst_info->tgsi_opcode) {
+		case TGSI_OPCODE_DP2:
+			if (i > 1) {
+				alu.src[0].sel = alu.src[1].sel = 248;
+				alu.src[0].chan = alu.src[1].chan = 0;
+			}
+			break;
+		case TGSI_OPCODE_DP3:
+			if (i > 2) {
+				alu.src[0].sel = alu.src[1].sel = 248;
+				alu.src[0].chan = alu.src[1].chan = 0;
+			}
+			break;
+		default:
+			break;
+		}
+		if (i == 3) {
+			alu.last = 1;
+		}
+		r = r600_bc_add_alu(ctx->bc, &alu);
+		if (r)
+			return r;
+	}
+	return tgsi_helper_copy(ctx, inst);
+}
+
 static struct r600_shader_tgsi_instruction r600_shader_tgsi_instruction[] = {
 	{TGSI_OPCODE_ARL,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_MOV,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOV, tgsi_op2},
@@ -682,8 +723,8 @@ static struct r600_shader_tgsi_instruction r600_shader_tgsi_instruction[] = {
 	{TGSI_OPCODE_LOG,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_MUL,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MUL, tgsi_op2},
 	{TGSI_OPCODE_ADD,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_ADD, tgsi_op2},
-	{TGSI_OPCODE_DP3,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_DOT4, tgsi_op2},
-	{TGSI_OPCODE_DP4,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_DOT4, tgsi_op2},
+	{TGSI_OPCODE_DP3,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_DOT4, tgsi_dp},
+	{TGSI_OPCODE_DP4,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_DOT4, tgsi_dp},
 	{TGSI_OPCODE_DST,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_MIN,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_MAX,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MAX, tgsi_op2},
@@ -747,7 +788,7 @@ static struct r600_shader_tgsi_instruction r600_shader_tgsi_instruction[] = {
 	{TGSI_OPCODE_TXB,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_NRM,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_DIV,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
-	{TGSI_OPCODE_DP2,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_DOT4, tgsi_op2},
+	{TGSI_OPCODE_DP2,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_DOT4, tgsi_dp},
 	{TGSI_OPCODE_TXL,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_BRK,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_IF,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
