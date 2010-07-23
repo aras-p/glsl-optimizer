@@ -122,6 +122,8 @@ process_call(exec_list *instructions, ir_function *f,
 	 deref = new(ctx) ir_dereference_variable(var);
 	 ir_assignment *assign = new(ctx) ir_assignment(deref, call, NULL);
 	 instructions->push_tail(assign);
+	 if (state->language_version >= 120)
+	    var->constant_value = call->constant_expression_value();
 
 	 deref = new(ctx) ir_dereference_variable(var);
 	 return deref;
