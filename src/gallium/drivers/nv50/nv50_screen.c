@@ -186,6 +186,8 @@ nv50_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 	case PIPE_CAP_MAX_VS_TEMPS:
 	case PIPE_CAP_MAX_FS_TEMPS: /* no spilling atm */
 		return 128 / 4;
+	case PIPE_CAP_DEPTH_CLAMP:
+		return 1;
 	default:
 		NOUVEAU_ERR("Unknown PIPE_CAP %d\n", param);
 		return 0;
@@ -524,6 +526,9 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	BEGIN_RING(chan, screen->tesla, NV50TCL_DEPTH_RANGE_NEAR(0), 2);
 	OUT_RINGf (chan, 0.0f);
 	OUT_RINGf (chan, 1.0f);
+
+	BEGIN_RING(chan, screen->tesla, NV50TCL_VIEWPORT_TRANSFORM_EN, 1);
+	OUT_RING  (chan, 1);
 
 	/* no dynamic combination of TIC & TSC entries => only BIND_TIC used */
 	BEGIN_RING(chan, screen->tesla, NV50TCL_LINKED_TSC, 1);

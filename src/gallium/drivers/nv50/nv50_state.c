@@ -658,6 +658,10 @@ static void
 nv50_set_clip_state(struct pipe_context *pipe,
 		    const struct pipe_clip_state *clip)
 {
+	struct nv50_context *nv50 = nv50_context(pipe);
+
+	nv50->clip.depth_clamp = clip->depth_clamp;
+	nv50->dirty |= NV50_NEW_CLIP;
 }
 
 static void

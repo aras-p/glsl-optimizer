@@ -50,6 +50,7 @@
 #define NV50_NEW_SAMPLER	(1 << 15)
 #define NV50_NEW_TEXTURE	(1 << 16)
 #define NV50_NEW_STENCIL_REF	(1 << 17)
+#define NV50_NEW_CLIP		(1 << 18)
 
 struct nv50_blend_stateobj {
 	struct pipe_blend_state pipe;
@@ -140,6 +141,7 @@ struct nv50_context {
 	struct pipe_scissor_state scissor;
 	struct pipe_viewport_state viewport;
 	struct pipe_framebuffer_state framebuffer;
+	struct pipe_clip_state clip;
 	struct nv50_program *vertprog;
 	struct nv50_program *fragprog;
 	struct nv50_program *geomprog;
