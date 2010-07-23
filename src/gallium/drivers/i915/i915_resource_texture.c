@@ -845,6 +845,7 @@ i915_texture_from_handle(struct pipe_screen * screen,
    tex->b.b.screen = screen;
 
    tex->stride = stride;
+   tex->total_nblocksy = align_nblocksy(tex->b.b.format, tex->b.b.height0, 8);
 
    i915_texture_set_level_info(tex, 0, 1);
    i915_texture_set_image_offset(tex, 0, 0, 0, 0);
