@@ -47,6 +47,7 @@ struct i915_winsys_batchbuffer;
 
 extern unsigned i915_debug;
 
+#ifdef DEBUG
 static INLINE boolean
 I915_DBG_ON(unsigned flags)
 {
@@ -64,6 +65,10 @@ I915_DBG(unsigned flags, const char *fmt, ...)
       va_end(args);
    }
 }
+#else
+#define I915_DBG_ON(flags) (0)
+static INLINE void I915_DBG(unsigned flags, const char *fmt, ...) {}
+#endif
 
 void i915_debug_init(struct i915_screen *i915);
 
