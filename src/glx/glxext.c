@@ -739,12 +739,16 @@ glx_screen_init(__GLXscreenConfigs *psc,
 }
 
 static __GLXscreenConfigs *
-createIndirectScreen()
+createIndirectScreen(int screen, __GLXdisplayPrivate * priv)
 {
    __GLXscreenConfigs *psc;
 
    psc = Xmalloc(sizeof *psc);
+   if (psc == NULL)
+      return NULL;
+
    memset(psc, 0, sizeof *psc);
+   glx_screen_init(psc, screen, priv);
 
    return psc;
 }
@@ -775,6 +779,7 @@ AllocAndFetchScreenConfigs(Display * dpy, __GLXdisplayPrivate * priv)
    }
 
    for (i = 0; i < screens; i++, psc++) {
+      psc = NULL;
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
       if (priv->dri2Display)
 	 psc = (*priv->dri2Display->createScreen) (i, priv);
@@ -782,9 +787,9 @@ AllocAndFetchScreenConfigs(Display * dpy, __GLXdisplayPrivate * priv)
 	 psc = (*priv->driDisplay->createScreen) (i, priv);
       if (psc == NULL && priv->driswDisplay)
 	 psc = (*priv->driswDisplay->createScreen) (i, priv);
+#endif
       if (psc == NULL)
 	 psc = createIndirectScreen (i, priv);
-#endif
       priv->screenConfigs[i] = psc;
    }
    SyncHandle();
