@@ -35,7 +35,8 @@ struct drisw_display
 
 struct drisw_context
 {
-   __GLXDRIcontext base;
+   __GLXcontext base;
+   __GLXDRIcontext dri_vtable;
    __DRIcontext *driContext;
    __GLXscreenConfigs *psc;
 };
@@ -239,11 +240,10 @@ static const __DRIextension *loader_extensions[] = {
  */
 
 static void
-driDestroyContext(__GLXDRIcontext *context,
-		  __GLXscreenConfigs *base, Display *dpy)
+driDestroyContext(__GLXcontext *context)
 {
    struct drisw_context *pcp = (struct drisw_context *) context;
-   struct drisw_screen *psc = (struct drisw_screen *) base;
+   struct drisw_screen *psc = (struct drisw_screen *) context->psc;
 
    (*psc->core->destroyContext) (pcp->driContext);
 
@@ -251,7 +251,7 @@ driDestroyContext(__GLXDRIcontext *context,
 }
 
 static Bool
-driBindContext(__GLXDRIcontext * context,
+driBindContext(__GLXcontext * context,
 	       __GLXDRIdrawable * draw, __GLXDRIdrawable * read)
 {
    struct drisw_context *pcp = (struct drisw_context *) context;
@@ -264,7 +264,7 @@ driBindContext(__GLXDRIcontext * context,
 }
 
 static void
-driUnbindContext(__GLXDRIcontext * context)
+driUnbindContext(__GLXcontext * context)
 {
    struct drisw_context *pcp = (struct drisw_context *) context;
    struct drisw_screen *psc = (struct drisw_screen *) pcp->psc;
@@ -272,10 +272,10 @@ driUnbindContext(__GLXDRIcontext * context)
    (*psc->core->unbindContext) (pcp->driContext);
 }
 
-static __GLXDRIcontext *
+static __GLXcontext *
 driCreateContext(__GLXscreenConfigs *base,
 		 const __GLcontextModes *mode,
-		 GLXContext gc, GLXContext shareList, int renderType)
+		 GLXContext shareList, int renderType)
 {
    struct drisw_context *pcp, *pcp_shared;
    __GLXDRIconfigPrivate *config = (__GLXDRIconfigPrivate *) mode;
@@ -294,7 +294,12 @@ driCreateContext(__GLXscreenConfigs *base,
    if (pcp == NULL)
       return NULL;
 
-   pcp->psc = &psc->base;
+   memset(pcp, 0, sizeof *pcp);
+   if (!glx_context_init(&pcp->base, &psc->base, mode)) {
+      Xfree(pcp);
+      return NULL;
+   }
+
    pcp->driContext =
       (*psc->core->createNewContext) (psc->driScreen,
 				      config->driConfig, shared, pcp);
@@ -303,9 +308,10 @@ driCreateContext(__GLXscreenConfigs *base,
       return NULL;
    }
 
-   pcp->base.destroyContext = driDestroyContext;
-   pcp->base.bindContext = driBindContext;
-   pcp->base.unbindContext = driUnbindContext;
+   pcp->base.driContext = &pcp->dri_vtable;
+   pcp->dri_vtable.destroyContext = driDestroyContext;
+   pcp->dri_vtable.bindContext = driBindContext;
+   pcp->dri_vtable.unbindContext = driUnbindContext;
 
    return &pcp->base;
 }

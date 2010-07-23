@@ -94,9 +94,9 @@ struct dri2_screen {
 
 struct dri2_context
 {
-   __GLXDRIcontext base;
+   __GLXcontext base;
+   __GLXDRIcontext dri_vtable;
    __DRIcontext *driContext;
-   __GLXscreenConfigs *psc;
 };
 
 struct dri2_drawable
@@ -111,12 +111,13 @@ struct dri2_drawable
    int swap_interval;
 };
 
+static const struct glx_context_vtable dri2_context_vtable;
+
 static void
-dri2DestroyContext(__GLXDRIcontext *context,
-		   __GLXscreenConfigs *base, Display *dpy)
+dri2DestroyContext(__GLXcontext *context)
 {
    struct dri2_context *pcp = (struct dri2_context *) context;
-   struct dri2_screen *psc = (struct dri2_screen *) base;
+   struct dri2_screen *psc = (struct dri2_screen *) context->psc;
 
    (*psc->core->destroyContext) (pcp->driContext);
 
@@ -124,11 +125,11 @@ dri2DestroyContext(__GLXDRIcontext *context,
 }
 
 static Bool
-dri2BindContext(__GLXDRIcontext *context,
+dri2BindContext(__GLXcontext *context,
 		__GLXDRIdrawable *draw, __GLXDRIdrawable *read)
 {
    struct dri2_context *pcp = (struct dri2_context *) context;
-   struct dri2_screen *psc = (struct dri2_screen *) pcp->psc;
+   struct dri2_screen *psc = (struct dri2_screen *) pcp->base.psc;
    struct dri2_drawable *pdr = (struct dri2_drawable *) draw;
    struct dri2_drawable *prd = (struct dri2_drawable *) read;
 
@@ -137,18 +138,18 @@ dri2BindContext(__GLXDRIcontext *context,
 }
 
 static void
-dri2UnbindContext(__GLXDRIcontext *context)
+dri2UnbindContext(__GLXcontext *context)
 {
    struct dri2_context *pcp = (struct dri2_context *) context;
-   struct dri2_screen *psc = (struct dri2_screen *) pcp->psc;
+   struct dri2_screen *psc = (struct dri2_screen *) pcp->base.psc;
 
    (*psc->core->unbindContext) (pcp->driContext);
 }
 
-static __GLXDRIcontext *
+static __GLXcontext *
 dri2CreateContext(__GLXscreenConfigs *base,
                   const __GLcontextModes * mode,
-                  GLXContext gc, GLXContext shareList, int renderType)
+                  GLXContext shareList, int renderType)
 {
    struct dri2_context *pcp, *pcp_shared;
    struct dri2_screen *psc = (struct dri2_screen *) base;
@@ -164,7 +165,12 @@ dri2CreateContext(__GLXscreenConfigs *base,
    if (pcp == NULL)
       return NULL;
 
-   pcp->psc = &psc->base;
+   memset(pcp, 0, sizeof *pcp);
+   if (!glx_context_init(&pcp->base, &psc->base, mode)) {
+      Xfree(pcp);
+      return NULL;
+   }
+
    pcp->driContext =
       (*psc->dri2->createNewContext) (psc->driScreen,
                                       config->driConfig, shared, pcp);
@@ -174,9 +180,11 @@ dri2CreateContext(__GLXscreenConfigs *base,
       return NULL;
    }
 
-   pcp->base.destroyContext = dri2DestroyContext;
-   pcp->base.bindContext = dri2BindContext;
-   pcp->base.unbindContext = dri2UnbindContext;
+   pcp->base.vtable = &dri2_context_vtable;
+   pcp->base.driContext = &pcp->dri_vtable;
+   pcp->dri_vtable.destroyContext = dri2DestroyContext;
+   pcp->dri_vtable.bindContext = dri2BindContext;
+   pcp->dri_vtable.unbindContext = dri2UnbindContext;
 
    return &pcp->base;
 }
@@ -825,8 +833,6 @@ dri2CreateScreen(int screen, __GLXdisplayPrivate * priv)
     * available.*/
    psp->copySubBuffer = dri2CopySubBuffer;
    __glXEnableDirectExtension(&psc->base, "GLX_MESA_copy_sub_buffer");
-
-   psc->base.direct_context_vtable = &dri2_context_vtable;
 
    Xfree(driverName);
    Xfree(deviceName);

@@ -62,7 +62,7 @@
 
 static const char __glXGLXClientVendorName[] = "Mesa Project and SGI";
 static const char __glXGLXClientVersion[] = "1.4";
-static const struct glx_context_vtable glx_indirect_context_vtable;
+static const struct glx_context_vtable indirect_context_vtable;
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
 
@@ -272,6 +272,7 @@ AllocateGLXContext(Display * dpy)
    }
    memset(gc, 0, sizeof(struct __GLXcontextRec));
 
+   gc->vtable = &indirect_context_vtable;
    state = Xmalloc(sizeof(struct __GLXattributeRec));
    if (state == NULL) {
       /* Out of memory */
@@ -325,7 +326,6 @@ AllocateGLXContext(Display * dpy)
    else {
       gc->limit = gc->buf + bufSize - __GLX_BUFFER_LIMIT_SIZE;
    }
-   gc->createDpy = dpy;
    gc->majorOpcode = opcode;
 
    /*
@@ -350,6 +350,22 @@ AllocateGLXContext(Display * dpy)
    return gc;
 }
 
+_X_HIDDEN Bool
+glx_context_init(__GLXcontext *gc,
+		 __GLXscreenConfigs *psc, const __GLcontextModes *fbconfig)
+{
+   gc->majorOpcode = __glXSetupForCommand(psc->display->dpy);
+   if (!gc->majorOpcode)
+      return GL_FALSE;
+
+   gc->screen = psc->scr;
+   gc->psc = psc;
+   gc->mode = fbconfig;
+   gc->isDirect = GL_TRUE;
+
+   return GL_TRUE;
+}
+
 
 /**
  * Create a new context.  Exactly one of \c vis and \c fbconfig should be
@@ -367,7 +383,7 @@ CreateContext(Display * dpy, int generic_id,
               Bool allowDirect,
 	      unsigned code, int renderType, int screen)
 {
-   GLXContext gc;
+   GLXContext gc = NULL;
    __GLXscreenConfigs *const psc = GetGLXScreenConfigs(dpy, screen);
 #if defined(GLX_DIRECT_RENDERING) && defined(GLX_USE_APPLEGL)
    int errorcode;
@@ -380,28 +396,18 @@ CreateContext(Display * dpy, int generic_id,
    if (generic_id == None)
       return NULL;
 
-   gc = AllocateGLXContext(dpy);
-   if (!gc)
-      return NULL;
-
 #ifndef GLX_USE_APPLEGL  /* TODO: darwin indirect */
 #ifdef GLX_DIRECT_RENDERING
    if (allowDirect && psc->driScreen) {
-      gc->driContext = psc->driScreen->createContext(psc, fbconfig, gc,
-						     shareList, renderType);
-      if (gc->driContext != NULL) {
-	 gc->screen = screen;
-	 gc->psc = psc;
-	 gc->mode = fbconfig;
-	 gc->isDirect = GL_TRUE;
-      }
+      gc = psc->driScreen->createContext(psc, fbconfig,
+					 shareList, renderType);
    }
 #endif
 
-   if (gc->driContext != NULL)
-      gc->vtable = psc->direct_context_vtable;
-   else
-      gc->vtable = &glx_indirect_context_vtable;
+   if (!gc)
+      gc = AllocateGLXContext(dpy);
+   if (!gc)
+      return NULL;
 
    LockDisplay(dpy);
    switch (code) {
@@ -570,41 +576,21 @@ DestroyContext(Display * dpy, GLXContext gc)
       return;
    }
 
-#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
+#if defined(GLX_DIRECT_RENDERING)
    /* Destroy the direct rendering context */
    if (gc->driContext) {
-      (*gc->driContext->destroyContext) (gc->driContext, gc->psc, dpy);
-      gc->driContext = NULL;
       GarbageCollectDRIDrawables(gc->psc);
+      if (gc->extensions)
+	 XFree((char *) gc->extensions);
+      (*gc->driContext->destroyContext) (gc);
    }
+   else
 #endif
-
-   __glXFreeVertexArrayState(gc);
-#else
-   __glXLock();
-#endif /* GLX_USE_APPLEGL */   
-
-   if (gc->currentDpy) {
-#ifdef GLX_USE_APPLEGL
-      /* 
-       * Set the Bool that indicates that we should destroy this GLX context
-       * when the context is no longer current.
-       */
-      gc->do_destroy = True;
-#endif
-      /* Have to free later cuz it's in use now */
-      __glXUnlock();
-   }
-   else {
-      /* Destroy the handle if not current to anybody */
-      __glXUnlock();
-#ifdef GLX_USE_APPLEGL
-      if(gc->driContext)
-         apple_glx_destroy_context(&gc->driContext, dpy);
-#endif
+   {
+      __glXFreeVertexArrayState(gc);
       __glXFreeContext(gc);
    }
-#ifndef GLX_USE_APPLEGL
+
    if (!imported) {
       /*
        ** This dpy also created the server side part of the context.
@@ -617,6 +603,26 @@ DestroyContext(Display * dpy, GLXContext gc)
       req->context = xid;
       UnlockDisplay(dpy);
       SyncHandle();
+   }
+
+#else
+
+   __glXLock();
+   if (gc->currentDpy) {
+      /* 
+       * Set the Bool that indicates that we should destroy this GLX context
+       * when the context is no longer current.
+       */
+      gc->do_destroy = True;
+      /* Have to free later cuz it's in use now */
+      __glXUnlock();
+   }
+   else {
+      /* Destroy the handle if not current to anybody */
+      __glXUnlock();
+      if(gc->driContext)
+	 apple_glx_destroy_context(&gc->driContext, dpy);
+      __glXFreeContext(gc);
    }
 #endif
 }
@@ -2711,9 +2717,9 @@ __glXCopySubBufferMESA(Display * dpy, GLXDrawable drawable,
  * GLX_EXT_texture_from_pixmap
  */
 static void
-glx_indirect_bind_tex_image(Display * dpy,
-			    GLXDrawable drawable,
-			    int buffer, const int *attrib_list)
+indirect_bind_tex_image(Display * dpy,
+			GLXDrawable drawable,
+			int buffer, const int *attrib_list)
 {
    xGLXVendorPrivateReq *req;
    GLXContext gc = __glXGetCurrentContext();
@@ -2764,7 +2770,7 @@ glx_indirect_bind_tex_image(Display * dpy,
 }
 
 static void
-glx_indirect_release_tex_image(Display * dpy, GLXDrawable drawable, int buffer)
+indirect_release_tex_image(Display * dpy, GLXDrawable drawable, int buffer)
 {
    xGLXVendorPrivateReq *req;
    GLXContext gc = __glXGetCurrentContext();
@@ -2793,9 +2799,9 @@ glx_indirect_release_tex_image(Display * dpy, GLXDrawable drawable, int buffer)
    SyncHandle();
 }
 
-static const struct glx_context_vtable glx_indirect_context_vtable = {
-   glx_indirect_bind_tex_image,
-   glx_indirect_release_tex_image,
+static const struct glx_context_vtable indirect_context_vtable = {
+   indirect_bind_tex_image,
+   indirect_release_tex_image,
 };
 
 /*@{*/

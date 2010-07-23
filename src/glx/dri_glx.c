@@ -78,7 +78,8 @@ struct dri_screen
 
 struct dri_context
 {
-   __GLXDRIcontext base;
+   __GLXcontext base;
+   __GLXDRIcontext dri_vtable;
    __DRIcontext *driContext;
    XID hwContextID;
    __GLXscreenConfigs *psc;
@@ -89,6 +90,11 @@ struct dri_drawable
    __GLXDRIdrawable base;
 
    __DRIdrawable *driDrawable;
+};
+
+static const struct glx_context_vtable dri_context_vtable = {
+   NULL,
+   NULL,
 };
 
 /*
@@ -497,11 +503,10 @@ CallCreateNewScreen(Display *dpy, int scrn, struct dri_screen *psc,
 }
 
 static void
-driDestroyContext(__GLXDRIcontext * context,
-                  __GLXscreenConfigs *base, Display * dpy)
+driDestroyContext(__GLXcontext * context)
 {
    struct dri_context *pcp = (struct dri_context *) context;
-   struct dri_screen *psc = (struct dri_screen *) base;
+   struct dri_screen *psc = (struct dri_screen *) context->psc;
 
    (*psc->core->destroyContext) (pcp->driContext);
 
@@ -510,7 +515,7 @@ driDestroyContext(__GLXDRIcontext * context,
 }
 
 static Bool
-driBindContext(__GLXDRIcontext *context,
+driBindContext(__GLXcontext *context,
 	       __GLXDRIdrawable *draw, __GLXDRIdrawable *read)
 {
    struct dri_context *pcp = (struct dri_context *) context;
@@ -523,7 +528,7 @@ driBindContext(__GLXDRIcontext *context,
 }
 
 static void
-driUnbindContext(__GLXDRIcontext * context)
+driUnbindContext(__GLXcontext * context)
 {
    struct dri_context *pcp = (struct dri_context *) context;
    struct dri_screen *psc = (struct dri_screen *) pcp->psc;
@@ -531,10 +536,10 @@ driUnbindContext(__GLXDRIcontext * context)
    (*psc->core->unbindContext) (pcp->driContext);
 }
 
-static __GLXDRIcontext *
+static __GLXcontext *
 driCreateContext(__GLXscreenConfigs *base,
                  const __GLcontextModes * mode,
-                 GLXContext gc, GLXContext shareList, int renderType)
+                 GLXContext shareList, int renderType)
 {
    struct dri_context *pcp, *pcp_shared;
    struct dri_screen *psc = (struct dri_screen *) base;
@@ -554,7 +559,12 @@ driCreateContext(__GLXscreenConfigs *base,
    if (pcp == NULL)
       return NULL;
 
-   pcp->psc = &psc->base;
+   memset(pcp, 0, sizeof *pcp);
+   if (!glx_context_init(&pcp->base, &psc->base, mode)) {
+      Xfree(pcp);
+      return NULL;
+   }
+
    if (!XF86DRICreateContextWithConfig(psc->base.dpy, psc->base.scr,
                                        mode->visualID,
                                        &pcp->hwContextID, &hwContext)) {
@@ -572,9 +582,11 @@ driCreateContext(__GLXscreenConfigs *base,
       return NULL;
    }
 
-   pcp->base.destroyContext = driDestroyContext;
-   pcp->base.bindContext = driBindContext;
-   pcp->base.unbindContext = driUnbindContext;
+   pcp->base.vtable = &dri_context_vtable;
+   pcp->base.driContext = &pcp->dri_vtable;
+   pcp->dri_vtable.destroyContext = driDestroyContext;
+   pcp->dri_vtable.bindContext = driBindContext;
+   pcp->dri_vtable.unbindContext = driUnbindContext;
 
    return &pcp->base;
 }
@@ -672,11 +684,6 @@ driDestroyScreen(__GLXscreenConfigs *base)
    if (psc->driver)
       dlclose(psc->driver);
 }
-
-static const struct glx_context_vtable dri_context_vtable = {
-   NULL,
-   NULL,
-};
 
 #ifdef __DRI_SWAP_BUFFER_COUNTER
 
@@ -883,8 +890,6 @@ driCreateScreen(int screen, __GLXdisplayPrivate *priv)
 
    psp->setSwapInterval = driSetSwapInterval;
    psp->getSwapInterval = driGetSwapInterval;
-
-   psc->base.direct_context_vtable = &dri_context_vtable;
 
    return &psc->base;
 }

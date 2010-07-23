@@ -126,10 +126,9 @@ struct __GLXDRIscreenRec {
 
    void (*destroyScreen)(__GLXscreenConfigs *psc);
 
-   __GLXDRIcontext *(*createContext)(__GLXscreenConfigs *psc,
-				     const __GLcontextModes *mode,
-				     GLXContext gc,
-				     GLXContext shareList, int renderType);
+   __GLXcontext *(*createContext)(__GLXscreenConfigs *psc,
+				  const __GLcontextModes *mode,
+				  GLXContext shareList, int renderType);
 
    __GLXDRIdrawable *(*createDrawable)(__GLXscreenConfigs *psc,
 				       XID drawable,
@@ -155,12 +154,10 @@ struct __GLXDRIscreenRec {
 
 struct __GLXDRIcontextRec
 {
-   void (*destroyContext) (__GLXDRIcontext * context,
-                           __GLXscreenConfigs * psc, Display * dpy);
-     Bool(*bindContext) (__GLXDRIcontext * context, __GLXDRIdrawable * pdraw,
-                         __GLXDRIdrawable * pread);
-
-   void (*unbindContext) (__GLXDRIcontext * context);
+   void (*destroyContext) (__GLXcontext *context);
+   Bool(*bindContext) (__GLXcontext *context, __GLXDRIdrawable *pdraw,
+		       __GLXDRIdrawable *pread);
+   void (*unbindContext) (__GLXcontext *context);
 };
 
 struct __GLXDRIdrawableRec
@@ -389,11 +386,6 @@ struct __GLXcontextRec
    /*@} */
 
     /**
-     * Record the dpy this context was created on for later freeing
-     */
-   Display *createDpy;
-
-    /**
      * Maximum small render command size.  This is the smaller of 64k and
      * the size of the above buffer.
      */
@@ -463,6 +455,10 @@ struct __GLXcontextRec
    const struct glx_context_vtable *vtable;
 };
 
+extern Bool
+glx_context_init(__GLXcontext *gc,
+		 __GLXscreenConfigs *psc, const __GLcontextModes *fbconfig);
+
 #define __glXSetError(gc,code)  \
    if (!(gc)->error) {          \
       (gc)->error = code;       \
@@ -514,11 +510,6 @@ struct __GLXscreenConfigsRec
      * set of extensions that the application can actually use.
      */
    char *effectiveGLXexts;
-
-   /**
-    * Context vtable to use for direct contexts on this screen
-    */
-   const struct glx_context_vtable *direct_context_vtable;
 
    __GLXdisplayPrivate *display;
 

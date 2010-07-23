@@ -399,7 +399,7 @@ MakeContextCurrent(Display * dpy, GLXDrawable draw,
       }
 
       bindReturnValue =
-         (gc->driContext->bindContext) (gc->driContext, pdraw, pread);
+         (gc->driContext->bindContext) (gc, pdraw, pread);
    }
    else if (!gc && oldGC && oldGC->driContext) {
       bindReturnValue = True;
@@ -441,7 +441,7 @@ MakeContextCurrent(Display * dpy, GLXDrawable draw,
    }
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
    else if (oldGC->driContext && oldGC != gc) {
-      oldGC->driContext->unbindContext(oldGC->driContext);
+      oldGC->driContext->unbindContext(oldGC);
    }
 #endif
 
@@ -488,9 +488,7 @@ MakeContextCurrent(Display * dpy, GLXDrawable draw,
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
             /* Destroy the old direct rendering context */
             if (oldGC->driContext) {
-               oldGC->driContext->destroyContext(oldGC->driContext,
-                                                 oldGC->psc,
-                                                 oldGC->createDpy);
+               oldGC->driContext->destroyContext(oldGC);
                oldGC->driContext = NULL;
             }
 #endif
