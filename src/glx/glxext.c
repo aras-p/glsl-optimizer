@@ -738,21 +738,6 @@ glx_screen_init(__GLXscreenConfigs *psc,
    return GL_TRUE;
 }
 
-static __GLXscreenConfigs *
-createIndirectScreen(int screen, __GLXdisplayPrivate * priv)
-{
-   __GLXscreenConfigs *psc;
-
-   psc = Xmalloc(sizeof *psc);
-   if (psc == NULL)
-      return NULL;
-
-   memset(psc, 0, sizeof *psc);
-   glx_screen_init(psc, screen, priv);
-
-   return psc;
-}
-
 /*
 ** Allocate the memory for the per screen configs for each screen.
 ** If that works then fetch the per screen configs data.
@@ -789,7 +774,7 @@ AllocAndFetchScreenConfigs(Display * dpy, __GLXdisplayPrivate * priv)
 	 psc = (*priv->driswDisplay->createScreen) (i, priv);
 #endif
       if (psc == NULL)
-	 psc = createIndirectScreen (i, priv);
+	 psc = indirect_create_screen(i, priv);
       priv->screenConfigs[i] = psc;
    }
    SyncHandle();

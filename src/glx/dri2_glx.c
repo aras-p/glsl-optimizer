@@ -154,9 +154,9 @@ dri2UnbindContext(__GLXcontext *context)
 }
 
 static __GLXcontext *
-dri2CreateContext(__GLXscreenConfigs *base,
-                  const __GLcontextModes * mode,
-                  GLXContext shareList, int renderType)
+dri2_create_context(__GLXscreenConfigs *base,
+		    const __GLcontextModes * mode,
+		    GLXContext shareList, int renderType)
 {
    struct dri2_context *pcp, *pcp_shared;
    struct dri2_screen *psc = (struct dri2_screen *) base;
@@ -718,6 +718,9 @@ dri2BindExtensions(struct dri2_screen *psc, const __DRIextension **extensions)
    }
 }
 
+static const struct glx_screen_vtable dri2_screen_vtable = {
+   dri2_create_context
+};
 
 static __GLXscreenConfigs *
 dri2CreateScreen(int screen, __GLXdisplayPrivate * priv)
@@ -811,10 +814,10 @@ dri2CreateScreen(int screen, __GLXdisplayPrivate * priv)
 
    psc->driver_configs = driver_configs;
 
+   psc->base.vtable = &dri2_screen_vtable;
    psp = &psc->vtable;
    psc->base.driScreen = psp;
    psp->destroyScreen = dri2DestroyScreen;
-   psp->createContext = dri2CreateContext;
    psp->createDrawable = dri2CreateDrawable;
    psp->swapBuffers = dri2SwapBuffers;
    psp->getDrawableMSC = NULL;

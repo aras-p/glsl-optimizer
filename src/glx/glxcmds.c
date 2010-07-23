@@ -234,6 +234,55 @@ ValidateGLXFBConfig(Display * dpy, GLXFBConfig config)
    return NULL;
 }
 
+#ifdef GLX_USE_APPLEGL
+
+static const struct glx_context_vtable applegl_context_vtable;
+
+static __GLcontext *
+applegl_create_context(__GLXscreenConfigs *psc,
+			const __GLcontextModes *mode,
+			GLXContext shareList, int renderType)
+{
+   __GLXcontext *gc;
+   int errorcode;
+   bool x11error;
+
+   /* TODO: Integrate this with apple_glx_create_context and make
+    * struct apple_glx_context inherit from __GLXcontext. */
+
+   gc = Xmalloc(sizeof *gc);
+   if (pcp == NULL)
+      return NULL;
+
+   memset(gc, 0, sizeof *gc);
+   if (!glx_context_init(&gc->base, &psc->base, mode)) {
+      Xfree(gc);
+      return NULL;
+   }
+
+   gc->vtable = &applegl_context_vtable;
+   gc->driContext = NULL;
+   gc->do_destroy = False;
+
+   /* TODO: darwin: Integrate with above to do indirect */
+   if(apple_glx_create_context(&gc->driContext, dpy, screen, fbconfig, 
+			       shareList ? shareList->driContext : NULL,
+			       &errorcode, &x11error)) {
+      __glXSendError(dpy, errorcode, 0, X_GLXCreateContext, x11error);
+      gc->vtable->destroy(gc);
+      return NULL;
+   }
+
+   gc->currentContextTag = -1;
+   gc->mode = fbconfig;
+   gc->isDirect = allowDirect;
+   gc->xid = 1; /* Just something not None, so we know when to destroy
+		 * it in MakeContextCurrent. */
+
+   return gc;
+}
+#endif
+
 
 /**
  * \todo It should be possible to move the allocate of \c client_state_private
@@ -246,17 +295,16 @@ ValidateGLXFBConfig(Display * dpy, GLXFBConfig config)
  * does all the initialization (including the pixel pack / unpack).
  */
 static GLXContext
-AllocateGLXContext(Display * dpy)
+indirect_create_context(__GLXscreenConfigs *psc,
+			const __GLcontextModes *mode,
+			GLXContext shareList, int renderType)
 {
    GLXContext gc;
    int bufSize;
    CARD8 opcode;
    __GLXattribute *state;
 
-   if (!dpy)
-      return NULL;
-
-   opcode = __glXSetupForCommand(dpy);
+   opcode = __glXSetupForCommand(psc->dpy);
    if (!opcode) {
       return NULL;
    }
@@ -269,6 +317,8 @@ AllocateGLXContext(Display * dpy)
    }
    memset(gc, 0, sizeof(struct __GLXcontextRec));
 
+   glx_context_init(gc, psc, mode);
+   gc->isDirect = GL_FALSE;
    gc->vtable = &indirect_context_vtable;
    state = Xmalloc(sizeof(struct __GLXattributeRec));
    if (state == NULL) {
@@ -287,7 +337,7 @@ AllocateGLXContext(Display * dpy)
     ** packet for the GLXRenderReq header.
     */
 
-   bufSize = (XMaxRequestSize(dpy) * 4) - sz_xGLXRenderReq;
+   bufSize = (XMaxRequestSize(psc->dpy) * 4) - sz_xGLXRenderReq;
    gc->buf = (GLubyte *) Xmalloc(bufSize);
    if (!gc->buf) {
       Xfree(gc->client_state_private);
@@ -339,13 +389,30 @@ AllocateGLXContext(Display * dpy)
    }
    gc->maxSmallRenderCommandSize = bufSize;
    
-#ifdef GLX_USE_APPLEGL
-   gc->driContext = NULL;
-   gc->do_destroy = False;   
-#endif
 
    return gc;
 }
+
+struct glx_screen_vtable indirect_screen_vtable = {
+   indirect_create_context
+};
+
+_X_HIDDEN __GLXscreenConfigs *
+indirect_create_screen(int screen, __GLXdisplayPrivate * priv)
+{
+   __GLXscreenConfigs *psc;
+
+   psc = Xmalloc(sizeof *psc);
+   if (psc == NULL)
+      return NULL;
+
+   memset(psc, 0, sizeof *psc);
+   glx_screen_init(psc, screen, priv);
+   psc->vtable = &indirect_screen_vtable;
+
+   return psc;
+}
+
 
 _X_HIDDEN Bool
 glx_context_init(__GLXcontext *gc,
@@ -382,27 +449,19 @@ CreateContext(Display * dpy, int generic_id,
 {
    GLXContext gc = NULL;
    __GLXscreenConfigs *const psc = GetGLXScreenConfigs(dpy, screen);
-#if defined(GLX_DIRECT_RENDERING) && defined(GLX_USE_APPLEGL)
-   int errorcode;
-   bool x11error;
-#endif
-    
+
    if (dpy == NULL)
       return NULL;
 
    if (generic_id == None)
       return NULL;
 
-#ifndef GLX_USE_APPLEGL  /* TODO: darwin indirect */
-#ifdef GLX_DIRECT_RENDERING
-   if (allowDirect && psc->driScreen) {
-      gc = psc->driScreen->createContext(psc, fbconfig,
-					 shareList, renderType);
-   }
-#endif
-
+   gc = NULL;
+   if (allowDirect && psc->vtable->create_context)
+      gc = psc->vtable->create_context(psc, fbconfig,
+				      shareList, renderType);
    if (!gc)
-      gc = AllocateGLXContext(dpy);
+      gc = indirect_create_context(psc, fbconfig, shareList, renderType);
    if (!gc)
       return NULL;
 
@@ -469,25 +528,9 @@ CreateContext(Display * dpy, int generic_id,
 
    UnlockDisplay(dpy);
    SyncHandle();
-#endif
 
    gc->imported = GL_FALSE;
    gc->renderType = renderType;
-
-   /* TODO: darwin: Integrate with above to do indirect */
-#ifdef GLX_USE_APPLEGL
-   if(apple_glx_create_context(&gc->driContext, dpy, screen, fbconfig, 
-                               shareList ? shareList->driContext : NULL,
-                               &errorcode, &x11error)) {
-      __glXSendError(dpy, errorcode, 0, X_GLXCreateContext, x11error);
-      gc->vtable->destroy(gc);
-      return NULL;
-   }
-   
-   gc->currentContextTag = -1;
-   gc->mode = fbconfig;
-   gc->isDirect = allowDirect;
-#endif
 
    return gc;
 }
@@ -1633,122 +1676,103 @@ GLX_ALIAS(Display *, glXGetCurrentDisplayEXT, (void), (),
           glXGetCurrentDisplay)
 
 #ifndef GLX_USE_APPLEGL
-/**
- * Used internally by libGL to send \c xGLXQueryContextinfoExtReq requests
- * to the X-server.
- *
- * \param dpy  Display where \c ctx was created.
- * \param ctx  Context to query.
- * \returns  \c Success on success.  \c GLX_BAD_CONTEXT if \c ctx is invalid,
- *           or zero if the request failed due to internal problems (i.e.,
- *           unable to allocate temporary memory, etc.)
- *
- * \note
- * This function dynamically determines whether to use the EXT_import_context
- * version of the protocol or the GLX 1.3 version of the protocol.
- */
-static int __glXQueryContextInfo(Display * dpy, GLXContext ctx)
+PUBLIC GLXContext
+glXImportContextEXT(Display *dpy, GLXContextID contextID)
 {
    __GLXdisplayPrivate *priv = __glXInitialize(dpy);
+   __GLXscreenConfigs *psc;
    xGLXQueryContextReply reply;
    CARD8 opcode;
-   GLuint numValues;
-   int retval;
+   GLXContext ctx;
+   int propList[__GLX_MAX_CONTEXT_PROPS * 2], *pProp, nPropListBytes;
+   int i, renderType;
+   XID share;
+   __GLcontextModes *mode;
 
-   if (ctx == NULL) {
-      return GLX_BAD_CONTEXT;
-   }
+   if (contextID == None || __glXIsDirect(dpy, contextID))
+      return NULL;
+
    opcode = __glXSetupForCommand(dpy);
-   if (!opcode) {
+   if (!opcode)
       return 0;
-   }
 
    /* Send the glXQueryContextInfoEXT request */
    LockDisplay(dpy);
 
-   if ((priv->majorVersion > 1) || (priv->minorVersion >= 3)) {
+   if (priv->majorVersion > 1 || priv->minorVersion >= 3) {
       xGLXQueryContextReq *req;
 
       GetReq(GLXQueryContext, req);
 
       req->reqType = opcode;
       req->glxCode = X_GLXQueryContext;
-      req->context = (unsigned int) (ctx->xid);
+      req->context = contextID;
    }
    else {
       xGLXVendorPrivateReq *vpreq;
       xGLXQueryContextInfoEXTReq *req;
 
       GetReqExtra(GLXVendorPrivate,
-                  sz_xGLXQueryContextInfoEXTReq - sz_xGLXVendorPrivateReq,
-                  vpreq);
+		  sz_xGLXQueryContextInfoEXTReq - sz_xGLXVendorPrivateReq,
+		  vpreq);
       req = (xGLXQueryContextInfoEXTReq *) vpreq;
       req->reqType = opcode;
       req->glxCode = X_GLXVendorPrivateWithReply;
       req->vendorCode = X_GLXvop_QueryContextInfoEXT;
-      req->context = (unsigned int) (ctx->xid);
+      req->context = contextID;
    }
 
    _XReply(dpy, (xReply *) & reply, 0, False);
 
-   numValues = reply.n;
-   if (numValues == 0)
-      retval = Success;
-   else if (numValues > __GLX_MAX_CONTEXT_PROPS)
-      retval = 0;
-   else {
-      int *propList, *pProp;
-      int nPropListBytes;
-
-      nPropListBytes = numValues << 3;
-      propList = (int *) Xmalloc(nPropListBytes);
-      if (NULL == propList) {
-         retval = 0;
-      }
-      else {
-	 unsigned i;
-
-         _XRead(dpy, (char *) propList, nPropListBytes);
-
-	 /* Look up screen first so we can look up visuals/fbconfigs later */
-         pProp = propList;
-         for (i = 0; i < numValues; i++, pProp += 2)
-	     if (pProp[0] == GLX_SCREEN) {
-		 ctx->screen = pProp[1];
-		 ctx->psc = GetGLXScreenConfigs(dpy, ctx->screen);
-	     }
-
-         pProp = propList;
-         for (i = 0; i < numValues; i++) {
-            switch (*pProp++) {
-            case GLX_SHARE_CONTEXT_EXT:
-               ctx->share_xid = *pProp++;
-               break;
-            case GLX_VISUAL_ID_EXT:
-               ctx->mode =
-                  _gl_context_modes_find_visual(ctx->psc->visuals, *pProp++);
-               break;
-            case GLX_FBCONFIG_ID:
-               ctx->mode =
-                  _gl_context_modes_find_fbconfig(ctx->psc->configs,
-                                                  *pProp++);
-               break;
-            case GLX_RENDER_TYPE:
-               ctx->renderType = *pProp++;
-               break;
-            case GLX_SCREEN:
-            default:
-               pProp++;
-               continue;
-            }
-         }
-         Xfree((char *) propList);
-         retval = Success;
-      }
-   }
+   if (reply.n <= __GLX_MAX_CONTEXT_PROPS)
+      nPropListBytes = reply.n * 2 * sizeof propList[0];
+   else
+      nPropListBytes = 0;
+   _XRead(dpy, (char *) propList, nPropListBytes);
    UnlockDisplay(dpy);
    SyncHandle();
-   return retval;
+
+   /* Look up screen first so we can look up visuals/fbconfigs later */
+   psc = NULL;
+   for (i = 0, pProp = propList; i < reply.n; i++, pProp += 2)
+      if (pProp[0] == GLX_SCREEN)
+	 psc = GetGLXScreenConfigs(dpy, pProp[1]);
+   if (psc == NULL)
+      return NULL;
+
+   share = None;
+   mode = NULL;
+   renderType = 0;
+   pProp = propList;
+
+   for (i = 0, pProp = propList; i < reply.n; i++, pProp += 2)
+      switch (pProp[0]) {
+      case GLX_SHARE_CONTEXT_EXT:
+	 share = pProp[1];
+	 break;
+      case GLX_VISUAL_ID_EXT:
+	 mode = _gl_context_modes_find_visual(psc->visuals, pProp[1]);
+	 break;
+      case GLX_FBCONFIG_ID:
+	 mode = _gl_context_modes_find_fbconfig(psc->configs, pProp[1]);
+	 break;
+      case GLX_RENDER_TYPE:
+	 renderType = pProp[1];
+	 break;
+      }
+
+   if (mode == NULL)
+      return NULL;
+
+   ctx = indirect_create_context(psc, mode, NULL, renderType);
+   if (ctx == NULL)
+      return NULL;
+
+   ctx->xid = contextID;
+   ctx->imported = GL_TRUE;
+   ctx->share_xid = share;
+
+   return ctx;
 }
 
 #endif
@@ -1756,38 +1780,21 @@ static int __glXQueryContextInfo(Display * dpy, GLXContext ctx)
 PUBLIC int
 glXQueryContext(Display * dpy, GLXContext ctx, int attribute, int *value)
 {
-#ifndef GLX_USE_APPLEGL
-   int retVal;
-
-   /* get the information from the server if we don't have it already */
-#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
-   if (!ctx->driContext && (ctx->mode == NULL)) {
-#else
-   if (ctx->mode == NULL) {
-#endif
-      retVal = __glXQueryContextInfo(dpy, ctx);
-      if (Success != retVal)
-         return retVal;
-   }
-#endif
-
    switch (attribute) {
-#ifndef GLX_USE_APPLEGL
       case GLX_SHARE_CONTEXT_EXT:
-      *value = (int) (ctx->share_xid);
+      *value = ctx->share_xid;
       break;
    case GLX_VISUAL_ID_EXT:
       *value = ctx->mode ? ctx->mode->visualID : None;
       break;
-#endif
    case GLX_SCREEN:
-      *value = (int) (ctx->screen);
+      *value = ctx->screen;
       break;
    case GLX_FBCONFIG_ID:
       *value = ctx->mode ? ctx->mode->fbconfigID : None;
       break;
    case GLX_RENDER_TYPE:
-      *value = (int) (ctx->renderType);
+      *value = ctx->renderType;
       break;
    default:
       return GLX_BAD_ATTRIBUTE;
@@ -1805,46 +1812,12 @@ PUBLIC GLXContextID glXGetContextIDEXT(const GLXContext ctx)
    return ctx->xid;
 }
 
-PUBLIC GLXContext
-glXImportContextEXT(Display * dpy, GLXContextID contextID)
-{
-#ifdef GLX_USE_APPLEGL
-   return NULL;
-#else
-   GLXContext ctx;
-
-   if (contextID == None) {
-      return NULL;
-   }
-   if (__glXIsDirect(dpy, contextID)) {
-      return NULL;
-   }
-
-   ctx = AllocateGLXContext(dpy);
-   if (NULL != ctx) {
-      ctx->xid = contextID;
-      ctx->imported = GL_TRUE;
-
-      if (Success != __glXQueryContextInfo(dpy, ctx)) {
-	 ctx->vtable->destroy(ctx);
-	 ctx = NULL;
-      }
-   }
-   return ctx;
-#endif
-}
-
 PUBLIC void
 glXFreeContextEXT(Display * dpy, GLXContext ctx)
 {
    DestroyContext(dpy, ctx);
 }
 
-
-
-/*
- * GLX 1.3 functions - these are just stubs for now!
- */
 
 PUBLIC GLXFBConfig *
 glXChooseFBConfig(Display * dpy, int screen,

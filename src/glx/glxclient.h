@@ -504,8 +504,16 @@ extern void __glFreeAttributeState(__GLXcontext *);
  * One of these records exists per screen of the display.  It contains
  * a pointer to the config data for that screen (if the screen supports GL).
  */
+struct glx_screen_vtable {
+   __GLXcontext *(*create_context)(__GLXscreenConfigs *psc,
+				   const __GLcontextModes *mode,
+				   GLXContext shareList, int renderType);
+};
+
 struct __GLXscreenConfigsRec
 {
+   const struct glx_screen_vtable *vtable;
+
     /**
      * GLX extension string reported by the X-server.
      */
@@ -798,5 +806,8 @@ extern __GLXDRIdrawable *
 GetGLXDRIDrawable(Display *dpy, GLXDrawable drawable);
 
 #endif
+
+extern __GLXscreenConfigs *
+indirect_create_screen(int screen, __GLXdisplayPrivate * priv);
 
 #endif /* !__GLX_client_h__ */

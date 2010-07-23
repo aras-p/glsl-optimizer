@@ -550,9 +550,9 @@ static const struct glx_context_vtable dri_context_vtable = {
 };
 
 static __GLXcontext *
-driCreateContext(__GLXscreenConfigs *base,
-                 const __GLcontextModes * mode,
-                 GLXContext shareList, int renderType)
+dri_create_context(__GLXscreenConfigs *base,
+		   const __GLcontextModes *mode,
+		   GLXContext shareList, int renderType)
 {
    struct dri_context *pcp, *pcp_shared;
    struct dri_screen *psc = (struct dri_screen *) base;
@@ -821,6 +821,10 @@ driBindExtensions(struct dri_screen *psc, const __DRIextension **extensions)
    }
 }
 
+static const struct glx_screen_vtable dri_screen_vtable = {
+   dri_create_context
+};
+
 static __GLXscreenConfigs *
 driCreateScreen(int screen, __GLXdisplayPrivate *priv)
 {
@@ -882,13 +886,13 @@ driCreateScreen(int screen, __GLXdisplayPrivate *priv)
    extensions = psc->core->getExtensions(psc->driScreen);
    driBindExtensions(psc, extensions);
 
+   psc->base.vtable = &dri_screen_vtable;
    psp = &psc->vtable;
    psc->base.driScreen = psp;
    if (psc->driCopySubBuffer)
       psp->copySubBuffer = driCopySubBuffer;
 
    psp->destroyScreen = driDestroyScreen;
-   psp->createContext = driCreateContext;
    psp->createDrawable = driCreateDrawable;
    psp->swapBuffers = driSwapBuffers;
 

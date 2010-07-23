@@ -289,9 +289,9 @@ static const struct glx_context_vtable drisw_context_vtable = {
 };
 
 static __GLXcontext *
-driCreateContext(__GLXscreenConfigs *base,
-		 const __GLcontextModes *mode,
-		 GLXContext shareList, int renderType)
+drisw_create_context(__GLXscreenConfigs *base,
+		     const __GLcontextModes *mode,
+		     GLXContext shareList, int renderType)
 {
    struct drisw_context *pcp, *pcp_shared;
    __GLXDRIconfigPrivate *config = (__GLXDRIconfigPrivate *) mode;
@@ -426,6 +426,10 @@ driOpenSwrast(void)
    return driver;
 }
 
+static const struct glx_screen_vtable drisw_screen_vtable = {
+   drisw_create_context
+};
+
 static __GLXscreenConfigs *
 driCreateScreen(int screen, __GLXdisplayPrivate *priv)
 {
@@ -482,10 +486,10 @@ driCreateScreen(int screen, __GLXdisplayPrivate *priv)
 
    psc->driver_configs = driver_configs;
 
+   psc->base.vtable = &drisw_screen_vtable;
    psp = &psc->vtable;
    psc->base.driScreen = psp;
    psp->destroyScreen = driDestroyScreen;
-   psp->createContext = driCreateContext;
    psp->createDrawable = driCreateDrawable;
    psp->swapBuffers = driSwapBuffers;
 
