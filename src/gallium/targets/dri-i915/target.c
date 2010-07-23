@@ -1,5 +1,6 @@
 
 #include "state_tracker/drm_driver.h"
+#include "target-helpers/inline_wrapper_sw_helper.h"
 #include "target-helpers/inline_debug_helper.h"
 #include "i915/drm/i915_drm_public.h"
 #include "i915/i915_public.h"
@@ -17,6 +18,9 @@ create_screen(int fd)
    screen = i915_screen_create(iws);
    if (!screen)
       return NULL;
+
+   if (debug_get_bool_option("I915_SOFTWARE", FALSE))
+      screen = sw_screen_wrap(screen);
 
    screen = debug_screen_wrap(screen);
 
