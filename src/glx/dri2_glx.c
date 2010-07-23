@@ -397,7 +397,7 @@ static void
 dri2_wait_x(__GLXcontext *gc)
 {
    struct dri2_drawable *priv = (struct dri2_drawable *)
-      GetGLXDRIDrawable(gc->currentDpy, gc->currentDrawable, NULL);
+      GetGLXDRIDrawable(gc->currentDpy, gc->currentDrawable);
 
    if (priv == NULL || !priv->have_fake_front)
       return;
@@ -409,7 +409,7 @@ static void
 dri2_wait_gl(__GLXcontext *gc)
 {
    struct dri2_drawable *priv = (struct dri2_drawable *)
-      GetGLXDRIDrawable(gc->currentDpy, gc->currentDrawable, NULL);
+      GetGLXDRIDrawable(gc->currentDpy, gc->currentDrawable);
 
    if (priv == NULL || !priv->have_fake_front)
       return;
@@ -638,7 +638,7 @@ dri2_bind_tex_image(Display * dpy,
 		    int buffer, const int *attrib_list)
 {
    GLXContext gc = __glXGetCurrentContext();
-   __GLXDRIdrawable *base = GetGLXDRIDrawable(dpy, drawable, NULL);
+   __GLXDRIdrawable *base = GetGLXDRIDrawable(dpy, drawable);
    __GLXdisplayPrivate *dpyPriv = __glXInitialize(dpy);
    struct dri2_drawable *pdraw = (struct dri2_drawable *) base;
    struct dri2_display *pdp =

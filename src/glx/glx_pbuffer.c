@@ -95,7 +95,7 @@ ChangeDrawableAttribute(Display * dpy, GLXDrawable drawable,
       return;
    }
 
-   pdraw = GetGLXDRIDrawable(dpy, drawable, NULL);
+   pdraw = GetGLXDRIDrawable(dpy, drawable);
 
    opcode = __glXSetupForCommand(dpy);
    if (!opcode)
@@ -214,14 +214,12 @@ CreateDRIDrawable(Display *dpy, const __GLcontextModes *fbconfig,
 static void
 DestroyDRIDrawable(Display *dpy, GLXDrawable drawable, int destroy_xdrawable)
 {
-   int screen;
    __GLXdisplayPrivate *const priv = __glXInitialize(dpy);
-   __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable, &screen);
-   __GLXscreenConfigs *psc = priv->screenConfigs[screen];
+   __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable);
 
    if (pdraw != NULL) {
       if (destroy_xdrawable)
-         XFreePixmap(psc->dpy, pdraw->xDrawable);
+         XFreePixmap(pdraw->psc->dpy, pdraw->xDrawable);
       (*pdraw->destroyDrawable) (pdraw);
       __glxHashDelete(priv->drawHash, drawable);
    }
@@ -341,7 +339,7 @@ GetDrawableAttribute(Display * dpy, GLXDrawable drawable,
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
          {
-            __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable, NULL);
+            __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable);
 
             if (pdraw != NULL && !pdraw->textureTarget)
                pdraw->textureTarget =
