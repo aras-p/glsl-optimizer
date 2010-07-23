@@ -226,6 +226,7 @@ static void widepoint_first_point( struct draw_stage *stage,
 
    if (rast->gl_rasterization_rules) {
       wide->xbias = 0.125;
+      wide->ybias = -0.125;
    }
 
    /* Disable triangle culling, stippling, unfilled mode etc. */
