@@ -165,7 +165,7 @@ dri2_create_context(__GLXscreenConfigs *base,
    __DRIcontext *shared = NULL;
 
    if (shareList) {
-      pcp_shared = (struct dri2_context *) shareList->driContext;
+      pcp_shared = (struct dri2_context *) shareList;
       shared = pcp_shared->driContext;
    }
 
