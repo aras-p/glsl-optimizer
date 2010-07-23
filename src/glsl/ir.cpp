@@ -908,6 +908,9 @@ visit_exec_list(exec_list *list, ir_visitor *visitor)
 static void
 steal_memory(ir_instruction *ir, void *new_ctx)
 {
+   ir_variable *var = ir->as_variable();
+   if (var != NULL && var->constant_value != NULL)
+      talloc_steal(ir, var->constant_value);
    talloc_steal(new_ctx, ir);
 }
 
