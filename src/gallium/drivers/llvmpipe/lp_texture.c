@@ -56,6 +56,7 @@
 #ifdef DEBUG
 static struct llvmpipe_resource resource_list;
 #endif
+static unsigned id_counter = 0;
 
 
 static INLINE boolean
@@ -210,7 +211,6 @@ static struct pipe_resource *
 llvmpipe_resource_create(struct pipe_screen *_screen,
                          const struct pipe_resource *templat)
 {
-   static unsigned id_counter = 0;
    struct llvmpipe_screen *screen = llvmpipe_screen(_screen);
    struct llvmpipe_resource *lpr = CALLOC_STRUCT(llvmpipe_resource);
    if (!lpr)
@@ -446,6 +446,10 @@ llvmpipe_resource_from_handle(struct pipe_screen *screen,
 {
    struct sw_winsys *winsys = llvmpipe_screen(screen)->winsys;
    struct llvmpipe_resource *lpr = CALLOC_STRUCT(llvmpipe_resource);
+   unsigned width, height, width_t, height_t;
+
+   /* XXX Seems like from_handled depth textures doesn't work that well */
+
    if (!lpr)
       return NULL;
 
@@ -453,12 +457,42 @@ llvmpipe_resource_from_handle(struct pipe_screen *screen,
    pipe_reference_init(&lpr->base.reference, 1);
    lpr->base.screen = screen;
 
+   width = align(lpr->base.width0, TILE_SIZE);
+   height = align(lpr->base.height0, TILE_SIZE);
+   width_t = width / TILE_SIZE;
+   height_t = height / TILE_SIZE;
+
+   /*
+    * Looks like unaligned displaytargets work just fine,
+    * at least sampler/render ones.
+    */
+#if 0
+   assert(lpr->base.width0 == width);
+   assert(lpr->base.height0 == height);
+#endif
+
+   lpr->tiles_per_row[0] = width_t;
+   lpr->tiles_per_image[0] = width_t * height_t;
+   lpr->num_slices_faces[0] = 1;
+   lpr->img_stride[0] = 0;
+
    lpr->dt = winsys->displaytarget_from_handle(winsys,
                                                template,
                                                whandle,
                                                &lpr->row_stride[0]);
    if (!lpr->dt)
       goto fail;
+
+   lpr->layout[0] = alloc_layout_array(1, lpr->base.width0, lpr->base.height0);
+
+   assert(lpr->layout[0]);
+   assert(lpr->layout[0][0] == LP_TEX_LAYOUT_NONE);
+
+   lpr->id = id_counter++;
+
+#ifdef DEBUG
+   insert_at_tail(&resource_list, lpr);
+#endif
 
    return &lpr->base;
 
