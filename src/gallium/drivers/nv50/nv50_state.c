@@ -546,7 +546,6 @@ nv50_vp_state_create(struct pipe_context *pipe,
 
 	p->pipe.tokens = tgsi_dup_tokens(cso->tokens);
 	p->type = PIPE_SHADER_VERTEX;
-	tgsi_scan_shader(p->pipe.tokens, &p->info);
 	return (void *)p;
 }
 
@@ -578,7 +577,6 @@ nv50_fp_state_create(struct pipe_context *pipe,
 
 	p->pipe.tokens = tgsi_dup_tokens(cso->tokens);
 	p->type = PIPE_SHADER_FRAGMENT;
-	tgsi_scan_shader(p->pipe.tokens, &p->info);
 	return (void *)p;
 }
 
@@ -610,7 +608,6 @@ nv50_gp_state_create(struct pipe_context *pipe,
 
 	p->pipe.tokens = tgsi_dup_tokens(cso->tokens);
 	p->type = PIPE_SHADER_GEOMETRY;
-	tgsi_scan_shader(p->pipe.tokens, &p->info);
 	return (void *)p;
 }
 

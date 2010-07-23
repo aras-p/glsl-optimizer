@@ -81,6 +81,9 @@ validate_fb(struct nv50_context *nv50)
 		case PIPE_FORMAT_R16G16B16A16_UNORM:
 			so_data(so, NV50TCL_RT_FORMAT_R16G16B16A16_UNORM);
 			break;
+		case PIPE_FORMAT_R16G16B16A16_FLOAT:
+			so_data(so, NV50TCL_RT_FORMAT_R16G16B16A16_FLOAT);
+			break;
 		case PIPE_FORMAT_R32G32B32A32_FLOAT:
 			so_data(so, NV50TCL_RT_FORMAT_R32G32B32A32_FLOAT);
 			break;
@@ -134,6 +137,12 @@ validate_fb(struct nv50_context *nv50)
 			break;
 		case PIPE_FORMAT_Z32_FLOAT:
 			so_data(so, NV50TCL_ZETA_FORMAT_Z32_FLOAT);
+			break;
+		case PIPE_FORMAT_Z32_FLOAT_S8X24_USCALED:
+			so_data(so, NV50TCL_ZETA_FORMAT_Z32_FLOAT_X24S8_UNORM);
+			break;
+		case PIPE_FORMAT_Z16_UNORM:
+			so_data(so, NV50TCL_ZETA_FORMAT_Z16_UNORM);
 			break;
 		default:
 			NOUVEAU_ERR("AIIII unknown format %s\n",

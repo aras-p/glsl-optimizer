@@ -519,7 +519,7 @@ nv50_vbo_static_attrib(struct nv50_context *nv50, unsigned attrib,
 		so_data  (so, fui(v[1]));
 		break;
 	case 1:
-		if (attrib == nv50->vertprog->cfg.edgeflag_in) {
+		if (attrib == nv50->vertprog->vp.edgeflag) {
 			so_method(so, tesla, NV50TCL_EDGEFLAG_ENABLE, 1);
 			so_data  (so, v[0] ? 1 : 0);
 		}
@@ -560,7 +560,7 @@ nv50_vbo_validate(struct nv50_context *nv50)
 
 	nv50->vbo_fifo = 0;
 	if (nv50->screen->force_push ||
-	    nv50->vertprog->cfg.edgeflag_in < 16)
+	    nv50->vertprog->vp.edgeflag < 16)
 		nv50->vbo_fifo = 0xffff;
 
 	for (i = 0; i < nv50->vtxbuf_nr; i++) {
