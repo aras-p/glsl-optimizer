@@ -756,7 +756,7 @@ _mesa_strdup( const char *s )
 float
 _mesa_strtof( const char *s, char **end )
 {
-#ifdef _GNU_SOURCE
+#if defined(_GNU_SOURCE) && !defined(__CYGWIN__)
    static locale_t loc = NULL;
    if (!loc) {
       loc = newlocale(LC_CTYPE_MASK, "C", NULL);
