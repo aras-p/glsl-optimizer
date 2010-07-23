@@ -109,6 +109,8 @@ typedef struct _modesettingRec
     Bool dirtyThrottling;
     CloseScreenProcPtr CloseScreen;
     Bool no3D;
+    Bool from_3D;
+    Bool isMaster;
 
     /* Broken-out options. */
     OptionInfoPtr Options;

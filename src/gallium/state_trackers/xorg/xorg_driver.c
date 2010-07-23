@@ -282,6 +282,7 @@ drv_init_drm(ScrnInfoPtr pScrn)
 
 
 	ms->fd = drmOpen(driver_descriptor.driver_name, BusID);
+	ms->isMaster = TRUE;
 	xfree(BusID);
 
 	if (ms->fd >= 0)
@@ -289,17 +290,6 @@ drv_init_drm(ScrnInfoPtr pScrn)
 
 	return FALSE;
     }
-
-    return TRUE;
-}
-
-static Bool
-drv_close_drm(ScrnInfoPtr pScrn)
-{
-    modesettingPtr ms = modesettingPTR(pScrn);
-
-    drmClose(ms->fd);
-    ms->fd = -1;
 
     return TRUE;
 }
@@ -332,25 +322,6 @@ drv_init_resource_management(ScrnInfoPtr pScrn)
     return FALSE;
 }
 
-static Bool
-drv_close_resource_management(ScrnInfoPtr pScrn)
-{
-    modesettingPtr ms = modesettingPTR(pScrn);
-
-    if (ms->screen) {
-	assert(ms->ctx == NULL);
-	ms->screen->destroy(ms->screen);
-    }
-    ms->screen = NULL;
-
-#ifdef HAVE_LIBKMS
-    if (ms->kms)
-	kms_destroy(&ms->kms);
-#endif
-
-    return TRUE;
-}
-
 static void
 drv_cleanup_fences(ScrnInfoPtr pScrn)
 {
@@ -375,8 +346,8 @@ drv_pre_init(ScrnInfoPtr pScrn, int flags)
     rgb defaultWeight = { 0, 0, 0 };
     EntityInfoPtr pEnt;
     EntPtr msEnt = NULL;
-    int max_width, max_height;
     CustomizerPtr cust;
+    Bool use3D;
 
     if (pScrn->numEntities != 1)
 	return FALSE;
@@ -431,6 +402,19 @@ drv_pre_init(ScrnInfoPtr pScrn, int flags)
     if (!drv_init_drm(pScrn))
 	return FALSE;
 
+    use3D = cust ? !cust->no_3d : TRUE;
+    ms->from_3D = xf86GetOptValBool(ms->Options, OPTION_3D_ACCEL,
+				    &use3D) ?
+	X_CONFIG : X_PROBED;
+
+    ms->no3D = !use3D;
+
+    if (!drv_init_resource_management(pScrn)) {
+	xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "Could not init "
+					       "Gallium3D or libKMS.");
+	return FALSE;
+    }
+
     pScrn->monitor = pScrn->confScreen->monitor;
     pScrn->progClock = TRUE;
     pScrn->rgbBits = 8;
@@ -469,9 +453,36 @@ drv_pre_init(ScrnInfoPtr pScrn, int flags)
     xf86CrtcConfigInit(pScrn, &crtc_config_funcs);
     xf86_config = XF86_CRTC_CONFIG_PTR(pScrn);
 
-    max_width = 2048;  /* A very low default */
-    max_height = 2048; /* see screen_init */
-    xf86CrtcSetSizeRange(pScrn, 320, 200, max_width, max_height);
+    /* get max width and height */
+    {
+	drmModeResPtr res;
+	int max_width, max_height;
+
+	res = drmModeGetResources(ms->fd);
+	max_width = res->max_width;
+	max_height = res->max_height;
+
+	if (ms->screen) {
+	    int max;
+
+	    max = ms->screen->get_param(ms->screen,
+					PIPE_CAP_MAX_TEXTURE_2D_LEVELS);
+	    max = 1 << (max - 1);
+	    max_width = max < max_width ? max : max_width;
+	    max_height = max < max_height ? max : max_height;
+	}
+
+	drmModeFreeResources(res);
+	xf86CrtcSetSizeRange(pScrn, res->min_width,
+			     res->min_height, max_width, max_height);
+	xf86DrvMsg(pScrn->scrnIndex, X_PROBED,
+		   "Min width %d, Max Width %d.\n",
+		   res->min_width, max_width);
+	xf86DrvMsg(pScrn->scrnIndex, X_PROBED,
+		   "Min height %d, Max Height %d.\n",
+		   res->min_height, max_height);
+    }
+
 
     if (xf86ReturnOptValBool(ms->Options, OPTION_SW_CURSOR, FALSE)) {
 	ms->SWCursor = TRUE;
@@ -637,58 +648,44 @@ drv_create_screen_resources(ScreenPtr pScreen)
 }
 
 static Bool
+drv_set_master(ScrnInfoPtr pScrn)
+{
+    modesettingPtr ms = modesettingPTR(pScrn);
+
+    if (!ms->isMaster && drmSetMaster(ms->fd) != 0) {
+	if (errno == EINVAL) {
+	    xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
+		       "drmSetMaster failed: 2.6.29 or newer kernel required for "
+		       "multi-server DRI\n");
+	} else {
+	    xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
+		       "drmSetMaster failed: %s\n", strerror(errno));
+	}
+	return FALSE;
+    }
+
+    ms->isMaster = TRUE;
+    return TRUE;
+}
+
+
+static Bool
 drv_screen_init(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 {
     ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
     modesettingPtr ms = modesettingPTR(pScrn);
-    unsigned max_width, max_height;
     VisualPtr visual;
     CustomizerPtr cust = ms->cust;
     MessageType from_st;
     MessageType from_dt;
-    MessageType from_3D;
-    Bool use3D;
 
-    if (!drv_init_drm(pScrn)) {
-	FatalError("Could not init DRM");
+    if (!drv_set_master(pScrn))
 	return FALSE;
-    }
-
-    use3D = cust ? !cust->no_3d : TRUE;
-    from_3D = xf86GetOptValBool(ms->Options, OPTION_3D_ACCEL,
-				&use3D) ?
-	X_CONFIG : X_PROBED;
-
-    ms->no3D = !use3D;
-
-    if (!drv_init_resource_management(pScrn)) {
-	FatalError("Could not init resource management (!pipe_screen && !libkms)");
-	return FALSE;
-    }
 
     if (!drv_init_front_buffer_functions(pScrn)) {
 	FatalError("Could not init front buffer manager");
 	return FALSE;
     }
-
-    /* get max width and height */
-    {
-	drmModeResPtr res;
-	res = drmModeGetResources(ms->fd);
-	max_width = res->max_width;
-	max_height = res->max_height;
-	drmModeFreeResources(res);
-    }
-
-    if (ms->screen) {
-	int max;
-	max = ms->screen->get_param(ms->screen, PIPE_CAP_MAX_TEXTURE_2D_LEVELS);
-	max = 1 << (max - 1);
-	max_width = max < max_width ? max : max_width;
-	max_height = max < max_height ? max : max_height;
-    }
-
-    xf86CrtcSetSizeRange(pScrn, 1, 1, max_width, max_height);
 
     pScrn->pScreen = pScreen;
 
@@ -773,7 +770,7 @@ drv_screen_init(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Fallback debugging is %s\n",
 	       ms->debug_fallback ? "enabled" : "disabled");
 #ifdef DRI2
-    xf86DrvMsg(pScrn->scrnIndex, from_3D, "3D Acceleration is %s\n",
+    xf86DrvMsg(pScrn->scrnIndex, ms->from_3D, "3D Acceleration is %s\n",
 	       ms->screen ? "enabled" : "disabled");
 #else
     xf86DrvMsg(pScrn->scrnIndex, X_INFO, "3D Acceleration is disabled\n");
@@ -876,6 +873,7 @@ drv_leave_vt(int scrnIndex, int flags)
 	xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
 		   "drmDropMaster failed: %s\n", strerror(errno));
 
+    ms->isMaster = FALSE;
     pScrn->vtSema = FALSE;
 }
 
@@ -889,16 +887,8 @@ drv_enter_vt(int scrnIndex, int flags)
     modesettingPtr ms = modesettingPTR(pScrn);
     CustomizerPtr cust = ms->cust;
 
-    if (drmSetMaster(ms->fd)) {
-	if (errno == EINVAL) {
-	    xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
-		       "drmSetMaster failed: 2.6.29 or newer kernel required for "
-		       "multi-server DRI\n");
-	} else {
-	    xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
-		       "drmSetMaster failed: %s\n", strerror(errno));
-	}
-    }
+    if (!drv_set_master(pScrn))
+	return FALSE;
 
     if (!ms->create_front_buffer(pScrn))
 	return FALSE;
@@ -966,12 +956,9 @@ drv_close_screen(int scrnIndex, ScreenPtr pScreen)
 	drv_leave_vt(scrnIndex, 0);
     }
 
-    drv_close_resource_management(pScrn);
-
-    drv_close_drm(pScrn);
-
     pScrn->vtSema = FALSE;
     pScreen->CloseScreen = ms->CloseScreen;
+
     return (*pScreen->CloseScreen) (scrnIndex, pScreen);
 }
 
