@@ -210,6 +210,14 @@ static void r300_texture_3d_fix_mipmapping(struct r300_screen *screen,
     }
 }
 
+/* Get a width in pixels from a stride in bytes. */
+static unsigned stride_to_width(enum pipe_format format,
+                                unsigned stride_in_bytes)
+{
+    return (stride_in_bytes / util_format_get_blocksize(format)) *
+            util_format_get_blockwidth(format);
+}
+
 static void r300_setup_miptree(struct r300_screen *screen,
                                struct r300_texture_desc *desc)
 {
@@ -246,9 +254,7 @@ static void r300_setup_miptree(struct r300_screen *screen,
         desc->size_in_bytes = desc->offset_in_bytes[i] + size;
         desc->layer_size_in_bytes[i] = layer_size;
         desc->stride_in_bytes[i] = stride;
-        desc->stride_in_pixels[i] =
-                (stride / util_format_get_blocksize(base->format)) *
-                util_format_get_blockwidth(base->format);
+        desc->stride_in_pixels[i] = stride_to_width(desc->b.b.format, stride);
 
         SCREEN_DBG(screen, DBG_TEXALLOC, "r300: Texture miptree: Level %d "
                 "(%dx%dx%d px, pitch %d bytes) %d bytes total, macrotiled %s\n",
@@ -261,9 +267,11 @@ static void r300_setup_miptree(struct r300_screen *screen,
 static void r300_setup_flags(struct r300_texture_desc *desc)
 {
     desc->uses_stride_addressing =
-            !util_is_power_of_two(desc->b.b.width0) ||
-            !util_is_power_of_two(desc->b.b.height0) ||
-            desc->stride_in_bytes_override;
+        !util_is_power_of_two(desc->b.b.width0) ||
+        !util_is_power_of_two(desc->b.b.height0) ||
+        (desc->stride_in_bytes_override &&
+         stride_to_width(desc->b.b.format,
+                         desc->stride_in_bytes_override) != desc->b.b.width0);
 }
 
 static void r300_setup_cbzb_flags(struct r300_screen *rscreen,
