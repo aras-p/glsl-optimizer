@@ -1019,4 +1019,9 @@ if [ ${INSTALLDIR} != "." ] ; then
     echo "mklib: Installing" ${FINAL_LIBS} "in" ${INSTALLDIR}
     test -d ${INSTALLDIR} || mkdir -p ${INSTALLDIR}
     mv ${FINAL_LIBS} ${INSTALLDIR}/
+
+    if [ "x${FINAL_BINS}" != "x" ] ; then
+        echo "mklib: Installing" ${FINAL_BINS} "in" ${INSTALLDIR}
+        mv ${FINAL_BINS} ${INSTALLDIR}/
+    fi
 fi
