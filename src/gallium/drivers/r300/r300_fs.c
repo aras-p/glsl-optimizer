@@ -173,7 +173,7 @@ static void get_external_state(
             t = (struct r300_texture*)texstate->sampler_views[i]->base.texture;
 
             /* XXX this should probably take into account STR, not just S. */
-            if (t->desc.uses_stride_addressing) {
+            if (t->desc.is_npot) {
                 switch (s->state.wrap_s) {
                     case PIPE_TEX_WRAP_REPEAT:
                         state->unit[i].wrap_mode = RC_WRAP_REPEAT;

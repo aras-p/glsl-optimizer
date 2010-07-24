@@ -272,6 +272,10 @@ static void r300_setup_flags(struct r300_texture_desc *desc)
         (desc->stride_in_bytes_override &&
          stride_to_width(desc->b.b.format,
                          desc->stride_in_bytes_override) != desc->b.b.width0);
+
+    desc->is_npot =
+        desc->uses_stride_addressing ||
+        !util_is_power_of_two(desc->b.b.height0);
 }
 
 static void r300_setup_cbzb_flags(struct r300_screen *rscreen,

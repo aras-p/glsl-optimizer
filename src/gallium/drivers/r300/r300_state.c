@@ -1296,7 +1296,7 @@ static void r300_set_fragment_sampler_views(struct pipe_context* pipe,
             /* Set the texrect factor in the fragment shader.
              * Needed for RECT and NPOT fallback. */
             texture = r300_texture(views[i]->texture);
-            if (texture->desc.uses_stride_addressing) {
+            if (texture->desc.is_npot) {
                 r300->fs_rc_constant_state.dirty = TRUE;
             }
 

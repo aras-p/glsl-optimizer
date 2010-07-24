@@ -361,13 +361,12 @@ struct r300_texture_desc {
      */
     unsigned stride_in_bytes_override;
 
-    /* Whether this texture has non-power-of-two dimensions
-     * or a user-specified stride.
-     * It can be either a regular texture or a rectangle one.
-     *
-     * This flag says that hardware must use the stride for addressing
-     * instead of the width.
-     */
+    /* Whether this texture has non-power-of-two dimensions.
+     * It can be either a regular texture or a rectangle one. */
+    boolean is_npot;
+
+    /* This flag says that hardware must use the stride for addressing
+     * instead of the width. */
     boolean uses_stride_addressing;
 
     /* Whether CBZB fast color clear is allowed on the miplevel. */

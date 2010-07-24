@@ -552,7 +552,8 @@ static void r300_texture_setup_immutable_state(struct r300_screen* screen,
         f->format0 |= R300_TX_PITCH_EN;
         f->format2 = (tex->desc.stride_in_pixels[0] - 1) & 0x1fff;
     } else {
-        /* power of two textures (3D, mipmaps, and no pitch) */
+        /* Power of two textures (3D, mipmaps, and no pitch),
+         * also NPOT textures with a width being POT. */
         f->format0 |= R300_TX_DEPTH(util_logbase2(pt->depth0) & 0xf);
     }
 
