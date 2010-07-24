@@ -229,7 +229,6 @@ FreeScreenConfigs(__GLXdisplayPrivate * priv)
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
       if (psc->driScreen) {
          psc->driScreen->destroyScreen(psc);
-         psc->driScreen = NULL;
       } else {
 	 Xfree(psc);
       }
