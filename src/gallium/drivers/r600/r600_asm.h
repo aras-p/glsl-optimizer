@@ -51,6 +51,33 @@ struct r600_bc_alu {
 	u32				value[4];
 };
 
+struct r600_bc_tex {
+	struct list_head		list;
+	unsigned			inst;
+	unsigned			resource_id;
+	unsigned			src_gpr;
+	unsigned			src_rel;
+	unsigned			dst_gpr;
+	unsigned			dst_rel;
+	unsigned			dst_sel_x;
+	unsigned			dst_sel_y;
+	unsigned			dst_sel_z;
+	unsigned			dst_sel_w;
+	unsigned			lod_bias;
+	unsigned			coord_type_x;
+	unsigned			coord_type_y;
+	unsigned			coord_type_z;
+	unsigned			coord_type_w;
+	unsigned			offset_x;
+	unsigned			offset_y;
+	unsigned			offset_z;
+	unsigned			sampler_id;
+	unsigned			src_sel_x;
+	unsigned			src_sel_y;
+	unsigned			src_sel_z;
+	unsigned			src_sel_w;
+};
+
 struct r600_bc_vtx {
 	struct list_head		list;
 	unsigned			inst;
@@ -87,6 +114,7 @@ struct r600_bc_cf {
 	unsigned			ndw;
 	unsigned			id;
 	struct list_head		alu;
+	struct list_head		tex;
 	struct list_head		vtx;
 	struct r600_bc_output		output;
 };
@@ -106,6 +134,7 @@ int r600_bc_init(struct r600_bc *bc, enum radeon_family family);
 int r600_bc_add_alu(struct r600_bc *bc, const struct r600_bc_alu *alu);
 int r600_bc_add_literal(struct r600_bc *bc, const u32 *value);
 int r600_bc_add_vtx(struct r600_bc *bc, const struct r600_bc_vtx *vtx);
+int r600_bc_add_tex(struct r600_bc *bc, const struct r600_bc_tex *tex);
 int r600_bc_add_output(struct r600_bc *bc, const struct r600_bc_output *output);
 int r600_bc_build(struct r600_bc *bc);
 

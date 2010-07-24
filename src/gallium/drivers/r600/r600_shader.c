@@ -23,6 +23,7 @@
 #include "pipe/p_shader_tokens.h"
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_scan.h"
+#include "tgsi/tgsi_dump.h"
 #include "util/u_format.h"
 #include "r600_screen.h"
 #include "r600_context.h"
@@ -259,10 +260,6 @@ static int tgsi_is_supported(struct r600_shader_ctx *ctx)
 		R600_ERR("label unsupported\n");
 		return -EINVAL;
 	}
-	if (i->Instruction.Texture) {
-		R600_ERR("texture unsupported\n");
-		return -EINVAL;
-	}
 	for (j = 0; j < i->Instruction.NumSrcRegs; j++) {
 		if (i->Src[j].Register.Indirect ||
 			i->Src[j].Register.Dimension ||
@@ -321,6 +318,7 @@ static int tgsi_declaration(struct r600_shader_ctx *ctx)
 		break;
 	case TGSI_FILE_CONSTANT:
 	case TGSI_FILE_TEMPORARY:
+	case TGSI_FILE_SAMPLER:
 		break;
 	default:
 		R600_ERR("unsupported file %d declaration\n", d->Declaration.File);
@@ -381,7 +379,6 @@ int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *s
 		tgsi_parse_token(&ctx.parse);
 		switch (ctx.parse.FullToken.Token.Type) {
 		case TGSI_TOKEN_TYPE_IMMEDIATE:
-//			R600_ERR("TGSI_TOKEN_TYPE_IMMEDIATE unsupported\n");
 			immediate = &ctx.parse.FullToken.FullImmediate;
 			value[0] = immediate->u[0].Uint;
 			value[1] = immediate->u[1].Uint;
@@ -713,6 +710,28 @@ static int tgsi_dp(struct r600_shader_ctx *ctx)
 	return tgsi_helper_copy(ctx, inst);
 }
 
+static int tgsi_tex(struct r600_shader_ctx *ctx)
+{
+	struct tgsi_full_instruction *inst = &ctx->parse.FullToken.FullInstruction;
+	struct r600_bc_tex tex;
+
+	memset(&tex, 0, sizeof(struct r600_bc_tex));
+	tex.inst = ctx->inst_info->r600_opcode;
+	tex.resource_id = ctx->file_offset[inst->Src[1].Register.File] + inst->Src[1].Register.Index;
+	tex.sampler_id = tex.resource_id;
+	tex.src_gpr = ctx->file_offset[inst->Src[0].Register.File] + inst->Src[0].Register.Index;
+	tex.dst_gpr = ctx->file_offset[inst->Dst[0].Register.File] + inst->Src[0].Register.Index;
+	tex.dst_sel_x = 0;
+	tex.dst_sel_y = 1;
+	tex.dst_sel_z = 2;
+	tex.dst_sel_w = 3;
+	tex.src_sel_x = 0;
+	tex.src_sel_y = 1;
+	tex.src_sel_z = 2;
+	tex.src_sel_w = 3;
+	return r600_bc_add_tex(ctx->bc, &tex);
+}
+
 static struct r600_shader_tgsi_instruction r600_shader_tgsi_instruction[] = {
 	{TGSI_OPCODE_ARL,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_MOV,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOV, tgsi_op2},
@@ -771,7 +790,7 @@ static struct r600_shader_tgsi_instruction r600_shader_tgsi_instruction[] = {
 	{TGSI_OPCODE_STR,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_TEX,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_TXD,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
-	{TGSI_OPCODE_TXP,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
+	{TGSI_OPCODE_TXP,	0, 0x10, tgsi_tex},
 	{TGSI_OPCODE_UP2H,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_UP2US,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_UP4B,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},

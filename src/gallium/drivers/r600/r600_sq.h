@@ -546,6 +546,8 @@
 #define   S_SQ_TEX_WORD1_COORD_TYPE_X(x)                             (((x) & 0x1) << 28)
 #define   G_SQ_TEX_WORD1_COORD_TYPE_X(x)                             (((x) >> 28) & 0x1)
 #define   C_SQ_TEX_WORD1_COORD_TYPE_X                                0xEFFFFFFF
+#define     V_SQ_TEX_WORD1_COORD_UNNORMALIZED                        0x00000000
+#define     V_SQ_TEX_WORD1_COORD_NORMALIZED                          0x00000001
 #define   S_SQ_TEX_WORD1_COORD_TYPE_Y(x)                             (((x) & 0x1) << 29)
 #define   G_SQ_TEX_WORD1_COORD_TYPE_Y(x)                             (((x) >> 29) & 0x1)
 #define   C_SQ_TEX_WORD1_COORD_TYPE_Y                                0xDFFFFFFF

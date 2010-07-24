@@ -38,6 +38,7 @@ static struct r600_bc_cf *r600_bc_cf(void)
 	LIST_INITHEAD(&cf->list);
 	LIST_INITHEAD(&cf->alu);
 	LIST_INITHEAD(&cf->vtx);
+	LIST_INITHEAD(&cf->tex);
 	return cf;
 }
 
@@ -59,6 +60,16 @@ static struct r600_bc_vtx *r600_bc_vtx(void)
 		return NULL;
 	LIST_INITHEAD(&vtx->list);
 	return vtx;
+}
+
+static struct r600_bc_tex *r600_bc_tex(void)
+{
+	struct r600_bc_tex *tex = CALLOC_STRUCT(r600_bc_tex);
+
+	if (tex == NULL)
+		return NULL;
+	LIST_INITHEAD(&tex->list);
+	return tex;
 }
 
 int r600_bc_init(struct r600_bc *bc, enum radeon_family family)
@@ -149,8 +160,14 @@ int r600_bc_add_literal(struct r600_bc *bc, const u32 *value)
 {
 	struct r600_bc_alu *alu;
 
-	if (bc->cf_last == NULL ||
-		bc->cf_last->inst != (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU << 3) ||
+	if (bc->cf_last == NULL) {
+		R600_ERR("no last CF\n");
+		return -EINVAL;
+	}
+	if (bc->cf_last->inst == V_SQ_CF_WORD1_SQ_CF_INST_TEX) {
+		return 0;
+	}
+	if (bc->cf_last->inst != (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU << 3) ||
 		LIST_IS_EMPTY(&bc->cf_last->alu)) {
 		R600_ERR("last CF is not ALU (%p)\n", bc->cf_last);
 		return -EINVAL;
@@ -186,13 +203,39 @@ int r600_bc_add_vtx(struct r600_bc *bc, const struct r600_bc_vtx *vtx)
 		bc->cf_last->inst = V_SQ_CF_WORD1_SQ_CF_INST_VTX;
 	}
 	LIST_ADDTAIL(&nvtx->list, &bc->cf_last->vtx);
-	/* each fetch use 6 dwords */
+	/* each fetch use 4 dwords */
 	bc->cf_last->ndw += 4;
 	bc->ndw += 4;
 	return 0;
 }
 
-int r600_bc_vtx_build(struct r600_bc *bc, struct r600_bc_vtx *vtx, unsigned id)
+int r600_bc_add_tex(struct r600_bc *bc, const struct r600_bc_tex *tex)
+{
+	struct r600_bc_tex *ntex = r600_bc_tex();
+	int r;
+
+	if (ntex == NULL)
+		return -ENOMEM;
+	memcpy(ntex, tex, sizeof(struct r600_bc_tex));
+
+	/* cf can contains only alu or only vtx or only tex */
+	if (bc->cf_last == NULL ||
+		bc->cf_last->inst != V_SQ_CF_WORD1_SQ_CF_INST_TEX) {
+		r = r600_bc_add_cf(bc);
+		if (r) {
+			free(ntex);
+			return r;
+		}
+		bc->cf_last->inst = V_SQ_CF_WORD1_SQ_CF_INST_TEX;
+	}
+	LIST_ADDTAIL(&ntex->list, &bc->cf_last->tex);
+	/* each texture fetch use 4 dwords */
+	bc->cf_last->ndw += 4;
+	bc->ndw += 4;
+	return 0;
+}
+
+static int r600_bc_vtx_build(struct r600_bc *bc, struct r600_bc_vtx *vtx, unsigned id)
 {
 	bc->bytecode[id++] = S_SQ_VTX_WORD0_BUFFER_ID(vtx->buffer_id) |
 				S_SQ_VTX_WORD0_SRC_GPR(vtx->src_gpr) |
@@ -205,6 +248,35 @@ int r600_bc_vtx_build(struct r600_bc *bc, struct r600_bc_vtx *vtx, unsigned id)
 				S_SQ_VTX_WORD1_USE_CONST_FIELDS(1) |
 				S_SQ_VTX_WORD1_GPR_DST_GPR(vtx->dst_gpr);
 	bc->bytecode[id++] = S_SQ_VTX_WORD2_MEGA_FETCH(1);
+	bc->bytecode[id++] = 0;
+	return 0;
+}
+
+static int r600_bc_tex_build(struct r600_bc *bc, struct r600_bc_tex *tex, unsigned id)
+{
+	bc->bytecode[id++] = S_SQ_TEX_WORD0_TEX_INST(tex->inst) |
+				S_SQ_TEX_WORD0_RESOURCE_ID(tex->resource_id) |
+				S_SQ_TEX_WORD0_SRC_GPR(tex->src_gpr) |
+				S_SQ_TEX_WORD0_SRC_REL(tex->src_rel);
+	bc->bytecode[id++] = S_SQ_TEX_WORD1_DST_GPR(tex->dst_gpr) |
+				S_SQ_TEX_WORD1_DST_REL(tex->dst_rel) |
+				S_SQ_TEX_WORD1_DST_SEL_X(tex->dst_sel_x) |
+				S_SQ_TEX_WORD1_DST_SEL_Y(tex->dst_sel_y) |
+				S_SQ_TEX_WORD1_DST_SEL_Z(tex->dst_sel_z) |
+				S_SQ_TEX_WORD1_DST_SEL_W(tex->dst_sel_w) |
+				S_SQ_TEX_WORD1_LOD_BIAS(tex->lod_bias) |
+				S_SQ_TEX_WORD1_COORD_TYPE_X(tex->coord_type_x) |
+				S_SQ_TEX_WORD1_COORD_TYPE_Y(tex->coord_type_y) |
+				S_SQ_TEX_WORD1_COORD_TYPE_Z(tex->coord_type_z) |
+				S_SQ_TEX_WORD1_COORD_TYPE_W(tex->coord_type_w);
+	bc->bytecode[id++] = S_SQ_TEX_WORD2_OFFSET_X(tex->offset_x) |
+				S_SQ_TEX_WORD2_OFFSET_Y(tex->offset_y) |
+				S_SQ_TEX_WORD2_OFFSET_Z(tex->offset_z) |
+				S_SQ_TEX_WORD2_SAMPLER_ID(tex->sampler_id) |
+				S_SQ_TEX_WORD2_SRC_SEL_X(tex->src_sel_x) |
+				S_SQ_TEX_WORD2_SRC_SEL_Y(tex->src_sel_y) |
+				S_SQ_TEX_WORD2_SRC_SEL_Z(tex->src_sel_z) |
+				S_SQ_TEX_WORD2_SRC_SEL_W(tex->src_sel_w);
 	bc->bytecode[id++] = 0;
 	return 0;
 }
@@ -262,6 +334,7 @@ int r600_bc_cf_build(struct r600_bc *bc, struct r600_bc_cf *cf)
 					S_SQ_CF_ALU_WORD1_BARRIER(1) |
 					S_SQ_CF_ALU_WORD1_COUNT((cf->ndw / 2) - 1);
 		break;
+	case V_SQ_CF_WORD1_SQ_CF_INST_TEX:
 	case V_SQ_CF_WORD1_SQ_CF_INST_VTX:
 	case V_SQ_CF_WORD1_SQ_CF_INST_VTX_TC:
 		bc->bytecode[id++] = S_SQ_CF_WORD0_ADDR(cf->addr >> 1);
@@ -295,6 +368,7 @@ int r600_bc_build(struct r600_bc *bc)
 	struct r600_bc_cf *cf;
 	struct r600_bc_alu *alu;
 	struct r600_bc_vtx *vtx;
+	struct r600_bc_tex *tex;
 	unsigned addr;
 	int r;
 
@@ -306,6 +380,7 @@ int r600_bc_build(struct r600_bc *bc)
 		switch (cf->inst) {
 		case (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU << 3):
 			break;
+		case V_SQ_CF_WORD1_SQ_CF_INST_TEX:
 		case V_SQ_CF_WORD1_SQ_CF_INST_VTX:
 		case V_SQ_CF_WORD1_SQ_CF_INST_VTX_TC:
 			/* fetch node need to be 16 bytes aligned*/
@@ -368,6 +443,14 @@ int r600_bc_build(struct r600_bc *bc)
 		case V_SQ_CF_WORD1_SQ_CF_INST_VTX_TC:
 			LIST_FOR_EACH_ENTRY(vtx, &cf->vtx, list) {
 				r = r600_bc_vtx_build(bc, vtx, addr);
+				if (r)
+					return r;
+				addr += 4;
+			}
+			break;
+		case V_SQ_CF_WORD1_SQ_CF_INST_TEX:
+			LIST_FOR_EACH_ENTRY(tex, &cf->tex, list) {
+				r = r600_bc_tex_build(bc, tex, addr);
 				if (r)
 					return r;
 				addr += 4;
