@@ -584,7 +584,7 @@ glx_send_destroy_context(Display *dpy, XID xid)
 static void
 indirect_destroy_context(__GLXcontext *gc)
 {
-   if (!gc->imported)
+   if (!gc->imported && gc->xid)
       glx_send_destroy_context(gc->psc->dpy, gc->xid);
 
    __glXFreeVertexArrayState(gc);
@@ -619,6 +619,8 @@ DestroyContext(Display * dpy, GLXContext gc)
        * Note that we set gc->xid = None above.  In MakeContextCurrent()
        * we check for that and delete the context there.
        */
+      if (!gc->imported)
+	 glx_send_destroy_context(dpy, gc->xid);
       gc->xid = None;
       __glXUnlock();
       return;

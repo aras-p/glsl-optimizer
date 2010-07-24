@@ -119,7 +119,8 @@ dri2_destroy_context(__GLXcontext *context)
    struct dri2_context *pcp = (struct dri2_context *) context;
    struct dri2_screen *psc = (struct dri2_screen *) context->psc;
 
-   glx_send_destroy_context(psc->base.dpy, context->xid);
+   if (context->xid)
+      glx_send_destroy_context(psc->base.dpy, context->xid);
 
    if (context->extensions)
       XFree((char *) context->extensions);

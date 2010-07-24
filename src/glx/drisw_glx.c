@@ -245,7 +245,8 @@ drisw_destroy_context(__GLXcontext *context)
    struct drisw_context *pcp = (struct drisw_context *) context;
    struct drisw_screen *psc = (struct drisw_screen *) context->psc;
 
-   glx_send_destroy_context(psc->base.dpy, context->xid);
+   if (context->xid)
+      glx_send_destroy_context(psc->base.dpy, context->xid);
 
    if (context->extensions)
       XFree((char *) context->extensions);
