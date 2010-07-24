@@ -97,29 +97,12 @@ static boolean r300_cbzb_clear_allowed(struct r300_context *r300,
 {
     struct pipe_framebuffer_state *fb =
         (struct pipe_framebuffer_state*)r300->fb_state.state;
-    struct r300_surface *surf = r300_surface(fb->cbufs[0]);
-    unsigned bpp;
 
     /* Only color clear allowed, and only one colorbuffer. */
     if (clear_buffers != PIPE_CLEAR_COLOR || fb->nr_cbufs != 1)
         return FALSE;
 
-    /* The colorbuffer must be point-sampled. */
-    if (surf->base.texture->nr_samples > 1)
-        return FALSE;
-
-    bpp = util_format_get_blocksizebits(surf->base.format);
-
-    /* ZB can only work with the two pixel sizes. */
-    if (bpp != 16 && bpp != 32)
-        return FALSE;
-
-    /* If the midpoint ZB offset is not aligned to 2048, it returns garbage
-     * with certain texture sizes. Macrotiling ensures the alignment. */
-    if (!r300_texture(surf->base.texture)->mip_macrotile[surf->base.level])
-        return FALSE;
-
-    return TRUE;
+    return r300_surface(fb->cbufs[0])->cbzb_allowed;
 }
 
 /* Clear currently bound buffers. */

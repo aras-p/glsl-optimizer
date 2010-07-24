@@ -619,7 +619,8 @@ static void r300_tex_set_tiling_flags(struct r300_context *r300,
 {
     /* Check if the macrotile flag needs to be changed.
      * Skip changing the flags otherwise. */
-    if (tex->mip_macrotile[tex->surface_level] != tex->mip_macrotile[level]) {
+    if (tex->desc.macrotile[tex->surface_level] !=
+        tex->desc.macrotile[level]) {
         /* Tiling determines how DRM treats the buffer data.
          * We must flush CS when changing it if the buffer is referenced. */
         if (r300->rws->cs_is_buffer_referenced(r300->cs,
@@ -627,8 +628,8 @@ static void r300_tex_set_tiling_flags(struct r300_context *r300,
             r300->context.flush(&r300->context, 0, NULL);
 
         r300->rws->buffer_set_tiling(r300->rws, tex->buffer,
-                tex->microtile, tex->mip_macrotile[level],
-                tex->pitch[0] * util_format_get_blocksize(tex->b.b.format));
+                tex->desc.microtile, tex->desc.macrotile[level],
+                tex->desc.stride_in_bytes[0]);
 
         tex->surface_level = level;
     }
@@ -670,8 +671,10 @@ static void r300_print_fb_surf_info(struct pipe_surface *surf, unsigned index,
             surf->zslice, surf->face, surf->level,
             util_format_short_name(surf->format),
 
-            rtex->macrotile ? "YES" : " NO", rtex->microtile ? "YES" : " NO",
-            rtex->hwpitch[0], tex->width0, tex->height0, tex->depth0,
+            rtex->desc.macrotile[0] ? "YES" : " NO",
+            rtex->desc.microtile ? "YES" : " NO",
+            rtex->desc.stride_in_pixels[0],
+            tex->width0, tex->height0, tex->depth0,
             tex->last_level, util_format_short_name(tex->format));
 }
 
@@ -1293,7 +1296,7 @@ static void r300_set_fragment_sampler_views(struct pipe_context* pipe,
             /* Set the texrect factor in the fragment shader.
              * Needed for RECT and NPOT fallback. */
             texture = r300_texture(views[i]->texture);
-            if (texture->uses_pitch) {
+            if (texture->desc.uses_stride_addressing) {
                 r300->fs_rc_constant_state.dirty = TRUE;
             }
 

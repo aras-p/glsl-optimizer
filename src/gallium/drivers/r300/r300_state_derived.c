@@ -567,7 +567,7 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
              * are stored in the format.
              * Otherwise, swizzles must be applied after the compare mode
              * in the fragment shader. */
-            if (util_format_is_depth_or_stencil(tex->b.b.format)) {
+            if (util_format_is_depth_or_stencil(tex->desc.b.b.format)) {
                 if (sampler->state.compare_mode == PIPE_TEX_COMPARE_NONE) {
                     texstate->format.format1 |=
                         r300_get_swizzle_combined(depth_swizzle, view->swizzle);
@@ -578,12 +578,12 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
             }
 
             /* to emulate 1D textures through 2D ones correctly */
-            if (tex->b.b.target == PIPE_TEXTURE_1D) {
+            if (tex->desc.b.b.target == PIPE_TEXTURE_1D) {
                 texstate->filter0 &= ~R300_TX_WRAP_T_MASK;
                 texstate->filter0 |= R300_TX_WRAP_T(R300_TX_CLAMP_TO_EDGE);
             }
 
-            if (tex->uses_pitch) {
+            if (tex->desc.uses_stride_addressing) {
                 /* NPOT textures don't support mip filter, unfortunately.
                  * This prevents incorrect rendering. */
                 texstate->filter0 &= ~R300_TX_MIN_FILTER_MIP_MASK;
@@ -610,7 +610,7 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
                 /* determine min/max levels */
                 /* the MAX_MIP level is the largest (finest) one */
                 max_level = MIN3(sampler->max_lod + view->base.first_level,
-                                 tex->b.b.last_level, view->base.last_level);
+                                 tex->desc.b.b.last_level, view->base.last_level);
                 min_level = MIN2(sampler->min_lod + view->base.first_level,
                                  max_level);
                 texstate->format.format0 |= R300_TX_NUM_LEVELS(max_level);
