@@ -266,11 +266,10 @@ nv_pass_fold_stores(struct nv_pass *ctx, struct nv_basic_block *b)
    int j;
 
    for (sti = b->entry; sti; sti = sti->next) {
-      if (!sti->def[0])
+      if (!sti->def[0] || sti->def[0]->reg.file != NV_FILE_OUT)
          continue;
 
-      if (sti->def[0]->reg.file != NV_FILE_OUT)
-         continue;
+      /* only handling MOV to $oX here */
       if (sti->opcode != NV_OP_MOV && sti->opcode != NV_OP_STA)
          continue;
 
@@ -282,8 +281,13 @@ nv_pass_fold_stores(struct nv_pass *ctx, struct nv_basic_block *b)
       if (nvi->def[0]->refc > 1)
          continue;
 
+      /* cannot MOV immediate to $oX */
+      if (nvi->src[0]->value->reg.file == NV_FILE_IMM)
+         continue;
+
       nvi->def[0] = sti->def[0];
-      nvi->fixed = 1;
+      sti->def[0] = NULL;
+      nvi->fixed = sti->fixed;
       sti->fixed = 0;
    }
    DESCEND_ARBITRARY(j, nv_pass_fold_stores);

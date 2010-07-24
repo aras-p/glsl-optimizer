@@ -539,26 +539,26 @@ emit_mov(struct nv_pc *pc, struct nv_instruction *i)
       pc->emit[1] |= DREG(i->def[0])->id << 4;
    } else
    if (SFILE(i, 0) == NV_FILE_IMM) {
-      if (i->opcode == NV_OP_LDA)
+      if (i->opcode == NV_OP_LDA) {
          emit_ld(pc, i);
-      else {
+      } else {
          pc->emit[0] = 0x10008001;
          pc->emit[1] = 0x00000003;
 
-	 emit_form_IMM(pc, i, 0);
+         emit_form_IMM(pc, i, 0);
       }
    } else {
       pc->emit[0] = 0x10000000;
       pc->emit[0] |= DREG(i->def[0])->id << 2;
       pc->emit[0] |= SREG(i->src[0])->id << 9;
 
-      if (!i->is_long)
+      if (!i->is_long) {
          pc->emit[0] |= 0x8000;
-      else {
+      } else {
          pc->emit[0] |= 0x00000001;
          pc->emit[1] = 0x0403c000;
 
-	 set_pred(pc, i);
+         set_pred(pc, i);
       }
    }
 
