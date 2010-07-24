@@ -958,6 +958,21 @@ struct u_resource_vtbl r300_texture_vtbl =
    u_default_transfer_inline_write    /* transfer_inline_write */
 };
 
+static void r300_tex_print_info(struct r300_screen *rscreen, struct r300_texture *tex,
+                                const char *func)
+{
+    fprintf(stderr,
+            "r300: %s: Macro: %s, Micro: %s, Pitch: %i, Dim: %ix%ix%i, "
+            "LastLevel: %i, Size: %i, Format: %s\n",
+            func,
+            tex->macrotile ? "YES" : " NO",
+            tex->microtile ? "YES" : " NO",
+            tex->hwpitch[0],
+            tex->b.b.width0, tex->b.b.height0, tex->b.b.depth0,
+            tex->b.b.last_level, tex->size,
+            util_format_short_name(tex->b.b.format));
+}
+
 /* Create a new texture. */
 struct pipe_resource* r300_texture_create(struct pipe_screen* screen,
                                           const struct pipe_resource* base)
@@ -997,15 +1012,9 @@ struct pipe_resource* r300_texture_create(struct pipe_screen* screen,
     r300_texture_setup_immutable_state(rscreen, tex);
     r300_texture_setup_fb_state(rscreen, tex);
 
-    SCREEN_DBG(rscreen, DBG_TEX,
-               "r300: texture_create: Macro: %s, Micro: %s, Pitch: %i, "
-               "Dim: %ix%ix%i, LastLevel: %i, Size: %i, Format: %s\n",
-               tex->macrotile ? "YES" : " NO",
-               tex->microtile ? "YES" : " NO",
-               tex->hwpitch[0],
-               base->width0, base->height0, base->depth0, base->last_level,
-               tex->size,
-               util_format_short_name(base->format));
+    if (SCREEN_DBG_ON(rscreen, DBG_TEX)) {
+        r300_tex_print_info(rscreen, tex, "texture_create");
+    }
 
     tex->domain = base->flags & R300_RESOURCE_FLAG_TRANSFER ?
                   R300_DOMAIN_GTT :
@@ -1084,7 +1093,7 @@ struct pipe_surface* r300_get_tex_surface(struct pipe_screen* screen,
         else
             surface->cbzb_format = R300_DEPTHFORMAT_16BIT_INT_Z;
 
-        SCREEN_DBG(r300_screen(screen), DBG_TEX,
+        SCREEN_DBG(r300_screen(screen), DBG_CBZB,
                    "CBZB Dim: %ix%i, Misalignment: %i, Macro: %s\n",
                    surface->cbzb_width, surface->cbzb_height,
                    offset & 2047,
@@ -1144,14 +1153,6 @@ r300_texture_from_handle(struct pipe_screen* screen,
 
     rws->buffer_get_tiling(rws, buffer, &tex->microtile, &tex->macrotile);
     r300_setup_flags(tex);
-    SCREEN_DBG(rscreen, DBG_TEX,
-               "r300: texture_from_handle: Macro: %s, Micro: %s, "
-               "Pitch: % 4i, Dim: %ix%i, Format: %s\n",
-               tex->macrotile ? "YES" : " NO",
-               tex->microtile ? "YES" : " NO",
-               stride / util_format_get_blocksize(base->format),
-               base->width0, base->height0,
-               util_format_short_name(base->format));
 
     /* Enforce microtiled zbuffer. */
     override_zb_flags = util_format_is_depth_or_stencil(base->format) &&
@@ -1184,5 +1185,9 @@ r300_texture_from_handle(struct pipe_screen* screen,
                 tex->microtile, tex->macrotile,
                 tex->pitch[0] * util_format_get_blocksize(tex->b.b.format));
     }
+
+    if (SCREEN_DBG_ON(rscreen, DBG_TEX))
+        r300_tex_print_info(rscreen, tex, "texture_from_handle");
+
     return (struct pipe_resource*)tex;
 }
