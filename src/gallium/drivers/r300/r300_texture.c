@@ -1022,6 +1022,7 @@ struct pipe_resource* r300_texture_create(struct pipe_screen* screen,
 
     tex->buffer = rws->buffer_create(rws, tex->size, 2048, base->bind,
                                      base->usage, tex->domain);
+    tex->buffer_size = tex->size;
 
     if (!tex->buffer) {
 	FREE(tex);
@@ -1120,7 +1121,7 @@ r300_texture_from_handle(struct pipe_screen* screen,
     struct r300_screen* rscreen = r300_screen(screen);
     struct r300_winsys_buffer *buffer;
     struct r300_texture* tex;
-    unsigned stride;
+    unsigned stride, size;
     boolean override_zb_flags;
 
     /* Support only 2D textures without mipmaps */
@@ -1130,7 +1131,7 @@ r300_texture_from_handle(struct pipe_screen* screen,
         return NULL;
     }
 
-    buffer = rws->buffer_from_handle(rws, whandle, &stride);
+    buffer = rws->buffer_from_handle(rws, whandle, &stride, &size);
     if (!buffer) {
         return NULL;
     }
@@ -1150,6 +1151,7 @@ r300_texture_from_handle(struct pipe_screen* screen,
 
     /* one ref already taken */
     tex->buffer = buffer;
+    tex->buffer_size = size;
 
     rws->buffer_get_tiling(rws, buffer, &tex->microtile, &tex->macrotile);
     r300_setup_flags(tex);
@@ -1186,8 +1188,18 @@ r300_texture_from_handle(struct pipe_screen* screen,
                 tex->pitch[0] * util_format_get_blocksize(tex->b.b.format));
     }
 
-    if (SCREEN_DBG_ON(rscreen, DBG_TEX))
+    /* Make sure the buffer we got is large enough. */
+    if (tex->size > tex->buffer_size) {
+        fprintf(stderr, "r300: texture_from_handle: The buffer is not "
+                        "large enough. Got: %i, Need: %i, Info:\n",
+                        tex->buffer_size, tex->size);
         r300_tex_print_info(rscreen, tex, "texture_from_handle");
+        pipe_resource_reference((struct pipe_resource**)&tex, NULL);
+        return NULL;
+    } else {
+        if (SCREEN_DBG_ON(rscreen, DBG_TEX))
+            r300_tex_print_info(rscreen, tex, "texture_from_handle");
+    }
 
     return (struct pipe_resource*)tex;
 }

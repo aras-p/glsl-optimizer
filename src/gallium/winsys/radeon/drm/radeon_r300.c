@@ -109,14 +109,19 @@ static void radeon_r300_winsys_buffer_reference(struct r300_winsys_screen *rws,
 
 static struct r300_winsys_buffer *radeon_r300_winsys_buffer_from_handle(struct r300_winsys_screen *rws,
                                                                         struct winsys_handle *whandle,
-                                                                        unsigned *stride)
+                                                                        unsigned *stride,
+                                                                        unsigned *size)
 {
     struct radeon_libdrm_winsys *ws = radeon_libdrm_winsys(rws);
     struct pb_buffer *_buf;
 
-    *stride = whandle->stride;
-
     _buf = radeon_drm_bufmgr_create_buffer_from_handle(ws->kman, whandle->handle);
+
+    if (stride)
+        *stride = whandle->stride;
+    if (size)
+        *size = _buf->base.size;
+
     return radeon_libdrm_winsys_buffer(_buf);
 }
 

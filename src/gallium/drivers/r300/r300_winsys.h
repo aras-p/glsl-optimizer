@@ -184,12 +184,13 @@ struct r300_winsys_screen {
      * \param ws        The winsys this function is called from.
      * \param whandle   A winsys handle pointer as was received from a state
      *                  tracker.
-     * \param stride    A pointer to the stride return variable.
-     *                  The stride is in bytes.
+     * \param stride    The returned buffer stride in bytes.
+     * \param size      The returned buffer size.
      */
     struct r300_winsys_buffer *(*buffer_from_handle)(struct r300_winsys_screen *ws,
                                                      struct winsys_handle *whandle,
-                                                     unsigned *stride);
+                                                     unsigned *stride,
+                                                     unsigned *size);
 
     /**
      * Get a winsys handle from a winsys buffer. The internal structure

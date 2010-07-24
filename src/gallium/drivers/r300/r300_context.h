@@ -352,8 +352,13 @@ struct r300_texture {
      */
     unsigned stride_override;
 
-    /* Total size of this texture, in bytes. */
+    /* Total size of this texture, in bytes,
+     * derived from the texture properties. */
     unsigned size;
+
+    /* Total size of the buffer backing this texture, in bytes.
+     * It must be >= size. */
+    unsigned buffer_size;
 
     /* Whether this texture has non-power-of-two dimensions
      * or a user-specified pitch.
