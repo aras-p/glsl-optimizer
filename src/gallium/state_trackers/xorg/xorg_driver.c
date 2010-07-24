@@ -472,7 +472,6 @@ drv_pre_init(ScrnInfoPtr pScrn, int flags)
 	    max_height = max < max_height ? max : max_height;
 	}
 
-	drmModeFreeResources(res);
 	xf86CrtcSetSizeRange(pScrn, res->min_width,
 			     res->min_height, max_width, max_height);
 	xf86DrvMsg(pScrn->scrnIndex, X_PROBED,
@@ -481,6 +480,7 @@ drv_pre_init(ScrnInfoPtr pScrn, int flags)
 	xf86DrvMsg(pScrn->scrnIndex, X_PROBED,
 		   "Min height %d, Max Height %d.\n",
 		   res->min_height, max_height);
+	drmModeFreeResources(res);
     }
 
 
