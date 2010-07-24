@@ -774,7 +774,11 @@ static unsigned r300_texture_get_nblocksy(struct r300_texture* tex,
         height = align(height, tile_height);
 
         /* This is needed for the kernel checker, unfortunately. */
-        height = util_next_power_of_two(height);
+        if ((tex->b.b.target != PIPE_TEXTURE_1D &&
+             tex->b.b.target != PIPE_TEXTURE_2D) ||
+            tex->b.b.last_level != 0) {
+            height = util_next_power_of_two(height);
+        }
     }
 
     return util_format_get_nblocksy(tex->b.b.format, height);
