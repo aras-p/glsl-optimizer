@@ -8,6 +8,7 @@ C_SOURCES = \
 	nv50_clear.c \
 	nv50_context.c \
 	nv50_draw.c \
+	nv50_formats.c \
 	nv50_miptree.c \
 	nv50_query.c \
 	nv50_resource.c \

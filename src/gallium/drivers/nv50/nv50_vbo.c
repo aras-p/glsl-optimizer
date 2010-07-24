@@ -29,99 +29,6 @@
 #include "nv50_context.h"
 #include "nv50_resource.h"
 
-/* VERTEX_ARRAY_ATTRIB_TYPE is duplicated for unknown reason */
-#define NV50_VAT(x) ((x) | ((x) << 3))
-
-static INLINE uint32_t
-nv50_vbo_type_to_hw(enum pipe_format format)
-{
-	const struct util_format_description *desc;
-
-	desc = util_format_description(format);
-	assert(desc);
-
-	switch (desc->channel[0].type) {
-	case UTIL_FORMAT_TYPE_FLOAT:
-		return NV50_VAT(NV50TCL_VERTEX_ARRAY_ATTRIB_TYPE_FLOAT);
-	case UTIL_FORMAT_TYPE_UNSIGNED:
-		if (desc->channel[0].normalized) {
-			return NV50_VAT(NV50TCL_VERTEX_ARRAY_ATTRIB_TYPE_UNORM);
-		}
-		return NV50_VAT(NV50TCL_VERTEX_ARRAY_ATTRIB_TYPE_USCALED);
-	case UTIL_FORMAT_TYPE_SIGNED:
-		if (desc->channel[0].normalized) {
-			return NV50_VAT(NV50TCL_VERTEX_ARRAY_ATTRIB_TYPE_SNORM);
-		}
-		return NV50_VAT(NV50TCL_VERTEX_ARRAY_ATTRIB_TYPE_SSCALED);
-	/*
-	case PIPE_FORMAT_TYPE_UINT:
-		return NV50_VAT(NV50TCL_VERTEX_ARRAY_ATTRIB_TYPE_UINT);
-	case PIPE_FORMAT_TYPE_SINT:
-		return NV50_VAT(NV50TCL_VERTEX_ARRAY_ATTRIB_TYPE_SINT); */
-	default:
-		return 0;
-	}
-}
-
-static INLINE uint32_t
-nv50_vbo_size_to_hw(unsigned size, unsigned nr_c)
-{
-	static const uint32_t hw_values[] = {
-		0, 0, 0, 0,
-		NV50TCL_VERTEX_ARRAY_ATTRIB_FORMAT_8,
-		NV50TCL_VERTEX_ARRAY_ATTRIB_FORMAT_8_8,
-		NV50TCL_VERTEX_ARRAY_ATTRIB_FORMAT_8_8_8,
-		NV50TCL_VERTEX_ARRAY_ATTRIB_FORMAT_8_8_8_8,
-		NV50TCL_VERTEX_ARRAY_ATTRIB_FORMAT_16,
-		NV50TCL_VERTEX_ARRAY_ATTRIB_FORMAT_16_16,
-		NV50TCL_VERTEX_ARRAY_ATTRIB_FORMAT_16_16_16,
-		NV50TCL_VERTEX_ARRAY_ATTRIB_FORMAT_16_16_16_16,
-		0, 0, 0, 0,
-		NV50TCL_VERTEX_ARRAY_ATTRIB_FORMAT_32,
-		NV50TCL_VERTEX_ARRAY_ATTRIB_FORMAT_32_32,
-		NV50TCL_VERTEX_ARRAY_ATTRIB_FORMAT_32_32_32,
-		NV50TCL_VERTEX_ARRAY_ATTRIB_FORMAT_32_32_32_32 };
-
-	/* we'd also have R11G11B10 and R10G10B10A2 */
-
-	assert(nr_c > 0 && nr_c <= 4);
-
-	if (size > 32)
-		return 0;
-	size >>= (3 - 2);
-
-	return hw_values[size + (nr_c - 1)];
-}
-
-static INLINE uint32_t
-nv50_vbo_vtxelt_to_hw(struct pipe_vertex_element *ve)
-{
-	uint32_t hw_type, hw_size;
-	enum pipe_format pf = ve->src_format;
-	const struct util_format_description *desc;
-	unsigned size, nr_components;
-
-	desc = util_format_description(pf);
-	assert(desc);
-
-	size = util_format_get_component_bits(pf, UTIL_FORMAT_COLORSPACE_RGB, 0);
-	nr_components = util_format_get_nr_components(pf);
-
-	hw_type = nv50_vbo_type_to_hw(pf);
-	hw_size = nv50_vbo_size_to_hw(size, nr_components);
-
-	if (!hw_type || !hw_size) {
-		NOUVEAU_ERR("unsupported vbo format: %s\n", util_format_name(pf));
-		abort();
-		return 0x24e80000;
-	}
-
-	if (desc->swizzle[0] == UTIL_FORMAT_SWIZZLE_Z) /* BGRA */
-		hw_size |= (1 << 31); /* no real swizzle bits :-( */
-
-	return (hw_type | hw_size);
-}
-
 struct instance {
 	struct nouveau_bo *bo;
 	unsigned delta;
@@ -543,11 +450,8 @@ nv50_vtxelt_construct(struct nv50_vtxelt_stateobj *cso)
 {
 	unsigned i;
 
-	for (i = 0; i < cso->num_elements; ++i) {
-		struct pipe_vertex_element *ve = &cso->pipe[i];
-
-		cso->hw[i] = nv50_vbo_vtxelt_to_hw(ve);
-	}
+	for (i = 0; i < cso->num_elements; ++i)
+		cso->hw[i] = nv50_format_table[cso->pipe[i].src_format].vtx;
 }
 
 struct nouveau_stateobj *

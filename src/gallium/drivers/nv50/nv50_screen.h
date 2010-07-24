@@ -38,4 +38,13 @@ nv50_screen(struct pipe_screen *screen)
 
 extern void nv50_screen_relocs(struct nv50_screen *);
 
+struct nv50_format {
+	uint32_t rt;
+	uint32_t tic;
+	uint32_t vtx;
+	uint32_t usage;
+};
+
+extern const struct nv50_format nv50_format_table[];
+
 #endif

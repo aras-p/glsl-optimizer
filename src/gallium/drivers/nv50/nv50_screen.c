@@ -34,75 +34,38 @@ nv50_screen_is_format_supported(struct pipe_screen *pscreen,
 				enum pipe_format format,
 				enum pipe_texture_target target,
 				unsigned sample_count,
-				unsigned tex_usage, unsigned geom_flags)
+				unsigned usage, unsigned geom_flags)
 {
 	if (sample_count > 1)
 		return FALSE;
 
-	if (tex_usage & PIPE_BIND_RENDER_TARGET) {
+	if (!util_format_s3tc_enabled) {
 		switch (format) {
-		case PIPE_FORMAT_B8G8R8X8_UNORM:
-		case PIPE_FORMAT_B8G8R8A8_UNORM:
-		case PIPE_FORMAT_B5G6R5_UNORM:
-		case PIPE_FORMAT_R16G16B16A16_SNORM:
-		case PIPE_FORMAT_R16G16B16A16_UNORM:
-		case PIPE_FORMAT_R32G32B32A32_FLOAT:
-		case PIPE_FORMAT_R16G16_SNORM:
-		case PIPE_FORMAT_R16G16_UNORM:
-			return TRUE;
-		default:
-			break;
-		}
-	} else
-	if (tex_usage & PIPE_BIND_DEPTH_STENCIL) {
-		switch (format) {
-		case PIPE_FORMAT_Z32_FLOAT:
-		case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
-		case PIPE_FORMAT_Z24X8_UNORM:
-		case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
-			return TRUE;
-		default:
-			break;
-		}
-	} else {
-		if (tex_usage & PIPE_BIND_SAMPLER_VIEW) {
-			switch (format) {
-			case PIPE_FORMAT_DXT1_RGB:
-			case PIPE_FORMAT_DXT1_RGBA:
-			case PIPE_FORMAT_DXT3_RGBA:
-			case PIPE_FORMAT_DXT5_RGBA:
-				return util_format_s3tc_enabled;
-			default:
-				break;
-			}
-		}
-		switch (format) {
-		case PIPE_FORMAT_B8G8R8A8_UNORM:
-		case PIPE_FORMAT_B8G8R8X8_UNORM:
-		case PIPE_FORMAT_B8G8R8A8_SRGB:
-		case PIPE_FORMAT_B8G8R8X8_SRGB:
-		case PIPE_FORMAT_B5G5R5A1_UNORM:
-		case PIPE_FORMAT_B4G4R4A4_UNORM:
-		case PIPE_FORMAT_B5G6R5_UNORM:
-		case PIPE_FORMAT_L8_UNORM:
-		case PIPE_FORMAT_A8_UNORM:
-		case PIPE_FORMAT_I8_UNORM:
-		case PIPE_FORMAT_L8A8_UNORM:
-		case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
-		case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
-		case PIPE_FORMAT_Z32_FLOAT:
-		case PIPE_FORMAT_R16G16B16A16_SNORM:
-		case PIPE_FORMAT_R16G16B16A16_UNORM:
-		case PIPE_FORMAT_R32G32B32A32_FLOAT:
-		case PIPE_FORMAT_R16G16_SNORM:
-		case PIPE_FORMAT_R16G16_UNORM:
-			return TRUE;
+		case PIPE_FORMAT_DXT1_RGB:
+		case PIPE_FORMAT_DXT1_RGBA:
+		case PIPE_FORMAT_DXT3_RGBA:
+		case PIPE_FORMAT_DXT5_RGBA:
+			return FALSE;
 		default:
 			break;
 		}
 	}
 
-	return FALSE;
+	switch (format) {
+	case PIPE_FORMAT_Z16_UNORM:
+		if ((nouveau_screen(pscreen)->device->chipset & 0xf0) != 0xa0)
+			return FALSE;
+		break;
+	default:
+		break;
+	}
+
+	/* transfers & shared are always supported */
+	usage &= ~(PIPE_BIND_TRANSFER_READ |
+		   PIPE_BIND_TRANSFER_WRITE |
+		   PIPE_BIND_SHARED);
+
+	return (nv50_format_table[format].usage & usage) == usage;
 }
 
 static int

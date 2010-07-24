@@ -159,6 +159,9 @@ nv50_miptree_create(struct pipe_screen *pscreen, const struct pipe_resource *tmp
 	case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
 		tile_flags = 0x2800;
 		break;
+	case PIPE_FORMAT_Z32_FLOAT_S8X24_USCALED:
+		tile_flags = 0xe000;
+		break;
 	case PIPE_FORMAT_R32G32B32A32_FLOAT:
 	case PIPE_FORMAT_R32G32B32_FLOAT:
 		tile_flags = 0x7400;
