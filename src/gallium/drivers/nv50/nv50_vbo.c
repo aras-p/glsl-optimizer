@@ -29,6 +29,9 @@
 #include "nv50_context.h"
 #include "nv50_resource.h"
 
+/* VERTEX_ARRAY_ATTRIB_TYPE is duplicated for unknown reason */
+#define NV50_VAT(x) ((x) | ((x) << 3))
+
 static INLINE uint32_t
 nv50_vbo_type_to_hw(enum pipe_format format)
 {
@@ -39,22 +42,22 @@ nv50_vbo_type_to_hw(enum pipe_format format)
 
 	switch (desc->channel[0].type) {
 	case UTIL_FORMAT_TYPE_FLOAT:
-		return NV50TCL_VERTEX_ARRAY_ATTRIB_TYPE_FLOAT;
+		return NV50_VAT(NV50TCL_VERTEX_ARRAY_ATTRIB_TYPE_FLOAT);
 	case UTIL_FORMAT_TYPE_UNSIGNED:
 		if (desc->channel[0].normalized) {
-			return NV50TCL_VERTEX_ARRAY_ATTRIB_TYPE_UNORM;
+			return NV50_VAT(NV50TCL_VERTEX_ARRAY_ATTRIB_TYPE_UNORM);
 		}
-		return NV50TCL_VERTEX_ARRAY_ATTRIB_TYPE_USCALED;
+		return NV50_VAT(NV50TCL_VERTEX_ARRAY_ATTRIB_TYPE_USCALED);
 	case UTIL_FORMAT_TYPE_SIGNED:
 		if (desc->channel[0].normalized) {
-			return NV50TCL_VERTEX_ARRAY_ATTRIB_TYPE_SNORM;
+			return NV50_VAT(NV50TCL_VERTEX_ARRAY_ATTRIB_TYPE_SNORM);
 		}
-		return NV50TCL_VERTEX_ARRAY_ATTRIB_TYPE_SSCALED;
+		return NV50_VAT(NV50TCL_VERTEX_ARRAY_ATTRIB_TYPE_SSCALED);
 	/*
 	case PIPE_FORMAT_TYPE_UINT:
-		return NV50TCL_VERTEX_ARRAY_ATTRIB_TYPE_UINT;
+		return NV50_VAT(NV50TCL_VERTEX_ARRAY_ATTRIB_TYPE_UINT);
 	case PIPE_FORMAT_TYPE_SINT:
-		return NV50TCL_VERTEX_ARRAY_ATTRIB_TYPE_SINT; */
+		return NV50_VAT(NV50TCL_VERTEX_ARRAY_ATTRIB_TYPE_SINT); */
 	default:
 		return 0;
 	}
