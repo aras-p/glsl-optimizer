@@ -362,6 +362,7 @@ driCreateDrawable(__GLXscreenConfigs *base, XID xDrawable,
    if (!pdp)
       return NULL;
 
+   memset(pdp, 0, sizeof *pdp);
    pdp->base.xDrawable = xDrawable;
    pdp->base.drawable = drawable;
    pdp->base.psc = &psc->base;

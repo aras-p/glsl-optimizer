@@ -224,6 +224,7 @@ dri2CreateDrawable(__GLXscreenConfigs *base, XID xDrawable,
    if (!pdraw)
       return NULL;
 
+   memset(pdraw, 0, sizeof *pdraw);
    pdraw->base.destroyDrawable = dri2DestroyDrawable;
    pdraw->base.xDrawable = xDrawable;
    pdraw->base.drawable = drawable;
