@@ -946,7 +946,7 @@ case $ARCH in
 
         if [ $STATIC = 1 ] ; then
 	    LIBNAME=${LIBNAME}.a
-            echo "mklib: Making" $ARCH "static library: " ${LIBNAME}
+            echo "mklib: Making CYGWIN static library: " ${LIBNAME}
             OPTS="-ru"
             if [ "${ALTOPTS}" ] ; then
                 OPTS=${ALTOPTS}
@@ -964,7 +964,7 @@ case $ARCH in
             if [ "${ALTOPTS}" ] ; then
                 OPTS=${ALTOPTS}
             fi
-            echo "mklib: Making" $ARCH "shared library: " ${CYGNAME}-${MAJOR}.dll
+            echo "mklib: Making CYGWIN shared library: " ${CYGNAME}-${MAJOR}.dll
 
             if [ $CPLUSPLUS = 1 ] ; then
                 LINK="g++"
