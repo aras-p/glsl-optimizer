@@ -154,7 +154,7 @@ static unsigned r300_texture_get_stride(struct r300_screen *screen,
 
 static unsigned r300_texture_get_nblocksy(struct r300_texture_desc *desc,
                                           unsigned level,
-                                          boolean align_for_cbzb)
+                                          boolean *out_aligned_for_cbzb)
 {
     unsigned height, tile_height;
 
@@ -175,12 +175,28 @@ static unsigned r300_texture_get_nblocksy(struct r300_texture_desc *desc,
             height = util_next_power_of_two(height);
         }
 
-        /* Allocate an even number of macrotiles for the CBZB clear.
-         * Do so for 3 or more macrotiles in the Y direction. */
-        if (align_for_cbzb &&
-            level == 0 && desc->b.b.last_level == 0 &&
-            desc->macrotile[0] && height >= tile_height * 3) {
-            height = align(height, tile_height * 2);
+        /* See if the CBZB clear can be used on the buffer,
+         * taking the texture size into account. */
+        if (out_aligned_for_cbzb) {
+            if (desc->macrotile[level]) {
+                /* When clearing, the layer (width*height) is horizontally split
+                 * into two, and the upper and lower halves are cleared by the CB
+                 * and ZB units, respectively. Therefore, the number of macrotiles
+                 * in the Y direction must be even. */
+
+                /* Align the height so that there is an even number of macrotiles.
+                 * Do so for 3 or more macrotiles in the Y direction. */
+                if (level == 0 && desc->b.b.last_level == 0 &&
+                    (desc->b.b.target == PIPE_TEXTURE_1D ||
+                     desc->b.b.target == PIPE_TEXTURE_2D) &&
+                    height >= tile_height * 3) {
+                    height = align(height, tile_height * 2);
+                }
+
+                *out_aligned_for_cbzb = height % (tile_height * 2) == 0;
+            } else {
+                *out_aligned_for_cbzb = FALSE;
+            }
         }
     }
 
@@ -219,11 +235,15 @@ static unsigned stride_to_width(enum pipe_format format,
 }
 
 static void r300_setup_miptree(struct r300_screen *screen,
-                               struct r300_texture_desc *desc)
+                               struct r300_texture_desc *desc,
+                               boolean align_for_cbzb)
 {
     struct pipe_resource *base = &desc->b.b;
     unsigned stride, size, layer_size, nblocksy, i;
     boolean rv350_mode = screen->caps.is_rv350;
+    boolean aligned_for_cbzb;
+
+    desc->size_in_bytes = 0;
 
     SCREEN_DBG(screen, DBG_TEXALLOC,
         "r300: Making miptree for texture, format %s\n",
@@ -238,7 +258,15 @@ static void r300_setup_miptree(struct r300_screen *screen,
              R300_BUFFER_TILED : R300_BUFFER_LINEAR;
 
         stride = r300_texture_get_stride(screen, desc, i);
-        nblocksy = r300_texture_get_nblocksy(desc, i, desc->stride_in_bytes_override == 0);
+
+        /* Compute the number of blocks in Y, see if the CBZB clear can be
+         * used on the texture. */
+        aligned_for_cbzb = FALSE;
+        if (align_for_cbzb && desc->cbzb_allowed[i])
+            nblocksy = r300_texture_get_nblocksy(desc, i, &aligned_for_cbzb);
+        else
+            nblocksy = r300_texture_get_nblocksy(desc, i, NULL);
+
         layer_size = stride * nblocksy;
 
         if (base->nr_samples) {
@@ -255,6 +283,7 @@ static void r300_setup_miptree(struct r300_screen *screen,
         desc->layer_size_in_bytes[i] = layer_size;
         desc->stride_in_bytes[i] = stride;
         desc->stride_in_pixels[i] = stride_to_width(desc->b.b.format, stride);
+        desc->cbzb_allowed[i] = desc->cbzb_allowed[i] && aligned_for_cbzb;
 
         SCREEN_DBG(screen, DBG_TEXALLOC, "r300: Texture miptree: Level %d "
                 "(%dx%dx%d px, pitch %d bytes) %d bytes total, macrotiled %s\n",
@@ -296,44 +325,6 @@ static void r300_setup_cbzb_flags(struct r300_screen *rscreen,
 
     for (i = 0; i <= desc->b.b.last_level; i++)
         desc->cbzb_allowed[i] = first_level_valid && desc->macrotile[i];
-    return;
-#if 0
-    /* When clearing, the layer (width*height) is horizontally split
-     * into two, and the upper and lower halves are cleared by the CB
-     * and ZB units, respectively. Therefore, the number of macrotiles
-     * in the Y direction must be even. */
-
-    if (desc->b.b.last_level > 0 ||
-        desc->b.b.target == PIPE_TEXTURE_3D ||
-        desc->b.b.target == PIPE_TEXTURE_CUBE) {
-        /* For mipmapped, 3D, or cube textures, just check if there are
-         * enough macrotiles per layer. */
-        for (i = 0; i <= desc->b.b.last_level; i++) {
-            desc->cbzb_allowed[i] = FALSE;
-
-            if (first_level_valid && desc->macrotile[i]) {
-                unsigned height, tile_height, num_macrotiles;
-
-                /* Compute the number of macrotiles in the Y direction. */
-                tile_height = r300_get_pixel_alignment(desc->b.b.format,
-                                                       desc->b.b.nr_samples,
-                                                       desc->microtile,
-                                                       R300_BUFFER_TILED,
-                                                       DIM_HEIGHT);
-                height = r300_texture_get_height(desc, i);
-                num_macrotiles = height / tile_height;
-
-                desc->cbzb_allowed[i] = num_macrotiles % 2 == 0;
-            }
-        }
-    } else {
-        /* For 1D and 2D non-mipmapped textures */
-        unsigned layer_size;
-
-        layer_size = desc->stride_in_bytes[0] *
-                     r300_texture_get_nblocksy(desc, 0, TRUE);
-    }
-#endif
 }
 
 static void r300_setup_tiling(struct r300_screen *screen,
@@ -409,8 +400,6 @@ boolean r300_texture_desc_init(struct r300_screen *rscreen,
 
     desc->stride_in_bytes_override = stride_in_bytes_override;
 
-    r300_setup_flags(desc);
-
     if (microtile == R300_BUFFER_SELECT_LAYOUT ||
         macrotile == R300_BUFFER_SELECT_LAYOUT) {
         r300_setup_tiling(rscreen, desc);
@@ -420,9 +409,18 @@ boolean r300_texture_desc_init(struct r300_screen *rscreen,
         assert(desc->b.b.last_level == 0);
     }
 
-    r300_setup_miptree(rscreen, desc);
-    r300_texture_3d_fix_mipmapping(rscreen, desc);
+    r300_setup_flags(desc);
     r300_setup_cbzb_flags(rscreen, desc);
+
+    /* Setup the miptree description. */
+    r300_setup_miptree(rscreen, desc, TRUE);
+    /* If the required buffer size is larger the given max size,
+     * try again without the alignment for the CBZB clear. */
+    if (max_buffer_size && desc->size_in_bytes > max_buffer_size) {
+        r300_setup_miptree(rscreen, desc, FALSE);
+    }
+
+    r300_texture_3d_fix_mipmapping(rscreen, desc);
 
     if (max_buffer_size) {
         /* Make sure the buffer we got is large enough. */
@@ -437,7 +435,6 @@ boolean r300_texture_desc_init(struct r300_screen *rscreen,
         desc->buffer_size_in_bytes = max_buffer_size;
     } else {
         desc->buffer_size_in_bytes = desc->size_in_bytes;
-
     }
 
     if (SCREEN_DBG_ON(rscreen, DBG_TEX))
