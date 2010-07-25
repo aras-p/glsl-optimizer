@@ -105,7 +105,8 @@ unsigned r300_get_swizzle_combined(const unsigned char *swizzle_format,
  * The FORMAT specifies how the texture sampler will treat the texture, and
  * makes available X, Y, Z, W, ZERO, and ONE for swizzling. */
 uint32_t r300_translate_texformat(enum pipe_format format,
-                                  const unsigned char *swizzle_view)
+                                  const unsigned char *swizzle_view,
+                                  boolean is_r500)
 {
     uint32_t result = 0;
     const struct util_format_description *desc;
@@ -130,7 +131,10 @@ uint32_t r300_translate_texformat(enum pipe_format format,
                     return R300_TX_FORMAT_X16;
                 case PIPE_FORMAT_X8Z24_UNORM:
                 case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
-                    return R500_TX_FORMAT_Y8X24;
+                    if (is_r500)
+                        return R500_TX_FORMAT_Y8X24;
+                    else
+                        return R300_TX_FORMAT_Y16X16;
                 default:
                     return ~0; /* Unsupported. */
             }
@@ -533,7 +537,7 @@ boolean r300_is_zs_format_supported(enum pipe_format format)
 
 boolean r300_is_sampler_format_supported(enum pipe_format format)
 {
-    return r300_translate_texformat(format, 0) != ~0;
+    return r300_translate_texformat(format, 0, TRUE) != ~0;
 }
 
 static void r300_texture_setup_immutable_state(struct r300_screen* screen,

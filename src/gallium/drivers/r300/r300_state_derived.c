@@ -528,15 +528,9 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
     struct r300_sampler_state *sampler;
     struct r300_sampler_view *view;
     struct r300_texture *tex;
-    unsigned min_level, max_level, i, size;
+    unsigned min_level, max_level, i, j, size;
     unsigned count = MIN2(state->sampler_view_count,
                           state->sampler_state_count);
-    unsigned char depth_swizzle[4] = {
-        UTIL_FORMAT_SWIZZLE_X,
-        UTIL_FORMAT_SWIZZLE_X,
-        UTIL_FORMAT_SWIZZLE_X,
-        UTIL_FORMAT_SWIZZLE_X
-    };
 
     /* The KIL opcode fix, see below. */
     if (!count && !r300->screen->caps.is_r500)
@@ -563,14 +557,29 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
             /* Assign a texture cache region. */
             texstate->format.format1 |= view->texcache_region;
 
-            /* If compare mode is disabled, the sampler view swizzles
-             * are stored in the format.
-             * Otherwise, swizzles must be applied after the compare mode
-             * in the fragment shader. */
+            /* Depth textures are kinda special. */
             if (util_format_is_depth_or_stencil(tex->desc.b.b.format)) {
+                unsigned char depth_swizzle[4];
+
+                if (!r300->screen->caps.is_r500 &&
+                    util_format_get_blocksizebits(tex->desc.b.b.format) == 32) {
+                    /* X24x8 is sampled as Y16X16 on r3xx-r4xx.
+                     * The depth here is at the Y component. */
+                    for (j = 0; j < 4; j++)
+                        depth_swizzle[j] = UTIL_FORMAT_SWIZZLE_Y;
+                } else {
+                    for (j = 0; j < 4; j++)
+                        depth_swizzle[j] = UTIL_FORMAT_SWIZZLE_X;
+                }
+
+                /* If compare mode is disabled, sampler view swizzles
+                 * are stored in the format.
+                 * Otherwise, the swizzles must be applied after the compare
+                 * mode in the fragment shader. */
                 if (sampler->state.compare_mode == PIPE_TEX_COMPARE_NONE) {
                     texstate->format.format1 |=
-                        r300_get_swizzle_combined(depth_swizzle, view->swizzle);
+                        r300_get_swizzle_combined(depth_swizzle,
+                                                  view->swizzle);
                 } else {
                     texstate->format.format1 |=
                         r300_get_swizzle_combined(depth_swizzle, 0);

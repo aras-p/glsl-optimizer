@@ -257,8 +257,6 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
     uint32_t retval = 0;
     boolean is_r500 = r300_screen(screen)->caps.is_r500;
     boolean is_r400 = r300_screen(screen)->caps.is_r400;
-    boolean is_z24 = format == PIPE_FORMAT_X8Z24_UNORM ||
-                     format == PIPE_FORMAT_S8_USCALED_Z24_UNORM;
     boolean is_color2101010 = format == PIPE_FORMAT_R10G10B10A2_UNORM ||
                               format == PIPE_FORMAT_R10G10B10X2_SNORM ||
                               format == PIPE_FORMAT_B10G10R10A2_UNORM ||
@@ -293,8 +291,6 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
 
     /* Check sampler format support. */
     if ((usage & PIPE_BIND_SAMPLER_VIEW) &&
-        /* Z24 cannot be sampled from on non-r5xx. */
-        (is_r500 || !is_z24) &&
         /* ATI1N is r5xx-only. */
         (is_r500 || !is_ati1n) &&
         /* ATI2N is supported on r4xx-r5xx. */
