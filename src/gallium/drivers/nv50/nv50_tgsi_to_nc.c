@@ -174,7 +174,8 @@ bld_fetch_global(struct bld_context *bld, struct bld_value_stack *stack)
 
    fetch_by_bb(stack, vals, &n, bld->pc->current_block);
 
-   assert(n);
+   if (n == 0)
+      return NULL;
    if (n == 1)
       return vals[0];
 
@@ -606,6 +607,7 @@ bld_export_outputs(struct bld_context *bld)
          if (!bld_is_output_written(bld, i, c))
             continue;
          vals[n] = bld_fetch_global(bld, &bld->ovs[i][c]);
+         assert(vals[n]);
          vals[n] = bld_insn_1(bld, NV_OP_MOV, vals[n]);
          vals[n++]->reg.id = bld->ti->output_map[i][c];
       }
@@ -733,6 +735,10 @@ emit_fetch(struct bld_context *bld, const struct tgsi_full_instruction *insn,
       NOUVEAU_ERR("illegal/unhandled src reg file: %d\n", src->Register.File);
       abort();
       break;	   
+   }
+   if (!res) {
+      debug_printf("WARNING: undefined source value in TGSI instruction\n");
+      return bld_load_imm_u32(bld, 0);
    }
 
    switch (tgsi_util_get_full_src_register_sign_mode(src, chan)) {
