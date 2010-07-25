@@ -38,7 +38,7 @@ struct drisw_context
    __GLXcontext base;
    __GLXDRIcontext dri_vtable;
    __DRIcontext *driContext;
-   __GLXscreenConfigs *psc;
+
 };
 
 struct drisw_screen
@@ -263,7 +263,7 @@ driBindContext(__GLXcontext * context,
 	       __GLXDRIdrawable * draw, __GLXDRIdrawable * read)
 {
    struct drisw_context *pcp = (struct drisw_context *) context;
-   struct drisw_screen *psc = (struct drisw_screen *) pcp->psc;
+   struct drisw_screen *psc = (struct drisw_screen *) pcp->base.psc;
    struct drisw_drawable *pdr = (struct drisw_drawable *) draw;
    struct drisw_drawable *prd = (struct drisw_drawable *) read;
 
@@ -275,7 +275,7 @@ static void
 driUnbindContext(__GLXcontext * context)
 {
    struct drisw_context *pcp = (struct drisw_context *) context;
-   struct drisw_screen *psc = (struct drisw_screen *) pcp->psc;
+   struct drisw_screen *psc = (struct drisw_screen *) pcp->base.psc;
 
    (*psc->core->unbindContext) (pcp->driContext);
 }
