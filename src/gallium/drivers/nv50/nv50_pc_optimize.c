@@ -465,11 +465,7 @@ constant_operand(struct nv_pc *pc,
       if ((type == NV_TYPE_F32 && val->reg.imm.f32 == 2.0f) ||
           (NV_TYPE_ISINT(type) && val->reg.imm.u32 == 2)) {
          nvi->opcode = NV_OP_ADD;
-         nv_reference(pc, &nvi->src[s], NULL);
-         if (!s) {
-            nvi->src[0] = nvi->src[1];
-            nvi->src[1] = NULL;
-         }
+         nv_reference(pc, &nvi->src[s], nvi->src[t]->value);
       } else
       if (type == NV_TYPE_F32 && val->reg.imm.f32 == -1.0f) {
          nvi->opcode = NV_OP_NEG;
