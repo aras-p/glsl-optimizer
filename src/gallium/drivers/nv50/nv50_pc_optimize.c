@@ -570,31 +570,99 @@ nv_pass_lower_cond(struct nv_pass *ctx, struct nv_basic_block *b)
 }
 #endif
 
-/* TODO: reload elimination, redundant store elimination */
+/* TODO: redundant store elimination */
 
-struct nv_pass_reldelim {
+struct load_record {
+   struct load_record *next;
+   uint64_t data;
+   struct nv_value *value;
+};
+
+#define LOAD_RECORD_POOL_SIZE 1024
+
+struct nv_pass_reld_elim {
    struct nv_pc *pc;
+
+   struct load_record *imm;
+   struct load_record *mem_s;
+   struct load_record *mem_v;
+   struct load_record *mem_c[16];
+   struct load_record *mem_l;
+
+   struct load_record pool[LOAD_RECORD_POOL_SIZE];
+   int alloc;
 };
 
 static int
-nv_pass_reload_elim(struct nv_pass_reldelim *ctx, struct nv_basic_block *b)
+nv_pass_reload_elim(struct nv_pass_reld_elim *ctx, struct nv_basic_block *b)
 {
-   int j;
+   struct load_record **rec, *it;
    struct nv_instruction *ld, *next;
+   uint64_t data;
+   struct nv_value *val;
+   int j;
 
    for (ld = b->entry; ld; ld = next) {
       next = ld->next;
+      if (!ld->src[0])
+         continue;
+      val = ld->src[0]->value;
+      rec = NULL;
 
       if (ld->opcode == NV_OP_LINTERP || ld->opcode == NV_OP_PINTERP) {
-
+         data = val->reg.id;
+         rec = &ctx->mem_v;
       } else
       if (ld->opcode == NV_OP_LDA) {
-         
+         data = val->reg.id;
+         if (val->reg.file >= NV_FILE_MEM_C(0) &&
+             val->reg.file <= NV_FILE_MEM_C(15))
+            rec = &ctx->mem_c[val->reg.file - NV_FILE_MEM_C(0)];
+         else
+         if (val->reg.file == NV_FILE_MEM_S)
+            rec = &ctx->mem_s;
+         else
+         if (val->reg.file == NV_FILE_MEM_L)
+            rec = &ctx->mem_l;
       } else
-      if (ld->opcode == NV_OP_MOV) {
-         
+      if ((ld->opcode == NV_OP_MOV) && (val->reg.file == NV_FILE_IMM)) {
+         data = val->reg.imm.u32;
+         rec = &ctx->imm;
+      }
+
+      if (!rec || !ld->def[0]->refc)
+         continue;
+
+      for (it = *rec; it; it = it->next)
+         if (it->data == data)
+            break;
+
+      if (it) {
+#if 1
+         nvcg_replace_value(ctx->pc, ld->def[0], it->value);
+#else
+         ld->opcode = NV_OP_MOV;
+         nv_reference(ctx->pc, &ld->src[0], it->value);
+#endif
+      } else {
+         if (ctx->alloc == LOAD_RECORD_POOL_SIZE)
+            continue;
+         it = &ctx->pool[ctx->alloc++];
+         it->next = *rec;
+         it->data = data;
+         it->value = ld->def[0];
+         *rec = it;
       }
    }
+
+   ctx->imm = NULL;
+   ctx->mem_s = NULL;
+   ctx->mem_v = NULL;
+   for (j = 0; j < 16; ++j)
+      ctx->mem_c[j] = NULL;
+   ctx->mem_l = NULL;
+   ctx->alloc = 0;
+
    DESCEND_ARBITRARY(j, nv_pass_reload_elim);
 
    return 0;
@@ -678,22 +746,73 @@ nv_pass_flatten(struct nv_pass *ctx, struct nv_basic_block *b)
    return 0;
 }
 
+/* local common subexpression elimination, stupid O(n^2) implementation */
+static int
+nv_pass_cse(struct nv_pass *ctx, struct nv_basic_block *b)
+{
+   struct nv_instruction *ir, *ik, *next;
+   struct nv_instruction *entry = b->phi ? b->phi : b->entry;
+   int s;
+   unsigned int reps;
+
+   do {
+      reps = 0;
+      for (ir = entry; ir; ir = next) {
+         next = ir->next;
+         for (ik = entry; ik != ir; ik = ik->next) {
+            if (ir->opcode != ik->opcode)
+               continue;
+
+            if (ik->opcode == NV_OP_LDA ||
+                ik->opcode == NV_OP_STA ||
+                ik->opcode == NV_OP_MOV ||
+                nv_is_vector_op(ik->opcode))
+               continue; /* ignore loads, stores & moves */
+
+            if (ik->src[4] || ir->src[4])
+               continue; /* don't mess with address registers */
+
+            for (s = 0; s < 3; ++s) {
+               struct nv_value *a, *b;
+
+               if (!ik->src[s]) {
+                  if (ir->src[s])
+                     break;
+                  continue;
+               }
+               if (ik->src[s]->mod != ir->src[s]->mod)
+                  break;
+               a = ik->src[s]->value;
+               b = ir->src[s]->value;
+               if (a == b)
+                  continue;
+               if (a->reg.file != b->reg.file ||
+                   a->reg.id < 0 ||
+                   a->reg.id != b->reg.id)
+                  break;
+            }
+            if (s == 3) {
+               nv_nvi_delete(ir);
+               ++reps;
+               nvcg_replace_value(ctx->pc, ir->def[0], ik->def[0]);
+               break;
+            }
+         }
+      }
+   } while(reps);
+
+   DESCEND_ARBITRARY(s, nv_pass_cse);
+
+   return 0;
+}
+
 int
 nv_pc_exec_pass0(struct nv_pc *pc)
 {
-   struct nv_pass_reldelim *reldelim;
+   struct nv_pass_reld_elim *reldelim;
    struct nv_pass pass;
    struct nv_pass_dce dce;
    int ret;
-
-   reldelim = CALLOC_STRUCT(nv_pass_reldelim);
-   reldelim->pc = pc;
-
-   ret = nv_pass_reload_elim(reldelim, pc->root);
-
-   FREE(reldelim);
-   if (ret)
-      return ret;
 
    pass.pc = pc;
 
@@ -717,6 +836,19 @@ nv_pc_exec_pass0(struct nv_pc *pc)
 
    pc->pass_seq++;
    ret = nv_pass_fold_stores(&pass, pc->root);
+   if (ret)
+      return ret;
+
+   reldelim = CALLOC_STRUCT(nv_pass_reld_elim);
+   reldelim->pc = pc;
+   pc->pass_seq++;
+   ret = nv_pass_reload_elim(reldelim, pc->root);
+   FREE(reldelim);
+   if (ret)
+      return ret;
+
+   pc->pass_seq++;
+   ret = nv_pass_cse(&pass, pc->root);
    if (ret)
       return ret;
 

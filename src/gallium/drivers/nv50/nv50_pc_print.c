@@ -181,7 +181,7 @@ nv_print_address(const char c, int buf, struct nv_value *a, int offset)
 static INLINE void
 nv_print_cond(struct nv_instruction *nvi)
 {
-   PRINT("%s%s%s$c%i ",
+   PRINT("%s%s %s$c%i ",
          gree, nv_cond_name(nvi->cc),
          mgta, nv_value_id(nvi->flags_src->value));
 }
@@ -198,7 +198,7 @@ nv_print_value(struct nv_value *value, struct nv_value *ind, ubyte type)
       PRINT(" %s%s", gree, nv_type_name(type));
 
    if (!nv_value_allocated(value))
-      reg_pfx = '%';
+      reg_pfx = nv_value_allocated(value->join) ? '&' : '%';
 
    switch (value->reg.file) {
    case NV_FILE_GPR:
@@ -267,6 +267,8 @@ void
 nv_print_instruction(struct nv_instruction *i)
 {
    int j;
+
+   PRINT("%i: ", i->serial);
 
    if (i->flags_src)
       nv_print_cond(i);

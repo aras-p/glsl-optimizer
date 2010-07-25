@@ -163,6 +163,24 @@ nv_nvi_refcount(struct nv_instruction *nvi)
    return rc;
 }
 
+int
+nvcg_replace_value(struct nv_pc *pc, struct nv_value *old_val,
+                   struct nv_value *new_val)
+{
+   int i, n;
+
+   if (old_val == new_val)
+      return old_val->refc;
+
+   for (i = 0, n = 0; i < pc->num_refs; ++i) {
+      if (pc->refs[i]->value == old_val) {
+         ++n;
+         nv_reference(pc, &pc->refs[i], new_val);
+      }
+   }
+   return n;
+}
+
 static void
 nv_pc_free_refs(struct nv_pc *pc)
 {

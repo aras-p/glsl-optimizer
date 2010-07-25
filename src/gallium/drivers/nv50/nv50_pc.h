@@ -363,11 +363,11 @@ new_ref(struct nv_pc *pc, struct nv_value *val)
       const unsigned old_size = pc->num_refs * sizeof(struct nv_ref *);
       const unsigned new_size = (pc->num_refs + 64) * sizeof(struct nv_ref *);
 
-	   pc->refs = REALLOC(pc->refs, old_size, new_size);
+      pc->refs = REALLOC(pc->refs, old_size, new_size);
 
-	   ref = CALLOC(64, sizeof(struct nv_ref));
-	   for (i = 0; i < 64; ++i)
-		   pc->refs[pc->num_refs + i] = &ref[i];
+      ref = CALLOC(64, sizeof(struct nv_ref));
+      for (i = 0; i < 64; ++i)
+         pc->refs[pc->num_refs + i] = &ref[i];
    }
 
    ref = pc->refs[pc->num_refs++];
@@ -426,6 +426,8 @@ int nv_nvi_refcount(struct nv_instruction *);
 void nv_nvi_delete(struct nv_instruction *);
 void nv_nvi_permute(struct nv_instruction *, struct nv_instruction *);
 void nvbb_attach_block(struct nv_basic_block *parent, struct nv_basic_block *);
+int nvcg_replace_value(struct nv_pc *pc, struct nv_value *old_val,
+                       struct nv_value *new_val);
 
 int nv_pc_exec_pass0(struct nv_pc *pc);
 int nv_pc_exec_pass1(struct nv_pc *pc);
