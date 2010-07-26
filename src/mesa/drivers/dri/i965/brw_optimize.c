@@ -117,9 +117,6 @@ static const GLuint inst_type_size[8] = {
     [7] = 4
 };
 
-#define BRW_MAX_OFFSET(x0,x1) ((x0) > (x1) ? (x0) : (x1))
-#define BRW_MIN_OFFSET(x0,x1) ((x0) < (x1) ? (x0) : (x1));
-
 static INLINE GLboolean
 brw_is_grf_written(const struct brw_instruction *inst,
                    int reg_index, int size,
@@ -158,8 +155,8 @@ brw_is_grf_written(const struct brw_instruction *inst,
 
    /* If the two intervals intersect, we overwrite the register */
    write_end = write_start + length;
-   const int left = BRW_MAX_OFFSET(write_start, reg_start);
-   const int right = BRW_MIN_OFFSET(write_end, reg_end);
+   const int left = MAX2(write_start, reg_start);
+   const int right = MIN2(write_end, reg_end);
 
    return left < right;
 }
@@ -208,10 +205,10 @@ brw_is_mrf_written(const struct brw_instruction *inst, int reg_index, int size)
       const int write_end1 = write_start1 + length;
 
       /* If the two intervals intersect, we overwrite the register */
-      const int left0 = BRW_MAX_OFFSET(write_start0, reg_start);
-      const int right0 = BRW_MIN_OFFSET(write_end0, reg_end);
-      const int left1 = BRW_MAX_OFFSET(write_start1, reg_start);
-      const int right1 = BRW_MIN_OFFSET(write_end1, reg_end);
+      const int left0 = MAX2(write_start0, reg_start);
+      const int right0 = MIN2(write_end0, reg_end);
+      const int left1 = MAX2(write_start1, reg_start);
+      const int right1 = MIN2(write_end1, reg_end);
 
       is_written = left0 < right0 || left1 < right1;
    }
@@ -225,8 +222,8 @@ brw_is_mrf_written(const struct brw_instruction *inst, int reg_index, int size)
       const int write_start = inst->bits1.da1.dest_reg_nr*REG_SIZE
                             + inst->bits1.da1.dest_subreg_nr;
       const int write_end = write_start + length;
-      const int left = BRW_MAX_OFFSET(write_start, reg_start);
-      const int right = BRW_MIN_OFFSET(write_end, reg_end);;
+      const int left = MAX2(write_start, reg_start);
+      const int right = MIN2(write_end, reg_end);;
 
       is_written = left < right;
    }
@@ -239,8 +236,8 @@ brw_is_mrf_written(const struct brw_instruction *inst, int reg_index, int size)
       const int mrf_start = inst->header.destreg__conditionalmod;
       const int write_start = mrf_start * REG_SIZE;
       const int write_end = write_start + REG_SIZE;
-      const int left = BRW_MAX_OFFSET(write_start, reg_start);
-      const int right = BRW_MIN_OFFSET(write_end, reg_end);;
+      const int left = MAX2(write_start, reg_start);
+      const int right = MIN2(write_end, reg_end);;
       is_written = left < right;
    }
 
@@ -277,8 +274,8 @@ brw_is_mrf_read(const struct brw_instruction *inst,
    read_start *= REG_SIZE;
    read_end = read_start + length;
 
-   const int left = BRW_MAX_OFFSET(read_start, reg_start);
-   const int right = BRW_MIN_OFFSET(read_end, reg_end);
+   const int left = MAX2(read_start, reg_start);
+   const int right = MIN2(read_end, reg_end);
 
    return left < right;
 }
