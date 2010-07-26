@@ -32,9 +32,6 @@
 #include "brw_defines.h"
 #include "brw_eu.h"
 
-#define BRW_MRF_NUM 16
-#define BRW_SIZE_OF_REG 32
-
 static INLINE
 GLboolean brw_is_arithmetic_inst(const struct brw_instruction *inst)
 {
@@ -162,20 +159,20 @@ brw_is_grf_written(const struct brw_instruction *inst,
    if (inst->bits1.da1.dest_reg_file != BRW_GENERAL_REGISTER_FILE)
       return GL_FALSE;
 
-   const int reg_start = reg_index * BRW_SIZE_OF_REG;
+   const int reg_start = reg_index * REG_SIZE;
    const int reg_end = reg_start + size;
 
    const int type_size = inst_type_size[inst->bits1.da1.dest_reg_type];
-   const int write_start = inst->bits1.da1.dest_reg_nr*BRW_SIZE_OF_REG
+   const int write_start = inst->bits1.da1.dest_reg_nr*REG_SIZE
                          + inst->bits1.da1.dest_subreg_nr;
    int length, write_end;
 
    /* SEND is specific */
    if (inst->header.opcode == BRW_OPCODE_SEND) {
       if (gen >= 5)
-         length = inst->bits3.generic_gen5.response_length*BRW_SIZE_OF_REG;
+         length = inst->bits3.generic_gen5.response_length*REG_SIZE;
       else 
-         length = inst->bits3.generic.response_length*BRW_SIZE_OF_REG;
+         length = inst->bits3.generic.response_length*REG_SIZE;
    }
    else {
       length = 1 << inst->header.execution_size;
@@ -205,7 +202,7 @@ brw_is_mrf_written(const struct brw_instruction *inst, int reg_index, int size)
    if (inst->bits1.da1.dest_reg_file != BRW_MESSAGE_REGISTER_FILE)
       return GL_FALSE;
 
-   const int reg_start = reg_index * BRW_SIZE_OF_REG;
+   const int reg_start = reg_index * REG_SIZE;
    const int reg_end = reg_start + size;
 
    const int mrf_index = inst->bits1.da1.dest_reg_nr & 0x0f;
@@ -225,12 +222,12 @@ brw_is_mrf_written(const struct brw_instruction *inst, int reg_index, int size)
       const int length = 8 * type_size * inst->bits1.da1.dest_horiz_stride;
 
       /* First 8-way register */
-      const int write_start0 = mrf_index*BRW_SIZE_OF_REG
+      const int write_start0 = mrf_index*REG_SIZE
                              + inst->bits1.da1.dest_subreg_nr;
       const int write_end0 = write_start0 + length;
 
       /* Second 8-way register */
-      const int write_start1 = (mrf_index+4)*BRW_SIZE_OF_REG
+      const int write_start1 = (mrf_index+4)*REG_SIZE
                              + inst->bits1.da1.dest_subreg_nr;
       const int write_end1 = write_start1 + length;
 
@@ -249,7 +246,7 @@ brw_is_mrf_written(const struct brw_instruction *inst, int reg_index, int size)
       length *= inst->bits1.da1.dest_horiz_stride;
 
       /* If the two intervals intersect, we write into the register */
-      const int write_start = inst->bits1.da1.dest_reg_nr*BRW_SIZE_OF_REG
+      const int write_start = inst->bits1.da1.dest_reg_nr*REG_SIZE
                             + inst->bits1.da1.dest_subreg_nr;
       const int write_end = write_start + length;
       const int left = BRW_MAX_OFFSET(write_start, reg_start);
@@ -264,8 +261,8 @@ brw_is_mrf_written(const struct brw_instruction *inst, int reg_index, int size)
        inst->bits1.da1.src0_reg_file != 0) {
 
       const int mrf_start = inst->header.destreg__conditionalmod;
-      const int write_start = mrf_start * BRW_SIZE_OF_REG;
-      const int write_end = write_start + BRW_SIZE_OF_REG;
+      const int write_start = mrf_start * REG_SIZE;
+      const int write_end = write_start + REG_SIZE;
       const int left = BRW_MAX_OFFSET(write_start, reg_start);
       const int right = BRW_MIN_OFFSET(write_end, reg_end);;
       is_written = left < right;
@@ -283,14 +280,14 @@ brw_is_mrf_read(const struct brw_instruction *inst,
    if (inst->bits2.da1.src0_address_mode != BRW_ADDRESS_DIRECT)
       return GL_TRUE;
 
-   const int reg_start = reg_index*BRW_SIZE_OF_REG;
+   const int reg_start = reg_index*REG_SIZE;
    const int reg_end = reg_start + size;
 
    int length, read_start, read_end;
    if (gen >= 5)
-      length = inst->bits3.generic_gen5.msg_length*BRW_SIZE_OF_REG;
+      length = inst->bits3.generic_gen5.msg_length*REG_SIZE;
    else 
-      length = inst->bits3.generic.msg_length*BRW_SIZE_OF_REG;
+      length = inst->bits3.generic.msg_length*REG_SIZE;
 
    /* Look if SEND uses an implicit mov. In that case, we read one less register
     * (but we write it)
@@ -301,7 +298,7 @@ brw_is_mrf_read(const struct brw_instruction *inst,
       length--;
       read_start = inst->header.destreg__conditionalmod + 1;
    }
-   read_start *= BRW_SIZE_OF_REG;
+   read_start *= REG_SIZE;
    read_end = read_start + length;
 
    const int left = BRW_MAX_OFFSET(read_start, reg_start);
@@ -330,7 +327,7 @@ brw_is_grf_read(const struct brw_instruction *inst, int reg_index, int size)
       if (inst->bits1.da1.src0_reg_file != BRW_GENERAL_REGISTER_FILE)
          return GL_FALSE;
 
-      const int reg_start = reg_index*BRW_SIZE_OF_REG;
+      const int reg_start = reg_index*REG_SIZE;
       const int reg_end = reg_start + size;
 
       /* See if at least one of this element intersects the interval */
@@ -340,7 +337,7 @@ brw_is_grf_read(const struct brw_instruction *inst, int reg_index, int size)
       const int row_num = elem_num >> inst->bits2.da1.src0_width;
       const int hs = type_size*inst_stride[inst->bits2.da1.src0_horiz_stride];
       const int vs = type_size*inst_stride[inst->bits2.da1.src0_vert_stride];
-      int row_start = inst->bits2.da1.src0_reg_nr*BRW_SIZE_OF_REG
+      int row_start = inst->bits2.da1.src0_reg_nr*REG_SIZE
                     + inst->bits2.da1.src0_subreg_nr;
       for (j = 0; j < row_num; ++j) {
          int write_start = row_start;
@@ -365,7 +362,7 @@ brw_is_grf_read(const struct brw_instruction *inst, int reg_index, int size)
       if (inst->bits1.da1.src1_reg_file != BRW_GENERAL_REGISTER_FILE)
          return GL_FALSE;
 
-      const int reg_start = reg_index*BRW_SIZE_OF_REG;
+      const int reg_start = reg_index*REG_SIZE;
       const int reg_end = reg_start + size;
 
       /* See if at least one of this element intersects the interval */
@@ -375,7 +372,7 @@ brw_is_grf_read(const struct brw_instruction *inst, int reg_index, int size)
       const int row_num = elem_num >> inst->bits3.da1.src1_width;
       const int hs = type_size*inst_stride[inst->bits3.da1.src1_horiz_stride];
       const int vs = type_size*inst_stride[inst->bits3.da1.src1_vert_stride];
-      int row_start = inst->bits3.da1.src1_reg_nr*BRW_SIZE_OF_REG
+      int row_start = inst->bits3.da1.src1_reg_nr*REG_SIZE
                     + inst->bits3.da1.src1_subreg_nr;
       for (j = 0; j < row_num; ++j) {
          int write_start = row_start;
@@ -530,7 +527,7 @@ void brw_remove_duplicate_mrf_moves(struct brw_compile *p)
 
       const int mrf_index0 = mrf_index;
       const int mrf_index1 = is_compr4 ? mrf_index0+4 : mrf_index0+1;
-      const int simd16_size = 2 * BRW_SIZE_OF_REG;
+      const int simd16_size = 2 * REG_SIZE;
 
       for (j = i + 1; j < p->nr_insn; j++) {
          const struct brw_instruction *inst = p->store + j;
@@ -541,8 +538,8 @@ void brw_remove_duplicate_mrf_moves(struct brw_compile *p)
          }
 
          if (brw_is_grf_written(inst, grf_index, simd16_size, gen) ||
-             brw_is_mrf_written(inst, mrf_index0, BRW_SIZE_OF_REG) ||
-             brw_is_mrf_written(inst, mrf_index1, BRW_SIZE_OF_REG))
+             brw_is_mrf_written(inst, mrf_index0, REG_SIZE) ||
+             brw_is_mrf_written(inst, mrf_index1, REG_SIZE))
             break;
       }
    }
@@ -556,7 +553,7 @@ void brw_remove_mrf_to_grf_moves(struct brw_compile *p)
    int i, j, prev;
    struct brw_context *brw = p->brw;
    const int gen = brw->intel.gen;
-   const int simd16_size = 2*BRW_SIZE_OF_REG;
+   const int simd16_size = 2*REG_SIZE;
 
    GLboolean *removeInst = calloc(sizeof(GLboolean), p->nr_insn);
    assert(removeInst);
@@ -606,10 +603,10 @@ void brw_remove_mrf_to_grf_moves(struct brw_compile *p)
             continue;
          if (brw_is_grf_written(inst, grf_index, simd16_size, gen)   ||
              brw_is_grf_read(inst, grf_index, simd16_size)           ||
-             brw_is_mrf_written(inst, mrf_index0, BRW_SIZE_OF_REG)   ||
-             brw_is_mrf_written(inst, mrf_index1, BRW_SIZE_OF_REG)   ||
-             brw_is_mrf_read(inst, mrf_index0, BRW_SIZE_OF_REG, gen) ||
-             brw_is_mrf_read(inst, mrf_index1, BRW_SIZE_OF_REG, gen)) {
+             brw_is_mrf_written(inst, mrf_index0, REG_SIZE)   ||
+             brw_is_mrf_written(inst, mrf_index1, REG_SIZE)   ||
+             brw_is_mrf_read(inst, mrf_index0, REG_SIZE, gen) ||
+             brw_is_mrf_read(inst, mrf_index1, REG_SIZE, gen)) {
             removeInst[i] = GL_FALSE;
             break;
          }

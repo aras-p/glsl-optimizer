@@ -192,11 +192,6 @@ void brw_clip_interp_vertex( struct brw_clip_compile *c,
    brw_clip_project_vertex(c, dest_ptr );
 }
 
-
-
-
-#define MAX_MRF 16
-
 void brw_clip_emit_vue(struct brw_clip_compile *c, 
 		       struct brw_indirect vert,
 		       GLboolean allocate,
