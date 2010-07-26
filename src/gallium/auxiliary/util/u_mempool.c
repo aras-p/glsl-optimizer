@@ -165,6 +165,5 @@ void util_mempool_destroy(struct util_mempool *pool)
       FREE(page);
    }
 
-   if (pool->threading)
-      pipe_mutex_destroy(pool->mutex);
+   pipe_mutex_destroy(pool->mutex);
 }
