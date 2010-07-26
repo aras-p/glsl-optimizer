@@ -2575,7 +2575,9 @@ __glXCopySubBufferMESA(Display * dpy, GLXDrawable drawable,
    INT32 *x_ptr, *y_ptr, *w_ptr, *h_ptr;
    CARD8 opcode;
 
-#ifdef __DRI_COPY_SUB_BUFFER
+   fprintf(stderr, "copy sub: %d,%d %dx%d\n", x, y , width, height);
+
+#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
    __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable);
    if (pdraw != NULL) {
       __GLXscreenConfigs *psc = pdraw->psc;
