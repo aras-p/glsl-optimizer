@@ -1283,7 +1283,7 @@ void emit_fb_write(struct brw_wm_compile *c,
 	  * + 1 for the second half we get destination + 4.
 	  */
 	 brw_MOV(p,
-		 brw_message_reg(nr + channel + (1 << 7)),
+		 brw_message_reg(nr + channel + BRW_MRF_COMPR4),
 		 arg0[channel]);
       } else {
 	 /*  mov (8) m2.0<1>:ud   r28.0<8;8,1>:ud  { Align1 } */

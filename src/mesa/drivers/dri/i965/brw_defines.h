@@ -604,6 +604,8 @@
 #define BRW_ARF_NOTIFICATION_COUNT    0x90
 #define BRW_ARF_IP                    0xA0
 
+#define BRW_MRF_COMPR4			(1 << 7)
+
 #define BRW_AMASK   0
 #define BRW_IMASK   1
 #define BRW_LMASK   2

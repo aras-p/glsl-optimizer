@@ -108,13 +108,13 @@ static const GLuint inst_stride[7] = {
 };
 
 static const GLuint inst_type_size[8] = {
-    [0] = 4,
-    [1] = 4,
-    [2] = 2,
-    [3] = 2,
-    [4] = 1,
-    [5] = 1,
-    [7] = 4
+    [BRW_REGISTER_TYPE_UD] = 4,
+    [BRW_REGISTER_TYPE_D] = 4,
+    [BRW_REGISTER_TYPE_UW] = 2,
+    [BRW_REGISTER_TYPE_W] = 2,
+    [BRW_REGISTER_TYPE_UB] = 1,
+    [BRW_REGISTER_TYPE_B] = 1,
+    [BRW_REGISTER_TYPE_F] = 4
 };
 
 static INLINE GLboolean
@@ -179,7 +179,7 @@ brw_is_mrf_written(const struct brw_instruction *inst, int reg_index, int size)
    const int reg_end = reg_start + size;
 
    const int mrf_index = inst->bits1.da1.dest_reg_nr & 0x0f;
-   const int is_compr4 = inst->bits1.da1.dest_reg_nr & 0xf0;
+   const int is_compr4 = inst->bits1.da1.dest_reg_nr & BRW_MRF_COMPR4;
    const int type_size = inst_type_size[inst->bits1.da1.dest_reg_type];
 
    /* We use compr4 with a size != 16 elements. Strange, we conservatively
@@ -392,17 +392,17 @@ brw_is_grf_to_mrf_mov(const struct brw_instruction *mov,
 
    if (mov->bits1.da1.dest_address_mode != BRW_ADDRESS_DIRECT ||
        mov->bits1.da1.dest_reg_file != BRW_MESSAGE_REGISTER_FILE ||
-       mov->bits1.da1.dest_reg_type != 7 ||
-       mov->bits1.da1.dest_horiz_stride != 1 ||
+       mov->bits1.da1.dest_reg_type != BRW_REGISTER_TYPE_F ||
+       mov->bits1.da1.dest_horiz_stride != BRW_HORIZONTAL_STRIDE_1 ||
        mov->bits1.da1.dest_subreg_nr != 0)
       return GL_FALSE;
 
    if (mov->bits2.da1.src0_address_mode != BRW_ADDRESS_DIRECT ||
        mov->bits1.da1.src0_reg_file != BRW_GENERAL_REGISTER_FILE ||
-       mov->bits1.da1.src0_reg_type != 7 ||
-       mov->bits2.da1.src0_width != 3 ||
-       mov->bits2.da1.src0_horiz_stride != 1 ||
-       mov->bits2.da1.src0_vert_stride != 4 ||
+       mov->bits1.da1.src0_reg_type != BRW_REGISTER_TYPE_F ||
+       mov->bits2.da1.src0_width != BRW_WIDTH_8 ||
+       mov->bits2.da1.src0_horiz_stride != BRW_HORIZONTAL_STRIDE_1 ||
+       mov->bits2.da1.src0_vert_stride != BRW_VERTICAL_STRIDE_8 ||
        mov->bits2.da1.src0_subreg_nr != 0 ||
        mov->bits2.da1.src0_abs != 0 ||
        mov->bits2.da1.src0_negate != 0)
@@ -410,7 +410,7 @@ brw_is_grf_to_mrf_mov(const struct brw_instruction *mov,
 
    *grf_index = mov->bits2.da1.src0_reg_nr;
    *mrf_index = mov->bits1.da1.dest_reg_nr & 0x0f;
-   *is_compr4 = (mov->bits1.da1.dest_reg_nr & 0xf0) != 0;
+   *is_compr4 = (mov->bits1.da1.dest_reg_nr & BRW_MRF_COMPR4) != 0;
    return GL_TRUE;
 }
 
@@ -424,8 +424,8 @@ brw_is_grf_straight_write(const struct brw_instruction *inst, int grf_index)
        inst->header.access_mode == BRW_ALIGN_1 &&
        inst->bits1.da1.dest_address_mode == BRW_ADDRESS_DIRECT &&
        inst->bits1.da1.dest_reg_file == BRW_GENERAL_REGISTER_FILE &&
-       inst->bits1.da1.dest_reg_type == 7 &&
-       inst->bits1.da1.dest_horiz_stride == 1 &&
+       inst->bits1.da1.dest_reg_type == BRW_REGISTER_TYPE_F &&
+       inst->bits1.da1.dest_horiz_stride == BRW_HORIZONTAL_STRIDE_1 &&
        inst->bits1.da1.dest_reg_nr == grf_index &&
        inst->bits1.da1.dest_subreg_nr == 0 &&
        brw_is_arithmetic_inst(inst))
