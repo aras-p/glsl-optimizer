@@ -278,13 +278,21 @@ bld_insn_3(struct bld_context *bld, uint opcode,
       (d)->insn->src[0]->typecast = NV_TYPE_##s0t;  \
    } while(0)
 
+#define BLD_INSN_2_EX(d, op, dt, s0, s0t, s1, s1t)       \
+   do {                                                  \
+      (d) = bld_insn_2(bld, (NV_OP_##op), (s0), (s1));   \
+      (d)->reg.type = NV_TYPE_##dt;                      \
+      (d)->insn->src[0]->typecast = NV_TYPE_##s0t;       \
+      (d)->insn->src[1]->typecast = NV_TYPE_##s1t;       \
+   } while(0)
+
 static struct nv_value *
 bld_pow(struct bld_context *bld, struct nv_value *x, struct nv_value *e)
 {
    struct nv_value *val;
 
    BLD_INSN_1_EX(val, LG2, F32, x, F32);
-   BLD_INSN_1_EX(val, MUL, F32, e, F32);
+   BLD_INSN_2_EX(val, MUL, F32, e, F32, val, F32);
    val = bld_insn_1(bld, NV_OP_PREEX2, val);
    val = bld_insn_1(bld, NV_OP_EX2, val);
 
