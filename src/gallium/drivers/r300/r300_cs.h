@@ -136,8 +136,8 @@
 
 #define WRITE_CS_TABLE(values, count) do { \
     CS_DEBUG(assert(cs_count == 0);) \
-    memcpy(cs_copy->ptr + cs_copy->cdw, values, count * 4); \
-    cs_copy->cdw += count; \
+    memcpy(cs_copy->ptr + cs_copy->cdw, (values), (count) * 4); \
+    cs_copy->cdw += (count); \
 } while (0)
 
 #endif /* R300_CS_H */
