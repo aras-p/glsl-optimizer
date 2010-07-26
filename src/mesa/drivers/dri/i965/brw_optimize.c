@@ -32,55 +32,25 @@
 #include "brw_defines.h"
 #include "brw_eu.h"
 
-static INLINE
-GLboolean brw_is_arithmetic_inst(const struct brw_instruction *inst)
-{
-   switch (inst->header.opcode) {
-      case BRW_OPCODE_MOV:
-      case BRW_OPCODE_SEL:
-      case BRW_OPCODE_NOT:
-      case BRW_OPCODE_AND:
-      case BRW_OPCODE_OR:
-      case BRW_OPCODE_XOR:
-      case BRW_OPCODE_SHR:
-      case BRW_OPCODE_SHL:
-      case BRW_OPCODE_RSR:
-      case BRW_OPCODE_RSL:
-      case BRW_OPCODE_ADD:
-      case BRW_OPCODE_MUL:
-      case BRW_OPCODE_AVG:
-      case BRW_OPCODE_FRC:
-      case BRW_OPCODE_RNDU:
-      case BRW_OPCODE_RNDD:
-      case BRW_OPCODE_RNDE:
-      case BRW_OPCODE_RNDZ:
-      case BRW_OPCODE_MAC:
-      case BRW_OPCODE_MACH:
-      case BRW_OPCODE_LINE:
-         return GL_TRUE;
-      default:
-         return GL_FALSE;
-   }
-}
-
 static const struct {
     char    *name;
     int	    nsrc;
     int	    ndst;
+    GLboolean is_arith;
 } inst_opcode[128] = {
-    [BRW_OPCODE_MOV] = { .name = "mov", .nsrc = 1, .ndst = 1 },
-    [BRW_OPCODE_FRC] = { .name = "frc", .nsrc = 1, .ndst = 1 },
-    [BRW_OPCODE_RNDU] = { .name = "rndu", .nsrc = 1, .ndst = 1 },
-    [BRW_OPCODE_RNDD] = { .name = "rndd", .nsrc = 1, .ndst = 1 },
-    [BRW_OPCODE_RNDE] = { .name = "rnde", .nsrc = 1, .ndst = 1 },
-    [BRW_OPCODE_RNDZ] = { .name = "rndz", .nsrc = 1, .ndst = 1 },
-    [BRW_OPCODE_NOT] = { .name = "not", .nsrc = 1, .ndst = 1 },
+    [BRW_OPCODE_MOV] = { .name = "mov", .nsrc = 1, .ndst = 1, .is_arith = 1 },
+    [BRW_OPCODE_FRC] = { .name = "frc", .nsrc = 1, .ndst = 1, .is_arith = 1 },
+    [BRW_OPCODE_RNDU] = { .name = "rndu", .nsrc = 1, .ndst = 1, .is_arith = 1 },
+    [BRW_OPCODE_RNDD] = { .name = "rndd", .nsrc = 1, .ndst = 1, .is_arith = 1 },
+    [BRW_OPCODE_RNDE] = { .name = "rnde", .nsrc = 1, .ndst = 1, .is_arith = 1 },
+    [BRW_OPCODE_RNDZ] = { .name = "rndz", .nsrc = 1, .ndst = 1, .is_arith = 1 },
+    [BRW_OPCODE_NOT] = { .name = "not", .nsrc = 1, .ndst = 1, .is_arith = 1 },
     [BRW_OPCODE_LZD] = { .name = "lzd", .nsrc = 1, .ndst = 1 },
 
-    [BRW_OPCODE_MUL] = { .name = "mul", .nsrc = 2, .ndst = 1 },
-    [BRW_OPCODE_MAC] = { .name = "mac", .nsrc = 2, .ndst = 1 },
-    [BRW_OPCODE_MACH] = { .name = "mach", .nsrc = 2, .ndst = 1 },
-    [BRW_OPCODE_LINE] = { .name = "line", .nsrc = 2, .ndst = 1 },
+    [BRW_OPCODE_MUL] = { .name = "mul", .nsrc = 2, .ndst = 1, .is_arith = 1 },
+    [BRW_OPCODE_MAC] = { .name = "mac", .nsrc = 2, .ndst = 1, .is_arith = 1 },
+    [BRW_OPCODE_MACH] = { .name = "mach", .nsrc = 2, .ndst = 1, .is_arith = 1 },
+    [BRW_OPCODE_LINE] = { .name = "line", .nsrc = 2, .ndst = 1, .is_arith = 1 },
     [BRW_OPCODE_PLN] = { .name = "pln", .nsrc = 2, .ndst = 1 },
     [BRW_OPCODE_SAD2] = { .name = "sad2", .nsrc = 2, .ndst = 1 },
     [BRW_OPCODE_SADA2] = { .name = "sada2", .nsrc = 2, .ndst = 1 },
@@ -90,14 +60,14 @@ static const struct {
     [BRW_OPCODE_DP2] = { .name = "dp2", .nsrc = 2, .ndst = 1 },
     [BRW_OPCODE_MATH] = { .name = "math", .nsrc = 2, .ndst = 1 },
 
-    [BRW_OPCODE_AVG] = { .name = "avg", .nsrc = 2, .ndst = 1 },
-    [BRW_OPCODE_ADD] = { .name = "add", .nsrc = 2, .ndst = 1 },
-    [BRW_OPCODE_SEL] = { .name = "sel", .nsrc = 2, .ndst = 1 },
-    [BRW_OPCODE_AND] = { .name = "and", .nsrc = 2, .ndst = 1 },
-    [BRW_OPCODE_OR] = { .name = "or", .nsrc = 2, .ndst = 1 },
-    [BRW_OPCODE_XOR] = { .name = "xor", .nsrc = 2, .ndst = 1 },
-    [BRW_OPCODE_SHR] = { .name = "shr", .nsrc = 2, .ndst = 1 },
-    [BRW_OPCODE_SHL] = { .name = "shl", .nsrc = 2, .ndst = 1 },
+    [BRW_OPCODE_AVG] = { .name = "avg", .nsrc = 2, .ndst = 1, .is_arith = 1 },
+    [BRW_OPCODE_ADD] = { .name = "add", .nsrc = 2, .ndst = 1, .is_arith = 1 },
+    [BRW_OPCODE_SEL] = { .name = "sel", .nsrc = 2, .ndst = 1, .is_arith = 1 },
+    [BRW_OPCODE_AND] = { .name = "and", .nsrc = 2, .ndst = 1, .is_arith = 1 },
+    [BRW_OPCODE_OR] = { .name = "or", .nsrc = 2, .ndst = 1, .is_arith = 1 },
+    [BRW_OPCODE_XOR] = { .name = "xor", .nsrc = 2, .ndst = 1, .is_arith = 1 },
+    [BRW_OPCODE_SHR] = { .name = "shr", .nsrc = 2, .ndst = 1, .is_arith = 1 },
+    [BRW_OPCODE_SHL] = { .name = "shl", .nsrc = 2, .ndst = 1, .is_arith = 1 },
     [BRW_OPCODE_ASR] = { .name = "asr", .nsrc = 2, .ndst = 1 },
     [BRW_OPCODE_CMP] = { .name = "cmp", .nsrc = 2, .ndst = 1 },
     [BRW_OPCODE_CMPN] = { .name = "cmpn", .nsrc = 2, .ndst = 1 },
@@ -120,6 +90,12 @@ static const struct {
     [BRW_OPCODE_DO] = { .name = "do", .nsrc = 0, .ndst = 0 },
     [BRW_OPCODE_ENDIF] = { .name = "endif", .nsrc = 2, .ndst = 0 },
 };
+
+static INLINE
+GLboolean brw_is_arithmetic_inst(const struct brw_instruction *inst)
+{
+   return inst_opcode[inst->header.opcode].is_arith;
+}
 
 static const GLuint inst_stride[7] = {
     [0] = 0,
