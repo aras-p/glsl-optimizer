@@ -476,9 +476,11 @@ static void brw_remove_inst(struct brw_compile *p, const GLboolean *removeInst)
    p->nr_insn = nr_insn;
 }
 
-/* The gen code emitter generates a lot of duplications in the mrf-to-grf moves.
- * Here, we monitor same mov mrf-to-grf instrutions and remove them as soon as
- * none of the two operands have been written
+/* The gen code emitter generates a lot of duplications in the
+ * grf-to-mrf moves, for example when texture sampling with the same
+ * coordinates from multiple textures..  Here, we monitor same mov
+ * grf-to-mrf instrutions and remove repeated ones where the operands
+ * and dst ahven't changed in between.
  */
 void brw_remove_duplicate_mrf_moves(struct brw_compile *p)
 {
@@ -521,7 +523,10 @@ void brw_remove_duplicate_mrf_moves(struct brw_compile *p)
    free(removeInst);
 }
 
-void brw_remove_mrf_to_grf_moves(struct brw_compile *p)
+/* Replace moves to MRFs where the value moved is the result of a
+ * normal arithmetic operation with computation right into the MRF.
+ */
+void brw_remove_grf_to_mrf_moves(struct brw_compile *p)
 {
    int i, j, prev;
    struct brw_context *brw = p->brw;

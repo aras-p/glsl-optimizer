@@ -1716,7 +1716,7 @@ void brw_wm_emit( struct brw_wm_compile *c )
    if (p->brw->intel.gen == 5) {
      brw_remove_duplicate_mrf_moves(p);
      if (c->dispatch_width == 16)
-	brw_remove_mrf_to_grf_moves(p);
+	brw_remove_grf_to_mrf_moves(p);
    }
 
    if (INTEL_DEBUG & DEBUG_WM) {
