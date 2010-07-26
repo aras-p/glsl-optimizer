@@ -44,6 +44,7 @@ static GLboolean
 brw_vs_arg_can_be_immediate(enum prog_opcode opcode, int arg)
 {
    int opcode_array[] = {
+      [OPCODE_MOV] = 1,
       [OPCODE_ADD] = 2,
       [OPCODE_CMP] = 3,
       [OPCODE_DP3] = 2,
