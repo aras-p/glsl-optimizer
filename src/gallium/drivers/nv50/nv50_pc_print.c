@@ -291,6 +291,9 @@ nv_print_instruction(struct nv_instruction *i)
    if (i->def[0])
       nv_print_value(i->def[0], NULL, NV_TYPE_ANY);
    else
+   if (i->target)
+      PRINT(" %s(BB:%i)", orng, i->target->id);
+   else
       PRINT(" #");
 
    for (j = 0; j < 4; ++j) {
@@ -304,7 +307,5 @@ nv_print_instruction(struct nv_instruction *i)
                    (j == nv50_indirect_opnd(i)) ?
                    i->src[4]->value : NULL);
    }
-   if (!i->is_long)
-      PRINT(" %ss", norm);
-   PRINT("\n");
+   PRINT(" %s%c\n", norm, i->is_long ? 'l' : 's');
 }

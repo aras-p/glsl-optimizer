@@ -254,7 +254,7 @@ nv50_emit_program(struct nv_pc *pc)
    assert(pc->emit == &code[pc->bin_size / 4]);
 
    /* XXX: we can do better than this ... */
-   if ((pc->emit[-1] & 3) == 3) {
+   if ((pc->emit[-2] & 2) || (pc->emit[-1] & 3) == 3) {
       pc->emit[0] = 0xf0000001;
       pc->emit[1] = 0xe0000000;
       pc->bin_size += 8;
@@ -347,16 +347,16 @@ nvbb_insert_phi(struct nv_basic_block *b, struct nv_instruction *i)
          b->entry->prev = i;
       } else {
          b->entry = i;
-	 b->exit = i;
+         b->exit = i;
       }
    } else {
       assert(b->entry);
       if (b->entry->opcode == NV_OP_PHI) { /* insert after entry */
-	 assert(b->entry == b->exit);
+         assert(b->entry == b->exit);
          b->entry->next = i;
          i->prev = b->entry;
          b->entry = i;
-	 b->exit = i;
+         b->exit = i;
       } else { /* insert before entry */
          assert(b->entry->prev && b->exit);
          i->next = b->entry;
@@ -396,12 +396,9 @@ nv_nvi_delete(struct nv_instruction *nvi)
 
    debug_printf("REM: "); nv_print_instruction(nvi);
 
-   for (j = 0; j < 4; ++j) {
-      if (!nvi->src[j])
-         break;
-      --(nvi->src[j]->value->refc);
-      nvi->src[j] = NULL;
-   }	       
+   for (j = 0; j < 5; ++j)
+      nv_reference(NULL, &nvi->src[j], NULL);
+   nv_reference(NULL, &nvi->flags_src, NULL);
 
    if (nvi->next)
       nvi->next->prev = nvi->prev;
@@ -414,19 +411,16 @@ nv_nvi_delete(struct nv_instruction *nvi)
       nvi->prev->next = nvi->next;
 
    if (nvi == b->entry) {
-      assert(nvi->opcode != NV_OP_PHI || !nvi->next);
-
-      if (!nvi->next || (nvi->opcode == NV_OP_PHI))
-         b->entry = nvi->prev;
-      else
-         b->entry = nvi->next;
+      /* PHIs don't get hooked to b->entry */
+      b->entry = nvi->next;
+      assert(!nvi->prev || nvi->prev->opcode == NV_OP_PHI);
    }
 
    if (nvi == b->phi) {
-      assert(!nvi->prev);
       if (nvi->opcode != NV_OP_PHI)
-         debug_printf("WARN: b->phi points to non-PHI instruction\n");
+         debug_printf("NOTE: b->phi points to non-PHI instruction\n");
 
+      assert(!nvi->prev);
       if (!nvi->next || nvi->next->opcode != NV_OP_PHI)
          b->phi = NULL;
       else

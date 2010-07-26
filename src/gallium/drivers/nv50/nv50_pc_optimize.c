@@ -122,15 +122,29 @@ nvi_isnop(struct nv_instruction *nvi)
 static void
 nv_pc_pass_pre_emission(struct nv_pc *pc, struct nv_basic_block *b)
 {
+   struct nv_basic_block *in;
    struct nv_instruction *nvi, *next;
    int j;
    uint size, n32 = 0;
 
    b->priv = 0;
 
-   if (pc->num_blocks)
-      b->bin_pos = pc->bb_list[pc->num_blocks - 1]->bin_pos +
-                   pc->bb_list[pc->num_blocks - 1]->bin_size;
+   for (j = pc->num_blocks - 1; j >= 0 && !pc->bb_list[j]->bin_size; --j);
+   if (j >= 0) {
+      in = pc->bb_list[j];
+
+      /* check for no-op branches (BRA $PC+8) */
+      if (in->exit && in->exit->opcode == NV_OP_BRA && in->exit->target == b) {
+         in->bin_size -= 8;
+         pc->bin_size -= 8;
+
+         for (++j; j < pc->num_blocks; ++j)
+            pc->bb_list[j]->bin_pos -= 8;
+
+         nv_nvi_delete(in->exit);
+      }
+      b->bin_pos = in->bin_pos + in->bin_size;
+   }
 
    pc->bb_list[pc->num_blocks++] = b;
 
@@ -183,7 +197,7 @@ nv_pc_pass_pre_emission(struct nv_pc *pc, struct nv_basic_block *b)
          b->exit->prev->is_long = 1;
       }
    }
-   assert(!b->exit || b->exit->is_long);
+   assert(!b->entry || (b->exit && b->exit->is_long));
 
    pc->bin_size += b->bin_size *= 4;
 
@@ -194,15 +208,6 @@ nv_pc_pass_pre_emission(struct nv_pc *pc, struct nv_basic_block *b)
    if (!b->out[1] && ++(b->out[0]->priv) != b->out[0]->num_in)
       return;
 
-#if 0
-   /* delete ELSE branch */
-   if (b->entry &&
-       b->entry->opcode == NV_OP_BRA && b->entry->target == b->out[0]) {
-      nv_nvi_delete(b->entry);
-      b->bin_size -= 2;
-      pc->bin_size -= 8;
-   }
-#endif
    for (j = 0; j < 2; ++j)
       if (b->out[j] && b->out[j] != b)
          nv_pc_pass_pre_emission(pc, b->out[j]);

@@ -402,7 +402,6 @@ nv_reference(struct nv_pc *pc, struct nv_ref **d, struct nv_value *s)
          ++(s->refc);
       }
    } else {
-      assert(*d);
       *d = NULL;
    }
 }
