@@ -96,13 +96,6 @@ static
 XEXT_GENERATE_ERROR_STRING(__glXErrorString, __glXExtensionName,
                            __GLX_NUMBER_ERRORS, error_list)
 
-static int
-__glXCloseDisplay(Display * dpy, XExtCodes * codes);
-static Bool
-__glXWireToEvent(Display *dpy, XEvent *event, xEvent *wire);
-static Status
-__glXEventToWire(Display *dpy, XEvent *event, xEvent *wire);
-
 /*
  * GLX events are a bit funky.  We don't stuff the X event code into
  * our user exposed (via XNextEvent) structure.  Instead we use the GLX
