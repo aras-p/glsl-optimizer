@@ -181,9 +181,11 @@ nv_print_address(const char c, int buf, struct nv_value *a, int offset)
 static INLINE void
 nv_print_cond(struct nv_instruction *nvi)
 {
-   PRINT("%s%s %s$c%i ",
+   char pfx = nv_value_allocated(nvi->flags_src->value->join) ? '$' : '%';
+
+   PRINT("%s%s %s%cc%i ",
          gree, nv_cond_name(nvi->cc),
-         mgta, nv_value_id(nvi->flags_src->value));
+         mgta, pfx, nv_value_id(nvi->flags_src->value));
 }
 
 static INLINE void
@@ -197,8 +199,8 @@ nv_print_value(struct nv_value *value, struct nv_value *ind, ubyte type)
    if (value->reg.file != NV_FILE_FLAGS)
       PRINT(" %s%s", gree, nv_type_name(type));
 
-   if (!nv_value_allocated(value))
-      reg_pfx = nv_value_allocated(value->join) ? '&' : '%';
+   if (!nv_value_allocated(value->join))
+      reg_pfx = '%';
 
    switch (value->reg.file) {
    case NV_FILE_GPR:
@@ -301,7 +303,7 @@ nv_print_instruction(struct nv_instruction *i)
          continue;
 
       if (i->src[j]->mod)
-         PRINT(" %s", nv_modifier_string(i->src[j]->mod));
+         PRINT(" %s%s", gree, nv_modifier_string(i->src[j]->mod));
 
       nv_print_ref(i->src[j],
                    (j == nv50_indirect_opnd(i)) ?

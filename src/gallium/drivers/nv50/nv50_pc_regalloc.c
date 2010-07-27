@@ -56,6 +56,25 @@ struct nv_pc_pass {
    uint pass_seq;
 };
 
+/* check if bf (future) can be reached from bp (past) */
+static boolean
+bb_reachable_by(struct nv_basic_block *bf, struct nv_basic_block *bp,
+                struct nv_basic_block *bt)
+{
+   if (bf == bp)
+      return TRUE;
+   if (bp == bt)
+      return FALSE;
+
+   if (bp->out[0] && bp->out[0] != bp &&
+       bb_reachable_by(bf, bp->out[0], bt))
+      return TRUE;
+   if (bp->out[1] && bp->out[1] != bp &&
+       bb_reachable_by(bf, bp->out[1], bt))
+      return TRUE;
+   return FALSE;
+}
+
 static void
 ranges_coalesce(struct nv_range *range)
 {
@@ -422,7 +441,7 @@ pass_generate_phi_movs(struct nv_pc_pass *ctx, struct nv_basic_block *b)
             if (!i->src[j])
                j = 3;
             else
-            if (i->src[j]->value->insn->bb == p)
+            if (bb_reachable_by(pn, i->src[j]->value->insn->bb, b))
                break;
          }
          if (j >= 4)
@@ -578,25 +597,6 @@ live_set_test(struct nv_basic_block *b, struct nv_ref *ref)
 {
    int n = ref->value->n;
    return b->live_set[n / 32] & (1 << (n % 32));
-}
-
-/* check if bf (future) can be reached from bp (past) */
-static boolean
-bb_reachable_by(struct nv_basic_block *bf, struct nv_basic_block *bp,
-		struct nv_basic_block *bt)
-{
-   if (bf == bp)
-      return TRUE;
-   if (bp == bt)
-      return FALSE;
-
-   if (bp->out[0] && bp->out[0] != bp &&
-       bb_reachable_by(bf, bp->out[0], bt))
-      return TRUE;
-   if (bp->out[1] && bp->out[1] != bp &&
-       bb_reachable_by(bf, bp->out[1], bt))
-      return TRUE;
-   return FALSE;
 }
 
 /* The live set of a block contains those values that are live immediately
@@ -918,12 +918,6 @@ pass_linear_scan(struct nv_pc_pass *ctx, int iter)
    return 0;
 }
 
-static int
-pass_eliminate_moves(struct nv_pc_pass *ctx)
-{
-   return 0;
-}
-
 int
 nv_pc_exec_pass1(struct nv_pc *pc)
 {
@@ -971,6 +965,11 @@ nv_pc_exec_pass1(struct nv_pc *pc)
       goto out;
    }
 
+#ifdef NV50_RA_DEBUG_LIVEI
+   for (i = 0; i < pc->num_values; ++i)
+      livei_print(&pc->values[i]);
+#endif
+
    for (i = 0; i < 2; ++i) {
       ret = pass_join_values(ctx, i);
       if (ret)
@@ -980,8 +979,6 @@ nv_pc_exec_pass1(struct nv_pc *pc)
          goto out;
    }
    assert(!ret && "joining");
-
-   ret = pass_eliminate_moves(ctx);
 
    for (i = 0; i < pc->num_values; ++i)
       livei_release(&pc->values[i]);
