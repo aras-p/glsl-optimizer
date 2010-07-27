@@ -911,7 +911,7 @@ steal_memory(ir_instruction *ir, void *new_ctx)
    ir_variable *var = ir->as_variable();
    ir_constant *constant = ir->as_constant();
    if (var != NULL && var->constant_value != NULL)
-      talloc_steal(ir, var->constant_value);
+      steal_memory(var->constant_value, ir);
 
    /* The components of aggregate constants are not visited by the normal
     * visitor, so steal their values by hand.
