@@ -154,7 +154,7 @@ struct cell_context
    struct vertex_info vertex_info;
 
    /** Mapped constant buffers */
-   void *mapped_constants[PIPE_SHADER_TYPES];
+   const void *mapped_constants[PIPE_SHADER_TYPES];
 
    PIPE_ALIGN_VAR(16) struct cell_spu_function_info spu_functions;
 
