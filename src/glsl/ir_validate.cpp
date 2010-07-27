@@ -104,6 +104,8 @@ ir_validate::visit(ir_if *ir)
       printf("\n");
       abort();
    }
+
+   return visit_continue;
 }
 
 
