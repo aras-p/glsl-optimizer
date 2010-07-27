@@ -58,7 +58,14 @@ public:
    virtual ir_visitor_status visit_leave(ir_texture *);
 
    ir_rvalue *handle_expression(ir_rvalue *in_ir);
-
+   bool reassociate_constant(ir_expression *ir1,
+			     int const_index,
+			     ir_constant *constant,
+			     ir_expression *ir2);
+   void reassociate_operands(ir_expression *ir1,
+			     int op1,
+			     ir_expression *ir2,
+			     int op2);
    bool progress;
 };
 
@@ -138,6 +145,84 @@ is_vec_one(ir_constant *ir)
    return true;
 }
 
+static void
+update_type(ir_expression *ir)
+{
+   if (ir->operands[0]->type->is_vector())
+      ir->type = ir->operands[0]->type;
+   else
+      ir->type = ir->operands[1]->type;
+}
+
+void
+ir_algebraic_visitor::reassociate_operands(ir_expression *ir1,
+					   int op1,
+					   ir_expression *ir2,
+					   int op2)
+{
+   ir_rvalue *temp = ir2->operands[op2];
+   ir2->operands[op2] = ir1->operands[op1];
+   ir1->operands[op1] = temp;
+
+   /* Update the type of ir2.  The type of ir1 won't have changed --
+    * base types matched, and at least one of the operands of the 2
+    * binops is still a vector if any of them were.
+    */
+   update_type(ir2);
+
+   this->progress = true;
+}
+
+/**
+ * Reassociates a constant down a tree of adds or multiplies.
+ *
+ * Consider (2 * (a * (b * 0.5))).  We want to send up with a * b.
+ */
+bool
+ir_algebraic_visitor::reassociate_constant(ir_expression *ir1, int const_index,
+					   ir_constant *constant,
+					   ir_expression *ir2)
+{
+   if (!ir2 || ir1->operation != ir2->operation)
+      return false;
+
+   /* Don't want to even think about matrices. */
+   if (ir1->operands[0]->type->is_matrix() ||
+       ir1->operands[0]->type->is_matrix() ||
+       ir2->operands[1]->type->is_matrix() ||
+       ir2->operands[1]->type->is_matrix())
+      return false;
+
+   ir_constant *ir2_const[2];
+   ir2_const[0] = ir2->operands[0]->constant_expression_value();
+   ir2_const[1] = ir2->operands[1]->constant_expression_value();
+
+   if (ir2_const[0] && ir2_const[1])
+      return false;
+
+   if (ir2_const[0]) {
+      reassociate_operands(ir1, const_index, ir2, 1);
+      return true;
+   } else if (ir2_const[1]) {
+      reassociate_operands(ir1, const_index, ir2, 0);
+      return true;
+   }
+
+   if (reassociate_constant(ir1, const_index, constant,
+			    ir2->operands[0]->as_expression())) {
+      update_type(ir2);
+      return true;
+   }
+
+   if (reassociate_constant(ir1, const_index, constant,
+			    ir2->operands[1]->as_expression())) {
+      update_type(ir2);
+      return true;
+   }
+
+   return false;
+}
+
 ir_rvalue *
 ir_algebraic_visitor::handle_expression(ir_rvalue *in_ir)
 {
@@ -201,6 +286,16 @@ ir_algebraic_visitor::handle_expression(ir_rvalue *in_ir)
 	 this->progress = true;
 	 return ir->operands[0];
       }
+
+      /* Reassociate addition of constants so that we can do constant
+       * folding.
+       */
+      if (op_const[0] && !op_const[1])
+	 reassociate_constant(ir, 0, op_const[0],
+			      ir->operands[1]->as_expression());
+      if (op_const[1] && !op_const[0])
+	 reassociate_constant(ir, 1, op_const[1],
+			      ir->operands[0]->as_expression());
       break;
 
    case ir_binop_sub:
@@ -231,6 +326,17 @@ ir_algebraic_visitor::handle_expression(ir_rvalue *in_ir)
 	 this->progress = true;
 	 return ir_constant::zero(ir, ir->type);
       }
+
+      /* Reassociate multiplication of constants so that we can do
+       * constant folding.
+       */
+      if (op_const[0] && !op_const[1])
+	 reassociate_constant(ir, 0, op_const[0],
+			      ir->operands[1]->as_expression());
+      if (op_const[1] && !op_const[0])
+	 reassociate_constant(ir, 1, op_const[1],
+			      ir->operands[0]->as_expression());
+
       break;
 
    case ir_binop_div:
