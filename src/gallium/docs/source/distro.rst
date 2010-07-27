@@ -51,10 +51,10 @@ nVidia nv50
 
 Driver for the nVidia nv50 family of GPUs.
 
-VMWare SVGA
+VMware SVGA
 ^^^^^^^^^^^
 
-Driver for VMWare virtualized guest operating system graphics processing.
+Driver for VMware virtualized guest operating system graphics processing.
 
 ATI r300
 ^^^^^^^^
