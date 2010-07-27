@@ -1061,6 +1061,7 @@ ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
    ir_to_mesa_src_reg src_reg;
    variable_storage *entry = find_variable_storage(ir->var);
    unsigned int loc;
+   int len;
 
    if (!entry) {
       switch (ir->var->mode) {
@@ -1089,9 +1090,17 @@ ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
 
 	 assert(ir->var->type->gl_type != 0 &&
 		ir->var->type->gl_type != GL_INVALID_ENUM);
+
+	 if (ir->var->type->is_vector() ||
+	     ir->var->type->is_scalar()) {
+	    len = ir->var->type->vector_elements;
+	 } else {
+	    len = type_size(ir->var->type) * 4;
+	 }
+
 	 loc = _mesa_add_uniform(this->prog->Parameters,
 				 ir->var->name,
-				 type_size(ir->var->type) * 4,
+				 len,
 				 ir->var->type->gl_type,
 				 NULL);
 
