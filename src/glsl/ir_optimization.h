@@ -23,11 +23,12 @@
 
 
 /**
- * \file ir_dead_code.h
+ * \file ir_optimization.h
  *
  * Prototypes for optimization passes to be called by the compiler and drivers.
  */
 
+bool do_algebraic(exec_list *instructions);
 bool do_constant_folding(exec_list *instructions);
 bool do_constant_variable(exec_list *instructions);
 bool do_constant_variable_unlinked(exec_list *instructions);

@@ -30,6 +30,7 @@ CXX_SOURCES = \
 	glsl_parser_extras.cpp \
 	glsl_types.cpp \
 	hir_field_selection.cpp \
+	ir_algebraic.cpp \
 	ir_basic_block.cpp \
 	ir_clone.cpp \
 	ir_constant_expression.cpp \
