@@ -363,9 +363,52 @@ lp_build_cmp(struct lp_build_context *bld,
 
 
 /**
+ * Return (mask & a) | (~mask & b);
+ */
+LLVMValueRef
+lp_build_select_bitwise(struct lp_build_context *bld,
+                        LLVMValueRef mask,
+                        LLVMValueRef a,
+                        LLVMValueRef b)
+{
+   struct lp_type type = bld->type;
+   LLVMValueRef res;
+
+   if (a == b) {
+      return a;
+   }
+
+   if(type.floating) {
+      LLVMTypeRef int_vec_type = lp_build_int_vec_type(type);
+      a = LLVMBuildBitCast(bld->builder, a, int_vec_type, "");
+      b = LLVMBuildBitCast(bld->builder, b, int_vec_type, "");
+   }
+
+   a = LLVMBuildAnd(bld->builder, a, mask, "");
+
+   /* This often gets translated to PANDN, but sometimes the NOT is
+    * pre-computed and stored in another constant. The best strategy depends
+    * on available registers, so it is not a big deal -- hopefully LLVM does
+    * the right decision attending the rest of the program.
+    */
+   b = LLVMBuildAnd(bld->builder, b, LLVMBuildNot(bld->builder, mask, ""), "");
+
+   res = LLVMBuildOr(bld->builder, a, b, "");
+
+   if(type.floating) {
+      LLVMTypeRef vec_type = lp_build_vec_type(type);
+      res = LLVMBuildBitCast(bld->builder, res, vec_type, "");
+   }
+
+   return res;
+}
+
+
+/**
  * Return mask ? a : b;
  *
- * mask is a bitwise mask, composed of 0 or ~0 for each element.
+ * mask is a bitwise mask, composed of 0 or ~0 for each element. Any other value
+ * will yield unpredictable results.
  */
 LLVMValueRef
 lp_build_select(struct lp_build_context *bld,
@@ -424,27 +467,7 @@ lp_build_select(struct lp_build_context *bld,
       }
    }
    else {
-      if(type.floating) {
-         LLVMTypeRef int_vec_type = lp_build_int_vec_type(type);
-         a = LLVMBuildBitCast(bld->builder, a, int_vec_type, "");
-         b = LLVMBuildBitCast(bld->builder, b, int_vec_type, "");
-      }
-
-      a = LLVMBuildAnd(bld->builder, a, mask, "");
-
-      /* This often gets translated to PANDN, but sometimes the NOT is
-       * pre-computed and stored in another constant. The best strategy depends
-       * on available registers, so it is not a big deal -- hopefully LLVM does
-       * the right decision attending the rest of the program.
-       */
-      b = LLVMBuildAnd(bld->builder, b, LLVMBuildNot(bld->builder, mask, ""), "");
-
-      res = LLVMBuildOr(bld->builder, a, b, "");
-
-      if(type.floating) {
-         LLVMTypeRef vec_type = lp_build_vec_type(type);
-         res = LLVMBuildBitCast(bld->builder, res, vec_type, "");
-      }
+      res = lp_build_select_bitwise(bld, mask, a, b);
    }
 
    return res;

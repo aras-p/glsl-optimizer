@@ -63,6 +63,11 @@ lp_build_cmp(struct lp_build_context *bld,
              LLVMValueRef a,
              LLVMValueRef b);
 
+LLVMValueRef
+lp_build_select_bitwise(struct lp_build_context *bld,
+                        LLVMValueRef mask,
+                        LLVMValueRef a,
+                        LLVMValueRef b);
 
 LLVMValueRef
 lp_build_select(struct lp_build_context *bld,
