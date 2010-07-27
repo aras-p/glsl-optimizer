@@ -34,6 +34,30 @@
 #include <stdio.h>
 #include <errno.h>
 
+
+struct r600_shader_tgsi_instruction;
+
+struct r600_shader_ctx {
+	struct tgsi_shader_info			info;
+	struct tgsi_parse_context		parse;
+	const struct tgsi_token			*tokens;
+	unsigned				type;
+	unsigned				file_offset[TGSI_FILE_COUNT];
+	unsigned				temp_reg;
+	struct r600_shader_tgsi_instruction	*inst_info;
+	struct r600_bc				*bc;
+	struct r600_shader			*shader;
+	u32					value[4];
+};
+
+struct r600_shader_tgsi_instruction {
+	unsigned	tgsi_opcode;
+	unsigned	is_op3;
+	unsigned	r600_opcode;
+	int (*process)(struct r600_shader_ctx *ctx);
+};
+
+static struct r600_shader_tgsi_instruction r600_shader_tgsi_instruction[];
 static int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *shader);
 
 static int r600_shader_update(struct pipe_context *ctx, struct r600_shader *shader)
@@ -216,29 +240,6 @@ int r600_pipe_shader_update(struct pipe_context *ctx, struct r600_pipe_shader *r
 	return r600_pipe_shader(ctx, rpshader);
 }
 
-struct r600_shader_tgsi_instruction;
-
-struct r600_shader_ctx {
-	struct tgsi_shader_info			info;
-	struct tgsi_parse_context		parse;
-	const struct tgsi_token			*tokens;
-	unsigned				type;
-	unsigned				file_offset[TGSI_FILE_COUNT];
-	unsigned				temp_reg;
-	struct r600_shader_tgsi_instruction	*inst_info;
-	struct r600_bc				*bc;
-	struct r600_shader			*shader;
-};
-
-struct r600_shader_tgsi_instruction {
-	unsigned	tgsi_opcode;
-	unsigned	is_op3;
-	unsigned	r600_opcode;
-	int (*process)(struct r600_shader_ctx *ctx);
-};
-
-static struct r600_shader_tgsi_instruction r600_shader_tgsi_instruction[];
-
 static int tgsi_is_supported(struct r600_shader_ctx *ctx)
 {
 	struct tgsi_full_instruction *i = &ctx->parse.FullToken.FullInstruction;
@@ -334,7 +335,6 @@ int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *s
 	struct r600_bc_output output;
 	unsigned opcode;
 	int i, r = 0, pos0;
-	u32 value[4];
 
 	ctx.bc = &shader->bc;
 	ctx.shader = shader;
@@ -380,10 +380,10 @@ int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *s
 		switch (ctx.parse.FullToken.Token.Type) {
 		case TGSI_TOKEN_TYPE_IMMEDIATE:
 			immediate = &ctx.parse.FullToken.FullImmediate;
-			value[0] = immediate->u[0].Uint;
-			value[1] = immediate->u[1].Uint;
-			value[2] = immediate->u[2].Uint;
-			value[3] = immediate->u[3].Uint;
+			ctx.value[0] = immediate->u[0].Uint;
+			ctx.value[1] = immediate->u[1].Uint;
+			ctx.value[2] = immediate->u[2].Uint;
+			ctx.value[3] = immediate->u[3].Uint;
 			break;
 		case TGSI_TOKEN_TYPE_DECLARATION:
 			r = tgsi_declaration(&ctx);
@@ -399,7 +399,7 @@ int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *s
 			r = ctx.inst_info->process(&ctx);
 			if (r)
 				goto out_err;
-			r = r600_bc_add_literal(ctx.bc, value);
+			r = r600_bc_add_literal(ctx.bc, ctx.value);
 			if (r)
 				goto out_err;
 			break;
@@ -557,6 +557,9 @@ static int tgsi_slt(struct r600_shader_ctx *ctx)
 	struct r600_bc_alu alu;
 	int i, r;
 
+	r = r600_bc_add_literal(ctx->bc, ctx->value);
+	if (r)
+		return r;
 	for (i = 0; i < 4; i++) {
 		memset(&alu, 0, sizeof(struct r600_bc_alu));
 		if (!(inst->Dst[0].Register.WriteMask & (1 << i))) {
