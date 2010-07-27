@@ -651,6 +651,9 @@ static int tgsi_lit(struct r600_shader_ctx *ctx)
 
 	if (inst->Dst[0].Register.WriteMask & (1 << 2))
 	{
+		int chan;
+		int sel;
+
 		/* dst.z = log(src.y) */
 		memset(&alu, 0, sizeof(struct r600_bc_alu));
 		alu.inst = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LOG_CLAMPED;
@@ -665,8 +668,8 @@ static int tgsi_lit(struct r600_shader_ctx *ctx)
 		if (r)
 			return r;
 
-		int chan = alu.dst.chan;
-		int sel = alu.dst.sel;
+		chan = alu.dst.chan;
+		sel = alu.dst.sel;
 
 		/* tmp.x = amd MUL_LIT(src.w, dst.z, src.x ) */
 		memset(&alu, 0, sizeof(struct r600_bc_alu));
