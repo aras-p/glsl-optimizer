@@ -1389,6 +1389,7 @@ ir_to_mesa_visitor::visit(ir_constant *ir)
 
    if (ir->type->base_type == GLSL_TYPE_STRUCT) {
       ir_to_mesa_src_reg temp_base = get_temp(ir->type);
+      temp_base.swizzle = SWIZZLE_NOOP;
       ir_to_mesa_dst_reg temp = ir_to_mesa_dst_reg_from_src(temp_base);
 
       foreach_iter(exec_list_iterator, iter, ir->components) {
