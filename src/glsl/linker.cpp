@@ -1262,9 +1262,7 @@ link_shaders(struct gl_shader_program *prog)
 	 progress = do_if_simplification(ir) || progress;
 	 progress = do_copy_propagation(ir) || progress;
 	 progress = do_dead_code_local(ir) || progress;
-#if 0
-	 progress = do_dead_code_unlinked(state, ir) || progress;
-#endif
+	 progress = do_dead_code_unlinked(ir) || progress;
 	 progress = do_constant_variable_unlinked(ir) || progress;
 	 progress = do_constant_folding(ir) || progress;
 	 progress = do_if_return(ir) || progress;
