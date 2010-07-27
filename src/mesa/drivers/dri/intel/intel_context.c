@@ -39,8 +39,6 @@
 #include "drivers/common/driverfuncs.h"
 #include "drivers/common/meta.h"
 
-#include "i830_dri.h"
-
 #include "intel_chipset.h"
 #include "intel_buffers.h"
 #include "intel_tex.h"
