@@ -75,7 +75,10 @@
 
 struct util_cpu_caps util_cpu_caps;
 
+#if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
 static int has_cpuid(void);
+#endif
+
 
 #if defined(PIPE_ARCH_X86)
 
