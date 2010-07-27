@@ -1501,7 +1501,7 @@ ir_to_mesa_visitor::get_function_signature(ir_function_signature *sig)
       break;
    }
 
-   if (sig->return_type) {
+   if (!sig->return_type->is_void()) {
       entry->return_reg = get_temp(sig->return_type);
    } else {
       entry->return_reg = ir_to_mesa_undef;
