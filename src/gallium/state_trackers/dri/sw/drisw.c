@@ -46,6 +46,8 @@
 #include "dri1_helper.h"
 #include "drisw.h"
 
+DEBUG_GET_ONCE_BOOL_OPTION(swrast_no_present, "SWRAST_NO_PRESENT", FALSE);
+static boolean swrast_no_present = FALSE;
 
 static INLINE void
 get_drawable_info(__DRIdrawable *dPriv, int *w, int *h)
@@ -94,6 +96,9 @@ drisw_present_texture(__DRIdrawable *dPriv,
    struct dri_drawable *drawable = dri_drawable(dPriv);
    struct dri_screen *screen = dri_screen(drawable->sPriv);
    struct pipe_surface *psurf;
+
+   if (swrast_no_present)
+      return;
 
    psurf = dri1_get_pipe_surface(drawable, ptex);
    if (!psurf)
@@ -215,7 +220,8 @@ drisw_allocate_textures(struct dri_drawable *drawable,
 
       dri_drawable_get_format(drawable, statts[i], &format, &bind);
 
-      if (statts[i] != ST_ATTACHMENT_DEPTH_STENCIL)
+      /* if we don't do any present, no need for display targets */
+      if (statts[i] != ST_ATTACHMENT_DEPTH_STENCIL && !swrast_no_present)
          bind |= PIPE_BIND_DISPLAY_TARGET;
 
       if (format == PIPE_FORMAT_NONE)
@@ -260,6 +266,8 @@ drisw_init_screen(__DRIscreen * sPriv)
    screen->allocate_textures = drisw_allocate_textures;
    screen->update_drawable_info = drisw_update_drawable_info;
    screen->flush_frontbuffer = drisw_flush_frontbuffer;
+
+   swrast_no_present = debug_get_option_swrast_no_present();
 
    sPriv->private = (void *)screen;
    sPriv->extensions = drisw_screen_extensions;
