@@ -20,6 +20,8 @@
  * SOFTWARE.
  */
 
+/* XXX: need to clean this up so we get the typecasting right more naturally */
+
 #include <unistd.h>
 
 #include "nv50_context.h"
@@ -1172,6 +1174,10 @@ bld_instruction(struct bld_context *bld,
          dst0[c] = bld_insn_2(bld, NV_OP_SET, src0, src1);
          dst0[c]->insn->set_cond = translate_setcc(insn->Instruction.Opcode);
          dst0[c]->reg.type = infer_dst_type(insn->Instruction.Opcode);
+
+         dst0[c]->insn->src[0]->typecast =
+         dst0[c]->insn->src[1]->typecast =
+            infer_src_type(insn->Instruction.Opcode);
 
          if (dst0[c]->reg.type != NV_TYPE_F32)
             break;
