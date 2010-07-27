@@ -65,6 +65,8 @@ public:
    virtual ir_visitor_status visit_leave(ir_function *ir);
    virtual ir_visitor_status visit_enter(ir_function_signature *ir);
 
+   virtual ir_visitor_status visit_leave(ir_expression *ir);
+
    static void validate_ir(ir_instruction *ir, void *data);
 
    ir_function *current_function;
@@ -157,6 +159,148 @@ ir_validate::visit_enter(ir_function_signature *ir)
    }
 
    this->validate_ir(ir, this->data);
+
+   return visit_continue;
+}
+
+ir_visitor_status
+ir_validate::visit_leave(ir_expression *ir)
+{
+   switch (ir->operation) {
+   case ir_unop_bit_not:
+      assert(ir->operands[0]->type == ir->type);
+      break;
+   case ir_unop_logic_not:
+      assert(ir->type == glsl_type::bool_type);
+      assert(ir->operands[0]->type == glsl_type::bool_type);
+      break;
+
+   case ir_unop_neg:
+   case ir_unop_abs:
+   case ir_unop_sign:
+   case ir_unop_rcp:
+   case ir_unop_rsq:
+   case ir_unop_sqrt:
+   case ir_unop_exp:
+   case ir_unop_log:
+   case ir_unop_exp2:
+   case ir_unop_log2:
+      assert(ir->type == ir->operands[0]->type);
+      break;
+
+   case ir_unop_f2i:
+      assert(ir->operands[0]->type->base_type == GLSL_TYPE_FLOAT);
+      assert(ir->type->base_type == GLSL_TYPE_INT);
+      break;
+   case ir_unop_i2f:
+      assert(ir->operands[0]->type->base_type == GLSL_TYPE_INT);
+      assert(ir->type->base_type == GLSL_TYPE_FLOAT);
+      break;
+   case ir_unop_f2b:
+      assert(ir->operands[0]->type->base_type == GLSL_TYPE_FLOAT);
+      assert(ir->type->base_type == GLSL_TYPE_BOOL);
+      break;
+   case ir_unop_b2f:
+      assert(ir->operands[0]->type->base_type == GLSL_TYPE_BOOL);
+      assert(ir->type->base_type == GLSL_TYPE_FLOAT);
+      break;
+   case ir_unop_i2b:
+      assert(ir->operands[0]->type->base_type == GLSL_TYPE_INT);
+      assert(ir->type->base_type == GLSL_TYPE_BOOL);
+      break;
+   case ir_unop_b2i:
+      assert(ir->operands[0]->type->base_type == GLSL_TYPE_BOOL);
+      assert(ir->type->base_type == GLSL_TYPE_INT);
+      break;
+   case ir_unop_u2f:
+      assert(ir->operands[0]->type->base_type == GLSL_TYPE_UINT);
+      assert(ir->type->base_type == GLSL_TYPE_FLOAT);
+      break;
+
+   case ir_unop_trunc:
+   case ir_unop_ceil:
+   case ir_unop_floor:
+   case ir_unop_fract:
+   case ir_unop_sin:
+   case ir_unop_cos:
+   case ir_unop_dFdx:
+   case ir_unop_dFdy:
+      assert(ir->operands[0]->type->base_type == GLSL_TYPE_FLOAT);
+      assert(ir->operands[0]->type == ir->type);
+      break;
+
+   case ir_binop_add:
+   case ir_binop_sub:
+   case ir_binop_mul:
+   case ir_binop_div:
+   case ir_binop_mod:
+   case ir_binop_min:
+   case ir_binop_max:
+   case ir_binop_pow:
+      if (ir->operands[0]->type->is_scalar())
+	 assert(ir->operands[1]->type == ir->type);
+      else if (ir->operands[1]->type->is_scalar())
+	 assert(ir->operands[0]->type == ir->type);
+      else if (ir->operands[0]->type->is_vector() &&
+	       ir->operands[1]->type->is_vector()) {
+	 assert(ir->operands[0]->type == ir->operands[1]->type);
+	 assert(ir->operands[0]->type == ir->type);
+      }
+      break;
+   case ir_binop_less:
+   case ir_binop_greater:
+   case ir_binop_lequal:
+   case ir_binop_gequal:
+      /* GLSL < > <= >= operators take scalar floats/ints, but in the
+       * IR we may want to do them for vectors instead to support the
+       * lessEqual() and friends builtins.
+       */
+      assert(ir->type == glsl_type::bool_type);
+      assert(ir->operands[0]->type == ir->operands[1]->type);
+      break;
+
+   case ir_binop_equal:
+   case ir_binop_nequal:
+      /* GLSL == and != operate on vectors and return a bool, and the
+       * IR matches that.  We may want to switch up the IR to work on
+       * vectors and return a bvec and make the operators break down
+       * to ANDing/ORing the results of the vector comparison.
+       */
+      assert(ir->type == glsl_type::bool_type);
+      assert(ir->operands[0]->type == ir->operands[1]->type);
+      break;
+
+   case ir_binop_lshift:
+   case ir_binop_rshift:
+   case ir_binop_bit_and:
+   case ir_binop_bit_xor:
+   case ir_binop_bit_or:
+      assert(ir->operands[0]->type == ir->operands[1]->type);
+      assert(ir->type == ir->operands[0]->type);
+      assert(ir->type->base_type == GLSL_TYPE_INT ||
+	     ir->type->base_type == GLSL_TYPE_UINT);
+      break;
+
+   case ir_binop_logic_and:
+   case ir_binop_logic_xor:
+   case ir_binop_logic_or:
+      assert(ir->type == glsl_type::bool_type);
+      assert(ir->operands[0]->type == glsl_type::bool_type);
+      assert(ir->operands[1]->type == glsl_type::bool_type);
+      break;
+
+   case ir_binop_dot:
+      assert(ir->type == glsl_type::float_type);
+      assert(ir->operands[0]->type->base_type == GLSL_TYPE_FLOAT);
+      assert(ir->operands[0]->type == ir->operands[1]->type);
+      break;
+
+   case ir_binop_cross:
+      assert(ir->operands[0]->type == glsl_type::vec3_type);
+      assert(ir->operands[1]->type == glsl_type::vec3_type);
+      assert(ir->type == glsl_type::vec3_type);
+      break;
+   }
 
    return visit_continue;
 }
