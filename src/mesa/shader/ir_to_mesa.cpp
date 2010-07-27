@@ -2146,6 +2146,8 @@ get_mesa_program(GLcontext *ctx, struct gl_shader_program *shader_program,
 	 inst->function->inst = i;
       else if (mesa_inst->Opcode == OPCODE_CAL)
 	 mesa_inst->BranchTarget = inst->function->sig_id; /* rewritten later */
+      else if (mesa_inst->Opcode == OPCODE_ARL)
+	 prog->NumAddressRegs = 1;
 
       mesa_inst++;
       i++;
