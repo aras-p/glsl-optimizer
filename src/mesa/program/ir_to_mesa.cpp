@@ -518,19 +518,21 @@ ir_to_mesa_visitor::get_temp(const glsl_type *type)
    int swizzle[4];
    int i;
 
-   assert(!type->is_array());
-
    src_reg.file = PROGRAM_TEMPORARY;
    src_reg.index = next_temp;
    src_reg.reladdr = NULL;
    next_temp += type_size(type);
 
-   for (i = 0; i < type->vector_elements; i++)
-      swizzle[i] = i;
-   for (; i < 4; i++)
-      swizzle[i] = type->vector_elements - 1;
-   src_reg.swizzle = MAKE_SWIZZLE4(swizzle[0], swizzle[1],
-				   swizzle[2], swizzle[3]);
+   if (type->is_array() || type->is_record()) {
+      src_reg.swizzle = SWIZZLE_NOOP;
+   } else {
+      for (i = 0; i < type->vector_elements; i++)
+	 swizzle[i] = i;
+      for (; i < 4; i++)
+	 swizzle[i] = type->vector_elements - 1;
+      src_reg.swizzle = MAKE_SWIZZLE4(swizzle[0], swizzle[1],
+				      swizzle[2], swizzle[3]);
+   }
    src_reg.negate = 0;
 
    return src_reg;
@@ -1329,8 +1331,6 @@ ir_to_mesa_visitor::visit(ir_assignment *ir)
    struct ir_to_mesa_src_reg r;
    int i;
 
-   assert(!ir->lhs->type->is_array());
-
    ir->rhs->accept(this);
    r = this->result;
 
@@ -1375,12 +1375,6 @@ ir_to_mesa_visitor::visit(ir_constant *ir)
    GLfloat *values = stack_vals;
    unsigned int i;
 
-   if (ir->type->is_array()) {
-      ir->print();
-      printf("\n");
-      assert(!"FINISHME: array constants");
-   }
-
    /* Unfortunately, 4 floats is all we can get into
     * _mesa_add_unnamed_constant.  So, make a temp to store an
     * aggregate constant and move each constant value into it.  If we
@@ -1389,7 +1383,6 @@ ir_to_mesa_visitor::visit(ir_constant *ir)
 
    if (ir->type->base_type == GLSL_TYPE_STRUCT) {
       ir_to_mesa_src_reg temp_base = get_temp(ir->type);
-      temp_base.swizzle = SWIZZLE_NOOP;
       ir_to_mesa_dst_reg temp = ir_to_mesa_dst_reg_from_src(temp_base);
 
       foreach_iter(exec_list_iterator, iter, ir->components) {
@@ -1402,6 +1395,27 @@ ir_to_mesa_visitor::visit(ir_constant *ir)
 	 src_reg = this->result;
 
 	 for (i = 0; i < (unsigned int)size; i++) {
+	    ir_to_mesa_emit_op1(ir, OPCODE_MOV, temp, src_reg);
+
+	    src_reg.index++;
+	    temp.index++;
+	 }
+      }
+      this->result = temp_base;
+      return;
+   }
+
+   if (ir->type->is_array()) {
+      ir_to_mesa_src_reg temp_base = get_temp(ir->type);
+      ir_to_mesa_dst_reg temp = ir_to_mesa_dst_reg_from_src(temp_base);
+      int size = type_size(ir->type->fields.array);
+
+      assert(size > 0);
+
+      for (i = 0; i < ir->type->length; i++) {
+	 ir->array_elements[i]->accept(this);
+	 src_reg = this->result;
+	 for (int j = 0; j < size; j++) {
 	    ir_to_mesa_emit_op1(ir, OPCODE_MOV, temp, src_reg);
 
 	    src_reg.index++;
