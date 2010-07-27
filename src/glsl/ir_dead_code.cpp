@@ -61,7 +61,7 @@ public:
    virtual ir_visitor_status visit(ir_variable *);
    virtual ir_visitor_status visit(ir_dereference_variable *);
 
-   virtual ir_visitor_status visit_enter(ir_function *);
+   virtual ir_visitor_status visit_enter(ir_function_signature *);
    virtual ir_visitor_status visit_leave(ir_assignment *);
 
    variable_entry *get_variable_entry(ir_variable *var);
@@ -116,9 +116,12 @@ ir_dead_code_visitor::visit(ir_dereference_variable *ir)
 
 
 ir_visitor_status
-ir_dead_code_visitor::visit_enter(ir_function *ir)
+ir_dead_code_visitor::visit_enter(ir_function_signature *ir)
 {
-   (void) ir;
+   /* We don't want to descend into the function parameters and
+    * dead-code eliminate them, so just accept the body here.
+    */
+   visit_list_elements(this, &ir->body);
    return visit_continue_with_parent;
 }
 
