@@ -8,10 +8,13 @@ env = drienv.Clone()
 
 env.ParseConfig('pkg-config --cflags --libs libdrm_radeon')
 
+env.Append(CPPDEFINES = ['GALLIUM_RBUG', 'GALLIUM_TRACE', 'GALLIUM_GALAHAD'])
+
 env.Prepend(LIBS = [
     st_dri,
     radeonwinsys,
     r300,
+    galahad,
     trace,
     rbug,
     mesa,
@@ -22,6 +25,6 @@ env.Prepend(LIBS = [
 
 env.SharedLibrary(
     target ='radeon_dri.so',
-    source = 'dummy.c',
+    source = 'target.c',
     SHLIBPREFIX = '',
 )

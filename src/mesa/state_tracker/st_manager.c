@@ -48,16 +48,8 @@
 #include "st_context.h"
 #include "st_format.h"
 #include "st_cb_fbo.h"
+#include "st_cb_flush.h"
 #include "st_manager.h"
-
-/* these functions are defined in st_context.c */
-struct st_context *
-st_create_context(struct pipe_context *pipe,
-                  const __GLcontextModes *visual,
-                  struct st_context *share);
-void st_destroy_context(struct st_context *st);
-void st_flush(struct st_context *st, uint pipeFlushFlags,
-              struct pipe_fence_handle **fence);
 
 /**
  * Cast wrapper to convert a GLframebuffer to an st_framebuffer.
@@ -603,9 +595,9 @@ st_context_destroy(struct st_context_iface *stctxi)
 }
 
 static struct st_context_iface *
-st_api_create_context(struct st_api *stapi, struct st_manager *smapi,
-                      const struct st_visual *visual,
-                      struct st_context_iface *shared_stctxi)
+create_context(gl_api api, struct st_manager *smapi,
+               const struct st_visual *visual,
+               struct st_context_iface *shared_stctxi)
 {
    struct st_context *shared_ctx = (struct st_context *) shared_stctxi;
    struct st_context *st;
@@ -617,7 +609,7 @@ st_api_create_context(struct st_api *stapi, struct st_manager *smapi,
       return NULL;
 
    st_visual_to_context_mode(visual, &mode);
-   st = st_create_context(pipe, &mode, shared_ctx);
+   st = st_create_context(api, pipe, &mode, shared_ctx);
    if (!st) {
       pipe->destroy(pipe);
       return NULL;
@@ -635,6 +627,30 @@ st_api_create_context(struct st_api *stapi, struct st_manager *smapi,
    st->iface.st_context_private = (void *) smapi;
 
    return &st->iface;
+}
+
+static struct st_context_iface *
+st_api_create_context(struct st_api *stapi, struct st_manager *smapi,
+                      const struct st_visual *visual,
+                      struct st_context_iface *shared_stctxi)
+{
+   return create_context(API_OPENGL, smapi, visual, shared_stctxi);
+}
+
+static struct st_context_iface *
+st_api_create_context_es1(struct st_api *stapi, struct st_manager *smapi,
+                          const struct st_visual *visual,
+                          struct st_context_iface *shared_stctxi)
+{
+   return create_context(API_OPENGLES, smapi, visual, shared_stctxi);
+}
+
+static struct st_context_iface *
+st_api_create_context_es2(struct st_api *stapi, struct st_manager *smapi,
+                          const struct st_visual *visual,
+                          struct st_context_iface *shared_stctxi)
+{
+   return create_context(API_OPENGLES2, smapi, visual, shared_stctxi);
 }
 
 static boolean
@@ -705,13 +721,6 @@ st_api_get_current(struct st_api *stapi)
    struct st_context *st = (ctx) ? ctx->st : NULL;
 
    return (st) ? &st->iface : NULL;
-}
-
-static boolean
-st_api_is_visual_supported(struct st_api *stapi,
-                           const struct st_visual *visual)
-{
-   return TRUE;
 }
 
 static st_proc_t
@@ -819,22 +828,60 @@ st_manager_add_color_renderbuffer(struct st_context *st, GLframebuffer *fb,
    return TRUE;
 }
 
-struct st_api st_gl_api = {
+static const struct st_api st_gl_api = {
    st_api_destroy,
    st_api_get_proc_address,
-   st_api_is_visual_supported,
    st_api_create_context,
    st_api_make_current,
    st_api_get_current,
 };
 
-/**
- * Return the st_api for this state tracker. This might either be GL, GLES1,
- * GLES2 that mostly depends on the build and link options. But these
- * functions remain the same either way.
- */
+static const struct st_api st_gl_api_es1 = {
+   st_api_destroy,
+   st_api_get_proc_address,
+   st_api_create_context_es1,
+   st_api_make_current,
+   st_api_get_current,
+};
+
+static const struct st_api st_gl_api_es2 = {
+   st_api_destroy,
+   st_api_get_proc_address,
+   st_api_create_context_es2,
+   st_api_make_current,
+   st_api_get_current,
+};
+
 struct st_api *
 st_gl_api_create(void)
 {
-   return &st_gl_api;
+   (void) st_gl_api;
+   (void) st_gl_api_es1;
+   (void) st_gl_api_es2;
+
+#if FEATURE_GL
+   return (struct st_api *) &st_gl_api;
+#else
+   return NULL;
+#endif
+}
+
+struct st_api *
+st_gl_api_create_es1(void)
+{
+#if FEATURE_ES1
+   return (struct st_api *) &st_gl_api_es1;
+#else
+   return NULL;
+#endif
+}
+
+struct st_api *
+st_gl_api_create_es2(void)
+{
+#if FEATURE_ES2
+   return (struct st_api *) &st_gl_api_es2;
+#else
+   return NULL;
+#endif
 }

@@ -26,6 +26,7 @@
  *
  **************************************************************************/
 
+#include "main/arbprogram.h"
 #include "main/arrayobj.h"
 #include "main/bufferobj.h"
 #include "main/enable.h"
@@ -33,8 +34,7 @@
 #include "main/texstate.h"
 #include "main/varray.h"
 #include "main/viewport.h"
-#include "shader/arbprogram.h"
-#include "shader/program.h"
+#include "program/program.h"
 #include "dri_metaops.h"
 
 void

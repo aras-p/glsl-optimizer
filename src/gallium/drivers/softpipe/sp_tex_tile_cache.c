@@ -63,19 +63,21 @@ sp_create_tex_tile_cache( struct pipe_context *pipe )
 void
 sp_destroy_tex_tile_cache(struct softpipe_tex_tile_cache *tc)
 {
-   uint pos;
+   if (tc) {
+      uint pos;
 
-   for (pos = 0; pos < NUM_ENTRIES; pos++) {
-      /*assert(tc->entries[pos].x < 0);*/
-   }
-   if (tc->transfer) {
-      tc->pipe->transfer_destroy(tc->pipe, tc->transfer);
-   }
-   if (tc->tex_trans) {
-      tc->pipe->transfer_destroy(tc->pipe, tc->tex_trans);
-   }
+      for (pos = 0; pos < NUM_ENTRIES; pos++) {
+         /*assert(tc->entries[pos].x < 0);*/
+      }
+      if (tc->transfer) {
+         tc->pipe->transfer_destroy(tc->pipe, tc->transfer);
+      }
+      if (tc->tex_trans) {
+         tc->pipe->transfer_destroy(tc->pipe, tc->tex_trans);
+      }
 
-   FREE( tc );
+      FREE( tc );
+   }
 }
 
 

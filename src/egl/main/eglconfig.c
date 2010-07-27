@@ -50,26 +50,17 @@ _eglInitConfig(_EGLConfig *config, _EGLDisplay *dpy, EGLint id)
 EGLConfig
 _eglAddConfig(_EGLDisplay *dpy, _EGLConfig *conf)
 {
-   _EGLConfig **configs;
-
    /* sanity check */
    assert(GET_CONFIG_ATTRIB(conf, EGL_CONFIG_ID) > 0);
 
-   configs = dpy->Configs;
-   if (dpy->NumConfigs >= dpy->MaxConfigs) {
-      EGLint new_size = dpy->MaxConfigs + 16;
-      assert(dpy->NumConfigs < new_size);
-
-      configs = realloc(dpy->Configs, new_size * sizeof(dpy->Configs[0]));
-      if (!configs)
+   if (!dpy->Configs) {
+      dpy->Configs = _eglCreateArray("Config", 16);
+      if (!dpy->Configs)
          return (EGLConfig) NULL;
-
-      dpy->Configs = configs;
-      dpy->MaxConfigs = new_size;
    }
 
    conf->Display = dpy;
-   dpy->Configs[dpy->NumConfigs++] = conf;
+   _eglAppendArray(dpy->Configs, (void *) conf);
 
    return (EGLConfig) conf;
 }
@@ -78,17 +69,13 @@ _eglAddConfig(_EGLDisplay *dpy, _EGLConfig *conf)
 EGLBoolean
 _eglCheckConfigHandle(EGLConfig config, _EGLDisplay *dpy)
 {
-   EGLint num_configs = (dpy) ? dpy->NumConfigs : 0;
-   EGLint i;
+   _EGLConfig *conf;
 
-   for (i = 0; i < num_configs; i++) {
-      _EGLConfig *conf = dpy->Configs[i];
-      if (conf == (_EGLConfig *) config) {
-         assert(conf->Display == dpy);
-         break;
-      }
-   }
-   return (i < num_configs);
+   conf = (_EGLConfig *) _eglFindArray(dpy->Configs, (void *) config);
+   if (conf)
+      assert(conf->Display == dpy);
+
+   return (conf != NULL);
 }
 
 
@@ -776,18 +763,10 @@ _eglChooseConfig(_EGLDriver *drv, _EGLDisplay *disp, const EGLint *attrib_list,
    if (!_eglParseConfigAttribList(&criteria, attrib_list))
       return _eglError(EGL_BAD_ATTRIBUTE, "eglChooseConfig");
 
-   /* allocate array of config pointers */
-   configList = (_EGLConfig **)
-      malloc(disp->NumConfigs * sizeof(_EGLConfig *));
+   configList = (_EGLConfig **) _eglFilterArray(disp->Configs, &count,
+         (_EGLArrayForEach) _eglMatchConfig, (void *) &criteria);
    if (!configList)
       return _eglError(EGL_BAD_ALLOC, "eglChooseConfig(out of memory)");
-
-   /* perform selection of configs */
-   count = 0;
-   for (i = 0; i < disp->NumConfigs; i++) {
-      if (_eglMatchConfig(disp->Configs[i], &criteria))
-         configList[count++] = disp->Configs[i];
-   }
 
    /* perform sorting of configs */
    if (configs && count) {
@@ -823,6 +802,15 @@ _eglGetConfigAttrib(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
 }
 
 
+static EGLBoolean
+_eglFlattenConfig(void *elem, void *buffer)
+{
+   _EGLConfig *conf = (_EGLConfig *) elem;
+   EGLConfig *handle = (EGLConfig *) buffer;
+   *handle = _eglGetConfigHandle(conf);
+   return EGL_TRUE;
+}
+
 /**
  * Fallback for eglGetConfigs.
  */
@@ -833,16 +821,8 @@ _eglGetConfigs(_EGLDriver *drv, _EGLDisplay *disp, EGLConfig *configs,
    if (!num_config)
       return _eglError(EGL_BAD_PARAMETER, "eglGetConfigs");
 
-   if (configs) {
-      EGLint i;
-      *num_config = MIN2(disp->NumConfigs, config_size);
-      for (i = 0; i < *num_config; i++)
-         configs[i] = _eglGetConfigHandle(disp->Configs[i]);
-   }
-   else {
-      /* just return total number of supported configs */
-      *num_config = disp->NumConfigs;
-   }
+   *num_config = _eglFlattenArray(disp->Configs, (void *) configs,
+         sizeof(configs[0]), config_size, _eglFlattenConfig);
 
    return EGL_TRUE;
 }

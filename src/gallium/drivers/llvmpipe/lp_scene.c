@@ -32,6 +32,7 @@
 #include "util/u_simple_list.h"
 #include "lp_scene.h"
 #include "lp_scene_queue.h"
+#include "lp_fence.h"
 
 
 /** List of texture references */
@@ -162,8 +163,8 @@ lp_scene_reset(struct lp_scene *scene )
 
    /* Free all but last binner command lists:
     */
-   for (i = 0; i < scene->tiles_x; i++) {
-      for (j = 0; j < scene->tiles_y; j++) {
+   for (i = 0; i < TILES_X; i++) {
+      for (j = 0; j < TILES_Y; j++) {
          lp_scene_bin_reset(scene, i, j);
       }
    }
@@ -197,6 +198,8 @@ lp_scene_reset(struct lp_scene *scene )
       }
       make_empty_list(ref_list);
    }
+
+   lp_fence_reference(&scene->fence, NULL);
 
    scene->scene_size = 0;
 
@@ -303,60 +306,6 @@ lp_scene_is_resource_referenced(const struct lp_scene *scene,
 }
 
 
-/**
- * Return last command in the bin
- */
-static lp_rast_cmd
-lp_get_last_command( const struct cmd_bin *bin )
-{
-   const struct cmd_block *tail = bin->commands.tail;
-   const unsigned i = tail->count;
-   if (i > 0)
-      return tail->cmd[i - 1];
-   else
-      return NULL;
-}
-
-
-/**
- * Replace the arg of the last command in the bin.
- */
-static void
-lp_replace_last_command_arg( struct cmd_bin *bin,
-                             const union lp_rast_cmd_arg arg )
-{
-   struct cmd_block *tail = bin->commands.tail;
-   const unsigned i = tail->count;
-   assert(i > 0);
-   tail->arg[i - 1] = arg;
-}
-
-
-
-/**
- * Put a state-change command into all bins.
- * If we find that the last command in a bin was also a state-change
- * command, we can simply replace that one with the new one.
- */
-void
-lp_scene_bin_state_command( struct lp_scene *scene,
-                            lp_rast_cmd cmd,
-                            const union lp_rast_cmd_arg arg )
-{
-   unsigned i, j;
-   for (i = 0; i < scene->tiles_x; i++) {
-      for (j = 0; j < scene->tiles_y; j++) {
-         struct cmd_bin *bin = lp_scene_get_bin(scene, i, j);
-         lp_rast_cmd last_cmd = lp_get_last_command(bin);
-         if (last_cmd == cmd) {
-            lp_replace_last_command_arg(bin, arg);
-         }
-         else {
-            lp_scene_bin_command( scene, i, j, cmd, arg );
-         }
-      }
-   }
-}
 
 
 /** advance curr_x,y to the next bin */

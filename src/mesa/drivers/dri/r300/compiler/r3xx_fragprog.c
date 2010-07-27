@@ -29,6 +29,7 @@
 #include "radeon_emulate_loops.h"
 #include "radeon_program_alu.h"
 #include "radeon_program_tex.h"
+#include "radeon_rename_regs.h"
 #include "r300_fragprog.h"
 #include "r300_fragprog_swizzle.h"
 #include "r500_fragprog.h"
@@ -97,25 +98,27 @@ static void debug_program_log(struct r300_fragment_program_compiler* c, const ch
 
 void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 {
+	struct emulate_loop_state loop_state;
+
 	rewrite_depth_out(c);
+
+	/* This transformation needs to be done before any of the IF
+	 * instructions are modified. */
+	radeonTransformKILP(&c->Base);
 
 	debug_program_log(c, "before compilation");
 
-	/* XXX Ideally this should be done only for r3xx, but since
-	 * we don't have branching support for r5xx, we use the emulation
-	 * on all chipsets. */
-	
-	if(c->Base.is_r500){
-		rc_emulate_loops(&c->Base, R500_PFS_MAX_INST);
+	if (c->Base.is_r500){
+		r500_transform_unroll_loops(&c->Base, &loop_state);	
+		debug_program_log(c, "after r500 transform loops");
 	}
 	else{
-		rc_emulate_loops(&c->Base, R300_PFS_MAX_ALU_INST);
+		rc_transform_unroll_loops(&c->Base, &loop_state);
+		debug_program_log(c, "after transform loops");
+		
+		rc_emulate_branches(&c->Base);
+		debug_program_log(c, "after emulate branches");
 	}
-	debug_program_log(c, "after emulate loops");
-	
-	rc_emulate_branches(&c->Base);
-
-	debug_program_log(c, "after emulate branches");
 
 	if (c->Base.is_r500) {
 		struct radeon_program_transformation transformations[] = {
@@ -162,6 +165,11 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 
 	debug_program_log(c, "after deadcode");
 
+	if(!c->Base.is_r500){
+		rc_emulate_loops(&loop_state, R300_PFS_MAX_ALU_INST);
+		debug_program_log(c, "after emulate loops");
+	}
+
 	rc_optimize(&c->Base);
 
 	debug_program_log(c, "after dataflow optimize");
@@ -171,6 +179,16 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 		return;
 
 	debug_program_log(c, "after dataflow passes");
+
+	if(!c->Base.is_r500) {
+		/* This pass makes it easier for the scheduler to group TEX
+		 * instructions and reduces the chances of creating too
+		 * many texture indirections.*/
+		rc_rename_regs(&c->Base);
+		if (c->Base.Error)
+			return;
+		debug_program_log(c, "after register rename");
+	}
 
 	rc_pair_translate(c);
 	if (c->Base.Error)

@@ -40,27 +40,19 @@
 
 /**
  * \param flags  bitmask of PIPE_FLUSH_x flags
- * \param fence  if non-null, returns pointer to a fench which can be waited on
+ * \param fence  if non-null, returns pointer to a fence which can be waited on
  */
 void
 llvmpipe_flush( struct pipe_context *pipe,
-		unsigned flags,
+                unsigned flags,
                 struct pipe_fence_handle **fence )
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
 
    draw_flush(llvmpipe->draw);
 
-   if (fence) {
-      /* if we're going to flush the setup/rasterization modules, emit
-       * a fence.
-       * XXX this (and the code below) may need fine tuning...
-       */
-      *fence = lp_setup_fence( llvmpipe->setup );
-   }
-
    /* ask the setup module to flush */
-   lp_setup_flush(llvmpipe->setup, flags);
+   lp_setup_flush(llvmpipe->setup, flags, fence);
 
    /* Enable to dump BMPs of the color/depth buffers each frame */
    if (0) {

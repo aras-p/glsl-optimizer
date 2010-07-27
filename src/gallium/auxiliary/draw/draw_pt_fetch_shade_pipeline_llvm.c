@@ -49,48 +49,50 @@ struct llvm_middle_end {
    unsigned vertex_data_offset;
    unsigned vertex_size;
    unsigned input_prim;
-   unsigned output_prim;
    unsigned opt;
 
    struct draw_llvm *llvm;
-   struct draw_llvm_variant *variants;
    struct draw_llvm_variant *current_variant;
-   int nr_variants;
 };
 
 
 static void
 llvm_middle_end_prepare( struct draw_pt_middle_end *middle,
                          unsigned in_prim,
-                         unsigned out_prim,
                          unsigned opt,
                          unsigned *max_vertices )
 {
    struct llvm_middle_end *fpme = (struct llvm_middle_end *)middle;
    struct draw_context *draw = fpme->draw;
-   struct draw_vertex_shader *vs = draw->vs.vertex_shader;
+   struct llvm_vertex_shader *shader =
+      llvm_vertex_shader(draw->vs.vertex_shader);
    struct draw_llvm_variant_key key;
    struct draw_llvm_variant *variant = NULL;
+   struct draw_llvm_variant_list_item *li;
    unsigned i;
    unsigned instance_id_index = ~0;
+
+
+   unsigned out_prim = (draw->gs.geometry_shader ? 
+                        draw->gs.geometry_shader->output_primitive :
+                        in_prim);
 
    /* Add one to num_outputs because the pipeline occasionally tags on
     * an additional texcoord, eg for AA lines.
     */
-   unsigned nr = MAX2( vs->info.num_inputs,
-		       vs->info.num_outputs + 1 );
+   unsigned nr = MAX2( shader->base.info.num_inputs,
+		       shader->base.info.num_outputs + 1 );
 
    /* Scan for instanceID system value.
     */
-   for (i = 0; i < vs->info.num_inputs; i++) {
-      if (vs->info.input_semantic_name[i] == TGSI_SEMANTIC_INSTANCEID) {
+   for (i = 0; i < shader->base.info.num_inputs; i++) {
+      if (shader->base.info.input_semantic_name[i] == TGSI_SEMANTIC_INSTANCEID) {
          instance_id_index = i;
          break;
       }
    }
 
    fpme->input_prim = in_prim;
-   fpme->output_prim = out_prim;
    fpme->opt = opt;
 
    /* Always leave room for the vertex header whether we need it or
@@ -107,7 +109,7 @@ llvm_middle_end_prepare( struct draw_pt_middle_end *middle,
 			    (boolean)draw->bypass_clipping,
 			    (boolean)(draw->identity_viewport),
 			    (boolean)draw->rasterizer->gl_rasterization_rules,
-			    (draw->vs.edgeflag_output ? true : false) );
+			    (draw->vs.edgeflag_output ? TRUE : FALSE) );
 
    draw_pt_so_emit_prepare( fpme->so_emit );
 
@@ -128,20 +130,41 @@ llvm_middle_end_prepare( struct draw_pt_middle_end *middle,
 
    draw_llvm_make_variant_key(fpme->llvm, &key);
 
-   variant = fpme->variants;
-   while(variant) {
-      if(memcmp(&variant->key, &key, sizeof key) == 0)
+   li = first_elem(&shader->variants);
+   while(!at_end(&shader->variants, li)) {
+      if(memcmp(&li->base->key, &key, sizeof key) == 0) {
+         variant = li->base;
          break;
-
-      variant = variant->next;
+      }
+      li = next_elem(li);
    }
 
-   if (!variant) {
-      variant = draw_llvm_prepare(fpme->llvm, nr);
-      variant->next = fpme->variants;
-      fpme->variants = variant;
-      ++fpme->nr_variants;
+   if (variant) {
+      move_to_head(&fpme->llvm->vs_variants_list, &variant->list_item_global);
    }
+   else {
+      unsigned i;
+      if (fpme->llvm->nr_variants >= DRAW_MAX_SHADER_VARIANTS) {
+         /*
+          * XXX: should we flush here ?
+          */
+         for (i = 0; i < DRAW_MAX_SHADER_VARIANTS / 4; i++) {
+            struct draw_llvm_variant_list_item *item =
+               last_elem(&fpme->llvm->vs_variants_list);
+            draw_llvm_destroy_variant(item->base);
+         }
+      }
+
+      variant = draw_llvm_create_variant(fpme->llvm, nr);
+
+      if (variant) {
+         insert_at_head(&shader->variants, &variant->list_item_local);
+         insert_at_head(&fpme->llvm->vs_variants_list, &variant->list_item_global);
+         fpme->llvm->nr_variants++;
+         shader->variants_cached++;
+      }
+   }
+
    fpme->current_variant = variant;
 
    /*XXX we only support one constant buffer */
@@ -210,7 +233,8 @@ llvm_pipeline_generic( struct draw_pt_middle_end *middle,
                                        fetch_info->start,
                                        fetch_info->count,
                                        fpme->vertex_size,
-                                       draw->pt.vertex_buffer );
+                                       draw->pt.vertex_buffer,
+                                       draw->instance_id);
    else
       fpme->current_variant->jit_func_elts( &fpme->llvm->jit_context,
                                             llvm_vert_info.verts,
@@ -218,7 +242,8 @@ llvm_pipeline_generic( struct draw_pt_middle_end *middle,
                                             fetch_info->elts,
                                             fetch_info->count,
                                             fpme->vertex_size,
-                                            draw->pt.vertex_buffer);
+                                            draw->pt.vertex_buffer,
+                                            draw->instance_id);
 
    /* Finished with fetch and vs:
     */
@@ -356,31 +381,7 @@ static void llvm_middle_end_finish( struct draw_pt_middle_end *middle )
 static void llvm_middle_end_destroy( struct draw_pt_middle_end *middle )
 {
    struct llvm_middle_end *fpme = (struct llvm_middle_end *)middle;
-   struct draw_context *draw = fpme->draw;
-   struct draw_llvm_variant *variant = NULL;
 
-   variant = fpme->variants;
-   while(variant) {
-      struct draw_llvm_variant *next = variant->next;
-
-      if (variant->function_elts) {
-         if (variant->function_elts)
-            LLVMFreeMachineCodeForFunction(draw->engine,
-                                           variant->function_elts);
-         LLVMDeleteFunction(variant->function_elts);
-      }
-
-      if (variant->function) {
-         if (variant->function)
-            LLVMFreeMachineCodeForFunction(draw->engine,
-                                           variant->function);
-         LLVMDeleteFunction(variant->function);
-      }
-
-      FREE(variant);
-
-      variant = next;
-   }
    if (fpme->fetch)
       draw_pt_fetch_destroy( fpme->fetch );
 
@@ -393,14 +394,12 @@ static void llvm_middle_end_destroy( struct draw_pt_middle_end *middle )
    if (fpme->post_vs)
       draw_pt_post_vs_destroy( fpme->post_vs );
 
-   if (fpme->llvm)
-      draw_llvm_destroy( fpme->llvm );
-
    FREE(middle);
 }
 
 
-struct draw_pt_middle_end *draw_pt_fetch_pipeline_or_emit_llvm( struct draw_context *draw )
+struct draw_pt_middle_end *
+draw_pt_fetch_pipeline_or_emit_llvm(struct draw_context *draw)
 {
    struct llvm_middle_end *fpme = 0;
 
@@ -436,13 +435,11 @@ struct draw_pt_middle_end *draw_pt_fetch_pipeline_or_emit_llvm( struct draw_cont
    if (!fpme->so_emit)
       goto fail;
 
-   fpme->llvm = draw_llvm_create(draw);
+   fpme->llvm = draw->llvm;
    if (!fpme->llvm)
       goto fail;
 
-   fpme->variants = NULL;
    fpme->current_variant = NULL;
-   fpme->nr_variants = 0;
 
    return &fpme->base;
 

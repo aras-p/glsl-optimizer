@@ -567,10 +567,24 @@ util_bswap16(uint16_t n)
 #define MAX3( A, B, C ) MAX2( MAX2( A, B ), C )
 
 
+/**
+ * Align a value, only works pot alignemnts.
+ */
 static INLINE int
 align(int value, int alignment)
 {
    return (value + alignment - 1) & ~(alignment - 1);
+}
+
+/**
+ * Works like align but on npot alignments.
+ */
+static INLINE size_t
+util_align_npot(size_t value, size_t alignment)
+{
+   if (value % alignment)
+      return value + (alignment - (value % alignment));
+   return value;
 }
 
 static INLINE unsigned

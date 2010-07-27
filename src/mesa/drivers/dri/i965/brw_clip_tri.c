@@ -32,7 +32,7 @@
 #include "main/glheader.h"
 #include "main/macros.h"
 #include "main/enums.h"
-#include "shader/program.h"
+#include "program/program.h"
 
 #include "intel_batchbuffer.h"
 
@@ -76,10 +76,7 @@ void brw_clip_tri_alloc_regs( struct brw_clip_compile *c,
 
    if (c->nr_attrs & 1) {
       for (j = 0; j < 3; j++) {
-	 GLuint delta = c->nr_attrs*16 + 32;
-
-         if (intel->gen == 5)
-             delta = c->nr_attrs * 16 + 32 * 3;
+	 GLuint delta = c->offset[c->idx_to_attr[c->nr_attrs - 1]] + ATTR_SIZE;
 
 	 brw_MOV(&c->func, byte_offset(c->reg.vertex[j], delta), brw_imm_f(0));
       }

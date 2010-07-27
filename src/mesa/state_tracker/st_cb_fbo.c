@@ -458,25 +458,37 @@ st_validate_framebuffer(GLcontext *ctx, struct gl_framebuffer *fb)
 {
    struct st_context *st = st_context(ctx);
    struct pipe_screen *screen = st->pipe->screen;
-   const struct gl_renderbuffer *depthRb =
-      fb->Attachment[BUFFER_DEPTH].Renderbuffer;
-   const struct gl_renderbuffer *stencilRb =
-      fb->Attachment[BUFFER_STENCIL].Renderbuffer;
+   const struct gl_renderbuffer_attachment *depth =
+         &fb->Attachment[BUFFER_DEPTH];
+   const struct gl_renderbuffer_attachment *stencil =
+         &fb->Attachment[BUFFER_STENCIL];
    GLuint i;
 
-   if (stencilRb && depthRb && stencilRb != depthRb) {
+   if (depth->Type && stencil->Type && depth->Type != stencil->Type) {
+      fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
+      return;
+   }
+   if (depth->Type == GL_RENDERBUFFER_EXT &&
+       stencil->Type == GL_RENDERBUFFER_EXT &&
+       depth->Renderbuffer != stencil->Renderbuffer) {
+      fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
+      return;
+   }
+   if (depth->Type == GL_TEXTURE &&
+       stencil->Type == GL_TEXTURE &&
+       depth->Texture != stencil->Texture) {
       fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
       return;
    }
 
    if (!st_validate_attachment(screen,
-			       &fb->Attachment[BUFFER_DEPTH],
+                               depth,
 			       PIPE_BIND_DEPTH_STENCIL)) {
       fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
       return;
    }
    if (!st_validate_attachment(screen,
-			       &fb->Attachment[BUFFER_STENCIL],
+                               stencil,
 			       PIPE_BIND_DEPTH_STENCIL)) {
       fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
       return;

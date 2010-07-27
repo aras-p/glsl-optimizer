@@ -12,6 +12,9 @@ if 'egl' in env['statetrackers']:
 	'#/src/gallium/winsys/sw',
 	'.',
     ])
+    env.Append(CPPDEFINES = [
+	'HAVE_GDI_BACKEND',
+    ])
 
     common_sources = [
         'common/egl_g3d.c',

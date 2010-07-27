@@ -27,6 +27,7 @@
 #include <errno.h>
 #include <util/u_inlines.h>
 #include "r600_screen.h"
+#include "r600_context.h"
 #include "r600d.h"
 
 int r600_conv_pipe_format(unsigned pformat, unsigned *format)
@@ -49,6 +50,12 @@ int r600_conv_pipe_format(unsigned pformat, unsigned *format)
 	case PIPE_FORMAT_R8G8B8A8_SSCALED:
 		*format = V_0280A0_COLOR_8_8_8_8;
 		return 0;
+	case PIPE_FORMAT_R32_FLOAT:
+		*format = V_0280A0_COLOR_32_FLOAT;
+		return 0;
+	case PIPE_FORMAT_R32G32_FLOAT:
+		*format = V_0280A0_COLOR_32_32_FLOAT;
+		return 0;
 	case PIPE_FORMAT_L8_UNORM:
 	case PIPE_FORMAT_A8_UNORM:
 	case PIPE_FORMAT_I8_UNORM:
@@ -60,8 +67,6 @@ int r600_conv_pipe_format(unsigned pformat, unsigned *format)
 	case PIPE_FORMAT_R64G64_FLOAT:
 	case PIPE_FORMAT_R64G64B64_FLOAT:
 	case PIPE_FORMAT_R64G64B64A64_FLOAT:
-	case PIPE_FORMAT_R32_FLOAT:
-	case PIPE_FORMAT_R32G32_FLOAT:
 	case PIPE_FORMAT_R32_UNORM:
 	case PIPE_FORMAT_R32G32_UNORM:
 	case PIPE_FORMAT_R32G32B32_UNORM:
@@ -111,7 +116,7 @@ int r600_conv_pipe_format(unsigned pformat, unsigned *format)
 	case PIPE_FORMAT_R32G32B32_FIXED:
 	case PIPE_FORMAT_R32G32B32A32_FIXED:
 	default:
-		fprintf(stderr, "%s:%d unsupported %d\n", __func__, __LINE__, pformat);
+		R600_ERR("unsupported %d\n", pformat);
 		return -EINVAL;
 	}
 }

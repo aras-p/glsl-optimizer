@@ -18,6 +18,7 @@ C_SOURCES = \
 	lp_fence.c \
 	lp_flush.c \
 	lp_jit.c \
+	lp_memory.c \
 	lp_perf.c \
 	lp_query.c \
 	lp_rast.c \
@@ -53,7 +54,11 @@ PROGS := lp_test_format	\
 	 lp_test_blend	\
 	 lp_test_conv	\
 	 lp_test_printf \
+	 lp_test_round \
          lp_test_sincos
+
+# Need this for the lp_test_*.o files
+CLEAN_EXTRA = *.o
 
 lp_test_sincos.o : sse_mathfun.h
 

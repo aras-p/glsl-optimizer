@@ -32,22 +32,71 @@
 #include "r300_emit.h"
 #include "r300_screen.h"
 #include "r300_screen_buffer.h"
-#include "r300_state_invariant.h"
 #include "r300_winsys.h"
 
 #include <inttypes.h>
 
-static void r300_destroy_context(struct pipe_context* context)
+static void r300_update_num_contexts(struct r300_screen *r300screen,
+                                     int diff)
 {
-    struct r300_context* r300 = r300_context(context);
-    struct r300_query *query, *temp;
-    struct r300_atom *atom;
+    if (diff > 0) {
+        p_atomic_inc(&r300screen->num_contexts);
 
+        if (r300screen->num_contexts > 1)
+            util_mempool_set_thread_safety(&r300screen->pool_buffers,
+                                           UTIL_MEMPOOL_MULTITHREADED);
+    } else {
+        p_atomic_dec(&r300screen->num_contexts);
+
+        if (r300screen->num_contexts <= 1)
+            util_mempool_set_thread_safety(&r300screen->pool_buffers,
+                                           UTIL_MEMPOOL_SINGLETHREADED);
+    }
+}
+
+static void r300_release_referenced_objects(struct r300_context *r300)
+{
+    struct pipe_framebuffer_state *fb =
+            (struct pipe_framebuffer_state*)r300->fb_state.state;
+    struct r300_textures_state *textures =
+            (struct r300_textures_state*)r300->textures_state.state;
+    struct r300_query *query, *temp;
+    unsigned i;
+
+    /* Framebuffer state. */
+    util_assign_framebuffer_state(fb, NULL);
+
+    /* Textures. */
+    for (i = 0; i < textures->sampler_view_count; i++)
+        pipe_sampler_view_reference(
+                (struct pipe_sampler_view**)&textures->sampler_views[i], NULL);
+
+    /* The special dummy texture for texkill. */
     if (r300->texkill_sampler) {
         pipe_sampler_view_reference(
                 (struct pipe_sampler_view**)&r300->texkill_sampler,
                 NULL);
     }
+
+    /* The SWTCL VBO. */
+    pipe_resource_reference(&r300->vbo, NULL);
+
+    /* Vertex buffers. */
+    for (i = 0; i < r300->vertex_buffer_count; i++) {
+        pipe_resource_reference(&r300->vertex_buffer[i].buffer, NULL);
+    }
+
+    /* If there are any queries pending or not destroyed, remove them now. */
+    foreach_s(query, temp, &r300->query_list) {
+        remove_from_list(query);
+        FREE(query);
+    }
+}
+
+static void r300_destroy_context(struct pipe_context* context)
+{
+    struct r300_context* r300 = r300_context(context);
+    struct r300_atom *atom;
 
     util_blitter_destroy(r300->blitter);
     draw_destroy(r300->draw);
@@ -62,23 +111,30 @@ static void r300_destroy_context(struct pipe_context* context)
         }
     }
 
-    /* If there are any queries pending or not destroyed, remove them now. */
-    foreach_s(query, temp, &r300->query_list) {
-        remove_from_list(query);
-        FREE(query);
-    }
-
     u_upload_destroy(r300->upload_vb);
     u_upload_destroy(r300->upload_ib);
 
     translate_cache_destroy(r300->tran.translate_cache);
 
+    r300_release_referenced_objects(r300);
+
+    r300->rws->cs_destroy(r300->cs);
+
+    util_mempool_destroy(&r300->pool_transfers);
+
+    r300_update_num_contexts(r300->screen, -1);
+
+    FREE(r300->aa_state.state);
     FREE(r300->blend_color_state.state);
     FREE(r300->clip_state.state);
     FREE(r300->fb_state.state);
+    FREE(r300->gpu_flush.state);
+    FREE(r300->hyperz_state.state);
+    FREE(r300->invariant_state.state);
     FREE(r300->rs_block_state.state);
     FREE(r300->scissor_state.state);
     FREE(r300->textures_state.state);
+    FREE(r300->vap_invariant_state.state);
     FREE(r300->viewport_state.state);
     FREE(r300->ztop_state.state);
     FREE(r300->fs_constants.state);
@@ -89,7 +145,7 @@ static void r300_destroy_context(struct pipe_context* context)
     FREE(r300);
 }
 
-static void r300_flush_cb(void *data)
+void r300_flush_cb(void *data)
 {
     struct r300_context* const cs_context_copy = data;
 
@@ -106,8 +162,10 @@ static void r300_flush_cb(void *data)
 
 static void r300_setup_atoms(struct r300_context* r300)
 {
+    boolean is_rv350 = r300->screen->caps.is_rv350;
     boolean is_r500 = r300->screen->caps.is_r500;
     boolean has_tcl = r300->screen->caps.has_tcl;
+    boolean drm_2_3_0 = r300->rws->get_value(r300->rws, R300_VID_DRM_2_3_0);
 
     /* Create the actual atom list.
      *
@@ -115,44 +173,75 @@ static void r300_setup_atoms(struct r300_context* r300)
      * can affect performance and conformance if not handled with care.
      *
      * Some atoms never change size, others change every emit - those have
-     * the size of 0 here. */
+     * the size of 0 here.
+     *
+     * NOTE: The framebuffer state is split into these atoms:
+     * - gpu_flush          (unpipelined regs)
+     * - aa_state           (unpipelined regs)
+     * - fb_state           (unpipelined regs)
+     * - hyperz_state       (unpipelined regs followed by pipelined ones)
+     * - fb_state_pipelined (pipelined regs)
+     * The motivation behind this is to be able to emit a strict
+     * subset of the regs, and to have reasonable register ordering. */
     make_empty_list(&r300->atom_list);
-    R300_INIT_ATOM(invariant_state, 71);
+    /* SC, GB (unpipelined), RB3D (unpipelined), ZB (unpipelined). */
+    R300_INIT_ATOM(gpu_flush, 9);
+    R300_INIT_ATOM(aa_state, 4);
+    R300_INIT_ATOM(fb_state, 0);
+    /* ZB (unpipelined), SC. */
+    R300_INIT_ATOM(hyperz_state, 6);
     R300_INIT_ATOM(ztop_state, 2);
-    R300_INIT_ATOM(query_start, 4);
+    /* ZB, FG. */
+    R300_INIT_ATOM(dsa_state, is_r500 ? 8 : 6);
+    /* RB3D. */
     R300_INIT_ATOM(blend_state, 8);
     R300_INIT_ATOM(blend_color_state, is_r500 ? 3 : 2);
-    R300_INIT_ATOM(clip_state, has_tcl ? 5 + (6 * 4) : 2);
-    R300_INIT_ATOM(dsa_state, is_r500 ? 8 : 6);
-    R300_INIT_ATOM(fb_state, 0);
-    R300_INIT_ATOM(rs_state, 0);
+    /* SC. */
     R300_INIT_ATOM(scissor_state, 3);
+    /* GB, FG, GA, SU, SC, RB3D. */
+    R300_INIT_ATOM(invariant_state, 16 + (is_rv350 ? 4 : 0));
+    /* VAP. */
     R300_INIT_ATOM(viewport_state, 9);
-    R300_INIT_ATOM(rs_block_state, 0);
-    R300_INIT_ATOM(vertex_stream_state, 0);
     R300_INIT_ATOM(pvs_flush, 2);
+    R300_INIT_ATOM(vap_invariant_state, 9);
+    R300_INIT_ATOM(vertex_stream_state, 0);
     R300_INIT_ATOM(vs_state, 0);
     R300_INIT_ATOM(vs_constants, 0);
-    R300_INIT_ATOM(texture_cache_inval, 2);
-    R300_INIT_ATOM(textures_state, 0);
+    R300_INIT_ATOM(clip_state, has_tcl ? 5 + (6 * 4) : 2);
+    /* VAP, RS, GA, GB, SU, SC. */
+    R300_INIT_ATOM(rs_block_state, 0);
+    R300_INIT_ATOM(rs_state, 0);
+    /* SC, US. */
+    R300_INIT_ATOM(fb_state_pipelined, 5 + (drm_2_3_0 ? 3 : 0));
+    /* US. */
     R300_INIT_ATOM(fs, 0);
     R300_INIT_ATOM(fs_rc_constant_state, 0);
     R300_INIT_ATOM(fs_constants, 0);
+    /* TX. */
+    R300_INIT_ATOM(texture_cache_inval, 2);
+    R300_INIT_ATOM(textures_state, 0);
+    /* ZB (unpipelined), SU. */
+    R300_INIT_ATOM(query_start, 4);
 
     /* Replace emission functions for r500. */
-    if (r300->screen->caps.is_r500) {
+    if (is_r500) {
         r300->fs.emit = r500_emit_fs;
         r300->fs_rc_constant_state.emit = r500_emit_fs_rc_constant_state;
         r300->fs_constants.emit = r500_emit_fs_constants;
     }
 
     /* Some non-CSO atoms need explicit space to store the state locally. */
+    r300->aa_state.state = CALLOC_STRUCT(r300_aa_state);
     r300->blend_color_state.state = CALLOC_STRUCT(r300_blend_color_state);
     r300->clip_state.state = CALLOC_STRUCT(r300_clip_state);
     r300->fb_state.state = CALLOC_STRUCT(pipe_framebuffer_state);
+    r300->gpu_flush.state = CALLOC_STRUCT(pipe_framebuffer_state);
+    r300->hyperz_state.state = CALLOC_STRUCT(r300_hyperz_state);
+    r300->invariant_state.state = CALLOC_STRUCT(r300_invariant_state);
     r300->rs_block_state.state = CALLOC_STRUCT(r300_rs_block);
     r300->scissor_state.state = CALLOC_STRUCT(pipe_scissor_state);
     r300->textures_state.state = CALLOC_STRUCT(r300_textures_state);
+    r300->vap_invariant_state.state = CALLOC_STRUCT(r300_vap_invariant_state);
     r300->viewport_state.state = CALLOC_STRUCT(r300_viewport_state);
     r300->ztop_state.state = CALLOC_STRUCT(r300_ztop_state);
     r300->fs_constants.state = CALLOC_STRUCT(r300_constant_buffer);
@@ -162,32 +251,110 @@ static void r300_setup_atoms(struct r300_context* r300)
     }
 
     /* Some non-CSO atoms don't use the state pointer. */
-    r300->invariant_state.allow_null_state = TRUE;
+    r300->fb_state_pipelined.allow_null_state = TRUE;
     r300->fs_rc_constant_state.allow_null_state = TRUE;
     r300->pvs_flush.allow_null_state = TRUE;
     r300->query_start.allow_null_state = TRUE;
     r300->texture_cache_inval.allow_null_state = TRUE;
+
+    /* Some states must be marked as dirty here to properly set up
+     * hardware in the first command stream. */
+    r300->invariant_state.dirty = TRUE;
+    r300->pvs_flush.dirty = TRUE;
+    r300->vap_invariant_state.dirty = TRUE;
+    r300->texture_cache_inval.dirty = TRUE;
+    r300->textures_state.dirty = TRUE;
 }
 
 /* Not every state tracker calls every driver function before the first draw
  * call and we must initialize the command buffers somehow. */
 static void r300_init_states(struct pipe_context *pipe)
 {
+    struct r300_context *r300 = r300_context(pipe);
     struct pipe_blend_color bc = {{0}};
     struct pipe_clip_state cs = {{{0}}};
     struct pipe_scissor_state ss = {0};
     struct r300_clip_state *clip =
-            (struct r300_clip_state*)r300_context(pipe)->clip_state.state;
+            (struct r300_clip_state*)r300->clip_state.state;
+    struct r300_gpu_flush *gpuflush =
+            (struct r300_gpu_flush*)r300->gpu_flush.state;
+    struct r300_vap_invariant_state *vap_invariant =
+            (struct r300_vap_invariant_state*)r300->vap_invariant_state.state;
+    struct r300_invariant_state *invariant =
+            (struct r300_invariant_state*)r300->invariant_state.state;
+    struct r300_hyperz_state *hyperz =
+            (struct r300_hyperz_state*)r300->hyperz_state.state;
     CB_LOCALS;
 
     pipe->set_blend_color(pipe, &bc);
     pipe->set_scissor_state(pipe, &ss);
 
+    /* Initialize the clip state. */
     if (r300_context(pipe)->screen->caps.has_tcl) {
         pipe->set_clip_state(pipe, &cs);
     } else {
         BEGIN_CB(clip->cb, 2);
         OUT_CB_REG(R300_VAP_CLIP_CNTL, R300_CLIP_DISABLE);
+        END_CB;
+    }
+
+    /* Initialize the GPU flush. */
+    {
+        BEGIN_CB(gpuflush->cb_flush_clean, 6);
+
+        /* Flush and free renderbuffer caches. */
+        OUT_CB_REG(R300_RB3D_DSTCACHE_CTLSTAT,
+            R300_RB3D_DSTCACHE_CTLSTAT_DC_FREE_FREE_3D_TAGS |
+            R300_RB3D_DSTCACHE_CTLSTAT_DC_FLUSH_FLUSH_DIRTY_3D);
+        OUT_CB_REG(R300_ZB_ZCACHE_CTLSTAT,
+            R300_ZB_ZCACHE_CTLSTAT_ZC_FLUSH_FLUSH_AND_FREE |
+            R300_ZB_ZCACHE_CTLSTAT_ZC_FREE_FREE);
+
+        /* Wait until the GPU is idle.
+         * This fixes random pixels sometimes appearing probably caused
+         * by incomplete rendering. */
+        OUT_CB_REG(RADEON_WAIT_UNTIL, RADEON_WAIT_3D_IDLECLEAN);
+        END_CB;
+    }
+
+    /* Initialize the VAP invariant state. */
+    {
+        BEGIN_CB(vap_invariant->cb, 9);
+        OUT_CB_REG(VAP_PVS_VTX_TIMEOUT_REG, 0xffff);
+        OUT_CB_REG_SEQ(R300_VAP_GB_VERT_CLIP_ADJ, 4);
+        OUT_CB_32F(1.0);
+        OUT_CB_32F(1.0);
+        OUT_CB_32F(1.0);
+        OUT_CB_32F(1.0);
+        OUT_CB_REG(R300_VAP_PSC_SGN_NORM_CNTL, R300_SGN_NORM_NO_ZERO);
+        END_CB;
+    }
+
+    /* Initialize the invariant state. */
+    {
+        BEGIN_CB(invariant->cb, r300->invariant_state.size);
+        OUT_CB_REG(R300_GB_SELECT, 0);
+        OUT_CB_REG(R300_FG_FOG_BLEND, 0);
+        OUT_CB_REG(R300_GA_ROUND_MODE, 1);
+        OUT_CB_REG(R300_GA_OFFSET, 0);
+        OUT_CB_REG(R300_SU_TEX_WRAP, 0);
+        OUT_CB_REG(R300_SU_DEPTH_SCALE, 0x4B7FFFFF);
+        OUT_CB_REG(R300_SU_DEPTH_OFFSET, 0);
+        OUT_CB_REG(R300_SC_EDGERULE, 0x2DA49525);
+
+        if (r300->screen->caps.is_rv350) {
+            OUT_CB_REG(R500_RB3D_DISCARD_SRC_PIXEL_LTE_THRESHOLD, 0x01010101);
+            OUT_CB_REG(R500_RB3D_DISCARD_SRC_PIXEL_GTE_THRESHOLD, 0xFEFEFEFE);
+        }
+        END_CB;
+    }
+
+    /* Initialize the hyperz state. */
+    {
+        BEGIN_CB(&hyperz->cb_begin, r300->hyperz_state.size);
+        OUT_CB_REG(R300_ZB_BW_CNTL, 0);
+        OUT_CB_REG(R300_ZB_DEPTHCLEARVALUE, 0);
+        OUT_CB_REG(R300_SC_HYPERZ, R300_SC_HYPERZ_ADJ_2);
         END_CB;
     }
 }
@@ -202,6 +369,8 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     if (!r300)
         return NULL;
 
+    r300_update_num_contexts(r300screen, 1);
+
     r300->rws = rws;
     r300->screen = r300screen;
 
@@ -210,6 +379,12 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     r300->context.priv = priv;
 
     r300->context.destroy = r300_destroy_context;
+
+    r300->cs = rws->cs_create(rws);
+
+    util_mempool_create(&r300->pool_transfers,
+                        sizeof(struct pipe_transfer), 64,
+                        UTIL_MEMPOOL_SINGLETHREADED);
 
     if (!r300screen->caps.has_tcl) {
         /* Create a Draw. This is used for SW TCL. */
@@ -230,16 +405,15 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     r300_init_blit_functions(r300);
     r300_init_flush_functions(r300);
     r300_init_query_functions(r300);
-    r300_init_render_functions(r300);
     r300_init_state_functions(r300);
     r300_init_resource_functions(r300);
 
-    r300->invariant_state.dirty = TRUE;
-
-    rws->set_flush_cb(r300->rws, r300_flush_cb, r300);
-    r300->dirty_hw++;
-
     r300->blitter = util_blitter_create(&r300->context);
+
+    /* Render functions must be initialized after blitter. */
+    r300_init_render_functions(r300);
+
+    rws->cs_set_flush(r300->cs, r300_flush_cb, r300);
 
     r300->upload_ib = u_upload_create(&r300->context,
 				      32 * 1024, 16,
@@ -280,11 +454,6 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
             r300->context.create_sampler_view(&r300->context, tex, &vtempl);
 
         pipe_resource_reference(&tex, NULL);
-
-        /* This will make sure that the dummy texture is set up
-         * from the beginning even if an application does not use
-         * textures. */
-        r300->textures_state.dirty = TRUE;
     }
 
     return &r300->context;
@@ -294,11 +463,6 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
  no_upload_vb:
     FREE(r300);
     return NULL;
-}
-
-boolean r300_check_cs(struct r300_context *r300, unsigned size)
-{
-    return size <= r300->rws->get_cs_free_dwords(r300->rws);
 }
 
 void r300_finish(struct r300_context *r300)

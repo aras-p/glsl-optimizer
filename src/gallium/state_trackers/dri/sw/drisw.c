@@ -255,7 +255,6 @@ drisw_init_screen(__DRIscreen * sPriv)
    if (!screen)
       return NULL;
 
-   screen->api = NULL; /* not needed */
    screen->sPriv = sPriv;
    screen->fd = -1;
    screen->allocate_textures = drisw_allocate_textures;

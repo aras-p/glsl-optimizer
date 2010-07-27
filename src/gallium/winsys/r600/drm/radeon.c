@@ -25,6 +25,11 @@
 #include "radeon_drm.h"
 #include "r600d.h"
 
+enum radeon_family radeon_get_family(struct radeon *radeon)
+{
+	return radeon->family;
+}
+
 static int radeon_get_device(struct radeon *radeon)
 {
 	struct drm_radeon_info info;

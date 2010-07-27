@@ -37,7 +37,7 @@ static void
 usage(void)
 {
    printf("Usage:\n");
-   printf("  compile fragment|vertex <source> <output>\n");
+   printf("  compile fragment|vertex|geometry <source> <output>\n");
 }
 
 int
@@ -65,6 +65,8 @@ main(int argc,
       shader_type = 1;
    } else if (!strcmp(argv[1], "vertex")) {
       shader_type = 2;
+   } else if (!strcmp(argv[1], "geometry")) {
+      shader_type = 3;
    } else {
       usage();
       return 1;
@@ -80,6 +82,9 @@ main(int argc,
    fseek(in, 0, SEEK_END);
    size = ftell(in);
    assert(size != -1);
+   if (size == -1) {
+      return 1;
+   }
    fseek(in, 0, SEEK_SET);
 
    out = fopen(argv[3], "w");

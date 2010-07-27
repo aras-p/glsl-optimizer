@@ -1,14 +1,11 @@
 #include <stdio.h>
 
-#include "state_tracker/drm_api.h"
+#include "state_tracker/drm_driver.h"
 
 #include "i915_drm_winsys.h"
+#include "i915_drm_public.h"
 #include "util/u_memory.h"
 
-#include "i915/i915_context.h"
-#include "i915/i915_screen.h"
-
-#include "trace/tr_drm.h"
 
 /*
  * Helper functions
@@ -48,8 +45,8 @@ i915_drm_winsys_destroy(struct i915_winsys *iws)
    FREE(idws);
 }
 
-static struct pipe_screen *
-i915_drm_create_screen(struct drm_api *api, int drmFD)
+struct i915_winsys *
+i915_drm_winsys_create(int drmFD)
 {
    struct i915_drm_winsys *idws;
    unsigned int deviceID;
@@ -73,21 +70,8 @@ i915_drm_create_screen(struct drm_api *api, int drmFD)
    idws->pools.gem = drm_intel_bufmgr_gem_init(idws->fd, idws->max_batch_size);
    drm_intel_bufmgr_gem_enable_reuse(idws->pools.gem);
 
-   idws->dump_cmd = debug_get_bool_option("INTEL_DUMP_CMD", FALSE);
+   idws->dump_cmd = debug_get_bool_option("I915_DUMP_CMD", FALSE);
+   idws->send_cmd = !debug_get_bool_option("I915_NO_HW", FALSE);
 
-   return i915_screen_create(&idws->base);
-}
-
-static struct drm_api i915_drm_api =
-{
-   .name = "i915",
-   .driver_name = "i915",
-   .create_screen = i915_drm_create_screen,
-   .destroy = NULL,
-};
-
-struct drm_api *
-drm_api_create()
-{
-   return trace_drm_create(&i915_drm_api);
+   return &idws->base;
 }

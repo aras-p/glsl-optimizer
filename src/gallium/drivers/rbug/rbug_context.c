@@ -97,15 +97,7 @@ rbug_draw_block_locked(struct rbug_context *rb_pipe, int flag)
    /* wait for rbug to clear the blocked flag */
    while (rb_pipe->draw_blocked & flag) {
       rb_pipe->draw_blocked |= flag;
-#ifdef PIPE_THREAD_HAVE_CONDVAR
       pipe_condvar_wait(rb_pipe->draw_cond, rb_pipe->draw_mutex);
-#else
-      pipe_mutex_unlock(rb_pipe->draw_mutex);
-#ifdef PIPE_SUBSYSTEM_WINDOWS_USER
-      Sleep(1);
-#endif
-      pipe_mutex_lock(rb_pipe->draw_mutex);
-#endif
    }
 
 }

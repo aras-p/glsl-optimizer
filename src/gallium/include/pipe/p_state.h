@@ -61,8 +61,8 @@ extern "C" {
 #define PIPE_MAX_SAMPLERS         16
 #define PIPE_MAX_VERTEX_SAMPLERS  16
 #define PIPE_MAX_GEOMETRY_SAMPLERS  16
-#define PIPE_MAX_SHADER_INPUTS    16
-#define PIPE_MAX_SHADER_OUTPUTS   16
+#define PIPE_MAX_SHADER_INPUTS    32
+#define PIPE_MAX_SHADER_OUTPUTS   32
 #define PIPE_MAX_TEXTURE_LEVELS   16
 #define PIPE_MAX_SO_BUFFERS        4
 
@@ -155,6 +155,7 @@ struct pipe_clip_state
 {
    float ucp[PIPE_MAX_CLIP_PLANES][4];
    unsigned nr;
+   unsigned depth_clamp:1;
 };
 
 
@@ -419,7 +420,7 @@ struct pipe_vertex_element
    /** Which vertex_buffer (as given to pipe->set_vertex_buffer()) does
     * this attribute live in?
     */
-   unsigned vertex_buffer_index:8;
+   unsigned vertex_buffer_index;
  
    enum pipe_format src_format;
 };

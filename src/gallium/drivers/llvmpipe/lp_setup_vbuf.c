@@ -61,7 +61,9 @@ lp_setup_get_vertex_info(struct vbuf_render *vbr)
 {
    struct lp_setup_context *setup = lp_setup_context(vbr);
 
-   /* vertex size/info depends on the latest state */
+   /* Vertex size/info depends on the latest state.
+    * The draw module may have issued additional state-change commands.
+    */
    lp_setup_update_state(setup);
 
    return setup->vertex_info;

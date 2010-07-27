@@ -32,54 +32,6 @@ glXGetSwapIntervalMESA(void)
 
 
 /*
-** GLX_MESA_swap_frame_usage
-*/
-
-int
-glXBeginFrameTrackingMESA(Display * dpy, GLXDrawable drawable)
-{
-   int status = GLX_BAD_CONTEXT;
-   (void) dpy;
-   (void) drawable;
-   return status;
-}
-
-
-int
-glXEndFrameTrackingMESA(Display * dpy, GLXDrawable drawable)
-{
-   int status = GLX_BAD_CONTEXT;
-   (void) dpy;
-   (void) drawable;
-   return status;
-}
-
-
-int
-glXGetFrameUsageMESA(Display * dpy, GLXDrawable drawable, GLfloat * usage)
-{
-   int status = GLX_BAD_CONTEXT;
-   (void) dpy;
-   (void) drawable;
-   (void) usage;
-   return status;
-}
-
-int
-glXQueryFrameTrackingMESA(Display * dpy, GLXDrawable drawable,
-                          int64_t * sbc, int64_t * missedFrames,
-                          GLfloat * lastMissedUsage)
-{
-   int status = GLX_BAD_CONTEXT;
-   (void) dpy;
-   (void) drawable;
-   (void) sbc;
-   (void) missedFrames;
-   (void) lastMissedUsage;
-   return status;
-}
-
-/*
 ** GLX_SGI_video_sync
 */
 int
@@ -190,52 +142,6 @@ glXWaitForSbcOML(Display * dpy, GLXDrawable drawable,
    return False;
 }
 
-
-/**
- * GLX_MESA_allocate_memory
- */
-/*@{*/
-
-PUBLIC void *
-glXAllocateMemoryMESA(Display * dpy, int scrn,
-                      size_t size, float readFreq,
-                      float writeFreq, float priority)
-{
-   (void) dpy;
-   (void) scrn;
-   (void) size;
-   (void) readFreq;
-   (void) writeFreq;
-   (void) priority;
-   return NULL;
-}
-
-
-PUBLIC void
-glXFreeMemoryMESA(Display * dpy, int scrn, void *pointer)
-{
-#ifdef __DRI_ALLOCATE
-   __GLXscreenConfigs *const psc = GetGLXScreenConfigs(dpy, scrn);
-
-   if (psc && psc->allocate)
-      (*psc->allocate->freeMemory) (psc->__driScreen, pointer);
-
-#else
-   (void) dpy;
-   (void) scrn;
-   (void) pointer;
-#endif /* __DRI_ALLOCATE */
-}
-
-
-PUBLIC GLuint
-glXGetMemoryOffsetMESA(Display * dpy, int scrn, const void *pointer)
-{
-   (void) dpy;
-   (void) scrn;
-   (void) pointer;
-   return ~0L;
-}
 
 Bool
 glXReleaseBuffersMESA(Display * dpy, GLXDrawable d)

@@ -5,13 +5,11 @@ common_INCLUDES = \
 	-I. \
 	-I$(TOP)/src/gallium/include \
 	-I$(TOP)/src/gallium/auxiliary \
-	-I$(TOP)/src/gallium/drivers \
 	-I$(TOP)/src/egl/main \
 	-I$(TOP)/include
 
 common_SOURCES = $(wildcard common/*.c)
 common_OBJECTS = $(common_SOURCES:.c=.o)
-
 
 x11_INCLUDES = \
 	-I$(TOP)/src/gallium/drivers \
@@ -31,30 +29,37 @@ kms_SOURCES = $(wildcard kms/*.c)
 kms_OBJECTS = $(kms_SOURCES:.c=.o)
 
 
-fbdev_INCLUDES = -I$(TOP)/src/gallium/winsys/sw -I$(TOP)/src/gallium/drivers
+fbdev_INCLUDES = -I$(TOP)/src/gallium/winsys/sw
 fbdev_SOURCES = $(wildcard fbdev/*.c)
 fbdev_OBJECTS = $(fbdev_SOURCES:.c=.o)
 
 
 ALL_INCLUDES = $(common_INCLUDES) $(x11_INCLUDES) $(kms_INCLUDES) $(fbdev_INCLUDES)
 ALL_SOURCES = $(common_SOURCES) $(x11_SOURCES) $(kms_SOURCES) $(fbdev_SOURCES)
-ALL_OBJECTS = $(common_OBJECTS) $(x11_OBJECTS) $(kms_OBJECTS) $(fbdev_OBJECTS)
+
+EGL_OBJECTS = $(common_OBJECTS)
+EGL_CPPFLAGS = $(common_INCLUDES)
+
+# add backends
+ifneq ($(findstring x11, $(EGL_PLATFORMS)),)
+EGL_OBJECTS += $(x11_OBJECTS)
+EGL_CPPFLAGS += -DHAVE_X11_BACKEND
+endif
+ifneq ($(findstring kms, $(EGL_PLATFORMS)),)
+EGL_OBJECTS += $(kms_OBJECTS)
+EGL_CPPFLAGS += -DHAVE_KMS_BACKEND
+endif
+ifneq ($(findstring fbdev, $(EGL_PLATFORMS)),)
+EGL_OBJECTS += $(fbdev_OBJECTS)
+EGL_CPPFLAGS += -DHAVE_FBDEV_BACKEND
+endif
 
 ##### TARGETS #####
 
-EGL_PLATFORMS_MODS = $(foreach plat, $(EGL_PLATFORMS), libegl$(plat).a)
+default: depend libegl.a
 
-default: depend $(EGL_PLATFORMS_MODS)
-
-
-libeglx11.a: $(x11_OBJECTS) $(common_OBJECTS) Makefile
-	$(MKLIB) -o eglx11 -static $(x11_OBJECTS) $(common_OBJECTS)
-
-libeglkms.a: $(kms_OBJECTS) $(common_OBJECTS) Makefile
-	$(MKLIB) -o eglkms -static $(kms_OBJECTS) $(common_OBJECTS)
-
-libeglfbdev.a: $(fbdev_OBJECTS) $(common_OBJECTS) Makefile
-	$(MKLIB) -o eglfbdev -static $(fbdev_OBJECTS) $(common_OBJECTS)
+libegl.a: $(EGL_OBJECTS) Makefile
+	$(MKLIB) -o egl -static $(EGL_OBJECTS)
 
 depend: 
 	rm -f depend
@@ -62,8 +67,8 @@ depend:
 	$(MKDEP) $(MKDEP_OPTIONS) $(ALL_INCLUDES) $(ALL_SOURCES) 2> /dev/null
 
 clean:
-	rm -f $(ALL_OBJECTS)
-	rm -f $(EGL_PLATFORMS_MODS)
+	rm -f libegl.a
+	rm -f $(EGL_OBJECTS)
 	rm -f depend depend.bak
 
 # Dummy target
@@ -72,16 +77,20 @@ install:
 
 ##### RULES #####
 
+define egl-cc
+$(CC) -c $(common_INCLUDES) $($(1)_INCLUDES) $(DEFINES) $(CFLAGS) $< -o $@
+endef
+
 $(common_OBJECTS): %.o: %.c
-	$(CC) -c $(common_INCLUDES) $(DEFINES) $(CFLAGS) $< -o $@
+	$(CC) -c $(EGL_CPPFLAGS) $(DEFINES) $(CFLAGS) $< -o $@
 
 $(x11_OBJECTS): %.o: %.c
-	$(CC) -c $(common_INCLUDES) $(x11_INCLUDES) $(DEFINES) $(CFLAGS) $< -o $@
+	$(call egl-cc,x11)
 
 $(kms_OBJECTS): %.o: %.c
-	$(CC) -c $(common_INCLUDES) $(kms_INCLUDES) $(DEFINES) $(CFLAGS) $< -o $@
+	$(call egl-cc,kms)
 
 $(fbdev_OBJECTS): %.o: %.c
-	$(CC) -c $(common_INCLUDES) $(fbdev_INCLUDES) $(DEFINES) $(CFLAGS) $< -o $@
+	$(call egl-cc,fbdev)
 
 sinclude depend

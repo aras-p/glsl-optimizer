@@ -46,12 +46,12 @@
  */
 
 #define CS_LOCALS(context) \
-    struct r300_context* const cs_context_copy = (context); \
-    struct r300_winsys_screen *cs_winsys = cs_context_copy->rws; \
-    CS_DEBUG(int cs_count = 0; (void) cs_count;)
+    struct r300_winsys_cs *cs_copy = (context)->cs; \
+    struct r300_winsys_screen *cs_winsys = (context)->rws; \
+    int cs_count = 0; (void) cs_count; (void) cs_winsys;
 
 #define BEGIN_CS(size) do { \
-    assert(r300_check_cs(cs_context_copy, (size))); \
+    assert(size <= (cs_copy->ndw - cs_copy->cdw)); \
     CS_DEBUG(cs_count = size;) \
 } while (0)
 
@@ -66,49 +66,39 @@
 #define END_CS
 #endif
 
+
 /**
  * Writing pure DWORDs.
  */
 
 #define OUT_CS(value) do { \
-    cs_winsys->write_cs_dword(cs_winsys, (value)); \
+    cs_copy->ptr[cs_copy->cdw++] = (value); \
     CS_DEBUG(cs_count--;) \
 } while (0)
 
-#define OUT_CS_32F(value) do { \
-    cs_winsys->write_cs_dword(cs_winsys, fui(value)); \
-    CS_DEBUG(cs_count--;) \
-} while (0)
+#define OUT_CS_32F(value) \
+    OUT_CS(fui(value))
 
 #define OUT_CS_REG(register, value) do { \
-    assert(register); \
-    cs_winsys->write_cs_dword(cs_winsys, CP_PACKET0(register, 0)); \
-    cs_winsys->write_cs_dword(cs_winsys, value); \
-    CS_DEBUG(cs_count -= 2;) \
+    OUT_CS(CP_PACKET0(register, 0)); \
+    OUT_CS(value); \
 } while (0)
 
 /* Note: This expects count to be the number of registers,
  * not the actual packet0 count! */
-#define OUT_CS_REG_SEQ(register, count) do { \
-    assert(register); \
-    cs_winsys->write_cs_dword(cs_winsys, CP_PACKET0((register), ((count) - 1))); \
-    CS_DEBUG(cs_count--;) \
-} while (0)
+#define OUT_CS_REG_SEQ(register, count) \
+    OUT_CS(CP_PACKET0((register), ((count) - 1)))
+
+#define OUT_CS_ONE_REG(register, count) \
+    OUT_CS(CP_PACKET0((register), ((count) - 1)) | RADEON_ONE_REG_WR)
+
+#define OUT_CS_PKT3(op, count) \
+    OUT_CS(CP_PACKET3(op, count))
 
 #define OUT_CS_TABLE(values, count) do { \
-    cs_winsys->write_cs_table(cs_winsys, values, count); \
+    memcpy(cs_copy->ptr + cs_copy->cdw, values, count * 4); \
+    cs_copy->cdw += count; \
     CS_DEBUG(cs_count -= count;) \
-} while (0)
-
-#define OUT_CS_ONE_REG(register, count) do { \
-    assert(register); \
-    cs_winsys->write_cs_dword(cs_winsys, CP_PACKET0((register), ((count) - 1)) | RADEON_ONE_REG_WR); \
-    CS_DEBUG(cs_count--;) \
-} while (0)
-
-#define OUT_CS_PKT3(op, count) do { \
-    cs_winsys->write_cs_dword(cs_winsys, CP_PACKET3(op, count)); \
-    CS_DEBUG(cs_count--;) \
 } while (0)
 
 
@@ -116,26 +106,26 @@
  * Writing relocations.
  */
 
-#define OUT_CS_RELOC(bo, offset, rd, wd, flags) do { \
+#define OUT_CS_RELOC(bo, offset, rd, wd) do { \
     assert(bo); \
-    cs_winsys->write_cs_dword(cs_winsys, offset); \
-    cs_winsys->write_cs_reloc(cs_winsys, bo, rd, wd, flags); \
-    CS_DEBUG(cs_count -= 3;) \
+    OUT_CS(offset); \
+    cs_winsys->cs_write_reloc(cs_copy, bo, rd, wd); \
+    CS_DEBUG(cs_count -= 2;) \
 } while (0)
 
-#define OUT_CS_BUF_RELOC(bo, offset, rd, wd, flags) do { \
+#define OUT_CS_BUF_RELOC(bo, offset, rd, wd) do { \
     assert(bo); \
-    OUT_CS_RELOC(r300_buffer(bo)->buf, offset, rd, wd, flags); \
+    OUT_CS_RELOC(r300_buffer(bo)->buf, offset, rd, wd); \
 } while (0)
 
-#define OUT_CS_TEX_RELOC(tex, offset, rd, wd, flags) do { \
+#define OUT_CS_TEX_RELOC(tex, offset, rd, wd) do { \
     assert(tex); \
-    OUT_CS_RELOC(tex->buffer, offset, rd, wd, flags); \
+    OUT_CS_RELOC(tex->buffer, offset, rd, wd); \
 } while (0)
 
-#define OUT_CS_BUF_RELOC_NO_OFFSET(bo, rd, wd, flags) do { \
+#define OUT_CS_BUF_RELOC_NO_OFFSET(bo, rd, wd) do { \
     assert(bo); \
-    cs_winsys->write_cs_reloc(cs_winsys, r300_buffer(bo)->buf, rd, wd, flags); \
+    cs_winsys->cs_write_reloc(cs_copy, r300_buffer(bo)->buf, rd, wd); \
     CS_DEBUG(cs_count -= 2;) \
 } while (0)
 
@@ -146,7 +136,8 @@
 
 #define WRITE_CS_TABLE(values, count) do { \
     CS_DEBUG(assert(cs_count == 0);) \
-    cs_winsys->write_cs_table(cs_winsys, values, count); \
+    memcpy(cs_copy->ptr + cs_copy->cdw, (values), (count) * 4); \
+    cs_copy->cdw += (count); \
 } while (0)
 
 #endif /* R300_CS_H */

@@ -86,12 +86,16 @@ ChangeDrawableAttribute(Display * dpy, GLXDrawable drawable,
                         const CARD32 * attribs, size_t num_attribs)
 {
    __GLXdisplayPrivate *priv = __glXInitialize(dpy);
+   __GLXDRIdrawable *pdraw;
    CARD32 *output;
    CARD8 opcode;
+   int i;
 
    if ((dpy == NULL) || (drawable == 0)) {
       return;
    }
+
+   pdraw = GetGLXDRIDrawable(dpy, drawable);
 
    opcode = __glXSetupForCommand(dpy);
    if (!opcode)
@@ -128,6 +132,15 @@ ChangeDrawableAttribute(Display * dpy, GLXDrawable drawable,
 
    UnlockDisplay(dpy);
    SyncHandle();
+
+   for (i = 0; i < num_attribs; i++) {
+      switch(attribs[i * 2]) {
+      case GLX_EVENT_MASK:
+	 /* Keep a local copy for masking out DRI2 proto events as needed */
+	 pdraw->eventMask = attribs[i * 2 + 1];
+	 break;
+      }
+   }
 
    return;
 }
@@ -178,7 +191,7 @@ CreateDRIDrawable(Display *dpy, const __GLcontextModes *fbconfig,
    __GLXDRIdrawable *pdraw;
    __GLXscreenConfigs *psc;
 
-   psc = &priv->screenConfigs[fbconfig->screen];
+   psc = priv->screenConfigs[fbconfig->screen];
    if (psc->driScreen == NULL)
       return;
 
@@ -189,7 +202,7 @@ CreateDRIDrawable(Display *dpy, const __GLcontextModes *fbconfig,
       return;
    }
 
-   if (__glxHashInsert(psc->drawHash, glxdrawable, pdraw)) {
+   if (__glxHashInsert(priv->drawHash, glxdrawable, pdraw)) {
       (*pdraw->destroyDrawable) (pdraw);
       return; /* FIXME: Check what we're supposed to do here... */
    }
@@ -201,16 +214,14 @@ CreateDRIDrawable(Display *dpy, const __GLcontextModes *fbconfig,
 static void
 DestroyDRIDrawable(Display *dpy, GLXDrawable drawable, int destroy_xdrawable)
 {
-   int screen;
    __GLXdisplayPrivate *const priv = __glXInitialize(dpy);
-   __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable, &screen);
-   __GLXscreenConfigs *psc = &priv->screenConfigs[screen];
+   __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable);
 
    if (pdraw != NULL) {
       if (destroy_xdrawable)
-         XFreePixmap(psc->dpy, pdraw->xDrawable);
+         XFreePixmap(pdraw->psc->dpy, pdraw->xDrawable);
       (*pdraw->destroyDrawable) (pdraw);
-      __glxHashDelete(psc->drawHash, drawable);
+      __glxHashDelete(priv->drawHash, drawable);
    }
 }
 
@@ -328,7 +339,7 @@ GetDrawableAttribute(Display * dpy, GLXDrawable drawable,
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
          {
-            __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable, NULL);
+            __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable);
 
             if (pdraw != NULL && !pdraw->textureTarget)
                pdraw->textureTarget =

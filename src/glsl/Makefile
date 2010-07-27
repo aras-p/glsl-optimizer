@@ -70,8 +70,8 @@ LIBS = \
 APPS = glsl_compiler glcpp/glcpp
 
 GLSL2_C_SOURCES = \
-	../mesa/shader/hash_table.c \
-	../mesa/shader/symbol_table.c
+	../mesa/program/hash_table.c \
+	../mesa/program/symbol_table.c
 GLSL2_CXX_SOURCES = \
 	main.cpp
 
@@ -87,7 +87,7 @@ DEFINES = \
 
 GLCPP_OBJECTS = \
 	$(GLCPP_SOURCES:.c=.o) \
-	../mesa/shader/hash_table.o
+	../mesa/program/hash_table.o
 
 OBJECTS = \
 	$(C_SOURCES:.c=.o) \
@@ -97,7 +97,7 @@ INCLUDES = \
 	-I. \
 	-I../mesa \
 	-I../mapi \
-	-I../mesa/shader \
+	-I../mesa/program \
 	-I../../include \
 	$(LIBRARY_INCLUDES)
 

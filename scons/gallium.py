@@ -282,6 +282,9 @@ def generate(env):
                 ccflags += [
                     '-mmmx', '-msse', '-msse2', # enable SIMD intrinsics
                 ]
+            if platform in ['windows', 'darwin']:
+                # Workaround http://gcc.gnu.org/bugzilla/show_bug.cgi?id=37216
+                ccflags += ['-fno-common']
             if distutils.version.LooseVersion(ccversion) >= distutils.version.LooseVersion('4.2'):
                 ccflags += [
                     '-mstackrealign', # ensure stack is aligned
@@ -292,7 +295,6 @@ def generate(env):
         # - http://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html
         ccflags += [
             '-Wall',
-            '-Wmissing-field-initializers',
             '-Wno-long-long',
             '-ffast-math',
             '-fmessage-length=0', # be nice to Eclipse
@@ -301,6 +303,10 @@ def generate(env):
             '-Wmissing-prototypes',
             '-std=gnu99',
         ]
+        if distutils.version.LooseVersion(ccversion) >= distutils.version.LooseVersion('4.0'):
+            ccflags += [
+                '-Wmissing-field-initializers',
+            ]
         if distutils.version.LooseVersion(ccversion) >= distutils.version.LooseVersion('4.2'):
             ccflags += [
                 '-Werror=pointer-arith',

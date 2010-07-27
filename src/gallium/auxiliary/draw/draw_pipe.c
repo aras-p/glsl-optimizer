@@ -177,15 +177,15 @@ static void do_triangle( struct draw_context *draw,
                 ( DRAW_PIPE_RESET_STIPPLE |     \
                   DRAW_PIPE_EDGE_FLAG_0 |       \
                   DRAW_PIPE_EDGE_FLAG_1 ),      \
-                verts + stride * elts[i0],      \
-                verts + stride * elts[i1],      \
-                verts + stride * elts[i2]);     \
+                verts + stride * (elts[i0] & ~DRAW_PIPE_FLAG_MASK),     \
+                verts + stride * (elts[i1] & ~DRAW_PIPE_FLAG_MASK),     \
+                verts + stride * (elts[i2] & ~DRAW_PIPE_FLAG_MASK));    \
    do_triangle( draw,                           \
                 ( DRAW_PIPE_EDGE_FLAG_1 |       \
                   DRAW_PIPE_EDGE_FLAG_2 ),      \
-                verts + stride * elts[i0],      \
-                verts + stride * elts[i2],      \
-                verts + stride * elts[i3])
+                verts + stride * (elts[i0] & ~DRAW_PIPE_FLAG_MASK),     \
+                verts + stride * (elts[i2] & ~DRAW_PIPE_FLAG_MASK),     \
+                verts + stride * (elts[i3] & ~DRAW_PIPE_FLAG_MASK))
 
 /* emit last quad vertex as last vertex in triangles */
 #define QUAD_LAST_PV(i0,i1,i2,i3)               \
@@ -193,15 +193,15 @@ static void do_triangle( struct draw_context *draw,
                 ( DRAW_PIPE_RESET_STIPPLE |     \
                   DRAW_PIPE_EDGE_FLAG_0 |       \
                   DRAW_PIPE_EDGE_FLAG_2 ),      \
-                verts + stride * elts[i0],      \
-                verts + stride * elts[i1],      \
-                verts + stride * elts[i3]);     \
+                verts + stride * (elts[i0] & ~DRAW_PIPE_FLAG_MASK),     \
+                verts + stride * (elts[i1] & ~DRAW_PIPE_FLAG_MASK),     \
+                verts + stride * (elts[i3] & ~DRAW_PIPE_FLAG_MASK));    \
    do_triangle( draw,                           \
                 ( DRAW_PIPE_EDGE_FLAG_0 |       \
                   DRAW_PIPE_EDGE_FLAG_1 ),      \
-                verts + stride * elts[i1],      \
-                verts + stride * elts[i2],      \
-                verts + stride * elts[i3])
+                verts + stride * (elts[i1] & ~DRAW_PIPE_FLAG_MASK),     \
+                verts + stride * (elts[i2] & ~DRAW_PIPE_FLAG_MASK),     \
+                verts + stride * (elts[i3] & ~DRAW_PIPE_FLAG_MASK))
 
 #define TRIANGLE(flags,i0,i1,i2)                                        \
    do_triangle( draw,                                                   \
@@ -218,7 +218,7 @@ static void do_triangle( struct draw_context *draw,
 
 #define POINT(i0)                               \
    do_point( draw,                              \
-             verts + stride * elts[i0] )
+             verts + stride * (elts[i0] & ~DRAW_PIPE_FLAG_MASK) )
 
 #define FUNC pipe_run
 #define ARGS                                    \
@@ -260,7 +260,7 @@ void draw_pipeline_run( struct draw_context *draw,
                         const struct draw_prim_info *prim_info)
 {
    unsigned i, start;
-   
+
    draw->pipeline.verts = (char *)vert_info->verts;
    draw->pipeline.vertex_stride = vert_info->stride;
    draw->pipeline.vertex_count = vert_info->count;
@@ -296,14 +296,14 @@ void draw_pipeline_run( struct draw_context *draw,
                   DRAW_PIPE_EDGE_FLAG_0 |                        \
                   DRAW_PIPE_EDGE_FLAG_1 ),                       \
                 verts + stride * ((i0) & ~DRAW_PIPE_FLAG_MASK),  \
-                verts + stride * (i1),                           \
-                verts + stride * (i2));                          \
+                verts + stride * ((i1) & ~DRAW_PIPE_FLAG_MASK),  \
+                verts + stride * ((i2) & ~DRAW_PIPE_FLAG_MASK)); \
    do_triangle( draw,                                            \
                 ( DRAW_PIPE_EDGE_FLAG_1 |                        \
                   DRAW_PIPE_EDGE_FLAG_2 ),                       \
                 verts + stride * ((i0) & ~DRAW_PIPE_FLAG_MASK),  \
-                verts + stride * (i2),                           \
-                verts + stride * (i3))
+                verts + stride * ((i2) & ~DRAW_PIPE_FLAG_MASK),  \
+                verts + stride * ((i3) & ~DRAW_PIPE_FLAG_MASK))
 
 /* emit last quad vertex as last vertex in triangles */
 #define QUAD_LAST_PV(i0,i1,i2,i3)                                \
@@ -312,31 +312,31 @@ void draw_pipeline_run( struct draw_context *draw,
                   DRAW_PIPE_EDGE_FLAG_0 |                        \
                   DRAW_PIPE_EDGE_FLAG_2 ),                       \
                 verts + stride * ((i0) & ~DRAW_PIPE_FLAG_MASK),  \
-                verts + stride * (i1),                           \
-                verts + stride * (i3));                          \
+                verts + stride * ((i1) & ~DRAW_PIPE_FLAG_MASK),  \
+                verts + stride * ((i3) & ~DRAW_PIPE_FLAG_MASK)); \
    do_triangle( draw,                                            \
                 ( DRAW_PIPE_EDGE_FLAG_0 |                        \
                   DRAW_PIPE_EDGE_FLAG_1 ),                       \
                 verts + stride * ((i1) & ~DRAW_PIPE_FLAG_MASK),  \
-                verts + stride * (i2),                           \
-                verts + stride * (i3))
+                verts + stride * ((i2) & ~DRAW_PIPE_FLAG_MASK),  \
+                verts + stride * ((i3) & ~DRAW_PIPE_FLAG_MASK))
 
 #define TRIANGLE(flags,i0,i1,i2)                                 \
    do_triangle( draw,                                            \
                 flags,  /* flags */                              \
                 verts + stride * ((i0) & ~DRAW_PIPE_FLAG_MASK),  \
-                verts + stride * (i1),                           \
-                verts + stride * (i2))
+                verts + stride * ((i1) & ~DRAW_PIPE_FLAG_MASK),  \
+                verts + stride * ((i2) & ~DRAW_PIPE_FLAG_MASK))
 
 #define LINE(flags,i0,i1)                                   \
    do_line( draw,                                           \
             flags,                                          \
             verts + stride * ((i0) & ~DRAW_PIPE_FLAG_MASK), \
-            verts + stride * (i1))
+            verts + stride * ((i1) & ~DRAW_PIPE_FLAG_MASK))
 
 #define POINT(i0)                               \
    do_point( draw,                              \
-             verts + stride * i0 )
+             verts + stride * ((i0) & ~DRAW_PIPE_FLAG_MASK) )
 
 #define FUNC pipe_run_linear
 #define ARGS                                    \

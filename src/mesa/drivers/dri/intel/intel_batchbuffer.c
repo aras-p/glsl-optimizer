@@ -102,7 +102,7 @@ do_flush_locked(struct intel_batchbuffer *batch, GLuint used)
    if (INTEL_DEBUG & DEBUG_BATCH) {
       drm_intel_bo_map(batch->buf, GL_FALSE);
       intel_decode(batch->buf->virtual, used / 4, batch->buf->offset,
-		   intel->intelScreen->deviceID);
+		   intel->intelScreen->deviceID, GL_TRUE);
       drm_intel_bo_unmap(batch->buf);
 
       if (intel->vtbl.debug_batch != NULL)

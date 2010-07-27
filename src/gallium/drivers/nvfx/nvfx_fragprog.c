@@ -842,7 +842,6 @@ nvfx_fragprog_validate(struct nvfx_context *nvfx)
 	struct nouveau_channel* chan = nvfx->screen->base.channel;
 	struct nvfx_fragment_program *fp = nvfx->fragprog;
 	int update = 0;
-	int i;
 
 	if (!fp->translated)
 	{
@@ -895,6 +894,7 @@ nvfx_fragprog_validate(struct nvfx_context *nvfx)
 			{
 				struct nvfx_fragment_program_bo* fpbo = os_malloc_aligned(sizeof(struct nvfx_fragment_program) + fp->prog_size * fp->progs_per_bo, 16);
 				char *map, *buf;
+				int i;
 
 				if(fp->fpbo)
 				{
@@ -910,7 +910,7 @@ nvfx_fragprog_validate(struct nvfx_context *nvfx)
 
 				map = fpbo->bo->map;
 				buf = fpbo->insn;
-				for(int i = 0; i < fp->progs_per_bo; ++i)
+				for(i = 0; i < fp->progs_per_bo; ++i)
 				{
 					memcpy(buf, fp->insn, fp->insn_len * 4);
 					nvfx_fp_memcpy(map, fp->insn, fp->insn_len * 4);
@@ -931,6 +931,7 @@ nvfx_fragprog_validate(struct nvfx_context *nvfx)
 			uint32_t* map = pipe_buffer_map(&nvfx->pipe, constbuf, PIPE_TRANSFER_READ, &transfer);
 			uint32_t* fpmap = (uint32_t*)((char*)fp->fpbo->bo->map + offset);
 			uint32_t* buf = (uint32_t*)((char*)fp->fpbo->insn + offset);
+			int i;
 			for (i = 0; i < fp->nr_consts; ++i) {
 				unsigned off = fp->consts[i].offset;
 				unsigned idx = fp->consts[i].index * 4;

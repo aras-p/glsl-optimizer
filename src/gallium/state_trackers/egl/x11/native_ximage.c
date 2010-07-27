@@ -441,8 +441,9 @@ ximage_display_destroy(struct native_display *ndpy)
 }
 
 struct native_display *
-x11_create_ximage_display(EGLNativeDisplayType dpy,
-                          struct native_event_handler *event_handler)
+x11_create_ximage_display(Display *dpy,
+                          struct native_event_handler *event_handler,
+                          void *user_data)
 {
    struct ximage_display *xdpy;
    struct sw_winsys *winsys = NULL;
@@ -462,6 +463,7 @@ x11_create_ximage_display(EGLNativeDisplayType dpy,
    }
 
    xdpy->event_handler = event_handler;
+   xdpy->base.user_data = user_data;
 
    xdpy->xscr_number = DefaultScreen(xdpy->dpy);
    xdpy->xscr = x11_screen_create(xdpy->dpy, xdpy->xscr_number);
@@ -472,7 +474,8 @@ x11_create_ximage_display(EGLNativeDisplayType dpy,
    if (!winsys)
       goto fail;
 
-   xdpy->base.screen = native_create_sw_screen(winsys);
+   xdpy->base.screen =
+      xdpy->event_handler->new_sw_screen(&xdpy->base, winsys);
    if (!xdpy->base.screen)
       goto fail;
 

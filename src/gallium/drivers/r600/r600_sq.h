@@ -87,9 +87,9 @@
 #define   G_SQ_CF_WORD1_BARRIER(x)                                   (((x) >> 31) & 0x1)
 #define   C_SQ_CF_WORD1_BARRIER                                      0x7FFFFFFF
 #define P_SQ_CF_ALU_WORD0
-#define   S_SQ_CF_ALU_WORD0_ALU_ADDR(x)                              (((x) & 0x3FFFFF) << 0)
-#define   G_SQ_CF_ALU_WORD0_ALU_ADDR(x)                              (((x) >> 0) & 0x3FFFFF)
-#define   C_SQ_CF_ALU_WORD0_ALU_ADDR                                 0xFFC00000
+#define   S_SQ_CF_ALU_WORD0_ADDR(x)                                  (((x) & 0x3FFFFF) << 0)
+#define   G_SQ_CF_ALU_WORD0_ADDR(x)                                  (((x) >> 0) & 0x3FFFFF)
+#define   C_SQ_CF_ALU_WORD0_ADDR                                     0xFFC00000
 #define   S_SQ_CF_ALU_WORD0_KCACHE_BANK0(x)                          (((x) & 0xF) << 22)
 #define   G_SQ_CF_ALU_WORD0_KCACHE_BANK0(x)                          (((x) >> 22) & 0xF)
 #define   C_SQ_CF_ALU_WORD0_KCACHE_BANK0                             0xFC3FFFFF
@@ -109,15 +109,15 @@
 #define   S_SQ_CF_ALU_WORD1_KCACHE_ADDR1(x)                          (((x) & 0xFF) << 10)
 #define   G_SQ_CF_ALU_WORD1_KCACHE_ADDR1(x)                          (((x) >> 10) & 0xFF)
 #define   C_SQ_CF_ALU_WORD1_KCACHE_ADDR1                             0xFFFC03FF
-#define   S_SQ_CF_ALU_WORD1_ALU_COUNT(x)                             (((x) & 0x7F) << 18)
-#define   G_SQ_CF_ALU_WORD1_ALU_COUNT(x)                             (((x) >> 18) & 0x7F)
-#define   C_SQ_CF_ALU_WORD1_ALU_COUNT                                0xFE03FFFF
+#define   S_SQ_CF_ALU_WORD1_COUNT(x)                                 (((x) & 0x7F) << 18)
+#define   G_SQ_CF_ALU_WORD1_COUNT(x)                                 (((x) >> 18) & 0x7F)
+#define   C_SQ_CF_ALU_WORD1_COUNT                                    0xFE03FFFF
 #define   S_SQ_CF_ALU_WORD1_USES_WATERFALL(x)                        (((x) & 0x1) << 25)
 #define   G_SQ_CF_ALU_WORD1_USES_WATERFALL(x)                        (((x) >> 25) & 0x1)
 #define   C_SQ_CF_ALU_WORD1_USES_WATERFALL                           0xFDFFFFFF
-#define   S_SQ_CF_ALU_WORD1_CF_ALU_INST(x)                           (((x) & 0xF) << 26)
-#define   G_SQ_CF_ALU_WORD1_CF_ALU_INST(x)                           (((x) >> 26) & 0xF)
-#define   C_SQ_CF_ALU_WORD1_CF_ALU_INST                              0xC3FFFFFF
+#define   S_SQ_CF_ALU_WORD1_CF_INST(x)                               (((x) & 0xF) << 26)
+#define   G_SQ_CF_ALU_WORD1_CF_INST(x)                               (((x) >> 26) & 0xF)
+#define   C_SQ_CF_ALU_WORD1_CF_INST                                  0xC3FFFFFF
 #define     V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU                         0x00000008
 #define     V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_PUSH_BEFORE             0x00000009
 #define     V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_POP_AFTER               0x0000000A
@@ -546,6 +546,8 @@
 #define   S_SQ_TEX_WORD1_COORD_TYPE_X(x)                             (((x) & 0x1) << 28)
 #define   G_SQ_TEX_WORD1_COORD_TYPE_X(x)                             (((x) >> 28) & 0x1)
 #define   C_SQ_TEX_WORD1_COORD_TYPE_X                                0xEFFFFFFF
+#define     V_SQ_TEX_WORD1_COORD_UNNORMALIZED                        0x00000000
+#define     V_SQ_TEX_WORD1_COORD_NORMALIZED                          0x00000001
 #define   S_SQ_TEX_WORD1_COORD_TYPE_Y(x)                             (((x) & 0x1) << 29)
 #define   G_SQ_TEX_WORD1_COORD_TYPE_Y(x)                             (((x) >> 29) & 0x1)
 #define   C_SQ_TEX_WORD1_COORD_TYPE_Y                                0xDFFFFFFF
@@ -580,27 +582,5 @@
 #define   S_SQ_TEX_WORD2_SRC_SEL_W(x)                                (((x) & 0x7) << 29)
 #define   G_SQ_TEX_WORD2_SRC_SEL_W(x)                                (((x) >> 29) & 0x7)
 #define   C_SQ_TEX_WORD2_SRC_SEL_W                                   0x1FFFFFFF
-#define P_SQ_ALU_WORD1_OP2_V2
-#define   S_SQ_ALU_WORD1_OP2_V2_SRC0_ABS(x)                          (((x) & 0x1) << 0)
-#define   G_SQ_ALU_WORD1_OP2_V2_SRC0_ABS(x)                          (((x) >> 0) & 0x1)
-#define   C_SQ_ALU_WORD1_OP2_V2_SRC0_ABS                             0xFFFFFFFE
-#define   S_SQ_ALU_WORD1_OP2_V2_SRC1_ABS(x)                          (((x) & 0x1) << 1)
-#define   G_SQ_ALU_WORD1_OP2_V2_SRC1_ABS(x)                          (((x) >> 1) & 0x1)
-#define   C_SQ_ALU_WORD1_OP2_V2_SRC1_ABS                             0xFFFFFFFD
-#define   S_SQ_ALU_WORD1_OP2_V2_UPDATE_EXECUTE_MASK(x)               (((x) & 0x1) << 2)
-#define   G_SQ_ALU_WORD1_OP2_V2_UPDATE_EXECUTE_MASK(x)               (((x) >> 2) & 0x1)
-#define   C_SQ_ALU_WORD1_OP2_V2_UPDATE_EXECUTE_MASK                  0xFFFFFFFB
-#define   S_SQ_ALU_WORD1_OP2_V2_UPDATE_PRED(x)                       (((x) & 0x1) << 3)
-#define   G_SQ_ALU_WORD1_OP2_V2_UPDATE_PRED(x)                       (((x) >> 3) & 0x1)
-#define   C_SQ_ALU_WORD1_OP2_V2_UPDATE_PRED                          0xFFFFFFF7
-#define   S_SQ_ALU_WORD1_OP2_V2_WRITE_MASK(x)                        (((x) & 0x1) << 4)
-#define   G_SQ_ALU_WORD1_OP2_V2_WRITE_MASK(x)                        (((x) >> 4) & 0x1)
-#define   C_SQ_ALU_WORD1_OP2_V2_WRITE_MASK                           0xFFFFFFEF
-#define   S_SQ_ALU_WORD1_OP2_V2_OMOD(x)                              (((x) & 0x3) << 5)
-#define   G_SQ_ALU_WORD1_OP2_V2_OMOD(x)                              (((x) >> 5) & 0x3)
-#define   C_SQ_ALU_WORD1_OP2_V2_OMOD                                 0xFFFFFF9F
-#define   S_SQ_ALU_WORD1_OP2_V2_ALU_INST(x)                          (((x) & 0x7FF) << 7)
-#define   G_SQ_ALU_WORD1_OP2_V2_ALU_INST(x)                          (((x) >> 7) & 0x7FF)
-#define   C_SQ_ALU_WORD1_OP2_V2_ALU_INST                             0xFFFC007F
 
 #endif

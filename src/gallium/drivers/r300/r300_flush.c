@@ -25,6 +25,7 @@
 #include "draw/draw_private.h"
 
 #include "util/u_simple_list.h"
+#include "util/u_upload_mgr.h"
 
 #include "r300_context.h"
 #include "r300_cs.h"
@@ -39,6 +40,9 @@ static void r300_flush(struct pipe_context* pipe,
     struct r300_atom *atom;
     struct r300_fence **rfence = (struct r300_fence**)fence;
 
+    u_upload_flush(r300->upload_vb);
+    u_upload_flush(r300->upload_ib);
+
     /* We probably need to flush Draw, but we may have been called from
      * within Draw. This feels kludgy, but it might be the best thing.
      *
@@ -48,12 +52,11 @@ static void r300_flush(struct pipe_context* pipe,
     }
 
     if (r300->dirty_hw) {
+        r300_emit_hyperz_end(r300);
         r300_emit_query_end(r300);
 
-        if (SCREEN_DBG_ON(r300->screen, DBG_STATS)) {
-            r300->flush_counter++;
-        }
-        r300->rws->flush_cs(r300->rws);
+        r300->flush_counter++;
+        r300->rws->cs_flush(r300->cs);
         r300->dirty_hw = 0;
 
         /* New kitchen sink, baby. */

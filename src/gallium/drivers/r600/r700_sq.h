@@ -583,27 +583,5 @@
 #define   S_SQ_TEX_WORD2_SRC_SEL_W(x)                                (((x) & 0x7) << 29)
 #define   G_SQ_TEX_WORD2_SRC_SEL_W(x)                                (((x) >> 29) & 0x7)
 #define   C_SQ_TEX_WORD2_SRC_SEL_W                                   0x1FFFFFFF
-#define P_SQ_ALU_WORD1_OP2_V2
-#define   S_SQ_ALU_WORD1_OP2_V2_SRC0_ABS(x)                          (((x) & 0x1) << 0)
-#define   G_SQ_ALU_WORD1_OP2_V2_SRC0_ABS(x)                          (((x) >> 0) & 0x1)
-#define   C_SQ_ALU_WORD1_OP2_V2_SRC0_ABS                             0xFFFFFFFE
-#define   S_SQ_ALU_WORD1_OP2_V2_SRC1_ABS(x)                          (((x) & 0x1) << 1)
-#define   G_SQ_ALU_WORD1_OP2_V2_SRC1_ABS(x)                          (((x) >> 1) & 0x1)
-#define   C_SQ_ALU_WORD1_OP2_V2_SRC1_ABS                             0xFFFFFFFD
-#define   S_SQ_ALU_WORD1_OP2_V2_UPDATE_EXECUTE_MASK(x)               (((x) & 0x1) << 2)
-#define   G_SQ_ALU_WORD1_OP2_V2_UPDATE_EXECUTE_MASK(x)               (((x) >> 2) & 0x1)
-#define   C_SQ_ALU_WORD1_OP2_V2_UPDATE_EXECUTE_MASK                  0xFFFFFFFB
-#define   S_SQ_ALU_WORD1_OP2_V2_UPDATE_PRED(x)                       (((x) & 0x1) << 3)
-#define   G_SQ_ALU_WORD1_OP2_V2_UPDATE_PRED(x)                       (((x) >> 3) & 0x1)
-#define   C_SQ_ALU_WORD1_OP2_V2_UPDATE_PRED                          0xFFFFFFF7
-#define   S_SQ_ALU_WORD1_OP2_V2_WRITE_MASK(x)                        (((x) & 0x1) << 4)
-#define   G_SQ_ALU_WORD1_OP2_V2_WRITE_MASK(x)                        (((x) >> 4) & 0x1)
-#define   C_SQ_ALU_WORD1_OP2_V2_WRITE_MASK                           0xFFFFFFEF
-#define   S_SQ_ALU_WORD1_OP2_V2_OMOD(x)                              (((x) & 0x3) << 5)
-#define   G_SQ_ALU_WORD1_OP2_V2_OMOD(x)                              (((x) >> 5) & 0x3)
-#define   C_SQ_ALU_WORD1_OP2_V2_OMOD                                 0xFFFFFF9F
-#define   S_SQ_ALU_WORD1_OP2_V2_ALU_INST(x)                          (((x) & 0x7FF) << 7)
-#define   G_SQ_ALU_WORD1_OP2_V2_ALU_INST(x)                          (((x) >> 7) & 0x7FF)
-#define   C_SQ_ALU_WORD1_OP2_V2_ALU_INST                             0xFFFC007F
 
 #endif

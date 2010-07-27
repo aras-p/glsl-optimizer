@@ -103,7 +103,7 @@ struct u_split_prim {
    uint edgeflag_off:1;
 };
 
-static inline void
+static INLINE void
 u_split_prim_init(struct u_split_prim *s,
                   unsigned mode, unsigned start, unsigned count)
 {

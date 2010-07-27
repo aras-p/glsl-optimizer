@@ -55,6 +55,7 @@ struct r300_buffer
     enum r300_buffer_domain domain;
 
     void *user_buffer;
+    void *constant_buffer;
     struct r300_buffer_range ranges[R300_BUFFER_MAX_RANGES];
     unsigned num_ranges;
 };
@@ -67,7 +68,7 @@ int r300_upload_index_buffer(struct r300_context *r300,
 			     struct pipe_resource **index_buffer,
 			     unsigned index_size,
 			     unsigned start,
-			     unsigned count);
+			     unsigned count, unsigned *out_offset);
 
 struct pipe_resource *r300_buffer_create(struct pipe_screen *screen,
 					 const struct pipe_resource *templ);
@@ -95,25 +96,6 @@ static INLINE struct r300_buffer *r300_buffer(struct pipe_resource *buffer)
 static INLINE boolean r300_buffer_is_user_buffer(struct pipe_resource *buffer)
 {
     return r300_buffer(buffer)->user_buffer ? true : false;
-}
-
-static INLINE boolean r300_add_buffer(struct r300_winsys_screen *rws,
-				      struct pipe_resource *buffer,
-				      int rd, int wr)
-{
-    struct r300_buffer *buf = r300_buffer(buffer);
-
-    if (!buf->buf)
-	return true;
-
-    return rws->add_buffer(rws, buf->buf, rd, wr);
-}
-
-static INLINE boolean r300_add_texture(struct r300_winsys_screen *rws,
-				       struct r300_texture *tex,
-				       int rd, int wr)
-{
-    return rws->add_buffer(rws, tex->buffer, rd, wr);
 }
 
 #endif

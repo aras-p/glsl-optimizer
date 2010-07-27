@@ -222,7 +222,7 @@ wm_unit_create_from_key(struct brw_context *brw, struct brw_wm_unit_key *key,
       drm_intel_bo_emit_reloc(bo, offsetof(struct brw_wm_unit_state, thread2),
 			      brw->wm.scratch_bo,
 			      wm.thread2.per_thread_scratch_space,
-			      0, 0);
+			      I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER);
    }
 
    /* Emit sampler state relocation */

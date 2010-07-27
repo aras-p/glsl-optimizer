@@ -444,42 +444,6 @@ _mesa_next_pow_two_64(uint64_t x)
 }
 
 
-/***
- *** UNCLAMPED_FLOAT_TO_UBYTE: clamp float to [0,1] and map to ubyte in [0,255]
- *** CLAMPED_FLOAT_TO_UBYTE: map float known to be in [0,1] to ubyte in [0,255]
- ***/
-#if defined(USE_IEEE) && !defined(DEBUG)
-#define IEEE_0996 0x3f7f0000	/* 0.996 or so */
-/* This function/macro is sensitive to precision.  Test very carefully
- * if you change it!
- */
-#define UNCLAMPED_FLOAT_TO_UBYTE(UB, F)					\
-        do {								\
-           fi_type __tmp;						\
-           __tmp.f = (F);						\
-           if (__tmp.i < 0)						\
-              UB = (GLubyte) 0;						\
-           else if (__tmp.i >= IEEE_0996)				\
-              UB = (GLubyte) 255;					\
-           else {							\
-              __tmp.f = __tmp.f * (255.0F/256.0F) + 32768.0F;		\
-              UB = (GLubyte) __tmp.i;					\
-           }								\
-        } while (0)
-#define CLAMPED_FLOAT_TO_UBYTE(UB, F)					\
-        do {								\
-           fi_type __tmp;						\
-           __tmp.f = (F) * (255.0F/256.0F) + 32768.0F;			\
-           UB = (GLubyte) __tmp.i;					\
-        } while (0)
-#else
-#define UNCLAMPED_FLOAT_TO_UBYTE(ub, f) \
-	ub = ((GLubyte) IROUND(CLAMP((f), 0.0F, 1.0F) * 255.0F))
-#define CLAMPED_FLOAT_TO_UBYTE(ub, f) \
-	ub = ((GLubyte) IROUND((f) * 255.0F))
-#endif
-
-
 /**
  * Return 1 if this is a little endian machine, 0 if big endian.
  */

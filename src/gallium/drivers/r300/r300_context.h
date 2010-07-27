@@ -61,6 +61,13 @@ struct r300_atom {
     boolean allow_null_state;
 };
 
+struct r300_aa_state {
+    struct r300_surface *dest;
+
+    uint32_t aa_config;
+    uint32_t aaresolve_ctl;
+};
+
 struct r300_blend_state {
     uint32_t cb[8];
     uint32_t cb_no_readwrite[8];
@@ -98,40 +105,39 @@ struct r300_dsa_state {
     boolean two_sided_stencil_ref;
 };
 
+struct r300_hyperz_state {
+    /* This is actually a command buffer with named dwords. */
+    uint32_t cb_begin;
+    uint32_t zb_bw_cntl;            /* R300_ZB_BW_CNTL */
+    uint32_t cb_reg1;
+    uint32_t zb_depthclearvalue;    /* R300_ZB_DEPTHCLEARVALUE */
+    uint32_t cb_reg2;
+    uint32_t sc_hyperz;             /* R300_SC_HYPERZ */
+};
+
+struct r300_gpu_flush {
+    uint32_t cb_flush_clean[6];
+};
+
 struct r300_rs_state {
     /* Original rasterizer state. */
     struct pipe_rasterizer_state rs;
     /* Draw-specific rasterizer state. */
     struct pipe_rasterizer_state rs_draw;
 
-    uint32_t vap_control_status;    /* R300_VAP_CNTL_STATUS: 0x2140 */
-    uint32_t multisample_position_0;/* R300_GB_MSPOS0: 0x4010 */
-    uint32_t multisample_position_1;/* R300_GB_MSPOS1: 0x4014 */
-    uint32_t antialiasing_config;   /* R300_GB_AA_CONFIG: 0x4020 */
-    uint32_t point_size;            /* R300_GA_POINT_SIZE: 0x421c */
-    uint32_t point_minmax;          /* R300_GA_POINT_MINMAX: 0x4230 */
-    uint32_t line_control;          /* R300_GA_LINE_CNTL: 0x4234 */
-    float depth_scale;            /* R300_SU_POLY_OFFSET_FRONT_SCALE: 0x42a4 */
-                                  /* R300_SU_POLY_OFFSET_BACK_SCALE: 0x42ac */
-    float depth_offset;           /* R300_SU_POLY_OFFSET_FRONT_OFFSET: 0x42a8 */
-                                  /* R300_SU_POLY_OFFSET_BACK_OFFSET: 0x42b0 */
-    uint32_t polygon_offset_enable; /* R300_SU_POLY_OFFSET_ENABLE: 0x42b4 */
-    uint32_t cull_mode;             /* R300_SU_CULL_MODE: 0x42b8 */
-    uint32_t line_stipple_config;   /* R300_GA_LINE_STIPPLE_CONFIG: 0x4328 */
-    uint32_t line_stipple_value;    /* R300_GA_LINE_STIPPLE_VALUE: 0x4260 */
+    /* Command buffers. */
+    uint32_t cb_main[25];
+    uint32_t cb_poly_offset_zb16[5];
+    uint32_t cb_poly_offset_zb24[5];
+
+    /* The index to cb_main where the cull_mode register value resides. */
+    unsigned cull_mode_index;
+
+    /* Whether polygon offset is enabled. */
+    boolean polygon_offset_enable;
+
+    /* This is emitted in the draw function. */
     uint32_t color_control;         /* R300_GA_COLOR_CONTROL: 0x4278 */
-    uint32_t polygon_mode;          /* R300_GA_POLY_MODE: 0x4288 */
-    uint32_t clip_rule;             /* R300_SC_CLIP_RULE: 0x43D0 */
-
-    /* Specifies top of Raster pipe specific enable controls,
-     * i.e. texture coordinates stuffing for points, lines, triangles */
-    uint32_t stuffing_enable;       /* R300_GB_ENABLE: 0x4008 */
-
-    /* Point sprites texture coordinates, 0: lower left, 1: upper right */
-    float point_texcoord_left;      /* R300_GA_POINT_S0: 0x4200 */
-    float point_texcoord_bottom;    /* R300_GA_POINT_T0: 0x4204 */
-    float point_texcoord_right;     /* R300_GA_POINT_S1: 0x4208 */
-    float point_texcoord_top;       /* R300_GA_POINT_T1: 0x420c */
 };
 
 struct r300_rs_block {
@@ -214,6 +220,14 @@ struct r300_vertex_stream_state {
     unsigned count;
 };
 
+struct r300_invariant_state {
+    uint32_t cb[20];
+};
+
+struct r300_vap_invariant_state {
+    uint32_t cb[9];
+};
+
 struct r300_viewport_state {
     float xscale;         /* R300_VAP_VPORT_XSCALE:  0x2098 */
     float xoffset;        /* R300_VAP_VPORT_XOFFSET: 0x209c */
@@ -233,8 +247,8 @@ struct r300_ztop_state {
 
 struct r300_constant_buffer {
     /* Buffer of constants */
-    uint32_t constants[256][4];
-    /* Total number of constants */
+    uint32_t *ptr;
+    /* Total number of vec4s */
     unsigned count;
 };
 
@@ -294,32 +308,48 @@ struct r300_surface {
 
     enum r300_buffer_domain domain;
 
-    uint32_t offset;
+    uint32_t offset;    /* COLOROFFSET or DEPTHOFFSET. */
     uint32_t pitch;     /* COLORPITCH or DEPTHPITCH. */
-    uint32_t format;    /* US_OUT_FMT or R300_ZB_FORMAT. */
+    uint32_t format;    /* US_OUT_FMT or ZB_FORMAT. */
+
+    /* Parameters dedicated to the CBZB clear. */
+    uint32_t cbzb_width;            /* Aligned width. */
+    uint32_t cbzb_height;           /* Half of the height. */
+    uint32_t cbzb_midpoint_offset;  /* DEPTHOFFSET. */
+    uint32_t cbzb_pitch;            /* DEPTHPITCH. */
+    uint32_t cbzb_format;           /* ZB_FORMAT. */
+
+    /* Whether the CBZB clear is allowed on the surface. */
+    boolean cbzb_allowed;
 };
 
-struct r300_texture {
-    /* Parent class */
+struct r300_texture_desc {
+    /* Parent class. */
     struct u_resource b;
 
-    enum r300_buffer_domain domain;
+    /* Buffer tiling.
+     * Macrotiling is specified per-level because small mipmaps cannot
+     * be macrotiled. */
+    enum r300_buffer_tiling microtile;
+    enum r300_buffer_tiling macrotile[R300_MAX_TEXTURE_LEVELS];
 
     /* Offsets into the buffer. */
-    unsigned offset[R300_MAX_TEXTURE_LEVELS];
+    unsigned offset_in_bytes[R300_MAX_TEXTURE_LEVELS];
 
-    /* A pitch for each mip-level */
-    unsigned pitch[R300_MAX_TEXTURE_LEVELS];
+    /* Strides for each mip-level. */
+    unsigned stride_in_pixels[R300_MAX_TEXTURE_LEVELS];
+    unsigned stride_in_bytes[R300_MAX_TEXTURE_LEVELS];
 
-    /* A pitch multiplied by blockwidth as hardware wants
-     * the number of pixels instead of the number of blocks. */
-    unsigned hwpitch[R300_MAX_TEXTURE_LEVELS];
+    /* Size of one zslice or face or 2D image based on the texture target. */
+    unsigned layer_size_in_bytes[R300_MAX_TEXTURE_LEVELS];
 
-    /* Size of one zslice or face based on the texture target */
-    unsigned layer_size[R300_MAX_TEXTURE_LEVELS];
+    /* Total size of this texture, in bytes,
+     * derived from the texture properties. */
+    unsigned size_in_bytes;
 
-    /* Whether the mipmap level is macrotiled. */
-    enum r300_buffer_tiling mip_macrotile[R300_MAX_TEXTURE_LEVELS];
+    /* Total size of the buffer backing this texture, in bytes.
+     * It must be >= size. */
+    unsigned buffer_size_in_bytes;
 
     /**
      * If non-zero, override the natural texture layout with
@@ -329,16 +359,24 @@ struct r300_texture {
      *
      * \sa r300_texture_get_stride
      */
-    unsigned stride_override;
+    unsigned stride_in_bytes_override;
 
-    /* Total size of this texture, in bytes. */
-    unsigned size;
+    /* Whether this texture has non-power-of-two dimensions.
+     * It can be either a regular texture or a rectangle one. */
+    boolean is_npot;
 
-    /* Whether this texture has non-power-of-two dimensions
-     * or a user-specified pitch.
-     * It can be either a regular texture or a rectangle one.
-     */
-    boolean uses_pitch;
+    /* This flag says that hardware must use the stride for addressing
+     * instead of the width. */
+    boolean uses_stride_addressing;
+
+    /* Whether CBZB fast color clear is allowed on the miplevel. */
+    boolean cbzb_allowed[R300_MAX_TEXTURE_LEVELS];
+};
+
+struct r300_texture {
+    struct r300_texture_desc desc;
+
+    enum r300_buffer_domain domain;
 
     /* Pipe buffer backing this texture. */
     struct r300_winsys_buffer *buffer;
@@ -349,8 +387,9 @@ struct r300_texture {
     /* All bits should be filled in. */
     struct r300_texture_fb_state fb_state;
 
-    /* Buffer tiling */
-    enum r300_buffer_tiling microtile, macrotile;
+    /* This is the level tiling flags were last time set for.
+     * It's used to prevent redundant tiling-flags changes from happening.*/
+    unsigned surface_level;
 };
 
 struct r300_vertex_element_state {
@@ -391,6 +430,8 @@ struct r300_context {
 
     /* The interface to the windowing system, etc. */
     struct r300_winsys_screen *rws;
+    /* The command stream. */
+    struct r300_winsys_cs *cs;
     /* Screen. */
     struct r300_screen *screen;
     /* Draw module. Used mostly for SW TCL. */
@@ -421,6 +462,8 @@ struct r300_context {
     /* Various CSO state objects. */
     /* Beginning of atom list. */
     struct r300_atom atom_list;
+    /* Anti-aliasing (MSAA) state. */
+    struct r300_atom aa_state;
     /* Blend state. */
     struct r300_atom blend_state;
     /* Blend color state. */
@@ -437,6 +480,10 @@ struct r300_context {
     struct r300_atom fs_constants;
     /* Framebuffer state. */
     struct r300_atom fb_state;
+    /* Framebuffer state (pipelined regs). */
+    struct r300_atom fb_state_pipelined;
+    /* HyperZ state (various SC/ZB bits). */
+    struct r300_atom hyperz_state;
     /* Occlusion query. */
     struct r300_atom query_start;
     /* Rasterizer state. */
@@ -459,8 +506,12 @@ struct r300_context {
     struct r300_atom ztop_state;
     /* PVS flush. */
     struct r300_atom pvs_flush;
+    /* VAP invariant state. */
+    struct r300_atom vap_invariant_state;
     /* Texture cache invalidate. */
     struct r300_atom texture_cache_inval;
+    /* GPU flush. */
+    struct r300_atom gpu_flush;
 
     /* Invariant state. This must be emitted to get the engine started. */
     struct r300_atom invariant_state;
@@ -497,9 +548,12 @@ struct r300_context {
     /* Incompatible vertex buffer layout? (misaligned stride or buffer_offset) */
     boolean incompatible_vb_layout;
 
+    boolean cbzb_clear;
     /* upload managers */
     struct u_upload_mgr *upload_vb;
     struct u_upload_mgr *upload_ib;
+
+    struct util_mempool pool_transfers;
 
     /* Stat counter. */
     uint64_t flush_counter;
@@ -534,8 +588,8 @@ static INLINE struct r300_fragment_shader *r300_fs(struct r300_context *r300)
 struct pipe_context* r300_create_context(struct pipe_screen* screen,
                                          void *priv);
 
-boolean r300_check_cs(struct r300_context *r300, unsigned size);
 void r300_finish(struct r300_context *r300);
+void r300_flush_cb(void *data);
 
 /* Context initialization. */
 struct draw_stage* r300_draw_stage(struct r300_context* r300);
@@ -563,6 +617,13 @@ void r300_translate_index_buffer(struct r300_context *r300,
 void r300_plug_in_stencil_ref_fallback(struct r300_context *r300);
 
 /* r300_state.c */
+enum r300_fb_state_change {
+    R300_CHANGED_FB_STATE = 0,
+    R300_CHANGED_CBZB_FLAG
+};
+
+void r300_mark_fb_state_dirty(struct r300_context *r300,
+                              enum r300_fb_state_change change);
 void r300_mark_fs_code_dirty(struct r300_context *r300);
 
 /* r300_debug.c */

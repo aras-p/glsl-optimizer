@@ -27,8 +27,8 @@
 
 #include "main/imports.h"
 #include "main/context.h"
+#include "main/shaderobj.h"
 #include "vbo/vbo.h"
-#include "shader/shader_api.h"
 #include "glapi/glapi.h"
 #include "st_context.h"
 #include "st_debug.h"
@@ -153,7 +153,7 @@ st_create_context_priv( GLcontext *ctx, struct pipe_context *pipe )
 }
 
 
-struct st_context *st_create_context(struct pipe_context *pipe,
+struct st_context *st_create_context(gl_api api, struct pipe_context *pipe,
                                      const __GLcontextModes *visual,
                                      struct st_context *share)
 {
@@ -164,16 +164,7 @@ struct st_context *st_create_context(struct pipe_context *pipe,
    memset(&funcs, 0, sizeof(funcs));
    st_init_driver_functions(&funcs);
 
-#if FEATURE_GL
-   ctx = _mesa_create_context_for_api(API_OPENGL,
-				      visual, shareCtx, &funcs, NULL);
-#elif FEATURE_ES1
-   ctx = _mesa_create_context_for_api(API_OPENGLES,
-				      visual, shareCtx, &funcs, NULL);
-#elif FEATURE_ES2
-   ctx = _mesa_create_context_for_api(API_OPENGLES2,
-				      visual, shareCtx, &funcs, NULL);
-#endif
+   ctx = _mesa_create_context_for_api(api, visual, shareCtx, &funcs, NULL);
 
    /* XXX: need a capability bit in gallium to query if the pipe
     * driver prefers DP4 or MUL/MAD for vertex transformation.
@@ -254,7 +245,7 @@ void st_destroy_context( struct st_context *st )
 
 void st_init_driver_functions(struct dd_function_table *functions)
 {
-   _mesa_init_glsl_driver_functions(functions);
+   _mesa_init_shader_object_functions(functions);
 
    st_init_accum_functions(functions);
    st_init_blit_functions(functions);

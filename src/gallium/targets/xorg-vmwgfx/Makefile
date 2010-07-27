@@ -8,6 +8,7 @@ C_SOURCES = \
 	vmw_video.c \
 	vmw_ioctl.c \
 	vmw_ctrl.c \
+	vmw_target.c \
 	vmw_screen.c
 
 DRIVER_INCLUDES = \
@@ -15,16 +16,18 @@ DRIVER_INCLUDES = \
 
 DRIVER_DEFINES = \
 	-std=gnu99 \
+	-DGALLIUM_RBUG \
+	-DGALLIUM_TRACE \
 	-DHAVE_CONFIG_H
 
-DRIVER_LINKS = \
+DRIVER_PIPES = \
 	$(TOP)/src/gallium/state_trackers/xorg/libxorgtracker.a \
 	$(TOP)/src/gallium/winsys/svga/drm/libsvgadrm.a \
-	$(TOP)/src/gallium/drivers/trace/libtrace.a \
-	$(TOP)/src/gallium/drivers/rbug/librbug.a \
 	$(TOP)/src/gallium/drivers/svga/libsvga.a \
-	$(GALLIUM_AUXILIARIES) \
-	$(shell pkg-config --libs --silence-errors libkms) \
-	$(shell pkg-config --libs libdrm)
+	$(TOP)/src/gallium/drivers/trace/libtrace.a \
+	$(TOP)/src/gallium/drivers/rbug/librbug.a
+
+DRIVER_LINKS = \
+	$(shell pkg-config --libs libdrm libkms)
 
 include ../Makefile.xorg

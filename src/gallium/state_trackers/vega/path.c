@@ -218,7 +218,7 @@ void path_destroy(struct path *p)
    if (p->stroked.path)
       path_destroy(p->stroked.path);
 
-   free(p);
+   FREE(p);
 }
 
 VGbitfield path_capabilities(struct path *p)

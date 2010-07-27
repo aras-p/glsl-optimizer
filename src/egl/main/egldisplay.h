@@ -5,6 +5,19 @@
 #include "egltypedefs.h"
 #include "egldefines.h"
 #include "eglmutex.h"
+#include "eglarray.h"
+
+
+enum _egl_platform_type {
+   _EGL_PLATFORM_WINDOWS,
+   _EGL_PLATFORM_X11,
+   _EGL_PLATFORM_DRM,
+   _EGL_PLATFORM_FBDEV,
+
+   _EGL_NUM_PLATFORMS,
+   _EGL_INVALID_PLATFORM = -1
+};
+typedef enum _egl_platform_type _EGLPlatformType;
 
 
 enum _egl_resource_type {
@@ -39,6 +52,7 @@ struct _egl_extensions
 {
    EGLBoolean MESA_screen_surface;
    EGLBoolean MESA_copy_context;
+   EGLBoolean MESA_drm_display;
    EGLBoolean KHR_image_base;
    EGLBoolean KHR_image_pixmap;
    EGLBoolean KHR_vg_parent_image;
@@ -53,14 +67,15 @@ struct _egl_extensions
 };
 
 
-struct _egl_display 
+struct _egl_display
 {
    /* used to link displays */
    _EGLDisplay *Next;
 
    _EGLMutex Mutex;
 
-   EGLNativeDisplayType NativeDisplay;
+   _EGLPlatformType Platform;
+   void *PlatformDisplay;
 
    EGLBoolean Initialized; /**< True if the display is initialized */
    _EGLDriver *Driver;
@@ -75,16 +90,16 @@ struct _egl_display
 
    _EGLExtensions Extensions;
 
-   EGLint NumScreens;
-   _EGLScreen **Screens;  /* array [NumScreens] */
-
-   EGLint MaxConfigs;
-   EGLint NumConfigs;
-   _EGLConfig **Configs;  /* array [NumConfigs] of ptr to _EGLConfig */
+   _EGLArray *Screens;
+   _EGLArray *Configs;
 
    /* lists of resources */
    _EGLResource *ResourceLists[_EGL_NUM_RESOURCES];
 };
+
+
+extern _EGLPlatformType
+_eglGetNativePlatform(void);
 
 
 extern void
@@ -92,7 +107,7 @@ _eglFiniDisplay(void);
 
 
 extern _EGLDisplay *
-_eglFindDisplay(EGLNativeDisplayType displayName);
+_eglFindDisplay(_EGLPlatformType plat, void *plat_dpy);
 
 
 PUBLIC void

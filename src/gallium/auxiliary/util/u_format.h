@@ -213,6 +213,16 @@ struct util_format_description
                        unsigned width, unsigned height);
 
    /**
+    * Fetch a single pixel (i, j) from a block.
+    *
+    * XXX: Only defined for a very few select formats.
+    */
+   void
+   (*fetch_rgba_8unorm)(uint8_t *dst,
+                        const uint8_t *src,
+                        unsigned i, unsigned j);
+
+   /**
     * Unpack pixel blocks to R32G32B32A32_FLOAT.
     * Note: strides are in bytes.
     *
@@ -662,6 +672,9 @@ util_format_write_4ub(enum pipe_format format,
 /*
  * Generic format conversion;
  */
+
+boolean
+util_format_fits_8unorm(const struct util_format_description *format_desc);
 
 void
 util_format_translate(enum pipe_format dst_format,

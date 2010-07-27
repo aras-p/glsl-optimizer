@@ -30,6 +30,7 @@ HEADERS = \
 
 SOURCES = \
 	eglapi.c \
+	eglarray.c \
 	eglconfig.c \
 	eglconfigutil.c \
 	eglcontext.c \
@@ -51,10 +52,20 @@ OBJECTS = $(SOURCES:.c=.o)
 # use dl*() to load drivers
 LOCAL_CFLAGS = -D_EGL_OS_UNIX=1
 
-EGL_DEFAULT_PLATFORM = $(firstword $(EGL_PLATFORMS))
+# translate --with-egl-platforms to _EGLPlatformType
+EGL_NATIVE_PLATFORM=_EGL_INVALID_PLATFORM
+ifeq ($(firstword $(EGL_PLATFORMS)),x11)
+EGL_NATIVE_PLATFORM=_EGL_PLATFORM_X11
+endif
+ifeq ($(firstword $(EGL_PLATFORMS)),kms)
+EGL_NATIVE_PLATFORM=_EGL_PLATFORM_DRM
+endif
+ifeq ($(firstword $(EGL_PLATFORMS)),fbdev)
+EGL_NATIVE_PLATFORM=_EGL_PLATFORM_FBDEV
+endif
 
 LOCAL_CFLAGS += \
-	-D_EGL_DEFAULT_PLATFORM=\"$(EGL_DEFAULT_PLATFORM)\" \
+	-D_EGL_NATIVE_PLATFORM=$(EGL_NATIVE_PLATFORM) \
 	-D_EGL_DRIVER_SEARCH_DIR=\"$(EGL_DRIVER_INSTALL_DIR)\"
 
 .c.o:

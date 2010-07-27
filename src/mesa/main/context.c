@@ -118,6 +118,7 @@
 #include "remap.h"
 #include "scissor.h"
 #include "shared.h"
+#include "shaderobj.h"
 #include "simple_list.h"
 #include "state.h"
 #include "stencil.h"
@@ -129,9 +130,8 @@
 #include "version.h"
 #include "viewport.h"
 #include "vtxfmt.h"
-#include "shader/program.h"
-#include "shader/prog_print.h"
-#include "shader/shader_api.h"
+#include "program/program.h"
+#include "program/prog_print.h"
 #if _HAVE_FULL_GL
 #include "math/m_matrix.h"
 #endif
@@ -347,6 +347,8 @@ dummy_enum_func(void)
    gl_texture_index ti;
    gl_vert_attrib va;
    gl_vert_result vr;
+   gl_geom_attrib ga;
+   gl_geom_result gr;
 
    (void) bi;
    (void) ci;
@@ -356,6 +358,8 @@ dummy_enum_func(void)
    (void) ti;
    (void) va;
    (void) vr;
+   (void) ga;
+   (void) gr;
 }
 
 
@@ -478,10 +482,21 @@ init_program_limits(GLenum type, struct gl_program_constants *prog)
       prog->MaxAttribs = MAX_NV_VERTEX_PROGRAM_INPUTS;
       prog->MaxAddressRegs = MAX_VERTEX_PROGRAM_ADDRESS_REGS;
    }
-   else {
+   else if (type == GL_FRAGMENT_PROGRAM_ARB) {
       prog->MaxParameters = MAX_NV_FRAGMENT_PROGRAM_PARAMS;
       prog->MaxAttribs = MAX_NV_FRAGMENT_PROGRAM_INPUTS;
       prog->MaxAddressRegs = MAX_FRAGMENT_PROGRAM_ADDRESS_REGS;
+   } else {
+      prog->MaxParameters = MAX_NV_VERTEX_PROGRAM_PARAMS;
+      prog->MaxAttribs = MAX_NV_VERTEX_PROGRAM_INPUTS;
+      prog->MaxAddressRegs = MAX_VERTEX_PROGRAM_ADDRESS_REGS;
+
+      prog->MaxGeometryTextureImageUnits = MAX_GEOMETRY_TEXTURE_IMAGE_UNITS;
+      prog->MaxGeometryVaryingComponents = MAX_GEOMETRY_VARYING_COMPONENTS;
+      prog->MaxVertexVaryingComponents = MAX_VERTEX_VARYING_COMPONENTS;
+      prog->MaxGeometryUniformComponents = MAX_GEOMETRY_UNIFORM_COMPONENTS;
+      prog->MaxGeometryOutputVertices = MAX_GEOMETRY_OUTPUT_VERTICES;
+      prog->MaxGeometryTotalOutputComponents = MAX_GEOMETRY_TOTAL_OUTPUT_COMPONENTS;
    }
 
    /* Set the native limits to zero.  This implies that there is no native
@@ -546,6 +561,9 @@ _mesa_init_constants(GLcontext *ctx)
 #endif
 #if FEATURE_ARB_fragment_program
    init_program_limits(GL_FRAGMENT_PROGRAM_ARB, &ctx->Const.FragmentProgram);
+#endif
+#if FEATURE_ARB_geometry_shader4
+   init_program_limits(MESA_GEOMETRY_PROGRAM, &ctx->Const.GeometryProgram);
 #endif
    ctx->Const.MaxProgramMatrices = MAX_PROGRAM_MATRICES;
    ctx->Const.MaxProgramMatrixStackDepth = MAX_PROGRAM_MATRIX_STACK_DEPTH;
@@ -1461,6 +1479,8 @@ _mesa_make_current( GLcontext *newCtx, GLframebuffer *drawBuffer,
 
       if (newCtx->FirstTimeCurrent) {
          _mesa_compute_version(newCtx);
+
+         newCtx->Extensions.String = _mesa_make_extension_string(newCtx);
 
          check_context_limits(newCtx);
 

@@ -498,11 +498,14 @@ GLX_eglInitialize(_EGLDriver *drv, _EGLDisplay *disp,
 {
    struct GLX_egl_display *GLX_dpy;
 
+   if (disp->Platform != _EGL_PLATFORM_X11)
+      return EGL_FALSE;
+
    GLX_dpy = CALLOC_STRUCT(GLX_egl_display);
    if (!GLX_dpy)
       return _eglError(EGL_BAD_ALLOC, "eglInitialize");
 
-   GLX_dpy->dpy = (Display *) disp->NativeDisplay;
+   GLX_dpy->dpy = (Display *) disp->PlatformDisplay;
    if (!GLX_dpy->dpy) {
       GLX_dpy->dpy = XOpenDisplay(NULL);
       if (!GLX_dpy->dpy) {
@@ -514,7 +517,7 @@ GLX_eglInitialize(_EGLDriver *drv, _EGLDisplay *disp,
 
    if (!glXQueryVersion(GLX_dpy->dpy, &GLX_dpy->glx_maj, &GLX_dpy->glx_min)) {
       _eglLog(_EGL_WARNING, "GLX: glXQueryVersion failed");
-      if (!disp->NativeDisplay)
+      if (!disp->PlatformDisplay)
          XCloseDisplay(GLX_dpy->dpy);
       free(GLX_dpy);
       return EGL_FALSE;
@@ -524,9 +527,9 @@ GLX_eglInitialize(_EGLDriver *drv, _EGLDisplay *disp,
    check_quirks(GLX_dpy, DefaultScreen(GLX_dpy->dpy));
 
    create_configs(disp, GLX_dpy, DefaultScreen(GLX_dpy->dpy));
-   if (!disp->NumConfigs) {
+   if (!_eglGetArraySize(disp->Configs)) {
       _eglLog(_EGL_WARNING, "GLX: failed to create any config");
-      if (!disp->NativeDisplay)
+      if (!disp->PlatformDisplay)
          XCloseDisplay(GLX_dpy->dpy);
       free(GLX_dpy);
       return EGL_FALSE;
@@ -558,7 +561,7 @@ GLX_eglTerminate(_EGLDriver *drv, _EGLDisplay *disp)
    if (GLX_dpy->fbconfigs)
       XFree(GLX_dpy->fbconfigs);
 
-   if (!disp->NativeDisplay)
+   if (!disp->PlatformDisplay)
       XCloseDisplay(GLX_dpy->dpy);
    free(GLX_dpy);
 
@@ -617,10 +620,11 @@ GLX_eglCreateContext(_EGLDriver *drv, _EGLDisplay *disp, _EGLConfig *conf,
 static void
 destroy_surface(_EGLDisplay *disp, _EGLSurface *surf)
 {
+   struct GLX_egl_display *GLX_dpy = GLX_egl_display(disp);
    struct GLX_egl_surface *GLX_surf = GLX_egl_surface(surf);
 
    if (GLX_surf->destroy)
-      GLX_surf->destroy(disp->NativeDisplay, GLX_surf->glx_drawable);
+      GLX_surf->destroy(GLX_dpy->dpy, GLX_surf->glx_drawable);
 
    free(GLX_surf);
 }

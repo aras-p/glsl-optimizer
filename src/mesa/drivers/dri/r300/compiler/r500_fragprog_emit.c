@@ -45,6 +45,8 @@
 
 #include "radeon_program_pair.h"
 
+#define MAX_BRANCH_DEPTH_FULL 32
+#define MAX_BRANCH_DEPTH_PARTIAL 4
 
 #define PROG_CODE \
 	struct r500_fragment_program_code *code = &c->code->code.r500
@@ -61,6 +63,10 @@ struct branch_info {
 	int Endif;
 };
 
+struct loop_info {
+	int LoopStart;
+};
+
 struct emit_state {
 	struct radeon_compiler * C;
 	struct r500_fragment_program_code * Code;
@@ -69,7 +75,12 @@ struct emit_state {
 	unsigned int CurrentBranchDepth;
 	unsigned int BranchesReserved;
 
+	struct loop_info * Loops;
+	unsigned int CurrentLoopDepth;
+	unsigned int LoopsReserved;
+
 	unsigned int MaxBranchDepth;
+
 };
 
 static unsigned int translate_rgb_op(struct r300_fragment_program_compiler *c, rc_opcode opcode)
@@ -359,16 +370,49 @@ static void emit_flowcontrol(struct emit_state * s, struct rc_instruction * inst
 
 	s->Code->inst[newip].inst0 = R500_INST_TYPE_FC | R500_INST_ALU_WAIT;
 
-	if (inst->U.I.Opcode == RC_OPCODE_IF) {
-		if (s->CurrentBranchDepth >= 32) {
+	switch(inst->U.I.Opcode){
+	struct branch_info * branch;
+	struct loop_info * loop;
+	case RC_OPCODE_BGNLOOP:
+		memory_pool_array_reserve(&s->C->Pool, struct loop_info,
+			s->Loops, s->CurrentLoopDepth, s->LoopsReserved, 1);
+
+		loop = &s->Loops[s->CurrentLoopDepth++];
+		
+		/* We don't emit an instruction for BGNLOOP, so we need to
+		 * decrement the instruction counter, but first we need to
+		 * set LoopStart to the current value of inst_end, which
+		 * will end up being the first real instruction in the loop.*/
+		loop->LoopStart = s->Code->inst_end--;
+		break;
+	
+	case RC_OPCODE_BRK:
+		/* Don't emit an instruction for BRK */
+		s->Code->inst_end--;
+		break;
+
+	case RC_OPCODE_CONTINUE:
+		loop = &s->Loops[s->CurrentLoopDepth - 1];
+		s->Code->inst[newip].inst2 = R500_FC_OP_JUMP |
+			R500_FC_JUMP_FUNC(0xff);
+		s->Code->inst[newip].inst3 = R500_FC_JUMP_ADDR(loop->LoopStart);
+		break;
+
+	case RC_OPCODE_ENDLOOP:
+		/* Don't emit an instruction for ENDLOOP */
+		s->Code->inst_end--;
+		s->CurrentLoopDepth--;
+		break;
+
+	case RC_OPCODE_IF:
+		if ( s->CurrentBranchDepth >= MAX_BRANCH_DEPTH_FULL) {
 			rc_error(s->C, "Branch depth exceeds hardware limit");
 			return;
 		}
-
 		memory_pool_array_reserve(&s->C->Pool, struct branch_info,
 				s->Branches, s->CurrentBranchDepth, s->BranchesReserved, 1);
 
-		struct branch_info * branch = &s->Branches[s->CurrentBranchDepth++];
+		branch = &s->Branches[s->CurrentBranchDepth++];
 		branch->If = newip;
 		branch->Else = -1;
 		branch->Endif = -1;
@@ -377,29 +421,50 @@ static void emit_flowcontrol(struct emit_state * s, struct rc_instruction * inst
 			s->MaxBranchDepth = s->CurrentBranchDepth;
 
 		/* actual instruction is filled in at ENDIF time */
-	} else if (inst->U.I.Opcode == RC_OPCODE_ELSE) {
+		break;
+	
+	case RC_OPCODE_ELSE:
 		if (!s->CurrentBranchDepth) {
 			rc_error(s->C, "%s: got ELSE outside a branch", __FUNCTION__);
 			return;
 		}
 
-		struct branch_info * branch = &s->Branches[s->CurrentBranchDepth - 1];
+		branch = &s->Branches[s->CurrentBranchDepth - 1];
 		branch->Else = newip;
 
 		/* actual instruction is filled in at ENDIF time */
-	} else if (inst->U.I.Opcode == RC_OPCODE_ENDIF) {
+		break;
+
+	case RC_OPCODE_ENDIF:
 		if (!s->CurrentBranchDepth) {
 			rc_error(s->C, "%s: got ELSE outside a branch", __FUNCTION__);
 			return;
 		}
 
-		struct branch_info * branch = &s->Branches[s->CurrentBranchDepth - 1];
-		branch->Endif = newip;
-
+		branch = &s->Branches[s->CurrentBranchDepth - 1];
+		
+		if(inst->Prev->U.I.Opcode == RC_OPCODE_BRK){
+			branch->Endif = --s->Code->inst_end;
+			s->Code->inst[branch->Endif].inst2 |=
+				R500_FC_B_OP0_DECR;
+		}
+		else{
+			branch->Endif = newip;
+		
+			s->Code->inst[branch->Endif].inst2 = R500_FC_OP_JUMP
+				| R500_FC_A_OP_NONE /* no address stack */
+				| R500_FC_JUMP_ANY /* docs says set this, but I don't understand why */
+				| R500_FC_B_OP0_DECR /* decrement branch counter if stay */
+				| R500_FC_B_OP1_NONE /* no branch counter if stay */
+				| R500_FC_B_POP_CNT(1)
+			;
+			s->Code->inst[branch->Endif].inst3 = R500_FC_JUMP_ADDR(branch->Endif + 1);
+		}
 		s->Code->inst[branch->If].inst2 = R500_FC_OP_JUMP
 			| R500_FC_A_OP_NONE /* no address stack */
 			| R500_FC_JUMP_FUNC(0x0f) /* jump if ALU result is false */
 			| R500_FC_B_OP0_INCR /* increment branch counter if stay */
+			| R500_FC_IGNORE_UNCOVERED
 		;
 
 		if (branch->Else >= 0) {
@@ -421,17 +486,10 @@ static void emit_flowcontrol(struct emit_state * s, struct rc_instruction * inst
 			s->Code->inst[branch->If].inst3 = R500_FC_JUMP_ADDR(branch->Endif + 1);
 		}
 
-		s->Code->inst[branch->Endif].inst2 = R500_FC_OP_JUMP
-			| R500_FC_A_OP_NONE /* no address stack */
-			| R500_FC_JUMP_ANY /* docs says set this, but I don't understand why */
-			| R500_FC_B_OP0_DECR /* decrement branch counter if stay */
-			| R500_FC_B_OP1_NONE /* no branch counter if stay */
-			| R500_FC_B_POP_CNT(1)
-		;
-		s->Code->inst[branch->Endif].inst3 = R500_FC_JUMP_ADDR(branch->Endif + 1);
 
 		s->CurrentBranchDepth--;
-	} else {
+		break;
+	default:
 		rc_error(s->C, "%s: unknown opcode %s\n", __FUNCTION__, rc_get_opcode_info(inst->U.I.Opcode)->Name);
 	}
 }
@@ -486,6 +544,10 @@ void r500BuildFragmentProgramHwCode(struct r300_fragment_program_compiler *compi
 		code->inst[ip].inst0 = R500_INST_TYPE_OUT | R500_INST_TEX_SEM_WAIT;
 	}
 
+	/* Use FULL flow control mode if branches are nested deep enough.
+	 * We don not need to enable FULL flow control mode for loops, becasue
+	 * we aren't using the hardware loop instructions.
+	 */
 	if (s.MaxBranchDepth >= 4) {
 		if (code->max_temp_idx < 1)
 			code->max_temp_idx = 1;

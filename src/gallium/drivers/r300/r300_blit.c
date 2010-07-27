@@ -24,12 +24,13 @@
 #include "r300_texture.h"
 
 #include "util/u_format.h"
+#include "util/u_pack_color.h"
 
-enum r300_blitter_op
+enum r300_blitter_op /* bitmask */
 {
-    R300_CLEAR,
-    R300_CLEAR_SURFACE,
-    R300_COPY
+    R300_CLEAR         = 1,
+    R300_CLEAR_SURFACE = 2,
+    R300_COPY          = 4
 };
 
 static void r300_blitter_begin(struct r300_context* r300, enum r300_blitter_op op)
@@ -79,6 +80,31 @@ static void r300_blitter_end(struct r300_context *r300)
     }
 }
 
+static uint32_t r300_depth_clear_cb_value(enum pipe_format format,
+					  const float* rgba)
+{
+    union util_color uc;
+    util_pack_color(rgba, format, &uc);
+
+    if (util_format_get_blocksizebits(format) == 32)
+        return uc.ui;
+    else
+        return uc.us | (uc.us << 16);
+}
+
+static boolean r300_cbzb_clear_allowed(struct r300_context *r300,
+                                       unsigned clear_buffers)
+{
+    struct pipe_framebuffer_state *fb =
+        (struct pipe_framebuffer_state*)r300->fb_state.state;
+
+    /* Only color clear allowed, and only one colorbuffer. */
+    if (clear_buffers != PIPE_CLEAR_COLOR || fb->nr_cbufs != 1)
+        return FALSE;
+
+    return r300_surface(fb->cbufs[0])->cbzb_allowed;
+}
+
 /* Clear currently bound buffers. */
 static void r300_clear(struct pipe_context* pipe,
                        unsigned buffers,
@@ -86,39 +112,81 @@ static void r300_clear(struct pipe_context* pipe,
                        double depth,
                        unsigned stencil)
 {
-    /* XXX Implement fastfill.
+    /* My notes about fastfill:
      *
-     * If fastfill is enabled, a few facts should be considered:
+     * 1) Only the zbuffer is cleared.
      *
-     * 1) Zbuffer must be micro-tiled and whole microtiles must be
-     *    written.
+     * 2) The zbuffer must be micro-tiled and whole microtiles must be
+     *    written. If microtiling is disabled, it locks up.
      *
-     * 2) ZB_DEPTHCLEARVALUE is used to clear a zbuffer and Z Mask must be
-     *    equal to 0.
+     * 3) There is Z Mask RAM which contains a compressed zbuffer and
+     *    it interacts with fastfill. We should figure out how to use it
+     *    to get more performance.
+     *    This is what we know about the Z Mask:
      *
-     * 3) For 16-bit integer buffering, compression causes a hung with one or
+     *       Each dword of the Z Mask contains compression information
+     *       for 16 4x4 pixel blocks, that is 2 bits for each block.
+     *       On chips with 2 Z pipes, every other dword maps to a different
+     *       pipe.
+     *
+     * 4) ZB_DEPTHCLEARVALUE is used to clear the zbuffer and the Z Mask must
+     *    be equal to 0. (clear the Z Mask RAM with zeros)
+     *
+     * 5) For 16-bit zbuffer, compression causes a hung with one or
      *    two samples and should not be used.
      *
-     * 4) Fastfill must not be used if reading of compressed Z data is disabled
+     * 6) FORCE_COMPRESSED_STENCIL_VALUE should be enabled for stencil clears
+     *    to avoid needless decompression.
+     *
+     * 7) Fastfill must not be used if reading of compressed Z data is disabled
      *    and writing of compressed Z data is enabled (RD/WR_COMP_ENABLE),
      *    i.e. it cannot be used to compress the zbuffer.
-     *    (what the hell does that mean and how does it fit in clearing
-     *    the buffers?)
+     *
+     * 8) ZB_CB_CLEAR does not interact with fastfill in any way.
      *
      * - Marek
      */
 
     struct r300_context* r300 = r300_context(pipe);
-    struct pipe_framebuffer_state* fb =
+    struct pipe_framebuffer_state *fb =
         (struct pipe_framebuffer_state*)r300->fb_state.state;
+    struct r300_hyperz_state *hyperz =
+        (struct r300_hyperz_state*)r300->hyperz_state.state;
+    uint32_t width = fb->width;
+    uint32_t height = fb->height;
 
+    /* Enable CBZB clear. */
+    if (r300_cbzb_clear_allowed(r300, buffers)) {
+        struct r300_surface *surf = r300_surface(fb->cbufs[0]);
+
+        hyperz->zb_depthclearvalue =
+                r300_depth_clear_cb_value(surf->base.format, rgba);
+
+        width = surf->cbzb_width;
+        height = surf->cbzb_height;
+
+        r300->cbzb_clear = TRUE;
+        r300_mark_fb_state_dirty(r300, R300_CHANGED_CBZB_FLAG);
+    }
+
+    /* Clear. */
     r300_blitter_begin(r300, R300_CLEAR);
     util_blitter_clear(r300->blitter,
-                       fb->width,
-                       fb->height,
+                       width,
+                       height,
                        fb->nr_cbufs,
                        buffers, rgba, depth, stencil);
     r300_blitter_end(r300);
+
+    /* Disable CBZB clear. */
+    if (r300->cbzb_clear) {
+        r300->cbzb_clear = FALSE;
+        r300_mark_fb_state_dirty(r300, R300_CHANGED_CBZB_FLAG);
+    }
+
+    /* XXX this flush "fixes" a hardlock in the cubestorm xscreensaver */
+    if (r300->flush_counter == 0)
+        pipe->flush(pipe, 0, NULL);
 }
 
 /* Clear a region of a color surface to a constant value. */
@@ -184,14 +252,6 @@ static void r300_resource_copy_region(struct pipe_context *pipe,
 {
     enum pipe_format old_format = dst->format;
     enum pipe_format new_format = old_format;
-
-    if (dst->format != src->format) {
-        debug_printf("r300: Implementation error: Format mismatch in %s\n"
-            "    : src: %s dst: %s\n", __FUNCTION__,
-            util_format_short_name(src->format),
-            util_format_short_name(dst->format));
-        debug_assert(0);
-    }
 
     if (!pipe->screen->is_format_supported(pipe->screen,
                                            old_format, src->target,

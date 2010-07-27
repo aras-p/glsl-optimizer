@@ -29,7 +29,7 @@
 #include <util/u_math.h>
 #include <util/u_inlines.h>
 #include <util/u_memory.h>
-#include "state_tracker/drm_api.h"
+#include "state_tracker/drm_driver.h"
 #include "r600_screen.h"
 #include "r600_context.h"
 

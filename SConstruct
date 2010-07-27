@@ -131,6 +131,8 @@ if 'trace' not in env['drivers']:
     env['drivers'].append('trace')
 if 'rbug' not in env['drivers']:
     env['drivers'].append('rbug')
+if 'galahad' not in env['drivers']:
+    env['drivers'].append('galahad')
 if 'identity' not in env['drivers']:
     env['drivers'].append('identity')
 if 'softpipe' not in env['drivers']:

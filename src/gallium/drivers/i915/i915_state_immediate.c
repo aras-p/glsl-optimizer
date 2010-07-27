@@ -1,8 +1,8 @@
 /**************************************************************************
- * 
+ *
  * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,13 +22,13 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
  /*
   * Authors:
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
- 
+
 #include "i915_state_inlines.h"
 #include "i915_context.h"
 #include "i915_state.h"
@@ -46,30 +46,31 @@
 
 
 /***********************************************************************
- * S0,S1: Vertex buffer state.  
+ * S0,S1: Vertex buffer state.
  */
 static void upload_S0S1(struct i915_context *i915)
 {
    unsigned LIS0, LIS1;
 
-   /* I915_NEW_VBO */
-   /* TODO: re-use vertex buffers here? */
+   /* I915_NEW_VBO
+    */
    LIS0 = i915->vbo_offset;
 
-   /* I915_NEW_VERTEX_SIZE -- do this where the vertex size is calculated! 
+   /* I915_NEW_VERTEX_SIZE
     */
+   /* XXX do this where the vertex size is calculated! */
    {
       unsigned vertex_size = i915->current.vertex_info.size;
 
       LIS1 = ((vertex_size << 24) |
-	      (vertex_size << 16));
+              (vertex_size << 16));
    }
 
-   /* I915_NEW_VBO */
-   /* TODO: use a vertex generation number to track vbo changes */
+   /* I915_NEW_VBO
+    */
    if (1 ||
        i915->current.immediate[I915_IMMEDIATE_S0] != LIS0 ||
-       i915->current.immediate[I915_IMMEDIATE_S1] != LIS1) 
+       i915->current.immediate[I915_IMMEDIATE_S1] != LIS1)
    {
       i915->current.immediate[I915_IMMEDIATE_S0] = LIS0;
       i915->current.immediate[I915_IMMEDIATE_S1] = LIS1;
@@ -78,10 +79,10 @@ static void upload_S0S1(struct i915_context *i915)
 }
 
 const struct i915_tracked_state i915_upload_S0S1 = {
-   I915_NEW_VBO | I915_NEW_VERTEX_FORMAT,
-   upload_S0S1
+   "imm S0 S1",
+   upload_S0S1,
+   I915_NEW_VBO | I915_NEW_VERTEX_FORMAT
 };
-
 
 
 
@@ -92,7 +93,8 @@ static void upload_S2S4(struct i915_context *i915)
 {
    unsigned LIS2, LIS4;
 
-   /* I915_NEW_VERTEX_FORMAT */
+   /* I915_NEW_VERTEX_FORMAT
+    */
    {
       LIS2 = i915->current.vertex_info.hwfmt[1];
       LIS4 = i915->current.vertex_info.hwfmt[0];
@@ -113,34 +115,37 @@ static void upload_S2S4(struct i915_context *i915)
    }
 }
 
-
 const struct i915_tracked_state i915_upload_S2S4 = {
-   I915_NEW_RASTERIZER | I915_NEW_VERTEX_FORMAT,
-   upload_S2S4
+   "imm S2 S4",
+   upload_S2S4,
+   I915_NEW_RASTERIZER | I915_NEW_VERTEX_FORMAT
 };
 
 
 
 /***********************************************************************
- * 
  */
-static void upload_S5( struct i915_context *i915 )
+static void upload_S5(struct i915_context *i915)
 {
    unsigned LIS5 = 0;
 
+   /* I915_NEW_DEPTH_STENCIL
+    */
    LIS5 |= i915->depth_stencil->stencil_LIS5;
    /* hope it's safe to set stencil ref value even if stencil test is disabled? */
    LIS5 |= i915->stencil_ref.ref_value[0] << S5_STENCIL_REF_SHIFT;
 
+   /* I915_NEW_BLEND
+    */
    LIS5 |= i915->blend->LIS5;
 
 #if 0
-   /* I915_NEW_RASTERIZER */
+   /* I915_NEW_RASTERIZER
+    */
    if (i915->state.Polygon->OffsetFill) {
       LIS5 |= S5_GLOBAL_DEPTH_OFFSET_ENABLE;
    }
 #endif
-
 
    if (LIS5 != i915->current.immediate[I915_IMMEDIATE_S5]) {
       i915->current.immediate[I915_IMMEDIATE_S5] = LIS5;
@@ -149,14 +154,16 @@ static void upload_S5( struct i915_context *i915 )
 }
 
 const struct i915_tracked_state i915_upload_S5 = {
-   (I915_NEW_DEPTH_STENCIL | I915_NEW_BLEND | I915_NEW_RASTERIZER),
-   upload_S5
+   "imm S5",
+   upload_S5,
+   I915_NEW_DEPTH_STENCIL | I915_NEW_BLEND | I915_NEW_RASTERIZER
 };
+
 
 
 /***********************************************************************
  */
-static void upload_S6( struct i915_context *i915 )
+static void upload_S6(struct i915_context *i915)
 {
    unsigned LIS6 = (2 << S6_TRISTRIP_PV_SHIFT);
 
@@ -180,14 +187,16 @@ static void upload_S6( struct i915_context *i915 )
 }
 
 const struct i915_tracked_state i915_upload_S6 = {
-   I915_NEW_BLEND | I915_NEW_DEPTH_STENCIL | I915_NEW_FRAMEBUFFER,
-   upload_S6
+   "imm s6",
+   upload_S6,
+   I915_NEW_BLEND | I915_NEW_DEPTH_STENCIL | I915_NEW_FRAMEBUFFER
 };
+
 
 
 /***********************************************************************
  */
-static void upload_S7( struct i915_context *i915 )
+static void upload_S7(struct i915_context *i915)
 {
    unsigned LIS7;
 
@@ -202,11 +211,15 @@ static void upload_S7( struct i915_context *i915 )
 }
 
 const struct i915_tracked_state i915_upload_S7 = {
-   I915_NEW_RASTERIZER,
-   upload_S7
+   "imm S7",
+   upload_S7,
+   I915_NEW_RASTERIZER
 };
 
 
+
+/***********************************************************************
+ */
 static const struct i915_tracked_state *atoms[] = {
    &i915_upload_S0S1,
    &i915_upload_S2S4,
@@ -215,13 +228,17 @@ static const struct i915_tracked_state *atoms[] = {
    &i915_upload_S7
 };
 
-/* 
- */
-void i915_update_immediate( struct i915_context *i915 )
+static void update_immediate(struct i915_context *i915)
 {
    int i;
 
    for (i = 0; i < Elements(atoms); i++)
       if (i915->dirty & atoms[i]->dirty)
-	 atoms[i]->update( i915 );
+         atoms[i]->update(i915);
 }
+
+struct i915_tracked_state i915_hw_immediate = {
+   "immediate",
+   update_immediate,
+   ~0 /* all state atoms, becuase we do internal checking */
+};

@@ -246,6 +246,7 @@
 #define PARAM_QUALIFIER_IN                         0
 #define PARAM_QUALIFIER_OUT                        1
 #define PARAM_QUALIFIER_INOUT                      2
+#define PARAM_QUALIFIER_NONE                       3
 
 /* function parameter */
 #define PARAMETER_NONE                             0
@@ -836,7 +837,6 @@ _parse_storage_qualifier(struct parse_context *ctx,
    return 0;
 }
 
-
 static int
 _parse_struct_declarator(struct parse_context *ctx,
                          struct parse_state *ps)
@@ -1114,6 +1114,21 @@ _parse_type_specifier(struct parse_context *ctx,
    return 0;
 }
 
+static int
+_parse_parameter_qualifier(struct parse_context *ctx,
+                           struct parse_state *ps)
+{
+   unsigned int e = _emit(ctx, &ps->out, PARAM_QUALIFIER_NONE);
+
+   if (_parse_id(ctx, ctx->dict.in, ps) == 0) {
+      _update(ctx, e, PARAM_QUALIFIER_IN);
+   } else if (_parse_id(ctx, ctx->dict.out, ps) == 0) {
+      _update(ctx, e, PARAM_QUALIFIER_OUT);
+   } else if (_parse_id(ctx, ctx->dict.inout, ps) == 0) {
+      _update(ctx, e, PARAM_QUALIFIER_INOUT);
+   }
+   return 0;
+}
 
 static int
 _parse_fully_specified_type(struct parse_context *ctx,
@@ -1136,6 +1151,7 @@ _parse_fully_specified_type(struct parse_context *ctx,
    if (_parse_storage_qualifier(ctx, &p)) {
       _emit(ctx, &p.out, TYPE_QUALIFIER_NONE);
    }
+   _parse_parameter_qualifier(ctx, &p);
    if (_parse_precision(ctx, &p)) {
       _emit(ctx, &p.out, PRECISION_DEFAULT);
    }
@@ -1163,23 +1179,6 @@ _parse_function_header(struct parse_context *ctx,
       return -1;
    }
    *ps = p;
-   return 0;
-}
-
-
-static int
-_parse_parameter_qualifier(struct parse_context *ctx,
-                           struct parse_state *ps)
-{
-   unsigned int e = _emit(ctx, &ps->out, PARAM_QUALIFIER_IN);
-
-   if (_parse_id(ctx, ctx->dict.out, ps) == 0) {
-      _update(ctx, e, PARAM_QUALIFIER_OUT);
-   } else if (_parse_id(ctx, ctx->dict.inout, ps) == 0) {
-      _update(ctx, e, PARAM_QUALIFIER_INOUT);
-   } else {
-      _parse_id(ctx, ctx->dict.in, ps);
-   }
    return 0;
 }
 
@@ -2192,9 +2191,8 @@ _parse_asm_statement(struct parse_context *ctx,
    if (_parse_identifier(ctx, &p)) {
       return -1;
    }
-   if (_parse_asm_arguments(ctx, &p)) {
-      return -1;
-   }
+   /* optional arguments */
+   _parse_asm_arguments(ctx, &p);
    if (_parse_token(ctx, SL_PP_SEMICOLON, &p)) {
       return -1;
    }

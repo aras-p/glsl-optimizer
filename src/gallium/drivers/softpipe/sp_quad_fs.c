@@ -109,7 +109,7 @@ shade_quads(struct quad_stage *qs,
 {
    struct softpipe_context *softpipe = qs->softpipe;
    struct tgsi_exec_machine *machine = softpipe->fs_machine;
-   unsigned i, pass = 0;
+   unsigned i, nr_quads = 0;
 
    for (i = 0; i < PIPE_MAX_CONSTANT_BUFFERS; i++) {
       machine->Consts[i] = softpipe->mapped_constants[PIPE_SHADER_FRAGMENT][i];
@@ -123,11 +123,11 @@ shade_quads(struct quad_stage *qs,
       if (/*do_coverage*/ 0)
          coverage_quad( qs, quads[i] );
 
-      quads[pass++] = quads[i];
+      quads[nr_quads++] = quads[i];
    }
    
-   if (pass)
-      qs->next->run(qs->next, quads, pass);
+   if (nr_quads)
+      qs->next->run(qs->next, quads, nr_quads);
 }
    
 

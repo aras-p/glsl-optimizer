@@ -45,6 +45,11 @@ void r300_emit_clip_state(struct r300_context* r300,
 void r300_emit_dsa_state(struct r300_context* r300,
                          unsigned size, void* state);
 
+void r300_emit_hyperz_state(struct r300_context *r300,
+                            unsigned size, void *state);
+
+void r300_emit_hyperz_end(struct r300_context *r300);
+
 void r300_emit_fs(struct r300_context* r300, unsigned size, void *state);
 
 void r300_emit_fs_constants(struct r300_context* r300, unsigned size, void *state);
@@ -58,6 +63,13 @@ void r500_emit_fs_constants(struct r300_context* r300, unsigned size, void *stat
 void r500_emit_fs_rc_constant_state(struct r300_context* r300, unsigned size, void *state);
 
 void r300_emit_fb_state(struct r300_context* r300, unsigned size, void* state);
+
+void r300_emit_fb_state_pipelined(struct r300_context *r300,
+                                  unsigned size, void *state);
+
+void r300_emit_gpu_flush(struct r300_context *r300, unsigned size, void *state);
+
+void r300_emit_aa_state(struct r300_context *r300, unsigned size, void *state);
 
 void r300_emit_query_start(struct r300_context *r300, unsigned size, void *state);
 
@@ -76,6 +88,9 @@ void r300_emit_textures_state(struct r300_context *r300,
 
 void r300_emit_aos_swtcl(struct r300_context *r300, boolean indexed);
 
+void r300_emit_vap_invariant_state(struct r300_context *r300,
+                                   unsigned size, void *state);
+
 void r300_emit_vertex_stream_state(struct r300_context* r300,
                                    unsigned size, void* state);
 
@@ -93,6 +108,9 @@ void r300_emit_ztop_state(struct r300_context* r300,
 void r300_emit_pvs_flush(struct r300_context* r300, unsigned size, void* state);
 
 void r300_emit_texture_cache_inval(struct r300_context* r300, unsigned size, void* state);
+
+void r300_emit_invariant_state(struct r300_context *r300,
+                               unsigned size, void *state);
 
 unsigned r300_get_num_dirty_dwords(struct r300_context *r300);
 

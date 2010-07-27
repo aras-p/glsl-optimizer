@@ -187,6 +187,8 @@ typedef enum {
 
 	RC_OPCODE_ENDLOOP,
 
+	RC_OPCODE_CONTINUE,
+
 	/** special instruction, used in R300-R500 fragment program pair instructions
 	 * indicates that the result of the alpha operation shall be replicated
 	 * across all other channels */
@@ -196,6 +198,9 @@ typedef enum {
 	 * to indicate the start of a block of texture instructions that
 	 * can run simultaneously. */
 	RC_OPCODE_BEGIN_TEX,
+
+	/** Stop execution of the shader (GLSL discard) */
+	RC_OPCODE_KILP,
 
 	MAX_RC_OPCODE
 } rc_opcode;

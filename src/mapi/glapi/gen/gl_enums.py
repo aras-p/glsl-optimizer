@@ -105,7 +105,8 @@ const char *_mesa_lookup_enum_by_nr( int nr )
    }
    else {
       /* this is not re-entrant safe, no big deal here */
-      sprintf(token_tmp, "0x%x", nr);
+      _mesa_snprintf(token_tmp, sizeof(token_tmp) - 1, "0x%x", nr);
+      token_tmp[sizeof(token_tmp) - 1] = '\\0';
       return token_tmp;
    }
 }

@@ -107,4 +107,12 @@ lp_build_const_mask_aos(struct lp_type type,
                         const boolean cond[4]);
 
 
+static INLINE LLVMValueRef
+lp_build_const_int32(int i)
+{
+   return LLVMConstInt(LLVMInt32Type(), i, 0);
+}
+
+
+
 #endif /* !LP_BLD_CONST_H */

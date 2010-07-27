@@ -36,7 +36,9 @@ The integer capabilities:
   bound.
 * ``OCCLUSION_QUERY``: Whether occlusion queries are available.
 * ``TIMER_QUERY``: Whether timer queries are available.
-* ``TEXTURE_SHADOW_MAP``: XXX
+* ``TEXTURE_SHADOW_MAP``: indicates whether the fragment shader hardware
+  can do the depth texture / Z comparison operation in TEX instructions
+  for shadow testing.
 * ``MAX_TEXTURE_2D_LEVELS``: The maximum number of mipmap levels available
   for a 2D texture.
 * ``MAX_TEXTURE_3D_LEVELS``: The maximum number of mipmap levels available
@@ -55,7 +57,13 @@ The integer capabilities:
   from color blend equations, in :ref:`Blend` state.
 * ``SM3``: Whether the vertex shader and fragment shader support equivalent
   opcodes to the Shader Model 3 specification. XXX oh god this is horrible
-* ``MAX_PREDICATE_REGISTERS``: XXX
+* ``MAX_PREDICATE_REGISTERS``: indicates the number of predicate registers
+  available.  Predicate register may be set as a side-effect of ALU
+  instructions to indicate less than, greater than or equal to zero.
+  Later instructions can use a predicate register to control writing to
+  each channel of destination registers.  NOTE: predicate registers have
+  not been fully implemented in Gallium at this time.  See the
+  GL_NV_fragment_program extension for more info (look for "condition codes").
 * ``MAX_COMBINED_SAMPLERS``: The total number of samplers accessible from
   the vertex and fragment shader, inclusive.
 * ``MAX_CONST_BUFFERS``: Maximum number of constant buffers that can be bound

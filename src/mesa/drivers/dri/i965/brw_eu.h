@@ -35,7 +35,7 @@
 
 #include "brw_structs.h"
 #include "brw_defines.h"
-#include "shader/prog_instruction.h"
+#include "program/prog_instruction.h"
 
 #define BRW_SWIZZLE4(a,b,c,d) (((a)<<0) | ((b)<<2) | ((c)<<4) | ((d)<<6))
 #define BRW_GET_SWZ(swz, idx) (((swz) >> ((idx)*2)) & 0x3)
@@ -520,6 +520,20 @@ static INLINE struct brw_reg brw_acc_reg( void )
 		       0);
 }
 
+static INLINE struct brw_reg brw_notification_1_reg(void)
+{
+
+   return brw_reg(BRW_ARCHITECTURE_REGISTER_FILE,
+		  BRW_ARF_NOTIFICATION_COUNT,
+		  1,
+		  BRW_REGISTER_TYPE_UD,
+		  BRW_VERTICAL_STRIDE_0,
+		  BRW_WIDTH_1,
+		  BRW_HORIZONTAL_STRIDE_0,
+		  BRW_SWIZZLE_XXXX,
+		  WRITEMASK_X);
+}
+
 
 static INLINE struct brw_reg brw_flag_reg( void )
 {
@@ -877,11 +891,14 @@ void brw_dp_READ_4( struct brw_compile *p,
 
 void brw_dp_READ_4_vs( struct brw_compile *p,
                        struct brw_reg dest,
-                       GLuint oword,
-                       GLboolean relAddr,
-                       struct brw_reg addrReg,
                        GLuint location,
                        GLuint bind_table_index );
+
+void brw_dp_READ_4_vs_relative(struct brw_compile *p,
+			       struct brw_reg dest,
+			       struct brw_reg addrReg,
+			       GLuint offset,
+			       GLuint bind_table_index);
 
 void brw_dp_WRITE_16( struct brw_compile *p,
 		      struct brw_reg src,
@@ -918,6 +935,8 @@ void brw_land_fwd_jump(struct brw_compile *p,
 
 
 void brw_NOP(struct brw_compile *p);
+
+void brw_WAIT(struct brw_compile *p);
 
 /* Special case: there is never a destination, execution size will be
  * taken from src0:
@@ -965,5 +984,7 @@ void brw_set_src1( struct brw_instruction *insn,
 
 /* brw_optimize.c */
 void brw_optimize(struct brw_compile *p);
+void brw_remove_duplicate_mrf_moves(struct brw_compile *p);
+void brw_remove_grf_to_mrf_moves(struct brw_compile *p);
 
 #endif

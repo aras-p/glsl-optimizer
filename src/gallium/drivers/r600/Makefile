@@ -18,10 +18,7 @@ C_SOURCES = \
 	r600_state.c \
 	r600_texture.c \
 	r600_shader.c \
-	r600_compiler.c \
-	r600_compiler_tgsi.c \
-	r600_compiler_dump.c \
-	r600_compiler_r600.c \
-	r600_compiler_r700.c
+	r600_asm.c \
+	r700_asm.c
 
 include ../../Makefile.template

@@ -32,8 +32,8 @@
  */
 
 #include "main/imports.h"
-#include "shader/prog_parameter.h"
-#include "shader/prog_print.h"
+#include "program/prog_parameter.h"
+#include "program/prog_print.h"
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
@@ -59,7 +59,8 @@ void st_upload_constants( struct st_context *st,
    struct pipe_resource **cbuf = &st->state.constants[shader_type];
 
    assert(shader_type == PIPE_SHADER_VERTEX ||
-          shader_type == PIPE_SHADER_FRAGMENT);
+          shader_type == PIPE_SHADER_FRAGMENT ||
+          shader_type == PIPE_SHADER_GEOMETRY);
 
    /* update constants */
    if (params && params->NumParameters) {
@@ -139,3 +140,24 @@ const struct st_tracked_state st_update_fs_constants = {
    update_fs_constants					/* update */
 };
 
+/* Geometry shader:
+ */
+static void update_gs_constants(struct st_context *st )
+{
+   struct st_geometry_program *gp = st->gp;
+   struct gl_program_parameter_list *params;
+
+   if (gp) {
+      params = gp->Base.Base.Parameters;
+      st_upload_constants( st, params, PIPE_SHADER_GEOMETRY );
+   }
+}
+
+const struct st_tracked_state st_update_gs_constants = {
+   "st_update_gs_constants",				/* name */
+   {							/* dirty */
+      (_NEW_PROGRAM | _NEW_PROGRAM_CONSTANTS),          /* mesa */
+      ST_NEW_GEOMETRY_PROGRAM,				/* st */
+   },
+   update_gs_constants					/* update */
+};

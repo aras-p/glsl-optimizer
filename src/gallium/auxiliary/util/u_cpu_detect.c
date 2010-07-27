@@ -38,7 +38,7 @@
 #include "u_cpu_detect.h"
 
 #if defined(PIPE_ARCH_PPC)
-#if defined(PIPE_OS_DARWIN)
+#if defined(PIPE_OS_APPLE)
 #include <sys/sysctl.h>
 #else
 #include <signal.h>
@@ -132,7 +132,7 @@ win32_sig_handler_sse(EXCEPTION_POINTERS* ep)
 #endif /* PIPE_ARCH_X86 */
 
 
-#if defined(PIPE_ARCH_PPC) && !defined(PIPE_OS_DARWIN)
+#if defined(PIPE_ARCH_PPC) && !defined(PIPE_OS_APPLE)
 static jmp_buf  __lv_powerpc_jmpbuf;
 static volatile sig_atomic_t __lv_powerpc_canjump = 0;
 
@@ -153,7 +153,7 @@ sigill_handler(int sig)
 static void
 check_os_altivec_support(void)
 {
-#if defined(PIPE_OS_DARWIN)
+#if defined(PIPE_OS_APPLE)
    int sels[2] = {CTL_HW, HW_VECTORUNIT};
    int has_vu = 0;
    int len = sizeof (has_vu);
@@ -166,8 +166,8 @@ check_os_altivec_support(void)
          util_cpu_caps.has_altivec = 1;
       }
    }
-#else /* !PIPE_OS_DARWIN */
-   /* no Darwin, do it the brute-force way */
+#else /* !PIPE_OS_APPLE */
+   /* not on Apple/Darwin, do it the brute-force way */
    /* this is borrowed from the libmpeg2 library */
    signal(SIGILL, sigill_handler);
    if (setjmp(__lv_powerpc_jmpbuf)) {
@@ -184,7 +184,7 @@ check_os_altivec_support(void)
       signal(SIGILL, SIG_DFL);
       util_cpu_caps.has_altivec = 1;
    }
-#endif /* PIPE_OS_DARWIN */
+#endif /* !PIPE_OS_APPLE */
 }
 #endif /* PIPE_ARCH_PPC */
 

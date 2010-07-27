@@ -12,6 +12,8 @@ MAIN_SOURCES = \
 	main/api_noop.c \
 	main/api_validate.c \
 	main/accum.c \
+	main/arbprogram.c \
+	main/atifragshader.c \
 	main/attrib.c \
 	main/arrayobj.c \
 	main/blend.c \
@@ -55,6 +57,7 @@ MAIN_SOURCES = \
 	main/mipmap.c \
 	main/mm.c \
 	main/multisample.c \
+	main/nvprogram.c \
 	main/pixel.c \
 	main/pixelstore.c \
 	main/points.c \
@@ -66,7 +69,8 @@ MAIN_SOURCES = \
 	main/remap.c \
 	main/renderbuffer.c \
 	main/scissor.c \
-	main/shaders.c \
+	main/shaderapi.c \
+	main/shaderobj.c \
 	main/shared.c \
 	main/state.c \
 	main/stencil.c \
@@ -88,6 +92,7 @@ MAIN_SOURCES = \
 	main/texstate.c \
 	main/texstore.c \
 	main/transformfeedback.c \
+	main/uniforms.c \
 	main/varray.c \
 	main/version.c \
 	main/viewport.c \
@@ -223,56 +228,51 @@ STATETRACKER_SOURCES = \
 	state_tracker/st_program.c \
 	state_tracker/st_texture.c
 
-SHADER_SOURCES = \
-	shader/arbprogparse.c \
-	shader/arbprogram.c \
-	shader/atifragshader.c \
-	shader/hash_table.c \
-	shader/lex.yy.c \
-	shader/nvfragparse.c \
-	shader/nvprogram.c \
-	shader/nvvertparse.c \
-	shader/program.c \
-	shader/program_parse.tab.c \
-	shader/program_parse_extra.c \
-	shader/prog_cache.c \
-	shader/prog_execute.c \
-	shader/prog_instruction.c \
-	shader/prog_noise.c \
-	shader/prog_optimize.c \
-	shader/prog_parameter.c \
-	shader/prog_parameter_layout.c \
-	shader/prog_print.c \
-	shader/prog_statevars.c \
-	shader/prog_uniform.c \
-	shader/programopt.c \
-	shader/symbol_table.c \
-	shader/shader_api.c \
-	shader/uniforms.c
+PROGRAM_SOURCES = \
+	program/arbprogparse.c \
+	program/hash_table.c \
+	program/lex.yy.c \
+	program/nvfragparse.c \
+	program/nvvertparse.c \
+	program/program.c \
+	program/program_parse.tab.c \
+	program/program_parse_extra.c \
+	program/prog_cache.c \
+	program/prog_execute.c \
+	program/prog_instruction.c \
+	program/prog_noise.c \
+	program/prog_optimize.c \
+	program/prog_parameter.c \
+	program/prog_parameter_layout.c \
+	program/prog_print.c \
+	program/prog_statevars.c \
+	program/prog_uniform.c \
+	program/programopt.c \
+	program/symbol_table.c
 
 SHADER_CXX_SOURCES = \
-	shader/ir_to_mesa.cpp
+	program/ir_to_mesa.cpp
 
 SLANG_SOURCES =	\
-	shader/slang/slang_builtin.c	\
-	shader/slang/slang_codegen.c	\
-	shader/slang/slang_compile.c	\
-	shader/slang/slang_compile_function.c	\
-	shader/slang/slang_compile_operation.c	\
-	shader/slang/slang_compile_struct.c	\
-	shader/slang/slang_compile_variable.c	\
-	shader/slang/slang_emit.c	\
-	shader/slang/slang_ir.c	\
-	shader/slang/slang_label.c	\
-	shader/slang/slang_link.c	\
-	shader/slang/slang_log.c	\
-	shader/slang/slang_mem.c	\
-	shader/slang/slang_print.c	\
-	shader/slang/slang_simplify.c	\
-	shader/slang/slang_storage.c	\
-	shader/slang/slang_typeinfo.c	\
-	shader/slang/slang_vartable.c	\
-	shader/slang/slang_utility.c
+	slang/slang_builtin.c	\
+	slang/slang_codegen.c	\
+	slang/slang_compile.c	\
+	slang/slang_compile_function.c	\
+	slang/slang_compile_operation.c	\
+	slang/slang_compile_struct.c	\
+	slang/slang_compile_variable.c	\
+	slang/slang_emit.c	\
+	slang/slang_ir.c	\
+	slang/slang_label.c	\
+	slang/slang_link.c	\
+	slang/slang_log.c	\
+	slang/slang_mem.c	\
+	slang/slang_print.c	\
+	slang/slang_simplify.c	\
+	slang/slang_storage.c	\
+	slang/slang_typeinfo.c	\
+	slang/slang_vartable.c	\
+	slang/slang_utility.c
 
 ASM_C_SOURCES =	\
 	x86/common_x86.c \
@@ -323,7 +323,7 @@ MESA_SOURCES = \
 	$(MATH_XFORM_SOURCES)	\
 	$(VBO_SOURCES)		\
 	$(TNL_SOURCES)		\
-	$(SHADER_SOURCES)	\
+	$(PROGRAM_SOURCES)	\
 	$(SWRAST_SOURCES)	\
 	$(SWRAST_SETUP_SOURCES)	\
 	$(COMMON_DRIVER_SOURCES)\
@@ -338,7 +338,7 @@ MESA_GALLIUM_SOURCES = \
 	$(MATH_SOURCES)		\
 	$(VBO_SOURCES)		\
 	$(STATETRACKER_SOURCES)	\
-	$(SHADER_SOURCES)	\
+	$(PROGRAM_SOURCES)	\
 	ppc/common_ppc.c	\
 	x86/common_x86.c
 

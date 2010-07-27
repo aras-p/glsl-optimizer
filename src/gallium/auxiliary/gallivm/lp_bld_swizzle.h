@@ -68,24 +68,12 @@ lp_build_broadcast_aos(struct lp_build_context *bld,
 /**
  * Swizzle a vector consisting of an array of XYZW structs.
  *
- * @param swizzle is the in [0,4[ range.
+ * @param swizzles is the in [0,4[ range.
  */
 LLVMValueRef
-lp_build_swizzle1_aos(struct lp_build_context *bld,
-                      LLVMValueRef a,
-                      const unsigned char swizzle[4]);
-
-
-/**
- * Swizzle two vector consisting of an array of XYZW structs.
- *
- * @param swizzle is the in [0,8[ range. Values in [4,8[ range refer to b.
- */
-LLVMValueRef
-lp_build_swizzle2_aos(struct lp_build_context *bld,
-                      LLVMValueRef a,
-                      LLVMValueRef b,
-                      const unsigned char swizzle[4]);
+lp_build_swizzle_aos(struct lp_build_context *bld,
+                     LLVMValueRef a,
+                     const unsigned char swizzles[4]);
 
 
 LLVMValueRef

@@ -32,7 +32,7 @@
 
 #include "main/mtypes.h"
 #include "main/texstore.h"
-#include "shader/prog_parameter.h"
+#include "program/prog_parameter.h"
 
 #include "intel_mipmap_tree.h"
 #include "intel_batchbuffer.h"

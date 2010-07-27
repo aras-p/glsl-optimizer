@@ -1,0 +1,13 @@
+Import('*')
+
+env = env.Clone()
+
+galahad = env.ConvenienceLibrary(
+	target = 'identity',
+	source = [
+		'glhd_context.c',
+		'glhd_objects.c',
+		'glhd_screen.c',
+	])
+
+Export('galahad')

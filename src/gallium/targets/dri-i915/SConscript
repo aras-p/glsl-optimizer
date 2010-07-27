@@ -8,10 +8,13 @@ env = drienv.Clone()
 
 env.ParseConfig('pkg-config --cflags --libs libdrm_intel')
 
+env.Append(CPPDEFINES = ['GALLIUM_RBUG', 'GALLIUM_TRACE', 'GALLIUM_GALAHAD'])
+
 env.Prepend(LIBS = [
     st_dri,
     i915drm,
     i915,
+    galahad,
     trace,
     rbug,
     mesa,
@@ -22,6 +25,6 @@ env.Prepend(LIBS = [
 
 env.LoadableModule(
     target = 'i915_dri.so',
-    source = 'dummy.c',
+    source = 'target.c',
     SHLIBPREFIX = '',
 )

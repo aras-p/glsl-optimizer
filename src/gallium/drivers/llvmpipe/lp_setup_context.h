@@ -81,7 +81,6 @@ struct lp_setup_context
     */
    struct draw_stage *vbuf;
    unsigned num_threads;
-   struct lp_rasterizer *rast;
    struct lp_scene *scenes[MAX_SCENES];  /**< all the scenes */
    struct lp_scene *scene;               /**< current scene being built */
    struct lp_scene_queue *empty_scenes;  /**< queue of empty scenes */
@@ -101,9 +100,10 @@ struct lp_setup_context
    } clear;
 
    enum setup_state {
-      SETUP_FLUSHED,
-      SETUP_CLEARED,
-      SETUP_ACTIVE
+      SETUP_FLUSHED,    /**< scene is null */
+      SETUP_EMPTY,      /**< scene exists but has only state changes */
+      SETUP_CLEARED,    /**< scene exists but has only clears */
+      SETUP_ACTIVE      /**< scene exists and has at least one draw/query */
    } state;
    
    struct {
@@ -129,7 +129,6 @@ struct lp_setup_context
 
    struct {
       struct pipe_scissor_state current;
-      const void *stored;
    } scissor;
 
    unsigned dirty;   /**< bitmask of LP_SETUP_NEW_x bits */

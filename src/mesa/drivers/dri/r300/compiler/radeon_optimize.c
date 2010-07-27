@@ -75,6 +75,15 @@ struct peephole_state {
 	int BranchDepth;
 };
 
+/**
+ * This is a callback function that is meant to be passed to
+ * rc_for_all_reads_mask.  This function will be called once for each source
+ * register in inst.
+ * @param inst The instruction that the source register belongs to.
+ * @param file The register file of the source register.
+ * @param index The index of the source register.
+ * @param mask The components of the source register that are being read from.
+ */
 static void peephole_scan_read(void * data, struct rc_instruction * inst,
 		rc_register_file file, unsigned int index, unsigned int mask)
 {
@@ -153,6 +162,11 @@ static void peephole(struct radeon_compiler * c, struct rc_instruction * inst_mo
 	for(struct rc_instruction * inst = inst_mov->Next;
 	    inst != &c->Program.Instructions;
 	    inst = inst->Next) {
+		/* XXX In the future we might be able to make the optimizer
+		 * smart enough to handle loops. */
+		if(inst->U.I.Opcode == RC_OPCODE_BGNLOOP){
+			return;
+		}
 		rc_for_all_reads_mask(inst, peephole_scan_read, &s);
 		rc_for_all_writes_mask(inst, peephole_scan_write, &s);
 		if (s.Conflict)
@@ -161,7 +175,8 @@ static void peephole(struct radeon_compiler * c, struct rc_instruction * inst_mo
 		if (s.BranchDepth >= 0) {
 			if (inst->U.I.Opcode == RC_OPCODE_IF) {
 				s.BranchDepth++;
-			} else if (inst->U.I.Opcode == RC_OPCODE_ENDIF) {
+			} else if (inst->U.I.Opcode == RC_OPCODE_ENDIF
+				|| inst->U.I.Opcode == RC_OPCODE_ELSE) {
 				s.BranchDepth--;
 				if (s.BranchDepth < 0) {
 					s.DefinedMask &= ~s.MovMask;
@@ -208,7 +223,8 @@ static void peephole(struct radeon_compiler * c, struct rc_instruction * inst_mo
 		if (s.BranchDepth >= 0) {
 			if (inst->U.I.Opcode == RC_OPCODE_IF) {
 				s.BranchDepth++;
-			} else if (inst->U.I.Opcode == RC_OPCODE_ENDIF) {
+			} else if (inst->U.I.Opcode == RC_OPCODE_ENDIF
+				|| inst->U.I.Opcode == RC_OPCODE_ELSE) {
 				s.BranchDepth--;
 				if (s.BranchDepth < 0)
 					break; /* no more readers after this point */

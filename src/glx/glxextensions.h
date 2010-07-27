@@ -41,7 +41,6 @@ enum
    EXT_visual_rating_bit,
    EXT_import_context_bit,
    MESA_agp_offset_bit,
-   MESA_allocate_memory_bit,    /* Replaces MESA_agp_offset & NV_vertex_array_range */
    MESA_copy_sub_buffer_bit,
    MESA_depth_float_bit,
    MESA_pixmap_colormap_bit,

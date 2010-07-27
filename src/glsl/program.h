@@ -25,8 +25,8 @@
 #include "main/mtypes.h"
 
 extern "C" {
-#include "shader/prog_parameter.h"
-#include "shader/prog_uniform.h"
+#include "program/prog_parameter.h"
+#include "program/prog_uniform.h"
 }
 
 extern void

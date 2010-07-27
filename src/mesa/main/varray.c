@@ -1368,10 +1368,10 @@ print_array(const char *name, GLint index, const struct gl_client_array *array)
       printf("  %s[%d]: ", name, index);
    else
       printf("  %s: ", name);
-   printf("Ptr=%p, Type=0x%x, Size=%d, ElemSize=%u, Stride=%d, Buffer=%u(Size %u), MaxElem=%u\n",
+   printf("Ptr=%p, Type=0x%x, Size=%d, ElemSize=%u, Stride=%d, Buffer=%u(Size %lu), MaxElem=%u\n",
 	  array->Ptr, array->Type, array->Size,
 	  array->_ElementSize, array->StrideB,
-	  array->BufferObj->Name, array->BufferObj->Size,
+	  array->BufferObj->Name, (unsigned long) array->BufferObj->Size,
 	  array->_MaxElement);
 }
 

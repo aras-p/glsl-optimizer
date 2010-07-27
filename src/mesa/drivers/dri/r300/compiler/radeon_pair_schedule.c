@@ -141,12 +141,28 @@ static void add_inst_to_list(struct schedule_instruction ** list, struct schedul
 	*list = inst;
 }
 
+static void add_inst_to_list_end(struct schedule_instruction ** list,
+					struct schedule_instruction * inst)
+{
+	if(!*list){
+		*list = inst;
+	}else{
+		struct schedule_instruction * temp = *list;
+		while(temp->NextReady){
+			temp = temp->NextReady;
+		}
+		temp->NextReady = inst;
+	}
+}
+
 static void instruction_ready(struct schedule_state * s, struct schedule_instruction * sinst)
 {
 	DBG("%i is now ready\n", sinst->Instruction->IP);
 
+	/* Adding Ready TEX instructions to the end of the "Ready List" helps
+	 * us emit TEX instructions in blocks without losing our place. */
 	if (sinst->Instruction->Type == RC_INSTRUCTION_NORMAL)
-		add_inst_to_list(&s->ReadyTEX, sinst);
+		add_inst_to_list_end(&s->ReadyTEX, sinst);
 	else if (sinst->Instruction->U.P.Alpha.Opcode == RC_OPCODE_NOP)
 		add_inst_to_list(&s->ReadyRGB, sinst);
 	else if (sinst->Instruction->U.P.RGB.Opcode == RC_OPCODE_NOP)
@@ -163,11 +179,14 @@ static void decrease_dependencies(struct schedule_state * s, struct schedule_ins
 		instruction_ready(s, sinst);
 }
 
-static void commit_instruction(struct schedule_state * s, struct schedule_instruction * sinst)
-{
-	DBG("%i: commit\n", sinst->Instruction->IP);
-
-	for(unsigned int i = 0; i < sinst->NumReadValues; ++i) {
+/**
+ * This function decreases the dependencies of the next instruction that
+ * wants to write to each of sinst's read values.
+ */
+static void commit_update_reads(struct schedule_state * s,
+					struct schedule_instruction * sinst){
+	unsigned int i;
+	for(i = 0; i < sinst->NumReadValues; ++i) {
 		struct reg_value * v = sinst->ReadValues[i];
 		assert(v->NumReaders > 0);
 		v->NumReaders--;
@@ -176,8 +195,12 @@ static void commit_instruction(struct schedule_state * s, struct schedule_instru
 				decrease_dependencies(s, v->Next->Writer);
 		}
 	}
+}
 
-	for(unsigned int i = 0; i < sinst->NumWriteValues; ++i) {
+static void commit_update_writes(struct schedule_state * s,
+					struct schedule_instruction * sinst){
+	unsigned int i;
+	for(i = 0; i < sinst->NumWriteValues; ++i) {
 		struct reg_value * v = sinst->WriteValues[i];
 		if (v->NumReaders) {
 			for(struct reg_value_reader * r = v->Readers; r; r = r->Next) {
@@ -196,6 +219,15 @@ static void commit_instruction(struct schedule_state * s, struct schedule_instru
 	}
 }
 
+static void commit_alu_instruction(struct schedule_state * s, struct schedule_instruction * sinst)
+{
+	DBG("%i: commit\n", sinst->Instruction->IP);
+
+	commit_update_reads(s, sinst);
+
+	commit_update_writes(s, sinst);
+}
+
 /**
  * Emit all ready texture instructions in a single block.
  *
@@ -208,21 +240,37 @@ static void emit_all_tex(struct schedule_state * s, struct rc_instruction * befo
 
 	assert(s->ReadyTEX);
 
-	/* Don't let the ready list change under us! */
-	readytex = s->ReadyTEX;
-	s->ReadyTEX = 0;
-
 	/* Node marker for R300 */
 	struct rc_instruction * inst_begin = rc_insert_new_instruction(s->C, before->Prev);
 	inst_begin->U.I.Opcode = RC_OPCODE_BEGIN_TEX;
 
 	/* Link texture instructions back in */
+	readytex = s->ReadyTEX;
 	while(readytex) {
-		struct schedule_instruction * tex = readytex;
-		readytex = readytex->NextReady;
+		rc_insert_instruction(before->Prev, readytex->Instruction);
+		DBG("%i: commit TEX reads\n", readytex->Instruction->IP);
 
-		rc_insert_instruction(before->Prev, tex->Instruction);
-		commit_instruction(s, tex);
+		/* All of the TEX instructions in the same TEX block have
+		 * their source registers read from before any of the
+		 * instructions in that block write to their destination
+		 * registers.  This means that when we commit a TEX
+		 * instruction, any other TEX instruction that wants to write
+		 * to one of the committed instruction's source register can be
+		 * marked as ready and should be emitted in the same TEX
+		 * block. This prevents the following sequence from being
+		 * emitted in two different TEX blocks:
+		 * 0: TEX temp[0].xyz, temp[1].xy__, 2D[0];
+		 * 1: TEX temp[1].xyz, temp[2].xy__, 2D[0];
+		 */
+		commit_update_reads(s, readytex);
+		readytex = readytex->NextReady;
+	}
+	readytex = s->ReadyTEX;
+	s->ReadyTEX = 0;
+	while(readytex){
+		DBG("%i: commit TEX writes\n", readytex->Instruction->IP);
+		commit_update_writes(s, readytex);
+		readytex = readytex->NextReady;
 	}
 }
 
@@ -328,7 +376,7 @@ static void emit_one_alu(struct schedule_state *s, struct rc_instruction * befor
 		}
 
 		rc_insert_instruction(before->Prev, sinst->Instruction);
-		commit_instruction(s, sinst);
+		commit_alu_instruction(s, sinst);
 	} else {
 		struct schedule_instruction **prgb;
 		struct schedule_instruction **palpha;
@@ -346,8 +394,8 @@ static void emit_one_alu(struct schedule_state *s, struct rc_instruction * befor
 				*prgb = (*prgb)->NextReady;
 				*palpha = (*palpha)->NextReady;
 				rc_insert_instruction(before->Prev, psirgb->Instruction);
-				commit_instruction(s, psirgb);
-				commit_instruction(s, psialpha);
+				commit_alu_instruction(s, psirgb);
+				commit_alu_instruction(s, psialpha);
 				goto success;
 			}
 		}
@@ -357,7 +405,7 @@ static void emit_one_alu(struct schedule_state *s, struct rc_instruction * befor
 		s->ReadyRGB = s->ReadyRGB->NextReady;
 
 		rc_insert_instruction(before->Prev, sinst->Instruction);
-		commit_instruction(s, sinst);
+		commit_alu_instruction(s, sinst);
 	success: ;
 	}
 }

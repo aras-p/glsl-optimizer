@@ -54,7 +54,6 @@ struct lp_fragment_shader_variant_key
    enum pipe_format zsbuf_format;
    unsigned nr_cbufs:8;
    unsigned flatshade:1;
-   unsigned scissor:1;
    unsigned occlusion_count:1;
 
    struct {

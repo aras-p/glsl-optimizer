@@ -303,6 +303,7 @@ EXTRA_EXT2(ARB_fragment_program, NV_fragment_program);
 EXTRA_EXT2(ARB_vertex_program, NV_vertex_program);
 EXTRA_EXT2(ARB_vertex_program, ARB_fragment_program);
 EXTRA_EXT(ARB_vertex_buffer_object);
+EXTRA_EXT(ARB_geometry_shader4);
 
 static const int
 extra_ARB_vertex_program_ARB_fragment_program_NV_vertex_program[] = {
@@ -667,7 +668,7 @@ static const struct value_desc values[] = {
    { GL_MAX_3D_TEXTURE_SIZE, LOC_CUSTOM, TYPE_INT,
      offsetof(GLcontext, Const.Max3DTextureLevels), NO_EXTRA },
 
-   /* GL_ARB_fragment_shader/OES_standard_derivatives */
+   /* GL_ARB_fragment_program/OES_standard_derivatives */
    { GL_FRAGMENT_SHADER_DERIVATIVE_HINT_ARB,
      CONTEXT_ENUM(Hint.FragmentShaderDerivative), extra_ARB_fragment_shader },
 #endif /* FEATURE_GL || FEATURE_ES2 */
@@ -1219,6 +1220,26 @@ static const struct value_desc values[] = {
      extra_ARB_transform_feedback2 },
    { GL_TRANSFORM_FEEDBACK_BINDING, LOC_CUSTOM, TYPE_INT, 0,
      extra_ARB_transform_feedback2 },
+
+   /* GL_ARB_geometry_shader4 */
+   { GL_MAX_GEOMETRY_TEXTURE_IMAGE_UNITS_ARB,
+     CONTEXT_INT(Const.GeometryProgram.MaxGeometryTextureImageUnits),
+     extra_ARB_geometry_shader4 },
+   { GL_MAX_GEOMETRY_OUTPUT_VERTICES_ARB,
+     CONTEXT_INT(Const.GeometryProgram.MaxGeometryOutputVertices),
+     extra_ARB_geometry_shader4 },
+   { GL_MAX_GEOMETRY_TOTAL_OUTPUT_COMPONENTS_ARB,
+     CONTEXT_INT(Const.GeometryProgram.MaxGeometryTotalOutputComponents),
+     extra_ARB_geometry_shader4 },
+   { GL_MAX_GEOMETRY_UNIFORM_COMPONENTS_ARB,
+     CONTEXT_INT(Const.GeometryProgram.MaxGeometryUniformComponents),
+     extra_ARB_geometry_shader4 },
+   { GL_MAX_GEOMETRY_VARYING_COMPONENTS_ARB,
+     CONTEXT_INT(Const.GeometryProgram.MaxGeometryVaryingComponents),
+     extra_ARB_geometry_shader4 },
+   { GL_MAX_VERTEX_VARYING_COMPONENTS_ARB,
+     CONTEXT_INT(Const.GeometryProgram.MaxVertexVaryingComponents),
+     extra_ARB_geometry_shader4 },
 
    /* GL 3.0 */
    { GL_NUM_EXTENSIONS, LOC_CUSTOM, TYPE_INT, 0, extra_version_30 },

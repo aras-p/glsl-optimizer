@@ -40,6 +40,12 @@
 #include <xcb/dri2.h>
 #include <xcb/xfixes.h>
 #include <X11/Xlib-xcb.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+
+#ifdef HAVE_LIBUDEV
+#include <libudev.h>
+#endif
 
 #include <glapi/glapi.h>
 #include "eglconfig.h"
@@ -79,7 +85,6 @@ struct dri2_egl_display
    char                     *driver_name;
 
    __DRIdri2LoaderExtension  loader_extension;
-   __DRIimageLookupExtension image_lookup_extension;
    const __DRIextension     *extensions[3];
 };
 
@@ -116,6 +121,10 @@ struct dri2_egl_image
 /* standard typecasts */
 _EGL_DRIVER_STANDARD_TYPECASTS(dri2_egl)
 _EGL_DRIVER_TYPECAST(dri2_egl_image, _EGLImage, obj)
+
+static const __DRIuseInvalidateExtension use_invalidate = {
+   { __DRI_USE_INVALIDATE, 1 }
+};
 
 EGLint dri2_to_egl_attribute_map[] = {
    0,
@@ -381,6 +390,11 @@ dri2_lookup_egl_image(__DRIcontext *context, void *image, void *data)
    return dri2_img->dri_image;
 }
 
+static const __DRIimageLookupExtension image_lookup_extension = {
+   { __DRI_IMAGE_LOOKUP, 1 },
+   dri2_lookup_egl_image
+};
+
 static __DRIbuffer *
 dri2_get_buffers_with_format(__DRIdrawable * driDrawable,
 			     int *width, int *height,
@@ -620,7 +634,7 @@ dri2_add_configs_for_visuals(struct dri2_egl_display *dri2_dpy,
       xcb_depth_next(&d);      
    }
 
-   if (!disp->NumConfigs) {
+   if (!_eglGetArraySize(disp->Configs)) {
       _eglLog(_EGL_WARNING, "DRI2: failed to create any config");
       return EGL_FALSE;
    }
@@ -690,27 +704,63 @@ dri2_load_driver(_EGLDisplay *disp)
    return EGL_TRUE;
 }
 
-
-/**
- * Called via eglInitialize(), GLX_drv->API.Initialize().
- */
 static EGLBoolean
-dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp,
-		EGLint *major, EGLint *minor)
+dri2_create_screen(_EGLDisplay *disp)
 {
    const __DRIextension **extensions;
    struct dri2_egl_display *dri2_dpy;
    unsigned int api_mask;
+
+   dri2_dpy = disp->DriverData;
+   dri2_dpy->dri_screen =
+      dri2_dpy->dri2->createNewScreen(0, dri2_dpy->fd, dri2_dpy->extensions,
+				      &dri2_dpy->driver_configs, dri2_dpy);
+
+   if (dri2_dpy->dri_screen == NULL) {
+      _eglLog(_EGL_WARNING, "DRI2: failed to create dri screen");
+      return EGL_FALSE;
+   }
+
+   extensions = dri2_dpy->core->getExtensions(dri2_dpy->dri_screen);
+   if (!dri2_bind_extensions(dri2_dpy, dri2_core_extensions, extensions))
+      goto cleanup_dri_screen;
+
+   if (dri2_dpy->dri2->base.version >= 2)
+      api_mask = dri2_dpy->dri2->getAPIMask(dri2_dpy->dri_screen);
+   else
+      api_mask = __DRI_API_OPENGL;
+
+   disp->ClientAPIsMask = 0;
+   if (api_mask & (1 <<__DRI_API_OPENGL))
+      disp->ClientAPIsMask |= EGL_OPENGL_BIT;
+   if (api_mask & (1 <<__DRI_API_GLES))
+      disp->ClientAPIsMask |= EGL_OPENGL_ES_BIT;
+   if (api_mask & (1 << __DRI_API_GLES2))
+      disp->ClientAPIsMask |= EGL_OPENGL_ES2_BIT;
+
+   return EGL_TRUE;
+
+ cleanup_dri_screen:
+   dri2_dpy->core->destroyScreen(dri2_dpy->dri_screen);
+
+   return EGL_FALSE;
+}
+
+static EGLBoolean
+dri2_initialize_x11(_EGLDriver *drv, _EGLDisplay *disp,
+		    EGLint *major, EGLint *minor)
+{
+   struct dri2_egl_display *dri2_dpy;
 
    dri2_dpy = malloc(sizeof *dri2_dpy);
    if (!dri2_dpy)
       return _eglError(EGL_BAD_ALLOC, "eglInitialize");
 
    disp->DriverData = (void *) dri2_dpy;
-   if (disp->NativeDisplay == NULL) {
+   if (disp->PlatformDisplay == NULL) {
       dri2_dpy->conn = xcb_connect(0, 0);
    } else {
-      dri2_dpy->conn = XGetXCBConnection(disp->NativeDisplay);
+      dri2_dpy->conn = XGetXCBConnection((Display *) disp->PlatformDisplay);
    }
 
    if (xcb_connection_has_error(dri2_dpy->conn)) {
@@ -754,39 +804,12 @@ dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp,
       dri2_dpy->loader_extension.getBuffersWithFormat = NULL;
    }
       
-   dri2_dpy->image_lookup_extension.base.name = __DRI_IMAGE_LOOKUP;
-   dri2_dpy->image_lookup_extension.base.version = 1;
-   dri2_dpy->image_lookup_extension.lookupEGLImage = dri2_lookup_egl_image;
-
    dri2_dpy->extensions[0] = &dri2_dpy->loader_extension.base;
-   dri2_dpy->extensions[1] = &dri2_dpy->image_lookup_extension.base;
+   dri2_dpy->extensions[1] = &image_lookup_extension.base;
    dri2_dpy->extensions[2] = NULL;
 
-   dri2_dpy->dri_screen =
-      dri2_dpy->dri2->createNewScreen(0, dri2_dpy->fd, dri2_dpy->extensions,
-				      &dri2_dpy->driver_configs, dri2_dpy);
-
-   if (dri2_dpy->dri_screen == NULL) {
-      _eglLog(_EGL_WARNING, "DRI2: failed to create dri screen");
+   if (!dri2_create_screen(disp))
       goto cleanup_fd;
-   }
-
-   extensions = dri2_dpy->core->getExtensions(dri2_dpy->dri_screen);
-   if (!dri2_bind_extensions(dri2_dpy, dri2_core_extensions, extensions))
-      goto cleanup_dri_screen;
-
-   if (dri2_dpy->dri2->base.version >= 2)
-      api_mask = dri2_dpy->dri2->getAPIMask(dri2_dpy->dri_screen);
-   else
-      api_mask = __DRI_API_OPENGL;
-
-   disp->ClientAPIsMask = 0;
-   if (api_mask & (1 <<__DRI_API_OPENGL))
-      disp->ClientAPIsMask |= EGL_OPENGL_BIT;
-   if (api_mask & (1 <<__DRI_API_GLES))
-      disp->ClientAPIsMask |= EGL_OPENGL_ES_BIT;
-   if (api_mask & (1 << __DRI_API_GLES2))
-      disp->ClientAPIsMask |= EGL_OPENGL_ES2_BIT;
 
    if (dri2_dpy->conn) {
       if (!dri2_add_configs_for_visuals(dri2_dpy, disp))
@@ -808,19 +831,180 @@ dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp,
 
  cleanup_configs:
    _eglCleanupDisplay(disp);
- cleanup_dri_screen:
    dri2_dpy->core->destroyScreen(dri2_dpy->dri_screen);
  cleanup_fd:
    close(dri2_dpy->fd);
  cleanup_driver:
    dlclose(dri2_dpy->driver);
  cleanup_conn:
-   if (disp->NativeDisplay == NULL)
+   if (disp->PlatformDisplay == NULL)
       xcb_disconnect(dri2_dpy->conn);
  cleanup_dpy:
    free(dri2_dpy);
 
    return EGL_FALSE;
+}
+
+#ifdef HAVE_LIBUDEV
+
+struct dri2_driver_map {
+   int vendor_id;
+   const char *driver;
+   const int *chip_ids;
+   int num_chips_ids;
+};
+
+const int i915_chip_ids[] = {
+   0x3577, /* PCI_CHIP_I830_M */
+   0x2562, /* PCI_CHIP_845_G */
+   0x3582, /* PCI_CHIP_I855_GM */
+   0x2572, /* PCI_CHIP_I865_G */
+   0x2582, /* PCI_CHIP_I915_G */
+   0x258a, /* PCI_CHIP_E7221_G */
+   0x2592, /* PCI_CHIP_I915_GM */
+   0x2772, /* PCI_CHIP_I945_G */
+   0x27a2, /* PCI_CHIP_I945_GM */
+   0x27ae, /* PCI_CHIP_I945_GME */
+   0x29b2, /* PCI_CHIP_Q35_G */
+   0x29c2, /* PCI_CHIP_G33_G */
+   0x29d2, /* PCI_CHIP_Q33_G */
+};
+
+const int i965_chip_ids[] = {
+   0x29a2, /* PCI_CHIP_I965_G */
+   0x2992, /* PCI_CHIP_I965_Q */
+   0x2982, /* PCI_CHIP_I965_G_1 */
+   0x2972, /* PCI_CHIP_I946_GZ */
+   0x2a02, /* PCI_CHIP_I965_GM */
+   0x2a12, /* PCI_CHIP_I965_GME */
+   0x2a42, /* PCI_CHIP_GM45_GM */
+   0x2e02, /* PCI_CHIP_IGD_E_G */
+   0x2e12, /* PCI_CHIP_Q45_G */
+   0x2e22, /* PCI_CHIP_G45_G */
+   0x2e32, /* PCI_CHIP_G41_G */
+};
+
+const struct dri2_driver_map driver_map[] = {
+   { 0x8086, "i915", i915_chip_ids, ARRAY_SIZE(i915_chip_ids) },
+   { 0x8086, "i965", i965_chip_ids, ARRAY_SIZE(i965_chip_ids) },
+};
+
+static char *
+dri2_get_driver_for_fd(int fd)
+{
+   struct udev *udev;
+   struct udev_device *device, *parent;
+   struct stat buf;
+   const char *pci_id;
+   char *driver = NULL;
+   int vendor_id, chip_id, i, j;
+
+   udev = udev_new();
+   if (fstat(fd, &buf) < 0) {
+      _eglLog(_EGL_WARNING, "EGL-DRI2: failed to stat fd %d", fd);
+      goto out;
+   }
+
+   device = udev_device_new_from_devnum(udev, 'c', buf.st_rdev);
+   if (device == NULL) {
+      _eglLog(_EGL_WARNING,
+	      "EGL-DRI2: could not create udev device for fd %d", fd);
+      goto out;
+   }
+
+   parent = udev_device_get_parent(device);
+   if (parent == NULL) {
+      _eglLog(_EGL_WARNING, "DRI2: could not get parent device");
+      goto out;
+   }
+
+   pci_id = udev_device_get_property_value(parent, "PCI_ID");
+   if (pci_id == NULL || sscanf(pci_id, "%x:%x", &vendor_id, &chip_id) != 2) {
+      _eglLog(_EGL_WARNING, "EGL-DRI2: malformed or no PCI ID");
+      goto out;
+   }
+
+   for (i = 0; i < ARRAY_SIZE(driver_map); i++) {
+      if (vendor_id != driver_map[i].vendor_id)
+	 continue;
+      for (j = 0; j < driver_map[i].num_chips_ids; j++)
+	 if (driver_map[i].chip_ids[j] == chip_id) {
+	    driver = strdup(driver_map[i].driver);
+	    _eglLog(_EGL_DEBUG, "pci id for %d: %04x:%04x, driver %s",
+		    fd, vendor_id, chip_id, driver);
+	    goto out;
+	 }
+   }
+
+ out:
+   udev_device_unref(device);
+   udev_unref(udev);
+
+   return driver;
+}
+
+static EGLBoolean
+dri2_initialize_drm(_EGLDriver *drv, _EGLDisplay *disp,
+		    EGLint *major, EGLint *minor)
+{
+   struct dri2_egl_display *dri2_dpy;
+
+   dri2_dpy = malloc(sizeof *dri2_dpy);
+   if (!dri2_dpy)
+      return _eglError(EGL_BAD_ALLOC, "eglInitialize");
+
+   disp->DriverData = (void *) dri2_dpy;
+   dri2_dpy->fd = (int) disp->PlatformDisplay;
+
+   dri2_dpy->driver_name = dri2_get_driver_for_fd(dri2_dpy->fd);
+   if (dri2_dpy->driver_name == NULL)
+      return _eglError(EGL_BAD_ALLOC, "DRI2: failed to get driver name");
+
+   if (!dri2_load_driver(disp))
+      goto cleanup_driver_name;
+
+   dri2_dpy->extensions[0] = &image_lookup_extension.base;
+   dri2_dpy->extensions[1] = &use_invalidate.base;
+   dri2_dpy->extensions[2] = NULL;
+
+   if (!dri2_create_screen(disp))
+      goto cleanup_driver;
+
+   disp->Extensions.KHR_image_base = EGL_TRUE;
+   disp->Extensions.KHR_gl_renderbuffer_image = EGL_TRUE;
+   disp->Extensions.KHR_gl_texture_2D_image = EGL_TRUE;
+
+   return EGL_TRUE;
+
+ cleanup_driver:
+   dlclose(dri2_dpy->driver);
+ cleanup_driver_name:
+   free(dri2_dpy->driver_name);
+
+   return EGL_FALSE;
+}
+
+#endif
+
+/**
+ * Called via eglInitialize(), GLX_drv->API.Initialize().
+ */
+static EGLBoolean
+dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp,
+		EGLint *major, EGLint *minor)
+{
+   switch (disp->Platform) {
+   case _EGL_PLATFORM_X11:
+      return dri2_initialize_x11(drv, disp, major, minor);
+
+#ifdef HAVE_LIBUDEV
+   case _EGL_PLATFORM_DRM:
+      return dri2_initialize_drm(drv, disp, major, minor);
+#endif
+
+   default:
+      return EGL_FALSE;
+   }
 }
 
 /**
@@ -837,7 +1021,7 @@ dri2_terminate(_EGLDriver *drv, _EGLDisplay *disp)
    dri2_dpy->core->destroyScreen(dri2_dpy->dri_screen);
    close(dri2_dpy->fd);
    dlclose(dri2_dpy->driver);
-   if (disp->NativeDisplay == NULL)
+   if (disp->PlatformDisplay == NULL)
       xcb_disconnect(dri2_dpy->conn);
    free(dri2_dpy);
    disp->DriverData = NULL;

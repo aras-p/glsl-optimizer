@@ -1,3 +1,5 @@
+import distutils.version
+
 Import('*')
 
 if not env['llvm']:
@@ -23,6 +25,16 @@ env.Depends('lp_tile_soa.c', [
     '#src/gallium/auxiliary/util/u_format_pack.py', 
 ])
 
+
+# Only enable SSSE3 for lp_tile_soa_sse3.c
+ssse3_env = env.Clone()
+if env['gcc'] \
+   and distutils.version.LooseVersion(env['CCVERSION']) >= distutils.version.LooseVersion('4.3') \
+   and env['machine'] in ('x86', 'x86_64') :
+    ssse3_env.Append(CCFLAGS = ['-mssse3'])
+lp_tile_soa_os = ssse3_env.SharedObject('lp_tile_soa.c')
+
+
 llvmpipe = env.ConvenienceLibrary(
 	target = 'llvmpipe',
 	source = [
@@ -38,6 +50,7 @@ llvmpipe = env.ConvenienceLibrary(
 		'lp_fence.c',
 		'lp_flush.c',
 		'lp_jit.c',
+		'lp_memory.c',
 		'lp_perf.c',
 		'lp_query.c',
 		'lp_rast.c',
@@ -65,7 +78,7 @@ llvmpipe = env.ConvenienceLibrary(
 		'lp_tex_sample.c',
 		'lp_texture.c',
 		'lp_tile_image.c',
-		'lp_tile_soa.c',
+        lp_tile_soa_os,
 	])
 
 
@@ -81,6 +94,9 @@ if env['platform'] != 'embedded':
 	'printf',
 	'sincos',
     ]
+
+    if not msvc:
+        tests.append('round')
 
     for test in tests:
         target = env.Program(

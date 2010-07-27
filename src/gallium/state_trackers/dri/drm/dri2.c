@@ -33,7 +33,7 @@
 #include "util/u_inlines.h"
 #include "util/u_format.h"
 #include "util/u_debug.h"
-#include "state_tracker/drm_api.h"
+#include "state_tracker/drm_driver.h"
 
 #include "dri_screen.h"
 #include "dri_context.h"
@@ -484,11 +484,11 @@ static const __DRIextension *dri_screen_extensions[] = {
    &driReadDrawableExtension,
    &driCopySubBufferExtension.base,
    &driSwapControlExtension.base,
-   &driFrameTrackingExtension.base,
    &driMediaStreamCounterExtension.base,
    &dri2TexBufferExtension.base,
    &dri2FlushExtension.base,
    &dri2ImageExtension.base,
+   &dri2ConfigQueryExtension.base,
    NULL
 };
 
@@ -508,7 +508,6 @@ dri2_init_screen(__DRIscreen * sPriv)
    if (!screen)
       return NULL;
 
-   screen->api = drm_api_create();
    screen->sPriv = sPriv;
    screen->fd = sPriv->fd;
    screen->lookup_egl_image = dri2_lookup_egl_image;
@@ -518,7 +517,7 @@ dri2_init_screen(__DRIscreen * sPriv)
    sPriv->private = (void *)screen;
    sPriv->extensions = dri_screen_extensions;
 
-   pscreen = screen->api->create_screen(screen->api, screen->fd);
+   pscreen = driver_descriptor.create_screen(screen->fd);
    /* dri_init_screen_helper checks pscreen for us */
 
    configs = dri_init_screen_helper(screen, pscreen, 32);

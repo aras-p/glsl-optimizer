@@ -598,7 +598,7 @@ static int src_da16 (FILE *file,
 	format (file, ".%d", _subreg_nr);
     string (file, "<");
     err |= control (file, "vert stride", vert_stride, _vert_stride, NULL);
-    string (file, ",1,1>");
+    string (file, ",4,1>");
     err |= control (file, "src da16 reg type", reg_encoding, _reg_type, NULL);
     /*
      * Three kinds of swizzle display:
@@ -836,10 +836,12 @@ int brw_disasm (FILE *file, struct brw_instruction *inst, int gen)
     if (inst->header.opcode == BRW_OPCODE_SEND) {
 	int target;
 
-	if (gen >= 5)
-	   target = inst->bits2.send_gen5.sfid;
+	if (gen >= 6)
+	    target = inst->header.destreg__conditionalmod;
+	else if (gen == 5)
+	    target = inst->bits2.send_gen5.sfid;
 	else
-	   target = inst->bits3.generic.msg_target;
+	    target = inst->bits3.generic.msg_target;
 
 	newline (file);
 	pad (file, 16);
@@ -868,13 +870,44 @@ int brw_disasm (FILE *file, struct brw_instruction *inst, int gen)
 			    inst->bits3.sampler.return_format, NULL);
 	    string (file, ")");
 	    break;
+	case BRW_MESSAGE_TARGET_DATAPORT_READ:
+	    if (gen >= 6) {
+		format (file, " (%d, %d, %d, %d, %d, %d)",
+			inst->bits3.dp_render_cache.binding_table_index,
+			inst->bits3.dp_render_cache.msg_control,
+			inst->bits3.dp_render_cache.msg_type,
+			inst->bits3.dp_render_cache.send_commit_msg,
+			inst->bits3.dp_render_cache.msg_length,
+			inst->bits3.dp_render_cache.response_length);
+	    } else if (gen >= 5) {
+		format (file, " (%d, %d, %d)",
+			inst->bits3.dp_read_gen5.binding_table_index,
+			inst->bits3.dp_read_gen5.msg_control,
+			inst->bits3.dp_read_gen5.msg_type);
+	    } else {
+		format (file, " (%d, %d, %d)",
+			inst->bits3.dp_read.binding_table_index,
+			inst->bits3.dp_read.msg_control,
+			inst->bits3.dp_read.msg_type);
+	    }
+	    break;
 	case BRW_MESSAGE_TARGET_DATAPORT_WRITE:
-	    format (file, " (%d, %d, %d, %d)",
-		    inst->bits3.dp_write.binding_table_index,
-		    (inst->bits3.dp_write.pixel_scoreboard_clear << 3) |
-		    inst->bits3.dp_write.msg_control,
-		    inst->bits3.dp_write.msg_type,
-		    inst->bits3.dp_write.send_commit_msg);
+	    if (gen >= 6) {
+		format (file, " (%d, %d, %d, %d, %d, %d)",
+			inst->bits3.dp_render_cache.binding_table_index,
+			inst->bits3.dp_render_cache.msg_control,
+			inst->bits3.dp_render_cache.msg_type,
+			inst->bits3.dp_render_cache.send_commit_msg,
+			inst->bits3.dp_render_cache.msg_length,
+			inst->bits3.dp_render_cache.response_length);
+	    } else {
+		format (file, " (%d, %d, %d, %d)",
+			inst->bits3.dp_write.binding_table_index,
+			(inst->bits3.dp_write.pixel_scoreboard_clear << 3) |
+			inst->bits3.dp_write.msg_control,
+			inst->bits3.dp_write.msg_type,
+			inst->bits3.dp_write.send_commit_msg);
+	    }
 	    break;
 	case BRW_MESSAGE_TARGET_URB:
 	    if (gen >= 5) {
@@ -900,15 +933,22 @@ int brw_disasm (FILE *file, struct brw_instruction *inst, int gen)
 	case BRW_MESSAGE_TARGET_THREAD_SPAWNER:
 	    break;
 	default:
-	    format (file, "unsupported target %d", inst->bits3.generic.msg_target);
+	    format (file, "unsupported target %d", target);
 	    break;
 	}
 	if (space)
 	    string (file, " ");
-	format (file, "mlen %d",
-		inst->bits3.generic.msg_length);
-	format (file, " rlen %d",
-		inst->bits3.generic.response_length);
+	if (gen >= 5) {
+	   format (file, "mlen %d",
+		   inst->bits3.generic_gen5.msg_length);
+	   format (file, " rlen %d",
+		   inst->bits3.generic_gen5.response_length);
+	} else {
+	   format (file, "mlen %d",
+		   inst->bits3.generic.msg_length);
+	   format (file, " rlen %d",
+		   inst->bits3.generic.response_length);
+	}
     }
     pad (file, 64);
     if (inst->header.opcode != BRW_OPCODE_NOP) {

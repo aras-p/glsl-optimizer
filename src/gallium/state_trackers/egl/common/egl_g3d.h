@@ -41,18 +41,18 @@
 
 #include "native.h"
 #include "egl_g3d_st.h"
+#include "egl_g3d_loader.h"
 
 struct egl_g3d_driver {
    _EGLDriver base;
-   struct st_api *stapis[ST_API_COUNT];
-   EGLint api_mask;
-
-   EGLint probe_key;
+   const struct egl_g3d_loader *loader;
+   const struct native_platform *platforms[_EGL_NUM_PLATFORMS];
 };
 
 struct egl_g3d_display {
    struct native_display *native;
 
+   const struct egl_g3d_loader *loader;
    struct st_manager *smapi;
    struct pipe_context *pipe;
 };

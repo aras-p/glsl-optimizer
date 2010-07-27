@@ -9,7 +9,8 @@
 # Optional defines:
 #   DRIVER_INCLUDES are appended to the list of includes directories.
 #   DRIVER_DEFINES is not used for makedepend, but for compilation.
-#   DRIVER_LINKS are flags given to the linker
+#   DRIVER_PIPES are pipe drivers and modules that the driver depends on.
+#   DRIVER_LINKS are flags given to the linker.
 
 ### Basic defines ###
 
@@ -27,13 +28,21 @@ INCLUDES = \
 
 LIBNAME_STAGING = $(TOP)/$(LIB_DIR)/gallium/$(TARGET)
 
+ifeq ($(MESA_LLVM),1)
+LD = g++
+LDFLAGS += $(LLVM_LDFLAGS)
+USE_CXX=1
+DRIVER_PIPES += $(TOP)/src/gallium/drivers/llvmpipe/libllvmpipe.a
+DRIVER_LINKS += $(LLVM_LIBS) -lm -ldl
+endif
+
 
 ##### TARGETS #####
 
 default: depend $(TOP)/$(LIB_DIR)/gallium $(LIBNAME) $(LIBNAME_STAGING)
 
-$(LIBNAME): $(OBJECTS) Makefile $(LIBS)
-	$(MKLIB) -noprefix -o $@ $(OBJECTS) $(DRIVER_LINKS)
+$(LIBNAME): $(OBJECTS) Makefile ../Makefile.xorg $(LIBS) $(DRIVER_PIPES)
+	$(MKLIB) -noprefix -o $@ $(LDFLAGS) $(OBJECTS) $(DRIVER_PIPES) $(GALLIUM_AUXILIARIES) $(DRIVER_LINKS)
 
 depend: $(C_SOURCES) $(CPP_SOURCES) $(ASM_SOURCES) $(SYMLINKS) $(GENERATED_SOURCES)
 	rm -f depend

@@ -1286,6 +1286,8 @@ wrapping rules.
 Declaration Semantic
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
+  Vertex and fragment shader input and output registers may be labeled
+  with semantic information consisting of a name and index.
 
   Follows Declaration token if Semantic bit is set.
 
@@ -1306,90 +1308,115 @@ Declaration Semantic
 TGSI_SEMANTIC_POSITION
 """"""""""""""""""""""
 
-Position, sometimes known as HPOS or WPOS for historical reasons, is the
-location of the vertex in space, in ``(x, y, z, w)`` format. ``x``, ``y``, and ``z``
-are the Cartesian coordinates, and ``w`` is the homogenous coordinate and used
-for the perspective divide, if enabled.
+For vertex shaders, TGSI_SEMANTIC_POSITION indicates the vertex shader
+output register which contains the homogeneous vertex position in the clip
+space coordinate system.  After clipping, the X, Y and Z components of the
+vertex will be divided by the W value to get normalized device coordinates.
 
-As a vertex shader output, position should be scaled to the viewport. When
-used in fragment shaders, position will be in window coordinates. The convention
-used depends on the FS_COORD_ORIGIN and FS_COORD_PIXEL_CENTER properties.
+For fragment shaders, TGSI_SEMANTIC_POSITION is used to indicate that
+fragment shader input contains the fragment's window position.  The X
+component starts at zero and always increases from left to right.
+The Y component starts at zero and always increases but Y=0 may either
+indicate the top of the window or the bottom depending on the fragment
+coordinate origin convention (see TGSI_PROPERTY_FS_COORD_ORIGIN).
+The Z coordinate ranges from 0 to 1 to represent depth from the front
+to the back of the Z buffer.  The W component contains the reciprocol
+of the interpolated vertex position W component.
 
-XXX additionally, is there a way to configure the perspective divide? it's
-accelerated on most chipsets AFAIK...
+Fragment shaders may also declare an output register with
+TGSI_SEMANTIC_POSITION.  Only the Z component is writable.  This allows
+the fragment shader to change the fragment's Z position.
 
-Position, if not specified, usually defaults to ``(0, 0, 0, 1)``, and can
-be partially specified as ``(x, y, 0, 1)`` or ``(x, y, z, 1)``.
 
-XXX usually? can we solidify that?
 
 TGSI_SEMANTIC_COLOR
 """""""""""""""""""
 
-Colors are used to, well, color the primitives. Colors are always in
-``(r, g, b, a)`` format.
+For vertex shader outputs or fragment shader inputs/outputs, this
+label indicates that the resister contains an R,G,B,A color.
 
-If alpha is not specified, it defaults to 1.
+Several shader inputs/outputs may contain colors so the semantic index
+is used to distinguish them.  For example, color[0] may be the diffuse
+color while color[1] may be the specular color.
+
+This label is needed so that the flat/smooth shading can be applied
+to the right interpolants during rasterization.
+
+
 
 TGSI_SEMANTIC_BCOLOR
 """"""""""""""""""""
 
 Back-facing colors are only used for back-facing polygons, and are only valid
 in vertex shader outputs. After rasterization, all polygons are front-facing
-and COLOR and BCOLOR end up occupying the same slots in the fragment, so
-all BCOLORs effectively become regular COLORs in the fragment shader.
+and COLOR and BCOLOR end up occupying the same slots in the fragment shader,
+so all BCOLORs effectively become regular COLORs in the fragment shader.
+
 
 TGSI_SEMANTIC_FOG
 """""""""""""""""
 
-The fog coordinate historically has been used to replace the depth coordinate
-for generation of fog in dedicated fog blocks. Gallium, however, does not use
-dedicated fog acceleration, placing it entirely in the fragment shader
-instead.
+Vertex shader inputs and outputs and fragment shader inputs may be
+labeled with TGSI_SEMANTIC_FOG to indicate that the register contains
+a fog coordinate in the form (F, 0, 0, 1).  Typically, the fragment
+shader will use the fog coordinate to compute a fog blend factor which
+is used to blend the normal fragment color with a constant fog color.
 
-The fog coordinate should be written in ``(f, 0, 0, 1)`` format. Only the first
-component matters when writing from the vertex shader; the driver will ensure
-that the coordinate is in this format when used as a fragment shader input.
+Only the first component matters when writing from the vertex shader;
+the driver will ensure that the coordinate is in this format when used
+as a fragment shader input.
+
 
 TGSI_SEMANTIC_PSIZE
 """""""""""""""""""
 
-PSIZE, or point size, is used to specify point sizes per-vertex. It should
-be in ``(s, 0, 0, 1)`` format, where ``s`` is the (possibly clamped) point size.
-Only the first component matters when writing from the vertex shader.
+Vertex shader input and output registers may be labeled with
+TGIS_SEMANTIC_PSIZE to indicate that the register contains a point size
+in the form (S, 0, 0, 1).  The point size controls the width or diameter
+of points for rasterization.  This label cannot be used in fragment
+shaders.
 
 When using this semantic, be sure to set the appropriate state in the
 :ref:`rasterizer` first.
 
+
 TGSI_SEMANTIC_GENERIC
 """""""""""""""""""""
 
-Generic semantics are nearly always used for texture coordinate attributes,
-in ``(s, t, r, q)`` format. ``t`` and ``r`` may be unused for certain kinds
-of lookups, and ``q`` is the level-of-detail bias for biased sampling.
+All vertex/fragment shader inputs/outputs not labeled with any other
+semantic label can be considered to be generic attributes.  Typical
+uses of generic inputs/outputs are texcoords and user-defined values.
 
-These attributes are called "generic" because they may be used for anything
-else, including parameters, texture generation information, or anything that
-can be stored inside a four-component vector.
 
 TGSI_SEMANTIC_NORMAL
 """"""""""""""""""""
 
-Vertex normal; could be used to implement per-pixel lighting for legacy APIs
-that allow mixing fixed-function and programmable stages.
+Indicates that a vertex shader input is a normal vector.  This is
+typically only used for legacy graphics APIs.
+
 
 TGSI_SEMANTIC_FACE
 """"""""""""""""""
 
-FACE is the facing bit, to store the facing information for the fragment
-shader. ``(f, 0, 0, 1)`` is the format. The first component will be positive
-when the fragment is front-facing, and negative when the component is
-back-facing.
+This label applies to fragment shader inputs only and indicates that
+the register contains front/back-face information of the form (F, 0,
+0, 1).  The first component will be positive when the fragment belongs
+to a front-facing polygon, and negative when the fragment belongs to a
+back-facing polygon.
+
 
 TGSI_SEMANTIC_EDGEFLAG
 """"""""""""""""""""""
 
-XXX no clue
+For vertex shaders, this sematic label indicates that an input or
+output is a boolean edge flag.  The register layout is [F, x, x, x]
+where F is 0.0 or 1.0 and x = don't care.  Normally, the vertex shader
+simply copies the edge flag input to the edgeflag output.
+
+Edge flags are used to control which lines or points are actually
+drawn when the polygon mode converts triangles/quads/polygons into
+points or lines.
+
 
 
 Properties

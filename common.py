@@ -87,7 +87,7 @@ def AddOptions(opts):
 	opts.Add(EnumOption('machine', 'use machine-specific assembly code', default_machine,
 											 allowed_values=('generic', 'ppc', 'x86', 'x86_64')))
 	opts.Add(EnumOption('platform', 'target platform', default_platform,
-											 allowed_values=('linux', 'cell', 'windows', 'winddk', 'wince', 'darwin', 'embedded', 'cygwin')))
+											 allowed_values=('linux', 'cell', 'windows', 'winddk', 'wince', 'darwin', 'embedded', 'cygwin', 'sunos5')))
 	opts.Add('toolchain', 'compiler toolchain', 'default')
 	opts.Add(BoolOption('llvm', 'use LLVM', default_llvm))
 	opts.Add(BoolOption('dri', 'build DRI drivers', default_dri))

@@ -42,6 +42,7 @@
 #include "i915_resource.h"
 #include "i915_screen.h"
 #include "i915_winsys.h"
+#include "i915_debug.h"
 
 
 #define DEBUG_TEXTURES 0
@@ -800,12 +801,10 @@ i915_texture_create(struct pipe_screen *screen,
    ws->buffer_unmap(ws, tex->buffer);
 #endif
 
-#if DEBUG_TEXTURES
-   debug_printf("%s: %p size %u, stride %u, blocks (%u, %u)\n", __func__,
-                tex, (unsigned int)tex_size, tex->stride,
-                tex->stride / util_format_get_blocksize(tex->b.b.format),
-                tex->total_nblocksy);
-#endif
+   I915_DBG(DBG_TEXTURE, "%s: %p size %u, stride %u, blocks (%u, %u)\n", __func__,
+            tex, (unsigned int)tex_size, tex->stride,
+            tex->stride / util_format_get_blocksize(tex->b.b.format),
+            tex->total_nblocksy);
 
    return &tex->b.b;
 
@@ -846,11 +845,17 @@ i915_texture_from_handle(struct pipe_screen * screen,
    tex->b.b.screen = screen;
 
    tex->stride = stride;
+   tex->total_nblocksy = align_nblocksy(tex->b.b.format, tex->b.b.height0, 8);
 
    i915_texture_set_level_info(tex, 0, 1);
    i915_texture_set_image_offset(tex, 0, 0, 0, 0);
 
    tex->buffer = buffer;
+
+   I915_DBG(DBG_TEXTURE, "%s: %p stride %u, blocks (%ux%u)\n", __func__,
+            tex, tex->stride,
+            tex->stride / util_format_get_blocksize(tex->b.b.format),
+            tex->total_nblocksy);
 
    return &tex->b.b;
 }

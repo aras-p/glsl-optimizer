@@ -969,7 +969,10 @@ _vbo_Materialfv(GLenum face, GLenum pname, const GLfloat *params)
 void GLAPIENTRY
 _vbo_Materialf(GLenum face, GLenum pname, GLfloat param)
 {
-   vbo_Materialfv(face, pname, &param);
+   GLfloat p[4];
+   p[0] = param;
+   p[1] = p[2] = p[3] = 0.0F;
+   vbo_Materialfv(face, pname, p);
 }
 
 

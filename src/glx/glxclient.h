@@ -37,8 +37,6 @@
 
 #ifndef _GLX_client_h_
 #define _GLX_client_h_
-#define NEED_REPLIES
-#define NEED_EVENTS
 #include <X11/Xproto.h>
 #include <X11/Xlibint.h>
 #include <X11/extensions/extutil.h>
@@ -97,13 +95,12 @@ typedef struct _glapi_table __GLapi;
 #define containerOf(ptr, type, member)              \
     (type *)( (char *)ptr - offsetof(type,member) )
 
-extern void DRI_glXUseXFont(Font font, int first, int count, int listbase);
+extern void DRI_glXUseXFont(GLXContext CC,
+			    Font font, int first, int count, int listbase);
 
 #endif
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
-
-#include <GL/internal/dri_interface.h>
 
 /**
  * Display dependent methods.  This structure is initialized during the
@@ -123,18 +120,16 @@ struct __GLXDRIdisplayRec
      */
    void (*destroyDisplay) (__GLXDRIdisplay * display);
 
-   __GLXDRIscreen *(*createScreen) (__GLXscreenConfigs * psc, int screen,
-                                    __GLXdisplayPrivate * priv);
+   __GLXscreenConfigs *(*createScreen)(int screen, __GLXdisplayPrivate * priv);
 };
 
 struct __GLXDRIscreenRec {
 
    void (*destroyScreen)(__GLXscreenConfigs *psc);
 
-   __GLXDRIcontext *(*createContext)(__GLXscreenConfigs *psc,
-				     const __GLcontextModes *mode,
-				     GLXContext gc,
-				     GLXContext shareList, int renderType);
+   __GLXcontext *(*createContext)(__GLXscreenConfigs *psc,
+				  const __GLcontextModes *mode,
+				  GLXContext shareList, int renderType);
 
    __GLXDRIdrawable *(*createDrawable)(__GLXscreenConfigs *psc,
 				       XID drawable,
@@ -145,8 +140,6 @@ struct __GLXDRIscreenRec {
 			  int64_t divisor, int64_t remainder);
    void (*copySubBuffer)(__GLXDRIdrawable *pdraw,
 			 int x, int y, int width, int height);
-   void (*waitX)(__GLXDRIdrawable *pdraw);
-   void (*waitGL)(__GLXDRIdrawable *pdraw);
    int (*getDrawableMSC)(__GLXscreenConfigs *psc, __GLXDRIdrawable *pdraw,
 			 int64_t *ust, int64_t *msc, int64_t *sbc);
    int (*waitForMSC)(__GLXDRIdrawable *pdraw, int64_t target_msc,
@@ -154,18 +147,15 @@ struct __GLXDRIscreenRec {
 		     int64_t *msc, int64_t *sbc);
    int (*waitForSBC)(__GLXDRIdrawable *pdraw, int64_t target_sbc, int64_t *ust,
 		     int64_t *msc, int64_t *sbc);
-   void (*setSwapInterval)(__GLXDRIdrawable *pdraw, int interval);
+   int (*setSwapInterval)(__GLXDRIdrawable *pdraw, int interval);
    int (*getSwapInterval)(__GLXDRIdrawable *pdraw);
 };
 
 struct __GLXDRIcontextRec
 {
-   void (*destroyContext) (__GLXDRIcontext * context,
-                           __GLXscreenConfigs * psc, Display * dpy);
-     Bool(*bindContext) (__GLXDRIcontext * context, __GLXDRIdrawable * pdraw,
-                         __GLXDRIdrawable * pread);
-
-   void (*unbindContext) (__GLXDRIcontext * context);
+   Bool(*bindContext) (__GLXcontext *context, __GLXDRIdrawable *pdraw,
+		       __GLXDRIdrawable *pread);
+   void (*unbindContext) (__GLXcontext *context);
 };
 
 struct __GLXDRIdrawableRec
@@ -176,8 +166,8 @@ struct __GLXDRIdrawableRec
    XID drawable;
    __GLXscreenConfigs *psc;
    GLenum textureTarget;
-   __DRIdrawable *driDrawable;
    GLenum textureFormat;        /* EXT_texture_from_pixmap support */
+   unsigned long eventMask;
 };
 
 /*
@@ -250,12 +240,20 @@ typedef struct __GLXattributeMachineRec
 } __GLXattributeMachine;
 
 struct glx_context_vtable {
+   void (*destroy)(__GLXcontext *ctx);
+   void (*wait_gl)(__GLXcontext *ctx);
+   void (*wait_x)(__GLXcontext *ctx);
+   void (*use_x_font)(__GLXcontext *ctx,
+		      Font font, int first, int count, int listBase);
    void (*bind_tex_image)(Display * dpy,
 			  GLXDrawable drawable,
 			  int buffer, const int *attrib_list);
    void (*release_tex_image)(Display * dpy, GLXDrawable drawable, int buffer);
    
 };
+
+extern void
+glx_send_destroy_context(Display *dpy, XID xid);
 
 /**
  * GLX state that needs to be kept on the client.  One of these records
@@ -394,11 +392,6 @@ struct __GLXcontextRec
    /*@} */
 
     /**
-     * Record the dpy this context was created on for later freeing
-     */
-   Display *createDpy;
-
-    /**
      * Maximum small render command size.  This is the smaller of 64k and
      * the size of the above buffer.
      */
@@ -421,7 +414,6 @@ struct __GLXcontextRec
    Bool do_destroy;
 #else
    __GLXDRIcontext *driContext;
-   __DRIcontext *__driContext;
 #endif
 #endif
 
@@ -469,6 +461,10 @@ struct __GLXcontextRec
    const struct glx_context_vtable *vtable;
 };
 
+extern Bool
+glx_context_init(__GLXcontext *gc,
+		 __GLXscreenConfigs *psc, const __GLcontextModes *fbconfig);
+
 #define __glXSetError(gc,code)  \
    if (!(gc)->error) {          \
       (gc)->error = code;       \
@@ -508,8 +504,16 @@ extern void __glFreeAttributeState(__GLXcontext *);
  * One of these records exists per screen of the display.  It contains
  * a pointer to the config data for that screen (if the screen supports GL).
  */
+struct glx_screen_vtable {
+   __GLXcontext *(*create_context)(__GLXscreenConfigs *psc,
+				   const __GLcontextModes *mode,
+				   GLXContext shareList, int renderType);
+};
+
 struct __GLXscreenConfigsRec
 {
+   const struct glx_screen_vtable *vtable;
+
     /**
      * GLX extension string reported by the X-server.
      */
@@ -521,61 +525,16 @@ struct __GLXscreenConfigsRec
      */
    char *effectiveGLXexts;
 
-   /**
-    * Context vtable to use for direct contexts on this screen
-    */
-   const struct glx_context_vtable *direct_context_vtable;
+   __GLXdisplayPrivate *display;
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
     /**
      * Per screen direct rendering interface functions and data.
      */
-   __DRIscreen *__driScreen;
-   const __DRIcoreExtension *core;
-   const __DRIlegacyExtension *legacy;
-   const __DRIswrastExtension *swrast;
-   const __DRIdri2Extension *dri2;
-   __glxHashTable *drawHash;
    Display *dpy;
-   int scr, fd;
-   void *driver;
+   int scr;
 
    __GLXDRIscreen *driScreen;
-
-   const __DRIconfig **driver_configs;
-
-#ifdef __DRI_COPY_SUB_BUFFER
-   const __DRIcopySubBufferExtension *driCopySubBuffer;
-#endif
-
-#ifdef __DRI_SWAP_CONTROL
-   const __DRIswapControlExtension *swapControl;
-#endif
-
-#ifdef __DRI_ALLOCATE
-   const __DRIallocateExtension *allocate;
-#endif
-
-#ifdef __DRI_FRAME_TRACKING
-   const __DRIframeTrackingExtension *frameTracking;
-#endif
-
-#ifdef __DRI_MEDIA_STREAM_COUNTER
-   const __DRImediaStreamCounterExtension *msc;
-#endif
-
-#ifdef __DRI_TEX_BUFFER
-   const __DRItexBufferExtension *texBuffer;
-#endif
-
-#ifdef __DRI2_FLUSH
-   const __DRI2flushExtension *f;
-#endif
-
-#ifdef __DRI2_CONFIG_QUERY
-   const __DRI2configQueryExtension *config;
-#endif
-
 #endif
 
     /**
@@ -603,6 +562,10 @@ struct __GLXscreenConfigsRec
  */
 struct __GLXdisplayPrivateRec
 {
+   /* The extension protocol codes */
+   XExtCodes *codes;
+   struct __GLXdisplayPrivateRec *next;
+
     /**
      * Back pointer to the display
      */
@@ -639,9 +602,11 @@ struct __GLXdisplayPrivateRec
      * Also, per screen data which now includes the server \c GLX_EXTENSION
      * string.
      */
-   __GLXscreenConfigs *screenConfigs;
+   __GLXscreenConfigs **screenConfigs;
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
+   __glxHashTable *drawHash;
+
     /**
      * Per display direct rendering interface functions and data.
      */
@@ -651,6 +616,14 @@ struct __GLXdisplayPrivateRec
 #endif
 };
 
+extern int
+glx_screen_init(__GLXscreenConfigs *psc,
+		int screen, __GLXdisplayPrivate * priv);
+
+#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
+extern __GLXDRIdrawable *
+dri2GetGlxDrawableFromXDrawableId(Display *dpy, XID id);
+#endif
 
 extern GLubyte *__glXFlushRenderBuffer(__GLXcontext *, GLubyte *);
 
@@ -697,8 +670,6 @@ extern __GLXcontext *__glXcurrentContext;
 #endif /* defined( PTHREADS ) */
 
 extern void __glXSetCurrentContextNull(void);
-
-extern void __glXFreeContext(__GLXcontext *);
 
 
 /*
@@ -820,17 +791,23 @@ extern GLboolean __glXGetMscRateOML(Display * dpy, GLXDrawable drawable,
                                     int32_t * denominator);
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
-GLboolean
-__driGetMscRateOML(__DRIdrawable * draw,
-                   int32_t * numerator, int32_t * denominator, void *private);
+extern GLboolean
+__glxGetMscRate(__GLXDRIdrawable *glxDraw,
+		int32_t * numerator, int32_t * denominator);
 
 /* So that dri2.c:DRI2WireToEvent() can access
  * glx_info->codes->first_event */
 XExtDisplayInfo *__glXFindDisplay (Display *dpy);
 
+extern void
+GarbageCollectDRIDrawables(__GLXscreenConfigs *psc);
+
 extern __GLXDRIdrawable *
-GetGLXDRIDrawable(Display *dpy, GLXDrawable drawable, int *const scrn_num);
+GetGLXDRIDrawable(Display *dpy, GLXDrawable drawable);
 
 #endif
+
+extern __GLXscreenConfigs *
+indirect_create_screen(int screen, __GLXdisplayPrivate * priv);
 
 #endif /* !__GLX_client_h__ */

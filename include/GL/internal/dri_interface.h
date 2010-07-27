@@ -74,7 +74,6 @@ typedef struct __DRIcoreExtensionRec		__DRIcoreExtension;
 typedef struct __DRIextensionRec		__DRIextension;
 typedef struct __DRIcopySubBufferExtensionRec	__DRIcopySubBufferExtension;
 typedef struct __DRIswapControlExtensionRec	__DRIswapControlExtension;
-typedef struct __DRIallocateExtensionRec	__DRIallocateExtension;
 typedef struct __DRIframeTrackingExtensionRec	__DRIframeTrackingExtension;
 typedef struct __DRImediaStreamCounterExtensionRec	__DRImediaStreamCounterExtension;
 typedef struct __DRItexOffsetExtensionRec	__DRItexOffsetExtension;
@@ -147,23 +146,6 @@ struct __DRIswapControlExtensionRec {
     __DRIextension base;
     void (*setSwapInterval)(__DRIdrawable *drawable, unsigned int inteval);
     unsigned int (*getSwapInterval)(__DRIdrawable *drawable);
-};
-
-/**
- * Used by drivers that implement the GLX_MESA_allocate_memory.
- */
-#define __DRI_ALLOCATE "DRI_Allocate"
-#define __DRI_ALLOCATE_VERSION 1
-struct __DRIallocateExtensionRec {
-    __DRIextension base;
-
-    void *(*allocateMemory)(__DRIscreen *screen, GLsizei size,
-			    GLfloat readfreq, GLfloat writefreq,
-			    GLfloat priority);
-   
-    void (*freeMemory)(__DRIscreen *screen, GLvoid *pointer);
-   
-    GLuint (*memoryOffset)(__DRIscreen *screen, const GLvoid *pointer);
 };
 
 /**

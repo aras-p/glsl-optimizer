@@ -37,7 +37,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define __R600_CMDBUF_H__
 
 #include "r600_context.h"
-#include "r600_emit.h"
 
 #define RADEON_CP_PACKET3_NOP                       0xC0001000
 #define RADEON_CP_PACKET3_NEXT_CHAR                 0xC0001900

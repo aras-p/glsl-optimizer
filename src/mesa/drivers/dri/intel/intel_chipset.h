@@ -115,6 +115,9 @@
 				 devid == PCI_CHIP_I946_GZ || \
 				 IS_G4X(devid))
 
+/* Compat macro for intel_decode.c */
+#define IS_IRONLAKE(devid)	IS_GEN5(devid)
+
 #define IS_GEN6(devid)		(devid == PCI_CHIP_SANDYBRIDGE || \
 				 devid == PCI_CHIP_SANDYBRIDGE_M)
 

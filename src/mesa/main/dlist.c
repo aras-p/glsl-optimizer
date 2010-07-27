@@ -34,6 +34,9 @@
 #include "api_arrayelt.h"
 #include "api_exec.h"
 #include "api_loopback.h"
+#if FEATURE_ATI_fragment_shader
+#include "atifragshader.h"
+#endif
 #include "config.h"
 #include "mfeatures.h"
 #if FEATURE_ARB_vertex_buffer_object
@@ -56,13 +59,10 @@
 #include "mtypes.h"
 #include "varray.h"
 #if FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program
-#include "shader/arbprogram.h"
+#include "arbprogram.h"
 #endif
 #if FEATURE_NV_vertex_program || FEATURE_NV_fragment_program
-#include "shader/nvprogram.h"
-#endif
-#if FEATURE_ATI_fragment_shader
-#include "shader/atifragshader.h"
+#include "nvprogram.h"
 #endif
 
 #include "math/m_matrix.h"

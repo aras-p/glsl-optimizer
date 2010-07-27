@@ -21,10 +21,10 @@ C_SOURCES = \
 	r300_screen_buffer.c \
 	r300_state.c \
 	r300_state_derived.c \
-	r300_state_invariant.c \
 	r300_vs.c \
 	r300_vs_draw.c \
 	r300_texture.c \
+	r300_texture_desc.c \
 	r300_tgsi_to_rc.c \
 	r300_transfer.c
 

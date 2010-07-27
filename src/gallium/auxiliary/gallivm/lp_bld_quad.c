@@ -61,8 +61,8 @@ LLVMValueRef
 lp_build_ddx(struct lp_build_context *bld,
              LLVMValueRef a)
 {
-   LLVMValueRef a_left  = lp_build_swizzle1_aos(bld, a, swizzle_left);
-   LLVMValueRef a_right = lp_build_swizzle1_aos(bld, a, swizzle_right);
+   LLVMValueRef a_left  = lp_build_swizzle_aos(bld, a, swizzle_left);
+   LLVMValueRef a_right = lp_build_swizzle_aos(bld, a, swizzle_right);
    return lp_build_sub(bld, a_right, a_left);
 }
 
@@ -71,8 +71,8 @@ LLVMValueRef
 lp_build_ddy(struct lp_build_context *bld,
              LLVMValueRef a)
 {
-   LLVMValueRef a_top    = lp_build_swizzle1_aos(bld, a, swizzle_top);
-   LLVMValueRef a_bottom = lp_build_swizzle1_aos(bld, a, swizzle_bottom);
+   LLVMValueRef a_top    = lp_build_swizzle_aos(bld, a, swizzle_top);
+   LLVMValueRef a_bottom = lp_build_swizzle_aos(bld, a, swizzle_bottom);
    return lp_build_sub(bld, a_bottom, a_top);
 }
 

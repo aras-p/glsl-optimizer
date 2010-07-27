@@ -289,6 +289,9 @@ void cso_release_all( struct cso_context *ctx )
       ctx->pipe->bind_fs_state( ctx->pipe, NULL );
       ctx->pipe->bind_vs_state( ctx->pipe, NULL );
       ctx->pipe->bind_vertex_elements_state( ctx->pipe, NULL );
+      ctx->pipe->set_fragment_sampler_views(ctx->pipe, 0, NULL);
+      if (ctx->pipe->set_vertex_sampler_views)
+         ctx->pipe->set_vertex_sampler_views(ctx->pipe, 0, NULL);
    }
 
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
@@ -1029,6 +1032,7 @@ static INLINE void
 clip_state_cpy(struct pipe_clip_state *dst,
                const struct pipe_clip_state *src)
 {
+   dst->depth_clamp = src->depth_clamp;
    dst->nr = src->nr;
    if (src->nr) {
       memcpy(dst->ucp, src->ucp, src->nr * sizeof(src->ucp[0]));
@@ -1039,6 +1043,9 @@ static INLINE int
 clip_state_cmp(const struct pipe_clip_state *a,
                const struct pipe_clip_state *b)
 {
+   if (a->depth_clamp != b->depth_clamp) {
+      return 1;
+   }
    if (a->nr != b->nr) {
       return 1;
    }

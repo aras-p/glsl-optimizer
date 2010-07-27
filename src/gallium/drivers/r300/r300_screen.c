@@ -30,6 +30,7 @@
 #include "r300_screen_buffer.h"
 #include "r300_state_inlines.h"
 #include "r300_winsys.h"
+#include "r300_public.h"
 
 /* Return the identifier behind whom the brave coders responsible for this
  * amalgamation of code, sweat, and duct tape, routinely obscure their names.
@@ -114,6 +115,7 @@ static int r300_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
         case PIPE_CAP_TEXTURE_MIRROR_REPEAT:
         case PIPE_CAP_BLEND_EQUATION_SEPARATE:
         case PIPE_CAP_TEXTURE_SWIZZLE:
+        case PIPE_CAP_DEPTH_CLAMP:
             return 1;
 
         /* Unsupported features (boolean caps). */
@@ -206,6 +208,8 @@ static int r300_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
             return 1; /* XXX guessed */
         case PIPE_CAP_MAX_VS_PREDS:
             return is_r500 ? 4 : 0; /* XXX guessed. */
+        case PIPE_CAP_GEOMETRY_SHADER4:
+            return 0;
 
         default:
             fprintf(stderr, "r300: Implementation error: Bad param %d\n",
@@ -253,9 +257,6 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
     uint32_t retval = 0;
     boolean is_r500 = r300_screen(screen)->caps.is_r500;
     boolean is_r400 = r300_screen(screen)->caps.is_r400;
-    boolean is_rv350 = r300_screen(screen)->caps.is_rv350;
-    boolean is_z24 = format == PIPE_FORMAT_X8Z24_UNORM ||
-                     format == PIPE_FORMAT_S8_USCALED_Z24_UNORM;
     boolean is_color2101010 = format == PIPE_FORMAT_R10G10B10A2_UNORM ||
                               format == PIPE_FORMAT_R10G10B10X2_SNORM ||
                               format == PIPE_FORMAT_B10G10R10A2_UNORM ||
@@ -269,12 +270,7 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
                             format == PIPE_FORMAT_R16G16B16_FLOAT ||
                             format == PIPE_FORMAT_R16G16B16A16_FLOAT;
 
-    if (target >= PIPE_MAX_TEXTURE_TYPES) {
-        fprintf(stderr, "r300: Implementation error: Received bogus texture "
-            "target %d in %s\n", target, __FUNCTION__);
-        return FALSE;
-    }
-
+    /* Check multisampling support. */
     switch (sample_count) {
         case 0:
         case 1:
@@ -295,8 +291,6 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
 
     /* Check sampler format support. */
     if ((usage & PIPE_BIND_SAMPLER_VIEW) &&
-        /* Z24 cannot be sampled from on non-r5xx. */
-        (is_r500 || !is_z24) &&
         /* ATI1N is r5xx-only. */
         (is_r500 || !is_ati1n) &&
         /* ATI2N is supported on r4xx-r5xx. */
@@ -329,7 +323,7 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
     /* Check vertex buffer format support. */
     if (usage & PIPE_BIND_VERTEX_BUFFER &&
         /* Half float is supported on >= RV350. */
-        (is_rv350 || !is_half_float) &&
+        (is_r400 || is_r500 || !is_half_float) &&
         r300_translate_vertex_data_type(format) != R300_INVALID_FORMAT) {
         retval |= PIPE_BIND_VERTEX_BUFFER;
     }
@@ -347,6 +341,8 @@ static void r300_destroy_screen(struct pipe_screen* pscreen)
 {
     struct r300_screen* r300screen = r300_screen(pscreen);
     struct r300_winsys_screen *rws = r300_winsys_screen(pscreen);
+
+    util_mempool_destroy(&r300screen->pool_buffers);
 
     if (rws)
       rws->destroy(rws);
@@ -387,7 +383,7 @@ static int r300_fence_finish(struct pipe_screen *screen,
     return 0; /* 0 == success */
 }
 
-struct pipe_screen* r300_create_screen(struct r300_winsys_screen *rws)
+struct pipe_screen* r300_screen_create(struct r300_winsys_screen *rws)
 {
     struct r300_screen *r300screen = CALLOC_STRUCT(r300_screen);
 
@@ -402,6 +398,10 @@ struct pipe_screen* r300_create_screen(struct r300_winsys_screen *rws)
 
     r300_init_debug(r300screen);
     r300_parse_chipset(&r300screen->caps);
+
+    util_mempool_create(&r300screen->pool_buffers,
+                        sizeof(struct r300_buffer), 64,
+                        UTIL_MEMPOOL_SINGLETHREADED);
 
     r300screen->rws = rws;
     r300screen->screen.winsys = (struct pipe_winsys*)rws;
@@ -422,10 +422,4 @@ struct pipe_screen* r300_create_screen(struct r300_winsys_screen *rws)
     util_format_s3tc_init();
 
     return &r300screen->screen;
-}
-
-struct r300_winsys_screen *
-r300_winsys_screen(struct pipe_screen *screen)
-{
-    return r300_screen(screen)->rws;
 }

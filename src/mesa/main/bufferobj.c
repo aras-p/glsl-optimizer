@@ -1924,7 +1924,7 @@ _mesa_BufferObjectUnpurgeable(GLcontext *ctx, GLuint name, GLenum option)
 
    bufObj->Purgeable = GL_FALSE;
 
-   retval = GL_RETAINED_APPLE;
+   retval = option;
    if (ctx->Driver.BufferObjectUnpurgeable)
       retval = ctx->Driver.BufferObjectUnpurgeable(ctx, bufObj, option);
 
@@ -1954,11 +1954,11 @@ _mesa_RenderObjectUnpurgeable(GLcontext *ctx, GLuint name, GLenum option)
 
    bufObj->Purgeable = GL_FALSE;
 
-   retval = GL_RETAINED_APPLE;
+   retval = option;
    if (ctx->Driver.RenderObjectUnpurgeable)
       retval = ctx->Driver.RenderObjectUnpurgeable(ctx, bufObj, option);
 
-   return option;
+   return retval;
 }
 
 
@@ -1984,7 +1984,7 @@ _mesa_TextureObjectUnpurgeable(GLcontext *ctx, GLuint name, GLenum option)
 
    bufObj->Purgeable = GL_FALSE;
 
-   retval = GL_RETAINED_APPLE;
+   retval = option;
    if (ctx->Driver.TextureObjectUnpurgeable)
       retval = ctx->Driver.TextureObjectUnpurgeable(ctx, bufObj, option);
 

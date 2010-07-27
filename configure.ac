@@ -410,6 +410,7 @@ dnl Check to see if dlopen is in default libraries (like Solaris, which
 dnl has it in libc), or if libdl is needed to get it.
 AC_CHECK_FUNC([dlopen], [],
     [AC_CHECK_LIB([dl], [dlopen], [DLOPEN_LIBS="-ldl"])])
+AC_SUBST([DLOPEN_LIBS])
 
 dnl See if posix_memalign is available
 AC_CHECK_FUNC([posix_memalign], [DEFINES="$DEFINES -DHAVE_POSIX_MEMALIGN"])
@@ -476,7 +477,7 @@ GLU_DIRS="sgi"
 GALLIUM_DIRS="auxiliary drivers state_trackers"
 GALLIUM_TARGET_DIRS=""
 GALLIUM_WINSYS_DIRS="sw"
-GALLIUM_DRIVERS_DIRS="softpipe failover trace rbug identity"
+GALLIUM_DRIVERS_DIRS="softpipe failover galahad trace rbug identity"
 GALLIUM_STATE_TRACKERS_DIRS=""
 
 case "$mesa_driver" in
@@ -488,7 +489,7 @@ xlib)
 dri)
     SRC_DIRS="$SRC_DIRS glx"
     DRIVER_DIRS="dri"
-    GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS sw/xlib sw/dri sw/drm"
+    GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS sw/xlib sw/dri"
     ;;
 osmesa)
     DRIVER_DIRS="osmesa"
@@ -682,7 +683,7 @@ AC_SUBST([DRI_DRIVER_SEARCH_DIR])
 dnl Direct rendering or just indirect rendering
 AC_ARG_ENABLE([driglx-direct],
     [AS_HELP_STRING([--disable-driglx-direct],
-        [enable direct rendering in GLX for DRI @<:@default=enabled@:>@])],
+        [enable direct rendering in GLX and EGL for DRI @<:@default=enabled@:>@])],
     [driglx_direct="$enableval"],
     [driglx_direct="yes"])
 dnl Which drivers to build - default is chosen by platform
@@ -963,12 +964,23 @@ if test "x$enable_egl" = xyes; then
             EGL_DRIVERS_DIRS="glx"
         fi
 
-        # build egl_dri2 when xcb-dri2 is available
-        PKG_CHECK_MODULES([EGL_DRI2], [x11-xcb xcb-dri2 xcb-xfixes libdrm],
-			  [have_xcb_dri2=yes],[have_xcb_dri2=no])
-        if test "$have_xcb_dri2" = yes; then
-            EGL_DRIVERS_DIRS="$EGL_DRIVERS_DIRS dri2"
-        fi
+        if test "$mesa_driver" = dri; then
+            # build egl_dri2 when xcb-dri2 is available
+            PKG_CHECK_MODULES([XCB_DRI2], [x11-xcb xcb-dri2 xcb-xfixes],
+            		  [have_xcb_dri2=yes],[have_xcb_dri2=no])
+            PKG_CHECK_MODULES([LIBUDEV], [libudev > 150],
+            		  [have_libudev=yes],[have_libudev=no])
+            
+            if test "$have_xcb_dri2" = yes; then
+                EGL_DRIVER_DRI2=dri2
+                DEFINES="$DEFINES -DHAVE_XCB_DRI2"
+                if test "$have_libudev" = yes; then
+                    DEFINES="$DEFINES -DHAVE_LIBUDEV"
+                fi
+            fi
+	fi
+
+        EGL_DRIVERS_DIRS="$EGL_DRIVERS_DIRS $EGL_DRIVER_DRI2"
     fi
 fi
 AC_SUBST([EGL_LIB_DEPS])
@@ -1120,10 +1132,6 @@ fi
 
 if test "x$enable_glut" = xyes; then
     SRC_DIRS="$SRC_DIRS glut/glx"
-    GLUT_CFLAGS=""
-    if test "x$GCC" = xyes; then
-        GLUT_CFLAGS="-fexceptions"
-    fi
     if test "$x11_pkgconfig" = yes; then
         PKG_CHECK_MODULES([GLUT],[x11 xmu xi])
         GLUT_PC_REQ_PRIV="x11 xmu xi"
@@ -1133,6 +1141,9 @@ if test "x$enable_glut" = xyes; then
         GLUT_LIB_DEPS="$X_LIBS -lX11 -lXmu -lXi"
         GLUT_PC_LIB_PRIV="$GLUT_LIB_DEPS"
         GLUT_PC_CFLAGS="$X11_INCLUDES"
+    fi
+    if test "x$GCC" = xyes; then
+        GLUT_CFLAGS="$GLUT_CFLAGS -fexceptions"
     fi
     GLUT_LIB_DEPS="$GLUT_LIB_DEPS -lm"
     GLUT_PC_LIB_PRIV="$GLUT_PC_LIB_PRIV -lm"
@@ -1253,6 +1264,7 @@ yes)
             HAVE_ST_EGL="yes"
             ;;
         xorg)
+            PKG_CHECK_MODULES([XORG], [xorg-server >= 1.6.0])
             PKG_CHECK_MODULES([LIBDRM_XORG], [libdrm >= $LIBDRM_XORG_REQUIRED])
             PKG_CHECK_MODULES([LIBKMS_XORG], [libkms >= $LIBKMS_XORG_REQUIRED])
             HAVE_ST_XORG="yes"
@@ -1294,7 +1306,11 @@ AC_SUBST([VG_LIB_DEPS])
 AC_SUBST([EGL_CLIENT_APIS])
 
 if test "x$HAVE_ST_EGL" = xyes; then
-	GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS egl-apis"
+	GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS egl"
+	# define GLX_DIRECT_RENDERING even when the driver is not dri
+	if test "x$mesa_driver" != xdri -a "x$driglx_direct" = xyes; then
+            DEFINES="$DEFINES -DGLX_DIRECT_RENDERING"
+	fi
 fi
 
 if test "x$HAVE_ST_XORG" = xyes; then
@@ -1401,17 +1417,14 @@ dnl
 dnl Gallium helper functions
 dnl
 gallium_check_st() {
-    if test "x$HAVE_ST_DRI" = xyes || test "x$HAVE_ST_EGL" = xyes || test "x$HAVE_ST_XORG" = xyes; then
+    if test "x$HAVE_ST_DRI" = xyes || test "x$HAVE_ST_XORG" = xyes; then
          GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS $1"
     fi
     if test "x$HAVE_ST_DRI" = xyes && test "x$2" != x; then
          GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $2"
     fi
-    if test "x$HAVE_ST_EGL" = xyes && test "x$3" != x; then
+    if test "x$HAVE_ST_XORG" = xyes && test "x$3" != x; then
          GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $3"
-    fi
-    if test "x$HAVE_ST_XORG" = xyes && test "x$4" != x; then
-         GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $4"
     fi
 }
 
@@ -1426,26 +1439,41 @@ AC_ARG_ENABLE([gallium-svga],
     [enable_gallium_svga=auto])
 if test "x$enable_gallium_svga" = xyes; then
     GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS svga"
-    gallium_check_st "svga/drm" "dri-vmwgfx" "egl-vmwgfx" "xorg-vmwgfx"
+    gallium_check_st "svga/drm" "dri-vmwgfx" "xorg-vmwgfx"
 elif test "x$enable_gallium_svga" = xauto; then
     GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS svga"
 fi
 
 dnl
-dnl Gallium Intel configuration
+dnl Gallium i915 configuration
 dnl
-AC_ARG_ENABLE([gallium-intel],
-    [AS_HELP_STRING([--enable-gallium-intel],
-        [build gallium intel @<:@default=disabled@:>@])],
-    [enable_gallium_intel="$enableval"],
-    [enable_gallium_intel=auto])
-if test "x$enable_gallium_intel" = xyes; then
+AC_ARG_ENABLE([gallium-i915],
+    [AS_HELP_STRING([--enable-gallium-i915],
+        [build gallium i915 @<:@default=disabled@:>@])],
+    [enable_gallium_i915="$enableval"],
+    [enable_gallium_i915=auto])
+if test "x$enable_gallium_i915" = xyes; then
     GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS i915/sw"
-    GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS i915 i965"
-    gallium_check_st "i915/drm i965/drm" "dri-i915 dri-i965" "egl-i915 egl-i965" "xorg-i915 xorg-i965"
-elif test "x$enable_gallium_intel" = xauto; then
+    GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS i915"
+    gallium_check_st "i915/drm" "dri-i915" "xorg-i915"
+elif test "x$enable_gallium_i915" = xauto; then
     GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS i915/sw"
-    GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS i915 i965"
+    GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS i915"
+fi
+
+dnl
+dnl Gallium i965 configuration
+dnl
+AC_ARG_ENABLE([gallium-i965],
+    [AS_HELP_STRING([--enable-gallium-i965],
+        [build gallium i965 @<:@default=disabled@:>@])],
+    [enable_gallium_i965="$enableval"],
+    [enable_gallium_i965=auto])
+if test "x$enable_gallium_i965" = xyes; then
+    GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS i965"
+    gallium_check_st "i965/drm" "dri-i965" "xorg-i965"
+elif test "x$enable_gallium_i965" = xauto; then
+    GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS i965"
 fi
 
 dnl
@@ -1458,7 +1486,7 @@ AC_ARG_ENABLE([gallium-radeon],
     [enable_gallium_radeon=auto])
 if test "x$enable_gallium_radeon" = xyes; then
     GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS r300"
-    gallium_check_st "radeon/drm" "dri-radeong" "egl-radeon" "xorg-radeon"
+    gallium_check_st "radeon/drm" "dri-radeong" "xorg-radeon"
 elif test "x$enable_gallium_radeon" = xauto; then
     GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS r300"
 fi
@@ -1486,7 +1514,7 @@ AC_ARG_ENABLE([gallium-nouveau],
     [enable_gallium_nouveau=no])
 if test "x$enable_gallium_nouveau" = xyes; then
     GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS nouveau nvfx nv50"
-    gallium_check_st "nouveau/drm" "dri-nouveau" "egl-nouveau" "xorg-nouveau"
+    gallium_check_st "nouveau/drm" "dri-nouveau" "xorg-nouveau"
 fi
 
 dnl
@@ -1500,9 +1528,6 @@ AC_ARG_ENABLE([gallium-swrast],
 if test "x$enable_gallium_swrast" = xyes || test "x$enable_gallium_swrast" = xauto; then
     if test "x$HAVE_ST_DRI" = xyes; then
         GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS dri-swrast"
-    fi
-    if test "x$HAVE_ST_EGL" = xyes; then
-        GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS egl-swrast"
     fi
 fi
 

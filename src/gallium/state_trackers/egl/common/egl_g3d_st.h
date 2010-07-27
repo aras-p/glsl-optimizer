@@ -33,12 +33,6 @@
 #include "state_tracker/st_api.h"
 #include "egltypedefs.h"
 
-void
-egl_g3d_init_st_apis(struct st_api *stapis[ST_API_COUNT]);
-
-void
-egl_g3d_destroy_st_apis(void);
-
 struct st_manager *
 egl_g3d_create_st_manager(_EGLDisplay *dpy);
 

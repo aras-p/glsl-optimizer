@@ -35,14 +35,15 @@
 #include "main/mtypes.h"
 
 #include "tnl/t_context.h"
-#include "shader/program.h"
-#include "shader/prog_parameter.h"
-#include "shader/prog_statevars.h"
+#include "program/program.h"
+#include "program/prog_parameter.h"
+#include "program/prog_statevars.h"
 
 #include "radeon_debug.h"
 #include "r600_context.h"
 #include "r600_cmdbuf.h"
-#include "shader/programopt.h"
+#include "r600_emit.h"
+#include "program/programopt.h"
 
 #include "r700_debug.h"
 #include "r700_vertprog.h"

@@ -44,6 +44,7 @@ struct lp_counters
    unsigned nr_empty_64;
    unsigned nr_fully_covered_64;
    unsigned nr_partially_covered_64;
+   unsigned nr_shade_opaque_64;
    unsigned nr_empty_16;
    unsigned nr_fully_covered_16;
    unsigned nr_partially_covered_16;

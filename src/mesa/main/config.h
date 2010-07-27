@@ -265,6 +265,15 @@
 /** For GL_EXT_transform_feedback */
 #define MAX_FEEDBACK_ATTRIBS 32
 
+/** For GL_ARB_geometry_shader4 */
+/*@{*/
+#define MAX_GEOMETRY_TEXTURE_IMAGE_UNITS             8
+#define MAX_GEOMETRY_VARYING_COMPONENTS              32
+#define MAX_VERTEX_VARYING_COMPONENTS                32
+#define MAX_GEOMETRY_UNIFORM_COMPONENTS              512
+#define MAX_GEOMETRY_OUTPUT_VERTICES                 256
+#define MAX_GEOMETRY_TOTAL_OUTPUT_COMPONENTS         1024
+/*@}*/
 
 
 /**

@@ -32,7 +32,7 @@
 
 #include "brw_context.h"
 #include "brw_wm.h"
-#include "shader/prog_parameter.h"
+#include "program/prog_parameter.h"
 
 
 

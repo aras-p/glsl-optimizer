@@ -38,7 +38,14 @@ struct pt_post_vs {
                    struct draw_vertex_info *info );
 };
 
-
+static INLINE void
+initialize_vertex_header(struct vertex_header *header)
+{
+   header->clipmask = 0;
+   header->edgeflag = 1;
+   header->pad = 0;
+   header->vertex_id = UNDEFINED_VERTEX_ID;
+}
 
 static INLINE float
 dot4(const float *a, const float *b)
@@ -49,10 +56,9 @@ dot4(const float *a, const float *b)
            a[3]*b[3]);
 }
 
-
-
 static INLINE unsigned
-compute_clipmask_gl(const float *clip, /*const*/ float plane[][4], unsigned nr)
+compute_clipmask_gl(const float *clip, /*const*/ float plane[][4], unsigned nr,
+                    boolean clip_depth)
 {
    unsigned mask = 0x0;
    unsigned i;
@@ -69,8 +75,10 @@ compute_clipmask_gl(const float *clip, /*const*/ float plane[][4], unsigned nr)
    if ( clip[0] + clip[3] < 0) mask |= (1<<1);
    if (-clip[1] + clip[3] < 0) mask |= (1<<2);
    if ( clip[1] + clip[3] < 0) mask |= (1<<3);
-   if ( clip[2] + clip[3] < 0) mask |= (1<<4); /* match mesa clipplane numbering - for now */
-   if (-clip[2] + clip[3] < 0) mask |= (1<<5); /* match mesa clipplane numbering - for now */
+   if (clip_depth) {
+      if ( clip[2] + clip[3] < 0) mask |= (1<<4); /* match mesa clipplane numbering - for now */
+      if (-clip[2] + clip[3] < 0) mask |= (1<<5); /* match mesa clipplane numbering - for now */
+   }
 
    /* Followed by any remaining ones:
     */
@@ -103,6 +111,7 @@ static boolean post_vs_cliptest_viewport_gl( struct pt_post_vs *pvs,
    for (j = 0; j < info->count; j++) {
       float *position = out->data[pos];
 
+      initialize_vertex_header(out);
 #if 0
       debug_printf("%d) io = %p, data = %p = [%f, %f, %f, %f]\n",
                    j, out, position, position[0], position[1], position[2], position[3]);
@@ -114,9 +123,11 @@ static boolean post_vs_cliptest_viewport_gl( struct pt_post_vs *pvs,
       out->clip[3] = position[3];
 
       out->vertex_id = 0xffff;
+      /* Disable depth clipping if depth clamping is enabled. */
       out->clipmask = compute_clipmask_gl(out->clip, 
 					  pvs->draw->plane,
-					  pvs->draw->nr_planes);
+                                          pvs->draw->nr_planes,
+                                          !pvs->draw->depth_clamp);
       clipped += out->clipmask;
 
       if (out->clipmask == 0)
@@ -192,6 +203,7 @@ static boolean post_vs_viewport( struct pt_post_vs *pvs,
    for (j = 0; j < info->count; j++) {
       float *position = out->data[pos];
 
+      initialize_vertex_header(out);
       /* Viewport mapping only, no cliptest/rhw divide
        */
       position[0] = position[0] * scale[0] + trans[0];
@@ -211,7 +223,16 @@ static boolean post_vs_viewport( struct pt_post_vs *pvs,
 static boolean post_vs_none( struct pt_post_vs *pvs,
 			     struct draw_vertex_info *info )
 {
+   struct vertex_header *out = info->verts;
+   unsigned j;
+
    if (0) debug_printf("%s\n", __FUNCTION__);
+   /* just initialize the vertex_id in all headers */
+   for (j = 0; j < info->count; j++) {
+      initialize_vertex_header(out);
+
+      out = (struct vertex_header *)((char *)out + info->stride);
+   }
    return FALSE;
 }
 

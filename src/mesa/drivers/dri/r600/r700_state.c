@@ -41,8 +41,8 @@
 #include "main/framebuffer.h"
 #include "drivers/common/meta.h"
 
-#include "shader/prog_parameter.h"
-#include "shader/prog_statevars.h"
+#include "program/prog_parameter.h"
+#include "program/prog_statevars.h"
 #include "vbo/vbo.h"
 
 #include "r600_context.h"

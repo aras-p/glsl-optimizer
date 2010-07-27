@@ -37,7 +37,7 @@ MESA_OUTPUTS = \
 ######################################################################
 
 XORG_GLX_DIR = $(XORG_BASE)/glx
-XORG_GLAPI_DIR = $(XORG_BASE)/glx/glapi
+XORG_GLAPI_DIR = $(XORG_BASE)/glx
 
 XORG_GLAPI_FILES = \
 	$(XORG_GLAPI_DIR)/glapi.h \
@@ -76,6 +76,7 @@ API_XML = \
 	ARB_draw_elements_base_vertex.xml \
 	ARB_draw_instanced.xml \
 	ARB_framebuffer_object.xml \
+	ARB_geometry_shader4.xml \
 	ARB_map_buffer_range.xml \
 	ARB_seamless_cube_map.xml \
 	ARB_sync.xml \

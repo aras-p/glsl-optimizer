@@ -348,11 +348,134 @@ _mesa_base_tex_format( GLcontext *ctx, GLint internalFormat )
       case GL_SLUMINANCE8_EXT:
          return GL_LUMINANCE;
       default:
-            ; /* fallthrough */
+         ; /* fallthrough */
+      }
+   }
+#endif /* FEATURE_EXT_texture_sRGB */
+
+   if (ctx->Extensions.EXT_texture_integer) {
+      switch (internalFormat) {
+      case GL_RGBA8UI_EXT:
+      case GL_RGBA16UI_EXT:
+      case GL_RGBA32UI_EXT:
+      case GL_RGBA8I_EXT:
+      case GL_RGBA16I_EXT:
+      case GL_RGBA32I_EXT:
+         return GL_RGBA;
+      case GL_RGB8UI_EXT:
+      case GL_RGB16UI_EXT:
+      case GL_RGB32UI_EXT:
+      case GL_RGB8I_EXT:
+      case GL_RGB16I_EXT:
+      case GL_RGB32I_EXT:
+         return GL_RGB;
+      case GL_ALPHA8UI_EXT:
+      case GL_ALPHA16UI_EXT:
+      case GL_ALPHA32UI_EXT:
+      case GL_ALPHA8I_EXT:
+      case GL_ALPHA16I_EXT:
+      case GL_ALPHA32I_EXT:
+         return GL_ALPHA;
+      case GL_INTENSITY8UI_EXT:
+      case GL_INTENSITY16UI_EXT:
+      case GL_INTENSITY32UI_EXT:
+      case GL_INTENSITY8I_EXT:
+      case GL_INTENSITY16I_EXT:
+      case GL_INTENSITY32I_EXT:
+         return GL_INTENSITY;
+      case GL_LUMINANCE8UI_EXT:
+      case GL_LUMINANCE16UI_EXT:
+      case GL_LUMINANCE32UI_EXT:
+      case GL_LUMINANCE8I_EXT:
+      case GL_LUMINANCE16I_EXT:
+      case GL_LUMINANCE32I_EXT:
+         return GL_LUMINANCE;
+      case GL_LUMINANCE_ALPHA8UI_EXT:
+      case GL_LUMINANCE_ALPHA16UI_EXT:
+      case GL_LUMINANCE_ALPHA32UI_EXT:
+      case GL_LUMINANCE_ALPHA8I_EXT:
+      case GL_LUMINANCE_ALPHA16I_EXT:
+      case GL_LUMINANCE_ALPHA32I_EXT:
+         return GL_LUMINANCE_ALPHA;
+      default:
+         ; /* fallthrough */
       }
    }
 
-#endif /* FEATURE_EXT_texture_sRGB */
+   if (ctx->Extensions.ARB_texture_rg) {
+      switch (internalFormat) {
+      case GL_R8:
+      case GL_R16:
+      case GL_R16F:
+      case GL_R32F:
+      case GL_R8I:
+      case GL_R8UI:
+      case GL_R16I:
+      case GL_R16UI:
+      case GL_R32I:
+      case GL_R32UI:
+         return GL_R;
+      case GL_RG:
+      case GL_RG_INTEGER:
+      case GL_RG8:
+      case GL_RG16:
+      case GL_RG16F:
+      case GL_RG32F:
+      case GL_RG8I:
+      case GL_RG8UI:
+      case GL_RG16I:
+      case GL_RG16UI:
+      case GL_RG32I:
+      case GL_RG32UI:
+         return GL_RG;
+      default:
+         ; /* fallthrough */
+      }
+   }
+
+   if (ctx->Extensions.EXT_texture_shared_exponent) {
+      switch (internalFormat) {
+      case GL_RGB9_E5_EXT:
+         return GL_RGB;
+      default:
+         ; /* fallthrough */
+      }
+   }
+
+   if (ctx->Extensions.EXT_packed_float) {
+      switch (internalFormat) {
+      case GL_R11F_G11F_B10F_EXT:
+         return GL_RGB;
+      default:
+         ; /* fallthrough */
+      }
+   }
+
+   if (ctx->Extensions.ARB_depth_buffer_float) {
+      switch (internalFormat) {
+      case GL_DEPTH_COMPONENT32F:
+         return GL_DEPTH_COMPONENT;
+      case GL_DEPTH32F_STENCIL8:
+         return GL_DEPTH_STENCIL;
+      default:
+         ; /* fallthrough */
+      }
+   }
+
+   if (ctx->Extensions.EXT_texture_compression_rgtc) {
+      switch (internalFormat) {
+      case GL_COMPRESSED_RED:
+      case GL_COMPRESSED_RED_RGTC1_EXT:
+      case GL_COMPRESSED_SIGNED_RED_RGTC1_EXT:
+         return GL_RED;
+      case GL_COMPRESSED_RG:
+      case GL_COMPRESSED_RED_GREEN_RGTC2_EXT:
+      case GL_COMPRESSED_SIGNED_RED_GREEN_RGTC2_EXT:
+         return GL_RG;
+      default:
+         ; /* fallthrough */
+      }
+   }
 
    return -1; /* error */
 }
@@ -2060,6 +2183,45 @@ override_internal_format(GLenum internalFormat, GLint width, GLint height)
 }
 
 
+/**
+ * Choose the actual hardware format for a texture image.
+ * Try to use the same format as the previous image level when possible.
+ * Otherwise, ask the driver for the best format.
+ * It's important to try to choose a consistant format for all levels
+ * for efficient texture memory layout/allocation.  In particular, this
+ * comes up during automatic mipmap generation.
+ */
+void
+_mesa_choose_texture_format(GLcontext *ctx,
+                            struct gl_texture_object *texObj,
+                            struct gl_texture_image *texImage,
+                            GLenum target, GLint level,
+                            GLenum internalFormat, GLenum format, GLenum type)
+{
+   /* see if we've already chosen a format for the previous level */
+   if (level > 0) {
+      struct gl_texture_image *prevImage =
+	 _mesa_select_tex_image(ctx, texObj, target, level - 1);
+      /* See if the prev level is defined and has an internal format which
+       * matches the new internal format.
+       */
+      if (prevImage &&
+          prevImage->Width > 0 &&
+          prevImage->InternalFormat == internalFormat) {
+         /* use the same format */
+         texImage->TexFormat = prevImage->TexFormat;
+         return;
+      }
+   }
+
+   /* choose format from scratch */
+   texImage->TexFormat = ctx->Driver.ChooseTextureFormat(ctx, internalFormat,
+                                                         format, type);
+   ASSERT(texImage->TexFormat != MESA_FORMAT_NONE);
+}
+
+
+
 /*
  * Called from the API.  Note that width includes the border.
  */
@@ -2120,11 +2282,8 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalFormat,
                                        postConvWidth, 1, 1,
                                        border, internalFormat);
 
-            /* Choose actual texture format */
-            texImage->TexFormat =
-               ctx->Driver.ChooseTextureFormat(ctx, internalFormat,
-                                               format, type);
-            ASSERT(texImage->TexFormat != MESA_FORMAT_NONE);
+            _mesa_choose_texture_format(ctx, texObj, texImage, target, level,
+                                        internalFormat, format, type);
 
             /* Give the texture to the driver.  <pixels> may be null. */
             ASSERT(ctx->Driver.TexImage1D);
@@ -2159,12 +2318,14 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalFormat,
       }
       else {
          /* no error, set the tex image parameters */
+         struct gl_texture_object *texObj =
+            _mesa_get_current_tex_object(ctx, target);
          ASSERT(texImage);
          _mesa_init_teximage_fields(ctx, target, texImage,
                                     postConvWidth, 1, 1,
                                     border, internalFormat);
-         texImage->TexFormat =
-            ctx->Driver.ChooseTextureFormat(ctx, internalFormat, format, type);
+         _mesa_choose_texture_format(ctx, texObj, texImage, target, level,
+                                     internalFormat, format, type);
       }
    }
    else {
@@ -2240,11 +2401,8 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
                                        postConvWidth, postConvHeight, 1,
                                        border, internalFormat);
 
-            /* Choose actual texture format */
-            texImage->TexFormat =
-               ctx->Driver.ChooseTextureFormat(ctx, internalFormat,
-                                               format, type);
-            ASSERT(texImage->TexFormat != MESA_FORMAT_NONE);
+            _mesa_choose_texture_format(ctx, texObj, texImage, target, level,
+                                        internalFormat, format, type);
 
             /* Give the texture to the driver.  <pixels> may be null. */
             ASSERT(ctx->Driver.TexImage2D);
@@ -2286,11 +2444,13 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
       }
       else {
          /* no error, set the tex image parameters */
+         struct gl_texture_object *texObj =
+            _mesa_get_current_tex_object(ctx, target);
          _mesa_init_teximage_fields(ctx, target, texImage,
                                     postConvWidth, postConvHeight, 1,
                                     border, internalFormat);
-         texImage->TexFormat =
-            ctx->Driver.ChooseTextureFormat(ctx, internalFormat, format, type);
+         _mesa_choose_texture_format(ctx, texObj, texImage, target, level,
+                                     internalFormat, format, type);
       }
    }
    else {
@@ -2356,11 +2516,8 @@ _mesa_TexImage3D( GLenum target, GLint level, GLint internalFormat,
                                        width, height, depth,
                                        border, internalFormat);
 
-            /* Choose actual texture format */
-            texImage->TexFormat =
-               ctx->Driver.ChooseTextureFormat(ctx, internalFormat,
-                                               format, type);
-            ASSERT(texImage->TexFormat != MESA_FORMAT_NONE);
+            _mesa_choose_texture_format(ctx, texObj, texImage, target, level,
+                                        internalFormat, format, type);
 
             /* Give the texture to the driver.  <pixels> may be null. */
             ASSERT(ctx->Driver.TexImage3D);
@@ -2397,10 +2554,12 @@ _mesa_TexImage3D( GLenum target, GLint level, GLint internalFormat,
       }
       else {
          /* no error, set the tex image parameters */
+         struct gl_texture_object *texObj =
+            _mesa_get_current_tex_object(ctx, target);
          _mesa_init_teximage_fields(ctx, target, texImage, width, height,
                                     depth, border, internalFormat);
-         texImage->TexFormat =
-            ctx->Driver.ChooseTextureFormat(ctx, internalFormat, format, type);
+         _mesa_choose_texture_format(ctx, texObj, texImage, target, level,
+                                     internalFormat, format, type);
       }
    }
    else {
@@ -2713,11 +2872,8 @@ _mesa_CopyTexImage1D( GLenum target, GLint level,
          _mesa_init_teximage_fields(ctx, target, texImage, postConvWidth, 1, 1,
                                     border, internalFormat);
 
-         /* Choose actual texture format */
-         texImage->TexFormat =
-            ctx->Driver.ChooseTextureFormat(ctx, internalFormat,
-                                            GL_NONE, GL_NONE);
-         ASSERT(texImage->TexFormat != MESA_FORMAT_NONE);
+         _mesa_choose_texture_format(ctx, texObj, texImage, target, level,
+                                     internalFormat, GL_NONE, GL_NONE);
 
          ASSERT(ctx->Driver.CopyTexImage1D);
          ctx->Driver.CopyTexImage1D(ctx, target, level, internalFormat,
@@ -2794,11 +2950,8 @@ _mesa_CopyTexImage2D( GLenum target, GLint level, GLenum internalFormat,
                                     postConvWidth, postConvHeight, 1,
                                     border, internalFormat);
 
-         /* Choose actual texture format */
-         texImage->TexFormat =
-            ctx->Driver.ChooseTextureFormat(ctx, internalFormat,
-                                            GL_NONE, GL_NONE);
-         ASSERT(texImage->TexFormat != MESA_FORMAT_NONE);
+         _mesa_choose_texture_format(ctx, texObj, texImage, target, level,
+                                     internalFormat, GL_NONE, GL_NONE);
 
          ASSERT(ctx->Driver.CopyTexImage2D);
          ctx->Driver.CopyTexImage2D(ctx, target, level, internalFormat,
@@ -3082,6 +3235,10 @@ compressed_texture_error_check(GLcontext *ctx, GLint dimensions,
       /* 3D compressed textures not allowed */
       return GL_INVALID_ENUM;
    }
+   else {
+      assert(0);
+      return GL_INVALID_ENUM;
+   }
 
    maxTextureSize = 1 << (maxLevels - 1);
 
@@ -3319,11 +3476,8 @@ _mesa_CompressedTexImage1DARB(GLenum target, GLint level,
             _mesa_init_teximage_fields(ctx, target, texImage, width, 1, 1,
                                        border, internalFormat);
 
-            /* Choose actual texture format */
-            texImage->TexFormat =
-               ctx->Driver.ChooseTextureFormat(ctx, internalFormat,
-                                               GL_NONE, GL_NONE);
-            ASSERT(texImage->TexFormat != MESA_FORMAT_NONE);
+            _mesa_choose_texture_format(ctx, texObj, texImage, target, level,
+                                        internalFormat, GL_NONE, GL_NONE);
 
             ASSERT(ctx->Driver.CompressedTexImage1D);
             ctx->Driver.CompressedTexImage1D(ctx, target, level,
@@ -3371,6 +3525,8 @@ _mesa_CompressedTexImage1DARB(GLenum target, GLint level,
 	    texImage = _mesa_select_tex_image(ctx, texObj, target, level);
 	    _mesa_init_teximage_fields(ctx, target, texImage, width, 1, 1,
 				       border, internalFormat);
+            _mesa_choose_texture_format(ctx, texObj, texImage, target, level,
+                                        internalFormat, GL_NONE, GL_NONE);
 	 }
 	 _mesa_unlock_texture(ctx, texObj);
       }
@@ -3446,11 +3602,8 @@ _mesa_CompressedTexImage2DARB(GLenum target, GLint level,
             _mesa_init_teximage_fields(ctx, target, texImage, width, height, 1,
                                        border, internalFormat);
 
-            /* Choose actual texture format */
-            texImage->TexFormat =
-               ctx->Driver.ChooseTextureFormat(ctx, internalFormat,
-                                               GL_NONE, GL_NONE);
-            ASSERT(texImage->TexFormat != MESA_FORMAT_NONE);
+            _mesa_choose_texture_format(ctx, texObj, texImage, target, level,
+                                        internalFormat, GL_NONE, GL_NONE);
 
             ASSERT(ctx->Driver.CompressedTexImage2D);
             ctx->Driver.CompressedTexImage2D(ctx, target, level,
@@ -3500,6 +3653,8 @@ _mesa_CompressedTexImage2DARB(GLenum target, GLint level,
 	    texImage = _mesa_select_tex_image(ctx, texObj, target, level);
 	    _mesa_init_teximage_fields(ctx, target, texImage, width, height, 1,
 				       border, internalFormat);
+            _mesa_choose_texture_format(ctx, texObj, texImage, target, level,
+                                        internalFormat, GL_NONE, GL_NONE);
 	 }
 	 _mesa_unlock_texture(ctx, texObj);
       }
@@ -3556,10 +3711,8 @@ _mesa_CompressedTexImage3DARB(GLenum target, GLint level,
                                        border, internalFormat);
 
             /* Choose actual texture format */
-            texImage->TexFormat =
-               ctx->Driver.ChooseTextureFormat(ctx, internalFormat,
-                                               GL_NONE, GL_NONE);
-            ASSERT(texImage->TexFormat != MESA_FORMAT_NONE);
+            _mesa_choose_texture_format(ctx, texObj, texImage, target, level,
+                                        internalFormat, GL_NONE, GL_NONE);
 
             ASSERT(ctx->Driver.CompressedTexImage3D);
             ctx->Driver.CompressedTexImage3D(ctx, target, level,
@@ -3608,6 +3761,8 @@ _mesa_CompressedTexImage3DARB(GLenum target, GLint level,
 	    texImage = _mesa_select_tex_image(ctx, texObj, target, level);
 	    _mesa_init_teximage_fields(ctx, target, texImage, width, height,
 				       depth, border, internalFormat);
+            _mesa_choose_texture_format(ctx, texObj, texImage, target, level,
+                                        internalFormat, GL_NONE, GL_NONE);
 	 }
 	 _mesa_unlock_texture(ctx, texObj);
       }

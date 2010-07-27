@@ -71,7 +71,7 @@ lerp(float a, float v0, float v1)
 
 
 /**
- * Do 2D/biliner interpolation of float values.
+ * Do 2D/bilinear interpolation of float values.
  * v00, v10, v01 and v11 are typically four texture samples in a square/box.
  * a and b are the horizontal and vertical interpolants.
  * It's important that this function is inlined when compiled with

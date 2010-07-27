@@ -32,7 +32,7 @@
 #include "pipe/p_compiler.h"
 #include "util/u_format.h"
 #include "pipe/p_state.h"
-#include "state_tracker/drm_api.h"
+#include "state_tracker/drm_driver.h"
 
 #include "common/native.h"
 #include "common/native_helper.h"
@@ -53,7 +53,6 @@ struct kms_display {
    struct native_event_handler *event_handler;
 
    int fd;
-   struct drm_api *api;
    drmModeResPtr resources;
    struct kms_config *config;
 

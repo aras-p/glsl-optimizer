@@ -34,6 +34,7 @@
 #include "main/glheader.h"
 #include "main/mtypes.h"
 #include "main/imports.h"
+#include "main/arbprogram.h"
 #include "main/arrayobj.h"
 #include "main/blend.h"
 #include "main/bufferobj.h"
@@ -51,7 +52,7 @@
 #include "main/polygon.h"
 #include "main/readpix.h"
 #include "main/scissor.h"
-#include "main/shaders.h"
+#include "main/shaderapi.h"
 #include "main/state.h"
 #include "main/stencil.h"
 #include "main/texobj.h"
@@ -61,8 +62,7 @@
 #include "main/texstate.h"
 #include "main/varray.h"
 #include "main/viewport.h"
-#include "shader/program.h"
-#include "shader/arbprogram.h"
+#include "program/program.h"
 #include "swrast/swrast.h"
 #include "drivers/common/meta.h"
 
@@ -2570,12 +2570,6 @@ copy_tex_image(GLcontext *ctx, GLuint dims, GLenum target, GLint level,
       return;
    }
 
-   if (texImage->TexFormat == MESA_FORMAT_NONE)
-      texImage->TexFormat = ctx->Driver.ChooseTextureFormat(ctx,
-                                                            internalFormat,
-                                                            format,
-                                                            type);
-
    _mesa_unlock_texture(ctx, texObj); /* need to unlock first */
 
    /*
@@ -2603,6 +2597,9 @@ copy_tex_image(GLcontext *ctx, GLuint dims, GLenum target, GLint level,
    _mesa_init_teximage_fields(ctx, target, texImage,
                               postConvWidth, postConvHeight, 1,
                               border, internalFormat);
+
+   _mesa_choose_texture_format(ctx, texObj, texImage, target, level,
+                               internalFormat, GL_NONE, GL_NONE);
 
    /*
     * Store texture data (with pixel transfer ops)

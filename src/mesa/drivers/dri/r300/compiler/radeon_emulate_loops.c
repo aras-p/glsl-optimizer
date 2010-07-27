@@ -38,22 +38,6 @@
 
 #define DBG(...) do { if (VERBOSE) fprintf(stderr, __VA_ARGS__); } while(0)
 
-struct emulate_loop_state {
-	struct radeon_compiler * C;
-	struct loop_info * Loops;
-	unsigned int LoopCount;
-	unsigned int LoopReserved;
-};
-
-struct loop_info {
-	struct rc_instruction * BeginLoop;
-	struct rc_instruction * Cond;
-	struct rc_instruction * If;
-	struct rc_instruction * Brk;
-	struct rc_instruction * EndIf;
-	struct rc_instruction * EndLoop;
-};
-
 struct const_value {
 	
 	struct radeon_compiler * C;
@@ -94,22 +78,13 @@ static int src_reg_is_immediate(struct rc_src_register * src,
 	c->Program.Constants.Constants[src->Index].Type==RC_CONSTANT_IMMEDIATE;
 }
 
-static unsigned int loop_count_instructions(struct loop_info * loop)
+static unsigned int loop_calc_iterations(struct emulate_loop_state *s, 
+			struct loop_info * loop, unsigned int max_instructions)
 {
-	unsigned int count = 0;
-	struct rc_instruction * inst = loop->BeginLoop->Next;
-	while(inst != loop->EndLoop){
-		count++;
-		inst = inst->Next;
-	}
-	return count;
-}
-
-static unsigned int loop_calc_iterations(struct loop_info * loop,
-		unsigned int loop_count, unsigned int max_instructions)
-{
-	unsigned int icount = loop_count_instructions(loop);
-	return max_instructions / (loop_count * icount);
+	unsigned int total_i = rc_recompute_ips(s->C);
+	unsigned int loop_i = (loop->EndLoop->IP - loop->BeginLoop->IP) - 1;
+	/* +1 because the program already has one iteration of the loop. */
+	return 1 + ((max_instructions - total_i) / (s->LoopCount * loop_i));
 }
 
 static void loop_unroll(struct emulate_loop_state * s,
@@ -214,8 +189,7 @@ static void get_incr_amount(void * data, struct rc_instruction * inst,
 }
 
 static int transform_const_loop(struct emulate_loop_state * s,
-						struct loop_info * loop,
-						struct rc_instruction * cond)
+						struct loop_info * loop)
 {
 	int end_loops = 1;
 	int iterations;
@@ -228,13 +202,13 @@ static int transform_const_loop(struct emulate_loop_state * s,
 
 	/* Find the counter and the upper limit */
 	
-	if(src_reg_is_immediate(&cond->U.I.SrcReg[0], s->C)){
-		limit = &cond->U.I.SrcReg[0];
-		counter = &cond->U.I.SrcReg[1];
+	if(src_reg_is_immediate(&loop->Cond->U.I.SrcReg[0], s->C)){
+		limit = &loop->Cond->U.I.SrcReg[0];
+		counter = &loop->Cond->U.I.SrcReg[1];
 	}
-	else if(src_reg_is_immediate(&cond->U.I.SrcReg[1], s->C)){
-		limit = &cond->U.I.SrcReg[1];
-		counter = &cond->U.I.SrcReg[0];
+	else if(src_reg_is_immediate(&loop->Cond->U.I.SrcReg[1], s->C)){
+		limit = &loop->Cond->U.I.SrcReg[1];
+		counter = &loop->Cond->U.I.SrcReg[0];
 	}
 	else{
 		DBG("No constant limit.\n");
@@ -293,8 +267,22 @@ static int transform_const_loop(struct emulate_loop_state * s,
 	 * simple, since we only support increment and decrement loops.
 	 */
 	limit_value = get_constant_value(s->C, limit, 0);
-	iterations = (int) ((limit_value - counter_value.Value) /
+	DBG("Limit is %f.\n", limit_value);
+	switch(loop->Cond->U.I.Opcode){
+	case RC_OPCODE_SGT:
+	case RC_OPCODE_SLT:
+		iterations = (int) ceilf((limit_value - counter_value.Value) /
 							count_inst.Amount);
+		break;
+
+	case RC_OPCODE_SLE:
+	case RC_OPCODE_SGE:
+		iterations = (int) floorf((limit_value - counter_value.Value) /
+							count_inst.Amount) + 1;
+		break;
+	default:
+		return 0;
+	}
 
 	DBG("Loop will have %d iterations.\n", iterations);
 	
@@ -414,7 +402,7 @@ static struct rc_instruction * transform_loop(struct emulate_loop_state * s,
 	}
 	
 	/* Check if the number of loops is known at compile time. */
-	if(transform_const_loop(s, loop, ptr)){
+	if(transform_const_loop(s, loop)){
 		return loop->BeginLoop->Next;
 	}
 
@@ -425,9 +413,14 @@ static struct rc_instruction * transform_loop(struct emulate_loop_state * s,
 	return loop->EndLoop;
 }
 
-static void rc_transform_loops(struct emulate_loop_state * s)
+void rc_transform_unroll_loops(struct radeon_compiler *c,
+					struct emulate_loop_state * s)
 {
-	struct rc_instruction * ptr = s->C->Program.Instructions.Next;
+	struct rc_instruction * ptr;
+	
+	memset(s, 0, sizeof(struct emulate_loop_state));
+	s->C = c;
+	ptr = s->C->Program.Instructions.Next;
 	while(ptr != &s->C->Program.Instructions) {
 		if(ptr->Type == RC_INSTRUCTION_NORMAL &&
 					ptr->U.I.Opcode == RC_OPCODE_BGNLOOP){
@@ -440,7 +433,7 @@ static void rc_transform_loops(struct emulate_loop_state * s)
 	}
 }
 
-static void rc_unroll_loops(struct emulate_loop_state *s,
+void rc_emulate_loops(struct emulate_loop_state *s,
 						unsigned int max_instructions)
 {
 	int i;
@@ -451,24 +444,8 @@ static void rc_unroll_loops(struct emulate_loop_state *s,
 		if(!s->Loops[i].EndLoop){
 			continue;
 		}
-		unsigned int iterations = loop_calc_iterations(&s->Loops[i],
-						s->LoopCount, max_instructions);
+		unsigned int iterations = loop_calc_iterations(s, &s->Loops[i],
+							max_instructions);
 		loop_unroll(s, &s->Loops[i], iterations);
 	}
-}
-
-void rc_emulate_loops(struct radeon_compiler *c, unsigned int max_instructions)
-{
-	struct emulate_loop_state s;
-
-	memset(&s, 0, sizeof(struct emulate_loop_state));
-	s.C = c;
-
-	/* We may need to move these two operations to r3xx_(vert|frag)prog.c
-	 * and run the optimization passes between them in order to increase
-	 * the number of unrolls we can do for each loop.
-	 */
-	rc_transform_loops(&s);
-	
-	rc_unroll_loops(&s, max_instructions);
 }

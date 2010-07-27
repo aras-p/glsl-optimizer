@@ -29,7 +29,7 @@
 #include <new>
 
 extern "C" {
-#include "symbol_table.h"
+#include "program/symbol_table.h"
 }
 #include "ir.h"
 #include "glsl_types.h"

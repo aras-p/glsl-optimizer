@@ -26,16 +26,16 @@
 #ifndef _NATIVE_X11_H_
 #define _NATIVE_X11_H_
 
-#include "state_tracker/drm_api.h"
 #include "common/native.h"
 
 struct native_display *
-x11_create_ximage_display(EGLNativeDisplayType dpy,
-                          struct native_event_handler *event_handler);
+x11_create_ximage_display(Display *dpy,
+                          struct native_event_handler *event_handler,
+                          void *user_data);
 
 struct native_display *
-x11_create_dri2_display(EGLNativeDisplayType dpy,
+x11_create_dri2_display(Display *dpy,
                         struct native_event_handler *event_handler,
-                        struct drm_api *api);
+                        void *user_data);
 
 #endif /* _NATIVE_X11_H_ */

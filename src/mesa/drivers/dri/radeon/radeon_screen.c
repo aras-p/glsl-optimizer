@@ -52,7 +52,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_tex.h"
 #elif defined(RADEON_R200)
 #include "r200_context.h"
-#include "r200_ioctl.h"
 #include "r200_tex.h"
 #elif defined(RADEON_R300)
 #include "r300_context.h"
@@ -338,12 +337,6 @@ static const __DRItexBufferExtension radeonTexBufferExtension = {
 #endif
 
 #if defined(RADEON_R200)
-static const __DRIallocateExtension r200AllocateExtension = {
-    { __DRI_ALLOCATE, __DRI_ALLOCATE_VERSION },
-    r200AllocateMemoryMESA,
-    r200FreeMemoryMESA,
-    r200GetMemoryOffsetMESA
-};
 
 static const __DRItexOffsetExtension r200texOffsetExtension = {
     { __DRI_TEX_OFFSET, __DRI_TEX_OFFSET_VERSION },
@@ -1209,7 +1202,6 @@ radeonCreateScreen( __DRIscreen *sPriv )
 
    i = 0;
    screen->extensions[i++] = &driCopySubBufferExtension.base;
-   screen->extensions[i++] = &driFrameTrackingExtension.base;
    screen->extensions[i++] = &driReadDrawableExtension;
 
    if ( screen->irq != 0 ) {
@@ -1222,9 +1214,6 @@ radeonCreateScreen( __DRIscreen *sPriv )
 #endif
 
 #if defined(RADEON_R200)
-   if (IS_R200_CLASS(screen))
-      screen->extensions[i++] = &r200AllocateExtension.base;
-
    screen->extensions[i++] = &r200texOffsetExtension.base;
 #endif
 
@@ -1366,8 +1355,8 @@ radeonCreateScreen2(__DRIscreen *sPriv)
 
    i = 0;
    screen->extensions[i++] = &driCopySubBufferExtension.base;
-   screen->extensions[i++] = &driFrameTrackingExtension.base;
    screen->extensions[i++] = &driReadDrawableExtension;
+   screen->extensions[i++] = &dri2ConfigQueryExtension.base;
 
    if ( screen->irq != 0 ) {
        screen->extensions[i++] = &driSwapControlExtension.base;
@@ -1379,9 +1368,6 @@ radeonCreateScreen2(__DRIscreen *sPriv)
 #endif
 
 #if defined(RADEON_R200)
-   if (IS_R200_CLASS(screen))
-       screen->extensions[i++] = &r200AllocateExtension.base;
-
    screen->extensions[i++] = &r200TexBufferExtension.base;
 #endif
 

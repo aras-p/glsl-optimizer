@@ -6,6 +6,7 @@
 #include "util/u_inlines.h"
 #include "util/u_format.h"
 #include "util/u_format_s3tc.h"
+#include "util/u_string.h"
 
 #include <stdio.h>
 #include <errno.h>
@@ -15,7 +16,7 @@
 #include "nouveau_screen.h"
 
 /* XXX this should go away */
-#include "state_tracker/drm_api.h"
+#include "state_tracker/drm_driver.h"
 #include "util/u_simple_screen.h"
 
 static const char *
@@ -24,7 +25,7 @@ nouveau_screen_get_name(struct pipe_screen *pscreen)
 	struct nouveau_device *dev = nouveau_screen(pscreen)->device;
 	static char buffer[128];
 
-	snprintf(buffer, sizeof(buffer), "NV%02X", dev->chipset);
+	util_snprintf(buffer, sizeof(buffer), "NV%02X", dev->chipset);
 	return buffer;
 }
 
@@ -181,7 +182,7 @@ nouveau_screen_bo_from_handle(struct pipe_screen *pscreen,
 	ret = nouveau_bo_handle_ref(dev, whandle->handle, &bo);
 	if (ret) {
 		debug_printf("%s: ref name 0x%08x failed with %d\n",
-			     __func__, whandle->handle, ret);
+			     __FUNCTION__, whandle->handle, ret);
 		return NULL;
 	}
 

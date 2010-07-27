@@ -26,6 +26,7 @@
  **************************************************************************/
 
 #include "main/glheader.h"
+#include "main/arbprogram.h"
 #include "main/enums.h"
 #include "main/image.h"
 #include "main/colormac.h"
@@ -44,7 +45,6 @@
 #include "main/attrib.h"
 #include "main/enable.h"
 #include "main/viewport.h"
-#include "shader/arbprogram.h"
 #include "swrast/swrast.h"
 
 #include "intel_screen.h"

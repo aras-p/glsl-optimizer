@@ -39,9 +39,48 @@ extern "C" {
 
 struct pipe_context;
 
+enum blitter_attrib_type {
+   UTIL_BLITTER_ATTRIB_NONE,
+   UTIL_BLITTER_ATTRIB_COLOR,
+   UTIL_BLITTER_ATTRIB_TEXCOORD
+};
+
 struct blitter_context
 {
+   /**
+    * Draw a rectangle.
+    *
+    * \param x1      An X coordinate of the top-left corner.
+    * \param y1      A Y coordinate of the top-left corner.
+    * \param x2      An X coordinate of the bottom-right corner.
+    * \param y2      A Y coordinate of the bottom-right corner.
+    * \param depth  A depth which the rectangle is rendered at.
+    *
+    * \param type   Semantics of the attributes "attrib".
+    *               If type is UTIL_BLITTER_ATTRIB_NONE, ignore them.
+    *               If type is UTIL_BLITTER_ATTRIB_COLOR, the attributes
+    *               make up a constant RGBA color, and should go to the COLOR0
+    *               varying slot of a fragment shader.
+    *               If type is UTIL_BLITTER_ATTRIB_TEXCOORD, {a1, a2} and
+    *               {a3, a4} specify top-left and bottom-right texture
+    *               coordinates of the rectangle, respectively, and should go
+    *               to the GENERIC0 varying slot of a fragment shader.
+    *
+    * \param attrib See type.
+    *
+    * \note A driver may optionally override this callback to implement
+    *       a specialized hardware path for drawing a rectangle, e.g. using
+    *       a rectangular point sprite.
+    */
+   void (*draw_rectangle)(struct blitter_context *blitter,
+                          unsigned x1, unsigned y1, unsigned x2, unsigned y2,
+                          float depth,
+                          enum blitter_attrib_type type,
+                          const float attrib[4]);
+
    /* Private members, really. */
+   struct pipe_context *pipe; /**< pipe context */
+
    void *saved_blend_state;   /**< blend state */
    void *saved_dsa_state;     /**< depth stencil alpha state */
    void *saved_velem_state;   /**< vertex elements state */
@@ -72,6 +111,15 @@ struct blitter_context *util_blitter_create(struct pipe_context *pipe);
  * Destroy a blitter context.
  */
 void util_blitter_destroy(struct blitter_context *blitter);
+
+/**
+ * Return the pipe context associated with a blitter context.
+ */
+static INLINE
+struct pipe_context *util_blitter_get_pipe(struct blitter_context *blitter)
+{
+   return blitter->pipe;
+}
 
 /*
  * These CSOs must be saved before any of the following functions is called:
@@ -208,11 +256,45 @@ void util_blitter_save_vertex_shader(struct blitter_context *blitter,
    blitter->saved_vs = vs;
 }
 
+/* XXX This should probably be moved elsewhere. */
+static INLINE
+void util_assign_framebuffer_state(struct pipe_framebuffer_state *dst,
+                                   const struct pipe_framebuffer_state *src)
+{
+   unsigned i;
+
+   if (src) {
+      /* Reference all surfaces. */
+      for (i = 0; i < src->nr_cbufs; i++) {
+         pipe_surface_reference(&dst->cbufs[i], src->cbufs[i]);
+      }
+      for (; i < dst->nr_cbufs; i++) {
+         pipe_surface_reference(&dst->cbufs[i], NULL);
+      }
+
+      pipe_surface_reference(&dst->zsbuf, src->zsbuf);
+
+      dst->nr_cbufs = src->nr_cbufs;
+      dst->width = src->width;
+      dst->height = src->height;
+   } else {
+      /* Set all surfaces to NULL. */
+      for (i = 0; i < dst->nr_cbufs; i++) {
+         pipe_surface_reference(&dst->cbufs[i], NULL);
+      }
+
+      pipe_surface_reference(&dst->zsbuf, NULL);
+
+      dst->nr_cbufs = 0;
+   }
+}
+
 static INLINE
 void util_blitter_save_framebuffer(struct blitter_context *blitter,
-                                   struct pipe_framebuffer_state *state)
+                                   const struct pipe_framebuffer_state *state)
 {
-   blitter->saved_fb_state = *state;
+   blitter->saved_fb_state.nr_cbufs = 0; /* It's ~0 now, meaning it's unsaved. */
+   util_assign_framebuffer_state(&blitter->saved_fb_state, state);
 }
 
 static INLINE
@@ -247,12 +329,13 @@ util_blitter_save_fragment_sampler_views(struct blitter_context *blitter,
                                          int num_views,
                                          struct pipe_sampler_view **views)
 {
+   unsigned i;
    assert(num_views <= Elements(blitter->saved_sampler_views));
 
    blitter->saved_num_sampler_views = num_views;
-   memcpy(blitter->saved_sampler_views,
-          views,
-          num_views * sizeof(struct pipe_sampler_view *));
+   for (i = 0; i < num_views; i++)
+      pipe_sampler_view_reference(&blitter->saved_sampler_views[i],
+                                  views[i]);
 }
 
 static INLINE void

@@ -202,32 +202,65 @@ void rc_dataflow_deadcode(struct radeon_compiler * c, rc_dataflow_mark_outputs_f
 	    inst = inst->Prev) {
 		const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->U.I.Opcode);
 
-		if (opcode->IsFlowControl) {
-			if (opcode->Opcode == RC_OPCODE_ENDIF) {
-				push_branch(&s);
-			} else {
-				if (s.BranchStackSize) {
-					struct branchinfo * branch = &s.BranchStack[s.BranchStackSize-1];
+		switch(opcode->Opcode){
+		/* Mark all sources in the loop body as used before doing
+		 * normal deadcode analysis.  This is probably not optimal.
+		 */
+		case RC_OPCODE_ENDLOOP:
+		{
+			int endloops = 1;
+			struct rc_instruction *ptr;
+			for(ptr = inst->Prev; endloops > 0; ptr = ptr->Prev){
+				opcode = rc_get_opcode_info(ptr->U.I.Opcode);
+				if(ptr->U.I.Opcode == RC_OPCODE_BGNLOOP){
+					endloops--;
+					continue;
+				}
+				if(ptr->U.I.Opcode == RC_OPCODE_ENDLOOP){
+					endloops++;
+					continue;
+				}
+				if(opcode->HasDstReg){
+					int src = 0;
+					unsigned int srcmasks[3];
+					rc_compute_sources_for_writemask(ptr,
+						ptr->U.I.DstReg.WriteMask, srcmasks);
+					for(src=0; src < opcode->NumSrcRegs; src++){
+						mark_used(&s,
+							ptr->U.I.SrcReg[src].File,
+							ptr->U.I.SrcReg[src].Index,
+							srcmasks[src]);
+					}
+				}
+			}
+			break;
+		}
+		case RC_OPCODE_CONTINUE:
+		case RC_OPCODE_BRK:
+		case RC_OPCODE_BGNLOOP:
+			break;
+		case RC_OPCODE_ENDIF:
+			push_branch(&s);
+			break;
+		default:
+			if (opcode->IsFlowControl && s.BranchStackSize) {
+				struct branchinfo * branch = &s.BranchStack[s.BranchStackSize-1];
+				if (opcode->Opcode == RC_OPCODE_IF) {
+					or_updatemasks(&s.R,
+							&s.R,
+							branch->HaveElse ? &branch->StoreElse : &branch->StoreEndif);
 
-					if (opcode->Opcode == RC_OPCODE_IF) {
-						or_updatemasks(&s.R,
-								&s.R,
-								branch->HaveElse ? &branch->StoreElse : &branch->StoreEndif);
-
-						s.BranchStackSize--;
-					} else if (opcode->Opcode == RC_OPCODE_ELSE) {
-						if (branch->HaveElse) {
-							rc_error(c, "%s: Multiple ELSE for one IF/ENDIF\n", __FUNCTION__);
-						} else {
-							memcpy(&branch->StoreElse, &s.R, sizeof(s.R));
-							memcpy(&s.R, &branch->StoreEndif, sizeof(s.R));
-							branch->HaveElse = 1;
-						}
+					s.BranchStackSize--;
+				} else if (opcode->Opcode == RC_OPCODE_ELSE) {
+					if (branch->HaveElse) {
+						rc_error(c, "%s: Multiple ELSE for one IF/ENDIF\n", __FUNCTION__);
 					} else {
-						rc_error(c, "%s: Unhandled control flow instruction %s\n", __FUNCTION__, opcode->Name);
+						memcpy(&branch->StoreElse, &s.R, sizeof(s.R));
+						memcpy(&s.R, &branch->StoreEndif, sizeof(s.R));
+						branch->HaveElse = 1;
 					}
 				} else {
-					rc_error(c, "%s: Unexpected control flow instruction\n", __FUNCTION__);
+					rc_error(c, "%s: Unhandled control flow instruction %s\n", __FUNCTION__, opcode->Name);
 				}
 			}
 		}

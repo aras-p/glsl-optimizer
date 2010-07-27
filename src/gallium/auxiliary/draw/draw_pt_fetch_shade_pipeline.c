@@ -48,13 +48,11 @@ struct fetch_pipeline_middle_end {
    unsigned vertex_data_offset;
    unsigned vertex_size;
    unsigned input_prim;
-   unsigned output_prim;
    unsigned opt;
 };
 
 static void fetch_pipeline_prepare( struct draw_pt_middle_end *middle,
-                                    unsigned in_prim,
-                                    unsigned out_prim,
+                                    unsigned prim,
 				    unsigned opt,
                                     unsigned *max_vertices )
 {
@@ -63,6 +61,10 @@ static void fetch_pipeline_prepare( struct draw_pt_middle_end *middle,
    struct draw_vertex_shader *vs = draw->vs.vertex_shader;
    unsigned i;
    unsigned instance_id_index = ~0;
+
+   unsigned gs_out_prim = (draw->gs.geometry_shader ? 
+                           draw->gs.geometry_shader->output_primitive :
+                           prim);
 
    /* Add one to num_outputs because the pipeline occasionally tags on
     * an additional texcoord, eg for AA lines.
@@ -79,8 +81,7 @@ static void fetch_pipeline_prepare( struct draw_pt_middle_end *middle,
       }
    }
 
-   fpme->input_prim = in_prim;
-   fpme->output_prim = out_prim;
+   fpme->input_prim = prim;
    fpme->opt = opt;
 
    /* Always leave room for the vertex header whether we need it or
@@ -102,13 +103,13 @@ static void fetch_pipeline_prepare( struct draw_pt_middle_end *middle,
 			    (boolean)draw->bypass_clipping,
 			    (boolean)draw->identity_viewport,
 			    (boolean)draw->rasterizer->gl_rasterization_rules,
-			    (draw->vs.edgeflag_output ? true : false) );
+			    (draw->vs.edgeflag_output ? TRUE : FALSE) );
 
    draw_pt_so_emit_prepare( fpme->so_emit );
 
    if (!(opt & PT_PIPELINE)) {
       draw_pt_emit_prepare( fpme->emit,
-			    out_prim,
+			    gs_out_prim,
                             max_vertices );
 
       *max_vertices = MAX2( *max_vertices,
@@ -183,7 +184,7 @@ static void draw_vertex_shader_run(struct draw_vertex_shader *vshader,
    output_verts->count = input_verts->count;
    output_verts->verts =
       (struct vertex_header *)MALLOC(output_verts->vertex_size *
-                                     output_verts->count);
+                                     align(output_verts->count, 4));
 
    vshader->run_linear(vshader,
                        (const float (*)[4])input_verts->verts->data,

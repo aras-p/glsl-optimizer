@@ -35,7 +35,6 @@
 #include "util/u_prim.h"
 
 #include "r300_cs.h"
-#include "r300_cb.h"
 #include "r300_context.h"
 #include "r300_screen_buffer.h"
 #include "r300_emit.h"
@@ -224,11 +223,12 @@ static void r300_prepare_for_rendering(struct r300_context *r300,
 
     /* Emitted in flush. */
     end_dwords += 26; /* emit_query_end */
+    end_dwords += r300->hyperz_state.size; /* emit_hyperz_end */
 
     cs_dwords += end_dwords;
 
     /* Reserve requested CS space. */
-    if (!r300_check_cs(r300, cs_dwords)) {
+    if (cs_dwords > (r300->cs->ndw - r300->cs->cdw)) {
         r300->context.flush(&r300->context, 0, NULL);
         flushed = TRUE;
     }
@@ -278,13 +278,16 @@ static boolean immd_is_good_idea(struct r300_context *r300,
 
     /* We shouldn't map buffers referenced by CS, busy buffers,
      * and ones placed in VRAM. */
-    /* XXX Check for VRAM buffers. */
     for (i = 0; i < vertex_element_count; i++) {
         velem = &r300->velems->velem[i];
         vbi = velem->vertex_buffer_index;
 
         if (!checked[vbi]) {
             vbuf = &r300->vertex_buffer[vbi];
+
+            if (!(r300_buffer(vbuf->buffer)->domain & R300_DOMAIN_GTT)) {
+                return FALSE;
+            }
 
             if (r300_buffer_is_referenced(&r300->context,
                                           vbuf->buffer,
@@ -299,8 +302,7 @@ static boolean immd_is_good_idea(struct r300_context *r300,
 }
 
 /*****************************************************************************
- * The emission of draw packets for r500. Older GPUs may use these functions *
- * after resolving fallback issues (e.g. stencil ref two-sided).             *
+ * The HWTCL draw functions.                                                 *
  ****************************************************************************/
 
 static void r300_emit_draw_arrays_immediate(struct r300_context *r300,
@@ -316,74 +318,70 @@ static void r300_emit_draw_arrays_immediate(struct r300_context *r300,
     /* Size of the vertex, in dwords. */
     unsigned vertex_size = r300->velems->vertex_size_dwords;
 
-    /* Offsets of the attribute, in dwords, from the start of the vertex. */
-    unsigned offset[PIPE_MAX_ATTRIBS];
-
     /* Size of the vertex element, in dwords. */
     unsigned size[PIPE_MAX_ATTRIBS];
 
     /* Stride to the same attrib in the next vertex in the vertex buffer,
      * in dwords. */
-    unsigned stride[PIPE_MAX_ATTRIBS] = {0};
+    unsigned stride[PIPE_MAX_ATTRIBS];
 
     /* Mapped vertex buffers. */
-    uint32_t* map[PIPE_MAX_ATTRIBS] = {0};
-    struct pipe_transfer* transfer[PIPE_MAX_ATTRIBS] = {NULL};
+    uint32_t* map[PIPE_MAX_ATTRIBS];
+    uint32_t* mapelem[PIPE_MAX_ATTRIBS];
+    struct pipe_transfer* transfer[PIPE_MAX_ATTRIBS] = {0};
 
-    CB_LOCALS;
+    CS_LOCALS(r300);
 
     /* Calculate the vertex size, offsets, strides etc. and map the buffers. */
     for (i = 0; i < vertex_element_count; i++) {
         velem = &r300->velems->velem[i];
-        offset[i] = velem->src_offset / 4;
         size[i] = r300->velems->hw_format_size[i] / 4;
         vbi = velem->vertex_buffer_index;
+        vbuf = &r300->vertex_buffer[vbi];
+        stride[i] = vbuf->stride / 4;
 
         /* Map the buffer. */
-        if (!map[vbi]) {
-            vbuf = &r300->vertex_buffer[vbi];
+        if (!transfer[vbi]) {
             map[vbi] = (uint32_t*)pipe_buffer_map(&r300->context,
                                                   vbuf->buffer,
                                                   PIPE_TRANSFER_READ,
 						  &transfer[vbi]);
-            stride[vbi] = vbuf->stride / 4;
-            map[vbi] += vbuf->buffer_offset / 4 + stride[vbi] * start;
+            map[vbi] += (vbuf->buffer_offset / 4) + stride[i] * start;
         }
+        mapelem[i] = map[vbi] + (velem->src_offset / 4);
     }
 
     dwords = 9 + count * vertex_size;
 
     r300_prepare_for_rendering(r300, PREP_FIRST_DRAW, NULL, dwords, 0, 0, NULL);
 
-    BEGIN_CS_AS_CB(r300, dwords);
-    OUT_CB_REG(R300_GA_COLOR_CONTROL,
+    BEGIN_CS(dwords);
+    OUT_CS_REG(R300_GA_COLOR_CONTROL,
             r300_provoking_vertex_fixes(r300, mode));
-    OUT_CB_REG(R300_VAP_VTX_SIZE, vertex_size);
-    OUT_CB_REG_SEQ(R300_VAP_VF_MAX_VTX_INDX, 2);
-    OUT_CB(count - 1);
-    OUT_CB(0);
-    OUT_CB_PKT3(R300_PACKET3_3D_DRAW_IMMD_2, count * vertex_size);
-    OUT_CB(R300_VAP_VF_CNTL__PRIM_WALK_VERTEX_EMBEDDED | (count << 16) |
+    OUT_CS_REG(R300_VAP_VTX_SIZE, vertex_size);
+    OUT_CS_REG_SEQ(R300_VAP_VF_MAX_VTX_INDX, 2);
+    OUT_CS(count - 1);
+    OUT_CS(0);
+    OUT_CS_PKT3(R300_PACKET3_3D_DRAW_IMMD_2, count * vertex_size);
+    OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_VERTEX_EMBEDDED | (count << 16) |
             r300_translate_primitive(mode));
 
     /* Emit vertices. */
     for (v = 0; v < count; v++) {
         for (i = 0; i < vertex_element_count; i++) {
-            vbi = r300->velems->velem[i].vertex_buffer_index;
-
-            OUT_CB_TABLE(&map[vbi][offset[i] + stride[vbi] * v], size[i]);
+            OUT_CS_TABLE(&mapelem[i][stride[i] * v], size[i]);
         }
     }
-    END_CB;
+    END_CS;
 
     /* Unmap buffers. */
     for (i = 0; i < vertex_element_count; i++) {
         vbi = r300->velems->velem[i].vertex_buffer_index;
 
-        if (map[vbi]) {
+        if (transfer[vbi]) {
             vbuf = &r300->vertex_buffer[vbi];
             pipe_buffer_unmap(&r300->context, vbuf->buffer, transfer[vbi]);
-            map[vbi] = NULL;
+            transfer[vbi] = NULL;
         }
     }
 }
@@ -475,7 +473,7 @@ static void r300_emit_draw_elements(struct r300_context *r300,
            (0 << R300_INDX_BUFFER_SKIP_SHIFT));
     OUT_CS(offset_dwords << 2);
     OUT_CS_BUF_RELOC(indexBuffer, count_dwords,
-		     r300_buffer(indexBuffer)->domain, 0, 0);
+                     r300_buffer(indexBuffer)->domain, 0);
 
     END_CS;
 }
@@ -499,12 +497,19 @@ static void r300_draw_range_elements(struct pipe_context* pipe,
     unsigned short_count;
     int buffer_offset = 0, index_offset = 0; /* for index bias emulation */
     boolean translate = FALSE;
+    unsigned new_offset;
 
     if (r300->skip_rendering) {
         return;
     }
 
     if (!u_trim_pipe_prim(mode, &count)) {
+        return;
+    }
+
+    /* Index buffer range checking. */
+    if ((start + count) * indexSize > indexBuffer->width0) {
+        fprintf(stderr, "r300: Invalid index buffer range. Skipping rendering.\n");
         return;
     }
 
@@ -522,18 +527,17 @@ static void r300_draw_range_elements(struct pipe_context* pipe,
                                 &start, count);
 
     r300_update_derived_state(r300);
-    r300_upload_index_buffer(r300, &indexBuffer, indexSize, start, count);
+    r300_upload_index_buffer(r300, &indexBuffer, indexSize, start, count, &new_offset);
 
+    start = new_offset;
     /* 15 dwords for emit_draw_elements */
     r300_prepare_for_rendering(r300,
         PREP_FIRST_DRAW | PREP_VALIDATE_VBOS | PREP_EMIT_AOS | PREP_INDEXED,
         indexBuffer, 15, buffer_offset, indexBias, NULL);
 
-    u_upload_flush(r300->upload_vb);
-    u_upload_flush(r300->upload_ib);
     if (alt_num_verts || count <= 65535) {
         r300_emit_draw_elements(r300, indexBuffer, indexSize,
-                                 minIndex, maxIndex, mode, start, count);
+				minIndex, maxIndex, mode, start, count);
     } else {
         do {
             short_count = MIN2(count, 65534);
@@ -865,13 +869,12 @@ static void r300_render_draw_arrays(struct vbuf_render* render,
     unsigned dwords = 6;
 
     CS_LOCALS(r300);
-
     (void) i; (void) ptr;
 
     r300_prepare_for_rendering(r300, PREP_FIRST_DRAW | PREP_EMIT_AOS_SWTCL,
                                NULL, dwords, 0, 0, NULL);
 
-    DBG(r300, DBG_DRAW, "r300: Doing vbuf render, count %d\n", count);
+    DBG(r300, DBG_DRAW, "r300: render_draw_arrays (count: %d)\n", count);
 
     /* Uncomment to dump all VBOs rendered through this interface.
      * Slow and noisy!
@@ -914,6 +917,7 @@ static void r300_render_draw_elements(struct vbuf_render* render,
     unsigned free_dwords;
 
     CS_LOCALS(r300);
+    DBG(r300, DBG_DRAW, "r300: render_draw_elements (count: %d)\n", count);
 
     /* Reserve at least 256 dwords.
      *
@@ -924,7 +928,7 @@ static void r300_render_draw_elements(struct vbuf_render* render,
         NULL, 256, 0, 0, &end_cs_dwords);
 
     while (count) {
-        free_dwords = r300->rws->get_cs_free_dwords(r300->rws);
+        free_dwords = r300->cs->ndw - r300->cs->cdw;
 
         short_count = MIN2(count, (free_dwords - end_cs_dwords - 6) * 2);
 
@@ -1015,6 +1019,88 @@ struct draw_stage* r300_draw_stage(struct r300_context* r300)
  *                         End of SW TCL functions                          *
  ***************************************************************************/
 
+/* If we used a quad to draw a rectangle, the pixels on the main diagonal
+ * would be computed and stored twice, which makes the clear/copy codepaths
+ * somewhat inefficient. Instead we use a rectangular point sprite. */
+static void r300_blitter_draw_rectangle(struct blitter_context *blitter,
+                                        unsigned x1, unsigned y1,
+                                        unsigned x2, unsigned y2,
+                                        float depth,
+                                        enum blitter_attrib_type type,
+                                        const float attrib[4])
+{
+    struct r300_context *r300 = r300_context(util_blitter_get_pipe(blitter));
+    unsigned last_sprite_coord_enable = r300->sprite_coord_enable;
+    unsigned width = x2 - x1;
+    unsigned height = y2 - y1;
+    unsigned vertex_size =
+            type == UTIL_BLITTER_ATTRIB_COLOR || !r300->draw ? 8 : 4;
+    unsigned dwords = 13 + vertex_size +
+                      (type == UTIL_BLITTER_ATTRIB_TEXCOORD ? 7 : 0);
+    const float zeros[4] = {0, 0, 0, 0};
+    CS_LOCALS(r300);
+
+    if (type == UTIL_BLITTER_ATTRIB_TEXCOORD)
+        r300->sprite_coord_enable = 1;
+
+    r300_update_derived_state(r300);
+
+    /* Mark some states we don't care about as non-dirty. */
+    r300->clip_state.dirty = FALSE;
+    r300->viewport_state.dirty = FALSE;
+
+    r300_prepare_for_rendering(r300, PREP_FIRST_DRAW, NULL, dwords, 0, 0, NULL);
+
+    DBG(r300, DBG_DRAW, "r300: draw_rectangle\n");
+
+    BEGIN_CS(dwords);
+    /* Set up GA. */
+    OUT_CS_REG(R300_GA_POINT_SIZE, (height * 6) | ((width * 6) << 16));
+
+    if (type == UTIL_BLITTER_ATTRIB_TEXCOORD) {
+        /* Set up the GA to generate texcoords. */
+        OUT_CS_REG(R300_GB_ENABLE, R300_GB_POINT_STUFF_ENABLE |
+                   (R300_GB_TEX_STR << R300_GB_TEX0_SOURCE_SHIFT));
+        OUT_CS_REG_SEQ(R300_GA_POINT_S0, 4);
+        OUT_CS_32F(attrib[0]);
+        OUT_CS_32F(attrib[3]);
+        OUT_CS_32F(attrib[2]);
+        OUT_CS_32F(attrib[1]);
+    }
+
+    /* Set up VAP controls. */
+    OUT_CS_REG(R300_VAP_CLIP_CNTL, R300_CLIP_DISABLE);
+    OUT_CS_REG(R300_VAP_VTE_CNTL, R300_VTX_XY_FMT | R300_VTX_Z_FMT);
+    OUT_CS_REG(R300_VAP_VTX_SIZE, vertex_size);
+    OUT_CS_REG_SEQ(R300_VAP_VF_MAX_VTX_INDX, 2);
+    OUT_CS(1);
+    OUT_CS(0);
+
+    /* Draw. */
+    OUT_CS_PKT3(R300_PACKET3_3D_DRAW_IMMD_2, vertex_size);
+    OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_VERTEX_EMBEDDED | (1 << 16) |
+           R300_VAP_VF_CNTL__PRIM_POINTS);
+
+    OUT_CS_32F(x1 + width * 0.5f);
+    OUT_CS_32F(y1 + height * 0.5f);
+    OUT_CS_32F(depth);
+    OUT_CS_32F(1);
+
+    if (vertex_size == 8) {
+        if (!attrib)
+            attrib = zeros;
+        OUT_CS_TABLE(attrib, 4);
+    }
+    END_CS;
+
+    /* Restore the state. */
+    r300->clip_state.dirty = TRUE;
+    r300->rs_state.dirty = TRUE;
+    r300->viewport_state.dirty = TRUE;
+
+    r300->sprite_coord_enable = last_sprite_coord_enable;
+}
+
 static void r300_resource_resolve(struct pipe_context* pipe,
                                   struct pipe_resource* dest,
                                   struct pipe_subresource subdest,
@@ -1022,33 +1108,35 @@ static void r300_resource_resolve(struct pipe_context* pipe,
                                   struct pipe_subresource subsrc)
 {
     struct r300_context* r300 = r300_context(pipe);
-    struct r300_surface* destsurf = r300_surface(
-        dest->screen->get_tex_surface(dest->screen,
-            dest, subdest.face, subdest.level, 0, 0));
+    struct r300_aa_state *aa = (struct r300_aa_state*)r300->aa_state.state;
     struct pipe_surface* srcsurf = src->screen->get_tex_surface(src->screen,
             src, subsrc.face, subsrc.level, 0, 0);
     float color[] = {0, 0, 0, 0};
-    CS_LOCALS(r300);
 
     DBG(r300, DBG_DRAW, "r300: Resolving resource...\n");
 
-    OUT_CS_REG_SEQ(R300_RB3D_AARESOLVE_OFFSET, 1);
-    OUT_CS_RELOC(destsurf->buffer, destsurf->offset, 0, destsurf->domain, 0);
+    /* Enable AA resolve. */
+    aa->dest = r300_surface(
+            dest->screen->get_tex_surface(dest->screen, dest, subdest.face,
+                                          subdest.level, 0, 0));
 
-    OUT_CS_REG_SEQ(R300_RB3D_AARESOLVE_PITCH, 1);
-    OUT_CS_RELOC(destsurf->buffer, destsurf->pitch, 0, destsurf->domain, 0);
-
-    OUT_CS_REG(R300_RB3D_AARESOLVE_CTL,
+    aa->aaresolve_ctl =
         R300_RB3D_AARESOLVE_CTL_AARESOLVE_MODE_RESOLVE |
-        R300_RB3D_AARESOLVE_CTL_AARESOLVE_ALPHA_AVERAGE);
+        R300_RB3D_AARESOLVE_CTL_AARESOLVE_ALPHA_AVERAGE;
+    r300->aa_state.size = 12;
+    r300->aa_state.dirty = TRUE;
 
+    /* Resolve the surface. */
     r300->context.clear_render_target(pipe,
         srcsurf, color, 0, 0, src->width0, src->height0);
 
-    OUT_CS_REG(R300_RB3D_AARESOLVE_CTL, 0x0);
+    /* Disable AA resolve. */
+    aa->aaresolve_ctl = 0;
+    r300->aa_state.size = 4;
+    r300->aa_state.dirty = TRUE;
 
     pipe_surface_reference((struct pipe_surface**)&srcsurf, NULL);
-    pipe_surface_reference((struct pipe_surface**)&destsurf, NULL);
+    pipe_surface_reference((struct pipe_surface**)&aa->dest, NULL);
 }
 
 void r300_init_render_functions(struct r300_context *r300)
@@ -1066,6 +1154,7 @@ void r300_init_render_functions(struct r300_context *r300)
     }
 
     r300->context.resource_resolve = r300_resource_resolve;
+    r300->blitter->draw_rectangle = r300_blitter_draw_rectangle;
 
     /* Plug in the two-sided stencil reference value fallback if needed. */
     if (!r300->screen->caps.is_r500)

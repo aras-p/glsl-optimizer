@@ -64,12 +64,12 @@ static void r300_stencilref_begin(struct r300_context *r300)
     struct r300_dsa_state *dsa = (struct r300_dsa_state*)r300->dsa_state.state;
 
     /* Save state. */
-    sr->rs_cull_mode = rs->cull_mode;
+    sr->rs_cull_mode = rs->cb_main[rs->cull_mode_index];
     sr->zb_stencilrefmask = dsa->stencil_ref_mask;
     sr->ref_value_front = r300->stencil_ref.ref_value[0];
 
     /* We *cull* pixels, therefore no need to mask out the bits. */
-    rs->cull_mode |= R300_CULL_BACK;
+    rs->cb_main[rs->cull_mode_index] |= R300_CULL_BACK;
 
     r300->rs_state.dirty = TRUE;
 }
@@ -81,7 +81,7 @@ static void r300_stencilref_switch_side(struct r300_context *r300)
     struct r300_rs_state *rs = (struct r300_rs_state*)r300->rs_state.state;
     struct r300_dsa_state *dsa = (struct r300_dsa_state*)r300->dsa_state.state;
 
-    rs->cull_mode = sr->rs_cull_mode | R300_CULL_FRONT;
+    rs->cb_main[rs->cull_mode_index] = sr->rs_cull_mode | R300_CULL_FRONT;
     dsa->stencil_ref_mask = dsa->stencil_ref_bf;
     r300->stencil_ref.ref_value[0] = r300->stencil_ref.ref_value[1];
 
@@ -97,7 +97,7 @@ static void r300_stencilref_end(struct r300_context *r300)
     struct r300_dsa_state *dsa = (struct r300_dsa_state*)r300->dsa_state.state;
 
     /* Restore state. */
-    rs->cull_mode = sr->rs_cull_mode;
+    rs->cb_main[rs->cull_mode_index] = sr->rs_cull_mode;
     dsa->stencil_ref_mask = sr->zb_stencilrefmask;
     r300->stencil_ref.ref_value[0] = sr->ref_value_front;
 

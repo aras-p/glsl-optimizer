@@ -159,10 +159,20 @@ driOpenDriver(const char *driverName)
    return handle;
 }
 
+static GLboolean
+__driGetMSCRate(__DRIdrawable *draw,
+		int32_t * numerator, int32_t * denominator,
+		void *loaderPrivate)
+{
+   __GLXDRIdrawable *glxDraw = loaderPrivate;
+
+   return __glxGetMscRate(glxDraw, numerator, denominator);
+}
+
 _X_HIDDEN const __DRIsystemTimeExtension systemTimeExtension = {
    {__DRI_SYSTEM_TIME, __DRI_SYSTEM_TIME_VERSION},
    __glXGetUST,
-   __driGetMscRateOML
+   __driGetMSCRate
 };
 
 #define __ATTRIB(attrib, field) \
@@ -336,120 +346,14 @@ driConvertConfigs(const __DRIcoreExtension * core,
    return head.next;
 }
 
-/* Bind DRI1 specific extensions */
 _X_HIDDEN void
-driBindExtensions(__GLXscreenConfigs *psc)
+driDestroyConfigs(const __DRIconfig **configs)
 {
-   const __DRIextension **extensions;
    int i;
 
-   extensions = psc->core->getExtensions(psc->__driScreen);
-
-   for (i = 0; extensions[i]; i++) {
-#ifdef __DRI_SWAP_CONTROL
-      /* No DRI2 support for swap_control at the moment, since SwapBuffers
-       * is done by the X server */
-      if (strcmp(extensions[i]->name, __DRI_SWAP_CONTROL) == 0) {
-	 psc->swapControl = (__DRIswapControlExtension *) extensions[i];
-	 __glXEnableDirectExtension(psc, "GLX_SGI_swap_control");
-	 __glXEnableDirectExtension(psc, "GLX_MESA_swap_control");
-      }
-#endif
-
-#ifdef __DRI_MEDIA_STREAM_COUNTER
-      if (strcmp(extensions[i]->name, __DRI_MEDIA_STREAM_COUNTER) == 0) {
-         psc->msc = (__DRImediaStreamCounterExtension *) extensions[i];
-         __glXEnableDirectExtension(psc, "GLX_SGI_video_sync");
-      }
-#endif
-
-#ifdef __DRI_SWAP_BUFFER_COUNTER
-      /* No driver supports this at this time and the extension is
-       * not defined in dri_interface.h.  Will enable
-       * GLX_OML_sync_control if implemented. */
-#endif
-
-      /* Ignore unknown extensions */
-   }
-}
-
-/* Bind DRI2 specific extensions */
-_X_HIDDEN void
-dri2BindExtensions(__GLXscreenConfigs *psc)
-{
-   const __DRIextension **extensions;
-   int i;
-
-   extensions = psc->core->getExtensions(psc->__driScreen);
-
-   for (i = 0; extensions[i]; i++) {
-#ifdef __DRI_TEX_BUFFER
-      if ((strcmp(extensions[i]->name, __DRI_TEX_BUFFER) == 0)) {
-	 psc->texBuffer = (__DRItexBufferExtension *) extensions[i];
-	 __glXEnableDirectExtension(psc, "GLX_EXT_texture_from_pixmap");
-      }
-#endif
-
-      __glXEnableDirectExtension(psc, "GLX_SGI_video_sync");
-      __glXEnableDirectExtension(psc, "GLX_SGI_swap_control");
-      __glXEnableDirectExtension(psc, "GLX_MESA_swap_control");
-
-      /* FIXME: if DRI2 version supports it... */
-      __glXEnableDirectExtension(psc, "INTEL_swap_event");
-
-#ifdef __DRI2_FLUSH
-      if ((strcmp(extensions[i]->name, __DRI2_FLUSH) == 0)) {
-	 psc->f = (__DRI2flushExtension *) extensions[i];
-	 /* internal driver extension, no GL extension exposed */
-      }
-#endif
-
-#ifdef __DRI2_CONFIG_QUERY
-      if ((strcmp(extensions[i]->name, __DRI2_CONFIG_QUERY) == 0))
-	 psc->config = (__DRI2configQueryExtension *) extensions[i];
-#endif
-   }
-}
-
-/* Bind extensions common to DRI1 and DRI2 */
-_X_HIDDEN void
-driBindCommonExtensions(__GLXscreenConfigs *psc)
-{
-   const __DRIextension **extensions;
-   int i;
-
-   extensions = psc->core->getExtensions(psc->__driScreen);
-
-   for (i = 0; extensions[i]; i++) {
-#ifdef __DRI_COPY_SUB_BUFFER
-      if (strcmp(extensions[i]->name, __DRI_COPY_SUB_BUFFER) == 0) {
-	 psc->driCopySubBuffer = (__DRIcopySubBufferExtension *) extensions[i];
-	 __glXEnableDirectExtension(psc, "GLX_MESA_copy_sub_buffer");
-      }
-#endif
-
-#ifdef __DRI_ALLOCATE
-      if (strcmp(extensions[i]->name, __DRI_ALLOCATE) == 0) {
-	 psc->allocate = (__DRIallocateExtension *) extensions[i];
-	 __glXEnableDirectExtension(psc, "GLX_MESA_allocate_memory");
-      }
-#endif
-
-#ifdef __DRI_FRAME_TRACKING
-      if (strcmp(extensions[i]->name, __DRI_FRAME_TRACKING) == 0) {
-	 psc->frameTracking = (__DRIframeTrackingExtension *) extensions[i];
-	 __glXEnableDirectExtension(psc, "GLX_MESA_swap_frame_usage");
-      }
-#endif
-
-#ifdef __DRI_READ_DRAWABLE
-      if (strcmp(extensions[i]->name, __DRI_READ_DRAWABLE) == 0) {
-	 __glXEnableDirectExtension(psc, "GLX_SGI_make_current_read");
-      }
-#endif
-
-      /* Ignore unknown extensions */
-   }
+   for (i = 0; configs[i]; i++)
+      free((__DRIconfig *) configs[i]);
+   free(configs);
 }
 
 #endif /* GLX_DIRECT_RENDERING */

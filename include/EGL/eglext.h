@@ -208,6 +208,17 @@ typedef EGLBoolean (EGLAPIENTRYP PFNEGLCOPYCONTEXTMESA) (EGLDisplay dpy, EGLCont
 
 #endif /* EGL_MESA_copy_context */
 
+#ifndef EGL_MESA_drm_display
+#define EGL_MESA_drm_display 1
+
+#ifdef EGL_EGLEXT_PROTOTYPES
+EGLAPI EGLDisplay EGLAPIENTRY eglGetDRMDisplayMESA(int fd);
+#endif /* EGL_EGLEXT_PROTOTYPES */
+
+typedef EGLDisplay (EGLAPIENTRYP PFNEGLGETDRMDISPLAYMESA) (int fd);
+
+#endif /* EGL_MESA_drm_display */
+
 #ifndef EGL_KHR_image_base
 #define EGL_KHR_image_base 1
 /* Most interfaces defined by EGL_KHR_image_pixmap above */

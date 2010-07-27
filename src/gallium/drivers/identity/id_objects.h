@@ -65,7 +65,6 @@ struct identity_transfer
 {
    struct pipe_transfer base;
 
-   struct pipe_context *pipe;
    struct pipe_transfer *transfer;
 };
 

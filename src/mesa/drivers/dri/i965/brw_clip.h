@@ -115,7 +115,10 @@ struct brw_clip_compile {
    GLboolean need_direction;
 
    GLuint header_position_offset;
-   GLuint offset[VERT_ATTRIB_MAX];
+   /** Mapping from VERT_RESULT_* to offset within the VUE. */
+   GLuint offset[VERT_RESULT_MAX];
+   /** Mapping from attribute index to VERT_RESULT_* */
+   GLuint idx_to_attr[VERT_RESULT_MAX];
 };
 
 #define ATTR_SIZE  (4*4)

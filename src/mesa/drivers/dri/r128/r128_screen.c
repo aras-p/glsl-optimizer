@@ -221,7 +221,6 @@ r128CreateScreen( __DRIscreen *sPriv )
    r128Screen->driScreen = sPriv;
 
    i = 0;
-   r128Screen->extensions[i++] = &driFrameTrackingExtension.base;
    if ( r128Screen->irq != 0 ) {
        r128Screen->extensions[i++] = &driSwapControlExtension.base;
        r128Screen->extensions[i++] = &driMediaStreamCounterExtension.base;

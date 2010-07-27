@@ -49,6 +49,7 @@
 #include "lp_bld_type.h"
 #include "lp_bld_const.h"
 #include "lp_bld_arit.h"
+#include "lp_bld_gather.h"
 #include "lp_bld_logic.h"
 #include "lp_bld_swizzle.h"
 #include "lp_bld_flow.h"
@@ -132,10 +133,14 @@ struct lp_build_tgsi_soa_context
    LLVMValueRef addr[LP_MAX_TGSI_ADDRS][NUM_CHANNELS];
    LLVMValueRef preds[LP_MAX_TGSI_PREDS][NUM_CHANNELS];
 
-   /* we allocate an array of temps if we have indirect
-    * addressing and then the temps above is unused */
+   /* We allocate/use this array of temps if (1 << TGSI_FILE_TEMPORARY) is
+    * set in the indirect_files field.
+    * The temps[] array above is unused then.
+    */
    LLVMValueRef temps_array;
-   boolean has_indirect_addressing;
+
+   /** bitmask indicating which register files are accessed indirectly */
+   unsigned indirect_files;
 
    struct lp_build_mask_context *mask;
    struct lp_exec_mask exec_mask;
@@ -404,24 +409,91 @@ static void lp_exec_mask_endsub(struct lp_exec_mask *mask, int *pc)
    lp_exec_mask_update(mask);
 }
 
+
+/**
+ * Return pointer to a temporary register channel (src or dest).
+ * Note that indirect addressing cannot be handled here.
+ * \param index  which temporary register
+ * \param chan  which channel of the temp register.
+ */
 static LLVMValueRef
 get_temp_ptr(struct lp_build_tgsi_soa_context *bld,
              unsigned index,
-             unsigned chan,
-             boolean is_indirect,
-             LLVMValueRef addr)
+             unsigned chan)
 {
    assert(chan < 4);
-   if (!bld->has_indirect_addressing) {
-      return bld->temps[index][chan];
-   } else {
-      LLVMValueRef lindex =
-         LLVMConstInt(LLVMInt32Type(), index * 4 + chan, 0);
-      if (is_indirect)
-         lindex = lp_build_add(&bld->base, lindex, addr);
+   if (bld->indirect_files & (1 << TGSI_FILE_TEMPORARY)) {
+      LLVMValueRef lindex = lp_build_const_int32(index * 4 + chan);
       return LLVMBuildGEP(bld->base.builder, bld->temps_array, &lindex, 1, "");
    }
+   else {
+      return bld->temps[index][chan];
+   }
 }
+
+
+/**
+ * Gather vector.
+ * XXX the lp_build_gather() function should be capable of doing this
+ * with a little work.
+ */
+static LLVMValueRef
+build_gather(struct lp_build_tgsi_soa_context *bld,
+             LLVMValueRef base_ptr,
+             LLVMValueRef indexes)
+{
+   LLVMValueRef res = bld->base.undef;
+   unsigned i;
+
+   /*
+    * Loop over elements of index_vec, load scalar value, insert it into 'res'.
+    */
+   for (i = 0; i < bld->base.type.length; i++) {
+      LLVMValueRef ii = LLVMConstInt(LLVMInt32Type(), i, 0);
+      LLVMValueRef index = LLVMBuildExtractElement(bld->base.builder,
+                                                   indexes, ii, "");
+      LLVMValueRef scalar_ptr = LLVMBuildGEP(bld->base.builder, base_ptr,
+                                             &index, 1, "");
+      LLVMValueRef scalar = LLVMBuildLoad(bld->base.builder, scalar_ptr, "");
+
+      res = LLVMBuildInsertElement(bld->base.builder, res, scalar, ii, "");
+   }
+
+   return res;
+}
+
+
+/**
+ * Read the current value of the ADDR register, convert the floats to
+ * ints, multiply by four and return the vector of offsets.
+ * The offsets will be used to index into the constant buffer or
+ * temporary register file.
+ */
+static LLVMValueRef
+get_indirect_offsets(struct lp_build_tgsi_soa_context *bld,
+                     const struct tgsi_src_register *indirect_reg)
+{
+   /* always use X component of address register */
+   const int x = indirect_reg->SwizzleX;
+   LLVMTypeRef int_vec_type = lp_build_int_vec_type(bld->base.type);
+   uint swizzle = tgsi_util_get_src_register_swizzle(indirect_reg, x);
+   LLVMValueRef vec4 = lp_build_const_int_vec(bld->int_bld.type, 4); 
+   LLVMValueRef addr_vec;
+
+   addr_vec = LLVMBuildLoad(bld->base.builder,
+                            bld->addr[indirect_reg->Index][swizzle],
+                            "load addr reg");
+
+   /* for indexing we want integers */
+   addr_vec = LLVMBuildFPToSI(bld->base.builder, addr_vec,
+                              int_vec_type, "");
+
+   /* addr_vec = addr_vec * 4 */
+   addr_vec = lp_build_mul(&bld->base, addr_vec, vec4);
+
+   return addr_vec;
+}
+
 
 /**
  * Register fetch.
@@ -430,14 +502,14 @@ static LLVMValueRef
 emit_fetch(
    struct lp_build_tgsi_soa_context *bld,
    const struct tgsi_full_instruction *inst,
-   unsigned index,
+   unsigned src_op,
    const unsigned chan_index )
 {
-   const struct tgsi_full_src_register *reg = &inst->Src[index];
+   const struct tgsi_full_src_register *reg = &inst->Src[src_op];
    const unsigned swizzle =
       tgsi_util_get_full_src_register_swizzle(reg, chan_index);
    LLVMValueRef res;
-   LLVMValueRef addr = NULL;
+   LLVMValueRef addr_vec = NULL;
 
    if (swizzle > 3) {
       assert(0 && "invalid swizzle in emit_fetch()");
@@ -445,32 +517,33 @@ emit_fetch(
    }
 
    if (reg->Register.Indirect) {
-      LLVMTypeRef int_vec_type = lp_build_int_vec_type(bld->base.type);
-      unsigned swizzle = tgsi_util_get_src_register_swizzle( &reg->Indirect, chan_index );
-      addr = LLVMBuildLoad(bld->base.builder,
-                           bld->addr[reg->Indirect.Index][swizzle],
-                           "");
-      /* for indexing we want integers */
-      addr = LLVMBuildFPToSI(bld->base.builder, addr,
-                             int_vec_type, "");
-      addr = LLVMBuildExtractElement(bld->base.builder,
-                                     addr, LLVMConstInt(LLVMInt32Type(), 0, 0),
-                                     "");
-      addr = lp_build_mul(&bld->base, addr, LLVMConstInt(LLVMInt32Type(), 4, 0));
+      assert(bld->indirect_files);
+      addr_vec = get_indirect_offsets(bld, &reg->Indirect);
    }
 
    switch (reg->Register.File) {
    case TGSI_FILE_CONSTANT:
-      {
-         LLVMValueRef index = LLVMConstInt(LLVMInt32Type(),
-                                           reg->Register.Index*4 + swizzle, 0);
+      if (reg->Register.Indirect) {
+         LLVMValueRef index_vec;  /* index into the const buffer */
+
+         assert(bld->indirect_files & (1 << TGSI_FILE_CONSTANT));
+
+         /* index_vec = broadcast(reg->Register.Index * 4 + swizzle) */
+         index_vec = lp_build_const_int_vec(bld->int_bld.type,
+                                            reg->Register.Index * 4 + swizzle);
+
+         /* index_vec = index_vec + addr_vec */
+         index_vec = lp_build_add(&bld->base, index_vec, addr_vec);
+
+         /* Gather values from the constant buffer */
+         res = build_gather(bld, bld->consts_ptr, index_vec);
+      }
+      else {
+         LLVMValueRef index;  /* index into the const buffer */
          LLVMValueRef scalar, scalar_ptr;
 
-         if (reg->Register.Indirect) {
-            /*lp_build_printf(bld->base.builder,
-              "\taddr = %d\n", addr);*/
-            index = lp_build_add(&bld->base, index, addr);
-         }
+         index = lp_build_const_int32(reg->Register.Index*4 + swizzle);
+
          scalar_ptr = LLVMBuildGEP(bld->base.builder, bld->consts_ptr,
                                    &index, 1, "");
          scalar = LLVMBuildLoad(bld->base.builder, scalar_ptr, "");
@@ -490,13 +563,38 @@ emit_fetch(
       break;
 
    case TGSI_FILE_TEMPORARY:
-      {
-         LLVMValueRef temp_ptr = get_temp_ptr(bld, reg->Register.Index,
-                                              swizzle,
-                                              reg->Register.Indirect,
-                                              addr);
+      if (reg->Register.Indirect) {
+         LLVMValueRef vec_len =
+            lp_build_const_int_vec(bld->int_bld.type, bld->base.type.length);
+         LLVMValueRef index_vec;  /* index into the const buffer */
+         LLVMValueRef temps_array;
+         LLVMTypeRef float4_ptr_type;
+
+         assert(bld->indirect_files & (1 << TGSI_FILE_TEMPORARY));
+
+         /* index_vec = broadcast(reg->Register.Index * 4 + swizzle) */
+         index_vec = lp_build_const_int_vec(bld->int_bld.type,
+                                            reg->Register.Index * 4 + swizzle);
+
+         /* index_vec += addr_vec */
+         index_vec = lp_build_add(&bld->int_bld, index_vec, addr_vec);
+
+         /* index_vec *= vector_length */
+         index_vec = lp_build_mul(&bld->int_bld, index_vec, vec_len);
+
+         /* cast temps_array pointer to float* */
+         float4_ptr_type = LLVMPointerType(LLVMFloatType(), 0);
+         temps_array = LLVMBuildBitCast(bld->int_bld.builder, bld->temps_array,
+                                        float4_ptr_type, "");
+
+         /* Gather values from the temporary register array */
+         res = build_gather(bld, temps_array, index_vec);
+      }
+      else {
+         LLVMValueRef temp_ptr;
+         temp_ptr = get_temp_ptr(bld, reg->Register.Index, swizzle);
          res = LLVMBuildLoad(bld->base.builder, temp_ptr, "");
-         if(!res)
+         if (!res)
             return bld->base.undef;
       }
       break;
@@ -660,8 +758,12 @@ emit_store(
    }
 
    if (reg->Register.Indirect) {
+      /* XXX use get_indirect_offsets() here eventually */
       LLVMTypeRef int_vec_type = lp_build_int_vec_type(bld->base.type);
       unsigned swizzle = tgsi_util_get_src_register_swizzle( &reg->Indirect, chan_index );
+
+      assert(bld->indirect_files);
+
       addr = LLVMBuildLoad(bld->base.builder,
                            bld->addr[reg->Indirect.Index][swizzle],
                            "");
@@ -680,14 +782,18 @@ emit_store(
                          bld->outputs[reg->Register.Index][chan_index]);
       break;
 
-   case TGSI_FILE_TEMPORARY: {
-      LLVMValueRef temp_ptr = get_temp_ptr(bld, reg->Register.Index,
-                                           chan_index,
-                                           reg->Register.Indirect,
-                                           addr);
-      lp_exec_mask_store(&bld->exec_mask, pred, value, temp_ptr);
+   case TGSI_FILE_TEMPORARY:
+      if (reg->Register.Indirect) {
+         /* XXX not done yet */
+         debug_printf("WARNING: LLVM scatter store of temp regs"
+                      " not implemented\n");
+      }
+      else {
+         LLVMValueRef temp_ptr = get_temp_ptr(bld, reg->Register.Index,
+                                              chan_index);
+         lp_exec_mask_store(&bld->exec_mask, pred, value, temp_ptr);
+      }
       break;
-   }
 
    case TGSI_FILE_ADDRESS:
       lp_exec_mask_store(&bld->exec_mask, pred, value,
@@ -905,7 +1011,7 @@ emit_declaration(
       switch (decl->Declaration.File) {
       case TGSI_FILE_TEMPORARY:
          assert(idx < LP_MAX_TGSI_TEMPS);
-         if (bld->has_indirect_addressing) {
+         if (bld->indirect_files & (1 << TGSI_FILE_TEMPORARY)) {
             LLVMValueRef array_size = LLVMConstInt(LLVMInt32Type(),
                                                    last*4 + 4, 0);
             bld->temps_array = lp_build_array_alloca(bld->base.builder,
@@ -1929,8 +2035,7 @@ lp_build_tgsi_soa(LLVMBuilderRef builder,
    bld.outputs = outputs;
    bld.consts_ptr = consts_ptr;
    bld.sampler = sampler;
-   bld.has_indirect_addressing = info->opcode_count[TGSI_OPCODE_ARR] > 0 ||
-                                 info->opcode_count[TGSI_OPCODE_ARL] > 0;
+   bld.indirect_files = info->indirect_files;
    bld.instructions = (struct tgsi_full_instruction *)
                       MALLOC( LP_MAX_INSTRUCTIONS * sizeof(struct tgsi_full_instruction) );
    bld.max_instructions = LP_MAX_INSTRUCTIONS;

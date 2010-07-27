@@ -147,6 +147,8 @@ invalidate_framebuffer(struct gl_framebuffer *fb)
 /**
  * Given a GL_*_ATTACHMENTn token, return a pointer to the corresponding
  * gl_renderbuffer_attachment object.
+ * This function is only used for user-created FB objects, not the
+ * default / window-system FB object.
  * If \p attachment is GL_DEPTH_STENCIL_ATTACHMENT, return a pointer to
  * the depth buffer attachment point.
  */
@@ -155,6 +157,8 @@ _mesa_get_attachment(GLcontext *ctx, struct gl_framebuffer *fb,
                      GLenum attachment)
 {
    GLuint i;
+
+   assert(fb->Name > 0);
 
    switch (attachment) {
    case GL_COLOR_ATTACHMENT0_EXT:
@@ -188,6 +192,23 @@ _mesa_get_attachment(GLcontext *ctx, struct gl_framebuffer *fb,
       /* fall-through / new in GL 3.0 */
    case GL_STENCIL_ATTACHMENT_EXT:
       return &fb->Attachment[BUFFER_STENCIL];
+   default:
+      return NULL;
+   }
+}
+
+
+/**
+ * As above, but only used for getting attachments of the default /
+ * window-system framebuffer (not user-created framebuffer objects).
+ */
+static struct gl_renderbuffer_attachment *
+_mesa_get_fb0_attachment(GLcontext *ctx, struct gl_framebuffer *fb,
+                         GLenum attachment)
+{
+   assert(fb->Name == 0);
+
+   switch (attachment) {
    case GL_FRONT_LEFT:
       return &fb->Attachment[BUFFER_FRONT_LEFT];
    case GL_FRONT_RIGHT:
@@ -196,10 +217,24 @@ _mesa_get_attachment(GLcontext *ctx, struct gl_framebuffer *fb,
       return &fb->Attachment[BUFFER_BACK_LEFT];
    case GL_BACK_RIGHT:
       return &fb->Attachment[BUFFER_BACK_RIGHT];
+   case GL_AUX0:
+      if (fb->Visual.numAuxBuffers == 1) {
+         return &fb->Attachment[BUFFER_AUX0];
+      }
+      return NULL;
+   case GL_DEPTH_BUFFER:
+      /* fall-through / new in GL 3.0 */
+   case GL_DEPTH_ATTACHMENT_EXT:
+      return &fb->Attachment[BUFFER_DEPTH];
+   case GL_STENCIL_BUFFER:
+      /* fall-through / new in GL 3.0 */
+   case GL_STENCIL_ATTACHMENT_EXT:
+      return &fb->Attachment[BUFFER_STENCIL];
    default:
       return NULL;
    }
 }
+
 
 
 /**
@@ -1885,7 +1920,15 @@ _mesa_GetFramebufferAttachmentParameterivEXT(GLenum target, GLenum attachment,
       return;
    }
 
-   att = _mesa_get_attachment(ctx, buffer, attachment);
+   if (buffer->Name == 0) {
+      /* the default / window-system FBO */
+      att = _mesa_get_fb0_attachment(ctx, buffer, attachment);
+   }
+   else {
+      /* user-created framebuffer FBO */
+      att = _mesa_get_attachment(ctx, buffer, attachment);
+   }
+
    if (att == NULL) {
       _mesa_error(ctx, GL_INVALID_ENUM,
                   "glGetFramebufferAttachmentParameterivEXT(attachment)");
@@ -2256,3 +2299,25 @@ _mesa_BlitFramebufferEXT(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
                                mask, filter);
 }
 #endif /* FEATURE_EXT_framebuffer_blit */
+
+#if FEATURE_ARB_geometry_shader4
+void GLAPIENTRY
+_mesa_FramebufferTextureARB(GLenum target, GLenum attachment,
+                            GLuint texture, GLint level)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   _mesa_error(ctx, GL_INVALID_OPERATION,
+               "glFramebufferTextureARB "
+               "not implemented!");
+}
+
+void GLAPIENTRY
+_mesa_FramebufferTextureFaceARB(GLenum target, GLenum attachment,
+                                GLuint texture, GLint level, GLenum face)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   _mesa_error(ctx, GL_INVALID_OPERATION,
+               "glFramebufferTextureFaceARB "
+               "not implemented!");
+}
+#endif /* FEATURE_ARB_geometry_shader4 */

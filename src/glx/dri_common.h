@@ -36,6 +36,8 @@
 #ifndef _DRI_COMMON_H
 #define _DRI_COMMON_H
 
+#include <GL/internal/dri_interface.h>
+
 typedef struct __GLXDRIconfigPrivateRec __GLXDRIconfigPrivate;
 
 struct __GLXDRIconfigPrivateRec
@@ -48,6 +50,8 @@ extern __GLcontextModes *driConvertConfigs(const __DRIcoreExtension * core,
                                            __GLcontextModes * modes,
                                            const __DRIconfig ** configs);
 
+extern void driDestroyConfigs(const __DRIconfig **configs);
+
 extern const __DRIsystemTimeExtension systemTimeExtension;
 
 extern void InfoMessageF(const char *f, ...);
@@ -55,9 +59,5 @@ extern void InfoMessageF(const char *f, ...);
 extern void ErrorMessageF(const char *f, ...);
 
 extern void *driOpenDriver(const char *driverName);
-
-extern void driBindExtensions(__GLXscreenConfigs * psc);
-extern void dri2BindExtensions(__GLXscreenConfigs * psc);
-extern void driBindCommonExtensions(__GLXscreenConfigs * psc);
 
 #endif /* _DRI_COMMON_H */

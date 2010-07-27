@@ -35,71 +35,57 @@
 #include "egl_g3d.h"
 #include "egl_g3d_api.h"
 #include "egl_g3d_st.h"
+#include "egl_g3d_loader.h"
 #include "native.h"
 
 /**
- * Initialize the state trackers.
+ * Get the native platform.
  */
-static void
-egl_g3d_init_st(_EGLDriver *drv)
+static const struct native_platform *
+egl_g3d_get_platform(_EGLDriver *drv, _EGLPlatformType plat)
 {
    struct egl_g3d_driver *gdrv = egl_g3d_driver(drv);
-   EGLint i;
 
-   /* already initialized */
-   if (gdrv->api_mask)
-      return;
+   if (!gdrv->platforms[plat]) {
+      const char *plat_name = NULL;
+      const struct native_platform *nplat = NULL;
 
-   egl_g3d_init_st_apis(gdrv->stapis);
-   for (i = 0; i < ST_API_COUNT; i++) {
-      if (gdrv->stapis[i])
-         gdrv->api_mask |= egl_g3d_st_api_bit(i);
+      switch (plat) {
+      case _EGL_PLATFORM_WINDOWS:
+         plat_name = "Windows";
+#ifdef HAVE_GDI_BACKEND
+         nplat = native_get_gdi_platform();
+#endif
+         break;
+      case _EGL_PLATFORM_X11:
+         plat_name = "X11";
+#ifdef HAVE_X11_BACKEND
+         nplat = native_get_x11_platform();
+#endif
+         break;
+      case _EGL_PLATFORM_DRM:
+         plat_name = "DRM";
+#ifdef HAVE_KMS_BACKEND
+         nplat = native_get_kms_platform();
+#endif
+         break;
+      case _EGL_PLATFORM_FBDEV:
+         plat_name = "FBDEV";
+#ifdef HAVE_FBDEV_BACKEND
+         nplat = native_get_fbdev_platform();
+#endif
+         break;
+      default:
+         break;
+      }
+
+      if (!nplat)
+         _eglLog(_EGL_WARNING, "unsupported platform %s", plat_name);
+
+      gdrv->platforms[plat] = nplat;
    }
 
-   if (gdrv->api_mask)
-      _eglLog(_EGL_DEBUG, "Driver API mask: 0x%x", gdrv->api_mask);
-   else
-      _eglLog(_EGL_WARNING, "No supported client API");
-}
-
-/**
- * Get the probe object of the display.
- *
- * Note that this function may be called before the display is initialized.
- */
-static struct native_probe *
-egl_g3d_get_probe(_EGLDriver *drv, _EGLDisplay *dpy)
-{
-   struct egl_g3d_driver *gdrv = egl_g3d_driver(drv);
-   struct native_probe *nprobe;
-
-   nprobe = (struct native_probe *) _eglGetProbeCache(gdrv->probe_key);
-   if (!nprobe || nprobe->display != dpy->NativeDisplay) {
-      if (nprobe)
-         nprobe->destroy(nprobe);
-      nprobe = native_create_probe(dpy->NativeDisplay);
-      _eglSetProbeCache(gdrv->probe_key, (void *) nprobe);
-   }
-
-   return nprobe;
-}
-
-/**
- * Destroy the probe object of the display.  The display may be NULL.
- *
- * Note that this function may be called before the display is initialized.
- */
-static void
-egl_g3d_destroy_probe(_EGLDriver *drv, _EGLDisplay *dpy)
-{
-   struct egl_g3d_driver *gdrv = egl_g3d_driver(drv);
-   struct native_probe *nprobe;
-
-   nprobe = (struct native_probe *) _eglGetProbeCache(gdrv->probe_key);
-   if (nprobe && (!dpy || nprobe->display == dpy->NativeDisplay)) {
-      nprobe->destroy(nprobe);
-      _eglSetProbeCache(gdrv->probe_key, NULL);
-   }
+   return gdrv->platforms[plat];
 }
 
 #ifdef EGL_MESA_screen_surface
@@ -268,11 +254,9 @@ egl_g3d_init_config(_EGLDriver *drv, _EGLDisplay *dpy,
                     _EGLConfig *conf, const struct native_config *nconf,
                     enum pipe_format depth_stencil_format)
 {
-   struct egl_g3d_driver *gdrv = egl_g3d_driver(drv);
    struct egl_g3d_config *gconf = egl_g3d_config(conf);
    EGLint buffer_mask, api_mask;
    EGLBoolean valid;
-   EGLint i;
 
    buffer_mask = 0x0;
    if (nconf->buffer_mask & (1 << NATIVE_ATTACHMENT_FRONT_LEFT))
@@ -293,14 +277,7 @@ egl_g3d_init_config(_EGLDriver *drv, _EGLDisplay *dpy,
    gconf->stvis.render_buffer = (buffer_mask & ST_ATTACHMENT_BACK_LEFT_MASK) ?
       ST_ATTACHMENT_BACK_LEFT : ST_ATTACHMENT_FRONT_LEFT;
 
-   api_mask = 0;
-   for (i = 0; i < ST_API_COUNT; i++) {
-      struct st_api *stapi = gdrv->stapis[i];
-      if (stapi) {
-         if (stapi->is_visual_supported(stapi, &gconf->stvis))
-            api_mask |= egl_g3d_st_api_bit(i);
-      }
-   }
+   api_mask = dpy->ClientAPIsMask;
    /* this is required by EGL, not by OpenGL ES */
    if (nconf->window_bit &&
        gconf->stvis.render_buffer != ST_ATTACHMENT_BACK_LEFT)
@@ -425,30 +402,63 @@ egl_g3d_invalid_surface(struct native_display *ndpy,
       gctx->stctxi->notify_invalid_framebuffer(gctx->stctxi, gsurf->stfbi);
 }
 
+static struct pipe_screen *
+egl_g3d_new_drm_screen(struct native_display *ndpy, const char *name, int fd)
+{
+   _EGLDisplay *dpy = (_EGLDisplay *) ndpy->user_data;
+   struct egl_g3d_display *gdpy = egl_g3d_display(dpy);
+   return gdpy->loader->create_drm_screen(name, fd);
+}
+
+static struct pipe_screen *
+egl_g3d_new_sw_screen(struct native_display *ndpy, struct sw_winsys *ws)
+{
+   _EGLDisplay *dpy = (_EGLDisplay *) ndpy->user_data;
+   struct egl_g3d_display *gdpy = egl_g3d_display(dpy);
+   return gdpy->loader->create_sw_screen(ws);
+}
+
 static struct native_event_handler egl_g3d_native_event_handler = {
-   egl_g3d_invalid_surface
+   egl_g3d_invalid_surface,
+   egl_g3d_new_drm_screen,
+   egl_g3d_new_sw_screen
 };
+
+static void
+egl_g3d_free_config(void *conf)
+{
+   struct egl_g3d_config *gconf = egl_g3d_config((_EGLConfig *) conf);
+   FREE(gconf);
+}
+
+static void
+egl_g3d_free_screen(void *scr)
+{
+   struct egl_g3d_screen *gscr = egl_g3d_screen((_EGLScreen *) scr);
+   FREE(gscr->native_modes);
+   FREE(gscr);
+}
 
 static EGLBoolean
 egl_g3d_terminate(_EGLDriver *drv, _EGLDisplay *dpy)
 {
    struct egl_g3d_display *gdpy = egl_g3d_display(dpy);
-   EGLint i;
 
    _eglReleaseDisplayResources(drv, dpy);
-   _eglCleanupDisplay(dpy);
 
    if (gdpy->pipe)
       gdpy->pipe->destroy(gdpy->pipe);
 
-   if (dpy->Screens) {
-      for (i = 0; i < dpy->NumScreens; i++) {
-         struct egl_g3d_screen *gscr = egl_g3d_screen(dpy->Screens[i]);
-         FREE(gscr->native_modes);
-         FREE(gscr);
-      }
-      FREE(dpy->Screens);
+   if (dpy->Configs) {
+      _eglDestroyArray(dpy->Configs, egl_g3d_free_config);
+      dpy->Configs = NULL;
    }
+   if (dpy->Screens) {
+      _eglDestroyArray(dpy->Screens, egl_g3d_free_screen);
+      dpy->Screens = NULL;
+   }
+
+   _eglCleanupDisplay(dpy);
 
    if (gdpy->smapi)
       egl_g3d_destroy_st_manager(gdpy->smapi);
@@ -468,28 +478,36 @@ egl_g3d_initialize(_EGLDriver *drv, _EGLDisplay *dpy,
 {
    struct egl_g3d_driver *gdrv = egl_g3d_driver(drv);
    struct egl_g3d_display *gdpy;
+   const struct native_platform *nplat;
 
-   /* the probe object is unlikely to be needed again */
-   egl_g3d_destroy_probe(drv, dpy);
+   nplat = egl_g3d_get_platform(drv, dpy->Platform);
+   if (!nplat)
+      return EGL_FALSE;
 
    gdpy = CALLOC_STRUCT(egl_g3d_display);
    if (!gdpy) {
       _eglError(EGL_BAD_ALLOC, "eglInitialize");
       goto fail;
    }
+   gdpy->loader = gdrv->loader;
    dpy->DriverData = gdpy;
 
-   gdpy->native = native_create_display(dpy->NativeDisplay,
-         &egl_g3d_native_event_handler);
+   _eglLog(_EGL_INFO, "use %s for display %p", nplat->name, dpy->PlatformDisplay);
+   gdpy->native = nplat->create_display(dpy->PlatformDisplay,
+         &egl_g3d_native_event_handler, (void *) dpy);
    if (!gdpy->native) {
       _eglError(EGL_NOT_INITIALIZED, "eglInitialize(no usable display)");
       goto fail;
    }
 
-   gdpy->native->user_data = (void *) dpy;
-
-   egl_g3d_init_st(&gdrv->base);
-   dpy->ClientAPIsMask = gdrv->api_mask;
+   if (gdpy->loader->api_mask & (1 << ST_API_OPENGL))
+      dpy->ClientAPIsMask |= EGL_OPENGL_BIT;
+   if (gdpy->loader->api_mask & (1 << ST_API_OPENGL_ES1))
+      dpy->ClientAPIsMask |= EGL_OPENGL_ES_BIT;
+   if (gdpy->loader->api_mask & (1 << ST_API_OPENGL_ES2))
+      dpy->ClientAPIsMask |= EGL_OPENGL_ES2_BIT;
+   if (gdpy->loader->api_mask & (1 << ST_API_OPENVG))
+      dpy->ClientAPIsMask |= EGL_OPENVG_BIT;
 
    gdpy->smapi = egl_g3d_create_st_manager(dpy);
    if (!gdpy->smapi) {
@@ -530,87 +548,51 @@ static _EGLProc
 egl_g3d_get_proc_address(_EGLDriver *drv, const char *procname)
 {
    struct egl_g3d_driver *gdrv = egl_g3d_driver(drv);
-   _EGLProc proc;
-   EGLint i;
+   struct st_api *stapi = NULL;
 
-   /* in case this is called before a display is initialized */
-   egl_g3d_init_st(&gdrv->base);
+   if (procname && procname[0] == 'v' && procname[1] == 'g')
+      stapi = gdrv->loader->get_st_api(ST_API_OPENVG);
+   else if (procname && procname[0] == 'g' && procname[1] == 'l')
+      stapi = gdrv->loader->guess_gl_api();
 
-   for (i = 0; i < ST_API_COUNT; i++) {
-      struct st_api *stapi = gdrv->stapis[i];
-      if (stapi) {
-         proc = (_EGLProc) stapi->get_proc_address(stapi, procname);
-         if (proc)
-            return proc;
-      }
-   }
-
-   return (_EGLProc) NULL;
+   return (_EGLProc) ((stapi) ?
+         stapi->get_proc_address(stapi, procname) : NULL);
 }
 
 static EGLint
 egl_g3d_probe(_EGLDriver *drv, _EGLDisplay *dpy)
 {
-   struct native_probe *nprobe;
-   enum native_probe_result res;
-   EGLint score;
-
-   nprobe = egl_g3d_get_probe(drv, dpy);
-   res = native_get_probe_result(nprobe);
-
-   switch (res) {
-   case NATIVE_PROBE_UNKNOWN:
-   default:
-      score = 0;
-      break;
-   case NATIVE_PROBE_FALLBACK:
-      score = 40;
-      break;
-   case NATIVE_PROBE_SUPPORTED:
-      score = 50;
-      break;
-   case NATIVE_PROBE_EXACT:
-      score = 100;
-      break;
-   }
-
-   return score;
-}
-
-static void
-egl_g3d_unload(_EGLDriver *drv)
-{
-   struct egl_g3d_driver *gdrv = egl_g3d_driver(drv);
-
-   egl_g3d_destroy_st_apis();
-   egl_g3d_destroy_probe(drv, NULL);
-   FREE(gdrv);
+   return (egl_g3d_get_platform(drv, dpy->Platform)) ? 90 : 0;
 }
 
 _EGLDriver *
-_eglMain(const char *args)
+egl_g3d_create_driver(const struct egl_g3d_loader *loader)
 {
-   static char driver_name[64];
    struct egl_g3d_driver *gdrv;
-
-   util_snprintf(driver_name, sizeof(driver_name),
-         "Gallium/%s", native_get_name());
 
    gdrv = CALLOC_STRUCT(egl_g3d_driver);
    if (!gdrv)
       return NULL;
+
+   gdrv->loader = loader;
 
    egl_g3d_init_driver_api(&gdrv->base);
    gdrv->base.API.Initialize = egl_g3d_initialize;
    gdrv->base.API.Terminate = egl_g3d_terminate;
    gdrv->base.API.GetProcAddress = egl_g3d_get_proc_address;
 
-   gdrv->base.Name = driver_name;
    gdrv->base.Probe = egl_g3d_probe;
-   gdrv->base.Unload = egl_g3d_unload;
 
-   /* the key is " EGL G3D" */
-   gdrv->probe_key = 0x0E61063D;
+   /* to be filled by the caller */
+   gdrv->base.Name = NULL;
+   gdrv->base.Unload = NULL;
 
    return &gdrv->base;
+}
+
+void
+egl_g3d_destroy_driver(_EGLDriver *drv)
+{
+   struct egl_g3d_driver *gdrv = egl_g3d_driver(drv);
+   FREE(gdrv);
 }

@@ -31,11 +31,13 @@
 #include "util/u_string.h"
 
 #include "i915_reg.h"
+#include "i915_debug.h"
 #include "i915_context.h"
 #include "i915_screen.h"
 #include "i915_surface.h"
 #include "i915_resource.h"
 #include "i915_winsys.h"
+#include "i915_public.h"
 
 
 /*
@@ -329,6 +331,8 @@ i915_screen_create(struct i915_winsys *iws)
 
    i915_init_screen_resource_functions(is);
    i915_init_screen_surface_functions(is);
+
+   i915_debug_init(is);
 
    return &is->base;
 }

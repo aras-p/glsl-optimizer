@@ -31,6 +31,7 @@
 #include "r600_screen.h"
 #include "r600_texture.h"
 #include "r600_context.h"
+#include "r600_public.h"
 #include <stdio.h>
 
 static const char* r600_get_vendor(struct pipe_screen* pscreen)
@@ -40,7 +41,13 @@ static const char* r600_get_vendor(struct pipe_screen* pscreen)
 
 static const char* r600_get_name(struct pipe_screen* pscreen)
 {
-	return "R600/R700 (HD2XXX,HD3XXX,HD4XXX)";
+	struct r600_screen *screen = r600_screen(pscreen);
+	enum radeon_family family = radeon_get_family(screen->rw);
+
+	if (family >= CHIP_R600 && family < CHIP_RV770)
+		return "R600 (HD2XXX,HD3XXX)";
+	else
+		return "R700 (HD4XXX)";
 }
 
 static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
@@ -240,7 +247,7 @@ static void r600_destroy_screen(struct pipe_screen* pscreen)
 	FREE(rscreen);
 }
 
-struct pipe_screen *radeon_create_screen(struct radeon *rw)
+struct pipe_screen *r600_screen_create(struct radeon *rw)
 {
 	struct r600_screen* rscreen;
 

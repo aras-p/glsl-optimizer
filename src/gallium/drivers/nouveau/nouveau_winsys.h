@@ -13,7 +13,7 @@
 #include "nouveau/nouveau_resource.h"
 #include "nouveau/nouveau_pushbuf.h"
 
-static inline uint32_t
+static INLINE uint32_t
 nouveau_screen_transfer_flags(unsigned pipe)
 {
 	uint32_t flags = 0;

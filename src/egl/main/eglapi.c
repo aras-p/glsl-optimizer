@@ -61,7 +61,6 @@
 #include "eglcontext.h"
 #include "egldisplay.h"
 #include "egltypedefs.h"
-#include "eglglobals.h"
 #include "eglcurrent.h"
 #include "egldriver.h"
 #include "eglsurface.h"
@@ -250,7 +249,8 @@ _eglUnlockDisplay(_EGLDisplay *dpy)
 EGLDisplay EGLAPIENTRY
 eglGetDisplay(EGLNativeDisplayType nativeDisplay)
 {
-   _EGLDisplay *dpy = _eglFindDisplay(nativeDisplay);
+   _EGLPlatformType plat = _eglGetNativePlatform();
+   _EGLDisplay *dpy = _eglFindDisplay(plat, (void *) nativeDisplay);
    return _eglGetDisplayHandle(dpy);
 }
 
@@ -263,46 +263,24 @@ EGLBoolean EGLAPIENTRY
 eglInitialize(EGLDisplay dpy, EGLint *major, EGLint *minor)
 {
    _EGLDisplay *disp = _eglLockDisplay(dpy);
-   EGLint major_int = 0, minor_int = 0;
 
    if (!disp)
       RETURN_EGL_ERROR(NULL, EGL_BAD_DISPLAY, EGL_FALSE);
 
    if (!disp->Initialized) {
-      _EGLDriver *drv = disp->Driver;
+      if (!_eglMatchDriver(disp, EGL_FALSE))
+         RETURN_EGL_ERROR(disp, EGL_NOT_INITIALIZED, EGL_FALSE);
 
-      if (!drv) {
-         _eglPreloadDrivers();
-         drv = _eglMatchDriver(disp);
-	 /* Initialize the particular display now */
-	 if (drv && !drv->API.Initialize(drv, disp, &major_int, &minor_int))
-	    RETURN_EGL_ERROR(disp, EGL_NOT_INITIALIZED, EGL_FALSE);
-      }
-      if (!drv)
-	 /* Load and initialize the first default driver that works */
-	 drv = _eglLoadDefaultDriver(disp, &major_int, &minor_int);
-      if (!drv)
-	 RETURN_EGL_ERROR(disp, EGL_NOT_INITIALIZED, EGL_FALSE);
-
-      disp->APImajor = major_int;
-      disp->APIminor = minor_int;
-      _eglsnprintf(disp->Version, sizeof(disp->Version),
-               "%d.%d (%s)", major_int, minor_int, drv->Name);
-
+      _eglsnprintf(disp->Version, sizeof(disp->Version), "%d.%d (%s)",
+            disp->APImajor, disp->APIminor, disp->Driver->Name);
       /* limit to APIs supported by core */
       disp->ClientAPIsMask &= _EGL_API_ALL_BITS;
-
-      disp->Driver = drv;
-      disp->Initialized = EGL_TRUE;
-   } else {
-      major_int = disp->APImajor;
-      minor_int = disp->APIminor;
    }
 
    /* Update applications version of major and minor if not NULL */
    if ((major != NULL) && (minor != NULL)) {
-      *major = major_int;
-      *minor = minor_int;
+      *major = disp->APImajor;
+      *minor = disp->APIminor;
    }
 
    RETURN_EGL_SUCCESS(disp, EGL_TRUE);
@@ -491,6 +469,8 @@ eglCreateWindowSurface(EGLDisplay dpy, EGLConfig config,
    EGLSurface ret;
 
    _EGL_CHECK_CONFIG(disp, conf, EGL_NO_SURFACE, drv);
+   if (disp->Platform != _eglGetNativePlatform())
+      RETURN_EGL_ERROR(disp, EGL_BAD_NATIVE_WINDOW, EGL_NO_SURFACE);
 
    surf = drv->API.CreateWindowSurface(drv, disp, conf, window, attrib_list);
    ret = (surf) ? _eglLinkSurface(surf, disp) : EGL_NO_SURFACE;
@@ -510,6 +490,8 @@ eglCreatePixmapSurface(EGLDisplay dpy, EGLConfig config,
    EGLSurface ret;
 
    _EGL_CHECK_CONFIG(disp, conf, EGL_NO_SURFACE, drv);
+   if (disp->Platform != _eglGetNativePlatform())
+      RETURN_EGL_ERROR(disp, EGL_BAD_NATIVE_PIXMAP, EGL_NO_SURFACE);
 
    surf = drv->API.CreatePixmapSurface(drv, disp, conf, pixmap, attrib_list);
    ret = (surf) ? _eglLinkSurface(surf, disp) : EGL_NO_SURFACE;
@@ -667,6 +649,8 @@ eglCopyBuffers(EGLDisplay dpy, EGLSurface surface, EGLNativePixmapType target)
    EGLBoolean ret;
 
    _EGL_CHECK_SURFACE(disp, surf, EGL_FALSE, drv);
+   if (disp->Platform != _eglGetNativePlatform())
+      RETURN_EGL_ERROR(disp, EGL_BAD_NATIVE_PIXMAP, EGL_FALSE);
    ret = drv->API.CopyBuffers(drv, disp, surf, target);
 
    RETURN_EGL_EVAL(disp, ret);
@@ -836,6 +820,9 @@ eglGetProcAddress(const char *procname)
       { "eglQueryScreenModeMESA", (_EGLProc) eglQueryScreenModeMESA },
       { "eglQueryModeStringMESA", (_EGLProc) eglQueryModeStringMESA },
 #endif /* EGL_MESA_screen_surface */
+#ifdef EGL_MESA_drm_display
+      { "eglGetDRMDisplayMESA", (_EGLProc) eglGetDRMDisplayMESA },
+#endif
 #ifdef EGL_KHR_image_base
       { "eglCreateImageKHR", (_EGLProc) eglCreateImageKHR },
       { "eglDestroyImageKHR", (_EGLProc) eglDestroyImageKHR },
@@ -860,18 +847,8 @@ eglGetProcAddress(const char *procname)
          }
       }
    }
-   if (ret)
-      RETURN_EGL_SUCCESS(NULL, ret);
-
-   _eglPreloadDrivers();
-
-   /* now loop over drivers to query their procs */
-   for (i = 0; i < _eglGlobal.NumDrivers; i++) {
-      _EGLDriver *drv = _eglGlobal.Drivers[i];
-      ret = drv->API.GetProcAddress(drv, procname);
-      if (ret)
-         break;
-   }
+   if (!ret)
+      ret = _eglGetDriverProc(procname);
 
    RETURN_EGL_SUCCESS(NULL, ret);
 }
@@ -955,7 +932,7 @@ eglCopyContextMESA(EGLDisplay dpy, EGLContext source, EGLContext dest,
 }
 
 
-EGLBoolean
+EGLBoolean EGLAPIENTRY
 eglGetScreensMESA(EGLDisplay dpy, EGLScreenMESA *screens,
                   EGLint max_screens, EGLint *num_screens)
 {
@@ -970,7 +947,7 @@ eglGetScreensMESA(EGLDisplay dpy, EGLScreenMESA *screens,
 }
 
 
-EGLSurface
+EGLSurface EGLAPIENTRY
 eglCreateScreenSurfaceMESA(EGLDisplay dpy, EGLConfig config,
                            const EGLint *attrib_list)
 {
@@ -989,7 +966,7 @@ eglCreateScreenSurfaceMESA(EGLDisplay dpy, EGLConfig config,
 }
 
 
-EGLBoolean
+EGLBoolean EGLAPIENTRY
 eglShowScreenSurfaceMESA(EGLDisplay dpy, EGLint screen,
                          EGLSurface surface, EGLModeMESA mode)
 {
@@ -1012,7 +989,7 @@ eglShowScreenSurfaceMESA(EGLDisplay dpy, EGLint screen,
 }
 
 
-EGLBoolean
+EGLBoolean EGLAPIENTRY
 eglScreenPositionMESA(EGLDisplay dpy, EGLScreenMESA screen, EGLint x, EGLint y)
 {
    _EGLDisplay *disp = _eglLockDisplay(dpy);
@@ -1027,7 +1004,7 @@ eglScreenPositionMESA(EGLDisplay dpy, EGLScreenMESA screen, EGLint x, EGLint y)
 }
 
 
-EGLBoolean
+EGLBoolean EGLAPIENTRY
 eglQueryScreenMESA(EGLDisplay dpy, EGLScreenMESA screen,
                    EGLint attribute, EGLint *value)
 {
@@ -1043,7 +1020,7 @@ eglQueryScreenMESA(EGLDisplay dpy, EGLScreenMESA screen,
 }
 
 
-EGLBoolean
+EGLBoolean EGLAPIENTRY
 eglQueryScreenSurfaceMESA(EGLDisplay dpy, EGLScreenMESA screen,
                           EGLSurface *surface)
 {
@@ -1062,7 +1039,7 @@ eglQueryScreenSurfaceMESA(EGLDisplay dpy, EGLScreenMESA screen,
 }
 
 
-EGLBoolean
+EGLBoolean EGLAPIENTRY
 eglQueryScreenModeMESA(EGLDisplay dpy, EGLScreenMESA screen, EGLModeMESA *mode)
 {
    _EGLDisplay *disp = _eglLockDisplay(dpy);
@@ -1080,7 +1057,7 @@ eglQueryScreenModeMESA(EGLDisplay dpy, EGLScreenMESA screen, EGLModeMESA *mode)
 }
 
 
-const char *
+const char * EGLAPIENTRY
 eglQueryModeStringMESA(EGLDisplay dpy, EGLModeMESA mode)
 {
    _EGLDisplay *disp = _eglLockDisplay(dpy);
@@ -1097,6 +1074,17 @@ eglQueryModeStringMESA(EGLDisplay dpy, EGLModeMESA mode)
 
 #endif /* EGL_MESA_screen_surface */
 
+
+#ifdef EGL_MESA_drm_display
+
+EGLDisplay EGLAPIENTRY
+eglGetDRMDisplayMESA(int fd)
+{
+   _EGLDisplay *dpy = _eglFindDisplay(_EGL_PLATFORM_DRM, (void *) fd);
+   return _eglGetDisplayHandle(dpy);
+}
+
+#endif /* EGL_MESA_drm_display */
 
 /**
  ** EGL 1.2
@@ -1116,7 +1104,7 @@ eglQueryModeStringMESA(EGLDisplay dpy, EGLModeMESA mode)
  *  eglWaitNative()
  * See section 3.7 "Rendering Context" in the EGL specification for details.
  */
-EGLBoolean
+EGLBoolean EGLAPIENTRY
 eglBindAPI(EGLenum api)
 {
    _EGLThreadInfo *t = _eglGetCurrentThread();
@@ -1136,7 +1124,7 @@ eglBindAPI(EGLenum api)
 /**
  * Return the last value set with eglBindAPI().
  */
-EGLenum
+EGLenum EGLAPIENTRY
 eglQueryAPI(void)
 {
    _EGLThreadInfo *t = _eglGetCurrentThread();
@@ -1149,7 +1137,7 @@ eglQueryAPI(void)
 }
 
 
-EGLSurface
+EGLSurface EGLAPIENTRY
 eglCreatePbufferFromClientBuffer(EGLDisplay dpy, EGLenum buftype,
                                  EGLClientBuffer buffer, EGLConfig config,
                                  const EGLint *attrib_list)
@@ -1170,7 +1158,7 @@ eglCreatePbufferFromClientBuffer(EGLDisplay dpy, EGLenum buftype,
 }
 
 
-EGLBoolean
+EGLBoolean EGLAPIENTRY
 eglReleaseThread(void)
 {
    /* unbind current contexts */
@@ -1209,7 +1197,7 @@ eglReleaseThread(void)
 #ifdef EGL_KHR_image_base
 
 
-EGLImageKHR
+EGLImageKHR EGLAPIENTRY
 eglCreateImageKHR(EGLDisplay dpy, EGLContext ctx, EGLenum target,
                   EGLClientBuffer buffer, const EGLint *attr_list)
 {
@@ -1231,7 +1219,7 @@ eglCreateImageKHR(EGLDisplay dpy, EGLContext ctx, EGLenum target,
 }
 
 
-EGLBoolean
+EGLBoolean EGLAPIENTRY
 eglDestroyImageKHR(EGLDisplay dpy, EGLImageKHR image)
 {
    _EGLDisplay *disp = _eglLockDisplay(dpy);
@@ -1255,7 +1243,7 @@ eglDestroyImageKHR(EGLDisplay dpy, EGLImageKHR image)
 
 #ifdef EGL_NOK_swap_region
 
-EGLBoolean
+EGLBoolean EGLAPIENTRY
 eglSwapBuffersRegionNOK(EGLDisplay dpy, EGLSurface surface,
 			EGLint numRects, const EGLint *rects)
 {

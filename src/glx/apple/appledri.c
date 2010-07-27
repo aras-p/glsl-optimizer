@@ -38,8 +38,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /* THIS IS NOT AN X CONSORTIUM STANDARD */
 
-#define NEED_EVENTS
-#define NEED_REPLIES
 #include <X11/Xlibint.h>
 #include "appledristr.h"
 #include <X11/extensions/Xext.h>

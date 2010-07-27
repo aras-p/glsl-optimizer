@@ -162,6 +162,15 @@ output_get_modes(xf86OutputPtr output)
 static int
 output_mode_valid(xf86OutputPtr output, DisplayModePtr pMode)
 {
+    modesettingPtr ms = modesettingPTR(output->scrn);
+    CustomizerPtr cust = ms->cust;
+
+    if (cust && cust->winsys_check_fb_size &&
+	!cust->winsys_check_fb_size(cust, pMode->HDisplay *
+				    output->scrn->bitsPerPixel / 8,
+				    pMode->VDisplay))
+	return MODE_BAD;
+
     return MODE_OK;
 }
 

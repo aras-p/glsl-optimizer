@@ -109,6 +109,19 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                      info->input_usage_mask[ind] |= usage_mask;
                   }
                }
+
+               /* check for indirect register reads */
+               if (src->Register.Indirect) {
+                  info->indirect_files |= (1 << src->Register.File);
+               }
+            }
+
+            /* check for indirect register writes */
+            for (i = 0; i < fullinst->Instruction.NumDstRegs; i++) {
+               const struct tgsi_full_dst_register *dst = &fullinst->Dst[i];
+               if (dst->Register.Indirect) {
+                  info->indirect_files |= (1 << dst->Register.File);
+               }
             }
 
             info->num_instructions++;

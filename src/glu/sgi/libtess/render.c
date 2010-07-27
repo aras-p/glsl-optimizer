@@ -39,8 +39,12 @@
 #include "tess.h"
 #include "render.h"
 
+#ifndef TRUE
 #define TRUE 1
+#endif
+#ifndef FALSE
 #define FALSE 0
+#endif
 
 /* This structure remembers the information we need about a primitive
  * to be able to render it later, once we have determined which
@@ -143,11 +147,11 @@ static void RenderMaximumFaceGroup( GLUtesselator *tess, GLUface *fOrig )
 
 #define AddToTrail(f,t)	((f)->trail = (t), (t) = (f), (f)->marked = TRUE)
 
-#define FreeTrail(t)	if( 1 ) { \
+#define FreeTrail(t)	do { \
 			  while( (t) != NULL ) { \
 			    (t)->marked = FALSE; t = (t)->trail; \
 			  } \
-			} else /* absorb trailing semicolon */
+			} while(0) /* absorb trailing semicolon */
 
 
 

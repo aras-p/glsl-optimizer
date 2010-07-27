@@ -84,7 +84,8 @@ lp_setup_fence( struct lp_setup_context *setup );
 
 void
 lp_setup_flush( struct lp_setup_context *setup,
-                unsigned flags );
+                unsigned flags,
+                struct pipe_fence_handle **fence);
 
 
 void

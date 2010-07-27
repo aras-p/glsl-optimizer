@@ -102,7 +102,8 @@ static void r300_draw_emit_all_attribs(struct r300_context* r300)
      * they won't be rasterized. */
     gen_count = 0;
     for (i = 0; i < ATTR_GENERIC_COUNT && gen_count < 8; i++) {
-        if (vs_outputs->generic[i] != ATTR_UNUSED) {
+        if (vs_outputs->generic[i] != ATTR_UNUSED &&
+            !(r300->sprite_coord_enable & (1 << i))) {
             r300_draw_emit_attrib(r300, EMIT_4F, INTERP_PERSPECTIVE,
                                   vs_outputs->generic[i]);
             gen_count++;
@@ -118,7 +119,7 @@ static void r300_draw_emit_all_attribs(struct r300_context* r300)
 
     /* WPOS. */
     if (r300_fs(r300)->shader->inputs.wpos != ATTR_UNUSED && gen_count < 8) {
-        DBG(r300, DBG_DRAW, "draw_emit_attrib: WPOS, index: %i\n",
+        DBG(r300, DBG_SWTCL, "draw_emit_attrib: WPOS, index: %i\n",
             vs_outputs->wpos);
         r300_draw_emit_attrib(r300, EMIT_4F, INTERP_PERSPECTIVE,
                               vs_outputs->wpos);
@@ -140,17 +141,18 @@ static void r300_swtcl_vertex_psc(struct r300_context *r300)
     /* For each Draw attribute, route it to the fragment shader according
      * to the vs_output_tab. */
     attrib_count = vinfo->num_attribs;
-    DBG(r300, DBG_DRAW, "r300: attrib count: %d\n", attrib_count);
+    DBG(r300, DBG_SWTCL, "r300: attrib count: %d\n", attrib_count);
     for (i = 0; i < attrib_count; i++) {
-        DBG(r300, DBG_DRAW, "r300: attrib: index %d, interp %d, emit %d,"
-               " vs_output_tab %d\n", vinfo->attrib[i].src_index,
-               vinfo->attrib[i].interp_mode, vinfo->attrib[i].emit,
-               vs_output_tab[i]);
-
-        /* Make sure we have a proper destination for our attribute. */
-        assert(vs_output_tab[i] != -1);
+        if (vs_output_tab[i] == -1) {
+            assert(0);
+            abort();
+        }
 
         format = draw_translate_vinfo_format(vinfo->attrib[i].emit);
+
+        DBG(r300, DBG_SWTCL,
+            "r300: swtcl_vertex_psc [%i] <- %s\n",
+            vs_output_tab[i], util_format_short_name(format));
 
         /* Obtain the type of data in this attribute. */
         type = r300_translate_vertex_data_type(format);
@@ -526,15 +528,9 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
     struct r300_sampler_state *sampler;
     struct r300_sampler_view *view;
     struct r300_texture *tex;
-    unsigned min_level, max_level, i, size;
+    unsigned min_level, max_level, i, j, size;
     unsigned count = MIN2(state->sampler_view_count,
                           state->sampler_state_count);
-    unsigned char depth_swizzle[4] = {
-        UTIL_FORMAT_SWIZZLE_X,
-        UTIL_FORMAT_SWIZZLE_X,
-        UTIL_FORMAT_SWIZZLE_X,
-        UTIL_FORMAT_SWIZZLE_X
-    };
 
     /* The KIL opcode fix, see below. */
     if (!count && !r300->screen->caps.is_r500)
@@ -561,14 +557,29 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
             /* Assign a texture cache region. */
             texstate->format.format1 |= view->texcache_region;
 
-            /* If compare mode is disabled, the sampler view swizzles
-             * are stored in the format.
-             * Otherwise, swizzles must be applied after the compare mode
-             * in the fragment shader. */
-            if (util_format_is_depth_or_stencil(tex->b.b.format)) {
+            /* Depth textures are kinda special. */
+            if (util_format_is_depth_or_stencil(tex->desc.b.b.format)) {
+                unsigned char depth_swizzle[4];
+
+                if (!r300->screen->caps.is_r500 &&
+                    util_format_get_blocksizebits(tex->desc.b.b.format) == 32) {
+                    /* X24x8 is sampled as Y16X16 on r3xx-r4xx.
+                     * The depth here is at the Y component. */
+                    for (j = 0; j < 4; j++)
+                        depth_swizzle[j] = UTIL_FORMAT_SWIZZLE_Y;
+                } else {
+                    for (j = 0; j < 4; j++)
+                        depth_swizzle[j] = UTIL_FORMAT_SWIZZLE_X;
+                }
+
+                /* If compare mode is disabled, sampler view swizzles
+                 * are stored in the format.
+                 * Otherwise, the swizzles must be applied after the compare
+                 * mode in the fragment shader. */
                 if (sampler->state.compare_mode == PIPE_TEX_COMPARE_NONE) {
                     texstate->format.format1 |=
-                        r300_get_swizzle_combined(depth_swizzle, view->swizzle);
+                        r300_get_swizzle_combined(depth_swizzle,
+                                                  view->swizzle);
                 } else {
                     texstate->format.format1 |=
                         r300_get_swizzle_combined(depth_swizzle, 0);
@@ -576,12 +587,12 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
             }
 
             /* to emulate 1D textures through 2D ones correctly */
-            if (tex->b.b.target == PIPE_TEXTURE_1D) {
+            if (tex->desc.b.b.target == PIPE_TEXTURE_1D) {
                 texstate->filter0 &= ~R300_TX_WRAP_T_MASK;
                 texstate->filter0 |= R300_TX_WRAP_T(R300_TX_CLAMP_TO_EDGE);
             }
 
-            if (tex->uses_pitch) {
+            if (tex->desc.is_npot) {
                 /* NPOT textures don't support mip filter, unfortunately.
                  * This prevents incorrect rendering. */
                 texstate->filter0 &= ~R300_TX_MIN_FILTER_MIP_MASK;
@@ -608,7 +619,7 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
                 /* determine min/max levels */
                 /* the MAX_MIP level is the largest (finest) one */
                 max_level = MIN3(sampler->max_lod + view->base.first_level,
-                                 tex->b.b.last_level, view->base.last_level);
+                                 tex->desc.b.b.last_level, view->base.last_level);
                 min_level = MIN2(sampler->min_lod + view->base.first_level,
                                  max_level);
                 texstate->format.format0 |= R300_TX_NUM_LEVELS(max_level);

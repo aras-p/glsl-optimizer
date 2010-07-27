@@ -237,8 +237,6 @@ struct i915_context
 
    struct i915_state current;
    unsigned hardware_dirty;
-   
-   unsigned debug;
 };
 
 /* A flag for each state_tracker state object:
@@ -318,8 +316,6 @@ struct pipe_context *i915_create_context(struct pipe_screen *screen,
 					 void *priv);
 
 
-
-
 /***********************************************************************
  * Inline conversion functions.  These are better-typed than the
  * macros used previously:
@@ -329,7 +325,6 @@ i915_context( struct pipe_context *pipe )
 {
    return (struct i915_context *)pipe;
 }
-
 
 
 #endif

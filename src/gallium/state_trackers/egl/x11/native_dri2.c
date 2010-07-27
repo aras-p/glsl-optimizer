@@ -32,11 +32,13 @@
 #include "pipe/p_screen.h"
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
-#include "state_tracker/drm_api.h"
+#include "state_tracker/drm_driver.h"
 #include "egllog.h"
 
 #include "native_x11.h"
 #include "x11_screen.h"
+
+#ifdef GLX_DIRECT_RENDERING
 
 enum dri2_surface_type {
    DRI2_SURFACE_TYPE_WINDOW,
@@ -50,7 +52,6 @@ struct dri2_display {
 
    struct native_event_handler *event_handler;
 
-   struct drm_api *api;
    struct x11_screen *xscr;
    int xscr_number;
    const char *dri_driver;
@@ -662,8 +663,6 @@ dri2_display_destroy(struct native_display *ndpy)
       x11_screen_destroy(dri2dpy->xscr);
    if (dri2dpy->own_dpy)
       XCloseDisplay(dri2dpy->dpy);
-   if (dri2dpy->api && dri2dpy->api->destroy)
-      dri2dpy->api->destroy(dri2dpy->api);
    FREE(dri2dpy);
 }
 
@@ -695,7 +694,6 @@ static boolean
 dri2_display_init_screen(struct native_display *ndpy)
 {
    struct dri2_display *dri2dpy = dri2_display(ndpy);
-   const char *driver = dri2dpy->api->name;
    int fd;
 
    if (!x11_screen_support(dri2dpy->xscr, X11_SCREEN_EXTENSION_DRI2) ||
@@ -706,19 +704,15 @@ dri2_display_init_screen(struct native_display *ndpy)
 
    dri2dpy->dri_driver = x11_screen_probe_dri2(dri2dpy->xscr,
          &dri2dpy->dri_major, &dri2dpy->dri_minor);
-   if (!dri2dpy->dri_driver || !driver ||
-       strcmp(dri2dpy->dri_driver, driver) != 0) {
-      _eglLog(_EGL_WARNING, "Driver mismatch: %s != %s",
-            dri2dpy->dri_driver, dri2dpy->api->name);
-      return FALSE;
-   }
 
    fd = x11_screen_enable_dri2(dri2dpy->xscr,
          dri2_display_invalidate_buffers, &dri2dpy->base);
    if (fd < 0)
       return FALSE;
 
-   dri2dpy->base.screen = dri2dpy->api->create_screen(dri2dpy->api, fd);
+   dri2dpy->base.screen =
+      dri2dpy->event_handler->new_drm_screen(&dri2dpy->base,
+            dri2dpy->dri_driver, fd);
    if (!dri2dpy->base.screen) {
       _eglLog(_EGL_WARNING, "failed to create DRM screen");
       return FALSE;
@@ -741,9 +735,9 @@ dri2_display_hash_table_compare(void *key1, void *key2)
 }
 
 struct native_display *
-x11_create_dri2_display(EGLNativeDisplayType dpy,
+x11_create_dri2_display(Display *dpy,
                         struct native_event_handler *event_handler,
-                        struct drm_api *api)
+                        void *user_data)
 {
    struct dri2_display *dri2dpy;
 
@@ -752,7 +746,7 @@ x11_create_dri2_display(EGLNativeDisplayType dpy,
       return NULL;
 
    dri2dpy->event_handler = event_handler;
-   dri2dpy->api = api;
+   dri2dpy->base.user_data = user_data;
 
    dri2dpy->dpy = dpy;
    if (!dri2dpy->dpy) {
@@ -792,3 +786,15 @@ x11_create_dri2_display(EGLNativeDisplayType dpy,
 
    return &dri2dpy->base;
 }
+
+#else /* GLX_DIRECT_RENDERING */
+
+struct native_display *
+x11_create_dri2_display(Display *dpy,
+                        struct native_event_handler *event_handler,
+                        void *user_data)
+{
+   return NULL;
+}
+
+#endif /* GLX_DIRECT_RENDERING */

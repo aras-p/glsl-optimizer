@@ -427,3 +427,123 @@ lp_build_pack(LLVMBuilderRef builder,
 
    return tmp[0];
 }
+
+
+/**
+ * Truncate or expand the bitwidth.
+ *
+ * NOTE: Getting the right sign flags is crucial here, as we employ some
+ * intrinsics that do saturation.
+ */
+void
+lp_build_resize(LLVMBuilderRef builder,
+                struct lp_type src_type,
+                struct lp_type dst_type,
+                const LLVMValueRef *src, unsigned num_srcs,
+                LLVMValueRef *dst, unsigned num_dsts)
+{
+   LLVMValueRef tmp[LP_MAX_VECTOR_LENGTH];
+   unsigned i;
+
+   /*
+    * We don't support float <-> int conversion here. That must be done
+    * before/after calling this function.
+    */
+   assert(src_type.floating == dst_type.floating);
+
+   /*
+    * We don't support double <-> float conversion yet, although it could be
+    * added with little effort.
+    */
+   assert((!src_type.floating && !dst_type.floating) ||
+          src_type.width == dst_type.width);
+
+   /* We must not loose or gain channels. Only precision */
+   assert(src_type.length * num_srcs == dst_type.length * num_dsts);
+
+   /* We don't support M:N conversion, only 1:N, M:1, or 1:1 */
+   assert(num_srcs == 1 || num_dsts == 1);
+
+   assert(src_type.length <= LP_MAX_VECTOR_LENGTH);
+   assert(dst_type.length <= LP_MAX_VECTOR_LENGTH);
+   assert(num_srcs <= LP_MAX_VECTOR_LENGTH);
+   assert(num_dsts <= LP_MAX_VECTOR_LENGTH);
+
+   if (src_type.width > dst_type.width) {
+      /*
+       * Truncate bit width.
+       */
+
+      assert(num_dsts == 1);
+
+      if (src_type.width * src_type.length == dst_type.width * dst_type.length) {
+        /*
+         * Register width remains constant -- use vector packing intrinsics
+         */
+
+         tmp[0] = lp_build_pack(builder, src_type, dst_type, TRUE, src, num_srcs);
+      }
+      else {
+         /*
+          * Do it element-wise.
+          */
+
+         assert(src_type.length == dst_type.length);
+         tmp[0] = lp_build_undef(dst_type);
+         for (i = 0; i < dst_type.length; ++i) {
+            LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), i, 0);
+            LLVMValueRef val = LLVMBuildExtractElement(builder, src[0], index, "");
+            val = LLVMBuildTrunc(builder, val, lp_build_elem_type(dst_type), "");
+            tmp[0] = LLVMBuildInsertElement(builder, tmp[0], val, index, "");
+         }
+      }
+   }
+   else if (src_type.width < dst_type.width) {
+      /*
+       * Expand bit width.
+       */
+
+      assert(num_srcs == 1);
+
+      if (src_type.width * src_type.length == dst_type.width * dst_type.length) {
+         /*
+          * Register width remains constant -- use vector unpack intrinsics
+          */
+         lp_build_unpack(builder, src_type, dst_type, src[0], tmp, num_dsts);
+      }
+      else {
+         /*
+          * Do it element-wise.
+          */
+
+         assert(src_type.length == dst_type.length);
+         tmp[0] = lp_build_undef(dst_type);
+         for (i = 0; i < dst_type.length; ++i) {
+            LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), i, 0);
+            LLVMValueRef val = LLVMBuildExtractElement(builder, src[0], index, "");
+
+            if (src_type.sign && dst_type.sign) {
+               val = LLVMBuildSExt(builder, val, lp_build_elem_type(dst_type), "");
+            } else {
+               val = LLVMBuildZExt(builder, val, lp_build_elem_type(dst_type), "");
+            }
+            tmp[0] = LLVMBuildInsertElement(builder, tmp[0], val, index, "");
+         }
+      }
+   }
+   else {
+      /*
+       * No-op
+       */
+
+      assert(num_srcs == 1);
+      assert(num_dsts == 1);
+
+      tmp[0] = src[0];
+   }
+
+   for(i = 0; i < num_dsts; ++i)
+      dst[i] = tmp[i];
+}
+
+

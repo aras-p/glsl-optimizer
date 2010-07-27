@@ -55,6 +55,7 @@ static void compile_clip_prog( struct brw_context *brw,
    GLuint program_size;
    GLuint delta;
    GLuint i;
+   GLuint header_regs;
 
    memset(&c, 0, sizeof(c));
    
@@ -72,22 +73,28 @@ static void compile_clip_prog( struct brw_context *brw,
    c.header_position_offset = ATTR_SIZE;
 
    if (intel->gen == 5)
-       delta = 3 * REG_SIZE;
+      header_regs = 3;
    else
-       delta = REG_SIZE;
+      header_regs = 1;
 
-   for (i = 0; i < VERT_RESULT_MAX; i++)
+   delta = header_regs * REG_SIZE;
+
+   for (i = 0; i < VERT_RESULT_MAX; i++) {
       if (c.key.attrs & BITFIELD64_BIT(i)) {
 	 c.offset[i] = delta;
 	 delta += ATTR_SIZE;
-      }
 
-   c.nr_attrs = brw_count_bits(c.key.attrs);
-   
-   if (intel->gen == 5)
-       c.nr_regs = (c.nr_attrs + 1) / 2 + 3;  /* are vertices packed, or reg-aligned? */
-   else
-       c.nr_regs = (c.nr_attrs + 1) / 2 + 1;  /* are vertices packed, or reg-aligned? */
+	 c.idx_to_attr[c.nr_attrs] = i;
+	 c.nr_attrs++;
+      }
+   }
+
+   /* The vertex attributes start at a URB row-aligned offset after
+    * the 8-20 dword vertex header, and continue for a URB row-aligned
+    * length.  nr_regs determines the urb_read_length from the start
+    * of the header to the end of the vertex data.
+    */
+   c.nr_regs = header_regs + (c.nr_attrs + 1) / 2;
 
    c.nr_bytes = c.nr_regs * REG_SIZE;
 

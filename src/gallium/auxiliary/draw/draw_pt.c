@@ -34,9 +34,11 @@
 #include "draw/draw_gs.h"
 #include "draw/draw_private.h"
 #include "draw/draw_pt.h"
+#include "draw/draw_vs.h"
 #include "tgsi/tgsi_dump.h"
 #include "util/u_math.h"
 #include "util/u_prim.h"
+#include "util/u_format.h"
 
 
 DEBUG_GET_ONCE_BOOL_OPTION(draw_fse, "DRAW_FSE", FALSE)
@@ -69,7 +71,6 @@ draw_pt_arrays(struct draw_context *draw,
    struct draw_pt_front_end *frontend = NULL;
    struct draw_pt_middle_end *middle = NULL;
    unsigned opt = 0;
-   unsigned out_prim = prim;
 
    /* Sanitize primitive length:
     */
@@ -80,18 +81,19 @@ draw_pt_arrays(struct draw_context *draw,
       if (count < first)
          return TRUE;
    }
-   if (draw->gs.geometry_shader) {
-      out_prim = draw->gs.geometry_shader->output_primitive;
-   }
 
    if (!draw->force_passthrough) {
+      unsigned gs_out_prim = (draw->gs.geometry_shader ? 
+                              draw->gs.geometry_shader->output_primitive :
+                              prim);
+
       if (!draw->render) {
          opt |= PT_PIPELINE;
       }
 
       if (draw_need_pipeline(draw,
                              draw->rasterizer,
-                             out_prim)) {
+                             gs_out_prim)) {
          opt |= PT_PIPELINE;
       }
 
@@ -102,7 +104,7 @@ draw_pt_arrays(struct draw_context *draw,
       opt |= PT_SHADE;
    }
 
-   if (draw->pt.middle.llvm && !draw->gs.geometry_shader) {
+   if (draw->pt.middle.llvm) {
       middle = draw->pt.middle.llvm;
    } else {
       if (opt == 0)
@@ -122,7 +124,7 @@ draw_pt_arrays(struct draw_context *draw,
       frontend = draw->pt.front.varray;
    }
 
-   frontend->prepare( frontend, prim, out_prim, middle, opt );
+   frontend->prepare( frontend, prim, middle, opt );
 
    frontend->run(frontend,
                  draw_pt_elt_func(draw),
@@ -265,31 +267,38 @@ draw_print_arrays(struct draw_context *draw, uint prim, int start, uint count)
          case PIPE_FORMAT_R32_FLOAT:
             {
                float *v = (float *) ptr;
-               debug_printf("%f  @ %p\n", v[0], (void *) v);
+               debug_printf("R %f  @ %p\n", v[0], (void *) v);
             }
             break;
          case PIPE_FORMAT_R32G32_FLOAT:
             {
                float *v = (float *) ptr;
-               debug_printf("%f %f  @ %p\n", v[0], v[1], (void *) v);
+               debug_printf("RG %f %f  @ %p\n", v[0], v[1], (void *) v);
             }
             break;
          case PIPE_FORMAT_R32G32B32_FLOAT:
             {
                float *v = (float *) ptr;
-               debug_printf("%f %f %f  @ %p\n", v[0], v[1], v[2], (void *) v);
+               debug_printf("RGB %f %f %f  @ %p\n", v[0], v[1], v[2], (void *) v);
             }
             break;
          case PIPE_FORMAT_R32G32B32A32_FLOAT:
             {
                float *v = (float *) ptr;
-               debug_printf("%f %f %f %f  @ %p\n", v[0], v[1], v[2], v[3],
+               debug_printf("RGBA %f %f %f %f  @ %p\n", v[0], v[1], v[2], v[3],
                             (void *) v);
             }
             break;
+         case PIPE_FORMAT_B8G8R8A8_UNORM:
+            {
+               ubyte *u = (ubyte *) ptr;
+               debug_printf("BGRA %d %d %d %d  @ %p\n", u[0], u[1], u[2], u[3],
+                            (void *) u);
+            }
+            break;
          default:
-            debug_printf("other format (fix me)\n");
-            ;
+            debug_printf("other format %s (fix me)\n",
+                     util_format_name(draw->pt.vertex_element[j].src_format));
          }
       }
    }
@@ -297,11 +306,8 @@ draw_print_arrays(struct draw_context *draw, uint prim, int start, uint count)
 
 
 /**
- * Draw vertex arrays
- * This is the main entrypoint into the drawing module.
- * \param prim  one of PIPE_PRIM_x
- * \param start  index of first vertex to draw
- * \param count  number of vertices to draw
+ * Non-instanced drawing.
+ * \sa draw_arrays_instanced
  */
 void
 draw_arrays(struct draw_context *draw, unsigned prim,
@@ -310,6 +316,20 @@ draw_arrays(struct draw_context *draw, unsigned prim,
    draw_arrays_instanced(draw, prim, start, count, 0, 1);
 }
 
+
+/**
+ * Draw vertex arrays.
+ * This is the main entrypoint into the drawing module.
+ * If drawing an indexed primitive, the draw_set_mapped_element_buffer_range()
+ * function should have already been called to specify the element/index buffer
+ * information.
+ *
+ * \param prim  one of PIPE_PRIM_x
+ * \param start  index of first vertex to draw
+ * \param count  number of vertices to draw
+ * \param startInstance  number for the first primitive instance (usually 0).
+ * \param instanceCount  number of instances to draw (1=non-instanced)
+ */
 void
 draw_arrays_instanced(struct draw_context *draw,
                       unsigned mode,
@@ -329,26 +349,30 @@ draw_arrays_instanced(struct draw_context *draw,
    if (0)
       draw_print_arrays(draw, mode, start, MIN2(count, 20));
 
-#if 0
-   {
-      int i;
+   if (0) {
+      unsigned int i;
       debug_printf("draw_arrays(mode=%u start=%u count=%u):\n",
                    mode, start, count);
       tgsi_dump(draw->vs.vertex_shader->state.tokens, 0);
       debug_printf("Elements:\n");
       for (i = 0; i < draw->pt.nr_vertex_elements; i++) {
-         debug_printf("  format=%s\n",
+         debug_printf("  %u: src_offset=%u  inst_div=%u   vbuf=%u  format=%s\n",
+                      i,
+                      draw->pt.vertex_element[i].src_offset,
+                      draw->pt.vertex_element[i].instance_divisor,
+                      draw->pt.vertex_element[i].vertex_buffer_index,
                       util_format_name(draw->pt.vertex_element[i].src_format));
       }
       debug_printf("Buffers:\n");
       for (i = 0; i < draw->pt.nr_vertex_buffers; i++) {
-         debug_printf("  stride=%u offset=%u ptr=%p\n",
+         debug_printf("  %u: stride=%u maxindex=%u offset=%u ptr=%p\n",
+                      i,
                       draw->pt.vertex_buffer[i].stride,
+                      draw->pt.vertex_buffer[i].max_index,
                       draw->pt.vertex_buffer[i].buffer_offset,
                       draw->pt.user.vbuffer[i]);
       }
    }
-#endif
 
    for (instance = 0; instance < instanceCount; instance++) {
       draw->instance_id = instance + startInstance;

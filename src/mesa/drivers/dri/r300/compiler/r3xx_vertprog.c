@@ -30,6 +30,7 @@
 #include "radeon_program_alu.h"
 #include "radeon_swizzle.h"
 #include "radeon_emulate_branches.h"
+#include "radeon_emulate_loops.h"
 
 /*
  * Take an already-setup and valid source then swizzle it appropriately to
@@ -145,7 +146,8 @@ static unsigned long t_src(struct r300_vertex_program_code *vp,
 			       t_swizzle(GET_SWZ(src->Swizzle, 2)),
 			       t_swizzle(GET_SWZ(src->Swizzle, 3)),
 			       t_src_class(src->File),
-			       src->Negate) | (src->RelAddr << 4);
+			       src->Negate) |
+	       (src->RelAddr << 4) | (src->Abs << 3);
 }
 
 static unsigned long t_src_scalar(struct r300_vertex_program_code *vp,
@@ -161,7 +163,7 @@ static unsigned long t_src_scalar(struct r300_vertex_program_code *vp,
 			       t_swizzle(GET_SWZ(src->Swizzle, 0)),
 			       t_src_class(src->File),
 			       src->Negate ? RC_MASK_XYZW : RC_MASK_NONE) |
-	    (src->RelAddr << 4);
+	       (src->RelAddr << 4) | (src->Abs << 3);
 }
 
 static int valid_dst(struct r300_vertex_program_code *vp,
@@ -348,7 +350,8 @@ static void translate_vertex_program(struct r300_vertex_program_compiler * compi
 		if (!valid_dst(compiler->code, &vpi->DstReg))
 			continue;
 
-		if (compiler->code->length >= VSF_MAX_FRAGMENT_LENGTH) {
+		if (compiler->code->length >= R500_VS_MAX_ALU_DWORDS ||
+		    (compiler->code->length >= R300_VS_MAX_ALU_DWORDS && !compiler->Base.is_r500)) {
 			rc_error(&compiler->Base, "Vertex program has too many instructions\n");
 			return;
 		}
@@ -404,7 +407,7 @@ static void allocate_temporary_registers(struct r300_vertex_program_compiler * c
 {
 	struct rc_instruction *inst;
 	unsigned int num_orig_temps = 0;
-	char hwtemps[VSF_MAX_FRAGMENT_TEMPS];
+	char hwtemps[R300_VS_MAX_TEMPS];
 	struct temporary_allocation * ta;
 	unsigned int i, j;
 
@@ -463,11 +466,11 @@ static void allocate_temporary_registers(struct r300_vertex_program_compiler * c
 				unsigned int orig = inst->U.I.DstReg.Index;
 
 				if (!ta[orig].Allocated) {
-					for(j = 0; j < VSF_MAX_FRAGMENT_TEMPS; ++j) {
+					for(j = 0; j < R300_VS_MAX_TEMPS; ++j) {
 						if (!hwtemps[j])
 							break;
 					}
-					if (j >= VSF_MAX_FRAGMENT_TEMPS) {
+					if (j >= R300_VS_MAX_TEMPS) {
 						fprintf(stderr, "Out of hw temporaries\n");
 					} else {
 						ta[orig].Allocated = 1;
@@ -485,6 +488,44 @@ static void allocate_temporary_registers(struct r300_vertex_program_compiler * c
 	}
 }
 
+/**
+ * R3xx-R4xx vertex engine does not support the Absolute source operand modifier
+ * and the Saturate opcode modifier. Only Absolute is currently transformed.
+ */
+static int transform_nonnative_modifiers(
+	struct radeon_compiler *c,
+	struct rc_instruction *inst,
+	void* unused)
+{
+	const struct rc_opcode_info *opcode = rc_get_opcode_info(inst->U.I.Opcode);
+	unsigned i;
+
+	/* Transform ABS(a) to MAX(a, -a). */
+	for (i = 0; i < opcode->NumSrcRegs; i++) {
+		if (inst->U.I.SrcReg[i].Abs) {
+			struct rc_instruction *new_inst;
+			unsigned temp;
+
+			inst->U.I.SrcReg[i].Abs = 0;
+
+			temp = rc_find_free_temporary(c);
+
+			new_inst = rc_insert_new_instruction(c, inst->Prev);
+			new_inst->U.I.Opcode = RC_OPCODE_MAX;
+			new_inst->U.I.DstReg.File = RC_FILE_TEMPORARY;
+			new_inst->U.I.DstReg.Index = temp;
+			new_inst->U.I.SrcReg[0] = inst->U.I.SrcReg[i];
+			new_inst->U.I.SrcReg[1] = inst->U.I.SrcReg[i];
+			new_inst->U.I.SrcReg[1].Negate ^= RC_MASK_XYZW;
+
+			memset(&inst->U.I.SrcReg[i], 0, sizeof(inst->U.I.SrcReg[i]));
+			inst->U.I.SrcReg[i].File = RC_FILE_TEMPORARY;
+			inst->U.I.SrcReg[i].Index = temp;
+			inst->U.I.SrcReg[i].Swizzle = RC_SWIZZLE_XYZW;
+		}
+	}
+	return 1;
+}
 
 /**
  * Vertex engine cannot read two inputs or two constants at the same time.
@@ -591,6 +632,8 @@ static struct rc_swizzle_caps r300_vertprog_swizzle_caps = {
 
 void r3xx_compile_vertex_program(struct r300_vertex_program_compiler* compiler)
 {
+	struct emulate_loop_state loop_state;
+	
 	compiler->Base.SwizzleCaps = &r300_vertprog_swizzle_caps;
 
 	addArtificialOutputs(compiler);
@@ -600,19 +643,48 @@ void r3xx_compile_vertex_program(struct r300_vertex_program_compiler* compiler)
 	/* XXX Ideally this should be done only for r3xx, but since
 	 * we don't have branching support for r5xx, we use the emulation
 	 * on all chipsets. */
+	rc_transform_unroll_loops(&compiler->Base, &loop_state);
+	
+	debug_program_log(compiler, "after transform loops");
+	
+	if (compiler->Base.is_r500){
+		rc_emulate_loops(&loop_state, R500_VS_MAX_ALU);
+	} else {
+		rc_emulate_loops(&loop_state, R300_VS_MAX_ALU);
+	}
+	debug_program_log(compiler, "after emulate loops");
+
 	rc_emulate_branches(&compiler->Base);
 
 	debug_program_log(compiler, "after emulate branches");
 
-	{
+	if (compiler->Base.is_r500) {
 		struct radeon_program_transformation transformations[] = {
 			{ &r300_transform_vertex_alu, 0 },
 			{ &r300_transform_trig_scale_vertex, 0 }
 		};
 		radeonLocalTransform(&compiler->Base, 2, transformations);
-	}
 
-	debug_program_log(compiler, "after native rewrite");
+		debug_program_log(compiler, "after native rewrite");
+	} else {
+		struct radeon_program_transformation transformations[] = {
+			{ &r300_transform_vertex_alu, 0 },
+			{ &radeonTransformTrigSimple, 0 }
+		};
+		radeonLocalTransform(&compiler->Base, 2, transformations);
+
+		debug_program_log(compiler, "after native rewrite");
+
+		/* Note: This pass has to be done seperately from ALU rewrite,
+		 * because it needs to check every instruction.
+		 */
+		struct radeon_program_transformation transformations2[] = {
+			{ &transform_nonnative_modifiers, 0 },
+		};
+		radeonLocalTransform(&compiler->Base, 1, transformations2);
+
+		debug_program_log(compiler, "after emulate modifiers");
+	}
 
 	{
 		/* Note: This pass has to be done seperately from ALU rewrite,

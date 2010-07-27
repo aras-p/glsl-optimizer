@@ -343,10 +343,11 @@ gdi_display_destroy(struct native_display *ndpy)
 }
 
 static struct native_display *
-gdi_create_display(HDC hDC, struct pipe_screen *screen,
-                   struct native_event_handler *event_handler)
+gdi_create_display(HDC hDC, struct native_event_handler *event_handler,
+                   void *user_data)
 {
    struct gdi_display *gdpy;
+   struct sw_winsys *winsys;
 
    gdpy = CALLOC_STRUCT(gdi_display);
    if (!gdpy)
@@ -354,8 +355,21 @@ gdi_create_display(HDC hDC, struct pipe_screen *screen,
 
    gdpy->hDC = hDC;
    gdpy->event_handler = event_handler;
+   gdpy->base.user_data = user_data;
 
-   gdpy->base.screen = screen;
+   winsys = gdi_create_sw_winsys();
+   if (!winsys) {
+      FREE(gdpy);
+      return NULL;
+   }
+
+   gdpy->base.screen = gdpy->event_handler->new_sw_screen(&gdpy->base, winsys);
+   if (!gdpy->base.screen) {
+      if (winsys->destroy)
+         winsys->destroy(winsys);
+      FREE(gdpy);
+      return NULL;
+   }
 
    gdpy->base.destroy = gdi_display_destroy;
    gdpy->base.get_param = gdi_display_get_param;
@@ -366,41 +380,20 @@ gdi_create_display(HDC hDC, struct pipe_screen *screen,
    return &gdpy->base;
 }
 
-struct native_probe *
-native_create_probe(EGLNativeDisplayType dpy)
+static struct native_display *
+native_create_display(void *dpy, struct native_event_handler *event_handler,
+                      void *user_data)
 {
-   return NULL;
+   return gdi_create_display((HDC) dpy, event_handler, user_data);
 }
 
-enum native_probe_result
-native_get_probe_result(struct native_probe *nprobe)
+static const struct native_platform gdi_platform = {
+   "GDI", /* name */
+   native_create_display
+};
+
+const struct native_platform *
+native_get_gdi_platform(void)
 {
-   return NATIVE_PROBE_UNKNOWN;
-}
-
-const char *
-native_get_name(void)
-{
-   return "GDI";
-}
-
-struct native_display *
-native_create_display(EGLNativeDisplayType dpy,
-                      struct native_event_handler *event_handler)
-{
-   struct sw_winsys *winsys;
-   struct pipe_screen *screen;
-
-   winsys = gdi_create_sw_winsys();
-   if (!winsys)
-      return NULL;
-
-   screen = native_create_sw_screen(winsys);
-   if (!screen) {
-      if (winsys->destroy)
-         winsys->destroy(winsys);
-      return NULL;
-   }
-
-   return gdi_create_display((HDC) dpy, screen, event_handler);
+   return &gdi_platform;
 }

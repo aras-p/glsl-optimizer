@@ -386,8 +386,10 @@ fbdev_display_init(struct native_display *ndpy)
       return FALSE;
 
    ws = fbdev_create_sw_winsys(fbdpy->fd, fbdpy->config.color_format);
-   if (ws)
-      fbdpy->base.screen = native_create_sw_screen(ws);
+   if (ws) {
+      fbdpy->base.screen =
+         fbdpy->event_handler->new_sw_screen(&fbdpy->base, ws);
+   }
 
    if (fbdpy->base.screen) {
       if (!fbdpy->base.screen->is_format_supported(fbdpy->base.screen,
@@ -402,7 +404,8 @@ fbdev_display_init(struct native_display *ndpy)
 }
 
 static struct native_display *
-fbdev_display_create(int fd, struct native_event_handler *event_handler)
+fbdev_display_create(int fd, struct native_event_handler *event_handler,
+                     void *user_data)
 {
    struct fbdev_display *fbdpy;
 
@@ -412,6 +415,7 @@ fbdev_display_create(int fd, struct native_event_handler *event_handler)
 
    fbdpy->fd = fd;
    fbdpy->event_handler = event_handler;
+   fbdpy->base.user_data = user_data;
 
    if (!fbdev_display_init(&fbdpy->base)) {
       FREE(fbdpy);
@@ -427,44 +431,37 @@ fbdev_display_create(int fd, struct native_event_handler *event_handler)
    return &fbdpy->base;
 }
 
-struct native_probe *
-native_create_probe(EGLNativeDisplayType dpy)
-{
-   return NULL;
-}
-
-enum native_probe_result
-native_get_probe_result(struct native_probe *nprobe)
-{
-   return NATIVE_PROBE_UNKNOWN;
-}
-
-const char *
-native_get_name(void)
-{
-   return "FBDEV";
-}
-
-struct native_display *
-native_create_display(EGLNativeDisplayType dpy,
-                      struct native_event_handler *event_handler)
+static struct native_display *
+native_create_display(void *dpy, struct native_event_handler *event_handler,
+                      void *user_data)
 {
    struct native_display *ndpy;
    int fd;
 
    /* well, this makes fd 0 being ignored */
-   if (dpy == EGL_DEFAULT_DISPLAY) {
+   if (!dpy) {
       fd = open("/dev/fb0", O_RDWR);
    }
    else {
-      fd = dup((int) pointer_to_intptr((void *) dpy));
+      fd = dup((int) pointer_to_intptr(dpy));
    }
    if (fd < 0)
       return NULL;
 
-   ndpy = fbdev_display_create(fd, event_handler);
+   ndpy = fbdev_display_create(fd, event_handler, user_data);
    if (!ndpy)
       close(fd);
 
    return ndpy;
+}
+
+static const struct native_platform fbdev_platform = {
+   "FBDEV", /* name */
+   native_create_display
+};
+
+const struct native_platform *
+native_get_fbdev_platform(void)
+{
+   return &fbdev_platform;
 }

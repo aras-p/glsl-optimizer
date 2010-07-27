@@ -165,7 +165,6 @@ draw_create_vs_ppc(struct draw_context *draw,
 		   const struct pipe_shader_state *templ);
 
 
-
 struct draw_vs_varient_key;
 struct draw_vertex_shader;
 
@@ -173,6 +172,11 @@ struct draw_vs_varient *
 draw_vs_create_varient_aos_sse( struct draw_vertex_shader *vs,
                                 const struct draw_vs_varient_key *key );
 
+#if HAVE_LLVM
+struct draw_vertex_shader *
+draw_create_vs_llvm(struct draw_context *draw,
+		    const struct pipe_shader_state *state);
+#endif
 
 
 /********************************************************************************

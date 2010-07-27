@@ -927,41 +927,6 @@ const __DRI2configQueryExtension dri2ConfigQueryExtension = {
    dri2ConfigQueryf,
 };
 
-static int
-driFrameTracking(__DRIdrawable *drawable, GLboolean enable)
-{
-    return GLX_BAD_CONTEXT;
-}
-
-static int
-driQueryFrameTracking(__DRIdrawable *dpriv,
-		      int64_t * sbc, int64_t * missedFrames,
-		      float * lastMissedUsage, float * usage)
-{
-   __DRIswapInfo   sInfo;
-   int             status;
-   int64_t         ust;
-   __DRIscreen *psp = dpriv->driScreenPriv;
-
-   status = dpriv->driScreenPriv->DriverAPI.GetSwapInfo( dpriv, & sInfo );
-   if ( status == 0 ) {
-      *sbc = sInfo.swap_count;
-      *missedFrames = sInfo.swap_missed_count;
-      *lastMissedUsage = sInfo.swap_missed_usage;
-
-      (*psp->systemTime->getUST)( & ust );
-      *usage = driCalculateSwapUsage( dpriv, sInfo.swap_ust, ust );
-   }
-
-   return status;
-}
-
-const __DRIframeTrackingExtension driFrameTrackingExtension = {
-    { __DRI_FRAME_TRACKING, __DRI_FRAME_TRACKING_VERSION },
-    driFrameTracking,
-    driQueryFrameTracking    
-};
-
 /**
  * Calculate amount of swap interval used between GLX buffer swaps.
  * 

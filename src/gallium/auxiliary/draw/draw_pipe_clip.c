@@ -262,6 +262,7 @@ do_clip_tri( struct draw_stage *stage,
 
       clipmask &= ~(1<<plane_idx);
 
+      assert(n < MAX_CLIPPED_VERTICES);
       inlist[n] = inlist[0]; /* prevent rotation of vertices */
 
       for (i = 1; i <= n; i++) {
@@ -270,11 +271,17 @@ do_clip_tri( struct draw_stage *stage,
 	 float dp = dot4( vert->clip, plane );
 
 	 if (!IS_NEGATIVE(dp_prev)) {
+            assert(outcount < MAX_CLIPPED_VERTICES);
 	    outlist[outcount++] = vert_prev;
 	 }
 
 	 if (DIFFERENT_SIGNS(dp, dp_prev)) {
-	    struct vertex_header *new_vert = clipper->stage.tmp[tmpnr++];
+	    struct vertex_header *new_vert;
+
+            assert(tmpnr < MAX_CLIPPED_VERTICES+1);
+            new_vert = clipper->stage.tmp[tmpnr++];
+
+            assert(outcount < MAX_CLIPPED_VERTICES);
 	    outlist[outcount++] = new_vert;
 
 	    if (IS_NEGATIVE(dp)) {
@@ -317,12 +324,14 @@ do_clip_tri( struct draw_stage *stage,
    if (clipper->flat) {
       if (stage->draw->rasterizer->flatshade_first) {
          if (inlist[0] != header->v[0]) {
+            assert(tmpnr < MAX_CLIPPED_VERTICES + 1);
             inlist[0] = dup_vert(stage, inlist[0], tmpnr++);
             copy_colors(stage, inlist[0], header->v[0]);
          }
       }
       else {
          if (inlist[0] != header->v[2]) {
+            assert(tmpnr < MAX_CLIPPED_VERTICES + 1);
             inlist[0] = dup_vert(stage, inlist[0], tmpnr++);
             copy_colors(stage, inlist[0], header->v[2]);
          }

@@ -41,10 +41,6 @@ typedef _EGLDriver *(*_EGLMain_t)(const char *args);
  */
 struct _egl_driver
 {
-   void *LibHandle; /**< dlopen handle */
-   const char *Path;  /**< path to this driver */
-   const char *Args;  /**< args to load this driver */
-
    const char *Name;  /**< name of this driver */
 
    /**
@@ -73,19 +69,15 @@ _eglMain(const char *args);
 
 
 extern _EGLDriver *
-_eglMatchDriver(_EGLDisplay *dpy);
+_eglMatchDriver(_EGLDisplay *dpy, EGLBoolean probe_only);
 
 
-extern EGLBoolean
-_eglPreloadDrivers(void);
+extern __eglMustCastToProperFunctionPointerType
+_eglGetDriverProc(const char *procname);
 
 
 extern void
 _eglUnloadDrivers(void);
-
-
-extern _EGLDriver *
-_eglLoadDefaultDriver(EGLDisplay dpy, EGLint *major, EGLint *minor);
 
 
 PUBLIC void
@@ -95,14 +87,6 @@ _eglInitDriverFallbacks(_EGLDriver *drv);
 PUBLIC void
 _eglSearchPathForEach(EGLBoolean (*callback)(const char *, size_t, void *),
                       void *callback_data);
-
-
-PUBLIC void
-_eglSetProbeCache(EGLint key, const void *val);
-
-
-PUBLIC const void *
-_eglGetProbeCache(EGLint key);
 
 
 #endif /* EGLDRIVER_INCLUDED */

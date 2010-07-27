@@ -33,7 +33,7 @@
 #include "main/glheader.h"
 #include "main/macros.h"
 #include "main/enums.h"
-#include "shader/program.h"
+#include "program/program.h"
 
 #include "intel_batchbuffer.h"
 
@@ -134,7 +134,6 @@ void brw_clip_interp_vertex( struct brw_clip_compile *c,
 			     GLboolean force_edgeflag)
 {
    struct brw_compile *p = &c->func;
-   struct intel_context *intel = &p->brw->intel;
    struct brw_reg tmp = get_tmp(c);
    GLuint i;
 
@@ -149,12 +148,9 @@ void brw_clip_interp_vertex( struct brw_clip_compile *c,
    /* Iterate over each attribute (could be done in pairs?)
     */
    for (i = 0; i < c->nr_attrs; i++) {
-      GLuint delta = i*16 + 32;
+      GLuint delta = c->offset[c->idx_to_attr[i]];
 
-      if (intel->gen == 5)
-          delta = i * 16 + 32 * 3;
-
-      if (delta == c->offset[VERT_RESULT_EDGE]) {
+      if (c->idx_to_attr[i] == VERT_RESULT_EDGE) {
 	 if (force_edgeflag) 
 	    brw_MOV(p, deref_4f(dest_ptr, delta), brw_imm_f(1));
 	 else
@@ -183,10 +179,7 @@ void brw_clip_interp_vertex( struct brw_clip_compile *c,
    }
 
    if (i & 1) {
-      GLuint delta = i*16 + 32;
-
-      if (intel->gen == 5)
-          delta = i * 16 + 32 * 3;
+      GLuint delta = c->offset[c->idx_to_attr[c->nr_attrs - 1]] + ATTR_SIZE;
 
       brw_MOV(p, deref_4f(dest_ptr, delta), brw_imm_f(0));
    }
@@ -198,11 +191,6 @@ void brw_clip_interp_vertex( struct brw_clip_compile *c,
     */
    brw_clip_project_vertex(c, dest_ptr );
 }
-
-
-
-
-#define MAX_MRF 16
 
 void brw_clip_emit_vue(struct brw_clip_compile *c, 
 		       struct brw_indirect vert,

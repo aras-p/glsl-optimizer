@@ -316,6 +316,54 @@ LLVMTypeRef
 lp_build_int32_vec4_type(void);
 
 
+static INLINE struct lp_type
+lp_float32_vec4_type(void)
+{
+   struct lp_type type;
+
+   memset(&type, 0, sizeof(type));
+   type.floating = TRUE;
+   type.sign = TRUE;
+   type.norm = FALSE;
+   type.width = 32;
+   type.length = 4;
+
+   return type;
+}
+
+
+static INLINE struct lp_type
+lp_int32_vec4_type(void)
+{
+   struct lp_type type;
+
+   memset(&type, 0, sizeof(type));
+   type.floating = FALSE;
+   type.sign = TRUE;
+   type.norm = FALSE;
+   type.width = 32;
+   type.length = 4;
+
+   return type;
+}
+
+
+static INLINE struct lp_type
+lp_unorm8_vec4_type(void)
+{
+   struct lp_type type;
+
+   memset(&type, 0, sizeof(type));
+   type.floating = FALSE;
+   type.sign = FALSE;
+   type.norm = TRUE;
+   type.width = 8;
+   type.length = 4;
+
+   return type;
+}
+
+
 struct lp_type
 lp_uint_type(struct lp_type type);
 

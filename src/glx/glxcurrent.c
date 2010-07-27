@@ -295,16 +295,16 @@ FetchDRIDrawable(Display * dpy, GLXDrawable glxDrawable, GLXContext gc)
    if (priv == NULL)
       return NULL;
 
-   psc = &priv->screenConfigs[gc->screen];
-   if (psc->drawHash == NULL)
+   psc = priv->screenConfigs[gc->screen];
+   if (priv->drawHash == NULL)
       return NULL;
 
-   if (__glxHashLookup(psc->drawHash, glxDrawable, (void *) &pdraw) == 0)
+   if (__glxHashLookup(priv->drawHash, glxDrawable, (void *) &pdraw) == 0)
       return pdraw;
 
    pdraw = psc->driScreen->createDrawable(psc, glxDrawable,
                                           glxDrawable, gc->mode);
-   if (__glxHashInsert(psc->drawHash, glxDrawable, pdraw)) {
+   if (__glxHashInsert(priv->drawHash, glxDrawable, pdraw)) {
       (*pdraw->destroyDrawable) (pdraw);
       return NULL;
    }
@@ -399,7 +399,7 @@ MakeContextCurrent(Display * dpy, GLXDrawable draw,
       }
 
       bindReturnValue =
-         (gc->driContext->bindContext) (gc->driContext, pdraw, pread);
+         (gc->driContext->bindContext) (gc, pdraw, pread);
    }
    else if (!gc && oldGC && oldGC->driContext) {
       bindReturnValue = True;
@@ -441,7 +441,7 @@ MakeContextCurrent(Display * dpy, GLXDrawable draw,
    }
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
    else if (oldGC->driContext && oldGC != gc) {
-      oldGC->driContext->unbindContext(oldGC->driContext);
+      oldGC->driContext->unbindContext(oldGC);
    }
 #endif
 
@@ -468,34 +468,13 @@ MakeContextCurrent(Display * dpy, GLXDrawable draw,
          oldGC->currentReadable = None;
          oldGC->currentContextTag = 0;
          oldGC->thread_id = 0;
-#ifdef GLX_USE_APPLEGL
-         
-         /*
-          * At this point we should check if the context has been
-          * through glXDestroyContext, and redestroy it if so.
-          */
-         if(oldGC->do_destroy) {
-            __glXUnlock();
-            /* glXDestroyContext uses the same global lock. */
-            glXDestroyContext(dpy, oldGC);
-            __glXLock();
-#else
+
          if (oldGC->xid == None) {
             /* We are switching away from a context that was
              * previously destroyed, so we need to free the memory
              * for the old handle.
              */
-#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
-            /* Destroy the old direct rendering context */
-            if (oldGC->driContext) {
-               oldGC->driContext->destroyContext(oldGC->driContext,
-                                                 oldGC->psc,
-                                                 oldGC->createDpy);
-               oldGC->driContext = NULL;
-            }
-#endif
-            __glXFreeContext(oldGC);
-#endif /* GLX_USE_APPLEGL */
+	    oldGC->vtable->destroy(oldGC);
          }
       }
       if (gc) {

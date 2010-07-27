@@ -235,8 +235,11 @@ struct rX00_fragment_program_code {
 };
 
 
-#define VSF_MAX_FRAGMENT_LENGTH (255*4)
-#define VSF_MAX_FRAGMENT_TEMPS (14)
+#define R300_VS_MAX_ALU		256
+#define R300_VS_MAX_ALU_DWORDS  (R300_VS_MAX_ALU * 4)
+#define R500_VS_MAX_ALU	        1024
+#define R500_VS_MAX_ALU_DWORDS  (R500_VS_MAX_ALU * 4)
+#define R300_VS_MAX_TEMPS	32
 
 #define VSF_MAX_INPUTS 32
 #define VSF_MAX_OUTPUTS 32
@@ -244,8 +247,8 @@ struct rX00_fragment_program_code {
 struct r300_vertex_program_code {
 	int length;
 	union {
-		uint32_t d[VSF_MAX_FRAGMENT_LENGTH];
-		float f[VSF_MAX_FRAGMENT_LENGTH];
+		uint32_t d[R500_VS_MAX_ALU_DWORDS];
+		float f[R500_VS_MAX_ALU_DWORDS];
 	} body;
 
 	int pos_end;

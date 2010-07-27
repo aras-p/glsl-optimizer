@@ -46,7 +46,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r600_context.h"
 #include "radeon_reg.h"
 #include "r600_cmdbuf.h"
-#include "r600_emit.h"
 #include "radeon_bocs_wrapper.h"
 #include "radeon_reg.h"
 

@@ -33,14 +33,14 @@
 #include "mtypes.h"
 #include "hash.h"
 #include "arrayobj.h"
+#if FEATURE_ATI_fragment_shader
+#include "atifragshader.h"
+#endif
 #include "bufferobj.h"
 #include "shared.h"
-#include "shader/program.h"
-#include "shader/shader_api.h"
+#include "program/program.h"
 #include "dlist.h"
-#if FEATURE_ATI_fragment_shader
-#include "shader/atifragshader.h"
-#endif
+#include "shaderobj.h"
 #if FEATURE_ARB_sync
 #include "syncobj.h"
 #endif
@@ -228,12 +228,12 @@ delete_shader_cb(GLuint id, void *data, void *userData)
    GLcontext *ctx = (GLcontext *) userData;
    struct gl_shader *sh = (struct gl_shader *) data;
    if (sh->Type == GL_FRAGMENT_SHADER || sh->Type == GL_VERTEX_SHADER) {
-      _mesa_free_shader(ctx, sh);
+      ctx->Driver.DeleteShader(ctx, sh);
    }
    else {
       struct gl_shader_program *shProg = (struct gl_shader_program *) data;
       ASSERT(shProg->Type == GL_SHADER_PROGRAM_MESA);
-      _mesa_free_shader_program(ctx, shProg);
+      ctx->Driver.DeleteShaderProgram(ctx, shProg);
    }
 }
 

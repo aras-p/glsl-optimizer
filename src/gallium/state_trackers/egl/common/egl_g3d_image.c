@@ -78,7 +78,7 @@ egl_g3d_create_image(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *ctx,
 
    gimg = CALLOC_STRUCT(egl_g3d_image);
    if (!gimg) {
-      _eglError(EGL_BAD_ALLOC, "eglCreatePbufferSurface");
+      _eglError(EGL_BAD_ALLOC, "eglCreateEGLImageKHR");
       return NULL;
    }
 

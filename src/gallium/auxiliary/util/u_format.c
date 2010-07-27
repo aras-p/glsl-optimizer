@@ -120,7 +120,7 @@ util_format_write_4ub(enum pipe_format format, const uint8_t *src, unsigned src_
 }
 
 
-static INLINE boolean
+boolean
 util_format_fits_8unorm(const struct util_format_description *format_desc)
 {
    unsigned chan;

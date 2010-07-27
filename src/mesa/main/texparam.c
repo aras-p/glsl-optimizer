@@ -39,7 +39,7 @@
 #include "main/texparam.h"
 #include "main/teximage.h"
 #include "main/texstate.h"
-#include "shader/prog_instruction.h"
+#include "program/prog_instruction.h"
 
 
 /**

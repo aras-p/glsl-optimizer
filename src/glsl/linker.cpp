@@ -74,11 +74,11 @@ extern "C" {
 
 #include "main/mtypes.h"
 #include "main/macros.h"
+#include "main/shaderobj.h"
 #include "glsl_symbol_table.h"
 #include "ir.h"
 #include "program.h"
 #include "hash_table.h"
-#include "shader_api.h"
 #include "linker.h"
 #include "ir_optimization.h"
 

@@ -364,7 +364,8 @@ static void brw_set_dp_write_message( struct brw_context *brw,
 				      GLuint msg_length,
 				      GLuint pixel_scoreboard_clear,
 				      GLuint response_length,
-				      GLuint end_of_thread )
+				      GLuint end_of_thread,
+				      GLuint send_commit_msg)
 {
    struct intel_context *intel = &brw->intel;
    brw_set_src1(insn, brw_imm_d(0));
@@ -374,7 +375,7 @@ static void brw_set_dp_write_message( struct brw_context *brw,
        insn->bits3.dp_write_gen5.msg_control = msg_control;
        insn->bits3.dp_write_gen5.pixel_scoreboard_clear = pixel_scoreboard_clear;
        insn->bits3.dp_write_gen5.msg_type = msg_type;
-       insn->bits3.dp_write_gen5.send_commit_msg = 0;
+       insn->bits3.dp_write_gen5.send_commit_msg = send_commit_msg;
        insn->bits3.dp_write_gen5.header_present = 1;
        insn->bits3.dp_write_gen5.response_length = response_length;
        insn->bits3.dp_write_gen5.msg_length = msg_length;
@@ -386,7 +387,7 @@ static void brw_set_dp_write_message( struct brw_context *brw,
        insn->bits3.dp_write.msg_control = msg_control;
        insn->bits3.dp_write.pixel_scoreboard_clear = pixel_scoreboard_clear;
        insn->bits3.dp_write.msg_type = msg_type;
-       insn->bits3.dp_write.send_commit_msg = 0;
+       insn->bits3.dp_write.send_commit_msg = send_commit_msg;
        insn->bits3.dp_write.response_length = response_length;
        insn->bits3.dp_write.msg_length = msg_length;
        insn->bits3.dp_write.msg_target = BRW_MESSAGE_TARGET_DATAPORT_WRITE;
@@ -906,6 +907,20 @@ void brw_CMP(struct brw_compile *p,
    }
 }
 
+/* Issue 'wait' instruction for n1, host could program MMIO
+   to wake up thread. */
+void brw_WAIT (struct brw_compile *p)
+{
+   struct brw_instruction *insn = next_insn(p, BRW_OPCODE_WAIT);
+   struct brw_reg src = brw_notification_1_reg();
+
+   brw_set_dest(insn, src);
+   brw_set_src0(insn, src);
+   brw_set_src1(insn, brw_null_reg());
+   insn->header.execution_size = 0; /* must */
+   insn->header.predicate_control = 0;
+   insn->header.compression_control = 0;
+}
 
 
 /***********************************************************************
@@ -1040,6 +1055,7 @@ void brw_dp_WRITE_16( struct brw_compile *p,
 		      struct brw_reg src,
 		      GLuint scratch_offset )
 {
+   struct intel_context *intel = &p->brw->intel;
    GLuint msg_reg_nr = 1;
    {
       brw_push_insn_state(p);
@@ -1056,13 +1072,32 @@ void brw_dp_WRITE_16( struct brw_compile *p,
 
    {
       GLuint msg_length = 3;
-      struct brw_reg dest = retype(brw_null_reg(), BRW_REGISTER_TYPE_UW);
+      struct brw_reg dest;
       struct brw_instruction *insn = next_insn(p, BRW_OPCODE_SEND);
-   
+      int send_commit_msg;
+
       insn->header.predicate_control = 0; /* XXX */
       insn->header.compression_control = BRW_COMPRESSION_NONE; 
       insn->header.destreg__conditionalmod = msg_reg_nr;
-  
+
+      /* Until gen6, writes followed by reads from the same location
+       * are not guaranteed to be ordered unless write_commit is set.
+       * If set, then a no-op write is issued to the destination
+       * register to set a dependency, and a read from the destination
+       * can be used to ensure the ordering.
+       *
+       * For gen6, only writes between different threads need ordering
+       * protection.  Our use of DP writes is all about register
+       * spilling within a thread.
+       */
+      if (intel->gen >= 6) {
+	 dest = retype(vec16(brw_null_reg()), BRW_REGISTER_TYPE_UW);
+	 send_commit_msg = 0;
+      } else {
+	 dest = brw_uw16_grf(0, 0);
+	 send_commit_msg = 1;
+      }
+
       brw_set_dest(insn, dest);
       brw_set_src0(insn, src);
 
@@ -1073,8 +1108,9 @@ void brw_dp_WRITE_16( struct brw_compile *p,
 			       BRW_DATAPORT_WRITE_MESSAGE_OWORD_BLOCK_WRITE, /* msg_type */
 			       msg_length,
 			       0, /* pixel scoreboard */
-			       0, /* response_length */
-			       0); /* eot */
+			       send_commit_msg, /* response_length */
+			       0, /* eot */
+			       send_commit_msg);
    }
 }
 
@@ -1115,7 +1151,7 @@ void brw_dp_READ_16( struct brw_compile *p,
       brw_set_dp_read_message(p->brw,
 			      insn,
 			      255, /* binding table index (255=stateless) */
-			      3,  /* msg_control (3 means 4 Owords) */
+			      BRW_DATAPORT_OWORD_BLOCK_4_OWORDS,
 			      BRW_DATAPORT_READ_MESSAGE_OWORD_BLOCK_READ, /* msg_type */
 			      1, /* target cache (render/scratch) */
 			      1, /* msg_length */
@@ -1190,68 +1226,107 @@ void brw_dp_READ_4( struct brw_compile *p,
  */
 void brw_dp_READ_4_vs(struct brw_compile *p,
                       struct brw_reg dest,
-                      GLuint oword,
-                      GLboolean relAddr,
-                      struct brw_reg addrReg,
                       GLuint location,
                       GLuint bind_table_index)
 {
+   struct brw_instruction *insn;
    GLuint msg_reg_nr = 1;
+   struct brw_reg b;
 
-   assert(oword < 2);
    /*
    printf("vs const read msg, location %u, msg_reg_nr %d\n",
           location, msg_reg_nr);
    */
 
    /* Setup MRF[1] with location/offset into const buffer */
-   {
-      struct brw_reg b;
+   brw_push_insn_state(p);
+   brw_set_compression_control(p, BRW_COMPRESSION_NONE);
+   brw_set_mask_control(p, BRW_MASK_DISABLE);
+   brw_set_predicate_control(p, BRW_PREDICATE_NONE);
 
-      brw_push_insn_state(p);
-      brw_set_compression_control(p, BRW_COMPRESSION_NONE);
-      brw_set_mask_control(p, BRW_MASK_DISABLE);
-      brw_set_predicate_control(p, BRW_PREDICATE_NONE);
-      /*brw_set_access_mode(p, BRW_ALIGN_16);*/
+   /* XXX I think we're setting all the dwords of MRF[1] to 'location'.
+    * when the docs say only dword[2] should be set.  Hmmm.  But it works.
+    */
+   b = brw_message_reg(msg_reg_nr);
+   b = retype(b, BRW_REGISTER_TYPE_UD);
+   /*b = get_element_ud(b, 2);*/
+   brw_MOV(p, b, brw_imm_ud(location));
 
-      /* XXX I think we're setting all the dwords of MRF[1] to 'location'.
-       * when the docs say only dword[2] should be set.  Hmmm.  But it works.
-       */
-      b = brw_message_reg(msg_reg_nr);
-      b = retype(b, BRW_REGISTER_TYPE_UD);
-      /*b = get_element_ud(b, 2);*/
-      if (relAddr) {
-         brw_ADD(p, b, addrReg, brw_imm_ud(location));
-      }
-      else {
-         brw_MOV(p, b, brw_imm_ud(location));
-      }
+   brw_pop_insn_state(p);
 
-      brw_pop_insn_state(p);
-   }
+   insn = next_insn(p, BRW_OPCODE_SEND);
 
-   {
-      struct brw_instruction *insn = next_insn(p, BRW_OPCODE_SEND);
-   
-      insn->header.predicate_control = BRW_PREDICATE_NONE;
-      insn->header.compression_control = BRW_COMPRESSION_NONE; 
-      insn->header.destreg__conditionalmod = msg_reg_nr;
-      insn->header.mask_control = BRW_MASK_DISABLE;
-      /*insn->header.access_mode = BRW_ALIGN_16;*/
-  
-      brw_set_dest(insn, dest);
-      brw_set_src0(insn, brw_null_reg());
+   insn->header.predicate_control = BRW_PREDICATE_NONE;
+   insn->header.compression_control = BRW_COMPRESSION_NONE;
+   insn->header.destreg__conditionalmod = msg_reg_nr;
+   insn->header.mask_control = BRW_MASK_DISABLE;
 
-      brw_set_dp_read_message(p->brw,
-			      insn,
-			      bind_table_index,
-			      oword,  /* 0 = lower Oword, 1 = upper Oword */
-			      BRW_DATAPORT_READ_MESSAGE_OWORD_BLOCK_READ, /* msg_type */
-			      0, /* source cache = data cache */
-			      1, /* msg_length */
-			      1, /* response_length (1 Oword) */
-			      0); /* eot */
-   }
+   brw_set_dest(insn, dest);
+   brw_set_src0(insn, brw_null_reg());
+
+   brw_set_dp_read_message(p->brw,
+			   insn,
+			   bind_table_index,
+			   0,
+			   BRW_DATAPORT_READ_MESSAGE_OWORD_BLOCK_READ, /* msg_type */
+			   0, /* source cache = data cache */
+			   1, /* msg_length */
+			   1, /* response_length (1 Oword) */
+			   0); /* eot */
+}
+
+/**
+ * Read a float[4] constant per vertex from VS constant buffer, with
+ * relative addressing.
+ */
+void brw_dp_READ_4_vs_relative(struct brw_compile *p,
+			       struct brw_reg dest,
+			       struct brw_reg addr_reg,
+			       GLuint offset,
+			       GLuint bind_table_index)
+{
+   struct intel_context *intel = &p->brw->intel;
+   int msg_type;
+
+   /* Setup MRF[1] with offset into const buffer */
+   brw_push_insn_state(p);
+   brw_set_compression_control(p, BRW_COMPRESSION_NONE);
+   brw_set_mask_control(p, BRW_MASK_DISABLE);
+   brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+
+   /* M1.0 is block offset 0, M1.4 is block offset 1, all other
+    * fields ignored.
+    */
+   brw_ADD(p, retype(brw_message_reg(1), BRW_REGISTER_TYPE_UD),
+	   addr_reg, brw_imm_d(offset));
+   brw_pop_insn_state(p);
+
+   struct brw_instruction *insn = next_insn(p, BRW_OPCODE_SEND);
+
+   insn->header.predicate_control = BRW_PREDICATE_NONE;
+   insn->header.compression_control = BRW_COMPRESSION_NONE;
+   insn->header.destreg__conditionalmod = 0;
+   insn->header.mask_control = BRW_MASK_DISABLE;
+
+   brw_set_dest(insn, dest);
+   brw_set_src0(insn, brw_vec8_grf(0, 0));
+
+   if (intel->gen == 6)
+      msg_type = GEN6_DATAPORT_READ_MESSAGE_OWORD_DUAL_BLOCK_READ;
+   else if (intel->gen == 5 || intel->is_g4x)
+      msg_type = G45_DATAPORT_READ_MESSAGE_OWORD_DUAL_BLOCK_READ;
+   else
+      msg_type = BRW_DATAPORT_READ_MESSAGE_OWORD_DUAL_BLOCK_READ;
+
+   brw_set_dp_read_message(p->brw,
+			   insn,
+			   bind_table_index,
+			   BRW_DATAPORT_OWORD_DUAL_BLOCK_1OWORD,
+			   msg_type,
+			   0, /* source cache = data cache */
+			   2, /* msg_length */
+			   1, /* response_length */
+			   0); /* eot */
 }
 
 
@@ -1281,7 +1356,8 @@ void brw_fb_WRITE(struct brw_compile *p,
 			    msg_length,
 			    1,	/* pixel scoreboard */
 			    response_length, 
-			    eot);
+			    eot,
+			    0 /* send_commit_msg */);
 }
 
 

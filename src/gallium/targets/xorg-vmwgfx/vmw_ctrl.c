@@ -32,9 +32,6 @@
  *      allows X clients to communicate with the driver.
  */
 
-
-#define NEED_REPLIES
-#define NEED_EVENTS
 #include "dixstruct.h"
 #include "extnsionst.h"
 #include <X11/X.h>

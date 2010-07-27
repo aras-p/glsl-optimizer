@@ -40,6 +40,7 @@
 #include "util/u_memory.h"
 #include "util/u_pack_color.h"
 #include "lp_context.h"
+#include "lp_memory.h"
 #include "lp_scene.h"
 #include "lp_scene_queue.h"
 #include "lp_texture.h"
@@ -63,15 +64,7 @@ struct lp_scene *
 lp_setup_get_current_scene(struct lp_setup_context *setup)
 {
    if (!setup->scene) {
-
-      /* wait for a free/empty scene
-       */
-      setup->scene = lp_scene_dequeue(setup->empty_scenes, TRUE);
-
-      assert(lp_scene_is_empty(setup->scene));
-
-      lp_scene_begin_binning(setup->scene,
-                             &setup->fb );
+      set_scene_state( setup, SETUP_EMPTY );
    }
    return setup->scene;
 }
@@ -159,8 +152,11 @@ static void
 lp_setup_rasterize_scene( struct lp_setup_context *setup )
 {
    struct lp_scene *scene = lp_setup_get_current_scene(setup);
+   struct llvmpipe_screen *screen = llvmpipe_screen(scene->pipe->screen);
 
-   lp_scene_rasterize(scene, setup->rast);
+   pipe_mutex_lock(screen->rast_mutex);
+   lp_scene_rasterize(scene, screen->rast);
+   pipe_mutex_unlock(screen->rast_mutex);
 
    reset_context( setup );
 
@@ -233,22 +229,36 @@ set_scene_state( struct lp_setup_context *setup,
    LP_DBG(DEBUG_SETUP, "%s old %d new %d\n", __FUNCTION__, old_state, new_state);
 
    switch (new_state) {
-   case SETUP_ACTIVE:
-      begin_binning( setup );
+   case SETUP_EMPTY:
+      assert(old_state == SETUP_FLUSHED);
+      assert(setup->scene == NULL);
+
+      /* wait for a free/empty scene
+       */
+      setup->scene = lp_scene_dequeue(setup->empty_scenes, TRUE);
+      assert(lp_scene_is_empty(setup->scene));
+      lp_scene_begin_binning(setup->scene,
+                             &setup->fb );
       break;
 
    case SETUP_CLEARED:
-      if (old_state == SETUP_ACTIVE) {
-         assert(0);
-         return;
-      }
+      assert(old_state == SETUP_EMPTY);
+      assert(setup->scene != NULL);
       break;
-      
+
+   case SETUP_ACTIVE:
+      assert(old_state == SETUP_EMPTY ||
+             old_state == SETUP_CLEARED);
+      assert(setup->scene != NULL);
+      begin_binning( setup );
+      break;
+
    case SETUP_FLUSHED:
       if (old_state == SETUP_CLEARED)
          execute_clears( setup );
       else
          lp_setup_rasterize_scene( setup );
+      assert(setup->scene == NULL);
       break;
 
    default:
@@ -264,23 +274,19 @@ set_scene_state( struct lp_setup_context *setup,
  */
 void
 lp_setup_flush( struct lp_setup_context *setup,
-                unsigned flags )
+                unsigned flags,
+                struct pipe_fence_handle **fence)
 {
    LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
 
    if (setup->scene) {
-      struct lp_scene *scene = lp_setup_get_current_scene(setup);
-      union lp_rast_cmd_arg dummy = {0};
-
-      if (flags & (PIPE_FLUSH_SWAPBUFFERS |
-                   PIPE_FLUSH_FRAME)) {
-         /* Store colors in the linear color buffer(s).
-          * If we don't do this here, we'll end up converting the tiled
-          * data to linear in the texture_unmap() function, which will
-          * not be a parallel/threaded operation as here.
+      if (fence) {
+         /* if we're going to flush the setup/rasterization modules, emit
+          * a fence.
           */
-         lp_scene_bin_everywhere(scene, lp_rast_store_color, dummy);
+         *fence = lp_setup_fence( setup );
       }
+
    }
 
    set_scene_state( setup, SETUP_FLUSHED );
@@ -296,6 +302,11 @@ lp_setup_bind_framebuffer( struct lp_setup_context *setup,
    /* Flush any old scene.
     */
    set_scene_state( setup, SETUP_FLUSHED );
+
+   /*
+    * Ensure the old scene is not reused.
+    */
+   assert(!setup->scene);
 
    /* Set new state.  This will be picked up later when we next need a
     * scene.
@@ -421,24 +432,27 @@ lp_setup_clear( struct lp_setup_context *setup,
 struct pipe_fence_handle *
 lp_setup_fence( struct lp_setup_context *setup )
 {
-   if (setup->num_threads == 0) {
+   if (setup->scene == NULL)
       return NULL;
-   }
-   else {
+   else if (setup->num_threads == 0)
+      return NULL;
+   else
+   {
       struct lp_scene *scene = lp_setup_get_current_scene(setup);
-      const unsigned rank = lp_scene_get_num_bins( scene ); /* xxx */
-      struct lp_fence *fence = lp_fence_create(rank);
+      const unsigned rank = setup->num_threads;
+
+      set_scene_state( setup, SETUP_ACTIVE );
+      
+      assert(scene->fence == NULL);
+
+      /* The caller gets a reference, we keep a copy too, so need to
+       * bump the refcount:
+       */
+      lp_fence_reference(&scene->fence, lp_fence_create(rank));
 
       LP_DBG(DEBUG_SETUP, "%s rank %u\n", __FUNCTION__, rank);
 
-      set_scene_state( setup, SETUP_ACTIVE );
-
-      /* insert the fence into all command bins */
-      lp_scene_bin_everywhere( scene,
-                               lp_rast_fence,
-                               lp_rast_arg_fence(fence) );
-
-      return (struct pipe_fence_handle *) fence;
+      return (struct pipe_fence_handle *) scene->fence;
    }
 }
 
@@ -611,6 +625,17 @@ lp_setup_set_fragment_sampler_views(struct lp_setup_context *setup,
                                                  LP_TEX_LAYOUT_LINEAR);
                jit_tex->row_stride[j] = lp_tex->row_stride[j];
                jit_tex->img_stride[j] = lp_tex->img_stride[j];
+
+               if (!jit_tex->data[j]) {
+                  /* out of memory - use dummy tile memory */
+                  jit_tex->data[j] = lp_dummy_tile;
+                  jit_tex->width = TILE_SIZE;
+                  jit_tex->height = TILE_SIZE;
+                  jit_tex->depth = 1;
+                  jit_tex->last_level = 0;
+                  jit_tex->row_stride[j] = 0;
+                  jit_tex->img_stride[j] = 0;
+               }
             }
          }
          else {
@@ -618,7 +643,6 @@ lp_setup_set_fragment_sampler_views(struct lp_setup_context *setup,
             /*
              * XXX: Where should this be unmapped?
              */
-
             struct llvmpipe_screen *screen = llvmpipe_screen(tex->screen);
             struct sw_winsys *winsys = screen->winsys;
             jit_tex->data[0] = winsys->displaytarget_map(winsys, lp_tex->dt,
@@ -717,28 +741,6 @@ lp_setup_update_state( struct lp_setup_context *setup )
       setup->dirty |= LP_SETUP_NEW_FS;
    }
 
-   if (setup->dirty & LP_SETUP_NEW_SCISSOR) {
-      float *stored;
-
-      stored = lp_scene_alloc_aligned(scene, 4 * sizeof(int32_t), 16);
-
-      if (stored) {
-         stored[0] = (float) setup->scissor.current.minx;
-         stored[1] = (float) setup->scissor.current.miny;
-         stored[2] = (float) setup->scissor.current.maxx;
-         stored[3] = (float) setup->scissor.current.maxy;
-
-         setup->scissor.stored = stored;
-
-         setup->fs.current.jit_context.scissor_xmin = stored[0];
-         setup->fs.current.jit_context.scissor_ymin = stored[1];
-         setup->fs.current.jit_context.scissor_xmax = stored[2];
-         setup->fs.current.jit_context.scissor_ymax = stored[3];
-      }
-
-      setup->dirty |= LP_SETUP_NEW_FS;
-   }
-
    if(setup->dirty & LP_SETUP_NEW_CONSTANTS) {
       struct pipe_resource *buffer = setup->constants.current;
 
@@ -792,11 +794,6 @@ lp_setup_update_state( struct lp_setup_context *setup )
                    &setup->fs.current,
                    sizeof setup->fs.current);
             setup->fs.stored = stored;
-
-            /* put the state-set command into all bins */
-            lp_scene_bin_state_command( scene,
-					lp_rast_set_state, 
-					lp_rast_arg_state(setup->fs.stored) );
          }
 
          /* The scene now references the textures in the rasterization
@@ -843,8 +840,6 @@ lp_setup_destroy( struct lp_setup_context *setup )
 
    lp_scene_queue_destroy(setup->empty_scenes);
 
-   lp_rast_destroy( setup->rast );
-
    FREE( setup );
 }
 
@@ -871,13 +866,7 @@ lp_setup_create( struct pipe_context *pipe,
    if (!setup->empty_scenes)
       goto fail;
 
-   /* XXX: move this to the screen and share between contexts:
-    */
    setup->num_threads = screen->num_threads;
-   setup->rast = lp_rast_create(screen->num_threads);
-   if (!setup->rast) 
-      goto fail;
-
    setup->vbuf = draw_vbuf_stage(draw, &setup->base);
    if (!setup->vbuf)
       goto fail;
@@ -901,9 +890,6 @@ lp_setup_create( struct pipe_context *pipe,
    return setup;
 
 fail:
-   if (setup->rast)
-      lp_rast_destroy( setup->rast );
-   
    if (setup->vbuf)
       ;
 
@@ -933,6 +919,8 @@ lp_setup_begin_query(struct lp_setup_context *setup,
 
    memset(pq->count, 0, sizeof(pq->count));  /* reset all counters */
 
+   set_scene_state( setup, SETUP_ACTIVE );
+
    cmd_arg.query_obj = pq;
    lp_scene_bin_everywhere(scene, lp_rast_begin_query, cmd_arg);
    pq->binned = TRUE;
@@ -947,6 +935,8 @@ lp_setup_end_query(struct lp_setup_context *setup, struct llvmpipe_query *pq)
 {
    struct lp_scene * scene = lp_setup_get_current_scene(setup);
    union lp_rast_cmd_arg cmd_arg;
+
+   set_scene_state( setup, SETUP_ACTIVE );
 
    cmd_arg.query_obj = pq;
    lp_scene_bin_everywhere(scene, lp_rast_end_query, cmd_arg);

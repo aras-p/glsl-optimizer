@@ -79,6 +79,9 @@ extern GLboolean
 _mesa_is_dudv_format(GLenum format);
 
 extern GLboolean
+_mesa_is_integer_format(GLenum format);
+
+extern GLboolean
 _mesa_is_compressed_format(GLcontext *ctx, GLenum format);
 
 extern GLvoid *

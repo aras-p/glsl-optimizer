@@ -36,6 +36,7 @@ void r300_parse_chipset(struct r300_capabilities* caps)
     caps->num_vert_fpus = 2;
     caps->num_tex_units = 16;
     caps->has_tcl = debug_get_bool_option("RADEON_NO_TCL", FALSE) ? FALSE : TRUE;
+    caps->has_hiz = TRUE;
     caps->is_r400 = FALSE;
     caps->is_r500 = FALSE;
     caps->high_second_pipe = FALSE;
@@ -76,6 +77,7 @@ void r300_parse_chipset(struct r300_capabilities* caps)
         case 0x4E54:
         case 0x4E56:
             caps->family = CHIP_FAMILY_RV350;
+            caps->has_hiz = FALSE;
             caps->high_second_pipe = TRUE;
             break;
 
@@ -106,6 +108,7 @@ void r300_parse_chipset(struct r300_capabilities* caps)
         case 0x5B64:
         case 0x5B65:
             caps->family = CHIP_FAMILY_RV370;
+            caps->has_hiz = FALSE;
             caps->high_second_pipe = TRUE;
             break;
 
@@ -201,24 +204,28 @@ void r300_parse_chipset(struct r300_capabilities* caps)
         case 0x5954:
         case 0x5955:
             caps->family = CHIP_FAMILY_RS480;
+            caps->has_hiz = FALSE;
             caps->has_tcl = FALSE;
             break;
 
         case 0x5974:
         case 0x5975:
             caps->family = CHIP_FAMILY_RS482;
+            caps->has_hiz = FALSE;
             caps->has_tcl = FALSE;
             break;
 
         case 0x5A41:
         case 0x5A42:
             caps->family = CHIP_FAMILY_RS400;
+            caps->has_hiz = FALSE;
             caps->has_tcl = FALSE;
             break;
 
         case 0x5A61:
         case 0x5A62:
             caps->family = CHIP_FAMILY_RC410;
+            caps->has_hiz = FALSE;
             caps->has_tcl = FALSE;
             break;
 

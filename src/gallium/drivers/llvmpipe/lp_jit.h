@@ -89,9 +89,6 @@ struct lp_jit_context
 
    uint32_t stencil_ref_front, stencil_ref_back;
 
-   /** floats, not ints */
-   float scissor_xmin, scissor_ymin, scissor_xmax, scissor_ymax;
-
    /* FIXME: store (also?) in floats */
    uint8_t *blend_color;
 
@@ -108,10 +105,6 @@ enum {
    LP_JIT_CTX_ALPHA_REF,
    LP_JIT_CTX_STENCIL_REF_FRONT,
    LP_JIT_CTX_STENCIL_REF_BACK,
-   LP_JIT_CTX_SCISSOR_XMIN,
-   LP_JIT_CTX_SCISSOR_YMIN,
-   LP_JIT_CTX_SCISSOR_XMAX,
-   LP_JIT_CTX_SCISSOR_YMAX,
    LP_JIT_CTX_BLEND_COLOR,
    LP_JIT_CTX_TEXTURES,
    LP_JIT_CTX_COUNT
@@ -129,18 +122,6 @@ enum {
 
 #define lp_jit_context_stencil_ref_back_value(_builder, _ptr) \
    lp_build_struct_get(_builder, _ptr, LP_JIT_CTX_STENCIL_REF_BACK, "stencil_ref_back")
-
-#define lp_jit_context_scissor_xmin_value(_builder, _ptr) \
-   lp_build_struct_get(_builder, _ptr, LP_JIT_CTX_SCISSOR_XMIN, "scissor_xmin")
-
-#define lp_jit_context_scissor_ymin_value(_builder, _ptr) \
-   lp_build_struct_get(_builder, _ptr, LP_JIT_CTX_SCISSOR_YMIN, "scissor_ymin")
-
-#define lp_jit_context_scissor_xmax_value(_builder, _ptr) \
-   lp_build_struct_get(_builder, _ptr, LP_JIT_CTX_SCISSOR_XMAX, "scissor_xmax")
-
-#define lp_jit_context_scissor_ymax_value(_builder, _ptr) \
-   lp_build_struct_get(_builder, _ptr, LP_JIT_CTX_SCISSOR_YMAX, "scissor_ymax")
 
 #define lp_jit_context_blend_color(_builder, _ptr) \
    lp_build_struct_get(_builder, _ptr, LP_JIT_CTX_BLEND_COLOR, "blend_color")
@@ -160,12 +141,7 @@ typedef void
                     const void *dady,
                     uint8_t **color,
                     void *depth,
-                    const int32_t c1,
-                    const int32_t c2,
-                    const int32_t c3,
-                    const int32_t *step1,
-                    const int32_t *step2,
-                    const int32_t *step3,
+                    uint32_t mask,
                     uint32_t *counter);
 
 

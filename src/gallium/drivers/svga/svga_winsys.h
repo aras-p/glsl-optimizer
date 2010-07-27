@@ -288,9 +288,6 @@ struct svga_winsys_screen
 };
 
 
-struct pipe_screen *
-svga_screen_create(struct svga_winsys_screen *sws);
-
 struct svga_winsys_screen *
 svga_winsys_screen(struct pipe_screen *screen);
 
