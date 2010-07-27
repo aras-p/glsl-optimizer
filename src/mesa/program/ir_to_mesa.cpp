@@ -1498,7 +1498,6 @@ ir_to_mesa_visitor::get_function_signature(ir_function_signature *sig)
       this->variables.push_tail(storage);
 
       this->next_temp += type_size(param->type);
-      break;
    }
 
    if (!sig->return_type->is_void()) {
