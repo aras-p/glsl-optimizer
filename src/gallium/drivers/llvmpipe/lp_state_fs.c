@@ -715,6 +715,7 @@ generate_fragment(struct llvmpipe_context *lp,
       if (gallivm_debug & GALLIVM_DEBUG_ASM) {
          lp_disassemble(f);
       }
+      lp_func_delete_body(function);
    }
 }
 

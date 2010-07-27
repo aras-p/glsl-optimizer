@@ -166,3 +166,11 @@ lp_set_target_options(void)
    }
 #endif
 }
+
+
+extern "C" void
+lp_func_delete_body(LLVMValueRef FF)
+{
+   llvm::Function *func = llvm::unwrap<llvm::Function>(FF);
+   func->deleteBody();
+}

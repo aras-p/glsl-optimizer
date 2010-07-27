@@ -826,6 +826,7 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant)
    if (gallivm_debug & GALLIVM_DEBUG_ASM) {
       lp_disassemble(code);
    }
+   lp_func_delete_body(variant->function);
 }
 
 
@@ -1001,6 +1002,7 @@ draw_llvm_generate_elts(struct draw_llvm *llvm, struct draw_llvm_variant *varian
    if (gallivm_debug & GALLIVM_DEBUG_ASM) {
       lp_disassemble(code);
    }
+   lp_func_delete_body(variant->function_elts);
 }
 
 void
