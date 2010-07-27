@@ -676,6 +676,10 @@ ir_swizzle::constant_expression_value()
 ir_constant *
 ir_dereference_variable::constant_expression_value()
 {
+   /* This may occur during compile and var->type is glsl_type::error_type */
+   if (!var)
+      return NULL;
+
    return var->constant_value ? var->constant_value->clone(NULL) : NULL;
 }
 
