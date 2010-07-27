@@ -146,13 +146,12 @@ ir_dead_code_visitor::visit_leave(ir_assignment *ir)
  * for usage on an unlinked instruction stream.
  */
 bool
-do_dead_code(struct _mesa_glsl_parse_state *state,
-	     exec_list *instructions)
+do_dead_code(exec_list *instructions)
 {
    ir_dead_code_visitor v;
    bool progress = false;
 
-   v.mem_ctx = state;
+   v.mem_ctx = talloc_new(NULL);
    v.run(instructions);
 
    foreach_iter(exec_list_iterator, iter, v.variable_list) {
@@ -188,6 +187,8 @@ do_dead_code(struct _mesa_glsl_parse_state *state,
 	 progress = true;
       }
    }
+   talloc_free(v.mem_ctx);
+
    return progress;
 }
 
@@ -199,8 +200,7 @@ do_dead_code(struct _mesa_glsl_parse_state *state,
  * with global scope.
  */
 bool
-do_dead_code_unlinked(struct _mesa_glsl_parse_state *state,
-		      exec_list *instructions)
+do_dead_code_unlinked(exec_list *instructions)
 {
    bool progress = false;
 
@@ -211,7 +211,7 @@ do_dead_code_unlinked(struct _mesa_glsl_parse_state *state,
 	 foreach_iter(exec_list_iterator, sigiter, *f) {
 	    ir_function_signature *sig =
 	       (ir_function_signature *) sigiter.get();
-	    if (do_dead_code(state, &sig->body))
+	    if (do_dead_code(&sig->body))
 	       progress = true;
 	 }
       }

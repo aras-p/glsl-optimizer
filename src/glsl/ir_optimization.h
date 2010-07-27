@@ -33,11 +33,9 @@ bool do_constant_folding(exec_list *instructions);
 bool do_constant_variable(exec_list *instructions);
 bool do_constant_variable_unlinked(exec_list *instructions);
 bool do_copy_propagation(exec_list *instructions);
-bool do_dead_code(struct _mesa_glsl_parse_state *state,
-		  exec_list *instructions);
+bool do_dead_code(exec_list *instructions);
 bool do_dead_code_local(exec_list *instructions);
-bool do_dead_code_unlinked(struct _mesa_glsl_parse_state *state,
-			   exec_list *instructions);
+bool do_dead_code_unlinked(exec_list *instructions);
 bool do_div_to_mul_rcp(exec_list *instructions);
 bool do_function_inlining(exec_list *instructions);
 bool do_if_return(exec_list *instructions);
