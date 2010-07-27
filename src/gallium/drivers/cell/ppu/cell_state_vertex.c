@@ -36,7 +36,7 @@
 #include "draw/draw_context.h"
 
 
-void *
+static void *
 cell_create_vertex_elements_state(struct pipe_context *pipe,
                                   unsigned count,
                                   const struct pipe_vertex_element *attribs)
@@ -51,7 +51,7 @@ cell_create_vertex_elements_state(struct pipe_context *pipe,
    return velems;
 }
 
-void
+static void
 cell_bind_vertex_elements_state(struct pipe_context *pipe,
                                 void *velems)
 {
@@ -66,7 +66,7 @@ cell_bind_vertex_elements_state(struct pipe_context *pipe,
       draw_set_vertex_elements(cell->draw, cell_velems->count, cell_velems->velem);
 }
 
-void
+static void
 cell_delete_vertex_elements_state(struct pipe_context *pipe, void *velems)
 {
    FREE( velems );
