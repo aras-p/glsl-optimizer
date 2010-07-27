@@ -1381,12 +1381,37 @@ ir_to_mesa_visitor::visit(ir_constant *ir)
       assert(!"FINISHME: array constants");
    }
 
+   /* Unfortunately, 4 floats is all we can get into
+    * _mesa_add_unnamed_constant.  So, make a temp to store an
+    * aggregate constant and move each constant value into it.  If we
+    * get lucky, copy propagation will eliminate the extra moves.
+    */
+
+   if (ir->type->base_type == GLSL_TYPE_STRUCT) {
+      ir_to_mesa_src_reg temp_base = get_temp(ir->type);
+      ir_to_mesa_dst_reg temp = ir_to_mesa_dst_reg_from_src(temp_base);
+
+      foreach_iter(exec_list_iterator, iter, ir->components) {
+	 ir_constant *field_value = (ir_constant *)iter.get();
+	 int size = type_size(field_value->type);
+
+	 assert(size > 0);
+
+	 field_value->accept(this);
+	 src_reg = this->result;
+
+	 for (i = 0; i < (unsigned int)size; i++) {
+	    ir_to_mesa_emit_op1(ir, OPCODE_MOV, temp, src_reg);
+
+	    src_reg.index++;
+	    temp.index++;
+	 }
+      }
+      this->result = temp_base;
+      return;
+   }
+
    if (ir->type->is_matrix()) {
-      /* Unfortunately, 4 floats is all we can get into
-       * _mesa_add_unnamed_constant.  So, make a temp to store the
-       * matrix and move each constant value into it.  If we get
-       * lucky, copy propagation will eliminate the extra moves.
-       */
       ir_to_mesa_src_reg mat = get_temp(glsl_type::vec4_type);
       ir_to_mesa_dst_reg mat_column = ir_to_mesa_dst_reg_from_src(mat);
 
