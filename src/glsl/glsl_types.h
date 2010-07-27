@@ -388,7 +388,6 @@ struct glsl_type {
       return is_array() ? length : -1;
    }
 
-private:
    /**
     * talloc context for all glsl_type allocations
     *
@@ -396,6 +395,7 @@ private:
     */
    static TALLOC_CTX *ctx;
 
+private:
    /** Constructor for vector and matrix types */
    glsl_type(GLenum gl_type,
 	     unsigned base_type, unsigned vector_elements,

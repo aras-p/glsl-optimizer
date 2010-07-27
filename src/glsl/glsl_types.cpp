@@ -35,6 +35,15 @@ hash_table *glsl_type::array_types = NULL;
 hash_table *glsl_type::record_types = NULL;
 void *glsl_type::ctx = NULL;
 
+static void
+init_talloc_type_ctx(void)
+{
+   if (glsl_type::ctx == NULL) {
+      glsl_type::ctx = talloc_init("glsl_type");
+      assert(glsl_type::ctx != NULL);
+   }
+}
+
 glsl_type::glsl_type(GLenum gl_type,
 		     unsigned base_type, unsigned vector_elements,
 		     unsigned matrix_columns, const char *name) :
@@ -43,9 +52,10 @@ glsl_type::glsl_type(GLenum gl_type,
    sampler_dimensionality(0), sampler_shadow(0), sampler_array(0),
    sampler_type(0),
    vector_elements(vector_elements), matrix_columns(matrix_columns),
-   name(name),
    length(0)
 {
+   init_talloc_type_ctx();
+   this->name = talloc_strdup(this->ctx, name);
    /* Neither dimension is zero or both dimensions are zero.
     */
    assert((vector_elements == 0) == (matrix_columns == 0));
@@ -60,9 +70,10 @@ glsl_type::glsl_type(GLenum gl_type,
    sampler_dimensionality(dim), sampler_shadow(shadow),
    sampler_array(array), sampler_type(type),
    vector_elements(0), matrix_columns(0),
-   name(name),
    length(0)
 {
+   init_talloc_type_ctx();
+   this->name = talloc_strdup(this->ctx, name);
    memset(& fields, 0, sizeof(fields));
 }
 
@@ -72,17 +83,13 @@ glsl_type::glsl_type(const glsl_struct_field *fields, unsigned num_fields,
    sampler_dimensionality(0), sampler_shadow(0), sampler_array(0),
    sampler_type(0),
    vector_elements(0), matrix_columns(0),
-   name(name),
    length(num_fields)
 {
    unsigned int i;
 
-   if (glsl_type::ctx == NULL) {
-      glsl_type::ctx = talloc_init("glsl_type");
-      assert(glsl_type::ctx != NULL);
-   }
-
-   this->fields.structure = talloc_array(glsl_type::ctx,
+   init_talloc_type_ctx();
+   this->name = talloc_strdup(this->ctx, name);
+   this->fields.structure = talloc_array(this->ctx,
 					 glsl_struct_field, length);
    for (i = 0; i < length; i++) {
       this->fields.structure[i].type = fields[i].type;
