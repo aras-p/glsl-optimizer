@@ -909,8 +909,26 @@ static void
 steal_memory(ir_instruction *ir, void *new_ctx)
 {
    ir_variable *var = ir->as_variable();
+   ir_constant *constant = ir->as_constant();
    if (var != NULL && var->constant_value != NULL)
       talloc_steal(ir, var->constant_value);
+
+   /* The components of aggregate constants are not visited by the normal
+    * visitor, so steal their values by hand.
+    */
+   if (constant != NULL) {
+      if (constant->type->is_record()) {
+	 foreach_iter(exec_list_iterator, iter, constant->components) {
+	    ir_constant *field = (ir_constant *)iter.get();
+	    steal_memory(field, ir);
+	 }
+      } else if (constant->type->is_array()) {
+	 for (unsigned int i = 0; i < constant->type->length; i++) {
+	    steal_memory(constant->array_elements[i], ir);
+	 }
+      }
+   }
+
    talloc_steal(new_ctx, ir);
 }
 
