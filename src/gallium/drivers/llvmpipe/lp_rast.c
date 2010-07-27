@@ -368,14 +368,15 @@ lp_rast_store_linear_color( struct lp_rasterizer_task *task,
 
    for (buf = 0; buf < rast->state.nr_cbufs; buf++) {
       struct pipe_surface *cbuf = scene->fb.cbufs[buf];
-      const unsigned face = cbuf->face, level = cbuf->level;
+      const unsigned face_slice = cbuf->face + cbuf->zslice;
+      const unsigned level = cbuf->level;
       struct llvmpipe_resource *lpt = llvmpipe_resource(cbuf->texture);
 
       if (!task->color_tiles[buf])
          continue;
 
       llvmpipe_unswizzle_cbuf_tile(lpt,
-                                   face,
+                                   face_slice,
                                    level,
                                    task->x, task->y,
                                    task->color_tiles[buf]);
