@@ -1412,7 +1412,7 @@ ir_to_mesa_visitor::visit(ir_constant *ir)
    }
 
    if (ir->type->is_matrix()) {
-      ir_to_mesa_src_reg mat = get_temp(glsl_type::vec4_type);
+      ir_to_mesa_src_reg mat = get_temp(ir->type);
       ir_to_mesa_dst_reg mat_column = ir_to_mesa_dst_reg_from_src(mat);
 
       for (i = 0; i < ir->type->matrix_columns; i++) {
