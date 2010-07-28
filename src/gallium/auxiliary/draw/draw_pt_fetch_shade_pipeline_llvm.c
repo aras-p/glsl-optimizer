@@ -1,6 +1,6 @@
 /**************************************************************************
  *
- * Copyright 2010 VMWare, Inc.
+ * Copyright 2010 VMware, Inc.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
