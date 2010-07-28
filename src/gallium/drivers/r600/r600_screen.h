@@ -40,14 +40,6 @@ struct r600_transfer {
 	unsigned			offset;
 };
 
-struct r600_buffer {
-	struct u_resource		b;
-	struct radeon_bo		*bo;
-	u32				domain;
-	u32				flink;
-	struct pb_buffer		*pb;
-};
-
 struct r600_screen {
 	struct pipe_screen		screen;
 	struct radeon			*rw;

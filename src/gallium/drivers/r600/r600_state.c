@@ -24,12 +24,12 @@
  *      Jerome Glisse
  */
 #include <stdio.h>
-#include <util/u_inlines.h>
-#include <util/u_format.h>
-#include <util/u_memory.h>
+#include "util/u_inlines.h"
+#include "util/u_format.h"
+#include "util/u_memory.h"
 #include "r600_screen.h"
-#include "r600_texture.h"
 #include "r600_context.h"
+#include "r600_resource.h"
 #include "r600d.h"
 
 
@@ -90,8 +90,8 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 {
 	struct r600_screen *rscreen = r600_screen(ctx->screen);
 	struct r600_context *rctx = r600_context(ctx);
-	struct r600_texture *rtex;
-	struct r600_buffer *rbuffer;
+	struct r600_resource_texture *rtex;
+	struct r600_resource *rbuffer;
 	struct radeon_state *rstate;
 	unsigned level = state->cbufs[0]->level;
 	unsigned pitch, slice;
@@ -99,8 +99,8 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 	rstate = radeon_state(rscreen->rw, R600_CB0_TYPE, R600_CB0);
 	if (rstate == NULL)
 		return;
-	rtex = (struct r600_texture*)state->cbufs[0]->texture;
-	rbuffer = (struct r600_buffer*)rtex->buffer;
+	rtex = (struct r600_resource_texture*)state->cbufs[0]->texture;
+	rbuffer = &rtex->resource;
 	rstate->bo[0] = radeon_bo_incref(rscreen->rw, rbuffer->bo);
 	rstate->bo[1] = radeon_bo_incref(rscreen->rw, rbuffer->bo);
 	rstate->bo[2] = radeon_bo_incref(rscreen->rw, rbuffer->bo);
@@ -125,8 +125,8 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 	radeon_draw_set_new(rctx->draw, rstate);
 	rctx->db = radeon_state_decref(rctx->db);
 	if(state->zsbuf) {
-		rtex = (struct r600_texture*)state->zsbuf->texture;
-		rbuffer = (struct r600_buffer*)rtex->buffer;
+		rtex = (struct r600_resource_texture*)state->zsbuf->texture;
+		rbuffer = &rtex->resource;
 		rctx->db = radeon_state(rscreen->rw, R600_DB_TYPE, R600_DB);
 		if(rctx->db == NULL)
 		     return;
@@ -397,8 +397,8 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 	struct r600_screen *rscreen = r600_screen(ctx->screen);
 	struct r600_texture_resource *rtexture;
 	const struct util_format_description *desc;
-	struct r600_texture *tmp;
-	struct r600_buffer *rbuffer;
+	struct r600_resource_texture *tmp;
+	struct r600_resource *rbuffer;
 	unsigned format;
 
 	if (r600_conv_pipe_format(texture->format, &format))
@@ -419,8 +419,8 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 	pipe_resource_reference(&rtexture->view.texture, texture);
 	rtexture->view.context = ctx;
 
-	tmp = (struct r600_texture*)texture;
-	rbuffer = (struct r600_buffer*)tmp->buffer;
+	tmp = (struct r600_resource_texture*)texture;
+	rbuffer = &tmp->resource;
 	rtexture->state->bo[0] = radeon_bo_incref(rscreen->rw, rbuffer->bo);
 	rtexture->state->bo[1] = radeon_bo_incref(rscreen->rw, rbuffer->bo);
 	rtexture->state->nbo = 2;

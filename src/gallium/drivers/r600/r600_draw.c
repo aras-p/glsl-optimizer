@@ -33,6 +33,7 @@
 #include <util/u_memory.h>
 #include "r600_screen.h"
 #include "r600_context.h"
+#include "r600_resource.h"
 #include "r600d.h"
 
 struct r600_draw {
@@ -51,7 +52,7 @@ static int r600_draw_common(struct r600_draw *draw)
 	struct r600_context *rctx = r600_context(draw->ctx);
 	struct r600_screen *rscreen = rctx->screen;
 	struct radeon_state *vs_resource;
-	struct r600_buffer *rbuffer;
+	struct r600_resource *rbuffer;
 	unsigned i, j, offset, format, prim;
 	u32 vgt_dma_index_type, vgt_draw_initiator;
 	int r;
@@ -101,7 +102,7 @@ static int r600_draw_common(struct r600_draw *draw)
 
 	for (i = 0 ; i < rctx->vertex_elements->count; i++) {
 		j = rctx->vertex_elements->elements[i].vertex_buffer_index;
-		rbuffer = (struct r600_buffer*)rctx->vertex_buffer[j].buffer;
+		rbuffer = (struct r600_resource*)rctx->vertex_buffer[j].buffer;
 		offset = rctx->vertex_elements->elements[i].src_offset + rctx->vertex_buffer[j].buffer_offset;
 		r = r600_conv_pipe_format(rctx->vertex_elements->elements[i].src_format, &format);
 		if (r)

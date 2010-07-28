@@ -29,9 +29,9 @@
 #include <util/u_format.h>
 #include <util/u_memory.h>
 #include <util/u_blitter.h>
-#include "r600_resource.h"
 #include "r600_screen.h"
 #include "r600_context.h"
+#include "r600_resource.h"
 #include "r600d.h"
 
 static void r600_destroy_context(struct pipe_context *context)
