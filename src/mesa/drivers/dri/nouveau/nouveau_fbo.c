@@ -220,7 +220,7 @@ get_tex_format(struct gl_texture_image *ti)
 	case MESA_FORMAT_RGB565:
 		return GL_RGB5;
 	default:
-		assert(0);
+		return GL_NONE;
 	}
 }
 
@@ -231,7 +231,6 @@ nouveau_render_texture(GLcontext *ctx, struct gl_framebuffer *fb,
 	struct gl_renderbuffer *rb = att->Renderbuffer;
 	struct gl_texture_image *ti =
 		att->Texture->Image[att->CubeMapFace][att->TextureLevel];
-	int ret;
 
 	/* Allocate a renderbuffer object for the texture if we
 	 * haven't already done so. */
@@ -244,9 +243,7 @@ nouveau_render_texture(GLcontext *ctx, struct gl_framebuffer *fb,
 	}
 
 	/* Update the renderbuffer fields from the texture. */
-	ret = set_renderbuffer_format(rb, get_tex_format(ti));
-	assert(ret);
-
+	set_renderbuffer_format(rb, get_tex_format(ti));
 	rb->Width = ti->Width;
 	rb->Height = ti->Height;
 	nouveau_surface_ref(&to_nouveau_teximage(ti)->surface,
