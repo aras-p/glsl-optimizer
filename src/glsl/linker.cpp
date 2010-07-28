@@ -1132,6 +1132,7 @@ assign_varying_locations(gl_shader *producer, gl_shader *consumer)
        * by the previous stage.
        */
       var->shader_in = (var->location != -1);
+      var->mode = ir_var_auto;
    }
 }
 
