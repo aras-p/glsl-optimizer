@@ -132,6 +132,9 @@ glcpp_parser_lex (YYSTYPE *yylval, YYLTYPE *yylloc, glcpp_parser_t *parser);
 static void
 glcpp_parser_lex_from (glcpp_parser_t *parser, token_list_t *list);
 
+static void
+add_builtin_define(glcpp_parser_t *parser, const char *name, int value);
+
 %}
 
 %pure-parser
@@ -142,9 +145,9 @@ glcpp_parser_lex_from (glcpp_parser_t *parser, token_list_t *list);
 %lex-param {glcpp_parser_t *parser}
 
 %expect 0
-%token COMMA_FINAL DEFINED ELIF_EXPANDED HASH HASH_DEFINE_FUNC HASH_DEFINE_OBJ HASH_ELIF HASH_ELSE HASH_ENDIF HASH_IF HASH_IFDEF HASH_IFNDEF HASH_UNDEF IDENTIFIER IF_EXPANDED INTEGER INTEGER_STRING NEWLINE OTHER PLACEHOLDER SPACE
+%token COMMA_FINAL DEFINED ELIF_EXPANDED HASH HASH_DEFINE_FUNC HASH_DEFINE_OBJ HASH_ELIF HASH_ELSE HASH_ENDIF HASH_IF HASH_IFDEF HASH_IFNDEF HASH_UNDEF HASH_VERSION IDENTIFIER IF_EXPANDED INTEGER INTEGER_STRING NEWLINE OTHER PLACEHOLDER SPACE
 %token PASTE
-%type <ival> expression INTEGER operator SPACE
+%type <ival> expression INTEGER operator SPACE integer_constant
 %type <str> IDENTIFIER INTEGER_STRING OTHER
 %type <string_list> identifier_list
 %type <token> preprocessing_token conditional_token
@@ -259,10 +262,19 @@ control_line:
 |	HASH_ENDIF NEWLINE {
 		_glcpp_parser_skip_stack_pop (parser, & @1);
 	}
+|	HASH_VERSION integer_constant NEWLINE {
+		macro_t *macro = hash_table_find (parser->defines, "__VERSION__");
+		if (macro) {
+			hash_table_remove (parser->defines, "__VERSION__");
+			talloc_free (macro);
+		}
+		add_builtin_define (parser, "__VERSION__", $2);
+		glcpp_printf(parser->output, "#version %" PRIiMAX "\n", $2);
+	}
 |	HASH NEWLINE
 ;
 
-expression:
+integer_constant:
 	INTEGER_STRING {
 		if (strlen ($1) >= 3 && strncmp ($1, "0x", 2) == 0) {
 			$$ = strtoll ($1 + 2, NULL, 16);
@@ -275,6 +287,9 @@ expression:
 |	INTEGER {
 		$$ = $1;
 	}
+
+expression:
+	integer_constant
 |	expression OR expression {
 		$$ = $1 || $3;
 	}
@@ -891,12 +906,26 @@ yyerror (YYLTYPE *locp, glcpp_parser_t *parser, const char *error)
 	glcpp_error(locp, parser, "%s", error);
 }
 
+static void add_builtin_define(glcpp_parser_t *parser,
+			       const char *name, int value)
+{
+   token_t *tok;
+   token_list_t *list;
+
+   tok = _token_create_ival (parser, INTEGER, value);
+
+   list = _token_list_create(parser);
+   _token_list_append(list, tok);
+   _define_object_macro(parser, NULL, name, list);
+
+   talloc_unlink(parser, tok);
+}
+
 glcpp_parser_t *
 glcpp_parser_create (const struct gl_extensions *extensions)
 {
 	glcpp_parser_t *parser;
-	token_t *tok;
-	token_list_t *list;
+	int language_version;
 
 	parser = xtalloc (NULL, glcpp_parser_t);
 
@@ -920,32 +949,24 @@ glcpp_parser_create (const struct gl_extensions *extensions)
 	parser->error = 0;
 
 	/* Add pre-defined macros. */
-	tok = _token_create_ival (parser, INTEGER, 1);
+	add_builtin_define(parser, "GL_ARB_draw_buffers", 1);
+	add_builtin_define(parser, "GL_ARB_texture_rectangle", 1);
 
-	list = _token_list_create(parser);
-	_token_list_append(list, tok);
-	_define_object_macro(parser, NULL, "GL_ARB_draw_buffers", list);
+	if (extensions != NULL) {
+	   if (extensions->EXT_texture_array) {
+	      add_builtin_define(parser, "GL_EXT_texture_array", 1);
+	   }
 
-	list = _token_list_create(parser);
-	_token_list_append(list, tok);
-	_define_object_macro(parser, NULL, "GL_ARB_texture_rectangle", list);
-
-	if ((extensions != NULL) && extensions->EXT_texture_array) {
-		list = _token_list_create(parser);
-		_token_list_append(list, tok);
-		_define_object_macro(parser, NULL,
-				     "GL_EXT_texture_array", list);
+	   if (extensions->ARB_fragment_coord_conventions)
+	      add_builtin_define(parser, "GL_ARB_fragment_coord_conventions",
+				 1);
 	}
 
-	if ((extensions != NULL) &&
-	    extensions->ARB_fragment_coord_conventions) {
-		list = _token_list_create(parser);
-		_token_list_append(list, tok);
-		_define_object_macro(parser, NULL,
-				     "GL_ARB_fragment_coord_conventions", list);
+	language_version = 110;
+	if (extensions && extensions->ARB_shading_language_120) {
+	   language_version = 120;
 	}
-
-	talloc_unlink(parser, tok);
+	add_builtin_define(parser, "__VERSION__", language_version);
 
 	return parser;
 }

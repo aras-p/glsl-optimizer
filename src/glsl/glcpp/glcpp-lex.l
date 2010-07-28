@@ -87,9 +87,17 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 		return SPACE;
 }
 
+{HASH}(version) {
+	yylval->str = xtalloc_strdup (yyextra, yytext);
+	yylineno++;
+	yycolumn = 0;
+	yyextra->space_tokens = 0;
+	return HASH_VERSION;
+}
+
 	/* glcpp doesn't handle #extension, #version, or #pragma directives.
 	 * Simply pass them through to the main compiler's lexer/parser. */
-{HASH}(extension|version|pragma)[^\n]+ {
+{HASH}(extension|pragma)[^\n]+ {
 	yylval->str = xtalloc_strdup (yyextra, yytext);
 	yylineno++;
 	yycolumn = 0;
