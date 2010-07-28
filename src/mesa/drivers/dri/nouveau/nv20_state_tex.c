@@ -194,7 +194,8 @@ nv20_emit_tex_obj(GLcontext *ctx, int emit)
 		| nvgl_wrap_mode(t->WrapS) << 0;
 
 	tx_filter = nvgl_filter_mode(t->MagFilter) << 24
-		| nvgl_filter_mode(t->MinFilter) << 16;
+		| nvgl_filter_mode(t->MinFilter) << 16
+		| 2 << 12;
 
 	tx_enable = NV20TCL_TX_ENABLE_ENABLE
 		| log2i(t->MaxAnisotropy) << 4;
