@@ -4,6 +4,9 @@ env = env.Clone()
 
 env.Prepend(LIBS = [gallium])
 
+if platform == 'sunos5':
+    env.Append(LIBS = ['m'])
+
 progs = [
     'pipe_barrier_test',
     'u_cache_test',
