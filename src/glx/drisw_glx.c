@@ -43,7 +43,7 @@ struct drisw_context
 
 struct drisw_screen
 {
-   __GLXscreenConfigs base;
+   struct glx_screen base;
 
    __DRIscreen *driScreen;
    __GLXDRIscreen vtable;
@@ -290,7 +290,7 @@ static const struct glx_context_vtable drisw_context_vtable = {
 };
 
 static __GLXcontext *
-drisw_create_context(__GLXscreenConfigs *base,
+drisw_create_context(struct glx_screen *base,
 		     struct glx_config *config_base,
 		     GLXContext shareList, int renderType)
 {
@@ -346,7 +346,7 @@ driDestroyDrawable(__GLXDRIdrawable * pdraw)
 }
 
 static __GLXDRIdrawable *
-driCreateDrawable(__GLXscreenConfigs *base, XID xDrawable,
+driCreateDrawable(struct glx_screen *base, XID xDrawable,
 		  GLXDrawable drawable, struct glx_config *modes)
 {
    struct drisw_drawable *pdp;
@@ -402,7 +402,7 @@ driSwapBuffers(__GLXDRIdrawable * pdraw,
 }
 
 static void
-driDestroyScreen(__GLXscreenConfigs *base)
+driDestroyScreen(struct glx_screen *base)
 {
    struct drisw_screen *psc = (struct drisw_screen *) base;
 
@@ -432,7 +432,7 @@ static const struct glx_screen_vtable drisw_screen_vtable = {
    drisw_create_context
 };
 
-static __GLXscreenConfigs *
+static struct glx_screen *
 driCreateScreen(int screen, __GLXdisplayPrivate *priv)
 {
    __GLXDRIscreen *psp;

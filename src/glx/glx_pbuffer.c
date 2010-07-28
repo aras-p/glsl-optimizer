@@ -189,9 +189,9 @@ CreateDRIDrawable(Display *dpy, struct glx_config *config,
 {
    __GLXdisplayPrivate *const priv = __glXInitialize(dpy);
    __GLXDRIdrawable *pdraw;
-   __GLXscreenConfigs *psc;
+   struct glx_screen *psc;
 
-   psc = priv->screenConfigs[config->screen];
+   psc = priv->screens[config->screen];
    if (psc->driScreen == NULL)
       return;
 

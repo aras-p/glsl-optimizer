@@ -67,7 +67,6 @@
 
 #define __GLX_MAX_TEXTURE_UNITS 32
 
-typedef struct __GLXscreenConfigsRec __GLXscreenConfigs;
 typedef struct __GLXcontextRec __GLXcontext;
 typedef struct __GLXdrawableRec __GLXdrawable;
 typedef struct __GLXdisplayPrivateRec __GLXdisplayPrivate;
@@ -102,18 +101,18 @@ struct __GLXDRIdisplayRec
      */
    void (*destroyDisplay) (__GLXDRIdisplay * display);
 
-   __GLXscreenConfigs *(*createScreen)(int screen, __GLXdisplayPrivate * priv);
+   struct glx_screen *(*createScreen)(int screen, __GLXdisplayPrivate * priv);
 };
 
 struct __GLXDRIscreenRec {
 
-   void (*destroyScreen)(__GLXscreenConfigs *psc);
+   void (*destroyScreen)(struct glx_screen *psc);
 
-   __GLXcontext *(*createContext)(__GLXscreenConfigs *psc,
+   __GLXcontext *(*createContext)(struct glx_screen *psc,
 				  struct glx_config *config,
 				  GLXContext shareList, int renderType);
 
-   __GLXDRIdrawable *(*createDrawable)(__GLXscreenConfigs *psc,
+   __GLXDRIdrawable *(*createDrawable)(struct glx_screen *psc,
 				       XID drawable,
 				       GLXDrawable glxDrawable,
 				       struct glx_config *config);
@@ -122,7 +121,7 @@ struct __GLXDRIscreenRec {
 			  int64_t divisor, int64_t remainder);
    void (*copySubBuffer)(__GLXDRIdrawable *pdraw,
 			 int x, int y, int width, int height);
-   int (*getDrawableMSC)(__GLXscreenConfigs *psc, __GLXDRIdrawable *pdraw,
+   int (*getDrawableMSC)(struct glx_screen *psc, __GLXDRIdrawable *pdraw,
 			 int64_t *ust, int64_t *msc, int64_t *sbc);
    int (*waitForMSC)(__GLXDRIdrawable *pdraw, int64_t target_msc,
 		     int64_t divisor, int64_t remainder, int64_t *ust,
@@ -146,7 +145,7 @@ struct __GLXDRIdrawableRec
 
    XID xDrawable;
    XID drawable;
-   __GLXscreenConfigs *psc;
+   struct glx_screen *psc;
    GLenum textureTarget;
    GLenum textureFormat;        /* EXT_texture_from_pixmap support */
    unsigned long eventMask;
@@ -284,7 +283,7 @@ struct __GLXcontextRec
      * Screen number.
      */
    GLint screen;
-   __GLXscreenConfigs *psc;
+   struct glx_screen *psc;
 
     /**
      * \c GL_TRUE if the context was created with ImportContext, which
@@ -445,7 +444,7 @@ struct __GLXcontextRec
 
 extern Bool
 glx_context_init(__GLXcontext *gc,
-		 __GLXscreenConfigs *psc, struct glx_config *fbconfig);
+		 struct glx_screen *psc, struct glx_config *fbconfig);
 
 #define __glXSetError(gc,code)  \
    if (!(gc)->error) {          \
@@ -487,12 +486,12 @@ extern void __glFreeAttributeState(__GLXcontext *);
  * a pointer to the config data for that screen (if the screen supports GL).
  */
 struct glx_screen_vtable {
-   __GLXcontext *(*create_context)(__GLXscreenConfigs *psc,
+   __GLXcontext *(*create_context)(struct glx_screen *psc,
 				   struct glx_config *config,
 				   GLXContext shareList, int renderType);
 };
 
-struct __GLXscreenConfigsRec
+struct glx_screen
 {
    const struct glx_screen_vtable *vtable;
 
@@ -528,7 +527,7 @@ struct __GLXscreenConfigsRec
      * Per-screen dynamic GLX extension tracking.  The \c direct_support
      * field only contains enough bits for 64 extensions.  Should libGL
      * ever need to track more than 64 GLX extensions, we can safely grow
-     * this field.  The \c __GLXscreenConfigs structure is not used outside
+     * this field.  The \c struct glx_screen structure is not used outside
      * libGL.
      */
    /*@{ */
@@ -584,7 +583,7 @@ struct __GLXdisplayPrivateRec
      * Also, per screen data which now includes the server \c GLX_EXTENSION
      * string.
      */
-   __GLXscreenConfigs **screenConfigs;
+   struct glx_screen **screens;
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
    __glxHashTable *drawHash;
@@ -599,7 +598,7 @@ struct __GLXdisplayPrivateRec
 };
 
 extern int
-glx_screen_init(__GLXscreenConfigs *psc,
+glx_screen_init(struct glx_screen *psc,
 		int screen, __GLXdisplayPrivate * priv);
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
@@ -782,14 +781,14 @@ __glxGetMscRate(__GLXDRIdrawable *glxDraw,
 XExtDisplayInfo *__glXFindDisplay (Display *dpy);
 
 extern void
-GarbageCollectDRIDrawables(__GLXscreenConfigs *psc);
+GarbageCollectDRIDrawables(struct glx_screen *psc);
 
 extern __GLXDRIdrawable *
 GetGLXDRIDrawable(Display *dpy, GLXDrawable drawable);
 
 #endif
 
-extern __GLXscreenConfigs *
+extern struct glx_screen *
 indirect_create_screen(int screen, __GLXdisplayPrivate * priv);
 
 #endif /* !__GLX_client_h__ */

@@ -76,7 +76,7 @@ struct dri2_display
 };
 
 struct dri2_screen {
-   __GLXscreenConfigs base;
+   struct glx_screen base;
 
    __DRIscreen *driScreen;
    __GLXDRIscreen vtable;
@@ -155,7 +155,7 @@ dri2UnbindContext(__GLXcontext *context)
 }
 
 static __GLXcontext *
-dri2_create_context(__GLXscreenConfigs *base,
+dri2_create_context(struct glx_screen *base,
 		    struct glx_config *config_base,
 		    GLXContext shareList, int renderType)
 {
@@ -211,7 +211,7 @@ dri2DestroyDrawable(__GLXDRIdrawable *base)
 }
 
 static __GLXDRIdrawable *
-dri2CreateDrawable(__GLXscreenConfigs *base, XID xDrawable,
+dri2CreateDrawable(struct glx_screen *base, XID xDrawable,
 		   GLXDrawable drawable, struct glx_config *config_base)
 {
    struct dri2_drawable *pdraw;
@@ -288,7 +288,7 @@ dri2CreateDrawable(__GLXscreenConfigs *base, XID xDrawable,
 #ifdef X_DRI2GetMSC
 
 static int
-dri2DrawableGetMSC(__GLXscreenConfigs *psc, __GLXDRIdrawable *pdraw,
+dri2DrawableGetMSC(struct glx_screen *psc, __GLXDRIdrawable *pdraw,
 		   int64_t *ust, int64_t *msc, int64_t *sbc)
 {
    CARD64 dri2_ust, dri2_msc, dri2_sbc;
@@ -442,7 +442,7 @@ dri2FlushFrontBuffer(__DRIdrawable *driDrawable, void *loaderPrivate)
 
 
 static void
-dri2DestroyScreen(__GLXscreenConfigs *base)
+dri2DestroyScreen(struct glx_screen *base)
 {
    struct dri2_screen *psc = (struct dri2_screen *) base;
 
@@ -724,7 +724,7 @@ static const struct glx_screen_vtable dri2_screen_vtable = {
    dri2_create_context
 };
 
-static __GLXscreenConfigs *
+static struct glx_screen *
 dri2CreateScreen(int screen, __GLXdisplayPrivate * priv)
 {
    const __DRIconfig **driver_configs;

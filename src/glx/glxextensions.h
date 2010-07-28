@@ -234,13 +234,13 @@ enum
 
 #define __GL_EXT_BYTES   ((__NUM_GL_EXTS + 7) / 8)
 
-struct __GLXscreenConfigsRec;
+struct glx_screen;
 struct __GLXcontextRec;
 
-extern GLboolean __glXExtensionBitIsEnabled(struct __GLXscreenConfigsRec *psc,
+extern GLboolean __glXExtensionBitIsEnabled(struct glx_screen *psc,
                                             unsigned bit);
 extern const char *__glXGetClientExtensions(void);
-extern void __glXCalculateUsableExtensions(struct __GLXscreenConfigsRec *psc,
+extern void __glXCalculateUsableExtensions(struct glx_screen *psc,
                                            GLboolean
                                            display_is_direct_capable,
                                            int server_minor_version);
@@ -256,8 +256,7 @@ extern GLboolean __glExtensionBitIsEnabled(const struct __GLXcontextRec *gc,
                                            unsigned bit);
 
 extern void
-__glXEnableDirectExtension(struct __GLXscreenConfigsRec *psc,
-                           const char *name);
+__glXEnableDirectExtension(struct glx_screen *psc, const char *name);
 
 /* Source-level backwards compatibility with old drivers. They won't
  * find the respective functions, though. 

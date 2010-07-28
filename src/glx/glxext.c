@@ -199,13 +199,13 @@ __glXEventToWire(Display *dpy, XEvent *event, xEvent *wire)
 static void
 FreeScreenConfigs(__GLXdisplayPrivate * priv)
 {
-   __GLXscreenConfigs *psc;
+   struct glx_screen *psc;
    GLint i, screens;
 
    /* Free screen configuration information */
    screens = ScreenCount(priv->dpy);
    for (i = 0; i < screens; i++) {
-      psc = priv->screenConfigs[i];
+      psc = priv->screens[i];
       if (psc->configs) {
 	 glx_config_destroy_list(psc->configs);
          if (psc->effectiveGLXexts)
@@ -228,8 +228,8 @@ FreeScreenConfigs(__GLXdisplayPrivate * priv)
       Xfree(psc);
 #endif
    }
-   XFree((char *) priv->screenConfigs);
-   priv->screenConfigs = NULL;
+   XFree((char *) priv->screens);
+   priv->screens = NULL;
 }
 
 /*
@@ -646,7 +646,7 @@ createConfigsFromProperties(Display * dpy, int nvisuals, int nprops,
 }
 
 static GLboolean
-getVisualConfigs(__GLXscreenConfigs *psc,
+getVisualConfigs(struct glx_screen *psc,
 		 __GLXdisplayPrivate *priv, int screen)
 {
    xGLXGetVisualConfigsReq *req;
@@ -675,7 +675,7 @@ getVisualConfigs(__GLXscreenConfigs *psc,
 }
 
 static GLboolean
-getFBConfigs(__GLXscreenConfigs *psc, __GLXdisplayPrivate *priv, int screen)
+getFBConfigs(struct glx_screen *psc, __GLXdisplayPrivate *priv, int screen)
 {
    xGLXGetFBConfigsReq *fb_req;
    xGLXGetFBConfigsSGIXReq *sgi_req;
@@ -722,7 +722,7 @@ getFBConfigs(__GLXscreenConfigs *psc, __GLXdisplayPrivate *priv, int screen)
 }
 
 _X_HIDDEN Bool
-glx_screen_init(__GLXscreenConfigs *psc,
+glx_screen_init(struct glx_screen *psc,
 		int screen, __GLXdisplayPrivate * priv)
 {
    /* Initialize per screen dynamic client GLX extensions */
@@ -744,15 +744,15 @@ glx_screen_init(__GLXscreenConfigs *psc,
 static Bool
 AllocAndFetchScreenConfigs(Display * dpy, __GLXdisplayPrivate * priv)
 {
-   __GLXscreenConfigs *psc;
+   struct glx_screen *psc;
    GLint i, screens;
 
    /*
     ** First allocate memory for the array of per screen configs.
     */
    screens = ScreenCount(dpy);
-   priv->screenConfigs = Xmalloc(screens * sizeof *priv->screenConfigs);
-   if (!priv->screenConfigs)
+   priv->screens = Xmalloc(screens * sizeof *priv->screens);
+   if (!priv->screens)
       return GL_FALSE;
 
    priv->serverGLXversion =
@@ -774,7 +774,7 @@ AllocAndFetchScreenConfigs(Display * dpy, __GLXdisplayPrivate * priv)
 #endif
       if (psc == NULL)
 	 psc = indirect_create_screen(i, priv);
-      priv->screenConfigs[i] = psc;
+      priv->screens[i] = psc;
    }
    SyncHandle();
    return GL_TRUE;

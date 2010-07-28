@@ -61,7 +61,7 @@ struct dri_display
 
 struct dri_screen
 {
-   __GLXscreenConfigs base;
+   struct glx_screen base;
 
    __DRIscreen *driScreen;
    __GLXDRIscreen vtable;
@@ -226,7 +226,7 @@ __glXReportDamage(__DRIdrawable * driDraw,
    int i;
    int x_off, y_off;
    __GLXDRIdrawable *glxDraw = loaderPrivate;
-   __GLXscreenConfigs *psc = glxDraw->psc;
+   struct glx_screen *psc = glxDraw->psc;
    Display *dpy = psc->dpy;
    Drawable drawable;
 
@@ -278,7 +278,7 @@ __glXDRIGetDrawableInfo(__DRIdrawable * drawable,
                         void *loaderPrivate)
 {
    __GLXDRIdrawable *glxDraw = loaderPrivate;
-   __GLXscreenConfigs *psc = glxDraw->psc;
+   struct glx_screen *psc = glxDraw->psc;
    Display *dpy = psc->dpy;
 
    return XF86DRIGetDrawableInfo(dpy, psc->scr, glxDraw->drawable,
@@ -550,7 +550,7 @@ static const struct glx_context_vtable dri_context_vtable = {
 };
 
 static __GLXcontext *
-dri_create_context(__GLXscreenConfigs *base,
+dri_create_context(struct glx_screen *base,
 		   struct glx_config *config_base,
 		   GLXContext shareList, int renderType)
 {
@@ -615,7 +615,7 @@ driDestroyDrawable(__GLXDRIdrawable * pdraw)
 }
 
 static __GLXDRIdrawable *
-driCreateDrawable(__GLXscreenConfigs *base,
+driCreateDrawable(struct glx_screen *base,
                   XID xDrawable,
                   GLXDrawable drawable, struct glx_config *config_base)
 {
@@ -685,7 +685,7 @@ driCopySubBuffer(__GLXDRIdrawable * pdraw,
 }
 
 static void
-driDestroyScreen(__GLXscreenConfigs *base)
+driDestroyScreen(struct glx_screen *base)
 {
    struct dri_screen *psc = (struct dri_screen *) base;
 
@@ -701,7 +701,7 @@ driDestroyScreen(__GLXscreenConfigs *base)
 #ifdef __DRI_SWAP_BUFFER_COUNTER
 
 static int
-driDrawableGetMSC(__GLXscreenConfigs *base, __GLXDRIdrawable *pdraw,
+driDrawableGetMSC(struct glx_screen *base, __GLXDRIdrawable *pdraw,
 		   int64_t *ust, int64_t *msc, int64_t *sbc)
 {
    struct dri_screen *psc = (struct dri_screen *) base;
@@ -826,7 +826,7 @@ static const struct glx_screen_vtable dri_screen_vtable = {
    dri_create_context
 };
 
-static __GLXscreenConfigs *
+static struct glx_screen *
 driCreateScreen(int screen, __GLXdisplayPrivate *priv)
 {
    struct dri_display *pdp;

@@ -290,12 +290,12 @@ FetchDRIDrawable(Display * dpy, GLXDrawable glxDrawable, GLXContext gc)
 {
    __GLXdisplayPrivate *const priv = __glXInitialize(dpy);
    __GLXDRIdrawable *pdraw;
-   __GLXscreenConfigs *psc;
+   struct glx_screen *psc;
 
    if (priv == NULL)
       return NULL;
 
-   psc = priv->screenConfigs[gc->screen];
+   psc = priv->screens[gc->screen];
    if (priv->drawHash == NULL)
       return NULL;
 
