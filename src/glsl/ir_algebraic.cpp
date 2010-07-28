@@ -213,13 +213,9 @@ ir_algebraic_visitor::handle_expression(ir_rvalue *in_ir)
 	 return ir->operands[0];
       }
 
-      if (is_vec_zero(op_const[0]) ||
-	  is_vec_zero(op_const[1])) {
-	 ir_constant_data zero_data;
-	 memset(&zero_data, 0, sizeof(zero_data));
-
+      if (is_vec_zero(op_const[0]) || is_vec_zero(op_const[1])) {
 	 this->progress = true;
-	 return new(ir) ir_constant(ir->type, &zero_data);
+	 return ir_constant::zero(ir, ir->type);
       }
       break;
 
