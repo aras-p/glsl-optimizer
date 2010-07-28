@@ -481,18 +481,26 @@ static void r600_set_fragment_sampler_views(struct pipe_context *ctx,
 	struct r600_texture_resource *rtexture;
 	struct r600_context *rctx = r600_context(ctx);
 	struct pipe_sampler_view *tmp;
-	unsigned i;
+	unsigned i, real_num_views = 0;
 
 	if (views == NULL)
 		return;
+
+	for (i = 0; i < count; i++) {
+		if (views[i])
+			real_num_views++;
+	}
 
 	for (i = 0; i < rctx->nps_view; i++) {
 		tmp = &rctx->ps_view[i]->view;
 		pipe_sampler_view_reference(&tmp, NULL);
 		rctx->ps_view[i] = NULL;
 	}
-	rctx->nps_view = count;
+	rctx->nps_view = real_num_views;
 	for (i = 0; i < count; i++) {
+
+		if (!views[i])
+			continue;
 		rtexture = LIST_ENTRY(struct r600_texture_resource, views[i], view);
 		rctx->ps_view[i] = rtexture;
 		tmp = NULL;
@@ -508,18 +516,24 @@ static void r600_set_vertex_sampler_views(struct pipe_context *ctx,
 	struct r600_texture_resource *rtexture;
 	struct r600_context *rctx = r600_context(ctx);
 	struct pipe_sampler_view *tmp;
-	unsigned i;
+	unsigned i, real_num_views = 0;
 
 	if (views == NULL)
 		return;
 
+	for (i = 0; i < count; i++) {
+		if (views[i])
+			real_num_views++;
+	}
 	for (i = 0; i < rctx->nvs_view; i++) {
 		tmp = &rctx->vs_view[i]->view;
 		pipe_sampler_view_reference(&tmp, NULL);
 		rctx->vs_view[i] = NULL;
 	}
-	rctx->nps_view = count;
+	rctx->nvs_view = real_num_views;
 	for (i = 0; i < count; i++) {
+		if (!views[i])
+			continue;
 		rtexture = LIST_ENTRY(struct r600_texture_resource, views[i], view);
 		rctx->vs_view[i] = rtexture;
 		tmp = NULL;
