@@ -82,7 +82,7 @@ GLSL2_OBJECTS = \
 
 ### Basic defines ###
 
-DEFINES = \
+DEFINES += \
 	$(LIBRARY_DEFINES) \
 	$(API_DEFINES)
 
