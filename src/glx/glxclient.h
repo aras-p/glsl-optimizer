@@ -51,7 +51,7 @@
 #endif
 #include "GL/glxproto.h"
 #include "glapi/glapitable.h"
-#include "glcontextmodes.h"
+#include "glxconfig.h"
 #include "glxhash.h"
 #if defined( PTHREADS )
 # include <pthread.h>

@@ -39,7 +39,6 @@
 #include <dlfcn.h>
 #include <stdarg.h>
 #include "glxclient.h"
-#include "glcontextmodes.h"
 #include "dri_common.h"
 
 #ifndef RTLD_NOW

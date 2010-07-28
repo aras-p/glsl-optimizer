@@ -23,7 +23,7 @@
  */
 
 /**
- * \file glcontextmodes.c
+ * \file glxconfig.c
  * Utility routines for working with \c struct glx_config structures.  At
  * some point most or all of these functions will be moved to the Mesa
  * code base.
@@ -36,7 +36,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "glcontextmodes.h"
+#include "glxconfig.h"
 
 #define NUM_VISUAL_TYPES   6
 

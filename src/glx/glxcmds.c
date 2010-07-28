@@ -36,7 +36,6 @@
 #include "glxclient.h"
 #include "glapi.h"
 #include "glxextensions.h"
-#include "glcontextmodes.h"
 
 #ifdef GLX_DIRECT_RENDERING
 #ifdef GLX_USE_APPLEGL

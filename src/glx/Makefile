@@ -5,10 +5,10 @@ EXTRA_DEFINES = -DXF86VIDMODE -D_REENTRANT \
                 -DDEFAULT_DRIVER_DIR=\"$(DRI_DRIVER_SEARCH_DIR)\"
 
 SOURCES = \
-	  glcontextmodes.c \
 	  clientattrib.c \
 	  compsize.c \
 	  eval.c \
+	  glxconfig.c \
 	  glxcmds.c \
 	  glxcurrent.c \
 	  glxext.c \

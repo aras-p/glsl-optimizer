@@ -47,7 +47,6 @@
 #include "apple_visual.h"
 #endif
 #include "glxextensions.h"
-#include "glcontextmodes.h"
 
 #ifdef USE_XCB
 #include <X11/Xlib-xcb.h>
