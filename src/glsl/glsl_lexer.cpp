@@ -1994,26 +1994,54 @@ return USING;
 case 140:
 YY_RULE_SETUP
 #line 321 "glsl_lexer.lpp"
-return LOWP;
+{
+		  if (yyextra->language_version >= 120){
+		      return LOWP;
+		   } else {
+		      yylval->identifier = strdup(yytext);
+		      return IDENTIFIER;
+		   }
+		}
 	YY_BREAK
 case 141:
 YY_RULE_SETUP
-#line 322 "glsl_lexer.lpp"
-return MEDIUMP;
+#line 329 "glsl_lexer.lpp"
+{
+		  if (yyextra->language_version >= 120){
+		      return MEDIUMP;
+		   } else {
+		      yylval->identifier = strdup(yytext);
+		      return IDENTIFIER;
+		   }
+		}return MEDIUMP;
 	YY_BREAK
 case 142:
 YY_RULE_SETUP
-#line 323 "glsl_lexer.lpp"
-return HIGHP;
+#line 337 "glsl_lexer.lpp"
+{
+		  if (yyextra->language_version >= 120){
+		      return HIGHP;
+		   } else {
+		      yylval->identifier = strdup(yytext);
+		      return IDENTIFIER;
+		   }
+		}
 	YY_BREAK
 case 143:
 YY_RULE_SETUP
-#line 324 "glsl_lexer.lpp"
-return PRECISION;
+#line 345 "glsl_lexer.lpp"
+{
+		  if (yyextra->language_version >= 120){
+		      return PRECISION;
+		   } else {
+		      yylval->identifier = strdup(yytext);
+		      return IDENTIFIER;
+		   }
+		}
 	YY_BREAK
 case 144:
 YY_RULE_SETUP
-#line 326 "glsl_lexer.lpp"
+#line 354 "glsl_lexer.lpp"
 {
 			    struct _mesa_glsl_parse_state *state = yyextra;
 			    void *ctx = state;	
@@ -2023,15 +2051,15 @@ YY_RULE_SETUP
 	YY_BREAK
 case 145:
 YY_RULE_SETUP
-#line 333 "glsl_lexer.lpp"
+#line 361 "glsl_lexer.lpp"
 { return yytext[0]; }
 	YY_BREAK
 case 146:
 YY_RULE_SETUP
-#line 335 "glsl_lexer.lpp"
+#line 363 "glsl_lexer.lpp"
 ECHO;
 	YY_BREAK
-#line 2035 "glsl_lexer.cpp"
+#line 2063 "glsl_lexer.cpp"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(PP):
 	yyterminate();
@@ -3173,7 +3201,7 @@ void _mesa_glsl_free (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 335 "glsl_lexer.lpp"
+#line 363 "glsl_lexer.lpp"
 
 
 

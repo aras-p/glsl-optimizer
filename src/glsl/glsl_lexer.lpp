@@ -318,10 +318,38 @@ namespace	return NAMESPACE;
 using		return USING;
 
     /* Additional reserved words in GLSL 1.20. */
-lowp		return LOWP;
-mediump		return MEDIUMP;
-highp		return HIGHP;
-precision	return PRECISION;
+lowp		{
+		  if (yyextra->language_version >= 120){
+		      return LOWP;
+		   } else {
+		      yylval->identifier = strdup(yytext);
+		      return IDENTIFIER;
+		   }
+		}
+mediump		{
+		  if (yyextra->language_version >= 120){
+		      return MEDIUMP;
+		   } else {
+		      yylval->identifier = strdup(yytext);
+		      return IDENTIFIER;
+		   }
+		}return MEDIUMP;
+highp		{
+		  if (yyextra->language_version >= 120){
+		      return HIGHP;
+		   } else {
+		      yylval->identifier = strdup(yytext);
+		      return IDENTIFIER;
+		   }
+		}
+precision	{
+		  if (yyextra->language_version >= 120){
+		      return PRECISION;
+		   } else {
+		      yylval->identifier = strdup(yytext);
+		      return IDENTIFIER;
+		   }
+		}
 
 [_a-zA-Z][_a-zA-Z0-9]*	{
 			    struct _mesa_glsl_parse_state *state = yyextra;
