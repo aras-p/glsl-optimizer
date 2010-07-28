@@ -946,6 +946,181 @@ ir_to_mesa_visitor::visit(ir_swizzle *ir)
    this->result = src_reg;
 }
 
+static const struct {
+   const char *name;
+   const char *field;
+   int tokens[STATE_LENGTH];
+   int swizzle;
+   bool array_indexed;
+} statevars[] = {
+   {"gl_DepthRange", "near",
+    {STATE_DEPTH_RANGE, 0, 0}, SWIZZLE_XXXX},
+   {"gl_DepthRange", "far",
+    {STATE_DEPTH_RANGE, 0, 0}, SWIZZLE_YYYY},
+   {"gl_DepthRange", "diff",
+    {STATE_DEPTH_RANGE, 0, 0}, SWIZZLE_ZZZZ},
+
+   {"gl_ClipPlane", NULL,
+    {STATE_CLIPPLANE, 0, 0}, SWIZZLE_XYZW, true}
+,
+   {"gl_Point", "size",
+    {STATE_POINT_SIZE}, SWIZZLE_XXXX},
+   {"gl_Point", "sizeMin",
+    {STATE_POINT_SIZE}, SWIZZLE_YYYY},
+   {"gl_Point", "sizeMax",
+    {STATE_POINT_SIZE}, SWIZZLE_ZZZZ},
+   {"gl_Point", "fadeThresholdSize",
+    {STATE_POINT_SIZE}, SWIZZLE_WWWW},
+   {"gl_Point", "distanceConstantAttenuation",
+    {STATE_POINT_ATTENUATION}, SWIZZLE_XXXX},
+   {"gl_Point", "distanceLinearAttenuation",
+    {STATE_POINT_ATTENUATION}, SWIZZLE_YYYY},
+   {"gl_Point", "distanceQuadraticAttenuation",
+    {STATE_POINT_ATTENUATION}, SWIZZLE_ZZZZ},
+
+   {"gl_FrontMaterial", "emission",
+    {STATE_MATERIAL, 0, STATE_EMISSION}, SWIZZLE_XYZW},
+   {"gl_FrontMaterial", "ambient",
+    {STATE_MATERIAL, 0, STATE_AMBIENT}, SWIZZLE_XYZW},
+   {"gl_FrontMaterial", "diffuse",
+    {STATE_MATERIAL, 0, STATE_DIFFUSE}, SWIZZLE_XYZW},
+   {"gl_FrontMaterial", "specular",
+    {STATE_MATERIAL, 0, STATE_SPECULAR}, SWIZZLE_XYZW},
+   {"gl_FrontMaterial", "shininess",
+    {STATE_MATERIAL, 0, STATE_SHININESS}, SWIZZLE_XXXX},
+
+   {"gl_BackMaterial", "emission",
+    {STATE_MATERIAL, 1, STATE_EMISSION}, SWIZZLE_XYZW},
+   {"gl_BackMaterial", "ambient",
+    {STATE_MATERIAL, 1, STATE_AMBIENT}, SWIZZLE_XYZW},
+   {"gl_BackMaterial", "diffuse",
+    {STATE_MATERIAL, 1, STATE_DIFFUSE}, SWIZZLE_XYZW},
+   {"gl_BackMaterial", "specular",
+    {STATE_MATERIAL, 1, STATE_SPECULAR}, SWIZZLE_XYZW},
+   {"gl_BackMaterial", "shininess",
+    {STATE_MATERIAL, 1, STATE_SHININESS}, SWIZZLE_XXXX},
+
+   {"gl_LightSource", "ambient",
+    {STATE_LIGHT, 0, STATE_AMBIENT}, SWIZZLE_XYZW, true},
+   {"gl_LightSource", "diffuse",
+    {STATE_LIGHT, 0, STATE_DIFFUSE}, SWIZZLE_XYZW, true},
+   {"gl_LightSource", "specular",
+    {STATE_LIGHT, 0, STATE_SPECULAR}, SWIZZLE_XYZW, true},
+   {"gl_LightSource", "position",
+    {STATE_LIGHT, 0, STATE_POSITION}, SWIZZLE_XYZW, true},
+   {"gl_LightSource", "halfVector",
+    {STATE_LIGHT, 0, STATE_HALF_VECTOR}, SWIZZLE_XYZW, true},
+   {"gl_LightSource", "spotDirection",
+    {STATE_LIGHT, 0, STATE_SPOT_DIRECTION}, SWIZZLE_XYZW, true},
+   {"gl_LightSource", "spotCosCutoff",
+    {STATE_LIGHT, 0, STATE_SPOT_DIRECTION}, SWIZZLE_WWWW, true},
+   {"gl_LightSource", "spotCutoff",
+    {STATE_LIGHT, 0, STATE_SPOT_CUTOFF}, SWIZZLE_XXXX, true},
+   {"gl_LightSource", "spotExponent",
+    {STATE_LIGHT, 0, STATE_ATTENUATION}, SWIZZLE_WWWW, true},
+   {"gl_LightSource", "constantAttenuation",
+    {STATE_LIGHT, 0, STATE_ATTENUATION}, SWIZZLE_XXXX, true},
+   {"gl_LightSource", "linearAttenuation",
+    {STATE_LIGHT, 0, STATE_ATTENUATION}, SWIZZLE_YYYY, true},
+   {"gl_LightSource", "quadraticAttenuation",
+    {STATE_LIGHT, 0, STATE_ATTENUATION}, SWIZZLE_ZZZZ, true},
+
+   {"gl_LightModel", NULL,
+    {STATE_LIGHTMODEL_AMBIENT, 0}, SWIZZLE_XYZW},
+
+   {"gl_FrontLightModelProduct", NULL,
+    {STATE_LIGHTMODEL_SCENECOLOR, 0}, SWIZZLE_XYZW},
+   {"gl_BackLightModelProduct", NULL,
+    {STATE_LIGHTMODEL_SCENECOLOR, 1}, SWIZZLE_XYZW},
+
+   {"gl_FrontLightProduct", "ambient",
+    {STATE_LIGHTPROD, 0, 0, STATE_AMBIENT}, SWIZZLE_XYZW, true},
+   {"gl_FrontLightProduct", "diffuse",
+    {STATE_LIGHTPROD, 0, 0, STATE_DIFFUSE}, SWIZZLE_XYZW, true},
+   {"gl_FrontLightProduct", "specular",
+    {STATE_LIGHTPROD, 0, 0, STATE_SPECULAR}, SWIZZLE_XYZW, true},
+
+   {"gl_BackLightProduct", "ambient",
+    {STATE_LIGHTPROD, 0, 1, STATE_AMBIENT}, SWIZZLE_XYZW, true},
+   {"gl_BackLightProduct", "diffuse",
+    {STATE_LIGHTPROD, 0, 1, STATE_DIFFUSE}, SWIZZLE_XYZW, true},
+   {"gl_BackLightProduct", "specular",
+    {STATE_LIGHTPROD, 0, 1, STATE_SPECULAR}, SWIZZLE_XYZW, true},
+
+   {"gl_TextureEnvColor", "ambient",
+    {STATE_TEXENV_COLOR, 0}, SWIZZLE_XYZW, true},
+
+   {"gl_EyePlaneS", NULL,
+    {STATE_TEXGEN, 0, STATE_TEXGEN_EYE_S}, SWIZZLE_XYZW, true},
+   {"gl_EyePlaneT", NULL,
+    {STATE_TEXGEN, 0, STATE_TEXGEN_EYE_T}, SWIZZLE_XYZW, true},
+   {"gl_EyePlaneR", NULL,
+    {STATE_TEXGEN, 0, STATE_TEXGEN_EYE_R}, SWIZZLE_XYZW, true},
+   {"gl_EyePlaneQ", NULL,
+    {STATE_TEXGEN, 0, STATE_TEXGEN_EYE_Q}, SWIZZLE_XYZW, true},
+
+   {"gl_ObjectPlaneS", NULL,
+    {STATE_TEXGEN, 0, STATE_TEXGEN_OBJECT_S}, SWIZZLE_XYZW, true},
+   {"gl_ObjectPlaneT", NULL,
+    {STATE_TEXGEN, 0, STATE_TEXGEN_OBJECT_T}, SWIZZLE_XYZW, true},
+   {"gl_ObjectPlaneR", NULL,
+    {STATE_TEXGEN, 0, STATE_TEXGEN_OBJECT_R}, SWIZZLE_XYZW, true},
+   {"gl_ObjectPlaneQ", NULL,
+    {STATE_TEXGEN, 0, STATE_TEXGEN_OBJECT_Q}, SWIZZLE_XYZW, true},
+
+   {"gl_Fog", "color",
+    {STATE_FOG_COLOR}, SWIZZLE_XYZW},
+   {"gl_Fog", "density",
+    {STATE_FOG_PARAMS}, SWIZZLE_XXXX},
+   {"gl_Fog", "start",
+    {STATE_FOG_PARAMS}, SWIZZLE_YYYY},
+   {"gl_Fog", "end",
+    {STATE_FOG_PARAMS}, SWIZZLE_ZZZZ},
+   {"gl_Fog", "scale",
+    {STATE_FOG_PARAMS}, SWIZZLE_WWWW},
+};
+
+static ir_to_mesa_src_reg
+get_builtin_uniform_reg(struct gl_program *prog,
+			const char *name, int array_index, const char *field)
+{
+   unsigned int i;
+   ir_to_mesa_src_reg src_reg;
+   int tokens[STATE_LENGTH];
+
+   for (i = 0; i < Elements(statevars); i++) {
+      if (strcmp(statevars[i].name, name) != 0)
+	 continue;
+      if (!field && statevars[i].field) {
+	 assert(!"FINISHME: whole-structure state var dereference");
+      }
+      if (field && strcmp(statevars[i].field, field) != 0)
+	 continue;
+      break;
+   }
+
+   if (i ==  Elements(statevars)) {
+      printf("builtin uniform %s%s%s not found\n",
+	     name,
+	     field ? "." : "",
+	     field ? field : "");
+      abort();
+   }
+
+   memcpy(&tokens, statevars[i].tokens, sizeof(tokens));
+   if (statevars[i].array_indexed)
+      tokens[1] = array_index;
+
+   src_reg.file = PROGRAM_STATE_VAR;
+   src_reg.index = _mesa_add_state_reference(prog->Parameters,
+					     (gl_state_index *)tokens);
+   src_reg.swizzle = statevars[i].swizzle;
+   src_reg.negate = 0;
+   src_reg.reladdr = false;
+
+   return src_reg;
+}
+
 static int
 add_matrix_ref(struct gl_program *prog, int *tokens)
 {
@@ -1176,6 +1351,7 @@ ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
 void
 ir_to_mesa_visitor::visit(ir_dereference_array *ir)
 {
+   ir_variable *var = ir->variable_referenced();
    ir_constant *index;
    ir_to_mesa_src_reg src_reg;
    ir_dereference_variable *deref_var = ir->array->as_dereference_variable();
@@ -1214,6 +1390,20 @@ ir_to_mesa_visitor::visit(ir_dereference_array *ir)
 
       this->result = src_reg;
       return;
+   }
+
+   if (strncmp(var->name, "gl_", 3) == 0 && var->mode == ir_var_uniform &&
+       !var->type->is_matrix()) {
+      ir_dereference_record *record = NULL;
+      if (ir->array->ir_type == ir_type_dereference_record)
+	 record = (ir_dereference_record *)ir->array;
+
+      assert(index || !"FINISHME: variable-indexed builtin uniform access");
+
+      this->result = get_builtin_uniform_reg(prog,
+					     var->name,
+					     index->value.i[0],
+					     record ? record->field : NULL);
    }
 
    ir->array->accept(this);
@@ -1260,6 +1450,17 @@ ir_to_mesa_visitor::visit(ir_dereference_record *ir)
    unsigned int i;
    const glsl_type *struct_type = ir->record->type;
    int offset = 0;
+   ir_variable *var = ir->record->variable_referenced();
+
+   if (strncmp(var->name, "gl_", 3) == 0 && var->mode == ir_var_uniform) {
+      assert(var);
+
+      this->result = get_builtin_uniform_reg(prog,
+					     var->name,
+					     0,
+					     ir->field);
+      return;
+   }
 
    ir->record->accept(this);
 
