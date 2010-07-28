@@ -74,7 +74,7 @@
 #  define USED
 #endif
 
-
+#define ARRAY_SIZE(a) (sizeof (a) / sizeof ((a)[0]))
 
 #define GLX_MAJOR_VERSION 1       /* current version numbers */
 #define GLX_MINOR_VERSION 4
@@ -127,13 +127,13 @@ struct __GLXDRIscreenRec {
    void (*destroyScreen)(__GLXscreenConfigs *psc);
 
    __GLXcontext *(*createContext)(__GLXscreenConfigs *psc,
-				  const __GLcontextModes *mode,
+				  struct glx_config *config,
 				  GLXContext shareList, int renderType);
 
    __GLXDRIdrawable *(*createDrawable)(__GLXscreenConfigs *psc,
 				       XID drawable,
 				       GLXDrawable glxDrawable,
-				       const __GLcontextModes *modes);
+				       struct glx_config *config);
 
    int64_t (*swapBuffers)(__GLXDRIdrawable *pdraw, int64_t target_msc,
 			  int64_t divisor, int64_t remainder);
@@ -403,9 +403,9 @@ struct __GLXcontextRec
    GLint majorOpcode;
 
     /**
-     * Pointer to the mode used to create this context.
+     * Pointer to the config used to create this context.
      */
-   const __GLcontextModes *mode;
+   struct glx_config *config;
 
 #ifdef GLX_DIRECT_RENDERING
 #ifdef GLX_USE_APPLEGL
@@ -462,7 +462,7 @@ struct __GLXcontextRec
 
 extern Bool
 glx_context_init(__GLXcontext *gc,
-		 __GLXscreenConfigs *psc, const __GLcontextModes *fbconfig);
+		 __GLXscreenConfigs *psc, struct glx_config *fbconfig);
 
 #define __glXSetError(gc,code)  \
    if (!(gc)->error) {          \
@@ -505,7 +505,7 @@ extern void __glFreeAttributeState(__GLXcontext *);
  */
 struct glx_screen_vtable {
    __GLXcontext *(*create_context)(__GLXscreenConfigs *psc,
-				   const __GLcontextModes *mode,
+				   struct glx_config *config,
 				   GLXContext shareList, int renderType);
 };
 
@@ -539,7 +539,7 @@ struct __GLXscreenConfigsRec
     /**
      * Linked list of glx visuals and  fbconfigs for this screen.
      */
-   __GLcontextModes *visuals, *configs;
+   struct glx_config *visuals, *configs;
 
     /**
      * Per-screen dynamic GLX extension tracking.  The \c direct_support
@@ -766,7 +766,7 @@ extern void _XSend(Display *, const void *, long);
 #endif
 
 
-extern void __glXInitializeVisualConfigFromTags(__GLcontextModes * config,
+extern void __glXInitializeVisualConfigFromTags(struct glx_config * config,
                                                 int count, const INT32 * bp,
                                                 Bool tagged_only,
                                                 Bool fbconfig_style_tags);

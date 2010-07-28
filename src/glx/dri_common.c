@@ -176,7 +176,7 @@ _X_HIDDEN const __DRIsystemTimeExtension systemTimeExtension = {
 };
 
 #define __ATTRIB(attrib, field) \
-    { attrib, offsetof(__GLcontextModes, field) }
+    { attrib, offsetof(struct glx_config, field) }
 
 static const struct
 {
@@ -225,10 +225,8 @@ __ATTRIB(__DRI_ATTRIB_BIND_TO_TEXTURE_RGB, bindToTextureRgb),
                      bindToMipmapTexture),
       __ATTRIB(__DRI_ATTRIB_YINVERTED, yInverted),};
 
-#define ARRAY_SIZE(a) (sizeof (a) / sizeof ((a)[0]))
-
 static int
-scalarEqual(__GLcontextModes * mode, unsigned int attrib, unsigned int value)
+scalarEqual(struct glx_config *mode, unsigned int attrib, unsigned int value)
 {
    unsigned int glxValue;
    int i;
@@ -243,8 +241,8 @@ scalarEqual(__GLcontextModes * mode, unsigned int attrib, unsigned int value)
 }
 
 static int
-driConfigEqual(const __DRIcoreExtension * core,
-               __GLcontextModes * modes, const __DRIconfig * driConfig)
+driConfigEqual(const __DRIcoreExtension *core,
+               struct glx_config *config, const __DRIconfig *driConfig)
 {
    unsigned int attrib, value, glxValue;
    int i;
@@ -260,7 +258,7 @@ driConfigEqual(const __DRIcoreExtension * core,
          else if (value & __DRI_ATTRIB_COLOR_INDEX_BIT) {
             glxValue |= GLX_COLOR_INDEX_BIT;
          }
-         if (glxValue != modes->renderType)
+         if (glxValue != config->renderType)
             return GL_FALSE;
          break;
 
@@ -271,7 +269,7 @@ driConfigEqual(const __DRIcoreExtension * core,
             glxValue = GLX_SLOW_CONFIG;
          else
             glxValue = GLX_NONE;
-         if (glxValue != modes->visualRating)
+         if (glxValue != config->visualRating)
             return GL_FALSE;
          break;
 
@@ -283,13 +281,13 @@ driConfigEqual(const __DRIcoreExtension * core,
             glxValue |= GLX_TEXTURE_2D_BIT_EXT;
          if (value & __DRI_ATTRIB_TEXTURE_RECTANGLE_BIT)
             glxValue |= GLX_TEXTURE_RECTANGLE_BIT_EXT;
-         if (modes->bindToTextureTargets != GLX_DONT_CARE &&
-             glxValue != modes->bindToTextureTargets)
+         if (config->bindToTextureTargets != GLX_DONT_CARE &&
+             glxValue != config->bindToTextureTargets)
             return GL_FALSE;
          break;
 
       default:
-         if (!scalarEqual(modes, attrib, value))
+         if (!scalarEqual(config, attrib, value))
             return GL_FALSE;
       }
    }
@@ -297,41 +295,41 @@ driConfigEqual(const __DRIcoreExtension * core,
    return GL_TRUE;
 }
 
-static __GLcontextModes *
+static struct glx_config *
 createDriMode(const __DRIcoreExtension * core,
-              __GLcontextModes * modes, const __DRIconfig ** driConfigs)
+	      struct glx_config *config, const __DRIconfig **driConfigs)
 {
-   __GLXDRIconfigPrivate *config;
+   __GLXDRIconfigPrivate *driConfig;
    int i;
 
    for (i = 0; driConfigs[i]; i++) {
-      if (driConfigEqual(core, modes, driConfigs[i]))
+      if (driConfigEqual(core, config, driConfigs[i]))
          break;
    }
 
    if (driConfigs[i] == NULL)
       return NULL;
 
-   config = Xmalloc(sizeof *config);
-   if (config == NULL)
+   driConfig = Xmalloc(sizeof *driConfig);
+   if (driConfig == NULL)
       return NULL;
 
-   config->modes = *modes;
-   config->driConfig = driConfigs[i];
+   driConfig->base = *config;
+   driConfig->driConfig = driConfigs[i];
 
-   return &config->modes;
+   return &driConfig->base;
 }
 
-_X_HIDDEN __GLcontextModes *
+_X_HIDDEN struct glx_config *
 driConvertConfigs(const __DRIcoreExtension * core,
-                  __GLcontextModes * modes, const __DRIconfig ** configs)
+                  struct glx_config *configs, const __DRIconfig **driConfigs)
 {
-   __GLcontextModes head, *tail, *m;
+   struct glx_config head, *tail, *m;
 
    tail = &head;
    head.next = NULL;
-   for (m = modes; m; m = m->next) {
-      tail->next = createDriMode(core, m, configs);
+   for (m = configs; m; m = m->next) {
+      tail->next = createDriMode(core, m, driConfigs);
       if (tail->next == NULL) {
          /* no matching dri config for m */
          continue;
@@ -341,7 +339,7 @@ driConvertConfigs(const __DRIcoreExtension * core,
       tail = tail->next;
    }
 
-   _gl_context_modes_destroy(modes);
+   glx_config_destroy_list(configs);
 
    return head.next;
 }

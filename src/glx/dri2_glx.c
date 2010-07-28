@@ -156,12 +156,12 @@ dri2UnbindContext(__GLXcontext *context)
 
 static __GLXcontext *
 dri2_create_context(__GLXscreenConfigs *base,
-		    const __GLcontextModes * mode,
+		    struct glx_config *config_base,
 		    GLXContext shareList, int renderType)
 {
    struct dri2_context *pcp, *pcp_shared;
    struct dri2_screen *psc = (struct dri2_screen *) base;
-   __GLXDRIconfigPrivate *config = (__GLXDRIconfigPrivate *) mode;
+   __GLXDRIconfigPrivate *config = (__GLXDRIconfigPrivate *) config_base;
    __DRIcontext *shared = NULL;
 
    if (shareList) {
@@ -174,7 +174,7 @@ dri2_create_context(__GLXscreenConfigs *base,
       return NULL;
 
    memset(pcp, 0, sizeof *pcp);
-   if (!glx_context_init(&pcp->base, &psc->base, mode)) {
+   if (!glx_context_init(&pcp->base, &psc->base, &config->base)) {
       Xfree(pcp);
       return NULL;
    }
@@ -212,11 +212,11 @@ dri2DestroyDrawable(__GLXDRIdrawable *base)
 
 static __GLXDRIdrawable *
 dri2CreateDrawable(__GLXscreenConfigs *base, XID xDrawable,
-		   GLXDrawable drawable, const __GLcontextModes * modes)
+		   GLXDrawable drawable, struct glx_config *config_base)
 {
    struct dri2_drawable *pdraw;
    struct dri2_screen *psc = (struct dri2_screen *) base;
-   __GLXDRIconfigPrivate *config = (__GLXDRIconfigPrivate *) modes;
+   __GLXDRIconfigPrivate *config = (__GLXDRIconfigPrivate *) config_base;
    __GLXdisplayPrivate *dpyPriv;
    struct dri2_display *pdp;
    GLint vblank_mode = DRI_CONF_VBLANK_DEF_INTERVAL_1;

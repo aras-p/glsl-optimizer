@@ -208,14 +208,14 @@ FreeScreenConfigs(__GLXdisplayPrivate * priv)
    for (i = 0; i < screens; i++) {
       psc = priv->screenConfigs[i];
       if (psc->configs) {
-         _gl_context_modes_destroy(psc->configs);
+	 glx_config_destroy_list(psc->configs);
          if (psc->effectiveGLXexts)
             Xfree(psc->effectiveGLXexts);
          psc->configs = NULL;   /* NOTE: just for paranoia */
       }
       if (psc->visuals) {
-         _gl_context_modes_destroy(psc->visuals);
-         psc->visuals = NULL;   /* NOTE: just for paranoia */
+	 glx_config_destroy_list(psc->visuals);
+	 psc->visuals = NULL;   /* NOTE: just for paranoia */
       }
       Xfree((char *) psc->serverGLXexts);
 
@@ -349,12 +349,27 @@ enum {
 };
 
 
+static GLint
+convert_from_x_visual_type(int visualType)
+{
+   static const int glx_visual_types[] = {
+      GLX_STATIC_GRAY, GLX_GRAY_SCALE,
+      GLX_STATIC_COLOR, GLX_PSEUDO_COLOR,
+      GLX_TRUE_COLOR, GLX_DIRECT_COLOR
+   };
+
+   if (visualType < ARRAY_SIZE(glx_visual_types))
+      return glx_visual_types[visualType];
+
+   return GLX_NONE;
+}
+
 /*
  * getVisualConfigs uses the !tagged_only path.
  * getFBConfigs uses the tagged_only path.
  */
 _X_HIDDEN void
-__glXInitializeVisualConfigFromTags(__GLcontextModes * config, int count,
+__glXInitializeVisualConfigFromTags(struct glx_config * config, int count,
                                     const INT32 * bp, Bool tagged_only,
                                     Bool fbconfig_style_tags)
 {
@@ -364,7 +379,7 @@ __glXInitializeVisualConfigFromTags(__GLcontextModes * config, int count,
       /* Copy in the first set of properties */
       config->visualID = *bp++;
 
-      config->visualType = _gl_convert_from_x_visual_type(*bp++);
+      config->visualType = convert_from_x_visual_type(*bp++);
 
       config->rgbMode = *bp++;
 
@@ -575,13 +590,13 @@ __glXInitializeVisualConfigFromTags(__GLcontextModes * config, int count,
       (config->rgbMode) ? GLX_RGBA_BIT : GLX_COLOR_INDEX_BIT;
 }
 
-static __GLcontextModes *
+static struct glx_config *
 createConfigsFromProperties(Display * dpy, int nvisuals, int nprops,
                             int screen, GLboolean tagged_only)
 {
    INT32 buf[__GLX_TOTAL_CONFIG], *props;
    unsigned prop_size;
-   __GLcontextModes *modes, *m;
+   struct glx_config *modes, *m;
    int i;
 
    if (nprops == 0)
@@ -594,7 +609,7 @@ createConfigsFromProperties(Display * dpy, int nvisuals, int nprops,
       return NULL;
 
    /* Allocate memory for our config structure */
-   modes = _gl_context_modes_create(nvisuals, sizeof(__GLcontextModes));
+   modes = glx_config_create_list(nvisuals);
    if (!modes)
       return NULL;
 

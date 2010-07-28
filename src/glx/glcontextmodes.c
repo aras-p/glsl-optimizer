@@ -24,7 +24,7 @@
 
 /**
  * \file glcontextmodes.c
- * Utility routines for working with \c __GLcontextModes structures.  At
+ * Utility routines for working with \c struct glx_config structures.  At
  * some point most or all of these functions will be moved to the Mesa
  * code base.
  *
@@ -41,28 +41,7 @@
 #define NUM_VISUAL_TYPES   6
 
 /**
- * Convert an X visual type to a GLX visual type.
- * 
- * \param visualType X visual type (i.e., \c TrueColor, \c StaticGray, etc.)
- *        to be converted.
- * \return If \c visualType is a valid X visual type, a GLX visual type will
- *         be returned.  Otherwise \c GLX_NONE will be returned.
- */
-GLint
-_gl_convert_from_x_visual_type(int visualType)
-{
-   static const int glx_visual_types[NUM_VISUAL_TYPES] = {
-      GLX_STATIC_GRAY, GLX_GRAY_SCALE,
-      GLX_STATIC_COLOR, GLX_PSEUDO_COLOR,
-      GLX_TRUE_COLOR, GLX_DIRECT_COLOR
-   };
-
-   return ((unsigned) visualType < NUM_VISUAL_TYPES)
-      ? glx_visual_types[visualType] : GLX_NONE;
-}
-
-/**
- * Get data from a GL context mode.
+ * Get data from a GLX config
  * 
  * \param mode         GL context mode whose data is to be returned.
  * \param attribute    Attribute of \c mode that is to be returned.
@@ -70,9 +49,8 @@ _gl_convert_from_x_visual_type(int visualType)
  * \return  If \c attribute is a valid attribute of \c mode, zero is
  *          returned.  Otherwise \c GLX_BAD_ATTRIBUTE is returned.
  */
-int
-_gl_get_context_mode_data(const __GLcontextModes * mode, int attribute,
-                          int *value_return)
+_X_HIDDEN int
+glx_config_get(struct glx_config * mode, int attribute, int *value_return)
 {
    switch (attribute) {
    case GLX_USE_GL:
@@ -222,7 +200,7 @@ _gl_get_context_mode_data(const __GLcontextModes * mode, int attribute,
 
 
 /**
- * Allocate a linked list of \c __GLcontextModes structures.  The fields of
+ * Allocate a linked list of \c struct glx_config structures.  The fields of
  * each structure will be initialized to "reasonable" default values.  In
  * most cases this is the default value defined by table 3.4 of the GLX
  * 1.3 specification.  This means that most values are either initialized to
@@ -233,36 +211,26 @@ _gl_get_context_mode_data(const __GLcontextModes * mode, int attribute,
  * \param count         Number of structures to allocate.
  * \param minimum_size  Minimum size of a structure to allocate.  This allows
  *                      for differences in the version of the
- *                      \c __GLcontextModes stucture used in libGL and in a
+ *                      \c struct glx_config stucture used in libGL and in a
  *                      DRI-based driver.
  * \returns A pointer to the first element in a linked list of \c count
  *          stuctures on success, or \c NULL on failure.
- * 
- * \warning Use of \c minimum_size does \b not guarantee binary compatibility.
- *          The fundamental assumption is that if the \c minimum_size
- *          specified by the driver and the size of the \c __GLcontextModes
- *          structure in libGL is the same, then the meaning of each byte in
- *          the structure is the same in both places.  \b Be \b careful!
- *          Basically this means that fields have to be added in libGL and
- *          then propagated to drivers.  Drivers should \b never arbitrarilly
- *          extend the \c __GLcontextModes data-structure.
  */
-__GLcontextModes *
-_gl_context_modes_create(unsigned count, size_t minimum_size)
+_X_HIDDEN struct glx_config *
+glx_config_create_list(unsigned count)
 {
-   const size_t size = (minimum_size > sizeof(__GLcontextModes))
-      ? minimum_size : sizeof(__GLcontextModes);
-   __GLcontextModes *base = NULL;
-   __GLcontextModes **next;
+   const size_t size = sizeof(struct glx_config);
+   struct glx_config *base = NULL;
+   struct glx_config **next;
    unsigned i;
 
    next = &base;
    for (i = 0; i < count; i++) {
-      *next = (__GLcontextModes *) malloc(size);
+      *next = (struct glx_config *) malloc(size);
       if (*next == NULL) {
-         _gl_context_modes_destroy(base);
-         base = NULL;
-         break;
+	 glx_config_destroy_list(base);
+	 base = NULL;
+	 break;
       }
 
       (void) memset(*next, 0, size);
@@ -290,22 +258,14 @@ _gl_context_modes_create(unsigned count, size_t minimum_size)
    return base;
 }
 
-
-/**
- * Destroy a linked list of \c __GLcontextModes structures created by
- * \c _gl_context_modes_create.
- * 
- * \param modes  Linked list of structures to be destroyed.  All structres
- *               in the list will be freed.
- */
-void
-_gl_context_modes_destroy(__GLcontextModes * modes)
+_X_HIDDEN void
+glx_config_destroy_list(struct glx_config *configs)
 {
-   while (modes != NULL) {
-      __GLcontextModes *const next = modes->next;
+   while (configs != NULL) {
+      struct glx_config *const next = configs->next;
 
-      free(modes);
-      modes = next;
+      free(configs);
+      configs = next;
    }
 }
 
@@ -319,26 +279,26 @@ _gl_context_modes_destroy(__GLcontextModes * modes)
  *          the list, or \c NULL if it was not.
  */
 
-__GLcontextModes *
-_gl_context_modes_find_visual(__GLcontextModes * modes, int vid)
+_X_HIDDEN struct glx_config *
+glx_config_find_visual(struct glx_config *configs, int vid)
 {
-   __GLcontextModes *m;
+   struct glx_config *c;
 
-   for (m = modes; m != NULL; m = m->next)
-      if (m->visualID == vid)
-         return m;
+   for (c = configs; c != NULL; c = c->next)
+      if (c->visualID == vid)
+	 return c;
 
    return NULL;
 }
 
-__GLcontextModes *
-_gl_context_modes_find_fbconfig(__GLcontextModes * modes, int fbid)
+_X_HIDDEN struct glx_config *
+glx_config_find_fbconfig(struct glx_config *configs, int fbid)
 {
-   __GLcontextModes *m;
+   struct glx_config *c;
 
-   for (m = modes; m != NULL; m = m->next)
-      if (m->fbconfigID == fbid)
-         return m;
+   for (c = configs; c != NULL; c = c->next)
+      if (c->fbconfigID == fbid)
+	 return c;
 
    return NULL;
 }

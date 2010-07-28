@@ -303,7 +303,7 @@ FetchDRIDrawable(Display * dpy, GLXDrawable glxDrawable, GLXContext gc)
       return pdraw;
 
    pdraw = psc->driScreen->createDrawable(psc, glxDrawable,
-                                          glxDrawable, gc->mode);
+                                          glxDrawable, gc->config);
    if (__glxHashInsert(priv->drawHash, glxDrawable, pdraw)) {
       (*pdraw->destroyDrawable) (pdraw);
       return NULL;

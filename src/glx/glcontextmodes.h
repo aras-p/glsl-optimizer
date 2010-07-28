@@ -30,8 +30,8 @@
 #ifndef GLCONTEXTMODES_H
 #define GLCONTEXTMODES_H
 
-typedef struct __GLcontextModesRec {
-    struct __GLcontextModesRec * next;
+struct glx_config {
+    struct glx_config * next;
 
     GLboolean rgbMode;
     GLboolean floatMode;
@@ -100,7 +100,7 @@ typedef struct __GLcontextModesRec {
     GLint bindToMipmapTexture;
     GLint bindToTextureTargets;
     GLint yInverted;
-} __GLcontextModes;
+};
 
 #define __GLX_MIN_CONFIG_PROPS	18
 #define __GLX_MAX_CONFIG_PROPS	500
@@ -117,14 +117,17 @@ typedef struct __GLcontextModesRec {
    (__GLX_MIN_CONFIG_PROPS + 2 * __GLX_EXT_CONFIG_PROPS)
 
 extern GLint _gl_convert_from_x_visual_type(int visualType);
-extern int _gl_get_context_mode_data(const __GLcontextModes * mode,
-                                     int attribute, int *value_return);
-extern __GLcontextModes *_gl_context_modes_create(unsigned count,
-                                                  size_t minimum_size);
-extern void _gl_context_modes_destroy(__GLcontextModes * modes);
-extern __GLcontextModes *_gl_context_modes_find_visual(__GLcontextModes *
-                                                       modes, int vid);
-extern __GLcontextModes *_gl_context_modes_find_fbconfig(__GLcontextModes *
-                                                         modes, int fbid);
+
+extern int
+glx_config_get(struct glx_config * mode, int attribute, int *value_return);
+extern struct glx_config *
+glx_config_create_list(unsigned count);
+extern void
+glx_config_destroy_list(struct glx_config *configs);
+extern struct glx_config *
+glx_config_find_visual(struct glx_config *configs, int vid);
+extern struct glx_config *
+glx_config_find_fbconfig(struct glx_config *configs, int fbid);
 
 #endif /* GLCONTEXTMODES_H */
+

@@ -208,26 +208,25 @@ GetGLXPrivScreenConfig(Display * dpy, int scrn, __GLXdisplayPrivate ** ppriv,
  * \param config  Application supplied \c GLXFBConfig.
  *
  * \returns If the \c GLXFBConfig is valid, the a pointer to the matching
- *          \c __GLcontextModes structure is returned.  Otherwise, \c NULL
+ *          \c struct glx_config structure is returned.  Otherwise, \c NULL
  *          is returned.
  */
-static __GLcontextModes *
-ValidateGLXFBConfig(Display * dpy, GLXFBConfig config)
+static struct glx_config *
+ValidateGLXFBConfig(Display * dpy, GLXFBConfig fbconfig)
 {
    __GLXdisplayPrivate *const priv = __glXInitialize(dpy);
-   const unsigned num_screens = ScreenCount(dpy);
+   int num_screens = ScreenCount(dpy);
    unsigned i;
-   const __GLcontextModes *modes;
-
+   struct glx_config *config;
 
    if (priv != NULL) {
       for (i = 0; i < num_screens; i++) {
-         for (modes = priv->screenConfigs[i]->configs; modes != NULL;
-              modes = modes->next) {
-            if (modes == (__GLcontextModes *) config) {
-               return (__GLcontextModes *) config;
-            }
-         }
+	 for (config = priv->screenConfigs[i]->configs; config != NULL;
+	      config = config->next) {
+	    if (config == (struct glx_config *) fbconfig) {
+	       return config;
+	    }
+	 }
       }
    }
 
@@ -240,8 +239,8 @@ static const struct glx_context_vtable applegl_context_vtable;
 
 static __GLcontext *
 applegl_create_context(__GLXscreenConfigs *psc,
-			const __GLcontextModes *mode,
-			GLXContext shareList, int renderType)
+		       struct glx_config *mode,
+		       GLXContext shareList, int renderType)
 {
    __GLXcontext *gc;
    int errorcode;
@@ -296,7 +295,7 @@ applegl_create_context(__GLXscreenConfigs *psc,
  */
 static GLXContext
 indirect_create_context(__GLXscreenConfigs *psc,
-			const __GLcontextModes *mode,
+			struct glx_config *mode,
 			GLXContext shareList, int renderType)
 {
    GLXContext gc;
@@ -416,7 +415,7 @@ indirect_create_screen(int screen, __GLXdisplayPrivate * priv)
 
 _X_HIDDEN Bool
 glx_context_init(__GLXcontext *gc,
-		 __GLXscreenConfigs *psc, const __GLcontextModes *fbconfig)
+		 __GLXscreenConfigs *psc, struct glx_config *config)
 {
    gc->majorOpcode = __glXSetupForCommand(psc->display->dpy);
    if (!gc->majorOpcode)
@@ -424,7 +423,7 @@ glx_context_init(__GLXcontext *gc,
 
    gc->screen = psc->scr;
    gc->psc = psc;
-   gc->mode = fbconfig;
+   gc->config = config;
    gc->isDirect = GL_TRUE;
 
    return GL_TRUE;
@@ -442,7 +441,7 @@ glx_context_init(__GLXcontext *gc,
 
 static GLXContext
 CreateContext(Display * dpy, int generic_id,
-              const __GLcontextModes * const fbconfig,
+              struct glx_config *config,
               GLXContext shareList,
               Bool allowDirect,
 	      unsigned code, int renderType, int screen)
@@ -458,10 +457,9 @@ CreateContext(Display * dpy, int generic_id,
 
    gc = NULL;
    if (allowDirect && psc->vtable->create_context)
-      gc = psc->vtable->create_context(psc, fbconfig,
-				      shareList, renderType);
+      gc = psc->vtable->create_context(psc, config, shareList, renderType);
    if (!gc)
-      gc = indirect_create_context(psc, fbconfig, shareList, renderType);
+      gc = indirect_create_context(psc, config, shareList, renderType);
    if (!gc)
       return NULL;
 
@@ -539,14 +537,14 @@ PUBLIC GLXContext
 glXCreateContext(Display * dpy, XVisualInfo * vis,
                  GLXContext shareList, Bool allowDirect)
 {
-   const __GLcontextModes *mode = NULL;
+   struct glx_config *config = NULL;
    int renderType = 0;
 
 #if defined(GLX_DIRECT_RENDERING) || defined(GLX_USE_APPLEGL)
    __GLXscreenConfigs *const psc = GetGLXScreenConfigs(dpy, vis->screen);
 
-   mode = _gl_context_modes_find_visual(psc->visuals, vis->visualid);
-   if (mode == NULL) {
+   config = glx_config_find_visual(psc->visuals, vis->visualid);
+   if (config == NULL) {
       xError error;
 
       error.errorCode = BadValue;
@@ -559,10 +557,10 @@ glXCreateContext(Display * dpy, XVisualInfo * vis,
       return None;
    }
 
-   renderType = mode->rgbMode ? GLX_RGBA_TYPE : GLX_COLOR_INDEX_TYPE;
+   renderType = config->rgbMode ? GLX_RGBA_TYPE : GLX_COLOR_INDEX_TYPE;
 #endif
 
-   return CreateContext(dpy, vis->visualid, mode, shareList, allowDirect,
+   return CreateContext(dpy, vis->visualid, config, shareList, allowDirect,
                         X_GLXCreateContext, renderType, vis->screen);
 }
 
@@ -942,11 +940,11 @@ glXCreateGLXPixmap(Display * dpy, XVisualInfo * vis, Pixmap pixmap)
 #ifdef GLX_USE_APPLEGL
    int screen = vis->screen;
    __GLXscreenConfigs *const psc = GetGLXScreenConfigs(dpy, screen);
-   const __GLcontextModes *modes;
+   const struct glx_config *config;
 
-   modes = _gl_context_modes_find_visual(psc->visuals, vis->visualid);
+   config = _gl_context_modes_find_visual(psc->visuals, vis->visualid);
    
-   if(apple_glx_pixmap_create(dpy, vis->screen, pixmap, modes))
+   if(apple_glx_pixmap_create(dpy, vis->screen, pixmap, config))
       return None;
    
    return pixmap;
@@ -980,13 +978,13 @@ glXCreateGLXPixmap(Display * dpy, XVisualInfo * vis, Pixmap pixmap)
       __GLXdisplayPrivate *const priv = __glXInitialize(dpy);
       __GLXDRIdrawable *pdraw;
       __GLXscreenConfigs *psc;
-      __GLcontextModes *modes;
+      struct glx_config *config;
 
       psc = priv->screenConfigs[vis->screen];
       if (psc->driScreen == NULL)
          break;
-      modes = _gl_context_modes_find_visual(psc->visuals, vis->visualid);
-      pdraw = psc->driScreen->createDrawable(psc, pixmap, req->glxpixmap, modes);
+      config = glx_config_find_visual(psc->visuals, vis->visualid);
+      pdraw = psc->driScreen->createDrawable(psc, pixmap, req->glxpixmap, config);
       if (pdraw == NULL) {
          fprintf(stderr, "failed to create pixmap\n");
          break;
@@ -1123,16 +1121,16 @@ glXGetConfig(Display * dpy, XVisualInfo * vis, int attribute,
 {
    __GLXdisplayPrivate *priv;
    __GLXscreenConfigs *psc;
-   __GLcontextModes *modes;
+   struct glx_config *config;
    int status;
 
    status = GetGLXPrivScreenConfig(dpy, vis->screen, &priv, &psc);
    if (status == Success) {
-      modes = _gl_context_modes_find_visual(psc->visuals, vis->visualid);
+      config = glx_config_find_visual(psc->visuals, vis->visualid);
 
       /* Lookup attribute after first finding a match on the visual */
-      if (modes != NULL) {
-         return _gl_get_context_mode_data(modes, attribute, value_return);
+      if (config != NULL) {
+	 return glx_config_get(config, attribute, value_return);
       }
 
       status = GLX_BAD_VISUAL;
@@ -1153,10 +1151,10 @@ glXGetConfig(Display * dpy, XVisualInfo * vis, int attribute,
 /************************************************************************/
 
 static void
-init_fbconfig_for_chooser(__GLcontextModes * config,
+init_fbconfig_for_chooser(struct glx_config * config,
                           GLboolean fbconfig_style_tags)
 {
-   memset(config, 0, sizeof(__GLcontextModes));
+   memset(config, 0, sizeof(struct glx_config));
    config->visualID = (XID) GLX_DONT_CARE;
    config->visualType = GLX_DONT_CARE;
 
@@ -1222,8 +1220,8 @@ init_fbconfig_for_chooser(__GLcontextModes * config,
  * \param b  Server specified config to test against \c a.
  */
 static Bool
-fbconfigs_compatible(const __GLcontextModes * const a,
-                     const __GLcontextModes * const b)
+fbconfigs_compatible(const struct glx_config * const a,
+                     const struct glx_config * const b)
 {
    MATCH_DONT_CARE(doubleBufferMode);
    MATCH_DONT_CARE(visualType);
@@ -1342,8 +1340,7 @@ fbconfigs_compatible(const __GLcontextModes * const a,
  * \sa qsort, glXChooseVisual, glXChooseFBConfig, glXChooseFBConfigSGIX
  */
 static int
-fbconfig_compare(const __GLcontextModes * const *const a,
-                 const __GLcontextModes * const *const b)
+fbconfig_compare(struct glx_config **a, struct glx_config **b)
 {
    /* The order of these comparisons must NOT change.  It is defined by
     * the GLX 1.3 spec and ARB_multisample.
@@ -1428,10 +1425,10 @@ fbconfig_compare(const __GLcontextModes * const *const a,
  * \sa glXChooseVisual, glXChooseFBConfig, glXChooseFBConfigSGIX
  */
 static int
-choose_visual(__GLcontextModes ** configs, int num_configs,
+choose_visual(struct glx_config ** configs, int num_configs,
               const int *attribList, GLboolean fbconfig_style_tags)
 {
-   __GLcontextModes test_config;
+   struct glx_config test_config;
    int base;
    int i;
 
@@ -1467,7 +1464,7 @@ choose_visual(__GLcontextModes ** configs, int num_configs,
     * specifications.
     */
 
-   qsort(configs, base, sizeof(__GLcontextModes *),
+   qsort(configs, base, sizeof(struct glx_config *),
          (int (*)(const void *, const void *)) fbconfig_compare);
    return base;
 }
@@ -1485,9 +1482,9 @@ glXChooseVisual(Display * dpy, int screen, int *attribList)
    XVisualInfo *visualList = NULL;
    __GLXdisplayPrivate *priv;
    __GLXscreenConfigs *psc;
-   __GLcontextModes test_config;
-   __GLcontextModes *modes;
-   const __GLcontextModes *best_config = NULL;
+   struct glx_config test_config;
+   struct glx_config *config;
+   struct glx_config *best_config = NULL;
 
    /*
     ** Get a list of all visuals, return if list is empty
@@ -1514,26 +1511,23 @@ glXChooseVisual(Display * dpy, int screen, int *attribList)
     ** Otherwise, create an XVisualInfo list with just the selected X visual
     ** and return this.
     */
-   for (modes = psc->visuals; modes != NULL; modes = modes->next) {
-      if (fbconfigs_compatible(&test_config, modes)
-          && ((best_config == NULL)
-              ||
-              (fbconfig_compare
-               ((const __GLcontextModes * const *const) &modes,
-                &best_config) < 0))) {
+   for (config = psc->visuals; config != NULL; config = config->next) {
+      if (fbconfigs_compatible(&test_config, config)
+          && ((best_config == NULL) ||
+              (fbconfig_compare (&config, &best_config) < 0))) {
          XVisualInfo visualTemplate;
          XVisualInfo *newList;
          int i;
 
          visualTemplate.screen = screen;
-         visualTemplate.visualid = modes->visualID;
+         visualTemplate.visualid = config->visualID;
          newList = XGetVisualInfo(dpy, VisualScreenMask | VisualIDMask,
                                   &visualTemplate, &i);
 
          if (newList) {
             Xfree(visualList);
             visualList = newList;
-            best_config = modes;
+            best_config = config;
          }
       }
    }
@@ -1689,7 +1683,7 @@ glXImportContextEXT(Display *dpy, GLXContextID contextID)
    int propList[__GLX_MAX_CONTEXT_PROPS * 2], *pProp, nPropListBytes;
    int i, renderType;
    XID share;
-   __GLcontextModes *mode;
+   struct glx_config *mode;
 
    if (contextID == None || __glXIsDirect(dpy, contextID))
       return NULL;
@@ -1753,10 +1747,10 @@ glXImportContextEXT(Display *dpy, GLXContextID contextID)
 	 share = pProp[1];
 	 break;
       case GLX_VISUAL_ID_EXT:
-	 mode = _gl_context_modes_find_visual(psc->visuals, pProp[1]);
+	 mode = glx_config_find_visual(psc->visuals, pProp[1]);
 	 break;
       case GLX_FBCONFIG_ID:
-	 mode = _gl_context_modes_find_fbconfig(psc->configs, pProp[1]);
+	 mode = glx_config_find_fbconfig(psc->configs, pProp[1]);
 	 break;
       case GLX_RENDER_TYPE:
 	 renderType = pProp[1];
@@ -1787,13 +1781,13 @@ glXQueryContext(Display * dpy, GLXContext ctx, int attribute, int *value)
       *value = ctx->share_xid;
       break;
    case GLX_VISUAL_ID_EXT:
-      *value = ctx->mode ? ctx->mode->visualID : None;
+      *value = ctx->config ? ctx->config->visualID : None;
       break;
    case GLX_SCREEN:
       *value = ctx->screen;
       break;
    case GLX_FBCONFIG_ID:
-      *value = ctx->mode ? ctx->mode->fbconfigID : None;
+      *value = ctx->config ? ctx->config->fbconfigID : None;
       break;
    case GLX_RENDER_TYPE:
       *value = ctx->renderType;
@@ -1825,11 +1819,11 @@ PUBLIC GLXFBConfig *
 glXChooseFBConfig(Display * dpy, int screen,
                   const int *attribList, int *nitems)
 {
-   __GLcontextModes **config_list;
+   struct glx_config **config_list;
    int list_size;
 
 
-   config_list = (__GLcontextModes **)
+   config_list = (struct glx_config **)
       glXGetFBConfigs(dpy, screen, &list_size);
 
    if ((config_list != NULL) && (list_size > 0) && (attribList != NULL)) {
@@ -1846,15 +1840,14 @@ glXChooseFBConfig(Display * dpy, int screen,
 
 
 PUBLIC GLXContext
-glXCreateNewContext(Display * dpy, GLXFBConfig config,
+glXCreateNewContext(Display * dpy, GLXFBConfig fbconfig,
                     int renderType, GLXContext shareList, Bool allowDirect)
 {
-   const __GLcontextModes *const fbconfig =
-      (const __GLcontextModes *const) config;
+   struct glx_config *config = (struct glx_config *) fbconfig;
 
-   return CreateContext(dpy, fbconfig->fbconfigID, fbconfig, shareList,
-                        allowDirect, X_GLXCreateNewContext, renderType,
-			fbconfig->screen);
+   return CreateContext(dpy, config->fbconfigID, config, shareList,
+			allowDirect, X_GLXCreateNewContext, renderType,
+			config->screen);
 }
 
 
@@ -1870,7 +1863,9 @@ PUBLIC GLXFBConfig *
 glXGetFBConfigs(Display * dpy, int screen, int *nelements)
 {
    __GLXdisplayPrivate *priv = __glXInitialize(dpy);
-   __GLcontextModes **config = NULL;
+   struct glx_config **config_list = NULL;
+   struct glx_config *config;
+   unsigned num_configs = 0;
    int i;
 
    *nelements = 0;
@@ -1879,58 +1874,56 @@ glXGetFBConfigs(Display * dpy, int screen, int *nelements)
        && (priv->screenConfigs[screen]->configs != NULL)
        && (priv->screenConfigs[screen]->configs->fbconfigID
 	   != (int) GLX_DONT_CARE)) {
-      unsigned num_configs = 0;
-      __GLcontextModes *modes;
 
-
-      for (modes = priv->screenConfigs[screen]->configs; modes != NULL;
-           modes = modes->next) {
-         if (modes->fbconfigID != (int) GLX_DONT_CARE) {
+      for (config = priv->screenConfigs[screen]->configs; config != NULL;
+           config = config->next) {
+         if (config->fbconfigID != (int) GLX_DONT_CARE) {
             num_configs++;
          }
       }
 
-      config = (__GLcontextModes **) Xmalloc(sizeof(__GLcontextModes *)
-                                             * num_configs);
-      if (config != NULL) {
+      config_list = Xmalloc(num_configs * sizeof *config_list);
+      if (config_list != NULL) {
          *nelements = num_configs;
          i = 0;
-         for (modes = priv->screenConfigs[screen]->configs; modes != NULL;
-              modes = modes->next) {
-            if (modes->fbconfigID != (int) GLX_DONT_CARE) {
-               config[i] = modes;
+         for (config = priv->screenConfigs[screen]->configs; config != NULL;
+              config = config->next) {
+            if (config->fbconfigID != (int) GLX_DONT_CARE) {
+               config_list[i] = config;
                i++;
             }
          }
       }
    }
-   return (GLXFBConfig *) config;
+
+   return (GLXFBConfig *) config_list;
 }
 
 
 PUBLIC int
-glXGetFBConfigAttrib(Display * dpy, GLXFBConfig config,
+glXGetFBConfigAttrib(Display * dpy, GLXFBConfig fbconfig,
                      int attribute, int *value)
 {
-   __GLcontextModes *const modes = ValidateGLXFBConfig(dpy, config);
+   struct glx_config *config = ValidateGLXFBConfig(dpy, fbconfig);
 
-   return (modes != NULL)
-      ? _gl_get_context_mode_data(modes, attribute, value)
-      : GLXBadFBConfig;
+   if (config == NULL)
+      return GLXBadFBConfig;
+
+   return glx_config_get(config, attribute, value);
 }
 
 
 PUBLIC XVisualInfo *
-glXGetVisualFromFBConfig(Display * dpy, GLXFBConfig config)
+glXGetVisualFromFBConfig(Display * dpy, GLXFBConfig fbconfig)
 {
    XVisualInfo visualTemplate;
-   __GLcontextModes *fbconfig = (__GLcontextModes *) config;
+   struct glx_config *config = (struct glx_config *) fbconfig;
    int count;
 
    /*
     ** Get a list of all visuals, return if list is empty
     */
-   visualTemplate.visualid = fbconfig->visualID;
+   visualTemplate.visualid = config->visualID;
    return XGetVisualInfo(dpy, VisualIDMask, &visualTemplate, &count);
 }
 
@@ -2144,7 +2137,7 @@ PUBLIC GLX_ALIAS(XVisualInfo *, glXGetVisualFromFBConfigSGIX,
 
 PUBLIC GLXPixmap
 glXCreateGLXPixmapWithConfigSGIX(Display * dpy,
-                                 GLXFBConfigSGIX config,
+                                 GLXFBConfigSGIX fbconfig,
                                  Pixmap pixmap)
 {
 #ifndef GLX_USE_APPLEGL
@@ -2154,19 +2147,19 @@ glXCreateGLXPixmapWithConfigSGIX(Display * dpy,
    CARD8 opcode;
    __GLXscreenConfigs *psc;
 #endif
-   const __GLcontextModes *const fbconfig = (__GLcontextModes *) config;
+   struct glx_config *config = (struct glx_config *) fbconfig;
 
 
    if ((dpy == NULL) || (config == NULL)) {
       return None;
    }
 #ifdef GLX_USE_APPLEGL
-   if(apple_glx_pixmap_create(dpy, fbconfig->screen, pixmap, fbconfig))
+   if(apple_glx_pixmap_create(dpy, config->screen, pixmap, config))
       return None;
    return pixmap;
 #else
 
-   psc = GetGLXScreenConfigs(dpy, fbconfig->screen);
+   psc = GetGLXScreenConfigs(dpy, config->screen);
    if ((psc != NULL)
        && __glXExtensionBitIsEnabled(psc, SGIX_fbconfig_bit)) {
       opcode = __glXSetupForCommand(dpy);
@@ -2183,8 +2176,8 @@ glXCreateGLXPixmapWithConfigSGIX(Display * dpy,
       req->reqType = opcode;
       req->glxCode = X_GLXVendorPrivateWithReply;
       req->vendorCode = X_GLXvop_CreateGLXPixmapWithConfigSGIX;
-      req->screen = fbconfig->screen;
-      req->fbconfig = fbconfig->fbconfigID;
+      req->screen = config->screen;
+      req->fbconfig = config->fbconfigID;
       req->pixmap = pixmap;
       req->glxpixmap = xid = XAllocID(dpy);
       UnlockDisplay(dpy);
@@ -2197,11 +2190,11 @@ glXCreateGLXPixmapWithConfigSGIX(Display * dpy,
 
 PUBLIC GLXContext
 glXCreateContextWithConfigSGIX(Display * dpy,
-                               GLXFBConfigSGIX config, int renderType,
+                               GLXFBConfigSGIX fbconfig, int renderType,
                                GLXContext shareList, Bool allowDirect)
 {
    GLXContext gc = NULL;
-   const __GLcontextModes *const fbconfig = (__GLcontextModes *) config;
+   struct glx_config *config = (struct glx_config *) fbconfig;
    __GLXscreenConfigs *psc;
 
 
@@ -2209,13 +2202,13 @@ glXCreateContextWithConfigSGIX(Display * dpy,
       return None;
    }
 
-   psc = GetGLXScreenConfigs(dpy, fbconfig->screen);
+   psc = GetGLXScreenConfigs(dpy, config->screen);
    if ((psc != NULL)
        && __glXExtensionBitIsEnabled(psc, SGIX_fbconfig_bit)) {
-      gc = CreateContext(dpy, fbconfig->fbconfigID, fbconfig, shareList,
+      gc = CreateContext(dpy, config->fbconfigID, config, shareList,
                          allowDirect,
 			 X_GLXvop_CreateContextWithConfigSGIX, renderType,
-			 fbconfig->screen);
+			 config->screen);
    }
 
    return gc;
@@ -2231,8 +2224,8 @@ glXGetFBConfigFromVisualSGIX(Display * dpy, XVisualInfo * vis)
    if ((GetGLXPrivScreenConfig(dpy, vis->screen, &priv, &psc) != Success)
        && __glXExtensionBitIsEnabled(psc, SGIX_fbconfig_bit)
        && (psc->configs->fbconfigID != (int) GLX_DONT_CARE)) {
-      return (GLXFBConfigSGIX) _gl_context_modes_find_visual(psc->configs,
-                                                             vis->visualid);
+      return (GLXFBConfigSGIX) glx_config_find_visual(psc->configs,
+						      vis->visualid);
    }
 
    return NULL;

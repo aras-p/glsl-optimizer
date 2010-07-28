@@ -337,7 +337,7 @@ CallCreateNewScreen(Display *dpy, int scrn, struct dri_screen *psc,
    drm_handle_t hFB;
    int junk;
    const __DRIconfig **driver_configs;
-   __GLcontextModes *visual;
+   struct glx_config *visual;
 
    /* DRI protocol version. */
    dri_version.major = driDpy->driMajor;
@@ -551,14 +551,14 @@ static const struct glx_context_vtable dri_context_vtable = {
 
 static __GLXcontext *
 dri_create_context(__GLXscreenConfigs *base,
-		   const __GLcontextModes *mode,
+		   struct glx_config *config_base,
 		   GLXContext shareList, int renderType)
 {
    struct dri_context *pcp, *pcp_shared;
    struct dri_screen *psc = (struct dri_screen *) base;
    drm_context_t hwContext;
    __DRIcontext *shared = NULL;
-   __GLXDRIconfigPrivate *config = (__GLXDRIconfigPrivate *) mode;
+   __GLXDRIconfigPrivate *config = (__GLXDRIconfigPrivate *) config_base;
 
    if (!psc->base.driScreen)
       return NULL;
@@ -573,13 +573,13 @@ dri_create_context(__GLXscreenConfigs *base,
       return NULL;
 
    memset(pcp, 0, sizeof *pcp);
-   if (!glx_context_init(&pcp->base, &psc->base, mode)) {
+   if (!glx_context_init(&pcp->base, &psc->base, &config->base)) {
       Xfree(pcp);
       return NULL;
    }
 
    if (!XF86DRICreateContextWithConfig(psc->base.dpy, psc->base.scr,
-                                       mode->visualID,
+                                       config->base.visualID,
                                        &pcp->hwContextID, &hwContext)) {
       Xfree(pcp);
       return NULL;
@@ -617,11 +617,11 @@ driDestroyDrawable(__GLXDRIdrawable * pdraw)
 static __GLXDRIdrawable *
 driCreateDrawable(__GLXscreenConfigs *base,
                   XID xDrawable,
-                  GLXDrawable drawable, const __GLcontextModes * modes)
+                  GLXDrawable drawable, struct glx_config *config_base)
 {
    drm_drawable_t hwDrawable;
    void *empty_attribute_list = NULL;
-   __GLXDRIconfigPrivate *config = (__GLXDRIconfigPrivate *) modes;
+   __GLXDRIconfigPrivate *config = (__GLXDRIconfigPrivate *) config_base;
    struct dri_screen *psc = (struct dri_screen *) base;
    struct dri_drawable *pdp;
 

@@ -291,11 +291,11 @@ static const struct glx_context_vtable drisw_context_vtable = {
 
 static __GLXcontext *
 drisw_create_context(__GLXscreenConfigs *base,
-		     const __GLcontextModes *mode,
+		     struct glx_config *config_base,
 		     GLXContext shareList, int renderType)
 {
    struct drisw_context *pcp, *pcp_shared;
-   __GLXDRIconfigPrivate *config = (__GLXDRIconfigPrivate *) mode;
+   __GLXDRIconfigPrivate *config = (__GLXDRIconfigPrivate *) config_base;
    struct drisw_screen *psc = (struct drisw_screen *) base;
    __DRIcontext *shared = NULL;
 
@@ -312,7 +312,7 @@ drisw_create_context(__GLXscreenConfigs *base,
       return NULL;
 
    memset(pcp, 0, sizeof *pcp);
-   if (!glx_context_init(&pcp->base, &psc->base, mode)) {
+   if (!glx_context_init(&pcp->base, &psc->base, &config->base)) {
       Xfree(pcp);
       return NULL;
    }
@@ -347,7 +347,7 @@ driDestroyDrawable(__GLXDRIdrawable * pdraw)
 
 static __GLXDRIdrawable *
 driCreateDrawable(__GLXscreenConfigs *base, XID xDrawable,
-		  GLXDrawable drawable, const __GLcontextModes * modes)
+		  GLXDrawable drawable, struct glx_config *modes)
 {
    struct drisw_drawable *pdp;
    __GLXDRIconfigPrivate *config = (__GLXDRIconfigPrivate *) modes;

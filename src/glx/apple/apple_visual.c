@@ -61,7 +61,7 @@ apple_visual_create_pfobj(CGLPixelFormatObj * pfobj, const void *mode,
                           bool offscreen)
 {
    CGLPixelFormatAttribute attr[MAX_ATTR];
-   const __GLcontextModes *c = mode;
+   const struct glx_config *c = mode;
    int numattr = 0;
    GLint vsref = 0;
    CGLError error = 0;
