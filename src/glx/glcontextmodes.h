@@ -39,10 +39,6 @@ typedef struct __GLcontextModesRec {
     GLuint doubleBufferMode;
     GLuint stereoMode;
 
-    GLboolean haveAccumBuffer;
-    GLboolean haveDepthBuffer;
-    GLboolean haveStencilBuffer;
-
     GLint redBits, greenBits, blueBits, alphaBits;	/* bits per comp */
     GLuint redMask, greenMask, blueMask, alphaMask;
     GLint rgbBits;		/* total bits for rgb */
@@ -121,10 +117,8 @@ typedef struct __GLcontextModesRec {
    (__GLX_MIN_CONFIG_PROPS + 2 * __GLX_EXT_CONFIG_PROPS)
 
 extern GLint _gl_convert_from_x_visual_type(int visualType);
-extern GLint _gl_convert_to_x_visual_type(int visualType);
 extern int _gl_get_context_mode_data(const __GLcontextModes * mode,
                                      int attribute, int *value_return);
-
 extern __GLcontextModes *_gl_context_modes_create(unsigned count,
                                                   size_t minimum_size);
 extern void _gl_context_modes_destroy(__GLcontextModes * modes);
@@ -132,7 +126,5 @@ extern __GLcontextModes *_gl_context_modes_find_visual(__GLcontextModes *
                                                        modes, int vid);
 extern __GLcontextModes *_gl_context_modes_find_fbconfig(__GLcontextModes *
                                                          modes, int fbid);
-extern GLboolean _gl_context_modes_are_same(const __GLcontextModes * a,
-                                            const __GLcontextModes * b);
 
 #endif /* GLCONTEXTMODES_H */

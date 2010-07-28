@@ -61,29 +61,6 @@ _gl_convert_from_x_visual_type(int visualType)
       ? glx_visual_types[visualType] : GLX_NONE;
 }
 
-
-/**
- * Convert a GLX visual type to an X visual type.
- * 
- * \param visualType GLX visual type (i.e., \c GLX_TRUE_COLOR, 
- *                   \c GLX_STATIC_GRAY, etc.) to be converted.
- * \return If \c visualType is a valid GLX visual type, an X visual type will
- *         be returned.  Otherwise -1 will be returned.
- */
-GLint
-_gl_convert_to_x_visual_type(int visualType)
-{
-   static const int x_visual_types[NUM_VISUAL_TYPES] = {
-      TrueColor, DirectColor,
-      PseudoColor, StaticColor,
-      GrayScale, StaticGray
-   };
-
-   return ((unsigned) (visualType - GLX_TRUE_COLOR) < NUM_VISUAL_TYPES)
-      ? x_visual_types[visualType - GLX_TRUE_COLOR] : -1;
-}
-
-
 /**
  * Get data from a GL context mode.
  * 
@@ -364,67 +341,4 @@ _gl_context_modes_find_fbconfig(__GLcontextModes * modes, int fbid)
          return m;
 
    return NULL;
-}
-
-/**
- * Determine if two context-modes are the same.  This is intended to be used
- * by libGL implementations to compare to sets of driver generated FBconfigs.
- * 
- * \param a  Context-mode to be compared.
- * \param b  Context-mode to be compared.
- * \returns \c GL_TRUE if the two context-modes are the same.  \c GL_FALSE is
- *          returned otherwise.
- */
-GLboolean
-_gl_context_modes_are_same(const __GLcontextModes * a,
-                           const __GLcontextModes * b)
-{
-   return ((a->rgbMode == b->rgbMode) &&
-           (a->floatMode == b->floatMode) &&
-           (a->colorIndexMode == b->colorIndexMode) &&
-           (a->doubleBufferMode == b->doubleBufferMode) &&
-           (a->stereoMode == b->stereoMode) &&
-           (a->redBits == b->redBits) &&
-           (a->greenBits == b->greenBits) &&
-           (a->blueBits == b->blueBits) && (a->alphaBits == b->alphaBits) &&
-#if 0                           /* For some reason these don't get set on the client-side in libGL. */
-           (a->redMask == b->redMask) &&
-           (a->greenMask == b->greenMask) &&
-           (a->blueMask == b->blueMask) && (a->alphaMask == b->alphaMask) &&
-#endif
-           (a->rgbBits == b->rgbBits) &&
-           (a->indexBits == b->indexBits) &&
-           (a->accumRedBits == b->accumRedBits) &&
-           (a->accumGreenBits == b->accumGreenBits) &&
-           (a->accumBlueBits == b->accumBlueBits) &&
-           (a->accumAlphaBits == b->accumAlphaBits) &&
-           (a->depthBits == b->depthBits) &&
-           (a->stencilBits == b->stencilBits) &&
-           (a->numAuxBuffers == b->numAuxBuffers) &&
-           (a->level == b->level) &&
-           (a->pixmapMode == b->pixmapMode) &&
-           (a->visualRating == b->visualRating) &&
-           (a->transparentPixel == b->transparentPixel) &&
-           ((a->transparentPixel != GLX_TRANSPARENT_RGB) ||
-            ((a->transparentRed == b->transparentRed) &&
-             (a->transparentGreen == b->transparentGreen) &&
-             (a->transparentBlue == b->transparentBlue) &&
-             (a->transparentAlpha == b->transparentAlpha))) &&
-           ((a->transparentPixel != GLX_TRANSPARENT_INDEX) ||
-            (a->transparentIndex == b->transparentIndex)) &&
-           (a->sampleBuffers == b->sampleBuffers) &&
-           (a->samples == b->samples) &&
-           ((a->drawableType & b->drawableType) != 0) &&
-           (a->renderType == b->renderType) &&
-           (a->maxPbufferWidth == b->maxPbufferWidth) &&
-           (a->maxPbufferHeight == b->maxPbufferHeight) &&
-           (a->maxPbufferPixels == b->maxPbufferPixels) &&
-           (a->optimalPbufferWidth == b->optimalPbufferWidth) &&
-           (a->optimalPbufferHeight == b->optimalPbufferHeight) &&
-           (a->swapMethod == b->swapMethod) &&
-           (a->bindToTextureRgb == b->bindToTextureRgb) &&
-           (a->bindToTextureRgba == b->bindToTextureRgba) &&
-           (a->bindToMipmapTexture == b->bindToMipmapTexture) &&
-           (a->bindToTextureTargets == b->bindToTextureTargets) &&
-           (a->yInverted == b->yInverted));
 }

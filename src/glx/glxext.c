@@ -573,13 +573,6 @@ __glXInitializeVisualConfigFromTags(__GLcontextModes * config, int count,
 
    config->renderType =
       (config->rgbMode) ? GLX_RGBA_BIT : GLX_COLOR_INDEX_BIT;
-
-   config->haveAccumBuffer = ((config->accumRedBits +
-                               config->accumGreenBits +
-                               config->accumBlueBits +
-                               config->accumAlphaBits) > 0);
-   config->haveDepthBuffer = (config->depthBits > 0);
-   config->haveStencilBuffer = (config->stencilBits > 0);
 }
 
 static __GLcontextModes *
