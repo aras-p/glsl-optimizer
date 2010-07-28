@@ -494,7 +494,7 @@ dri2SwapBuffers(__GLXDRIdrawable *pdraw, int64_t target_msc, int64_t divisor,
     struct dri2_screen *psc = (struct dri2_screen *) priv->base.psc;
     struct dri2_display *pdp =
 	(struct dri2_display *)dpyPriv->dri2Display;
-    CARD64 ret;
+    CARD64 ret = 0;
 
 #ifdef __DRI2_FLUSH
     if (psc->f)
