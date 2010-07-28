@@ -141,6 +141,7 @@ glcpp_parser_lex_from (glcpp_parser_t *parser, token_list_t *list);
 %parse-param {glcpp_parser_t *parser}
 %lex-param {glcpp_parser_t *parser}
 
+%expect 0
 %token COMMA_FINAL DEFINED ELIF_EXPANDED HASH HASH_DEFINE_FUNC HASH_DEFINE_OBJ HASH_ELIF HASH_ELSE HASH_ENDIF HASH_IF HASH_IFDEF HASH_IFNDEF HASH_UNDEF IDENTIFIER IF_EXPANDED INTEGER INTEGER_STRING NEWLINE OTHER PLACEHOLDER SPACE
 %token PASTE
 %type <ival> expression INTEGER operator SPACE
