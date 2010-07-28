@@ -55,8 +55,12 @@ static int r600_draw_common(struct r600_draw *draw)
 	struct r600_resource *rbuffer;
 	unsigned i, j, offset, format, prim;
 	u32 vgt_dma_index_type, vgt_draw_initiator;
+	struct pipe_vertex_buffer *vertex_buffer;
 	int r;
 
+	r = r600_context_hw_states(rctx);
+	if (r)
+		return r;
 	switch (draw->index_size) {
 	case 2:
 		vgt_draw_initiator = 0;
@@ -84,26 +88,18 @@ static int r600_draw_common(struct r600_draw *draw)
 	r = r600_pipe_shader_update(draw->ctx, rctx->ps_shader);
 	if (r)
 		return r;
-	r = radeon_draw_set(rctx->draw, rctx->vs_shader->state);
+	r = radeon_draw_set(rctx->draw, rctx->vs_shader->rstate);
 	if (r)
 		return r;
-	r = radeon_draw_set(rctx->draw, rctx->ps_shader->state);
-	if (r)
-		return r;
-	r = radeon_draw_set(rctx->draw, rctx->cb_cntl);
-	if (r)
-		return r;
-	r = radeon_draw_set(rctx->draw, rctx->db);
-	if (r)
-		return r;
-	r = radeon_draw_set(rctx->draw, rctx->config);
+	r = radeon_draw_set(rctx->draw, rctx->ps_shader->rstate);
 	if (r)
 		return r;
 
 	for (i = 0 ; i < rctx->vertex_elements->count; i++) {
 		j = rctx->vertex_elements->elements[i].vertex_buffer_index;
-		rbuffer = (struct r600_resource*)rctx->vertex_buffer[j].buffer;
-		offset = rctx->vertex_elements->elements[i].src_offset + rctx->vertex_buffer[j].buffer_offset;
+		vertex_buffer = &rctx->vertex_buffer[j];
+		rbuffer = (struct r600_resource*)vertex_buffer->buffer;
+		offset = rctx->vertex_elements->elements[i].src_offset + vertex_buffer->buffer_offset;
 		r = r600_conv_pipe_format(rctx->vertex_elements->elements[i].src_format, &format);
 		if (r)
 			return r;
@@ -114,7 +110,7 @@ static int r600_draw_common(struct r600_draw *draw)
 		vs_resource->nbo = 1;
 		vs_resource->states[R600_PS_RESOURCE__RESOURCE0_WORD0] = offset;
 		vs_resource->states[R600_PS_RESOURCE__RESOURCE0_WORD1] = rbuffer->bo->size - offset;
-		vs_resource->states[R600_PS_RESOURCE__RESOURCE0_WORD2] = S_038008_STRIDE(rctx->vertex_buffer[j].stride) |
+		vs_resource->states[R600_PS_RESOURCE__RESOURCE0_WORD2] = S_038008_STRIDE(vertex_buffer->stride) |
 								S_038008_DATA_FORMAT(format);
 		vs_resource->states[R600_PS_RESOURCE__RESOURCE0_WORD3] = 0x00000000;
 		vs_resource->states[R600_PS_RESOURCE__RESOURCE0_WORD4] = 0x00000000;
@@ -126,17 +122,19 @@ static int r600_draw_common(struct r600_draw *draw)
 		if (r)
 			return r;
 	}
+#if 0
 	/* setup texture sampler & resource */
-	for (i = 0 ; i < rctx->nps_sampler; i++) {
-		r = radeon_draw_set_new(rctx->draw, rctx->ps_sampler[i]);
+	for (i = 0 ; i < rctx->ps_nsampler; i++) {
+		r = radeon_draw_set_new(rctx->draw, rctx->ps_sampler[i]->rstate);
 		if (r)
 			return r;
 	}
-	for (i = 0 ; i < rctx->nps_view; i++) {
-		r = radeon_draw_set_new(rctx->draw, rctx->ps_view[i]->state);
+	for (i = 0 ; i < rctx->ps_nsampler_view; i++) {
+		r = radeon_draw_set_new(rctx->draw, rctx->ps_sampler_view[i]->rstate);
 		if (r)
 			return r;
 	}
+#endif
 	/* FIXME start need to change winsys */
 	draw->draw = radeon_state(rscreen->rw, R600_DRAW_TYPE, R600_DRAW);
 	if (draw->draw == NULL)

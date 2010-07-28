@@ -34,21 +34,74 @@
 #include "r600_shader.h"
 
 /* XXX move this to a more appropriate place */
-struct r600_vertex_elements_state
+union pipe_states {
+	struct pipe_rasterizer_state		rasterizer;
+	struct pipe_poly_stipple		poly_stipple;
+	struct pipe_scissor_state		scissor;
+	struct pipe_clip_state			clip;
+	struct pipe_shader_state		shader;
+	struct pipe_depth_state			depth;
+	struct pipe_stencil_state		stencil;
+	struct pipe_alpha_state			alpha;
+	struct pipe_depth_stencil_alpha_state	dsa;
+	struct pipe_blend_state			blend;
+	struct pipe_blend_color			blend_color;
+	struct pipe_stencil_ref			stencil_ref;
+	struct pipe_framebuffer_state		framebuffer;
+	struct pipe_sampler_state		sampler;
+	struct pipe_sampler_view		sampler_view;
+	struct pipe_viewport_state		viewport;
+};
+
+enum pipe_state_type {
+	pipe_rasterizer_type = 1,
+	pipe_poly_stipple_type,
+	pipe_scissor_type,
+	pipe_clip_type,
+	pipe_shader_type,
+	pipe_depth_type,
+	pipe_stencil_type,
+	pipe_alpha_type,
+	pipe_dsa_type,
+	pipe_blend_type,
+	pipe_stencil_ref_type,
+	pipe_framebuffer_type,
+	pipe_sampler_type,
+	pipe_sampler_view_type,
+	pipe_viewport_type,
+	pipe_type_count
+};
+
+struct r600_context_state {
+	union pipe_states		state;
+	unsigned			refcount;
+	unsigned			type;
+	struct radeon_state		*rstate;
+	struct r600_shader		shader;
+	struct radeon_bo		*bo;
+};
+
+struct r600_vertex_element
 {
-	unsigned count;
-	struct pipe_vertex_element elements[32];
+	unsigned			refcount;
+	unsigned			count;
+	struct pipe_vertex_element	elements[32];
 };
 
-struct r600_pipe_shader {
-	struct r600_shader			shader;
-	struct radeon_bo			*bo;
-	struct radeon_state			*state;
-};
-
-struct r600_texture_resource {
-	struct pipe_sampler_view		view;
-	struct radeon_state			*state;
+struct r600_context_hw_states {
+	struct radeon_state	*rasterizer;
+	struct radeon_state	*scissor;
+	struct radeon_state	*dsa;
+	struct radeon_state	*blend;
+	struct radeon_state	*viewport;
+	struct radeon_state	*cb0;
+	struct radeon_state	*config;
+	struct radeon_state	*cb_cntl;
+	struct radeon_state	*db;
+	unsigned		ps_nresource;
+	unsigned		ps_nsampler;
+	struct radeon_state	*ps_resource[160];
+	struct radeon_state	*ps_sampler[16];
 };
 
 struct r600_context {
@@ -56,9 +109,11 @@ struct r600_context {
 	struct r600_screen		*screen;
 	struct radeon			*rw;
 	struct radeon_ctx		*ctx;
-	struct radeon_state		*cb_cntl;
-	struct radeon_state		*db;
-	struct radeon_state		*config;
+	struct blitter_context		*blitter;
+	struct radeon_draw		*draw;
+	/* hw states */
+	struct r600_context_hw_states	hw_states;
+#if 0
 	struct r600_pipe_shader		*ps_shader;
 	struct r600_pipe_shader		*vs_shader;
 	unsigned			nps_sampler;
@@ -71,18 +126,69 @@ struct r600_context {
 	unsigned			nvertex_buffer;
 	struct r600_vertex_elements_state *vertex_elements;
 	struct pipe_vertex_buffer	vertex_buffer[PIPE_MAX_ATTRIBS];
-	struct blitter_context		*blitter;
 	struct pipe_stencil_ref		stencil_ref;
 	struct pipe_framebuffer_state	fb_state;
-	struct radeon_draw		*draw;
 	struct pipe_viewport_state	viewport;
+#endif
+	/* pipe states */
+	unsigned			flat_shade;
+	unsigned			ps_nsampler;
+	unsigned			vs_nsampler;
+	unsigned			ps_nsampler_view;
+	unsigned			vs_nsampler_view;
+	unsigned			nvertex_buffer;
+	struct r600_context_state	*rasterizer;
+	struct r600_context_state	*poly_stipple;
+	struct r600_context_state	*scissor;
+	struct r600_context_state	*clip;
+	struct r600_context_state	*ps_shader;
+	struct r600_context_state	*vs_shader;
+	struct r600_context_state	*depth;
+	struct r600_context_state	*stencil;
+	struct r600_context_state	*alpha;
+	struct r600_context_state	*dsa;
+	struct r600_context_state	*blend;
+	struct r600_context_state	*stencil_ref;
+	struct r600_context_state	*viewport;
+	struct r600_context_state	*framebuffer;
+	struct r600_context_state	*ps_sampler[PIPE_MAX_ATTRIBS];
+	struct r600_context_state	*vs_sampler[PIPE_MAX_ATTRIBS];
+	struct r600_context_state	*ps_sampler_view[PIPE_MAX_ATTRIBS];
+	struct r600_context_state	*vs_sampler_view[PIPE_MAX_ATTRIBS];
+	struct r600_vertex_element	*vertex_elements;
+	struct pipe_vertex_buffer	vertex_buffer[PIPE_MAX_ATTRIBS];
 };
+
+#if 0
+struct r600_vertex_elements_state
+{
+	unsigned count;
+	struct pipe_vertex_element	elements[32];
+};
+
+struct r600_pipe_shader {
+	struct r600_shader		shader;
+	struct radeon_bo		*bo;
+	struct radeon_state		*state;
+};
+
+struct r600_texture_resource {
+	struct pipe_sampler_view	view;
+	struct radeon_state		*state;
+};
+#endif
 
 /* Convenience cast wrapper. */
 static INLINE struct r600_context *r600_context(struct pipe_context *pipe)
 {
     return (struct r600_context*)pipe;
 }
+
+struct r600_context_state *r600_context_state(struct r600_context *rctx, unsigned type, const void *state);
+struct r600_context_state *r600_context_state_incref(struct r600_context_state *rstate);
+struct r600_context_state *r600_context_state_decref(struct r600_context_state *rstate);
+
+int r600_context_hw_states(struct r600_context *rctx);
 
 void r600_draw_arrays(struct pipe_context *ctx, unsigned mode,
 			unsigned start, unsigned count);
@@ -101,10 +207,11 @@ void r600_init_state_functions(struct r600_context *rctx);
 void r600_init_query_functions(struct r600_context* rctx);
 struct pipe_context *r600_create_context(struct pipe_screen *screen, void *priv);
 
-void r600_pipe_shader_destroy(struct pipe_context *ctx, struct r600_pipe_shader *rpshader);
-struct r600_pipe_shader *r600_pipe_shader_create(struct pipe_context *ctx,
-						const struct tgsi_token *tokens);
-int r600_pipe_shader_update(struct pipe_context *ctx, struct r600_pipe_shader *rpshader);
+int r600_pipe_shader_create(struct pipe_context *ctx,
+			struct r600_context_state *rstate,
+			const struct tgsi_token *tokens);
+int r600_pipe_shader_update(struct pipe_context *ctx,
+				struct r600_context_state *rstate);
 
 #define R600_ERR(fmt, args...) \
 	fprintf(stderr, "EE %s/%s:%d - "fmt, __FILE__, __func__, __LINE__, ##args)

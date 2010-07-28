@@ -24,7 +24,6 @@
 #include "r600_context.h"
 #include "r600_resource.h"
 #include "r600_screen.h"
-#include "r600_texture.h"
 
 static struct pipe_resource *r600_resource_create(struct pipe_screen *screen,
 						const struct pipe_resource *templ)

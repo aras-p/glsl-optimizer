@@ -141,6 +141,7 @@ static void r600_buffer_destroy(struct pipe_screen *screen,
 	if (rbuffer->bo) {
 		radeon_bo_decref(rscreen->rw, rbuffer->bo);
 	}
+	memset(rbuffer, 0, sizeof(struct r600_resource));
 	FREE(rbuffer);
 }
 

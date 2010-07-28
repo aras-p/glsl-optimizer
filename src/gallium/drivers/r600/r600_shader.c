@@ -98,43 +98,40 @@ static int r600_shader_update(struct pipe_context *ctx, struct r600_shader *shad
 	return r600_bc_build(&shader->bc);
 }
 
-struct r600_pipe_shader *r600_pipe_shader_create(struct pipe_context *ctx,
-						const struct tgsi_token *tokens)
+int r600_pipe_shader_create(struct pipe_context *ctx,
+			struct r600_context_state *rpshader,
+			const struct tgsi_token *tokens)
 {
 	struct r600_screen *rscreen = r600_screen(ctx->screen);
-	struct r600_pipe_shader *rpshader = CALLOC_STRUCT(r600_pipe_shader);
 	int r;
 
 fprintf(stderr, "--------------------------------------------------------------\n");
 tgsi_dump(tokens, 0);
 	if (rpshader == NULL)
-		return NULL;
+		return -ENOMEM;
 	rpshader->shader.family = radeon_get_family(rscreen->rw);
 	r = r600_shader_from_tgsi(tokens, &rpshader->shader);
 	if (r) {
 		R600_ERR("translation from TGSI failed !\n");
-		goto out_err;
+		return r;
 	}
 	r = r600_bc_build(&rpshader->shader.bc);
 	if (r) {
 		R600_ERR("building bytecode failed !\n");
-		goto out_err;
+		return r;
 	}
 fprintf(stderr, "______________________________________________________________\n");
-	return rpshader;
-out_err:
-	free(rpshader);
-	return NULL;
+	return 0;
 }
 
-static int r600_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader *rpshader)
+static int r600_pipe_shader_vs(struct pipe_context *ctx, struct r600_context_state *rpshader)
 {
 	struct r600_screen *rscreen = r600_screen(ctx->screen);
 	struct r600_shader *rshader = &rpshader->shader;
 	struct radeon_state *state;
 	unsigned i, j, tmp;
 
-	rpshader->state = radeon_state_decref(rpshader->state);
+	rpshader->rstate = radeon_state_decref(rpshader->rstate);
 	state = radeon_state(rscreen->rw, R600_VS_SHADER_TYPE, R600_VS_SHADER);
 	if (state == NULL)
 		return -ENOMEM;
@@ -150,22 +147,22 @@ static int r600_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader
 	}
 	state->states[R600_VS_SHADER__SPI_VS_OUT_CONFIG] = S_0286C4_VS_EXPORT_COUNT(rshader->noutput - 2);
 	state->states[R600_VS_SHADER__SQ_PGM_RESOURCES_VS] = S_028868_NUM_GPRS(rshader->bc.ngpr);
-	rpshader->state = state;
-	rpshader->state->bo[0] = radeon_bo_incref(rscreen->rw, rpshader->bo);
-	rpshader->state->bo[1] = radeon_bo_incref(rscreen->rw, rpshader->bo);
-	rpshader->state->nbo = 2;
-	rpshader->state->placement[0] = RADEON_GEM_DOMAIN_GTT;
+	rpshader->rstate = state;
+	rpshader->rstate->bo[0] = radeon_bo_incref(rscreen->rw, rpshader->bo);
+	rpshader->rstate->bo[1] = radeon_bo_incref(rscreen->rw, rpshader->bo);
+	rpshader->rstate->nbo = 2;
+	rpshader->rstate->placement[0] = RADEON_GEM_DOMAIN_GTT;
 	return radeon_state_pm4(state);
 }
 
-static int r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *rpshader)
+static int r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_context_state *rpshader)
 {
 	struct r600_screen *rscreen = r600_screen(ctx->screen);
 	struct r600_shader *rshader = &rpshader->shader;
 	struct radeon_state *state;
 	unsigned i, tmp;
 
-	rpshader->state = radeon_state_decref(rpshader->state);
+	rpshader->rstate = radeon_state_decref(rpshader->rstate);
 	state = radeon_state(rscreen->rw, R600_PS_SHADER_TYPE, R600_PS_SHADER);
 	if (state == NULL)
 		return -ENOMEM;
@@ -180,14 +177,14 @@ static int r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader
 	state->states[R600_PS_SHADER__SPI_PS_IN_CONTROL_1] = 0x00000000;
 	state->states[R600_PS_SHADER__SQ_PGM_RESOURCES_PS] = S_028868_NUM_GPRS(rshader->bc.ngpr);
 	state->states[R600_PS_SHADER__SQ_PGM_EXPORTS_PS] = 0x00000002;
-	rpshader->state = state;
-	rpshader->state->bo[0] = radeon_bo_incref(rscreen->rw, rpshader->bo);
-	rpshader->state->nbo = 1;
-	rpshader->state->placement[0] = RADEON_GEM_DOMAIN_GTT;
+	rpshader->rstate = state;
+	rpshader->rstate->bo[0] = radeon_bo_incref(rscreen->rw, rpshader->bo);
+	rpshader->rstate->nbo = 1;
+	rpshader->rstate->placement[0] = RADEON_GEM_DOMAIN_GTT;
 	return radeon_state_pm4(state);
 }
 
-static int r600_pipe_shader(struct pipe_context *ctx, struct r600_pipe_shader *rpshader)
+static int r600_pipe_shader(struct pipe_context *ctx, struct r600_context_state *rpshader)
 {
 	struct r600_screen *rscreen = r600_screen(ctx->screen);
 	struct r600_context *rctx = r600_context(ctx);
@@ -221,7 +218,7 @@ static int r600_pipe_shader(struct pipe_context *ctx, struct r600_pipe_shader *r
 	return r;
 }
 
-int r600_pipe_shader_update(struct pipe_context *ctx, struct r600_pipe_shader *rpshader)
+int r600_pipe_shader_update(struct pipe_context *ctx, struct r600_context_state *rpshader)
 {
 	struct r600_context *rctx = r600_context(ctx);
 	int r;
