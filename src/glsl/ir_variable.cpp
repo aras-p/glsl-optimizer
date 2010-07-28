@@ -152,12 +152,8 @@ generate_110_uniforms(exec_list *instructions,
     * FINISHME: (glFrontMaterial, glBackMaterial)
     */
 
-   /* FINISHME: The size of this array is implementation dependent based on the
-    * FINISHME: value of GL_MAX_TEXTURE_LIGHTS.  GL_MAX_TEXTURE_LIGHTS must be
-    * FINISHME: at least 8, so hard-code 8 for now.
-    */
    const glsl_type *const light_source_array_type =
-      glsl_type::get_array_instance(state->symbols->get_type("gl_LightSourceParameters"), 8);
+      glsl_type::get_array_instance(state->symbols->get_type("gl_LightSourceParameters"), state->Const.MaxLights);
 
    add_variable("gl_LightSource", ir_var_uniform, -1, light_source_array_type,
 		instructions, state->symbols);
@@ -227,11 +223,9 @@ generate_130_vs_variables(exec_list *instructions,
 			   instructions, state->symbols);
    }
 
-   /* FINISHME: The size of this array is implementation dependent based on
-    * FINISHME: the value of GL_MAX_CLIP_DISTANCES.
-    */
    const glsl_type *const clip_distance_array_type =
-      glsl_type::get_array_instance(glsl_type::float_type, 8);
+      glsl_type::get_array_instance(glsl_type::float_type,
+				    state->Const.MaxClipPlanes);
 
    /* FINISHME: gl_ClipDistance needs a real location assigned. */
    add_variable("gl_ClipDistance", ir_var_out, -1, clip_distance_array_type,
@@ -349,11 +343,9 @@ generate_130_fs_variables(exec_list *instructions,
 {
    generate_120_fs_variables(instructions, state);
 
-   /* FINISHME: The size of this array is implementation dependent based on
-    * FINISHME: the value of GL_MAX_CLIP_DISTANCES.
-    */
    const glsl_type *const clip_distance_array_type =
-      glsl_type::get_array_instance(glsl_type::float_type, 8);
+      glsl_type::get_array_instance(glsl_type::float_type,
+				    state->Const.MaxClipPlanes);
 
    /* FINISHME: gl_ClipDistance needs a real location assigned. */
    add_variable("gl_ClipDistance", ir_var_in, -1, clip_distance_array_type,
