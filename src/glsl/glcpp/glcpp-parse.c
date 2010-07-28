@@ -3041,7 +3041,7 @@ _token_print (char **out, token_t *token)
 
 	switch (token->type) {
 	case INTEGER:
-		glcpp_printf (*out, "%" PRIxMAX, token->value.ival);
+		glcpp_printf (*out, "%" PRIiMAX, token->value.ival);
 		break;
 	case IDENTIFIER:
 	case INTEGER_STRING:
