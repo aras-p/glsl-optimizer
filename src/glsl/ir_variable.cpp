@@ -76,6 +76,14 @@ add_variable(const char *name, enum ir_variable_mode mode, int slot,
    return var;
 }
 
+static ir_variable *
+add_uniform(exec_list *instructions,
+	    struct _mesa_glsl_parse_state *state,
+	    const char *name, const glsl_type *type)
+{
+   return add_variable(name, ir_var_uniform, -1, type, instructions,
+		       state->symbols);
+}
 
 static void
 add_builtin_variable(const builtin_variable *proto, exec_list *instructions,
@@ -141,28 +149,58 @@ generate_110_uniforms(exec_list *instructions,
       glsl_type::get_array_instance(glsl_type::mat4_type,
 				    state->Const.MaxTextureCoords);
 
-   add_variable("gl_TextureMatrix", ir_var_uniform, -1, mat4_array_type,
-		instructions, state->symbols);
+   add_uniform(instructions, state, "gl_TextureMatrix", mat4_array_type);
 
-   /* FINISHME: Add support for gl_DepthRangeParameters */
-   /* FINISHME: Add support for gl_ClipPlane[] */
-   /* FINISHME: Add support for gl_PointParameters */
+   add_uniform(instructions, state, "gl_DepthRangeParameters",
+		state->symbols->get_type("gl_DepthRangeParameters"));
 
-   /* FINISHME: Add support for gl_MaterialParameters
-    * FINISHME: (glFrontMaterial, glBackMaterial)
-    */
+   add_uniform(instructions, state, "gl_ClipPlane",
+	       glsl_type::get_array_instance(glsl_type::vec4_type,
+					     state->Const.MaxClipPlanes));
+   add_uniform(instructions, state, "gl_Point",
+	       state->symbols->get_type("gl_PointParameters"));
+
+   const glsl_type *const material_parameters_type =
+      state->symbols->get_type("gl_MaterialParameters");
+   add_uniform(instructions, state, "gl_FrontMaterial", material_parameters_type);
+   add_uniform(instructions, state, "gl_BackMaterial", material_parameters_type);
 
    const glsl_type *const light_source_array_type =
       glsl_type::get_array_instance(state->symbols->get_type("gl_LightSourceParameters"), state->Const.MaxLights);
 
-   add_variable("gl_LightSource", ir_var_uniform, -1, light_source_array_type,
-		instructions, state->symbols);
+   add_uniform(instructions, state, "gl_LightSource", light_source_array_type);
 
-   /* FINISHME: Add support for gl_LightModel */
-   /* FINISHME: Add support for gl_FrontLightProduct[], gl_BackLightProduct[] */
-   /* FINISHME: Add support for gl_TextureEnvColor[] */
-   /* FINISHME: Add support for gl_ObjectPlane*[], gl_EyePlane*[] */
-   /* FINISHME: Add support for gl_Fog */
+   const glsl_type *const light_model_products_type =
+      state->symbols->get_type("gl_LightModelProducts");
+   add_uniform(instructions, state, "gl_FrontLightModelProduct",
+	       light_model_products_type);
+   add_uniform(instructions, state, "gl_BackLightModelProduct",
+	       light_model_products_type);
+
+   const glsl_type *const light_products_type =
+      glsl_type::get_array_instance(state->symbols->get_type("gl_LightProducts"),
+				    state->Const.MaxLights);
+   add_uniform(instructions, state, "gl_FrontLightProduct", light_products_type);
+   add_uniform(instructions, state, "gl_BackLightProduct", light_products_type);
+
+   add_uniform(instructions, state, "gl_TextureEnvColor",
+	       glsl_type::get_array_instance(glsl_type::vec4_type,
+					     state->Const.MaxTextureUnits));
+
+   const glsl_type *const texcoords_vec4 =
+      glsl_type::get_array_instance(glsl_type::vec4_type,
+				    state->Const.MaxTextureCoords);
+   add_uniform(instructions, state, "gl_EyePlaneS", texcoords_vec4);
+   add_uniform(instructions, state, "gl_EyePlaneT", texcoords_vec4);
+   add_uniform(instructions, state, "gl_EyePlaneR", texcoords_vec4);
+   add_uniform(instructions, state, "gl_EyePlaneQ", texcoords_vec4);
+   add_uniform(instructions, state, "gl_ObjectPlaneS", texcoords_vec4);
+   add_uniform(instructions, state, "gl_ObjectPlaneT", texcoords_vec4);
+   add_uniform(instructions, state, "gl_ObjectPlaneR", texcoords_vec4);
+   add_uniform(instructions, state, "gl_ObjectPlaneQ", texcoords_vec4);
+
+   add_uniform(instructions, state, "gl_Fog",
+	       state->symbols->get_type("gl_FogParameters"));
 }
 
 static void
