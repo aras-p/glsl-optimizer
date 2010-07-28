@@ -39,6 +39,7 @@
 #define _GLX_client_h_
 #include <X11/Xproto.h>
 #include <X11/Xlibint.h>
+#include <X11/Xfuncproto.h>
 #include <X11/extensions/extutil.h>
 #define GLX_GLXEXT_PROTOTYPES
 #include <GL/glx.h>
@@ -59,21 +60,6 @@
 
 #include "glxextensions.h"
 
-
-/* If we build the library with gcc's -fvisibility=hidden flag, we'll
- * use the PUBLIC macro to mark functions that are to be exported.
- *
- * We also need to define a USED attribute, so the optimizer doesn't
- * inline a static function that we later use in an alias. - ajax
- */
-#if defined(__GNUC__)
-#  define PUBLIC __attribute__((visibility("default")))
-#  define USED __attribute__((used))
-#else
-#  define PUBLIC
-#  define USED
-#endif
-
 #define ARRAY_SIZE(a) (sizeof (a) / sizeof ((a)[0]))
 
 #define GLX_MAJOR_VERSION 1       /* current version numbers */
@@ -90,9 +76,6 @@ typedef struct _glapi_table __GLapi;
 /************************************************************************/
 
 #ifdef GLX_DIRECT_RENDERING
-
-#define containerOf(ptr, type, member)              \
-    (type *)( (char *)ptr - offsetof(type,member) )
 
 extern void DRI_glXUseXFont(GLXContext CC,
 			    Font font, int first, int count, int listbase);

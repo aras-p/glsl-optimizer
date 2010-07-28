@@ -151,7 +151,7 @@ driGetDriverName(Display * dpy, int scrNum, char **driverName)
  * The returned char pointer points to a static array that will be
  * overwritten by subsequent calls.
  */
-PUBLIC const char *
+_X_EXPORT const char *
 glXGetScreenDriver(Display * dpy, int scrNum)
 {
    static char ret[32];
@@ -181,7 +181,7 @@ glXGetScreenDriver(Display * dpy, int scrNum)
  *
  * Note: The driver remains opened after this function returns.
  */
-PUBLIC const char *
+_X_EXPORT const char *
 glXGetDriverConfig(const char *driverName)
 {
    void *handle = driOpenDriver(driverName);

@@ -593,7 +593,7 @@ DestroyPbuffer(Display * dpy, GLXDrawable drawable)
 /**
  * Create a new pbuffer.
  */
-PUBLIC GLXPbufferSGIX
+_X_EXPORT GLXPbufferSGIX
 glXCreateGLXPbufferSGIX(Display * dpy, GLXFBConfigSGIX config,
                         unsigned int width, unsigned int height,
                         int *attrib_list)
@@ -608,7 +608,7 @@ glXCreateGLXPbufferSGIX(Display * dpy, GLXFBConfigSGIX config,
 /**
  * Create a new pbuffer.
  */
-PUBLIC GLXPbuffer
+_X_EXPORT GLXPbuffer
 glXCreatePbuffer(Display * dpy, GLXFBConfig config, const int *attrib_list)
 {
    int i, width, height;
@@ -683,7 +683,7 @@ glXCreatePbuffer(Display * dpy, GLXFBConfig config, const int *attrib_list)
 /**
  * Destroy an existing pbuffer.
  */
-PUBLIC void
+_X_EXPORT void
 glXDestroyPbuffer(Display * dpy, GLXPbuffer pbuf)
 {
 #ifdef GLX_USE_APPLEGL
@@ -699,7 +699,7 @@ glXDestroyPbuffer(Display * dpy, GLXPbuffer pbuf)
 /**
  * Query an attribute of a drawable.
  */
-PUBLIC void
+_X_EXPORT void
 glXQueryDrawable(Display * dpy, GLXDrawable drawable,
                  int attribute, unsigned int *value)
 {
@@ -748,7 +748,7 @@ glXQueryDrawable(Display * dpy, GLXDrawable drawable,
 /**
  * Query an attribute of a pbuffer.
  */
-PUBLIC int
+_X_EXPORT int
 glXQueryGLXPbufferSGIX(Display * dpy, GLXPbufferSGIX drawable,
                        int attribute, unsigned int *value)
 {
@@ -759,7 +759,7 @@ glXQueryGLXPbufferSGIX(Display * dpy, GLXPbufferSGIX drawable,
 /**
  * Select the event mask for a drawable.
  */
-PUBLIC void
+_X_EXPORT void
 glXSelectEvent(Display * dpy, GLXDrawable drawable, unsigned long mask)
 {
 #ifdef GLX_USE_APPLEGL
@@ -792,7 +792,7 @@ glXSelectEvent(Display * dpy, GLXDrawable drawable, unsigned long mask)
 /**
  * Get the selected event mask for a drawable.
  */
-PUBLIC void
+_X_EXPORT void
 glXGetSelectedEvent(Display * dpy, GLXDrawable drawable, unsigned long *mask)
 {
 #ifdef GLX_USE_APPLEGL
@@ -829,7 +829,7 @@ glXGetSelectedEvent(Display * dpy, GLXDrawable drawable, unsigned long *mask)
 }
 
 
-PUBLIC GLXPixmap
+_X_EXPORT GLXPixmap
 glXCreatePixmap(Display * dpy, GLXFBConfig config, Pixmap pixmap,
                 const int *attrib_list)
 {
@@ -849,7 +849,7 @@ glXCreatePixmap(Display * dpy, GLXFBConfig config, Pixmap pixmap,
 }
 
 
-PUBLIC GLXWindow
+_X_EXPORT GLXWindow
 glXCreateWindow(Display * dpy, GLXFBConfig config, Window win,
                 const int *attrib_list)
 {
@@ -884,7 +884,7 @@ glXCreateWindow(Display * dpy, GLXFBConfig config, Window win,
 }
 
 
-PUBLIC void
+_X_EXPORT void
 glXDestroyPixmap(Display * dpy, GLXPixmap pixmap)
 {
    WARN_ONCE_GLX_1_3(dpy, __func__);
@@ -897,7 +897,7 @@ glXDestroyPixmap(Display * dpy, GLXPixmap pixmap)
 }
 
 
-PUBLIC void
+_X_EXPORT void
 glXDestroyWindow(Display * dpy, GLXWindow win)
 {
    WARN_ONCE_GLX_1_3(dpy, __func__);
@@ -907,17 +907,17 @@ glXDestroyWindow(Display * dpy, GLXWindow win)
 }
 
 #ifndef GLX_USE_APPLEGL
-PUBLIC
+_X_EXPORT
 GLX_ALIAS_VOID(glXDestroyGLXPbufferSGIX,
                (Display * dpy, GLXPbufferSGIX pbuf),
                (dpy, pbuf), glXDestroyPbuffer)
 
-PUBLIC
+_X_EXPORT
 GLX_ALIAS_VOID(glXSelectEventSGIX,
                (Display * dpy, GLXDrawable drawable,
                 unsigned long mask), (dpy, drawable, mask), glXSelectEvent)
 
-PUBLIC
+_X_EXPORT
 GLX_ALIAS_VOID(glXGetSelectedEventSGIX,
                (Display * dpy, GLXDrawable drawable,
                 unsigned long *mask), (dpy, drawable, mask),
