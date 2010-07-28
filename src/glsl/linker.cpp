@@ -1061,7 +1061,8 @@ assign_attribute_locations(gl_shader_program *prog, unsigned max_attribute_index
 
 
 void
-assign_varying_locations(gl_shader *producer, gl_shader *consumer)
+assign_varying_locations(struct gl_shader_program *prog,
+			 gl_shader *producer, gl_shader *consumer)
 {
    /* FINISHME: Set dynamically when geometry shader support is added. */
    unsigned output_index = VERT_RESULT_VAR0;
@@ -1128,11 +1129,32 @@ assign_varying_locations(gl_shader *producer, gl_shader *consumer)
       if ((var == NULL) || (var->mode != ir_var_in))
 	 continue;
 
-      /* An 'in' variable is only really a shader input if its value is written
-       * by the previous stage.
-       */
-      var->shader_in = (var->location != -1);
-      var->mode = ir_var_auto;
+      if (var->location == -1) {
+	 if (prog->Version <= 120) {
+	    /* On page 25 (page 31 of the PDF) of the GLSL 1.20 spec:
+	     *
+	     *     Only those varying variables used (i.e. read) in
+	     *     the fragment shader executable must be written to
+	     *     by the vertex shader executable; declaring
+	     *     superfluous varying variables in a vertex shader is
+	     *     permissible.
+	     *
+	     * We interpret this text as meaning that the VS must
+	     * write the variable for the FS to read it.  See
+	     * "glsl1-varying read but not written" in piglit.
+	     */
+
+	    linker_error_printf(prog, "fragment shader varying %s not written "
+				"by vertex shader\n.", var->name);
+	    prog->LinkStatus = false;
+	 }
+
+	 /* An 'in' variable is only really a shader input if its
+	  * value is written by the previous stage.
+	  */
+	 var->shader_in = false;
+	 var->mode = ir_var_auto;
+      }
    }
 }
 
@@ -1294,7 +1316,8 @@ link_shaders(struct gl_shader_program *prog)
 	 goto done;
 
    for (unsigned i = 1; i < prog->_NumLinkedShaders; i++)
-      assign_varying_locations(prog->_LinkedShaders[i - 1],
+      assign_varying_locations(prog,
+			       prog->_LinkedShaders[i - 1],
 			       prog->_LinkedShaders[i]);
 
    /* FINISHME: Assign fragment shader output locations. */
