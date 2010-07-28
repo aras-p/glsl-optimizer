@@ -557,9 +557,6 @@ static int tgsi_slt(struct r600_shader_ctx *ctx)
 	struct r600_bc_alu alu;
 	int i, r;
 
-	r = r600_bc_add_literal(ctx->bc, ctx->value);
-	if (r)
-		return r;
 	for (i = 0; i < 4; i++) {
 		memset(&alu, 0, sizeof(struct r600_bc_alu));
 		if (!(inst->Dst[0].Register.WriteMask & (1 << i))) {
@@ -739,6 +736,9 @@ static int tgsi_helper_copy(struct r600_shader_ctx *ctx, struct tgsi_full_instru
 	struct r600_bc_alu alu;
 	int i, r;
 
+	r = r600_bc_add_literal(ctx->bc, ctx->value);
+	if (r)
+		return r;
 	for (i = 0; i < 4; i++) {
 		memset(&alu, 0, sizeof(struct r600_bc_alu));
 		if (!(inst->Dst[0].Register.WriteMask & (1 << i))) {
