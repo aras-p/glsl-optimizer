@@ -579,12 +579,12 @@ static void r600_set_viewport_state(struct pipe_context *ctx,
 		return;
 	rstate->states[R600_VIEWPORT__PA_SC_VPORT_ZMIN_0] = 0x00000000;
 	rstate->states[R600_VIEWPORT__PA_SC_VPORT_ZMAX_0] = 0x3F800000;
-	rstate->states[R600_VIEWPORT__PA_CL_VPORT_XSCALE_0] = r600_float_to_u32(state->scale[0]);
-	rstate->states[R600_VIEWPORT__PA_CL_VPORT_YSCALE_0] = r600_float_to_u32(state->scale[1]);
-	rstate->states[R600_VIEWPORT__PA_CL_VPORT_ZSCALE_0] = r600_float_to_u32(state->scale[2]);
-	rstate->states[R600_VIEWPORT__PA_CL_VPORT_XOFFSET_0] = r600_float_to_u32(state->translate[0]);
-	rstate->states[R600_VIEWPORT__PA_CL_VPORT_YOFFSET_0] = r600_float_to_u32(state->translate[1]);
-	rstate->states[R600_VIEWPORT__PA_CL_VPORT_ZOFFSET_0] = r600_float_to_u32(state->translate[2]);
+	rstate->states[R600_VIEWPORT__PA_CL_VPORT_XSCALE_0] = fui(state->scale[0]);
+	rstate->states[R600_VIEWPORT__PA_CL_VPORT_YSCALE_0] = fui(state->scale[1]);
+	rstate->states[R600_VIEWPORT__PA_CL_VPORT_ZSCALE_0] = fui(state->scale[2]);
+	rstate->states[R600_VIEWPORT__PA_CL_VPORT_XOFFSET_0] = fui(state->translate[0]);
+	rstate->states[R600_VIEWPORT__PA_CL_VPORT_YOFFSET_0] = fui(state->translate[1]);
+	rstate->states[R600_VIEWPORT__PA_CL_VPORT_ZOFFSET_0] = fui(state->translate[2]);
 	rstate->states[R600_VIEWPORT__PA_CL_VTE_CNTL] = 0x0000043F;
 	if (radeon_state_pm4(rstate)) {
 		radeon_state_decref(rstate);

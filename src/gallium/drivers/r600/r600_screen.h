@@ -88,17 +88,4 @@ void r600_texture_transfer_unmap(struct pipe_context *ctx,
 int r600_conv_pipe_format(unsigned pformat, unsigned *format);
 int r600_conv_pipe_prim(unsigned pprim, unsigned *prim);
 
-union r600_float_to_u32_u {
-	u32	u;
-	float	f;
-};
-
-static inline u32 r600_float_to_u32(float f)
-{
-	union r600_float_to_u32_u c;
-
-	c.f = f;
-	return c.u;
-}
-
 #endif
