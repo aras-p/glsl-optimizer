@@ -4,11 +4,11 @@ def gen(x, y):
     type = "mat" + str(x)
     if x != y:
         type = type + "x" + str(y)
-    print type + " outerProduct(vec" + str(x) + " u, vec" + str(y) + " v)\n{"
+    print type + " outerProduct(vec" + str(y) + " u, vec" + str(x) + " v)\n{"
     print "    " + type + " m;"
 
     for i in range(x):
-        print "    m[" + str(i) + "] = v * u[" + str(i) + "];"
+        print "    m[" + str(i) + "] = u * v[" + str(i) + "];"
     print "    return m;\n}"
 
 print "#version 120"
