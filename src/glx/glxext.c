@@ -56,7 +56,7 @@
 
 
 #ifdef DEBUG
-void __glXDumpDrawBuffer(__GLXcontext * ctx);
+void __glXDumpDrawBuffer(struct glx_context * ctx);
 #endif
 
 /*
@@ -68,7 +68,7 @@ _X_HIDDEN int __glXDebug = 0;
 /* Extension required boiler plate */
 
 static const char __glXExtensionName[] = GLX_EXTENSION_NAME;
-static __GLXdisplayPrivate *glx_displays;
+  static struct glx_display *glx_displays;
 
 static /* const */ char *error_list[] = {
    "GLXBadContext",
@@ -107,7 +107,7 @@ XEXT_GENERATE_ERROR_STRING(__glXErrorString, __glXExtensionName,
 static Bool
 __glXWireToEvent(Display *dpy, XEvent *event, xEvent *wire)
 {
-   __GLXdisplayPrivate *glx_dpy = __glXInitialize(dpy);
+     struct glx_display *glx_dpy = __glXInitialize(dpy);
 
    if (glx_dpy == NULL)
       return False;
@@ -167,7 +167,7 @@ __glXWireToEvent(Display *dpy, XEvent *event, xEvent *wire)
 static Status
 __glXEventToWire(Display *dpy, XEvent *event, xEvent *wire)
 {
-   __GLXdisplayPrivate *glx_dpy = __glXInitialize(dpy);
+     struct glx_display *glx_dpy = __glXInitialize(dpy);
 
    if (glx_dpy == NULL)
       return False;
@@ -197,7 +197,7 @@ __glXEventToWire(Display *dpy, XEvent *event, xEvent *wire)
 ** __glXScreenConfigs.
 */
 static void
-FreeScreenConfigs(__GLXdisplayPrivate * priv)
+  FreeScreenConfigs(struct glx_display * priv)
 {
    struct glx_screen *psc;
    GLint i, screens;
@@ -239,8 +239,8 @@ FreeScreenConfigs(__GLXdisplayPrivate * priv)
 static int
 __glXCloseDisplay(Display * dpy, XExtCodes * codes)
 {
-   __GLXdisplayPrivate *priv, **prev;
-   GLXContext gc;
+     struct glx_display *priv, **prev;
+     struct glx_context *gc;
 
    _XLockMutex(_Xglobal_lock);
    prev = &glx_displays;
@@ -647,7 +647,7 @@ createConfigsFromProperties(Display * dpy, int nvisuals, int nprops,
 
 static GLboolean
 getVisualConfigs(struct glx_screen *psc,
-		 __GLXdisplayPrivate *priv, int screen)
+		  struct glx_display *priv, int screen)
 {
    xGLXGetVisualConfigsReq *req;
    xGLXGetVisualConfigsReply reply;
@@ -675,7 +675,7 @@ getVisualConfigs(struct glx_screen *psc,
 }
 
 static GLboolean
-getFBConfigs(struct glx_screen *psc, __GLXdisplayPrivate *priv, int screen)
+ getFBConfigs(struct glx_screen *psc, struct glx_display *priv, int screen)
 {
    xGLXGetFBConfigsReq *fb_req;
    xGLXGetFBConfigsSGIXReq *sgi_req;
@@ -723,7 +723,7 @@ getFBConfigs(struct glx_screen *psc, __GLXdisplayPrivate *priv, int screen)
 
 _X_HIDDEN Bool
 glx_screen_init(struct glx_screen *psc,
-		int screen, __GLXdisplayPrivate * priv)
+		 int screen, struct glx_display * priv)
 {
    /* Initialize per screen dynamic client GLX extensions */
    psc->ext_list_first_time = GL_TRUE;
@@ -742,7 +742,7 @@ glx_screen_init(struct glx_screen *psc,
 ** If that works then fetch the per screen configs data.
 */
 static Bool
-AllocAndFetchScreenConfigs(Display * dpy, __GLXdisplayPrivate * priv)
+ AllocAndFetchScreenConfigs(Display * dpy, struct glx_display * priv)
 {
    struct glx_screen *psc;
    GLint i, screens;
@@ -783,10 +783,10 @@ AllocAndFetchScreenConfigs(Display * dpy, __GLXdisplayPrivate * priv)
 /*
 ** Initialize the client side extension code.
 */
-_X_HIDDEN __GLXdisplayPrivate *
+ _X_HIDDEN struct glx_display *
 __glXInitialize(Display * dpy)
 {
-   __GLXdisplayPrivate *dpyPriv;
+    struct glx_display *dpyPriv;
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
    Bool glx_direct, glx_accel;
 #endif
@@ -881,8 +881,8 @@ __glXInitialize(Display * dpy)
 _X_HIDDEN CARD8
 __glXSetupForCommand(Display * dpy)
 {
-   GLXContext gc;
-   __GLXdisplayPrivate *priv;
+    struct glx_context *gc;
+    struct glx_display *priv;
 
    /* If this thread has a current context, flush its rendering commands */
    gc = __glXGetCurrentContext();
@@ -921,7 +921,7 @@ __glXSetupForCommand(Display * dpy)
  * \c pc parameter.
  */
 _X_HIDDEN GLubyte *
-__glXFlushRenderBuffer(__GLXcontext * ctx, GLubyte * pc)
+__glXFlushRenderBuffer(struct glx_context * ctx, GLubyte * pc)
 {
    Display *const dpy = ctx->currentDpy;
 #ifdef USE_XCB
@@ -972,7 +972,7 @@ __glXFlushRenderBuffer(__GLXcontext * ctx, GLubyte * pc)
  * \param dataLen        Size, in bytes, of the command data.
  */
 _X_HIDDEN void
-__glXSendLargeChunk(__GLXcontext * gc, GLint requestNumber,
+__glXSendLargeChunk(struct glx_context * gc, GLint requestNumber,
                     GLint totalRequests, const GLvoid * data, GLint dataLen)
 {
    Display *dpy = gc->currentDpy;
@@ -1021,7 +1021,7 @@ __glXSendLargeChunk(__GLXcontext * gc, GLint requestNumber,
  * \param dataLen    Size, in bytes, of the command data.
  */
 _X_HIDDEN void
-__glXSendLargeCommand(__GLXcontext * ctx,
+__glXSendLargeCommand(struct glx_context * ctx,
                       const GLvoid * header, GLint headerLen,
                       const GLvoid * data, GLint dataLen)
 {
@@ -1063,7 +1063,7 @@ __glXSendLargeCommand(__GLXcontext * ctx,
 
 #ifdef DEBUG
 _X_HIDDEN void
-__glXDumpDrawBuffer(__GLXcontext * ctx)
+__glXDumpDrawBuffer(struct glx_context * ctx)
 {
    GLubyte *p = ctx->buf;
    GLubyte *end = ctx->pc;

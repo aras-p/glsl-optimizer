@@ -89,7 +89,7 @@ GarbageCollectDRIDrawables(struct glx_screen * sc)
 {
    XID draw;
    __GLXDRIdrawable *pdraw;
-   __GLXdisplayPrivate *priv = sc->display;
+   struct glx_display *priv = sc->display;
    XWindowAttributes xwa;
    int (*oldXErrorHandler) (Display *, XErrorEvent *);
 
@@ -127,7 +127,7 @@ GarbageCollectDRIDrawables(struct glx_screen * sc)
 _X_HIDDEN __GLXDRIdrawable *
 GetGLXDRIDrawable(Display * dpy, GLXDrawable drawable)
 {
-   __GLXdisplayPrivate *priv = __glXInitialize(dpy);
+   struct glx_display *priv = __glXInitialize(dpy);
    __GLXDRIdrawable *pdraw;
 
    if (priv == NULL)
@@ -159,7 +159,7 @@ GetGLXDRIDrawable(Display * dpy, GLXDrawable drawable)
 static struct glx_screen *
 GetGLXScreenConfigs(Display * dpy, int scrn)
 {
-   __GLXdisplayPrivate *const priv = __glXInitialize(dpy);
+   struct glx_display *const priv = __glXInitialize(dpy);
 
    return (priv
            && priv->screens !=
@@ -168,7 +168,7 @@ GetGLXScreenConfigs(Display * dpy, int scrn)
 
 
 static int
-GetGLXPrivScreenConfig(Display * dpy, int scrn, __GLXdisplayPrivate ** ppriv,
+GetGLXPrivScreenConfig(Display * dpy, int scrn, struct glx_display ** ppriv,
                        struct glx_screen ** ppsc)
 {
    /* Initialize the extension, if needed .  This has the added value
@@ -213,7 +213,7 @@ GetGLXPrivScreenConfig(Display * dpy, int scrn, __GLXdisplayPrivate ** ppriv,
 static struct glx_config *
 ValidateGLXFBConfig(Display * dpy, GLXFBConfig fbconfig)
 {
-   __GLXdisplayPrivate *const priv = __glXInitialize(dpy);
+   struct glx_display *const priv = __glXInitialize(dpy);
    int num_screens = ScreenCount(dpy);
    unsigned i;
    struct glx_config *config;
@@ -236,17 +236,17 @@ ValidateGLXFBConfig(Display * dpy, GLXFBConfig fbconfig)
 
 static const struct glx_context_vtable applegl_context_vtable;
 
-static __GLcontext *
+static struct glx_context *
 applegl_create_context(struct glx_screen *psc,
 		       struct glx_config *mode,
-		       GLXContext shareList, int renderType)
+		       struct glx_context *shareList, int renderType)
 {
-   __GLXcontext *gc;
+   struct glx_context *gc;
    int errorcode;
    bool x11error;
 
    /* TODO: Integrate this with apple_glx_create_context and make
-    * struct apple_glx_context inherit from __GLXcontext. */
+    * struct apple_glx_context inherit from struct glx_context. */
 
    gc = Xmalloc(sizeof *gc);
    if (pcp == NULL)
@@ -292,12 +292,12 @@ applegl_create_context(struct glx_screen *psc,
  * function called \c __glXAllocateClientState that allocates the memory and
  * does all the initialization (including the pixel pack / unpack).
  */
-static GLXContext
+static struct glx_context *
 indirect_create_context(struct glx_screen *psc,
 			struct glx_config *mode,
-			GLXContext shareList, int renderType)
+			struct glx_context *shareList, int renderType)
 {
-   GLXContext gc;
+   struct glx_context *gc;
    int bufSize;
    CARD8 opcode;
    __GLXattribute *state;
@@ -308,12 +308,12 @@ indirect_create_context(struct glx_screen *psc,
    }
 
    /* Allocate our context record */
-   gc = (GLXContext) Xmalloc(sizeof(struct __GLXcontextRec));
+   gc = Xmalloc(sizeof *gc);
    if (!gc) {
       /* Out of memory */
       return NULL;
    }
-   memset(gc, 0, sizeof(struct __GLXcontextRec));
+   memset(gc, 0, sizeof *gc);
 
    glx_context_init(gc, psc, mode);
    gc->isDirect = GL_FALSE;
@@ -396,7 +396,7 @@ struct glx_screen_vtable indirect_screen_vtable = {
 };
 
 _X_HIDDEN struct glx_screen *
-indirect_create_screen(int screen, __GLXdisplayPrivate * priv)
+indirect_create_screen(int screen, struct glx_display * priv)
 {
    struct glx_screen *psc;
 
@@ -413,7 +413,7 @@ indirect_create_screen(int screen, __GLXdisplayPrivate * priv)
 
 
 _X_HIDDEN Bool
-glx_context_init(__GLXcontext *gc,
+glx_context_init(struct glx_context *gc,
 		 struct glx_screen *psc, struct glx_config *config)
 {
    gc->majorOpcode = __glXSetupForCommand(psc->display->dpy);
@@ -441,13 +441,13 @@ glx_context_init(__GLXcontext *gc,
 static GLXContext
 CreateContext(Display * dpy, int generic_id,
               struct glx_config *config,
-              GLXContext shareList,
+              GLXContext shareList_user,
               Bool allowDirect,
 	      unsigned code, int renderType, int screen)
 {
-   GLXContext gc = NULL;
+   struct glx_context *gc = NULL;
    struct glx_screen *const psc = GetGLXScreenConfigs(dpy, screen);
-
+   struct glx_context *shareList = (struct glx_context *) shareList_user;
    if (dpy == NULL)
       return NULL;
 
@@ -529,7 +529,7 @@ CreateContext(Display * dpy, int generic_id,
    gc->imported = GL_FALSE;
    gc->renderType = renderType;
 
-   return gc;
+   return (GLXContext) gc;
 }
 
 _X_EXPORT GLXContext
@@ -579,7 +579,7 @@ glx_send_destroy_context(Display *dpy, XID xid)
 }
 
 static void
-indirect_destroy_context(__GLXcontext *gc)
+indirect_destroy_context(struct glx_context *gc)
 {
    if (!gc->imported && gc->xid)
       glx_send_destroy_context(gc->psc->dpy, gc->xid);
@@ -604,8 +604,10 @@ indirect_destroy_context(__GLXcontext *gc)
 ** Destroy the named context
 */
 static void
-DestroyContext(Display * dpy, GLXContext gc)
+DestroyContext(Display * dpy, GLXContext ctx)
 {
+   struct glx_context *gc = (struct glx_context *) ctx;
+
    if (!gc)
       return;
 
@@ -640,7 +642,7 @@ glXDestroyContext(Display * dpy, GLXContext gc)
 _X_EXPORT Bool
 glXQueryVersion(Display * dpy, int *major, int *minor)
 {
-   __GLXdisplayPrivate *priv;
+   struct glx_display *priv;
 
    /* Init the extension.  This fetches the major and minor version. */
    priv = __glXInitialize(dpy);
@@ -674,7 +676,7 @@ glXQueryExtension(Display * dpy, int *errorBase, int *eventBase)
 }
 
 static void
-indirect_wait_gl(__GLXcontext *gc)
+indirect_wait_gl(struct glx_context *gc)
 {
    xGLXWaitGLReq *req;
    Display *dpy = gc->currentDpy;
@@ -699,14 +701,14 @@ indirect_wait_gl(__GLXcontext *gc)
 _X_EXPORT void
 glXWaitGL(void)
 {
-   GLXContext gc = __glXGetCurrentContext();
+   struct glx_context *gc = __glXGetCurrentContext();
 
    if (gc && gc->vtable->use_x_font)
       gc->vtable->wait_gl(gc);
 }
 
 static void
-indirect_wait_x(__GLXcontext *gc)
+indirect_wait_x(struct glx_context *gc)
 {
    xGLXWaitXReq *req;
    Display *dpy = gc->currentDpy;
@@ -730,14 +732,14 @@ indirect_wait_x(__GLXcontext *gc)
 _X_EXPORT void
 glXWaitX(void)
 {
-   GLXContext gc = __glXGetCurrentContext();
+   struct glx_context *gc = __glXGetCurrentContext();
 
    if (gc && gc->vtable->use_x_font)
       gc->vtable->wait_x(gc);
 }
 
 static void
-indirect_use_x_font(__GLXcontext *gc,
+indirect_use_x_font(struct glx_context *gc,
 		    Font font, int first, int count, int listBase)
 {
    xGLXUseXFontReq *req;
@@ -763,19 +765,19 @@ indirect_use_x_font(__GLXcontext *gc,
 #ifdef GLX_USE_APPLEGL
 
 static void
-applegl_destroy_context(__GLXcontext *gc)
+applegl_destroy_context(struct glx_context *gc)
 {
    apple_glx_destroy_context(&gc->driContext, gc->currentDpy);
 }
 
 static void
-applegl_wait_gl(__GLXcontext *gc)
+applegl_wait_gl(struct glx_context *gc)
 {
    glFinish();
 }
 
 static void
-applegl_wait_x(__GLXcontext *gc)
+applegl_wait_x(struct glx_context *gc)
 {
    apple_glx_waitx(gc->dpy, gc->driContext);
 }
@@ -794,7 +796,7 @@ static const struct glx_context_vtable applegl_context_vtable = {
 _X_EXPORT void
 glXUseXFont(Font font, int first, int count, int listBase)
 {
-   GLXContext gc = __glXGetCurrentContext();
+   struct glx_context *gc = __glXGetCurrentContext();
 
    if (gc && gc->vtable->use_x_font)
       gc->vtable->use_x_font(gc, font, first, count, listBase);
@@ -807,11 +809,13 @@ glXUseXFont(Font font, int first, int count, int listBase)
 ** attribute "mask".
 */
 _X_EXPORT void
-glXCopyContext(Display * dpy, GLXContext source,
-               GLXContext dest, unsigned long mask)
+glXCopyContext(Display * dpy, GLXContext source_user,
+	       GLXContext dest_user, unsigned long mask)
 {
+   struct glx_context *source = (struct glx_context *) source_user;
+   struct glx_context *dest = (struct glx_context *) dest_user;
 #ifdef GLX_USE_APPLEGL
-   GLXContext gc = __glXGetCurrentContext();
+   struct glx_context *gc = __glXGetCurrentContext();
    int errorcode;
    bool x11error;
 
@@ -822,7 +826,7 @@ glXCopyContext(Display * dpy, GLXContext source,
    
 #else
    xGLXCopyContextReq *req;
-   GLXContext gc = __glXGetCurrentContext();
+   struct glx_context *gc = __glXGetCurrentContext();
    GLXContextTag tag;
    CARD8 opcode;
 
@@ -918,8 +922,10 @@ __glXIsDirect(Display * dpy, GLXContextID contextID)
  * the GLX protocol here at all?
  */
 _X_EXPORT Bool
-glXIsDirect(Display * dpy, GLXContext gc)
+glXIsDirect(Display * dpy, GLXContext gc_user)
 {
+   struct glx_context *gc = (struct glx_context *) gc_user;
+
    if (!gc) {
       return GL_FALSE;
    }
@@ -974,7 +980,7 @@ glXCreateGLXPixmap(Display * dpy, XVisualInfo * vis, Pixmap pixmap)
       /* FIXME: Maybe delay __DRIdrawable creation until the drawable
        * is actually bound to a context... */
 
-      __GLXdisplayPrivate *const priv = __glXInitialize(dpy);
+      struct glx_display *const priv = __glXInitialize(dpy);
       __GLXDRIdrawable *pdraw;
       struct glx_screen *psc;
       struct glx_config *config;
@@ -1029,7 +1035,7 @@ glXDestroyGLXPixmap(Display * dpy, GLXPixmap glxpixmap)
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
    {
-      __GLXdisplayPrivate *const priv = __glXInitialize(dpy);
+      struct glx_display *const priv = __glXInitialize(dpy);
       __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, glxpixmap);
 
       if (pdraw != NULL) {
@@ -1052,7 +1058,7 @@ glXSwapBuffers(Display * dpy, GLXDrawable drawable)
       __glXSendError(dpy, GLXBadCurrentWindow, 0, X_GLXSwapBuffers, false);
    }
 #else
-   GLXContext gc;
+   struct glx_context *gc;
    GLXContextTag tag;
    CARD8 opcode;
 #ifdef USE_XCB
@@ -1118,7 +1124,7 @@ _X_EXPORT int
 glXGetConfig(Display * dpy, XVisualInfo * vis, int attribute,
              int *value_return)
 {
-   __GLXdisplayPrivate *priv;
+   struct glx_display *priv;
    struct glx_screen *psc;
    struct glx_config *config;
    int status;
@@ -1479,7 +1485,7 @@ _X_EXPORT XVisualInfo *
 glXChooseVisual(Display * dpy, int screen, int *attribList)
 {
    XVisualInfo *visualList = NULL;
-   __GLXdisplayPrivate *priv;
+   struct glx_display *priv;
    struct glx_screen *psc;
    struct glx_config test_config;
    struct glx_config *config;
@@ -1545,7 +1551,7 @@ _X_EXPORT const char *
 glXQueryExtensionsString(Display * dpy, int screen)
 {
    struct glx_screen *psc;
-   __GLXdisplayPrivate *priv;
+   struct glx_display *priv;
 
    if (GetGLXPrivScreenConfig(dpy, screen, &priv, &psc) != Success) {
       return NULL;
@@ -1591,7 +1597,7 @@ _X_EXPORT const char *
 glXQueryServerString(Display * dpy, int screen, int name)
 {
    struct glx_screen *psc;
-   __GLXdisplayPrivate *priv;
+   struct glx_display *priv;
    const char **str;
 
 
@@ -1660,7 +1666,7 @@ __glXClientInfo(Display * dpy, int opcode)
 _X_EXPORT Display *
 glXGetCurrentDisplay(void)
 {
-   GLXContext gc = __glXGetCurrentContext();
+   struct glx_context *gc = __glXGetCurrentContext();
    if (NULL == gc)
       return NULL;
    return gc->currentDpy;
@@ -1674,11 +1680,11 @@ GLX_ALIAS(Display *, glXGetCurrentDisplayEXT, (void), (),
 _X_EXPORT GLXContext
 glXImportContextEXT(Display *dpy, GLXContextID contextID)
 {
-   __GLXdisplayPrivate *priv = __glXInitialize(dpy);
+   struct glx_display *priv = __glXInitialize(dpy);
    struct glx_screen *psc;
    xGLXQueryContextReply reply;
    CARD8 opcode;
-   GLXContext ctx;
+   struct glx_context *ctx;
    int propList[__GLX_MAX_CONTEXT_PROPS * 2], *pProp, nPropListBytes;
    int i, renderType;
    XID share;
@@ -1767,14 +1773,16 @@ glXImportContextEXT(Display *dpy, GLXContextID contextID)
    ctx->imported = GL_TRUE;
    ctx->share_xid = share;
 
-   return ctx;
+   return (GLXContext) ctx;
 }
 
 #endif
 
 _X_EXPORT int
-glXQueryContext(Display * dpy, GLXContext ctx, int attribute, int *value)
+glXQueryContext(Display * dpy, GLXContext ctx_user, int attribute, int *value)
 {
+   struct glx_context *ctx = (struct glx_context *) ctx_user;
+
    switch (attribute) {
       case GLX_SHARE_CONTEXT_EXT:
       *value = ctx->share_xid;
@@ -1802,8 +1810,10 @@ GLX_ALIAS(int, glXQueryContextInfoEXT,
           (Display * dpy, GLXContext ctx, int attribute, int *value),
           (dpy, ctx, attribute, value), glXQueryContext)
 
-_X_EXPORT GLXContextID glXGetContextIDEXT(const GLXContext ctx)
+_X_EXPORT GLXContextID glXGetContextIDEXT(const GLXContext ctx_user)
 {
+   struct glx_context *ctx = (struct glx_context *) ctx_user;
+
    return ctx->xid;
 }
 
@@ -1853,7 +1863,8 @@ glXCreateNewContext(Display * dpy, GLXFBConfig fbconfig,
 _X_EXPORT GLXDrawable
 glXGetCurrentReadDrawable(void)
 {
-   GLXContext gc = __glXGetCurrentContext();
+   struct glx_context *gc = __glXGetCurrentContext();
+
    return gc->currentReadable;
 }
 
@@ -1861,7 +1872,7 @@ glXGetCurrentReadDrawable(void)
 _X_EXPORT GLXFBConfig *
 glXGetFBConfigs(Display * dpy, int screen, int *nelements)
 {
-   __GLXdisplayPrivate *priv = __glXInitialize(dpy);
+   struct glx_display *priv = __glXInitialize(dpy);
    struct glx_config **config_list = NULL;
    struct glx_config *config;
    unsigned num_configs = 0;
@@ -1934,7 +1945,7 @@ static int
 __glXSwapIntervalSGI(int interval)
 {
    xGLXVendorPrivateReq *req;
-   GLXContext gc = __glXGetCurrentContext();
+   struct glx_context *gc = __glXGetCurrentContext();
    struct glx_screen *psc;
    Display *dpy;
    CARD32 *interval_ptr;
@@ -1991,7 +2002,7 @@ static int
 __glXSwapIntervalMESA(unsigned int interval)
 {
 #ifdef GLX_DIRECT_RENDERING
-   GLXContext gc = __glXGetCurrentContext();
+   struct glx_context *gc = __glXGetCurrentContext();
 
    if (gc != NULL && gc->driContext) {
       struct glx_screen *psc;
@@ -2013,7 +2024,7 @@ static int
 __glXGetSwapIntervalMESA(void)
 {
 #ifdef GLX_DIRECT_RENDERING
-   GLXContext gc = __glXGetCurrentContext();
+   struct glx_context *gc = __glXGetCurrentContext();
 
    if (gc != NULL && gc->driContext) {
       struct glx_screen *psc;
@@ -2039,7 +2050,7 @@ __glXGetVideoSyncSGI(unsigned int *count)
 {
    int64_t ust, msc, sbc;
    int ret;
-   GLXContext gc = __glXGetCurrentContext();
+   struct glx_context *gc = __glXGetCurrentContext();
    struct glx_screen *psc;
 #ifdef GLX_DIRECT_RENDERING
    __GLXDRIdrawable *pdraw;
@@ -2076,7 +2087,7 @@ __glXGetVideoSyncSGI(unsigned int *count)
 static int
 __glXWaitVideoSyncSGI(int divisor, int remainder, unsigned int *count)
 {
-   GLXContext gc = __glXGetCurrentContext();
+   struct glx_context *gc = __glXGetCurrentContext();
    struct glx_screen *psc;
 #ifdef GLX_DIRECT_RENDERING
    __GLXDRIdrawable *pdraw;
@@ -2217,7 +2228,7 @@ glXCreateContextWithConfigSGIX(Display * dpy,
 _X_EXPORT GLXFBConfigSGIX
 glXGetFBConfigFromVisualSGIX(Display * dpy, XVisualInfo * vis)
 {
-   __GLXdisplayPrivate *priv;
+   struct glx_display *priv;
    struct glx_screen *psc = NULL;
 
    if ((GetGLXPrivScreenConfig(dpy, vis->screen, &priv, &psc) != Success)
@@ -2272,7 +2283,7 @@ static Bool
 __glXGetSyncValuesOML(Display * dpy, GLXDrawable drawable,
                       int64_t * ust, int64_t * msc, int64_t * sbc)
 {
-   __GLXdisplayPrivate * const priv = __glXInitialize(dpy);
+   struct glx_display * const priv = __glXInitialize(dpy);
    int ret;
 #ifdef GLX_DIRECT_RENDERING
    __GLXDRIdrawable *pdraw;
@@ -2402,7 +2413,7 @@ static int64_t
 __glXSwapBuffersMscOML(Display * dpy, GLXDrawable drawable,
                        int64_t target_msc, int64_t divisor, int64_t remainder)
 {
-   GLXContext gc = __glXGetCurrentContext();
+   struct glx_context *gc = __glXGetCurrentContext();
 #ifdef GLX_DIRECT_RENDERING
    __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable);
    struct glx_screen *psc = pdraw ? pdraw->psc : NULL;
@@ -2561,7 +2572,7 @@ __glXCopySubBufferMESA(Display * dpy, GLXDrawable drawable,
                        int x, int y, int width, int height)
 {
    xGLXVendorPrivateReq *req;
-   GLXContext gc;
+   struct glx_context *gc;
    GLXContextTag tag;
    CARD32 *drawable_ptr;
    INT32 *x_ptr, *y_ptr, *w_ptr, *h_ptr;
@@ -2631,7 +2642,7 @@ indirect_bind_tex_image(Display * dpy,
 			int buffer, const int *attrib_list)
 {
    xGLXVendorPrivateReq *req;
-   GLXContext gc = __glXGetCurrentContext();
+   struct glx_context *gc = __glXGetCurrentContext();
    CARD32 *drawable_ptr;
    INT32 *buffer_ptr;
    CARD32 *num_attrib_ptr;
@@ -2682,7 +2693,7 @@ static void
 indirect_release_tex_image(Display * dpy, GLXDrawable drawable, int buffer)
 {
    xGLXVendorPrivateReq *req;
-   GLXContext gc = __glXGetCurrentContext();
+   struct glx_context *gc = __glXGetCurrentContext();
    CARD32 *drawable_ptr;
    INT32 *buffer_ptr;
    CARD8 opcode;
@@ -2722,7 +2733,7 @@ static void
 __glXBindTexImageEXT(Display * dpy,
                      GLXDrawable drawable, int buffer, const int *attrib_list)
 {
-   GLXContext gc = __glXGetCurrentContext();
+   struct glx_context *gc = __glXGetCurrentContext();
 
    if (gc == NULL || gc->vtable->bind_tex_image == NULL)
       return;
@@ -2733,7 +2744,7 @@ __glXBindTexImageEXT(Display * dpy,
 static void
 __glXReleaseTexImageEXT(Display * dpy, GLXDrawable drawable, int buffer)
 {
-   GLXContext gc = __glXGetCurrentContext();
+   struct glx_context *gc = __glXGetCurrentContext();
 
    if (gc == NULL || gc->vtable->release_tex_image == NULL)
       return;

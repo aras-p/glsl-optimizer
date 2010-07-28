@@ -235,7 +235,7 @@ enum
 #define __GL_EXT_BYTES   ((__NUM_GL_EXTS + 7) / 8)
 
 struct glx_screen;
-struct __GLXcontextRec;
+struct glx_context;
 
 extern GLboolean __glXExtensionBitIsEnabled(struct glx_screen *psc,
                                             unsigned bit);
@@ -245,14 +245,14 @@ extern void __glXCalculateUsableExtensions(struct glx_screen *psc,
                                            display_is_direct_capable,
                                            int server_minor_version);
 
-extern void __glXCalculateUsableGLExtensions(struct __GLXcontextRec *gc,
+extern void __glXCalculateUsableGLExtensions(struct glx_context *gc,
                                              const char *server_string,
                                              int major_version,
                                              int minor_version);
 extern void __glXGetGLVersion(int *major_version, int *minor_version);
 extern char *__glXGetClientGLExtensionString(void);
 
-extern GLboolean __glExtensionBitIsEnabled(const struct __GLXcontextRec *gc,
+extern GLboolean __glExtensionBitIsEnabled(struct glx_context *gc,
                                            unsigned bit);
 
 extern void

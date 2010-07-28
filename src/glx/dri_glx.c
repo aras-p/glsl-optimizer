@@ -78,7 +78,7 @@ struct dri_screen
 
 struct dri_context
 {
-   __GLXcontext base;
+   struct glx_context base;
    __GLXDRIcontext dri_vtable;
    __DRIcontext *driContext;
    XID hwContextID;
@@ -499,7 +499,7 @@ CallCreateNewScreen(Display *dpy, int scrn, struct dri_screen *psc,
 }
 
 static void
-dri_destroy_context(__GLXcontext * context)
+dri_destroy_context(struct glx_context * context)
 {
    struct dri_context *pcp = (struct dri_context *) context;
    struct dri_screen *psc = (struct dri_screen *) context->psc;
@@ -519,7 +519,7 @@ dri_destroy_context(__GLXcontext * context)
 }
 
 static Bool
-driBindContext(__GLXcontext *context,
+driBindContext(struct glx_context *context,
 	       __GLXDRIdrawable *draw, __GLXDRIdrawable *read)
 {
    struct dri_context *pcp = (struct dri_context *) context;
@@ -532,7 +532,7 @@ driBindContext(__GLXcontext *context,
 }
 
 static void
-driUnbindContext(__GLXcontext * context)
+driUnbindContext(struct glx_context * context)
 {
    struct dri_context *pcp = (struct dri_context *) context;
    struct dri_screen *psc = (struct dri_screen *) pcp->base.psc;
@@ -549,10 +549,10 @@ static const struct glx_context_vtable dri_context_vtable = {
    NULL,
 };
 
-static __GLXcontext *
+static struct glx_context *
 dri_create_context(struct glx_screen *base,
 		   struct glx_config *config_base,
-		   GLXContext shareList, int renderType)
+		   struct glx_context *shareList, int renderType)
 {
    struct dri_context *pcp, *pcp_shared;
    struct dri_screen *psc = (struct dri_screen *) base;
@@ -756,7 +756,7 @@ driWaitForSBC(__GLXDRIdrawable *pdraw, int64_t target_sbc, int64_t *ust,
 static int
 driSetSwapInterval(__GLXDRIdrawable *pdraw, int interval)
 {
-   GLXContext gc = __glXGetCurrentContext();
+   struct glx_context *gc = __glXGetCurrentContext();
    struct dri_drawable *pdp = (struct dri_drawable *) pdraw;
    struct dri_screen *psc;
 
@@ -775,7 +775,7 @@ driSetSwapInterval(__GLXDRIdrawable *pdraw, int interval)
 static int
 driGetSwapInterval(__GLXDRIdrawable *pdraw)
 {
-   GLXContext gc = __glXGetCurrentContext();
+   struct glx_context *gc = __glXGetCurrentContext();
    struct dri_drawable *pdp = (struct dri_drawable *) pdraw;
    struct dri_screen *psc;
 
@@ -827,7 +827,7 @@ static const struct glx_screen_vtable dri_screen_vtable = {
 };
 
 static struct glx_screen *
-driCreateScreen(int screen, __GLXdisplayPrivate *priv)
+driCreateScreen(int screen, struct glx_display *priv)
 {
    struct dri_display *pdp;
    __GLXDRIscreen *psp;

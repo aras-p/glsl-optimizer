@@ -35,7 +35,7 @@ struct drisw_display
 
 struct drisw_context
 {
-   __GLXcontext base;
+   struct glx_context base;
    __GLXDRIcontext dri_vtable;
    __DRIcontext *driContext;
 
@@ -240,7 +240,7 @@ static const __DRIextension *loader_extensions[] = {
  */
 
 static void
-drisw_destroy_context(__GLXcontext *context)
+drisw_destroy_context(struct glx_context *context)
 {
    struct drisw_context *pcp = (struct drisw_context *) context;
    struct drisw_screen *psc = (struct drisw_screen *) context->psc;
@@ -259,7 +259,7 @@ drisw_destroy_context(__GLXcontext *context)
 }
 
 static Bool
-driBindContext(__GLXcontext * context,
+driBindContext(struct glx_context * context,
 	       __GLXDRIdrawable * draw, __GLXDRIdrawable * read)
 {
    struct drisw_context *pcp = (struct drisw_context *) context;
@@ -272,7 +272,7 @@ driBindContext(__GLXcontext * context,
 }
 
 static void
-driUnbindContext(__GLXcontext * context)
+driUnbindContext(struct glx_context * context)
 {
    struct drisw_context *pcp = (struct drisw_context *) context;
    struct drisw_screen *psc = (struct drisw_screen *) pcp->base.psc;
@@ -289,10 +289,10 @@ static const struct glx_context_vtable drisw_context_vtable = {
    NULL,
 };
 
-static __GLXcontext *
+static struct glx_context *
 drisw_create_context(struct glx_screen *base,
 		     struct glx_config *config_base,
-		     GLXContext shareList, int renderType)
+		     struct glx_context *shareList, int renderType)
 {
    struct drisw_context *pcp, *pcp_shared;
    __GLXDRIconfigPrivate *config = (__GLXDRIconfigPrivate *) config_base;
@@ -433,7 +433,7 @@ static const struct glx_screen_vtable drisw_screen_vtable = {
 };
 
 static struct glx_screen *
-driCreateScreen(int screen, __GLXdisplayPrivate *priv)
+driCreateScreen(int screen, struct glx_display *priv)
 {
    __GLXDRIscreen *psp;
    const __DRIconfig **driver_configs;

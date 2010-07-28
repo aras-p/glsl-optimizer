@@ -54,7 +54,7 @@
 
 /* Setup for all commands */
 #define __GLX_DECLARE_VARIABLES()               \
-   __GLXcontext *gc;                            \
+   struct glx_context *gc;                            \
    GLubyte *pc, *pixelHeaderPC;                 \
    GLuint compsize, cmdlen
 

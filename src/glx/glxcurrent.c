@@ -61,7 +61,7 @@ static GLubyte dummyBuffer[__GLX_BUFFER_LIMIT_SIZE];
 ** gl and glx entry points are designed to operate as nop's when using
 ** the dummy context structure.
 */
-static __GLXcontext dummyContext = {
+static struct glx_context dummyContext = {
    &dummyBuffer[0],
    &dummyBuffer[0],
    &dummyBuffer[0],
@@ -74,7 +74,7 @@ static __GLXcontext dummyContext = {
 /*
 ** All indirect rendering contexts will share the same indirect dispatch table.
 */
-static __GLapi *IndirectAPI = NULL;
+static struct _glapi_table *IndirectAPI = NULL;
 #endif
 
 /*
@@ -98,7 +98,7 @@ __thread void *__glX_tls_Context __attribute__ ((tls_model("initial-exec")))
    = &dummyContext;
 
 _X_HIDDEN void
-__glXSetCurrentContext(__GLXcontext * c)
+__glXSetCurrentContext(struct glx_context * c)
 {
    __glX_tls_Context = (c != NULL) ? c : &dummyContext;
 }
@@ -133,13 +133,13 @@ init_thread_data(void)
 }
 
 _X_HIDDEN void
-__glXSetCurrentContext(__GLXcontext * c)
+__glXSetCurrentContext(struct glx_context * c)
 {
    pthread_once(&once_control, init_thread_data);
    pthread_setspecific(ContextTSD, c);
 }
 
-_X_HIDDEN __GLXcontext *
+_X_HIDDEN struct glx_context *
 __glXGetCurrentContext(void)
 {
    void *v;
@@ -147,7 +147,7 @@ __glXGetCurrentContext(void)
    pthread_once(&once_control, init_thread_data);
 
    v = pthread_getspecific(ContextTSD);
-   return (v == NULL) ? &dummyContext : (__GLXcontext *) v;
+   return (v == NULL) ? &dummyContext : (struct glx_context *) v;
 }
 
 # endif /* defined( GLX_USE_TLS ) */
@@ -159,7 +159,7 @@ __glXGetCurrentContext(void)
 #else
 
 /* not thread safe */
-_X_HIDDEN __GLXcontext *__glXcurrentContext = &dummyContext;
+_X_HIDDEN struct glx_context *__glXcurrentContext = &dummyContext;
 
 #endif
 
@@ -182,20 +182,20 @@ __glXSetCurrentContextNull(void)
 _X_EXPORT GLXContext
 glXGetCurrentContext(void)
 {
-   GLXContext cx = __glXGetCurrentContext();
+   struct glx_context *cx = __glXGetCurrentContext();
 
    if (cx == &dummyContext) {
       return NULL;
    }
    else {
-      return cx;
+      return (GLXContext) cx;
    }
 }
 
 _X_EXPORT GLXDrawable
 glXGetCurrentDrawable(void)
 {
-   GLXContext gc = __glXGetCurrentContext();
+   struct glx_context *gc = __glXGetCurrentContext();
    return gc->currentDrawable;
 }
 
@@ -239,7 +239,7 @@ SendMakeCurrentRequest(Display * dpy, CARD8 opcode,
       req->oldContextTag = gc_tag;
    }
    else {
-      __GLXdisplayPrivate *priv = __glXInitialize(dpy);
+      struct glx_display *priv = __glXInitialize(dpy);
 
       /* If the server can support the GLX 1.3 version, we should
        * perfer that.  Not only that, some servers support GLX 1.3 but
@@ -286,9 +286,10 @@ SendMakeCurrentRequest(Display * dpy, CARD8 opcode,
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
 static __GLXDRIdrawable *
-FetchDRIDrawable(Display * dpy, GLXDrawable glxDrawable, GLXContext gc)
+FetchDRIDrawable(Display * dpy,
+		 GLXDrawable glxDrawable, struct glx_context *gc)
 {
-   __GLXdisplayPrivate *const priv = __glXInitialize(dpy);
+   struct glx_display *const priv = __glXInitialize(dpy);
    __GLXDRIdrawable *pdraw;
    struct glx_screen *psc;
 
@@ -314,7 +315,7 @@ FetchDRIDrawable(Display * dpy, GLXDrawable glxDrawable, GLXContext gc)
 #endif /* GLX_DIRECT_RENDERING */
 
 static void
-__glXGenerateError(Display * dpy, GLXContext gc, XID resource,
+__glXGenerateError(Display * dpy, struct glx_context *gc, XID resource,
                    BYTE errorCode, CARD16 minorCode)
 {
    xError error;
@@ -337,9 +338,10 @@ __glXGenerateError(Display * dpy, GLXContext gc, XID resource,
  */
 static Bool
 MakeContextCurrent(Display * dpy, GLXDrawable draw,
-                   GLXDrawable read, GLXContext gc)
+                   GLXDrawable read, GLXContext gc_user)
 {
-   const GLXContext oldGC = __glXGetCurrentContext();
+   struct glx_context *gc = (struct glx_context *) gc_user;
+   struct glx_context *oldGC = __glXGetCurrentContext();
 #ifdef GLX_USE_APPLEGL
    bool error = apple_glx_make_current_context(dpy, 
                    (oldGC && oldGC != &dummyContext) ? oldGC->driContext : NULL, 

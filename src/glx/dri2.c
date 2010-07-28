@@ -99,7 +99,7 @@ DRI2WireToEvent(Display *dpy, XEvent *event, xEvent *wire)
       GLXBufferSwapComplete *aevent = (GLXBufferSwapComplete *)event;
       xDRI2BufferSwapComplete *awire = (xDRI2BufferSwapComplete *)wire;
       __GLXDRIdrawable *pdraw;
-      __GLXdisplayPrivate *glx_dpy = __glXInitialize(dpy);
+      struct glx_display *glx_dpy = __glXInitialize(dpy);
 
       /* Ignore swap events if we're not looking for them */
       pdraw = dri2GetGlxDrawableFromXDrawableId(dpy, awire->drawable);

@@ -57,7 +57,7 @@
 static void
 warn_GLX_1_3(Display * dpy, const char *function_name)
 {
-   __GLXdisplayPrivate *priv = __glXInitialize(dpy);
+   struct glx_display *priv = __glXInitialize(dpy);
 
    if (priv->minorVersion < 3) {
       fprintf(stderr,
@@ -85,7 +85,7 @@ static void
 ChangeDrawableAttribute(Display * dpy, GLXDrawable drawable,
                         const CARD32 * attribs, size_t num_attribs)
 {
-   __GLXdisplayPrivate *priv = __glXInitialize(dpy);
+   struct glx_display *priv = __glXInitialize(dpy);
    __GLXDRIdrawable *pdraw;
    CARD32 *output;
    CARD8 opcode;
@@ -187,7 +187,7 @@ CreateDRIDrawable(Display *dpy, struct glx_config *config,
 		  XID drawable, XID glxdrawable,
 		  const int *attrib_list, size_t num_attribs)
 {
-   __GLXdisplayPrivate *const priv = __glXInitialize(dpy);
+   struct glx_display *const priv = __glXInitialize(dpy);
    __GLXDRIdrawable *pdraw;
    struct glx_screen *psc;
 
@@ -214,7 +214,7 @@ CreateDRIDrawable(Display *dpy, struct glx_config *config,
 static void
 DestroyDRIDrawable(Display *dpy, GLXDrawable drawable, int destroy_xdrawable)
 {
-   __GLXdisplayPrivate *const priv = __glXInitialize(dpy);
+   struct glx_display *const priv = __glXInitialize(dpy);
    __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable);
 
    if (pdraw != NULL) {
@@ -263,7 +263,7 @@ static int
 GetDrawableAttribute(Display * dpy, GLXDrawable drawable,
                      int attribute, unsigned int *value)
 {
-   __GLXdisplayPrivate *priv;
+   struct glx_display *priv;
    xGLXGetDrawableAttributesReply reply;
    CARD32 *data;
    CARD8 opcode;
@@ -461,7 +461,7 @@ CreatePbuffer(Display * dpy, struct glx_config *config,
               unsigned int width, unsigned int height,
               const int *attrib_list, GLboolean size_in_attribs)
 {
-   __GLXdisplayPrivate *priv = __glXInitialize(dpy);
+   struct glx_display *priv = __glXInitialize(dpy);
    GLXDrawable id = 0;
    CARD32 *data;
    CARD8 opcode;
@@ -547,7 +547,7 @@ CreatePbuffer(Display * dpy, struct glx_config *config,
 static void
 DestroyPbuffer(Display * dpy, GLXDrawable drawable)
 {
-   __GLXdisplayPrivate *priv = __glXInitialize(dpy);
+   struct glx_display *priv = __glXInitialize(dpy);
    CARD8 opcode;
 
    if ((dpy == NULL) || (drawable == 0)) {

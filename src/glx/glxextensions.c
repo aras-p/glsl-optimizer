@@ -513,7 +513,7 @@ __glXExtensionBitIsEnabled(struct glx_screen * psc, unsigned bit)
  *
  */
 GLboolean
-__glExtensionBitIsEnabled(const __GLXcontext * gc, unsigned bit)
+__glExtensionBitIsEnabled(struct glx_context *gc, unsigned bit)
 {
    GLboolean enabled = GL_FALSE;
 
@@ -675,7 +675,7 @@ __glXCalculateUsableExtensions(struct glx_screen * psc,
  */
 
 void
-__glXCalculateUsableGLExtensions(__GLXcontext * gc,
+__glXCalculateUsableGLExtensions(struct glx_context * gc,
                                  const char *server_string,
                                  int major_version, int minor_version)
 {

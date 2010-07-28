@@ -101,7 +101,7 @@ void
 __indirect_glInterleavedArrays(GLenum format, GLsizei stride,
                                const GLvoid * pointer)
 {
-   __GLXcontext *gc = __glXGetCurrentContext();
+   struct glx_context *gc = __glXGetCurrentContext();
    __GLXattribute *state = (__GLXattribute *) (gc->client_state_private);
 
 #define NONE  {0, 0, 0}
