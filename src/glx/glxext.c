@@ -742,7 +742,7 @@ glx_screen_init(struct glx_screen *psc,
 ** If that works then fetch the per screen configs data.
 */
 static Bool
- AllocAndFetchScreenConfigs(Display * dpy, struct glx_display * priv)
+AllocAndFetchScreenConfigs(Display * dpy, struct glx_display * priv)
 {
    struct glx_screen *psc;
    GLint i, screens;

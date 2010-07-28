@@ -283,37 +283,6 @@ SendMakeCurrentRequest(Display * dpy, CARD8 opcode,
    return ret;
 }
 
-
-#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
-static __GLXDRIdrawable *
-FetchDRIDrawable(Display * dpy,
-		 GLXDrawable glxDrawable, struct glx_context *gc)
-{
-   struct glx_display *const priv = __glXInitialize(dpy);
-   __GLXDRIdrawable *pdraw;
-   struct glx_screen *psc;
-
-   if (priv == NULL)
-      return NULL;
-
-   psc = priv->screens[gc->screen];
-   if (priv->drawHash == NULL)
-      return NULL;
-
-   if (__glxHashLookup(priv->drawHash, glxDrawable, (void *) &pdraw) == 0)
-      return pdraw;
-
-   pdraw = psc->driScreen->createDrawable(psc, glxDrawable,
-                                          glxDrawable, gc->config);
-   if (__glxHashInsert(priv->drawHash, glxDrawable, pdraw)) {
-      (*pdraw->destroyDrawable) (pdraw);
-      return NULL;
-   }
-
-   return pdraw;
-}
-#endif /* GLX_DIRECT_RENDERING */
-
 static void
 __glXGenerateError(Display * dpy, struct glx_context *gc, XID resource,
                    BYTE errorCode, CARD16 minorCode)
@@ -331,6 +300,55 @@ __glXGenerateError(Display * dpy, struct glx_context *gc, XID resource,
 
 #endif /* GLX_USE_APPLEGL */
 
+_X_HIDDEN int
+indirect_bind_context(struct glx_context *gc, struct glx_context *old,
+		      GLXDrawable draw, GLXDrawable read)
+{
+   xGLXMakeCurrentReply reply;
+   GLXContextTag tag;
+   __GLXattribute *state;
+   Display *dpy = gc->psc->dpy;
+   int opcode = __glXSetupForCommand(dpy);
+
+   if (old && !old->isDirect && old->psc->dpy == dpy)
+      tag = old->currentContextTag;
+   else
+      tag = None;
+
+   SendMakeCurrentRequest(dpy, opcode, gc->xid, tag, draw, read, &reply);
+
+   if (!IndirectAPI)
+      IndirectAPI = __glXNewIndirectAPI();
+   _glapi_set_dispatch(IndirectAPI);
+
+   gc->currentContextTag = reply.contextTag;
+   state = gc->client_state_private;
+   if (state->array_state == NULL) {
+      glGetString(GL_EXTENSIONS);
+      glGetString(GL_VERSION);
+      __glXInitVertexArrayState(gc);
+   }
+
+   return Success;
+}
+
+_X_HIDDEN void
+indirect_unbind_context(struct glx_context *gc, struct glx_context *new)
+{
+   Display *dpy = gc->psc->dpy;
+   int opcode = __glXSetupForCommand(dpy);
+   xGLXMakeCurrentReply reply;
+
+   /* We are either switching to no context, away from a indirect
+    * context to a direct context or from one dpy to another and have
+    * to send a request to the dpy to unbind the previous context.
+    */
+   if (!new || new->isDirect || new->psc->dpy != dpy)
+      SendMakeCurrentRequest(dpy, opcode, None,
+			     gc->currentContextTag, None, None, &reply);
+   gc->currentContextTag = 0;
+}
+
 /**
  * Make a particular context current.
  *
@@ -342,25 +360,7 @@ MakeContextCurrent(Display * dpy, GLXDrawable draw,
 {
    struct glx_context *gc = (struct glx_context *) gc_user;
    struct glx_context *oldGC = __glXGetCurrentContext();
-#ifdef GLX_USE_APPLEGL
-   bool error = apple_glx_make_current_context(dpy, 
-                   (oldGC && oldGC != &dummyContext) ? oldGC->driContext : NULL, 
-                   gc ? gc->driContext : NULL, draw);
-   
-   apple_glx_diagnostic("%s: error %s\n", __func__, error ? "YES" : "NO");
-   if(error)
-      return GL_FALSE;
-#else
-   xGLXMakeCurrentReply reply;
-   const CARD8 opcode = __glXSetupForCommand(dpy);
-   const CARD8 oldOpcode = ((gc == oldGC) || (oldGC == &dummyContext))
-      ? opcode : __glXSetupForCommand(oldGC->currentDpy);
-   Bool bindReturnValue;
-   __GLXattribute *state;
-
-   if (!opcode || !oldOpcode) {
-      return GL_FALSE;
-   }
+   int ret = Success;
 
    /* Make sure that the new context has a nonzero ID.  In the request,
     * a zero context ID is used only to mean that we bind to no current
@@ -388,134 +388,36 @@ MakeContextCurrent(Display * dpy, GLXDrawable draw,
       return False;
    }
 
-#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
-   /* Bind the direct rendering context to the drawable */
-   if (gc && gc->driContext) {
-      __GLXDRIdrawable *pdraw = FetchDRIDrawable(dpy, draw, gc);
-      __GLXDRIdrawable *pread = FetchDRIDrawable(dpy, read, gc);
-
-      if ((pdraw == NULL) || (pread == NULL)) {
-         __glXGenerateError(dpy, gc, (pdraw == NULL) ? draw : read,
-                            GLXBadDrawable, X_GLXMakeContextCurrent);
-         return False;
-      }
-
-      bindReturnValue =
-         (gc->driContext->bindContext) (gc, pdraw, pread);
-   }
-   else if (!gc && oldGC && oldGC->driContext) {
-      bindReturnValue = True;
-   }
-   else
-#endif
-   {
-      /* Send a glXMakeCurrent request to bind the new context. */
-      bindReturnValue =
-         SendMakeCurrentRequest(dpy, opcode, gc ? gc->xid : None,
-                                ((dpy != oldGC->currentDpy)
-                                 || oldGC->isDirect)
-                                ? None : oldGC->currentContextTag, draw, read,
-                                &reply);
+   if (oldGC != &dummyContext && oldGC != gc) {
+      oldGC->vtable->unbind(oldGC, gc);
+      oldGC->currentDpy = 0;
+      oldGC->currentDrawable = None;
+      oldGC->currentReadable = None;
+      oldGC->thread_id = 0;
+      if (oldGC->xid == None)
+	 /* We are switching away from a context that was
+	  * previously destroyed, so we need to free the memory
+	  * for the old handle.
+	  */
+	 oldGC->vtable->destroy(oldGC);
    }
 
-
-   if (!bindReturnValue) {
-      return False;
+   if (gc) {
+      ret = gc->vtable->bind(gc, oldGC, draw, read);
+      gc->currentDpy = dpy;
+      gc->currentDrawable = draw;
+      gc->currentReadable = read;
+      gc->thread_id = _glthread_GetID();
+      __glXSetCurrentContext(gc);
+   } else {
+      __glXSetCurrentContextNull();
    }
 
-#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
-   if ((dpy != oldGC->currentDpy || (gc && gc->driContext)) &&
-       !oldGC->isDirect && oldGC != &dummyContext) {
-#else
-   if ((dpy != oldGC->currentDpy) && oldGC != &dummyContext) {
-#endif
-      xGLXMakeCurrentReply dummy_reply;
-
-      /* We are either switching from one dpy to another and have to
-       * send a request to the previous dpy to unbind the previous
-       * context, or we are switching away from a indirect context to
-       * a direct context and have to send a request to the dpy to
-       * unbind the previous context.
-       */
-      (void) SendMakeCurrentRequest(oldGC->currentDpy, oldOpcode, None,
-                                    oldGC->currentContextTag, None, None,
-                                    &dummy_reply);
+   if (ret) {
+      __glXGenerateError(dpy, gc, None, ret, X_GLXMakeContextCurrent);
+      return GL_FALSE;
    }
-#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
-   else if (oldGC->driContext && oldGC != gc) {
-      oldGC->driContext->unbindContext(oldGC);
-   }
-#endif
 
-#endif /* GLX_USE_APPLEGL */
-
-   /* Update our notion of what is current */
-   __glXLock();
-   if (gc == oldGC) {
-      /* Even though the contexts are the same the drawable might have
-       * changed.  Note that gc cannot be the dummy, and that oldGC
-       * cannot be NULL, therefore if they are the same, gc is not
-       * NULL and not the dummy.
-       */
-      if(gc) {
-        gc->currentDrawable = draw;
-        gc->currentReadable = read;
-      }
-   }
-   else {
-      if (oldGC != &dummyContext) {
-         /* Old current context is no longer current to anybody */
-         oldGC->currentDpy = 0;
-         oldGC->currentDrawable = None;
-         oldGC->currentReadable = None;
-         oldGC->currentContextTag = 0;
-         oldGC->thread_id = 0;
-
-         if (oldGC->xid == None) {
-            /* We are switching away from a context that was
-             * previously destroyed, so we need to free the memory
-             * for the old handle.
-             */
-	    oldGC->vtable->destroy(oldGC);
-         }
-      }
-      if (gc) {
-         __glXSetCurrentContext(gc);
-
-         gc->currentDpy = dpy;
-         gc->currentDrawable = draw;
-         gc->currentReadable = read;
-#ifndef GLX_USE_APPLEGL
-         gc->thread_id = _glthread_GetID();
-
-#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
-         if (!gc->driContext) {
-#endif
-            if (!IndirectAPI)
-               IndirectAPI = __glXNewIndirectAPI();
-            _glapi_set_dispatch(IndirectAPI);
-
-            state = (__GLXattribute *) (gc->client_state_private);
-
-            gc->currentContextTag = reply.contextTag;
-            if (state->array_state == NULL) {
-               (void) glGetString(GL_EXTENSIONS);
-               (void) glGetString(GL_VERSION);
-               __glXInitVertexArrayState(gc);
-            }
-#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
-         }
-         else {
-            gc->currentContextTag = -1;
-         }
-#endif
-#endif /* GLX_USE_APPLEGL */
-      }
-      else {
-         __glXSetCurrentContextNull();
-      }
-   }
-   __glXUnlock();
    return GL_TRUE;
 }
 

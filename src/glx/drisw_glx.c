@@ -36,7 +36,6 @@ struct drisw_display
 struct drisw_context
 {
    struct glx_context base;
-   __GLXDRIcontext dri_vtable;
    __DRIcontext *driContext;
 
 };
@@ -258,21 +257,29 @@ drisw_destroy_context(struct glx_context *context)
    Xfree(pcp);
 }
 
-static Bool
-driBindContext(struct glx_context * context,
-	       __GLXDRIdrawable * draw, __GLXDRIdrawable * read)
+static int
+drisw_bind_context(struct glx_context *context, struct glx_context *old,
+		   GLXDrawable draw, GLXDrawable read)
 {
    struct drisw_context *pcp = (struct drisw_context *) context;
    struct drisw_screen *psc = (struct drisw_screen *) pcp->base.psc;
-   struct drisw_drawable *pdr = (struct drisw_drawable *) draw;
-   struct drisw_drawable *prd = (struct drisw_drawable *) read;
+   struct drisw_drawable *pdraw, *pread;
 
-   return (*psc->core->bindContext) (pcp->driContext,
-				     pdr->driDrawable, prd->driDrawable);
+   pdraw = (struct drisw_drawable *) driFetchDrawable(context, draw);
+   pread = (struct drisw_drawable *) driFetchDrawable(context, read);
+
+   if (pdraw == NULL || pread == NULL)
+      return GLXBadDrawable;
+
+   if ((*psc->core->bindContext) (pcp->driContext,
+				  pdraw->driDrawable, pread->driDrawable))
+      return Success;
+
+   return GLXBadContext;
 }
 
 static void
-driUnbindContext(struct glx_context * context)
+drisw_unbind_context(struct glx_context *context, struct glx_context *new)
 {
    struct drisw_context *pcp = (struct drisw_context *) context;
    struct drisw_screen *psc = (struct drisw_screen *) pcp->base.psc;
@@ -282,6 +289,8 @@ driUnbindContext(struct glx_context * context)
 
 static const struct glx_context_vtable drisw_context_vtable = {
    drisw_destroy_context,
+   drisw_bind_context,
+   drisw_unbind_context,
    NULL,
    NULL,
    DRI_glXUseXFont,
@@ -303,7 +312,7 @@ drisw_create_context(struct glx_screen *base,
       return NULL;
 
    if (shareList) {
-      pcp_shared = (struct drisw_context *) shareList->driContext;
+      pcp_shared = (struct drisw_context *) shareList;
       shared = pcp_shared->driContext;
    }
 
@@ -326,9 +335,6 @@ drisw_create_context(struct glx_screen *base,
    }
 
    pcp->base.vtable = &drisw_context_vtable;
-   pcp->base.driContext = &pcp->dri_vtable;
-   pcp->dri_vtable.bindContext = driBindContext;
-   pcp->dri_vtable.unbindContext = driUnbindContext;
 
    return &pcp->base;
 }

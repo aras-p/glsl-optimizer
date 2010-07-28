@@ -88,7 +88,6 @@ extern void DRI_glXUseXFont(struct glx_context *ctx,
 typedef struct __GLXDRIdisplayRec __GLXDRIdisplay;
 typedef struct __GLXDRIscreenRec __GLXDRIscreen;
 typedef struct __GLXDRIdrawableRec __GLXDRIdrawable;
-typedef struct __GLXDRIcontextRec __GLXDRIcontext;
 
 #include "glxextensions.h"
 
@@ -129,13 +128,6 @@ struct __GLXDRIscreenRec {
 		     int64_t *msc, int64_t *sbc);
    int (*setSwapInterval)(__GLXDRIdrawable *pdraw, int interval);
    int (*getSwapInterval)(__GLXDRIdrawable *pdraw);
-};
-
-struct __GLXDRIcontextRec
-{
-   Bool(*bindContext) (struct glx_context *context, __GLXDRIdrawable *pdraw,
-		       __GLXDRIdrawable *pread);
-   void (*unbindContext) (struct glx_context *context);
 };
 
 struct __GLXDRIdrawableRec
@@ -221,6 +213,9 @@ typedef struct __GLXattributeMachineRec
 
 struct glx_context_vtable {
    void (*destroy)(struct glx_context *ctx);
+   int (*bind)(struct glx_context *context, struct glx_context *old,
+	       GLXDrawable draw, GLXDrawable read);
+   void (*unbind)(struct glx_context *context, struct glx_context *new);
    void (*wait_gl)(struct glx_context *ctx);
    void (*wait_x)(struct glx_context *ctx);
    void (*use_x_font)(struct glx_context *ctx,
@@ -387,15 +382,6 @@ struct glx_context
      * Pointer to the config used to create this context.
      */
    struct glx_config *config;
-
-#ifdef GLX_DIRECT_RENDERING
-#ifdef GLX_USE_APPLEGL
-   void *driContext;
-   Bool do_destroy;
-#else
-   __GLXDRIcontext *driContext;
-#endif
-#endif
 
     /**
      * The current read-drawable for this context.  Will be None if this
@@ -790,5 +776,10 @@ GetGLXDRIDrawable(Display *dpy, GLXDrawable drawable);
 
 extern struct glx_screen *
 indirect_create_screen(int screen, struct glx_display * priv);
+extern int 
+indirect_bind_context(struct glx_context *gc, struct glx_context *old,
+		      GLXDrawable draw, GLXDrawable read);
+extern void
+indirect_unbind_context(struct glx_context *gc, struct glx_context *new);
 
 #endif /* !__GLX_client_h__ */

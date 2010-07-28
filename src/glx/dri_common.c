@@ -353,4 +353,31 @@ driDestroyConfigs(const __DRIconfig **configs)
    free(configs);
 }
 
+_X_HIDDEN __GLXDRIdrawable *
+driFetchDrawable(struct glx_context *gc, GLXDrawable glxDrawable)
+{
+   struct glx_display *const priv = __glXInitialize(gc->psc->dpy);
+   __GLXDRIdrawable *pdraw;
+   struct glx_screen *psc;
+
+   if (priv == NULL)
+      return NULL;
+
+   psc = priv->screens[gc->screen];
+   if (priv->drawHash == NULL)
+      return NULL;
+
+   if (__glxHashLookup(priv->drawHash, glxDrawable, (void *) &pdraw) == 0)
+      return pdraw;
+
+   pdraw = psc->driScreen->createDrawable(psc, glxDrawable,
+                                          glxDrawable, gc->config);
+   if (__glxHashInsert(priv->drawHash, glxDrawable, pdraw)) {
+      (*pdraw->destroyDrawable) (pdraw);
+      return NULL;
+   }
+
+   return pdraw;
+}
+
 #endif /* GLX_DIRECT_RENDERING */

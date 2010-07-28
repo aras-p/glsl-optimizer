@@ -42,15 +42,12 @@
 #include "apple_glx_context.h"
 #include "apple_glx.h"
 #include "glx_error.h"
-#define GC_IS_DIRECT(gc) ((gc)->isDirect)
 #else
 #include <sys/time.h>
 #include <X11/extensions/xf86vmode.h>
 #include "xf86dri.h"
-#define GC_IS_DIRECT(gc) ((gc)->driContext != NULL)
 #endif
 #else
-#define GC_IS_DIRECT(gc) (0)
 #endif
 
 #if defined(USE_XCB)
@@ -424,6 +421,7 @@ glx_context_init(struct glx_context *gc,
    gc->psc = psc;
    gc->config = config;
    gc->isDirect = GL_TRUE;
+   gc->currentContextTag = -1;
 
    return GL_TRUE;
 }
@@ -475,7 +473,7 @@ CreateContext(Display * dpy, int generic_id,
       req->visual = generic_id;
       req->screen = screen;
       req->shareList = shareList ? shareList->xid : None;
-      req->isDirect = GC_IS_DIRECT(gc);
+      req->isDirect = gc->isDirect;
       break;
    }
 
@@ -491,7 +489,7 @@ CreateContext(Display * dpy, int generic_id,
       req->screen = screen;
       req->renderType = renderType;
       req->shareList = shareList ? shareList->xid : None;
-      req->isDirect = GC_IS_DIRECT(gc);
+      req->isDirect = gc->isDirect;
       break;
    }
 
@@ -512,7 +510,7 @@ CreateContext(Display * dpy, int generic_id,
       req->screen = screen;
       req->renderType = renderType;
       req->shareList = shareList ? shareList->xid : None;
-      req->isDirect = GC_IS_DIRECT(gc);
+      req->isDirect = gc->isDirect;
       break;
    }
 
@@ -836,7 +834,7 @@ glXCopyContext(Display * dpy, GLXContext source_user,
    }
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
-   if (gc->driContext) {
+   if (gc->isDirect) {
       /* NOT_DONE: This does not work yet */
    }
 #endif
@@ -929,7 +927,7 @@ glXIsDirect(Display * dpy, GLXContext gc_user)
    if (!gc) {
       return GL_FALSE;
    }
-   else if (GC_IS_DIRECT(gc)) {
+   else if (gc->isDirect) {
       return GL_TRUE;
    }
 #ifdef GLX_USE_APPLEGL  /* TODO: indirect on darwin */
@@ -1962,7 +1960,7 @@ __glXSwapIntervalSGI(int interval)
    psc = GetGLXScreenConfigs( gc->currentDpy, gc->screen);
 
 #ifdef GLX_DIRECT_RENDERING
-   if (gc->driContext && psc->driScreen && psc->driScreen->setSwapInterval) {
+   if (gc->isDirect && psc->driScreen && psc->driScreen->setSwapInterval) {
       __GLXDRIdrawable *pdraw =
 	 GetGLXDRIDrawable(gc->currentDpy, gc->currentDrawable);
       psc->driScreen->setSwapInterval(pdraw, interval);
@@ -2004,7 +2002,7 @@ __glXSwapIntervalMESA(unsigned int interval)
 #ifdef GLX_DIRECT_RENDERING
    struct glx_context *gc = __glXGetCurrentContext();
 
-   if (gc != NULL && gc->driContext) {
+   if (gc != NULL && gc->isDirect) {
       struct glx_screen *psc;
 
       psc = GetGLXScreenConfigs( gc->currentDpy, gc->screen);
@@ -2026,7 +2024,7 @@ __glXGetSwapIntervalMESA(void)
 #ifdef GLX_DIRECT_RENDERING
    struct glx_context *gc = __glXGetCurrentContext();
 
-   if (gc != NULL && gc->driContext) {
+   if (gc != NULL && gc->isDirect) {
       struct glx_screen *psc;
 
       psc = GetGLXScreenConfigs( gc->currentDpy, gc->screen);
@@ -2060,7 +2058,7 @@ __glXGetVideoSyncSGI(unsigned int *count)
       return GLX_BAD_CONTEXT;
 
 #ifdef GLX_DIRECT_RENDERING
-   if (!gc->driContext)
+   if (!gc->isDirect)
       return GLX_BAD_CONTEXT;
 #endif
 
@@ -2102,7 +2100,7 @@ __glXWaitVideoSyncSGI(int divisor, int remainder, unsigned int *count)
       return GLX_BAD_CONTEXT;
 
 #ifdef GLX_DIRECT_RENDERING
-   if (!gc->driContext)
+   if (!gc->isDirect)
       return GLX_BAD_CONTEXT;
 #endif
 
@@ -2423,7 +2421,7 @@ __glXSwapBuffersMscOML(Display * dpy, GLXDrawable drawable,
       return -1;
 
 #ifdef GLX_DIRECT_RENDERING
-   if (!pdraw || !gc->driContext)
+   if (!pdraw || !gc->isDirect)
       return -1;
 #endif
 
@@ -2721,6 +2719,8 @@ indirect_release_tex_image(Display * dpy, GLXDrawable drawable, int buffer)
 
 static const struct glx_context_vtable indirect_context_vtable = {
    indirect_destroy_context,
+   indirect_bind_context,
+   indirect_unbind_context,
    indirect_wait_gl,
    indirect_wait_x,
    indirect_use_x_font,

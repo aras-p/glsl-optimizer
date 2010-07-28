@@ -95,7 +95,6 @@ struct dri2_screen {
 struct dri2_context
 {
    struct glx_context base;
-   __GLXDRIcontext dri_vtable;
    __DRIcontext *driContext;
 };
 
@@ -133,20 +132,28 @@ dri2_destroy_context(struct glx_context *context)
 }
 
 static Bool
-dri2BindContext(struct glx_context *context,
-		__GLXDRIdrawable *draw, __GLXDRIdrawable *read)
+dri2_bind_context(struct glx_context *context, struct glx_context *old,
+		  GLXDrawable draw, GLXDrawable read)
 {
    struct dri2_context *pcp = (struct dri2_context *) context;
    struct dri2_screen *psc = (struct dri2_screen *) pcp->base.psc;
-   struct dri2_drawable *pdr = (struct dri2_drawable *) draw;
-   struct dri2_drawable *prd = (struct dri2_drawable *) read;
+   struct dri2_drawable *pdraw, *pread;
 
-   return (*psc->core->bindContext) (pcp->driContext,
-				     pdr->driDrawable, prd->driDrawable);
+   pdraw = (struct dri2_drawable *) driFetchDrawable(context, draw);
+   pread = (struct dri2_drawable *) driFetchDrawable(context, read);
+
+   if (pdraw == NULL || pread == NULL)
+      return GLXBadDrawable;
+
+   if ((*psc->core->bindContext) (pcp->driContext,
+				  pdraw->driDrawable, pread->driDrawable))
+      return Success;
+
+   return GLXBadContext;
 }
 
 static void
-dri2UnbindContext(struct glx_context *context)
+dri2_unbind_context(struct glx_context *context, struct glx_context *new)
 {
    struct dri2_context *pcp = (struct dri2_context *) context;
    struct dri2_screen *psc = (struct dri2_screen *) pcp->base.psc;
@@ -189,9 +196,6 @@ dri2_create_context(struct glx_screen *base,
    }
 
    pcp->base.vtable = &dri2_context_vtable;
-   pcp->base.driContext = &pcp->dri_vtable;
-   pcp->dri_vtable.bindContext = dri2BindContext;
-   pcp->dri_vtable.unbindContext = dri2UnbindContext;
 
    return &pcp->base;
 }
@@ -684,6 +688,8 @@ dri2_release_tex_image(Display * dpy, GLXDrawable drawable, int buffer)
 
 static const struct glx_context_vtable dri2_context_vtable = {
    dri2_destroy_context,
+   dri2_bind_context,
+   dri2_unbind_context,
    dri2_wait_gl,
    dri2_wait_x,
    DRI_glXUseXFont,
