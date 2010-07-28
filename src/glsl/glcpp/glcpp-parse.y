@@ -478,7 +478,6 @@ operator:
 |	','			{ $$ = ','; }
 |	'='			{ $$ = '='; }
 |	PASTE			{ $$ = PASTE; }
-|	DEFINED			{ $$ = DEFINED; }
 ;
 
 %%
