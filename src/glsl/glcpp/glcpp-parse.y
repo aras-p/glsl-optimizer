@@ -937,6 +937,14 @@ glcpp_parser_create (const struct gl_extensions *extensions)
 				     "GL_EXT_texture_array", list);
 	}
 
+	if ((extensions != NULL) &&
+	    extensions->ARB_fragment_coord_conventions) {
+		list = _token_list_create(parser);
+		_token_list_append(list, tok);
+		_define_object_macro(parser, NULL,
+				     "GL_ARB_fragment_coord_conventions", list);
+	}
+
 	talloc_unlink(parser, tok);
 
 	return parser;
