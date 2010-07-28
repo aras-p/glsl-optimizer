@@ -49,10 +49,9 @@
 #ifdef WIN32
 #include <stdint.h>
 #endif
-#include "GL/glxint.h"
 #include "GL/glxproto.h"
-#include "GL/internal/glcore.h"
 #include "glapi/glapitable.h"
+#include "glcontextmodes.h"
 #include "glxhash.h"
 #if defined( PTHREADS )
 # include <pthread.h>

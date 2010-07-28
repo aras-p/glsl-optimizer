@@ -30,12 +30,98 @@
 #ifndef GLCONTEXTMODES_H
 #define GLCONTEXTMODES_H
 
-#include "GL/internal/glcore.h"
+typedef struct __GLcontextModesRec {
+    struct __GLcontextModesRec * next;
+
+    GLboolean rgbMode;
+    GLboolean floatMode;
+    GLboolean colorIndexMode;
+    GLuint doubleBufferMode;
+    GLuint stereoMode;
+
+    GLboolean haveAccumBuffer;
+    GLboolean haveDepthBuffer;
+    GLboolean haveStencilBuffer;
+
+    GLint redBits, greenBits, blueBits, alphaBits;	/* bits per comp */
+    GLuint redMask, greenMask, blueMask, alphaMask;
+    GLint rgbBits;		/* total bits for rgb */
+    GLint indexBits;		/* total bits for colorindex */
+
+    GLint accumRedBits, accumGreenBits, accumBlueBits, accumAlphaBits;
+    GLint depthBits;
+    GLint stencilBits;
+
+    GLint numAuxBuffers;
+
+    GLint level;
+
+    GLint pixmapMode;
+
+    /* GLX */
+    GLint visualID;
+    GLint visualType;     /**< One of the GLX X visual types. (i.e., 
+			   * \c GLX_TRUE_COLOR, etc.)
+			   */
+
+    /* EXT_visual_rating / GLX 1.2 */
+    GLint visualRating;
+
+    /* EXT_visual_info / GLX 1.2 */
+    GLint transparentPixel;
+				/*    colors are floats scaled to ints */
+    GLint transparentRed, transparentGreen, transparentBlue, transparentAlpha;
+    GLint transparentIndex;
+
+    /* ARB_multisample / SGIS_multisample */
+    GLint sampleBuffers;
+    GLint samples;
+
+    /* SGIX_fbconfig / GLX 1.3 */
+    GLint drawableType;
+    GLint renderType;
+    GLint xRenderable;
+    GLint fbconfigID;
+
+    /* SGIX_pbuffer / GLX 1.3 */
+    GLint maxPbufferWidth;
+    GLint maxPbufferHeight;
+    GLint maxPbufferPixels;
+    GLint optimalPbufferWidth;   /* Only for SGIX_pbuffer. */
+    GLint optimalPbufferHeight;  /* Only for SGIX_pbuffer. */
+
+    /* SGIX_visual_select_group */
+    GLint visualSelectGroup;
+
+    /* OML_swap_method */
+    GLint swapMethod;
+
+    GLint screen;
+
+    /* EXT_texture_from_pixmap */
+    GLint bindToTextureRgb;
+    GLint bindToTextureRgba;
+    GLint bindToMipmapTexture;
+    GLint bindToTextureTargets;
+    GLint yInverted;
+} __GLcontextModes;
+
+#define __GLX_MIN_CONFIG_PROPS	18
+#define __GLX_MAX_CONFIG_PROPS	500
+#define __GLX_EXT_CONFIG_PROPS	10
+
+/*
+** Since we send all non-core visual properties as token, value pairs,
+** we require 2 words across the wire. In order to maintain backwards
+** compatibility, we need to send the total number of words that the
+** VisualConfigs are sent back in so old libraries can simply "ignore"
+** the new properties.
+*/
+#define __GLX_TOTAL_CONFIG \
+   (__GLX_MIN_CONFIG_PROPS + 2 * __GLX_EXT_CONFIG_PROPS)
 
 extern GLint _gl_convert_from_x_visual_type(int visualType);
 extern GLint _gl_convert_to_x_visual_type(int visualType);
-extern void _gl_copy_visual_to_context_mode(__GLcontextModes * mode,
-                                            const __GLXvisualConfig * config);
 extern int _gl_get_context_mode_data(const __GLcontextModes * mode,
                                      int attribute, int *value_return);
 
