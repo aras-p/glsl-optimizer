@@ -55,7 +55,7 @@ static void r600_flush(struct pipe_context *ctx, unsigned flags,
 	 */
 	if (!dc)
 		radeon_ctx_dump_bof(rctx->ctx, "gallium.bof");
-#if 0
+#if 1
 	radeon_ctx_submit(rctx->ctx);
 #endif
 	rctx->ctx = radeon_ctx_decref(rctx->ctx);

@@ -125,6 +125,17 @@ static int r600_draw_common(struct r600_draw *draw)
 		if (r)
 			return r;
 	}
+	/* setup texture sampler & resource */
+	for (i = 0 ; i < rctx->nps_sampler; i++) {
+		r = radeon_draw_set_new(rctx->draw, rctx->ps_sampler[i]);
+		if (r)
+			return r;
+	}
+	for (i = 0 ; i < rctx->nps_view; i++) {
+		r = radeon_draw_set_new(rctx->draw, rctx->ps_view[i]->state);
+		if (r)
+			return r;
+	}
 	/* FIXME start need to change winsys */
 	draw->draw = radeon_state(rscreen->rw, R600_DRAW_TYPE, R600_DRAW);
 	if (draw->draw == NULL)

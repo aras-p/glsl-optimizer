@@ -838,12 +838,82 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 {
 	struct tgsi_full_instruction *inst = &ctx->parse.FullToken.FullInstruction;
 	struct r600_bc_tex tex;
+	struct r600_bc_alu alu;
+	unsigned src_gpr;
+	int r;
 
+	src_gpr = ctx->file_offset[inst->Src[0].Register.File] + inst->Src[0].Register.Index;
+
+	/* Add perspective divide */
+	if (ctx->inst_info->tgsi_opcode == TGSI_OPCODE_TXP) {
+		memset(&alu, 0, sizeof(struct r600_bc_alu));
+		alu.inst = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_IEEE;
+		alu.src[0].sel = src_gpr;
+		alu.src[0].chan = 3;
+		alu.dst.sel = ctx->temp_reg;
+		alu.dst.chan = 3;
+		alu.last = 1;
+		alu.dst.write = 1;
+		r = r600_bc_add_alu(ctx->bc, &alu);
+		if (r)
+			return r;
+
+		memset(&alu, 0, sizeof(struct r600_bc_alu));
+		alu.inst = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MUL;
+		alu.src[0].sel = ctx->temp_reg;
+		alu.src[0].chan = 3;
+		alu.src[1].sel = src_gpr;
+		alu.src[1].chan = 0;
+		alu.dst.sel = ctx->temp_reg;
+		alu.dst.chan = 0;
+		alu.dst.write = 1;
+		r = r600_bc_add_alu(ctx->bc, &alu);
+		if (r)
+			return r;
+		memset(&alu, 0, sizeof(struct r600_bc_alu));
+		alu.inst = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MUL;
+		alu.src[0].sel = ctx->temp_reg;
+		alu.src[0].chan = 3;
+		alu.src[1].sel = src_gpr;
+		alu.src[1].chan = 1;
+		alu.dst.sel = ctx->temp_reg;
+		alu.dst.chan = 1;
+		alu.dst.write = 1;
+		r = r600_bc_add_alu(ctx->bc, &alu);
+		if (r)
+			return r;
+		memset(&alu, 0, sizeof(struct r600_bc_alu));
+		alu.inst = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MUL;
+		alu.src[0].sel = ctx->temp_reg;
+		alu.src[0].chan = 3;
+		alu.src[1].sel = src_gpr;
+		alu.src[1].chan = 2;
+		alu.dst.sel = ctx->temp_reg;
+		alu.dst.chan = 2;
+		alu.dst.write = 1;
+		r = r600_bc_add_alu(ctx->bc, &alu);
+		if (r)
+			return r;
+		memset(&alu, 0, sizeof(struct r600_bc_alu));
+		alu.inst = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOV;
+		alu.src[0].sel = 249;
+		alu.src[0].chan = 0;
+		alu.dst.sel = ctx->temp_reg;
+		alu.dst.chan = 3;
+		alu.last = 1;
+		alu.dst.write = 1;
+		r = r600_bc_add_alu(ctx->bc, &alu);
+		if (r)
+			return r;
+		src_gpr = ctx->temp_reg;
+	}
+
+	/* TODO use temp if src_gpr is not a temporary reg (File != TEMPORARY) */
 	memset(&tex, 0, sizeof(struct r600_bc_tex));
 	tex.inst = ctx->inst_info->r600_opcode;
 	tex.resource_id = ctx->file_offset[inst->Src[1].Register.File] + inst->Src[1].Register.Index;
 	tex.sampler_id = tex.resource_id;
-	tex.src_gpr = ctx->file_offset[inst->Src[0].Register.File] + inst->Src[0].Register.Index;
+	tex.src_gpr = src_gpr;
 	tex.dst_gpr = ctx->file_offset[inst->Dst[0].Register.File] + inst->Src[0].Register.Index;
 	tex.dst_sel_x = 0;
 	tex.dst_sel_y = 1;
@@ -853,6 +923,10 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 	tex.src_sel_y = 1;
 	tex.src_sel_z = 2;
 	tex.src_sel_w = 3;
+	tex.coord_type_x = 1;
+	tex.coord_type_y = 1;
+	tex.coord_type_z = 1;
+	tex.coord_type_w = 1;
 	return r600_bc_add_tex(ctx->bc, &tex);
 }
 
@@ -912,7 +986,7 @@ static struct r600_shader_tgsi_instruction r600_shader_tgsi_instruction[] = {
 	{TGSI_OPCODE_SLE,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_SNE,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_STR,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
-	{TGSI_OPCODE_TEX,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
+	{TGSI_OPCODE_TEX,	0, 0x10, tgsi_tex},
 	{TGSI_OPCODE_TXD,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_TXP,	0, 0x10, tgsi_tex},
 	{TGSI_OPCODE_UP2H,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},

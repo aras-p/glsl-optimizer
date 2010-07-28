@@ -26,6 +26,8 @@
 #ifndef R600D_H
 #define R600D_H
 
+#define R600_TEXEL_PITCH_ALIGNMENT_MASK        0x7
+
 #define PKT3_NOP                               0x10
 #define PKT3_INDIRECT_BUFFER_END               0x17
 #define PKT3_SET_PREDICATION                   0x20
@@ -574,6 +576,132 @@
 #define   S_0287F0_USE_OPAQUE(x)                       (((x) & 0x1) << 6)
 #define   G_0287F0_USE_OPAQUE(x)                       (((x) >> 6) & 0x1)
 #define   C_0287F0_USE_OPAQUE                          0xFFFFFFBF
+#define R_038000_SQ_TEX_RESOURCE_WORD0_0             0x038000
+#define   S_038000_DIM(x)                              (((x) & 0x7) << 0)
+#define   G_038000_DIM(x)                              (((x) >> 0) & 0x7)
+#define   C_038000_DIM                                 0xFFFFFFF8
+#define     V_038000_SQ_TEX_DIM_1D                     0x00000000
+#define     V_038000_SQ_TEX_DIM_2D                     0x00000001
+#define     V_038000_SQ_TEX_DIM_3D                     0x00000002
+#define     V_038000_SQ_TEX_DIM_CUBEMAP                0x00000003
+#define     V_038000_SQ_TEX_DIM_1D_ARRAY               0x00000004
+#define     V_038000_SQ_TEX_DIM_2D_ARRAY               0x00000005
+#define     V_038000_SQ_TEX_DIM_2D_MSAA                0x00000006
+#define     V_038000_SQ_TEX_DIM_2D_ARRAY_MSAA          0x00000007
+#define   S_038000_TILE_MODE(x)                        (((x) & 0xF) << 3)
+#define   G_038000_TILE_MODE(x)                        (((x) >> 3) & 0xF)
+#define   C_038000_TILE_MODE                           0xFFFFFF87
+#define   S_038000_TILE_TYPE(x)                        (((x) & 0x1) << 7)
+#define   G_038000_TILE_TYPE(x)                        (((x) >> 7) & 0x1)
+#define   C_038000_TILE_TYPE                           0xFFFFFF7F
+#define   S_038000_PITCH(x)                            (((x) & 0x7FF) << 8)
+#define   G_038000_PITCH(x)                            (((x) >> 8) & 0x7FF)
+#define   C_038000_PITCH                               0xFFF800FF
+#define   S_038000_TEX_WIDTH(x)                        (((x) & 0x1FFF) << 19)
+#define   G_038000_TEX_WIDTH(x)                        (((x) >> 19) & 0x1FFF)
+#define   C_038000_TEX_WIDTH                           0x0007FFFF
+#define R_038004_SQ_TEX_RESOURCE_WORD1_0             0x038004
+#define   S_038004_TEX_HEIGHT(x)                       (((x) & 0x1FFF) << 0)
+#define   G_038004_TEX_HEIGHT(x)                       (((x) >> 0) & 0x1FFF)
+#define   C_038004_TEX_HEIGHT                          0xFFFFE000
+#define   S_038004_TEX_DEPTH(x)                        (((x) & 0x1FFF) << 13)
+#define   G_038004_TEX_DEPTH(x)                        (((x) >> 13) & 0x1FFF)
+#define   C_038004_TEX_DEPTH                           0xFC001FFF
+#define   S_038004_DATA_FORMAT(x)                      (((x) & 0x3F) << 26)
+#define   G_038004_DATA_FORMAT(x)                      (((x) >> 26) & 0x3F)
+#define   C_038004_DATA_FORMAT                         0x03FFFFFF
+#define R_038008_SQ_TEX_RESOURCE_WORD2_0             0x038008
+#define   S_038008_BASE_ADDRESS(x)                     (((x) & 0xFFFFFFFF) << 0)
+#define   G_038008_BASE_ADDRESS(x)                     (((x) >> 0) & 0xFFFFFFFF)
+#define   C_038008_BASE_ADDRESS                        0x00000000
+#define R_03800C_SQ_TEX_RESOURCE_WORD3_0             0x03800C
+#define   S_03800C_MIP_ADDRESS(x)                      (((x) & 0xFFFFFFFF) << 0)
+#define   G_03800C_MIP_ADDRESS(x)                      (((x) >> 0) & 0xFFFFFFFF)
+#define   C_03800C_MIP_ADDRESS                         0x00000000
+#define R_038010_SQ_TEX_RESOURCE_WORD4_0             0x038010
+#define   S_038010_FORMAT_COMP_X(x)                    (((x) & 0x3) << 0)
+#define   G_038010_FORMAT_COMP_X(x)                    (((x) >> 0) & 0x3)
+#define   C_038010_FORMAT_COMP_X                       0xFFFFFFFC
+#define     V_038010_SQ_FORMAT_COMP_UNSIGNED           0x00000000
+#define     V_038010_SQ_FORMAT_COMP_SIGNED             0x00000001
+#define     V_038010_SQ_FORMAT_COMP_UNSIGNED_BIASED    0x00000002
+#define   S_038010_FORMAT_COMP_Y(x)                    (((x) & 0x3) << 2)
+#define   G_038010_FORMAT_COMP_Y(x)                    (((x) >> 2) & 0x3)
+#define   C_038010_FORMAT_COMP_Y                       0xFFFFFFF3
+#define   S_038010_FORMAT_COMP_Z(x)                    (((x) & 0x3) << 4)
+#define   G_038010_FORMAT_COMP_Z(x)                    (((x) >> 4) & 0x3)
+#define   C_038010_FORMAT_COMP_Z                       0xFFFFFFCF
+#define   S_038010_FORMAT_COMP_W(x)                    (((x) & 0x3) << 6)
+#define   G_038010_FORMAT_COMP_W(x)                    (((x) >> 6) & 0x3)
+#define   C_038010_FORMAT_COMP_W                       0xFFFFFF3F
+#define   S_038010_NUM_FORMAT_ALL(x)                   (((x) & 0x3) << 8)
+#define   G_038010_NUM_FORMAT_ALL(x)                   (((x) >> 8) & 0x3)
+#define   C_038010_NUM_FORMAT_ALL                      0xFFFFFCFF
+#define     V_038010_SQ_NUM_FORMAT_NORM                0x00000000
+#define     V_038010_SQ_NUM_FORMAT_INT                 0x00000001
+#define     V_038010_SQ_NUM_FORMAT_SCALED              0x00000002
+#define   S_038010_SRF_MODE_ALL(x)                     (((x) & 0x1) << 10)
+#define   G_038010_SRF_MODE_ALL(x)                     (((x) >> 10) & 0x1)
+#define   C_038010_SRF_MODE_ALL                        0xFFFFFBFF
+#define     V_038010_SFR_MODE_ZERO_CLAMP_MINUS_ONE     0x00000000
+#define     V_038010_SFR_MODE_NO_ZERO                  0x00000001
+#define   S_038010_FORCE_DEGAMMA(x)                    (((x) & 0x1) << 11)
+#define   G_038010_FORCE_DEGAMMA(x)                    (((x) >> 11) & 0x1)
+#define   C_038010_FORCE_DEGAMMA                       0xFFFFF7FF
+#define   S_038010_ENDIAN_SWAP(x)                      (((x) & 0x3) << 12)
+#define   G_038010_ENDIAN_SWAP(x)                      (((x) >> 12) & 0x3)
+#define   C_038010_ENDIAN_SWAP                         0xFFFFCFFF
+#define   S_038010_REQUEST_SIZE(x)                     (((x) & 0x3) << 14)
+#define   G_038010_REQUEST_SIZE(x)                     (((x) >> 14) & 0x3)
+#define   C_038010_REQUEST_SIZE                        0xFFFF3FFF
+#define   S_038010_DST_SEL_X(x)                        (((x) & 0x7) << 16)
+#define   G_038010_DST_SEL_X(x)                        (((x) >> 16) & 0x7)
+#define   C_038010_DST_SEL_X                           0xFFF8FFFF
+#define     V_038010_SQ_SEL_X                          0x00000000
+#define     V_038010_SQ_SEL_Y                          0x00000001
+#define     V_038010_SQ_SEL_Z                          0x00000002
+#define     V_038010_SQ_SEL_W                          0x00000003
+#define     V_038010_SQ_SEL_0                          0x00000004
+#define     V_038010_SQ_SEL_1                          0x00000005
+#define   S_038010_DST_SEL_Y(x)                        (((x) & 0x7) << 19)
+#define   G_038010_DST_SEL_Y(x)                        (((x) >> 19) & 0x7)
+#define   C_038010_DST_SEL_Y                           0xFFC7FFFF
+#define   S_038010_DST_SEL_Z(x)                        (((x) & 0x7) << 22)
+#define   G_038010_DST_SEL_Z(x)                        (((x) >> 22) & 0x7)
+#define   C_038010_DST_SEL_Z                           0xFE3FFFFF
+#define   S_038010_DST_SEL_W(x)                        (((x) & 0x7) << 25)
+#define   G_038010_DST_SEL_W(x)                        (((x) >> 25) & 0x7)
+#define   C_038010_DST_SEL_W                           0xF1FFFFFF
+#define   S_038010_BASE_LEVEL(x)                       (((x) & 0xF) << 28)
+#define   G_038010_BASE_LEVEL(x)                       (((x) >> 28) & 0xF)
+#define   C_038010_BASE_LEVEL                          0x0FFFFFFF
+#define R_038014_SQ_TEX_RESOURCE_WORD5_0             0x038014
+#define   S_038014_LAST_LEVEL(x)                       (((x) & 0xF) << 0)
+#define   G_038014_LAST_LEVEL(x)                       (((x) >> 0) & 0xF)
+#define   C_038014_LAST_LEVEL                          0xFFFFFFF0
+#define   S_038014_BASE_ARRAY(x)                       (((x) & 0x1FFF) << 4)
+#define   G_038014_BASE_ARRAY(x)                       (((x) >> 4) & 0x1FFF)
+#define   C_038014_BASE_ARRAY                          0xFFFE000F
+#define   S_038014_LAST_ARRAY(x)                       (((x) & 0x1FFF) << 17)
+#define   G_038014_LAST_ARRAY(x)                       (((x) >> 17) & 0x1FFF)
+#define   C_038014_LAST_ARRAY                          0xC001FFFF
+#define R_038018_SQ_TEX_RESOURCE_WORD6_0             0x038018
+#define   S_038018_MPEG_CLAMP(x)                       (((x) & 0x3) << 0)
+#define   G_038018_MPEG_CLAMP(x)                       (((x) >> 0) & 0x3)
+#define   C_038018_MPEG_CLAMP                          0xFFFFFFFC
+#define   S_038018_PERF_MODULATION(x)                  (((x) & 0x7) << 5)
+#define   G_038018_PERF_MODULATION(x)                  (((x) >> 5) & 0x7)
+#define   C_038018_PERF_MODULATION                     0xFFFFFF1F
+#define   S_038018_INTERLACED(x)                       (((x) & 0x1) << 8)
+#define   G_038018_INTERLACED(x)                       (((x) >> 8) & 0x1)
+#define   C_038018_INTERLACED                          0xFFFFFEFF
+#define   S_038018_TYPE(x)                             (((x) & 0x3) << 30)
+#define   G_038018_TYPE(x)                             (((x) >> 30) & 0x3)
+#define   C_038018_TYPE                                0x3FFFFFFF
+#define     V_038010_SQ_TEX_VTX_INVALID_TEXTURE        0x00000000
+#define     V_038010_SQ_TEX_VTX_INVALID_BUFFER         0x00000001
+#define     V_038010_SQ_TEX_VTX_VALID_TEXTURE          0x00000002
+#define     V_038010_SQ_TEX_VTX_VALID_BUFFER           0x00000003
 #define R_038008_SQ_VTX_CONSTANT_WORD2_0             0x038008
 #define   S_038008_BASE_ADDRESS_HI(x)                  (((x) & 0xFF) << 0)
 #define   G_038008_BASE_ADDRESS_HI(x)                  (((x) >> 0) & 0xFF)
@@ -633,6 +761,113 @@
 #define   S_038008_ENDIAN_SWAP(x)                      (((x) & 0x3) << 30)
 #define   G_038008_ENDIAN_SWAP(x)                      (((x) >> 30) & 0x3)
 #define   C_038008_ENDIAN_SWAP                         0x3FFFFFFF
+#define R_03C000_SQ_TEX_SAMPLER_WORD0_0              0x03C000
+#define   S_03C000_CLAMP_X(x)                          (((x) & 0x7) << 0)
+#define   G_03C000_CLAMP_X(x)                          (((x) >> 0) & 0x7)
+#define   C_03C000_CLAMP_X                             0xFFFFFFF8
+#define     V_03C000_SQ_TEX_WRAP                       0x00000000
+#define     V_03C000_SQ_TEX_MIRROR                     0x00000001
+#define     V_03C000_SQ_TEX_CLAMP_LAST_TEXEL           0x00000002
+#define     V_03C000_SQ_TEX_MIRROR_ONCE_LAST_TEXEL     0x00000003
+#define     V_03C000_SQ_TEX_CLAMP_HALF_BORDER          0x00000004
+#define     V_03C000_SQ_TEX_MIRROR_ONCE_HALF_BORDER    0x00000005
+#define     V_03C000_SQ_TEX_CLAMP_BORDER               0x00000006
+#define     V_03C000_SQ_TEX_MIRROR_ONCE_BORDER         0x00000007
+#define   S_03C000_CLAMP_Y(x)                          (((x) & 0x7) << 3)
+#define   G_03C000_CLAMP_Y(x)                          (((x) >> 3) & 0x7)
+#define   C_03C000_CLAMP_Y                             0xFFFFFFC7
+#define   S_03C000_CLAMP_Z(x)                          (((x) & 0x7) << 6)
+#define   G_03C000_CLAMP_Z(x)                          (((x) >> 6) & 0x7)
+#define   C_03C000_CLAMP_Z                             0xFFFFFE3F
+#define   S_03C000_XY_MAG_FILTER(x)                    (((x) & 0x7) << 9)
+#define   G_03C000_XY_MAG_FILTER(x)                    (((x) >> 9) & 0x7)
+#define   C_03C000_XY_MAG_FILTER                       0xFFFFF1FF
+#define     V_03C000_SQ_TEX_XY_FILTER_POINT            0x00000000
+#define     V_03C000_SQ_TEX_XY_FILTER_BILINEAR         0x00000001
+#define     V_03C000_SQ_TEX_XY_FILTER_BICUBIC          0x00000002
+#define   S_03C000_XY_MIN_FILTER(x)                    (((x) & 0x7) << 12)
+#define   G_03C000_XY_MIN_FILTER(x)                    (((x) >> 12) & 0x7)
+#define   C_03C000_XY_MIN_FILTER                       0xFFFF8FFF
+#define   S_03C000_Z_FILTER(x)                         (((x) & 0x3) << 15)
+#define   G_03C000_Z_FILTER(x)                         (((x) >> 15) & 0x3)
+#define   C_03C000_Z_FILTER                            0xFFFE7FFF
+#define     V_03C000_SQ_TEX_Z_FILTER_NONE              0x00000000
+#define     V_03C000_SQ_TEX_Z_FILTER_POINT             0x00000001
+#define     V_03C000_SQ_TEX_Z_FILTER_LINEAR            0x00000002
+#define   S_03C000_MIP_FILTER(x)                       (((x) & 0x3) << 17)
+#define   G_03C000_MIP_FILTER(x)                       (((x) >> 17) & 0x3)
+#define   C_03C000_MIP_FILTER                          0xFFF9FFFF
+#define   S_03C000_BORDER_COLOR_TYPE(x)                (((x) & 0x3) << 22)
+#define   G_03C000_BORDER_COLOR_TYPE(x)                (((x) >> 22) & 0x3)
+#define   C_03C000_BORDER_COLOR_TYPE                   0xFF3FFFFF
+#define     V_03C000_SQ_TEX_BORDER_COLOR_TRANS_BLACK   0x00000000
+#define     V_03C000_SQ_TEX_BORDER_COLOR_OPAQUE_BLACK  0x00000001
+#define     V_03C000_SQ_TEX_BORDER_COLOR_OPAQUE_WHITE  0x00000002
+#define     V_03C000_SQ_TEX_BORDER_COLOR_REGISTER      0x00000003
+#define   S_03C000_POINT_SAMPLING_CLAMP(x)             (((x) & 0x1) << 24)
+#define   G_03C000_POINT_SAMPLING_CLAMP(x)             (((x) >> 24) & 0x1)
+#define   C_03C000_POINT_SAMPLING_CLAMP                0xFEFFFFFF
+#define   S_03C000_TEX_ARRAY_OVERRIDE(x)               (((x) & 0x1) << 25)
+#define   G_03C000_TEX_ARRAY_OVERRIDE(x)               (((x) >> 25) & 0x1)
+#define   C_03C000_TEX_ARRAY_OVERRIDE                  0xFDFFFFFF
+#define   S_03C000_DEPTH_COMPARE_FUNCTION(x)           (((x) & 0x7) << 26)
+#define   G_03C000_DEPTH_COMPARE_FUNCTION(x)           (((x) >> 26) & 0x7)
+#define   C_03C000_DEPTH_COMPARE_FUNCTION              0xE3FFFFFF
+#define     V_03C000_SQ_TEX_DEPTH_COMPARE_NEVER        0x00000000
+#define     V_03C000_SQ_TEX_DEPTH_COMPARE_LESS         0x00000001
+#define     V_03C000_SQ_TEX_DEPTH_COMPARE_EQUAL        0x00000002
+#define     V_03C000_SQ_TEX_DEPTH_COMPARE_LESSEQUAL    0x00000003
+#define     V_03C000_SQ_TEX_DEPTH_COMPARE_GREATER      0x00000004
+#define     V_03C000_SQ_TEX_DEPTH_COMPARE_NOTEQUAL     0x00000005
+#define     V_03C000_SQ_TEX_DEPTH_COMPARE_GREATEREQUAL 0x00000006
+#define     V_03C000_SQ_TEX_DEPTH_COMPARE_ALWAYS       0x00000007
+#define   S_03C000_CHROMA_KEY(x)                       (((x) & 0x3) << 29)
+#define   G_03C000_CHROMA_KEY(x)                       (((x) >> 29) & 0x3)
+#define   C_03C000_CHROMA_KEY                          0x9FFFFFFF
+#define     V_03C000_SQ_TEX_CHROMA_KEY_DISABLE         0x00000000
+#define     V_03C000_SQ_TEX_CHROMA_KEY_KILL            0x00000001
+#define     V_03C000_SQ_TEX_CHROMA_KEY_BLEND           0x00000002
+#define   S_03C000_LOD_USES_MINOR_AXIS(x)              (((x) & 0x1) << 31)
+#define   G_03C000_LOD_USES_MINOR_AXIS(x)              (((x) >> 31) & 0x1)
+#define   C_03C000_LOD_USES_MINOR_AXIS                 0x7FFFFFFF
+#define R_03C004_SQ_TEX_SAMPLER_WORD1_0              0x03C004
+#define   S_03C004_MIN_LOD(x)                          (((x) & 0x3FF) << 0)
+#define   G_03C004_MIN_LOD(x)                          (((x) >> 0) & 0x3FF)
+#define   C_03C004_MIN_LOD                             0xFFFFFC00
+#define   S_03C004_MAX_LOD(x)                          (((x) & 0x3FF) << 10)
+#define   G_03C004_MAX_LOD(x)                          (((x) >> 10) & 0x3FF)
+#define   C_03C004_MAX_LOD                             0xFFF003FF
+#define   S_03C004_LOD_BIAS(x)                         (((x) & 0xFFF) << 20)
+#define   G_03C004_LOD_BIAS(x)                         (((x) >> 20) & 0xFFF)
+#define   C_03C004_LOD_BIAS                            0x000FFFFF
+#define R_03C008_SQ_TEX_SAMPLER_WORD2_0              0x03C008
+#define   S_03C008_LOD_BIAS_SEC(x)                     (((x) & 0xFFF) << 0)
+#define   G_03C008_LOD_BIAS_SEC(x)                     (((x) >> 0) & 0xFFF)
+#define   C_03C008_LOD_BIAS_SEC                        0xFFFFF000
+#define   S_03C008_MC_COORD_TRUNCATE(x)                (((x) & 0x1) << 12)
+#define   G_03C008_MC_COORD_TRUNCATE(x)                (((x) >> 12) & 0x1)
+#define   C_03C008_MC_COORD_TRUNCATE                   0xFFFFEFFF
+#define   S_03C008_FORCE_DEGAMMA(x)                    (((x) & 0x1) << 13)
+#define   G_03C008_FORCE_DEGAMMA(x)                    (((x) >> 13) & 0x1)
+#define   C_03C008_FORCE_DEGAMMA                       0xFFFFDFFF
+#define   S_03C008_HIGH_PRECISION_FILTER(x)            (((x) & 0x1) << 14)
+#define   G_03C008_HIGH_PRECISION_FILTER(x)            (((x) >> 14) & 0x1)
+#define   C_03C008_HIGH_PRECISION_FILTER               0xFFFFBFFF
+#define   S_03C008_PERF_MIP(x)                         (((x) & 0x7) << 15)
+#define   G_03C008_PERF_MIP(x)                         (((x) >> 15) & 0x7)
+#define   C_03C008_PERF_MIP                            0xFFFC7FFF
+#define   S_03C008_PERF_Z(x)                           (((x) & 0x3) << 18)
+#define   G_03C008_PERF_Z(x)                           (((x) >> 18) & 0x3)
+#define   C_03C008_PERF_Z                              0xFFF3FFFF
+#define   S_03C008_FETCH_4(x)                          (((x) & 0x1) << 26)
+#define   G_03C008_FETCH_4(x)                          (((x) >> 26) & 0x1)
+#define   C_03C008_FETCH_4                             0xFBFFFFFF
+#define   S_03C008_SAMPLE_IS_PCF(x)                    (((x) & 0x1) << 27)
+#define   G_03C008_SAMPLE_IS_PCF(x)                    (((x) >> 27) & 0x1)
+#define   C_03C008_SAMPLE_IS_PCF                       0xF7FFFFFF
+#define   S_03C008_TYPE(x)                             (((x) & 0x1) << 31)
+#define   G_03C008_TYPE(x)                             (((x) >> 31) & 0x1)
+#define   C_03C008_TYPE                                0x7FFFFFFF
 #define R_008958_VGT_PRIMITIVE_TYPE                  0x008958
 #define   S_008958_PRIM_TYPE(x)                        (((x) & 0x3F) << 0)
 #define   G_008958_PRIM_TYPE(x)                        (((x) >> 0) & 0x3F)

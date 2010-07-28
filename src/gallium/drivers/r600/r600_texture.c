@@ -31,7 +31,9 @@
 #include <util/u_memory.h>
 #include "state_tracker/drm_driver.h"
 #include "r600_screen.h"
+#include "r600_context.h"
 #include "r600_texture.h"
+#include "r600d.h"
 
 extern struct u_resource_vtbl r600_texture_vtbl;
 
@@ -69,6 +71,8 @@ static void r600_setup_miptree(struct r600_screen *rscreen, struct r600_texture 
 		rtex->offset[i] = offset;
 		rtex->layer_size[i] = layer_size;
 		rtex->pitch[i] = stride / util_format_get_blocksize(ptex->format);
+		rtex->pitch[i] += R600_TEXEL_PITCH_ALIGNMENT_MASK;
+		rtex->pitch[i] &= ~R600_TEXEL_PITCH_ALIGNMENT_MASK;
 		rtex->stride[i] = stride;
 		offset += align(size, 32);
 	}

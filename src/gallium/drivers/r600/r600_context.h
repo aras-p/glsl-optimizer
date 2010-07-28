@@ -23,6 +23,7 @@
 #ifndef R600_CONTEXT_H
 #define R600_CONTEXT_H
 
+#include <stdio.h>
 #include <pipe/p_state.h>
 #include <pipe/p_context.h>
 #include <tgsi/tgsi_scan.h>
@@ -45,6 +46,11 @@ struct r600_pipe_shader {
 	struct radeon_state			*state;
 };
 
+struct r600_texture_resource {
+	struct pipe_sampler_view		view;
+	struct radeon_state			*state;
+};
+
 struct r600_context {
 	struct pipe_context		context;
 	struct r600_screen		*screen;
@@ -55,6 +61,12 @@ struct r600_context {
 	struct radeon_state		*config;
 	struct r600_pipe_shader		*ps_shader;
 	struct r600_pipe_shader		*vs_shader;
+	unsigned			nps_sampler;
+	struct radeon_state		*ps_sampler[PIPE_MAX_ATTRIBS];
+	unsigned			nps_view;
+	unsigned			nvs_view;
+	struct r600_texture_resource	*ps_view[PIPE_MAX_ATTRIBS];
+	struct r600_texture_resource	*vs_view[PIPE_MAX_ATTRIBS];
 	unsigned			flat_shade;
 	unsigned			nvertex_buffer;
 	struct r600_vertex_elements_state *vertex_elements;
