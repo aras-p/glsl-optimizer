@@ -13,6 +13,7 @@ SOURCES = \
 	  glxcurrent.c \
 	  glxext.c \
 	  glxextensions.c \
+	  indirect_glx.c \
 	  indirect.c \
 	  indirect_init.c \
 	  indirect_size.c \
@@ -37,7 +38,9 @@ SOURCES = \
 	  XF86dri.c \
 	  glxhash.c \
 	  dri2_glx.c \
-	  dri2.c
+	  dri2.c \
+	  applegl_glx.c
+
 
 GLAPI_LIB = $(TOP)/src/mapi/glapi/libglapi.a
 

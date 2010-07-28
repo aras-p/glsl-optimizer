@@ -776,10 +776,9 @@ GetGLXDRIDrawable(Display *dpy, GLXDrawable drawable);
 
 extern struct glx_screen *
 indirect_create_screen(int screen, struct glx_display * priv);
-extern int 
-indirect_bind_context(struct glx_context *gc, struct glx_context *old,
-		      GLXDrawable draw, GLXDrawable read);
-extern void
-indirect_unbind_context(struct glx_context *gc, struct glx_context *new);
+extern struct glx_context *
+indirect_create_context(struct glx_screen *psc,
+			struct glx_config *mode,
+			struct glx_context *shareList, int renderType);
 
 #endif /* !__GLX_client_h__ */

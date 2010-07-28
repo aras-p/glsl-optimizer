@@ -58,7 +58,6 @@
 
 static const char __glXGLXClientVendorName[] = "Mesa Project and SGI";
 static const char __glXGLXClientVersion[] = "1.4";
-static const struct glx_context_vtable indirect_context_vtable;
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
 
@@ -229,186 +228,6 @@ ValidateGLXFBConfig(Display * dpy, GLXFBConfig fbconfig)
    return NULL;
 }
 
-#ifdef GLX_USE_APPLEGL
-
-static const struct glx_context_vtable applegl_context_vtable;
-
-static struct glx_context *
-applegl_create_context(struct glx_screen *psc,
-		       struct glx_config *mode,
-		       struct glx_context *shareList, int renderType)
-{
-   struct glx_context *gc;
-   int errorcode;
-   bool x11error;
-
-   /* TODO: Integrate this with apple_glx_create_context and make
-    * struct apple_glx_context inherit from struct glx_context. */
-
-   gc = Xmalloc(sizeof *gc);
-   if (pcp == NULL)
-      return NULL;
-
-   memset(gc, 0, sizeof *gc);
-   if (!glx_context_init(&gc->base, &psc->base, mode)) {
-      Xfree(gc);
-      return NULL;
-   }
-
-   gc->vtable = &applegl_context_vtable;
-   gc->driContext = NULL;
-   gc->do_destroy = False;
-
-   /* TODO: darwin: Integrate with above to do indirect */
-   if(apple_glx_create_context(&gc->driContext, dpy, screen, fbconfig, 
-			       shareList ? shareList->driContext : NULL,
-			       &errorcode, &x11error)) {
-      __glXSendError(dpy, errorcode, 0, X_GLXCreateContext, x11error);
-      gc->vtable->destroy(gc);
-      return NULL;
-   }
-
-   gc->currentContextTag = -1;
-   gc->mode = fbconfig;
-   gc->isDirect = allowDirect;
-   gc->xid = 1; /* Just something not None, so we know when to destroy
-		 * it in MakeContextCurrent. */
-
-   return gc;
-}
-#endif
-
-
-/**
- * \todo It should be possible to move the allocate of \c client_state_private
- * later in the function for direct-rendering contexts.  Direct-rendering
- * contexts don't need to track client state, so they don't need that memory
- * at all.
- *
- * \todo Eliminate \c __glXInitVertexArrayState.  Replace it with a new
- * function called \c __glXAllocateClientState that allocates the memory and
- * does all the initialization (including the pixel pack / unpack).
- */
-static struct glx_context *
-indirect_create_context(struct glx_screen *psc,
-			struct glx_config *mode,
-			struct glx_context *shareList, int renderType)
-{
-   struct glx_context *gc;
-   int bufSize;
-   CARD8 opcode;
-   __GLXattribute *state;
-
-   opcode = __glXSetupForCommand(psc->dpy);
-   if (!opcode) {
-      return NULL;
-   }
-
-   /* Allocate our context record */
-   gc = Xmalloc(sizeof *gc);
-   if (!gc) {
-      /* Out of memory */
-      return NULL;
-   }
-   memset(gc, 0, sizeof *gc);
-
-   glx_context_init(gc, psc, mode);
-   gc->isDirect = GL_FALSE;
-   gc->vtable = &indirect_context_vtable;
-   state = Xmalloc(sizeof(struct __GLXattributeRec));
-   if (state == NULL) {
-      /* Out of memory */
-      Xfree(gc);
-      return NULL;
-   }
-   gc->client_state_private = state;
-   memset(gc->client_state_private, 0, sizeof(struct __GLXattributeRec));
-   state->NoDrawArraysProtocol = (getenv("LIBGL_NO_DRAWARRAYS") != NULL);
-
-   /*
-    ** Create a temporary buffer to hold GLX rendering commands.  The size
-    ** of the buffer is selected so that the maximum number of GLX rendering
-    ** commands can fit in a single X packet and still have room in the X
-    ** packet for the GLXRenderReq header.
-    */
-
-   bufSize = (XMaxRequestSize(psc->dpy) * 4) - sz_xGLXRenderReq;
-   gc->buf = (GLubyte *) Xmalloc(bufSize);
-   if (!gc->buf) {
-      Xfree(gc->client_state_private);
-      Xfree(gc);
-      return NULL;
-   }
-   gc->bufSize = bufSize;
-
-   /* Fill in the new context */
-   gc->renderMode = GL_RENDER;
-
-   state->storePack.alignment = 4;
-   state->storeUnpack.alignment = 4;
-
-   gc->attributes.stackPointer = &gc->attributes.stack[0];
-
-   /*
-    ** PERFORMANCE NOTE: A mode dependent fill image can speed things up.
-    ** Other code uses the fastImageUnpack bit, but it is never set
-    ** to GL_TRUE.
-    */
-   gc->fastImageUnpack = GL_FALSE;
-   gc->fillImage = __glFillImage;
-   gc->pc = gc->buf;
-   gc->bufEnd = gc->buf + bufSize;
-   gc->isDirect = GL_FALSE;
-   if (__glXDebug) {
-      /*
-       ** Set limit register so that there will be one command per packet
-       */
-      gc->limit = gc->buf;
-   }
-   else {
-      gc->limit = gc->buf + bufSize - __GLX_BUFFER_LIMIT_SIZE;
-   }
-   gc->majorOpcode = opcode;
-
-   /*
-    ** Constrain the maximum drawing command size allowed to be
-    ** transfered using the X_GLXRender protocol request.  First
-    ** constrain by a software limit, then constrain by the protocl
-    ** limit.
-    */
-   if (bufSize > __GLX_RENDER_CMD_SIZE_LIMIT) {
-      bufSize = __GLX_RENDER_CMD_SIZE_LIMIT;
-   }
-   if (bufSize > __GLX_MAX_RENDER_CMD_SIZE) {
-      bufSize = __GLX_MAX_RENDER_CMD_SIZE;
-   }
-   gc->maxSmallRenderCommandSize = bufSize;
-   
-
-   return gc;
-}
-
-struct glx_screen_vtable indirect_screen_vtable = {
-   indirect_create_context
-};
-
-_X_HIDDEN struct glx_screen *
-indirect_create_screen(int screen, struct glx_display * priv)
-{
-   struct glx_screen *psc;
-
-   psc = Xmalloc(sizeof *psc);
-   if (psc == NULL)
-      return NULL;
-
-   memset(psc, 0, sizeof *psc);
-   glx_screen_init(psc, screen, priv);
-   psc->vtable = &indirect_screen_vtable;
-
-   return psc;
-}
-
-
 _X_HIDDEN Bool
 glx_context_init(struct glx_context *gc,
 		 struct glx_screen *psc, struct glx_config *config)
@@ -576,28 +395,6 @@ glx_send_destroy_context(Display *dpy, XID xid)
    SyncHandle();
 }
 
-static void
-indirect_destroy_context(struct glx_context *gc)
-{
-   if (!gc->imported && gc->xid)
-      glx_send_destroy_context(gc->psc->dpy, gc->xid);
-
-   __glXFreeVertexArrayState(gc);
-
-   if (gc->vendor)
-      XFree((char *) gc->vendor);
-   if (gc->renderer)
-      XFree((char *) gc->renderer);
-   if (gc->version)
-      XFree((char *) gc->version);
-   if (gc->extensions)
-      XFree((char *) gc->extensions);
-   __glFreeAttributeState(gc);
-   XFree((char *) gc->buf);
-   Xfree((char *) gc->client_state_private);
-   XFree((char *) gc);
-}
-
 /*
 ** Destroy the named context
 */
@@ -673,25 +470,6 @@ glXQueryExtension(Display * dpy, int *errorBase, int *eventBase)
    return rv;
 }
 
-static void
-indirect_wait_gl(struct glx_context *gc)
-{
-   xGLXWaitGLReq *req;
-   Display *dpy = gc->currentDpy;
-
-   /* Flush any pending commands out */
-   __glXFlushRenderBuffer(gc, gc->pc);
-
-   /* Send the glXWaitGL request */
-   LockDisplay(dpy);
-   GetReq(GLXWaitGL, req);
-   req->reqType = gc->majorOpcode;
-   req->glxCode = X_GLXWaitGL;
-   req->contextTag = gc->currentContextTag;
-   UnlockDisplay(dpy);
-   SyncHandle();
-}
-
 /*
 ** Put a barrier in the token stream that forces the GL to finish its
 ** work before X can proceed.
@@ -703,24 +481,6 @@ glXWaitGL(void)
 
    if (gc && gc->vtable->use_x_font)
       gc->vtable->wait_gl(gc);
-}
-
-static void
-indirect_wait_x(struct glx_context *gc)
-{
-   xGLXWaitXReq *req;
-   Display *dpy = gc->currentDpy;
-
-   /* Flush any pending commands out */
-   __glXFlushRenderBuffer(gc, gc->pc);
-
-   LockDisplay(dpy);
-   GetReq(GLXWaitX, req);
-   req->reqType = gc->majorOpcode;
-   req->glxCode = X_GLXWaitX;
-   req->contextTag = gc->currentContextTag;
-   UnlockDisplay(dpy);
-   SyncHandle();
 }
 
 /*
@@ -735,61 +495,6 @@ glXWaitX(void)
    if (gc && gc->vtable->use_x_font)
       gc->vtable->wait_x(gc);
 }
-
-static void
-indirect_use_x_font(struct glx_context *gc,
-		    Font font, int first, int count, int listBase)
-{
-   xGLXUseXFontReq *req;
-   Display *dpy = gc->currentDpy;
-
-   /* Flush any pending commands out */
-   __glXFlushRenderBuffer(gc, gc->pc);
-
-   /* Send the glXUseFont request */
-   LockDisplay(dpy);
-   GetReq(GLXUseXFont, req);
-   req->reqType = gc->majorOpcode;
-   req->glxCode = X_GLXUseXFont;
-   req->contextTag = gc->currentContextTag;
-   req->font = font;
-   req->first = first;
-   req->count = count;
-   req->listBase = listBase;
-   UnlockDisplay(dpy);
-   SyncHandle();
-}
-
-#ifdef GLX_USE_APPLEGL
-
-static void
-applegl_destroy_context(struct glx_context *gc)
-{
-   apple_glx_destroy_context(&gc->driContext, gc->currentDpy);
-}
-
-static void
-applegl_wait_gl(struct glx_context *gc)
-{
-   glFinish();
-}
-
-static void
-applegl_wait_x(struct glx_context *gc)
-{
-   apple_glx_waitx(gc->dpy, gc->driContext);
-}
-
-static const struct glx_context_vtable applegl_context_vtable = {
-   applegl_destroy_context,
-   applegl_wait_gl,
-   applegl_wait_x,
-   DRI_glXUseXFont,
-   NULL, /* bind_tex_image, */
-   NULL, /* release_tex_image, */
-};
-
-#endif
 
 _X_EXPORT void
 glXUseXFont(Font font, int first, int count, int listBase)
@@ -2629,104 +2334,6 @@ __glXCopySubBufferMESA(Display * dpy, GLXDrawable drawable,
    UnlockDisplay(dpy);
    SyncHandle();
 }
-
-
-/**
- * GLX_EXT_texture_from_pixmap
- */
-static void
-indirect_bind_tex_image(Display * dpy,
-			GLXDrawable drawable,
-			int buffer, const int *attrib_list)
-{
-   xGLXVendorPrivateReq *req;
-   struct glx_context *gc = __glXGetCurrentContext();
-   CARD32 *drawable_ptr;
-   INT32 *buffer_ptr;
-   CARD32 *num_attrib_ptr;
-   CARD32 *attrib_ptr;
-   CARD8 opcode;
-   unsigned int i;
-
-   i = 0;
-   if (attrib_list) {
-      while (attrib_list[i * 2] != None)
-         i++;
-   }
-
-   opcode = __glXSetupForCommand(dpy);
-   if (!opcode)
-      return;
-
-   LockDisplay(dpy);
-   GetReqExtra(GLXVendorPrivate, 12 + 8 * i, req);
-   req->reqType = opcode;
-   req->glxCode = X_GLXVendorPrivate;
-   req->vendorCode = X_GLXvop_BindTexImageEXT;
-   req->contextTag = gc->currentContextTag;
-
-   drawable_ptr = (CARD32 *) (req + 1);
-   buffer_ptr = (INT32 *) (drawable_ptr + 1);
-   num_attrib_ptr = (CARD32 *) (buffer_ptr + 1);
-   attrib_ptr = (CARD32 *) (num_attrib_ptr + 1);
-
-   *drawable_ptr = drawable;
-   *buffer_ptr = buffer;
-   *num_attrib_ptr = (CARD32) i;
-
-   i = 0;
-   if (attrib_list) {
-      while (attrib_list[i * 2] != None) {
-         *attrib_ptr++ = (CARD32) attrib_list[i * 2 + 0];
-         *attrib_ptr++ = (CARD32) attrib_list[i * 2 + 1];
-         i++;
-      }
-   }
-
-   UnlockDisplay(dpy);
-   SyncHandle();
-}
-
-static void
-indirect_release_tex_image(Display * dpy, GLXDrawable drawable, int buffer)
-{
-   xGLXVendorPrivateReq *req;
-   struct glx_context *gc = __glXGetCurrentContext();
-   CARD32 *drawable_ptr;
-   INT32 *buffer_ptr;
-   CARD8 opcode;
-
-   opcode = __glXSetupForCommand(dpy);
-   if (!opcode)
-      return;
-
-   LockDisplay(dpy);
-   GetReqExtra(GLXVendorPrivate, sizeof(CARD32) + sizeof(INT32), req);
-   req->reqType = opcode;
-   req->glxCode = X_GLXVendorPrivate;
-   req->vendorCode = X_GLXvop_ReleaseTexImageEXT;
-   req->contextTag = gc->currentContextTag;
-
-   drawable_ptr = (CARD32 *) (req + 1);
-   buffer_ptr = (INT32 *) (drawable_ptr + 1);
-
-   *drawable_ptr = drawable;
-   *buffer_ptr = buffer;
-
-   UnlockDisplay(dpy);
-   SyncHandle();
-}
-
-static const struct glx_context_vtable indirect_context_vtable = {
-   indirect_destroy_context,
-   indirect_bind_context,
-   indirect_unbind_context,
-   indirect_wait_gl,
-   indirect_wait_x,
-   indirect_use_x_font,
-   indirect_bind_tex_image,
-   indirect_release_tex_image,
-};
 
 /*@{*/
 static void

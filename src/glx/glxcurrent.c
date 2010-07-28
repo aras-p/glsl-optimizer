@@ -45,7 +45,6 @@
 #include "apple_glx_context.h"
 #else
 #include "glapi.h"
-#include "indirect_init.h"
 #endif
 
 /*
@@ -68,14 +67,6 @@ static struct glx_context dummyContext = {
    &dummyBuffer[__GLX_BUFFER_LIMIT_SIZE],
    sizeof(dummyBuffer),
 };
-
-
-#ifndef GLX_USE_APPLEGL
-/*
-** All indirect rendering contexts will share the same indirect dispatch table.
-*/
-static struct _glapi_table *IndirectAPI = NULL;
-#endif
 
 /*
  * Current context management and locking
@@ -176,9 +167,6 @@ __glXSetCurrentContextNull(void)
 #endif
 }
 
-
-/************************************************************************/
-
 _X_EXPORT GLXContext
 glXGetCurrentContext(void)
 {
@@ -199,90 +187,6 @@ glXGetCurrentDrawable(void)
    return gc->currentDrawable;
 }
 
-
-#ifndef GLX_USE_APPLEGL
-/************************************************************************/
-
-/**
- * Sends a GLX protocol message to the specified display to make the context
- * and the drawables current.
- *
- * \param dpy     Display to send the message to.
- * \param opcode  Major opcode value for the display.
- * \param gc_id   Context tag for the context to be made current.
- * \param draw    Drawable ID for the "draw" drawable.
- * \param read    Drawable ID for the "read" drawable.
- * \param reply   Space to store the X-server's reply.
- *
- * \warning
- * This function assumes that \c dpy is locked with \c LockDisplay on entry.
- */
-static Bool
-SendMakeCurrentRequest(Display * dpy, CARD8 opcode,
-                       GLXContextID gc_id, GLXContextTag gc_tag,
-                       GLXDrawable draw, GLXDrawable read,
-                       xGLXMakeCurrentReply * reply)
-{
-   Bool ret;
-
-
-   LockDisplay(dpy);
-
-   if (draw == read) {
-      xGLXMakeCurrentReq *req;
-
-      GetReq(GLXMakeCurrent, req);
-      req->reqType = opcode;
-      req->glxCode = X_GLXMakeCurrent;
-      req->drawable = draw;
-      req->context = gc_id;
-      req->oldContextTag = gc_tag;
-   }
-   else {
-      struct glx_display *priv = __glXInitialize(dpy);
-
-      /* If the server can support the GLX 1.3 version, we should
-       * perfer that.  Not only that, some servers support GLX 1.3 but
-       * not the SGI extension.
-       */
-
-      if ((priv->majorVersion > 1) || (priv->minorVersion >= 3)) {
-         xGLXMakeContextCurrentReq *req;
-
-         GetReq(GLXMakeContextCurrent, req);
-         req->reqType = opcode;
-         req->glxCode = X_GLXMakeContextCurrent;
-         req->drawable = draw;
-         req->readdrawable = read;
-         req->context = gc_id;
-         req->oldContextTag = gc_tag;
-      }
-      else {
-         xGLXVendorPrivateWithReplyReq *vpreq;
-         xGLXMakeCurrentReadSGIReq *req;
-
-         GetReqExtra(GLXVendorPrivateWithReply,
-                     sz_xGLXMakeCurrentReadSGIReq -
-                     sz_xGLXVendorPrivateWithReplyReq, vpreq);
-         req = (xGLXMakeCurrentReadSGIReq *) vpreq;
-         req->reqType = opcode;
-         req->glxCode = X_GLXVendorPrivateWithReply;
-         req->vendorCode = X_GLXvop_MakeCurrentReadSGI;
-         req->drawable = draw;
-         req->readable = read;
-         req->context = gc_id;
-         req->oldContextTag = gc_tag;
-      }
-   }
-
-   ret = _XReply(dpy, (xReply *) reply, 0, False);
-
-   UnlockDisplay(dpy);
-   SyncHandle();
-
-   return ret;
-}
-
 static void
 __glXGenerateError(Display * dpy, struct glx_context *gc, XID resource,
                    BYTE errorCode, CARD16 minorCode)
@@ -296,57 +200,6 @@ __glXGenerateError(Display * dpy, struct glx_context *gc, XID resource,
    error.majorCode = gc->majorOpcode;
    error.minorCode = minorCode;
    _XError(dpy, &error);
-}
-
-#endif /* GLX_USE_APPLEGL */
-
-_X_HIDDEN int
-indirect_bind_context(struct glx_context *gc, struct glx_context *old,
-		      GLXDrawable draw, GLXDrawable read)
-{
-   xGLXMakeCurrentReply reply;
-   GLXContextTag tag;
-   __GLXattribute *state;
-   Display *dpy = gc->psc->dpy;
-   int opcode = __glXSetupForCommand(dpy);
-
-   if (old && !old->isDirect && old->psc->dpy == dpy)
-      tag = old->currentContextTag;
-   else
-      tag = None;
-
-   SendMakeCurrentRequest(dpy, opcode, gc->xid, tag, draw, read, &reply);
-
-   if (!IndirectAPI)
-      IndirectAPI = __glXNewIndirectAPI();
-   _glapi_set_dispatch(IndirectAPI);
-
-   gc->currentContextTag = reply.contextTag;
-   state = gc->client_state_private;
-   if (state->array_state == NULL) {
-      glGetString(GL_EXTENSIONS);
-      glGetString(GL_VERSION);
-      __glXInitVertexArrayState(gc);
-   }
-
-   return Success;
-}
-
-_X_HIDDEN void
-indirect_unbind_context(struct glx_context *gc, struct glx_context *new)
-{
-   Display *dpy = gc->psc->dpy;
-   int opcode = __glXSetupForCommand(dpy);
-   xGLXMakeCurrentReply reply;
-
-   /* We are either switching to no context, away from a indirect
-    * context to a direct context or from one dpy to another and have
-    * to send a request to the dpy to unbind the previous context.
-    */
-   if (!new || new->isDirect || new->psc->dpy != dpy)
-      SendMakeCurrentRequest(dpy, opcode, None,
-			     gc->currentContextTag, None, None, &reply);
-   gc->currentContextTag = 0;
 }
 
 /**
