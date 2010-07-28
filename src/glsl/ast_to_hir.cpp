@@ -50,6 +50,7 @@
  */
 
 #include "main/imports.h"
+#include "main/extensions.h"
 #include "glsl_symbol_table.h"
 #include "glsl_parser_extras.h"
 #include "ast.h"
@@ -1542,8 +1543,8 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
    else
       var->interpolation = ir_var_smooth;
 
-   /* FINISHME: Apply the fragment coord convetion layout qualifiers.
-    */
+   var->pixel_center_integer = qual->pixel_center_integer;
+   var->origin_upper_left = qual->origin_upper_left;
    if ((qual->origin_upper_left || qual->pixel_center_integer)
        && (strcmp(var->name, "gl_FragCoord") != 0)) {
       const char *const qual_string = (qual->origin_upper_left)
@@ -1932,6 +1933,16 @@ ast_declarator_list::hir(exec_list *instructions,
 	    earlier->type = var->type;
 	    delete var;
 	    var = NULL;
+	 } else if (state->extensions->ARB_fragment_coord_conventions &&
+		    (earlier != NULL) &&
+		    (strcmp(var->name, "gl_FragCoord") == 0) &&
+		    earlier->type == var->type &&
+		    earlier->mode == var->mode) {
+	    /* Allow redeclaration of gl_FragCoord for ARB_fcc layout
+	     * qualifiers.
+	     */
+	    earlier->origin_upper_left = var->origin_upper_left;
+	    earlier->pixel_center_integer = var->pixel_center_integer;
 	 } else {
 	    YYLTYPE loc = this->get_location();
 

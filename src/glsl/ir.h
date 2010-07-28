@@ -238,6 +238,10 @@ public:
     */
    unsigned array_lvalue:1;
 
+   /* ARB_fragment_coord_conventions */
+   unsigned origin_upper_left:1;
+   unsigned pixel_center_integer:1;
+
    /**
     * Storage location of the base of this variable
     *

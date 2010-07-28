@@ -52,6 +52,8 @@ ir_variable::clone(struct hash_table *ht) const
    var->array_lvalue = this->array_lvalue;
    var->location = this->location;
    var->warn_extension = this->warn_extension;
+   var->origin_upper_left = this->origin_upper_left;
+   var->pixel_center_integer = this->pixel_center_integer;
 
    if (this->constant_value)
       var->constant_value = this->constant_value->clone(ht);
