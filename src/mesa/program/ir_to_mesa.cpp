@@ -2320,7 +2320,7 @@ get_mesa_program(GLcontext *ctx, struct gl_shader_program *shader_program,
 
    validate_ir_tree(shader->ir);
 
-   prog = ctx->Driver.NewProgram(ctx, target, 1);
+   prog = ctx->Driver.NewProgram(ctx, target, shader_program->Name);
    if (!prog)
       return NULL;
    prog->Parameters = _mesa_new_parameter_list();
@@ -2536,6 +2536,7 @@ _mesa_glsl_link_shader(GLcontext *ctx, struct gl_shader_program *prog)
    if (prog->LinkStatus) {
       for (i = 0; i < prog->_NumLinkedShaders; i++) {
 	 struct gl_program *linked_prog;
+	 bool ok = true;
 
 	 linked_prog = get_mesa_program(ctx, prog,
 					prog->_LinkedShaders[i]);
@@ -2547,15 +2548,18 @@ _mesa_glsl_link_shader(GLcontext *ctx, struct gl_shader_program *prog)
 	 case GL_VERTEX_SHADER:
 	    _mesa_reference_vertprog(ctx, &prog->VertexProgram,
 				     (struct gl_vertex_program *)linked_prog);
-	    ctx->Driver.ProgramStringNotify(ctx, GL_VERTEX_PROGRAM_ARB,
-					    linked_prog);
+	    ok = ctx->Driver.ProgramStringNotify(ctx, GL_VERTEX_PROGRAM_ARB,
+						 linked_prog);
 	    break;
 	 case GL_FRAGMENT_SHADER:
 	    _mesa_reference_fragprog(ctx, &prog->FragmentProgram,
 				     (struct gl_fragment_program *)linked_prog);
-	    ctx->Driver.ProgramStringNotify(ctx, GL_FRAGMENT_PROGRAM_ARB,
-					    linked_prog);
+	    ok = ctx->Driver.ProgramStringNotify(ctx, GL_FRAGMENT_PROGRAM_ARB,
+						 linked_prog);
 	    break;
+	 }
+	 if (!ok) {
+	    prog->LinkStatus = GL_FALSE;
 	 }
       }
    }
