@@ -169,7 +169,10 @@ static int r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_context_sta
 	for (i = 0; i < rshader->ninput; i++) {
 		tmp = S_028644_SEMANTIC(rshader->input[i].sid);
 		tmp |= S_028644_SEL_CENTROID(1);
-		tmp |= S_028644_FLAT_SHADE(rshader->flat_shade);
+		if (rshader->input[i].name == TGSI_SEMANTIC_COLOR ||
+			rshader->input[i].name == TGSI_SEMANTIC_BCOLOR) {
+			tmp |= S_028644_FLAT_SHADE(rshader->flat_shade);
+		}
 		state->states[R600_PS_SHADER__SPI_PS_INPUT_CNTL_0 + i] = tmp;
 	}
 	state->states[R600_PS_SHADER__SPI_PS_IN_CONTROL_0] = S_0286CC_NUM_INTERP(rshader->ninput) |
@@ -287,6 +290,7 @@ static int tgsi_declaration(struct r600_shader_ctx *ctx)
 		i = ctx->shader->ninput++;
 		ctx->shader->input[i].name = d->Semantic.Name;
 		ctx->shader->input[i].sid = d->Semantic.Index;
+		ctx->shader->input[i].interpolate = d->Declaration.Interpolate;
 		ctx->shader->input[i].gpr = ctx->file_offset[TGSI_FILE_INPUT] + i;
 		if (ctx->type == TGSI_PROCESSOR_VERTEX) {
 			/* turn input into fetch */
@@ -313,6 +317,7 @@ static int tgsi_declaration(struct r600_shader_ctx *ctx)
 		ctx->shader->output[i].name = d->Semantic.Name;
 		ctx->shader->output[i].sid = d->Semantic.Index;
 		ctx->shader->output[i].gpr = ctx->file_offset[TGSI_FILE_OUTPUT] + i;
+		ctx->shader->output[i].interpolate = d->Declaration.Interpolate;
 		break;
 	case TGSI_FILE_CONSTANT:
 	case TGSI_FILE_TEMPORARY:

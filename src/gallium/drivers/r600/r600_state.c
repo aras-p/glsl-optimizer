@@ -692,8 +692,6 @@ static struct radeon_state *r600_rasterizer(struct r600_context *rctx)
 	struct radeon_state *rstate;
 
 	rctx->flat_shade = state->flatshade;
-	rctx->flat_shade = 0;
-R600_ERR("flat shade with texture broke tex coord interp\n");
 	rstate = radeon_state(rscreen->rw, R600_RASTERIZER_TYPE, R600_RASTERIZER);
 	if (rstate == NULL)
 		return NULL;
