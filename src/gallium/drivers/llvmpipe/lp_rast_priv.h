@@ -40,6 +40,34 @@
 #include "lp_limits.h"
 
 
+/* If we crash in a jitted function, we can examine jit_line and jit_state
+ * to get some info.  This is not thread-safe, however.
+ */
+#ifdef DEBUG
+
+extern int jit_line;
+extern const struct lp_rast_state *jit_state;
+
+#define BEGIN_JIT_CALL(state) \
+   do { \
+      jit_line = __LINE__; \
+      jit_state = state; \
+   } while (0)
+
+#define END_JIT_CALL() \
+   do { \
+      jit_line = 0; \
+      jit_state = NULL; \
+   } while (0)
+
+#else
+
+#define BEGIN_JIT_CALL(X)
+#define END_JIT_CALL
+
+#endif
+
+
 struct lp_rasterizer;
 
 
@@ -249,6 +277,7 @@ lp_rast_shade_quads_all( struct lp_rasterizer_task *task,
    depth = lp_rast_get_depth_block_pointer(task, x, y);
 
    /* run shader on 4x4 block */
+   BEGIN_JIT_CALL(state);
    variant->jit_function[RAST_WHOLE]( &state->jit_context,
                                       x, y,
                                       inputs->facing,
@@ -259,6 +288,7 @@ lp_rast_shade_quads_all( struct lp_rasterizer_task *task,
                                       depth,
                                       0xffff,
                                       &task->vis_counter );
+   END_JIT_CALL();
 }
 
 
