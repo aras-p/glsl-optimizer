@@ -294,6 +294,7 @@ int r600_bc_alu_build(struct r600_bc *bc, struct r600_bc_alu *alu, unsigned id)
 					S_SQ_ALU_WORD0_LAST(alu->last);
 		bc->bytecode[id++] = S_SQ_ALU_WORD1_DST_GPR(alu->dst.sel) |
 					S_SQ_ALU_WORD1_DST_CHAN(alu->dst.chan) |
+					S_SQ_ALU_WORD1_CLAMP(alu->dst.clamp) |
 					S_SQ_ALU_WORD1_OP3_SRC2_SEL(alu->src[2].sel) |
 					S_SQ_ALU_WORD1_OP3_SRC2_CHAN(alu->src[2].chan) |
 					S_SQ_ALU_WORD1_OP3_SRC2_NEG(alu->src[2].neg) |
@@ -309,6 +310,7 @@ int r600_bc_alu_build(struct r600_bc *bc, struct r600_bc_alu *alu, unsigned id)
 					S_SQ_ALU_WORD0_LAST(alu->last);
 		bc->bytecode[id++] = S_SQ_ALU_WORD1_DST_GPR(alu->dst.sel) |
 					S_SQ_ALU_WORD1_DST_CHAN(alu->dst.chan) |
+					S_SQ_ALU_WORD1_CLAMP(alu->dst.clamp) |
 					S_SQ_ALU_WORD1_OP2_SRC0_ABS(alu->src[0].abs) |
 					S_SQ_ALU_WORD1_OP2_SRC1_ABS(alu->src[1].abs) |
 					S_SQ_ALU_WORD1_OP2_WRITE_MASK(alu->dst.write) |

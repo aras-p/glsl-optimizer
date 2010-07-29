@@ -59,24 +59,22 @@ static unsigned long r600_texture_get_offset(struct r600_resource_texture *rtex,
 static void r600_setup_miptree(struct r600_screen *rscreen, struct r600_resource_texture *rtex)
 {
 	struct pipe_resource *ptex = &rtex->resource.base.b;
-	unsigned long w, h, stride, size, layer_size, i, offset;
+	unsigned long w, h, pitch, size, layer_size, i, offset;
 
+	rtex->bpt = util_format_get_blocksize(ptex->format);
 	for (i = 0, offset = 0; i <= ptex->last_level; i++) {
 		w = u_minify(ptex->width0, i);
 		h = u_minify(ptex->height0, i);
-		stride = align(util_format_get_stride(ptex->format, w), 32);
-		layer_size = stride * h;
+		pitch = util_format_get_stride(ptex->format, align(w, 64));
+		layer_size = pitch * h;
 		if (ptex->target == PIPE_TEXTURE_CUBE)
 			size = layer_size * 6;
 		else
 			size = layer_size * u_minify(ptex->depth0, i);
 		rtex->offset[i] = offset;
 		rtex->layer_size[i] = layer_size;
-		rtex->pitch[i] = stride / util_format_get_blocksize(ptex->format);
-		rtex->pitch[i] += R600_TEXEL_PITCH_ALIGNMENT_MASK;
-		rtex->pitch[i] &= ~R600_TEXEL_PITCH_ALIGNMENT_MASK;
-		rtex->stride[i] = stride;
-		offset += align(size, 32);
+		rtex->pitch[i] = pitch;
+		offset += size;
 	}
 	rtex->size = offset;
 }
@@ -183,11 +181,11 @@ struct pipe_resource *r600_texture_from_handle(struct pipe_screen *screen,
 	pipe_reference_init(&resource->base.b.reference, 1);
 	resource->base.b.screen = screen;
 	resource->bo = bo;
-	rtex->stride_override = whandle->stride;
-	rtex->pitch[0] = whandle->stride / util_format_get_blocksize(templ->format);
-	rtex->stride[0] = whandle->stride;
+	rtex->pitch_override = whandle->stride;
+	rtex->bpt = util_format_get_blocksize(templ->format);
+	rtex->pitch[0] = whandle->stride;
 	rtex->offset[0] = 0;
-	rtex->size = align(rtex->stride[0] * templ->height0, 32);
+	rtex->size = align(rtex->pitch[0] * templ->height0, 64);
 
 	return &resource->base.b;
 }
@@ -216,7 +214,7 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 	trans->transfer.sr = sr;
 	trans->transfer.usage = usage;
 	trans->transfer.box = *box;
-	trans->transfer.stride = rtex->stride[sr.level];
+	trans->transfer.stride = rtex->pitch[sr.level];
 	trans->offset = r600_texture_get_offset(rtex, sr.level, box->z, sr.face);
 	return &trans->transfer;
 }

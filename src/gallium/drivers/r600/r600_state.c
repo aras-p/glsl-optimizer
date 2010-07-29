@@ -24,6 +24,7 @@
  *      Jerome Glisse
  */
 #include <stdio.h>
+#include <errno.h>
 #include "util/u_inlines.h"
 #include "util/u_format.h"
 #include "util/u_memory.h"
@@ -649,8 +650,8 @@ static struct radeon_state *r600_cb0(struct r600_context *rctx)
 	rstate->placement[2] = RADEON_GEM_DOMAIN_GTT;
 	rstate->placement[4] = RADEON_GEM_DOMAIN_GTT;
 	rstate->nbo = 3;
-	pitch = rtex->pitch[level] / 8 - 1;
-	slice = rtex->pitch[level] * state->cbufs[0]->height / 64 - 1;
+	pitch = (rtex->pitch[level] / rtex->bpt) / 8 - 1;
+	slice = (rtex->pitch[level] / rtex->bpt) * state->cbufs[0]->height / 64 - 1;
 	rstate->states[R600_CB0__CB_COLOR0_BASE] = 0x00000000;
 	rstate->states[R600_CB0__CB_COLOR0_INFO] = 0x08110068;
 	rstate->states[R600_CB0__CB_COLOR0_SIZE] = S_028060_PITCH_TILE_MAX(pitch) |
@@ -666,6 +667,22 @@ static struct radeon_state *r600_cb0(struct r600_context *rctx)
 	return rstate;
 }
 
+int r600_db_format(unsigned pformat, unsigned *format)
+{
+	switch (pformat) {
+	case PIPE_FORMAT_Z24X8_UNORM:
+		*format = V_028010_DEPTH_X8_24;
+		return 0;
+	case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
+		*format = V_028010_DEPTH_8_24;
+		return 0;
+	default:
+		*format = V_028010_DEPTH_INVALID;
+		R600_ERR("unsupported %d\n", pformat);
+		return -EINVAL;
+	}
+}
+
 static struct radeon_state *r600_db(struct r600_context *rctx)
 {
 	struct r600_screen *rscreen = rctx->screen;
@@ -674,7 +691,7 @@ static struct radeon_state *r600_db(struct r600_context *rctx)
 	struct radeon_state *rstate;
 	const struct pipe_framebuffer_state *state = &rctx->framebuffer->state.framebuffer;
 	unsigned level = state->cbufs[0]->level;
-	unsigned pitch, slice;
+	unsigned pitch, slice, format;
 
 	if (state->zsbuf == NULL)
 		return NULL;
@@ -689,10 +706,15 @@ static struct radeon_state *r600_db(struct r600_context *rctx)
 	rstate->nbo = 1;
 	rstate->placement[0] = RADEON_GEM_DOMAIN_VRAM;
 	level = state->zsbuf->level;
-	pitch = rtex->pitch[level] / 8 - 1;
-	slice = rtex->pitch[level] * state->zsbuf->height / 64 - 1;
+	pitch = (rtex->pitch[level] / rtex->bpt) / 8 - 1;
+	slice = (rtex->pitch[level] / rtex->bpt) * state->zsbuf->height / 64 - 1;
+	if (r600_db_format(state->zsbuf->texture->format, &format)) {
+		radeon_state_decref(rstate);
+		return NULL;
+	}
 	rstate->states[R600_DB__DB_DEPTH_BASE] = 0x00000000;
-	rstate->states[R600_DB__DB_DEPTH_INFO] = 0x00010006;
+	rstate->states[R600_DB__DB_DEPTH_INFO] = 0x00010000 |
+					S_028010_FORMAT(format);
 	rstate->states[R600_DB__DB_DEPTH_VIEW] = 0x00000000;
 	rstate->states[R600_DB__DB_PREFETCH_LIMIT] = (state->zsbuf->height / 8) -1;
 	rstate->states[R600_DB__DB_DEPTH_SIZE] = S_028000_PITCH_TILE_MAX(pitch) |
@@ -716,7 +738,10 @@ static struct radeon_state *r600_rasterizer(struct r600_context *rctx)
 		return NULL;
 	rstate->states[R600_RASTERIZER__SPI_INTERP_CONTROL_0] = 0x00000001;
 	rstate->states[R600_RASTERIZER__PA_CL_CLIP_CNTL] = 0x00000000;
-	rstate->states[R600_RASTERIZER__PA_SU_SC_MODE_CNTL] = 0x00080000;
+	rstate->states[R600_RASTERIZER__PA_SU_SC_MODE_CNTL] = 0x00080000 |
+			S_028814_CULL_FRONT((state->cull_face & PIPE_FACE_FRONT) ? 1 : 0) |
+			S_028814_CULL_BACK((state->cull_face & PIPE_FACE_BACK) ? 1 : 0) |
+			S_028814_FACE(!state->front_ccw);
 	rstate->states[R600_RASTERIZER__PA_CL_VS_OUT_CNTL] = 0x00000000;
 	rstate->states[R600_RASTERIZER__PA_CL_NANINF_CNTL] = 0x00000000;
 	rstate->states[R600_RASTERIZER__PA_SU_POINT_SIZE] = 0x00080008;
@@ -910,6 +935,11 @@ static inline unsigned r600_tex_compare(unsigned compare)
 	}
 }
 
+static INLINE u32 S_FIXED(float value, u32 frac_bits)
+{
+	return value * (1 << frac_bits);
+}
+
 static struct radeon_state *r600_sampler(struct r600_context *rctx,
 				const struct pipe_sampler_state *state,
 				unsigned id)
@@ -930,9 +960,9 @@ static struct radeon_state *r600_sampler(struct r600_context *rctx,
 			S_03C000_DEPTH_COMPARE_FUNCTION(r600_tex_compare(state->compare_func));
 	/* FIXME LOD it depends on texture base level ... */
 	rstate->states[R600_PS_SAMPLER__SQ_TEX_SAMPLER_WORD1_0] =
-			S_03C004_MIN_LOD(0) |
-			S_03C004_MAX_LOD(0) |
-			S_03C004_LOD_BIAS(0);
+			S_03C004_MIN_LOD(S_FIXED(CLAMP(state->min_lod, 0, 15), 6)) |
+			S_03C004_MAX_LOD(S_FIXED(CLAMP(state->max_lod, 0, 15), 6)) |
+			S_03C004_LOD_BIAS(S_FIXED(CLAMP(state->lod_bias, -16, 16), 6));
 	rstate->states[R600_PS_SAMPLER__SQ_TEX_SAMPLER_WORD2_0] = S_03C008_TYPE(1);
 	if (radeon_state_pm4(rstate)) {
 		radeon_state_decref(rstate);
@@ -1020,7 +1050,7 @@ static struct radeon_state *r600_resource(struct r600_context *rctx,
 	/* FIXME properly handle first level != 0 */
 	rstate->states[R600_PS_RESOURCE__RESOURCE0_WORD0] =
 			S_038000_DIM(r600_tex_dim(view->texture->target)) |
-			S_038000_PITCH((tmp->pitch[0] / 8) - 1) |
+			S_038000_PITCH(((tmp->pitch[0] / tmp->bpt) / 8) - 1) |
 			S_038000_TEX_WIDTH(view->texture->width0 - 1);
 	rstate->states[R600_PS_RESOURCE__RESOURCE0_WORD1] =
 			S_038004_TEX_HEIGHT(view->texture->height0 - 1) |
@@ -1036,9 +1066,9 @@ static struct radeon_state *r600_resource(struct r600_context *rctx,
 			S_038010_NUM_FORMAT_ALL(V_038010_SQ_NUM_FORMAT_NORM) |
 			S_038010_SRF_MODE_ALL(V_038010_SFR_MODE_NO_ZERO) |
 			S_038010_REQUEST_SIZE(1) |
-			S_038010_DST_SEL_X(r600_tex_swizzle(view->swizzle_r)) |
+			S_038010_DST_SEL_X(r600_tex_swizzle(view->swizzle_b)) |
 			S_038010_DST_SEL_Y(r600_tex_swizzle(view->swizzle_g)) |
-			S_038010_DST_SEL_Z(r600_tex_swizzle(view->swizzle_b)) |
+			S_038010_DST_SEL_Z(r600_tex_swizzle(view->swizzle_r)) |
 			S_038010_DST_SEL_W(r600_tex_swizzle(view->swizzle_a)) |
 			S_038010_BASE_LEVEL(view->first_level);
 	rstate->states[R600_PS_RESOURCE__RESOURCE0_WORD5] =

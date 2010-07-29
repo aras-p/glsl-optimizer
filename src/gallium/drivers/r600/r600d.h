@@ -316,6 +316,46 @@
 #define   S_028010_ZRANGE_PRECISION(x)                 (((x) & 0x1) << 31)
 #define   G_028010_ZRANGE_PRECISION(x)                 (((x) >> 31) & 0x1)
 #define   C_028010_ZRANGE_PRECISION                    0x7FFFFFFF
+#define R_028814_PA_SU_SC_MODE_CNTL                  0x028814
+#define   S_028814_CULL_FRONT(x)                       (((x) & 0x1) << 0)
+#define   G_028814_CULL_FRONT(x)                       (((x) >> 0) & 0x1)
+#define   C_028814_CULL_FRONT                          0xFFFFFFFE
+#define   S_028814_CULL_BACK(x)                        (((x) & 0x1) << 1)
+#define   G_028814_CULL_BACK(x)                        (((x) >> 1) & 0x1)
+#define   C_028814_CULL_BACK                           0xFFFFFFFD
+#define   S_028814_FACE(x)                             (((x) & 0x1) << 2)
+#define   G_028814_FACE(x)                             (((x) >> 2) & 0x1)
+#define   C_028814_FACE                                0xFFFFFFFB
+#define   S_028814_POLY_MODE(x)                        (((x) & 0x3) << 3)
+#define   G_028814_POLY_MODE(x)                        (((x) >> 3) & 0x3)
+#define   C_028814_POLY_MODE                           0xFFFFFFE7
+#define   S_028814_POLYMODE_FRONT_PTYPE(x)             (((x) & 0x7) << 5)
+#define   G_028814_POLYMODE_FRONT_PTYPE(x)             (((x) >> 5) & 0x7)
+#define   C_028814_POLYMODE_FRONT_PTYPE                0xFFFFFF1F
+#define   S_028814_POLYMODE_BACK_PTYPE(x)              (((x) & 0x7) << 8)
+#define   G_028814_POLYMODE_BACK_PTYPE(x)              (((x) >> 8) & 0x7)
+#define   C_028814_POLYMODE_BACK_PTYPE                 0xFFFFF8FF
+#define   S_028814_POLY_OFFSET_FRONT_ENABLE(x)         (((x) & 0x1) << 11)
+#define   G_028814_POLY_OFFSET_FRONT_ENABLE(x)         (((x) >> 11) & 0x1)
+#define   C_028814_POLY_OFFSET_FRONT_ENABLE            0xFFFFF7FF
+#define   S_028814_POLY_OFFSET_BACK_ENABLE(x)          (((x) & 0x1) << 12)
+#define   G_028814_POLY_OFFSET_BACK_ENABLE(x)          (((x) >> 12) & 0x1)
+#define   C_028814_POLY_OFFSET_BACK_ENABLE             0xFFFFEFFF
+#define   S_028814_POLY_OFFSET_PARA_ENABLE(x)          (((x) & 0x1) << 13)
+#define   G_028814_POLY_OFFSET_PARA_ENABLE(x)          (((x) >> 13) & 0x1)
+#define   C_028814_POLY_OFFSET_PARA_ENABLE             0xFFFFDFFF
+#define   S_028814_VTX_WINDOW_OFFSET_ENABLE(x)         (((x) & 0x1) << 16)
+#define   G_028814_VTX_WINDOW_OFFSET_ENABLE(x)         (((x) >> 16) & 0x1)
+#define   C_028814_VTX_WINDOW_OFFSET_ENABLE            0xFFFEFFFF
+#define   S_028814_PROVOKING_VTX_LAST(x)               (((x) & 0x1) << 19)
+#define   G_028814_PROVOKING_VTX_LAST(x)               (((x) >> 19) & 0x1)
+#define   C_028814_PROVOKING_VTX_LAST                  0xFFF7FFFF
+#define   S_028814_PERSP_CORR_DIS(x)                   (((x) & 0x1) << 20)
+#define   G_028814_PERSP_CORR_DIS(x)                   (((x) >> 20) & 0x1)
+#define   C_028814_PERSP_CORR_DIS                      0xFFEFFFFF
+#define   S_028814_MULTI_PRIM_IB_ENA(x)                (((x) & 0x1) << 21)
+#define   G_028814_MULTI_PRIM_IB_ENA(x)                (((x) >> 21) & 0x1)
+#define   C_028814_MULTI_PRIM_IB_ENA                   0xFFDFFFFF
 #define R_028000_DB_DEPTH_SIZE                       0x028000
 #define   S_028000_PITCH_TILE_MAX(x)                   (((x) & 0x3FF) << 0)
 #define   G_028000_PITCH_TILE_MAX(x)                   (((x) >> 0) & 0x3FF)

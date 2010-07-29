@@ -249,10 +249,6 @@ static int tgsi_is_supported(struct r600_shader_ctx *ctx)
 		R600_ERR("too many dst (%d)\n", i->Instruction.NumDstRegs);
 		return -EINVAL;
 	}
-	if (i->Instruction.Saturate) {
-		R600_ERR("staturate unsupported\n");
-		return -EINVAL;
-	}
 	if (i->Instruction.Predicate) {
 		R600_ERR("predicate unsupported\n");
 		return -EINVAL;
@@ -507,10 +503,15 @@ static int tgsi_dst(struct r600_shader_ctx *ctx,
 			unsigned swizzle,
 			struct r600_bc_alu_dst *r600_dst)
 {
+	struct tgsi_full_instruction *inst = &ctx->parse.FullToken.FullInstruction;
+
 	r600_dst->sel = tgsi_dst->Register.Index;
 	r600_dst->sel += ctx->file_offset[tgsi_dst->Register.File];
 	r600_dst->chan = swizzle;
 	r600_dst->write = 1;
+	if (inst->Instruction.Saturate) {
+		r600_dst->clamp = 1;
+	}
 	return 0;
 }
 
@@ -539,6 +540,9 @@ static int tgsi_op2(struct r600_shader_ctx *ctx)
 		switch (ctx->inst_info->tgsi_opcode) {
 		case TGSI_OPCODE_SUB:
 			alu.src[1].neg = 1;
+			break;
+		case TGSI_OPCODE_ABS:
+			alu.src[0].abs = 1;
 			break;
 		default:
 			break;
@@ -1040,13 +1044,13 @@ static struct r600_shader_tgsi_instruction r600_shader_tgsi_instruction[] = {
 	{TGSI_OPCODE_CLAMP,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_FLR,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_ROUND,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
-	{TGSI_OPCODE_EX2,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
+	{TGSI_OPCODE_EX2,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_EXP_IEEE, tgsi_trans},
 	{TGSI_OPCODE_LG2,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_POW,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_XPD,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	/* gap */
 	{32,			0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
-	{TGSI_OPCODE_ABS,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
+	{TGSI_OPCODE_ABS,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOV, tgsi_op2},
 	{TGSI_OPCODE_RCC,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_DPH,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_COS,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
