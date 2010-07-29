@@ -34,7 +34,7 @@ extern "C" {
 #include "glsl_parser_extras.h"
 #include "ir.h"
 #include "program.h"
-#include "hash_table.h"
+#include "program/hash_table.h"
 #include "linker.h"
 
 static ir_function_signature *
