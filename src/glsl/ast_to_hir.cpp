@@ -658,7 +658,7 @@ ast_expression::hir(exec_list *instructions,
       -1,               /* ast_sequence doesn't convert to ir_expression. */
    };
    ir_rvalue *result = NULL;
-   ir_rvalue *op[2];
+   ir_rvalue *op[3];
    const struct glsl_type *type = glsl_type::error_type;
    bool error_emitted = false;
    YYLTYPE loc;
