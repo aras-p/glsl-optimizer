@@ -2084,7 +2084,7 @@ struct gl_shader
    unsigned Version;       /**< GLSL version used for linking */
 
    struct exec_list *ir;
-   struct glsl_symbol_table *symbols;
+   class glsl_symbol_table *symbols;
 
    /** Shaders containing built-in functions that are used for linking. */
    struct gl_shader *builtins_to_link[16];

@@ -1095,7 +1095,7 @@ ast_function_expression::hir(exec_list *instructions,
 	    var->constant_value = matrix->constant_expression_value();
 
 	    /* Replace the matrix with dereferences of its columns. */
-	    for (int i = 0; i < matrix->type->matrix_columns; i++) {
+	    for (unsigned int i = 0; i < matrix->type->matrix_columns; i++) {
 	       matrix->insert_before(new (ctx) ir_dereference_array(var,
 		  new(ctx) ir_constant(i)));
 	    }
