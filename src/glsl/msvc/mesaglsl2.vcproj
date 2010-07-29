@@ -50,6 +50,7 @@
 				WarningLevel="3"
 				DebugInformationFormat="4"
 				DisableSpecificWarnings="4291;4996;4800;4099"
+				ForcedIncludeFiles="msvccompat.h"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -114,6 +115,7 @@
 				WarningLevel="3"
 				DebugInformationFormat="3"
 				DisableSpecificWarnings="4291;4996;4800;4099"
+				ForcedIncludeFiles="msvccompat.h"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -467,6 +469,10 @@
 				</Filter>
 			</Filter>
 		</Filter>
+		<File
+			RelativePath=".\msvccompat.h"
+			>
+		</File>
 	</Files>
 	<Globals>
 	</Globals>
