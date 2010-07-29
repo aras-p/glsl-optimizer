@@ -220,7 +220,7 @@ static void do_triangle( struct draw_context *draw,
    do_point( draw,                              \
              verts + stride * (elts[i0] & ~DRAW_PIPE_FLAG_MASK) )
 
-#define FUNC pipe_run
+#define FUNC pipe_run_elts
 #define ARGS                                    \
     struct draw_context *draw,                  \
     unsigned prim,                              \
@@ -269,14 +269,29 @@ void draw_pipeline_run( struct draw_context *draw,
         i < prim_info->primitive_count;
         start += prim_info->primitive_lengths[i], i++)
    {
-      unsigned count = prim_info->primitive_lengths[i];
+      const unsigned count = prim_info->primitive_lengths[i];
 
-      pipe_run(draw,
-               prim_info->prim,
-               vert_info->verts,
-               vert_info->stride,
-               prim_info->elts + start,
-               count);
+#if DEBUG
+      /* make sure none of the element indexes go outside the vertex buffer */
+      {
+         unsigned max_index = 0x0, i;
+         /* find the largest element index */
+         for (i = 0; i < count; i++) {
+            unsigned int index = (prim_info->elts[start + i]
+                                  & ~DRAW_PIPE_FLAG_MASK);
+            if (index > max_index)
+               max_index = index;
+         }
+         assert(max_index <= vert_info->count);
+      }
+#endif
+
+      pipe_run_elts(draw,
+                    prim_info->prim,
+                    vert_info->verts,
+                    vert_info->stride,
+                    prim_info->elts + start,
+                    count);
    }
 
    draw->pipeline.verts = NULL;
@@ -377,6 +392,8 @@ void draw_pipeline_run_linear( struct draw_context *draw,
       draw->pipeline.verts = verts;
       draw->pipeline.vertex_stride = vert_info->stride;
       draw->pipeline.vertex_count = count;
+
+      assert(count <= vert_info->count);
 
       pipe_run_linear(draw,
                       prim_info->prim,
