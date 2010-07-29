@@ -2,6 +2,8 @@
 
 #include <math.h>
 
+#ifdef __cplusplus
+
 static inline float truncf (float x)
 {
 	if (x < 0.0f)
@@ -19,3 +21,5 @@ static inline float log2f (float x)
 {
 	return logf (x) / logf (2.0f);
 }
+
+#endif
