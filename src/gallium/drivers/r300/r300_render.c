@@ -681,11 +681,13 @@ static void r300_swtcl_draw_vbo(struct pipe_context* pipe,
     r300_update_derived_state(r300);
 
     for (i = 0; i < r300->vertex_buffer_count; i++) {
-        void* buf = pipe_buffer_map(pipe,
-                                    r300->vertex_buffer[i].buffer,
-                                    PIPE_TRANSFER_READ,
-                                    &vb_transfer[i]);
-        draw_set_mapped_vertex_buffer(r300->draw, i, buf);
+        if (r300->vertex_buffer[i].buffer) {
+            void *buf = pipe_buffer_map(pipe,
+                                  r300->vertex_buffer[i].buffer,
+                                  PIPE_TRANSFER_READ,
+                                  &vb_transfer[i]);
+            draw_set_mapped_vertex_buffer(r300->draw, i, buf);
+        }
     }
 
     if (info->indexed && r300->index_buffer.buffer) {
@@ -709,9 +711,11 @@ static void r300_swtcl_draw_vbo(struct pipe_context* pipe,
     draw_flush(r300->draw);
 
     for (i = 0; i < r300->vertex_buffer_count; i++) {
-        pipe_buffer_unmap(pipe, r300->vertex_buffer[i].buffer,
-                          vb_transfer[i]);
-        draw_set_mapped_vertex_buffer(r300->draw, i, NULL);
+        if (r300->vertex_buffer[i].buffer) {
+            pipe_buffer_unmap(pipe, r300->vertex_buffer[i].buffer,
+                              vb_transfer[i]);
+            draw_set_mapped_vertex_buffer(r300->draw, i, NULL);
+        }
     }
 
     if (ib_transfer) {
@@ -795,6 +799,8 @@ static void* r300_render_map_vertices(struct vbuf_render* render)
 					  r300render->vbo,
                                           PIPE_TRANSFER_WRITE,
 					  &r300render->vbo_transfer);
+
+    assert(r300render->vbo_ptr);
 
     return ((uint8_t*)r300render->vbo_ptr + r300render->vbo_offset);
 }

@@ -446,7 +446,6 @@ static void r300_set_clip_state(struct pipe_context* pipe,
 
         r300->clip_state.dirty = TRUE;
     } else {
-        draw_flush(r300->draw);
         draw_set_clip_state(r300->draw, state);
     }
 }
@@ -726,10 +725,6 @@ static void
         fprintf(stderr, "r300: Implementation error: Render targets are too "
         "big in %s, refusing to bind framebuffer state!\n", __FUNCTION__);
         return;
-    }
-
-    if (r300->draw) {
-        draw_flush(r300->draw);
     }
 
     /* If nr_cbufs is changed from zero to non-zero or vice versa... */
@@ -1096,7 +1091,6 @@ static void r300_bind_rs_state(struct pipe_context* pipe, void* state)
     boolean last_two_sided_color = r300->two_sided_color;
 
     if (r300->draw && rs) {
-        draw_flush(r300->draw);
         draw_set_rasterizer_state(r300->draw, &rs->rs_draw, state);
     }
 
@@ -1385,7 +1379,6 @@ static void r300_set_viewport_state(struct pipe_context* pipe,
     r300->viewport = *state;
 
     if (r300->draw) {
-        draw_flush(r300->draw);
         draw_set_viewport_state(r300->draw, state);
         viewport->vte_control = R300_VTX_XY_FMT | R300_VTX_Z_FMT;
         return;
@@ -1486,7 +1479,6 @@ static void r300_set_vertex_buffers(struct pipe_context* pipe,
 
     } else {
         /* SW TCL. */
-        draw_flush(r300->draw);
         draw_set_vertex_buffers(r300->draw, count, buffers);
     }
 
@@ -1671,7 +1663,6 @@ static void r300_bind_vertex_elements_state(struct pipe_context *pipe,
     r300->velems = velems;
 
     if (r300->draw) {
-        draw_flush(r300->draw);
         draw_set_vertex_elements(r300->draw, velems->count, velems->velem);
         return;
     }
@@ -1737,7 +1728,6 @@ static void r300_bind_vs_state(struct pipe_context* pipe, void* shader)
 
         r300->pvs_flush.dirty = TRUE;
     } else {
-        draw_flush(r300->draw);
         draw_bind_vertex_shader(r300->draw,
                 (struct draw_vertex_shader*)vs->draw_vs);
     }
