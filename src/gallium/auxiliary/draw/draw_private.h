@@ -163,9 +163,11 @@ struct draw_context
          /** vertex arrays */
          const void *vbuffer[PIPE_MAX_ATTRIBS];
          
-         /** constant buffer (for vertex/geometry shader) */
+         /** constant buffers (for vertex/geometry shader) */
          const void *vs_constants[PIPE_MAX_CONSTANT_BUFFERS];
+         unsigned vs_constants_size[PIPE_MAX_CONSTANT_BUFFERS];
          const void *gs_constants[PIPE_MAX_CONSTANT_BUFFERS];
+         unsigned gs_constants_size[PIPE_MAX_CONSTANT_BUFFERS];
       } user;
 
       boolean test_fse;         /* enable FSE even though its not correct (eg for softpipe) */
@@ -198,6 +200,7 @@ struct draw_context
    struct pipe_viewport_state viewport;
    boolean identity_viewport;
 
+   /** Vertex shader state */
    struct {
       struct draw_vertex_shader *vertex_shader;
       uint num_vs_outputs;  /**< convenience, from vertex_shader */
@@ -227,6 +230,7 @@ struct draw_context
       struct translate_cache *emit_cache;
    } vs;
 
+   /** Geometry shader state */
    struct {
       struct draw_geometry_shader *geometry_shader;
       uint num_gs_outputs;  /**< convenience, from geometry_shader */
@@ -239,6 +243,7 @@ struct draw_context
       struct tgsi_sampler **samplers;
    } gs;
 
+   /** Stream output (vertex feedback) state */
    struct {
       struct pipe_stream_output_state state;
       void *buffers[PIPE_MAX_SO_BUFFERS];

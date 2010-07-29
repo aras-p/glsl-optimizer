@@ -288,12 +288,19 @@ draw_set_mapped_constant_buffer(struct draw_context *draw,
                 shader_type == PIPE_SHADER_GEOMETRY);
    debug_assert(slot < PIPE_MAX_CONSTANT_BUFFERS);
 
-   if (shader_type == PIPE_SHADER_VERTEX) {
+   switch (shader_type) {
+   case PIPE_SHADER_VERTEX:
       draw->pt.user.vs_constants[slot] = buffer;
+      draw->pt.user.vs_constants_size[slot] = size;
       draw_vs_set_constants(draw, slot, buffer, size);
-   } else if (shader_type == PIPE_SHADER_GEOMETRY) {
+      break;
+   case PIPE_SHADER_GEOMETRY:
       draw->pt.user.gs_constants[slot] = buffer;
+      draw->pt.user.gs_constants_size[slot] = size;
       draw_gs_set_constants(draw, slot, buffer, size);
+      break;
+   default:
+      assert(0 && "invalid shader type in draw_set_mapped_constant_buffer");
    }
 }
 

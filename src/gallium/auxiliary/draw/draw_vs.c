@@ -48,18 +48,30 @@
 
 DEBUG_GET_ONCE_BOOL_OPTION(gallium_dump_vs, "GALLIUM_DUMP_VS", FALSE)
 
+
+/**
+ * Set a vertex shader constant buffer.
+ * \param slot  which constant buffer in [0, PIPE_MAX_CONSTANT_BUFFERS-1]
+ * \param constants  the mapped buffer
+ * \param size  size of buffer in bytes
+ */
 void
 draw_vs_set_constants(struct draw_context *draw,
                       unsigned slot,
                       const void *constants,
                       unsigned size)
 {
-   if (((uintptr_t)constants) & 0xf) {
+   const int alignment = 16;
+
+   /* check if buffer is 16-byte aligned */
+   if (((uintptr_t)constants) & (alignment - 1)) {
+      /* if not, copy the constants into a new, 16-byte aligned buffer */
       if (size > draw->vs.const_storage_size[slot]) {
          if (draw->vs.aligned_constant_storage[slot]) {
             align_free((void *)draw->vs.aligned_constant_storage[slot]);
          }
-         draw->vs.aligned_constant_storage[slot] = align_malloc(size, 16);
+         draw->vs.aligned_constant_storage[slot] =
+            align_malloc(size, alignment);
       }
       assert(constants);
       memcpy((void *)draw->vs.aligned_constant_storage[slot],

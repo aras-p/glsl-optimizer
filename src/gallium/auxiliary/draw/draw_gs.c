@@ -75,7 +75,7 @@ draw_gs_set_constants(struct draw_context *draw,
                       const void *constants,
                       unsigned size)
 {
-   /* noop */
+   debug_printf("draw_gs_set_constants() not implemented yet!\n");
 }
 
 
@@ -394,8 +394,13 @@ static void gs_tri_adj(struct draw_geometry_shader *shader,
    const ushort *elts = input_prims->elts;
 #include "draw_gs_tmp.h"
 
+
+/**
+ * Execute geometry shader using TGSI interpreter.
+ */
 int draw_geometry_shader_run(struct draw_geometry_shader *shader,
                              const void *constants[PIPE_MAX_CONSTANT_BUFFERS], 
+                             const unsigned constants_size[PIPE_MAX_CONSTANT_BUFFERS], 
                              const struct draw_vertex_info *input_verts,
                              const struct draw_prim_info *input_prim,
                              struct draw_vertex_info *output_verts,
@@ -405,7 +410,6 @@ int draw_geometry_shader_run(struct draw_geometry_shader *shader,
    unsigned input_stride = input_verts->vertex_size;
    unsigned vertex_size = input_verts->vertex_size;
    struct tgsi_exec_machine *machine = shader->machine;
-   unsigned int i;
    unsigned num_input_verts = input_prim->linear ?
                               input_verts->count :
                               input_prim->count;
@@ -447,9 +451,8 @@ int draw_geometry_shader_run(struct draw_geometry_shader *shader,
    }
    shader->primitive_lengths = MALLOC(max_out_prims * sizeof(unsigned));
 
-   for (i = 0; i < PIPE_MAX_CONSTANT_BUFFERS; i++) {
-      machine->Consts[i] = constants[i];
-   }
+   tgsi_exec_set_constant_buffers(machine, PIPE_MAX_CONSTANT_BUFFERS,
+                                  constants, constants_size);
 
    if (input_prim->linear)
       gs_run(shader, input_prim, input_verts,
