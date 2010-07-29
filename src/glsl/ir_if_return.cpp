@@ -54,11 +54,39 @@ do_if_return(exec_list *instructions)
 {
    ir_if_return_visitor v;
 
-   visit_list_elements(&v, instructions);
+   do {
+      v.progress = false;
+      visit_list_elements(&v, instructions);
+   } while (v.progress);
 
    return v.progress;
 }
 
+/**
+ * Removes any instructions after a (unconditional) return, since they will
+ * never be executed.
+ */
+static void
+truncate_after_instruction(ir_instruction *ir)
+{
+   while (!ir->get_next()->is_tail_sentinel())
+      ((ir_instruction *)ir->get_next())->remove();
+}
+
+/**
+ * Returns an ir_instruction of the first ir_return in the exec_list, or NULL.
+ */
+static ir_return *
+find_return_in_block(exec_list *instructions)
+{
+   foreach_iter(exec_list_iterator, iter, *instructions) {
+      ir_instruction *ir = (ir_instruction *)iter.get();
+      if (ir->ir_type == ir_type_return)
+	 return (ir_return *)ir;
+   }
+
+   return NULL;
+}
 
 ir_visitor_status
 ir_if_return_visitor::visit_enter(ir_if *ir)
@@ -66,32 +94,16 @@ ir_if_return_visitor::visit_enter(ir_if *ir)
    ir_return *then_return = NULL;
    ir_return *else_return = NULL;
 
-   /* Try to find a return statement on both sides. */
-   foreach_iter(exec_list_iterator, then_iter, ir->then_instructions) {
-      ir_instruction *then_ir = (ir_instruction *)then_iter.get();
-      then_return = then_ir->as_return();
-      if (then_return)
-	 break;
-   }
-   if (!then_return)
-      return visit_continue;
-
-   foreach_iter(exec_list_iterator, else_iter, ir->else_instructions) {
-      ir_instruction *else_ir = (ir_instruction *)else_iter.get();
-      else_return = else_ir->as_return();
-      if (else_return)
-	 break;
-   }
-   if (!else_return)
+   then_return = find_return_in_block(&ir->then_instructions);
+   else_return = find_return_in_block(&ir->else_instructions);
+   if (!then_return || !else_return)
       return visit_continue;
 
    /* Trim off any trailing instructions after the return statements
     * on both sides.
     */
-   while (then_return->get_next()->get_next())
-      ((ir_instruction *)then_return->get_next())->remove();
-   while (else_return->get_next()->get_next())
-      ((ir_instruction *)else_return->get_next())->remove();
+   truncate_after_instruction(then_return);
+   truncate_after_instruction(else_return);
 
    this->progress = true;
 
