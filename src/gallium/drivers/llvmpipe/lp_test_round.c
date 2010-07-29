@@ -31,7 +31,7 @@
 
 #include "util/u_pointer.h"
 #include "gallivm/lp_bld.h"
-#include "gallivm/lp_bld_printf.h"
+#include "gallivm/lp_bld_init.h"
 #include "gallivm/lp_bld_arit.h"
 
 #include <llvm-c/Analysis.h>
@@ -121,8 +121,7 @@ test_round(unsigned verbose, FILE *fp)
 {
    LLVMModuleRef module = NULL;
    LLVMValueRef test_round = NULL, test_trunc, test_floor, test_ceil;
-   LLVMExecutionEngineRef engine = NULL;
-   LLVMModuleProviderRef provider = NULL;
+   LLVMExecutionEngineRef engine = lp_build_engine;
    LLVMPassManagerRef pass = NULL;
    char *error = NULL;
    test_round_t round_func, trunc_func, floor_func, ceil_func;
@@ -144,13 +143,6 @@ test_round(unsigned verbose, FILE *fp)
       abort();
    }
    LLVMDisposeMessage(error);
-
-   provider = LLVMCreateModuleProviderForExistingModule(module);
-   if (LLVMCreateJITCompiler(&engine, provider, 1, &error)) {
-      fprintf(stderr, "%s\n", error);
-      LLVMDisposeMessage(error);
-      abort();
-   }
 
 #if 0
    pass = LLVMCreatePassManager();

@@ -30,7 +30,7 @@
 #include <stdio.h>
 
 #include "gallivm/lp_bld.h"
-#include "gallivm/lp_bld_printf.h"
+#include "gallivm/lp_bld_init.h"
 #include "gallivm/lp_bld_arit.h"
 
 #include <llvm-c/Analysis.h>
@@ -101,8 +101,7 @@ test_sincos(unsigned verbose, FILE *fp)
 {
    LLVMModuleRef module = NULL;
    LLVMValueRef test_sin = NULL, test_cos = NULL;
-   LLVMExecutionEngineRef engine = NULL;
-   LLVMModuleProviderRef provider = NULL;
+   LLVMExecutionEngineRef engine = lp_build_engine;
    LLVMPassManagerRef pass = NULL;
    char *error = NULL;
    test_sincos_t sin_func;
@@ -121,13 +120,6 @@ test_sincos(unsigned verbose, FILE *fp)
       abort();
    }
    LLVMDisposeMessage(error);
-
-   provider = LLVMCreateModuleProviderForExistingModule(module);
-   if (LLVMCreateJITCompiler(&engine, provider, 1, &error)) {
-      fprintf(stderr, "%s\n", error);
-      LLVMDisposeMessage(error);
-      abort();
-   }
 
 #if 0
    pass = LLVMCreatePassManager();
@@ -162,7 +154,6 @@ test_sincos(unsigned verbose, FILE *fp)
    LLVMFreeMachineCodeForFunction(engine, test_sin);
    LLVMFreeMachineCodeForFunction(engine, test_cos);
 
-   LLVMDisposeExecutionEngine(engine);
    if(pass)
       LLVMDisposePassManager(pass);
 
