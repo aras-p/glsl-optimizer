@@ -44,10 +44,10 @@ public:
    }
 
    ir_visitor_status visit_enter(ir_function_signature *);
-   ir_visitor_status visit_enter(ir_if *);
+   ir_visitor_status visit_leave(ir_if *);
 
-   void move_outer_block_inside(ir_instruction *ir,
-				exec_list *inner_block);
+   ir_visitor_status move_outer_block_inside(ir_instruction *ir,
+					     exec_list *inner_block);
    void move_returns_after_block(ir_instruction *ir,
 				 ir_return *then_return,
 				 ir_return *else_return);
@@ -127,18 +127,25 @@ ir_if_return_visitor::move_returns_after_block(ir_instruction *ir,
    this->progress = true;
 }
 
-void
+ir_visitor_status
 ir_if_return_visitor::move_outer_block_inside(ir_instruction *ir,
 					      exec_list *inner_block)
 {
-   if (!ir->get_next()->is_tail_sentinel())
-      this->progress = true;
+   if (!ir->get_next()->is_tail_sentinel()) {
+      while (!ir->get_next()->is_tail_sentinel()) {
+	 ir_instruction *move_ir = (ir_instruction *)ir->get_next();
 
-   while (!ir->get_next()->is_tail_sentinel()) {
-      ir_instruction *move_ir = (ir_instruction *)ir->get_next();
+	 move_ir->remove();
+	 inner_block->push_tail(move_ir);
+      }
 
-      move_ir->remove();
-      inner_block->push_tail(move_ir);
+      /* If we move the instructions following ir inside the block, it
+       * will confuse the exec_list iteration in the parent that visited
+       * us.  So stop the visit at this point.
+       */
+      return visit_stop;
+   } else {
+      return visit_continue;
    }
 }
 
@@ -199,7 +206,7 @@ ir_if_return_visitor::visit_enter(ir_function_signature *ir)
 }
 
 ir_visitor_status
-ir_if_return_visitor::visit_enter(ir_if *ir)
+ir_if_return_visitor::visit_leave(ir_if *ir)
 {
    ir_return *then_return;
    ir_return *else_return;
@@ -231,15 +238,9 @@ ir_if_return_visitor::visit_enter(ir_if *ir)
     * side, so we'll trigger the above case on the next pass.
     */
    if (then_return) {
-      move_outer_block_inside(ir, &ir->else_instructions);
+      return move_outer_block_inside(ir, &ir->else_instructions);
    } else {
       assert(else_return);
-      move_outer_block_inside(ir, &ir->then_instructions);
+      return move_outer_block_inside(ir, &ir->then_instructions);
    }
-
-   /* If we move the instructions following ir inside the block, it
-    * will confuse the exec_list iteration in the parent that visited
-    * us.  So stop the visit at this point.
-    */
-   return visit_stop;
 }
