@@ -57,8 +57,10 @@ _mesa_print_ir(exec_list *instructions,
 
    printf("(\n");
    foreach_iter(exec_list_iterator, iter, *instructions) {
-      ((ir_instruction *)iter.get())->print();
-      printf("\n");
+      ir_instruction *ir = (ir_instruction *)iter.get();
+      ir->print();
+      if (ir->ir_type != ir_type_function)
+	 printf("\n");
    }
    printf("\n)");
 }
@@ -122,6 +124,16 @@ void ir_print_visitor::visit(ir_function_signature *ir)
 
 void ir_print_visitor::visit(ir_function *ir)
 {
+   bool found_non_builtin_proto = false;
+
+   foreach_iter(exec_list_iterator, iter, *ir) {
+      ir_function_signature *const sig = (ir_function_signature *) iter.get();
+      if (sig->is_defined || !sig->is_built_in)
+	 found_non_builtin_proto = true;
+   }
+   if (!found_non_builtin_proto)
+      return;
+
    printf("(function %s\n", ir->name);
    foreach_iter(exec_list_iterator, iter, *ir) {
       ir_function_signature *const sig = (ir_function_signature *) iter.get();
@@ -130,7 +142,7 @@ void ir_print_visitor::visit(ir_function *ir)
       printf("\n");
    }
 
-   printf(")\n");
+   printf(")\n\n");
 }
 
 
