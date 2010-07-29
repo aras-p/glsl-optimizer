@@ -65,6 +65,13 @@ _mesa_print_ir(exec_list *instructions,
    printf("\n)");
 }
 
+
+void ir_print_visitor::indent(void)
+{
+   for (int i = 0; i < indentation; i++)
+      printf("  ");
+}
+
 static void
 print_type(const glsl_type *t)
 {
@@ -102,23 +109,43 @@ void ir_print_visitor::visit(ir_variable *ir)
 void ir_print_visitor::visit(ir_function_signature *ir)
 {
    printf("(signature ");
+   indentation++;
+
    print_type(ir->return_type);
-   printf("\n  (parameters\n");
+   printf("\n");
+   indent();
+
+   printf("(parameters\n");
+   indentation++;
+
    foreach_iter(exec_list_iterator, iter, ir->parameters) {
       ir_variable *const inst = (ir_variable *) iter.get();
 
+      indent();
       inst->accept(this);
       printf("\n");
    }
-   printf("  )\n(");
+   indentation--;
+
+   indent();
+   printf(")\n");
+
+   indent();
+
+   printf("(\n");
+   indentation++;
 
    foreach_iter(exec_list_iterator, iter, ir->body) {
       ir_instruction *const inst = (ir_instruction *) iter.get();
 
+      indent();
       inst->accept(this);
       printf("\n");
    }
+   indentation--;
+   indent();
    printf("))\n");
+   indentation--;
 }
 
 
@@ -135,13 +162,16 @@ void ir_print_visitor::visit(ir_function *ir)
       return;
 
    printf("(function %s\n", ir->name);
+   indentation++;
    foreach_iter(exec_list_iterator, iter, *ir) {
       ir_function_signature *const sig = (ir_function_signature *) iter.get();
 
+      indent();
       sig->accept(this);
       printf("\n");
    }
-
+   indentation--;
+   indent();
    printf(")\n\n");
 }
 
@@ -352,21 +382,33 @@ ir_print_visitor::visit(ir_if *ir)
    ir->condition->accept(this);
 
    printf("(\n");
+   indentation++;
+
    foreach_iter(exec_list_iterator, iter, ir->then_instructions) {
       ir_instruction *const inst = (ir_instruction *) iter.get();
 
+      indent();
       inst->accept(this);
       printf("\n");
    }
+
+   indentation--;
+   indent();
    printf(")\n");
 
+   indent();
    printf("(\n");
+   indentation++;
+
    foreach_iter(exec_list_iterator, iter, ir->else_instructions) {
       ir_instruction *const inst = (ir_instruction *) iter.get();
 
+      indent();
       inst->accept(this);
       printf("\n");
    }
+   indentation--;
+   indent();
    printf("))\n");
 }
 
@@ -387,12 +429,17 @@ ir_print_visitor::visit(ir_loop *ir)
    if (ir->increment != NULL)
       ir->increment->accept(this);
    printf(") (\n");
+   indentation++;
+
    foreach_iter(exec_list_iterator, iter, ir->body_instructions) {
       ir_instruction *const inst = (ir_instruction *) iter.get();
 
+      indent();
       inst->accept(this);
       printf("\n");
    }
+   indentation--;
+   indent();
    printf("))\n");
 }
 
