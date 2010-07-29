@@ -246,7 +246,7 @@ __glXCloseDisplay(Display * dpy, XExtCodes * codes)
    prev = &glx_displays;
    for (priv = glx_displays; priv; prev = &priv->next, priv = priv->next) {
       if (priv->dpy == dpy) {
-	 (*prev)->next = priv->next;
+	 (*prev) = priv->next;
 	 break;
       }
    }
