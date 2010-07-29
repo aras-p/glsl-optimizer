@@ -24,7 +24,7 @@
 #include <cstdio>
 #include "ast.h"
 extern "C" {
-#include "symbol_table.h"
+#include "program/symbol_table.h"
 }
 
 void

@@ -78,7 +78,7 @@ extern "C" {
 #include "glsl_symbol_table.h"
 #include "ir.h"
 #include "program.h"
-#include "hash_table.h"
+#include "program/hash_table.h"
 #include "linker.h"
 #include "ir_optimization.h"
 

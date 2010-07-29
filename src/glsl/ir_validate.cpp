@@ -36,7 +36,7 @@
 #include <inttypes.h>
 #include "ir.h"
 #include "ir_hierarchical_visitor.h"
-#include "hash_table.h"
+#include "program/hash_table.h"
 #include "glsl_types.h"
 
 class ir_validate : public ir_hierarchical_visitor {

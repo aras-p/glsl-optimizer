@@ -33,7 +33,7 @@
 #include "ir_function_inlining.h"
 #include "ir_expression_flattening.h"
 #include "glsl_types.h"
-#include "hash_table.h"
+#include "program/hash_table.h"
 
 class ir_function_inlining_visitor : public ir_hierarchical_visitor {
 public:
