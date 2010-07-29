@@ -40,19 +40,21 @@ void
 _mesa_print_ir(exec_list *instructions,
 	       struct _mesa_glsl_parse_state *state)
 {
-   for (unsigned i = 0; i < state->num_user_structures; i++) {
-      const glsl_type *const s = state->user_structures[i];
+   if (state) {
+      for (unsigned i = 0; i < state->num_user_structures; i++) {
+	 const glsl_type *const s = state->user_structures[i];
 
-      printf("(structure (%s) (%s@%p) (%u) (\n",
-	     s->name, s->name, s, s->length);
+	 printf("(structure (%s) (%s@%p) (%u) (\n",
+		s->name, s->name, s, s->length);
 
-      for (unsigned j = 0; j < s->length; j++) {
-	 printf("\t((");
-	 print_type(s->fields.structure[j].type);
-	 printf(")(%s))\n", s->fields.structure[j].name);
+	 for (unsigned j = 0; j < s->length; j++) {
+	    printf("\t((");
+	    print_type(s->fields.structure[j].type);
+	    printf(")(%s))\n", s->fields.structure[j].name);
+	 }
+
+	 printf(")\n");
       }
-
-      printf(")\n");
    }
 
    printf("(\n");
