@@ -63,7 +63,7 @@ extern const struct lp_rast_state *jit_state;
 #else
 
 #define BEGIN_JIT_CALL(X)
-#define END_JIT_CALL
+#define END_JIT_CALL()
 
 #endif
 
