@@ -33,7 +33,7 @@
 #define FORMATS_H
 
 
-#include "main/mtypes.h"
+#include <GL/gl.h>
 
 
 
