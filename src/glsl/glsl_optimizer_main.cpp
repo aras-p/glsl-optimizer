@@ -63,6 +63,8 @@ int dump_hir = 0;
 int dump_lir = 0;
 
 struct Shader {
+	Shader () : ir(0), InfoLog(0) { }
+
 	GLenum type;
 	std::string source;
 	GLboolean CompileStatus;
@@ -145,7 +147,7 @@ void compile_shader (Shader* shader)
    shader->InfoLog = state->info_log;
 
    // Retain any live IR, but trash the rest.
-   reparent_ir(shader->ir, shader);
+   reparent_ir(shader->ir, statePtr);
 
    talloc_free(state);
 
