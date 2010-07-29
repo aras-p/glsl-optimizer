@@ -963,9 +963,6 @@ glcpp_parser_create (const struct gl_extensions *extensions)
 	}
 
 	language_version = 110;
-	if (extensions && extensions->ARB_shading_language_120) {
-	   language_version = 120;
-	}
 	add_builtin_define(parser, "__VERSION__", language_version);
 
 	return parser;
