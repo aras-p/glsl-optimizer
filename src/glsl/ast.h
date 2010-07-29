@@ -423,6 +423,15 @@ public:
 
 class ast_fully_specified_type : public ast_node {
 public:
+   ast_fully_specified_type ()
+   {
+	   union {
+		   ast_type_qualifier q;
+		   unsigned i;
+	   } q;
+	   q.i = 0;
+	   qualifier = q.q;
+   }
    virtual void print(void) const;
    bool has_qualifiers() const;
 
