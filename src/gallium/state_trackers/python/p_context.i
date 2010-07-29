@@ -289,6 +289,20 @@ struct st_context {
                                       $self->vertex_buffers);
    }
 
+   void set_index_buffer(unsigned index_size,
+                         unsigned offset,
+                         struct pipe_resource *buffer)
+   {
+      struct pipe_index_buffer ib;
+
+      memset(&ib, 0, sizeof(ib));
+      ib.index_size = index_size;
+      ib.offset = offset;
+      ib.buffer = buffer;
+
+      $self->pipe->set_index_buffer($self->pipe, &ib);
+   }
+
    void set_vertex_element(unsigned index,
                            const struct pipe_vertex_element *element) 
    {
@@ -308,29 +322,12 @@ struct st_context {
     */
    
    void draw_arrays(unsigned mode, unsigned start, unsigned count) {
-      $self->pipe->draw_arrays($self->pipe, mode, start, count);
+      util_draw_arrays($self->pipe, mode, start, count);
    }
 
-   void draw_elements( struct pipe_resource *indexBuffer,
-                       unsigned indexSize, int indexBias,
-                       unsigned mode, unsigned start, unsigned count) 
+   void draw_vbo(const struct pipe_draw_info *info)
    {
-      $self->pipe->draw_elements($self->pipe, 
-                                 indexBuffer, 
-                                 indexSize, 
-                                 indexBias,
-                                 mode, start, count);
-   }
-
-   void draw_range_elements( struct pipe_resource *indexBuffer,
-                             unsigned indexSize, int indexBias,
-                             unsigned minIndex, unsigned maxIndex,
-                             unsigned mode, unsigned start, unsigned count)
-   {
-      $self->pipe->draw_range_elements($self->pipe, 
-                                       indexBuffer, indexSize, indexBias,
-                                       minIndex, maxIndex,
-                                       mode, start, count);
+      $self->pipe->draw_vbo($self->pipe, info);
    }
 
    void draw_vertices(unsigned prim,
@@ -382,7 +379,7 @@ struct st_context {
       pipe->set_vertex_buffers(pipe, 1, &vbuffer);
 
       /* draw */
-      pipe->draw_arrays(pipe, prim, 0, num_verts);
+      util_draw_arrays(pipe, prim, 0, num_verts);
 
       cso_restore_vertex_elements($self->cso);
 
