@@ -81,6 +81,22 @@ static const GLfloat ZeroVec[4] = { 0.0F, 0.0F, 0.0F, 0.0F };
 
 
 /**
+ * Return TRUE for +0 and other positive values, FALSE otherwise.
+ * Used for RCC opcode.
+ */
+static INLINE GLboolean
+positive(float x)
+{
+   fi_type fi;
+   fi.f = x;
+   if (fi.i & 0x80000000)
+      return GL_FALSE;
+   return GL_TRUE;
+}
+
+
+
+/**
  * Return a pointer to the 4-element float vector specified by the given
  * source register.
  */
@@ -1340,6 +1356,44 @@ _mesa_execute_program(GLcontext * ctx,
             store_vector4(inst, machine, result);
          }
          break;
+      case OPCODE_RCC:  /* clamped riciprocal */
+         {
+            const float largest = 1.884467e+19, smallest = 5.42101e-20;
+            GLfloat a[4], r, result[4];
+            fetch_vector1(&inst->SrcReg[0], machine, a);
+            if (DEBUG_PROG) {
+               if (a[0] == 0)
+                  printf("RCC(0)\n");
+               else if (IS_INF_OR_NAN(a[0]))
+                  printf("RCC(inf)\n");
+            }
+            if (a[0] == 1.0F) {
+               r = 1.0F;
+            }
+            else {
+               r = 1.0F / a[0];
+            }
+            if (positive(r)) {
+               if (r > largest) {
+                  r = largest;
+               }
+               else if (r < smallest) {
+                  r = smallest;
+               }
+            }
+            else {
+               if (r < -largest) {
+                  r = -largest;
+               }
+               else if (r > -smallest) {
+                  r = -smallest;
+               }
+            }
+            result[0] = result[1] = result[2] = result[3] = r;
+            store_vector4(inst, machine, result);
+         }
+         break;
+
       case OPCODE_RCP:
          {
             GLfloat a[4], result[4];
