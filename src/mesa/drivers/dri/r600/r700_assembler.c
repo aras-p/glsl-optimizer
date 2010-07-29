@@ -6473,7 +6473,7 @@ GLboolean Process_Fragment_Exports(r700_AssemblerBase *pR700AsmCode,
      * results are undefined anyway */
     if(export_count == 0)
     {
-        Process_Export(pR700AsmCode, SQ_EXPORT_PIXEL, 0, 1, 0, GL_FALSE);
+        Process_Export(pR700AsmCode, SQ_EXPORT_PIXEL, 0, 1, pR700AsmCode->starting_export_register_number, GL_FALSE);
     }
     
     if(pR700AsmCode->cf_last_export_ptr != NULL) 
