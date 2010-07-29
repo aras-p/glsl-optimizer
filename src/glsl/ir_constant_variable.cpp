@@ -42,10 +42,13 @@ struct assignment_entry {
    int assignment_count;
    ir_variable *var;
    ir_constant *constval;
+   bool our_scope;
 };
 
 class ir_constant_variable_visitor : public ir_hierarchical_visitor {
 public:
+   virtual ir_visitor_status visit_enter(ir_dereference_variable *);
+   virtual ir_visitor_status visit(ir_variable *);
    virtual ir_visitor_status visit_enter(ir_assignment *);
    virtual ir_visitor_status visit_enter(ir_call *);
 
@@ -66,6 +69,22 @@ get_assignment_entry(ir_variable *var, exec_list *list)
    entry->var = var;
    list->push_head(&entry->link);
    return entry;
+}
+
+ir_visitor_status
+ir_constant_variable_visitor::visit(ir_variable *ir)
+{
+   struct assignment_entry *entry = get_assignment_entry(ir, &this->list);
+   entry->our_scope = true;
+   return visit_continue;
+}
+
+/* Skip derefs of variables so that we can detect declarations. */
+ir_visitor_status
+ir_constant_variable_visitor::visit_enter(ir_dereference_variable *ir)
+{
+   (void)ir;
+   return visit_continue_with_parent;
 }
 
 ir_visitor_status
@@ -146,7 +165,7 @@ do_constant_variable(exec_list *instructions)
       struct assignment_entry *entry;
       entry = exec_node_data(struct assignment_entry, v.list.head, link);
 
-      if (entry->assignment_count == 1 && entry->constval) {
+      if (entry->assignment_count == 1 && entry->constval && entry->our_scope) {
 	 entry->var->constant_value = entry->constval;
 	 progress = true;
       }
