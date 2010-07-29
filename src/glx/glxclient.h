@@ -774,6 +774,8 @@ GetGLXDRIDrawable(Display *dpy, GLXDrawable drawable);
 
 #endif
 
+extern struct glx_context dummyContext;
+
 extern struct glx_screen *
 indirect_create_screen(int screen, struct glx_display * priv);
 extern struct glx_context *

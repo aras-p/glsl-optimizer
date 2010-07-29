@@ -60,7 +60,7 @@ static GLubyte dummyBuffer[__GLX_BUFFER_LIMIT_SIZE];
 ** gl and glx entry points are designed to operate as nop's when using
 ** the dummy context structure.
 */
-static struct glx_context dummyContext = {
+struct glx_context dummyContext = {
    &dummyBuffer[0],
    &dummyBuffer[0],
    &dummyBuffer[0],

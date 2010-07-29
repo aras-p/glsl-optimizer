@@ -137,7 +137,7 @@ indirect_bind_context(struct glx_context *gc, struct glx_context *old,
    Display *dpy = gc->psc->dpy;
    int opcode = __glXSetupForCommand(dpy);
 
-   if (old && !old->isDirect && old->psc->dpy == dpy)
+   if (old != &dummyContext && !old->isDirect && old->psc->dpy == dpy)
       tag = old->currentContextTag;
    else
       tag = None;
