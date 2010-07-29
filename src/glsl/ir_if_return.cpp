@@ -24,13 +24,16 @@
 /**
  * \file ir_if_return.cpp
  *
- * This pass tries to normalize functions to always return from one place.
+ * This pass tries to normalize functions to always return from one
+ * place by moving around blocks of code in if statements.
  *
  * This helps on hardware with no branching support, and may even be a
  * useful transform on hardware supporting control flow by turning
  * masked returns into normal returns.
  */
 
+#include <string.h>
+#include "glsl_types.h"
 #include "ir.h"
 
 class ir_if_return_visitor : public ir_hierarchical_visitor {
@@ -40,6 +43,7 @@ public:
       this->progress = false;
    }
 
+   ir_visitor_status visit_enter(ir_function_signature *);
    ir_visitor_status visit_enter(ir_if *);
 
    void move_outer_block_inside(ir_instruction *ir,
@@ -136,6 +140,62 @@ ir_if_return_visitor::move_outer_block_inside(ir_instruction *ir,
       move_ir->remove();
       inner_block->push_tail(move_ir);
    }
+}
+
+/* Normalize a function to always have a return statement at the end.
+ *
+ * This avoids the ir_if handler needing to know whether it is at the
+ * top level of the function to know if there's an implicit return at
+ * the end of the outer block.
+ */
+ir_visitor_status
+ir_if_return_visitor::visit_enter(ir_function_signature *ir)
+{
+   ir_return *ret;
+
+   if (!ir->is_defined)
+      return visit_continue_with_parent;
+   if (strcmp(ir->function_name(), "main") == 0)
+      return visit_continue_with_parent;
+
+   ret = find_return_in_block(&ir->body);
+
+   if (ret) {
+      truncate_after_instruction(ret);
+   } else {
+      if (ir->return_type->is_void()) {
+	 ir->body.push_tail(new(ir) ir_return(NULL));
+      } else {
+	 /* Probably, if we've got a function with a return value
+	  * hitting this point, it's something like:
+	  *
+	  * float reduce_below_half(float val)
+	  * {
+	  *         while () {
+	  *                 if (val >= 0.5)
+	  *                         val /= 2.0;
+	  *                 else
+	  *                         return val;
+	  *         }
+	  * }
+	  *
+	  * So we gain a junk return statement of an undefined value
+	  * at the end that never gets executed.  However, a backend
+	  * using this pass is probably desperate to get rid of
+	  * function calls, so go ahead and do it for their sake in
+	  * case it fixes apps.
+	  */
+	 ir_variable *undef = new(ir) ir_variable(ir->return_type,
+						  "if_return_undef",
+						  ir_var_temporary);
+	 ir->body.push_tail(undef);
+
+	 ir_dereference_variable *deref = new(ir) ir_dereference_variable(undef);
+	 ir->body.push_tail(new(ir) ir_return(deref));
+      }
+   }
+
+   return visit_continue;
 }
 
 ir_visitor_status
