@@ -83,6 +83,7 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 	pipe_reference(NULL, &texture->reference);
 	rstate->state.sampler_view.texture = texture;
 	rstate->state.sampler_view.reference.count = 1;
+	rstate->state.sampler_view.context = ctx;
 	return &rstate->state.sampler_view;
 }
 
