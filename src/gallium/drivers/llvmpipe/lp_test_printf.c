@@ -32,6 +32,7 @@
 #include "util/u_pointer.h"
 #include "gallivm/lp_bld.h"
 #include "gallivm/lp_bld_init.h"
+#include "gallivm/lp_bld_assert.h"
 #include "gallivm/lp_bld_printf.h"
 
 #include <llvm-c/Analysis.h>
@@ -75,6 +76,9 @@ add_printf_test(LLVMModuleRef module)
    lp_build_printf(builder, "hello, world\n");
    lp_build_printf(builder, "print 5 6: %d %d\n", LLVMConstInt(LLVMInt32Type(), 5, 0),
 				LLVMConstInt(LLVMInt32Type(), 6, 0));
+
+   /* Also test lp_build_assert().  This should not fail. */
+   lp_build_assert(builder, LLVMConstInt(LLVMInt32Type(), 1, 0), "assert(1)");
 
    LLVMBuildRetVoid(builder);
    LLVMDisposeBuilder(builder);
