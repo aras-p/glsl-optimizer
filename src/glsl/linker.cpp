@@ -542,7 +542,7 @@ remap_variables(ir_instruction *inst, glsl_symbol_table *symbols,
  * Move non-declarations from one instruction stream to another
  *
  * The intended usage pattern of this function is to pass the pointer to the
- * head sentinal of a list (i.e., a pointer to the list cast to an \c exec_node
+ * head sentinel of a list (i.e., a pointer to the list cast to an \c exec_node
  * pointer) for \c last and \c false for \c make_copies on the first
  * call.  Successive calls pass the return value of the previous call for
  * \c last and \c true for \c make_copies.

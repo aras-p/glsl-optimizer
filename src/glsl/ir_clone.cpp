@@ -330,7 +330,7 @@ ir_constant::clone(struct hash_table *ht) const
 
       c->type = this->type;
       for (exec_node *node = this->components.head
-	      ; !node->is_tail_sentinal()
+	      ; !node->is_tail_sentinel()
 	      ; node = node->next) {
 	 ir_constant *const orig = (ir_constant *) node;
 

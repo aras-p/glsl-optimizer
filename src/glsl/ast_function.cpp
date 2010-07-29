@@ -398,7 +398,7 @@ constant_record_constructor(const glsl_type *constructor_type,
    for (unsigned i = 0; i < constructor_type->length; i++) {
       ir_instruction *ir = (ir_instruction *) node;
 
-      if (node->is_tail_sentinal()) {
+      if (node->is_tail_sentinel()) {
 	 _mesa_glsl_error(loc, state,
 			  "insufficient parameters to constructor for `%s'",
 			  constructor_type->name);
@@ -531,7 +531,7 @@ single_scalar_parameter(exec_list *parameters)
    const ir_rvalue *const p = (ir_rvalue *) parameters->head;
    assert(((ir_rvalue *)p)->as_rvalue() != NULL);
 
-   return (p->type->is_scalar() && p->next->is_tail_sentinal());
+   return (p->type->is_scalar() && p->next->is_tail_sentinel());
 }
 
 
@@ -763,7 +763,7 @@ emit_inline_matrix_constructor(const glsl_type *type,
        *     identity matrix. If a matrix argument is given to a matrix
        *     constructor, it is an error to have any other arguments."
        */
-      assert(first_param->next->is_tail_sentinal());
+      assert(first_param->next->is_tail_sentinel());
       ir_rvalue *const src_matrix = first_param;
 
       /* If the source matrix is smaller, pre-initialize the relavent parts of

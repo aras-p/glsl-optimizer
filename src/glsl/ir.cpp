@@ -295,7 +295,7 @@ ir_constant::ir_constant(const struct glsl_type *type, exec_list *value_list)
     */
    for (unsigned i = 0; i < type->components(); /* empty */) {
       assert(value->as_constant() != NULL);
-      assert(!value->is_tail_sentinal());
+      assert(!value->is_tail_sentinel());
 
       for (unsigned j = 0; j < value->type->components(); j++) {
 	 switch (type->base_type) {
@@ -433,7 +433,7 @@ ir_constant::get_record_field(const char *name)
       /* If the end of the list is encountered before the element matching the
        * requested field is found, return NULL.
        */
-      if (node->is_tail_sentinal())
+      if (node->is_tail_sentinel())
 	 return NULL;
    }
 
@@ -459,8 +459,8 @@ ir_constant::has_value(const ir_constant *c) const
       const exec_node *a_node = this->components.head;
       const exec_node *b_node = c->components.head;
 
-      while (!a_node->is_tail_sentinal()) {
-	 assert(!b_node->is_tail_sentinal());
+      while (!a_node->is_tail_sentinel()) {
+	 assert(!b_node->is_tail_sentinel());
 
 	 const ir_constant *const a_field = (ir_constant *) a_node;
 	 const ir_constant *const b_field = (ir_constant *) b_node;
