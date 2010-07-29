@@ -97,6 +97,7 @@ replace_return_with_assignment(ir_instruction *ir, void *data)
 	  * have reached here. (see can_inline()).
 	  */
 	 assert(!ret->next->is_tail_sentinal());
+	 ret->remove();
       }
    }
 }
