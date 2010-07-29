@@ -24,15 +24,11 @@
 /**
  * \file ir_if_return.cpp
  *
- * If a function includes an if statement that returns from both
- * branches, then make the branches write the return val to a temp and
- * return the temp after the if statement.
+ * This pass tries to normalize functions to always return from one place.
  *
- * This allows inlinining in the common case of short functions that
- * return one of two values based on a condition.  This helps on
- * hardware with no branching support, and may even be a useful
- * transform on hardware supporting control flow by masked returns
- * with normal returns.
+ * This helps on hardware with no branching support, and may even be a
+ * useful transform on hardware supporting control flow by turning
+ * masked returns into normal returns.
  */
 
 #include "ir.h"
@@ -46,6 +42,11 @@ public:
 
    ir_visitor_status visit_enter(ir_if *);
 
+   void move_outer_block_inside(ir_instruction *ir,
+				exec_list *inner_block);
+   void move_returns_after_block(ir_instruction *ir,
+				 ir_return *then_return,
+				 ir_return *else_return);
    bool progress;
 };
 
@@ -69,6 +70,9 @@ do_if_return(exec_list *instructions)
 static void
 truncate_after_instruction(ir_instruction *ir)
 {
+   if (!ir)
+      return;
+
    while (!ir->get_next()->is_tail_sentinel())
       ((ir_instruction *)ir->get_next())->remove();
 }
@@ -88,24 +92,11 @@ find_return_in_block(exec_list *instructions)
    return NULL;
 }
 
-ir_visitor_status
-ir_if_return_visitor::visit_enter(ir_if *ir)
+void
+ir_if_return_visitor::move_returns_after_block(ir_instruction *ir,
+					       ir_return *then_return,
+					       ir_return *else_return)
 {
-   ir_return *then_return = NULL;
-   ir_return *else_return = NULL;
-
-   then_return = find_return_in_block(&ir->then_instructions);
-   else_return = find_return_in_block(&ir->else_instructions);
-   if (!then_return || !else_return)
-      return visit_continue;
-
-   /* Trim off any trailing instructions after the return statements
-    * on both sides.
-    */
-   truncate_after_instruction(then_return);
-   truncate_after_instruction(else_return);
-
-   this->progress = true;
 
    if (!then_return->value) {
       then_return->remove();
@@ -129,6 +120,66 @@ ir_if_return_visitor::visit_enter(ir_if *ir)
       ir_dereference_variable *deref = new(ir) ir_dereference_variable(new_var);
       ir->insert_after(new(ir) ir_return(deref));
    }
+   this->progress = true;
+}
 
-   return visit_continue;
+void
+ir_if_return_visitor::move_outer_block_inside(ir_instruction *ir,
+					      exec_list *inner_block)
+{
+   if (!ir->get_next()->is_tail_sentinel())
+      this->progress = true;
+
+   while (!ir->get_next()->is_tail_sentinel()) {
+      ir_instruction *move_ir = (ir_instruction *)ir->get_next();
+
+      move_ir->remove();
+      inner_block->push_tail(move_ir);
+   }
+}
+
+ir_visitor_status
+ir_if_return_visitor::visit_enter(ir_if *ir)
+{
+   ir_return *then_return;
+   ir_return *else_return;
+
+   then_return = find_return_in_block(&ir->then_instructions);
+   else_return = find_return_in_block(&ir->else_instructions);
+   if (!then_return && !else_return)
+      return visit_continue;
+
+   /* Trim off any trailing instructions after the return statements
+    * on both sides.
+    */
+   truncate_after_instruction(then_return);
+   truncate_after_instruction(else_return);
+
+   /* If both sides return, then we can move the returns to a single
+    * one outside the if statement.
+    */
+   if (then_return && else_return) {
+      move_returns_after_block(ir, then_return, else_return);
+      return visit_continue;
+   }
+
+   /* If only one side returns, then the block of code after the "if"
+    * is only executed by the other side, so those instructions don't
+    * need to be anywhere but that other side.
+    *
+    * This will usually pull a return statement up into the other
+    * side, so we'll trigger the above case on the next pass.
+    */
+   if (then_return) {
+      move_outer_block_inside(ir, &ir->else_instructions);
+   } else {
+      assert(else_return);
+      move_outer_block_inside(ir, &ir->then_instructions);
+   }
+
+   /* If we move the instructions following ir inside the block, it
+    * will confuse the exec_list iteration in the parent that visited
+    * us.  So stop the visit at this point.
+    */
+   return visit_stop;
 }
