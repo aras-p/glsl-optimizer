@@ -259,6 +259,7 @@ draw_print_arrays(struct draw_context *draw, uint prim, int start, uint count)
       for (j = 0; j < draw->pt.nr_vertex_elements; j++) {
          uint buf = draw->pt.vertex_element[j].vertex_buffer_index;
          ubyte *ptr = (ubyte *) draw->pt.user.vbuffer[buf];
+         ptr += draw->pt.vertex_buffer[buf].buffer_offset;
          ptr += draw->pt.vertex_buffer[buf].stride * ii;
          ptr += draw->pt.vertex_element[j].src_offset;
 
