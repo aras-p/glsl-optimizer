@@ -39,11 +39,6 @@
 #include "glxinit.h"
 
 struct x11_screen {
-#ifdef GLX_DIRECT_RENDERING
-   /* dummy base class */
-   struct __GLXDRIdisplayRec base;
-#endif
-
    Display *dpy;
    int number;
 
@@ -108,7 +103,7 @@ x11_screen_destroy(struct x11_screen *xscr)
 #ifdef GLX_DIRECT_RENDERING
    /* xscr->glx_dpy will be destroyed with the X display */
    if (xscr->glx_dpy)
-      xscr->glx_dpy->dri2Display = NULL;
+      xscr->glx_dpy->xscr = NULL;
 #endif
 
    if (xscr->visuals)
@@ -231,17 +226,6 @@ x11_screen_get_glx_configs(struct x11_screen *xscr)
 }
 
 /**
- * Return the GLX visuals.
- */
-const __GLcontextModes *
-x11_screen_get_glx_visuals(struct x11_screen *xscr)
-{
-   return (x11_screen_init_glx(xscr))
-      ? xscr->glx_dpy->screenConfigs[xscr->number]->visuals
-      : NULL;
-}
-
-/**
  * Probe the screen for the DRI2 driver name.
  */
 const char *
@@ -306,14 +290,14 @@ x11_screen_enable_dri2(struct x11_screen *xscr,
          close(fd);
          return -1;
       }
-      if (xscr->glx_dpy->dri2Display) {
+      if (xscr->glx_dpy->xscr) {
          _eglLog(_EGL_WARNING,
                "display is already managed by another x11 screen");
          close(fd);
          return -1;
       }
 
-      xscr->glx_dpy->dri2Display = (__GLXDRIdisplay *) xscr;
+      xscr->glx_dpy->xscr = xscr;
       xscr->dri_invalidate_buffers = invalidate_buffers;
       xscr->dri_user_data = user_data;
 
@@ -428,6 +412,9 @@ x11_context_modes_count(const __GLcontextModes *modes)
    return count;
 }
 
+extern void
+dri2InvalidateBuffers(Display *dpy, XID drawable);
+
 /**
  * This is called from src/glx/dri2.c.
  */
@@ -437,8 +424,8 @@ dri2InvalidateBuffers(Display *dpy, XID drawable)
    __GLXdisplayPrivate *priv = __glXInitialize(dpy);
    struct x11_screen *xscr = NULL;
 
-   if (priv && priv->dri2Display)
-      xscr = (struct x11_screen *) priv->dri2Display;
+   if (priv && priv->xscr)
+      xscr = priv->xscr;
    if (!xscr || !xscr->dri_invalidate_buffers)
       return;
 
