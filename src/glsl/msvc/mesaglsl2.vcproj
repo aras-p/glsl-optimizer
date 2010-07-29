@@ -475,6 +475,14 @@
 					Name="program"
 					>
 					<File
+						RelativePath="..\..\mesa\program\hash_table.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\mesa\program\hash_table.h"
+						>
+					</File>
+					<File
 						RelativePath="..\..\mesa\program\symbol_table.c"
 						>
 					</File>
