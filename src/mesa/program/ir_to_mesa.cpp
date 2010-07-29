@@ -2350,8 +2350,12 @@ get_mesa_program(GLcontext *ctx, struct gl_shader_program *shader_program,
 
 	    visit_exec_list(&entry->sig->body, &v);
 
-	    entry->bgn_inst = v.ir_to_mesa_emit_op0(NULL, OPCODE_RET);
-	    entry->bgn_inst = v.ir_to_mesa_emit_op0(NULL, OPCODE_ENDSUB);
+	    ir_to_mesa_instruction *last;
+	    last = (ir_to_mesa_instruction *)v.instructions.get_tail();
+	    if (last->op != OPCODE_RET)
+	       v.ir_to_mesa_emit_op0(NULL, OPCODE_RET);
+
+	    v.ir_to_mesa_emit_op0(NULL, OPCODE_ENDSUB);
 	    progress = GL_TRUE;
 	 }
       }
