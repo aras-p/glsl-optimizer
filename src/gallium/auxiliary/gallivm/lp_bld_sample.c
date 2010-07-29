@@ -179,6 +179,9 @@ lp_build_sample_offset(struct lp_build_context *bld,
       LLVMValueRef y_offset = lp_build_mul(bld, y, y_stride);
       offset = lp_build_add(bld, offset, y_offset);
    }
+   else {
+      *out_j = bld->zero;
+   }
 
    if (z && z_stride) {
       LLVMValueRef z_offset = lp_build_mul(bld, z, z_stride);
