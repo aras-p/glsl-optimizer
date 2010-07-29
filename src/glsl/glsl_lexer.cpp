@@ -1307,17 +1307,17 @@ return CONST_TOK;
 case 17:
 YY_RULE_SETUP
 #line 111 "glsl_lexer.lpp"
-return BOOL;
+return BOOL_T;
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
 #line 112 "glsl_lexer.lpp"
-return FLOAT;
+return FLOAT_T;
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
 #line 113 "glsl_lexer.lpp"
-return INT;
+return INT_T;
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
@@ -1412,7 +1412,7 @@ return VEC4;
 case 38:
 YY_RULE_SETUP
 #line 134 "glsl_lexer.lpp"
-return MAT2;
+return MAT2_T;
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
@@ -1472,12 +1472,12 @@ return MAT4X4;
 case 50:
 YY_RULE_SETUP
 #line 147 "glsl_lexer.lpp"
-return IN;
+return IN_T;
 	YY_BREAK
 case 51:
 YY_RULE_SETUP
 #line 148 "glsl_lexer.lpp"
-return OUT;
+return OUT_T;
 	YY_BREAK
 case 52:
 YY_RULE_SETUP
@@ -1592,7 +1592,7 @@ return STRUCT;
 case 67:
 YY_RULE_SETUP
 #line 202 "glsl_lexer.lpp"
-return VOID;
+return VOID_T;
 	YY_BREAK
 case 68:
 YY_RULE_SETUP
@@ -1873,12 +1873,12 @@ return INTERFACE;
 case 116:
 YY_RULE_SETUP
 #line 295 "glsl_lexer.lpp"
-return LONG;
+return LONG_T;
 	YY_BREAK
 case 117:
 YY_RULE_SETUP
 #line 296 "glsl_lexer.lpp"
-return SHORT;
+return SHORT_T;
 	YY_BREAK
 case 118:
 YY_RULE_SETUP
@@ -1893,7 +1893,7 @@ return HALF;
 case 120:
 YY_RULE_SETUP
 #line 299 "glsl_lexer.lpp"
-return FIXED;
+return FIXED_T;
 	YY_BREAK
 case 121:
 YY_RULE_SETUP
@@ -1903,7 +1903,7 @@ return UNSIGNED;
 case 122:
 YY_RULE_SETUP
 #line 301 "glsl_lexer.lpp"
-return INPUT;
+return INPUT_T;
 	YY_BREAK
 case 123:
 YY_RULE_SETUP

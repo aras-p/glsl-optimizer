@@ -49,7 +49,7 @@
 DEC_INT		[1-9][0-9]*
 HEX_INT		0[xX][0-9a-fA-F]+
 OCT_INT		0[0-7]*
-INT		({DEC_INT}|{HEX_INT}|{OCT_INT})
+INT_T	({DEC_INT}|{HEX_INT}|{OCT_INT})
 SPC		[ \t]*
 SPCP		[ \t]+
 HASH		^{SPC}#{SPC}
@@ -61,7 +61,7 @@ HASH		^{SPC}#{SPC}
 ^[ \t]*#[ \t]*$			;
 ^[ \t]*#[ \t]*version		{ BEGIN PP; return VERSION; }
 ^[ \t]*#[ \t]*extension		{ BEGIN PP; return EXTENSION; }
-{HASH}line{SPCP}{INT}{SPCP}{INT}{SPC}$ {
+{HASH}line{SPCP}{INT_T}{SPCP}{INT_T}{SPC}$ {
 				   /* Eat characters until the first digit is
 				    * encountered
 				    */
@@ -76,7 +76,7 @@ HASH		^{SPC}#{SPC}
 				   yylineno = strtol(ptr, &ptr, 0) - 1;
 				   yylloc->source = strtol(ptr, NULL, 0);
 				}
-{HASH}line{SPCP}{INT}{SPC}$	{
+{HASH}line{SPCP}{INT_T}{SPC}$	{
 				   /* Eat characters until the first digit is
 				    * encountered
 				    */
@@ -108,9 +108,9 @@ HASH		^{SPC}#{SPC}
 
 attribute	return ATTRIBUTE;
 const		return CONST_TOK;
-bool		return BOOL;
-float		return FLOAT;
-int		return INT;
+bool		return BOOL_T;
+float		return FLOAT_T;
+int		return INT_T;
 
 break		return BREAK;
 continue	return CONTINUE;
@@ -131,7 +131,7 @@ ivec4		return IVEC4;
 vec2		return VEC2;
 vec3		return VEC3;
 vec4		return VEC4;
-mat2		return MAT2;
+mat2		return MAT2_T;
 mat3		return MAT3;
 mat4		return MAT4;
 mat2x2		return MAT2X2;
@@ -144,8 +144,8 @@ mat4x2		return MAT4X2;
 mat4x3		return MAT4X3;
 mat4x4		return MAT4X4;
 
-in		return IN;
-out		return OUT;
+in		return IN_T;
+out		return OUT_T;
 inout		return INOUT;
 uniform		return UNIFORM;
 varying		return VARYING;
@@ -199,7 +199,7 @@ sampler1DShadow	return SAMPLER1DSHADOW;
 sampler2DShadow	return SAMPLER2DSHADOW;
 
 struct		return STRUCT;
-void		return VOID;
+void		return VOID_T;
 
 layout		{
 		  if ((yyextra->language_version >= 140)
@@ -292,13 +292,13 @@ static		return STATIC;
 extern		return EXTERN;
 external	return EXTERNAL;
 interface	return INTERFACE;
-long		return LONG;
-short		return SHORT;
+long		return LONG_T;
+short		return SHORT_T;
 double		return DOUBLE;
 half		return HALF;
-fixed		return FIXED;
+fixed		return FIXED_T;
 unsigned	return UNSIGNED;
-input		return INPUT;
+input		return INPUT_T;
 output		return OUTPUT;
 hvec2		return HVEC2;
 hvec3		return HVEC3;
