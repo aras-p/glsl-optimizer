@@ -29,6 +29,11 @@
 #include <stdio.h>
 #include <stdarg.h>
 
+#ifdef _MSC_VER
+extern "C" {
+#endif
+
+
 #define TALLOC_VERSION_MAJOR 2
 #define TALLOC_VERSION_MINOR 0
 
@@ -198,5 +203,10 @@ char *talloc_asprintf_append_buffer(char *s, const char *fmt, ...) PRINTF_ATTRIB
 void talloc_set_abort_fn(void (*abort_fn)(const char *reason));
 void talloc_set_log_fn(void (*log_fn)(const char *message));
 void talloc_set_log_stderr(void);
+
+#ifdef _MSC_VER
+}
+#endif
+
 
 #endif
