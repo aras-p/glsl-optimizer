@@ -301,7 +301,7 @@ static EGLBoolean
 _eglCheckMakeCurrent(_EGLContext *ctx, _EGLSurface *draw, _EGLSurface *read)
 {
    _EGLThreadInfo *t = _eglGetCurrentThread();
-   _EGLDisplay *dpy = ctx->Resource.Display;
+   _EGLDisplay *dpy;
    EGLint conflict_api;
    EGLBoolean surfaceless;
 
@@ -315,6 +315,7 @@ _eglCheckMakeCurrent(_EGLContext *ctx, _EGLSurface *draw, _EGLSurface *read)
       return EGL_TRUE;
    }
 
+   dpy = ctx->Resource.Display;
    switch (_eglGetContextAPIBit(ctx)) {
    case EGL_OPENGL_ES_BIT:
       surfaceless = dpy->Extensions.KHR_surfaceless_gles1;
