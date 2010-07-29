@@ -32,6 +32,7 @@
 #include "gallivm/lp_bld.h"
 #include "gallivm/lp_bld_init.h"
 #include "gallivm/lp_bld_arit.h"
+#include "util/u_pointer.h"
 
 #include <llvm-c/Analysis.h>
 #include <llvm-c/ExecutionEngine.h>
@@ -136,8 +137,8 @@ test_sincos(unsigned verbose, FILE *fp)
    (void)pass;
 #endif
 
-   sin_func = (test_sincos_t)LLVMGetPointerToGlobal(engine, test_sin);
-   cos_func = (test_sincos_t)LLVMGetPointerToGlobal(engine, test_cos);
+   sin_func = (test_sincos_t) pointer_to_func(LLVMGetPointerToGlobal(engine, test_sin));
+   cos_func = (test_sincos_t) pointer_to_func(LLVMGetPointerToGlobal(engine, test_cos));
 
    memset(unpacked, 0, sizeof unpacked);
 
