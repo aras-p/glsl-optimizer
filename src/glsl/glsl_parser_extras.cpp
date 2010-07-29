@@ -280,7 +280,9 @@ ast_node::print(void) const
 
 ast_node::ast_node(void)
 {
-   /* empty */
+   this->location.source = 0;
+   this->location.line = 0;
+   this->location.column = 0;
 }
 
 
