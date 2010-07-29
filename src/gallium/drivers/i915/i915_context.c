@@ -67,8 +67,8 @@ i915_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
     * Map index buffer, if present
     */
    if (info->indexed && i915->index_buffer.buffer) {
-      mapped_indices = i915_buffer(i915->index_buffer.buffer)->data;
-      mapped_indices += i915->index_buffer.offset;
+      char *indices = (char *) i915_buffer(i915->index_buffer.buffer)->data;
+      mapped_indices = (void *) (indices + i915->index_buffer.offset);
    }
 
    draw_set_mapped_element_buffer_range(draw, (mapped_indices) ?

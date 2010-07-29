@@ -69,8 +69,8 @@ llvmpipe_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
 
    /* Map index buffer, if present */
    if (info->indexed && lp->index_buffer.buffer) {
-      mapped_indices = llvmpipe_resource_data(lp->index_buffer.buffer);
-      mapped_indices += lp->index_buffer.offset;
+      char *indices = (char *) llvmpipe_resource_data(lp->index_buffer.buffer);
+      mapped_indices = (void *) (indices + lp->index_buffer.offset);
    }
 
    draw_set_mapped_element_buffer_range(draw, (mapped_indices) ?

@@ -692,7 +692,7 @@ static void r300_swtcl_draw_vbo(struct pipe_context* pipe,
         indices = pipe_buffer_map(pipe, r300->index_buffer.buffer,
                                   PIPE_TRANSFER_READ, &ib_transfer);
         if (indices)
-            indices += r300->index_buffer.offset;
+            indices = (void *) ((char *) indices + r300->index_buffer.offset);
     }
 
     draw_set_mapped_element_buffer_range(r300->draw, (indices) ?

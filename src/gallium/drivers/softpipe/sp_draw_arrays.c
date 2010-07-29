@@ -139,8 +139,8 @@ softpipe_draw_vbo(struct pipe_context *pipe,
 
    /* Map index buffer, if present */
    if (info->indexed && sp->index_buffer.buffer) {
-      mapped_indices = softpipe_resource(sp->index_buffer.buffer)->data;
-      mapped_indices += sp->index_buffer.offset;
+      char *indices = (char *) softpipe_resource(sp->index_buffer.buffer)->data;
+      mapped_indices = (void *) (indices + sp->index_buffer.offset);
    }
 
    draw_set_mapped_element_buffer_range(draw, (mapped_indices) ?
