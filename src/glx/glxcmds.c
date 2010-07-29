@@ -479,7 +479,7 @@ glXWaitGL(void)
 {
    struct glx_context *gc = __glXGetCurrentContext();
 
-   if (gc && gc->vtable->use_x_font)
+   if (gc && gc->vtable->wait_gl)
       gc->vtable->wait_gl(gc);
 }
 
@@ -492,7 +492,7 @@ glXWaitX(void)
 {
    struct glx_context *gc = __glXGetCurrentContext();
 
-   if (gc && gc->vtable->use_x_font)
+   if (gc && gc->vtable->wait_x)
       gc->vtable->wait_x(gc);
 }
 
