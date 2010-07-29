@@ -23,7 +23,7 @@
 
 #include "ir.h"
 #include "main/imports.h"
-#include "symbol_table.h"
+#include "program/symbol_table.h"
 #include "glsl_parser_extras.h"
 #include "ast.h"
 #include "glsl_types.h"

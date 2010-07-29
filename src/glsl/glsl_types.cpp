@@ -28,7 +28,7 @@
 #include "glsl_types.h"
 #include "builtin_types.h"
 extern "C" {
-#include "hash_table.h"
+#include "program/hash_table.h"
 }
 
 hash_table *glsl_type::array_types = NULL;

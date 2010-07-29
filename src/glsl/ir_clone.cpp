@@ -25,7 +25,7 @@
 #include "ir.h"
 #include "glsl_types.h"
 extern "C" {
-#include "hash_table.h"
+#include "program/hash_table.h"
 }
 
 /**
