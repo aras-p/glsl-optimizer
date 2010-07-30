@@ -40,6 +40,7 @@
 #include "convolve.h"
 #include "dlopen.h"
 #include "image.h"
+#include "macros.h"
 #include "texcompress.h"
 #include "texcompress_s3tc.h"
 #include "texstore.h"

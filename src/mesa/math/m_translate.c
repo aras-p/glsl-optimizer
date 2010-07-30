@@ -29,6 +29,7 @@
 
 
 #include "main/glheader.h"
+#include "main/macros.h"
 #include "main/mtypes.h"		/* GLchan hack */
 #include "main/colormac.h"
 

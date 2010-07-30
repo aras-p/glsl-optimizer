@@ -38,6 +38,7 @@
 #include "main/glheader.h"
 #include "main/colormac.h"
 #include "main/context.h"
+#include "main/macros.h"
 #include "prog_execute.h"
 #include "prog_instruction.h"
 #include "prog_parameter.h"
