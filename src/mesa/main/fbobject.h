@@ -26,6 +26,7 @@
 #ifndef FBOBJECT_H
 #define FBOBJECT_H
 
+#include "mtypes.h"
 
 extern void
 _mesa_init_fbobjects(GLcontext *ctx);
