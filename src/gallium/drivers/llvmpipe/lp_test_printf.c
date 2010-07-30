@@ -120,6 +120,7 @@ test_printf(unsigned verbose, FILE *fp, const struct printf_test_case *testcase)
       abort();
    }
 #else
+   (void) provider;
    engine = lp_build_engine;
 #endif
 
