@@ -93,12 +93,16 @@ remove_line_continuations(glcpp_parser_t *ctx, const char *shader)
 	const char *newline;
 	while ((newline = strchr(search_start, '\n')) != NULL) {
 		const char *backslash = NULL;
+
+		/* # of characters preceding the newline. */
+		int n = newline - shader;
+
 		/* Find the preceding '\', if it exists */
-		if (newline[-1] == '\\') {
+		if (n >= 1 && newline[-1] == '\\')
 			backslash = newline - 1;
-		} else if (newline[-1] == '\r' && newline[-2] == '\\') {
+		else if (n >= 2 && newline[-1] == '\r' && newline[-2] == '\\')
 			backslash = newline - 2;
-		}
+
 		/* Double backslashes don't count (the backslash is escaped) */
 		if (backslash != NULL && backslash[-1] == '\\') {
 			backslash = NULL;
