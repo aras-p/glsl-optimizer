@@ -556,6 +556,30 @@ static int tgsi_op2(struct r600_shader_ctx *ctx)
 	return 0;
 }
 
+static int tgsi_kill(struct r600_shader_ctx *ctx)
+{
+	struct tgsi_full_instruction *inst = &ctx->parse.FullToken.FullInstruction;
+	struct r600_bc_alu alu;
+	int i, r;
+
+	for (i = 0; i < 4; i++) {
+		memset(&alu, 0, sizeof(struct r600_bc_alu));
+		alu.inst = ctx->inst_info->r600_opcode;
+		alu.dst.chan = i;
+		alu.src[0].sel = 248;
+		r = tgsi_src(ctx, &inst->Src[0], i, &alu.src[1]);
+		if (r)
+			return r;
+		if (i == 3) {
+			alu.last = 1;
+		}
+		r = r600_bc_add_alu(ctx->bc, &alu);
+		if (r)
+			return r;
+	}
+	return 0;
+}
+
 static int tgsi_slt(struct r600_shader_ctx *ctx)
 {
 	struct tgsi_full_instruction *inst = &ctx->parse.FullToken.FullInstruction;
@@ -1139,7 +1163,7 @@ static struct r600_shader_tgsi_instruction r600_shader_tgsi_instruction[] = {
 	{TGSI_OPCODE_CALLNZ,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_IFC,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_BREAKC,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
-	{TGSI_OPCODE_KIL,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},  /* conditional kill */
+	{TGSI_OPCODE_KIL,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLGT, tgsi_kill},  /* conditional kill */
 	{TGSI_OPCODE_END,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_end},  /* aka HALT */
 	/* gap */
 	{118,			0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
