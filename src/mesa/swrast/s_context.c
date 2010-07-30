@@ -28,7 +28,6 @@
 
 #include "main/imports.h"
 #include "main/bufferobj.h"
-#include "main/context.h"
 #include "main/colormac.h"
 #include "main/mtypes.h"
 #include "main/teximage.h"

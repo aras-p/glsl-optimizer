@@ -27,7 +27,6 @@
 #include "main/bufferobj.h"
 #include "main/colormac.h"
 #include "main/convolve.h"
-#include "main/context.h"
 #include "main/feedback.h"
 #include "main/formats.h"
 #include "main/image.h"

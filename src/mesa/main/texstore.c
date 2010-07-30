@@ -55,7 +55,6 @@
 #include "glheader.h"
 #include "bufferobj.h"
 #include "colormac.h"
-#include "context.h"
 #include "convolve.h"
 #include "image.h"
 #include "macros.h"
