@@ -44,6 +44,15 @@
 #include "util/u_math.h"
 #include "util/u_memory.h"
 
+
+#define PROGRAM_ANY_CONST ((1 << PROGRAM_LOCAL_PARAM) |  \
+                           (1 << PROGRAM_ENV_PARAM) |    \
+                           (1 << PROGRAM_STATE_VAR) |    \
+                           (1 << PROGRAM_NAMED_PARAM) |  \
+                           (1 << PROGRAM_CONSTANT) |     \
+                           (1 << PROGRAM_UNIFORM))
+
+
 struct label {
    unsigned branch_target;
    unsigned token;
@@ -1059,6 +1068,16 @@ st_translate_mesa_program(
       t->address[0] = ureg_DECL_address( ureg );
    }
 
+   if (program->IndirectRegisterFiles & (1 << PROGRAM_TEMPORARY)) {
+      /* If temps are accessed with indirect addressing, declare temporaries
+       * in sequential order.  Else, we declare them on demand elsewhere.
+       */
+      for (i = 0; i < program->NumTemporaries; i++) {
+         /* XXX use TGSI_FILE_TEMPORARY_ARRAY when it's supported by ureg */
+         t->temps[i] = ureg_DECL_temporary( t->ureg );
+      }
+   }
+
    /* Emit constants and immediates.  Mesa uses a single index space
     * for these, so we put all the translated regs in t->constants.
     */
@@ -1069,7 +1088,7 @@ st_translate_mesa_program(
          ret = PIPE_ERROR_OUT_OF_MEMORY;
          goto out;
       }
-      
+
       for (i = 0; i < program->Parameters->NumParameters; i++) {
          switch (program->Parameters->Parameters[i].Type) {
          case PROGRAM_ENV_PARAM:
@@ -1080,13 +1099,14 @@ st_translate_mesa_program(
             t->constants[i] = ureg_DECL_constant( ureg, i );
             break;
 
-            /* Emit immediates only when there is no address register
-             * in use.  FIXME: Be smarter and recognize param arrays:
+            /* Emit immediates only when there's no indirect addressing of
+             * the const buffer.
+             * FIXME: Be smarter and recognize param arrays:
              * indirect addressing is only valid within the referenced
              * array.
              */
          case PROGRAM_CONSTANT:
-            if (program->NumAddressRegs > 0) 
+            if (program->IndirectRegisterFiles & PROGRAM_ANY_CONST)
                t->constants[i] = ureg_DECL_constant( ureg, i );
             else
                t->constants[i] = 
