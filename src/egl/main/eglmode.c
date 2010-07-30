@@ -10,6 +10,9 @@
 #include "eglstring.h"
 
 
+#ifdef EGL_MESA_screen_surface
+
+
 #define MIN2(A, B)  (((A) < (B)) ? (A) : (B))
 
 
@@ -353,3 +356,6 @@ _eglQueryModeStringMESA(_EGLDriver *drv, _EGLDisplay *dpy, _EGLMode *m)
 {
    return m->Name;
 }
+
+
+#endif /* EGL_MESA_screen_surface */

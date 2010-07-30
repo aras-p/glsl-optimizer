@@ -314,8 +314,10 @@ _eglValidateConfig(const _EGLConfig *conf, EGLBoolean for_matching)
                    EGL_VG_ALPHA_FORMAT_PRE_BIT |
                    EGL_MULTISAMPLE_RESOLVE_BOX_BIT |
                    EGL_SWAP_BEHAVIOR_PRESERVED_BIT;
+#ifdef EGL_MESA_screen_surface
             if (conf->Display->Extensions.MESA_screen_surface)
                mask |= EGL_SCREEN_BIT_MESA;
+#endif
             break;
          case EGL_RENDERABLE_TYPE:
          case EGL_CONFORMANT:

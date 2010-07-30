@@ -434,9 +434,11 @@ egl_g3d_free_config(void *conf)
 static void
 egl_g3d_free_screen(void *scr)
 {
+#ifdef EGL_MESA_screen_surface
    struct egl_g3d_screen *gscr = egl_g3d_screen((_EGLScreen *) scr);
    FREE(gscr->native_modes);
    FREE(gscr);
+#endif
 }
 
 static EGLBoolean

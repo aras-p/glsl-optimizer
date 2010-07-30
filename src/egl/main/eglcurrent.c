@@ -1,6 +1,5 @@
 #include <stdlib.h>
 #include <string.h>
-#include "eglglobals.h"
 #include "egllog.h"
 #include "eglmutex.h"
 #include "eglcurrent.h"
@@ -300,12 +299,14 @@ _eglError(EGLint errCode, const char *msg)
       case EGL_BAD_SURFACE:
          s = "EGL_BAD_SURFACE";
          break;
+#ifdef EGL_MESA_screen_surface
       case EGL_BAD_SCREEN_MESA:
          s = "EGL_BAD_SCREEN_MESA";
          break;
       case EGL_BAD_MODE_MESA:
          s = "EGL_BAD_MODE_MESA";
          break;
+#endif
       default:
          s = "other";
       }
