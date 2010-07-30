@@ -38,6 +38,7 @@
 #include "gallivm/lp_bld_tgsi.h"
 #include "gallivm/lp_bld_printf.h"
 #include "gallivm/lp_bld_intr.h"
+#include "gallivm/lp_bld_init.h"
 
 #include "tgsi/tgsi_exec.h"
 #include "tgsi/tgsi_dump.h"
