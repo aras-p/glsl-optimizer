@@ -36,6 +36,9 @@
 #ifndef _DEBUG_H
 #define _DEBUG_H
 
+#include "glheader.h"
+#include "mtypes.h"
+
 #if _HAVE_FULL_GL
 
 extern void _mesa_print_tri_caps( const char *name, GLuint flags );
