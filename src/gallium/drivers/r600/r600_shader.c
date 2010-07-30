@@ -138,12 +138,10 @@ static int r600_pipe_shader_vs(struct pipe_context *ctx, struct r600_context_sta
 	for (i = 0; i < 10; i++) {
 		state->states[R600_VS_SHADER__SPI_VS_OUT_ID_0 + i] = 0;
 	}
-	for (i = 0, j = 0; i < rshader->noutput; i++) {
-		if (rshader->output[i].name != TGSI_SEMANTIC_POSITION) {
-			tmp = rshader->output[i].sid << ((j & 3) * 8);
-			state->states[R600_VS_SHADER__SPI_VS_OUT_ID_0 + j / 4] |= tmp;
-			j++;
-		}
+	/* so far never got proper semantic id from tgsi */
+	for (i = 0; i < 32; i++) {
+		tmp = i << ((i & 3) * 8);
+		state->states[R600_VS_SHADER__SPI_VS_OUT_ID_0 + i / 4] |= tmp;
 	}
 	state->states[R600_VS_SHADER__SPI_VS_OUT_CONFIG] = S_0286C4_VS_EXPORT_COUNT(rshader->noutput - 2);
 	state->states[R600_VS_SHADER__SQ_PGM_RESOURCES_VS] = S_028868_NUM_GPRS(rshader->bc.ngpr);
@@ -167,7 +165,7 @@ static int r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_context_sta
 	if (state == NULL)
 		return -ENOMEM;
 	for (i = 0; i < rshader->ninput; i++) {
-		tmp = S_028644_SEMANTIC(rshader->input[i].sid);
+		tmp = S_028644_SEMANTIC(i);
 		tmp |= S_028644_SEL_CENTROID(1);
 		if (rshader->input[i].name == TGSI_SEMANTIC_COLOR ||
 			rshader->input[i].name == TGSI_SEMANTIC_BCOLOR) {
@@ -525,6 +523,7 @@ static int tgsi_op2(struct r600_shader_ctx *ctx)
 		memset(&alu, 0, sizeof(struct r600_bc_alu));
 		if (!(inst->Dst[0].Register.WriteMask & (1 << i))) {
 			alu.inst = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP;
+			alu.dst.chan = i;
 		} else {
 			alu.inst = ctx->inst_info->r600_opcode;
 			for (j = 0; j < inst->Instruction.NumSrcRegs; j++) {
@@ -567,6 +566,7 @@ static int tgsi_slt(struct r600_shader_ctx *ctx)
 		memset(&alu, 0, sizeof(struct r600_bc_alu));
 		if (!(inst->Dst[0].Register.WriteMask & (1 << i))) {
 			alu.inst = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP;
+			alu.dst.chan = i;
 		} else {
 			alu.inst = ctx->inst_info->r600_opcode;
 			r = tgsi_src(ctx, &inst->Src[0], i, &alu.src[1]);
@@ -747,6 +747,7 @@ static int tgsi_helper_copy(struct r600_shader_ctx *ctx, struct tgsi_full_instru
 		memset(&alu, 0, sizeof(struct r600_bc_alu));
 		if (!(inst->Dst[0].Register.WriteMask & (1 << i))) {
 			alu.inst = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP;
+			alu.dst.chan = i;
 		} else {
 			alu.inst = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOV;
 			r = tgsi_dst(ctx, &inst->Dst[0], i, &alu.dst);
@@ -918,7 +919,7 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 	tex.resource_id = ctx->file_offset[inst->Src[1].Register.File] + inst->Src[1].Register.Index;
 	tex.sampler_id = tex.resource_id;
 	tex.src_gpr = src_gpr;
-	tex.dst_gpr = ctx->file_offset[inst->Dst[0].Register.File] + inst->Src[0].Register.Index;
+	tex.dst_gpr = ctx->file_offset[inst->Dst[0].Register.File] + inst->Dst[0].Register.Index;
 	tex.dst_sel_x = 0;
 	tex.dst_sel_y = 1;
 	tex.dst_sel_z = 2;
