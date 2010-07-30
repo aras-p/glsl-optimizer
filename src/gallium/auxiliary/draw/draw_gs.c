@@ -75,7 +75,10 @@ draw_gs_set_constants(struct draw_context *draw,
                       const void *constants,
                       unsigned size)
 {
-   debug_printf("draw_gs_set_constants() not implemented yet!\n");
+   /* noop. added here for symmetry with the VS
+    * code and in case we'll ever want to allign
+    * the constants, e.g. when we'll change to a
+    * different interpreter */
 }
 
 
