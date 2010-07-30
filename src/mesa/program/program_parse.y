@@ -835,6 +835,7 @@ srcReg: USED_IDENTIFIER /* temporaryReg | progParamSingle */
 	   $$.Base.File = $1->param_binding_type;
 
 	   if ($3.Base.RelAddr) {
+              state->prog->IndirectRegisterFiles |= (1 << $$.Base.File);
 	      $1->param_accessed_indirectly = 1;
 
 	      $$.Base.RelAddr = 1;

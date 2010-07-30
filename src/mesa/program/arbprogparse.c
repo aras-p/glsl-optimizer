@@ -109,6 +109,7 @@ _mesa_parse_arb_fragment_program(GLcontext* ctx, GLenum target,
    program->Base.NumNativeTexIndirections = prog.NumTexIndirections;
    program->Base.InputsRead      = prog.InputsRead;
    program->Base.OutputsWritten  = prog.OutputsWritten;
+   program->Base.IndirectRegisterFiles = prog.IndirectRegisterFiles;
    for (i = 0; i < MAX_TEXTURE_IMAGE_UNITS; i++) {
       program->Base.TexturesUsed[i] = prog.TexturesUsed[i];
       if (prog.TexturesUsed[i])
@@ -199,6 +200,7 @@ _mesa_parse_arb_vertex_program(GLcontext *ctx, GLenum target,
    program->Base.NumNativeAddressRegs = prog.NumNativeAddressRegs;
    program->Base.InputsRead     = prog.InputsRead;
    program->Base.OutputsWritten = prog.OutputsWritten;
+   program->Base.IndirectRegisterFiles = prog.IndirectRegisterFiles;
    program->IsPositionInvariant = (state.option.PositionInvariant)
       ? GL_TRUE : GL_FALSE;
 

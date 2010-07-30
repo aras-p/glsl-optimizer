@@ -1808,6 +1808,11 @@ struct gl_program
    /** Which texture target is being sampled (TEXTURE_1D/2D/3D/etc_INDEX) */
    gl_texture_index SamplerTargets[MAX_SAMPLERS];
 
+   /** Bitmask of which register files are read/written with indirect
+    * addressing.  Mask of (1 << PROGRAM_x) bits.
+    */
+   GLbitfield IndirectRegisterFiles;
+
    /** Logical counts */
    /*@{*/
    GLuint NumInstructions;

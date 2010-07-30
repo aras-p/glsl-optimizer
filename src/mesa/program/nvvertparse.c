@@ -64,6 +64,7 @@ struct parse_state {
    GLbitfield inputsRead;
    GLbitfield outputsWritten;
    GLboolean anyProgRegsWritten;
+   GLboolean indirectRegisterFiles;
    GLuint numInst;                 /* number of instructions parsed */
 };
 
@@ -410,6 +411,7 @@ Parse_ParamReg(struct parse_state *parseState, struct prog_src_register *srcReg)
 
       srcReg->RelAddr = GL_TRUE;
       srcReg->File = PROGRAM_ENV_PARAM;
+      parseState->indirectRegisterFiles |= (1 << srcReg->File);
       /* Look for +/-N offset */
       if (!Peek_Token(parseState, token))
          RETURN_ERROR;
@@ -1308,6 +1310,7 @@ _mesa_parse_nv_vertex_program(GLcontext *ctx, GLenum dstTarget,
    parseState.inputsRead = 0;
    parseState.outputsWritten = 0;
    parseState.anyProgRegsWritten = GL_FALSE;
+   parseState.indirectRegisterFiles = 0x0;
 
    /* Reset error state */
    _mesa_set_program_error(ctx, -1, NULL);
@@ -1407,6 +1410,8 @@ _mesa_parse_nv_vertex_program(GLcontext *ctx, GLenum dstTarget,
 
       program->Base.Parameters = _mesa_new_parameter_list ();
       program->Base.NumParameters = 0;
+
+      program->Base.IndirectRegisterFiles = parseState.indirectRegisterFiles;
 
       state_tokens[0] = STATE_VERTEX_PROGRAM;
       state_tokens[1] = STATE_ENV;
