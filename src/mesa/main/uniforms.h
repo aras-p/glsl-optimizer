@@ -25,6 +25,10 @@
 #ifndef UNIFORMS_H
 #define UNIFORMS_H
 
+#include "glheader.h"
+
+struct gl_program;
+struct _glapi_table;
 
 extern void GLAPIENTRY
 _mesa_Uniform1fARB(GLint, GLfloat);
