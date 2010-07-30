@@ -27,7 +27,7 @@
 #define CLEAR_H
 
 
-#include "main/mtypes.h"
+#include "glheader.h"
 
 
 extern void GLAPIENTRY
