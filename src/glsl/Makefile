@@ -58,6 +58,7 @@ CXX_SOURCES = \
 	ir_swizzle_swizzle.cpp \
 	ir_validate.cpp \
 	ir_variable.cpp \
+	ir_variable_refcount.cpp \
 	ir_vec_index_to_cond_assign.cpp \
 	ir_vec_index_to_swizzle.cpp \
 	linker.cpp \
