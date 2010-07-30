@@ -110,8 +110,6 @@ util_draw_elements_instanced(struct pipe_context *pipe,
    info.index_bias = index_bias;
    info.start_instance = start_instance;
    info.instance_count = instance_count;
-   info.min_index = start;
-   info.max_index = start + count - 1;
 
    pipe->draw_vbo(pipe, &info);
 }
