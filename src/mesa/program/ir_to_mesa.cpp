@@ -2355,7 +2355,10 @@ get_mesa_program(GLcontext *ctx, struct gl_shader_program *shader_program,
 	    if (last->op != OPCODE_RET)
 	       v.ir_to_mesa_emit_op0(NULL, OPCODE_RET);
 
-	    v.ir_to_mesa_emit_op0(NULL, OPCODE_ENDSUB);
+	    ir_to_mesa_instruction *end;
+	    end = v.ir_to_mesa_emit_op0(NULL, OPCODE_ENDSUB);
+	    end->function = entry;
+
 	    progress = GL_TRUE;
 	 }
       }
@@ -2401,12 +2404,23 @@ get_mesa_program(GLcontext *ctx, struct gl_shader_program *shader_program,
 	 shader_program->LinkStatus = false;
       }
 
-      if (mesa_inst->Opcode == OPCODE_BGNSUB)
+      switch (mesa_inst->Opcode) {
+      case OPCODE_BGNSUB:
 	 inst->function->inst = i;
-      else if (mesa_inst->Opcode == OPCODE_CAL)
+	 mesa_inst->Comment = strdup(inst->function->sig->function_name());
+	 break;
+      case OPCODE_ENDSUB:
+	 mesa_inst->Comment = strdup(inst->function->sig->function_name());
+	 break;
+      case OPCODE_CAL:
 	 mesa_inst->BranchTarget = inst->function->sig_id; /* rewritten later */
-      else if (mesa_inst->Opcode == OPCODE_ARL)
+	 break;
+      case OPCODE_ARL:
 	 prog->NumAddressRegs = 1;
+	 break;
+      default:
+	 break;
+      }
 
       mesa_inst++;
       i++;
