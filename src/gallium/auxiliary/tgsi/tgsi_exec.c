@@ -651,7 +651,6 @@ tgsi_exec_machine_bind_shader(
 
    if (numSamplers) {
       assert(samplers);
-      assert(samplers[0]);
    }
 
    mach->Tokens = tokens;
