@@ -33,7 +33,6 @@
 #include "r600_screen.h"
 #include "r600_context.h"
 #include "r600_resource.h"
-#include "r600d.h"
 
 extern struct u_resource_vtbl r600_texture_vtbl;
 
