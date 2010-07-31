@@ -2983,7 +2983,7 @@ yyreduce:
 /* Line 1455 of yacc.c  */
 #line 937 "program_parse.y"
     {
-	   if (((yyvsp[(1) - (1)].integer) < 0) || ((yyvsp[(1) - (1)].integer) > 63)) {
+	   if (((yyvsp[(1) - (1)].integer) < 0) || ((yyvsp[(1) - (1)].integer) > 4095)) {
               char s[100];
               _mesa_snprintf(s, sizeof(s),
                              "relative address offset too large (%d)", (yyvsp[(1) - (1)].integer));
@@ -3000,7 +3000,7 @@ yyreduce:
 /* Line 1455 of yacc.c  */
 #line 951 "program_parse.y"
     {
-	   if (((yyvsp[(1) - (1)].integer) < 0) || ((yyvsp[(1) - (1)].integer) > 64)) {
+	   if (((yyvsp[(1) - (1)].integer) < 0) || ((yyvsp[(1) - (1)].integer) > 4096)) {
               char s[100];
               _mesa_snprintf(s, sizeof(s),
                              "relative address offset too large (%d)", (yyvsp[(1) - (1)].integer));
