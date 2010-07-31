@@ -639,12 +639,10 @@ nv_pass_reload_elim(struct nv_pass_reld_elim *ctx, struct nv_basic_block *b)
             break;
 
       if (it) {
-#if 1
-         nvcg_replace_value(ctx->pc, ld->def[0], it->value);
-#else
-         ld->opcode = NV_OP_MOV;
-         nv_reference(ctx->pc, &ld->src[0], it->value);
-#endif
+         if (ld->def[0]->reg.id >= 0)
+            it->value = ld->def[0];
+         else
+            nvcg_replace_value(ctx->pc, ld->def[0], it->value);
       } else {
          if (ctx->alloc == LOAD_RECORD_POOL_SIZE)
             continue;
