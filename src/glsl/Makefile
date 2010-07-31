@@ -56,6 +56,7 @@ CXX_SOURCES = \
 	ir_print_visitor.cpp \
 	ir_reader.cpp \
 	ir_swizzle_swizzle.cpp \
+	ir_tree_grafting.cpp \
 	ir_validate.cpp \
 	ir_variable.cpp \
 	ir_variable_refcount.cpp \
