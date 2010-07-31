@@ -3,6 +3,7 @@
 #include "egllog.h"
 #include "eglmutex.h"
 #include "eglcurrent.h"
+#include "eglglobals.h"
 
 
 /* This should be kept in sync with _eglInitThreadInfo() */
