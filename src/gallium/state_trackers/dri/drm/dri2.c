@@ -351,7 +351,8 @@ dri2_allocate_textures(struct dri_drawable *drawable,
    unsigned num_buffers = count;
 
    buffers = dri2_drawable_get_buffers(drawable, statts, &num_buffers);
-   dri2_drawable_process_buffers(drawable, buffers, num_buffers);
+   if (buffers)
+      dri2_drawable_process_buffers(drawable, buffers, num_buffers);
 }
 
 static void
