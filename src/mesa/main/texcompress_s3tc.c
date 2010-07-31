@@ -36,7 +36,6 @@
 #include "glheader.h"
 #include "imports.h"
 #include "colormac.h"
-#include "context.h"
 #include "convolve.h"
 #include "dlopen.h"
 #include "image.h"
