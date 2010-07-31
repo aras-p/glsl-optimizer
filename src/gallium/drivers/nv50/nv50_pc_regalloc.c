@@ -20,19 +20,6 @@
  * SOFTWARE.
  */
 
-/*
- * XXX: phi function live intervals start at first ordinary instruction,
- *      add_range should be taking care of that already ...
- *
- * XXX: TEX must choose TEX's def as representative
- *
- * XXX: Aieee! Must materialize MOVs if source is in other basic block!
- *       -- absolutely, or we cannot execute the MOV conditionally at all
- * XXX: Aieee! Must include PHIs in LVA so we pull through liveness if
- *      PHI source is e.g. in dominator block.
- *       -- seems we lose liveness somehow, track that
- */
-
 #include "nv50_context.h"
 #include "nv50_pc.h"
 
@@ -143,7 +130,6 @@ add_range(struct nv_value *val, struct nv_basic_block *b, int end)
    bgn = val->insn->serial;
    if (bgn < b->entry->serial || bgn > b->exit->serial)
       bgn = b->entry->serial;
-   // debug_printf("add_range(value %i): [%i, %i)\n", val->n, bgn, end);
 
    if (bgn > end) {
       debug_printf("Aieee! BLOCK [%i, %i], RANGE [%i, %i)\n",
@@ -391,25 +377,45 @@ try_join_values(struct nv_pc_pass *ctx, struct nv_value *a, struct nv_value *b)
    do_join_values(ctx, a, b);
 }
 
-/* For each operand of each phi in b, generate a new value by inserting a MOV
- * at the end of the block it is coming from and replace the operand with it.
- * This eliminates liveness conflicts.
+/* For phi functions with sources from blocks that are not direct predecessors,
+ * if such a source is to be used in an earlier predecessor, we need to add an
+ * additional phi function. Used when inserting the MOVs below.
+ */
+static struct nv_value *
+propagate_phi(struct nv_pc *pc, struct nv_instruction *phi, int s)
+{
+   struct nv_basic_block *b = pc->current_block;
+   struct nv_value *val = phi->src[s]->value;
+   struct nv_instruction *nvi = new_instruction(pc, NV_OP_PHI);
+   int i, k;
+
+   (nvi->def[0] = new_value(pc, val->reg.file, val->reg.type))->insn = nvi;
+
+   for (k = 0, i = 0; i < 4 && phi->src[i]; ++i) {
+      if (bb_reachable_by(b, phi->src[i]->value->insn->bb, b))
+         nvi->src[k++] = new_ref(pc, phi->src[i]->value);
+   }
+   return nvi->def[0];
+}
+
+/* For IF blocks without ELSE blocks, insert an empty block for the MOVs.
+ * Insert additional PHIs for cases where a direct MOV wouldn't be valid.
  */
 static int
-pass_generate_phi_movs(struct nv_pc_pass *ctx, struct nv_basic_block *b)
+pass_generate_phi_movs_1(struct nv_pc_pass *ctx, struct nv_basic_block *b)
 {
-   struct nv_instruction *i, *i2;
-   struct nv_basic_block *p, *pn;
+   struct nv_instruction *i, *ni;
    struct nv_value *val;
+   struct nv_basic_block *p, *pn;
    int n, j;
 
    b->pass_seq = ctx->pc->pass_seq;
 
    for (n = 0; n < b->num_in; ++n) {
-      p = b->in[n];
+      p = pn = b->in[n];
       assert(p);
 
-      if (b->num_in > 1 && p->out[0] && p->out[1]) { /* if without else */
+      if (b->num_in > 1 && p->out[0] && p->out[1]) {
          pn = new_basic_block(ctx->pc);
 
          if (p->out[0] == b)
@@ -426,56 +432,97 @@ pass_generate_phi_movs(struct nv_pc_pass *ctx, struct nv_basic_block *b)
                break;
             }
          }
-
          pn->out[0] = b;
          pn->in[0] = p;
          pn->num_in = 1;
-      } else
-         pn = p;
+      }
 
       ctx->pc->current_block = pn;
 
-      /* every block with PHIs will also have other operations */
       for (i = b->phi; i && i->opcode == NV_OP_PHI; i = i->next) {
-         for (j = 0; j < 4; ++j) {
-            if (!i->src[j])
-               j = 3;
-            else
+         for (j = 0; j < 4 && i->src[j]; ++j) {
             if (bb_reachable_by(pn, i->src[j]->value->insn->bb, b))
                break;
          }
-         if (j >= 4)
+         if (j >= 4 || !i->src[j])
             continue;
-         assert(i->src[j]);
          val = i->src[j]->value;
 
-         /* XXX: should probably not insert this after terminator */
-         i2 = new_instruction(ctx->pc, NV_OP_MOV);
-
-         i2->def[0] = new_value(ctx->pc, val->reg.file, val->reg.type);
-         i2->src[0] = new_ref  (ctx->pc, val);
-         i2->def[0]->insn = i2;
-
-         nv_reference(ctx->pc, &i->src[j], i2->def[0]);
+         if (!nvbb_dominated_by(pn, val->insn->bb))
+            nv_reference(ctx->pc, &i->src[j], propagate_phi(ctx->pc, i, j));
       }
       if (pn != p && pn->exit) {
-         /* XXX: this branch should probably be eliminated */
          ctx->pc->current_block = b->in[n ? 0 : 1];
-         i2 = new_instruction(ctx->pc, NV_OP_BRA);
-         i2->target = b;
-         i2->is_terminator = 1;
+         ni = new_instruction(ctx->pc, NV_OP_BRA);
+         ni->target = b;
+         ni->is_terminator = 1;
       }
    }
 
-   if (b->out[0] && b->out[0]->pass_seq < ctx->pc->pass_seq) {
-      pass_generate_phi_movs(ctx, b->out[0]);
-   }
-
-   if (b->out[1] && b->out[1]->pass_seq < ctx->pc->pass_seq) {
-      pass_generate_phi_movs(ctx, b->out[1]);
-   }
+   for (j = 0; j < 2; ++j)
+      if (b->out[j] && b->out[j]->pass_seq < ctx->pc->pass_seq)
+         pass_generate_phi_movs_1(ctx, b->out[j]);
 
    return 0;
+}
+
+/* Now everything should be in order and we can insert the MOVs. */
+static int
+pass_generate_phi_movs_2(struct nv_pc_pass *ctx, struct nv_basic_block *b)
+{
+   struct nv_instruction *i, *mov;
+   struct nv_value *val;
+   struct nv_basic_block *p;
+   int n, j;
+
+   b->pass_seq = ctx->pc->pass_seq;
+
+   for (n = 0; n < b->num_in; ++n) {
+      ctx->pc->current_block = p = b->in[n];
+
+      for (i = b->phi; i && i->opcode == NV_OP_PHI; i = i->next) {
+         for (j = 0; j < 4 && i->src[j]; ++j) {
+            if (bb_reachable_by(p, i->src[j]->value->insn->bb, b))
+               break;
+         }
+         if (j >= 4 || !i->src[j])
+            continue;
+         val = i->src[j]->value;
+
+         mov = new_instruction(ctx->pc, NV_OP_MOV);
+
+         /* TODO: insert instruction at correct position in the first place */
+         if (mov->prev && mov->prev->target)
+            nv_nvi_permute(mov->prev, mov);
+
+         mov->def[0] = new_value(ctx->pc, val->reg.file, val->reg.type);
+         mov->def[0]->insn = mov;
+         mov->src[0] = new_ref(ctx->pc, val);
+
+         nv_reference(ctx->pc, &i->src[j], mov->def[0]);
+      }
+   }
+
+   for (j = 1; j >= 0; --j) /* different order for the sake of diversity */
+      if (b->out[j] && b->out[j]->pass_seq < ctx->pc->pass_seq)
+         pass_generate_phi_movs_2(ctx, b->out[j]);
+
+   return 0;
+}
+
+/* For each operand of each PHI in b, generate a new value by inserting a MOV
+ * at the end of the block it is coming from and replace the operand with its
+ * result. This eliminates liveness conflicts and enables us to let values be
+ * copied to the right register if such a conflict exists nonetheless.
+ */
+static INLINE int
+pass_generate_phi_movs(struct nv_pc_pass *ctx, struct nv_basic_block *b)
+{
+   if (pass_generate_phi_movs_1(ctx, b))
+      return 1;
+
+   ++ctx->pc->pass_seq;
+   return pass_generate_phi_movs_2(ctx, b);
 }
 
 static int
@@ -525,6 +572,7 @@ pass_join_values(struct nv_pc_pass *ctx, int iter)
    return 0;
 }
 
+/* Order the instructions so that live intervals can be expressed in numbers. */
 static int
 pass_order_instructions(struct nv_pc_pass *ctx, struct nv_basic_block *b)
 {
@@ -560,7 +608,7 @@ bb_live_set_print(struct nv_pc *pc, struct nv_basic_block *b)
    int j;
    struct nv_value *val;
 
-   debug_printf("live_set of %p: ", b);
+   debug_printf("LIVE-INs of BB:%i: ", b->id);
 
    for (j = 0; j < pc->num_values; ++j) {
       if (!(b->live_set[j / 32] & (1 << (j % 32))))
@@ -579,16 +627,12 @@ live_set_add(struct nv_basic_block *b, struct nv_value *val)
 {
    if (!val->insn) /* don't add non-def values */
       return;
-   /* debug_printf("live[%p] <- %i\n", b, val->n); */
-
    b->live_set[val->n / 32] |= 1 << (val->n % 32);
 }
 
 static INLINE void
 live_set_rem(struct nv_basic_block *b, struct nv_value *val)
 {
-   /* if (val->insn)
-      debug_printf("live[%p] -> %i\n", b, val->n); */
    b->live_set[val->n / 32] &= ~(1 << (val->n % 32));
 }
 
@@ -600,13 +644,21 @@ live_set_test(struct nv_basic_block *b, struct nv_ref *ref)
 }
 
 /* The live set of a block contains those values that are live immediately
- * before the beginning of the block.
+ * before the beginning of the block, so do a backwards scan.
  */
 static int
 pass_build_live_sets(struct nv_pc_pass *ctx, struct nv_basic_block *b)
 {
    struct nv_instruction *i;
    int j, n, ret = 0;
+
+   debug_printf("pass_build_live_sets BB:%i\n", b->id);
+
+   if (b->pass_seq >= ctx->pc->pass_seq) {
+      debug_printf("already visited\n");
+      return 0;
+   }
+   b->pass_seq = ctx->pc->pass_seq;
 
    /* slight hack for undecidedness: set phi = entry if it's undefined */
    if (!b->phi)
@@ -638,23 +690,18 @@ pass_build_live_sets(struct nv_pc_pass *ctx, struct nv_basic_block *b)
 
             if (bb_reachable_by(b, i->src[j]->value->insn->bb, b->out[n])) {
                live_set_add(b, i->src[j]->value);
-               debug_printf("%p: live set + %i\n", b, i->src[j]->value->n);
+               debug_printf("BB:%i liveset + %i\n", b->id, i->src[j]->value->n);
             } else {
                live_set_rem(b, i->src[j]->value);
-               debug_printf("%p: live set - %i\n", b, i->src[j]->value->n);
+               debug_printf("BB:%i liveset - %i\n", b->id, i->src[j]->value->n);
             }
          }
       }
    }
 
-   if (b->pass_seq >= ctx->pc->pass_seq)
-      return 0;
-   b->pass_seq = ctx->pc->pass_seq;
-
-   debug_printf("%s: visiting block %p\n", __FUNCTION__, b);
-
    if (!b->entry)
       return 0;
+
    bb_live_set_print(ctx->pc, b);
 
    for (i = b->exit; i; i = i->prev) {
@@ -785,8 +832,6 @@ pass_build_intervals(struct nv_pc_pass *ctx, struct nv_basic_block *b)
 
    if (b->out[1] && b->out[1]->pass_seq < ctx->pc->pass_seq)
       pass_build_intervals(ctx, b->out[1]);
-
-   debug_printf("built intervals for block %p\n", b);
 
    return 0;
 }

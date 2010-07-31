@@ -815,6 +815,7 @@ nv_pc_exec_pass0(struct nv_pc *pc)
    struct nv_pass_dce dce;
    int ret;
 
+   pass.n = 0;
    pass.pc = pc;
 
    pc->pass_seq++;

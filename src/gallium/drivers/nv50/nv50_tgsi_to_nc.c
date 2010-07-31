@@ -212,14 +212,10 @@ bld_imm_u32(struct bld_context *bld, uint32_t u)
    int i;
    unsigned n = bld->num_immds;
 
-   debug_printf("bld_imm_u32: 0x%08x\n", u);
-
    for (i = 0; i < n; ++i)
       if (bld->saved_immd[i]->reg.imm.u32 == u)
          return bld->saved_immd[i];
    assert(n < BLD_MAX_IMMDS);
-
-   debug_printf("need new one\n");
 
    bld->num_immds++;
 

@@ -464,3 +464,18 @@ void nvbb_attach_block(struct nv_basic_block *parent, struct nv_basic_block *b)
 
    b->in[b->num_in++] = parent;
 }
+
+int
+nvbb_dominated_by(struct nv_basic_block *b, struct nv_basic_block *d)
+{
+   int j, n;
+
+   if (b == d)
+      return 1;
+
+   n = 0;
+   for (j = 0; j < b->num_in; ++j)
+      n += nvbb_dominated_by(b->in[j], d);
+
+   return n && (n == b->num_in);
+}
