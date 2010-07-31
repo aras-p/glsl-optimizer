@@ -44,7 +44,7 @@ nv50_transfer_constbuf(struct nv50_context *nv50,
    if (!map)
       return;
 
-   count = MIN2(buf->width0, size);
+   count = buf->width0; /* MIN2(buf->width0, size); */
    start = 0;
 
    while (count) {
@@ -92,8 +92,13 @@ nv50_program_validate_data(struct nv50_context *nv50, struct nv50_program *p)
       }
    }
 
+   /* If the state tracker doesn't change the constbuf, and it is first
+    * validated with a program that doesn't use it, this check prevents
+    * it from even being uploaded. */
+   /*
    if (p->parm_size == 0)
       return;
+   */
 
    switch (p->type) {
    case PIPE_SHADER_VERTEX:
