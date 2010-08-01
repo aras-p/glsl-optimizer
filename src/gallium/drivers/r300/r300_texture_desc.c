@@ -136,13 +136,27 @@ static unsigned r300_texture_get_stride(struct r300_screen *screen,
 
         stride = util_format_get_stride(desc->b.b.format, width);
 
-        /* Some IGPs need a minimum stride of 64 bytes, hmm...
-         * This doesn't seem to apply to tiled textures, according to r300c. */
-        if (!desc->microtile && !desc->macrotile[level] &&
+        /* Some IGPs need a minimum stride of 64 bytes, hmm... */
+        if (!desc->macrotile[level] &&
             (screen->caps.family == CHIP_FAMILY_RS600 ||
              screen->caps.family == CHIP_FAMILY_RS690 ||
              screen->caps.family == CHIP_FAMILY_RS740)) {
-            return stride < 64 ? 64 : stride;
+            unsigned min_stride;
+
+            if (desc->microtile) {
+                unsigned tile_height =
+                        r300_get_pixel_alignment(desc->b.b.format,
+                                                 desc->b.b.nr_samples,
+                                                 desc->microtile,
+                                                 desc->macrotile[level],
+                                                 DIM_HEIGHT);
+
+                min_stride = 64 / tile_height;
+            } else {
+                min_stride = 64;
+            }
+
+            return stride < min_stride ? min_stride : stride;
         }
 
         /* The alignment to 32 bytes is sort of implied by the layout... */
