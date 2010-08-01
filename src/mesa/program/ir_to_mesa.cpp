@@ -2514,6 +2514,10 @@ _mesa_glsl_compile_shader(GLcontext *ctx, struct gl_shader *shader)
 	  sizeof(shader->builtins_to_link[0]) * state->num_builtins_to_link);
    shader->num_builtins_to_link = state->num_builtins_to_link;
 
+   if (ctx->Shader.Flags & GLSL_LOG) {
+      _mesa_write_shader_to_file(shader);
+   }
+
    /* Retain any live IR, but trash the rest. */
    reparent_ir(shader->ir, shader);
 
