@@ -214,7 +214,7 @@ src_register( struct st_translate *t,
       return ureg_src_undef();
 
    case PROGRAM_TEMPORARY:
-      ASSERT(index >= 0);
+      assert(index >= 0);
       if (ureg_dst_is_undef(t->temps[index]))
          t->temps[index] = ureg_DECL_temporary( t->ureg );
       assert(index < Elements(t->temps));
@@ -224,7 +224,7 @@ src_register( struct st_translate *t,
    case PROGRAM_ENV_PARAM:
    case PROGRAM_LOCAL_PARAM:
    case PROGRAM_UNIFORM:
-      ASSERT(index >= 0);
+      assert(index >= 0);
       return t->constants[index];
    case PROGRAM_STATE_VAR:
    case PROGRAM_CONSTANT:       /* ie, immediate */

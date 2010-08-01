@@ -36,7 +36,6 @@
 
 #include "main/glheader.h"
 #include "main/config.h"
-#include "main/compiler.h"
 #include "main/mfeatures.h"
 #include "glapi/glapi.h"
 #include "math/m_matrix.h"	/* GLmatrix */

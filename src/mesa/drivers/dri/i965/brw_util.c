@@ -30,6 +30,8 @@
   */
          
 
+#include <assert.h>
+
 #include "main/mtypes.h"
 #include "program/prog_parameter.h"
 #include "brw_util.h"
