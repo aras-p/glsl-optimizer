@@ -373,28 +373,14 @@ static void gs_tri_adj(struct draw_geometry_shader *shader,
    gs_flush(shader, 1);
 }
 
-#define TRIANGLE(gs,i0,i1,i2) gs_tri(gs,i0,i1,i2)
-#define TRI_ADJ(gs,i0,i1,i2,i3,i4,i5)  gs_tri_adj(gs,i0,i1,i2,i3,i4,i5)
-#define LINE(gs,i0,i1)        gs_line(gs,i0,i1)
-#define LINE_ADJ(gs,i0,i1,i2,i3)    gs_line_adj(gs,i0,i1,i2,i3)
-#define POINT(gs,i0)          gs_point(gs,i0)
-#define FUNC gs_run
-#define LOCAL_VARS
+#define FUNC         gs_run
+#define GET_ELT(idx) (idx)
 #include "draw_gs_tmp.h"
 
 
-#define TRIANGLE(gs,i0,i1,i2) gs_tri(gs,elts[i0],elts[i1],elts[i2])
-#define TRI_ADJ(gs,i0,i1,i2,i3,i4,i5)           \
-   gs_tri_adj(gs,elts[i0],elts[i1],elts[i2],elts[i3], \
-              elts[i4],elts[i5])
-#define LINE(gs,i0,i1)        gs_line(gs,elts[i0],elts[i1])
-#define LINE_ADJ(gs,i0,i1,i2,i3)  gs_line_adj(gs,elts[i0],      \
-                                              elts[i1],         \
-                                              elts[i2],elts[i3])
-#define POINT(gs,i0)          gs_point(gs,elts[i0])
-#define FUNC gs_run_elts
-#define LOCAL_VARS                         \
-   const ushort *elts = input_prims->elts;
+#define FUNC         gs_run_elts
+#define LOCAL_VARS   const ushort *elts = input_prims->elts;
+#define GET_ELT(idx) (elts[idx])
 #include "draw_gs_tmp.h"
 
 
