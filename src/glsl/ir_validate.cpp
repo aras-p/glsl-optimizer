@@ -171,8 +171,8 @@ ir_validate::visit_leave(ir_expression *ir)
       assert(ir->operands[0]->type == ir->type);
       break;
    case ir_unop_logic_not:
-      assert(ir->type == glsl_type::bool_type);
-      assert(ir->operands[0]->type == glsl_type::bool_type);
+      assert(ir->type->base_type == GLSL_TYPE_BOOL);
+      assert(ir->operands[0]->type->base_type == GLSL_TYPE_BOOL);
       break;
 
    case ir_unop_neg:
