@@ -408,6 +408,14 @@
 					>
 				</File>
 				<File
+					RelativePath="..\ir_variable_refcount.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\ir_variable_refcount.h"
+					>
+				</File>
+				<File
 					RelativePath="..\ir_vec_index_to_cond_assign.cpp"
 					>
 				</File>
