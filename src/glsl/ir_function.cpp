@@ -167,8 +167,16 @@ ir_function::matching_signature(const exec_list *actual_parameters)
       ir_function_signature *const sig =
 	 (ir_function_signature *) iter.get();
 
-      const int score = parameter_lists_match(& sig->parameters,
+      int score = parameter_lists_match(& sig->parameters,
 					      actual_parameters);
+
+	  // Make signature matching prefer signatures with definitions.
+	  // Just choosing the prototype will make inlining etc. not work.
+	  // So multiply score by two and add 1 if this is a signature without
+	  // a definition.
+	  score *= 2;
+	  if (!sig->is_defined && score >= 0)
+		  score += 1;
 
       if (score == 0)
 	 return sig;
