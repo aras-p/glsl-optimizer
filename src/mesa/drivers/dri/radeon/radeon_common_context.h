@@ -614,5 +614,6 @@ GLboolean radeonMakeCurrent(__DRIcontext * driContextPriv,
 			    __DRIdrawable * driDrawPriv,
 			    __DRIdrawable * driReadPriv);
 extern void radeonDestroyContext(__DRIcontext * driContextPriv);
+void radeon_prepare_render(radeonContextPtr radeon);
 
 #endif

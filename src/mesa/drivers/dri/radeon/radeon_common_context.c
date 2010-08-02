@@ -493,6 +493,50 @@ radeon_bits_per_pixel(const struct radeon_renderbuffer *rb)
    return _mesa_get_format_bytes(rb->base.Format) * 8; 
 }
 
+/*
+ * Check if drawable has been invalidated by dri2InvalidateDrawable().
+ * Update renderbuffers if so. This prevents a client from accessing
+ * a backbuffer that has a swap pending but not yet completed.
+ *
+ * See intel_prepare_render for equivalent code in intel driver.
+ *
+ */
+void radeon_prepare_render(radeonContextPtr radeon)
+{
+    __DRIcontext *driContext = radeon->dri.context;
+    __DRIdrawable *drawable;
+    __DRIscreen *screen;
+
+    screen = driContext->driScreenPriv;
+    if (!screen->dri2.loader)
+        return;
+
+    drawable = driContext->driDrawablePriv;
+    if (drawable->dri2.stamp != driContext->dri2.draw_stamp) {
+	if (drawable->lastStamp != drawable->dri2.stamp)
+	    radeon_update_renderbuffers(driContext, drawable, GL_FALSE);
+
+	/* Intel driver does the equivalent of this, no clue if it is needed:
+	 * radeon_draw_buffer(radeon->glCtx, &(drawable->driverPrivate)->base);
+	 */
+	driContext->dri2.draw_stamp = drawable->dri2.stamp;
+    }
+
+    drawable = driContext->driReadablePriv;
+    if (drawable->dri2.stamp != driContext->dri2.read_stamp) {
+	if (drawable->lastStamp != drawable->dri2.stamp)
+	    radeon_update_renderbuffers(driContext, drawable, GL_FALSE);
+	driContext->dri2.read_stamp = drawable->dri2.stamp;
+    }
+
+    /* If we're currently rendering to the front buffer, the rendering
+     * that will happen next will probably dirty the front buffer.  So
+     * mark it as dirty here.
+     */
+    if (radeon->is_front_buffer_rendering)
+	radeon->front_buffer_dirty = GL_TRUE;
+}
+
 void
 radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable,
 			    GLboolean front_only)
@@ -513,6 +557,11 @@ radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable,
 	draw = drawable->driverPrivate;
 	screen = context->driScreenPriv;
 	radeon = (radeonContextPtr) context->driverPrivate;
+
+	/* Set this up front, so that in case our buffers get invalidated
+	 * while we're getting new buffers, we don't clobber the stamp and
+	 * thus ignore the invalidate. */
+	drawable->lastStamp = drawable->dri2.stamp;
 
 	if (screen->dri2.loader
 	   && (screen->dri2.loader->base.version > 2)
