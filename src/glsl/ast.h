@@ -464,6 +464,8 @@ public:
 
 class ast_parameter_declarator : public ast_node {
 public:
+   ast_parameter_declarator () : is_array(false), array_size(0) { }
+
    virtual void print(void) const;
 
    virtual ir_rvalue *hir(exec_list *instructions,
