@@ -139,7 +139,7 @@ ir_validate::visit_enter(ir_function *ir)
 ir_visitor_status
 ir_validate::visit_leave(ir_function *ir)
 {
-   (void) ir;
+   assert(talloc_parent(ir->name) == ir);
 
    this->current_function = NULL;
    return visit_continue;
@@ -313,6 +313,8 @@ ir_validate::visit(ir_variable *ir)
     * in the ir_dereference_variable handler to ensure that a variable is
     * declared before it is dereferenced.
     */
+   assert(talloc_parent(ir->name) == ir);
+
    hash_table_insert(ht, ir, ir);
    return visit_continue;
 }
