@@ -24,17 +24,16 @@
 /**
  * \file ir_if_return.cpp
  *
- * If a function includes an if statement that returns from both
- * branches, then make the branches write the return val to a temp and
- * return the temp after the if statement.
+ * This pass tries to normalize functions to always return from one
+ * place by moving around blocks of code in if statements.
  *
- * This allows inlinining in the common case of short functions that
- * return one of two values based on a condition.  This helps on
- * hardware with no branching support, and may even be a useful
- * transform on hardware supporting control flow by masked returns
- * with normal returns.
+ * This helps on hardware with no branching support, and may even be a
+ * useful transform on hardware supporting control flow by turning
+ * masked returns into normal returns.
  */
 
+#include <string.h>
+#include "glsl_types.h"
 #include "ir.h"
 
 class ir_if_return_visitor : public ir_hierarchical_visitor {
@@ -44,8 +43,14 @@ public:
       this->progress = false;
    }
 
-   ir_visitor_status visit_enter(ir_if *);
+   ir_visitor_status visit_enter(ir_function_signature *);
+   ir_visitor_status visit_leave(ir_if *);
 
+   ir_visitor_status move_outer_block_inside(ir_instruction *ir,
+					     exec_list *inner_block);
+   void move_returns_after_block(ir_instruction *ir,
+				 ir_return *then_return,
+				 ir_return *else_return);
    bool progress;
 };
 
@@ -54,46 +59,48 @@ do_if_return(exec_list *instructions)
 {
    ir_if_return_visitor v;
 
-   visit_list_elements(&v, instructions);
+   do {
+      v.progress = false;
+      visit_list_elements(&v, instructions);
+   } while (v.progress);
 
    return v.progress;
 }
 
-
-ir_visitor_status
-ir_if_return_visitor::visit_enter(ir_if *ir)
+/**
+ * Removes any instructions after a (unconditional) return, since they will
+ * never be executed.
+ */
+static void
+truncate_after_instruction(ir_instruction *ir)
 {
-   ir_return *then_return = NULL;
-   ir_return *else_return = NULL;
+   if (!ir)
+      return;
 
-   /* Try to find a return statement on both sides. */
-   foreach_iter(exec_list_iterator, then_iter, ir->then_instructions) {
-      ir_instruction *then_ir = (ir_instruction *)then_iter.get();
-      then_return = then_ir->as_return();
-      if (then_return)
-	 break;
+   while (!ir->get_next()->is_tail_sentinel())
+      ((ir_instruction *)ir->get_next())->remove();
+}
+
+/**
+ * Returns an ir_instruction of the first ir_return in the exec_list, or NULL.
+ */
+static ir_return *
+find_return_in_block(exec_list *instructions)
+{
+   foreach_iter(exec_list_iterator, iter, *instructions) {
+      ir_instruction *ir = (ir_instruction *)iter.get();
+      if (ir->ir_type == ir_type_return)
+	 return (ir_return *)ir;
    }
-   if (!then_return)
-      return visit_continue;
 
-   foreach_iter(exec_list_iterator, else_iter, ir->else_instructions) {
-      ir_instruction *else_ir = (ir_instruction *)else_iter.get();
-      else_return = else_ir->as_return();
-      if (else_return)
-	 break;
-   }
-   if (!else_return)
-      return visit_continue;
+   return NULL;
+}
 
-   /* Trim off any trailing instructions after the return statements
-    * on both sides.
-    */
-   while (then_return->get_next()->get_next())
-      ((ir_instruction *)then_return->get_next())->remove();
-   while (else_return->get_next()->get_next())
-      ((ir_instruction *)else_return->get_next())->remove();
-
-   this->progress = true;
+void
+ir_if_return_visitor::move_returns_after_block(ir_instruction *ir,
+					       ir_return *then_return,
+					       ir_return *else_return)
+{
 
    if (!then_return->value) {
       then_return->remove();
@@ -117,6 +124,123 @@ ir_if_return_visitor::visit_enter(ir_if *ir)
       ir_dereference_variable *deref = new(ir) ir_dereference_variable(new_var);
       ir->insert_after(new(ir) ir_return(deref));
    }
+   this->progress = true;
+}
+
+ir_visitor_status
+ir_if_return_visitor::move_outer_block_inside(ir_instruction *ir,
+					      exec_list *inner_block)
+{
+   if (!ir->get_next()->is_tail_sentinel()) {
+      while (!ir->get_next()->is_tail_sentinel()) {
+	 ir_instruction *move_ir = (ir_instruction *)ir->get_next();
+
+	 move_ir->remove();
+	 inner_block->push_tail(move_ir);
+      }
+
+      /* If we move the instructions following ir inside the block, it
+       * will confuse the exec_list iteration in the parent that visited
+       * us.  So stop the visit at this point.
+       */
+      return visit_stop;
+   } else {
+      return visit_continue;
+   }
+}
+
+/* Normalize a function to always have a return statement at the end.
+ *
+ * This avoids the ir_if handler needing to know whether it is at the
+ * top level of the function to know if there's an implicit return at
+ * the end of the outer block.
+ */
+ir_visitor_status
+ir_if_return_visitor::visit_enter(ir_function_signature *ir)
+{
+   ir_return *ret;
+
+   if (!ir->is_defined)
+      return visit_continue_with_parent;
+   if (strcmp(ir->function_name(), "main") == 0)
+      return visit_continue_with_parent;
+
+   ret = find_return_in_block(&ir->body);
+
+   if (ret) {
+      truncate_after_instruction(ret);
+   } else {
+      if (ir->return_type->is_void()) {
+	 ir->body.push_tail(new(ir) ir_return(NULL));
+      } else {
+	 /* Probably, if we've got a function with a return value
+	  * hitting this point, it's something like:
+	  *
+	  * float reduce_below_half(float val)
+	  * {
+	  *         while () {
+	  *                 if (val >= 0.5)
+	  *                         val /= 2.0;
+	  *                 else
+	  *                         return val;
+	  *         }
+	  * }
+	  *
+	  * So we gain a junk return statement of an undefined value
+	  * at the end that never gets executed.  However, a backend
+	  * using this pass is probably desperate to get rid of
+	  * function calls, so go ahead and do it for their sake in
+	  * case it fixes apps.
+	  */
+	 ir_variable *undef = new(ir) ir_variable(ir->return_type,
+						  "if_return_undef",
+						  ir_var_temporary);
+	 ir->body.push_tail(undef);
+
+	 ir_dereference_variable *deref = new(ir) ir_dereference_variable(undef);
+	 ir->body.push_tail(new(ir) ir_return(deref));
+      }
+   }
 
    return visit_continue;
+}
+
+ir_visitor_status
+ir_if_return_visitor::visit_leave(ir_if *ir)
+{
+   ir_return *then_return;
+   ir_return *else_return;
+
+   then_return = find_return_in_block(&ir->then_instructions);
+   else_return = find_return_in_block(&ir->else_instructions);
+   if (!then_return && !else_return)
+      return visit_continue;
+
+   /* Trim off any trailing instructions after the return statements
+    * on both sides.
+    */
+   truncate_after_instruction(then_return);
+   truncate_after_instruction(else_return);
+
+   /* If both sides return, then we can move the returns to a single
+    * one outside the if statement.
+    */
+   if (then_return && else_return) {
+      move_returns_after_block(ir, then_return, else_return);
+      return visit_continue;
+   }
+
+   /* If only one side returns, then the block of code after the "if"
+    * is only executed by the other side, so those instructions don't
+    * need to be anywhere but that other side.
+    *
+    * This will usually pull a return statement up into the other
+    * side, so we'll trigger the above case on the next pass.
+    */
+   if (then_return) {
+      return move_outer_block_inside(ir, &ir->else_instructions);
+   } else {
+      assert(else_return);
+      return move_outer_block_inside(ir, &ir->then_instructions);
+   }
 }

@@ -2350,8 +2350,15 @@ get_mesa_program(GLcontext *ctx, struct gl_shader_program *shader_program,
 
 	    visit_exec_list(&entry->sig->body, &v);
 
-	    entry->bgn_inst = v.ir_to_mesa_emit_op0(NULL, OPCODE_RET);
-	    entry->bgn_inst = v.ir_to_mesa_emit_op0(NULL, OPCODE_ENDSUB);
+	    ir_to_mesa_instruction *last;
+	    last = (ir_to_mesa_instruction *)v.instructions.get_tail();
+	    if (last->op != OPCODE_RET)
+	       v.ir_to_mesa_emit_op0(NULL, OPCODE_RET);
+
+	    ir_to_mesa_instruction *end;
+	    end = v.ir_to_mesa_emit_op0(NULL, OPCODE_ENDSUB);
+	    end->function = entry;
+
 	    progress = GL_TRUE;
 	 }
       }
@@ -2397,12 +2404,23 @@ get_mesa_program(GLcontext *ctx, struct gl_shader_program *shader_program,
 	 shader_program->LinkStatus = false;
       }
 
-      if (mesa_inst->Opcode == OPCODE_BGNSUB)
+      switch (mesa_inst->Opcode) {
+      case OPCODE_BGNSUB:
 	 inst->function->inst = i;
-      else if (mesa_inst->Opcode == OPCODE_CAL)
+	 mesa_inst->Comment = strdup(inst->function->sig->function_name());
+	 break;
+      case OPCODE_ENDSUB:
+	 mesa_inst->Comment = strdup(inst->function->sig->function_name());
+	 break;
+      case OPCODE_CAL:
 	 mesa_inst->BranchTarget = inst->function->sig_id; /* rewritten later */
-      else if (mesa_inst->Opcode == OPCODE_ARL)
+	 break;
+      case OPCODE_ARL:
 	 prog->NumAddressRegs = 1;
+	 break;
+      default:
+	 break;
+      }
 
       mesa_inst++;
       i++;
@@ -2467,6 +2485,7 @@ _mesa_glsl_compile_shader(GLcontext *ctx, struct gl_shader *shader)
 	 progress = do_copy_propagation(shader->ir) || progress;
 	 progress = do_dead_code_local(shader->ir) || progress;
 	 progress = do_dead_code_unlinked(shader->ir) || progress;
+	 progress = do_tree_grafting(shader->ir) || progress;
 	 progress = do_constant_variable_unlinked(shader->ir) || progress;
 	 progress = do_constant_folding(shader->ir) || progress;
 	 progress = do_algebraic(shader->ir) || progress;
@@ -2494,6 +2513,10 @@ _mesa_glsl_compile_shader(GLcontext *ctx, struct gl_shader *shader)
    memcpy(shader->builtins_to_link, state->builtins_to_link,
 	  sizeof(shader->builtins_to_link[0]) * state->num_builtins_to_link);
    shader->num_builtins_to_link = state->num_builtins_to_link;
+
+   if (ctx->Shader.Flags & GLSL_LOG) {
+      _mesa_write_shader_to_file(shader);
+   }
 
    /* Retain any live IR, but trash the rest. */
    reparent_ir(shader->ir, shader);

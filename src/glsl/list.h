@@ -25,28 +25,28 @@
  * \file list.h
  * \brief Doubly-linked list abstract container type.
  *
- * Each doubly-linked list has a sentinal head and tail node.  These nodes
- * contain no data.  The head sentinal can be identified by its \c prev
- * pointer being \c NULL.  The tail sentinal can be identified by its
+ * Each doubly-linked list has a sentinel head and tail node.  These nodes
+ * contain no data.  The head sentinel can be identified by its \c prev
+ * pointer being \c NULL.  The tail sentinel can be identified by its
  * \c next pointer being \c NULL.
  *
- * A list is empty if either the head sentinal's \c next pointer points to the
- * tail sentinal or the tail sentinal's \c prev poiner points to the head
- * sentinal.
+ * A list is empty if either the head sentinel's \c next pointer points to the
+ * tail sentinel or the tail sentinel's \c prev poiner points to the head
+ * sentinel.
  *
  * Instead of tracking two separate \c node structures and a \c list structure
- * that points to them, the sentinal nodes are in a single structure.  Noting
- * that each sentinal node always has one \c NULL pointer, the \c NULL
+ * that points to them, the sentinel nodes are in a single structure.  Noting
+ * that each sentinel node always has one \c NULL pointer, the \c NULL
  * pointers occupy the same memory location.  In the \c list structure
  * contains a the following:
  *
  *   - A \c head pointer that represents the \c next pointer of the
- *     head sentinal node.
+ *     head sentinel node.
  *   - A \c tail pointer that represents the \c prev pointer of the head
- *     sentinal node and the \c next pointer of the tail sentinal node.  This
+ *     sentinel node and the \c next pointer of the tail sentinel node.  This
  *     pointer is \b always \c NULL.
  *   - A \c tail_prev pointer that represents the \c prev pointer of the
- *     tail sentinal node.
+ *     tail sentinel node.
  *
  * Therefore, if \c head->next is \c NULL or \c tail_prev->prev is \c NULL,
  * the list is empty.
@@ -178,17 +178,17 @@ struct exec_node {
    }
 
    /**
-    * Is this the sentinal at the tail of the list?
+    * Is this the sentinel at the tail of the list?
     */
-   bool is_tail_sentinal() const
+   bool is_tail_sentinel() const
    {
       return this->next == NULL;
    }
 
    /**
-    * Is this the sentinal at the head of the list?
+    * Is this the sentinel at the head of the list?
     */
-   bool is_head_sentinal() const
+   bool is_head_sentinel() const
    {
       return this->prev == NULL;
    }
@@ -320,7 +320,7 @@ struct exec_list {
        *
        * - Check to see if the \c head points to the \c tail.
        * - Check to see if the \c tail_pred points to the \c head.
-       * - Check to see if the \c head is the sentinal node by test whether its
+       * - Check to see if the \c head is the sentinel node by test whether its
        *   \c next pointer is \c NULL.
        *
        * The first two methods tend to generate better code on modern systems

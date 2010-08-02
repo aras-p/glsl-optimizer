@@ -38,15 +38,16 @@ extern void _mesa_print_ir(exec_list *instructions,
 class ir_print_visitor : public ir_visitor {
 public:
    ir_print_visitor()
-      : deref_depth(0)
    {
-      /* empty */
+      indentation = 0;
    }
 
    virtual ~ir_print_visitor()
    {
       /* empty */
    }
+
+   void indent(void);
 
    /**
     * \name Visit methods
@@ -76,7 +77,7 @@ public:
    /*@}*/
 
 private:
-   int deref_depth;
+   int indentation;
 };
 
 #endif /* IR_PRINT_VISITOR_H */

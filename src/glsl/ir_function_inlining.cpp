@@ -96,7 +96,8 @@ replace_return_with_assignment(ir_instruction *ir, void *data)
 	 /* un-valued return has to be the last return, or we shouldn't
 	  * have reached here. (see can_inline()).
 	  */
-	 assert(!ret->next->is_tail_sentinal());
+	 assert(!ret->next->is_tail_sentinel());
+	 ret->remove();
       }
    }
 }

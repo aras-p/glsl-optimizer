@@ -164,6 +164,8 @@ public:
        */
       linked_sig->accept(this);
 
+      ir->set_callee(linked_sig);
+
       return visit_continue;
    }
 

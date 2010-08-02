@@ -29,117 +29,8 @@
 
 #include "ir.h"
 #include "ir_visitor.h"
-#include "ir_expression_flattening.h"
+#include "ir_variable_refcount.h"
 #include "glsl_types.h"
-
-class variable_entry : public exec_node
-{
-public:
-   variable_entry(ir_variable *var)
-   {
-      this->var = var;
-      assign = NULL;
-      referenced_count = 0;
-      assigned_count = 0;
-      declaration = false;
-   }
-
-   ir_variable *var; /* The key: the variable's pointer. */
-   ir_assignment *assign; /* An assignment to the variable, if any */
-
-   /** Number of times the variable is referenced, including assignments. */
-   unsigned referenced_count;
-
-   /** Number of times the variable is assignmened. */
-   unsigned assigned_count;
-
-   bool declaration; /* If the variable had a decl in the instruction stream */
-};
-
-class ir_dead_code_visitor : public ir_hierarchical_visitor {
-public:
-   virtual ir_visitor_status visit(ir_variable *);
-   virtual ir_visitor_status visit(ir_dereference_variable *);
-
-   virtual ir_visitor_status visit_enter(ir_function_signature *);
-   virtual ir_visitor_status visit_leave(ir_assignment *);
-
-   variable_entry *get_variable_entry(ir_variable *var);
-
-   bool (*predicate)(ir_instruction *ir);
-
-   /* List of variable_entry */
-   exec_list variable_list;
-
-   void *mem_ctx;
-};
-
-
-variable_entry *
-ir_dead_code_visitor::get_variable_entry(ir_variable *var)
-{
-   assert(var);
-   foreach_iter(exec_list_iterator, iter, this->variable_list) {
-      variable_entry *entry = (variable_entry *)iter.get();
-      if (entry->var == var)
-	 return entry;
-   }
-
-   variable_entry *entry = new(mem_ctx) variable_entry(var);
-   this->variable_list.push_tail(entry);
-   return entry;
-}
-
-
-ir_visitor_status
-ir_dead_code_visitor::visit(ir_variable *ir)
-{
-   variable_entry *entry = this->get_variable_entry(ir);
-   if (entry)
-      entry->declaration = true;
-
-   return visit_continue;
-}
-
-
-ir_visitor_status
-ir_dead_code_visitor::visit(ir_dereference_variable *ir)
-{
-   ir_variable *const var = ir->variable_referenced();
-   variable_entry *entry = this->get_variable_entry(var);
-
-   if (entry)
-      entry->referenced_count++;
-
-   return visit_continue;
-}
-
-
-ir_visitor_status
-ir_dead_code_visitor::visit_enter(ir_function_signature *ir)
-{
-   /* We don't want to descend into the function parameters and
-    * dead-code eliminate them, so just accept the body here.
-    */
-   visit_list_elements(this, &ir->body);
-   return visit_continue_with_parent;
-}
-
-
-ir_visitor_status
-ir_dead_code_visitor::visit_leave(ir_assignment *ir)
-{
-   variable_entry *entry;
-   entry = this->get_variable_entry(ir->lhs->variable_referenced());
-   if (entry) {
-      entry->assigned_count++;
-      if (entry->assign == NULL)
-	 entry->assign = ir;
-   }
-
-   return visit_continue;
-}
-
 
 /**
  * Do a dead code pass over instructions and everything that instructions
@@ -151,10 +42,9 @@ ir_dead_code_visitor::visit_leave(ir_assignment *ir)
 bool
 do_dead_code(exec_list *instructions)
 {
-   ir_dead_code_visitor v;
+   ir_variable_refcount_visitor v;
    bool progress = false;
 
-   v.mem_ctx = talloc_new(NULL);
    v.run(instructions);
 
    foreach_iter(exec_list_iterator, iter, v.variable_list) {

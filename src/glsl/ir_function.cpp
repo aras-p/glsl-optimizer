@@ -94,13 +94,13 @@ parameter_lists_match(const exec_list *list_a, const exec_list *list_b)
    int total_score = 0;
 
    for (/* empty */
-	; !node_a->is_tail_sentinal()
+	; !node_a->is_tail_sentinel()
 	; node_a = node_a->next, node_b = node_b->next) {
       /* If all of the parameters from the other parameter list have been
        * exhausted, the lists have different length and, by definition,
        * do not match.
        */
-      if (node_b->is_tail_sentinal())
+      if (node_b->is_tail_sentinel())
 	 return -1;
 
 
@@ -151,7 +151,7 @@ parameter_lists_match(const exec_list *list_a, const exec_list *list_b)
     * exhausted, the lists have different length and, by definition, do not
     * match.
     */
-   if (!node_b->is_tail_sentinal())
+   if (!node_b->is_tail_sentinel())
       return -1;
 
    return total_score;
@@ -192,7 +192,7 @@ parameter_lists_match_exact(const exec_list *list_a, const exec_list *list_b)
    const exec_node *node_b = list_b->head;
 
    for (/* empty */
-	; !node_a->is_tail_sentinal() && !node_b->is_tail_sentinal()
+	; !node_a->is_tail_sentinel() && !node_b->is_tail_sentinel()
 	; node_a = node_a->next, node_b = node_b->next) {
       ir_variable *a = (ir_variable *) node_a;
       ir_variable *b = (ir_variable *) node_b;
@@ -207,7 +207,7 @@ parameter_lists_match_exact(const exec_list *list_a, const exec_list *list_b)
    /* Unless both lists are exhausted, they differ in length and, by
     * definition, do not match.
     */
-   return (node_a->is_tail_sentinal() == node_b->is_tail_sentinal());
+   return (node_a->is_tail_sentinel() == node_b->is_tail_sentinel());
 }
 
 ir_function_signature *

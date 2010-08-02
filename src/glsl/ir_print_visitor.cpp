@@ -40,27 +40,38 @@ void
 _mesa_print_ir(exec_list *instructions,
 	       struct _mesa_glsl_parse_state *state)
 {
-   for (unsigned i = 0; i < state->num_user_structures; i++) {
-      const glsl_type *const s = state->user_structures[i];
+   if (state) {
+      for (unsigned i = 0; i < state->num_user_structures; i++) {
+	 const glsl_type *const s = state->user_structures[i];
 
-      printf("(structure (%s) (%s@%p) (%u) (\n",
-	     s->name, s->name, s, s->length);
+	 printf("(structure (%s) (%s@%p) (%u) (\n",
+		s->name, s->name, s, s->length);
 
-      for (unsigned j = 0; j < s->length; j++) {
-	 printf("\t((");
-	 print_type(s->fields.structure[j].type);
-	 printf(")(%s))\n", s->fields.structure[j].name);
+	 for (unsigned j = 0; j < s->length; j++) {
+	    printf("\t((");
+	    print_type(s->fields.structure[j].type);
+	    printf(")(%s))\n", s->fields.structure[j].name);
+	 }
+
+	 printf(")\n");
       }
-
-      printf(")\n");
    }
 
    printf("(\n");
    foreach_iter(exec_list_iterator, iter, *instructions) {
-      ((ir_instruction *)iter.get())->print();
-      printf("\n");
+      ir_instruction *ir = (ir_instruction *)iter.get();
+      ir->print();
+      if (ir->ir_type != ir_type_function)
+	 printf("\n");
    }
    printf("\n)");
+}
+
+
+void ir_print_visitor::indent(void)
+{
+   for (int i = 0; i < indentation; i++)
+      printf("  ");
 }
 
 static void
@@ -100,37 +111,70 @@ void ir_print_visitor::visit(ir_variable *ir)
 void ir_print_visitor::visit(ir_function_signature *ir)
 {
    printf("(signature ");
+   indentation++;
+
    print_type(ir->return_type);
-   printf("\n  (parameters\n");
+   printf("\n");
+   indent();
+
+   printf("(parameters\n");
+   indentation++;
+
    foreach_iter(exec_list_iterator, iter, ir->parameters) {
       ir_variable *const inst = (ir_variable *) iter.get();
 
+      indent();
       inst->accept(this);
       printf("\n");
    }
-   printf("  )\n(");
+   indentation--;
+
+   indent();
+   printf(")\n");
+
+   indent();
+
+   printf("(\n");
+   indentation++;
 
    foreach_iter(exec_list_iterator, iter, ir->body) {
       ir_instruction *const inst = (ir_instruction *) iter.get();
 
+      indent();
       inst->accept(this);
       printf("\n");
    }
+   indentation--;
+   indent();
    printf("))\n");
+   indentation--;
 }
 
 
 void ir_print_visitor::visit(ir_function *ir)
 {
+   bool found_non_builtin_proto = false;
+
+   foreach_iter(exec_list_iterator, iter, *ir) {
+      ir_function_signature *const sig = (ir_function_signature *) iter.get();
+      if (sig->is_defined || !sig->is_built_in)
+	 found_non_builtin_proto = true;
+   }
+   if (!found_non_builtin_proto)
+      return;
+
    printf("(function %s\n", ir->name);
+   indentation++;
    foreach_iter(exec_list_iterator, iter, *ir) {
       ir_function_signature *const sig = (ir_function_signature *) iter.get();
 
+      indent();
       sig->accept(this);
       printf("\n");
    }
-
-   printf(")\n");
+   indentation--;
+   indent();
+   printf(")\n\n");
 }
 
 
@@ -340,21 +384,33 @@ ir_print_visitor::visit(ir_if *ir)
    ir->condition->accept(this);
 
    printf("(\n");
+   indentation++;
+
    foreach_iter(exec_list_iterator, iter, ir->then_instructions) {
       ir_instruction *const inst = (ir_instruction *) iter.get();
 
+      indent();
       inst->accept(this);
       printf("\n");
    }
+
+   indentation--;
+   indent();
    printf(")\n");
 
+   indent();
    printf("(\n");
+   indentation++;
+
    foreach_iter(exec_list_iterator, iter, ir->else_instructions) {
       ir_instruction *const inst = (ir_instruction *) iter.get();
 
+      indent();
       inst->accept(this);
       printf("\n");
    }
+   indentation--;
+   indent();
    printf("))\n");
 }
 
@@ -375,12 +431,17 @@ ir_print_visitor::visit(ir_loop *ir)
    if (ir->increment != NULL)
       ir->increment->accept(this);
    printf(") (\n");
+   indentation++;
+
    foreach_iter(exec_list_iterator, iter, ir->body_instructions) {
       ir_instruction *const inst = (ir_instruction *) iter.get();
 
+      indent();
       inst->accept(this);
       printf("\n");
    }
+   indentation--;
+   indent();
    printf("))\n");
 }
 

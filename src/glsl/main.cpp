@@ -163,6 +163,7 @@ compile_shader(struct gl_shader *shader)
 	 progress = do_copy_propagation(shader->ir) || progress;
 	 progress = do_dead_code_local(shader->ir) || progress;
 	 progress = do_dead_code_unlinked(shader->ir) || progress;
+	 progress = do_tree_grafting(shader->ir) || progress;
 	 progress = do_constant_variable_unlinked(shader->ir) || progress;
 	 progress = do_constant_folding(shader->ir) || progress;
 	 progress = do_algebraic(shader->ir) || progress;
