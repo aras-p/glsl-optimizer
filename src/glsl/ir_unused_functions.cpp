@@ -31,15 +31,15 @@ struct function_entry : public exec_node
 	ir_function_signature *func;
 };
 
-class ir_global_usage_visitor : public ir_hierarchical_visitor {
+class ir_function_usage_visitor : public ir_hierarchical_visitor {
 public:
-	ir_global_usage_visitor(void)
+	ir_function_usage_visitor(void)
 	{
 		this->mem_ctx = talloc_new(NULL);
 		this->function_list.make_empty();
 	}
 
-	~ir_global_usage_visitor(void)
+	~ir_function_usage_visitor(void)
 	{
 		talloc_free(mem_ctx);
 	}
@@ -56,7 +56,7 @@ public:
 
 
 bool
-ir_global_usage_visitor::has_function_entry(const ir_function_signature *var) const
+ir_function_usage_visitor::has_function_entry(const ir_function_signature *var) const
 {
 	assert(var);
 	foreach_iter(exec_list_iterator, iter, this->function_list) {
@@ -69,7 +69,7 @@ ir_global_usage_visitor::has_function_entry(const ir_function_signature *var) co
 
 
 ir_visitor_status
-ir_global_usage_visitor::visit_enter(ir_call *ir)
+ir_function_usage_visitor::visit_enter(ir_call *ir)
 {
 	if (!has_function_entry (ir->get_callee()))
 	{
@@ -83,7 +83,7 @@ ir_global_usage_visitor::visit_enter(ir_call *ir)
 bool
 do_unused_function_removal(exec_list *instructions)
 {
-	ir_global_usage_visitor v;
+	ir_function_usage_visitor v;
 	v.run (instructions);
 
 	bool progress = false;
