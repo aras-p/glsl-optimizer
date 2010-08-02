@@ -340,10 +340,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\ir_global_usage.cpp"
-					>
-				</File>
-				<File
 					RelativePath="..\ir_hierarchical_visitor.cpp"
 					>
 				</File>
@@ -409,6 +405,10 @@
 				</File>
 				<File
 					RelativePath="..\ir_swizzle_swizzle.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\ir_unused_functions.cpp"
 					>
 				</File>
 				<File
