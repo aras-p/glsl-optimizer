@@ -36,6 +36,16 @@
 
 #define YY_USER_INIT yylineno = 0; yycolumn = 0;
 
+#define TOKEN_OR_IDENTIFIER(version, token)			 \
+   do {								 \
+      if (yyextra->language_version >= version) {		 \
+	 return token;						 \
+      } else {							 \
+	 yylval->identifier = strdup(yytext);			 \
+	 return IDENTIFIER;					 \
+      }								 \
+   } while (0)
+
 %}
 
 %option bison-bridge bison-locations reentrant noyywrap
@@ -134,62 +144,27 @@ vec4		return VEC4;
 mat2		return MAT2;
 mat3		return MAT3;
 mat4		return MAT4;
-mat2x2		return MAT2X2;
-mat2x3		return MAT2X3;
-mat2x4		return MAT2X4;
-mat3x2		return MAT3X2;
-mat3x3		return MAT3X3;
-mat3x4		return MAT3X4;
-mat4x2		return MAT4X2;
-mat4x3		return MAT4X3;
-mat4x4		return MAT4X4;
+mat2x2		TOKEN_OR_IDENTIFIER(120, MAT2X2);
+mat2x3		TOKEN_OR_IDENTIFIER(120, MAT2X3);
+mat2x4		TOKEN_OR_IDENTIFIER(120, MAT2X4);
+mat3x2		TOKEN_OR_IDENTIFIER(120, MAT3X2);
+mat3x3		TOKEN_OR_IDENTIFIER(120, MAT3X3);
+mat3x4		TOKEN_OR_IDENTIFIER(120, MAT3X4);
+mat4x2		TOKEN_OR_IDENTIFIER(120, MAT4X2);
+mat4x3		TOKEN_OR_IDENTIFIER(120, MAT4X3);
+mat4x4		TOKEN_OR_IDENTIFIER(120, MAT4X4);
 
 in		return IN;
 out		return OUT;
 inout		return INOUT;
 uniform		return UNIFORM;
 varying		return VARYING;
-centroid	{
-		   if (yyextra->language_version >= 120) {
-		      return CENTROID;
-		   } else {
-		      yylval->identifier = strdup(yytext);
-		      return IDENTIFIER;
-		   }
-		}
-invariant	{
-		   if (yyextra->language_version >= 120) {
-		      return INVARIANT;
-		   } else {
-		      yylval->identifier = strdup(yytext);
-		      return IDENTIFIER;
-		   }
-		}
+centroid	TOKEN_OR_IDENTIFIER(120, CENTROID);
+invariant	TOKEN_OR_IDENTIFIER(120, INVARIANT);
 
-flat		{
-		   if (yyextra->language_version >= 130) {
-		      return FLAT;
-		   } else {
-		      yylval->identifier = strdup(yytext);
-		      return IDENTIFIER;
-		   }
-		}
-smooth		{
-		   if (yyextra->language_version >= 130) {
-		      return SMOOTH;
-		   } else {
-		      yylval->identifier = strdup(yytext);
-		      return IDENTIFIER;
-		   }
-		}
-noperspective	{
-		   if (yyextra->language_version >= 130) {
-		      return NOPERSPECTIVE;
-		   } else {
-		      yylval->identifier = strdup(yytext);
-		      return IDENTIFIER;
-		   }
-		}
+flat		TOKEN_OR_IDENTIFIER(130, FLAT);
+smooth		TOKEN_OR_IDENTIFIER(130, SMOOTH);
+noperspective	TOKEN_OR_IDENTIFIER(130, NOPERSPECTIVE);
 
 sampler1D	return SAMPLER1D;
 sampler2D	return SAMPLER2D;
@@ -318,38 +293,10 @@ namespace	return NAMESPACE;
 using		return USING;
 
     /* Additional reserved words in GLSL 1.20. */
-lowp		{
-		  if (yyextra->language_version >= 120){
-		      return LOWP;
-		   } else {
-		      yylval->identifier = strdup(yytext);
-		      return IDENTIFIER;
-		   }
-		}
-mediump		{
-		  if (yyextra->language_version >= 120){
-		      return MEDIUMP;
-		   } else {
-		      yylval->identifier = strdup(yytext);
-		      return IDENTIFIER;
-		   }
-		}return MEDIUMP;
-highp		{
-		  if (yyextra->language_version >= 120){
-		      return HIGHP;
-		   } else {
-		      yylval->identifier = strdup(yytext);
-		      return IDENTIFIER;
-		   }
-		}
-precision	{
-		  if (yyextra->language_version >= 120){
-		      return PRECISION;
-		   } else {
-		      yylval->identifier = strdup(yytext);
-		      return IDENTIFIER;
-		   }
-		}
+lowp		TOKEN_OR_IDENTIFIER(120, LOWP);
+mediump		TOKEN_OR_IDENTIFIER(120, MEDIUMP);
+highp		TOKEN_OR_IDENTIFIER(120, HIGHP);
+precision	TOKEN_OR_IDENTIFIER(120, PRECISION);
 
 [_a-zA-Z][_a-zA-Z0-9]*	{
 			    struct _mesa_glsl_parse_state *state = yyextra;
