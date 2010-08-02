@@ -115,6 +115,7 @@ void compile_shader (Shader* shader)
 	 progress = false;
 
 	 progress = do_function_inlining(shader->ir) || progress;
+	 progress = do_unused_function_removal(shader->ir) || progress;
 	 progress = do_if_simplification(shader->ir) || progress;
 	 progress = do_copy_propagation(shader->ir) || progress;
 	 progress = do_dead_code_local(shader->ir) || progress;

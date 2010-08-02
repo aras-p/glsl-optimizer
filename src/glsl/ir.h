@@ -416,6 +416,8 @@ public:
     */
    const char *name;
 
+   struct exec_list& get_signatures () { return signatures; }
+
 private:
    /**
     * List of ir_function_signature for each overloaded function with this name.
