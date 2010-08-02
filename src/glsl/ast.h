@@ -457,6 +457,7 @@ class ast_parameter_declarator : public ast_node {
 public:
    ast_parameter_declarator()
    {
+      this->identifier = NULL;
       this->is_array = false;
       this->array_size = 0;
    }
