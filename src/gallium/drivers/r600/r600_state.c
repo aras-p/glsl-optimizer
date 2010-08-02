@@ -873,19 +873,27 @@ static struct radeon_state *r600_dsa(struct r600_context *rctx)
 	const struct pipe_depth_stencil_alpha_state *state = &rctx->dsa->state.dsa;
 	struct r600_screen *rscreen = rctx->screen;
 	struct radeon_state *rstate;
-	unsigned db_depth_control;
-
+	unsigned db_depth_control, alpha_test_control, alpha_ref;
+	
 	rstate = radeon_state(rscreen->rw, R600_DSA_TYPE, R600_DSA);
 	if (rstate == NULL)
 		return NULL;
+
 	db_depth_control = 0x00700700 | S_028800_Z_ENABLE(state->depth.enabled) | S_028800_Z_WRITE_ENABLE(state->depth.writemask) | S_028800_ZFUNC(state->depth.func);
-	
+	alpha_test_control = 0;
+	alpha_ref = 0;
+	if (state->alpha.enabled) {
+		alpha_test_control = (state->alpha.func) << 0;
+		alpha_test_control |= SX_ALPHA_TEST_ENABLE;
+		alpha_ref = fui(state->alpha.ref_value);
+	}
+
 	rstate->states[R600_DSA__DB_STENCIL_CLEAR] = 0x00000000;
 	rstate->states[R600_DSA__DB_DEPTH_CLEAR] = 0x3F800000;
-	rstate->states[R600_DSA__SX_ALPHA_TEST_CONTROL] = 0x00000000;
+	rstate->states[R600_DSA__SX_ALPHA_TEST_CONTROL] = alpha_test_control;
 	rstate->states[R600_DSA__DB_STENCILREFMASK] = 0xFFFFFF00;
 	rstate->states[R600_DSA__DB_STENCILREFMASK_BF] = 0xFFFFFF00;
-	rstate->states[R600_DSA__SX_ALPHA_REF] = 0x00000000;
+	rstate->states[R600_DSA__SX_ALPHA_REF] = alpha_ref;
 	rstate->states[R600_DSA__SPI_FOG_FUNC_SCALE] = 0x00000000;
 	rstate->states[R600_DSA__SPI_FOG_FUNC_BIAS] = 0x00000000;
 	rstate->states[R600_DSA__SPI_FOG_CNTL] = 0x00000000;
