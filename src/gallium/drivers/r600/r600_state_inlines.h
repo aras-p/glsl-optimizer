@@ -97,4 +97,37 @@ static INLINE uint32_t r600_translate_blend_factor(int blend_fact)
 	return 0;
 }
 
+static INLINE uint32_t r600_translate_stencil_op(int s_op)
+{
+	switch (s_op) {
+	case PIPE_STENCIL_OP_KEEP:
+		return R600_ZS_KEEP;
+        case PIPE_STENCIL_OP_ZERO:
+		return R600_ZS_ZERO;
+        case PIPE_STENCIL_OP_REPLACE:
+		return R600_ZS_REPLACE;
+        case PIPE_STENCIL_OP_INCR:
+		return R600_ZS_INCR;
+        case PIPE_STENCIL_OP_DECR:
+		return R600_ZS_DECR;
+        case PIPE_STENCIL_OP_INCR_WRAP:
+		return R600_ZS_INCR_WRAP;
+        case PIPE_STENCIL_OP_DECR_WRAP:
+		return R600_ZS_DECR_WRAP;
+        case PIPE_STENCIL_OP_INVERT:
+		return R600_ZS_INVERT;
+        default:
+		fprintf(stderr, "r600: Unknown stencil op %d", s_op);
+		assert(0);
+		break;
+	}
+	return 0;
+}
+
+/* translates straight */
+static INLINE uint32_t r600_translate_ds_func(int func)
+{
+	return func;
+}
+
 #endif

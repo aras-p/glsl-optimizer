@@ -874,12 +874,42 @@ static struct radeon_state *r600_dsa(struct r600_context *rctx)
 	struct r600_screen *rscreen = rctx->screen;
 	struct radeon_state *rstate;
 	unsigned db_depth_control, alpha_test_control, alpha_ref;
+	unsigned stencil_ref_mask, stencil_ref_mask_bf;
 	
 	rstate = radeon_state(rscreen->rw, R600_DSA_TYPE, R600_DSA);
 	if (rstate == NULL)
 		return NULL;
 
-	db_depth_control = 0x00700700 | S_028800_Z_ENABLE(state->depth.enabled) | S_028800_Z_WRITE_ENABLE(state->depth.writemask) | S_028800_ZFUNC(state->depth.func);
+	stencil_ref_mask = 0;
+	stencil_ref_mask_bf = 0;
+	db_depth_control = 0x00700700 |
+		S_028800_Z_ENABLE(state->depth.enabled) |
+		S_028800_Z_WRITE_ENABLE(state->depth.writemask) |
+		S_028800_ZFUNC(state->depth.func);
+	/* set stencil enable */
+	db_depth_control |= S_028800_STENCIL_ENABLE(state->stencil[0].enabled);
+	
+	if (state->stencil[0].enabled) {
+
+		db_depth_control |= S_028800_STENCILFUNC(r600_translate_ds_func(state->stencil[0].func));
+		db_depth_control |= S_028800_STENCILFAIL(r600_translate_stencil_op(state->stencil[0].fail_op));
+		db_depth_control |= S_028800_STENCILZPASS(r600_translate_stencil_op(state->stencil[0].zpass_op));
+		db_depth_control |= S_028800_STENCILZFAIL(r600_translate_stencil_op(state->stencil[0].zfail_op));
+		
+		db_depth_control |= S_028800_BACKFACE_ENABLE(state->stencil[1].enabled);
+
+		stencil_ref_mask = (state->stencil[0].valuemask << R600_STENCILMASK_SHIFT) |
+			(state->stencil[0].writemask << R600_STENCILWRITEMASK_SHIFT);
+		if (state->stencil[1].enabled) {
+			db_depth_control |= S_028800_STENCILFUNC_BF(r600_translate_ds_func(state->stencil[1].func));
+			db_depth_control |= S_028800_STENCILFAIL_BF(r600_translate_stencil_op(state->stencil[1].fail_op));
+			db_depth_control |= S_028800_STENCILZPASS_BF(r600_translate_stencil_op(state->stencil[1].zpass_op));
+			db_depth_control |= S_028800_STENCILZFAIL_BF(r600_translate_stencil_op(state->stencil[1].zfail_op));
+			stencil_ref_mask_bf = (state->stencil[1].valuemask << R600_STENCILMASK_SHIFT) |
+				(state->stencil[1].writemask << R600_STENCILWRITEMASK_SHIFT);
+		}
+	}
+
 	alpha_test_control = 0;
 	alpha_ref = 0;
 	if (state->alpha.enabled) {
@@ -891,8 +921,8 @@ static struct radeon_state *r600_dsa(struct r600_context *rctx)
 	rstate->states[R600_DSA__DB_STENCIL_CLEAR] = 0x00000000;
 	rstate->states[R600_DSA__DB_DEPTH_CLEAR] = 0x3F800000;
 	rstate->states[R600_DSA__SX_ALPHA_TEST_CONTROL] = alpha_test_control;
-	rstate->states[R600_DSA__DB_STENCILREFMASK] = 0xFFFFFF00;
-	rstate->states[R600_DSA__DB_STENCILREFMASK_BF] = 0xFFFFFF00;
+	rstate->states[R600_DSA__DB_STENCILREFMASK] = stencil_ref_mask;
+	rstate->states[R600_DSA__DB_STENCILREFMASK_BF] = stencil_ref_mask_bf;
 	rstate->states[R600_DSA__SX_ALPHA_REF] = alpha_ref;
 	rstate->states[R600_DSA__SPI_FOG_FUNC_SCALE] = 0x00000000;
 	rstate->states[R600_DSA__SPI_FOG_FUNC_BIAS] = 0x00000000;
