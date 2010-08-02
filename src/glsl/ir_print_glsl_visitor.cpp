@@ -328,9 +328,9 @@ ir_print_glsl_visitor::visit(ir_call *ir)
    bool first = true;
    foreach_iter(exec_list_iterator, iter, *ir) {
       ir_instruction *const inst = (ir_instruction *) iter.get();
-      inst->accept(this);
-	  if (first)
+	  if (!first)
 		  printf (", ");
+      inst->accept(this);
 	  first = false;
    }
    printf(") ");
