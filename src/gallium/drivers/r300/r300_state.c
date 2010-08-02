@@ -1014,7 +1014,7 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
 	for (i = 0; i < 8; i++) {
 	    if (state->sprite_coord_enable & (1 << i))
                 stuffing_enable |=
-		    R300_GB_TEX_STR << (R300_GB_TEX0_SOURCE_SHIFT + (i*2));
+                    R300_GB_TEX_ST << (R300_GB_TEX0_SOURCE_SHIFT + (i*2));
 	}
 
         point_texcoord_left = 0.0f;
