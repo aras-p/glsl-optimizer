@@ -674,6 +674,12 @@ ir_dereference_variable::constant_expression_value()
    if (!var)
       return NULL;
 
+   /* The constant_value of a uniform variable is its initializer,
+    * not the lifetime constant value of the uniform.
+    */
+   if (var->mode == ir_var_uniform)
+      return NULL;
+
    return var->constant_value ? var->constant_value->clone(NULL) : NULL;
 }
 
