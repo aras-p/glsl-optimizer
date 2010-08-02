@@ -252,6 +252,11 @@ public:
    GLboolean try_emit_mad(ir_expression *ir,
 			  int mul_operand);
 
+   void add_aggregate_uniform(ir_instruction *ir,
+			      const char *name,
+			      const struct glsl_type *type,
+			      struct ir_to_mesa_dst_reg temp);
+
    int *sampler_map;
    int sampler_map_size;
 
@@ -1241,6 +1246,62 @@ get_builtin_matrix_ref(void *mem_ctx, struct gl_program *prog, ir_variable *var,
    return NULL;
 }
 
+/* Recursively add all the members of the aggregate uniform as uniform names
+ * to Mesa, moving those uniforms to our structured temporary.
+ */
+void
+ir_to_mesa_visitor::add_aggregate_uniform(ir_instruction *ir,
+					  const char *name,
+					  const struct glsl_type *type,
+					  struct ir_to_mesa_dst_reg temp)
+{
+   int loc;
+
+   if (type->is_record()) {
+      void *mem_ctx = talloc_new(NULL);
+
+      for (unsigned int i = 0; i < type->length; i++) {
+	 const glsl_type *field_type = type->fields.structure[i].type;
+	 add_aggregate_uniform(ir,
+			       talloc_asprintf(mem_ctx, "%s.%s", name,
+					       type->fields.structure[i].name),
+			       field_type, temp);
+	 temp.index += type_size(field_type);
+      }
+
+      talloc_free(mem_ctx);
+
+      return;
+   }
+
+   assert(type->is_vector() || type->is_scalar() || !"FINISHME: other types");
+
+   int len;
+
+   if (type->is_vector() ||
+       type->is_scalar()) {
+      len = type->vector_elements;
+   } else {
+      len = type_size(type) * 4;
+   }
+
+   loc = _mesa_add_uniform(this->prog->Parameters,
+			   name,
+			   len,
+			   type->gl_type,
+			   NULL);
+
+
+   ir_to_mesa_src_reg uniform(PROGRAM_UNIFORM, loc, type);
+
+   for (int i = 0; i < type_size(type); i++) {
+      ir_to_mesa_emit_op1(ir, OPCODE_MOV, temp, uniform);
+      temp.index++;
+      uniform.index++;
+   }
+}
+
+
 void
 ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
 {
@@ -1275,6 +1336,23 @@ ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
 
 	 assert(ir->var->type->gl_type != 0 &&
 		ir->var->type->gl_type != GL_INVALID_ENUM);
+
+	 /* Oh, the joy of aggregate types in Mesa.  Like constants,
+	  * we can only really do vec4s.  So, make a temp, chop the
+	  * aggregate up into vec4s, and move those vec4s to the temp.
+	  */
+	 if (ir->var->type->is_record()) {
+	    ir_to_mesa_src_reg temp = get_temp(ir->var->type);
+
+	    entry = new(mem_ctx) variable_storage(ir->var,
+						  temp.file,
+						  temp.index);
+	    this->variables.push_tail(entry);
+
+	    add_aggregate_uniform(ir->var, ir->var->name, ir->var->type,
+				   ir_to_mesa_dst_reg_from_src(temp));
+	    break;
+	 }
 
 	 if (ir->var->type->is_vector() ||
 	     ir->var->type->is_scalar()) {
