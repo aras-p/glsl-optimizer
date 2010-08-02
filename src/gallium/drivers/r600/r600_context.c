@@ -331,20 +331,6 @@ struct pipe_context *r600_create_context(struct pipe_screen *screen, void *priv)
 		return NULL;
 	}
 
-	rctx->hw_states.cb_cntl = radeon_state(rscreen->rw, R600_CB_CNTL_TYPE, R600_CB_CNTL);
-	rctx->hw_states.cb_cntl->states[R600_CB_CNTL__CB_SHADER_MASK] = 0x0000000F;
-	rctx->hw_states.cb_cntl->states[R600_CB_CNTL__CB_TARGET_MASK] = 0x0000000F;
-	rctx->hw_states.cb_cntl->states[R600_CB_CNTL__CB_COLOR_CONTROL] = 0x00CC0000;
-	rctx->hw_states.cb_cntl->states[R600_CB_CNTL__PA_SC_AA_CONFIG] = 0x00000000;
-	rctx->hw_states.cb_cntl->states[R600_CB_CNTL__PA_SC_AA_SAMPLE_LOCS_MCTX] = 0x00000000;
-	rctx->hw_states.cb_cntl->states[R600_CB_CNTL__PA_SC_AA_SAMPLE_LOCS_8S_WD1_MCTX] = 0x00000000;
-	rctx->hw_states.cb_cntl->states[R600_CB_CNTL__CB_CLRCMP_CONTROL] = 0x01000000;
-	rctx->hw_states.cb_cntl->states[R600_CB_CNTL__CB_CLRCMP_SRC] = 0x00000000;
-	rctx->hw_states.cb_cntl->states[R600_CB_CNTL__CB_CLRCMP_DST] = 0x000000FF;
-	rctx->hw_states.cb_cntl->states[R600_CB_CNTL__CB_CLRCMP_MSK] = 0xFFFFFFFF;
-	rctx->hw_states.cb_cntl->states[R600_CB_CNTL__PA_SC_AA_MASK] = 0xFFFFFFFF;
-	radeon_state_pm4(rctx->hw_states.cb_cntl);
-
 	r600_init_config(rctx);
 
 	rctx->ctx = radeon_ctx(rscreen->rw);

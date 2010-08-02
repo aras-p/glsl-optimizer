@@ -32,6 +32,8 @@
 #include "r600_context.h"
 #include "r600_resource.h"
 #include "r600d.h"
+#include "r600_reg.h"
+#include "r600_state_inlines.h"
 
 static void *r600_create_blend_state(struct pipe_context *ctx,
 					const struct pipe_blend_state *state)
@@ -259,6 +261,9 @@ static void r600_delete_state(struct pipe_context *ctx, void *state)
 static void r600_set_blend_color(struct pipe_context *ctx,
 					const struct pipe_blend_color *color)
 {
+	struct r600_context *rctx = r600_context(ctx);
+
+	rctx->blend_color = *color;
 }
 
 static void r600_set_clip_state(struct pipe_context *ctx,
@@ -604,15 +609,17 @@ static struct radeon_state *r600_blend(struct r600_context *rctx)
 {
 	struct r600_screen *rscreen = rctx->screen;
 	struct radeon_state *rstate;
+	const struct pipe_blend_state *state = &rctx->blend->state.blend;
+	int i;
 
 	rstate = radeon_state(rscreen->rw, R600_BLEND_TYPE, R600_BLEND);
 	if (rstate == NULL)
 		return NULL;
-	rstate->states[R600_BLEND__CB_BLEND_RED] = 0x00000000;
-	rstate->states[R600_BLEND__CB_BLEND_GREEN] = 0x00000000;
-	rstate->states[R600_BLEND__CB_BLEND_BLUE] = 0x00000000;
-	rstate->states[R600_BLEND__CB_BLEND_ALPHA] = 0x00000000;
-	rstate->states[R600_BLEND__CB_BLEND0_CONTROL] = 0x00010001;
+	rstate->states[R600_BLEND__CB_BLEND_RED] = fui(rctx->blend_color.color[0]);
+	rstate->states[R600_BLEND__CB_BLEND_GREEN] = fui(rctx->blend_color.color[1]);
+	rstate->states[R600_BLEND__CB_BLEND_BLUE] = fui(rctx->blend_color.color[2]);
+	rstate->states[R600_BLEND__CB_BLEND_ALPHA] = fui(rctx->blend_color.color[3]);
+	rstate->states[R600_BLEND__CB_BLEND0_CONTROL] = 0x00000000;
 	rstate->states[R600_BLEND__CB_BLEND1_CONTROL] = 0x00000000;
 	rstate->states[R600_BLEND__CB_BLEND2_CONTROL] = 0x00000000;
 	rstate->states[R600_BLEND__CB_BLEND3_CONTROL] = 0x00000000;
@@ -621,6 +628,37 @@ static struct radeon_state *r600_blend(struct r600_context *rctx)
 	rstate->states[R600_BLEND__CB_BLEND6_CONTROL] = 0x00000000;
 	rstate->states[R600_BLEND__CB_BLEND7_CONTROL] = 0x00000000;
 	rstate->states[R600_BLEND__CB_BLEND_CONTROL] = 0x00000000;
+
+	for (i = 0; i < 8; i++) {
+
+		unsigned eqRGB = state->rt[i].rgb_func;
+		unsigned srcRGB = state->rt[i].rgb_src_factor;
+		unsigned dstRGB = state->rt[i].rgb_dst_factor;
+		
+		unsigned eqA = state->rt[i].alpha_func;
+		unsigned srcA = state->rt[i].alpha_src_factor;
+		unsigned dstA = state->rt[i].alpha_dst_factor;
+		uint32_t bc = 0;
+
+		if (!state->rt[i].blend_enable)
+			continue;
+
+		bc |= r600_translate_blend_function(eqRGB) << CB_BLEND_COLOR_COMB_FCN_SHIFT;
+		bc |= r600_translate_blend_factor(srcRGB) << CB_BLEND_COLOR_SRCBLEND_SHIFT;
+		bc |= r600_translate_blend_factor(dstRGB) << CB_BLEND_COLOR_DESTBLEND_SHIFT;
+
+		if (srcA != srcRGB || dstA != dstRGB || eqA != eqRGB) {
+			bc |= CB_BLEND_SEPARATE_ALPHA_BLEND;
+			bc |= r600_translate_blend_function(eqA) << CB_BLEND_ALPHA_COMB_FCN_SHIFT;
+			bc |= r600_translate_blend_factor(srcA) << CB_BLEND_ALPHA_SRCBLEND_SHIFT;
+			bc |= r600_translate_blend_factor(dstA) << CB_BLEND_ALPHA_DESTBLEND_SHIFT;
+		}
+
+		rstate->states[R600_BLEND__CB_BLEND0_CONTROL + i] = bc;
+		if (i == 0)
+			rstate->states[R600_BLEND__CB_BLEND_CONTROL] = bc;
+	}
+
 	if (radeon_state_pm4(rstate)) {
 		radeon_state_decref(rstate);
 		return NULL;
@@ -1084,6 +1122,49 @@ static struct radeon_state *r600_resource(struct r600_context *rctx,
 	return rstate;
 }
 
+static struct radeon_state *r600_cb_cntl(struct r600_context *rctx)
+{
+	struct r600_screen *rscreen = rctx->screen;
+	struct radeon_state *rstate;
+	const struct pipe_blend_state *pbs = &rctx->blend->state.blend;
+	uint32_t color_control, target_mask;
+	int i;
+
+	target_mask = 0;
+	color_control = 0;
+
+	if (pbs->logicop_enable) {
+		color_control |= (pbs->logicop_func) << 16;
+	} else
+		color_control |= (0xcc << 16);
+
+	target_mask |= (pbs->rt[0].colormask);
+	for (i = 0; i < 8; i++) {
+		if (pbs->rt[i].blend_enable) {
+			color_control |= (1 << (8 + i));
+			target_mask |= (pbs->rt[0].colormask << (4 * i));
+		} else if (i == 0)
+			target_mask |= 0xf;
+	}
+	rstate = radeon_state(rscreen->rw, R600_CB_CNTL_TYPE, R600_CB_CNTL);
+	rstate->states[R600_CB_CNTL__CB_SHADER_MASK] = 0x0000000F;
+	rstate->states[R600_CB_CNTL__CB_TARGET_MASK] = target_mask;
+	rstate->states[R600_CB_CNTL__CB_COLOR_CONTROL] = color_control;
+	rstate->states[R600_CB_CNTL__PA_SC_AA_CONFIG] = 0x00000000;
+	rstate->states[R600_CB_CNTL__PA_SC_AA_SAMPLE_LOCS_MCTX] = 0x00000000;
+	rstate->states[R600_CB_CNTL__PA_SC_AA_SAMPLE_LOCS_8S_WD1_MCTX] = 0x00000000;
+	rstate->states[R600_CB_CNTL__CB_CLRCMP_CONTROL] = 0x01000000;
+	rstate->states[R600_CB_CNTL__CB_CLRCMP_SRC] = 0x00000000;
+	rstate->states[R600_CB_CNTL__CB_CLRCMP_DST] = 0x000000FF;
+	rstate->states[R600_CB_CNTL__CB_CLRCMP_MSK] = 0xFFFFFFFF;
+	rstate->states[R600_CB_CNTL__PA_SC_AA_MASK] = 0xFFFFFFFF;
+	if (radeon_state_pm4(rstate)) {
+		radeon_state_decref(rstate);
+		return NULL;
+	}
+	return rstate;
+}
+
 int r600_context_hw_states(struct r600_context *rctx)
 {
 	unsigned i;
@@ -1093,7 +1174,7 @@ int r600_context_hw_states(struct r600_context *rctx)
 	 * doesn't
 	 */
 	//radeon_state_decref(rctx->hw_states.config);
-	//radeon_state_decref(rctx->hw_states.cb_cntl);
+	radeon_state_decref(rctx->hw_states.cb_cntl);
 	radeon_state_decref(rctx->hw_states.db);
 	radeon_state_decref(rctx->hw_states.rasterizer);
 	radeon_state_decref(rctx->hw_states.scissor);
@@ -1120,6 +1201,8 @@ int r600_context_hw_states(struct r600_context *rctx)
 	rctx->hw_states.viewport = r600_viewport(rctx);
 	rctx->hw_states.cb0 = r600_cb0(rctx);
 	rctx->hw_states.db = r600_db(rctx);
+	rctx->hw_states.cb_cntl = r600_cb_cntl(rctx);
+
 	for (i = 0; i < rctx->ps_nsampler; i++) {
 		if (rctx->ps_sampler[i]) {
 			rctx->hw_states.ps_sampler[i] = r600_sampler(rctx,

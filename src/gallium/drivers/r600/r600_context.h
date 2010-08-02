@@ -158,6 +158,7 @@ struct r600_context {
 	struct r600_vertex_element	*vertex_elements;
 	struct pipe_vertex_buffer	vertex_buffer[PIPE_MAX_ATTRIBS];
 	struct pipe_index_buffer	index_buffer;
+	struct pipe_blend_color         blend_color;
 };
 
 #if 0
