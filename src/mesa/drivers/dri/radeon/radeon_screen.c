@@ -376,21 +376,6 @@ static const __DRItexBufferExtension r600TexBufferExtension = {
 };
 #endif
 
-static void
-radeonDRI2Flush(__DRIdrawable *drawable)
-{
-    radeonContextPtr rmesa;
-
-    rmesa = (radeonContextPtr) drawable->driContextPriv->driverPrivate;
-    radeonFlush(rmesa->glCtx);
-}
-
-static const struct __DRI2flushExtensionRec radeonFlushExtension = {
-    { __DRI2_FLUSH, __DRI2_FLUSH_VERSION },
-    radeonDRI2Flush,
-    dri2InvalidateDrawable,
-};
-
 static int radeon_set_screen_flags(radeonScreenPtr screen, int device_id)
 {
    screen->device_id = device_id;
@@ -1393,8 +1378,6 @@ radeonCreateScreen2(__DRIscreen *sPriv)
 #if defined(RADEON_R600)
    screen->extensions[i++] = &r600TexBufferExtension.base;
 #endif
-
-   screen->extensions[i++] = &radeonFlushExtension.base;
 
    screen->extensions[i++] = NULL;
    sPriv->extensions = screen->extensions;

@@ -408,8 +408,6 @@ static GLboolean radeon_run_render( GLcontext *ctx,
        !radeon_dma_validate_render( ctx, VB ))
       return GL_TRUE;		
 
-   radeon_prepare_render(&rmesa->radeon);
-
    tnl->Driver.Render.Start( ctx );
 
    for (i = 0 ; i < VB->PrimitiveCount ; i++)

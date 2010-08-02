@@ -977,10 +977,6 @@ static void r700DrawPrims(GLcontext *ctx,
 {
 	GLboolean retval = GL_FALSE;
 
-	context_t *context = R700_CONTEXT(ctx);
-	radeonContextPtr radeon = &context->radeon;
-	radeon_prepare_render(radeon);
-
 	/* This check should get folded into just the places that
 	 * min/max index are really needed.
 	 */
