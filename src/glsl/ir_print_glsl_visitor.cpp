@@ -170,9 +170,6 @@ void ir_print_glsl_visitor::visit(ir_function *ir)
 
 void ir_print_glsl_visitor::visit(ir_expression *ir)
 {
-   print_type(ir->type);
-   printf("(");
-
    if (ir->operands[0])
       ir->operands[0]->accept(this);
 
@@ -180,7 +177,7 @@ void ir_print_glsl_visitor::visit(ir_expression *ir)
 
    if (ir->operands[1])
       ir->operands[1]->accept(this);
-   printf(") ");
+   printf(" ");
 }
 
 
@@ -271,9 +268,8 @@ void ir_print_glsl_visitor::visit(ir_dereference_array *ir)
 
 void ir_print_glsl_visitor::visit(ir_dereference_record *ir)
 {
-   printf("(record_ref ");
    ir->record->accept(this);
-   printf(" %s) ", ir->field);
+   printf(".%s ", ir->field);
 }
 
 
@@ -296,6 +292,17 @@ void ir_print_glsl_visitor::visit(ir_assignment *ir)
 
 void ir_print_glsl_visitor::visit(ir_constant *ir)
 {
+	if (ir->type == glsl_type::float_type)
+	{
+		printf("%f", ir->value.f[0]);
+		return;
+	}
+	else if (ir->type == glsl_type::int_type)
+	{
+		printf("%d", ir->value.i[0]);
+		return;
+	}
+
    const glsl_type *const base_type = ir->type->get_base_type();
 
    print_type(ir->type);
@@ -369,10 +376,10 @@ ir_print_glsl_visitor::visit(ir_discard *ir)
 void
 ir_print_glsl_visitor::visit(ir_if *ir)
 {
-   printf("(if ");
+   printf("if (");
    ir->condition->accept(this);
 
-   printf("(\n");
+   printf(") {\n");
    indentation++;
 
    foreach_iter(exec_list_iterator, iter, ir->then_instructions) {
@@ -385,22 +392,25 @@ ir_print_glsl_visitor::visit(ir_if *ir)
 
    indentation--;
    indent();
-   printf(")\n");
+   printf("}\n");
 
-   indent();
-   printf("(\n");
-   indentation++;
+   if (!ir->else_instructions.is_empty())
+   {
+	   indent();
+	   printf("else {\n");
+	   indentation++;
 
-   foreach_iter(exec_list_iterator, iter, ir->else_instructions) {
-      ir_instruction *const inst = (ir_instruction *) iter.get();
+	   foreach_iter(exec_list_iterator, iter, ir->else_instructions) {
+		  ir_instruction *const inst = (ir_instruction *) iter.get();
 
-      indent();
-      inst->accept(this);
-      printf("\n");
+		  indent();
+		  inst->accept(this);
+		  printf("\n");
+	   }
+	   indentation--;
+	   indent();
+	   printf("}\n");
    }
-   indentation--;
-   indent();
-   printf("))\n");
 }
 
 
