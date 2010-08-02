@@ -73,7 +73,6 @@ public:
 
    /** ir_print_visitor helper for debugging. */
    void print(void) const;
-   void print_glsl(void) const;
 
    virtual void accept(ir_visitor *) = 0;
    virtual ir_visitor_status accept(ir_hierarchical_visitor *) = 0;

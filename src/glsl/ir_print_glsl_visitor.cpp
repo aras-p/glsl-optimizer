@@ -28,15 +28,6 @@
 static void print_type(const glsl_type *t);
 
 void
-ir_instruction::print_glsl(void) const
-{
-   ir_instruction *deconsted = const_cast<ir_instruction *>(this);
-
-   ir_print_glsl_visitor v;
-   deconsted->accept(&v);
-}
-
-void
 _mesa_print_ir_glsl(exec_list *instructions,
 	       struct _mesa_glsl_parse_state *state)
 {
@@ -44,24 +35,31 @@ _mesa_print_ir_glsl(exec_list *instructions,
       for (unsigned i = 0; i < state->num_user_structures; i++) {
 	 const glsl_type *const s = state->user_structures[i];
 
-	 printf("(structure (%s) (%s@%p) (%u) (\n",
-		s->name, s->name, s, s->length);
+	 printf("struct %s {\n",
+		s->name);
 
 	 for (unsigned j = 0; j < s->length; j++) {
-	    printf("\t((");
+	    printf("  ");
 	    print_type(s->fields.structure[j].type);
-	    printf(")(%s))\n", s->fields.structure[j].name);
+	    printf(" %s;\n", s->fields.structure[j].name);
 	 }
 
-	 printf(")\n");
+	 printf("};\n");
       }
    }
 
    foreach_iter(exec_list_iterator, iter, *instructions) {
       ir_instruction *ir = (ir_instruction *)iter.get();
-      ir->print_glsl();
-      //if (ir->ir_type != ir_type_function)
-		//printf("\n");
+	  if (ir->ir_type == ir_type_variable) {
+		ir_variable *var = static_cast<ir_variable*>(ir);
+		if (strstr(var->name, "gl_") == var->name)
+			continue;
+	  }
+
+	  ir_print_glsl_visitor v;
+	  ir->accept(&v);
+      if (ir->ir_type != ir_type_function)
+		printf("\n");
    }
 }
 
@@ -76,12 +74,11 @@ static void
 print_type(const glsl_type *t)
 {
    if (t->base_type == GLSL_TYPE_ARRAY) {
-      printf("(array ");
       print_type(t->fields.array);
-      printf(" %u)", t->length);
+      printf("[%u]", t->length);
    } else if ((t->base_type == GLSL_TYPE_STRUCT)
 	      && (strncmp("gl_", t->name, 3) != 0)) {
-      printf("%s@%p", t->name, t);
+      printf("%s", t->name);
    } else {
       printf("%s", t->name);
    }
@@ -90,19 +87,19 @@ print_type(const glsl_type *t)
 
 void ir_print_glsl_visitor::visit(ir_variable *ir)
 {
-	if (strstr (ir->name, "gl_") == ir->name)
-		return;
-
    const char *const cent = (ir->centroid) ? "centroid " : "";
    const char *const inv = (ir->invariant) ? "invariant " : "";
    const char *const mode[] = { "", "uniform ", "in ", "out ", "inout ",
-			        "/*tmp*/ " };
-   const char *const interp[] = { "", "flat", "noperspective" };
+			        "" };
+   const char *const interp[] = { "", "flat ", "noperspective " };
 
-   printf("%s%s%s%s ",
+   printf("%s%s%s%s",
 	  cent, inv, mode[ir->mode], interp[ir->interpolation]);
    print_type(ir->type);
-   printf(" %s;\n", ir->name);
+   printf(" %s", ir->name);
+   if (ir->mode == ir_var_temporary)
+	   printf ("_%p", ir);
+   printf(";");
 }
 
 
@@ -173,14 +170,13 @@ void ir_print_glsl_visitor::visit(ir_function *ir)
 
 void ir_print_glsl_visitor::visit(ir_expression *ir)
 {
-   printf("(expression ");
-
    print_type(ir->type);
-
-   printf(" %s ", ir->operator_string());
+   printf("(");
 
    if (ir->operands[0])
       ir->operands[0]->accept(this);
+
+   printf(" %s ", ir->operator_string());
 
    if (ir->operands[1])
       ir->operands[1]->accept(this);
@@ -257,7 +253,10 @@ void ir_print_glsl_visitor::visit(ir_swizzle *ir)
 void ir_print_glsl_visitor::visit(ir_dereference_variable *ir)
 {
    ir_variable *var = ir->variable_referenced();
-   printf("%s ", var->name);
+   printf("%s", var->name);
+   if (var->mode == ir_var_temporary)
+	   printf ("_%p", ir);
+   printf(" ");
 }
 
 
@@ -326,10 +325,13 @@ void
 ir_print_glsl_visitor::visit(ir_call *ir)
 {
    printf("%s (", ir->callee_name());
+   bool first = true;
    foreach_iter(exec_list_iterator, iter, *ir) {
       ir_instruction *const inst = (ir_instruction *) iter.get();
-
       inst->accept(this);
+	  if (first)
+		  printf (", ");
+	  first = false;
    }
    printf(") ");
 }
