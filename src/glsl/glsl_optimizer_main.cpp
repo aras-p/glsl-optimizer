@@ -58,10 +58,6 @@ usage_fail(const char *name)
       exit(EXIT_FAILURE);
 }
 
-int dump_ast = 0;
-int dump_hir = 0;
-int dump_lir = 0;
-
 struct Shader {
 	Shader () : ir(0), InfoLog(0) { }
 
@@ -78,8 +74,6 @@ void compile_shader (Shader* shader)
 	struct _mesa_glsl_parse_state *state = new(statePtr) _mesa_glsl_parse_state(NULL, shader->type, statePtr);
 
 	const char* source = shader->source.c_str();
-   //state->error = preprocess(state, &source, &state->info_log,
-	//		     state->extensions);
 	state->error = 0;
 
    if (!state->error) {
@@ -88,21 +82,12 @@ void compile_shader (Shader* shader)
       _mesa_glsl_lexer_dtor(state);
    }
 
-   if (dump_ast) {
-	   printf ("******** AST:\n");
-      foreach_list_const(n, &state->translation_unit) {
-	 ast_node *ast = exec_node_data(ast_node, n, link);
-	 ast->print();
-      }
-      printf("\n\n");
-   }
-
    shader->ir = new(statePtr) exec_list;
    if (!state->error && !state->translation_unit.is_empty())
       _mesa_ast_to_hir(shader->ir, state);
 
    // Print out the unoptimized IR.
-   if (!state->error && dump_hir) {
+   if (!state->error) {
       validate_ir_tree(shader->ir);
 	  printf ("******** Unoptimized:\n");
       _mesa_print_ir_glsl(shader->ir, state);
@@ -134,17 +119,12 @@ void compile_shader (Shader* shader)
 
 
    // Print out the resulting IR
-   if (!state->error && dump_lir) {
+   if (!state->error) {
 	   printf ("******** Optimized:\n");
       _mesa_print_ir_glsl(shader->ir, state);
    }
 
-   //shader->symbols = state->symbols;
    shader->CompileStatus = !state->error;
-   //shader->Version = state->language_version;
-   //memcpy(shader->builtins_to_link, state->builtins_to_link,
-   //	 sizeof(shader->builtins_to_link[0]) * state->num_builtins_to_link);
-   //shader->num_builtins_to_link = state->num_builtins_to_link;
 
    if (shader->InfoLog)
       talloc_free(shader->InfoLog);
@@ -163,23 +143,10 @@ int main(int argc, char **argv)
 {
    int status = EXIT_SUCCESS;
 
-   int optind = 1;
-   for (int i = 1; i < argc; ++i)
-   {
-	   if (!strcmp (argv[i], "--dump-ast")) dump_ast = 1, ++optind;
-	   else if (!strcmp (argv[i], "--dump-hir")) dump_hir = 1, ++optind;
-	   else if (!strcmp (argv[i], "--dump-lir")) dump_lir = 1, ++optind;
-   }
-
-   if (argc <= optind)
+   if (argc <= 1)
       usage_fail(argv[0]);
 
-   //struct gl_shader_program *whole_program;
-
-   //whole_program = talloc_zero (NULL, struct gl_shader_program);
-   //assert(whole_program != NULL);
-
-   for (/* empty */; argc > optind; optind++)
+   for (int optind = 1; optind < argc; ++optind)
    {
 	  Shader shader;
 
@@ -212,7 +179,6 @@ int main(int argc, char **argv)
       }
    }
 
-   //talloc_free(whole_program);
    _mesa_glsl_release_types();
    _mesa_glsl_release_functions();
 

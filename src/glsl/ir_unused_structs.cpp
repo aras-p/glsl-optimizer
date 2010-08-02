@@ -60,35 +60,3 @@ ir_struct_usage_visitor::visit(ir_dereference_variable *ir)
 	}
 	return visit_continue;
 }
-
-/*
-bool
-do_unused_function_removal(exec_list *instructions)
-{
-	ir_struct_usage_visitor v;
-	v.run (instructions);
-
-	bool progress = false;
-	foreach_iter(exec_list_iterator, iter, *instructions) {
-		ir_instruction *ir = (ir_instruction *)iter.get();
-		ir_function* func = ir->as_function();
-		if (!func)
-			continue;
-
-		if (!strcmp(func->name, "main"))
-			continue;
-
-		foreach_list_safe(node, &func->get_signatures()) {
-			ir_function_signature *const sig = (ir_function_signature *const) node;
-			if (sig->is_built_in)
-				continue;
-			if (!v.has_function_entry (sig))
-			{
-				sig->remove();
-				progress = true;
-			}
-		}
-	}
-	return progress;
-}
-*/
