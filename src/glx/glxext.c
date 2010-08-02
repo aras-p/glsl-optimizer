@@ -197,7 +197,7 @@ __glXEventToWire(Display *dpy, XEvent *event, xEvent *wire)
 ** __glXScreenConfigs.
 */
 static void
-  FreeScreenConfigs(struct glx_display * priv)
+FreeScreenConfigs(struct glx_display * priv)
 {
    struct glx_screen *psc;
    GLint i, screens;
@@ -232,28 +232,13 @@ static void
    priv->screens = NULL;
 }
 
-/*
-** Release the private memory referred to in a display private
-** structure.  The caller will free the extension structure.
-*/
-static int
-__glXCloseDisplay(Display * dpy, XExtCodes * codes)
+static void
+glx_display_free(struct glx_display *priv)
 {
-     struct glx_display *priv, **prev;
-     struct glx_context *gc;
-
-   _XLockMutex(_Xglobal_lock);
-   prev = &glx_displays;
-   for (priv = glx_displays; priv; prev = &priv->next, priv = priv->next) {
-      if (priv->dpy == dpy) {
-	 (*prev) = priv->next;
-	 break;
-      }
-   }
-   _XUnlockMutex(_Xglobal_lock);
+   struct glx_context *gc;
 
    gc = __glXGetCurrentContext();
-   if (dpy == gc->currentDpy) {
+   if (priv->dpy == gc->currentDpy) {
       gc->vtable->destroy(gc);
       __glXSetCurrentContextNull();
    }
@@ -282,6 +267,24 @@ __glXCloseDisplay(Display * dpy, XExtCodes * codes)
 #endif
 
    Xfree((char *) priv);
+}
+
+static int
+__glXCloseDisplay(Display * dpy, XExtCodes * codes)
+{
+   struct glx_display *priv, **prev;
+
+   _XLockMutex(_Xglobal_lock);
+   prev = &glx_displays;
+   for (priv = glx_displays; priv; prev = &priv->next, priv = priv->next) {
+      if (priv->dpy == dpy) {
+	 (*prev) = priv->next;
+	 break;
+      }
+   }
+   _XUnlockMutex(_Xglobal_lock);
+
+   glx_display_free(priv);
 
    return 1;
 }
@@ -790,7 +793,7 @@ AllocAndFetchScreenConfigs(Display * dpy, struct glx_display * priv)
  _X_HIDDEN struct glx_display *
 __glXInitialize(Display * dpy)
 {
-    struct glx_display *dpyPriv;
+   struct glx_display *dpyPriv, *d;
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
    Bool glx_direct, glx_accel;
 #endif
@@ -804,6 +807,9 @@ __glXInitialize(Display * dpy)
 	 return dpyPriv;
       }
    }
+
+   /* Drop the lock while we create the display private. */
+   _XUnlockMutex(_Xglobal_lock);
 
    dpyPriv = Xcalloc(1, sizeof *dpyPriv);
    if (!dpyPriv)
@@ -869,6 +875,18 @@ __glXInitialize(Display * dpy)
 
    if (dpyPriv->majorVersion == 1 && dpyPriv->minorVersion >= 1)
       __glXClientInfo(dpy, dpyPriv->majorOpcode);
+
+   /* Grab the lock again and add the dispay private, unless somebody
+    * beat us to initializing on this display in the meantime. */
+   _XLockMutex(_Xglobal_lock);
+
+   for (d = glx_displays; d; d = d->next) {
+      if (d->dpy == dpy) {
+	 _XUnlockMutex(_Xglobal_lock);
+	 glx_display_free(dpyPriv);
+	 return d;
+      }
+   }
 
    dpyPriv->next = glx_displays;
    glx_displays = dpyPriv;
