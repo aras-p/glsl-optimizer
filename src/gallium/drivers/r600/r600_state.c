@@ -667,7 +667,7 @@ static struct radeon_state *r600_cb0(struct r600_context *rctx)
 	return rstate;
 }
 
-int r600_db_format(unsigned pformat, unsigned *format)
+static int r600_db_format(unsigned pformat, unsigned *format)
 {
 	switch (pformat) {
 	case PIPE_FORMAT_Z24X8_UNORM:
