@@ -129,7 +129,7 @@ static int r600_pipe_shader_vs(struct pipe_context *ctx, struct r600_context_sta
 	struct r600_screen *rscreen = r600_screen(ctx->screen);
 	struct r600_shader *rshader = &rpshader->shader;
 	struct radeon_state *state;
-	unsigned i, j, tmp;
+	unsigned i, tmp;
 
 	rpshader->rstate = radeon_state_decref(rpshader->rstate);
 	state = radeon_state(rscreen->rw, R600_VS_SHADER_TYPE, R600_VS_SHADER);

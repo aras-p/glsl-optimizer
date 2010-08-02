@@ -106,7 +106,7 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER:
 		return 0;
 	default:
-		debug_printf("r600: unknown param %d\n", param);
+		R600_ERR("r600: unknown param %d\n", param);
 		return 0;
 	}
 }
@@ -124,7 +124,7 @@ static float r600_get_paramf(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_MAX_TEXTURE_LOD_BIAS:
 		return 16.0f;
 	default:
-		debug_printf("r600: unsupported paramf %d\n", param);
+		R600_ERR("r600: unsupported paramf %d\n", param);
 		return 0.0f;
 	}
 }
@@ -137,7 +137,7 @@ static boolean r600_is_format_supported(struct pipe_screen* screen,
 					unsigned geom_flags)
 {
 	if (target >= PIPE_MAX_TEXTURE_TYPES) {
-		debug_printf("r600: unsupported texture type %d\n", target);
+		R600_ERR("r600: unsupported texture type %d\n", target);
 		return FALSE;
 	}
 	switch (format) {

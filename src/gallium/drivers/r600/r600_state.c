@@ -32,7 +32,6 @@
 #include "r600_context.h"
 #include "r600_resource.h"
 #include "r600d.h"
-#include "r600_reg.h"
 #include "r600_state_inlines.h"
 
 static void *r600_create_blend_state(struct pipe_context *ctx,
@@ -292,7 +291,7 @@ static void r600_set_constant_buffer(struct pipe_context *ctx,
 		type = R600_PS_CONSTANT_TYPE;
 		break;
 	default:
-		fprintf(stderr, "%s:%d unsupported %d\n", __func__, __LINE__, shader);
+		R600_ERR("unsupported %d\n", shader);
 		return;
 	}
 	if (buffer && buffer->width0 > 0) {
@@ -418,8 +417,7 @@ static void r600_set_index_buffer(struct pipe_context *ctx,
 	if (ib) {
 		pipe_resource_reference(&rctx->index_buffer.buffer, ib->buffer);
 		memcpy(&rctx->index_buffer, ib, sizeof(rctx->index_buffer));
-	}
-	else {
+	} else {
 		pipe_resource_reference(&rctx->index_buffer.buffer, NULL);
 		memset(&rctx->index_buffer, 0, sizeof(rctx->index_buffer));
 	}
@@ -643,15 +641,15 @@ static struct radeon_state *r600_blend(struct r600_context *rctx)
 		if (!state->rt[i].blend_enable)
 			continue;
 
-		bc |= r600_translate_blend_function(eqRGB) << CB_BLEND_COLOR_COMB_FCN_SHIFT;
-		bc |= r600_translate_blend_factor(srcRGB) << CB_BLEND_COLOR_SRCBLEND_SHIFT;
-		bc |= r600_translate_blend_factor(dstRGB) << CB_BLEND_COLOR_DESTBLEND_SHIFT;
+		bc |= S_028804_COLOR_COMB_FCN(r600_translate_blend_function(eqRGB));
+		bc |= S_028804_COLOR_SRCBLEND(r600_translate_blend_factor(srcRGB));
+		bc |= S_028804_COLOR_DESTBLEND(r600_translate_blend_factor(dstRGB));
 
 		if (srcA != srcRGB || dstA != dstRGB || eqA != eqRGB) {
-			bc |= CB_BLEND_SEPARATE_ALPHA_BLEND;
-			bc |= r600_translate_blend_function(eqA) << CB_BLEND_ALPHA_COMB_FCN_SHIFT;
-			bc |= r600_translate_blend_factor(srcA) << CB_BLEND_ALPHA_SRCBLEND_SHIFT;
-			bc |= r600_translate_blend_factor(dstA) << CB_BLEND_ALPHA_DESTBLEND_SHIFT;
+			bc |= S_028804_SEPARATE_ALPHA_BLEND(1);
+			bc |= S_028804_ALPHA_COMB_FCN(r600_translate_blend_function(eqA));
+			bc |= S_028804_ALPHA_SRCBLEND(r600_translate_blend_factor(srcA));
+			bc |= S_028804_ALPHA_DESTBLEND(r600_translate_blend_factor(dstA));
 		}
 
 		rstate->states[R600_BLEND__CB_BLEND0_CONTROL + i] = bc;
@@ -895,26 +893,25 @@ static struct radeon_state *r600_dsa(struct r600_context *rctx)
 		db_depth_control |= S_028800_STENCILFAIL(r600_translate_stencil_op(state->stencil[0].fail_op));
 		db_depth_control |= S_028800_STENCILZPASS(r600_translate_stencil_op(state->stencil[0].zpass_op));
 		db_depth_control |= S_028800_STENCILZFAIL(r600_translate_stencil_op(state->stencil[0].zfail_op));
-		
 		db_depth_control |= S_028800_BACKFACE_ENABLE(state->stencil[1].enabled);
 
-		stencil_ref_mask = (state->stencil[0].valuemask << R600_STENCILMASK_SHIFT) |
-			(state->stencil[0].writemask << R600_STENCILWRITEMASK_SHIFT);
+		stencil_ref_mask = S_028430_STENCILMASK(state->stencil[0].valuemask) |
+			S_028430_STENCILWRITEMASK(state->stencil[0].writemask);
 		if (state->stencil[1].enabled) {
 			db_depth_control |= S_028800_STENCILFUNC_BF(r600_translate_ds_func(state->stencil[1].func));
 			db_depth_control |= S_028800_STENCILFAIL_BF(r600_translate_stencil_op(state->stencil[1].fail_op));
 			db_depth_control |= S_028800_STENCILZPASS_BF(r600_translate_stencil_op(state->stencil[1].zpass_op));
 			db_depth_control |= S_028800_STENCILZFAIL_BF(r600_translate_stencil_op(state->stencil[1].zfail_op));
-			stencil_ref_mask_bf = (state->stencil[1].valuemask << R600_STENCILMASK_SHIFT) |
-				(state->stencil[1].writemask << R600_STENCILWRITEMASK_SHIFT);
+			stencil_ref_mask_bf = S_028434_STENCILMASK_BF(state->stencil[1].valuemask) |
+				S_028434_STENCILWRITEMASK_BF(state->stencil[1].writemask);
 		}
 	}
 
 	alpha_test_control = 0;
 	alpha_ref = 0;
 	if (state->alpha.enabled) {
-		alpha_test_control = (state->alpha.func) << 0;
-		alpha_test_control |= SX_ALPHA_TEST_ENABLE;
+		alpha_test_control = S_028410_ALPHA_FUNC(state->alpha.func);
+		alpha_test_control |= S_028410_ALPHA_TEST_ENABLE(1);
 		alpha_ref = fui(state->alpha.ref_value);
 	}
 
@@ -1108,7 +1105,10 @@ static struct radeon_state *r600_resource(struct r600_context *rctx,
 	if (r600_conv_pipe_format(view->texture->format, &format))
 		return NULL;
 	desc = util_format_description(view->texture->format);
-	assert(desc == NULL);
+	if (desc == NULL) {
+		R600_ERR("unknow format %d\n", view->texture->format);
+		return NULL;
+	}
 	rstate = radeon_state(rscreen->rw, R600_PS_RESOURCE_TYPE, id);
 	if (rstate == NULL) {
 		return NULL;

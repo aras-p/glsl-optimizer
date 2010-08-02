@@ -249,6 +249,16 @@
 #define   S_028060_SLICE_TILE_MAX(x)                   (((x) & 0xFFFFF) << 10)
 #define   G_028060_SLICE_TILE_MAX(x)                   (((x) >> 10) & 0xFFFFF)
 #define   C_028060_SLICE_TILE_MAX                      0xC00003FF
+#define R_028410_SX_ALPHA_TEST_CONTROL               0x028410
+#define   S_028410_ALPHA_FUNC(x)                       (((x) & 0x7) << 0)
+#define   G_028410_ALPHA_FUNC(x)                       (((x) >> 0) & 0x7)
+#define   C_028410_ALPHA_FUNC                          0xFFFFFFF8
+#define   S_028410_ALPHA_TEST_ENABLE(x)                (((x) & 0x1) << 3)
+#define   G_028410_ALPHA_TEST_ENABLE(x)                (((x) >> 3) & 0x1)
+#define   C_028410_ALPHA_TEST_ENABLE                   0xFFFFFFF7
+#define   S_028410_ALPHA_TEST_BYPASS(x)                (((x) & 0x1) << 8)
+#define   G_028410_ALPHA_TEST_BYPASS(x)                (((x) >> 8) & 0x1)
+#define   C_028410_ALPHA_TEST_BYPASS                   0xFFFFFEFF
 #define R_028800_DB_DEPTH_CONTROL                    0x028800
 #define   S_028800_STENCIL_ENABLE(x)                   (((x) & 0x1) << 0)
 #define   G_028800_STENCIL_ENABLE(x)                   (((x) >> 0) & 0x1)
@@ -268,9 +278,25 @@
 #define   S_028800_STENCILFUNC(x)                      (((x) & 0x7) << 8)
 #define   G_028800_STENCILFUNC(x)                      (((x) >> 8) & 0x7)
 #define   C_028800_STENCILFUNC                         0xFFFFF8FF
+#define     V_028800_STENCILFUNC_NEVER                 0x00000000
+#define     V_028800_STENCILFUNC_LESS                  0x00000001
+#define     V_028800_STENCILFUNC_EQUAL                 0x00000002
+#define     V_028800_STENCILFUNC_LEQUAL                0x00000003
+#define     V_028800_STENCILFUNC_GREATER               0x00000004
+#define     V_028800_STENCILFUNC_NOTEQUAL              0x00000005
+#define     V_028800_STENCILFUNC_GEQUAL                0x00000006
+#define     V_028800_STENCILFUNC_ALWAYS                0x00000007
 #define   S_028800_STENCILFAIL(x)                      (((x) & 0x7) << 11)
 #define   G_028800_STENCILFAIL(x)                      (((x) >> 11) & 0x7)
 #define   C_028800_STENCILFAIL                         0xFFFFC7FF
+#define     V_028800_STENCIL_KEEP                      0x00000000
+#define     V_028800_STENCIL_ZERO                      0x00000001
+#define     V_028800_STENCIL_REPLACE                   0x00000002
+#define     V_028800_STENCIL_INCR                      0x00000003
+#define     V_028800_STENCIL_DECR                      0x00000004
+#define     V_028800_STENCIL_INVERT                    0x00000005
+#define     V_028800_STENCIL_INCR_WRAP                 0x00000006
+#define     V_028800_STENCIL_DECR_WRAP                 0x00000007
 #define   S_028800_STENCILZPASS(x)                     (((x) & 0x7) << 14)
 #define   G_028800_STENCILZPASS(x)                     (((x) >> 14) & 0x7)
 #define   C_028800_STENCILZPASS                        0xFFFE3FFF
@@ -316,6 +342,77 @@
 #define   S_028010_ZRANGE_PRECISION(x)                 (((x) & 0x1) << 31)
 #define   G_028010_ZRANGE_PRECISION(x)                 (((x) >> 31) & 0x1)
 #define   C_028010_ZRANGE_PRECISION                    0x7FFFFFFF
+#define R_028430_DB_STENCILREFMASK                   0x028430
+#define   S_028430_STENCILREF(x)                       (((x) & 0xFF) << 0)
+#define   G_028430_STENCILREF(x)                       (((x) >> 0) & 0xFF)
+#define   C_028430_STENCILREF                          0xFFFFFF00
+#define   S_028430_STENCILMASK(x)                      (((x) & 0xFF) << 8)
+#define   G_028430_STENCILMASK(x)                      (((x) >> 8) & 0xFF)
+#define   C_028430_STENCILMASK                         0xFFFF00FF
+#define   S_028430_STENCILWRITEMASK(x)                 (((x) & 0xFF) << 16)
+#define   G_028430_STENCILWRITEMASK(x)                 (((x) >> 16) & 0xFF)
+#define   C_028430_STENCILWRITEMASK                    0xFF00FFFF
+#define R_028434_DB_STENCILREFMASK_BF                0x028434
+#define   S_028434_STENCILREF_BF(x)                    (((x) & 0xFF) << 0)
+#define   G_028434_STENCILREF_BF(x)                    (((x) >> 0) & 0xFF)
+#define   C_028434_STENCILREF_BF                       0xFFFFFF00
+#define   S_028434_STENCILMASK_BF(x)                   (((x) & 0xFF) << 8)
+#define   G_028434_STENCILMASK_BF(x)                   (((x) >> 8) & 0xFF)
+#define   C_028434_STENCILMASK_BF                      0xFFFF00FF
+#define   S_028434_STENCILWRITEMASK_BF(x)              (((x) & 0xFF) << 16)
+#define   G_028434_STENCILWRITEMASK_BF(x)              (((x) >> 16) & 0xFF)
+#define   C_028434_STENCILWRITEMASK_BF                 0xFF00FFFF
+#define R_028804_CB_BLEND_CONTROL                    0x028804
+#define   S_028804_COLOR_SRCBLEND(x)                   (((x) & 0x1F) << 0)
+#define   G_028804_COLOR_SRCBLEND(x)                   (((x) >> 0) & 0x1F)
+#define   C_028804_COLOR_SRCBLEND                      0xFFFFFFE0
+#define     V_028804_BLEND_ZERO                        0x00000000
+#define     V_028804_BLEND_ONE                         0x00000001
+#define     V_028804_BLEND_SRC_COLOR                   0x00000002
+#define     V_028804_BLEND_ONE_MINUS_SRC_COLOR         0x00000003
+#define     V_028804_BLEND_SRC_ALPHA                   0x00000004
+#define     V_028804_BLEND_ONE_MINUS_SRC_ALPHA         0x00000005
+#define     V_028804_BLEND_DST_ALPHA                   0x00000006
+#define     V_028804_BLEND_ONE_MINUS_DST_ALPHA         0x00000007
+#define     V_028804_BLEND_DST_COLOR                   0x00000008
+#define     V_028804_BLEND_ONE_MINUS_DST_COLOR         0x00000009
+#define     V_028804_BLEND_SRC_ALPHA_SATURATE          0x0000000A
+#define     V_028804_BLEND_BOTH_SRC_ALPHA              0x0000000B
+#define     V_028804_BLEND_BOTH_INV_SRC_ALPHA          0x0000000C
+#define     V_028804_BLEND_CONST_COLOR                 0x0000000D
+#define     V_028804_BLEND_ONE_MINUS_CONST_COLOR       0x0000000E
+#define     V_028804_BLEND_SRC1_COLOR                  0x0000000F
+#define     V_028804_BLEND_INV_SRC1_COLOR              0x00000010
+#define     V_028804_BLEND_SRC1_ALPHA                  0x00000011
+#define     V_028804_BLEND_INV_SRC1_ALPHA              0x00000012
+#define     V_028804_BLEND_CONST_ALPHA                 0x00000013
+#define     V_028804_BLEND_ONE_MINUS_CONST_ALPHA       0x00000014
+#define   S_028804_COLOR_COMB_FCN(x)                   (((x) & 0x7) << 5)
+#define   G_028804_COLOR_COMB_FCN(x)                   (((x) >> 5) & 0x7)
+#define   C_028804_COLOR_COMB_FCN                      0xFFFFFF1F
+#define     V_028804_COMB_DST_PLUS_SRC                 0x00000000
+#define     V_028804_COMB_SRC_MINUS_DST                0x00000001
+#define     V_028804_COMB_MIN_DST_SRC                  0x00000002
+#define     V_028804_COMB_MAX_DST_SRC                  0x00000003
+#define     V_028804_COMB_DST_MINUS_SRC                0x00000004
+#define   S_028804_COLOR_DESTBLEND(x)                  (((x) & 0x1F) << 8)
+#define   G_028804_COLOR_DESTBLEND(x)                  (((x) >> 8) & 0x1F)
+#define   C_028804_COLOR_DESTBLEND                     0xFFFFE0FF
+#define   S_028804_OPACITY_WEIGHT(x)                   (((x) & 0x1) << 13)
+#define   G_028804_OPACITY_WEIGHT(x)                   (((x) >> 13) & 0x1)
+#define   C_028804_OPACITY_WEIGHT                      0xFFFFDFFF
+#define   S_028804_ALPHA_SRCBLEND(x)                   (((x) & 0x1F) << 16)
+#define   G_028804_ALPHA_SRCBLEND(x)                   (((x) >> 16) & 0x1F)
+#define   C_028804_ALPHA_SRCBLEND                      0xFFE0FFFF
+#define   S_028804_ALPHA_COMB_FCN(x)                   (((x) & 0x7) << 21)
+#define   G_028804_ALPHA_COMB_FCN(x)                   (((x) >> 21) & 0x7)
+#define   C_028804_ALPHA_COMB_FCN                      0xFF1FFFFF
+#define   S_028804_ALPHA_DESTBLEND(x)                  (((x) & 0x1F) << 24)
+#define   G_028804_ALPHA_DESTBLEND(x)                  (((x) >> 24) & 0x1F)
+#define   C_028804_ALPHA_DESTBLEND                     0xE0FFFFFF
+#define   S_028804_SEPARATE_ALPHA_BLEND(x)             (((x) & 0x1) << 29)
+#define   G_028804_SEPARATE_ALPHA_BLEND(x)             (((x) >> 29) & 0x1)
+#define   C_028804_SEPARATE_ALPHA_BLEND                0xDFFFFFFF
 #define R_028814_PA_SU_SC_MODE_CNTL                  0x028814
 #define   S_028814_CULL_FRONT(x)                       (((x) & 0x1) << 0)
 #define   G_028814_CULL_FRONT(x)                       (((x) >> 0) & 0x1)
