@@ -2872,25 +2872,92 @@ GLboolean assemble_CMP(r700_AssemblerBase *pAsm)
 
 GLboolean assemble_TRIG(r700_AssemblerBase *pAsm, BITS opcode)
 {
+    /* 
+     * r600 - trunc to -PI..PI range
+     * r700 - normalize by dividing by 2PI
+     * see fdo bug 27901
+     */
+  
     int tmp;
     checkop1(pAsm);
 
     tmp = gethelpr(pAsm);
 
-    pAsm->D.dst.opcode = SQ_OP2_INST_MUL;
+    pAsm->D.dst.opcode = SQ_OP3_INST_MULADD;
+    pAsm->D.dst.op3    = 1;
+
     setaddrmode_PVSDST(&(pAsm->D.dst), ADDR_ABSOLUTE);
     pAsm->D.dst.rtype  = DST_REG_TEMPORARY;
     pAsm->D.dst.reg    = tmp;
-    pAsm->D.dst.writex = 1;
 
     assemble_src(pAsm, 0, -1);
 
     pAsm->S[1].src.rtype = SRC_REC_LITERAL;
     setswizzle_PVSSRC(&(pAsm->S[1].src), SQ_SEL_X);
+    
+    pAsm->S[2].src.rtype = SRC_REC_LITERAL;
+    setswizzle_PVSSRC(&(pAsm->S[2].src), SQ_SEL_Y);
+
     pAsm->D2.dst2.literal_slots = 1;
     pAsm->C[0].f = 1/(3.1415926535 * 2);
-    pAsm->C[1].f = 0.0F;
-    next_ins(pAsm);
+    pAsm->C[1].f = 0.5f;
+    
+    if ( GL_FALSE == next_ins(pAsm) )
+    {
+        return GL_FALSE;
+    }
+
+    pAsm->D.dst.opcode = SQ_OP2_INST_FRACT;
+
+    setaddrmode_PVSDST(&(pAsm->D.dst), ADDR_ABSOLUTE);
+    pAsm->D.dst.rtype  = DST_REG_TEMPORARY;
+    pAsm->D.dst.reg    = tmp;
+    pAsm->D.dst.writex = 1;
+
+    setaddrmode_PVSSRC(&(pAsm->S[0].src), ADDR_ABSOLUTE);
+    pAsm->S[0].src.rtype = SRC_REG_TEMPORARY;
+    pAsm->S[0].src.reg   = tmp;
+    setswizzle_PVSSRC(&(pAsm->S[0].src), SQ_SEL_X);
+
+    if(( GL_FALSE == next_ins(pAsm) ))
+    {
+        return GL_FALSE;
+    }
+    pAsm->D.dst.opcode = SQ_OP3_INST_MULADD;
+    pAsm->D.dst.op3    = 1;
+
+    setaddrmode_PVSDST(&(pAsm->D.dst), ADDR_ABSOLUTE);
+    pAsm->D.dst.rtype  = DST_REG_TEMPORARY;
+    pAsm->D.dst.reg    = tmp;
+
+    setaddrmode_PVSSRC(&(pAsm->S[0].src), ADDR_ABSOLUTE);
+    pAsm->S[0].src.rtype = SRC_REG_TEMPORARY;
+    pAsm->S[0].src.reg   = tmp;
+    setswizzle_PVSSRC(&(pAsm->S[0].src), SQ_SEL_X);
+
+    pAsm->S[1].src.rtype = SRC_REC_LITERAL;
+    setswizzle_PVSSRC(&(pAsm->S[1].src), SQ_SEL_X);
+
+    pAsm->S[2].src.rtype = SRC_REC_LITERAL;
+    setswizzle_PVSSRC(&(pAsm->S[2].src), SQ_SEL_Y);
+
+    pAsm->D2.dst2.literal_slots = 1;
+
+    if (pAsm->bR6xx)
+    {
+       pAsm->C[0].f = 3.1415926535897f * 2.0f;
+       pAsm->C[1].f = -3.1415926535897f;
+    }
+    else 
+    {
+       pAsm->C[0].f = 1.0f;
+       pAsm->C[1].f = -0.5f;
+    }
+
+    if(( GL_FALSE == next_ins(pAsm) ))
+    {
+        return GL_FALSE;
+    }
 
     pAsm->D.dst.opcode = opcode;
     pAsm->D.dst.math = 1;
@@ -4030,22 +4097,79 @@ GLboolean assemble_SCS(r700_AssemblerBase *pAsm)
     checkop1(pAsm);
 
     tmp = gethelpr(pAsm);
-    /* tmp.x = src /2*PI */
-    pAsm->D.dst.opcode = SQ_OP2_INST_MUL;
+
+    pAsm->D.dst.opcode = SQ_OP3_INST_MULADD;
+    pAsm->D.dst.op3    = 1;
+
     setaddrmode_PVSDST(&(pAsm->D.dst), ADDR_ABSOLUTE);
     pAsm->D.dst.rtype  = DST_REG_TEMPORARY;
     pAsm->D.dst.reg    = tmp;
-    pAsm->D.dst.writex = 1;
 
     assemble_src(pAsm, 0, -1);
 
     pAsm->S[1].src.rtype = SRC_REC_LITERAL;
     setswizzle_PVSSRC(&(pAsm->S[1].src), SQ_SEL_X);
+
+    pAsm->S[2].src.rtype = SRC_REC_LITERAL;
+    setswizzle_PVSSRC(&(pAsm->S[2].src), SQ_SEL_Y);
+
     pAsm->D2.dst2.literal_slots = 1;
     pAsm->C[0].f = 1/(3.1415926535 * 2);
-    pAsm->C[1].f = 0.0F;
+    pAsm->C[1].f = 0.5F;
 
-    next_ins(pAsm);
+    if ( GL_FALSE == next_ins(pAsm) )
+    {
+        return GL_FALSE;
+    }
+
+    pAsm->D.dst.opcode = SQ_OP2_INST_FRACT;
+
+    setaddrmode_PVSDST(&(pAsm->D.dst), ADDR_ABSOLUTE);
+    pAsm->D.dst.rtype  = DST_REG_TEMPORARY;
+    pAsm->D.dst.reg    = tmp;
+    pAsm->D.dst.writex = 1;
+
+    setaddrmode_PVSSRC(&(pAsm->S[0].src), ADDR_ABSOLUTE);
+    pAsm->S[0].src.rtype = SRC_REG_TEMPORARY;
+    pAsm->S[0].src.reg   = tmp;
+    setswizzle_PVSSRC(&(pAsm->S[0].src), SQ_SEL_X);
+
+    if(( GL_FALSE == next_ins(pAsm) ))
+    {
+        return GL_FALSE;
+    }
+    pAsm->D.dst.opcode = SQ_OP3_INST_MULADD;
+    pAsm->D.dst.op3    = 1;
+
+    setaddrmode_PVSDST(&(pAsm->D.dst), ADDR_ABSOLUTE);
+    pAsm->D.dst.rtype  = DST_REG_TEMPORARY;
+    pAsm->D.dst.reg    = tmp;
+
+    setaddrmode_PVSSRC(&(pAsm->S[0].src), ADDR_ABSOLUTE);
+    pAsm->S[0].src.rtype = SRC_REG_TEMPORARY;
+    pAsm->S[0].src.reg   = tmp;
+    setswizzle_PVSSRC(&(pAsm->S[0].src), SQ_SEL_X);
+
+    pAsm->S[1].src.rtype = SRC_REC_LITERAL;
+    setswizzle_PVSSRC(&(pAsm->S[1].src), SQ_SEL_X);
+
+    pAsm->S[2].src.rtype = SRC_REC_LITERAL;
+    setswizzle_PVSSRC(&(pAsm->S[2].src), SQ_SEL_Y);
+
+    pAsm->D2.dst2.literal_slots = 1;
+
+    if(pAsm->bR6xx) {
+       pAsm->C[0].f = 3.1415926535897f * 2.0f;
+       pAsm->C[1].f = -3.1415926535897f;
+    } else {
+       pAsm->C[0].f = 1.0f;
+       pAsm->C[1].f = -0.5f;
+    }
+
+    if(( GL_FALSE == next_ins(pAsm) ))
+    {
+        return GL_FALSE;
+    }
 
     // COS dst.x,    a.x
     pAsm->D.dst.opcode = SQ_OP2_INST_COS;
