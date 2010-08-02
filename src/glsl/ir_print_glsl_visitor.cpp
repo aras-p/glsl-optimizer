@@ -24,6 +24,7 @@
 #include "ir_print_glsl_visitor.h"
 #include "glsl_types.h"
 #include "glsl_parser_extras.h"
+#include "ir_unused_structs.h"
 
 static void print_type(const glsl_type *t);
 
@@ -32,8 +33,14 @@ _mesa_print_ir_glsl(exec_list *instructions,
 	       struct _mesa_glsl_parse_state *state)
 {
    if (state) {
+	   ir_struct_usage_visitor v;
+	   v.run (instructions);
+
       for (unsigned i = 0; i < state->num_user_structures; i++) {
 	 const glsl_type *const s = state->user_structures[i];
+
+	 if (!v.has_struct_entry(s))
+		 continue;
 
 	 printf("struct %s {\n",
 		s->name);

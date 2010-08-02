@@ -412,6 +412,14 @@
 					>
 				</File>
 				<File
+					RelativePath="..\ir_unused_structs.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\ir_unused_structs.h"
+					>
+				</File>
+				<File
 					RelativePath="..\ir_validate.cpp"
 					>
 				</File>
