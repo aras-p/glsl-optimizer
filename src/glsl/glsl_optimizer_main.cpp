@@ -89,6 +89,7 @@ void compile_shader (Shader* shader)
    }
 
    if (dump_ast) {
+	   printf ("******** AST:\n");
       foreach_list_const(n, &state->translation_unit) {
 	 ast_node *ast = exec_node_data(ast_node, n, link);
 	 ast->print();
@@ -103,6 +104,7 @@ void compile_shader (Shader* shader)
    // Print out the unoptimized IR.
    if (!state->error && dump_hir) {
       validate_ir_tree(shader->ir);
+	  printf ("******** Unoptimized IR:\n");
       _mesa_print_ir(shader->ir, state);
    }
 
@@ -131,6 +133,7 @@ void compile_shader (Shader* shader)
 
    // Print out the resulting IR
    if (!state->error && dump_lir) {
+	   printf ("******** Optimized IR:\n");
       _mesa_print_ir(shader->ir, state);
    }
 
