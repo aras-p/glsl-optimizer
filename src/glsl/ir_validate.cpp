@@ -336,6 +336,8 @@ ir_validate::validate_ir(ir_instruction *ir, void *data)
 void
 check_node_type(ir_instruction *ir, void *data)
 {
+   (void) data;
+
    if (ir->ir_type <= ir_type_unset || ir->ir_type >= ir_type_max) {
       printf("Instruction node with unset type\n");
       ir->print(); printf("\n");
