@@ -35,8 +35,8 @@ hash_table *glsl_type::array_types = NULL;
 hash_table *glsl_type::record_types = NULL;
 void *glsl_type::ctx = NULL;
 
-static void
-init_talloc_type_ctx(void)
+void
+glsl_type::init_talloc_type_ctx(void)
 {
    if (glsl_type::ctx == NULL) {
       glsl_type::ctx = talloc_init("glsl_type");
