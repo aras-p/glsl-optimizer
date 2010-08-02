@@ -380,6 +380,14 @@
 					>
 				</File>
 				<File
+					RelativePath="..\ir_print_glsl_visitor.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\ir_print_glsl_visitor.h"
+					>
+				</File>
+				<File
 					RelativePath="..\ir_print_visitor.cpp"
 					>
 				</File>

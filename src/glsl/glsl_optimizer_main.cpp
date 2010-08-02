@@ -29,7 +29,7 @@ static bool ReadStringFromFile (const char* pathName, std::string& output)
 #include "glsl_parser_extras.h"
 #include "glsl_parser.h"
 #include "ir_optimization.h"
-#include "ir_print_visitor.h"
+#include "ir_print_glsl_visitor.h"
 #include "program.h"
 
 extern "C" struct gl_shader *
@@ -104,8 +104,8 @@ void compile_shader (Shader* shader)
    // Print out the unoptimized IR.
    if (!state->error && dump_hir) {
       validate_ir_tree(shader->ir);
-	  printf ("******** Unoptimized IR:\n");
-      _mesa_print_ir(shader->ir, state);
+	  printf ("******** Unoptimized:\n");
+      _mesa_print_ir_glsl(shader->ir, state);
    }
 
    // Optimization passes
@@ -133,8 +133,8 @@ void compile_shader (Shader* shader)
 
    // Print out the resulting IR
    if (!state->error && dump_lir) {
-	   printf ("******** Optimized IR:\n");
-      _mesa_print_ir(shader->ir, state);
+	   printf ("******** Optimized:\n");
+      _mesa_print_ir_glsl(shader->ir, state);
    }
 
    //shader->symbols = state->symbols;
