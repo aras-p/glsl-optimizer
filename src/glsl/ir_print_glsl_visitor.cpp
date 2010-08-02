@@ -96,10 +96,7 @@ void ir_print_glsl_visitor::visit(ir_variable *ir)
    printf("%s%s%s%s",
 	  cent, inv, mode[ir->mode], interp[ir->interpolation]);
    print_type(ir->type);
-   printf(" %s", ir->name);
-   if (ir->mode == ir_var_temporary)
-	   printf ("_%p", ir);
-   printf(";");
+   printf(" %s;", ir->name);
 }
 
 
@@ -250,10 +247,7 @@ void ir_print_glsl_visitor::visit(ir_swizzle *ir)
 void ir_print_glsl_visitor::visit(ir_dereference_variable *ir)
 {
    ir_variable *var = ir->variable_referenced();
-   printf("%s", var->name);
-   if (var->mode == ir_var_temporary)
-	   printf ("_%p", ir);
-   printf(" ");
+   printf("%s ", var->name);
 }
 
 

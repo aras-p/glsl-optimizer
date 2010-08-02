@@ -789,6 +789,7 @@ ir_swizzle::variable_referenced()
    return this->val->variable_referenced();
 }
 
+int ir_variable::temp_var_counter = 0;
 
 ir_variable::ir_variable(const struct glsl_type *type, const char *name,
 			 ir_variable_mode mode)
@@ -798,7 +799,14 @@ ir_variable::ir_variable(const struct glsl_type *type, const char *name,
 {
    this->ir_type = ir_type_variable;
    this->type = type;
-   this->name = talloc_strdup(this, name);
+   if (mode == ir_var_temporary)
+   {
+	   this->name = talloc_asprintf(this, "tmpvar_%d", ++temp_var_counter);
+   }
+   else
+   {
+	this->name = talloc_strdup(this, name);
+   }
    this->location = -1;
    this->warn_extension = NULL;
    this->constant_value = NULL;

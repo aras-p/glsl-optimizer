@@ -268,6 +268,8 @@ public:
     * Value assigned in the initializer of a variable declared "const"
     */
    ir_constant *constant_value;
+
+   static int temp_var_counter;
 };
 
 
