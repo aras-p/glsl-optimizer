@@ -384,53 +384,28 @@ glsl_type::get_instance(unsigned base_type, unsigned rows, unsigned columns)
 }
 
 
-int
-glsl_type::array_key_compare(const void *a, const void *b)
-{
-   const glsl_type *const key1 = (glsl_type *) a;
-   const glsl_type *const key2 = (glsl_type *) b;
-
-   /* Return zero is the types match (there is zero difference) or non-zero
-    * otherwise.
-    */
-   return ((key1->fields.array == key2->fields.array)
-	   && (key1->length == key2->length)) ? 0 : 1;
-}
-
-
-unsigned
-glsl_type::array_key_hash(const void *a)
-{
-   const glsl_type *const key = (glsl_type *) a;
-
-   const struct {
-      const glsl_type *t;
-      unsigned l;
-      char nul;
-   } hash_key = {
-      key->fields.array,
-      key->length,
-      '\0'
-   };
-
-   return hash_table_string_hash(& hash_key);
-}
-
-
 const glsl_type *
 glsl_type::get_array_instance(const glsl_type *base, unsigned array_size)
 {
-   const glsl_type key(base, array_size);
 
    if (array_types == NULL) {
-      array_types = hash_table_ctor(64, array_key_hash, array_key_compare);
+      array_types = hash_table_ctor(64, hash_table_string_hash,
+				    hash_table_string_compare);
    }
 
-   const glsl_type *t = (glsl_type *) hash_table_find(array_types, & key);
+   /* Generate a name using the base type pointer in the key.  This is
+    * done because the name of the base type may not be unique across
+    * shaders.  For example, two shaders may have different record types
+    * named 'foo'.
+    */
+   char key[128];
+   snprintf(key, sizeof(key), "%p[%u]", base, array_size);
+
+   const glsl_type *t = (glsl_type *) hash_table_find(array_types, key);
    if (t == NULL) {
       t = new glsl_type(base, array_size);
 
-      hash_table_insert(array_types, (void *) t, t);
+      hash_table_insert(array_types, (void *) t, talloc_strdup(ctx, key));
    }
 
    assert(t->base_type == GLSL_TYPE_ARRAY);

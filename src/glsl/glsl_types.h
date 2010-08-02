@@ -418,9 +418,6 @@ private:
    /** Hash table containing the known array types. */
    static struct hash_table *array_types;
 
-   static int array_key_compare(const void *a, const void *b);
-   static unsigned array_key_hash(const void *key);
-
    /** Hash table containing the known record types. */
    static struct hash_table *record_types;
 
