@@ -172,16 +172,78 @@ void ir_print_glsl_visitor::visit(ir_function *ir)
 }
 
 
+static const char *const operator_glsl_strs[] = {
+	"~",
+	"!",
+	"-",
+	"abs",
+	"sign",
+	"1.0/",
+	"inversesqrt",
+	"sqrt",
+	"exp",
+	"log",
+	"exp2",
+	"log2",
+	"(int)",
+	"(float)",
+	"(bool)",
+	"(float)",
+	"(bool)",
+	"(int)",
+	"(float)",
+	"trunc",
+	"ceil",
+	"floor",
+	"fract",
+	"sin",
+	"cos",
+	"dFdx",
+	"dFdy",
+	"+",
+	"-",
+	"*",
+	"/",
+	"%",
+	"<",
+	">",
+	"<=",
+	">=",
+	"==",
+	"!=",
+	"<<",
+	">>",
+	"&",
+	"^",
+	"|",
+	"&&",
+	"^^",
+	"||",
+	"dot",
+	"cross",
+	"min",
+	"max",
+	"pow",
+};
+
 void ir_print_glsl_visitor::visit(ir_expression *ir)
 {
-   if (ir->operands[0])
-      ir->operands[0]->accept(this);
+	if (ir->get_num_operands() == 1) {
+		printf("%s(", operator_glsl_strs[ir->operation]);
+		if (ir->operands[0])
+			ir->operands[0]->accept(this);
+		printf(")");
+	}
+	else {
+		if (ir->operands[0])
+			ir->operands[0]->accept(this);
 
-   printf(" %s ", ir->operator_string());
+		printf(" %s ", ir->operator_string());
 
-   if (ir->operands[1])
-      ir->operands[1]->accept(this);
-   printf(" ");
+		if (ir->operands[1])
+			ir->operands[1]->accept(this);
+	}
+	printf(" ");
 }
 
 
@@ -363,14 +425,12 @@ ir_print_glsl_visitor::visit(ir_return *ir)
 void
 ir_print_glsl_visitor::visit(ir_discard *ir)
 {
-   printf("(discard ");
+   printf("discard;");
 
    if (ir->condition != NULL) {
-      printf(" ");
+      printf(" TODO ");
       ir->condition->accept(this);
    }
-
-   printf(")");
 }
 
 
@@ -418,7 +478,23 @@ ir_print_glsl_visitor::visit(ir_if *ir)
 void
 ir_print_glsl_visitor::visit(ir_loop *ir)
 {
-   printf("(loop (");
+	bool noData = (ir->counter == NULL && ir->from == NULL && ir->to == NULL && ir->increment == NULL);
+	if (noData) {
+		printf ("while (true) {\n");
+		indentation++;
+		foreach_iter(exec_list_iterator, iter, ir->body_instructions) {
+			ir_instruction *const inst = (ir_instruction *) iter.get();
+			indent();
+			inst->accept(this);
+			printf("\n");
+		}
+		indentation--;
+		indent();
+		printf ("}\n");
+		return;
+	}
+
+   printf("( TODO loop (");
    if (ir->counter != NULL)
       ir->counter->accept(this);
    printf(") (");
@@ -449,5 +525,5 @@ ir_print_glsl_visitor::visit(ir_loop *ir)
 void
 ir_print_glsl_visitor::visit(ir_loop_jump *ir)
 {
-   printf("%s", ir->is_break() ? "break" : "continue");
+   printf("%s", ir->is_break() ? "break;" : "continue;");
 }
