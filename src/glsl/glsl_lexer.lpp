@@ -236,6 +236,10 @@ layout		{
 			    yylval->real = strtod(yytext, NULL);
 			    return FLOATCONSTANT;
 			}
+[0-9]+[fF]		{
+			    yylval->real = strtod(yytext, NULL);
+			    return FLOATCONSTANT;
+			}
 
 true			{
 			    yylval->n = 1;
