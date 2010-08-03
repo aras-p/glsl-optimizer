@@ -68,11 +68,11 @@ void main ()
   o .hip_pack0 .xy = xlt_v .texcoord .xy * _MainTex_ST .xy  + _MainTex_ST .zw ; 
   o .hip_pack0 .zw = xlt_v .texcoord .xy * _BumpMap_ST .xy  + _BumpMap_ST .zw ; 
   vec3 tmpvar_65;
-  tmpvar_65 .xyz = (vec3)_Object2World [0] ; 
+  tmpvar_65 .xyz = vec3(_Object2World [0] ); 
   vec3 tmpvar_66;
-  tmpvar_66 .xyz = (vec3)_Object2World [1] ; 
+  tmpvar_66 .xyz = vec3(_Object2World [1] ); 
   vec3 tmpvar_67;
-  tmpvar_67 .xyz = (vec3)_Object2World [2] ; 
+  tmpvar_67 .xyz = vec3(_Object2World [2] ); 
   mat3 tmpvar_68;
   tmpvar_68 [uint (0) ] .xyz = tmpvar_65 .xyz; 
   tmpvar_68 [uint (1) ] .xyz = tmpvar_66 .xyz; 

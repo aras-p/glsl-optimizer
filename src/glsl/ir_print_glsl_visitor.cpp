@@ -408,14 +408,19 @@ void ir_print_glsl_visitor::visit(ir_assignment *ir)
 
    buffer = talloc_asprintf_append(buffer, " = ");
 
-   if (ir->lhs->type != ir->rhs->type)
+   bool typeMismatch = (ir->lhs->type != ir->rhs->type);
+   if (typeMismatch)
    {
-	   buffer = talloc_asprintf_append(buffer, "(");
 	   buffer = print_type(buffer, ir->lhs->type);
-	   buffer = talloc_asprintf_append(buffer, ")");
+	   buffer = talloc_asprintf_append(buffer, "(");
    }
 
    ir->rhs->accept(this);
+
+   if (typeMismatch)
+   {
+	   buffer = talloc_asprintf_append(buffer, ")");
+   }
    buffer = talloc_asprintf_append(buffer, "; ");
 }
 

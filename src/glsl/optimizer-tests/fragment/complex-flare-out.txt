@@ -4,7 +4,7 @@ void main ()
   vec4 tmpvar_1;
   tmpvar_1 .xyzw = gl_Color ; 
   vec2 tmpvar_2;
-  tmpvar_2 .xy = (vec2)gl_TexCoord [0] ; 
+  tmpvar_2 .xy = vec2(gl_TexCoord [0] ); 
   vec4 color;
   color  = tmpvar_1 ; 
   vec4 tmpvar_8;
