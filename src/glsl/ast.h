@@ -42,7 +42,7 @@ public:
    {
       void *node;
 
-      node = talloc_size(ctx, size);
+      node = talloc_zero_size(ctx, size);
       assert(node != NULL);
 
       return node;
@@ -464,7 +464,12 @@ public:
 
 class ast_parameter_declarator : public ast_node {
 public:
-   ast_parameter_declarator () : is_array(false), array_size(0) { }
+   ast_parameter_declarator()
+   {
+      this->identifier = NULL;
+      this->is_array = false;
+      this->array_size = 0;
+   }
 
    virtual void print(void) const;
 

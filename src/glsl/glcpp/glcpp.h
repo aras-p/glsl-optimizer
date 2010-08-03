@@ -28,7 +28,7 @@
 
 #include <talloc.h>
 
-#include "hash_table.h"
+#include "program/hash_table.h"
 
 #define yyscan_t void*
 

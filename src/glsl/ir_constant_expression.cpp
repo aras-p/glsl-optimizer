@@ -674,6 +674,12 @@ ir_dereference_variable::constant_expression_value()
    if (!var)
       return NULL;
 
+   /* The constant_value of a uniform variable is its initializer,
+    * not the lifetime constant value of the uniform.
+    */
+   if (var->mode == ir_var_uniform)
+      return NULL;
+
    return var->constant_value ? var->constant_value->clone(NULL) : NULL;
 }
 
@@ -850,7 +856,7 @@ ir_call::constant_expression_value()
 	    break;
 	 case GLSL_TYPE_INT:
 	    data.i[c] = CLAMP(op[0]->value.i[c], op[1]->value.i[c1],
-			      op[2]->value.u[c2]);
+			      op[2]->value.i[c2]);
 	    break;
 	 case GLSL_TYPE_FLOAT:
 	    data.f[c] = CLAMP(op[0]->value.f[c], op[1]->value.f[c1],

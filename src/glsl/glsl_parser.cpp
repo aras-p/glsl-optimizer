@@ -4454,7 +4454,7 @@ yyreduce:
     {
 			   if (state->language_version < 130)
 			      _mesa_glsl_error(& (yylsp[(1) - (1)]), state,
-					       "precission qualifier forbidden "
+					       "precision qualifier forbidden "
 					       "in GLSL %d.%d (1.30 or later "
 					       "required)\n",
 					       state->language_version / 100,
@@ -4471,7 +4471,7 @@ yyreduce:
     {
 			   if (state->language_version < 130)
 			      _mesa_glsl_error(& (yylsp[(1) - (1)]), state,
-					       "precission qualifier forbidden "
+					       "precision qualifier forbidden "
 					       "in GLSL %d.%d (1.30 or later "
 					       "required)\n",
 					       state->language_version / 100,
@@ -4488,7 +4488,7 @@ yyreduce:
     {
 			   if (state->language_version < 130)
 			      _mesa_glsl_error(& (yylsp[(1) - (1)]), state,
-					       "precission qualifier forbidden "
+					       "precision qualifier forbidden "
 					       "in GLSL %d.%d (1.30 or later "
 					       "required)\n",
 					       state->language_version / 100,

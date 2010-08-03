@@ -53,11 +53,30 @@ extern "C" {
 #include "program/prog_parameter.h"
 }
 
+static int swizzle_for_size(int size);
+
 /**
  * This struct is a corresponding struct to Mesa prog_src_register, with
  * wider fields.
  */
 typedef struct ir_to_mesa_src_reg {
+   ir_to_mesa_src_reg(int file, int index, const glsl_type *type)
+   {
+      this->file = file;
+      this->index = index;
+      if (type && (type->is_scalar() || type->is_vector() || type->is_matrix()))
+	 this->swizzle = swizzle_for_size(type->vector_elements);
+      else
+	 this->swizzle = SWIZZLE_XYZW;
+      this->negate = 0;
+      this->reladdr = NULL;
+   }
+
+   ir_to_mesa_src_reg()
+   {
+      this->file = PROGRAM_UNDEFINED;
+   }
+
    int file; /**< PROGRAM_* from Mesa */
    int index; /**< temporary index, VERT_ATTRIB_*, FRAG_ATTRIB_*, etc. */
    GLuint swizzle; /**< SWIZZLE_XYZWONEZERO swizzles from Mesa. */
@@ -233,6 +252,15 @@ public:
    GLboolean try_emit_mad(ir_expression *ir,
 			  int mul_operand);
 
+   int add_uniform(const char *name,
+		   const glsl_type *type,
+		   ir_constant *constant);
+   void add_aggregate_uniform(ir_instruction *ir,
+			      const char *name,
+			      const struct glsl_type *type,
+			      ir_constant *constant,
+			      struct ir_to_mesa_dst_reg temp);
+
    int *sampler_map;
    int sampler_map_size;
 
@@ -242,9 +270,7 @@ public:
    void *mem_ctx;
 };
 
-ir_to_mesa_src_reg ir_to_mesa_undef = {
-   PROGRAM_UNDEFINED, 0, SWIZZLE_NOOP, NEGATE_NONE, NULL,
-};
+ir_to_mesa_src_reg ir_to_mesa_undef = ir_to_mesa_src_reg(PROGRAM_UNDEFINED, 0, NULL);
 
 ir_to_mesa_dst_reg ir_to_mesa_undef_dst = {
    PROGRAM_UNDEFINED, 0, SWIZZLE_NOOP, COND_TR, NULL,
@@ -379,15 +405,7 @@ ir_to_mesa_dst_reg_from_src(ir_to_mesa_src_reg reg)
 inline ir_to_mesa_src_reg
 ir_to_mesa_src_reg_from_dst(ir_to_mesa_dst_reg reg)
 {
-   ir_to_mesa_src_reg src_reg;
-
-   src_reg.file = reg.file;
-   src_reg.index = reg.index;
-   src_reg.swizzle = SWIZZLE_XYZW;
-   src_reg.negate = 0;
-   src_reg.reladdr = reg.reladdr;
-
-   return src_reg;
+   return ir_to_mesa_src_reg(reg.file, reg.index, NULL);
 }
 
 /**
@@ -460,13 +478,10 @@ ir_to_mesa_visitor::ir_to_mesa_emit_scalar_op1(ir_instruction *ir,
 struct ir_to_mesa_src_reg
 ir_to_mesa_visitor::src_reg_for_float(float val)
 {
-   ir_to_mesa_src_reg src_reg;
+   ir_to_mesa_src_reg src_reg(PROGRAM_CONSTANT, -1, NULL);
 
-   src_reg.file = PROGRAM_CONSTANT;
    src_reg.index = _mesa_add_unnamed_constant(this->prog->Parameters,
 					      &val, 1, &src_reg.swizzle);
-   src_reg.reladdr = NULL;
-   src_reg.negate = 0;
 
    return src_reg;
 }
@@ -1235,13 +1250,139 @@ get_builtin_matrix_ref(void *mem_ctx, struct gl_program *prog, ir_variable *var,
    return NULL;
 }
 
+int
+ir_to_mesa_visitor::add_uniform(const char *name,
+				const glsl_type *type,
+				ir_constant *constant)
+{
+   int len;
+
+   if (type->is_vector() ||
+       type->is_scalar()) {
+      len = type->vector_elements;
+   } else {
+      len = type_size(type) * 4;
+   }
+
+   float *values = NULL;
+   if (constant && type->is_array()) {
+      values = (float *)malloc(type->length * 4 * sizeof(float));
+
+      assert(type->fields.array->is_scalar() ||
+	     type->fields.array->is_vector() ||
+	     !"FINISHME: uniform array initializers for non-vector");
+
+      for (unsigned int i = 0; i < type->length; i++) {
+	 ir_constant *element = constant->array_elements[i];
+	 unsigned int c;
+
+	 for (c = 0; c < type->fields.array->vector_elements; c++) {
+	    switch (type->fields.array->base_type) {
+	    case GLSL_TYPE_FLOAT:
+	       values[4 * i + c] = element->value.f[c];
+	       break;
+	    case GLSL_TYPE_INT:
+	       values[4 * i + c] = element->value.i[c];
+	       break;
+	    case GLSL_TYPE_UINT:
+	       values[4 * i + c] = element->value.u[c];
+	       break;
+	    case GLSL_TYPE_BOOL:
+	       values[4 * i + c] = element->value.b[c];
+	       break;
+	    default:
+	       assert(!"not reached");
+	    }
+	 }
+      }
+   } else if (constant) {
+      values = (float *)malloc(16 * sizeof(float));
+      for (unsigned int i = 0; i < type->components(); i++) {
+	 switch (type->base_type) {
+	 case GLSL_TYPE_FLOAT:
+	    values[i] = constant->value.f[i];
+	    break;
+	 case GLSL_TYPE_INT:
+	    values[i] = constant->value.i[i];
+	    break;
+	 case GLSL_TYPE_UINT:
+	    values[i] = constant->value.u[i];
+	    break;
+	 case GLSL_TYPE_BOOL:
+	    values[i] = constant->value.b[i];
+	    break;
+	 default:
+	    assert(!"not reached");
+	 }
+      }
+   }
+
+   int loc = _mesa_add_uniform(this->prog->Parameters,
+			       name,
+			       len,
+			       type->gl_type,
+			       values);
+   free(values);
+
+   return loc;
+}
+
+/* Recursively add all the members of the aggregate uniform as uniform names
+ * to Mesa, moving those uniforms to our structured temporary.
+ */
+void
+ir_to_mesa_visitor::add_aggregate_uniform(ir_instruction *ir,
+					  const char *name,
+					  const struct glsl_type *type,
+					  ir_constant *constant,
+					  struct ir_to_mesa_dst_reg temp)
+{
+   int loc;
+
+   if (type->is_record()) {
+      void *mem_ctx = talloc_new(NULL);
+      ir_constant *field_constant = NULL;
+
+      if (constant)
+	 field_constant = (ir_constant *)constant->components.get_head();
+
+      for (unsigned int i = 0; i < type->length; i++) {
+	 const glsl_type *field_type = type->fields.structure[i].type;
+
+	 add_aggregate_uniform(ir,
+			       talloc_asprintf(mem_ctx, "%s.%s", name,
+					       type->fields.structure[i].name),
+			       field_type, field_constant, temp);
+	 temp.index += type_size(field_type);
+
+	 if (constant)
+	    field_constant = (ir_constant *)field_constant->next;
+      }
+
+      talloc_free(mem_ctx);
+
+      return;
+   }
+
+   assert(type->is_vector() || type->is_scalar() || !"FINISHME: other types");
+
+   loc = add_uniform(name, type, constant);
+
+   ir_to_mesa_src_reg uniform(PROGRAM_UNIFORM, loc, type);
+
+   for (int i = 0; i < type_size(type); i++) {
+      ir_to_mesa_emit_op1(ir, OPCODE_MOV, temp, uniform);
+      temp.index++;
+      uniform.index++;
+   }
+}
+
+
 void
 ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
 {
-   ir_to_mesa_src_reg src_reg;
    variable_storage *entry = find_variable_storage(ir->var);
    unsigned int loc;
-   int len;
 
    if (!entry) {
       switch (ir->var->mode) {
@@ -1271,18 +1412,27 @@ ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
 	 assert(ir->var->type->gl_type != 0 &&
 		ir->var->type->gl_type != GL_INVALID_ENUM);
 
-	 if (ir->var->type->is_vector() ||
-	     ir->var->type->is_scalar()) {
-	    len = ir->var->type->vector_elements;
-	 } else {
-	    len = type_size(ir->var->type) * 4;
+	 /* Oh, the joy of aggregate types in Mesa.  Like constants,
+	  * we can only really do vec4s.  So, make a temp, chop the
+	  * aggregate up into vec4s, and move those vec4s to the temp.
+	  */
+	 if (ir->var->type->is_record()) {
+	    ir_to_mesa_src_reg temp = get_temp(ir->var->type);
+
+	    entry = new(mem_ctx) variable_storage(ir->var,
+						  temp.file,
+						  temp.index);
+	    this->variables.push_tail(entry);
+
+	    add_aggregate_uniform(ir->var, ir->var->name, ir->var->type,
+				  ir->var->constant_value,
+				  ir_to_mesa_dst_reg_from_src(temp));
+	    break;
 	 }
 
-	 loc = _mesa_add_uniform(this->prog->Parameters,
-				 ir->var->name,
-				 len,
-				 ir->var->type->gl_type,
-				 NULL);
+	 loc = add_uniform(ir->var->name,
+			   ir->var->type,
+			   ir->var->constant_value);
 
 	 /* Always mark the uniform used at this point.  If it isn't
 	  * used, dead code elimination should have nuked the decl already.
@@ -1340,17 +1490,7 @@ ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
       }
    }
 
-   src_reg.file = entry->file;
-   src_reg.index = entry->index;
-   /* If the type is smaller than a vec4, replicate the last channel out. */
-   if (ir->type->is_scalar() || ir->type->is_vector())
-      src_reg.swizzle = swizzle_for_size(ir->var->type->vector_elements);
-   else
-      src_reg.swizzle = SWIZZLE_NOOP;
-   src_reg.reladdr = NULL;
-   src_reg.negate = 0;
-
-   this->result = src_reg;
+   this->result = ir_to_mesa_src_reg(entry->file, entry->index, ir->var->type);
 }
 
 void
@@ -1367,17 +1507,13 @@ ir_to_mesa_visitor::visit(ir_dereference_array *ir)
    if (deref_var && strncmp(deref_var->var->name,
 			    "gl_TextureMatrix",
 			    strlen("gl_TextureMatrix")) == 0) {
-      ir_to_mesa_src_reg src_reg;
       struct variable_storage *entry;
 
       entry = get_builtin_matrix_ref(this->mem_ctx, this->prog, deref_var->var,
 				     ir->array_index);
       assert(entry);
 
-      src_reg.file = entry->file;
-      src_reg.index = entry->index;
-      src_reg.swizzle = swizzle_for_size(ir->type->vector_elements);
-      src_reg.negate = 0;
+      ir_to_mesa_src_reg src_reg(entry->file, entry->index, ir->type);
 
       if (index) {
 	 src_reg.reladdr = NULL;
@@ -1646,17 +1782,14 @@ ir_to_mesa_visitor::visit(ir_constant *ir)
       ir_to_mesa_dst_reg mat_column = ir_to_mesa_dst_reg_from_src(mat);
 
       for (i = 0; i < ir->type->matrix_columns; i++) {
-	 src_reg.file = PROGRAM_CONSTANT;
-
 	 assert(ir->type->base_type == GLSL_TYPE_FLOAT);
 	 values = &ir->value.f[i * ir->type->vector_elements];
 
+	 src_reg = ir_to_mesa_src_reg(PROGRAM_CONSTANT, -1, NULL);
 	 src_reg.index = _mesa_add_unnamed_constant(this->prog->Parameters,
-						    values,
-						    ir->type->vector_elements,
-						    &src_reg.swizzle);
-	 src_reg.reladdr = NULL;
-	 src_reg.negate = 0;
+						values,
+						ir->type->vector_elements,
+						&src_reg.swizzle);
 	 ir_to_mesa_emit_op1(ir, OPCODE_MOV, mat_column, src_reg);
 
 	 mat_column.index++;
@@ -1689,13 +1822,11 @@ ir_to_mesa_visitor::visit(ir_constant *ir)
       assert(!"Non-float/uint/int/bool constant");
    }
 
-   src_reg.index = _mesa_add_unnamed_constant(this->prog->Parameters,
-					      values, ir->type->vector_elements,
-					      &src_reg.swizzle);
-   src_reg.reladdr = NULL;
-   src_reg.negate = 0;
-
-   this->result = src_reg;
+   this->result = ir_to_mesa_src_reg(PROGRAM_CONSTANT, -1, ir->type);
+   this->result.index = _mesa_add_unnamed_constant(this->prog->Parameters,
+						   values,
+						   ir->type->vector_elements,
+						   &this->result.swizzle);
 }
 
 function_entry *
@@ -1825,7 +1956,7 @@ ir_to_mesa_visitor::visit(ir_call *ir)
 void
 ir_to_mesa_visitor::visit(ir_texture *ir)
 {
-   ir_to_mesa_src_reg result_src, coord, lod_info = { 0 }, projector;
+   ir_to_mesa_src_reg result_src, coord, lod_info, projector;
    ir_to_mesa_dst_reg result_dst, coord_dst;
    ir_to_mesa_instruction *inst = NULL;
    prog_opcode opcode = OPCODE_NOP;
@@ -2051,6 +2182,7 @@ mesa_src_reg_from_ir_src_reg(ir_to_mesa_src_reg reg)
    mesa_reg.RelAddr = reg.reladdr != NULL;
    mesa_reg.Negate = reg.negate;
    mesa_reg.Abs = 0;
+   mesa_reg.HasIndex2 = GL_FALSE;
 
    return mesa_reg;
 }

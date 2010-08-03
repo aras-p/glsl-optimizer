@@ -75,7 +75,7 @@ struct symbol_header {
     struct symbol_header *next;
 
     /** Symbol name. */
-    const char *name;
+    char *name;
 
     /** Linked list of symbols with the same name. */
     struct symbol *symbols;
@@ -337,9 +337,9 @@ _mesa_symbol_table_add_symbol(struct _mesa_symbol_table *table,
 
     if (hdr == NULL) {
         hdr = calloc(1, sizeof(*hdr));
-        hdr->name = name;
+        hdr->name = strdup(name);
 
-        hash_table_insert(table->ht, hdr, name);
+        hash_table_insert(table->ht, hdr, hdr->name);
 	hdr->next = table->hdr;
 	table->hdr = hdr;
     }
@@ -404,6 +404,7 @@ _mesa_symbol_table_dtor(struct _mesa_symbol_table *table)
 
    for (hdr = table->hdr; hdr != NULL; hdr = next) {
        next = hdr->next;
+       free(hdr->name);
        free(hdr);
    }
 

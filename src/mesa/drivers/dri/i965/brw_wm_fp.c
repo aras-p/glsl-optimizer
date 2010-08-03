@@ -88,6 +88,7 @@ static struct prog_src_register src_reg(GLuint file, GLuint idx)
    reg.RelAddr = 0;
    reg.Negate = NEGATE_NONE;
    reg.Abs = 0;
+   reg.HasIndex2 = 0;
    return reg;
 }
 

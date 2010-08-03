@@ -45,6 +45,9 @@ struct gl_shader *
 _mesa_new_shader(GLcontext *ctx, GLuint name, GLenum type)
 {
    struct gl_shader *shader;
+
+   (void) ctx;
+
    assert(type == GL_FRAGMENT_SHADER || type == GL_VERTEX_SHADER);
    shader = talloc_zero(NULL, struct gl_shader);
    if (shader) {

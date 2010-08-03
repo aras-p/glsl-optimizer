@@ -139,7 +139,7 @@ ir_validate::visit_enter(ir_function *ir)
 ir_visitor_status
 ir_validate::visit_leave(ir_function *ir)
 {
-   (void) ir;
+   assert(talloc_parent(ir->name) == ir);
 
    this->current_function = NULL;
    return visit_continue;
@@ -171,8 +171,8 @@ ir_validate::visit_leave(ir_expression *ir)
       assert(ir->operands[0]->type == ir->type);
       break;
    case ir_unop_logic_not:
-      assert(ir->type == glsl_type::bool_type);
-      assert(ir->operands[0]->type == glsl_type::bool_type);
+      assert(ir->type->base_type == GLSL_TYPE_BOOL);
+      assert(ir->operands[0]->type->base_type == GLSL_TYPE_BOOL);
       break;
 
    case ir_unop_neg:
@@ -313,6 +313,8 @@ ir_validate::visit(ir_variable *ir)
     * in the ir_dereference_variable handler to ensure that a variable is
     * declared before it is dereferenced.
     */
+   assert(talloc_parent(ir->name) == ir);
+
    hash_table_insert(ht, ir, ir);
    return visit_continue;
 }
@@ -334,6 +336,8 @@ ir_validate::validate_ir(ir_instruction *ir, void *data)
 void
 check_node_type(ir_instruction *ir, void *data)
 {
+   (void) data;
+
    if (ir->ir_type <= ir_type_unset || ir->ir_type >= ir_type_max) {
       printf("Instruction node with unset type\n");
       ir->print(); printf("\n");

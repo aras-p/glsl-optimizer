@@ -1128,7 +1128,7 @@ precision_qualifier:
 	HIGHP		{
 			   if (state->language_version < 130)
 			      _mesa_glsl_error(& @1, state,
-					       "precission qualifier forbidden "
+					       "precision qualifier forbidden "
 					       "in GLSL %d.%d (1.30 or later "
 					       "required)\n",
 					       state->language_version / 100,
@@ -1139,7 +1139,7 @@ precision_qualifier:
 	| MEDIUMP	{
 			   if (state->language_version < 130)
 			      _mesa_glsl_error(& @1, state,
-					       "precission qualifier forbidden "
+					       "precision qualifier forbidden "
 					       "in GLSL %d.%d (1.30 or later "
 					       "required)\n",
 					       state->language_version / 100,
@@ -1150,7 +1150,7 @@ precision_qualifier:
 	| LOWP		{
 			   if (state->language_version < 130)
 			      _mesa_glsl_error(& @1, state,
-					       "precission qualifier forbidden "
+					       "precision qualifier forbidden "
 					       "in GLSL %d.%d (1.30 or later "
 					       "required)\n",
 					       state->language_version / 100,

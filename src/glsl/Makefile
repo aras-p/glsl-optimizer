@@ -100,7 +100,6 @@ INCLUDES = \
 	-I. \
 	-I../mesa \
 	-I../mapi \
-	-I../mesa/program \
 	-I../../include \
 	$(LIBRARY_INCLUDES)
 
