@@ -368,23 +368,23 @@ static void PIPE_CDECL generic_run_elts( struct translate *translate,
    /* loop over vertex attributes (vertex shader inputs)
     */
    for (i = 0; i < count; i++) {
-      unsigned elt = *elts++;
+      const unsigned elt = *elts++;
 
       for (attr = 0; attr < nr_attrs; attr++) {
 	 float data[4];
-         const uint8_t *src;
-         unsigned index;
-
-	 char *dst = (vert + 
-		      tg->attrib[attr].output_offset);
+	 char *dst = vert + tg->attrib[attr].output_offset;
 
          if (tg->attrib[attr].type == TRANSLATE_ELEMENT_NORMAL) {
+            const uint8_t *src;
+            unsigned index;
+
             if (tg->attrib[attr].instance_divisor) {
                index = instance_id / tg->attrib[attr].instance_divisor;
             } else {
                index = elt;
             }
 
+            /* clamp to void going out of bounds */
             index = MIN2(index, tg->attrib[attr].max_index);
 
             src = tg->attrib[attr].input_ptr +
@@ -392,11 +392,23 @@ static void PIPE_CDECL generic_run_elts( struct translate *translate,
 
             tg->attrib[attr].fetch( data, src, 0, 0 );
 
+            if (0)
+               debug_printf("Fetch elt attr %d  from %p  stride %d  div %u  max %u  index %d:  "
+                            " %f, %f, %f, %f \n",
+                            attr,
+                            tg->attrib[attr].input_ptr,
+                            tg->attrib[attr].input_stride,
+                            tg->attrib[attr].instance_divisor,
+                            tg->attrib[attr].max_index,
+                            index,
+                            data[0], data[1],data[2], data[3]);
          } else {
             data[0] = (float)instance_id;
          }
-         if (0) debug_printf("vert %d/%d attr %d: %f %f %f %f\n",
-                             i, elt, attr, data[0], data[1], data[2], data[3]);
+
+         if (0)
+            debug_printf("vert %d/%d attr %d: %f %f %f %f\n",
+                         i, elt, attr, data[0], data[1], data[2], data[3]);
 
 	 tg->attrib[attr].emit( data, dst );
       }
@@ -425,29 +437,42 @@ static void PIPE_CDECL generic_run( struct translate *translate,
 
       for (attr = 0; attr < nr_attrs; attr++) {
 	 float data[4];
-
-	 char *dst = (vert + 
-		      tg->attrib[attr].output_offset);
+	 char *dst = vert + tg->attrib[attr].output_offset;
 
          if (tg->attrib[attr].type == TRANSLATE_ELEMENT_NORMAL) {
             const uint8_t *src;
+            unsigned index;
 
             if (tg->attrib[attr].instance_divisor) {
-               src = tg->attrib[attr].input_ptr +
-                     tg->attrib[attr].input_stride *
-                     (instance_id / tg->attrib[attr].instance_divisor);
-            } else {
-               src = tg->attrib[attr].input_ptr +
-                     tg->attrib[attr].input_stride * elt;
+               index = instance_id / tg->attrib[attr].instance_divisor;
+            }
+            else {
+               index = elt;
             }
 
+            /* clamp to void going out of bounds */
+            index = MIN2(index, tg->attrib[attr].max_index);
+
+            src = tg->attrib[attr].input_ptr +
+                  tg->attrib[attr].input_stride * index;
+
             tg->attrib[attr].fetch( data, src, 0, 0 );
+
+            if (0)
+               debug_printf("Fetch linear attr %d  from %p  stride %d  index %d: "
+                            " %f, %f, %f, %f \n",
+                            attr,
+                            tg->attrib[attr].input_ptr,
+                            tg->attrib[attr].input_stride,
+                            index,
+                            data[0], data[1],data[2], data[3]);
          } else {
             data[0] = (float)instance_id;
          }
 
-         if (0) debug_printf("vert %d attr %d: %f %f %f %f\n",
-                             i, attr, data[0], data[1], data[2], data[3]);
+         if (0)
+            debug_printf("vert %d attr %d: %f %f %f %f\n",
+                         i, attr, data[0], data[1], data[2], data[3]);
 
 	 tg->attrib[attr].emit( data, dst );
       }
