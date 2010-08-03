@@ -8,6 +8,7 @@
 #include "nouveau/nouveau_util.h"
 #include "nouveau/nouveau_screen.h"
 #include "nv04_surface_2d.h"
+#include "nvfx_resource.h"
 
 static INLINE int
 nv04_surface_format(enum pipe_format format)

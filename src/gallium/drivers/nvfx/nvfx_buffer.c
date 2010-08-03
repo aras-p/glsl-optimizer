@@ -97,6 +97,7 @@ nvfx_buffer_create(struct pipe_screen *pscreen,
 		return NULL;
 
 	buffer->base = *template;
+	buffer->base.flags |= NVFX_RESOURCE_FLAG_LINEAR;
 	buffer->vtbl = &nvfx_buffer_vtbl;
 	pipe_reference_init(&buffer->base.reference, 1);
 	buffer->base.screen = pscreen;
@@ -132,6 +133,7 @@ nvfx_user_buffer_create(struct pipe_screen *pscreen,
 
 	pipe_reference_init(&buffer->base.reference, 1);
 	buffer->vtbl = &nvfx_buffer_vtbl;
+	buffer->base.flags = NVFX_RESOURCE_FLAG_LINEAR;
 	buffer->base.screen = pscreen;
 	buffer->base.format = PIPE_FORMAT_R8_UNORM;
 	buffer->base.usage = PIPE_USAGE_IMMUTABLE;

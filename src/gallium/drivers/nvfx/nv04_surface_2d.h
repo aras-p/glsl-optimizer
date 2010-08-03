@@ -38,6 +38,4 @@ nv04_surface_2d_takedown(struct nv04_surface_2d **);
 struct nv04_surface*
 nv04_surface_wrap_for_render(struct pipe_screen *pscreen, struct nv04_surface_2d* eng2d, struct nv04_surface* ns);
 
-#define NVFX_RESOURCE_FLAG_LINEAR (PIPE_RESOURCE_FLAG_DRV_PRIV << 0)
-
 #endif

@@ -20,6 +20,8 @@ struct nvfx_resource {
 	struct nouveau_bo *bo;
 };
 
+#define NVFX_RESOURCE_FLAG_LINEAR (PIPE_RESOURCE_FLAG_DRV_PRIV << 0)
+
 #define NVFX_MAX_TEXTURE_LEVELS  16
 
 struct nvfx_miptree {
