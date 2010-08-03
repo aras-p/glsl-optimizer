@@ -352,7 +352,7 @@ ir_constant::clone(struct hash_table *ht) const
    }
 
    default:
-      assert(!"Should not get here."); break;
+      assert(!"Should not get here.");
       return NULL;
    }
 }
