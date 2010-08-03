@@ -12,6 +12,7 @@ struct util_surfaces
    {
       struct cso_hash *hash;
       struct pipe_surface **array;
+      void* pv;
    } u;
 };
 
@@ -32,6 +33,18 @@ util_surfaces_get(struct util_surfaces *us, unsigned surface_struct_size, struct
    }
 
    return util_surfaces_do_get(us, surface_struct_size, pscreen, pt, face, level, zslice, flags);
+}
+
+static INLINE struct pipe_surface *
+util_surfaces_peek(struct util_surfaces *us, struct pipe_resource *pt, unsigned face, unsigned level, unsigned zslice)
+{
+   if(!us->u.pv)
+      return 0;
+
+   if(unlikely(pt->target == PIPE_TEXTURE_3D || pt->target == PIPE_TEXTURE_CUBE))
+      return cso_hash_iter_data(cso_hash_find(us->u.hash, ((zslice + face) << 8) | level));
+   else
+      return us->u.array[level];
 }
 
 void util_surfaces_do_detach(struct util_surfaces *us, struct pipe_surface *ps);
