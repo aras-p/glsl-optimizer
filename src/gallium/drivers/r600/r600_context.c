@@ -41,7 +41,7 @@ static void r600_destroy_context(struct pipe_context *context)
 	FREE(rctx);
 }
 
-static void r600_flush(struct pipe_context *ctx, unsigned flags,
+void r600_flush(struct pipe_context *ctx, unsigned flags,
 			struct pipe_fence_handle **fence)
 {
 	struct r600_context *rctx = r600_context(ctx);

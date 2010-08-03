@@ -61,6 +61,12 @@ int r600_conv_pipe_format(unsigned pformat, unsigned *format)
 	case PIPE_FORMAT_I8_UNORM:
 		*format = V_0280A0_COLOR_8;
 		return 0;
+	case PIPE_FORMAT_B4G4R4A4_UNORM:
+		*format = V_0280A0_COLOR_4_4_4_4;
+		return 0;
+	case PIPE_FORMAT_B5G6R5_UNORM:
+		*format = V_0280A0_COLOR_5_6_5;
+		return 0;
 	case PIPE_FORMAT_L16_UNORM:
 	case PIPE_FORMAT_Z16_UNORM:
 	case PIPE_FORMAT_Z32_UNORM:

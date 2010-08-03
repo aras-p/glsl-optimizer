@@ -170,6 +170,10 @@ static int r600_draw_common(struct r600_draw *draw)
 		return r;
 	/* FIXME */
 	r = radeon_ctx_set_draw_new(rctx->ctx, rctx->draw);
+	if (r == -EBUSY) {
+		r600_flush(draw->ctx, 0, NULL);
+		r = radeon_ctx_set_draw_new(rctx->ctx, rctx->draw);
+	}
 	if (r)
 		return r;
 	rctx->draw = radeon_draw_duplicate(rctx->draw);

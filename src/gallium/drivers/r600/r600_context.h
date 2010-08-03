@@ -113,23 +113,6 @@ struct r600_context {
 	struct radeon_draw		*draw;
 	/* hw states */
 	struct r600_context_hw_states	hw_states;
-#if 0
-	struct r600_pipe_shader		*ps_shader;
-	struct r600_pipe_shader		*vs_shader;
-	unsigned			nps_sampler;
-	struct radeon_state		*ps_sampler[PIPE_MAX_ATTRIBS];
-	unsigned			nps_view;
-	unsigned			nvs_view;
-	struct r600_texture_resource	*ps_view[PIPE_MAX_ATTRIBS];
-	struct r600_texture_resource	*vs_view[PIPE_MAX_ATTRIBS];
-	unsigned			flat_shade;
-	unsigned			nvertex_buffer;
-	struct r600_vertex_elements_state *vertex_elements;
-	struct pipe_vertex_buffer	vertex_buffer[PIPE_MAX_ATTRIBS];
-	struct pipe_stencil_ref		stencil_ref;
-	struct pipe_framebuffer_state	fb_state;
-	struct pipe_viewport_state	viewport;
-#endif
 	/* pipe states */
 	unsigned			flat_shade;
 	unsigned			ps_nsampler;
@@ -161,25 +144,6 @@ struct r600_context {
 	struct pipe_blend_color         blend_color;
 };
 
-#if 0
-struct r600_vertex_elements_state
-{
-	unsigned count;
-	struct pipe_vertex_element	elements[32];
-};
-
-struct r600_pipe_shader {
-	struct r600_shader		shader;
-	struct radeon_bo		*bo;
-	struct radeon_state		*state;
-};
-
-struct r600_texture_resource {
-	struct pipe_sampler_view	view;
-	struct radeon_state		*state;
-};
-#endif
-
 /* Convenience cast wrapper. */
 static INLINE struct r600_context *r600_context(struct pipe_context *pipe)
 {
@@ -189,6 +153,8 @@ static INLINE struct r600_context *r600_context(struct pipe_context *pipe)
 struct r600_context_state *r600_context_state(struct r600_context *rctx, unsigned type, const void *state);
 struct r600_context_state *r600_context_state_incref(struct r600_context_state *rstate);
 struct r600_context_state *r600_context_state_decref(struct r600_context_state *rstate);
+void r600_flush(struct pipe_context *ctx, unsigned flags,
+			struct pipe_fence_handle **fence);
 
 int r600_context_hw_states(struct r600_context *rctx);
 
