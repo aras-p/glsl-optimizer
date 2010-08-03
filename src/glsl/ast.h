@@ -42,7 +42,7 @@ public:
    {
       void *node;
 
-      node = talloc_size(ctx, size);
+      node = talloc_zero_size(ctx, size);
       assert(node != NULL);
 
       return node;
