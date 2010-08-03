@@ -1,0 +1,13 @@
+struct v2f {
+    float pos;
+    float unusedmember;
+};
+void main() {
+	float f = gl_FragCoord.x;
+	
+    v2f sused;
+	sused.pos = f;
+	sused.unusedmember = f;
+	
+    gl_FragColor = vec4(sused.pos);
+}

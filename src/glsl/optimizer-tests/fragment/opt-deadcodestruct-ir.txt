@@ -1,0 +1,24 @@
+struct v2f {
+  float pos;
+  float unusedmember;
+};
+void main ()
+{
+  float f;
+  float tmpvar_1;
+  tmpvar_1  = gl_FragCoord .x; 
+  f  = tmpvar_1 ; 
+  v2f sused;
+  float tmpvar_2;
+  tmpvar_2  = f ; 
+  sused .pos  = tmpvar_2 ; 
+  float tmpvar_3;
+  tmpvar_3  = f ; 
+  sused .unusedmember  = tmpvar_3 ; 
+  vec4 tmpvar_4;
+  tmpvar_4  = sused .pos .xxxx; 
+  vec4 tmpvar_5;
+  tmpvar_5  = tmpvar_4 ; 
+  gl_FragColor  = tmpvar_5 ; 
+}
+
