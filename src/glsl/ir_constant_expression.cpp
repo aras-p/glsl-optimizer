@@ -856,7 +856,7 @@ ir_call::constant_expression_value()
 	    break;
 	 case GLSL_TYPE_INT:
 	    data.i[c] = CLAMP(op[0]->value.i[c], op[1]->value.i[c1],
-			      op[2]->value.u[c2]);
+			      op[2]->value.i[c2]);
 	    break;
 	 case GLSL_TYPE_FLOAT:
 	    data.f[c] = CLAMP(op[0]->value.f[c], op[1]->value.f[c1],
