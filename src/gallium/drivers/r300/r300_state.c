@@ -744,7 +744,7 @@ static void
     r300_mark_fb_state_dirty(r300, R300_CHANGED_FB_STATE);
 
     /* Polygon offset depends on the zbuffer bit depth. */
-    if (state->zsbuf && r300->polygon_offset_enabled) {
+    if (state->zsbuf) {
         switch (util_format_get_blocksize(state->zsbuf->texture->format)) {
             case 2:
                 zbuffer_bpp = 16;
@@ -756,7 +756,9 @@ static void
 
         if (r300->zbuffer_bpp != zbuffer_bpp) {
             r300->zbuffer_bpp = zbuffer_bpp;
-            r300->rs_state.dirty = TRUE;
+
+            if (r300->polygon_offset_enabled)
+                r300->rs_state.dirty = TRUE;
         }
     }
 
@@ -1095,9 +1097,7 @@ static void r300_bind_rs_state(struct pipe_context* pipe, void* state)
     }
 
     if (rs) {
-        r300->polygon_offset_enabled = (rs->rs.offset_point ||
-                                        rs->rs.offset_line ||
-                                        rs->rs.offset_tri);
+        r300->polygon_offset_enabled = rs->polygon_offset_enable;
         r300->sprite_coord_enable = rs->rs.sprite_coord_enable;
         r300->two_sided_color = rs->rs.light_twoside;
     } else {
