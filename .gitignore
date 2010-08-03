@@ -26,3 +26,5 @@ cscope*
 config.py
 build
 .dir-locals.el
+*.pbxuser
+*.perspectivev3
