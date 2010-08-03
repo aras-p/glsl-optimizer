@@ -34,13 +34,13 @@ void main ()
   tmpvar_3 .xyzw = gl_TexCoord [0] ; 
   xlt_IN .hip_pack0  = tmpvar_3 ; 
   vec3 tmpvar_5;
-  tmpvar_5 .xyz = gl_TexCoord [1] ; 
+  tmpvar_5 .xyz = (vec3)gl_TexCoord [1] ; 
   xlt_IN .viewDir  = tmpvar_5 ; 
   vec3 tmpvar_7;
-  tmpvar_7 .xyz = gl_TexCoord [2] ; 
+  tmpvar_7 .xyz = (vec3)gl_TexCoord [2] ; 
   xlt_IN .lightDir  = tmpvar_7 ; 
   vec3 tmpvar_9;
-  tmpvar_9 .xyz = gl_TexCoord [3] ; 
+  tmpvar_9 .xyz = (vec3)gl_TexCoord [3] ; 
   xlt_IN .vlight  = tmpvar_9 ; 
   v2f_surf IN;
   IN  = xlt_IN ; 
@@ -72,7 +72,7 @@ void main ()
   tmpvar_65  = sqrt (1.000000 - normal .x * normal .x   - normal .y * normal .y  ) ; 
   normal .z = tmpvar_65 ; 
   vec3 tmpvar_67;
-  tmpvar_67 .xyz = normal ; 
+  tmpvar_67 .xyz = (vec3)normal ; 
   o .Normal  = tmpvar_67 ; 
   o  = o ; 
   vec3 tmpvar_69;

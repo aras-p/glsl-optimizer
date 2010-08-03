@@ -19,11 +19,11 @@ mat3 xll_constructMat3 (
 )
 {
   vec3 tmpvar_1;
-  tmpvar_1 .xyz = m [0] ; 
+  tmpvar_1 .xyz = (vec3)m [0] ; 
   vec3 tmpvar_2;
-  tmpvar_2 .xyz = m [1] ; 
+  tmpvar_2 .xyz = (vec3)m [1] ; 
   vec3 tmpvar_3;
-  tmpvar_3 .xyz = m [2] ; 
+  tmpvar_3 .xyz = (vec3)m [2] ; 
   mat3 tmpvar_4;
   vec3 tmpvar_5;
   tmpvar_5  = tmpvar_1 ; 
