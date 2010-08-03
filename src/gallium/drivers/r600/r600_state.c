@@ -1182,8 +1182,7 @@ static struct radeon_state *r600_cb_cntl(struct r600_context *rctx)
 		if (pbs->rt[i].blend_enable) {
 			color_control |= (1 << (8 + i));
 			target_mask |= (pbs->rt[0].colormask << (4 * i));
-		} else if (i == 0)
-			target_mask |= 0xf;
+		}
 	}
 	rstate = radeon_state(rscreen->rw, R600_CB_CNTL_TYPE, R600_CB_CNTL);
 	rstate->states[R600_CB_CNTL__CB_SHADER_MASK] = 0x0000000F;
