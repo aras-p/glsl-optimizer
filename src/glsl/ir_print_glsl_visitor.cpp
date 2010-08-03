@@ -22,11 +22,50 @@
  */
 
 #include "ir_print_glsl_visitor.h"
+#include "ir_visitor.h"
 #include "glsl_types.h"
 #include "glsl_parser_extras.h"
 #include "ir_unused_structs.h"
 
 static void print_type(const glsl_type *t);
+
+
+class ir_print_glsl_visitor : public ir_visitor {
+public:
+	ir_print_glsl_visitor()
+	{
+		indentation = 0;
+	}
+
+	virtual ~ir_print_glsl_visitor()
+	{
+		/* empty */
+	}
+
+	void indent(void);
+
+	virtual void visit(ir_variable *);
+	virtual void visit(ir_function_signature *);
+	virtual void visit(ir_function *);
+	virtual void visit(ir_expression *);
+	virtual void visit(ir_texture *);
+	virtual void visit(ir_swizzle *);
+	virtual void visit(ir_dereference_variable *);
+	virtual void visit(ir_dereference_array *);
+	virtual void visit(ir_dereference_record *);
+	virtual void visit(ir_assignment *);
+	virtual void visit(ir_constant *);
+	virtual void visit(ir_call *);
+	virtual void visit(ir_return *);
+	virtual void visit(ir_discard *);
+	virtual void visit(ir_if *);
+	virtual void visit(ir_loop *);
+	virtual void visit(ir_loop_jump *);
+
+private:
+	int indentation;
+};
+
 
 void
 _mesa_print_ir_glsl(exec_list *instructions,
