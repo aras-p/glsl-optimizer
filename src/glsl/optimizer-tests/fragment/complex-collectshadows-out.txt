@@ -13,8 +13,7 @@ uniform mat4 _View2Shadow1;
 uniform mat4 _View2Shadow2;
 uniform mat4 _View2Shadow3;
 uniform vec4 _ZBufferParams;
-void main (
-)
+void main ()
 {
   v2f xlt_i;
   xlt_i .pos  = vec4 (0.000000, 0.000000, 0.000000, 0.000000) ; 

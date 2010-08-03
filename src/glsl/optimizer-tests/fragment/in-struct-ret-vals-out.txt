@@ -3,8 +3,7 @@ struct v2f {
   vec2 uv;
   vec4 color;
 };
-void main (
-)
+void main ()
 {
   v2f xlt_i;
   xlt_i .pos  = vec4 (0.000000, 0.000000, 0.000000, 0.000000) ; 

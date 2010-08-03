@@ -155,19 +155,24 @@ void ir_print_glsl_visitor::visit(ir_variable *ir)
 void ir_print_glsl_visitor::visit(ir_function_signature *ir)
 {
    buffer = print_type(buffer, ir->return_type);
-   buffer = talloc_asprintf_append(buffer, " %s (\n", ir->function_name());
+   buffer = talloc_asprintf_append(buffer, " %s (", ir->function_name());
 
-   indentation++;
-   foreach_iter(exec_list_iterator, iter, ir->parameters) {
-      ir_variable *const inst = (ir_variable *) iter.get();
+   if (!ir->parameters.is_empty())
+   {
+	   buffer = talloc_asprintf_append(buffer, "\n");
 
-      indent();
-      inst->accept(this);
-      buffer = talloc_asprintf_append(buffer, "\n");
+	   indentation++;
+	   foreach_iter(exec_list_iterator, iter, ir->parameters) {
+		  ir_variable *const inst = (ir_variable *) iter.get();
+
+		  indent();
+		  inst->accept(this);
+		  buffer = talloc_asprintf_append(buffer, "\n");
+	   }
+	   indentation--;
+
+	   indent();
    }
-   indentation--;
-
-   indent();
 
    if (ir->body.is_empty())
    {

@@ -1,5 +1,4 @@
-void main (
-)
+void main ()
 {
   if (gl_FragCoord .x == 1.000000 ) {
     discard;

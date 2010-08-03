@@ -30,8 +30,7 @@ uniform vec4 unity_SHC;
 uniform vec4 unity_Scale;
 in vec4 TANGENT;
 out vec4 xlv_FOG;
-void main (
-)
+void main ()
 {
   appdata_full xlt_v;
   vec4 tmpvar_1;

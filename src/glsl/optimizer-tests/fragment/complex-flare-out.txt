@@ -1,6 +1,5 @@
 uniform sampler2D _FlareTexture;
-void main (
-)
+void main ()
 {
   vec4 tmpvar_1;
   tmpvar_1 .xyzw = gl_Color ; 
