@@ -90,7 +90,9 @@ void compile_shader (Shader* shader)
    if (!state->error) {
       validate_ir_tree(shader->ir);
 	  printf ("******** Unoptimized:\n");
-      _mesa_print_ir_glsl(shader->ir, state);
+	  char* buffer = talloc_strdup(statePtr, "");
+      buffer = _mesa_print_ir_glsl(shader->ir, state, buffer);
+	  printf (buffer);
    }
 
    // Optimization passes
@@ -121,7 +123,9 @@ void compile_shader (Shader* shader)
    // Print out the resulting IR
    if (!state->error) {
 	   printf ("******** Optimized:\n");
-      _mesa_print_ir_glsl(shader->ir, state);
+	   char* buffer = talloc_strdup(statePtr, "");
+	   buffer = _mesa_print_ir_glsl(shader->ir, state, buffer);
+	   printf (buffer);
    }
 
    shader->CompileStatus = !state->error;

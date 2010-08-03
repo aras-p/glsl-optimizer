@@ -28,7 +28,8 @@
 
 #include "ir.h"
 
-extern void _mesa_print_ir_glsl(exec_list *instructions,
-			   struct _mesa_glsl_parse_state *state);
+extern char* _mesa_print_ir_glsl(exec_list *instructions,
+			struct _mesa_glsl_parse_state *state,
+			char* buf);
 
 #endif /* IR_PRINT_GLSL_VISITOR_H */
