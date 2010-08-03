@@ -1,0 +1,91 @@
+struct v2f {
+  vec4 pos;
+  vec2 uv;
+  vec3 ray;
+};
+uniform sampler2D _CameraDepthTexture;
+uniform vec4 _LightShadowData;
+uniform vec4 _LightSplitsFar;
+uniform vec4 _LightSplitsNear;
+uniform sampler2D _ShadowMapTexture;
+uniform mat4 _View2Shadow;
+uniform mat4 _View2Shadow1;
+uniform mat4 _View2Shadow2;
+uniform mat4 _View2Shadow3;
+uniform vec4 _ZBufferParams;
+void main (
+)
+{
+  v2f xlt_i;
+  xlt_i .pos  = vec4 (0.000000, 0.000000, 0.000000, 0.000000) ; 
+  vec2 tmpvar_2;
+  tmpvar_2 .xy = gl_TexCoord [0] ; 
+  xlt_i .uv  = tmpvar_2 ; 
+  vec3 tmpvar_4;
+  tmpvar_4 .xyz = gl_TexCoord [1] ; 
+  xlt_i .ray  = tmpvar_4 ; 
+  v2f i;
+  i  = xlt_i ; 
+  float depth;
+  vec4 res;
+  vec4 tmpvar_39;
+  tmpvar_39  = texture2D (_CameraDepthTexture , i .uv ) ; 
+  float __retval;
+  __retval  = 1.0/(_ZBufferParams .x * tmpvar_39 .x  + _ZBufferParams .y ) ; 
+  depth  = __retval ; 
+  vec4 tmpvar_44;
+  tmpvar_44 .xyz = i .ray  * __retval  ; 
+  tmpvar_44 .w = 1.000000; 
+  vec3 sc0;
+  vec3 sc1;
+  vec3 sc2;
+  vec3 sc3;
+  float z;
+  vec4 near;
+  vec4 coord;
+  sc0  = _View2Shadow  * tmpvar_44  .xyz; 
+  sc1  = _View2Shadow1  * tmpvar_44  .xyz; 
+  sc2  = _View2Shadow2  * tmpvar_44  .xyz; 
+  sc3  = _View2Shadow3  * tmpvar_44  .xyz; 
+  float tmpvar_52;
+  tmpvar_52  = tmpvar_44 .z; 
+  z  = tmpvar_52 ; 
+  bvec4 tmpvar_54;
+  tmpvar_54  = greaterThanEqual (tmpvar_52 .xxxx, _LightSplitsNear ) ; 
+  vec4 tmpvar_55;
+  tmpvar_55 .xyzw = (float)(tmpvar_54 ) ; 
+  near  = tmpvar_55 ; 
+  bvec4 tmpvar_58;
+  tmpvar_58  = lessThan (z .xxxx, _LightSplitsFar ) ; 
+  vec4 tmpvar_59;
+  tmpvar_59 .xyzw = (float)(tmpvar_58 ) ; 
+  vec4 tmpvar_61;
+  tmpvar_61  = near  * tmpvar_59  ; 
+  vec4 tmpvar_62;
+  tmpvar_62 .xyz = sc0  * tmpvar_61 .x  + sc1  * tmpvar_61 .y   + sc2  * tmpvar_61 .z   + sc3  * tmpvar_61 .w  ; 
+  tmpvar_62 .w = 1.000000; 
+  coord  = tmpvar_62 ; 
+  vec4 tmpvar_64;
+  tmpvar_64  = texture2D (_ShadowMapTexture , coord .xy) ; 
+  float tmpvar_65;
+  if (tmpvar_64 .x < coord .z ) {
+    tmpvar_65  = _LightShadowData .x; 
+  }
+  else {
+    tmpvar_65  = 1.000000; 
+  }
+
+  res .x = tmpvar_65 ; 
+  res .y = 1.000000; 
+  vec2 enc;
+  enc  = vec2 (1.000000, 255.000000)  * 1.000000 - depth   ; 
+  vec2 tmpvar_75;
+  tmpvar_75  = fract (enc ) ; 
+  enc  = tmpvar_75 ; 
+  enc .x = tmpvar_75 .x - tmpvar_75 .y * 0.003922  ; 
+  res .zw = enc ; 
+  vec4 tmpvar_8;
+  tmpvar_8 .xyzw = res ; 
+  gl_FragData [0]  = tmpvar_8 ; 
+}
+

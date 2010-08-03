@@ -1,5 +1,13 @@
 #include <string>
+#include <vector>
 #include "glsl_optimizer.h"
+
+#ifdef _MSC_VER
+#include <windows.h>
+#else
+#include <dirent.h>
+#endif
+
 
 static bool ReadStringFromFile (const char* pathName, std::string& output)
 {
@@ -25,63 +33,149 @@ static bool ReadStringFromFile (const char* pathName, std::string& output)
 	return true;
 }
 
+typedef std::vector<std::string> StringVector;
 
-static void usage_fail(const char *name)
+static StringVector GetFiles (const std::string& folder, const std::string& endsWith)
 {
-	printf("%s <filename.frag|filename.vert>\n", name);
-	exit(EXIT_FAILURE);
+	StringVector res;
+
+	#ifdef _MSC_VER
+	WIN32_FIND_DATAA FindFileData;
+	HANDLE hFind = FindFirstFileA ((folder+"/*"+endsWith).c_str(), &FindFileData);
+	if (hFind == INVALID_HANDLE_VALUE)
+		return res;
+
+	do {
+		res.push_back (FindFileData.cFileName);
+	} while (FindNextFileA (hFind, &FindFileData));
+
+	FindClose (hFind);
+	
+	#else
+	
+	DIR *dirp;
+	struct dirent *dp;
+
+	if ((dirp = opendir(folder.c_str())) == NULL)
+		return res;
+
+	while ( (dp = readdir(dirp)) )
+	{
+		std::string fname = dp->d_name;
+		if (fname == "." || fname == "..")
+			continue;
+		if (!EndsWith (fname, endsWith))
+			continue;
+		res.push_back (fname);
+	}
+	closedir(dirp);
+	
+	#endif
+
+	return res;
+}
+
+static void DeleteFile (const std::string& path)
+{
+	#ifdef _MSC_VER
+	DeleteFileA (path.c_str());
+	#else
+	unlink (path.c_str());
+	#endif
 }
 
 
-int main(int argc, char **argv)
+static bool TestFile (glslopt_ctx* ctx, bool vertex, const std::string& inputPath, const std::string& outputPath, const std::string& errPath, bool doCheckGLSL)
 {
-   int status = EXIT_SUCCESS;
+	DeleteFile (errPath);
 
-   if (argc <= 1)
-      usage_fail(argv[0]);
+	std::string input;
+	if (!ReadStringFromFile (inputPath.c_str(), input))
+	{
+		printf ("  failed to read input file\n");
+		return false;
+	}
 
-   glslopt_ctx* ctx = glslopt_initialize();
+	bool res = true;
 
-   for (int optind = 1; optind < argc; ++optind)
-   {
-      const unsigned len = strlen(argv[optind]);
-      if (len < 6)
-		  usage_fail(argv[0]);
+	glslopt_shader_type type = vertex ? kGlslOptShaderVertex : kGlslOptShaderFragment;
+	glslopt_shader* shader = glslopt_optimize (ctx, type, input.c_str());
 
-	  glslopt_shader_type type;
+	bool optimizeOk = glslopt_get_status(shader);
+	if (optimizeOk)
+	{
+		std::string text = glslopt_get_output (shader);
+		std::string output;
+		ReadStringFromFile (outputPath.c_str(), output);
 
-      const char *const ext = & argv[optind][len - 5];
-      if (strncmp(".vert", ext, 5) == 0)
-		  type = kGlslOptShaderVertex;
-      else if (strncmp(".frag", ext, 5) == 0)
-		  type = kGlslOptShaderFragment;
-      else
-		  usage_fail(argv[0]);
+		if (text != output)
+		{
+			// write output
+			FILE* f = fopen (errPath.c_str(), "wb");
+			fwrite (text.c_str(), 1, text.size(), f);
+			fclose (f);
+			printf ("  does not match expected output\n");
+			res = false;
+		}
+		//if (doCheckGLSL && !CheckGLSL (vertex, text.c_str()))
+		//	res = false;
+	}
+	else
+	{
+		printf ("  optimize error: %s\n", glslopt_get_log(shader));
+		res = false;
+	}
 
-	  std::string shaderSource;
-	  if (!ReadStringFromFile (argv[optind], shaderSource))
-	  {
-		  printf("File \"%s\" does not exist.\n", argv[optind]);
-		  exit(EXIT_FAILURE);
-	  }
+	glslopt_shader_delete (shader);
 
-	  glslopt_shader* shader = glslopt_optimize (ctx, type, shaderSource.c_str());
-	  if (!glslopt_get_status(shader))
-	  {
-		  printf ("ERRROR, info log for %s:\n%s\n", argv[optind], glslopt_get_log(shader));
-		  status = EXIT_FAILURE;
-		  break;
-	  }
-	  else
-	  {
-		  printf ("******** Raw       output for %s:\n%s\n", argv[optind], glslopt_get_raw_output(shader));
-		  printf ("******** Optimized output for %s:\n%s\n", argv[optind], glslopt_get_output(shader));
-	  }
+	return res;
+}
 
-	  glslopt_shader_delete (shader);
-   }
 
-   glslopt_cleanup (ctx);
+int main (int argc, const char** argv)
+{
+	if (argc < 2)
+	{
+		printf ("USAGE: glsloptimizer testfolder\n");
+		return 1;
+	}
 
-   return status;
+	//bool hasOpenGL = InitializeOpenGL ();
+	bool hasOpenGL = false;
+	glslopt_ctx* ctx = glslopt_initialize();
+
+	std::string baseFolder = argv[1];
+
+	static const char* kTypeName[2] = { "vertex", "fragment" };
+	size_t tests = 0;
+	size_t errors = 0;
+	for (int type = 0; type < 2; ++type)
+	{
+		printf ("testing %s...\n", kTypeName[type]);
+		std::string testFolder = baseFolder + "/" + kTypeName[type];
+		StringVector inputFiles = GetFiles (testFolder, "-in.txt");
+
+		size_t n = inputFiles.size();
+		tests += n;
+		for (size_t i = 0; i < n; ++i)
+		{
+			std::string inname = inputFiles[i];
+			printf ("test %s\n", inname.c_str());
+			std::string outname = inname.substr (0,inname.size()-7) + "-out.txt";
+			std::string errname = inname.substr (0,inname.size()-7) + "-res.txt";
+			bool ok = TestFile (ctx, type==0, testFolder + "/" + inname, testFolder + "/" + outname, testFolder + "/" + errname, hasOpenGL);
+			if (!ok)
+			{
+				++errors;
+			}
+		}
+	}
+	if (errors != 0)
+		printf ("%i tests, %i FAILED\n", tests, errors);
+	else
+		printf ("%i tests succeeded\n", tests);
+
+	glslopt_cleanup (ctx);
+
+	return errors ? 1 : 0;
 }
