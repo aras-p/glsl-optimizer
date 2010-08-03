@@ -11,6 +11,7 @@
 #include "util/u_memory.h"
 #include "util/u_math.h"
 #include "util/u_inlines.h"
+#include "util/u_double_list.h"
 
 #include "draw/draw_vertex.h"
 #include "util/u_blitter.h"
@@ -67,6 +68,7 @@ struct nvfx_state {
 	unsigned scissor_enabled;
 	unsigned stipple_enabled;
 	unsigned fp_samplers;
+	unsigned render_temps;
 };
 
 struct nvfx_vtxelt_state {
@@ -90,6 +92,7 @@ struct nvfx_context {
 
 	struct draw_context *draw;
 	struct blitter_context* blitter;
+	struct list_head render_cache;
 
 	/* HW state derived from pipe states */
 	struct nvfx_state state;
@@ -185,7 +188,8 @@ extern void nvfx_draw_elements_swtnl(struct pipe_context *pipe,
 extern void nvfx_vtxfmt_validate(struct nvfx_context *nvfx);
 
 /* nvfx_fb.c */
-extern void nvfx_state_framebuffer_validate(struct nvfx_context *nvfx);
+extern int nvfx_framebuffer_prepare(struct nvfx_context *nvfx);
+extern void nvfx_framebuffer_validate(struct nvfx_context *nvfx, unsigned prepare_result);
 void
 nvfx_framebuffer_relocate(struct nvfx_context *nvfx);
 

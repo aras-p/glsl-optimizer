@@ -1,15 +1,48 @@
 #include "nvfx_context.h"
 #include "nvfx_state.h"
+#include "nvfx_resource.h"
 #include "draw/draw_context.h"
 
 static boolean
 nvfx_state_validate_common(struct nvfx_context *nvfx)
 {
 	struct nouveau_channel* chan = nvfx->screen->base.channel;
-	unsigned dirty = nvfx->dirty;
+	unsigned dirty;
+	int all_swizzled = -1;
+	boolean flush_tex_cache = FALSE;
 
 	if(nvfx != nvfx->screen->cur_ctx)
-		dirty = ~0;
+	{
+		nvfx->dirty = ~0;
+		nvfx->screen->cur_ctx = nvfx;
+	}
+
+	/* These can trigger use the of 3D engine to copy temporaries.
+	 * That will recurse here and thus dirty all 3D state, so we need to this before anything else, and in a loop..
+	 * This converges to having clean temps, then binding both fragtexes and framebuffers.
+	 */
+	while(nvfx->dirty & (NVFX_NEW_FB | NVFX_NEW_SAMPLER))
+	{
+		if(nvfx->dirty & NVFX_NEW_SAMPLER)
+		{
+			nvfx->dirty &=~ NVFX_NEW_SAMPLER;
+			nvfx_fragtex_validate(nvfx);
+
+			// TODO: only set this if really necessary
+			flush_tex_cache = TRUE;
+		}
+
+		if(nvfx->dirty & NVFX_NEW_FB)
+		{
+			nvfx->dirty &=~ NVFX_NEW_FB;
+			all_swizzled = nvfx_framebuffer_prepare(nvfx);
+
+			// TODO: make sure this doesn't happen, i.e. fbs have matching formats
+			assert(all_swizzled >= 0);
+		}
+	}
+
+	dirty = nvfx->dirty;
 
 	if(nvfx->render_mode == HW)
 	{
@@ -35,9 +68,6 @@ nvfx_state_validate_common(struct nvfx_context *nvfx)
 			nvfx_vtxfmt_validate(nvfx);
 	}
 
-	if(dirty & NVFX_NEW_FB)
-		nvfx_state_framebuffer_validate(nvfx);
-
 	if(dirty & NVFX_NEW_RAST)
 		sb_emit(chan, nvfx->rasterizer->sb, nvfx->rasterizer->sb_len);
 
@@ -48,10 +78,14 @@ nvfx_state_validate_common(struct nvfx_context *nvfx)
 		nvfx_state_stipple_validate(nvfx);
 
 	if(dirty & (NVFX_NEW_FRAGPROG | NVFX_NEW_FRAGCONST))
+	{
 		nvfx_fragprog_validate(nvfx);
+		if(dirty & NVFX_NEW_FRAGPROG)
+			flush_tex_cache = TRUE; // TODO: do we need this?
+	}
 
-	if(dirty & NVFX_NEW_SAMPLER)
-		nvfx_fragtex_validate(nvfx);
+	if(all_swizzled >= 0)
+		nvfx_framebuffer_validate(nvfx, all_swizzled);
 
 	if(dirty & NVFX_NEW_BLEND)
 		sb_emit(chan, nvfx->blend->sb, nvfx->blend->sb_len);
@@ -72,13 +106,17 @@ nvfx_state_validate_common(struct nvfx_context *nvfx)
 	if(dirty & (NVFX_NEW_VIEWPORT | NVFX_NEW_FB))
 		nvfx_state_viewport_validate(nvfx);
 
-	/* TODO: could nv30 need this or something similar too? */
-	if((dirty & (NVFX_NEW_FRAGPROG | NVFX_NEW_SAMPLER)) && nvfx->is_nv4x) {
-		WAIT_RING(chan, 4);
-		OUT_RING(chan, RING_3D(NV40TCL_TEX_CACHE_CTL, 1));
-		OUT_RING(chan, 2);
-		OUT_RING(chan, RING_3D(NV40TCL_TEX_CACHE_CTL, 1));
-		OUT_RING(chan, 1);
+	if(flush_tex_cache)
+	{
+		// TODO: what about nv30?
+		if(nvfx->is_nv4x)
+		{
+			WAIT_RING(chan, 4);
+			OUT_RING(chan, RING_3D(NV40TCL_TEX_CACHE_CTL, 1));
+			OUT_RING(chan, 2);
+			OUT_RING(chan, RING_3D(NV40TCL_TEX_CACHE_CTL, 1));
+			OUT_RING(chan, 1);
+		}
 	}
 	nvfx->dirty = 0;
 	return TRUE;
@@ -99,6 +137,21 @@ nvfx_state_emit(struct nvfx_context *nvfx)
 	      ;
 	MARK_RING(chan, max_relocs * 2, max_relocs * 2);
 	nvfx_state_relocate(nvfx);
+
+	unsigned render_temps = nvfx->state.render_temps;
+	if(render_temps)
+	{
+		for(int i = 0; i < nvfx->framebuffer.nr_cbufs; ++i)
+		{
+			if(render_temps & (1 << i))
+				util_dirty_surface_set_dirty(nvfx_surface_get_dirty_surfaces(nvfx->framebuffer.cbufs[i]),
+						(struct util_dirty_surface*)nvfx->framebuffer.cbufs[i]);
+		}
+
+		if(render_temps & 0x80)
+			util_dirty_surface_set_dirty(nvfx_surface_get_dirty_surfaces(nvfx->framebuffer.zsbuf),
+					(struct util_dirty_surface*)nvfx->framebuffer.zsbuf);
+	}
 }
 
 void

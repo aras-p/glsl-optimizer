@@ -11,6 +11,7 @@
 #include "nvfx_screen.h"
 #include "nvfx_resource.h"
 #include "nvfx_transfer.h"
+#include "nv04_2d.h"
 
 static void
 nvfx_miptree_choose_format(struct nvfx_miptree *mt)
@@ -115,15 +116,22 @@ nvfx_miptree_get_handle(struct pipe_screen *pscreen,
 
 
 static void
+nvfx_miptree_surface_final_destroy(struct pipe_surface* ps)
+{
+	struct nvfx_surface* ns = (struct nvfx_surface*)ps;
+	pipe_resource_reference(&ps->texture, 0);
+	pipe_resource_reference((struct pipe_resource**)&ns->temp, 0);
+	FREE(ps);
+}
+
+static void
 nvfx_miptree_destroy(struct pipe_screen *screen, struct pipe_resource *pt)
 {
 	struct nvfx_miptree *mt = (struct nvfx_miptree *)pt;
+	util_surfaces_destroy(&mt->surfaces, pt, nvfx_miptree_surface_final_destroy);
 	nouveau_screen_bo_release(screen, mt->base.bo);
 	FREE(mt);
 }
-
-
-
 
 struct u_resource_vtbl nvfx_miptree_vtbl = 
 {
@@ -152,6 +160,8 @@ nvfx_miptree_create_skeleton(struct pipe_screen *pscreen, const struct pipe_reso
 
         mt->base.base = *pt;
         mt->base.vtbl = &nvfx_miptree_vtbl;
+        util_dirty_surfaces_init(&mt->dirty_surfaces);
+
         pipe_reference_init(&mt->base.base.reference, 1);
         mt->base.base.screen = pscreen;
 
@@ -218,29 +228,28 @@ nvfx_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_resource *pt,
 			 unsigned face, unsigned level, unsigned zslice,
 			 unsigned flags)
 {
+	struct nvfx_miptree* mt = (struct nvfx_miptree*)pt;
 	struct nvfx_surface *ns;
 
-	ns = CALLOC_STRUCT(nvfx_surface);
-	if (!ns)
-		return NULL;
-	pipe_resource_reference(&ns->base.texture, pt);
-	ns->base.format = pt->format;
-	ns->base.width = u_minify(pt->width0, level);
-	ns->base.height = u_minify(pt->height0, level);
-	ns->base.usage = flags;
-	pipe_reference_init(&ns->base.reference, 1);
-	ns->base.face = face;
-	ns->base.level = level;
-	ns->base.zslice = zslice;
-	ns->pitch = nvfx_subresource_pitch(pt, level);
-	ns->base.offset = nvfx_subresource_offset(pt, face, level, zslice);
+	ns = (struct nvfx_surface*)util_surfaces_get(&mt->surfaces, sizeof(struct nvfx_surface), pscreen, pt, face, level, zslice, flags);
+	if(ns->base.base.offset == ~0) {
+		util_dirty_surface_init(&ns->base);
+		ns->pitch = nvfx_subresource_pitch(pt, level);
+		ns->base.base.offset = nvfx_subresource_offset(pt, face, level, zslice);
+	}
 
-	return &ns->base;
+	return &ns->base.base;
 }
 
 void
 nvfx_miptree_surface_del(struct pipe_surface *ps)
 {
-	pipe_resource_reference(&ps->texture, NULL);
-	FREE(ps);
+	struct nvfx_surface* ns = (struct nvfx_surface*)ps;
+
+	if(!ns->temp)
+	{
+		util_surfaces_detach(&((struct nvfx_miptree*)ps->texture)->surfaces, ps);
+		pipe_resource_reference(&ps->texture, 0);
+		FREE(ps);
+	}
 }

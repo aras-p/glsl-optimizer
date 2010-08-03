@@ -16,6 +16,10 @@ nvfx_fragtex_validate(struct nvfx_context *nvfx)
 		samplers &= ~(1 << unit);
 
 		if(nvfx->fragment_sampler_views[unit] && nvfx->tex_sampler[unit]) {
+			util_dirty_surfaces_use_for_sampling(&nvfx->pipe,
+					&((struct nvfx_miptree*)nvfx->fragment_sampler_views[unit]->texture)->dirty_surfaces,
+					nvfx_surface_flush);
+
 			if(!nvfx->is_nv4x)
 				nv30_fragtex_set(nvfx, unit);
 			else

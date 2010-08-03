@@ -1,13 +1,16 @@
-
 #ifndef NVFX_RESOURCE_H
 #define NVFX_RESOURCE_H
 
 #include "util/u_transfer.h"
 #include "util/u_format.h"
 #include "util/u_math.h"
+#include "util/u_double_list.h"
+#include "util/u_surfaces.h"
+#include "util/u_dirty_surfaces.h"
 #include <nouveau/nouveau_bo.h>
 
 struct pipe_resource;
+struct nv04_region;
 
 
 /* This gets further specialized into either buffer or texture
@@ -38,17 +41,34 @@ nvfx_resource_on_gpu(struct pipe_resource* pr)
 
 #define NVFX_MAX_TEXTURE_LEVELS  16
 
+/* We have the following invariants for render temporaries
+ *
+ * 1. Render temporaries are always linear
+ * 2. Render temporaries are always up to date
+ * 3. Currently, render temporaries are destroyed when the resource is used for sampling, but kept for any other use
+ *
+ * Also, we do NOT flush temporaries on any pipe->flush().
+ * This is fine, as long as scanout targets and shared resources never need temps.
+ *
+ * TODO: we may want to also support swizzled temporaries to improve performance in some cases.
+ */
+
 struct nvfx_miptree {
         struct nvfx_resource base;
 
         unsigned linear_pitch; /* for linear textures, 0 for swizzled and compressed textures with level-dependent minimal pitch */
         unsigned face_size; /* 128-byte aligned face/total size */
         unsigned level_offset[NVFX_MAX_TEXTURE_LEVELS];
+
+        struct util_surfaces surfaces;
+        struct util_dirty_surfaces dirty_surfaces;
 };
 
 struct nvfx_surface {
-	struct pipe_surface base;
+	struct util_dirty_surface base;
 	unsigned pitch;
+
+	struct nvfx_miptree* temp;
 };
 
 static INLINE 
@@ -65,6 +85,12 @@ nvfx_surface_buffer(struct pipe_surface *surf)
 	return mt->bo;
 }
 
+static INLINE struct util_dirty_surfaces*
+nvfx_surface_get_dirty_surfaces(struct pipe_surface* surf)
+{
+	struct nvfx_miptree *mt = (struct nvfx_miptree *)surf->texture;
+	return &mt->dirty_surfaces;
+}
 
 void
 nvfx_init_resource_functions(struct pipe_context *pipe);
@@ -140,5 +166,11 @@ nvfx_subresource_pitch(struct pipe_resource* pt, unsigned level)
 			return util_format_get_stride(pt->format, u_minify(pt->width0, level));
 	}
 }
+
+void
+nvfx_surface_create_temp(struct pipe_context* pipe, struct pipe_surface* surf);
+
+void
+nvfx_surface_flush(struct pipe_context* pipe, struct pipe_surface* surf);
 
 #endif

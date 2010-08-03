@@ -94,23 +94,44 @@ nvfx_region_fixup_swizzled(struct nv04_region* rgn, unsigned zslice, unsigned wi
 }
 
 static INLINE void
-nvfx_region_init_for_surface(struct nv04_region* rgn, struct nvfx_surface* surf, unsigned x, unsigned y)
+nvfx_region_init_for_surface(struct nv04_region* rgn, struct nvfx_surface* surf, unsigned x, unsigned y, bool for_write)
 {
-	rgn->bo = ((struct nvfx_resource*)surf->base.texture)->bo;
-	rgn->offset = surf->base.offset;
-	rgn->pitch = surf->pitch;
 	rgn->x = x;
 	rgn->y = y;
 	rgn->z = 0;
+	nvfx_region_set_format(rgn, surf->base.base.format);
 
-	nvfx_region_set_format(rgn, surf->base.format);
-	if(!(surf->base.texture->flags & NVFX_RESOURCE_FLAG_LINEAR))
-		nvfx_region_fixup_swizzled(rgn, surf->base.zslice, surf->base.width, surf->base.height, u_minify(surf->base.texture->depth0, surf->base.level));
+	if(surf->temp)
+	{
+		rgn->bo = surf->temp->base.bo;
+		rgn->offset = 0;
+		rgn->pitch = surf->temp->linear_pitch;
+
+		if(for_write)
+			util_dirty_surface_set_dirty(nvfx_surface_get_dirty_surfaces(&surf->base.base), &surf->base);
+	} else {
+		rgn->bo = ((struct nvfx_resource*)surf->base.base.texture)->bo;
+		rgn->offset = surf->base.base.offset;
+		rgn->pitch = surf->pitch;
+
+	        if(!(surf->base.base.texture->flags & NVFX_RESOURCE_FLAG_LINEAR))
+		        nvfx_region_fixup_swizzled(rgn, surf->base.base.zslice, surf->base.base.width, surf->base.base.height, u_minify(surf->base.base.texture->depth0, surf->base.base.level));
+	}
 }
 
 static INLINE void
-nvfx_region_init_for_subresource(struct nv04_region* rgn, struct pipe_resource* pt, struct pipe_subresource sub, unsigned x, unsigned y, unsigned z)
+nvfx_region_init_for_subresource(struct nv04_region* rgn, struct pipe_resource* pt, struct pipe_subresource sub, unsigned x, unsigned y, unsigned z, bool for_write)
 {
+	if(pt->target != PIPE_BUFFER)
+	{
+		struct nvfx_surface* ns = (struct nvfx_surface*)util_surfaces_peek(&((struct nvfx_miptree*)pt)->surfaces, pt, sub.face, sub.level, z);
+		if(ns && util_dirty_surface_is_dirty(&ns->base))
+		{
+			nvfx_region_init_for_surface(rgn, ns, x, y, for_write);
+			return;
+		}
+	}
+
 	rgn->bo = ((struct nvfx_resource*)pt)->bo;
 	rgn->offset = nvfx_subresource_offset(pt, sub.face, sub.level, z);
 	rgn->pitch = nvfx_subresource_pitch(pt, sub.level);
@@ -165,6 +186,7 @@ nv04_scaled_image_format(enum pipe_format format)
 	}
 }
 
+// XXX: must save index buffer too!
 static struct blitter_context*
 nvfx_get_blitter(struct pipe_context* pipe, int copy)
 {
@@ -237,8 +259,8 @@ nvfx_resource_copy_region(struct pipe_context *pipe,
 	int dst_to_gpu = dstr->usage != PIPE_USAGE_DYNAMIC && dstr->usage != PIPE_USAGE_STAGING;
 	int src_on_gpu = nvfx_resource_on_gpu(srcr);
 
-	nvfx_region_init_for_subresource(&dst, dstr, subdst, dstx, dsty, dstz);
-	nvfx_region_init_for_subresource(&src, srcr, subsrc, srcx, srcy, srcz);
+	nvfx_region_init_for_subresource(&dst, dstr, subdst, dstx, dsty, dstz, TRUE);
+	nvfx_region_init_for_subresource(&src, srcr, subsrc, srcx, srcy, srcz, FALSE);
 	w = util_format_get_stride(dstr->format, w) >> dst.bpps;
 	h = util_format_get_nblocksy(dstr->format, h);
 
@@ -293,10 +315,11 @@ nvfx_surface_fill(struct pipe_context* pipe, struct pipe_surface *dsts,
 	struct nv04_2d_context *ctx = nvfx_screen(pipe->screen)->eng2d;
 	struct nv04_region dst;
 	/* Always try to use the GPU right now, if possible
-	 * If the user wanted the surface data on the CPU, he would have cleared with memset */
+	 * If the user wanted the surface data on the CPU, he would have cleared with memset (hopefully) */
 
 	// we don't care about interior pixel order since we set all them to the same value
-	nvfx_region_init_for_surface(&dst, (struct nvfx_surface*)dsts, dx, dy);
+	nvfx_region_init_for_surface(&dst, (struct nvfx_surface*)dsts, dx, dy, TRUE);
+
 	w = util_format_get_stride(dsts->format, w) >> dst.bpps;
 	h = util_format_get_nblocksy(dsts->format, h);
 
@@ -339,6 +362,80 @@ nvfx_screen_surface_init(struct pipe_screen *pscreen)
 		return -1;
 	nvfx_screen(pscreen)->eng2d = ctx;
 	return 0;
+}
+
+static void
+nvfx_surface_copy_temp(struct pipe_context* pipe, struct pipe_surface* surf, int to_temp)
+{
+	struct nvfx_surface* ns = (struct nvfx_surface*)surf;
+	struct pipe_subresource tempsr, surfsr;
+	struct pipe_resource *idxbuf_buffer;
+	unsigned idxbuf_format;
+
+	tempsr.face = 0;
+	tempsr.level = 0;
+	surfsr.face = surf->face;
+	surfsr.level = surf->level;
+
+	// TODO: do this properly, in blitter save
+	idxbuf_buffer = ((struct nvfx_context*)pipe)->idxbuf_buffer;
+	idxbuf_format = ((struct nvfx_context*)pipe)->idxbuf_format;
+
+	if(to_temp)
+		nvfx_resource_copy_region(pipe, &ns->temp->base.base, tempsr, 0, 0, 0, surf->texture, surfsr, 0, 0, surf->zslice, surf->width, surf->height);
+	else
+		nvfx_resource_copy_region(pipe, surf->texture, surfsr, 0, 0, surf->zslice, &ns->temp->base.base, tempsr, 0, 0, 0, surf->width, surf->height);
+
+	((struct nvfx_context*)pipe)->idxbuf_buffer = idxbuf_buffer;
+	((struct nvfx_context*)pipe)->idxbuf_format = idxbuf_format;
+}
+
+void
+nvfx_surface_create_temp(struct pipe_context* pipe, struct pipe_surface* surf)
+{
+	struct nvfx_surface* ns = (struct nvfx_surface*)surf;
+	struct pipe_resource template;
+	memset(&template, 0, sizeof(struct pipe_resource));
+	template.target = PIPE_TEXTURE_2D;
+	template.format = surf->format;
+	template.width0 = surf->width;
+	template.height0 = surf->height;
+	template.depth0 = 1;
+	template.nr_samples = surf->texture->nr_samples;
+	template.flags = NVFX_RESOURCE_FLAG_LINEAR;
+
+	ns->temp = (struct nvfx_miptree*)nvfx_miptree_create(pipe->screen, &template);
+	nvfx_surface_copy_temp(pipe, surf, 1);
+}
+
+void
+nvfx_surface_flush(struct pipe_context* pipe, struct pipe_surface* surf)
+{
+	struct nvfx_context* nvfx = (struct nvfx_context*)pipe;
+	struct nvfx_surface* ns = (struct nvfx_surface*)surf;
+	boolean bound = FALSE;
+
+	/* must be done before the copy, otherwise the copy will use the temp as destination */
+	util_dirty_surface_set_clean(nvfx_surface_get_dirty_surfaces(surf), &ns->base);
+
+	nvfx_surface_copy_temp(pipe, surf, 0);
+
+	if(nvfx->framebuffer.zsbuf == surf)
+		bound = TRUE;
+	else
+	{
+		for(unsigned i = 0; i < nvfx->framebuffer.nr_cbufs; ++i)
+		{
+			if(nvfx->framebuffer.cbufs[i] == surf)
+			{
+				bound = TRUE;
+				break;
+			}
+		}
+	}
+
+	if(!bound)
+		pipe_resource_reference((struct pipe_resource**)&ns->temp, 0);
 }
 
 static void

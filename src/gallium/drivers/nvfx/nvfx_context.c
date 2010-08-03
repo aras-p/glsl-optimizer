@@ -15,6 +15,7 @@ nvfx_flush(struct pipe_context *pipe, unsigned flags,
 	struct nouveau_channel *chan = screen->base.channel;
 	struct nouveau_grobj *eng3d = screen->eng3d;
 
+	/* XXX: we need to actually be intelligent here */
 	if (flags & PIPE_FLUSH_TEXTURE_CACHE) {
 		BEGIN_RING(chan, eng3d, 0x1fd8, 1);
 		OUT_RING  (chan, 2);
@@ -87,5 +88,8 @@ nvfx_create(struct pipe_screen *pscreen, void *priv)
 	/* set these to that we init them on first validation */
 	nvfx->state.scissor_enabled = ~0;
 	nvfx->state.stipple_enabled = ~0;
+
+	LIST_INITHEAD(&nvfx->render_cache);
+
 	return &nvfx->pipe;
 }
