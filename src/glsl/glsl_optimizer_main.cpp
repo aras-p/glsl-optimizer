@@ -85,10 +85,8 @@ static void DeleteFile (const std::string& path)
 }
 
 
-static bool TestFile (glslopt_ctx* ctx, bool vertex, const std::string& inputPath, const std::string& outputPath, const std::string& errPath, bool doCheckGLSL)
+static bool TestFile (glslopt_ctx* ctx, bool vertex, const std::string& inputPath, const std::string& hirPath, const std::string& outputPath, bool doCheckGLSL)
 {
-	DeleteFile (errPath);
-
 	std::string input;
 	if (!ReadStringFromFile (inputPath.c_str(), input))
 	{
@@ -104,17 +102,30 @@ static bool TestFile (glslopt_ctx* ctx, bool vertex, const std::string& inputPat
 	bool optimizeOk = glslopt_get_status(shader);
 	if (optimizeOk)
 	{
-		std::string text = glslopt_get_output (shader);
-		std::string output;
-		ReadStringFromFile (outputPath.c_str(), output);
+		std::string textHir = glslopt_get_raw_output (shader);
+		std::string textOpt = glslopt_get_output (shader);
+		std::string outputHir;
+		ReadStringFromFile (hirPath.c_str(), outputHir);
+		std::string outputOpt;
+		ReadStringFromFile (outputPath.c_str(), outputOpt);
 
-		if (text != output)
+		if (textHir != outputHir)
 		{
 			// write output
-			FILE* f = fopen (errPath.c_str(), "wb");
-			fwrite (text.c_str(), 1, text.size(), f);
+			FILE* f = fopen (hirPath.c_str(), "wb");
+			fwrite (textHir.c_str(), 1, textHir.size(), f);
 			fclose (f);
-			printf ("  does not match expected output\n");
+			printf ("  does not match raw output\n");
+			res = false;
+		}
+
+		if (textOpt != outputOpt)
+		{
+			// write output
+			FILE* f = fopen (outputPath.c_str(), "wb");
+			fwrite (textOpt.c_str(), 1, textOpt.size(), f);
+			fclose (f);
+			printf ("  does not match optimized output\n");
 			res = false;
 		}
 		//if (doCheckGLSL && !CheckGLSL (vertex, text.c_str()))
@@ -161,9 +172,9 @@ int main (int argc, const char** argv)
 		{
 			std::string inname = inputFiles[i];
 			printf ("test %s\n", inname.c_str());
+			std::string hirname = inname.substr (0,inname.size()-7) + "-ir.txt";
 			std::string outname = inname.substr (0,inname.size()-7) + "-out.txt";
-			std::string errname = inname.substr (0,inname.size()-7) + "-res.txt";
-			bool ok = TestFile (ctx, type==0, testFolder + "/" + inname, testFolder + "/" + outname, testFolder + "/" + errname, hasOpenGL);
+			bool ok = TestFile (ctx, type==0, testFolder + "/" + inname, testFolder + "/" + hirname, testFolder + "/" + outname, hasOpenGL);
 			if (!ok)
 			{
 				++errors;
