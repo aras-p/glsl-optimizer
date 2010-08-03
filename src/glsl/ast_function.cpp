@@ -572,16 +572,17 @@ emit_inline_vector_constructor(const glsl_type *type,
       ir_rvalue *rhs = new(ctx) ir_swizzle(first_param, 0, 0, 0, 0,
 					   lhs_components);
       ir_dereference_variable *lhs = new(ctx) ir_dereference_variable(var);
+      const unsigned mask = (1U << lhs_components) - 1;
 
       assert(rhs->type == lhs->type);
 
-      ir_instruction *inst = new(ctx) ir_assignment(lhs, rhs, NULL);
+      ir_instruction *inst = new(ctx) ir_assignment(lhs, rhs, NULL, mask);
       instructions->push_tail(inst);
    } else {
       unsigned base_component = 0;
       foreach_list(node, parameters) {
-	 ir_rvalue *rhs = (ir_rvalue *) node;
-	 unsigned rhs_components = rhs->type->components();
+	 ir_rvalue *param = (ir_rvalue *) node;
+	 unsigned rhs_components = param->type->components();
 
 	 /* Do not try to assign more components to the vector than it has!
 	  */
@@ -589,19 +590,23 @@ emit_inline_vector_constructor(const glsl_type *type,
 	    rhs_components = lhs_components - base_component;
 	 }
 
-	 /* Emit an assignment of the constructor parameter to the next set of
-	  * components in the temporary variable.
+	 /* Generate a swizzle that puts the first element of the source at
+	  * the location of the first element of the destination.
 	  */
-	 unsigned mask[4] = { 0, 0, 0, 0 };
-	 for (unsigned i = 0; i < rhs_components; i++) {
-	    mask[i] = i + base_component;
-	 }
+	 unsigned swiz[4] = { 0, 0, 0, 0 };
+	 for (unsigned i = 0; i < rhs_components; i++)
+	    swiz[i + base_component] = i;
 
+	 /* Mask of fields to be written in the assignment.
+	  */
+	 const unsigned write_mask = ((1U << rhs_components) - 1)
+	    << base_component;
 
-	 ir_rvalue *lhs_ref = new(ctx) ir_dereference_variable(var);
-	 ir_swizzle *lhs = new(ctx) ir_swizzle(lhs_ref, mask, rhs_components);
+	 ir_dereference *lhs = new(ctx) ir_dereference_variable(var);
+	 ir_rvalue *rhs = new(ctx) ir_swizzle(param, swiz, lhs_components);
 
-	 ir_instruction *inst = new(ctx) ir_assignment(lhs, rhs, NULL);
+	 ir_instruction *inst =
+	    new(ctx) ir_assignment(lhs, rhs, NULL, write_mask);
 	 instructions->push_tail(inst);
 
 	 /* Advance the component index by the number of components that were
@@ -631,18 +636,27 @@ assign_to_matrix_column(ir_variable *var, unsigned column, unsigned row_base,
 			ir_rvalue *src, unsigned src_base, unsigned count,
 			void *mem_ctx)
 {
-   const unsigned mask[8] = { 0, 1, 2, 3, 0, 0, 0, 0 };
-
    ir_constant *col_idx = new(mem_ctx) ir_constant(column);
-   ir_rvalue *column_ref = new(mem_ctx) ir_dereference_array(var, col_idx);
+   ir_dereference *column_ref = new(mem_ctx) ir_dereference_array(var, col_idx);
 
    assert(column_ref->type->components() >= (row_base + count));
-   ir_rvalue *lhs = new(mem_ctx) ir_swizzle(column_ref, &mask[row_base], count);
-
    assert(src->type->components() >= (src_base + count));
-   ir_rvalue *rhs = new(mem_ctx) ir_swizzle(src, &mask[src_base], count);
 
-   return new(mem_ctx) ir_assignment(lhs, rhs, NULL);
+   /* Generate a swizzle that puts the first element of the source at the
+    * location of the first element of the destination.
+    */
+   unsigned swiz[4] = { src_base, src_base, src_base, src_base };
+   for (unsigned i = 0; i < count; i++)
+      swiz[i + row_base] = src_base + i;
+
+   ir_rvalue *const rhs =
+      new(mem_ctx) ir_swizzle(src, swiz, column_ref->type->components());
+
+   /* Mask of fields to be written in the assignment.
+    */
+   const unsigned write_mask = ((1U << count) - 1) << row_base;
+
+   return new(mem_ctx) ir_assignment(column_ref, rhs, NULL, write_mask);
 }
 
 
@@ -704,10 +718,9 @@ emit_inline_matrix_constructor(const glsl_type *type,
 				NULL);
       instructions->push_tail(inst);
 
-      ir_rvalue *const rhs_ref = new(ctx) ir_dereference_variable(rhs_var);
-      ir_rvalue *const x_of_rhs = new(ctx) ir_swizzle(rhs_ref, 0, 0, 0, 0, 1);
+      ir_dereference *const rhs_ref = new(ctx) ir_dereference_variable(rhs_var);
 
-      inst = new(ctx) ir_assignment(x_of_rhs, first_param, NULL);
+      inst = new(ctx) ir_assignment(rhs_ref, first_param, NULL, 0x01);
       instructions->push_tail(inst);
 
       /* Assign the temporary vector to each column of the destination matrix
@@ -813,11 +826,16 @@ emit_inline_matrix_constructor(const glsl_type *type,
       instructions->push_tail(inst);
 
 
-      const unsigned swiz[4] = { 0, 1, 2, 3 };
+      unsigned swiz[4] = { 0, 0, 0, 0 };
+      for (unsigned i = 1; i < src_matrix->type->vector_elements; i++)
+	 swiz[i] = i;
+
       const unsigned last_col = min(src_matrix->type->matrix_columns,
 				    var->type->matrix_columns);
+      const unsigned write_mask = (1U << var->type->vector_elements) - 1;
+
       for (unsigned i = 0; i < last_col; i++) {
-	 ir_rvalue *const lhs_col =
+	 ir_dereference *const lhs =
 	    new(ctx) ir_dereference_array(var, new(ctx) ir_constant(i));
 	 ir_rvalue *const rhs_col =
 	    new(ctx) ir_dereference_array(rhs_var, new(ctx) ir_constant(i));
@@ -830,26 +848,18 @@ emit_inline_matrix_constructor(const glsl_type *type,
 	  * It would be perfectly valid to unconditionally generate the
 	  * swizzles, this this will typically result in a more compact IR tree.
 	  */
-	 ir_rvalue *lhs;
 	 ir_rvalue *rhs;
-	 if (lhs_col->type->vector_elements < rhs_col->type->vector_elements) {
-	    lhs = lhs_col;
-
+	 if (lhs->type->vector_elements != rhs_col->type->vector_elements) {
 	    rhs = new(ctx) ir_swizzle(rhs_col, swiz,
-				      lhs_col->type->vector_elements);
-	 } else if (lhs_col->type->vector_elements
-		    > rhs_col->type->vector_elements) {
-	    lhs = new(ctx) ir_swizzle(lhs_col, swiz,
-				      rhs_col->type->vector_elements);
-	    rhs = rhs_col;
+				      lhs->type->vector_elements);
 	 } else {
-	    lhs = lhs_col;
 	    rhs = rhs_col;
 	 }
 
 	 assert(lhs->type == rhs->type);
 
-	 ir_instruction *inst = new(ctx) ir_assignment(lhs, rhs, NULL);
+	 ir_instruction *inst =
+	    new(ctx) ir_assignment(lhs, rhs, NULL, write_mask);
 	 instructions->push_tail(inst);
       }
    } else {
