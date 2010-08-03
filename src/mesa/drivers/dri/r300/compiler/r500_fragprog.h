@@ -49,6 +49,4 @@ extern int r500_transform_IF(
 	struct rc_instruction * inst,
 	void* data);
 
-void r500_transform_unroll_loops(struct radeon_compiler * c,
-						struct emulate_loop_state * s);
 #endif

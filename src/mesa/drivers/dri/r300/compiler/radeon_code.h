@@ -221,6 +221,9 @@ struct r500_fragment_program_code {
 	int max_temp_idx;
 
 	uint32_t us_fc_ctrl;
+
+	uint32_t int_constants[32];
+	uint32_t int_constant_count;
 };
 
 struct rX00_fragment_program_code {
