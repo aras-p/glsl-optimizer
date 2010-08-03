@@ -34,6 +34,8 @@
 #ifndef ST_ATOM_H
 #define ST_ATOM_H
 
+#include "main/glheader.h"
+
 struct st_context;
 struct st_tracked_state;
 
