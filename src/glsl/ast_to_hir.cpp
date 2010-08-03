@@ -555,9 +555,8 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
 						  NULL));
    deref_var = new(ctx) ir_dereference_variable(var);
 
-   instructions->push_tail(new(ctx) ir_assignment(lhs,
-						  deref_var,
-						  NULL));
+   if (!error_emitted)
+      instructions->push_tail(new(ctx) ir_assignment(lhs, deref_var, NULL));
 
    return new(ctx) ir_dereference_variable(var);
 }
