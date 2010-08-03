@@ -4,6 +4,7 @@
 #include "util/u_format.h"
 #include "util/u_memory.h"
 #include "util/u_math.h"
+#include "util/u_staging.h"
 #include "state_tracker/drm_driver.h"
 #include "nouveau/nouveau_winsys.h"
 #include "nouveau/nouveau_screen.h"
@@ -142,11 +143,11 @@ struct u_resource_vtbl nvfx_miptree_vtbl =
    nvfx_miptree_get_handle,	      /* get_handle */
    nvfx_miptree_destroy,	      /* resource_destroy */
    NULL,			      /* is_resource_referenced */
-   nvfx_miptree_transfer_new,	      /* get_transfer */
-   nvfx_miptree_transfer_del,     /* transfer_destroy */
-   nvfx_miptree_transfer_map,	      /* transfer_map */
+   nvfx_transfer_new,	  	      /* get_transfer */
+   util_staging_transfer_destroy,     /* transfer_destroy */
+   nvfx_transfer_map,		      /* transfer_map */
    u_default_transfer_flush_region,   /* transfer_flush_region */
-   nvfx_miptree_transfer_unmap,	      /* transfer_unmap */
+   nvfx_transfer_unmap,	              /* transfer_unmap */
    u_default_transfer_inline_write    /* transfer_inline_write */
 };
 

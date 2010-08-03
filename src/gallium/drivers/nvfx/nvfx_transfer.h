@@ -7,19 +7,17 @@
 
 
 struct pipe_transfer *
-nvfx_miptree_transfer_new(struct pipe_context *pcontext,
+nvfx_transfer_new(struct pipe_context *pcontext,
 			  struct pipe_resource *pt,
 			  struct pipe_subresource sr,
 			  unsigned usage,
 			  const struct pipe_box *box);
-void
-nvfx_miptree_transfer_del(struct pipe_context *pcontext,
-			  struct pipe_transfer *ptx);
+
 void *
-nvfx_miptree_transfer_map(struct pipe_context *pcontext,
+nvfx_transfer_map(struct pipe_context *pcontext,
 			  struct pipe_transfer *ptx);
 void
-nvfx_miptree_transfer_unmap(struct pipe_context *pcontext,
+nvfx_transfer_unmap(struct pipe_context *pcontext,
 			    struct pipe_transfer *ptx);
 
 
