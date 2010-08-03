@@ -765,8 +765,37 @@ static struct radeon_state *r600_db(struct r600_context *rctx)
 static struct radeon_state *r600_rasterizer(struct r600_context *rctx)
 {
 	const struct pipe_rasterizer_state *state = &rctx->rasterizer->state.rasterizer;
+	const struct pipe_framebuffer_state *fb = &rctx->framebuffer->state.framebuffer;
 	struct r600_screen *rscreen = rctx->screen;
 	struct radeon_state *rstate;
+	float offset_units = 0, offset_scale = 0;
+	char depth = 0;
+	unsigned offset_db_fmt_cntl = 0;
+
+	if (fb->zsbuf) {
+		offset_units = state->offset_units;
+		offset_scale = state->offset_scale * 12.0f;
+		switch (fb->zsbuf->texture->format) {
+		case PIPE_FORMAT_Z24X8_UNORM:
+		case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
+			depth = -24;
+			offset_units *= 2.0f;
+			break;
+		case PIPE_FORMAT_Z32_FLOAT:
+			depth = -23;
+			offset_units *= 1.0f;
+			offset_db_fmt_cntl |= S_028DF8_POLY_OFFSET_DB_IS_FLOAT_FMT(1);
+			break;
+		case PIPE_FORMAT_Z16_UNORM:
+			depth = -16;
+			offset_units *= 4.0f;
+			break;
+		default:
+			R600_ERR("unsupported %d\n", fb->zsbuf->texture->format);
+			return NULL;
+		}
+	}
+	offset_db_fmt_cntl |= S_028DF8_POLY_OFFSET_NEG_NUM_DB_BITS(depth);
 
 	rctx->flat_shade = state->flatshade;
 	rstate = radeon_state(rscreen->rw, R600_RASTERIZER_TYPE, R600_RASTERIZER);
@@ -777,7 +806,10 @@ static struct radeon_state *r600_rasterizer(struct r600_context *rctx)
 	rstate->states[R600_RASTERIZER__PA_SU_SC_MODE_CNTL] = 0x00080000 |
 			S_028814_CULL_FRONT((state->cull_face & PIPE_FACE_FRONT) ? 1 : 0) |
 			S_028814_CULL_BACK((state->cull_face & PIPE_FACE_BACK) ? 1 : 0) |
-			S_028814_FACE(!state->front_ccw);
+			S_028814_FACE(!state->front_ccw) |
+			S_028814_POLY_OFFSET_FRONT_ENABLE(state->offset_tri) |
+			S_028814_POLY_OFFSET_BACK_ENABLE(state->offset_tri) |
+			S_028814_POLY_OFFSET_PARA_ENABLE(state->offset_tri);
 	rstate->states[R600_RASTERIZER__PA_CL_VS_OUT_CNTL] = 0x00000000;
 	rstate->states[R600_RASTERIZER__PA_CL_NANINF_CNTL] = 0x00000000;
 	rstate->states[R600_RASTERIZER__PA_SU_POINT_SIZE] = 0x00080008;
@@ -790,12 +822,12 @@ static struct radeon_state *r600_rasterizer(struct r600_context *rctx)
 	rstate->states[R600_RASTERIZER__PA_CL_GB_VERT_DISC_ADJ] = 0x3F800000;
 	rstate->states[R600_RASTERIZER__PA_CL_GB_HORZ_CLIP_ADJ] = 0x3F800000;
 	rstate->states[R600_RASTERIZER__PA_CL_GB_HORZ_DISC_ADJ] = 0x3F800000;
-	rstate->states[R600_RASTERIZER__PA_SU_POLY_OFFSET_DB_FMT_CNTL] = 0x00000000;
+	rstate->states[R600_RASTERIZER__PA_SU_POLY_OFFSET_DB_FMT_CNTL] = offset_db_fmt_cntl;
 	rstate->states[R600_RASTERIZER__PA_SU_POLY_OFFSET_CLAMP] = 0x00000000;
-	rstate->states[R600_RASTERIZER__PA_SU_POLY_OFFSET_FRONT_SCALE] = 0x00000000;
-	rstate->states[R600_RASTERIZER__PA_SU_POLY_OFFSET_FRONT_OFFSET] = 0x00000000;
-	rstate->states[R600_RASTERIZER__PA_SU_POLY_OFFSET_BACK_SCALE] = 0x00000000;
-	rstate->states[R600_RASTERIZER__PA_SU_POLY_OFFSET_BACK_OFFSET] = 0x00000000;
+	rstate->states[R600_RASTERIZER__PA_SU_POLY_OFFSET_FRONT_SCALE] = fui(offset_scale);
+	rstate->states[R600_RASTERIZER__PA_SU_POLY_OFFSET_FRONT_OFFSET] = fui(offset_units);
+	rstate->states[R600_RASTERIZER__PA_SU_POLY_OFFSET_BACK_SCALE] = fui(offset_scale);
+	rstate->states[R600_RASTERIZER__PA_SU_POLY_OFFSET_BACK_OFFSET] = fui(offset_units);
 	if (radeon_state_pm4(rstate)) {
 		radeon_state_decref(rstate);
 		return NULL;

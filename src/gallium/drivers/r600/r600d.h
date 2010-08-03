@@ -539,6 +539,29 @@
 #define   S_028D10_IGNORE_SC_ZRANGE(x)                 (((x) & 0x1) << 17)
 #define   G_028D10_IGNORE_SC_ZRANGE(x)                 (((x) >> 17) & 0x1)
 #define   C_028D10_IGNORE_SC_ZRANGE                    0xFFFDFFFF
+#define R_028DF8_PA_SU_POLY_OFFSET_DB_FMT_CNTL       0x028DF8
+#define   S_028DF8_POLY_OFFSET_NEG_NUM_DB_BITS(x)      (((x) & 0xFF) << 0)
+#define   G_028DF8_POLY_OFFSET_NEG_NUM_DB_BITS(x)      (((x) >> 0) & 0xFF)
+#define   C_028DF8_POLY_OFFSET_NEG_NUM_DB_BITS         0xFFFFFF00
+#define   S_028DF8_POLY_OFFSET_DB_IS_FLOAT_FMT(x)      (((x) & 0x1) << 8)
+#define   G_028DF8_POLY_OFFSET_DB_IS_FLOAT_FMT(x)      (((x) >> 8) & 0x1)
+#define   C_028DF8_POLY_OFFSET_DB_IS_FLOAT_FMT         0xFFFFFEFF
+#define R_028E00_PA_SU_POLY_OFFSET_FRONT_SCALE       0x028E00
+#define   S_028E00_SCALE(x)                            (((x) & 0xFFFFFFFF) << 0)
+#define   G_028E00_SCALE(x)                            (((x) >> 0) & 0xFFFFFFFF)
+#define   C_028E00_SCALE                               0x00000000
+#define R_028E04_PA_SU_POLY_OFFSET_FRONT_OFFSET      0x028E04
+#define   S_028E04_OFFSET(x)                           (((x) & 0xFFFFFFFF) << 0)
+#define   G_028E04_OFFSET(x)                           (((x) >> 0) & 0xFFFFFFFF)
+#define   C_028E04_OFFSET                              0x00000000
+#define R_028E08_PA_SU_POLY_OFFSET_BACK_SCALE        0x028E08
+#define   S_028E08_SCALE(x)                            (((x) & 0xFFFFFFFF) << 0)
+#define   G_028E08_SCALE(x)                            (((x) >> 0) & 0xFFFFFFFF)
+#define   C_028E08_SCALE                               0x00000000
+#define R_028E0C_PA_SU_POLY_OFFSET_BACK_OFFSET       0x028E0C
+#define   S_028E0C_OFFSET(x)                           (((x) & 0xFFFFFFFF) << 0)
+#define   G_028E0C_OFFSET(x)                           (((x) >> 0) & 0xFFFFFFFF)
+#define   C_028E0C_OFFSET                              0x00000000
 #define R_028A40_VGT_GS_MODE                         0x028A40
 #define   S_028A40_MODE(x)                             (((x) & 0x3) << 0)
 #define   G_028A40_MODE(x)                             (((x) >> 0) & 0x3)
