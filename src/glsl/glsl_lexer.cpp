@@ -1327,7 +1327,7 @@ return FLOAT_T;
 case 19:
 YY_RULE_SETUP
 #line 123 "glsl_lexer.lpp"
-return INT;
+return INT_T;
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
