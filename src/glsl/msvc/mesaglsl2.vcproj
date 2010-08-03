@@ -63,6 +63,7 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
+				OutputFile="$(OutDir)\$(ProjectName)-win32.lib"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -86,7 +87,7 @@
 			IntermediateDirectory="build/$(ProjectName)/$(ConfigurationName)"
 			ConfigurationType="4"
 			CharacterSet="1"
-			WholeProgramOptimization="1"
+			WholeProgramOptimization="0"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -109,11 +110,11 @@
 				EnableIntrinsicFunctions="true"
 				AdditionalIncludeDirectories="talloc;../../../include;../../mesa;../../mapi;."
 				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;NOMINMAX;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE;snprintf=_snprintf"
-				RuntimeLibrary="2"
+				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
-				DebugInformationFormat="3"
+				DebugInformationFormat="1"
 				DisableSpecificWarnings="4291;4996;4800;4099;4244;4018"
 				ForcedIncludeFiles="msvccompat.h"
 			/>
@@ -128,6 +129,7 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
+				OutputFile="$(OutDir)\$(ProjectName)-win32.lib"
 			/>
 			<Tool
 				Name="VCALinkTool"
