@@ -91,6 +91,7 @@ static int r600_bc_add_cf(struct r600_bc *bc)
 	bc->cf_last = cf;
 	bc->ncf++;
 	bc->ndw += 2;
+	bc->force_add_cf = 0;
 	return 0;
 }
 
@@ -119,7 +120,7 @@ int r600_bc_add_alu(struct r600_bc *bc, const struct r600_bc_alu *alu)
 
 	/* cf can contains only alu or only vtx or only tex */
 	if (bc->cf_last == NULL || bc->cf_last->inst != (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU << 3) ||
-		(bc->cf_last->ndw >> 1) >= 120) {
+		bc->force_add_cf) {
 		/* at most 128 slots, one add alu can add 4 slots + 4 constant worst case */
 		r = r600_bc_add_cf(bc);
 		if (r) {
@@ -127,6 +128,9 @@ int r600_bc_add_alu(struct r600_bc *bc, const struct r600_bc_alu *alu)
 			return r;
 		}
 		bc->cf_last->inst = V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU << 3;
+	}
+	if (alu->last && (bc->cf_last->ndw >> 1) >= 124) {
+		bc->force_add_cf = 1;
 	}
 	/* number of gpr == the last gpr used in any alu */
 	for (i = 0; i < 3; i++) {

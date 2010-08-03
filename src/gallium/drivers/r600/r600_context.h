@@ -200,10 +200,10 @@ void r600_init_state_functions(struct r600_context *rctx);
 void r600_init_query_functions(struct r600_context* rctx);
 struct pipe_context *r600_create_context(struct pipe_screen *screen, void *priv);
 
-int r600_pipe_shader_create(struct pipe_context *ctx,
+extern int r600_pipe_shader_create(struct pipe_context *ctx,
 			struct r600_context_state *rstate,
 			const struct tgsi_token *tokens);
-int r600_pipe_shader_update(struct pipe_context *ctx,
+extern int r600_pipe_shader_update(struct pipe_context *ctx,
 				struct r600_context_state *rstate);
 
 #define R600_ERR(fmt, args...) \
