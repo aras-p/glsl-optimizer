@@ -15,7 +15,7 @@ struct appdata_full {
   vec4 color;
 };
 mat3 xll_constructMat3 (
-  in mat4 m;
+  in mat4 m
 )
 {
   vec3 tmpvar_1;
@@ -52,11 +52,11 @@ uniform vec4 unity_SHBr;
 uniform vec4 unity_SHC;
 uniform vec4 unity_Scale;
 vec3 ShadeSH9 (
-  in vec4 normal;
+  in vec4 normal
 );
 
 vec3 ShadeSH9 (
-  in vec4 normal;
+  in vec4 normal
 )
 {
   vec3 x1;
@@ -107,15 +107,15 @@ vec3 ShadeSH9 (
 }
 
 void PositionFog (
-  in vec4 v;
-  out vec4 pos;
-  out float fog;
+  in vec4 v,
+  out vec4 pos,
+  out float fog
 );
 
 void PositionFog (
-  in vec4 v;
-  out vec4 pos;
-  out float fog;
+  in vec4 v,
+  out vec4 pos,
+  out float fog
 )
 {
   vec4 tmpvar_1;
@@ -127,11 +127,11 @@ void PositionFog (
 }
 
 vec3 ObjSpaceViewDir (
-  in vec4 v;
+  in vec4 v
 );
 
 vec3 ObjSpaceViewDir (
-  in vec4 v;
+  in vec4 v
 )
 {
   vec3 objSpaceCameraPos;
@@ -145,11 +145,11 @@ vec3 ObjSpaceViewDir (
 }
 
 vec3 ObjSpaceLightDir (
-  in vec4 v;
+  in vec4 v
 );
 
 vec3 ObjSpaceLightDir (
-  in vec4 v;
+  in vec4 v
 )
 {
   vec3 objSpaceLightPos;
@@ -160,11 +160,11 @@ vec3 ObjSpaceLightDir (
 }
 
 v2f_surf vert_surf (
-  in appdata_full v;
+  in appdata_full v
 );
 
 v2f_surf vert_surf (
-  in appdata_full v;
+  in appdata_full v
 )
 {
   v2f_surf o;

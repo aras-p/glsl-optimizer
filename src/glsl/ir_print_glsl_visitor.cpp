@@ -36,6 +36,7 @@ public:
 	{
 		indentation = 0;
 		buffer = buf;
+		addSemicolon = true;
 	}
 
 	virtual ~ir_print_glsl_visitor()
@@ -65,6 +66,7 @@ public:
 
 	int indentation;
 	char* buffer;
+	bool addSemicolon;
 };
 
 
@@ -148,7 +150,9 @@ void ir_print_glsl_visitor::visit(ir_variable *ir)
    buffer = talloc_asprintf_append(buffer, "%s%s%s%s",
 	  cent, inv, mode[ir->mode], interp[ir->interpolation]);
    buffer = print_type(buffer, ir->type);
-   buffer = talloc_asprintf_append(buffer, " %s;", ir->name);
+   buffer = talloc_asprintf_append(buffer, " %s", ir->name);
+   if (addSemicolon)
+	buffer = talloc_asprintf_append(buffer, ";");
 }
 
 
@@ -162,15 +166,21 @@ void ir_print_glsl_visitor::visit(ir_function_signature *ir)
 	   buffer = talloc_asprintf_append(buffer, "\n");
 
 	   indentation++;
+	   addSemicolon = false;
+	   bool first = true;
 	   foreach_iter(exec_list_iterator, iter, ir->parameters) {
 		  ir_variable *const inst = (ir_variable *) iter.get();
 
+		  if (!first)
+			  buffer = talloc_asprintf_append(buffer, ",\n");
 		  indent();
 		  inst->accept(this);
-		  buffer = talloc_asprintf_append(buffer, "\n");
+		  first = false;
 	   }
+	   addSemicolon = true;
 	   indentation--;
 
+	   buffer = talloc_asprintf_append(buffer, "\n");
 	   indent();
    }
 

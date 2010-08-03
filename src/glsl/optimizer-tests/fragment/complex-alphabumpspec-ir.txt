@@ -25,11 +25,11 @@ uniform sampler2D _MainTex;
 uniform float _Shininess;
 uniform vec4 _SpecColor;
 vec4 UnpackNormal (
-  in vec4 packednormal;
+  in vec4 packednormal
 );
 
 vec4 UnpackNormal (
-  in vec4 packednormal;
+  in vec4 packednormal
 )
 {
   vec4 normal;
@@ -45,13 +45,13 @@ vec4 UnpackNormal (
 }
 
 void surf (
-  in Input IN;
-  inout SurfaceOutput o;
+  in Input IN,
+  inout SurfaceOutput o
 );
 
 void surf (
-  in Input IN;
-  inout SurfaceOutput o;
+  in Input IN,
+  inout SurfaceOutput o
 )
 {
   vec4 tex;
@@ -84,17 +84,17 @@ void surf (
 }
 
 vec4 LightingBlinnPhong (
-  in SurfaceOutput s;
-  in vec3 lightDir;
-  in vec3 viewDir;
-  in float atten;
+  in SurfaceOutput s,
+  in vec3 lightDir,
+  in vec3 viewDir,
+  in float atten
 );
 
 vec4 LightingBlinnPhong (
-  in SurfaceOutput s;
-  in vec3 lightDir;
-  in vec3 viewDir;
-  in float atten;
+  in SurfaceOutput s,
+  in vec3 lightDir,
+  in vec3 viewDir,
+  in float atten
 )
 {
   vec3 h;
@@ -136,11 +136,11 @@ vec4 LightingBlinnPhong (
 }
 
 vec4 frag_surf (
-  in v2f_surf IN;
+  in v2f_surf IN
 );
 
 vec4 frag_surf (
-  in v2f_surf IN;
+  in v2f_surf IN
 )
 {
   Input surfIN;

@@ -14,11 +14,11 @@ uniform mat4 _View2Shadow2;
 uniform mat4 _View2Shadow3;
 uniform vec4 _ZBufferParams;
 float unitySampleShadow (
-  in vec4 eyePos;
+  in vec4 eyePos
 );
 
 float unitySampleShadow (
-  in vec4 eyePos;
+  in vec4 eyePos
 )
 {
   vec3 sc0;
@@ -88,22 +88,22 @@ float unitySampleShadow (
 }
 
 float Linear01Depth (
-  in float z;
+  in float z
 );
 
 float Linear01Depth (
-  in float z;
+  in float z
 )
 {
   return 1.000000 / _ZBufferParams .x * z   + _ZBufferParams .y  ;
 }
 
 vec2 EncodeFloatRG (
-  in float v;
+  in float v
 );
 
 vec2 EncodeFloatRG (
-  in float v;
+  in float v
 )
 {
   vec2 kEncodeMul;
@@ -130,11 +130,11 @@ vec2 EncodeFloatRG (
 }
 
 vec4 xlat_main (
-  in v2f i;
+  in v2f i
 );
 
 vec4 xlat_main (
-  in v2f i;
+  in v2f i
 )
 {
   float depth;
