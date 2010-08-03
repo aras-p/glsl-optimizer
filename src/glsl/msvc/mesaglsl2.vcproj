@@ -49,7 +49,7 @@
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				DebugInformationFormat="4"
-				DisableSpecificWarnings="4291;4996;4800;4099"
+				DisableSpecificWarnings="4291;4996;4800;4099;4244;4018"
 				ForcedIncludeFiles="msvccompat.h"
 			/>
 			<Tool
@@ -114,7 +114,7 @@
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				DebugInformationFormat="3"
-				DisableSpecificWarnings="4291;4996;4800;4099"
+				DisableSpecificWarnings="4291;4996;4800;4099;4244;4018"
 				ForcedIncludeFiles="msvccompat.h"
 			/>
 			<Tool
