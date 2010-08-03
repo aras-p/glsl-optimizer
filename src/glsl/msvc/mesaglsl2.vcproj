@@ -408,6 +408,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\ir_tree_grafting.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\ir_unused_functions.cpp"
 					>
 				</File>
