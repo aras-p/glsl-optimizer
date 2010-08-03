@@ -12,16 +12,8 @@
 struct pipe_resource;
 struct nv04_region;
 
-
-/* This gets further specialized into either buffer or texture
- * structures.  In the future we'll want to remove much of that
- * distinction, but for now try to keep as close to the existing code
- * as possible and use the vtbl struct to choose between the two
- * underlying implementations.
- */
 struct nvfx_resource {
 	struct pipe_resource base;
-	struct u_resource_vtbl *vtbl;
 	struct nouveau_bo *bo;
 };
 
@@ -105,6 +97,10 @@ nvfx_screen_init_resource_functions(struct pipe_screen *pscreen);
 struct pipe_resource *
 nvfx_miptree_create(struct pipe_screen *pscreen, const struct pipe_resource *pt);
 
+void
+nvfx_miptree_destroy(struct pipe_screen *pscreen,
+                     struct pipe_resource *presource);
+
 struct pipe_resource *
 nvfx_miptree_from_handle(struct pipe_screen *pscreen,
 			 const struct pipe_resource *template,
@@ -113,6 +109,10 @@ nvfx_miptree_from_handle(struct pipe_screen *pscreen,
 struct pipe_resource *
 nvfx_buffer_create(struct pipe_screen *pscreen,
 		   const struct pipe_resource *template);
+
+void
+nvfx_buffer_destroy(struct pipe_screen *pscreen,
+                    struct pipe_resource *presource);
 
 struct pipe_resource *
 nvfx_user_buffer_create(struct pipe_screen *screen,

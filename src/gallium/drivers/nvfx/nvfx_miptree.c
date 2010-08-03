@@ -98,23 +98,6 @@ nvfx_miptree_layout(struct nvfx_miptree *mt)
 	return offset;
 }
 
-static boolean
-nvfx_miptree_get_handle(struct pipe_screen *pscreen,
-			struct pipe_resource *ptexture,
-			struct winsys_handle *whandle)
-{
-	struct nvfx_miptree* mt = (struct nvfx_miptree*)ptexture;
-
-	if (!mt || !mt->base.bo)
-		return FALSE;
-
-	return nouveau_screen_bo_get_handle(pscreen,
-					    mt->base.bo,
-					    mt->linear_pitch,
-					    whandle);
-}
-
-
 static void
 nvfx_miptree_surface_final_destroy(struct pipe_surface* ps)
 {
@@ -124,7 +107,7 @@ nvfx_miptree_surface_final_destroy(struct pipe_surface* ps)
 	FREE(ps);
 }
 
-static void
+void
 nvfx_miptree_destroy(struct pipe_screen *screen, struct pipe_resource *pt)
 {
 	struct nvfx_miptree *mt = (struct nvfx_miptree *)pt;
@@ -132,19 +115,6 @@ nvfx_miptree_destroy(struct pipe_screen *screen, struct pipe_resource *pt)
 	nouveau_screen_bo_release(screen, mt->base.bo);
 	FREE(mt);
 }
-
-struct u_resource_vtbl nvfx_miptree_vtbl = 
-{
-   nvfx_miptree_get_handle,	      /* get_handle */
-   nvfx_miptree_destroy,	      /* resource_destroy */
-   NULL,			      /* is_resource_referenced */
-   nvfx_transfer_new,	  	      /* get_transfer */
-   util_staging_transfer_destroy,     /* transfer_destroy */
-   nvfx_transfer_map,		      /* transfer_map */
-   u_default_transfer_flush_region,   /* transfer_flush_region */
-   nvfx_transfer_unmap,	              /* transfer_unmap */
-   u_default_transfer_inline_write    /* transfer_inline_write */
-};
 
 static struct nvfx_miptree*
 nvfx_miptree_create_skeleton(struct pipe_screen *pscreen, const struct pipe_resource *pt)
@@ -159,7 +129,6 @@ nvfx_miptree_create_skeleton(struct pipe_screen *pscreen, const struct pipe_reso
                 return NULL;
 
         mt->base.base = *pt;
-        mt->base.vtbl = &nvfx_miptree_vtbl;
         util_dirty_surfaces_init(&mt->dirty_surfaces);
 
         pipe_reference_init(&mt->base.base.reference, 1);
@@ -221,8 +190,6 @@ nvfx_miptree_from_handle(struct pipe_screen *pscreen, const struct pipe_resource
         return &mt->base.base;
 }
 
-/* Surface helpers, not strictly required to implement the resource vtbl:
- */
 struct pipe_surface *
 nvfx_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_resource *pt,
 			 unsigned face, unsigned level, unsigned zslice,
