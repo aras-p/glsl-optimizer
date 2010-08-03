@@ -70,11 +70,9 @@ void main (
   float tmpvar_65;
   if (tmpvar_64 .x < coord .z ) {
     tmpvar_65  = _LightShadowData .x; 
-  }
-  else {
+  } else {
     tmpvar_65  = 1.000000; 
   }
-
   res .x = tmpvar_65 ; 
   res .y = 1.000000; 
   vec2 enc;

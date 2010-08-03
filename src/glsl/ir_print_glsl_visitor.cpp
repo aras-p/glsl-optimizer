@@ -498,12 +498,11 @@ ir_print_glsl_visitor::visit(ir_if *ir)
 
    indentation--;
    indent();
-   buffer = talloc_asprintf_append(buffer, "}\n");
+   buffer = talloc_asprintf_append(buffer, "}");
 
    if (!ir->else_instructions.is_empty())
    {
-	   indent();
-	   buffer = talloc_asprintf_append(buffer, "else {\n");
+	   buffer = talloc_asprintf_append(buffer, " else {\n");
 	   indentation++;
 
 	   foreach_iter(exec_list_iterator, iter, ir->else_instructions) {
@@ -515,7 +514,7 @@ ir_print_glsl_visitor::visit(ir_if *ir)
 	   }
 	   indentation--;
 	   indent();
-	   buffer = talloc_asprintf_append(buffer, "}\n");
+	   buffer = talloc_asprintf_append(buffer, "}");
    }
 }
 
@@ -535,7 +534,7 @@ ir_print_glsl_visitor::visit(ir_loop *ir)
 		}
 		indentation--;
 		indent();
-		buffer = talloc_asprintf_append(buffer, "}\n");
+		buffer = talloc_asprintf_append(buffer, "}");
 		return;
 	}
 
