@@ -356,6 +356,7 @@ ir_to_mesa_visitor::ir_to_mesa_emit_op1(ir_instruction *ir,
 					ir_to_mesa_dst_reg dst,
 					ir_to_mesa_src_reg src0)
 {
+   assert(dst.writemask != 0);
    return ir_to_mesa_emit_op3(ir, op, dst,
 			      src0, ir_to_mesa_undef, ir_to_mesa_undef);
 }
@@ -1615,21 +1616,17 @@ ir_to_mesa_visitor::visit(ir_dereference_record *ir)
  * We want to be careful in assignment setup to hit the actual storage
  * instead of potentially using a temporary like we might with the
  * ir_dereference handler.
- *
- * Thanks to ir_swizzle_swizzle, and ir_vec_index_to_swizzle, we
- * should only see potentially one variable array index of a vector,
- * and one swizzle, before getting to actual vec4 storage.  So handle
- * those, then go use ir_dereference to handle the rest.
  */
 static struct ir_to_mesa_dst_reg
-get_assignment_lhs(ir_instruction *ir, ir_to_mesa_visitor *v,
+get_assignment_lhs(ir_dereference *ir, ir_to_mesa_visitor *v,
 		   ir_to_mesa_src_reg *r)
 {
-   struct ir_to_mesa_dst_reg dst_reg;
-   ir_swizzle *swiz;
-
+   /* The LHS must be a dereference.  If the LHS is a variable indexed array
+    * access of a vector, it must be separated into a series conditional moves
+    * before reaching this point (see ir_vec_index_to_cond_assign).
+    */
+   assert(ir->as_dereference());
    ir_dereference_array *deref_array = ir->as_dereference_array();
-   /* This should have been handled by ir_vec_index_to_cond_assign */
    if (deref_array) {
       assert(!deref_array->array->type->is_vector());
    }
@@ -1638,38 +1635,7 @@ get_assignment_lhs(ir_instruction *ir, ir_to_mesa_visitor *v,
     * swizzles in it and write swizzles using writemask, though.
     */
    ir->accept(v);
-   dst_reg = ir_to_mesa_dst_reg_from_src(v->result);
-
-   if ((swiz = ir->as_swizzle())) {
-      int swizzles[4] = {
-	 swiz->mask.x,
-	 swiz->mask.y,
-	 swiz->mask.z,
-	 swiz->mask.w
-      };
-      int new_r_swizzle[4];
-      int orig_r_swizzle = r->swizzle;
-      int i;
-
-      for (i = 0; i < 4; i++) {
-	 new_r_swizzle[i] = GET_SWZ(orig_r_swizzle, 0);
-      }
-
-      dst_reg.writemask = 0;
-      for (i = 0; i < 4; i++) {
-	 if (i < swiz->mask.num_components) {
-	    dst_reg.writemask |= 1 << swizzles[i];
-	    new_r_swizzle[swizzles[i]] = GET_SWZ(orig_r_swizzle, i);
-	 }
-      }
-
-      r->swizzle = MAKE_SWIZZLE4(new_r_swizzle[0],
-				 new_r_swizzle[1],
-				 new_r_swizzle[2],
-				 new_r_swizzle[3]);
-   }
-
-   return dst_reg;
+   return ir_to_mesa_dst_reg_from_src(v->result);
 }
 
 void
@@ -1683,6 +1649,23 @@ ir_to_mesa_visitor::visit(ir_assignment *ir)
    r = this->result;
 
    l = get_assignment_lhs(ir->lhs, this, &r);
+
+   /* FINISHME: This should really set to the correct maximal writemask for each
+    * FINISHME: component written (in the loops below).  This case can only
+    * FINISHME: occur for matrices, arrays, and structures.
+    */
+   if (ir->write_mask == 0) {
+      assert(!ir->lhs->type->is_scalar() && !ir->lhs->type->is_vector());
+      l.writemask = WRITEMASK_XYZW;
+   } else if (ir->lhs->type->is_scalar()) {
+      /* FINISHME: This hack makes writing to gl_FragData, which lives in the
+       * FINISHME: W component of fragment shader output zero, work correctly.
+       */
+      l.writemask = WRITEMASK_XYZW;
+   } else {
+      assert(ir->lhs->type->is_vector());
+      l.writemask = ir->write_mask;
+   }
 
    assert(l.file != PROGRAM_UNDEFINED);
    assert(r.file != PROGRAM_UNDEFINED);

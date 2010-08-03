@@ -22,6 +22,7 @@
  */
 #include <string.h>
 #include "main/imports.h"
+#include "main/macros.h"
 #include "ir.h"
 #include "ir_visitor.h"
 #include "glsl_types.h"
@@ -31,13 +32,121 @@ ir_rvalue::ir_rvalue()
    this->type = glsl_type::error_type;
 }
 
+/**
+ * Modify the swizzle make to move one component to another
+ *
+ * \param m    IR swizzle to be modified
+ * \param from Component in the RHS that is to be swizzled
+ * \param to   Desired swizzle location of \c from
+ */
+static void
+update_rhs_swizzle(ir_swizzle_mask &m, unsigned from, unsigned to)
+{
+   switch (to) {
+   case 0: m.x = from; break;
+   case 1: m.y = from; break;
+   case 2: m.z = from; break;
+   case 3: m.w = from; break;
+   default: assert(!"Should not get here.");
+   }
+
+   m.num_components = MAX2(m.num_components, (to + 1));
+}
+
+void
+ir_assignment::set_lhs(ir_rvalue *lhs)
+{
+   while (lhs != NULL) {
+      ir_swizzle *swiz = lhs->as_swizzle();
+
+      if (swiz == NULL)
+	 break;
+
+      unsigned write_mask = 0;
+      ir_swizzle_mask rhs_swiz = { 0, 0, 0, 0, 0, 0 };
+
+      for (unsigned i = 0; i < swiz->mask.num_components; i++) {
+	 unsigned c = 0;
+
+	 switch (i) {
+	 case 0: c = swiz->mask.x; break;
+	 case 1: c = swiz->mask.y; break;
+	 case 2: c = swiz->mask.z; break;
+	 case 3: c = swiz->mask.w; break;
+	 default: assert(!"Should not get here.");
+	 }
+
+	 write_mask |= (((this->write_mask >> i) & 1) << c);
+	 update_rhs_swizzle(rhs_swiz, i, c);
+      }
+
+      this->write_mask = write_mask;
+      lhs = swiz->val;
+
+      this->rhs = new(this) ir_swizzle(this->rhs, rhs_swiz);
+   }
+
+   assert((lhs == NULL) || lhs->as_dereference());
+
+   this->lhs = (ir_dereference *) lhs;
+}
+
+ir_variable *
+ir_assignment::whole_variable_written()
+{
+   ir_variable *v = this->lhs->whole_variable_referenced();
+
+   if (v == NULL)
+      return NULL;
+
+   if (v->type->is_scalar())
+      return v;
+
+   if (v->type->is_vector()) {
+      const unsigned mask = (1U << v->type->vector_elements) - 1;
+
+      if (mask != this->write_mask)
+	 return NULL;
+   }
+
+   /* Either all the vector components are assigned or the variable is some
+    * composite type (and the whole thing is assigned.
+    */
+   return v;
+}
+
+ir_assignment::ir_assignment(ir_dereference *lhs, ir_rvalue *rhs,
+			     ir_rvalue *condition, unsigned write_mask)
+{
+   this->ir_type = ir_type_assignment;
+   this->condition = condition;
+   this->rhs = rhs;
+   this->lhs = lhs;
+   this->write_mask = write_mask;
+}
+
 ir_assignment::ir_assignment(ir_rvalue *lhs, ir_rvalue *rhs,
 			     ir_rvalue *condition)
 {
    this->ir_type = ir_type_assignment;
-   this->lhs = lhs;
-   this->rhs = rhs;
    this->condition = condition;
+   this->rhs = rhs;
+
+   /* If the RHS is a vector type, assume that all components of the vector
+    * type are being written to the LHS.  The write mask comes from the RHS
+    * because we can have a case where the LHS is a vec4 and the RHS is a
+    * vec3.  In that case, the assignment is:
+    *
+    *     (assign (...) (xyz) (var_ref lhs) (var_ref rhs))
+    */
+   if (rhs->type->is_vector())
+      this->write_mask = (1U << rhs->type->vector_elements) - 1;
+   else if (rhs->type->is_scalar())
+      this->write_mask = 1;
+   else
+      this->write_mask = 0;
+
+   this->set_lhs(lhs);
 }
 
 

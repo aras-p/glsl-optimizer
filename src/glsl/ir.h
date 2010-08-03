@@ -514,6 +514,16 @@ class ir_assignment : public ir_instruction {
 public:
    ir_assignment(ir_rvalue *lhs, ir_rvalue *rhs, ir_rvalue *condition);
 
+   /**
+    * Construct an assignment with an explicit write mask
+    *
+    * \note
+    * Since a write mask is supplied, the LHS must already be a bare
+    * \c ir_dereference.  The cannot be any swizzles in the LHS.
+    */
+   ir_assignment(ir_dereference *lhs, ir_rvalue *rhs, ir_rvalue *condition,
+		 unsigned write_mask);
+
    virtual ir_assignment *clone(void *mem_ctx, struct hash_table *ht) const;
 
    virtual ir_constant *constant_expression_value();
@@ -531,9 +541,31 @@ public:
    }
 
    /**
-    * Left-hand side of the assignment.
+    * Get a whole variable written by an assignment
+    *
+    * If the LHS of the assignment writes a whole variable, the variable is
+    * returned.  Otherwise \c NULL is returned.  Examples of whole-variable
+    * assignment are:
+    *
+    *  - Assigning to a scalar
+    *  - Assigning to all components of a vector
+    *  - Whole array (or matrix) assignment
+    *  - Whole structure assignment
     */
-   ir_rvalue *lhs;
+   ir_variable *whole_variable_written();
+
+   /**
+    * Set the LHS of an assignment
+    */
+   void set_lhs(ir_rvalue *lhs);
+
+   /**
+    * Left-hand side of the assignment.
+    *
+    * This should be treated as read only.  If you need to set the LHS of an
+    * assignment, use \c ir_assignment::set_lhs.
+    */
+   ir_dereference *lhs;
 
    /**
     * Value being assigned
@@ -544,6 +576,16 @@ public:
     * Optional condition for the assignment.
     */
    ir_rvalue *condition;
+
+
+   /**
+    * Component mask written
+    *
+    * For non-vector types in the LHS, this field will be zero.  For vector
+    * types, a bit will be set for each component that is written.  Note that
+    * for \c vec2 and \c vec3 types only the lower bits will ever be set.
+    */
+   unsigned write_mask:4;
 };
 
 /* Update ir_expression::num_operands() and operator_strs when
