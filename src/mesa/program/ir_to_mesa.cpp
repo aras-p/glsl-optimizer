@@ -252,9 +252,13 @@ public:
    GLboolean try_emit_mad(ir_expression *ir,
 			  int mul_operand);
 
+   int add_uniform(const char *name,
+		   const glsl_type *type,
+		   ir_constant *constant);
    void add_aggregate_uniform(ir_instruction *ir,
 			      const char *name,
 			      const struct glsl_type *type,
+			      ir_constant *constant,
 			      struct ir_to_mesa_dst_reg temp);
 
    int *sampler_map;
@@ -1246,36 +1250,11 @@ get_builtin_matrix_ref(void *mem_ctx, struct gl_program *prog, ir_variable *var,
    return NULL;
 }
 
-/* Recursively add all the members of the aggregate uniform as uniform names
- * to Mesa, moving those uniforms to our structured temporary.
- */
-void
-ir_to_mesa_visitor::add_aggregate_uniform(ir_instruction *ir,
-					  const char *name,
-					  const struct glsl_type *type,
-					  struct ir_to_mesa_dst_reg temp)
+int
+ir_to_mesa_visitor::add_uniform(const char *name,
+				const glsl_type *type,
+				ir_constant *constant)
 {
-   int loc;
-
-   if (type->is_record()) {
-      void *mem_ctx = talloc_new(NULL);
-
-      for (unsigned int i = 0; i < type->length; i++) {
-	 const glsl_type *field_type = type->fields.structure[i].type;
-	 add_aggregate_uniform(ir,
-			       talloc_asprintf(mem_ctx, "%s.%s", name,
-					       type->fields.structure[i].name),
-			       field_type, temp);
-	 temp.index += type_size(field_type);
-      }
-
-      talloc_free(mem_ctx);
-
-      return;
-   }
-
-   assert(type->is_vector() || type->is_scalar() || !"FINISHME: other types");
-
    int len;
 
    if (type->is_vector() ||
@@ -1285,12 +1264,109 @@ ir_to_mesa_visitor::add_aggregate_uniform(ir_instruction *ir,
       len = type_size(type) * 4;
    }
 
-   loc = _mesa_add_uniform(this->prog->Parameters,
-			   name,
-			   len,
-			   type->gl_type,
-			   NULL);
+   float *values = NULL;
+   if (constant && type->is_array()) {
+      values = (float *)malloc(type->length * 4 * sizeof(float));
 
+      assert(type->fields.array->is_scalar() ||
+	     type->fields.array->is_vector() ||
+	     !"FINISHME: uniform array initializers for non-vector");
+
+      for (unsigned int i = 0; i < type->length; i++) {
+	 ir_constant *element = constant->array_elements[i];
+	 unsigned int c;
+
+	 for (c = 0; c < type->fields.array->vector_elements; c++) {
+	    switch (type->fields.array->base_type) {
+	    case GLSL_TYPE_FLOAT:
+	       values[4 * i + c] = element->value.f[c];
+	       break;
+	    case GLSL_TYPE_INT:
+	       values[4 * i + c] = element->value.i[c];
+	       break;
+	    case GLSL_TYPE_UINT:
+	       values[4 * i + c] = element->value.u[c];
+	       break;
+	    case GLSL_TYPE_BOOL:
+	       values[4 * i + c] = element->value.b[c];
+	       break;
+	    default:
+	       assert(!"not reached");
+	    }
+	 }
+      }
+   } else if (constant) {
+      values = (float *)malloc(16 * sizeof(float));
+      for (unsigned int i = 0; i < type->components(); i++) {
+	 switch (type->base_type) {
+	 case GLSL_TYPE_FLOAT:
+	    values[i] = constant->value.f[i];
+	    break;
+	 case GLSL_TYPE_INT:
+	    values[i] = constant->value.i[i];
+	    break;
+	 case GLSL_TYPE_UINT:
+	    values[i] = constant->value.u[i];
+	    break;
+	 case GLSL_TYPE_BOOL:
+	    values[i] = constant->value.b[i];
+	    break;
+	 default:
+	    assert(!"not reached");
+	 }
+      }
+   }
+
+   int loc = _mesa_add_uniform(this->prog->Parameters,
+			       name,
+			       len,
+			       type->gl_type,
+			       values);
+   free(values);
+
+   return loc;
+}
+
+/* Recursively add all the members of the aggregate uniform as uniform names
+ * to Mesa, moving those uniforms to our structured temporary.
+ */
+void
+ir_to_mesa_visitor::add_aggregate_uniform(ir_instruction *ir,
+					  const char *name,
+					  const struct glsl_type *type,
+					  ir_constant *constant,
+					  struct ir_to_mesa_dst_reg temp)
+{
+   int loc;
+
+   if (type->is_record()) {
+      void *mem_ctx = talloc_new(NULL);
+      ir_constant *field_constant = NULL;
+
+      if (constant)
+	 field_constant = (ir_constant *)constant->components.get_head();
+
+      for (unsigned int i = 0; i < type->length; i++) {
+	 const glsl_type *field_type = type->fields.structure[i].type;
+
+	 add_aggregate_uniform(ir,
+			       talloc_asprintf(mem_ctx, "%s.%s", name,
+					       type->fields.structure[i].name),
+			       field_type, field_constant, temp);
+	 temp.index += type_size(field_type);
+
+	 if (constant)
+	    field_constant = (ir_constant *)field_constant->next;
+      }
+
+      talloc_free(mem_ctx);
+
+      return;
+   }
+
+   assert(type->is_vector() || type->is_scalar() || !"FINISHME: other types");
+
+   loc = add_uniform(name, type, constant);
 
    ir_to_mesa_src_reg uniform(PROGRAM_UNIFORM, loc, type);
 
@@ -1307,7 +1383,6 @@ ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
 {
    variable_storage *entry = find_variable_storage(ir->var);
    unsigned int loc;
-   int len;
 
    if (!entry) {
       switch (ir->var->mode) {
@@ -1350,22 +1425,14 @@ ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
 	    this->variables.push_tail(entry);
 
 	    add_aggregate_uniform(ir->var, ir->var->name, ir->var->type,
-				   ir_to_mesa_dst_reg_from_src(temp));
+				  ir->var->constant_value,
+				  ir_to_mesa_dst_reg_from_src(temp));
 	    break;
 	 }
 
-	 if (ir->var->type->is_vector() ||
-	     ir->var->type->is_scalar()) {
-	    len = ir->var->type->vector_elements;
-	 } else {
-	    len = type_size(ir->var->type) * 4;
-	 }
-
-	 loc = _mesa_add_uniform(this->prog->Parameters,
-				 ir->var->name,
-				 len,
-				 ir->var->type->gl_type,
-				 NULL);
+	 loc = add_uniform(ir->var->name,
+			   ir->var->type,
+			   ir->var->constant_value);
 
 	 /* Always mark the uniform used at this point.  If it isn't
 	  * used, dead code elimination should have nuked the decl already.
