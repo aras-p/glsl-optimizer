@@ -339,6 +339,25 @@ format_from_get_elt( pt_elt_func get_elt )
 #endif
 
 
+/**
+ * Check if any vertex attributes use instance divisors.
+ * Note that instance divisors complicate vertex fetching so we need
+ * to take the vcache path when they're in use.
+ */
+static boolean
+any_instance_divisors(const struct draw_context *draw)
+{
+   uint i;
+
+   for (i = 0; i < draw->pt.nr_vertex_elements; i++) {
+      uint div = draw->pt.vertex_element[i].instance_divisor;
+      if (div)
+         return TRUE;
+   }
+   return FALSE;
+}
+
+
 static INLINE void 
 vcache_check_run( struct draw_pt_front_end *frontend, 
                   pt_elt_func get_elt,
@@ -380,6 +399,9 @@ vcache_check_run( struct draw_pt_front_end *frontend,
     * that any arithmetic involving max_index doesn't overflow!
     */
    if (max_index >= (unsigned) DRAW_PIPE_MAX_VERTICES)
+      goto fail;
+
+   if (any_instance_divisors(draw))
       goto fail;
 
    fetch_count = max_index + 1 - min_index;
