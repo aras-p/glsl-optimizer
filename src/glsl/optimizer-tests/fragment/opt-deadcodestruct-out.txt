@@ -1,14 +1,12 @@
-struct v2f {
-  float pos;
-  float unusedmember;
+struct foo {
+  float used;
+  float unused;
 };
 void main ()
 {
-  float tmpvar_1;
-  tmpvar_1  = gl_FragCoord .x; 
-  v2f sused;
-  sused .pos  = tmpvar_1 ; 
-  sused .unusedmember  = tmpvar_1 ; 
-  gl_FragColor  = sused .pos .xxxx; 
+  foo s;
+  s .used  = 1.000000; 
+  s .unused  = 1.000000; 
+  gl_FragColor  = s .used .xxxx; 
 }
 
