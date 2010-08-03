@@ -34,8 +34,8 @@
 #include "talloc.h"
 #include <string.h>
 
+#define TALLOC_MIN(a,b) ((a)<(b)?(a):(b))
 #ifdef _MSC_VER
-#define MIN(a,b) ((a)<(b)?(a):(b))
 typedef size_t ssize_t;
 extern "C" {
 #endif
@@ -142,7 +142,6 @@ static void talloc_abort(const char *reason)
 
 static void talloc_abort_magic(unsigned magic)
 {
-	unsigned striped = magic - TALLOC_MAGIC_BASE;
 	talloc_log("Bad talloc magic[0x%08X] expected[0x%08X]\n",
 		   magic,
 		   TALLOC_MAGIC);
@@ -920,7 +919,7 @@ void *_talloc_realloc(const void *context, void *ptr, size_t size, const char *n
 		}
 
 		if (new_ptr) {
-			memcpy(new_ptr, tc, MIN(tc->size,size) + TC_HDR_SIZE);
+			memcpy(new_ptr, tc, TALLOC_MIN(tc->size,size) + TC_HDR_SIZE);
 		}
 	}
 	else {
