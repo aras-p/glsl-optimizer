@@ -113,6 +113,7 @@ static INLINE boolean u_trim_pipe_prim( unsigned pipe_prim, unsigned *nr )
       *nr -= (*nr % 4);
       break;
    case PIPE_PRIM_LINE_STRIP_ADJACENCY:
+      ok = (*nr >= 4);
       break;
    case PIPE_PRIM_TRIANGLES_ADJACENCY:
       ok = (*nr >= 6);
