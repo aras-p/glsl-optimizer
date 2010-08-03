@@ -212,6 +212,14 @@
 					</FileConfiguration>
 				</File>
 				<File
+					RelativePath="..\glsl_optimizer.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\glsl_optimizer.h"
+					>
+				</File>
+				<File
 					RelativePath="..\glsl_parser.cpp"
 					>
 				</File>
