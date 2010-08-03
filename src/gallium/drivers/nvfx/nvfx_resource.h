@@ -46,6 +46,11 @@ struct nvfx_miptree {
         unsigned level_offset[NVFX_MAX_TEXTURE_LEVELS];
 };
 
+struct nvfx_surface {
+	struct pipe_surface base;
+	unsigned pitch;
+};
+
 static INLINE 
 struct nvfx_resource *nvfx_resource(struct pipe_resource *resource)
 {

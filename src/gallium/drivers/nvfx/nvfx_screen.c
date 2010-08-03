@@ -233,7 +233,6 @@ nvfx_screen_surface_format_supported(struct pipe_screen *pscreen,
 	return FALSE;
 }
 
-
 static void
 nvfx_screen_destroy(struct pipe_screen *pscreen)
 {
@@ -245,7 +244,7 @@ nvfx_screen_destroy(struct pipe_screen *pscreen)
 	nouveau_notifier_free(&screen->query);
 	nouveau_notifier_free(&screen->sync);
 	nouveau_grobj_free(&screen->eng3d);
-	nv04_surface_2d_takedown(&screen->eng2d);
+	nvfx_screen_surface_takedown(pscreen);
 
 	nouveau_screen_fini(&screen->base);
 
@@ -451,8 +450,7 @@ nvfx_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	}
 
 	/* 2D engine setup */
-	screen->eng2d = nv04_surface_2d_init(&screen->base);
-	screen->eng2d->buf = nvfx_surface_buffer;
+	nvfx_screen_surface_init(pscreen);
 
 	/* Notifier for sync purposes */
 	ret = nouveau_notifier_alloc(chan, 0xbeef0301, 1, &screen->sync);

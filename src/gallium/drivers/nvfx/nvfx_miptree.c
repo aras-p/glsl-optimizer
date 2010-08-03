@@ -8,8 +8,7 @@
 #include "state_tracker/drm_driver.h"
 #include "nouveau/nouveau_winsys.h"
 #include "nouveau/nouveau_screen.h"
-#include "nv04_surface_2d.h"
-#include "nvfx_context.h"
+#include "nvfx_screen.h"
 #include "nvfx_resource.h"
 #include "nvfx_transfer.h"
 
@@ -231,9 +230,9 @@ nvfx_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_resource *pt,
 			 unsigned face, unsigned level, unsigned zslice,
 			 unsigned flags)
 {
-	struct nv04_surface *ns;
+	struct nvfx_surface *ns;
 
-	ns = CALLOC_STRUCT(nv04_surface);
+	ns = CALLOC_STRUCT(nvfx_surface);
 	if (!ns)
 		return NULL;
 	pipe_resource_reference(&ns->base.texture, pt);
@@ -254,15 +253,6 @@ nvfx_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_resource *pt,
 void
 nvfx_miptree_surface_del(struct pipe_surface *ps)
 {
-	struct nv04_surface* ns = (struct nv04_surface*)ps;
-	if(ns->backing)
-	{
-		struct nvfx_screen* screen = (struct nvfx_screen*)ps->texture->screen;
-		if(1 /*ns->backing->base.usage & PIPE_BIND_BLIT_DESTINATION*/)
-			screen->eng2d->copy(screen->eng2d, &ns->backing->base, 0, 0, ps, 0, 0, ns->base.width, ns->base.height);
-		nvfx_miptree_surface_del(&ns->backing->base);
-	}
-
 	pipe_resource_reference(&ps->texture, NULL);
 	FREE(ps);
 }

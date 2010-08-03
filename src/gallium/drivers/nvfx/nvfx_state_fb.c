@@ -2,8 +2,6 @@
 #include "nvfx_resource.h"
 #include "nouveau/nouveau_util.h"
 
-
-
 void
 nvfx_state_framebuffer_validate(struct nvfx_context *nvfx)
 {
@@ -31,7 +29,7 @@ nvfx_state_framebuffer_validate(struct nvfx_context *nvfx)
 		rt_enable |= (NV34TCL_RT_ENABLE_COLOR0 << i);
 		nvfx->hw_rt[i].bo = ((struct nvfx_miptree*)fb->cbufs[i]->texture)->base.bo;
 		nvfx->hw_rt[i].offset = fb->cbufs[i]->offset;
-		nvfx->hw_rt[i].pitch = ((struct nv04_surface *)fb->cbufs[i])->pitch;
+		nvfx->hw_rt[i].pitch = ((struct nvfx_surface *)fb->cbufs[i])->pitch;
 	}
 	for(; i < 4; ++i)
 		nvfx->hw_rt[i].bo = 0;
@@ -44,7 +42,7 @@ nvfx_state_framebuffer_validate(struct nvfx_context *nvfx)
 		zeta_format = fb->zsbuf->format;
 		nvfx->hw_zeta.bo = ((struct nvfx_miptree*)fb->zsbuf->texture)->base.bo;
 		nvfx->hw_zeta.offset = fb->zsbuf->offset;
-		nvfx->hw_zeta.pitch = ((struct nv04_surface *)fb->zsbuf)->pitch;
+		nvfx->hw_zeta.pitch = ((struct nvfx_surface *)fb->zsbuf)->pitch;
 	}
 	else
 		nvfx->hw_zeta.bo = 0;

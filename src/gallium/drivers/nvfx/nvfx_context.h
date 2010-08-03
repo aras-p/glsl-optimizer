@@ -13,6 +13,7 @@
 #include "util/u_inlines.h"
 
 #include "draw/draw_vertex.h"
+#include "util/u_blitter.h"
 
 #include "nouveau/nouveau_winsys.h"
 #include "nouveau/nouveau_gldefs.h"
@@ -88,6 +89,7 @@ struct nvfx_context {
 	unsigned is_nv4x; /* either 0 or ~0 */
 
 	struct draw_context *draw;
+	struct blitter_context* blitter;
 
 	/* HW state derived from pipe states */
 	struct nvfx_state state;
