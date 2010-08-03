@@ -869,6 +869,7 @@ static struct radeon_state *r600_viewport(struct r600_context *rctx)
 static struct radeon_state *r600_dsa(struct r600_context *rctx)
 {
 	const struct pipe_depth_stencil_alpha_state *state = &rctx->dsa->state.dsa;
+	const struct pipe_stencil_ref *stencil_ref = &rctx->stencil_ref->state.stencil_ref;
 	struct r600_screen *rscreen = rctx->screen;
 	struct radeon_state *rstate;
 	unsigned db_depth_control, alpha_test_control, alpha_ref;
@@ -880,30 +881,30 @@ static struct radeon_state *r600_dsa(struct r600_context *rctx)
 
 	stencil_ref_mask = 0;
 	stencil_ref_mask_bf = 0;
-	db_depth_control = 0x00700700 |
-		S_028800_Z_ENABLE(state->depth.enabled) |
+	db_depth_control = S_028800_Z_ENABLE(state->depth.enabled) |
 		S_028800_Z_WRITE_ENABLE(state->depth.writemask) |
 		S_028800_ZFUNC(state->depth.func);
 	/* set stencil enable */
-	db_depth_control |= S_028800_STENCIL_ENABLE(state->stencil[0].enabled);
-	
-	if (state->stencil[0].enabled) {
 
+	if (state->stencil[0].enabled) {
+		db_depth_control |= S_028800_STENCIL_ENABLE(1);
 		db_depth_control |= S_028800_STENCILFUNC(r600_translate_ds_func(state->stencil[0].func));
 		db_depth_control |= S_028800_STENCILFAIL(r600_translate_stencil_op(state->stencil[0].fail_op));
 		db_depth_control |= S_028800_STENCILZPASS(r600_translate_stencil_op(state->stencil[0].zpass_op));
 		db_depth_control |= S_028800_STENCILZFAIL(r600_translate_stencil_op(state->stencil[0].zfail_op));
-		db_depth_control |= S_028800_BACKFACE_ENABLE(state->stencil[1].enabled);
 
 		stencil_ref_mask = S_028430_STENCILMASK(state->stencil[0].valuemask) |
 			S_028430_STENCILWRITEMASK(state->stencil[0].writemask);
+		stencil_ref_mask |= S_028430_STENCILREF(stencil_ref->ref_value[0]);
 		if (state->stencil[1].enabled) {
+			db_depth_control |= S_028800_BACKFACE_ENABLE(1);
 			db_depth_control |= S_028800_STENCILFUNC_BF(r600_translate_ds_func(state->stencil[1].func));
 			db_depth_control |= S_028800_STENCILFAIL_BF(r600_translate_stencil_op(state->stencil[1].fail_op));
 			db_depth_control |= S_028800_STENCILZPASS_BF(r600_translate_stencil_op(state->stencil[1].zpass_op));
 			db_depth_control |= S_028800_STENCILZFAIL_BF(r600_translate_stencil_op(state->stencil[1].zfail_op));
 			stencil_ref_mask_bf = S_028434_STENCILMASK_BF(state->stencil[1].valuemask) |
 				S_028434_STENCILWRITEMASK_BF(state->stencil[1].writemask);
+			stencil_ref_mask_bf |= S_028430_STENCILREF(stencil_ref->ref_value[1]);
 		}
 	}
 

@@ -86,7 +86,6 @@ static void r600_clear_render_target(struct pipe_context *pipe,
 
 	util_blitter_clear_render_target(rctx->blitter, dst, rgba,
 					 dstx, dsty, width, height);
-R600_ERR("vtx elem %p\n", rctx->vertex_elements);
 }
 
 static void r600_clear_depth_stencil(struct pipe_context *pipe,
@@ -105,7 +104,6 @@ static void r600_clear_depth_stencil(struct pipe_context *pipe,
 
 	util_blitter_clear_depth_stencil(rctx->blitter, dst, clear_flags, depth, stencil,
 					 dstx, dsty, width, height);
-R600_ERR("vtx elem %p\n", rctx->vertex_elements);
 }
 
 static void r600_resource_copy_region(struct pipe_context *pipe,
