@@ -1,5 +1,6 @@
 #include <string>
 #include <vector>
+#include <time.h>
 #include "glsl_optimizer.h"
 
 #ifdef _MSC_VER
@@ -270,12 +271,14 @@ int main (int argc, const char** argv)
 
 	std::string baseFolder = argv[1];
 
+	clock_t time0 = clock();
+
 	static const char* kTypeName[2] = { "vertex", "fragment" };
 	size_t tests = 0;
 	size_t errors = 0;
 	for (int type = 0; type < 2; ++type)
 	{
-		printf ("testing %s...\n", kTypeName[type]);
+		printf ("** running %s...\n", kTypeName[type]);
 		std::string testFolder = baseFolder + "/" + kTypeName[type];
 		StringVector inputFiles = GetFiles (testFolder, "-in.txt");
 
@@ -294,10 +297,13 @@ int main (int argc, const char** argv)
 			}
 		}
 	}
+	clock_t time1 = clock();
+	float timeDelta = float(time1-time0)/CLOCKS_PER_SEC;
+
 	if (errors != 0)
-		printf ("%i tests, %i FAILED\n", tests, errors);
+		printf ("**** %i tests (%.2fsec), %i !!!FAILED!!!\n", tests, timeDelta, errors);
 	else
-		printf ("%i tests succeeded\n", tests);
+		printf ("**** %i tests (%.2fsec) succeeded\n", tests, timeDelta);
 
 	glslopt_cleanup (ctx);
 
