@@ -36,7 +36,6 @@ public:
 	{
 		indentation = 0;
 		buffer = buf;
-		addSemicolon = true;
 	}
 
 	virtual ~ir_print_glsl_visitor()
@@ -66,7 +65,6 @@ public:
 
 	int indentation;
 	char* buffer;
-	bool addSemicolon;
 };
 
 
@@ -110,7 +108,7 @@ _mesa_print_ir_glsl(exec_list *instructions,
 	  ir->accept(&v);
 	  buffer = v.buffer;
       if (ir->ir_type != ir_type_function)
-		buffer = talloc_asprintf_append(buffer, "\n");
+		buffer = talloc_asprintf_append(buffer, ";\n");
    }
 
    return buffer;
@@ -151,8 +149,6 @@ void ir_print_glsl_visitor::visit(ir_variable *ir)
 	  cent, inv, mode[ir->mode], interp[ir->interpolation]);
    buffer = print_type(buffer, ir->type);
    buffer = talloc_asprintf_append(buffer, " %s", ir->name);
-   if (addSemicolon)
-	buffer = talloc_asprintf_append(buffer, ";");
 }
 
 
@@ -166,7 +162,6 @@ void ir_print_glsl_visitor::visit(ir_function_signature *ir)
 	   buffer = talloc_asprintf_append(buffer, "\n");
 
 	   indentation++;
-	   addSemicolon = false;
 	   bool first = true;
 	   foreach_iter(exec_list_iterator, iter, ir->parameters) {
 		  ir_variable *const inst = (ir_variable *) iter.get();
@@ -177,7 +172,6 @@ void ir_print_glsl_visitor::visit(ir_function_signature *ir)
 		  inst->accept(this);
 		  first = false;
 	   }
-	   addSemicolon = true;
 	   indentation--;
 
 	   buffer = talloc_asprintf_append(buffer, "\n");
@@ -201,7 +195,7 @@ void ir_print_glsl_visitor::visit(ir_function_signature *ir)
 
       indent();
       inst->accept(this);
-	  buffer = talloc_asprintf_append(buffer, "\n");
+	  buffer = talloc_asprintf_append(buffer, ";\n");
    }
    indentation--;
    indent();
@@ -421,7 +415,6 @@ void ir_print_glsl_visitor::visit(ir_assignment *ir)
    {
 	   buffer = talloc_asprintf_append(buffer, ")");
    }
-   buffer = talloc_asprintf_append(buffer, "; ");
 }
 
 
@@ -435,6 +428,11 @@ void ir_print_glsl_visitor::visit(ir_constant *ir)
 	else if (ir->type == glsl_type::int_type)
 	{
 		buffer = talloc_asprintf_append(buffer, "%d", ir->value.i[0]);
+		return;
+	}
+	else if (ir->type == glsl_type::uint_type)
+	{
+		buffer = talloc_asprintf_append(buffer, "%u", ir->value.u[0]);
 		return;
 	}
 
@@ -489,15 +487,13 @@ ir_print_glsl_visitor::visit(ir_return *ir)
       buffer = talloc_asprintf_append(buffer, " ");
       value->accept(this);
    }
-
-   buffer = talloc_asprintf_append(buffer, ";");
 }
 
 
 void
 ir_print_glsl_visitor::visit(ir_discard *ir)
 {
-   buffer = talloc_asprintf_append(buffer, "discard;");
+   buffer = talloc_asprintf_append(buffer, "discard");
 
    if (ir->condition != NULL) {
       buffer = talloc_asprintf_append(buffer, " TODO ");
@@ -520,7 +516,7 @@ ir_print_glsl_visitor::visit(ir_if *ir)
 
       indent();
       inst->accept(this);
-      buffer = talloc_asprintf_append(buffer, "\n");
+      buffer = talloc_asprintf_append(buffer, ";\n");
    }
 
    indentation--;
@@ -537,7 +533,7 @@ ir_print_glsl_visitor::visit(ir_if *ir)
 
 		  indent();
 		  inst->accept(this);
-		  buffer = talloc_asprintf_append(buffer, "\n");
+		  buffer = talloc_asprintf_append(buffer, ";\n");
 	   }
 	   indentation--;
 	   indent();
@@ -557,7 +553,7 @@ ir_print_glsl_visitor::visit(ir_loop *ir)
 			ir_instruction *const inst = (ir_instruction *) iter.get();
 			indent();
 			inst->accept(this);
-			buffer = talloc_asprintf_append(buffer, "\n");
+			buffer = talloc_asprintf_append(buffer, ";\n");
 		}
 		indentation--;
 		indent();
@@ -585,7 +581,7 @@ ir_print_glsl_visitor::visit(ir_loop *ir)
 
       indent();
       inst->accept(this);
-      buffer = talloc_asprintf_append(buffer, "\n");
+      buffer = talloc_asprintf_append(buffer, ";\n");
    }
    indentation--;
    indent();
@@ -596,5 +592,5 @@ ir_print_glsl_visitor::visit(ir_loop *ir)
 void
 ir_print_glsl_visitor::visit(ir_loop_jump *ir)
 {
-   buffer = talloc_asprintf_append(buffer, "%s", ir->is_break() ? "break;" : "continue;");
+   buffer = talloc_asprintf_append(buffer, "%s", ir->is_break() ? "break" : "continue");
 }
