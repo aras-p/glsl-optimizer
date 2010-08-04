@@ -95,7 +95,7 @@ public:
 
 	 assert(const_cast<ir_variable *>(param)->as_variable() != NULL);
 
-	 ir_variable *const param_copy = param->clone(NULL);
+	 ir_variable *const param_copy = param->clone(mem_ctx, NULL);
 	 copy->parameters.push_tail(param_copy);
       }
 

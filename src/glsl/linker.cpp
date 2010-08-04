@@ -323,7 +323,8 @@ cross_validate_globals(struct gl_shader_program *prog,
 		   * FINISHME: modify the shader, and linking with the second
 		   * FINISHME: will fail.
 		   */
-		  existing->constant_value = var->constant_value->clone(NULL);
+		  existing->constant_value =
+		     var->constant_value->clone(talloc_parent(existing), NULL);
 	    }
 	 } else
 	    variables.add_variable(var->name, var);
@@ -488,16 +489,17 @@ populate_symbol_table(gl_shader *sh)
  *                     should be added.
  */
 void
-remap_variables(ir_instruction *inst, glsl_symbol_table *symbols,
-		exec_list *instructions, hash_table *temps)
+remap_variables(ir_instruction *inst, struct gl_shader *target,
+		hash_table *temps)
 {
    class remap_visitor : public ir_hierarchical_visitor {
    public:
-      remap_visitor(glsl_symbol_table *symbols, exec_list *instructions,
+	 remap_visitor(struct gl_shader *target,
 		    hash_table *temps)
       {
-	 this->symbols = symbols;
-	 this->instructions = instructions;
+	 this->target = target;
+	 this->symbols = target->symbols;
+	 this->instructions = target->ir;
 	 this->temps = temps;
       }
 
@@ -516,7 +518,7 @@ remap_variables(ir_instruction *inst, glsl_symbol_table *symbols,
 	 if (existing != NULL)
 	    ir->var = existing;
 	 else {
-	    ir_variable *copy = ir->var->clone(NULL);
+	    ir_variable *copy = ir->var->clone(this->target, NULL);
 
 	    this->symbols->add_variable(copy->name, copy);
 	    this->instructions->push_head(copy);
@@ -527,12 +529,13 @@ remap_variables(ir_instruction *inst, glsl_symbol_table *symbols,
       }
 
    private:
+      struct gl_shader *target;
       glsl_symbol_table *symbols;
       exec_list *instructions;
       hash_table *temps;
    };
 
-   remap_visitor v(symbols, instructions, temps);
+   remap_visitor v(target, temps);
 
    inst->accept(&v);
 }
@@ -583,12 +586,12 @@ move_non_declarations(exec_list *instructions, exec_node *last,
 	     || ((var != NULL) && (var->mode == ir_var_temporary)));
 
       if (make_copies) {
-	 inst = inst->clone(NULL);
+	 inst = inst->clone(target, NULL);
 
 	 if (var != NULL)
 	    hash_table_insert(temps, inst, var);
 	 else
-	    remap_variables(inst, target->symbols, target->ir, temps);
+	    remap_variables(inst, target, temps);
       } else {
 	 inst->remove();
       }
@@ -713,7 +716,7 @@ link_intrastage_shaders(struct gl_shader_program *prog,
 
    gl_shader *const linked = _mesa_new_shader(NULL, 0, main->Type);
    linked->ir = new(linked) exec_list;
-   clone_ir_list(linked->ir, main->ir);
+   clone_ir_list(linked, linked->ir, main->ir);
 
    populate_symbol_table(linked);
 

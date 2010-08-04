@@ -143,7 +143,7 @@ public:
 	 const ir_instruction *const original = (ir_instruction *) node;
 	 assert(const_cast<ir_instruction *>(original)->as_variable());
 
-	 ir_instruction *copy = original->clone(ht);
+	 ir_instruction *copy = original->clone(linked, ht);
 	 formal_parameters.push_tail(copy);
       }
 
@@ -152,7 +152,7 @@ public:
       foreach_list_const(node, &sig->body) {
 	 const ir_instruction *const original = (ir_instruction *) node;
 
-	 ir_instruction *copy = original->clone(ht);
+	 ir_instruction *copy = original->clone(linked, ht);
 	 linked_sig->body.push_tail(copy);
       }
 
@@ -182,7 +182,7 @@ public:
 	    /* Clone the ir_variable that the dereference already has and add
 	     * it to the linked shader.
 	     */
-	    var = ir->var->clone(NULL);
+	    var = ir->var->clone(linked, NULL);
 	    linked->symbols->add_variable(var->name, var);
 	    linked->ir->push_head(var);
 	 }

@@ -680,7 +680,10 @@ ir_dereference_variable::constant_expression_value()
    if (var->mode == ir_var_uniform)
       return NULL;
 
-   return var->constant_value ? var->constant_value->clone(NULL) : NULL;
+   if (!var->constant_value)
+      return NULL;
+
+   return var->constant_value->clone(talloc_parent(var), NULL);
 }
 
 
@@ -732,7 +735,7 @@ ir_dereference_array::constant_expression_value()
 	 return new(ctx) ir_constant(array, component);
       } else {
 	 const unsigned index = idx->value.u[0];
-	 return array->get_array_element(index)->clone(NULL);
+	 return array->get_array_element(index)->clone(ctx, NULL);
       }
    }
    return NULL;

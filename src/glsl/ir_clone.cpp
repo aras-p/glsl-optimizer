@@ -36,11 +36,10 @@ extern "C" {
  * eventually.
  */
 ir_variable *
-ir_variable::clone(struct hash_table *ht) const
+ir_variable::clone(void *mem_ctx, struct hash_table *ht) const
 {
-   void *ctx = talloc_parent(this);
-   ir_variable *var = new(ctx) ir_variable(this->type, this->name,
-					   (ir_variable_mode) this->mode);
+   ir_variable *var = new(mem_ctx) ir_variable(this->type, this->name,
+					       (ir_variable_mode) this->mode);
 
    var->max_array_access = this->max_array_access;
    var->read_only = this->read_only;
@@ -56,7 +55,7 @@ ir_variable::clone(struct hash_table *ht) const
    var->pixel_center_integer = this->pixel_center_integer;
 
    if (this->constant_value)
-      var->constant_value = this->constant_value->clone(ht);
+      var->constant_value = this->constant_value->clone(mem_ctx, ht);
 
    if (ht) {
       hash_table_insert(ht, var, (void *)const_cast<ir_variable *>(this));
@@ -66,118 +65,109 @@ ir_variable::clone(struct hash_table *ht) const
 }
 
 ir_swizzle *
-ir_swizzle::clone(struct hash_table *ht) const
+ir_swizzle::clone(void *mem_ctx, struct hash_table *ht) const
 {
-   void *ctx = talloc_parent(this);
-   return new(ctx) ir_swizzle(this->val->clone(ht), this->mask);
+   return new(mem_ctx) ir_swizzle(this->val->clone(mem_ctx, ht), this->mask);
 }
 
 ir_return *
-ir_return::clone(struct hash_table *ht) const
+ir_return::clone(void *mem_ctx, struct hash_table *ht) const
 {
-   void *ctx = talloc_parent(this);
    ir_rvalue *new_value = NULL;
 
    if (this->value)
-      new_value = this->value->clone(ht);
+      new_value = this->value->clone(mem_ctx, ht);
 
-   return new(ctx) ir_return(new_value);
+   return new(mem_ctx) ir_return(new_value);
 }
 
 ir_discard *
-ir_discard::clone(struct hash_table *ht) const
+ir_discard::clone(void *mem_ctx, struct hash_table *ht) const
 {
-   void *ctx = talloc_parent(this);
    ir_rvalue *new_condition = NULL;
 
    if (this->condition != NULL)
-      new_condition = this->condition->clone(ht);
+      new_condition = this->condition->clone(mem_ctx, ht);
 
-   return new(ctx) ir_discard(new_condition);
+   return new(mem_ctx) ir_discard(new_condition);
 }
 
 ir_loop_jump *
-ir_loop_jump::clone(struct hash_table *ht) const
+ir_loop_jump::clone(void *mem_ctx, struct hash_table *ht) const
 {
-   void *ctx = talloc_parent(this);
    (void)ht;
 
-   return new(ctx) ir_loop_jump(this->mode);
+   return new(mem_ctx) ir_loop_jump(this->mode);
 }
 
 ir_if *
-ir_if::clone(struct hash_table *ht) const
+ir_if::clone(void *mem_ctx, struct hash_table *ht) const
 {
-   void *ctx = talloc_parent(this);
-   ir_if *new_if = new(ctx) ir_if(this->condition->clone(ht));
+   ir_if *new_if = new(mem_ctx) ir_if(this->condition->clone(mem_ctx, ht));
 
    foreach_iter(exec_list_iterator, iter, this->then_instructions) {
       ir_instruction *ir = (ir_instruction *)iter.get();
-      new_if->then_instructions.push_tail(ir->clone(ht));
+      new_if->then_instructions.push_tail(ir->clone(mem_ctx, ht));
    }
 
    foreach_iter(exec_list_iterator, iter, this->else_instructions) {
       ir_instruction *ir = (ir_instruction *)iter.get();
-      new_if->else_instructions.push_tail(ir->clone(ht));
+      new_if->else_instructions.push_tail(ir->clone(mem_ctx, ht));
    }
 
    return new_if;
 }
 
 ir_loop *
-ir_loop::clone(struct hash_table *ht) const
+ir_loop::clone(void *mem_ctx, struct hash_table *ht) const
 {
-   void *ctx = talloc_parent(this);
-   ir_loop *new_loop = new(ctx) ir_loop();
+   ir_loop *new_loop = new(mem_ctx) ir_loop();
 
    if (this->from)
-      new_loop->from = this->from->clone(ht);
+      new_loop->from = this->from->clone(mem_ctx, ht);
    if (this->to)
-      new_loop->to = this->to->clone(ht);
+      new_loop->to = this->to->clone(mem_ctx, ht);
    if (this->increment)
-      new_loop->increment = this->increment->clone(ht);
+      new_loop->increment = this->increment->clone(mem_ctx, ht);
    new_loop->counter = counter;
 
    foreach_iter(exec_list_iterator, iter, this->body_instructions) {
       ir_instruction *ir = (ir_instruction *)iter.get();
-      new_loop->body_instructions.push_tail(ir->clone(ht));
+      new_loop->body_instructions.push_tail(ir->clone(mem_ctx, ht));
    }
 
    return new_loop;
 }
 
 ir_call *
-ir_call::clone(struct hash_table *ht) const
+ir_call::clone(void *mem_ctx, struct hash_table *ht) const
 {
-   void *ctx = talloc_parent(this);
    exec_list new_parameters;
 
    foreach_iter(exec_list_iterator, iter, this->actual_parameters) {
       ir_instruction *ir = (ir_instruction *)iter.get();
-      new_parameters.push_tail(ir->clone(ht));
+      new_parameters.push_tail(ir->clone(mem_ctx, ht));
    }
 
-   return new(ctx) ir_call(this->callee, &new_parameters);
+   return new(mem_ctx) ir_call(this->callee, &new_parameters);
 }
 
 ir_expression *
-ir_expression::clone(struct hash_table *ht) const
+ir_expression::clone(void *mem_ctx, struct hash_table *ht) const
 {
-   void *ctx = talloc_parent(this);
    ir_rvalue *op[2] = {NULL, NULL};
    unsigned int i;
 
    for (i = 0; i < get_num_operands(); i++) {
-      op[i] = this->operands[i]->clone(ht);
+      op[i] = this->operands[i]->clone(mem_ctx, ht);
    }
 
-   return new(ctx) ir_expression(this->operation, this->type, op[0], op[1]);
+   return new(mem_ctx) ir_expression(this->operation, this->type, op[0], op[1]);
 }
 
 ir_dereference_variable *
-ir_dereference_variable::clone(struct hash_table *ht) const
+ir_dereference_variable::clone(void *mem_ctx, struct hash_table *ht) const
 {
-   void *ctx = talloc_parent(this);
    ir_variable *new_var;
 
    if (ht) {
@@ -188,38 +178,36 @@ ir_dereference_variable::clone(struct hash_table *ht) const
       new_var = this->var;
    }
 
-   return new(ctx) ir_dereference_variable(new_var);
+   return new(mem_ctx) ir_dereference_variable(new_var);
 }
 
 ir_dereference_array *
-ir_dereference_array::clone(struct hash_table *ht) const
+ir_dereference_array::clone(void *mem_ctx, struct hash_table *ht) const
 {
-   void *ctx = talloc_parent(this);
-   return new(ctx) ir_dereference_array(this->array->clone(ht),
-					this->array_index->clone(ht));
+   return new(mem_ctx) ir_dereference_array(this->array->clone(mem_ctx, ht),
+					    this->array_index->clone(mem_ctx,
+								     ht));
 }
 
 ir_dereference_record *
-ir_dereference_record::clone(struct hash_table *ht) const
+ir_dereference_record::clone(void *mem_ctx, struct hash_table *ht) const
 {
-   void *ctx = talloc_parent(this);
-   return new(ctx) ir_dereference_record(this->record->clone(ht),
-					 this->field);
+   return new(mem_ctx) ir_dereference_record(this->record->clone(mem_ctx, ht),
+					     this->field);
 }
 
 ir_texture *
-ir_texture::clone(struct hash_table *ht) const
+ir_texture::clone(void *mem_ctx, struct hash_table *ht) const
 {
-   void *ctx = talloc_parent(this);
-   ir_texture *new_tex = new(ctx) ir_texture(this->op);
+   ir_texture *new_tex = new(mem_ctx) ir_texture(this->op);
    new_tex->type = this->type;
 
-   new_tex->sampler = this->sampler->clone(ht);
-   new_tex->coordinate = this->coordinate->clone(ht);
+   new_tex->sampler = this->sampler->clone(mem_ctx, ht);
+   new_tex->coordinate = this->coordinate->clone(mem_ctx, ht);
    if (this->projector)
-      new_tex->projector = this->projector->clone(ht);
+      new_tex->projector = this->projector->clone(mem_ctx, ht);
    if (this->shadow_comparitor) {
-      new_tex->shadow_comparitor = this->shadow_comparitor->clone(ht);
+      new_tex->shadow_comparitor = this->shadow_comparitor->clone(mem_ctx, ht);
    }
 
    for (int i = 0; i < 3; i++)
@@ -229,15 +217,15 @@ ir_texture::clone(struct hash_table *ht) const
    case ir_tex:
       break;
    case ir_txb:
-      new_tex->lod_info.bias = this->lod_info.bias->clone(ht);
+      new_tex->lod_info.bias = this->lod_info.bias->clone(mem_ctx, ht);
       break;
    case ir_txl:
    case ir_txf:
-      new_tex->lod_info.lod = this->lod_info.lod->clone(ht);
+      new_tex->lod_info.lod = this->lod_info.lod->clone(mem_ctx, ht);
       break;
    case ir_txd:
-      new_tex->lod_info.grad.dPdx = this->lod_info.grad.dPdx->clone(ht);
-      new_tex->lod_info.grad.dPdy = this->lod_info.grad.dPdy->clone(ht);
+      new_tex->lod_info.grad.dPdx = this->lod_info.grad.dPdx->clone(mem_ctx, ht);
+      new_tex->lod_info.grad.dPdy = this->lod_info.grad.dPdy->clone(mem_ctx, ht);
       break;
    }
 
@@ -245,30 +233,28 @@ ir_texture::clone(struct hash_table *ht) const
 }
 
 ir_assignment *
-ir_assignment::clone(struct hash_table *ht) const
+ir_assignment::clone(void *mem_ctx, struct hash_table *ht) const
 {
    ir_rvalue *new_condition = NULL;
 
    if (this->condition)
-      new_condition = this->condition->clone(ht);
+      new_condition = this->condition->clone(mem_ctx, ht);
 
-   void *ctx = talloc_parent(this);
-   return new(ctx) ir_assignment(this->lhs->clone(ht),
-				 this->rhs->clone(ht),
-				 new_condition);
+   return new(mem_ctx) ir_assignment(this->lhs->clone(mem_ctx, ht),
+				     this->rhs->clone(mem_ctx, ht),
+				     new_condition);
 }
 
 ir_function *
-ir_function::clone(struct hash_table *ht) const
+ir_function::clone(void *mem_ctx, struct hash_table *ht) const
 {
-   void *mem_ctx = talloc_parent(this);
    ir_function *copy = new(mem_ctx) ir_function(this->name);
 
    foreach_list_const(node, &this->signatures) {
       const ir_function_signature *const sig =
 	 (const ir_function_signature *const) node;
 
-      ir_function_signature *sig_copy = sig->clone(ht);
+      ir_function_signature *sig_copy = sig->clone(mem_ctx, ht);
       copy->add_signature(sig_copy);
 
       if (ht != NULL)
@@ -280,9 +266,8 @@ ir_function::clone(struct hash_table *ht) const
 }
 
 ir_function_signature *
-ir_function_signature::clone(struct hash_table *ht) const
+ir_function_signature::clone(void *mem_ctx, struct hash_table *ht) const
 {
-   void *mem_ctx = talloc_parent(this);
    ir_function_signature *copy =
       new(mem_ctx) ir_function_signature(this->return_type);
 
@@ -296,7 +281,7 @@ ir_function_signature::clone(struct hash_table *ht) const
 
       assert(const_cast<ir_variable *>(param)->as_variable() != NULL);
 
-      ir_variable *const param_copy = param->clone(ht);
+      ir_variable *const param_copy = param->clone(mem_ctx, ht);
       copy->parameters.push_tail(param_copy);
    }
 
@@ -305,7 +290,7 @@ ir_function_signature::clone(struct hash_table *ht) const
    foreach_list_const(node, &this->body) {
       const ir_instruction *const inst = (const ir_instruction *) node;
 
-      ir_instruction *const inst_copy = inst->clone(ht);
+      ir_instruction *const inst_copy = inst->clone(mem_ctx, ht);
       copy->body.push_tail(inst_copy);
    }
 
@@ -313,9 +298,8 @@ ir_function_signature::clone(struct hash_table *ht) const
 }
 
 ir_constant *
-ir_constant::clone(struct hash_table *ht) const
+ir_constant::clone(void *mem_ctx, struct hash_table *ht) const
 {
-   void *ctx = talloc_parent(this);
    (void)ht;
 
    switch (this->type->base_type) {
@@ -323,10 +307,10 @@ ir_constant::clone(struct hash_table *ht) const
    case GLSL_TYPE_INT:
    case GLSL_TYPE_FLOAT:
    case GLSL_TYPE_BOOL:
-      return new(ctx) ir_constant(this->type, &this->value);
+      return new(mem_ctx) ir_constant(this->type, &this->value);
 
    case GLSL_TYPE_STRUCT: {
-      ir_constant *c = new(ctx) ir_constant;
+      ir_constant *c = new(mem_ctx) ir_constant;
 
       c->type = this->type;
       for (exec_node *node = this->components.head
@@ -334,19 +318,19 @@ ir_constant::clone(struct hash_table *ht) const
 	      ; node = node->next) {
 	 ir_constant *const orig = (ir_constant *) node;
 
-	 c->components.push_tail(orig->clone(NULL));
+	 c->components.push_tail(orig->clone(mem_ctx, NULL));
       }
 
       return c;
    }
 
    case GLSL_TYPE_ARRAY: {
-      ir_constant *c = new(ctx) ir_constant;
+      ir_constant *c = new(mem_ctx) ir_constant;
 
       c->type = this->type;
       c->array_elements = talloc_array(c, ir_constant *, this->type->length);
       for (unsigned i = 0; i < this->type->length; i++) {
-	 c->array_elements[i] = this->array_elements[i]->clone(NULL);
+	 c->array_elements[i] = this->array_elements[i]->clone(mem_ctx, NULL);
       }
       return c;
    }
@@ -395,14 +379,14 @@ fixup_function_calls(struct hash_table *ht, exec_list *instructions)
 
 
 void
-clone_ir_list(exec_list *out, const exec_list *in)
+clone_ir_list(void *mem_ctx, exec_list *out, const exec_list *in)
 {
    struct hash_table *ht =
       hash_table_ctor(0, hash_table_pointer_hash, hash_table_pointer_compare);
 
    foreach_list_const(node, in) {
       const ir_instruction *const original = (ir_instruction *) node;
-      ir_instruction *copy = original->clone(ht);
+      ir_instruction *copy = original->clone(mem_ctx, ht);
 
       out->push_tail(copy);
    }
