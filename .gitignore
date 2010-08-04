@@ -28,3 +28,4 @@ build
 .dir-locals.el
 *.pbxuser
 *.perspectivev3
+*.mode1v3
