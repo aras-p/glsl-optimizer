@@ -1,0 +1,198 @@
+struct appdata_full {
+  vec4 vertex;
+  vec4 tangent;
+  vec3 normal;
+  vec4 texcoord;
+  vec4 texcoord1;
+  vec4 color;
+};
+struct v2f {
+  vec4 pos;
+  vec2 uv;
+  vec3 color;
+};
+uniform vec4[4] _TerrainTreeLightColors;
+uniform vec3[4] _TerrainTreeLightDirections;
+void ExpandBillboard (
+  in mat4 mat,
+  inout vec4 pos,
+  inout vec3 normal,
+  inout vec4 tangent
+);
+
+void ExpandBillboard (
+  in mat4 mat,
+  inout vec4 pos,
+  inout vec3 normal,
+  inout vec4 tangent
+)
+{
+  float isBillboard;
+  vec3 norb;
+  vec3 tanb;
+  float tmpvar_1;
+  tmpvar_1 = abs (tangent.w);
+  float tmpvar_2;
+  tmpvar_2 = (1.000000 - tmpvar_1);
+  isBillboard = tmpvar_2;
+  vec4 tmpvar_3;
+  tmpvar_3.xyz = normal;
+  tmpvar_3.w = 0.000000;
+  vec4 tmpvar_4;
+  tmpvar_4 = normalize ((tmpvar_3 * mat));
+  vec3 tmpvar_5;
+  tmpvar_5.xyz = vec3(tmpvar_4);
+  vec3 tmpvar_6;
+  tmpvar_6 = tmpvar_5;
+  norb = tmpvar_6;
+  vec4 tmpvar_7;
+  tmpvar_7.x = normal.z;
+  tmpvar_7.y = 0.000000;
+  tmpvar_7.z = -(normal.x);
+  tmpvar_7.w = 0.000000;
+  vec4 tmpvar_8;
+  tmpvar_8 = normalize ((tmpvar_7 * mat));
+  vec3 tmpvar_9;
+  tmpvar_9.xyz = vec3(tmpvar_8);
+  vec3 tmpvar_10;
+  tmpvar_10 = tmpvar_9;
+  tanb = tmpvar_10;
+  vec4 tmpvar_11;
+  tmpvar_11 = (pos + ((tangent * mat) * isBillboard));
+  pos = tmpvar_11;
+  vec3 tmpvar_12;
+  tmpvar_12 = isBillboard.xxx;
+  vec3 tmpvar_13;
+  tmpvar_13 = mix (normal, norb, tmpvar_12);
+  vec3 tmpvar_14;
+  tmpvar_14 = tmpvar_13;
+  normal = tmpvar_14;
+  vec4 tmpvar_15;
+  tmpvar_15.xyz = tanb;
+  tmpvar_15.w = -1.000000;
+  vec4 tmpvar_16;
+  tmpvar_16 = isBillboard.xxxx;
+  vec4 tmpvar_17;
+  tmpvar_17 = mix (tangent, tmpvar_15, tmpvar_16);
+  vec4 tmpvar_18;
+  tmpvar_18 = tmpvar_17;
+  tangent = tmpvar_18;
+}
+
+v2f vert (
+  in appdata_full v
+);
+
+v2f vert (
+  in appdata_full v
+)
+{
+  v2f o;
+  vec3 lightColor;
+  int i;
+  int tmpvar_1;
+  tmpvar_1 = 0;
+  i = tmpvar_1;
+  vec3 lightDir;
+  float diff;
+  ExpandBillboard (gl_ModelViewMatrixInverseTranspose, v.vertex, v.normal, v.tangent);
+  vec4 tmpvar_2;
+  tmpvar_2 = (gl_ModelViewProjectionMatrix * v.vertex);
+  o.pos = tmpvar_2;
+  vec2 tmpvar_3;
+  tmpvar_3 = v.texcoord.xy;
+  o.uv = tmpvar_3;
+  vec3 tmpvar_4;
+  tmpvar_4 = gl_LightModel.ambient.xyz;
+  lightColor = tmpvar_4;
+  while (true) {
+    if (!((i < 4))) {
+      break;
+    };
+    vec3 tmpvar_5;
+    tmpvar_5 = _TerrainTreeLightDirections[i];
+    lightDir.xyz = tmpvar_5;
+    float tmpvar_6;
+    tmpvar_6 = dot (lightDir.xyz, v.normal);
+    float tmpvar_7;
+    tmpvar_7 = max (0.000000, ((tmpvar_6 * 0.500000) + 0.500000));
+    float tmpvar_8;
+    tmpvar_8 = tmpvar_7;
+    diff = tmpvar_8;
+    vec3 tmpvar_9;
+    tmpvar_9.xyz = vec3((_TerrainTreeLightColors[i] * diff));
+    vec3 tmpvar_10;
+    tmpvar_10 = (lightColor + tmpvar_9);
+    lightColor = tmpvar_10;
+    int tmpvar_11;
+    tmpvar_11 = i;
+    int tmpvar_12;
+    tmpvar_12 = (i + 1);
+    i = tmpvar_12;
+  };
+  vec3 tmpvar_13;
+  tmpvar_13 = (lightColor * v.color.w);
+  o.color = tmpvar_13;
+  return o;
+}
+
+attribute vec4 TANGENT;
+void main ()
+{
+  v2f xl_retval;
+  appdata_full xlt_v;
+  vec4 tmpvar_1;
+  tmpvar_1.xyzw = gl_Vertex;
+  vec4 tmpvar_2;
+  tmpvar_2 = tmpvar_1;
+  xlt_v.vertex = tmpvar_2;
+  vec4 tmpvar_3;
+  tmpvar_3.xyzw = TANGENT;
+  vec4 tmpvar_4;
+  tmpvar_4 = tmpvar_3;
+  xlt_v.tangent = tmpvar_4;
+  vec3 tmpvar_5;
+  tmpvar_5.xyz = gl_Normal;
+  vec3 tmpvar_6;
+  tmpvar_6 = tmpvar_5;
+  xlt_v.normal = tmpvar_6;
+  vec4 tmpvar_7;
+  tmpvar_7.xyzw = gl_MultiTexCoord0;
+  vec4 tmpvar_8;
+  tmpvar_8 = tmpvar_7;
+  xlt_v.texcoord = tmpvar_8;
+  vec4 tmpvar_9;
+  tmpvar_9.xyzw = gl_MultiTexCoord1;
+  vec4 tmpvar_10;
+  tmpvar_10 = tmpvar_9;
+  xlt_v.texcoord1 = tmpvar_10;
+  vec4 tmpvar_11;
+  tmpvar_11.xyzw = gl_Color;
+  vec4 tmpvar_12;
+  tmpvar_12 = tmpvar_11;
+  xlt_v.color = tmpvar_12;
+  v2f tmpvar_13;
+  tmpvar_13 = vert (xlt_v);
+  v2f tmpvar_14;
+  tmpvar_14 = tmpvar_13;
+  xl_retval = tmpvar_14;
+  vec4 tmpvar_15;
+  tmpvar_15.xyzw = xl_retval.pos;
+  vec4 tmpvar_16;
+  tmpvar_16 = tmpvar_15;
+  gl_Position = tmpvar_16;
+  vec4 tmpvar_17;
+  tmpvar_17.xy = xl_retval.uv;
+  tmpvar_17.z = 0.000000;
+  tmpvar_17.w = 0.000000;
+  vec4 tmpvar_18;
+  tmpvar_18 = tmpvar_17;
+  gl_TexCoord[0] = tmpvar_18;
+  vec4 tmpvar_19;
+  tmpvar_19.xyz = xl_retval.color;
+  tmpvar_19.w = 0.000000;
+  vec4 tmpvar_20;
+  tmpvar_20 = tmpvar_19;
+  gl_TexCoord[1] = tmpvar_20;
+}
+

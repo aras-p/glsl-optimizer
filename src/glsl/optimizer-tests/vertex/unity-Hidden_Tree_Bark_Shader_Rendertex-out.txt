@@ -1,0 +1,76 @@
+struct v2f {
+  vec4 pos;
+  vec2 uv;
+  vec3 color;
+};
+struct appdata_full {
+  vec4 vertex;
+  vec4 tangent;
+  vec3 normal;
+  vec4 texcoord;
+  vec4 texcoord1;
+  vec4 color;
+};
+uniform vec4[4] _TerrainTreeLightColors;
+uniform vec3[4] _TerrainTreeLightDirections;
+attribute vec4 TANGENT;
+void main ()
+{
+  appdata_full xlt_v;
+  vec4 tmpvar_1;
+  tmpvar_1.xyzw = gl_Vertex;
+  xlt_v.vertex = tmpvar_1;
+  vec4 tmpvar_3;
+  tmpvar_3.xyzw = TANGENT;
+  xlt_v.tangent = tmpvar_3;
+  vec3 tmpvar_5;
+  tmpvar_5.xyz = gl_Normal;
+  xlt_v.normal = tmpvar_5;
+  vec4 tmpvar_7;
+  tmpvar_7.xyzw = gl_MultiTexCoord0;
+  xlt_v.texcoord = tmpvar_7;
+  vec4 tmpvar_9;
+  tmpvar_9.xyzw = gl_MultiTexCoord1;
+  xlt_v.texcoord1 = tmpvar_9;
+  vec4 tmpvar_11;
+  tmpvar_11.xyzw = gl_Color;
+  xlt_v.color = tmpvar_11;
+  appdata_full v;
+  v = xlt_v;
+  v2f o;
+  vec3 lightColor;
+  int i;
+  i = 0;
+  vec3 lightDir;
+  o.pos = (gl_ModelViewProjectionMatrix * xlt_v.vertex);
+  o.uv = xlt_v.texcoord.xy;
+  lightColor = gl_LightModel.ambient.xyz;
+  while (true) {
+    if (!((i < 4))) {
+      break;
+    };
+    lightDir.xyz = _TerrainTreeLightDirections[i];
+    float tmpvar_27;
+    tmpvar_27 = dot (lightDir.xyz, v.normal);
+    float tmpvar_28;
+    tmpvar_28 = max (0.000000, tmpvar_27);
+    vec3 tmpvar_30;
+    tmpvar_30.xyz = vec3((_TerrainTreeLightColors[i] * tmpvar_28));
+    lightColor = (lightColor + tmpvar_30);
+    i = (i + 1);
+  };
+  o.color = (lightColor * v.color.w);
+  vec4 tmpvar_15;
+  tmpvar_15.xyzw = o.pos;
+  gl_Position = tmpvar_15;
+  vec4 tmpvar_17;
+  tmpvar_17.xy = o.uv;
+  tmpvar_17.z = 0.000000;
+  tmpvar_17.w = 0.000000;
+  gl_TexCoord[0] = tmpvar_17;
+  vec4 tmpvar_19;
+  tmpvar_19.xyz = o.color;
+  tmpvar_19.w = 0.000000;
+  gl_TexCoord[1] = tmpvar_19;
+}
+
