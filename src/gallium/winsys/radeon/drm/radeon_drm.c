@@ -152,12 +152,14 @@ static void do_ioctls(int fd, struct radeon_libdrm_winsys* winsys)
 
     debug_printf("radeon: Successfully grabbed chipset info from kernel!\n"
                  "radeon: DRM version: %d.%d.%d ID: 0x%04x GB: %d Z: %d\n"
-                 "radeon: GART size: %d MB VRAM size: %d MB\n",
+                 "radeon: GART size: %d MB VRAM size: %d MB\n"
+                 "radeon: HyperZ: %s\n",
                  version->version_major, version->version_minor,
                  version->version_patchlevel, winsys->pci_id,
                  winsys->gb_pipes, winsys->z_pipes,
                  winsys->gart_size / 1024 / 1024,
-                 winsys->vram_size / 1024 / 1024);
+                 winsys->vram_size / 1024 / 1024,
+                 winsys->hyperz ? "YES" : "NO");
 
     drmFreeVersion(version);
 }
