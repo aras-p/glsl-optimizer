@@ -45,6 +45,7 @@ extern "C" {
 #include "main/mtypes.h"
 #include "main/shaderobj.h"
 #include "main/uniforms.h"
+#include "program/hash_table.h"
 #include "program/prog_instruction.h"
 #include "program/prog_optimize.h"
 #include "program/prog_print.h"
@@ -160,6 +161,7 @@ public:
 class ir_to_mesa_visitor : public ir_visitor {
 public:
    ir_to_mesa_visitor();
+   ~ir_to_mesa_visitor();
 
    function_entry *current_function;
 
@@ -261,11 +263,10 @@ public:
 			      ir_constant *constant,
 			      struct ir_to_mesa_dst_reg temp);
 
-   int *sampler_map;
-   int sampler_map_size;
+   struct hash_table *sampler_map;
 
-   void map_sampler(int location, int sampler);
-   int get_sampler_number(int location);
+   void set_sampler_location(ir_variable *sampler, int location);
+   int get_sampler_location(ir_variable *sampler);
 
    void *mem_ctx;
 };
@@ -370,22 +371,22 @@ ir_to_mesa_visitor::ir_to_mesa_emit_op0(ir_instruction *ir,
 }
 
 void
-ir_to_mesa_visitor::map_sampler(int location, int sampler)
+ir_to_mesa_visitor::set_sampler_location(ir_variable *sampler, int location)
 {
-   if (this->sampler_map_size <= location) {
-      this->sampler_map = talloc_realloc(this->mem_ctx, this->sampler_map,
-					 int, location + 1);
-      this->sampler_map_size = location + 1;
+   if (this->sampler_map == NULL) {
+      this->sampler_map = hash_table_ctor(0, hash_table_pointer_hash,
+					  hash_table_pointer_compare);
    }
 
-   this->sampler_map[location] = sampler;
+   hash_table_insert(this->sampler_map, (void *)(uintptr_t)location, sampler);
 }
 
 int
-ir_to_mesa_visitor::get_sampler_number(int location)
+ir_to_mesa_visitor::get_sampler_location(ir_variable *sampler)
 {
-   assert(location < this->sampler_map_size);
-   return this->sampler_map[location];
+   void *result = hash_table_find(this->sampler_map, sampler);
+
+   return (int)(uintptr_t)result;
 }
 
 inline ir_to_mesa_dst_reg
@@ -1394,14 +1395,10 @@ ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
 
 	 /* FINISHME: Fix up uniform name for arrays and things */
 	 if (ir->var->type->base_type == GLSL_TYPE_SAMPLER) {
-	    /* FINISHME: we whack the location of the var here, which
-	     * is probably not expected.  But we need to communicate
-	     * mesa's sampler number to the tex instruction.
-	     */
 	    int sampler = _mesa_add_sampler(this->prog->Parameters,
 					    ir->var->name,
 					    ir->var->type->gl_type);
-	    map_sampler(ir->var->location, sampler);
+	    set_sampler_location(ir->var, sampler);
 
 	    entry = new(mem_ctx) variable_storage(ir->var, PROGRAM_SAMPLER,
 						  sampler);
@@ -2059,7 +2056,7 @@ ir_to_mesa_visitor::visit(ir_texture *ir)
     */
    sampler->accept(this);
 
-   inst->sampler = get_sampler_number(sampler->var->location);
+   inst->sampler = get_sampler_location(sampler->var);
 
    switch (sampler->type->sampler_dimensionality) {
    case GLSL_SAMPLER_DIM_1D:
@@ -2166,8 +2163,13 @@ ir_to_mesa_visitor::ir_to_mesa_visitor()
    next_temp = 1;
    next_signature_id = 1;
    sampler_map = NULL;
-   sampler_map_size = 0;
    current_function = NULL;
+}
+
+ir_to_mesa_visitor::~ir_to_mesa_visitor()
+{
+   if (this->sampler_map)
+      hash_table_dtor(this->sampler_map);
 }
 
 static struct prog_src_register
