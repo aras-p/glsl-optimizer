@@ -889,6 +889,7 @@ public:
 
    ir_discard(ir_rvalue *cond)
    {
+      this->ir_type = ir_type_discard;
       this->condition = cond;
    }
 
