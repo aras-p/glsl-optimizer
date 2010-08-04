@@ -44,7 +44,7 @@ public:
 
    ir_visitor_status visit_leave(ir_assignment *);
 
-   ir_rvalue *get_column(ir_variable *var, int col);
+   ir_dereference *get_column(ir_variable *var, int col);
    ir_rvalue *get_element(ir_variable *var, int col, int row);
 
    void do_mul_mat_mat(ir_variable *result_var,
@@ -109,7 +109,7 @@ ir_mat_op_to_vec_visitor::get_element(ir_variable *var, int col, int row)
    return new(base_ir) ir_swizzle(deref, row, 0, 0, 0, 1);
 }
 
-ir_rvalue *
+ir_dereference *
 ir_mat_op_to_vec_visitor::get_column(ir_variable *var, int row)
 {
    ir_dereference *deref;
@@ -314,7 +314,9 @@ ir_mat_op_to_vec_visitor::visit_leave(ir_assignment *assign)
    case ir_binop_add:
    case ir_binop_sub:
    case ir_binop_div:
-   case ir_binop_mod:
+   case ir_binop_mod: {
+      const unsigned mask = (1U << result_var->type->vector_elements) - 1;
+
       /* For most operations, the matrix version is just going
        * column-wise through and applying the operation to each column
        * if available.
@@ -322,7 +324,7 @@ ir_mat_op_to_vec_visitor::visit_leave(ir_assignment *assign)
       for (i = 0; i < matrix_columns; i++) {
 	 ir_rvalue *op0 = get_column(op_var[0], i);
 	 ir_rvalue *op1 = get_column(op_var[1], i);
-	 ir_rvalue *result = get_column(result_var, i);
+	 ir_dereference *result = get_column(result_var, i);
 	 ir_expression *column_expr;
 	 ir_assignment *column_assign;
 
@@ -333,10 +335,13 @@ ir_mat_op_to_vec_visitor::visit_leave(ir_assignment *assign)
 
 	 column_assign = new(base_ir) ir_assignment(result,
 						    column_expr,
-						    NULL);
+						    NULL,
+						    mask);
+	 assert(column_assign->write_mask != 0);
 	 base_ir->insert_before(column_assign);
       }
       break;
+   }
    case ir_binop_mul:
       if (op_var[0]->type->is_matrix()) {
 	 if (op_var[1]->type->is_matrix()) {
