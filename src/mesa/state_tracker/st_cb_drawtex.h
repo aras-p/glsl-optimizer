@@ -10,7 +10,10 @@
 #define ST_CB_DRAWTEX_H
 
 
-#include "main/mtypes.h"
+#include "main/compiler.h"
+
+struct dd_function_table;
+struct st_context;
 
 #if FEATURE_OES_draw_texture
 
