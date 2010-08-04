@@ -153,5 +153,5 @@ do_vec_index_to_swizzle(exec_list *instructions)
 
    v.run(instructions);
 
-   return false;
+   return v.progress;
 }
