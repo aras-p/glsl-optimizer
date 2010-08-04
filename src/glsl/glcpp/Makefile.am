@@ -25,8 +25,7 @@ libglcpp_la_SOURCES = \
 	glcpp-lex.l \
 	glcpp-parse.y \
 	glcpp.h \
-	pp.c \
-	xtalloc.c
+	pp.c
 
 BUILT_SOURCES = glcpp-parse.h glcpp-parse.c glcpp-lex.c
 CLEANFILES = $(BUILT_SOURCES)
