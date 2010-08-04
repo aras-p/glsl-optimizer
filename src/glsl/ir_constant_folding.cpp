@@ -39,7 +39,7 @@ class ir_constant_folding_visitor : public ir_visitor {
 public:
    ir_constant_folding_visitor()
    {
-      /* empty */
+      this->progress = false;
    }
 
    virtual ~ir_constant_folding_visitor()
@@ -75,6 +75,8 @@ public:
    /*@}*/
 
    void fold_constant(ir_rvalue **rvalue);
+
+   bool progress;
 };
 
 void
@@ -86,6 +88,7 @@ ir_constant_folding_visitor::fold_constant(ir_rvalue **rvalue)
    ir_constant *constant = (*rvalue)->constant_expression_value();
    if (constant) {
       *rvalue = constant;
+      this->progress = true;
    } else {
       (*rvalue)->accept(this);
    }
@@ -178,6 +181,7 @@ ir_constant_folding_visitor::visit(ir_assignment *ir)
 	 else
 	    ir->remove();
       }
+      this->progress = true;
    }
 }
 
@@ -240,6 +244,5 @@ do_constant_folding(exec_list *instructions)
 
    visit_exec_list(instructions, &constant_folding);
 
-   /* FINISHME: Return real progress. */
-   return false;
+   return constant_folding.progress;
 }
