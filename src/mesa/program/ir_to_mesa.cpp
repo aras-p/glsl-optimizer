@@ -2622,7 +2622,7 @@ _mesa_glsl_compile_shader(GLcontext *ctx, struct gl_shader *shader)
 	 progress = do_constant_folding(shader->ir) || progress;
 	 progress = do_algebraic(shader->ir) || progress;
 	 progress = do_if_return(shader->ir) || progress;
-	 if (ctx->Shader.EmitNoIfs)
+	 if (1 || ctx->Shader.EmitNoIfs)
 	    progress = do_if_to_cond_assign(shader->ir) || progress;
 
 	 progress = do_vec_index_to_swizzle(shader->ir) || progress;

@@ -690,11 +690,11 @@ ir_dereference_variable::constant_expression_value()
 ir_constant *
 ir_dereference_array::constant_expression_value()
 {
-   void *ctx = talloc_parent(this);
    ir_constant *array = this->array->constant_expression_value();
    ir_constant *idx = this->array_index->constant_expression_value();
 
    if ((array != NULL) && (idx != NULL)) {
+      void *ctx = talloc_parent(this);
       if (array->type->is_matrix()) {
 	 /* Array access of a matrix results in a vector.
 	  */
