@@ -30,7 +30,6 @@
 #include <stdio.h>
 
 #include "../r300_reg.h"
-#include "radeon_emulate_loops.h"
 
 /**
  * Rewrite IF instructions to use the ALU result special register.
