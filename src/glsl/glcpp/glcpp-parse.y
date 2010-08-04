@@ -106,6 +106,9 @@ int
 _active_list_contains (active_list_t *list, const char *identifier);
 
 static void
+_glcpp_parser_expand_if (glcpp_parser_t *parser, int type, token_list_t *list);
+
+static void
 _glcpp_parser_expand_token_list (glcpp_parser_t *parser,
 				 token_list_t *list);
 
@@ -212,16 +215,7 @@ control_line:
 		talloc_free ($2);
 	}
 |	HASH_IF conditional_tokens NEWLINE {
-		token_list_t *expanded;
-		token_t *token;
-
-		expanded = _token_list_create (parser);
-		token = _token_create_ival (parser, IF_EXPANDED, IF_EXPANDED);
-		_token_list_append (expanded, token);
-		talloc_unlink (parser, token);
-		_glcpp_parser_expand_token_list (parser, $2);
-		_token_list_append_list (expanded, $2);
-		glcpp_parser_lex_from (parser, expanded);
+		_glcpp_parser_expand_if (parser, IF_EXPANDED, $2);
 	}
 |	HASH_IFDEF IDENTIFIER junk NEWLINE {
 		macro_t *macro = hash_table_find (parser->defines, $2);
@@ -234,16 +228,7 @@ control_line:
 		_glcpp_parser_skip_stack_push_if (parser, & @1, macro == NULL);
 	}
 |	HASH_ELIF conditional_tokens NEWLINE {
-		token_list_t *expanded;
-		token_t *token;
-
-		expanded = _token_list_create (parser);
-		token = _token_create_ival (parser, ELIF_EXPANDED, ELIF_EXPANDED);
-		_token_list_append (expanded, token);
-		talloc_unlink (parser, token);
-		_glcpp_parser_expand_token_list (parser, $2);
-		_token_list_append_list (expanded, $2);
-		glcpp_parser_lex_from (parser, expanded);
+		_glcpp_parser_expand_if (parser, ELIF_EXPANDED, $2);
 	}
 |	HASH_ELIF NEWLINE {
 		/* #elif without an expression results in a warning if the
@@ -1085,6 +1070,20 @@ _token_list_create_with_one_space (void *ctx)
 	_token_list_append (list, space);
 
 	return list;
+}
+
+static void
+_glcpp_parser_expand_if (glcpp_parser_t *parser, int type, token_list_t *list)
+{
+	token_list_t *expanded;
+	token_t *token;
+
+	expanded = _token_list_create (parser);
+	token = _token_create_ival (parser, type, type);
+	_token_list_append (expanded, token);
+	_glcpp_parser_expand_token_list (parser, list);
+	_token_list_append_list (expanded, list);
+	glcpp_parser_lex_from (parser, expanded);
 }
 
 /* This is a helper function that's essentially part of the
