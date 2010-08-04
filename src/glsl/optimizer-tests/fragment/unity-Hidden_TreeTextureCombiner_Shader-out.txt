@@ -1,0 +1,25 @@
+struct v2f_combiner {
+  vec4 pos;
+  vec2 uv;
+};
+uniform vec4 _Color;
+uniform sampler2D _RGBSource;
+void main ()
+{
+  v2f_combiner xlt_i;
+  xlt_i.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
+  vec2 tmpvar_2;
+  tmpvar_2.xy = vec2(gl_TexCoord[0]);
+  xlt_i.uv = tmpvar_2;
+  v2f_combiner i;
+  i = xlt_i;
+  vec4 c;
+  vec4 tmpvar_9;
+  tmpvar_9 = texture2D (_RGBSource, i.uv);
+  c = tmpvar_9;
+  c.x = _Color.w;
+  vec4 tmpvar_6;
+  tmpvar_6.xyzw = c;
+  gl_FragData[0] = tmpvar_6;
+}
+

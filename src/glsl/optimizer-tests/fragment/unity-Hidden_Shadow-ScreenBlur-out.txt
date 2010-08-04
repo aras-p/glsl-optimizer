@@ -1,0 +1,62 @@
+struct v2f_img {
+  vec4 pos;
+  vec2 uv;
+};
+uniform vec4[8] _BlurOffsets;
+uniform sampler2D _MainTex;
+uniform vec4 unity_ShadowBlurParams;
+void main ()
+{
+  v2f_img xlt_i;
+  xlt_i.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
+  vec2 tmpvar_2;
+  tmpvar_2.xy = vec2(gl_TexCoord[0]);
+  xlt_i.uv = tmpvar_2;
+  vec4 coord;
+  vec4 mask;
+  float dist;
+  float radius;
+  float diffTolerance;
+  int i_1;
+  i_1 = 0;
+  vec4 sample;
+  float diff;
+  vec4 tmpvar_14;
+  tmpvar_14.xy = xlt_i.uv;
+  tmpvar_14.z = 0.000000;
+  tmpvar_14.w = 0.000000;
+  coord = tmpvar_14;
+  vec4 tmpvar_16;
+  tmpvar_16 = texture2D (_MainTex, coord.xy);
+  mask = tmpvar_16;
+  float tmpvar_18;
+  tmpvar_18 = (tmpvar_16.z + (tmpvar_16.w / 255.000000));
+  dist = tmpvar_18;
+  float tmpvar_21;
+  tmpvar_21 = clamp ((unity_ShadowBlurParams.y / (1.000000 - tmpvar_18)), 0.000000, 1.000000);
+  radius = tmpvar_21;
+  float tmpvar_23;
+  tmpvar_23 = unity_ShadowBlurParams.x;
+  diffTolerance = tmpvar_23;
+  mask.xy = (mask.xy * tmpvar_23);
+  while (true) {
+    if (!((i_1 < 8))) {
+      break;
+    };
+    vec4 tmpvar_25;
+    tmpvar_25 = texture2D (_MainTex, (coord + (radius * _BlurOffsets[i_1])).xy);
+    sample = tmpvar_25;
+    diff = (dist - (tmpvar_25.z + (tmpvar_25.w / 255.000000)));
+    float tmpvar_29;
+    tmpvar_29 = abs (diff);
+    float tmpvar_32;
+    tmpvar_32 = clamp ((diffTolerance - tmpvar_29), 0.000000, 1.000000);
+    diff = tmpvar_32;
+    mask.xy = (mask.xy + (tmpvar_32 * sample.xy));
+    i_1 = (i_1 + 1);
+  };
+  vec4 tmpvar_6;
+  tmpvar_6.xyzw = (mask.x / mask.y).xxxx;
+  gl_FragData[0] = tmpvar_6;
+}
+
