@@ -629,20 +629,20 @@ emit_inline_vector_constructor(const glsl_type *type,
 ir_instruction *
 assign_to_matrix_column(ir_variable *var, unsigned column, unsigned row_base,
 			ir_rvalue *src, unsigned src_base, unsigned count,
-			TALLOC_CTX *ctx)
+			void *mem_ctx)
 {
    const unsigned mask[8] = { 0, 1, 2, 3, 0, 0, 0, 0 };
 
-   ir_constant *col_idx = new(ctx) ir_constant(column);
-   ir_rvalue *column_ref = new(ctx) ir_dereference_array(var, col_idx);
+   ir_constant *col_idx = new(mem_ctx) ir_constant(column);
+   ir_rvalue *column_ref = new(mem_ctx) ir_dereference_array(var, col_idx);
 
    assert(column_ref->type->components() >= (row_base + count));
-   ir_rvalue *lhs = new(ctx) ir_swizzle(column_ref, &mask[row_base], count);
+   ir_rvalue *lhs = new(mem_ctx) ir_swizzle(column_ref, &mask[row_base], count);
 
    assert(src->type->components() >= (src_base + count));
-   ir_rvalue *rhs = new(ctx) ir_swizzle(src, &mask[src_base], count);
+   ir_rvalue *rhs = new(mem_ctx) ir_swizzle(src, &mask[src_base], count);
 
-   return new(ctx) ir_assignment(lhs, rhs, NULL);
+   return new(mem_ctx) ir_assignment(lhs, rhs, NULL);
 }
 
 
