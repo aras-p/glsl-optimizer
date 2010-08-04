@@ -234,6 +234,8 @@ void* r600_texture_transfer_map(struct pipe_context *ctx,
 	struct r600_screen *rscreen = r600_screen(ctx->screen);
 	char *map;
 
+	r600_flush(ctx, 0, NULL);
+
 	resource = (struct r600_resource *)transfer->resource;
 	if (radeon_bo_map(rscreen->rw, resource->bo)) {
 		return NULL;
