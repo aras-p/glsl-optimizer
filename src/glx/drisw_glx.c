@@ -502,10 +502,9 @@ driCreateScreen(int screen, struct glx_display *priv)
    return &psc->base;
 
  handle_error:
-   Xfree(psc);
-
    if (psc->driver)
       dlclose(psc->driver);
+   Xfree(psc);
 
    ErrorMessageF("reverting to indirect rendering\n");
 
