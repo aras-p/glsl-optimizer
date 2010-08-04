@@ -82,7 +82,7 @@ public:
 void
 ir_constant_folding_visitor::fold_constant(ir_rvalue **rvalue)
 {
-   if ((*rvalue)->ir_type == ir_type_constant)
+   if (*rvalue == NULL || (*rvalue)->ir_type == ir_type_constant)
       return;
 
    ir_constant *constant = (*rvalue)->constant_expression_value();
@@ -131,15 +131,32 @@ ir_constant_folding_visitor::visit(ir_expression *ir)
 void
 ir_constant_folding_visitor::visit(ir_texture *ir)
 {
-   // FINISHME: Do stuff with texture lookups
-   (void) ir;
+   fold_constant(&ir->coordinate);
+   fold_constant(&ir->projector);
+   fold_constant(&ir->shadow_comparitor);
+
+   switch (ir->op) {
+   case ir_tex:
+      break;
+   case ir_txb:
+      fold_constant(&ir->lod_info.bias);
+      break;
+   case ir_txf:
+   case ir_txl:
+      fold_constant(&ir->lod_info.lod);
+      break;
+   case ir_txd:
+      fold_constant(&ir->lod_info.grad.dPdx);
+      fold_constant(&ir->lod_info.grad.dPdy);
+      break;
+   }
 }
 
 
 void
 ir_constant_folding_visitor::visit(ir_swizzle *ir)
 {
-   ir->val->accept(this);
+   fold_constant(&ir->val);
 }
 
 
@@ -180,8 +197,8 @@ ir_constant_folding_visitor::visit(ir_assignment *ir)
 	    ir->condition = NULL;
 	 else
 	    ir->remove();
+	 this->progress = true;
       }
-      this->progress = true;
    }
 }
 
@@ -196,14 +213,22 @@ ir_constant_folding_visitor::visit(ir_constant *ir)
 void
 ir_constant_folding_visitor::visit(ir_call *ir)
 {
-   (void) ir;
+   foreach_iter(exec_list_iterator, iter, *ir) {
+      ir_rvalue *param = (ir_rvalue *)iter.get();
+      ir_rvalue *new_param = param;
+      fold_constant(&new_param);
+
+      if (new_param != param) {
+	 param->replace_with(new_param);
+      }
+   }
 }
 
 
 void
 ir_constant_folding_visitor::visit(ir_return *ir)
 {
-   (void) ir;
+   fold_constant(&ir->value);
 }
 
 
