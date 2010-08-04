@@ -765,7 +765,7 @@ public:
     * Generates an inline version of the function before @ir,
     * returning the return value of the function.
     */
-   ir_rvalue *generate_inline(ir_instruction *ir);
+   ir_rvalue *generate_inline(ir_instruction *ir, ir_function_signature* parent);
 
    /* List of ir_rvalue of paramaters passed in this call. */
    exec_list actual_parameters;
