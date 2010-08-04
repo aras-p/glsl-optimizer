@@ -32,16 +32,16 @@ float unitySampleShadow (
   vec4 coord;
   float shadow;
   vec3 tmpvar_1;
-  tmpvar_1  = _View2Shadow  * eyePos  .xyz;
+  tmpvar_1  = (_View2Shadow  * eyePos ) .xyz;
   sc0  = tmpvar_1 ;
   vec3 tmpvar_2;
-  tmpvar_2  = _View2Shadow1  * eyePos  .xyz;
+  tmpvar_2  = (_View2Shadow1  * eyePos ) .xyz;
   sc1  = tmpvar_2 ;
   vec3 tmpvar_3;
-  tmpvar_3  = _View2Shadow2  * eyePos  .xyz;
+  tmpvar_3  = (_View2Shadow2  * eyePos ) .xyz;
   sc2  = tmpvar_3 ;
   vec3 tmpvar_4;
-  tmpvar_4  = _View2Shadow3  * eyePos  .xyz;
+  tmpvar_4  = (_View2Shadow3  * eyePos ) .xyz;
   sc3  = tmpvar_4 ;
   float tmpvar_5;
   tmpvar_5  = eyePos .z;
@@ -65,10 +65,10 @@ float unitySampleShadow (
   tmpvar_13  = tmpvar_12 ;
   far  = tmpvar_13 ;
   vec4 tmpvar_14;
-  tmpvar_14  = near  * far  ;
+  tmpvar_14  = (near  * far ) ;
   weights  = tmpvar_14 ;
   vec4 tmpvar_15;
-  tmpvar_15 .xyz = sc0  * weights .x  + sc1  * weights .y   + sc2  * weights .z   + sc3  * weights .w  ;
+  tmpvar_15 .xyz = ((((sc0  * weights .x)  + (sc1  * weights .y) )  + (sc2  * weights .z) )  + (sc3  * weights .w) ) ;
   tmpvar_15 .w = 1.000000;
   vec4 tmpvar_16;
   tmpvar_16  = tmpvar_15 ;
@@ -76,7 +76,7 @@ float unitySampleShadow (
   vec4 tmpvar_17;
   tmpvar_17  = texture2D (_ShadowMapTexture , coord .xy) ;
   float tmpvar_18;
-  if (tmpvar_17 .x < coord .z ) {
+  if ((tmpvar_17 .x < coord .z) ) {
     tmpvar_18  = _LightShadowData .x;
   } else {
     tmpvar_18  = 1.000000;
@@ -95,7 +95,7 @@ float Linear01Depth (
   in float z
 )
 {
-  return 1.000000 / _ZBufferParams .x * z   + _ZBufferParams .y  ;
+  return (1.000000 / ((_ZBufferParams .x * z )  + _ZBufferParams .y) ) ;
 }
 
 vec2 EncodeFloatRG (
@@ -116,7 +116,7 @@ vec2 EncodeFloatRG (
   kEncodeBit  = tmpvar_2 ;
   vec2 enc;
   vec2 tmpvar_3;
-  tmpvar_3  = kEncodeMul  * v  ;
+  tmpvar_3  = (kEncodeMul  * v ) ;
   enc  = tmpvar_3 ;
   vec2 tmpvar_4;
   tmpvar_4  = fract (enc ) ;
@@ -124,7 +124,7 @@ vec2 EncodeFloatRG (
   tmpvar_5  = tmpvar_4 ;
   enc  = tmpvar_5 ;
   float tmpvar_6;
-  tmpvar_6  = enc .x - enc .y * kEncodeBit   ;
+  tmpvar_6  = (enc .x - (enc .y * kEncodeBit ) ) ;
   enc .x = tmpvar_6 ;
   return enc ;
 }
@@ -152,7 +152,7 @@ vec4 xlat_main (
   tmpvar_4  = tmpvar_3 ;
   depth  = tmpvar_4 ;
   vec4 tmpvar_5;
-  tmpvar_5 .xyz = i .ray  * depth  ;
+  tmpvar_5 .xyz = (i .ray  * depth ) ;
   tmpvar_5 .w = 1.000000;
   vec4 tmpvar_6;
   tmpvar_6  = tmpvar_5 ;
@@ -169,7 +169,7 @@ vec4 xlat_main (
   tmpvar_10  = 1.000000;
   res .y = tmpvar_10 ;
   vec2 tmpvar_11;
-  tmpvar_11  = EncodeFloatRG (1.000000 - depth  ) ;
+  tmpvar_11  = EncodeFloatRG ((1.000000 - depth ) ) ;
   vec2 tmpvar_12;
   tmpvar_12  = tmpvar_11 ;
   res .zw = tmpvar_12 ;

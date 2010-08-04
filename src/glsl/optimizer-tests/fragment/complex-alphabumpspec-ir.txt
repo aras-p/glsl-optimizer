@@ -34,10 +34,10 @@ vec4 UnpackNormal (
 {
   vec4 normal;
   vec2 tmpvar_1;
-  tmpvar_1  = packednormal .wy * 2.000000  - 1.000000 ;
+  tmpvar_1  = ((packednormal .wy * 2.000000)  - 1.000000) ;
   normal .xy = tmpvar_1 ;
   float tmpvar_2;
-  tmpvar_2  = sqrt (1.000000 - normal .x * normal .x   - normal .y * normal .y  ) ;
+  tmpvar_2  = sqrt (((1.000000 - (normal .x * normal .x) )  - (normal .y * normal .y) ) ) ;
   float tmpvar_3;
   tmpvar_3  = tmpvar_2 ;
   normal .z = tmpvar_3 ;
@@ -61,13 +61,13 @@ void surf (
   tmpvar_2  = tmpvar_1 ;
   tex  = tmpvar_2 ;
   vec3 tmpvar_3;
-  tmpvar_3  = tex .xyz * _Color .xyz ;
+  tmpvar_3  = (tex .xyz * _Color .xyz) ;
   o .Albedo  = tmpvar_3 ;
   float tmpvar_4;
   tmpvar_4  = tex .w;
   o .Gloss  = tmpvar_4 ;
   float tmpvar_5;
-  tmpvar_5  = tex .w * _Color .w ;
+  tmpvar_5  = (tex .w * _Color .w) ;
   o .Alpha  = tmpvar_5 ;
   float tmpvar_6;
   tmpvar_6  = _Shininess ;
@@ -103,7 +103,7 @@ vec4 LightingBlinnPhong (
   float spec;
   vec4 c;
   vec3 tmpvar_1;
-  tmpvar_1  = normalize (lightDir  + viewDir  ) ;
+  tmpvar_1  = normalize ((lightDir  + viewDir ) ) ;
   vec3 tmpvar_2;
   tmpvar_2  = tmpvar_1 ;
   h  = tmpvar_2 ;
@@ -122,15 +122,15 @@ vec4 LightingBlinnPhong (
   tmpvar_8  = tmpvar_7 ;
   nh  = tmpvar_8 ;
   float tmpvar_9;
-  tmpvar_9  = pow (nh , s .Specular  * 128.000000 ) ;
+  tmpvar_9  = pow (nh , (s .Specular  * 128.000000) ) ;
   float tmpvar_10;
-  tmpvar_10  = tmpvar_9  * s .Gloss  ;
+  tmpvar_10  = (tmpvar_9  * s .Gloss ) ;
   spec  = tmpvar_10 ;
   vec3 tmpvar_11;
-  tmpvar_11  = s .Albedo  * _LightColor0 .xyz  * diff   + _LightColor0 .xyz * _SpecColor .xyz  * spec    * atten  * 2.000000  ;
+  tmpvar_11  = ((((s .Albedo  * _LightColor0 .xyz)  * diff )  + ((_LightColor0 .xyz * _SpecColor .xyz)  * spec ) )  * (atten  * 2.000000) ) ;
   c .xyz = tmpvar_11 ;
   float tmpvar_12;
-  tmpvar_12  = s .Alpha  + _LightColor0 .w * _SpecColor .w  * spec   * atten   ;
+  tmpvar_12  = (s .Alpha  + (((_LightColor0 .w * _SpecColor .w)  * spec )  * atten ) ) ;
   c .w = tmpvar_12 ;
   return c ;
 }
@@ -182,7 +182,7 @@ vec4 frag_surf (
   tmpvar_12  = tmpvar_11 ;
   c  = tmpvar_12 ;
   vec3 tmpvar_13;
-  tmpvar_13  = c .xyz + o .Albedo  * IN .vlight   ;
+  tmpvar_13  = (c .xyz + (o .Albedo  * IN .vlight ) ) ;
   c .xyz = tmpvar_13 ;
   float tmpvar_14;
   tmpvar_14  = o .Alpha ;

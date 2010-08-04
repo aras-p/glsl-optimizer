@@ -11,7 +11,7 @@ vec4 xlat_main (
 {
   vec4 tmpvar_1;
   tmpvar_1  = texture2D (_FlareTexture , texcoord ) ;
-  return tmpvar_1  * color  ;
+  return (tmpvar_1  * color ) ;
 }
 
 void main ()

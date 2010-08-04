@@ -10,7 +10,7 @@ void main ()
   vec4 tmpvar_8;
   tmpvar_8  = texture2D (_FlareTexture , tmpvar_2 ) ;
   vec4 tmpvar_5;
-  tmpvar_5 .xyzw = tmpvar_8  * color  ;
+  tmpvar_5 .xyzw = (tmpvar_8  * color ) ;
   gl_FragData [0]  = tmpvar_5 ;
 }
 

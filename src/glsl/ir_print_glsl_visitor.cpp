@@ -289,6 +289,7 @@ void ir_print_glsl_visitor::visit(ir_expression *ir)
 		buffer = talloc_asprintf_append(buffer, ")");
 	}
 	else {
+		buffer = talloc_asprintf_append(buffer, "(");
 		if (ir->operands[0])
 			ir->operands[0]->accept(this);
 
@@ -296,6 +297,7 @@ void ir_print_glsl_visitor::visit(ir_expression *ir)
 
 		if (ir->operands[1])
 			ir->operands[1]->accept(this);
+		buffer = talloc_asprintf_append(buffer, ")");
 	}
 	buffer = talloc_asprintf_append(buffer, " ");
 }

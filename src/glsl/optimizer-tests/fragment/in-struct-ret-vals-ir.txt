@@ -16,7 +16,7 @@ vec4 xlat_main (
   tmpvar_1  = i .color ;
   c  = tmpvar_1 ;
   vec2 tmpvar_2;
-  tmpvar_2  = c .xy + i .uv  ;
+  tmpvar_2  = (c .xy + i .uv ) ;
   c .xy = tmpvar_2 ;
   return c ;
 }

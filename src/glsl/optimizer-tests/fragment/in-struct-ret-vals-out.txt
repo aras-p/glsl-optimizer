@@ -17,7 +17,7 @@ void main ()
   vec4 tmpvar_11;
   tmpvar_11  = xlt_i .color ;
   c  = tmpvar_11 ;
-  c .xy = tmpvar_11 .xy + xlt_i .uv  ;
+  c .xy = (tmpvar_11 .xy + xlt_i .uv ) ;
   vec4 tmpvar_8;
   tmpvar_8 .xyzw = c ;
   gl_FragData [0]  = tmpvar_8 ;

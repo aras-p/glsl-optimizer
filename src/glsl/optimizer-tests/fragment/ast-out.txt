@@ -1,6 +1,6 @@
 void main ()
 {
-  if (gl_FragCoord .x == 1.000000 ) {
+  if ((gl_FragCoord .x == 1.000000) ) {
     discard;
   };
   float a;
@@ -8,19 +8,19 @@ void main ()
   int i;
   i  = 0;
   while (true) {
-    if (!(i  < 10 ) ) {
+    if (!((i  < 10) ) ) {
       break;
     };
-    a  = a  + 1.000000 ;
-    i  = i  + 1 ;
+    a  = (a  + 1.000000) ;
+    i  = (i  + 1) ;
   };
   while (true) {
-    a  = a  + 2.000000 ;
+    a  = (a  + 2.000000) ;
     break;
   };
   float tmpvar_8;
-  tmpvar_8  = a  + 1.000000 ;
-  a  = -(tmpvar_8  * tmpvar_8  )  - 1.000000 ;
+  tmpvar_8  = (a  + 1.000000) ;
+  a  = (-((tmpvar_8  * tmpvar_8 ) )  - 1.000000) ;
   float tmpvar_12;
   tmpvar_12  = sqrt (a ) ;
   float tmpvar_14;
