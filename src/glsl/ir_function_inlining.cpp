@@ -119,8 +119,6 @@ replace_return_with_assignment(ir_instruction *ir, void *data)
 static void rename_inlined_variable (ir_variable* new_var, ir_function_signature* func)
 {
 	// go through callee, see if we have any variables that match this one
-	const char* name = new_var->name;
-
 	bool progress;
 	int counter = 0;
 	do
