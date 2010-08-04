@@ -771,6 +771,10 @@ nv_pass_cse(struct nv_pass *ctx, struct nv_basic_block *b)
             if (ik->src[4] || ir->src[4])
                continue; /* don't mess with address registers */
 
+            if (ik->flags_src || ir->flags_src ||
+                ik->flags_def || ir->flags_def)
+               continue; /* and also not with flags, for now */
+
             for (s = 0; s < 3; ++s) {
                struct nv_value *a, *b;
 

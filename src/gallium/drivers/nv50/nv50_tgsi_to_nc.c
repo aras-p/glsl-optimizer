@@ -51,16 +51,22 @@ struct bld_value_stack {
 };
 
 static INLINE void
-bld_push_value(struct bld_value_stack *stk)
+bld_vals_push_val(struct bld_value_stack *stk, struct nv_value *val)
 {
-   assert(!stk->size || (stk->body[stk->size - 1] != stk->top));
+   assert(!stk->size || (stk->body[stk->size - 1] != val));
 
    if (!(stk->size % 8)) {
       unsigned old_sz = (stk->size + 0) * sizeof(struct nv_value *);
       unsigned new_sz = (stk->size + 8) * sizeof(struct nv_value *);
       stk->body = (struct nv_value **)REALLOC(stk->body, old_sz, new_sz);
    }
-   stk->body[stk->size++] = stk->top;
+   stk->body[stk->size++] = val;
+}
+
+static INLINE void
+bld_vals_push(struct bld_value_stack *stk)
+{
+   bld_vals_push_val(stk, stk->top);
    stk->top = NULL;
 }
 
@@ -72,7 +78,7 @@ bld_push_values(struct bld_value_stack *stacks, int n)
    for (i = 0; i < n; ++i)
       for (c = 0; c < 4; ++c)
          if (stacks[i * 4 + c].top)
-            bld_push_value(&stacks[i * 4 + c]);
+            bld_vals_push(&stacks[i * 4 + c]);
 }
 
 #define FETCH_TEMP(i, c)    (bld->tvs[i][c].top)
@@ -121,6 +127,17 @@ struct bld_context {
    uint num_immds;
 };
 
+static INLINE void
+bld_warn_uninitialized(struct bld_context *bld, int kind,
+                       struct bld_value_stack *stk, struct nv_basic_block *b)
+{
+   long i = (stk - &bld->tvs[0][0]) / 4;
+   long c = (stk - &bld->tvs[0][0]) & 3;
+
+   debug_printf("WARNING: TEMP[%li].%li %s used uninitialized in BB:%i\n",
+                i, c, kind ? "may be" : "is", b->id);
+}
+
 static INLINE struct nv_value *
 bld_def(struct nv_instruction *i, int c, struct nv_value *value)
 {
@@ -168,42 +185,91 @@ fetch_by_bb(struct bld_value_stack *stack,
       fetch_by_bb(stack, vals, n, b->in[i]);
 }
 
+static INLINE struct nv_value *
+bld_load_imm_u32(struct bld_context *bld, uint32_t u);
+
 static struct nv_value *
-bld_fetch_global(struct bld_context *bld, struct bld_value_stack *stack)
+bld_phi(struct bld_context *bld, struct nv_basic_block *b,
+        struct bld_value_stack *stack)
 {
-   struct nv_value *vals[16], *phi = NULL;
-   int j, i = 0, n = 0;
+   struct nv_basic_block *in;
+   struct nv_value *vals[16], *val;
+   struct nv_instruction *phi;
+   int i, j, n;
 
-   fetch_by_bb(stack, vals, &n, bld->pc->current_block);
+   do {
+      i = n = 0;
+      fetch_by_bb(stack, vals, &n, b);
 
-   if (n == 0)
-      return NULL;
+      if (!n) {
+         bld_warn_uninitialized(bld, 0, stack, b);
+         return NULL;
+      }
+
+      if (n == 1) {
+         if (nvbb_dominated_by(b, vals[0]->insn->bb))
+            break;
+
+         bld_warn_uninitialized(bld, 1, stack, b);
+
+         /* back-tracking to insert missing value of other path */
+         in = b;
+         while (in->in[0]) {
+            if (in->num_in == 1) {
+               in = in->in[0];
+            } else {
+               if (!nvbb_reachable_by(in->in[0], vals[0]->insn->bb, b)) {
+                  in = in->in[0];
+                  break;
+               }
+               if (!nvbb_reachable_by(in->in[1], vals[0]->insn->bb, b)) {
+                  in = in->in[1];
+                  break;
+               }
+               in = in->in[0];
+            }
+         }
+         bld->pc->current_block = in;
+
+         /* should make this a no-op */
+         bld_vals_push_val(stack, bld_load_imm_u32(bld, 0));
+         continue;
+      }
+
+      for (i = 0; i < n; ++i) {
+         if (nvbb_dominated_by(b, vals[i]->insn->bb))
+            continue;
+
+         for (j = 0; j < b->num_in; ++j)
+            if (nvbb_dominated_by(b->in[j], vals[i]->insn->bb))
+               break;
+         if (j == b->num_in) {
+            in = nvbb_dom_frontier(vals[i]->insn->bb);
+            val = bld_phi(bld, in, stack);
+            bld_vals_push_val(stack, val);
+            break;
+         }
+      }
+   } while(i < n);
+
+   bld->pc->current_block = b;
+
    if (n == 1)
       return vals[0];
 
-   debug_printf("phi required: %i candidates\n", n);
+   phi = new_instruction(bld->pc, NV_OP_PHI);
 
-   while (i < n) {
-      struct nv_instruction *insn = new_instruction(bld->pc, NV_OP_PHI);
+   bld_def(phi, 0, new_value(bld->pc, vals[0]->reg.file, vals[0]->reg.type));
+   for (i = 0; i < n; ++i)
+      phi->src[i] = new_ref(bld->pc, vals[i]);
 
-      j = phi ? 1 : 0;
-      if (phi)
-         insn->src[0] = new_ref(bld->pc, phi);
+   return phi->def[0];
+}
 
-      phi = new_value(bld->pc, vals[0]->reg.file, vals[0]->reg.type);
-
-      bld_def(insn, 0, phi);
-
-      for (; j < 4; ++j) {
-         insn->src[j] = new_ref(bld->pc, vals[i++]);
-         if (i == n)
-            break;
-      }
-      debug_printf("new phi: %i, %i in\n", phi->n, j);
-   }
-
-   /* insert_at_head(list, phi) is done at end of block */
-   return phi;
+static INLINE struct nv_value *
+bld_fetch_global(struct bld_context *bld, struct bld_value_stack *stack)
+{
+   return bld_phi(bld, bld->pc->current_block, stack);
 }
 
 static INLINE struct nv_value *
@@ -640,6 +706,9 @@ bld_new_block(struct bld_context *bld, struct nv_basic_block *b)
 
    for (i = 0; i < 4; ++i)
       bld->saved_addr[i][0] = NULL;
+
+   for (i = 0; i < 128; ++i)
+      bld->saved_inputs[i] = NULL;
 }
 
 static struct nv_value *

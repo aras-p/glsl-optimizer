@@ -426,6 +426,9 @@ void nv_nvi_delete(struct nv_instruction *);
 void nv_nvi_permute(struct nv_instruction *, struct nv_instruction *);
 void nvbb_attach_block(struct nv_basic_block *parent, struct nv_basic_block *);
 int nvbb_dominated_by(struct nv_basic_block *, struct nv_basic_block *);
+boolean nvbb_reachable_by(struct nv_basic_block *, struct nv_basic_block *,
+                          struct nv_basic_block *);
+struct nv_basic_block *nvbb_dom_frontier(struct nv_basic_block *);
 int nvcg_replace_value(struct nv_pc *pc, struct nv_value *old_val,
                        struct nv_value *new_val);
 

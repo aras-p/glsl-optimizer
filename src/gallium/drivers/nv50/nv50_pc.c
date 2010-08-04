@@ -394,7 +394,7 @@ nv_nvi_delete(struct nv_instruction *nvi)
    struct nv_basic_block *b = nvi->bb;
    int j;
 
-   debug_printf("REM: "); nv_print_instruction(nvi);
+   /* debug_printf("REM: "); nv_print_instruction(nvi); */
 
    for (j = 0; j < 5; ++j)
       nv_reference(NULL, &nvi->src[j], NULL);
@@ -477,5 +477,40 @@ nvbb_dominated_by(struct nv_basic_block *b, struct nv_basic_block *d)
    for (j = 0; j < b->num_in; ++j)
       n += nvbb_dominated_by(b->in[j], d);
 
-   return n && (n == b->num_in);
+   return (n && (n == b->num_in)) ? 1 : 0;
+}
+
+/* check if bf (future) can be reached from bp (past) */
+boolean
+nvbb_reachable_by(struct nv_basic_block *bf, struct nv_basic_block *bp,
+                  struct nv_basic_block *bt)
+{
+   if (bf == bp)
+      return TRUE;
+   if (bp == bt)
+      return FALSE;
+
+   if (bp->out[0] && bp->out[0] != bp &&
+       nvbb_reachable_by(bf, bp->out[0], bt))
+      return TRUE;
+   if (bp->out[1] && bp->out[1] != bp &&
+       nvbb_reachable_by(bf, bp->out[1], bt))
+      return TRUE;
+   return FALSE;
+}
+
+struct nv_basic_block *
+nvbb_dom_frontier(struct nv_basic_block *b)
+{
+   struct nv_basic_block *df = b->out[0];
+
+   assert(df);
+   while (nvbb_dominated_by(df, b) ||
+          (!nvbb_dominated_by(df->in[0], b) &&
+           (!df->in[1] || !nvbb_dominated_by(df->in[1], b)))) {
+      df = df->out[0];
+      assert(df);
+   }
+   assert(df);
+   return df;
 }
