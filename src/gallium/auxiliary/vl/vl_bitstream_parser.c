@@ -29,17 +29,58 @@
 #include <assert.h>
 #include <limits.h>
 #include <util/u_memory.h>
+#include <stdio.h>
+
+inline void endian_swap_ushort(unsigned short *x)
+{
+    x[0] = (x[0]>>8) | 
+        (x[0]<<8);
+}
+
+inline void endian_swap_uint(unsigned int *x)
+{
+    x[0] = (x[0]>>24) | 
+        ((x[0]<<8) & 0x00FF0000) |
+        ((x[0]>>8) & 0x0000FF00) |
+        (x[0]<<24);
+}
+
+inline void endian_swap_ulonglong(unsigned long long *x)
+{
+    x[0] = (x[0]>>56) | 
+        ((x[0]<<40) & 0x00FF000000000000) |
+        ((x[0]<<24) & 0x0000FF0000000000) |
+        ((x[0]<<8)  & 0x000000FF00000000) |
+        ((x[0]>>8)  & 0x00000000FF000000) |
+        ((x[0]>>24) & 0x0000000000FF0000) |
+        ((x[0]>>40) & 0x000000000000FF00) |
+        (x[0]<<56);
+}
 
 static unsigned
 grab_bits(unsigned cursor, unsigned how_many_bits, unsigned bitstream_elt)
 {
-   unsigned excess_bits = sizeof(unsigned) * CHAR_BIT - how_many_bits - cursor;
+   unsigned excess_bits = sizeof(unsigned) * CHAR_BIT - how_many_bits;
 	
    assert(cursor < sizeof(unsigned) * CHAR_BIT);
    assert(how_many_bits > 0 && how_many_bits <= sizeof(unsigned) * CHAR_BIT);
    assert(cursor + how_many_bits <= sizeof(unsigned) * CHAR_BIT);
-
-   return (bitstream_elt << excess_bits) >> (excess_bits + cursor);
+   
+   #ifndef PIPE_ARCH_BIG_ENDIAN 
+   switch (sizeof(unsigned))  {
+	   case 2:
+			endian_swap_ushort(&bitstream_elt);
+			break;
+	   case 4:
+			endian_swap_uint(&bitstream_elt);
+			break;
+	   case 8:
+			endian_swap_ulonglong(&bitstream_elt);
+			break;
+   }
+   #endif // !PIPE_ARCH_BIG_ENDIAN 
+   
+	return (bitstream_elt << cursor) >> (excess_bits);
 }
 
 static unsigned
