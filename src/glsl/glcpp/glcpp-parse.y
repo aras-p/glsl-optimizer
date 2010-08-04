@@ -215,7 +215,15 @@ control_line:
 		talloc_free ($2);
 	}
 |	HASH_IF conditional_tokens NEWLINE {
-		_glcpp_parser_expand_if (parser, IF_EXPANDED, $2);
+		/* If we're skipping to the next #elif/#else case or to #endif,
+		 * don't bother expanding or parsing the expression.
+		 */
+		if (parser->skip_stack != NULL && parser->skip_stack->type != SKIP_NO_SKIP) {
+			_glcpp_parser_skip_stack_push_if (parser, & @1, 0);
+			parser->skip_stack->type = SKIP_TO_ENDIF;
+		} else {
+			_glcpp_parser_expand_if (parser, IF_EXPANDED, $2);
+		}
 	}
 |	HASH_IFDEF IDENTIFIER junk NEWLINE {
 		macro_t *macro = hash_table_find (parser->defines, $2);
@@ -228,7 +236,13 @@ control_line:
 		_glcpp_parser_skip_stack_push_if (parser, & @1, macro == NULL);
 	}
 |	HASH_ELIF conditional_tokens NEWLINE {
-		_glcpp_parser_expand_if (parser, ELIF_EXPANDED, $2);
+		/* If we just finished a non-skipped #if/#ifdef/#ifndef block,
+		 * don't bother expanding or parsing the expression.
+		 */
+		if (parser->skip_stack != NULL && parser->skip_stack->type == SKIP_NO_SKIP)
+			parser->skip_stack->type = SKIP_TO_ENDIF;
+		else
+			_glcpp_parser_expand_if (parser, ELIF_EXPANDED, $2);
 	}
 |	HASH_ELIF NEWLINE {
 		/* #elif without an expression results in a warning if the
