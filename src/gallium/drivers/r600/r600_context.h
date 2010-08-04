@@ -76,7 +76,7 @@ struct r600_context_state {
 	union pipe_states		state;
 	unsigned			refcount;
 	unsigned			type;
-	struct radeon_state		*rstate;
+	struct radeon_state		rstate;
 	struct r600_shader		shader;
 	struct radeon_bo		*bo;
 };
@@ -89,28 +89,28 @@ struct r600_vertex_element
 };
 
 struct r600_context_hw_states {
-	struct radeon_state	*rasterizer;
-	struct radeon_state	*scissor;
-	struct radeon_state	*dsa;
-	struct radeon_state	*blend;
-	struct radeon_state	*viewport;
-	struct radeon_state	*cb0;
-	struct radeon_state	*config;
-	struct radeon_state	*cb_cntl;
-	struct radeon_state	*db;
+	struct radeon_state	rasterizer;
+	struct radeon_state	scissor;
+	struct radeon_state	dsa;
+	struct radeon_state	blend;
+	struct radeon_state	viewport;
+	struct radeon_state	cb0;
+	struct radeon_state	config;
+	struct radeon_state	cb_cntl;
+	struct radeon_state	db;
 	unsigned		ps_nresource;
 	unsigned		ps_nsampler;
-	struct radeon_state	*ps_resource[160];
-	struct radeon_state	*ps_sampler[16];
+	struct radeon_state	ps_resource[160];
+	struct radeon_state	ps_sampler[16];
 };
 
 struct r600_context {
 	struct pipe_context		context;
 	struct r600_screen		*screen;
 	struct radeon			*rw;
-	struct radeon_ctx		*ctx;
+	struct radeon_ctx		ctx;
 	struct blitter_context		*blitter;
-	struct radeon_draw		*draw;
+	struct radeon_draw		draw;
 	/* hw states */
 	struct r600_context_hw_states	hw_states;
 	/* pipe states */
@@ -120,6 +120,7 @@ struct r600_context {
 	unsigned			ps_nsampler_view;
 	unsigned			vs_nsampler_view;
 	unsigned			nvertex_buffer;
+	struct radeon_state		config;
 	struct r600_context_state	*rasterizer;
 	struct r600_context_state	*poly_stipple;
 	struct r600_context_state	*scissor;
