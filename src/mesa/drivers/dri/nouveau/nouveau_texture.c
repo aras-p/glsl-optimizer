@@ -183,10 +183,10 @@ teximage_fits(struct gl_texture_object *t, int level)
 	struct nouveau_surface *s = &to_nouveau_texture(t)->surfaces[level];
 	struct gl_texture_image *ti = t->Image[0][level];
 
-	return ti && (t->Target == GL_TEXTURE_RECTANGLE ||
-		      (s->bo && s->width == ti->Width &&
-		       s->height == ti->Height &&
-		       s->format == ti->TexFormat));
+	return ti && to_nouveau_teximage(ti)->surface.bo &&
+		(t->Target == GL_TEXTURE_RECTANGLE ||
+		 (s->bo && s->format == ti->TexFormat &&
+		  s->width == ti->Width && s->height == ti->Height));
 }
 
 static GLboolean
