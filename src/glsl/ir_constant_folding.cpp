@@ -73,7 +73,23 @@ public:
    virtual void visit(ir_loop *);
    virtual void visit(ir_loop_jump *);
    /*@}*/
+
+   void fold_constant(ir_rvalue **rvalue);
 };
+
+void
+ir_constant_folding_visitor::fold_constant(ir_rvalue **rvalue)
+{
+   if ((*rvalue)->ir_type == ir_type_constant)
+      return;
+
+   ir_constant *constant = (*rvalue)->constant_expression_value();
+   if (constant) {
+      *rvalue = constant;
+   } else {
+      (*rvalue)->accept(this);
+   }
+}
 
 void
 ir_constant_folding_visitor::visit(ir_variable *ir)
@@ -101,16 +117,10 @@ ir_constant_folding_visitor::visit(ir_function *ir)
 void
 ir_constant_folding_visitor::visit(ir_expression *ir)
 {
-   ir_constant *op[2];
    unsigned int operand;
 
    for (operand = 0; operand < ir->get_num_operands(); operand++) {
-      op[operand] = ir->operands[operand]->constant_expression_value();
-      if (op[operand]) {
-	 ir->operands[operand] = op[operand];
-      } else {
-	 ir->operands[operand]->accept(this);
-      }
+      fold_constant(&ir->operands[operand]);
    }
 }
 
@@ -140,14 +150,7 @@ ir_constant_folding_visitor::visit(ir_dereference_variable *ir)
 void
 ir_constant_folding_visitor::visit(ir_dereference_array *ir)
 {
-   ir_constant *const_val =
-      ir->array_index->constant_expression_value();
-
-   if (const_val)
-      ir->array_index = const_val;
-   else
-      ir->array_index->accept(this);
-
+   fold_constant(&ir->array_index);
    ir->array->accept(this);
 }
 
@@ -162,17 +165,13 @@ ir_constant_folding_visitor::visit(ir_dereference_record *ir)
 void
 ir_constant_folding_visitor::visit(ir_assignment *ir)
 {
-   ir_constant *const_val = ir->rhs->constant_expression_value();
-   if (const_val)
-      ir->rhs = const_val;
-   else
-      ir->rhs->accept(this);
+   fold_constant(&ir->rhs);
 
    if (ir->condition) {
       /* If the condition is constant, either remove the condition or
        * remove the never-executed assignment.
        */
-      const_val = ir->condition->constant_expression_value();
+      ir_constant *const_val = ir->condition->constant_expression_value();
       if (const_val) {
 	 if (const_val->value.b[0])
 	    ir->condition = NULL;
@@ -214,11 +213,7 @@ ir_constant_folding_visitor::visit(ir_discard *ir)
 void
 ir_constant_folding_visitor::visit(ir_if *ir)
 {
-   ir_constant *const_val = ir->condition->constant_expression_value();
-   if (const_val)
-      ir->condition = const_val;
-   else
-      ir->condition->accept(this);
+   fold_constant(&ir->condition);
 
    visit_exec_list(&ir->then_instructions, this);
    visit_exec_list(&ir->else_instructions, this);
