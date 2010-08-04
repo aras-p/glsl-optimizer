@@ -142,6 +142,11 @@ static bool ReadStringFromFile (const char* pathName, std::string& output)
 	return true;
 }
 
+bool EndsWith (const std::string& str, const std::string& sub)
+{
+	return (str.size() >= sub.size()) && (strncmp (str.c_str()+str.size()-sub.size(), sub.c_str(), sub.size())==0);
+}
+
 typedef std::vector<std::string> StringVector;
 
 static StringVector GetFiles (const std::string& folder, const std::string& endsWith)
