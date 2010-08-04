@@ -657,9 +657,10 @@ dri2_bind_tex_image(Display * dpy,
    struct dri2_drawable *pdraw = (struct dri2_drawable *) base;
    struct dri2_display *pdp =
       (struct dri2_display *) dpyPriv->dri2Display;
-   struct dri2_screen *psc = (struct dri2_screen *) base->psc;
+   struct dri2_screen *psc;
 
    if (pdraw != NULL) {
+      psc = (struct dri2_screen *) base->psc;
 
 #if __DRI2_FLUSH_VERSION >= 3
       if (!pdp->invalidateAvailable && psc->f)
