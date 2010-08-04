@@ -29,7 +29,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-#ifdef _MSC_VER
+#ifdef __cplusplus
 extern "C" {
 #endif
 
@@ -123,7 +123,7 @@ char *talloc_vasprintf_append(char *s, const char *fmt, va_list ap) PRINTF_ATTRI
 char *talloc_asprintf(const void *t, const char *fmt, ...) PRINTF_ATTRIBUTE(2,3);
 char *talloc_asprintf_append(char *s, const char *fmt, ...) PRINTF_ATTRIBUTE(2,3);
 
-#ifdef _MSC_VER
+#ifdef __cplusplus
 }
 #endif
 

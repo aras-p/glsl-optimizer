@@ -37,6 +37,8 @@
 #define TALLOC_MIN(a,b) ((a)<(b)?(a):(b))
 #ifdef _MSC_VER
 typedef size_t ssize_t;
+#endif
+#ifdef __cplusplus
 extern "C" {
 #endif
 
@@ -1220,6 +1222,6 @@ int talloc_is_parent(const void *context, const void *ptr)
 	return 0;
 }
 
-#ifdef _MSC_VER
+#ifdef __cplusplus
 }
 #endif
