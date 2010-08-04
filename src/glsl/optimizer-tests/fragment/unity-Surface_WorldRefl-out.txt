@@ -1,0 +1,71 @@
+struct SurfaceOutput {
+  vec3 Albedo;
+  vec3 Normal;
+  vec3 Emission;
+  float Specular;
+  float Gloss;
+  float Alpha;
+};
+struct Input {
+  vec3 worldRefl;
+};
+struct v2f_surf {
+  vec4 pos;
+  float fog;
+  vec3 worldRefl;
+  vec3 normal;
+  vec3 lightDir;
+};
+uniform samplerCube _Cube;
+uniform vec4 _LightColor0;
+varying vec4 xlv_FOG;
+void main ()
+{
+  v2f_surf xlt_IN;
+  xlt_IN.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
+  xlt_IN.fog = xlv_FOG.x;
+  vec3 tmpvar_3;
+  tmpvar_3.xyz = vec3(gl_TexCoord[0]);
+  xlt_IN.worldRefl = tmpvar_3;
+  vec3 tmpvar_5;
+  tmpvar_5.xyz = vec3(gl_TexCoord[1]);
+  xlt_IN.normal = tmpvar_5;
+  vec3 tmpvar_7;
+  tmpvar_7.xyz = vec3(gl_TexCoord[2]);
+  xlt_IN.lightDir = tmpvar_7;
+  v2f_surf IN;
+  IN = xlt_IN;
+  Input surfIN;
+  SurfaceOutput o;
+  vec4 c;
+  surfIN.worldRefl = xlt_IN.worldRefl;
+  o.Albedo = vec3 (0.000000, 0.000000, 0.000000);
+  o.Emission = vec3 (0.000000, 0.000000, 0.000000);
+  o.Specular = 0.000000;
+  o.Alpha = 0.000000;
+  o.Gloss = 0.000000;
+  o.Normal = xlt_IN.normal;
+  Input IN_i0;
+  IN_i0 = surfIN;
+  SurfaceOutput o_i0;
+  o_i0 = o;
+  vec4 tmpvar_29;
+  tmpvar_29 = textureCube (_Cube, IN_i0.worldRefl);
+  o_i0.Albedo = tmpvar_29.xyz;
+  o = o_i0;
+  SurfaceOutput s;
+  s = o_i0;
+  vec4 c_i0;
+  float tmpvar_34;
+  tmpvar_34 = dot (s.Normal, IN.lightDir);
+  float tmpvar_35;
+  tmpvar_35 = max (0.000000, tmpvar_34);
+  c_i0.xyz = ((s.Albedo * _LightColor0.xyz) * (tmpvar_35 * 2.000000));
+  c_i0.w = s.Alpha;
+  c = c_i0;
+  c.w = 0.000000;
+  vec4 tmpvar_11;
+  tmpvar_11.xyzw = c;
+  gl_FragData[0] = tmpvar_11;
+}
+

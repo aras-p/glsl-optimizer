@@ -1,0 +1,39 @@
+struct v2f_img {
+  vec4 pos;
+  vec2 uv;
+};
+uniform sampler2D _MainTex;
+uniform sampler2D _RampTex;
+void main ()
+{
+  v2f_img xlt_i;
+  xlt_i.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
+  vec2 tmpvar_2;
+  tmpvar_2.xy = vec2(gl_TexCoord[0]);
+  xlt_i.uv = tmpvar_2;
+  v2f_img i;
+  i = xlt_i;
+  vec4 orig;
+  float rr;
+  float gg;
+  vec4 tmpvar_9;
+  tmpvar_9 = texture2D (_MainTex, i.uv);
+  orig = tmpvar_9;
+  vec4 tmpvar_11;
+  tmpvar_11 = texture2D (_RampTex, orig.xx);
+  rr = (tmpvar_11.x + 0.000010);
+  vec4 tmpvar_13;
+  tmpvar_13 = texture2D (_RampTex, orig.yy);
+  gg = (tmpvar_13.y + 0.000020);
+  vec4 tmpvar_15;
+  tmpvar_15 = texture2D (_RampTex, orig.zz);
+  vec4 tmpvar_17;
+  tmpvar_17.x = rr;
+  tmpvar_17.y = gg;
+  tmpvar_17.z = (tmpvar_15.z + 0.000030);
+  tmpvar_17.w = orig.w;
+  vec4 tmpvar_6;
+  tmpvar_6.xyzw = tmpvar_17;
+  gl_FragData[0] = tmpvar_6;
+}
+

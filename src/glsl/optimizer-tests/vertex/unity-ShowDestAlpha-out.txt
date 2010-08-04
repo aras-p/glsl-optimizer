@@ -1,0 +1,19 @@
+struct v2f {
+  vec4 vertex;
+};
+struct appdata_t {
+  vec4 vertex;
+};
+void main ()
+{
+  appdata_t xlt_v;
+  vec4 tmpvar_1;
+  tmpvar_1.xyzw = gl_Vertex;
+  xlt_v.vertex = tmpvar_1;
+  v2f o;
+  o.vertex = (gl_ModelViewProjectionMatrix * xlt_v.vertex);
+  vec4 tmpvar_5;
+  tmpvar_5.xyzw = o.vertex;
+  gl_Position = tmpvar_5;
+}
+

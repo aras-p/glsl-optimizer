@@ -1,0 +1,83 @@
+struct SurfaceOutput {
+  vec3 Albedo;
+  vec3 Normal;
+  vec3 Emission;
+  float Specular;
+  float Gloss;
+  float Alpha;
+};
+struct Input {
+  vec2 uv_MainTex;
+  vec2 uv_DecalTex;
+};
+struct v2f_surf {
+  vec4 pos;
+  float fog;
+  vec4 hip_pack0;
+  vec4 hip_screen;
+};
+uniform vec4 _Color;
+uniform sampler2D _DecalTex;
+uniform sampler2D _LightBuffer;
+uniform sampler2D _MainTex;
+uniform vec4 unity_Ambient;
+varying vec4 xlv_FOG;
+void main ()
+{
+  v2f_surf xlt_IN;
+  xlt_IN.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
+  xlt_IN.fog = xlv_FOG.x;
+  vec4 tmpvar_3;
+  tmpvar_3.xyzw = gl_TexCoord[0];
+  xlt_IN.hip_pack0 = tmpvar_3;
+  vec4 tmpvar_5;
+  tmpvar_5.xyzw = gl_TexCoord[1];
+  xlt_IN.hip_screen = tmpvar_5;
+  v2f_surf IN;
+  IN = xlt_IN;
+  Input surfIN;
+  SurfaceOutput o;
+  vec4 light;
+  surfIN.uv_MainTex = xlt_IN.hip_pack0.xy;
+  surfIN.uv_DecalTex = xlt_IN.hip_pack0.zw;
+  o.Albedo = vec3 (0.000000, 0.000000, 0.000000);
+  o.Emission = vec3 (0.000000, 0.000000, 0.000000);
+  o.Specular = 0.000000;
+  o.Alpha = 0.000000;
+  o.Gloss = 0.000000;
+  Input IN_i0;
+  IN_i0 = surfIN;
+  SurfaceOutput o_i0;
+  o_i0 = o;
+  vec4 c;
+  vec4 tmpvar_32;
+  tmpvar_32 = texture2D (_MainTex, IN_i0.uv_MainTex);
+  c = tmpvar_32;
+  vec4 tmpvar_34;
+  tmpvar_34 = texture2D (_DecalTex, IN_i0.uv_DecalTex);
+  vec3 tmpvar_37;
+  tmpvar_37 = mix (c.xyz, tmpvar_34.xyz, tmpvar_34.www);
+  c.xyz = tmpvar_37;
+  vec4 tmpvar_39;
+  tmpvar_39 = (c * _Color);
+  c = tmpvar_39;
+  o_i0.Albedo = tmpvar_39.xyz;
+  o_i0.Alpha = tmpvar_39.w;
+  o = o_i0;
+  vec4 tmpvar_42;
+  tmpvar_42 = texture2DProj (_LightBuffer, IN.hip_screen);
+  light = tmpvar_42;
+  vec4 tmpvar_44;
+  tmpvar_44 = log2 (light);
+  vec4 tmpvar_45;
+  tmpvar_45 = -(tmpvar_44);
+  light = tmpvar_45;
+  light.xyz = (tmpvar_45.xyz + unity_Ambient.xyz);
+  vec4 c_i0;
+  c_i0.xyz = (o.Albedo * light.xyz);
+  c_i0.w = o.Alpha;
+  vec4 tmpvar_9;
+  tmpvar_9.xyzw = c_i0;
+  gl_FragData[0] = tmpvar_9;
+}
+

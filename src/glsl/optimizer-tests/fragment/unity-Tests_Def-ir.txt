@@ -1,0 +1,93 @@
+struct SurfaceOutput {
+  vec3 Albedo;
+  vec3 Normal;
+  vec3 Emission;
+  float Specular;
+  float Gloss;
+  float Alpha;
+};
+struct Input {
+  vec2 uv_MainTex;
+};
+struct v2f_surf {
+  vec4 pos;
+  vec3 normal;
+};
+void surf (
+  in Input IN,
+  inout SurfaceOutput o
+);
+
+void surf (
+  in Input IN,
+  inout SurfaceOutput o
+)
+{
+  vec3 tmpvar_1;
+  tmpvar_1 = vec3 (1.000000, 0.000000, 0.000000);
+  o.Emission = tmpvar_1;
+}
+
+vec4 frag_surf (
+  in v2f_surf IN
+);
+
+vec4 frag_surf (
+  in v2f_surf IN
+)
+{
+  SurfaceOutput o;
+  Input surfIN;
+  vec4 res;
+  vec3 tmpvar_1;
+  tmpvar_1 = vec3 (0.000000, 0.000000, 0.000000);
+  o.Albedo = tmpvar_1;
+  vec3 tmpvar_2;
+  tmpvar_2 = vec3 (0.000000, 0.000000, 0.000000);
+  o.Emission = tmpvar_2;
+  float tmpvar_3;
+  tmpvar_3 = 0.000000;
+  o.Specular = tmpvar_3;
+  float tmpvar_4;
+  tmpvar_4 = 0.000000;
+  o.Alpha = tmpvar_4;
+  float tmpvar_5;
+  tmpvar_5 = 0.000000;
+  o.Gloss = tmpvar_5;
+  vec3 tmpvar_6;
+  tmpvar_6 = IN.normal;
+  o.Normal = tmpvar_6;
+  surf (surfIN, o);
+  vec3 tmpvar_7;
+  tmpvar_7 = ((o.Normal * vec3 (0.500000, 0.500000, -0.500000)) + 0.500000);
+  res.xyz = tmpvar_7;
+  float tmpvar_8;
+  tmpvar_8 = o.Specular;
+  res.w = tmpvar_8;
+  return res;
+}
+
+void main ()
+{
+  vec4 xl_retval;
+  v2f_surf xlt_IN;
+  vec4 tmpvar_1;
+  tmpvar_1 = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
+  xlt_IN.pos = tmpvar_1;
+  vec3 tmpvar_2;
+  tmpvar_2.xyz = vec3(gl_TexCoord[0]);
+  vec3 tmpvar_3;
+  tmpvar_3 = tmpvar_2;
+  xlt_IN.normal = tmpvar_3;
+  vec4 tmpvar_4;
+  tmpvar_4 = frag_surf (xlt_IN);
+  vec4 tmpvar_5;
+  tmpvar_5 = tmpvar_4;
+  xl_retval = tmpvar_5;
+  vec4 tmpvar_6;
+  tmpvar_6.xyzw = xl_retval;
+  vec4 tmpvar_7;
+  tmpvar_7 = tmpvar_6;
+  gl_FragData[0] = tmpvar_7;
+}
+

@@ -1,0 +1,60 @@
+struct v2f {
+  vec4 vertex;
+  vec4 uvgrab;
+  vec2 uvbump;
+  vec2 uvmain;
+};
+struct appdata_t {
+  vec4 vertex;
+  vec2 texcoord;
+};
+void main ()
+{
+  appdata_t xlt_v;
+  vec4 tmpvar_1;
+  tmpvar_1.xyzw = gl_Vertex;
+  xlt_v.vertex = tmpvar_1;
+  vec2 tmpvar_3;
+  tmpvar_3.xy = vec2(gl_MultiTexCoord0);
+  xlt_v.texcoord = tmpvar_3;
+  v2f o;
+  o.vertex = (gl_ModelViewProjectionMatrix * xlt_v.vertex);
+  vec2 tmpvar_26;
+  tmpvar_26.x = o.vertex.x;
+  tmpvar_26.y = o.vertex.y;
+  o.uvgrab.xy = ((tmpvar_26 + o.vertex.w) * 0.500000);
+  o.uvgrab.zw = o.vertex.zw;
+  vec2 inUV;
+  inUV = xlt_v.texcoord;
+  vec4 tmpvar_31;
+  tmpvar_31.x = inUV.x;
+  tmpvar_31.y = inUV.y;
+  tmpvar_31.z = 0.000000;
+  tmpvar_31.w = 0.000000;
+  o.uvbump = (gl_TextureMatrix[1] * tmpvar_31).xy;
+  vec2 inUV_i0;
+  inUV_i0 = xlt_v.texcoord;
+  vec4 tmpvar_37;
+  tmpvar_37.x = inUV_i0.x;
+  tmpvar_37.y = inUV_i0.y;
+  tmpvar_37.z = 0.000000;
+  tmpvar_37.w = 0.000000;
+  o.uvmain = (gl_TextureMatrix[2] * tmpvar_37).xy;
+  vec4 tmpvar_7;
+  tmpvar_7.xyzw = o.vertex;
+  gl_Position = tmpvar_7;
+  vec4 tmpvar_9;
+  tmpvar_9.xyzw = o.uvgrab;
+  gl_TexCoord[0] = tmpvar_9;
+  vec4 tmpvar_11;
+  tmpvar_11.xy = o.uvbump;
+  tmpvar_11.z = 0.000000;
+  tmpvar_11.w = 0.000000;
+  gl_TexCoord[1] = tmpvar_11;
+  vec4 tmpvar_13;
+  tmpvar_13.xy = o.uvmain;
+  tmpvar_13.z = 0.000000;
+  tmpvar_13.w = 0.000000;
+  gl_TexCoord[2] = tmpvar_13;
+}
+

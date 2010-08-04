@@ -1,0 +1,30 @@
+struct v2f {
+  vec4 pos;
+  vec2[2] uv;
+};
+uniform sampler2D _AdaptTex;
+uniform sampler2D _MainTex;
+void main ()
+{
+  v2f xlt_i;
+  xlt_i.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
+  vec2 tmpvar_2;
+  tmpvar_2.xy = vec2(gl_TexCoord[0]);
+  xlt_i.uv[0] = tmpvar_2;
+  vec2 tmpvar_4;
+  tmpvar_4.xy = vec2(gl_TexCoord[1]);
+  xlt_i.uv[1] = tmpvar_4;
+  v2f i;
+  i = xlt_i;
+  vec4 col;
+  vec4 tmpvar_11;
+  tmpvar_11 = texture2D (_MainTex, i.uv[0]);
+  col = tmpvar_11;
+  vec4 tmpvar_13;
+  tmpvar_13 = texture2D (_AdaptTex, i.uv[1]);
+  col.xyz = ((col.xyz * 1.0/(tmpvar_13.z)) + -(tmpvar_13.w));
+  vec4 tmpvar_8;
+  tmpvar_8.xyzw = col;
+  gl_FragData[0] = tmpvar_8;
+}
+

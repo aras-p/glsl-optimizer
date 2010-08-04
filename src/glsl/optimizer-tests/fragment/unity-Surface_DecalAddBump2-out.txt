@@ -1,0 +1,72 @@
+struct SurfaceOutput {
+  vec3 Albedo;
+  vec3 Normal;
+  vec3 Emission;
+  float Specular;
+  float Gloss;
+  float Alpha;
+};
+struct Input {
+  vec2 uv_Decal;
+  vec2 uv_DecalBump;
+};
+struct v2f_surf {
+  vec4 pos;
+  float fog;
+  vec4 hip_pack0;
+  vec2 hip_lmap;
+};
+uniform sampler2D _Decal;
+uniform sampler2D _DecalBump;
+uniform sampler2D unity_Lightmap;
+varying vec4 xlv_FOG;
+void main ()
+{
+  v2f_surf xlt_IN;
+  xlt_IN.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
+  xlt_IN.fog = xlv_FOG.x;
+  vec4 tmpvar_3;
+  tmpvar_3.xyzw = gl_TexCoord[0];
+  xlt_IN.hip_pack0 = tmpvar_3;
+  vec2 tmpvar_5;
+  tmpvar_5.xy = vec2(gl_TexCoord[1]);
+  xlt_IN.hip_lmap = tmpvar_5;
+  v2f_surf IN;
+  IN = xlt_IN;
+  Input surfIN;
+  SurfaceOutput o;
+  vec4 c;
+  surfIN.uv_Decal = xlt_IN.hip_pack0.xy;
+  surfIN.uv_DecalBump = xlt_IN.hip_pack0.zw;
+  o.Albedo = vec3 (0.000000, 0.000000, 0.000000);
+  o.Emission = vec3 (0.000000, 0.000000, 0.000000);
+  o.Specular = 0.000000;
+  o.Alpha = 0.000000;
+  o.Gloss = 0.000000;
+  Input IN_i0;
+  IN_i0 = surfIN;
+  SurfaceOutput o_i0;
+  o_i0 = o;
+  vec4 tmpvar_35;
+  tmpvar_35 = texture2D (_Decal, IN_i0.uv_Decal);
+  o_i0.Albedo = (tmpvar_35.xyz * 0.500000);
+  vec4 tmpvar_37;
+  tmpvar_37 = texture2D (_DecalBump, IN_i0.uv_DecalBump);
+  vec4 normal;
+  normal.xy = ((tmpvar_37.wy * 2.000000) - 1.000000);
+  float tmpvar_41;
+  tmpvar_41 = sqrt (((1.000000 - (normal.x * normal.x)) - (normal.y * normal.y)));
+  normal.z = tmpvar_41;
+  vec3 tmpvar_43;
+  tmpvar_43.xyz = vec3(normal);
+  o_i0.Normal = tmpvar_43;
+  o = o_i0;
+  vec4 tmpvar_45;
+  tmpvar_45 = texture2D (unity_Lightmap, IN.hip_lmap.xy);
+  c.xyz = (o.Albedo * (2.000000 * tmpvar_45.xyz));
+  c.w = o.Alpha;
+  vec4 tmpvar_9;
+  tmpvar_9.xyzw = c;
+  gl_FragData[0] = tmpvar_9;
+}
+

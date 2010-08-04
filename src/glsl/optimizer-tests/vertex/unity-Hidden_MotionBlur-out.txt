@@ -1,0 +1,31 @@
+struct v2f {
+  vec4 vertex;
+  vec2 texcoord;
+};
+struct appdata_t {
+  vec4 vertex;
+  vec2 texcoord;
+};
+uniform vec4 _MainTex_ST;
+void main ()
+{
+  appdata_t xlt_v;
+  vec4 tmpvar_1;
+  tmpvar_1.xyzw = gl_Vertex;
+  xlt_v.vertex = tmpvar_1;
+  vec2 tmpvar_3;
+  tmpvar_3.xy = vec2(gl_MultiTexCoord0);
+  xlt_v.texcoord = tmpvar_3;
+  v2f o;
+  o.vertex = (gl_ModelViewProjectionMatrix * xlt_v.vertex);
+  o.texcoord = ((xlt_v.texcoord.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
+  vec4 tmpvar_7;
+  tmpvar_7.xyzw = o.vertex;
+  gl_Position = tmpvar_7;
+  vec4 tmpvar_9;
+  tmpvar_9.xy = o.texcoord;
+  tmpvar_9.z = 0.000000;
+  tmpvar_9.w = 0.000000;
+  gl_TexCoord[0] = tmpvar_9;
+}
+

@@ -1,0 +1,92 @@
+struct SurfaceOutput {
+  vec3 Albedo;
+  vec3 Normal;
+  vec3 Emission;
+  float Specular;
+  float Gloss;
+  float Alpha;
+};
+struct Input {
+  vec2 uv_MainTex;
+};
+struct v2f_surf {
+  vec4 pos;
+  float fog;
+  vec2 hip_pack0;
+  vec3 normal;
+  vec3 vlight;
+  vec4 _ShadowCoord;
+};
+uniform vec4 _Color;
+uniform float _Cutoff;
+uniform vec4 _LightColor0;
+uniform sampler2D _MainTex;
+uniform sampler2D _ShadowMapTexture;
+uniform vec4 _WorldSpaceLightPos0;
+varying vec4 xlv_FOG;
+void main ()
+{
+  v2f_surf xlt_IN;
+  xlt_IN.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
+  xlt_IN.fog = xlv_FOG.x;
+  vec2 tmpvar_3;
+  tmpvar_3.xy = vec2(gl_TexCoord[0]);
+  xlt_IN.hip_pack0 = tmpvar_3;
+  vec3 tmpvar_5;
+  tmpvar_5.xyz = vec3(gl_TexCoord[1]);
+  xlt_IN.normal = tmpvar_5;
+  vec3 tmpvar_7;
+  tmpvar_7.xyz = vec3(gl_TexCoord[2]);
+  xlt_IN.vlight = tmpvar_7;
+  vec4 tmpvar_9;
+  tmpvar_9.xyzw = gl_TexCoord[3];
+  xlt_IN._ShadowCoord = tmpvar_9;
+  v2f_surf IN;
+  IN = xlt_IN;
+  Input surfIN;
+  SurfaceOutput o;
+  vec4 c;
+  surfIN.uv_MainTex = xlt_IN.hip_pack0.xy;
+  o.Albedo = vec3 (0.000000, 0.000000, 0.000000);
+  o.Emission = vec3 (0.000000, 0.000000, 0.000000);
+  o.Specular = 0.000000;
+  o.Alpha = 0.000000;
+  o.Gloss = 0.000000;
+  o.Normal = xlt_IN.normal;
+  Input IN_i0;
+  IN_i0 = surfIN;
+  SurfaceOutput o_i0;
+  o_i0 = o;
+  vec4 tmpvar_36;
+  tmpvar_36 = texture2D (_MainTex, IN_i0.uv_MainTex);
+  vec4 tmpvar_37;
+  tmpvar_37 = (tmpvar_36 * _Color);
+  o_i0.Albedo = tmpvar_37.xyz;
+  o_i0.Alpha = tmpvar_37.w;
+  o = o_i0;
+  float x;
+  x = (o_i0.Alpha - _Cutoff);
+  if ((x < 0.000000)) {
+    discard;
+  };
+  vec4 tmpvar_42;
+  tmpvar_42 = texture2DProj (_ShadowMapTexture, IN._ShadowCoord);
+  SurfaceOutput s;
+  s = o;
+  float atten_i0;
+  atten_i0 = tmpvar_42.x;
+  vec4 c_i0_i1;
+  float tmpvar_47;
+  tmpvar_47 = dot (s.Normal, _WorldSpaceLightPos0.xyz);
+  float tmpvar_48;
+  tmpvar_48 = max (0.000000, tmpvar_47);
+  c_i0_i1.xyz = ((s.Albedo * _LightColor0.xyz) * ((tmpvar_48 * atten_i0) * 2.000000));
+  c_i0_i1.w = s.Alpha;
+  c = c_i0_i1;
+  c.xyz = (c_i0_i1.xyz + (o.Albedo * IN.vlight));
+  c.w = o.Alpha;
+  vec4 tmpvar_13;
+  tmpvar_13.xyzw = c;
+  gl_FragData[0] = tmpvar_13;
+}
+

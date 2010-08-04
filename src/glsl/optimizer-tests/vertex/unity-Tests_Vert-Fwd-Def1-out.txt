@@ -1,0 +1,74 @@
+struct v2f_surf {
+  vec4 pos;
+  float fog;
+  vec4 hip_screen;
+};
+struct appdata_full {
+  vec4 vertex;
+  vec4 tangent;
+  vec3 normal;
+  vec4 texcoord;
+  vec4 texcoord1;
+  vec4 color;
+};
+uniform vec4 _ProjectionParams;
+attribute vec4 TANGENT;
+varying vec4 xlv_FOG;
+void main ()
+{
+  appdata_full xlt_v;
+  vec4 tmpvar_1;
+  tmpvar_1.xyzw = gl_Vertex;
+  xlt_v.vertex = tmpvar_1;
+  vec4 tmpvar_3;
+  tmpvar_3.xyzw = TANGENT;
+  xlt_v.tangent = tmpvar_3;
+  vec3 tmpvar_5;
+  tmpvar_5.xyz = gl_Normal;
+  xlt_v.normal = tmpvar_5;
+  vec4 tmpvar_7;
+  tmpvar_7.xyzw = gl_MultiTexCoord0;
+  xlt_v.texcoord = tmpvar_7;
+  vec4 tmpvar_9;
+  tmpvar_9.xyzw = gl_MultiTexCoord1;
+  xlt_v.texcoord1 = tmpvar_9;
+  vec4 tmpvar_11;
+  tmpvar_11.xyzw = gl_Color;
+  xlt_v.color = tmpvar_11;
+  v2f_surf o;
+  vec4 pos;
+  float fog;
+  vec4 tmpvar_29;
+  tmpvar_29 = (gl_ModelViewProjectionMatrix * xlt_v.vertex);
+  pos = tmpvar_29;
+  float tmpvar_30;
+  tmpvar_30 = tmpvar_29.z;
+  fog = tmpvar_30;
+  o.pos = tmpvar_29;
+  o.fog = tmpvar_30;
+  vec4 pos_i0;
+  pos_i0 = o.pos;
+  vec4 o_i0;
+  vec4 tmpvar_33;
+  tmpvar_33 = (pos_i0 * 0.500000);
+  o_i0 = tmpvar_33;
+  vec2 tmpvar_34;
+  tmpvar_34.x = tmpvar_33.x;
+  tmpvar_34.y = (tmpvar_33.y * _ProjectionParams.x);
+  o_i0.xy = (tmpvar_34 + tmpvar_33.w);
+  o_i0.zw = pos_i0.zw;
+  o.hip_screen = o_i0;
+  vec4 tmpvar_15;
+  tmpvar_15.xyzw = o.pos;
+  gl_Position = tmpvar_15;
+  vec4 tmpvar_17;
+  tmpvar_17.x = o.fog;
+  tmpvar_17.y = 0.000000;
+  tmpvar_17.z = 0.000000;
+  tmpvar_17.w = 0.000000;
+  xlv_FOG = tmpvar_17;
+  vec4 tmpvar_19;
+  tmpvar_19.xyzw = o.hip_screen;
+  gl_TexCoord[0] = tmpvar_19;
+}
+

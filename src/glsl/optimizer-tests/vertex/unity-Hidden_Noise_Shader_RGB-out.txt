@@ -1,0 +1,53 @@
+struct appdata_img {
+  vec4 vertex;
+  vec2 texcoord;
+};
+struct v2f {
+  vec4 pos;
+  vec2 uv;
+  vec2 uvg;
+  vec2 uvs;
+};
+uniform vec4 _GrainOffsetScale;
+uniform vec4 _ScratchOffsetScale;
+void main ()
+{
+  appdata_img xlt_v;
+  vec4 tmpvar_1;
+  tmpvar_1.xyzw = gl_Vertex;
+  xlt_v.vertex = tmpvar_1;
+  vec2 tmpvar_3;
+  tmpvar_3.xy = vec2(gl_MultiTexCoord0);
+  xlt_v.texcoord = tmpvar_3;
+  v2f o;
+  o.pos = (gl_ModelViewProjectionMatrix * xlt_v.vertex);
+  vec2 inUV;
+  inUV = xlt_v.texcoord;
+  vec4 tmpvar_23;
+  tmpvar_23.x = inUV.x;
+  tmpvar_23.y = inUV.y;
+  tmpvar_23.z = 0.000000;
+  tmpvar_23.w = 0.000000;
+  o.uv = (gl_TextureMatrix[0] * tmpvar_23).xy;
+  o.uvg = ((xlt_v.texcoord.xy * _GrainOffsetScale.zw) + _GrainOffsetScale.xy);
+  o.uvs = ((xlt_v.texcoord.xy * _ScratchOffsetScale.zw) + _ScratchOffsetScale.xy);
+  vec4 tmpvar_7;
+  tmpvar_7.xyzw = o.pos;
+  gl_Position = tmpvar_7;
+  vec4 tmpvar_9;
+  tmpvar_9.xy = o.uv;
+  tmpvar_9.z = 0.000000;
+  tmpvar_9.w = 0.000000;
+  gl_TexCoord[0] = tmpvar_9;
+  vec4 tmpvar_11;
+  tmpvar_11.xy = o.uvg;
+  tmpvar_11.z = 0.000000;
+  tmpvar_11.w = 0.000000;
+  gl_TexCoord[1] = tmpvar_11;
+  vec4 tmpvar_13;
+  tmpvar_13.xy = o.uvs;
+  tmpvar_13.z = 0.000000;
+  tmpvar_13.w = 0.000000;
+  gl_TexCoord[2] = tmpvar_13;
+}
+

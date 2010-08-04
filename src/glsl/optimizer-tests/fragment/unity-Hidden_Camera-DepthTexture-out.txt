@@ -1,0 +1,26 @@
+struct v2f {
+  vec4 pos;
+  vec2 uv;
+};
+uniform sampler2D _MainTex;
+void main ()
+{
+  v2f xlt_i;
+  xlt_i.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
+  vec2 tmpvar_2;
+  tmpvar_2.xy = vec2(gl_TexCoord[0]);
+  xlt_i.uv = tmpvar_2;
+  v2f i;
+  i = xlt_i;
+  vec4 tmpvar_9;
+  tmpvar_9 = texture2D (_MainTex, i.uv);
+  float x;
+  x = (tmpvar_9.w - 0.001000);
+  if ((x < 0.000000)) {
+    discard;
+  };
+  vec4 tmpvar_6;
+  tmpvar_6.xyzw = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
+  gl_FragData[0] = tmpvar_6;
+}
+

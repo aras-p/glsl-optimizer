@@ -1,0 +1,71 @@
+struct v2f {
+  vec4 pos;
+  float fog;
+  vec2[2] bumpuv;
+  vec3 viewDir;
+};
+struct appdata {
+  vec4 vertex;
+  vec3 normal;
+};
+uniform vec4 _WaveOffset;
+uniform float _WaveScale;
+uniform mat4 _World2Object;
+uniform vec3 _WorldSpaceCameraPos;
+uniform vec4 unity_Scale;
+varying vec4 xlv_FOG;
+void main ()
+{
+  appdata xlt_v;
+  vec4 tmpvar_1;
+  tmpvar_1.xyzw = gl_Vertex;
+  xlt_v.vertex = tmpvar_1;
+  vec3 tmpvar_3;
+  tmpvar_3.xyz = gl_Normal;
+  xlt_v.normal = tmpvar_3;
+  v2f o;
+  vec4 temp;
+  vec4 pos;
+  float fog;
+  vec4 tmpvar_23;
+  tmpvar_23 = (gl_ModelViewProjectionMatrix * xlt_v.vertex);
+  pos = tmpvar_23;
+  float tmpvar_24;
+  tmpvar_24 = tmpvar_23.z;
+  fog = tmpvar_24;
+  o.pos = tmpvar_23;
+  o.fog = tmpvar_24;
+  temp.xyzw = ((xlt_v.vertex.xzxz * _WaveScale) + _WaveOffset);
+  o.bumpuv[0] = (temp.xy * vec2 (0.400000, 0.450000));
+  o.bumpuv[1] = temp.wz;
+  vec4 tmpvar_30;
+  tmpvar_30.xyz = _WorldSpaceCameraPos.xyz;
+  tmpvar_30.w = 1.000000;
+  vec3 tmpvar_32;
+  tmpvar_32 = normalize ((((_World2Object * tmpvar_30).xyz * unity_Scale.w) - xlt_v.vertex.xyz));
+  o.viewDir.xzy = tmpvar_32;
+  vec4 tmpvar_7;
+  tmpvar_7.xyzw = o.pos;
+  gl_Position = tmpvar_7;
+  vec4 tmpvar_9;
+  tmpvar_9.x = o.fog;
+  tmpvar_9.y = 0.000000;
+  tmpvar_9.z = 0.000000;
+  tmpvar_9.w = 0.000000;
+  xlv_FOG = tmpvar_9;
+  vec4 tmpvar_11;
+  tmpvar_11.xy = o.bumpuv[0];
+  tmpvar_11.z = 0.000000;
+  tmpvar_11.w = 0.000000;
+  gl_TexCoord[0] = tmpvar_11;
+  vec4 tmpvar_13;
+  tmpvar_13.xy = o.bumpuv[1];
+  tmpvar_13.z = 0.000000;
+  tmpvar_13.w = 0.000000;
+  gl_TexCoord[1] = tmpvar_13;
+  vec4 tmpvar_15;
+  tmpvar_15.xyz = o.viewDir;
+  tmpvar_15.w = 0.000000;
+  gl_TexCoord[2] = tmpvar_15;
+}
+

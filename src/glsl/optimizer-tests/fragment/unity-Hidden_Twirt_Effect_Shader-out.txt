@@ -1,0 +1,41 @@
+struct v2f {
+  vec4 pos;
+  vec2 uv;
+};
+uniform vec4 _CenterRadius;
+uniform sampler2D _MainTex;
+uniform mat4 _RotationMatrix;
+void main ()
+{
+  v2f xlt_i;
+  xlt_i.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
+  vec2 tmpvar_2;
+  tmpvar_2.xy = vec2(gl_TexCoord[0]);
+  xlt_i.uv = tmpvar_2;
+  vec2 offset;
+  vec2 distortedOffset;
+  vec2 tmpvar_13;
+  tmpvar_13 = xlt_i.uv;
+  offset = tmpvar_13;
+  vec2 inUV;
+  inUV = tmpvar_13.xy;
+  vec4 tmpvar_16;
+  tmpvar_16.x = inUV.x;
+  tmpvar_16.y = inUV.y;
+  tmpvar_16.z = 0.000000;
+  tmpvar_16.w = 0.000000;
+  distortedOffset = (_RotationMatrix * tmpvar_16).xy;
+  float tmpvar_21;
+  tmpvar_21 = length ((tmpvar_13 / _CenterRadius.zw));
+  float tmpvar_22;
+  tmpvar_22 = min (1.000000, tmpvar_21);
+  vec2 tmpvar_25;
+  tmpvar_25 = mix (distortedOffset, offset, tmpvar_22.xx);
+  offset = (tmpvar_25 + _CenterRadius.xy);
+  vec4 tmpvar_28;
+  tmpvar_28 = texture2D (_MainTex, offset);
+  vec4 tmpvar_6;
+  tmpvar_6.xyzw = tmpvar_28;
+  gl_FragData[0] = tmpvar_6;
+}
+

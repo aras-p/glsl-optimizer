@@ -1,0 +1,53 @@
+struct v2f_img {
+  vec4 pos;
+  vec2 uv;
+};
+uniform vec4 _AdaptParams;
+uniform sampler2D _CurTex;
+uniform sampler2D _MainTex;
+void main ()
+{
+  v2f_img xlt_i;
+  xlt_i.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
+  vec2 tmpvar_2;
+  tmpvar_2.xy = vec2(gl_TexCoord[0]);
+  xlt_i.uv = tmpvar_2;
+  v2f_img i;
+  i = xlt_i;
+  vec2 valAdapted;
+  vec2 delta;
+  vec4 valNew;
+  vec4 tmpvar_9;
+  tmpvar_9 = texture2D (_MainTex, i.uv);
+  valAdapted = tmpvar_9.xy;
+  vec4 tmpvar_11;
+  tmpvar_11 = texture2D (_CurTex, i.uv);
+  delta = ((tmpvar_11.xy - valAdapted) * _AdaptParams.x);
+  float tmpvar_14;
+  tmpvar_14 = sign (delta.x);
+  float tmpvar_15;
+  tmpvar_15 = abs (delta.x);
+  float tmpvar_16;
+  tmpvar_16 = max (0.003922, tmpvar_15);
+  delta.x = (tmpvar_14 * tmpvar_16);
+  float tmpvar_18;
+  tmpvar_18 = sign (delta.y);
+  float tmpvar_19;
+  tmpvar_19 = abs (delta.y);
+  float tmpvar_20;
+  tmpvar_20 = max (0.003922, tmpvar_19);
+  delta.y = (tmpvar_18 * tmpvar_20);
+  valNew.xy = (valAdapted + delta);
+  float tmpvar_23;
+  tmpvar_23 = max (valNew.x, _AdaptParams.z);
+  valNew.x = tmpvar_23;
+  float tmpvar_25;
+  tmpvar_25 = min (valNew.y, _AdaptParams.y);
+  valNew.y = tmpvar_25;
+  valNew.z = ((valNew.x - valNew.y) + 0.010000);
+  valNew.w = (valNew.y / valNew.z);
+  vec4 tmpvar_6;
+  tmpvar_6.xyzw = valNew;
+  gl_FragData[0] = tmpvar_6;
+}
+

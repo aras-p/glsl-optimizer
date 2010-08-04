@@ -1,0 +1,77 @@
+struct SurfaceOutput {
+  vec3 Albedo;
+  vec3 Normal;
+  vec3 Emission;
+  float Specular;
+  float Gloss;
+  float Alpha;
+};
+struct Input {
+  vec3 foo;
+};
+struct v2f_surf {
+  vec4 pos;
+  float fog;
+  vec3 cust_foo;
+  vec3 normal;
+  vec3 lightDir;
+  vec2 _LightCoord;
+};
+uniform vec4 _LightColor0;
+uniform sampler2D _LightTexture0;
+varying vec4 xlv_FOG;
+void main ()
+{
+  v2f_surf xlt_IN;
+  xlt_IN.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
+  xlt_IN.fog = xlv_FOG.x;
+  vec3 tmpvar_3;
+  tmpvar_3.xyz = vec3(gl_TexCoord[0]);
+  xlt_IN.cust_foo = tmpvar_3;
+  vec3 tmpvar_5;
+  tmpvar_5.xyz = vec3(gl_TexCoord[1]);
+  xlt_IN.normal = tmpvar_5;
+  vec3 tmpvar_7;
+  tmpvar_7.xyz = vec3(gl_TexCoord[2]);
+  xlt_IN.lightDir = tmpvar_7;
+  vec2 tmpvar_9;
+  tmpvar_9.xy = vec2(gl_TexCoord[3]);
+  xlt_IN._LightCoord = tmpvar_9;
+  v2f_surf IN;
+  IN = xlt_IN;
+  Input surfIN;
+  SurfaceOutput o;
+  vec3 lightDir;
+  vec4 c;
+  surfIN.foo = xlt_IN.cust_foo;
+  o.Albedo = vec3 (0.000000, 0.000000, 0.000000);
+  o.Emission = vec3 (0.000000, 0.000000, 0.000000);
+  o.Specular = 0.000000;
+  o.Alpha = 0.000000;
+  o.Gloss = 0.000000;
+  o.Normal = xlt_IN.normal;
+  SurfaceOutput o_i0;
+  o_i0 = o;
+  o_i0.Albedo = surfIN.foo;
+  o = o_i0;
+  lightDir = xlt_IN.lightDir;
+  vec4 tmpvar_32;
+  tmpvar_32 = texture2D (_LightTexture0, IN._LightCoord);
+  SurfaceOutput s;
+  s = o;
+  float atten;
+  atten = tmpvar_32.w;
+  vec4 c_i0;
+  float tmpvar_35;
+  tmpvar_35 = dot (s.Normal, lightDir);
+  float tmpvar_36;
+  tmpvar_36 = max (0.000000, tmpvar_35);
+  c_i0.xyz = ((s.Albedo * _LightColor0.xyz) * ((tmpvar_36 * atten) * 2.000000));
+  c_i0.w = s.Alpha;
+  c = c_i0;
+  c.w = 0.000000;
+  vec4 tmpvar_13;
+  tmpvar_13.xyzw = c;
+  gl_FragData[0] = tmpvar_13;
+}
+

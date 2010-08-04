@@ -1,0 +1,150 @@
+struct SurfaceOutput {
+  vec3 Albedo;
+  vec3 Normal;
+  vec3 Emission;
+  float Specular;
+  float Gloss;
+  float Alpha;
+};
+struct Input {
+  vec2 uv_MainTex;
+};
+struct v2f_surf {
+  vec4 pos;
+  vec3 vec;
+  vec2 hip_pack0;
+};
+void xll_clip (
+  in float x
+)
+{
+  if ((x < 0.000000)) {
+    discard;
+  };
+}
+
+uniform vec4 _Color;
+uniform float _Cutoff;
+uniform vec4 _LightPositionRange;
+uniform sampler2D _MainTex;
+void surf (
+  in Input IN,
+  inout SurfaceOutput o
+);
+
+void surf (
+  in Input IN,
+  inout SurfaceOutput o
+)
+{
+  vec4 c;
+  vec4 tmpvar_1;
+  tmpvar_1 = texture2D (_MainTex, IN.uv_MainTex);
+  vec4 tmpvar_2;
+  tmpvar_2 = (tmpvar_1 * _Color);
+  c = tmpvar_2;
+  vec3 tmpvar_3;
+  tmpvar_3 = c.xyz;
+  o.Albedo = tmpvar_3;
+  float tmpvar_4;
+  tmpvar_4 = c.w;
+  o.Alpha = tmpvar_4;
+}
+
+vec4 EncodeFloatRGBA (
+  in float v
+);
+
+vec4 EncodeFloatRGBA (
+  in float v
+)
+{
+  vec4 kEncodeMul;
+  vec4 tmpvar_1;
+  tmpvar_1 = vec4 (1.000000, 255.000000, 65025.000000, 160580992.000000);
+  kEncodeMul = tmpvar_1;
+  float kEncodeBit;
+  float tmpvar_2;
+  tmpvar_2 = 0.003922;
+  kEncodeBit = tmpvar_2;
+  vec4 enc;
+  vec4 tmpvar_3;
+  tmpvar_3 = (kEncodeMul * v);
+  enc = tmpvar_3;
+  vec4 tmpvar_4;
+  tmpvar_4 = fract (enc);
+  vec4 tmpvar_5;
+  tmpvar_5 = tmpvar_4;
+  enc = tmpvar_5;
+  vec4 tmpvar_6;
+  tmpvar_6 = (enc - (enc.yzww * kEncodeBit));
+  enc = tmpvar_6;
+  return enc;
+}
+
+vec4 frag_surf (
+  in v2f_surf IN
+);
+
+vec4 frag_surf (
+  in v2f_surf IN
+)
+{
+  Input surfIN;
+  SurfaceOutput o;
+  vec2 tmpvar_1;
+  tmpvar_1 = IN.hip_pack0.xy;
+  surfIN.uv_MainTex = tmpvar_1;
+  vec3 tmpvar_2;
+  tmpvar_2 = vec3 (0.000000, 0.000000, 0.000000);
+  o.Albedo = tmpvar_2;
+  vec3 tmpvar_3;
+  tmpvar_3 = vec3 (0.000000, 0.000000, 0.000000);
+  o.Emission = tmpvar_3;
+  float tmpvar_4;
+  tmpvar_4 = 0.000000;
+  o.Specular = tmpvar_4;
+  float tmpvar_5;
+  tmpvar_5 = 0.000000;
+  o.Alpha = tmpvar_5;
+  float tmpvar_6;
+  tmpvar_6 = 0.000000;
+  o.Gloss = tmpvar_6;
+  surf (surfIN, o);
+  xll_clip ((o.Alpha - _Cutoff));
+  float tmpvar_7;
+  tmpvar_7 = length (IN.vec);
+  vec4 tmpvar_8;
+  tmpvar_8 = EncodeFloatRGBA ((tmpvar_7 * _LightPositionRange.w));
+  return tmpvar_8;
+}
+
+void main ()
+{
+  vec4 xl_retval;
+  v2f_surf xlt_IN;
+  vec4 tmpvar_1;
+  tmpvar_1 = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
+  xlt_IN.pos = tmpvar_1;
+  vec3 tmpvar_2;
+  tmpvar_2.xyz = vec3(gl_TexCoord[0]);
+  vec3 tmpvar_3;
+  tmpvar_3 = tmpvar_2;
+  xlt_IN.vec = tmpvar_3;
+  vec2 tmpvar_4;
+  tmpvar_4.xy = vec2(gl_TexCoord[1]);
+  vec2 tmpvar_5;
+  tmpvar_5 = tmpvar_4;
+  xlt_IN.hip_pack0 = tmpvar_5;
+  vec4 tmpvar_6;
+  tmpvar_6 = frag_surf (xlt_IN);
+  vec4 tmpvar_7;
+  tmpvar_7 = tmpvar_6;
+  xl_retval = tmpvar_7;
+  vec4 tmpvar_8;
+  tmpvar_8.xyzw = xl_retval;
+  vec4 tmpvar_9;
+  tmpvar_9 = tmpvar_8;
+  gl_FragData[0] = tmpvar_9;
+}
+

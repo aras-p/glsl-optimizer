@@ -1,0 +1,61 @@
+struct v2f {
+  vec4 pos;
+  float fog;
+  vec4 color;
+  vec2 texcoord;
+};
+struct appdata {
+  vec4 vertex;
+  vec3 normal;
+  vec4 color;
+  vec2 texcoord;
+};
+varying vec4 xlv_FOG;
+void main ()
+{
+  appdata xlt_v;
+  vec4 tmpvar_1;
+  tmpvar_1.xyzw = gl_Vertex;
+  xlt_v.vertex = tmpvar_1;
+  vec3 tmpvar_3;
+  tmpvar_3.xyz = gl_Normal;
+  xlt_v.normal = tmpvar_3;
+  vec4 tmpvar_5;
+  tmpvar_5.xyzw = gl_Color;
+  xlt_v.color = tmpvar_5;
+  vec2 tmpvar_7;
+  tmpvar_7.xy = vec2(gl_MultiTexCoord0);
+  xlt_v.texcoord = tmpvar_7;
+  v2f o;
+  vec4 pos;
+  float fog;
+  vec4 tmpvar_22;
+  tmpvar_22 = (gl_ModelViewProjectionMatrix * xlt_v.vertex);
+  pos = tmpvar_22;
+  float tmpvar_23;
+  tmpvar_23 = tmpvar_22.z;
+  fog = tmpvar_23;
+  o.pos = tmpvar_22;
+  o.fog = tmpvar_23;
+  o.color.xyz = ((xlt_v.color.xyz + (xlt_v.normal * 0.300000)) * 0.500000);
+  o.color.w = 1.000000;
+  o.texcoord = xlt_v.texcoord;
+  vec4 tmpvar_11;
+  tmpvar_11.xyzw = o.pos;
+  gl_Position = tmpvar_11;
+  vec4 tmpvar_13;
+  tmpvar_13.x = o.fog;
+  tmpvar_13.y = 0.000000;
+  tmpvar_13.z = 0.000000;
+  tmpvar_13.w = 0.000000;
+  xlv_FOG = tmpvar_13;
+  vec4 tmpvar_15;
+  tmpvar_15.xyzw = o.color;
+  gl_FrontColor = tmpvar_15;
+  vec4 tmpvar_17;
+  tmpvar_17.xy = o.texcoord;
+  tmpvar_17.z = 0.000000;
+  tmpvar_17.w = 0.000000;
+  gl_TexCoord[0] = tmpvar_17;
+}
+

@@ -1,0 +1,52 @@
+struct MySurfaceOutput {
+  vec3 Albedo;
+  vec3 Normal;
+  vec3 Emission;
+  float Specular;
+  vec3 GlossColor;
+  float Alpha;
+};
+struct Input {
+  vec2 uv_MainTex;
+  vec2 uv_SpecMap;
+};
+struct v2f_surf {
+  vec4 pos;
+  vec3 normal;
+};
+uniform sampler2D _MainTex;
+uniform sampler2D _SpecMap;
+void main ()
+{
+  v2f_surf xlt_IN;
+  xlt_IN.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
+  vec3 tmpvar_2;
+  tmpvar_2.xyz = vec3(gl_TexCoord[0]);
+  xlt_IN.normal = tmpvar_2;
+  MySurfaceOutput o;
+  Input surfIN;
+  vec4 res;
+  o.Albedo = vec3 (0.000000, 0.000000, 0.000000);
+  o.Emission = vec3 (0.000000, 0.000000, 0.000000);
+  o.Specular = 0.000000;
+  o.Alpha = 0.000000;
+  o.Normal = xlt_IN.normal;
+  Input IN_i0;
+  IN_i0 = surfIN;
+  MySurfaceOutput o_i0;
+  o_i0 = o;
+  vec4 tmpvar_20;
+  tmpvar_20 = texture2D (_MainTex, IN_i0.uv_MainTex);
+  o_i0.Albedo = (tmpvar_20.xyz * 0.300000);
+  vec4 tmpvar_22;
+  tmpvar_22 = texture2D (_SpecMap, IN_i0.uv_SpecMap);
+  o_i0.GlossColor = tmpvar_22.xyz;
+  o_i0.Specular = 0.250000;
+  o = o_i0;
+  res.xyz = ((o_i0.Normal * vec3 (0.500000, 0.500000, -0.500000)) + 0.500000);
+  res.w = o_i0.Specular;
+  vec4 tmpvar_6;
+  tmpvar_6.xyzw = res;
+  gl_FragData[0] = tmpvar_6;
+}
+

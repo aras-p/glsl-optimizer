@@ -1,0 +1,89 @@
+struct v2f {
+  vec4 pos;
+  vec2 uv;
+};
+struct appdata_base {
+  vec4 vertex;
+  vec3 normal;
+  vec4 texcoord;
+};
+vec4 xll_tex2Dlod (
+  in sampler2D s,
+  in vec4 coord
+)
+{
+  vec4 tmpvar_1;
+  tmpvar_1 = texture2DLod (s, coord.xy, coord.w);
+  return tmpvar_1;
+}
+
+uniform sampler2D _MainTex;
+v2f vert (
+  in appdata_base v
+);
+
+v2f vert (
+  in appdata_base v
+)
+{
+  vec4 tex;
+  v2f o;
+  vec4 tmpvar_1;
+  tmpvar_1.xy = v.texcoord.xy;
+  tmpvar_1.z = 0.000000;
+  tmpvar_1.w = 0.000000;
+  vec4 tmpvar_2;
+  tmpvar_2 = xll_tex2Dlod (_MainTex, tmpvar_1);
+  vec4 tmpvar_3;
+  tmpvar_3 = tmpvar_2;
+  tex = tmpvar_3;
+  float tmpvar_4;
+  tmpvar_4 = (v.vertex.y + (tex.x * 2.000000));
+  v.vertex.y = tmpvar_4;
+  vec4 tmpvar_5;
+  tmpvar_5 = (gl_ModelViewProjectionMatrix * v.vertex);
+  o.pos = tmpvar_5;
+  vec2 tmpvar_6;
+  tmpvar_6 = v.texcoord.xy;
+  o.uv = tmpvar_6;
+  return o;
+}
+
+void main ()
+{
+  v2f xl_retval;
+  appdata_base xlt_v;
+  vec4 tmpvar_1;
+  tmpvar_1.xyzw = gl_Vertex;
+  vec4 tmpvar_2;
+  tmpvar_2 = tmpvar_1;
+  xlt_v.vertex = tmpvar_2;
+  vec3 tmpvar_3;
+  tmpvar_3.xyz = gl_Normal;
+  vec3 tmpvar_4;
+  tmpvar_4 = tmpvar_3;
+  xlt_v.normal = tmpvar_4;
+  vec4 tmpvar_5;
+  tmpvar_5.xyzw = gl_MultiTexCoord0;
+  vec4 tmpvar_6;
+  tmpvar_6 = tmpvar_5;
+  xlt_v.texcoord = tmpvar_6;
+  v2f tmpvar_7;
+  tmpvar_7 = vert (xlt_v);
+  v2f tmpvar_8;
+  tmpvar_8 = tmpvar_7;
+  xl_retval = tmpvar_8;
+  vec4 tmpvar_9;
+  tmpvar_9.xyzw = xl_retval.pos;
+  vec4 tmpvar_10;
+  tmpvar_10 = tmpvar_9;
+  gl_Position = tmpvar_10;
+  vec4 tmpvar_11;
+  tmpvar_11.xy = xl_retval.uv;
+  tmpvar_11.z = 0.000000;
+  tmpvar_11.w = 0.000000;
+  vec4 tmpvar_12;
+  tmpvar_12 = tmpvar_11;
+  gl_TexCoord[0] = tmpvar_12;
+}
+

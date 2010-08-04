@@ -1,0 +1,23 @@
+struct v2f {
+  vec4 vertex;
+  vec2 uv;
+};
+void main ()
+{
+  vec4 tmpvar_1;
+  tmpvar_1.xyzw = gl_Vertex;
+  vec2 tmpvar_2;
+  tmpvar_2.xy = vec2(gl_MultiTexCoord0);
+  v2f o;
+  o.vertex = (gl_ModelViewProjectionMatrix * tmpvar_1);
+  o.uv = tmpvar_2;
+  vec4 tmpvar_5;
+  tmpvar_5.xyzw = o.vertex;
+  gl_Position = tmpvar_5;
+  vec4 tmpvar_7;
+  tmpvar_7.xy = o.uv;
+  tmpvar_7.z = 0.000000;
+  tmpvar_7.w = 0.000000;
+  gl_TexCoord[0] = tmpvar_7;
+}
+

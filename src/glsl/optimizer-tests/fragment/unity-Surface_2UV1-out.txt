@@ -1,0 +1,73 @@
+struct SurfaceOutput {
+  vec3 Albedo;
+  vec3 Normal;
+  vec3 Emission;
+  float Specular;
+  float Gloss;
+  float Alpha;
+};
+struct Input {
+  vec2 uv_MainTex;
+  vec2 uv2_Detail;
+};
+struct v2f_surf {
+  vec4 pos;
+  float fog;
+  vec4 hip_pack0;
+  vec4 hip_screen;
+};
+uniform sampler2D _Detail;
+uniform sampler2D _LightBuffer;
+uniform sampler2D _MainTex;
+uniform vec4 unity_Ambient;
+varying vec4 xlv_FOG;
+void main ()
+{
+  v2f_surf xlt_IN;
+  xlt_IN.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
+  xlt_IN.fog = xlv_FOG.x;
+  vec4 tmpvar_3;
+  tmpvar_3.xyzw = gl_TexCoord[0];
+  xlt_IN.hip_pack0 = tmpvar_3;
+  vec4 tmpvar_5;
+  tmpvar_5.xyzw = gl_TexCoord[1];
+  xlt_IN.hip_screen = tmpvar_5;
+  v2f_surf IN;
+  IN = xlt_IN;
+  Input surfIN;
+  SurfaceOutput o;
+  vec4 light;
+  surfIN.uv_MainTex = xlt_IN.hip_pack0.xy;
+  surfIN.uv2_Detail = xlt_IN.hip_pack0.zw;
+  o.Albedo = vec3 (0.000000, 0.000000, 0.000000);
+  o.Emission = vec3 (0.000000, 0.000000, 0.000000);
+  o.Specular = 0.000000;
+  o.Alpha = 0.000000;
+  o.Gloss = 0.000000;
+  Input IN_i0;
+  IN_i0 = surfIN;
+  SurfaceOutput o_i0;
+  o_i0 = o;
+  vec4 tmpvar_25;
+  tmpvar_25 = texture2D (_MainTex, IN_i0.uv_MainTex);
+  vec4 tmpvar_26;
+  tmpvar_26 = texture2D (_Detail, IN_i0.uv2_Detail);
+  o_i0.Albedo = ((tmpvar_25.xyz * tmpvar_26.xyz) * 2.000000);
+  o = o_i0;
+  vec4 tmpvar_28;
+  tmpvar_28 = texture2DProj (_LightBuffer, IN.hip_screen);
+  light = tmpvar_28;
+  vec4 tmpvar_30;
+  tmpvar_30 = log2 (light);
+  vec4 tmpvar_31;
+  tmpvar_31 = -(tmpvar_30);
+  light = tmpvar_31;
+  light.xyz = (tmpvar_31.xyz + unity_Ambient.xyz);
+  vec4 c;
+  c.xyz = (o.Albedo * light.xyz);
+  c.w = o.Alpha;
+  vec4 tmpvar_9;
+  tmpvar_9.xyzw = c;
+  gl_FragData[0] = tmpvar_9;
+}
+

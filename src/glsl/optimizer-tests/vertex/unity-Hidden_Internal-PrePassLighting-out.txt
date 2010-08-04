@@ -1,0 +1,51 @@
+struct v2f {
+  vec4 pos;
+  vec4 uv;
+  vec3 ray;
+};
+struct appdata {
+  vec4 vertex;
+  vec3 texcoord;
+};
+uniform vec4 _ProjectionParams;
+void main ()
+{
+  appdata xlt_v;
+  vec4 tmpvar_1;
+  tmpvar_1.xyzw = gl_Vertex;
+  xlt_v.vertex = tmpvar_1;
+  vec3 tmpvar_3;
+  tmpvar_3.xyz = vec3(gl_MultiTexCoord0);
+  xlt_v.texcoord = tmpvar_3;
+  appdata v;
+  v = xlt_v;
+  v2f o;
+  o.pos = (gl_ModelViewProjectionMatrix * xlt_v.vertex);
+  vec4 pos;
+  pos = o.pos;
+  vec4 o_i0;
+  vec4 tmpvar_22;
+  tmpvar_22 = (pos * 0.500000);
+  o_i0 = tmpvar_22;
+  vec2 tmpvar_23;
+  tmpvar_23.x = tmpvar_22.x;
+  tmpvar_23.y = (tmpvar_22.y * _ProjectionParams.x);
+  o_i0.xy = (tmpvar_23 + tmpvar_22.w);
+  o_i0.zw = pos.zw;
+  o.uv = o_i0;
+  o.ray = ((gl_ModelViewMatrix * xlt_v.vertex).xyz * vec3 (-1.000000, -1.000000, 1.000000));
+  vec3 tmpvar_29;
+  tmpvar_29 = mix (o.ray, v.texcoord, (float)((xlt_v.texcoord.z != 0.000000)).xxx);
+  o.ray = tmpvar_29;
+  vec4 tmpvar_7;
+  tmpvar_7.xyzw = o.pos;
+  gl_Position = tmpvar_7;
+  vec4 tmpvar_9;
+  tmpvar_9.xyzw = o.uv;
+  gl_TexCoord[0] = tmpvar_9;
+  vec4 tmpvar_11;
+  tmpvar_11.xyz = o.ray;
+  tmpvar_11.w = 0.000000;
+  gl_TexCoord[1] = tmpvar_11;
+}
+

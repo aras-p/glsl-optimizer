@@ -1,0 +1,50 @@
+struct v2f {
+  vec4 pos;
+  vec2 uv;
+  vec2 uvOrig;
+};
+uniform float _Angle;
+uniform vec4 _CenterRadius;
+uniform sampler2D _MainTex;
+void main ()
+{
+  v2f xlt_i;
+  xlt_i.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
+  vec2 tmpvar_2;
+  tmpvar_2.xy = vec2(gl_TexCoord[0]);
+  xlt_i.uv = tmpvar_2;
+  vec2 tmpvar_4;
+  tmpvar_4.xy = vec2(gl_TexCoord[1]);
+  xlt_i.uvOrig = tmpvar_4;
+  vec2 offset;
+  float angle;
+  vec2 uv;
+  offset = xlt_i.uvOrig;
+  float tmpvar_16;
+  tmpvar_16 = length ((offset / _CenterRadius.zw));
+  angle = (1.000000 - tmpvar_16);
+  float tmpvar_18;
+  tmpvar_18 = max (0.000000, angle);
+  float tmpvar_20;
+  tmpvar_20 = ((tmpvar_18 * tmpvar_18) * _Angle);
+  angle = tmpvar_20;
+  float x;
+  x = tmpvar_20;
+  float s;
+  float c;
+  float tmpvar_21;
+  tmpvar_21 = sin (x);
+  s = tmpvar_21;
+  float tmpvar_23;
+  tmpvar_23 = cos (x);
+  c = tmpvar_23;
+  uv.x = ((tmpvar_23 * offset.x) - (s * offset.y));
+  uv.y = ((s * offset.x) + (tmpvar_23 * offset.y));
+  uv = (uv + _CenterRadius.xy);
+  vec4 tmpvar_28;
+  tmpvar_28 = texture2D (_MainTex, uv);
+  vec4 tmpvar_8;
+  tmpvar_8.xyzw = tmpvar_28;
+  gl_FragData[0] = tmpvar_8;
+}
+

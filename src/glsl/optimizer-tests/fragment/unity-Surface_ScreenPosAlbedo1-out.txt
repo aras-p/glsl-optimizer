@@ -1,0 +1,66 @@
+struct SurfaceOutput {
+  vec3 Albedo;
+  vec3 Normal;
+  vec3 Emission;
+  float Specular;
+  float Gloss;
+  float Alpha;
+};
+struct Input {
+  vec4 screenPos;
+};
+struct v2f_surf {
+  vec4 pos;
+  float fog;
+  vec4 hip_screenPos;
+  vec4 hip_screen;
+};
+uniform sampler2D _LightBuffer;
+uniform sampler2D _MainTex;
+uniform vec4 unity_Ambient;
+varying vec4 xlv_FOG;
+void main ()
+{
+  v2f_surf xlt_IN;
+  xlt_IN.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
+  xlt_IN.fog = xlv_FOG.x;
+  vec4 tmpvar_3;
+  tmpvar_3.xyzw = gl_TexCoord[0];
+  xlt_IN.hip_screenPos = tmpvar_3;
+  vec4 tmpvar_5;
+  tmpvar_5.xyzw = gl_TexCoord[1];
+  xlt_IN.hip_screen = tmpvar_5;
+  v2f_surf IN;
+  IN = xlt_IN;
+  Input surfIN;
+  SurfaceOutput o;
+  vec4 light;
+  surfIN.screenPos = xlt_IN.hip_screenPos;
+  o.Albedo = vec3 (0.000000, 0.000000, 0.000000);
+  o.Emission = vec3 (0.000000, 0.000000, 0.000000);
+  o.Specular = 0.000000;
+  o.Alpha = 0.000000;
+  o.Gloss = 0.000000;
+  SurfaceOutput o_i0;
+  o_i0 = o;
+  vec4 tmpvar_27;
+  tmpvar_27 = texture2D (_MainTex, ((surfIN.screenPos.xy / surfIN.screenPos.w) * vec2 (2.000000, 1.000000)));
+  o_i0.Albedo = tmpvar_27.xyz;
+  o = o_i0;
+  vec4 tmpvar_29;
+  tmpvar_29 = texture2DProj (_LightBuffer, IN.hip_screen);
+  light = tmpvar_29;
+  vec4 tmpvar_31;
+  tmpvar_31 = log2 (light);
+  vec4 tmpvar_32;
+  tmpvar_32 = -(tmpvar_31);
+  light = tmpvar_32;
+  light.xyz = (tmpvar_32.xyz + unity_Ambient.xyz);
+  vec4 c;
+  c.xyz = (o.Albedo * light.xyz);
+  c.w = o.Alpha;
+  vec4 tmpvar_9;
+  tmpvar_9.xyzw = c;
+  gl_FragData[0] = tmpvar_9;
+}
+

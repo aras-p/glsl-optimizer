@@ -1,0 +1,96 @@
+struct v2f_img {
+  vec4 pos;
+  vec2 uv;
+};
+uniform vec4 _AdaptParams;
+uniform sampler2D _CurTex;
+uniform sampler2D _MainTex;
+vec4 frag (
+  in v2f_img i
+);
+
+vec4 frag (
+  in v2f_img i
+)
+{
+  vec2 valAdapted;
+  vec2 valCur;
+  vec2 delta;
+  vec4 valNew;
+  vec4 tmpvar_1;
+  tmpvar_1 = texture2D (_MainTex, i.uv);
+  vec2 tmpvar_2;
+  tmpvar_2 = tmpvar_1.xy;
+  valAdapted = tmpvar_2;
+  vec4 tmpvar_3;
+  tmpvar_3 = texture2D (_CurTex, i.uv);
+  vec2 tmpvar_4;
+  tmpvar_4 = tmpvar_3.xy;
+  valCur = tmpvar_4;
+  vec2 tmpvar_5;
+  tmpvar_5 = ((valCur - valAdapted) * _AdaptParams.x);
+  delta = tmpvar_5;
+  float tmpvar_6;
+  tmpvar_6 = sign (delta.x);
+  float tmpvar_7;
+  tmpvar_7 = abs (delta.x);
+  float tmpvar_8;
+  tmpvar_8 = max (0.003922, tmpvar_7);
+  float tmpvar_9;
+  tmpvar_9 = (tmpvar_6 * tmpvar_8);
+  delta.x = tmpvar_9;
+  float tmpvar_10;
+  tmpvar_10 = sign (delta.y);
+  float tmpvar_11;
+  tmpvar_11 = abs (delta.y);
+  float tmpvar_12;
+  tmpvar_12 = max (0.003922, tmpvar_11);
+  float tmpvar_13;
+  tmpvar_13 = (tmpvar_10 * tmpvar_12);
+  delta.y = tmpvar_13;
+  vec2 tmpvar_14;
+  tmpvar_14 = (valAdapted + delta);
+  valNew.xy = tmpvar_14;
+  float tmpvar_15;
+  tmpvar_15 = max (valNew.x, _AdaptParams.z);
+  float tmpvar_16;
+  tmpvar_16 = tmpvar_15;
+  valNew.x = tmpvar_16;
+  float tmpvar_17;
+  tmpvar_17 = min (valNew.y, _AdaptParams.y);
+  float tmpvar_18;
+  tmpvar_18 = tmpvar_17;
+  valNew.y = tmpvar_18;
+  float tmpvar_19;
+  tmpvar_19 = ((valNew.x - valNew.y) + 0.010000);
+  valNew.z = tmpvar_19;
+  float tmpvar_20;
+  tmpvar_20 = (valNew.y / valNew.z);
+  valNew.w = tmpvar_20;
+  return valNew;
+}
+
+void main ()
+{
+  vec4 xl_retval;
+  v2f_img xlt_i;
+  vec4 tmpvar_1;
+  tmpvar_1 = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
+  xlt_i.pos = tmpvar_1;
+  vec2 tmpvar_2;
+  tmpvar_2.xy = vec2(gl_TexCoord[0]);
+  vec2 tmpvar_3;
+  tmpvar_3 = tmpvar_2;
+  xlt_i.uv = tmpvar_3;
+  vec4 tmpvar_4;
+  tmpvar_4 = frag (xlt_i);
+  vec4 tmpvar_5;
+  tmpvar_5 = tmpvar_4;
+  xl_retval = tmpvar_5;
+  vec4 tmpvar_6;
+  tmpvar_6.xyzw = xl_retval;
+  vec4 tmpvar_7;
+  tmpvar_7 = tmpvar_6;
+  gl_FragData[0] = tmpvar_7;
+}
+

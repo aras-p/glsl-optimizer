@@ -1,0 +1,142 @@
+struct v2f {
+  vec4 pos;
+  vec4 uv;
+  vec3 ray;
+};
+uniform sampler2D _CameraDepthTexture;
+uniform sampler2D _CameraNormalsTexture;
+uniform vec4 _LightColor;
+uniform vec4 _LightPos;
+uniform vec4 _LightPositionRange;
+uniform vec4 _LightShadowData;
+uniform samplerCube _LightTexture0;
+uniform sampler2D _LightTextureB0;
+uniform vec4 _ProjectionParams;
+uniform samplerCube _ShadowMapTexture;
+uniform mat4 _View2Shadow;
+uniform mat4 _ViewToCookie;
+uniform vec4 _ZBufferParams;
+uniform vec4 unity_LightmapFade;
+float ComputeShadow (
+  in vec3 vec,
+  in vec2 uv
+)
+{
+  vec3 tmpvar_29;
+  tmpvar_29.xyz = vec3(_View2Shadow[0]);
+  vec3 tmpvar_30;
+  tmpvar_30.xyz = vec3(_View2Shadow[1]);
+  vec3 tmpvar_31;
+  tmpvar_31.xyz = vec3(_View2Shadow[2]);
+  mat3 tmpvar_32;
+  tmpvar_32[0].xyz = tmpvar_29.xyz;
+  tmpvar_32[1].xyz = tmpvar_30.xyz;
+  tmpvar_32[2].xyz = tmpvar_31.xyz;
+  vec = (tmpvar_32 * vec);
+  float tmpvar_6;
+  tmpvar_6 = length (vec);
+  float mydist;
+  mydist = ((tmpvar_6 * _LightPositionRange.w) * 0.970000);
+  vec4 tmpvar_38;
+  tmpvar_38 = textureCube (_ShadowMapTexture, vec);
+  float tmpvar_43;
+  tmpvar_43 = dot (tmpvar_38, vec4 (1.000000, 0.003922, 0.000015, 0.000000));
+  float tmpvar_45;
+  if ((tmpvar_43 < mydist)) {
+    tmpvar_45 = _LightShadowData.x;
+  } else {
+    tmpvar_45 = 1.000000;
+  };
+  return tmpvar_45;
+  return 1.000000;
+}
+
+void main ()
+{
+  v2f xlt_i;
+  xlt_i.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
+  vec4 tmpvar_2;
+  tmpvar_2.xyzw = gl_TexCoord[0];
+  xlt_i.uv = tmpvar_2;
+  vec3 tmpvar_4;
+  tmpvar_4.xyz = vec3(gl_TexCoord[1]);
+  xlt_i.ray = tmpvar_4;
+  v2f i;
+  i = xlt_i;
+  vec2 uv;
+  vec4 nspec;
+  vec3 normal;
+  vec3 vpos;
+  vec3 tolight;
+  vec3 lightDir;
+  float atten;
+  float diff;
+  float spec;
+  vec4 res;
+  i.ray = (xlt_i.ray * (_ProjectionParams.z / xlt_i.ray.z));
+  uv = (i.uv.xy / i.uv.w);
+  vec4 tmpvar_51;
+  tmpvar_51 = texture2D (_CameraNormalsTexture, uv);
+  nspec = tmpvar_51;
+  normal = ((tmpvar_51.xyz * 2.000000) - 1.000000);
+  vec3 tmpvar_54;
+  tmpvar_54 = normalize (normal);
+  normal = tmpvar_54;
+  vec4 tmpvar_56;
+  tmpvar_56 = texture2D (_CameraDepthTexture, uv);
+  vec3 tmpvar_61;
+  tmpvar_61 = (i.ray * 1.0/(((_ZBufferParams.x * tmpvar_56.x) + _ZBufferParams.y)));
+  vpos = tmpvar_61;
+  tolight = (_LightPos.xyz - tmpvar_61);
+  vec3 tmpvar_63;
+  tmpvar_63 = normalize (tolight);
+  lightDir = tmpvar_63;
+  float tmpvar_65;
+  tmpvar_65 = dot (tolight, tolight);
+  vec2 tmpvar_68;
+  tmpvar_68.xy = (tmpvar_65 * _LightPos.w).xx;
+  vec4 tmpvar_69;
+  tmpvar_69 = texture2D (_LightTextureB0, tmpvar_68);
+  atten = tmpvar_69.w;
+  float tmpvar_71;
+  tmpvar_71 = ComputeShadow (-(tolight), uv);
+  atten = (atten * tmpvar_71);
+  vec4 tmpvar_73;
+  tmpvar_73.xyz = vpos;
+  tmpvar_73.w = 1.000000;
+  vec4 tmpvar_74;
+  tmpvar_74 = textureCube (_LightTexture0, (_ViewToCookie * tmpvar_73).xyz);
+  atten = (atten * tmpvar_74.w);
+  float tmpvar_76;
+  tmpvar_76 = dot (lightDir, normal);
+  float tmpvar_77;
+  tmpvar_77 = max (0.000000, tmpvar_76);
+  diff = tmpvar_77;
+  vec3 tmpvar_79;
+  tmpvar_79 = normalize (vpos);
+  vec3 tmpvar_80;
+  tmpvar_80 = normalize ((lightDir - tmpvar_79));
+  float tmpvar_82;
+  tmpvar_82 = dot (tmpvar_80, normal);
+  float tmpvar_83;
+  tmpvar_83 = max (0.000000, tmpvar_82);
+  float tmpvar_84;
+  tmpvar_84 = pow (tmpvar_83, (nspec.w * 128.000000));
+  spec = tmpvar_84;
+  float tmpvar_88;
+  tmpvar_88 = clamp (atten, 0.000000, 1.000000);
+  spec = (spec * tmpvar_88);
+  res.xyz = (_LightColor.xyz * (diff * atten));
+  float tmpvar_93;
+  tmpvar_93 = dot (_LightColor.xyz, vec3 (0.220000, 0.707000, 0.071000));
+  res.w = (spec * tmpvar_93);
+  float tmpvar_98;
+  tmpvar_98 = clamp ((1.000000 - ((vpos.z * unity_LightmapFade.z) + unity_LightmapFade.w)), 0.000000, 1.000000);
+  res = (res * tmpvar_98);
+  vec4 tmpvar_100;
+  tmpvar_100 = exp2 (-(res));
+  vec4 tmpvar_8;
+  tmpvar_8.xyzw = tmpvar_100;
+  gl_FragData[0] = tmpvar_8;
+}
+

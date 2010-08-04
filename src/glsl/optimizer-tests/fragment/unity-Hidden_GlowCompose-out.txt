@@ -1,0 +1,22 @@
+struct v2f {
+  vec4 pos;
+  vec2 uv;
+};
+uniform vec4 _Color;
+uniform sampler2D _MainTex;
+void main ()
+{
+  v2f xlt_i;
+  xlt_i.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
+  vec2 tmpvar_2;
+  tmpvar_2.xy = vec2(gl_TexCoord[0]);
+  xlt_i.uv = tmpvar_2;
+  v2f i;
+  i = xlt_i;
+  vec4 tmpvar_9;
+  tmpvar_9 = texture2D (_MainTex, i.uv);
+  vec4 tmpvar_6;
+  tmpvar_6.xyzw = ((2.000000 * _Color) * tmpvar_9);
+  gl_FragData[0] = tmpvar_6;
+}
+

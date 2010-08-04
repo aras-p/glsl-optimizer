@@ -1,0 +1,7 @@
+void main ()
+{
+  vec4 tmpvar_4;
+  tmpvar_4.xyzw = vec4 (1.000000, 1.000000, 1.000000, 1.000000);
+  gl_FragData[0] = tmpvar_4;
+}
+

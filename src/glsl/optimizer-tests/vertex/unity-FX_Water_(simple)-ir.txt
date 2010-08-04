@@ -1,0 +1,138 @@
+struct v2f {
+  vec4 pos;
+  float fog;
+  vec2[2] bumpuv;
+  vec3 viewDir;
+};
+struct appdata {
+  vec4 vertex;
+  vec3 normal;
+};
+uniform vec4 _WaveOffset;
+uniform float _WaveScale;
+uniform mat4 _World2Object;
+uniform vec3 _WorldSpaceCameraPos;
+uniform vec4 unity_Scale;
+void PositionFog (
+  in vec4 v,
+  out vec4 pos,
+  out float fog
+);
+
+void PositionFog (
+  in vec4 v,
+  out vec4 pos,
+  out float fog
+)
+{
+  vec4 tmpvar_1;
+  tmpvar_1 = (gl_ModelViewProjectionMatrix * v);
+  pos = tmpvar_1;
+  float tmpvar_2;
+  tmpvar_2 = pos.z;
+  fog = tmpvar_2;
+}
+
+vec3 ObjSpaceViewDir (
+  in vec4 v
+);
+
+vec3 ObjSpaceViewDir (
+  in vec4 v
+)
+{
+  vec3 objSpaceCameraPos;
+  vec4 tmpvar_1;
+  tmpvar_1.xyz = _WorldSpaceCameraPos.xyz;
+  tmpvar_1.w = 1.000000;
+  vec3 tmpvar_2;
+  tmpvar_2 = ((_World2Object * tmpvar_1).xyz * unity_Scale.w);
+  objSpaceCameraPos = tmpvar_2;
+  return (objSpaceCameraPos - v.xyz);
+}
+
+v2f vert (
+  in appdata v
+);
+
+v2f vert (
+  in appdata v
+)
+{
+  v2f o;
+  vec4 temp;
+  PositionFog (v.vertex, o.pos, o.fog);
+  vec4 tmpvar_1;
+  tmpvar_1 = ((v.vertex.xzxz * _WaveScale) + _WaveOffset);
+  temp.xyzw = tmpvar_1;
+  vec2 tmpvar_2;
+  tmpvar_2 = (temp.xy * vec2 (0.400000, 0.450000));
+  o.bumpuv[0] = tmpvar_2;
+  vec2 tmpvar_3;
+  tmpvar_3 = temp.wz;
+  o.bumpuv[1] = tmpvar_3;
+  vec3 tmpvar_4;
+  tmpvar_4 = ObjSpaceViewDir (v.vertex);
+  vec3 tmpvar_5;
+  tmpvar_5 = normalize (tmpvar_4);
+  vec3 tmpvar_6;
+  tmpvar_6 = tmpvar_5;
+  o.viewDir.xzy = tmpvar_6;
+  return o;
+}
+
+varying vec4 xlv_FOG;
+void main ()
+{
+  v2f xl_retval;
+  appdata xlt_v;
+  vec4 tmpvar_1;
+  tmpvar_1.xyzw = gl_Vertex;
+  vec4 tmpvar_2;
+  tmpvar_2 = tmpvar_1;
+  xlt_v.vertex = tmpvar_2;
+  vec3 tmpvar_3;
+  tmpvar_3.xyz = gl_Normal;
+  vec3 tmpvar_4;
+  tmpvar_4 = tmpvar_3;
+  xlt_v.normal = tmpvar_4;
+  v2f tmpvar_5;
+  tmpvar_5 = vert (xlt_v);
+  v2f tmpvar_6;
+  tmpvar_6 = tmpvar_5;
+  xl_retval = tmpvar_6;
+  vec4 tmpvar_7;
+  tmpvar_7.xyzw = xl_retval.pos;
+  vec4 tmpvar_8;
+  tmpvar_8 = tmpvar_7;
+  gl_Position = tmpvar_8;
+  vec4 tmpvar_9;
+  tmpvar_9.x = xl_retval.fog;
+  tmpvar_9.y = 0.000000;
+  tmpvar_9.z = 0.000000;
+  tmpvar_9.w = 0.000000;
+  vec4 tmpvar_10;
+  tmpvar_10 = tmpvar_9;
+  xlv_FOG = tmpvar_10;
+  vec4 tmpvar_11;
+  tmpvar_11.xy = xl_retval.bumpuv[0];
+  tmpvar_11.z = 0.000000;
+  tmpvar_11.w = 0.000000;
+  vec4 tmpvar_12;
+  tmpvar_12 = tmpvar_11;
+  gl_TexCoord[0] = tmpvar_12;
+  vec4 tmpvar_13;
+  tmpvar_13.xy = xl_retval.bumpuv[1];
+  tmpvar_13.z = 0.000000;
+  tmpvar_13.w = 0.000000;
+  vec4 tmpvar_14;
+  tmpvar_14 = tmpvar_13;
+  gl_TexCoord[1] = tmpvar_14;
+  vec4 tmpvar_15;
+  tmpvar_15.xyz = xl_retval.viewDir;
+  tmpvar_15.w = 0.000000;
+  vec4 tmpvar_16;
+  tmpvar_16 = tmpvar_15;
+  gl_TexCoord[2] = tmpvar_16;
+}
+

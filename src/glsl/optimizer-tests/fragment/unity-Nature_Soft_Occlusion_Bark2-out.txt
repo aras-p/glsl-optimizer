@@ -1,0 +1,59 @@
+struct SurfaceOutput {
+  vec3 Albedo;
+  vec3 Normal;
+  vec3 Emission;
+  float Specular;
+  float Gloss;
+  float Alpha;
+};
+struct Input {
+  vec2 uv_MainTex;
+};
+struct v2f_surf {
+  vec4 pos;
+  vec3 vec;
+};
+uniform vec4 _Color;
+uniform vec4 _LightPositionRange;
+uniform sampler2D _MainTex;
+void main ()
+{
+  v2f_surf xlt_IN;
+  xlt_IN.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
+  vec3 tmpvar_2;
+  tmpvar_2.xyz = vec3(gl_TexCoord[0]);
+  xlt_IN.vec = tmpvar_2;
+  v2f_surf IN;
+  IN = xlt_IN;
+  SurfaceOutput o;
+  Input surfIN;
+  o.Albedo = vec3 (0.000000, 0.000000, 0.000000);
+  o.Emission = vec3 (0.000000, 0.000000, 0.000000);
+  o.Specular = 0.000000;
+  o.Alpha = 0.000000;
+  o.Gloss = 0.000000;
+  Input IN_i0;
+  IN_i0 = surfIN;
+  SurfaceOutput o_i0;
+  o_i0 = o;
+  vec4 tmpvar_25;
+  tmpvar_25 = texture2D (_MainTex, IN_i0.uv_MainTex);
+  vec4 tmpvar_26;
+  tmpvar_26 = (tmpvar_25 * _Color);
+  o_i0.Albedo = tmpvar_26.xyz;
+  o_i0.Alpha = tmpvar_26.w;
+  o = o_i0;
+  float tmpvar_29;
+  tmpvar_29 = length (IN.vec);
+  vec4 enc;
+  enc = (vec4 (1.000000, 255.000000, 65025.000000, 160580992.000000) * (tmpvar_29 * _LightPositionRange.w));
+  vec4 tmpvar_35;
+  tmpvar_35 = fract (enc);
+  vec4 tmpvar_37;
+  tmpvar_37 = (tmpvar_35 - (tmpvar_35.yzww * 0.003922));
+  enc = tmpvar_37;
+  vec4 tmpvar_6;
+  tmpvar_6.xyzw = tmpvar_37;
+  gl_FragData[0] = tmpvar_6;
+}
+

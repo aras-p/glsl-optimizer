@@ -1,0 +1,88 @@
+struct SurfaceOutput {
+  vec3 Albedo;
+  vec3 Normal;
+  vec3 Emission;
+  float Specular;
+  float Gloss;
+  float Alpha;
+};
+struct Input {
+  vec2 uv_MainTex;
+  vec4 color;
+};
+struct v2f_surf {
+  vec4 pos;
+  float fog;
+  vec2 hip_pack0;
+  vec4 lop_color;
+  vec3 normal;
+  vec3 vlight;
+};
+uniform float _Cutoff;
+uniform vec4 _LightColor0;
+uniform sampler2D _MainTex;
+uniform vec4 _WorldSpaceLightPos0;
+varying vec4 xlv_FOG;
+void main ()
+{
+  v2f_surf xlt_IN;
+  xlt_IN.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
+  xlt_IN.fog = xlv_FOG.x;
+  vec2 tmpvar_3;
+  tmpvar_3.xy = vec2(gl_TexCoord[0]);
+  xlt_IN.hip_pack0 = tmpvar_3;
+  vec4 tmpvar_5;
+  tmpvar_5.xyzw = gl_Color;
+  xlt_IN.lop_color = tmpvar_5;
+  vec3 tmpvar_7;
+  tmpvar_7.xyz = vec3(gl_TexCoord[1]);
+  xlt_IN.normal = tmpvar_7;
+  vec3 tmpvar_9;
+  tmpvar_9.xyz = vec3(gl_TexCoord[2]);
+  xlt_IN.vlight = tmpvar_9;
+  v2f_surf IN;
+  IN = xlt_IN;
+  Input surfIN;
+  SurfaceOutput o;
+  vec4 c;
+  surfIN.uv_MainTex = xlt_IN.hip_pack0.xy;
+  surfIN.color = xlt_IN.lop_color;
+  o.Albedo = vec3 (0.000000, 0.000000, 0.000000);
+  o.Emission = vec3 (0.000000, 0.000000, 0.000000);
+  o.Specular = 0.000000;
+  o.Alpha = 0.000000;
+  o.Gloss = 0.000000;
+  o.Normal = xlt_IN.normal;
+  Input IN_i0;
+  IN_i0 = surfIN;
+  SurfaceOutput o_i0;
+  o_i0 = o;
+  vec4 tmpvar_35;
+  tmpvar_35 = texture2D (_MainTex, IN_i0.uv_MainTex);
+  vec4 tmpvar_36;
+  tmpvar_36 = (tmpvar_35 * IN_i0.color);
+  o_i0.Albedo = tmpvar_36.xyz;
+  o_i0.Alpha = tmpvar_36.w;
+  o = o_i0;
+  float x;
+  x = (o_i0.Alpha - _Cutoff);
+  if ((x < 0.000000)) {
+    discard;
+  };
+  SurfaceOutput s;
+  s = o;
+  vec4 c_i0_i1;
+  float tmpvar_41;
+  tmpvar_41 = dot (s.Normal, _WorldSpaceLightPos0.xyz);
+  float tmpvar_42;
+  tmpvar_42 = max (0.000000, tmpvar_41);
+  c_i0_i1.xyz = ((s.Albedo * _LightColor0.xyz) * (tmpvar_42 * 2.000000));
+  c_i0_i1.w = s.Alpha;
+  c = c_i0_i1;
+  c.xyz = (c_i0_i1.xyz + (o.Albedo * IN.vlight));
+  c.w = o.Alpha;
+  vec4 tmpvar_13;
+  tmpvar_13.xyzw = c;
+  gl_FragData[0] = tmpvar_13;
+}
+

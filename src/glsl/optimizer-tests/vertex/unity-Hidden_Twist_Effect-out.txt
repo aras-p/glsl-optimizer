@@ -1,0 +1,45 @@
+struct appdata_img {
+  vec4 vertex;
+  vec2 texcoord;
+};
+struct v2f {
+  vec4 pos;
+  vec2 uv;
+  vec2 uvOrig;
+};
+uniform vec4 _CenterRadius;
+void main ()
+{
+  appdata_img xlt_v;
+  vec4 tmpvar_1;
+  tmpvar_1.xyzw = gl_Vertex;
+  xlt_v.vertex = tmpvar_1;
+  vec2 tmpvar_3;
+  tmpvar_3.xy = vec2(gl_MultiTexCoord0);
+  xlt_v.texcoord = tmpvar_3;
+  v2f o;
+  o.pos = (gl_ModelViewProjectionMatrix * xlt_v.vertex);
+  vec2 tmpvar_19;
+  tmpvar_19 = (xlt_v.texcoord.xy - _CenterRadius.xy);
+  vec4 tmpvar_22;
+  tmpvar_22.x = tmpvar_19.x;
+  tmpvar_22.y = tmpvar_19.y;
+  tmpvar_22.z = 0.000000;
+  tmpvar_22.w = 0.000000;
+  o.uv = (gl_TextureMatrix[0] * tmpvar_22).xy;
+  o.uvOrig = tmpvar_19;
+  vec4 tmpvar_7;
+  tmpvar_7.xyzw = o.pos;
+  gl_Position = tmpvar_7;
+  vec4 tmpvar_9;
+  tmpvar_9.xy = o.uv;
+  tmpvar_9.z = 0.000000;
+  tmpvar_9.w = 0.000000;
+  gl_TexCoord[0] = tmpvar_9;
+  vec4 tmpvar_11;
+  tmpvar_11.xy = o.uvOrig;
+  tmpvar_11.z = 0.000000;
+  tmpvar_11.w = 0.000000;
+  gl_TexCoord[1] = tmpvar_11;
+}
+
