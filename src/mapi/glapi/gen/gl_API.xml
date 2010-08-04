@@ -7949,6 +7949,8 @@
     </enum>
 </category>
 
+<xi:include href="ARB_ES2_compatibility.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+
 <xi:include href="ARB_framebuffer_object.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
 <xi:include href="ARB_copy_buffer.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
