@@ -243,6 +243,11 @@ print_line(struct lp_setup_context *setup,
 }
 
 
+static INLINE boolean sign(float x){
+   return x >= 0;  
+}  
+
+
 static void
 lp_setup_line( struct lp_setup_context *setup,
                const float (*v1)[4],
@@ -251,7 +256,7 @@ lp_setup_line( struct lp_setup_context *setup,
    struct lp_scene *scene = lp_setup_get_current_scene(setup);
    struct lp_rast_triangle *line;
    float oneoverarea;
-   float half_width = setup->line_width / 2;
+   float width = MAX2(1.0, setup->line_width);
    int minx, maxx, miny, maxy;
    int ix0, ix1, iy0, iy1;
    unsigned tri_bytes;
@@ -260,7 +265,25 @@ lp_setup_line( struct lp_setup_context *setup,
    int i;
    int nr_planes = 4;
    boolean opaque;
-         
+   
+   /* linewidth should be interpreted as integer */
+   int fixed_width = subpixel_snap(round(width));
+
+   float xdiamond_offset=0;
+   float ydiamond_offset=0;
+   float xdiamond_offset_end=0;
+   float ydiamond_offset_end=0;
+      
+   float x1diff;
+   float y1diff;
+   float x2diff;
+   float y2diff;
+
+   boolean draw_start;
+   boolean draw_end;
+   boolean will_draw_start;
+   boolean will_draw_end;
+
    if (0)
       print_line(setup, v1, v2);
 
@@ -278,21 +301,76 @@ lp_setup_line( struct lp_setup_context *setup,
    if (!line)
       return;
 
-#ifndef DEBUG
+#ifdef DEBUG
    line->v[0][0] = v1[0][0];
    line->v[1][0] = v2[0][0];   
    line->v[0][1] = v1[0][1];
    line->v[1][1] = v2[0][1];
 #endif
 
-   /* pre-calculation(based on given vertices) to determine if line is
-    * more horizontal or more vertical
-    */
    line->dx = v1[0][0] - v2[0][0];
    line->dy = v1[0][1] - v2[0][1];
-   
-   /* x-major line */
+  
+/* X-MAJOR LINE */
    if (fabsf(line->dx) >= fabsf(line->dy)) {
+
+      x1diff = v1[0][0] - (float) floor(v1[0][0]) - 0.5;
+      y1diff = v1[0][1] - (float) floor(v1[0][1]) - 0.5;
+      x2diff = v2[0][0] - (float) floor(v2[0][0]) - 0.5;
+      y2diff = v2[0][1] - (float) floor(v2[0][1]) - 0.5;
+
+      if (y2diff==-0.5 && line->dy<0){
+         y2diff = 0.5;
+      }
+      
+      /* 
+       * Diamond exit rule test for starting point 
+       */    
+      if (fabsf(x1diff) + fabsf(y1diff) < 0.5) {
+         draw_start = TRUE;
+      }
+      else if (sign(x1diff) == sign(-line->dx)) {
+         draw_start = FALSE;
+      }
+      else if (sign(-y1diff) != sign(line->dy)) {
+         draw_start = TRUE;
+      }
+      else {
+         /* do intersection test */
+         float yintersect = v1[0][1] + x1diff*((float)line->dy/(float)line->dx);
+         if (yintersect < ceil(v1[0][1]) && yintersect > floor(v1[0][1])){
+            draw_start = TRUE;
+         }
+         else draw_start = FALSE;
+      }
+
+
+      /* 
+       * Diamond exit rule test for ending point 
+       */    
+      if (fabsf(x2diff) + fabsf(y2diff) < 0.5) {
+         draw_end = FALSE;
+      }
+      else if (sign(x2diff) != sign(-line->dx)) {
+         draw_end = FALSE;
+      }
+      else if (sign(-y2diff) == sign(line->dy)) {
+         draw_end = TRUE;
+      }
+      else {
+         /* do intersection test */
+         float yintersect = v2[0][1] + x2diff*((float)line->dy/(float)line->dx);
+         if (yintersect < ceil(v2[0][1]) && yintersect > floor(v2[0][1])){
+            draw_end = TRUE;
+         }
+         else draw_end = FALSE;
+      }
+
+      /* Are we already drawing start/end?
+       */
+      will_draw_start = sign(-x1diff) != sign(line->dx);
+      will_draw_end = (sign(x2diff) == sign(-line->dx)) || x2diff==0;
+
       if (line->dx < 0) {
          /* if v2 is to the right of v1, swap pointers */
          const float (*temp)[4] = v1;
@@ -300,21 +378,102 @@ lp_setup_line( struct lp_setup_context *setup,
          v2 = temp;
          line->dx = -line->dx;
          line->dy = -line->dy;
+         /* Otherwise shift planes appropriately */
+         if (will_draw_start != draw_start) {
+            xdiamond_offset_end = - x1diff - 0.5;
+            ydiamond_offset_end = xdiamond_offset_end*(float)line->dy/(float)line->dx;
+
+         }
+         if (will_draw_end != draw_end) {
+            xdiamond_offset = - x2diff - 0.5;
+            ydiamond_offset = xdiamond_offset*(float)line->dy/(float)line->dx;
+         }
+
       }
-      
+      else{
+         /* Otherwise shift planes appropriately */
+         if (will_draw_start != draw_start) {
+            xdiamond_offset = - x1diff + 0.5;
+            ydiamond_offset = xdiamond_offset*(float)line->dy/(float)line->dx;
+         }
+         if (will_draw_end != draw_end) {
+            xdiamond_offset_end = - x2diff + 0.5;
+            ydiamond_offset_end = xdiamond_offset_end*(float)line->dy/(float)line->dx;
+         }
+      }
+  
       /* x/y positions in fixed point */
-      x[0] = subpixel_snap(v1[0][0] - setup->pixel_offset);
-      x[1] = subpixel_snap(v2[0][0] - setup->pixel_offset);
-      x[2] = subpixel_snap(v2[0][0] - setup->pixel_offset);
-      x[3] = subpixel_snap(v1[0][0] - setup->pixel_offset);
+      x[0] = subpixel_snap(v1[0][0] + xdiamond_offset - setup->pixel_offset);
+      x[1] = subpixel_snap(v2[0][0] + xdiamond_offset_end - setup->pixel_offset);
+      x[2] = subpixel_snap(v2[0][0] + xdiamond_offset_end - setup->pixel_offset);
+      x[3] = subpixel_snap(v1[0][0] + xdiamond_offset - setup->pixel_offset);
       
-      y[0] = subpixel_snap(v1[0][1] - half_width - setup->pixel_offset);
-      y[1] = subpixel_snap(v2[0][1] - half_width - setup->pixel_offset);
-      y[2] = subpixel_snap(v2[0][1] + half_width - setup->pixel_offset);
-      y[3] = subpixel_snap(v1[0][1] + half_width - setup->pixel_offset);
+      y[0] = subpixel_snap(v1[0][1] + ydiamond_offset - setup->pixel_offset) - fixed_width/2;
+      y[1] = subpixel_snap(v2[0][1] + ydiamond_offset_end - setup->pixel_offset) - fixed_width/2;
+      y[2] = subpixel_snap(v2[0][1] + ydiamond_offset_end - setup->pixel_offset) + fixed_width/2;
+      y[3] = subpixel_snap(v1[0][1] + ydiamond_offset - setup->pixel_offset) + fixed_width/2;
+      
    }
+
+
    else{
-      /* y-major line */
+/* Y-MAJOR LINE */      
+      x1diff = v1[0][0] - (float) floor(v1[0][0]) - 0.5;
+      y1diff = v1[0][1] - (float) floor(v1[0][1]) - 0.5;
+      x2diff = v2[0][0] - (float) floor(v2[0][0]) - 0.5;
+      y2diff = v2[0][1] - (float) floor(v2[0][1]) - 0.5;
+
+      if (x2diff==-0.5 && line->dx<0){
+         x2diff = 0.5;
+      }
+
+/* 
+ * Diamond exit rule test for starting point 
+ */    
+      if (fabsf(x1diff) + fabsf(y1diff) < 0.5) {
+         draw_start = TRUE;
+      }
+      else if (sign(-y1diff) == sign(line->dy)) {
+         draw_start = FALSE;
+      }
+      else if (sign(x1diff) != sign(-line->dx)) {
+         draw_start = TRUE;
+      }
+      else {
+         /* do intersection test */
+         float xintersect = v1[0][0] + y1diff*((float)line->dx/(float)line->dy);
+         if (xintersect < ceil(v1[0][0]) && xintersect > floor(v1[0][0])){
+            draw_start = TRUE;
+         }
+         else draw_start = FALSE;
+      }
+
+      /* 
+       * Diamond exit rule test for ending point 
+       */    
+      if (fabsf(x2diff) + fabsf(y2diff) < 0.5) {
+         draw_end = FALSE;
+      }
+      else if (sign(-y2diff) != sign(line->dy) ) {
+         draw_end = FALSE;
+      }
+      else if (sign(x2diff) == sign(-line->dx) ) {
+         draw_end = TRUE;
+      }
+      else {
+         /* do intersection test */
+         float xintersect = v2[0][0] + y2diff*((float)line->dx/(float)line->dy);
+         if (xintersect < ceil(v2[0][0]) && xintersect > floor(v2[0][0])){
+            draw_end = TRUE;
+         }
+         else draw_end = FALSE;
+      }
+
+      /* Are we already drawing start/end?
+       */
+      will_draw_start = sign(y1diff) == sign(line->dy);
+      will_draw_end = (sign(-y2diff) == sign(line->dy)) || y2diff==0;
+
       if (line->dy > 0) {
          /* if v2 is on top of v1, swap pointers */
          const float (*temp)[4] = v1;
@@ -322,18 +481,43 @@ lp_setup_line( struct lp_setup_context *setup,
          v2 = temp; 
          line->dx = -line->dx;
          line->dy = -line->dy;
+
+         /* Otherwise shift planes appropriately */
+         if (will_draw_start != draw_start) {
+            ydiamond_offset_end = - y1diff + 0.5;
+            xdiamond_offset_end = ydiamond_offset_end*(float)line->dx/(float)line->dy;
+         }
+         if (will_draw_end != draw_end) {
+            ydiamond_offset = - y2diff + 0.5;
+            xdiamond_offset = ydiamond_offset*(float)line->dx/(float)line->dy;
+         }
+      }
+
+      else{
+         /* Otherwise shift planes appropriately */
+         if (will_draw_start != draw_start) {
+            ydiamond_offset = - y1diff - 0.5;
+            xdiamond_offset = ydiamond_offset*(float)line->dx/(float)line->dy;
+                     
+         }
+         if (will_draw_end != draw_end) {
+            ydiamond_offset_end = - y2diff - 0.5;
+            xdiamond_offset_end = ydiamond_offset_end*(float)line->dx/(float)line->dy;
+         }
       }
  
-      x[0] = subpixel_snap(v1[0][0] - half_width - setup->pixel_offset);
-      x[1] = subpixel_snap(v2[0][0] - half_width - setup->pixel_offset);
-      x[2] = subpixel_snap(v2[0][0] + half_width - setup->pixel_offset);
-      x[3] = subpixel_snap(v1[0][0] + half_width - setup->pixel_offset);
+      /* x/y positions in fixed point */
+      x[0] = subpixel_snap(v1[0][0] + xdiamond_offset - setup->pixel_offset) - fixed_width/2;
+      x[1] = subpixel_snap(v2[0][0] + xdiamond_offset_end - setup->pixel_offset) - fixed_width/2;
+      x[2] = subpixel_snap(v2[0][0] + xdiamond_offset_end - setup->pixel_offset) + fixed_width/2;
+      x[3] = subpixel_snap(v1[0][0] + xdiamond_offset - setup->pixel_offset) + fixed_width/2;
      
-      y[0] = subpixel_snap(v1[0][1] - setup->pixel_offset);
-      y[1] = subpixel_snap(v2[0][1] - setup->pixel_offset);
-      y[2] = subpixel_snap(v2[0][1] - setup->pixel_offset);
-      y[3] = subpixel_snap(v1[0][1] - setup->pixel_offset);
+      y[0] = subpixel_snap(v1[0][1] + ydiamond_offset - setup->pixel_offset); 
+      y[1] = subpixel_snap(v2[0][1] + ydiamond_offset_end - setup->pixel_offset);
+      y[2] = subpixel_snap(v2[0][1] + ydiamond_offset_end - setup->pixel_offset);
+      y[3] = subpixel_snap(v1[0][1] + ydiamond_offset - setup->pixel_offset);
    }
+
 
    /* calculate the deltas */
    line->plane[0].dcdy = x[0] - x[1];
@@ -361,8 +545,8 @@ lp_setup_line( struct lp_setup_context *setup,
 
       minx = (MIN4(x[0], x[1], x[2], x[3]) + (FIXED_ONE-1)) >> FIXED_ORDER;
       maxx = (MAX4(x[0], x[1], x[2], x[3]) + (FIXED_ONE-1)) >> FIXED_ORDER;
-      miny = (MIN4(y[0], y[1], y[3], y[3]) + (FIXED_ONE-1) + adj) >> FIXED_ORDER;
-      maxy = (MAX4(y[0], y[1], y[3], y[3]) + (FIXED_ONE-1) + adj) >> FIXED_ORDER;
+      miny = (MIN4(y[0], y[1], y[2], y[3]) + (FIXED_ONE-1) + adj) >> FIXED_ORDER;
+      maxy = (MAX4(y[0], y[1], y[2], y[3]) + (FIXED_ONE-1) + adj) >> FIXED_ORDER;
    }
 
    if (setup->scissor_test) {
@@ -526,7 +710,7 @@ lp_setup_line( struct lp_setup_context *setup,
 
 
    /*
-    * All fields of 'tri' are now set.  The remaining code here is
+    * All fields of 'line' are now set.  The remaining code here is
     * concerned with binning.
     */
 
