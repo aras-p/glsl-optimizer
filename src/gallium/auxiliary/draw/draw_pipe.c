@@ -179,18 +179,17 @@ static void do_triangle( struct draw_context *draw,
    do_triangle( draw,                                          \
                 i0,  /* flags */                               \
                 verts + stride * (i0 & ~DRAW_PIPE_FLAG_MASK),  \
-                verts + stride * (i1 & ~DRAW_PIPE_FLAG_MASK),  \
-                verts + stride * (i2 & ~DRAW_PIPE_FLAG_MASK) )
+                verts + stride * (i1),                         \
+                verts + stride * (i2) )
 
 #define LINE(flags,i0,i1)                                      \
    do_line( draw,                                              \
             i0, /* flags */                                    \
             verts + stride * (i0 & ~DRAW_PIPE_FLAG_MASK),      \
-            verts + stride * (i1 & ~DRAW_PIPE_FLAG_MASK) )
+            verts + stride * (i1) )
 
 #define POINT(i0)                               \
-   do_point( draw,                              \
-             verts + stride * (i0 & ~DRAW_PIPE_FLAG_MASK) )
+   do_point( draw, verts + stride * (i0) )
 
 #define GET_ELT(idx) (elts[idx])
 
@@ -268,22 +267,19 @@ void draw_pipeline_run( struct draw_context *draw,
  * This code is for non-indexed (aka linear) rendering (no elts).
  */
 
-#define TRIANGLE(flags,i0,i1,i2)                                 \
-   do_triangle( draw,                                            \
-                flags,  /* flags */                              \
-                verts + stride * ((i0) & ~DRAW_PIPE_FLAG_MASK),  \
-                verts + stride * ((i1) & ~DRAW_PIPE_FLAG_MASK),  \
-                verts + stride * ((i2) & ~DRAW_PIPE_FLAG_MASK))
+#define TRIANGLE(flags,i0,i1,i2)       \
+   do_triangle( draw, flags,           \
+                verts + stride * (i0), \
+                verts + stride * (i1), \
+                verts + stride * (i2) )
 
-#define LINE(flags,i0,i1)                                   \
-   do_line( draw,                                           \
-            flags,                                          \
-            verts + stride * ((i0) & ~DRAW_PIPE_FLAG_MASK), \
-            verts + stride * ((i1) & ~DRAW_PIPE_FLAG_MASK))
+#define LINE(flags,i0,i1)              \
+   do_line( draw, flags,               \
+            verts + stride * (i0),     \
+            verts + stride * (i1) )
 
-#define POINT(i0)                               \
-   do_point( draw,                              \
-             verts + stride * ((i0) & ~DRAW_PIPE_FLAG_MASK) )
+#define POINT(i0)                      \
+   do_point( draw, verts + stride * (i0) )
 
 
 #define GET_ELT(idx) (idx)
