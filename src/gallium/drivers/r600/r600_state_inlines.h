@@ -48,7 +48,7 @@ static INLINE uint32_t r600_translate_blend_factor(int blend_fact)
 {
 	switch (blend_fact) {
 	case PIPE_BLENDFACTOR_ONE:
-		return V_028804_BLEND_ZERO;
+		return V_028804_BLEND_ONE;
 	case PIPE_BLENDFACTOR_SRC_COLOR:
 		return V_028804_BLEND_SRC_COLOR;
 	case PIPE_BLENDFACTOR_SRC_ALPHA:

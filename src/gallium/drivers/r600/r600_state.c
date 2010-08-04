@@ -628,7 +628,6 @@ static struct radeon_state *r600_blend(struct r600_context *rctx)
 	rstate->states[R600_BLEND__CB_BLEND_CONTROL] = 0x00000000;
 
 	for (i = 0; i < 8; i++) {
-
 		unsigned eqRGB = state->rt[i].rgb_func;
 		unsigned srcRGB = state->rt[i].rgb_src_factor;
 		unsigned dstRGB = state->rt[i].rgb_dst_factor;
@@ -1202,7 +1201,7 @@ static struct radeon_state *r600_cb_cntl(struct r600_context *rctx)
 	int i;
 
 	target_mask = 0;
-	color_control = 0;
+	color_control = S_028808_PER_MRT_BLEND(1);
 
 	if (pbs->logicop_enable) {
 		color_control |= (pbs->logicop_func) << 16;
@@ -1212,7 +1211,7 @@ static struct radeon_state *r600_cb_cntl(struct r600_context *rctx)
 	target_mask |= (pbs->rt[0].colormask);
 	for (i = 0; i < 8; i++) {
 		if (pbs->rt[i].blend_enable) {
-			color_control |= (1 << (8 + i));
+			color_control |= S_028808_TARGET_BLEND_ENABLE(1 << i);
 			target_mask |= (pbs->rt[0].colormask << (4 * i));
 		}
 	}
