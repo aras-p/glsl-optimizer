@@ -299,7 +299,6 @@ void ir_print_glsl_visitor::visit(ir_expression *ir)
 			ir->operands[1]->accept(this);
 		buffer = talloc_asprintf_append(buffer, ")");
 	}
-	buffer = talloc_asprintf_append(buffer, " ");
 }
 
 
@@ -372,7 +371,7 @@ void ir_print_glsl_visitor::visit(ir_swizzle *ir)
 void ir_print_glsl_visitor::visit(ir_dereference_variable *ir)
 {
    ir_variable *var = ir->variable_referenced();
-   buffer = talloc_asprintf_append(buffer, "%s ", var->name);
+   buffer = talloc_asprintf_append(buffer, "%s", var->name);
 }
 
 
@@ -381,14 +380,14 @@ void ir_print_glsl_visitor::visit(ir_dereference_array *ir)
    ir->array->accept(this);
    buffer = talloc_asprintf_append(buffer, "[");
    ir->array_index->accept(this);
-   buffer = talloc_asprintf_append(buffer, "] ");
+   buffer = talloc_asprintf_append(buffer, "]");
 }
 
 
 void ir_print_glsl_visitor::visit(ir_dereference_record *ir)
 {
    ir->record->accept(this);
-   buffer = talloc_asprintf_append(buffer, ".%s ", ir->field);
+   buffer = talloc_asprintf_append(buffer, ".%s", ir->field);
 }
 
 
@@ -459,7 +458,7 @@ void ir_print_glsl_visitor::visit(ir_constant *ir)
 	 }
       }
    }
-   buffer = talloc_asprintf_append(buffer, ") ");
+   buffer = talloc_asprintf_append(buffer, ")");
 }
 
 
@@ -475,7 +474,7 @@ ir_print_glsl_visitor::visit(ir_call *ir)
       inst->accept(this);
 	  first = false;
    }
-   buffer = talloc_asprintf_append(buffer, ") ");
+   buffer = talloc_asprintf_append(buffer, ")");
 }
 
 

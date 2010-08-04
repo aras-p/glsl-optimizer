@@ -6,19 +6,19 @@ void main ()
 {
   float f;
   float tmpvar_1;
-  tmpvar_1  = 1.000000;
-  f  = tmpvar_1 ;
+  tmpvar_1 = 1.000000;
+  f = tmpvar_1;
   foo s;
   float tmpvar_2;
-  tmpvar_2  = f ;
-  s .used  = tmpvar_2 ;
+  tmpvar_2 = f;
+  s.used = tmpvar_2;
   float tmpvar_3;
-  tmpvar_3  = f ;
-  s .unused  = tmpvar_3 ;
+  tmpvar_3 = f;
+  s.unused = tmpvar_3;
   vec4 tmpvar_4;
-  tmpvar_4  = s .used .xxxx;
+  tmpvar_4 = s.used.xxxx;
   vec4 tmpvar_5;
-  tmpvar_5  = tmpvar_4 ;
-  gl_FragColor  = tmpvar_5 ;
+  tmpvar_5 = tmpvar_4;
+  gl_FragColor = tmpvar_5;
 }
 

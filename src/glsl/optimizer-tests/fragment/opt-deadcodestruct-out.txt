@@ -5,8 +5,8 @@ struct foo {
 void main ()
 {
   foo s;
-  s .used  = 1.000000;
-  s .unused  = 1.000000;
-  gl_FragColor  = s .used .xxxx;
+  s.used = 1.000000;
+  s.unused = 1.000000;
+  gl_FragColor = s.used.xxxx;
 }
 
