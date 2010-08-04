@@ -645,11 +645,11 @@ void r3xx_compile_vertex_program(struct r300_vertex_program_compiler* compiler)
 	 * on all chipsets. */
 
 	if (compiler->Base.is_r500){
-		rc_transform_loops(&compiler->Base, &loop_state, R500_VS_MAX_ALU);
+		rc_transform_loops(&compiler->Base, &loop_state);
 		rc_emulate_loops(&loop_state, R500_VS_MAX_ALU);
 	} else {
+		rc_transform_loops(&compiler->Base, &loop_state);
 		rc_emulate_loops(&loop_state, R300_VS_MAX_ALU);
-		rc_transform_loops(&compiler->Base, &loop_state, R300_VS_MAX_ALU);
 	}
 	debug_program_log(compiler, "after emulate loops");
 
