@@ -146,10 +146,10 @@ static void FUNC( struct draw_pt_front_end *frontend,
 
          if (flatfirst) {
             flags = (DRAW_PIPE_RESET_STIPPLE |
-                     DRAW_PIPE_EDGE_FLAG_1 |
-                     DRAW_PIPE_EDGE_FLAG_2);
-            edge_next = DRAW_PIPE_EDGE_FLAG_2;
-            edge_finish = DRAW_PIPE_EDGE_FLAG_0;
+                     DRAW_PIPE_EDGE_FLAG_0 |
+                     DRAW_PIPE_EDGE_FLAG_1);
+            edge_next = DRAW_PIPE_EDGE_FLAG_1;
+            edge_finish = DRAW_PIPE_EDGE_FLAG_2;
          }
          else {
             flags = (DRAW_PIPE_RESET_STIPPLE |
