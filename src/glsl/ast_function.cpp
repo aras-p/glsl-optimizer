@@ -554,9 +554,7 @@ emit_inline_vector_constructor(const glsl_type *type,
 {
    assert(!parameters->is_empty());
 
-   ir_variable *var = new(ctx) ir_variable(type,
-					   talloc_strdup(ctx, "vec_ctor"),
-					   ir_var_temporary);
+   ir_variable *var = new(ctx) ir_variable(type, "vec_ctor", ir_var_temporary);
    instructions->push_tail(var);
 
    /* There are two kinds of vector constructors.
@@ -667,9 +665,7 @@ emit_inline_matrix_constructor(const glsl_type *type,
 {
    assert(!parameters->is_empty());
 
-   ir_variable *var = new(ctx) ir_variable(type,
-					   talloc_strdup(ctx, "mat_ctor"),
-					   ir_var_temporary);
+   ir_variable *var = new(ctx) ir_variable(type, "mat_ctor", ir_var_temporary);
    instructions->push_tail(var);
 
    /* There are three kinds of matrix constructors.
@@ -692,8 +688,7 @@ emit_inline_matrix_constructor(const glsl_type *type,
        * components with zero.
        */
       ir_variable *rhs_var =
-	 new(ctx) ir_variable(glsl_type::vec4_type,
-			      talloc_strdup(ctx, "mat_ctor_vec"),
+	 new(ctx) ir_variable(glsl_type::vec4_type, "mat_ctor_vec",
 			      ir_var_temporary);
       instructions->push_tail(rhs_var);
 
@@ -807,8 +802,7 @@ emit_inline_matrix_constructor(const glsl_type *type,
        * generate a temporary and copy the paramter there.
        */
       ir_variable *const rhs_var =
-	 new(ctx) ir_variable(first_param->type,
-			      talloc_strdup(ctx, "mat_ctor_mat"),
+	 new(ctx) ir_variable(first_param->type, "mat_ctor_mat",
 			      ir_var_temporary);
       instructions->push_tail(rhs_var);
 
@@ -874,9 +868,7 @@ emit_inline_matrix_constructor(const glsl_type *type,
 	  * generate a temporary and copy the paramter there.
 	  */
 	 ir_variable *rhs_var =
-	    new(ctx) ir_variable(rhs->type,
-				 talloc_strdup(ctx, "mat_ctor_vec"),
-				 ir_var_temporary);
+	    new(ctx) ir_variable(rhs->type, "mat_ctor_vec", ir_var_temporary);
 	 instructions->push_tail(rhs_var);
 
 	 ir_dereference *rhs_var_ref =

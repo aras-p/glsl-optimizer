@@ -313,7 +313,8 @@ ir_validate::visit(ir_variable *ir)
     * in the ir_dereference_variable handler to ensure that a variable is
     * declared before it is dereferenced.
     */
-   assert(talloc_parent(ir->name) == ir);
+   if (ir->name)
+      assert(talloc_parent(ir->name) == ir);
 
    hash_table_insert(ht, ir, ir);
    return visit_continue;
