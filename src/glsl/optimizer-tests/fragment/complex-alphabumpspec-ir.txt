@@ -190,7 +190,7 @@ vec4 frag_surf (
   return c;
 }
 
-in vec4 xlv_FOG;
+varying vec4 xlv_FOG;
 void main ()
 {
   vec4 xl_retval;

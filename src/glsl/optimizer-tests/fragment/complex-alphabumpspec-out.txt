@@ -24,7 +24,7 @@ uniform vec4 _LightColor0;
 uniform sampler2D _MainTex;
 uniform float _Shininess;
 uniform vec4 _SpecColor;
-in vec4 xlv_FOG;
+varying vec4 xlv_FOG;
 void main ()
 {
   v2f_surf xlt_IN;

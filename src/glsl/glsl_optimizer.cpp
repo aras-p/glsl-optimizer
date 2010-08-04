@@ -81,9 +81,10 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 	glslopt_shader* shader = new (ctx->mem_ctx) glslopt_shader ();
 
 	GLenum glType = 0;
+	PrintGlslMode printMode;
 	switch (type) {
-	case kGlslOptShaderVertex: glType = GL_VERTEX_SHADER; break;
-	case kGlslOptShaderFragment: glType = GL_FRAGMENT_SHADER; break;
+	case kGlslOptShaderVertex: glType = GL_VERTEX_SHADER; printMode = kPrintGlslVertex; break;
+	case kGlslOptShaderFragment: glType = GL_FRAGMENT_SHADER; printMode = kPrintGlslFragment; break;
 	}
 	if (!glType)
 	{
@@ -107,7 +108,7 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 	// Un-optimized output
 	if (!state->error) {
 		validate_ir_tree(ir);
-		shader->rawOutput = _mesa_print_ir_glsl(ir, state, talloc_strdup(ctx->mem_ctx, ""));
+		shader->rawOutput = _mesa_print_ir_glsl(ir, state, talloc_strdup(ctx->mem_ctx, ""), printMode);
 	}
 
 	// Optimization passes
@@ -137,7 +138,7 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 	// Final optimized output
 	if (!state->error)
 	{
-		shader->optimizedOutput = _mesa_print_ir_glsl(ir, state, talloc_strdup(ctx->mem_ctx, ""));
+		shader->optimizedOutput = _mesa_print_ir_glsl(ir, state, talloc_strdup(ctx->mem_ctx, ""), printMode);
 	}
 
 	shader->status = !state->error;

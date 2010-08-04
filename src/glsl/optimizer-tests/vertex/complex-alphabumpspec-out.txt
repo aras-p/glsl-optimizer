@@ -28,8 +28,8 @@ uniform vec4 unity_SHBg;
 uniform vec4 unity_SHBr;
 uniform vec4 unity_SHC;
 uniform vec4 unity_Scale;
-in vec4 TANGENT;
-out vec4 xlv_FOG;
+attribute vec4 TANGENT;
+varying vec4 xlv_FOG;
 void main ()
 {
   appdata_full xlt_v;

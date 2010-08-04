@@ -28,8 +28,14 @@
 
 #include "ir.h"
 
+enum PrintGlslMode {
+	kPrintGlslNone = 0,
+	kPrintGlslVertex,
+	kPrintGlslFragment,
+};
+
 extern char* _mesa_print_ir_glsl(exec_list *instructions,
 			struct _mesa_glsl_parse_state *state,
-			char* buf);
+			char* buf, PrintGlslMode mode);
 
 #endif /* IR_PRINT_GLSL_VISITOR_H */

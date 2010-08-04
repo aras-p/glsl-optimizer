@@ -244,8 +244,8 @@ v2f_surf vert_surf (
   return o;
 }
 
-in vec4 TANGENT;
-out vec4 xlv_FOG;
+attribute vec4 TANGENT;
+varying vec4 xlv_FOG;
 void main ()
 {
   v2f_surf xl_retval;

@@ -32,10 +32,11 @@ static char* print_type(char* buffer, const glsl_type *t);
 
 class ir_print_glsl_visitor : public ir_visitor {
 public:
-	ir_print_glsl_visitor(char* buf)
+	ir_print_glsl_visitor(char* buf, PrintGlslMode mode_)
 	{
 		indentation = 0;
 		buffer = buf;
+		mode = mode_;
 	}
 
 	virtual ~ir_print_glsl_visitor()
@@ -65,13 +66,14 @@ public:
 
 	int indentation;
 	char* buffer;
+	PrintGlslMode mode;
 };
 
 
 char*
 _mesa_print_ir_glsl(exec_list *instructions,
 	    struct _mesa_glsl_parse_state *state,
-		char* buffer)
+		char* buffer, PrintGlslMode mode)
 {
    if (state) {
 	   ir_struct_usage_visitor v;
@@ -104,7 +106,7 @@ _mesa_print_ir_glsl(exec_list *instructions,
 			continue;
 	  }
 
-	  ir_print_glsl_visitor v (buffer);
+	  ir_print_glsl_visitor v (buffer, mode);
 	  ir->accept(&v);
 	  buffer = v.buffer;
       if (ir->ir_type != ir_type_function)
@@ -141,12 +143,16 @@ void ir_print_glsl_visitor::visit(ir_variable *ir)
 {
    const char *const cent = (ir->centroid) ? "centroid " : "";
    const char *const inv = (ir->invariant) ? "invariant " : "";
-   const char *const mode[] = { "", "uniform ", "in ", "out ", "inout ",
-			        "" };
+   const char *const mode[3][6] = 
+   {
+	{ "", "uniform ", "in ",        "out ",     "inout ", "" },
+	{ "", "uniform ", "attribute ", "varying ", "inout ", "" },
+	{ "", "uniform ", "varying ",   "out ",     "inout ", "" },
+   };
    const char *const interp[] = { "", "flat ", "noperspective " };
 
    buffer = talloc_asprintf_append(buffer, "%s%s%s%s",
-	  cent, inv, mode[ir->mode], interp[ir->interpolation]);
+	  cent, inv, mode[this->mode][ir->mode], interp[ir->interpolation]);
    buffer = print_type(buffer, ir->type);
    buffer = talloc_asprintf_append(buffer, " %s", ir->name);
 }
@@ -215,6 +221,9 @@ void ir_print_glsl_visitor::visit(ir_function *ir)
    if (!found_non_builtin_proto)
       return;
 
+   PrintGlslMode oldMode = this->mode;
+   this->mode = kPrintGlslNone;
+
    foreach_iter(exec_list_iterator, iter, *ir) {
       ir_function_signature *const sig = (ir_function_signature *) iter.get();
 
@@ -222,6 +231,9 @@ void ir_print_glsl_visitor::visit(ir_function *ir)
       sig->accept(this);
       buffer = talloc_asprintf_append(buffer, "\n");
    }
+
+   this->mode = oldMode;
+
    indent();
 }
 
