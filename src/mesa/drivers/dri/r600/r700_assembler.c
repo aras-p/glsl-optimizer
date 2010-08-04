@@ -275,7 +275,10 @@ GLuint GetSurfaceFormat(GLenum eType, GLuint nChannels, GLuint * pClient_size)
                 case 2:
                     format = FMT_8_8; break;
                 case 3:
-                    format = FMT_8_8_8; break;
+                    /* for some (small/unaligned) strides using 4 comps works
+                     * better, probably same as GL_SHORT below
+                     * test piglit/draw-vertices */
+                    format = FMT_8_8_8_8; break;
                 case 4:
                     format = FMT_8_8_8_8; break;
                 default:
