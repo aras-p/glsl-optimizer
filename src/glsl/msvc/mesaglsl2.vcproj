@@ -322,6 +322,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\ir_dead_functions.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\ir_div_to_mul_rcp.cpp"
 					>
 				</File>
@@ -419,10 +423,6 @@
 				</File>
 				<File
 					RelativePath="..\ir_tree_grafting.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\ir_unused_functions.cpp"
 					>
 				</File>
 				<File

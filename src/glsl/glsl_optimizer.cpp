@@ -118,7 +118,7 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 		do {
 			progress = false;
 			progress = do_function_inlining(ir) || progress;
-			progress = do_unused_function_removal(ir) || progress;
+			progress = do_dead_functions(ir) || progress;
 			progress = do_if_simplification(ir) || progress;
 			progress = do_copy_propagation(ir) || progress;
 			progress = do_dead_code_local(ir) || progress;
