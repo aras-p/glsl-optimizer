@@ -17,8 +17,8 @@ void main ()
   gl_Position = o.vertex.xyzw;
   vec4 tmpvar_9;
   tmpvar_9.xy = vec2(o.texcoord.xyxx);
-  tmpvar_9.z = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
-  tmpvar_9.w = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_9.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_9.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[0] = tmpvar_9;
 }
 

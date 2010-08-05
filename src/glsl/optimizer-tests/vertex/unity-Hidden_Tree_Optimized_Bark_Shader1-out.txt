@@ -43,7 +43,7 @@ void main ()
   float fBranchPhase;
   vec3 bend;
   float tmpvar_125;
-  tmpvar_125 = dot (_Object2World[3].xyz, vec3 (1.000000, 1.000000, 1.000000));
+  tmpvar_125 = dot (_Object2World[3].xyz, vec3(1.000000, 1.000000, 1.000000));
   float tmpvar_127;
   tmpvar_127 = (tmpvar_125 + animParams.x);
   fBranchPhase = tmpvar_127;
@@ -53,7 +53,7 @@ void main ()
   tmpvar_131.x = float(vec2(tmpvar_129));
   tmpvar_131.y = float(vec2(fBranchPhase));
   vec4 tmpvar_133;
-  tmpvar_133 = fract (((_TimeX + tmpvar_131).xxyy * vec4 (1.975000, 0.793000, 0.375000, 0.193000)));
+  tmpvar_133 = fract (((_TimeX + tmpvar_131).xxyy * vec4(1.975000, 0.793000, 0.375000, 0.193000)));
   vec4 tmpvar_139;
   tmpvar_139 = fract ((((tmpvar_133 * 2.000000) - 1.000000) + 0.500000));
   vec4 tmpvar_140;
@@ -73,9 +73,9 @@ void main ()
   vec3 planeNormal;
   projectedVertex = pos_i0.xyz;
   vec3 tmpvar_153;
-  tmpvar_153.x = float(vec3 (0.000000, 0.000000, 0.000000));
+  tmpvar_153.x = float(vec3(0.000000, 0.000000, 0.000000));
   tmpvar_153.y = float(_SquashPlaneNormal.www);
-  tmpvar_153.z = float(vec3 (0.000000, 0.000000, 0.000000));
+  tmpvar_153.z = float(vec3(0.000000, 0.000000, 0.000000));
   planeNormal = _SquashPlaneNormal.xyz;
   float tmpvar_157;
   tmpvar_157 = dot (planeNormal, (tmpvar_153 - pos_i0.xyz));
@@ -84,7 +84,7 @@ void main ()
   tmpvar_160 = mix (projectedVertex, pos_i0.xyz, vec3(_SquashAmount));
   vec4 tmpvar_161;
   tmpvar_161.xyz = vec3(tmpvar_160.xyzx);
-  tmpvar_161.w = float(vec4 (1.000000, 1.000000, 1.000000, 1.000000));
+  tmpvar_161.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
   pos_i0 = tmpvar_161;
   v_i0.vertex = tmpvar_161;
   vec4 tmpvar_164;

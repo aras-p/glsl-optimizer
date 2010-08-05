@@ -225,7 +225,7 @@ vec2 EncodeFloatRG (
 {
   vec2 kEncodeMul;
   vec2 tmpvar_1;
-  tmpvar_1 = vec2 (1.000000, 255.000000);
+  tmpvar_1 = vec2(1.000000, 255.000000);
   kEncodeMul = tmpvar_1;
   float kEncodeBit;
   float tmpvar_2;
@@ -271,10 +271,10 @@ vec4 frag_surf (
   tmpvar_2 = IN.lop_color;
   surfIN.color = tmpvar_2;
   vec3 tmpvar_3;
-  tmpvar_3 = vec3 (0.000000, 0.000000, 0.000000);
+  tmpvar_3 = vec3(0.000000, 0.000000, 0.000000);
   o.Albedo = tmpvar_3;
   vec3 tmpvar_4;
-  tmpvar_4 = vec3 (0.000000, 0.000000, 0.000000);
+  tmpvar_4 = vec3(0.000000, 0.000000, 0.000000);
   o.Emission = tmpvar_4;
   float tmpvar_5;
   tmpvar_5 = 0.000000;
@@ -349,7 +349,7 @@ void main ()
   vec4 xl_retval;
   v2f_surf xlt_IN;
   vec4 tmpvar_1;
-  tmpvar_1 = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
+  tmpvar_1 = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_IN.pos = tmpvar_1;
   vec3 tmpvar_2;
   tmpvar_2 = gl_TexCoord[0].xyz;

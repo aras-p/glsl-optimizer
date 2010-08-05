@@ -50,7 +50,7 @@ v2f vert (
   tmpvar_3 = tmpvar_2;
   o.uv = tmpvar_3;
   vec3 tmpvar_4;
-  tmpvar_4 = ((gl_ModelViewMatrix * v.vertex).xyz * vec3 (-1.000000, -1.000000, 1.000000));
+  tmpvar_4 = ((gl_ModelViewMatrix * v.vertex).xyz * vec3(-1.000000, -1.000000, 1.000000));
   o.ray = tmpvar_4;
   vec3 tmpvar_5;
   tmpvar_5 = vec3(float((v.texcoord.z != 0.000000)));

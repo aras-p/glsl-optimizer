@@ -509,7 +509,7 @@ void ir_print_glsl_visitor::visit(ir_constant *ir)
    const glsl_type *const base_type = ir->type->get_base_type();
 
    buffer = print_type(buffer, ir->type, true);
-   buffer = talloc_asprintf_append(buffer, " (");
+   buffer = talloc_asprintf_append(buffer, "(");
 
    if (ir->type->is_array()) {
       for (unsigned i = 0; i < ir->type->length; i++)

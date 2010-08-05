@@ -208,7 +208,7 @@ vec4 AnimateVertex (
   vec2 vWavesSum;
   vec3 bend;
   float tmpvar_3;
-  tmpvar_3 = dot (_Object2World[3].xyz, vec3 (1.000000, 1.000000, 1.000000));
+  tmpvar_3 = dot (_Object2World[3].xyz, vec3(1.000000, 1.000000, 1.000000));
   float tmpvar_4;
   tmpvar_4 = tmpvar_3;
   fObjPhase = tmpvar_4;
@@ -229,7 +229,7 @@ vec4 AnimateVertex (
   tmpvar_10 = (_TimeX + tmpvar_9);
   vWavesIn = tmpvar_10;
   vec4 tmpvar_11;
-  tmpvar_11 = fract ((vWavesIn.xxyy * vec4 (1.975000, 0.793000, 0.375000, 0.193000)));
+  tmpvar_11 = fract ((vWavesIn.xxyy * vec4(1.975000, 0.793000, 0.375000, 0.193000)));
   vec4 tmpvar_12;
   tmpvar_12 = ((tmpvar_11 * 2.000000) - 1.000000);
   vWaves = tmpvar_12;

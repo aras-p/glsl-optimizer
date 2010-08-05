@@ -6,7 +6,7 @@ uniform sampler2D _MainTex;
 void main ()
 {
   v2f_img xlt_i;
-  xlt_i.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
+  xlt_i.pos = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_i.uv = gl_TexCoord[0].xy;
   v2f_img i;
   i = xlt_i;
@@ -16,8 +16,8 @@ void main ()
   tmpvar_10 = texture2D (_MainTex, i.uv);
   original = tmpvar_10;
   float tmpvar_12;
-  tmpvar_12 = dot (vec3 (0.299000, 0.587000, 0.114000), original.xyz);
-  xlat_var_output = (vec4 (0.191000, -0.054000, -0.221000, 0.000000) + tmpvar_12);
+  tmpvar_12 = dot (vec3(0.299000, 0.587000, 0.114000), original.xyz);
+  xlat_var_output = (vec4(0.191000, -0.054000, -0.221000, 0.000000) + tmpvar_12);
   xlat_var_output.w = float(original.wwww);
   gl_FragData[0] = xlat_var_output.xyzw;
 }

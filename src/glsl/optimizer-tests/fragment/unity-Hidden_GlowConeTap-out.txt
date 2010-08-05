@@ -7,7 +7,7 @@ uniform sampler2D _MainTex;
 void main ()
 {
   v2f xlt_i;
-  xlt_i.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
+  xlt_i.pos = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_i.uv[0] = gl_TexCoord[0].xyzw;
   xlt_i.uv[1] = gl_TexCoord[1].xyzw;
   v2f i;

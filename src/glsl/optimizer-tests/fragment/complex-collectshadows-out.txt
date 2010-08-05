@@ -16,7 +16,7 @@ uniform vec4 _ZBufferParams;
 void main ()
 {
   v2f xlt_i;
-  xlt_i.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
+  xlt_i.pos = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_i.uv = gl_TexCoord[0].xy;
   xlt_i.ray = gl_TexCoord[1].xyz;
   v2f i;
@@ -30,7 +30,7 @@ void main ()
   depth = __retval_i0;
   vec4 tmpvar_44;
   tmpvar_44.xyz = vec3((i.ray * __retval_i0).xyzx);
-  tmpvar_44.w = float(vec4 (1.000000, 1.000000, 1.000000, 1.000000));
+  tmpvar_44.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
   vec3 sc0;
   vec3 sc1;
   vec3 sc2;
@@ -54,7 +54,7 @@ void main ()
   tmpvar_61 = (near * vec4(tmpvar_58).xyzw);
   vec4 tmpvar_62;
   tmpvar_62.xyz = vec3(((((sc0 * tmpvar_61.x) + (sc1 * tmpvar_61.y)) + (sc2 * tmpvar_61.z)) + (sc3 * tmpvar_61.w)).xyzx);
-  tmpvar_62.w = float(vec4 (1.000000, 1.000000, 1.000000, 1.000000));
+  tmpvar_62.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
   coord = tmpvar_62;
   vec4 tmpvar_64;
   tmpvar_64 = texture2D (_ShadowMapTexture, coord.xy);
@@ -65,9 +65,9 @@ void main ()
     tmpvar_65 = 1.000000;
   };
   res.x = tmpvar_65;
-  res.y = float(vec2 (1.000000, 1.000000));
+  res.y = float(vec2(1.000000, 1.000000));
   vec2 enc;
-  enc = (vec2 (1.000000, 255.000000) * (1.000000 - depth));
+  enc = (vec2(1.000000, 255.000000) * (1.000000 - depth));
   vec2 tmpvar_75;
   tmpvar_75 = fract (enc);
   enc = tmpvar_75;

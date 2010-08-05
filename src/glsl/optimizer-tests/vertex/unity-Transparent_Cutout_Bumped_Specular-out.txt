@@ -64,15 +64,15 @@ void main ()
   gl_TexCoord[0] = o.hip_pack0.xyzw;
   vec4 tmpvar_19;
   tmpvar_19.xyz = vec3(o.TtoV0.xyzx);
-  tmpvar_19.w = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_19.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[1] = tmpvar_19;
   vec4 tmpvar_21;
   tmpvar_21.xyz = vec3(o.TtoV1.xyzx);
-  tmpvar_21.w = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_21.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[2] = tmpvar_21;
   vec4 tmpvar_23;
   tmpvar_23.xyz = vec3(o.TtoV2.xyzx);
-  tmpvar_23.w = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_23.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[3] = tmpvar_23;
 }
 

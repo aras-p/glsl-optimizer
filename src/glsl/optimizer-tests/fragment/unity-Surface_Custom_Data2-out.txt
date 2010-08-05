@@ -23,7 +23,7 @@ varying vec4 xlv_FOG;
 void main ()
 {
   v2f_surf xlt_IN;
-  xlt_IN.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
+  xlt_IN.pos = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_IN.fog = xlv_FOG.x;
   xlt_IN.cust_foo = gl_TexCoord[0].xyz;
   xlt_IN.hip_screen = gl_TexCoord[1].xyzw;
@@ -36,8 +36,8 @@ void main ()
   vec3 lmFull;
   vec3 lmIndirect;
   surfIN.foo = xlt_IN.cust_foo;
-  o.Albedo = vec3 (0.000000, 0.000000, 0.000000);
-  o.Emission = vec3 (0.000000, 0.000000, 0.000000);
+  o.Albedo = vec3(0.000000, 0.000000, 0.000000);
+  o.Emission = vec3(0.000000, 0.000000, 0.000000);
   o.Specular = 0.000000;
   o.Alpha = 0.000000;
   o.Gloss = 0.000000;

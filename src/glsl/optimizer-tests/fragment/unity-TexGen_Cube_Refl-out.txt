@@ -7,7 +7,7 @@ uniform samplerCube _MainTex;
 void main ()
 {
   v2f xlt_i;
-  xlt_i.vertex = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
+  xlt_i.vertex = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_i.color = gl_Color.xyzw;
   xlt_i.texcoord = gl_TexCoord[0].xyz;
   v2f i;

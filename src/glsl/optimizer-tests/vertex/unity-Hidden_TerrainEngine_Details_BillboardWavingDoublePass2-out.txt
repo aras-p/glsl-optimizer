@@ -40,7 +40,7 @@ void main ()
   float tmpvar_125;
   tmpvar_125 = dot (grasspos, grasspos);
   if ((tmpvar_125 > _WaveAndDistance.w)) {
-    offset = vec2 (0.000000, 0.000000);
+    offset = vec2(0.000000, 0.000000);
   };
   pos.xyz = (pos.xyz + (offset.x * _CameraRight.xyz)).xyz;
   pos.xyz = (pos.xyz + (offset.y * _CameraUp.xyz)).xyz;
@@ -56,8 +56,8 @@ void main ()
   vec4 s;
   float lighting;
   vec3 waveMove;
-  waveMove = vec3 (0.000000, 0.000000, 0.000000);
-  waves = (((vertex.x * (vec4 (0.012000, 0.020000, 0.060000, 0.024000) * _WaveAndDistance.y)) + (vertex.z * (vec4 (0.006000, 0.020000, 0.020000, 0.050000) * _WaveAndDistance.y))) + (_WaveAndDistance.x * vec4 (1.200000, 2.000000, 1.600000, 4.800000)));
+  waveMove = vec3(0.000000, 0.000000, 0.000000);
+  waves = (((vertex.x * (vec4(0.012000, 0.020000, 0.060000, 0.024000) * _WaveAndDistance.y)) + (vertex.z * (vec4(0.006000, 0.020000, 0.020000, 0.050000) * _WaveAndDistance.y))) + (_WaveAndDistance.x * vec4(1.200000, 2.000000, 1.600000, 4.800000)));
   vec4 tmpvar_139;
   tmpvar_139 = fract (waves);
   waves = tmpvar_139;
@@ -75,20 +75,20 @@ void main ()
   tmpvar_153 = (tmpvar_151 * tmpvar_151);
   s = (tmpvar_153 * tmpvar_153);
   float tmpvar_156;
-  tmpvar_156 = dot (s, vec4 (0.674200, 0.674200, 0.269680, 0.134840));
+  tmpvar_156 = dot (s, vec4(0.674200, 0.674200, 0.269680, 0.134840));
   lighting = (tmpvar_156 * 0.700000);
   s = (s * waveAmount_i0);
   float tmpvar_159;
-  tmpvar_159 = dot (s, vec4 (0.024000, 0.040000, -0.120000, 0.096000));
+  tmpvar_159 = dot (s, vec4(0.024000, 0.040000, -0.120000, 0.096000));
   waveMove.x = tmpvar_159;
   float tmpvar_161;
-  tmpvar_161 = dot (s, vec4 (0.006000, 0.020000, -0.020000, 0.100000));
+  tmpvar_161 = dot (s, vec4(0.006000, 0.020000, -0.020000, 0.100000));
   waveMove.z = float(vec3(tmpvar_161));
   vertex.xz = vec2((vertex.xz - (waveMove.xz * _WaveAndDistance.z)).xxy);
   vec3 tmpvar_165;
-  tmpvar_165 = mix (vec3 (0.500000, 0.500000, 0.500000), _WavingTint.xyz, vec3(lighting));
+  tmpvar_165 = mix (vec3(0.500000, 0.500000, 0.500000), _WavingTint.xyz, vec3(lighting));
   outColor.xyz = ((color_i0 * tmpvar_165) * 2.000000).xyz;
-  outColor.w = float(vec4 (1.000000, 1.000000, 1.000000, 1.000000));
+  outColor.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
   v_i0.vertex = vertex;
   v_i0.color = outColor;
   o.hip_pack0 = ((v_i0.texcoord.xy * _MainTex_ST.xy) + _MainTex_ST.zw).xy;
@@ -101,8 +101,8 @@ void main ()
   gl_Position = o.pos.xyzw;
   vec4 tmpvar_17;
   tmpvar_17.xy = vec2(o.hip_pack0.xyxx);
-  tmpvar_17.z = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
-  tmpvar_17.w = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_17.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_17.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[1] = tmpvar_17;
   gl_FrontColor = o.lop_color.xyzw;
 }

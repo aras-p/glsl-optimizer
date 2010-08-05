@@ -17,8 +17,8 @@ void main ()
 {
   SurfaceOutput o;
   Input surfIN;
-  o.Albedo = vec3 (0.000000, 0.000000, 0.000000);
-  o.Emission = vec3 (0.000000, 0.000000, 0.000000);
+  o.Albedo = vec3(0.000000, 0.000000, 0.000000);
+  o.Emission = vec3(0.000000, 0.000000, 0.000000);
   o.Specular = 0.000000;
   o.Alpha = 0.000000;
   o.Gloss = 0.000000;
@@ -43,6 +43,6 @@ void main ()
   normal.z = float(vec3(tmpvar_46));
   o_i0.Normal = normal.xyz;
   o = o_i0;
-  gl_FragData[0] = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
+  gl_FragData[0] = vec4(0.000000, 0.000000, 0.000000, 0.000000);
 }
 

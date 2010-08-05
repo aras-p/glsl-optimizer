@@ -39,15 +39,15 @@ void main ()
   gl_Position = o.pos.xyzw;
   vec4 tmpvar_17;
   tmpvar_17.x = float(vec4(o.fog));
-  tmpvar_17.y = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
-  tmpvar_17.z = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
-  tmpvar_17.w = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_17.y = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_17.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_17.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   xlv_FOG = tmpvar_17;
   gl_TexCoord[0] = o.hip_pack0.xyzw;
   vec4 tmpvar_21;
   tmpvar_21.xy = vec2(o.hip_lmap.xyxx);
-  tmpvar_21.z = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
-  tmpvar_21.w = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_21.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_21.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[1] = tmpvar_21;
 }
 

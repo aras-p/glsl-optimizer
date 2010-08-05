@@ -121,10 +121,10 @@ vec4 frag_surf (
   tmpvar_5 = IN.hip_pack2.xy;
   surfIN.uv_Splat3 = tmpvar_5;
   vec3 tmpvar_6;
-  tmpvar_6 = vec3 (0.000000, 0.000000, 0.000000);
+  tmpvar_6 = vec3(0.000000, 0.000000, 0.000000);
   o.Albedo = tmpvar_6;
   vec3 tmpvar_7;
-  tmpvar_7 = vec3 (0.000000, 0.000000, 0.000000);
+  tmpvar_7 = vec3(0.000000, 0.000000, 0.000000);
   o.Emission = tmpvar_7;
   float tmpvar_8;
   tmpvar_8 = 0.000000;
@@ -163,7 +163,7 @@ void main ()
   vec4 xl_retval;
   v2f_surf xlt_IN;
   vec4 tmpvar_1;
-  tmpvar_1 = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
+  tmpvar_1 = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_IN.pos = tmpvar_1;
   float tmpvar_2;
   tmpvar_2 = xlv_FOG.x;

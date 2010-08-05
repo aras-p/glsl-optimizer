@@ -21,7 +21,7 @@ void main ()
   tmpvar_28[2] = gl_ModelViewMatrixInverseTranspose[2].xyz;
   vec4 tmpvar_33;
   tmpvar_33.xyz = vec3((((tmpvar_28 * xlt_v.normal) * 0.500000) + 0.500000).xyzx);
-  tmpvar_33.w = float(vec4 (1.000000, 1.000000, 1.000000, 1.000000));
+  tmpvar_33.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
   o.color = tmpvar_33;
   gl_Position = o.pos.xyzw;
   gl_FrontColor = o.color.xyzw;

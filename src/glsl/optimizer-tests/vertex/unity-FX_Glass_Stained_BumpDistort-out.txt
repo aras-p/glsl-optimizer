@@ -25,28 +25,28 @@ void main ()
   vec4 tmpvar_31;
   tmpvar_31.x = float(inUV.xxxx);
   tmpvar_31.y = float(inUV.yyyy);
-  tmpvar_31.z = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
-  tmpvar_31.w = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_31.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_31.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   o.uvbump = (gl_TextureMatrix[1] * tmpvar_31).xy;
   vec2 inUV_i0;
   inUV_i0 = xlt_v.texcoord;
   vec4 tmpvar_37;
   tmpvar_37.x = float(inUV_i0.xxxx);
   tmpvar_37.y = float(inUV_i0.yyyy);
-  tmpvar_37.z = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
-  tmpvar_37.w = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_37.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_37.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   o.uvmain = (gl_TextureMatrix[2] * tmpvar_37).xy;
   gl_Position = o.vertex.xyzw;
   gl_TexCoord[0] = o.uvgrab.xyzw;
   vec4 tmpvar_11;
   tmpvar_11.xy = vec2(o.uvbump.xyxx);
-  tmpvar_11.z = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
-  tmpvar_11.w = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_11.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_11.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[1] = tmpvar_11;
   vec4 tmpvar_13;
   tmpvar_13.xy = vec2(o.uvmain.xyxx);
-  tmpvar_13.z = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
-  tmpvar_13.w = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_13.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_13.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[2] = tmpvar_13;
 }
 

@@ -154,7 +154,7 @@ float Luminance (
 )
 {
   float tmpvar_1;
-  tmpvar_1 = dot (c, vec3 (0.220000, 0.707000, 0.071000));
+  tmpvar_1 = dot (c, vec3(0.220000, 0.707000, 0.071000));
   return tmpvar_1;
 }
 
@@ -179,7 +179,7 @@ float DecodeFloatRGBA (
 {
   vec4 kDecodeDot;
   vec4 tmpvar_1;
-  tmpvar_1 = vec4 (1.000000, 0.003922, 0.000015, 0.000000);
+  tmpvar_1 = vec4(1.000000, 0.003922, 0.000015, 0.000000);
   kDecodeDot = tmpvar_1;
   float tmpvar_2;
   tmpvar_2 = dot (enc, kDecodeDot);
@@ -412,7 +412,7 @@ void main ()
   vec4 xl_retval;
   v2f xlt_i;
   vec4 tmpvar_1;
-  tmpvar_1 = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
+  tmpvar_1 = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_i.pos = tmpvar_1;
   vec4 tmpvar_2;
   tmpvar_2 = gl_TexCoord[0].xyzw;

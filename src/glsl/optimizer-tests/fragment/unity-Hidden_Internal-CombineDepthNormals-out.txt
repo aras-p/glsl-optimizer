@@ -8,7 +8,7 @@ uniform vec4 _ZBufferParams;
 void main ()
 {
   v2f xlt_i;
-  xlt_i.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
+  xlt_i.pos = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_i.uv = gl_TexCoord[0].xy;
   v2f i;
   i = xlt_i;
@@ -32,7 +32,7 @@ void main ()
     vec4 enc;
     enc.xy = ((((normal.xy / (normal.z + 1.000000)) / 1.777700) * 0.500000) + 0.500000).xy;
     vec2 enc_i0_i1;
-    enc_i0_i1 = (vec2 (1.000000, 255.000000) * d);
+    enc_i0_i1 = (vec2(1.000000, 255.000000) * d);
     vec2 tmpvar_63;
     tmpvar_63 = fract (enc_i0_i1);
     enc_i0_i1 = tmpvar_63;
@@ -40,7 +40,7 @@ void main ()
     enc.zw = vec2(enc_i0_i1.xxxy);
     tmpvar_48 = enc;
   } else {
-    tmpvar_48 = vec4 (0.500000, 0.500000, 1.000000, 1.000000);
+    tmpvar_48 = vec4(0.500000, 0.500000, 1.000000, 1.000000);
   };
   gl_FragData[0] = tmpvar_48.xyzw;
 }

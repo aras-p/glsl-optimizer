@@ -71,7 +71,7 @@ void main ()
   o.lightDir = (tmpvar_77 * (_World2Object * _WorldSpaceLightPos0).xyz);
   vec4 tmpvar_92;
   tmpvar_92.xyz = vec3(worldN.xyzx);
-  tmpvar_92.w = float(vec4 (1.000000, 1.000000, 1.000000, 1.000000));
+  tmpvar_92.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
   vec4 normal;
   normal = tmpvar_92;
   vec3 x1;
@@ -112,18 +112,18 @@ void main ()
   gl_Position = o.pos.xyzw;
   vec4 tmpvar_17;
   tmpvar_17.x = float(vec4(o.fog));
-  tmpvar_17.y = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
-  tmpvar_17.z = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
-  tmpvar_17.w = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_17.y = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_17.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_17.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   xlv_FOG = tmpvar_17;
   gl_TexCoord[0] = o.hip_pack0.xyzw;
   vec4 tmpvar_21;
   tmpvar_21.xyz = vec3(o.lightDir.xyzx);
-  tmpvar_21.w = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_21.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[1] = tmpvar_21;
   vec4 tmpvar_23;
   tmpvar_23.xyz = vec3(o.vlight.xyzx);
-  tmpvar_23.w = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_23.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[2] = tmpvar_23;
   gl_TexCoord[3] = o._ShadowCoord.xyzw;
 }

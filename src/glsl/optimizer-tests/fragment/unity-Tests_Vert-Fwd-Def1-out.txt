@@ -17,7 +17,7 @@ varying vec4 xlv_FOG;
 void main ()
 {
   v2f_surf xlt_IN;
-  xlt_IN.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
+  xlt_IN.pos = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_IN.fog = xlv_FOG.x;
   xlt_IN.hip_screen = gl_TexCoord[0].xyzw;
   v2f_surf IN;
@@ -25,14 +25,14 @@ void main ()
   SurfaceOutput o;
   vec4 light;
   vec4 col;
-  o.Albedo = vec3 (0.000000, 0.000000, 0.000000);
-  o.Emission = vec3 (0.000000, 0.000000, 0.000000);
+  o.Albedo = vec3(0.000000, 0.000000, 0.000000);
+  o.Emission = vec3(0.000000, 0.000000, 0.000000);
   o.Specular = 0.000000;
   o.Alpha = 0.000000;
   o.Gloss = 0.000000;
   SurfaceOutput o_i0;
   o_i0 = o;
-  o_i0.Emission = vec3 (1.000000, 0.000000, 0.000000);
+  o_i0.Emission = vec3(1.000000, 0.000000, 0.000000);
   o = o_i0;
   vec4 tmpvar_20;
   tmpvar_20 = texture2DProj (_LightBuffer, IN.hip_screen);

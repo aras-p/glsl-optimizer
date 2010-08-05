@@ -19,8 +19,8 @@ void main ()
   v2f o;
   vec4 tmpvar_16;
   tmpvar_16.xy = vec2(xlt_v.texcoord.xyxx);
-  tmpvar_16.z = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
-  tmpvar_16.w = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_16.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_16.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   vec4 coord;
   coord = tmpvar_16;
   vec4 tmpvar_19;
@@ -31,8 +31,8 @@ void main ()
   gl_Position = o.pos.xyzw;
   vec4 tmpvar_11;
   tmpvar_11.xy = vec2(o.uv.xyxx);
-  tmpvar_11.z = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
-  tmpvar_11.w = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_11.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_11.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[0] = tmpvar_11;
 }
 

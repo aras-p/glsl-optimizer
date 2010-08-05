@@ -54,7 +54,7 @@ float DecodeFloatRG (
 {
   vec2 kDecodeDot;
   vec2 tmpvar_1;
-  tmpvar_1 = vec2 (1.000000, 0.003922);
+  tmpvar_1 = vec2(1.000000, 0.003922);
   kDecodeDot = tmpvar_1;
   float tmpvar_2;
   tmpvar_2 = dot (enc, kDecodeDot);
@@ -129,7 +129,7 @@ void main ()
   vec4 xl_retval;
   v2f_img xlt_i;
   vec4 tmpvar_1;
-  tmpvar_1 = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
+  tmpvar_1 = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_i.pos = tmpvar_1;
   vec2 tmpvar_2;
   tmpvar_2 = gl_TexCoord[0].xy;

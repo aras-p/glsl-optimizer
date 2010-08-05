@@ -6,7 +6,7 @@ uniform sampler2D _GrabTexture;
 void main ()
 {
   v2f xlt_i;
-  xlt_i.vertex = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
+  xlt_i.vertex = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_i.uv = gl_TexCoord[0].xyzw;
   v2f i;
   i = xlt_i;

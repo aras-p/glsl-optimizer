@@ -5,7 +5,7 @@ struct v2f {
 void main ()
 {
   v2f xlt_i;
-  xlt_i.vertex = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
+  xlt_i.vertex = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_i.color = gl_Color.xyzw;
   gl_FragData[0] = xlt_i.color.xyzw;
 }

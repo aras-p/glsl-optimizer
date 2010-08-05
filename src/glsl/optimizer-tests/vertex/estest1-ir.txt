@@ -8,7 +8,7 @@ void main ()
   tmpvar_1 = (modelViewProjectionMatrix * position);
   gl_Position = tmpvar_1;
   vec4 tmpvar_2;
-  tmpvar_2.xy = vec2((position.xy * vec2 (4.000000, 4.000000)).xyxx);
+  tmpvar_2.xy = vec2((position.xy * vec2(4.000000, 4.000000)).xyxx);
   tmpvar_2.z = float(vec4(0.000000));
   tmpvar_2.w = float(vec4(0.000000));
   vec4 tmpvar_3;

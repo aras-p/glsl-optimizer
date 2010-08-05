@@ -56,9 +56,9 @@ void main ()
   gl_Position = o.pos.xyzw;
   vec4 tmpvar_17;
   tmpvar_17.x = float(vec4(o.fog));
-  tmpvar_17.y = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
-  tmpvar_17.z = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
-  tmpvar_17.w = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_17.y = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_17.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_17.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   xlv_FOG = tmpvar_17;
   gl_TexCoord[0] = o.hip_screenPos.xyzw;
   gl_TexCoord[1] = o.hip_screen.xyzw;

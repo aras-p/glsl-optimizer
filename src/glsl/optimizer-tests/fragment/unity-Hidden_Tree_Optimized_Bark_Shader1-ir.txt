@@ -96,10 +96,10 @@ vec4 frag_surf (
   SurfaceOutput o;
   Input surfIN;
   vec3 tmpvar_1;
-  tmpvar_1 = vec3 (0.000000, 0.000000, 0.000000);
+  tmpvar_1 = vec3(0.000000, 0.000000, 0.000000);
   o.Albedo = tmpvar_1;
   vec3 tmpvar_2;
-  tmpvar_2 = vec3 (0.000000, 0.000000, 0.000000);
+  tmpvar_2 = vec3(0.000000, 0.000000, 0.000000);
   o.Emission = tmpvar_2;
   float tmpvar_3;
   tmpvar_3 = 0.000000;
@@ -111,7 +111,7 @@ vec4 frag_surf (
   tmpvar_5 = 0.000000;
   o.Gloss = tmpvar_5;
   surf (surfIN, o);
-  return vec4 (0.000000, 0.000000, 0.000000, 0.000000);
+  return vec4(0.000000, 0.000000, 0.000000, 0.000000);
 }
 
 void main ()
@@ -119,7 +119,7 @@ void main ()
   vec4 xl_retval;
   v2f_surf xlt_IN;
   vec4 tmpvar_1;
-  tmpvar_1 = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
+  tmpvar_1 = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_IN.pos = tmpvar_1;
   vec4 tmpvar_2;
   tmpvar_2 = frag_surf (xlt_IN);

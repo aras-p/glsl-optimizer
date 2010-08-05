@@ -23,8 +23,8 @@ void main ()
   gl_FrontColor = o.color.xyzw;
   vec4 tmpvar_13;
   tmpvar_13.xy = vec2(o.texcoord.xyxx);
-  tmpvar_13.z = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
-  tmpvar_13.w = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_13.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_13.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[0] = tmpvar_13;
 }
 

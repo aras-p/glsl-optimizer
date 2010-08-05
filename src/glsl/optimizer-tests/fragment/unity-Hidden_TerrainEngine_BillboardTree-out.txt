@@ -9,7 +9,7 @@ varying vec4 xlv_FOG;
 void main ()
 {
   v2f xlt_xlat_var_input;
-  xlt_xlat_var_input.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
+  xlt_xlat_var_input.pos = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_xlat_var_input.fog = xlv_FOG.x;
   xlt_xlat_var_input.color = gl_Color.xyzw;
   xlt_xlat_var_input.uv = gl_TexCoord[0].xy;

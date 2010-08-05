@@ -17,25 +17,25 @@ uniform sampler2D _MainTex;
 void main ()
 {
   v2f_surf xlt_IN;
-  xlt_IN.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
+  xlt_IN.pos = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_IN.normal = gl_TexCoord[0].xyz;
   SurfaceOutput o;
   Input surfIN;
   vec4 res;
-  o.Albedo = vec3 (0.000000, 0.000000, 0.000000);
-  o.Emission = vec3 (0.000000, 0.000000, 0.000000);
+  o.Albedo = vec3(0.000000, 0.000000, 0.000000);
+  o.Emission = vec3(0.000000, 0.000000, 0.000000);
   o.Specular = 0.000000;
   o.Alpha = 0.000000;
   o.Gloss = 0.000000;
   o.Normal = xlt_IN.normal;
   SurfaceOutput o_i0;
   o_i0 = o;
-  o_i0.Albedo = vec3 (0.500000, 0.500000, 0.500000);
+  o_i0.Albedo = vec3(0.500000, 0.500000, 0.500000);
   vec4 tmpvar_23;
-  tmpvar_23 = texture2D (_MainTex, ((surfIN.screenPos.xy / surfIN.screenPos.w) * vec2 (2.000000, 1.000000)));
+  tmpvar_23 = texture2D (_MainTex, ((surfIN.screenPos.xy / surfIN.screenPos.w) * vec2(2.000000, 1.000000)));
   o_i0.Emission = (tmpvar_23.xyz * 0.500000);
   o = o_i0;
-  res.xyz = ((o_i0.Normal * vec3 (0.500000, 0.500000, -0.500000)) + 0.500000).xyz;
+  res.xyz = ((o_i0.Normal * vec3(0.500000, 0.500000, -0.500000)) + 0.500000).xyz;
   res.w = float(vec4(o_i0.Specular));
   gl_FragData[0] = res.xyzw;
 }

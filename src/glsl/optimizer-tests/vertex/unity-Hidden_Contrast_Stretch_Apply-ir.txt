@@ -49,7 +49,7 @@ v2f vert (
   tmpvar_3 = tmpvar_2;
   o.uv[0] = tmpvar_3;
   vec2 tmpvar_4;
-  tmpvar_4 = vec2 (0.500000, 0.500000);
+  tmpvar_4 = vec2(0.500000, 0.500000);
   o.uv[1] = tmpvar_4;
   return o;
 }

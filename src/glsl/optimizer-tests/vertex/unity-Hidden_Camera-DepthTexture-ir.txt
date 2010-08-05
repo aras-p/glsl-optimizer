@@ -42,7 +42,7 @@ void TerrainBillboardTree (
   treeDistanceSqr = tmpvar_3;
   if ((treeDistanceSqr > _TreeBillboardDistances.x)) {
     vec2 tmpvar_4;
-    tmpvar_4 = vec2 (0.000000, 0.000000);
+    tmpvar_4 = vec2(0.000000, 0.000000);
     offset = tmpvar_4.xy;
   };
   vec3 tmpvar_5;
@@ -72,7 +72,7 @@ void TerrainBillboardTree (
   vec3 tmpvar_14;
   tmpvar_14 = vec3(billboardModeFactor);
   vec3 tmpvar_15;
-  tmpvar_15 = mix (((((_TreeBillboardCameraUp.xyz * tmpvar_13) * 2.000000) - (vec3 (0.000000, 1.000000, 0.000000) * absRadius)) - ((_TreeBillboardCameraUp.xyz * absRadius) * billboardRootOffsetFactor)), (_TreeBillboardCameraUp.xyz * radius), tmpvar_14);
+  tmpvar_15 = mix (((((_TreeBillboardCameraUp.xyz * tmpvar_13) * 2.000000) - (vec3(0.000000, 1.000000, 0.000000) * absRadius)) - ((_TreeBillboardCameraUp.xyz * absRadius) * billboardRootOffsetFactor)), (_TreeBillboardCameraUp.xyz * radius), tmpvar_14);
   vec3 tmpvar_16;
   tmpvar_16 = (pos.xyz + tmpvar_15);
   pos.xyz = tmpvar_16.xyz;

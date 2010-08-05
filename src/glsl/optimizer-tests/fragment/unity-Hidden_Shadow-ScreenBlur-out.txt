@@ -8,7 +8,7 @@ uniform vec4 unity_ShadowBlurParams;
 void main ()
 {
   v2f_img xlt_i;
-  xlt_i.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
+  xlt_i.pos = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_i.uv = gl_TexCoord[0].xy;
   vec4 coord;
   vec4 mask;
@@ -21,8 +21,8 @@ void main ()
   float diff;
   vec4 tmpvar_14;
   tmpvar_14.xy = vec2(xlt_i.uv.xyxx);
-  tmpvar_14.z = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
-  tmpvar_14.w = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_14.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_14.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   coord = tmpvar_14;
   vec4 tmpvar_16;
   tmpvar_16 = texture2D (_MainTex, coord.xy);

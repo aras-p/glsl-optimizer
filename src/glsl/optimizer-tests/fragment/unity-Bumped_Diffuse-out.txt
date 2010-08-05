@@ -23,7 +23,7 @@ uniform sampler2D _MainTex;
 void main ()
 {
   v2f_surf xlt_IN;
-  xlt_IN.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
+  xlt_IN.pos = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_IN.hip_pack0 = gl_TexCoord[0].xy;
   xlt_IN.TtoV0 = gl_TexCoord[1].xyz;
   xlt_IN.TtoV1 = gl_TexCoord[2].xyz;
@@ -35,8 +35,8 @@ void main ()
   vec3 viewN;
   vec4 res;
   surfIN.uv_BumpMap = xlt_IN.hip_pack0.xy;
-  o.Albedo = vec3 (0.000000, 0.000000, 0.000000);
-  o.Emission = vec3 (0.000000, 0.000000, 0.000000);
+  o.Albedo = vec3(0.000000, 0.000000, 0.000000);
+  o.Emission = vec3(0.000000, 0.000000, 0.000000);
   o.Specular = 0.000000;
   o.Alpha = 0.000000;
   o.Gloss = 0.000000;
@@ -69,7 +69,7 @@ void main ()
   tmpvar_53 = dot (IN.TtoV2, o.Normal);
   viewN.z = float(vec3(tmpvar_53));
   o.Normal = viewN;
-  res.xyz = ((o.Normal * vec3 (0.500000, 0.500000, -0.500000)) + 0.500000).xyz;
+  res.xyz = ((o.Normal * vec3(0.500000, 0.500000, -0.500000)) + 0.500000).xyz;
   res.w = float(vec4(o.Specular));
   gl_FragData[0] = res.xyzw;
 }

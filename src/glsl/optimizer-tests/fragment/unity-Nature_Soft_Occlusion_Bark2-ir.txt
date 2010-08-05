@@ -50,7 +50,7 @@ vec4 EncodeFloatRGBA (
 {
   vec4 kEncodeMul;
   vec4 tmpvar_1;
-  tmpvar_1 = vec4 (1.000000, 255.000000, 65025.000000, 160580992.000000);
+  tmpvar_1 = vec4(1.000000, 255.000000, 65025.000000, 160580992.000000);
   kEncodeMul = tmpvar_1;
   float kEncodeBit;
   float tmpvar_2;
@@ -82,10 +82,10 @@ vec4 frag_surf (
   SurfaceOutput o;
   Input surfIN;
   vec3 tmpvar_1;
-  tmpvar_1 = vec3 (0.000000, 0.000000, 0.000000);
+  tmpvar_1 = vec3(0.000000, 0.000000, 0.000000);
   o.Albedo = tmpvar_1;
   vec3 tmpvar_2;
-  tmpvar_2 = vec3 (0.000000, 0.000000, 0.000000);
+  tmpvar_2 = vec3(0.000000, 0.000000, 0.000000);
   o.Emission = tmpvar_2;
   float tmpvar_3;
   tmpvar_3 = 0.000000;
@@ -109,7 +109,7 @@ void main ()
   vec4 xl_retval;
   v2f_surf xlt_IN;
   vec4 tmpvar_1;
-  tmpvar_1 = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
+  tmpvar_1 = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_IN.pos = tmpvar_1;
   vec3 tmpvar_2;
   tmpvar_2 = gl_TexCoord[0].xyz;

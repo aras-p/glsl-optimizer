@@ -29,7 +29,7 @@ void main ()
   pos.xyz = (pos.xyz * _Scale.xyz).xyz;
   vec4 tmpvar_59;
   tmpvar_59.xyz = vec3(pos.xyzx);
-  tmpvar_59.w = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_59.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   vec3 tmpvar_62;
   tmpvar_62 = mix (pos.xyz, (_TerrainEngineBendTree * tmpvar_59).xyz, xlt_v.color.www);
   pos.xyz = tmpvar_62.xyz;
@@ -39,9 +39,9 @@ void main ()
   vec3 planeNormal;
   projectedVertex = pos.xyz;
   vec3 tmpvar_67;
-  tmpvar_67.x = float(vec3 (0.000000, 0.000000, 0.000000));
+  tmpvar_67.x = float(vec3(0.000000, 0.000000, 0.000000));
   tmpvar_67.y = float(_SquashPlaneNormal.www);
-  tmpvar_67.z = float(vec3 (0.000000, 0.000000, 0.000000));
+  tmpvar_67.z = float(vec3(0.000000, 0.000000, 0.000000));
   planeNormal = _SquashPlaneNormal.xyz;
   float tmpvar_71;
   tmpvar_71 = dot (planeNormal, (tmpvar_67 - pos.xyz));
@@ -50,7 +50,7 @@ void main ()
   tmpvar_74 = mix (projectedVertex, pos_i0.xyz, vec3(_SquashAmount));
   vec4 tmpvar_75;
   tmpvar_75.xyz = vec3(tmpvar_74.xyzx);
-  tmpvar_75.w = float(vec4 (1.000000, 1.000000, 1.000000, 1.000000));
+  tmpvar_75.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
   pos_i0 = tmpvar_75;
   pos = tmpvar_75;
   v.vertex = tmpvar_75;
@@ -65,8 +65,8 @@ void main ()
   gl_Position = o.pos.xyzw;
   vec4 tmpvar_13;
   tmpvar_13.xy = vec2(o.uv.xyxx);
-  tmpvar_13.z = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
-  tmpvar_13.w = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_13.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_13.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[0] = tmpvar_13;
   gl_TexCoord[1] = o.nz.xyzw;
 }

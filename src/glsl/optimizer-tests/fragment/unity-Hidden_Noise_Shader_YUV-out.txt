@@ -11,7 +11,7 @@ uniform sampler2D _ScratchTex;
 void main ()
 {
   v2f xlt_i;
-  xlt_i.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
+  xlt_i.pos = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_i.uv = gl_TexCoord[0].xy;
   xlt_i.uvg = gl_TexCoord[1].xy;
   xlt_i.uvs = gl_TexCoord[2].xy;
@@ -23,7 +23,7 @@ void main ()
   tmpvar_13 = texture2D (_MainTex, i.uv);
   col = tmpvar_13;
   float tmpvar_15;
-  tmpvar_15 = dot (col.xyz, vec3 (0.299000, 0.587000, 0.114000));
+  tmpvar_15 = dot (col.xyz, vec3(0.299000, 0.587000, 0.114000));
   yuv.x = tmpvar_15;
   yuv.y = float(vec2(((col.z - yuv.x) * 0.492000)));
   yuv.z = float(vec3(((col.x - yuv.x) * 0.877000)));

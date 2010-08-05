@@ -59,28 +59,28 @@ void main ()
   o.lightDir = (tmpvar_41 * (((_World2Object * _WorldSpaceLightPos0).xyz * unity_Scale.w) - v.vertex.xyz));
   vec4 tmpvar_58;
   tmpvar_58.xyz = vec3(_WorldSpaceCameraPos.xyzx);
-  tmpvar_58.w = float(vec4 (1.000000, 1.000000, 1.000000, 1.000000));
+  tmpvar_58.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
   o.viewDir = (tmpvar_41 * (((_World2Object * tmpvar_58).xyz * unity_Scale.w) - v.vertex.xyz));
   o._LightCoord = (_LightMatrix0 * (_Object2World * v.vertex)).xyz;
   gl_Position = o.pos.xyzw;
   vec4 tmpvar_17;
   tmpvar_17.x = float(vec4(o.fog));
-  tmpvar_17.y = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
-  tmpvar_17.z = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
-  tmpvar_17.w = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_17.y = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_17.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_17.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   xlv_FOG = tmpvar_17;
   gl_TexCoord[0] = o.hip_pack0.xyzw;
   vec4 tmpvar_21;
   tmpvar_21.xyz = vec3(o.viewDir.xyzx);
-  tmpvar_21.w = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_21.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[1] = tmpvar_21;
   vec4 tmpvar_23;
   tmpvar_23.xyz = vec3(o.lightDir.xyzx);
-  tmpvar_23.w = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_23.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[2] = tmpvar_23;
   vec4 tmpvar_25;
   tmpvar_25.xyz = vec3(o._LightCoord.xyzx);
-  tmpvar_25.w = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_25.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[3] = tmpvar_25;
 }
 

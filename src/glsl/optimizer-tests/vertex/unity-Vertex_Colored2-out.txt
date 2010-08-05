@@ -24,20 +24,20 @@ void main ()
   o.pos = tmpvar_22;
   o.fog = tmpvar_22.z;
   o.color.xyz = ((xlt_v.color.xyz + (xlt_v.normal * 0.300000)) * 0.500000).xyz;
-  o.color.w = float(vec4 (1.000000, 1.000000, 1.000000, 1.000000));
+  o.color.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
   o.texcoord = xlt_v.texcoord;
   gl_Position = o.pos.xyzw;
   vec4 tmpvar_13;
   tmpvar_13.x = float(vec4(o.fog));
-  tmpvar_13.y = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
-  tmpvar_13.z = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
-  tmpvar_13.w = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_13.y = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_13.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_13.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   xlv_FOG = tmpvar_13;
   gl_FrontColor = o.color.xyzw;
   vec4 tmpvar_17;
   tmpvar_17.xy = vec2(o.texcoord.xyxx);
-  tmpvar_17.z = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
-  tmpvar_17.w = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_17.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_17.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[0] = tmpvar_17;
 }
 

@@ -48,7 +48,7 @@ void main ()
   o.hip_pack0.zw = vec2(((xlt_v.texcoord.xy * _BumpMap_ST.xy) + _BumpMap_ST.zw).xxxy);
   vec4 tmpvar_56;
   tmpvar_56.xyz = vec3(_WorldSpaceCameraPos.xyzx);
-  tmpvar_56.w = float(vec4 (1.000000, 1.000000, 1.000000, 1.000000));
+  tmpvar_56.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
   mat3 tmpvar_64;
   tmpvar_64[0] = _Object2World[0].xyz;
   tmpvar_64[1] = _Object2World[1].xyz;
@@ -97,9 +97,9 @@ void main ()
   gl_Position = o.pos.xyzw;
   vec4 tmpvar_17;
   tmpvar_17.x = float(vec4(o.fog));
-  tmpvar_17.y = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
-  tmpvar_17.z = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
-  tmpvar_17.w = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_17.y = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_17.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_17.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   xlv_FOG = tmpvar_17;
   gl_TexCoord[0] = o.hip_pack0.xyzw;
   gl_TexCoord[1] = o.hip_screen.xyzw;
@@ -108,7 +108,7 @@ void main ()
   gl_TexCoord[4] = o.TtoW2.xyzw;
   vec4 tmpvar_29;
   tmpvar_29.xyz = vec3(o.hip_lmapFade.xyzx);
-  tmpvar_29.w = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_29.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[5] = tmpvar_29;
 }
 

@@ -40,7 +40,7 @@ void main ()
   o.hip_pack0 = ((xlt_v.texcoord.xy * _MainTex_ST.xy) + _MainTex_ST.zw).xy;
   vec4 tmpvar_49;
   tmpvar_49.xyz = vec3(_WorldSpaceCameraPos.xyzx);
-  tmpvar_49.w = float(vec4 (1.000000, 1.000000, 1.000000, 1.000000));
+  tmpvar_49.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
   vec3 tmpvar_52;
   tmpvar_52 = reflect (-((((_World2Object * tmpvar_49).xyz * unity_Scale.w) - xlt_v.vertex.xyz)), v.normal);
   mat3 tmpvar_59;
@@ -63,18 +63,18 @@ void main ()
   gl_Position = o.pos.xyzw;
   vec4 tmpvar_17;
   tmpvar_17.x = float(vec4(o.fog));
-  tmpvar_17.y = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
-  tmpvar_17.z = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
-  tmpvar_17.w = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_17.y = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_17.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_17.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   xlv_FOG = tmpvar_17;
   vec4 tmpvar_19;
   tmpvar_19.xy = vec2(o.hip_pack0.xyxx);
-  tmpvar_19.z = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
-  tmpvar_19.w = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_19.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_19.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[0] = tmpvar_19;
   vec4 tmpvar_21;
   tmpvar_21.xyz = vec3(o.worldRefl.xyzx);
-  tmpvar_21.w = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_21.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[1] = tmpvar_21;
   gl_TexCoord[2] = o.hip_screen.xyzw;
 }

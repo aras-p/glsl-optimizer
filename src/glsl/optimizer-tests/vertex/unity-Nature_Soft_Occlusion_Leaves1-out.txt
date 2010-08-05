@@ -37,7 +37,7 @@ void main ()
   pos.xyz = (pos.xyz * _Scale.xyz).xyz;
   vec4 tmpvar_84;
   tmpvar_84.xyz = vec3(pos.xyzx);
-  tmpvar_84.w = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_84.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   vec3 tmpvar_87;
   tmpvar_87 = mix (pos.xyz, (_TerrainEngineBendTree * tmpvar_84).xyz, xlt_v.color.www);
   pos.xyz = tmpvar_87.xyz;
@@ -47,9 +47,9 @@ void main ()
   vec3 planeNormal;
   projectedVertex = pos.xyz;
   vec3 tmpvar_92;
-  tmpvar_92.x = float(vec3 (0.000000, 0.000000, 0.000000));
+  tmpvar_92.x = float(vec3(0.000000, 0.000000, 0.000000));
   tmpvar_92.y = float(_SquashPlaneNormal.www);
-  tmpvar_92.z = float(vec3 (0.000000, 0.000000, 0.000000));
+  tmpvar_92.z = float(vec3(0.000000, 0.000000, 0.000000));
   planeNormal = _SquashPlaneNormal.xyz;
   float tmpvar_96;
   tmpvar_96 = dot (planeNormal, (tmpvar_92 - pos.xyz));
@@ -58,7 +58,7 @@ void main ()
   tmpvar_99 = mix (projectedVertex, pos_i0.xyz, vec3(_SquashAmount));
   vec4 tmpvar_100;
   tmpvar_100.xyz = vec3(tmpvar_99.xyzx);
-  tmpvar_100.w = float(vec4 (1.000000, 1.000000, 1.000000, 1.000000));
+  tmpvar_100.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
   pos_i0 = tmpvar_100;
   pos = tmpvar_100;
   v_i0.vertex = tmpvar_100;
@@ -82,14 +82,14 @@ void main ()
   gl_Position = o.pos.xyzw;
   vec4 tmpvar_17;
   tmpvar_17.x = float(vec4(o.fog));
-  tmpvar_17.y = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
-  tmpvar_17.z = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
-  tmpvar_17.w = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_17.y = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_17.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_17.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   xlv_FOG = tmpvar_17;
   vec4 tmpvar_19;
   tmpvar_19.xy = vec2(o.hip_pack0.xyxx);
-  tmpvar_19.z = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
-  tmpvar_19.w = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_19.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_19.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[0] = tmpvar_19;
   gl_TexCoord[1] = o.hip_screen.xyzw;
 }

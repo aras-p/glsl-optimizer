@@ -32,8 +32,8 @@ void main ()
   vec4 waves;
   vec4 s;
   vec3 waveMove;
-  waveMove = vec3 (0.000000, 0.000000, 0.000000);
-  waves = (((vertex.x * (vec4 (0.012000, 0.020000, 0.060000, 0.024000) * _WaveAndDistance.y)) + (vertex.z * (vec4 (0.006000, 0.020000, 0.020000, 0.050000) * _WaveAndDistance.y))) + (_WaveAndDistance.x * vec4 (1.200000, 2.000000, 1.600000, 4.800000)));
+  waveMove = vec3(0.000000, 0.000000, 0.000000);
+  waves = (((vertex.x * (vec4(0.012000, 0.020000, 0.060000, 0.024000) * _WaveAndDistance.y)) + (vertex.z * (vec4(0.006000, 0.020000, 0.020000, 0.050000) * _WaveAndDistance.y))) + (_WaveAndDistance.x * vec4(1.200000, 2.000000, 1.600000, 4.800000)));
   vec4 tmpvar_83;
   tmpvar_83 = fract (waves);
   waves = tmpvar_83;
@@ -52,22 +52,22 @@ void main ()
   s = (tmpvar_97 * tmpvar_97);
   s = (s * waveAmount_i0);
   float tmpvar_103;
-  tmpvar_103 = dot (s, vec4 (0.024000, 0.040000, -0.120000, 0.096000));
+  tmpvar_103 = dot (s, vec4(0.024000, 0.040000, -0.120000, 0.096000));
   waveMove.x = tmpvar_103;
   float tmpvar_105;
-  tmpvar_105 = dot (s, vec4 (0.006000, 0.020000, -0.020000, 0.100000));
+  tmpvar_105 = dot (s, vec4(0.006000, 0.020000, -0.020000, 0.100000));
   waveMove.z = float(vec3(tmpvar_105));
   vertex.xz = vec2((vertex.xz - (waveMove.xz * _WaveAndDistance.z)).xxy);
   v.vertex = vertex;
   o.pos = (gl_ModelViewProjectionMatrix * v.vertex);
   o.uv = v.texcoord.xy;
-  o.nz.xyz = vec3 (0.000000, 0.000000, 1.000000);
+  o.nz.xyz = vec3(0.000000, 0.000000, 1.000000);
   o.nz.w = float(vec4(-(((gl_ModelViewMatrix * v.vertex).z * _ProjectionParams.w))));
   gl_Position = o.pos.xyzw;
   vec4 tmpvar_15;
   tmpvar_15.xy = vec2(o.uv.xyxx);
-  tmpvar_15.z = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
-  tmpvar_15.w = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_15.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_15.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[0] = tmpvar_15;
   gl_TexCoord[1] = o.nz.xyzw;
 }

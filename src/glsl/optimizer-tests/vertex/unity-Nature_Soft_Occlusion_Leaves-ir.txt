@@ -249,7 +249,7 @@ vec3 Shade4PointLights (
   tmpvar_3 = (lightPosZ - pos.z);
   toLightZ = tmpvar_3;
   vec4 tmpvar_4;
-  tmpvar_4 = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
+  tmpvar_4 = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   lengthSq = tmpvar_4;
   vec4 tmpvar_5;
   tmpvar_5 = (lengthSq + (toLightX * toLightX));
@@ -261,7 +261,7 @@ vec3 Shade4PointLights (
   tmpvar_7 = (lengthSq + (toLightZ * toLightZ));
   lengthSq = tmpvar_7;
   vec4 tmpvar_8;
-  tmpvar_8 = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
+  tmpvar_8 = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   ndotl = tmpvar_8;
   vec4 tmpvar_9;
   tmpvar_9 = (ndotl + (toLightX * normal.x));
@@ -278,7 +278,7 @@ vec3 Shade4PointLights (
   tmpvar_13 = tmpvar_12;
   corr = tmpvar_13;
   vec4 tmpvar_14;
-  tmpvar_14 = max (vec4 (0.000000, 0.000000, 0.000000, 0.000000), (ndotl * corr));
+  tmpvar_14 = max (vec4(0.000000, 0.000000, 0.000000, 0.000000), (ndotl * corr));
   vec4 tmpvar_15;
   tmpvar_15 = tmpvar_14;
   ndotl = tmpvar_15;
@@ -289,7 +289,7 @@ vec3 Shade4PointLights (
   tmpvar_17 = (ndotl * atten);
   diff = tmpvar_17;
   vec3 tmpvar_18;
-  tmpvar_18 = vec3 (0.000000, 0.000000, 0.000000);
+  tmpvar_18 = vec3(0.000000, 0.000000, 0.000000);
   col = tmpvar_18;
   vec3 tmpvar_19;
   tmpvar_19 = (col + (lightColor0 * diff.x));

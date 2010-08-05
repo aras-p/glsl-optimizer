@@ -21,7 +21,7 @@ uniform sampler2D _MainTex;
 void main ()
 {
   v2f_surf xlt_IN;
-  xlt_IN.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
+  xlt_IN.pos = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_IN.vec = gl_TexCoord[0].xyz;
   xlt_IN.hip_pack0 = gl_TexCoord[1].xy;
   v2f_surf IN;
@@ -29,8 +29,8 @@ void main ()
   Input surfIN;
   SurfaceOutput o;
   surfIN.uv_MainTex = xlt_IN.hip_pack0.xy;
-  o.Albedo = vec3 (0.000000, 0.000000, 0.000000);
-  o.Emission = vec3 (0.000000, 0.000000, 0.000000);
+  o.Albedo = vec3(0.000000, 0.000000, 0.000000);
+  o.Emission = vec3(0.000000, 0.000000, 0.000000);
   o.Specular = 0.000000;
   o.Alpha = 0.000000;
   o.Gloss = 0.000000;
@@ -53,7 +53,7 @@ void main ()
   float tmpvar_32;
   tmpvar_32 = length (IN.vec);
   vec4 enc;
-  enc = (vec4 (1.000000, 255.000000, 65025.000000, 160580992.000000) * (tmpvar_32 * _LightPositionRange.w));
+  enc = (vec4(1.000000, 255.000000, 65025.000000, 160580992.000000) * (tmpvar_32 * _LightPositionRange.w));
   vec4 tmpvar_38;
   tmpvar_38 = fract (enc);
   vec4 tmpvar_40;

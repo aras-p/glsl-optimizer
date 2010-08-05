@@ -108,7 +108,7 @@ vec2 EncodeFloatRG (
 {
   vec2 kEncodeMul;
   vec2 tmpvar_1;
-  tmpvar_1 = vec2 (1.000000, 255.000000);
+  tmpvar_1 = vec2(1.000000, 255.000000);
   kEncodeMul = tmpvar_1;
   float kEncodeBit;
   float tmpvar_2;
@@ -181,7 +181,7 @@ void main ()
   vec4 xl_retval;
   v2f xlt_i;
   vec4 tmpvar_1;
-  tmpvar_1 = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
+  tmpvar_1 = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_i.pos = tmpvar_1;
   vec2 tmpvar_2;
   tmpvar_2 = gl_TexCoord[0].xy;

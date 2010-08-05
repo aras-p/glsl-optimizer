@@ -34,7 +34,7 @@ float ComputeShadow (
   vec4 tmpvar_38;
   tmpvar_38 = textureCube (_ShadowMapTexture, vec);
   float tmpvar_43;
-  tmpvar_43 = dot (tmpvar_38, vec4 (1.000000, 0.003922, 0.000015, 0.000000));
+  tmpvar_43 = dot (tmpvar_38, vec4(1.000000, 0.003922, 0.000015, 0.000000));
   float tmpvar_45;
   if ((tmpvar_43 < mydist)) {
     tmpvar_45 = _LightShadowData.x;
@@ -48,7 +48,7 @@ float ComputeShadow (
 void main ()
 {
   v2f xlt_i;
-  xlt_i.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
+  xlt_i.pos = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_i.uv = gl_TexCoord[0].xyzw;
   xlt_i.ray = gl_TexCoord[1].xyz;
   v2f i;
@@ -91,7 +91,7 @@ void main ()
   atten = (atten * tmpvar_71);
   vec4 tmpvar_73;
   tmpvar_73.xyz = vec3(vpos.xyzx);
-  tmpvar_73.w = float(vec4 (1.000000, 1.000000, 1.000000, 1.000000));
+  tmpvar_73.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
   vec4 tmpvar_74;
   tmpvar_74 = textureCube (_LightTexture0, (_ViewToCookie * tmpvar_73).xyz);
   atten = (atten * tmpvar_74.w);
@@ -116,7 +116,7 @@ void main ()
   spec = (spec * tmpvar_88);
   res.xyz = (_LightColor.xyz * (diff * atten)).xyz;
   float tmpvar_93;
-  tmpvar_93 = dot (_LightColor.xyz, vec3 (0.220000, 0.707000, 0.071000));
+  tmpvar_93 = dot (_LightColor.xyz, vec3(0.220000, 0.707000, 0.071000));
   res.w = float(vec4((spec * tmpvar_93)));
   float tmpvar_98;
   tmpvar_98 = clamp ((1.000000 - ((vpos.z * unity_LightmapFade.z) + unity_LightmapFade.w)), 0.000000, 1.000000);

@@ -72,24 +72,24 @@ void main ()
   tmpvar_53[2].z = float(v.normal.zzz);
   vec4 tmpvar_66;
   tmpvar_66.xyz = vec3(_WorldSpaceCameraPos.xyzx);
-  tmpvar_66.w = float(vec4 (1.000000, 1.000000, 1.000000, 1.000000));
+  tmpvar_66.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
   o.viewDir = (tmpvar_53 * (((_World2Object * tmpvar_66).xyz * unity_Scale.w) - v.vertex.xyz));
   gl_Position = o.pos.xyzw;
   vec4 tmpvar_17;
   tmpvar_17.x = float(vec4(o.fog));
-  tmpvar_17.y = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
-  tmpvar_17.z = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
-  tmpvar_17.w = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_17.y = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_17.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_17.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   xlv_FOG = tmpvar_17;
   gl_TexCoord[0] = o.hip_pack0.xyzw;
   vec4 tmpvar_21;
   tmpvar_21.xyz = vec3(o.viewDir.xyzx);
-  tmpvar_21.w = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_21.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[1] = tmpvar_21;
   gl_TexCoord[2] = o.hip_screen.xyzw;
   vec4 tmpvar_25;
   tmpvar_25.xyz = vec3(o.hip_lmapFade.xyzx);
-  tmpvar_25.w = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_25.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[3] = tmpvar_25;
 }
 

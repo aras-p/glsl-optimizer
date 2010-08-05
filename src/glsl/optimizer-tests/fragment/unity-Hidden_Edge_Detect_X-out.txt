@@ -7,7 +7,7 @@ uniform float _Treshold;
 void main ()
 {
   v2f xlt_i;
-  xlt_i.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
+  xlt_i.pos = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_i.uv[0] = gl_TexCoord[0].xy;
   xlt_i.uv[1] = gl_TexCoord[1].xy;
   xlt_i.uv[2] = gl_TexCoord[2].xy;
@@ -30,7 +30,7 @@ void main ()
   float tmpvar_21;
   tmpvar_21 = dot (diff, diff);
   if ((tmpvar_21 >= _Treshold)) {
-    original.xyz = vec3 (0.000000, 0.000000, 0.000000);
+    original.xyz = vec3(0.000000, 0.000000, 0.000000);
   };
   gl_FragData[0] = original.xyzw;
 }

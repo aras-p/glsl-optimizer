@@ -28,7 +28,7 @@ uniform sampler2D _ShadowMapTexture;
 void main ()
 {
   v2f_surf xlt_IN;
-  xlt_IN.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
+  xlt_IN.pos = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_IN._ShadowCoord0 = gl_TexCoord[0].xyz;
   xlt_IN._ShadowCoord1 = gl_TexCoord[1].xyz;
   xlt_IN._ShadowCoord2 = gl_TexCoord[2].xyz;
@@ -45,8 +45,8 @@ void main ()
   float shadow;
   vec4 res;
   surfIN.worldPos = xlt_IN.worldPos;
-  o.Albedo = vec3 (0.000000, 0.000000, 0.000000);
-  o.Emission = vec3 (0.000000, 0.000000, 0.000000);
+  o.Albedo = vec3(0.000000, 0.000000, 0.000000);
+  o.Emission = vec3(0.000000, 0.000000, 0.000000);
   o.Specular = 0.000000;
   o.Alpha = 0.000000;
   o.Gloss = 0.000000;
@@ -75,7 +75,7 @@ void main ()
   tmpvar_50 = (near * vec4(tmpvar_47).xyzw);
   vec4 tmpvar_51;
   tmpvar_51.xyz = vec3(((((IN._ShadowCoord0 * tmpvar_50.x) + (IN._ShadowCoord1 * tmpvar_50.y)) + (IN._ShadowCoord2 * tmpvar_50.z)) + (IN._ShadowCoord3 * tmpvar_50.w)).xyzx);
-  tmpvar_51.w = float(vec4 (1.000000, 1.000000, 1.000000, 1.000000));
+  tmpvar_51.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
   coord = tmpvar_51;
   vec4 tmpvar_53;
   tmpvar_53 = texture2D (_ShadowMapTexture, coord.xy);
@@ -91,9 +91,9 @@ void main ()
   float tmpvar_61;
   tmpvar_61 = clamp ((shadow + tmpvar_58), 0.000000, 1.000000);
   res.x = tmpvar_61;
-  res.y = float(vec2 (1.000000, 1.000000));
+  res.y = float(vec2(1.000000, 1.000000));
   vec2 enc;
-  enc = (vec2 (1.000000, 255.000000) * (1.000000 - (z * _ProjectionParams.w)).x);
+  enc = (vec2(1.000000, 255.000000) * (1.000000 - (z * _ProjectionParams.w)).x);
   vec2 tmpvar_70;
   tmpvar_70 = fract (enc);
   enc = tmpvar_70;

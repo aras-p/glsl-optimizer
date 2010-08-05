@@ -7,7 +7,7 @@ uniform sampler2D _MainTex;
 void main ()
 {
   v2f xlt_i;
-  xlt_i.vertex = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
+  xlt_i.vertex = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_i.texcoord = gl_TexCoord[0].xy;
   v2f i;
   i = xlt_i;

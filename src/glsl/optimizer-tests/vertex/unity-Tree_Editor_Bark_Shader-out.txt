@@ -55,7 +55,7 @@ void main ()
   float fBranchPhase;
   vec3 bend;
   float tmpvar_142;
-  tmpvar_142 = dot (_Object2World[3].xyz, vec3 (1.000000, 1.000000, 1.000000));
+  tmpvar_142 = dot (_Object2World[3].xyz, vec3(1.000000, 1.000000, 1.000000));
   float tmpvar_144;
   tmpvar_144 = (tmpvar_142 + animParams.x);
   fBranchPhase = tmpvar_144;
@@ -65,7 +65,7 @@ void main ()
   tmpvar_148.x = float(vec2(tmpvar_146));
   tmpvar_148.y = float(vec2(fBranchPhase));
   vec4 tmpvar_150;
-  tmpvar_150 = fract (((_TimeX + tmpvar_148).xxyy * vec4 (1.975000, 0.793000, 0.375000, 0.193000)));
+  tmpvar_150 = fract (((_TimeX + tmpvar_148).xxyy * vec4(1.975000, 0.793000, 0.375000, 0.193000)));
   vec4 tmpvar_156;
   tmpvar_156 = fract ((((tmpvar_150 * 2.000000) - 1.000000) + 0.500000));
   vec4 tmpvar_157;
@@ -85,9 +85,9 @@ void main ()
   vec3 planeNormal;
   projectedVertex = pos_i0.xyz;
   vec3 tmpvar_170;
-  tmpvar_170.x = float(vec3 (0.000000, 0.000000, 0.000000));
+  tmpvar_170.x = float(vec3(0.000000, 0.000000, 0.000000));
   tmpvar_170.y = float(_SquashPlaneNormal.www);
-  tmpvar_170.z = float(vec3 (0.000000, 0.000000, 0.000000));
+  tmpvar_170.z = float(vec3(0.000000, 0.000000, 0.000000));
   planeNormal = _SquashPlaneNormal.xyz;
   float tmpvar_174;
   tmpvar_174 = dot (planeNormal, (tmpvar_170 - pos_i0.xyz));
@@ -96,7 +96,7 @@ void main ()
   tmpvar_177 = mix (projectedVertex, pos_i0.xyz, vec3(_SquashAmount));
   vec4 tmpvar_178;
   tmpvar_178.xyz = vec3(tmpvar_177.xyzx);
-  tmpvar_178.w = float(vec4 (1.000000, 1.000000, 1.000000, 1.000000));
+  tmpvar_178.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
   pos_i0 = tmpvar_178;
   v_i0.vertex = tmpvar_178;
   vec4 tmpvar_181;
@@ -133,28 +133,28 @@ void main ()
   o.lightDir = (tmpvar_193 * (_World2Object * _WorldSpaceLightPos0).xyz);
   vec4 tmpvar_210;
   tmpvar_210.xyz = vec3(_WorldSpaceCameraPos.xyzx);
-  tmpvar_210.w = float(vec4 (1.000000, 1.000000, 1.000000, 1.000000));
+  tmpvar_210.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
   o.viewDir = (tmpvar_193 * (((_World2Object * tmpvar_210).xyz * unity_Scale.w) - v.vertex.xyz));
   gl_Position = o.pos.xyzw;
   vec4 tmpvar_17;
   tmpvar_17.x = float(vec4(o.fog));
-  tmpvar_17.y = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
-  tmpvar_17.z = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
-  tmpvar_17.w = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_17.y = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_17.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_17.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   xlv_FOG = tmpvar_17;
   vec4 tmpvar_19;
   tmpvar_19.xy = vec2(o.hip_pack0.xyxx);
-  tmpvar_19.z = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
-  tmpvar_19.w = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_19.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_19.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[0] = tmpvar_19;
   gl_FrontColor = o.lop_color.xyzw;
   vec4 tmpvar_23;
   tmpvar_23.xyz = vec3(o.lightDir.xyzx);
-  tmpvar_23.w = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_23.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[1] = tmpvar_23;
   vec4 tmpvar_25;
   tmpvar_25.xyz = vec3(o.viewDir.xyzx);
-  tmpvar_25.w = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_25.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[2] = tmpvar_25;
 }
 

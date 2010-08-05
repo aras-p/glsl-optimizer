@@ -109,10 +109,10 @@ vec4 frag_surf (
   tmpvar_2 = IN.hip_pack0.zw;
   surfIN.uv_BumpMap = tmpvar_2;
   vec3 tmpvar_3;
-  tmpvar_3 = vec3 (0.000000, 0.000000, 0.000000);
+  tmpvar_3 = vec3(0.000000, 0.000000, 0.000000);
   o.Albedo = tmpvar_3;
   vec3 tmpvar_4;
-  tmpvar_4 = vec3 (0.000000, 0.000000, 0.000000);
+  tmpvar_4 = vec3(0.000000, 0.000000, 0.000000);
   o.Emission = tmpvar_4;
   float tmpvar_5;
   tmpvar_5 = 0.000000;
@@ -144,7 +144,7 @@ vec4 frag_surf (
   tmpvar_14 = viewN;
   o.Normal = tmpvar_14;
   vec3 tmpvar_15;
-  tmpvar_15 = ((o.Normal * vec3 (0.500000, 0.500000, -0.500000)) + 0.500000);
+  tmpvar_15 = ((o.Normal * vec3(0.500000, 0.500000, -0.500000)) + 0.500000);
   res.xyz = tmpvar_15.xyz;
   float tmpvar_16;
   tmpvar_16 = o.Specular;
@@ -157,7 +157,7 @@ void main ()
   vec4 xl_retval;
   v2f_surf xlt_IN;
   vec4 tmpvar_1;
-  tmpvar_1 = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
+  tmpvar_1 = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_IN.pos = tmpvar_1;
   vec4 tmpvar_2;
   tmpvar_2 = gl_TexCoord[0].xyzw;

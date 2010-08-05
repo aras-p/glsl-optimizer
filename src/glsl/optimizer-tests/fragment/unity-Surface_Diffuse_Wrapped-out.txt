@@ -24,7 +24,7 @@ varying vec4 xlv_FOG;
 void main ()
 {
   v2f_surf xlt_IN;
-  xlt_IN.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
+  xlt_IN.pos = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_IN.fog = xlv_FOG.x;
   xlt_IN.hip_pack0 = gl_TexCoord[0].xy;
   xlt_IN.normal = gl_TexCoord[1].xyz;
@@ -37,8 +37,8 @@ void main ()
   vec3 lightDir;
   vec4 c;
   surfIN.uv_MainTex = xlt_IN.hip_pack0.xy;
-  o.Albedo = vec3 (0.000000, 0.000000, 0.000000);
-  o.Emission = vec3 (0.000000, 0.000000, 0.000000);
+  o.Albedo = vec3(0.000000, 0.000000, 0.000000);
+  o.Emission = vec3(0.000000, 0.000000, 0.000000);
   o.Specular = 0.000000;
   o.Alpha = 0.000000;
   o.Gloss = 0.000000;
@@ -64,7 +64,7 @@ void main ()
   c_i0.xyz = ((s.Albedo * _LightColor0.xyz) * ((((tmpvar_37 * 0.500000) + 0.500000) * atten) * 2.000000)).xyz;
   c_i0.w = float(vec4(s.Alpha));
   c = c_i0;
-  c.w = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
+  c.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_FragData[0] = c.xyzw;
 }
 

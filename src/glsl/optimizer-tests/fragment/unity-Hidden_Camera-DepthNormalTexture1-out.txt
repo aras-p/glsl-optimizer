@@ -8,7 +8,7 @@ uniform sampler2D _MainTex;
 void main ()
 {
   v2f xlt_i;
-  xlt_i.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
+  xlt_i.pos = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_i.uv = gl_TexCoord[0].xy;
   xlt_i.nz = gl_TexCoord[1].xyzw;
   v2f i;
@@ -25,7 +25,7 @@ void main ()
   vec4 enc;
   enc.xy = ((((normal.xy / (normal.z + 1.000000)) / 1.777700) * 0.500000) + 0.500000).xy;
   vec2 enc_i0_i1;
-  enc_i0_i1 = (vec2 (1.000000, 255.000000) * i.nz.w);
+  enc_i0_i1 = (vec2(1.000000, 255.000000) * i.nz.w);
   vec2 tmpvar_56;
   tmpvar_56 = fract (enc_i0_i1);
   enc_i0_i1 = tmpvar_56;

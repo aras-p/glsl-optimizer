@@ -19,13 +19,13 @@ uniform float _Shininess;
 void main ()
 {
   v2f_surf xlt_IN;
-  xlt_IN.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
+  xlt_IN.pos = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_IN.normal = gl_TexCoord[0].xyz;
   SurfaceOutput o;
   Input surfIN;
   vec4 res;
-  o.Albedo = vec3 (0.000000, 0.000000, 0.000000);
-  o.Emission = vec3 (0.000000, 0.000000, 0.000000);
+  o.Albedo = vec3(0.000000, 0.000000, 0.000000);
+  o.Emission = vec3(0.000000, 0.000000, 0.000000);
   o.Specular = 0.000000;
   o.Alpha = 0.000000;
   o.Gloss = 0.000000;
@@ -41,7 +41,7 @@ void main ()
   o_i0.Alpha = (tmpvar_21.w * _Color.w);
   o_i0.Specular = _Shininess;
   o = o_i0;
-  res.xyz = ((o_i0.Normal * vec3 (0.500000, 0.500000, -0.500000)) + 0.500000).xyz;
+  res.xyz = ((o_i0.Normal * vec3(0.500000, 0.500000, -0.500000)) + 0.500000).xyz;
   res.w = float(vec4(o_i0.Specular));
   gl_FragData[0] = res.xyzw;
 }

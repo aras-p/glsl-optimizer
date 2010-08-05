@@ -35,10 +35,10 @@ void surf (
   tmpvar_1 = (IN.screenPos.xy / IN.screenPos.w);
   uv = tmpvar_1;
   vec2 tmpvar_2;
-  tmpvar_2 = (uv * vec2 (2.000000, 1.000000));
+  tmpvar_2 = (uv * vec2(2.000000, 1.000000));
   uv = tmpvar_2;
   vec3 tmpvar_3;
-  tmpvar_3 = vec3 (0.500000, 0.500000, 0.500000);
+  tmpvar_3 = vec3(0.500000, 0.500000, 0.500000);
   o.Albedo = tmpvar_3;
   vec4 tmpvar_4;
   tmpvar_4 = texture2D (_MainTex, uv);
@@ -90,10 +90,10 @@ vec4 frag_surf (
   vec3 lightDir;
   vec4 c;
   vec3 tmpvar_1;
-  tmpvar_1 = vec3 (0.000000, 0.000000, 0.000000);
+  tmpvar_1 = vec3(0.000000, 0.000000, 0.000000);
   o.Albedo = tmpvar_1;
   vec3 tmpvar_2;
-  tmpvar_2 = vec3 (0.000000, 0.000000, 0.000000);
+  tmpvar_2 = vec3(0.000000, 0.000000, 0.000000);
   o.Emission = tmpvar_2;
   float tmpvar_3;
   tmpvar_3 = 0.000000;
@@ -143,7 +143,7 @@ void main ()
   vec4 xl_retval;
   v2f_surf xlt_IN;
   vec4 tmpvar_1;
-  tmpvar_1 = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
+  tmpvar_1 = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_IN.pos = tmpvar_1;
   float tmpvar_2;
   tmpvar_2 = xlv_FOG.x;

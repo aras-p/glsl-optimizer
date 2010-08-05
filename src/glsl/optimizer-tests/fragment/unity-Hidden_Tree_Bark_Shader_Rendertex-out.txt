@@ -7,7 +7,7 @@ uniform sampler2D _MainTex;
 void main ()
 {
   v2f xlt_i;
-  xlt_i.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
+  xlt_i.pos = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_i.uv = gl_TexCoord[0].xy;
   xlt_i.color = gl_TexCoord[1].xyz;
   v2f i;
@@ -17,7 +17,7 @@ void main ()
   tmpvar_11 = texture2D (_MainTex, i.uv);
   col = tmpvar_11;
   col.xyz = (tmpvar_11.xyz * (i.color * 2.000000)).xyz;
-  col.w = float(vec4 (1.000000, 1.000000, 1.000000, 1.000000));
+  col.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
   gl_FragData[0] = col.xyzw;
 }
 

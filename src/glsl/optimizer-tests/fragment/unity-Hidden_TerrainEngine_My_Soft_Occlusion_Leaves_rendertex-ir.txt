@@ -14,7 +14,7 @@ vec4 frag (
 {
   vec4 tmpvar_1;
   tmpvar_1 = texture2D (_MainTex, i.texcoord);
-  return (tmpvar_1 * vec4 (1.000000, 0.000000, 0.000000, 1.000000));
+  return (tmpvar_1 * vec4(1.000000, 0.000000, 0.000000, 1.000000));
 }
 
 void main ()
@@ -22,7 +22,7 @@ void main ()
   vec4 xl_retval;
   v2f xlt_i;
   vec4 tmpvar_1;
-  tmpvar_1 = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
+  tmpvar_1 = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_i.vertex = tmpvar_1;
   vec4 tmpvar_2;
   tmpvar_2 = gl_Color.xyzw;

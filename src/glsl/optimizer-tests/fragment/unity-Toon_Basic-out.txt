@@ -9,7 +9,7 @@ uniform samplerCube _ToonShade;
 void main ()
 {
   v2f xlt_i;
-  xlt_i.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
+  xlt_i.pos = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_i.texcoord = gl_TexCoord[0].xy;
   xlt_i.cubenormal = gl_TexCoord[1].xyz;
   v2f i;
