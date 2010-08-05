@@ -2604,7 +2604,6 @@ _mesa_glsl_compile_shader(GLcontext *ctx, struct gl_shader *shader)
       do {
 	 progress = false;
 
-	 progress = do_function_inlining(shader->ir) || progress;
 	 progress = do_if_simplification(shader->ir) || progress;
 	 progress = do_copy_propagation(shader->ir) || progress;
 	 progress = do_dead_code_local(shader->ir) || progress;
