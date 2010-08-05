@@ -21,10 +21,11 @@ struct emulate_loop_state {
 	struct loop_info * Loops;
 	unsigned int LoopCount;
 	unsigned int LoopReserved;
+	int prog_inst_limit;
 };
 
 void rc_transform_loops(struct radeon_compiler *c,
-						struct emulate_loop_state * s);
+			struct emulate_loop_state * s, int prog_inst_limit);
 
 void rc_unroll_loops(struct radeon_compiler * c, int prog_inst_limit);
 

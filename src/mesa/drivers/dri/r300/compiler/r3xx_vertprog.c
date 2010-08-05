@@ -32,6 +32,11 @@
 #include "radeon_emulate_branches.h"
 #include "radeon_emulate_loops.h"
 
+struct loop {
+	int BgnLoop;
+
+};
+
 /*
  * Take an already-setup and valid source then swizzle it appropriately to
  * obtain a constant ZERO or ONE source.
@@ -337,6 +342,10 @@ static void translate_vertex_program(struct r300_vertex_program_compiler * compi
 {
 	struct rc_instruction *rci;
 
+	struct loop * loops;
+	int current_loop_depth = 0;
+	int loops_reserved = 0;
+
 	compiler->code->pos_end = 0;	/* Not supported yet */
 	compiler->code->length = 0;
 
@@ -385,6 +394,68 @@ static void translate_vertex_program(struct r300_vertex_program_compiler * compi
 		case RC_OPCODE_SIN: ei_math1(compiler->code, ME_SIN, vpi, inst); break;
 		case RC_OPCODE_SLT: ei_vector2(compiler->code, VE_SET_LESS_THAN, vpi, inst); break;
 		case RC_OPCODE_SNE: ei_vector2(compiler->code, VE_SET_NOT_EQUAL, vpi, inst); break;
+		case RC_OPCODE_BGNLOOP:
+		{
+			struct loop * l;
+
+			if ((!compiler->Base.is_r500
+				&& loops_reserved >= R300_VS_MAX_LOOP_DEPTH)
+				|| loops_reserved >= R500_VS_MAX_FC_DEPTH) {
+				rc_error(&compiler->Base,
+						"Loops are nested too deep.");
+				return;
+			}
+			memory_pool_array_reserve(&compiler->Base.Pool,
+					struct loop, loops, current_loop_depth,
+					loops_reserved, 1);
+			l = &loops[current_loop_depth++];
+			memset(l , 0, sizeof(struct loop));
+			l->BgnLoop = (compiler->code->length / 4);
+			continue;
+		}
+		case RC_OPCODE_ENDLOOP:
+		{
+			struct loop * l = &loops[current_loop_depth - 1];
+			unsigned int act_addr = l->BgnLoop - 1;
+			unsigned int last_addr = (compiler->code->length / 4) - 1;
+			unsigned int ret_addr = l->BgnLoop;
+
+			if (loops_reserved >= R300_VS_MAX_FC_OPS) {
+				rc_error(&compiler->Base,
+					"Too many flow control instructions.");
+				return;
+			}
+			if (compiler->Base.is_r500) {
+				compiler->code->fc_op_addrs.r500
+					[compiler->code->num_fc_ops].lw =
+					R500_PVS_FC_ACT_ADRS(act_addr)
+					| R500_PVS_FC_LOOP_CNT_JMP_INST(0xffff)
+					;
+				compiler->code->fc_op_addrs.r500
+					[compiler->code->num_fc_ops].uw =
+					R500_PVS_FC_LAST_INST(last_addr)
+					| R500_PVS_FC_RTN_INST(ret_addr)
+					;
+			} else {
+				compiler->code->fc_op_addrs.r300
+					[compiler->code->num_fc_ops] =
+					R300_PVS_FC_ACT_ADRS(act_addr)
+					| R300_PVS_FC_LOOP_CNT_JMP_INST(0xff)
+					| R300_PVS_FC_LAST_INST(last_addr)
+					| R300_PVS_FC_RTN_INST(ret_addr)
+					;
+			}
+			compiler->code->fc_loop_index[compiler->code->num_fc_ops] =
+				R300_PVS_FC_LOOP_INIT_VAL(0x0)
+				| R300_PVS_FC_LOOP_STEP_VAL(0x1)
+				;
+			compiler->code->fc_ops |= R300_VAP_PVS_FC_OPC_LOOP(
+						compiler->code->num_fc_ops);
+			compiler->code->num_fc_ops++;
+			current_loop_depth--;
+			continue;
+		}
+
 		default:
 			rc_error(&compiler->Base, "Unknown opcode %s\n", rc_get_opcode_info(vpi->Opcode)->Name);
 			return;
@@ -406,6 +477,7 @@ struct temporary_allocation {
 static void allocate_temporary_registers(struct r300_vertex_program_compiler * compiler)
 {
 	struct rc_instruction *inst;
+	struct rc_instruction *end_loop = NULL;
 	unsigned int num_orig_temps = 0;
 	char hwtemps[R300_VS_MAX_TEMPS];
 	struct temporary_allocation * ta;
@@ -440,10 +512,35 @@ static void allocate_temporary_registers(struct r300_vertex_program_compiler * c
 	/* Pass 2: Determine original temporary lifetimes */
 	for(inst = compiler->Base.Program.Instructions.Next; inst != &compiler->Base.Program.Instructions; inst = inst->Next) {
 		const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->U.I.Opcode);
+		/* Instructions inside of loops need to use the ENDLOOP
+		 * instruction as their LastRead. */
+		if (!end_loop && inst->U.I.Opcode == RC_OPCODE_BGNLOOP) {
+			int endloops = 1;
+			struct rc_instruction * ptr;
+			for(ptr = inst->Next;
+				ptr != &compiler->Base.Program.Instructions;
+							ptr = ptr->Next){
+				if (ptr->U.I.Opcode == RC_OPCODE_BGNLOOP) {
+					endloops++;
+				} else if (ptr->U.I.Opcode == RC_OPCODE_ENDLOOP) {
+					endloops--;
+					if (endloops <= 0) {
+						end_loop = ptr;
+						break;
+					}
+				}
+			}
+		}
+
+		if (inst == end_loop) {
+			end_loop = NULL;
+			continue;
+		}
 
 		for (i = 0; i < opcode->NumSrcRegs; ++i) {
 			if (inst->U.I.SrcReg[i].File == RC_FILE_TEMPORARY)
-				ta[inst->U.I.SrcReg[i].Index].LastRead = inst;
+				ta[inst->U.I.SrcReg[i].Index].LastRead =
+						end_loop ? end_loop : inst;
 		}
 	}
 
@@ -640,17 +737,11 @@ void r3xx_compile_vertex_program(struct r300_vertex_program_compiler* compiler)
 
 	debug_program_log(compiler, "before compilation");
 
-	/* XXX Ideally this should be done only for r3xx, but since
-	 * we don't have branching support for r5xx, we use the emulation
-	 * on all chipsets. */
+	if (compiler->Base.is_r500)
+		rc_transform_loops(&compiler->Base, &loop_state, R500_VS_MAX_ALU);
+	else
+		rc_transform_loops(&compiler->Base, &loop_state, R300_VS_MAX_ALU);
 
-	if (compiler->Base.is_r500){
-		rc_transform_loops(&compiler->Base, &loop_state);
-		rc_emulate_loops(&loop_state, R500_VS_MAX_ALU);
-	} else {
-		rc_transform_loops(&compiler->Base, &loop_state);
-		rc_emulate_loops(&loop_state, R300_VS_MAX_ALU);
-	}
 	debug_program_log(compiler, "after emulate loops");
 
 	rc_emulate_branches(&compiler->Base);
@@ -717,6 +808,6 @@ void r3xx_compile_vertex_program(struct r300_vertex_program_compiler* compiler)
 
 	if (compiler->Base.Debug) {
 		fprintf(stderr, "Final vertex program code:\n");
-		r300_vertex_program_dump(compiler->code);
+		r300_vertex_program_dump(compiler);
 	}
 }

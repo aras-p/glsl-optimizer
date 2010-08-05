@@ -113,5 +113,6 @@ struct r300_vertex_program_compiler {
 };
 
 void r3xx_compile_vertex_program(struct r300_vertex_program_compiler* c);
+void r300_vertex_program_dump(struct r300_vertex_program_compiler * c);
 
 #endif /* RADEON_COMPILER_H */

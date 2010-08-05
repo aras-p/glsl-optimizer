@@ -423,7 +423,8 @@ static int build_loop_info(struct radeon_compiler * c, struct loop_info * loop,
  * @param inst A pointer to a BGNLOOP instruction.
  * @return 1 for success, 0 for failure
  */
-int transform_loop(struct emulate_loop_state * s, struct rc_instruction * inst)
+static int transform_loop(struct emulate_loop_state * s,
+						struct rc_instruction * inst)
 {
 	struct loop_info * loop;
 
@@ -435,7 +436,7 @@ int transform_loop(struct emulate_loop_state * s, struct rc_instruction * inst)
 	if (!build_loop_info(s->C, loop, inst))
 		return 0;
 
-	if(try_unroll_loop(s->C, loop, -1)){
+	if(try_unroll_loop(s->C, loop, s->prog_inst_limit)){
 		return 1;
 	}
 
@@ -472,12 +473,13 @@ int transform_loop(struct emulate_loop_state * s, struct rc_instruction * inst)
 }
 
 void rc_transform_loops(struct radeon_compiler *c,
-						struct emulate_loop_state * s)
+			struct emulate_loop_state * s, int prog_inst_limit)
 {
 	struct rc_instruction * ptr;
 
 	memset(s, 0, sizeof(struct emulate_loop_state));
 	s->C = c;
+	s->prog_inst_limit = prog_inst_limit;
 	for(ptr = s->C->Program.Instructions.Next;
 			ptr != &s->C->Program.Instructions; ptr = ptr->Next) {
 		if(ptr->Type == RC_INSTRUCTION_NORMAL &&

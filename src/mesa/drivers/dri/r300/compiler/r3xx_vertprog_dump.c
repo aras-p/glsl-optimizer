@@ -20,6 +20,7 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
+#include "radeon_compiler.h"
 #include "radeon_code.h"
 
 #include <stdio.h>
@@ -160,8 +161,9 @@ static void r300_vs_src_dump(uint32_t src)
 			r300_vs_swiz_debug[(src >> 22) & 0x7]);
 }
 
-void r300_vertex_program_dump(struct r300_vertex_program_code * vs)
+void r300_vertex_program_dump(struct r300_vertex_program_compiler * c)
 {
+	struct r300_vertex_program_code * vs = c->code;
 	unsigned instrcount = vs->length / 4;
 	unsigned i;
 
@@ -175,6 +177,23 @@ void r300_vertex_program_dump(struct r300_vertex_program_code * vs)
 		for(src = 0; src < 3; ++src) {
 			fprintf(stderr, " src%i: 0x%08x", src, vs->body.d[offset+1+src]);
 			r300_vs_src_dump(vs->body.d[offset+1+src]);
+		}
+	}
+
+	fprintf(stderr, "Flow Control Ops: 0x%08x\n",vs->fc_ops);
+	for(i = 0; i < vs->num_fc_ops; i++) {
+		switch((vs->fc_ops >> (i * 2)) & 0x3 ) {
+		case 0: fprintf(stderr, "NOP"); break;
+		case 1: fprintf(stderr, "JUMP"); break;
+		case 2: fprintf(stderr, "LOOP"); break;
+		case 3: fprintf(stderr, "JSR"); break;
+		}
+		if (c->Base.is_r500) {
+			fprintf(stderr,": uw-> 0x%08x lw-> 0x%08x\n",
+				vs->fc_op_addrs.r500[i].uw,
+				vs->fc_op_addrs.r500[i].lw);
+		} else {
+			fprintf(stderr,": 0x%08x\n", vs->fc_op_addrs.r300[i]);
 		}
 	}
 }

@@ -113,7 +113,7 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 		debug_program_log(c, "after unroll loops");
 	}
 	else{
-		rc_transform_loops(&c->Base, &loop_state);
+		rc_transform_loops(&c->Base, &loop_state, -1);
 		debug_program_log(c, "after transform loops");
 
 		rc_emulate_branches(&c->Base);

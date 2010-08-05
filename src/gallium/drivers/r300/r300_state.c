@@ -1758,10 +1758,12 @@ static void r300_bind_vs_state(struct pipe_context* pipe, void* shader)
     r300->rs_block_state.dirty = TRUE; /* Will be updated before the emission. */
 
     if (r300->screen->caps.has_tcl) {
+        unsigned fc_op_dwords = r300->screen->caps.is_r500 ? 3 : 2;
         r300->vs_state.dirty = TRUE;
         r300->vs_state.size =
                 vs->code.length + 9 +
-                (vs->immediates_count ? vs->immediates_count * 4 + 3 : 0);
+                (vs->immediates_count ? vs->immediates_count * 4 + 3 : 0) +
+        (vs->code.num_fc_ops ? vs->code.num_fc_ops * fc_op_dwords + 4 : 0);
 
         if (vs->externals_count) {
             r300->vs_constants.dirty = TRUE;

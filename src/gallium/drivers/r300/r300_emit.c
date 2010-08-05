@@ -936,6 +936,22 @@ void r300_emit_vs_state(struct r300_context* r300, unsigned size, void* state)
             OUT_CS_TABLE(data, 4);
         }
     }
+
+    /* Emit flow control instructions. */
+    if (code->num_fc_ops) {
+
+        OUT_CS_REG(R300_VAP_PVS_FLOW_CNTL_OPC, code->fc_ops);
+        if (r300screen->caps.is_r500) {
+            OUT_CS_REG_SEQ(R500_VAP_PVS_FLOW_CNTL_ADDRS_LW_0, code->num_fc_ops * 2);
+            OUT_CS_TABLE(code->fc_op_addrs.r500, code->num_fc_ops * 2);
+        } else {
+            OUT_CS_REG_SEQ(R300_VAP_PVS_FLOW_CNTL_ADDRS_0, code->num_fc_ops);
+            OUT_CS_TABLE(code->fc_op_addrs.r300, code->num_fc_ops);
+        }
+        OUT_CS_REG_SEQ(R300_VAP_PVS_FLOW_CNTL_LOOP_INDEX_0, code->num_fc_ops);
+        OUT_CS_TABLE(code->fc_loop_index, code->num_fc_ops);
+    }
+
     END_CS;
 }
 
