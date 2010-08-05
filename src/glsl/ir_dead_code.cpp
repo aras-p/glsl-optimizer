@@ -32,6 +32,8 @@
 #include "ir_variable_refcount.h"
 #include "glsl_types.h"
 
+static bool debug = false;
+
 /**
  * Do a dead code pass over instructions and everything that instructions
  * references.
@@ -60,6 +62,13 @@ do_dead_code(exec_list *instructions)
        */
       assert(entry->referenced_count >= entry->assigned_count);
 
+      if (debug) {
+	 printf("%s@%p: %d refs, %d assigns, %sdeclared in our scope\n",
+		entry->var->name, entry->var,
+		entry->referenced_count, entry->assigned_count,
+		entry->declaration ? "" : "not ");
+      }
+
       if ((entry->referenced_count > entry->assigned_count)
 	  || !entry->declaration)
 	 continue;
@@ -72,6 +81,11 @@ do_dead_code(exec_list *instructions)
 	     entry->var->mode != ir_var_inout) {
 	    entry->assign->remove();
 	    progress = true;
+
+	    if (debug) {
+	       printf("Removed assignment to %s@%p\n",
+		      entry->var->name, entry->var);
+	    }
 	 }
       } else {
 	 /* If there are no assignments or references to the variable left,
@@ -79,6 +93,11 @@ do_dead_code(exec_list *instructions)
 	  */
 	 entry->var->remove();
 	 progress = true;
+
+	 if (debug) {
+	    printf("Removed declaration of %s@%p\n",
+		   entry->var->name, entry->var);
+	 }
       }
    }
    talloc_free(v.mem_ctx);
