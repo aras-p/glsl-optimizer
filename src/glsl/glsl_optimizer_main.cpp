@@ -288,7 +288,6 @@ int main (int argc, const char** argv)
 		StringVector inputFiles = GetFiles (testFolder, "-in.txt");
 
 		size_t n = inputFiles.size();
-		tests += n;
 		for (size_t i = 0; i < n; ++i)
 		{
 			std::string inname = inputFiles[i];
@@ -300,6 +299,7 @@ int main (int argc, const char** argv)
 			{
 				++errors;
 			}
+			++tests;
 		}
 	}
 	clock_t time1 = clock();
