@@ -83,7 +83,14 @@ ir_rvalue_visitor::visit_leave(ir_swizzle *ir)
 ir_visitor_status
 ir_rvalue_visitor::visit_leave(ir_dereference_array *ir)
 {
+   /* The array index is not the target of the assignment, so clear the
+    * 'in_assignee' flag.  Restore it after returning from the array index.
+    */
+   const bool was_in_assignee = this->in_assignee;
+   this->in_assignee = false;
    handle_rvalue(&ir->array_index);
+   this->in_assignee = was_in_assignee;
+
    handle_rvalue(&ir->array);
    return visit_continue;
 }

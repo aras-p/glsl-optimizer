@@ -165,6 +165,13 @@ public:
     * Extra data parameter passed to the per-node callback function
     */
    void *data;
+
+   /**
+    * Currently in the LHS of an assignment?
+    *
+    * This is set and cleared by the \c ir_assignment::accept method.
+    */
+   bool in_assignee;
 };
 
 void visit_tree(ir_instruction *ir,

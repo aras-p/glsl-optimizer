@@ -242,7 +242,14 @@ ir_dereference_array::accept(ir_hierarchical_visitor *v)
    if (s != visit_continue)
       return (s == visit_continue_with_parent) ? visit_continue : s;
 
+   /* The array index is not the target of the assignment, so clear the
+    * 'in_assignee' flag.  Restore it after returning from the array index.
+    */
+   const bool was_in_assignee = v->in_assignee;
+   v->in_assignee = false;
    s = this->array_index->accept(v);
+   v->in_assignee = was_in_assignee;
+
    if (s != visit_continue)
       return (s == visit_continue_with_parent) ? visit_continue : s;
 
@@ -270,7 +277,9 @@ ir_assignment::accept(ir_hierarchical_visitor *v)
    if (s != visit_continue)
       return (s == visit_continue_with_parent) ? visit_continue : s;
 
+   v->in_assignee = true;
    s = this->lhs->accept(v);
+   v->in_assignee = false;
    if (s != visit_continue)
       return (s == visit_continue_with_parent) ? visit_continue : s;
 
