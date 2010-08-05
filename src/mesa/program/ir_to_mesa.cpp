@@ -518,6 +518,11 @@ type_size(const struct glsl_type *type)
 	 size += type_size(type->fields.structure[i].type);
       }
       return size;
+   case GLSL_TYPE_SAMPLER:
+      /* Samplers take up no register space, since they're baked in at
+       * link time.
+       */
+      return 0;
    default:
       assert(0);
    }
