@@ -69,7 +69,7 @@ void main ()
   o.pos = (gl_ModelViewProjectionMatrix * v.vertex);
   o.fog = o.pos.z;
   o.uv.x = v.texcoord.x;
-  o.uv.y = (float)((v.texcoord.y > 0.000000));
+  o.uv.y = float((v.texcoord.y > 0.000000));
   o.color = v.color;
   vec4 tmpvar_11;
   tmpvar_11.xyzw = o.pos;

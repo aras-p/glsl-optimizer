@@ -107,7 +107,7 @@ void main ()
   vec3 lightDir_i0;
   lightDir_i0 = lightDir;
   float atten;
-  atten = (((float)((IN._LightCoord.z > 0.000000)) * tmpvar_72) * tmpvar_80.w);
+  atten = ((float((IN._LightCoord.z > 0.000000)) * tmpvar_72) * tmpvar_80.w);
   vec3 h;
   float diff;
   vec4 c_i0_i1;

@@ -271,7 +271,7 @@ vec4 frag_surf (
   float tmpvar_15;
   tmpvar_15 = UnitySpotAttenuate (IN._LightCoord.xyz);
   vec4 tmpvar_16;
-  tmpvar_16 = LightingBlinnPhong (o, lightDir, tmpvar_13, (((float)((IN._LightCoord.z > 0.000000)) * tmpvar_14) * tmpvar_15));
+  tmpvar_16 = LightingBlinnPhong (o, lightDir, tmpvar_13, ((float((IN._LightCoord.z > 0.000000)) * tmpvar_14) * tmpvar_15));
   vec4 tmpvar_17;
   tmpvar_17 = tmpvar_16;
   c = tmpvar_17;

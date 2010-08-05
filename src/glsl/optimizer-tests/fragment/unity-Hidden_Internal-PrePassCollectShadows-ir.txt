@@ -51,7 +51,7 @@ float unitySampleShadow (
   bvec4 tmpvar_7;
   tmpvar_7 = greaterThanEqual (tmpvar_6, _LightSplitsNear);
   vec4 tmpvar_8;
-  tmpvar_8.xyzw = (float)(tmpvar_7);
+  tmpvar_8.xyzw = vec4(tmpvar_7);
   vec4 tmpvar_9;
   tmpvar_9 = tmpvar_8;
   near = tmpvar_9;
@@ -60,7 +60,7 @@ float unitySampleShadow (
   bvec4 tmpvar_11;
   tmpvar_11 = lessThan (tmpvar_10, _LightSplitsFar);
   vec4 tmpvar_12;
-  tmpvar_12.xyzw = (float)(tmpvar_11);
+  tmpvar_12.xyzw = vec4(tmpvar_11);
   vec4 tmpvar_13;
   tmpvar_13 = tmpvar_12;
   far = tmpvar_13;

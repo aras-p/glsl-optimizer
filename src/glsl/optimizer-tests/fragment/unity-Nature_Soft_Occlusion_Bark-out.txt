@@ -85,7 +85,7 @@ void main ()
   SurfaceOutput s;
   s = o;
   float atten;
-  atten = (((float)((IN._LightCoord.z > 0.000000)) * tmpvar_47) * tmpvar_55.w);
+  atten = ((float((IN._LightCoord.z > 0.000000)) * tmpvar_47) * tmpvar_55.w);
   vec4 c_i0_i1;
   float tmpvar_58;
   tmpvar_58 = dot (s.Normal, lightDir);

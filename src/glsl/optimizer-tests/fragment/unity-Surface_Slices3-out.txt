@@ -81,12 +81,12 @@ void main ()
   bvec4 tmpvar_44;
   tmpvar_44 = greaterThanEqual (z, _LightSplitsNear);
   vec4 tmpvar_45;
-  tmpvar_45.xyzw = (float)(tmpvar_44);
+  tmpvar_45.xyzw = vec4(tmpvar_44);
   near = tmpvar_45;
   bvec4 tmpvar_47;
   tmpvar_47 = lessThan (z, _LightSplitsFar);
   vec4 tmpvar_48;
-  tmpvar_48.xyzw = (float)(tmpvar_47);
+  tmpvar_48.xyzw = vec4(tmpvar_47);
   vec4 tmpvar_50;
   tmpvar_50 = (near * tmpvar_48);
   vec4 tmpvar_51;

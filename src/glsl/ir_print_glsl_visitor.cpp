@@ -266,13 +266,13 @@ static const char *const operator_glsl_strs[] = {
 	"log",
 	"exp2",
 	"log2",
-	"(int)",
-	"(float)",
-	"(bool)",
-	"(float)",
-	"(bool)",
-	"(int)",
-	"(float)",
+	"int",
+	"float",
+	"bool",
+	"float",
+	"bool",
+	"int",
+	"float",
 	"trunc",
 	"ceil",
 	"floor",
@@ -310,7 +310,12 @@ static const char *const operator_glsl_strs[] = {
 void ir_print_glsl_visitor::visit(ir_expression *ir)
 {
 	if (ir->get_num_operands() == 1) {
-		buffer = talloc_asprintf_append(buffer, "%s(", operator_glsl_strs[ir->operation]);
+		if (ir->operation >= ir_unop_f2i && ir->operation <= ir_unop_u2f) {
+			buffer = print_type(buffer, ir->type, true);
+			buffer = talloc_asprintf_append(buffer, "(");
+		} else {
+			buffer = talloc_asprintf_append(buffer, "%s(", operator_glsl_strs[ir->operation]);
+		}
 		if (ir->operands[0])
 			ir->operands[0]->accept(this);
 		buffer = talloc_asprintf_append(buffer, ")");

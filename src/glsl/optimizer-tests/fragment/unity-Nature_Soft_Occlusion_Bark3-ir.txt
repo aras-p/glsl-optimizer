@@ -226,14 +226,14 @@ vec4 frag_surf (
   bvec4 tmpvar_8;
   tmpvar_8 = greaterThanEqual (z, _LightSplitsNear);
   vec4 tmpvar_9;
-  tmpvar_9.xyzw = (float)(tmpvar_8);
+  tmpvar_9.xyzw = vec4(tmpvar_8);
   vec4 tmpvar_10;
   tmpvar_10 = tmpvar_9;
   near = tmpvar_10;
   bvec4 tmpvar_11;
   tmpvar_11 = lessThan (z, _LightSplitsFar);
   vec4 tmpvar_12;
-  tmpvar_12.xyzw = (float)(tmpvar_11);
+  tmpvar_12.xyzw = vec4(tmpvar_11);
   vec4 tmpvar_13;
   tmpvar_13 = tmpvar_12;
   far = tmpvar_13;

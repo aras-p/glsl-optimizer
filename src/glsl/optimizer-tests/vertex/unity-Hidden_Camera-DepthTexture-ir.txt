@@ -95,7 +95,7 @@ v2f vert (
   tmpvar_2 = v.texcoord.x;
   o.uv.x = tmpvar_2;
   float tmpvar_3;
-  tmpvar_3 = (float)((v.texcoord.y > 0.000000));
+  tmpvar_3 = float((v.texcoord.y > 0.000000));
   o.uv.y = tmpvar_3;
   return o;
 }

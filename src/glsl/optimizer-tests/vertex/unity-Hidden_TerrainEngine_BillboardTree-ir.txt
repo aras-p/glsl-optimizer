@@ -100,7 +100,7 @@ v2f vert (
   tmpvar_3 = v.texcoord.x;
   o.uv.x = tmpvar_3;
   float tmpvar_4;
-  tmpvar_4 = (float)((v.texcoord.y > 0.000000));
+  tmpvar_4 = float((v.texcoord.y > 0.000000));
   o.uv.y = tmpvar_4;
   vec4 tmpvar_5;
   tmpvar_5 = v.color;
