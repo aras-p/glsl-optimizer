@@ -43,6 +43,7 @@
 
 extern "C" {
 #include "main/mtypes.h"
+#include "main/shaderapi.h"
 #include "main/shaderobj.h"
 #include "main/uniforms.h"
 #include "program/hash_table.h"
@@ -1458,7 +1459,7 @@ ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
 		ir->var->location >= VERT_ATTRIB_GENERIC0) {
 	       _mesa_add_attribute(prog->Attributes,
 				   ir->var->name,
-				   type_size(ir->var->type) * 4,
+				   _mesa_sizeof_glsl_type(ir->var->type->gl_type),
 				   ir->var->type->gl_type,
 				   ir->var->location - VERT_ATTRIB_GENERIC0);
 	    }
