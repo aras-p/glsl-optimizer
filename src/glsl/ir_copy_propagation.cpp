@@ -213,7 +213,7 @@ kill_invalidated_copies(ir_assignment *ir, exec_list *acp)
  * Adds an entry to the available copy list if it's a plain assignment
  * of a variable to a variable.
  */
-static void
+static bool
 add_copy(void *ctx, ir_assignment *ir, exec_list *acp)
 {
    acp_entry *entry;
@@ -221,16 +221,28 @@ add_copy(void *ctx, ir_assignment *ir, exec_list *acp)
    if (ir->condition) {
       ir_constant *condition = ir->condition->as_constant();
       if (!condition || !condition->value.b[0])
-	 return;
+	 return false;
    }
 
    ir_variable *lhs_var = ir->whole_variable_written();
    ir_variable *rhs_var = ir->rhs->whole_variable_referenced();
 
    if ((lhs_var != NULL) && (rhs_var != NULL)) {
-      entry = new(ctx) acp_entry(lhs_var, rhs_var);
-      acp->push_tail(entry);
+      if (lhs_var == rhs_var) {
+	 /* This is a dumb assignment, but we've conveniently noticed
+	  * it here.  Removing it now would mess up the loop iteration
+	  * calling us.  Just flag it to not execute, and someone else
+	  * will clean up the mess.
+	  */
+	 ir->condition = new(talloc_parent(ir)) ir_constant(false);
+	 return true;
+      } else {
+	 entry = new(ctx) acp_entry(lhs_var, rhs_var);
+	 acp->push_tail(entry);
+      }
    }
+
+   return false;
 }
 
 static void
@@ -253,7 +265,7 @@ copy_propagation_basic_block(ir_instruction *first,
       if (ir_assign) {
 	 kill_invalidated_copies(ir_assign, &acp);
 
-	 add_copy(ctx, ir_assign, &acp);
+	 progress = add_copy(ctx, ir_assign, &acp) || progress;
       }
       if (ir == last)
 	 break;
