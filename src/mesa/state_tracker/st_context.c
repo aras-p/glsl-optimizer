@@ -28,6 +28,7 @@
 #include "main/imports.h"
 #include "main/context.h"
 #include "main/shaderobj.h"
+#include "program/prog_cache.h"
 #include "vbo/vbo.h"
 #include "glapi/glapi.h"
 #include "st_context.h"
