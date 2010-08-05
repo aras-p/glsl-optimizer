@@ -410,7 +410,6 @@ public:
     */
    const char *name;
 
-private:
    /**
     * List of ir_function_signature for each overloaded function with this name.
     */

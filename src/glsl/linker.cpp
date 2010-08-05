@@ -1286,6 +1286,7 @@ link_shaders(struct gl_shader_program *prog)
 	 progress = false;
 
 	 progress = do_function_inlining(ir) || progress;
+	 progress = do_dead_functions(ir) || progress;
 	 progress = do_if_simplification(ir) || progress;
 	 progress = do_copy_propagation(ir) || progress;
 	 progress = do_dead_code_local(ir) || progress;
