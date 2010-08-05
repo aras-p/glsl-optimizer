@@ -31,7 +31,12 @@
 #define ST_FORMAT_H
 
 #include "main/formats.h"
+#include "main/mtypes.h"
 
+#include "pipe/p_defines.h"
+#include "pipe/p_format.h"
+
+struct pipe_screen;
 
 extern GLenum
 st_format_datatype(enum pipe_format format);
