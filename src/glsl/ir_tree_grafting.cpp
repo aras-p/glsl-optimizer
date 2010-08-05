@@ -319,6 +319,10 @@ tree_grafting_basic_block(ir_instruction *bb_first,
       if (!lhs_var)
 	 continue;
 
+      if (lhs_var->mode == ir_var_out ||
+	  lhs_var->mode == ir_var_inout)
+	 continue;
+
       struct variable_entry *entry = info->refs->get_variable_entry(lhs_var);
 
       if (!entry->declaration ||
