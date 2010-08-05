@@ -418,6 +418,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\ir_structure_splitting.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\ir_swizzle_swizzle.cpp"
 					>
 				</File>
