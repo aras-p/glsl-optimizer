@@ -2545,7 +2545,14 @@ get_mesa_program(GLcontext *ctx, struct gl_shader_program *shader_program,
 
    set_branchtargets(&v, mesa_instructions, num_instructions);
    if (ctx->Shader.Flags & GLSL_DUMP) {
-      printf("Mesa %s program:\n", target_string);
+      printf("\n");
+      printf("GLSL IR for linked %s program %d:\n", target_string,
+	     shader_program->Name);
+      _mesa_print_ir(shader->ir, NULL);
+      printf("\n");
+      printf("\n");
+      printf("Mesa IR for linked %s program %d:\n", target_string,
+	     shader_program->Name);
       print_program(mesa_instructions, mesa_instruction_annotation,
 		    num_instructions);
    }
@@ -2633,6 +2640,15 @@ _mesa_glsl_compile_shader(GLcontext *ctx, struct gl_shader *shader)
 
    if (ctx->Shader.Flags & GLSL_LOG) {
       _mesa_write_shader_to_file(shader);
+   }
+
+   if (ctx->Shader.Flags & GLSL_DUMP) {
+      printf("GLSL source for shader %d:\n", shader->Name);
+      printf("%s\n", shader->Source);
+
+      printf("GLSL IR for shader %d:\n", shader->Name);
+      _mesa_print_ir(shader->ir, NULL);
+      printf("\n\n");
    }
 
    /* Retain any live IR, but trash the rest. */
