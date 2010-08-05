@@ -451,12 +451,31 @@ void ir_print_glsl_visitor::visit(ir_assignment *ir)
 
    ir->lhs->accept(this);
 
+   char mask[5];
+   unsigned j = 0;
+   const glsl_type* lhsType = ir->lhs->type;
+   if (ir->lhs->type->vector_elements > 1 && ir->write_mask != (1<<ir->lhs->type->vector_elements)-1)
+   {
+	   for (unsigned i = 0; i < 4; i++) {
+		   if ((ir->write_mask & (1 << i)) != 0) {
+			   mask[j] = "xyzw"[i];
+			   j++;
+		   }
+	   }
+	   lhsType = glsl_type::get_instance(lhsType->base_type, j, 1);
+   }
+   mask[j] = '\0';
+   if (mask[0])
+   {
+	   buffer = talloc_asprintf_append(buffer, ".%s", mask);
+   }
+
    buffer = talloc_asprintf_append(buffer, " = ");
 
-   bool typeMismatch = (ir->lhs->type != ir->rhs->type);
+   bool typeMismatch = (lhsType != ir->rhs->type);
    if (typeMismatch)
    {
-	   buffer = print_type(buffer, ir->lhs->type, true);
+	   buffer = print_type(buffer, lhsType, true);
 	   buffer = talloc_asprintf_append(buffer, "(");
    }
 
