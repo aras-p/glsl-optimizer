@@ -1,0 +1,25 @@
+attribute vec4 position;
+uniform mat4 modelViewProjectionMatrix;
+varying vec4 xlv_TEXCOORD0;
+varying vec4 xlv_TEXCOORD1;
+void main ()
+{
+  vec4 tmpvar_1;
+  tmpvar_1 = (modelViewProjectionMatrix * position);
+  gl_Position = tmpvar_1;
+  vec4 tmpvar_2;
+  tmpvar_2.xy = vec2((position.xy * vec2 (4.000000, 4.000000)).xyxx);
+  tmpvar_2.z = float(vec4(0.000000));
+  tmpvar_2.w = float(vec4(0.000000));
+  vec4 tmpvar_3;
+  tmpvar_3 = tmpvar_2;
+  xlv_TEXCOORD0 = tmpvar_3;
+  vec4 tmpvar_4;
+  tmpvar_4.xy = vec2(position.xy.xyxx);
+  tmpvar_4.z = float(vec4(0.000000));
+  tmpvar_4.w = float(vec4(0.000000));
+  vec4 tmpvar_5;
+  tmpvar_5 = tmpvar_4;
+  xlv_TEXCOORD1 = tmpvar_5;
+}
+
