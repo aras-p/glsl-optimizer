@@ -50,12 +50,12 @@ void main ()
   tmpvar_52 = tmpvar_44.z;
   z_i0 = tmpvar_52;
   bvec4 tmpvar_54;
-  tmpvar_54 = greaterThanEqual (tmpvar_52.xxxx, _LightSplitsNear);
+  tmpvar_54 = greaterThanEqual (vec4(tmpvar_52), _LightSplitsNear);
   vec4 tmpvar_55;
   tmpvar_55.xyzw = (float)(tmpvar_54);
   near = tmpvar_55;
   bvec4 tmpvar_58;
-  tmpvar_58 = lessThan (z_i0.xxxx, _LightSplitsFar);
+  tmpvar_58 = lessThan (vec4(z_i0), _LightSplitsFar);
   vec4 tmpvar_59;
   tmpvar_59.xyzw = (float)(tmpvar_58);
   vec4 tmpvar_61;

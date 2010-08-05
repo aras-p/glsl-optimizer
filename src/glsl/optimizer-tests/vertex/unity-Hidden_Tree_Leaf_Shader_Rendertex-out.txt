@@ -76,13 +76,13 @@ void main ()
   tanb = tmpvar_49;
   pos = (pos + ((tangent * mat) * isBillboard));
   vec3 tmpvar_53;
-  tmpvar_53 = mix (normal, norb, isBillboard.xxx);
+  tmpvar_53 = mix (normal, norb, vec3(isBillboard));
   normal = tmpvar_53;
   vec4 tmpvar_55;
   tmpvar_55.xyz = tanb;
   tmpvar_55.w = -1.000000;
   vec4 tmpvar_57;
-  tmpvar_57 = mix (tangent, tmpvar_55, isBillboard.xxxx);
+  tmpvar_57 = mix (tangent, tmpvar_55, vec4(isBillboard));
   tangent = tmpvar_57;
   v.vertex = pos;
   v.normal = normal;

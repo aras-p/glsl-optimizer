@@ -91,7 +91,7 @@ void main ()
   tmpvar_147 = dot (planeNormal, (tmpvar_143 - tmpvar_146));
   projectedVertex = (projectedVertex + (tmpvar_147 * planeNormal));
   vec3 tmpvar_150;
-  tmpvar_150 = mix (projectedVertex, pos_i0.xyz, _SquashAmount.xxx);
+  tmpvar_150 = mix (projectedVertex, pos_i0.xyz, vec3(_SquashAmount));
   vec4 tmpvar_151;
   tmpvar_151.xyz = tmpvar_150;
   tmpvar_151.w = 1.000000;

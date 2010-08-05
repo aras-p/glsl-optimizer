@@ -33,7 +33,7 @@ vec4 frag (
   float tmpvar_3;
   tmpvar_3 = Luminance (col.xyz);
   vec3 tmpvar_4;
-  tmpvar_4 = (tmpvar_3 * (1.000000 + (col.w * 2.000000))).xxx;
+  tmpvar_4 = vec3((tmpvar_3 * (1.000000 + (col.w * 2.000000))));
   vec3 tmpvar_5;
   tmpvar_5 = tmpvar_4;
   col.xyz = tmpvar_5;

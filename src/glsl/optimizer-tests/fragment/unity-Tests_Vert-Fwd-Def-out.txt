@@ -53,7 +53,7 @@ void main ()
   float tmpvar_31;
   tmpvar_31 = dot (IN._LightCoord, IN._LightCoord);
   vec2 tmpvar_33;
-  tmpvar_33.xy = tmpvar_31.xx;
+  tmpvar_33.xy = vec2(tmpvar_31);
   vec4 tmpvar_34;
   tmpvar_34 = texture2D (_LightTextureB0, tmpvar_33);
   vec4 tmpvar_35;

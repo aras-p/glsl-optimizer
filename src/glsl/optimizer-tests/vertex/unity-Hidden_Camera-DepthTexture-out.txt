@@ -60,7 +60,7 @@ void main ()
   float tmpvar_44;
   tmpvar_44 = max (0.000000, radius);
   vec3 tmpvar_46;
-  tmpvar_46 = mix (((((_TreeBillboardCameraUp.xyz * tmpvar_44) * 2.000000) - (vec3 (0.000000, 1.000000, 0.000000) * absRadius)) - ((_TreeBillboardCameraUp.xyz * absRadius) * billboardRootOffsetFactor)), (_TreeBillboardCameraUp.xyz * radius), billboardModeFactor.xxx);
+  tmpvar_46 = mix (((((_TreeBillboardCameraUp.xyz * tmpvar_44) * 2.000000) - (vec3 (0.000000, 1.000000, 0.000000) * absRadius)) - ((_TreeBillboardCameraUp.xyz * absRadius) * billboardRootOffsetFactor)), (_TreeBillboardCameraUp.xyz * radius), vec3(billboardModeFactor));
   pos.xyz = (pos.xyz + tmpvar_46);
   v.vertex = pos;
   o.pos = (gl_ModelViewProjectionMatrix * v.vertex);

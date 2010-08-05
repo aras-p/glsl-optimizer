@@ -28,7 +28,7 @@ vec4 frag (
   float tmpvar_2;
   tmpvar_2 = Linear01Depth (tmpvar_1.x);
   vec4 tmpvar_3;
-  tmpvar_3 = (1.000000 - tmpvar_2).xxxx;
+  tmpvar_3 = vec4((1.000000 - tmpvar_2));
   return tmpvar_3;
 }
 

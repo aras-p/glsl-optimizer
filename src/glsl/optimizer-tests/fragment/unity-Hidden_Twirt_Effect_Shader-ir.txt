@@ -61,7 +61,7 @@ vec4 frag (
   tmpvar_7 = tmpvar_6;
   t = tmpvar_7;
   vec2 tmpvar_8;
-  tmpvar_8 = t.xx;
+  tmpvar_8 = vec2(t);
   vec2 tmpvar_9;
   tmpvar_9 = mix (distortedOffset, offset, tmpvar_8);
   vec2 tmpvar_10;

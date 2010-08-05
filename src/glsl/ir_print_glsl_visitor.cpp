@@ -372,12 +372,24 @@ void ir_print_glsl_visitor::visit(ir_swizzle *ir)
       ir->mask.w,
    };
 
-   ir->val->accept(this);
-   if (ir->val->type == glsl_type::float_type)
-   {
-	   if (ir->mask.num_components == 1 && ir->mask.x == 0)
-		   return; // .x swizzle on a float, nothing to do
-   }
+	if (ir->val->type == glsl_type::float_type)
+	{
+		if (ir->mask.num_components != 1)
+		{
+			buffer = print_type(buffer, ir->type);
+			buffer = talloc_asprintf_append(buffer, "(");
+		}
+	}
+	ir->val->accept(this);
+	
+	if (ir->val->type == glsl_type::float_type)
+	{
+		if (ir->mask.num_components != 1)
+		{
+			buffer = talloc_asprintf_append(buffer, ")");
+		}
+		return;
+	}
 
    buffer = talloc_asprintf_append(buffer, ".");
    for (unsigned i = 0; i < ir->mask.num_components; i++) {

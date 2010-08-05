@@ -219,7 +219,7 @@ vec4 frag_surf (
   o.Gloss = tmpvar_5;
   surf (surfIN, o);
   vec4 tmpvar_6;
-  tmpvar_6 = IN._ShadowZFade.x.xxxx;
+  tmpvar_6 = vec4(IN._ShadowZFade.x);
   vec4 tmpvar_7;
   tmpvar_7 = tmpvar_6;
   z = tmpvar_7;

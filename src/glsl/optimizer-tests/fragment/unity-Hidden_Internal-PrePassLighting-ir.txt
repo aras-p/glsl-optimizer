@@ -337,7 +337,7 @@ vec4 frag (
   tmpvar_17 = (tmpvar_16 * _LightPos.w);
   att = tmpvar_17;
   vec2 tmpvar_18;
-  tmpvar_18 = att.xx;
+  tmpvar_18 = vec2(att);
   vec2 tmpvar_19;
   tmpvar_19.xy = tmpvar_18;
   vec4 tmpvar_20;

@@ -71,7 +71,7 @@ void main ()
   float tmpvar_45;
   tmpvar_45 = clamp (IN.hip_lmapFade.z, 0.000000, 1.000000);
   vec3 tmpvar_47;
-  tmpvar_47 = mix (lmIndirect, lmFull, tmpvar_45.xxx);
+  tmpvar_47 = mix (lmIndirect, lmFull, vec3(tmpvar_45));
   light.xyz = (light.xyz + tmpvar_47);
   vec4 c;
   c.xyz = (o.Albedo * light.xyz);

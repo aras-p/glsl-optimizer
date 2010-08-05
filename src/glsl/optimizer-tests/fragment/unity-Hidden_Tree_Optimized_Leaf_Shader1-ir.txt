@@ -336,7 +336,7 @@ vec4 frag_surf (
   float tmpvar_12;
   tmpvar_12 = dot (IN._LightCoord, IN._LightCoord);
   vec2 tmpvar_13;
-  tmpvar_13 = tmpvar_12.xx;
+  tmpvar_13 = vec2(tmpvar_12);
   vec2 tmpvar_14;
   tmpvar_14.xy = tmpvar_13;
   vec4 tmpvar_15;

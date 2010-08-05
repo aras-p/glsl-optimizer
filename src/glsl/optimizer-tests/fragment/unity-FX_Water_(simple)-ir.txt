@@ -72,7 +72,7 @@ vec4 frag (
   tmpvar_12 = tmpvar_11;
   water = tmpvar_12;
   vec3 tmpvar_13;
-  tmpvar_13 = water.w.xxx;
+  tmpvar_13 = vec3(water.w);
   vec3 tmpvar_14;
   tmpvar_14 = mix (water.xyz, _horizonColor.xyz, tmpvar_13);
   vec3 tmpvar_15;

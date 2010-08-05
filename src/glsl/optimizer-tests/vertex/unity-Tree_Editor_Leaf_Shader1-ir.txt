@@ -61,7 +61,7 @@ vec4 Squash (
   tmpvar_7 = (projectedVertex + (tmpvar_6 * planeNormal));
   projectedVertex = tmpvar_7;
   vec3 tmpvar_8;
-  tmpvar_8 = _SquashAmount.xxx;
+  tmpvar_8 = vec3(_SquashAmount);
   vec3 tmpvar_9;
   tmpvar_9 = mix (projectedVertex, pos.xyz, tmpvar_8);
   vec4 tmpvar_10;
@@ -121,7 +121,7 @@ void ExpandBillboard (
   tmpvar_11 = (pos + ((tangent * mat) * isBillboard));
   pos = tmpvar_11;
   vec3 tmpvar_12;
-  tmpvar_12 = isBillboard.xxx;
+  tmpvar_12 = vec3(isBillboard);
   vec3 tmpvar_13;
   tmpvar_13 = mix (normal, norb, tmpvar_12);
   vec3 tmpvar_14;
@@ -131,7 +131,7 @@ void ExpandBillboard (
   tmpvar_15.xyz = tanb;
   tmpvar_15.w = -1.000000;
   vec4 tmpvar_16;
-  tmpvar_16 = isBillboard.xxxx;
+  tmpvar_16 = vec4(isBillboard);
   vec4 tmpvar_17;
   tmpvar_17 = mix (tangent, tmpvar_15, tmpvar_16);
   vec4 tmpvar_18;
@@ -216,7 +216,7 @@ vec4 AnimateVertex (
   tmpvar_5 = (fObjPhase + animParams.x);
   fBranchPhase = tmpvar_5;
   vec3 tmpvar_6;
-  tmpvar_6 = (animParams.y + fBranchPhase).xxx;
+  tmpvar_6 = vec3((animParams.y + fBranchPhase));
   float tmpvar_7;
   tmpvar_7 = dot (pos.xyz, tmpvar_6);
   float tmpvar_8;

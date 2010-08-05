@@ -79,7 +79,7 @@ float UnitySpotAttenuate (
   float tmpvar_1;
   tmpvar_1 = dot (LightCoord, LightCoord);
   vec2 tmpvar_2;
-  tmpvar_2 = tmpvar_1.xx;
+  tmpvar_2 = vec2(tmpvar_1);
   vec2 tmpvar_3;
   tmpvar_3.xy = tmpvar_2;
   vec4 tmpvar_4;

@@ -61,7 +61,7 @@ void ExpandBillboard (
   tmpvar_11 = (pos + ((tangent * mat) * isBillboard));
   pos = tmpvar_11;
   vec3 tmpvar_12;
-  tmpvar_12 = isBillboard.xxx;
+  tmpvar_12 = vec3(isBillboard);
   vec3 tmpvar_13;
   tmpvar_13 = mix (normal, norb, tmpvar_12);
   vec3 tmpvar_14;
@@ -71,7 +71,7 @@ void ExpandBillboard (
   tmpvar_15.xyz = tanb;
   tmpvar_15.w = -1.000000;
   vec4 tmpvar_16;
-  tmpvar_16 = isBillboard.xxxx;
+  tmpvar_16 = vec4(isBillboard);
   vec4 tmpvar_17;
   tmpvar_17 = mix (tangent, tmpvar_15, tmpvar_16);
   vec4 tmpvar_18;

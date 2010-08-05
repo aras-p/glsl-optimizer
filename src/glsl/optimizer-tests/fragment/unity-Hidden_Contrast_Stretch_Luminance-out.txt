@@ -18,7 +18,7 @@ void main ()
   col = tmpvar_11;
   float tmpvar_15;
   tmpvar_15 = dot (tmpvar_11.xyz, vec3 (0.220000, 0.707000, 0.071000));
-  col.xyz = (tmpvar_15 * (1.000000 + (col.w * 2.000000))).xxx;
+  col.xyz = vec3((tmpvar_15 * (1.000000 + (col.w * 2.000000))));
   vec4 tmpvar_6;
   tmpvar_6.xyzw = col;
   gl_FragData[0] = tmpvar_6;

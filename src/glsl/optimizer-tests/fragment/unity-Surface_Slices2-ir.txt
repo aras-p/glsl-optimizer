@@ -251,7 +251,7 @@ vec4 frag_surf (
   float tmpvar_18;
   tmpvar_18 = xll_saturate (IN.hip_lmapFade.z);
   vec3 tmpvar_19;
-  tmpvar_19 = tmpvar_18.xxx;
+  tmpvar_19 = vec3(tmpvar_18);
   vec3 tmpvar_20;
   tmpvar_20 = mix (lmIndirect, lmFull, tmpvar_19);
   vec3 tmpvar_21;

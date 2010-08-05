@@ -60,7 +60,7 @@ void main ()
   vec4 tmpvar_33;
   tmpvar_33 = texture2D (unity_Lightmap, IN.hip_lmap.xy);
   vec3 tmpvar_38;
-  tmpvar_38 = min ((2.000000 * tmpvar_33.xyz), (atten * 2.000000).xxx);
+  tmpvar_38 = min ((2.000000 * tmpvar_33.xyz), vec3((atten * 2.000000)));
   c.xyz = (o.Albedo * tmpvar_38);
   c.w = o.Alpha;
   vec4 tmpvar_11;

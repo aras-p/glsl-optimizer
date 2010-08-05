@@ -94,7 +94,7 @@ void main ()
   float tmpvar_65;
   tmpvar_65 = dot (tolight, tolight);
   vec2 tmpvar_68;
-  tmpvar_68.xy = (tmpvar_65 * _LightPos.w).xx;
+  tmpvar_68.xy = vec2((tmpvar_65 * _LightPos.w));
   vec4 tmpvar_69;
   tmpvar_69 = texture2D (_LightTextureB0, tmpvar_68);
   atten = tmpvar_69.w;

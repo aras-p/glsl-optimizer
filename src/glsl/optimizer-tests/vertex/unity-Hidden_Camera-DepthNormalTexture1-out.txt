@@ -88,7 +88,7 @@ void main ()
   waveMove.z = tmpvar_105;
   vertex.xz = (vertex.xz - (waveMove.xz * _WaveAndDistance.z));
   vec3 tmpvar_109;
-  tmpvar_109 = mix (vec3 (0.500000, 0.500000, 0.500000), _WavingTint.xyz, lighting.xxx);
+  tmpvar_109 = mix (vec3 (0.500000, 0.500000, 0.500000), _WavingTint.xyz, vec3(lighting));
   outColor.xyz = ((color * tmpvar_109) * 2.000000);
   outColor.w = 1.000000;
   v.vertex = vertex;

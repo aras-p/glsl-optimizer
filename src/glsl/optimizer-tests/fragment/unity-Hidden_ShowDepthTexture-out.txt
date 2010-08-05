@@ -22,7 +22,7 @@ void main ()
   vec4 tmpvar_12;
   tmpvar_12 = texture2D (_CameraDepthTexture, i.uv);
   col = tex;
-  col.xy = (1.0/(((_ZBufferParams.z * tmpvar_12.x) + _ZBufferParams.w)) * 0.010000).xx;
+  col.xy = vec2((1.0/(((_ZBufferParams.z * tmpvar_12.x) + _ZBufferParams.w)) * 0.010000));
   vec4 tmpvar_6;
   tmpvar_6.xyzw = col;
   gl_FragData[0] = tmpvar_6;

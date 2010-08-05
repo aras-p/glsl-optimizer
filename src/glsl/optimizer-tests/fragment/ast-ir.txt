@@ -62,7 +62,7 @@ void main ()
   tmpvar_14 = (1.000000 / a);
   a = tmpvar_14;
   vec4 tmpvar_15;
-  tmpvar_15 = a.xxxx;
+  tmpvar_15 = vec4(a);
   vec4 tmpvar_16;
   tmpvar_16 = tmpvar_15;
   gl_FragColor = tmpvar_16;

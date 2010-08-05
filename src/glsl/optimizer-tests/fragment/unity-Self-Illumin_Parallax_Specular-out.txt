@@ -115,7 +115,7 @@ void main ()
   float tmpvar_109;
   tmpvar_109 = dot (IN._LightCoord, IN._LightCoord);
   vec2 tmpvar_111;
-  tmpvar_111.xy = tmpvar_109.xx;
+  tmpvar_111.xy = vec2(tmpvar_109);
   vec4 tmpvar_112;
   tmpvar_112 = texture2D (_LightTexture0, tmpvar_111);
   SurfaceOutput s;

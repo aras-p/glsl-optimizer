@@ -285,7 +285,7 @@ vec4 frag_surf (
   surf (surfIN, o);
   xll_clip ((o.Alpha - _Cutoff));
   vec4 tmpvar_7;
-  tmpvar_7 = IN._ShadowZFade.x.xxxx;
+  tmpvar_7 = vec4(IN._ShadowZFade.x);
   vec4 tmpvar_8;
   tmpvar_8 = tmpvar_7;
   z = tmpvar_8;

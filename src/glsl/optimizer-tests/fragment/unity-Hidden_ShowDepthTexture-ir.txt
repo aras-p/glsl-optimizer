@@ -47,7 +47,7 @@ vec4 frag (
   tmpvar_7 = tex;
   col = tmpvar_7;
   vec2 tmpvar_8;
-  tmpvar_8 = z.xx;
+  tmpvar_8 = vec2(z);
   vec2 tmpvar_9;
   tmpvar_9 = tmpvar_8;
   col.xy = tmpvar_9;

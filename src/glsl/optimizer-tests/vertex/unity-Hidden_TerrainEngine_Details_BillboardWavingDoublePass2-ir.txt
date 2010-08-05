@@ -165,7 +165,7 @@ void TerrainWaveGrass (
   tmpvar_22 = (vertex.xz - (waveMove.xz * _WaveAndDistance.z));
   vertex.xz = tmpvar_22;
   vec3 tmpvar_23;
-  tmpvar_23 = lighting.xxx;
+  tmpvar_23 = vec3(lighting);
   vec3 tmpvar_24;
   tmpvar_24 = mix (vec3 (0.500000, 0.500000, 0.500000), _WavingTint.xyz, tmpvar_23);
   vec3 tmpvar_25;

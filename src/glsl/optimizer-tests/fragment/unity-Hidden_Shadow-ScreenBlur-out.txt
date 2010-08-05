@@ -56,7 +56,7 @@ void main ()
     i_1 = (i_1 + 1);
   };
   vec4 tmpvar_6;
-  tmpvar_6.xyzw = (mask.x / mask.y).xxxx;
+  tmpvar_6.xyzw = vec4((mask.x / mask.y));
   gl_FragData[0] = tmpvar_6;
 }
 

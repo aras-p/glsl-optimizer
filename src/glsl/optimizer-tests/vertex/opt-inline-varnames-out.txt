@@ -8,6 +8,6 @@ void main ()
   b = tmpvar_10;
   float tmpvar_12;
   tmpvar_12 = sqrt (b);
-  gl_Position = (((a + b) + (a * b)) + tmpvar_12).xxxx;
+  gl_Position = vec4((((a + b) + (a * b)) + tmpvar_12));
 }
 

@@ -72,7 +72,7 @@ void TerrainBillboardTree (
   float tmpvar_13;
   tmpvar_13 = max (0.000000, radius);
   vec3 tmpvar_14;
-  tmpvar_14 = billboardModeFactor.xxx;
+  tmpvar_14 = vec3(billboardModeFactor);
   vec3 tmpvar_15;
   tmpvar_15 = mix (((((_TreeBillboardCameraUp.xyz * tmpvar_13) * 2.000000) - (vec3 (0.000000, 1.000000, 0.000000) * absRadius)) - ((_TreeBillboardCameraUp.xyz * absRadius) * billboardRootOffsetFactor)), (_TreeBillboardCameraUp.xyz * radius), tmpvar_14);
   vec3 tmpvar_16;

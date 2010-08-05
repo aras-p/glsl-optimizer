@@ -72,7 +72,7 @@ void main ()
   tmpvar_144 = (tmpvar_142 + animParams.x);
   fBranchPhase = tmpvar_144;
   float tmpvar_146;
-  tmpvar_146 = dot (pos.xyz, (animParams.y + tmpvar_144).xxx);
+  tmpvar_146 = dot (pos.xyz, vec3((animParams.y + tmpvar_144)));
   vec2 tmpvar_148;
   tmpvar_148.x = tmpvar_146;
   tmpvar_148.y = fBranchPhase;
@@ -107,7 +107,7 @@ void main ()
   tmpvar_174 = dot (planeNormal, (tmpvar_170 - tmpvar_173));
   projectedVertex = (projectedVertex + (tmpvar_174 * planeNormal));
   vec3 tmpvar_177;
-  tmpvar_177 = mix (projectedVertex, pos_i0.xyz, _SquashAmount.xxx);
+  tmpvar_177 = mix (projectedVertex, pos_i0.xyz, vec3(_SquashAmount));
   vec4 tmpvar_178;
   tmpvar_178.xyz = tmpvar_177;
   tmpvar_178.w = 1.000000;

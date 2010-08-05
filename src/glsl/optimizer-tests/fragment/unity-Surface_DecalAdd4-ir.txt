@@ -109,7 +109,7 @@ vec4 frag_surf (
   tmpvar_11 = tmpvar_10;
   lmFull = tmpvar_11;
   vec3 tmpvar_12;
-  tmpvar_12 = (atten * 2.000000).xxx;
+  tmpvar_12 = vec3((atten * 2.000000));
   vec3 tmpvar_13;
   tmpvar_13 = min (lmFull, tmpvar_12);
   vec3 tmpvar_14;

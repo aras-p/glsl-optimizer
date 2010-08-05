@@ -16,7 +16,7 @@ void main ()
   tmpvar_3 = f;
   s.unused = tmpvar_3;
   vec4 tmpvar_4;
-  tmpvar_4 = s.used.xxxx;
+  tmpvar_4 = vec4(s.used);
   vec4 tmpvar_5;
   tmpvar_5 = tmpvar_4;
   gl_FragColor = tmpvar_5;

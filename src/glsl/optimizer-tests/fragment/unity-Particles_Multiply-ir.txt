@@ -19,7 +19,7 @@ vec4 frag (
   tmpvar_2 = (i.color * tmpvar_1);
   prev = tmpvar_2;
   vec4 tmpvar_3;
-  tmpvar_3 = prev.w.xxxx;
+  tmpvar_3 = vec4(prev.w);
   vec4 tmpvar_4;
   tmpvar_4 = mix (vec4 (1.000000, 1.000000, 1.000000, 1.000000), prev, tmpvar_3);
   return tmpvar_4;

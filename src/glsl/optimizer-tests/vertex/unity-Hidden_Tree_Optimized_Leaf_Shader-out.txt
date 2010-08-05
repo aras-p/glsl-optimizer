@@ -88,13 +88,13 @@ void main ()
   tanb = tmpvar_180;
   pos = (pos + ((tangent * mat) * isBillboard));
   vec3 tmpvar_184;
-  tmpvar_184 = mix (normal, norb, isBillboard.xxx);
+  tmpvar_184 = mix (normal, norb, vec3(isBillboard));
   normal = tmpvar_184;
   vec4 tmpvar_186;
   tmpvar_186.xyz = tanb;
   tmpvar_186.w = -1.000000;
   vec4 tmpvar_188;
-  tmpvar_188 = mix (tangent, tmpvar_186, isBillboard.xxxx);
+  tmpvar_188 = mix (tangent, tmpvar_186, vec4(isBillboard));
   tangent = tmpvar_188;
   v_i0.vertex = pos;
   v_i0.normal = normal;
@@ -117,7 +117,7 @@ void main ()
   tmpvar_198 = (tmpvar_196 + animParams.x);
   fBranchPhase = tmpvar_198;
   float tmpvar_200;
-  tmpvar_200 = dot (pos_i0.xyz, (animParams.y + tmpvar_198).xxx);
+  tmpvar_200 = dot (pos_i0.xyz, vec3((animParams.y + tmpvar_198)));
   vec2 tmpvar_202;
   tmpvar_202.x = tmpvar_200;
   tmpvar_202.y = fBranchPhase;
@@ -152,7 +152,7 @@ void main ()
   tmpvar_228 = dot (planeNormal, (tmpvar_224 - tmpvar_227));
   projectedVertex = (projectedVertex + (tmpvar_228 * planeNormal));
   vec3 tmpvar_231;
-  tmpvar_231 = mix (projectedVertex, pos_i0_i1.xyz, _SquashAmount.xxx);
+  tmpvar_231 = mix (projectedVertex, pos_i0_i1.xyz, vec3(_SquashAmount));
   vec4 tmpvar_232;
   tmpvar_232.xyz = tmpvar_231;
   tmpvar_232.w = 1.000000;

@@ -192,7 +192,7 @@ vec4 frag (
   tmpvar_21 = (mask.x / mask.y);
   shadow = tmpvar_21;
   vec4 tmpvar_22;
-  tmpvar_22 = shadow.xxxx;
+  tmpvar_22 = vec4(shadow);
   return tmpvar_22;
 }
 

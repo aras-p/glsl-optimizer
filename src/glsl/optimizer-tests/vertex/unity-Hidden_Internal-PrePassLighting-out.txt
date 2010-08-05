@@ -35,7 +35,7 @@ void main ()
   o.uv = o_i0;
   o.ray = ((gl_ModelViewMatrix * xlt_v.vertex).xyz * vec3 (-1.000000, -1.000000, 1.000000));
   vec3 tmpvar_29;
-  tmpvar_29 = mix (o.ray, v.texcoord, (float)((xlt_v.texcoord.z != 0.000000)).xxx);
+  tmpvar_29 = mix (o.ray, v.texcoord, vec3((float)((xlt_v.texcoord.z != 0.000000))));
   o.ray = tmpvar_29;
   vec4 tmpvar_7;
   tmpvar_7.xyzw = o.pos;

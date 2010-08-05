@@ -10,7 +10,7 @@ void main ()
   f = tmpvar_1;
   v2f sused;
   vec4 tmpvar_2;
-  tmpvar_2 = f.xxxx;
+  tmpvar_2 = vec4(f);
   vec4 tmpvar_3;
   tmpvar_3 = tmpvar_2;
   sused.pos = tmpvar_3;
@@ -19,7 +19,7 @@ void main ()
   sused.unusedmember = tmpvar_4;
   v2f sunused;
   vec4 tmpvar_5;
-  tmpvar_5 = f.xxxx;
+  tmpvar_5 = vec4(f);
   vec4 tmpvar_6;
   tmpvar_6 = tmpvar_5;
   sunused.pos = tmpvar_6;
@@ -43,7 +43,7 @@ void main ()
   tmpvar_11 = (f * 5.000000);
   arrunused[0] = tmpvar_11;
   vec4 tmpvar_12;
-  tmpvar_12 = ((fused + sused.pos.x) + arrused[0]).xxxx;
+  tmpvar_12 = vec4(((fused + sused.pos.x) + arrused[0]));
   vec4 tmpvar_13;
   tmpvar_13 = tmpvar_12;
   gl_FragColor = tmpvar_13;

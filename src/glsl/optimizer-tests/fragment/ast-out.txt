@@ -26,6 +26,6 @@ void main ()
   float tmpvar_14;
   tmpvar_14 = 1.0/(tmpvar_12);
   a = tmpvar_14;
-  gl_FragColor = tmpvar_14.xxxx;
+  gl_FragColor = vec4(tmpvar_14);
 }
 

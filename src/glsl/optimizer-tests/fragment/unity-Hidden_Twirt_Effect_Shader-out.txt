@@ -30,7 +30,7 @@ void main ()
   float tmpvar_22;
   tmpvar_22 = min (1.000000, tmpvar_21);
   vec2 tmpvar_25;
-  tmpvar_25 = mix (distortedOffset, offset, tmpvar_22.xx);
+  tmpvar_25 = mix (distortedOffset, offset, vec2(tmpvar_22));
   offset = (tmpvar_25 + _CenterRadius.xy);
   vec4 tmpvar_28;
   tmpvar_28 = texture2D (_MainTex, offset);

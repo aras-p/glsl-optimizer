@@ -50,7 +50,7 @@ vec4 Squash (
   tmpvar_7 = (projectedVertex + (tmpvar_6 * planeNormal));
   projectedVertex = tmpvar_7;
   vec3 tmpvar_8;
-  tmpvar_8 = _SquashAmount.xxx;
+  tmpvar_8 = vec3(_SquashAmount);
   vec3 tmpvar_9;
   tmpvar_9 = mix (projectedVertex, pos.xyz, tmpvar_8);
   vec4 tmpvar_10;
@@ -83,7 +83,7 @@ void TerrainAnimateTree (
   tmpvar_3 = (_TerrainEngineBendTree * tmpvar_2).xyz;
   bent = tmpvar_3;
   vec3 tmpvar_4;
-  tmpvar_4 = alpha.xxx;
+  tmpvar_4 = vec3(alpha);
   vec3 tmpvar_5;
   tmpvar_5 = mix (pos.xyz, bent, tmpvar_4);
   vec3 tmpvar_6;
