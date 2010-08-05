@@ -49,6 +49,14 @@ public:
    bool has_call;
 };
 
+bool
+ir_has_call(ir_instruction *ir)
+{
+   ir_has_call_visitor v;
+   ir->accept(&v);
+   return v.has_call;
+}
+
 /**
  * Calls a user function for every basic block in the instruction stream.
  *
@@ -115,8 +123,6 @@ void call_for_basic_blocks(exec_list *instructions,
 	    call_for_basic_blocks(&ir_sig->body, callback, data);
 	 }
       } else if (ir->as_assignment()) {
-	 ir_has_call_visitor v;
-
 	 /* If there's a call in the expression tree being assigned,
 	  * then that ends the BB too.
 	  *
@@ -130,8 +136,7 @@ void call_for_basic_blocks(exec_list *instructions,
 	  * expression flattener may be useful before using the basic
 	  * block finder to get more maximal basic blocks out.
 	  */
-	 ir->accept(&v);
-	 if (v.has_call) {
+	 if (ir_has_call(ir)) {
 	    callback(leader, ir, data);
 	    leader = NULL;
 	 }
