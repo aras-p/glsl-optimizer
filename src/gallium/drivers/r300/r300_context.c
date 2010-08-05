@@ -195,8 +195,7 @@ static void r300_setup_atoms(struct r300_context* r300)
     R300_INIT_ATOM(gpu_flush, 9);
     R300_INIT_ATOM(aa_state, 4);
     R300_INIT_ATOM(fb_state, 0);
-    if (has_hyperz)
-        R300_INIT_ATOM(hyperz_state, is_rv350 ? 10 : 8);
+    R300_INIT_ATOM(hyperz_state, is_rv350 ? 10 : 8);
     /* ZB (unpipelined), SC. */
     R300_INIT_ATOM(ztop_state, 2);
     /* ZB, FG. */
@@ -251,8 +250,7 @@ static void r300_setup_atoms(struct r300_context* r300)
     r300->clip_state.state = CALLOC_STRUCT(r300_clip_state);
     r300->fb_state.state = CALLOC_STRUCT(pipe_framebuffer_state);
     r300->gpu_flush.state = CALLOC_STRUCT(pipe_framebuffer_state);
-    if (has_hyperz)
-        r300->hyperz_state.state = CALLOC_STRUCT(r300_hyperz_state);
+    r300->hyperz_state.state = CALLOC_STRUCT(r300_hyperz_state);
     r300->invariant_state.state = CALLOC_STRUCT(r300_invariant_state);
     r300->rs_block_state.state = CALLOC_STRUCT(r300_rs_block);
     r300->scissor_state.state = CALLOC_STRUCT(pipe_scissor_state);
@@ -365,7 +363,6 @@ static void r300_init_states(struct pipe_context *pipe)
     }
 
     /* Initialize the hyperz state. */
-    if (r300->rws->get_value(r300->rws, R300_CAN_HYPERZ))
     {
         struct r300_hyperz_state *hyperz =
             (struct r300_hyperz_state*)r300->hyperz_state.state;
