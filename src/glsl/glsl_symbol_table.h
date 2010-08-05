@@ -133,6 +133,12 @@ public:
       return _mesa_symbol_table_add_symbol(table, glsl_function_name_space,
 					   name, f) == 0;
    }
+
+   bool remove_function(const char *name, ir_function *f)
+   {
+      return _mesa_symbol_table_add_symbol(table, glsl_function_name_space,
+					   name, f) == 0;
+   }
    /*@}*/
 
    /**

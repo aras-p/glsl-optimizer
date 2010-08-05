@@ -39,6 +39,7 @@ CXX_SOURCES = \
 	ir.cpp \
 	ir_dead_code.cpp \
 	ir_dead_code_local.cpp \
+	ir_dead_functions.cpp \
 	ir_div_to_mul_rcp.cpp \
 	ir_expression_flattening.cpp \
 	ir_function_can_inline.cpp \
