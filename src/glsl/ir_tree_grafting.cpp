@@ -92,8 +92,9 @@ void
 dereferences_variable_callback(ir_instruction *ir, void *data)
 {
    struct find_deref_info *info = (struct find_deref_info *)data;
+   ir_dereference_variable *deref = ir->as_dereference_variable();
 
-   if (ir == info->var)
+   if (deref && deref->var == info->var)
       info->found = true;
 }
 
@@ -123,7 +124,7 @@ ir_tree_grafting_visitor::do_graft(ir_rvalue **rvalue)
 
    if (debug) {
       printf("GRAFTING:\n");
-      this->graft_assign->rhs->print();
+      this->graft_assign->print();
       printf("\n");
       printf("TO:\n");
       (*rvalue)->print();
