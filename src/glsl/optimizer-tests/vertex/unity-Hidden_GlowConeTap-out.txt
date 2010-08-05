@@ -4,7 +4,7 @@ struct appdata_img {
 };
 struct v2f {
   vec4 pos;
-  vec4[2] uv;
+  vec4 uv[2];
 };
 uniform vec4 _BlurOffsets;
 uniform vec4 _MainTex_TexelSize;

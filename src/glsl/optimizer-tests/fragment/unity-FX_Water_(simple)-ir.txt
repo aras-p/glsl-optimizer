@@ -1,7 +1,7 @@
 struct v2f {
   vec4 pos;
   float fog;
-  vec2[2] bumpuv;
+  vec2 bumpuv[2];
   vec3 viewDir;
 };
 uniform sampler2D _BumpMap;

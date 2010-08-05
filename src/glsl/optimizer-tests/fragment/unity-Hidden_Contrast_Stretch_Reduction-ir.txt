@@ -1,6 +1,6 @@
 struct v2f {
   vec4 position;
-  vec2[4] uv;
+  vec2 uv[4];
 };
 uniform sampler2D _MainTex;
 vec4 frag (

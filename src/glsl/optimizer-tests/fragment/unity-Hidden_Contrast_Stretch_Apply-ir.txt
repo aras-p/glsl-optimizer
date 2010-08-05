@@ -1,6 +1,6 @@
 struct v2f {
   vec4 pos;
-  vec2[2] uv;
+  vec2 uv[2];
 };
 uniform sampler2D _AdaptTex;
 uniform sampler2D _MainTex;

@@ -9,7 +9,7 @@ void main ()
   v2f sused;
   sused.pos = vec4(tmpvar_1);
   sused.unusedmember = (tmpvar_1 * 6.000000);
-  float[3] arrused;
+  float arrused[3];
   arrused[0] = (tmpvar_1 * 4.000000);
   gl_FragColor = vec4((((tmpvar_1 * 2.000000) + sused.pos.x) + arrused[0]));
 }

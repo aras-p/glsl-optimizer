@@ -34,11 +34,11 @@ void main ()
   float tmpvar_9;
   tmpvar_9 = (f * 3.000000);
   funused = tmpvar_9;
-  float[3] arrused;
+  float arrused[3];
   float tmpvar_10;
   tmpvar_10 = (f * 4.000000);
   arrused[0] = tmpvar_10;
-  float[3] arrunused;
+  float arrunused[3];
   float tmpvar_11;
   tmpvar_11 = (f * 5.000000);
   arrunused[0] = tmpvar_11;

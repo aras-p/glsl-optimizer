@@ -11,8 +11,8 @@ struct appdata_full {
   vec4 texcoord1;
   vec4 color;
 };
-uniform vec4[4] _TerrainTreeLightColors;
-uniform vec3[4] _TerrainTreeLightDirections;
+uniform vec4 _TerrainTreeLightColors[4];
+uniform vec3 _TerrainTreeLightDirections[4];
 v2f vert (
   in appdata_full v
 );

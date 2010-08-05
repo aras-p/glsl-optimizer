@@ -107,7 +107,7 @@ mat4 xll_saturate (
   return tmpvar_5;
 }
 
-uniform vec4[8] _BlurOffsets;
+uniform vec4 _BlurOffsets[8];
 uniform sampler2D _MainTex;
 uniform vec4 unity_ShadowBlurParams;
 vec4 frag (

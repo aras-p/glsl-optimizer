@@ -4,7 +4,7 @@ struct appdata_img {
 };
 struct v2f {
   vec4 position;
-  vec2[4] uv;
+  vec2 uv[4];
 };
 void main ()
 {

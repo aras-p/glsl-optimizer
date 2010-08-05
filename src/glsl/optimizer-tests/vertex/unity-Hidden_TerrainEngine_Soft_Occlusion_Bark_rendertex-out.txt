@@ -17,8 +17,8 @@ uniform vec4 _Scale;
 uniform float _SquashAmount;
 uniform vec4 _SquashPlaneNormal;
 uniform mat4 _TerrainEngineBendTree;
-uniform vec4[4] _TerrainTreeLightColors;
-uniform vec3[4] _TerrainTreeLightDirections;
+uniform vec4 _TerrainTreeLightColors[4];
+uniform vec3 _TerrainTreeLightDirections[4];
 attribute vec4 TANGENT;
 varying vec4 xlv_FOG;
 void main ()

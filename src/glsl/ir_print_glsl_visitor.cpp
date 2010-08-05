@@ -27,7 +27,8 @@
 #include "glsl_parser_extras.h"
 #include "ir_unused_structs.h"
 
-static char* print_type(char* buffer, const glsl_type *t);
+static char* print_type(char* buffer, const glsl_type *t, bool arraySize);
+static char* print_type_post(char* buffer, const glsl_type *t, bool arraySize);
 
 
 class ir_print_glsl_visitor : public ir_visitor {
@@ -90,8 +91,10 @@ _mesa_print_ir_glsl(exec_list *instructions,
 
 	 for (unsigned j = 0; j < s->length; j++) {
 	    buffer = talloc_asprintf_append(buffer, "  ");
-	    buffer = print_type(buffer, s->fields.structure[j].type);
-	    buffer = talloc_asprintf_append(buffer, " %s;\n", s->fields.structure[j].name);
+	    buffer = print_type(buffer, s->fields.structure[j].type, false);
+	    buffer = talloc_asprintf_append(buffer, " %s", s->fields.structure[j].name);
+        buffer = print_type_post(buffer, s->fields.structure[j].type, false);
+        buffer = talloc_asprintf_append(buffer, ";\n");
 	 }
 
 	 buffer = talloc_asprintf_append(buffer, "};\n");
@@ -124,11 +127,12 @@ void ir_print_glsl_visitor::indent(void)
 }
 
 static char*
-print_type(char* buffer, const glsl_type *t)
+print_type(char* buffer, const glsl_type *t, bool arraySize)
 {
    if (t->base_type == GLSL_TYPE_ARRAY) {
-      buffer = print_type(buffer, t->fields.array);
-      buffer = talloc_asprintf_append(buffer, "[%u]", t->length);
+      buffer = print_type(buffer, t->fields.array, true);
+      if (arraySize)
+         buffer = talloc_asprintf_append(buffer, "[%u]", t->length);
    } else if ((t->base_type == GLSL_TYPE_STRUCT)
 	      && (strncmp("gl_", t->name, 3) != 0)) {
       buffer = talloc_asprintf_append(buffer, "%s", t->name);
@@ -136,6 +140,16 @@ print_type(char* buffer, const glsl_type *t)
       buffer = talloc_asprintf_append(buffer, "%s", t->name);
    }
    return buffer;
+}
+
+static char*
+print_type_post(char* buffer, const glsl_type *t, bool arraySize)
+{
+	if (t->base_type == GLSL_TYPE_ARRAY) {
+		if (!arraySize)
+			buffer = talloc_asprintf_append(buffer, "[%u]", t->length);
+	}
+	return buffer;
 }
 
 
@@ -153,14 +167,15 @@ void ir_print_glsl_visitor::visit(ir_variable *ir)
 
    buffer = talloc_asprintf_append(buffer, "%s%s%s%s",
 	  cent, inv, mode[this->mode][ir->mode], interp[ir->interpolation]);
-   buffer = print_type(buffer, ir->type);
+   buffer = print_type(buffer, ir->type, false);
    buffer = talloc_asprintf_append(buffer, " %s", ir->name);
+   buffer = print_type_post(buffer, ir->type, false);
 }
 
 
 void ir_print_glsl_visitor::visit(ir_function_signature *ir)
 {
-   buffer = print_type(buffer, ir->return_type);
+   buffer = print_type(buffer, ir->return_type, true);
    buffer = talloc_asprintf_append(buffer, " %s (", ir->function_name());
 
    if (!ir->parameters.is_empty())
@@ -376,7 +391,7 @@ void ir_print_glsl_visitor::visit(ir_swizzle *ir)
 	{
 		if (ir->mask.num_components != 1)
 		{
-			buffer = print_type(buffer, ir->type);
+			buffer = print_type(buffer, ir->type, true);
 			buffer = talloc_asprintf_append(buffer, "(");
 		}
 	}
@@ -436,7 +451,7 @@ void ir_print_glsl_visitor::visit(ir_assignment *ir)
    bool typeMismatch = (ir->lhs->type != ir->rhs->type);
    if (typeMismatch)
    {
-	   buffer = print_type(buffer, ir->lhs->type);
+	   buffer = print_type(buffer, ir->lhs->type, true);
 	   buffer = talloc_asprintf_append(buffer, "(");
    }
 
@@ -469,7 +484,7 @@ void ir_print_glsl_visitor::visit(ir_constant *ir)
 
    const glsl_type *const base_type = ir->type->get_base_type();
 
-   buffer = print_type(buffer, ir->type);
+   buffer = print_type(buffer, ir->type, true);
    buffer = talloc_asprintf_append(buffer, " (");
 
    if (ir->type->is_array()) {
