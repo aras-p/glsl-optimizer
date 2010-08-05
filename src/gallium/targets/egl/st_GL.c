@@ -1,4 +1,5 @@
 #include "state_tracker/st_gl_api.h"
+#include "state_tracker/st_api.h"
 
 #if FEATURE_GL
 PUBLIC struct st_api *
