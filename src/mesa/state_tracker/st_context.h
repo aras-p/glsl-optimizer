@@ -1,3 +1,4 @@
+//struct dd_function_table;
 /**************************************************************************
  * 
  * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
@@ -29,21 +30,17 @@
 #define ST_CONTEXT_H
 
 #include "main/mtypes.h"
-#include "program/prog_cache.h"
 #include "pipe/p_state.h"
 #include "state_tracker/st_api.h"
 
-
-struct st_context;
-struct st_texture_object;
-struct st_fragment_program;
+struct bitmap_cache;
+struct blit_state;
+struct dd_function_table;
 struct draw_context;
 struct draw_stage;
-struct cso_cache;
-struct cso_blend;
 struct gen_mipmap_state;
-struct blit_state;
-struct bitmap_cache;
+struct st_context;
+struct st_fragment_program;
 
 
 #define ST_NEW_MESA                    0x1 /* Mesa state has changed */
