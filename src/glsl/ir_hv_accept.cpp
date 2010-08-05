@@ -212,7 +212,7 @@ ir_texture::accept(ir_hierarchical_visitor *v)
       break;
    }
 
-   return visit_continue_with_parent;
+   return (s == visit_stop) ? s : v->visit_leave(this);
 }
 
 
