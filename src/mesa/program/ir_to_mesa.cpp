@@ -752,15 +752,12 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
       ir_to_mesa_emit_scalar_op1(ir, OPCODE_RCP, result_dst, op[0]);
       break;
 
-   case ir_unop_exp:
-      ir_to_mesa_emit_scalar_op2(ir, OPCODE_POW, result_dst,
-				 src_reg_for_float(M_E), op[0]);
-      break;
    case ir_unop_exp2:
       ir_to_mesa_emit_scalar_op1(ir, OPCODE_EX2, result_dst, op[0]);
       break;
+   case ir_unop_exp:
    case ir_unop_log:
-      ir_to_mesa_emit_scalar_op1(ir, OPCODE_LOG, result_dst, op[0]);
+      assert(!"not reached: should be handled by ir_explog_to_explog2");
       break;
    case ir_unop_log2:
       ir_to_mesa_emit_scalar_op1(ir, OPCODE_LG2, result_dst, op[0]);
