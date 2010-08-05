@@ -28,6 +28,8 @@ void main ()
   xlt_v.texcoord = gl_MultiTexCoord0.xyzw;
   xlt_v.texcoord1 = gl_MultiTexCoord1.xyzw;
   xlt_v.color = gl_Color.xyzw;
+  appdata_full v;
+  v = xlt_v;
   v2f_surf o;
   vec4 tmpvar_34;
   tmpvar_34 = (gl_ModelViewProjectionMatrix * xlt_v.vertex);
@@ -36,6 +38,8 @@ void main ()
   o.hip_pack0.xy = ((xlt_v.texcoord.xy * _Decal_ST.xy) + _Decal_ST.zw).xy;
   o.hip_pack0.zw = vec2(((xlt_v.texcoord.xy * _DecalBump_ST.xy) + _DecalBump_ST.zw).xy);
   o.hip_lmap = ((xlt_v.texcoord1.xy * unity_LightmapST.xy) + unity_LightmapST.zw).xy;
+  vec3 tmpvar_49;
+  tmpvar_49 = cross (v.normal, v.tangent.xyz);
   gl_Position = o.pos.xyzw;
   vec4 tmpvar_17;
   tmpvar_17.x = float(vec4(o.fog));

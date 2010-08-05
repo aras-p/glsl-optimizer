@@ -22,6 +22,8 @@ float ComputeShadow (
   in vec2 uv
 )
 {
+  float tmpvar_28;
+  tmpvar_28 = clamp (((vec.z * _LightShadowData.z) + _LightShadowData.w), 0.000000, 1.000000);
   mat3 tmpvar_32;
   tmpvar_32[0] = _View2Shadow[0].xyz;
   tmpvar_32[1] = _View2Shadow[1].xyz;
