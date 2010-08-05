@@ -78,7 +78,8 @@ do_dead_code(exec_list *instructions)
 	  * Don't do so if it's a shader output, though.
 	  */
 	 if (entry->var->mode != ir_var_out &&
-	     entry->var->mode != ir_var_inout) {
+	     entry->var->mode != ir_var_inout &&
+	     !ir_has_call(entry->assign)) {
 	    entry->assign->remove();
 	    progress = true;
 
