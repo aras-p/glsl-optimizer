@@ -1564,7 +1564,8 @@ void brw_vs_emit(struct brw_vs_compile *c )
 
    if (INTEL_DEBUG & DEBUG_VS) {
       printf("vs-mesa:\n");
-      _mesa_print_program(&c->vp->program.Base); 
+      _mesa_fprint_program_opt(stdout, &c->vp->program.Base, PROG_PRINT_DEBUG,
+			       GL_TRUE);
       printf("\n");
    }
 

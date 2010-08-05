@@ -1037,13 +1037,12 @@ static void print_insns( const struct prog_instruction *insn,
    for (i = 0; i < nr; i++, insn++) {
       printf("%3d: ", i);
       if (insn->Opcode < MAX_OPCODE)
-	 _mesa_print_instruction(insn);
+	 _mesa_fprint_instruction_opt(stdout, insn, 0, PROG_PRINT_DEBUG, NULL);
       else if (insn->Opcode < MAX_WM_OPCODE) {
 	 GLuint idx = insn->Opcode - MAX_OPCODE;
 
-	 _mesa_print_alu_instruction(insn,
-				     wm_opcode_strings[idx],
-				     3);
+	 _mesa_fprint_alu_instruction(stdout, insn, wm_opcode_strings[idx],
+				      3, PROG_PRINT_DEBUG, NULL);
       }
       else 
 	 printf("965 Opcode %d\n", insn->Opcode);
@@ -1062,7 +1061,8 @@ void brw_wm_pass_fp( struct brw_wm_compile *c )
 
    if (INTEL_DEBUG & DEBUG_WM) {
       printf("pre-fp:\n");
-      _mesa_print_program(&fp->program.Base); 
+      _mesa_fprint_program_opt(stdout, &fp->program.Base, PROG_PRINT_DEBUG,
+			       GL_TRUE);
       printf("\n");
    }
 
