@@ -11,26 +11,20 @@ void main ()
   v2f xlt_xlat_var_input;
   xlt_xlat_var_input.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
   xlt_xlat_var_input.fog = xlv_FOG.x;
-  vec4 tmpvar_3;
-  tmpvar_3.xyzw = gl_Color;
-  xlt_xlat_var_input.color = tmpvar_3;
-  vec2 tmpvar_5;
-  tmpvar_5.xy = vec2(gl_TexCoord[0]);
-  xlt_xlat_var_input.uv = tmpvar_5;
+  xlt_xlat_var_input.color = gl_Color.xyzw;
+  xlt_xlat_var_input.uv = gl_TexCoord[0].xy;
   v2f xlat_var_input;
   xlat_var_input = xlt_xlat_var_input;
   vec4 col;
   vec4 tmpvar_12;
   tmpvar_12 = texture2D (_MainTex, xlat_var_input.uv);
   col = tmpvar_12;
-  col.xyz = (tmpvar_12.xyz * xlat_var_input.color.xyz);
+  col.xyz = (tmpvar_12.xyz * xlat_var_input.color.xyz).xyz;
   float x;
   x = col.w;
   if ((x < 0.000000)) {
     discard;
   };
-  vec4 tmpvar_9;
-  tmpvar_9.xyzw = col;
-  gl_FragData[0] = tmpvar_9;
+  gl_FragData[0] = col.xyzw;
 }
 

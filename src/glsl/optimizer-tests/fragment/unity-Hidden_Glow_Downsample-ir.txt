@@ -38,13 +38,13 @@ vec4 frag (
   c = tmpvar_9;
   vec3 tmpvar_10;
   tmpvar_10 = (c.xyz * _Color.xyz);
-  c.xyz = tmpvar_10;
+  c.xyz = tmpvar_10.xyz;
   vec3 tmpvar_11;
   tmpvar_11 = (c.xyz * (c.w + _Color.w));
-  c.xyz = tmpvar_11;
+  c.xyz = tmpvar_11.xyz;
   float tmpvar_12;
   tmpvar_12 = 0.000000;
-  c.w = tmpvar_12;
+  c.w = float(vec4(tmpvar_12));
   return c;
 }
 
@@ -56,22 +56,22 @@ void main ()
   tmpvar_1 = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
   xlt_i.pos = tmpvar_1;
   vec4 tmpvar_2;
-  tmpvar_2.xyzw = gl_TexCoord[0];
+  tmpvar_2 = gl_TexCoord[0].xyzw;
   vec4 tmpvar_3;
   tmpvar_3 = tmpvar_2;
   xlt_i.uv[0] = tmpvar_3;
   vec4 tmpvar_4;
-  tmpvar_4.xyzw = gl_TexCoord[1];
+  tmpvar_4 = gl_TexCoord[1].xyzw;
   vec4 tmpvar_5;
   tmpvar_5 = tmpvar_4;
   xlt_i.uv[1] = tmpvar_5;
   vec4 tmpvar_6;
-  tmpvar_6.xyzw = gl_TexCoord[2];
+  tmpvar_6 = gl_TexCoord[2].xyzw;
   vec4 tmpvar_7;
   tmpvar_7 = tmpvar_6;
   xlt_i.uv[2] = tmpvar_7;
   vec4 tmpvar_8;
-  tmpvar_8.xyzw = gl_TexCoord[3];
+  tmpvar_8 = gl_TexCoord[3].xyzw;
   vec4 tmpvar_9;
   tmpvar_9 = tmpvar_8;
   xlt_i.uv[3] = tmpvar_9;
@@ -81,7 +81,7 @@ void main ()
   tmpvar_11 = tmpvar_10;
   xl_retval = tmpvar_11;
   vec4 tmpvar_12;
-  tmpvar_12.xyzw = xl_retval;
+  tmpvar_12 = xl_retval.xyzw;
   vec4 tmpvar_13;
   tmpvar_13 = tmpvar_12;
   gl_FragData[0] = tmpvar_13;

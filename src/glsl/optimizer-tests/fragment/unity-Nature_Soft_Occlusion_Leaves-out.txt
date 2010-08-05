@@ -29,18 +29,10 @@ void main ()
   v2f_surf xlt_IN;
   xlt_IN.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
   xlt_IN.fog = xlv_FOG.x;
-  vec2 tmpvar_3;
-  tmpvar_3.xy = vec2(gl_TexCoord[0]);
-  xlt_IN.hip_pack0 = tmpvar_3;
-  vec3 tmpvar_5;
-  tmpvar_5.xyz = vec3(gl_TexCoord[1]);
-  xlt_IN.normal = tmpvar_5;
-  vec3 tmpvar_7;
-  tmpvar_7.xyz = vec3(gl_TexCoord[2]);
-  xlt_IN.vlight = tmpvar_7;
-  vec4 tmpvar_9;
-  tmpvar_9.xyzw = gl_TexCoord[3];
-  xlt_IN._ShadowCoord = tmpvar_9;
+  xlt_IN.hip_pack0 = gl_TexCoord[0].xy;
+  xlt_IN.normal = gl_TexCoord[1].xyz;
+  xlt_IN.vlight = gl_TexCoord[2].xyz;
+  xlt_IN._ShadowCoord = gl_TexCoord[3].xyzw;
   v2f_surf IN;
   IN = xlt_IN;
   Input surfIN;
@@ -80,13 +72,11 @@ void main ()
   tmpvar_47 = dot (s.Normal, _WorldSpaceLightPos0.xyz);
   float tmpvar_48;
   tmpvar_48 = max (0.000000, tmpvar_47);
-  c_i0_i1.xyz = ((s.Albedo * _LightColor0.xyz) * ((tmpvar_48 * atten_i0) * 2.000000));
-  c_i0_i1.w = s.Alpha;
+  c_i0_i1.xyz = ((s.Albedo * _LightColor0.xyz) * ((tmpvar_48 * atten_i0) * 2.000000)).xyz;
+  c_i0_i1.w = float(vec4(s.Alpha));
   c = c_i0_i1;
-  c.xyz = (c_i0_i1.xyz + (o.Albedo * IN.vlight));
-  c.w = o.Alpha;
-  vec4 tmpvar_13;
-  tmpvar_13.xyzw = c;
-  gl_FragData[0] = tmpvar_13;
+  c.xyz = (c_i0_i1.xyz + (o.Albedo * IN.vlight)).xyz;
+  c.w = float(vec4(o.Alpha));
+  gl_FragData[0] = c.xyzw;
 }
 

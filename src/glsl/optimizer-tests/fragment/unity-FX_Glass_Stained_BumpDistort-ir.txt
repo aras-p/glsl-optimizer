@@ -20,12 +20,12 @@ vec4 UnpackNormal (
   vec4 normal;
   vec2 tmpvar_1;
   tmpvar_1 = ((packednormal.wy * 2.000000) - 1.000000);
-  normal.xy = tmpvar_1;
+  normal.xy = tmpvar_1.xy;
   float tmpvar_2;
   tmpvar_2 = sqrt (((1.000000 - (normal.x * normal.x)) - (normal.y * normal.y)));
   float tmpvar_3;
   tmpvar_3 = tmpvar_2;
-  normal.z = tmpvar_3;
+  normal.z = float(vec3(tmpvar_3));
   return normal;
 }
 
@@ -53,7 +53,7 @@ vec4 frag (
   offset = tmpvar_4;
   vec2 tmpvar_5;
   tmpvar_5 = ((offset * i.uvgrab.z) + i.uvgrab.xy);
-  i.uvgrab.xy = tmpvar_5;
+  i.uvgrab.xy = tmpvar_5.xy;
   vec4 tmpvar_6;
   tmpvar_6 = texture2DProj (_GrabTexture, i.uvgrab);
   vec4 tmpvar_7;
@@ -75,17 +75,17 @@ void main ()
   tmpvar_1 = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
   xlt_i.vertex = tmpvar_1;
   vec4 tmpvar_2;
-  tmpvar_2.xyzw = gl_TexCoord[0];
+  tmpvar_2 = gl_TexCoord[0].xyzw;
   vec4 tmpvar_3;
   tmpvar_3 = tmpvar_2;
   xlt_i.uvgrab = tmpvar_3;
   vec2 tmpvar_4;
-  tmpvar_4.xy = vec2(gl_TexCoord[1]);
+  tmpvar_4 = gl_TexCoord[1].xy;
   vec2 tmpvar_5;
   tmpvar_5 = tmpvar_4;
   xlt_i.uvbump = tmpvar_5;
   vec2 tmpvar_6;
-  tmpvar_6.xy = vec2(gl_TexCoord[2]);
+  tmpvar_6 = gl_TexCoord[2].xy;
   vec2 tmpvar_7;
   tmpvar_7 = tmpvar_6;
   xlt_i.uvmain = tmpvar_7;
@@ -95,7 +95,7 @@ void main ()
   tmpvar_9 = tmpvar_8;
   xl_retval = tmpvar_9;
   vec4 tmpvar_10;
-  tmpvar_10.xyzw = xl_retval;
+  tmpvar_10 = xl_retval.xyzw;
   vec4 tmpvar_11;
   tmpvar_11 = tmpvar_10;
   gl_FragData[0] = tmpvar_11;

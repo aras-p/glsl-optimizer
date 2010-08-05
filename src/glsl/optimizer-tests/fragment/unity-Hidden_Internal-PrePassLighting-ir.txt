@@ -50,10 +50,10 @@ mat2 xll_saturate (
   mat2 tmpvar_3;
   vec2 tmpvar_4;
   tmpvar_4 = tmpvar_1;
-  tmpvar_3[0].xy = tmpvar_4.xy;
+  tmpvar_3[0] = tmpvar_4.xy;
   vec2 tmpvar_5;
   tmpvar_5 = tmpvar_2;
-  tmpvar_3[1].xy = tmpvar_5.xy;
+  tmpvar_3[1] = tmpvar_5.xy;
   return tmpvar_3;
 }
 
@@ -70,13 +70,13 @@ mat3 xll_saturate (
   mat3 tmpvar_4;
   vec3 tmpvar_5;
   tmpvar_5 = tmpvar_1;
-  tmpvar_4[0].xyz = tmpvar_5.xyz;
+  tmpvar_4[0] = tmpvar_5.xyz;
   vec3 tmpvar_6;
   tmpvar_6 = tmpvar_2;
-  tmpvar_4[1].xyz = tmpvar_6.xyz;
+  tmpvar_4[1] = tmpvar_6.xyz;
   vec3 tmpvar_7;
   tmpvar_7 = tmpvar_3;
-  tmpvar_4[2].xyz = tmpvar_7.xyz;
+  tmpvar_4[2] = tmpvar_7.xyz;
   return tmpvar_4;
 }
 
@@ -95,16 +95,16 @@ mat4 xll_saturate (
   mat4 tmpvar_5;
   vec4 tmpvar_6;
   tmpvar_6 = tmpvar_1;
-  tmpvar_5[0].xyzw = tmpvar_6.xyzw;
+  tmpvar_5[0] = tmpvar_6.xyzw;
   vec4 tmpvar_7;
   tmpvar_7 = tmpvar_2;
-  tmpvar_5[1].xyzw = tmpvar_7.xyzw;
+  tmpvar_5[1] = tmpvar_7.xyzw;
   vec4 tmpvar_8;
   tmpvar_8 = tmpvar_3;
-  tmpvar_5[2].xyzw = tmpvar_8.xyzw;
+  tmpvar_5[2] = tmpvar_8.xyzw;
   vec4 tmpvar_9;
   tmpvar_9 = tmpvar_4;
-  tmpvar_5[3].xyzw = tmpvar_9.xyzw;
+  tmpvar_5[3] = tmpvar_9.xyzw;
   return tmpvar_5;
 }
 
@@ -113,21 +113,21 @@ mat3 xll_constructMat3 (
 )
 {
   vec3 tmpvar_1;
-  tmpvar_1.xyz = vec3(m[0]);
+  tmpvar_1 = m[0].xyz;
   vec3 tmpvar_2;
-  tmpvar_2.xyz = vec3(m[1]);
+  tmpvar_2 = m[1].xyz;
   vec3 tmpvar_3;
-  tmpvar_3.xyz = vec3(m[2]);
+  tmpvar_3 = m[2].xyz;
   mat3 tmpvar_4;
   vec3 tmpvar_5;
   tmpvar_5 = tmpvar_1;
-  tmpvar_4[0].xyz = tmpvar_5.xyz;
+  tmpvar_4[0] = tmpvar_5.xyz;
   vec3 tmpvar_6;
   tmpvar_6 = tmpvar_2;
-  tmpvar_4[1].xyz = tmpvar_6.xyz;
+  tmpvar_4[1] = tmpvar_6.xyz;
   vec3 tmpvar_7;
   tmpvar_7 = tmpvar_3;
-  tmpvar_4[2].xyz = tmpvar_7.xyz;
+  tmpvar_4[2] = tmpvar_7.xyz;
   return tmpvar_4;
 }
 
@@ -251,7 +251,7 @@ float ComputeShadow (
   tmpvar_3 = tmpvar_2;
   fade = tmpvar_3;
   mat3 tmpvar_4;
-  tmpvar_4 = xll_constructMat3 (_View2Shadow);
+  tmpvar_4 = (xll_constructMat3 (_View2Shadow));
   vec3 tmpvar_5;
   tmpvar_5 = (tmpvar_4 * vec);
   vec = tmpvar_5;
@@ -339,7 +339,7 @@ vec4 frag (
   vec2 tmpvar_18;
   tmpvar_18 = vec2(att);
   vec2 tmpvar_19;
-  tmpvar_19.xy = tmpvar_18;
+  tmpvar_19 = tmpvar_18.xy;
   vec4 tmpvar_20;
   tmpvar_20 = texture2D (_LightTextureB0, tmpvar_19);
   float tmpvar_21;
@@ -351,8 +351,8 @@ vec4 frag (
   tmpvar_23 = (atten * tmpvar_22);
   atten = tmpvar_23;
   vec4 tmpvar_24;
-  tmpvar_24.xyz = vpos;
-  tmpvar_24.w = 1.000000;
+  tmpvar_24.xyz = vec3(vpos.xyzx);
+  tmpvar_24.w = float(vec4(1.000000));
   vec4 tmpvar_25;
   tmpvar_25 = textureCube (_LightTexture0, (_ViewToCookie * tmpvar_24).xyz);
   float tmpvar_26;
@@ -388,12 +388,12 @@ vec4 frag (
   spec = tmpvar_38;
   vec3 tmpvar_39;
   tmpvar_39 = (_LightColor.xyz * (diff * atten));
-  res.xyz = tmpvar_39;
+  res.xyz = tmpvar_39.xyz;
   float tmpvar_40;
   tmpvar_40 = Luminance (_LightColor.xyz);
   float tmpvar_41;
   tmpvar_41 = (spec * tmpvar_40);
-  res.w = tmpvar_41;
+  res.w = float(vec4(tmpvar_41));
   float tmpvar_42;
   tmpvar_42 = ((vpos.z * unity_LightmapFade.z) + unity_LightmapFade.w);
   fade = tmpvar_42;
@@ -415,12 +415,12 @@ void main ()
   tmpvar_1 = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
   xlt_i.pos = tmpvar_1;
   vec4 tmpvar_2;
-  tmpvar_2.xyzw = gl_TexCoord[0];
+  tmpvar_2 = gl_TexCoord[0].xyzw;
   vec4 tmpvar_3;
   tmpvar_3 = tmpvar_2;
   xlt_i.uv = tmpvar_3;
   vec3 tmpvar_4;
-  tmpvar_4.xyz = vec3(gl_TexCoord[1]);
+  tmpvar_4 = gl_TexCoord[1].xyz;
   vec3 tmpvar_5;
   tmpvar_5 = tmpvar_4;
   xlt_i.ray = tmpvar_5;
@@ -430,7 +430,7 @@ void main ()
   tmpvar_7 = tmpvar_6;
   xl_retval = tmpvar_7;
   vec4 tmpvar_8;
-  tmpvar_8.xyzw = xl_retval;
+  tmpvar_8 = xl_retval.xyzw;
   vec4 tmpvar_9;
   tmpvar_9 = tmpvar_8;
   gl_FragData[0] = tmpvar_9;

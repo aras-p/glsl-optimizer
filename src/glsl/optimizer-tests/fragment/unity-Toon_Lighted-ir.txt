@@ -67,8 +67,8 @@ vec4 LightingToonRamp (
   tmpvar_2 = ((tmpvar_1 * 0.500000) + 0.500000);
   d = tmpvar_2;
   vec2 tmpvar_3;
-  tmpvar_3.x = d;
-  tmpvar_3.y = d;
+  tmpvar_3.x = float(vec2(d));
+  tmpvar_3.y = float(vec2(d));
   vec4 tmpvar_4;
   tmpvar_4 = texture2D (_Ramp, tmpvar_3);
   vec3 tmpvar_5;
@@ -76,10 +76,10 @@ vec4 LightingToonRamp (
   ramp = tmpvar_5;
   vec3 tmpvar_6;
   tmpvar_6 = (((s.Albedo * _LightColor0.xyz) * ramp) * (atten * 2.000000));
-  c.xyz = tmpvar_6;
+  c.xyz = tmpvar_6.xyz;
   float tmpvar_7;
   tmpvar_7 = 0.000000;
-  c.w = tmpvar_7;
+  c.w = float(vec4(tmpvar_7));
   return c;
 }
 
@@ -129,7 +129,7 @@ vec4 frag_surf (
   c = tmpvar_11;
   float tmpvar_12;
   tmpvar_12 = 0.000000;
-  c.w = tmpvar_12;
+  c.w = float(vec4(tmpvar_12));
   return c;
 }
 
@@ -145,22 +145,22 @@ void main ()
   tmpvar_2 = xlv_FOG.x;
   xlt_IN.fog = tmpvar_2;
   vec2 tmpvar_3;
-  tmpvar_3.xy = vec2(gl_TexCoord[0]);
+  tmpvar_3 = gl_TexCoord[0].xy;
   vec2 tmpvar_4;
   tmpvar_4 = tmpvar_3;
   xlt_IN.hip_pack0 = tmpvar_4;
   vec3 tmpvar_5;
-  tmpvar_5.xyz = vec3(gl_TexCoord[1]);
+  tmpvar_5 = gl_TexCoord[1].xyz;
   vec3 tmpvar_6;
   tmpvar_6 = tmpvar_5;
   xlt_IN.normal = tmpvar_6;
   vec3 tmpvar_7;
-  tmpvar_7.xyz = vec3(gl_TexCoord[2]);
+  tmpvar_7 = gl_TexCoord[2].xyz;
   vec3 tmpvar_8;
   tmpvar_8 = tmpvar_7;
   xlt_IN.lightDir = tmpvar_8;
   vec2 tmpvar_9;
-  tmpvar_9.xy = vec2(gl_TexCoord[3]);
+  tmpvar_9 = gl_TexCoord[3].xy;
   vec2 tmpvar_10;
   tmpvar_10 = tmpvar_9;
   xlt_IN._LightCoord = tmpvar_10;
@@ -170,7 +170,7 @@ void main ()
   tmpvar_12 = tmpvar_11;
   xl_retval = tmpvar_12;
   vec4 tmpvar_13;
-  tmpvar_13.xyzw = xl_retval;
+  tmpvar_13 = xl_retval.xyzw;
   vec4 tmpvar_14;
   tmpvar_14 = tmpvar_13;
   gl_FragData[0] = tmpvar_14;

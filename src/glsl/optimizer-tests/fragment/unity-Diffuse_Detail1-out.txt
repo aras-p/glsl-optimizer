@@ -21,9 +21,7 @@ void main ()
 {
   v2f_surf xlt_IN;
   xlt_IN.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
-  vec3 tmpvar_2;
-  tmpvar_2.xyz = vec3(gl_TexCoord[0]);
-  xlt_IN.normal = tmpvar_2;
+  xlt_IN.normal = gl_TexCoord[0].xyz;
   SurfaceOutput o;
   Input surfIN;
   vec4 res;
@@ -43,14 +41,12 @@ void main ()
   c = (tmpvar_21 * _Color);
   vec4 tmpvar_23;
   tmpvar_23 = texture2D (_Detail, IN_i0.uv_Detail);
-  c.xyz = (c.xyz * (tmpvar_23.xyz * 2.000000));
+  c.xyz = (c.xyz * (tmpvar_23.xyz * 2.000000)).xyz;
   o_i0.Albedo = c.xyz;
   o_i0.Alpha = c.w;
   o = o_i0;
-  res.xyz = ((o_i0.Normal * vec3 (0.500000, 0.500000, -0.500000)) + 0.500000);
-  res.w = o_i0.Specular;
-  vec4 tmpvar_6;
-  tmpvar_6.xyzw = res;
-  gl_FragData[0] = tmpvar_6;
+  res.xyz = ((o_i0.Normal * vec3 (0.500000, 0.500000, -0.500000)) + 0.500000).xyz;
+  res.w = float(vec4(o_i0.Specular));
+  gl_FragData[0] = res.xyzw;
 }
 

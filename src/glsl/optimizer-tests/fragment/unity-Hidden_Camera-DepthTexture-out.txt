@@ -7,9 +7,7 @@ void main ()
 {
   v2f xlt_i;
   xlt_i.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
-  vec2 tmpvar_2;
-  tmpvar_2.xy = vec2(gl_TexCoord[0]);
-  xlt_i.uv = tmpvar_2;
+  xlt_i.uv = gl_TexCoord[0].xy;
   v2f i;
   i = xlt_i;
   vec4 tmpvar_9;
@@ -19,8 +17,6 @@ void main ()
   if ((x < 0.000000)) {
     discard;
   };
-  vec4 tmpvar_6;
-  tmpvar_6.xyzw = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
-  gl_FragData[0] = tmpvar_6;
+  gl_FragData[0] = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
 }
 

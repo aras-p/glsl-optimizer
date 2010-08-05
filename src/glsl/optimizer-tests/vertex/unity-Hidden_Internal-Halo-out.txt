@@ -12,29 +12,19 @@ uniform vec4 _HaloFalloff_ST;
 void main ()
 {
   appdata_t xlt_v;
-  vec4 tmpvar_1;
-  tmpvar_1.xyzw = gl_Vertex;
-  xlt_v.vertex = tmpvar_1;
-  vec4 tmpvar_3;
-  tmpvar_3.xyzw = gl_Color;
-  xlt_v.color = tmpvar_3;
-  vec2 tmpvar_5;
-  tmpvar_5.xy = vec2(gl_MultiTexCoord0);
-  xlt_v.texcoord = tmpvar_5;
+  xlt_v.vertex = gl_Vertex.xyzw;
+  xlt_v.color = gl_Color.xyzw;
+  xlt_v.texcoord = gl_MultiTexCoord0.xy;
   v2f o;
   o.vertex = (gl_ModelViewProjectionMatrix * xlt_v.vertex);
   o.color = xlt_v.color;
   o.texcoord = ((xlt_v.texcoord.xy * _HaloFalloff_ST.xy) + _HaloFalloff_ST.zw);
-  vec4 tmpvar_9;
-  tmpvar_9.xyzw = o.vertex;
-  gl_Position = tmpvar_9;
-  vec4 tmpvar_11;
-  tmpvar_11.xyzw = o.color;
-  gl_FrontColor = tmpvar_11;
+  gl_Position = o.vertex.xyzw;
+  gl_FrontColor = o.color.xyzw;
   vec4 tmpvar_13;
-  tmpvar_13.xy = o.texcoord;
-  tmpvar_13.z = 0.000000;
-  tmpvar_13.w = 0.000000;
+  tmpvar_13.xy = vec2(o.texcoord.xyxx);
+  tmpvar_13.z = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_13.w = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[0] = tmpvar_13;
 }
 

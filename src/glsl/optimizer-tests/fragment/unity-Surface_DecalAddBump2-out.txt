@@ -25,12 +25,8 @@ void main ()
   v2f_surf xlt_IN;
   xlt_IN.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
   xlt_IN.fog = xlv_FOG.x;
-  vec4 tmpvar_3;
-  tmpvar_3.xyzw = gl_TexCoord[0];
-  xlt_IN.hip_pack0 = tmpvar_3;
-  vec2 tmpvar_5;
-  tmpvar_5.xy = vec2(gl_TexCoord[1]);
-  xlt_IN.hip_lmap = tmpvar_5;
+  xlt_IN.hip_pack0 = gl_TexCoord[0].xyzw;
+  xlt_IN.hip_lmap = gl_TexCoord[1].xy;
   v2f_surf IN;
   IN = xlt_IN;
   Input surfIN;
@@ -53,20 +49,16 @@ void main ()
   vec4 tmpvar_37;
   tmpvar_37 = texture2D (_DecalBump, IN_i0.uv_DecalBump);
   vec4 normal;
-  normal.xy = ((tmpvar_37.wy * 2.000000) - 1.000000);
+  normal.xy = ((tmpvar_37.wy * 2.000000) - 1.000000).xy;
   float tmpvar_41;
   tmpvar_41 = sqrt (((1.000000 - (normal.x * normal.x)) - (normal.y * normal.y)));
-  normal.z = tmpvar_41;
-  vec3 tmpvar_43;
-  tmpvar_43.xyz = vec3(normal);
-  o_i0.Normal = tmpvar_43;
+  normal.z = float(vec3(tmpvar_41));
+  o_i0.Normal = normal.xyz;
   o = o_i0;
   vec4 tmpvar_45;
   tmpvar_45 = texture2D (unity_Lightmap, IN.hip_lmap.xy);
-  c.xyz = (o.Albedo * (2.000000 * tmpvar_45.xyz));
-  c.w = o.Alpha;
-  vec4 tmpvar_9;
-  tmpvar_9.xyzw = c;
-  gl_FragData[0] = tmpvar_9;
+  c.xyz = (o.Albedo * (2.000000 * tmpvar_45.xyz)).xyz;
+  c.w = float(vec4(o.Alpha));
+  gl_FragData[0] = c.xyzw;
 }
 

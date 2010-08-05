@@ -31,12 +31,8 @@ void main ()
   v2f_surf xlt_IN;
   xlt_IN.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
   xlt_IN.fog = xlv_FOG.x;
-  vec4 tmpvar_3;
-  tmpvar_3.xyzw = gl_TexCoord[0];
-  xlt_IN.hip_pack0 = tmpvar_3;
-  vec4 tmpvar_5;
-  tmpvar_5.xyzw = gl_TexCoord[1];
-  xlt_IN.hip_screen = tmpvar_5;
+  xlt_IN.hip_pack0 = gl_TexCoord[0].xyzw;
+  xlt_IN.hip_screen = gl_TexCoord[1].xyzw;
   v2f_surf IN;
   IN = xlt_IN;
   Input surfIN;
@@ -72,13 +68,11 @@ void main ()
   vec4 tmpvar_53;
   tmpvar_53 = texture2D (_BumpMap, IN_i0.uv_BumpMap);
   vec4 normal;
-  normal.xy = ((tmpvar_53.wy * 2.000000) - 1.000000);
+  normal.xy = ((tmpvar_53.wy * 2.000000) - 1.000000).xy;
   float tmpvar_57;
   tmpvar_57 = sqrt (((1.000000 - (normal.x * normal.x)) - (normal.y * normal.y)));
-  normal.z = tmpvar_57;
-  vec3 tmpvar_59;
-  tmpvar_59.xyz = vec3(normal);
-  o_i0.Normal = tmpvar_59;
+  normal.z = float(vec3(tmpvar_57));
+  o_i0.Normal = normal.xyz;
   o = o_i0;
   vec4 tmpvar_61;
   tmpvar_61 = texture2DProj (_LightBuffer, IN.hip_screen);
@@ -88,16 +82,14 @@ void main ()
   vec4 tmpvar_64;
   tmpvar_64 = -(tmpvar_63);
   light = tmpvar_64;
-  light.xyz = (tmpvar_64.xyz + unity_Ambient.xyz);
+  light.xyz = (tmpvar_64.xyz + unity_Ambient.xyz).xyz;
   vec4 c_i0;
   float tmpvar_68;
   tmpvar_68 = (light.w * o.Gloss);
-  c_i0.xyz = ((o.Albedo * light.xyz) + ((light.xyz * _SpecColor.xyz) * tmpvar_68));
-  c_i0.w = (o.Alpha + (tmpvar_68 * _SpecColor.w));
+  c_i0.xyz = ((o.Albedo * light.xyz) + ((light.xyz * _SpecColor.xyz) * tmpvar_68)).xyz;
+  c_i0.w = float(vec4((o.Alpha + (tmpvar_68 * _SpecColor.w))));
   col = c_i0;
-  col.xyz = (c_i0.xyz + o.Emission);
-  vec4 tmpvar_9;
-  tmpvar_9.xyzw = col;
-  gl_FragData[0] = tmpvar_9;
+  col.xyz = (c_i0.xyz + o.Emission).xyz;
+  gl_FragData[0] = col.xyzw;
 }
 

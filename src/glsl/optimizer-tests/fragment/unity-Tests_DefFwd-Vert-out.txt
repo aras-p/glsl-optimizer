@@ -19,12 +19,8 @@ void main ()
   v2f_surf xlt_IN;
   xlt_IN.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
   xlt_IN.fog = xlv_FOG.x;
-  vec3 tmpvar_3;
-  tmpvar_3.xyz = vec3(gl_TexCoord[0]);
-  xlt_IN.normal = tmpvar_3;
-  vec3 tmpvar_5;
-  tmpvar_5.xyz = vec3(gl_TexCoord[1]);
-  xlt_IN.lightDir = tmpvar_5;
+  xlt_IN.normal = gl_TexCoord[0].xyz;
+  xlt_IN.lightDir = gl_TexCoord[1].xyz;
   SurfaceOutput o;
   vec4 c;
   o.Albedo = vec3 (0.000000, 0.000000, 0.000000);
@@ -44,12 +40,10 @@ void main ()
   tmpvar_29 = dot (s.Normal, xlt_IN.lightDir);
   float tmpvar_30;
   tmpvar_30 = max (0.000000, tmpvar_29);
-  c_i0.xyz = ((s.Albedo * _LightColor0.xyz) * (tmpvar_30 * 2.000000));
-  c_i0.w = s.Alpha;
+  c_i0.xyz = ((s.Albedo * _LightColor0.xyz) * (tmpvar_30 * 2.000000)).xyz;
+  c_i0.w = float(vec4(s.Alpha));
   c = c_i0;
-  c.w = 0.000000;
-  vec4 tmpvar_9;
-  tmpvar_9.xyzw = c;
-  gl_FragData[0] = tmpvar_9;
+  c.w = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
+  gl_FragData[0] = c.xyzw;
 }
 

@@ -36,21 +36,11 @@ void main ()
   v2f_surf xlt_IN;
   xlt_IN.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
   xlt_IN.fog = xlv_FOG.x;
-  vec4 tmpvar_3;
-  tmpvar_3.xyzw = gl_TexCoord[0];
-  xlt_IN.hip_pack0 = tmpvar_3;
-  vec4 tmpvar_5;
-  tmpvar_5.xyzw = gl_TexCoord[1];
-  xlt_IN.hip_pack1 = tmpvar_5;
-  vec2 tmpvar_7;
-  tmpvar_7.xy = vec2(gl_TexCoord[2]);
-  xlt_IN.hip_pack2 = tmpvar_7;
-  vec4 tmpvar_9;
-  tmpvar_9.xyzw = gl_TexCoord[3];
-  xlt_IN.hip_screen = tmpvar_9;
-  vec3 tmpvar_11;
-  tmpvar_11.xyz = vec3(gl_TexCoord[4]);
-  xlt_IN.hip_lmapFade = tmpvar_11;
+  xlt_IN.hip_pack0 = gl_TexCoord[0].xyzw;
+  xlt_IN.hip_pack1 = gl_TexCoord[1].xyzw;
+  xlt_IN.hip_pack2 = gl_TexCoord[2].xy;
+  xlt_IN.hip_screen = gl_TexCoord[3].xyzw;
+  xlt_IN.hip_lmapFade = gl_TexCoord[4].xyz;
   v2f_surf IN;
   IN = xlt_IN;
   Input surfIN;
@@ -110,12 +100,10 @@ void main ()
   tmpvar_73 = clamp (IN.hip_lmapFade.z, 0.000000, 1.000000);
   vec3 tmpvar_75;
   tmpvar_75 = mix (lmIndirect, lmFull, vec3(tmpvar_73));
-  light.xyz = (light.xyz + tmpvar_75);
+  light.xyz = (light.xyz + tmpvar_75).xyz;
   vec4 c;
-  c.xyz = (o.Albedo * light.xyz);
-  c.w = o.Alpha;
-  vec4 tmpvar_15;
-  tmpvar_15.xyzw = c;
-  gl_FragData[0] = tmpvar_15;
+  c.xyz = (o.Albedo * light.xyz).xyz;
+  c.w = float(vec4(o.Alpha));
+  gl_FragData[0] = c.xyzw;
 }
 

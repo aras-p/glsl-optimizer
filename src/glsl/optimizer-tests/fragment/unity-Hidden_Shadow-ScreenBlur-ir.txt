@@ -49,10 +49,10 @@ mat2 xll_saturate (
   mat2 tmpvar_3;
   vec2 tmpvar_4;
   tmpvar_4 = tmpvar_1;
-  tmpvar_3[0].xy = tmpvar_4.xy;
+  tmpvar_3[0] = tmpvar_4.xy;
   vec2 tmpvar_5;
   tmpvar_5 = tmpvar_2;
-  tmpvar_3[1].xy = tmpvar_5.xy;
+  tmpvar_3[1] = tmpvar_5.xy;
   return tmpvar_3;
 }
 
@@ -69,13 +69,13 @@ mat3 xll_saturate (
   mat3 tmpvar_4;
   vec3 tmpvar_5;
   tmpvar_5 = tmpvar_1;
-  tmpvar_4[0].xyz = tmpvar_5.xyz;
+  tmpvar_4[0] = tmpvar_5.xyz;
   vec3 tmpvar_6;
   tmpvar_6 = tmpvar_2;
-  tmpvar_4[1].xyz = tmpvar_6.xyz;
+  tmpvar_4[1] = tmpvar_6.xyz;
   vec3 tmpvar_7;
   tmpvar_7 = tmpvar_3;
-  tmpvar_4[2].xyz = tmpvar_7.xyz;
+  tmpvar_4[2] = tmpvar_7.xyz;
   return tmpvar_4;
 }
 
@@ -94,16 +94,16 @@ mat4 xll_saturate (
   mat4 tmpvar_5;
   vec4 tmpvar_6;
   tmpvar_6 = tmpvar_1;
-  tmpvar_5[0].xyzw = tmpvar_6.xyzw;
+  tmpvar_5[0] = tmpvar_6.xyzw;
   vec4 tmpvar_7;
   tmpvar_7 = tmpvar_2;
-  tmpvar_5[1].xyzw = tmpvar_7.xyzw;
+  tmpvar_5[1] = tmpvar_7.xyzw;
   vec4 tmpvar_8;
   tmpvar_8 = tmpvar_3;
-  tmpvar_5[2].xyzw = tmpvar_8.xyzw;
+  tmpvar_5[2] = tmpvar_8.xyzw;
   vec4 tmpvar_9;
   tmpvar_9 = tmpvar_4;
-  tmpvar_5[3].xyzw = tmpvar_9.xyzw;
+  tmpvar_5[3] = tmpvar_9.xyzw;
   return tmpvar_5;
 }
 
@@ -132,9 +132,9 @@ vec4 frag (
   float diff;
   float shadow;
   vec4 tmpvar_2;
-  tmpvar_2.xy = i.uv;
-  tmpvar_2.z = 0.000000;
-  tmpvar_2.w = 0.000000;
+  tmpvar_2.xy = vec2(i.uv.xyxx);
+  tmpvar_2.z = float(vec4(0.000000));
+  tmpvar_2.w = float(vec4(0.000000));
   vec4 tmpvar_3;
   tmpvar_3 = tmpvar_2;
   coord = tmpvar_3;
@@ -156,7 +156,7 @@ vec4 frag (
   diffTolerance = tmpvar_9;
   vec2 tmpvar_10;
   tmpvar_10 = (mask.xy * diffTolerance);
-  mask.xy = tmpvar_10;
+  mask.xy = tmpvar_10.xy;
   while (true) {
     if (!((i_1 < 8))) {
       break;
@@ -181,7 +181,7 @@ vec4 frag (
     diff = tmpvar_17;
     vec2 tmpvar_18;
     tmpvar_18 = (mask.xy + (diff * sample.xy));
-    mask.xy = tmpvar_18;
+    mask.xy = tmpvar_18.xy;
     int tmpvar_19;
     tmpvar_19 = i_1;
     int tmpvar_20;
@@ -204,7 +204,7 @@ void main ()
   tmpvar_1 = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
   xlt_i.pos = tmpvar_1;
   vec2 tmpvar_2;
-  tmpvar_2.xy = vec2(gl_TexCoord[0]);
+  tmpvar_2 = gl_TexCoord[0].xy;
   vec2 tmpvar_3;
   tmpvar_3 = tmpvar_2;
   xlt_i.uv = tmpvar_3;
@@ -214,7 +214,7 @@ void main ()
   tmpvar_5 = tmpvar_4;
   xl_retval = tmpvar_5;
   vec4 tmpvar_6;
-  tmpvar_6.xyzw = xl_retval;
+  tmpvar_6 = xl_retval.xyzw;
   vec4 tmpvar_7;
   tmpvar_7 = tmpvar_6;
   gl_FragData[0] = tmpvar_7;

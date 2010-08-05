@@ -114,10 +114,10 @@ vec4 frag_surf (
   tmpvar_13 = min (lmFull, tmpvar_12);
   vec3 tmpvar_14;
   tmpvar_14 = (o.Albedo * tmpvar_13);
-  c.xyz = tmpvar_14;
+  c.xyz = tmpvar_14.xyz;
   float tmpvar_15;
   tmpvar_15 = o.Alpha;
-  c.w = tmpvar_15;
+  c.w = float(vec4(tmpvar_15));
   return c;
 }
 
@@ -133,17 +133,17 @@ void main ()
   tmpvar_2 = xlv_FOG.x;
   xlt_IN.fog = tmpvar_2;
   vec2 tmpvar_3;
-  tmpvar_3.xy = vec2(gl_TexCoord[0]);
+  tmpvar_3 = gl_TexCoord[0].xy;
   vec2 tmpvar_4;
   tmpvar_4 = tmpvar_3;
   xlt_IN.hip_pack0 = tmpvar_4;
   vec2 tmpvar_5;
-  tmpvar_5.xy = vec2(gl_TexCoord[2]);
+  tmpvar_5 = gl_TexCoord[2].xy;
   vec2 tmpvar_6;
   tmpvar_6 = tmpvar_5;
   xlt_IN.hip_lmap = tmpvar_6;
   vec4 tmpvar_7;
-  tmpvar_7.xyzw = gl_TexCoord[3];
+  tmpvar_7 = gl_TexCoord[3].xyzw;
   vec4 tmpvar_8;
   tmpvar_8 = tmpvar_7;
   xlt_IN._ShadowCoord = tmpvar_8;
@@ -153,7 +153,7 @@ void main ()
   tmpvar_10 = tmpvar_9;
   xl_retval = tmpvar_10;
   vec4 tmpvar_11;
-  tmpvar_11.xyzw = xl_retval;
+  tmpvar_11 = xl_retval.xyzw;
   vec4 tmpvar_12;
   tmpvar_12 = tmpvar_11;
   gl_FragData[0] = tmpvar_12;

@@ -64,10 +64,10 @@ mat2 xll_saturate (
   mat2 tmpvar_3;
   vec2 tmpvar_4;
   tmpvar_4 = tmpvar_1;
-  tmpvar_3[0].xy = tmpvar_4.xy;
+  tmpvar_3[0] = tmpvar_4.xy;
   vec2 tmpvar_5;
   tmpvar_5 = tmpvar_2;
-  tmpvar_3[1].xy = tmpvar_5.xy;
+  tmpvar_3[1] = tmpvar_5.xy;
   return tmpvar_3;
 }
 
@@ -84,13 +84,13 @@ mat3 xll_saturate (
   mat3 tmpvar_4;
   vec3 tmpvar_5;
   tmpvar_5 = tmpvar_1;
-  tmpvar_4[0].xyz = tmpvar_5.xyz;
+  tmpvar_4[0] = tmpvar_5.xyz;
   vec3 tmpvar_6;
   tmpvar_6 = tmpvar_2;
-  tmpvar_4[1].xyz = tmpvar_6.xyz;
+  tmpvar_4[1] = tmpvar_6.xyz;
   vec3 tmpvar_7;
   tmpvar_7 = tmpvar_3;
-  tmpvar_4[2].xyz = tmpvar_7.xyz;
+  tmpvar_4[2] = tmpvar_7.xyz;
   return tmpvar_4;
 }
 
@@ -109,16 +109,16 @@ mat4 xll_saturate (
   mat4 tmpvar_5;
   vec4 tmpvar_6;
   tmpvar_6 = tmpvar_1;
-  tmpvar_5[0].xyzw = tmpvar_6.xyzw;
+  tmpvar_5[0] = tmpvar_6.xyzw;
   vec4 tmpvar_7;
   tmpvar_7 = tmpvar_2;
-  tmpvar_5[1].xyzw = tmpvar_7.xyzw;
+  tmpvar_5[1] = tmpvar_7.xyzw;
   vec4 tmpvar_8;
   tmpvar_8 = tmpvar_3;
-  tmpvar_5[2].xyzw = tmpvar_8.xyzw;
+  tmpvar_5[2] = tmpvar_8.xyzw;
   vec4 tmpvar_9;
   tmpvar_9 = tmpvar_4;
-  tmpvar_5[3].xyzw = tmpvar_9.xyzw;
+  tmpvar_5[3] = tmpvar_9.xyzw;
   return tmpvar_5;
 }
 
@@ -226,14 +226,14 @@ vec4 frag_surf (
   bvec4 tmpvar_8;
   tmpvar_8 = greaterThanEqual (z, _LightSplitsNear);
   vec4 tmpvar_9;
-  tmpvar_9.xyzw = vec4(tmpvar_8);
+  tmpvar_9 = vec4(tmpvar_8).xyzw;
   vec4 tmpvar_10;
   tmpvar_10 = tmpvar_9;
   near = tmpvar_10;
   bvec4 tmpvar_11;
   tmpvar_11 = lessThan (z, _LightSplitsFar);
   vec4 tmpvar_12;
-  tmpvar_12.xyzw = vec4(tmpvar_11);
+  tmpvar_12 = vec4(tmpvar_11).xyzw;
   vec4 tmpvar_13;
   tmpvar_13 = tmpvar_12;
   far = tmpvar_13;
@@ -241,8 +241,8 @@ vec4 frag_surf (
   tmpvar_14 = (near * far);
   weights = tmpvar_14;
   vec4 tmpvar_15;
-  tmpvar_15.xyz = ((((IN._ShadowCoord0 * weights.x) + (IN._ShadowCoord1 * weights.y)) + (IN._ShadowCoord2 * weights.z)) + (IN._ShadowCoord3 * weights.w));
-  tmpvar_15.w = 1.000000;
+  tmpvar_15.xyz = vec3(((((IN._ShadowCoord0 * weights.x) + (IN._ShadowCoord1 * weights.y)) + (IN._ShadowCoord2 * weights.z)) + (IN._ShadowCoord3 * weights.w)).xyzx);
+  tmpvar_15.w = float(vec4(1.000000));
   vec4 tmpvar_16;
   tmpvar_16 = tmpvar_15;
   coord = tmpvar_16;
@@ -269,12 +269,12 @@ vec4 frag_surf (
   res.x = tmpvar_23;
   float tmpvar_24;
   tmpvar_24 = 1.000000;
-  res.y = tmpvar_24;
+  res.y = float(vec2(tmpvar_24));
   vec2 tmpvar_25;
   tmpvar_25 = EncodeFloatRG ((1.000000 - (z * _ProjectionParams.w)).x);
   vec2 tmpvar_26;
   tmpvar_26 = tmpvar_25;
-  res.zw = tmpvar_26;
+  res.zw = vec2(tmpvar_26.xxxy);
   return res;
 }
 
@@ -286,27 +286,27 @@ void main ()
   tmpvar_1 = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
   xlt_IN.pos = tmpvar_1;
   vec3 tmpvar_2;
-  tmpvar_2.xyz = vec3(gl_TexCoord[0]);
+  tmpvar_2 = gl_TexCoord[0].xyz;
   vec3 tmpvar_3;
   tmpvar_3 = tmpvar_2;
   xlt_IN._ShadowCoord0 = tmpvar_3;
   vec3 tmpvar_4;
-  tmpvar_4.xyz = vec3(gl_TexCoord[1]);
+  tmpvar_4 = gl_TexCoord[1].xyz;
   vec3 tmpvar_5;
   tmpvar_5 = tmpvar_4;
   xlt_IN._ShadowCoord1 = tmpvar_5;
   vec3 tmpvar_6;
-  tmpvar_6.xyz = vec3(gl_TexCoord[2]);
+  tmpvar_6 = gl_TexCoord[2].xyz;
   vec3 tmpvar_7;
   tmpvar_7 = tmpvar_6;
   xlt_IN._ShadowCoord2 = tmpvar_7;
   vec3 tmpvar_8;
-  tmpvar_8.xyz = vec3(gl_TexCoord[3]);
+  tmpvar_8 = gl_TexCoord[3].xyz;
   vec3 tmpvar_9;
   tmpvar_9 = tmpvar_8;
   xlt_IN._ShadowCoord3 = tmpvar_9;
   vec2 tmpvar_10;
-  tmpvar_10.xy = vec2(gl_TexCoord[4]);
+  tmpvar_10 = gl_TexCoord[4].xy;
   vec2 tmpvar_11;
   tmpvar_11 = tmpvar_10;
   xlt_IN._ShadowZFade = tmpvar_11;
@@ -316,7 +316,7 @@ void main ()
   tmpvar_13 = tmpvar_12;
   xl_retval = tmpvar_13;
   vec4 tmpvar_14;
-  tmpvar_14.xyzw = xl_retval;
+  tmpvar_14 = xl_retval.xyzw;
   vec4 tmpvar_15;
   tmpvar_15 = tmpvar_14;
   gl_FragData[0] = tmpvar_15;

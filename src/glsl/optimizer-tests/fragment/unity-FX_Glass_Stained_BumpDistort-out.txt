@@ -13,33 +13,25 @@ void main ()
 {
   v2f xlt_i;
   xlt_i.vertex = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
-  vec4 tmpvar_2;
-  tmpvar_2.xyzw = gl_TexCoord[0];
-  xlt_i.uvgrab = tmpvar_2;
-  vec2 tmpvar_4;
-  tmpvar_4.xy = vec2(gl_TexCoord[1]);
-  xlt_i.uvbump = tmpvar_4;
-  vec2 tmpvar_6;
-  tmpvar_6.xy = vec2(gl_TexCoord[2]);
-  xlt_i.uvmain = tmpvar_6;
+  xlt_i.uvgrab = gl_TexCoord[0].xyzw;
+  xlt_i.uvbump = gl_TexCoord[1].xy;
+  xlt_i.uvmain = gl_TexCoord[2].xy;
   v2f i;
   i = xlt_i;
   vec4 col;
   vec4 tmpvar_17;
   tmpvar_17 = texture2D (_BumpMap, i.uvbump);
   vec4 normal;
-  normal.xy = ((tmpvar_17.wy * 2.000000) - 1.000000);
+  normal.xy = ((tmpvar_17.wy * 2.000000) - 1.000000).xy;
   float tmpvar_21;
   tmpvar_21 = sqrt (((1.000000 - (normal.x * normal.x)) - (normal.y * normal.y)));
-  normal.z = tmpvar_21;
-  i.uvgrab.xy = ((((normal.xy * _BumpAmt) * _GrabTexture_TexelSize.xy) * i.uvgrab.z) + i.uvgrab.xy);
+  normal.z = float(vec3(tmpvar_21));
+  i.uvgrab.xy = ((((normal.xy * _BumpAmt) * _GrabTexture_TexelSize.xy) * i.uvgrab.z) + i.uvgrab.xy).xy;
   vec4 tmpvar_26;
   tmpvar_26 = texture2DProj (_GrabTexture, i.uvgrab);
   col = tmpvar_26;
   vec4 tmpvar_28;
   tmpvar_28 = texture2D (_MainTex, i.uvmain);
-  vec4 tmpvar_10;
-  tmpvar_10.xyzw = (col * tmpvar_28);
-  gl_FragData[0] = tmpvar_10;
+  gl_FragData[0] = (col * tmpvar_28).xyzw;
 }
 

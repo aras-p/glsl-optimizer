@@ -81,7 +81,7 @@ float UnitySpotAttenuate (
   vec2 tmpvar_2;
   tmpvar_2 = vec2(tmpvar_1);
   vec2 tmpvar_3;
-  tmpvar_3.xy = tmpvar_2;
+  tmpvar_3 = tmpvar_2.xy;
   vec4 tmpvar_4;
   tmpvar_4 = texture2D (_LightTextureB0, tmpvar_3);
   return tmpvar_4.w;
@@ -132,10 +132,10 @@ vec4 LightingBlinnPhong (
   spec = tmpvar_10;
   vec3 tmpvar_11;
   tmpvar_11 = ((((s.Albedo * _LightColor0.xyz) * diff) + ((_LightColor0.xyz * _SpecColor.xyz) * spec)) * (atten * 2.000000));
-  c.xyz = tmpvar_11;
+  c.xyz = tmpvar_11.xyz;
   float tmpvar_12;
   tmpvar_12 = (s.Alpha + (((_LightColor0.w * _SpecColor.w) * spec) * atten));
-  c.w = tmpvar_12;
+  c.w = float(vec4(tmpvar_12));
   return c;
 }
 
@@ -182,7 +182,7 @@ vec4 frag_surf (
   tmpvar_10 = tmpvar_9;
   lightDir = tmpvar_10;
   vec3 tmpvar_11;
-  tmpvar_11.xyz = IN.viewDir;
+  tmpvar_11 = IN.viewDir.xyz;
   vec3 tmpvar_12;
   tmpvar_12 = normalize (tmpvar_11);
   float tmpvar_13;
@@ -196,7 +196,7 @@ vec4 frag_surf (
   c = tmpvar_16;
   float tmpvar_17;
   tmpvar_17 = 0.000000;
-  c.w = tmpvar_17;
+  c.w = float(vec4(tmpvar_17));
   return c;
 }
 
@@ -212,27 +212,27 @@ void main ()
   tmpvar_2 = xlv_FOG.x;
   xlt_IN.fog = tmpvar_2;
   vec2 tmpvar_3;
-  tmpvar_3.xy = vec2(gl_TexCoord[0]);
+  tmpvar_3 = gl_TexCoord[0].xy;
   vec2 tmpvar_4;
   tmpvar_4 = tmpvar_3;
   xlt_IN.hip_pack0 = tmpvar_4;
   vec3 tmpvar_5;
-  tmpvar_5.xyz = vec3(gl_TexCoord[1]);
+  tmpvar_5 = gl_TexCoord[1].xyz;
   vec3 tmpvar_6;
   tmpvar_6 = tmpvar_5;
   xlt_IN.normal = tmpvar_6;
   vec3 tmpvar_7;
-  tmpvar_7.xyz = vec3(gl_TexCoord[2]);
+  tmpvar_7 = gl_TexCoord[2].xyz;
   vec3 tmpvar_8;
   tmpvar_8 = tmpvar_7;
   xlt_IN.lightDir = tmpvar_8;
   vec3 tmpvar_9;
-  tmpvar_9.xyz = vec3(gl_TexCoord[3]);
+  tmpvar_9 = gl_TexCoord[3].xyz;
   vec3 tmpvar_10;
   tmpvar_10 = tmpvar_9;
   xlt_IN.viewDir = tmpvar_10;
   vec4 tmpvar_11;
-  tmpvar_11.xyzw = gl_TexCoord[4];
+  tmpvar_11 = gl_TexCoord[4].xyzw;
   vec4 tmpvar_12;
   tmpvar_12 = tmpvar_11;
   xlt_IN._LightCoord = tmpvar_12;
@@ -242,7 +242,7 @@ void main ()
   tmpvar_14 = tmpvar_13;
   xl_retval = tmpvar_14;
   vec4 tmpvar_15;
-  tmpvar_15.xyzw = xl_retval;
+  tmpvar_15 = xl_retval.xyzw;
   vec4 tmpvar_16;
   tmpvar_16 = tmpvar_15;
   gl_FragData[0] = tmpvar_16;

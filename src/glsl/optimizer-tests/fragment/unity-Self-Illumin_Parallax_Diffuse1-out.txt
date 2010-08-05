@@ -34,18 +34,10 @@ void main ()
   v2f_surf xlt_IN;
   xlt_IN.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
   xlt_IN.fog = xlv_FOG.x;
-  vec4 tmpvar_3;
-  tmpvar_3.xyzw = gl_TexCoord[0];
-  xlt_IN.hip_pack0 = tmpvar_3;
-  vec3 tmpvar_5;
-  tmpvar_5.xyz = vec3(gl_TexCoord[1]);
-  xlt_IN.viewDir = tmpvar_5;
-  vec3 tmpvar_7;
-  tmpvar_7.xyz = vec3(gl_TexCoord[2]);
-  xlt_IN.lightDir = tmpvar_7;
-  vec2 tmpvar_9;
-  tmpvar_9.xy = vec2(gl_TexCoord[3]);
-  xlt_IN._LightCoord = tmpvar_9;
+  xlt_IN.hip_pack0 = gl_TexCoord[0].xyzw;
+  xlt_IN.viewDir = gl_TexCoord[1].xyz;
+  xlt_IN.lightDir = gl_TexCoord[2].xyz;
+  xlt_IN._LightCoord = gl_TexCoord[3].xy;
   v2f_surf IN;
   IN = xlt_IN;
   Input surfIN;
@@ -74,7 +66,7 @@ void main ()
   vec3 tmpvar_70;
   tmpvar_70 = normalize (IN_i0.viewDir);
   v = tmpvar_70;
-  v.z = (tmpvar_70.z + 0.420000);
+  v.z = float(vec3((tmpvar_70.z + 0.420000)));
   __retval_i0_i0 = (h_i0 * (v.xy / v.z));
   IN_i0.uv_MainTex = (IN_i0.uv_MainTex + __retval_i0_i0);
   IN_i0.uv_BumpMap = (IN_i0.uv_BumpMap + __retval_i0_i0);
@@ -92,13 +84,11 @@ void main ()
   vec4 tmpvar_83;
   tmpvar_83 = texture2D (_BumpMap, IN_i0.uv_BumpMap);
   vec4 normal;
-  normal.xy = ((tmpvar_83.wy * 2.000000) - 1.000000);
+  normal.xy = ((tmpvar_83.wy * 2.000000) - 1.000000).xy;
   float tmpvar_87;
   tmpvar_87 = sqrt (((1.000000 - (normal.x * normal.x)) - (normal.y * normal.y)));
-  normal.z = tmpvar_87;
-  vec3 tmpvar_89;
-  tmpvar_89.xyz = vec3(normal);
-  o_i0.Normal = tmpvar_89;
+  normal.z = float(vec3(tmpvar_87));
+  o_i0.Normal = normal.xyz;
   o = o_i0;
   lightDir = IN.lightDir;
   vec4 tmpvar_92;
@@ -112,12 +102,10 @@ void main ()
   tmpvar_95 = dot (s.Normal, lightDir);
   float tmpvar_96;
   tmpvar_96 = max (0.000000, tmpvar_95);
-  c_i0_i1.xyz = ((s.Albedo * _LightColor0.xyz) * ((tmpvar_96 * atten) * 2.000000));
-  c_i0_i1.w = s.Alpha;
+  c_i0_i1.xyz = ((s.Albedo * _LightColor0.xyz) * ((tmpvar_96 * atten) * 2.000000)).xyz;
+  c_i0_i1.w = float(vec4(s.Alpha));
   c = c_i0_i1;
-  c.w = 0.000000;
-  vec4 tmpvar_13;
-  tmpvar_13.xyzw = c;
-  gl_FragData[0] = tmpvar_13;
+  c.w = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
+  gl_FragData[0] = c.xyzw;
 }
 

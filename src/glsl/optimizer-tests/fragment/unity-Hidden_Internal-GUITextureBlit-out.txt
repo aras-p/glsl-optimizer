@@ -10,26 +10,18 @@ void main ()
 {
   v2f xlt_i;
   xlt_i.vertex = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
-  vec4 tmpvar_2;
-  tmpvar_2.xyzw = gl_Color;
-  xlt_i.color = tmpvar_2;
-  vec2 tmpvar_4;
-  tmpvar_4.xy = vec2(gl_TexCoord[0]);
-  xlt_i.texcoord = tmpvar_4;
-  vec2 tmpvar_6;
-  tmpvar_6.xy = vec2(gl_TexCoord[1]);
-  xlt_i.texgencoord = tmpvar_6;
+  xlt_i.color = gl_Color.xyzw;
+  xlt_i.texcoord = gl_TexCoord[0].xy;
+  xlt_i.texgencoord = gl_TexCoord[1].xy;
   v2f i;
   i = xlt_i;
   vec4 col;
   vec4 tmpvar_13;
   tmpvar_13 = texture2D (_MainTex, i.texcoord);
-  col.xyz = (tmpvar_13.xyz * i.color.xyz);
+  col.xyz = (tmpvar_13.xyz * i.color.xyz).xyz;
   vec4 tmpvar_15;
   tmpvar_15 = texture2D (_GUIClipTexture, i.texgencoord);
-  col.w = (i.color.w * tmpvar_15.w);
-  vec4 tmpvar_10;
-  tmpvar_10.xyzw = col;
-  gl_FragData[0] = tmpvar_10;
+  col.w = float(vec4((i.color.w * tmpvar_15.w)));
+  gl_FragData[0] = col.xyzw;
 }
 

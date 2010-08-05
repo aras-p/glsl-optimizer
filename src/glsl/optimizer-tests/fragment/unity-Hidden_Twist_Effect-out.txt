@@ -10,12 +10,8 @@ void main ()
 {
   v2f xlt_i;
   xlt_i.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
-  vec2 tmpvar_2;
-  tmpvar_2.xy = vec2(gl_TexCoord[0]);
-  xlt_i.uv = tmpvar_2;
-  vec2 tmpvar_4;
-  tmpvar_4.xy = vec2(gl_TexCoord[1]);
-  xlt_i.uvOrig = tmpvar_4;
+  xlt_i.uv = gl_TexCoord[0].xy;
+  xlt_i.uvOrig = gl_TexCoord[1].xy;
   vec2 offset;
   float angle;
   vec2 uv;
@@ -31,20 +27,16 @@ void main ()
   float x;
   x = tmpvar_20;
   float s;
-  float c;
   float tmpvar_21;
   tmpvar_21 = sin (x);
   s = tmpvar_21;
   float tmpvar_23;
   tmpvar_23 = cos (x);
-  c = tmpvar_23;
   uv.x = ((tmpvar_23 * offset.x) - (s * offset.y));
-  uv.y = ((s * offset.x) + (tmpvar_23 * offset.y));
+  uv.y = float(vec2(((s * offset.x) + (tmpvar_23 * offset.y))));
   uv = (uv + _CenterRadius.xy);
   vec4 tmpvar_28;
   tmpvar_28 = texture2D (_MainTex, uv);
-  vec4 tmpvar_8;
-  tmpvar_8.xyzw = tmpvar_28;
-  gl_FragData[0] = tmpvar_8;
+  gl_FragData[0] = tmpvar_28.xyzw;
 }
 

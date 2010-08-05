@@ -50,7 +50,7 @@ vec4 frag (
   tmpvar_8 = vec2(z);
   vec2 tmpvar_9;
   tmpvar_9 = tmpvar_8;
-  col.xy = tmpvar_9;
+  col.xy = tmpvar_9.xy;
   return col;
 }
 
@@ -62,7 +62,7 @@ void main ()
   tmpvar_1 = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
   xlt_i.pos = tmpvar_1;
   vec2 tmpvar_2;
-  tmpvar_2.xy = vec2(gl_TexCoord[0]);
+  tmpvar_2 = gl_TexCoord[0].xy;
   vec2 tmpvar_3;
   tmpvar_3 = tmpvar_2;
   xlt_i.uv = tmpvar_3;
@@ -72,7 +72,7 @@ void main ()
   tmpvar_5 = tmpvar_4;
   xl_retval = tmpvar_5;
   vec4 tmpvar_6;
-  tmpvar_6.xyzw = xl_retval;
+  tmpvar_6 = xl_retval.xyzw;
   vec4 tmpvar_7;
   tmpvar_7 = tmpvar_6;
   gl_FragData[0] = tmpvar_7;

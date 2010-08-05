@@ -72,7 +72,7 @@ float UnitySpotAttenuate (
   vec2 tmpvar_2;
   tmpvar_2 = vec2(tmpvar_1);
   vec2 tmpvar_3;
-  tmpvar_3.xy = tmpvar_2;
+  tmpvar_3 = tmpvar_2.xy;
   vec4 tmpvar_4;
   tmpvar_4 = texture2D (_LightTextureB0, tmpvar_3);
   return tmpvar_4.w;
@@ -101,10 +101,10 @@ vec4 LightingLambert (
   diff = tmpvar_3;
   vec3 tmpvar_4;
   tmpvar_4 = ((s.Albedo * _LightColor0.xyz) * ((diff * atten) * 2.000000));
-  c.xyz = tmpvar_4;
+  c.xyz = tmpvar_4.xyz;
   float tmpvar_5;
   tmpvar_5 = s.Alpha;
-  c.w = tmpvar_5;
+  c.w = float(vec4(tmpvar_5));
   return c;
 }
 
@@ -161,7 +161,7 @@ vec4 frag_surf (
   c = tmpvar_14;
   float tmpvar_15;
   tmpvar_15 = 0.000000;
-  c.w = tmpvar_15;
+  c.w = float(vec4(tmpvar_15));
   return c;
 }
 
@@ -177,22 +177,22 @@ void main ()
   tmpvar_2 = xlv_FOG.x;
   xlt_IN.fog = tmpvar_2;
   vec2 tmpvar_3;
-  tmpvar_3.xy = vec2(gl_TexCoord[0]);
+  tmpvar_3 = gl_TexCoord[0].xy;
   vec2 tmpvar_4;
   tmpvar_4 = tmpvar_3;
   xlt_IN.hip_pack0 = tmpvar_4;
   vec3 tmpvar_5;
-  tmpvar_5.xyz = vec3(gl_TexCoord[1]);
+  tmpvar_5 = gl_TexCoord[1].xyz;
   vec3 tmpvar_6;
   tmpvar_6 = tmpvar_5;
   xlt_IN.normal = tmpvar_6;
   vec3 tmpvar_7;
-  tmpvar_7.xyz = vec3(gl_TexCoord[2]);
+  tmpvar_7 = gl_TexCoord[2].xyz;
   vec3 tmpvar_8;
   tmpvar_8 = tmpvar_7;
   xlt_IN.lightDir = tmpvar_8;
   vec4 tmpvar_9;
-  tmpvar_9.xyzw = gl_TexCoord[3];
+  tmpvar_9 = gl_TexCoord[3].xyzw;
   vec4 tmpvar_10;
   tmpvar_10 = tmpvar_9;
   xlt_IN._LightCoord = tmpvar_10;
@@ -202,7 +202,7 @@ void main ()
   tmpvar_12 = tmpvar_11;
   xl_retval = tmpvar_12;
   vec4 tmpvar_13;
-  tmpvar_13.xyzw = xl_retval;
+  tmpvar_13 = xl_retval.xyzw;
   vec4 tmpvar_14;
   tmpvar_14 = tmpvar_13;
   gl_FragData[0] = tmpvar_14;

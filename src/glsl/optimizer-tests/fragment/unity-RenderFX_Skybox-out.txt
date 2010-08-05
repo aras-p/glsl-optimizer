@@ -8,18 +8,14 @@ void main ()
 {
   v2f xlt_i;
   xlt_i.vertex = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
-  vec2 tmpvar_2;
-  tmpvar_2.xy = vec2(gl_TexCoord[0]);
-  xlt_i.texcoord = tmpvar_2;
+  xlt_i.texcoord = gl_TexCoord[0].xy;
   v2f i_i0;
   i_i0 = xlt_i;
   vec4 col;
   vec4 tmpvar_16;
   tmpvar_16 = texture2D (_UpTex, i_i0.texcoord);
-  col.xyz = ((tmpvar_16.xyz + _Tint.xyz) - 0.500000);
-  col.w = (tmpvar_16.w * _Tint.w);
-  vec4 tmpvar_6;
-  tmpvar_6.xyzw = col;
-  gl_FragData[0] = tmpvar_6;
+  col.xyz = ((tmpvar_16.xyz + _Tint.xyz) - 0.500000).xyz;
+  col.w = float(vec4((tmpvar_16.w * _Tint.w)));
+  gl_FragData[0] = col.xyzw;
 }
 

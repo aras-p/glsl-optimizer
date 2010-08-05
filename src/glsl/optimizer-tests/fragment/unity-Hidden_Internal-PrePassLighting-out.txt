@@ -22,16 +22,10 @@ float ComputeShadow (
   in vec2 uv
 )
 {
-  vec3 tmpvar_29;
-  tmpvar_29.xyz = vec3(_View2Shadow[0]);
-  vec3 tmpvar_30;
-  tmpvar_30.xyz = vec3(_View2Shadow[1]);
-  vec3 tmpvar_31;
-  tmpvar_31.xyz = vec3(_View2Shadow[2]);
   mat3 tmpvar_32;
-  tmpvar_32[0].xyz = tmpvar_29.xyz;
-  tmpvar_32[1].xyz = tmpvar_30.xyz;
-  tmpvar_32[2].xyz = tmpvar_31.xyz;
+  tmpvar_32[0] = _View2Shadow[0].xyz;
+  tmpvar_32[1] = _View2Shadow[1].xyz;
+  tmpvar_32[2] = _View2Shadow[2].xyz;
   vec = (tmpvar_32 * vec);
   float tmpvar_6;
   tmpvar_6 = length (vec);
@@ -55,12 +49,8 @@ void main ()
 {
   v2f xlt_i;
   xlt_i.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
-  vec4 tmpvar_2;
-  tmpvar_2.xyzw = gl_TexCoord[0];
-  xlt_i.uv = tmpvar_2;
-  vec3 tmpvar_4;
-  tmpvar_4.xyz = vec3(gl_TexCoord[1]);
-  xlt_i.ray = tmpvar_4;
+  xlt_i.uv = gl_TexCoord[0].xyzw;
+  xlt_i.ray = gl_TexCoord[1].xyz;
   v2f i;
   i = xlt_i;
   vec2 uv;
@@ -93,17 +83,15 @@ void main ()
   lightDir = tmpvar_63;
   float tmpvar_65;
   tmpvar_65 = dot (tolight, tolight);
-  vec2 tmpvar_68;
-  tmpvar_68.xy = vec2((tmpvar_65 * _LightPos.w));
   vec4 tmpvar_69;
-  tmpvar_69 = texture2D (_LightTextureB0, tmpvar_68);
+  tmpvar_69 = texture2D (_LightTextureB0, vec2((tmpvar_65 * _LightPos.w)));
   atten = tmpvar_69.w;
   float tmpvar_71;
   tmpvar_71 = ComputeShadow (-(tolight), uv);
   atten = (atten * tmpvar_71);
   vec4 tmpvar_73;
-  tmpvar_73.xyz = vpos;
-  tmpvar_73.w = 1.000000;
+  tmpvar_73.xyz = vec3(vpos.xyzx);
+  tmpvar_73.w = float(vec4 (1.000000, 1.000000, 1.000000, 1.000000));
   vec4 tmpvar_74;
   tmpvar_74 = textureCube (_LightTexture0, (_ViewToCookie * tmpvar_73).xyz);
   atten = (atten * tmpvar_74.w);
@@ -126,17 +114,15 @@ void main ()
   float tmpvar_88;
   tmpvar_88 = clamp (atten, 0.000000, 1.000000);
   spec = (spec * tmpvar_88);
-  res.xyz = (_LightColor.xyz * (diff * atten));
+  res.xyz = (_LightColor.xyz * (diff * atten)).xyz;
   float tmpvar_93;
   tmpvar_93 = dot (_LightColor.xyz, vec3 (0.220000, 0.707000, 0.071000));
-  res.w = (spec * tmpvar_93);
+  res.w = float(vec4((spec * tmpvar_93)));
   float tmpvar_98;
   tmpvar_98 = clamp ((1.000000 - ((vpos.z * unity_LightmapFade.z) + unity_LightmapFade.w)), 0.000000, 1.000000);
   res = (res * tmpvar_98);
   vec4 tmpvar_100;
   tmpvar_100 = exp2 (-(res));
-  vec4 tmpvar_8;
-  tmpvar_8.xyzw = tmpvar_100;
-  gl_FragData[0] = tmpvar_8;
+  gl_FragData[0] = tmpvar_100.xyzw;
 }
 

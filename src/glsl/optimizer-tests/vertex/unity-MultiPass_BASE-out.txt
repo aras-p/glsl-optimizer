@@ -7,13 +7,9 @@ struct appdata {
 void main ()
 {
   appdata xlt_v;
-  vec4 tmpvar_1;
-  tmpvar_1.xyzw = gl_Vertex;
-  xlt_v.vertex = tmpvar_1;
+  xlt_v.vertex = gl_Vertex.xyzw;
   v2f o;
   o.pos = (gl_ModelViewProjectionMatrix * xlt_v.vertex);
-  vec4 tmpvar_5;
-  tmpvar_5.xyzw = o.pos;
-  gl_Position = tmpvar_5;
+  gl_Position = o.pos.xyzw;
 }
 

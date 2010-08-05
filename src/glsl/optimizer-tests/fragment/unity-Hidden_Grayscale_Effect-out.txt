@@ -9,9 +9,7 @@ void main ()
 {
   v2f_img xlt_i;
   xlt_i.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
-  vec2 tmpvar_2;
-  tmpvar_2.xy = vec2(gl_TexCoord[0]);
-  xlt_i.uv = tmpvar_2;
+  xlt_i.uv = gl_TexCoord[0].xy;
   v2f_img i;
   i = xlt_i;
   vec4 original;
@@ -22,14 +20,12 @@ void main ()
   float tmpvar_15;
   tmpvar_15 = dot (tmpvar_11.xyz, vec3 (0.220000, 0.707000, 0.071000));
   vec2 tmpvar_17;
-  tmpvar_17.x = (tmpvar_15 + _RampOffset);
-  tmpvar_17.y = 0.500000;
+  tmpvar_17.x = float(vec2((tmpvar_15 + _RampOffset)));
+  tmpvar_17.y = float(vec2 (0.500000, 0.500000));
   vec4 tmpvar_19;
   tmpvar_19 = texture2D (_RampTex, tmpvar_17);
   xlat_var_output = tmpvar_19;
-  xlat_var_output.w = original.w;
-  vec4 tmpvar_6;
-  tmpvar_6.xyzw = xlat_var_output;
-  gl_FragData[0] = tmpvar_6;
+  xlat_var_output.w = float(original.wwww);
+  gl_FragData[0] = xlat_var_output.xyzw;
 }
 

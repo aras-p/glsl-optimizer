@@ -74,10 +74,10 @@ mat2 xll_saturate (
   mat2 tmpvar_3;
   vec2 tmpvar_4;
   tmpvar_4 = tmpvar_1;
-  tmpvar_3[0].xy = tmpvar_4.xy;
+  tmpvar_3[0] = tmpvar_4.xy;
   vec2 tmpvar_5;
   tmpvar_5 = tmpvar_2;
-  tmpvar_3[1].xy = tmpvar_5.xy;
+  tmpvar_3[1] = tmpvar_5.xy;
   return tmpvar_3;
 }
 
@@ -94,13 +94,13 @@ mat3 xll_saturate (
   mat3 tmpvar_4;
   vec3 tmpvar_5;
   tmpvar_5 = tmpvar_1;
-  tmpvar_4[0].xyz = tmpvar_5.xyz;
+  tmpvar_4[0] = tmpvar_5.xyz;
   vec3 tmpvar_6;
   tmpvar_6 = tmpvar_2;
-  tmpvar_4[1].xyz = tmpvar_6.xyz;
+  tmpvar_4[1] = tmpvar_6.xyz;
   vec3 tmpvar_7;
   tmpvar_7 = tmpvar_3;
-  tmpvar_4[2].xyz = tmpvar_7.xyz;
+  tmpvar_4[2] = tmpvar_7.xyz;
   return tmpvar_4;
 }
 
@@ -119,16 +119,16 @@ mat4 xll_saturate (
   mat4 tmpvar_5;
   vec4 tmpvar_6;
   tmpvar_6 = tmpvar_1;
-  tmpvar_5[0].xyzw = tmpvar_6.xyzw;
+  tmpvar_5[0] = tmpvar_6.xyzw;
   vec4 tmpvar_7;
   tmpvar_7 = tmpvar_2;
-  tmpvar_5[1].xyzw = tmpvar_7.xyzw;
+  tmpvar_5[1] = tmpvar_7.xyzw;
   vec4 tmpvar_8;
   tmpvar_8 = tmpvar_3;
-  tmpvar_5[2].xyzw = tmpvar_8.xyzw;
+  tmpvar_5[2] = tmpvar_8.xyzw;
   vec4 tmpvar_9;
   tmpvar_9 = tmpvar_4;
-  tmpvar_5[3].xyzw = tmpvar_9.xyzw;
+  tmpvar_5[3] = tmpvar_9.xyzw;
   return tmpvar_5;
 }
 
@@ -169,10 +169,10 @@ vec4 LightingLambert_PrePass (
   vec4 c;
   vec3 tmpvar_1;
   tmpvar_1 = (s.Albedo * light.xyz);
-  c.xyz = tmpvar_1;
+  c.xyz = tmpvar_1.xyz;
   float tmpvar_2;
   tmpvar_2 = s.Alpha;
-  c.w = tmpvar_2;
+  c.w = float(vec4(tmpvar_2));
   return c;
 }
 
@@ -259,7 +259,7 @@ vec4 frag_surf (
   lm = tmpvar_21;
   vec3 tmpvar_22;
   tmpvar_22 = (light.xyz + lm);
-  light.xyz = tmpvar_22;
+  light.xyz = tmpvar_22.xyz;
   vec4 tmpvar_23;
   tmpvar_23 = LightingLambert_PrePass (o, light);
   vec4 tmpvar_24;
@@ -280,22 +280,22 @@ void main ()
   tmpvar_2 = xlv_FOG.x;
   xlt_IN.fog = tmpvar_2;
   vec2 tmpvar_3;
-  tmpvar_3.xy = vec2(gl_TexCoord[0]);
+  tmpvar_3 = gl_TexCoord[0].xy;
   vec2 tmpvar_4;
   tmpvar_4 = tmpvar_3;
   xlt_IN.hip_pack0 = tmpvar_4;
   vec3 tmpvar_5;
-  tmpvar_5.xyz = vec3(gl_TexCoord[1]);
+  tmpvar_5 = gl_TexCoord[1].xyz;
   vec3 tmpvar_6;
   tmpvar_6 = tmpvar_5;
   xlt_IN.worldPos = tmpvar_6;
   vec4 tmpvar_7;
-  tmpvar_7.xyzw = gl_TexCoord[2];
+  tmpvar_7 = gl_TexCoord[2].xyzw;
   vec4 tmpvar_8;
   tmpvar_8 = tmpvar_7;
   xlt_IN.hip_screen = tmpvar_8;
   vec3 tmpvar_9;
-  tmpvar_9.xyz = vec3(gl_TexCoord[3]);
+  tmpvar_9 = gl_TexCoord[3].xyz;
   vec3 tmpvar_10;
   tmpvar_10 = tmpvar_9;
   xlt_IN.hip_lmapFade = tmpvar_10;
@@ -305,7 +305,7 @@ void main ()
   tmpvar_12 = tmpvar_11;
   xl_retval = tmpvar_12;
   vec4 tmpvar_13;
-  tmpvar_13.xyzw = xl_retval;
+  tmpvar_13 = xl_retval.xyzw;
   vec4 tmpvar_14;
   tmpvar_14 = tmpvar_13;
   gl_FragData[0] = tmpvar_14;

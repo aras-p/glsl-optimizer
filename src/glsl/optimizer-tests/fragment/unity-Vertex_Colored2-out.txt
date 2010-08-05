@@ -11,18 +11,12 @@ void main ()
   v2f xlt_i;
   xlt_i.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
   xlt_i.fog = xlv_FOG.x;
-  vec4 tmpvar_3;
-  tmpvar_3.xyzw = gl_Color;
-  xlt_i.color = tmpvar_3;
-  vec2 tmpvar_5;
-  tmpvar_5.xy = vec2(gl_TexCoord[0]);
-  xlt_i.texcoord = tmpvar_5;
+  xlt_i.color = gl_Color.xyzw;
+  xlt_i.texcoord = gl_TexCoord[0].xy;
   v2f i;
   i = xlt_i;
   vec4 tmpvar_12;
   tmpvar_12 = texture2D (_MainTex, i.texcoord);
-  vec4 tmpvar_9;
-  tmpvar_9.xyzw = (tmpvar_12 * i.color);
-  gl_FragData[0] = tmpvar_9;
+  gl_FragData[0] = (tmpvar_12 * i.color).xyzw;
 }
 

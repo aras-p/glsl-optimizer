@@ -55,10 +55,10 @@ vec4 LightingLambert (
   diff = tmpvar_3;
   vec3 tmpvar_4;
   tmpvar_4 = ((s.Albedo * _LightColor0.xyz) * ((diff * atten) * 2.000000));
-  c.xyz = tmpvar_4;
+  c.xyz = tmpvar_4.xyz;
   float tmpvar_5;
   tmpvar_5 = s.Alpha;
-  c.w = tmpvar_5;
+  c.w = float(vec4(tmpvar_5));
   return c;
 }
 
@@ -103,10 +103,10 @@ vec4 frag_surf (
   c = tmpvar_9;
   vec3 tmpvar_10;
   tmpvar_10 = (c.xyz + (o.Albedo * IN.vlight));
-  c.xyz = tmpvar_10;
+  c.xyz = tmpvar_10.xyz;
   vec3 tmpvar_11;
   tmpvar_11 = (c.xyz + o.Emission);
-  c.xyz = tmpvar_11;
+  c.xyz = tmpvar_11.xyz;
   return c;
 }
 
@@ -122,12 +122,12 @@ void main ()
   tmpvar_2 = xlv_FOG.x;
   xlt_IN.fog = tmpvar_2;
   vec3 tmpvar_3;
-  tmpvar_3.xyz = vec3(gl_TexCoord[0]);
+  tmpvar_3 = gl_TexCoord[0].xyz;
   vec3 tmpvar_4;
   tmpvar_4 = tmpvar_3;
   xlt_IN.normal = tmpvar_4;
   vec3 tmpvar_5;
-  tmpvar_5.xyz = vec3(gl_TexCoord[1]);
+  tmpvar_5 = gl_TexCoord[1].xyz;
   vec3 tmpvar_6;
   tmpvar_6 = tmpvar_5;
   xlt_IN.vlight = tmpvar_6;
@@ -137,7 +137,7 @@ void main ()
   tmpvar_8 = tmpvar_7;
   xl_retval = tmpvar_8;
   vec4 tmpvar_9;
-  tmpvar_9.xyzw = xl_retval;
+  tmpvar_9 = xl_retval.xyzw;
   vec4 tmpvar_10;
   tmpvar_10 = tmpvar_9;
   gl_FragData[0] = tmpvar_10;

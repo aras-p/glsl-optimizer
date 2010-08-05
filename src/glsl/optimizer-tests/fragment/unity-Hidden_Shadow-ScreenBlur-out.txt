@@ -9,9 +9,7 @@ void main ()
 {
   v2f_img xlt_i;
   xlt_i.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
-  vec2 tmpvar_2;
-  tmpvar_2.xy = vec2(gl_TexCoord[0]);
-  xlt_i.uv = tmpvar_2;
+  xlt_i.uv = gl_TexCoord[0].xy;
   vec4 coord;
   vec4 mask;
   float dist;
@@ -22,9 +20,9 @@ void main ()
   vec4 sample;
   float diff;
   vec4 tmpvar_14;
-  tmpvar_14.xy = xlt_i.uv;
-  tmpvar_14.z = 0.000000;
-  tmpvar_14.w = 0.000000;
+  tmpvar_14.xy = vec2(xlt_i.uv.xyxx);
+  tmpvar_14.z = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_14.w = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
   coord = tmpvar_14;
   vec4 tmpvar_16;
   tmpvar_16 = texture2D (_MainTex, coord.xy);
@@ -38,7 +36,7 @@ void main ()
   float tmpvar_23;
   tmpvar_23 = unity_ShadowBlurParams.x;
   diffTolerance = tmpvar_23;
-  mask.xy = (mask.xy * tmpvar_23);
+  mask.xy = (mask.xy * tmpvar_23).xy;
   while (true) {
     if (!((i_1 < 8))) {
       break;
@@ -52,11 +50,9 @@ void main ()
     float tmpvar_32;
     tmpvar_32 = clamp ((diffTolerance - tmpvar_29), 0.000000, 1.000000);
     diff = tmpvar_32;
-    mask.xy = (mask.xy + (tmpvar_32 * sample.xy));
+    mask.xy = (mask.xy + (tmpvar_32 * sample.xy)).xy;
     i_1 = (i_1 + 1);
   };
-  vec4 tmpvar_6;
-  tmpvar_6.xyzw = vec4((mask.x / mask.y));
-  gl_FragData[0] = tmpvar_6;
+  gl_FragData[0] = vec4((mask.x / mask.y));
 }
 

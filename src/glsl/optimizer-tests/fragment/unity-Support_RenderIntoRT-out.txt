@@ -6,11 +6,7 @@ void main ()
 {
   v2f xlt_i;
   xlt_i.vertex = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
-  vec4 tmpvar_2;
-  tmpvar_2.xyzw = gl_Color;
-  xlt_i.color = tmpvar_2;
-  vec4 tmpvar_6;
-  tmpvar_6.xyzw = xlt_i.color;
-  gl_FragData[0] = tmpvar_6;
+  xlt_i.color = gl_Color.xyzw;
+  gl_FragData[0] = xlt_i.color.xyzw;
 }
 

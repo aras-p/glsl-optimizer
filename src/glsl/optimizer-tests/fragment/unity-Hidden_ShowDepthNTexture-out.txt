@@ -8,9 +8,7 @@ void main ()
 {
   v2f_img xlt_i;
   xlt_i.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
-  vec2 tmpvar_2;
-  tmpvar_2.xy = vec2(gl_TexCoord[0]);
-  xlt_i.uv = tmpvar_2;
+  xlt_i.uv = gl_TexCoord[0].xy;
   v2f_img i;
   i = xlt_i;
   vec4 tex;
@@ -23,34 +21,30 @@ void main ()
   vec4 enc;
   enc = tmpvar_39;
   float depth_i0;
-  vec3 normal;
   float tmpvar_44;
   tmpvar_44 = dot (tmpvar_39.zw, vec2 (1.000000, 0.003922));
   depth_i0 = tmpvar_44;
   vec3 nn;
   vec3 n_i0;
   vec3 tmpvar_49;
-  tmpvar_49.x = 3.555400;
-  tmpvar_49.y = 3.555400;
-  tmpvar_49.z = 0.000000;
+  tmpvar_49.x = float(vec3 (3.555400, 3.555400, 3.555400));
+  tmpvar_49.y = float(vec3 (3.555400, 3.555400, 3.555400));
+  tmpvar_49.z = float(vec3 (0.000000, 0.000000, 0.000000));
   vec3 tmpvar_50;
-  tmpvar_50.x = -1.777700;
-  tmpvar_50.y = -1.777700;
-  tmpvar_50.z = 1.000000;
+  tmpvar_50.x = float(vec3 (-1.777700, -1.777700, -1.777700));
+  tmpvar_50.y = float(vec3 (-1.777700, -1.777700, -1.777700));
+  tmpvar_50.z = float(vec3 (1.000000, 1.000000, 1.000000));
   nn = ((enc.xyz * tmpvar_49) + tmpvar_50);
   float tmpvar_52;
   tmpvar_52 = dot (nn.xyz, nn.xyz);
   float tmpvar_53;
   tmpvar_53 = (2.000000 / tmpvar_52);
-  n_i0.xy = (tmpvar_53 * nn.xy);
-  n_i0.z = (tmpvar_53 - 1.000000);
-  normal = n_i0;
+  n_i0.xy = (tmpvar_53 * nn.xy).xy;
+  n_i0.z = float(vec3((tmpvar_53 - 1.000000)));
   col.x = depth_i0;
-  col.y = ((n_i0.x * 0.500000) + 0.500000);
-  col.z = ((n_i0.y * 0.500000) + 0.500000);
-  col.w = tex.w;
-  vec4 tmpvar_6;
-  tmpvar_6.xyzw = col;
-  gl_FragData[0] = tmpvar_6;
+  col.y = float(vec2(((n_i0.x * 0.500000) + 0.500000)));
+  col.z = float(vec3(((n_i0.y * 0.500000) + 0.500000)));
+  col.w = float(tex.wwww);
+  gl_FragData[0] = col.xyzw;
 }
 

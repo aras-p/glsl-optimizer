@@ -30,18 +30,10 @@ void main ()
   v2f_surf xlt_IN;
   xlt_IN.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
   xlt_IN.fog = xlv_FOG.x;
-  vec2 tmpvar_3;
-  tmpvar_3.xy = vec2(gl_TexCoord[0]);
-  xlt_IN.hip_pack0 = tmpvar_3;
-  vec4 tmpvar_5;
-  tmpvar_5.xyzw = gl_Color;
-  xlt_IN.lop_color = tmpvar_5;
-  vec3 tmpvar_7;
-  tmpvar_7.xyz = vec3(gl_TexCoord[1]);
-  xlt_IN.lightDir = tmpvar_7;
-  vec3 tmpvar_9;
-  tmpvar_9.xyz = vec3(gl_TexCoord[2]);
-  xlt_IN.viewDir = tmpvar_9;
+  xlt_IN.hip_pack0 = gl_TexCoord[0].xy;
+  xlt_IN.lop_color = gl_Color.xyzw;
+  xlt_IN.lightDir = gl_TexCoord[1].xyz;
+  xlt_IN.viewDir = gl_TexCoord[2].xyz;
   v2f_surf IN;
   IN = xlt_IN;
   Input surfIN;
@@ -72,13 +64,11 @@ void main ()
   tmpvar_77 = texture2D (_BumpSpecMap, IN_i0.uv_MainTex);
   o_i0.Specular = tmpvar_77.x;
   vec4 normal;
-  normal.xy = ((tmpvar_77.wy * 2.000000) - 1.000000);
+  normal.xy = ((tmpvar_77.wy * 2.000000) - 1.000000).xy;
   float tmpvar_83;
   tmpvar_83 = sqrt (((1.000000 - (normal.x * normal.x)) - (normal.y * normal.y)));
-  normal.z = tmpvar_83;
-  vec3 tmpvar_85;
-  tmpvar_85.xyz = vec3(normal);
-  o_i0.Normal = tmpvar_85;
+  normal.z = float(vec3(tmpvar_83));
+  o_i0.Normal = normal.xyz;
   o = o_i0;
   float x;
   x = (o_i0.Alpha - _Cutoff);
@@ -86,10 +76,8 @@ void main ()
     discard;
   };
   lightDir = IN.lightDir;
-  vec3 tmpvar_88;
-  tmpvar_88.xyz = IN.viewDir;
   vec3 tmpvar_89;
-  tmpvar_89 = normalize (tmpvar_88);
+  tmpvar_89 = normalize (IN.viewDir.xyz);
   LeafSurfaceOutput s;
   s = o;
   vec3 lightDir_i0;
@@ -129,11 +117,9 @@ void main ()
   vec3 tmpvar_112;
   tmpvar_112 = ((col + (spec * (1.000000 - tmpvar_110))) * _LightColor0.xyz);
   col = tmpvar_112;
-  c_i0_i1.xyz = (tmpvar_112 * 2.000000);
+  c_i0_i1.xyz = (tmpvar_112 * 2.000000).xyz;
   c = c_i0_i1;
-  c.w = o.Alpha;
-  vec4 tmpvar_13;
-  tmpvar_13.xyzw = c;
-  gl_FragData[0] = tmpvar_13;
+  c.w = float(vec4(o.Alpha));
+  gl_FragData[0] = c.xyzw;
 }
 

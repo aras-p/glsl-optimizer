@@ -28,18 +28,10 @@ void main ()
 {
   v2f_surf xlt_IN;
   xlt_IN.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
-  vec2 tmpvar_2;
-  tmpvar_2.xy = vec2(gl_TexCoord[0]);
-  xlt_IN.hip_pack0 = tmpvar_2;
-  vec3 tmpvar_4;
-  tmpvar_4.xyz = vec3(gl_TexCoord[1]);
-  xlt_IN.TtoV0 = tmpvar_4;
-  vec3 tmpvar_6;
-  tmpvar_6.xyz = vec3(gl_TexCoord[2]);
-  xlt_IN.TtoV1 = tmpvar_6;
-  vec3 tmpvar_8;
-  tmpvar_8.xyz = vec3(gl_TexCoord[3]);
-  xlt_IN.TtoV2 = tmpvar_8;
+  xlt_IN.hip_pack0 = gl_TexCoord[0].xy;
+  xlt_IN.TtoV0 = gl_TexCoord[1].xyz;
+  xlt_IN.TtoV1 = gl_TexCoord[2].xyz;
+  xlt_IN.TtoV2 = gl_TexCoord[3].xyz;
   v2f_surf IN;
   IN = xlt_IN;
   Input surfIN;
@@ -66,13 +58,11 @@ void main ()
   vec4 tmpvar_51;
   tmpvar_51 = texture2D (_BumpMap, IN_i0.uv_BumpMap);
   vec4 normal;
-  normal.xy = ((tmpvar_51.wy * 2.000000) - 1.000000);
+  normal.xy = ((tmpvar_51.wy * 2.000000) - 1.000000).xy;
   float tmpvar_55;
   tmpvar_55 = sqrt (((1.000000 - (normal.x * normal.x)) - (normal.y * normal.y)));
-  normal.z = tmpvar_55;
-  vec3 tmpvar_57;
-  tmpvar_57.xyz = vec3(normal);
-  o_i0.Normal = tmpvar_57;
+  normal.z = float(vec3(tmpvar_55));
+  o_i0.Normal = normal.xyz;
   vec4 tmpvar_60;
   tmpvar_60 = textureCube (_Cube, IN_i0.worldRefl);
   vec4 tmpvar_62;
@@ -85,15 +75,13 @@ void main ()
   viewN.x = tmpvar_65;
   float tmpvar_67;
   tmpvar_67 = dot (IN.TtoV1, o.Normal);
-  viewN.y = tmpvar_67;
+  viewN.y = float(vec2(tmpvar_67));
   float tmpvar_69;
   tmpvar_69 = dot (IN.TtoV2, o.Normal);
-  viewN.z = tmpvar_69;
+  viewN.z = float(vec3(tmpvar_69));
   o.Normal = viewN;
-  res.xyz = ((o.Normal * vec3 (0.500000, 0.500000, -0.500000)) + 0.500000);
-  res.w = o.Specular;
-  vec4 tmpvar_12;
-  tmpvar_12.xyzw = res;
-  gl_FragData[0] = tmpvar_12;
+  res.xyz = ((o.Normal * vec3 (0.500000, 0.500000, -0.500000)) + 0.500000).xyz;
+  res.w = float(vec4(o.Specular));
+  gl_FragData[0] = res.xyzw;
 }
 

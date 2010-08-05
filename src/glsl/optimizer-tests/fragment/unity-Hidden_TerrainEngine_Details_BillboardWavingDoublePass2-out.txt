@@ -21,12 +21,8 @@ void main ()
 {
   v2f_surf xlt_IN;
   xlt_IN.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
-  vec2 tmpvar_2;
-  tmpvar_2.xy = vec2(gl_TexCoord[1]);
-  xlt_IN.hip_pack0 = tmpvar_2;
-  vec4 tmpvar_4;
-  tmpvar_4.xyzw = gl_Color;
-  xlt_IN.lop_color = tmpvar_4;
+  xlt_IN.hip_pack0 = gl_TexCoord[1].xy;
+  xlt_IN.lop_color = gl_Color.xyzw;
   Input surfIN;
   SurfaceOutput o;
   surfIN.uv_MainTex = xlt_IN.hip_pack0.xy;
@@ -52,8 +48,6 @@ void main ()
   if ((x < 0.000000)) {
     discard;
   };
-  vec4 tmpvar_8;
-  tmpvar_8.xyzw = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
-  gl_FragData[0] = tmpvar_8;
+  gl_FragData[0] = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
 }
 

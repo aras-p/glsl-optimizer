@@ -4,20 +4,14 @@ struct v2f {
 };
 void main ()
 {
-  vec4 tmpvar_1;
-  tmpvar_1.xyzw = gl_Vertex;
   v2f o;
-  o.vertex = (gl_ModelViewProjectionMatrix * tmpvar_1);
+  o.vertex = (gl_ModelViewProjectionMatrix * gl_Vertex.xyzw);
   vec2 tmpvar_12;
-  tmpvar_12.x = o.vertex.x;
-  tmpvar_12.y = o.vertex.y;
-  o.uv.xy = ((tmpvar_12 + o.vertex.w) * 0.500000);
-  o.uv.zw = o.vertex.zw;
-  vec4 tmpvar_5;
-  tmpvar_5.xyzw = o.vertex;
-  gl_Position = tmpvar_5;
-  vec4 tmpvar_7;
-  tmpvar_7.xyzw = o.uv;
-  gl_TexCoord[0] = tmpvar_7;
+  tmpvar_12.x = float(o.vertex.xx);
+  tmpvar_12.y = float(o.vertex.yy);
+  o.uv.xy = ((tmpvar_12 + o.vertex.w) * 0.500000).xy;
+  o.uv.zw = vec2(o.vertex.zzzw);
+  gl_Position = o.vertex.xyzw;
+  gl_TexCoord[0] = o.uv.xyzw;
 }
 

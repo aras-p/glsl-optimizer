@@ -27,15 +27,9 @@ void main ()
   v2f_surf xlt_IN;
   xlt_IN.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
   xlt_IN.fog = xlv_FOG.x;
-  vec4 tmpvar_3;
-  tmpvar_3.xyzw = gl_TexCoord[0];
-  xlt_IN.hip_pack0 = tmpvar_3;
-  vec3 tmpvar_5;
-  tmpvar_5.xyz = vec3(gl_TexCoord[1]);
-  xlt_IN.lightDir = tmpvar_5;
-  vec3 tmpvar_7;
-  tmpvar_7.xyz = vec3(gl_TexCoord[2]);
-  xlt_IN._LightCoord = tmpvar_7;
+  xlt_IN.hip_pack0 = gl_TexCoord[0].xyzw;
+  xlt_IN.lightDir = gl_TexCoord[1].xyz;
+  xlt_IN._LightCoord = gl_TexCoord[2].xyz;
   v2f_surf IN;
   IN = xlt_IN;
   Input surfIN;
@@ -59,13 +53,11 @@ void main ()
   vec4 tmpvar_43;
   tmpvar_43 = texture2D (_DecalBump, IN_i0.uv_DecalBump);
   vec4 normal;
-  normal.xy = ((tmpvar_43.wy * 2.000000) - 1.000000);
+  normal.xy = ((tmpvar_43.wy * 2.000000) - 1.000000).xy;
   float tmpvar_47;
   tmpvar_47 = sqrt (((1.000000 - (normal.x * normal.x)) - (normal.y * normal.y)));
-  normal.z = tmpvar_47;
-  vec3 tmpvar_49;
-  tmpvar_49.xyz = vec3(normal);
-  o_i0.Normal = tmpvar_49;
+  normal.z = float(vec3(tmpvar_47));
+  o_i0.Normal = normal.xyz;
   o = o_i0;
   lightDir = IN.lightDir;
   vec3 tmpvar_52;
@@ -73,10 +65,8 @@ void main ()
   lightDir = tmpvar_52;
   float tmpvar_54;
   tmpvar_54 = dot (IN._LightCoord, IN._LightCoord);
-  vec2 tmpvar_56;
-  tmpvar_56.xy = vec2(tmpvar_54);
   vec4 tmpvar_57;
-  tmpvar_57 = texture2D (_LightTexture0, tmpvar_56);
+  tmpvar_57 = texture2D (_LightTexture0, vec2(tmpvar_54));
   SurfaceOutput s;
   s = o;
   float atten;
@@ -86,12 +76,10 @@ void main ()
   tmpvar_60 = dot (s.Normal, lightDir);
   float tmpvar_61;
   tmpvar_61 = max (0.000000, tmpvar_60);
-  c_i0.xyz = ((s.Albedo * _LightColor0.xyz) * ((tmpvar_61 * atten) * 2.000000));
-  c_i0.w = s.Alpha;
+  c_i0.xyz = ((s.Albedo * _LightColor0.xyz) * ((tmpvar_61 * atten) * 2.000000)).xyz;
+  c_i0.w = float(vec4(s.Alpha));
   c = c_i0;
-  c.w = 0.000000;
-  vec4 tmpvar_11;
-  tmpvar_11.xyzw = c;
-  gl_FragData[0] = tmpvar_11;
+  c.w = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
+  gl_FragData[0] = c.xyzw;
 }
 

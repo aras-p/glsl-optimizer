@@ -34,12 +34,12 @@ vec4 UnpackNormal (
   vec4 normal;
   vec2 tmpvar_1;
   tmpvar_1 = ((packednormal.wy * 2.000000) - 1.000000);
-  normal.xy = tmpvar_1;
+  normal.xy = tmpvar_1.xy;
   float tmpvar_2;
   tmpvar_2 = sqrt (((1.000000 - (normal.x * normal.x)) - (normal.y * normal.y)));
   float tmpvar_3;
   tmpvar_3 = tmpvar_2;
-  normal.z = tmpvar_3;
+  normal.z = float(vec3(tmpvar_3));
   return normal;
 }
 
@@ -85,7 +85,7 @@ void surf (
   vec4 tmpvar_11;
   tmpvar_11 = UnpackNormal (tmpvar_10);
   vec3 tmpvar_12;
-  tmpvar_12.xyz = vec3(tmpvar_11);
+  tmpvar_12 = tmpvar_11.xyz;
   vec3 tmpvar_13;
   tmpvar_13 = tmpvar_12;
   o.Normal = tmpvar_13;
@@ -131,21 +131,21 @@ vec4 frag_surf (
   tmpvar_9 = dot (IN.TtoV1, o.Normal);
   float tmpvar_10;
   tmpvar_10 = tmpvar_9;
-  viewN.y = tmpvar_10;
+  viewN.y = float(vec2(tmpvar_10));
   float tmpvar_11;
   tmpvar_11 = dot (IN.TtoV2, o.Normal);
   float tmpvar_12;
   tmpvar_12 = tmpvar_11;
-  viewN.z = tmpvar_12;
+  viewN.z = float(vec3(tmpvar_12));
   vec3 tmpvar_13;
   tmpvar_13 = viewN;
   o.Normal = tmpvar_13;
   vec3 tmpvar_14;
   tmpvar_14 = ((o.Normal * vec3 (0.500000, 0.500000, -0.500000)) + 0.500000);
-  res.xyz = tmpvar_14;
+  res.xyz = tmpvar_14.xyz;
   float tmpvar_15;
   tmpvar_15 = o.Specular;
-  res.w = tmpvar_15;
+  res.w = float(vec4(tmpvar_15));
   return res;
 }
 
@@ -157,22 +157,22 @@ void main ()
   tmpvar_1 = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
   xlt_IN.pos = tmpvar_1;
   vec2 tmpvar_2;
-  tmpvar_2.xy = vec2(gl_TexCoord[0]);
+  tmpvar_2 = gl_TexCoord[0].xy;
   vec2 tmpvar_3;
   tmpvar_3 = tmpvar_2;
   xlt_IN.hip_pack0 = tmpvar_3;
   vec3 tmpvar_4;
-  tmpvar_4.xyz = vec3(gl_TexCoord[1]);
+  tmpvar_4 = gl_TexCoord[1].xyz;
   vec3 tmpvar_5;
   tmpvar_5 = tmpvar_4;
   xlt_IN.TtoV0 = tmpvar_5;
   vec3 tmpvar_6;
-  tmpvar_6.xyz = vec3(gl_TexCoord[2]);
+  tmpvar_6 = gl_TexCoord[2].xyz;
   vec3 tmpvar_7;
   tmpvar_7 = tmpvar_6;
   xlt_IN.TtoV1 = tmpvar_7;
   vec3 tmpvar_8;
-  tmpvar_8.xyz = vec3(gl_TexCoord[3]);
+  tmpvar_8 = gl_TexCoord[3].xyz;
   vec3 tmpvar_9;
   tmpvar_9 = tmpvar_8;
   xlt_IN.TtoV2 = tmpvar_9;
@@ -182,7 +182,7 @@ void main ()
   tmpvar_11 = tmpvar_10;
   xl_retval = tmpvar_11;
   vec4 tmpvar_12;
-  tmpvar_12.xyzw = xl_retval;
+  tmpvar_12 = xl_retval.xyzw;
   vec4 tmpvar_13;
   tmpvar_13 = tmpvar_12;
   gl_FragData[0] = tmpvar_13;

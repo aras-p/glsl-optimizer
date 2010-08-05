@@ -47,10 +47,10 @@ vec4 frag (
   tmpvar_12 = max (0.003922, tmpvar_11);
   float tmpvar_13;
   tmpvar_13 = (tmpvar_10 * tmpvar_12);
-  delta.y = tmpvar_13;
+  delta.y = float(vec2(tmpvar_13));
   vec2 tmpvar_14;
   tmpvar_14 = (valAdapted + delta);
-  valNew.xy = tmpvar_14;
+  valNew.xy = tmpvar_14.xy;
   float tmpvar_15;
   tmpvar_15 = max (valNew.x, _AdaptParams.z);
   float tmpvar_16;
@@ -60,13 +60,13 @@ vec4 frag (
   tmpvar_17 = min (valNew.y, _AdaptParams.y);
   float tmpvar_18;
   tmpvar_18 = tmpvar_17;
-  valNew.y = tmpvar_18;
+  valNew.y = float(vec2(tmpvar_18));
   float tmpvar_19;
   tmpvar_19 = ((valNew.x - valNew.y) + 0.010000);
-  valNew.z = tmpvar_19;
+  valNew.z = float(vec3(tmpvar_19));
   float tmpvar_20;
   tmpvar_20 = (valNew.y / valNew.z);
-  valNew.w = tmpvar_20;
+  valNew.w = float(vec4(tmpvar_20));
   return valNew;
 }
 
@@ -78,7 +78,7 @@ void main ()
   tmpvar_1 = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
   xlt_i.pos = tmpvar_1;
   vec2 tmpvar_2;
-  tmpvar_2.xy = vec2(gl_TexCoord[0]);
+  tmpvar_2 = gl_TexCoord[0].xy;
   vec2 tmpvar_3;
   tmpvar_3 = tmpvar_2;
   xlt_i.uv = tmpvar_3;
@@ -88,7 +88,7 @@ void main ()
   tmpvar_5 = tmpvar_4;
   xl_retval = tmpvar_5;
   vec4 tmpvar_6;
-  tmpvar_6.xyzw = xl_retval;
+  tmpvar_6 = xl_retval.xyzw;
   vec4 tmpvar_7;
   tmpvar_7 = tmpvar_6;
   gl_FragData[0] = tmpvar_7;

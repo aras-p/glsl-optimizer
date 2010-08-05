@@ -9,9 +9,7 @@ void main ()
 {
   v2f xlt_i;
   xlt_i.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
-  vec2 tmpvar_2;
-  tmpvar_2.xy = vec2(gl_TexCoord[0]);
-  xlt_i.uv = tmpvar_2;
+  xlt_i.uv = gl_TexCoord[0].xy;
   v2f i;
   i = xlt_i;
   float d;
@@ -25,27 +23,25 @@ void main ()
   float __retval_i0;
   __retval_i0 = 1.0/(((_ZBufferParams.x * d) + _ZBufferParams.y));
   d = __retval_i0;
-  n.xyz = ((tmpvar_41.xyz * 2.000000) - 1.000000);
-  n.z = -(n.z);
+  n.xyz = ((tmpvar_41.xyz * 2.000000) - 1.000000).xyz;
+  n.z = float(vec3(-(n.z)));
   vec4 tmpvar_48;
   if ((__retval_i0 < 0.999985)) {
     vec3 normal;
     normal = n.xyz;
     vec4 enc;
-    enc.xy = ((((normal.xy / (normal.z + 1.000000)) / 1.777700) * 0.500000) + 0.500000);
+    enc.xy = ((((normal.xy / (normal.z + 1.000000)) / 1.777700) * 0.500000) + 0.500000).xy;
     vec2 enc_i0_i1;
     enc_i0_i1 = (vec2 (1.000000, 255.000000) * d);
     vec2 tmpvar_63;
     tmpvar_63 = fract (enc_i0_i1);
     enc_i0_i1 = tmpvar_63;
     enc_i0_i1.x = (tmpvar_63.x - (tmpvar_63.y * 0.003922));
-    enc.zw = enc_i0_i1;
+    enc.zw = vec2(enc_i0_i1.xxxy);
     tmpvar_48 = enc;
   } else {
     tmpvar_48 = vec4 (0.500000, 0.500000, 1.000000, 1.000000);
   };
-  vec4 tmpvar_6;
-  tmpvar_6.xyzw = tmpvar_48;
-  gl_FragData[0] = tmpvar_6;
+  gl_FragData[0] = tmpvar_48.xyzw;
 }
 

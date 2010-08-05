@@ -8,18 +8,10 @@ void main ()
 {
   v2f xlt_i;
   xlt_i.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
-  vec4 tmpvar_2;
-  tmpvar_2.xyzw = gl_TexCoord[0];
-  xlt_i.uv[0] = tmpvar_2;
-  vec4 tmpvar_4;
-  tmpvar_4.xyzw = gl_TexCoord[1];
-  xlt_i.uv[1] = tmpvar_4;
-  vec4 tmpvar_6;
-  tmpvar_6.xyzw = gl_TexCoord[2];
-  xlt_i.uv[2] = tmpvar_6;
-  vec4 tmpvar_8;
-  tmpvar_8.xyzw = gl_TexCoord[3];
-  xlt_i.uv[3] = tmpvar_8;
+  xlt_i.uv[0] = gl_TexCoord[0].xyzw;
+  xlt_i.uv[1] = gl_TexCoord[1].xyzw;
+  xlt_i.uv[2] = gl_TexCoord[2].xyzw;
+  xlt_i.uv[3] = gl_TexCoord[3].xyzw;
   v2f i;
   i = xlt_i;
   vec4 c;
@@ -37,11 +29,9 @@ void main ()
   vec4 tmpvar_23;
   tmpvar_23 = ((c + tmpvar_21) / 4.000000);
   c = tmpvar_23;
-  c.xyz = (tmpvar_23.xyz * _Color.xyz);
-  c.xyz = (c.xyz * (c.w + _Color.w));
-  c.w = 0.000000;
-  vec4 tmpvar_12;
-  tmpvar_12.xyzw = c;
-  gl_FragData[0] = tmpvar_12;
+  c.xyz = (tmpvar_23.xyz * _Color.xyz).xyz;
+  c.xyz = (c.xyz * (c.w + _Color.w)).xyz;
+  c.w = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
+  gl_FragData[0] = c.xyzw;
 }
 

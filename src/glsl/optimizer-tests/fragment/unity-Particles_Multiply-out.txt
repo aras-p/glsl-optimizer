@@ -8,12 +8,8 @@ void main ()
 {
   v2f xlt_i;
   xlt_i.vertex = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
-  vec4 tmpvar_2;
-  tmpvar_2.xyzw = gl_Color;
-  xlt_i.color = tmpvar_2;
-  vec2 tmpvar_4;
-  tmpvar_4.xy = vec2(gl_TexCoord[0]);
-  xlt_i.texcoord = tmpvar_4;
+  xlt_i.color = gl_Color.xyzw;
+  xlt_i.texcoord = gl_TexCoord[0].xy;
   v2f i;
   i = xlt_i;
   vec4 tmpvar_11;
@@ -22,8 +18,6 @@ void main ()
   tmpvar_12 = (i.color * tmpvar_11);
   vec4 tmpvar_14;
   tmpvar_14 = mix (vec4 (1.000000, 1.000000, 1.000000, 1.000000), tmpvar_12, tmpvar_12.wwww);
-  vec4 tmpvar_8;
-  tmpvar_8.xyzw = tmpvar_14;
-  gl_FragData[0] = tmpvar_8;
+  gl_FragData[0] = tmpvar_14.xyzw;
 }
 

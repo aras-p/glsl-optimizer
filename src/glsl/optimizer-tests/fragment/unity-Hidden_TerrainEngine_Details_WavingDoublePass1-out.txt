@@ -30,21 +30,11 @@ void main ()
   v2f_surf xlt_IN;
   xlt_IN.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
   xlt_IN.fog = xlv_FOG.x;
-  vec2 tmpvar_3;
-  tmpvar_3.xy = vec2(gl_TexCoord[0]);
-  xlt_IN.hip_pack0 = tmpvar_3;
-  vec4 tmpvar_5;
-  tmpvar_5.xyzw = gl_Color;
-  xlt_IN.lop_color = tmpvar_5;
-  vec3 tmpvar_7;
-  tmpvar_7.xyz = vec3(gl_TexCoord[1]);
-  xlt_IN.normal = tmpvar_7;
-  vec3 tmpvar_9;
-  tmpvar_9.xyz = vec3(gl_TexCoord[2]);
-  xlt_IN.lightDir = tmpvar_9;
-  vec4 tmpvar_11;
-  tmpvar_11.xyzw = gl_TexCoord[3];
-  xlt_IN._LightCoord = tmpvar_11;
+  xlt_IN.hip_pack0 = gl_TexCoord[0].xy;
+  xlt_IN.lop_color = gl_Color.xyzw;
+  xlt_IN.normal = gl_TexCoord[1].xyz;
+  xlt_IN.lightDir = gl_TexCoord[2].xyz;
+  xlt_IN._LightCoord = gl_TexCoord[3].xyzw;
   v2f_surf IN;
   IN = xlt_IN;
   Input surfIN;
@@ -89,10 +79,8 @@ void main ()
   LightCoord_i0 = IN._LightCoord.xyz;
   float tmpvar_55;
   tmpvar_55 = dot (LightCoord_i0, LightCoord_i0);
-  vec2 tmpvar_57;
-  tmpvar_57.xy = vec2(tmpvar_55);
   vec4 tmpvar_58;
-  tmpvar_58 = texture2D (_LightTextureB0, tmpvar_57);
+  tmpvar_58 = texture2D (_LightTextureB0, vec2(tmpvar_55));
   SurfaceOutput s;
   s = o;
   float atten;
@@ -102,12 +90,10 @@ void main ()
   tmpvar_61 = dot (s.Normal, lightDir);
   float tmpvar_62;
   tmpvar_62 = max (0.000000, tmpvar_61);
-  c_i0_i1.xyz = ((s.Albedo * _LightColor0.xyz) * ((tmpvar_62 * atten) * 2.000000));
-  c_i0_i1.w = s.Alpha;
+  c_i0_i1.xyz = ((s.Albedo * _LightColor0.xyz) * ((tmpvar_62 * atten) * 2.000000)).xyz;
+  c_i0_i1.w = float(vec4(s.Alpha));
   c = c_i0_i1;
-  c.w = o.Alpha;
-  vec4 tmpvar_15;
-  tmpvar_15.xyzw = c;
-  gl_FragData[0] = tmpvar_15;
+  c.w = float(vec4(o.Alpha));
+  gl_FragData[0] = c.xyzw;
 }
 

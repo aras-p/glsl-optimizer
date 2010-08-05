@@ -22,12 +22,8 @@ void main ()
 {
   v2f_surf xlt_IN;
   xlt_IN.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
-  vec3 tmpvar_2;
-  tmpvar_2.xyz = vec3(gl_TexCoord[0]);
-  xlt_IN.vec = tmpvar_2;
-  vec2 tmpvar_4;
-  tmpvar_4.xy = vec2(gl_TexCoord[1]);
-  xlt_IN.hip_pack0 = tmpvar_4;
+  xlt_IN.vec = gl_TexCoord[0].xyz;
+  xlt_IN.hip_pack0 = gl_TexCoord[1].xy;
   v2f_surf IN;
   IN = xlt_IN;
   Input surfIN;
@@ -63,8 +59,6 @@ void main ()
   vec4 tmpvar_40;
   tmpvar_40 = (tmpvar_38 - (tmpvar_38.yzww * 0.003922));
   enc = tmpvar_40;
-  vec4 tmpvar_8;
-  tmpvar_8.xyzw = tmpvar_40;
-  gl_FragData[0] = tmpvar_8;
+  gl_FragData[0] = tmpvar_40.xyzw;
 }
 

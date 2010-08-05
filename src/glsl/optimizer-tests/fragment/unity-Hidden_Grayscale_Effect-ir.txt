@@ -41,8 +41,8 @@ vec4 frag (
   tmpvar_4 = tmpvar_3;
   grayscale = tmpvar_4;
   vec2 tmpvar_5;
-  tmpvar_5.x = (grayscale + _RampOffset);
-  tmpvar_5.y = 0.500000;
+  tmpvar_5.x = float(vec2((grayscale + _RampOffset)));
+  tmpvar_5.y = float(vec2(0.500000));
   vec2 tmpvar_6;
   tmpvar_6 = tmpvar_5;
   remap = tmpvar_6;
@@ -53,7 +53,7 @@ vec4 frag (
   xlat_var_output = tmpvar_8;
   float tmpvar_9;
   tmpvar_9 = original.w;
-  xlat_var_output.w = tmpvar_9;
+  xlat_var_output.w = float(vec4(tmpvar_9));
   return xlat_var_output;
 }
 
@@ -65,7 +65,7 @@ void main ()
   tmpvar_1 = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
   xlt_i.pos = tmpvar_1;
   vec2 tmpvar_2;
-  tmpvar_2.xy = vec2(gl_TexCoord[0]);
+  tmpvar_2 = gl_TexCoord[0].xy;
   vec2 tmpvar_3;
   tmpvar_3 = tmpvar_2;
   xlt_i.uv = tmpvar_3;
@@ -75,7 +75,7 @@ void main ()
   tmpvar_5 = tmpvar_4;
   xl_retval = tmpvar_5;
   vec4 tmpvar_6;
-  tmpvar_6.xyzw = xl_retval;
+  tmpvar_6 = xl_retval.xyzw;
   vec4 tmpvar_7;
   tmpvar_7 = tmpvar_6;
   gl_FragData[0] = tmpvar_7;

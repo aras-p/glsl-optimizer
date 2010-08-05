@@ -88,13 +88,13 @@ void xll_sincos (
   mat2 tmpvar_3;
   vec2 tmpvar_4;
   tmpvar_4 = tmpvar_1;
-  tmpvar_3[0].xy = tmpvar_4.xy;
+  tmpvar_3[0] = tmpvar_4.xy;
   vec2 tmpvar_5;
   tmpvar_5 = tmpvar_2;
-  tmpvar_3[1].xy = tmpvar_5.xy;
+  tmpvar_3[1] = tmpvar_5.xy;
   mat2 tmpvar_6;
-  tmpvar_6 = tmpvar_3;
-  s = tmpvar_6;
+  tmpvar_6 = (tmpvar_3);
+  s = (tmpvar_6);
   vec2 tmpvar_7;
   tmpvar_7 = cos (x[0]);
   vec2 tmpvar_8;
@@ -102,13 +102,13 @@ void xll_sincos (
   mat2 tmpvar_9;
   vec2 tmpvar_10;
   tmpvar_10 = tmpvar_7;
-  tmpvar_9[0].xy = tmpvar_10.xy;
+  tmpvar_9[0] = tmpvar_10.xy;
   vec2 tmpvar_11;
   tmpvar_11 = tmpvar_8;
-  tmpvar_9[1].xy = tmpvar_11.xy;
+  tmpvar_9[1] = tmpvar_11.xy;
   mat2 tmpvar_12;
-  tmpvar_12 = tmpvar_9;
-  c = tmpvar_12;
+  tmpvar_12 = (tmpvar_9);
+  c = (tmpvar_12);
 }
 
 void xll_sincos (
@@ -126,16 +126,16 @@ void xll_sincos (
   mat3 tmpvar_4;
   vec3 tmpvar_5;
   tmpvar_5 = tmpvar_1;
-  tmpvar_4[0].xyz = tmpvar_5.xyz;
+  tmpvar_4[0] = tmpvar_5.xyz;
   vec3 tmpvar_6;
   tmpvar_6 = tmpvar_2;
-  tmpvar_4[1].xyz = tmpvar_6.xyz;
+  tmpvar_4[1] = tmpvar_6.xyz;
   vec3 tmpvar_7;
   tmpvar_7 = tmpvar_3;
-  tmpvar_4[2].xyz = tmpvar_7.xyz;
+  tmpvar_4[2] = tmpvar_7.xyz;
   mat3 tmpvar_8;
-  tmpvar_8 = tmpvar_4;
-  s = tmpvar_8;
+  tmpvar_8 = (tmpvar_4);
+  s = (tmpvar_8);
   vec3 tmpvar_9;
   tmpvar_9 = cos (x[0]);
   vec3 tmpvar_10;
@@ -145,16 +145,16 @@ void xll_sincos (
   mat3 tmpvar_12;
   vec3 tmpvar_13;
   tmpvar_13 = tmpvar_9;
-  tmpvar_12[0].xyz = tmpvar_13.xyz;
+  tmpvar_12[0] = tmpvar_13.xyz;
   vec3 tmpvar_14;
   tmpvar_14 = tmpvar_10;
-  tmpvar_12[1].xyz = tmpvar_14.xyz;
+  tmpvar_12[1] = tmpvar_14.xyz;
   vec3 tmpvar_15;
   tmpvar_15 = tmpvar_11;
-  tmpvar_12[2].xyz = tmpvar_15.xyz;
+  tmpvar_12[2] = tmpvar_15.xyz;
   mat3 tmpvar_16;
-  tmpvar_16 = tmpvar_12;
-  c = tmpvar_16;
+  tmpvar_16 = (tmpvar_12);
+  c = (tmpvar_16);
 }
 
 void xll_sincos (
@@ -174,19 +174,19 @@ void xll_sincos (
   mat4 tmpvar_5;
   vec4 tmpvar_6;
   tmpvar_6 = tmpvar_1;
-  tmpvar_5[0].xyzw = tmpvar_6.xyzw;
+  tmpvar_5[0] = tmpvar_6.xyzw;
   vec4 tmpvar_7;
   tmpvar_7 = tmpvar_2;
-  tmpvar_5[1].xyzw = tmpvar_7.xyzw;
+  tmpvar_5[1] = tmpvar_7.xyzw;
   vec4 tmpvar_8;
   tmpvar_8 = tmpvar_3;
-  tmpvar_5[2].xyzw = tmpvar_8.xyzw;
+  tmpvar_5[2] = tmpvar_8.xyzw;
   vec4 tmpvar_9;
   tmpvar_9 = tmpvar_4;
-  tmpvar_5[3].xyzw = tmpvar_9.xyzw;
+  tmpvar_5[3] = tmpvar_9.xyzw;
   mat4 tmpvar_10;
-  tmpvar_10 = tmpvar_5;
-  s = tmpvar_10;
+  tmpvar_10 = (tmpvar_5);
+  s = (tmpvar_10);
   vec4 tmpvar_11;
   tmpvar_11 = cos (x[0]);
   vec4 tmpvar_12;
@@ -198,19 +198,19 @@ void xll_sincos (
   mat4 tmpvar_15;
   vec4 tmpvar_16;
   tmpvar_16 = tmpvar_11;
-  tmpvar_15[0].xyzw = tmpvar_16.xyzw;
+  tmpvar_15[0] = tmpvar_16.xyzw;
   vec4 tmpvar_17;
   tmpvar_17 = tmpvar_12;
-  tmpvar_15[1].xyzw = tmpvar_17.xyzw;
+  tmpvar_15[1] = tmpvar_17.xyzw;
   vec4 tmpvar_18;
   tmpvar_18 = tmpvar_13;
-  tmpvar_15[2].xyzw = tmpvar_18.xyzw;
+  tmpvar_15[2] = tmpvar_18.xyzw;
   vec4 tmpvar_19;
   tmpvar_19 = tmpvar_14;
-  tmpvar_15[3].xyzw = tmpvar_19.xyzw;
+  tmpvar_15[3] = tmpvar_19.xyzw;
   mat4 tmpvar_20;
-  tmpvar_20 = tmpvar_15;
-  c = tmpvar_20;
+  tmpvar_20 = (tmpvar_15);
+  c = (tmpvar_20);
 }
 
 uniform float _Angle;
@@ -251,7 +251,7 @@ vec4 frag (
   uv.x = tmpvar_7;
   float tmpvar_8;
   tmpvar_8 = ((sinLength * offset.x) + (cosLength * offset.y));
-  uv.y = tmpvar_8;
+  uv.y = float(vec2(tmpvar_8));
   vec2 tmpvar_9;
   tmpvar_9 = (uv + _CenterRadius.xy);
   uv = tmpvar_9;
@@ -268,12 +268,12 @@ void main ()
   tmpvar_1 = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
   xlt_i.pos = tmpvar_1;
   vec2 tmpvar_2;
-  tmpvar_2.xy = vec2(gl_TexCoord[0]);
+  tmpvar_2 = gl_TexCoord[0].xy;
   vec2 tmpvar_3;
   tmpvar_3 = tmpvar_2;
   xlt_i.uv = tmpvar_3;
   vec2 tmpvar_4;
-  tmpvar_4.xy = vec2(gl_TexCoord[1]);
+  tmpvar_4 = gl_TexCoord[1].xy;
   vec2 tmpvar_5;
   tmpvar_5 = tmpvar_4;
   xlt_i.uvOrig = tmpvar_5;
@@ -283,7 +283,7 @@ void main ()
   tmpvar_7 = tmpvar_6;
   xl_retval = tmpvar_7;
   vec4 tmpvar_8;
-  tmpvar_8.xyzw = xl_retval;
+  tmpvar_8 = xl_retval.xyzw;
   vec4 tmpvar_9;
   tmpvar_9 = tmpvar_8;
   gl_FragData[0] = tmpvar_9;

@@ -27,12 +27,12 @@ vec4 UnpackNormal (
   vec4 normal;
   vec2 tmpvar_1;
   tmpvar_1 = ((packednormal.wy * 2.000000) - 1.000000);
-  normal.xy = tmpvar_1;
+  normal.xy = tmpvar_1.xy;
   float tmpvar_2;
   tmpvar_2 = sqrt (((1.000000 - (normal.x * normal.x)) - (normal.y * normal.y)));
   float tmpvar_3;
   tmpvar_3 = tmpvar_2;
-  normal.z = tmpvar_3;
+  normal.z = float(vec3(tmpvar_3));
   return normal;
 }
 
@@ -79,7 +79,7 @@ void surf (
   vec4 tmpvar_11;
   tmpvar_11 = UnpackNormal (norspc);
   vec3 tmpvar_12;
-  tmpvar_12.xyz = vec3(tmpvar_11);
+  tmpvar_12 = tmpvar_11.xyz;
   vec3 tmpvar_13;
   tmpvar_13 = tmpvar_12;
   o.Normal = tmpvar_13;
@@ -127,7 +127,7 @@ void main ()
   tmpvar_3 = tmpvar_2;
   xl_retval = tmpvar_3;
   vec4 tmpvar_4;
-  tmpvar_4.xyzw = xl_retval;
+  tmpvar_4 = xl_retval.xyzw;
   vec4 tmpvar_5;
   tmpvar_5 = tmpvar_4;
   gl_FragData[0] = tmpvar_5;

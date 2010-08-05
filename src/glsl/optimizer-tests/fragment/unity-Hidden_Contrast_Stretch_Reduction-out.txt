@@ -7,18 +7,10 @@ void main ()
 {
   v2f xlt_i;
   xlt_i.position = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
-  vec2 tmpvar_2;
-  tmpvar_2.xy = vec2(gl_TexCoord[0]);
-  xlt_i.uv[0] = tmpvar_2;
-  vec2 tmpvar_4;
-  tmpvar_4.xy = vec2(gl_TexCoord[1]);
-  xlt_i.uv[1] = tmpvar_4;
-  vec2 tmpvar_6;
-  tmpvar_6.xy = vec2(gl_TexCoord[2]);
-  xlt_i.uv[2] = tmpvar_6;
-  vec2 tmpvar_8;
-  tmpvar_8.xy = vec2(gl_TexCoord[3]);
-  xlt_i.uv[3] = tmpvar_8;
+  xlt_i.uv[0] = gl_TexCoord[0].xy;
+  xlt_i.uv[1] = gl_TexCoord[1].xy;
+  xlt_i.uv[2] = gl_TexCoord[2].xy;
+  xlt_i.uv[3] = gl_TexCoord[3].xy;
   v2f i;
   i = xlt_i;
   vec4 v00;
@@ -51,10 +43,8 @@ void main ()
   tmpvar_28 = min (v10.y, v11.y);
   float tmpvar_29;
   tmpvar_29 = min (tmpvar_27, tmpvar_28);
-  res.y = tmpvar_29;
-  res.zw = v00.zw;
-  vec4 tmpvar_12;
-  tmpvar_12.xyzw = res;
-  gl_FragData[0] = tmpvar_12;
+  res.y = float(vec2(tmpvar_29));
+  res.zw = vec2(v00.zzzw);
+  gl_FragData[0] = res.xyzw;
 }
 

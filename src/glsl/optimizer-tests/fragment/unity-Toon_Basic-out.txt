@@ -10,12 +10,8 @@ void main ()
 {
   v2f xlt_i;
   xlt_i.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
-  vec2 tmpvar_2;
-  tmpvar_2.xy = vec2(gl_TexCoord[0]);
-  xlt_i.texcoord = tmpvar_2;
-  vec3 tmpvar_4;
-  tmpvar_4.xyz = vec3(gl_TexCoord[1]);
-  xlt_i.cubenormal = tmpvar_4;
+  xlt_i.texcoord = gl_TexCoord[0].xy;
+  xlt_i.cubenormal = gl_TexCoord[1].xyz;
   v2f i;
   i = xlt_i;
   vec4 col;
@@ -25,10 +21,8 @@ void main ()
   vec4 tmpvar_13;
   tmpvar_13 = textureCube (_ToonShade, i.cubenormal);
   vec4 tmpvar_15;
-  tmpvar_15.xyz = ((2.000000 * tmpvar_13.xyz) * col.xyz);
-  tmpvar_15.w = col.w;
-  vec4 tmpvar_8;
-  tmpvar_8.xyzw = tmpvar_15;
-  gl_FragData[0] = tmpvar_8;
+  tmpvar_15.xyz = vec3(((2.000000 * tmpvar_13.xyz) * col.xyz).xyzx);
+  tmpvar_15.w = float(col.wwww);
+  gl_FragData[0] = tmpvar_15.xyzw;
 }
 

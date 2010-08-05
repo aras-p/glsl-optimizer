@@ -31,21 +31,11 @@ void main ()
   v2f_surf xlt_IN;
   xlt_IN.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
   xlt_IN.fog = xlv_FOG.x;
-  vec2 tmpvar_3;
-  tmpvar_3.xy = vec2(gl_TexCoord[0]);
-  xlt_IN.hip_pack0 = tmpvar_3;
-  vec3 tmpvar_5;
-  tmpvar_5.xyz = vec3(gl_TexCoord[1]);
-  xlt_IN.normal = tmpvar_5;
-  vec3 tmpvar_7;
-  tmpvar_7.xyz = vec3(gl_TexCoord[2]);
-  xlt_IN.lightDir = tmpvar_7;
-  vec3 tmpvar_9;
-  tmpvar_9.xyz = vec3(gl_TexCoord[3]);
-  xlt_IN.viewDir = tmpvar_9;
-  vec4 tmpvar_11;
-  tmpvar_11.xyzw = gl_TexCoord[4];
-  xlt_IN._LightCoord = tmpvar_11;
+  xlt_IN.hip_pack0 = gl_TexCoord[0].xy;
+  xlt_IN.normal = gl_TexCoord[1].xyz;
+  xlt_IN.lightDir = gl_TexCoord[2].xyz;
+  xlt_IN.viewDir = gl_TexCoord[3].xyz;
+  xlt_IN._LightCoord = gl_TexCoord[4].xyzw;
   v2f_surf IN;
   IN = xlt_IN;
   Input surfIN;
@@ -74,10 +64,8 @@ void main ()
   vec3 tmpvar_58;
   tmpvar_58 = normalize (lightDir);
   lightDir = tmpvar_58;
-  vec3 tmpvar_60;
-  tmpvar_60.xyz = IN.viewDir;
   vec3 tmpvar_61;
-  tmpvar_61 = normalize (tmpvar_60);
+  tmpvar_61 = normalize (IN.viewDir.xyz);
   float tmpvar_62;
   vec4 LightCoord;
   LightCoord = IN._LightCoord;
@@ -88,10 +76,8 @@ void main ()
   LightCoord_i0 = IN._LightCoord.xyz;
   float tmpvar_67;
   tmpvar_67 = dot (LightCoord_i0, LightCoord_i0);
-  vec2 tmpvar_69;
-  tmpvar_69.xy = vec2(tmpvar_67);
   vec4 tmpvar_70;
-  tmpvar_70 = texture2D (_LightTextureB0, tmpvar_69);
+  tmpvar_70 = texture2D (_LightTextureB0, vec2(tmpvar_67));
   SurfaceOutput s;
   s = o;
   vec3 lightDir_i0;
@@ -117,12 +103,10 @@ void main ()
   tmpvar_81 = pow (tmpvar_79, (s.Specular * 128.000000));
   float tmpvar_82;
   tmpvar_82 = (tmpvar_81 * s.Gloss);
-  c_i0.xyz = ((((s.Albedo * _LightColor0.xyz) * diff) + ((_LightColor0.xyz * _SpecColor.xyz) * tmpvar_82)) * (atten * 2.000000));
-  c_i0.w = (s.Alpha + (((_LightColor0.w * _SpecColor.w) * tmpvar_82) * atten));
+  c_i0.xyz = ((((s.Albedo * _LightColor0.xyz) * diff) + ((_LightColor0.xyz * _SpecColor.xyz) * tmpvar_82)) * (atten * 2.000000)).xyz;
+  c_i0.w = float(vec4((s.Alpha + (((_LightColor0.w * _SpecColor.w) * tmpvar_82) * atten))));
   c = c_i0;
-  c.w = 0.000000;
-  vec4 tmpvar_15;
-  tmpvar_15.xyzw = c;
-  gl_FragData[0] = tmpvar_15;
+  c.w = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
+  gl_FragData[0] = c.xyzw;
 }
 

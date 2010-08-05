@@ -37,16 +37,12 @@ void main ()
   tmpvar_40 = texture2D (_BumpSpecMap, IN_i0.uv_MainTex);
   o_i0.Specular = tmpvar_40.x;
   vec4 normal;
-  normal.xy = ((tmpvar_40.wy * 2.000000) - 1.000000);
+  normal.xy = ((tmpvar_40.wy * 2.000000) - 1.000000).xy;
   float tmpvar_46;
   tmpvar_46 = sqrt (((1.000000 - (normal.x * normal.x)) - (normal.y * normal.y)));
-  normal.z = tmpvar_46;
-  vec3 tmpvar_48;
-  tmpvar_48.xyz = vec3(normal);
-  o_i0.Normal = tmpvar_48;
+  normal.z = float(vec3(tmpvar_46));
+  o_i0.Normal = normal.xyz;
   o = o_i0;
-  vec4 tmpvar_4;
-  tmpvar_4.xyzw = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
-  gl_FragData[0] = tmpvar_4;
+  gl_FragData[0] = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
 }
 

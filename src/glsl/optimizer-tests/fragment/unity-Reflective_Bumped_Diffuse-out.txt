@@ -31,15 +31,9 @@ void main ()
   v2f_surf xlt_IN;
   xlt_IN.pos = vec4 (0.000000, 0.000000, 0.000000, 0.000000);
   xlt_IN.fog = xlv_FOG.x;
-  vec4 tmpvar_3;
-  tmpvar_3.xyzw = gl_TexCoord[0];
-  xlt_IN.hip_pack0 = tmpvar_3;
-  vec3 tmpvar_5;
-  tmpvar_5.xyz = vec3(gl_TexCoord[1]);
-  xlt_IN.lightDir = tmpvar_5;
-  vec2 tmpvar_7;
-  tmpvar_7.xy = vec2(gl_TexCoord[2]);
-  xlt_IN._LightCoord = tmpvar_7;
+  xlt_IN.hip_pack0 = gl_TexCoord[0].xyzw;
+  xlt_IN.lightDir = gl_TexCoord[1].xyz;
+  xlt_IN._LightCoord = gl_TexCoord[2].xy;
   v2f_surf IN;
   IN = xlt_IN;
   Input surfIN;
@@ -65,13 +59,11 @@ void main ()
   vec4 tmpvar_53;
   tmpvar_53 = texture2D (_BumpMap, IN_i0.uv_BumpMap);
   vec4 normal;
-  normal.xy = ((tmpvar_53.wy * 2.000000) - 1.000000);
+  normal.xy = ((tmpvar_53.wy * 2.000000) - 1.000000).xy;
   float tmpvar_57;
   tmpvar_57 = sqrt (((1.000000 - (normal.x * normal.x)) - (normal.y * normal.y)));
-  normal.z = tmpvar_57;
-  vec3 tmpvar_59;
-  tmpvar_59.xyz = vec3(normal);
-  o_i0.Normal = tmpvar_59;
+  normal.z = float(vec3(tmpvar_57));
+  o_i0.Normal = normal.xyz;
   vec4 tmpvar_62;
   tmpvar_62 = textureCube (_Cube, IN_i0.worldRefl);
   vec4 tmpvar_64;
@@ -91,12 +83,10 @@ void main ()
   tmpvar_71 = dot (s.Normal, lightDir);
   float tmpvar_72;
   tmpvar_72 = max (0.000000, tmpvar_71);
-  c_i0_i1.xyz = ((s.Albedo * _LightColor0.xyz) * ((tmpvar_72 * atten) * 2.000000));
-  c_i0_i1.w = s.Alpha;
+  c_i0_i1.xyz = ((s.Albedo * _LightColor0.xyz) * ((tmpvar_72 * atten) * 2.000000)).xyz;
+  c_i0_i1.w = float(vec4(s.Alpha));
   c = c_i0_i1;
-  c.w = 0.000000;
-  vec4 tmpvar_11;
-  tmpvar_11.xyzw = c;
-  gl_FragData[0] = tmpvar_11;
+  c.w = float(vec4 (0.000000, 0.000000, 0.000000, 0.000000));
+  gl_FragData[0] = c.xyzw;
 }
 
