@@ -18,7 +18,7 @@ void main ()
   float tmpvar_12;
   tmpvar_12 = dot (vec3(0.299000, 0.587000, 0.114000), original.xyz);
   xlat_var_output = (vec4(0.191000, -0.054000, -0.221000, 0.000000) + tmpvar_12);
-  xlat_var_output.w = float(original.wwww);
+  xlat_var_output.w = float(original.w);
   gl_FragData[0] = xlat_var_output.xyzw;
 }
 

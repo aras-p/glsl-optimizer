@@ -93,7 +93,7 @@ v2f_surf vert_surf (
   o.hip_pack0.xy = tmpvar_1.xy;
   vec2 tmpvar_2;
   tmpvar_2 = ((v.texcoord.xy * _Detail_ST.xy) + _Detail_ST.zw);
-  o.hip_pack0.zw = vec2(tmpvar_2.xxxy);
+  o.hip_pack0.zw = vec2(tmpvar_2.xy);
   mat3 tmpvar_3;
   tmpvar_3 = (xll_constructMat3 (_Object2World));
   vec3 tmpvar_4;
@@ -170,13 +170,13 @@ void main ()
   tmpvar_20 = tmpvar_19;
   gl_TexCoord[0] = tmpvar_20;
   vec4 tmpvar_21;
-  tmpvar_21.xyz = vec3(xl_retval.normal.xyzx);
+  tmpvar_21.xyz = vec3(xl_retval.normal.xyz);
   tmpvar_21.w = float(vec4(0.000000));
   vec4 tmpvar_22;
   tmpvar_22 = tmpvar_21;
   gl_TexCoord[1] = tmpvar_22;
   vec4 tmpvar_23;
-  tmpvar_23.xyz = vec3(xl_retval.lightDir.xyzx);
+  tmpvar_23.xyz = vec3(xl_retval.lightDir.xyz);
   tmpvar_23.w = float(vec4(0.000000));
   vec4 tmpvar_24;
   tmpvar_24 = tmpvar_23;

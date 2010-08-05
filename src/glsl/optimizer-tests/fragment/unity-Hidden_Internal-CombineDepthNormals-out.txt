@@ -37,7 +37,7 @@ void main ()
     tmpvar_63 = fract (enc_i0_i1);
     enc_i0_i1 = tmpvar_63;
     enc_i0_i1.x = (tmpvar_63.x - (tmpvar_63.y * 0.003922));
-    enc.zw = vec2(enc_i0_i1.xxxy);
+    enc.zw = vec2(enc_i0_i1.xy);
     tmpvar_48 = enc;
   } else {
     tmpvar_48 = vec4(0.500000, 0.500000, 1.000000, 1.000000);

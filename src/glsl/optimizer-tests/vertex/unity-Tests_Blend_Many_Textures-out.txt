@@ -18,7 +18,7 @@ void main ()
   o.uv = xlt_v.texcoord.xy;
   gl_Position = o.pos.xyzw;
   vec4 tmpvar_11;
-  tmpvar_11.xy = vec2(o.uv.xyxx);
+  tmpvar_11.xy = vec2(o.uv.xy);
   tmpvar_11.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_11.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[0] = tmpvar_11;

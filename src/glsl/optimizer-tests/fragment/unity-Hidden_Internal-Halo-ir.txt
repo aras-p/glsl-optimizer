@@ -19,7 +19,7 @@ vec4 frag (
   tmpvar_2 = tmpvar_1.w;
   a = tmpvar_2;
   vec4 tmpvar_3;
-  tmpvar_3.xyz = vec3((i.color.xyz * a).xyzx);
+  tmpvar_3.xyz = vec3((i.color.xyz * a).xyz);
   tmpvar_3.w = float(vec4(a));
   return tmpvar_3;
 }

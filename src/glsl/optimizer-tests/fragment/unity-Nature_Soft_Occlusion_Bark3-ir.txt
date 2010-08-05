@@ -241,7 +241,7 @@ vec4 frag_surf (
   tmpvar_14 = (near * far);
   weights = tmpvar_14;
   vec4 tmpvar_15;
-  tmpvar_15.xyz = vec3(((((IN._ShadowCoord0 * weights.x) + (IN._ShadowCoord1 * weights.y)) + (IN._ShadowCoord2 * weights.z)) + (IN._ShadowCoord3 * weights.w)).xyzx);
+  tmpvar_15.xyz = vec3(((((IN._ShadowCoord0 * weights.x) + (IN._ShadowCoord1 * weights.y)) + (IN._ShadowCoord2 * weights.z)) + (IN._ShadowCoord3 * weights.w)).xyz);
   tmpvar_15.w = float(vec4(1.000000));
   vec4 tmpvar_16;
   tmpvar_16 = tmpvar_15;
@@ -274,7 +274,7 @@ vec4 frag_surf (
   tmpvar_25 = EncodeFloatRG ((1.000000 - (z * _ProjectionParams.w)).x);
   vec2 tmpvar_26;
   tmpvar_26 = tmpvar_25;
-  res.zw = vec2(tmpvar_26.xxxy);
+  res.zw = vec2(tmpvar_26.xy);
   return res;
 }
 

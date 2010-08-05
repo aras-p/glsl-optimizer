@@ -55,7 +55,7 @@ vec4 Squash (
   vec3 tmpvar_9;
   tmpvar_9 = mix (projectedVertex, pos.xyz, tmpvar_8);
   vec4 tmpvar_10;
-  tmpvar_10.xyz = vec3(tmpvar_9.xyzx);
+  tmpvar_10.xyz = vec3(tmpvar_9.xyz);
   tmpvar_10.w = float(vec4(1.000000));
   vec4 tmpvar_11;
   tmpvar_11 = tmpvar_10;
@@ -78,7 +78,7 @@ void TerrainAnimateTree (
   tmpvar_1 = (pos.xyz * _Scale.xyz);
   pos.xyz = tmpvar_1.xyz;
   vec4 tmpvar_2;
-  tmpvar_2.xyz = vec3(pos.xyz.xyzx);
+  tmpvar_2.xyz = vec3(pos.xyz.xyz);
   tmpvar_2.w = float(vec4(0.000000));
   vec3 tmpvar_3;
   tmpvar_3 = (_TerrainEngineBendTree * tmpvar_2).xyz;

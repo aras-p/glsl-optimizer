@@ -18,8 +18,8 @@ void main ()
   vec2 inUV;
   inUV = tmpvar_13.xy;
   vec4 tmpvar_16;
-  tmpvar_16.x = float(inUV.xxxx);
-  tmpvar_16.y = float(inUV.yyyy);
+  tmpvar_16.x = float(inUV.x);
+  tmpvar_16.y = float(inUV.y);
   tmpvar_16.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_16.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   distortedOffset = (_RotationMatrix * tmpvar_16).xy;

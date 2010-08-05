@@ -92,7 +92,7 @@ vec4 EncodeDepthNormal (
   tmpvar_3 = EncodeFloatRG (depth);
   vec2 tmpvar_4;
   tmpvar_4 = tmpvar_3;
-  enc.zw = vec2(tmpvar_4.xxxy);
+  enc.zw = vec2(tmpvar_4.xy);
   return enc;
 }
 

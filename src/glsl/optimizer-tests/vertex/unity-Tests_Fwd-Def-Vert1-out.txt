@@ -29,7 +29,7 @@ void main ()
   o.normal = (tmpvar_34 * xlt_v.normal);
   gl_Position = o.pos.xyzw;
   vec4 tmpvar_17;
-  tmpvar_17.xyz = vec3(o.normal.xyzx);
+  tmpvar_17.xyz = vec3(o.normal.xyz);
   tmpvar_17.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[0] = tmpvar_17;
 }

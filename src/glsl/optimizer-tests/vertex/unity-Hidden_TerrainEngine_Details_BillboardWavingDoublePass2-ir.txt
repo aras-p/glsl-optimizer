@@ -163,7 +163,7 @@ void TerrainWaveGrass (
   waveMove.z = float(vec3(tmpvar_21));
   vec2 tmpvar_22;
   tmpvar_22 = (vertex.xz - (waveMove.xz * _WaveAndDistance.z));
-  vertex.xz = vec2(tmpvar_22.xxy);
+  vertex.xz = vec2(tmpvar_22.xy);
   vec3 tmpvar_23;
   tmpvar_23 = vec3(lighting);
   vec3 tmpvar_24;
@@ -304,7 +304,7 @@ void main ()
   tmpvar_16 = tmpvar_15;
   gl_Position = tmpvar_16;
   vec4 tmpvar_17;
-  tmpvar_17.xy = vec2(xl_retval.hip_pack0.xyxx);
+  tmpvar_17.xy = vec2(xl_retval.hip_pack0.xy);
   tmpvar_17.z = float(vec4(0.000000));
   tmpvar_17.w = float(vec4(0.000000));
   vec4 tmpvar_18;

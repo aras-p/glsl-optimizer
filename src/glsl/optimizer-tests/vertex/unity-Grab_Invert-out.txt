@@ -7,10 +7,10 @@ void main ()
   v2f o;
   o.vertex = (gl_ModelViewProjectionMatrix * gl_Vertex.xyzw);
   vec2 tmpvar_12;
-  tmpvar_12.x = float(o.vertex.xx);
-  tmpvar_12.y = float(o.vertex.yy);
+  tmpvar_12.x = float(o.vertex.x);
+  tmpvar_12.y = float(o.vertex.y);
   o.uv.xy = ((tmpvar_12 + o.vertex.w) * 0.500000).xy;
-  o.uv.zw = vec2(o.vertex.zzzw);
+  o.uv.zw = vec2(o.vertex.zw);
   gl_Position = o.vertex.xyzw;
   gl_TexCoord[0] = o.uv.xyzw;
 }

@@ -41,7 +41,7 @@ void main ()
   pos = xlt_v.vertex;
   pos.xyz = (pos.xyz * _Scale.xyz).xyz;
   vec4 tmpvar_57;
-  tmpvar_57.xyz = vec3(pos.xyzx);
+  tmpvar_57.xyz = vec3(pos.xyz);
   tmpvar_57.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   vec3 tmpvar_60;
   tmpvar_60 = mix (pos.xyz, (_TerrainEngineBendTree * tmpvar_57).xyz, xlt_v.color.www);
@@ -53,7 +53,7 @@ void main ()
   projectedVertex = pos.xyz;
   vec3 tmpvar_65;
   tmpvar_65.x = float(vec3(0.000000, 0.000000, 0.000000));
-  tmpvar_65.y = float(_SquashPlaneNormal.www);
+  tmpvar_65.y = float(_SquashPlaneNormal.w);
   tmpvar_65.z = float(vec3(0.000000, 0.000000, 0.000000));
   planeNormal = _SquashPlaneNormal.xyz;
   float tmpvar_69;
@@ -62,7 +62,7 @@ void main ()
   vec3 tmpvar_72;
   tmpvar_72 = mix (projectedVertex, pos_i0.xyz, vec3(_SquashAmount));
   vec4 tmpvar_73;
-  tmpvar_73.xyz = vec3(tmpvar_72.xyzx);
+  tmpvar_73.xyz = vec3(tmpvar_72.xyz);
   tmpvar_73.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
   pos_i0 = tmpvar_73;
   pos = tmpvar_73;

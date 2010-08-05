@@ -29,7 +29,7 @@ void main ()
   o.bumpuv[0] = (temp.xy * vec2(0.400000, 0.450000));
   o.bumpuv[1] = temp.wz;
   vec4 tmpvar_30;
-  tmpvar_30.xyz = vec3(_WorldSpaceCameraPos.xyzx);
+  tmpvar_30.xyz = vec3(_WorldSpaceCameraPos.xyz);
   tmpvar_30.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
   vec3 tmpvar_32;
   tmpvar_32 = normalize ((((_World2Object * tmpvar_30).xyz * unity_Scale.w) - xlt_v.vertex.xyz));
@@ -42,17 +42,17 @@ void main ()
   tmpvar_9.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   xlv_FOG = tmpvar_9;
   vec4 tmpvar_11;
-  tmpvar_11.xy = vec2(o.bumpuv[0].xyxx);
+  tmpvar_11.xy = vec2(o.bumpuv[0].xy);
   tmpvar_11.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_11.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[0] = tmpvar_11;
   vec4 tmpvar_13;
-  tmpvar_13.xy = vec2(o.bumpuv[1].xyxx);
+  tmpvar_13.xy = vec2(o.bumpuv[1].xy);
   tmpvar_13.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_13.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[1] = tmpvar_13;
   vec4 tmpvar_15;
-  tmpvar_15.xyz = vec3(o.viewDir.xyzx);
+  tmpvar_15.xyz = vec3(o.viewDir.xyz);
   tmpvar_15.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[2] = tmpvar_15;
 }

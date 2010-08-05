@@ -27,7 +27,7 @@ vec4 frag (
   tmpvar_4 = tmpvar_3;
   cube = tmpvar_4;
   vec4 tmpvar_5;
-  tmpvar_5.xyz = vec3(((2.000000 * cube.xyz) * col.xyz).xyzx);
+  tmpvar_5.xyz = vec3(((2.000000 * cube.xyz) * col.xyz).xyz);
   tmpvar_5.w = float(vec4(col.w));
   return tmpvar_5;
 }

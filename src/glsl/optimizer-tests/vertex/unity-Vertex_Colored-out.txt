@@ -37,12 +37,12 @@ void main ()
   xlv_FOG = tmpvar_13;
   gl_FrontColor = o.color.xyzw;
   vec4 tmpvar_17;
-  tmpvar_17.xy = vec2(o.texcoord.xyxx);
+  tmpvar_17.xy = vec2(o.texcoord.xy);
   tmpvar_17.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_17.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[0] = tmpvar_17;
   vec4 tmpvar_19;
-  tmpvar_19.xyz = vec3(o.normal.xyzx);
+  tmpvar_19.xyz = vec3(o.normal.xyz);
   tmpvar_19.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[1] = tmpvar_19;
 }

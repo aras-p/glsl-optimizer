@@ -59,14 +59,14 @@ void main ()
   tmpvar_10 = tmpvar_9;
   gl_Position = tmpvar_10;
   vec4 tmpvar_11;
-  tmpvar_11.xy = vec2(xl_retval.uv.xyxx);
+  tmpvar_11.xy = vec2(xl_retval.uv.xy);
   tmpvar_11.z = float(vec4(0.000000));
   tmpvar_11.w = float(vec4(0.000000));
   vec4 tmpvar_12;
   tmpvar_12 = tmpvar_11;
   gl_TexCoord[0] = tmpvar_12;
   vec4 tmpvar_13;
-  tmpvar_13.xyz = vec3(xl_retval.ray.xyzx);
+  tmpvar_13.xyz = vec3(xl_retval.ray.xyz);
   tmpvar_13.w = float(vec4(0.000000));
   vec4 tmpvar_14;
   tmpvar_14 = tmpvar_13;

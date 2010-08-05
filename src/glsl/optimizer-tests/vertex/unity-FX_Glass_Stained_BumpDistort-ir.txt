@@ -57,7 +57,7 @@ v2f vert (
   o.uvgrab.xy = tmpvar_4.xy;
   vec2 tmpvar_5;
   tmpvar_5 = o.vertex.zw;
-  o.uvgrab.zw = vec2(tmpvar_5.xxxy);
+  o.uvgrab.zw = vec2(tmpvar_5.xy);
   vec2 tmpvar_6;
   tmpvar_6 = MultiplyUV (gl_TextureMatrix[1], v.texcoord);
   vec2 tmpvar_7;
@@ -101,14 +101,14 @@ void main ()
   tmpvar_10 = tmpvar_9;
   gl_TexCoord[0] = tmpvar_10;
   vec4 tmpvar_11;
-  tmpvar_11.xy = vec2(xl_retval.uvbump.xyxx);
+  tmpvar_11.xy = vec2(xl_retval.uvbump.xy);
   tmpvar_11.z = float(vec4(0.000000));
   tmpvar_11.w = float(vec4(0.000000));
   vec4 tmpvar_12;
   tmpvar_12 = tmpvar_11;
   gl_TexCoord[1] = tmpvar_12;
   vec4 tmpvar_13;
-  tmpvar_13.xy = vec2(xl_retval.uvmain.xyxx);
+  tmpvar_13.xy = vec2(xl_retval.uvmain.xy);
   tmpvar_13.z = float(vec4(0.000000));
   tmpvar_13.w = float(vec4(0.000000));
   vec4 tmpvar_14;

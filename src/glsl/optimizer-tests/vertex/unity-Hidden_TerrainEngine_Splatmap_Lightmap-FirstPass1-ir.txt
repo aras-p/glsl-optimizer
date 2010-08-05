@@ -63,7 +63,7 @@ vec4 ComputeScreenPos (
   o.xy = tmpvar_3.xy;
   vec2 tmpvar_4;
   tmpvar_4 = pos.zw;
-  o.zw = vec2(tmpvar_4.xxxy);
+  o.zw = vec2(tmpvar_4.xy);
   return o;
 }
 
@@ -82,13 +82,13 @@ v2f_surf vert_surf (
   o.hip_pack0.xy = tmpvar_1.xy;
   vec2 tmpvar_2;
   tmpvar_2 = ((v.texcoord.xy * _Splat0_ST.xy) + _Splat0_ST.zw);
-  o.hip_pack0.zw = vec2(tmpvar_2.xxxy);
+  o.hip_pack0.zw = vec2(tmpvar_2.xy);
   vec2 tmpvar_3;
   tmpvar_3 = ((v.texcoord.xy * _Splat1_ST.xy) + _Splat1_ST.zw);
   o.hip_pack1.xy = tmpvar_3.xy;
   vec2 tmpvar_4;
   tmpvar_4 = ((v.texcoord.xy * _Splat2_ST.xy) + _Splat2_ST.zw);
-  o.hip_pack1.zw = vec2(tmpvar_4.xxxy);
+  o.hip_pack1.zw = vec2(tmpvar_4.xy);
   vec2 tmpvar_5;
   tmpvar_5 = ((v.texcoord.xy * _Splat3_ST.xy) + _Splat3_ST.zw);
   o.hip_pack2 = tmpvar_5.xy;
@@ -171,7 +171,7 @@ void main ()
   tmpvar_22 = tmpvar_21;
   gl_TexCoord[1] = tmpvar_22;
   vec4 tmpvar_23;
-  tmpvar_23.xy = vec2(xl_retval.hip_pack2.xyxx);
+  tmpvar_23.xy = vec2(xl_retval.hip_pack2.xy);
   tmpvar_23.z = float(vec4(0.000000));
   tmpvar_23.w = float(vec4(0.000000));
   vec4 tmpvar_24;
@@ -183,7 +183,7 @@ void main ()
   tmpvar_26 = tmpvar_25;
   gl_TexCoord[3] = tmpvar_26;
   vec4 tmpvar_27;
-  tmpvar_27.xyz = vec3(xl_retval.hip_lmapFade.xyzx);
+  tmpvar_27.xyz = vec3(xl_retval.hip_lmapFade.xyz);
   tmpvar_27.w = float(vec4(0.000000));
   vec4 tmpvar_28;
   tmpvar_28 = tmpvar_27;

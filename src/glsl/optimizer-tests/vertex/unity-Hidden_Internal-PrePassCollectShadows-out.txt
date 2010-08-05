@@ -20,12 +20,12 @@ void main ()
   o.ray = xlt_v.texcoord1;
   gl_Position = o.pos.xyzw;
   vec4 tmpvar_11;
-  tmpvar_11.xy = vec2(o.uv.xyxx);
+  tmpvar_11.xy = vec2(o.uv.xy);
   tmpvar_11.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_11.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[0] = tmpvar_11;
   vec4 tmpvar_13;
-  tmpvar_13.xyz = vec3(o.ray.xyzx);
+  tmpvar_13.xyz = vec3(o.ray.xyz);
   tmpvar_13.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[1] = tmpvar_13;
 }

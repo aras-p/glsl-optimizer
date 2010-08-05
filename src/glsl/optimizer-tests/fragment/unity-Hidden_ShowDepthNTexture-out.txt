@@ -44,7 +44,7 @@ void main ()
   col.x = depth_i0;
   col.y = float(vec2(((n_i0.x * 0.500000) + 0.500000)));
   col.z = float(vec3(((n_i0.y * 0.500000) + 0.500000)));
-  col.w = float(tex.wwww);
+  col.w = float(tex.w);
   gl_FragData[0] = col.xyzw;
 }
 

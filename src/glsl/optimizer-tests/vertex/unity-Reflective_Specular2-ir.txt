@@ -72,7 +72,7 @@ vec3 ObjSpaceViewDir (
 {
   vec3 objSpaceCameraPos;
   vec4 tmpvar_1;
-  tmpvar_1.xyz = vec3(_WorldSpaceCameraPos.xyz.xyzx);
+  tmpvar_1.xyz = vec3(_WorldSpaceCameraPos.xyz.xyz);
   tmpvar_1.w = float(vec4(1.000000));
   vec3 tmpvar_2;
   tmpvar_2 = ((_World2Object * tmpvar_1).xyz * unity_Scale.w);
@@ -100,7 +100,7 @@ vec4 ComputeScreenPos (
   o.xy = tmpvar_3.xy;
   vec2 tmpvar_4;
   tmpvar_4 = pos.zw;
-  o.zw = vec2(tmpvar_4.xxxy);
+  o.zw = vec2(tmpvar_4.xy);
   return o;
 }
 
@@ -197,14 +197,14 @@ void main ()
   tmpvar_18 = tmpvar_17;
   xlv_FOG = tmpvar_18;
   vec4 tmpvar_19;
-  tmpvar_19.xy = vec2(xl_retval.hip_pack0.xyxx);
+  tmpvar_19.xy = vec2(xl_retval.hip_pack0.xy);
   tmpvar_19.z = float(vec4(0.000000));
   tmpvar_19.w = float(vec4(0.000000));
   vec4 tmpvar_20;
   tmpvar_20 = tmpvar_19;
   gl_TexCoord[0] = tmpvar_20;
   vec4 tmpvar_21;
-  tmpvar_21.xyz = vec3(xl_retval.worldRefl.xyzx);
+  tmpvar_21.xyz = vec3(xl_retval.worldRefl.xyz);
   tmpvar_21.w = float(vec4(0.000000));
   vec4 tmpvar_22;
   tmpvar_22 = tmpvar_21;

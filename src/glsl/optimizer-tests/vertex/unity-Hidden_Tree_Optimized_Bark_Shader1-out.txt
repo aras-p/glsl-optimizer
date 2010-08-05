@@ -32,8 +32,8 @@ void main ()
   v_i0 = xlt_v;
   v_i0.vertex.xyz = (xlt_v.vertex.xyz * _Scale.xyz).xyz;
   vec4 tmpvar_120;
-  tmpvar_120.xy = vec2(v_i0.color.xyxx);
-  tmpvar_120.zw = vec2(v_i0.texcoord1.xxxy);
+  tmpvar_120.xy = vec2(v_i0.color.xy);
+  tmpvar_120.zw = vec2(v_i0.texcoord1.xy);
   vec4 pos;
   pos = v_i0.vertex;
   vec3 normal;
@@ -74,7 +74,7 @@ void main ()
   projectedVertex = pos_i0.xyz;
   vec3 tmpvar_153;
   tmpvar_153.x = float(vec3(0.000000, 0.000000, 0.000000));
-  tmpvar_153.y = float(_SquashPlaneNormal.www);
+  tmpvar_153.y = float(_SquashPlaneNormal.w);
   tmpvar_153.z = float(vec3(0.000000, 0.000000, 0.000000));
   planeNormal = _SquashPlaneNormal.xyz;
   float tmpvar_157;
@@ -83,13 +83,13 @@ void main ()
   vec3 tmpvar_160;
   tmpvar_160 = mix (projectedVertex, pos_i0.xyz, vec3(_SquashAmount));
   vec4 tmpvar_161;
-  tmpvar_161.xyz = vec3(tmpvar_160.xyzx);
+  tmpvar_161.xyz = vec3(tmpvar_160.xyz);
   tmpvar_161.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
   pos_i0 = tmpvar_161;
   v_i0.vertex = tmpvar_161;
   vec4 tmpvar_164;
-  tmpvar_164.xyz = vec3((v_i0.color.w * _Color.xyz).xyzx);
-  tmpvar_164.w = float(_Color.wwww);
+  tmpvar_164.xyz = vec3((v_i0.color.w * _Color.xyz).xyz);
+  tmpvar_164.w = float(_Color.w);
   v_i0.color = tmpvar_164;
   vec3 tmpvar_166;
   tmpvar_166 = normalize (v_i0.normal);

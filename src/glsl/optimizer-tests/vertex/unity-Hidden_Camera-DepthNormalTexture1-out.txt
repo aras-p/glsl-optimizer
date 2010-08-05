@@ -57,7 +57,7 @@ void main ()
   float tmpvar_105;
   tmpvar_105 = dot (s, vec4(0.006000, 0.020000, -0.020000, 0.100000));
   waveMove.z = float(vec3(tmpvar_105));
-  vertex.xz = vec2((vertex.xz - (waveMove.xz * _WaveAndDistance.z)).xxy);
+  vertex.xz = vec2((vertex.xz - (waveMove.xz * _WaveAndDistance.z)).xy);
   v.vertex = vertex;
   o.pos = (gl_ModelViewProjectionMatrix * v.vertex);
   o.uv = v.texcoord.xy;
@@ -65,7 +65,7 @@ void main ()
   o.nz.w = float(vec4(-(((gl_ModelViewMatrix * v.vertex).z * _ProjectionParams.w))));
   gl_Position = o.pos.xyzw;
   vec4 tmpvar_15;
-  tmpvar_15.xy = vec2(o.uv.xyxx);
+  tmpvar_15.xy = vec2(o.uv.xy);
   tmpvar_15.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_15.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[0] = tmpvar_15;

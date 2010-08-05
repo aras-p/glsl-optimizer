@@ -25,7 +25,7 @@ void main ()
   vec4 tmpvar_19;
   tmpvar_19 = texture2D (_RampTex, tmpvar_17);
   xlat_var_output = tmpvar_19;
-  xlat_var_output.w = float(original.wwww);
+  xlat_var_output.w = float(original.w);
   gl_FragData[0] = xlat_var_output.xyzw;
 }
 

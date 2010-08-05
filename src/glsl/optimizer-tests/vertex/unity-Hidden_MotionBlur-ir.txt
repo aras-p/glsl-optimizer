@@ -50,7 +50,7 @@ void main ()
   tmpvar_8 = tmpvar_7;
   gl_Position = tmpvar_8;
   vec4 tmpvar_9;
-  tmpvar_9.xy = vec2(xl_retval.texcoord.xyxx);
+  tmpvar_9.xy = vec2(xl_retval.texcoord.xy);
   tmpvar_9.z = float(vec4(0.000000));
   tmpvar_9.w = float(vec4(0.000000));
   vec4 tmpvar_10;

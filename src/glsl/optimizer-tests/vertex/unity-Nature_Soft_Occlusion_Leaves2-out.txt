@@ -39,7 +39,7 @@ void main ()
   pos = xlt_v.vertex;
   pos.xyz = (pos.xyz * _Scale.xyz).xyz;
   vec4 tmpvar_86;
-  tmpvar_86.xyz = vec3(pos.xyzx);
+  tmpvar_86.xyz = vec3(pos.xyz);
   tmpvar_86.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   vec3 tmpvar_89;
   tmpvar_89 = mix (pos.xyz, (_TerrainEngineBendTree * tmpvar_86).xyz, xlt_v.color.www);
@@ -51,7 +51,7 @@ void main ()
   projectedVertex = pos.xyz;
   vec3 tmpvar_94;
   tmpvar_94.x = float(vec3(0.000000, 0.000000, 0.000000));
-  tmpvar_94.y = float(_SquashPlaneNormal.www);
+  tmpvar_94.y = float(_SquashPlaneNormal.w);
   tmpvar_94.z = float(vec3(0.000000, 0.000000, 0.000000));
   planeNormal = _SquashPlaneNormal.xyz;
   float tmpvar_98;
@@ -60,7 +60,7 @@ void main ()
   vec3 tmpvar_101;
   tmpvar_101 = mix (projectedVertex, pos_i0.xyz, vec3(_SquashAmount));
   vec4 tmpvar_102;
-  tmpvar_102.xyz = vec3(tmpvar_101.xyzx);
+  tmpvar_102.xyz = vec3(tmpvar_101.xyz);
   tmpvar_102.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
   pos_i0 = tmpvar_102;
   pos = tmpvar_102;
@@ -77,10 +77,10 @@ void main ()
   tmpvar_110 = (pos_i0_i1_i2 * 0.500000);
   o_i0 = tmpvar_110;
   vec2 tmpvar_111;
-  tmpvar_111.x = float(tmpvar_110.xx);
+  tmpvar_111.x = float(tmpvar_110.x);
   tmpvar_111.y = float(vec2((tmpvar_110.y * _ProjectionParams.x)));
   o_i0.xy = (tmpvar_111 + tmpvar_110.w).xy;
-  o_i0.zw = vec2(pos_i0_i1_i2.zzzw);
+  o_i0.zw = vec2(pos_i0_i1_i2.zw);
   o.hip_screen = o_i0;
   o.hip_lmapFade.xy = ((v_i0.texcoord1.xy * unity_LightmapST.xy) + unity_LightmapST.zw).xy;
   o.hip_lmapFade.z = float(vec3(((-((gl_ModelViewMatrix * v_i0.vertex).z) * unity_LightmapFade.z) + unity_LightmapFade.w)));
@@ -92,13 +92,13 @@ void main ()
   tmpvar_17.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   xlv_FOG = tmpvar_17;
   vec4 tmpvar_19;
-  tmpvar_19.xy = vec2(o.hip_pack0.xyxx);
+  tmpvar_19.xy = vec2(o.hip_pack0.xy);
   tmpvar_19.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_19.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[0] = tmpvar_19;
   gl_TexCoord[1] = o.hip_screen.xyzw;
   vec4 tmpvar_23;
-  tmpvar_23.xyz = vec3(o.hip_lmapFade.xyzx);
+  tmpvar_23.xyz = vec3(o.hip_lmapFade.xyz);
   tmpvar_23.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[2] = tmpvar_23;
 }

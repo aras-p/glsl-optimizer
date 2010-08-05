@@ -20,7 +20,7 @@ void main ()
   vec4 sample;
   float diff;
   vec4 tmpvar_14;
-  tmpvar_14.xy = vec2(xlt_i.uv.xyxx);
+  tmpvar_14.xy = vec2(xlt_i.uv.xy);
   tmpvar_14.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_14.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   coord = tmpvar_14;

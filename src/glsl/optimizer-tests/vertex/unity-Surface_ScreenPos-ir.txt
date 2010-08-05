@@ -156,13 +156,13 @@ void main ()
   tmpvar_18 = tmpvar_17;
   xlv_FOG = tmpvar_18;
   vec4 tmpvar_19;
-  tmpvar_19.xyz = vec3(xl_retval.normal.xyzx);
+  tmpvar_19.xyz = vec3(xl_retval.normal.xyz);
   tmpvar_19.w = float(vec4(0.000000));
   vec4 tmpvar_20;
   tmpvar_20 = tmpvar_19;
   gl_TexCoord[0] = tmpvar_20;
   vec4 tmpvar_21;
-  tmpvar_21.xyz = vec3(xl_retval.lightDir.xyzx);
+  tmpvar_21.xyz = vec3(xl_retval.lightDir.xyz);
   tmpvar_21.w = float(vec4(0.000000));
   vec4 tmpvar_22;
   tmpvar_22 = tmpvar_21;

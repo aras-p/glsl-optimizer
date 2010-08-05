@@ -32,7 +32,7 @@ void main ()
   o.pos = tmpvar_31;
   o.fog = tmpvar_31.z;
   o.hip_pack0.xy = ((xlt_v.texcoord.xy * _MainTex_ST.xy) + _MainTex_ST.zw).xy;
-  o.hip_pack0.zw = vec2(((xlt_v.texcoord.xy * _Illum_ST.xy) + _Illum_ST.zw).xxxy);
+  o.hip_pack0.zw = vec2(((xlt_v.texcoord.xy * _Illum_ST.xy) + _Illum_ST.zw).xy);
   vec4 pos_i0;
   pos_i0 = o.pos;
   vec4 o_i0;
@@ -40,10 +40,10 @@ void main ()
   tmpvar_37 = (pos_i0 * 0.500000);
   o_i0 = tmpvar_37;
   vec2 tmpvar_38;
-  tmpvar_38.x = float(tmpvar_37.xx);
+  tmpvar_38.x = float(tmpvar_37.x);
   tmpvar_38.y = float(vec2((tmpvar_37.y * _ProjectionParams.x)));
   o_i0.xy = (tmpvar_38 + tmpvar_37.w).xy;
-  o_i0.zw = vec2(pos_i0.zzzw);
+  o_i0.zw = vec2(pos_i0.zw);
   o.hip_screen = o_i0;
   gl_Position = o.pos.xyzw;
   vec4 tmpvar_17;

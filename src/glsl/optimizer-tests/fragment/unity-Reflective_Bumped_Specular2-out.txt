@@ -52,9 +52,9 @@ void main ()
   surfIN.uv_MainTex = xlt_IN.hip_pack0.xy;
   surfIN.uv_BumpMap = xlt_IN.hip_pack0.zw;
   vec3 tmpvar_53;
-  tmpvar_53.x = float(xlt_IN.TtoW0.www);
-  tmpvar_53.y = float(xlt_IN.TtoW1.www);
-  tmpvar_53.z = float(xlt_IN.TtoW2.www);
+  tmpvar_53.x = float(xlt_IN.TtoW0.w);
+  tmpvar_53.y = float(xlt_IN.TtoW1.w);
+  tmpvar_53.z = float(xlt_IN.TtoW2.w);
   surfIN.worldRefl = tmpvar_53;
   surfIN.TtoW0 = xlt_IN.TtoW0.xyz;
   surfIN.TtoW1 = xlt_IN.TtoW1.xyz;

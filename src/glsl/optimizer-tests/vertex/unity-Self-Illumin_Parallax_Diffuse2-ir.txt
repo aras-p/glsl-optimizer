@@ -51,7 +51,7 @@ vec3 ObjSpaceViewDir (
 {
   vec3 objSpaceCameraPos;
   vec4 tmpvar_1;
-  tmpvar_1.xyz = vec3(_WorldSpaceCameraPos.xyz.xyzx);
+  tmpvar_1.xyz = vec3(_WorldSpaceCameraPos.xyz.xyz);
   tmpvar_1.w = float(vec4(1.000000));
   vec3 tmpvar_2;
   tmpvar_2 = ((_World2Object * tmpvar_1).xyz * unity_Scale.w);
@@ -79,7 +79,7 @@ vec4 ComputeScreenPos (
   o.xy = tmpvar_3.xy;
   vec2 tmpvar_4;
   tmpvar_4 = pos.zw;
-  o.zw = vec2(tmpvar_4.xxxy);
+  o.zw = vec2(tmpvar_4.xy);
   return o;
 }
 
@@ -100,7 +100,7 @@ v2f_surf vert_surf (
   o.hip_pack0.xy = tmpvar_1.xy;
   vec2 tmpvar_2;
   tmpvar_2 = ((v.texcoord.xy * _BumpMap_ST.xy) + _BumpMap_ST.zw);
-  o.hip_pack0.zw = vec2(tmpvar_2.xxxy);
+  o.hip_pack0.zw = vec2(tmpvar_2.xy);
   vec2 tmpvar_3;
   tmpvar_3 = ((v.texcoord.xy * _Illum_ST.xy) + _Illum_ST.zw);
   o.hip_pack1 = tmpvar_3.xy;
@@ -213,14 +213,14 @@ void main ()
   tmpvar_20 = tmpvar_19;
   gl_TexCoord[0] = tmpvar_20;
   vec4 tmpvar_21;
-  tmpvar_21.xy = vec2(xl_retval.hip_pack1.xyxx);
+  tmpvar_21.xy = vec2(xl_retval.hip_pack1.xy);
   tmpvar_21.z = float(vec4(0.000000));
   tmpvar_21.w = float(vec4(0.000000));
   vec4 tmpvar_22;
   tmpvar_22 = tmpvar_21;
   gl_TexCoord[1] = tmpvar_22;
   vec4 tmpvar_23;
-  tmpvar_23.xyz = vec3(xl_retval.viewDir.xyzx);
+  tmpvar_23.xyz = vec3(xl_retval.viewDir.xyz);
   tmpvar_23.w = float(vec4(0.000000));
   vec4 tmpvar_24;
   tmpvar_24 = tmpvar_23;

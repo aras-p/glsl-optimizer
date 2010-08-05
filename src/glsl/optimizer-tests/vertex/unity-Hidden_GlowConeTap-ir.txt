@@ -73,7 +73,7 @@ v2f vert (
   tmpvar_9.y = float(vec2(offY));
   vec2 tmpvar_10;
   tmpvar_10 = (uv + tmpvar_9);
-  o.uv[0].zw = vec2(tmpvar_10.xxxy);
+  o.uv[0].zw = vec2(tmpvar_10.xy);
   vec2 tmpvar_11;
   tmpvar_11.x = float(vec2(offX));
   tmpvar_11.y = float(vec2(-(offY)));
@@ -85,7 +85,7 @@ v2f vert (
   tmpvar_13.y = float(vec2(-(offY)));
   vec2 tmpvar_14;
   tmpvar_14 = (uv + tmpvar_13);
-  o.uv[1].zw = vec2(tmpvar_14.xxxy);
+  o.uv[1].zw = vec2(tmpvar_14.xy);
   return o;
 }
 

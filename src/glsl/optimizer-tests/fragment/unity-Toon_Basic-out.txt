@@ -21,8 +21,8 @@ void main ()
   vec4 tmpvar_13;
   tmpvar_13 = textureCube (_ToonShade, i.cubenormal);
   vec4 tmpvar_15;
-  tmpvar_15.xyz = vec3(((2.000000 * tmpvar_13.xyz) * col.xyz).xyzx);
-  tmpvar_15.w = float(col.wwww);
+  tmpvar_15.xyz = vec3(((2.000000 * tmpvar_13.xyz) * col.xyz).xyz);
+  tmpvar_15.w = float(col.w);
   gl_FragData[0] = tmpvar_15.xyzw;
 }
 

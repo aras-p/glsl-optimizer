@@ -53,7 +53,7 @@ vec4 ComputeScreenPos (
   o.xy = tmpvar_3.xy;
   vec2 tmpvar_4;
   tmpvar_4 = pos.zw;
-  o.zw = vec2(tmpvar_4.xxxy);
+  o.zw = vec2(tmpvar_4.xy);
   return o;
 }
 

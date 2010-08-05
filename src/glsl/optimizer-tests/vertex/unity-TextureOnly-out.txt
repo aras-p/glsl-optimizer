@@ -9,7 +9,7 @@ void main ()
   o.uv = gl_MultiTexCoord0.xy;
   gl_Position = o.vertex.xyzw;
   vec4 tmpvar_7;
-  tmpvar_7.xy = vec2(o.uv.xyxx);
+  tmpvar_7.xy = vec2(o.uv.xy);
   tmpvar_7.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_7.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[0] = tmpvar_7;

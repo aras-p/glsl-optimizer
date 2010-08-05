@@ -62,7 +62,7 @@ vec4 Squash (
   vec3 tmpvar_9;
   tmpvar_9 = mix (projectedVertex, pos.xyz, tmpvar_8);
   vec4 tmpvar_10;
-  tmpvar_10.xyz = vec3(tmpvar_9.xyzx);
+  tmpvar_10.xyz = vec3(tmpvar_9.xyz);
   tmpvar_10.w = float(vec4(1.000000));
   vec4 tmpvar_11;
   tmpvar_11 = tmpvar_10;
@@ -93,7 +93,7 @@ void ExpandBillboard (
   tmpvar_2 = (1.000000 - tmpvar_1);
   isBillboard = tmpvar_2;
   vec4 tmpvar_3;
-  tmpvar_3.xyz = vec3(normal.xyzx);
+  tmpvar_3.xyz = vec3(normal.xyz);
   tmpvar_3.w = float(vec4(0.000000));
   vec4 tmpvar_4;
   tmpvar_4 = normalize ((tmpvar_3 * mat));
@@ -125,7 +125,7 @@ void ExpandBillboard (
   tmpvar_14 = tmpvar_13;
   normal = tmpvar_14;
   vec4 tmpvar_15;
-  tmpvar_15.xyz = vec3(tanb.xyzx);
+  tmpvar_15.xyz = vec3(tanb.xyz);
   tmpvar_15.w = float(vec4(-1.000000));
   vec4 tmpvar_16;
   tmpvar_16 = vec4(isBillboard);
@@ -266,8 +266,8 @@ void TreeVertLeaf (
   tmpvar_1 = (v.vertex.xyz * _Scale.xyz);
   v.vertex.xyz = tmpvar_1.xyz;
   vec4 tmpvar_2;
-  tmpvar_2.xy = vec2(v.color.xy.xyxx);
-  tmpvar_2.zw = vec2(v.texcoord1.xy.xxxy);
+  tmpvar_2.xy = vec2(v.color.xy.xy);
+  tmpvar_2.zw = vec2(v.texcoord1.xy.xy);
   vec4 tmpvar_3;
   tmpvar_3 = AnimateVertex (v.vertex, v.normal, tmpvar_2);
   vec4 tmpvar_4;
@@ -279,7 +279,7 @@ void TreeVertLeaf (
   tmpvar_6 = tmpvar_5;
   v.vertex = tmpvar_6;
   vec4 tmpvar_7;
-  tmpvar_7.xyz = vec3((v.color.w * _Color.xyz).xyzx);
+  tmpvar_7.xyz = vec3((v.color.w * _Color.xyz).xyz);
   tmpvar_7.w = float(vec4(_Color.w));
   vec4 tmpvar_8;
   tmpvar_8 = tmpvar_7;
@@ -326,7 +326,7 @@ vec3 ObjSpaceViewDir (
 {
   vec3 objSpaceCameraPos;
   vec4 tmpvar_1;
-  tmpvar_1.xyz = vec3(_WorldSpaceCameraPos.xyz.xyzx);
+  tmpvar_1.xyz = vec3(_WorldSpaceCameraPos.xyz.xyz);
   tmpvar_1.w = float(vec4(1.000000));
   vec3 tmpvar_2;
   tmpvar_2 = ((_World2Object * tmpvar_1).xyz * unity_Scale.w);
@@ -472,7 +472,7 @@ void main ()
   tmpvar_18 = tmpvar_17;
   xlv_FOG = tmpvar_18;
   vec4 tmpvar_19;
-  tmpvar_19.xy = vec2(xl_retval.hip_pack0.xyxx);
+  tmpvar_19.xy = vec2(xl_retval.hip_pack0.xy);
   tmpvar_19.z = float(vec4(0.000000));
   tmpvar_19.w = float(vec4(0.000000));
   vec4 tmpvar_20;
@@ -484,13 +484,13 @@ void main ()
   tmpvar_22 = tmpvar_21;
   gl_FrontColor = tmpvar_22;
   vec4 tmpvar_23;
-  tmpvar_23.xyz = vec3(xl_retval.lightDir.xyzx);
+  tmpvar_23.xyz = vec3(xl_retval.lightDir.xyz);
   tmpvar_23.w = float(vec4(0.000000));
   vec4 tmpvar_24;
   tmpvar_24 = tmpvar_23;
   gl_TexCoord[1] = tmpvar_24;
   vec4 tmpvar_25;
-  tmpvar_25.xyz = vec3(xl_retval.viewDir.xyzx);
+  tmpvar_25.xyz = vec3(xl_retval.viewDir.xyz);
   tmpvar_25.w = float(vec4(0.000000));
   vec4 tmpvar_26;
   tmpvar_26 = tmpvar_25;

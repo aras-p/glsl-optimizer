@@ -44,13 +44,13 @@ void main ()
   tmpvar_41 = abs (tangent.w);
   isBillboard = (1.000000 - tmpvar_41);
   vec4 tmpvar_43;
-  tmpvar_43.xyz = vec3(normal.xyzx);
+  tmpvar_43.xyz = vec3(normal.xyz);
   tmpvar_43.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   vec4 tmpvar_44;
   tmpvar_44 = normalize ((tmpvar_43 * mat));
   norb = tmpvar_44.xyz;
   vec4 tmpvar_47;
-  tmpvar_47.x = float(normal.zzzz);
+  tmpvar_47.x = float(normal.z);
   tmpvar_47.y = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_47.z = float(vec4(-(normal.x)));
   tmpvar_47.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
@@ -62,7 +62,7 @@ void main ()
   tmpvar_53 = mix (normal, norb, vec3(isBillboard));
   normal = tmpvar_53;
   vec4 tmpvar_55;
-  tmpvar_55.xyz = vec3(tanb.xyzx);
+  tmpvar_55.xyz = vec3(tanb.xyz);
   tmpvar_55.w = float(vec4(-1.000000, -1.000000, -1.000000, -1.000000));
   vec4 tmpvar_57;
   tmpvar_57 = mix (tangent, tmpvar_55, vec4(isBillboard));
@@ -87,12 +87,12 @@ void main ()
   o.color = (lightColor * v.color.w);
   gl_Position = o.pos.xyzw;
   vec4 tmpvar_17;
-  tmpvar_17.xy = vec2(o.uv.xyxx);
+  tmpvar_17.xy = vec2(o.uv.xy);
   tmpvar_17.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_17.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[0] = tmpvar_17;
   vec4 tmpvar_19;
-  tmpvar_19.xyz = vec3(o.color.xyzx);
+  tmpvar_19.xyz = vec3(o.color.xyz);
   tmpvar_19.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[1] = tmpvar_19;
 }

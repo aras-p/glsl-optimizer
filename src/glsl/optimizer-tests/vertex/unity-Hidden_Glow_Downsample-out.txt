@@ -18,8 +18,8 @@ void main ()
   vec2 inUV;
   inUV = xlt_v.texcoord;
   vec4 tmpvar_25;
-  tmpvar_25.x = float(inUV.xxxx);
-  tmpvar_25.y = float(inUV.yyyy);
+  tmpvar_25.x = float(inUV.x);
+  tmpvar_25.y = float(inUV.y);
   tmpvar_25.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_25.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   uv.xy = (gl_TextureMatrix[0] * tmpvar_25).xy;

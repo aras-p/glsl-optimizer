@@ -56,7 +56,7 @@ vec4 frag (
   res.y = float(vec2(tmpvar_16));
   vec2 tmpvar_17;
   tmpvar_17 = v00.zw;
-  res.zw = vec2(tmpvar_17.xxxy);
+  res.zw = vec2(tmpvar_17.xy);
   return res;
 }
 

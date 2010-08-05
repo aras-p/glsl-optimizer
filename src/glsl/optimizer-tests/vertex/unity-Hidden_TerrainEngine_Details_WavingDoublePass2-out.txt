@@ -70,7 +70,7 @@ void main ()
   float tmpvar_157;
   tmpvar_157 = dot (s, vec4(0.006000, 0.020000, -0.020000, 0.100000));
   waveMove.z = float(vec3(tmpvar_157));
-  vertex.xz = vec2((vertex.xz - (waveMove.xz * _WaveAndDistance.z)).xxy);
+  vertex.xz = vec2((vertex.xz - (waveMove.xz * _WaveAndDistance.z)).xy);
   vec3 tmpvar_161;
   tmpvar_161 = mix (vec3(0.500000, 0.500000, 0.500000), _WavingTint.xyz, vec3(lighting));
   outColor.xyz = ((color_i0 * tmpvar_161) * 2.000000).xyz;
@@ -90,10 +90,10 @@ void main ()
   tmpvar_172 = (pos_i0 * 0.500000);
   o_i0 = tmpvar_172;
   vec2 tmpvar_173;
-  tmpvar_173.x = float(tmpvar_172.xx);
+  tmpvar_173.x = float(tmpvar_172.x);
   tmpvar_173.y = float(vec2((tmpvar_172.y * _ProjectionParams.x)));
   o_i0.xy = (tmpvar_173 + tmpvar_172.w).xy;
-  o_i0.zw = vec2(pos_i0.zzzw);
+  o_i0.zw = vec2(pos_i0.zw);
   o.hip_screen = o_i0;
   gl_Position = o.pos.xyzw;
   vec4 tmpvar_17;
@@ -103,7 +103,7 @@ void main ()
   tmpvar_17.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   xlv_FOG = tmpvar_17;
   vec4 tmpvar_19;
-  tmpvar_19.xy = vec2(o.hip_pack0.xyxx);
+  tmpvar_19.xy = vec2(o.hip_pack0.xy);
   tmpvar_19.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_19.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[0] = tmpvar_19;

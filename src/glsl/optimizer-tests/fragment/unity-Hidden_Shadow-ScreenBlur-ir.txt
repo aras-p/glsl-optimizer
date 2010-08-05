@@ -132,7 +132,7 @@ vec4 frag (
   float diff;
   float shadow;
   vec4 tmpvar_2;
-  tmpvar_2.xy = vec2(i.uv.xyxx);
+  tmpvar_2.xy = vec2(i.uv.xy);
   tmpvar_2.z = float(vec4(0.000000));
   tmpvar_2.w = float(vec4(0.000000));
   vec4 tmpvar_3;

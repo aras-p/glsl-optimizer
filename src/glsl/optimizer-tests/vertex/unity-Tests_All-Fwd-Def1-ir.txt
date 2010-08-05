@@ -55,7 +55,7 @@ vec4 ComputeScreenPos (
   o.xy = tmpvar_3.xy;
   vec2 tmpvar_4;
   tmpvar_4 = pos.zw;
-  o.zw = vec2(tmpvar_4.xxxy);
+  o.zw = vec2(tmpvar_4.xy);
   return o;
 }
 
@@ -143,7 +143,7 @@ void main ()
   tmpvar_20 = tmpvar_19;
   gl_TexCoord[0] = tmpvar_20;
   vec4 tmpvar_21;
-  tmpvar_21.xyz = vec3(xl_retval.hip_lmapFade.xyzx);
+  tmpvar_21.xyz = vec3(xl_retval.hip_lmapFade.xyz);
   tmpvar_21.w = float(vec4(0.000000));
   vec4 tmpvar_22;
   tmpvar_22 = tmpvar_21;

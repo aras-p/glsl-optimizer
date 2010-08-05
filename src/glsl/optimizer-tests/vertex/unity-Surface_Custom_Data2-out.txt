@@ -45,10 +45,10 @@ void main ()
   tmpvar_40 = (pos_i0 * 0.500000);
   o_i0_i0 = tmpvar_40;
   vec2 tmpvar_41;
-  tmpvar_41.x = float(tmpvar_40.xx);
+  tmpvar_41.x = float(tmpvar_40.x);
   tmpvar_41.y = float(vec2((tmpvar_40.y * _ProjectionParams.x)));
   o_i0_i0.xy = (tmpvar_41 + tmpvar_40.w).xy;
-  o_i0_i0.zw = vec2(pos_i0.zzzw);
+  o_i0_i0.zw = vec2(pos_i0.zw);
   o.hip_screen = o_i0_i0;
   o.hip_lmapFade.xy = ((xlt_v.texcoord1.xy * unity_LightmapST.xy) + unity_LightmapST.zw).xy;
   o.hip_lmapFade.z = float(vec3(((-((gl_ModelViewMatrix * xlt_v.vertex).z) * unity_LightmapFade.z) + unity_LightmapFade.w)));
@@ -60,12 +60,12 @@ void main ()
   tmpvar_17.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   xlv_FOG = tmpvar_17;
   vec4 tmpvar_19;
-  tmpvar_19.xyz = vec3(o.cust_foo.xyzx);
+  tmpvar_19.xyz = vec3(o.cust_foo.xyz);
   tmpvar_19.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[0] = tmpvar_19;
   gl_TexCoord[1] = o.hip_screen.xyzw;
   vec4 tmpvar_23;
-  tmpvar_23.xyz = vec3(o.hip_lmapFade.xyzx);
+  tmpvar_23.xyz = vec3(o.hip_lmapFade.xyz);
   tmpvar_23.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[2] = tmpvar_23;
 }

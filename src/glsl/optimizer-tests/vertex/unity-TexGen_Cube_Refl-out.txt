@@ -22,7 +22,7 @@ void main ()
   v2f o;
   o.vertex = (gl_ModelViewProjectionMatrix * xlt_v.vertex);
   vec4 tmpvar_22;
-  tmpvar_22.xyz = vec3(_WorldSpaceCameraPos.xyzx);
+  tmpvar_22.xyz = vec3(_WorldSpaceCameraPos.xyz);
   tmpvar_22.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
   vec3 tmpvar_24;
   tmpvar_24 = normalize ((((_World2Object * tmpvar_22).xyz * unity_Scale.w) - xlt_v.vertex.xyz));
@@ -30,14 +30,14 @@ void main ()
   tmpvar_26 = reflect (-(tmpvar_24), v.normal);
   o.texcoord = tmpvar_26;
   vec4 tmpvar_28;
-  tmpvar_28.xyz = vec3(o.texcoord.xyzx);
+  tmpvar_28.xyz = vec3(o.texcoord.xyz);
   tmpvar_28.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   o.texcoord = (gl_ModelViewMatrix * tmpvar_28).xyz;
   o.color = v.color;
   gl_Position = o.vertex.xyzw;
   gl_FrontColor = o.color.xyzw;
   vec4 tmpvar_13;
-  tmpvar_13.xyz = vec3(o.texcoord.xyzx);
+  tmpvar_13.xyz = vec3(o.texcoord.xyz);
   tmpvar_13.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[0] = tmpvar_13;
 }

@@ -103,14 +103,14 @@ void main ()
   tmpvar_16 = tmpvar_15;
   gl_FrontColor = tmpvar_16;
   vec4 tmpvar_17;
-  tmpvar_17.xy = vec2(xl_retval.texcoord.xyxx);
+  tmpvar_17.xy = vec2(xl_retval.texcoord.xy);
   tmpvar_17.z = float(vec4(0.000000));
   tmpvar_17.w = float(vec4(0.000000));
   vec4 tmpvar_18;
   tmpvar_18 = tmpvar_17;
   gl_TexCoord[0] = tmpvar_18;
   vec4 tmpvar_19;
-  tmpvar_19.xyz = vec3(xl_retval.normal.xyzx);
+  tmpvar_19.xyz = vec3(xl_retval.normal.xyz);
   tmpvar_19.w = float(vec4(0.000000));
   vec4 tmpvar_20;
   tmpvar_20 = tmpvar_19;

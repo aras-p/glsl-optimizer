@@ -28,7 +28,7 @@ v2f vert (
   o.uv.xy = tmpvar_4.xy;
   vec2 tmpvar_5;
   tmpvar_5 = o.vertex.zw;
-  o.uv.zw = vec2(tmpvar_5.xxxy);
+  o.uv.zw = vec2(tmpvar_5.xy);
   return o;
 }
 

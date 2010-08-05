@@ -84,7 +84,7 @@ void main ()
   float tmpvar_161;
   tmpvar_161 = dot (s, vec4(0.006000, 0.020000, -0.020000, 0.100000));
   waveMove.z = float(vec3(tmpvar_161));
-  vertex.xz = vec2((vertex.xz - (waveMove.xz * _WaveAndDistance.z)).xxy);
+  vertex.xz = vec2((vertex.xz - (waveMove.xz * _WaveAndDistance.z)).xy);
   vec3 tmpvar_165;
   tmpvar_165 = mix (vec3(0.500000, 0.500000, 0.500000), _WavingTint.xyz, vec3(lighting));
   outColor.xyz = ((color_i0 * tmpvar_165) * 2.000000).xyz;
@@ -100,7 +100,7 @@ void main ()
   };
   gl_Position = o.pos.xyzw;
   vec4 tmpvar_17;
-  tmpvar_17.xy = vec2(o.hip_pack0.xyxx);
+  tmpvar_17.xy = vec2(o.hip_pack0.xy);
   tmpvar_17.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_17.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[1] = tmpvar_17;

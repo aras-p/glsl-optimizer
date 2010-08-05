@@ -36,10 +36,10 @@ void main ()
   tmpvar_40 = (pos_i0 * 0.500000);
   o_i0 = tmpvar_40;
   vec2 tmpvar_41;
-  tmpvar_41.x = float(tmpvar_40.xx);
+  tmpvar_41.x = float(tmpvar_40.x);
   tmpvar_41.y = float(vec2((tmpvar_40.y * _ProjectionParams.x)));
   o_i0.xy = (tmpvar_41 + tmpvar_40.w).xy;
-  o_i0.zw = vec2(pos_i0.zzzw);
+  o_i0.zw = vec2(pos_i0.zw);
   o.hip_screenPos = o_i0;
   vec4 pos_i0_i1;
   pos_i0_i1 = o.pos;
@@ -48,10 +48,10 @@ void main ()
   tmpvar_47 = (pos_i0_i1 * 0.500000);
   o_i0_i1 = tmpvar_47;
   vec2 tmpvar_48;
-  tmpvar_48.x = float(tmpvar_47.xx);
+  tmpvar_48.x = float(tmpvar_47.x);
   tmpvar_48.y = float(vec2((tmpvar_47.y * _ProjectionParams.x)));
   o_i0_i1.xy = (tmpvar_48 + tmpvar_47.w).xy;
-  o_i0_i1.zw = vec2(pos_i0_i1.zzzw);
+  o_i0_i1.zw = vec2(pos_i0_i1.zw);
   o.hip_screen = o_i0_i1;
   gl_Position = o.pos.xyzw;
   vec4 tmpvar_17;

@@ -19,17 +19,17 @@ void main ()
   o.pos = (gl_ModelViewProjectionMatrix * xlt_v.vertex);
   o.texcoord = ((xlt_v.texcoord.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
   vec4 tmpvar_18;
-  tmpvar_18.xyz = vec3(xlt_v.normal.xyzx);
+  tmpvar_18.xyz = vec3(xlt_v.normal.xyz);
   tmpvar_18.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   o.cubenormal = (gl_ModelViewMatrix * tmpvar_18).xyz;
   gl_Position = o.pos.xyzw;
   vec4 tmpvar_11;
-  tmpvar_11.xy = vec2(o.texcoord.xyxx);
+  tmpvar_11.xy = vec2(o.texcoord.xy);
   tmpvar_11.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_11.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[0] = tmpvar_11;
   vec4 tmpvar_13;
-  tmpvar_13.xyz = vec3(o.cubenormal.xyzx);
+  tmpvar_13.xyz = vec3(o.cubenormal.xyz);
   tmpvar_13.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[1] = tmpvar_13;
 }

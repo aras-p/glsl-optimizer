@@ -41,10 +41,10 @@ void main ()
   tmpvar_39 = (pos_i0 * 0.500000);
   o_i0 = tmpvar_39;
   vec2 tmpvar_40;
-  tmpvar_40.x = float(tmpvar_39.xx);
+  tmpvar_40.x = float(tmpvar_39.x);
   tmpvar_40.y = float(vec2((tmpvar_39.y * _ProjectionParams.x)));
   o_i0.xy = (tmpvar_40 + tmpvar_39.w).xy;
-  o_i0.zw = vec2(pos_i0.zzzw);
+  o_i0.zw = vec2(pos_i0.zw);
   o.hip_screen = o_i0;
   gl_Position = o.pos.xyzw;
   vec4 tmpvar_17;
@@ -54,12 +54,12 @@ void main ()
   tmpvar_17.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   xlv_FOG = tmpvar_17;
   vec4 tmpvar_19;
-  tmpvar_19.xy = vec2(o.hip_pack0.xyxx);
+  tmpvar_19.xy = vec2(o.hip_pack0.xy);
   tmpvar_19.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_19.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[0] = tmpvar_19;
   vec4 tmpvar_21;
-  tmpvar_21.xyz = vec3(o.worldPos.xyzx);
+  tmpvar_21.xyz = vec3(o.worldPos.xyz);
   tmpvar_21.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[1] = tmpvar_21;
   gl_TexCoord[2] = o.hip_screen.xyzw;

@@ -55,7 +55,7 @@ vec4 ComputeScreenPos (
   o.xy = tmpvar_3.xy;
   vec2 tmpvar_4;
   tmpvar_4 = pos.zw;
-  o.zw = vec2(tmpvar_4.xxxy);
+  o.zw = vec2(tmpvar_4.xy);
   return o;
 }
 
@@ -74,7 +74,7 @@ v2f_surf vert_surf (
   o.hip_pack0.xy = tmpvar_1.xy;
   vec2 tmpvar_2;
   tmpvar_2 = ((v.texcoord.xy * _DecalTex_ST.xy) + _DecalTex_ST.zw);
-  o.hip_pack0.zw = vec2(tmpvar_2.xxxy);
+  o.hip_pack0.zw = vec2(tmpvar_2.xy);
   vec4 tmpvar_3;
   tmpvar_3 = ComputeScreenPos (o.pos);
   vec4 tmpvar_4;

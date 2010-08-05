@@ -44,7 +44,7 @@ void main ()
   float tmpvar_29;
   tmpvar_29 = min (tmpvar_27, tmpvar_28);
   res.y = float(vec2(tmpvar_29));
-  res.zw = vec2(v00.zzzw);
+  res.zw = vec2(v00.zw);
   gl_FragData[0] = res.xyzw;
 }
 

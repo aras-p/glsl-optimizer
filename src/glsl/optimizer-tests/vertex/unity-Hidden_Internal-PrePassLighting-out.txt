@@ -24,10 +24,10 @@ void main ()
   tmpvar_22 = (pos * 0.500000);
   o_i0 = tmpvar_22;
   vec2 tmpvar_23;
-  tmpvar_23.x = float(tmpvar_22.xx);
+  tmpvar_23.x = float(tmpvar_22.x);
   tmpvar_23.y = float(vec2((tmpvar_22.y * _ProjectionParams.x)));
   o_i0.xy = (tmpvar_23 + tmpvar_22.w).xy;
-  o_i0.zw = vec2(pos.zzzw);
+  o_i0.zw = vec2(pos.zw);
   o.uv = o_i0;
   o.ray = ((gl_ModelViewMatrix * xlt_v.vertex).xyz * vec3(-1.000000, -1.000000, 1.000000));
   vec3 tmpvar_29;
@@ -36,7 +36,7 @@ void main ()
   gl_Position = o.pos.xyzw;
   gl_TexCoord[0] = o.uv.xyzw;
   vec4 tmpvar_11;
-  tmpvar_11.xyz = vec3(o.ray.xyzx);
+  tmpvar_11.xyz = vec3(o.ray.xyz);
   tmpvar_11.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[1] = tmpvar_11;
 }

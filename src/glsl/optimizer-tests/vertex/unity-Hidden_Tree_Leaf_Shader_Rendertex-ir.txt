@@ -36,7 +36,7 @@ void ExpandBillboard (
   tmpvar_2 = (1.000000 - tmpvar_1);
   isBillboard = tmpvar_2;
   vec4 tmpvar_3;
-  tmpvar_3.xyz = vec3(normal.xyzx);
+  tmpvar_3.xyz = vec3(normal.xyz);
   tmpvar_3.w = float(vec4(0.000000));
   vec4 tmpvar_4;
   tmpvar_4 = normalize ((tmpvar_3 * mat));
@@ -68,7 +68,7 @@ void ExpandBillboard (
   tmpvar_14 = tmpvar_13;
   normal = tmpvar_14;
   vec4 tmpvar_15;
-  tmpvar_15.xyz = vec3(tanb.xyzx);
+  tmpvar_15.xyz = vec3(tanb.xyz);
   tmpvar_15.w = float(vec4(-1.000000));
   vec4 tmpvar_16;
   tmpvar_16 = vec4(isBillboard);
@@ -182,14 +182,14 @@ void main ()
   tmpvar_16 = tmpvar_15;
   gl_Position = tmpvar_16;
   vec4 tmpvar_17;
-  tmpvar_17.xy = vec2(xl_retval.uv.xyxx);
+  tmpvar_17.xy = vec2(xl_retval.uv.xy);
   tmpvar_17.z = float(vec4(0.000000));
   tmpvar_17.w = float(vec4(0.000000));
   vec4 tmpvar_18;
   tmpvar_18 = tmpvar_17;
   gl_TexCoord[0] = tmpvar_18;
   vec4 tmpvar_19;
-  tmpvar_19.xyz = vec3(xl_retval.color.xyzx);
+  tmpvar_19.xyz = vec3(xl_retval.color.xyz);
   tmpvar_19.w = float(vec4(0.000000));
   vec4 tmpvar_20;
   tmpvar_20 = tmpvar_19;

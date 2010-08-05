@@ -60,7 +60,7 @@ void main ()
   o.uv.y = float(vec2(float((v.texcoord.y > 0.000000))));
   gl_Position = o.pos.xyzw;
   vec4 tmpvar_13;
-  tmpvar_13.xy = vec2(o.uv.xyxx);
+  tmpvar_13.xy = vec2(o.uv.xy);
   tmpvar_13.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_13.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[0] = tmpvar_13;

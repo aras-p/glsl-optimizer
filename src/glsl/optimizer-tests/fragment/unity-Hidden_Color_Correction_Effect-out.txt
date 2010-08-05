@@ -29,7 +29,7 @@ void main ()
   tmpvar_17.x = float(vec4(rr));
   tmpvar_17.y = float(vec4(gg));
   tmpvar_17.z = float(vec4((tmpvar_15.z + 0.000030)));
-  tmpvar_17.w = float(orig.wwww);
+  tmpvar_17.w = float(orig.w);
   gl_FragData[0] = tmpvar_17.xyzw;
 }
 

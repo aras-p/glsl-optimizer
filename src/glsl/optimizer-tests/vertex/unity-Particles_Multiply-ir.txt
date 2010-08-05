@@ -65,7 +65,7 @@ void main ()
   tmpvar_12 = tmpvar_11;
   gl_FrontColor = tmpvar_12;
   vec4 tmpvar_13;
-  tmpvar_13.xy = vec2(xl_retval.texcoord.xyxx);
+  tmpvar_13.xy = vec2(xl_retval.texcoord.xy);
   tmpvar_13.z = float(vec4(0.000000));
   tmpvar_13.w = float(vec4(0.000000));
   vec4 tmpvar_14;

@@ -39,7 +39,7 @@ void main ()
   o.pos = tmpvar_43;
   o.fog = tmpvar_43.z;
   o.hip_pack0.xy = ((xlt_v.texcoord.xy * _MainTex_ST.xy) + _MainTex_ST.zw).xy;
-  o.hip_pack0.zw = vec2(((xlt_v.texcoord.xy * _SpecMap_ST.xy) + _SpecMap_ST.zw).xxxy);
+  o.hip_pack0.zw = vec2(((xlt_v.texcoord.xy * _SpecMap_ST.xy) + _SpecMap_ST.zw).xy);
   mat3 tmpvar_52;
   tmpvar_52[0] = _Object2World[0].xyz;
   tmpvar_52[1] = _Object2World[1].xyz;
@@ -57,15 +57,15 @@ void main ()
   xlv_FOG = tmpvar_17;
   gl_TexCoord[0] = o.hip_pack0.xyzw;
   vec4 tmpvar_21;
-  tmpvar_21.xyz = vec3(o.normal.xyzx);
+  tmpvar_21.xyz = vec3(o.normal.xyz);
   tmpvar_21.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[1] = tmpvar_21;
   vec4 tmpvar_23;
-  tmpvar_23.xyz = vec3(o.lightDir.xyzx);
+  tmpvar_23.xyz = vec3(o.lightDir.xyz);
   tmpvar_23.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[2] = tmpvar_23;
   vec4 tmpvar_25;
-  tmpvar_25.xyz = vec3(o.viewDir.xyzx);
+  tmpvar_25.xyz = vec3(o.viewDir.xyz);
   tmpvar_25.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[3] = tmpvar_25;
   gl_TexCoord[4] = o._LightCoord.xyzw;

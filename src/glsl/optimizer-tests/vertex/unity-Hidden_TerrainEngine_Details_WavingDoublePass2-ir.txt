@@ -162,7 +162,7 @@ void TerrainWaveGrass (
   waveMove.z = float(vec3(tmpvar_21));
   vec2 tmpvar_22;
   tmpvar_22 = (vertex.xz - (waveMove.xz * _WaveAndDistance.z));
-  vertex.xz = vec2(tmpvar_22.xxy);
+  vertex.xz = vec2(tmpvar_22.xy);
   vec3 tmpvar_23;
   tmpvar_23 = vec3(lighting);
   vec3 tmpvar_24;
@@ -237,7 +237,7 @@ vec4 ComputeScreenPos (
   o.xy = tmpvar_3.xy;
   vec2 tmpvar_4;
   tmpvar_4 = pos.zw;
-  o.zw = vec2(tmpvar_4.xxxy);
+  o.zw = vec2(tmpvar_4.xy);
   return o;
 }
 
@@ -321,7 +321,7 @@ void main ()
   tmpvar_18 = tmpvar_17;
   xlv_FOG = tmpvar_18;
   vec4 tmpvar_19;
-  tmpvar_19.xy = vec2(xl_retval.hip_pack0.xyxx);
+  tmpvar_19.xy = vec2(xl_retval.hip_pack0.xy);
   tmpvar_19.z = float(vec4(0.000000));
   tmpvar_19.w = float(vec4(0.000000));
   vec4 tmpvar_20;

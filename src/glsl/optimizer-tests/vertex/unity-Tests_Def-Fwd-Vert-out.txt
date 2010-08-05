@@ -57,7 +57,7 @@ void main ()
   worldN = tmpvar_84;
   o.normal = tmpvar_84;
   vec4 tmpvar_86;
-  tmpvar_86.xyz = vec3(tmpvar_84.xyzx);
+  tmpvar_86.xyz = vec3(tmpvar_84.xyz);
   tmpvar_86.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
   vec4 normal;
   normal = tmpvar_86;
@@ -122,11 +122,11 @@ void main ()
   tmpvar_17.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   xlv_FOG = tmpvar_17;
   vec4 tmpvar_19;
-  tmpvar_19.xyz = vec3(o.normal.xyzx);
+  tmpvar_19.xyz = vec3(o.normal.xyz);
   tmpvar_19.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[0] = tmpvar_19;
   vec4 tmpvar_21;
-  tmpvar_21.xyz = vec3(o.vlight.xyzx);
+  tmpvar_21.xyz = vec3(o.vlight.xyz);
   tmpvar_21.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[1] = tmpvar_21;
 }

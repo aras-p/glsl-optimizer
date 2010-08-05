@@ -45,7 +45,7 @@ void main ()
   vec3 tmpvar_43;
   tmpvar_43 = mix (tmpvar_40.xyz, _horizonColor.xyz, tmpvar_40.www);
   col.xyz = tmpvar_43.xyz;
-  col.w = float(_horizonColor.wwww);
+  col.w = float(_horizonColor.w);
   gl_FragData[0] = col.xyzw;
 }
 

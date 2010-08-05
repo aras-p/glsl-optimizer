@@ -99,7 +99,7 @@ void main ()
   tmpvar_16 = tmpvar_15;
   gl_Position = tmpvar_16;
   vec4 tmpvar_17;
-  tmpvar_17.xyz = vec3(xl_retval.normal.xyzx);
+  tmpvar_17.xyz = vec3(xl_retval.normal.xyz);
   tmpvar_17.w = float(vec4(0.000000));
   vec4 tmpvar_18;
   tmpvar_18 = tmpvar_17;

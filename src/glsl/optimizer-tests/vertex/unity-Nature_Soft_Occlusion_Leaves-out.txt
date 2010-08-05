@@ -58,7 +58,7 @@ void main ()
   pos = xlt_v.vertex;
   pos.xyz = (pos.xyz * _Scale.xyz).xyz;
   vec4 tmpvar_135;
-  tmpvar_135.xyz = vec3(pos.xyzx);
+  tmpvar_135.xyz = vec3(pos.xyz);
   tmpvar_135.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   vec3 tmpvar_138;
   tmpvar_138 = mix (pos.xyz, (_TerrainEngineBendTree * tmpvar_135).xyz, xlt_v.color.www);
@@ -70,7 +70,7 @@ void main ()
   projectedVertex = pos.xyz;
   vec3 tmpvar_143;
   tmpvar_143.x = float(vec3(0.000000, 0.000000, 0.000000));
-  tmpvar_143.y = float(_SquashPlaneNormal.www);
+  tmpvar_143.y = float(_SquashPlaneNormal.w);
   tmpvar_143.z = float(vec3(0.000000, 0.000000, 0.000000));
   planeNormal = _SquashPlaneNormal.xyz;
   float tmpvar_147;
@@ -79,7 +79,7 @@ void main ()
   vec3 tmpvar_150;
   tmpvar_150 = mix (projectedVertex, pos_i0.xyz, vec3(_SquashAmount));
   vec4 tmpvar_151;
-  tmpvar_151.xyz = vec3(tmpvar_150.xyzx);
+  tmpvar_151.xyz = vec3(tmpvar_150.xyz);
   tmpvar_151.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
   pos_i0 = tmpvar_151;
   pos = tmpvar_151;
@@ -99,7 +99,7 @@ void main ()
   worldN = tmpvar_166;
   o.normal = tmpvar_166;
   vec4 tmpvar_168;
-  tmpvar_168.xyz = vec3(tmpvar_166.xyzx);
+  tmpvar_168.xyz = vec3(tmpvar_166.xyz);
   tmpvar_168.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
   vec4 normal;
   normal = tmpvar_168;
@@ -163,10 +163,10 @@ void main ()
   tmpvar_216 = (pos_i0_i1_i2_i3 * 0.500000);
   o_i0 = tmpvar_216;
   vec2 tmpvar_217;
-  tmpvar_217.x = float(tmpvar_216.xx);
+  tmpvar_217.x = float(tmpvar_216.x);
   tmpvar_217.y = float(vec2((tmpvar_216.y * _ProjectionParams.x)));
   o_i0.xy = (tmpvar_217 + tmpvar_216.w).xy;
-  o_i0.zw = vec2(pos_i0_i1_i2_i3.zzzw);
+  o_i0.zw = vec2(pos_i0_i1_i2_i3.zw);
   o._ShadowCoord = o_i0;
   gl_Position = o.pos.xyzw;
   vec4 tmpvar_17;
@@ -176,16 +176,16 @@ void main ()
   tmpvar_17.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   xlv_FOG = tmpvar_17;
   vec4 tmpvar_19;
-  tmpvar_19.xy = vec2(o.hip_pack0.xyxx);
+  tmpvar_19.xy = vec2(o.hip_pack0.xy);
   tmpvar_19.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_19.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[0] = tmpvar_19;
   vec4 tmpvar_21;
-  tmpvar_21.xyz = vec3(o.normal.xyzx);
+  tmpvar_21.xyz = vec3(o.normal.xyz);
   tmpvar_21.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[1] = tmpvar_21;
   vec4 tmpvar_23;
-  tmpvar_23.xyz = vec3(o.vlight.xyzx);
+  tmpvar_23.xyz = vec3(o.vlight.xyz);
   tmpvar_23.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[2] = tmpvar_23;
   gl_TexCoord[3] = o._ShadowCoord.xyzw;

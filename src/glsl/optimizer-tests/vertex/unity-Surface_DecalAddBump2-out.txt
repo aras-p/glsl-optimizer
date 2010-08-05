@@ -34,7 +34,7 @@ void main ()
   o.pos = tmpvar_34;
   o.fog = tmpvar_34.z;
   o.hip_pack0.xy = ((xlt_v.texcoord.xy * _Decal_ST.xy) + _Decal_ST.zw).xy;
-  o.hip_pack0.zw = vec2(((xlt_v.texcoord.xy * _DecalBump_ST.xy) + _DecalBump_ST.zw).xxxy);
+  o.hip_pack0.zw = vec2(((xlt_v.texcoord.xy * _DecalBump_ST.xy) + _DecalBump_ST.zw).xy);
   o.hip_lmap = ((xlt_v.texcoord1.xy * unity_LightmapST.xy) + unity_LightmapST.zw).xy;
   gl_Position = o.pos.xyzw;
   vec4 tmpvar_17;
@@ -45,7 +45,7 @@ void main ()
   xlv_FOG = tmpvar_17;
   gl_TexCoord[0] = o.hip_pack0.xyzw;
   vec4 tmpvar_21;
-  tmpvar_21.xy = vec2(o.hip_lmap.xyxx);
+  tmpvar_21.xy = vec2(o.hip_lmap.xy);
   tmpvar_21.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_21.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[1] = tmpvar_21;

@@ -259,7 +259,7 @@ vec4 ComputeScreenPos (
   o.xy = tmpvar_3.xy;
   vec2 tmpvar_4;
   tmpvar_4 = pos.zw;
-  o.zw = vec2(tmpvar_4.xxxy);
+  o.zw = vec2(tmpvar_4.xy);
   return o;
 }
 
@@ -281,13 +281,13 @@ v2f_surf vert_surf (
   o.hip_pack0.xy = tmpvar_1.xy;
   vec2 tmpvar_2;
   tmpvar_2 = ((v.texcoord.xy * _Splat0_ST.xy) + _Splat0_ST.zw);
-  o.hip_pack0.zw = vec2(tmpvar_2.xxxy);
+  o.hip_pack0.zw = vec2(tmpvar_2.xy);
   vec2 tmpvar_3;
   tmpvar_3 = ((v.texcoord.xy * _Splat1_ST.xy) + _Splat1_ST.zw);
   o.hip_pack1.xy = tmpvar_3.xy;
   vec2 tmpvar_4;
   tmpvar_4 = ((v.texcoord.xy * _Splat2_ST.xy) + _Splat2_ST.zw);
-  o.hip_pack1.zw = vec2(tmpvar_4.xxxy);
+  o.hip_pack1.zw = vec2(tmpvar_4.xy);
   vec2 tmpvar_5;
   tmpvar_5 = ((v.texcoord.xy * _Splat3_ST.xy) + _Splat3_ST.zw);
   o.hip_pack2 = tmpvar_5.xy;
@@ -300,7 +300,7 @@ v2f_surf vert_surf (
   tmpvar_8 = worldN;
   o.normal = tmpvar_8;
   vec4 tmpvar_9;
-  tmpvar_9.xyz = vec3(worldN.xyzx);
+  tmpvar_9.xyz = vec3(worldN.xyz);
   tmpvar_9.w = float(vec4(1.000000));
   vec3 tmpvar_10;
   tmpvar_10 = ShadeSH9 (tmpvar_9);
@@ -391,20 +391,20 @@ void main ()
   tmpvar_22 = tmpvar_21;
   gl_TexCoord[1] = tmpvar_22;
   vec4 tmpvar_23;
-  tmpvar_23.xy = vec2(xl_retval.hip_pack2.xyxx);
+  tmpvar_23.xy = vec2(xl_retval.hip_pack2.xy);
   tmpvar_23.z = float(vec4(0.000000));
   tmpvar_23.w = float(vec4(0.000000));
   vec4 tmpvar_24;
   tmpvar_24 = tmpvar_23;
   gl_TexCoord[2] = tmpvar_24;
   vec4 tmpvar_25;
-  tmpvar_25.xyz = vec3(xl_retval.normal.xyzx);
+  tmpvar_25.xyz = vec3(xl_retval.normal.xyz);
   tmpvar_25.w = float(vec4(0.000000));
   vec4 tmpvar_26;
   tmpvar_26 = tmpvar_25;
   gl_TexCoord[3] = tmpvar_26;
   vec4 tmpvar_27;
-  tmpvar_27.xyz = vec3(xl_retval.vlight.xyzx);
+  tmpvar_27.xyz = vec3(xl_retval.vlight.xyz);
   tmpvar_27.w = float(vec4(0.000000));
   vec4 tmpvar_28;
   tmpvar_28 = tmpvar_27;

@@ -74,7 +74,7 @@ void main ()
   vec4 tmpvar_50;
   tmpvar_50 = (near * vec4(tmpvar_47).xyzw);
   vec4 tmpvar_51;
-  tmpvar_51.xyz = vec3(((((IN._ShadowCoord0 * tmpvar_50.x) + (IN._ShadowCoord1 * tmpvar_50.y)) + (IN._ShadowCoord2 * tmpvar_50.z)) + (IN._ShadowCoord3 * tmpvar_50.w)).xyzx);
+  tmpvar_51.xyz = vec3(((((IN._ShadowCoord0 * tmpvar_50.x) + (IN._ShadowCoord1 * tmpvar_50.y)) + (IN._ShadowCoord2 * tmpvar_50.z)) + (IN._ShadowCoord3 * tmpvar_50.w)).xyz);
   tmpvar_51.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
   coord = tmpvar_51;
   vec4 tmpvar_53;
@@ -98,7 +98,7 @@ void main ()
   tmpvar_70 = fract (enc);
   enc = tmpvar_70;
   enc.x = (tmpvar_70.x - (tmpvar_70.y * 0.003922));
-  res.zw = vec2(enc.xxxy);
+  res.zw = vec2(enc.xy);
   gl_FragData[0] = res.xyzw;
 }
 

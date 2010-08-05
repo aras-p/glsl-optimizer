@@ -30,7 +30,7 @@ void main ()
   tmpvar_56 = fract (enc_i0_i1);
   enc_i0_i1 = tmpvar_56;
   enc_i0_i1.x = (tmpvar_56.x - (tmpvar_56.y * 0.003922));
-  enc.zw = vec2(enc_i0_i1.xxxy);
+  enc.zw = vec2(enc_i0_i1.xy);
   gl_FragData[0] = enc.xyzw;
 }
 

@@ -37,7 +37,7 @@ void main ()
   o.pos = tmpvar_49;
   o.fog = tmpvar_49.z;
   vec4 tmpvar_53;
-  tmpvar_53.xyz = vec3(_WorldSpaceCameraPos.xyzx);
+  tmpvar_53.xyz = vec3(_WorldSpaceCameraPos.xyz);
   tmpvar_53.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
   vec3 tmpvar_56;
   tmpvar_56 = reflect (-((((_World2Object * tmpvar_53).xyz * unity_Scale.w) - xlt_v.vertex.xyz)), v.normal);
@@ -60,15 +60,15 @@ void main ()
   tmpvar_17.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   xlv_FOG = tmpvar_17;
   vec4 tmpvar_19;
-  tmpvar_19.xyz = vec3(o.worldRefl.xyzx);
+  tmpvar_19.xyz = vec3(o.worldRefl.xyz);
   tmpvar_19.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[0] = tmpvar_19;
   vec4 tmpvar_21;
-  tmpvar_21.xyz = vec3(o.normal.xyzx);
+  tmpvar_21.xyz = vec3(o.normal.xyz);
   tmpvar_21.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[1] = tmpvar_21;
   vec4 tmpvar_23;
-  tmpvar_23.xyz = vec3(o.lightDir.xyzx);
+  tmpvar_23.xyz = vec3(o.lightDir.xyz);
   tmpvar_23.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[2] = tmpvar_23;
 }

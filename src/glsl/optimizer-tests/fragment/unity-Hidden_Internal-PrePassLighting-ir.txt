@@ -351,7 +351,7 @@ vec4 frag (
   tmpvar_23 = (atten * tmpvar_22);
   atten = tmpvar_23;
   vec4 tmpvar_24;
-  tmpvar_24.xyz = vec3(vpos.xyzx);
+  tmpvar_24.xyz = vec3(vpos.xyz);
   tmpvar_24.w = float(vec4(1.000000));
   vec4 tmpvar_25;
   tmpvar_25 = textureCube (_LightTexture0, (_ViewToCookie * tmpvar_24).xyz);

@@ -16,14 +16,14 @@ void main ()
   vec2 inUV;
   inUV = xlt_v.texcoord;
   vec4 tmpvar_19;
-  tmpvar_19.x = float(inUV.xxxx);
-  tmpvar_19.y = float(inUV.yyyy);
+  tmpvar_19.x = float(inUV.x);
+  tmpvar_19.y = float(inUV.y);
   tmpvar_19.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_19.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   o.uv = (gl_TextureMatrix[0] * tmpvar_19).xy;
   gl_Position = o.pos.xyzw;
   vec4 tmpvar_9;
-  tmpvar_9.xy = vec2(o.uv.xyxx);
+  tmpvar_9.xy = vec2(o.uv.xy);
   tmpvar_9.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_9.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[0] = tmpvar_9;
