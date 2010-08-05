@@ -684,6 +684,7 @@ void r300_mark_fb_state_dirty(struct r300_context *r300,
                               enum r300_fb_state_change change)
 {
     struct pipe_framebuffer_state *state = r300->fb_state.state;
+    boolean has_hyperz = r300->rws->get_value(r300->rws, R300_CAN_HYPERZ);
 
     /* What is marked as dirty depends on the enum r300_fb_state_change. */
     r300->gpu_flush.dirty = TRUE;
@@ -701,8 +702,11 @@ void r300_mark_fb_state_dirty(struct r300_context *r300,
 
     if (r300->cbzb_clear)
         r300->fb_state.size += 10;
-    else if (state->zsbuf)
-        r300->fb_state.size += r300->screen->caps.hiz_ram ? 18 : 14;
+    else if (state->zsbuf) {
+        r300->fb_state.size += 10;
+        if (has_hyperz)
+            r300->fb_state.size += r300->screen->caps.hiz_ram ? 8 : 4;
+    }
 
     /* The size of the rest of atoms stays the same. */
 }
