@@ -38,6 +38,7 @@ public:
 		indentation = 0;
 		buffer = buf;
 		mode = mode_;
+		writeMask = ~0;
 	}
 
 	virtual ~ir_print_glsl_visitor()
@@ -68,6 +69,7 @@ public:
 	int indentation;
 	char* buffer;
 	PrintGlslMode mode;
+	unsigned writeMask;
 };
 
 
@@ -400,7 +402,11 @@ void ir_print_glsl_visitor::visit(ir_swizzle *ir)
 			buffer = talloc_asprintf_append(buffer, "(");
 		}
 	}
+
+	unsigned oldWriteMask = this->writeMask;
+	this->writeMask = ~0;
 	ir->val->accept(this);
+	this->writeMask = oldWriteMask;
 	
 	if (ir->val->type == glsl_type::float_type)
 	{
@@ -413,7 +419,8 @@ void ir_print_glsl_visitor::visit(ir_swizzle *ir)
 
    buffer = talloc_asprintf_append(buffer, ".");
    for (unsigned i = 0; i < ir->mask.num_components; i++) {
-	   buffer = talloc_asprintf_append(buffer, "%c", "xyzw"[swiz[i]]);
+	   if (this->writeMask & (1<<i))
+		buffer = talloc_asprintf_append(buffer, "%c", "xyzw"[swiz[i]]);
    }
 }
 
@@ -454,6 +461,7 @@ void ir_print_glsl_visitor::visit(ir_assignment *ir)
    char mask[5];
    unsigned j = 0;
    const glsl_type* lhsType = ir->lhs->type;
+   unsigned oldWriteMask = this->writeMask;
    if (ir->lhs->type->vector_elements > 1 && ir->write_mask != (1<<ir->lhs->type->vector_elements)-1)
    {
 	   for (unsigned i = 0; i < 4; i++) {
@@ -463,6 +471,7 @@ void ir_print_glsl_visitor::visit(ir_assignment *ir)
 		   }
 	   }
 	   lhsType = glsl_type::get_instance(lhsType->base_type, j, 1);
+	   this->writeMask = ir->write_mask;
    }
    mask[j] = '\0';
    if (mask[0])
@@ -485,6 +494,8 @@ void ir_print_glsl_visitor::visit(ir_assignment *ir)
    {
 	   buffer = talloc_asprintf_append(buffer, ")");
    }
+
+   this->writeMask = oldWriteMask;
 }
 
 
