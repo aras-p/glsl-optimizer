@@ -1328,7 +1328,7 @@ radeonCreateScreen2(__DRIscreen *sPriv)
 	   screen->chip_flags |= RADEON_CLASS_R600;
 
    /* r6xx+ tiling */
-   if (IS_R600_CLASS(screen) && (sPriv->drm_version.minor >= 5)) {
+   if (IS_R600_CLASS(screen) && (sPriv->drm_version.minor >= 6)) {
 	   ret = radeonGetParam(sPriv, RADEON_INFO_TILE_CONFIG, &temp);
 	   if (ret)
 		   fprintf(stderr, "failed to get tiling info\n");
