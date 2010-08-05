@@ -312,8 +312,8 @@ nv50_generate_code(struct nv50_translation_info *ti)
    ti->p->immd_size = pc->immd_count * 4;
    ti->p->immd = pc->immd_buf;
 
-   ti->p->max_gpr = (pc->max_reg[NV_FILE_GPR] + 1) >> 1;
-   ti->p->max_gpr++;
+   /* highest 16 bit reg to num of 32 bit regs */
+   ti->p->max_gpr = (pc->max_reg[NV_FILE_GPR] >> 1) + 1;
 
    ti->p->fixups = pc->fixups;
    ti->p->num_fixups = pc->num_fixups;
