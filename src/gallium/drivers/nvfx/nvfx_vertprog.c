@@ -299,7 +299,13 @@ nvfx_vp_arith(struct nvfx_context* nvfx, struct nvfx_vpc *vpc, int slot, int op,
 		  (3 << NVFX_VP(INST_COND_SWZ_W_SHIFT)));
 
 	if(!nvfx->is_nv4x) {
-		hw[1] |= (op << NV30_VP_INST_VEC_OPCODE_SHIFT);
+		if(slot == 0)
+			hw[1] |= (op << NV30_VP_INST_VEC_OPCODE_SHIFT);
+		else
+		{
+			hw[0] |= ((op >> 4) << NV30_VP_INST_SCA_OPCODEH_SHIFT);
+			hw[1] |= ((op & 0xf) << NV30_VP_INST_SCA_OPCODEL_SHIFT);
+		}
 //		hw[3] |= NVFX_VP(INST_SCA_DEST_TEMP_MASK);
 //		hw[3] |= (mask << NVFX_VP(INST_VEC_WRITEMASK_SHIFT));
 
