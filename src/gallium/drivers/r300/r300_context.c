@@ -171,6 +171,7 @@ static void r300_setup_atoms(struct r300_context* r300)
     boolean is_r500 = r300->screen->caps.is_r500;
     boolean has_tcl = r300->screen->caps.has_tcl;
     boolean drm_2_3_0 = r300->rws->get_value(r300->rws, R300_VID_DRM_2_3_0);
+    boolean drm_2_6_0 = r300->rws->get_value(r300->rws, R300_VID_DRM_2_6_0);
     boolean has_hyperz = r300->rws->get_value(r300->rws, R300_CAN_HYPERZ);
     boolean has_hiz_ram = r300->screen->caps.hiz_ram > 0;
 
@@ -195,7 +196,7 @@ static void r300_setup_atoms(struct r300_context* r300)
     R300_INIT_ATOM(gpu_flush, 9);
     R300_INIT_ATOM(aa_state, 4);
     R300_INIT_ATOM(fb_state, 0);
-    R300_INIT_ATOM(hyperz_state, is_rv350 ? 10 : 8);
+    R300_INIT_ATOM(hyperz_state, is_r500 || (is_rv350 && drm_2_6_0) ? 10 : 8);
     /* ZB (unpipelined), SC. */
     R300_INIT_ATOM(ztop_state, 2);
     /* ZB, FG. */
@@ -373,7 +374,9 @@ static void r300_init_states(struct pipe_context *pipe)
         OUT_CB_REG(R300_ZB_DEPTHCLEARVALUE, 0);
         OUT_CB_REG(R300_SC_HYPERZ, R300_SC_HYPERZ_ADJ_2);
 
-        if (r300->screen->caps.is_rv350) {
+        if (r300->screen->caps.is_r500 ||
+            (r300->screen->caps.is_rv350 &&
+             r300->rws->get_value(r300->rws, R300_VID_DRM_2_6_0))) {
             OUT_CB_REG(R300_GB_Z_PEQ_CONFIG, 0);
         }
         END_CB;

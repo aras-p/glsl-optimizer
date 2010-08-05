@@ -103,6 +103,10 @@ static void do_ioctls(int fd, struct radeon_libdrm_winsys* winsys)
     winsys->drm_2_3_0 = version->version_major > 2 ||
                         version->version_minor >= 3;
 
+    winsys->drm_2_6_0 = version->version_major > 2 ||
+                        (version->version_major == 2 &&
+                         version->version_minor >= 6);
+
     info.request = RADEON_INFO_DEVICE_ID;
     retval = drmCommandWriteRead(fd, DRM_RADEON_INFO, &info, sizeof(info));
     if (retval) {
