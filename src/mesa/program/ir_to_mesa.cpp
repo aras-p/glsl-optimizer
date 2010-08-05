@@ -2646,9 +2646,11 @@ _mesa_glsl_compile_shader(GLcontext *ctx, struct gl_shader *shader)
       printf("GLSL source for shader %d:\n", shader->Name);
       printf("%s\n", shader->Source);
 
-      printf("GLSL IR for shader %d:\n", shader->Name);
-      _mesa_print_ir(shader->ir, NULL);
-      printf("\n\n");
+      if (shader->CompileStatus) {
+	 printf("GLSL IR for shader %d:\n", shader->Name);
+	 _mesa_print_ir(shader->ir, NULL);
+	 printf("\n\n");
+      }
    }
 
    /* Retain any live IR, but trash the rest. */
