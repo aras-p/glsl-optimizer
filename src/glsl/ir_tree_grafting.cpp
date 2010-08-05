@@ -315,7 +315,7 @@ tree_grafting_basic_block(ir_instruction *bb_first,
       if (!assign)
 	 continue;
 
-      ir_variable *lhs_var = assign->lhs->whole_variable_referenced();
+      ir_variable *lhs_var = assign->whole_variable_written();
       if (!lhs_var)
 	 continue;
 

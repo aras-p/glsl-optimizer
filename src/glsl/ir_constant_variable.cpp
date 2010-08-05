@@ -110,7 +110,7 @@ ir_constant_variable_visitor::visit_enter(ir_assignment *ir)
 	 return visit_continue;
    }
 
-   ir_variable *var = ir->lhs->whole_variable_referenced();
+   ir_variable *var = ir->whole_variable_written();
    if (!var)
       return visit_continue;
 

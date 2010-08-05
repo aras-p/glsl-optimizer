@@ -194,7 +194,7 @@ ir_call::generate_inline(ir_instruction *next_ir, ir_function_signature* parent)
 	 parameters[i] = NULL;
 	 hash_table_insert(ht, param->variable_referenced(), sig_param);
       } else {
-	 parameters[i] = sig_param->clone(ht);
+	 parameters[i] = sig_param->clone(ctx, ht);
 	 parameters[i]->mode = ir_var_auto;
 	 next_ir->insert_before(parameters[i]);
       }
@@ -216,7 +216,7 @@ ir_call::generate_inline(ir_instruction *next_ir, ir_function_signature* parent)
    /* Generate the inlined body of the function. */
    foreach_iter(exec_list_iterator, iter, callee->body) {
       ir_instruction *ir = (ir_instruction *)iter.get();
-      ir_instruction *new_ir = ir->clone(ht);
+      ir_instruction *new_ir = ir->clone(ctx, ht);
 	  ir_variable *new_var = new_ir->as_variable();
 	  if (new_var)
 		  rename_inlined_variable (new_var, parent);
@@ -240,7 +240,7 @@ ir_call::generate_inline(ir_instruction *next_ir, ir_function_signature* parent)
 			    sig_param->mode == ir_var_inout)) {
 	 ir_assignment *assign;
 
-	 assign = new(ctx) ir_assignment(param->clone(NULL)->as_rvalue(),
+	 assign = new(ctx) ir_assignment(param->clone(ctx, NULL)->as_rvalue(),
 					 new(ctx) ir_dereference_variable(parameters[i]),
 					 NULL);
 	 next_ir->insert_before(assign);

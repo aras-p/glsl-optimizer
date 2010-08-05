@@ -76,17 +76,17 @@ struct glsl_type {
 				*/
 
    /* Callers of this talloc-based new need not call delete. It's
-    * easier to just talloc_free 'ctx' (or any of its ancestors). */
+    * easier to just talloc_free 'mem_ctx' (or any of its ancestors). */
    static void* operator new(size_t size)
    {
-      if (glsl_type::ctx == NULL) {
-	 glsl_type::ctx = talloc_init("glsl_type");
-	 assert(glsl_type::ctx != NULL);
+      if (glsl_type::mem_ctx == NULL) {
+	 glsl_type::mem_ctx = talloc_init("glsl_type");
+	 assert(glsl_type::mem_ctx != NULL);
       }
 
       void *type;
 
-      type = talloc_size(glsl_type::ctx, size);
+      type = talloc_size(glsl_type::mem_ctx, size);
       assert(type != NULL);
 
       return type;
@@ -394,7 +394,7 @@ private:
     *
     * Set on the first call to \c glsl_type::new.
     */
-   static TALLOC_CTX *ctx;
+   static void *mem_ctx;
 
    void init_talloc_type_ctx(void);
 

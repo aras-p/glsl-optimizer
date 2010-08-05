@@ -75,10 +75,10 @@ static void do_vs_prog( struct brw_context *brw,
 	 c.prog_data.outputs_written |= BITFIELD64_BIT(VERT_RESULT_TEX0 + i);
    }
 
-   if (0)
-      _mesa_print_program(&c.vp->program.Base);
-
-
+   if (0) {
+      _mesa_fprint_program_opt(stdout, &c.vp->program.Base, PROG_PRINT_DEBUG,
+			       GL_TRUE);
+   }
 
    /* Emit GEN4 code.
     */

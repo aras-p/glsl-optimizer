@@ -39,7 +39,7 @@ class ir_constant_folding_visitor : public ir_visitor {
 public:
    ir_constant_folding_visitor()
    {
-      /* empty */
+      this->progress = false;
    }
 
    virtual ~ir_constant_folding_visitor()
@@ -73,7 +73,26 @@ public:
    virtual void visit(ir_loop *);
    virtual void visit(ir_loop_jump *);
    /*@}*/
+
+   void fold_constant(ir_rvalue **rvalue);
+
+   bool progress;
 };
+
+void
+ir_constant_folding_visitor::fold_constant(ir_rvalue **rvalue)
+{
+   if (*rvalue == NULL || (*rvalue)->ir_type == ir_type_constant)
+      return;
+
+   ir_constant *constant = (*rvalue)->constant_expression_value();
+   if (constant) {
+      *rvalue = constant;
+      this->progress = true;
+   } else {
+      (*rvalue)->accept(this);
+   }
+}
 
 void
 ir_constant_folding_visitor::visit(ir_variable *ir)
@@ -101,16 +120,10 @@ ir_constant_folding_visitor::visit(ir_function *ir)
 void
 ir_constant_folding_visitor::visit(ir_expression *ir)
 {
-   ir_constant *op[2];
    unsigned int operand;
 
    for (operand = 0; operand < ir->get_num_operands(); operand++) {
-      op[operand] = ir->operands[operand]->constant_expression_value();
-      if (op[operand]) {
-	 ir->operands[operand] = op[operand];
-      } else {
-	 ir->operands[operand]->accept(this);
-      }
+      fold_constant(&ir->operands[operand]);
    }
 }
 
@@ -118,15 +131,32 @@ ir_constant_folding_visitor::visit(ir_expression *ir)
 void
 ir_constant_folding_visitor::visit(ir_texture *ir)
 {
-   // FINISHME: Do stuff with texture lookups
-   (void) ir;
+   fold_constant(&ir->coordinate);
+   fold_constant(&ir->projector);
+   fold_constant(&ir->shadow_comparitor);
+
+   switch (ir->op) {
+   case ir_tex:
+      break;
+   case ir_txb:
+      fold_constant(&ir->lod_info.bias);
+      break;
+   case ir_txf:
+   case ir_txl:
+      fold_constant(&ir->lod_info.lod);
+      break;
+   case ir_txd:
+      fold_constant(&ir->lod_info.grad.dPdx);
+      fold_constant(&ir->lod_info.grad.dPdy);
+      break;
+   }
 }
 
 
 void
 ir_constant_folding_visitor::visit(ir_swizzle *ir)
 {
-   ir->val->accept(this);
+   fold_constant(&ir->val);
 }
 
 
@@ -140,14 +170,7 @@ ir_constant_folding_visitor::visit(ir_dereference_variable *ir)
 void
 ir_constant_folding_visitor::visit(ir_dereference_array *ir)
 {
-   ir_constant *const_val =
-      ir->array_index->constant_expression_value();
-
-   if (const_val)
-      ir->array_index = const_val;
-   else
-      ir->array_index->accept(this);
-
+   fold_constant(&ir->array_index);
    ir->array->accept(this);
 }
 
@@ -162,22 +185,19 @@ ir_constant_folding_visitor::visit(ir_dereference_record *ir)
 void
 ir_constant_folding_visitor::visit(ir_assignment *ir)
 {
-   ir_constant *const_val = ir->rhs->constant_expression_value();
-   if (const_val)
-      ir->rhs = const_val;
-   else
-      ir->rhs->accept(this);
+   fold_constant(&ir->rhs);
 
    if (ir->condition) {
       /* If the condition is constant, either remove the condition or
        * remove the never-executed assignment.
        */
-      const_val = ir->condition->constant_expression_value();
+      ir_constant *const_val = ir->condition->constant_expression_value();
       if (const_val) {
 	 if (const_val->value.b[0])
 	    ir->condition = NULL;
 	 else
 	    ir->remove();
+	 this->progress = true;
       }
    }
 }
@@ -193,14 +213,22 @@ ir_constant_folding_visitor::visit(ir_constant *ir)
 void
 ir_constant_folding_visitor::visit(ir_call *ir)
 {
-   (void) ir;
+   foreach_iter(exec_list_iterator, iter, *ir) {
+      ir_rvalue *param = (ir_rvalue *)iter.get();
+      ir_rvalue *new_param = param;
+      fold_constant(&new_param);
+
+      if (new_param != param) {
+	 param->replace_with(new_param);
+      }
+   }
 }
 
 
 void
 ir_constant_folding_visitor::visit(ir_return *ir)
 {
-   (void) ir;
+   fold_constant(&ir->value);
 }
 
 
@@ -214,11 +242,7 @@ ir_constant_folding_visitor::visit(ir_discard *ir)
 void
 ir_constant_folding_visitor::visit(ir_if *ir)
 {
-   ir_constant *const_val = ir->condition->constant_expression_value();
-   if (const_val)
-      ir->condition = const_val;
-   else
-      ir->condition->accept(this);
+   fold_constant(&ir->condition);
 
    visit_exec_list(&ir->then_instructions, this);
    visit_exec_list(&ir->else_instructions, this);
@@ -245,6 +269,5 @@ do_constant_folding(exec_list *instructions)
 
    visit_exec_list(instructions, &constant_folding);
 
-   /* FINISHME: Return real progress. */
-   return false;
+   return constant_folding.progress;
 }

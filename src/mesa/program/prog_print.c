@@ -540,12 +540,12 @@ fprint_comment(FILE *f, const struct prog_instruction *inst)
 }
 
 
-static void
-fprint_alu_instruction(FILE *f,
-                       const struct prog_instruction *inst,
-                       const char *opcode_string, GLuint numRegs,
-                       gl_prog_print_mode mode,
-                       const struct gl_program *prog)
+void
+_mesa_fprint_alu_instruction(FILE *f,
+			     const struct prog_instruction *inst,
+			     const char *opcode_string, GLuint numRegs,
+			     gl_prog_print_mode mode,
+			     const struct gl_program *prog)
 {
    GLuint j;
 
@@ -582,8 +582,8 @@ void
 _mesa_print_alu_instruction(const struct prog_instruction *inst,
                             const char *opcode_string, GLuint numRegs)
 {
-   fprint_alu_instruction(stderr, inst, opcode_string,
-                          numRegs, PROG_PRINT_DEBUG, NULL);
+   _mesa_fprint_alu_instruction(stderr, inst, opcode_string,
+				numRegs, PROG_PRINT_DEBUG, NULL);
 }
 
 
@@ -791,16 +791,16 @@ _mesa_fprint_instruction_opt(FILE *f,
    default:
       if (inst->Opcode < MAX_OPCODE) {
          /* typical alu instruction */
-         fprint_alu_instruction(f, inst,
-                                _mesa_opcode_string(inst->Opcode),
-                                _mesa_num_inst_src_regs(inst->Opcode),
-                                mode, prog);
+         _mesa_fprint_alu_instruction(f, inst,
+				      _mesa_opcode_string(inst->Opcode),
+				      _mesa_num_inst_src_regs(inst->Opcode),
+				      mode, prog);
       }
       else {
-         fprint_alu_instruction(f, inst,
-                                _mesa_opcode_string(inst->Opcode),
-                                3/*_mesa_num_inst_src_regs(inst->Opcode)*/,
-                                mode, prog);
+         _mesa_fprint_alu_instruction(f, inst,
+				      _mesa_opcode_string(inst->Opcode),
+				      3/*_mesa_num_inst_src_regs(inst->Opcode)*/,
+				      mode, prog);
       }
       break;
    }
@@ -1031,11 +1031,9 @@ _mesa_write_shader_to_file(const struct gl_shader *shader)
 
    fprintf(f, "/* Compile status: %s */\n",
            shader->CompileStatus ? "ok" : "fail");
-   if (!shader->CompileStatus) {
-      fprintf(f, "/* Log Info: */\n");
-      fputs(shader->InfoLog, f);
-   }
-   else {
+   fprintf(f, "/* Log Info: */\n");
+   fputs(shader->InfoLog, f);
+   if (shader->CompileStatus && shader->Program) {
       fprintf(f, "/* GPU code */\n");
       fprintf(f, "/*\n");
       _mesa_fprint_program_opt(f, shader->Program, PROG_PRINT_DEBUG, GL_TRUE);

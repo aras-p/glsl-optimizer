@@ -68,7 +68,8 @@ do_dead_code(exec_list *instructions)
 	 /* Remove a single dead assignment to the variable we found.
 	  * Don't do so if it's a shader output, though.
 	  */
-	 if (!entry->var->shader_out) {
+	 if (entry->var->mode != ir_var_out &&
+	     entry->var->mode != ir_var_inout) {
 	    entry->assign->remove();
 	    progress = true;
 	 }

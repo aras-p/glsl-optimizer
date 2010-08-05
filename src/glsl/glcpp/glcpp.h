@@ -219,28 +219,4 @@ glcpp_lex_destroy (yyscan_t scanner);
 int
 yyparse (glcpp_parser_t *parser);
 
-/* xtalloc - wrappers around talloc to check for out-of-memory */
-
-#define xtalloc(ctx, type) (type *)xtalloc_named_const(ctx, sizeof(type), #type)
-
-#define xtalloc_size(ctx, size) xtalloc_named_const(ctx, size, __location__)
-
-void *
-xtalloc_named_const (const void *context, size_t size, const char *name);
-
-char *
-xtalloc_strdup (const void *t, const char *p);
-
-char *
-xtalloc_strndup (const void *t, const char *p, size_t n);
-
-char *
-xtalloc_asprintf (const void *t, const char *fmt, ...);
-
-void *
-_xtalloc_reference_loc (const void *context,
-			const void *ptr, const char *location);
-
-#define xtalloc_reference(ctx, ptr) (_TALLOC_TYPEOF(ptr))_xtalloc_reference_loc((ctx),(ptr), __location__)
-
 #endif

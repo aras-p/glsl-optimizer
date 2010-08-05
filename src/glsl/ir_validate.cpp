@@ -67,6 +67,8 @@ public:
 
    virtual ir_visitor_status visit_leave(ir_expression *ir);
 
+   virtual ir_visitor_status visit_enter(ir_assignment *ir);
+
    static void validate_ir(ir_instruction *ir, void *data);
 
    ir_function *current_function;
@@ -317,6 +319,36 @@ ir_validate::visit(ir_variable *ir)
       assert(talloc_parent(ir->name) == ir);
 
    hash_table_insert(ht, ir, ir);
+   return visit_continue;
+}
+
+ir_visitor_status
+ir_validate::visit_enter(ir_assignment *ir)
+{
+   const ir_dereference *const lhs = ir->lhs;
+   if (lhs->type->is_scalar() || lhs->type->is_vector()) {
+      if (ir->write_mask == 0) {
+	 printf("Assignment LHS is %s, but write mask is 0:\n",
+		lhs->type->is_scalar() ? "scalar" : "vector");
+	 ir->print();
+	 abort();
+      }
+
+      /* Mask of fields that do not exist in the destination.  These should
+       * not be written by the assignment.
+       */
+      const unsigned invalid_mask = ~((1U << lhs->type->components()) - 1);
+
+      if ((invalid_mask & ir->write_mask) != 0) {
+	 printf("Assignment write mask enables invalid components for "
+		"type %s:\n", lhs->type->name);
+	 ir->print();
+	 abort();
+      }
+   }
+
+   this->validate_ir(ir, this->data);
+
    return visit_continue;
 }
 

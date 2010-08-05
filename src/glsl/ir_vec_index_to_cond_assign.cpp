@@ -82,6 +82,8 @@ ir_vec_index_to_cond_assign_visitor::convert_vec_index_to_cond_assign(ir_rvalue 
        orig_deref->array->type->is_array())
       return ir;
 
+   void *mem_ctx = talloc_parent(ir);
+
    assert(orig_deref->array_index->type->base_type == GLSL_TYPE_INT);
 
    /* Store the index to a temporary to avoid reusing its tree. */
@@ -109,7 +111,7 @@ ir_vec_index_to_cond_assign_visitor::convert_vec_index_to_cond_assign(ir_rvalue 
       /* Just clone the rest of the deref chain when trying to get at the
        * underlying variable.
        */
-      swizzle = new(base_ir) ir_swizzle(orig_deref->array->clone(NULL),
+      swizzle = new(base_ir) ir_swizzle(orig_deref->array->clone(mem_ctx, NULL),
 					i, 0, 0, 0, 1);
 
       deref = new(base_ir) ir_dereference_variable(var);
@@ -165,6 +167,8 @@ ir_vec_index_to_cond_assign_visitor::visit_leave(ir_assignment *ir)
        orig_deref->array->type->is_array())
       return visit_continue;
 
+   void *mem_ctx = talloc_parent(ir);
+
    assert(orig_deref->array_index->type->base_type == GLSL_TYPE_INT);
 
    /* Store the index to a temporary to avoid reusing its tree. */
@@ -196,7 +200,7 @@ ir_vec_index_to_cond_assign_visitor::visit_leave(ir_assignment *ir)
       /* Just clone the rest of the deref chain when trying to get at the
        * underlying variable.
        */
-      swizzle = new(ir) ir_swizzle(orig_deref->array->clone(NULL),
+      swizzle = new(ir) ir_swizzle(orig_deref->array->clone(mem_ctx, NULL),
 				   i, 0, 0, 0, 1);
 
       deref = new(ir) ir_dereference_variable(var);

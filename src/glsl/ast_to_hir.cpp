@@ -555,9 +555,8 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
 						  NULL));
    deref_var = new(ctx) ir_dereference_variable(var);
 
-   instructions->push_tail(new(ctx) ir_assignment(lhs,
-						  deref_var,
-						  NULL));
+   if (!error_emitted)
+      instructions->push_tail(new(ctx) ir_assignment(lhs, deref_var, NULL));
 
    return new(ctx) ir_dereference_variable(var);
 }
@@ -966,7 +965,7 @@ ast_expression::hir(exec_list *instructions,
 						   op[0], op[1]);
 
       result = do_assignment(instructions, state,
-			     op[0]->clone(NULL), temp_rhs,
+			     op[0]->clone(ctx, NULL), temp_rhs,
 			     this->subexpressions[0]->get_location());
       type = result->type;
       error_emitted = (op[0]->type->is_error());
@@ -992,7 +991,7 @@ ast_expression::hir(exec_list *instructions,
 					op[0], op[1]);
 
       result = do_assignment(instructions, state,
-			     op[0]->clone(NULL), temp_rhs,
+			     op[0]->clone(ctx, NULL), temp_rhs,
 			     this->subexpressions[0]->get_location());
       type = result->type;
       error_emitted = type->is_error();
@@ -1113,7 +1112,7 @@ ast_expression::hir(exec_list *instructions,
 					op[0], op[1]);
 
       result = do_assignment(instructions, state,
-			     op[0]->clone(NULL), temp_rhs,
+			     op[0]->clone(ctx, NULL), temp_rhs,
 			     this->subexpressions[0]->get_location());
       type = result->type;
       error_emitted = op[0]->type->is_error();
@@ -1139,10 +1138,10 @@ ast_expression::hir(exec_list *instructions,
       /* Get a temporary of a copy of the lvalue before it's modified.
        * This may get thrown away later.
        */
-      result = get_lvalue_copy(instructions, op[0]->clone(NULL));
+      result = get_lvalue_copy(instructions, op[0]->clone(ctx, NULL));
 
       (void)do_assignment(instructions, state,
-			  op[0]->clone(NULL), temp_rhs,
+			  op[0]->clone(ctx, NULL), temp_rhs,
 			  this->subexpressions[0]->get_location());
 
       type = result->type;
@@ -1511,31 +1510,6 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
    else if (qual->uniform)
       var->mode = ir_var_uniform;
 
-   if (qual->uniform)
-      var->shader_in = true;
-
-   /* Any 'in' or 'inout' variables at global scope must be marked as being
-    * shader inputs.  Likewise, any 'out' or 'inout' variables at global scope
-    * must be marked as being shader outputs.
-    */
-   if (state->current_function == NULL) {
-      switch (var->mode) {
-      case ir_var_in:
-      case ir_var_uniform:
-	 var->shader_in = true;
-	 break;
-      case ir_var_out:
-	 var->shader_out = true;
-	 break;
-      case ir_var_inout:
-	 var->shader_in = true;
-	 var->shader_out = true;
-	 break;
-      default:
-	 break;
-      }
-   }
-
    if (qual->flat)
       var->interpolation = ir_var_flat;
    else if (qual->noperspective)
@@ -1703,11 +1677,19 @@ ast_declarator_list::hir(exec_list *instructions,
 				       & loc);
 
       if (this->type->qualifier.invariant) {
-	 if ((state->target == vertex_shader) && !var->shader_out) {
+	 if ((state->target == vertex_shader) && !(var->mode == ir_var_out ||
+						   var->mode == ir_var_inout)) {
+	    /* FINISHME: Note that this doesn't work for invariant on
+	     * a function signature outval
+	     */
 	    _mesa_glsl_error(& loc, state,
 			     "`%s' cannot be marked invariant, vertex shader "
 			     "outputs only\n", var->name);
-	 } else if ((state->target == fragment_shader) && !var->shader_in) {
+	 } else if ((state->target == fragment_shader) &&
+		    !(var->mode == ir_var_in || var->mode == ir_var_inout)) {
+	    /* FINISHME: Note that this doesn't work for invariant on
+	     * a function signature inval
+	     */
 	    _mesa_glsl_error(& loc, state,
 			     "`%s' cannot be marked invariant, fragment shader "
 			     "inputs only\n", var->name);

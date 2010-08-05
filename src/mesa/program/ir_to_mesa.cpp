@@ -45,6 +45,7 @@ extern "C" {
 #include "main/mtypes.h"
 #include "main/shaderobj.h"
 #include "main/uniforms.h"
+#include "program/hash_table.h"
 #include "program/prog_instruction.h"
 #include "program/prog_optimize.h"
 #include "program/prog_print.h"
@@ -160,6 +161,7 @@ public:
 class ir_to_mesa_visitor : public ir_visitor {
 public:
    ir_to_mesa_visitor();
+   ~ir_to_mesa_visitor();
 
    function_entry *current_function;
 
@@ -261,11 +263,10 @@ public:
 			      ir_constant *constant,
 			      struct ir_to_mesa_dst_reg temp);
 
-   int *sampler_map;
-   int sampler_map_size;
+   struct hash_table *sampler_map;
 
-   void map_sampler(int location, int sampler);
-   int get_sampler_number(int location);
+   void set_sampler_location(ir_variable *sampler, int location);
+   int get_sampler_location(ir_variable *sampler);
 
    void *mem_ctx;
 };
@@ -355,6 +356,7 @@ ir_to_mesa_visitor::ir_to_mesa_emit_op1(ir_instruction *ir,
 					ir_to_mesa_dst_reg dst,
 					ir_to_mesa_src_reg src0)
 {
+   assert(dst.writemask != 0);
    return ir_to_mesa_emit_op3(ir, op, dst,
 			      src0, ir_to_mesa_undef, ir_to_mesa_undef);
 }
@@ -370,22 +372,22 @@ ir_to_mesa_visitor::ir_to_mesa_emit_op0(ir_instruction *ir,
 }
 
 void
-ir_to_mesa_visitor::map_sampler(int location, int sampler)
+ir_to_mesa_visitor::set_sampler_location(ir_variable *sampler, int location)
 {
-   if (this->sampler_map_size <= location) {
-      this->sampler_map = talloc_realloc(this->mem_ctx, this->sampler_map,
-					 int, location + 1);
-      this->sampler_map_size = location + 1;
+   if (this->sampler_map == NULL) {
+      this->sampler_map = hash_table_ctor(0, hash_table_pointer_hash,
+					  hash_table_pointer_compare);
    }
 
-   this->sampler_map[location] = sampler;
+   hash_table_insert(this->sampler_map, (void *)(uintptr_t)location, sampler);
 }
 
 int
-ir_to_mesa_visitor::get_sampler_number(int location)
+ir_to_mesa_visitor::get_sampler_location(ir_variable *sampler)
 {
-   assert(location < this->sampler_map_size);
-   return this->sampler_map[location];
+   void *result = hash_table_find(this->sampler_map, sampler);
+
+   return (int)(uintptr_t)result;
 }
 
 inline ir_to_mesa_dst_reg
@@ -1394,14 +1396,10 @@ ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
 
 	 /* FINISHME: Fix up uniform name for arrays and things */
 	 if (ir->var->type->base_type == GLSL_TYPE_SAMPLER) {
-	    /* FINISHME: we whack the location of the var here, which
-	     * is probably not expected.  But we need to communicate
-	     * mesa's sampler number to the tex instruction.
-	     */
 	    int sampler = _mesa_add_sampler(this->prog->Parameters,
 					    ir->var->name,
 					    ir->var->type->gl_type);
-	    map_sampler(ir->var->location, sampler);
+	    set_sampler_location(ir->var, sampler);
 
 	    entry = new(mem_ctx) variable_storage(ir->var, PROGRAM_SAMPLER,
 						  sampler);
@@ -1618,21 +1616,17 @@ ir_to_mesa_visitor::visit(ir_dereference_record *ir)
  * We want to be careful in assignment setup to hit the actual storage
  * instead of potentially using a temporary like we might with the
  * ir_dereference handler.
- *
- * Thanks to ir_swizzle_swizzle, and ir_vec_index_to_swizzle, we
- * should only see potentially one variable array index of a vector,
- * and one swizzle, before getting to actual vec4 storage.  So handle
- * those, then go use ir_dereference to handle the rest.
  */
 static struct ir_to_mesa_dst_reg
-get_assignment_lhs(ir_instruction *ir, ir_to_mesa_visitor *v,
+get_assignment_lhs(ir_dereference *ir, ir_to_mesa_visitor *v,
 		   ir_to_mesa_src_reg *r)
 {
-   struct ir_to_mesa_dst_reg dst_reg;
-   ir_swizzle *swiz;
-
+   /* The LHS must be a dereference.  If the LHS is a variable indexed array
+    * access of a vector, it must be separated into a series conditional moves
+    * before reaching this point (see ir_vec_index_to_cond_assign).
+    */
+   assert(ir->as_dereference());
    ir_dereference_array *deref_array = ir->as_dereference_array();
-   /* This should have been handled by ir_vec_index_to_cond_assign */
    if (deref_array) {
       assert(!deref_array->array->type->is_vector());
    }
@@ -1641,38 +1635,7 @@ get_assignment_lhs(ir_instruction *ir, ir_to_mesa_visitor *v,
     * swizzles in it and write swizzles using writemask, though.
     */
    ir->accept(v);
-   dst_reg = ir_to_mesa_dst_reg_from_src(v->result);
-
-   if ((swiz = ir->as_swizzle())) {
-      int swizzles[4] = {
-	 swiz->mask.x,
-	 swiz->mask.y,
-	 swiz->mask.z,
-	 swiz->mask.w
-      };
-      int new_r_swizzle[4];
-      int orig_r_swizzle = r->swizzle;
-      int i;
-
-      for (i = 0; i < 4; i++) {
-	 new_r_swizzle[i] = GET_SWZ(orig_r_swizzle, 0);
-      }
-
-      dst_reg.writemask = 0;
-      for (i = 0; i < 4; i++) {
-	 if (i < swiz->mask.num_components) {
-	    dst_reg.writemask |= 1 << swizzles[i];
-	    new_r_swizzle[swizzles[i]] = GET_SWZ(orig_r_swizzle, i);
-	 }
-      }
-
-      r->swizzle = MAKE_SWIZZLE4(new_r_swizzle[0],
-				 new_r_swizzle[1],
-				 new_r_swizzle[2],
-				 new_r_swizzle[3]);
-   }
-
-   return dst_reg;
+   return ir_to_mesa_dst_reg_from_src(v->result);
 }
 
 void
@@ -1686,6 +1649,23 @@ ir_to_mesa_visitor::visit(ir_assignment *ir)
    r = this->result;
 
    l = get_assignment_lhs(ir->lhs, this, &r);
+
+   /* FINISHME: This should really set to the correct maximal writemask for each
+    * FINISHME: component written (in the loops below).  This case can only
+    * FINISHME: occur for matrices, arrays, and structures.
+    */
+   if (ir->write_mask == 0) {
+      assert(!ir->lhs->type->is_scalar() && !ir->lhs->type->is_vector());
+      l.writemask = WRITEMASK_XYZW;
+   } else if (ir->lhs->type->is_scalar()) {
+      /* FINISHME: This hack makes writing to gl_FragData, which lives in the
+       * FINISHME: W component of fragment shader output zero, work correctly.
+       */
+      l.writemask = WRITEMASK_XYZW;
+   } else {
+      assert(ir->lhs->type->is_vector());
+      l.writemask = ir->write_mask;
+   }
 
    assert(l.file != PROGRAM_UNDEFINED);
    assert(r.file != PROGRAM_UNDEFINED);
@@ -2059,7 +2039,7 @@ ir_to_mesa_visitor::visit(ir_texture *ir)
     */
    sampler->accept(this);
 
-   inst->sampler = get_sampler_number(sampler->var->location);
+   inst->sampler = get_sampler_location(sampler->var);
 
    switch (sampler->type->sampler_dimensionality) {
    case GLSL_SAMPLER_DIM_1D:
@@ -2166,8 +2146,13 @@ ir_to_mesa_visitor::ir_to_mesa_visitor()
    next_temp = 1;
    next_signature_id = 1;
    sampler_map = NULL;
-   sampler_map_size = 0;
    current_function = NULL;
+}
+
+ir_to_mesa_visitor::~ir_to_mesa_visitor()
+{
+   if (this->sampler_map)
+      hash_table_dtor(this->sampler_map);
 }
 
 static struct prog_src_register
@@ -2560,7 +2545,14 @@ get_mesa_program(GLcontext *ctx, struct gl_shader_program *shader_program,
 
    set_branchtargets(&v, mesa_instructions, num_instructions);
    if (ctx->Shader.Flags & GLSL_DUMP) {
-      printf("Mesa %s program:\n", target_string);
+      printf("\n");
+      printf("GLSL IR for linked %s program %d:\n", target_string,
+	     shader_program->Name);
+      _mesa_print_ir(shader->ir, NULL);
+      printf("\n");
+      printf("\n");
+      printf("Mesa IR for linked %s program %d:\n", target_string,
+	     shader_program->Name);
       print_program(mesa_instructions, mesa_instruction_annotation,
 		    num_instructions);
    }
@@ -2622,7 +2614,7 @@ _mesa_glsl_compile_shader(GLcontext *ctx, struct gl_shader *shader)
 	 progress = do_constant_folding(shader->ir) || progress;
 	 progress = do_algebraic(shader->ir) || progress;
 	 progress = do_if_return(shader->ir) || progress;
-	 if (ctx->Shader.EmitNoIfs)
+	 if (1 || ctx->Shader.EmitNoIfs)
 	    progress = do_if_to_cond_assign(shader->ir) || progress;
 
 	 progress = do_vec_index_to_swizzle(shader->ir) || progress;
@@ -2648,6 +2640,15 @@ _mesa_glsl_compile_shader(GLcontext *ctx, struct gl_shader *shader)
 
    if (ctx->Shader.Flags & GLSL_LOG) {
       _mesa_write_shader_to_file(shader);
+   }
+
+   if (ctx->Shader.Flags & GLSL_DUMP) {
+      printf("GLSL source for shader %d:\n", shader->Name);
+      printf("%s\n", shader->Source);
+
+      printf("GLSL IR for shader %d:\n", shader->Name);
+      _mesa_print_ir(shader->ir, NULL);
+      printf("\n\n");
    }
 
    /* Retain any live IR, but trash the rest. */

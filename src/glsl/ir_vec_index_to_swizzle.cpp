@@ -107,7 +107,7 @@ ir_vec_index_to_swizzle_visitor::visit_enter(ir_swizzle *ir)
 ir_visitor_status
 ir_vec_index_to_swizzle_visitor::visit_enter(ir_assignment *ir)
 {
-   ir->lhs = convert_vec_index_to_swizzle(ir->lhs);
+   ir->set_lhs(convert_vec_index_to_swizzle(ir->lhs));
    ir->rhs = convert_vec_index_to_swizzle(ir->rhs);
 
    return visit_continue;
@@ -153,5 +153,5 @@ do_vec_index_to_swizzle(exec_list *instructions)
 
    v.run(instructions);
 
-   return false;
+   return v.progress;
 }

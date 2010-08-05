@@ -88,7 +88,7 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 }
 
 {HASH}(version) {
-	yylval->str = xtalloc_strdup (yyextra, yytext);
+	yylval->str = talloc_strdup (yyextra, yytext);
 	yylineno++;
 	yycolumn = 0;
 	yyextra->space_tokens = 0;
@@ -98,7 +98,7 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 	/* glcpp doesn't handle #extension, #version, or #pragma directives.
 	 * Simply pass them through to the main compiler's lexer/parser. */
 {HASH}(extension|pragma)[^\n]+ {
-	yylval->str = xtalloc_strdup (yyextra, yytext);
+	yylval->str = talloc_strdup (yyextra, yytext);
 	yylineno++;
 	yycolumn = 0;
 	return OTHER;
@@ -186,17 +186,17 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 }
 
 {DECIMAL_INTEGER} {
-	yylval->str = xtalloc_strdup (yyextra, yytext);
+	yylval->str = talloc_strdup (yyextra, yytext);
 	return INTEGER_STRING;
 }
 
 {OCTAL_INTEGER} {
-	yylval->str = xtalloc_strdup (yyextra, yytext);
+	yylval->str = talloc_strdup (yyextra, yytext);
 	return INTEGER_STRING;
 }
 
 {HEXADECIMAL_INTEGER} {
-	yylval->str = xtalloc_strdup (yyextra, yytext);
+	yylval->str = talloc_strdup (yyextra, yytext);
 	return INTEGER_STRING;
 }
 
@@ -241,7 +241,7 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 }
 
 {IDENTIFIER} {
-	yylval->str = xtalloc_strdup (yyextra, yytext);
+	yylval->str = talloc_strdup (yyextra, yytext);
 	return IDENTIFIER;
 }
 
@@ -250,7 +250,7 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 }
 
 {OTHER}+ {
-	yylval->str = xtalloc_strdup (yyextra, yytext);
+	yylval->str = talloc_strdup (yyextra, yytext);
 	return OTHER;
 }
 

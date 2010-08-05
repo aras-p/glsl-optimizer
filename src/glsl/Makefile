@@ -9,8 +9,7 @@ LIBNAME = glsl
 LIBGLCPP_SOURCES = \
 	glcpp/glcpp-lex.c \
 	glcpp/glcpp-parse.c \
-	glcpp/pp.c \
-	glcpp/xtalloc.c
+	glcpp/pp.c
 
 GLCPP_SOURCES = \
 	$(LIBGLCPP_SOURCES) \

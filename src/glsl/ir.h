@@ -76,7 +76,8 @@ public:
 
    virtual void accept(ir_visitor *) = 0;
    virtual ir_visitor_status accept(ir_hierarchical_visitor *) = 0;
-   virtual ir_instruction *clone(struct hash_table *ht) const = 0;
+   virtual ir_instruction *clone(void *mem_ctx,
+				 struct hash_table *ht) const = 0;
 
    /**
     * \name IR instruction downcast functions
@@ -113,7 +114,7 @@ protected:
 
 class ir_rvalue : public ir_instruction {
 public:
-   virtual ir_rvalue *clone(struct hash_table *) const = 0;
+   virtual ir_rvalue *clone(void *mem_ctx, struct hash_table *) const = 0;
 
    virtual ir_constant *constant_expression_value() = 0;
 
@@ -175,7 +176,7 @@ class ir_variable : public ir_instruction {
 public:
    ir_variable(const struct glsl_type *, const char *, ir_variable_mode);
 
-   virtual ir_variable *clone(struct hash_table *ht) const;
+   virtual ir_variable *clone(void *mem_ctx, struct hash_table *ht) const;
 
    virtual ir_variable *as_variable()
    {
@@ -193,10 +194,10 @@ public:
    /**
     * Get the string value for the interpolation qualifier
     *
-    * \return
-    * If none of \c shader_in or \c shader_out is set, an empty string will
-    * be returned.  Otherwise the string that would be used in a shader to
-    * specify \c mode will be returned.
+    * \return The string that would be used in a shader to specify \c
+    * mode will be returned.
+    *
+    * This function should only be used on a shader input or output variable.
     */
    const char *interpolation_string() const;
 
@@ -220,12 +221,6 @@ public:
    unsigned read_only:1;
    unsigned centroid:1;
    unsigned invariant:1;
-   /** If the variable is initialized outside of the scope of the shader */
-   unsigned shader_in:1;
-   /**
-    * If the variable value is later used outside of the scope of the shader.
-    */
-   unsigned shader_out:1;
 
    unsigned mode:3;
    unsigned interpolation:2;
@@ -285,7 +280,8 @@ class ir_function_signature : public ir_instruction {
 public:
    ir_function_signature(const glsl_type *return_type);
 
-   virtual ir_function_signature *clone(struct hash_table *ht) const;
+   virtual ir_function_signature *clone(void *mem_ctx,
+					struct hash_table *ht) const;
 
    virtual void accept(ir_visitor *v)
    {
@@ -371,7 +367,7 @@ class ir_function : public ir_instruction {
 public:
    ir_function(const char *name);
 
-   virtual ir_function *clone(struct hash_table *ht) const;
+   virtual ir_function *clone(void *mem_ctx, struct hash_table *ht) const;
 
    virtual ir_function *as_function()
    {
@@ -443,7 +439,7 @@ public:
       ir_type = ir_type_if;
    }
 
-   virtual ir_if *clone(struct hash_table *ht) const;
+   virtual ir_if *clone(void *mem_ctx, struct hash_table *ht) const;
 
    virtual ir_if *as_if()
    {
@@ -475,7 +471,7 @@ public:
       ir_type = ir_type_loop;
    }
 
-   virtual ir_loop *clone(struct hash_table *ht) const;
+   virtual ir_loop *clone(void *mem_ctx, struct hash_table *ht) const;
 
    virtual void accept(ir_visitor *v)
    {
@@ -516,7 +512,17 @@ class ir_assignment : public ir_instruction {
 public:
    ir_assignment(ir_rvalue *lhs, ir_rvalue *rhs, ir_rvalue *condition);
 
-   virtual ir_assignment *clone(struct hash_table *ht) const;
+   /**
+    * Construct an assignment with an explicit write mask
+    *
+    * \note
+    * Since a write mask is supplied, the LHS must already be a bare
+    * \c ir_dereference.  The cannot be any swizzles in the LHS.
+    */
+   ir_assignment(ir_dereference *lhs, ir_rvalue *rhs, ir_rvalue *condition,
+		 unsigned write_mask);
+
+   virtual ir_assignment *clone(void *mem_ctx, struct hash_table *ht) const;
 
    virtual ir_constant *constant_expression_value();
 
@@ -533,9 +539,31 @@ public:
    }
 
    /**
-    * Left-hand side of the assignment.
+    * Get a whole variable written by an assignment
+    *
+    * If the LHS of the assignment writes a whole variable, the variable is
+    * returned.  Otherwise \c NULL is returned.  Examples of whole-variable
+    * assignment are:
+    *
+    *  - Assigning to a scalar
+    *  - Assigning to all components of a vector
+    *  - Whole array (or matrix) assignment
+    *  - Whole structure assignment
     */
-   ir_rvalue *lhs;
+   ir_variable *whole_variable_written();
+
+   /**
+    * Set the LHS of an assignment
+    */
+   void set_lhs(ir_rvalue *lhs);
+
+   /**
+    * Left-hand side of the assignment.
+    *
+    * This should be treated as read only.  If you need to set the LHS of an
+    * assignment, use \c ir_assignment::set_lhs.
+    */
+   ir_dereference *lhs;
 
    /**
     * Value being assigned
@@ -546,6 +574,16 @@ public:
     * Optional condition for the assignment.
     */
    ir_rvalue *condition;
+
+
+   /**
+    * Component mask written
+    *
+    * For non-vector types in the LHS, this field will be zero.  For vector
+    * types, a bit will be set for each component that is written.  Note that
+    * for \c vec2 and \c vec3 types only the lower bits will ever be set.
+    */
+   unsigned write_mask:4;
 };
 
 /* Update ir_expression::num_operands() and operator_strs when
@@ -666,7 +704,7 @@ public:
       return this;
    }
 
-   virtual ir_expression *clone(struct hash_table *ht) const;
+   virtual ir_expression *clone(void *mem_ctx, struct hash_table *ht) const;
 
    virtual ir_constant *constant_expression_value();
 
@@ -712,7 +750,7 @@ public:
       actual_parameters->move_nodes_to(& this->actual_parameters);
    }
 
-   virtual ir_call *clone(struct hash_table *ht) const;
+   virtual ir_call *clone(void *mem_ctx, struct hash_table *ht) const;
 
    virtual ir_constant *constant_expression_value();
 
@@ -809,7 +847,7 @@ public:
       this->ir_type = ir_type_return;
    }
 
-   virtual ir_return *clone(struct hash_table *) const;
+   virtual ir_return *clone(void *mem_ctx, struct hash_table *) const;
 
    virtual ir_return *as_return()
    {
@@ -854,7 +892,7 @@ public:
       this->loop = loop;
    }
 
-   virtual ir_loop_jump *clone(struct hash_table *) const;
+   virtual ir_loop_jump *clone(void *mem_ctx, struct hash_table *) const;
 
    virtual void accept(ir_visitor *v)
    {
@@ -897,7 +935,7 @@ public:
       this->condition = cond;
    }
 
-   virtual ir_discard *clone(struct hash_table *ht) const;
+   virtual ir_discard *clone(void *mem_ctx, struct hash_table *ht) const;
 
    virtual void accept(ir_visitor *v)
    {
@@ -949,7 +987,7 @@ public:
       this->ir_type = ir_type_texture;
    }
 
-   virtual ir_texture *clone(struct hash_table *) const;
+   virtual ir_texture *clone(void *mem_ctx, struct hash_table *) const;
 
    virtual ir_constant *constant_expression_value();
 
@@ -1041,7 +1079,7 @@ public:
 
    ir_swizzle(ir_rvalue *val, ir_swizzle_mask mask);
 
-   virtual ir_swizzle *clone(struct hash_table *) const;
+   virtual ir_swizzle *clone(void *mem_ctx, struct hash_table *) const;
 
    virtual ir_constant *constant_expression_value();
 
@@ -1087,7 +1125,7 @@ private:
 
 class ir_dereference : public ir_rvalue {
 public:
-   virtual ir_dereference *clone(struct hash_table *) const = 0;
+   virtual ir_dereference *clone(void *mem_ctx, struct hash_table *) const = 0;
 
    virtual ir_dereference *as_dereference()
    {
@@ -1107,7 +1145,8 @@ class ir_dereference_variable : public ir_dereference {
 public:
    ir_dereference_variable(ir_variable *var);
 
-   virtual ir_dereference_variable *clone(struct hash_table *) const;
+   virtual ir_dereference_variable *clone(void *mem_ctx,
+					  struct hash_table *) const;
 
    virtual ir_constant *constant_expression_value();
 
@@ -1155,7 +1194,8 @@ public:
 
    ir_dereference_array(ir_variable *var, ir_rvalue *array_index);
 
-   virtual ir_dereference_array *clone(struct hash_table *) const;
+   virtual ir_dereference_array *clone(void *mem_ctx,
+				       struct hash_table *) const;
 
    virtual ir_constant *constant_expression_value();
 
@@ -1193,7 +1233,8 @@ public:
 
    ir_dereference_record(ir_variable *var, const char *field);
 
-   virtual ir_dereference_record *clone(struct hash_table *) const;
+   virtual ir_dereference_record *clone(void *mem_ctx,
+					struct hash_table *) const;
 
    virtual ir_constant *constant_expression_value();
 
@@ -1258,7 +1299,7 @@ public:
     */
    static ir_constant *zero(void *mem_ctx, const glsl_type *type);
 
-   virtual ir_constant *clone(struct hash_table *) const;
+   virtual ir_constant *clone(void *mem_ctx, struct hash_table *) const;
 
    virtual ir_constant *constant_expression_value();
 
@@ -1331,7 +1372,7 @@ void validate_ir_tree(exec_list *instructions);
  * \param out  List to hold the cloned instructions
  */
 void
-clone_ir_list(exec_list *out, const exec_list *in);
+clone_ir_list(void *mem_ctx, exec_list *out, const exec_list *in);
 
 extern void
 _mesa_glsl_initialize_variables(exec_list *instructions,

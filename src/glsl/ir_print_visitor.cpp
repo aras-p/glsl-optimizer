@@ -296,7 +296,19 @@ void ir_print_visitor::visit(ir_assignment *ir)
    else
       printf("(constant bool (1))");
 
-   printf(" ");
+
+   char mask[5];
+   unsigned j = 0;
+
+   for (unsigned i = 0; i < 4; i++) {
+      if ((ir->write_mask & (1 << i)) != 0) {
+	 mask[j] = "xyzw"[i];
+	 j++;
+      }
+   }
+   mask[j] = '\0';
+
+   printf(" (%s) ", mask);
 
    ir->lhs->accept(this);
 

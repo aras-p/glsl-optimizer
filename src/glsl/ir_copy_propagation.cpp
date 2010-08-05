@@ -224,7 +224,7 @@ add_copy(void *ctx, ir_assignment *ir, exec_list *acp)
 	 return;
    }
 
-   ir_variable *lhs_var = ir->lhs->whole_variable_referenced();
+   ir_variable *lhs_var = ir->whole_variable_written();
    ir_variable *rhs_var = ir->rhs->whole_variable_referenced();
 
    if ((lhs_var != NULL) && (rhs_var != NULL)) {

@@ -106,6 +106,9 @@ int
 _active_list_contains (active_list_t *list, const char *identifier);
 
 static void
+_glcpp_parser_expand_if (glcpp_parser_t *parser, int type, token_list_t *list);
+
+static void
 _glcpp_parser_expand_token_list (glcpp_parser_t *parser,
 				 token_list_t *list);
 
@@ -212,16 +215,15 @@ control_line:
 		talloc_free ($2);
 	}
 |	HASH_IF conditional_tokens NEWLINE {
-		token_list_t *expanded;
-		token_t *token;
-
-		expanded = _token_list_create (parser);
-		token = _token_create_ival (parser, IF_EXPANDED, IF_EXPANDED);
-		_token_list_append (expanded, token);
-		talloc_unlink (parser, token);
-		_glcpp_parser_expand_token_list (parser, $2);
-		_token_list_append_list (expanded, $2);
-		glcpp_parser_lex_from (parser, expanded);
+		/* If we're skipping to the next #elif/#else case or to #endif,
+		 * don't bother expanding or parsing the expression.
+		 */
+		if (parser->skip_stack != NULL && parser->skip_stack->type != SKIP_NO_SKIP) {
+			_glcpp_parser_skip_stack_push_if (parser, & @1, 0);
+			parser->skip_stack->type = SKIP_TO_ENDIF;
+		} else {
+			_glcpp_parser_expand_if (parser, IF_EXPANDED, $2);
+		}
 	}
 |	HASH_IFDEF IDENTIFIER junk NEWLINE {
 		macro_t *macro = hash_table_find (parser->defines, $2);
@@ -234,16 +236,13 @@ control_line:
 		_glcpp_parser_skip_stack_push_if (parser, & @1, macro == NULL);
 	}
 |	HASH_ELIF conditional_tokens NEWLINE {
-		token_list_t *expanded;
-		token_t *token;
-
-		expanded = _token_list_create (parser);
-		token = _token_create_ival (parser, ELIF_EXPANDED, ELIF_EXPANDED);
-		_token_list_append (expanded, token);
-		talloc_unlink (parser, token);
-		_glcpp_parser_expand_token_list (parser, $2);
-		_token_list_append_list (expanded, $2);
-		glcpp_parser_lex_from (parser, expanded);
+		/* If we just finished a non-skipped #if/#ifdef/#ifndef block,
+		 * don't bother expanding or parsing the expression.
+		 */
+		if (parser->skip_stack != NULL && parser->skip_stack->type == SKIP_NO_SKIP)
+			parser->skip_stack->type = SKIP_TO_ENDIF;
+		else
+			_glcpp_parser_expand_if (parser, ELIF_EXPANDED, $2);
 	}
 |	HASH_ELIF NEWLINE {
 		/* #elif without an expression results in a warning if the
@@ -503,7 +502,7 @@ _string_list_create (void *ctx)
 {
 	string_list_t *list;
 
-	list = xtalloc (ctx, string_list_t);
+	list = talloc (ctx, string_list_t);
 	list->head = NULL;
 	list->tail = NULL;
 
@@ -515,8 +514,8 @@ _string_list_append_item (string_list_t *list, const char *str)
 {
 	string_node_t *node;
 
-	node = xtalloc (list, string_node_t);
-	node->str = xtalloc_strdup (node, str);
+	node = talloc (list, string_node_t);
+	node->str = talloc_strdup (node, str);
 
 	node->next = NULL;
 
@@ -569,7 +568,7 @@ _argument_list_create (void *ctx)
 {
 	argument_list_t *list;
 
-	list = xtalloc (ctx, argument_list_t);
+	list = talloc (ctx, argument_list_t);
 	list->head = NULL;
 	list->tail = NULL;
 
@@ -581,7 +580,7 @@ _argument_list_append (argument_list_t *list, token_list_t *argument)
 {
 	argument_node_t *node;
 
-	node = xtalloc (list, argument_node_t);
+	node = talloc (list, argument_node_t);
 	node->argument = argument;
 
 	node->next = NULL;
@@ -638,7 +637,7 @@ _token_create_str (void *ctx, int type, char *str)
 {
 	token_t *token;
 
-	token = xtalloc (ctx, token_t);
+	token = talloc (ctx, token_t);
 	token->type = type;
 	token->value.str = talloc_steal (token, str);
 
@@ -650,7 +649,7 @@ _token_create_ival (void *ctx, int type, int ival)
 {
 	token_t *token;
 
-	token = xtalloc (ctx, token_t);
+	token = talloc (ctx, token_t);
 	token->type = type;
 	token->value.ival = ival;
 
@@ -662,7 +661,7 @@ _token_list_create (void *ctx)
 {
 	token_list_t *list;
 
-	list = xtalloc (ctx, token_list_t);
+	list = talloc (ctx, token_list_t);
 	list->head = NULL;
 	list->tail = NULL;
 	list->non_space_tail = NULL;
@@ -675,8 +674,8 @@ _token_list_append (token_list_t *list, token_t *token)
 {
 	token_node_t *node;
 
-	node = xtalloc (list, token_node_t);
-	node->token = xtalloc_reference (list, token);
+	node = talloc (list, token_node_t);
+	node->token = talloc_reference (list, token);
 
 	node->next = NULL;
 
@@ -871,8 +870,8 @@ _token_paste (glcpp_parser_t *parser, token_t *token, token_t *other)
 	{
 		char *str;
 
-		str = xtalloc_asprintf (token, "%s%s",
-					token->value.str, other->value.str);
+		str = talloc_asprintf (token, "%s%s", token->value.str,
+				       other->value.str);
 		combined = _token_create_str (token, token->type, str);
 		combined->location = token->location;
 		return combined;
@@ -927,7 +926,7 @@ glcpp_parser_create (const struct gl_extensions *extensions)
 	glcpp_parser_t *parser;
 	int language_version;
 
-	parser = xtalloc (NULL, glcpp_parser_t);
+	parser = talloc (NULL, glcpp_parser_t);
 
 	glcpp_lex_init_extra (parser, &parser->scanner);
 	parser->defines = hash_table_ctor (32, hash_table_string_hash,
@@ -1085,6 +1084,20 @@ _token_list_create_with_one_space (void *ctx)
 	_token_list_append (list, space);
 
 	return list;
+}
+
+static void
+_glcpp_parser_expand_if (glcpp_parser_t *parser, int type, token_list_t *list)
+{
+	token_list_t *expanded;
+	token_t *token;
+
+	expanded = _token_list_create (parser);
+	token = _token_create_ival (parser, type, type);
+	_token_list_append (expanded, token);
+	_glcpp_parser_expand_token_list (parser, list);
+	_token_list_append_list (expanded, list);
+	glcpp_parser_lex_from (parser, expanded);
 }
 
 /* This is a helper function that's essentially part of the
@@ -1294,7 +1307,7 @@ _glcpp_parser_expand_node (glcpp_parser_t *parser,
 		token_list_t *expansion;
 		token_t *final;
 
-		str = xtalloc_strdup (parser, token->value.str);
+		str = talloc_strdup (parser, token->value.str);
 		final = _token_create_str (parser, OTHER, str);
 		expansion = _token_list_create (parser);
 		_token_list_append (expansion, final);
@@ -1330,8 +1343,8 @@ _active_list_push (active_list_t *list,
 {
 	active_list_t *node;
 
-	node = xtalloc (list, active_list_t);
-	node->identifier = xtalloc_strdup (node, identifier);
+	node = talloc (list, active_list_t);
+	node->identifier = talloc_strdup (node, identifier);
 	node->marker = marker;
 	node->next = list;
 
@@ -1481,7 +1494,7 @@ _define_object_macro (glcpp_parser_t *parser,
 	if (loc != NULL)
 		_check_for_reserved_macro_name(parser, loc, identifier);
 
-	macro = xtalloc (parser, macro_t);
+	macro = talloc (parser, macro_t);
 
 	macro->is_function = 0;
 	macro->parameters = NULL;
@@ -1502,7 +1515,7 @@ _define_function_macro (glcpp_parser_t *parser,
 
 	_check_for_reserved_macro_name(parser, loc, identifier);
 
-	macro = xtalloc (parser, macro_t);
+	macro = talloc (parser, macro_t);
 
 	macro->is_function = 1;
 	macro->parameters = talloc_steal (macro, parameters);
@@ -1628,7 +1641,7 @@ _glcpp_parser_skip_stack_push_if (glcpp_parser_t *parser, YYLTYPE *loc,
 	if (parser->skip_stack)
 		current = parser->skip_stack->type;
 
-	node = xtalloc (parser, skip_node_t);
+	node = talloc (parser, skip_node_t);
 	node->loc = *loc;
 
 	if (current == SKIP_NO_SKIP) {
