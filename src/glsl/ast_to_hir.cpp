@@ -1510,31 +1510,6 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
    else if (qual->uniform)
       var->mode = ir_var_uniform;
 
-   if (qual->uniform)
-      var->shader_in = true;
-
-   /* Any 'in' or 'inout' variables at global scope must be marked as being
-    * shader inputs.  Likewise, any 'out' or 'inout' variables at global scope
-    * must be marked as being shader outputs.
-    */
-   if (state->current_function == NULL) {
-      switch (var->mode) {
-      case ir_var_in:
-      case ir_var_uniform:
-	 var->shader_in = true;
-	 break;
-      case ir_var_out:
-	 var->shader_out = true;
-	 break;
-      case ir_var_inout:
-	 var->shader_in = true;
-	 var->shader_out = true;
-	 break;
-      default:
-	 break;
-      }
-   }
-
    if (qual->flat)
       var->interpolation = ir_var_flat;
    else if (qual->noperspective)
@@ -1702,11 +1677,19 @@ ast_declarator_list::hir(exec_list *instructions,
 				       & loc);
 
       if (this->type->qualifier.invariant) {
-	 if ((state->target == vertex_shader) && !var->shader_out) {
+	 if ((state->target == vertex_shader) && !(var->mode == ir_var_out ||
+						   var->mode == ir_var_inout)) {
+	    /* FINISHME: Note that this doesn't work for invariant on
+	     * a function signature outval
+	     */
 	    _mesa_glsl_error(& loc, state,
 			     "`%s' cannot be marked invariant, vertex shader "
 			     "outputs only\n", var->name);
-	 } else if ((state->target == fragment_shader) && !var->shader_in) {
+	 } else if ((state->target == fragment_shader) &&
+		    !(var->mode == ir_var_in || var->mode == ir_var_inout)) {
+	    /* FINISHME: Note that this doesn't work for invariant on
+	     * a function signature inval
+	     */
 	    _mesa_glsl_error(& loc, state,
 			     "`%s' cannot be marked invariant, fragment shader "
 			     "inputs only\n", var->name);

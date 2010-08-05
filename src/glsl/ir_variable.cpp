@@ -43,22 +43,12 @@ add_variable(const char *name, enum ir_variable_mode mode, int slot,
 
    switch (var->mode) {
    case ir_var_auto:
-      var->read_only = true;
-      break;
    case ir_var_in:
-      var->shader_in = true;
+   case ir_var_uniform:
       var->read_only = true;
       break;
    case ir_var_inout:
-      var->shader_in = true;
-      var->shader_out = true;
-      break;
    case ir_var_out:
-      var->shader_out = true;
-      break;
-   case ir_var_uniform:
-      var->shader_in = true;
-      var->read_only = true;
       break;
    default:
       assert(0);

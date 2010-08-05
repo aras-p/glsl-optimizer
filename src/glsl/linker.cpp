@@ -1124,7 +1124,6 @@ assign_varying_locations(struct gl_shader_program *prog,
        * by the following stage.
        */
       if (var->location == -1) {
-	 var->shader_out = false;
 	 var->mode = ir_var_auto;
       }
    }
@@ -1158,7 +1157,6 @@ assign_varying_locations(struct gl_shader_program *prog,
 	 /* An 'in' variable is only really a shader input if its
 	  * value is written by the previous stage.
 	  */
-	 var->shader_in = false;
 	 var->mode = ir_var_auto;
       }
    }

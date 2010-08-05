@@ -194,10 +194,10 @@ public:
    /**
     * Get the string value for the interpolation qualifier
     *
-    * \return
-    * If none of \c shader_in or \c shader_out is set, an empty string will
-    * be returned.  Otherwise the string that would be used in a shader to
-    * specify \c mode will be returned.
+    * \return The string that would be used in a shader to specify \c
+    * mode will be returned.
+    *
+    * This function should only be used on a shader input or output variable.
     */
    const char *interpolation_string() const;
 
@@ -221,12 +221,6 @@ public:
    unsigned read_only:1;
    unsigned centroid:1;
    unsigned invariant:1;
-   /** If the variable is initialized outside of the scope of the shader */
-   unsigned shader_in:1;
-   /**
-    * If the variable value is later used outside of the scope of the shader.
-    */
-   unsigned shader_out:1;
 
    unsigned mode:3;
    unsigned interpolation:2;
