@@ -240,6 +240,8 @@ void* r600_texture_transfer_map(struct pipe_context *ctx,
 	if (radeon_bo_map(rscreen->rw, resource->bo)) {
 		return NULL;
 	}
+	radeon_bo_wait(rscreen->rw, resource->bo);
+
 	map = resource->bo->data;
 
 	return map + rtransfer->offset +
