@@ -1281,6 +1281,7 @@ link_shaders(struct gl_shader_program *prog)
       do_mat_op_to_vec(ir);
       do_mod_to_fract(ir);
       do_div_to_mul_rcp(ir);
+      do_explog_to_explog2(ir);
 
       do {
 	 progress = false;

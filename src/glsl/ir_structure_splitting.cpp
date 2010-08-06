@@ -34,7 +34,10 @@
 
 #include "ir.h"
 #include "ir_visitor.h"
+#include "ir_print_visitor.h"
 #include "glsl_types.h"
+
+static bool debug = false;
 
 class variable_entry : public exec_node
 {
@@ -76,7 +79,7 @@ public:
 
    virtual ir_visitor_status visit(ir_variable *);
    virtual ir_visitor_status visit(ir_dereference_variable *);
-   virtual ir_visitor_status visit(ir_dereference_record *);
+   virtual ir_visitor_status visit_enter(ir_dereference_record *);
 
    virtual ir_visitor_status visit_enter(ir_function_signature *);
 
@@ -93,7 +96,7 @@ ir_structure_reference_visitor::get_variable_entry(ir_variable *var)
 {
    assert(var);
 
-   if (!var->type->is_record())
+   if (!var->type->is_record() || var->mode == ir_var_uniform)
       return NULL;
 
    foreach_iter(exec_list_iterator, iter, this->variable_list) {
@@ -132,10 +135,10 @@ ir_structure_reference_visitor::visit(ir_dereference_variable *ir)
 }
 
 ir_visitor_status
-ir_structure_reference_visitor::visit(ir_dereference_record *ir)
+ir_structure_reference_visitor::visit_enter(ir_dereference_record *ir)
 {
    /* Don't descend into the ir_dereference_variable below. */
-   return visit_continue;
+   return visit_continue_with_parent;
 }
 
 ir_visitor_status
@@ -162,6 +165,7 @@ public:
    virtual ir_visitor_status visit_leave(ir_assignment *);
    virtual ir_visitor_status visit_leave(ir_call *);
    virtual ir_visitor_status visit_leave(ir_dereference_array *);
+   virtual ir_visitor_status visit_leave(ir_dereference_record *);
    virtual ir_visitor_status visit_leave(ir_expression *);
    virtual ir_visitor_status visit_leave(ir_if *);
    virtual ir_visitor_status visit_leave(ir_return *);
@@ -200,13 +204,13 @@ ir_structure_splitting_visitor::split_deref(ir_dereference **deref)
    if ((*deref)->ir_type != ir_type_dereference_record)
       return;
 
-   ir_dereference_record *deref_record = (ir_dereference_record *)deref;
-   ir_dereference_variable *deref_var = deref_record->as_dereference_variable();
+   ir_dereference_record *deref_record = (ir_dereference_record *)*deref;
+   ir_dereference_variable *deref_var = deref_record->record->as_dereference_variable();
    if (!deref_var)
       return;
 
    variable_entry *entry = get_splitting_entry(deref_var->var);
-   if (entry)
+   if (!entry)
       return;
 
    unsigned int i;
@@ -223,6 +227,9 @@ ir_structure_splitting_visitor::split_deref(ir_dereference **deref)
 void
 ir_structure_splitting_visitor::split_rvalue(ir_rvalue **rvalue)
 {
+   if (!*rvalue)
+      return;
+
    ir_dereference *deref = (*rvalue)->as_dereference();
 
    if (!deref)
@@ -281,6 +288,14 @@ ir_visitor_status
 ir_structure_splitting_visitor::visit_leave(ir_dereference_array *ir)
 {
    split_rvalue(&ir->array_index);
+   split_rvalue(&ir->array);
+   return visit_continue;
+}
+
+ir_visitor_status
+ir_structure_splitting_visitor::visit_leave(ir_dereference_record *ir)
+{
+   split_rvalue(&ir->record);
    return visit_continue;
 }
 
@@ -328,11 +343,19 @@ bool
 do_structure_splitting(exec_list *instructions)
 {
    ir_structure_reference_visitor refs;
-   void *mem_ctx = talloc_new(NULL);
+
+   visit_list_elements(&refs, instructions);
 
    /* Trim out variables we can't split. */
    foreach_iter(exec_list_iterator, iter, refs.variable_list) {
       variable_entry *entry = (variable_entry *)iter.get();
+
+      if (debug) {
+	 printf("structure %s@%p: decl %d, whole_access %d\n",
+		entry->var->name, entry->var, entry->declaration,
+		entry->whole_structure_access);
+      }
+
       if (!entry->declaration || entry->whole_structure_access) {
 	 entry->remove();
       }
@@ -340,6 +363,8 @@ do_structure_splitting(exec_list *instructions)
 
    if (refs.variable_list.is_empty())
       return false;
+
+   void *mem_ctx = talloc_new(NULL);
 
    /* Replace the decls of the structures to be split with their split
     * components.
@@ -356,7 +381,7 @@ do_structure_splitting(exec_list *instructions)
 
       for (unsigned int i = 0; i < entry->var->type->length; i++) {
 	 const char *name = talloc_asprintf(mem_ctx, "%s_%s",
-					    type->name,
+					    entry->var->name,
 					    type->fields.structure[i].name);
 
 	 entry->components[i] =

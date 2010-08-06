@@ -1951,7 +1951,14 @@ ast_declarator_list::hir(exec_list *instructions,
 			  decl->identifier);
       }
 
-      instructions->push_tail(var);
+      /* Push the variable declaration to the top.  It means that all
+       * the variable declarations will appear in a funny
+       * last-to-first order, but otherwise we run into trouble if a
+       * function is prototyped, a global var is decled, then the
+       * function is defined with usage of the global var.  See
+       * glslparsertest's CorrectModule.frag.
+       */
+      instructions->push_head(var);
       instructions->append_list(&initializer_instructions);
 
       /* Add the variable to the symbol table after processing the initializer.

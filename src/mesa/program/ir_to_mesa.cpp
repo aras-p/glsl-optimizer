@@ -752,15 +752,12 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
       ir_to_mesa_emit_scalar_op1(ir, OPCODE_RCP, result_dst, op[0]);
       break;
 
-   case ir_unop_exp:
-      ir_to_mesa_emit_scalar_op2(ir, OPCODE_POW, result_dst,
-				 src_reg_for_float(M_E), op[0]);
-      break;
    case ir_unop_exp2:
       ir_to_mesa_emit_scalar_op1(ir, OPCODE_EX2, result_dst, op[0]);
       break;
+   case ir_unop_exp:
    case ir_unop_log:
-      ir_to_mesa_emit_scalar_op1(ir, OPCODE_LOG, result_dst, op[0]);
+      assert(!"not reached: should be handled by ir_explog_to_explog2");
       break;
    case ir_unop_log2:
       ir_to_mesa_emit_scalar_op1(ir, OPCODE_LG2, result_dst, op[0]);
@@ -2043,10 +2040,12 @@ ir_to_mesa_visitor::visit(ir_texture *ir)
 
    switch (sampler->type->sampler_dimensionality) {
    case GLSL_SAMPLER_DIM_1D:
-      inst->tex_target = TEXTURE_1D_INDEX;
+      inst->tex_target = (sampler->type->sampler_array)
+	 ? TEXTURE_1D_ARRAY_INDEX : TEXTURE_1D_INDEX;
       break;
    case GLSL_SAMPLER_DIM_2D:
-      inst->tex_target = TEXTURE_2D_INDEX;
+      inst->tex_target = (sampler->type->sampler_array)
+	 ? TEXTURE_2D_ARRAY_INDEX : TEXTURE_2D_INDEX;
       break;
    case GLSL_SAMPLER_DIM_3D:
       inst->tex_target = TEXTURE_3D_INDEX;

@@ -74,6 +74,11 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct __GLcontextRec *ctx,
       static struct gl_extensions null_extensions;
 
       memset(&null_extensions, 0, sizeof(null_extensions));
+      null_extensions.ARB_draw_buffers = GL_TRUE;
+      null_extensions.ARB_fragment_coord_conventions = GL_TRUE;
+      null_extensions.EXT_texture_array = GL_TRUE;
+      null_extensions.NV_texture_rectangle = GL_TRUE;
+
       this->extensions = &null_extensions;
 
       /* 1.10 minimums. */
