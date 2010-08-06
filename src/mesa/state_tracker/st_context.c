@@ -63,6 +63,9 @@
 #include "cso_cache/cso_context.h"
 
 
+DEBUG_GET_ONCE_BOOL_OPTION(mesa_mvp_dp4, "MESA_MVP_DP4", FALSE);
+
+
 /**
  * Called via ctx->Driver.UpdateState()
  */
@@ -170,7 +173,7 @@ struct st_context *st_create_context(gl_api api, struct pipe_context *pipe,
    /* XXX: need a capability bit in gallium to query if the pipe
     * driver prefers DP4 or MUL/MAD for vertex transformation.
     */
-   if (debug_get_bool_option("MESA_MVP_DP4", FALSE))
+   if (debug_get_option_mesa_mvp_dp4())
       _mesa_set_mvp_with_dp4( ctx, GL_TRUE );
 
    return st_create_context_priv(ctx, pipe);
