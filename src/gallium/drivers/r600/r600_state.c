@@ -660,24 +660,25 @@ static int r600_blend(struct r600_context *rctx, struct radeon_state *rstate)
 	return radeon_state_pm4(rstate);
 }
 
-static int r600_cb0(struct r600_context *rctx, struct radeon_state *rstate)
+static int r600_cb(struct r600_context *rctx, struct radeon_state *rstate, int cb)
 {
 	struct r600_screen *rscreen = rctx->screen;
 	struct r600_resource_texture *rtex;
 	struct r600_resource *rbuffer;
 	const struct pipe_framebuffer_state *state = &rctx->framebuffer->state.framebuffer;
-	unsigned level = state->cbufs[0]->level;
+	unsigned level = state->cbufs[cb]->level;
 	unsigned pitch, slice;
 	unsigned color_info;
 	unsigned format, swap, ntype;
 	int r;
 	const struct util_format_description *desc;
+	int id = R600_CB0 + cb;
 
-	r = radeon_state_init(rstate, rscreen->rw, R600_CB0_TYPE, R600_CB0);
+	r = radeon_state_init(rstate, rscreen->rw, R600_CB0_TYPE, id);
 	if (r)
 		return r;
 
-	rtex = (struct r600_resource_texture*)state->cbufs[0]->texture;
+	rtex = (struct r600_resource_texture*)state->cbufs[cb]->texture;
 	rbuffer = &rtex->resource;
 	rstate->bo[0] = radeon_bo_incref(rscreen->rw, rbuffer->bo);
 	rstate->bo[1] = radeon_bo_incref(rscreen->rw, rbuffer->bo);
@@ -687,7 +688,7 @@ static int r600_cb0(struct r600_context *rctx, struct radeon_state *rstate)
 	rstate->placement[4] = RADEON_GEM_DOMAIN_GTT;
 	rstate->nbo = 3;
 	pitch = (rtex->pitch[level] / rtex->bpt) / 8 - 1;
-	slice = (rtex->pitch[level] / rtex->bpt) * state->cbufs[0]->height / 64 - 1;
+	slice = (rtex->pitch[level] / rtex->bpt) * state->cbufs[cb]->height / 64 - 1;
 
 	ntype = 0;
 	desc = util_format_description(rtex->resource.base.b.format);
@@ -878,14 +879,20 @@ static int r600_dsa(struct r600_context *rctx, struct radeon_state *rstate)
 	const struct pipe_depth_stencil_alpha_state *state = &rctx->dsa->state.dsa;
 	const struct pipe_stencil_ref *stencil_ref = &rctx->stencil_ref->state.stencil_ref;
 	struct r600_screen *rscreen = rctx->screen;
-	unsigned db_depth_control, alpha_test_control, alpha_ref;
+	unsigned db_depth_control, alpha_test_control, alpha_ref, db_shader_control;
 	unsigned stencil_ref_mask, stencil_ref_mask_bf;
-	int r;
+	int r, i;
+	struct r600_shader *rshader = &rctx->ps_shader->shader;
 
 	r = radeon_state_init(rstate, rscreen->rw, R600_DSA_TYPE, R600_DSA);
 	if (r)
 		return r;
 
+	db_shader_control = 0x210;
+	for (i = 0; i < rshader->noutput; i++) {
+		if (rshader->output[i].name == TGSI_SEMANTIC_POSITION)
+			db_shader_control |= 1;
+	}
 	stencil_ref_mask = 0;
 	stencil_ref_mask_bf = 0;
 	db_depth_control = S_028800_Z_ENABLE(state->depth.enabled) |
@@ -933,7 +940,7 @@ static int r600_dsa(struct r600_context *rctx, struct radeon_state *rstate)
 	rstate->states[R600_DSA__SPI_FOG_FUNC_BIAS] = 0x00000000;
 	rstate->states[R600_DSA__SPI_FOG_CNTL] = 0x00000000;
 	rstate->states[R600_DSA__DB_DEPTH_CONTROL] = db_depth_control;
-	rstate->states[R600_DSA__DB_SHADER_CONTROL] = 0x00000210;
+	rstate->states[R600_DSA__DB_SHADER_CONTROL] = db_shader_control;
 	rstate->states[R600_DSA__DB_RENDER_CONTROL] = 0x00000060;
 	rstate->states[R600_DSA__DB_RENDER_OVERRIDE] = 0x0000002A;
 	rstate->states[R600_DSA__DB_SRESULTS_COMPARE_STATE1] = 0x00000000;
@@ -1159,11 +1166,17 @@ static int r600_cb_cntl(struct r600_context *rctx, struct radeon_state *rstate)
 {
 	struct r600_screen *rscreen = rctx->screen;
 	const struct pipe_blend_state *pbs = &rctx->blend->state.blend;
-	uint32_t color_control, target_mask;
+	int nr_cbufs = rctx->framebuffer->state.framebuffer.nr_cbufs;	
+	uint32_t color_control, target_mask, shader_mask;
 	int i, r;
 
 	target_mask = 0;
+	shader_mask = 0;
 	color_control = S_028808_PER_MRT_BLEND(1);
+
+	for (i = 0; i < nr_cbufs; i++) {
+		shader_mask |= 0xf << i;
+	}
 
 	if (pbs->logicop_enable) {
 		color_control |= (pbs->logicop_func) << 16;
@@ -1175,11 +1188,13 @@ static int r600_cb_cntl(struct r600_context *rctx, struct radeon_state *rstate)
 			color_control |= S_028808_TARGET_BLEND_ENABLE(1 << i);
 		}
 		target_mask |= (pbs->rt[i].colormask << (4 * i));
+		
 	}
 	r = radeon_state_init(rstate, rscreen->rw, R600_CB_CNTL_TYPE, R600_CB_CNTL);
 	if (r)
 		return r;
-	rstate->states[R600_CB_CNTL__CB_SHADER_MASK] = 0x0000000F;
+
+	rstate->states[R600_CB_CNTL__CB_SHADER_MASK] = shader_mask;
 	rstate->states[R600_CB_CNTL__CB_TARGET_MASK] = target_mask;
 	rstate->states[R600_CB_CNTL__CB_COLOR_CONTROL] = color_control;
 	rstate->states[R600_CB_CNTL__PA_SC_AA_CONFIG] = 0x00000000;
@@ -1197,6 +1212,7 @@ int r600_context_hw_states(struct r600_context *rctx)
 {
 	unsigned i;
 	int r;
+	int nr_cbufs = rctx->framebuffer->state.framebuffer.nr_cbufs;
 
 	/* free previous TODO determine what need to be updated, what
 	 * doesn't
@@ -1210,7 +1226,8 @@ int r600_context_hw_states(struct r600_context *rctx)
 	r600_dsa(rctx, &rctx->hw_states.dsa);
 	r600_blend(rctx, &rctx->hw_states.blend);
 	r600_viewport(rctx, &rctx->hw_states.viewport);
-	r600_cb0(rctx, &rctx->hw_states.cb0);
+	for (i = 0; i < nr_cbufs; i++)
+		r600_cb(rctx, &rctx->hw_states.cb[i], i);
 	r600_db(rctx, &rctx->hw_states.db);
 	r600_cb_cntl(rctx, &rctx->hw_states.cb_cntl);
 
@@ -1250,9 +1267,11 @@ int r600_context_hw_states(struct r600_context *rctx)
 	r = radeon_draw_set(&rctx->draw, &rctx->hw_states.viewport);
 	if (r)
 		return r;
-	r = radeon_draw_set(&rctx->draw, &rctx->hw_states.cb0);
-	if (r)
-		return r;
+	for (i = 0; i < nr_cbufs; i++) {
+		r = radeon_draw_set(&rctx->draw, &rctx->hw_states.cb[i]);
+		if (r)
+			return r;
+	}
 	r = radeon_draw_set(&rctx->draw, &rctx->hw_states.config);
 	if (r)
 		return r;

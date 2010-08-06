@@ -158,7 +158,7 @@ static int r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_context_sta
 	struct r600_screen *rscreen = r600_screen(ctx->screen);
 	struct r600_shader *rshader = &rpshader->shader;
 	struct radeon_state *state;
-	unsigned i, tmp;
+	unsigned i, tmp, exports_ps, num_cout;
 	int r;
 
 	r = radeon_state_init(&rpshader->rstate, rscreen->rw, R600_PS_SHADER_TYPE, R600_PS_SHADER);
@@ -174,11 +174,22 @@ static int r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_context_sta
 		}
 		state->states[R600_PS_SHADER__SPI_PS_INPUT_CNTL_0 + i] = tmp;
 	}
+
+	exports_ps = 0;
+	num_cout = 0;
+	for (i = 0; i < rshader->noutput; i++) {
+		if (rshader->output[i].name == TGSI_SEMANTIC_POSITION)
+			exports_ps |= 1;
+		else if (rshader->output[i].name == TGSI_SEMANTIC_COLOR) {
+			exports_ps |= (1 << (num_cout+1));
+			num_cout++;
+		}
+	}
 	state->states[R600_PS_SHADER__SPI_PS_IN_CONTROL_0] = S_0286CC_NUM_INTERP(rshader->ninput) |
 							S_0286CC_PERSP_GRADIENT_ENA(1);
 	state->states[R600_PS_SHADER__SPI_PS_IN_CONTROL_1] = 0x00000000;
 	state->states[R600_PS_SHADER__SQ_PGM_RESOURCES_PS] = S_028868_NUM_GPRS(rshader->bc.ngpr);
-	state->states[R600_PS_SHADER__SQ_PGM_EXPORTS_PS] = 0x00000002;
+	state->states[R600_PS_SHADER__SQ_PGM_EXPORTS_PS] = exports_ps;
 	rpshader->rstate.bo[0] = radeon_bo_incref(rscreen->rw, rpshader->bo);
 	rpshader->rstate.nbo = 1;
 	rpshader->rstate.placement[0] = RADEON_GEM_DOMAIN_GTT;
@@ -430,6 +441,9 @@ int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *s
 		case TGSI_PROCESSOR_FRAGMENT:
 			if (shader->output[i].name == TGSI_SEMANTIC_COLOR) {
 				output.array_base = 0;
+				output.type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PIXEL;
+			} else if (shader->output[i].name == TGSI_SEMANTIC_POSITION) {
+				output.array_base = 61;
 				output.type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PIXEL;
 			} else {
 				R600_ERR("unsupported fragment output name %d\n", shader->output[i].name);

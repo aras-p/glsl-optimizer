@@ -94,7 +94,7 @@ struct r600_context_hw_states {
 	struct radeon_state	dsa;
 	struct radeon_state	blend;
 	struct radeon_state	viewport;
-	struct radeon_state	cb0;
+	struct radeon_state	cb[7];
 	struct radeon_state	config;
 	struct radeon_state	cb_cntl;
 	struct radeon_state	db;
