@@ -683,7 +683,6 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant)
    unsigned i, j;
    struct lp_build_context bld;
    struct lp_build_loop_state lp_loop;
-   struct lp_type vs_type = lp_type_float_vec(32);
    const int max_vertices = 4;
    LLVMValueRef outputs[PIPE_MAX_SHADER_OUTPUTS][NUM_CHANNELS];
    void *code;
@@ -732,7 +731,7 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant)
    builder = LLVMCreateBuilder();
    LLVMPositionBuilderAtEnd(builder, block);
 
-   lp_build_context_init(&bld, builder, vs_type);
+   lp_build_context_init(&bld, builder, lp_type_int(32));
 
    end = lp_build_add(&bld, start, count);
 
@@ -847,7 +846,6 @@ draw_llvm_generate_elts(struct draw_llvm *llvm, struct draw_llvm_variant *varian
    struct lp_build_context bld;
    struct lp_build_context bld_int;
    struct lp_build_loop_state lp_loop;
-   struct lp_type vs_type = lp_type_float_vec(32);
    const int max_vertices = 4;
    LLVMValueRef outputs[PIPE_MAX_SHADER_OUTPUTS][NUM_CHANNELS];
    LLVMValueRef fetch_max;
@@ -899,7 +897,7 @@ draw_llvm_generate_elts(struct draw_llvm *llvm, struct draw_llvm_variant *varian
    builder = LLVMCreateBuilder();
    LLVMPositionBuilderAtEnd(builder, block);
 
-   lp_build_context_init(&bld, builder, vs_type);
+   lp_build_context_init(&bld, builder, lp_type_float_vec(32));
    lp_build_context_init(&bld_int, builder, lp_type_int(32));
 
    step = LLVMConstInt(LLVMInt32Type(), max_vertices, 0);
