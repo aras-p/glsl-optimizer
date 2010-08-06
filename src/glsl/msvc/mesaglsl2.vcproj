@@ -43,7 +43,7 @@
 				Optimization="0"
 				AdditionalIncludeDirectories="talloc;../../../include;../../mesa;../../mapi;."
 				PreprocessorDefinitions="WIN32;_DEBUG;_LIB;NOMINMAX;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE;snprintf=_snprintf"
-				MinimalRebuild="true"
+				MinimalRebuild="false"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
 				UsePrecompiledHeader="0"
