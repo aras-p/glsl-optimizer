@@ -108,7 +108,7 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
       /* Setup new texture template.
        */
       memset(&template, 0, sizeof(template));
-      template.target = PIPE_TEXTURE_2D;
+      template.target = st->internal_target;
       template.format = format;
       template.width0 = width;
       template.height0 = height;
