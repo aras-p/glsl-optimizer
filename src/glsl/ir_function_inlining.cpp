@@ -121,8 +121,12 @@ replace_return_with_assignment(ir_instruction *ir, void *data)
    }
 }
 
-static void rename_inlined_variable (ir_variable* new_var, ir_function_signature* func)
+static void rename_inlined_variable (ir_instruction* new_ir, ir_function_signature* func)
 {
+	ir_variable *new_var = new_ir->as_variable();
+	if (!new_var)
+		return;
+
 	// go through callee, see if we have any variables that match this one
 	bool progress;
 	int counter = 0;
@@ -199,6 +203,7 @@ ir_call::generate_inline(ir_instruction *next_ir, ir_function_signature* parent)
 	 parameters[i] = NULL;
       } else {
 	 parameters[i] = sig_param->clone(ctx, ht);
+	 rename_inlined_variable (parameters[i], parent);
 	 parameters[i]->mode = ir_var_auto;
 	 next_ir->insert_before(parameters[i]);
       }
@@ -223,9 +228,7 @@ ir_call::generate_inline(ir_instruction *next_ir, ir_function_signature* parent)
    foreach_iter(exec_list_iterator, iter, callee->body) {
       ir_instruction *ir = (ir_instruction *)iter.get();
       ir_instruction *new_ir = ir->clone(ctx, ht);
-	  ir_variable *new_var = new_ir->as_variable();
-	  if (new_var)
-		  rename_inlined_variable (new_var, parent);
+	  rename_inlined_variable (new_ir, parent);
 
       new_instructions.push_tail(new_ir);
       visit_tree(new_ir, replace_return_with_assignment, retval);
