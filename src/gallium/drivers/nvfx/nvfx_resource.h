@@ -3,9 +3,11 @@
 #define NVFX_RESOURCE_H
 
 #include "util/u_transfer.h"
+#include "util/u_format.h"
+#include "util/u_math.h"
+#include <nouveau/nouveau_bo.h>
 
 struct pipe_resource;
-struct nouveau_bo;
 
 
 /* This gets further specialized into either buffer or texture
@@ -21,6 +23,18 @@ struct nvfx_resource {
 };
 
 #define NVFX_RESOURCE_FLAG_LINEAR (PIPE_RESOURCE_FLAG_DRV_PRIV << 0)
+
+static inline int
+nvfx_resource_on_gpu(struct pipe_resource* pr)
+{
+#if 0
+	// a compiler error here means you need to apply libdrm-nouveau-add-domain.patch to libdrm
+	// TODO: return FALSE if not VRAM and on a PCI-E system
+	return ((struct nvfx_resource*)pr)->bo->domain & (NOUVEAU_BO_VRAM | NOUVEAU_BO_GART);
+#else
+	return TRUE;
+#endif
+}
 
 #define NVFX_MAX_TEXTURE_LEVELS  16
 
