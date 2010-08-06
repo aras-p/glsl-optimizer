@@ -57,6 +57,41 @@ process_parameters(exec_list *instructions, exec_list *actual_parameters,
 }
 
 
+/**
+ * Generate a source prototype for a function signature
+ *
+ * \param return_type Return type of the function.  May be \c NULL.
+ * \param name        Name of the function.
+ * \param parameters  Parameter list for the function.  This may be either a
+ *                    formal or actual parameter list.  Only the type is used.
+ *
+ * \return
+ * A talloced string representing the prototype of the function.
+ */
+char *
+prototype_string(const glsl_type *return_type, const char *name,
+		 exec_list *parameters)
+{
+   char *str = NULL;
+
+   if (return_type != NULL)
+      str = talloc_asprintf(str, "%s ", return_type->name);
+
+   str = talloc_asprintf_append(str, "%s(", name);
+
+   const char *comma = "";
+   foreach_list(node, parameters) {
+      const ir_instruction *const param = (ir_instruction *) node;
+
+      str = talloc_asprintf_append(str, "%s%s", comma, param->type->name);
+      comma = ", ";
+   }
+
+   str = talloc_strdup_append(str, ")");
+   return str;
+}
+
+
 static ir_rvalue *
 process_call(exec_list *instructions, ir_function *f,
 	     YYLTYPE *loc, exec_list *actual_parameters,
@@ -132,13 +167,23 @@ process_call(exec_list *instructions, ir_function *f,
 	 return NULL;
       }
    } else {
-      /* FINISHME: Log a better error message here.  G++ will show the types
-       * FINISHME: of the actual parameters and the set of candidate
-       * FINISHME: functions.  A different error should also be logged when
-       * FINISHME: multiple functions match.
-       */
+      char *str = prototype_string(NULL, f->name, actual_parameters);
+
       _mesa_glsl_error(loc, state, "no matching function for call to `%s'",
-		       f->name);
+		       str);
+      talloc_free(str);
+
+      const char *prefix = "candidates are: ";
+      foreach_list (node, &f->signatures) {
+	 ir_function_signature *sig = (ir_function_signature *) node;
+
+	 str = prototype_string(sig->return_type, f->name, &sig->parameters);
+	 _mesa_glsl_error(loc, state, "%s%s\n", prefix, str);
+	 talloc_free(str);
+
+	 prefix = "                ";
+      }
+
       return ir_call::get_error_instruction(ctx);
    }
 }
