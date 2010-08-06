@@ -1,6 +1,7 @@
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
 #include "util/u_inlines.h"
+#include "util/u_framebuffer.h"
 
 #include "draw/draw_context.h"
 
@@ -507,7 +508,10 @@ nvfx_set_framebuffer_state(struct pipe_context *pipe,
 {
 	struct nvfx_context *nvfx = nvfx_context(pipe);
 
-	nvfx->framebuffer = *fb;
+	if(fb)
+		util_copy_framebuffer_state(&nvfx->framebuffer, fb);
+	else
+		util_unreference_framebuffer_state(&nvfx->framebuffer);
 	nvfx->dirty |= NVFX_NEW_FB;
 }
 
@@ -548,7 +552,17 @@ nvfx_set_vertex_buffers(struct pipe_context *pipe, unsigned count,
 {
 	struct nvfx_context *nvfx = nvfx_context(pipe);
 
-	memcpy(nvfx->vtxbuf, vb, sizeof(*vb) * count);
+	for(unsigned i = 0; i < count; ++i)
+	{
+		pipe_resource_reference(&nvfx->vtxbuf[i].buffer, vb[i].buffer);
+		nvfx->vtxbuf[i].buffer_offset = vb[i].buffer_offset;
+		nvfx->vtxbuf[i].max_index = vb[i].max_index;
+		nvfx->vtxbuf[i].stride = vb[i].stride;
+	}
+
+	for(unsigned i = count; i < nvfx->vtxbuf_nr; ++i)
+		pipe_resource_reference(&nvfx->vtxbuf[i].buffer, 0);
+
 	nvfx->vtxbuf_nr = count;
 
 	nvfx->dirty |= NVFX_NEW_ARRAYS;
@@ -561,12 +575,20 @@ nvfx_set_index_buffer(struct pipe_context *pipe,
 {
 	struct nvfx_context *nvfx = nvfx_context(pipe);
 
-	if (ib)
-		memcpy(&nvfx->idxbuf, ib, sizeof(nvfx->idxbuf));
-	else
-		memset(&nvfx->idxbuf, 0, sizeof(nvfx->idxbuf));
-
 	/* TODO make this more like a state */
+
+	if(ib)
+	{
+		pipe_resource_reference(&nvfx->idxbuf.buffer, ib->buffer);
+		nvfx->idxbuf.index_size = ib->index_size;
+		nvfx->idxbuf.offset = ib->offset;
+	}
+	else
+	{
+		pipe_resource_reference(&nvfx->idxbuf.buffer, 0);
+		nvfx->idxbuf.index_size = 0;
+		nvfx->idxbuf.offset = 0;
+	}
 }
 
 static void *
