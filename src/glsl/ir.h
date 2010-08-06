@@ -1392,4 +1392,7 @@ import_prototypes(const exec_list *source, exec_list *dest,
 extern bool
 ir_has_call(ir_instruction *ir);
 
+extern void
+do_set_program_inouts(exec_list *instructions, struct gl_program *prog);
+
 #endif /* IR_H */

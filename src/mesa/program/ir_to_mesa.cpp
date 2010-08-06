@@ -2324,80 +2324,14 @@ print_program(struct prog_instruction *mesa_instructions,
 }
 
 static void
-mark_input(struct gl_program *prog,
-	   int index,
-	   GLboolean reladdr)
-{
-   prog->InputsRead |= BITFIELD64_BIT(index);
-   int i;
-
-   if (reladdr) {
-      if (index >= FRAG_ATTRIB_TEX0 && index <= FRAG_ATTRIB_TEX7) {
-	 for (i = 0; i < 8; i++) {
-	    prog->InputsRead |= BITFIELD64_BIT(FRAG_ATTRIB_TEX0 + i);
-	 }
-      } else {
-	 assert(!"FINISHME: Mark InputsRead for varying arrays");
-      }
-   }
-}
-
-static void
-mark_output(struct gl_program *prog,
-	   int index,
-	   GLboolean reladdr)
-{
-   prog->OutputsWritten |= BITFIELD64_BIT(index);
-   int i;
-
-   if (reladdr) {
-      if (index >= VERT_RESULT_TEX0 && index <= VERT_RESULT_TEX7) {
-	 for (i = 0; i < 8; i++) {
-	    prog->OutputsWritten |= BITFIELD64_BIT(FRAG_ATTRIB_TEX0 + i);
-	 }
-      } else {
-	 assert(!"FINISHME: Mark OutputsWritten for varying arrays");
-      }
-   }
-}
-
-static void
 count_resources(struct gl_program *prog)
 {
    unsigned int i;
 
-   prog->InputsRead = 0;
-   prog->OutputsWritten = 0;
    prog->SamplersUsed = 0;
 
    for (i = 0; i < prog->NumInstructions; i++) {
       struct prog_instruction *inst = &prog->Instructions[i];
-      unsigned int reg;
-
-      switch (inst->DstReg.File) {
-      case PROGRAM_OUTPUT:
-	 mark_output(prog, inst->DstReg.Index, inst->DstReg.RelAddr);
-	 break;
-      case PROGRAM_INPUT:
-	 mark_input(prog, inst->DstReg.Index, inst->DstReg.RelAddr);
-	 break;
-      default:
-	 break;
-      }
-
-      for (reg = 0; reg < _mesa_num_inst_src_regs(inst->Opcode); reg++) {
-	 switch (inst->SrcReg[reg].File) {
-	 case PROGRAM_OUTPUT:
-	    mark_output(prog, inst->SrcReg[reg].Index,
-			inst->SrcReg[reg].RelAddr);
-	    break;
-	 case PROGRAM_INPUT:
-	    mark_input(prog, inst->SrcReg[reg].Index, inst->SrcReg[reg].RelAddr);
-	    break;
-	 default:
-	    break;
-	 }
-      }
 
       /* Instead of just using the uniform's value to map to a
        * sampler, Mesa first allocates a separate number for the
@@ -2578,6 +2512,7 @@ get_mesa_program(GLcontext *ctx, struct gl_shader_program *shader_program,
    }
 
    set_branchtargets(&v, mesa_instructions, num_instructions);
+
    if (ctx->Shader.Flags & GLSL_DUMP) {
       printf("\n");
       printf("GLSL IR for linked %s program %d:\n", target_string,
@@ -2593,6 +2528,9 @@ get_mesa_program(GLcontext *ctx, struct gl_shader_program *shader_program,
 
    prog->Instructions = mesa_instructions;
    prog->NumInstructions = num_instructions;
+
+   do_set_program_inouts(shader->ir, prog);
+   count_resources(prog);
 
    _mesa_reference_program(ctx, &shader->Program, prog);
 
@@ -2731,7 +2669,6 @@ _mesa_glsl_link_shader(GLcontext *ctx, struct gl_shader_program *prog)
 
 	 linked_prog = get_mesa_program(ctx, prog,
 					prog->_LinkedShaders[i]);
-	 count_resources(linked_prog);
 
 	 link_uniforms_to_shared_uniform_list(prog->Uniforms, linked_prog);
 

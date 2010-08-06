@@ -56,6 +56,7 @@ CXX_SOURCES = \
 	ir_mod_to_fract.cpp \
 	ir_print_visitor.cpp \
 	ir_reader.cpp \
+	ir_set_program_inouts.cpp \
 	ir_structure_splitting.cpp \
 	ir_swizzle_swizzle.cpp \
 	ir_tree_grafting.cpp \
