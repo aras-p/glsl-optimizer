@@ -1,10 +1,3 @@
-struct v2f_surf {
-  vec4 pos;
-  vec2 hip_pack0;
-  vec3 TtoV0;
-  vec3 TtoV1;
-  vec3 TtoV2;
-};
 struct appdata_full {
   vec4 vertex;
   vec4 tangent;
@@ -26,9 +19,10 @@ void main ()
   xlt_v.color = gl_Color.xyzw;
   appdata_full v;
   v = xlt_v;
-  v2f_surf o;
-  o.pos = (gl_ModelViewProjectionMatrix * xlt_v.vertex);
-  o.hip_pack0 = ((xlt_v.texcoord.xy * _BumpMap_ST.xy) + _BumpMap_ST.zw).xy;
+  vec4 tmpvar_115;
+  vec2 tmpvar_116;
+  tmpvar_115 = (gl_ModelViewProjectionMatrix * xlt_v.vertex);
+  tmpvar_116 = ((xlt_v.texcoord.xy * _BumpMap_ST.xy) + _BumpMap_ST.zw).xy;
   vec3 tmpvar_52;
   tmpvar_52 = cross (v.normal, v.tangent.xyz);
   vec3 tmpvar_53;
@@ -47,33 +41,30 @@ void main ()
   tmpvar_70[0] = gl_ModelViewMatrixInverseTranspose[0].xyz;
   tmpvar_70[1] = gl_ModelViewMatrixInverseTranspose[1].xyz;
   tmpvar_70[2] = gl_ModelViewMatrixInverseTranspose[2].xyz;
-  o.TtoV0 = (tmpvar_54 * tmpvar_70[0].xyz);
   mat3 tmpvar_80;
   tmpvar_80[0] = gl_ModelViewMatrixInverseTranspose[0].xyz;
   tmpvar_80[1] = gl_ModelViewMatrixInverseTranspose[1].xyz;
   tmpvar_80[2] = gl_ModelViewMatrixInverseTranspose[2].xyz;
-  o.TtoV1 = (tmpvar_54 * tmpvar_80[1].xyz);
   mat3 tmpvar_90;
   tmpvar_90[0] = gl_ModelViewMatrixInverseTranspose[0].xyz;
   tmpvar_90[1] = gl_ModelViewMatrixInverseTranspose[1].xyz;
   tmpvar_90[2] = gl_ModelViewMatrixInverseTranspose[2].xyz;
-  o.TtoV2 = (tmpvar_54 * tmpvar_90[2].xyz);
-  gl_Position = o.pos.xyzw;
+  gl_Position = tmpvar_115.xyzw;
   vec4 tmpvar_17;
-  tmpvar_17.xy = vec2(o.hip_pack0.xy);
+  tmpvar_17.xy = vec2(tmpvar_116.xy);
   tmpvar_17.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_17.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[0] = tmpvar_17;
   vec4 tmpvar_19;
-  tmpvar_19.xyz = vec3(o.TtoV0.xyz);
+  tmpvar_19.xyz = vec3((tmpvar_54 * tmpvar_70[0].xyz).xyz);
   tmpvar_19.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[1] = tmpvar_19;
   vec4 tmpvar_21;
-  tmpvar_21.xyz = vec3(o.TtoV1.xyz);
+  tmpvar_21.xyz = vec3((tmpvar_54 * tmpvar_80[1].xyz).xyz);
   tmpvar_21.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[2] = tmpvar_21;
   vec4 tmpvar_23;
-  tmpvar_23.xyz = vec3(o.TtoV2.xyz);
+  tmpvar_23.xyz = vec3((tmpvar_54 * tmpvar_90[2].xyz).xyz);
   tmpvar_23.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[3] = tmpvar_23;
 }

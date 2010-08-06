@@ -1,21 +1,12 @@
-struct v2f {
-  vec4 pos;
-  vec2 uv;
-  vec2 uvOrig;
-};
 uniform sampler2D _MainTex;
 uniform vec4 _CenterRadius;
 uniform float _Angle;
 void main ()
 {
-  v2f xlt_i;
-  xlt_i.pos = vec4(0.000000, 0.000000, 0.000000, 0.000000);
-  xlt_i.uv = gl_TexCoord[0].xy;
-  xlt_i.uvOrig = gl_TexCoord[1].xy;
   vec2 uv;
   float angle;
   vec2 offset;
-  offset = xlt_i.uvOrig;
+  offset = gl_TexCoord[1].xy;
   float tmpvar_16;
   tmpvar_16 = length ((offset / _CenterRadius.zw));
   angle = (1.000000 - tmpvar_16);

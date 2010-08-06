@@ -10,10 +10,6 @@ struct Input {
   vec2 uv_MainTex;
   vec3 worldRefl;
 };
-struct v2f_surf {
-  vec4 pos;
-  vec3 normal;
-};
 uniform float _Shininess;
 uniform vec4 _ReflectColor;
 uniform sampler2D _MainTex;
@@ -21,9 +17,6 @@ uniform samplerCube _Cube;
 uniform vec4 _Color;
 void main ()
 {
-  v2f_surf xlt_IN;
-  xlt_IN.pos = vec4(0.000000, 0.000000, 0.000000, 0.000000);
-  xlt_IN.normal = gl_TexCoord[0].xyz;
   vec4 res;
   Input surfIN;
   SurfaceOutput o;
@@ -32,7 +25,7 @@ void main ()
   o.Specular = 0.000000;
   o.Alpha = 0.000000;
   o.Gloss = 0.000000;
-  o.Normal = xlt_IN.normal;
+  o.Normal = gl_TexCoord[0].xyz;
   Input IN_i0;
   IN_i0 = surfIN;
   SurfaceOutput o_i0;

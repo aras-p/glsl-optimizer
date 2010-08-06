@@ -1,18 +1,3 @@
-struct v2f_surf {
-  vec4 pos;
-  float fog;
-  vec2 hip_pack0;
-  vec3 normal;
-  vec3 lightDir;
-};
-struct appdata_full {
-  vec4 vertex;
-  vec4 tangent;
-  vec3 normal;
-  vec4 texcoord;
-  vec4 texcoord1;
-  vec4 color;
-};
 varying vec4 xlv_FOG;
 attribute vec4 TANGENT;
 uniform vec4 unity_Scale;
@@ -21,43 +6,30 @@ uniform mat4 _Object2World;
 uniform vec4 _MainTex_ST;
 void main ()
 {
-  appdata_full xlt_v;
-  xlt_v.vertex = gl_Vertex.xyzw;
-  xlt_v.tangent = TANGENT.xyzw;
-  xlt_v.normal = gl_Normal.xyz;
-  xlt_v.texcoord = gl_MultiTexCoord0.xyzw;
-  xlt_v.texcoord1 = gl_MultiTexCoord1.xyzw;
-  xlt_v.color = gl_Color.xyzw;
-  v2f_surf o;
   vec4 tmpvar_38;
-  tmpvar_38 = (gl_ModelViewProjectionMatrix * xlt_v.vertex);
-  o.pos = tmpvar_38;
-  o.fog = tmpvar_38.z;
-  o.hip_pack0 = ((xlt_v.texcoord.xy * _MainTex_ST.xy) + _MainTex_ST.zw).xy;
+  tmpvar_38 = (gl_ModelViewProjectionMatrix * gl_Vertex.xyzw);
   mat3 tmpvar_46;
   tmpvar_46[0] = _Object2World[0].xyz;
   tmpvar_46[1] = _Object2World[1].xyz;
   tmpvar_46[2] = _Object2World[2].xyz;
-  o.normal = (tmpvar_46 * (xlt_v.normal * unity_Scale.w));
-  o.lightDir = _WorldSpaceLightPos0.xyz;
-  gl_Position = o.pos.xyzw;
+  gl_Position = tmpvar_38.xyzw;
   vec4 tmpvar_17;
-  tmpvar_17.x = float(vec4(o.fog));
+  tmpvar_17.x = float(tmpvar_38.z);
   tmpvar_17.y = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_17.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_17.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   xlv_FOG = tmpvar_17;
   vec4 tmpvar_19;
-  tmpvar_19.xy = vec2(o.hip_pack0.xy);
+  tmpvar_19.xy = vec2(((gl_MultiTexCoord0.xy * _MainTex_ST.xy) + _MainTex_ST.zw).xy);
   tmpvar_19.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_19.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[0] = tmpvar_19;
   vec4 tmpvar_21;
-  tmpvar_21.xyz = vec3(o.normal.xyz);
+  tmpvar_21.xyz = vec3((tmpvar_46 * (gl_Normal.xyz * unity_Scale.w)).xyz);
   tmpvar_21.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[1] = tmpvar_21;
   vec4 tmpvar_23;
-  tmpvar_23.xyz = vec3(o.lightDir.xyz);
+  tmpvar_23.xyz = vec3(_WorldSpaceLightPos0.xyz);
   tmpvar_23.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[2] = tmpvar_23;
 }

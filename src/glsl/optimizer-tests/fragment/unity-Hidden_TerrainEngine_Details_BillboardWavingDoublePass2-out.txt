@@ -10,23 +10,14 @@ struct Input {
   vec2 uv_MainTex;
   vec4 color;
 };
-struct v2f_surf {
-  vec4 pos;
-  vec2 hip_pack0;
-  vec4 lop_color;
-};
 uniform sampler2D _MainTex;
 uniform float _Cutoff;
 void main ()
 {
-  v2f_surf xlt_IN;
-  xlt_IN.pos = vec4(0.000000, 0.000000, 0.000000, 0.000000);
-  xlt_IN.hip_pack0 = gl_TexCoord[1].xy;
-  xlt_IN.lop_color = gl_Color.xyzw;
   SurfaceOutput o;
   Input surfIN;
-  surfIN.uv_MainTex = xlt_IN.hip_pack0.xy;
-  surfIN.color = xlt_IN.lop_color;
+  surfIN.uv_MainTex = gl_TexCoord[1].xy;
+  surfIN.color = gl_Color.xyzw;
   o.Albedo = vec3(0.000000, 0.000000, 0.000000);
   o.Emission = vec3(0.000000, 0.000000, 0.000000);
   o.Specular = 0.000000;

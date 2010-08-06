@@ -1,41 +1,21 @@
-struct v2f {
-  vec4 pos;
-  float fog;
-  vec4 color;
-  vec2 texcoord;
-};
-struct appdata {
-  vec4 vertex;
-  vec3 normal;
-  vec4 color;
-  vec2 texcoord;
-};
 varying vec4 xlv_FOG;
 void main ()
 {
-  appdata xlt_v;
-  xlt_v.vertex = gl_Vertex.xyzw;
-  xlt_v.normal = gl_Normal.xyz;
-  xlt_v.color = gl_Color.xyzw;
-  xlt_v.texcoord = gl_MultiTexCoord0.xy;
-  v2f o;
+  vec4 tmpvar_53;
   vec4 tmpvar_22;
-  tmpvar_22 = (gl_ModelViewProjectionMatrix * xlt_v.vertex);
-  o.pos = tmpvar_22;
-  o.fog = tmpvar_22.z;
-  o.color.xyz = ((xlt_v.color.xyz + (xlt_v.normal * 0.300000)) * 0.500000).xyz;
-  o.color.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
-  o.texcoord = xlt_v.texcoord;
-  gl_Position = o.pos.xyzw;
+  tmpvar_22 = (gl_ModelViewProjectionMatrix * gl_Vertex.xyzw);
+  tmpvar_53.xyz = ((gl_Color.xyz + (gl_Normal.xyz * 0.300000)) * 0.500000).xyz;
+  tmpvar_53.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
+  gl_Position = tmpvar_22.xyzw;
   vec4 tmpvar_13;
-  tmpvar_13.x = float(vec4(o.fog));
+  tmpvar_13.x = float(tmpvar_22.z);
   tmpvar_13.y = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_13.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_13.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   xlv_FOG = tmpvar_13;
-  gl_FrontColor = o.color.xyzw;
+  gl_FrontColor = tmpvar_53.xyzw;
   vec4 tmpvar_17;
-  tmpvar_17.xy = vec2(o.texcoord.xy);
+  tmpvar_17.xy = vec2(gl_MultiTexCoord0.xy);
   tmpvar_17.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_17.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[0] = tmpvar_17;

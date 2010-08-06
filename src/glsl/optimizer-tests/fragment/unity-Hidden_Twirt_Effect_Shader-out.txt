@@ -1,22 +1,15 @@
-struct v2f {
-  vec4 pos;
-  vec2 uv;
-};
 uniform mat4 _RotationMatrix;
 uniform sampler2D _MainTex;
 uniform vec4 _CenterRadius;
 void main ()
 {
-  v2f xlt_i;
-  xlt_i.pos = vec4(0.000000, 0.000000, 0.000000, 0.000000);
-  xlt_i.uv = gl_TexCoord[0].xy;
+  vec2 tmpvar_30;
+  tmpvar_30 = gl_TexCoord[0].xy;
   vec2 distortedOffset;
   vec2 offset;
-  vec2 tmpvar_13;
-  tmpvar_13 = xlt_i.uv;
-  offset = tmpvar_13;
+  offset = tmpvar_30;
   vec2 inUV;
-  inUV = tmpvar_13.xy;
+  inUV = tmpvar_30.xy;
   vec4 tmpvar_16;
   tmpvar_16.x = float(inUV.x);
   tmpvar_16.y = float(inUV.y);
@@ -24,7 +17,7 @@ void main ()
   tmpvar_16.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   distortedOffset = (_RotationMatrix * tmpvar_16).xy;
   float tmpvar_21;
-  tmpvar_21 = length ((tmpvar_13 / _CenterRadius.zw));
+  tmpvar_21 = length ((tmpvar_30 / _CenterRadius.zw));
   float tmpvar_22;
   tmpvar_22 = min (1.000000, tmpvar_21);
   vec2 tmpvar_25;

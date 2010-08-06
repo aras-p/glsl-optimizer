@@ -6,11 +6,6 @@ struct appdata_full {
   vec4 texcoord1;
   vec4 color;
 };
-struct v2f_surf {
-  vec4 pos;
-  vec2 hip_pack0;
-  vec4 lop_color;
-};
 attribute vec4 TANGENT;
 uniform vec4 unity_LightShadowBias;
 uniform vec4 _WavingTint;
@@ -28,7 +23,9 @@ void main ()
   xlt_v.texcoord = gl_MultiTexCoord0.xyzw;
   xlt_v.texcoord1 = gl_MultiTexCoord1.xyzw;
   xlt_v.color = gl_Color.xyzw;
-  v2f_surf o;
+  vec4 tmpvar_187;
+  vec2 tmpvar_188;
+  vec4 tmpvar_189;
   appdata_full v_i0;
   v_i0 = xlt_v;
   vec4 pos;
@@ -91,19 +88,19 @@ void main ()
   outColor.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
   v_i0.vertex = vertex;
   v_i0.color = outColor;
-  o.hip_pack0 = ((v_i0.texcoord.xy * _MainTex_ST.xy) + _MainTex_ST.zw).xy;
-  o.lop_color = v_i0.color;
-  o.pos = (gl_ModelViewProjectionMatrix * v_i0.vertex);
-  o.pos.z = float(vec3((o.pos.z + unity_LightShadowBias.x)));
-  if ((o.pos.z < -(o.pos.w))) {
-    o.pos.z = float(vec3(-(o.pos.w)));
+  tmpvar_188 = ((v_i0.texcoord.xy * _MainTex_ST.xy) + _MainTex_ST.zw).xy;
+  tmpvar_189 = v_i0.color;
+  tmpvar_187 = (gl_ModelViewProjectionMatrix * v_i0.vertex);
+  tmpvar_187.z = float(vec3((tmpvar_187.z + unity_LightShadowBias.x)));
+  if ((tmpvar_187.z < -(tmpvar_187.w))) {
+    tmpvar_187.z = float(vec3(-(tmpvar_187.w)));
   };
-  gl_Position = o.pos.xyzw;
+  gl_Position = tmpvar_187.xyzw;
   vec4 tmpvar_17;
-  tmpvar_17.xy = vec2(o.hip_pack0.xy);
+  tmpvar_17.xy = vec2(tmpvar_188.xy);
   tmpvar_17.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_17.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[1] = tmpvar_17;
-  gl_FrontColor = o.lop_color.xyzw;
+  gl_FrontColor = tmpvar_189.xyzw;
 }
 

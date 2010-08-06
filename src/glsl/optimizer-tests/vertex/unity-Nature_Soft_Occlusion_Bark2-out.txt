@@ -6,10 +6,6 @@ struct appdata_full {
   vec4 texcoord1;
   vec4 color;
 };
-struct v2f_surf {
-  vec4 pos;
-  vec3 vec;
-};
 attribute vec4 TANGENT;
 uniform mat4 _TerrainEngineBendTree;
 uniform vec4 _SquashPlaneNormal;
@@ -26,7 +22,6 @@ void main ()
   xlt_v.texcoord = gl_MultiTexCoord0.xyzw;
   xlt_v.texcoord1 = gl_MultiTexCoord1.xyzw;
   xlt_v.color = gl_Color.xyzw;
-  v2f_surf o;
   appdata_full v_i0;
   v_i0 = xlt_v;
   vec4 pos;
@@ -59,11 +54,9 @@ void main ()
   pos_i0 = tmpvar_89;
   pos = tmpvar_89;
   v_i0.vertex = tmpvar_89;
-  o.vec = ((_Object2World * v_i0.vertex).xyz - _LightPositionRange.xyz);
-  o.pos = (gl_ModelViewProjectionMatrix * v_i0.vertex);
-  gl_Position = o.pos.xyzw;
+  gl_Position = (gl_ModelViewProjectionMatrix * v_i0.vertex).xyzw;
   vec4 tmpvar_17;
-  tmpvar_17.xyz = vec3(o.vec.xyz);
+  tmpvar_17.xyz = vec3(((_Object2World * v_i0.vertex).xyz - _LightPositionRange.xyz).xyz);
   tmpvar_17.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[0] = tmpvar_17;
 }

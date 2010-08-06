@@ -1,35 +1,13 @@
-struct v2f_surf {
-  vec4 pos;
-  vec3 normal;
-};
-struct appdata_full {
-  vec4 vertex;
-  vec4 tangent;
-  vec3 normal;
-  vec4 texcoord;
-  vec4 texcoord1;
-  vec4 color;
-};
 attribute vec4 TANGENT;
 void main ()
 {
-  appdata_full xlt_v;
-  xlt_v.vertex = gl_Vertex.xyzw;
-  xlt_v.tangent = TANGENT.xyzw;
-  xlt_v.normal = gl_Normal.xyz;
-  xlt_v.texcoord = gl_MultiTexCoord0.xyzw;
-  xlt_v.texcoord1 = gl_MultiTexCoord1.xyzw;
-  xlt_v.color = gl_Color.xyzw;
-  v2f_surf o;
-  o.pos = (gl_ModelViewProjectionMatrix * xlt_v.vertex);
   mat3 tmpvar_34;
   tmpvar_34[0] = gl_ModelViewMatrixInverseTranspose[0].xyz;
   tmpvar_34[1] = gl_ModelViewMatrixInverseTranspose[1].xyz;
   tmpvar_34[2] = gl_ModelViewMatrixInverseTranspose[2].xyz;
-  o.normal = (tmpvar_34 * xlt_v.normal);
-  gl_Position = o.pos.xyzw;
+  gl_Position = (gl_ModelViewProjectionMatrix * gl_Vertex.xyzw).xyzw;
   vec4 tmpvar_17;
-  tmpvar_17.xyz = vec3(o.normal.xyz);
+  tmpvar_17.xyz = vec3((tmpvar_34 * gl_Normal.xyz).xyz);
   tmpvar_17.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[0] = tmpvar_17;
 }

@@ -1,10 +1,3 @@
-struct v2f_surf {
-  vec4 pos;
-  float fog;
-  vec2 hip_pack0;
-  vec3 worldRefl;
-  vec4 hip_screen;
-};
 struct appdata_full {
   vec4 vertex;
   vec4 tangent;
@@ -32,12 +25,14 @@ void main ()
   xlt_v.color = gl_Color.xyzw;
   appdata_full v;
   v = xlt_v;
-  v2f_surf o;
+  vec4 tmpvar_91;
+  float tmpvar_92;
+  vec2 tmpvar_93;
   vec4 tmpvar_44;
   tmpvar_44 = (gl_ModelViewProjectionMatrix * xlt_v.vertex);
-  o.pos = tmpvar_44;
-  o.fog = tmpvar_44.z;
-  o.hip_pack0 = ((xlt_v.texcoord.xy * _MainTex_ST.xy) + _MainTex_ST.zw).xy;
+  tmpvar_91 = tmpvar_44;
+  tmpvar_92 = tmpvar_44.z;
+  tmpvar_93 = ((xlt_v.texcoord.xy * _MainTex_ST.xy) + _MainTex_ST.zw).xy;
   vec4 tmpvar_49;
   tmpvar_49.xyz = vec3(_WorldSpaceCameraPos.xyz);
   tmpvar_49.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
@@ -47,35 +42,31 @@ void main ()
   tmpvar_59[0] = _Object2World[0].xyz;
   tmpvar_59[1] = _Object2World[1].xyz;
   tmpvar_59[2] = _Object2World[2].xyz;
-  o.worldRefl = (tmpvar_59 * tmpvar_52);
-  vec4 pos_i0;
-  pos_i0 = o.pos;
   vec4 o_i0;
   vec4 tmpvar_66;
-  tmpvar_66 = (pos_i0 * 0.500000);
+  tmpvar_66 = (tmpvar_91 * 0.500000);
   o_i0 = tmpvar_66;
   vec2 tmpvar_67;
   tmpvar_67.x = float(tmpvar_66.x);
   tmpvar_67.y = float(vec2((tmpvar_66.y * _ProjectionParams.x)));
   o_i0.xy = (tmpvar_67 + tmpvar_66.w).xy;
-  o_i0.zw = vec2(pos_i0.zw);
-  o.hip_screen = o_i0;
-  gl_Position = o.pos.xyzw;
+  o_i0.zw = vec2(tmpvar_91.zw);
+  gl_Position = tmpvar_91.xyzw;
   vec4 tmpvar_17;
-  tmpvar_17.x = float(vec4(o.fog));
+  tmpvar_17.x = float(vec4(tmpvar_92));
   tmpvar_17.y = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_17.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_17.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   xlv_FOG = tmpvar_17;
   vec4 tmpvar_19;
-  tmpvar_19.xy = vec2(o.hip_pack0.xy);
+  tmpvar_19.xy = vec2(tmpvar_93.xy);
   tmpvar_19.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_19.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[0] = tmpvar_19;
   vec4 tmpvar_21;
-  tmpvar_21.xyz = vec3(o.worldRefl.xyz);
+  tmpvar_21.xyz = vec3((tmpvar_59 * tmpvar_52).xyz);
   tmpvar_21.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[1] = tmpvar_21;
-  gl_TexCoord[2] = o.hip_screen.xyzw;
+  gl_TexCoord[2] = o_i0.xyzw;
 }
 

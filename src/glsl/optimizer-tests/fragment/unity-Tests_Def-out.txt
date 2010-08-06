@@ -6,15 +6,8 @@ struct SurfaceOutput {
   float Gloss;
   float Alpha;
 };
-struct v2f_surf {
-  vec4 pos;
-  vec3 normal;
-};
 void main ()
 {
-  v2f_surf xlt_IN;
-  xlt_IN.pos = vec4(0.000000, 0.000000, 0.000000, 0.000000);
-  xlt_IN.normal = gl_TexCoord[0].xyz;
   vec4 res;
   SurfaceOutput o;
   o.Albedo = vec3(0.000000, 0.000000, 0.000000);
@@ -22,7 +15,7 @@ void main ()
   o.Specular = 0.000000;
   o.Alpha = 0.000000;
   o.Gloss = 0.000000;
-  o.Normal = xlt_IN.normal;
+  o.Normal = gl_TexCoord[0].xyz;
   SurfaceOutput o_i0;
   o_i0 = o;
   o_i0.Emission = vec3(1.000000, 0.000000, 0.000000);

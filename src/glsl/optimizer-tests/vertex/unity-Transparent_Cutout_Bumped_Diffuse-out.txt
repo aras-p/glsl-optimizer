@@ -1,9 +1,3 @@
-struct v2f_surf {
-  vec4 pos;
-  float fog;
-  vec4 hip_pack0;
-  vec3 lightDir;
-};
 struct appdata_full {
   vec4 vertex;
   vec4 tangent;
@@ -29,13 +23,15 @@ void main ()
   xlt_v.color = gl_Color.xyzw;
   appdata_full v;
   v = xlt_v;
-  v2f_surf o;
+  vec4 tmpvar_65;
+  float tmpvar_66;
+  vec4 tmpvar_67;
   vec4 tmpvar_28;
   tmpvar_28 = (gl_ModelViewProjectionMatrix * xlt_v.vertex);
-  o.pos = tmpvar_28;
-  o.fog = tmpvar_28.z;
-  o.hip_pack0.xy = ((xlt_v.texcoord.xy * _MainTex_ST.xy) + _MainTex_ST.zw).xy;
-  o.hip_pack0.zw = vec2(((xlt_v.texcoord.xy * _BumpMap_ST.xy) + _BumpMap_ST.zw).xy);
+  tmpvar_65 = tmpvar_28;
+  tmpvar_66 = tmpvar_28.z;
+  tmpvar_67.xy = ((xlt_v.texcoord.xy * _MainTex_ST.xy) + _MainTex_ST.zw).xy;
+  tmpvar_67.zw = vec2(((xlt_v.texcoord.xy * _BumpMap_ST.xy) + _BumpMap_ST.zw).xy);
   vec3 tmpvar_32;
   tmpvar_32 = cross (v.normal, v.tangent.xyz);
   vec3 tmpvar_33;
@@ -50,17 +46,16 @@ void main ()
   tmpvar_34[2].x = float(v.tangent.z);
   tmpvar_34[2].y = float(tmpvar_33.z);
   tmpvar_34[2].z = float(v.normal.z);
-  o.lightDir = (tmpvar_34 * (_World2Object * _WorldSpaceLightPos0).xyz);
-  gl_Position = o.pos.xyzw;
+  gl_Position = tmpvar_65.xyzw;
   vec4 tmpvar_17;
-  tmpvar_17.x = float(vec4(o.fog));
+  tmpvar_17.x = float(vec4(tmpvar_66));
   tmpvar_17.y = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_17.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_17.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   xlv_FOG = tmpvar_17;
-  gl_TexCoord[0] = o.hip_pack0.xyzw;
+  gl_TexCoord[0] = tmpvar_67.xyzw;
   vec4 tmpvar_21;
-  tmpvar_21.xyz = vec3(o.lightDir.xyz);
+  tmpvar_21.xyz = vec3((tmpvar_34 * (_World2Object * _WorldSpaceLightPos0).xyz).xyz);
   tmpvar_21.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[1] = tmpvar_21;
 }

@@ -1,11 +1,3 @@
-struct v2f_surf {
-  vec4 pos;
-  float fog;
-  vec4 hip_pack0;
-  vec3 lightDir;
-  vec3 vlight;
-  vec4 _ShadowCoord;
-};
 struct appdata_full {
   vec4 vertex;
   vec4 tangent;
@@ -50,13 +42,17 @@ void main ()
   appdata_full v;
   v = xlt_v;
   vec3 worldN;
-  v2f_surf o;
+  vec4 tmpvar_192;
+  float tmpvar_193;
+  vec4 tmpvar_194;
+  vec3 tmpvar_195;
+  vec3 tmpvar_196;
   vec4 tmpvar_84;
   tmpvar_84 = (gl_ModelViewProjectionMatrix * xlt_v.vertex);
-  o.pos = tmpvar_84;
-  o.fog = tmpvar_84.z;
-  o.hip_pack0.xy = ((xlt_v.texcoord.xy * _Decal_ST.xy) + _Decal_ST.zw).xy;
-  o.hip_pack0.zw = vec2(((xlt_v.texcoord.xy * _DecalBump_ST.xy) + _DecalBump_ST.zw).xy);
+  tmpvar_192 = tmpvar_84;
+  tmpvar_193 = tmpvar_84.z;
+  tmpvar_194.xy = ((xlt_v.texcoord.xy * _Decal_ST.xy) + _Decal_ST.zw).xy;
+  tmpvar_194.zw = vec2(((xlt_v.texcoord.xy * _DecalBump_ST.xy) + _DecalBump_ST.zw).xy);
   mat3 tmpvar_93;
   tmpvar_93[0] = _Object2World[0].xyz;
   tmpvar_93[1] = _Object2World[1].xyz;
@@ -76,7 +72,7 @@ void main ()
   tmpvar_100[2].x = float(v.tangent.z);
   tmpvar_100[2].y = float(tmpvar_99.z);
   tmpvar_100[2].z = float(v.normal.z);
-  o.lightDir = (tmpvar_100 * (_World2Object * _WorldSpaceLightPos0).xyz);
+  tmpvar_195 = (tmpvar_100 * (_World2Object * _WorldSpaceLightPos0).xyz);
   vec4 tmpvar_115;
   tmpvar_115.xyz = vec3(worldN.xyz);
   tmpvar_115.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
@@ -104,7 +100,7 @@ void main ()
   float tmpvar_129;
   tmpvar_129 = dot (unity_SHBb, vB);
   x2.z = float(vec3(tmpvar_129));
-  o.vlight = ((x1 + x2) + (unity_SHC.xyz * ((normal.x * normal.x) - (normal.y * normal.y))));
+  tmpvar_196 = ((x1 + x2) + (unity_SHC.xyz * ((normal.x * normal.x) - (normal.y * normal.y))));
   vec3 tmpvar_135;
   tmpvar_135 = (_Object2World * v.vertex).xyz;
   vec3 lightColor0;
@@ -134,35 +130,32 @@ void main ()
   ndotl = tmpvar_151;
   vec4 tmpvar_154;
   tmpvar_154 = (tmpvar_151 * 1.0/((1.000000 + (lengthSq * lightAttenSq))));
-  o.vlight = (o.vlight + ((((lightColor0 * tmpvar_154.x) + (lightColor1 * tmpvar_154.y)) + (lightColor2 * tmpvar_154.z)) + (lightColor3 * tmpvar_154.w)));
-  vec4 pos_i0_i1;
-  pos_i0_i1 = o.pos;
+  tmpvar_196 = (tmpvar_196 + ((((lightColor0 * tmpvar_154.x) + (lightColor1 * tmpvar_154.y)) + (lightColor2 * tmpvar_154.z)) + (lightColor3 * tmpvar_154.w)));
   vec4 o_i0;
   vec4 tmpvar_163;
-  tmpvar_163 = (pos_i0_i1 * 0.500000);
+  tmpvar_163 = (tmpvar_192 * 0.500000);
   o_i0 = tmpvar_163;
   vec2 tmpvar_164;
   tmpvar_164.x = float(tmpvar_163.x);
   tmpvar_164.y = float(vec2((tmpvar_163.y * _ProjectionParams.x)));
   o_i0.xy = (tmpvar_164 + tmpvar_163.w).xy;
-  o_i0.zw = vec2(pos_i0_i1.zw);
-  o._ShadowCoord = o_i0;
-  gl_Position = o.pos.xyzw;
+  o_i0.zw = vec2(tmpvar_192.zw);
+  gl_Position = tmpvar_192.xyzw;
   vec4 tmpvar_17;
-  tmpvar_17.x = float(vec4(o.fog));
+  tmpvar_17.x = float(vec4(tmpvar_193));
   tmpvar_17.y = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_17.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_17.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   xlv_FOG = tmpvar_17;
-  gl_TexCoord[0] = o.hip_pack0.xyzw;
+  gl_TexCoord[0] = tmpvar_194.xyzw;
   vec4 tmpvar_21;
-  tmpvar_21.xyz = vec3(o.lightDir.xyz);
+  tmpvar_21.xyz = vec3(tmpvar_195.xyz);
   tmpvar_21.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[1] = tmpvar_21;
   vec4 tmpvar_23;
-  tmpvar_23.xyz = vec3(o.vlight.xyz);
+  tmpvar_23.xyz = vec3(tmpvar_196.xyz);
   tmpvar_23.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[2] = tmpvar_23;
-  gl_TexCoord[3] = o._ShadowCoord.xyzw;
+  gl_TexCoord[3] = o_i0.xyzw;
 }
 

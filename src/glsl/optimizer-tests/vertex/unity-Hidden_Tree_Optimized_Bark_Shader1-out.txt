@@ -6,9 +6,6 @@ struct appdata_full {
   vec4 texcoord1;
   vec4 color;
 };
-struct v2f_surf {
-  vec4 pos;
-};
 attribute vec4 TANGENT;
 uniform vec4 unity_LightShadowBias;
 uniform vec4 _Wind;
@@ -27,7 +24,7 @@ void main ()
   xlt_v.texcoord = gl_MultiTexCoord0.xyzw;
   xlt_v.texcoord1 = gl_MultiTexCoord1.xyzw;
   xlt_v.color = gl_Color.xyzw;
-  v2f_surf o;
+  vec4 tmpvar_177;
   appdata_full v_i0;
   v_i0 = xlt_v;
   v_i0.vertex.xyz = (xlt_v.vertex.xyz * _Scale.xyz).xyz;
@@ -97,11 +94,11 @@ void main ()
   vec3 tmpvar_168;
   tmpvar_168 = normalize (v_i0.tangent.xyz);
   v_i0.tangent.xyz = tmpvar_168.xyz;
-  o.pos = (gl_ModelViewProjectionMatrix * v_i0.vertex);
-  o.pos.z = float(vec3((o.pos.z + unity_LightShadowBias.x)));
-  if ((o.pos.z < -(o.pos.w))) {
-    o.pos.z = float(vec3(-(o.pos.w)));
+  tmpvar_177 = (gl_ModelViewProjectionMatrix * v_i0.vertex);
+  tmpvar_177.z = float(vec3((tmpvar_177.z + unity_LightShadowBias.x)));
+  if ((tmpvar_177.z < -(tmpvar_177.w))) {
+    tmpvar_177.z = float(vec3(-(tmpvar_177.w)));
   };
-  gl_Position = o.pos.xyzw;
+  gl_Position = tmpvar_177.xyzw;
 }
 

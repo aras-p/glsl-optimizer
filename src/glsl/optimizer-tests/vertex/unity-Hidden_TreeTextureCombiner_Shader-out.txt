@@ -1,23 +1,8 @@
-struct v2f_combiner {
-  vec4 pos;
-  vec2 uv;
-};
-struct appdata_combiner {
-  vec4 vertex;
-  vec2 texcoord;
-};
 void main ()
 {
-  appdata_combiner xlt_v;
-  xlt_v.vertex = gl_Vertex.xyzw;
-  xlt_v.texcoord = gl_MultiTexCoord0.xy;
-  v2f_combiner o;
-  o.pos = xlt_v.vertex;
-  o.pos = (gl_ModelViewProjectionMatrix * o.pos);
-  o.uv = xlt_v.texcoord;
-  gl_Position = o.pos.xyzw;
+  gl_Position = (gl_ModelViewProjectionMatrix * gl_Vertex.xyzw).xyzw;
   vec4 tmpvar_9;
-  tmpvar_9.xy = vec2(o.uv.xy);
+  tmpvar_9.xy = vec2(gl_MultiTexCoord0.xy);
   tmpvar_9.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_9.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[0] = tmpvar_9;

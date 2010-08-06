@@ -1,19 +1,10 @@
-struct v2f {
-  vec4 pos;
-  vec2 uv;
-  vec4 color;
-};
 void main ()
 {
-  v2f xlt_i;
-  xlt_i.pos = vec4(0.000000, 0.000000, 0.000000, 0.000000);
-  xlt_i.uv = gl_TexCoord[0].xy;
-  xlt_i.color = gl_Color.xyzw;
+  vec4 tmpvar_15;
+  tmpvar_15 = gl_Color.xyzw;
   vec4 c;
-  vec4 tmpvar_11;
-  tmpvar_11 = xlt_i.color;
-  c = tmpvar_11;
-  c.xy = (tmpvar_11.xy + xlt_i.uv).xy;
+  c = tmpvar_15;
+  c.xy = (tmpvar_15.xy + gl_TexCoord[0].xy).xy;
   gl_FragData[0] = c.xyzw;
 }
 

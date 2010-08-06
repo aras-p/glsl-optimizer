@@ -6,32 +6,22 @@ struct SurfaceOutput {
   float Gloss;
   float Alpha;
 };
-struct Input {
-  vec4 screenPos;
-};
-struct v2f_surf {
-  vec4 pos;
-  vec3 normal;
-};
 uniform sampler2D _MainTex;
 void main ()
 {
-  v2f_surf xlt_IN;
-  xlt_IN.pos = vec4(0.000000, 0.000000, 0.000000, 0.000000);
-  xlt_IN.normal = gl_TexCoord[0].xyz;
   vec4 res;
-  Input surfIN;
+  vec4 tmpvar_29;
   SurfaceOutput o;
   o.Albedo = vec3(0.000000, 0.000000, 0.000000);
   o.Emission = vec3(0.000000, 0.000000, 0.000000);
   o.Specular = 0.000000;
   o.Alpha = 0.000000;
   o.Gloss = 0.000000;
-  o.Normal = xlt_IN.normal;
+  o.Normal = gl_TexCoord[0].xyz;
   SurfaceOutput o_i0;
   o_i0 = o;
   vec4 tmpvar_21;
-  tmpvar_21 = texture2D (_MainTex, ((surfIN.screenPos.xy / surfIN.screenPos.w) * vec2(2.000000, 1.000000)));
+  tmpvar_21 = texture2D (_MainTex, ((tmpvar_29.xy / tmpvar_29.w) * vec2(2.000000, 1.000000)));
   o_i0.Albedo = tmpvar_21.xyz;
   o = o_i0;
   res.xyz = ((o_i0.Normal * vec3(0.500000, 0.500000, -0.500000)) + 0.500000).xyz;

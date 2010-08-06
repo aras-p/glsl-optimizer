@@ -1,9 +1,3 @@
-struct v2f {
-  vec4 pos;
-  float fog;
-  vec4 uv;
-  vec4 color;
-};
 struct appdata_tree {
   vec4 vertex;
   vec4 tangent;
@@ -35,7 +29,10 @@ void main ()
   int i;
   vec4 lightColor;
   vec4 lightDir;
-  v2f o;
+  vec4 tmpvar_110;
+  float tmpvar_111;
+  vec4 tmpvar_112;
+  vec4 tmpvar_113;
   i = 0;
   vec4 pos;
   pos = xlt_v.vertex;
@@ -67,9 +64,9 @@ void main ()
   pos_i0 = tmpvar_73;
   pos = tmpvar_73;
   v.vertex = tmpvar_73;
-  o.pos = (gl_ModelViewProjectionMatrix * v.vertex);
-  o.fog = o.pos.z;
-  o.uv = v.texcoord;
+  tmpvar_110 = (gl_ModelViewProjectionMatrix * v.vertex);
+  tmpvar_111 = tmpvar_110.z;
+  tmpvar_112 = v.texcoord;
   lightDir.w = float(vec4(_AO));
   lightColor = gl_LightModel.ambient;
   while (true) {
@@ -87,16 +84,16 @@ void main ()
     i = (i + 1);
   };
   lightColor.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
-  o.color = (lightColor * _Color);
-  o.color.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
-  gl_Position = o.pos.xyzw;
+  tmpvar_113 = (lightColor * _Color);
+  tmpvar_113.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
+  gl_Position = tmpvar_110.xyzw;
   vec4 tmpvar_15;
-  tmpvar_15.x = float(vec4(o.fog));
+  tmpvar_15.x = float(vec4(tmpvar_111));
   tmpvar_15.y = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_15.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_15.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   xlv_FOG = tmpvar_15;
-  gl_TexCoord[0] = o.uv.xyzw;
-  gl_FrontColor = o.color.xyzw;
+  gl_TexCoord[0] = tmpvar_112.xyzw;
+  gl_FrontColor = tmpvar_113.xyzw;
 }
 

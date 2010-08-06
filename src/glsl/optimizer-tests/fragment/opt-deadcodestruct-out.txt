@@ -1,12 +1,5 @@
-struct foo {
-  float used;
-  float unused;
-};
 void main ()
 {
-  foo s;
-  s.used = 1.000000;
-  s.unused = 1.000000;
-  gl_FragColor = vec4(s.used);
+  gl_FragColor = vec4(1.000000, 1.000000, 1.000000, 1.000000);
 }
 

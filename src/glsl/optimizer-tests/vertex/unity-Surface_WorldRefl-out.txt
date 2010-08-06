@@ -1,10 +1,3 @@
-struct v2f_surf {
-  vec4 pos;
-  float fog;
-  vec3 worldRefl;
-  vec3 normal;
-  vec3 lightDir;
-};
 struct appdata_full {
   vec4 vertex;
   vec4 tangent;
@@ -31,11 +24,12 @@ void main ()
   xlt_v.color = gl_Color.xyzw;
   appdata_full v;
   v = xlt_v;
-  v2f_surf o;
+  vec4 tmpvar_102;
+  float tmpvar_103;
   vec4 tmpvar_49;
   tmpvar_49 = (gl_ModelViewProjectionMatrix * xlt_v.vertex);
-  o.pos = tmpvar_49;
-  o.fog = tmpvar_49.z;
+  tmpvar_102 = tmpvar_49;
+  tmpvar_103 = tmpvar_49.z;
   vec4 tmpvar_53;
   tmpvar_53.xyz = vec3(_WorldSpaceCameraPos.xyz);
   tmpvar_53.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
@@ -45,30 +39,27 @@ void main ()
   tmpvar_63[0] = _Object2World[0].xyz;
   tmpvar_63[1] = _Object2World[1].xyz;
   tmpvar_63[2] = _Object2World[2].xyz;
-  o.worldRefl = (tmpvar_63 * tmpvar_56);
   mat3 tmpvar_73;
   tmpvar_73[0] = _Object2World[0].xyz;
   tmpvar_73[1] = _Object2World[1].xyz;
   tmpvar_73[2] = _Object2World[2].xyz;
-  o.normal = (tmpvar_73 * (v.normal * unity_Scale.w));
-  o.lightDir = _WorldSpaceLightPos0.xyz;
-  gl_Position = o.pos.xyzw;
+  gl_Position = tmpvar_102.xyzw;
   vec4 tmpvar_17;
-  tmpvar_17.x = float(vec4(o.fog));
+  tmpvar_17.x = float(vec4(tmpvar_103));
   tmpvar_17.y = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_17.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_17.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   xlv_FOG = tmpvar_17;
   vec4 tmpvar_19;
-  tmpvar_19.xyz = vec3(o.worldRefl.xyz);
+  tmpvar_19.xyz = vec3((tmpvar_63 * tmpvar_56).xyz);
   tmpvar_19.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[0] = tmpvar_19;
   vec4 tmpvar_21;
-  tmpvar_21.xyz = vec3(o.normal.xyz);
+  tmpvar_21.xyz = vec3((tmpvar_73 * (v.normal * unity_Scale.w)).xyz);
   tmpvar_21.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[1] = tmpvar_21;
   vec4 tmpvar_23;
-  tmpvar_23.xyz = vec3(o.lightDir.xyz);
+  tmpvar_23.xyz = vec3(_WorldSpaceLightPos0.xyz);
   tmpvar_23.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[2] = tmpvar_23;
 }

@@ -6,9 +6,6 @@ struct SurfaceOutput {
   float Gloss;
   float Alpha;
 };
-struct Input {
-  vec3 foo;
-};
 struct v2f_surf {
   vec4 pos;
   float fog;
@@ -34,8 +31,6 @@ void main ()
   vec4 c;
   vec3 lightDir;
   SurfaceOutput o;
-  Input surfIN;
-  surfIN.foo = xlt_IN.cust_foo;
   o.Albedo = vec3(0.000000, 0.000000, 0.000000);
   o.Emission = vec3(0.000000, 0.000000, 0.000000);
   o.Specular = 0.000000;
@@ -44,7 +39,7 @@ void main ()
   o.Normal = xlt_IN.normal;
   SurfaceOutput o_i0;
   o_i0 = o;
-  o_i0.Albedo = surfIN.foo;
+  o_i0.Albedo = xlt_IN.cust_foo;
   o = o_i0;
   lightDir = xlt_IN.lightDir;
   vec4 tmpvar_32;

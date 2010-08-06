@@ -1,29 +1,13 @@
-struct v2f {
-  vec4 pos;
-  vec4 color;
-};
-struct appdata_base {
-  vec4 vertex;
-  vec3 normal;
-  vec4 texcoord;
-};
 void main ()
 {
-  appdata_base xlt_v;
-  xlt_v.vertex = gl_Vertex.xyzw;
-  xlt_v.normal = gl_Normal.xyz;
-  xlt_v.texcoord = gl_MultiTexCoord0.xyzw;
-  v2f o;
-  o.pos = (gl_ModelViewProjectionMatrix * xlt_v.vertex);
   mat3 tmpvar_28;
   tmpvar_28[0] = gl_ModelViewMatrixInverseTranspose[0].xyz;
   tmpvar_28[1] = gl_ModelViewMatrixInverseTranspose[1].xyz;
   tmpvar_28[2] = gl_ModelViewMatrixInverseTranspose[2].xyz;
   vec4 tmpvar_33;
-  tmpvar_33.xyz = vec3((((tmpvar_28 * xlt_v.normal) * 0.500000) + 0.500000).xyz);
+  tmpvar_33.xyz = vec3((((tmpvar_28 * gl_Normal.xyz) * 0.500000) + 0.500000).xyz);
   tmpvar_33.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
-  o.color = tmpvar_33;
-  gl_Position = o.pos.xyzw;
-  gl_FrontColor = o.color.xyzw;
+  gl_Position = (gl_ModelViewProjectionMatrix * gl_Vertex.xyzw).xyzw;
+  gl_FrontColor = tmpvar_33.xyzw;
 }
 

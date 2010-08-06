@@ -6,11 +6,6 @@ struct appdata_full {
   vec4 texcoord1;
   vec4 color;
 };
-struct v2f {
-  vec4 pos;
-  vec2 uv;
-  vec3 color;
-};
 attribute vec4 TANGENT;
 uniform vec3 _TerrainTreeLightDirections[4];
 uniform vec4 _TerrainTreeLightColors[4];
@@ -27,7 +22,8 @@ void main ()
   v = xlt_v;
   int i;
   vec3 lightColor;
-  v2f o;
+  vec4 tmpvar_82;
+  vec2 tmpvar_83;
   i = 0;
   mat4 mat;
   mat = (gl_ModelViewMatrixInverseTranspose);
@@ -70,8 +66,8 @@ void main ()
   v.vertex = pos;
   v.normal = normal;
   v.tangent = tmpvar_57;
-  o.pos = (gl_ModelViewProjectionMatrix * v.vertex);
-  o.uv = v.texcoord.xy;
+  tmpvar_82 = (gl_ModelViewProjectionMatrix * v.vertex);
+  tmpvar_83 = v.texcoord.xy;
   lightColor = gl_LightModel.ambient.xyz;
   while (true) {
     if (!((i < 4))) {
@@ -84,15 +80,14 @@ void main ()
     lightColor = (lightColor + (_TerrainTreeLightColors[i] * tmpvar_64).xyz);
     i = (i + 1);
   };
-  o.color = (lightColor * v.color.w);
-  gl_Position = o.pos.xyzw;
+  gl_Position = tmpvar_82.xyzw;
   vec4 tmpvar_17;
-  tmpvar_17.xy = vec2(o.uv.xy);
+  tmpvar_17.xy = vec2(tmpvar_83.xy);
   tmpvar_17.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_17.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[0] = tmpvar_17;
   vec4 tmpvar_19;
-  tmpvar_19.xyz = vec3(o.color.xyz);
+  tmpvar_19.xyz = vec3((lightColor * v.color.w).xyz);
   tmpvar_19.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[1] = tmpvar_19;
 }

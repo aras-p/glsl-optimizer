@@ -1,15 +1,5 @@
-struct v2f {
-  vec4 pos;
-};
-struct appdata {
-  vec4 vertex;
-};
 void main ()
 {
-  appdata xlt_v;
-  xlt_v.vertex = gl_Vertex.xyzw;
-  v2f o;
-  o.pos = (gl_ModelViewProjectionMatrix * xlt_v.vertex);
-  gl_Position = o.pos.xyzw;
+  gl_Position = (gl_ModelViewProjectionMatrix * gl_Vertex.xyzw).xyzw;
 }
 

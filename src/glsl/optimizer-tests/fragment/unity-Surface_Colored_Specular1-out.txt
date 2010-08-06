@@ -10,17 +10,10 @@ struct Input {
   vec2 uv_MainTex;
   vec2 uv_SpecMap;
 };
-struct v2f_surf {
-  vec4 pos;
-  vec3 normal;
-};
 uniform sampler2D _SpecMap;
 uniform sampler2D _MainTex;
 void main ()
 {
-  v2f_surf xlt_IN;
-  xlt_IN.pos = vec4(0.000000, 0.000000, 0.000000, 0.000000);
-  xlt_IN.normal = gl_TexCoord[0].xyz;
   vec4 res;
   Input surfIN;
   MySurfaceOutput o;
@@ -28,7 +21,7 @@ void main ()
   o.Emission = vec3(0.000000, 0.000000, 0.000000);
   o.Specular = 0.000000;
   o.Alpha = 0.000000;
-  o.Normal = xlt_IN.normal;
+  o.Normal = gl_TexCoord[0].xyz;
   Input IN_i0;
   IN_i0 = surfIN;
   MySurfaceOutput o_i0;

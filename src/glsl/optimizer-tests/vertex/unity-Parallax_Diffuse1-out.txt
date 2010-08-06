@@ -1,10 +1,3 @@
-struct v2f_surf {
-  vec4 pos;
-  float fog;
-  vec4 hip_pack0;
-  vec3 viewDir;
-  vec4 hip_screen;
-};
 struct appdata_full {
   vec4 vertex;
   vec4 tangent;
@@ -32,25 +25,26 @@ void main ()
   xlt_v.color = gl_Color.xyzw;
   appdata_full v;
   v = xlt_v;
-  v2f_surf o;
+  vec4 tmpvar_85;
+  float tmpvar_86;
+  vec4 tmpvar_87;
+  vec4 tmpvar_89;
   vec4 tmpvar_36;
   tmpvar_36 = (gl_ModelViewProjectionMatrix * xlt_v.vertex);
-  o.pos = tmpvar_36;
-  o.fog = tmpvar_36.z;
-  o.hip_pack0.xy = ((xlt_v.texcoord.xy * _MainTex_ST.xy) + _MainTex_ST.zw).xy;
-  o.hip_pack0.zw = vec2(((xlt_v.texcoord.xy * _BumpMap_ST.xy) + _BumpMap_ST.zw).xy);
-  vec4 pos_i0;
-  pos_i0 = o.pos;
+  tmpvar_85 = tmpvar_36;
+  tmpvar_86 = tmpvar_36.z;
+  tmpvar_87.xy = ((xlt_v.texcoord.xy * _MainTex_ST.xy) + _MainTex_ST.zw).xy;
+  tmpvar_87.zw = vec2(((xlt_v.texcoord.xy * _BumpMap_ST.xy) + _BumpMap_ST.zw).xy);
   vec4 o_i0;
   vec4 tmpvar_42;
-  tmpvar_42 = (pos_i0 * 0.500000);
+  tmpvar_42 = (tmpvar_36 * 0.500000);
   o_i0 = tmpvar_42;
   vec2 tmpvar_43;
   tmpvar_43.x = float(tmpvar_42.x);
   tmpvar_43.y = float(vec2((tmpvar_42.y * _ProjectionParams.x)));
   o_i0.xy = (tmpvar_43 + tmpvar_42.w).xy;
-  o_i0.zw = vec2(pos_i0.zw);
-  o.hip_screen = o_i0;
+  o_i0.zw = vec2(tmpvar_36.zw);
+  tmpvar_89 = o_i0;
   vec3 tmpvar_47;
   tmpvar_47 = cross (v.normal, v.tangent.xyz);
   vec3 tmpvar_48;
@@ -68,19 +62,18 @@ void main ()
   vec4 tmpvar_62;
   tmpvar_62.xyz = vec3(_WorldSpaceCameraPos.xyz);
   tmpvar_62.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
-  o.viewDir = (tmpvar_49 * (((_World2Object * tmpvar_62).xyz * unity_Scale.w) - v.vertex.xyz));
-  gl_Position = o.pos.xyzw;
+  gl_Position = tmpvar_85.xyzw;
   vec4 tmpvar_17;
-  tmpvar_17.x = float(vec4(o.fog));
+  tmpvar_17.x = float(vec4(tmpvar_86));
   tmpvar_17.y = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_17.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_17.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   xlv_FOG = tmpvar_17;
-  gl_TexCoord[0] = o.hip_pack0.xyzw;
+  gl_TexCoord[0] = tmpvar_87.xyzw;
   vec4 tmpvar_21;
-  tmpvar_21.xyz = vec3(o.viewDir.xyz);
+  tmpvar_21.xyz = vec3((tmpvar_49 * (((_World2Object * tmpvar_62).xyz * unity_Scale.w) - v.vertex.xyz)).xyz);
   tmpvar_21.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[1] = tmpvar_21;
-  gl_TexCoord[2] = o.hip_screen.xyzw;
+  gl_TexCoord[2] = tmpvar_89.xyzw;
 }
 

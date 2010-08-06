@@ -1,25 +1,13 @@
-struct appdata_img {
-  vec4 vertex;
-  vec2 texcoord;
-};
-struct v2f {
-  vec4 pos;
-  vec4 uv[4];
-};
 uniform vec4 _MainTex_TexelSize;
 void main ()
 {
-  appdata_img xlt_v;
-  xlt_v.vertex = gl_Vertex.xyzw;
-  xlt_v.texcoord = gl_MultiTexCoord0.xy;
+  vec2 tmpvar_41;
+  tmpvar_41 = gl_MultiTexCoord0.xy;
   vec4 uv;
-  v2f o;
-  o.pos = (gl_ModelViewProjectionMatrix * xlt_v.vertex);
-  vec2 inUV;
-  inUV = xlt_v.texcoord;
+  vec4 tmpvar_53[4];
   vec4 tmpvar_25;
-  tmpvar_25.x = float(inUV.x);
-  tmpvar_25.y = float(inUV.y);
+  tmpvar_25.x = float(tmpvar_41.x);
+  tmpvar_25.y = float(tmpvar_41.y);
   tmpvar_25.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_25.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   uv.xy = (gl_TextureMatrix[0] * tmpvar_25).xy;
@@ -33,29 +21,29 @@ void main ()
   tmpvar_32.y = float(vec4(-(tmpvar_31)));
   tmpvar_32.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_32.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
-  o.uv[0] = (uv + tmpvar_32);
+  tmpvar_53[0] = (uv + tmpvar_32);
   vec4 tmpvar_34;
   tmpvar_34.x = float(vec4(tmpvar_30));
   tmpvar_34.y = float(vec4(-(tmpvar_31)));
   tmpvar_34.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_34.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
-  o.uv[1] = (uv + tmpvar_34);
+  tmpvar_53[1] = (uv + tmpvar_34);
   vec4 tmpvar_36;
   tmpvar_36.x = float(vec4(tmpvar_30));
   tmpvar_36.y = float(vec4(tmpvar_31));
   tmpvar_36.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_36.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
-  o.uv[2] = (uv + tmpvar_36);
+  tmpvar_53[2] = (uv + tmpvar_36);
   vec4 tmpvar_38;
   tmpvar_38.x = float(vec4(-(tmpvar_30)));
   tmpvar_38.y = float(vec4(tmpvar_31));
   tmpvar_38.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_38.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
-  o.uv[3] = (uv + tmpvar_38);
-  gl_Position = o.pos.xyzw;
-  gl_TexCoord[0] = o.uv[0].xyzw;
-  gl_TexCoord[1] = o.uv[1].xyzw;
-  gl_TexCoord[2] = o.uv[2].xyzw;
-  gl_TexCoord[3] = o.uv[3].xyzw;
+  tmpvar_53[3] = (uv + tmpvar_38);
+  gl_Position = (gl_ModelViewProjectionMatrix * gl_Vertex.xyzw).xyzw;
+  gl_TexCoord[0] = tmpvar_53[0].xyzw;
+  gl_TexCoord[1] = tmpvar_53[1].xyzw;
+  gl_TexCoord[2] = tmpvar_53[2].xyzw;
+  gl_TexCoord[3] = tmpvar_53[3].xyzw;
 }
 

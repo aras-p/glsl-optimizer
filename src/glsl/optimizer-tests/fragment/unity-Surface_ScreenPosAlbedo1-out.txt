@@ -6,9 +6,6 @@ struct SurfaceOutput {
   float Gloss;
   float Alpha;
 };
-struct Input {
-  vec4 screenPos;
-};
 struct v2f_surf {
   vec4 pos;
   float fog;
@@ -30,8 +27,8 @@ void main ()
   IN = xlt_IN;
   vec4 light;
   SurfaceOutput o;
-  Input surfIN;
-  surfIN.screenPos = xlt_IN.hip_screenPos;
+  vec4 tmpvar_39;
+  tmpvar_39 = xlt_IN.hip_screenPos;
   o.Albedo = vec3(0.000000, 0.000000, 0.000000);
   o.Emission = vec3(0.000000, 0.000000, 0.000000);
   o.Specular = 0.000000;
@@ -40,7 +37,7 @@ void main ()
   SurfaceOutput o_i0;
   o_i0 = o;
   vec4 tmpvar_27;
-  tmpvar_27 = texture2D (_MainTex, ((surfIN.screenPos.xy / surfIN.screenPos.w) * vec2(2.000000, 1.000000)));
+  tmpvar_27 = texture2D (_MainTex, ((tmpvar_39.xy / tmpvar_39.w) * vec2(2.000000, 1.000000)));
   o_i0.Albedo = tmpvar_27.xyz;
   o = o_i0;
   vec4 tmpvar_29;

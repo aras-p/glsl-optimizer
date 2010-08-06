@@ -1,29 +1,15 @@
-struct appdata_img {
-  vec4 vertex;
-  vec2 texcoord;
-};
-struct v2f {
-  vec4 pos;
-  vec2 uv;
-};
 void main ()
 {
-  appdata_img xlt_v;
-  xlt_v.vertex = gl_Vertex.xyzw;
-  xlt_v.texcoord = gl_MultiTexCoord0.xy;
-  v2f o;
-  o.pos = (gl_ModelViewProjectionMatrix * xlt_v.vertex);
   vec2 inUV;
-  inUV = xlt_v.texcoord.xy;
+  inUV = gl_MultiTexCoord0.xy;
   vec4 tmpvar_19;
   tmpvar_19.x = float(inUV.x);
   tmpvar_19.y = float(inUV.y);
   tmpvar_19.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_19.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
-  o.uv = (gl_TextureMatrix[0] * tmpvar_19).xy;
-  gl_Position = o.pos.xyzw;
+  gl_Position = (gl_ModelViewProjectionMatrix * gl_Vertex.xyzw).xyzw;
   vec4 tmpvar_9;
-  tmpvar_9.xy = vec2(o.uv.xy);
+  tmpvar_9.xy = vec2((gl_TextureMatrix[0] * tmpvar_19).xy);
   tmpvar_9.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_9.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[0] = tmpvar_9;

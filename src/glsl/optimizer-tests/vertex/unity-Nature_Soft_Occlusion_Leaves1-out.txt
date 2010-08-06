@@ -6,12 +6,6 @@ struct appdata_full {
   vec4 texcoord1;
   vec4 color;
 };
-struct v2f_surf {
-  vec4 pos;
-  float fog;
-  vec2 hip_pack0;
-  vec4 hip_screen;
-};
 varying vec4 xlv_FOG;
 attribute vec4 TANGENT;
 uniform mat4 _TerrainEngineBendTree;
@@ -29,7 +23,6 @@ void main ()
   xlt_v.texcoord = gl_MultiTexCoord0.xyzw;
   xlt_v.texcoord1 = gl_MultiTexCoord1.xyzw;
   xlt_v.color = gl_Color.xyzw;
-  v2f_surf o;
   appdata_full v_i0;
   v_i0 = xlt_v;
   vec4 pos;
@@ -64,33 +57,27 @@ void main ()
   v_i0.vertex = tmpvar_100;
   vec4 tmpvar_103;
   tmpvar_103 = (gl_ModelViewProjectionMatrix * v_i0.vertex);
-  o.pos = tmpvar_103;
-  o.fog = tmpvar_103.z;
-  o.hip_pack0 = ((v_i0.texcoord.xy * _MainTex_ST.xy) + _MainTex_ST.zw).xy;
-  vec4 pos_i0_i1_i2;
-  pos_i0_i1_i2 = o.pos;
   vec4 o_i0;
   vec4 tmpvar_108;
-  tmpvar_108 = (pos_i0_i1_i2 * 0.500000);
+  tmpvar_108 = (tmpvar_103 * 0.500000);
   o_i0 = tmpvar_108;
   vec2 tmpvar_109;
   tmpvar_109.x = float(tmpvar_108.x);
   tmpvar_109.y = float(vec2((tmpvar_108.y * _ProjectionParams.x)));
   o_i0.xy = (tmpvar_109 + tmpvar_108.w).xy;
-  o_i0.zw = vec2(pos_i0_i1_i2.zw);
-  o.hip_screen = o_i0;
-  gl_Position = o.pos.xyzw;
+  o_i0.zw = vec2(tmpvar_103.zw);
+  gl_Position = tmpvar_103.xyzw;
   vec4 tmpvar_17;
-  tmpvar_17.x = float(vec4(o.fog));
+  tmpvar_17.x = float(tmpvar_103.z);
   tmpvar_17.y = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_17.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_17.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   xlv_FOG = tmpvar_17;
   vec4 tmpvar_19;
-  tmpvar_19.xy = vec2(o.hip_pack0.xy);
+  tmpvar_19.xy = vec2(((v_i0.texcoord.xy * _MainTex_ST.xy) + _MainTex_ST.zw).xy);
   tmpvar_19.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_19.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[0] = tmpvar_19;
-  gl_TexCoord[1] = o.hip_screen.xyzw;
+  gl_TexCoord[1] = o_i0.xyzw;
 }
 

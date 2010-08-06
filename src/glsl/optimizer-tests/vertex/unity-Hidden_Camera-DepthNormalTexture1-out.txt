@@ -1,8 +1,3 @@
-struct v2f {
-  vec4 pos;
-  vec2 uv;
-  vec4 nz;
-};
 struct appdata_grass {
   vec4 vertex;
   vec4 tangent;
@@ -24,7 +19,7 @@ void main ()
   xlt_v.texcoord1 = gl_MultiTexCoord1.xyzw;
   appdata_grass v;
   v = xlt_v;
-  v2f o;
+  vec4 tmpvar_132;
   vec4 vertex;
   vertex = xlt_v.vertex;
   float waveAmount_i0;
@@ -65,16 +60,14 @@ void main ()
   vec3 tmpvar_109;
   tmpvar_109 = mix (vec3(0.500000, 0.500000, 0.500000), _WavingTint.xyz, vec3(lighting));
   v.vertex = vertex;
-  o.pos = (gl_ModelViewProjectionMatrix * v.vertex);
-  o.uv = v.texcoord.xy;
-  o.nz.xyz = vec3(0.000000, 0.000000, 1.000000);
-  o.nz.w = float(vec4(-(((gl_ModelViewMatrix * v.vertex).z * _ProjectionParams.w))));
-  gl_Position = o.pos.xyzw;
+  tmpvar_132.xyz = vec3(0.000000, 0.000000, 1.000000);
+  tmpvar_132.w = float(vec4(-(((gl_ModelViewMatrix * v.vertex).z * _ProjectionParams.w))));
+  gl_Position = (gl_ModelViewProjectionMatrix * v.vertex).xyzw;
   vec4 tmpvar_15;
-  tmpvar_15.xy = vec2(o.uv.xy);
+  tmpvar_15.xy = vec2(v.texcoord.xy);
   tmpvar_15.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_15.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[0] = tmpvar_15;
-  gl_TexCoord[1] = o.nz.xyzw;
+  gl_TexCoord[1] = tmpvar_132.xyzw;
 }
 

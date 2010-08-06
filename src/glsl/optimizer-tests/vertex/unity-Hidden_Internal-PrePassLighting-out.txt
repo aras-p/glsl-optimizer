@@ -1,8 +1,3 @@
-struct v2f {
-  vec4 pos;
-  vec4 uv;
-  vec3 ray;
-};
 struct appdata {
   vec4 vertex;
   vec3 texcoord;
@@ -15,28 +10,28 @@ void main ()
   xlt_v.texcoord = gl_MultiTexCoord0.xyz;
   appdata v;
   v = xlt_v;
-  v2f o;
-  o.pos = (gl_ModelViewProjectionMatrix * xlt_v.vertex);
-  vec4 pos;
-  pos = o.pos;
+  vec4 tmpvar_43;
+  vec4 tmpvar_44;
+  vec3 tmpvar_45;
+  tmpvar_43 = (gl_ModelViewProjectionMatrix * xlt_v.vertex);
   vec4 o_i0;
   vec4 tmpvar_22;
-  tmpvar_22 = (pos * 0.500000);
+  tmpvar_22 = (tmpvar_43 * 0.500000);
   o_i0 = tmpvar_22;
   vec2 tmpvar_23;
   tmpvar_23.x = float(tmpvar_22.x);
   tmpvar_23.y = float(vec2((tmpvar_22.y * _ProjectionParams.x)));
   o_i0.xy = (tmpvar_23 + tmpvar_22.w).xy;
-  o_i0.zw = vec2(pos.zw);
-  o.uv = o_i0;
-  o.ray = ((gl_ModelViewMatrix * xlt_v.vertex).xyz * vec3(-1.000000, -1.000000, 1.000000));
+  o_i0.zw = vec2(tmpvar_43.zw);
+  tmpvar_44 = o_i0;
+  tmpvar_45 = ((gl_ModelViewMatrix * xlt_v.vertex).xyz * vec3(-1.000000, -1.000000, 1.000000));
   vec3 tmpvar_29;
-  tmpvar_29 = mix (o.ray, v.texcoord, vec3(float((xlt_v.texcoord.z != 0.000000))));
-  o.ray = tmpvar_29;
-  gl_Position = o.pos.xyzw;
-  gl_TexCoord[0] = o.uv.xyzw;
+  tmpvar_29 = mix (tmpvar_45, v.texcoord, vec3(float((xlt_v.texcoord.z != 0.000000))));
+  tmpvar_45 = tmpvar_29;
+  gl_Position = tmpvar_43.xyzw;
+  gl_TexCoord[0] = tmpvar_44.xyzw;
   vec4 tmpvar_11;
-  tmpvar_11.xyz = vec3(o.ray.xyz);
+  tmpvar_11.xyz = vec3(tmpvar_29.xyz);
   tmpvar_11.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[1] = tmpvar_11;
 }
