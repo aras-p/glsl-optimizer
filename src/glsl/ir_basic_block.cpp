@@ -34,27 +34,38 @@
 
 class ir_has_call_visitor : public ir_hierarchical_visitor {
 public:
-   ir_has_call_visitor()
+   ir_has_call_visitor(bool skipBuiltins)
    {
       has_call = false;
+	  skip_builtins = skipBuiltins;
    }
 
    virtual ir_visitor_status visit_enter(ir_call *ir)
    {
       (void) ir;
-      has_call = true;
+	  if (!skip_builtins || !ir->get_callee() || !ir->get_callee()->is_built_in)
+		has_call = true;
       return visit_stop;
    }
 
    bool has_call;
+   bool skip_builtins;
 };
 
 bool
 ir_has_call(ir_instruction *ir)
 {
-   ir_has_call_visitor v;
+   ir_has_call_visitor v(false);
    ir->accept(&v);
    return v.has_call;
+}
+
+bool
+ir_has_call_skip_builtins(ir_instruction *ir)
+{
+	ir_has_call_visitor v(true);
+	ir->accept(&v);
+	return v.has_call;
 }
 
 /**

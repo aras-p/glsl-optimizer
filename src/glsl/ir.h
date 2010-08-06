@@ -1394,4 +1394,7 @@ import_prototypes(const exec_list *source, exec_list *dest,
 extern bool
 ir_has_call(ir_instruction *ir);
 
+extern bool
+ir_has_call_skip_builtins(ir_instruction *ir);
+
 #endif /* IR_H */

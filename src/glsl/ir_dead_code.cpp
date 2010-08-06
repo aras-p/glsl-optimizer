@@ -79,7 +79,7 @@ do_dead_code(exec_list *instructions)
 	  */
 	 if (entry->var->mode != ir_var_out &&
 	     entry->var->mode != ir_var_inout &&
-	     !ir_has_call(entry->assign)) {
+	     !ir_has_call_skip_builtins(entry->assign)) {
 	    entry->assign->remove();
 	    progress = true;
 

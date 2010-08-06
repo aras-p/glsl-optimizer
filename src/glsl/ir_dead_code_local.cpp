@@ -158,8 +158,9 @@ process_assignment(void *ctx, ir_assignment *ir, exec_list *assignments)
 
    /* Add this instruction to the assignment list available to be removed.
     * But not if the assignment has other side effects.
+	* Skip any calls to built-in functions, cause they don't have side effects.
     */
-   if (ir_has_call(ir))
+   if (ir_has_call_skip_builtins(ir))
       return progress;
 
    assignment_entry *entry = new(ctx) assignment_entry(var, ir);
