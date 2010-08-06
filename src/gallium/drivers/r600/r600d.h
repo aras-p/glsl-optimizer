@@ -1169,4 +1169,9 @@
 #define   G_0286D4_PNT_SPRITE_TOP_1(x)                 (((x) >> 14) & 0x1)
 #define   C_0286D4_PNT_SPRITE_TOP_1                    0xFFFFBFFF
 
+/* temporary swap */
+#define SWAP_STD 0
+#define SWAP_ALT 1
+#define SWAP_STD_REV 2
+#define SWAP_ALT_REV 3
 #endif

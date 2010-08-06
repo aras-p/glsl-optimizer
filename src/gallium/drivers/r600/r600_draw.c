@@ -34,7 +34,7 @@
 #include "r600_screen.h"
 #include "r600_context.h"
 #include "r600_resource.h"
-#include "r600d.h"
+#include "r600_state_inlines.h"
 
 struct r600_draw {
 	struct pipe_context	*ctx;
@@ -100,9 +100,7 @@ static int r600_draw_common(struct r600_draw *draw)
 		vertex_buffer = &rctx->vertex_buffer[j];
 		rbuffer = (struct r600_resource*)vertex_buffer->buffer;
 		offset = rctx->vertex_elements->elements[i].src_offset + vertex_buffer->buffer_offset;
-		r = r600_conv_pipe_format(rctx->vertex_elements->elements[i].src_format, &format);
-		if (r)
-			return r;
+		format = r600_translate_colorformat(rctx->vertex_elements->elements[i].src_format);
 		r = radeon_state_init(&vs_resource, rscreen->rw, R600_VS_RESOURCE_TYPE, R600_VS_RESOURCE + i);
 		if (r)
 			return r;

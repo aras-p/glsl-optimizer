@@ -668,6 +668,8 @@ static int r600_cb0(struct r600_context *rctx, struct radeon_state *rstate)
 	const struct pipe_framebuffer_state *state = &rctx->framebuffer->state.framebuffer;
 	unsigned level = state->cbufs[0]->level;
 	unsigned pitch, slice;
+	unsigned color_info;
+	unsigned format, swap;
 	int r;
 
 	r = radeon_state_init(rstate, rscreen->rw, R600_CB0_TYPE, R600_CB0);
@@ -685,8 +687,16 @@ static int r600_cb0(struct r600_context *rctx, struct radeon_state *rstate)
 	rstate->nbo = 3;
 	pitch = (rtex->pitch[level] / rtex->bpt) / 8 - 1;
 	slice = (rtex->pitch[level] / rtex->bpt) * state->cbufs[0]->height / 64 - 1;
+
+	format = r600_translate_colorformat(rtex->resource.base.b.format);
+	swap = r600_translate_colorswap(rtex->resource.base.b.format);
+	color_info = S_0280A0_FORMAT(format) |
+	  S_0280A0_COMP_SWAP(swap) |
+	  S_0280A0_BLEND_CLAMP(1) |
+	  S_0280A0_SOURCE_FORMAT(1);
+
 	rstate->states[R600_CB0__CB_COLOR0_BASE] = 0x00000000;
-	rstate->states[R600_CB0__CB_COLOR0_INFO] = 0x08110068;
+	rstate->states[R600_CB0__CB_COLOR0_INFO] = color_info;
 	rstate->states[R600_CB0__CB_COLOR0_SIZE] = S_028060_PITCH_TILE_MAX(pitch) |
 						S_028060_SLICE_TILE_MAX(slice);
 	rstate->states[R600_CB0__CB_COLOR0_VIEW] = 0x00000000;
@@ -1103,7 +1113,8 @@ static int r600_resource(struct r600_context *rctx, struct radeon_state *rstate,
 	r = radeon_state_init(rstate, rscreen->rw, R600_PS_RESOURCE_TYPE, id);
 	if (r)
 		return r;
-	if (r600_conv_pipe_format(view->texture->format, &format))
+	format = r600_translate_colorformat(view->texture->format);
+	if (format == ~0)
 		return -EINVAL;
 	desc = util_format_description(view->texture->format);
 	if (desc == NULL) {

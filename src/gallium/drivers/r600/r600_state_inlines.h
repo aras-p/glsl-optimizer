@@ -23,6 +23,9 @@
 #ifndef R600_STATE_INLINES_H
 #define R600_STATE_INLINES_H
 
+#include "util/u_format.h"
+#include "r600d.h"
+
 static INLINE uint32_t r600_translate_blend_function(int blend_func)
 {
 	switch (blend_func) {
@@ -124,6 +127,156 @@ static INLINE uint32_t r600_translate_stencil_op(int s_op)
 static INLINE uint32_t r600_translate_ds_func(int func)
 {
 	return func;
+}
+
+static uint32_t r600_translate_colorswap(enum pipe_format format)
+{
+	switch (format) {
+		/* 8-bit buffers. */
+        case PIPE_FORMAT_A8_UNORM:
+        case PIPE_FORMAT_I8_UNORM:
+        case PIPE_FORMAT_L8_UNORM:
+        case PIPE_FORMAT_R8_UNORM:
+        case PIPE_FORMAT_R8_SNORM:
+		return SWAP_STD;
+
+		/* 16-bit buffers. */
+        case PIPE_FORMAT_B5G6R5_UNORM:
+		return SWAP_STD_REV;
+
+        case PIPE_FORMAT_B5G5R5A1_UNORM:
+        case PIPE_FORMAT_B5G5R5X1_UNORM:
+		return SWAP_ALT;
+
+        case PIPE_FORMAT_B4G4R4A4_UNORM:
+        case PIPE_FORMAT_B4G4R4X4_UNORM:
+		return SWAP_ALT;
+		/* 32-bit buffers. */
+        case PIPE_FORMAT_B8G8R8A8_UNORM:
+        case PIPE_FORMAT_B8G8R8X8_UNORM:
+		return SWAP_ALT;
+
+        case PIPE_FORMAT_A8R8G8B8_UNORM:
+        case PIPE_FORMAT_X8R8G8B8_UNORM:
+		return SWAP_ALT_REV;
+        case PIPE_FORMAT_R8G8B8A8_SNORM:
+        case PIPE_FORMAT_R8G8B8X8_UNORM:
+		return SWAP_STD;
+
+        case PIPE_FORMAT_A8B8G8R8_UNORM:
+        case PIPE_FORMAT_X8B8G8R8_UNORM:
+//        case PIPE_FORMAT_R8SG8SB8UX8U_NORM:
+		return SWAP_STD_REV;
+
+        case PIPE_FORMAT_R10G10B10A2_UNORM:
+        case PIPE_FORMAT_R10G10B10X2_SNORM:
+        case PIPE_FORMAT_B10G10R10A2_UNORM:
+        case PIPE_FORMAT_R10SG10SB10SA2U_NORM:
+		return SWAP_STD_REV;
+
+		/* 64-bit buffers. */
+        case PIPE_FORMAT_R16G16B16A16_UNORM:
+        case PIPE_FORMAT_R16G16B16A16_SNORM:
+//		return V_0280A0_COLOR_16_16_16_16;
+        case PIPE_FORMAT_R16G16B16A16_FLOAT:
+//		return V_0280A0_COLOR_16_16_16_16_FLOAT;
+
+		/* 128-bit buffers. */
+        case PIPE_FORMAT_R32G32B32A32_FLOAT:
+//		return V_0280A0_COLOR_32_32_32_32_FLOAT;
+		return 0;
+	default:
+		R600_ERR("unsupported colorswap format %d\n", format);
+		return ~0;
+	}
+	return ~0;
+
+}
+
+static INLINE uint32_t r600_translate_colorformat(enum pipe_format format)
+{
+	switch (format) {
+		/* 8-bit buffers. */
+        case PIPE_FORMAT_A8_UNORM:
+        case PIPE_FORMAT_I8_UNORM:
+        case PIPE_FORMAT_L8_UNORM:
+        case PIPE_FORMAT_R8_UNORM:
+        case PIPE_FORMAT_R8_SNORM:
+		return V_0280A0_COLOR_8;
+
+		/* 16-bit buffers. */
+        case PIPE_FORMAT_B5G6R5_UNORM:
+		return V_0280A0_COLOR_5_6_5;
+
+        case PIPE_FORMAT_B5G5R5A1_UNORM:
+        case PIPE_FORMAT_B5G5R5X1_UNORM:
+		return V_0280A0_COLOR_1_5_5_5;
+
+        case PIPE_FORMAT_B4G4R4A4_UNORM:
+        case PIPE_FORMAT_B4G4R4X4_UNORM:
+		return V_0280A0_COLOR_4_4_4_4;
+
+		/* 32-bit buffers. */
+        case PIPE_FORMAT_B8G8R8A8_UNORM:
+        case PIPE_FORMAT_B8G8R8X8_UNORM:
+        case PIPE_FORMAT_A8R8G8B8_UNORM:
+        case PIPE_FORMAT_X8R8G8B8_UNORM:
+        case PIPE_FORMAT_A8B8G8R8_UNORM:
+        case PIPE_FORMAT_R8G8B8A8_SNORM:
+        case PIPE_FORMAT_X8B8G8R8_UNORM:
+        case PIPE_FORMAT_R8G8B8X8_UNORM:
+        case PIPE_FORMAT_R8SG8SB8UX8U_NORM:
+		return V_0280A0_COLOR_8_8_8_8;
+
+        case PIPE_FORMAT_R10G10B10A2_UNORM:
+        case PIPE_FORMAT_R10G10B10X2_SNORM:
+        case PIPE_FORMAT_B10G10R10A2_UNORM:
+        case PIPE_FORMAT_R10SG10SB10SA2U_NORM:
+		return V_0280A0_COLOR_10_10_10_2;
+
+		/* 64-bit buffers. */
+        case PIPE_FORMAT_R16G16B16A16_UNORM:
+        case PIPE_FORMAT_R16G16B16A16_SNORM:
+		return V_0280A0_COLOR_16_16_16_16;
+        case PIPE_FORMAT_R16G16B16A16_FLOAT:
+		return V_0280A0_COLOR_16_16_16_16_FLOAT;
+        case PIPE_FORMAT_R32G32_FLOAT:
+		return V_0280A0_COLOR_32_32_FLOAT;
+
+		/* 128-bit buffers. */
+        case PIPE_FORMAT_R32G32B32_FLOAT:
+        case PIPE_FORMAT_R32G32B32A32_FLOAT:
+		return V_0280A0_COLOR_32_32_32_32_FLOAT;
+
+		/* YUV buffers. */
+        case PIPE_FORMAT_UYVY:
+//		return R300_COLOR_FORMAT_YVYU;
+        case PIPE_FORMAT_YUYV:
+//		return R300_COLOR_FORMAT_VYUY;
+        default:
+		return ~0; /* Unsupported. */
+	}
+}
+
+static INLINE boolean r600_is_sampler_format_supported(enum pipe_format format)
+{
+	return r600_translate_colorformat(format) != ~0;
+}
+
+static INLINE boolean r600_is_colorbuffer_format_supported(enum pipe_format format)
+{
+	return r600_translate_colorformat(format) != ~0 &&
+		r600_translate_colorswap(format) != ~0;
+}
+
+static INLINE boolean r600_is_zs_format_supported(enum pipe_format format)
+{
+	return TRUE;
+}
+
+static INLINE boolean r600_is_vertex_format_supported(enum pipe_format format)
+{
+	return r600_translate_colorformat(format) != ~0;
 }
 
 #endif
