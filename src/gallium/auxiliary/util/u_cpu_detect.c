@@ -73,7 +73,7 @@
 #endif
 
 
-DEBUG_GET_ONCE_BOOL_OPTION(dump_cpu, "GALLIUM_DUMP_CPU", TRUE);
+DEBUG_GET_ONCE_BOOL_OPTION(dump_cpu, "GALLIUM_DUMP_CPU", TRUE)
 
 
 struct util_cpu_caps util_cpu_caps;

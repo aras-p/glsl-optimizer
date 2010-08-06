@@ -47,7 +47,7 @@
 #include "lp_setup.h"
 
 
-DEBUG_GET_ONCE_BOOL_OPTION(lp_no_rast, "LP_NO_RAST", FALSE);
+DEBUG_GET_ONCE_BOOL_OPTION(lp_no_rast, "LP_NO_RAST", FALSE)
 
 
 static void llvmpipe_destroy( struct pipe_context *pipe )
