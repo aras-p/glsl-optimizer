@@ -39,10 +39,10 @@
 
 static bool debug = false;
 
-class variable_entry : public exec_node
+class split_var_entry : public exec_node
 {
 public:
-   variable_entry(ir_variable *var)
+   split_var_entry(ir_variable *var)
    {
       this->var = var;
       this->whole_structure_access = 0;
@@ -83,16 +83,16 @@ public:
 
    virtual ir_visitor_status visit_enter(ir_function_signature *);
 
-   variable_entry *get_variable_entry(ir_variable *var);
+   split_var_entry *get_split_var_entry(ir_variable *var);
 
-   /* List of variable_entry */
+   /* List of split_var_entry */
    exec_list variable_list;
 
    void *mem_ctx;
 };
 
-variable_entry *
-ir_structure_reference_visitor::get_variable_entry(ir_variable *var)
+split_var_entry *
+ir_structure_reference_visitor::get_split_var_entry(ir_variable *var)
 {
    assert(var);
 
@@ -100,12 +100,12 @@ ir_structure_reference_visitor::get_variable_entry(ir_variable *var)
       return NULL;
 
    foreach_iter(exec_list_iterator, iter, this->variable_list) {
-      variable_entry *entry = (variable_entry *)iter.get();
+      split_var_entry *entry = (split_var_entry *)iter.get();
       if (entry->var == var)
 	 return entry;
    }
 
-   variable_entry *entry = new(mem_ctx) variable_entry(var);
+   split_var_entry *entry = new(mem_ctx) split_var_entry(var);
    this->variable_list.push_tail(entry);
    return entry;
 }
@@ -114,7 +114,7 @@ ir_structure_reference_visitor::get_variable_entry(ir_variable *var)
 ir_visitor_status
 ir_structure_reference_visitor::visit(ir_variable *ir)
 {
-   variable_entry *entry = this->get_variable_entry(ir);
+   split_var_entry *entry = this->get_split_var_entry(ir);
 
    if (entry)
       entry->declaration = true;
@@ -126,7 +126,7 @@ ir_visitor_status
 ir_structure_reference_visitor::visit(ir_dereference_variable *ir)
 {
    ir_variable *const var = ir->variable_referenced();
-   variable_entry *entry = this->get_variable_entry(var);
+   split_var_entry *entry = this->get_split_var_entry(var);
 
    if (entry)
       entry->whole_structure_access++;
@@ -174,13 +174,13 @@ public:
 
    void split_deref(ir_dereference **deref);
    void split_rvalue(ir_rvalue **rvalue);
-   struct variable_entry *get_splitting_entry(ir_variable *var);
+   struct split_var_entry *get_splitting_entry(ir_variable *var);
 
    exec_list *variable_list;
    void *mem_ctx;
 };
 
-struct variable_entry *
+struct split_var_entry *
 ir_structure_splitting_visitor::get_splitting_entry(ir_variable *var)
 {
    assert(var);
@@ -189,7 +189,7 @@ ir_structure_splitting_visitor::get_splitting_entry(ir_variable *var)
       return NULL;
 
    foreach_iter(exec_list_iterator, iter, *this->variable_list) {
-      variable_entry *entry = (variable_entry *)iter.get();
+      split_var_entry *entry = (split_var_entry *)iter.get();
       if (entry->var == var) {
 	 return entry;
       }
@@ -209,7 +209,7 @@ ir_structure_splitting_visitor::split_deref(ir_dereference **deref)
    if (!deref_var)
       return;
 
-   variable_entry *entry = get_splitting_entry(deref_var->var);
+   split_var_entry *entry = get_splitting_entry(deref_var->var);
    if (!entry)
       return;
 
@@ -348,7 +348,7 @@ do_structure_splitting(exec_list *instructions)
 
    /* Trim out variables we can't split. */
    foreach_iter(exec_list_iterator, iter, refs.variable_list) {
-      variable_entry *entry = (variable_entry *)iter.get();
+      split_var_entry *entry = (split_var_entry *)iter.get();
 
       if (debug) {
 	 printf("structure %s@%p: decl %d, whole_access %d\n",
@@ -370,7 +370,7 @@ do_structure_splitting(exec_list *instructions)
     * components.
     */
    foreach_iter(exec_list_iterator, iter, refs.variable_list) {
-      variable_entry *entry = (variable_entry *)iter.get();
+      split_var_entry *entry = (split_var_entry *)iter.get();
       const struct glsl_type *type = entry->var->type;
 
       entry->mem_ctx = talloc_parent(entry->var);
