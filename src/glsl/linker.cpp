@@ -793,11 +793,13 @@ assign_uniform_locations(struct gl_shader_program *prog)
 	 if ((var == NULL) || (var->mode != ir_var_uniform))
 	    continue;
 
-	 if (var->type->is_sampler())
-	    continue;
-
 	 const unsigned vec4_slots = (var->component_slots() + 3) / 4;
-	 assert(vec4_slots != 0);
+	 if (vec4_slots == 0) {
+	    /* If we've got a sampler or an aggregate of them, the size can
+	     * end up zero.  Don't allocate any space.
+	     */
+	    continue;
+	 }
 
 	 uniform_node *n = (uniform_node *) hash_table_find(ht, var->name);
 	 if (n == NULL) {
