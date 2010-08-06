@@ -73,6 +73,9 @@
 #endif
 
 
+DEBUG_GET_ONCE_BOOL_OPTION(dump_cpu, "GALLIUM_DUMP_CPU", TRUE);
+
+
 struct util_cpu_caps util_cpu_caps;
 
 #if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
@@ -500,23 +503,25 @@ util_cpu_detect(void)
 #endif /* PIPE_ARCH_PPC */
 
 #ifdef DEBUG
-   debug_printf("util_cpu_caps.arch = %i\n", util_cpu_caps.arch);
-   debug_printf("util_cpu_caps.nr_cpus = %u\n", util_cpu_caps.nr_cpus);
+   if (debug_get_option_dump_cpu()) {
+      debug_printf("util_cpu_caps.arch = %i\n", util_cpu_caps.arch);
+      debug_printf("util_cpu_caps.nr_cpus = %u\n", util_cpu_caps.nr_cpus);
 
-   debug_printf("util_cpu_caps.x86_cpu_type = %u\n", util_cpu_caps.x86_cpu_type);
-   debug_printf("util_cpu_caps.cacheline = %u\n", util_cpu_caps.cacheline);
+      debug_printf("util_cpu_caps.x86_cpu_type = %u\n", util_cpu_caps.x86_cpu_type);
+      debug_printf("util_cpu_caps.cacheline = %u\n", util_cpu_caps.cacheline);
 
-   debug_printf("util_cpu_caps.has_tsc = %u\n", util_cpu_caps.has_tsc);
-   debug_printf("util_cpu_caps.has_mmx = %u\n", util_cpu_caps.has_mmx);
-   debug_printf("util_cpu_caps.has_mmx2 = %u\n", util_cpu_caps.has_mmx2);
-   debug_printf("util_cpu_caps.has_sse = %u\n", util_cpu_caps.has_sse);
-   debug_printf("util_cpu_caps.has_sse2 = %u\n", util_cpu_caps.has_sse2);
-   debug_printf("util_cpu_caps.has_sse3 = %u\n", util_cpu_caps.has_sse3);
-   debug_printf("util_cpu_caps.has_ssse3 = %u\n", util_cpu_caps.has_ssse3);
-   debug_printf("util_cpu_caps.has_sse4_1 = %u\n", util_cpu_caps.has_sse4_1);
-   debug_printf("util_cpu_caps.has_3dnow = %u\n", util_cpu_caps.has_3dnow);
-   debug_printf("util_cpu_caps.has_3dnow_ext = %u\n", util_cpu_caps.has_3dnow_ext);
-   debug_printf("util_cpu_caps.has_altivec = %u\n", util_cpu_caps.has_altivec);
+      debug_printf("util_cpu_caps.has_tsc = %u\n", util_cpu_caps.has_tsc);
+      debug_printf("util_cpu_caps.has_mmx = %u\n", util_cpu_caps.has_mmx);
+      debug_printf("util_cpu_caps.has_mmx2 = %u\n", util_cpu_caps.has_mmx2);
+      debug_printf("util_cpu_caps.has_sse = %u\n", util_cpu_caps.has_sse);
+      debug_printf("util_cpu_caps.has_sse2 = %u\n", util_cpu_caps.has_sse2);
+      debug_printf("util_cpu_caps.has_sse3 = %u\n", util_cpu_caps.has_sse3);
+      debug_printf("util_cpu_caps.has_ssse3 = %u\n", util_cpu_caps.has_ssse3);
+      debug_printf("util_cpu_caps.has_sse4_1 = %u\n", util_cpu_caps.has_sse4_1);
+      debug_printf("util_cpu_caps.has_3dnow = %u\n", util_cpu_caps.has_3dnow);
+      debug_printf("util_cpu_caps.has_3dnow_ext = %u\n", util_cpu_caps.has_3dnow_ext);
+      debug_printf("util_cpu_caps.has_altivec = %u\n", util_cpu_caps.has_altivec);
+   }
 #endif
 
    util_cpu_detect_initialized = TRUE;
