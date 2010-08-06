@@ -358,7 +358,7 @@ void r300_emit_fb_state(struct r300_context* r300, unsigned size, void* state)
     struct pipe_framebuffer_state* fb = (struct pipe_framebuffer_state*)state;
     struct r300_surface* surf;
     unsigned i;
-    boolean has_hyperz = r300->rws->get_value(r300->rws, R300_CAN_HYPERZ);
+    boolean can_hyperz = r300->rws->get_value(r300->rws, R300_CAN_HYPERZ);
     CS_LOCALS(r300);
 
     BEGIN_CS(size);
@@ -411,7 +411,7 @@ void r300_emit_fb_state(struct r300_context* r300, unsigned size, void* state)
         OUT_CS_REG_SEQ(R300_ZB_DEPTHPITCH, 1);
         OUT_CS_RELOC(surf->buffer, surf->pitch, 0, surf->domain);
 
-        if (has_hyperz) {
+        if (can_hyperz) {
             uint32_t surf_pitch;
             struct r300_texture *tex;
             int level = surf->base.level;

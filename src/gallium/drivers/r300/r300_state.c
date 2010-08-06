@@ -684,7 +684,7 @@ void r300_mark_fb_state_dirty(struct r300_context *r300,
                               enum r300_fb_state_change change)
 {
     struct pipe_framebuffer_state *state = r300->fb_state.state;
-    boolean has_hyperz = r300->rws->get_value(r300->rws, R300_CAN_HYPERZ);
+    boolean can_hyperz = r300->rws->get_value(r300->rws, R300_CAN_HYPERZ);
 
     /* What is marked as dirty depends on the enum r300_fb_state_change. */
     r300->gpu_flush.dirty = TRUE;
@@ -703,7 +703,7 @@ void r300_mark_fb_state_dirty(struct r300_context *r300,
         r300->fb_state.size += 10;
     else if (state->zsbuf) {
         r300->fb_state.size += 10;
-        if (has_hyperz)
+        if (can_hyperz)
             r300->fb_state.size += r300->screen->caps.hiz_ram ? 8 : 4;
     }
 
@@ -717,7 +717,7 @@ static void
     struct r300_context* r300 = r300_context(pipe);
     struct r300_aa_state *aa = (struct r300_aa_state*)r300->aa_state.state;
     struct pipe_framebuffer_state *old_state = r300->fb_state.state;
-    boolean has_hyperz = r300->rws->get_value(r300->rws, R300_CAN_HYPERZ);
+    boolean can_hyperz = r300->rws->get_value(r300->rws, R300_CAN_HYPERZ);
     unsigned max_width, max_height, i;
     uint32_t zbuffer_bpp = 0;
     int blocksize;
@@ -764,7 +764,7 @@ static void
             zbuffer_bpp = 24;
             break;
         }
-        if (has_hyperz) {
+        if (can_hyperz) {
             struct r300_surface *zs_surf = r300_surface(state->zsbuf);
             struct r300_texture *tex;
             int compress = r300->screen->caps.is_rv350 ? RV350_Z_COMPRESS_88 : R300_Z_COMPRESS_44;

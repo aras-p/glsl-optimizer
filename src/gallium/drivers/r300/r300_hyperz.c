@@ -64,7 +64,7 @@ static bool r300_zfunc_same_direction(int func1, int func2)
             return FALSE;
     return TRUE;
 }
-    
+
 static int r300_get_hiz_min(struct r300_context *r300)
 {
     struct r300_dsa_state *dsa_state = r300->dsa_state.state;
