@@ -37,8 +37,8 @@ v2f vert (
 
 void main ()
 {
-  v2f xl_retval;
   appdata xlt_v;
+  v2f xl_retval;
   vec4 tmpvar_1;
   tmpvar_1 = gl_Vertex.xyzw;
   vec4 tmpvar_2;

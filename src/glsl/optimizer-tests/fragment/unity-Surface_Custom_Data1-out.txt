@@ -17,9 +17,9 @@ struct v2f_surf {
   vec3 lightDir;
   vec2 _LightCoord;
 };
-uniform vec4 _LightColor0;
-uniform sampler2D _LightTexture0;
 varying vec4 xlv_FOG;
+uniform sampler2D _LightTexture0;
+uniform vec4 _LightColor0;
 void main ()
 {
   v2f_surf xlt_IN;
@@ -31,10 +31,10 @@ void main ()
   xlt_IN._LightCoord = gl_TexCoord[3].xy;
   v2f_surf IN;
   IN = xlt_IN;
-  Input surfIN;
-  SurfaceOutput o;
-  vec3 lightDir;
   vec4 c;
+  vec3 lightDir;
+  SurfaceOutput o;
+  Input surfIN;
   surfIN.foo = xlt_IN.cust_foo;
   o.Albedo = vec3(0.000000, 0.000000, 0.000000);
   o.Emission = vec3(0.000000, 0.000000, 0.000000);

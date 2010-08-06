@@ -17,10 +17,11 @@ struct v2f_surf {
   vec3 vlight;
   vec4 _ShadowCoord;
 };
-uniform sampler2D _Decal;
-uniform vec4 _LightColor0;
-uniform sampler2D _ShadowMapTexture;
+varying vec4 xlv_FOG;
 uniform vec4 _WorldSpaceLightPos0;
+uniform sampler2D _ShadowMapTexture;
+uniform vec4 _LightColor0;
+uniform sampler2D _Decal;
 float unitySampleShadow (
   in vec4 shadowCoord
 );
@@ -67,8 +68,8 @@ vec4 LightingLambert (
   in float atten
 )
 {
-  float diff;
   vec4 c;
+  float diff;
   float tmpvar_1;
   tmpvar_1 = dot (s.Normal, lightDir);
   float tmpvar_2;
@@ -93,10 +94,10 @@ vec4 frag_surf (
   in v2f_surf IN
 )
 {
-  Input surfIN;
-  SurfaceOutput o;
-  float atten;
   vec4 c;
+  float atten;
+  SurfaceOutput o;
+  Input surfIN;
   vec2 tmpvar_1;
   tmpvar_1 = IN.hip_pack0.xy;
   surfIN.uv_Decal = tmpvar_1;
@@ -135,11 +136,10 @@ vec4 frag_surf (
   return c;
 }
 
-varying vec4 xlv_FOG;
 void main ()
 {
-  vec4 xl_retval;
   v2f_surf xlt_IN;
+  vec4 xl_retval;
   vec4 tmpvar_1;
   tmpvar_1 = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_IN.pos = tmpvar_1;

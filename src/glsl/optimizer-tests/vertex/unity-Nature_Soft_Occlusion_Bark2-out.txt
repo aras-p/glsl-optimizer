@@ -10,13 +10,13 @@ struct v2f_surf {
   vec4 pos;
   vec3 vec;
 };
-uniform vec4 _LightPositionRange;
-uniform mat4 _Object2World;
-uniform vec4 _Scale;
-uniform float _SquashAmount;
-uniform vec4 _SquashPlaneNormal;
-uniform mat4 _TerrainEngineBendTree;
 attribute vec4 TANGENT;
+uniform mat4 _TerrainEngineBendTree;
+uniform vec4 _SquashPlaneNormal;
+uniform float _SquashAmount;
+uniform vec4 _Scale;
+uniform mat4 _Object2World;
+uniform vec4 _LightPositionRange;
 void main ()
 {
   appdata_full xlt_v;
@@ -40,8 +40,8 @@ void main ()
   pos.xyz = tmpvar_76.xyz;
   vec4 pos_i0;
   pos_i0 = pos;
-  vec3 projectedVertex;
   vec3 planeNormal;
+  vec3 projectedVertex;
   projectedVertex = pos.xyz;
   vec3 tmpvar_81;
   tmpvar_81.x = float(vec3(0.000000, 0.000000, 0.000000));

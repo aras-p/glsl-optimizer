@@ -18,13 +18,14 @@ struct v2f_surf {
   vec3 lightDir;
   vec4 _LightCoord;
 };
-uniform vec4 _Color;
-uniform samplerCube _Cube;
-uniform vec4 _LightColor0;
-uniform sampler2D _LightTexture0;
-uniform sampler2D _LightTextureB0;
-uniform sampler2D _MainTex;
+varying vec4 xlv_FOG;
 uniform vec4 _ReflectColor;
+uniform sampler2D _MainTex;
+uniform sampler2D _LightTextureB0;
+uniform sampler2D _LightTexture0;
+uniform vec4 _LightColor0;
+uniform samplerCube _Cube;
+uniform vec4 _Color;
 void surf (
   in Input IN,
   inout SurfaceOutput o
@@ -35,9 +36,9 @@ void surf (
   inout SurfaceOutput o
 )
 {
-  vec4 tex;
-  vec4 c;
   vec4 reflcol;
+  vec4 c;
+  vec4 tex;
   vec4 tmpvar_1;
   tmpvar_1 = texture2D (_MainTex, IN.uv_MainTex);
   vec4 tmpvar_2;
@@ -109,8 +110,8 @@ vec4 LightingLambert (
   in float atten
 )
 {
-  float diff;
   vec4 c;
+  float diff;
   float tmpvar_1;
   tmpvar_1 = dot (s.Normal, lightDir);
   float tmpvar_2;
@@ -135,10 +136,10 @@ vec4 frag_surf (
   in v2f_surf IN
 )
 {
-  Input surfIN;
-  SurfaceOutput o;
-  vec3 lightDir;
   vec4 c;
+  vec3 lightDir;
+  SurfaceOutput o;
+  Input surfIN;
   vec2 tmpvar_1;
   tmpvar_1 = IN.hip_pack0.xy;
   surfIN.uv_MainTex = tmpvar_1;
@@ -184,11 +185,10 @@ vec4 frag_surf (
   return c;
 }
 
-varying vec4 xlv_FOG;
 void main ()
 {
-  vec4 xl_retval;
   v2f_surf xlt_IN;
+  vec4 xl_retval;
   vec4 tmpvar_1;
   tmpvar_1 = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_IN.pos = tmpvar_1;

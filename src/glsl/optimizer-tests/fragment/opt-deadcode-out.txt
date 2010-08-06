@@ -4,12 +4,12 @@ struct v2f {
 };
 void main ()
 {
+  float arrused[3];
+  v2f sused;
   float tmpvar_1;
   tmpvar_1 = gl_FragCoord.x;
-  v2f sused;
   sused.pos = vec4(tmpvar_1);
   sused.unusedmember = (tmpvar_1 * 6.000000);
-  float arrused[3];
   arrused[0] = (tmpvar_1 * 4.000000);
   gl_FragColor = vec4((((tmpvar_1 * 2.000000) + sused.pos.x) + arrused[0]));
 }

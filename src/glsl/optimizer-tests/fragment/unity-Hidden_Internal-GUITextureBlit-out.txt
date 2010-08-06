@@ -4,8 +4,8 @@ struct v2f {
   vec2 texcoord;
   vec2 texgencoord;
 };
-uniform sampler2D _GUIClipTexture;
 uniform sampler2D _MainTex;
+uniform sampler2D _GUIClipTexture;
 void main ()
 {
   v2f xlt_i;

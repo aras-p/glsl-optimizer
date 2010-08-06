@@ -20,14 +20,14 @@ struct v2f_surf {
   vec3 vlight;
   vec4 _ShadowCoord;
 };
-uniform sampler2D _BumpMap;
-uniform vec4 _Color;
-uniform vec4 _LightColor0;
-uniform sampler2D _MainTex;
-uniform float _Parallax;
-uniform sampler2D _ParallaxMap;
-uniform sampler2D _ShadowMapTexture;
 varying vec4 xlv_FOG;
+uniform sampler2D _ShadowMapTexture;
+uniform sampler2D _ParallaxMap;
+uniform float _Parallax;
+uniform sampler2D _MainTex;
+uniform vec4 _LightColor0;
+uniform vec4 _Color;
+uniform sampler2D _BumpMap;
 void main ()
 {
   v2f_surf xlt_IN;
@@ -40,9 +40,9 @@ void main ()
   xlt_IN._ShadowCoord = gl_TexCoord[4].xyzw;
   v2f_surf IN;
   IN = xlt_IN;
-  Input surfIN;
-  SurfaceOutput o;
   vec4 c;
+  SurfaceOutput o;
+  Input surfIN;
   surfIN.uv_MainTex = xlt_IN.hip_pack0.xy;
   surfIN.uv_BumpMap = xlt_IN.hip_pack0.zw;
   surfIN.viewDir = xlt_IN.viewDir;

@@ -8,8 +8,8 @@ struct v2f {
   vec2 uvg;
   vec2 uvs;
 };
-uniform vec4 _GrainOffsetScale;
 uniform vec4 _ScratchOffsetScale;
+uniform vec4 _GrainOffsetScale;
 vec2 MultiplyUV (
   in mat4 mat,
   in vec2 inUV
@@ -63,8 +63,8 @@ v2f vert (
 
 void main ()
 {
-  v2f xl_retval;
   appdata_img xlt_v;
+  v2f xl_retval;
   vec4 tmpvar_1;
   tmpvar_1 = gl_Vertex.xyzw;
   vec4 tmpvar_2;

@@ -13,11 +13,11 @@ void main ()
   xlt_i.uv[3] = gl_TexCoord[3].xy;
   v2f i;
   i = xlt_i;
-  vec4 v00;
-  vec2 v01;
-  vec2 v10;
-  vec2 v11;
   vec4 res;
+  vec2 v11;
+  vec2 v10;
+  vec2 v01;
+  vec4 v00;
   vec4 tmpvar_15;
   tmpvar_15 = texture2D (_MainTex, i.uv[0]);
   v00 = tmpvar_15;

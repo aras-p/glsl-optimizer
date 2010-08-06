@@ -9,11 +9,11 @@ struct appdata {
   vec4 color;
   vec4 texcoord;
 };
-uniform vec4 _ProjectionParams;
-uniform vec4 _Scale;
-uniform float _SquashAmount;
-uniform vec4 _SquashPlaneNormal;
 uniform mat4 _TerrainEngineBendTree;
+uniform vec4 _SquashPlaneNormal;
+uniform float _SquashAmount;
+uniform vec4 _Scale;
+uniform vec4 _ProjectionParams;
 void main ()
 {
   appdata xlt_v;
@@ -35,8 +35,8 @@ void main ()
   pos.xyz = tmpvar_62.xyz;
   vec4 pos_i0;
   pos_i0 = pos;
-  vec3 projectedVertex;
   vec3 planeNormal;
+  vec3 projectedVertex;
   projectedVertex = pos.xyz;
   vec3 tmpvar_67;
   tmpvar_67.x = float(vec3(0.000000, 0.000000, 0.000000));

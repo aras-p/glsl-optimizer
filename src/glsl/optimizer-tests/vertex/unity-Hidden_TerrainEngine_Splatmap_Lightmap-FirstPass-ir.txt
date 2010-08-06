@@ -14,12 +14,14 @@ struct appdata_full {
   vec4 texcoord1;
   vec4 color;
 };
-uniform vec4 _Control_ST;
-uniform vec4 _ProjectionParams;
-uniform vec4 _Splat0_ST;
-uniform vec4 _Splat1_ST;
-uniform vec4 _Splat2_ST;
+varying vec4 xlv_FOG;
+attribute vec4 TANGENT;
 uniform vec4 _Splat3_ST;
+uniform vec4 _Splat2_ST;
+uniform vec4 _Splat1_ST;
+uniform vec4 _Splat0_ST;
+uniform vec4 _ProjectionParams;
+uniform vec4 _Control_ST;
 void PositionFog (
   in vec4 v,
   out vec4 pos,
@@ -97,12 +99,10 @@ v2f_surf vert_surf (
   return o;
 }
 
-attribute vec4 TANGENT;
-varying vec4 xlv_FOG;
 void main ()
 {
-  v2f_surf xl_retval;
   appdata_full xlt_v;
+  v2f_surf xl_retval;
   vec4 tmpvar_1;
   tmpvar_1 = gl_Vertex.xyzw;
   vec4 tmpvar_2;

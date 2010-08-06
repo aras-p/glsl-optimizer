@@ -13,6 +13,8 @@ struct appdata_full {
   vec4 texcoord1;
   vec4 color;
 };
+attribute vec4 TANGENT;
+uniform vec4 _BumpMap_ST;
 mat3 xll_constructMat3 (
   in mat4 m
 )
@@ -36,7 +38,6 @@ mat3 xll_constructMat3 (
   return tmpvar_4;
 }
 
-uniform vec4 _BumpMap_ST;
 v2f_surf vert_surf (
   in appdata_full v
 );
@@ -45,9 +46,9 @@ v2f_surf vert_surf (
   in appdata_full v
 )
 {
-  v2f_surf o;
-  vec3 binormal;
   mat3 rotation;
+  vec3 binormal;
+  v2f_surf o;
   vec4 tmpvar_1;
   tmpvar_1 = (gl_ModelViewProjectionMatrix * v.vertex);
   o.pos = tmpvar_1;
@@ -108,11 +109,10 @@ v2f_surf vert_surf (
   return o;
 }
 
-attribute vec4 TANGENT;
 void main ()
 {
-  v2f_surf xl_retval;
   appdata_full xlt_v;
+  v2f_surf xl_retval;
   vec4 tmpvar_1;
   tmpvar_1 = gl_Vertex.xyzw;
   vec4 tmpvar_2;

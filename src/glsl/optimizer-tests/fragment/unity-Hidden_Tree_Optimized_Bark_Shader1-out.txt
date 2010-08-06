@@ -10,13 +10,13 @@ struct Input {
   vec2 uv_MainTex;
   vec4 color;
 };
-uniform sampler2D _BumpSpecMap;
-uniform sampler2D _MainTex;
 uniform sampler2D _TranslucencyMap;
+uniform sampler2D _MainTex;
+uniform sampler2D _BumpSpecMap;
 void main ()
 {
-  SurfaceOutput o;
   Input surfIN;
+  SurfaceOutput o;
   o.Albedo = vec3(0.000000, 0.000000, 0.000000);
   o.Emission = vec3(0.000000, 0.000000, 0.000000);
   o.Specular = 0.000000;

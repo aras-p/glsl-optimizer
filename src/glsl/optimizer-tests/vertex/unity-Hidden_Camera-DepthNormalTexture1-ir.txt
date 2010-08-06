@@ -10,9 +10,10 @@ struct appdata_grass {
   vec4 texcoord;
   vec4 texcoord1;
 };
-uniform vec4 _ProjectionParams;
-uniform vec4 _WaveAndDistance;
+attribute vec4 TANGENT;
 uniform vec4 _WavingTint;
+uniform vec4 _WaveAndDistance;
+uniform vec4 _ProjectionParams;
 void FastSinCos (
   in vec4 val,
   out vec4 s,
@@ -25,18 +26,18 @@ void FastSinCos (
   out vec4 c
 )
 {
-  vec4 r5;
-  vec4 r6;
-  vec4 r7;
-  vec4 r8;
-  vec4 r1;
-  vec4 r2;
-  vec4 r3;
+  vec4 cos8;
   vec4 sin7;
+  vec4 r3;
+  vec4 r2;
+  vec4 r1;
+  vec4 r8;
+  vec4 r7;
+  vec4 r6;
+  vec4 r5;
   vec4 tmpvar_1;
   tmpvar_1 = vec4(1.000000, -0.161616, 0.008333, -0.000198);
   sin7 = tmpvar_1;
-  vec4 cos8;
   vec4 tmpvar_2;
   tmpvar_2 = vec4(-0.500000, 0.041667, -0.001389, 0.000025);
   cos8 = tmpvar_2;
@@ -86,29 +87,29 @@ void TerrainWaveGrass (
   out vec4 outColor
 )
 {
-  vec4 _waveXSize;
-  vec4 _waveZSize;
+  vec3 waveColor;
+  vec3 waveMove;
+  float lighting;
+  vec4 c;
+  vec4 s;
+  vec4 waves;
+  vec4 _waveZmove;
+  vec4 _waveXmove;
   vec4 waveSpeed;
+  vec4 _waveZSize;
+  vec4 _waveXSize;
   vec4 tmpvar_1;
   tmpvar_1 = vec4(1.200000, 2.000000, 1.600000, 4.800000);
   waveSpeed = tmpvar_1;
-  vec4 _waveXmove;
   vec4 tmpvar_2;
   tmpvar_2 = vec4(0.024000, 0.040000, -0.120000, 0.096000);
   _waveXmove = tmpvar_2;
-  vec4 _waveZmove;
   vec4 tmpvar_3;
   tmpvar_3 = vec4(0.006000, 0.020000, -0.020000, 0.100000);
   _waveZmove = tmpvar_3;
-  vec4 waves;
-  vec4 s;
-  vec4 c;
-  float lighting;
-  vec3 waveMove;
   vec3 tmpvar_4;
   tmpvar_4 = vec3(0.000000, 0.000000, 0.000000);
   waveMove = tmpvar_4;
-  vec3 waveColor;
   vec4 tmpvar_5;
   tmpvar_5 = (vec4(0.012000, 0.020000, 0.060000, 0.024000) * _WaveAndDistance.y);
   _waveXSize = tmpvar_5;
@@ -182,9 +183,9 @@ v2f vert (
   in appdata_grass v
 )
 {
-  float waveAmount;
-  vec4 dummyColor;
   v2f o;
+  vec4 dummyColor;
+  float waveAmount;
   float tmpvar_1;
   tmpvar_1 = (v.color.w * _WaveAndDistance.z);
   waveAmount = tmpvar_1;
@@ -211,11 +212,10 @@ v2f vert (
   return o;
 }
 
-attribute vec4 TANGENT;
 void main ()
 {
-  v2f xl_retval;
   appdata_grass xlt_v;
+  v2f xl_retval;
   vec4 tmpvar_1;
   tmpvar_1 = gl_Vertex.xyzw;
   vec4 tmpvar_2;

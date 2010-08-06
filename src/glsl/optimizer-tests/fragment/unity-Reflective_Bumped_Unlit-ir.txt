@@ -8,10 +8,11 @@ struct v2f {
   vec3 TtoW1;
   vec3 TtoW2;
 };
-uniform sampler2D _BumpMap;
-uniform samplerCube _Cube;
-uniform sampler2D _MainTex;
+varying vec4 xlv_FOG;
 uniform vec4 _ReflectColor;
+uniform sampler2D _MainTex;
+uniform samplerCube _Cube;
+uniform sampler2D _BumpMap;
 vec4 UnpackNormal (
   in vec4 packednormal
 );
@@ -40,12 +41,12 @@ vec4 frag (
   in v2f i
 )
 {
-  vec4 normal;
-  vec4 texcol;
-  vec3 wn;
-  vec3 r;
-  vec4 c;
   vec4 reflcolor;
+  vec4 c;
+  vec3 r;
+  vec3 wn;
+  vec4 texcol;
+  vec4 normal;
   vec4 tmpvar_1;
   tmpvar_1 = texture2D (_BumpMap, i.uv2);
   vec4 tmpvar_2;
@@ -92,11 +93,10 @@ vec4 frag (
   return (c + reflcolor);
 }
 
-varying vec4 xlv_FOG;
 void main ()
 {
-  vec4 xl_retval;
   v2f xlt_i;
+  vec4 xl_retval;
   vec4 tmpvar_1;
   tmpvar_1 = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_i.pos = tmpvar_1;

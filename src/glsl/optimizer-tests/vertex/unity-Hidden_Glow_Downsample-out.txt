@@ -12,8 +12,8 @@ void main ()
   appdata_img xlt_v;
   xlt_v.vertex = gl_Vertex.xyzw;
   xlt_v.texcoord = gl_MultiTexCoord0.xy;
-  v2f o;
   vec4 uv;
+  v2f o;
   o.pos = (gl_ModelViewProjectionMatrix * xlt_v.vertex);
   vec2 inUV;
   inUV = xlt_v.texcoord;

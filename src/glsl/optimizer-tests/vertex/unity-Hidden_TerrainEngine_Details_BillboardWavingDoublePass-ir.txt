@@ -14,6 +14,31 @@ struct v2f_surf {
   vec3 normal;
   vec3 vlight;
 };
+varying vec4 xlv_FOG;
+attribute vec4 TANGENT;
+uniform vec4 unity_Scale;
+uniform vec4 unity_SHC;
+uniform vec4 unity_SHBr;
+uniform vec4 unity_SHBg;
+uniform vec4 unity_SHBb;
+uniform vec4 unity_SHAr;
+uniform vec4 unity_SHAg;
+uniform vec4 unity_SHAb;
+uniform vec3 unity_LightColor3;
+uniform vec3 unity_LightColor2;
+uniform vec3 unity_LightColor1;
+uniform vec3 unity_LightColor0;
+uniform vec4 unity_4LightPosZ0;
+uniform vec4 unity_4LightPosY0;
+uniform vec4 unity_4LightPosX0;
+uniform vec4 unity_4LightAtten0;
+uniform vec4 _WavingTint;
+uniform vec4 _WaveAndDistance;
+uniform mat4 _Object2World;
+uniform vec4 _MainTex_ST;
+uniform vec3 _CameraUp;
+uniform vec3 _CameraRight;
+uniform vec4 _CameraPosition;
 mat3 xll_constructMat3 (
   in mat4 m
 )
@@ -37,29 +62,6 @@ mat3 xll_constructMat3 (
   return tmpvar_4;
 }
 
-uniform vec4 _CameraPosition;
-uniform vec3 _CameraRight;
-uniform vec3 _CameraUp;
-uniform vec4 _MainTex_ST;
-uniform mat4 _Object2World;
-uniform vec4 _WaveAndDistance;
-uniform vec4 _WavingTint;
-uniform vec4 unity_4LightAtten0;
-uniform vec4 unity_4LightPosX0;
-uniform vec4 unity_4LightPosY0;
-uniform vec4 unity_4LightPosZ0;
-uniform vec3 unity_LightColor0;
-uniform vec3 unity_LightColor1;
-uniform vec3 unity_LightColor2;
-uniform vec3 unity_LightColor3;
-uniform vec4 unity_SHAb;
-uniform vec4 unity_SHAg;
-uniform vec4 unity_SHAr;
-uniform vec4 unity_SHBb;
-uniform vec4 unity_SHBg;
-uniform vec4 unity_SHBr;
-uniform vec4 unity_SHC;
-uniform vec4 unity_Scale;
 void FastSinCos (
   in vec4 val,
   out vec4 s,
@@ -72,18 +74,18 @@ void FastSinCos (
   out vec4 c
 )
 {
-  vec4 r5;
-  vec4 r6;
-  vec4 r7;
-  vec4 r8;
-  vec4 r1;
-  vec4 r2;
-  vec4 r3;
+  vec4 cos8;
   vec4 sin7;
+  vec4 r3;
+  vec4 r2;
+  vec4 r1;
+  vec4 r8;
+  vec4 r7;
+  vec4 r6;
+  vec4 r5;
   vec4 tmpvar_1;
   tmpvar_1 = vec4(1.000000, -0.161616, 0.008333, -0.000198);
   sin7 = tmpvar_1;
-  vec4 cos8;
   vec4 tmpvar_2;
   tmpvar_2 = vec4(-0.500000, 0.041667, -0.001389, 0.000025);
   cos8 = tmpvar_2;
@@ -133,29 +135,29 @@ void TerrainWaveGrass (
   out vec4 outColor
 )
 {
-  vec4 _waveXSize;
-  vec4 _waveZSize;
+  vec3 waveColor;
+  vec3 waveMove;
+  float lighting;
+  vec4 c;
+  vec4 s;
+  vec4 waves;
+  vec4 _waveZmove;
+  vec4 _waveXmove;
   vec4 waveSpeed;
+  vec4 _waveZSize;
+  vec4 _waveXSize;
   vec4 tmpvar_1;
   tmpvar_1 = vec4(1.200000, 2.000000, 1.600000, 4.800000);
   waveSpeed = tmpvar_1;
-  vec4 _waveXmove;
   vec4 tmpvar_2;
   tmpvar_2 = vec4(0.024000, 0.040000, -0.120000, 0.096000);
   _waveXmove = tmpvar_2;
-  vec4 _waveZmove;
   vec4 tmpvar_3;
   tmpvar_3 = vec4(0.006000, 0.020000, -0.020000, 0.100000);
   _waveZmove = tmpvar_3;
-  vec4 waves;
-  vec4 s;
-  vec4 c;
-  float lighting;
-  vec3 waveMove;
   vec3 tmpvar_4;
   tmpvar_4 = vec3(0.000000, 0.000000, 0.000000);
   waveMove = tmpvar_4;
-  vec3 waveColor;
   vec4 tmpvar_5;
   tmpvar_5 = (vec4(0.012000, 0.020000, 0.060000, 0.024000) * _WaveAndDistance.y);
   _waveXSize = tmpvar_5;
@@ -258,8 +260,8 @@ void vert (
   inout appdata_full v
 )
 {
-  float waveAmount;
   vec4 color;
+  float waveAmount;
   TerrainBillboardGrass (v.vertex, v.tangent.xy);
   float tmpvar_1;
   tmpvar_1 = v.tangent.y;
@@ -278,11 +280,11 @@ vec3 ShadeSH9 (
   in vec4 normal
 )
 {
-  vec3 x1;
-  vec4 vB;
-  vec3 x2;
-  float vC;
   vec3 x3;
+  float vC;
+  vec3 x2;
+  vec4 vB;
+  vec3 x1;
   float tmpvar_1;
   tmpvar_1 = dot (unity_SHAr, normal);
   float tmpvar_2;
@@ -351,15 +353,15 @@ vec3 Shade4PointLights (
   in vec3 normal
 )
 {
-  vec4 toLightX;
-  vec4 toLightY;
-  vec4 toLightZ;
-  vec4 lengthSq;
-  vec4 ndotl;
-  vec4 corr;
-  vec4 atten;
-  vec4 diff;
   vec3 col;
+  vec4 diff;
+  vec4 atten;
+  vec4 corr;
+  vec4 ndotl;
+  vec4 lengthSq;
+  vec4 toLightZ;
+  vec4 toLightY;
+  vec4 toLightX;
   vec4 tmpvar_1;
   tmpvar_1 = (lightPosX - pos.x);
   toLightX = tmpvar_1;
@@ -455,10 +457,10 @@ v2f_surf vert_surf (
   in appdata_full v
 )
 {
-  v2f_surf o;
-  vec3 worldN;
-  vec3 shlight;
   vec3 worldPos;
+  vec3 shlight;
+  vec3 worldN;
+  v2f_surf o;
   vert (v);
   PositionFog (v.vertex, o.pos, o.fog);
   vec2 tmpvar_1;
@@ -497,12 +499,10 @@ v2f_surf vert_surf (
   return o;
 }
 
-attribute vec4 TANGENT;
-varying vec4 xlv_FOG;
 void main ()
 {
-  v2f_surf xl_retval;
   appdata_full xlt_v;
+  v2f_surf xl_retval;
   vec4 tmpvar_1;
   tmpvar_1 = gl_Vertex.xyzw;
   vec4 tmpvar_2;

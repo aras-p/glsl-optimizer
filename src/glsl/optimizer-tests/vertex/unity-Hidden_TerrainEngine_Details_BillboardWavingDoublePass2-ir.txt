@@ -11,13 +11,14 @@ struct v2f_surf {
   vec2 hip_pack0;
   vec4 lop_color;
 };
-uniform vec4 _CameraPosition;
-uniform vec3 _CameraRight;
-uniform vec3 _CameraUp;
-uniform vec4 _MainTex_ST;
-uniform vec4 _WaveAndDistance;
-uniform vec4 _WavingTint;
+attribute vec4 TANGENT;
 uniform vec4 unity_LightShadowBias;
+uniform vec4 _WavingTint;
+uniform vec4 _WaveAndDistance;
+uniform vec4 _MainTex_ST;
+uniform vec3 _CameraUp;
+uniform vec3 _CameraRight;
+uniform vec4 _CameraPosition;
 void FastSinCos (
   in vec4 val,
   out vec4 s,
@@ -30,18 +31,18 @@ void FastSinCos (
   out vec4 c
 )
 {
-  vec4 r5;
-  vec4 r6;
-  vec4 r7;
-  vec4 r8;
-  vec4 r1;
-  vec4 r2;
-  vec4 r3;
+  vec4 cos8;
   vec4 sin7;
+  vec4 r3;
+  vec4 r2;
+  vec4 r1;
+  vec4 r8;
+  vec4 r7;
+  vec4 r6;
+  vec4 r5;
   vec4 tmpvar_1;
   tmpvar_1 = vec4(1.000000, -0.161616, 0.008333, -0.000198);
   sin7 = tmpvar_1;
-  vec4 cos8;
   vec4 tmpvar_2;
   tmpvar_2 = vec4(-0.500000, 0.041667, -0.001389, 0.000025);
   cos8 = tmpvar_2;
@@ -91,29 +92,29 @@ void TerrainWaveGrass (
   out vec4 outColor
 )
 {
-  vec4 _waveXSize;
-  vec4 _waveZSize;
+  vec3 waveColor;
+  vec3 waveMove;
+  float lighting;
+  vec4 c;
+  vec4 s;
+  vec4 waves;
+  vec4 _waveZmove;
+  vec4 _waveXmove;
   vec4 waveSpeed;
+  vec4 _waveZSize;
+  vec4 _waveXSize;
   vec4 tmpvar_1;
   tmpvar_1 = vec4(1.200000, 2.000000, 1.600000, 4.800000);
   waveSpeed = tmpvar_1;
-  vec4 _waveXmove;
   vec4 tmpvar_2;
   tmpvar_2 = vec4(0.024000, 0.040000, -0.120000, 0.096000);
   _waveXmove = tmpvar_2;
-  vec4 _waveZmove;
   vec4 tmpvar_3;
   tmpvar_3 = vec4(0.006000, 0.020000, -0.020000, 0.100000);
   _waveZmove = tmpvar_3;
-  vec4 waves;
-  vec4 s;
-  vec4 c;
-  float lighting;
-  vec3 waveMove;
   vec3 tmpvar_4;
   tmpvar_4 = vec3(0.000000, 0.000000, 0.000000);
   waveMove = tmpvar_4;
-  vec3 waveColor;
   vec4 tmpvar_5;
   tmpvar_5 = (vec4(0.012000, 0.020000, 0.060000, 0.024000) * _WaveAndDistance.y);
   _waveXSize = tmpvar_5;
@@ -216,8 +217,8 @@ void vert (
   inout appdata_full v
 )
 {
-  float waveAmount;
   vec4 color;
+  float waveAmount;
   TerrainBillboardGrass (v.vertex, v.tangent.xy);
   float tmpvar_1;
   tmpvar_1 = v.tangent.y;
@@ -258,11 +259,10 @@ v2f_surf vert_surf (
   return o;
 }
 
-attribute vec4 TANGENT;
 void main ()
 {
-  v2f_surf xl_retval;
   appdata_full xlt_v;
+  v2f_surf xl_retval;
   vec4 tmpvar_1;
   tmpvar_1 = gl_Vertex.xyzw;
   vec4 tmpvar_2;

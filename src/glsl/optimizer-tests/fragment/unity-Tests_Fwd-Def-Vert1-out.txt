@@ -15,8 +15,8 @@ void main ()
   v2f_surf xlt_IN;
   xlt_IN.pos = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_IN.normal = gl_TexCoord[0].xyz;
-  SurfaceOutput o;
   vec4 res;
+  SurfaceOutput o;
   o.Albedo = vec3(0.000000, 0.000000, 0.000000);
   o.Emission = vec3(0.000000, 0.000000, 0.000000);
   o.Specular = 0.000000;

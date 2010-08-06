@@ -13,9 +13,9 @@ struct v2f_surf {
   vec4 pos;
   vec3 vec;
 };
-uniform vec4 _Color;
-uniform vec4 _LightPositionRange;
 uniform sampler2D _MainTex;
+uniform vec4 _LightPositionRange;
+uniform vec4 _Color;
 void surf (
   in Input IN,
   inout SurfaceOutput o
@@ -48,15 +48,15 @@ vec4 EncodeFloatRGBA (
   in float v
 )
 {
+  vec4 enc;
+  float kEncodeBit;
   vec4 kEncodeMul;
   vec4 tmpvar_1;
   tmpvar_1 = vec4(1.000000, 255.000000, 65025.000000, 160580992.000000);
   kEncodeMul = tmpvar_1;
-  float kEncodeBit;
   float tmpvar_2;
   tmpvar_2 = 0.003922;
   kEncodeBit = tmpvar_2;
-  vec4 enc;
   vec4 tmpvar_3;
   tmpvar_3 = (kEncodeMul * v);
   enc = tmpvar_3;
@@ -79,8 +79,8 @@ vec4 frag_surf (
   in v2f_surf IN
 )
 {
-  SurfaceOutput o;
   Input surfIN;
+  SurfaceOutput o;
   vec3 tmpvar_1;
   tmpvar_1 = vec3(0.000000, 0.000000, 0.000000);
   o.Albedo = tmpvar_1;
@@ -106,8 +106,8 @@ vec4 frag_surf (
 
 void main ()
 {
-  vec4 xl_retval;
   v2f_surf xlt_IN;
+  vec4 xl_retval;
   vec4 tmpvar_1;
   tmpvar_1 = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_IN.pos = tmpvar_1;

@@ -2,8 +2,8 @@ struct v2f_combiner {
   vec4 pos;
   vec2 uv;
 };
-uniform vec4 _Color;
 uniform sampler2D _RGBSource;
+uniform vec4 _Color;
 vec4 frag (
   in v2f_combiner i
 );
@@ -26,8 +26,8 @@ vec4 frag (
 
 void main ()
 {
-  vec4 xl_retval;
   v2f_combiner xlt_i;
+  vec4 xl_retval;
   vec4 tmpvar_1;
   tmpvar_1 = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_i.pos = tmpvar_1;

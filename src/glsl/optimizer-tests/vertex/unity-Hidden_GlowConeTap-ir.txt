@@ -6,8 +6,8 @@ struct v2f {
   vec4 pos;
   vec4 uv[2];
 };
-uniform vec4 _BlurOffsets;
 uniform vec4 _MainTex_TexelSize;
+uniform vec4 _BlurOffsets;
 vec2 MultiplyUV (
   in mat4 mat,
   in vec2 inUV
@@ -41,10 +41,10 @@ v2f vert (
   in appdata_img v
 )
 {
-  float offX;
-  float offY;
-  v2f o;
   vec2 uv;
+  v2f o;
+  float offY;
+  float offX;
   float tmpvar_1;
   tmpvar_1 = (_MainTex_TexelSize.x * _BlurOffsets.x);
   offX = tmpvar_1;
@@ -91,8 +91,8 @@ v2f vert (
 
 void main ()
 {
-  v2f xl_retval;
   appdata_img xlt_v;
+  v2f xl_retval;
   vec4 tmpvar_1;
   tmpvar_1 = gl_Vertex.xyzw;
   vec4 tmpvar_2;

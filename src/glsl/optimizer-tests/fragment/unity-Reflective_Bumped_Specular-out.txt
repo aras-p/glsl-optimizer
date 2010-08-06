@@ -19,16 +19,16 @@ struct v2f_surf {
   vec3 viewDir;
   vec3 _LightCoord;
 };
-uniform sampler2D _BumpMap;
-uniform vec4 _Color;
-uniform samplerCube _Cube;
-uniform vec4 _LightColor0;
-uniform sampler2D _LightTexture0;
-uniform sampler2D _MainTex;
-uniform vec4 _ReflectColor;
-uniform float _Shininess;
-uniform vec4 _SpecColor;
 varying vec4 xlv_FOG;
+uniform vec4 _SpecColor;
+uniform float _Shininess;
+uniform vec4 _ReflectColor;
+uniform sampler2D _MainTex;
+uniform sampler2D _LightTexture0;
+uniform vec4 _LightColor0;
+uniform samplerCube _Cube;
+uniform vec4 _Color;
+uniform sampler2D _BumpMap;
 void main ()
 {
   v2f_surf xlt_IN;
@@ -40,10 +40,10 @@ void main ()
   xlt_IN._LightCoord = gl_TexCoord[3].xyz;
   v2f_surf IN;
   IN = xlt_IN;
-  Input surfIN;
-  SurfaceOutput o;
-  vec3 lightDir;
   vec4 c;
+  vec3 lightDir;
+  SurfaceOutput o;
+  Input surfIN;
   surfIN.uv_MainTex = xlt_IN.hip_pack0.xy;
   surfIN.uv_BumpMap = xlt_IN.hip_pack0.zw;
   o.Albedo = vec3(0.000000, 0.000000, 0.000000);
@@ -93,9 +93,9 @@ void main ()
   lightDir_i0 = lightDir;
   float atten;
   atten = tmpvar_88.w;
-  vec3 h;
-  float diff;
   vec4 c_i0_i1;
+  float diff;
+  vec3 h;
   vec3 tmpvar_91;
   tmpvar_91 = normalize ((lightDir_i0 + tmpvar_84));
   h = tmpvar_91;

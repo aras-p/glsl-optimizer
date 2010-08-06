@@ -14,6 +14,17 @@ struct v2f_surf {
   vec3 lightDir;
   vec4 _LightCoord;
 };
+varying vec4 xlv_FOG;
+attribute vec4 TANGENT;
+uniform vec4 unity_Scale;
+uniform vec4 _WorldSpaceLightPos0;
+uniform mat4 _TerrainEngineBendTree;
+uniform vec4 _SquashPlaneNormal;
+uniform float _SquashAmount;
+uniform vec4 _Scale;
+uniform mat4 _Object2World;
+uniform vec4 _MainTex_ST;
+uniform mat4 _LightMatrix0;
 mat3 xll_constructMat3 (
   in mat4 m
 )
@@ -37,15 +48,6 @@ mat3 xll_constructMat3 (
   return tmpvar_4;
 }
 
-uniform mat4 _LightMatrix0;
-uniform vec4 _MainTex_ST;
-uniform mat4 _Object2World;
-uniform vec4 _Scale;
-uniform float _SquashAmount;
-uniform vec4 _SquashPlaneNormal;
-uniform mat4 _TerrainEngineBendTree;
-uniform vec4 _WorldSpaceLightPos0;
-uniform vec4 unity_Scale;
 vec4 Squash (
   in vec4 pos
 );
@@ -54,9 +56,9 @@ vec4 Squash (
   in vec4 pos
 )
 {
-  vec3 projectedVertex;
-  vec3 planePoint;
   vec3 planeNormal;
+  vec3 planePoint;
+  vec3 projectedVertex;
   vec3 tmpvar_1;
   tmpvar_1 = pos.xyz;
   projectedVertex = tmpvar_1;
@@ -200,12 +202,10 @@ v2f_surf vert_surf (
   return o;
 }
 
-attribute vec4 TANGENT;
-varying vec4 xlv_FOG;
 void main ()
 {
-  v2f_surf xl_retval;
   appdata_full xlt_v;
+  v2f_surf xl_retval;
   vec4 tmpvar_1;
   tmpvar_1 = gl_Vertex.xyzw;
   vec4 tmpvar_2;

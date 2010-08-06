@@ -1,11 +1,11 @@
 void main ()
 {
+  int i;
+  float a;
   if ((gl_FragCoord.x == 1.000000)) {
     discard;
   };
-  float a;
   a = 4.000000;
-  int i;
   i = 0;
   while (true) {
     if (!((i < 10))) {

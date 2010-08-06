@@ -14,11 +14,13 @@ struct appdata_full {
   vec4 texcoord1;
   vec4 color;
 };
-uniform vec4 _MainTex_ST;
-uniform mat4 _Object2World;
-uniform vec4 _ProjectionParams;
-uniform vec4 unity_LightmapFade;
+varying vec4 xlv_FOG;
+attribute vec4 TANGENT;
 uniform vec4 unity_LightmapST;
+uniform vec4 unity_LightmapFade;
+uniform vec4 _ProjectionParams;
+uniform mat4 _Object2World;
+uniform vec4 _MainTex_ST;
 void PositionFog (
   in vec4 v,
   out vec4 pos,
@@ -93,12 +95,10 @@ v2f_surf vert_surf (
   return o;
 }
 
-attribute vec4 TANGENT;
-varying vec4 xlv_FOG;
 void main ()
 {
-  v2f_surf xl_retval;
   appdata_full xlt_v;
+  v2f_surf xl_retval;
   vec4 tmpvar_1;
   tmpvar_1 = gl_Vertex.xyzw;
   vec4 tmpvar_2;

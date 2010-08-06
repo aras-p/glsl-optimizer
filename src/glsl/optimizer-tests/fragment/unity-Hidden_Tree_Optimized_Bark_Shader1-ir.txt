@@ -13,9 +13,9 @@ struct Input {
 struct v2f_surf {
   vec4 pos;
 };
-uniform sampler2D _BumpSpecMap;
-uniform sampler2D _MainTex;
 uniform sampler2D _TranslucencyMap;
+uniform sampler2D _MainTex;
+uniform sampler2D _BumpSpecMap;
 vec4 UnpackNormal (
   in vec4 packednormal
 );
@@ -46,9 +46,9 @@ void surf (
   inout SurfaceOutput o
 )
 {
-  vec4 c;
-  vec4 trngls;
   vec4 norspc;
+  vec4 trngls;
+  vec4 c;
   vec4 tmpvar_1;
   tmpvar_1 = texture2D (_MainTex, IN.uv_MainTex);
   vec4 tmpvar_2;
@@ -93,8 +93,8 @@ vec4 frag_surf (
   in v2f_surf IN
 )
 {
-  SurfaceOutput o;
   Input surfIN;
+  SurfaceOutput o;
   vec3 tmpvar_1;
   tmpvar_1 = vec3(0.000000, 0.000000, 0.000000);
   o.Albedo = tmpvar_1;
@@ -116,8 +116,8 @@ vec4 frag_surf (
 
 void main ()
 {
-  vec4 xl_retval;
   v2f_surf xlt_IN;
+  vec4 xl_retval;
   vec4 tmpvar_1;
   tmpvar_1 = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_IN.pos = tmpvar_1;

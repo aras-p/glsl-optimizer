@@ -4,8 +4,8 @@ struct v2f {
   vec4 color;
   vec2 texcoord;
 };
-uniform sampler2D _MainTex;
 varying vec4 xlv_FOG;
+uniform sampler2D _MainTex;
 void main ()
 {
   v2f xlt_i;

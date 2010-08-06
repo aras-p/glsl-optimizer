@@ -12,6 +12,25 @@ struct appdata_full {
   vec4 texcoord1;
   vec4 color;
 };
+varying vec4 xlv_FOG;
+attribute vec4 TANGENT;
+uniform vec4 unity_Scale;
+uniform vec4 unity_SHC;
+uniform vec4 unity_SHBr;
+uniform vec4 unity_SHBg;
+uniform vec4 unity_SHBb;
+uniform vec4 unity_SHAr;
+uniform vec4 unity_SHAg;
+uniform vec4 unity_SHAb;
+uniform vec3 unity_LightColor3;
+uniform vec3 unity_LightColor2;
+uniform vec3 unity_LightColor1;
+uniform vec3 unity_LightColor0;
+uniform vec4 unity_4LightPosZ0;
+uniform vec4 unity_4LightPosY0;
+uniform vec4 unity_4LightPosX0;
+uniform vec4 unity_4LightAtten0;
+uniform mat4 _Object2World;
 mat3 xll_constructMat3 (
   in mat4 m
 )
@@ -35,23 +54,6 @@ mat3 xll_constructMat3 (
   return tmpvar_4;
 }
 
-uniform mat4 _Object2World;
-uniform vec4 unity_4LightAtten0;
-uniform vec4 unity_4LightPosX0;
-uniform vec4 unity_4LightPosY0;
-uniform vec4 unity_4LightPosZ0;
-uniform vec3 unity_LightColor0;
-uniform vec3 unity_LightColor1;
-uniform vec3 unity_LightColor2;
-uniform vec3 unity_LightColor3;
-uniform vec4 unity_SHAb;
-uniform vec4 unity_SHAg;
-uniform vec4 unity_SHAr;
-uniform vec4 unity_SHBb;
-uniform vec4 unity_SHBg;
-uniform vec4 unity_SHBr;
-uniform vec4 unity_SHC;
-uniform vec4 unity_Scale;
 vec3 ShadeSH9 (
   in vec4 normal
 );
@@ -60,11 +62,11 @@ vec3 ShadeSH9 (
   in vec4 normal
 )
 {
-  vec3 x1;
-  vec4 vB;
-  vec3 x2;
-  float vC;
   vec3 x3;
+  float vC;
+  vec3 x2;
+  vec4 vB;
+  vec3 x1;
   float tmpvar_1;
   tmpvar_1 = dot (unity_SHAr, normal);
   float tmpvar_2;
@@ -133,15 +135,15 @@ vec3 Shade4PointLights (
   in vec3 normal
 )
 {
-  vec4 toLightX;
-  vec4 toLightY;
-  vec4 toLightZ;
-  vec4 lengthSq;
-  vec4 ndotl;
-  vec4 corr;
-  vec4 atten;
-  vec4 diff;
   vec3 col;
+  vec4 diff;
+  vec4 atten;
+  vec4 corr;
+  vec4 ndotl;
+  vec4 lengthSq;
+  vec4 toLightZ;
+  vec4 toLightY;
+  vec4 toLightX;
   vec4 tmpvar_1;
   tmpvar_1 = (lightPosX - pos.x);
   toLightX = tmpvar_1;
@@ -237,10 +239,10 @@ v2f_surf vert_surf (
   in appdata_full v
 )
 {
-  v2f_surf o;
-  vec3 worldN;
-  vec3 shlight;
   vec3 worldPos;
+  vec3 shlight;
+  vec3 worldN;
+  v2f_surf o;
   PositionFog (v.vertex, o.pos, o.fog);
   mat3 tmpvar_1;
   tmpvar_1 = (xll_constructMat3 (_Object2World));
@@ -272,12 +274,10 @@ v2f_surf vert_surf (
   return o;
 }
 
-attribute vec4 TANGENT;
-varying vec4 xlv_FOG;
 void main ()
 {
-  v2f_surf xl_retval;
   appdata_full xlt_v;
+  v2f_surf xl_retval;
   vec4 tmpvar_1;
   tmpvar_1 = gl_Vertex.xyzw;
   vec4 tmpvar_2;

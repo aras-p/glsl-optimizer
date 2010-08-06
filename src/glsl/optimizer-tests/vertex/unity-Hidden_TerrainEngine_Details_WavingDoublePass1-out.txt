@@ -15,15 +15,15 @@ struct v2f_surf {
   vec3 lightDir;
   vec4 _LightCoord;
 };
-uniform mat4 _LightMatrix0;
-uniform vec4 _MainTex_ST;
-uniform mat4 _Object2World;
-uniform vec4 _WaveAndDistance;
-uniform vec4 _WavingTint;
-uniform vec4 _WorldSpaceLightPos0;
-uniform vec4 unity_Scale;
-attribute vec4 TANGENT;
 varying vec4 xlv_FOG;
+attribute vec4 TANGENT;
+uniform vec4 unity_Scale;
+uniform vec4 _WorldSpaceLightPos0;
+uniform vec4 _WavingTint;
+uniform vec4 _WaveAndDistance;
+uniform mat4 _Object2World;
+uniform vec4 _MainTex_ST;
+uniform mat4 _LightMatrix0;
 void main ()
 {
   appdata_full xlt_v;
@@ -43,10 +43,10 @@ void main ()
   vec3 color_i0;
   color_i0 = xlt_v.color.xyz;
   vec4 outColor;
-  vec4 waves;
-  vec4 s;
-  float lighting;
   vec3 waveMove;
+  float lighting;
+  vec4 s;
+  vec4 waves;
   waveMove = vec3(0.000000, 0.000000, 0.000000);
   waves = (((vertex.x * (vec4(0.012000, 0.020000, 0.060000, 0.024000) * _WaveAndDistance.y)) + (vertex.z * (vec4(0.006000, 0.020000, 0.020000, 0.050000) * _WaveAndDistance.y))) + (_WaveAndDistance.x * vec4(1.200000, 2.000000, 1.600000, 4.800000)));
   vec4 tmpvar_144;

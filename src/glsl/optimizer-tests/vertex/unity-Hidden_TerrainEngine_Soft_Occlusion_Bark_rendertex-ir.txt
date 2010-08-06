@@ -11,14 +11,16 @@ struct appdata_tree {
   vec4 color;
   vec4 texcoord;
 };
-uniform float _AO;
-uniform vec4 _Color;
-uniform vec4 _Scale;
-uniform float _SquashAmount;
-uniform vec4 _SquashPlaneNormal;
-uniform mat4 _TerrainEngineBendTree;
-uniform vec4 _TerrainTreeLightColors[4];
+varying vec4 xlv_FOG;
+attribute vec4 TANGENT;
 uniform vec3 _TerrainTreeLightDirections[4];
+uniform vec4 _TerrainTreeLightColors[4];
+uniform mat4 _TerrainEngineBendTree;
+uniform vec4 _SquashPlaneNormal;
+uniform float _SquashAmount;
+uniform vec4 _Scale;
+uniform vec4 _Color;
+uniform float _AO;
 vec4 Squash (
   in vec4 pos
 );
@@ -27,9 +29,9 @@ vec4 Squash (
   in vec4 pos
 )
 {
-  vec3 projectedVertex;
-  vec3 planePoint;
   vec3 planeNormal;
+  vec3 planePoint;
+  vec3 projectedVertex;
   vec3 tmpvar_1;
   tmpvar_1 = pos.xyz;
   projectedVertex = tmpvar_1;
@@ -105,19 +107,19 @@ v2f vert (
   in appdata_tree v
 )
 {
-  vec3 viewpos;
-  v2f o;
-  vec4 lightDir;
-  vec4 lightColor;
+  float occ;
+  float atten;
   int i;
+  vec4 lightColor;
+  vec4 lightDir;
+  v2f o;
+  vec3 viewpos;
   int tmpvar_1;
   tmpvar_1 = 0;
   i = tmpvar_1;
-  float atten;
   float tmpvar_2;
   tmpvar_2 = 1.000000;
   atten = tmpvar_2;
-  float occ;
   TerrainAnimateTree (v.vertex, v.color.w);
   vec3 tmpvar_3;
   tmpvar_3 = (gl_ModelViewMatrix * v.vertex).xyz;
@@ -180,12 +182,10 @@ v2f vert (
   return o;
 }
 
-attribute vec4 TANGENT;
-varying vec4 xlv_FOG;
 void main ()
 {
-  v2f xl_retval;
   appdata_tree xlt_v;
+  v2f xl_retval;
   vec4 tmpvar_1;
   tmpvar_1 = gl_Vertex.xyzw;
   vec4 tmpvar_2;

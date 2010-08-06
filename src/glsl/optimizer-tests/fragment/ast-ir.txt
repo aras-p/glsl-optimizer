@@ -1,9 +1,10 @@
 void main ()
 {
+  int i;
+  float a;
   if ((gl_FragCoord.x == 1.000000)) {
     discard;
   };
-  float a;
   if ((2 == 3)) {
     float tmpvar_1;
     tmpvar_1 = 2.000000;
@@ -18,7 +19,6 @@ void main ()
     tmpvar_3 = 4.000000;
     a = tmpvar_3;
   };
-  int i;
   int tmpvar_4;
   tmpvar_4 = 0;
   i = tmpvar_4;

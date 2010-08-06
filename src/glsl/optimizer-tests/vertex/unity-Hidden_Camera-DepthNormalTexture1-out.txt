@@ -10,10 +10,10 @@ struct appdata_grass {
   vec4 texcoord;
   vec4 texcoord1;
 };
-uniform vec4 _ProjectionParams;
-uniform vec4 _WaveAndDistance;
-uniform vec4 _WavingTint;
 attribute vec4 TANGENT;
+uniform vec4 _WavingTint;
+uniform vec4 _WaveAndDistance;
+uniform vec4 _ProjectionParams;
 void main ()
 {
   appdata_grass xlt_v;
@@ -29,10 +29,10 @@ void main ()
   vertex = xlt_v.vertex;
   float waveAmount_i0;
   waveAmount_i0 = (xlt_v.color.w * _WaveAndDistance.z);
-  vec4 waves;
-  vec4 s;
-  float lighting;
   vec3 waveMove;
+  float lighting;
+  vec4 s;
+  vec4 waves;
   waveMove = vec3(0.000000, 0.000000, 0.000000);
   waves = (((vertex.x * (vec4(0.012000, 0.020000, 0.060000, 0.024000) * _WaveAndDistance.y)) + (vertex.z * (vec4(0.006000, 0.020000, 0.020000, 0.050000) * _WaveAndDistance.y))) + (_WaveAndDistance.x * vec4(1.200000, 2.000000, 1.600000, 4.800000)));
   vec4 tmpvar_83;

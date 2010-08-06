@@ -15,6 +15,15 @@ struct appdata_full {
   vec4 texcoord1;
   vec4 color;
 };
+varying vec4 xlv_FOG;
+attribute vec4 TANGENT;
+uniform vec4 unity_Scale;
+uniform vec4 _WorldSpaceLightPos0;
+uniform vec3 _WorldSpaceCameraPos;
+uniform vec4 _SpecMap_ST;
+uniform mat4 _Object2World;
+uniform vec4 _MainTex_ST;
+uniform mat4 _LightMatrix0;
 mat3 xll_constructMat3 (
   in mat4 m
 )
@@ -38,13 +47,6 @@ mat3 xll_constructMat3 (
   return tmpvar_4;
 }
 
-uniform mat4 _LightMatrix0;
-uniform vec4 _MainTex_ST;
-uniform mat4 _Object2World;
-uniform vec4 _SpecMap_ST;
-uniform vec3 _WorldSpaceCameraPos;
-uniform vec4 _WorldSpaceLightPos0;
-uniform vec4 unity_Scale;
 vec3 WorldSpaceViewDir (
   in vec4 v
 );
@@ -128,12 +130,10 @@ v2f_surf vert_surf (
   return o;
 }
 
-attribute vec4 TANGENT;
-varying vec4 xlv_FOG;
 void main ()
 {
-  v2f_surf xl_retval;
   appdata_full xlt_v;
+  v2f_surf xl_retval;
   vec4 tmpvar_1;
   tmpvar_1 = gl_Vertex.xyzw;
   vec4 tmpvar_2;

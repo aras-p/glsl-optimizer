@@ -12,9 +12,9 @@ struct v2f_surf {
   vec3 normal;
   vec3 vlight;
 };
-uniform vec4 _LightColor0;
-uniform vec4 _WorldSpaceLightPos0;
 varying vec4 xlv_FOG;
+uniform vec4 _WorldSpaceLightPos0;
+uniform vec4 _LightColor0;
 void main ()
 {
   v2f_surf xlt_IN;
@@ -24,8 +24,8 @@ void main ()
   xlt_IN.vlight = gl_TexCoord[1].xyz;
   v2f_surf IN;
   IN = xlt_IN;
-  SurfaceOutput o;
   vec4 c;
+  SurfaceOutput o;
   o.Albedo = vec3(0.000000, 0.000000, 0.000000);
   o.Emission = vec3(0.000000, 0.000000, 0.000000);
   o.Specular = 0.000000;

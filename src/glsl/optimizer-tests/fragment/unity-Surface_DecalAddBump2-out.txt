@@ -16,10 +16,10 @@ struct v2f_surf {
   vec4 hip_pack0;
   vec2 hip_lmap;
 };
-uniform sampler2D _Decal;
-uniform sampler2D _DecalBump;
-uniform sampler2D unity_Lightmap;
 varying vec4 xlv_FOG;
+uniform sampler2D unity_Lightmap;
+uniform sampler2D _DecalBump;
+uniform sampler2D _Decal;
 void main ()
 {
   v2f_surf xlt_IN;
@@ -29,9 +29,9 @@ void main ()
   xlt_IN.hip_lmap = gl_TexCoord[1].xy;
   v2f_surf IN;
   IN = xlt_IN;
-  Input surfIN;
-  SurfaceOutput o;
   vec4 c;
+  SurfaceOutput o;
+  Input surfIN;
   surfIN.uv_Decal = xlt_IN.hip_pack0.xy;
   surfIN.uv_DecalBump = xlt_IN.hip_pack0.zw;
   o.Albedo = vec3(0.000000, 0.000000, 0.000000);

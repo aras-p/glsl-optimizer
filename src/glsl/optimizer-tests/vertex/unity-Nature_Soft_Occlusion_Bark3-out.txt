@@ -14,17 +14,17 @@ struct v2f_surf {
   vec3 _ShadowCoord3;
   vec2 _ShadowZFade;
 };
-uniform vec4 _LightShadowData;
-uniform mat4 _Object2World;
-uniform vec4 _Scale;
-uniform float _SquashAmount;
-uniform vec4 _SquashPlaneNormal;
-uniform mat4 _TerrainEngineBendTree;
-uniform mat4 _World2Shadow;
-uniform mat4 _World2Shadow1;
-uniform mat4 _World2Shadow2;
-uniform mat4 _World2Shadow3;
 attribute vec4 TANGENT;
+uniform mat4 _World2Shadow3;
+uniform mat4 _World2Shadow2;
+uniform mat4 _World2Shadow1;
+uniform mat4 _World2Shadow;
+uniform mat4 _TerrainEngineBendTree;
+uniform vec4 _SquashPlaneNormal;
+uniform float _SquashAmount;
+uniform vec4 _Scale;
+uniform mat4 _Object2World;
+uniform vec4 _LightShadowData;
 void main ()
 {
   appdata_full xlt_v;
@@ -48,8 +48,8 @@ void main ()
   pos.xyz = tmpvar_84.xyz;
   vec4 pos_i0;
   pos_i0 = pos;
-  vec3 projectedVertex;
   vec3 planeNormal;
+  vec3 projectedVertex;
   projectedVertex = pos.xyz;
   vec3 tmpvar_89;
   tmpvar_89.x = float(vec3(0.000000, 0.000000, 0.000000));

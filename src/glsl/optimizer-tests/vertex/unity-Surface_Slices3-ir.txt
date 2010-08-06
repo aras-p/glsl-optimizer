@@ -15,12 +15,13 @@ struct appdata_full {
   vec4 texcoord1;
   vec4 color;
 };
-uniform vec4 _LightShadowData;
-uniform mat4 _Object2World;
-uniform mat4 _World2Shadow;
-uniform mat4 _World2Shadow1;
-uniform mat4 _World2Shadow2;
+attribute vec4 TANGENT;
 uniform mat4 _World2Shadow3;
+uniform mat4 _World2Shadow2;
+uniform mat4 _World2Shadow1;
+uniform mat4 _World2Shadow;
+uniform mat4 _Object2World;
+uniform vec4 _LightShadowData;
 v2f_surf vert_surf (
   in appdata_full v
 );
@@ -29,9 +30,9 @@ v2f_surf vert_surf (
   in appdata_full v
 )
 {
-  v2f_surf o;
-  float z;
   vec4 wpos;
+  float z;
+  v2f_surf o;
   vec3 tmpvar_1;
   tmpvar_1 = (_Object2World * v.vertex).xyz;
   o.worldPos = tmpvar_1;
@@ -65,11 +66,10 @@ v2f_surf vert_surf (
   return o;
 }
 
-attribute vec4 TANGENT;
 void main ()
 {
-  v2f_surf xl_retval;
   appdata_full xlt_v;
+  v2f_surf xl_retval;
   vec4 tmpvar_1;
   tmpvar_1 = gl_Vertex.xyzw;
   vec4 tmpvar_2;

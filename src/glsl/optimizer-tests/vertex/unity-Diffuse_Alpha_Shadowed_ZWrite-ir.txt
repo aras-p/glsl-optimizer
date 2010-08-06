@@ -13,6 +13,18 @@ struct appdata_full {
   vec4 texcoord1;
   vec4 color;
 };
+varying vec4 xlv_FOG;
+attribute vec4 TANGENT;
+uniform vec4 unity_Scale;
+uniform vec4 unity_SHC;
+uniform vec4 unity_SHBr;
+uniform vec4 unity_SHBg;
+uniform vec4 unity_SHBb;
+uniform vec4 unity_SHAr;
+uniform vec4 unity_SHAg;
+uniform vec4 unity_SHAb;
+uniform mat4 _Object2World;
+uniform vec4 _MainTex_ST;
 mat3 xll_constructMat3 (
   in mat4 m
 )
@@ -36,16 +48,6 @@ mat3 xll_constructMat3 (
   return tmpvar_4;
 }
 
-uniform vec4 _MainTex_ST;
-uniform mat4 _Object2World;
-uniform vec4 unity_SHAb;
-uniform vec4 unity_SHAg;
-uniform vec4 unity_SHAr;
-uniform vec4 unity_SHBb;
-uniform vec4 unity_SHBg;
-uniform vec4 unity_SHBr;
-uniform vec4 unity_SHC;
-uniform vec4 unity_Scale;
 vec3 ShadeSH9 (
   in vec4 normal
 );
@@ -54,11 +56,11 @@ vec3 ShadeSH9 (
   in vec4 normal
 )
 {
-  vec3 x1;
-  vec4 vB;
-  vec3 x2;
-  float vC;
   vec3 x3;
+  float vC;
+  vec3 x2;
+  vec4 vB;
+  vec3 x1;
   float tmpvar_1;
   tmpvar_1 = dot (unity_SHAr, normal);
   float tmpvar_2;
@@ -129,9 +131,9 @@ v2f_surf vert_surf (
   in appdata_full v
 )
 {
-  v2f_surf o;
-  vec3 worldN;
   vec3 shlight;
+  vec3 worldN;
+  v2f_surf o;
   PositionFog (v.vertex, o.pos, o.fog);
   vec2 tmpvar_1;
   tmpvar_1 = ((v.texcoord.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
@@ -158,12 +160,10 @@ v2f_surf vert_surf (
   return o;
 }
 
-attribute vec4 TANGENT;
-varying vec4 xlv_FOG;
 void main ()
 {
-  v2f_surf xl_retval;
   appdata_full xlt_v;
+  v2f_surf xl_retval;
   vec4 tmpvar_1;
   tmpvar_1 = gl_Vertex.xyzw;
   vec4 tmpvar_2;

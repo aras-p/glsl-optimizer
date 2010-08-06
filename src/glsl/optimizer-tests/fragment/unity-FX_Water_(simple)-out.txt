@@ -4,10 +4,10 @@ struct v2f {
   vec2 bumpuv[2];
   vec3 viewDir;
 };
-uniform sampler2D _BumpMap;
-uniform sampler2D _ColorControl;
-uniform vec4 _horizonColor;
 varying vec4 xlv_FOG;
+uniform vec4 _horizonColor;
+uniform sampler2D _ColorControl;
+uniform sampler2D _BumpMap;
 void main ()
 {
   v2f xlt_i;
@@ -18,8 +18,8 @@ void main ()
   xlt_i.viewDir = gl_TexCoord[2].xyz;
   v2f i;
   i = xlt_i;
-  vec3 bump1;
   vec4 col;
+  vec3 bump1;
   vec4 tmpvar_22;
   tmpvar_22 = texture2D (_BumpMap, i.bumpuv[0]);
   vec4 normal;

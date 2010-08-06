@@ -11,9 +11,9 @@ struct v2f_surf {
   float fog;
   vec4 hip_screen;
 };
-uniform sampler2D _LightBuffer;
-uniform vec4 unity_Ambient;
 varying vec4 xlv_FOG;
+uniform vec4 unity_Ambient;
+uniform sampler2D _LightBuffer;
 void main ()
 {
   v2f_surf xlt_IN;
@@ -22,9 +22,9 @@ void main ()
   xlt_IN.hip_screen = gl_TexCoord[0].xyzw;
   v2f_surf IN;
   IN = xlt_IN;
-  SurfaceOutput o;
-  vec4 light;
   vec4 col;
+  vec4 light;
+  SurfaceOutput o;
   o.Albedo = vec3(0.000000, 0.000000, 0.000000);
   o.Emission = vec3(0.000000, 0.000000, 0.000000);
   o.Specular = 0.000000;

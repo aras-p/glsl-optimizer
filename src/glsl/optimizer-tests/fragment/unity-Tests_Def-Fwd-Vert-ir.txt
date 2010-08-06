@@ -15,8 +15,9 @@ struct v2f_surf {
   vec3 normal;
   vec3 vlight;
 };
-uniform vec4 _LightColor0;
+varying vec4 xlv_FOG;
 uniform vec4 _WorldSpaceLightPos0;
+uniform vec4 _LightColor0;
 void surf (
   in Input IN,
   inout SurfaceOutput o
@@ -44,8 +45,8 @@ vec4 LightingLambert (
   in float atten
 )
 {
-  float diff;
   vec4 c;
+  float diff;
   float tmpvar_1;
   tmpvar_1 = dot (s.Normal, lightDir);
   float tmpvar_2;
@@ -70,13 +71,13 @@ vec4 frag_surf (
   in v2f_surf IN
 )
 {
-  SurfaceOutput o;
-  Input surfIN;
+  vec4 c;
   float atten;
+  Input surfIN;
+  SurfaceOutput o;
   float tmpvar_1;
   tmpvar_1 = 1.000000;
   atten = tmpvar_1;
-  vec4 c;
   vec3 tmpvar_2;
   tmpvar_2 = vec3(0.000000, 0.000000, 0.000000);
   o.Albedo = tmpvar_2;
@@ -110,11 +111,10 @@ vec4 frag_surf (
   return c;
 }
 
-varying vec4 xlv_FOG;
 void main ()
 {
-  vec4 xl_retval;
   v2f_surf xlt_IN;
+  vec4 xl_retval;
   vec4 tmpvar_1;
   tmpvar_1 = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_IN.pos = tmpvar_1;

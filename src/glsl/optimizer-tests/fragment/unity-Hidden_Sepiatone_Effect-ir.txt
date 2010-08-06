@@ -11,13 +11,13 @@ vec4 frag (
   in v2f_img i
 )
 {
-  vec4 original;
-  float Y;
+  vec4 xlat_var_output;
   vec4 sepiaConvert;
+  float Y;
+  vec4 original;
   vec4 tmpvar_1;
   tmpvar_1 = vec4(0.191000, -0.054000, -0.221000, 0.000000);
   sepiaConvert = tmpvar_1;
-  vec4 xlat_var_output;
   vec4 tmpvar_2;
   tmpvar_2 = texture2D (_MainTex, i.uv);
   vec4 tmpvar_3;
@@ -39,8 +39,8 @@ vec4 frag (
 
 void main ()
 {
-  vec4 xl_retval;
   v2f_img xlt_i;
+  vec4 xl_retval;
   vec4 tmpvar_1;
   tmpvar_1 = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_i.pos = tmpvar_1;

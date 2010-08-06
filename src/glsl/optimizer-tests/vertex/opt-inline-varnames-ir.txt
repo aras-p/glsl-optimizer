@@ -25,13 +25,13 @@ float har (
   in float a
 )
 {
+  float c;
   float b;
   float tmpvar_1;
   tmpvar_1 = sqrt (a);
   float tmpvar_2;
   tmpvar_2 = tmpvar_1;
   b = tmpvar_2;
-  float c;
   float tmpvar_3;
   tmpvar_3 = sqrt (b);
   float tmpvar_4;

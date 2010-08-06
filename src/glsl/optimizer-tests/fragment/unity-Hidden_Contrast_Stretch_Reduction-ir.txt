@@ -11,11 +11,11 @@ vec4 frag (
   in v2f i
 )
 {
-  vec4 v00;
-  vec2 v01;
-  vec2 v10;
-  vec2 v11;
   vec4 res;
+  vec2 v11;
+  vec2 v10;
+  vec2 v01;
+  vec4 v00;
   vec4 tmpvar_1;
   tmpvar_1 = texture2D (_MainTex, i.uv[0]);
   vec4 tmpvar_2;
@@ -62,8 +62,8 @@ vec4 frag (
 
 void main ()
 {
-  vec4 xl_retval;
   v2f xlt_i;
+  vec4 xl_retval;
   vec4 tmpvar_1;
   tmpvar_1 = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_i.position = tmpvar_1;

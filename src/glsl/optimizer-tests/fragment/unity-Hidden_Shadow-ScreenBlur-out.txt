@@ -2,23 +2,23 @@ struct v2f_img {
   vec4 pos;
   vec2 uv;
 };
-uniform vec4 _BlurOffsets[8];
-uniform sampler2D _MainTex;
 uniform vec4 unity_ShadowBlurParams;
+uniform sampler2D _MainTex;
+uniform vec4 _BlurOffsets[8];
 void main ()
 {
   v2f_img xlt_i;
   xlt_i.pos = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_i.uv = gl_TexCoord[0].xy;
-  vec4 coord;
-  vec4 mask;
-  float dist;
-  float radius;
-  float diffTolerance;
-  int i_1;
-  i_1 = 0;
-  vec4 sample;
   float diff;
+  vec4 sample;
+  int i_1;
+  float diffTolerance;
+  float radius;
+  float dist;
+  vec4 mask;
+  vec4 coord;
+  i_1 = 0;
   vec4 tmpvar_14;
   tmpvar_14.xy = vec2(xlt_i.uv.xy);
   tmpvar_14.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));

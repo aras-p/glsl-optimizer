@@ -2,8 +2,8 @@ struct v2f {
   vec4 pos;
   vec2 uv[3];
 };
-uniform sampler2D _MainTex;
 uniform float _Treshold;
+uniform sampler2D _MainTex;
 void main ()
 {
   v2f xlt_i;
@@ -13,10 +13,10 @@ void main ()
   xlt_i.uv[2] = gl_TexCoord[2].xy;
   v2f i;
   i = xlt_i;
-  vec4 original;
-  vec3 p1;
-  vec3 p2;
   vec3 diff;
+  vec3 p2;
+  vec3 p1;
+  vec4 original;
   vec4 tmpvar_13;
   tmpvar_13 = texture2D (_MainTex, i.uv[0]);
   original = tmpvar_13;

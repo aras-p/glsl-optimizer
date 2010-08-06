@@ -14,8 +14,9 @@ struct v2f_surf {
   float fog;
   vec4 hip_screen;
 };
-uniform sampler2D _LightBuffer;
+varying vec4 xlv_FOG;
 uniform vec4 unity_Ambient;
+uniform sampler2D _LightBuffer;
 void surf (
   in Input IN,
   inout SurfaceOutput o
@@ -59,10 +60,10 @@ vec4 frag_surf (
   in v2f_surf IN
 )
 {
-  SurfaceOutput o;
-  Input surfIN;
-  vec4 light;
   vec4 col;
+  vec4 light;
+  Input surfIN;
+  SurfaceOutput o;
   vec3 tmpvar_1;
   tmpvar_1 = vec3(0.000000, 0.000000, 0.000000);
   o.Albedo = tmpvar_1;
@@ -103,11 +104,10 @@ vec4 frag_surf (
   return col;
 }
 
-varying vec4 xlv_FOG;
 void main ()
 {
-  vec4 xl_retval;
   v2f_surf xlt_IN;
+  vec4 xl_retval;
   vec4 tmpvar_1;
   tmpvar_1 = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_IN.pos = tmpvar_1;

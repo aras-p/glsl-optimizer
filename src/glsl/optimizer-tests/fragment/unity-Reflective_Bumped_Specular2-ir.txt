@@ -23,15 +23,16 @@ struct v2f_surf {
   vec4 TtoW1;
   vec4 TtoW2;
 };
-uniform sampler2D _BumpMap;
-uniform vec4 _Color;
-uniform samplerCube _Cube;
-uniform sampler2D _LightBuffer;
-uniform sampler2D _MainTex;
-uniform vec4 _ReflectColor;
-uniform float _Shininess;
-uniform vec4 _SpecColor;
+varying vec4 xlv_FOG;
 uniform vec4 unity_Ambient;
+uniform vec4 _SpecColor;
+uniform float _Shininess;
+uniform vec4 _ReflectColor;
+uniform sampler2D _MainTex;
+uniform sampler2D _LightBuffer;
+uniform samplerCube _Cube;
+uniform vec4 _Color;
+uniform sampler2D _BumpMap;
 vec4 UnpackNormal (
   in vec4 packednormal
 );
@@ -62,10 +63,10 @@ void surf (
   inout SurfaceOutput o
 )
 {
-  vec4 tex;
-  vec4 c;
-  vec3 worldRefl;
   vec4 reflcol;
+  vec3 worldRefl;
+  vec4 c;
+  vec4 tex;
   vec4 tmpvar_1;
   tmpvar_1 = texture2D (_MainTex, IN.uv_MainTex);
   vec4 tmpvar_2;
@@ -133,8 +134,8 @@ vec4 LightingBlinnPhong_PrePass (
   in vec4 light
 )
 {
-  float spec;
   vec4 c;
+  float spec;
   float tmpvar_1;
   tmpvar_1 = (light.w * s.Gloss);
   spec = tmpvar_1;
@@ -155,10 +156,10 @@ vec4 frag_surf (
   in v2f_surf IN
 )
 {
-  Input surfIN;
-  SurfaceOutput o;
-  vec4 light;
   vec4 col;
+  vec4 light;
+  SurfaceOutput o;
+  Input surfIN;
   vec2 tmpvar_1;
   tmpvar_1 = IN.hip_pack0.xy;
   surfIN.uv_MainTex = tmpvar_1;
@@ -221,11 +222,10 @@ vec4 frag_surf (
   return col;
 }
 
-varying vec4 xlv_FOG;
 void main ()
 {
-  vec4 xl_retval;
   v2f_surf xlt_IN;
+  vec4 xl_retval;
   vec4 tmpvar_1;
   tmpvar_1 = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_IN.pos = tmpvar_1;

@@ -2,8 +2,8 @@ struct v2f {
   vec4 vertex;
   vec2 texcoord;
 };
-uniform float _AccumOrig;
 uniform sampler2D _MainTex;
+uniform float _AccumOrig;
 vec4 frag (
   in v2f i
 );
@@ -22,8 +22,8 @@ vec4 frag (
 
 void main ()
 {
-  vec4 xl_retval;
   v2f xlt_i;
+  vec4 xl_retval;
   vec4 tmpvar_1;
   tmpvar_1 = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_i.vertex = tmpvar_1;

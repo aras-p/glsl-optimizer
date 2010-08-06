@@ -13,6 +13,13 @@ struct appdata_full {
   vec4 texcoord1;
   vec4 color;
 };
+varying vec4 xlv_FOG;
+attribute vec4 TANGENT;
+uniform vec4 unity_Scale;
+uniform vec4 unity_LightmapST;
+uniform vec4 _ProjectionParams;
+uniform mat4 _Object2World;
+uniform vec4 _Decal_ST;
 mat3 xll_constructMat3 (
   in mat4 m
 )
@@ -36,11 +43,6 @@ mat3 xll_constructMat3 (
   return tmpvar_4;
 }
 
-uniform vec4 _Decal_ST;
-uniform mat4 _Object2World;
-uniform vec4 _ProjectionParams;
-uniform vec4 unity_LightmapST;
-uniform vec4 unity_Scale;
 void PositionFog (
   in vec4 v,
   out vec4 pos,
@@ -93,8 +95,8 @@ v2f_surf vert_surf (
   in appdata_full v
 )
 {
-  v2f_surf o;
   vec3 worldN;
+  v2f_surf o;
   PositionFog (v.vertex, o.pos, o.fog);
   vec2 tmpvar_1;
   tmpvar_1 = ((v.texcoord.xy * _Decal_ST.xy) + _Decal_ST.zw);
@@ -115,12 +117,10 @@ v2f_surf vert_surf (
   return o;
 }
 
-attribute vec4 TANGENT;
-varying vec4 xlv_FOG;
 void main ()
 {
-  v2f_surf xl_retval;
   appdata_full xlt_v;
+  v2f_surf xl_retval;
   vec4 tmpvar_1;
   tmpvar_1 = gl_Vertex.xyzw;
   vec4 tmpvar_2;

@@ -11,8 +11,9 @@ struct v2f {
   vec2 uv;
   vec3 color;
 };
-uniform vec4 _TerrainTreeLightColors[4];
+attribute vec4 TANGENT;
 uniform vec3 _TerrainTreeLightDirections[4];
+uniform vec4 _TerrainTreeLightColors[4];
 void ExpandBillboard (
   in mat4 mat,
   inout vec4 pos,
@@ -27,9 +28,9 @@ void ExpandBillboard (
   inout vec4 tangent
 )
 {
-  float isBillboard;
-  vec3 norb;
   vec3 tanb;
+  vec3 norb;
+  float isBillboard;
   float tmpvar_1;
   tmpvar_1 = abs (tangent.w);
   float tmpvar_2;
@@ -87,14 +88,14 @@ v2f vert (
   in appdata_full v
 )
 {
-  v2f o;
-  vec3 lightColor;
+  float diff;
+  vec3 lightDir;
   int i;
+  vec3 lightColor;
+  v2f o;
   int tmpvar_1;
   tmpvar_1 = 0;
   i = tmpvar_1;
-  vec3 lightDir;
-  float diff;
   ExpandBillboard (gl_ModelViewMatrixInverseTranspose, v.vertex, v.normal, v.tangent);
   vec4 tmpvar_2;
   tmpvar_2 = (gl_ModelViewProjectionMatrix * v.vertex);
@@ -136,11 +137,10 @@ v2f vert (
   return o;
 }
 
-attribute vec4 TANGENT;
 void main ()
 {
-  v2f xl_retval;
   appdata_full xlt_v;
+  v2f xl_retval;
   vec4 tmpvar_1;
   tmpvar_1 = gl_Vertex.xyzw;
   vec4 tmpvar_2;

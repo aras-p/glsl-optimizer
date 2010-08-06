@@ -3,6 +3,20 @@ struct v2f {
   vec4 uv;
   vec3 ray;
 };
+uniform vec4 unity_LightmapFade;
+uniform vec4 _ZBufferParams;
+uniform mat4 _ViewToCookie;
+uniform mat4 _View2Shadow;
+uniform samplerCube _ShadowMapTexture;
+uniform vec4 _ProjectionParams;
+uniform sampler2D _LightTextureB0;
+uniform samplerCube _LightTexture0;
+uniform vec4 _LightShadowData;
+uniform vec4 _LightPositionRange;
+uniform vec4 _LightPos;
+uniform vec4 _LightColor;
+uniform sampler2D _CameraNormalsTexture;
+uniform sampler2D _CameraDepthTexture;
 float xll_saturate (
   in float x
 )
@@ -131,20 +145,6 @@ mat3 xll_constructMat3 (
   return tmpvar_4;
 }
 
-uniform sampler2D _CameraDepthTexture;
-uniform sampler2D _CameraNormalsTexture;
-uniform vec4 _LightColor;
-uniform vec4 _LightPos;
-uniform vec4 _LightPositionRange;
-uniform vec4 _LightShadowData;
-uniform samplerCube _LightTexture0;
-uniform sampler2D _LightTextureB0;
-uniform vec4 _ProjectionParams;
-uniform samplerCube _ShadowMapTexture;
-uniform mat4 _View2Shadow;
-uniform mat4 _ViewToCookie;
-uniform vec4 _ZBufferParams;
-uniform vec4 unity_LightmapFade;
 float Luminance (
   in vec3 c
 );
@@ -240,8 +240,8 @@ float ComputeShadow (
   in vec2 uv
 )
 {
-  float fade;
   float mydist;
+  float fade;
   float tmpvar_1;
   tmpvar_1 = ((vec.z * _LightShadowData.z) + _LightShadowData.w);
   fade = tmpvar_1;
@@ -277,20 +277,20 @@ vec4 frag (
   in v2f i
 )
 {
-  vec2 uv;
-  vec4 nspec;
-  vec3 normal;
-  float depth;
-  vec3 vpos;
-  vec3 tolight;
-  vec3 lightDir;
-  float att;
-  float atten;
-  float diff;
-  vec3 h;
-  float spec;
-  vec4 res;
   float fade;
+  vec4 res;
+  float spec;
+  vec3 h;
+  float diff;
+  float atten;
+  float att;
+  vec3 lightDir;
+  vec3 tolight;
+  vec3 vpos;
+  float depth;
+  vec3 normal;
+  vec4 nspec;
+  vec2 uv;
   vec3 tmpvar_1;
   tmpvar_1 = (i.ray * (_ProjectionParams.z / i.ray.z));
   i.ray = tmpvar_1;
@@ -409,8 +409,8 @@ vec4 frag (
 
 void main ()
 {
-  vec4 xl_retval;
   v2f xlt_i;
+  vec4 xl_retval;
   vec4 tmpvar_1;
   tmpvar_1 = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_i.pos = tmpvar_1;

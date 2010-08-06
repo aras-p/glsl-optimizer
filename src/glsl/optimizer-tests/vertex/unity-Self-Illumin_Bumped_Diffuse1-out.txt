@@ -13,8 +13,8 @@ struct appdata_full {
   vec4 texcoord1;
   vec4 color;
 };
-uniform vec4 _BumpMap_ST;
 attribute vec4 TANGENT;
+uniform vec4 _BumpMap_ST;
 void main ()
 {
   appdata_full xlt_v;

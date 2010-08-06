@@ -13,18 +13,18 @@ struct appdata_full {
   vec4 texcoord1;
   vec4 color;
 };
-uniform vec4 _MainTex_ST;
-uniform mat4 _Object2World;
-uniform vec4 unity_SHAb;
-uniform vec4 unity_SHAg;
-uniform vec4 unity_SHAr;
-uniform vec4 unity_SHBb;
-uniform vec4 unity_SHBg;
-uniform vec4 unity_SHBr;
-uniform vec4 unity_SHC;
-uniform vec4 unity_Scale;
-attribute vec4 TANGENT;
 varying vec4 xlv_FOG;
+attribute vec4 TANGENT;
+uniform vec4 unity_Scale;
+uniform vec4 unity_SHC;
+uniform vec4 unity_SHBr;
+uniform vec4 unity_SHBg;
+uniform vec4 unity_SHBb;
+uniform vec4 unity_SHAr;
+uniform vec4 unity_SHAg;
+uniform vec4 unity_SHAb;
+uniform mat4 _Object2World;
+uniform vec4 _MainTex_ST;
 void main ()
 {
   appdata_full xlt_v;
@@ -52,9 +52,9 @@ void main ()
   tmpvar_66.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
   vec4 normal;
   normal = tmpvar_66;
-  vec3 x1;
-  vec4 vB;
   vec3 x2;
+  vec4 vB;
+  vec3 x1;
   float tmpvar_69;
   tmpvar_69 = dot (unity_SHAr, normal);
   x1.x = tmpvar_69;

@@ -4,9 +4,10 @@ struct v2f {
   vec2 bumpuv[2];
   vec3 viewDir;
 };
-uniform sampler2D _BumpMap;
-uniform sampler2D _ColorControl;
+varying vec4 xlv_FOG;
 uniform vec4 _horizonColor;
+uniform sampler2D _ColorControl;
+uniform sampler2D _BumpMap;
 vec4 UnpackNormal (
   in vec4 packednormal
 );
@@ -35,12 +36,12 @@ vec4 frag (
   in v2f i
 )
 {
-  vec3 bump1;
-  vec3 bump2;
-  vec3 bump;
-  float fresnel;
-  vec4 water;
   vec4 col;
+  vec4 water;
+  float fresnel;
+  vec3 bump;
+  vec3 bump2;
+  vec3 bump1;
   vec4 tmpvar_1;
   tmpvar_1 = texture2D (_BumpMap, i.bumpuv[0]);
   vec4 tmpvar_2;
@@ -84,11 +85,10 @@ vec4 frag (
   return col;
 }
 
-varying vec4 xlv_FOG;
 void main ()
 {
-  vec4 xl_retval;
   v2f xlt_i;
+  vec4 xl_retval;
   vec4 tmpvar_1;
   tmpvar_1 = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_i.pos = tmpvar_1;

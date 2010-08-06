@@ -2,8 +2,8 @@ struct v2f_combiner {
   vec4 pos;
   vec2 uv;
 };
-uniform vec4 _Color;
 uniform sampler2D _RGBSource;
+uniform vec4 _Color;
 void main ()
 {
   v2f_combiner xlt_i;

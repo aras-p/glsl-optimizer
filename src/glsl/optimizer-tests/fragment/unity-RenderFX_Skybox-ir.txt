@@ -2,8 +2,8 @@ struct v2f {
   vec4 vertex;
   vec2 texcoord;
 };
-uniform vec4 _Tint;
 uniform sampler2D _UpTex;
+uniform vec4 _Tint;
 vec4 skybox_frag (
   in v2f i,
   in sampler2D smp
@@ -14,8 +14,8 @@ vec4 skybox_frag (
   in sampler2D smp
 )
 {
-  vec4 tex;
   vec4 col;
+  vec4 tex;
   vec4 tmpvar_1;
   tmpvar_1 = texture2D (smp, i.texcoord);
   vec4 tmpvar_2;
@@ -45,8 +45,8 @@ vec4 frag (
 
 void main ()
 {
-  vec4 xl_retval;
   v2f xlt_i;
+  vec4 xl_retval;
   vec4 tmpvar_1;
   tmpvar_1 = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_i.vertex = tmpvar_1;

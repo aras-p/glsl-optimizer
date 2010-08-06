@@ -7,6 +7,7 @@ struct appdata_base {
   vec3 normal;
   vec4 texcoord;
 };
+uniform sampler2D _CameraDepthTexture;
 vec4 xll_tex2Dlod (
   in sampler2D s,
   in vec4 coord
@@ -17,7 +18,6 @@ vec4 xll_tex2Dlod (
   return tmpvar_1;
 }
 
-uniform sampler2D _CameraDepthTexture;
 v2f vert (
   in appdata_base v
 );
@@ -26,8 +26,8 @@ v2f vert (
   in appdata_base v
 )
 {
-  float tex;
   v2f o;
+  float tex;
   vec4 tmpvar_1;
   tmpvar_1.xy = vec2(v.texcoord.xy.xy);
   tmpvar_1.z = float(vec4(0.000000));
@@ -51,8 +51,8 @@ v2f vert (
 
 void main ()
 {
-  v2f xl_retval;
   appdata_base xlt_v;
+  v2f xl_retval;
   vec4 tmpvar_1;
   tmpvar_1 = gl_Vertex.xyzw;
   vec4 tmpvar_2;

@@ -2,8 +2,8 @@ struct v2f {
   vec4 vertex;
   vec3 texcoord;
 };
-uniform samplerCube _Tex;
 uniform vec4 _Tint;
+uniform samplerCube _Tex;
 void main ()
 {
   v2f xlt_i;

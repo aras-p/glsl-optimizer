@@ -3,9 +3,11 @@ struct v2f {
   vec2 uv0;
   vec2 uv1;
 };
-uniform vec4 _Color;
-uniform sampler2D _Detail;
+varying vec4 xlv_TEXCOORD1;
+varying vec4 xlv_TEXCOORD0;
 uniform sampler2D _MainTex;
+uniform sampler2D _Detail;
+uniform vec4 _Color;
 vec4 frag (
   in v2f i
 );
@@ -28,12 +30,10 @@ vec4 frag (
   return c;
 }
 
-varying vec4 xlv_TEXCOORD0;
-varying vec4 xlv_TEXCOORD1;
 void main ()
 {
-  vec4 xl_retval;
   v2f xlt_i;
+  vec4 xl_retval;
   vec2 tmpvar_1;
   tmpvar_1 = xlv_TEXCOORD0.xy;
   vec2 tmpvar_2;

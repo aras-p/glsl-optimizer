@@ -17,6 +17,11 @@ struct v2f_surf {
   vec4 lop_color;
   vec4 hip_screen;
 };
+varying vec4 xlv_FOG;
+uniform vec4 unity_Ambient;
+uniform sampler2D _MainTex;
+uniform sampler2D _LightBuffer;
+uniform float _Cutoff;
 void xll_clip (
   in float x
 )
@@ -26,10 +31,6 @@ void xll_clip (
   };
 }
 
-uniform float _Cutoff;
-uniform sampler2D _LightBuffer;
-uniform sampler2D _MainTex;
-uniform vec4 unity_Ambient;
 void surf (
   in Input IN,
   inout SurfaceOutput o
@@ -82,10 +83,10 @@ vec4 frag_surf (
   in v2f_surf IN
 )
 {
-  Input surfIN;
-  SurfaceOutput o;
-  vec4 light;
   vec4 col;
+  vec4 light;
+  SurfaceOutput o;
+  Input surfIN;
   vec2 tmpvar_1;
   tmpvar_1 = IN.hip_pack0.xy;
   surfIN.uv_MainTex = tmpvar_1;
@@ -130,11 +131,10 @@ vec4 frag_surf (
   return col;
 }
 
-varying vec4 xlv_FOG;
 void main ()
 {
-  vec4 xl_retval;
   v2f_surf xlt_IN;
+  vec4 xl_retval;
   vec4 tmpvar_1;
   tmpvar_1 = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_IN.pos = tmpvar_1;

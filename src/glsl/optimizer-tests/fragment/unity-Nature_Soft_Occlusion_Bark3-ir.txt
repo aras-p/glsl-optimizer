@@ -17,6 +17,13 @@ struct v2f_surf {
   vec3 _ShadowCoord3;
   vec2 _ShadowZFade;
 };
+uniform sampler2D _ShadowMapTexture;
+uniform vec4 _ProjectionParams;
+uniform sampler2D _MainTex;
+uniform vec4 _LightSplitsNear;
+uniform vec4 _LightSplitsFar;
+uniform vec4 _LightShadowData;
+uniform vec4 _Color;
 float xll_saturate (
   in float x
 )
@@ -122,13 +129,6 @@ mat4 xll_saturate (
   return tmpvar_5;
 }
 
-uniform vec4 _Color;
-uniform vec4 _LightShadowData;
-uniform vec4 _LightSplitsFar;
-uniform vec4 _LightSplitsNear;
-uniform sampler2D _MainTex;
-uniform vec4 _ProjectionParams;
-uniform sampler2D _ShadowMapTexture;
 void surf (
   in Input IN,
   inout SurfaceOutput o
@@ -161,15 +161,15 @@ vec2 EncodeFloatRG (
   in float v
 )
 {
+  vec2 enc;
+  float kEncodeBit;
   vec2 kEncodeMul;
   vec2 tmpvar_1;
   tmpvar_1 = vec2(1.000000, 255.000000);
   kEncodeMul = tmpvar_1;
-  float kEncodeBit;
   float tmpvar_2;
   tmpvar_2 = 0.003922;
   kEncodeBit = tmpvar_2;
-  vec2 enc;
   vec2 tmpvar_3;
   tmpvar_3 = (kEncodeMul * v);
   enc = tmpvar_3;
@@ -192,16 +192,16 @@ vec4 frag_surf (
   in v2f_surf IN
 )
 {
-  SurfaceOutput o;
-  Input surfIN;
-  vec4 z;
-  vec4 near;
-  vec4 far;
-  vec4 weights;
-  vec4 coord;
-  float shadow;
-  float faded;
   vec4 res;
+  float faded;
+  float shadow;
+  vec4 coord;
+  vec4 weights;
+  vec4 far;
+  vec4 near;
+  vec4 z;
+  Input surfIN;
+  SurfaceOutput o;
   vec3 tmpvar_1;
   tmpvar_1 = vec3(0.000000, 0.000000, 0.000000);
   o.Albedo = tmpvar_1;
@@ -280,8 +280,8 @@ vec4 frag_surf (
 
 void main ()
 {
-  vec4 xl_retval;
   v2f_surf xlt_IN;
+  vec4 xl_retval;
   vec4 tmpvar_1;
   tmpvar_1 = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_IN.pos = tmpvar_1;

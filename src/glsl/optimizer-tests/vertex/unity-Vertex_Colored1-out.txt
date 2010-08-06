@@ -11,8 +11,8 @@ struct appdata_t {
   vec3 normal;
   vec2 texcoord;
 };
-uniform vec4 _MainTex_ST;
 varying vec4 xlv_FOG;
+uniform vec4 _MainTex_ST;
 void main ()
 {
   appdata_t xlt_v;

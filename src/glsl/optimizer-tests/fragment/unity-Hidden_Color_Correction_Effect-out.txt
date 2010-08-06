@@ -2,8 +2,8 @@ struct v2f_img {
   vec4 pos;
   vec2 uv;
 };
-uniform sampler2D _MainTex;
 uniform sampler2D _RampTex;
+uniform sampler2D _MainTex;
 void main ()
 {
   v2f_img xlt_i;
@@ -11,9 +11,9 @@ void main ()
   xlt_i.uv = gl_TexCoord[0].xy;
   v2f_img i;
   i = xlt_i;
-  vec4 orig;
-  float rr;
   float gg;
+  float rr;
+  vec4 orig;
   vec4 tmpvar_9;
   tmpvar_9 = texture2D (_MainTex, i.uv);
   orig = tmpvar_9;

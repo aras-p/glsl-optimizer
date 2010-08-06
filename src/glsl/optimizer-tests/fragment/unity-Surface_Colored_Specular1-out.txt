@@ -14,16 +14,16 @@ struct v2f_surf {
   vec4 pos;
   vec3 normal;
 };
-uniform sampler2D _MainTex;
 uniform sampler2D _SpecMap;
+uniform sampler2D _MainTex;
 void main ()
 {
   v2f_surf xlt_IN;
   xlt_IN.pos = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_IN.normal = gl_TexCoord[0].xyz;
-  MySurfaceOutput o;
-  Input surfIN;
   vec4 res;
+  Input surfIN;
+  MySurfaceOutput o;
   o.Albedo = vec3(0.000000, 0.000000, 0.000000);
   o.Emission = vec3(0.000000, 0.000000, 0.000000);
   o.Specular = 0.000000;

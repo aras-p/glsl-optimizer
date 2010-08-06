@@ -13,13 +13,13 @@ struct appdata_full {
   vec4 texcoord1;
   vec4 color;
 };
-uniform vec4 _Decal_ST;
-uniform mat4 _Object2World;
-uniform vec4 _ProjectionParams;
-uniform vec4 unity_LightmapST;
-uniform vec4 unity_Scale;
-attribute vec4 TANGENT;
 varying vec4 xlv_FOG;
+attribute vec4 TANGENT;
+uniform vec4 unity_Scale;
+uniform vec4 unity_LightmapST;
+uniform vec4 _ProjectionParams;
+uniform mat4 _Object2World;
+uniform vec4 _Decal_ST;
 void main ()
 {
   appdata_full xlt_v;

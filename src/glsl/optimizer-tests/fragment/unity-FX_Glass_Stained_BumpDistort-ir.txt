@@ -4,11 +4,11 @@ struct v2f {
   vec2 uvbump;
   vec2 uvmain;
 };
-uniform float _BumpAmt;
-uniform sampler2D _BumpMap;
-uniform sampler2D _GrabTexture;
-uniform vec4 _GrabTexture_TexelSize;
 uniform sampler2D _MainTex;
+uniform vec4 _GrabTexture_TexelSize;
+uniform sampler2D _GrabTexture;
+uniform sampler2D _BumpMap;
+uniform float _BumpAmt;
 vec4 UnpackNormal (
   in vec4 packednormal
 );
@@ -37,10 +37,10 @@ vec4 frag (
   in v2f i
 )
 {
-  vec2 bump;
-  vec2 offset;
-  vec4 col;
   vec4 tint;
+  vec4 col;
+  vec2 offset;
+  vec2 bump;
   vec4 tmpvar_1;
   tmpvar_1 = texture2D (_BumpMap, i.uvbump);
   vec4 tmpvar_2;
@@ -69,8 +69,8 @@ vec4 frag (
 
 void main ()
 {
-  vec4 xl_retval;
   v2f xlt_i;
+  vec4 xl_retval;
   vec4 tmpvar_1;
   tmpvar_1 = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_i.vertex = tmpvar_1;

@@ -4,11 +4,11 @@ struct foo {
 };
 void main ()
 {
+  foo s;
   float f;
   float tmpvar_1;
   tmpvar_1 = 1.000000;
   f = tmpvar_1;
-  foo s;
   float tmpvar_2;
   tmpvar_2 = f;
   s.used = tmpvar_2;

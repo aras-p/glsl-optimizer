@@ -3,6 +3,9 @@ struct v2f {
   vec2 uv;
   vec2 uvOrig;
 };
+uniform sampler2D _MainTex;
+uniform vec4 _CenterRadius;
+uniform float _Angle;
 void xll_sincos (
   in float x,
   out float s,
@@ -213,9 +216,6 @@ void xll_sincos (
   c = (tmpvar_20);
 }
 
-uniform float _Angle;
-uniform vec4 _CenterRadius;
-uniform sampler2D _MainTex;
 vec4 frag (
   in v2f i
 );
@@ -224,11 +224,11 @@ vec4 frag (
   in v2f i
 )
 {
-  vec2 offset;
-  float angle;
-  float sinLength;
-  float cosLength;
   vec2 uv;
+  float cosLength;
+  float sinLength;
+  float angle;
+  vec2 offset;
   vec2 tmpvar_1;
   tmpvar_1 = i.uvOrig;
   offset = tmpvar_1;
@@ -262,8 +262,8 @@ vec4 frag (
 
 void main ()
 {
-  vec4 xl_retval;
   v2f xlt_i;
+  vec4 xl_retval;
   vec4 tmpvar_1;
   tmpvar_1 = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_i.pos = tmpvar_1;

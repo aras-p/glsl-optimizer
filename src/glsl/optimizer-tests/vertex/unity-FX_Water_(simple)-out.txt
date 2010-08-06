@@ -8,19 +8,19 @@ struct appdata {
   vec4 vertex;
   vec3 normal;
 };
-uniform vec4 _WaveOffset;
-uniform float _WaveScale;
-uniform mat4 _World2Object;
-uniform vec3 _WorldSpaceCameraPos;
-uniform vec4 unity_Scale;
 varying vec4 xlv_FOG;
+uniform vec4 unity_Scale;
+uniform vec3 _WorldSpaceCameraPos;
+uniform mat4 _World2Object;
+uniform float _WaveScale;
+uniform vec4 _WaveOffset;
 void main ()
 {
   appdata xlt_v;
   xlt_v.vertex = gl_Vertex.xyzw;
   xlt_v.normal = gl_Normal.xyz;
-  v2f o;
   vec4 temp;
+  v2f o;
   vec4 tmpvar_23;
   tmpvar_23 = (gl_ModelViewProjectionMatrix * xlt_v.vertex);
   o.pos = tmpvar_23;

@@ -11,9 +11,9 @@ struct appdata_full {
   vec4 texcoord1;
   vec4 color;
 };
-uniform vec4 _TerrainTreeLightColors[4];
-uniform vec3 _TerrainTreeLightDirections[4];
 attribute vec4 TANGENT;
+uniform vec3 _TerrainTreeLightDirections[4];
+uniform vec4 _TerrainTreeLightColors[4];
 void main ()
 {
   appdata_full xlt_v;
@@ -25,9 +25,9 @@ void main ()
   xlt_v.color = gl_Color.xyzw;
   appdata_full v;
   v = xlt_v;
-  v2f o;
-  vec3 lightColor;
   int i;
+  vec3 lightColor;
+  v2f o;
   i = 0;
   o.pos = (gl_ModelViewProjectionMatrix * xlt_v.vertex);
   o.uv = xlt_v.texcoord.xy;

@@ -16,9 +16,10 @@ struct v2f_surf {
   vec4 hip_pack0;
   vec2 hip_lmap;
 };
-uniform sampler2D _Decal;
-uniform sampler2D _DecalBump;
+varying vec4 xlv_FOG;
 uniform sampler2D unity_Lightmap;
+uniform sampler2D _DecalBump;
+uniform sampler2D _Decal;
 vec4 UnpackNormal (
   in vec4 packednormal
 );
@@ -84,14 +85,14 @@ vec4 frag_surf (
   in v2f_surf IN
 )
 {
-  Input surfIN;
-  SurfaceOutput o;
+  vec4 c;
+  vec3 lmFull;
   float atten;
+  SurfaceOutput o;
+  Input surfIN;
   float tmpvar_1;
   tmpvar_1 = 1.000000;
   atten = tmpvar_1;
-  vec3 lmFull;
-  vec4 c;
   vec2 tmpvar_2;
   tmpvar_2 = IN.hip_pack0.xy;
   surfIN.uv_Decal = tmpvar_2;
@@ -130,11 +131,10 @@ vec4 frag_surf (
   return c;
 }
 
-varying vec4 xlv_FOG;
 void main ()
 {
-  vec4 xl_retval;
   v2f_surf xlt_IN;
+  vec4 xl_retval;
   vec4 tmpvar_1;
   tmpvar_1 = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_IN.pos = tmpvar_1;

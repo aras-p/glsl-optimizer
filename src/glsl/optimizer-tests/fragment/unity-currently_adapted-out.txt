@@ -2,9 +2,9 @@ struct v2f_img {
   vec4 pos;
   vec2 uv;
 };
-uniform vec4 _AdaptParams;
-uniform sampler2D _CurTex;
 uniform sampler2D _MainTex;
+uniform sampler2D _CurTex;
+uniform vec4 _AdaptParams;
 void main ()
 {
   v2f_img xlt_i;
@@ -12,9 +12,9 @@ void main ()
   xlt_i.uv = gl_TexCoord[0].xy;
   v2f_img i;
   i = xlt_i;
-  vec2 valAdapted;
-  vec2 delta;
   vec4 valNew;
+  vec2 delta;
+  vec2 valAdapted;
   vec4 tmpvar_9;
   tmpvar_9 = texture2D (_MainTex, i.uv);
   valAdapted = tmpvar_9.xy;

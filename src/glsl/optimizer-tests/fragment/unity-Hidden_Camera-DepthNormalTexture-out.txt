@@ -3,8 +3,8 @@ struct v2f {
   vec2 uv;
   vec4 nz;
 };
-uniform float _Cutoff;
 uniform sampler2D _MainTex;
+uniform float _Cutoff;
 void main ()
 {
   v2f xlt_i;

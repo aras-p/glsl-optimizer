@@ -9,15 +9,15 @@ struct appdata_full {
 struct v2f_surf {
   vec4 pos;
 };
-uniform vec4 _Color;
-uniform mat4 _Object2World;
-uniform vec4 _Scale;
-uniform float _SquashAmount;
-uniform vec4 _SquashPlaneNormal;
-uniform float _TimeX;
-uniform vec4 _Wind;
-uniform vec4 unity_LightShadowBias;
 attribute vec4 TANGENT;
+uniform vec4 unity_LightShadowBias;
+uniform vec4 _Wind;
+uniform float _TimeX;
+uniform vec4 _SquashPlaneNormal;
+uniform float _SquashAmount;
+uniform vec4 _Scale;
+uniform mat4 _Object2World;
+uniform vec4 _Color;
 void main ()
 {
   appdata_full xlt_v;
@@ -40,8 +40,8 @@ void main ()
   normal = v_i0.normal;
   vec4 animParams;
   animParams = tmpvar_120;
-  float fBranchPhase;
   vec3 bend;
+  float fBranchPhase;
   float tmpvar_125;
   tmpvar_125 = dot (_Object2World[3].xyz, vec3(1.000000, 1.000000, 1.000000));
   float tmpvar_127;
@@ -69,8 +69,8 @@ void main ()
   v_i0.vertex = pos;
   vec4 pos_i0;
   pos_i0 = v_i0.vertex;
-  vec3 projectedVertex;
   vec3 planeNormal;
+  vec3 projectedVertex;
   projectedVertex = pos_i0.xyz;
   vec3 tmpvar_153;
   tmpvar_153.x = float(vec3(0.000000, 0.000000, 0.000000));

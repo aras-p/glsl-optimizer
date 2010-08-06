@@ -16,13 +16,13 @@ struct v2f_surf {
   vec4 hip_screen;
   vec3 hip_lmapFade;
 };
-uniform vec4 _Color;
-uniform float _Cutoff;
-uniform sampler2D _LightBuffer;
-uniform sampler2D _MainTex;
-uniform sampler2D unity_Lightmap;
-uniform sampler2D unity_LightmapInd;
 varying vec4 xlv_FOG;
+uniform sampler2D unity_LightmapInd;
+uniform sampler2D unity_Lightmap;
+uniform sampler2D _MainTex;
+uniform sampler2D _LightBuffer;
+uniform float _Cutoff;
+uniform vec4 _Color;
 void main ()
 {
   v2f_surf xlt_IN;
@@ -33,11 +33,11 @@ void main ()
   xlt_IN.hip_lmapFade = gl_TexCoord[2].xyz;
   v2f_surf IN;
   IN = xlt_IN;
-  Input surfIN;
-  SurfaceOutput o;
-  vec4 light;
-  vec3 lmFull;
   vec3 lmIndirect;
+  vec3 lmFull;
+  vec4 light;
+  SurfaceOutput o;
+  Input surfIN;
   surfIN.uv_MainTex = xlt_IN.hip_pack0.xy;
   o.Albedo = vec3(0.000000, 0.000000, 0.000000);
   o.Emission = vec3(0.000000, 0.000000, 0.000000);

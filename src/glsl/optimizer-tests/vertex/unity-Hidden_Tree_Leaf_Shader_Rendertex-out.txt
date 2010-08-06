@@ -11,9 +11,9 @@ struct v2f {
   vec2 uv;
   vec3 color;
 };
-uniform vec4 _TerrainTreeLightColors[4];
-uniform vec3 _TerrainTreeLightDirections[4];
 attribute vec4 TANGENT;
+uniform vec3 _TerrainTreeLightDirections[4];
+uniform vec4 _TerrainTreeLightColors[4];
 void main ()
 {
   appdata_full xlt_v;
@@ -25,9 +25,9 @@ void main ()
   xlt_v.color = gl_Color.xyzw;
   appdata_full v;
   v = xlt_v;
-  v2f o;
-  vec3 lightColor;
   int i;
+  vec3 lightColor;
+  v2f o;
   i = 0;
   mat4 mat;
   mat = (gl_ModelViewMatrixInverseTranspose);
@@ -37,9 +37,9 @@ void main ()
   normal = xlt_v.normal;
   vec4 tangent;
   tangent = xlt_v.tangent;
-  float isBillboard;
-  vec3 norb;
   vec3 tanb;
+  vec3 norb;
+  float isBillboard;
   float tmpvar_41;
   tmpvar_41 = abs (tangent.w);
   isBillboard = (1.000000 - tmpvar_41);

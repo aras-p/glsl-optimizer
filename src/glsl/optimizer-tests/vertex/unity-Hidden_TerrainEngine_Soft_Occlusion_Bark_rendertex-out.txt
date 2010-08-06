@@ -11,16 +11,16 @@ struct appdata_tree {
   vec4 color;
   vec4 texcoord;
 };
-uniform float _AO;
-uniform vec4 _Color;
-uniform vec4 _Scale;
-uniform float _SquashAmount;
-uniform vec4 _SquashPlaneNormal;
-uniform mat4 _TerrainEngineBendTree;
-uniform vec4 _TerrainTreeLightColors[4];
-uniform vec3 _TerrainTreeLightDirections[4];
-attribute vec4 TANGENT;
 varying vec4 xlv_FOG;
+attribute vec4 TANGENT;
+uniform vec3 _TerrainTreeLightDirections[4];
+uniform vec4 _TerrainTreeLightColors[4];
+uniform mat4 _TerrainEngineBendTree;
+uniform vec4 _SquashPlaneNormal;
+uniform float _SquashAmount;
+uniform vec4 _Scale;
+uniform vec4 _Color;
+uniform float _AO;
 void main ()
 {
   appdata_tree xlt_v;
@@ -31,12 +31,12 @@ void main ()
   xlt_v.texcoord = gl_MultiTexCoord0.xyzw;
   appdata_tree v;
   v = xlt_v;
-  v2f o;
-  vec4 lightDir;
-  vec4 lightColor;
-  int i;
-  i = 0;
   float occ;
+  int i;
+  vec4 lightColor;
+  vec4 lightDir;
+  v2f o;
+  i = 0;
   vec4 pos;
   pos = xlt_v.vertex;
   pos.xyz = (pos.xyz * _Scale.xyz).xyz;
@@ -48,8 +48,8 @@ void main ()
   pos.xyz = tmpvar_60.xyz;
   vec4 pos_i0;
   pos_i0 = pos;
-  vec3 projectedVertex;
   vec3 planeNormal;
+  vec3 projectedVertex;
   projectedVertex = pos.xyz;
   vec3 tmpvar_65;
   tmpvar_65.x = float(vec3(0.000000, 0.000000, 0.000000));

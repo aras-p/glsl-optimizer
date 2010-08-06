@@ -2,9 +2,9 @@ struct v2f {
   vec4 pos;
   vec2 uv;
 };
-uniform sampler2D _CameraDepthTexture;
-uniform sampler2D _CameraNormalsTexture;
 uniform vec4 _ZBufferParams;
+uniform sampler2D _CameraNormalsTexture;
+uniform sampler2D _CameraDepthTexture;
 void main ()
 {
   v2f xlt_i;
@@ -12,8 +12,8 @@ void main ()
   xlt_i.uv = gl_TexCoord[0].xy;
   v2f i;
   i = xlt_i;
-  float d;
   vec4 n;
+  float d;
   vec4 tmpvar_39;
   tmpvar_39 = texture2D (_CameraDepthTexture, i.uv);
   d = tmpvar_39.x;

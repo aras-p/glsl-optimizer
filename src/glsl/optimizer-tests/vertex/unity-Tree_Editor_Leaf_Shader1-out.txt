@@ -16,20 +16,20 @@ struct v2f_surf {
   vec2 hip_pack0;
   vec4 lop_color;
 };
-uniform vec4 _Color;
-uniform vec4 _LightShadowData;
-uniform vec4 _MainTex_ST;
-uniform mat4 _Object2World;
-uniform vec4 _Scale;
-uniform float _SquashAmount;
-uniform vec4 _SquashPlaneNormal;
-uniform float _TimeX;
-uniform vec4 _Wind;
-uniform mat4 _World2Shadow;
-uniform mat4 _World2Shadow1;
-uniform mat4 _World2Shadow2;
-uniform mat4 _World2Shadow3;
 attribute vec4 TANGENT;
+uniform mat4 _World2Shadow3;
+uniform mat4 _World2Shadow2;
+uniform mat4 _World2Shadow1;
+uniform mat4 _World2Shadow;
+uniform vec4 _Wind;
+uniform float _TimeX;
+uniform vec4 _SquashPlaneNormal;
+uniform float _SquashAmount;
+uniform vec4 _Scale;
+uniform mat4 _Object2World;
+uniform vec4 _MainTex_ST;
+uniform vec4 _LightShadowData;
+uniform vec4 _Color;
 void main ()
 {
   appdata_full xlt_v;
@@ -50,9 +50,9 @@ void main ()
   normal = xlt_v.normal;
   vec4 tangent;
   tangent = xlt_v.tangent;
-  float isBillboard;
-  vec3 norb;
   vec3 tanb;
+  vec3 norb;
+  float isBillboard;
   float tmpvar_169;
   tmpvar_169 = abs (tangent.w);
   isBillboard = (1.000000 - tmpvar_169);
@@ -93,8 +93,8 @@ void main ()
   normal_i0 = v_i0.normal;
   vec4 animParams;
   animParams = tmpvar_188;
-  float fBranchPhase;
   vec3 bend;
+  float fBranchPhase;
   float tmpvar_193;
   tmpvar_193 = dot (_Object2World[3].xyz, vec3(1.000000, 1.000000, 1.000000));
   float tmpvar_195;
@@ -122,8 +122,8 @@ void main ()
   v_i0.vertex = pos_i0;
   vec4 pos_i0_i1;
   pos_i0_i1 = v_i0.vertex;
-  vec3 projectedVertex;
   vec3 planeNormal;
+  vec3 projectedVertex;
   projectedVertex = pos_i0_i1.xyz;
   vec3 tmpvar_221;
   tmpvar_221.x = float(vec3(0.000000, 0.000000, 0.000000));

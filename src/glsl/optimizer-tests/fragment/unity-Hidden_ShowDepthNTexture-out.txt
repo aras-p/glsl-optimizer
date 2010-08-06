@@ -2,8 +2,8 @@ struct v2f_img {
   vec4 pos;
   vec2 uv;
 };
-uniform sampler2D _CameraDepthNormalsTexture;
 uniform sampler2D _MainTex;
+uniform sampler2D _CameraDepthNormalsTexture;
 void main ()
 {
   v2f_img xlt_i;
@@ -11,8 +11,8 @@ void main ()
   xlt_i.uv = gl_TexCoord[0].xy;
   v2f_img i;
   i = xlt_i;
-  vec4 tex;
   vec4 col;
+  vec4 tex;
   vec4 tmpvar_37;
   tmpvar_37 = texture2D (_MainTex, i.uv);
   tex = tmpvar_37;
@@ -24,8 +24,8 @@ void main ()
   float tmpvar_44;
   tmpvar_44 = dot (tmpvar_39.zw, vec2(1.000000, 0.003922));
   depth_i0 = tmpvar_44;
-  vec3 nn;
   vec3 n_i0;
+  vec3 nn;
   vec3 tmpvar_49;
   tmpvar_49.x = float(vec3(3.555400, 3.555400, 3.555400));
   tmpvar_49.y = float(vec3(3.555400, 3.555400, 3.555400));

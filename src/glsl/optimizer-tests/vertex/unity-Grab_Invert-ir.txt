@@ -12,8 +12,8 @@ v2f vert (
   in vec2 uv
 )
 {
-  v2f o;
   float scale;
+  v2f o;
   float tmpvar_1;
   tmpvar_1 = 1.000000;
   scale = tmpvar_1;

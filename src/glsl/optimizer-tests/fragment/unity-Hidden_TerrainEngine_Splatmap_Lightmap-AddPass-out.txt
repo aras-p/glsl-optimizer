@@ -23,15 +23,15 @@ struct v2f_surf {
   vec3 vlight;
   vec4 _ShadowCoord;
 };
-uniform sampler2D _Control;
-uniform vec4 _LightColor0;
-uniform sampler2D _ShadowMapTexture;
-uniform sampler2D _Splat0;
-uniform sampler2D _Splat1;
-uniform sampler2D _Splat2;
-uniform sampler2D _Splat3;
-uniform vec4 _WorldSpaceLightPos0;
 varying vec4 xlv_FOG;
+uniform vec4 _WorldSpaceLightPos0;
+uniform sampler2D _Splat3;
+uniform sampler2D _Splat2;
+uniform sampler2D _Splat1;
+uniform sampler2D _Splat0;
+uniform sampler2D _ShadowMapTexture;
+uniform vec4 _LightColor0;
+uniform sampler2D _Control;
 void main ()
 {
   v2f_surf xlt_IN;
@@ -45,9 +45,9 @@ void main ()
   xlt_IN._ShadowCoord = gl_TexCoord[5].xyzw;
   v2f_surf IN;
   IN = xlt_IN;
-  Input surfIN;
-  SurfaceOutput o;
   vec4 c;
+  SurfaceOutput o;
+  Input surfIN;
   surfIN.uv_Control = xlt_IN.hip_pack0.xy;
   surfIN.uv_Splat0 = xlt_IN.hip_pack0.zw;
   surfIN.uv_Splat1 = xlt_IN.hip_pack1.xy;
@@ -63,8 +63,8 @@ void main ()
   IN_i0 = surfIN;
   SurfaceOutput o_i0;
   o_i0 = o;
-  vec4 splat_control;
   vec3 col;
+  vec4 splat_control;
   vec4 tmpvar_52;
   tmpvar_52 = texture2D (_Control, IN_i0.uv_Control);
   splat_control = tmpvar_52;

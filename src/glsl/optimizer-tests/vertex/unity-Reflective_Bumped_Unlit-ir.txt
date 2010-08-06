@@ -14,11 +14,13 @@ struct appdata_tan {
   vec3 normal;
   vec4 texcoord;
 };
-uniform vec4 _BumpMap_ST;
-uniform vec4 _MainTex_ST;
-uniform mat4 _Object2World;
-uniform vec3 _WorldSpaceCameraPos;
+varying vec4 xlv_FOG;
+attribute vec4 TANGENT;
 uniform vec4 unity_Scale;
+uniform vec3 _WorldSpaceCameraPos;
+uniform mat4 _Object2World;
+uniform vec4 _MainTex_ST;
+uniform vec4 _BumpMap_ST;
 vec3 WorldSpaceViewDir (
   in vec4 v
 );
@@ -58,9 +60,9 @@ v2f vert (
   in appdata_tan v
 )
 {
-  v2f o;
-  vec3 binormal;
   mat3 rotation;
+  vec3 binormal;
+  v2f o;
   PositionFog (v.vertex, o.pos, o.fog);
   vec2 tmpvar_1;
   tmpvar_1 = ((v.texcoord.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
@@ -121,12 +123,10 @@ v2f vert (
   return o;
 }
 
-attribute vec4 TANGENT;
-varying vec4 xlv_FOG;
 void main ()
 {
-  v2f xl_retval;
   appdata_tan xlt_v;
+  v2f xl_retval;
   vec4 tmpvar_1;
   tmpvar_1 = gl_Vertex.xyzw;
   vec4 tmpvar_2;

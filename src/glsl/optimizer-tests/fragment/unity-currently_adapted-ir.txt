@@ -2,9 +2,9 @@ struct v2f_img {
   vec4 pos;
   vec2 uv;
 };
-uniform vec4 _AdaptParams;
-uniform sampler2D _CurTex;
 uniform sampler2D _MainTex;
+uniform sampler2D _CurTex;
+uniform vec4 _AdaptParams;
 vec4 frag (
   in v2f_img i
 );
@@ -13,10 +13,10 @@ vec4 frag (
   in v2f_img i
 )
 {
-  vec2 valAdapted;
-  vec2 valCur;
-  vec2 delta;
   vec4 valNew;
+  vec2 delta;
+  vec2 valCur;
+  vec2 valAdapted;
   vec4 tmpvar_1;
   tmpvar_1 = texture2D (_MainTex, i.uv);
   vec2 tmpvar_2;
@@ -72,8 +72,8 @@ vec4 frag (
 
 void main ()
 {
-  vec4 xl_retval;
   v2f_img xlt_i;
+  vec4 xl_retval;
   vec4 tmpvar_1;
   tmpvar_1 = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_i.pos = tmpvar_1;

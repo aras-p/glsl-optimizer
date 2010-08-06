@@ -13,16 +13,16 @@ struct v2f_surf {
   vec4 hip_screen;
   vec3 hip_lmapFade;
 };
-uniform vec4 _MainTex_ST;
-uniform vec4 _ProjectionParams;
-uniform vec4 _Scale;
-uniform float _SquashAmount;
-uniform vec4 _SquashPlaneNormal;
-uniform mat4 _TerrainEngineBendTree;
-uniform vec4 unity_LightmapFade;
-uniform vec4 unity_LightmapST;
-attribute vec4 TANGENT;
 varying vec4 xlv_FOG;
+attribute vec4 TANGENT;
+uniform vec4 unity_LightmapST;
+uniform vec4 unity_LightmapFade;
+uniform mat4 _TerrainEngineBendTree;
+uniform vec4 _SquashPlaneNormal;
+uniform float _SquashAmount;
+uniform vec4 _Scale;
+uniform vec4 _ProjectionParams;
+uniform vec4 _MainTex_ST;
 void main ()
 {
   appdata_full xlt_v;
@@ -46,8 +46,8 @@ void main ()
   pos.xyz = tmpvar_89.xyz;
   vec4 pos_i0;
   pos_i0 = pos;
-  vec3 projectedVertex;
   vec3 planeNormal;
+  vec3 projectedVertex;
   projectedVertex = pos.xyz;
   vec3 tmpvar_94;
   tmpvar_94.x = float(vec3(0.000000, 0.000000, 0.000000));

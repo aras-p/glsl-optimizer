@@ -3,16 +3,16 @@ struct v2f {
   vec2 uv;
   vec3 ray;
 };
-uniform sampler2D _CameraDepthTexture;
-uniform vec4 _LightShadowData;
-uniform vec4 _LightSplitsFar;
-uniform vec4 _LightSplitsNear;
-uniform sampler2D _ShadowMapTexture;
-uniform mat4 _View2Shadow;
-uniform mat4 _View2Shadow1;
-uniform mat4 _View2Shadow2;
-uniform mat4 _View2Shadow3;
 uniform vec4 _ZBufferParams;
+uniform mat4 _View2Shadow3;
+uniform mat4 _View2Shadow2;
+uniform mat4 _View2Shadow1;
+uniform mat4 _View2Shadow;
+uniform sampler2D _ShadowMapTexture;
+uniform vec4 _LightSplitsNear;
+uniform vec4 _LightSplitsFar;
+uniform vec4 _LightShadowData;
+uniform sampler2D _CameraDepthTexture;
 void main ()
 {
   v2f xlt_i;
@@ -21,8 +21,8 @@ void main ()
   xlt_i.ray = gl_TexCoord[1].xyz;
   v2f i;
   i = xlt_i;
-  float depth;
   vec4 res;
+  float depth;
   vec4 tmpvar_39;
   tmpvar_39 = texture2D (_CameraDepthTexture, i.uv);
   float __retval_i0;
@@ -31,13 +31,13 @@ void main ()
   vec4 tmpvar_44;
   tmpvar_44.xyz = vec3((i.ray * __retval_i0).xyz);
   tmpvar_44.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
-  vec3 sc0;
-  vec3 sc1;
-  vec3 sc2;
-  vec3 sc3;
-  float z_i0;
-  vec4 near;
   vec4 coord;
+  vec4 near;
+  float z_i0;
+  vec3 sc3;
+  vec3 sc2;
+  vec3 sc1;
+  vec3 sc0;
   sc0 = (_View2Shadow * tmpvar_44).xyz;
   sc1 = (_View2Shadow1 * tmpvar_44).xyz;
   sc2 = (_View2Shadow2 * tmpvar_44).xyz;

@@ -9,6 +9,11 @@ struct appdata {
   vec4 color;
   vec4 texcoord;
 };
+uniform mat4 _TerrainEngineBendTree;
+uniform vec4 _SquashPlaneNormal;
+uniform float _SquashAmount;
+uniform vec4 _Scale;
+uniform vec4 _ProjectionParams;
 mat3 xll_constructMat3 (
   in mat4 m
 )
@@ -32,11 +37,6 @@ mat3 xll_constructMat3 (
   return tmpvar_4;
 }
 
-uniform vec4 _ProjectionParams;
-uniform vec4 _Scale;
-uniform float _SquashAmount;
-uniform vec4 _SquashPlaneNormal;
-uniform mat4 _TerrainEngineBendTree;
 vec4 Squash (
   in vec4 pos
 );
@@ -45,9 +45,9 @@ vec4 Squash (
   in vec4 pos
 )
 {
-  vec3 projectedVertex;
-  vec3 planePoint;
   vec3 planeNormal;
+  vec3 planePoint;
+  vec3 projectedVertex;
   vec3 tmpvar_1;
   tmpvar_1 = pos.xyz;
   projectedVertex = tmpvar_1;
@@ -144,8 +144,8 @@ v2f vert (
 
 void main ()
 {
-  v2f xl_retval;
   appdata xlt_v;
+  v2f xl_retval;
   vec4 tmpvar_1;
   tmpvar_1 = gl_Vertex.xyzw;
   vec4 tmpvar_2;

@@ -10,11 +10,12 @@ struct appdata_tree_billboard {
   vec4 texcoord;
   vec2 texcoord1;
 };
-uniform vec4 _TreeBillboardCameraFront;
-uniform vec4 _TreeBillboardCameraPos;
-uniform vec3 _TreeBillboardCameraRight;
-uniform vec4 _TreeBillboardCameraUp;
+varying vec4 xlv_FOG;
 uniform vec4 _TreeBillboardDistances;
+uniform vec4 _TreeBillboardCameraUp;
+uniform vec3 _TreeBillboardCameraRight;
+uniform vec4 _TreeBillboardCameraPos;
+uniform vec4 _TreeBillboardCameraFront;
 void TerrainBillboardTree (
   inout vec4 pos,
   in vec2 offset,
@@ -27,13 +28,13 @@ void TerrainBillboardTree (
   in float offsetz
 )
 {
-  vec3 treePos;
-  float treeDistanceSqr;
-  float billboardAngleFactor;
-  float radius;
-  float billboardModeFactor;
-  float billboardRootOffsetFactor;
   float absRadius;
+  float billboardRootOffsetFactor;
+  float billboardModeFactor;
+  float radius;
+  float billboardAngleFactor;
+  float treeDistanceSqr;
+  vec3 treePos;
   vec3 tmpvar_1;
   tmpvar_1 = (pos.xyz - _TreeBillboardCameraPos.xyz);
   treePos = tmpvar_1;
@@ -108,11 +109,10 @@ v2f vert (
   return o;
 }
 
-varying vec4 xlv_FOG;
 void main ()
 {
-  v2f xl_retval;
   appdata_tree_billboard xlt_v;
+  v2f xl_retval;
   vec4 tmpvar_1;
   tmpvar_1 = gl_Vertex.xyzw;
   vec4 tmpvar_2;

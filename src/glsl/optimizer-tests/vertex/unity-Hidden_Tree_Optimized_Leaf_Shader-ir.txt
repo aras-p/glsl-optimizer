@@ -14,18 +14,20 @@ struct v2f_surf {
   vec3 lightDir;
   vec3 viewDir;
 };
-uniform vec4 _Color;
-uniform vec4 _MainTex_ST;
-uniform mat4 _Object2World;
-uniform vec4 _Scale;
-uniform float _SquashAmount;
-uniform vec4 _SquashPlaneNormal;
-uniform float _TimeX;
-uniform vec4 _Wind;
-uniform mat4 _World2Object;
-uniform vec3 _WorldSpaceCameraPos;
-uniform vec4 _WorldSpaceLightPos0;
+varying vec4 xlv_FOG;
+attribute vec4 TANGENT;
 uniform vec4 unity_Scale;
+uniform vec4 _WorldSpaceLightPos0;
+uniform vec3 _WorldSpaceCameraPos;
+uniform mat4 _World2Object;
+uniform vec4 _Wind;
+uniform float _TimeX;
+uniform vec4 _SquashPlaneNormal;
+uniform float _SquashAmount;
+uniform vec4 _Scale;
+uniform mat4 _Object2World;
+uniform vec4 _MainTex_ST;
+uniform vec4 _Color;
 vec4 Squash (
   in vec4 pos
 );
@@ -34,9 +36,9 @@ vec4 Squash (
   in vec4 pos
 )
 {
-  vec3 projectedVertex;
-  vec3 planePoint;
   vec3 planeNormal;
+  vec3 planePoint;
+  vec3 projectedVertex;
   vec3 tmpvar_1;
   tmpvar_1 = pos.xyz;
   projectedVertex = tmpvar_1;
@@ -84,9 +86,9 @@ void ExpandBillboard (
   inout vec4 tangent
 )
 {
-  float isBillboard;
-  vec3 norb;
   vec3 tanb;
+  vec3 norb;
+  float isBillboard;
   float tmpvar_1;
   tmpvar_1 = abs (tangent.w);
   float tmpvar_2;
@@ -189,21 +191,21 @@ vec4 AnimateVertex (
   in vec4 animParams
 )
 {
+  vec3 bend;
+  vec2 vWavesSum;
+  vec4 vWaves;
+  vec2 vWavesIn;
+  float fVtxPhase;
+  float fBranchPhase;
+  float fObjPhase;
+  float fBranchAmp;
   float fDetailAmp;
   float tmpvar_1;
   tmpvar_1 = 0.100000;
   fDetailAmp = tmpvar_1;
-  float fBranchAmp;
   float tmpvar_2;
   tmpvar_2 = 0.300000;
   fBranchAmp = tmpvar_2;
-  float fObjPhase;
-  float fBranchPhase;
-  float fVtxPhase;
-  vec2 vWavesIn;
-  vec4 vWaves;
-  vec2 vWavesSum;
-  vec3 bend;
   float tmpvar_3;
   tmpvar_3 = dot (_Object2World[3].xyz, vec3(1.000000, 1.000000, 1.000000));
   float tmpvar_4;
@@ -357,9 +359,9 @@ v2f_surf vert_surf (
   in appdata_full v
 )
 {
-  v2f_surf o;
-  vec3 binormal;
   mat3 rotation;
+  vec3 binormal;
+  v2f_surf o;
   TreeVertLeaf (v);
   PositionFog (v.vertex, o.pos, o.fog);
   vec2 tmpvar_1;
@@ -417,12 +419,10 @@ v2f_surf vert_surf (
   return o;
 }
 
-attribute vec4 TANGENT;
-varying vec4 xlv_FOG;
 void main ()
 {
-  v2f_surf xl_retval;
   appdata_full xlt_v;
+  v2f_surf xl_retval;
   vec4 tmpvar_1;
   tmpvar_1 = gl_Vertex.xyzw;
   vec4 tmpvar_2;

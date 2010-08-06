@@ -16,6 +16,14 @@ struct v2f_surf {
   vec4 hip_screen;
   vec3 hip_lmapFade;
 };
+varying vec4 xlv_FOG;
+uniform sampler2D unity_LightmapInd;
+uniform sampler2D unity_Lightmap;
+uniform vec4 _SpecColor;
+uniform float _Shininess;
+uniform sampler2D _MainTex;
+uniform sampler2D _LightBuffer;
+uniform vec4 _Color;
 float xll_saturate (
   in float x
 )
@@ -121,13 +129,6 @@ mat4 xll_saturate (
   return tmpvar_5;
 }
 
-uniform vec4 _Color;
-uniform sampler2D _LightBuffer;
-uniform sampler2D _MainTex;
-uniform float _Shininess;
-uniform vec4 _SpecColor;
-uniform sampler2D unity_Lightmap;
-uniform sampler2D unity_LightmapInd;
 void surf (
   in Input IN,
   inout SurfaceOutput o
@@ -168,8 +169,8 @@ vec4 LightingBlinnPhong_PrePass (
   in vec4 light
 )
 {
-  float spec;
   vec4 c;
+  float spec;
   float tmpvar_1;
   tmpvar_1 = (light.w * s.Gloss);
   spec = tmpvar_1;
@@ -201,13 +202,13 @@ vec4 frag_surf (
   in v2f_surf IN
 )
 {
-  Input surfIN;
-  SurfaceOutput o;
-  vec4 light;
-  vec3 lmFull;
-  vec3 lmIndirect;
-  vec3 lm;
   vec4 col;
+  vec3 lm;
+  vec3 lmIndirect;
+  vec3 lmFull;
+  vec4 light;
+  SurfaceOutput o;
+  Input surfIN;
   vec2 tmpvar_1;
   tmpvar_1 = IN.hip_pack0.xy;
   surfIN.uv_MainTex = tmpvar_1;
@@ -271,11 +272,10 @@ vec4 frag_surf (
   return col;
 }
 
-varying vec4 xlv_FOG;
 void main ()
 {
-  vec4 xl_retval;
   v2f_surf xlt_IN;
+  vec4 xl_retval;
   vec4 tmpvar_1;
   tmpvar_1 = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_IN.pos = tmpvar_1;

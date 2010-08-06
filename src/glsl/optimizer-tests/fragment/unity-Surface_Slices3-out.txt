@@ -19,12 +19,12 @@ struct v2f_surf {
   vec2 _ShadowZFade;
   vec3 worldPos;
 };
-uniform vec4 _LightShadowData;
-uniform vec4 _LightSplitsFar;
-uniform vec4 _LightSplitsNear;
-uniform sampler2D _MainTex;
-uniform vec4 _ProjectionParams;
 uniform sampler2D _ShadowMapTexture;
+uniform vec4 _ProjectionParams;
+uniform sampler2D _MainTex;
+uniform vec4 _LightSplitsNear;
+uniform vec4 _LightSplitsFar;
+uniform vec4 _LightShadowData;
 void main ()
 {
   v2f_surf xlt_IN;
@@ -37,13 +37,13 @@ void main ()
   xlt_IN.worldPos = gl_TexCoord[5].xyz;
   v2f_surf IN;
   IN = xlt_IN;
-  Input surfIN;
-  SurfaceOutput o;
-  vec4 z;
-  vec4 near;
-  vec4 coord;
-  float shadow;
   vec4 res;
+  float shadow;
+  vec4 coord;
+  vec4 near;
+  vec4 z;
+  SurfaceOutput o;
+  Input surfIN;
   surfIN.worldPos = xlt_IN.worldPos;
   o.Albedo = vec3(0.000000, 0.000000, 0.000000);
   o.Emission = vec3(0.000000, 0.000000, 0.000000);

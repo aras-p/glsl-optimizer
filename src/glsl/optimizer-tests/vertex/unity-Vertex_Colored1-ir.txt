@@ -11,6 +11,7 @@ struct appdata_t {
   vec3 normal;
   vec2 texcoord;
 };
+varying vec4 xlv_FOG;
 uniform vec4 _MainTex_ST;
 void PositionFog (
   in vec4 v,
@@ -54,11 +55,10 @@ v2f vert (
   return o;
 }
 
-varying vec4 xlv_FOG;
 void main ()
 {
-  v2f xl_retval;
   appdata_t xlt_v;
+  v2f xl_retval;
   vec4 tmpvar_1;
   tmpvar_1 = gl_Vertex.xyzw;
   vec4 tmpvar_2;

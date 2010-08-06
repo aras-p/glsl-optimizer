@@ -15,21 +15,21 @@ struct v2f_surf {
   vec3 viewDir;
   vec3 _LightCoord;
 };
-uniform vec4 _Color;
-uniform mat4 _LightMatrix0;
-uniform vec4 _MainTex_ST;
-uniform mat4 _Object2World;
-uniform vec4 _Scale;
-uniform float _SquashAmount;
-uniform vec4 _SquashPlaneNormal;
-uniform float _TimeX;
-uniform vec4 _Wind;
-uniform mat4 _World2Object;
-uniform vec3 _WorldSpaceCameraPos;
-uniform vec4 _WorldSpaceLightPos0;
-uniform vec4 unity_Scale;
-attribute vec4 TANGENT;
 varying vec4 xlv_FOG;
+attribute vec4 TANGENT;
+uniform vec4 unity_Scale;
+uniform vec4 _WorldSpaceLightPos0;
+uniform vec3 _WorldSpaceCameraPos;
+uniform mat4 _World2Object;
+uniform vec4 _Wind;
+uniform float _TimeX;
+uniform vec4 _SquashPlaneNormal;
+uniform float _SquashAmount;
+uniform vec4 _Scale;
+uniform mat4 _Object2World;
+uniform vec4 _MainTex_ST;
+uniform mat4 _LightMatrix0;
+uniform vec4 _Color;
 void main ()
 {
   appdata_full xlt_v;
@@ -54,8 +54,8 @@ void main ()
   normal = v_i0.normal;
   vec4 animParams;
   animParams = tmpvar_139;
-  float fBranchPhase;
   vec3 bend;
+  float fBranchPhase;
   float tmpvar_144;
   tmpvar_144 = dot (_Object2World[3].xyz, vec3(1.000000, 1.000000, 1.000000));
   float tmpvar_146;
@@ -83,8 +83,8 @@ void main ()
   v_i0.vertex = pos;
   vec4 pos_i0;
   pos_i0 = v_i0.vertex;
-  vec3 projectedVertex;
   vec3 planeNormal;
+  vec3 projectedVertex;
   projectedVertex = pos_i0.xyz;
   vec3 tmpvar_172;
   tmpvar_172.x = float(vec3(0.000000, 0.000000, 0.000000));

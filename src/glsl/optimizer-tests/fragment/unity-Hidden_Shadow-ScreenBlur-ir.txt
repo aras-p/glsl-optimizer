@@ -2,6 +2,9 @@ struct v2f_img {
   vec4 pos;
   vec2 uv;
 };
+uniform vec4 unity_ShadowBlurParams;
+uniform sampler2D _MainTex;
+uniform vec4 _BlurOffsets[8];
 float xll_saturate (
   in float x
 )
@@ -107,9 +110,6 @@ mat4 xll_saturate (
   return tmpvar_5;
 }
 
-uniform vec4 _BlurOffsets[8];
-uniform sampler2D _MainTex;
-uniform vec4 unity_ShadowBlurParams;
 vec4 frag (
   in v2f_img i
 );
@@ -118,19 +118,19 @@ vec4 frag (
   in v2f_img i
 )
 {
-  vec4 coord;
-  vec4 mask;
-  float dist;
-  float radius;
-  float diffTolerance;
+  float shadow;
+  float diff;
+  float sampleDist;
+  vec4 sample;
   int i_1;
+  float diffTolerance;
+  float radius;
+  float dist;
+  vec4 mask;
+  vec4 coord;
   int tmpvar_1;
   tmpvar_1 = 0;
   i_1 = tmpvar_1;
-  vec4 sample;
-  float sampleDist;
-  float diff;
-  float shadow;
   vec4 tmpvar_2;
   tmpvar_2.xy = vec2(i.uv.xy);
   tmpvar_2.z = float(vec4(0.000000));
@@ -198,8 +198,8 @@ vec4 frag (
 
 void main ()
 {
-  vec4 xl_retval;
   v2f_img xlt_i;
+  vec4 xl_retval;
   vec4 tmpvar_1;
   tmpvar_1 = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_i.pos = tmpvar_1;

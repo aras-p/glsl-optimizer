@@ -18,14 +18,14 @@ struct v2f_surf {
   vec3 viewDir;
   vec4 hip_screen;
 };
-uniform sampler2D _BumpMap;
-uniform vec4 _Color;
-uniform sampler2D _LightBuffer;
-uniform sampler2D _MainTex;
-uniform float _Parallax;
-uniform sampler2D _ParallaxMap;
-uniform vec4 unity_Ambient;
 varying vec4 xlv_FOG;
+uniform vec4 unity_Ambient;
+uniform sampler2D _ParallaxMap;
+uniform float _Parallax;
+uniform sampler2D _MainTex;
+uniform sampler2D _LightBuffer;
+uniform vec4 _Color;
+uniform sampler2D _BumpMap;
 void main ()
 {
   v2f_surf xlt_IN;
@@ -36,9 +36,9 @@ void main ()
   xlt_IN.hip_screen = gl_TexCoord[2].xyzw;
   v2f_surf IN;
   IN = xlt_IN;
-  Input surfIN;
-  SurfaceOutput o;
   vec4 light;
+  SurfaceOutput o;
+  Input surfIN;
   surfIN.uv_MainTex = xlt_IN.hip_pack0.xy;
   surfIN.uv_BumpMap = xlt_IN.hip_pack0.zw;
   surfIN.viewDir = xlt_IN.viewDir;

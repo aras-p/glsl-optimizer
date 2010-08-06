@@ -2,8 +2,8 @@ struct v2f_img {
   vec4 pos;
   vec2 uv;
 };
-uniform sampler2D _CameraDepthNormalsTexture;
 uniform sampler2D _MainTex;
+uniform sampler2D _CameraDepthNormalsTexture;
 vec3 DecodeViewNormalStereo (
   in vec4 enc4
 );
@@ -12,13 +12,13 @@ vec3 DecodeViewNormalStereo (
   in vec4 enc4
 )
 {
+  vec3 n;
+  float g;
+  vec3 nn;
   float kScale;
   float tmpvar_1;
   tmpvar_1 = 1.777700;
   kScale = tmpvar_1;
-  vec3 nn;
-  float g;
-  vec3 n;
   vec3 tmpvar_2;
   tmpvar_2.x = float(vec3((2.000000 * kScale)));
   tmpvar_2.y = float(vec3((2.000000 * kScale)));
@@ -93,11 +93,11 @@ vec4 frag (
   in v2f_img i
 )
 {
-  vec4 tex;
-  vec4 depth;
-  float z;
-  vec3 n;
   vec4 col;
+  vec3 n;
+  float z;
+  vec4 depth;
+  vec4 tex;
   vec4 tmpvar_1;
   tmpvar_1 = texture2D (_MainTex, i.uv);
   vec4 tmpvar_2;
@@ -126,8 +126,8 @@ vec4 frag (
 
 void main ()
 {
-  vec4 xl_retval;
   v2f_img xlt_i;
+  vec4 xl_retval;
   vec4 tmpvar_1;
   tmpvar_1 = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_i.pos = tmpvar_1;

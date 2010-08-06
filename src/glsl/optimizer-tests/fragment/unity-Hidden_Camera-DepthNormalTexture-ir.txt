@@ -3,6 +3,8 @@ struct v2f {
   vec2 uv;
   vec4 nz;
 };
+uniform sampler2D _MainTex;
+uniform float _Cutoff;
 void xll_clip (
   in float x
 )
@@ -12,8 +14,6 @@ void xll_clip (
   };
 }
 
-uniform float _Cutoff;
-uniform sampler2D _MainTex;
 vec2 EncodeViewNormalStereo (
   in vec3 n
 );
@@ -22,11 +22,11 @@ vec2 EncodeViewNormalStereo (
   in vec3 n
 )
 {
+  vec2 enc;
   float kScale;
   float tmpvar_1;
   tmpvar_1 = 1.777700;
   kScale = tmpvar_1;
-  vec2 enc;
   vec2 tmpvar_2;
   tmpvar_2 = (n.xy / (n.z + 1.000000));
   enc = tmpvar_2;
@@ -47,15 +47,15 @@ vec2 EncodeFloatRG (
   in float v
 )
 {
+  vec2 enc;
+  float kEncodeBit;
   vec2 kEncodeMul;
   vec2 tmpvar_1;
   tmpvar_1 = vec2(1.000000, 255.000000);
   kEncodeMul = tmpvar_1;
-  float kEncodeBit;
   float tmpvar_2;
   tmpvar_2 = 0.003922;
   kEncodeBit = tmpvar_2;
-  vec2 enc;
   vec2 tmpvar_3;
   tmpvar_3 = (kEncodeMul * v);
   enc = tmpvar_3;
@@ -116,8 +116,8 @@ vec4 frag (
 
 void main ()
 {
-  vec4 xl_retval;
   v2f xlt_i;
+  vec4 xl_retval;
   vec4 tmpvar_1;
   tmpvar_1 = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_i.pos = tmpvar_1;

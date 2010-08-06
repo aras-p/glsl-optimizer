@@ -17,6 +17,11 @@ struct v2f_surf {
   vec3 TtoV1;
   vec3 TtoV2;
 };
+uniform float _Shininess;
+uniform sampler2D _MainTex;
+uniform float _Cutoff;
+uniform vec4 _Color;
+uniform sampler2D _BumpMap;
 void xll_clip (
   in float x
 )
@@ -26,11 +31,6 @@ void xll_clip (
   };
 }
 
-uniform sampler2D _BumpMap;
-uniform vec4 _Color;
-uniform float _Cutoff;
-uniform sampler2D _MainTex;
-uniform float _Shininess;
 vec4 UnpackNormal (
   in vec4 packednormal
 );
@@ -98,10 +98,10 @@ vec4 frag_surf (
   in v2f_surf IN
 )
 {
-  Input surfIN;
-  SurfaceOutput o;
-  vec3 viewN;
   vec4 res;
+  vec3 viewN;
+  SurfaceOutput o;
+  Input surfIN;
   vec2 tmpvar_1;
   tmpvar_1 = IN.hip_pack0.xy;
   surfIN.uv_MainTex = tmpvar_1;
@@ -154,8 +154,8 @@ vec4 frag_surf (
 
 void main ()
 {
-  vec4 xl_retval;
   v2f_surf xlt_IN;
+  vec4 xl_retval;
   vec4 tmpvar_1;
   tmpvar_1 = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_IN.pos = tmpvar_1;

@@ -8,11 +8,11 @@ struct v2f {
   vec3 TtoW1;
   vec3 TtoW2;
 };
-uniform sampler2D _BumpMap;
-uniform samplerCube _Cube;
-uniform sampler2D _MainTex;
-uniform vec4 _ReflectColor;
 varying vec4 xlv_FOG;
+uniform vec4 _ReflectColor;
+uniform sampler2D _MainTex;
+uniform samplerCube _Cube;
+uniform sampler2D _BumpMap;
 void main ()
 {
   v2f xlt_i;
@@ -26,10 +26,10 @@ void main ()
   xlt_i.TtoW2 = gl_TexCoord[5].xyz;
   v2f i;
   i = xlt_i;
-  vec4 normal;
-  vec4 texcol;
-  vec3 wn;
   vec4 c;
+  vec3 wn;
+  vec4 texcol;
+  vec4 normal;
   vec4 tmpvar_24;
   tmpvar_24 = texture2D (_BumpMap, i.uv2);
   vec4 normal_i0;

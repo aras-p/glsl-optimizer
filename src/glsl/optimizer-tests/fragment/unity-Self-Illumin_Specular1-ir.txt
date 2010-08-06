@@ -14,10 +14,10 @@ struct v2f_surf {
   vec4 pos;
   vec3 normal;
 };
-uniform vec4 _Color;
-uniform sampler2D _Illum;
-uniform sampler2D _MainTex;
 uniform float _Shininess;
+uniform sampler2D _MainTex;
+uniform sampler2D _Illum;
+uniform vec4 _Color;
 void surf (
   in Input IN,
   inout SurfaceOutput o
@@ -28,8 +28,8 @@ void surf (
   inout SurfaceOutput o
 )
 {
-  vec4 tex;
   vec4 c;
+  vec4 tex;
   vec4 tmpvar_1;
   tmpvar_1 = texture2D (_MainTex, IN.uv_MainTex);
   vec4 tmpvar_2;
@@ -65,9 +65,9 @@ vec4 frag_surf (
   in v2f_surf IN
 )
 {
-  SurfaceOutput o;
-  Input surfIN;
   vec4 res;
+  Input surfIN;
+  SurfaceOutput o;
   vec3 tmpvar_1;
   tmpvar_1 = vec3(0.000000, 0.000000, 0.000000);
   o.Albedo = tmpvar_1;
@@ -98,8 +98,8 @@ vec4 frag_surf (
 
 void main ()
 {
-  vec4 xl_retval;
   v2f_surf xlt_IN;
+  vec4 xl_retval;
   vec4 tmpvar_1;
   tmpvar_1 = vec4(0.000000, 0.000000, 0.000000, 0.000000);
   xlt_IN.pos = tmpvar_1;

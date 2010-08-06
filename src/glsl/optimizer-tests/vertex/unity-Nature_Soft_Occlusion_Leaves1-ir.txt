@@ -12,12 +12,14 @@ struct v2f_surf {
   vec2 hip_pack0;
   vec4 hip_screen;
 };
-uniform vec4 _MainTex_ST;
-uniform vec4 _ProjectionParams;
-uniform vec4 _Scale;
-uniform float _SquashAmount;
-uniform vec4 _SquashPlaneNormal;
+varying vec4 xlv_FOG;
+attribute vec4 TANGENT;
 uniform mat4 _TerrainEngineBendTree;
+uniform vec4 _SquashPlaneNormal;
+uniform float _SquashAmount;
+uniform vec4 _Scale;
+uniform vec4 _ProjectionParams;
+uniform vec4 _MainTex_ST;
 vec4 Squash (
   in vec4 pos
 );
@@ -26,9 +28,9 @@ vec4 Squash (
   in vec4 pos
 )
 {
-  vec3 projectedVertex;
-  vec3 planePoint;
   vec3 planeNormal;
+  vec3 planePoint;
+  vec3 projectedVertex;
   vec3 tmpvar_1;
   tmpvar_1 = pos.xyz;
   projectedVertex = tmpvar_1;
@@ -173,12 +175,10 @@ v2f_surf vert_surf (
   return o;
 }
 
-attribute vec4 TANGENT;
-varying vec4 xlv_FOG;
 void main ()
 {
-  v2f_surf xl_retval;
   appdata_full xlt_v;
+  v2f_surf xl_retval;
   vec4 tmpvar_1;
   tmpvar_1 = gl_Vertex.xyzw;
   vec4 tmpvar_2;
