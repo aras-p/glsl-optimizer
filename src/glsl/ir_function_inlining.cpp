@@ -246,6 +246,8 @@ ir_call::generate_inline(ir_instruction *next_ir, ir_function_signature* parent)
 	 assert(deref);
 	 do_sampler_replacement(&new_instructions, sig_param, deref);
       }
+      param_iter.next();
+      sig_param_iter.next();
    }
 
    /* Now push those new instructions in. */
