@@ -147,7 +147,7 @@ void call_for_basic_blocks(exec_list *instructions,
 	  * expression flattener may be useful before using the basic
 	  * block finder to get more maximal basic blocks out.
 	  */
-	 if (ir_has_call(ir)) {
+	 if (ir_has_call_skip_builtins(ir)) {
 	    callback(leader, ir, data);
 	    leader = NULL;
 	 }
