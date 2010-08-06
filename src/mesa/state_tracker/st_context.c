@@ -63,7 +63,7 @@
 #include "cso_cache/cso_context.h"
 
 
-DEBUG_GET_ONCE_BOOL_OPTION(mesa_mvp_dp4, "MESA_MVP_DP4", FALSE);
+DEBUG_GET_ONCE_BOOL_OPTION(mesa_mvp_dp4, "MESA_MVP_DP4", FALSE)
 
 
 /**
