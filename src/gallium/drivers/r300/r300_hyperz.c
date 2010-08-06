@@ -27,8 +27,6 @@
 #include "r300_hyperz.h"
 #include "r300_reg.h"
 #include "r300_fs.h"
-#include "r300_emit.h"
-#include "r300_texture.h"
 
 /*
   HiZ rules - taken from various docs 
