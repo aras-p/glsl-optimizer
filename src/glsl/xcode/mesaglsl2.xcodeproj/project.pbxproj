@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2B28CBB8120BEB6E00AE3749 /* ir_dead_functions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B28CBB6120BEB6E00AE3749 /* ir_dead_functions.cpp */; };
+		2B28CBB9120BEB6E00AE3749 /* ir_structure_splitting.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B28CBB7120BEB6E00AE3749 /* ir_structure_splitting.cpp */; };
 		2B47DA011209C87B00937F2C /* hash_table.c in Sources */ = {isa = PBXBuildFile; fileRef = 2B47D9FD1209C87B00937F2C /* hash_table.c */; };
 		2B47DA021209C87B00937F2C /* hash_table.h in Headers */ = {isa = PBXBuildFile; fileRef = 2B47D9FE1209C87B00937F2C /* hash_table.h */; };
 		2B47DA031209C87B00937F2C /* symbol_table.c in Sources */ = {isa = PBXBuildFile; fileRef = 2B47D9FF1209C87B00937F2C /* symbol_table.c */; };
@@ -65,7 +67,6 @@
 		2BA55AD11207FEA6002DC82D /* ir_reader.h in Headers */ = {isa = PBXBuildFile; fileRef = 2BA55A861207FEA6002DC82D /* ir_reader.h */; };
 		2BA55AD21207FEA6002DC82D /* ir_swizzle_swizzle.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA55A871207FEA6002DC82D /* ir_swizzle_swizzle.cpp */; };
 		2BA55AD31207FEA6002DC82D /* ir_tree_grafting.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA55A881207FEA6002DC82D /* ir_tree_grafting.cpp */; };
-		2BA55AD41207FEA6002DC82D /* ir_unused_functions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA55A891207FEA6002DC82D /* ir_unused_functions.cpp */; };
 		2BA55AD51207FEA6002DC82D /* ir_unused_structs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA55A8A1207FEA6002DC82D /* ir_unused_structs.cpp */; };
 		2BA55AD61207FEA6002DC82D /* ir_unused_structs.h in Headers */ = {isa = PBXBuildFile; fileRef = 2BA55A8B1207FEA6002DC82D /* ir_unused_structs.h */; };
 		2BA55AD71207FEA6002DC82D /* ir_validate.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA55A8C1207FEA6002DC82D /* ir_validate.cpp */; };
@@ -89,6 +90,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		2B28CBB6120BEB6E00AE3749 /* ir_dead_functions.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ir_dead_functions.cpp; path = ../ir_dead_functions.cpp; sourceTree = SOURCE_ROOT; };
+		2B28CBB7120BEB6E00AE3749 /* ir_structure_splitting.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ir_structure_splitting.cpp; path = ../ir_structure_splitting.cpp; sourceTree = SOURCE_ROOT; };
 		2B47D9FD1209C87B00937F2C /* hash_table.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = hash_table.c; path = ../../mesa/program/hash_table.c; sourceTree = SOURCE_ROOT; };
 		2B47D9FE1209C87B00937F2C /* hash_table.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = hash_table.h; path = ../../mesa/program/hash_table.h; sourceTree = SOURCE_ROOT; };
 		2B47D9FF1209C87B00937F2C /* symbol_table.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = symbol_table.c; path = ../../mesa/program/symbol_table.c; sourceTree = SOURCE_ROOT; };
@@ -149,7 +152,6 @@
 		2BA55A861207FEA6002DC82D /* ir_reader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ir_reader.h; path = ../ir_reader.h; sourceTree = SOURCE_ROOT; };
 		2BA55A871207FEA6002DC82D /* ir_swizzle_swizzle.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ir_swizzle_swizzle.cpp; path = ../ir_swizzle_swizzle.cpp; sourceTree = SOURCE_ROOT; };
 		2BA55A881207FEA6002DC82D /* ir_tree_grafting.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ir_tree_grafting.cpp; path = ../ir_tree_grafting.cpp; sourceTree = SOURCE_ROOT; };
-		2BA55A891207FEA6002DC82D /* ir_unused_functions.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ir_unused_functions.cpp; path = ../ir_unused_functions.cpp; sourceTree = SOURCE_ROOT; };
 		2BA55A8A1207FEA6002DC82D /* ir_unused_structs.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ir_unused_structs.cpp; path = ../ir_unused_structs.cpp; sourceTree = SOURCE_ROOT; };
 		2BA55A8B1207FEA6002DC82D /* ir_unused_structs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ir_unused_structs.h; path = ../ir_unused_structs.h; sourceTree = SOURCE_ROOT; };
 		2BA55A8C1207FEA6002DC82D /* ir_validate.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ir_validate.cpp; path = ../ir_validate.cpp; sourceTree = SOURCE_ROOT; };
@@ -256,6 +258,7 @@
 				2BA55A6D1207FEA6002DC82D /* ir_copy_propagation.cpp */,
 				2BA55A6E1207FEA6002DC82D /* ir_dead_code_local.cpp */,
 				2BA55A6F1207FEA6002DC82D /* ir_dead_code.cpp */,
+				2B28CBB6120BEB6E00AE3749 /* ir_dead_functions.cpp */,
 				2BA55A701207FEA6002DC82D /* ir_div_to_mul_rcp.cpp */,
 				2BA55A711207FEA6002DC82D /* ir_expression_flattening.cpp */,
 				2BA55A721207FEA6002DC82D /* ir_expression_flattening.h */,
@@ -279,9 +282,9 @@
 				2BA55A841207FEA6002DC82D /* ir_print_visitor.h */,
 				2BA55A851207FEA6002DC82D /* ir_reader.cpp */,
 				2BA55A861207FEA6002DC82D /* ir_reader.h */,
+				2B28CBB7120BEB6E00AE3749 /* ir_structure_splitting.cpp */,
 				2BA55A871207FEA6002DC82D /* ir_swizzle_swizzle.cpp */,
 				2BA55A881207FEA6002DC82D /* ir_tree_grafting.cpp */,
-				2BA55A891207FEA6002DC82D /* ir_unused_functions.cpp */,
 				2BA55A8A1207FEA6002DC82D /* ir_unused_structs.cpp */,
 				2BA55A8B1207FEA6002DC82D /* ir_unused_structs.h */,
 				2BA55A8C1207FEA6002DC82D /* ir_validate.cpp */,
@@ -430,7 +433,6 @@
 				2BA55AD01207FEA6002DC82D /* ir_reader.cpp in Sources */,
 				2BA55AD21207FEA6002DC82D /* ir_swizzle_swizzle.cpp in Sources */,
 				2BA55AD31207FEA6002DC82D /* ir_tree_grafting.cpp in Sources */,
-				2BA55AD41207FEA6002DC82D /* ir_unused_functions.cpp in Sources */,
 				2BA55AD51207FEA6002DC82D /* ir_unused_structs.cpp in Sources */,
 				2BA55AD71207FEA6002DC82D /* ir_validate.cpp in Sources */,
 				2BA55AD81207FEA6002DC82D /* ir_variable_refcount.cpp in Sources */,
@@ -444,6 +446,8 @@
 				2BA55AEC1207FEEB002DC82D /* talloc.c in Sources */,
 				2B47DA011209C87B00937F2C /* hash_table.c in Sources */,
 				2B47DA031209C87B00937F2C /* symbol_table.c in Sources */,
+				2B28CBB8120BEB6E00AE3749 /* ir_dead_functions.cpp in Sources */,
+				2B28CBB9120BEB6E00AE3749 /* ir_structure_splitting.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
