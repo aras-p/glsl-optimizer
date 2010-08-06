@@ -30,7 +30,7 @@
 
 /* these macros are optional */
 #ifndef LOCAL_VARS
-#define LOCAL_VARS do {} while (0)
+#define LOCAL_VARS
 #endif
 #ifndef FUNC_ENTER
 #define FUNC_ENTER do {} while (0)
@@ -50,7 +50,7 @@ FUNC(FUNC_VARS)
 {
    unsigned idx[6], i;
    ushort flags;
-   LOCAL_VARS;
+   LOCAL_VARS
 
    FUNC_ENTER;
 

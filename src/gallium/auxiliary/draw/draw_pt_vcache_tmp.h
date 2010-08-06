@@ -10,7 +10,7 @@
    struct draw_context *draw = vcache->draw;                               \
    const unsigned prim = vcache->input_prim;                               \
    const boolean last_vertex_last = !(draw->rasterizer->flatshade &&       \
-                                      draw->rasterizer->flatshade_first)
+                                      draw->rasterizer->flatshade_first);
 
 #define GET_ELT(idx) (get_elt(elts, idx) + elt_bias)
 
