@@ -52,8 +52,19 @@ struct draw_vertex_info;
 /* The "front end" - prepare sets of fetch, draw elements for the
  * middle end.
  *
- * Currenly one version of this:
+ * The fetch elements are indices to the vertices.  The draw elements are
+ * indices to the fetched vertices.  When both arrays of elements are both
+ * linear, middle->run_linear is called;  When only the fetch elements are
+ * linear, middle->run_linear_elts is called;  Otherwise, middle->run is
+ * called.
+ *
+ * When the number of the draw elements exceeds max_vertex of the middle end,
+ * the draw elements (as well as the fetch elements) are splitted and the
+ * middle end is called multiple times.
+ *
+ * Currenly there are:
  *    - vcache - catchall implementation, decomposes to TRI/LINE/POINT prims
+ *    - vsplit - catchall implementation, splits big prims
  * Later:
  *    - varray, varray_split
  *    - velement, velement_split
@@ -138,6 +149,7 @@ const void *draw_pt_elt_ptr( struct draw_context *draw,
  */
 struct draw_pt_front_end *draw_pt_vcache( struct draw_context *draw );
 struct draw_pt_front_end *draw_pt_varray(struct draw_context *draw);
+struct draw_pt_front_end *draw_pt_vsplit(struct draw_context *draw);
 
 
 /* Middle-ends:

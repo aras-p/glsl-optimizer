@@ -37,6 +37,7 @@ C_SOURCES = \
 	draw/draw_pt_util.c \
 	draw/draw_pt_varray.c \
 	draw/draw_pt_vcache.c \
+	draw/draw_pt_vsplit.c \
 	draw/draw_vertex.c \
 	draw/draw_vs.c \
 	draw/draw_vs_varient.c \
