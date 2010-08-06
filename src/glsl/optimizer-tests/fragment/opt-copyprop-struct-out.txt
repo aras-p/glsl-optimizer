@@ -1,15 +1,8 @@
-struct v2f {
-  float f;
-};
 varying float var;
 void main ()
 {
-  v2f i2;
-  v2f i;
-  i.f = var;
-  i2 = i;
   float tmpvar_3;
-  tmpvar_3 = abs (i2.f);
+  tmpvar_3 = abs (var);
   gl_FragColor = vec4(tmpvar_3);
 }
 

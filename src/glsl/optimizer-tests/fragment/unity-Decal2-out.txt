@@ -47,7 +47,7 @@ void main ()
   o_i0 = o;
   vec4 c;
   vec4 tmpvar_32;
-  tmpvar_32 = texture2D (_MainTex, IN_i0.uv_MainTex);
+  tmpvar_32 = texture2D (_MainTex, surfIN.uv_MainTex);
   c = tmpvar_32;
   vec4 tmpvar_34;
   tmpvar_34 = texture2D (_DecalTex, IN_i0.uv_DecalTex);
@@ -64,7 +64,7 @@ void main ()
   tmpvar_42 = texture2DProj (_LightBuffer, IN.hip_screen);
   light = tmpvar_42;
   vec4 tmpvar_44;
-  tmpvar_44 = log2 (light);
+  tmpvar_44 = log2 (tmpvar_42);
   vec4 tmpvar_45;
   tmpvar_45 = -(tmpvar_44);
   light = tmpvar_45;

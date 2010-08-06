@@ -24,7 +24,7 @@ void main ()
   vec4 res;
   float depth;
   vec4 tmpvar_39;
-  tmpvar_39 = texture2D (_CameraDepthTexture, i.uv);
+  tmpvar_39 = texture2D (_CameraDepthTexture, xlt_i.uv);
   float __retval_i0;
   __retval_i0 = 1.0/(((_ZBufferParams.x * tmpvar_39.x) + _ZBufferParams.y));
   depth = __retval_i0;
@@ -57,7 +57,7 @@ void main ()
   tmpvar_62.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
   coord = tmpvar_62;
   vec4 tmpvar_64;
-  tmpvar_64 = texture2D (_ShadowMapTexture, coord.xy);
+  tmpvar_64 = texture2D (_ShadowMapTexture, tmpvar_62.xy);
   float tmpvar_65;
   if ((tmpvar_64.x < coord.z)) {
     tmpvar_65 = _LightShadowData.x;
@@ -67,9 +67,11 @@ void main ()
   res.x = tmpvar_65;
   res.y = float(vec2(1.000000, 1.000000));
   vec2 enc;
-  enc = (vec2(1.000000, 255.000000) * (1.000000 - depth));
+  vec2 tmpvar_74;
+  tmpvar_74 = (vec2(1.000000, 255.000000) * (1.000000 - depth));
+  enc = tmpvar_74;
   vec2 tmpvar_75;
-  tmpvar_75 = fract (enc);
+  tmpvar_75 = fract (tmpvar_74);
   enc = tmpvar_75;
   enc.x = (tmpvar_75.x - (tmpvar_75.y * 0.003922));
   res.zw = vec2(enc.xy);

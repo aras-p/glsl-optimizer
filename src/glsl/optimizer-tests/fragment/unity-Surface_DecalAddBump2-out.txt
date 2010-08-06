@@ -44,7 +44,7 @@ void main ()
   SurfaceOutput o_i0;
   o_i0 = o;
   vec4 tmpvar_35;
-  tmpvar_35 = texture2D (_Decal, IN_i0.uv_Decal);
+  tmpvar_35 = texture2D (_Decal, surfIN.uv_Decal);
   o_i0.Albedo = (tmpvar_35.xyz * 0.500000);
   vec4 tmpvar_37;
   tmpvar_37 = texture2D (_DecalBump, IN_i0.uv_DecalBump);

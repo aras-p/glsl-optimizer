@@ -7,7 +7,7 @@ void main ()
   tmpvar_10 = sqrt (a);
   b = tmpvar_10;
   float tmpvar_12;
-  tmpvar_12 = sqrt (b);
+  tmpvar_12 = sqrt (tmpvar_10);
   gl_Position = vec4((((a + b) + (a * b)) + tmpvar_12));
 }
 

@@ -45,9 +45,11 @@ void main ()
   tmpvar_41 = texture2D (_MainTex, ((tmpvar_64.xy / tmpvar_64.w) * vec2(2.000000, 1.000000)));
   o_i0.Emission = (tmpvar_41.xyz * 0.500000);
   o = o_i0;
-  lightDir = IN.lightDir;
+  vec3 tmpvar_43;
+  tmpvar_43 = IN.lightDir;
+  lightDir = tmpvar_43;
   vec3 tmpvar_44;
-  tmpvar_44 = normalize (lightDir);
+  tmpvar_44 = normalize (tmpvar_43);
   lightDir = tmpvar_44;
   float tmpvar_46;
   vec4 LightCoord;
@@ -67,7 +69,7 @@ void main ()
   atten = ((float((IN._LightCoord.z > 0.000000)) * tmpvar_46) * tmpvar_54.w);
   vec4 c_i0;
   float tmpvar_57;
-  tmpvar_57 = dot (s.Normal, lightDir);
+  tmpvar_57 = dot (o.Normal, lightDir);
   float tmpvar_58;
   tmpvar_58 = max (0.000000, tmpvar_57);
   c_i0.xyz = ((s.Albedo * _LightColor0.xyz) * ((tmpvar_58 * atten) * 2.000000)).xyz;

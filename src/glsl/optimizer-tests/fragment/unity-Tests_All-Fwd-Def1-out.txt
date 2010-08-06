@@ -40,10 +40,10 @@ void main ()
   o_i0.Emission = vec3(1.000000, 0.000000, 0.000000);
   o = o_i0;
   vec4 tmpvar_26;
-  tmpvar_26 = texture2DProj (_LightBuffer, IN.hip_screen);
+  tmpvar_26 = texture2DProj (_LightBuffer, xlt_IN.hip_screen);
   light = tmpvar_26;
   vec4 tmpvar_28;
-  tmpvar_28 = log2 (light);
+  tmpvar_28 = log2 (tmpvar_26);
   light = -(tmpvar_28);
   vec4 tmpvar_30;
   tmpvar_30 = texture2D (unity_Lightmap, IN.hip_lmapFade.xy);

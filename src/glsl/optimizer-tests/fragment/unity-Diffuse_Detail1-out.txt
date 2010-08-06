@@ -30,7 +30,7 @@ void main ()
   o_i0 = o;
   vec4 c;
   vec4 tmpvar_21;
-  tmpvar_21 = texture2D (_MainTex, IN_i0.uv_MainTex);
+  tmpvar_21 = texture2D (_MainTex, surfIN.uv_MainTex);
   c = (tmpvar_21 * _Color);
   vec4 tmpvar_23;
   tmpvar_23 = texture2D (_Detail, IN_i0.uv_Detail);

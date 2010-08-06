@@ -15,7 +15,7 @@ void main ()
   vec4 n;
   float d;
   vec4 tmpvar_39;
-  tmpvar_39 = texture2D (_CameraDepthTexture, i.uv);
+  tmpvar_39 = texture2D (_CameraDepthTexture, xlt_i.uv);
   d = tmpvar_39.x;
   vec4 tmpvar_41;
   tmpvar_41 = texture2D (_CameraNormalsTexture, i.uv);
@@ -32,9 +32,11 @@ void main ()
     vec4 enc;
     enc.xy = ((((normal.xy / (normal.z + 1.000000)) / 1.777700) * 0.500000) + 0.500000).xy;
     vec2 enc_i0_i1;
-    enc_i0_i1 = (vec2(1.000000, 255.000000) * d);
+    vec2 tmpvar_62;
+    tmpvar_62 = (vec2(1.000000, 255.000000) * d);
+    enc_i0_i1 = tmpvar_62;
     vec2 tmpvar_63;
-    tmpvar_63 = fract (enc_i0_i1);
+    tmpvar_63 = fract (tmpvar_62);
     enc_i0_i1 = tmpvar_63;
     enc_i0_i1.x = (tmpvar_63.x - (tmpvar_63.y * 0.003922));
     enc.zw = vec2(enc_i0_i1.xy);

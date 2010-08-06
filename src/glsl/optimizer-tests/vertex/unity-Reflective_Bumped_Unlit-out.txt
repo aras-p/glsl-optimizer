@@ -33,7 +33,7 @@ void main ()
   tmpvar_89 = ((xlt_v.texcoord.xy * _BumpMap_ST.xy) + _BumpMap_ST.zw);
   tmpvar_90 = -((_WorldSpaceCameraPos.xyz - (_Object2World * xlt_v.vertex).xyz));
   vec3 tmpvar_38;
-  tmpvar_38 = cross (v.normal, v.tangent.xyz);
+  tmpvar_38 = cross (xlt_v.normal, xlt_v.tangent.xyz);
   vec3 tmpvar_39;
   tmpvar_39 = (tmpvar_38 * v.tangent.w);
   mat3 tmpvar_40;

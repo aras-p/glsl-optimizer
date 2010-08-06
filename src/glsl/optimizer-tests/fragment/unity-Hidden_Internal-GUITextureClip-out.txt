@@ -17,7 +17,7 @@ void main ()
   i = xlt_i;
   vec4 col;
   vec4 tmpvar_13;
-  tmpvar_13 = texture2D (_MainTex, i.texcoord);
+  tmpvar_13 = texture2D (_MainTex, xlt_i.texcoord);
   col = (tmpvar_13 * i.color);
   vec4 tmpvar_15;
   tmpvar_15 = texture2D (_GUIClipTexture, i.texgencoord);

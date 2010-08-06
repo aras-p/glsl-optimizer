@@ -32,10 +32,10 @@ void main ()
   pos = xlt_v.vertex;
   vec2 offset;
   offset = xlt_v.tangent.xy;
-  vec3 grasspos;
-  grasspos = (pos.xyz - _CameraPosition.xyz);
+  vec3 tmpvar_124;
+  tmpvar_124 = (pos.xyz - _CameraPosition.xyz);
   float tmpvar_125;
-  tmpvar_125 = dot (grasspos, grasspos);
+  tmpvar_125 = dot (tmpvar_124, tmpvar_124);
   if ((tmpvar_125 > _WaveAndDistance.w)) {
     offset = vec2(0.000000, 0.000000);
   };
@@ -52,12 +52,9 @@ void main ()
   vec3 waveMove;
   float lighting;
   vec4 s;
-  vec4 waves;
   waveMove = vec3(0.000000, 0.000000, 0.000000);
-  waves = (((vertex.x * (vec4(0.012000, 0.020000, 0.060000, 0.024000) * _WaveAndDistance.y)) + (vertex.z * (vec4(0.006000, 0.020000, 0.020000, 0.050000) * _WaveAndDistance.y))) + (_WaveAndDistance.x * vec4(1.200000, 2.000000, 1.600000, 4.800000)));
   vec4 tmpvar_139;
-  tmpvar_139 = fract (waves);
-  waves = tmpvar_139;
+  tmpvar_139 = fract ((((vertex.x * (vec4(0.012000, 0.020000, 0.060000, 0.024000) * _WaveAndDistance.y)) + (vertex.z * (vec4(0.006000, 0.020000, 0.020000, 0.050000) * _WaveAndDistance.y))) + (_WaveAndDistance.x * vec4(1.200000, 2.000000, 1.600000, 4.800000))));
   vec4 tmpvar_143;
   tmpvar_143 = ((tmpvar_139 * 6.408850) - 3.141590);
   vec4 tmpvar_144;
@@ -74,9 +71,11 @@ void main ()
   float tmpvar_156;
   tmpvar_156 = dot (s, vec4(0.674200, 0.674200, 0.269680, 0.134840));
   lighting = (tmpvar_156 * 0.700000);
-  s = (s * waveAmount_i0);
+  vec4 tmpvar_158;
+  tmpvar_158 = (s * waveAmount_i0);
+  s = tmpvar_158;
   float tmpvar_159;
-  tmpvar_159 = dot (s, vec4(0.024000, 0.040000, -0.120000, 0.096000));
+  tmpvar_159 = dot (tmpvar_158, vec4(0.024000, 0.040000, -0.120000, 0.096000));
   waveMove.x = tmpvar_159;
   float tmpvar_161;
   tmpvar_161 = dot (s, vec4(0.006000, 0.020000, -0.020000, 0.100000));

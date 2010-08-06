@@ -13,7 +13,7 @@ void main ()
   v2f i;
   i = xlt_i;
   vec4 tmpvar_11;
-  tmpvar_11 = texture2D (_MainTex, i.texcoord);
+  tmpvar_11 = texture2D (_MainTex, xlt_i.texcoord);
   gl_FragData[0] = (tmpvar_11 * i.color).xyzw;
 }
 

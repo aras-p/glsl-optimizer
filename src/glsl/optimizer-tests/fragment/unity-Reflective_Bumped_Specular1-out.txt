@@ -50,7 +50,7 @@ void main ()
   o_i0 = o;
   vec4 tex;
   vec4 tmpvar_45;
-  tmpvar_45 = texture2D (_MainTex, IN_i0.uv_MainTex);
+  tmpvar_45 = texture2D (_MainTex, surfIN.uv_MainTex);
   tex = tmpvar_45;
   o_i0.Albedo = (tmpvar_45 * _Color).xyz;
   o_i0.Gloss = tmpvar_45.w;
@@ -71,7 +71,7 @@ void main ()
   o_i0.Alpha = (tmpvar_62.w * _ReflectColor.w);
   o = o_i0;
   float tmpvar_65;
-  tmpvar_65 = dot (IN.TtoV0, o.Normal);
+  tmpvar_65 = dot (IN.TtoV0, o_i0.Normal);
   viewN.x = tmpvar_65;
   float tmpvar_67;
   tmpvar_67 = dot (IN.TtoV1, o.Normal);

@@ -54,7 +54,7 @@ void main ()
   SurfaceOutput o_i0;
   o_i0 = o;
   vec4 tmpvar_36;
-  tmpvar_36 = texture2D (_MainTex, IN_i0.uv_MainTex);
+  tmpvar_36 = texture2D (_MainTex, surfIN.uv_MainTex);
   vec4 tmpvar_37;
   tmpvar_37 = (tmpvar_36 * IN_i0.color);
   o_i0.Albedo = tmpvar_37.xyz;
@@ -65,9 +65,11 @@ void main ()
   if ((x < 0.000000)) {
     discard;
   };
-  lightDir = IN.lightDir;
+  vec3 tmpvar_40;
+  tmpvar_40 = IN.lightDir;
+  lightDir = tmpvar_40;
   vec3 tmpvar_41;
-  tmpvar_41 = normalize (lightDir);
+  tmpvar_41 = normalize (tmpvar_40);
   lightDir = tmpvar_41;
   float tmpvar_43;
   tmpvar_43 = dot (IN._LightCoord, IN._LightCoord);
@@ -81,7 +83,7 @@ void main ()
   atten = (tmpvar_46.w * tmpvar_47.w);
   vec4 c_i0_i1;
   float tmpvar_50;
-  tmpvar_50 = dot (s.Normal, lightDir);
+  tmpvar_50 = dot (o.Normal, lightDir);
   float tmpvar_51;
   tmpvar_51 = max (0.000000, tmpvar_50);
   c_i0_i1.xyz = ((s.Albedo * _LightColor0.xyz) * ((tmpvar_51 * atten) * 2.000000)).xyz;

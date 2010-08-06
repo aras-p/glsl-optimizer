@@ -74,7 +74,7 @@ void main ()
   o_i0 = o;
   vec4 tex;
   vec4 tmpvar_79;
-  tmpvar_79 = texture2D (_ParallaxMap, IN_i0.uv_BumpMap);
+  tmpvar_79 = texture2D (_ParallaxMap, surfIN.uv_BumpMap);
   vec2 __retval_i0;
   float h_i0;
   vec3 v;
@@ -121,7 +121,7 @@ void main ()
   tmpvar_113 = texture2DProj (_LightBuffer, IN.hip_screen);
   light = tmpvar_113;
   vec4 tmpvar_115;
-  tmpvar_115 = log2 (light);
+  tmpvar_115 = log2 (tmpvar_113);
   vec4 tmpvar_116;
   tmpvar_116 = -(tmpvar_115);
   light = tmpvar_116;

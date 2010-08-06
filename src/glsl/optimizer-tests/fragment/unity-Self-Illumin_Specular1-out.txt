@@ -32,7 +32,7 @@ void main ()
   vec4 c;
   vec4 tex;
   vec4 tmpvar_24;
-  tmpvar_24 = texture2D (_MainTex, IN_i0.uv_MainTex);
+  tmpvar_24 = texture2D (_MainTex, surfIN.uv_MainTex);
   tex = tmpvar_24;
   vec4 tmpvar_26;
   tmpvar_26 = (tmpvar_24 * _Color);

@@ -14,7 +14,7 @@ void main ()
   i = xlt_i;
   vec4 col;
   vec4 tmpvar_11;
-  tmpvar_11 = texture2D (_MainTex, i.uv[0]);
+  tmpvar_11 = texture2D (_MainTex, xlt_i.uv[0]);
   col = tmpvar_11;
   vec4 tmpvar_13;
   tmpvar_13 = texture2D (_AdaptTex, i.uv[1]);

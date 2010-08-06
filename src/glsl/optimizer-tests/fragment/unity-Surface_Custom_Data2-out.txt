@@ -41,10 +41,10 @@ void main ()
   o_i0.Albedo = xlt_IN.cust_foo;
   o = o_i0;
   vec4 tmpvar_29;
-  tmpvar_29 = texture2DProj (_LightBuffer, IN.hip_screen);
+  tmpvar_29 = texture2DProj (_LightBuffer, xlt_IN.hip_screen);
   light = tmpvar_29;
   vec4 tmpvar_31;
-  tmpvar_31 = log2 (light);
+  tmpvar_31 = log2 (tmpvar_29);
   light = -(tmpvar_31);
   vec4 tmpvar_33;
   tmpvar_33 = texture2D (unity_Lightmap, IN.hip_lmapFade.xy);

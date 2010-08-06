@@ -40,7 +40,7 @@ void main ()
   s = o_i0;
   vec4 c_i0;
   float tmpvar_29;
-  tmpvar_29 = dot (s.Normal, _WorldSpaceLightPos0.xyz);
+  tmpvar_29 = dot (o_i0.Normal, _WorldSpaceLightPos0.xyz);
   float tmpvar_30;
   tmpvar_30 = max (0.000000, tmpvar_29);
   c_i0.xyz = ((s.Albedo * _LightColor0.xyz) * (tmpvar_30 * 2.000000)).xyz;

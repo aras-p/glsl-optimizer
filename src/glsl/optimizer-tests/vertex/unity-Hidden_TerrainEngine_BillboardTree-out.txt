@@ -31,10 +31,10 @@ void main ()
   float billboardRootOffsetFactor;
   float billboardModeFactor;
   float radius;
-  vec3 treePos;
-  treePos = (pos.xyz - _TreeBillboardCameraPos.xyz);
+  vec3 tmpvar_36;
+  tmpvar_36 = (pos.xyz - _TreeBillboardCameraPos.xyz);
   float tmpvar_37;
-  tmpvar_37 = dot (treePos, treePos);
+  tmpvar_37 = dot (tmpvar_36, tmpvar_36);
   if ((tmpvar_37 > _TreeBillboardDistances.x)) {
     offset = vec2(0.000000, 0.000000);
   };
@@ -45,7 +45,7 @@ void main ()
   billboardModeFactor = _TreeBillboardCameraUp.w;
   billboardRootOffsetFactor = _TreeBillboardCameraFront.w;
   float tmpvar_46;
-  tmpvar_46 = abs (radius);
+  tmpvar_46 = abs (tmpvar_42);
   absRadius = tmpvar_46;
   float tmpvar_48;
   tmpvar_48 = max (0.000000, radius);

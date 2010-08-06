@@ -6,9 +6,6 @@ struct SurfaceOutput {
   float Gloss;
   float Alpha;
 };
-struct Input {
-  vec2 uv_MainTex;
-};
 struct v2f_surf {
   vec4 pos;
   float fog;
@@ -36,19 +33,15 @@ void main ()
   vec3 lmFull;
   vec4 light;
   SurfaceOutput o;
-  Input surfIN;
-  surfIN.uv_MainTex = xlt_IN.hip_pack0.xy;
   o.Albedo = vec3(0.000000, 0.000000, 0.000000);
   o.Emission = vec3(0.000000, 0.000000, 0.000000);
   o.Specular = 0.000000;
   o.Alpha = 0.000000;
   o.Gloss = 0.000000;
-  Input IN_i0;
-  IN_i0 = surfIN;
   SurfaceOutput o_i0;
   o_i0 = o;
   vec4 tmpvar_31;
-  tmpvar_31 = texture2D (_MainTex, IN_i0.uv_MainTex);
+  tmpvar_31 = texture2D (_MainTex, xlt_IN.hip_pack0.xy);
   vec4 tmpvar_32;
   tmpvar_32 = (tmpvar_31 * _Color);
   o_i0.Albedo = tmpvar_32.xyz;
@@ -58,7 +51,7 @@ void main ()
   tmpvar_35 = texture2DProj (_LightBuffer, IN.hip_screen);
   light = tmpvar_35;
   vec4 tmpvar_37;
-  tmpvar_37 = log2 (light);
+  tmpvar_37 = log2 (tmpvar_35);
   light = -(tmpvar_37);
   vec4 tmpvar_39;
   tmpvar_39 = texture2D (unity_Lightmap, IN.hip_lmapFade.xy);

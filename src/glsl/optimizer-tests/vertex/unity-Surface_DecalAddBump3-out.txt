@@ -50,7 +50,7 @@ void main ()
   tmpvar_70[2] = _Object2World[2].xyz;
   worldN = (tmpvar_70 * (xlt_v.normal * unity_Scale.w));
   vec3 tmpvar_75;
-  tmpvar_75 = cross (v.normal, v.tangent.xyz);
+  tmpvar_75 = cross (xlt_v.normal, xlt_v.tangent.xyz);
   vec3 tmpvar_76;
   tmpvar_76 = (tmpvar_75 * v.tangent.w);
   mat3 tmpvar_77;
@@ -73,7 +73,7 @@ void main ()
   vec4 vB;
   vec3 x1;
   float tmpvar_95;
-  tmpvar_95 = dot (unity_SHAr, normal);
+  tmpvar_95 = dot (unity_SHAr, tmpvar_92);
   x1.x = tmpvar_95;
   float tmpvar_97;
   tmpvar_97 = dot (unity_SHAg, normal);
@@ -81,9 +81,11 @@ void main ()
   float tmpvar_99;
   tmpvar_99 = dot (unity_SHAb, normal);
   x1.z = float(vec3(tmpvar_99));
-  vB = (normal.xyzz * normal.yzzx);
+  vec4 tmpvar_101;
+  tmpvar_101 = (normal.xyzz * normal.yzzx);
+  vB = tmpvar_101;
   float tmpvar_102;
-  tmpvar_102 = dot (unity_SHBr, vB);
+  tmpvar_102 = dot (unity_SHBr, tmpvar_101);
   x2.x = tmpvar_102;
   float tmpvar_104;
   tmpvar_104 = dot (unity_SHBg, vB);

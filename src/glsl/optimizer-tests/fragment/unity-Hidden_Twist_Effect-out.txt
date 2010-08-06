@@ -3,31 +3,32 @@ uniform vec4 _CenterRadius;
 uniform float _Angle;
 void main ()
 {
+  vec2 tmpvar_31;
+  tmpvar_31 = gl_TexCoord[1].xy;
   vec2 uv;
-  float angle;
   vec2 offset;
-  offset = gl_TexCoord[1].xy;
+  offset = tmpvar_31;
   float tmpvar_16;
-  tmpvar_16 = length ((offset / _CenterRadius.zw));
-  angle = (1.000000 - tmpvar_16);
+  tmpvar_16 = length ((tmpvar_31 / _CenterRadius.zw));
   float tmpvar_18;
-  tmpvar_18 = max (0.000000, angle);
+  tmpvar_18 = max (0.000000, (1.000000 - tmpvar_16));
   float tmpvar_20;
   tmpvar_20 = ((tmpvar_18 * tmpvar_18) * _Angle);
-  angle = tmpvar_20;
   float x;
   x = tmpvar_20;
   float s;
   float tmpvar_21;
-  tmpvar_21 = sin (x);
+  tmpvar_21 = sin (tmpvar_20);
   s = tmpvar_21;
   float tmpvar_23;
   tmpvar_23 = cos (x);
   uv.x = ((tmpvar_23 * offset.x) - (s * offset.y));
   uv.y = float(vec2(((s * offset.x) + (tmpvar_23 * offset.y))));
-  uv = (uv + _CenterRadius.xy);
+  vec2 tmpvar_27;
+  tmpvar_27 = (uv + _CenterRadius.xy);
+  uv = tmpvar_27;
   vec4 tmpvar_28;
-  tmpvar_28 = texture2D (_MainTex, uv);
+  tmpvar_28 = texture2D (_MainTex, tmpvar_27);
   gl_FragData[0] = tmpvar_28.xyzw;
 }
 

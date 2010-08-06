@@ -49,7 +49,7 @@ void main ()
   tmpvar_105.xy = ((xlt_v.texcoord1.xy * unity_LightmapST.xy) + unity_LightmapST.zw).xy;
   tmpvar_105.z = float(vec3(((-((gl_ModelViewMatrix * xlt_v.vertex).z) * unity_LightmapFade.z) + unity_LightmapFade.w)));
   vec3 tmpvar_52;
-  tmpvar_52 = cross (v.normal, v.tangent.xyz);
+  tmpvar_52 = cross (xlt_v.normal, xlt_v.tangent.xyz);
   vec3 tmpvar_53;
   tmpvar_53 = (tmpvar_52 * v.tangent.w);
   mat3 tmpvar_54;

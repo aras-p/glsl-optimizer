@@ -19,7 +19,7 @@ void main ()
   vec2 v01;
   vec4 v00;
   vec4 tmpvar_15;
-  tmpvar_15 = texture2D (_MainTex, i.uv[0]);
+  tmpvar_15 = texture2D (_MainTex, xlt_i.uv[0]);
   v00 = tmpvar_15;
   vec4 tmpvar_17;
   tmpvar_17 = texture2D (_MainTex, i.uv[1]);

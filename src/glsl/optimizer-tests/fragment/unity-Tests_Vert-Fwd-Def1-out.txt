@@ -6,22 +6,11 @@ struct SurfaceOutput {
   float Gloss;
   float Alpha;
 };
-struct v2f_surf {
-  vec4 pos;
-  float fog;
-  vec4 hip_screen;
-};
 varying vec4 xlv_FOG;
 uniform vec4 unity_Ambient;
 uniform sampler2D _LightBuffer;
 void main ()
 {
-  v2f_surf xlt_IN;
-  xlt_IN.pos = vec4(0.000000, 0.000000, 0.000000, 0.000000);
-  xlt_IN.fog = xlv_FOG.x;
-  xlt_IN.hip_screen = gl_TexCoord[0].xyzw;
-  v2f_surf IN;
-  IN = xlt_IN;
   vec4 col;
   vec4 light;
   SurfaceOutput o;
@@ -35,10 +24,10 @@ void main ()
   o_i0.Emission = vec3(1.000000, 0.000000, 0.000000);
   o = o_i0;
   vec4 tmpvar_20;
-  tmpvar_20 = texture2DProj (_LightBuffer, IN.hip_screen);
+  tmpvar_20 = texture2DProj (_LightBuffer, gl_TexCoord[0].xyzw);
   light = tmpvar_20;
   vec4 tmpvar_22;
-  tmpvar_22 = log2 (light);
+  tmpvar_22 = log2 (tmpvar_20);
   vec4 tmpvar_23;
   tmpvar_23 = -(tmpvar_22);
   light = tmpvar_23;

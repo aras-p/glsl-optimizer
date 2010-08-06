@@ -46,7 +46,7 @@ void main ()
   SurfaceOutput o_i0;
   o_i0 = o;
   vec4 tmpvar_41;
-  tmpvar_41 = texture2D (_MainTex, IN_i0.uv_MainTex);
+  tmpvar_41 = texture2D (_MainTex, surfIN.uv_MainTex);
   vec4 tmpvar_42;
   tmpvar_42 = (tmpvar_41 * _Color);
   o_i0.Albedo = tmpvar_42.xyz;
@@ -69,7 +69,7 @@ void main ()
   s = o;
   vec4 c_i0_i1;
   float tmpvar_56;
-  tmpvar_56 = dot (s.Normal, IN.lightDir);
+  tmpvar_56 = dot (o.Normal, IN.lightDir);
   float tmpvar_57;
   tmpvar_57 = max (0.000000, tmpvar_56);
   c_i0_i1.xyz = ((s.Albedo * _LightColor0.xyz) * (tmpvar_57 * 2.000000)).xyz;

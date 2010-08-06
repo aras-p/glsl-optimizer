@@ -39,9 +39,11 @@ void main ()
   o_i0 = o;
   o_i0.Emission = vec3(0.000000, 1.000000, 0.000000);
   o = o_i0;
-  lightDir = xlt_IN.lightDir;
+  vec3 tmpvar_28;
+  tmpvar_28 = xlt_IN.lightDir;
+  lightDir = tmpvar_28;
   vec3 tmpvar_29;
-  tmpvar_29 = normalize (lightDir);
+  tmpvar_29 = normalize (tmpvar_28);
   lightDir = tmpvar_29;
   float tmpvar_31;
   tmpvar_31 = dot (IN._LightCoord, IN._LightCoord);
@@ -53,7 +55,7 @@ void main ()
   atten = tmpvar_34.w;
   vec4 c_i0;
   float tmpvar_37;
-  tmpvar_37 = dot (s.Normal, lightDir);
+  tmpvar_37 = dot (o.Normal, lightDir);
   float tmpvar_38;
   tmpvar_38 = max (0.000000, tmpvar_37);
   c_i0.xyz = ((s.Albedo * _LightColor0.xyz) * ((tmpvar_38 * atten) * 2.000000)).xyz;

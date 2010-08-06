@@ -58,7 +58,7 @@ void main ()
   o_i0 = o;
   vec4 c_i0;
   vec4 tmpvar_65;
-  tmpvar_65 = texture2D (_ParallaxMap, IN_i0.uv_BumpMap);
+  tmpvar_65 = texture2D (_ParallaxMap, surfIN.uv_BumpMap);
   vec2 __retval_i0;
   float h_i0;
   vec3 v;
@@ -99,7 +99,7 @@ void main ()
   atten = tmpvar_92.w;
   vec4 c_i0_i1;
   float tmpvar_95;
-  tmpvar_95 = dot (s.Normal, lightDir);
+  tmpvar_95 = dot (o.Normal, lightDir);
   float tmpvar_96;
   tmpvar_96 = max (0.000000, tmpvar_95);
   c_i0_i1.xyz = ((s.Albedo * _LightColor0.xyz) * ((tmpvar_96 * atten) * 2.000000)).xyz;

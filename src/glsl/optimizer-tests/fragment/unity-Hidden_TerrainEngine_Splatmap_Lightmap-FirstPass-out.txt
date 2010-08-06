@@ -60,7 +60,7 @@ void main ()
   vec3 col_i0;
   vec4 splat_control;
   vec4 tmpvar_41;
-  tmpvar_41 = texture2D (_Control, IN_i0.uv_Control);
+  tmpvar_41 = texture2D (_Control, surfIN.uv_Control);
   splat_control = tmpvar_41;
   vec4 tmpvar_43;
   tmpvar_43 = texture2D (_Splat0, IN_i0.uv_Splat0);
@@ -83,7 +83,7 @@ void main ()
   tmpvar_53 = texture2DProj (_LightBuffer, IN.hip_screen);
   light = tmpvar_53;
   vec4 tmpvar_55;
-  tmpvar_55 = log2 (light);
+  tmpvar_55 = log2 (tmpvar_53);
   vec4 tmpvar_56;
   tmpvar_56 = -(tmpvar_55);
   light = tmpvar_56;

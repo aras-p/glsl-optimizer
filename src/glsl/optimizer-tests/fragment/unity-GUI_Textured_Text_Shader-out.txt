@@ -1,19 +1,10 @@
-struct v2f {
-  vec4 vertex;
-  vec2 texcoord;
-};
 uniform sampler2D _MainTex;
 uniform vec4 _Color;
 void main ()
 {
-  v2f xlt_i;
-  xlt_i.vertex = vec4(0.000000, 0.000000, 0.000000, 0.000000);
-  xlt_i.texcoord = gl_TexCoord[0].xy;
-  v2f i;
-  i = xlt_i;
   vec4 col;
   vec4 tmpvar_9;
-  tmpvar_9 = texture2D (_MainTex, i.texcoord);
+  tmpvar_9 = texture2D (_MainTex, gl_TexCoord[0].xy);
   col.xyz = (tmpvar_9.xyz * _Color.xyz).xyz;
   col.w = float(_Color.w);
   gl_FragData[0] = col.xyzw;

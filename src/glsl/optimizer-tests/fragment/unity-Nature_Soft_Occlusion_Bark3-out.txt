@@ -6,9 +6,6 @@ struct SurfaceOutput {
   float Gloss;
   float Alpha;
 };
-struct Input {
-  vec2 uv_MainTex;
-};
 struct v2f_surf {
   vec4 pos;
   vec3 _ShadowCoord0;
@@ -40,27 +37,27 @@ void main ()
   vec4 coord;
   vec4 near;
   vec4 z;
-  Input surfIN;
+  vec2 tmpvar_73;
   SurfaceOutput o;
   o.Albedo = vec3(0.000000, 0.000000, 0.000000);
   o.Emission = vec3(0.000000, 0.000000, 0.000000);
   o.Specular = 0.000000;
   o.Alpha = 0.000000;
   o.Gloss = 0.000000;
-  Input IN_i0;
-  IN_i0 = surfIN;
   SurfaceOutput o_i0;
   o_i0 = o;
   vec4 tmpvar_37;
-  tmpvar_37 = texture2D (_MainTex, IN_i0.uv_MainTex);
+  tmpvar_37 = texture2D (_MainTex, tmpvar_73);
   vec4 tmpvar_38;
   tmpvar_38 = (tmpvar_37 * _Color);
   o_i0.Albedo = tmpvar_38.xyz;
   o_i0.Alpha = tmpvar_38.w;
   o = o_i0;
-  z = IN._ShadowZFade.xxxx;
+  vec4 tmpvar_41;
+  tmpvar_41 = IN._ShadowZFade.xxxx;
+  z = tmpvar_41;
   bvec4 tmpvar_43;
-  tmpvar_43 = greaterThanEqual (z, _LightSplitsNear);
+  tmpvar_43 = greaterThanEqual (tmpvar_41, _LightSplitsNear);
   near = vec4(tmpvar_43).xyzw;
   bvec4 tmpvar_46;
   tmpvar_46 = lessThan (z, _LightSplitsFar);
@@ -71,7 +68,7 @@ void main ()
   tmpvar_50.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
   coord = tmpvar_50;
   vec4 tmpvar_52;
-  tmpvar_52 = texture2D (_ShadowMapTexture, coord.xy);
+  tmpvar_52 = texture2D (_ShadowMapTexture, tmpvar_50.xy);
   float tmpvar_53;
   if ((tmpvar_52.x < coord.z)) {
     tmpvar_53 = _LightShadowData.x;
@@ -86,9 +83,11 @@ void main ()
   res.x = tmpvar_60;
   res.y = float(vec2(1.000000, 1.000000));
   vec2 enc;
-  enc = (vec2(1.000000, 255.000000) * (1.000000 - (z * _ProjectionParams.w)).x);
+  vec2 tmpvar_68;
+  tmpvar_68 = (vec2(1.000000, 255.000000) * (1.000000 - (z * _ProjectionParams.w)).x);
+  enc = tmpvar_68;
   vec2 tmpvar_69;
-  tmpvar_69 = fract (enc);
+  tmpvar_69 = fract (tmpvar_68);
   enc = tmpvar_69;
   enc.x = (tmpvar_69.x - (tmpvar_69.y * 0.003922));
   res.zw = vec2(enc.xy);

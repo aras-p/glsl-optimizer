@@ -57,7 +57,7 @@ void main ()
   SurfaceOutput o_i0;
   o_i0 = o;
   vec4 tmpvar_63;
-  tmpvar_63 = texture2D (_ParallaxMap, IN_i0.uv_BumpMap);
+  tmpvar_63 = texture2D (_ParallaxMap, surfIN.uv_BumpMap);
   vec2 __retval_i0;
   float h_i0;
   vec3 v;
@@ -88,7 +88,7 @@ void main ()
   tmpvar_86 = texture2DProj (_LightBuffer, IN.hip_screen);
   light = tmpvar_86;
   vec4 tmpvar_88;
-  tmpvar_88 = log2 (light);
+  tmpvar_88 = log2 (tmpvar_86);
   light = -(tmpvar_88);
   vec4 tmpvar_90;
   tmpvar_90 = texture2D (unity_Lightmap, IN.hip_lmapFade.xy);

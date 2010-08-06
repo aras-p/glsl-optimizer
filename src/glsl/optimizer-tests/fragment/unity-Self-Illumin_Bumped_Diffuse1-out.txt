@@ -48,7 +48,7 @@ void main ()
   o_i0 = o;
   vec4 c;
   vec4 tmpvar_40;
-  tmpvar_40 = texture2D (_MainTex, IN_i0.uv_MainTex);
+  tmpvar_40 = texture2D (_MainTex, surfIN.uv_MainTex);
   vec4 tmpvar_42;
   tmpvar_42 = (tmpvar_40 * _Color);
   c = tmpvar_42;
@@ -67,7 +67,7 @@ void main ()
   o_i0.Normal = normal.xyz;
   o = o_i0;
   float tmpvar_55;
-  tmpvar_55 = dot (IN.TtoV0, o.Normal);
+  tmpvar_55 = dot (IN.TtoV0, o_i0.Normal);
   viewN.x = tmpvar_55;
   float tmpvar_57;
   tmpvar_57 = dot (IN.TtoV1, o.Normal);

@@ -17,7 +17,7 @@ void main ()
   i = xlt_i;
   vec4 c;
   vec4 tmpvar_10;
-  tmpvar_10 = texture2D (_MainTex, i.uv0);
+  tmpvar_10 = texture2D (_MainTex, xlt_i.uv0);
   c = (_Color * tmpvar_10);
   vec4 tmpvar_12;
   tmpvar_12 = texture2D (_Detail, i.uv1);

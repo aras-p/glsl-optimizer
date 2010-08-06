@@ -1,18 +1,9 @@
-struct v2f {
-  vec4 vertex;
-  vec2 texcoord;
-};
 uniform sampler2D _MainTex;
 uniform float _AccumOrig;
 void main ()
 {
-  v2f xlt_i;
-  xlt_i.vertex = vec4(0.000000, 0.000000, 0.000000, 0.000000);
-  xlt_i.texcoord = gl_TexCoord[0].xy;
-  v2f i;
-  i = xlt_i;
   vec4 tmpvar_9;
-  tmpvar_9 = texture2D (_MainTex, i.texcoord);
+  tmpvar_9 = texture2D (_MainTex, gl_TexCoord[0].xy);
   vec4 tmpvar_10;
   tmpvar_10.xyz = vec3(tmpvar_9.xyz);
   tmpvar_10.w = float(vec4(_AccumOrig));

@@ -14,7 +14,7 @@ void main ()
   vec4 col;
   vec4 tex;
   vec4 tmpvar_37;
-  tmpvar_37 = texture2D (_MainTex, i.uv);
+  tmpvar_37 = texture2D (_MainTex, xlt_i.uv);
   tex = tmpvar_37;
   vec4 tmpvar_39;
   tmpvar_39 = texture2D (_CameraDepthNormalsTexture, i.uv);
@@ -34,9 +34,11 @@ void main ()
   tmpvar_50.x = float(vec3(-1.777700, -1.777700, -1.777700));
   tmpvar_50.y = float(vec3(-1.777700, -1.777700, -1.777700));
   tmpvar_50.z = float(vec3(1.000000, 1.000000, 1.000000));
-  nn = ((enc.xyz * tmpvar_49) + tmpvar_50);
+  vec3 tmpvar_51;
+  tmpvar_51 = ((enc.xyz * tmpvar_49) + tmpvar_50);
+  nn = tmpvar_51;
   float tmpvar_52;
-  tmpvar_52 = dot (nn.xyz, nn.xyz);
+  tmpvar_52 = dot (tmpvar_51.xyz, tmpvar_51.xyz);
   float tmpvar_53;
   tmpvar_53 = (2.000000 / tmpvar_52);
   n_i0.xy = (tmpvar_53 * nn.xy).xy;

@@ -27,7 +27,7 @@ void main ()
   MySurfaceOutput o_i0;
   o_i0 = o;
   vec4 tmpvar_20;
-  tmpvar_20 = texture2D (_MainTex, IN_i0.uv_MainTex);
+  tmpvar_20 = texture2D (_MainTex, surfIN.uv_MainTex);
   o_i0.Albedo = (tmpvar_20.xyz * 0.300000);
   vec4 tmpvar_22;
   tmpvar_22 = texture2D (_SpecMap, IN_i0.uv_SpecMap);

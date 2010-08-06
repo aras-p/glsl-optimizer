@@ -20,7 +20,7 @@ void main ()
   i = xlt_i;
   vec4 col;
   vec4 tmpvar_17;
-  tmpvar_17 = texture2D (_BumpMap, i.uvbump);
+  tmpvar_17 = texture2D (_BumpMap, xlt_i.uvbump);
   vec4 normal;
   normal.xy = ((tmpvar_17.wy * 2.000000) - 1.000000).xy;
   float tmpvar_21;

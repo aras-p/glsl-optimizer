@@ -56,7 +56,7 @@ void main ()
   vec4 c;
   vec4 tex;
   vec4 tmpvar_38;
-  tmpvar_38 = texture2D (_MainTex, IN_i0.uv_MainTex);
+  tmpvar_38 = texture2D (_MainTex, surfIN.uv_MainTex);
   tex = tmpvar_38;
   vec4 tmpvar_40;
   tmpvar_40 = (tmpvar_38 * _Color);
@@ -73,7 +73,7 @@ void main ()
   tmpvar_47 = texture2DProj (_LightBuffer, IN.hip_screen);
   light = tmpvar_47;
   vec4 tmpvar_49;
-  tmpvar_49 = log2 (light);
+  tmpvar_49 = log2 (tmpvar_47);
   light = -(tmpvar_49);
   vec4 tmpvar_51;
   tmpvar_51 = texture2D (unity_Lightmap, IN.hip_lmapFade.xy);

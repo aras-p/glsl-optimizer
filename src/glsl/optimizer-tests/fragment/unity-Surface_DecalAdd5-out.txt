@@ -6,9 +6,6 @@ struct SurfaceOutput {
   float Gloss;
   float Alpha;
 };
-struct Input {
-  vec2 uv_Decal;
-};
 struct v2f_surf {
   vec4 pos;
   float fog;
@@ -35,20 +32,16 @@ void main ()
   IN = xlt_IN;
   vec4 c;
   SurfaceOutput o;
-  Input surfIN;
-  surfIN.uv_Decal = xlt_IN.hip_pack0.xy;
   o.Albedo = vec3(0.000000, 0.000000, 0.000000);
   o.Emission = vec3(0.000000, 0.000000, 0.000000);
   o.Specular = 0.000000;
   o.Alpha = 0.000000;
   o.Gloss = 0.000000;
   o.Normal = xlt_IN.normal;
-  Input IN_i0;
-  IN_i0 = surfIN;
   SurfaceOutput o_i0;
   o_i0 = o;
   vec4 tmpvar_34;
-  tmpvar_34 = texture2D (_Decal, IN_i0.uv_Decal);
+  tmpvar_34 = texture2D (_Decal, xlt_IN.hip_pack0.xy);
   o_i0.Albedo = (tmpvar_34.xyz * 0.500000);
   o = o_i0;
   vec4 tmpvar_38;
@@ -59,7 +52,7 @@ void main ()
   atten_i0 = tmpvar_38.x;
   vec4 c_i0;
   float tmpvar_43;
-  tmpvar_43 = dot (s.Normal, _WorldSpaceLightPos0.xyz);
+  tmpvar_43 = dot (o.Normal, _WorldSpaceLightPos0.xyz);
   float tmpvar_44;
   tmpvar_44 = max (0.000000, tmpvar_43);
   c_i0.xyz = ((s.Albedo * _LightColor0.xyz) * ((tmpvar_44 * atten_i0) * 2.000000)).xyz;

@@ -16,7 +16,7 @@ void main ()
   v2f i;
   i = xlt_i;
   vec4 tmpvar_12;
-  tmpvar_12 = texture2D (_MainTex, i.texcoord);
+  tmpvar_12 = texture2D (_MainTex, xlt_i.texcoord);
   gl_FragData[0] = (tmpvar_12 * i.color).xyzw;
 }
 

@@ -50,7 +50,7 @@ void main ()
   SurfaceOutput o_i0;
   o_i0 = o;
   vec4 tmpvar_50;
-  tmpvar_50 = texture2D (_MainTex, IN_i0.uv_BumpMap);
+  tmpvar_50 = texture2D (_MainTex, surfIN.uv_BumpMap);
   o_i0.Albedo = tmpvar_50.xyz;
   vec4 tmpvar_52;
   tmpvar_52 = texture2D (_BumpMap, IN_i0.uv_BumpMap);
@@ -70,9 +70,11 @@ void main ()
   tmpvar_66 = pow ((1.000000 - tmpvar_64), _RimPower);
   o_i0.Emission = (_RimColor.xyz * tmpvar_66);
   o = o_i0;
-  lightDir = IN.lightDir;
+  vec3 tmpvar_68;
+  tmpvar_68 = IN.lightDir;
+  lightDir = tmpvar_68;
   vec3 tmpvar_69;
-  tmpvar_69 = normalize (lightDir);
+  tmpvar_69 = normalize (tmpvar_68);
   lightDir = tmpvar_69;
   float tmpvar_71;
   tmpvar_71 = dot (IN._LightCoord, IN._LightCoord);
@@ -86,7 +88,7 @@ void main ()
   atten = (tmpvar_74.w * tmpvar_75.w);
   vec4 c_i0;
   float tmpvar_78;
-  tmpvar_78 = dot (s.Normal, lightDir);
+  tmpvar_78 = dot (o.Normal, lightDir);
   float tmpvar_79;
   tmpvar_79 = max (0.000000, tmpvar_78);
   c_i0.xyz = ((s.Albedo * _LightColor0.xyz) * ((tmpvar_79 * atten) * 2.000000)).xyz;

@@ -13,7 +13,7 @@ void main ()
   v2f i;
   i = xlt_i;
   vec4 tmpvar_11;
-  tmpvar_11 = texture2D (_HaloFalloff, i.texcoord);
+  tmpvar_11 = texture2D (_HaloFalloff, xlt_i.texcoord);
   float tmpvar_12;
   tmpvar_12 = tmpvar_11.w;
   vec4 tmpvar_13;

@@ -16,10 +16,8 @@ void main ()
   tmpvar_16.xy = vec2(xlt_v.texcoord.xy);
   tmpvar_16.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_16.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
-  vec4 coord;
-  coord = tmpvar_16;
   vec4 tmpvar_19;
-  tmpvar_19 = texture2DLod (_MainTex, coord.xy, coord.w);
+  tmpvar_19 = texture2DLod (_MainTex, tmpvar_16.xy, tmpvar_16.w);
   v.vertex.y = float(vec2((v.vertex.y + (tmpvar_19.x * 2.000000))));
   gl_Position = (gl_ModelViewProjectionMatrix * v.vertex).xyzw;
   vec4 tmpvar_11;

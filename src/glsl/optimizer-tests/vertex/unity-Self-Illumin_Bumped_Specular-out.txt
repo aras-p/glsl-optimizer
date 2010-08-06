@@ -24,7 +24,7 @@ void main ()
   tmpvar_115 = (gl_ModelViewProjectionMatrix * xlt_v.vertex);
   tmpvar_116 = ((xlt_v.texcoord.xy * _BumpMap_ST.xy) + _BumpMap_ST.zw).xy;
   vec3 tmpvar_52;
-  tmpvar_52 = cross (v.normal, v.tangent.xyz);
+  tmpvar_52 = cross (xlt_v.normal, xlt_v.tangent.xyz);
   vec3 tmpvar_53;
   tmpvar_53 = (tmpvar_52 * v.tangent.w);
   mat3 tmpvar_54;

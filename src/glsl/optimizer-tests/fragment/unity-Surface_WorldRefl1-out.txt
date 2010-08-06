@@ -6,14 +6,11 @@ struct SurfaceOutput {
   float Gloss;
   float Alpha;
 };
-struct Input {
-  vec3 worldRefl;
-};
 uniform samplerCube _Cube;
 void main ()
 {
   vec4 res;
-  Input surfIN;
+  vec3 tmpvar_25;
   SurfaceOutput o;
   o.Albedo = vec3(0.000000, 0.000000, 0.000000);
   o.Emission = vec3(0.000000, 0.000000, 0.000000);
@@ -21,12 +18,10 @@ void main ()
   o.Alpha = 0.000000;
   o.Gloss = 0.000000;
   o.Normal = gl_TexCoord[0].xyz;
-  Input IN_i0;
-  IN_i0 = surfIN;
   SurfaceOutput o_i0;
   o_i0 = o;
   vec4 tmpvar_17;
-  tmpvar_17 = textureCube (_Cube, IN_i0.worldRefl);
+  tmpvar_17 = textureCube (_Cube, tmpvar_25);
   o_i0.Albedo = tmpvar_17.xyz;
   o = o_i0;
   res.xyz = ((o_i0.Normal * vec3(0.500000, 0.500000, -0.500000)) + 0.500000).xyz;

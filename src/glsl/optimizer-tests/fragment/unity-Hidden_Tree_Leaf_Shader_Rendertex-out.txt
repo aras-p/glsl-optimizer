@@ -15,7 +15,7 @@ void main ()
   i = xlt_i;
   vec4 col;
   vec4 tmpvar_11;
-  tmpvar_11 = texture2D (_MainTex, i.uv);
+  tmpvar_11 = texture2D (_MainTex, xlt_i.uv);
   col = tmpvar_11;
   col.xyz = (tmpvar_11.xyz * (i.color * 2.000000)).xyz;
   col.w = float(vec4((col.w * (2.000000 * _HalfOverCutoff))));

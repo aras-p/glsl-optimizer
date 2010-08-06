@@ -18,7 +18,7 @@ void main ()
   xlat_var_input = xlt_xlat_var_input;
   vec4 col;
   vec4 tmpvar_12;
-  tmpvar_12 = texture2D (_MainTex, xlat_var_input.uv.xy);
+  tmpvar_12 = texture2D (_MainTex, xlt_xlat_var_input.uv.xy);
   col = tmpvar_12;
   col.xyz = (tmpvar_12.xyz * (2.000000 * xlat_var_input.color.xyz)).xyz;
   col.w = float(vec4((col.w * (2.000000 * _HalfOverCutoff))));

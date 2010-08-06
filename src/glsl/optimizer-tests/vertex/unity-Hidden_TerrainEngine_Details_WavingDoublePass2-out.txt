@@ -33,12 +33,9 @@ void main ()
   vec3 waveMove;
   float lighting;
   vec4 s;
-  vec4 waves;
   waveMove = vec3(0.000000, 0.000000, 0.000000);
-  waves = (((vertex.x * (vec4(0.012000, 0.020000, 0.060000, 0.024000) * _WaveAndDistance.y)) + (vertex.z * (vec4(0.006000, 0.020000, 0.020000, 0.050000) * _WaveAndDistance.y))) + (_WaveAndDistance.x * vec4(1.200000, 2.000000, 1.600000, 4.800000)));
   vec4 tmpvar_135;
-  tmpvar_135 = fract (waves);
-  waves = tmpvar_135;
+  tmpvar_135 = fract ((((vertex.x * (vec4(0.012000, 0.020000, 0.060000, 0.024000) * _WaveAndDistance.y)) + (vertex.z * (vec4(0.006000, 0.020000, 0.020000, 0.050000) * _WaveAndDistance.y))) + (_WaveAndDistance.x * vec4(1.200000, 2.000000, 1.600000, 4.800000))));
   vec4 tmpvar_139;
   tmpvar_139 = ((tmpvar_135 * 6.408850) - 3.141590);
   vec4 tmpvar_140;
@@ -55,9 +52,11 @@ void main ()
   float tmpvar_152;
   tmpvar_152 = dot (s, vec4(0.674200, 0.674200, 0.269680, 0.134840));
   lighting = (tmpvar_152 * 0.700000);
-  s = (s * waveAmount_i0);
+  vec4 tmpvar_154;
+  tmpvar_154 = (s * waveAmount_i0);
+  s = tmpvar_154;
   float tmpvar_155;
-  tmpvar_155 = dot (s, vec4(0.024000, 0.040000, -0.120000, 0.096000));
+  tmpvar_155 = dot (tmpvar_154, vec4(0.024000, 0.040000, -0.120000, 0.096000));
   waveMove.x = tmpvar_155;
   float tmpvar_157;
   tmpvar_157 = dot (s, vec4(0.006000, 0.020000, -0.020000, 0.100000));

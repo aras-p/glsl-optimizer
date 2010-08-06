@@ -3,7 +3,6 @@ uniform sampler2D _MainTex;
 uniform vec4 _BlurOffsets[8];
 void main ()
 {
-  float diff;
   vec4 sample;
   int i_1;
   float diffTolerance;
@@ -18,7 +17,7 @@ void main ()
   tmpvar_14.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   coord = tmpvar_14;
   vec4 tmpvar_16;
-  tmpvar_16 = texture2D (_MainTex, coord.xy);
+  tmpvar_16 = texture2D (_MainTex, tmpvar_14.xy);
   mask = tmpvar_16;
   float tmpvar_18;
   tmpvar_18 = (tmpvar_16.z + (tmpvar_16.w / 255.000000));
@@ -37,12 +36,10 @@ void main ()
     vec4 tmpvar_25;
     tmpvar_25 = texture2D (_MainTex, (coord + (radius * _BlurOffsets[i_1])).xy);
     sample = tmpvar_25;
-    diff = (dist - (tmpvar_25.z + (tmpvar_25.w / 255.000000)));
     float tmpvar_29;
-    tmpvar_29 = abs (diff);
+    tmpvar_29 = abs ((dist - (tmpvar_25.z + (tmpvar_25.w / 255.000000))));
     float tmpvar_32;
     tmpvar_32 = clamp ((diffTolerance - tmpvar_29), 0.000000, 1.000000);
-    diff = tmpvar_32;
     mask.xy = (mask.xy + (tmpvar_32 * sample.xy)).xy;
     i_1 = (i_1 + 1);
   };

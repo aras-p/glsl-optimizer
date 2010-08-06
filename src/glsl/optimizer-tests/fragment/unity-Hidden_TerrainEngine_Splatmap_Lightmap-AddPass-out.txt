@@ -66,7 +66,7 @@ void main ()
   vec3 col;
   vec4 splat_control;
   vec4 tmpvar_52;
-  tmpvar_52 = texture2D (_Control, IN_i0.uv_Control);
+  tmpvar_52 = texture2D (_Control, surfIN.uv_Control);
   splat_control = tmpvar_52;
   vec4 tmpvar_54;
   tmpvar_54 = texture2D (_Splat0, IN_i0.uv_Splat0);
@@ -93,7 +93,7 @@ void main ()
   atten_i0 = tmpvar_66.x;
   vec4 c_i0;
   float tmpvar_71;
-  tmpvar_71 = dot (s.Normal, _WorldSpaceLightPos0.xyz);
+  tmpvar_71 = dot (o.Normal, _WorldSpaceLightPos0.xyz);
   float tmpvar_72;
   tmpvar_72 = max (0.000000, tmpvar_71);
   c_i0.xyz = ((s.Albedo * _LightColor0.xyz) * ((tmpvar_72 * atten_i0) * 2.000000)).xyz;

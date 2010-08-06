@@ -13,12 +13,11 @@ void main ()
   xlt_i.uv[2] = gl_TexCoord[2].xy;
   v2f i;
   i = xlt_i;
-  vec3 diff;
   vec3 p2;
   vec3 p1;
   vec4 original;
   vec4 tmpvar_13;
-  tmpvar_13 = texture2D (_MainTex, i.uv[0]);
+  tmpvar_13 = texture2D (_MainTex, xlt_i.uv[0]);
   original = tmpvar_13;
   p1 = tmpvar_13.xyz;
   vec4 tmpvar_16;
@@ -26,9 +25,10 @@ void main ()
   p2 = tmpvar_16.xyz;
   vec4 tmpvar_18;
   tmpvar_18 = texture2D (_MainTex, i.uv[2]);
-  diff = (((p1 * 2.000000) - p2) - tmpvar_18.xyz);
+  vec3 tmpvar_20;
+  tmpvar_20 = (((p1 * 2.000000) - p2) - tmpvar_18.xyz);
   float tmpvar_21;
-  tmpvar_21 = dot (diff, diff);
+  tmpvar_21 = dot (tmpvar_20, tmpvar_20);
   if ((tmpvar_21 >= _Treshold)) {
     original.xyz = vec3(0.000000, 0.000000, 0.000000);
   };

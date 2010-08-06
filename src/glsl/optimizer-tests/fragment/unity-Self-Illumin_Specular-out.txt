@@ -58,7 +58,7 @@ void main ()
   vec4 c_i0;
   vec4 tex;
   vec4 tmpvar_54;
-  tmpvar_54 = texture2D (_MainTex, IN_i0.uv_MainTex);
+  tmpvar_54 = texture2D (_MainTex, surfIN.uv_MainTex);
   tex = tmpvar_54;
   vec4 tmpvar_56;
   tmpvar_56 = (tmpvar_54 * _Color);
@@ -71,9 +71,11 @@ void main ()
   o_i0.Alpha = c_i0.w;
   o_i0.Specular = _Shininess;
   o = o_i0;
-  lightDir = IN.lightDir;
+  vec3 tmpvar_63;
+  tmpvar_63 = IN.lightDir;
+  lightDir = tmpvar_63;
   vec3 tmpvar_64;
-  tmpvar_64 = normalize (lightDir);
+  tmpvar_64 = normalize (tmpvar_63);
   lightDir = tmpvar_64;
   vec3 tmpvar_67;
   tmpvar_67 = normalize (IN.viewDir.xyz);
@@ -99,7 +101,7 @@ void main ()
   float diff;
   vec3 h;
   vec3 tmpvar_79;
-  tmpvar_79 = normalize ((lightDir_i0 + tmpvar_67));
+  tmpvar_79 = normalize ((lightDir + tmpvar_67));
   h = tmpvar_79;
   float tmpvar_81;
   tmpvar_81 = dot (s.Normal, lightDir_i0);

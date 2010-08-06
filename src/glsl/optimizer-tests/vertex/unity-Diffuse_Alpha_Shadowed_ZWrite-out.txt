@@ -37,7 +37,7 @@ void main ()
   vec4 vB;
   vec3 x1;
   float tmpvar_69;
-  tmpvar_69 = dot (unity_SHAr, normal);
+  tmpvar_69 = dot (unity_SHAr, tmpvar_66);
   x1.x = tmpvar_69;
   float tmpvar_71;
   tmpvar_71 = dot (unity_SHAg, normal);
@@ -45,9 +45,11 @@ void main ()
   float tmpvar_73;
   tmpvar_73 = dot (unity_SHAb, normal);
   x1.z = float(vec3(tmpvar_73));
-  vB = (normal.xyzz * normal.yzzx);
+  vec4 tmpvar_75;
+  tmpvar_75 = (normal.xyzz * normal.yzzx);
+  vB = tmpvar_75;
   float tmpvar_76;
-  tmpvar_76 = dot (unity_SHBr, vB);
+  tmpvar_76 = dot (unity_SHBr, tmpvar_75);
   x2.x = tmpvar_76;
   float tmpvar_78;
   tmpvar_78 = dot (unity_SHBg, vB);

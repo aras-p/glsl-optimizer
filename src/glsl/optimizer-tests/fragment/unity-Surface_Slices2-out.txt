@@ -51,7 +51,7 @@ void main ()
   SurfaceOutput o_i0;
   o_i0 = o;
   float tmpvar_33;
-  tmpvar_33 = fract (((IN_i0.worldPos.y + (IN_i0.worldPos.z * 0.100000)) * 5.000000));
+  tmpvar_33 = fract (((surfIN.worldPos.y + (surfIN.worldPos.z * 0.100000)) * 5.000000));
   float x;
   x = (tmpvar_33 - 0.500000);
   if ((x < 0.000000)) {
@@ -65,7 +65,7 @@ void main ()
   tmpvar_36 = texture2DProj (_LightBuffer, IN.hip_screen);
   light = tmpvar_36;
   vec4 tmpvar_38;
-  tmpvar_38 = log2 (light);
+  tmpvar_38 = log2 (tmpvar_36);
   light = -(tmpvar_38);
   vec4 tmpvar_40;
   tmpvar_40 = texture2D (unity_Lightmap, IN.hip_lmapFade.xy);

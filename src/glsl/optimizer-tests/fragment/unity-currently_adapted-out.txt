@@ -16,13 +16,15 @@ void main ()
   vec2 delta;
   vec2 valAdapted;
   vec4 tmpvar_9;
-  tmpvar_9 = texture2D (_MainTex, i.uv);
+  tmpvar_9 = texture2D (_MainTex, xlt_i.uv);
   valAdapted = tmpvar_9.xy;
   vec4 tmpvar_11;
   tmpvar_11 = texture2D (_CurTex, i.uv);
-  delta = ((tmpvar_11.xy - valAdapted) * _AdaptParams.x);
+  vec2 tmpvar_13;
+  tmpvar_13 = ((tmpvar_11.xy - valAdapted) * _AdaptParams.x);
+  delta = tmpvar_13;
   float tmpvar_14;
-  tmpvar_14 = sign (delta.x);
+  tmpvar_14 = sign (tmpvar_13.x);
   float tmpvar_15;
   tmpvar_15 = abs (delta.x);
   float tmpvar_16;

@@ -33,7 +33,7 @@ void main ()
   tmpvar_67.xy = ((xlt_v.texcoord.xy * _MainTex_ST.xy) + _MainTex_ST.zw).xy;
   tmpvar_67.zw = vec2(((xlt_v.texcoord.xy * _BumpMap_ST.xy) + _BumpMap_ST.zw).xy);
   vec3 tmpvar_32;
-  tmpvar_32 = cross (v.normal, v.tangent.xyz);
+  tmpvar_32 = cross (xlt_v.normal, xlt_v.tangent.xyz);
   vec3 tmpvar_33;
   tmpvar_33 = (tmpvar_32 * v.tangent.w);
   mat3 tmpvar_34;

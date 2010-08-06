@@ -44,7 +44,7 @@ void main ()
   tmpvar_29 = texture2DProj (_LightBuffer, IN.hip_screen);
   light = tmpvar_29;
   vec4 tmpvar_31;
-  tmpvar_31 = log2 (light);
+  tmpvar_31 = log2 (tmpvar_29);
   vec4 tmpvar_32;
   tmpvar_32 = -(tmpvar_31);
   light = tmpvar_32;

@@ -51,7 +51,7 @@ void main ()
   SurfaceOutput o_i0;
   o_i0 = o;
   vec4 tmpvar_34;
-  tmpvar_34 = texture2D (_MainTex, IN_i0.uv_MainTex);
+  tmpvar_34 = texture2D (_MainTex, surfIN.uv_MainTex);
   vec4 tmpvar_35;
   tmpvar_35 = (tmpvar_34 * IN_i0.color);
   o_i0.Albedo = tmpvar_35.xyz;
@@ -61,7 +61,7 @@ void main ()
   tmpvar_38 = texture2DProj (_LightBuffer, IN.hip_screen);
   light = tmpvar_38;
   vec4 tmpvar_40;
-  tmpvar_40 = log2 (light);
+  tmpvar_40 = log2 (tmpvar_38);
   light = -(tmpvar_40);
   vec4 tmpvar_42;
   tmpvar_42 = texture2D (unity_Lightmap, IN.hip_lmapFade.xy);

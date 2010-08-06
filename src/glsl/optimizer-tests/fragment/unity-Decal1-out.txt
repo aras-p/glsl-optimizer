@@ -53,7 +53,7 @@ void main ()
   o_i0 = o;
   vec4 c_i0;
   vec4 tmpvar_40;
-  tmpvar_40 = texture2D (_MainTex, IN_i0.uv_MainTex);
+  tmpvar_40 = texture2D (_MainTex, surfIN.uv_MainTex);
   c_i0 = tmpvar_40;
   vec4 tmpvar_42;
   tmpvar_42 = texture2D (_DecalTex, IN_i0.uv_DecalTex);
@@ -75,7 +75,7 @@ void main ()
   atten = tmpvar_51.w;
   vec4 c_i0_i1;
   float tmpvar_54;
-  tmpvar_54 = dot (s.Normal, lightDir);
+  tmpvar_54 = dot (o.Normal, lightDir);
   float tmpvar_55;
   tmpvar_55 = max (0.000000, tmpvar_54);
   c_i0_i1.xyz = ((s.Albedo * _LightColor0.xyz) * ((tmpvar_55 * atten) * 2.000000)).xyz;

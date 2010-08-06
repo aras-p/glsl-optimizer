@@ -49,7 +49,7 @@ void main ()
   SurfaceOutput o_i0;
   o_i0 = o;
   vec4 tmpvar_46;
-  tmpvar_46 = texture2D (_Decal, IN_i0.uv_Decal);
+  tmpvar_46 = texture2D (_Decal, surfIN.uv_Decal);
   o_i0.Albedo = (tmpvar_46.xyz * 0.500000);
   vec4 tmpvar_48;
   tmpvar_48 = texture2D (_DecalBump, IN_i0.uv_DecalBump);
@@ -68,7 +68,7 @@ void main ()
   atten_i0 = tmpvar_58.x;
   vec4 c_i0;
   float tmpvar_63;
-  tmpvar_63 = dot (s.Normal, IN.lightDir);
+  tmpvar_63 = dot (o.Normal, IN.lightDir);
   float tmpvar_64;
   tmpvar_64 = max (0.000000, tmpvar_63);
   c_i0.xyz = ((s.Albedo * _LightColor0.xyz) * ((tmpvar_64 * atten_i0) * 2.000000)).xyz;

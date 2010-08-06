@@ -6,9 +6,6 @@ struct SurfaceOutput {
   float Gloss;
   float Alpha;
 };
-struct Input {
-  vec2 uv_MainTex;
-};
 struct v2f_surf {
   vec4 pos;
   float fog;
@@ -41,28 +38,26 @@ void main ()
   vec4 c;
   vec3 lightDir;
   SurfaceOutput o;
-  Input surfIN;
-  surfIN.uv_MainTex = xlt_IN.hip_pack0.xy;
   o.Albedo = vec3(0.000000, 0.000000, 0.000000);
   o.Emission = vec3(0.000000, 0.000000, 0.000000);
   o.Specular = 0.000000;
   o.Alpha = 0.000000;
   o.Gloss = 0.000000;
   o.Normal = xlt_IN.normal;
-  Input IN_i0;
-  IN_i0 = surfIN;
   SurfaceOutput o_i0;
   o_i0 = o;
   vec4 tmpvar_51;
-  tmpvar_51 = texture2D (_MainTex, IN_i0.uv_MainTex);
+  tmpvar_51 = texture2D (_MainTex, xlt_IN.hip_pack0.xy);
   o_i0.Albedo = (tmpvar_51.xyz * _Color.xyz);
   o_i0.Gloss = tmpvar_51.w;
   o_i0.Alpha = (tmpvar_51.w * _Color.w);
   o_i0.Specular = _Shininess;
   o = o_i0;
-  lightDir = IN.lightDir;
+  vec3 tmpvar_57;
+  tmpvar_57 = IN.lightDir;
+  lightDir = tmpvar_57;
   vec3 tmpvar_58;
-  tmpvar_58 = normalize (lightDir);
+  tmpvar_58 = normalize (tmpvar_57);
   lightDir = tmpvar_58;
   vec3 tmpvar_61;
   tmpvar_61 = normalize (IN.viewDir.xyz);
@@ -88,7 +83,7 @@ void main ()
   float diff;
   vec3 h;
   vec3 tmpvar_73;
-  tmpvar_73 = normalize ((lightDir_i0 + tmpvar_61));
+  tmpvar_73 = normalize ((lightDir + tmpvar_61));
   h = tmpvar_73;
   float tmpvar_75;
   tmpvar_75 = dot (s.Normal, lightDir_i0);

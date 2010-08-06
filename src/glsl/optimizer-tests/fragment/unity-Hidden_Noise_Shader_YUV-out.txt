@@ -20,10 +20,10 @@ void main ()
   vec3 yuv;
   vec4 col;
   vec4 tmpvar_13;
-  tmpvar_13 = texture2D (_MainTex, i.uv);
+  tmpvar_13 = texture2D (_MainTex, xlt_i.uv);
   col = tmpvar_13;
   float tmpvar_15;
-  tmpvar_15 = dot (col.xyz, vec3(0.299000, 0.587000, 0.114000));
+  tmpvar_15 = dot (tmpvar_13.xyz, vec3(0.299000, 0.587000, 0.114000));
   yuv.x = tmpvar_15;
   yuv.y = float(vec2(((col.z - yuv.x) * 0.492000)));
   yuv.z = float(vec3(((col.x - yuv.x) * 0.877000)));

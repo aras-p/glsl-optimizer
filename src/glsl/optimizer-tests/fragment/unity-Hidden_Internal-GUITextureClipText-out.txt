@@ -19,7 +19,7 @@ void main ()
   vec4 col;
   col = _Color;
   vec4 tmpvar_14;
-  tmpvar_14 = texture2D (_MainTex, i.texcoord);
+  tmpvar_14 = texture2D (_MainTex, xlt_i.texcoord);
   vec4 tmpvar_15;
   tmpvar_15 = texture2D (_GUIClipTexture, i.texgencoord);
   col.w = float(vec4((col.w * (tmpvar_14.w * tmpvar_15.w))));

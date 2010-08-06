@@ -21,7 +21,7 @@ void main ()
   vec4 col;
   vec3 bump1;
   vec4 tmpvar_22;
-  tmpvar_22 = texture2D (_BumpMap, i.bumpuv[0]);
+  tmpvar_22 = texture2D (_BumpMap, xlt_i.bumpuv[0]);
   vec4 normal;
   normal.xy = ((tmpvar_22.wy * 2.000000) - 1.000000).xy;
   float tmpvar_26;

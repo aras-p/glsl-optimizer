@@ -65,7 +65,7 @@ void main ()
   o_i0 = o;
   vec4 c;
   vec4 tmpvar_60;
-  tmpvar_60 = texture2D (_MainTex, IN_i0.uv_MainTex);
+  tmpvar_60 = texture2D (_MainTex, surfIN.uv_MainTex);
   c = tmpvar_60;
   o_i0.Albedo = (tmpvar_60.xyz * IN_i0.color.xyz);
   vec4 tmpvar_63;
@@ -90,9 +90,11 @@ void main ()
   if ((x < 0.000000)) {
     discard;
   };
-  z = IN._ShadowZFade.xxxx;
+  vec4 tmpvar_78;
+  tmpvar_78 = IN._ShadowZFade.xxxx;
+  z = tmpvar_78;
   bvec4 tmpvar_80;
-  tmpvar_80 = greaterThanEqual (z, _LightSplitsNear);
+  tmpvar_80 = greaterThanEqual (tmpvar_78, _LightSplitsNear);
   near = vec4(tmpvar_80).xyzw;
   bvec4 tmpvar_83;
   tmpvar_83 = lessThan (z, _LightSplitsFar);
@@ -103,7 +105,7 @@ void main ()
   tmpvar_87.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
   coord = tmpvar_87;
   vec4 tmpvar_89;
-  tmpvar_89 = texture2D (_ShadowMapTexture, coord.xy);
+  tmpvar_89 = texture2D (_ShadowMapTexture, tmpvar_87.xy);
   float tmpvar_90;
   if ((tmpvar_89.x < coord.z)) {
     tmpvar_90 = _LightShadowData.x;
@@ -118,9 +120,11 @@ void main ()
   res.x = tmpvar_97;
   res.y = float(vec2(1.000000, 1.000000));
   vec2 enc;
-  enc = (vec2(1.000000, 255.000000) * (1.000000 - (z * _ProjectionParams.w)).x);
+  vec2 tmpvar_105;
+  tmpvar_105 = (vec2(1.000000, 255.000000) * (1.000000 - (z * _ProjectionParams.w)).x);
+  enc = tmpvar_105;
   vec2 tmpvar_106;
-  tmpvar_106 = fract (enc);
+  tmpvar_106 = fract (tmpvar_105);
   enc = tmpvar_106;
   enc.x = (tmpvar_106.x - (tmpvar_106.y * 0.003922));
   res.zw = vec2(enc.xy);

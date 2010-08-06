@@ -45,7 +45,7 @@ void main ()
   tmpvar_62[2] = _Object2World[2].xyz;
   worldRefl = (tmpvar_62 * -((((_World2Object * tmpvar_54).xyz * unity_Scale.w) - xlt_v.vertex.xyz)));
   vec3 tmpvar_67;
-  tmpvar_67 = cross (v.normal, v.tangent.xyz);
+  tmpvar_67 = cross (xlt_v.normal, xlt_v.tangent.xyz);
   vec3 tmpvar_68;
   tmpvar_68 = (tmpvar_67 * v.tangent.w);
   mat3 tmpvar_69;

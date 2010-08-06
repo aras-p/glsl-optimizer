@@ -31,7 +31,7 @@ void main ()
   vec4 texcol;
   vec4 normal;
   vec4 tmpvar_24;
-  tmpvar_24 = texture2D (_BumpMap, i.uv2);
+  tmpvar_24 = texture2D (_BumpMap, xlt_i.uv2);
   vec4 normal_i0;
   normal_i0.xy = ((tmpvar_24.wy * 2.000000) - 1.000000).xy;
   float tmpvar_28;

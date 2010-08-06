@@ -60,7 +60,7 @@ void main ()
   o_i0 = o;
   vec4 tex;
   vec4 tmpvar_75;
-  tmpvar_75 = texture2D (_ParallaxMap, IN_i0.uv_BumpMap);
+  tmpvar_75 = texture2D (_ParallaxMap, surfIN.uv_BumpMap);
   vec2 __retval_i0;
   float h_i0;
   vec3 v;
@@ -91,9 +91,11 @@ void main ()
   o_i0.Emission = (tmpvar_101.xyz * _ReflectColor.xyz);
   o_i0.Alpha = (tmpvar_101.w * _ReflectColor.w);
   o = o_i0;
-  lightDir = IN.lightDir;
+  vec3 tmpvar_104;
+  tmpvar_104 = IN.lightDir;
+  lightDir = tmpvar_104;
   vec3 tmpvar_105;
-  tmpvar_105 = normalize (lightDir);
+  tmpvar_105 = normalize (tmpvar_104);
   lightDir = tmpvar_105;
   float tmpvar_107;
   vec4 LightCoord;
@@ -113,7 +115,7 @@ void main ()
   atten = ((float((IN._LightCoord.z > 0.000000)) * tmpvar_107) * tmpvar_115.w);
   vec4 c_i0_i1;
   float tmpvar_118;
-  tmpvar_118 = dot (s.Normal, lightDir);
+  tmpvar_118 = dot (o.Normal, lightDir);
   float tmpvar_119;
   tmpvar_119 = max (0.000000, tmpvar_118);
   c_i0_i1.xyz = ((s.Albedo * _LightColor0.xyz) * ((tmpvar_119 * atten) * 2.000000)).xyz;

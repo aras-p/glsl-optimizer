@@ -34,7 +34,7 @@ void main ()
   tmpvar_53.xyz = vec3(_WorldSpaceCameraPos.xyz);
   tmpvar_53.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
   vec3 tmpvar_56;
-  tmpvar_56 = reflect (-((((_World2Object * tmpvar_53).xyz * unity_Scale.w) - xlt_v.vertex.xyz)), v.normal);
+  tmpvar_56 = reflect (-((((_World2Object * tmpvar_53).xyz * unity_Scale.w) - xlt_v.vertex.xyz)), xlt_v.normal);
   mat3 tmpvar_63;
   tmpvar_63[0] = _Object2World[0].xyz;
   tmpvar_63[1] = _Object2World[1].xyz;

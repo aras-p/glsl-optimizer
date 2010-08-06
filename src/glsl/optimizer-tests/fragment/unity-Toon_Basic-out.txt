@@ -16,7 +16,7 @@ void main ()
   i = xlt_i;
   vec4 col;
   vec4 tmpvar_11;
-  tmpvar_11 = texture2D (_MainTex, i.texcoord);
+  tmpvar_11 = texture2D (_MainTex, xlt_i.texcoord);
   col = (_Color * tmpvar_11);
   vec4 tmpvar_13;
   tmpvar_13 = textureCube (_ToonShade, i.cubenormal);

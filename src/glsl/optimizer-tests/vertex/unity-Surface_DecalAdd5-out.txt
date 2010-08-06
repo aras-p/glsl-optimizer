@@ -66,7 +66,7 @@ void main ()
   vec4 vB;
   vec3 x1;
   float tmpvar_99;
-  tmpvar_99 = dot (unity_SHAr, normal);
+  tmpvar_99 = dot (unity_SHAr, tmpvar_96);
   x1.x = tmpvar_99;
   float tmpvar_101;
   tmpvar_101 = dot (unity_SHAg, normal);
@@ -74,9 +74,11 @@ void main ()
   float tmpvar_103;
   tmpvar_103 = dot (unity_SHAb, normal);
   x1.z = float(vec3(tmpvar_103));
-  vB = (normal.xyzz * normal.yzzx);
+  vec4 tmpvar_105;
+  tmpvar_105 = (normal.xyzz * normal.yzzx);
+  vB = tmpvar_105;
   float tmpvar_106;
-  tmpvar_106 = dot (unity_SHBr, vB);
+  tmpvar_106 = dot (unity_SHBr, tmpvar_105);
   x2.x = tmpvar_106;
   float tmpvar_108;
   tmpvar_108 = dot (unity_SHBg, vB);
@@ -105,10 +107,12 @@ void main ()
   tmpvar_120 = (unity_4LightPosY0 - tmpvar_116.y);
   vec4 tmpvar_121;
   tmpvar_121 = (unity_4LightPosZ0 - tmpvar_116.z);
-  lengthSq = (((tmpvar_119 * tmpvar_119) + (tmpvar_120 * tmpvar_120)) + (tmpvar_121 * tmpvar_121));
+  vec4 tmpvar_125;
+  tmpvar_125 = (((tmpvar_119 * tmpvar_119) + (tmpvar_120 * tmpvar_120)) + (tmpvar_121 * tmpvar_121));
+  lengthSq = tmpvar_125;
   ndotl = (((tmpvar_119 * worldN.x) + (tmpvar_120 * worldN.y)) + (tmpvar_121 * worldN.z));
   vec4 tmpvar_130;
-  tmpvar_130 = inversesqrt (lengthSq);
+  tmpvar_130 = inversesqrt (tmpvar_125);
   vec4 tmpvar_132;
   tmpvar_132 = max (vec4(0.000000, 0.000000, 0.000000, 0.000000), (ndotl * tmpvar_130));
   ndotl = tmpvar_132;

@@ -49,7 +49,7 @@ void main ()
   o_i0.zw = vec2(tmpvar_38.zw);
   tmpvar_97 = o_i0;
   vec3 tmpvar_50;
-  tmpvar_50 = cross (v.normal, v.tangent.xyz);
+  tmpvar_50 = cross (xlt_v.normal, xlt_v.tangent.xyz);
   vec3 tmpvar_51;
   tmpvar_51 = (tmpvar_50 * v.tangent.w);
   mat3 tmpvar_52;
