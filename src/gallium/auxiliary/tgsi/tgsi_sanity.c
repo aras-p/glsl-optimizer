@@ -34,7 +34,7 @@
 #include "tgsi_iterate.h"
 
 
-DEBUG_GET_ONCE_BOOL_OPTION(print_sanity, "TGSI_PRINT_SANITY", FALSE);
+DEBUG_GET_ONCE_BOOL_OPTION(print_sanity, "TGSI_PRINT_SANITY", TRUE);
 
 
 typedef struct {
