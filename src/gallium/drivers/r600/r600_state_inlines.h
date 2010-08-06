@@ -129,6 +129,20 @@ static INLINE uint32_t r600_translate_ds_func(int func)
 	return func;
 }
 
+static uint32_t r600_translate_dbformat(enum pipe_format format)
+{
+	switch (format) {
+	case PIPE_FORMAT_Z16_UNORM:
+		return V_028010_DEPTH_16;
+	case PIPE_FORMAT_Z24X8_UNORM:
+		return V_028010_DEPTH_X8_24;
+	case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
+		return V_028010_DEPTH_8_24;
+	default:
+		return ~0;
+	}
+}
+
 static uint32_t r600_translate_colorswap(enum pipe_format format)
 {
 	switch (format) {
@@ -167,6 +181,10 @@ static uint32_t r600_translate_colorswap(enum pipe_format format)
         case PIPE_FORMAT_X8B8G8R8_UNORM:
 //        case PIPE_FORMAT_R8SG8SB8UX8U_NORM:
 		return SWAP_STD_REV;
+
+	case PIPE_FORMAT_Z24X8_UNORM:
+	case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
+		return SWAP_STD;
 
         case PIPE_FORMAT_R10G10B10A2_UNORM:
         case PIPE_FORMAT_R10G10B10X2_SNORM:
@@ -234,6 +252,10 @@ static INLINE uint32_t r600_translate_colorformat(enum pipe_format format)
         case PIPE_FORMAT_R10SG10SB10SA2U_NORM:
 		return V_0280A0_COLOR_10_10_10_2;
 
+	case PIPE_FORMAT_Z24X8_UNORM:
+	case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
+		return V_0280A0_COLOR_24_8;
+
 		/* 64-bit buffers. */
         case PIPE_FORMAT_R16G16B16A16_UNORM:
         case PIPE_FORMAT_R16G16B16A16_SNORM:
@@ -271,7 +293,7 @@ static INLINE boolean r600_is_colorbuffer_format_supported(enum pipe_format form
 
 static INLINE boolean r600_is_zs_format_supported(enum pipe_format format)
 {
-	return TRUE;
+	return r600_translate_dbformat(format) != ~0;
 }
 
 static INLINE boolean r600_is_vertex_format_supported(enum pipe_format format)

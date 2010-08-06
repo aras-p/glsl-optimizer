@@ -706,22 +706,6 @@ static int r600_cb0(struct r600_context *rctx, struct radeon_state *rstate)
 	return radeon_state_pm4(rstate);
 }
 
-static int r600_db_format(unsigned pformat, unsigned *format)
-{
-	switch (pformat) {
-	case PIPE_FORMAT_Z24X8_UNORM:
-		*format = V_028010_DEPTH_X8_24;
-		return 0;
-	case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
-		*format = V_028010_DEPTH_8_24;
-		return 0;
-	default:
-		*format = V_028010_DEPTH_INVALID;
-		R600_ERR("unsupported %d\n", pformat);
-		return -EINVAL;
-	}
-}
-
 static int r600_db(struct r600_context *rctx, struct radeon_state *rstate)
 {
 	struct r600_screen *rscreen = rctx->screen;
@@ -746,9 +730,7 @@ static int r600_db(struct r600_context *rctx, struct radeon_state *rstate)
 	level = state->zsbuf->level;
 	pitch = (rtex->pitch[level] / rtex->bpt) / 8 - 1;
 	slice = (rtex->pitch[level] / rtex->bpt) * state->zsbuf->height / 64 - 1;
-	if (r600_db_format(state->zsbuf->texture->format, &format)) {
-		return -EINVAL;
-	}
+	format = r600_translate_dbformat(state->zsbuf->texture->format);
 	rstate->states[R600_DB__DB_DEPTH_BASE] = 0x00000000;
 	rstate->states[R600_DB__DB_DEPTH_INFO] = 0x00010000 |
 					S_028010_FORMAT(format);
