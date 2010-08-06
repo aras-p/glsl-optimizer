@@ -58,7 +58,7 @@ void main ()
   o_i0 = o;
   vec4 tmpvar_63;
   tmpvar_63 = texture2D (_ParallaxMap, IN_i0.uv_BumpMap);
-  vec2 __retval_i0_i0;
+  vec2 __retval_i0;
   float h_i0;
   vec3 v;
   h_i0 = ((tmpvar_63.w * _Parallax) - (_Parallax / 2.000000));
@@ -66,9 +66,9 @@ void main ()
   tmpvar_68 = normalize (IN_i0.viewDir);
   v = tmpvar_68;
   v.z = float(vec3((tmpvar_68.z + 0.420000)));
-  __retval_i0_i0 = (h_i0 * (v.xy / v.z));
-  IN_i0.uv_MainTex = (IN_i0.uv_MainTex + __retval_i0_i0);
-  IN_i0.uv_BumpMap = (IN_i0.uv_BumpMap + __retval_i0_i0);
+  __retval_i0 = (h_i0 * (v.xy / v.z));
+  IN_i0.uv_MainTex = (IN_i0.uv_MainTex + __retval_i0);
+  IN_i0.uv_BumpMap = (IN_i0.uv_BumpMap + __retval_i0);
   vec4 tmpvar_74;
   tmpvar_74 = texture2D (_MainTex, IN_i0.uv_MainTex);
   vec4 tmpvar_75;

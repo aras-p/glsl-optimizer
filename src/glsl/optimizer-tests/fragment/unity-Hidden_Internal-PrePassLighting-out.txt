@@ -29,14 +29,14 @@ float ComputeShadow (
   vec = (tmpvar_32 * vec);
   float tmpvar_6;
   tmpvar_6 = length (vec);
-  float mydist;
-  mydist = ((tmpvar_6 * _LightPositionRange.w) * 0.970000);
+  float mydist_i0;
+  mydist_i0 = ((tmpvar_6 * _LightPositionRange.w) * 0.970000);
   vec4 tmpvar_38;
   tmpvar_38 = textureCube (_ShadowMapTexture, vec);
   float tmpvar_43;
   tmpvar_43 = dot (tmpvar_38, vec4(1.000000, 0.003922, 0.000015, 0.000000));
   float tmpvar_45;
-  if ((tmpvar_43 < mydist)) {
+  if ((tmpvar_43 < mydist_i0)) {
     tmpvar_45 = _LightShadowData.x;
   } else {
     tmpvar_45 = 1.000000;

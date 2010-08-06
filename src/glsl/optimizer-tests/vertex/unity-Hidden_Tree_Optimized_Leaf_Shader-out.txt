@@ -106,10 +106,10 @@ void main ()
   tmpvar_210 = fract ((((tmpvar_204 * 2.000000) - 1.000000) + 0.500000));
   vec4 tmpvar_211;
   tmpvar_211 = abs (((tmpvar_210 * 2.000000) - 1.000000));
-  vec4 __retval_i0_i1_i0;
-  __retval_i0_i1_i0 = ((tmpvar_211 * tmpvar_211) * (3.000000 - (2.000000 * tmpvar_211)));
+  vec4 __retval_i0;
+  __retval_i0 = ((tmpvar_211 * tmpvar_211) * (3.000000 - (2.000000 * tmpvar_211)));
   vec2 tmpvar_215;
-  tmpvar_215 = (__retval_i0_i1_i0.xz + __retval_i0_i1_i0.yw);
+  tmpvar_215 = (__retval_i0.xz + __retval_i0.yw);
   bend = ((animParams.y * 0.100000) * normal_i0.xyz);
   bend.y = float(vec2((animParams.w * 0.300000)));
   pos_i0.xyz = (pos_i0.xyz + (((tmpvar_215.xyx * bend) + ((_Wind.xyz * tmpvar_215.y) * animParams.w)) * _Wind.w)).xyz;
