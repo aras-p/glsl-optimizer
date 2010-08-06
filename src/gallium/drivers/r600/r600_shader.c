@@ -105,8 +105,8 @@ int r600_pipe_shader_create(struct pipe_context *ctx,
 	struct r600_screen *rscreen = r600_screen(ctx->screen);
 	int r;
 
-fprintf(stderr, "--------------------------------------------------------------\n");
-tgsi_dump(tokens, 0);
+//fprintf(stderr, "--------------------------------------------------------------\n");
+//tgsi_dump(tokens, 0);
 	if (rpshader == NULL)
 		return -ENOMEM;
 	rpshader->shader.family = radeon_get_family(rscreen->rw);
@@ -120,7 +120,7 @@ tgsi_dump(tokens, 0);
 		R600_ERR("building bytecode failed !\n");
 		return r;
 	}
-fprintf(stderr, "______________________________________________________________\n");
+//fprintf(stderr, "______________________________________________________________\n");
 	return 0;
 }
 
@@ -340,6 +340,7 @@ int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *s
 	struct tgsi_full_immediate *immediate;
 	struct r600_shader_ctx ctx;
 	struct r600_bc_output output[32];
+	unsigned output_done;
 	unsigned opcode;
 	int i, r = 0, pos0;
 
@@ -431,9 +432,7 @@ int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *s
 		output[i].inst = V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT;
 		switch (ctx.type == TGSI_PROCESSOR_VERTEX) {
 		case TGSI_PROCESSOR_VERTEX:
-			shader->output[i].type = r600_export_parameter;
 			if (shader->output[i].name == TGSI_SEMANTIC_POSITION) {
-				shader->output[i].type = r600_export_position;
 				output[i].array_base = 60;
 				output[i].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_POS;
 				/* position doesn't count in array_base */
@@ -441,12 +440,10 @@ int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *s
 			}
 			break;
 		case TGSI_PROCESSOR_FRAGMENT:
-			shader->output[i].type = r600_export_framebuffer;
 			if (shader->output[i].name == TGSI_SEMANTIC_COLOR) {
-				output[i].array_base = 0;
+				output[i].array_base = shader->output[i].sid;
 				output[i].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PIXEL;
 			} else if (shader->output[i].name == TGSI_SEMANTIC_POSITION) {
-				shader->output[i].type = r600_export_position;
 				output[i].array_base = 61;
 				output[i].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PIXEL;
 			} else {
@@ -464,9 +461,9 @@ int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *s
 			output[i].end_of_program = 1;
 		}
 	}
-	for (i = shader->noutput - 1, shader->output_done = 0; i >= 0; i--) {
-		if (!(shader->output_done & (1 << output[i].type))) {
-			shader->output_done |= (1 << output[i].type);
+	for (i = shader->noutput - 1, output_done = 0; i >= 0; i--) {
+		if (!(output_done & (1 << output[i].type))) {
+			output_done |= (1 << output[i].type);
 			output[i].inst = V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT_DONE;
 		}
 	}

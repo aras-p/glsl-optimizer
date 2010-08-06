@@ -55,7 +55,7 @@ void r600_flush(struct pipe_context *ctx, unsigned flags,
 	 * without throwing bad code
 	 */
 	sprintf(dname, "gallium-%08d.bof", dc);
-	if (dc < 10)
+	if (dc < 1)
 		radeon_ctx_dump_bof(rctx->ctx, dname);
 #if 1
 	radeon_ctx_submit(rctx->ctx);
@@ -204,24 +204,6 @@ static void r600_init_config(struct r600_context *rctx)
 		num_es_stack_entries = 0;
 		break;
 	}
-	printf("ps_prio : %d\n", ps_prio);
-	printf("vs_prio : %d\n", vs_prio);
-	printf("gs_prio : %d\n", gs_prio);
-	printf("es_prio : %d\n", es_prio);
-	printf("num_ps_gprs : %d\n", num_ps_gprs);
-	printf("num_vs_gprs : %d\n", num_vs_gprs);
-	printf("num_gs_gprs : %d\n", num_gs_gprs);
-	printf("num_es_gprs : %d\n", num_es_gprs);
-	printf("num_temp_gprs : %d\n", num_temp_gprs);
-	printf("num_ps_threads : %d\n", num_ps_threads);
-	printf("num_vs_threads : %d\n", num_vs_threads);
-	printf("num_gs_threads : %d\n", num_gs_threads);
-	printf("num_es_threads : %d\n", num_es_threads);
-	printf("num_ps_stack_entries : %d\n", num_ps_stack_entries);
-	printf("num_vs_stack_entries : %d\n", num_vs_stack_entries);
-	printf("num_gs_stack_entries : %d\n", num_gs_stack_entries);
-	printf("num_es_stack_entries : %d\n", num_es_stack_entries);
-
 	rctx->hw_states.config = radeon_state(rctx->rw, R600_CONFIG_TYPE, R600_CONFIG);
 
 	rctx->hw_states.config->states[R600_CONFIG__SQ_CONFIG] = 0x00000000;

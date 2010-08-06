@@ -1205,7 +1205,7 @@ static struct radeon_state *r600_cb_cntl(struct r600_context *rctx)
 	struct r600_screen *rscreen = rctx->screen;
 	struct radeon_state *rstate;
 	const struct pipe_blend_state *pbs = &rctx->blend->state.blend;
-	int nr_cbufs = rctx->framebuffer->state.framebuffer.nr_cbufs;	
+	int nr_cbufs = rctx->framebuffer->state.framebuffer.nr_cbufs;
 	uint32_t color_control, target_mask, shader_mask;
 	int i;
 
@@ -1214,20 +1214,29 @@ static struct radeon_state *r600_cb_cntl(struct r600_context *rctx)
 	color_control = S_028808_PER_MRT_BLEND(1);
 
 	for (i = 0; i < nr_cbufs; i++) {
-		shader_mask |= 0xf << i;
+		shader_mask |= 0xf << (i * 4);
 	}
 
 	if (pbs->logicop_enable) {
 		color_control |= (pbs->logicop_func) << 16;
-	} else
+	} else {
 		color_control |= (0xcc << 16);
+	}
 
-	for (i = 0; i < 8; i++) {
-		if (pbs->rt[i].blend_enable) {
-			color_control |= S_028808_TARGET_BLEND_ENABLE(1 << i);
+	if (pbs->independent_blend_enable) {
+		for (i = 0; i < 8; i++) {
+			if (pbs->rt[i].blend_enable) {
+				color_control |= S_028808_TARGET_BLEND_ENABLE(1 << i);
+			}
+			target_mask |= (pbs->rt[i].colormask << (4 * i));
 		}
-		target_mask |= (pbs->rt[i].colormask << (4 * i));
-		
+	} else {
+		for (i = 0; i < 8; i++) {
+			if (pbs->rt[0].blend_enable) {
+				color_control |= S_028808_TARGET_BLEND_ENABLE(1 << i);
+			}
+			target_mask |= (pbs->rt[0].colormask << (4 * i));
+		}
 	}
 	rstate = radeon_state(rscreen->rw, R600_CB_CNTL_TYPE, R600_CB_CNTL);
 	rstate->states[R600_CB_CNTL__CB_SHADER_MASK] = shader_mask;
