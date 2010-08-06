@@ -2040,10 +2040,12 @@ ir_to_mesa_visitor::visit(ir_texture *ir)
 
    switch (sampler->type->sampler_dimensionality) {
    case GLSL_SAMPLER_DIM_1D:
-      inst->tex_target = TEXTURE_1D_INDEX;
+      inst->tex_target = (sampler->type->sampler_array)
+	 ? TEXTURE_1D_ARRAY_INDEX : TEXTURE_1D_INDEX;
       break;
    case GLSL_SAMPLER_DIM_2D:
-      inst->tex_target = TEXTURE_2D_INDEX;
+      inst->tex_target = (sampler->type->sampler_array)
+	 ? TEXTURE_2D_ARRAY_INDEX : TEXTURE_2D_INDEX;
       break;
    case GLSL_SAMPLER_DIM_3D:
       inst->tex_target = TEXTURE_3D_INDEX;
