@@ -4,14 +4,13 @@
 #include "pipe/p_compiler.h"
 #include "pipe/p_state.h"
 #include "util/u_atomic.h"
-
-struct util_hash_table;
+#include "cso_cache/cso_hash.h"
 
 struct util_surfaces
 {
    union
    {
-      struct util_hash_table *table;
+      struct cso_hash *hash;
       struct pipe_surface **array;
    } u;
 };
