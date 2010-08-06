@@ -212,23 +212,17 @@ const glsl_type glsl_type::builtin_130_types[] = {
    glsl_type(GL_UNSIGNED_INT_VEC3, GLSL_TYPE_UINT, 3, 1, "uvec3"),
    glsl_type(GL_UNSIGNED_INT_VEC4, GLSL_TYPE_UINT, 4, 1, "uvec4"),
 
-   /* 1D and 2D texture arrays */
-   glsl_type(GL_SAMPLER_1D_ARRAY,
-	     GLSL_SAMPLER_DIM_1D, 0, 1, GLSL_TYPE_FLOAT, "sampler1DArray"),
+   /* 1D and 2D texture arrays - several of these are included only in
+    * builtin_EXT_texture_array_types.
+    */
    glsl_type(GL_INT_SAMPLER_1D_ARRAY,
 	     GLSL_SAMPLER_DIM_1D, 0, 1,   GLSL_TYPE_INT, "isampler1DArray"),
    glsl_type(GL_UNSIGNED_INT_SAMPLER_1D_ARRAY,
 	     GLSL_SAMPLER_DIM_1D, 0, 1,  GLSL_TYPE_UINT, "usampler1DArray"),
-   glsl_type(GL_SAMPLER_1D_ARRAY_SHADOW,
-	     GLSL_SAMPLER_DIM_1D, 1, 1, GLSL_TYPE_FLOAT, "sampler1DArrayShadow"),
-   glsl_type(GL_SAMPLER_2D_ARRAY,
-	     GLSL_SAMPLER_DIM_2D, 0, 1, GLSL_TYPE_FLOAT, "sampler2DArray"),
    glsl_type(GL_INT_SAMPLER_2D_ARRAY,
 	     GLSL_SAMPLER_DIM_2D, 0, 1,   GLSL_TYPE_INT, "isampler2DArray"),
    glsl_type(GL_UNSIGNED_INT_SAMPLER_2D_ARRAY,
 	     GLSL_SAMPLER_DIM_2D, 0, 1,  GLSL_TYPE_UINT, "usampler2DArray"),
-   glsl_type(GL_SAMPLER_2D_ARRAY_SHADOW,
-	     GLSL_SAMPLER_DIM_2D, 1, 1, GLSL_TYPE_FLOAT, "sampler2DArrayShadow"),
 
    /* cube shadow samplers */
    glsl_type(GL_SAMPLER_CUBE_SHADOW,

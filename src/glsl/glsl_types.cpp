@@ -144,6 +144,7 @@ glsl_type::generate_130_types(glsl_symbol_table *symtab)
 
    add_types_to_symbol_table(symtab, builtin_130_types,
 			     Elements(builtin_130_types), false);
+   generate_EXT_texture_array_types(symtab, false);
 }
 
 
