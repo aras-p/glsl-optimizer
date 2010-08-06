@@ -160,8 +160,8 @@ void radeon_ctx_dump_bof(struct radeon_ctx *ctx, const char *file);
  * R600/R700
  */
 
-#define R600_NSTATE				1273
-#define R600_NTYPE				25
+#define R600_NSTATE				1280
+#define R600_NTYPE				32
 
 #define R600_CONFIG				0
 #define R600_CONFIG_TYPE				0
@@ -207,12 +207,26 @@ void radeon_ctx_dump_bof(struct radeon_ctx *ctx, const char *file);
 #define R600_GS_SAMPLER_BORDER_TYPE				20
 #define R600_CB0				1269
 #define R600_CB0_TYPE				21
-#define R600_DB				1270
-#define R600_DB_TYPE				22
-#define R600_VGT				1271
-#define R600_VGT_TYPE				23
-#define R600_DRAW				1272
-#define R600_DRAW_TYPE				24
+#define R600_CB1				1270
+#define R600_CB1_TYPE				22
+#define R600_CB2				1271
+#define R600_CB2_TYPE				23
+#define R600_CB3				1272
+#define R600_CB3_TYPE				24
+#define R600_CB4				1273
+#define R600_CB4_TYPE				25
+#define R600_CB5				1274
+#define R600_CB5_TYPE				26
+#define R600_CB6				1275
+#define R600_CB6_TYPE				27
+#define R600_CB7				1276
+#define R600_CB7_TYPE				28
+#define R600_DB				1277
+#define R600_DB_TYPE				29
+#define R600_VGT				1278
+#define R600_VGT_TYPE				30
+#define R600_DRAW				1279
+#define R600_DRAW_TYPE				31
 /* R600_CONFIG */
 #define R600_CONFIG__SQ_CONFIG			0
 #define R600_CONFIG__SQ_GPR_RESOURCE_MGMT_1			1

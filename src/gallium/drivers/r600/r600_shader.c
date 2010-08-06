@@ -339,7 +339,7 @@ int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *s
 {
 	struct tgsi_full_immediate *immediate;
 	struct r600_shader_ctx ctx;
-	struct r600_bc_output output;
+	struct r600_bc_output output[32];
 	unsigned opcode;
 	int i, r = 0, pos0;
 
@@ -418,33 +418,37 @@ int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *s
 	}
 	/* export output */
 	for (i = 0, pos0 = 0; i < shader->noutput; i++) {
-		memset(&output, 0, sizeof(struct r600_bc_output));
-		output.gpr = shader->output[i].gpr;
-		output.elem_size = 3;
-		output.swizzle_x = 0;
-		output.swizzle_y = 1;
-		output.swizzle_z = 2;
-		output.swizzle_w = 3;
-		output.barrier = 1;
-		output.type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PARAM;
-		output.array_base = i - pos0;
-		output.inst = V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT_DONE;
+		memset(&output[i], 0, sizeof(struct r600_bc_output));
+		output[i].gpr = shader->output[i].gpr;
+		output[i].elem_size = 3;
+		output[i].swizzle_x = 0;
+		output[i].swizzle_y = 1;
+		output[i].swizzle_z = 2;
+		output[i].swizzle_w = 3;
+		output[i].barrier = 1;
+		output[i].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PARAM;
+		output[i].array_base = i - pos0;
+		output[i].inst = V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT;
 		switch (ctx.type == TGSI_PROCESSOR_VERTEX) {
 		case TGSI_PROCESSOR_VERTEX:
+			shader->output[i].type = r600_export_parameter;
 			if (shader->output[i].name == TGSI_SEMANTIC_POSITION) {
-				output.array_base = 60;
-				output.type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_POS;
+				shader->output[i].type = r600_export_position;
+				output[i].array_base = 60;
+				output[i].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_POS;
 				/* position doesn't count in array_base */
 				pos0 = 1;
 			}
 			break;
 		case TGSI_PROCESSOR_FRAGMENT:
+			shader->output[i].type = r600_export_framebuffer;
 			if (shader->output[i].name == TGSI_SEMANTIC_COLOR) {
-				output.array_base = 0;
-				output.type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PIXEL;
+				output[i].array_base = 0;
+				output[i].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PIXEL;
 			} else if (shader->output[i].name == TGSI_SEMANTIC_POSITION) {
-				output.array_base = 61;
-				output.type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PIXEL;
+				shader->output[i].type = r600_export_position;
+				output[i].array_base = 61;
+				output[i].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PIXEL;
 			} else {
 				R600_ERR("unsupported fragment output name %d\n", shader->output[i].name);
 				r = -EINVAL;
@@ -457,9 +461,17 @@ int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *s
 			goto out_err;
 		}
 		if (i == (shader->noutput - 1)) {
-			output.end_of_program = 1;
+			output[i].end_of_program = 1;
 		}
-		r = r600_bc_add_output(ctx.bc, &output);
+	}
+	for (i = shader->noutput - 1, shader->output_done = 0; i >= 0; i--) {
+		if (!(shader->output_done & (1 << output[i].type))) {
+			shader->output_done |= (1 << output[i].type);
+			output[i].inst = V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT_DONE;
+		}
+	}
+	for (i = 0; i < shader->noutput; i++) {
+		r = r600_bc_add_output(ctx.bc, &output[i]);
 		if (r)
 			goto out_err;
 	}

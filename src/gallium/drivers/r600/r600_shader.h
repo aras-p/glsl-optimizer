@@ -25,9 +25,17 @@
 
 #include "r600_asm.h"
 
+enum r600_export_type {
+	r600_export_position = 0,
+	r600_export_parameter,
+	r600_export_framebuffer,
+};
+
 struct r600_shader_io {
 	unsigned		name;
 	unsigned		gpr;
+	unsigned		done;
+	unsigned		type;
 	int			sid;
 	unsigned		interpolate;
 };
@@ -41,6 +49,7 @@ struct r600_shader {
 	struct r600_shader_io	input[32];
 	struct r600_shader_io	output[32];
 	enum radeon_family	family;
+	unsigned		output_done;
 };
 
 #endif

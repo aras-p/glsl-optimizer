@@ -675,9 +675,8 @@ static struct radeon_state *r600_cb(struct r600_context *rctx, int cb)
 	unsigned color_info;
 	unsigned format, swap, ntype;
 	const struct util_format_description *desc;
-	int id = R600_CB0 + cb;
 
-	rstate = radeon_state(rscreen->rw, R600_CB0_TYPE, id);
+	rstate = radeon_state(rscreen->rw, R600_CB0_TYPE + cb, R600_CB0 + cb);
 	if (rstate == NULL)
 		return NULL;
 	rtex = (struct r600_resource_texture*)state->cbufs[cb]->texture;
