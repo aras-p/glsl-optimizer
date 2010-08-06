@@ -25,7 +25,6 @@ void main ()
   float waveAmount_i0;
   waveAmount_i0 = (xlt_v.color.w * _WaveAndDistance.z);
   vec3 waveMove;
-  float lighting;
   vec4 s;
   vec4 waves;
   waveMove = vec3(0.000000, 0.000000, 0.000000);
@@ -46,9 +45,6 @@ void main ()
   vec4 tmpvar_97;
   tmpvar_97 = (tmpvar_95 * tmpvar_95);
   s = (tmpvar_97 * tmpvar_97);
-  float tmpvar_100;
-  tmpvar_100 = dot (s, vec4(0.674200, 0.674200, 0.269680, 0.134840));
-  lighting = (tmpvar_100 * 0.700000);
   s = (s * waveAmount_i0);
   float tmpvar_103;
   tmpvar_103 = dot (s, vec4(0.024000, 0.040000, -0.120000, 0.096000));
@@ -57,8 +53,6 @@ void main ()
   tmpvar_105 = dot (s, vec4(0.006000, 0.020000, -0.020000, 0.100000));
   waveMove.z = float(vec3(tmpvar_105));
   vertex.xz = vec2((vertex.xz - (waveMove.xz * _WaveAndDistance.z)).xy);
-  vec3 tmpvar_109;
-  tmpvar_109 = mix (vec3(0.500000, 0.500000, 0.500000), _WavingTint.xyz, vec3(lighting));
   v.vertex = vertex;
   tmpvar_132.xyz = vec3(0.000000, 0.000000, 1.000000);
   tmpvar_132.w = float(vec4(-(((gl_ModelViewMatrix * v.vertex).z * _ProjectionParams.w))));
