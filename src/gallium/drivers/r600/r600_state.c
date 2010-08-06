@@ -1224,14 +1224,14 @@ static struct radeon_state *r600_cb_cntl(struct r600_context *rctx)
 	}
 
 	if (pbs->independent_blend_enable) {
-		for (i = 0; i < 8; i++) {
+		for (i = 0; i < nr_cbufs; i++) {
 			if (pbs->rt[i].blend_enable) {
 				color_control |= S_028808_TARGET_BLEND_ENABLE(1 << i);
 			}
 			target_mask |= (pbs->rt[i].colormask << (4 * i));
 		}
 	} else {
-		for (i = 0; i < 8; i++) {
+		for (i = 0; i < nr_cbufs; i++) {
 			if (pbs->rt[0].blend_enable) {
 				color_control |= S_028808_TARGET_BLEND_ENABLE(1 << i);
 			}
