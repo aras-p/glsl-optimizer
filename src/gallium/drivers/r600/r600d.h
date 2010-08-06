@@ -352,6 +352,61 @@
 #define   S_028808_ROP3(x)                             (((x) & 0xFF) << 16)
 #define   G_028808_ROP3(x)                             (((x) >> 16) & 0xFF)
 #define   C_028808_ROP3                                0xFF00FFFF
+#define R_028810_PA_CL_CLIP_CNTL                     0x028810
+#define   S_028810_UCP_ENA_0(x)                        (((x) & 0x1) << 0)
+#define   G_028810_UCP_ENA_0(x)                        (((x) >> 0) & 0x1)
+#define   C_028810_UCP_ENA_0                           0xFFFFFFFE
+#define   S_028810_UCP_ENA_1(x)                        (((x) & 0x1) << 1)
+#define   G_028810_UCP_ENA_1(x)                        (((x) >> 1) & 0x1)
+#define   C_028810_UCP_ENA_1                           0xFFFFFFFD
+#define   S_028810_UCP_ENA_2(x)                        (((x) & 0x1) << 2)
+#define   G_028810_UCP_ENA_2(x)                        (((x) >> 2) & 0x1)
+#define   C_028810_UCP_ENA_2                           0xFFFFFFFB
+#define   S_028810_UCP_ENA_3(x)                        (((x) & 0x1) << 3)
+#define   G_028810_UCP_ENA_3(x)                        (((x) >> 3) & 0x1)
+#define   C_028810_UCP_ENA_3                           0xFFFFFFF7
+#define   S_028810_UCP_ENA_4(x)                        (((x) & 0x1) << 4)
+#define   G_028810_UCP_ENA_4(x)                        (((x) >> 4) & 0x1)
+#define   C_028810_UCP_ENA_4                           0xFFFFFFEF
+#define   S_028810_UCP_ENA_5(x)                        (((x) & 0x1) << 5)
+#define   G_028810_UCP_ENA_5(x)                        (((x) >> 5) & 0x1)
+#define   C_028810_UCP_ENA_5                           0xFFFFFFDF
+#define   S_028810_PS_UCP_Y_SCALE_NEG(x)               (((x) & 0x1) << 13)
+#define   G_028810_PS_UCP_Y_SCALE_NEG(x)               (((x) >> 13) & 0x1)
+#define   C_028810_PS_UCP_Y_SCALE_NEG                  0xFFFFDFFF
+#define   S_028810_PS_UCP_MODE(x)                      (((x) & 0x3) << 14)
+#define   G_028810_PS_UCP_MODE(x)                      (((x) >> 14) & 0x3)
+#define   C_028810_PS_UCP_MODE                         0xFFFF3FFF
+#define   S_028810_CLIP_DISABLE(x)                     (((x) & 0x1) << 16)
+#define   G_028810_CLIP_DISABLE(x)                     (((x) >> 16) & 0x1)
+#define   C_028810_CLIP_DISABLE                        0xFFFEFFFF
+#define   S_028810_UCP_CULL_ONLY_ENA(x)                (((x) & 0x1) << 17)
+#define   G_028810_UCP_CULL_ONLY_ENA(x)                (((x) >> 17) & 0x1)
+#define   C_028810_UCP_CULL_ONLY_ENA                   0xFFFDFFFF
+#define   S_028810_BOUNDARY_EDGE_FLAG_ENA(x)           (((x) & 0x1) << 18)
+#define   G_028810_BOUNDARY_EDGE_FLAG_ENA(x)           (((x) >> 18) & 0x1)
+#define   C_028810_BOUNDARY_EDGE_FLAG_ENA              0xFFFBFFFF
+#define   S_028810_DX_CLIP_SPACE_DEF(x)                (((x) & 0x1) << 19)
+#define   G_028810_DX_CLIP_SPACE_DEF(x)                (((x) >> 19) & 0x1)
+#define   C_028810_DX_CLIP_SPACE_DEF                   0xFFF7FFFF
+#define   S_028810_DIS_CLIP_ERR_DETECT(x)              (((x) & 0x1) << 20)
+#define   G_028810_DIS_CLIP_ERR_DETECT(x)              (((x) >> 20) & 0x1)
+#define   C_028810_DIS_CLIP_ERR_DETECT                 0xFFEFFFFF
+#define   S_028810_VTX_KILL_OR(x)                      (((x) & 0x1) << 21)
+#define   G_028810_VTX_KILL_OR(x)                      (((x) >> 21) & 0x1)
+#define   C_028810_VTX_KILL_OR                         0xFFDFFFFF
+#define   S_028810_DX_LINEAR_ATTR_CLIP_ENA(x)          (((x) & 0x1) << 24)
+#define   G_028810_DX_LINEAR_ATTR_CLIP_ENA(x)          (((x) >> 24) & 0x1)
+#define   C_028810_DX_LINEAR_ATTR_CLIP_ENA             0xFEFFFFFF
+#define   S_028810_VTE_VPORT_PROVOKE_DISABLE(x)        (((x) & 0x1) << 25)
+#define   G_028810_VTE_VPORT_PROVOKE_DISABLE(x)        (((x) >> 25) & 0x1)
+#define   C_028810_VTE_VPORT_PROVOKE_DISABLE           0xFDFFFFFF
+#define   S_028810_ZCLIP_NEAR_DISABLE(x)               (((x) & 0x1) << 26)
+#define   G_028810_ZCLIP_NEAR_DISABLE(x)               (((x) >> 26) & 0x1)
+#define   C_028810_ZCLIP_NEAR_DISABLE                  0xFBFFFFFF
+#define   S_028810_ZCLIP_FAR_DISABLE(x)                (((x) & 0x1) << 27)
+#define   G_028810_ZCLIP_FAR_DISABLE(x)                (((x) >> 27) & 0x1)
+#define   C_028810_ZCLIP_FAR_DISABLE                   0xF7FFFFFF
 #define R_028010_DB_DEPTH_INFO                       0x028010
 #define   S_028010_FORMAT(x)                           (((x) & 0x7) << 0)
 #define   G_028010_FORMAT(x)                           (((x) >> 0) & 0x7)
