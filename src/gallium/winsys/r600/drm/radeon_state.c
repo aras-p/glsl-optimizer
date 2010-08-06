@@ -32,23 +32,82 @@
 /*
  * state core functions
  */
-int radeon_state_init(struct radeon_state *state, struct radeon *radeon, u32 type, u32 id)
+struct radeon_state *radeon_state(struct radeon *radeon, u32 type, u32 id)
 {
+	struct radeon_state *state;
+
 	if (type > radeon->ntype) {
 		fprintf(stderr, "%s invalid type %d\n", __func__, type);
-		return -EINVAL;
+		return NULL;
 	}
 	if (id > radeon->nstate) {
 		fprintf(stderr, "%s invalid state id %d\n", __func__, id);
-		return -EINVAL;
+		return NULL;
 	}
-	memset(state, 0, sizeof(struct radeon_state));
+	state = calloc(1, sizeof(*state));
+	if (state == NULL)
+		return NULL;
 	state->radeon = radeon;
 	state->type = type;
 	state->id = id;
+	state->refcount = 1;
 	state->npm4 = radeon->type[type].npm4;
 	state->nstates = radeon->type[type].nstates;
-	return 0;
+	state->states = calloc(1, state->nstates * 4);
+	state->pm4 = calloc(1, radeon->type[type].npm4 * 4);
+	if (state->states == NULL || state->pm4 == NULL) {
+		radeon_state_decref(state);
+		return NULL;
+	}
+	return state;
+}
+
+struct radeon_state *radeon_state_duplicate(struct radeon_state *state)
+{
+	struct radeon_state *nstate = radeon_state(state->radeon, state->type, state->id);
+	unsigned i;
+
+	if (state == NULL)
+		return NULL;
+	nstate->cpm4 = state->cpm4;
+	nstate->nbo = state->nbo;
+	nstate->nreloc = state->nreloc;
+	memcpy(nstate->states, state->states, state->nstates * 4);
+	memcpy(nstate->pm4, state->pm4, state->npm4 * 4);
+	memcpy(nstate->placement, state->placement, 8 * 4);
+	memcpy(nstate->reloc_pm4_id, state->reloc_pm4_id, 8 * 4);
+	memcpy(nstate->reloc_bo_id, state->reloc_bo_id, 8 * 4);
+	memcpy(nstate->bo_dirty, state->bo_dirty, 4 * 4);
+	for (i = 0; i < state->nbo; i++) {
+		nstate->bo[i] = radeon_bo_incref(state->radeon, state->bo[i]);
+	}
+	return nstate;
+}
+
+struct radeon_state *radeon_state_incref(struct radeon_state *state)
+{
+	state->refcount++;
+	return state;
+}
+
+struct radeon_state *radeon_state_decref(struct radeon_state *state)
+{
+	unsigned i;
+
+	if (state == NULL)
+		return NULL;
+	if (--state->refcount > 0) {
+		return NULL;
+	}
+	for (i = 0; i < state->nbo; i++) {
+		state->bo[i] = radeon_bo_decref(state->radeon, state->bo[i]);
+	}
+	free(state->immd);
+	free(state->states);
+	free(state->pm4);
+	memset(state, 0, sizeof(*state));
+	free(state);
+	return NULL;
 }
 
 int radeon_state_replace_always(struct radeon_state *ostate,
@@ -97,7 +156,6 @@ int radeon_state_pm4(struct radeon_state *state)
 		return r;
 	}
 	state->pm4_crc = crc32(state->pm4, state->cpm4 * 4);
-	state->valid = 1;
 	return 0;
 }
 

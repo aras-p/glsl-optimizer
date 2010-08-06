@@ -32,8 +32,13 @@
 
 int radeon_ctx_set_bo_new(struct radeon_ctx *ctx, struct radeon_bo *bo)
 {
-	if (ctx->nbo >= 2048)
-		return -EBUSY;
+	void *ptr;
+
+	ptr = realloc(ctx->bo, sizeof(struct radeon_bo) * (ctx->nbo + 1));
+	if (ptr == NULL) {
+		return -ENOMEM;
+	}
+	ctx->bo = ptr;
 	ctx->bo[ctx->nbo] = bo;
 	ctx->nbo++;
 	return 0;
@@ -71,26 +76,49 @@ void radeon_ctx_get_placement(struct radeon_ctx *ctx, unsigned reloc, u32 *place
 	}
 }
 
-static void radeon_ctx_clear(struct radeon_ctx *ctx)
+struct radeon_ctx *radeon_ctx(struct radeon *radeon)
 {
-	ctx->draw_cpm4 = 0;
-	ctx->cpm4 = 0;
-	ctx->ndraw = 0;
-	ctx->nbo = 0;
-	ctx->nreloc = 0;
+	struct radeon_ctx *ctx;
+
+	if (radeon == NULL)
+		return NULL;
+	ctx = calloc(1, sizeof(*ctx));
+	if (ctx == NULL)
+		return NULL;
+	ctx->radeon = radeon_incref(radeon);
+	return ctx;
 }
 
-int radeon_ctx_init(struct radeon_ctx *ctx, struct radeon *radeon)
+struct radeon_ctx *radeon_ctx_incref(struct radeon_ctx *ctx)
 {
-	memset(ctx, 0, sizeof(struct radeon_ctx));
-	ctx->radeon = radeon_incref(radeon);
-	radeon_ctx_clear(ctx);
+	ctx->refcount++;
+	return ctx;
+}
+
+struct radeon_ctx *radeon_ctx_decref(struct radeon_ctx *ctx)
+{
+	unsigned i;
+
+	if (ctx == NULL)
+		return NULL;
+	if (--ctx->refcount > 0) {
+		return NULL;
+	}
+
+	for (i = 0; i < ctx->ndraw; i++) {
+		ctx->draw[i] = radeon_draw_decref(ctx->draw[i]);
+	}
+	for (i = 0; i < ctx->nbo; i++) {
+		ctx->bo[i] = radeon_bo_decref(ctx->radeon, ctx->bo[i]);
+	}
+	ctx->radeon = radeon_decref(ctx->radeon);
+	free(ctx->draw);
+	free(ctx->bo);
 	free(ctx->pm4);
-	ctx->cpm4 = 0;
-	ctx->pm4 = malloc(64 * 1024);
-	if (ctx->pm4 == NULL)
-		return -ENOMEM;
-	return 0;
+	free(ctx->reloc);
+	memset(ctx, 0, sizeof(*ctx));
+	free(ctx);
+	return NULL;
 }
 
 static int radeon_ctx_state_bo(struct radeon_ctx *ctx, struct radeon_state *state)
@@ -114,6 +142,7 @@ static int radeon_ctx_state_bo(struct radeon_ctx *ctx, struct radeon_state *stat
 	}
 	return 0;
 }
+
 
 int radeon_ctx_submit(struct radeon_ctx *ctx)
 {
@@ -141,7 +170,6 @@ int radeon_ctx_submit(struct radeon_ctx *ctx)
 	r = drmCommandWriteRead(ctx->radeon->fd, DRM_RADEON_CS, &drmib,
 				sizeof(struct drm_radeon_cs));
 #endif
-	radeon_ctx_clear(ctx);
 	return r;
 }
 
@@ -149,6 +177,7 @@ static int radeon_ctx_reloc(struct radeon_ctx *ctx, struct radeon_bo *bo,
 			unsigned id, unsigned *placement)
 {
 	unsigned i;
+	struct radeon_cs_reloc *ptr;
 
 	for (i = 0; i < ctx->nreloc; i++) {
 		if (ctx->reloc[i].handle == bo->handle) {
@@ -156,12 +185,14 @@ static int radeon_ctx_reloc(struct radeon_ctx *ctx, struct radeon_bo *bo,
 			return 0;
 		}
 	}
-	if (ctx->nreloc >= 2048)
-		return -EINVAL;
-	ctx->reloc[ctx->nreloc].handle = bo->handle;
-	ctx->reloc[ctx->nreloc].read_domain = placement[0] | placement [1];
-	ctx->reloc[ctx->nreloc].write_domain = placement[0] | placement [1];
-	ctx->reloc[ctx->nreloc].flags = 0;
+	ptr = realloc(ctx->reloc, sizeof(struct radeon_cs_reloc) * (ctx->nreloc + 1));
+	if (ptr == NULL)
+		return -ENOMEM;
+	ctx->reloc = ptr;
+	ptr[ctx->nreloc].handle = bo->handle;
+	ptr[ctx->nreloc].read_domain = placement[0] | placement [1];
+	ptr[ctx->nreloc].write_domain = placement[0] | placement [1];
+	ptr[ctx->nreloc].flags = 0;
 	ctx->pm4[id] = ctx->nreloc * sizeof(struct radeon_cs_reloc) / 4;
 	ctx->nreloc++;
 	return 0;
@@ -190,13 +221,21 @@ static int radeon_ctx_state_schedule(struct radeon_ctx *ctx, struct radeon_state
 	return 0;
 }
 
-int radeon_ctx_set_draw(struct radeon_ctx *ctx, struct radeon_draw *draw)
+int radeon_ctx_set_draw_new(struct radeon_ctx *ctx, struct radeon_draw *draw)
 {
-	unsigned cpm4, i;
+	struct radeon_draw *pdraw = NULL;
+	struct radeon_draw **ndraw;
+	struct radeon_state *nstate, *ostate;
+	unsigned cpm4, i, cstate;
+	void *tmp;
 	int r = 0;
 
+	ndraw = realloc(ctx->draw, sizeof(void*) * (ctx->ndraw + 1));
+	if (ndraw == NULL)
+		return -ENOMEM;
+	ctx->draw = ndraw;
 	for (i = 0; i < draw->nstate; i++) {
-		r = radeon_ctx_state_bo(ctx, &draw->state[i]);
+		r = radeon_ctx_state_bo(ctx, draw->state[i]);
 		if (r)
 			return r;
 	}
@@ -208,48 +247,69 @@ int radeon_ctx_set_draw(struct radeon_ctx *ctx, struct radeon_draw *draw)
 			__func__, draw->cpm4, RADEON_CTX_MAX_PM4);
 		return -EINVAL;
 	}
-	ctx->draw[ctx->ndraw] = *draw;
-	for (i = 0, cpm4 = 0; i < draw->nstate - 1; i++) {
-		ctx->draw[ctx->ndraw].state[i].valid &= ~2;
-		if (ctx->draw[ctx->ndraw].state[i].valid) {
-			if (ctx->ndraw > 1 && ctx->draw[ctx->ndraw - 1].state[i].valid) {
-				if (ctx->draw[ctx->ndraw - 1].state[i].pm4_crc == draw->state[i].pm4_crc)
-					continue;
+	tmp = realloc(ctx->state, (ctx->nstate + draw->nstate) * sizeof(void*));
+	if (tmp == NULL)
+		return -ENOMEM;
+	ctx->state = tmp;
+	pdraw = ctx->cdraw;
+	for (i = 0, cpm4 = 0, cstate = ctx->nstate; i < draw->nstate - 1; i++) {
+		nstate = draw->state[i];
+		if (nstate) {
+			if (pdraw && pdraw->state[i]) {
+				ostate = pdraw->state[i];
+				if (ostate->pm4_crc != nstate->pm4_crc) {
+					ctx->state[cstate++] = nstate;
+					cpm4 += nstate->cpm4;
+				}
+			} else {
+				ctx->state[cstate++] = nstate;
+				cpm4 += nstate->cpm4;
 			}
-			ctx->draw[ctx->ndraw].state[i].valid |= 2;
-			cpm4 += ctx->draw[ctx->ndraw].state[i].cpm4;
 		}
 	}
 	/* The last state is the draw state always add it */
-	if (!draw->state[i].valid) {
+	if (draw->state[i] == NULL) {
 		fprintf(stderr, "%s no draw command\n", __func__);
 		return -EINVAL;
 	}
-	ctx->draw[ctx->ndraw].state[i].valid |= 2;
-	cpm4 += ctx->draw[ctx->ndraw].state[i].cpm4;
+	ctx->state[cstate++] = draw->state[i];
+	cpm4 += draw->state[i]->cpm4;
 	if ((ctx->draw_cpm4 + cpm4) > RADEON_CTX_MAX_PM4) {
 		/* need to flush */
 		return -EBUSY;
 	}
 	ctx->draw_cpm4 += cpm4;
-	ctx->ndraw++;
+	ctx->nstate = cstate;
+	ctx->draw[ctx->ndraw++] = draw;
+	ctx->cdraw = draw;
 	return 0;
+}
+
+int radeon_ctx_set_draw(struct radeon_ctx *ctx, struct radeon_draw *draw)
+{
+	int r;
+
+	radeon_draw_incref(draw);
+	r = radeon_ctx_set_draw_new(ctx, draw);
+	if (r)
+		radeon_draw_decref(draw);
+	return r;
 }
 
 int radeon_ctx_pm4(struct radeon_ctx *ctx)
 {
-	unsigned i, j, c;
+	unsigned i;
 	int r;
 
-	for (i = 0, c = 0, ctx->id = 0; i < ctx->ndraw; i++) {
-		for (j = 0; j < ctx->draw[i].nstate; j++) {
-			if (ctx->draw[i].state[j].valid & 2) {
-				r = radeon_ctx_state_schedule(ctx, &ctx->draw[i].state[j]);
-				if (r)
-					return r;
-				c += ctx->draw[i].state[j].cpm4;
-			}
-		}
+	free(ctx->pm4);
+	ctx->cpm4 = 0;
+	ctx->pm4 = malloc(ctx->draw_cpm4 * 4);
+	if (ctx->pm4 == NULL)
+		return -EINVAL;
+	for (i = 0, ctx->id = 0; i < ctx->nstate; i++) {
+		r = radeon_ctx_state_schedule(ctx, ctx->state[i]);
+		if (r)
+			return r;
 	}
 	if (ctx->id != ctx->draw_cpm4) {
 		fprintf(stderr, "%s miss predicted pm4 size %d for %d\n",

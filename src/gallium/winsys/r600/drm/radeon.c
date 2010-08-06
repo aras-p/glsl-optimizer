@@ -43,6 +43,16 @@ static int radeon_get_device(struct radeon *radeon)
 	return r;
 }
 
+/* symbol missing drove me crazy hack to get symbol exported */
+static void fake(void)
+{
+	struct radeon_ctx *ctx;
+	struct radeon_draw *draw;
+
+	ctx = radeon_ctx(NULL);
+	draw = radeon_draw(NULL);
+}
+
 struct radeon *radeon_new(int fd, unsigned device)
 {
 	struct radeon *radeon;
@@ -50,6 +60,7 @@ struct radeon *radeon_new(int fd, unsigned device)
 
 	radeon = calloc(1, sizeof(*radeon));
 	if (radeon == NULL) {
+		fake();
 		return NULL;
 	}
 	radeon->fd = fd;

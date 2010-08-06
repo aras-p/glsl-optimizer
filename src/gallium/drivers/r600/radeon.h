@@ -103,17 +103,17 @@ int radeon_bo_wait(struct radeon *radeon, struct radeon_bo *bo);
  */
 struct radeon_state {
 	struct radeon			*radeon;
-	unsigned			valid;
+	unsigned			refcount;
 	unsigned			type;
 	unsigned			id;
 	unsigned			nstates;
-	u32				states[64];
+	u32				*states;
 	unsigned			npm4;
 	unsigned			cpm4;
 	u32				pm4_crc;
-	u32				pm4[128];
+	u32				*pm4;
 	u32				nimmd;
-	u32				immd[64];
+	u32				*immd;
 	unsigned			nbo;
 	struct radeon_bo		*bo[4];
 	unsigned			nreloc;
@@ -123,51 +123,35 @@ struct radeon_state {
 	unsigned			bo_dirty[4];
 };
 
-int radeon_state_init(struct radeon_state *state, struct radeon *radeon, u32 type, u32 id);
+struct radeon_state *radeon_state(struct radeon *radeon, u32 type, u32 id);
+struct radeon_state *radeon_state_incref(struct radeon_state *state);
+struct radeon_state *radeon_state_decref(struct radeon_state *state);
 int radeon_state_pm4(struct radeon_state *state);
 
 /*
  * draw functions
  */
 struct radeon_draw {
+	unsigned			refcount;
 	struct radeon			*radeon;
 	unsigned			nstate;
-	struct radeon_state		state[1273];
+	struct radeon_state		**state;
 	unsigned			cpm4;
 };
 
-int radeon_draw_init(struct radeon_draw *draw, struct radeon *radeon);
+struct radeon_draw *radeon_draw(struct radeon *radeon);
+struct radeon_draw *radeon_draw_duplicate(struct radeon_draw *draw);
+struct radeon_draw *radeon_draw_incref(struct radeon_draw *draw);
+struct radeon_draw *radeon_draw_decref(struct radeon_draw *draw);
 int radeon_draw_set(struct radeon_draw *draw, struct radeon_state *state);
+int radeon_draw_set_new(struct radeon_draw *draw, struct radeon_state *state);
 int radeon_draw_check(struct radeon_draw *draw);
 
-/*
- * Context
- */
-#pragma pack(1)
-struct radeon_cs_reloc {
-	uint32_t	handle;
-	uint32_t	read_domain;
-	uint32_t	write_domain;
-	uint32_t	flags;
-};
-#pragma pack()
-
-struct radeon_ctx {
-	struct radeon			*radeon;
-	u32				*pm4;
-	u32				cpm4;
-	u32				draw_cpm4;
-	unsigned			id;
-	unsigned			nreloc;
-	struct radeon_cs_reloc		reloc[2048];
-	unsigned			nbo;
-	struct radeon_bo		*bo[2048];
-	unsigned			ndraw;
-	struct radeon_draw		draw[128];
-};
-
-int radeon_ctx_init(struct radeon_ctx *ctx, struct radeon *radeon);
+struct radeon_ctx *radeon_ctx(struct radeon *radeon);
+struct radeon_ctx *radeon_ctx_decref(struct radeon_ctx *ctx);
+struct radeon_ctx *radeon_ctx_incref(struct radeon_ctx *ctx);
 int radeon_ctx_set_draw(struct radeon_ctx *ctx, struct radeon_draw *draw);
+int radeon_ctx_set_draw_new(struct radeon_ctx *ctx, struct radeon_draw *draw);
 int radeon_ctx_pm4(struct radeon_ctx *ctx);
 int radeon_ctx_submit(struct radeon_ctx *ctx);
 void radeon_ctx_dump_bof(struct radeon_ctx *ctx, const char *file);

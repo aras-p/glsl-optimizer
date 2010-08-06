@@ -48,14 +48,18 @@ void r600_flush(struct pipe_context *ctx, unsigned flags,
 	struct r600_screen *rscreen = rctx->screen;
 	static int dc = 0;
 
-	if (radeon_ctx_pm4(&rctx->ctx))
+	if (radeon_ctx_pm4(rctx->ctx))
 		return;
 	/* FIXME dumping should be removed once shader support instructions
 	 * without throwing bad code
 	 */
 	if (!dc)
-		radeon_ctx_dump_bof(&rctx->ctx, "gallium.bof");
-	radeon_ctx_submit(&rctx->ctx);
+		radeon_ctx_dump_bof(rctx->ctx, "gallium.bof");
+#if 1
+	radeon_ctx_submit(rctx->ctx);
+#endif
+	rctx->ctx = radeon_ctx_decref(rctx->ctx);
+	rctx->ctx = radeon_ctx(rscreen->rw);
 	dc++;
 }
 
@@ -216,8 +220,9 @@ static void r600_init_config(struct r600_context *rctx)
 	printf("num_gs_stack_entries : %d\n", num_gs_stack_entries);
 	printf("num_es_stack_entries : %d\n", num_es_stack_entries);
 
-	radeon_state_init(&rctx->config, rctx->rw, R600_CONFIG_TYPE, R600_CONFIG);
-	rctx->config.states[R600_CONFIG__SQ_CONFIG] = 0x00000000;
+	rctx->hw_states.config = radeon_state(rctx->rw, R600_CONFIG_TYPE, R600_CONFIG);
+
+	rctx->hw_states.config->states[R600_CONFIG__SQ_CONFIG] = 0x00000000;
 	switch (family) {
 	case CHIP_RV610:
 	case CHIP_RV620:
@@ -226,75 +231,75 @@ static void r600_init_config(struct r600_context *rctx)
 	case CHIP_RV710:
 		break;
 	default:
-		rctx->config.states[R600_CONFIG__SQ_CONFIG] |= S_008C00_VC_ENABLE(1);
+		rctx->hw_states.config->states[R600_CONFIG__SQ_CONFIG] |= S_008C00_VC_ENABLE(1);
 		break;
 	}
-	rctx->config.states[R600_CONFIG__SQ_CONFIG] |= S_008C00_DX9_CONSTS(1);
-	rctx->config.states[R600_CONFIG__SQ_CONFIG] |= S_008C00_ALU_INST_PREFER_VECTOR(1);
-	rctx->config.states[R600_CONFIG__SQ_CONFIG] |= S_008C00_PS_PRIO(ps_prio);
-	rctx->config.states[R600_CONFIG__SQ_CONFIG] |= S_008C00_VS_PRIO(vs_prio);
-	rctx->config.states[R600_CONFIG__SQ_CONFIG] |= S_008C00_GS_PRIO(gs_prio);
-	rctx->config.states[R600_CONFIG__SQ_CONFIG] |= S_008C00_ES_PRIO(es_prio);
+	rctx->hw_states.config->states[R600_CONFIG__SQ_CONFIG] |= S_008C00_DX9_CONSTS(1);
+	rctx->hw_states.config->states[R600_CONFIG__SQ_CONFIG] |= S_008C00_ALU_INST_PREFER_VECTOR(1);
+	rctx->hw_states.config->states[R600_CONFIG__SQ_CONFIG] |= S_008C00_PS_PRIO(ps_prio);
+	rctx->hw_states.config->states[R600_CONFIG__SQ_CONFIG] |= S_008C00_VS_PRIO(vs_prio);
+	rctx->hw_states.config->states[R600_CONFIG__SQ_CONFIG] |= S_008C00_GS_PRIO(gs_prio);
+	rctx->hw_states.config->states[R600_CONFIG__SQ_CONFIG] |= S_008C00_ES_PRIO(es_prio);
 
-	rctx->config.states[R600_CONFIG__SQ_GPR_RESOURCE_MGMT_1] = 0;
-	rctx->config.states[R600_CONFIG__SQ_GPR_RESOURCE_MGMT_1] |= S_008C04_NUM_PS_GPRS(num_ps_gprs);
-	rctx->config.states[R600_CONFIG__SQ_GPR_RESOURCE_MGMT_1] |= S_008C04_NUM_VS_GPRS(num_vs_gprs);
-	rctx->config.states[R600_CONFIG__SQ_GPR_RESOURCE_MGMT_1] |= S_008C04_NUM_CLAUSE_TEMP_GPRS(num_temp_gprs);
+	rctx->hw_states.config->states[R600_CONFIG__SQ_GPR_RESOURCE_MGMT_1] = 0;
+	rctx->hw_states.config->states[R600_CONFIG__SQ_GPR_RESOURCE_MGMT_1] |= S_008C04_NUM_PS_GPRS(num_ps_gprs);
+	rctx->hw_states.config->states[R600_CONFIG__SQ_GPR_RESOURCE_MGMT_1] |= S_008C04_NUM_VS_GPRS(num_vs_gprs);
+	rctx->hw_states.config->states[R600_CONFIG__SQ_GPR_RESOURCE_MGMT_1] |= S_008C04_NUM_CLAUSE_TEMP_GPRS(num_temp_gprs);
 
-	rctx->config.states[R600_CONFIG__SQ_GPR_RESOURCE_MGMT_2] = 0;
-	rctx->config.states[R600_CONFIG__SQ_GPR_RESOURCE_MGMT_2] |= S_008C08_NUM_GS_GPRS(num_gs_gprs);
-	rctx->config.states[R600_CONFIG__SQ_GPR_RESOURCE_MGMT_2] |= S_008C08_NUM_GS_GPRS(num_es_gprs);
+	rctx->hw_states.config->states[R600_CONFIG__SQ_GPR_RESOURCE_MGMT_2] = 0;
+	rctx->hw_states.config->states[R600_CONFIG__SQ_GPR_RESOURCE_MGMT_2] |= S_008C08_NUM_GS_GPRS(num_gs_gprs);
+	rctx->hw_states.config->states[R600_CONFIG__SQ_GPR_RESOURCE_MGMT_2] |= S_008C08_NUM_GS_GPRS(num_es_gprs);
 
-	rctx->config.states[R600_CONFIG__SQ_THREAD_RESOURCE_MGMT] = 0;
-	rctx->config.states[R600_CONFIG__SQ_THREAD_RESOURCE_MGMT] |= S_008C0C_NUM_PS_THREADS(num_ps_threads);
-	rctx->config.states[R600_CONFIG__SQ_THREAD_RESOURCE_MGMT] |= S_008C0C_NUM_VS_THREADS(num_vs_threads);
-	rctx->config.states[R600_CONFIG__SQ_THREAD_RESOURCE_MGMT] |= S_008C0C_NUM_GS_THREADS(num_gs_threads);
-	rctx->config.states[R600_CONFIG__SQ_THREAD_RESOURCE_MGMT] |= S_008C0C_NUM_ES_THREADS(num_es_threads);
+	rctx->hw_states.config->states[R600_CONFIG__SQ_THREAD_RESOURCE_MGMT] = 0;
+	rctx->hw_states.config->states[R600_CONFIG__SQ_THREAD_RESOURCE_MGMT] |= S_008C0C_NUM_PS_THREADS(num_ps_threads);
+	rctx->hw_states.config->states[R600_CONFIG__SQ_THREAD_RESOURCE_MGMT] |= S_008C0C_NUM_VS_THREADS(num_vs_threads);
+	rctx->hw_states.config->states[R600_CONFIG__SQ_THREAD_RESOURCE_MGMT] |= S_008C0C_NUM_GS_THREADS(num_gs_threads);
+	rctx->hw_states.config->states[R600_CONFIG__SQ_THREAD_RESOURCE_MGMT] |= S_008C0C_NUM_ES_THREADS(num_es_threads);
 
-	rctx->config.states[R600_CONFIG__SQ_STACK_RESOURCE_MGMT_1] = 0;
-	rctx->config.states[R600_CONFIG__SQ_STACK_RESOURCE_MGMT_1] |= S_008C10_NUM_PS_STACK_ENTRIES(num_ps_stack_entries);
-	rctx->config.states[R600_CONFIG__SQ_STACK_RESOURCE_MGMT_1] |= S_008C10_NUM_VS_STACK_ENTRIES(num_vs_stack_entries);
+	rctx->hw_states.config->states[R600_CONFIG__SQ_STACK_RESOURCE_MGMT_1] = 0;
+	rctx->hw_states.config->states[R600_CONFIG__SQ_STACK_RESOURCE_MGMT_1] |= S_008C10_NUM_PS_STACK_ENTRIES(num_ps_stack_entries);
+	rctx->hw_states.config->states[R600_CONFIG__SQ_STACK_RESOURCE_MGMT_1] |= S_008C10_NUM_VS_STACK_ENTRIES(num_vs_stack_entries);
 
-	rctx->config.states[R600_CONFIG__SQ_STACK_RESOURCE_MGMT_2] = 0;
-	rctx->config.states[R600_CONFIG__SQ_STACK_RESOURCE_MGMT_2] |= S_008C14_NUM_GS_STACK_ENTRIES(num_gs_stack_entries);
-	rctx->config.states[R600_CONFIG__SQ_STACK_RESOURCE_MGMT_2] |= S_008C14_NUM_ES_STACK_ENTRIES(num_es_stack_entries);
+	rctx->hw_states.config->states[R600_CONFIG__SQ_STACK_RESOURCE_MGMT_2] = 0;
+	rctx->hw_states.config->states[R600_CONFIG__SQ_STACK_RESOURCE_MGMT_2] |= S_008C14_NUM_GS_STACK_ENTRIES(num_gs_stack_entries);
+	rctx->hw_states.config->states[R600_CONFIG__SQ_STACK_RESOURCE_MGMT_2] |= S_008C14_NUM_ES_STACK_ENTRIES(num_es_stack_entries);
 
-	rctx->config.states[R600_CONFIG__SQ_DYN_GPR_CNTL_PS_FLUSH_REQ] = 0x00004000;
-	rctx->config.states[R600_CONFIG__TA_CNTL_AUX] = 0x07000002;
-	rctx->config.states[R600_CONFIG__VC_ENHANCE] = 0x00000000;
-	rctx->config.states[R600_CONFIG__DB_DEBUG] = 0x00000000;
-	rctx->config.states[R600_CONFIG__DB_WATERMARKS] = 0x00420204;
-	rctx->config.states[R600_CONFIG__SX_MISC] = 0x00000000;
-	rctx->config.states[R600_CONFIG__SPI_THREAD_GROUPING] = 0x00000001;
-	rctx->config.states[R600_CONFIG__CB_SHADER_CONTROL] = 0x00000003;
-	rctx->config.states[R600_CONFIG__SQ_ESGS_RING_ITEMSIZE] = 0x00000000;
-	rctx->config.states[R600_CONFIG__SQ_GSVS_RING_ITEMSIZE] = 0x00000000;
-	rctx->config.states[R600_CONFIG__SQ_ESTMP_RING_ITEMSIZE] = 0x00000000;
-	rctx->config.states[R600_CONFIG__SQ_GSTMP_RING_ITEMSIZE] = 0x00000000;
-	rctx->config.states[R600_CONFIG__SQ_VSTMP_RING_ITEMSIZE] = 0x00000000;
-	rctx->config.states[R600_CONFIG__SQ_PSTMP_RING_ITEMSIZE] = 0x00000000;
-	rctx->config.states[R600_CONFIG__SQ_FBUF_RING_ITEMSIZE] = 0x00000000;
-	rctx->config.states[R600_CONFIG__SQ_REDUC_RING_ITEMSIZE] = 0x00000000;
-	rctx->config.states[R600_CONFIG__SQ_GS_VERT_ITEMSIZE] = 0x00000000;
-	rctx->config.states[R600_CONFIG__VGT_OUTPUT_PATH_CNTL] = 0x00000000;
-	rctx->config.states[R600_CONFIG__VGT_HOS_CNTL] = 0x00000000;
-	rctx->config.states[R600_CONFIG__VGT_HOS_MAX_TESS_LEVEL] = 0x00000000;
-	rctx->config.states[R600_CONFIG__VGT_HOS_MIN_TESS_LEVEL] = 0x00000000;
-	rctx->config.states[R600_CONFIG__VGT_HOS_REUSE_DEPTH] = 0x00000000;
-	rctx->config.states[R600_CONFIG__VGT_GROUP_PRIM_TYPE] = 0x00000000;
-	rctx->config.states[R600_CONFIG__VGT_GROUP_FIRST_DECR] = 0x00000000;
-	rctx->config.states[R600_CONFIG__VGT_GROUP_DECR] = 0x00000000;
-	rctx->config.states[R600_CONFIG__VGT_GROUP_VECT_0_CNTL] = 0x00000000;
-	rctx->config.states[R600_CONFIG__VGT_GROUP_VECT_1_CNTL] = 0x00000000;
-	rctx->config.states[R600_CONFIG__VGT_GROUP_VECT_0_FMT_CNTL] = 0x00000000;
-	rctx->config.states[R600_CONFIG__VGT_GROUP_VECT_1_FMT_CNTL] = 0x00000000;
-	rctx->config.states[R600_CONFIG__VGT_GS_MODE] = 0x00000000;
-	rctx->config.states[R600_CONFIG__PA_SC_MODE_CNTL] = 0x00514000;
-	rctx->config.states[R600_CONFIG__VGT_STRMOUT_EN] = 0x00000000;
-	rctx->config.states[R600_CONFIG__VGT_REUSE_OFF] = 0x00000001;
-	rctx->config.states[R600_CONFIG__VGT_VTX_CNT_EN] = 0x00000000;
-	rctx->config.states[R600_CONFIG__VGT_STRMOUT_BUFFER_EN] = 0x00000000;
-	radeon_state_pm4(&rctx->config);
+	rctx->hw_states.config->states[R600_CONFIG__SQ_DYN_GPR_CNTL_PS_FLUSH_REQ] = 0x00004000;
+	rctx->hw_states.config->states[R600_CONFIG__TA_CNTL_AUX] = 0x07000002;
+	rctx->hw_states.config->states[R600_CONFIG__VC_ENHANCE] = 0x00000000;
+	rctx->hw_states.config->states[R600_CONFIG__DB_DEBUG] = 0x00000000;
+	rctx->hw_states.config->states[R600_CONFIG__DB_WATERMARKS] = 0x00420204;
+	rctx->hw_states.config->states[R600_CONFIG__SX_MISC] = 0x00000000;
+	rctx->hw_states.config->states[R600_CONFIG__SPI_THREAD_GROUPING] = 0x00000001;
+	rctx->hw_states.config->states[R600_CONFIG__CB_SHADER_CONTROL] = 0x00000003;
+	rctx->hw_states.config->states[R600_CONFIG__SQ_ESGS_RING_ITEMSIZE] = 0x00000000;
+	rctx->hw_states.config->states[R600_CONFIG__SQ_GSVS_RING_ITEMSIZE] = 0x00000000;
+	rctx->hw_states.config->states[R600_CONFIG__SQ_ESTMP_RING_ITEMSIZE] = 0x00000000;
+	rctx->hw_states.config->states[R600_CONFIG__SQ_GSTMP_RING_ITEMSIZE] = 0x00000000;
+	rctx->hw_states.config->states[R600_CONFIG__SQ_VSTMP_RING_ITEMSIZE] = 0x00000000;
+	rctx->hw_states.config->states[R600_CONFIG__SQ_PSTMP_RING_ITEMSIZE] = 0x00000000;
+	rctx->hw_states.config->states[R600_CONFIG__SQ_FBUF_RING_ITEMSIZE] = 0x00000000;
+	rctx->hw_states.config->states[R600_CONFIG__SQ_REDUC_RING_ITEMSIZE] = 0x00000000;
+	rctx->hw_states.config->states[R600_CONFIG__SQ_GS_VERT_ITEMSIZE] = 0x00000000;
+	rctx->hw_states.config->states[R600_CONFIG__VGT_OUTPUT_PATH_CNTL] = 0x00000000;
+	rctx->hw_states.config->states[R600_CONFIG__VGT_HOS_CNTL] = 0x00000000;
+	rctx->hw_states.config->states[R600_CONFIG__VGT_HOS_MAX_TESS_LEVEL] = 0x00000000;
+	rctx->hw_states.config->states[R600_CONFIG__VGT_HOS_MIN_TESS_LEVEL] = 0x00000000;
+	rctx->hw_states.config->states[R600_CONFIG__VGT_HOS_REUSE_DEPTH] = 0x00000000;
+	rctx->hw_states.config->states[R600_CONFIG__VGT_GROUP_PRIM_TYPE] = 0x00000000;
+	rctx->hw_states.config->states[R600_CONFIG__VGT_GROUP_FIRST_DECR] = 0x00000000;
+	rctx->hw_states.config->states[R600_CONFIG__VGT_GROUP_DECR] = 0x00000000;
+	rctx->hw_states.config->states[R600_CONFIG__VGT_GROUP_VECT_0_CNTL] = 0x00000000;
+	rctx->hw_states.config->states[R600_CONFIG__VGT_GROUP_VECT_1_CNTL] = 0x00000000;
+	rctx->hw_states.config->states[R600_CONFIG__VGT_GROUP_VECT_0_FMT_CNTL] = 0x00000000;
+	rctx->hw_states.config->states[R600_CONFIG__VGT_GROUP_VECT_1_FMT_CNTL] = 0x00000000;
+	rctx->hw_states.config->states[R600_CONFIG__VGT_GS_MODE] = 0x00000000;
+	rctx->hw_states.config->states[R600_CONFIG__PA_SC_MODE_CNTL] = 0x00514000;
+	rctx->hw_states.config->states[R600_CONFIG__VGT_STRMOUT_EN] = 0x00000000;
+	rctx->hw_states.config->states[R600_CONFIG__VGT_REUSE_OFF] = 0x00000001;
+	rctx->hw_states.config->states[R600_CONFIG__VGT_VTX_CNT_EN] = 0x00000000;
+	rctx->hw_states.config->states[R600_CONFIG__VGT_STRMOUT_BUFFER_EN] = 0x00000000;
+	radeon_state_pm4(rctx->hw_states.config);
 }
 
 struct pipe_context *r600_create_context(struct pipe_screen *screen, void *priv)
@@ -328,7 +333,7 @@ struct pipe_context *r600_create_context(struct pipe_screen *screen, void *priv)
 
 	r600_init_config(rctx);
 
-	radeon_ctx_init(&rctx->ctx, rscreen->rw);
-	radeon_draw_init(&rctx->draw, rscreen->rw);
+	rctx->ctx = radeon_ctx(rscreen->rw);
+	rctx->draw = radeon_draw(rscreen->rw);
 	return &rctx->context;
 }
