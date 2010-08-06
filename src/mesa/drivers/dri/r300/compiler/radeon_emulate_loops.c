@@ -421,13 +421,9 @@ static int build_loop_info(struct radeon_compiler * c, struct loop_info * loop,
  * ENDLOOP;                         	-> ENDLOOP
  *
  * @param inst A pointer to a BGNLOOP instruction.
- * @return If the loop can be unrolled, a pointer to the first instruction of
- * 		the unrolled loop.
- * 	   Otherwise, A pointer to the ENDLOOP instruction.
- * 	   Null if there is an error.
+ * @return 1 for success, 0 for failure
  */
-static struct rc_instruction * transform_loop(struct emulate_loop_state * s,
-						struct rc_instruction * inst)
+int transform_loop(struct emulate_loop_state * s, struct rc_instruction * inst)
 {
 	struct loop_info * loop;
 
@@ -437,10 +433,10 @@ static struct rc_instruction * transform_loop(struct emulate_loop_state * s,
 	loop = &s->Loops[s->LoopCount++];
 
 	if (!build_loop_info(s->C, loop, inst))
-		return NULL;
+		return 0;
 
 	if(try_unroll_loop(s->C, loop, -1)){
-		return loop->BeginLoop->Next;
+		return 1;
 	}
 
 	/* Reverse the conditional instruction */
@@ -465,14 +461,14 @@ static struct rc_instruction * transform_loop(struct emulate_loop_state * s,
 		break;
 	default:
 		rc_error(s->C, "loop->Cond is not a conditional.\n");
-		return NULL;
+		return 0;
 	}
 
 	/* Prepare the loop to be emulated */
 	rc_remove_instruction(loop->Brk);
 	rc_remove_instruction(loop->EndIf);
 	rc_insert_instruction(loop->EndLoop->Prev, loop->EndIf);
-	return loop->EndLoop;
+	return 1;
 }
 
 void rc_transform_loops(struct radeon_compiler *c,
@@ -482,16 +478,13 @@ void rc_transform_loops(struct radeon_compiler *c,
 
 	memset(s, 0, sizeof(struct emulate_loop_state));
 	s->C = c;
-	ptr = s->C->Program.Instructions.Next;
-	while(ptr != &s->C->Program.Instructions) {
+	for(ptr = s->C->Program.Instructions.Next;
+			ptr != &s->C->Program.Instructions; ptr = ptr->Next) {
 		if(ptr->Type == RC_INSTRUCTION_NORMAL &&
 					ptr->U.I.Opcode == RC_OPCODE_BGNLOOP){
-			ptr = transform_loop(s, ptr);
-			if(!ptr){
+			if (!transform_loop(s, ptr))
 				return;
-			}
 		}
-		ptr = ptr->Next;
 	}
 }
 
