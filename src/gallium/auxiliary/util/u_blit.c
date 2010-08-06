@@ -62,6 +62,7 @@ struct blit_state
    struct pipe_viewport_state viewport;
    struct pipe_clip_state clip;
    struct pipe_vertex_element velem[2];
+   enum pipe_texture_target internal_target;
 
    void *vs;
    void *fs[TGSI_WRITEMASK_XYZW + 1];
@@ -110,7 +111,6 @@ util_create_blit(struct pipe_context *pipe, struct cso_context *cso)
    ctx->sampler.min_mip_filter = PIPE_TEX_MIPFILTER_NONE;
    ctx->sampler.min_img_filter = 0; /* set later */
    ctx->sampler.mag_img_filter = 0; /* set later */
-   ctx->sampler.normalized_coords = 1;
 
    /* vertex elements state */
    memset(&ctx->velem[0], 0, sizeof(ctx->velem[0]) * 2);
@@ -144,6 +144,11 @@ util_create_blit(struct pipe_context *pipe, struct cso_context *cso)
       ctx->vertices[i][1][2] = 0.0f; /* r */
       ctx->vertices[i][1][3] = 1.0f; /* q */
    }
+
+   if(pipe->screen->get_param(pipe->screen, PIPE_CAP_NPOT_TEXTURES))
+      ctx->internal_target = PIPE_TEXTURE_2D;
+   else
+      ctx->internal_target = PIPE_TEXTURE_RECT;
 
    return ctx;
 }
@@ -296,6 +301,7 @@ util_blit_pixels_writemask(struct blit_state *ctx,
    unsigned offset;
    boolean overlap;
    float s0, t0, s1, t1;
+   boolean normalized;
 
    assert(filter == PIPE_TEX_MIPFILTER_NEAREST ||
           filter == PIPE_TEX_MIPFILTER_LINEAR);
@@ -335,7 +341,6 @@ util_blit_pixels_writemask(struct blit_state *ctx,
       return;
    }
 
-
    /* Create a temporary texture when src and dest alias or when src
     * is anything other than a 2d texture.
     * XXX should just use appropriate shader to access 1d / 3d slice / cube face,
@@ -373,7 +378,7 @@ util_blit_pixels_writemask(struct blit_state *ctx,
 
       /* create temp texture */
       memset(&texTemp, 0, sizeof(texTemp));
-      texTemp.target = PIPE_TEXTURE_2D;
+      texTemp.target = ctx->internal_target;
       texTemp.format = src_tex->format;
       texTemp.last_level = 0;
       texTemp.width0 = srcW;
@@ -393,10 +398,19 @@ util_blit_pixels_writemask(struct blit_state *ctx,
                                  src_tex, srcsub, srcLeft, srcTop, srcZ0, /* src */
                                  srcW, srcH);     /* size */
 
-      s0 = 0.0f; 
-      s1 = 1.0f;
-      t0 = 0.0f;
-      t1 = 1.0f;
+      normalized = tex->target != PIPE_TEXTURE_RECT;
+      if(normalized) {
+         s0 = 0.0f;
+         s1 = 1.0f;
+         t0 = 0.0f;
+         t1 = 1.0f;
+      }
+      else {
+         s0 = 0;
+         s1 = srcW;
+         t0 = 0;
+         t1 = srcH;
+      }
 
       u_sampler_view_default_template(&sv_templ, tex, tex->format);
       sampler_view = pipe->create_sampler_view(pipe, tex, &sv_templ);
@@ -416,17 +430,25 @@ util_blit_pixels_writemask(struct blit_state *ctx,
          return;
       }
 
-      s0 = srcX0 / (float)(u_minify(sampler_view->texture->width0, srcsub.level));
-      s1 = srcX1 / (float)(u_minify(sampler_view->texture->width0, srcsub.level));
-      t0 = srcY0 / (float)(u_minify(sampler_view->texture->height0, srcsub.level));
-      t1 = srcY1 / (float)(u_minify(sampler_view->texture->height0, srcsub.level));
+      s0 = srcX0;
+      s1 = srcX1;
+      t0 = srcY0;
+      t1 = srcY1;
+      normalized = sampler_view->texture->target != PIPE_TEXTURE_RECT;
+      if(normalized)
+      {
+         s0 /= (float)(u_minify(sampler_view->texture->width0, srcsub.level));
+         s1 /= (float)(u_minify(sampler_view->texture->width0, srcsub.level));
+         t0 /= (float)(u_minify(sampler_view->texture->height0, srcsub.level));
+         t1 /= (float)(u_minify(sampler_view->texture->height0, srcsub.level));
+      }
    }
 
 
-   assert(screen->is_format_supported(screen, sampler_view->format, PIPE_TEXTURE_2D,
+   assert(screen->is_format_supported(screen, sampler_view->format, ctx->internal_target,
                                       sampler_view->texture->nr_samples,
                                       PIPE_BIND_SAMPLER_VIEW, 0));
-   assert(screen->is_format_supported(screen, dst->format, PIPE_TEXTURE_2D,
+   assert(screen->is_format_supported(screen, dst->format, ctx->internal_target,
                                       dst->texture->nr_samples,
                                       PIPE_BIND_RENDER_TARGET, 0));
 
@@ -451,6 +473,7 @@ util_blit_pixels_writemask(struct blit_state *ctx,
    cso_set_vertex_elements(ctx->cso, 2, ctx->velem);
 
    /* sampler */
+   ctx->sampler.normalized_coords = normalized;
    ctx->sampler.min_img_filter = filter;
    ctx->sampler.mag_img_filter = filter;
    /* we've limited this already with the sampler view but you never know... */
@@ -575,6 +598,7 @@ util_blit_pixels_tex(struct blit_state *ctx,
                      int dstX1, int dstY1,
                      float z, uint filter)
 {
+   boolean normalized = src_sampler_view->texture->target != PIPE_TEXTURE_RECT;
    struct pipe_framebuffer_state fb;
    float s0, t0, s1, t1;
    unsigned offset;
@@ -587,10 +611,18 @@ util_blit_pixels_tex(struct blit_state *ctx,
    assert(tex->width0 != 0);
    assert(tex->height0 != 0);
 
-   s0 = srcX0 / (float)tex->width0;
-   s1 = srcX1 / (float)tex->width0;
-   t0 = srcY0 / (float)tex->height0;
-   t1 = srcY1 / (float)tex->height0;
+   s0 = srcX0;
+   s1 = srcX1;
+   t0 = srcY0;
+   t1 = srcY1;
+
+   if(normalized)
+   {
+      s0 /= (float)tex->width0;
+      s1 /= (float)tex->width0;
+      t0 /= (float)tex->height0;
+      t1 /= (float)tex->height0;
+   }
 
    assert(ctx->pipe->screen->is_format_supported(ctx->pipe->screen, dst->format,
                                                  PIPE_TEXTURE_2D,
@@ -618,6 +650,7 @@ util_blit_pixels_tex(struct blit_state *ctx,
    cso_set_vertex_elements(ctx->cso, 2, ctx->velem);
 
    /* sampler */
+   ctx->sampler.normalized_coords = normalized;
    ctx->sampler.min_img_filter = filter;
    ctx->sampler.mag_img_filter = filter;
    cso_single_sampler(ctx->cso, 0, &ctx->sampler);
