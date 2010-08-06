@@ -26,16 +26,8 @@
 
 class ir_struct_usage_visitor : public ir_hierarchical_visitor {
 public:
-	ir_struct_usage_visitor()
-	{
-		this->mem_ctx = talloc_new(NULL);
-		this->struct_list.make_empty();
-	}
-
-	~ir_struct_usage_visitor(void)
-	{
-		talloc_free(mem_ctx);
-	}
+	ir_struct_usage_visitor();
+	~ir_struct_usage_visitor(void);
 
 	virtual ir_visitor_status visit(ir_dereference_variable *);
 

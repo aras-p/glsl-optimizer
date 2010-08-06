@@ -60,3 +60,34 @@ ir_struct_usage_visitor::visit(ir_dereference_variable *ir)
 	}
 	return visit_continue;
 }
+
+static void visit_variable (ir_instruction* ir, void* data)
+{
+	ir_variable* var = ir->as_variable();
+	if (!var)
+		return;
+	ir_struct_usage_visitor* self = reinterpret_cast<ir_struct_usage_visitor*>(data);
+	const glsl_type* t = ir->type;
+	if (t->base_type == GLSL_TYPE_STRUCT)
+	{
+		if (!self->has_struct_entry (t))
+		{
+			struct_entry *entry = new(self->mem_ctx) struct_entry(t);
+			self->struct_list.push_tail (entry);
+		}
+	}
+
+}
+
+ir_struct_usage_visitor::ir_struct_usage_visitor()
+{
+	this->mem_ctx = talloc_new(NULL);
+	this->struct_list.make_empty();
+	this->callback = visit_variable;
+	this->data = this;
+}
+
+ir_struct_usage_visitor::~ir_struct_usage_visitor(void)
+{
+	talloc_free(mem_ctx);
+}
