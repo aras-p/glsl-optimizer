@@ -2,6 +2,33 @@
 #ifndef GLSL_OPTIMIZER_H
 #define GLSL_OPTIMIZER_H
 
+/*
+ Main GLSL optimizer interface.
+
+ General usage:
+
+ ctx = glslopt_initialize();
+ for (lots of shaders) {
+   shader = glslopt_optimize (ctx, shaderType, shaderSource);
+   if (glslopt_get_status (shader)) {
+     newSource = glslopt_get_output (shader);
+   } else {
+     errorLog = glslopt_get_log (shader);
+   }
+   glslopt_shader_delete (shader);
+ }
+ glslopt_cleanup (ctx);
+
+
+ Notes and caveats:
+ * Does not support GLSL preprocessor. All input shader source should be
+   already preprocessed. For my use case it's not needed, so I did not
+   bother even compiling Mesa's one. 
+ * I haven't checked if/how it works with higher GLSL versions than the
+   default (1.10?)
+
+*/
+
 struct glslopt_shader;
 struct glslopt_ctx;
 
