@@ -695,7 +695,7 @@ static struct radeon_state *r600_cb(struct r600_context *rctx, int cb)
 	ntype = 0;
 	desc = util_format_description(rtex->resource.base.b.format);
 	if (desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB)
-		ntype = NUM_FORMAT_SRGB;
+		ntype = V_0280A0_NUMBER_SRGB;
 
 	format = r600_translate_colorformat(rtex->resource.base.b.format);
 	swap = r600_translate_colorswap(rtex->resource.base.b.format);

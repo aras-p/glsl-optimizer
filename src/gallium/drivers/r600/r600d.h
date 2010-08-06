@@ -209,12 +209,24 @@
 #define   S_0280A0_NUMBER_TYPE(x)                      (((x) & 0x7) << 12)
 #define   G_0280A0_NUMBER_TYPE(x)                      (((x) >> 12) & 0x7)
 #define   C_0280A0_NUMBER_TYPE                         0xFFFF8FFF
+#define     V_0280A0_NUMBER_UNORM                      0x00000000
+#define     V_0280A0_NUMBER_SNORM                      0x00000001
+#define     V_0280A0_NUMBER_USCALED                    0x00000002
+#define     V_0280A0_NUMBER_SSCALED                    0x00000003
+#define     V_0280A0_NUMBER_UINT                       0x00000004
+#define     V_0280A0_NUMBER_SINT                       0x00000005
+#define     V_0280A0_NUMBER_SRGB                       0x00000006
+#define     V_0280A0_NUMBER_FLOAT                      0x00000007
 #define   S_0280A0_READ_SIZE(x)                        (((x) & 0x1) << 15)
 #define   G_0280A0_READ_SIZE(x)                        (((x) >> 15) & 0x1)
 #define   C_0280A0_READ_SIZE                           0xFFFF7FFF
 #define   S_0280A0_COMP_SWAP(x)                        (((x) & 0x3) << 16)
 #define   G_0280A0_COMP_SWAP(x)                        (((x) >> 16) & 0x3)
 #define   C_0280A0_COMP_SWAP                           0xFFFCFFFF
+#define     V_0280A0_SWAP_STD                          0x00000000
+#define     V_0280A0_SWAP_ALT                          0x00000001
+#define     V_0280A0_SWAP_STD_REV                      0x00000002
+#define     V_0280A0_SWAP_ALT_REV                      0x00000003
 #define   S_0280A0_TILE_MODE(x)                        (((x) & 0x3) << 18)
 #define   G_0280A0_TILE_MODE(x)                        (((x) >> 18) & 0x3)
 #define   C_0280A0_TILE_MODE                           0xFFF3FFFF
@@ -1169,11 +1181,4 @@
 #define   G_0286D4_PNT_SPRITE_TOP_1(x)                 (((x) >> 14) & 0x1)
 #define   C_0286D4_PNT_SPRITE_TOP_1                    0xFFFFBFFF
 
-/* temporary swap */
-#define SWAP_STD 0
-#define SWAP_ALT 1
-#define SWAP_STD_REV 2
-#define SWAP_ALT_REV 3
-
-#define NUM_FORMAT_SRGB 6
 #endif
