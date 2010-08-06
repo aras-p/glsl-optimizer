@@ -21,12 +21,14 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
-#include "util/u_format.h"
-#include "util/u_mm.h"
 #include "r300_context.h"
 #include "r300_hyperz.h"
 #include "r300_reg.h"
 #include "r300_fs.h"
+#include "r300_winsys.h"
+
+#include "util/u_format.h"
+#include "util/u_mm.h"
 
 /*
   HiZ rules - taken from various docs 
@@ -137,6 +139,9 @@ static void r300_update_hyperz(struct r300_context* r300)
         z->zb_bw_cntl |= R300_ZB_CB_CLEAR_CACHE_LINE_WRITE_ONLY;
         return;
     }
+
+    if (!r300->rws->get_value(r300->rws, R300_CAN_HYPERZ))
+        return;
 
     /* Zbuffer compression. */
     if (r300->z_compression) {

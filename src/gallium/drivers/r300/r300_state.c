@@ -689,8 +689,7 @@ void r300_mark_fb_state_dirty(struct r300_context *r300,
     /* What is marked as dirty depends on the enum r300_fb_state_change. */
     r300->gpu_flush.dirty = TRUE;
     r300->fb_state.dirty = TRUE;
-    if (r300->rws->get_value(r300->rws, R300_CAN_HYPERZ))
-        r300->hyperz_state.dirty = TRUE;
+    r300->hyperz_state.dirty = TRUE;
 
     if (change == R300_CHANGED_FB_STATE) {
         r300->aa_state.dirty = TRUE;

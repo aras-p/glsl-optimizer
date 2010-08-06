@@ -223,8 +223,7 @@ static void r300_prepare_for_rendering(struct r300_context *r300,
 
     /* Emitted in flush. */
     end_dwords += 26; /* emit_query_end */
-    if (r300->rws->get_value(r300->rws, R300_CAN_HYPERZ))
-        end_dwords += r300->hyperz_state.size + 2; /* emit_hyperz_end + zcache flush */
+    end_dwords += r300->hyperz_state.size + 2; /* emit_hyperz_end + zcache flush */
 
     cs_dwords += end_dwords;
 

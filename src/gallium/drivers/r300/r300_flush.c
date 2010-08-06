@@ -44,8 +44,7 @@ static void r300_flush(struct pipe_context* pipe,
     u_upload_flush(r300->upload_ib);
 
     if (r300->dirty_hw) {
-        if (r300->rws->get_value(r300->rws, R300_CAN_HYPERZ))
-            r300_emit_hyperz_end(r300);
+        r300_emit_hyperz_end(r300);
         r300_emit_query_end(r300);
 
         r300->flush_counter++;
