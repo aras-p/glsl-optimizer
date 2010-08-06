@@ -1174,4 +1174,6 @@
 #define SWAP_ALT 1
 #define SWAP_STD_REV 2
 #define SWAP_ALT_REV 3
+
+#define NUM_FORMAT_SRGB 6
 #endif

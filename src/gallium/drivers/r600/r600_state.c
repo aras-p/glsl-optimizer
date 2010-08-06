@@ -669,8 +669,9 @@ static int r600_cb0(struct r600_context *rctx, struct radeon_state *rstate)
 	unsigned level = state->cbufs[0]->level;
 	unsigned pitch, slice;
 	unsigned color_info;
-	unsigned format, swap;
+	unsigned format, swap, ntype;
 	int r;
+	const struct util_format_description *desc;
 
 	r = radeon_state_init(rstate, rscreen->rw, R600_CB0_TYPE, R600_CB0);
 	if (r)
@@ -688,12 +689,19 @@ static int r600_cb0(struct r600_context *rctx, struct radeon_state *rstate)
 	pitch = (rtex->pitch[level] / rtex->bpt) / 8 - 1;
 	slice = (rtex->pitch[level] / rtex->bpt) * state->cbufs[0]->height / 64 - 1;
 
+	ntype = 0;
+	desc = util_format_description(rtex->resource.base.b.format);
+	if (desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB)
+		ntype = NUM_FORMAT_SRGB;
+
 	format = r600_translate_colorformat(rtex->resource.base.b.format);
 	swap = r600_translate_colorswap(rtex->resource.base.b.format);
+
 	color_info = S_0280A0_FORMAT(format) |
-	  S_0280A0_COMP_SWAP(swap) |
-	  S_0280A0_BLEND_CLAMP(1) |
-	  S_0280A0_SOURCE_FORMAT(1);
+		S_0280A0_COMP_SWAP(swap) |
+		S_0280A0_BLEND_CLAMP(1) |
+		S_0280A0_SOURCE_FORMAT(1) |
+		S_0280A0_NUMBER_TYPE(ntype);
 
 	rstate->states[R600_CB0__CB_COLOR0_BASE] = 0x00000000;
 	rstate->states[R600_CB0__CB_COLOR0_INFO] = color_info;
@@ -1136,6 +1144,7 @@ static int r600_resource(struct r600_context *rctx, struct radeon_state *rstate,
 			S_038010_DST_SEL_Y(r600_tex_swizzle(view->swizzle_g)) |
 			S_038010_DST_SEL_Z(r600_tex_swizzle(view->swizzle_r)) |
 			S_038010_DST_SEL_W(r600_tex_swizzle(view->swizzle_a)) |
+		        S_038010_FORCE_DEGAMMA(desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB ? 1 : 0) |
 			S_038010_BASE_LEVEL(view->first_level);
 	rstate->states[R600_PS_RESOURCE__RESOURCE0_WORD5] =
 			S_038014_LAST_LEVEL(view->last_level) |
