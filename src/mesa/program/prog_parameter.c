@@ -344,18 +344,19 @@ _mesa_use_uniform(struct gl_program_parameter_list *paramList,
  */
 GLint
 _mesa_add_sampler(struct gl_program_parameter_list *paramList,
-                  const char *name, GLenum datatype)
+                  const char *name, GLenum datatype, int array_length)
 {
    GLint i = _mesa_lookup_parameter_index(paramList, -1, name);
    if (i >= 0 && paramList->Parameters[i].Type == PROGRAM_SAMPLER) {
-      ASSERT(paramList->Parameters[i].Size == 1);
+      ASSERT(paramList->Parameters[i].Size == 4 * array_length);
       ASSERT(paramList->Parameters[i].DataType == datatype);
       /* already in list */
       return (GLint) paramList->ParameterValues[i][0];
    }
    else {
       GLuint i;
-      const GLint size = 1; /* a sampler is basically a texture unit number */
+       /* One integer texture unit number goes in each parameter location. */
+      const GLint size = 4 * array_length;
       GLfloat value[4];
       GLint numSamplers = 0;
       for (i = 0; i < paramList->NumParameters; i++) {

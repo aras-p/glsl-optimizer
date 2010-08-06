@@ -1398,10 +1398,19 @@ ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
 	    break;
 
 	 /* FINISHME: Fix up uniform name for arrays and things */
-	 if (ir->var->type->base_type == GLSL_TYPE_SAMPLER) {
+	 if (ir->var->type->base_type == GLSL_TYPE_SAMPLER ||
+	     (ir->var->type->base_type == GLSL_TYPE_ARRAY &&
+	      ir->var->type->fields.array->base_type == GLSL_TYPE_SAMPLER)) {
+	    int array_length;
+
+	    if (ir->var->type->base_type == GLSL_TYPE_ARRAY)
+	       array_length = ir->var->type->length;
+	    else
+	       array_length = 1;
 	    int sampler = _mesa_add_sampler(this->prog->Parameters,
 					    ir->var->name,
-					    ir->var->type->gl_type);
+					    ir->var->type->gl_type,
+					    array_length);
 	    set_sampler_location(ir->var, sampler);
 
 	    entry = new(mem_ctx) variable_storage(ir->var, PROGRAM_SAMPLER,
@@ -2035,22 +2044,42 @@ ir_to_mesa_visitor::visit(ir_texture *ir)
    if (ir->shadow_comparitor)
       inst->tex_shadow = GL_TRUE;
 
-   ir_dereference_variable *sampler = ir->sampler->as_dereference_variable();
-   assert(sampler); /* FINISHME: sampler arrays */
+   ir_variable *sampler = ir->sampler->variable_referenced();
+
    /* generate the mapping, remove when we generate storage at
     * declaration time
     */
-   sampler->accept(this);
+   ir->sampler->accept(this);
 
-   inst->sampler = get_sampler_location(sampler->var);
+   inst->sampler = get_sampler_location(sampler);
 
-   switch (sampler->type->sampler_dimensionality) {
+   ir_dereference_array *sampler_array = ir->sampler->as_dereference_array();
+   if (sampler_array) {
+      ir_constant *array_index =
+	 sampler_array->array_index->constant_expression_value();
+
+      /* GLSL 1.10 and 1.20 allowed variable sampler array indices,
+       * while GLSL 1.30 requires that the array indices be constant
+       * integer expressions.  We don't expect any driver to actually
+       * work with a really variable array index, and in 1.20 all that
+       * would work would be an unrolled loop counter, so assert that
+       * we ended up with a constant at least..
+       */
+      assert(array_index);
+      inst->sampler += array_index->value.i[0];
+   }
+
+   const glsl_type *sampler_type = sampler->type;
+   while (sampler_type->base_type == GLSL_TYPE_ARRAY)
+      sampler_type = sampler_type->fields.array;
+
+   switch (sampler_type->sampler_dimensionality) {
    case GLSL_SAMPLER_DIM_1D:
-      inst->tex_target = (sampler->type->sampler_array)
+      inst->tex_target = (sampler_type->sampler_array)
 	 ? TEXTURE_1D_ARRAY_INDEX : TEXTURE_1D_INDEX;
       break;
    case GLSL_SAMPLER_DIM_2D:
-      inst->tex_target = (sampler->type->sampler_array)
+      inst->tex_target = (sampler_type->sampler_array)
 	 ? TEXTURE_2D_ARRAY_INDEX : TEXTURE_2D_INDEX;
       break;
    case GLSL_SAMPLER_DIM_3D:
