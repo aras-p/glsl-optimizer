@@ -441,83 +441,6 @@ nvfx_set_viewport_state(struct pipe_context *pipe,
 	nvfx->draw_dirty |= NVFX_NEW_VIEWPORT;
 }
 
-static void
-nvfx_set_vertex_buffers(struct pipe_context *pipe, unsigned count,
-			const struct pipe_vertex_buffer *vb)
-{
-	struct nvfx_context *nvfx = nvfx_context(pipe);
-
-	for(unsigned i = 0; i < count; ++i)
-	{
-		pipe_resource_reference(&nvfx->vtxbuf[i].buffer, vb[i].buffer);
-		nvfx->vtxbuf[i].buffer_offset = vb[i].buffer_offset;
-		nvfx->vtxbuf[i].max_index = vb[i].max_index;
-		nvfx->vtxbuf[i].stride = vb[i].stride;
-	}
-
-	for(unsigned i = count; i < nvfx->vtxbuf_nr; ++i)
-		pipe_resource_reference(&nvfx->vtxbuf[i].buffer, 0);
-
-	nvfx->vtxbuf_nr = count;
-
-	nvfx->dirty |= NVFX_NEW_ARRAYS;
-	nvfx->draw_dirty |= NVFX_NEW_ARRAYS;
-}
-
-static void
-nvfx_set_index_buffer(struct pipe_context *pipe,
-		      const struct pipe_index_buffer *ib)
-{
-	struct nvfx_context *nvfx = nvfx_context(pipe);
-
-	/* TODO make this more like a state */
-
-	if(ib)
-	{
-		pipe_resource_reference(&nvfx->idxbuf.buffer, ib->buffer);
-		nvfx->idxbuf.index_size = ib->index_size;
-		nvfx->idxbuf.offset = ib->offset;
-	}
-	else
-	{
-		pipe_resource_reference(&nvfx->idxbuf.buffer, 0);
-		nvfx->idxbuf.index_size = 0;
-		nvfx->idxbuf.offset = 0;
-	}
-}
-
-static void *
-nvfx_vtxelts_state_create(struct pipe_context *pipe,
-			  unsigned num_elements,
-			  const struct pipe_vertex_element *elements)
-{
-	struct nvfx_vtxelt_state *cso = CALLOC_STRUCT(nvfx_vtxelt_state);
-
-	assert(num_elements < 16); /* not doing fallbacks yet */
-	cso->num_elements = num_elements;
-	memcpy(cso->pipe, elements, num_elements * sizeof(*elements));
-
-/*	nvfx_vtxelt_construct(cso);*/
-
-	return (void *)cso;
-}
-
-static void
-nvfx_vtxelts_state_delete(struct pipe_context *pipe, void *hwcso)
-{
-	FREE(hwcso);
-}
-
-static void
-nvfx_vtxelts_state_bind(struct pipe_context *pipe, void *hwcso)
-{
-	struct nvfx_context *nvfx = nvfx_context(pipe);
-
-	nvfx->vtxelt = hwcso;
-	nvfx->dirty |= NVFX_NEW_ARRAYS;
-	/*nvfx->draw_dirty |= NVFX_NEW_ARRAYS;*/
-}
-
 void
 nvfx_init_state_functions(struct nvfx_context *nvfx)
 {
@@ -553,11 +476,4 @@ nvfx_init_state_functions(struct nvfx_context *nvfx)
 	nvfx->pipe.set_polygon_stipple = nvfx_set_polygon_stipple;
 	nvfx->pipe.set_scissor_state = nvfx_set_scissor_state;
 	nvfx->pipe.set_viewport_state = nvfx_set_viewport_state;
-
-	nvfx->pipe.create_vertex_elements_state = nvfx_vtxelts_state_create;
-	nvfx->pipe.delete_vertex_elements_state = nvfx_vtxelts_state_delete;
-	nvfx->pipe.bind_vertex_elements_state = nvfx_vtxelts_state_bind;
-
-	nvfx->pipe.set_vertex_buffers = nvfx_set_vertex_buffers;
-	nvfx->pipe.set_index_buffer = nvfx_set_index_buffer;
 }

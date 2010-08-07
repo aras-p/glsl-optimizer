@@ -76,7 +76,9 @@ nvfx_create(struct pipe_screen *pscreen, void *priv)
 	nvfx_init_surface_functions(nvfx);
 	nvfx_init_state_functions(nvfx);
 	nvfx_init_sampling_functions(nvfx);
+	nvfx_init_vbo_functions(nvfx);
 	nvfx_init_resource_functions(&nvfx->pipe);
+	nvfx_init_transfer_functions(&nvfx->pipe);
 
 	/* Create, configure, and install fallback swtnl path */
 	nvfx->draw = draw_create(&nvfx->pipe);
@@ -89,6 +91,7 @@ nvfx_create(struct pipe_screen *pscreen, void *priv)
 	/* set these to that we init them on first validation */
 	nvfx->state.scissor_enabled = ~0;
 	nvfx->state.stipple_enabled = ~0;
+	nvfx->use_vertex_buffers = -1;
 
 	LIST_INITHEAD(&nvfx->render_cache);
 

@@ -10,6 +10,7 @@
 
 #include "nvfx_context.h"
 #include "nvfx_state.h"
+#include "nvfx_resource.h"
 
 /* TODO (at least...):
  *  1. Indexed consts  + ARL
@@ -874,7 +875,6 @@ nvfx_vertprog_validate(struct nvfx_context *nvfx)
 	struct nouveau_grobj *eng3d = screen->eng3d;
 	struct nvfx_vertex_program *vp;
 	struct pipe_resource *constbuf;
-	struct pipe_transfer *transfer = NULL;
 	boolean upload_code = FALSE, upload_data = FALSE;
 	int i;
 
@@ -983,11 +983,8 @@ nvfx_vertprog_validate(struct nvfx_context *nvfx)
 	if (vp->nr_consts) {
 		float *map = NULL;
 
-		if (constbuf) {
-			map = pipe_buffer_map(pipe, constbuf,
-					      PIPE_TRANSFER_READ,
-					      &transfer);
-		}
+		if (constbuf)
+			map = nvfx_buffer(constbuf)->data;
 
 		for (i = 0; i < vp->nr_consts; i++) {
 			struct nvfx_vertex_program_data *vpd = &vp->consts[i];
@@ -1005,9 +1002,6 @@ nvfx_vertprog_validate(struct nvfx_context *nvfx)
 			OUT_RING  (chan, i + vp->data->start);
 			OUT_RINGp (chan, (uint32_t *)vpd->value, 4);
 		}
-
-		if (constbuf)
-			pipe_buffer_unmap(pipe, constbuf, transfer);
 	}
 
 	/* Upload vtxprog */

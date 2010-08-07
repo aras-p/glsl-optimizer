@@ -59,12 +59,6 @@ nvfx_resource_get_handle(struct pipe_screen *pscreen,
 void
 nvfx_init_resource_functions(struct pipe_context *pipe)
 {
-	pipe->get_transfer = nvfx_transfer_new;
-	pipe->transfer_map = nvfx_transfer_map;
-	pipe->transfer_flush_region = u_default_transfer_flush_region;
-	pipe->transfer_unmap = nvfx_transfer_unmap;
-	pipe->transfer_destroy = util_staging_transfer_destroy;
-	pipe->transfer_inline_write = u_default_transfer_inline_write;
 	pipe->is_resource_referenced = nvfx_resource_is_referenced;
 }
 

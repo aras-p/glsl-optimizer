@@ -16,6 +16,7 @@ struct nvfx_screen {
 
 	unsigned is_nv4x; /* either 0 or ~0 */
 	boolean force_swtnl;
+	boolean trace_draw;
 	unsigned vertex_buffer_reloc_flags;
 	unsigned index_buffer_reloc_flags;
 
@@ -33,6 +34,18 @@ struct nvfx_screen {
 	struct nouveau_resource *vp_data_heap;
 
 	struct nv04_2d_context* eng2d;
+
+	/* Once the amount of bytes drawn from the buffer reaches the updated size times this value,
+	 * we will assume that the buffer will be drawn an huge number of times before the
+	 * next modification
+	 */
+	float static_reuse_threshold;
+
+	/* Cost of allocating a buffer in terms of the cost of copying a byte to an hardware buffer */
+	unsigned buffer_allocation_cost;
+
+	/* inline_cost/hardware_cost conversion ration */
+	float inline_cost_per_hardware_cost;
 };
 
 static INLINE struct nvfx_screen *

@@ -163,11 +163,11 @@ nvfx_screen_get_paramf(struct pipe_screen *pscreen, enum pipe_cap param)
 }
 
 static boolean
-nvfx_screen_surface_format_supported(struct pipe_screen *pscreen,
+nvfx_screen_is_format_supported(struct pipe_screen *pscreen,
 				     enum pipe_format format,
 				     enum pipe_texture_target target,
 				     unsigned sample_count,
-				     unsigned tex_usage, unsigned geom_flags)
+				     unsigned bind, unsigned geom_flags)
 {
 	struct nvfx_screen *screen = nvfx_screen(pscreen);
 	struct pipe_surface *front = ((struct nouveau_winsys *) pscreen->winsys)->front;
@@ -175,7 +175,7 @@ nvfx_screen_surface_format_supported(struct pipe_screen *pscreen,
 	 if (sample_count > 1)
 		return FALSE;
 
-	if (tex_usage & PIPE_BIND_RENDER_TARGET) {
+	if (bind & PIPE_BIND_RENDER_TARGET) {
 		switch (format) {
 		case PIPE_FORMAT_B8G8R8A8_UNORM:
 		case PIPE_FORMAT_B8G8R8X8_UNORM:
@@ -186,7 +186,7 @@ nvfx_screen_surface_format_supported(struct pipe_screen *pscreen,
 		}
 	}
 
-	if (tex_usage & PIPE_BIND_DEPTH_STENCIL) {
+	if (bind & PIPE_BIND_DEPTH_STENCIL) {
 		switch (format) {
 		case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
 		case PIPE_FORMAT_X8Z24_UNORM:
@@ -201,7 +201,7 @@ nvfx_screen_surface_format_supported(struct pipe_screen *pscreen,
 		}
 	}
 
-	if (tex_usage & PIPE_BIND_SAMPLER_VIEW) {
+	if (bind & PIPE_BIND_SAMPLER_VIEW) {
 		struct nvfx_texture_format* tf = &nvfx_texture_formats[format];
 		if(util_format_is_s3tc(format) && !util_format_s3tc_enabled)
 			return FALSE;
@@ -217,6 +217,22 @@ nvfx_screen_surface_format_supported(struct pipe_screen *pscreen,
 				return FALSE;
 		}
 	}
+
+	// note that we do actually support everything through translate
+	if (bind & PIPE_BIND_VERTEX_BUFFER) {
+		unsigned type = nvfx_vertex_formats[format];
+		if(!type)
+			return FALSE;
+	}
+
+	if (bind & PIPE_BIND_INDEX_BUFFER) {
+		// 8-bit indices supported, but not in hardware index buffer
+		if(format != PIPE_FORMAT_R16_USCALED && format != PIPE_FORMAT_R32_USCALED)
+			return FALSE;
+	}
+
+	if(bind & PIPE_BIND_STREAM_OUTPUT)
+		return FALSE;
 
 	return TRUE;
 }
@@ -387,7 +403,7 @@ nvfx_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	pscreen->destroy = nvfx_screen_destroy;
 	pscreen->get_param = nvfx_screen_get_param;
 	pscreen->get_paramf = nvfx_screen_get_paramf;
-	pscreen->is_format_supported = nvfx_screen_surface_format_supported;
+	pscreen->is_format_supported = nvfx_screen_is_format_supported;
 	pscreen->context_create = nvfx_create;
 
 	switch (dev->chipset & 0xf0) {
@@ -419,6 +435,11 @@ nvfx_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 	}
 
 	screen->force_swtnl = debug_get_bool_option("NOUVEAU_SWTNL", FALSE);
+	screen->trace_draw = debug_get_bool_option("NVFX_TRACE_DRAW", FALSE);
+
+	screen->buffer_allocation_cost = debug_get_num_option("NVFX_BUFFER_ALLOCATION_COST", 16384);
+	screen->inline_cost_per_hardware_cost = atof(debug_get_option("NVFX_INLINE_COST_PER_HARDWARE_COST", "1.0"));
+	screen->static_reuse_threshold = atof(debug_get_option("NVFX_STATIC_REUSE_THRESHOLD", "2.0"));
 
 	screen->vertex_buffer_reloc_flags = nvfx_screen_get_vertex_buffer_flags(screen);
 

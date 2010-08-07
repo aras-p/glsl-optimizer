@@ -44,6 +44,7 @@
 #define NVFX_NEW_SR		(1 << 13)
 #define NVFX_NEW_VERTCONST	(1 << 14)
 #define NVFX_NEW_FRAGCONST	(1 << 15)
+#define NVFX_NEW_INDEX	(1 << 16)
 
 struct nvfx_rasterizer_state {
 	struct pipe_rasterizer_state pipe;
@@ -71,9 +72,53 @@ struct nvfx_state {
 	unsigned render_temps;
 };
 
+struct nvfx_per_vertex_element {
+	unsigned idx;
+        unsigned vertex_buffer_index;
+        unsigned src_offset;
+};
+
+struct nvfx_low_frequency_element {
+	unsigned idx;
+	unsigned vertex_buffer_index;
+	unsigned src_offset;
+        void (*fetch_rgba_float)(float *dst, const uint8_t *src, unsigned i, unsigned j);
+        unsigned ncomp;
+};
+
+struct nvfx_per_instance_element {
+	struct nvfx_low_frequency_element base;
+	unsigned instance_divisor;
+};
+
+struct nvfx_per_vertex_buffer_info
+{
+	unsigned vertex_buffer_index;
+	unsigned per_vertex_size;
+};
+
 struct nvfx_vtxelt_state {
 	struct pipe_vertex_element pipe[16];
 	unsigned num_elements;
+	unsigned vtxfmt[16];
+
+	unsigned num_per_vertex_buffer_infos;
+	struct nvfx_per_vertex_buffer_info per_vertex_buffer_info[16];
+
+	unsigned num_per_vertex;
+	struct nvfx_per_vertex_element per_vertex[16];
+
+	unsigned num_per_instance;
+	struct nvfx_per_instance_element per_instance[16];
+
+	unsigned num_constant;
+	struct nvfx_low_frequency_element constant[16];
+
+	boolean needs_translate;
+	struct translate* translate;
+
+	unsigned vertex_length;
+	unsigned max_vertices_per_packet;
 };
 
 struct nvfx_render_target {
@@ -127,8 +172,6 @@ struct nvfx_context {
 	struct pipe_viewport_state viewport;
 	struct pipe_framebuffer_state framebuffer;
 	struct pipe_index_buffer idxbuf;
-	struct pipe_resource *idxbuf_buffer;
-	unsigned idxbuf_format;
 	struct nvfx_sampler_state *tex_sampler[PIPE_MAX_SAMPLERS];
 	struct pipe_sampler_view *fragment_sampler_views[PIPE_MAX_SAMPLERS];
 	unsigned nr_samplers;
@@ -137,8 +180,14 @@ struct nvfx_context {
 	struct pipe_vertex_buffer vtxbuf[PIPE_MAX_ATTRIBS];
 	unsigned vtxbuf_nr;
 	struct nvfx_vtxelt_state *vtxelt;
+	int base_vertex;
+	boolean use_index_buffer;
+	/* -1 = hardware input setup is outdated
+	 * 0 = hardware input setup is for inline vertices
+	 * 1 = hardware input setup is for hardware vertices
+	 */
+	int use_vertex_buffers;
 
-	unsigned vbo_bo;
 	unsigned hw_vtxelt_nr;
 	uint8_t hw_samplers;
 	uint32_t hw_txf[8];
@@ -180,11 +229,7 @@ extern void nvfx_clear(struct pipe_context *pipe, unsigned buffers,
 
 /* nvfx_draw.c */
 extern struct draw_stage *nvfx_draw_render_stage(struct nvfx_context *nvfx);
-extern void nvfx_draw_elements_swtnl(struct pipe_context *pipe,
-                                     struct pipe_resource *idxbuf,
-                                     unsigned ib_size, int ib_bias,
-                                     unsigned mode,
-                                     unsigned start, unsigned count);
+extern void nvfx_draw_vbo_swtnl(struct pipe_context *pipe, const struct pipe_draw_info* info);
 extern void nvfx_vtxfmt_validate(struct nvfx_context *nvfx);
 
 /* nvfx_fb.c */
@@ -245,17 +290,53 @@ extern boolean nvfx_state_validate_swtnl(struct nvfx_context *nvfx);
 extern void nvfx_state_emit(struct nvfx_context *nvfx);
 
 /* nvfx_transfer.c */
-extern void nvfx_init_transfer_functions(struct nvfx_context *nvfx);
+extern void nvfx_init_transfer_functions(struct pipe_context *pipe);
 
 /* nvfx_vbo.c */
 extern boolean nvfx_vbo_validate(struct nvfx_context *nvfx);
 extern void nvfx_vbo_relocate(struct nvfx_context *nvfx);
+extern void nvfx_idxbuf_validate(struct nvfx_context* nvfx);
+extern void nvfx_idxbuf_relocate(struct nvfx_context* nvfx);
 extern void nvfx_draw_vbo(struct pipe_context *pipe,
                           const struct pipe_draw_info *info);
+extern void nvfx_init_vbo_functions(struct nvfx_context *nvfx);
+extern unsigned nvfx_vertex_formats[];
 
 /* nvfx_vertprog.c */
 extern boolean nvfx_vertprog_validate(struct nvfx_context *nvfx);
 extern void nvfx_vertprog_destroy(struct nvfx_context *,
 				  struct nvfx_vertex_program *);
+
+/* nvfx_push.c */
+extern void nvfx_push_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info);
+
+/* must WAIT_RING(chan, ncomp + 1) or equivalent beforehand! */
+static inline void nvfx_emit_vtx_attr(struct nouveau_channel* chan, unsigned attrib, float* v, unsigned ncomp)
+{
+	switch (ncomp) {
+	case 4:
+		OUT_RING(chan, RING_3D(NV34TCL_VTX_ATTR_4F_X(attrib), 4));
+		OUT_RING(chan, fui(v[0]));
+		OUT_RING(chan, fui(v[1]));
+		OUT_RING(chan,  fui(v[2]));
+		OUT_RING(chan,  fui(v[3]));
+		break;
+	case 3:
+		OUT_RING(chan, RING_3D(NV34TCL_VTX_ATTR_3F_X(attrib), 3));
+		OUT_RING(chan,  fui(v[0]));
+		OUT_RING(chan,  fui(v[1]));
+		OUT_RING(chan,  fui(v[2]));
+		break;
+	case 2:
+		OUT_RING(chan, RING_3D(NV34TCL_VTX_ATTR_2F_X(attrib), 2));
+		OUT_RING(chan,  fui(v[0]));
+		OUT_RING(chan,  fui(v[1]));
+		break;
+	case 1:
+		OUT_RING(chan, RING_3D(NV34TCL_VTX_ATTR_1F(attrib), 1));
+		OUT_RING(chan,  fui(v[0]));
+		break;
+	}
+}
 
 #endif

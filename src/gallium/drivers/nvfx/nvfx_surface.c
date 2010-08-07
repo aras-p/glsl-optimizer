@@ -36,7 +36,6 @@
 #include "util/u_blitter.h"
 
 #include "nouveau/nouveau_winsys.h"
-#include "nouveau/nouveau_util.h"
 #include "nouveau/nouveau_screen.h"
 #include "nvfx_context.h"
 #include "nvfx_screen.h"
@@ -62,7 +61,7 @@ nvfx_region_set_format(struct nv04_region* rgn, enum pipe_format format)
 		break;
 	default:
 		assert(util_is_pot(bits));
-		int shift = log2i(bits) - 3;
+		int shift = util_logbase2(bits) - 3;
 		assert(shift >= 2);
 		rgn->bpps = 2;
 		shift -= 2;
@@ -365,25 +364,29 @@ nvfx_surface_copy_temp(struct pipe_context* pipe, struct pipe_surface* surf, int
 {
 	struct nvfx_surface* ns = (struct nvfx_surface*)surf;
 	struct pipe_subresource tempsr, surfsr;
-	struct pipe_resource *idxbuf_buffer;
-	unsigned idxbuf_format;
+	struct nvfx_context* nvfx = nvfx_context(pipe);
+
+	// TODO: we really should do this validation before setting these variable in draw calls
+	unsigned use_vertex_buffers = nvfx->use_vertex_buffers;
+	boolean use_index_buffer = nvfx->use_index_buffer;
+	unsigned base_vertex = nvfx->base_vertex;
 
 	tempsr.face = 0;
 	tempsr.level = 0;
 	surfsr.face = surf->face;
 	surfsr.level = surf->level;
 
-	// TODO: do this properly, in blitter save
-	idxbuf_buffer = ((struct nvfx_context*)pipe)->idxbuf_buffer;
-	idxbuf_format = ((struct nvfx_context*)pipe)->idxbuf_format;
-
 	if(to_temp)
 		nvfx_resource_copy_region(pipe, &ns->temp->base.base, tempsr, 0, 0, 0, surf->texture, surfsr, 0, 0, surf->zslice, surf->width, surf->height);
 	else
 		nvfx_resource_copy_region(pipe, surf->texture, surfsr, 0, 0, surf->zslice, &ns->temp->base.base, tempsr, 0, 0, 0, surf->width, surf->height);
 
-	((struct nvfx_context*)pipe)->idxbuf_buffer = idxbuf_buffer;
-	((struct nvfx_context*)pipe)->idxbuf_format = idxbuf_format;
+	nvfx->use_vertex_buffers = use_vertex_buffers;
+	nvfx->use_index_buffer = use_index_buffer;
+        nvfx->base_vertex = base_vertex;
+
+	nvfx->dirty |= NVFX_NEW_ARRAYS;
+	nvfx->draw_dirty |= NVFX_NEW_ARRAYS;
 }
 
 void

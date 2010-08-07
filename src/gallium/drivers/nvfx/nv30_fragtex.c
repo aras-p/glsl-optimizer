@@ -1,7 +1,6 @@
 #include "util/u_format.h"
 
 #include "nvfx_context.h"
-#include "nouveau/nouveau_util.h"
 #include "nvfx_tex.h"
 #include "nvfx_resource.h"
 
@@ -44,9 +43,9 @@ nv30_sampler_view_init(struct pipe_context *pipe,
 
 	txf = sv->u.init_fmt;
 	txf |= (level != sv->base.last_level ? NV34TCL_TX_FORMAT_MIPMAP : 0);
-	txf |= log2i(u_minify(pt->width0, level)) << NV34TCL_TX_FORMAT_BASE_SIZE_U_SHIFT;
-	txf |= log2i(u_minify(pt->height0, level)) << NV34TCL_TX_FORMAT_BASE_SIZE_V_SHIFT;
-	txf |= log2i(u_minify(pt->depth0, level)) << NV34TCL_TX_FORMAT_BASE_SIZE_W_SHIFT;
+	txf |= util_logbase2(u_minify(pt->width0, level)) << NV34TCL_TX_FORMAT_BASE_SIZE_U_SHIFT;
+	txf |= util_logbase2(u_minify(pt->height0, level)) << NV34TCL_TX_FORMAT_BASE_SIZE_V_SHIFT;
+	txf |= util_logbase2(u_minify(pt->depth0, level)) << NV34TCL_TX_FORMAT_BASE_SIZE_W_SHIFT;
 	txf |=  0x10000;
 
 	sv->u.nv30.fmt[0] = tf->fmt[0] | txf;

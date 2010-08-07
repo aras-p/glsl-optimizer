@@ -14,6 +14,7 @@ C_SOURCES = \
 	nv30_fragtex.c \
 	nv40_fragtex.c \
 	nvfx_miptree.c \
+	nvfx_push.c \
 	nvfx_query.c \
 	nvfx_resource.c \
 	nvfx_screen.c \

@@ -1,6 +1,5 @@
 #include "nvfx_context.h"
 #include "nvfx_resource.h"
-#include "nouveau/nouveau_util.h"
 #include "util/u_format.h"
 
 static inline boolean
@@ -125,8 +124,8 @@ nvfx_framebuffer_validate(struct nvfx_context *nvfx, unsigned prepare_result)
 		assert(!(fb->width & (fb->width - 1)) && !(fb->height & (fb->height - 1)));
 
 		rt_format = NV34TCL_RT_FORMAT_TYPE_SWIZZLED |
-			(log2i(fb->width) << NV34TCL_RT_FORMAT_LOG2_WIDTH_SHIFT) |
-			(log2i(fb->height) << NV34TCL_RT_FORMAT_LOG2_HEIGHT_SHIFT);
+			(util_logbase2(fb->width) << NV34TCL_RT_FORMAT_LOG2_WIDTH_SHIFT) |
+			(util_logbase2(fb->height) << NV34TCL_RT_FORMAT_LOG2_HEIGHT_SHIFT);
 	} else
 		rt_format = NV34TCL_RT_FORMAT_TYPE_LINEAR;
 

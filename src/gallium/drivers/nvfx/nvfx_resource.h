@@ -17,8 +17,23 @@ struct nvfx_resource {
 	struct nouveau_bo *bo;
 };
 
-#define NVFX_RESOURCE_FLAG_LINEAR (PIPE_RESOURCE_FLAG_DRV_PRIV << 0)
+static INLINE
+struct nvfx_resource *nvfx_resource(struct pipe_resource *resource)
+{
+	return (struct nvfx_resource *)resource;
+}
 
+#define NVFX_RESOURCE_FLAG_LINEAR (PIPE_RESOURCE_FLAG_DRV_PRIV << 0)
+#define NVFX_RESOURCE_FLAG_USER (PIPE_RESOURCE_FLAG_DRV_PRIV << 1)
+
+/* is resource mapped into the GPU's address space (i.e. VRAM or GART) ? */
+static INLINE boolean
+nvfx_resource_mapped_by_gpu(struct pipe_resource *resource)
+{
+   return nvfx_resource(resource)->bo->handle;
+}
+
+/* is resource in VRAM? */
 static inline int
 nvfx_resource_on_gpu(struct pipe_resource* pr)
 {
@@ -63,12 +78,6 @@ struct nvfx_surface {
 	struct nvfx_miptree* temp;
 };
 
-static INLINE 
-struct nvfx_resource *nvfx_resource(struct pipe_resource *resource)
-{
-	return (struct nvfx_resource *)resource;
-}
-
 static INLINE struct nouveau_bo *
 nvfx_surface_buffer(struct pipe_surface *surf)
 {
@@ -105,22 +114,6 @@ struct pipe_resource *
 nvfx_miptree_from_handle(struct pipe_screen *pscreen,
 			 const struct pipe_resource *template,
 			 struct winsys_handle *whandle);
-
-struct pipe_resource *
-nvfx_buffer_create(struct pipe_screen *pscreen,
-		   const struct pipe_resource *template);
-
-void
-nvfx_buffer_destroy(struct pipe_screen *pscreen,
-                    struct pipe_resource *presource);
-
-struct pipe_resource *
-nvfx_user_buffer_create(struct pipe_screen *screen,
-			void *ptr,
-			unsigned bytes,
-			unsigned usage);
-
-
 
 void
 nvfx_miptree_surface_del(struct pipe_surface *ps);
@@ -172,5 +165,59 @@ nvfx_surface_create_temp(struct pipe_context* pipe, struct pipe_surface* surf);
 
 void
 nvfx_surface_flush(struct pipe_context* pipe, struct pipe_surface* surf);
+
+struct nvfx_buffer
+{
+	struct nvfx_resource base;
+	uint8_t* data;
+	unsigned size;
+
+	/* the range of data not yet uploaded to the GPU bo */
+	unsigned dirty_begin;
+	unsigned dirty_end;
+
+	/* whether all transfers were unsynchronized */
+	boolean dirty_unsynchronized;
+
+	/* whether it would have been profitable to upload
+	 * the latest updated data to the GPU immediately */
+	boolean last_update_static;
+
+	/* how many bytes we need to draw before we deem
+	 * the buffer to be static
+	 */
+	long long bytes_to_draw_until_static;
+};
+
+static inline struct nvfx_buffer* nvfx_buffer(struct pipe_resource* pr)
+{
+	return (struct nvfx_buffer*)pr;
+}
+
+/* this is an heuristic to determine whether we are better off uploading the
+ * buffer to the GPU, or just continuing pushing it on the FIFO
+ */
+static inline boolean nvfx_buffer_seems_static(struct nvfx_buffer* buffer)
+{
+	return buffer->last_update_static
+		|| buffer->bytes_to_draw_until_static < 0;
+}
+
+struct pipe_resource *
+nvfx_buffer_create(struct pipe_screen *pscreen,
+		   const struct pipe_resource *template);
+
+void
+nvfx_buffer_destroy(struct pipe_screen *pscreen,
+                    struct pipe_resource *presource);
+
+struct pipe_resource *
+nvfx_user_buffer_create(struct pipe_screen *screen,
+			void *ptr,
+			unsigned bytes,
+			unsigned usage);
+
+void
+nvfx_buffer_upload(struct nvfx_buffer* buffer);
 
 #endif

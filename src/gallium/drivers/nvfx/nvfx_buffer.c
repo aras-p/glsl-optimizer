@@ -6,13 +6,16 @@
 #include "nouveau/nouveau_screen.h"
 #include "nouveau/nouveau_winsys.h"
 #include "nvfx_resource.h"
+#include "nvfx_screen.h"
 
 void nvfx_buffer_destroy(struct pipe_screen *pscreen,
 				struct pipe_resource *presource)
 {
-	struct nvfx_resource *buffer = nvfx_resource(presource);
+	struct nvfx_buffer *buffer = nvfx_buffer(presource);
 
-	nouveau_screen_bo_release(pscreen, buffer->bo);
+	if(!(buffer->base.base.flags & NVFX_RESOURCE_FLAG_USER))
+		align_free(buffer->data);
+	nouveau_screen_bo_release(pscreen, buffer->base.bo);
 	FREE(buffer);
 }
 
@@ -20,31 +23,22 @@ struct pipe_resource *
 nvfx_buffer_create(struct pipe_screen *pscreen,
 		   const struct pipe_resource *template)
 {
-	struct nvfx_resource *buffer;
+	struct nvfx_screen* screen = nvfx_screen(pscreen);
+	struct nvfx_buffer* buffer;
 
-	buffer = CALLOC_STRUCT(nvfx_resource);
+	buffer = CALLOC_STRUCT(nvfx_buffer);
 	if (!buffer)
 		return NULL;
 
-	buffer->base = *template;
-	buffer->base.flags |= NVFX_RESOURCE_FLAG_LINEAR;
-	pipe_reference_init(&buffer->base.reference, 1);
-	buffer->base.screen = pscreen;
+	buffer->base.base = *template;
+	buffer->base.base.flags |= NVFX_RESOURCE_FLAG_LINEAR;
+	pipe_reference_init(&buffer->base.base.reference, 1);
+	buffer->base.base.screen = pscreen;
+	buffer->size = util_format_get_stride(template->format, template->width0);
+	buffer->bytes_to_draw_until_static = buffer->size * screen->static_reuse_threshold;
+	buffer->data = align_malloc(buffer->size, 16);
 
-	buffer->bo = nouveau_screen_bo_new(pscreen,
-					   16,
-					   buffer->base.usage,
-					   buffer->base.bind,
-					   buffer->base.width0);
-
-	if (buffer->bo == NULL)
-		goto fail;
-
-	return &buffer->base;
-
-fail:
-	FREE(buffer);
-	return NULL;
+	return &buffer->base.base;
 }
 
 
@@ -54,29 +48,49 @@ nvfx_user_buffer_create(struct pipe_screen *pscreen,
 			unsigned bytes,
 			unsigned usage)
 {
-	struct nvfx_resource *buffer;
+	struct nvfx_screen* screen = nvfx_screen(pscreen);
+	struct nvfx_buffer* buffer;
 
-	buffer = CALLOC_STRUCT(nvfx_resource);
+	buffer = CALLOC_STRUCT(nvfx_buffer);
 	if (!buffer)
 		return NULL;
 
-	pipe_reference_init(&buffer->base.reference, 1);
-	buffer->base.flags = NVFX_RESOURCE_FLAG_LINEAR;
-	buffer->base.screen = pscreen;
-	buffer->base.format = PIPE_FORMAT_R8_UNORM;
-	buffer->base.usage = PIPE_USAGE_IMMUTABLE;
-	buffer->base.bind = usage;
-	buffer->base.width0 = bytes;
-	buffer->base.height0 = 1;
-	buffer->base.depth0 = 1;
+	pipe_reference_init(&buffer->base.base.reference, 1);
+	buffer->base.base.flags = NVFX_RESOURCE_FLAG_LINEAR | NVFX_RESOURCE_FLAG_USER;
+	buffer->base.base.screen = pscreen;
+	buffer->base.base.format = PIPE_FORMAT_R8_UNORM;
+	buffer->base.base.usage = PIPE_USAGE_IMMUTABLE;
+	buffer->base.base.bind = usage;
+	buffer->base.base.width0 = bytes;
+	buffer->base.base.height0 = 1;
+	buffer->base.base.depth0 = 1;
+	buffer->data = ptr;
+	buffer->size = bytes;
+	buffer->bytes_to_draw_until_static = bytes * screen->static_reuse_threshold;
+	buffer->dirty_end = bytes;
 
-	buffer->bo = nouveau_screen_bo_user(pscreen, ptr, bytes);
-	if (!buffer->bo)
-		goto fail;
+	return &buffer->base.base;
+}
 
-	return &buffer->base;
+void nvfx_buffer_upload(struct nvfx_buffer* buffer)
+{
+	unsigned dirty = buffer->dirty_end - buffer->dirty_begin;
+	if(!buffer->base.bo)
+	{
+		buffer->base.bo = nouveau_screen_bo_new(buffer->base.base.screen,
+					   16,
+					   buffer->base.base.usage,
+					   buffer->base.base.bind,
+					   buffer->base.base.width0);
+	}
 
-fail:
-	FREE(buffer);
-	return NULL;
+	if(dirty)
+	{
+		// TODO: may want to use a temporary in some cases
+		nouveau_bo_map(buffer->base.bo, NOUVEAU_BO_WR
+				| (buffer->dirty_unsynchronized ? NOUVEAU_BO_NOSYNC : 0));
+		memcpy(buffer->base.bo->map + buffer->dirty_begin, buffer->data + buffer->dirty_begin, dirty);
+		nouveau_bo_unmap(buffer->base.bo);
+		buffer->dirty_begin = buffer->dirty_end = 0;
+	}
 }
