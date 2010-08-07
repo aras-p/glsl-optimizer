@@ -199,9 +199,6 @@ static void fse_run_linear( struct draw_pt_middle_end *middle,
     */
    draw_do_flush( draw, DRAW_FLUSH_BACKEND );
 
-   if (count >= UNDEFINED_VERTEX_ID) 
-      goto fail;
-
    if (!draw->render->allocate_vertices( draw->render,
                                          (ushort)fse->key.output_stride,
                                          (ushort)count ))
@@ -268,9 +265,6 @@ fse_run(struct draw_pt_middle_end *middle,
     */
    draw_do_flush( draw, DRAW_FLUSH_BACKEND );
 
-   if (fetch_count >= UNDEFINED_VERTEX_ID) 
-      goto fail;
-
    if (!draw->render->allocate_vertices( draw->render,
                                          (ushort)fse->key.output_stride,
                                          (ushort)fetch_count ))
@@ -330,9 +324,6 @@ static boolean fse_run_linear_elts( struct draw_pt_middle_end *middle,
    /* XXX: need to flush to get prim_vbuf.c to release its allocation??
     */
    draw_do_flush( draw, DRAW_FLUSH_BACKEND );
-
-   if (count >= UNDEFINED_VERTEX_ID)
-      return FALSE;
 
    if (!draw->render->allocate_vertices( draw->render,
                                          (ushort)fse->key.output_stride,
