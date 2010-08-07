@@ -57,7 +57,7 @@ static void varray_flush_linear(struct varray_frontend *varray,
 {
    if (count) {
       assert(varray->middle->run_linear);
-      varray->middle->run_linear(varray->middle, start, count);
+      varray->middle->run_linear(varray->middle, start, count, 0x0);
    }
 }
 
@@ -83,7 +83,8 @@ static void varray_line_loop_segment(struct varray_frontend *varray,
                           varray->fetch_elts,
                           nr,
                           varray->draw_elts, /* ie. linear */
-                          nr);
+                          nr,
+                          0x0);
    }
 }
 
@@ -110,7 +111,8 @@ static void varray_fan_segment(struct varray_frontend *varray,
                           varray->fetch_elts,
                           nr,
                           varray->draw_elts, /* ie. linear */
-                          nr);
+                          nr,
+                          0x0);
    }
 }
 

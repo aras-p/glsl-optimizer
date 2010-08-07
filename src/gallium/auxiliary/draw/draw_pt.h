@@ -80,6 +80,8 @@ struct draw_pt_front_end {
 /* The "middle end" - prepares actual hardware vertices for the
  * hardware backend.
  *
+ * prim_flags is as defined by pipe_draw_info::flags.
+ *
  * Currently two versions of this:
  *     - fetch, vertex shade, cliptest, prim-pipeline
  *     - fetch, emit (ie passthrough)
@@ -94,11 +96,13 @@ struct draw_pt_middle_end {
                 const unsigned *fetch_elts,
                 unsigned fetch_count,
                 const ushort *draw_elts,
-                unsigned draw_count );
+                unsigned draw_count,
+                unsigned prim_flags );
 
    void (*run_linear)(struct draw_pt_middle_end *,
                       unsigned start,
-                      unsigned count);
+                      unsigned count,
+                      unsigned prim_flags );
 
    /* Transform all vertices in a linear range and then draw them with
     * the supplied element list.  May fail and return FALSE.
@@ -107,7 +111,8 @@ struct draw_pt_middle_end {
                             unsigned fetch_start,
                             unsigned fetch_count,
                             const ushort *draw_elts,
-                            unsigned draw_count );
+                            unsigned draw_count,
+                            unsigned prim_flags );
 
    int (*get_max_vertex_count)( struct draw_pt_middle_end * );
 

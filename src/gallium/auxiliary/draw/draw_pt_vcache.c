@@ -82,7 +82,8 @@ vcache_flush( struct vcache_frontend *vcache )
                            vcache->fetch_elts,
                            vcache->fetch_count,
                            vcache->draw_elts,
-                           vcache->draw_count );
+                           vcache->draw_count,
+                           0x0 );
    }
 
    memset(vcache->in, ~0, sizeof(vcache->in));
@@ -509,7 +510,7 @@ vcache_check_run( struct draw_pt_front_end *frontend,
                                             min_index + elt_bias, /* start */
                                             fetch_count,
                                             transformed_elts,
-                                            draw_count );
+                                            draw_count, 0x0 );
    
    FREE(storage);
 

@@ -294,7 +294,8 @@ static void llvm_middle_end_run( struct draw_pt_middle_end *middle,
                                  const unsigned *fetch_elts,
                                  unsigned fetch_count,
                                  const ushort *draw_elts,
-                                 unsigned draw_count )
+                                 unsigned draw_count,
+                                 unsigned prim_flags )
 {
    struct llvm_middle_end *fpme = (struct llvm_middle_end *)middle;
    struct draw_fetch_info fetch_info;
@@ -310,7 +311,7 @@ static void llvm_middle_end_run( struct draw_pt_middle_end *middle,
    prim_info.count = draw_count;
    prim_info.elts = draw_elts;
    prim_info.prim = fpme->input_prim;
-   prim_info.flags = 0x0;
+   prim_info.flags = prim_flags;
    prim_info.primitive_count = 1;
    prim_info.primitive_lengths = &draw_count;
 
@@ -320,7 +321,8 @@ static void llvm_middle_end_run( struct draw_pt_middle_end *middle,
 
 static void llvm_middle_end_linear_run( struct draw_pt_middle_end *middle,
                                        unsigned start,
-                                       unsigned count)
+                                       unsigned count,
+                                       unsigned prim_flags)
 {
    struct llvm_middle_end *fpme = (struct llvm_middle_end *)middle;
    struct draw_fetch_info fetch_info;
@@ -336,7 +338,7 @@ static void llvm_middle_end_linear_run( struct draw_pt_middle_end *middle,
    prim_info.count = count;
    prim_info.elts = NULL;
    prim_info.prim = fpme->input_prim;
-   prim_info.flags = 0x0;
+   prim_info.flags = prim_flags;
    prim_info.primitive_count = 1;
    prim_info.primitive_lengths = &count;
 
@@ -350,7 +352,8 @@ llvm_middle_end_linear_run_elts( struct draw_pt_middle_end *middle,
                                  unsigned start,
                                  unsigned count,
                                  const ushort *draw_elts,
-                                 unsigned draw_count )
+                                 unsigned draw_count,
+                                 unsigned prim_flags )
 {
    struct llvm_middle_end *fpme = (struct llvm_middle_end *)middle;
    struct draw_fetch_info fetch_info;
@@ -366,7 +369,7 @@ llvm_middle_end_linear_run_elts( struct draw_pt_middle_end *middle,
    prim_info.count = draw_count;
    prim_info.elts = draw_elts;
    prim_info.prim = fpme->input_prim;
-   prim_info.flags = 0x0;
+   prim_info.flags = prim_flags;
    prim_info.primitive_count = 1;
    prim_info.primitive_lengths = &draw_count;
 
