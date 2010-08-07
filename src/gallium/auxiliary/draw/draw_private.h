@@ -140,7 +140,6 @@ struct draw_context
       } middle;
 
       struct {
-         struct draw_pt_front_end *vcache;
          struct draw_pt_front_end *vsplit;
       } front;
 

@@ -48,7 +48,7 @@ DEBUG_GET_ONCE_BOOL_OPTION(draw_use_llvm, "DRAW_USE_LLVM", TRUE)
 #endif
 
 /* Overall we split things into:
- *     - frontend -- prepare fetch_elts, draw_elts - eg vcache
+ *     - frontend -- prepare fetch_elts, draw_elts - eg vsplit
  *     - middle   -- fetch, shade, cliptest, viewport
  *     - pipeline -- the prim pipeline: clipping, wide lines, etc 
  *     - backend  -- the vbuf_render provided by the driver.
@@ -106,15 +106,7 @@ draw_pt_arrays(struct draw_context *draw,
          middle = draw->pt.middle.general;
    }
 
-
-   /* Pick the right frontend
-    */
-   if (draw->pt.user.elts || (opt & PT_PIPELINE)) {
-      frontend = draw->pt.front.vcache;
-   }
-   else {
-      frontend = draw->pt.front.vsplit;
-   }
+   frontend = draw->pt.front.vsplit;
 
    frontend->prepare( frontend, prim, middle, opt );
 
@@ -130,10 +122,6 @@ boolean draw_pt_init( struct draw_context *draw )
 {
    draw->pt.test_fse = debug_get_option_draw_fse();
    draw->pt.no_fse = debug_get_option_draw_no_fse();
-
-   draw->pt.front.vcache = draw_pt_vcache( draw );
-   if (!draw->pt.front.vcache)
-      return FALSE;
 
    draw->pt.front.vsplit = draw_pt_vsplit(draw);
    if (!draw->pt.front.vsplit)
@@ -180,11 +168,6 @@ void draw_pt_destroy( struct draw_context *draw )
    if (draw->pt.middle.fetch_shade_emit) {
       draw->pt.middle.fetch_shade_emit->destroy( draw->pt.middle.fetch_shade_emit );
       draw->pt.middle.fetch_shade_emit = NULL;
-   }
-
-   if (draw->pt.front.vcache) {
-      draw->pt.front.vcache->destroy( draw->pt.front.vcache );
-      draw->pt.front.vcache = NULL;
    }
 
    if (draw->pt.front.vsplit) {

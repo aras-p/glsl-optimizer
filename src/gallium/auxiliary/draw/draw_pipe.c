@@ -169,10 +169,6 @@ static void do_triangle( struct draw_context *draw,
 /*
  * Set up macros for draw_pt_decompose.h template code.
  * This code uses vertex indexes / elements.
- *
- * Flags are needed by the stipple and unfilled stages.  When the two stages
- * are active, vcache_run_extras is called and the flags are stored in the
- * higher bits of i0.  Otherwise, flags do not matter.
  */
 
 #define TRIANGLE(flags,i0,i1,i2)                                  \
@@ -180,7 +176,7 @@ static void do_triangle( struct draw_context *draw,
       assert(!((i1) & DRAW_PIPE_FLAG_MASK));                      \
       assert(!((i2) & DRAW_PIPE_FLAG_MASK));                      \
       do_triangle( draw,                                          \
-                   i0,  /* flags */                               \
+                   flags,                                         \
                    verts + stride * (i0 & ~DRAW_PIPE_FLAG_MASK),  \
                    verts + stride * (i1),                         \
                    verts + stride * (i2) );                       \
@@ -190,7 +186,7 @@ static void do_triangle( struct draw_context *draw,
    do {                                                           \
       assert(!((i1) & DRAW_PIPE_FLAG_MASK));                      \
       do_line( draw,                                              \
-               i0, /* flags */                                    \
+               flags,                                             \
                verts + stride * (i0 & ~DRAW_PIPE_FLAG_MASK),      \
                verts + stride * (i1) );                           \
    } while (0)
