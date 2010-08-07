@@ -198,7 +198,6 @@ nvfx_screen_surface_format_supported(struct pipe_screen *pscreen,
 			break;
 		}
 	} else {
-		switch (format) {
 		if (tex_usage & PIPE_BIND_SAMPLER_VIEW) {
 			switch (format) {
 			case PIPE_FORMAT_DXT1_RGB:
@@ -210,6 +209,7 @@ nvfx_screen_surface_format_supported(struct pipe_screen *pscreen,
 				break;
 			}
 		}
+		switch (format) {
 		case PIPE_FORMAT_B8G8R8A8_UNORM:
 		case PIPE_FORMAT_B8G8R8X8_UNORM:
 		case PIPE_FORMAT_B5G5R5A1_UNORM:
