@@ -1,10 +1,9 @@
-
-/* A Bison parser, made by GNU Bison 2.4.1.  */
+/* A Bison parser, made by GNU Bison 2.4.2.  */
 
 /* Skeleton interface for Bison's Yacc-like parsers in C
    
-      Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006
-   Free Software Foundation, Inc.
+      Copyright (C) 1984, 1989-1990, 2000-2006, 2009-2010 Free Software
+   Foundation, Inc.
    
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -146,56 +145,86 @@
      LOWP = 362,
      MEDIUMP = 363,
      HIGHP = 364,
-     PRECISION = 365,
-     VERSION = 366,
-     EXTENSION = 367,
-     LINE = 368,
-     PRAGMA = 369,
-     COLON = 370,
-     EOL = 371,
-     INTERFACE = 372,
-     OUTPUT = 373,
-     LAYOUT_TOK = 374,
-     ASM = 375,
-     CLASS = 376,
-     UNION = 377,
-     ENUM = 378,
-     TYPEDEF = 379,
-     TEMPLATE = 380,
-     THIS = 381,
-     PACKED = 382,
-     GOTO = 383,
-     INLINE_TOK = 384,
-     NOINLINE = 385,
-     VOLATILE = 386,
-     PUBLIC_TOK = 387,
-     STATIC = 388,
-     EXTERN = 389,
-     EXTERNAL = 390,
-     LONG = 391,
-     SHORT = 392,
-     DOUBLE = 393,
-     HALF = 394,
-     FIXED = 395,
-     UNSIGNED = 396,
-     INPUT = 397,
-     OUPTUT = 398,
-     HVEC2 = 399,
-     HVEC3 = 400,
-     HVEC4 = 401,
-     DVEC2 = 402,
-     DVEC3 = 403,
-     DVEC4 = 404,
-     FVEC2 = 405,
-     FVEC3 = 406,
-     FVEC4 = 407,
-     SAMPLER2DRECT = 408,
-     SAMPLER3DRECT = 409,
-     SAMPLER2DRECTSHADOW = 410,
-     SIZEOF = 411,
-     CAST = 412,
-     NAMESPACE = 413,
-     USING = 414
+     SUPERP = 365,
+     PRECISION = 366,
+     VERSION = 367,
+     EXTENSION = 368,
+     LINE = 369,
+     PRAGMA = 370,
+     COLON = 371,
+     EOL = 372,
+     INTERFACE = 373,
+     OUTPUT = 374,
+     LAYOUT_TOK = 375,
+     ASM = 376,
+     CLASS = 377,
+     UNION = 378,
+     ENUM = 379,
+     TYPEDEF = 380,
+     TEMPLATE = 381,
+     THIS = 382,
+     PACKED = 383,
+     GOTO = 384,
+     INLINE_TOK = 385,
+     NOINLINE = 386,
+     VOLATILE = 387,
+     PUBLIC_TOK = 388,
+     STATIC = 389,
+     EXTERN = 390,
+     EXTERNAL = 391,
+     LONG = 392,
+     SHORT = 393,
+     DOUBLE = 394,
+     HALF = 395,
+     FIXED = 396,
+     UNSIGNED = 397,
+     INPUT = 398,
+     OUPTUT = 399,
+     HVEC2 = 400,
+     HVEC3 = 401,
+     HVEC4 = 402,
+     DVEC2 = 403,
+     DVEC3 = 404,
+     DVEC4 = 405,
+     FVEC2 = 406,
+     FVEC3 = 407,
+     FVEC4 = 408,
+     SAMPLER2DRECT = 409,
+     SAMPLER3DRECT = 410,
+     SAMPLER2DRECTSHADOW = 411,
+     SIZEOF = 412,
+     CAST = 413,
+     NAMESPACE = 414,
+     USING = 415,
+     COMMON = 416,
+     PARTITION = 417,
+     ACTIVE = 418,
+     SAMPLERBUFFER = 419,
+     FILTER = 420,
+     IMAGE1D = 421,
+     IMAGE2D = 422,
+     IMAGE3D = 423,
+     IMAGECUBE = 424,
+     IMAGE1DARRAY = 425,
+     IMAGE2DARRAY = 426,
+     IIMAGE1D = 427,
+     IIMAGE2D = 428,
+     IIMAGE3D = 429,
+     IIMAGECUBE = 430,
+     IIMAGE1DARRAY = 431,
+     IIMAGE2DARRAY = 432,
+     UIMAGE1D = 433,
+     UIMAGE2D = 434,
+     UIMAGE3D = 435,
+     UIMAGECUBE = 436,
+     UIMAGE1DARRAY = 437,
+     UIMAGE2DARRAY = 438,
+     IMAGE1DSHADOW = 439,
+     IMAGE2DSHADOW = 440,
+     IMAGEBUFFER = 441,
+     IIMAGEBUFFER = 442,
+     UIMAGEBUFFER = 443,
+     ROW_MAJOR = 444
    };
 #endif
 
@@ -205,7 +234,7 @@
 typedef union YYSTYPE
 {
 
-/* Line 1676 of yacc.c  */
+/* Line 1685 of yacc.c  */
 #line 45 "glsl_parser.ypp"
 
    int n;
@@ -236,8 +265,8 @@ typedef union YYSTYPE
 
 
 
-/* Line 1676 of yacc.c  */
-#line 241 "glsl_parser.h"
+/* Line 1685 of yacc.c  */
+#line 270 "glsl_parser.h"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
