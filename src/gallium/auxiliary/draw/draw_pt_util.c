@@ -92,3 +92,10 @@ void draw_pt_split_prim(unsigned prim, unsigned *first, unsigned *incr)
       break;
    }
 }
+
+unsigned draw_pt_trim_count(unsigned count, unsigned first, unsigned incr)
+{
+   if (count < first)
+      return 0;
+   return count - (count - first) % incr;
+}

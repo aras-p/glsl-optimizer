@@ -47,15 +47,6 @@ DEBUG_GET_ONCE_BOOL_OPTION(draw_no_fse, "DRAW_NO_FSE", FALSE)
 DEBUG_GET_ONCE_BOOL_OPTION(draw_use_llvm, "DRAW_USE_LLVM", TRUE)
 #endif
 
-static unsigned trim( unsigned count, unsigned first, unsigned incr )
-{
-   if (count < first)
-      return 0;
-   return count - (count - first) % incr; 
-}
-
-
-
 /* Overall we split things into:
  *     - frontend -- prepare fetch_elts, draw_elts - eg vcache
  *     - middle   -- fetch, shade, cliptest, viewport
@@ -77,7 +68,7 @@ draw_pt_arrays(struct draw_context *draw,
    {
       unsigned first, incr;
       draw_pt_split_prim(prim, &first, &incr);
-      count = trim(count, first, incr);
+      count = draw_pt_trim_count(count, first, incr);
       if (count < first)
          return TRUE;
    }
