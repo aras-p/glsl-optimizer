@@ -26,7 +26,6 @@ C_SOURCES = \
 	draw/draw_pipe_wide_line.c \
 	draw/draw_pipe_wide_point.c \
 	draw/draw_pt.c \
-	draw/draw_pt_elts.c \
 	draw/draw_pt_emit.c \
 	draw/draw_pt_fetch.c \
 	draw/draw_pt_fetch_emit.c \
@@ -35,8 +34,6 @@ C_SOURCES = \
 	draw/draw_pt_post_vs.c \
 	draw/draw_pt_so_emit.c \
 	draw/draw_pt_util.c \
-	draw/draw_pt_varray.c \
-	draw/draw_pt_vcache.c \
 	draw/draw_pt_vsplit.c \
 	draw/draw_vertex.c \
 	draw/draw_vs.c \

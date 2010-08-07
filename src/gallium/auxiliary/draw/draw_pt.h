@@ -35,8 +35,6 @@
 
 #include "pipe/p_compiler.h"
 
-typedef unsigned (*pt_elt_func)( const void *elts, unsigned idx );
-
 struct draw_pt_middle_end;
 struct draw_context;
 struct draw_prim_info;
@@ -62,14 +60,8 @@ struct draw_vertex_info;
  * the draw elements (as well as the fetch elements) are splitted and the
  * middle end is called multiple times.
  *
- * Currenly there are:
- *    - vcache - catchall implementation, decomposes to TRI/LINE/POINT prims
+ * Currenly there is:
  *    - vsplit - catchall implementation, splits big prims
- * Later:
- *    - varray, varray_split
- *    - velement, velement_split
- *
- * Currenly only using the vcache version.
  */
 struct draw_pt_front_end {
    void (*prepare)( struct draw_pt_front_end *,
@@ -136,19 +128,10 @@ struct vbuf_render;
 struct vertex_header;
 
 
-/* Helper functions.
- */
-pt_elt_func draw_pt_elt_func( struct draw_context *draw );
-const void *draw_pt_elt_ptr( struct draw_context *draw,
-                             unsigned start );
-
 /* Frontends: 
  *
- * Currently only the general-purpose vcache implementation, could add
- * a special case for tiny vertex buffers.
+ * Currently only the general-purpose vsplit implementation.
  */
-struct draw_pt_front_end *draw_pt_vcache( struct draw_context *draw );
-struct draw_pt_front_end *draw_pt_varray(struct draw_context *draw);
 struct draw_pt_front_end *draw_pt_vsplit(struct draw_context *draw);
 
 
