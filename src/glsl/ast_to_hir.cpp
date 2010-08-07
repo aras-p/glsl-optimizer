@@ -1474,7 +1474,7 @@ ast_compound_statement::hir(exec_list *instructions,
 
 
 static const glsl_type *
-process_array_type(const glsl_type *base, ast_node *array_size,
+process_array_type(YYLTYPE *loc, const glsl_type *base, ast_node *array_size,
 		   struct _mesa_glsl_parse_state *state)
 {
    unsigned length = 0;
@@ -1510,6 +1510,12 @@ process_array_type(const glsl_type *base, ast_node *array_size,
 	    }
 	 }
       }
+   } else if (state->es_shader) {
+      /* Section 10.17 of the GLSL ES 1.00 specification states that unsized
+       * array declarations have been removed from the language.
+       */
+      _mesa_glsl_error(loc, state, "unsized array declarations are not "
+		       "allowed in GLSL ES 1.00.");
    }
 
    return glsl_type::get_array_instance(base, length);
@@ -1530,7 +1536,8 @@ ast_type_specifier::glsl_type(const char **name,
       *name = this->type_name;
 
       if (this->is_array) {
-	 type = process_array_type(type, this->array_size, state);
+	 YYLTYPE loc = this->get_location();
+	 type = process_array_type(&loc, type, this->array_size, state);
       }
    }
 
@@ -1727,7 +1734,8 @@ ast_declarator_list::hir(exec_list *instructions,
       }
 
       if (decl->is_array) {
-	 var_type = process_array_type(decl_type, decl->array_size, state);
+	 var_type = process_array_type(&loc, decl_type, decl->array_size,
+				       state);
       } else {
 	 var_type = decl_type;
       }
@@ -2142,7 +2150,7 @@ ast_parameter_declarator::hir(exec_list *instructions,
     * call already handled the "vec4[..] foo" case.
     */
    if (this->is_array) {
-      type = process_array_type(type, this->array_size, state);
+      type = process_array_type(&loc, type, this->array_size, state);
    }
 
    if (type->array_size() == 0) {
@@ -2712,11 +2720,12 @@ ast_struct_specifier::hir(exec_list *instructions,
 
       foreach_list_typed (ast_declaration, decl, link,
 			  &decl_list->declarations) {
-	 const struct glsl_type *const field_type =
-	    (decl->is_array)
-	    ? process_array_type(decl_type, decl->array_size, state)
-	    : decl_type;
-
+	 const struct glsl_type *field_type = decl_type;
+	 if (decl->is_array) {
+	    YYLTYPE loc = decl->get_location();
+	    field_type = process_array_type(&loc, decl_type, decl->array_size,
+					    state);
+	 }
 	 fields[i].type = (field_type != NULL)
 	    ? field_type : glsl_type::error_type;
 	 fields[i].name = decl->identifier;
