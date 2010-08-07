@@ -82,111 +82,6 @@ nvfx_blend_state_delete(struct pipe_context *pipe, void *hwcso)
 }
 
 static void *
-nvfx_sampler_state_create(struct pipe_context *pipe,
-			  const struct pipe_sampler_state *cso)
-{
-	struct nvfx_context *nvfx = nvfx_context(pipe);
-	struct nvfx_sampler_state *ps;
-
-	ps = MALLOC(sizeof(struct nvfx_sampler_state));
-
-	/* on nv30, we use this as an internal flag */
-	ps->fmt = cso->normalized_coords ? 0 : NV40TCL_TEX_FORMAT_RECT;
-	ps->en = 0;
-	ps->filt = nvfx_tex_filter(cso);
-	ps->wrap = (nvfx_tex_wrap_mode(cso->wrap_s) << NV34TCL_TX_WRAP_S_SHIFT) |
-		    (nvfx_tex_wrap_mode(cso->wrap_t) << NV34TCL_TX_WRAP_T_SHIFT) |
-		    (nvfx_tex_wrap_mode(cso->wrap_r) << NV34TCL_TX_WRAP_R_SHIFT) |
-		    nvfx_tex_wrap_compare_mode(cso);
-	ps->bcol = nvfx_tex_border_color(cso->border_color);
-
-	if(nvfx->is_nv4x)
-		nv40_sampler_state_init(pipe, ps, cso);
-	else
-		nv30_sampler_state_init(pipe, ps, cso);
-
-	return (void *)ps;
-}
-
-static void
-nvfx_sampler_state_bind(struct pipe_context *pipe, unsigned nr, void **sampler)
-{
-	struct nvfx_context *nvfx = nvfx_context(pipe);
-	unsigned unit;
-
-	for (unit = 0; unit < nr; unit++) {
-		nvfx->tex_sampler[unit] = sampler[unit];
-		nvfx->dirty_samplers |= (1 << unit);
-	}
-
-	for (unit = nr; unit < nvfx->nr_samplers; unit++) {
-		nvfx->tex_sampler[unit] = NULL;
-		nvfx->dirty_samplers |= (1 << unit);
-	}
-
-	nvfx->nr_samplers = nr;
-	nvfx->dirty |= NVFX_NEW_SAMPLER;
-}
-
-static void
-nvfx_sampler_state_delete(struct pipe_context *pipe, void *hwcso)
-{
-	FREE(hwcso);
-}
-
-static void
-nvfx_set_fragment_sampler_views(struct pipe_context *pipe,
-				unsigned nr,
-				struct pipe_sampler_view **views)
-{
-	struct nvfx_context *nvfx = nvfx_context(pipe);
-	unsigned unit;
-
-	for (unit = 0; unit < nr; unit++) {
-		pipe_sampler_view_reference(&nvfx->fragment_sampler_views[unit],
-                                            views[unit]);
-		nvfx->dirty_samplers |= (1 << unit);
-	}
-
-	for (unit = nr; unit < nvfx->nr_textures; unit++) {
-		pipe_sampler_view_reference(&nvfx->fragment_sampler_views[unit],
-                                            NULL);
-		nvfx->dirty_samplers |= (1 << unit);
-	}
-
-	nvfx->nr_textures = nr;
-	nvfx->dirty |= NVFX_NEW_SAMPLER;
-}
-
-
-static struct pipe_sampler_view *
-nvfx_create_sampler_view(struct pipe_context *pipe,
-			 struct pipe_resource *texture,
-			 const struct pipe_sampler_view *templ)
-{
-	struct pipe_sampler_view *view = CALLOC_STRUCT(pipe_sampler_view);
-
-	if (view) {
-		*view = *templ;
-		view->reference.count = 1;
-		view->texture = NULL;
-		pipe_resource_reference(&view->texture, texture);
-		view->context = pipe;
-	}
-
-	return view;
-}
-
-
-static void
-nvfx_sampler_view_destroy(struct pipe_context *pipe,
-			  struct pipe_sampler_view *view)
-{
-	pipe_resource_reference(&view->texture, NULL);
-	FREE(view);
-}
-
-static void *
 nvfx_rasterizer_state_create(struct pipe_context *pipe,
 			     const struct pipe_rasterizer_state *cso)
 {
@@ -629,13 +524,6 @@ nvfx_init_state_functions(struct nvfx_context *nvfx)
 	nvfx->pipe.create_blend_state = nvfx_blend_state_create;
 	nvfx->pipe.bind_blend_state = nvfx_blend_state_bind;
 	nvfx->pipe.delete_blend_state = nvfx_blend_state_delete;
-
-	nvfx->pipe.create_sampler_state = nvfx_sampler_state_create;
-	nvfx->pipe.bind_fragment_sampler_states = nvfx_sampler_state_bind;
-	nvfx->pipe.delete_sampler_state = nvfx_sampler_state_delete;
-	nvfx->pipe.set_fragment_sampler_views = nvfx_set_fragment_sampler_views;
-        nvfx->pipe.create_sampler_view = nvfx_create_sampler_view;
-        nvfx->pipe.sampler_view_destroy = nvfx_sampler_view_destroy;
 
 	nvfx->pipe.create_rasterizer_state = nvfx_rasterizer_state_create;
 	nvfx->pipe.bind_rasterizer_state = nvfx_rasterizer_state_bind;

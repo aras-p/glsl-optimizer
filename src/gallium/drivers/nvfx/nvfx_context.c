@@ -75,6 +75,7 @@ nvfx_create(struct pipe_screen *pscreen, void *priv)
 	nvfx_init_query_functions(nvfx);
 	nvfx_init_surface_functions(nvfx);
 	nvfx_init_state_functions(nvfx);
+	nvfx_init_sampling_functions(nvfx);
 	nvfx_init_resource_functions(&nvfx->pipe);
 
 	/* Create, configure, and install fallback swtnl path */

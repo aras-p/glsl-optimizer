@@ -201,15 +201,20 @@ extern void
 nvfx_fragprog_relocate(struct nvfx_context *nvfx);
 
 /* nvfx_fragtex.c */
+extern void nvfx_init_sampling_functions(struct nvfx_context *nvfx);
 extern void nvfx_fragtex_validate(struct nvfx_context *nvfx);
-extern void
-nvfx_fragtex_relocate(struct nvfx_context *nvfx);
+extern void nvfx_fragtex_relocate(struct nvfx_context *nvfx);
+
+struct nvfx_sampler_view;
 
 /* nv30_fragtex.c */
 extern void
 nv30_sampler_state_init(struct pipe_context *pipe,
 			  struct nvfx_sampler_state *ps,
 			  const struct pipe_sampler_state *cso);
+extern void
+nv30_sampler_view_init(struct pipe_context *pipe,
+			  struct nvfx_sampler_view *sv);
 extern void nv30_fragtex_set(struct nvfx_context *nvfx, int unit);
 
 /* nv40_fragtex.c */
@@ -217,6 +222,9 @@ extern void
 nv40_sampler_state_init(struct pipe_context *pipe,
 			  struct nvfx_sampler_state *ps,
 			  const struct pipe_sampler_state *cso);
+extern void
+nv40_sampler_view_init(struct pipe_context *pipe,
+			  struct nvfx_sampler_view *sv);
 extern void nv40_fragtex_set(struct nvfx_context *nvfx, int unit);
 
 /* nvfx_state.c */

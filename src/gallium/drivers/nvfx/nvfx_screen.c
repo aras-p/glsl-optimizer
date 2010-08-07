@@ -8,6 +8,7 @@
 #include "nvfx_context.h"
 #include "nvfx_screen.h"
 #include "nvfx_resource.h"
+#include "nvfx_tex.h"
 
 #define NV30TCL_CHIPSET_3X_MASK 0x00000003
 #define NV34TCL_CHIPSET_3X_MASK 0x00000010
@@ -179,58 +180,45 @@ nvfx_screen_surface_format_supported(struct pipe_screen *pscreen,
 		case PIPE_FORMAT_B8G8R8A8_UNORM:
 		case PIPE_FORMAT_B8G8R8X8_UNORM:
 		case PIPE_FORMAT_B5G6R5_UNORM:
-			return TRUE;
-		default:
 			break;
+		default:
+			return FALSE;
 		}
-	} else
+	}
+
 	if (tex_usage & PIPE_BIND_DEPTH_STENCIL) {
 		switch (format) {
 		case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
 		case PIPE_FORMAT_X8Z24_UNORM:
-			return TRUE;
+			break;
 		case PIPE_FORMAT_Z16_UNORM:
 			/* TODO: this nv30 limitation probably does not exist */
-			if (!screen->is_nv4x && front)
-				return (front->format == PIPE_FORMAT_B5G6R5_UNORM);
-			return TRUE;
-		default:
+			if (!screen->is_nv4x && front && front->format != PIPE_FORMAT_B5G6R5_UNORM)
+				return FALSE;
 			break;
-		}
-	} else {
-		if (tex_usage & PIPE_BIND_SAMPLER_VIEW) {
-			switch (format) {
-			case PIPE_FORMAT_DXT1_RGB:
-			case PIPE_FORMAT_DXT1_RGBA:
-			case PIPE_FORMAT_DXT3_RGBA:
-			case PIPE_FORMAT_DXT5_RGBA:
-				return util_format_s3tc_enabled;
-			default:
-				break;
-			}
-		}
-		switch (format) {
-		case PIPE_FORMAT_B8G8R8A8_UNORM:
-		case PIPE_FORMAT_B8G8R8X8_UNORM:
-		case PIPE_FORMAT_B5G5R5A1_UNORM:
-		case PIPE_FORMAT_B4G4R4A4_UNORM:
-		case PIPE_FORMAT_B5G6R5_UNORM:
-		case PIPE_FORMAT_L8_UNORM:
-		case PIPE_FORMAT_A8_UNORM:
-		case PIPE_FORMAT_I8_UNORM:
-		case PIPE_FORMAT_L8A8_UNORM:
-		case PIPE_FORMAT_Z16_UNORM:
-		case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
-			return TRUE;
-		/* TODO: does nv30 support this? */
-		case PIPE_FORMAT_R16_SNORM:
-			return !!screen->is_nv4x;
 		default:
-			break;
+			return FALSE;
 		}
 	}
 
-	return FALSE;
+	if (tex_usage & PIPE_BIND_SAMPLER_VIEW) {
+		struct nvfx_texture_format* tf = &nvfx_texture_formats[format];
+		if(util_format_is_s3tc(format) && !util_format_s3tc_enabled)
+			return FALSE;
+
+		if(screen->is_nv4x)
+		{
+			if(tf->fmt[4] < 0)
+				return FALSE;
+		}
+		else
+		{
+			if(tf->fmt[0] < 0)
+				return FALSE;
+		}
+	}
+
+	return TRUE;
 }
 
 static void
