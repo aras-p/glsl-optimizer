@@ -111,9 +111,8 @@ add_types_to_symbol_table(glsl_symbol_table *symtab,
    }
 }
 
-
 void
-glsl_type::generate_110_types(glsl_symbol_table *symtab)
+glsl_type::generate_100ES_types(glsl_symbol_table *symtab)
 {
    add_types_to_symbol_table(symtab, builtin_core_types,
 			     Elements(builtin_core_types),
@@ -121,10 +120,20 @@ glsl_type::generate_110_types(glsl_symbol_table *symtab)
    add_types_to_symbol_table(symtab, builtin_structure_types,
 			     Elements(builtin_structure_types),
 			     false);
+   add_types_to_symbol_table(symtab, &void_type, 1, false);
+}
+
+void
+glsl_type::generate_110_types(glsl_symbol_table *symtab)
+{
+   generate_100ES_types(symtab);
+
+   add_types_to_symbol_table(symtab, builtin_110_types,
+			     Elements(builtin_110_types),
+			     false);
    add_types_to_symbol_table(symtab, builtin_110_deprecated_structure_types,
 			     Elements(builtin_110_deprecated_structure_types),
 			     false);
-   add_types_to_symbol_table(symtab, & void_type, 1, false);
 }
 
 
@@ -173,6 +182,10 @@ void
 _mesa_glsl_initialize_types(struct _mesa_glsl_parse_state *state)
 {
    switch (state->language_version) {
+   case 100:
+      assert(state->es_shader);
+      glsl_type::generate_100ES_types(state->symbols);
+      break;
    case 110:
       glsl_type::generate_110_types(state->symbols);
       break;
