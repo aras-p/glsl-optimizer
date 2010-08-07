@@ -141,7 +141,7 @@ generate_110_uniforms(exec_list *instructions,
 
    add_uniform(instructions, state, "gl_TextureMatrix", mat4_array_type);
 
-   add_uniform(instructions, state, "gl_DepthRangeParameters",
+   add_uniform(instructions, state, "gl_DepthRange",
 		state->symbols->get_type("gl_DepthRangeParameters"));
 
    add_uniform(instructions, state, "gl_ClipPlane",
