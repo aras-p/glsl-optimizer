@@ -97,6 +97,32 @@ add_builtin_constant(exec_list *instructions,
    var->constant_value = new(var) ir_constant(value);
 }
 
+/* Several constants in GLSL ES have different names than normal desktop GLSL.
+ * Therefore, this function should only be called on the ES path.
+ */
+static void
+generate_100ES_uniforms(exec_list *instructions,
+		     struct _mesa_glsl_parse_state *state)
+{
+   add_builtin_constant(instructions, state, "gl_MaxVertexAttribs",
+			state->Const.MaxVertexAttribs);
+   add_builtin_constant(instructions, state, "gl_MaxVertexUniformVectors",
+			state->Const.MaxVertexUniformComponents);
+   add_builtin_constant(instructions, state, "gl_MaxVaryingVectors",
+			state->Const.MaxVaryingFloats / 4);
+   add_builtin_constant(instructions, state, "gl_MaxVertexTextureImageUnits",
+			state->Const.MaxVertexTextureImageUnits);
+   add_builtin_constant(instructions, state, "gl_MaxCombinedTextureImageUnits",
+			state->Const.MaxCombinedTextureImageUnits);
+   add_builtin_constant(instructions, state, "gl_MaxTextureImageUnits",
+			state->Const.MaxTextureImageUnits);
+   add_builtin_constant(instructions, state, "gl_MaxFragmentUniformVectors",
+			state->Const.MaxFragmentUniformComponents);
+
+   add_uniform(instructions, state, "gl_DepthRange",
+	       state->symbols->get_type("gl_DepthRangeParameters"));
+}
+
 static void
 generate_110_uniforms(exec_list *instructions,
 		      struct _mesa_glsl_parse_state *state)
@@ -189,6 +215,23 @@ generate_110_uniforms(exec_list *instructions,
 	       state->symbols->get_type("gl_FogParameters"));
 }
 
+/* This function should only be called for ES, not desktop GL. */
+static void
+generate_100ES_vs_variables(exec_list *instructions,
+			  struct _mesa_glsl_parse_state *state)
+{
+   for (unsigned i = 0; i < Elements(builtin_core_vs_variables); i++) {
+      add_builtin_variable(& builtin_core_vs_variables[i],
+			   instructions, state->symbols);
+   }
+
+   generate_100ES_uniforms(instructions, state);
+
+   generate_ARB_draw_buffers_variables(instructions, state, false,
+				       vertex_shader);
+}
+
+
 static void
 generate_110_vs_variables(exec_list *instructions,
 			  struct _mesa_glsl_parse_state *state)
@@ -264,6 +307,9 @@ initialize_vs_variables(exec_list *instructions,
 {
 
    switch (state->language_version) {
+   case 100:
+      generate_100ES_vs_variables(instructions, state);
+      break;
    case 110:
       generate_110_vs_variables(instructions, state);
       break;
@@ -276,12 +322,38 @@ initialize_vs_variables(exec_list *instructions,
    }
 }
 
+/* This function should only be called for ES, not desktop GL. */
+static void
+generate_100ES_fs_variables(exec_list *instructions,
+			  struct _mesa_glsl_parse_state *state)
+{
+   for (unsigned i = 0; i < Elements(builtin_core_fs_variables); i++) {
+      add_builtin_variable(& builtin_core_fs_variables[i],
+			   instructions, state->symbols);
+   }
+
+   for (unsigned i = 0; i < Elements(builtin_100ES_fs_variables); i++) {
+      add_builtin_variable(& builtin_100ES_fs_variables[i],
+			   instructions, state->symbols);
+   }
+
+   generate_100ES_uniforms(instructions, state);
+
+   generate_ARB_draw_buffers_variables(instructions, state, false,
+				       fragment_shader);
+}
+
 static void
 generate_110_fs_variables(exec_list *instructions,
 			  struct _mesa_glsl_parse_state *state)
 {
    for (unsigned i = 0; i < Elements(builtin_core_fs_variables); i++) {
       add_builtin_variable(& builtin_core_fs_variables[i],
+			   instructions, state->symbols);
+   }
+
+   for (unsigned i = 0; i < Elements(builtin_110_fs_variables); i++) {
+      add_builtin_variable(& builtin_110_fs_variables[i],
 			   instructions, state->symbols);
    }
 
@@ -382,6 +454,9 @@ initialize_fs_variables(exec_list *instructions,
 {
 
    switch (state->language_version) {
+   case 100:
+      generate_100ES_fs_variables(instructions, state);
+      break;
    case 110:
       generate_110_fs_variables(instructions, state);
       break;
