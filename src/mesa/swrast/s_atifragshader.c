@@ -24,6 +24,7 @@
 #include "main/macros.h"
 #include "main/atifragshader.h"
 #include "swrast/s_atifragshader.h"
+#include "swrast/s_context.h"
 
 
 /**
