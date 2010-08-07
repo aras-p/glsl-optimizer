@@ -28,7 +28,8 @@
 #define S_FOG_H
 
 
-#include "swrast.h"
+#include "main/mtypes.h"
+#include "s_span.h"
 
 
 extern GLfloat
