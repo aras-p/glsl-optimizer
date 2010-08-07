@@ -118,11 +118,11 @@ llvm_middle_end_prepare( struct draw_pt_middle_end *middle,
 			    out_prim,
                             max_vertices );
 
-      *max_vertices = MAX2( *max_vertices,
-                            DRAW_PIPE_MAX_VERTICES );
+      *max_vertices = MAX2( *max_vertices, 4096 );
    }
    else {
-      *max_vertices = DRAW_PIPE_MAX_VERTICES;
+      /* limit max fetches by limiting max_vertices */
+      *max_vertices = 4096;
    }
 
    /* return even number */

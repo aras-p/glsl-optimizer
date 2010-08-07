@@ -225,7 +225,7 @@ static void so_tri(struct pt_so_emit *so, int i0, int i1, int i2)
 
 #define FUNC         so_run_elts
 #define LOCAL_VARS   const ushort *elts = input_prims->elts;
-#define GET_ELT(idx) (elts[start + (idx)] & ~DRAW_PIPE_FLAG_MASK)
+#define GET_ELT(idx) (elts[start + (idx)])
 #include "draw_so_emit_tmp.h"
 
 

@@ -373,21 +373,15 @@ void draw_pipeline_destroy( struct draw_context *draw );
 
 
 
-/* We use the top few bits in the elts[] parameter to convey a little
- * API information.  This limits the number of vertices we can address
- * to only 4096 -- if that becomes a problem, we can switch to 32-bit
- * draw indices.
- *
- * These flags expected at first vertex of lines & triangles when
- * unfilled and/or line stipple modes are operational.
+/*
+ * These flags are used by the pipeline when unfilled and/or line stipple modes
+ * are operational.
  */
-#define DRAW_PIPE_MAX_VERTICES  (0x1<<12)
-#define DRAW_PIPE_EDGE_FLAG_0   (0x1<<12)
-#define DRAW_PIPE_EDGE_FLAG_1   (0x2<<12)
-#define DRAW_PIPE_EDGE_FLAG_2   (0x4<<12)
-#define DRAW_PIPE_EDGE_FLAG_ALL (0x7<<12)
-#define DRAW_PIPE_RESET_STIPPLE (0x8<<12)
-#define DRAW_PIPE_FLAG_MASK     (0xf<<12)
+#define DRAW_PIPE_EDGE_FLAG_0   0x1
+#define DRAW_PIPE_EDGE_FLAG_1   0x2
+#define DRAW_PIPE_EDGE_FLAG_2   0x4
+#define DRAW_PIPE_EDGE_FLAG_ALL 0x7
+#define DRAW_PIPE_RESET_STIPPLE 0x8
 
 void draw_pipeline_run( struct draw_context *draw,
                         const struct draw_vertex_info *vert,

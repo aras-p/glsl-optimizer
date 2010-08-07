@@ -173,27 +173,23 @@ static void do_triangle( struct draw_context *draw,
 
 #define TRIANGLE(flags,i0,i1,i2)                                  \
    do {                                                           \
-      assert(!((i1) & DRAW_PIPE_FLAG_MASK));                      \
-      assert(!((i2) & DRAW_PIPE_FLAG_MASK));                      \
       do_triangle( draw,                                          \
                    flags,                                         \
-                   verts + stride * (i0 & ~DRAW_PIPE_FLAG_MASK),  \
+                   verts + stride * (i0),                         \
                    verts + stride * (i1),                         \
                    verts + stride * (i2) );                       \
    } while (0)
 
 #define LINE(flags,i0,i1)                                         \
    do {                                                           \
-      assert(!((i1) & DRAW_PIPE_FLAG_MASK));                      \
       do_line( draw,                                              \
                flags,                                             \
-               verts + stride * (i0 & ~DRAW_PIPE_FLAG_MASK),      \
+               verts + stride * (i0),                             \
                verts + stride * (i1) );                           \
    } while (0)
 
 #define POINT(i0)                               \
    do {                                         \
-      assert(!((i0) & DRAW_PIPE_FLAG_MASK));    \
       do_point( draw, verts + stride * (i0) );  \
    } while (0)
 
@@ -247,8 +243,7 @@ void draw_pipeline_run( struct draw_context *draw,
          unsigned max_index = 0x0, i;
          /* find the largest element index */
          for (i = 0; i < count; i++) {
-            unsigned int index = (prim_info->elts[start + i]
-                                  & ~DRAW_PIPE_FLAG_MASK);
+            unsigned int index = prim_info->elts[start + i];
             if (index > max_index)
                max_index = index;
          }
