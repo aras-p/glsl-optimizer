@@ -1,4 +1,4 @@
-((function textureLod
+((function textureProjGrad
    (signature vec4
      (parameters
        (declare (in) sampler1D sampler)

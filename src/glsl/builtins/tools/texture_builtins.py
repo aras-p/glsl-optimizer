@@ -156,7 +156,7 @@ with open(path.join(builtins_dir, "130", "texelFetch"), 'w') as sys.stdout:
     print "))"
 
 with open(path.join(builtins_dir, "130", "textureProjLod"), 'w') as sys.stdout:
-    print "((function textureLod"
+    print "((function textureProjLod"
     generate_fiu_sigs("txl", "1D", True)
     generate_fiu_sigs("txl", "1D", True, 2)
     generate_fiu_sigs("txl", "2D", True)
@@ -175,7 +175,7 @@ with open(path.join(builtins_dir, "130", "textureGrad"), 'w') as sys.stdout:
     print ")\n)"
 
 with open(path.join(builtins_dir, "130", "textureProjGrad"), 'w') as sys.stdout:
-    print "((function textureLod"
+    print "((function textureProjGrad"
     generate_fiu_sigs("txd", "1D", True)
     generate_fiu_sigs("txd", "1D", True, 2)
     generate_fiu_sigs("txd", "2D", True)
