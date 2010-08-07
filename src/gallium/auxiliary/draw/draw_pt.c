@@ -111,8 +111,9 @@ draw_pt_arrays(struct draw_context *draw,
     */
    if (draw->pt.user.elts || (opt & PT_PIPELINE)) {
       frontend = draw->pt.front.vcache;
-   } else {
-      frontend = draw->pt.front.varray;
+   }
+   else {
+      frontend = draw->pt.front.vsplit;
    }
 
    frontend->prepare( frontend, prim, middle, opt );
@@ -134,8 +135,8 @@ boolean draw_pt_init( struct draw_context *draw )
    if (!draw->pt.front.vcache)
       return FALSE;
 
-   draw->pt.front.varray = draw_pt_varray(draw);
-   if (!draw->pt.front.varray)
+   draw->pt.front.vsplit = draw_pt_vsplit(draw);
+   if (!draw->pt.front.vsplit)
       return FALSE;
 
    draw->pt.middle.fetch_emit = draw_pt_fetch_emit( draw );
@@ -186,9 +187,9 @@ void draw_pt_destroy( struct draw_context *draw )
       draw->pt.front.vcache = NULL;
    }
 
-   if (draw->pt.front.varray) {
-      draw->pt.front.varray->destroy( draw->pt.front.varray );
-      draw->pt.front.varray = NULL;
+   if (draw->pt.front.vsplit) {
+      draw->pt.front.vsplit->destroy( draw->pt.front.vsplit );
+      draw->pt.front.vsplit = NULL;
    }
 }
 
