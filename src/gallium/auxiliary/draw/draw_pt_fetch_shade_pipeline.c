@@ -311,6 +311,7 @@ static void fetch_pipeline_run( struct draw_pt_middle_end *middle,
    prim_info.count = draw_count;
    prim_info.elts = draw_elts;
    prim_info.prim = fpme->input_prim;
+   prim_info.flags = 0x0;
    prim_info.primitive_count = 1;
    prim_info.primitive_lengths = &draw_count;
 
@@ -336,6 +337,7 @@ static void fetch_pipeline_linear_run( struct draw_pt_middle_end *middle,
    prim_info.count = count;
    prim_info.elts = NULL;
    prim_info.prim = fpme->input_prim;
+   prim_info.flags = 0x0;
    prim_info.primitive_count = 1;
    prim_info.primitive_lengths = &count;
 
@@ -364,6 +366,7 @@ static boolean fetch_pipeline_linear_run_elts( struct draw_pt_middle_end *middle
    prim_info.count = draw_count;
    prim_info.elts = draw_elts;
    prim_info.prim = fpme->input_prim;
+   prim_info.flags = 0x0;
    prim_info.primitive_count = 1;
    prim_info.primitive_lengths = &draw_count;
 

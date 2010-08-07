@@ -457,6 +457,7 @@ int draw_geometry_shader_run(struct draw_geometry_shader *shader,
    output_prims->start = 0;
    output_prims->count = shader->emitted_vertices;
    output_prims->prim = shader->output_primitive;
+   output_prims->flags = 0x0;
    output_prims->primitive_lengths = shader->primitive_lengths;
    output_prims->primitive_count = shader->emitted_primitives;
    output_verts->count = shader->emitted_vertices;

@@ -12,6 +12,7 @@
    const boolean last_vertex_last =                               \
       !(draw->rasterizer->flatshade &&                            \
         draw->rasterizer->flatshade_first);                       \
+   const unsigned prim_flags = input_prims->flags;                \
    do {                                                           \
       debug_assert(input_prims->primitive_count == 1);            \
       switch (prim) {                                             \

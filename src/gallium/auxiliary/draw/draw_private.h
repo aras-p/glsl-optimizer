@@ -296,6 +296,10 @@ struct draw_vertex_info {
    unsigned count;
 };
 
+/* these flags are set if the primitive is a segment of a larger one */
+#define DRAW_SPLIT_BEFORE 0x1
+#define DRAW_SPLIT_AFTER  0x2
+
 struct draw_prim_info {
    boolean linear;
    unsigned start;
@@ -304,6 +308,7 @@ struct draw_prim_info {
    unsigned count;
 
    unsigned prim;
+   unsigned flags;
    unsigned *primitive_lengths;
    unsigned primitive_count;
 };

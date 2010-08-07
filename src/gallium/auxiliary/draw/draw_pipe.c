@@ -207,6 +207,7 @@ static void do_triangle( struct draw_context *draw,
 #define FUNC_VARS                               \
     struct draw_context *draw,                  \
     unsigned prim,                              \
+    unsigned prim_flags,                        \
     struct vertex_header *vertices,             \
     unsigned stride,                            \
     const ushort *elts,                         \
@@ -261,6 +262,7 @@ void draw_pipeline_run( struct draw_context *draw,
 
       pipe_run_elts(draw,
                     prim_info->prim,
+                    prim_info->flags,
                     vert_info->verts,
                     vert_info->stride,
                     prim_info->elts + start,
@@ -298,6 +300,7 @@ void draw_pipeline_run( struct draw_context *draw,
 #define FUNC_VARS                      \
     struct draw_context *draw,         \
     unsigned prim,                     \
+    unsigned prim_flags,               \
     struct vertex_header *vertices,    \
     unsigned stride,                   \
     unsigned count
@@ -330,6 +333,7 @@ void draw_pipeline_run_linear( struct draw_context *draw,
 
       pipe_run_linear(draw,
                       prim_info->prim,
+                      prim_info->flags,
                       (struct vertex_header*)verts,
                       vert_info->stride,
                       count);
