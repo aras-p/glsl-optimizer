@@ -55,6 +55,31 @@ radeon_winsys_create(int fd)
     return rws;
 }
 
+/* Enable/disable Hyper-Z access. Return TRUE on success. */
+static boolean radeon_set_hyperz_access(int fd, boolean enable)
+{
+#ifndef RADEON_INFO_WANT_HYPERZ
+#define RADEON_INFO_WANT_HYPERZ 7
+#endif
+
+    struct drm_radeon_info info = {0};
+    unsigned value = enable ? 1 : 0;
+
+    if (!debug_get_bool_option("RADEON_HYPERZ", FALSE))
+        return FALSE;
+
+    info.value = (unsigned long)&value;
+    info.request = RADEON_INFO_WANT_HYPERZ;
+
+    if (drmCommandWriteRead(fd, DRM_RADEON_INFO, &info, sizeof(info)) != 0)
+        return FALSE;
+
+    if (enable && !value)
+        return FALSE;
+
+    return TRUE;
+}
+
 /* Helper function to do the ioctls needed for setup and init. */
 static void do_ioctls(int fd, struct radeon_libdrm_winsys* winsys)
 {
@@ -134,15 +159,7 @@ static void do_ioctls(int fd, struct radeon_libdrm_winsys* winsys)
     }
     winsys->z_pipes = target;
 
-    winsys->hyperz = FALSE;
-#ifndef RADEON_INFO_WANT_HYPERZ
-#define RADEON_INFO_WANT_HYPERZ 7
-#endif
-    info.request = RADEON_INFO_WANT_HYPERZ;
-    retval = drmCommandWriteRead(fd, DRM_RADEON_INFO, &info, sizeof(info));
-    if (!retval && target == 1) {
-        winsys->hyperz = TRUE;
-    }
+    winsys->hyperz = radeon_set_hyperz_access(fd, TRUE);
 
     retval = drmCommandWriteRead(fd, DRM_RADEON_GEM_INFO,
             &gem_info, sizeof(gem_info));
