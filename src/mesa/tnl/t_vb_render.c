@@ -44,6 +44,7 @@
 #include "main/macros.h"
 #include "main/imports.h"
 #include "main/mtypes.h"
+#include "math/m_xform.h"
 
 #include "t_pipeline.h"
 
