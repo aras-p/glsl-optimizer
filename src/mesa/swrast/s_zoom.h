@@ -25,7 +25,8 @@
 #ifndef S_ZOOM_H
 #define S_ZOOM_H
 
-#include "swrast.h"
+#include "main/mtypes.h"
+#include "s_span.h"
 
 
 extern void
