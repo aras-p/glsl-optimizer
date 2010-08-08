@@ -338,6 +338,12 @@ void r300_zmask_alloc_block(struct r300_context *r300, struct r300_surface *surf
 
     tex = r300_texture(surf->base.texture);
 
+    /* We currently don't handle decompression for 3D textures and cubemaps
+     * correctly. */
+    if (tex->desc.b.b.target != PIPE_TEXTURE_1D &&
+        tex->desc.b.b.target != PIPE_TEXTURE_2D)
+        return;
+
     if (tex->zmask_mem[level])
         return;
 
