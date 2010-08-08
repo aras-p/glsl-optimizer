@@ -1008,6 +1008,8 @@ void r300_emit_hiz_clear(struct r300_context *r300, unsigned size, void *state)
     int i;
 
     tex = r300_texture(fb->zsbuf->texture);
+
+    offset = tex->hiz_mem[fb->zsbuf->level]->ofs;
     stride = tex->desc.stride_in_pixels[fb->zsbuf->level];
 
     /* convert from pixels to 4x4 blocks */
@@ -1042,6 +1044,8 @@ void r300_emit_zmask_clear(struct r300_context *r300, unsigned size, void *state
 
     tex = r300_texture(fb->zsbuf->texture);
     stride = tex->desc.stride_in_pixels[fb->zsbuf->level];
+
+    offset = tex->zmask_mem[fb->zsbuf->level]->ofs;
 
     if (r300->z_compression == RV350_Z_COMPRESS_88)
         mult = 8;
