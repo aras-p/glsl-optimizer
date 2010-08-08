@@ -489,7 +489,7 @@ get_indirect_offsets(struct lp_build_tgsi_soa_context *bld,
                               int_vec_type, "");
 
    /* addr_vec = addr_vec * 4 */
-   addr_vec = lp_build_mul(&bld->base, addr_vec, vec4);
+   addr_vec = lp_build_mul(&bld->int_bld, addr_vec, vec4);
 
    return addr_vec;
 }
@@ -773,7 +773,9 @@ emit_store(
       addr = LLVMBuildExtractElement(bld->base.builder,
                                      addr, LLVMConstInt(LLVMInt32Type(), 0, 0),
                                      "");
-      addr = lp_build_mul(&bld->base, addr, LLVMConstInt(LLVMInt32Type(), 4, 0));
+      addr = LLVMBuildMul(bld->base.builder,
+                          addr, LLVMConstInt(LLVMInt32Type(), 4, 0),
+                          "");
    }
 
    switch( reg->Register.File ) {
