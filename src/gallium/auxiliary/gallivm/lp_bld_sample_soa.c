@@ -888,17 +888,17 @@ lp_build_lod_selector(struct lp_build_sample_context *bld,
          /* Compute rho = max of all partial derivatives scaled by texture size.
           * XXX this could be vectorized somewhat
           */
-         rho = LLVMBuildMul(bld->builder,
+         rho = LLVMBuildFMul(bld->builder,
                             lp_build_max(float_bld, dsdx, dsdy),
                             lp_build_int_to_float(float_bld, width), "");
          if (dims > 1) {
             LLVMValueRef max;
-            max = LLVMBuildMul(bld->builder,
+            max = LLVMBuildFMul(bld->builder,
                                lp_build_max(float_bld, dtdx, dtdy),
                                lp_build_int_to_float(float_bld, height), "");
             rho = lp_build_max(float_bld, rho, max);
             if (dims > 2) {
-               max = LLVMBuildMul(bld->builder,
+               max = LLVMBuildFMul(bld->builder,
                                   lp_build_max(float_bld, drdx, drdy),
                                   lp_build_int_to_float(float_bld, depth), "");
                rho = lp_build_max(float_bld, rho, max);
@@ -912,12 +912,12 @@ lp_build_lod_selector(struct lp_build_sample_context *bld,
          if (lod_bias) {
             lod_bias = LLVMBuildExtractElement(bld->builder, lod_bias,
                                                index0, "");
-            lod = LLVMBuildAdd(bld->builder, lod, lod_bias, "shader_lod_bias");
+            lod = LLVMBuildFAdd(bld->builder, lod, lod_bias, "shader_lod_bias");
          }
       }
 
       /* add sampler lod bias */
-      lod = LLVMBuildAdd(bld->builder, lod, sampler_lod_bias, "sampler_lod_bias");
+      lod = LLVMBuildFAdd(bld->builder, lod, sampler_lod_bias, "sampler_lod_bias");
 
       /* clamp lod */
       lod = lp_build_clamp(float_bld, lod, min_lod, max_lod);
@@ -2028,6 +2028,8 @@ lp_build_sample_soa(LLVMBuilderRef builder,
       enum pipe_format fmt = static_state->format;
       debug_printf("Sample from %s\n", util_format_name(fmt));
    }
+
+   assert(type.floating);
 
    /* Setup our build context */
    memset(&bld, 0, sizeof bld);

@@ -197,7 +197,7 @@ lp_build_unpack_rgba_soa(LLVMBuilderRef builder,
             if (format_desc->channel[chan].normalized) {
                double scale = 1.0 / ((1 << (format_desc->channel[chan].size - 1)) - 1);
                LLVMValueRef scale_val = lp_build_const_vec(type, scale);
-               input = LLVMBuildMul(builder, input, scale_val, "");
+               input = LLVMBuildFMul(builder, input, scale_val, "");
             }
          }
          else {
@@ -227,7 +227,7 @@ lp_build_unpack_rgba_soa(LLVMBuilderRef builder,
             double scale = 1.0 / ((1 << (format_desc->channel[chan].size/2)) - 1);
             LLVMValueRef scale_val = lp_build_const_vec(type, scale);
             input = LLVMBuildSIToFP(builder, input, lp_build_vec_type(type), "");
-            input = LLVMBuildMul(builder, input, scale_val, "");
+            input = LLVMBuildFMul(builder, input, scale_val, "");
          }
          else {
             /* FIXME */

@@ -85,7 +85,7 @@ lp_build_scalar_ddx(struct lp_build_context *bld,
    LLVMValueRef idx_right = LLVMConstInt(LLVMInt32Type(), LP_BLD_QUAD_TOP_RIGHT, 0);
    LLVMValueRef a_left  = LLVMBuildExtractElement(bld->builder, a, idx_left, "");
    LLVMValueRef a_right = LLVMBuildExtractElement(bld->builder, a, idx_right, "");
-   return LLVMBuildSub(bld->builder, a_right, a_left, "");
+   return lp_build_sub(bld, a_right, a_left);
 }
 
 
@@ -97,5 +97,5 @@ lp_build_scalar_ddy(struct lp_build_context *bld,
    LLVMValueRef idx_bottom = LLVMConstInt(LLVMInt32Type(), LP_BLD_QUAD_BOTTOM_LEFT, 0);
    LLVMValueRef a_top    = LLVMBuildExtractElement(bld->builder, a, idx_top, "");
    LLVMValueRef a_bottom = LLVMBuildExtractElement(bld->builder, a, idx_bottom, "");
-   return LLVMBuildSub(bld->builder, a_bottom, a_top, "");
+   return lp_build_sub(bld, a_bottom, a_top);
 }

@@ -240,7 +240,7 @@ lp_build_unpack_arith_rgba_aos(LLVMBuilderRef builder,
     */
 
    if (normalized)
-      scaled = LLVMBuildMul(builder, casted, LLVMConstVector(scales, 4), "");
+      scaled = LLVMBuildFMul(builder, casted, LLVMConstVector(scales, 4), "");
    else
       scaled = casted;
 
@@ -322,7 +322,7 @@ lp_build_pack_rgba_aos(LLVMBuilderRef builder,
    }
 
    if (normalized)
-      scaled = LLVMBuildMul(builder, unswizzled, LLVMConstVector(scales, 4), "");
+      scaled = LLVMBuildFMul(builder, unswizzled, LLVMConstVector(scales, 4), "");
    else
       scaled = unswizzled;
 
