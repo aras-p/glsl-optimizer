@@ -844,7 +844,6 @@ draw_llvm_generate_elts(struct draw_llvm *llvm, struct draw_llvm_variant *varian
    struct draw_context *draw = llvm->draw;
    unsigned i, j;
    struct lp_build_context bld;
-   struct lp_build_context bld_int;
    struct lp_build_loop_state lp_loop;
    const int max_vertices = 4;
    LLVMValueRef outputs[PIPE_MAX_SHADER_OUTPUTS][NUM_CHANNELS];
@@ -897,8 +896,7 @@ draw_llvm_generate_elts(struct draw_llvm *llvm, struct draw_llvm_variant *varian
    builder = LLVMCreateBuilder();
    LLVMPositionBuilderAtEnd(builder, block);
 
-   lp_build_context_init(&bld, builder, lp_type_float_vec(32));
-   lp_build_context_init(&bld_int, builder, lp_type_int(32));
+   lp_build_context_init(&bld, builder, lp_type_int(32));
 
    step = LLVMConstInt(LLVMInt32Type(), max_vertices, 0);
 
@@ -933,7 +931,7 @@ draw_llvm_generate_elts(struct draw_llvm *llvm, struct draw_llvm_variant *varian
          /* make sure we're not out of bounds which can happen
           * if fetch_count % 4 != 0, because on the last iteration
           * a few of the 4 vertex fetches will be out of bounds */
-         true_index = lp_build_min(&bld_int, true_index, fetch_max);
+         true_index = lp_build_min(&bld, true_index, fetch_max);
 
          fetch_ptr = LLVMBuildGEP(builder, fetch_elts,
                                   &true_index, 1, "");
