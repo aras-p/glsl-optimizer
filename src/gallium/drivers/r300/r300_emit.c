@@ -1069,6 +1069,9 @@ void r300_emit_zmask_clear(struct r300_context *r300, unsigned size, void *state
         offset <<= offset_shift;
         r300_emit_zmask_line_clear(r300, offset, stride, 0x0);//0xffffffff);
     }
+
+    /* Mark the current zbuffer's zmask as dirty. */
+    tex->dirty_zmask[fb->zsbuf->level] = TRUE;
 }
 
 void r300_emit_ztop_state(struct r300_context* r300,

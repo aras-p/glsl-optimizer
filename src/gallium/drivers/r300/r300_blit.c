@@ -259,27 +259,32 @@ static void r300_clear_depth_stencil(struct pipe_context *pipe,
     r300_blitter_end(r300);
 }
 
-/* Clear a region of a depth stencil surface. */
-static void r300_flush_depth_stencil(struct pipe_context *pipe,
-                                     struct pipe_resource *dst,
-                                     struct pipe_subresource subdst)
+/* Flush a depth stencil buffer. */
+void r300_flush_depth_stencil(struct pipe_context *pipe,
+                              struct pipe_resource *dst,
+                              struct pipe_subresource subdst,
+                              unsigned zslice)
 {
     struct r300_context *r300 = r300_context(pipe);
     struct pipe_surface *dstsurf;
     struct r300_texture *tex = r300_texture(dst);
 
-    /* only flush the zmask if we have one attached to this texture */
     if (!tex->zmask_mem[subdst.level])
+        return;
+    if (!tex->dirty_zmask[subdst.level])
         return;
 
     dstsurf = pipe->screen->get_tex_surface(pipe->screen, dst,
-                                            subdst.face, subdst.level, 0,
+                                            subdst.face, subdst.level, zslice,
                                             PIPE_BIND_DEPTH_STENCIL);
     r300->z_decomp_rd = TRUE;
     r300_blitter_begin(r300, R300_CLEAR_SURFACE);
     util_blitter_flush_depth_stencil(r300->blitter, dstsurf);
     r300_blitter_end(r300);
     r300->z_decomp_rd = FALSE;
+
+    tex->dirty_zmask[subdst.level] = FALSE;
+    pipe->flush(pipe, 0, NULL);
 }
 
 /* Copy a block of pixels from one surface to another using HW. */
@@ -342,7 +347,7 @@ static void r300_resource_copy_region(struct pipe_context *pipe,
 
     is_depth = util_format_get_component_bits(src->format, UTIL_FORMAT_COLORSPACE_ZS, 0) != 0;
     if (is_depth) {
-        r300_flush_depth_stencil(pipe, src, subsrc);
+        r300_flush_depth_stencil(pipe, src, subsrc, srcz);
     }
     if (old_format != new_format) {
         dst->format = new_format;

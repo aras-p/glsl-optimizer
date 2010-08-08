@@ -397,6 +397,7 @@ struct r300_texture {
     /* hyper-z memory allocs */
     struct mem_block *hiz_mem[R300_MAX_TEXTURE_LEVELS];
     struct mem_block *zmask_mem[R300_MAX_TEXTURE_LEVELS];
+    boolean dirty_zmask[R300_MAX_TEXTURE_LEVELS];
 
     /* This is the level tiling flags were last time set for.
      * It's used to prevent redundant tiling-flags changes from happening.*/
@@ -627,6 +628,12 @@ void r300_init_query_functions(struct r300_context* r300);
 void r300_init_render_functions(struct r300_context *r300);
 void r300_init_state_functions(struct r300_context* r300);
 void r300_init_resource_functions(struct r300_context* r300);
+
+/* r300_blit.c */
+void r300_flush_depth_stencil(struct pipe_context *pipe,
+                              struct pipe_resource *dst,
+                              struct pipe_subresource subdst,
+                              unsigned zslice);
 
 /* r300_query.c */
 void r300_resume_query(struct r300_context *r300,
