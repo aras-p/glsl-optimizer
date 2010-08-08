@@ -110,6 +110,9 @@ struct r300_vertex_program_compiler {
 
 	void * UserData;
 	void (*SetHwInputOutput)(struct r300_vertex_program_compiler * c);
+
+	int PredicateIndex;
+	unsigned int PredicateMask;
 };
 
 void r3xx_compile_vertex_program(struct r300_vertex_program_compiler* c);

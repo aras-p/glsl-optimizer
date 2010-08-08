@@ -337,6 +337,129 @@ static void ei_pow(struct r300_vertex_program_code *vp,
 	inst[3] = t_src_scalar(vp, &vpi->SrcReg[1]);
 }
 
+static void mark_write(void * userdata,	struct rc_instruction * inst,
+		rc_register_file file,	unsigned int index, unsigned int mask)
+{
+	unsigned int * writemasks = userdata;
+
+	if (file != RC_FILE_TEMPORARY)
+		return;
+
+	if (index >= R300_VS_MAX_TEMPS)
+		return;
+
+	writemasks[index] |= mask;
+}
+
+static unsigned long t_pred_src(struct r300_vertex_program_compiler * compiler)
+{
+	return PVS_SRC_OPERAND(compiler->PredicateIndex,
+		t_swizzle(RC_SWIZZLE_ZERO),
+		t_swizzle(RC_SWIZZLE_ZERO),
+		t_swizzle(RC_SWIZZLE_ZERO),
+		t_swizzle(RC_SWIZZLE_W),
+		t_src_class(RC_FILE_TEMPORARY),
+		0);
+}
+
+static unsigned long t_pred_dst(struct r300_vertex_program_compiler * compiler,
+					unsigned int hw_opcode, int is_math)
+{
+	return PVS_OP_DST_OPERAND(hw_opcode,
+	     is_math,
+	     0,
+	     compiler->PredicateIndex,
+	     RC_MASK_W,
+	     t_dst_class(RC_FILE_TEMPORARY));
+
+}
+
+static void ei_if(struct r300_vertex_program_compiler * compiler,
+					struct rc_instruction *rci,
+					unsigned int * inst,
+					unsigned int branch_depth)
+{
+	unsigned int predicate_opcode;
+	int is_math = 0;
+
+	if (!compiler->Base.is_r500) {
+		rc_error(&compiler->Base,"Opcode IF not supported\n");
+		return;
+	}
+
+	/* Reserve a temporary to use as our predicate stack counter, if we
+	 * don't already have one. */
+	if (!compiler->PredicateMask) {
+		unsigned int writemasks[R300_VS_MAX_TEMPS];
+		memset(writemasks, 0, sizeof(writemasks));
+		struct rc_instruction * inst;
+		unsigned int i;
+		for(inst = compiler->Base.Program.Instructions.Next;
+				inst != &compiler->Base.Program.Instructions;
+							inst = inst->Next) {
+			rc_for_all_writes_mask(inst, mark_write, writemasks);
+		}
+		for(i = 0; i < R300_VS_MAX_TEMPS; i++) {
+			unsigned int mask = ~writemasks[i] & RC_MASK_XYZW;
+			/* Only the W component can be used fo the predicate
+			 * stack counter. */
+			if (mask & RC_MASK_W) {
+				compiler->PredicateMask = RC_MASK_W;
+				compiler->PredicateIndex = i;
+				break;
+			}
+		}
+		if (i == R300_VS_MAX_TEMPS) {
+			rc_error(&compiler->Base, "No free temporary to use for"
+					" predicate stack counter.\n");
+			return;
+		}
+	}
+	predicate_opcode =
+			branch_depth ? VE_PRED_SET_NEQ_PUSH : ME_PRED_SET_NEQ;
+
+	rci->U.I.SrcReg[0].Swizzle = RC_MAKE_SWIZZLE_SMEAR(GET_SWZ(rci->U.I.SrcReg[0].Swizzle,0));
+	if (branch_depth == 0) {
+		is_math = 1;
+		predicate_opcode = ME_PRED_SET_NEQ;
+		inst[1] = t_src(compiler->code, &rci->U.I.SrcReg[0]);
+		inst[2] = 0;
+	} else {
+		predicate_opcode = VE_PRED_SET_NEQ_PUSH;
+		inst[1] = t_pred_src(compiler);
+		inst[2] = t_src(compiler->code, &rci->U.I.SrcReg[0]);
+	}
+
+	inst[0] = t_pred_dst(compiler, predicate_opcode, is_math);
+	inst[3] = 0;
+
+}
+
+static void ei_else(struct r300_vertex_program_compiler * compiler,
+							unsigned int * inst)
+{
+	if (!compiler->Base.is_r500) {
+		rc_error(&compiler->Base,"Opcode ELSE not supported\n");
+		return;
+	}
+	inst[0] = t_pred_dst(compiler, ME_PRED_SET_INV, 1);
+	inst[1] = t_pred_src(compiler);
+	inst[2] = 0;
+	inst[3] = 0;
+}
+
+static void ei_endif(struct r300_vertex_program_compiler *compiler,
+							unsigned int * inst)
+{
+	if (!compiler->Base.is_r500) {
+		rc_error(&compiler->Base,"Opcode ENDIF not supported\n");
+		return;
+	}
+	inst[0] = t_pred_dst(compiler, ME_PRED_SET_POP, 1);
+	inst[1] = t_pred_src(compiler);
+	inst[2] = 0;
+	inst[3] = 0;
+}
 
 static void translate_vertex_program(struct r300_vertex_program_compiler * compiler)
 {
@@ -345,6 +468,8 @@ static void translate_vertex_program(struct r300_vertex_program_compiler * compi
 	struct loop * loops;
 	int current_loop_depth = 0;
 	int loops_reserved = 0;
+
+	unsigned int branch_depth = 0;
 
 	compiler->code->pos_end = 0;	/* Not supported yet */
 	compiler->code->length = 0;
@@ -375,9 +500,12 @@ static void translate_vertex_program(struct r300_vertex_program_compiler * compi
 		case RC_OPCODE_COS: ei_math1(compiler->code, ME_COS, vpi, inst); break;
 		case RC_OPCODE_DP4: ei_vector2(compiler->code, VE_DOT_PRODUCT, vpi, inst); break;
 		case RC_OPCODE_DST: ei_vector2(compiler->code, VE_DISTANCE_VECTOR, vpi, inst); break;
+		case RC_OPCODE_ELSE: ei_else(compiler, inst); break;
+		case RC_OPCODE_ENDIF: ei_endif(compiler, inst); branch_depth--; break;
 		case RC_OPCODE_EX2: ei_math1(compiler->code, ME_EXP_BASE2_FULL_DX, vpi, inst); break;
 		case RC_OPCODE_EXP: ei_math1(compiler->code, ME_EXP_BASE2_DX, vpi, inst); break;
 		case RC_OPCODE_FRC: ei_vector1(compiler->code, VE_FRACTION, vpi, inst); break;
+		case RC_OPCODE_IF: ei_if(compiler, rci, inst, branch_depth); branch_depth++; break;
 		case RC_OPCODE_LG2: ei_math1(compiler->code, ME_LOG_BASE2_FULL_DX, vpi, inst); break;
 		case RC_OPCODE_LIT: ei_lit(compiler->code, vpi, inst); break;
 		case RC_OPCODE_LOG: ei_math1(compiler->code, ME_LOG_BASE2_DX, vpi, inst); break;
@@ -459,6 +587,19 @@ static void translate_vertex_program(struct r300_vertex_program_compiler * compi
 		default:
 			rc_error(&compiler->Base, "Unknown opcode %s\n", rc_get_opcode_info(vpi->Opcode)->Name);
 			return;
+		}
+
+		/* Non-flow control instructions that are inside an if statement
+		 * need to pay attention to the predicate bit. */
+		if (branch_depth
+			&& vpi->Opcode != RC_OPCODE_IF
+			&& vpi->Opcode != RC_OPCODE_ELSE
+			&& vpi->Opcode != RC_OPCODE_ENDIF) {
+
+			inst[0] |= (PVS_DST_PRED_ENABLE_MASK
+						<< PVS_DST_PRED_ENABLE_SHIFT);
+			inst[0] |= (PVS_DST_PRED_SENSE_MASK
+						<< PVS_DST_PRED_SENSE_SHIFT);
 		}
 
 		compiler->code->length += 4;
@@ -744,9 +885,10 @@ void r3xx_compile_vertex_program(struct r300_vertex_program_compiler* compiler)
 
 	debug_program_log(compiler, "after emulate loops");
 
-	rc_emulate_branches(&compiler->Base);
-
-	debug_program_log(compiler, "after emulate branches");
+	if (!compiler->Base.is_r500) {
+		rc_emulate_branches(&compiler->Base);
+		debug_program_log(compiler, "after emulate branches");
+	}
 
 	if (compiler->Base.is_r500) {
 		struct radeon_program_transformation transformations[] = {

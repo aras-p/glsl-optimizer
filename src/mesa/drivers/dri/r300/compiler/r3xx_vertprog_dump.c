@@ -22,6 +22,7 @@
 
 #include "radeon_compiler.h"
 #include "radeon_code.h"
+#include "../r300_reg.h"
 
 #include <stdio.h>
 
@@ -134,6 +135,10 @@ static void r300_vs_op_dump(uint32_t op)
 {
 	fprintf(stderr, " dst: %d%s op: ",
 			(op >> 13) & 0x7f, r300_vs_dst_debug[(op >> 8) & 0x7]);
+	if ((op >> PVS_DST_PRED_ENABLE_SHIFT) & 0x1) {
+		fprintf(stderr, "PRED %u",
+				(op >> PVS_DST_PRED_SENSE_SHIFT) & 0x1);
+	}
 	if (op & 0x80) {
 		if (op & 0x1) {
 			fprintf(stderr, "PVS_MACRO_OP_2CLK_M2X_ADD\n");
