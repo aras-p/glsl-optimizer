@@ -190,6 +190,9 @@ lp_build_add(struct lp_build_context *bld,
    const struct lp_type type = bld->type;
    LLVMValueRef res;
 
+   assert(lp_check_value(type, a));
+   assert(lp_check_value(type, b));
+
    if(a == bld->zero)
       return b;
    if(b == bld->zero)
@@ -272,6 +275,9 @@ lp_build_sub(struct lp_build_context *bld,
 {
    const struct lp_type type = bld->type;
    LLVMValueRef res;
+
+   assert(lp_check_value(type, a));
+   assert(lp_check_value(type, b));
 
    if(b == bld->zero)
       return a;
@@ -395,6 +401,9 @@ lp_build_mul(struct lp_build_context *bld,
    LLVMValueRef shift;
    LLVMValueRef res;
 
+   assert(lp_check_value(type, a));
+   assert(lp_check_value(type, b));
+
    if(a == bld->zero)
       return bld->zero;
    if(a == bld->one)
@@ -517,6 +526,9 @@ lp_build_div(struct lp_build_context *bld,
              LLVMValueRef b)
 {
    const struct lp_type type = bld->type;
+
+   assert(lp_check_value(type, a));
+   assert(lp_check_value(type, b));
 
    if(a == bld->zero)
       return bld->zero;
