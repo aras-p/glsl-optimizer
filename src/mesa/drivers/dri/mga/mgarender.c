@@ -44,6 +44,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/imports.h"
 #include "main/mtypes.h"
 
+#include "math/m_xform.h"
+
 #include "tnl/t_context.h"
 
 #include "mgacontext.h"
