@@ -533,7 +533,7 @@ emit_fetch(
                                             reg->Register.Index * 4 + swizzle);
 
          /* index_vec = index_vec + addr_vec */
-         index_vec = lp_build_add(&bld->base, index_vec, addr_vec);
+         index_vec = lp_build_add(&bld->int_bld, index_vec, addr_vec);
 
          /* Gather values from the constant buffer */
          res = build_gather(bld, bld->consts_ptr, index_vec);
