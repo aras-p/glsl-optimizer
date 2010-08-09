@@ -72,7 +72,7 @@ unsigned r600_check_blit(gl_format mesa_format)
     case MESA_FORMAT_Z24_S8:
     case MESA_FORMAT_Z16:
     case MESA_FORMAT_Z32:
-    case MESA_FORMAT_SRGBA8:
+    case MESA_FORMAT_SARGB8:
     case MESA_FORMAT_SLA8:
     case MESA_FORMAT_SL8:
 	    break;
@@ -320,9 +320,9 @@ set_render_target(context_t *context, struct radeon_bo *bo, gl_format mesa_forma
 	    CLEARbit(cb_color0_info, SOURCE_FORMAT_bit);
 	    SETfield(cb_color0_info, NUMBER_UNORM, NUMBER_TYPE_shift, NUMBER_TYPE_mask);
             break;
-    case MESA_FORMAT_SRGBA8:
+    case MESA_FORMAT_SARGB8:
             format = COLOR_8_8_8_8;
-            comp_swap = SWAP_STD_REV;
+            comp_swap = SWAP_ALT;
 	    SETbit(cb_color0_info, SOURCE_FORMAT_bit);
 	    SETfield(cb_color0_info, NUMBER_SRGB, NUMBER_TYPE_shift, NUMBER_TYPE_mask);
             break;
@@ -1050,17 +1050,17 @@ set_tex_resource(context_t * context,
 	    SETfield(sq_tex_resource4, SQ_SEL_X,
 		     SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_shift, SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_mask);
 	    break;
-    case MESA_FORMAT_SRGBA8:
+    case MESA_FORMAT_SARGB8:
 	    SETfield(sq_tex_resource1, FMT_8_8_8_8,
 		     SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_shift, SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_mask);
 
-	    SETfield(sq_tex_resource4, SQ_SEL_W,
-		     SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_shift, SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_mask);
 	    SETfield(sq_tex_resource4, SQ_SEL_Z,
-		     SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_shift, SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_mask);
+		     SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_shift, SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_mask);
 	    SETfield(sq_tex_resource4, SQ_SEL_Y,
-		     SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_shift, SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_mask);
+		     SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_shift, SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_mask);
 	    SETfield(sq_tex_resource4, SQ_SEL_X,
+		     SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_shift, SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_mask);
+	    SETfield(sq_tex_resource4, SQ_SEL_W,
 		     SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_shift, SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_mask);
 	    SETbit(sq_tex_resource4, SQ_TEX_RESOURCE_WORD4_0__FORCE_DEGAMMA_bit);
 	    break;

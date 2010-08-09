@@ -152,8 +152,8 @@ int32_t r300TranslateTexFormat(gl_format mesaFormat)
 		case MESA_FORMAT_Z32:
 			return R300_EASY_TX_FORMAT(X, X, X, X, X32);
 		/* EXT_texture_sRGB */
-		case MESA_FORMAT_SRGBA8:
-			return R300_EASY_TX_FORMAT(Y, Z, W, X, W8Z8Y8X8) | R300_TX_FORMAT_GAMMA;
+		case MESA_FORMAT_SARGB8:
+			return R300_EASY_TX_FORMAT(X, Y, Z, W, W8Z8Y8X8) | R300_TX_FORMAT_GAMMA;
 		case MESA_FORMAT_SLA8:
 			return R300_EASY_TX_FORMAT(X, X, X, Y, Y8X8) | R300_TX_FORMAT_GAMMA;
 		case MESA_FORMAT_SL8:

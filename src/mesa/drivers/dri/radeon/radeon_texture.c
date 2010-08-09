@@ -551,7 +551,7 @@ gl_format radeonChooseTextureFormat(GLcontext * ctx,
 	case GL_SRGB8_ALPHA8:
 	case GL_COMPRESSED_SRGB:
 	case GL_COMPRESSED_SRGB_ALPHA:
-		return MESA_FORMAT_SRGBA8;
+		return MESA_FORMAT_SARGB8;
 
 	case GL_SLUMINANCE:
 	case GL_SLUMINANCE8:

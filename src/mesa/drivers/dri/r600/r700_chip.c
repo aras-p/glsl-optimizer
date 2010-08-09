@@ -523,9 +523,9 @@ static void r700SetRenderTarget(context_t *context, int id)
 		     CB_COLOR0_INFO__ARRAY_MODE_shift, CB_COLOR0_INFO__ARRAY_MODE_mask);
 	    CLEARbit(r700->render_target[id].CB_COLOR0_INFO.u32All, SOURCE_FORMAT_bit);
             break;
-    case MESA_FORMAT_SRGBA8:
+    case MESA_FORMAT_SARGB8:
             format = COLOR_8_8_8_8;
-            comp_swap = SWAP_STD_REV;
+            comp_swap = SWAP_ALT;
 	    number_type = NUMBER_SRGB;
 	    SETbit(r700->render_target[id].CB_COLOR0_INFO.u32All, SOURCE_FORMAT_bit);
             break;
