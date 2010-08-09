@@ -125,9 +125,6 @@ llvm_middle_end_prepare( struct draw_pt_middle_end *middle,
       *max_vertices = 4096;
    }
 
-   /* return even number */
-   *max_vertices = *max_vertices & ~1;
-
    draw_llvm_make_variant_key(fpme->llvm, &key);
 
    li = first_elem(&shader->variants);

@@ -353,9 +353,6 @@ vbuf_alloc_vertices( struct vbuf_stage *vbuf )
    /* Allocate a new vertex buffer */
    vbuf->max_vertices = vbuf->render->max_vertex_buffer_bytes / vbuf->vertex_size;
 
-   /* even number */
-   vbuf->max_vertices = vbuf->max_vertices & ~1;
-
    if(vbuf->max_vertices >= UNDEFINED_VERTEX_ID)
       vbuf->max_vertices = UNDEFINED_VERTEX_ID - 1;
 
