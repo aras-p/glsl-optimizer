@@ -160,6 +160,8 @@ lp_build_comp(struct lp_build_context *bld,
 {
    const struct lp_type type = bld->type;
 
+   assert(lp_check_value(type, a));
+
    if(a == bld->one)
       return bld->zero;
    if(a == bld->zero)
@@ -254,6 +256,8 @@ lp_build_sum_vector(struct lp_build_context *bld,
    const struct lp_type type = bld->type;
    LLVMValueRef index, res;
    unsigned i;
+
+   assert(lp_check_value(type, a));
 
    if (a == bld->zero)
       return bld->zero;
@@ -505,6 +509,8 @@ lp_build_mul_imm(struct lp_build_context *bld,
 {
    LLVMValueRef factor;
 
+   assert(lp_check_value(bld->type, a));
+
    if(b == 0)
       return bld->zero;
 
@@ -598,6 +604,10 @@ lp_build_lerp(struct lp_build_context *bld,
    LLVMValueRef delta;
    LLVMValueRef res;
 
+   assert(lp_check_value(bld->type, x));
+   assert(lp_check_value(bld->type, v0));
+   assert(lp_check_value(bld->type, v1));
+
    delta = lp_build_sub(bld, v1, v0);
 
    res = lp_build_mul(bld, x, delta);
@@ -639,6 +649,9 @@ lp_build_min(struct lp_build_context *bld,
              LLVMValueRef a,
              LLVMValueRef b)
 {
+   assert(lp_check_value(bld->type, a));
+   assert(lp_check_value(bld->type, b));
+
    if(a == bld->undef || b == bld->undef)
       return bld->undef;
 
@@ -667,6 +680,9 @@ lp_build_max(struct lp_build_context *bld,
              LLVMValueRef a,
              LLVMValueRef b)
 {
+   assert(lp_check_value(bld->type, a));
+   assert(lp_check_value(bld->type, b));
+
    if(a == bld->undef || b == bld->undef)
       return bld->undef;
 
@@ -696,6 +712,10 @@ lp_build_clamp(struct lp_build_context *bld,
                LLVMValueRef min,
                LLVMValueRef max)
 {
+   assert(lp_check_value(bld->type, a));
+   assert(lp_check_value(bld->type, min));
+   assert(lp_check_value(bld->type, max));
+
    a = lp_build_min(bld, a, max);
    a = lp_build_max(bld, a, min);
    return a;
@@ -711,6 +731,8 @@ lp_build_abs(struct lp_build_context *bld,
 {
    const struct lp_type type = bld->type;
    LLVMTypeRef vec_type = lp_build_vec_type(type);
+
+   assert(lp_check_value(type, a));
 
    if(!type.sign)
       return a;
@@ -745,6 +767,8 @@ LLVMValueRef
 lp_build_negate(struct lp_build_context *bld,
                 LLVMValueRef a)
 {
+   assert(lp_check_value(bld->type, a));
+
 #if HAVE_LLVM >= 0x0207
    if (bld->type.floating)
       a = LLVMBuildFNeg(bld->builder, a, "");
@@ -764,6 +788,8 @@ lp_build_sgn(struct lp_build_context *bld,
    const struct lp_type type = bld->type;
    LLVMValueRef cond;
    LLVMValueRef res;
+
+   assert(lp_check_value(type, a));
 
    /* Handle non-zero case */
    if(!type.sign) {
@@ -822,6 +848,7 @@ lp_build_set_sign(struct lp_build_context *bld,
                              ~((unsigned long long) 1 << (type.width - 1)));
    LLVMValueRef val, res;
 
+   assert(lp_check_value(type, a));
    assert(type.floating);
 
    /* val = reinterpret_cast<int>(a) */
@@ -1188,6 +1215,8 @@ lp_build_sqrt(struct lp_build_context *bld,
    LLVMTypeRef vec_type = lp_build_vec_type(type);
    char intrinsic[32];
 
+   assert(lp_check_value(type, a));
+
    /* TODO: optimize the constant case */
    /* TODO: optimize the constant case */
 
@@ -1203,6 +1232,8 @@ lp_build_rcp(struct lp_build_context *bld,
              LLVMValueRef a)
 {
    const struct lp_type type = bld->type;
+
+   assert(lp_check_value(type, a));
 
    if(a == bld->zero)
       return bld->undef;
@@ -1257,6 +1288,8 @@ lp_build_rsqrt(struct lp_build_context *bld,
                LLVMValueRef a)
 {
    const struct lp_type type = bld->type;
+
+   assert(lp_check_value(type, a));
 
    assert(type.floating);
 
@@ -1745,6 +1778,8 @@ lp_build_exp(struct lp_build_context *bld,
    /* log2(e) = 1/log(2) */
    LLVMValueRef log2e = lp_build_const_vec(bld->type, 1.4426950408889634);
 
+   assert(lp_check_value(bld->type, x));
+
    return lp_build_mul(bld, log2e, lp_build_exp2(bld, x));
 }
 
@@ -1758,6 +1793,8 @@ lp_build_log(struct lp_build_context *bld,
 {
    /* log(2) */
    LLVMValueRef log2 = lp_build_const_vec(bld->type, 0.69314718055994529);
+
+   assert(lp_check_value(bld->type, x));
 
    return lp_build_mul(bld, log2, lp_build_exp2(bld, x));
 }
@@ -1780,6 +1817,8 @@ lp_build_polynomial(struct lp_build_context *bld,
    const struct lp_type type = bld->type;
    LLVMValueRef res = NULL;
    unsigned i;
+
+   assert(lp_check_value(bld->type, x));
 
    /* TODO: optimize the constant case */
    if(LLVMIsConstant(x))
@@ -1851,6 +1890,8 @@ lp_build_exp2_approx(struct lp_build_context *bld,
    LLVMValueRef expipart = NULL;
    LLVMValueRef expfpart = NULL;
    LLVMValueRef res = NULL;
+
+   assert(lp_check_value(bld->type, x));
 
    if(p_exp2_int_part || p_frac_part || p_exp2) {
       /* TODO: optimize the constant case */
@@ -1964,6 +2005,8 @@ lp_build_log2_approx(struct lp_build_context *bld,
    LLVMValueRef logexp = NULL;
    LLVMValueRef logmant = NULL;
    LLVMValueRef res = NULL;
+
+   assert(lp_check_value(bld->type, x));
 
    if(p_exp || p_floor_log2 || p_log2) {
       /* TODO: optimize the constant case */
