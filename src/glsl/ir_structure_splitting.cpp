@@ -80,7 +80,7 @@ public:
    virtual ir_visitor_status visit(ir_variable *);
    virtual ir_visitor_status visit(ir_dereference_variable *);
    virtual ir_visitor_status visit_enter(ir_dereference_record *);
-
+   virtual ir_visitor_status visit_enter(ir_assignment *);
    virtual ir_visitor_status visit_enter(ir_function_signature *);
 
    variable_entry *get_variable_entry(ir_variable *var);
@@ -139,6 +139,19 @@ ir_structure_reference_visitor::visit_enter(ir_dereference_record *ir)
 {
    /* Don't descend into the ir_dereference_variable below. */
    return visit_continue_with_parent;
+}
+
+ir_visitor_status
+ir_structure_reference_visitor::visit_enter(ir_assignment *ir)
+{
+   if (ir->lhs->as_dereference_variable() &&
+       ir->rhs->as_dereference_variable() &&
+       !ir->condition) {
+      /* We'll split copies of a structure to copies of components, so don't
+       * descend to the ir_dereference_variables.
+       */
+      return visit_continue_with_parent;
+   }
 }
 
 ir_visitor_status
@@ -302,9 +315,44 @@ ir_structure_splitting_visitor::visit_leave(ir_dereference_record *ir)
 ir_visitor_status
 ir_structure_splitting_visitor::visit_leave(ir_assignment *ir)
 {
-   split_rvalue(&ir->rhs);
+   ir_dereference_variable *lhs_deref = ir->lhs->as_dereference_variable();
+   ir_dereference_variable *rhs_deref = ir->rhs->as_dereference_variable();
+   variable_entry *lhs_entry = lhs_deref ? get_splitting_entry(lhs_deref->var) : NULL;
+   variable_entry *rhs_entry = rhs_deref ? get_splitting_entry(rhs_deref->var) : NULL;
+   const glsl_type *type = ir->rhs->type;
+
+   if ((lhs_entry || rhs_entry) && !ir->condition) {
+      for (unsigned int i = 0; i < type->length; i++) {
+	 ir_dereference *new_lhs, *new_rhs;
+	 void *mem_ctx = lhs_entry ? lhs_entry->mem_ctx : rhs_entry->mem_ctx;
+
+	 if (lhs_entry) {
+	    new_lhs = new(mem_ctx) ir_dereference_variable(lhs_entry->components[i]);
+	 } else {
+	    new_lhs = new(mem_ctx)
+	       ir_dereference_record(ir->lhs->clone(mem_ctx, NULL),
+				     type->fields.structure[i].name);
+	 }
+
+	 if (rhs_entry) {
+	    new_rhs = new(mem_ctx) ir_dereference_variable(rhs_entry->components[i]);
+	 } else {
+	    new_rhs = new(mem_ctx)
+	       ir_dereference_record(ir->rhs->clone(mem_ctx, NULL),
+				     type->fields.structure[i].name);
+	 }
+
+	 ir->insert_before(new(mem_ctx) ir_assignment(new_lhs,
+						      new_rhs,
+						      NULL));
+      }
+      ir->remove();
+   } else {
+      split_rvalue(&ir->rhs);
+      split_deref(&ir->lhs);
+   }
+
    split_rvalue(&ir->condition);
-   split_deref(&ir->lhs);
 
    return visit_continue;
 }
