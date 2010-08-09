@@ -836,12 +836,25 @@ static struct radeon_state *r600_rasterizer(struct r600_context *rctx)
 static struct radeon_state *r600_scissor(struct r600_context *rctx)
 {
 	const struct pipe_scissor_state *state = &rctx->scissor->state.scissor;
+	const struct pipe_framebuffer_state *fb = &rctx->framebuffer->state.framebuffer;
 	struct r600_screen *rscreen = rctx->screen;
 	struct radeon_state *rstate;
+	unsigned minx, maxx, miny, maxy;
 	u32 tl, br;
 
-	tl = S_028240_TL_X(state->minx) | S_028240_TL_Y(state->miny) | S_028240_WINDOW_OFFSET_DISABLE(1);
-	br = S_028244_BR_X(state->maxx) | S_028244_BR_Y(state->maxy);
+	if (state == NULL) {
+		minx = 0;
+		miny = 0;
+		maxx = fb->cbufs[0]->width;
+		maxy = fb->cbufs[0]->height;
+	} else {
+		minx = state->minx;
+		miny = state->miny;
+		maxx = state->maxx;
+		maxy = state->maxy;
+	}
+	tl = S_028240_TL_X(minx) | S_028240_TL_Y(miny) | S_028240_WINDOW_OFFSET_DISABLE(1);
+	br = S_028244_BR_X(maxx) | S_028244_BR_Y(maxy);
 	rstate = radeon_state(rscreen->rw, R600_SCISSOR_TYPE, R600_SCISSOR);
 	if (rstate == NULL)
 		return NULL;
