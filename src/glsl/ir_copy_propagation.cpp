@@ -167,10 +167,11 @@ ir_copy_propagation_visitor::visit_enter(ir_call *ir)
    /* Do copy propagation on call parameters, but skip any out params */
    exec_list_iterator sig_param_iter = ir->get_callee()->parameters.iterator();
    foreach_iter(exec_list_iterator, iter, ir->actual_parameters) {
-      ir_variable *sig_param = (ir_variable *) sig_param_iter.get();
+      ir_variable *sig_param = (ir_variable *)sig_param_iter.get();
       ir_instruction *ir = (ir_instruction *)iter.get();
-      if (sig_param->mode != ir_var_out && sig_param->mode != ir_var_inout && sig_param->mode != ir_var_uniform) {
-         ir->accept (this);
+      if (sig_param->mode != ir_var_out && sig_param->mode != ir_var_inout &&
+	  sig_param->mode != ir_var_uniform) {
+         ir->accept(this);
       }
       sig_param_iter.next();
    }

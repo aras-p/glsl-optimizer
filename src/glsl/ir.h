@@ -1397,4 +1397,7 @@ ir_has_call(ir_instruction *ir);
 extern bool
 ir_has_call_skip_builtins(ir_instruction *ir);
 
+extern void
+do_set_program_inouts(exec_list *instructions, struct gl_program *prog);
+
 #endif /* IR_H */
