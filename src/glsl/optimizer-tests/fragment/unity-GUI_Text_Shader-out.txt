@@ -4,9 +4,7 @@ void main ()
 {
   vec4 col;
   col = _Color;
-  vec4 tmpvar_10;
-  tmpvar_10 = texture2D (_MainTex, gl_TexCoord[0].xy);
-  col.w = float(vec4((col.w * tmpvar_10.w)));
+  col.w = float(vec4((_Color.w * texture2D (_MainTex, gl_TexCoord[0].xy).w)));
   gl_FragData[0] = col.xyzw;
 }
 

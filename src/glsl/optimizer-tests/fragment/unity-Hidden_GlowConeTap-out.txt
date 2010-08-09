@@ -1,31 +1,13 @@
-struct v2f {
-  vec4 pos;
-  vec4 uv[2];
-};
 uniform sampler2D _MainTex;
 uniform vec4 _Color;
 void main ()
 {
-  v2f xlt_i;
-  xlt_i.pos = vec4(0.000000, 0.000000, 0.000000, 0.000000);
-  xlt_i.uv[0] = gl_TexCoord[0].xyzw;
-  xlt_i.uv[1] = gl_TexCoord[1].xyzw;
-  v2f i;
-  i = xlt_i;
+  vec4 tmpvar_21[2];
+  tmpvar_21[0] = gl_TexCoord[0].xyzw;
+  tmpvar_21[1] = gl_TexCoord[1].xyzw;
   vec4 c;
-  vec4 tmpvar_11;
-  tmpvar_11 = texture2D (_MainTex, xlt_i.uv[0].xy);
-  c = tmpvar_11;
-  vec4 tmpvar_13;
-  tmpvar_13 = texture2D (_MainTex, i.uv[0].zw);
-  c = (c + tmpvar_13);
-  vec4 tmpvar_15;
-  tmpvar_15 = texture2D (_MainTex, i.uv[1].xy);
-  c = (c + tmpvar_15);
-  vec4 tmpvar_17;
-  tmpvar_17 = texture2D (_MainTex, i.uv[1].zw);
   vec4 tmpvar_18;
-  tmpvar_18 = (c + tmpvar_17);
+  tmpvar_18 = (((texture2D (_MainTex, tmpvar_21[0].xy) + texture2D (_MainTex, tmpvar_21[0].zw)) + texture2D (_MainTex, tmpvar_21[1].xy)) + texture2D (_MainTex, tmpvar_21[1].zw));
   c = tmpvar_18;
   c.xyz = (tmpvar_18.xyz * _Color.xyz).xyz;
   gl_FragData[0] = (c * _Color.w).xyzw;

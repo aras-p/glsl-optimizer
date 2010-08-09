@@ -18,20 +18,10 @@ void main ()
   xlt_i.uvmain = gl_TexCoord[2].xy;
   v2f i;
   i = xlt_i;
-  vec4 col;
-  vec4 tmpvar_17;
-  tmpvar_17 = texture2D (_BumpMap, xlt_i.uvbump);
   vec4 normal;
-  normal.xy = ((tmpvar_17.wy * 2.000000) - 1.000000).xy;
-  float tmpvar_21;
-  tmpvar_21 = sqrt (((1.000000 - (normal.x * normal.x)) - (normal.y * normal.y)));
-  normal.z = float(vec3(tmpvar_21));
-  i.uvgrab.xy = ((((normal.xy * _BumpAmt) * _GrabTexture_TexelSize.xy) * i.uvgrab.z) + i.uvgrab.xy).xy;
-  vec4 tmpvar_26;
-  tmpvar_26 = texture2DProj (_GrabTexture, i.uvgrab);
-  col = tmpvar_26;
-  vec4 tmpvar_28;
-  tmpvar_28 = texture2D (_MainTex, i.uvmain);
-  gl_FragData[0] = (col * tmpvar_28).xyzw;
+  normal.xy = ((texture2D (_BumpMap, xlt_i.uvbump).wy * 2.000000) - 1.000000).xy;
+  normal.z = float(vec3(sqrt (((1.000000 - (normal.x * normal.x)) - (normal.y * normal.y)))));
+  i.uvgrab.xy = ((((normal.xy * _BumpAmt) * _GrabTexture_TexelSize.xy) * xlt_i.uvgrab.z) + xlt_i.uvgrab.xy).xy;
+  gl_FragData[0] = (texture2DProj (_GrabTexture, i.uvgrab) * texture2D (_MainTex, i.uvmain)).xyzw;
 }
 

@@ -12,7 +12,6 @@ uniform vec4 _LightColor0;
 void main ()
 {
   vec4 c;
-  vec3 lightDir;
   SurfaceOutput o;
   o.Albedo = vec3(0.000000, 0.000000, 0.000000);
   o.Emission = vec3(0.000000, 0.000000, 0.000000);
@@ -24,20 +23,9 @@ void main ()
   o_i0 = o;
   o_i0.Emission = vec3(0.000000, 1.000000, 0.000000);
   o = o_i0;
-  lightDir = gl_TexCoord[1].xyz;
-  vec4 tmpvar_29;
-  tmpvar_29 = texture2D (_LightTexture0, gl_TexCoord[2].xy);
-  SurfaceOutput s;
-  s = o;
-  float atten;
-  atten = tmpvar_29.w;
   vec4 c_i0;
-  float tmpvar_32;
-  tmpvar_32 = dot (o.Normal, lightDir);
-  float tmpvar_33;
-  tmpvar_33 = max (0.000000, tmpvar_32);
-  c_i0.xyz = ((s.Albedo * _LightColor0.xyz) * ((tmpvar_33 * atten) * 2.000000)).xyz;
-  c_i0.w = float(vec4(s.Alpha));
+  c_i0.xyz = ((o_i0.Albedo * _LightColor0.xyz) * ((max (0.000000, dot (o_i0.Normal, gl_TexCoord[1].xyz)) * texture2D (_LightTexture0, gl_TexCoord[2].xy).w) * 2.000000)).xyz;
+  c_i0.w = float(vec4(o_i0.Alpha));
   c = c_i0;
   c.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_FragData[0] = c.xyzw;

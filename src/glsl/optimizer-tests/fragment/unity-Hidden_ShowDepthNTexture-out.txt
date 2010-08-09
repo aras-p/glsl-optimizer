@@ -1,31 +1,13 @@
-struct v2f_img {
-  vec4 pos;
-  vec2 uv;
-};
 uniform sampler2D _MainTex;
 uniform sampler2D _CameraDepthNormalsTexture;
 void main ()
 {
-  v2f_img xlt_i;
-  xlt_i.pos = vec4(0.000000, 0.000000, 0.000000, 0.000000);
-  xlt_i.uv = gl_TexCoord[0].xy;
-  v2f_img i;
-  i = xlt_i;
+  vec2 tmpvar_62;
+  tmpvar_62 = gl_TexCoord[0].xy;
   vec4 col;
-  vec4 tex;
-  vec4 tmpvar_37;
-  tmpvar_37 = texture2D (_MainTex, xlt_i.uv);
-  tex = tmpvar_37;
   vec4 tmpvar_39;
-  tmpvar_39 = texture2D (_CameraDepthNormalsTexture, i.uv);
-  vec4 enc;
-  enc = tmpvar_39;
-  float depth_i0;
-  float tmpvar_44;
-  tmpvar_44 = dot (tmpvar_39.zw, vec2(1.000000, 0.003922));
-  depth_i0 = tmpvar_44;
+  tmpvar_39 = texture2D (_CameraDepthNormalsTexture, tmpvar_62);
   vec3 n_i0;
-  vec3 nn;
   vec3 tmpvar_49;
   tmpvar_49.x = float(vec3(3.555400, 3.555400, 3.555400));
   tmpvar_49.y = float(vec3(3.555400, 3.555400, 3.555400));
@@ -35,18 +17,15 @@ void main ()
   tmpvar_50.y = float(vec3(-1.777700, -1.777700, -1.777700));
   tmpvar_50.z = float(vec3(1.000000, 1.000000, 1.000000));
   vec3 tmpvar_51;
-  tmpvar_51 = ((enc.xyz * tmpvar_49) + tmpvar_50);
-  nn = tmpvar_51;
-  float tmpvar_52;
-  tmpvar_52 = dot (tmpvar_51.xyz, tmpvar_51.xyz);
+  tmpvar_51 = ((tmpvar_39.xyz * tmpvar_49) + tmpvar_50);
   float tmpvar_53;
-  tmpvar_53 = (2.000000 / tmpvar_52);
-  n_i0.xy = (tmpvar_53 * nn.xy).xy;
+  tmpvar_53 = (2.000000 / dot (tmpvar_51.xyz, tmpvar_51.xyz));
+  n_i0.xy = (tmpvar_53 * tmpvar_51.xy).xy;
   n_i0.z = float(vec3((tmpvar_53 - 1.000000)));
-  col.x = depth_i0;
+  col.x = dot (tmpvar_39.zw, vec2(1.000000, 0.003922));
   col.y = float(vec2(((n_i0.x * 0.500000) + 0.500000)));
   col.z = float(vec3(((n_i0.y * 0.500000) + 0.500000)));
-  col.w = float(tex.w);
+  col.w = float(texture2D (_MainTex, tmpvar_62).w);
   gl_FragData[0] = col.xyzw;
 }
 

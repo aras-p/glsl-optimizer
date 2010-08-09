@@ -21,10 +21,8 @@ void main ()
   o.Normal = gl_TexCoord[0].xyz;
   SurfaceOutput o_i0;
   o_i0 = o;
-  vec4 tmpvar_19;
-  tmpvar_19 = texture2D (_MainTex, tmpvar_29);
   vec4 tmpvar_20;
-  tmpvar_20 = (tmpvar_19 * _Color);
+  tmpvar_20 = (texture2D (_MainTex, tmpvar_29) * _Color);
   o_i0.Albedo = tmpvar_20.xyz;
   o_i0.Alpha = tmpvar_20.w;
   o = o_i0;

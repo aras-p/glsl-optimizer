@@ -3,9 +3,7 @@ uniform vec4 _Color;
 void main ()
 {
   vec4 c;
-  vec4 tmpvar_9;
-  tmpvar_9 = texture2D (_RGBSource, gl_TexCoord[0].xy);
-  c = tmpvar_9;
+  c = texture2D (_RGBSource, gl_TexCoord[0].xy);
   c.x = _Color.w;
   gl_FragData[0] = c.xyzw;
 }

@@ -6,10 +6,6 @@ struct SurfaceOutput {
   float Gloss;
   float Alpha;
 };
-struct Input {
-  vec2 uv_MainTex;
-  vec2 uv_Illum;
-};
 uniform float _Shininess;
 uniform sampler2D _MainTex;
 uniform sampler2D _Illum;
@@ -17,7 +13,8 @@ uniform vec4 _Color;
 void main ()
 {
   vec4 res;
-  Input surfIN;
+  vec2 tmpvar_39;
+  vec2 tmpvar_40;
   SurfaceOutput o;
   o.Albedo = vec3(0.000000, 0.000000, 0.000000);
   o.Emission = vec3(0.000000, 0.000000, 0.000000);
@@ -25,24 +22,16 @@ void main ()
   o.Alpha = 0.000000;
   o.Gloss = 0.000000;
   o.Normal = gl_TexCoord[0].xyz;
-  Input IN_i0;
-  IN_i0 = surfIN;
   SurfaceOutput o_i0;
   o_i0 = o;
-  vec4 c;
-  vec4 tex;
   vec4 tmpvar_24;
-  tmpvar_24 = texture2D (_MainTex, surfIN.uv_MainTex);
-  tex = tmpvar_24;
+  tmpvar_24 = texture2D (_MainTex, tmpvar_39);
   vec4 tmpvar_26;
   tmpvar_26 = (tmpvar_24 * _Color);
-  c = tmpvar_26;
   o_i0.Albedo = tmpvar_26.xyz;
-  vec4 tmpvar_28;
-  tmpvar_28 = texture2D (_Illum, IN_i0.uv_Illum);
-  o_i0.Emission = (c.xyz * tmpvar_28.w);
-  o_i0.Gloss = tex.w;
-  o_i0.Alpha = c.w;
+  o_i0.Emission = (tmpvar_26.xyz * texture2D (_Illum, tmpvar_40).w);
+  o_i0.Gloss = tmpvar_24.w;
+  o_i0.Alpha = tmpvar_26.w;
   o_i0.Specular = _Shininess;
   o = o_i0;
   res.xyz = ((o_i0.Normal * vec3(0.500000, 0.500000, -0.500000)) + 0.500000).xyz;

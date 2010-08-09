@@ -1,22 +1,7 @@
-struct v2f {
-  vec4 pos;
-  float fog;
-  vec4 color;
-  vec2 texcoord;
-};
 varying vec4 xlv_FOG;
 uniform sampler2D _MainTex;
 void main ()
 {
-  v2f xlt_i;
-  xlt_i.pos = vec4(0.000000, 0.000000, 0.000000, 0.000000);
-  xlt_i.fog = xlv_FOG.x;
-  xlt_i.color = gl_Color.xyzw;
-  xlt_i.texcoord = gl_TexCoord[0].xy;
-  v2f i;
-  i = xlt_i;
-  vec4 tmpvar_12;
-  tmpvar_12 = texture2D (_MainTex, xlt_i.texcoord);
-  gl_FragData[0] = (tmpvar_12 * i.color).xyzw;
+  gl_FragData[0] = (texture2D (_MainTex, gl_TexCoord[0].xy) * gl_Color.xyzw).xyzw;
 }
 

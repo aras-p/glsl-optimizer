@@ -6,28 +6,15 @@ struct SurfaceOutput {
   float Gloss;
   float Alpha;
 };
-struct v2f_surf {
-  vec4 pos;
-  float fog;
-  vec4 hip_screen;
-  vec3 hip_lmapFade;
-};
 varying vec4 xlv_FOG;
 uniform sampler2D unity_LightmapInd;
 uniform sampler2D unity_Lightmap;
 uniform sampler2D _LightBuffer;
 void main ()
 {
-  v2f_surf xlt_IN;
-  xlt_IN.pos = vec4(0.000000, 0.000000, 0.000000, 0.000000);
-  xlt_IN.fog = xlv_FOG.x;
-  xlt_IN.hip_screen = gl_TexCoord[0].xyzw;
-  xlt_IN.hip_lmapFade = gl_TexCoord[1].xyz;
-  v2f_surf IN;
-  IN = xlt_IN;
+  vec3 tmpvar_54;
+  tmpvar_54 = gl_TexCoord[1].xyz;
   vec4 col;
-  vec3 lmIndirect;
-  vec3 lmFull;
   vec4 light;
   SurfaceOutput o;
   o.Albedo = vec3(0.000000, 0.000000, 0.000000);
@@ -39,28 +26,15 @@ void main ()
   o_i0 = o;
   o_i0.Emission = vec3(1.000000, 0.000000, 0.000000);
   o = o_i0;
-  vec4 tmpvar_26;
-  tmpvar_26 = texture2DProj (_LightBuffer, xlt_IN.hip_screen);
-  light = tmpvar_26;
-  vec4 tmpvar_28;
-  tmpvar_28 = log2 (tmpvar_26);
-  light = -(tmpvar_28);
-  vec4 tmpvar_30;
-  tmpvar_30 = texture2D (unity_Lightmap, IN.hip_lmapFade.xy);
-  lmFull = (2.000000 * tmpvar_30.xyz);
-  vec4 tmpvar_34;
-  tmpvar_34 = texture2D (unity_LightmapInd, IN.hip_lmapFade.xy);
-  lmIndirect = (2.000000 * tmpvar_34.xyz);
-  float tmpvar_40;
-  tmpvar_40 = clamp (IN.hip_lmapFade.z, 0.000000, 1.000000);
-  vec3 tmpvar_42;
-  tmpvar_42 = mix (lmIndirect, lmFull, vec3(tmpvar_40));
-  light.xyz = (light.xyz + tmpvar_42).xyz;
+  vec4 tmpvar_29;
+  tmpvar_29 = -(log2 (texture2DProj (_LightBuffer, gl_TexCoord[0].xyzw)));
+  light = tmpvar_29;
+  light.xyz = (tmpvar_29.xyz + mix ((2.000000 * texture2D (unity_LightmapInd, tmpvar_54.xy).xyz), (2.000000 * texture2D (unity_Lightmap, tmpvar_54.xy).xyz), vec3(clamp (tmpvar_54.z, 0.000000, 1.000000)))).xyz;
   vec4 c;
-  c.xyz = (o.Albedo * light.xyz).xyz;
-  c.w = float(vec4(o.Alpha));
+  c.xyz = (o_i0.Albedo * light.xyz).xyz;
+  c.w = float(vec4(o_i0.Alpha));
   col = c;
-  col.xyz = (c.xyz + o.Emission).xyz;
+  col.xyz = (c.xyz + o_i0.Emission).xyz;
   gl_FragData[0] = col.xyzw;
 }
 

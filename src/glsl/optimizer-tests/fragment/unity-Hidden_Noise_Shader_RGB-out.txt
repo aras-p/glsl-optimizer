@@ -1,32 +1,15 @@
-struct v2f {
-  vec4 pos;
-  vec2 uv;
-  vec2 uvg;
-  vec2 uvs;
-};
 uniform sampler2D _ScratchTex;
 uniform sampler2D _MainTex;
 uniform vec4 _Intensity;
 uniform sampler2D _GrainTex;
 void main ()
 {
-  v2f xlt_i;
-  xlt_i.pos = vec4(0.000000, 0.000000, 0.000000, 0.000000);
-  xlt_i.uv = gl_TexCoord[0].xy;
-  xlt_i.uvg = gl_TexCoord[1].xy;
-  xlt_i.uvs = gl_TexCoord[2].xy;
-  v2f i;
-  i = xlt_i;
   vec4 col;
   vec4 tmpvar_13;
-  tmpvar_13 = texture2D (_MainTex, xlt_i.uv);
+  tmpvar_13 = texture2D (_MainTex, gl_TexCoord[0].xy);
   col = tmpvar_13;
-  vec4 tmpvar_15;
-  tmpvar_15 = texture2D (_GrainTex, i.uvg);
-  col.xyz = (col.xyz + (((tmpvar_15.xyz * 2.000000) - 1.000000) * _Intensity.x)).xyz;
-  vec4 tmpvar_18;
-  tmpvar_18 = texture2D (_ScratchTex, i.uvs);
-  col.xyz = (col.xyz + (((tmpvar_18.xyz * 2.000000) - 1.000000) * _Intensity.y)).xyz;
+  col.xyz = (tmpvar_13.xyz + (((texture2D (_GrainTex, gl_TexCoord[1].xy).xyz * 2.000000) - 1.000000) * _Intensity.x)).xyz;
+  col.xyz = (col.xyz + (((texture2D (_ScratchTex, gl_TexCoord[2].xy).xyz * 2.000000) - 1.000000) * _Intensity.y)).xyz;
   gl_FragData[0] = col.xyzw;
 }
 

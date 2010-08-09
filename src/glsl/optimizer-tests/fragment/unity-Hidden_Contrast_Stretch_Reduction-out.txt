@@ -1,50 +1,23 @@
-struct v2f {
-  vec4 position;
-  vec2 uv[4];
-};
 uniform sampler2D _MainTex;
 void main ()
 {
-  v2f xlt_i;
-  xlt_i.position = vec4(0.000000, 0.000000, 0.000000, 0.000000);
-  xlt_i.uv[0] = gl_TexCoord[0].xy;
-  xlt_i.uv[1] = gl_TexCoord[1].xy;
-  xlt_i.uv[2] = gl_TexCoord[2].xy;
-  xlt_i.uv[3] = gl_TexCoord[3].xy;
-  v2f i;
-  i = xlt_i;
+  vec2 tmpvar_33[4];
+  tmpvar_33[0] = gl_TexCoord[0].xy;
+  tmpvar_33[1] = gl_TexCoord[1].xy;
+  tmpvar_33[2] = gl_TexCoord[2].xy;
+  tmpvar_33[3] = gl_TexCoord[3].xy;
   vec4 res;
-  vec2 v11;
-  vec2 v10;
-  vec2 v01;
-  vec4 v00;
   vec4 tmpvar_15;
-  tmpvar_15 = texture2D (_MainTex, xlt_i.uv[0]);
-  v00 = tmpvar_15;
-  vec4 tmpvar_17;
-  tmpvar_17 = texture2D (_MainTex, i.uv[1]);
-  v01 = tmpvar_17.xy;
-  vec4 tmpvar_19;
-  tmpvar_19 = texture2D (_MainTex, i.uv[2]);
-  v10 = tmpvar_19.xy;
-  vec4 tmpvar_21;
-  tmpvar_21 = texture2D (_MainTex, i.uv[3]);
-  v11 = tmpvar_21.xy;
-  float tmpvar_23;
-  tmpvar_23 = max (v00.x, v01.x);
-  float tmpvar_24;
-  tmpvar_24 = max (v10.x, v11.x);
-  float tmpvar_25;
-  tmpvar_25 = max (tmpvar_23, tmpvar_24);
-  res.x = tmpvar_25;
-  float tmpvar_27;
-  tmpvar_27 = min (v00.y, v01.y);
-  float tmpvar_28;
-  tmpvar_28 = min (v10.y, v11.y);
-  float tmpvar_29;
-  tmpvar_29 = min (tmpvar_27, tmpvar_28);
-  res.y = float(vec2(tmpvar_29));
-  res.zw = vec2(v00.zw);
+  tmpvar_15 = texture2D (_MainTex, tmpvar_33[0]);
+  vec2 tmpvar_18;
+  tmpvar_18 = texture2D (_MainTex, tmpvar_33[1]).xy;
+  vec2 tmpvar_20;
+  tmpvar_20 = texture2D (_MainTex, tmpvar_33[2]).xy;
+  vec2 tmpvar_22;
+  tmpvar_22 = texture2D (_MainTex, tmpvar_33[3]).xy;
+  res.x = max (max (tmpvar_15.x, tmpvar_18.x), max (tmpvar_20.x, tmpvar_22.x));
+  res.y = float(vec2(min (min (tmpvar_15.y, tmpvar_18.y), min (tmpvar_20.y, tmpvar_22.y))));
+  res.zw = vec2(tmpvar_15.zw);
   gl_FragData[0] = res.xyzw;
 }
 

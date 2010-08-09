@@ -1,8 +1,3 @@
-struct v2f {
-  vec4 pos;
-  vec2 uv0;
-  vec2 uv1;
-};
 varying vec4 xlv_TEXCOORD1;
 varying vec4 xlv_TEXCOORD0;
 uniform sampler2D _MainTex;
@@ -10,20 +5,6 @@ uniform sampler2D _Detail;
 uniform vec4 _Color;
 void main ()
 {
-  v2f xlt_i;
-  xlt_i.uv0 = xlv_TEXCOORD0.xy;
-  xlt_i.uv1 = xlv_TEXCOORD1.xy;
-  v2f i;
-  i = xlt_i;
-  vec4 c;
-  vec4 tmpvar_10;
-  tmpvar_10 = texture2D (_MainTex, xlt_i.uv0);
-  c = (_Color * tmpvar_10);
-  vec4 tmpvar_12;
-  tmpvar_12 = texture2D (_Detail, i.uv1);
-  vec4 tmpvar_13;
-  tmpvar_13 = ((c * tmpvar_12) * 2.000000);
-  c = tmpvar_13;
-  gl_FragData[0] = tmpvar_13.xyzw;
+  gl_FragData[0] = (((_Color * texture2D (_MainTex, xlv_TEXCOORD0.xy)) * texture2D (_Detail, xlv_TEXCOORD1.xy)) * 2.000000).xyzw;
 }
 

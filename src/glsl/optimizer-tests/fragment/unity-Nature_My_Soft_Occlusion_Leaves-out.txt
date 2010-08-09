@@ -1,8 +1,6 @@
 uniform sampler2D _MainTex;
 void main ()
 {
-  vec4 tmpvar_11;
-  tmpvar_11 = texture2D (_MainTex, gl_TexCoord[0].xy);
-  gl_FragData[0] = (tmpvar_11 * vec4(1.000000, 0.000000, 0.000000, 1.000000)).xyzw;
+  gl_FragData[0] = (texture2D (_MainTex, gl_TexCoord[0].xy) * vec4(1.000000, 0.000000, 0.000000, 1.000000)).xyzw;
 }
 

@@ -20,13 +20,8 @@ void main ()
   };
   float tmpvar_8;
   tmpvar_8 = (a + 1.000000);
-  float tmpvar_11;
-  tmpvar_11 = (-((tmpvar_8 * tmpvar_8)) - 1.000000);
-  a = tmpvar_11;
-  float tmpvar_12;
-  tmpvar_12 = sqrt (tmpvar_11);
   float tmpvar_14;
-  tmpvar_14 = 1.0/(tmpvar_12);
+  tmpvar_14 = 1.0/(sqrt ((-((tmpvar_8 * tmpvar_8)) - 1.000000)));
   a = tmpvar_14;
   gl_FragColor = vec4(tmpvar_14);
 }

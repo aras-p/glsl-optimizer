@@ -3,9 +3,7 @@ uniform vec4 _Color;
 void main ()
 {
   vec4 col;
-  vec4 tmpvar_9;
-  tmpvar_9 = texture2D (_MainTex, gl_TexCoord[0].xy);
-  col.xyz = (tmpvar_9.xyz * _Color.xyz).xyz;
+  col.xyz = (texture2D (_MainTex, gl_TexCoord[0].xy).xyz * _Color.xyz).xyz;
   col.w = float(_Color.w);
   gl_FragData[0] = col.xyzw;
 }

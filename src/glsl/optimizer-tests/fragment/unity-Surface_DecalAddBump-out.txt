@@ -6,26 +6,11 @@ struct SurfaceOutput {
   float Gloss;
   float Alpha;
 };
-struct v2f_surf {
-  vec4 pos;
-  float fog;
-  vec2 hip_pack0;
-  vec3 normal;
-  vec3 lightDir;
-};
 varying vec4 xlv_FOG;
 uniform sampler2D _MainTex;
 uniform vec4 _LightColor0;
 void main ()
 {
-  v2f_surf xlt_IN;
-  xlt_IN.pos = vec4(0.000000, 0.000000, 0.000000, 0.000000);
-  xlt_IN.fog = xlv_FOG.x;
-  xlt_IN.hip_pack0 = gl_TexCoord[0].xy;
-  xlt_IN.normal = gl_TexCoord[1].xyz;
-  xlt_IN.lightDir = gl_TexCoord[2].xyz;
-  v2f_surf IN;
-  IN = xlt_IN;
   vec4 c;
   SurfaceOutput o;
   o.Albedo = vec3(0.000000, 0.000000, 0.000000);
@@ -33,22 +18,14 @@ void main ()
   o.Specular = 0.000000;
   o.Alpha = 0.000000;
   o.Gloss = 0.000000;
-  o.Normal = xlt_IN.normal;
+  o.Normal = gl_TexCoord[1].xyz;
   SurfaceOutput o_i0;
   o_i0 = o;
-  vec4 tmpvar_29;
-  tmpvar_29 = texture2D (_MainTex, xlt_IN.hip_pack0.xy);
-  o_i0.Albedo = (tmpvar_29.xyz * 0.500000);
+  o_i0.Albedo = (texture2D (_MainTex, gl_TexCoord[0].xy).xyz * 0.500000);
   o = o_i0;
-  SurfaceOutput s;
-  s = o_i0;
   vec4 c_i0;
-  float tmpvar_34;
-  tmpvar_34 = dot (o_i0.Normal, IN.lightDir);
-  float tmpvar_35;
-  tmpvar_35 = max (0.000000, tmpvar_34);
-  c_i0.xyz = ((s.Albedo * _LightColor0.xyz) * (tmpvar_35 * 2.000000)).xyz;
-  c_i0.w = float(vec4(s.Alpha));
+  c_i0.xyz = ((o_i0.Albedo * _LightColor0.xyz) * (max (0.000000, dot (o_i0.Normal, gl_TexCoord[2].xyz)) * 2.000000)).xyz;
+  c_i0.w = float(vec4(o_i0.Alpha));
   c = c_i0;
   c.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_FragData[0] = c.xyzw;

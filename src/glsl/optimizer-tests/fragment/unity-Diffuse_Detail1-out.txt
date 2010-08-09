@@ -6,17 +6,14 @@ struct SurfaceOutput {
   float Gloss;
   float Alpha;
 };
-struct Input {
-  vec2 uv_MainTex;
-  vec2 uv_Detail;
-};
 uniform sampler2D _MainTex;
 uniform sampler2D _Detail;
 uniform vec4 _Color;
 void main ()
 {
   vec4 res;
-  Input surfIN;
+  vec2 tmpvar_33;
+  vec2 tmpvar_34;
   SurfaceOutput o;
   o.Albedo = vec3(0.000000, 0.000000, 0.000000);
   o.Emission = vec3(0.000000, 0.000000, 0.000000);
@@ -24,17 +21,13 @@ void main ()
   o.Alpha = 0.000000;
   o.Gloss = 0.000000;
   o.Normal = gl_TexCoord[0].xyz;
-  Input IN_i0;
-  IN_i0 = surfIN;
   SurfaceOutput o_i0;
   o_i0 = o;
   vec4 c;
-  vec4 tmpvar_21;
-  tmpvar_21 = texture2D (_MainTex, surfIN.uv_MainTex);
-  c = (tmpvar_21 * _Color);
-  vec4 tmpvar_23;
-  tmpvar_23 = texture2D (_Detail, IN_i0.uv_Detail);
-  c.xyz = (c.xyz * (tmpvar_23.xyz * 2.000000)).xyz;
+  vec4 tmpvar_22;
+  tmpvar_22 = (texture2D (_MainTex, tmpvar_33) * _Color);
+  c = tmpvar_22;
+  c.xyz = (tmpvar_22.xyz * (texture2D (_Detail, tmpvar_34).xyz * 2.000000)).xyz;
   o_i0.Albedo = c.xyz;
   o_i0.Alpha = c.w;
   o = o_i0;

@@ -6,16 +6,6 @@ struct SurfaceOutput {
   float Gloss;
   float Alpha;
 };
-struct Input {
-  vec2 uv_MainTex;
-  vec2 uv2_LightMap;
-};
-struct v2f_surf {
-  vec4 pos;
-  float fog;
-  vec4 hip_pack0;
-  vec4 hip_screen;
-};
 varying vec4 xlv_FOG;
 uniform vec4 unity_Ambient;
 uniform sampler2D _MainTex;
@@ -24,50 +14,33 @@ uniform sampler2D _LightBuffer;
 uniform vec4 _Color;
 void main ()
 {
-  v2f_surf xlt_IN;
-  xlt_IN.pos = vec4(0.000000, 0.000000, 0.000000, 0.000000);
-  xlt_IN.fog = xlv_FOG.x;
-  xlt_IN.hip_pack0 = gl_TexCoord[0].xyzw;
-  xlt_IN.hip_screen = gl_TexCoord[1].xyzw;
-  v2f_surf IN;
-  IN = xlt_IN;
+  vec4 tmpvar_49;
+  tmpvar_49 = gl_TexCoord[0].xyzw;
   vec4 col;
   vec4 light;
   SurfaceOutput o;
-  Input surfIN;
-  surfIN.uv_MainTex = xlt_IN.hip_pack0.xy;
-  surfIN.uv2_LightMap = xlt_IN.hip_pack0.zw;
   o.Albedo = vec3(0.000000, 0.000000, 0.000000);
   o.Emission = vec3(0.000000, 0.000000, 0.000000);
   o.Specular = 0.000000;
   o.Alpha = 0.000000;
   o.Gloss = 0.000000;
-  Input IN_i0;
-  IN_i0 = surfIN;
   SurfaceOutput o_i0;
   o_i0 = o;
-  vec4 tmpvar_29;
-  tmpvar_29 = texture2D (_MainTex, surfIN.uv_MainTex);
-  o_i0.Albedo = (tmpvar_29.xyz * _Color.xyz);
+  o_i0.Albedo = (texture2D (_MainTex, tmpvar_49.xy).xyz * _Color.xyz);
   vec4 tmpvar_32;
-  tmpvar_32 = texture2D (_LightMap, IN_i0.uv2_LightMap);
+  tmpvar_32 = texture2D (_LightMap, tmpvar_49.zw);
   o_i0.Emission = (tmpvar_32.xyz * o_i0.Albedo.xyz);
   o_i0.Alpha = (tmpvar_32.w * _Color.w);
   o = o_i0;
-  vec4 tmpvar_36;
-  tmpvar_36 = texture2DProj (_LightBuffer, IN.hip_screen);
-  light = tmpvar_36;
-  vec4 tmpvar_38;
-  tmpvar_38 = log2 (tmpvar_36);
   vec4 tmpvar_39;
-  tmpvar_39 = -(tmpvar_38);
+  tmpvar_39 = -(log2 (texture2DProj (_LightBuffer, gl_TexCoord[1].xyzw)));
   light = tmpvar_39;
   light.xyz = (tmpvar_39.xyz + unity_Ambient.xyz).xyz;
   vec4 c;
-  c.xyz = (o.Albedo * light.xyz).xyz;
-  c.w = float(vec4(o.Alpha));
+  c.xyz = (o_i0.Albedo * light.xyz).xyz;
+  c.w = float(vec4(o_i0.Alpha));
   col = c;
-  col.xyz = (c.xyz + o.Emission).xyz;
+  col.xyz = (c.xyz + o_i0.Emission).xyz;
   gl_FragData[0] = col.xyzw;
 }
 

@@ -1,8 +1,6 @@
 uniform sampler2D _GrabTexture;
 void main ()
 {
-  vec4 tmpvar_9;
-  tmpvar_9 = texture2DProj (_GrabTexture, gl_TexCoord[0].xyzw);
-  gl_FragData[0] = (1.000000 - tmpvar_9).xyzw;
+  gl_FragData[0] = (1.000000 - texture2DProj (_GrabTexture, gl_TexCoord[0].xyzw)).xyzw;
 }
 

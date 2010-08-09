@@ -7,13 +7,13 @@ uniform vec4 _Decal_ST;
 uniform vec4 _DecalBump_ST;
 void main ()
 {
-  vec4 tmpvar_89;
-  tmpvar_89 = gl_MultiTexCoord0.xyzw;
-  vec4 tmpvar_80;
+  vec4 tmpvar_65;
+  tmpvar_65 = gl_MultiTexCoord0.xyzw;
+  vec4 tmpvar_92;
   vec4 tmpvar_34;
   tmpvar_34 = (gl_ModelViewProjectionMatrix * gl_Vertex.xyzw);
-  tmpvar_80.xy = ((tmpvar_89.xy * _Decal_ST.xy) + _Decal_ST.zw).xy;
-  tmpvar_80.zw = vec2(((tmpvar_89.xy * _DecalBump_ST.xy) + _DecalBump_ST.zw).xy);
+  tmpvar_92.xy = ((tmpvar_65.xy * _Decal_ST.xy) + _Decal_ST.zw).xy;
+  tmpvar_92.zw = vec2(((tmpvar_65.xy * _DecalBump_ST.xy) + _DecalBump_ST.zw).xy);
   gl_Position = tmpvar_34.xyzw;
   vec4 tmpvar_17;
   tmpvar_17.x = float(tmpvar_34.z);
@@ -21,7 +21,7 @@ void main ()
   tmpvar_17.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_17.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   xlv_FOG = tmpvar_17;
-  gl_TexCoord[0] = tmpvar_80.xyzw;
+  gl_TexCoord[0] = tmpvar_92.xyzw;
   vec4 tmpvar_21;
   tmpvar_21.xy = vec2(((gl_MultiTexCoord1.xy * unity_LightmapST.xy) + unity_LightmapST.zw).xy);
   tmpvar_21.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));

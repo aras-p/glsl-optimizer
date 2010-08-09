@@ -1,26 +1,13 @@
-struct v2f_img {
-  vec4 pos;
-  vec2 uv;
-};
 uniform vec4 _ZBufferParams;
 uniform sampler2D _MainTex;
 uniform sampler2D _CameraDepthTexture;
 void main ()
 {
-  v2f_img xlt_i;
-  xlt_i.pos = vec4(0.000000, 0.000000, 0.000000, 0.000000);
-  xlt_i.uv = gl_TexCoord[0].xy;
-  v2f_img i;
-  i = xlt_i;
+  vec2 tmpvar_21;
+  tmpvar_21 = gl_TexCoord[0].xy;
   vec4 col;
-  vec4 tex;
-  vec4 tmpvar_10;
-  tmpvar_10 = texture2D (_MainTex, xlt_i.uv);
-  tex = tmpvar_10;
-  vec4 tmpvar_12;
-  tmpvar_12 = texture2D (_CameraDepthTexture, i.uv);
-  col = tex;
-  col.xy = vec2((1.0/(((_ZBufferParams.z * tmpvar_12.x) + _ZBufferParams.w)) * 0.010000));
+  col = texture2D (_MainTex, tmpvar_21);
+  col.xy = vec2((1.0/(((_ZBufferParams.z * texture2D (_CameraDepthTexture, tmpvar_21).x) + _ZBufferParams.w)) * 0.010000));
   gl_FragData[0] = col.xyzw;
 }
 

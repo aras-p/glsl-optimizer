@@ -1,8 +1,3 @@
-struct v2f {
-  vec4 pos;
-  vec2 uv;
-  vec3 ray;
-};
 uniform vec4 _ZBufferParams;
 uniform mat4 _View2Shadow3;
 uniform mat4 _View2Shadow2;
@@ -15,51 +10,25 @@ uniform vec4 _LightShadowData;
 uniform sampler2D _CameraDepthTexture;
 void main ()
 {
-  v2f xlt_i;
-  xlt_i.pos = vec4(0.000000, 0.000000, 0.000000, 0.000000);
-  xlt_i.uv = gl_TexCoord[0].xy;
-  xlt_i.ray = gl_TexCoord[1].xyz;
-  v2f i;
-  i = xlt_i;
   vec4 res;
   float depth;
-  vec4 tmpvar_39;
-  tmpvar_39 = texture2D (_CameraDepthTexture, xlt_i.uv);
   float __retval_i0;
-  __retval_i0 = 1.0/(((_ZBufferParams.x * tmpvar_39.x) + _ZBufferParams.y));
+  __retval_i0 = 1.0/(((_ZBufferParams.x * texture2D (_CameraDepthTexture, gl_TexCoord[0].xy).x) + _ZBufferParams.y));
   depth = __retval_i0;
   vec4 tmpvar_44;
-  tmpvar_44.xyz = vec3((i.ray * __retval_i0).xyz);
+  tmpvar_44.xyz = vec3((gl_TexCoord[1].xyz * __retval_i0).xyz);
   tmpvar_44.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
-  vec4 coord;
-  vec4 near;
-  float z_i0;
-  vec3 sc3;
-  vec3 sc2;
-  vec3 sc1;
-  vec3 sc0;
-  sc0 = (_View2Shadow * tmpvar_44).xyz;
-  sc1 = (_View2Shadow1 * tmpvar_44).xyz;
-  sc2 = (_View2Shadow2 * tmpvar_44).xyz;
-  sc3 = (_View2Shadow3 * tmpvar_44).xyz;
   float tmpvar_52;
   tmpvar_52 = tmpvar_44.z;
-  z_i0 = tmpvar_52;
-  bvec4 tmpvar_54;
-  tmpvar_54 = greaterThanEqual (vec4(tmpvar_52), _LightSplitsNear);
-  near = vec4(tmpvar_54).xyzw;
-  bvec4 tmpvar_58;
-  tmpvar_58 = lessThan (vec4(z_i0), _LightSplitsFar);
   vec4 tmpvar_61;
-  tmpvar_61 = (near * vec4(tmpvar_58).xyzw);
+  tmpvar_61 = (vec4(greaterThanEqual (vec4(tmpvar_52), _LightSplitsNear)).xyzw * vec4(lessThan (vec4(tmpvar_52), _LightSplitsFar)).xyzw);
   vec4 tmpvar_62;
-  tmpvar_62.xyz = vec3(((((sc0 * tmpvar_61.x) + (sc1 * tmpvar_61.y)) + (sc2 * tmpvar_61.z)) + (sc3 * tmpvar_61.w)).xyz);
+  tmpvar_62.xyz = vec3((((((_View2Shadow * tmpvar_44).xyz * tmpvar_61.x) + ((_View2Shadow1 * tmpvar_44).xyz * tmpvar_61.y)) + ((_View2Shadow2 * tmpvar_44).xyz * tmpvar_61.z)) + ((_View2Shadow3 * tmpvar_44).xyz * tmpvar_61.w)).xyz);
   tmpvar_62.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
-  coord = tmpvar_62;
   vec4 tmpvar_64;
   tmpvar_64 = texture2D (_ShadowMapTexture, tmpvar_62.xy);
   float tmpvar_65;
-  if ((tmpvar_64.x < coord.z)) {
+  if ((tmpvar_64.x < tmpvar_62.z)) {
     tmpvar_65 = _LightShadowData.x;
   } else {
     tmpvar_65 = 1.000000;
@@ -67,11 +36,8 @@ void main ()
   res.x = tmpvar_65;
   res.y = float(vec2(1.000000, 1.000000));
   vec2 enc;
-  vec2 tmpvar_74;
-  tmpvar_74 = (vec2(1.000000, 255.000000) * (1.000000 - depth));
-  enc = tmpvar_74;
   vec2 tmpvar_75;
-  tmpvar_75 = fract (tmpvar_74);
+  tmpvar_75 = fract ((vec2(1.000000, 255.000000) * (1.000000 - depth)));
   enc = tmpvar_75;
   enc.x = (tmpvar_75.x - (tmpvar_75.y * 0.003922));
   res.zw = vec2(enc.xy);

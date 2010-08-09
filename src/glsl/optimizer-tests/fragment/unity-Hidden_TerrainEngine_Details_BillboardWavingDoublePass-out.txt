@@ -6,10 +6,6 @@ struct SurfaceOutput {
   float Gloss;
   float Alpha;
 };
-struct Input {
-  vec2 uv_MainTex;
-  vec4 color;
-};
 struct v2f_surf {
   vec4 pos;
   float fog;
@@ -36,23 +32,16 @@ void main ()
   IN = xlt_IN;
   vec4 c;
   SurfaceOutput o;
-  Input surfIN;
-  surfIN.uv_MainTex = xlt_IN.hip_pack0.xy;
-  surfIN.color = xlt_IN.lop_color;
   o.Albedo = vec3(0.000000, 0.000000, 0.000000);
   o.Emission = vec3(0.000000, 0.000000, 0.000000);
   o.Specular = 0.000000;
   o.Alpha = 0.000000;
   o.Gloss = 0.000000;
   o.Normal = xlt_IN.normal;
-  Input IN_i0;
-  IN_i0 = surfIN;
   SurfaceOutput o_i0;
   o_i0 = o;
-  vec4 tmpvar_35;
-  tmpvar_35 = texture2D (_MainTex, surfIN.uv_MainTex);
   vec4 tmpvar_36;
-  tmpvar_36 = (tmpvar_35 * IN_i0.color);
+  tmpvar_36 = (texture2D (_MainTex, xlt_IN.hip_pack0.xy) * xlt_IN.lop_color);
   o_i0.Albedo = tmpvar_36.xyz;
   o_i0.Alpha = tmpvar_36.w;
   o = o_i0;
@@ -61,15 +50,9 @@ void main ()
   if ((x < 0.000000)) {
     discard;
   };
-  SurfaceOutput s;
-  s = o;
   vec4 c_i0_i1;
-  float tmpvar_41;
-  tmpvar_41 = dot (o.Normal, _WorldSpaceLightPos0.xyz);
-  float tmpvar_42;
-  tmpvar_42 = max (0.000000, tmpvar_41);
-  c_i0_i1.xyz = ((s.Albedo * _LightColor0.xyz) * (tmpvar_42 * 2.000000)).xyz;
-  c_i0_i1.w = float(vec4(s.Alpha));
+  c_i0_i1.xyz = ((o.Albedo * _LightColor0.xyz) * (max (0.000000, dot (o.Normal, _WorldSpaceLightPos0.xyz)) * 2.000000)).xyz;
+  c_i0_i1.w = float(vec4(o.Alpha));
   c = c_i0_i1;
   c.xyz = (c_i0_i1.xyz + (o.Albedo * IN.vlight)).xyz;
   c.w = float(vec4(o.Alpha));

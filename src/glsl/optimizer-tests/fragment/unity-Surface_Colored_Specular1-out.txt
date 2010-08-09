@@ -6,32 +6,23 @@ struct MySurfaceOutput {
   vec3 GlossColor;
   float Alpha;
 };
-struct Input {
-  vec2 uv_MainTex;
-  vec2 uv_SpecMap;
-};
 uniform sampler2D _SpecMap;
 uniform sampler2D _MainTex;
 void main ()
 {
   vec4 res;
-  Input surfIN;
+  vec2 tmpvar_32;
+  vec2 tmpvar_33;
   MySurfaceOutput o;
   o.Albedo = vec3(0.000000, 0.000000, 0.000000);
   o.Emission = vec3(0.000000, 0.000000, 0.000000);
   o.Specular = 0.000000;
   o.Alpha = 0.000000;
   o.Normal = gl_TexCoord[0].xyz;
-  Input IN_i0;
-  IN_i0 = surfIN;
   MySurfaceOutput o_i0;
   o_i0 = o;
-  vec4 tmpvar_20;
-  tmpvar_20 = texture2D (_MainTex, surfIN.uv_MainTex);
-  o_i0.Albedo = (tmpvar_20.xyz * 0.300000);
-  vec4 tmpvar_22;
-  tmpvar_22 = texture2D (_SpecMap, IN_i0.uv_SpecMap);
-  o_i0.GlossColor = tmpvar_22.xyz;
+  o_i0.Albedo = (texture2D (_MainTex, tmpvar_32).xyz * 0.300000);
+  o_i0.GlossColor = texture2D (_SpecMap, tmpvar_33).xyz;
   o_i0.Specular = 0.250000;
   o = o_i0;
   res.xyz = ((o_i0.Normal * vec3(0.500000, 0.500000, -0.500000)) + 0.500000).xyz;

@@ -1,35 +1,23 @@
-struct appdata_t {
-  vec4 vertex;
-  vec4 color;
-  vec3 normal;
-};
 uniform vec4 unity_Scale;
 uniform vec3 _WorldSpaceCameraPos;
 uniform mat4 _World2Object;
 void main ()
 {
-  appdata_t xlt_v;
-  xlt_v.vertex = gl_Vertex.xyzw;
-  xlt_v.color = gl_Color.xyzw;
-  xlt_v.normal = gl_Normal.xyz;
-  appdata_t v;
-  v = xlt_v;
-  vec4 tmpvar_44;
-  tmpvar_44 = (gl_ModelViewProjectionMatrix * xlt_v.vertex);
+  vec4 tmpvar_32;
+  tmpvar_32 = gl_Vertex.xyzw;
+  vec3 tmpvar_52;
   vec4 tmpvar_22;
   tmpvar_22.xyz = vec3(_WorldSpaceCameraPos.xyz);
   tmpvar_22.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
-  vec3 tmpvar_24;
-  tmpvar_24 = normalize ((((_World2Object * tmpvar_22).xyz * unity_Scale.w) - xlt_v.vertex.xyz));
-  vec3 tmpvar_26;
-  tmpvar_26 = reflect (-(tmpvar_24), v.normal);
+  tmpvar_52 = reflect (-(normalize ((((_World2Object * tmpvar_22).xyz * unity_Scale.w) - tmpvar_32.xyz))), gl_Normal.xyz);
   vec4 tmpvar_28;
-  tmpvar_28.xyz = vec3(tmpvar_26.xyz);
+  tmpvar_28.xyz = vec3(tmpvar_52.xyz);
   tmpvar_28.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
-  gl_Position = tmpvar_44.xyzw;
-  gl_FrontColor = v.color.xyzw;
+  tmpvar_52 = (gl_ModelViewMatrix * tmpvar_28).xyz;
+  gl_Position = (gl_ModelViewProjectionMatrix * tmpvar_32).xyzw;
+  gl_FrontColor = gl_Color.xyzw;
   vec4 tmpvar_13;
-  tmpvar_13.xyz = vec3((gl_ModelViewMatrix * tmpvar_28).xyz);
+  tmpvar_13.xyz = vec3(tmpvar_52.xyz);
   tmpvar_13.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[0] = tmpvar_13;
 }

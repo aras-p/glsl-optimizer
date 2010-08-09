@@ -31,10 +31,8 @@ void main ()
   o.Gloss = 0.000000;
   SurfaceOutput o_i0;
   o_i0 = o;
-  vec4 tmpvar_28;
-  tmpvar_28 = texture2D (_MainTex, xlt_IN.hip_pack0.xy);
   vec4 tmpvar_29;
-  tmpvar_29 = (tmpvar_28 * _Color);
+  tmpvar_29 = (texture2D (_MainTex, xlt_IN.hip_pack0.xy) * _Color);
   o_i0.Albedo = tmpvar_29.xyz;
   o_i0.Alpha = tmpvar_29.w;
   o = o_i0;
@@ -43,10 +41,8 @@ void main ()
   if ((x < 0.000000)) {
     discard;
   };
-  float tmpvar_32;
-  tmpvar_32 = length (IN.vec);
   vec4 tmpvar_38;
-  tmpvar_38 = fract ((vec4(1.000000, 255.000000, 65025.000000, 160580992.000000) * (tmpvar_32 * _LightPositionRange.w)));
+  tmpvar_38 = fract ((vec4(1.000000, 255.000000, 65025.000000, 160580992.000000) * (length (IN.vec) * _LightPositionRange.w)));
   gl_FragData[0] = (tmpvar_38 - (tmpvar_38.yzww * 0.003922)).xyzw;
 }
 

@@ -1,28 +1,13 @@
-struct v2f {
-  vec4 pos;
-  vec2 texcoord;
-  vec3 cubenormal;
-};
 uniform samplerCube _ToonShade;
 uniform sampler2D _MainTex;
 uniform vec4 _Color;
 void main ()
 {
-  v2f xlt_i;
-  xlt_i.pos = vec4(0.000000, 0.000000, 0.000000, 0.000000);
-  xlt_i.texcoord = gl_TexCoord[0].xy;
-  xlt_i.cubenormal = gl_TexCoord[1].xyz;
-  v2f i;
-  i = xlt_i;
-  vec4 col;
-  vec4 tmpvar_11;
-  tmpvar_11 = texture2D (_MainTex, xlt_i.texcoord);
-  col = (_Color * tmpvar_11);
-  vec4 tmpvar_13;
-  tmpvar_13 = textureCube (_ToonShade, i.cubenormal);
+  vec4 tmpvar_12;
+  tmpvar_12 = (_Color * texture2D (_MainTex, gl_TexCoord[0].xy));
   vec4 tmpvar_15;
-  tmpvar_15.xyz = vec3(((2.000000 * tmpvar_13.xyz) * col.xyz).xyz);
-  tmpvar_15.w = float(col.w);
+  tmpvar_15.xyz = vec3(((2.000000 * textureCube (_ToonShade, gl_TexCoord[1].xyz).xyz) * tmpvar_12.xyz).xyz);
+  tmpvar_15.w = float(tmpvar_12.w);
   gl_FragData[0] = tmpvar_15.xyzw;
 }
 

@@ -6,10 +6,6 @@ struct SurfaceOutput {
   float Gloss;
   float Alpha;
 };
-struct Input {
-  vec2 uv_MainTex;
-  vec2 uv_BumpMap;
-};
 struct v2f_surf {
   vec4 pos;
   vec4 hip_pack0;
@@ -35,31 +31,22 @@ void main ()
   vec4 res;
   vec3 viewN;
   SurfaceOutput o;
-  Input surfIN;
-  surfIN.uv_MainTex = xlt_IN.hip_pack0.xy;
-  surfIN.uv_BumpMap = xlt_IN.hip_pack0.zw;
   o.Albedo = vec3(0.000000, 0.000000, 0.000000);
   o.Emission = vec3(0.000000, 0.000000, 0.000000);
   o.Specular = 0.000000;
   o.Alpha = 0.000000;
   o.Gloss = 0.000000;
-  Input IN_i0;
-  IN_i0 = surfIN;
   SurfaceOutput o_i0;
   o_i0 = o;
   vec4 tmpvar_40;
-  tmpvar_40 = texture2D (_MainTex, surfIN.uv_MainTex);
+  tmpvar_40 = texture2D (_MainTex, xlt_IN.hip_pack0.xy);
   o_i0.Albedo = (tmpvar_40.xyz * _Color.xyz);
   o_i0.Gloss = tmpvar_40.w;
   o_i0.Alpha = (tmpvar_40.w * _Color.w);
   o_i0.Specular = _Shininess;
-  vec4 tmpvar_46;
-  tmpvar_46 = texture2D (_BumpMap, IN_i0.uv_BumpMap);
   vec4 normal;
-  normal.xy = ((tmpvar_46.wy * 2.000000) - 1.000000).xy;
-  float tmpvar_50;
-  tmpvar_50 = sqrt (((1.000000 - (normal.x * normal.x)) - (normal.y * normal.y)));
-  normal.z = float(vec3(tmpvar_50));
+  normal.xy = ((texture2D (_BumpMap, xlt_IN.hip_pack0.zw).wy * 2.000000) - 1.000000).xy;
+  normal.z = float(vec3(sqrt (((1.000000 - (normal.x * normal.x)) - (normal.y * normal.y)))));
   o_i0.Normal = normal.xyz;
   o = o_i0;
   float x;
@@ -67,15 +54,9 @@ void main ()
   if ((x < 0.000000)) {
     discard;
   };
-  float tmpvar_54;
-  tmpvar_54 = dot (IN.TtoV0, o.Normal);
-  viewN.x = tmpvar_54;
-  float tmpvar_56;
-  tmpvar_56 = dot (IN.TtoV1, o.Normal);
-  viewN.y = float(vec2(tmpvar_56));
-  float tmpvar_58;
-  tmpvar_58 = dot (IN.TtoV2, o.Normal);
-  viewN.z = float(vec3(tmpvar_58));
+  viewN.x = dot (IN.TtoV0, o.Normal);
+  viewN.y = float(vec2(dot (IN.TtoV1, o.Normal)));
+  viewN.z = float(vec3(dot (IN.TtoV2, o.Normal)));
   o.Normal = viewN;
   res.xyz = ((o.Normal * vec3(0.500000, 0.500000, -0.500000)) + 0.500000).xyz;
   res.w = float(vec4(o.Specular));

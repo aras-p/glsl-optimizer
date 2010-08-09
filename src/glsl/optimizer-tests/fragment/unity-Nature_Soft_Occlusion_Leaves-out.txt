@@ -42,10 +42,8 @@ void main ()
   o.Normal = xlt_IN.normal;
   SurfaceOutput o_i0;
   o_i0 = o;
-  vec4 tmpvar_36;
-  tmpvar_36 = texture2D (_MainTex, xlt_IN.hip_pack0.xy);
   vec4 tmpvar_37;
-  tmpvar_37 = (tmpvar_36 * _Color);
+  tmpvar_37 = (texture2D (_MainTex, xlt_IN.hip_pack0.xy) * _Color);
   o_i0.Albedo = tmpvar_37.xyz;
   o_i0.Alpha = tmpvar_37.w;
   o = o_i0;
@@ -54,19 +52,9 @@ void main ()
   if ((x < 0.000000)) {
     discard;
   };
-  vec4 tmpvar_42;
-  tmpvar_42 = texture2DProj (_ShadowMapTexture, IN._ShadowCoord);
-  SurfaceOutput s;
-  s = o;
-  float atten_i0;
-  atten_i0 = tmpvar_42.x;
   vec4 c_i0_i1;
-  float tmpvar_47;
-  tmpvar_47 = dot (o.Normal, _WorldSpaceLightPos0.xyz);
-  float tmpvar_48;
-  tmpvar_48 = max (0.000000, tmpvar_47);
-  c_i0_i1.xyz = ((s.Albedo * _LightColor0.xyz) * ((tmpvar_48 * atten_i0) * 2.000000)).xyz;
-  c_i0_i1.w = float(vec4(s.Alpha));
+  c_i0_i1.xyz = ((o.Albedo * _LightColor0.xyz) * ((max (0.000000, dot (o.Normal, _WorldSpaceLightPos0.xyz)) * texture2DProj (_ShadowMapTexture, IN._ShadowCoord).x) * 2.000000)).xyz;
+  c_i0_i1.w = float(vec4(o.Alpha));
   c = c_i0_i1;
   c.xyz = (c_i0_i1.xyz + (o.Albedo * IN.vlight)).xyz;
   c.w = float(vec4(o.Alpha));

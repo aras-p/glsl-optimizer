@@ -1,27 +1,12 @@
-struct v2f {
-  vec4 vertex;
-  vec4 color;
-  vec2 texcoord;
-  vec2 texgencoord;
-};
 uniform sampler2D _MainTex;
 uniform sampler2D _GUIClipTexture;
 void main ()
 {
-  v2f xlt_i;
-  xlt_i.vertex = vec4(0.000000, 0.000000, 0.000000, 0.000000);
-  xlt_i.color = gl_Color.xyzw;
-  xlt_i.texcoord = gl_TexCoord[0].xy;
-  xlt_i.texgencoord = gl_TexCoord[1].xy;
-  v2f i;
-  i = xlt_i;
   vec4 col;
-  vec4 tmpvar_13;
-  tmpvar_13 = texture2D (_MainTex, xlt_i.texcoord);
-  col = (tmpvar_13 * i.color);
-  vec4 tmpvar_15;
-  tmpvar_15 = texture2D (_GUIClipTexture, i.texgencoord);
-  col.w = float(vec4((col.w * tmpvar_15.w)));
+  vec4 tmpvar_14;
+  tmpvar_14 = (texture2D (_MainTex, gl_TexCoord[0].xy) * gl_Color.xyzw);
+  col = tmpvar_14;
+  col.w = float(vec4((tmpvar_14.w * texture2D (_GUIClipTexture, gl_TexCoord[1].xy).w)));
   gl_FragData[0] = col.xyzw;
 }
 

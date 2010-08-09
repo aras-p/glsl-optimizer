@@ -1,8 +1,6 @@
 uniform samplerCube _MainTex;
 void main ()
 {
-  vec4 tmpvar_11;
-  tmpvar_11 = textureCube (_MainTex, gl_TexCoord[0].xyz);
-  gl_FragData[0] = tmpvar_11.xyzw;
+  gl_FragData[0] = textureCube (_MainTex, gl_TexCoord[0].xyz).xyzw;
 }
 

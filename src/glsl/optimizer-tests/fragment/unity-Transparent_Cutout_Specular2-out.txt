@@ -32,8 +32,6 @@ void main ()
   xlt_IN.hip_lmapFade = gl_TexCoord[2].xyz;
   v2f_surf IN;
   IN = xlt_IN;
-  vec3 lmIndirect;
-  vec3 lmFull;
   vec4 light;
   SurfaceOutput o;
   o.Albedo = vec3(0.000000, 0.000000, 0.000000);
@@ -55,23 +53,10 @@ void main ()
   if ((x < 0.000000)) {
     discard;
   };
-  vec4 tmpvar_40;
-  tmpvar_40 = texture2DProj (_LightBuffer, IN.hip_screen);
-  light = tmpvar_40;
-  vec4 tmpvar_42;
-  tmpvar_42 = log2 (tmpvar_40);
-  light = -(tmpvar_42);
-  vec4 tmpvar_44;
-  tmpvar_44 = texture2D (unity_Lightmap, IN.hip_lmapFade.xy);
-  lmFull = (2.000000 * tmpvar_44.xyz);
-  vec4 tmpvar_48;
-  tmpvar_48 = texture2D (unity_LightmapInd, IN.hip_lmapFade.xy);
-  lmIndirect = (2.000000 * tmpvar_48.xyz);
-  float tmpvar_54;
-  tmpvar_54 = clamp (IN.hip_lmapFade.z, 0.000000, 1.000000);
-  vec3 tmpvar_56;
-  tmpvar_56 = mix (lmIndirect, lmFull, vec3(tmpvar_54));
-  light.xyz = (light.xyz + tmpvar_56).xyz;
+  vec4 tmpvar_43;
+  tmpvar_43 = -(log2 (texture2DProj (_LightBuffer, IN.hip_screen)));
+  light = tmpvar_43;
+  light.xyz = (tmpvar_43.xyz + mix ((2.000000 * texture2D (unity_LightmapInd, IN.hip_lmapFade.xy).xyz), (2.000000 * texture2D (unity_Lightmap, IN.hip_lmapFade.xy).xyz), vec3(clamp (IN.hip_lmapFade.z, 0.000000, 1.000000)))).xyz;
   vec4 c;
   float tmpvar_61;
   tmpvar_61 = (light.w * o.Gloss);

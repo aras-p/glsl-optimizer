@@ -1,10 +1,6 @@
 uniform sampler2D _FlareTexture;
 void main ()
 {
-  vec4 color;
-  color = gl_Color.xyzw;
-  vec4 tmpvar_8;
-  tmpvar_8 = texture2D (_FlareTexture, gl_TexCoord[0].xy);
-  gl_FragData[0] = (tmpvar_8 * color).xyzw;
+  gl_FragData[0] = (texture2D (_FlareTexture, gl_TexCoord[0].xy) * gl_Color.xyzw).xyzw;
 }
 

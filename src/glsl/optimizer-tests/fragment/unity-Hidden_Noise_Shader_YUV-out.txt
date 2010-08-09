@@ -1,41 +1,22 @@
-struct v2f {
-  vec4 pos;
-  vec2 uv;
-  vec2 uvg;
-  vec2 uvs;
-};
 uniform sampler2D _ScratchTex;
 uniform sampler2D _MainTex;
 uniform vec4 _Intensity;
 uniform sampler2D _GrainTex;
 void main ()
 {
-  v2f xlt_i;
-  xlt_i.pos = vec4(0.000000, 0.000000, 0.000000, 0.000000);
-  xlt_i.uv = gl_TexCoord[0].xy;
-  xlt_i.uvg = gl_TexCoord[1].xy;
-  xlt_i.uvs = gl_TexCoord[2].xy;
-  v2f i;
-  i = xlt_i;
   vec3 yuv;
   vec4 col;
   vec4 tmpvar_13;
-  tmpvar_13 = texture2D (_MainTex, xlt_i.uv);
+  tmpvar_13 = texture2D (_MainTex, gl_TexCoord[0].xy);
   col = tmpvar_13;
-  float tmpvar_15;
-  tmpvar_15 = dot (tmpvar_13.xyz, vec3(0.299000, 0.587000, 0.114000));
-  yuv.x = tmpvar_15;
-  yuv.y = float(vec2(((col.z - yuv.x) * 0.492000)));
-  yuv.z = float(vec3(((col.x - yuv.x) * 0.877000)));
-  vec4 tmpvar_19;
-  tmpvar_19 = texture2D (_GrainTex, i.uvg);
-  yuv = (yuv.xyz + (((tmpvar_19.xyz * 2.000000) - 1.000000) * _Intensity.x)).xyz;
+  yuv.x = dot (tmpvar_13.xyz, vec3(0.299000, 0.587000, 0.114000));
+  yuv.y = float(vec2(((tmpvar_13.z - yuv.x) * 0.492000)));
+  yuv.z = float(vec3(((tmpvar_13.x - yuv.x) * 0.877000)));
+  yuv = (yuv.xyz + (((texture2D (_GrainTex, gl_TexCoord[1].xy).xyz * 2.000000) - 1.000000) * _Intensity.x)).xyz;
   col.x = ((yuv.z * 1.140000) + yuv.x);
   col.y = float(vec2((((yuv.z * -0.581000) + (yuv.y * -0.395000)) + yuv.x)));
   col.z = float(vec3(((yuv.y * 2.032000) + yuv.x)));
-  vec4 tmpvar_25;
-  tmpvar_25 = texture2D (_ScratchTex, i.uvs);
-  col.xyz = (col.xyz + (((tmpvar_25.xyz * 2.000000) - 1.000000) * _Intensity.y)).xyz;
+  col.xyz = (col.xyz + (((texture2D (_ScratchTex, gl_TexCoord[2].xy).xyz * 2.000000) - 1.000000) * _Intensity.y)).xyz;
   gl_FragData[0] = col.xyzw;
 }
 

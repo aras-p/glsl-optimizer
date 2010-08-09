@@ -5,9 +5,6 @@ void main ()
 {
   vec2 tmpvar_30;
   tmpvar_30 = gl_TexCoord[0].xy;
-  vec2 distortedOffset;
-  vec2 offset;
-  offset = tmpvar_30;
   vec2 inUV;
   inUV = tmpvar_30.xy;
   vec4 tmpvar_16;
@@ -15,18 +12,6 @@ void main ()
   tmpvar_16.y = float(inUV.y);
   tmpvar_16.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_16.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
-  distortedOffset = (_RotationMatrix * tmpvar_16).xy;
-  float tmpvar_21;
-  tmpvar_21 = length ((tmpvar_30 / _CenterRadius.zw));
-  float tmpvar_22;
-  tmpvar_22 = min (1.000000, tmpvar_21);
-  vec2 tmpvar_25;
-  tmpvar_25 = mix (distortedOffset, offset, vec2(tmpvar_22));
-  vec2 tmpvar_27;
-  tmpvar_27 = (tmpvar_25 + _CenterRadius.xy);
-  offset = tmpvar_27;
-  vec4 tmpvar_28;
-  tmpvar_28 = texture2D (_MainTex, tmpvar_27);
-  gl_FragData[0] = tmpvar_28.xyzw;
+  gl_FragData[0] = texture2D (_MainTex, (mix ((_RotationMatrix * tmpvar_16).xy, tmpvar_30, vec2(min (1.000000, length ((tmpvar_30 / _CenterRadius.zw))))) + _CenterRadius.xy)).xyzw;
 }
 

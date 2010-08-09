@@ -23,20 +23,15 @@ void main ()
   o_i0 = o;
   o_i0.Emission = vec3(1.000000, 1.000000, 0.000000);
   o = o_i0;
-  vec4 tmpvar_20;
-  tmpvar_20 = texture2DProj (_LightBuffer, gl_TexCoord[0].xyzw);
-  light = tmpvar_20;
-  vec4 tmpvar_22;
-  tmpvar_22 = log2 (tmpvar_20);
   vec4 tmpvar_23;
-  tmpvar_23 = -(tmpvar_22);
+  tmpvar_23 = -(log2 (texture2DProj (_LightBuffer, gl_TexCoord[0].xyzw)));
   light = tmpvar_23;
   light.xyz = (tmpvar_23.xyz + unity_Ambient.xyz).xyz;
   vec4 c;
-  c.xyz = (o.Albedo * light.xyz).xyz;
-  c.w = float(vec4(o.Alpha));
+  c.xyz = (o_i0.Albedo * light.xyz).xyz;
+  c.w = float(vec4(o_i0.Alpha));
   col = c;
-  col.xyz = (c.xyz + o.Emission).xyz;
+  col.xyz = (c.xyz + o_i0.Emission).xyz;
   gl_FragData[0] = col.xyzw;
 }
 

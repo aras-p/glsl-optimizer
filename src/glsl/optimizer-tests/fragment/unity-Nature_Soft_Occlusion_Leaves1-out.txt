@@ -36,10 +36,8 @@ void main ()
   o.Gloss = 0.000000;
   SurfaceOutput o_i0;
   o_i0 = o;
-  vec4 tmpvar_25;
-  tmpvar_25 = texture2D (_MainTex, xlt_IN.hip_pack0.xy);
   vec4 tmpvar_26;
-  tmpvar_26 = (tmpvar_25 * _Color);
+  tmpvar_26 = (texture2D (_MainTex, xlt_IN.hip_pack0.xy) * _Color);
   o_i0.Albedo = tmpvar_26.xyz;
   o_i0.Alpha = tmpvar_26.w;
   o = o_i0;
@@ -48,13 +46,8 @@ void main ()
   if ((x < 0.000000)) {
     discard;
   };
-  vec4 tmpvar_29;
-  tmpvar_29 = texture2DProj (_LightBuffer, IN.hip_screen);
-  light = tmpvar_29;
-  vec4 tmpvar_31;
-  tmpvar_31 = log2 (tmpvar_29);
   vec4 tmpvar_32;
-  tmpvar_32 = -(tmpvar_31);
+  tmpvar_32 = -(log2 (texture2DProj (_LightBuffer, IN.hip_screen)));
   light = tmpvar_32;
   light.xyz = (tmpvar_32.xyz + unity_Ambient.xyz).xyz;
   vec4 c_i0;

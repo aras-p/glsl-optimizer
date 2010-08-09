@@ -6,41 +6,30 @@ struct SurfaceOutput {
   float Gloss;
   float Alpha;
 };
-struct Input {
-  vec2 uv_MainTex;
-  vec4 color;
-};
 uniform sampler2D _TranslucencyMap;
 uniform sampler2D _MainTex;
 uniform sampler2D _BumpSpecMap;
 void main ()
 {
-  Input surfIN;
+  vec2 tmpvar_52;
+  vec4 tmpvar_53;
   SurfaceOutput o;
   o.Albedo = vec3(0.000000, 0.000000, 0.000000);
   o.Emission = vec3(0.000000, 0.000000, 0.000000);
   o.Specular = 0.000000;
   o.Alpha = 0.000000;
   o.Gloss = 0.000000;
-  Input IN_i0;
-  IN_i0 = surfIN;
   SurfaceOutput o_i0;
   o_i0 = o;
-  vec4 tmpvar_33;
-  tmpvar_33 = texture2D (_MainTex, surfIN.uv_MainTex);
-  o_i0.Albedo = (tmpvar_33.xyz * IN_i0.color.xyz);
-  vec4 tmpvar_36;
-  tmpvar_36 = texture2D (_TranslucencyMap, IN_i0.uv_MainTex);
-  o_i0.Gloss = tmpvar_36.w;
-  o_i0.Alpha = IN_i0.color.w;
+  o_i0.Albedo = (texture2D (_MainTex, tmpvar_52).xyz * tmpvar_53.xyz);
+  o_i0.Gloss = texture2D (_TranslucencyMap, tmpvar_52).w;
+  o_i0.Alpha = tmpvar_53.w;
   vec4 tmpvar_40;
-  tmpvar_40 = texture2D (_BumpSpecMap, IN_i0.uv_MainTex);
+  tmpvar_40 = texture2D (_BumpSpecMap, tmpvar_52);
   o_i0.Specular = tmpvar_40.x;
   vec4 normal;
   normal.xy = ((tmpvar_40.wy * 2.000000) - 1.000000).xy;
-  float tmpvar_46;
-  tmpvar_46 = sqrt (((1.000000 - (normal.x * normal.x)) - (normal.y * normal.y)));
-  normal.z = float(vec3(tmpvar_46));
+  normal.z = float(vec3(sqrt (((1.000000 - (normal.x * normal.x)) - (normal.y * normal.y)))));
   o_i0.Normal = normal.xyz;
   o = o_i0;
   gl_FragData[0] = vec4(0.000000, 0.000000, 0.000000, 0.000000);
