@@ -393,7 +393,7 @@ void r300_emit_fb_state(struct r300_context* r300, unsigned size, void* state)
             /* HiZ RAM. */
             if (r300->screen->caps.hiz_ram) {
                 if (tex->hiz_mem[level]) {
-                    OUT_CS_REG(R300_ZB_HIZ_OFFSET, tex->hiz_mem[level]->ofs);
+                    OUT_CS_REG(R300_ZB_HIZ_OFFSET, tex->hiz_mem[level]->ofs << 2);
                     OUT_CS_REG(R300_ZB_HIZ_PITCH, surf_pitch);
                 } else {
                     OUT_CS_REG(R300_ZB_HIZ_OFFSET, 0);
@@ -402,7 +402,7 @@ void r300_emit_fb_state(struct r300_context* r300, unsigned size, void* state)
             }
             /* Z Mask RAM. (compressed zbuffer) */
             if (tex->zmask_mem[level]) {
-                OUT_CS_REG(R300_ZB_ZMASK_OFFSET, tex->zmask_mem[level]->ofs);
+                OUT_CS_REG(R300_ZB_ZMASK_OFFSET, tex->zmask_mem[level]->ofs << 2);
                 OUT_CS_REG(R300_ZB_ZMASK_PITCH, surf_pitch);
             } else {
                 OUT_CS_REG(R300_ZB_ZMASK_OFFSET, 0);
