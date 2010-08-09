@@ -80,4 +80,6 @@ void r600_texture_transfer_unmap(struct pipe_context *ctx,
 int r600_conv_pipe_format(unsigned pformat, unsigned *format);
 int r600_conv_pipe_prim(unsigned pprim, unsigned *prim);
 
+void r600_init_screen_texture_functions(struct pipe_screen *screen);
+
 #endif

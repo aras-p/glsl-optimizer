@@ -127,7 +127,7 @@ static int r600_draw_common(struct r600_draw *draw)
 	draw->draw->states[R600_DRAW__VGT_NUM_INDICES] = draw->count;
 	draw->draw->states[R600_DRAW__VGT_DRAW_INITIATOR] = vgt_draw_initiator;
 	if (draw->index_buffer) {
-		rbuffer = (struct r600_buffer*)draw->index_buffer;
+		rbuffer = (struct r600_resource*)draw->index_buffer;
 		draw->draw->bo[0] = radeon_bo_incref(rscreen->rw, rbuffer->bo);
 		draw->draw->placement[0] = RADEON_GEM_DOMAIN_GTT;
 		draw->draw->placement[1] = RADEON_GEM_DOMAIN_GTT;

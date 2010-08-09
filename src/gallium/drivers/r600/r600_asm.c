@@ -287,7 +287,7 @@ static int r600_bc_tex_build(struct r600_bc *bc, struct r600_bc_tex *tex, unsign
 	return 0;
 }
 
-int r600_bc_alu_build(struct r600_bc *bc, struct r600_bc_alu *alu, unsigned id)
+static int r600_bc_alu_build(struct r600_bc *bc, struct r600_bc_alu *alu, unsigned id)
 {
 	unsigned i;
 
@@ -331,7 +331,7 @@ int r600_bc_alu_build(struct r600_bc *bc, struct r600_bc_alu *alu, unsigned id)
 	return 0;
 }
 
-int r600_bc_cf_build(struct r600_bc *bc, struct r600_bc_cf *cf)
+static int r600_bc_cf_build(struct r600_bc *bc, struct r600_bc_cf *cf)
 {
 	unsigned id = cf->id;
 
