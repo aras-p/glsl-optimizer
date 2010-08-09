@@ -249,9 +249,9 @@ glx_display_free(struct glx_display *priv)
    if (priv->serverGLXversion)
       Xfree((char *) priv->serverGLXversion);
 
+#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
    __glxHashDestroy(priv->drawHash);
 
-#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
    /* Free the direct rendering per display data */
    if (priv->driswDisplay)
       (*priv->driswDisplay->destroyDisplay) (priv->driswDisplay);

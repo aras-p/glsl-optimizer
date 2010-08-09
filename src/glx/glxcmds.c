@@ -2161,9 +2161,9 @@ __glXWaitForMscOML(Display * dpy, GLXDrawable drawable,
 {
 #ifdef GLX_DIRECT_RENDERING
    __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable);
-#endif
    struct glx_screen *psc = pdraw ? pdraw->psc : NULL;
    int ret;
+#endif
 
 
    /* The OML_sync_control spec says these should "generate a GLX_BAD_VALUE
@@ -2193,9 +2193,9 @@ __glXWaitForSbcOML(Display * dpy, GLXDrawable drawable,
 {
 #ifdef GLX_DIRECT_RENDERING
    __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable);
-#endif
    struct glx_screen *psc = pdraw ? pdraw->psc : NULL;
    int ret;
+#endif
 
    /* The OML_sync_control spec says this should "generate a GLX_BAD_VALUE
     * error", but the return type in the spec is Bool.

@@ -86,7 +86,9 @@ ChangeDrawableAttribute(Display * dpy, GLXDrawable drawable,
                         const CARD32 * attribs, size_t num_attribs)
 {
    struct glx_display *priv = __glXInitialize(dpy);
+#ifdef GLX_DIRECT_RENDERING
    __GLXDRIdrawable *pdraw;
+#endif
    CARD32 *output;
    CARD8 opcode;
    int i;
@@ -94,8 +96,6 @@ ChangeDrawableAttribute(Display * dpy, GLXDrawable drawable,
    if ((dpy == NULL) || (drawable == 0)) {
       return;
    }
-
-   pdraw = GetGLXDRIDrawable(dpy, drawable);
 
    opcode = __glXSetupForCommand(dpy);
    if (!opcode)
@@ -133,6 +133,9 @@ ChangeDrawableAttribute(Display * dpy, GLXDrawable drawable,
    UnlockDisplay(dpy);
    SyncHandle();
 
+#ifdef GLX_DIRECT_RENDERING
+   pdraw = GetGLXDRIDrawable(dpy, drawable);
+
    for (i = 0; i < num_attribs; i++) {
       switch(attribs[i * 2]) {
       case GLX_EVENT_MASK:
@@ -141,6 +144,7 @@ ChangeDrawableAttribute(Display * dpy, GLXDrawable drawable,
 	 break;
       }
    }
+#endif
 
    return;
 }
