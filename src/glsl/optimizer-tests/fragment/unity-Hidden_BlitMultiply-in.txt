@@ -15,10 +15,10 @@ struct v2f {
     vec4 pos;
     vec2 uv;
 };
-uniform sampler2D __RenderTex;
+uniform sampler2D _RenderTex;
 vec4 frag( in v2f i );
 vec4 frag( in v2f i ) {
-    return texture2D( __RenderTex, i.uv);
+    return texture2D( _RenderTex, i.uv);
 }
 void main() {
     vec4 xl_retval;

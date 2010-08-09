@@ -1,8 +1,6 @@
-uniform sampler2D __RenderTex;
+uniform sampler2D _RenderTex;
 void main ()
 {
-  vec4 tmpvar_9;
-  tmpvar_9 = texture2D (__RenderTex, gl_TexCoord[0].xy);
-  gl_FragData[0] = tmpvar_9.xyzw;
+  gl_FragData[0] = texture2D (_RenderTex, gl_TexCoord[0].xy).xyzw;
 }
 
