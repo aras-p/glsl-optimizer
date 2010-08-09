@@ -72,6 +72,9 @@ lp_build_min_simple(struct lp_build_context *bld,
    const char *intrinsic = NULL;
    LLVMValueRef cond;
 
+   assert(lp_check_value(type, a));
+   assert(lp_check_value(type, b));
+
    /* TODO: optimize the constant case */
 
    if(type.width * type.length == 128) {
@@ -117,6 +120,9 @@ lp_build_max_simple(struct lp_build_context *bld,
    const struct lp_type type = bld->type;
    const char *intrinsic = NULL;
    LLVMValueRef cond;
+
+   assert(lp_check_value(type, a));
+   assert(lp_check_value(type, b));
 
    /* TODO: optimize the constant case */
 
@@ -394,6 +400,10 @@ lp_build_mul_u8n(LLVMBuilderRef builder,
 {
    LLVMValueRef c8;
    LLVMValueRef ab;
+
+   assert(!i16_type.floating);
+   assert(lp_check_value(i16_type, a));
+   assert(lp_check_value(i16_type, b));
 
    c8 = lp_build_const_int_vec(i16_type, 8);
    
@@ -848,8 +858,8 @@ lp_build_set_sign(struct lp_build_context *bld,
                              ~((unsigned long long) 1 << (type.width - 1)));
    LLVMValueRef val, res;
 
-   assert(lp_check_value(type, a));
    assert(type.floating);
+   assert(lp_check_value(type, a));
 
    /* val = reinterpret_cast<int>(a) */
    val = LLVMBuildBitCast(bld->builder, a, int_vec_type, "");
