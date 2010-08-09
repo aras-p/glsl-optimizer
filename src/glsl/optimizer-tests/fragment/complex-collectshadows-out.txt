@@ -12,11 +12,11 @@ void main ()
 {
   vec4 res;
   float depth;
-  float __retval_i0;
-  __retval_i0 = 1.0/(((_ZBufferParams.x * texture2D (_CameraDepthTexture, gl_TexCoord[0].xy).x) + _ZBufferParams.y));
-  depth = __retval_i0;
+  float _ret_val_i0;
+  _ret_val_i0 = 1.0/(((_ZBufferParams.x * texture2D (_CameraDepthTexture, gl_TexCoord[0].xy).x) + _ZBufferParams.y));
+  depth = _ret_val_i0;
   vec4 tmpvar_44;
-  tmpvar_44.xyz = vec3((gl_TexCoord[1].xyz * __retval_i0).xyz);
+  tmpvar_44.xyz = vec3((gl_TexCoord[1].xyz * _ret_val_i0).xyz);
   tmpvar_44.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
   float tmpvar_52;
   tmpvar_52 = tmpvar_44.z;

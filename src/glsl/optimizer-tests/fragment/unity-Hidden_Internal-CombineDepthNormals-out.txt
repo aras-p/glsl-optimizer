@@ -10,13 +10,13 @@ void main ()
   vec4 tmpvar_41;
   tmpvar_41 = texture2D (_CameraNormalsTexture, tmpvar_68);
   n = tmpvar_41;
-  float __retval_i0;
-  __retval_i0 = 1.0/(((_ZBufferParams.x * texture2D (_CameraDepthTexture, tmpvar_68).x) + _ZBufferParams.y));
-  d = __retval_i0;
+  float _ret_val_i0;
+  _ret_val_i0 = 1.0/(((_ZBufferParams.x * texture2D (_CameraDepthTexture, tmpvar_68).x) + _ZBufferParams.y));
+  d = _ret_val_i0;
   n.xyz = ((tmpvar_41.xyz * 2.000000) - 1.000000).xyz;
   n.z = float(vec3(-(n.z)));
   vec4 tmpvar_48;
-  if ((__retval_i0 < 0.999985)) {
+  if ((_ret_val_i0 < 0.999985)) {
     vec3 normal;
     normal = n.xyz;
     vec4 enc;

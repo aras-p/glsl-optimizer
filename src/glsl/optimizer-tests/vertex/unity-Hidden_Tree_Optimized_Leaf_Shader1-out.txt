@@ -77,10 +77,10 @@ void main ()
   tmpvar_204.y = float(vec2(tmpvar_200));
   vec4 tmpvar_213;
   tmpvar_213 = abs (((fract ((((fract (((_TimeX + tmpvar_204).xxyy * vec4(1.975000, 0.793000, 0.375000, 0.193000))) * 2.000000) - 1.000000) + 0.500000)) * 2.000000) - 1.000000));
-  vec4 __retval_i0;
-  __retval_i0 = ((tmpvar_213 * tmpvar_213) * (3.000000 - (2.000000 * tmpvar_213)));
+  vec4 _ret_val_i0;
+  _ret_val_i0 = ((tmpvar_213 * tmpvar_213) * (3.000000 - (2.000000 * tmpvar_213)));
   vec2 tmpvar_217;
-  tmpvar_217 = (__retval_i0.xz + __retval_i0.yw);
+  tmpvar_217 = (_ret_val_i0.xz + _ret_val_i0.yw);
   bend = ((tmpvar_193.y * 0.100000) * v_i0.normal.xyz);
   bend.y = float(vec2((tmpvar_193.w * 0.300000)));
   pos_i0.xyz = (pos_i0.xyz + (((tmpvar_217.xyx * bend) + ((_Wind.xyz * tmpvar_217.y) * tmpvar_193.w)) * _Wind.w)).xyz;
