@@ -1454,7 +1454,7 @@ set_default_state(context_t *context)
 	    SETbit(sq_dyn_gpr_cntl_ps_flush_req, VS_PC_LIMIT_ENABLE_bit);
     }
 
-    BEGIN_BATCH_NO_AUTOSTATE(114);
+    BEGIN_BATCH_NO_AUTOSTATE(117);
     R600_OUT_BATCH_REGSEQ(SQ_CONFIG, 6);
     R600_OUT_BATCH(sq_config);
     R600_OUT_BATCH(sq_gpr_resource_mgmt_1);
@@ -1532,6 +1532,7 @@ set_default_state(context_t *context)
     R600_OUT_BATCH(0);
 
     R600_OUT_BATCH_REGVAL(VGT_STRMOUT_BUFFER_EN, 0);
+    R600_OUT_BATCH_REGVAL(SX_ALPHA_TEST_CONTROL, 0);
 
     END_BATCH();
     COMMIT_BATCH();
@@ -1613,7 +1614,7 @@ unsigned r600_blit(GLcontext *ctx,
     /* Flush is needed to make sure that source buffer has correct data */
     radeonFlush(ctx);
 
-    rcommonEnsureCmdBufSpace(&context->radeon, 305, __FUNCTION__);
+    rcommonEnsureCmdBufSpace(&context->radeon, 308, __FUNCTION__);
 
     /* load shaders */
     load_shaders(context->radeon.glCtx);
@@ -1622,7 +1623,7 @@ unsigned r600_blit(GLcontext *ctx,
         return GL_FALSE;
 
     /* set clear state */
-    /* 114 */
+    /* 117 */
     set_default_state(context);
 
     /* shaders */
