@@ -317,8 +317,8 @@ ir_structure_splitting_visitor::visit_leave(ir_assignment *ir)
 {
    ir_dereference_variable *lhs_deref = ir->lhs->as_dereference_variable();
    ir_dereference_variable *rhs_deref = ir->rhs->as_dereference_variable();
-   variable_entry *lhs_entry = lhs_deref ? get_splitting_entry(lhs_deref->var) : NULL;
-   variable_entry *rhs_entry = rhs_deref ? get_splitting_entry(rhs_deref->var) : NULL;
+   split_var_entry *lhs_entry = lhs_deref ? get_splitting_entry(lhs_deref->var) : NULL;
+   split_var_entry *rhs_entry = rhs_deref ? get_splitting_entry(rhs_deref->var) : NULL;
    const glsl_type *type = ir->rhs->type;
 
    if ((lhs_entry || rhs_entry) && !ir->condition) {
