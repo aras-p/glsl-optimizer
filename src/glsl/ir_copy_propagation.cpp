@@ -25,7 +25,7 @@
  * \file ir_copy_propagation.cpp
  *
  * Moves usage of recently-copied variables to the previous copy of
- * the variable within basic blocks.
+ * the variable.
  *
  * This should reduce the number of MOV instructions in the generated
  * programs unless copy propagation is also done on the LIR, and may
@@ -53,13 +53,31 @@ public:
    ir_variable *rhs;
 };
 
+
+class kill_entry : public exec_node
+{
+public:
+   kill_entry(ir_variable *var)
+   {
+      assert(var);
+      this->var = var;
+   }
+
+   ir_variable *var;
+};
+
 class ir_copy_propagation_visitor : public ir_hierarchical_visitor {
 public:
-   ir_copy_propagation_visitor(exec_list *acp)
+   ir_copy_propagation_visitor()
    {
       progress = false;
-      in_lhs = false;
-      this->acp = acp;
+      mem_ctx = talloc_new(0);
+      this->acp = new(mem_ctx) exec_list;
+      this->kills = new(mem_ctx) exec_list;
+   }
+   ~ir_copy_propagation_visitor()
+   {
+      talloc_free(mem_ctx);
    }
 
    virtual ir_visitor_status visit(class ir_dereference_variable *);
@@ -70,26 +88,46 @@ public:
    virtual ir_visitor_status visit_enter(class ir_call *);
    virtual ir_visitor_status visit_enter(class ir_if *);
 
-   /** List of acp_entry */
+   void add_copy(ir_assignment *ir);
+   void kill(ir_variable *ir);
+   void handle_if_block(exec_list *instructions);
+
+   /** List of acp_entry: The available copies to propagate */
    exec_list *acp;
+   /**
+    * List of kill_entry: The variables whose values were killed in this
+    * block.
+    */
+   exec_list *kills;
+
    bool progress;
 
-   /** Currently in the LHS of an assignment? */
-   bool in_lhs;
+   bool killed_all;
+
+   void *mem_ctx;
 };
-
-
-ir_visitor_status
-ir_copy_propagation_visitor::visit_enter(ir_loop *ir)
-{
-   (void)ir;
-   return visit_continue_with_parent;
-}
 
 ir_visitor_status
 ir_copy_propagation_visitor::visit_enter(ir_function_signature *ir)
 {
-   (void)ir;
+   /* Treat entry into a function signature as a completely separate
+    * block.  Any instructions at global scope will be shuffled into
+    * main() at link time, so they're irrelevant to us.
+    */
+   exec_list *orig_acp = this->acp;
+   exec_list *orig_kills = this->kills;
+   bool orig_killed_all = this->killed_all;
+
+   this->acp = new(mem_ctx) exec_list;
+   this->kills = new(mem_ctx) exec_list;
+   this->killed_all = false;
+
+   visit_list_elements(this, &ir->body);
+
+   this->kills = orig_kills;
+   this->acp = orig_acp;
+   this->killed_all = orig_killed_all;
+
    return visit_continue_with_parent;
 }
 
@@ -98,34 +136,33 @@ ir_copy_propagation_visitor::visit_enter(ir_assignment *ir)
 {
    ir_visitor_status s;
 
-   /* Inline the rest of ir_assignment::accept(ir_hv *v), wrapping the
-    * LHS part with setting in_lhs so that we can avoid copy
-    * propagating into the LHS.
+   /* ir_assignment::accept(ir_hv *v), skipping the LHS so that we can
+    * avoid copy propagating into the LHS.
     *
     * Note that this means we won't copy propagate into the derefs of
     * an array index.  Oh well.
     */
-   this->in_lhs = true;
-   s = ir->lhs->accept(this);
-   this->in_lhs = false;
-   if (s != visit_continue)
-      return (s == visit_continue_with_parent) ? visit_continue : s;
 
    s = ir->rhs->accept(this);
-   if (s != visit_continue)
-      return (s == visit_continue_with_parent) ? visit_continue : s;
+   assert(s == visit_continue);
 
-   if (ir->condition)
+   if (ir->condition) {
       s = ir->condition->accept(this);
+      assert(s == visit_continue);
+   }
 
-   return (s == visit_stop) ? s : visit_continue_with_parent;
+   kill(ir->lhs->variable_referenced());
+
+   add_copy(ir);
+
+   return visit_continue_with_parent;
 }
 
 ir_visitor_status
 ir_copy_propagation_visitor::visit_enter(ir_function *ir)
 {
    (void) ir;
-   return visit_continue_with_parent;
+   return visit_continue;
 }
 
 /**
@@ -138,14 +175,7 @@ ir_copy_propagation_visitor::visit_enter(ir_function *ir)
 ir_visitor_status
 ir_copy_propagation_visitor::visit(ir_dereference_variable *ir)
 {
-   /* Ignores the LHS.  Don't want to rewrite the LHS to point at some
-    * other storage!
-    */
-   if (this->in_lhs) {
-      return visit_continue;
-   }
-
-   ir_variable *var = ir->variable_referenced();
+   ir_variable *var = ir->var;
 
    foreach_iter(exec_list_iterator, iter, *this->acp) {
       acp_entry *entry = (acp_entry *)iter.get();
@@ -169,43 +199,108 @@ ir_copy_propagation_visitor::visit_enter(ir_call *ir)
    foreach_iter(exec_list_iterator, iter, ir->actual_parameters) {
       ir_variable *sig_param = (ir_variable *)sig_param_iter.get();
       ir_instruction *ir = (ir_instruction *)iter.get();
-      if (sig_param->mode != ir_var_out && sig_param->mode != ir_var_inout &&
-	  sig_param->mode != ir_var_uniform) {
+      if (sig_param->mode != ir_var_out && sig_param->mode != ir_var_inout) {
          ir->accept(this);
       }
       sig_param_iter.next();
    }
+
+   /* Since we're unlinked, we don't (necssarily) know the side effects of
+    * this call.  So kill all copies.
+    */
+   acp->make_empty();
+   this->killed_all = true;
+
    return visit_continue_with_parent;
 }
 
+void
+ir_copy_propagation_visitor::handle_if_block(exec_list *instructions)
+{
+   exec_list *orig_acp = this->acp;
+   exec_list *orig_kills = this->kills;
+   bool orig_killed_all = this->killed_all;
+
+   this->acp = new(mem_ctx) exec_list;
+   this->kills = new(mem_ctx) exec_list;
+   this->killed_all = false;
+
+   /* Populate the initial acp with a copy of the original */
+   foreach_iter(exec_list_iterator, iter, *orig_acp) {
+      acp_entry *a = (acp_entry *)iter.get();
+      this->acp->push_tail(new(this->mem_ctx) acp_entry(a->lhs, a->rhs));
+   }
+
+   visit_list_elements(this, instructions);
+
+   if (this->killed_all) {
+      orig_acp->make_empty();
+   }
+
+   exec_list *new_kills = this->kills;
+   this->kills = orig_kills;
+   this->acp = orig_acp;
+   this->killed_all = this->killed_all || orig_killed_all;
+
+   foreach_iter(exec_list_iterator, iter, *new_kills) {
+      kill_entry *k = (kill_entry *)iter.get();
+      kill(k->var);
+   }
+}
 
 ir_visitor_status
 ir_copy_propagation_visitor::visit_enter(ir_if *ir)
 {
    ir->condition->accept(this);
 
-   /* Do not traverse into the body of the if-statement since that is a
-    * different basic block.
-    */
+   handle_if_block(&ir->then_instructions);
+   handle_if_block(&ir->else_instructions);
+
+   /* handle_if_block() already descended into the children. */
    return visit_continue_with_parent;
 }
 
-static bool
-propagate_copies(ir_instruction *ir, exec_list *acp)
+ir_visitor_status
+ir_copy_propagation_visitor::visit_enter(ir_loop *ir)
 {
-   ir_copy_propagation_visitor v(acp);
+   exec_list *orig_acp = this->acp;
+   exec_list *orig_kills = this->kills;
+   bool orig_killed_all = this->killed_all;
 
-   ir->accept(&v);
+   /* FINISHME: For now, the initial acp for loops is totally empty.
+    * We could go through once, then go through again with the acp
+    * cloned minus the killed entries after the first run through.
+    */
+   this->acp = new(mem_ctx) exec_list;
+   this->kills = new(mem_ctx) exec_list;
+   this->killed_all = false;
 
-   return v.progress;
+   visit_list_elements(this, &ir->body_instructions);
+
+   if (this->killed_all) {
+      orig_acp->make_empty();
+   }
+
+   exec_list *new_kills = this->kills;
+   this->kills = orig_kills;
+   this->acp = orig_acp;
+   this->killed_all = this->killed_all || orig_killed_all;
+
+   foreach_iter(exec_list_iterator, iter, *new_kills) {
+      kill_entry *k = (kill_entry *)iter.get();
+      kill(k->var);
+   }
+
+   /* already descended into the children. */
+   return visit_continue_with_parent;
 }
 
-static void
-kill_invalidated_copies(ir_assignment *ir, exec_list *acp)
+void
+ir_copy_propagation_visitor::kill(ir_variable *var)
 {
-   ir_variable *var = ir->lhs->variable_referenced();
    assert(var != NULL);
 
+   /* Remove any entries currently in the ACP for this kill. */
    foreach_iter(exec_list_iterator, iter, *acp) {
       acp_entry *entry = (acp_entry *)iter.get();
 
@@ -213,21 +308,25 @@ kill_invalidated_copies(ir_assignment *ir, exec_list *acp)
 	 entry->remove();
       }
    }
+
+   /* Add the LHS variable to the list of killed variables in this block.
+    */
+   this->kills->push_tail(new(this->mem_ctx) kill_entry(var));
 }
 
 /**
  * Adds an entry to the available copy list if it's a plain assignment
  * of a variable to a variable.
  */
-static bool
-add_copy(void *ctx, ir_assignment *ir, exec_list *acp)
+void
+ir_copy_propagation_visitor::add_copy(ir_assignment *ir)
 {
    acp_entry *entry;
 
    if (ir->condition) {
       ir_constant *condition = ir->condition->as_constant();
       if (!condition || !condition->value.b[0])
-	 return false;
+	 return;
    }
 
    ir_variable *lhs_var = ir->whole_variable_written();
@@ -241,43 +340,12 @@ add_copy(void *ctx, ir_assignment *ir, exec_list *acp)
 	  * will clean up the mess.
 	  */
 	 ir->condition = new(talloc_parent(ir)) ir_constant(false);
-	 return true;
+	 this->progress = true;
       } else {
-	 entry = new(ctx) acp_entry(lhs_var, rhs_var);
-	 acp->push_tail(entry);
+	 entry = new(this->mem_ctx) acp_entry(lhs_var, rhs_var);
+	 this->acp->push_tail(entry);
       }
    }
-
-   return false;
-}
-
-static void
-copy_propagation_basic_block(ir_instruction *first,
-			     ir_instruction *last,
-			     void *data)
-{
-   ir_instruction *ir;
-   /* List of avaialble_copy */
-   exec_list acp;
-   bool *out_progress = (bool *)data;
-   bool progress = false;
-
-   void *ctx = talloc_new(NULL);
-   for (ir = first;; ir = (ir_instruction *)ir->next) {
-      ir_assignment *ir_assign = ir->as_assignment();
-
-      progress = propagate_copies(ir, &acp) || progress;
-
-      if (ir_assign) {
-	 kill_invalidated_copies(ir_assign, &acp);
-
-	 progress = add_copy(ctx, ir_assign, &acp) || progress;
-      }
-      if (ir == last)
-	 break;
-   }
-   *out_progress = progress;
-   talloc_free(ctx);
 }
 
 /**
@@ -286,9 +354,9 @@ copy_propagation_basic_block(ir_instruction *first,
 bool
 do_copy_propagation(exec_list *instructions)
 {
-   bool progress = false;
+   ir_copy_propagation_visitor v;
 
-   call_for_basic_blocks(instructions, copy_propagation_basic_block, &progress);
+   visit_list_elements(&v, instructions);
 
-   return progress;
+   return v.progress;
 }
