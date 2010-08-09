@@ -168,6 +168,10 @@ ir_algebraic_visitor::handle_expression(ir_rvalue *in_ir)
 	 break;
 
       switch (op_expr[0]->operation) {
+      case ir_binop_less:    new_op = ir_binop_gequal;  break;
+      case ir_binop_greater: new_op = ir_binop_lequal;  break;
+      case ir_binop_lequal:  new_op = ir_binop_greater; break;
+      case ir_binop_gequal:  new_op = ir_binop_less;    break;
       case ir_binop_equal:   new_op = ir_binop_nequal;  break;
       case ir_binop_nequal:  new_op = ir_binop_equal;   break;
 
