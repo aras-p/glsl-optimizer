@@ -1,1 +1,0 @@
-../intel/intel_tex.c

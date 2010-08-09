@@ -1,8 +1,0 @@
-# Configuration for profiling on Linux with gprof
-
-include $(TOP)/configs/linux-static
-
-CONFIG_NAME = linux-profile
-
-OPT_FLAGS = -pg -g -O2
-DEFINES += -DNDEBUG

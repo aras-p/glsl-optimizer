@@ -1,6 +1,0 @@
-Import('*')
-
-SConscript([
-	'sw/SConscript',
-	'drm/SConscript',
-])

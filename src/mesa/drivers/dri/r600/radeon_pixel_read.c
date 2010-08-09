@@ -1,1 +1,0 @@
-../radeon/radeon_pixel_read.c
