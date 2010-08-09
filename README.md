@@ -41,9 +41,4 @@ Notes
   bother compiling Mesa's one. Shouldn't be hard if you need it.
 * I haven't checked if/how it works with higher GLSL versions than the
   default (1.10?), or with GLSL ES syntax.
-* This is a clone of whole Mesa's GLSL2 branch. A lot of the files are not
-  actually needed by the library. For example, you can exclude everything
-  in `bin`, `configs`, `docs`, `doxygen`, `scons`, `windows`; everything
-  except `GL` from `include`, everything except `glsl`, `mapi`, `mesa` from
-  `src` and so on.
   
