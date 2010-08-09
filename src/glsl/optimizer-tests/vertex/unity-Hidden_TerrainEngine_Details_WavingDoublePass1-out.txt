@@ -1,11 +1,3 @@
-struct appdata_full {
-  vec4 vertex;
-  vec4 tangent;
-  vec3 normal;
-  vec4 texcoord;
-  vec4 texcoord1;
-  vec4 color;
-};
 varying vec4 xlv_FOG;
 attribute vec4 TANGENT;
 uniform vec4 unity_Scale;
@@ -17,22 +9,17 @@ uniform vec4 _MainTex_ST;
 uniform mat4 _LightMatrix0;
 void main ()
 {
-  appdata_full xlt_v;
-  xlt_v.vertex = gl_Vertex.xyzw;
-  xlt_v.tangent = TANGENT.xyzw;
-  xlt_v.normal = gl_Normal.xyz;
-  xlt_v.texcoord = gl_MultiTexCoord0.xyzw;
-  xlt_v.texcoord1 = gl_MultiTexCoord1.xyzw;
-  xlt_v.color = gl_Color.xyzw;
-  appdata_full v_i0;
-  v_i0 = xlt_v;
+  vec4 tmpvar_1;
+  tmpvar_1 = gl_Vertex.xyzw;
+  vec4 tmpvar_11;
+  tmpvar_11 = gl_Color.xyzw;
   vec4 vertex;
-  vertex = xlt_v.vertex;
+  vertex = tmpvar_1;
   vec4 outColor;
   vec3 waveMove;
   waveMove = vec3(0.000000, 0.000000, 0.000000);
   vec4 tmpvar_148;
-  tmpvar_148 = ((fract ((((vertex.x * (vec4(0.012000, 0.020000, 0.060000, 0.024000) * _WaveAndDistance.y)) + (vertex.z * (vec4(0.006000, 0.020000, 0.020000, 0.050000) * _WaveAndDistance.y))) + (_WaveAndDistance.x * vec4(1.200000, 2.000000, 1.600000, 4.800000)))) * 6.408850) - 3.141590);
+  tmpvar_148 = ((fract ((((tmpvar_1.x * (vec4(0.012000, 0.020000, 0.060000, 0.024000) * _WaveAndDistance.y)) + (tmpvar_1.z * (vec4(0.006000, 0.020000, 0.020000, 0.050000) * _WaveAndDistance.y))) + (_WaveAndDistance.x * vec4(1.200000, 2.000000, 1.600000, 4.800000)))) * 6.408850) - 3.141590);
   vec4 tmpvar_149;
   tmpvar_149 = (tmpvar_148 * tmpvar_148);
   vec4 tmpvar_153;
@@ -46,16 +33,14 @@ void main ()
   vec4 tmpvar_159;
   tmpvar_159 = (tmpvar_158 * tmpvar_158);
   vec4 tmpvar_163;
-  tmpvar_163 = (tmpvar_159 * (xlt_v.color.w * _WaveAndDistance.z));
+  tmpvar_163 = (tmpvar_159 * (tmpvar_11.w * _WaveAndDistance.z));
   waveMove.x = dot (tmpvar_163, vec4(0.024000, 0.040000, -0.120000, 0.096000));
   waveMove.z = float(vec3(dot (tmpvar_163, vec4(0.006000, 0.020000, -0.020000, 0.100000))));
-  vertex.xz = vec2((vertex.xz - (waveMove.xz * _WaveAndDistance.z)).xy);
-  outColor.xyz = ((xlt_v.color.xyz * mix (vec3(0.500000, 0.500000, 0.500000), _WavingTint.xyz, vec3((dot (tmpvar_159, vec4(0.674200, 0.674200, 0.269680, 0.134840)) * 0.700000)))) * 2.000000).xyz;
+  vertex.xz = vec2((tmpvar_1.xz - (waveMove.xz * _WaveAndDistance.z)).xy);
+  outColor.xyz = ((tmpvar_11.xyz * mix (vec3(0.500000, 0.500000, 0.500000), _WavingTint.xyz, vec3((dot (tmpvar_159, vec4(0.674200, 0.674200, 0.269680, 0.134840)) * 0.700000)))) * 2.000000).xyz;
   outColor.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
-  v_i0.vertex = vertex;
-  v_i0.color = outColor;
   vec4 tmpvar_175;
-  tmpvar_175 = (gl_ModelViewProjectionMatrix * v_i0.vertex);
+  tmpvar_175 = (gl_ModelViewProjectionMatrix * vertex);
   mat3 tmpvar_184;
   tmpvar_184[0] = _Object2World[0].xyz;
   tmpvar_184[1] = _Object2World[1].xyz;
@@ -68,19 +53,19 @@ void main ()
   tmpvar_17.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   xlv_FOG = tmpvar_17;
   vec4 tmpvar_19;
-  tmpvar_19.xy = vec2(((v_i0.texcoord.xy * _MainTex_ST.xy) + _MainTex_ST.zw).xy);
+  tmpvar_19.xy = vec2(((gl_MultiTexCoord0.xy * _MainTex_ST.xy) + _MainTex_ST.zw).xy);
   tmpvar_19.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_19.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[0] = tmpvar_19;
-  gl_FrontColor = v_i0.color.xyzw;
+  gl_FrontColor = outColor.xyzw;
   vec4 tmpvar_23;
-  tmpvar_23.xyz = vec3((tmpvar_184 * (v_i0.normal * unity_Scale.w)).xyz);
+  tmpvar_23.xyz = vec3((tmpvar_184 * (gl_Normal.xyz * unity_Scale.w)).xyz);
   tmpvar_23.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[1] = tmpvar_23;
   vec4 tmpvar_25;
-  tmpvar_25.xyz = vec3((_WorldSpaceLightPos0.xyz - (_Object2World * v_i0.vertex).xyz).xyz);
+  tmpvar_25.xyz = vec3((_WorldSpaceLightPos0.xyz - (_Object2World * vertex).xyz).xyz);
   tmpvar_25.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[2] = tmpvar_25;
-  gl_TexCoord[3] = (_LightMatrix0 * (_Object2World * v_i0.vertex)).xyzw;
+  gl_TexCoord[3] = (_LightMatrix0 * (_Object2World * vertex)).xyzw;
 }
 

@@ -1,18 +1,3 @@
-struct SurfaceOutput {
-  vec3 Albedo;
-  vec3 Normal;
-  vec3 Emission;
-  float Specular;
-  float Gloss;
-  float Alpha;
-};
-struct v2f_surf {
-  vec4 pos;
-  float fog;
-  vec2 hip_pack0;
-  vec4 hip_screen;
-  vec3 hip_lmapFade;
-};
 varying vec4 xlv_FOG;
 uniform sampler2D unity_LightmapInd;
 uniform sampler2D unity_Lightmap;
@@ -22,40 +7,31 @@ uniform float _Cutoff;
 uniform vec4 _Color;
 void main ()
 {
-  v2f_surf xlt_IN;
-  xlt_IN.pos = vec4(0.000000, 0.000000, 0.000000, 0.000000);
-  xlt_IN.fog = xlv_FOG.x;
-  xlt_IN.hip_pack0 = gl_TexCoord[0].xy;
-  xlt_IN.hip_screen = gl_TexCoord[1].xyzw;
-  xlt_IN.hip_lmapFade = gl_TexCoord[2].xyz;
-  v2f_surf IN;
-  IN = xlt_IN;
+  vec4 tmpvar_67;
+  vec3 tmpvar_68;
+  tmpvar_67 = gl_TexCoord[1].xyzw;
+  tmpvar_68 = gl_TexCoord[2].xyz;
   vec4 light;
-  SurfaceOutput o;
-  o.Albedo = vec3(0.000000, 0.000000, 0.000000);
-  o.Emission = vec3(0.000000, 0.000000, 0.000000);
-  o.Specular = 0.000000;
-  o.Alpha = 0.000000;
-  o.Gloss = 0.000000;
-  SurfaceOutput o_i0;
-  o_i0 = o;
+  vec3 tmpvar_69;
+  float tmpvar_74;
   vec4 tmpvar_32;
-  tmpvar_32 = (texture2D (_MainTex, xlt_IN.hip_pack0.xy) * _Color);
-  o_i0.Albedo = tmpvar_32.xyz;
-  o_i0.Alpha = tmpvar_32.w;
-  o = o_i0;
+  tmpvar_32 = (texture2D (_MainTex, gl_TexCoord[0].xy) * _Color);
+  float tmpvar_34;
+  tmpvar_34 = tmpvar_32.w;
+  tmpvar_69 = tmpvar_32.xyz;
+  tmpvar_74 = tmpvar_34;
   float x;
-  x = (o_i0.Alpha - _Cutoff);
+  x = (tmpvar_34 - _Cutoff);
   if ((x < 0.000000)) {
     discard;
   };
   vec4 tmpvar_38;
-  tmpvar_38 = -(log2 (texture2DProj (_LightBuffer, IN.hip_screen)));
+  tmpvar_38 = -(log2 (texture2DProj (_LightBuffer, tmpvar_67)));
   light = tmpvar_38;
-  light.xyz = (tmpvar_38.xyz + mix ((2.000000 * texture2D (unity_LightmapInd, IN.hip_lmapFade.xy).xyz), (2.000000 * texture2D (unity_Lightmap, IN.hip_lmapFade.xy).xyz), vec3(clamp (IN.hip_lmapFade.z, 0.000000, 1.000000)))).xyz;
+  light.xyz = (tmpvar_38.xyz + mix ((2.000000 * texture2D (unity_LightmapInd, tmpvar_68.xy).xyz), (2.000000 * texture2D (unity_Lightmap, tmpvar_68.xy).xyz), vec3(clamp (tmpvar_68.z, 0.000000, 1.000000)))).xyz;
   vec4 c_i0;
-  c_i0.xyz = (o.Albedo * light.xyz).xyz;
-  c_i0.w = float(vec4(o.Alpha));
+  c_i0.xyz = (tmpvar_69 * light.xyz).xyz;
+  c_i0.w = float(vec4(tmpvar_74));
   gl_FragData[0] = c_i0.xyzw;
 }
 

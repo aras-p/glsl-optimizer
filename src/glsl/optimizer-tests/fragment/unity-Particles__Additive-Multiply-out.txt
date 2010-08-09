@@ -2,13 +2,13 @@ uniform vec4 _TintColor;
 uniform sampler2D _MainTex;
 void main ()
 {
-  vec4 tmpvar_16;
-  tmpvar_16 = gl_Color.xyzw;
+  vec4 tmpvar_2;
+  tmpvar_2 = gl_Color.xyzw;
   vec4 col;
   vec4 tmpvar_11;
   tmpvar_11 = texture2D (_MainTex, gl_TexCoord[0].xy);
-  col.xyz = (((_TintColor.xyz * tmpvar_11.xyz) * tmpvar_16.xyz) * 2.000000).xyz;
-  col.w = float(vec4(((1.000000 - tmpvar_11.w) * ((_TintColor.w * tmpvar_16.w) * 2.000000))));
+  col.xyz = (((_TintColor.xyz * tmpvar_11.xyz) * tmpvar_2.xyz) * 2.000000).xyz;
+  col.w = float(vec4(((1.000000 - tmpvar_11.w) * ((_TintColor.w * tmpvar_2.w) * 2.000000))));
   gl_FragData[0] = col.xyzw;
 }
 

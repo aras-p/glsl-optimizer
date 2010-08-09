@@ -3,15 +3,15 @@ uniform sampler2D _MainTex;
 uniform vec4 _CenterRadius;
 void main ()
 {
-  vec2 tmpvar_30;
-  tmpvar_30 = gl_TexCoord[0].xy;
+  vec2 tmpvar_2;
+  tmpvar_2 = gl_TexCoord[0].xy;
   vec2 inUV;
-  inUV = tmpvar_30.xy;
+  inUV = tmpvar_2.xy;
   vec4 tmpvar_16;
   tmpvar_16.x = float(inUV.x);
   tmpvar_16.y = float(inUV.y);
   tmpvar_16.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_16.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
-  gl_FragData[0] = texture2D (_MainTex, (mix ((_RotationMatrix * tmpvar_16).xy, tmpvar_30, vec2(min (1.000000, length ((tmpvar_30 / _CenterRadius.zw))))) + _CenterRadius.xy)).xyzw;
+  gl_FragData[0] = texture2D (_MainTex, (mix ((_RotationMatrix * tmpvar_16).xy, tmpvar_2, vec2(min (1.000000, length ((tmpvar_2 / _CenterRadius.zw))))) + _CenterRadius.xy)).xyzw;
 }
 

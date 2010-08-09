@@ -7,11 +7,11 @@ uniform mat4 _Object2World;
 uniform vec4 _MainTex_ST;
 void main ()
 {
-  vec4 tmpvar_48;
-  tmpvar_48 = gl_Vertex.xyzw;
+  vec4 tmpvar_1;
+  tmpvar_1 = gl_Vertex.xyzw;
   vec3 tmpvar_89;
   vec4 tmpvar_35;
-  tmpvar_35 = (gl_ModelViewProjectionMatrix * tmpvar_48);
+  tmpvar_35 = (gl_ModelViewProjectionMatrix * tmpvar_1);
   vec4 o_i0;
   vec4 tmpvar_41;
   tmpvar_41 = (tmpvar_35 * 0.500000);
@@ -22,7 +22,7 @@ void main ()
   o_i0.xy = (tmpvar_42 + tmpvar_41.w).xy;
   o_i0.zw = vec2(tmpvar_35.zw);
   tmpvar_89.xy = ((gl_MultiTexCoord1.xy * unity_LightmapST.xy) + unity_LightmapST.zw).xy;
-  tmpvar_89.z = float(vec3(((-((gl_ModelViewMatrix * tmpvar_48).z) * unity_LightmapFade.z) + unity_LightmapFade.w)));
+  tmpvar_89.z = float(vec3(((-((gl_ModelViewMatrix * tmpvar_1).z) * unity_LightmapFade.z) + unity_LightmapFade.w)));
   gl_Position = tmpvar_35.xyzw;
   vec4 tmpvar_17;
   tmpvar_17.x = float(tmpvar_35.z);
@@ -36,7 +36,7 @@ void main ()
   tmpvar_19.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[0] = tmpvar_19;
   vec4 tmpvar_21;
-  tmpvar_21.xyz = vec3((_Object2World * tmpvar_48).xyz);
+  tmpvar_21.xyz = vec3((_Object2World * tmpvar_1).xyz);
   tmpvar_21.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[1] = tmpvar_21;
   gl_TexCoord[2] = o_i0.xyzw;

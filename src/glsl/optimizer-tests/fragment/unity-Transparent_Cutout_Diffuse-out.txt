@@ -1,19 +1,3 @@
-struct SurfaceOutput {
-  vec3 Albedo;
-  vec3 Normal;
-  vec3 Emission;
-  float Specular;
-  float Gloss;
-  float Alpha;
-};
-struct v2f_surf {
-  vec4 pos;
-  float fog;
-  vec2 hip_pack0;
-  vec3 normal;
-  vec3 lightDir;
-  vec4 _LightCoord;
-};
 varying vec4 xlv_FOG;
 uniform sampler2D _MainTex;
 uniform sampler2D _LightTextureB0;
@@ -23,44 +7,33 @@ uniform float _Cutoff;
 uniform vec4 _Color;
 void main ()
 {
-  v2f_surf xlt_IN;
-  xlt_IN.pos = vec4(0.000000, 0.000000, 0.000000, 0.000000);
-  xlt_IN.fog = xlv_FOG.x;
-  xlt_IN.hip_pack0 = gl_TexCoord[0].xy;
-  xlt_IN.normal = gl_TexCoord[1].xyz;
-  xlt_IN.lightDir = gl_TexCoord[2].xyz;
-  xlt_IN._LightCoord = gl_TexCoord[3].xyzw;
-  v2f_surf IN;
-  IN = xlt_IN;
+  vec3 tmpvar_75;
+  vec4 tmpvar_76;
+  tmpvar_75 = gl_TexCoord[2].xyz;
+  tmpvar_76 = gl_TexCoord[3].xyzw;
   vec4 c;
-  SurfaceOutput o;
-  o.Albedo = vec3(0.000000, 0.000000, 0.000000);
-  o.Emission = vec3(0.000000, 0.000000, 0.000000);
-  o.Specular = 0.000000;
-  o.Alpha = 0.000000;
-  o.Gloss = 0.000000;
-  o.Normal = xlt_IN.normal;
-  SurfaceOutput o_i0;
-  o_i0 = o;
+  vec3 tmpvar_77;
+  vec3 tmpvar_78;
+  float tmpvar_82;
   vec4 tmpvar_41;
-  tmpvar_41 = (texture2D (_MainTex, xlt_IN.hip_pack0.xy) * _Color);
-  o_i0.Albedo = tmpvar_41.xyz;
-  o_i0.Alpha = tmpvar_41.w;
-  o = o_i0;
+  tmpvar_41 = (texture2D (_MainTex, gl_TexCoord[0].xy) * _Color);
+  float tmpvar_43;
+  tmpvar_43 = tmpvar_41.w;
+  tmpvar_77 = tmpvar_41.xyz;
+  tmpvar_78 = gl_TexCoord[1].xyz;
+  tmpvar_82 = tmpvar_43;
   float x;
-  x = (o_i0.Alpha - _Cutoff);
+  x = (tmpvar_43 - _Cutoff);
   if ((x < 0.000000)) {
     discard;
   };
-  vec4 LightCoord;
-  LightCoord = IN._LightCoord;
   vec3 LightCoord_i0;
-  LightCoord_i0 = IN._LightCoord.xyz;
+  LightCoord_i0 = tmpvar_76.xyz;
   vec4 c_i0_i1;
-  c_i0_i1.xyz = ((o.Albedo * _LightColor0.xyz) * ((max (0.000000, dot (o.Normal, normalize (IN.lightDir))) * ((float((IN._LightCoord.z > 0.000000)) * texture2D (_LightTexture0, ((LightCoord.xy / LightCoord.w) + 0.500000)).w) * texture2D (_LightTextureB0, vec2(dot (LightCoord_i0, LightCoord_i0))).w)) * 2.000000)).xyz;
-  c_i0_i1.w = float(vec4(o.Alpha));
+  c_i0_i1.xyz = ((tmpvar_77 * _LightColor0.xyz) * ((max (0.000000, dot (tmpvar_78, normalize (tmpvar_75))) * ((float((tmpvar_76.z > 0.000000)) * texture2D (_LightTexture0, ((tmpvar_76.xy / tmpvar_76.w) + 0.500000)).w) * texture2D (_LightTextureB0, vec2(dot (LightCoord_i0, LightCoord_i0))).w)) * 2.000000)).xyz;
+  c_i0_i1.w = float(vec4(tmpvar_82));
   c = c_i0_i1;
-  c.w = float(vec4(o.Alpha));
+  c.w = float(vec4(tmpvar_82));
   gl_FragData[0] = c.xyzw;
 }
 

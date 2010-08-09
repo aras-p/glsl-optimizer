@@ -1,36 +1,17 @@
-struct SurfaceOutput {
-  vec3 Albedo;
-  vec3 Normal;
-  vec3 Emission;
-  float Specular;
-  float Gloss;
-  float Alpha;
-};
 varying vec4 xlv_FOG;
 uniform sampler2D unity_Lightmap;
 uniform sampler2D _DecalBump;
 uniform sampler2D _Decal;
 void main ()
 {
-  vec4 tmpvar_53;
-  tmpvar_53 = gl_TexCoord[0].xyzw;
+  vec4 tmpvar_3;
+  tmpvar_3 = gl_TexCoord[0].xyzw;
   vec4 c;
-  SurfaceOutput o;
-  o.Albedo = vec3(0.000000, 0.000000, 0.000000);
-  o.Emission = vec3(0.000000, 0.000000, 0.000000);
-  o.Specular = 0.000000;
-  o.Alpha = 0.000000;
-  o.Gloss = 0.000000;
-  SurfaceOutput o_i0;
-  o_i0 = o;
-  o_i0.Albedo = (texture2D (_Decal, tmpvar_53.xy).xyz * 0.500000);
   vec4 normal;
-  normal.xy = ((texture2D (_DecalBump, tmpvar_53.zw).wy * 2.000000) - 1.000000).xy;
+  normal.xy = ((texture2D (_DecalBump, tmpvar_3.zw).wy * 2.000000) - 1.000000).xy;
   normal.z = float(vec3(sqrt (((1.000000 - (normal.x * normal.x)) - (normal.y * normal.y)))));
-  o_i0.Normal = normal.xyz;
-  o = o_i0;
-  c.xyz = (o_i0.Albedo * (2.000000 * texture2D (unity_Lightmap, gl_TexCoord[1].xy).xyz)).xyz;
-  c.w = float(vec4(o_i0.Alpha));
+  c.xyz = ((texture2D (_Decal, tmpvar_3.xy).xyz * 0.500000) * (2.000000 * texture2D (unity_Lightmap, gl_TexCoord[1].xy).xyz)).xyz;
+  c.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_FragData[0] = c.xyzw;
 }
 

@@ -1,11 +1,11 @@
 void main ()
 {
-  vec2 tmpvar_27;
-  tmpvar_27 = gl_MultiTexCoord0.xy;
+  vec2 tmpvar_3;
+  tmpvar_3 = gl_MultiTexCoord0.xy;
   vec2 tmpvar_39[2];
   vec4 tmpvar_21;
-  tmpvar_21.x = float(tmpvar_27.x);
-  tmpvar_21.y = float(tmpvar_27.y);
+  tmpvar_21.x = float(tmpvar_3.x);
+  tmpvar_21.y = float(tmpvar_3.y);
   tmpvar_21.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_21.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_39[0] = (gl_TextureMatrix[0] * tmpvar_21).xy;

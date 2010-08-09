@@ -7,13 +7,13 @@ uniform vec4 _MainTex_ST;
 uniform vec4 _DecalTex_ST;
 void main ()
 {
-  vec4 tmpvar_59;
-  tmpvar_59 = gl_MultiTexCoord0.xyzw;
+  vec4 tmpvar_7;
+  tmpvar_7 = gl_MultiTexCoord0.xyzw;
   vec4 tmpvar_90;
   vec4 tmpvar_38;
   tmpvar_38 = (gl_ModelViewProjectionMatrix * gl_Vertex.xyzw);
-  tmpvar_90.xy = ((tmpvar_59.xy * _MainTex_ST.xy) + _MainTex_ST.zw).xy;
-  tmpvar_90.zw = vec2(((tmpvar_59.xy * _DecalTex_ST.xy) + _DecalTex_ST.zw).xy);
+  tmpvar_90.xy = ((tmpvar_7.xy * _MainTex_ST.xy) + _MainTex_ST.zw).xy;
+  tmpvar_90.zw = vec2(((tmpvar_7.xy * _DecalTex_ST.xy) + _DecalTex_ST.zw).xy);
   mat3 tmpvar_47;
   tmpvar_47[0] = _Object2World[0].xyz;
   tmpvar_47[1] = _Object2World[1].xyz;

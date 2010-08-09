@@ -5,13 +5,13 @@ uniform vec4 _MainTex_ST;
 uniform vec4 _Illum_ST;
 void main ()
 {
-  vec4 tmpvar_45;
-  tmpvar_45 = gl_MultiTexCoord0.xyzw;
+  vec4 tmpvar_7;
+  tmpvar_7 = gl_MultiTexCoord0.xyzw;
   vec4 tmpvar_72;
   vec4 tmpvar_31;
   tmpvar_31 = (gl_ModelViewProjectionMatrix * gl_Vertex.xyzw);
-  tmpvar_72.xy = ((tmpvar_45.xy * _MainTex_ST.xy) + _MainTex_ST.zw).xy;
-  tmpvar_72.zw = vec2(((tmpvar_45.xy * _Illum_ST.xy) + _Illum_ST.zw).xy);
+  tmpvar_72.xy = ((tmpvar_7.xy * _MainTex_ST.xy) + _MainTex_ST.zw).xy;
+  tmpvar_72.zw = vec2(((tmpvar_7.xy * _Illum_ST.xy) + _Illum_ST.zw).xy);
   vec4 o_i0;
   vec4 tmpvar_37;
   tmpvar_37 = (tmpvar_31 * 0.500000);

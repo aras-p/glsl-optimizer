@@ -3,21 +3,18 @@ uniform vec3 _WorldSpaceCameraPos;
 uniform mat4 _World2Object;
 void main ()
 {
-  vec4 tmpvar_32;
-  tmpvar_32 = gl_Vertex.xyzw;
-  vec3 tmpvar_52;
+  vec4 tmpvar_1;
+  tmpvar_1 = gl_Vertex.xyzw;
   vec4 tmpvar_22;
   tmpvar_22.xyz = vec3(_WorldSpaceCameraPos.xyz);
   tmpvar_22.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
-  tmpvar_52 = reflect (-(normalize ((((_World2Object * tmpvar_22).xyz * unity_Scale.w) - tmpvar_32.xyz))), gl_Normal.xyz);
   vec4 tmpvar_28;
-  tmpvar_28.xyz = vec3(tmpvar_52.xyz);
+  tmpvar_28.xyz = vec3(reflect (-(normalize ((((_World2Object * tmpvar_22).xyz * unity_Scale.w) - tmpvar_1.xyz))), gl_Normal.xyz).xyz);
   tmpvar_28.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
-  tmpvar_52 = (gl_ModelViewMatrix * tmpvar_28).xyz;
-  gl_Position = (gl_ModelViewProjectionMatrix * tmpvar_32).xyzw;
+  gl_Position = (gl_ModelViewProjectionMatrix * tmpvar_1).xyzw;
   gl_FrontColor = gl_Color.xyzw;
   vec4 tmpvar_13;
-  tmpvar_13.xyz = vec3(tmpvar_52.xyz);
+  tmpvar_13.xyz = vec3((gl_ModelViewMatrix * tmpvar_28).xyz);
   tmpvar_13.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[0] = tmpvar_13;
 }

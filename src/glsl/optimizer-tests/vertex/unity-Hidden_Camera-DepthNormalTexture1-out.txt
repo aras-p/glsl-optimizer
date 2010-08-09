@@ -1,31 +1,18 @@
-struct appdata_grass {
-  vec4 vertex;
-  vec4 tangent;
-  vec4 color;
-  vec4 texcoord;
-  vec4 texcoord1;
-};
 attribute vec4 TANGENT;
 uniform vec4 _WavingTint;
 uniform vec4 _WaveAndDistance;
 uniform vec4 _ProjectionParams;
 void main ()
 {
-  appdata_grass xlt_v;
-  xlt_v.vertex = gl_Vertex.xyzw;
-  xlt_v.tangent = TANGENT.xyzw;
-  xlt_v.color = gl_Color.xyzw;
-  xlt_v.texcoord = gl_MultiTexCoord0.xyzw;
-  xlt_v.texcoord1 = gl_MultiTexCoord1.xyzw;
-  appdata_grass v;
-  v = xlt_v;
-  vec4 tmpvar_132;
+  vec4 tmpvar_1;
+  tmpvar_1 = gl_Vertex.xyzw;
+  vec4 tmpvar_142;
   vec4 vertex;
-  vertex = xlt_v.vertex;
+  vertex = tmpvar_1;
   vec3 waveMove;
   waveMove = vec3(0.000000, 0.000000, 0.000000);
   vec4 tmpvar_87;
-  tmpvar_87 = ((fract ((((vertex.x * (vec4(0.012000, 0.020000, 0.060000, 0.024000) * _WaveAndDistance.y)) + (vertex.z * (vec4(0.006000, 0.020000, 0.020000, 0.050000) * _WaveAndDistance.y))) + (_WaveAndDistance.x * vec4(1.200000, 2.000000, 1.600000, 4.800000)))) * 6.408850) - 3.141590);
+  tmpvar_87 = ((fract ((((tmpvar_1.x * (vec4(0.012000, 0.020000, 0.060000, 0.024000) * _WaveAndDistance.y)) + (tmpvar_1.z * (vec4(0.006000, 0.020000, 0.020000, 0.050000) * _WaveAndDistance.y))) + (_WaveAndDistance.x * vec4(1.200000, 2.000000, 1.600000, 4.800000)))) * 6.408850) - 3.141590);
   vec4 tmpvar_88;
   tmpvar_88 = (tmpvar_87 * tmpvar_87);
   vec4 tmpvar_92;
@@ -37,19 +24,18 @@ void main ()
   vec4 tmpvar_97;
   tmpvar_97 = (tmpvar_95 * tmpvar_95);
   vec4 tmpvar_102;
-  tmpvar_102 = ((tmpvar_97 * tmpvar_97) * (xlt_v.color.w * _WaveAndDistance.z));
+  tmpvar_102 = ((tmpvar_97 * tmpvar_97) * (gl_Color.w * _WaveAndDistance.z));
   waveMove.x = dot (tmpvar_102, vec4(0.024000, 0.040000, -0.120000, 0.096000));
   waveMove.z = float(vec3(dot (tmpvar_102, vec4(0.006000, 0.020000, -0.020000, 0.100000))));
-  vertex.xz = vec2((vertex.xz - (waveMove.xz * _WaveAndDistance.z)).xy);
-  v.vertex = vertex;
-  tmpvar_132.xyz = vec3(0.000000, 0.000000, 1.000000);
-  tmpvar_132.w = float(vec4(-(((gl_ModelViewMatrix * v.vertex).z * _ProjectionParams.w))));
-  gl_Position = (gl_ModelViewProjectionMatrix * v.vertex).xyzw;
+  vertex.xz = vec2((tmpvar_1.xz - (waveMove.xz * _WaveAndDistance.z)).xy);
+  tmpvar_142.xyz = vec3(0.000000, 0.000000, 1.000000);
+  tmpvar_142.w = float(vec4(-(((gl_ModelViewMatrix * vertex).z * _ProjectionParams.w))));
+  gl_Position = (gl_ModelViewProjectionMatrix * vertex).xyzw;
   vec4 tmpvar_15;
-  tmpvar_15.xy = vec2(v.texcoord.xy);
+  tmpvar_15.xy = vec2(gl_MultiTexCoord0.xy);
   tmpvar_15.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_15.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[0] = tmpvar_15;
-  gl_TexCoord[1] = tmpvar_132.xyzw;
+  gl_TexCoord[1] = tmpvar_142.xyzw;
 }
 

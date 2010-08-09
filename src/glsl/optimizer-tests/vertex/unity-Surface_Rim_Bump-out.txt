@@ -8,26 +8,26 @@ uniform mat4 _LightMatrix0;
 uniform vec4 _BumpMap_ST;
 void main ()
 {
-  vec4 tmpvar_51;
-  vec4 tmpvar_52;
-  vec3 tmpvar_53;
-  tmpvar_51 = gl_Vertex.xyzw;
-  tmpvar_52 = TANGENT.xyzw;
-  tmpvar_53 = gl_Normal.xyz;
+  vec4 tmpvar_1;
+  tmpvar_1 = gl_Vertex.xyzw;
+  vec4 tmpvar_3;
+  tmpvar_3 = TANGENT.xyzw;
+  vec3 tmpvar_5;
+  tmpvar_5 = gl_Normal.xyz;
   vec4 tmpvar_30;
-  tmpvar_30 = (gl_ModelViewProjectionMatrix * tmpvar_51);
+  tmpvar_30 = (gl_ModelViewProjectionMatrix * tmpvar_1);
   vec3 tmpvar_34;
-  tmpvar_34 = (cross (tmpvar_53, tmpvar_52.xyz) * tmpvar_52.w);
+  tmpvar_34 = (cross (tmpvar_5, tmpvar_3.xyz) * tmpvar_3.w);
   mat3 tmpvar_35;
-  tmpvar_35[0].x = float(tmpvar_52.x);
+  tmpvar_35[0].x = float(tmpvar_3.x);
   tmpvar_35[0].y = float(tmpvar_34.x);
-  tmpvar_35[0].z = float(tmpvar_53.x);
-  tmpvar_35[1].x = float(tmpvar_52.y);
+  tmpvar_35[0].z = float(tmpvar_5.x);
+  tmpvar_35[1].x = float(tmpvar_3.y);
   tmpvar_35[1].y = float(tmpvar_34.y);
-  tmpvar_35[1].z = float(tmpvar_53.y);
-  tmpvar_35[2].x = float(tmpvar_52.z);
+  tmpvar_35[1].z = float(tmpvar_5.y);
+  tmpvar_35[2].x = float(tmpvar_3.z);
   tmpvar_35[2].y = float(tmpvar_34.z);
-  tmpvar_35[2].z = float(tmpvar_53.z);
+  tmpvar_35[2].z = float(tmpvar_5.z);
   gl_Position = tmpvar_30.xyzw;
   vec4 tmpvar_17;
   tmpvar_17.x = float(tmpvar_30.z);
@@ -41,9 +41,9 @@ void main ()
   tmpvar_19.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[0] = tmpvar_19;
   vec4 tmpvar_21;
-  tmpvar_21.xyz = vec3((tmpvar_35 * (((_World2Object * _WorldSpaceLightPos0).xyz * unity_Scale.w) - tmpvar_51.xyz)).xyz);
+  tmpvar_21.xyz = vec3((tmpvar_35 * (((_World2Object * _WorldSpaceLightPos0).xyz * unity_Scale.w) - tmpvar_1.xyz)).xyz);
   tmpvar_21.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[1] = tmpvar_21;
-  gl_TexCoord[2] = (_LightMatrix0 * (_Object2World * tmpvar_51)).xyzw;
+  gl_TexCoord[2] = (_LightMatrix0 * (_Object2World * tmpvar_1)).xyzw;
 }
 

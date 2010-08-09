@@ -2,11 +2,11 @@ uniform sampler2D _MainTex;
 uniform sampler2D _GUIClipTexture;
 void main ()
 {
-  vec4 tmpvar_18;
-  tmpvar_18 = gl_Color.xyzw;
+  vec4 tmpvar_2;
+  tmpvar_2 = gl_Color.xyzw;
   vec4 col;
-  col.xyz = (texture2D (_MainTex, gl_TexCoord[0].xy).xyz * tmpvar_18.xyz).xyz;
-  col.w = float(vec4((tmpvar_18.w * texture2D (_GUIClipTexture, gl_TexCoord[1].xy).w)));
+  col.xyz = (texture2D (_MainTex, gl_TexCoord[0].xy).xyz * tmpvar_2.xyz).xyz;
+  col.w = float(vec4((tmpvar_2.w * texture2D (_GUIClipTexture, gl_TexCoord[1].xy).w)));
   gl_FragData[0] = col.xyzw;
 }
 

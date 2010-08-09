@@ -25,19 +25,18 @@ uniform mat4 _Object2World;
 uniform vec4 _Control_ST;
 void main ()
 {
-  vec4 tmpvar_157;
-  vec4 tmpvar_160;
-  tmpvar_157 = gl_Vertex.xyzw;
-  tmpvar_160 = gl_MultiTexCoord0.xyzw;
+  vec4 tmpvar_1;
+  tmpvar_1 = gl_Vertex.xyzw;
+  vec4 tmpvar_7;
+  tmpvar_7 = gl_MultiTexCoord0.xyzw;
   vec4 tmpvar_203;
   vec4 tmpvar_204;
-  vec3 tmpvar_207;
   vec4 tmpvar_86;
-  tmpvar_86 = (gl_ModelViewProjectionMatrix * tmpvar_157);
-  tmpvar_203.xy = ((tmpvar_160.xy * _Control_ST.xy) + _Control_ST.zw).xy;
-  tmpvar_203.zw = vec2(((tmpvar_160.xy * _Splat0_ST.xy) + _Splat0_ST.zw).xy);
-  tmpvar_204.xy = ((tmpvar_160.xy * _Splat1_ST.xy) + _Splat1_ST.zw).xy;
-  tmpvar_204.zw = vec2(((tmpvar_160.xy * _Splat2_ST.xy) + _Splat2_ST.zw).xy);
+  tmpvar_86 = (gl_ModelViewProjectionMatrix * tmpvar_1);
+  tmpvar_203.xy = ((tmpvar_7.xy * _Control_ST.xy) + _Control_ST.zw).xy;
+  tmpvar_203.zw = vec2(((tmpvar_7.xy * _Splat0_ST.xy) + _Splat0_ST.zw).xy);
+  tmpvar_204.xy = ((tmpvar_7.xy * _Splat1_ST.xy) + _Splat1_ST.zw).xy;
+  tmpvar_204.zw = vec2(((tmpvar_7.xy * _Splat2_ST.xy) + _Splat2_ST.zw).xy);
   mat3 tmpvar_98;
   tmpvar_98[0] = _Object2World[0].xyz;
   tmpvar_98[1] = _Object2World[1].xyz;
@@ -57,9 +56,8 @@ void main ()
   x2.x = dot (unity_SHBr, tmpvar_113);
   x2.y = float(vec2(dot (unity_SHBg, tmpvar_113)));
   x2.z = float(vec3(dot (unity_SHBb, tmpvar_113)));
-  tmpvar_207 = ((x1 + x2) + (unity_SHC.xyz * ((tmpvar_104.x * tmpvar_104.x) - (tmpvar_104.y * tmpvar_104.y))));
   vec3 tmpvar_124;
-  tmpvar_124 = (_Object2World * tmpvar_157).xyz;
+  tmpvar_124 = (_Object2World * tmpvar_1).xyz;
   vec4 tmpvar_127;
   tmpvar_127 = (unity_4LightPosX0 - tmpvar_124.x);
   vec4 tmpvar_128;
@@ -70,7 +68,6 @@ void main ()
   tmpvar_133 = (((tmpvar_127 * tmpvar_127) + (tmpvar_128 * tmpvar_128)) + (tmpvar_129 * tmpvar_129));
   vec4 tmpvar_143;
   tmpvar_143 = (max (vec4(0.000000, 0.000000, 0.000000, 0.000000), ((((tmpvar_127 * tmpvar_102.x) + (tmpvar_128 * tmpvar_102.y)) + (tmpvar_129 * tmpvar_102.z)) * inversesqrt (tmpvar_133))) * 1.0/((1.000000 + (tmpvar_133 * unity_4LightAtten0))));
-  tmpvar_207 = (tmpvar_207 + ((((unity_LightColor0 * tmpvar_143.x) + (unity_LightColor1 * tmpvar_143.y)) + (unity_LightColor2 * tmpvar_143.z)) + (unity_LightColor3 * tmpvar_143.w)));
   vec4 o_i0;
   vec4 tmpvar_152;
   tmpvar_152 = (tmpvar_86 * 0.500000);
@@ -90,7 +87,7 @@ void main ()
   gl_TexCoord[0] = tmpvar_203.xyzw;
   gl_TexCoord[1] = tmpvar_204.xyzw;
   vec4 tmpvar_23;
-  tmpvar_23.xy = vec2(((tmpvar_160.xy * _Splat3_ST.xy) + _Splat3_ST.zw).xy);
+  tmpvar_23.xy = vec2(((tmpvar_7.xy * _Splat3_ST.xy) + _Splat3_ST.zw).xy);
   tmpvar_23.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_23.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[2] = tmpvar_23;
@@ -99,7 +96,7 @@ void main ()
   tmpvar_25.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[3] = tmpvar_25;
   vec4 tmpvar_27;
-  tmpvar_27.xyz = vec3(tmpvar_207.xyz);
+  tmpvar_27.xyz = vec3((((x1 + x2) + (unity_SHC.xyz * ((tmpvar_104.x * tmpvar_104.x) - (tmpvar_104.y * tmpvar_104.y)))) + ((((unity_LightColor0 * tmpvar_143.x) + (unity_LightColor1 * tmpvar_143.y)) + (unity_LightColor2 * tmpvar_143.z)) + (unity_LightColor3 * tmpvar_143.w))).xyz);
   tmpvar_27.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[4] = tmpvar_27;
   gl_TexCoord[5] = o_i0.xyzw;

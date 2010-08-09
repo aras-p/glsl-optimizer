@@ -1,11 +1,3 @@
-struct SurfaceOutput {
-  vec3 Albedo;
-  vec3 Normal;
-  vec3 Emission;
-  float Specular;
-  float Gloss;
-  float Alpha;
-};
 varying vec4 xlv_FOG;
 uniform sampler2D unity_LightmapInd;
 uniform sampler2D unity_Lightmap;
@@ -17,33 +9,22 @@ uniform sampler2D _LightBuffer;
 uniform sampler2D _Control;
 void main ()
 {
-  vec4 tmpvar_85;
-  vec4 tmpvar_86;
-  vec3 tmpvar_89;
-  tmpvar_85 = gl_TexCoord[0].xyzw;
-  tmpvar_86 = gl_TexCoord[1].xyzw;
-  tmpvar_89 = gl_TexCoord[4].xyz;
+  vec4 tmpvar_3;
+  tmpvar_3 = gl_TexCoord[0].xyzw;
+  vec4 tmpvar_5;
+  tmpvar_5 = gl_TexCoord[1].xyzw;
+  vec3 tmpvar_11;
+  tmpvar_11 = gl_TexCoord[4].xyz;
   vec4 light;
-  SurfaceOutput o;
-  o.Albedo = vec3(0.000000, 0.000000, 0.000000);
-  o.Emission = vec3(0.000000, 0.000000, 0.000000);
-  o.Specular = 0.000000;
-  o.Alpha = 0.000000;
-  o.Gloss = 0.000000;
-  SurfaceOutput o_i0;
-  o_i0 = o;
   vec4 tmpvar_47;
-  tmpvar_47 = texture2D (_Control, tmpvar_85.xy);
-  o_i0.Albedo = ((((tmpvar_47.x * texture2D (_Splat0, tmpvar_85.zw).xyz) + (tmpvar_47.y * texture2D (_Splat1, tmpvar_86.xy).xyz)) + (tmpvar_47.z * texture2D (_Splat2, tmpvar_86.zw).xyz)) + (tmpvar_47.w * texture2D (_Splat3, gl_TexCoord[2].xy).xyz));
-  o_i0.Alpha = 0.000000;
-  o = o_i0;
+  tmpvar_47 = texture2D (_Control, tmpvar_3.xy);
   vec4 tmpvar_62;
   tmpvar_62 = -(log2 (texture2DProj (_LightBuffer, gl_TexCoord[3].xyzw)));
   light = tmpvar_62;
-  light.xyz = (tmpvar_62.xyz + mix ((2.000000 * texture2D (unity_LightmapInd, tmpvar_89.xy).xyz), (2.000000 * texture2D (unity_Lightmap, tmpvar_89.xy).xyz), vec3(clamp (tmpvar_89.z, 0.000000, 1.000000)))).xyz;
+  light.xyz = (tmpvar_62.xyz + mix ((2.000000 * texture2D (unity_LightmapInd, tmpvar_11.xy).xyz), (2.000000 * texture2D (unity_Lightmap, tmpvar_11.xy).xyz), vec3(clamp (tmpvar_11.z, 0.000000, 1.000000)))).xyz;
   vec4 c;
-  c.xyz = (o_i0.Albedo * light.xyz).xyz;
-  c.w = float(vec4(o_i0.Alpha));
+  c.xyz = (((((tmpvar_47.x * texture2D (_Splat0, tmpvar_3.zw).xyz) + (tmpvar_47.y * texture2D (_Splat1, tmpvar_5.xy).xyz)) + (tmpvar_47.z * texture2D (_Splat2, tmpvar_5.zw).xyz)) + (tmpvar_47.w * texture2D (_Splat3, gl_TexCoord[2].xy).xyz)) * light.xyz).xyz;
+  c.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_FragData[0] = c.xyzw;
 }
 

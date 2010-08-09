@@ -1,28 +1,25 @@
 uniform vec4 _ProjectionParams;
 void main ()
 {
-  vec4 tmpvar_31;
-  vec3 tmpvar_32;
-  tmpvar_31 = gl_Vertex.xyzw;
-  tmpvar_32 = gl_MultiTexCoord0.xyz;
-  vec4 tmpvar_47;
-  vec3 tmpvar_49;
-  tmpvar_47 = (gl_ModelViewProjectionMatrix * tmpvar_31);
+  vec4 tmpvar_1;
+  tmpvar_1 = gl_Vertex.xyzw;
+  vec3 tmpvar_3;
+  tmpvar_3 = gl_MultiTexCoord0.xyz;
+  vec4 tmpvar_19;
+  tmpvar_19 = (gl_ModelViewProjectionMatrix * tmpvar_1);
   vec4 o_i0;
   vec4 tmpvar_22;
-  tmpvar_22 = (tmpvar_47 * 0.500000);
+  tmpvar_22 = (tmpvar_19 * 0.500000);
   o_i0 = tmpvar_22;
   vec2 tmpvar_23;
   tmpvar_23.x = float(tmpvar_22.x);
   tmpvar_23.y = float(vec2((tmpvar_22.y * _ProjectionParams.x)));
   o_i0.xy = (tmpvar_23 + tmpvar_22.w).xy;
-  o_i0.zw = vec2(tmpvar_47.zw);
-  tmpvar_49 = ((gl_ModelViewMatrix * tmpvar_31).xyz * vec3(-1.000000, -1.000000, 1.000000));
-  tmpvar_49 = mix (tmpvar_49, tmpvar_32, vec3(float((tmpvar_32.z != 0.000000))));
-  gl_Position = tmpvar_47.xyzw;
+  o_i0.zw = vec2(tmpvar_19.zw);
+  gl_Position = tmpvar_19.xyzw;
   gl_TexCoord[0] = o_i0.xyzw;
   vec4 tmpvar_11;
-  tmpvar_11.xyz = vec3(tmpvar_49.xyz);
+  tmpvar_11.xyz = vec3(mix (((gl_ModelViewMatrix * tmpvar_1).xyz * vec3(-1.000000, -1.000000, 1.000000)), tmpvar_3, vec3(float((tmpvar_3.z != 0.000000)))).xyz);
   tmpvar_11.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[1] = tmpvar_11;
 }

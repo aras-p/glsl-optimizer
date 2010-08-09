@@ -1,11 +1,3 @@
-struct SurfaceOutput {
-  vec3 Albedo;
-  vec3 Normal;
-  vec3 Emission;
-  float Specular;
-  float Gloss;
-  float Alpha;
-};
 varying vec4 xlv_FOG;
 uniform vec4 _SpecColor;
 uniform float _Shininess;
@@ -17,41 +9,31 @@ uniform vec4 _Color;
 uniform sampler2D _BumpMap;
 void main ()
 {
-  vec4 tmpvar_96;
-  vec3 tmpvar_99;
-  tmpvar_96 = gl_TexCoord[0].xyzw;
-  tmpvar_99 = gl_TexCoord[3].xyz;
+  vec4 tmpvar_3;
+  tmpvar_3 = gl_TexCoord[0].xyzw;
+  vec3 tmpvar_9;
+  tmpvar_9 = gl_TexCoord[3].xyz;
   vec4 c;
-  SurfaceOutput o;
-  o.Albedo = vec3(0.000000, 0.000000, 0.000000);
-  o.Emission = vec3(0.000000, 0.000000, 0.000000);
-  o.Specular = 0.000000;
-  o.Alpha = 0.000000;
-  o.Gloss = 0.000000;
-  SurfaceOutput o_i0;
-  o_i0 = o;
   vec4 tmpvar_54;
-  tmpvar_54 = texture2D (_MainTex, tmpvar_96.xy);
-  o_i0.Albedo = (tmpvar_54.xyz * _Color.xyz);
-  o_i0.Gloss = tmpvar_54.w;
-  o_i0.Alpha = (tmpvar_54.w * _Color.w);
-  o_i0.Specular = _Shininess;
+  tmpvar_54 = texture2D (_MainTex, tmpvar_3.xy);
+  float tmpvar_58;
+  tmpvar_58 = (tmpvar_54.w * _Color.w);
   vec4 normal;
-  normal.xy = ((texture2D (_BumpMap, tmpvar_96.zw).wy * 2.000000) - 1.000000).xy;
+  normal.xy = ((texture2D (_BumpMap, tmpvar_3.zw).wy * 2.000000) - 1.000000).xy;
   normal.z = float(vec3(sqrt (((1.000000 - (normal.x * normal.x)) - (normal.y * normal.y)))));
-  o_i0.Normal = normal.xyz;
-  o = o_i0;
+  vec3 tmpvar_66;
+  tmpvar_66 = normal.xyz;
   vec3 tmpvar_69;
   tmpvar_69 = normalize (gl_TexCoord[1].xyz);
   float atten;
-  atten = (texture2D (_LightTextureB0, vec2(dot (tmpvar_99, tmpvar_99))).w * textureCube (_LightTexture0, tmpvar_99).w);
+  atten = (texture2D (_LightTextureB0, vec2(dot (tmpvar_9, tmpvar_9))).w * textureCube (_LightTexture0, tmpvar_9).w);
   vec4 c_i0;
   float tmpvar_89;
-  tmpvar_89 = (pow (max (0.000000, dot (o_i0.Normal, normalize ((tmpvar_69 + normalize (gl_TexCoord[2].xyz))))), (o_i0.Specular * 128.000000)) * o_i0.Gloss);
-  c_i0.xyz = ((((o_i0.Albedo * _LightColor0.xyz) * max (0.000000, dot (o_i0.Normal, tmpvar_69))) + ((_LightColor0.xyz * _SpecColor.xyz) * tmpvar_89)) * (atten * 2.000000)).xyz;
-  c_i0.w = float(vec4((o_i0.Alpha + (((_LightColor0.w * _SpecColor.w) * tmpvar_89) * atten))));
+  tmpvar_89 = (pow (max (0.000000, dot (tmpvar_66, normalize ((tmpvar_69 + normalize (gl_TexCoord[2].xyz))))), (_Shininess * 128.000000)) * tmpvar_54.w);
+  c_i0.xyz = (((((tmpvar_54.xyz * _Color.xyz) * _LightColor0.xyz) * max (0.000000, dot (tmpvar_66, tmpvar_69))) + ((_LightColor0.xyz * _SpecColor.xyz) * tmpvar_89)) * (atten * 2.000000)).xyz;
+  c_i0.w = float(vec4((tmpvar_58 + (((_LightColor0.w * _SpecColor.w) * tmpvar_89) * atten))));
   c = c_i0;
-  c.w = float(vec4(o_i0.Alpha));
+  c.w = float(vec4(tmpvar_58));
   gl_FragData[0] = c.xyzw;
 }
 

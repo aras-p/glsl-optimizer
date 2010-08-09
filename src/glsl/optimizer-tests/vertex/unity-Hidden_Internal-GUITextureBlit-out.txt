@@ -2,9 +2,9 @@ uniform vec4 _MainTex_ST;
 uniform mat4 _GUIClipTextureMatrix;
 void main ()
 {
-  vec4 tmpvar_24;
-  tmpvar_24 = gl_Vertex.xyzw;
-  gl_Position = (gl_ModelViewProjectionMatrix * tmpvar_24).xyzw;
+  vec4 tmpvar_1;
+  tmpvar_1 = gl_Vertex.xyzw;
+  gl_Position = (gl_ModelViewProjectionMatrix * tmpvar_1).xyzw;
   gl_FrontColor = gl_Color.xyzw;
   vec4 tmpvar_13;
   tmpvar_13.xy = vec2(((gl_MultiTexCoord0.xy * _MainTex_ST.xy) + _MainTex_ST.zw).xy);
@@ -12,7 +12,7 @@ void main ()
   tmpvar_13.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[0] = tmpvar_13;
   vec4 tmpvar_15;
-  tmpvar_15.xy = vec2((_GUIClipTextureMatrix * (gl_ModelViewMatrix * tmpvar_24)).xy);
+  tmpvar_15.xy = vec2((_GUIClipTextureMatrix * (gl_ModelViewMatrix * tmpvar_1)).xy);
   tmpvar_15.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_15.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[1] = tmpvar_15;

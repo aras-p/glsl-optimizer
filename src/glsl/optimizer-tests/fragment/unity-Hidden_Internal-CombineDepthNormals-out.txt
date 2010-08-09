@@ -3,15 +3,15 @@ uniform sampler2D _CameraNormalsTexture;
 uniform sampler2D _CameraDepthTexture;
 void main ()
 {
-  vec2 tmpvar_68;
-  tmpvar_68 = gl_TexCoord[0].xy;
+  vec2 tmpvar_2;
+  tmpvar_2 = gl_TexCoord[0].xy;
   vec4 n;
   float d;
   vec4 tmpvar_41;
-  tmpvar_41 = texture2D (_CameraNormalsTexture, tmpvar_68);
+  tmpvar_41 = texture2D (_CameraNormalsTexture, tmpvar_2);
   n = tmpvar_41;
   float _ret_val_i0;
-  _ret_val_i0 = 1.0/(((_ZBufferParams.x * texture2D (_CameraDepthTexture, tmpvar_68).x) + _ZBufferParams.y));
+  _ret_val_i0 = 1.0/(((_ZBufferParams.x * texture2D (_CameraDepthTexture, tmpvar_2).x) + _ZBufferParams.y));
   d = _ret_val_i0;
   n.xyz = ((tmpvar_41.xyz * 2.000000) - 1.000000).xyz;
   n.z = float(vec3(-(n.z)));

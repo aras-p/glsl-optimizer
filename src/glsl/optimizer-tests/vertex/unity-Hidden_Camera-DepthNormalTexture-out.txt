@@ -1,9 +1,3 @@
-struct appdata {
-  vec4 vertex;
-  vec3 normal;
-  vec4 color;
-  vec4 texcoord;
-};
 uniform mat4 _TerrainEngineBendTree;
 uniform vec4 _SquashPlaneNormal;
 uniform float _SquashAmount;
@@ -11,21 +5,16 @@ uniform vec4 _Scale;
 uniform vec4 _ProjectionParams;
 void main ()
 {
-  appdata xlt_v;
-  xlt_v.vertex = gl_Vertex.xyzw;
-  xlt_v.normal = gl_Normal.xyz;
-  xlt_v.color = gl_Color.xyzw;
-  xlt_v.texcoord = gl_MultiTexCoord0.xyzw;
-  appdata v;
-  v = xlt_v;
-  vec4 tmpvar_105;
+  vec4 tmpvar_1;
+  tmpvar_1 = gl_Vertex.xyzw;
+  vec4 tmpvar_113;
   vec4 pos;
-  pos = xlt_v.vertex;
-  pos.xyz = (pos.xyz * _Scale.xyz).xyz;
+  pos = tmpvar_1;
+  pos.xyz = (tmpvar_1.xyz * _Scale.xyz).xyz;
   vec4 tmpvar_59;
   tmpvar_59.xyz = vec3(pos.xyz);
   tmpvar_59.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
-  pos.xyz = mix (pos.xyz, (_TerrainEngineBendTree * tmpvar_59).xyz, xlt_v.color.www).xyz;
+  pos.xyz = mix (pos.xyz, (_TerrainEngineBendTree * tmpvar_59).xyz, gl_Color.www).xyz;
   vec3 tmpvar_67;
   tmpvar_67.x = float(vec3(0.000000, 0.000000, 0.000000));
   tmpvar_67.y = float(_SquashPlaneNormal.w);
@@ -36,19 +25,18 @@ void main ()
   tmpvar_75.xyz = vec3(mix ((pos.xyz + (dot (tmpvar_69, (tmpvar_67 - pos.xyz)) * tmpvar_69)), pos.xyz, vec3(_SquashAmount)).xyz);
   tmpvar_75.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
   pos = tmpvar_75;
-  v.vertex = tmpvar_75;
   mat3 tmpvar_85;
   tmpvar_85[0] = gl_ModelViewMatrixInverseTranspose[0].xyz;
   tmpvar_85[1] = gl_ModelViewMatrixInverseTranspose[1].xyz;
   tmpvar_85[2] = gl_ModelViewMatrixInverseTranspose[2].xyz;
-  tmpvar_105.xyz = (tmpvar_85 * v.normal).xyz;
-  tmpvar_105.w = float(vec4(-(((gl_ModelViewMatrix * v.vertex).z * _ProjectionParams.w))));
-  gl_Position = (gl_ModelViewProjectionMatrix * v.vertex).xyzw;
+  tmpvar_113.xyz = (tmpvar_85 * gl_Normal.xyz).xyz;
+  tmpvar_113.w = float(vec4(-(((gl_ModelViewMatrix * tmpvar_75).z * _ProjectionParams.w))));
+  gl_Position = (gl_ModelViewProjectionMatrix * tmpvar_75).xyzw;
   vec4 tmpvar_13;
-  tmpvar_13.xy = vec2(v.texcoord.xy);
+  tmpvar_13.xy = vec2(gl_MultiTexCoord0.xy);
   tmpvar_13.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_13.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[0] = tmpvar_13;
-  gl_TexCoord[1] = tmpvar_105.xyzw;
+  gl_TexCoord[1] = tmpvar_113.xyzw;
 }
 

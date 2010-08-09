@@ -1,13 +1,5 @@
-struct SurfaceOutput {
-  vec4 color;
-};
 void main ()
 {
-  SurfaceOutput o;
-  SurfaceOutput o_i0;
-  o_i0 = o;
-  o_i0.color = vec4(1.000000, 1.000000, 1.000000, 1.000000);
-  o = o_i0;
-  gl_FragColor = o_i0.color;
+  gl_FragColor = vec4(1.000000, 1.000000, 1.000000, 1.000000);
 }
 

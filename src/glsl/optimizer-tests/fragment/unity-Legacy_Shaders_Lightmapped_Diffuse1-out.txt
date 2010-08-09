@@ -1,11 +1,3 @@
-struct SurfaceOutput {
-  vec3 Albedo;
-  vec3 Normal;
-  vec3 Emission;
-  float Specular;
-  float Gloss;
-  float Alpha;
-};
 varying vec4 xlv_FOG;
 uniform vec4 unity_Ambient;
 uniform sampler2D _MainTex;
@@ -14,33 +6,23 @@ uniform sampler2D _LightBuffer;
 uniform vec4 _Color;
 void main ()
 {
-  vec4 tmpvar_49;
-  tmpvar_49 = gl_TexCoord[0].xyzw;
+  vec4 tmpvar_3;
+  tmpvar_3 = gl_TexCoord[0].xyzw;
   vec4 col;
   vec4 light;
-  SurfaceOutput o;
-  o.Albedo = vec3(0.000000, 0.000000, 0.000000);
-  o.Emission = vec3(0.000000, 0.000000, 0.000000);
-  o.Specular = 0.000000;
-  o.Alpha = 0.000000;
-  o.Gloss = 0.000000;
-  SurfaceOutput o_i0;
-  o_i0 = o;
-  o_i0.Albedo = (texture2D (_MainTex, tmpvar_49.xy).xyz * _Color.xyz);
+  vec3 tmpvar_31;
+  tmpvar_31 = (texture2D (_MainTex, tmpvar_3.xy).xyz * _Color.xyz);
   vec4 tmpvar_32;
-  tmpvar_32 = texture2D (_LightMap, tmpvar_49.zw);
-  o_i0.Emission = (tmpvar_32.xyz * o_i0.Albedo.xyz);
-  o_i0.Alpha = (tmpvar_32.w * _Color.w);
-  o = o_i0;
+  tmpvar_32 = texture2D (_LightMap, tmpvar_3.zw);
   vec4 tmpvar_39;
   tmpvar_39 = -(log2 (texture2DProj (_LightBuffer, gl_TexCoord[1].xyzw)));
   light = tmpvar_39;
   light.xyz = (tmpvar_39.xyz + unity_Ambient.xyz).xyz;
   vec4 c;
-  c.xyz = (o_i0.Albedo * light.xyz).xyz;
-  c.w = float(vec4(o_i0.Alpha));
+  c.xyz = (tmpvar_31 * light.xyz).xyz;
+  c.w = float(vec4((tmpvar_32.w * _Color.w)));
   col = c;
-  col.xyz = (c.xyz + o_i0.Emission).xyz;
+  col.xyz = (c.xyz + (tmpvar_32.xyz * tmpvar_31.xyz)).xyz;
   gl_FragData[0] = col.xyzw;
 }
 

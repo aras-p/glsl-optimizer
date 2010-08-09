@@ -1,30 +1,8 @@
-struct SurfaceOutput {
-  vec3 Albedo;
-  vec3 Normal;
-  vec3 Emission;
-  float Specular;
-  float Gloss;
-  float Alpha;
-};
 uniform sampler2D _MainTex;
 uniform vec4 _LightPositionRange;
 uniform vec4 _Color;
 void main ()
 {
-  vec2 tmpvar_42;
-  SurfaceOutput o;
-  o.Albedo = vec3(0.000000, 0.000000, 0.000000);
-  o.Emission = vec3(0.000000, 0.000000, 0.000000);
-  o.Specular = 0.000000;
-  o.Alpha = 0.000000;
-  o.Gloss = 0.000000;
-  SurfaceOutput o_i0;
-  o_i0 = o;
-  vec4 tmpvar_26;
-  tmpvar_26 = (texture2D (_MainTex, tmpvar_42) * _Color);
-  o_i0.Albedo = tmpvar_26.xyz;
-  o_i0.Alpha = tmpvar_26.w;
-  o = o_i0;
   vec4 tmpvar_35;
   tmpvar_35 = fract ((vec4(1.000000, 255.000000, 65025.000000, 160580992.000000) * (length (gl_TexCoord[0].xyz) * _LightPositionRange.w)));
   gl_FragData[0] = (tmpvar_35 - (tmpvar_35.yzww * 0.003922)).xyzw;

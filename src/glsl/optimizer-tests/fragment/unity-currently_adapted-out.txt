@@ -3,14 +3,14 @@ uniform sampler2D _CurTex;
 uniform vec4 _AdaptParams;
 void main ()
 {
-  vec2 tmpvar_30;
-  tmpvar_30 = gl_TexCoord[0].xy;
+  vec2 tmpvar_2;
+  tmpvar_2 = gl_TexCoord[0].xy;
   vec4 valNew;
   vec2 delta;
   vec2 tmpvar_10;
-  tmpvar_10 = texture2D (_MainTex, tmpvar_30).xy;
+  tmpvar_10 = texture2D (_MainTex, tmpvar_2).xy;
   vec2 tmpvar_13;
-  tmpvar_13 = ((texture2D (_CurTex, tmpvar_30).xy - tmpvar_10) * _AdaptParams.x);
+  tmpvar_13 = ((texture2D (_CurTex, tmpvar_2).xy - tmpvar_10) * _AdaptParams.x);
   delta = tmpvar_13;
   delta.x = (sign (tmpvar_13.x) * max (0.003922, abs (tmpvar_13.x)));
   delta.y = float(vec2((sign (delta.y) * max (0.003922, abs (delta.y)))));

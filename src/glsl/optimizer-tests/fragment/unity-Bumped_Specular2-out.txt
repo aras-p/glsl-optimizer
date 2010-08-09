@@ -1,11 +1,3 @@
-struct SurfaceOutput {
-  vec3 Albedo;
-  vec3 Normal;
-  vec3 Emission;
-  float Specular;
-  float Gloss;
-  float Alpha;
-};
 varying vec4 xlv_FOG;
 uniform sampler2D unity_LightmapInd;
 uniform sampler2D unity_Lightmap;
@@ -17,38 +9,24 @@ uniform vec4 _Color;
 uniform sampler2D _BumpMap;
 void main ()
 {
-  vec3 tmpvar_89;
-  tmpvar_89 = gl_TexCoord[2].xyz;
+  vec3 tmpvar_7;
+  tmpvar_7 = gl_TexCoord[2].xyz;
   vec4 light;
-  SurfaceOutput o;
-  vec2 tmpvar_96;
-  o.Albedo = vec3(0.000000, 0.000000, 0.000000);
-  o.Emission = vec3(0.000000, 0.000000, 0.000000);
-  o.Specular = 0.000000;
-  o.Alpha = 0.000000;
-  o.Gloss = 0.000000;
-  SurfaceOutput o_i0;
-  o_i0 = o;
+  vec2 tmpvar_102;
   vec4 tmpvar_46;
   tmpvar_46 = texture2D (_MainTex, gl_TexCoord[0].xy);
-  o_i0.Albedo = (tmpvar_46.xyz * _Color.xyz);
-  o_i0.Gloss = tmpvar_46.w;
-  o_i0.Alpha = (tmpvar_46.w * _Color.w);
-  o_i0.Specular = _Shininess;
   vec4 normal;
-  normal.xy = ((texture2D (_BumpMap, tmpvar_96).wy * 2.000000) - 1.000000).xy;
+  normal.xy = ((texture2D (_BumpMap, tmpvar_102).wy * 2.000000) - 1.000000).xy;
   normal.z = float(vec3(sqrt (((1.000000 - (normal.x * normal.x)) - (normal.y * normal.y)))));
-  o_i0.Normal = normal.xyz;
-  o = o_i0;
   vec4 tmpvar_63;
   tmpvar_63 = -(log2 (texture2DProj (_LightBuffer, gl_TexCoord[1].xyzw)));
   light = tmpvar_63;
-  light.xyz = (tmpvar_63.xyz + mix ((2.000000 * texture2D (unity_LightmapInd, tmpvar_89.xy).xyz), (2.000000 * texture2D (unity_Lightmap, tmpvar_89.xy).xyz), vec3(clamp (tmpvar_89.z, 0.000000, 1.000000)))).xyz;
+  light.xyz = (tmpvar_63.xyz + mix ((2.000000 * texture2D (unity_LightmapInd, tmpvar_7.xy).xyz), (2.000000 * texture2D (unity_Lightmap, tmpvar_7.xy).xyz), vec3(clamp (tmpvar_7.z, 0.000000, 1.000000)))).xyz;
   vec4 c;
   float tmpvar_81;
-  tmpvar_81 = (light.w * o_i0.Gloss);
-  c.xyz = ((o_i0.Albedo * light.xyz) + ((light.xyz * _SpecColor.xyz) * tmpvar_81)).xyz;
-  c.w = float(vec4((o_i0.Alpha + (tmpvar_81 * _SpecColor.w))));
+  tmpvar_81 = (light.w * tmpvar_46.w);
+  c.xyz = (((tmpvar_46.xyz * _Color.xyz) * light.xyz) + ((light.xyz * _SpecColor.xyz) * tmpvar_81)).xyz;
+  c.w = float(vec4(((tmpvar_46.w * _Color.w) + (tmpvar_81 * _SpecColor.w))));
   gl_FragData[0] = c.xyzw;
 }
 

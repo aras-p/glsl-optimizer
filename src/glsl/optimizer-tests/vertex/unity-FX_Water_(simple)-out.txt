@@ -6,13 +6,13 @@ uniform float _WaveScale;
 uniform vec4 _WaveOffset;
 void main ()
 {
-  vec4 tmpvar_34;
-  tmpvar_34 = gl_Vertex.xyzw;
+  vec4 tmpvar_1;
+  tmpvar_1 = gl_Vertex.xyzw;
   vec4 temp;
   vec2 tmpvar_56[2];
   vec4 tmpvar_23;
-  tmpvar_23 = (gl_ModelViewProjectionMatrix * tmpvar_34);
-  temp = ((tmpvar_34.xzxz * _WaveScale) + _WaveOffset).xyzw;
+  tmpvar_23 = (gl_ModelViewProjectionMatrix * tmpvar_1);
+  temp = ((tmpvar_1.xzxz * _WaveScale) + _WaveOffset).xyzw;
   tmpvar_56[0] = (temp.xy * vec2(0.400000, 0.450000));
   tmpvar_56[1] = temp.wz;
   vec4 tmpvar_30;
@@ -36,7 +36,7 @@ void main ()
   tmpvar_13.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[1] = tmpvar_13;
   vec4 tmpvar_15;
-  tmpvar_15.xyz = vec3(normalize ((((_World2Object * tmpvar_30).xyz * unity_Scale.w) - tmpvar_34.xyz)).xzy);
+  tmpvar_15.xyz = vec3(normalize ((((_World2Object * tmpvar_30).xyz * unity_Scale.w) - tmpvar_1.xyz)).xzy);
   tmpvar_15.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[2] = tmpvar_15;
 }

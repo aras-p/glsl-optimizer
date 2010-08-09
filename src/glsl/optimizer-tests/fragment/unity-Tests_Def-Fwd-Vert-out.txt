@@ -1,34 +1,15 @@
-struct SurfaceOutput {
-  vec3 Albedo;
-  vec3 Normal;
-  vec3 Emission;
-  float Specular;
-  float Gloss;
-  float Alpha;
-};
 varying vec4 xlv_FOG;
 uniform vec4 _WorldSpaceLightPos0;
 uniform vec4 _LightColor0;
 void main ()
 {
   vec4 c;
-  SurfaceOutput o;
-  o.Albedo = vec3(0.000000, 0.000000, 0.000000);
-  o.Emission = vec3(0.000000, 0.000000, 0.000000);
-  o.Specular = 0.000000;
-  o.Alpha = 0.000000;
-  o.Gloss = 0.000000;
-  o.Normal = gl_TexCoord[0].xyz;
-  SurfaceOutput o_i0;
-  o_i0 = o;
-  o_i0.Emission = vec3(0.000000, 1.000000, 0.000000);
-  o = o_i0;
   vec4 c_i0;
-  c_i0.xyz = ((o_i0.Albedo * _LightColor0.xyz) * (max (0.000000, dot (o_i0.Normal, _WorldSpaceLightPos0.xyz)) * 2.000000)).xyz;
-  c_i0.w = float(vec4(o_i0.Alpha));
+  c_i0.xyz = vec3(0.000000, 0.000000, 0.000000);
+  c_i0.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   c = c_i0;
-  c.xyz = (c_i0.xyz + (o_i0.Albedo * gl_TexCoord[1].xyz)).xyz;
-  c.xyz = (c.xyz + o_i0.Emission).xyz;
+  c.xyz = c_i0.xyz;
+  c.xyz = (c.xyz + vec3(0.000000, 1.000000, 0.000000)).xyz;
   gl_FragData[0] = c.xyzw;
 }
 

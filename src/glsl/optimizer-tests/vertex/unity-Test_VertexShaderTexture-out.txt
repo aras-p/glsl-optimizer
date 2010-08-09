@@ -1,25 +1,20 @@
-struct appdata_base {
-  vec4 vertex;
-  vec3 normal;
-  vec4 texcoord;
-};
 uniform sampler2D _MainTex;
 void main ()
 {
-  appdata_base xlt_v;
-  xlt_v.vertex = gl_Vertex.xyzw;
-  xlt_v.normal = gl_Normal.xyz;
-  xlt_v.texcoord = gl_MultiTexCoord0.xyzw;
-  appdata_base v;
-  v = xlt_v;
+  vec4 tmpvar_1;
+  tmpvar_1 = gl_Vertex.xyzw;
+  vec4 tmpvar_5;
+  tmpvar_5 = gl_MultiTexCoord0.xyzw;
+  vec4 tmpvar_35;
+  tmpvar_35 = tmpvar_1;
   vec4 tmpvar_16;
-  tmpvar_16.xy = vec2(xlt_v.texcoord.xy);
+  tmpvar_16.xy = vec2(tmpvar_5.xy);
   tmpvar_16.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_16.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
-  v.vertex.y = float(vec2((xlt_v.vertex.y + (texture2DLod (_MainTex, tmpvar_16.xy, tmpvar_16.w).x * 2.000000))));
-  gl_Position = (gl_ModelViewProjectionMatrix * v.vertex).xyzw;
+  tmpvar_35.y = float(vec2((tmpvar_1.y + (texture2DLod (_MainTex, tmpvar_16.xy, tmpvar_16.w).x * 2.000000))));
+  gl_Position = (gl_ModelViewProjectionMatrix * tmpvar_35).xyzw;
   vec4 tmpvar_11;
-  tmpvar_11.xy = vec2(v.texcoord.xy);
+  tmpvar_11.xy = vec2(tmpvar_5.xy);
   tmpvar_11.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_11.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[0] = tmpvar_11;

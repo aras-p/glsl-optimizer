@@ -8,10 +8,10 @@ uniform mat4 _Object2World;
 uniform vec4 _MainTex_ST;
 void main ()
 {
-  vec4 tmpvar_71;
-  tmpvar_71 = gl_Vertex.xyzw;
+  vec4 tmpvar_1;
+  tmpvar_1 = gl_Vertex.xyzw;
   vec4 tmpvar_44;
-  tmpvar_44 = (gl_ModelViewProjectionMatrix * tmpvar_71);
+  tmpvar_44 = (gl_ModelViewProjectionMatrix * tmpvar_1);
   vec4 tmpvar_49;
   tmpvar_49.xyz = vec3(_WorldSpaceCameraPos.xyz);
   tmpvar_49.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
@@ -41,7 +41,7 @@ void main ()
   tmpvar_19.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[0] = tmpvar_19;
   vec4 tmpvar_21;
-  tmpvar_21.xyz = vec3((tmpvar_59 * reflect (-((((_World2Object * tmpvar_49).xyz * unity_Scale.w) - tmpvar_71.xyz)), gl_Normal.xyz)).xyz);
+  tmpvar_21.xyz = vec3((tmpvar_59 * reflect (-((((_World2Object * tmpvar_49).xyz * unity_Scale.w) - tmpvar_1.xyz)), gl_Normal.xyz)).xyz);
   tmpvar_21.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[1] = tmpvar_21;
   gl_TexCoord[2] = o_i0.xyzw;

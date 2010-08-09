@@ -1,24 +1,3 @@
-struct SurfaceOutput {
-  vec3 Albedo;
-  vec3 Normal;
-  vec3 Emission;
-  float Specular;
-  float Gloss;
-  float Alpha;
-};
-struct Input {
-  vec2 uv_MainTex;
-  vec3 worldPos;
-};
-struct v2f_surf {
-  vec4 pos;
-  vec3 _ShadowCoord0;
-  vec3 _ShadowCoord1;
-  vec3 _ShadowCoord2;
-  vec3 _ShadowCoord3;
-  vec2 _ShadowZFade;
-  vec3 worldPos;
-};
 uniform sampler2D _ShadowMapTexture;
 uniform vec4 _ProjectionParams;
 uniform sampler2D _MainTex;
@@ -27,44 +6,36 @@ uniform vec4 _LightSplitsFar;
 uniform vec4 _LightShadowData;
 void main ()
 {
-  v2f_surf xlt_IN;
-  xlt_IN.pos = vec4(0.000000, 0.000000, 0.000000, 0.000000);
-  xlt_IN._ShadowCoord0 = gl_TexCoord[0].xyz;
-  xlt_IN._ShadowCoord1 = gl_TexCoord[1].xyz;
-  xlt_IN._ShadowCoord2 = gl_TexCoord[2].xyz;
-  xlt_IN._ShadowCoord3 = gl_TexCoord[3].xyz;
-  xlt_IN._ShadowZFade = gl_TexCoord[4].xy;
-  xlt_IN.worldPos = gl_TexCoord[5].xyz;
-  v2f_surf IN;
-  IN = xlt_IN;
+  vec3 tmpvar_12;
+  tmpvar_12 = gl_TexCoord[5].xyz;
+  vec3 tmpvar_82;
+  vec3 tmpvar_83;
+  vec3 tmpvar_84;
+  vec3 tmpvar_85;
+  vec2 tmpvar_86;
+  tmpvar_82 = gl_TexCoord[0].xyz;
+  tmpvar_83 = gl_TexCoord[1].xyz;
+  tmpvar_84 = gl_TexCoord[2].xyz;
+  tmpvar_85 = gl_TexCoord[3].xyz;
+  tmpvar_86 = gl_TexCoord[4].xy;
   vec4 res;
   vec4 z;
-  SurfaceOutput o;
-  Input surfIN;
-  surfIN.worldPos = xlt_IN.worldPos;
-  o.Albedo = vec3(0.000000, 0.000000, 0.000000);
-  o.Emission = vec3(0.000000, 0.000000, 0.000000);
-  o.Specular = 0.000000;
-  o.Alpha = 0.000000;
-  o.Gloss = 0.000000;
-  Input IN_i0;
-  IN_i0 = surfIN;
-  SurfaceOutput o_i0;
-  o_i0 = o;
+  vec3 tmpvar_89;
+  vec3 tmpvar_99;
+  tmpvar_99 = tmpvar_89;
   float x;
-  x = (fract (((surfIN.worldPos.y + (surfIN.worldPos.z * 0.100000)) * 5.000000)) - 0.500000);
+  x = (fract (((tmpvar_12.y + (tmpvar_12.z * 0.100000)) * 5.000000)) - 0.500000);
   if ((x < 0.000000)) {
     discard;
   };
-  o_i0.Albedo = texture2D (_MainTex, IN_i0.uv_MainTex).xyz;
-  o = o_i0;
+  tmpvar_89 = tmpvar_99;
   vec4 tmpvar_42;
-  tmpvar_42 = IN._ShadowZFade.xxxx;
+  tmpvar_42 = tmpvar_86.xxxx;
   z = tmpvar_42;
   vec4 tmpvar_50;
   tmpvar_50 = (vec4(greaterThanEqual (tmpvar_42, _LightSplitsNear)).xyzw * vec4(lessThan (tmpvar_42, _LightSplitsFar)).xyzw);
   vec4 tmpvar_51;
-  tmpvar_51.xyz = vec3(((((IN._ShadowCoord0 * tmpvar_50.x) + (IN._ShadowCoord1 * tmpvar_50.y)) + (IN._ShadowCoord2 * tmpvar_50.z)) + (IN._ShadowCoord3 * tmpvar_50.w)).xyz);
+  tmpvar_51.xyz = vec3(((((tmpvar_82 * tmpvar_50.x) + (tmpvar_83 * tmpvar_50.y)) + (tmpvar_84 * tmpvar_50.z)) + (tmpvar_85 * tmpvar_50.w)).xyz);
   tmpvar_51.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
   vec4 tmpvar_53;
   tmpvar_53 = texture2D (_ShadowMapTexture, tmpvar_51.xy);
@@ -74,7 +45,7 @@ void main ()
   } else {
     tmpvar_54 = 1.000000;
   };
-  res.x = clamp ((tmpvar_54 + clamp (IN._ShadowZFade.y, 0.000000, 1.000000)), 0.000000, 1.000000);
+  res.x = clamp ((tmpvar_54 + clamp (tmpvar_86.y, 0.000000, 1.000000)), 0.000000, 1.000000);
   res.y = float(vec2(1.000000, 1.000000));
   vec2 enc;
   vec2 tmpvar_70;

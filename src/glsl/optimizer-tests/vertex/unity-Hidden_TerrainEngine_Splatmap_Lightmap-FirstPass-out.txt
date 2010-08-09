@@ -8,16 +8,16 @@ uniform vec4 _ProjectionParams;
 uniform vec4 _Control_ST;
 void main ()
 {
-  vec4 tmpvar_52;
-  tmpvar_52 = gl_MultiTexCoord0.xyzw;
+  vec4 tmpvar_7;
+  tmpvar_7 = gl_MultiTexCoord0.xyzw;
   vec4 tmpvar_87;
   vec4 tmpvar_88;
   vec4 tmpvar_35;
   tmpvar_35 = (gl_ModelViewProjectionMatrix * gl_Vertex.xyzw);
-  tmpvar_87.xy = ((tmpvar_52.xy * _Control_ST.xy) + _Control_ST.zw).xy;
-  tmpvar_87.zw = vec2(((tmpvar_52.xy * _Splat0_ST.xy) + _Splat0_ST.zw).xy);
-  tmpvar_88.xy = ((tmpvar_52.xy * _Splat1_ST.xy) + _Splat1_ST.zw).xy;
-  tmpvar_88.zw = vec2(((tmpvar_52.xy * _Splat2_ST.xy) + _Splat2_ST.zw).xy);
+  tmpvar_87.xy = ((tmpvar_7.xy * _Control_ST.xy) + _Control_ST.zw).xy;
+  tmpvar_87.zw = vec2(((tmpvar_7.xy * _Splat0_ST.xy) + _Splat0_ST.zw).xy);
+  tmpvar_88.xy = ((tmpvar_7.xy * _Splat1_ST.xy) + _Splat1_ST.zw).xy;
+  tmpvar_88.zw = vec2(((tmpvar_7.xy * _Splat2_ST.xy) + _Splat2_ST.zw).xy);
   vec4 o_i0;
   vec4 tmpvar_44;
   tmpvar_44 = (tmpvar_35 * 0.500000);
@@ -37,7 +37,7 @@ void main ()
   gl_TexCoord[0] = tmpvar_87.xyzw;
   gl_TexCoord[1] = tmpvar_88.xyzw;
   vec4 tmpvar_23;
-  tmpvar_23.xy = vec2(((tmpvar_52.xy * _Splat3_ST.xy) + _Splat3_ST.zw).xy);
+  tmpvar_23.xy = vec2(((tmpvar_7.xy * _Splat3_ST.xy) + _Splat3_ST.zw).xy);
   tmpvar_23.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_23.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[2] = tmpvar_23;

@@ -1,40 +1,15 @@
-struct SurfaceOutput {
-  vec3 Albedo;
-  vec3 Normal;
-  vec3 Emission;
-  float Specular;
-  float Gloss;
-  float Alpha;
-};
 varying vec4 xlv_FOG;
 uniform sampler2D unity_LightmapInd;
 uniform sampler2D unity_Lightmap;
 uniform sampler2D _LightBuffer;
 void main ()
 {
-  vec3 tmpvar_54;
-  tmpvar_54 = gl_TexCoord[1].xyz;
   vec4 col;
-  vec4 light;
-  SurfaceOutput o;
-  o.Albedo = vec3(0.000000, 0.000000, 0.000000);
-  o.Emission = vec3(0.000000, 0.000000, 0.000000);
-  o.Specular = 0.000000;
-  o.Alpha = 0.000000;
-  o.Gloss = 0.000000;
-  SurfaceOutput o_i0;
-  o_i0 = o;
-  o_i0.Emission = vec3(1.000000, 0.000000, 0.000000);
-  o = o_i0;
-  vec4 tmpvar_29;
-  tmpvar_29 = -(log2 (texture2DProj (_LightBuffer, gl_TexCoord[0].xyzw)));
-  light = tmpvar_29;
-  light.xyz = (tmpvar_29.xyz + mix ((2.000000 * texture2D (unity_LightmapInd, tmpvar_54.xy).xyz), (2.000000 * texture2D (unity_Lightmap, tmpvar_54.xy).xyz), vec3(clamp (tmpvar_54.z, 0.000000, 1.000000)))).xyz;
   vec4 c;
-  c.xyz = (o_i0.Albedo * light.xyz).xyz;
-  c.w = float(vec4(o_i0.Alpha));
+  c.xyz = vec3(0.000000, 0.000000, 0.000000);
+  c.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   col = c;
-  col.xyz = (c.xyz + o_i0.Emission).xyz;
+  col.xyz = (c.xyz + vec3(1.000000, 0.000000, 0.000000)).xyz;
   gl_FragData[0] = col.xyzw;
 }
 

@@ -7,16 +7,16 @@ uniform mat4 _Object2World;
 uniform vec4 _LightShadowData;
 void main ()
 {
-  vec4 tmpvar_40;
-  tmpvar_40 = gl_Vertex.xyzw;
+  vec4 tmpvar_1;
+  tmpvar_1 = gl_Vertex.xyzw;
   vec2 tmpvar_85;
   float tmpvar_32;
-  tmpvar_32 = -((gl_ModelViewMatrix * tmpvar_40).z);
+  tmpvar_32 = -((gl_ModelViewMatrix * tmpvar_1).z);
   tmpvar_85.x = tmpvar_32;
   tmpvar_85.y = float(vec2(((tmpvar_32 * _LightShadowData.z) + _LightShadowData.w)));
   vec4 tmpvar_35;
-  tmpvar_35 = (_Object2World * tmpvar_40);
-  gl_Position = (gl_ModelViewProjectionMatrix * tmpvar_40).xyzw;
+  tmpvar_35 = (_Object2World * tmpvar_1);
+  gl_Position = (gl_ModelViewProjectionMatrix * tmpvar_1).xyzw;
   vec4 tmpvar_17;
   tmpvar_17.xyz = vec3((_World2Shadow * tmpvar_35).xyz);
   tmpvar_17.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
@@ -39,7 +39,7 @@ void main ()
   tmpvar_25.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[4] = tmpvar_25;
   vec4 tmpvar_27;
-  tmpvar_27.xyz = vec3((_Object2World * tmpvar_40).xyz);
+  tmpvar_27.xyz = vec3((_Object2World * tmpvar_1).xyz);
   tmpvar_27.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[5] = tmpvar_27;
 }

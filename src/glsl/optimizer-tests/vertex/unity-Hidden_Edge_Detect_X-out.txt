@@ -1,13 +1,13 @@
 uniform vec4 _MainTex_TexelSize;
 void main ()
 {
-  vec2 tmpvar_33;
-  tmpvar_33 = gl_MultiTexCoord0.xy;
+  vec2 tmpvar_3;
+  tmpvar_3 = gl_MultiTexCoord0.xy;
   vec2 tmpvar_45[3];
   vec2 _ret_val_i0;
   vec4 tmpvar_23;
-  tmpvar_23.x = float(tmpvar_33.x);
-  tmpvar_23.y = float(tmpvar_33.y);
+  tmpvar_23.x = float(tmpvar_3.x);
+  tmpvar_23.y = float(tmpvar_3.y);
   tmpvar_23.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_23.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   _ret_val_i0 = (gl_TextureMatrix[0] * tmpvar_23).xy;

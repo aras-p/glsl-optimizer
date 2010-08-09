@@ -5,11 +5,11 @@ uniform vec4 unity_LightmapFade;
 uniform vec4 _ProjectionParams;
 void main ()
 {
-  vec4 tmpvar_42;
-  tmpvar_42 = gl_Vertex.xyzw;
+  vec4 tmpvar_1;
+  tmpvar_1 = gl_Vertex.xyzw;
   vec3 tmpvar_73;
   vec4 tmpvar_31;
-  tmpvar_31 = (gl_ModelViewProjectionMatrix * tmpvar_42);
+  tmpvar_31 = (gl_ModelViewProjectionMatrix * tmpvar_1);
   vec4 o_i0;
   vec4 tmpvar_35;
   tmpvar_35 = (tmpvar_31 * 0.500000);
@@ -20,7 +20,7 @@ void main ()
   o_i0.xy = (tmpvar_36 + tmpvar_35.w).xy;
   o_i0.zw = vec2(tmpvar_31.zw);
   tmpvar_73.xy = ((gl_MultiTexCoord1.xy * unity_LightmapST.xy) + unity_LightmapST.zw).xy;
-  tmpvar_73.z = float(vec3(((-((gl_ModelViewMatrix * tmpvar_42).z) * unity_LightmapFade.z) + unity_LightmapFade.w)));
+  tmpvar_73.z = float(vec3(((-((gl_ModelViewMatrix * tmpvar_1).z) * unity_LightmapFade.z) + unity_LightmapFade.w)));
   gl_Position = tmpvar_31.xyzw;
   vec4 tmpvar_17;
   tmpvar_17.x = float(tmpvar_31.z);
