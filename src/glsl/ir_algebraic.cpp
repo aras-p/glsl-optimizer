@@ -161,22 +161,32 @@ ir_algebraic_visitor::handle_expression(ir_rvalue *in_ir)
    }
 
    switch (ir->operation) {
-   case ir_unop_logic_not:
-      if (op_expr[0] && op_expr[0]->operation == ir_binop_equal) {
+   case ir_unop_logic_not: {
+      enum ir_expression_operation new_op = ir_unop_logic_not;
+
+      if (op_expr[0] == NULL)
+	 break;
+
+      switch (op_expr[0]->operation) {
+      case ir_binop_equal:   new_op = ir_binop_nequal;  break;
+      case ir_binop_nequal:  new_op = ir_binop_equal;   break;
+
+      default:
+	 /* The default case handler is here to silence a warning from GCC.
+	  */
+	 break;
+      }
+
+      if (new_op != ir_unop_logic_not) {
 	 this->progress = true;
-	 return new(ir) ir_expression(ir_binop_nequal,
+	 return new(ir) ir_expression(new_op,
 				      ir->type,
 				      op_expr[0]->operands[0],
 				      op_expr[0]->operands[1]);
       }
-      if (op_expr[0] && op_expr[0]->operation == ir_binop_nequal) {
-	 this->progress = true;
-	 return new(ir) ir_expression(ir_binop_equal,
-				      ir->type,
-				      op_expr[0]->operands[0],
-				      op_expr[0]->operands[1]);
-      }
+
       break;
+   }
 
    case ir_binop_add:
       if (is_vec_zero(op_const[0])) {
