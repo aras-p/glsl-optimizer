@@ -383,7 +383,7 @@ static void r300_translate_fragment_shader(
     find_output_registers(&compiler, shader);
 
     if (compiler.Base.Debug) {
-        debug_printf("r300: Initial fragment program\n");
+        DBG(r300, DBG_FP, "r300: Initial fragment program\n");
         tgsi_dump(tokens, 0);
     }
 
@@ -418,7 +418,7 @@ static void r300_translate_fragment_shader(
     }
 
     if (compiler.Base.Error) {
-        fprintf(stderr, "r300 FP: Compiler Error:\n%sUsing a dummy shader"
+        DBG(r300, DBG_FP, "r300 FP: Compiler Error:\n%sUsing a dummy shader"
                 " instead.\nIf there's an 'unknown opcode' message, please"
                 " file a bug report and attach this log.\n", compiler.Base.ErrorMsg);
 
