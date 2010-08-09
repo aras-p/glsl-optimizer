@@ -512,10 +512,7 @@ lp_build_mul_imm(struct lp_build_context *bld,
       return a;
 
    if(b == -1)
-      if (bld->type.floating)
-         return LLVMBuildFNeg(bld->builder, a, "");
-      else
-         return LLVMBuildNeg(bld->builder, a, "");
+      return lp_build_negate(bld, a);
 
    if(b == 2 && bld->type.floating)
       return lp_build_add(bld, a, a);
@@ -748,9 +745,11 @@ LLVMValueRef
 lp_build_negate(struct lp_build_context *bld,
                 LLVMValueRef a)
 {
+#if HAVE_LLVM >= 0x0207
    if (bld->type.floating)
       a = LLVMBuildFNeg(bld->builder, a, "");
    else
+#endif
       a = LLVMBuildNeg(bld->builder, a, "");
 
    return a;

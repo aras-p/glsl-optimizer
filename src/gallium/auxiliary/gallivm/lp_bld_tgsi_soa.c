@@ -506,7 +506,6 @@ emit_fetch(
    const unsigned chan_index )
 {
    const struct tgsi_full_src_register *reg = &inst->Src[src_op];
-   const struct lp_type type = bld->base.type;
    const unsigned swizzle =
       tgsi_util_get_full_src_register_swizzle(reg, chan_index);
    LLVMValueRef res;
@@ -615,10 +614,7 @@ emit_fetch(
       res = lp_build_abs( &bld->base, res );
       /* fall through */
    case TGSI_UTIL_SIGN_TOGGLE:
-      if (type.floating)
-         res = LLVMBuildFNeg( bld->base.builder, res, "" );
-      else
-         res = LLVMBuildNeg( bld->base.builder, res, "" );
+      res = lp_build_negate( &bld->base, res );
       break;
 
    case TGSI_UTIL_SIGN_KEEP:
