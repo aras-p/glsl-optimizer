@@ -1,5 +1,6 @@
 #include "draw/draw_context.h"
 #include "pipe/p_defines.h"
+#include "util/u_framebuffer.h"
 
 #include "nvfx_context.h"
 #include "nvfx_screen.h"
@@ -30,6 +31,13 @@ static void
 nvfx_destroy(struct pipe_context *pipe)
 {
 	struct nvfx_context *nvfx = nvfx_context(pipe);
+
+	for(unsigned i = 0; i < nvfx->vtxbuf_nr; ++i)
+		pipe_resource_reference(&nvfx->vtxbuf[i].buffer, 0);
+	pipe_resource_reference(&nvfx->idxbuf.buffer, 0);
+	util_unreference_framebuffer_state(&nvfx->framebuffer);
+	for(unsigned i = 0; i < PIPE_MAX_SAMPLERS; ++i)
+		pipe_sampler_view_reference(&nvfx->fragment_sampler_views[i], 0);
 
 	if (nvfx->draw)
 		draw_destroy(nvfx->draw);
