@@ -152,6 +152,7 @@ ir_structure_reference_visitor::visit_enter(ir_assignment *ir)
        */
       return visit_continue_with_parent;
    }
+   return visit_continue;
 }
 
 ir_visitor_status
