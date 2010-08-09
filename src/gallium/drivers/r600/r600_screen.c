@@ -53,59 +53,92 @@ static const char* r600_get_name(struct pipe_screen* pscreen)
 static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 {
 	switch (param) {
-	case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
-	case PIPE_CAP_MAX_COMBINED_SAMPLERS:
-		return 16;
+	/* Supported features (boolean caps). */
 	case PIPE_CAP_NPOT_TEXTURES:
-		return 1;
 	case PIPE_CAP_TWO_SIDED_STENCIL:
-		return 1;
 	case PIPE_CAP_GLSL:
-		return 1;
 	case PIPE_CAP_DUAL_SOURCE_BLEND:
-		return 1;
 	case PIPE_CAP_ANISOTROPIC_FILTER:
-		return 1;
 	case PIPE_CAP_POINT_SPRITE:
-		return 1;
-	case PIPE_CAP_MAX_RENDER_TARGETS:
-		/* FIXME some r6xx are buggy and can only do 4 */
-		return 8;
 	case PIPE_CAP_OCCLUSION_QUERY:
-		return 1;
 	case PIPE_CAP_TEXTURE_SHADOW_MAP:
+	case PIPE_CAP_TEXTURE_MIRROR_CLAMP:
+	case PIPE_CAP_TEXTURE_MIRROR_REPEAT:
+	case PIPE_CAP_BLEND_EQUATION_SEPARATE:
+	case PIPE_CAP_SM3:
+	case PIPE_CAP_TEXTURE_SWIZZLE:
+	case PIPE_CAP_INDEP_BLEND_ENABLE:
+	case PIPE_CAP_DEPTHSTENCIL_CLEAR_SEPARATE:
 		return 1;
+
+	/* Unsupported features (boolean caps). */
+	case PIPE_CAP_TIMER_QUERY:
+	case PIPE_CAP_TGSI_CONT_SUPPORTED:
+	case PIPE_CAP_STREAM_OUTPUT:
+	case PIPE_CAP_INDEP_BLEND_FUNC: /* FIXME allow this */
+	case PIPE_CAP_GEOMETRY_SHADER4:
+	case PIPE_CAP_DEPTH_CLAMP: /* FIXME allow this */
+		return 0;
+
+	/* Texturing. */
 	case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
 	case PIPE_CAP_MAX_TEXTURE_3D_LEVELS:
 	case PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS:
-		/* FIXME not sure here */
-		return 13;
-	case PIPE_CAP_TEXTURE_MIRROR_CLAMP:
-		return 1;
-	case PIPE_CAP_TEXTURE_MIRROR_REPEAT:
-		return 1;
+		return 14;
 	case PIPE_CAP_MAX_VERTEX_TEXTURE_UNITS:
 		/* FIXME allow this once infrastructure is there */
 		return 0;
-	case PIPE_CAP_TGSI_CONT_SUPPORTED:
-		return 0;
-	case PIPE_CAP_BLEND_EQUATION_SEPARATE:
-		return 1;
-	case PIPE_CAP_SM3:
-		return 1;
-	case PIPE_CAP_INDEP_BLEND_ENABLE:
-		return 1;
-	case PIPE_CAP_INDEP_BLEND_FUNC:
-		/* FIXME allow this */
-		return 0;
-	case PIPE_CAP_DEPTHSTENCIL_CLEAR_SEPARATE:
-		return 1;
+	case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
+	case PIPE_CAP_MAX_COMBINED_SAMPLERS:
+		return 16;
+
+	/* Render targets. */
+	case PIPE_CAP_MAX_RENDER_TARGETS:
+		/* FIXME some r6xx are buggy and can only do 4 */
+		return 8;
+
+	/* Fragment coordinate conventions. */
 	case PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT:
 	case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER:
 		return 1;
 	case PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT:
 	case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER:
 		return 0;
+
+	/* Shader limits. */
+	case PIPE_CAP_MAX_VS_INSTRUCTIONS:
+	case PIPE_CAP_MAX_VS_ALU_INSTRUCTIONS:
+	case PIPE_CAP_MAX_VS_TEX_INSTRUCTIONS:
+	case PIPE_CAP_MAX_VS_TEX_INDIRECTIONS:
+	case PIPE_CAP_MAX_FS_INSTRUCTIONS:
+	case PIPE_CAP_MAX_FS_ALU_INSTRUCTIONS:
+	case PIPE_CAP_MAX_FS_TEX_INSTRUCTIONS:
+	case PIPE_CAP_MAX_FS_TEX_INDIRECTIONS:
+		return 8192;
+	case PIPE_CAP_MAX_VS_CONTROL_FLOW_DEPTH:
+	case PIPE_CAP_MAX_FS_CONTROL_FLOW_DEPTH:
+		return 8; /* FIXME */
+	case PIPE_CAP_MAX_VS_INPUTS:
+	case PIPE_CAP_MAX_FS_INPUTS:
+		return 32;
+	case PIPE_CAP_MAX_VS_TEMPS:
+	case PIPE_CAP_MAX_FS_TEMPS:
+		return 128;
+	case PIPE_CAP_MAX_VS_ADDRS:
+	case PIPE_CAP_MAX_FS_ADDRS:
+		return 1; /* FIXME Isn't this equal to TEMPS? */
+	case PIPE_CAP_MAX_VS_CONSTS:
+	case PIPE_CAP_MAX_FS_CONSTS:
+		return 256; /* FIXME I believe this should be much higher. */
+	case PIPE_CAP_MAX_CONST_BUFFERS:
+		return 1;
+	case PIPE_CAP_MAX_CONST_BUFFER_SIZE: /* in bytes */
+		return 4096;
+	case PIPE_CAP_MAX_PREDICATE_REGISTERS:
+	case PIPE_CAP_MAX_VS_PREDS:
+	case PIPE_CAP_MAX_FS_PREDS:
+		return 0; /* FIXME */
+
 	default:
 		R600_ERR("r600: unknown param %d\n", param);
 		return 0;
