@@ -267,11 +267,11 @@ glsl_type::generate_constructor(glsl_symbol_table *symtab) const
    }
 
    /* Generate the body of the constructor.  The body assigns each of the
-    * parameters to a portion of a local variable called __retval that has
-    * the same type as the constructor.  After initializing __retval,
-    * __retval is returned.
+    * parameters to a portion of a local variable called _ret_val that has
+    * the same type as the constructor.  After initializing _ret_val,
+    * _ret_val is returned.
     */
-   ir_variable *retval = new(ctx) ir_variable(this, "__retval", ir_var_auto);
+   ir_variable *retval = new(ctx) ir_variable(this, "_ret_val", ir_var_auto);
    sig->body.push_tail(retval);
 
    for (unsigned i = 0; i < length; i++) {
