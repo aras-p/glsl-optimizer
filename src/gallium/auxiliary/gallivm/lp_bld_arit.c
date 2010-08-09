@@ -588,13 +588,24 @@ lp_build_div(struct lp_build_context *bld,
    if(a == bld->undef || b == bld->undef)
       return bld->undef;
 
-   if(LLVMIsConstant(a) && LLVMIsConstant(b))
-      return LLVMConstFDiv(a, b);
+   if(LLVMIsConstant(a) && LLVMIsConstant(b)) {
+      if (type.floating)
+         return LLVMConstFDiv(a, b);
+      else if (type.sign)
+         return LLVMConstSDiv(a, b);
+      else
+         return LLVMConstUDiv(a, b);
+   }
 
    if(util_cpu_caps.has_sse && type.width == 32 && type.length == 4)
       return lp_build_mul(bld, a, lp_build_rcp(bld, b));
 
-   return LLVMBuildFDiv(bld->builder, a, b, "");
+   if (type.floating)
+      return LLVMBuildFDiv(bld->builder, a, b, "");
+   else if (type.sign)
+      return LLVMBuildSDiv(bld->builder, a, b, "");
+   else
+      return LLVMBuildUDiv(bld->builder, a, b, "");
 }
 
 
