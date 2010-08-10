@@ -8,16 +8,8 @@ void main ()
   vec4 tmpvar_39;
   tmpvar_39 = texture2D (_CameraDepthNormalsTexture, tmpvar_2);
   vec3 n_i0;
-  vec3 tmpvar_49;
-  tmpvar_49.x = float(vec3(3.555400, 3.555400, 3.555400));
-  tmpvar_49.y = float(vec3(3.555400, 3.555400, 3.555400));
-  tmpvar_49.z = float(vec3(0.000000, 0.000000, 0.000000));
-  vec3 tmpvar_50;
-  tmpvar_50.x = float(vec3(-1.777700, -1.777700, -1.777700));
-  tmpvar_50.y = float(vec3(-1.777700, -1.777700, -1.777700));
-  tmpvar_50.z = float(vec3(1.000000, 1.000000, 1.000000));
   vec3 tmpvar_51;
-  tmpvar_51 = ((tmpvar_39.xyz * tmpvar_49) + tmpvar_50);
+  tmpvar_51 = ((tmpvar_39.xyz * vec3(3.555400, 3.555400, 0.000000)) + vec3(-1.777700, -1.777700, 1.000000));
   float tmpvar_53;
   tmpvar_53 = (2.000000 / dot (tmpvar_51.xyz, tmpvar_51.xyz));
   n_i0.xy = (tmpvar_53 * tmpvar_51.xy).xy;

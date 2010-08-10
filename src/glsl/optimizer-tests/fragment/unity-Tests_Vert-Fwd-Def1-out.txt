@@ -3,12 +3,6 @@ uniform vec4 unity_Ambient;
 uniform sampler2D _LightBuffer;
 void main ()
 {
-  vec4 col;
-  vec4 c;
-  c.xyz = vec3(0.000000, 0.000000, 0.000000);
-  c.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
-  col = c;
-  col.xyz = (c.xyz + vec3(1.000000, 0.000000, 0.000000)).xyz;
-  gl_FragData[0] = col.xyzw;
+  gl_FragData[0] = vec4(1.000000, 0.000000, 0.000000, 0.000000);
 }
 
