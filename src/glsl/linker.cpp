@@ -1308,48 +1308,13 @@ link_shaders(struct gl_shader_program *prog)
       prog->LinkStatus = true;
    }
 
-   /* FINISHME: Perform whole-program optimization here. */
+   /* Do common optimization before assigning storage for attributes,
+    * uniforms, and varyings.  Later optimization could possibly make
+    * some of that unused.
+    */
    for (unsigned i = 0; i < prog->_NumLinkedShaders; i++) {
-      /* Optimization passes */
-      bool progress;
-      exec_list *ir = prog->_LinkedShaders[i]->ir;
-
-      /* Lowering */
-      do_mat_op_to_vec(ir);
-      do_mod_to_fract(ir);
-      do_div_to_mul_rcp(ir);
-      do_explog_to_explog2(ir);
-      do_sub_to_add_neg(ir);
-
-      do {
-	 progress = false;
-
-	 progress = do_function_inlining(ir) || progress;
-	 progress = do_dead_functions(ir) || progress;
-	 progress = do_structure_splitting(ir) || progress;
-	 progress = do_if_simplification(ir) || progress;
-	 progress = do_copy_propagation(ir) || progress;
-	 progress = do_dead_code_local(ir) || progress;
-	 progress = do_dead_code(ir) || progress;
-	 progress = do_tree_grafting(ir) || progress;
-	 progress = do_constant_propagation(ir) || progress;
-	 progress = do_constant_variable(ir) || progress;
-	 progress = do_constant_folding(ir) || progress;
-	 progress = do_algebraic(ir) || progress;
-	 progress = do_if_return(ir) || progress;
-#if 0
-	 if (ctx->Shader.EmitNoIfs)
-	    progress = do_if_to_cond_assign(ir) || progress;
-#endif
-
-	 progress = do_vec_index_to_swizzle(ir) || progress;
-	 /* Do this one after the previous to let the easier pass handle
-	  * constant vector indexing.
-	  */
-	 progress = do_vec_index_to_cond_assign(ir) || progress;
-
-	 progress = do_swizzle_swizzle(ir) || progress;
-      } while (progress);
+      while (do_common_optimization(prog->_LinkedShaders[i]->ir, true))
+	 ;
    }
 
    assign_uniform_locations(prog);

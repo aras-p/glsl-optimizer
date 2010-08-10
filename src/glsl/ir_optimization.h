@@ -28,6 +28,8 @@
  * Prototypes for optimization passes to be called by the compiler and drivers.
  */
 
+bool do_common_optimization(exec_list *ir, bool linked);
+
 bool do_algebraic(exec_list *instructions);
 bool do_constant_folding(exec_list *instructions);
 bool do_constant_variable(exec_list *instructions);

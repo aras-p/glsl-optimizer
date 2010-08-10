@@ -33,6 +33,7 @@ extern "C" {
 #include "ast.h"
 #include "glsl_parser_extras.h"
 #include "glsl_parser.h"
+#include "ir_optimization.h"
 
 _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct __GLcontextRec *ctx,
 					       GLenum target, void *mem_ctx)
@@ -704,4 +705,38 @@ ast_struct_specifier::ast_struct_specifier(char *identifier,
 {
    name = identifier;
    this->declarations.push_degenerate_list_at_head(&declarator_list->link);
+}
+
+bool
+do_common_optimization(exec_list *ir, bool linked)
+{
+   GLboolean progress = GL_FALSE;
+
+   progress = do_sub_to_add_neg(ir) || progress;
+
+   if (linked) {
+      progress = do_function_inlining(ir) || progress;
+      progress = do_dead_functions(ir) || progress;
+   }
+   progress = do_structure_splitting(ir) || progress;
+   progress = do_if_simplification(ir) || progress;
+   progress = do_copy_propagation(ir) || progress;
+   if (linked)
+      progress = do_dead_code(ir) || progress;
+   else
+      progress = do_dead_code_unlinked(ir) || progress;
+   progress = do_dead_code_local(ir) || progress;
+   progress = do_tree_grafting(ir) || progress;
+   progress = do_constant_propagation(ir) || progress;
+   if (linked)
+      progress = do_constant_variable(ir) || progress;
+   else
+      progress = do_constant_variable_unlinked(ir) || progress;
+   progress = do_constant_folding(ir) || progress;
+   progress = do_algebraic(ir) || progress;
+   progress = do_if_return(ir) || progress;
+   progress = do_vec_index_to_swizzle(ir) || progress;
+   progress = do_swizzle_swizzle(ir) || progress;
+
+   return progress;
 }

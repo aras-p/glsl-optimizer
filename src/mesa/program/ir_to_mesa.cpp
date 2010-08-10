@@ -2567,38 +2567,11 @@ _mesa_glsl_compile_shader(GLcontext *ctx, struct gl_shader *shader)
    if (!state->error && !shader->ir->is_empty()) {
       validate_ir_tree(shader->ir);
 
-      /* Lowering */
-      do_mat_op_to_vec(shader->ir);
-      do_mod_to_fract(shader->ir);
-      do_div_to_mul_rcp(shader->ir);
-      do_sub_to_add_neg(shader->ir);
-
-      /* Optimization passes */
-      bool progress;
-      do {
-	 progress = false;
-
-	 progress = do_if_simplification(shader->ir) || progress;
-	 progress = do_copy_propagation(shader->ir) || progress;
-	 progress = do_dead_code_local(shader->ir) || progress;
-	 progress = do_dead_code_unlinked(shader->ir) || progress;
-	 progress = do_tree_grafting(shader->ir) || progress;
-	 progress = do_constant_propagation(shader->ir) || progress;
-	 progress = do_constant_variable_unlinked(shader->ir) || progress;
-	 progress = do_constant_folding(shader->ir) || progress;
-	 progress = do_algebraic(shader->ir) || progress;
-	 progress = do_if_return(shader->ir) || progress;
-	 if (ctx->Shader.EmitNoIfs)
-	    progress = do_if_to_cond_assign(shader->ir) || progress;
-
-	 progress = do_vec_index_to_swizzle(shader->ir) || progress;
-	 /* Do this one after the previous to let the easier pass handle
-	  * constant vector indexing.
-	  */
-	 progress = do_vec_index_to_cond_assign(shader->ir) || progress;
-
-	 progress = do_swizzle_swizzle(shader->ir) || progress;
-      } while (progress);
+      /* Do some optimization at compile time to reduce shader IR size
+       * and reduce later work if the same shader is linked multiple times
+       */
+      while (do_common_optimization(shader->ir, false))
+	 ;
 
       validate_ir_tree(shader->ir);
    }
@@ -2663,6 +2636,30 @@ _mesa_glsl_link_shader(GLcontext *ctx, struct gl_shader_program *prog)
        */
       free(prog->Uniforms);
       prog->Uniforms = _mesa_new_uniform_list();
+   }
+
+   if (prog->LinkStatus) {
+      for (unsigned i = 0; i < prog->_NumLinkedShaders; i++) {
+	 bool progress;
+	 exec_list *ir = prog->_LinkedShaders[i]->ir;
+
+	 do {
+	    progress = false;
+
+	    /* Lowering */
+	    do_mat_op_to_vec(ir);
+	    do_mod_to_fract(ir);
+	    do_div_to_mul_rcp(ir);
+	    do_explog_to_explog2(ir);
+
+	    progress = do_common_optimization(ir, true) || progress;
+
+	    if (ctx->Shader.EmitNoIfs)
+	       progress = do_if_to_cond_assign(ir) || progress;
+
+	    progress = do_vec_index_to_cond_assign(ir) || progress;
+	 } while (progress);
+      }
    }
 
    if (prog->LinkStatus) {
