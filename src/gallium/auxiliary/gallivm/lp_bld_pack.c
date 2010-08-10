@@ -261,13 +261,14 @@ lp_build_pack2(LLVMBuilderRef builder,
 #endif
    LLVMTypeRef dst_vec_type = lp_build_vec_type(dst_type);
    LLVMValueRef shuffle;
-   LLVMValueRef res;
+   LLVMValueRef res = NULL;
 
    assert(!src_type.floating);
    assert(!dst_type.floating);
    assert(src_type.width == dst_type.width * 2);
    assert(src_type.length * 2 == dst_type.length);
 
+   /* Check for special cases first */
    if(util_cpu_caps.has_sse2 && src_type.width * src_type.length == 128) {
       switch(src_type.width) {
       case 32:
@@ -283,8 +284,8 @@ lp_build_pack2(LLVMBuilderRef builder,
                return lp_build_intrinsic_binary(builder, "llvm.x86.sse41.packusdw", dst_vec_type, lo, hi);
             }
             else {
-               assert(0);
-               return LLVMGetUndef(dst_vec_type);
+               /* use generic shuffle below */
+               res = NULL;
             }
          }
          break;
@@ -310,10 +311,13 @@ lp_build_pack2(LLVMBuilderRef builder,
          break;
       }
 
-      res = LLVMBuildBitCast(builder, res, dst_vec_type, "");
-      return res;
+      if (res) {
+         res = LLVMBuildBitCast(builder, res, dst_vec_type, "");
+         return res;
+      }
    }
 
+   /* generic shuffle */
    lo = LLVMBuildBitCast(builder, lo, dst_vec_type, "");
    hi = LLVMBuildBitCast(builder, hi, dst_vec_type, "");
 
