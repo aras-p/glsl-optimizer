@@ -48,6 +48,7 @@ struct r600_bc_alu {
 	unsigned			last;
 	unsigned			is_op3;
 	unsigned			nliteral;
+	unsigned			literal_added;
 	u32				value[4];
 };
 

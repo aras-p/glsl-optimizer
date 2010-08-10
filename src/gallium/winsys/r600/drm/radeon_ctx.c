@@ -151,6 +151,8 @@ int radeon_ctx_submit(struct radeon_ctx *ctx)
 	uint64_t chunk_array[2];
 	int r = 0;
 
+	if (!ctx->cpm4)
+		return 0;
 #if 0
 	for (r = 0; r < ctx->cpm4; r++) {
 		fprintf(stderr, "0x%08X\n", ctx->pm4[r]);

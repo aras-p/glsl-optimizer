@@ -54,15 +54,18 @@ void r600_flush(struct pipe_context *ctx, unsigned flags,
 	/* FIXME dumping should be removed once shader support instructions
 	 * without throwing bad code
 	 */
+	if (!rctx->ctx->cpm4)
+		goto out;
 	sprintf(dname, "gallium-%08d.bof", dc);
 	if (dc < 1)
 		radeon_ctx_dump_bof(rctx->ctx, dname);
 #if 1
 	radeon_ctx_submit(rctx->ctx);
 #endif
+	dc++;
+out:
 	rctx->ctx = radeon_ctx_decref(rctx->ctx);
 	rctx->ctx = radeon_ctx(rscreen->rw);
-	dc++;
 }
 
 static void r600_init_config(struct r600_context *rctx)

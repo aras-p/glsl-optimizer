@@ -157,6 +157,37 @@ int radeon_ctx_submit(struct radeon_ctx *ctx);
 void radeon_ctx_dump_bof(struct radeon_ctx *ctx, const char *file);
 
 /*
+ * radeon context functions
+ */
+#pragma pack(1)
+struct radeon_cs_reloc {
+	uint32_t	handle;
+	uint32_t	read_domain;
+	uint32_t	write_domain;
+	uint32_t	flags;
+};
+#pragma pack()
+
+struct radeon_ctx {
+	int				refcount;
+	struct radeon			*radeon;
+	u32				*pm4;
+	u32				cpm4;
+	u32				draw_cpm4;
+	unsigned			id;
+	unsigned			next_id;
+	unsigned			nreloc;
+	struct radeon_cs_reloc		*reloc;
+	unsigned			nbo;
+	struct radeon_bo		**bo;
+	unsigned			ndraw;
+	struct radeon_draw		*cdraw;
+	struct radeon_draw		**draw;
+	unsigned			nstate;
+	struct radeon_state		**state;
+};
+
+/*
  * R600/R700
  */
 

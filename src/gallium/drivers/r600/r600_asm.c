@@ -179,12 +179,13 @@ int r600_bc_add_literal(struct r600_bc *bc, const u32 *value)
 		return -EINVAL;
 	}
 	alu = LIST_ENTRY(struct r600_bc_alu, bc->cf_last->alu.prev, list);
-	if (!alu->last || !alu->nliteral) {
+	if (!alu->last || !alu->nliteral || alu->literal_added) {
 		return 0;
 	}
 	memcpy(alu->value, value, 4 * 4);
 	bc->cf_last->ndw += alu->nliteral;
 	bc->ndw += alu->nliteral;
+	alu->literal_added = 1;
 	return 0;
 }
 
