@@ -1284,6 +1284,7 @@ link_shaders(struct gl_shader_program *prog)
       do_mod_to_fract(ir);
       do_div_to_mul_rcp(ir);
       do_explog_to_explog2(ir);
+      do_sub_to_add_neg(ir);
 
       do {
 	 progress = false;
@@ -1296,6 +1297,7 @@ link_shaders(struct gl_shader_program *prog)
 	 progress = do_dead_code_local(ir) || progress;
 	 progress = do_dead_code(ir) || progress;
 	 progress = do_tree_grafting(ir) || progress;
+	 progress = do_constant_propagation(ir) || progress;
 	 progress = do_constant_variable(ir) || progress;
 	 progress = do_constant_folding(ir) || progress;
 	 progress = do_algebraic(ir) || progress;

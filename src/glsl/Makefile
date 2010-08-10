@@ -34,6 +34,7 @@ CXX_SOURCES = \
 	ir_clone.cpp \
 	ir_constant_expression.cpp \
 	ir_constant_folding.cpp \
+	ir_constant_propagation.cpp \
 	ir_constant_variable.cpp \
 	ir_copy_propagation.cpp \
 	ir.cpp \
@@ -58,6 +59,7 @@ CXX_SOURCES = \
 	ir_reader.cpp \
 	ir_set_program_inouts.cpp \
 	ir_structure_splitting.cpp \
+	ir_sub_to_add_neg.cpp \
 	ir_swizzle_swizzle.cpp \
 	ir_tree_grafting.cpp \
 	ir_validate.cpp \

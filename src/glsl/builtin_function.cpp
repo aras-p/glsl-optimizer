@@ -4164,7 +4164,7 @@ static const char *builtins_130_textureProj = {
 };
 
 static const char *builtins_130_textureProjGrad = {
-   "((function textureLod\n"
+   "((function textureProjGrad\n"
    "   (signature vec4\n"
    "     (parameters\n"
    "       (declare (in) sampler1D sampler)\n"
@@ -4289,7 +4289,7 @@ static const char *builtins_130_textureProjGrad = {
 };
 
 static const char *builtins_130_textureProjLod = {
-   "((function textureLod\n"
+   "((function textureProjLod\n"
    "   (signature vec4\n"
    "     (parameters\n"
    "       (declare (in) sampler1D sampler)\n"
