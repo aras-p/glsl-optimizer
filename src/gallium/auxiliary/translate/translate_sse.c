@@ -46,18 +46,6 @@
 #define W    3
 
 
-typedef void (PIPE_CDECL *run_func)( struct translate *translate,
-                                     unsigned start,
-                                     unsigned count,
-                                     unsigned instance_id,
-                                     void *output_buffer);
-
-typedef void (PIPE_CDECL *run_elts_func)( struct translate *translate,
-                                          const unsigned *elts,
-                                          unsigned count,
-                                          unsigned instance_id,
-                                          void *output_buffer);
-
 struct translate_buffer {
    const void *base_ptr;
    unsigned stride;
@@ -101,9 +89,6 @@ struct translate_sse {
 
    boolean use_instancing;
    unsigned instance_id;
-
-   run_func      gen_run;
-   run_elts_func gen_run_elts;
 
    /* these are actually known values, but putting them in a struct
     * like this is helpful to keep them in sync across the file.
@@ -700,36 +685,6 @@ static void translate_sse_release( struct translate *translate )
    FREE(p);
 }
 
-static void PIPE_CDECL translate_sse_run_elts( struct translate *translate,
-			      const unsigned *elts,
-			      unsigned count,
-                              unsigned instance_id,
-			      void *output_buffer )
-{
-   struct translate_sse *p = (struct translate_sse *)translate;
-
-   p->gen_run_elts( translate,
-		    elts,
-		    count,
-                    instance_id,
-                    output_buffer);
-}
-
-static void PIPE_CDECL translate_sse_run( struct translate *translate,
-			 unsigned start,
-			 unsigned count,
-                         unsigned instance_id,
-			 void *output_buffer )
-{
-   struct translate_sse *p = (struct translate_sse *)translate;
-
-   p->gen_run( translate,
-	       start,
-	       count,
-               instance_id,
-               output_buffer);
-}
-
 
 struct translate *translate_sse2_create( const struct translate_key *key )
 {
@@ -746,8 +701,6 @@ struct translate *translate_sse2_create( const struct translate_key *key )
    p->translate.key = *key;
    p->translate.release = translate_sse_release;
    p->translate.set_buffer = translate_sse_set_buffer;
-   p->translate.run_elts = translate_sse_run_elts;
-   p->translate.run = translate_sse_run;
 
    for (i = 0; i < key->nr_elements; i++) {
       if (key->element[i].type == TRANSLATE_ELEMENT_NORMAL) {
@@ -789,12 +742,12 @@ struct translate *translate_sse2_create( const struct translate_key *key )
    if (!build_vertex_emit(p, &p->elt_func, FALSE))
       goto fail;
 
-   p->gen_run = (run_func)x86_get_func(&p->linear_func);
-   if (p->gen_run == NULL)
+   p->translate.run = (void*)x86_get_func(&p->linear_func);
+   if (p->translate.run == NULL)
       goto fail;
 
-   p->gen_run_elts = (run_elts_func)x86_get_func(&p->elt_func);
-   if (p->gen_run_elts == NULL)
+   p->translate.run_elts = (void*)x86_get_func(&p->elt_func);
+   if (p->translate.run_elts == NULL)
       goto fail;
 
    return &p->translate;
