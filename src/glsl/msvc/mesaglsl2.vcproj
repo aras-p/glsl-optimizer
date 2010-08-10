@@ -306,6 +306,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\ir_constant_propagation.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\ir_constant_variable.cpp"
 					>
 				</File>

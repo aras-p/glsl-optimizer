@@ -125,6 +125,7 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 			progress = do_dead_code_local(ir) || progress;
 			progress = do_dead_code_unlinked(ir) || progress;
 			progress = do_tree_grafting(ir) || progress;
+			progress = do_constant_propagation(ir) || progress;
 			progress = do_constant_variable_unlinked(ir) || progress;
 			progress = do_constant_folding(ir) || progress;
 			progress = do_algebraic(ir) || progress;
