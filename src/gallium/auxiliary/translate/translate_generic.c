@@ -362,6 +362,66 @@ static emit_func get_emit_func( enum pipe_format format )
    }
 }
 
+static ALWAYS_INLINE void PIPE_CDECL generic_run_one( struct translate_generic *tg,
+                                         unsigned elt,
+                                         unsigned instance_id,
+                                         void *vert )
+{
+   unsigned nr_attrs = tg->nr_attrib;
+   unsigned attr;
+
+   for (attr = 0; attr < nr_attrs; attr++) {
+      float data[4];
+      char *dst = vert + tg->attrib[attr].output_offset;
+
+      if (tg->attrib[attr].type == TRANSLATE_ELEMENT_NORMAL) {
+         const uint8_t *src;
+         unsigned index;
+         int copy_size;
+
+         if (tg->attrib[attr].instance_divisor) {
+            index = instance_id / tg->attrib[attr].instance_divisor;
+         }
+         else {
+            index = elt;
+         }
+
+         /* clamp to void going out of bounds */
+         index = MIN2(index, tg->attrib[attr].max_index);
+
+         src = tg->attrib[attr].input_ptr +
+               tg->attrib[attr].input_stride * index;
+
+         copy_size = tg->attrib[attr].copy_size;
+         if(likely(copy_size >= 0))
+            memcpy(dst, src, copy_size);
+         else
+         {
+            tg->attrib[attr].fetch( data, src, 0, 0 );
+
+            if (0)
+               debug_printf("Fetch linear attr %d  from %p  stride %d  index %d: "
+                         " %f, %f, %f, %f \n",
+                         attr,
+                         tg->attrib[attr].input_ptr,
+                         tg->attrib[attr].input_stride,
+                         index,
+                         data[0], data[1],data[2], data[3]);
+
+            tg->attrib[attr].emit( data, dst );
+         }
+      } else {
+         if(likely(tg->attrib[attr].copy_size >= 0))
+            memcpy(data, &instance_id, 4);
+         else
+         {
+            data[0] = (float)instance_id;
+            tg->attrib[attr].emit( data, dst );
+         }
+      }
+   }
+}
+
 /**
  * Fetch vertex attributes for 'count' vertices.
  */
@@ -373,70 +433,13 @@ static void PIPE_CDECL generic_run_elts( struct translate *translate,
 {
    struct translate_generic *tg = translate_generic(translate);
    char *vert = output_buffer;
-   unsigned nr_attrs = tg->nr_attrib;
-   unsigned attr;
    unsigned i;
 
-   /* loop over vertex attributes (vertex shader inputs)
-    */
    for (i = 0; i < count; i++) {
-      const unsigned elt = *elts++;
-
-      for (attr = 0; attr < nr_attrs; attr++) {
-	 float data[4];
-	 char *dst = vert + tg->attrib[attr].output_offset;
-
-	 if (tg->attrib[attr].type == TRANSLATE_ELEMENT_NORMAL) {
-            const uint8_t *src;
-            unsigned index;
-            int copy_size;
-
-            if (tg->attrib[attr].instance_divisor) {
-               index = instance_id / tg->attrib[attr].instance_divisor;
-            } else {
-               index = elt;
-            }
-
-            /* clamp to void going out of bounds */
-            index = MIN2(index, tg->attrib[attr].max_index);
-
-            src = tg->attrib[attr].input_ptr +
-                  tg->attrib[attr].input_stride * index;
-
-            copy_size = tg->attrib[attr].copy_size;
-            if(likely(copy_size >= 0))
-               memcpy(dst, src, copy_size);
-            else
-            {
-               tg->attrib[attr].fetch( data, src, 0, 0 );
-
-               if (0)
-                  debug_printf("Fetch elt attr %d  from %p  stride %d  div %u  max %u  index %d:  "
-                               " %f, %f, %f, %f \n",
-                               attr,
-                               tg->attrib[attr].input_ptr,
-                               tg->attrib[attr].input_stride,
-                               tg->attrib[attr].instance_divisor,
-                               tg->attrib[attr].max_index,
-                               index,
-                               data[0], data[1],data[2], data[3]);
-               tg->attrib[attr].emit( data, dst );
-            }
-         } else {
-            if(likely(tg->attrib[attr].copy_size >= 0))
-               memcpy(data, &instance_id, 4);
-            else
-            {
-               data[0] = (float)instance_id;
-               tg->attrib[attr].emit( data, dst );
-            }
-         }
-      }
+      generic_run_one(tg, *elts++, instance_id, vert);
       vert += tg->translate.key.output_stride;
    }
 }
-
-
 
 static void PIPE_CDECL generic_run( struct translate *translate,
                                     unsigned start,
@@ -446,66 +449,10 @@ static void PIPE_CDECL generic_run( struct translate *translate,
 {
    struct translate_generic *tg = translate_generic(translate);
    char *vert = output_buffer;
-   unsigned nr_attrs = tg->nr_attrib;
-   unsigned attr;
    unsigned i;
 
-   /* loop over vertex attributes (vertex shader inputs)
-    */
    for (i = 0; i < count; i++) {
-      unsigned elt = start + i;
-
-      for (attr = 0; attr < nr_attrs; attr++) {
-	 float data[4];
-	 char *dst = vert + tg->attrib[attr].output_offset;
-
-         if (tg->attrib[attr].type == TRANSLATE_ELEMENT_NORMAL) {
-            const uint8_t *src;
-            unsigned index;
-            int copy_size;
-
-            if (tg->attrib[attr].instance_divisor) {
-               index = instance_id / tg->attrib[attr].instance_divisor;
-            }
-            else {
-               index = elt;
-            }
-
-            /* clamp to void going out of bounds */
-            index = MIN2(index, tg->attrib[attr].max_index);
-
-            src = tg->attrib[attr].input_ptr +
-                  tg->attrib[attr].input_stride * index;
-
-            copy_size = tg->attrib[attr].copy_size;
-            if(likely(copy_size >= 0))
-               memcpy(dst, src, copy_size);
-            else
-            {
-               tg->attrib[attr].fetch( data, src, 0, 0 );
-
-               if (0)
-                  debug_printf("Fetch linear attr %d  from %p  stride %d  index %d: "
-                            " %f, %f, %f, %f \n",
-                            attr,
-                            tg->attrib[attr].input_ptr,
-                            tg->attrib[attr].input_stride,
-                            index,
-                            data[0], data[1],data[2], data[3]);
-
-               tg->attrib[attr].emit( data, dst );
-            }
-         } else {
-            if(likely(tg->attrib[attr].copy_size >= 0))
-               memcpy(data, &instance_id, 4);
-            else
-            {
-               data[0] = (float)instance_id;
-               tg->attrib[attr].emit( data, dst );
-            }
-         }
-      }
-      
+      generic_run_one(tg, start + i, instance_id, vert);
       vert += tg->translate.key.output_stride;
    }
 }
