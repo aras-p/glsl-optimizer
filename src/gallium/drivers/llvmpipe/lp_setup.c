@@ -496,11 +496,15 @@ lp_setup_set_line_state( struct lp_setup_context *setup,
 
 void 
 lp_setup_set_point_state( struct lp_setup_context *setup,
-                          float point_size)
+                          float point_size,                          
+                          boolean point_size_per_vertex,
+                          uint sprite)
 {
    LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
 
    setup->point_size = point_size;
+   setup->sprite = sprite;
+   setup->point_size_per_vertex = point_size_per_vertex;
 }
 
 void

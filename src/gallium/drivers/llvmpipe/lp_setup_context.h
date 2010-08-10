@@ -74,6 +74,7 @@ struct lp_setup_context
    uint prim;
    uint vertex_size;
    uint nr_vertices;
+   uint sprite;
    uint vertex_buffer_size;
    void *vertex_buffer;
 
@@ -89,6 +90,7 @@ struct lp_setup_context
    boolean flatshade_first;
    boolean ccw_is_frontface;
    boolean scissor_test;
+   boolean point_size_per_vertex;
    unsigned cullmode;
    float pixel_offset;
    float line_width;

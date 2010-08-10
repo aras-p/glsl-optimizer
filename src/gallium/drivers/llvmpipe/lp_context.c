@@ -158,6 +158,8 @@ llvmpipe_create_context( struct pipe_screen *screen, void *priv )
    /* convert points and lines into triangles: 
     * (otherwise, draw points and lines natively)
     */
+   draw_wide_point_sprites(llvmpipe->draw, FALSE);
+   draw_enable_point_sprites(llvmpipe->draw, FALSE);
    draw_wide_point_threshold(llvmpipe->draw, 10000.0);
    draw_wide_line_threshold(llvmpipe->draw, 10000.0);
 

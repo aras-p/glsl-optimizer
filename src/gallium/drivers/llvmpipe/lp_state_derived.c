@@ -74,6 +74,15 @@ compute_vertex_info(struct llvmpipe_context *llvmpipe)
       vs_index = draw_find_shader_output(llvmpipe->draw,
                                          lpfs->info.input_semantic_name[i],
                                          lpfs->info.input_semantic_index[i]);
+      if (vs_index < 0) {
+         /*
+          * This can happen with sprite coordinates - the vertex
+          * shader doesn't need to provide an output as we generate
+          * them internally.  However, lets keep pretending that there
+          * is something there to not confuse other code.
+          */
+         vs_index = 0;
+      }
 
       /* This can be pre-computed, except for flatshade:
        */
@@ -128,11 +137,12 @@ compute_vertex_info(struct llvmpipe_context *llvmpipe)
 
    /* Figure out if we need pointsize as well.
     */
-   llvmpipe->psize_slot = draw_find_shader_output(llvmpipe->draw,
-                                                  TGSI_SEMANTIC_PSIZE, 0);
-   if (llvmpipe->psize_slot > 0) {
-      draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_CONSTANT,
-                            llvmpipe->psize_slot);
+   vs_index = draw_find_shader_output(llvmpipe->draw,
+                                      TGSI_SEMANTIC_PSIZE, 0);
+
+   if (vs_index > 0) {
+      llvmpipe->psize_slot = vinfo->num_attribs;
+      draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_CONSTANT, vs_index);
    }
 
    llvmpipe->num_inputs = lpfs->info.num_inputs;

@@ -36,6 +36,7 @@
 #include "lp_setup_context.h"
 #include "lp_rast.h"
 #include "lp_state_fs.h"
+#include "tgsi/tgsi_scan.h"
 
 #define NUM_CHANNELS 4
 
@@ -61,6 +62,49 @@ static void constant_coef( struct lp_setup_context *setup,
    point->inputs.dadx[slot][i] = 0.0f;
    point->inputs.dady[slot][i] = 0.0f;
 }
+
+static void perspective_coef( struct lp_setup_context *setup,
+                              struct lp_rast_triangle *point,
+                              const struct point_info *info,
+                              unsigned slot,
+                              unsigned vert_attr,
+                              unsigned i)
+{
+   if (i == 0) {   
+      float dadx = FIXED_ONE / (float)info->dx12;  
+      float dady =  0.0f;
+      point->inputs.dadx[slot][i] = dadx;
+      point->inputs.dady[slot][i] = dady;
+      point->inputs.a0[slot][i] = (0.5 -
+                                  (dadx * ((float)info->v0[0][0] - setup->pixel_offset) +
+                                   dady * ((float)info->v0[0][1] - setup->pixel_offset)));
+   }
+
+   else if (i == 1) {
+      float dadx =  0.0f; 
+      float dady =  FIXED_ONE / (float)info->dx12;
+   
+      point->inputs.dadx[slot][i] = dadx;
+      point->inputs.dady[slot][i] = dady;
+      point->inputs.a0[slot][i] = (0.5 -
+                                  (dadx * ((float)info->v0[0][0] - setup->pixel_offset) +
+                                   dady * ((float)info->v0[0][1] - setup->pixel_offset)));
+   }
+
+   else if (i == 2) {
+      point->inputs.a0[slot][i] = 0.0f;
+      point->inputs.dadx[slot][i] = 0.0f;
+      point->inputs.dady[slot][i] = 0.0f;
+   }
+      
+   else if (i == 3) {
+      point->inputs.a0[slot][i] = 1.0f;
+      point->inputs.dadx[slot][i] = 0.0f;
+      point->inputs.dady[slot][i] = 0.0f;
+   }
+
+}
+
 
 /**
  * Special coefficient setup for gl_FragCoord.
@@ -128,6 +172,23 @@ setup_point_coefficients( struct lp_setup_context *setup,
          fragcoord_usage_mask |= usage_mask;
          break;
 
+      case LP_INTERP_PERSPECTIVE:
+         /* For point sprite textures */        
+         if (setup->fs.current.variant->shader->info.input_semantic_name[slot] 
+             == TGSI_SEMANTIC_GENERIC) 
+         {
+            int index = setup->fs.current.variant->shader->info.input_semantic_index[slot];
+            
+            if (setup->sprite & (1 << index)) {
+               for (i = 0; i < NUM_CHANNELS; i++)
+                  if (usage_mask & (1 << i))
+                     perspective_coef(setup, point, info, slot+1, vert_attr, i);
+               fragcoord_usage_mask |= TGSI_WRITEMASK_W;
+               break;                     
+            }
+         }
+
+         /* Otherwise fallthrough */
       default:
          for (i = 0; i < NUM_CHANNELS; i++) {
             if (usage_mask & (1 << i))
@@ -155,7 +216,7 @@ static void lp_setup_point( struct lp_setup_context *setup,
    /* x/y positions in fixed point */
    const int sizeAttr = setup->psize;
    const float size
-      = sizeAttr > 0 ? v0[sizeAttr][0]
+      = (setup->point_size_per_vertex && sizeAttr > 0) ? v0[sizeAttr][0]
       : setup->point_size;
    
    /* Point size as fixed point integer, remove rounding errors 
