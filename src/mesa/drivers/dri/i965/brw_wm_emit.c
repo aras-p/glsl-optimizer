@@ -1775,7 +1775,7 @@ void brw_wm_emit( struct brw_wm_compile *c )
 
      printf("wm-native:\n");
      for (i = 0; i < p->nr_insn; i++)
-	 brw_disasm(stderr, &p->store[i], p->brw->intel.gen);
+	 brw_disasm(stdout, &p->store[i], p->brw->intel.gen);
       printf("\n");
    }
 }

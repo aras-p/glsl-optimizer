@@ -2117,7 +2117,7 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
     if (INTEL_DEBUG & DEBUG_WM) {
       printf("wm-native:\n");
       for (i = 0; i < p->nr_insn; i++)
-	 brw_disasm(stderr, &p->store[i], intel->gen);
+	 brw_disasm(stdout, &p->store[i], intel->gen);
       printf("\n");
     }
 }
