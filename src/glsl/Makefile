@@ -34,6 +34,7 @@ CXX_SOURCES = \
 	ir_clone.cpp \
 	ir_constant_expression.cpp \
 	ir_constant_folding.cpp \
+	ir_constant_propagation.cpp \
 	ir_constant_variable.cpp \
 	ir_copy_propagation.cpp \
 	ir.cpp \
