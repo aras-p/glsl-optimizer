@@ -6,13 +6,11 @@ void main ()
   vec2 tmpvar_2;
   tmpvar_2 = gl_TexCoord[0].xy;
   vec4 n;
-  float d;
   vec4 tmpvar_41;
   tmpvar_41 = texture2D (_CameraNormalsTexture, tmpvar_2);
   n = tmpvar_41;
   float _ret_val_i0;
   _ret_val_i0 = 1.0/(((_ZBufferParams.x * texture2D (_CameraDepthTexture, tmpvar_2).x) + _ZBufferParams.y));
-  d = _ret_val_i0;
   n.xyz = ((tmpvar_41.xyz * 2.000000) - 1.000000).xyz;
   n.z = float(vec3(-(n.z)));
   vec4 tmpvar_48;
@@ -23,7 +21,7 @@ void main ()
     enc.xy = ((((normal.xy / (normal.z + 1.000000)) / 1.777700) * 0.500000) + 0.500000).xy;
     vec2 enc_i0_i1;
     vec2 tmpvar_63;
-    tmpvar_63 = fract ((vec2(1.000000, 255.000000) * d));
+    tmpvar_63 = fract ((vec2(1.000000, 255.000000) * _ret_val_i0));
     enc_i0_i1 = tmpvar_63;
     enc_i0_i1.x = (tmpvar_63.x - (tmpvar_63.y * 0.003922));
     enc.zw = vec2(enc_i0_i1.xy);

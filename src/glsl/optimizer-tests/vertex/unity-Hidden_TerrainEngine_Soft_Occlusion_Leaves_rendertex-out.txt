@@ -12,14 +12,13 @@ void main ()
 {
   vec4 tmpvar_1;
   tmpvar_1 = gl_Vertex.xyzw;
+  vec4 tmpvar_9;
+  tmpvar_9 = gl_MultiTexCoord0.xyzw;
   vec3 tmpvar_117;
   tmpvar_117 = gl_Normal.xyz;
   int i;
   vec4 lightColor;
   vec4 lightDir;
-  vec4 tmpvar_120;
-  float tmpvar_121;
-  vec4 tmpvar_122;
   vec4 tmpvar_123;
   i = 0;
   vec4 pos;
@@ -41,13 +40,12 @@ void main ()
   pos = tmpvar_73;
   vec4 tmpvar_78;
   tmpvar_78 = (gl_ModelViewProjectionMatrix * tmpvar_73);
-  tmpvar_120 = tmpvar_78;
-  tmpvar_121 = tmpvar_78.z;
-  tmpvar_122 = gl_MultiTexCoord0.xyzw;
+  float tmpvar_79;
+  tmpvar_79 = tmpvar_78.z;
   lightDir.w = float(vec4(_AO));
   lightColor = gl_LightModel.ambient;
   while (true) {
-    if (!((i < 4))) {
+    if ((i >= 4)) {
       break;
     };
     lightDir.xyz = _TerrainTreeLightDirections[i].xyz;
@@ -57,14 +55,14 @@ void main ()
   lightColor.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
   tmpvar_123 = (lightColor * _Color);
   tmpvar_123.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
-  gl_Position = tmpvar_120.xyzw;
+  gl_Position = tmpvar_78.xyzw;
   vec4 tmpvar_15;
-  tmpvar_15.x = float(vec4(tmpvar_121));
+  tmpvar_15.x = float(vec4(tmpvar_79));
   tmpvar_15.y = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_15.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_15.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   xlv_FOG = tmpvar_15;
-  gl_TexCoord[0] = tmpvar_122.xyzw;
+  gl_TexCoord[0] = tmpvar_9.xyzw;
   gl_FrontColor = tmpvar_123.xyzw;
 }
 

@@ -9,35 +9,33 @@ uniform float _Cutoff;
 uniform vec4 _Color;
 void main ()
 {
-  vec4 tmpvar_73;
-  vec3 tmpvar_74;
-  tmpvar_73 = gl_TexCoord[1].xyzw;
-  tmpvar_74 = gl_TexCoord[2].xyz;
+  vec4 tmpvar_5;
+  tmpvar_5 = gl_TexCoord[1].xyzw;
+  vec3 tmpvar_7;
+  tmpvar_7 = gl_TexCoord[2].xyz;
   vec4 light;
-  vec3 tmpvar_75;
-  float tmpvar_79;
-  float tmpvar_80;
   vec4 tmpvar_34;
   tmpvar_34 = texture2D (_MainTex, gl_TexCoord[0].xy);
+  vec3 tmpvar_36;
+  tmpvar_36 = (tmpvar_34.xyz * _Color.xyz);
+  float tmpvar_37;
+  tmpvar_37 = tmpvar_34.w;
   float tmpvar_38;
   tmpvar_38 = (tmpvar_34.w * _Color.w);
-  tmpvar_75 = (tmpvar_34.xyz * _Color.xyz);
-  tmpvar_79 = tmpvar_34.w;
-  tmpvar_80 = tmpvar_38;
   float x;
   x = (tmpvar_38 - _Cutoff);
   if ((x < 0.000000)) {
     discard;
   };
   vec4 tmpvar_43;
-  tmpvar_43 = -(log2 (texture2DProj (_LightBuffer, tmpvar_73)));
+  tmpvar_43 = -(log2 (texture2DProj (_LightBuffer, tmpvar_5)));
   light = tmpvar_43;
-  light.xyz = (tmpvar_43.xyz + mix ((2.000000 * texture2D (unity_LightmapInd, tmpvar_74.xy).xyz), (2.000000 * texture2D (unity_Lightmap, tmpvar_74.xy).xyz), vec3(clamp (tmpvar_74.z, 0.000000, 1.000000)))).xyz;
+  light.xyz = (tmpvar_43.xyz + mix ((2.000000 * texture2D (unity_LightmapInd, tmpvar_7.xy).xyz), (2.000000 * texture2D (unity_Lightmap, tmpvar_7.xy).xyz), vec3(clamp (tmpvar_7.z, 0.000000, 1.000000)))).xyz;
   vec4 c;
   float tmpvar_61;
-  tmpvar_61 = (light.w * tmpvar_79);
-  c.xyz = ((tmpvar_75 * light.xyz) + ((light.xyz * _SpecColor.xyz) * tmpvar_61)).xyz;
-  c.w = float(vec4((tmpvar_80 + (tmpvar_61 * _SpecColor.w))));
+  tmpvar_61 = (light.w * tmpvar_37);
+  c.xyz = ((tmpvar_36 * light.xyz) + ((light.xyz * _SpecColor.xyz) * tmpvar_61)).xyz;
+  c.w = float(vec4((tmpvar_38 + (tmpvar_61 * _SpecColor.w))));
   gl_FragData[0] = c.xyzw;
 }
 

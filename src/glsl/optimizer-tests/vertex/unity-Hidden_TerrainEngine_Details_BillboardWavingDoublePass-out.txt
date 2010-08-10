@@ -29,14 +29,12 @@ void main ()
   tmpvar_1 = gl_Vertex.xyzw;
   vec4 tmpvar_3;
   tmpvar_3 = TANGENT.xyzw;
-  vec4 tmpvar_329;
-  vec3 tmpvar_330;
-  vec4 tmpvar_331;
-  vec4 tmpvar_333;
-  tmpvar_329 = tmpvar_3;
-  tmpvar_330 = gl_Normal.xyz;
-  tmpvar_331 = gl_MultiTexCoord0.xyzw;
-  tmpvar_333 = gl_Color.xyzw;
+  vec3 tmpvar_5;
+  tmpvar_5 = gl_Normal.xyz;
+  vec4 tmpvar_7;
+  tmpvar_7 = gl_MultiTexCoord0.xyzw;
+  vec4 tmpvar_11;
+  tmpvar_11 = gl_Color.xyzw;
   vec4 pos;
   pos = tmpvar_1;
   vec2 offset;
@@ -48,7 +46,7 @@ void main ()
   if ((tmpvar_180 > _WaveAndDistance.w)) {
     offset = vec2(0.000000, 0.000000);
   };
-  pos.xyz = (pos.xyz + (offset.x * _CameraRight.xyz)).xyz;
+  pos.xyz = (tmpvar_1.xyz + (offset.x * _CameraRight.xyz)).xyz;
   pos.xyz = (pos.xyz + (offset.y * _CameraUp.xyz)).xyz;
   vec4 vertex;
   vertex = pos;
@@ -70,13 +68,12 @@ void main ()
   vec4 tmpvar_209;
   tmpvar_209 = (tmpvar_208 * tmpvar_208);
   vec4 tmpvar_213;
-  tmpvar_213 = (tmpvar_209 * tmpvar_329.y);
+  tmpvar_213 = (tmpvar_209 * tmpvar_3.y);
   waveMove.x = dot (tmpvar_213, vec4(0.024000, 0.040000, -0.120000, 0.096000));
   waveMove.z = float(vec3(dot (tmpvar_213, vec4(0.006000, 0.020000, -0.020000, 0.100000))));
   vertex.xz = vec2((pos.xz - (waveMove.xz * _WaveAndDistance.z)).xy);
-  outColor.xyz = ((tmpvar_333.xyz * mix (vec3(0.500000, 0.500000, 0.500000), _WavingTint.xyz, vec3((dot (tmpvar_209, vec4(0.674200, 0.674200, 0.269680, 0.134840)) * 0.700000)))) * 2.000000).xyz;
+  outColor.xyz = ((tmpvar_11.xyz * mix (vec3(0.500000, 0.500000, 0.500000), _WavingTint.xyz, vec3((dot (tmpvar_209, vec4(0.674200, 0.674200, 0.269680, 0.134840)) * 0.700000)))) * 2.000000).xyz;
   outColor.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
-  tmpvar_333 = outColor;
   vec4 tmpvar_225;
   tmpvar_225 = (gl_ModelViewProjectionMatrix * vertex);
   mat3 tmpvar_234;
@@ -84,7 +81,7 @@ void main ()
   tmpvar_234[1] = _Object2World[1].xyz;
   tmpvar_234[2] = _Object2World[2].xyz;
   vec3 tmpvar_238;
-  tmpvar_238 = (tmpvar_234 * (tmpvar_330 * unity_Scale.w));
+  tmpvar_238 = (tmpvar_234 * (tmpvar_5 * unity_Scale.w));
   vec4 tmpvar_240;
   tmpvar_240.xyz = vec3(tmpvar_238.xyz);
   tmpvar_240.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
@@ -118,7 +115,7 @@ void main ()
   tmpvar_17.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   xlv_FOG = tmpvar_17;
   vec4 tmpvar_19;
-  tmpvar_19.xy = vec2(((tmpvar_331.xy * _MainTex_ST.xy) + _MainTex_ST.zw).xy);
+  tmpvar_19.xy = vec2(((tmpvar_7.xy * _MainTex_ST.xy) + _MainTex_ST.zw).xy);
   tmpvar_19.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_19.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[0] = tmpvar_19;

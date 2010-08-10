@@ -12,18 +12,17 @@ uniform float _Cutoff;
 uniform sampler2D _BumpMap;
 void main ()
 {
-  vec3 tmpvar_119;
-  vec3 tmpvar_120;
-  vec3 tmpvar_121;
-  vec3 tmpvar_122;
-  vec2 tmpvar_123;
-  tmpvar_119 = gl_TexCoord[0].xyz;
-  tmpvar_120 = gl_TexCoord[1].xyz;
-  tmpvar_121 = gl_TexCoord[2].xyz;
-  tmpvar_122 = gl_TexCoord[3].xyz;
-  tmpvar_123 = gl_TexCoord[4].xy;
+  vec3 tmpvar_2;
+  tmpvar_2 = gl_TexCoord[0].xyz;
+  vec3 tmpvar_4;
+  tmpvar_4 = gl_TexCoord[1].xyz;
+  vec3 tmpvar_6;
+  tmpvar_6 = gl_TexCoord[2].xyz;
+  vec3 tmpvar_8;
+  tmpvar_8 = gl_TexCoord[3].xyz;
+  vec2 tmpvar_10;
+  tmpvar_10 = gl_TexCoord[4].xy;
   vec4 res;
-  vec4 z;
   vec2 tmpvar_54;
   tmpvar_54 = gl_TexCoord[5].xy;
   vec4 normal;
@@ -35,12 +34,11 @@ void main ()
     discard;
   };
   vec4 tmpvar_78;
-  tmpvar_78 = tmpvar_123.xxxx;
-  z = tmpvar_78;
+  tmpvar_78 = tmpvar_10.xxxx;
   vec4 tmpvar_86;
   tmpvar_86 = (vec4(greaterThanEqual (tmpvar_78, _LightSplitsNear)).xyzw * vec4(lessThan (tmpvar_78, _LightSplitsFar)).xyzw);
   vec4 tmpvar_87;
-  tmpvar_87.xyz = vec3(((((tmpvar_119 * tmpvar_86.x) + (tmpvar_120 * tmpvar_86.y)) + (tmpvar_121 * tmpvar_86.z)) + (tmpvar_122 * tmpvar_86.w)).xyz);
+  tmpvar_87.xyz = vec3(((((tmpvar_2 * tmpvar_86.x) + (tmpvar_4 * tmpvar_86.y)) + (tmpvar_6 * tmpvar_86.z)) + (tmpvar_8 * tmpvar_86.w)).xyz);
   tmpvar_87.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
   vec4 tmpvar_89;
   tmpvar_89 = texture2D (_ShadowMapTexture, tmpvar_87.xy);
@@ -50,11 +48,11 @@ void main ()
   } else {
     tmpvar_90 = 1.000000;
   };
-  res.x = clamp ((tmpvar_90 + clamp (tmpvar_123.y, 0.000000, 1.000000)), 0.000000, 1.000000);
+  res.x = clamp ((tmpvar_90 + clamp (tmpvar_10.y, 0.000000, 1.000000)), 0.000000, 1.000000);
   res.y = float(vec2(1.000000, 1.000000));
   vec2 enc;
   vec2 tmpvar_106;
-  tmpvar_106 = fract ((vec2(1.000000, 255.000000) * (1.000000 - (z * _ProjectionParams.w)).x));
+  tmpvar_106 = fract ((vec2(1.000000, 255.000000) * (1.000000 - (tmpvar_78 * _ProjectionParams.w)).x));
   enc = tmpvar_106;
   enc.x = (tmpvar_106.x - (tmpvar_106.y * 0.003922));
   res.zw = vec2(enc.xy);

@@ -8,7 +8,7 @@ void main ()
   a = 4.000000;
   i = 0;
   while (true) {
-    if (!((i < 10))) {
+    if ((i >= 10)) {
       break;
     };
     a = (a + 1.000000);

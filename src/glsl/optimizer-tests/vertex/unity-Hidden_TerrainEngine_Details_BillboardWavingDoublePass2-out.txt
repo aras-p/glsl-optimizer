@@ -12,15 +12,12 @@ void main ()
   tmpvar_1 = gl_Vertex.xyzw;
   vec4 tmpvar_3;
   tmpvar_3 = TANGENT.xyzw;
+  vec4 tmpvar_7;
+  tmpvar_7 = gl_MultiTexCoord0.xyzw;
+  vec4 tmpvar_11;
+  tmpvar_11 = gl_Color.xyzw;
   vec4 tmpvar_199;
   vec2 tmpvar_200;
-  vec4 tmpvar_201;
-  vec4 tmpvar_203;
-  vec4 tmpvar_205;
-  vec4 tmpvar_207;
-  tmpvar_203 = tmpvar_3;
-  tmpvar_205 = gl_MultiTexCoord0.xyzw;
-  tmpvar_207 = gl_Color.xyzw;
   vec4 pos;
   pos = tmpvar_1;
   vec2 offset;
@@ -32,7 +29,7 @@ void main ()
   if ((tmpvar_125 > _WaveAndDistance.w)) {
     offset = vec2(0.000000, 0.000000);
   };
-  pos.xyz = (pos.xyz + (offset.x * _CameraRight.xyz)).xyz;
+  pos.xyz = (tmpvar_1.xyz + (offset.x * _CameraRight.xyz)).xyz;
   pos.xyz = (pos.xyz + (offset.y * _CameraUp.xyz)).xyz;
   vec4 vertex;
   vertex = pos;
@@ -54,15 +51,13 @@ void main ()
   vec4 tmpvar_154;
   tmpvar_154 = (tmpvar_153 * tmpvar_153);
   vec4 tmpvar_158;
-  tmpvar_158 = (tmpvar_154 * tmpvar_203.y);
+  tmpvar_158 = (tmpvar_154 * tmpvar_3.y);
   waveMove.x = dot (tmpvar_158, vec4(0.024000, 0.040000, -0.120000, 0.096000));
   waveMove.z = float(vec3(dot (tmpvar_158, vec4(0.006000, 0.020000, -0.020000, 0.100000))));
   vertex.xz = vec2((pos.xz - (waveMove.xz * _WaveAndDistance.z)).xy);
-  outColor.xyz = ((tmpvar_207.xyz * mix (vec3(0.500000, 0.500000, 0.500000), _WavingTint.xyz, vec3((dot (tmpvar_154, vec4(0.674200, 0.674200, 0.269680, 0.134840)) * 0.700000)))) * 2.000000).xyz;
+  outColor.xyz = ((tmpvar_11.xyz * mix (vec3(0.500000, 0.500000, 0.500000), _WavingTint.xyz, vec3((dot (tmpvar_154, vec4(0.674200, 0.674200, 0.269680, 0.134840)) * 0.700000)))) * 2.000000).xyz;
   outColor.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
-  tmpvar_207 = outColor;
-  tmpvar_200 = ((tmpvar_205.xy * _MainTex_ST.xy) + _MainTex_ST.zw).xy;
-  tmpvar_201 = outColor;
+  tmpvar_200 = ((tmpvar_7.xy * _MainTex_ST.xy) + _MainTex_ST.zw).xy;
   vec4 tmpvar_172;
   tmpvar_172 = (gl_ModelViewProjectionMatrix * vertex);
   tmpvar_199 = tmpvar_172;
@@ -76,6 +71,6 @@ void main ()
   tmpvar_17.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_17.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[1] = tmpvar_17;
-  gl_FrontColor = tmpvar_201.xyzw;
+  gl_FrontColor = outColor.xyzw;
 }
 

@@ -4,15 +4,15 @@ uniform float _Cutoff;
 uniform vec4 _Color;
 void main ()
 {
-  vec3 tmpvar_45;
-  tmpvar_45 = gl_TexCoord[0].xyz;
+  vec3 tmpvar_2;
+  tmpvar_2 = gl_TexCoord[0].xyz;
   float x;
   x = ((texture2D (_MainTex, gl_TexCoord[1].xy) * _Color).w - _Cutoff);
   if ((x < 0.000000)) {
     discard;
   };
   vec4 tmpvar_38;
-  tmpvar_38 = fract ((vec4(1.000000, 255.000000, 65025.000000, 160580992.000000) * (length (tmpvar_45) * _LightPositionRange.w)));
+  tmpvar_38 = fract ((vec4(1.000000, 255.000000, 65025.000000, 160580992.000000) * (length (tmpvar_2) * _LightPositionRange.w)));
   gl_FragData[0] = (tmpvar_38 - (tmpvar_38.yzww * 0.003922)).xyzw;
 }
 

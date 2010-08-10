@@ -7,28 +7,24 @@ void main ()
 {
   vec3 tmpvar_5;
   tmpvar_5 = gl_TexCoord[1].xyz;
-  vec4 tmpvar_70;
-  vec3 tmpvar_71;
-  tmpvar_70 = gl_TexCoord[2].xyzw;
-  tmpvar_71 = gl_TexCoord[3].xyz;
+  vec4 tmpvar_7;
+  tmpvar_7 = gl_TexCoord[2].xyzw;
+  vec3 tmpvar_9;
+  tmpvar_9 = gl_TexCoord[3].xyz;
   vec4 light;
-  vec3 tmpvar_73;
-  vec2 tmpvar_80;
-  tmpvar_80 = gl_TexCoord[0].xy;
-  vec3 tmpvar_83;
-  tmpvar_83 = tmpvar_73;
+  vec2 tmpvar_26;
+  tmpvar_26 = gl_TexCoord[0].xy;
   float x;
   x = (fract (((tmpvar_5.y + (tmpvar_5.z * 0.100000)) * 5.000000)) - 0.500000);
   if ((x < 0.000000)) {
     discard;
   };
-  tmpvar_73 = tmpvar_83;
   vec4 tmpvar_39;
-  tmpvar_39 = -(log2 (texture2DProj (_LightBuffer, tmpvar_70)));
+  tmpvar_39 = -(log2 (texture2DProj (_LightBuffer, tmpvar_7)));
   light = tmpvar_39;
-  light.xyz = (tmpvar_39.xyz + mix ((2.000000 * texture2D (unity_LightmapInd, tmpvar_71.xy).xyz), (2.000000 * texture2D (unity_Lightmap, tmpvar_71.xy).xyz), vec3(clamp (tmpvar_71.z, 0.000000, 1.000000)))).xyz;
+  light.xyz = (tmpvar_39.xyz + mix ((2.000000 * texture2D (unity_LightmapInd, tmpvar_9.xy).xyz), (2.000000 * texture2D (unity_Lightmap, tmpvar_9.xy).xyz), vec3(clamp (tmpvar_9.z, 0.000000, 1.000000)))).xyz;
   vec4 c;
-  c.xyz = (texture2D (_MainTex, tmpvar_80).xyz * light.xyz).xyz;
+  c.xyz = (texture2D (_MainTex, tmpvar_26).xyz * light.xyz).xyz;
   c.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_FragData[0] = c.xyzw;
 }

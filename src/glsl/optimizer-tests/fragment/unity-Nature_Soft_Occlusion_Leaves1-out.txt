@@ -6,29 +6,27 @@ uniform float _Cutoff;
 uniform vec4 _Color;
 void main ()
 {
-  vec4 tmpvar_46;
-  tmpvar_46 = gl_TexCoord[1].xyzw;
+  vec4 tmpvar_5;
+  tmpvar_5 = gl_TexCoord[1].xyzw;
   vec4 light;
-  vec3 tmpvar_47;
-  float tmpvar_52;
   vec4 tmpvar_26;
   tmpvar_26 = (texture2D (_MainTex, gl_TexCoord[0].xy) * _Color);
+  vec3 tmpvar_27;
+  tmpvar_27 = tmpvar_26.xyz;
   float tmpvar_28;
   tmpvar_28 = tmpvar_26.w;
-  tmpvar_47 = tmpvar_26.xyz;
-  tmpvar_52 = tmpvar_28;
   float x;
   x = (tmpvar_28 - _Cutoff);
   if ((x < 0.000000)) {
     discard;
   };
   vec4 tmpvar_32;
-  tmpvar_32 = -(log2 (texture2DProj (_LightBuffer, tmpvar_46)));
+  tmpvar_32 = -(log2 (texture2DProj (_LightBuffer, tmpvar_5)));
   light = tmpvar_32;
   light.xyz = (tmpvar_32.xyz + unity_Ambient.xyz).xyz;
   vec4 c_i0;
-  c_i0.xyz = (tmpvar_47 * light.xyz).xyz;
-  c_i0.w = float(vec4(tmpvar_52));
+  c_i0.xyz = (tmpvar_27 * light.xyz).xyz;
+  c_i0.w = float(vec4(tmpvar_28));
   gl_FragData[0] = c_i0.xyzw;
 }
 

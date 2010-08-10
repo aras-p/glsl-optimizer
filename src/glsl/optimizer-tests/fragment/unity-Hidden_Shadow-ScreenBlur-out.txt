@@ -27,7 +27,7 @@ void main ()
   diffTolerance = tmpvar_23;
   mask.xy = (tmpvar_16.xy * tmpvar_23).xy;
   while (true) {
-    if (!((i_1 < 8))) {
+    if ((i_1 >= 8)) {
       break;
     };
     vec4 tmpvar_25;

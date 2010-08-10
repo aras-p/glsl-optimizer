@@ -3,33 +3,33 @@ uniform vec3 _TerrainTreeLightDirections[4];
 uniform vec4 _TerrainTreeLightColors[4];
 void main ()
 {
+  vec4 tmpvar_11;
+  tmpvar_11 = gl_Color.xyzw;
   vec3 tmpvar_54;
-  vec4 tmpvar_57;
   tmpvar_54 = gl_Normal.xyz;
-  tmpvar_57 = gl_Color.xyzw;
   int i;
   vec3 lightColor;
-  vec4 tmpvar_58;
-  vec2 tmpvar_59;
   i = 0;
-  tmpvar_58 = (gl_ModelViewProjectionMatrix * gl_Vertex.xyzw);
-  tmpvar_59 = gl_MultiTexCoord0.xy;
+  vec4 tmpvar_23;
+  tmpvar_23 = (gl_ModelViewProjectionMatrix * gl_Vertex.xyzw);
+  vec2 tmpvar_24;
+  tmpvar_24 = gl_MultiTexCoord0.xy;
   lightColor = gl_LightModel.ambient.xyz;
   while (true) {
-    if (!((i < 4))) {
+    if ((i >= 4)) {
       break;
     };
     lightColor = (lightColor + (_TerrainTreeLightColors[i] * max (0.000000, dot (_TerrainTreeLightDirections[i].xyz, tmpvar_54))).xyz);
     i = (i + 1);
   };
-  gl_Position = tmpvar_58.xyzw;
+  gl_Position = tmpvar_23.xyzw;
   vec4 tmpvar_17;
-  tmpvar_17.xy = vec2(tmpvar_59.xy);
+  tmpvar_17.xy = vec2(tmpvar_24.xy);
   tmpvar_17.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_17.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[0] = tmpvar_17;
   vec4 tmpvar_19;
-  tmpvar_19.xyz = vec3((lightColor * tmpvar_57.w).xyz);
+  tmpvar_19.xyz = vec3((lightColor * tmpvar_11.w).xyz);
   tmpvar_19.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[1] = tmpvar_19;
 }

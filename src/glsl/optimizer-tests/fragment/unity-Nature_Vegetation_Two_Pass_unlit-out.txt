@@ -3,15 +3,13 @@ uniform float _Cutoff;
 uniform vec4 _Color;
 void main ()
 {
-  vec4 col;
   vec4 tmpvar_12;
   tmpvar_12 = (_Color * texture2D (_MainTex, gl_TexCoord[0].xy));
-  col = tmpvar_12;
   float x;
   x = (tmpvar_12.w - _Cutoff);
   if ((x < 0.000000)) {
     discard;
   };
-  gl_FragData[0] = col.xyzw;
+  gl_FragData[0] = tmpvar_12.xyzw;
 }
 

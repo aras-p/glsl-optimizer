@@ -11,10 +11,8 @@ uniform sampler2D _CameraDepthTexture;
 void main ()
 {
   vec4 res;
-  float depth;
   float _ret_val_i0;
   _ret_val_i0 = 1.0/(((_ZBufferParams.x * texture2D (_CameraDepthTexture, gl_TexCoord[0].xy).x) + _ZBufferParams.y));
-  depth = _ret_val_i0;
   vec4 tmpvar_44;
   tmpvar_44.xyz = vec3((gl_TexCoord[1].xyz * _ret_val_i0).xyz);
   tmpvar_44.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
@@ -37,7 +35,7 @@ void main ()
   res.y = float(vec2(1.000000, 1.000000));
   vec2 enc;
   vec2 tmpvar_75;
-  tmpvar_75 = fract ((vec2(1.000000, 255.000000) * (1.000000 - depth)));
+  tmpvar_75 = fract ((vec2(1.000000, 255.000000) * (1.000000 - _ret_val_i0)));
   enc = tmpvar_75;
   enc.x = (tmpvar_75.x - (tmpvar_75.y * 0.003922));
   res.zw = vec2(enc.xy);
