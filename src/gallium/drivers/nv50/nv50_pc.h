@@ -246,6 +246,11 @@ struct nv_instruction {
    ubyte quadop;
 };
 
+#define CFG_EDGE_FORWARD     0
+#define CFG_EDGE_BACK        1
+#define CFG_EDGE_LOOP_ENTER  2
+#define CFG_EDGE_LOOP_LEAVE  4
+
 struct nv_basic_block {
    struct nv_instruction *entry; /* first non-phi instruction */
    struct nv_instruction *exit;
@@ -253,8 +258,10 @@ struct nv_basic_block {
    int num_instructions;
 
    struct nv_basic_block *out[2]; /* no indirect branches -> 2 */
-   struct nv_basic_block **in;
+   struct nv_basic_block *in[8]; /* hope that suffices */
    uint num_in;
+   ubyte out_kind[2];
+   ubyte in_kind[8];
 
    int id;
    struct nv_basic_block *last_visitor;
@@ -383,7 +390,6 @@ new_basic_block(struct nv_pc *pc)
 {
    struct nv_basic_block *bb = CALLOC_STRUCT(nv_basic_block);
 
-   bb->in = CALLOC(sizeof(struct nv_basic_block *), 4);
    bb->id = pc->num_blocks++;
    return bb;
 }
@@ -414,6 +420,7 @@ const char *nv_opcode_name(uint opcode);
 void nv_print_instruction(struct nv_instruction *);
 
 /* nv50_pc.c */
+
 void nv_print_program(struct nv_basic_block *b);
 
 boolean nv_op_commutative(uint opcode);
@@ -424,13 +431,18 @@ ubyte nv50_supported_src_mods(uint opcode, int s);
 int nv_nvi_refcount(struct nv_instruction *);
 void nv_nvi_delete(struct nv_instruction *);
 void nv_nvi_permute(struct nv_instruction *, struct nv_instruction *);
-void nvbb_attach_block(struct nv_basic_block *parent, struct nv_basic_block *);
-int nvbb_dominated_by(struct nv_basic_block *, struct nv_basic_block *);
+void nvbb_attach_block(struct nv_basic_block *parent,
+                       struct nv_basic_block *, ubyte edge_kind);
+boolean nvbb_dominated_by(struct nv_basic_block *, struct nv_basic_block *);
 boolean nvbb_reachable_by(struct nv_basic_block *, struct nv_basic_block *,
                           struct nv_basic_block *);
 struct nv_basic_block *nvbb_dom_frontier(struct nv_basic_block *);
 int nvcg_replace_value(struct nv_pc *pc, struct nv_value *old_val,
                        struct nv_value *new_val);
+
+typedef void (*nv_pc_pass_func)(void *priv, struct nv_basic_block *b);
+
+void nv_pc_pass_in_order(struct nv_basic_block *, nv_pc_pass_func, void *);
 
 int nv_pc_exec_pass0(struct nv_pc *pc);
 int nv_pc_exec_pass1(struct nv_pc *pc);

@@ -120,14 +120,13 @@ nvi_isnop(struct nv_instruction *nvi)
 }
 
 static void
-nv_pc_pass_pre_emission(struct nv_pc *pc, struct nv_basic_block *b)
+nv_pc_pass_pre_emission(void *priv, struct nv_basic_block *b)
 {
+   struct nv_pc *pc = (struct nv_pc *)priv;
    struct nv_basic_block *in;
    struct nv_instruction *nvi, *next;
    int j;
    uint size, n32 = 0;
-
-   b->priv = 0;
 
    for (j = pc->num_blocks - 1; j >= 0 && !pc->bb_list[j]->bin_size; --j);
    if (j >= 0) {
@@ -200,17 +199,6 @@ nv_pc_pass_pre_emission(struct nv_pc *pc, struct nv_basic_block *b)
    assert(!b->entry || (b->exit && b->exit->is_long));
 
    pc->bin_size += b->bin_size *= 4;
-
-   /* descend CFG */
-
-   if (!b->out[0])
-      return;
-   if (!b->out[1] && ++(b->out[0]->priv) != b->out[0]->num_in)
-      return;
-
-   for (j = 0; j < 2; ++j)
-      if (b->out[j] && b->out[j] != b)
-         nv_pc_pass_pre_emission(pc, b->out[j]);
 }
 
 int
@@ -219,9 +207,9 @@ nv_pc_exec_pass2(struct nv_pc *pc)
    debug_printf("preparing %u blocks for emission\n", pc->num_blocks);
 
    pc->bb_list = CALLOC(pc->num_blocks, sizeof(struct nv_basic_block *));
-  
    pc->num_blocks = 0;
-   nv_pc_pass_pre_emission(pc, pc->root);
+
+   nv_pc_pass_in_order(pc->root, nv_pc_pass_pre_emission, pc);
 
    return 0;
 }
@@ -307,8 +295,11 @@ nv_pass_fold_stores(struct nv_pass *ctx, struct nv_basic_block *b)
       if (nvi->def[0]->refc > 1)
          continue;
 
-      /* cannot MOV immediate to $oX */
-      if (nvi->src[0]->value->reg.file == NV_FILE_IMM)
+      /* cannot write to $oX when using immediate */
+      for (j = 0; j < 4 && nvi->src[j]; ++j)
+         if (nvi->src[j]->value->reg.file == NV_FILE_IMM)
+            break;
+      if (j < 4)
          continue;
 
       nvi->def[0] = sti->def[0];
@@ -339,7 +330,6 @@ nv_pass_fold_loads(struct nv_pass *ctx, struct nv_basic_block *b)
 
          if (is_immd_move(ld) && nv50_nvi_can_use_imm(nvi, j)) {
             nv_reference(ctx->pc, &nvi->src[j], ld->src[0]->value);
-            debug_printf("folded immediate %i\n", ld->def[0]->n);
             continue;
          }
 

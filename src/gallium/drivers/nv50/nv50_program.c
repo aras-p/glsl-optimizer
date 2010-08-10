@@ -27,6 +27,7 @@
 #include "pipe/p_shader_tokens.h"
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_util.h"
+#include "tgsi/tgsi_dump.h"
 
 static INLINE unsigned
 bitcount4(const uint32_t val)
@@ -185,6 +186,8 @@ prog_immediate(struct nv50_translation_info *ti,
 {
    int c;
    unsigned n = ++ti->immd32_nr;
+
+   tgsi_dump_immediate(imm);
 
    if (n == (1 << (ffs(n) - 1)))
       ti->immd32 = REALLOC(ti->immd32, (n / 2) * 16, (n * 2) * 16);

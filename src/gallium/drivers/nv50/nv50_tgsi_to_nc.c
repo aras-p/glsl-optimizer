@@ -22,6 +22,19 @@
 
 /* XXX: need to clean this up so we get the typecasting right more naturally */
 
+/* LOOP FIXME 1
+ * In bld_store_loop_var, only replace values that belong to the TGSI register
+ * written.
+ * For TGSI MOV, we only associate the source value with the value tracker of
+ * the destination, instead of generating an actual MOV.
+ *
+ * Possible solution: generate PHI functions in loop headers in advance.
+ */
+/* LOOP FIXME 2:
+ * In fetch_by_bb, when going back through a break-block, we miss all of the
+ * definitions from inside the loop.
+ */
+
 #include <unistd.h>
 
 #include "nv50_context.h"
@@ -48,6 +61,8 @@ struct bld_value_stack {
    struct nv_value *top;
    struct nv_value **body;
    unsigned size;
+   uint16_t loop_use; /* 1 bit per loop level, indicates if used/defd */
+   uint16_t loop_def;
 };
 
 static INLINE void
@@ -81,19 +96,6 @@ bld_push_values(struct bld_value_stack *stacks, int n)
             bld_vals_push(&stacks[i * 4 + c]);
 }
 
-#define FETCH_TEMP(i, c)    (bld->tvs[i][c].top)
-#define STORE_TEMP(i, c, v) (bld->tvs[i][c].top = (v))
-#define FETCH_ADDR(i, c)    (bld->avs[i][c].top)
-#define STORE_ADDR(i, c, v) (bld->avs[i][c].top = (v))
-#define FETCH_PRED(i, c)    (bld->pvs[i][c].top)
-#define STORE_PRED(i, c, v) (bld->pvs[i][c].top = (v))
-#define FETCH_OUTR(i, c)    (bld->ovs[i][c].top)
-#define STORE_OUTR(i, c, v)                                         \
-   do {                                                             \
-      bld->ovs[i][c].top = (v);                                     \
-      bld->outputs_written[(i) / 8] |= 1 << (((i) * 4 + (c)) % 32); \
-   } while (0)
-
 struct bld_context {
    struct nv50_translation_info *ti;
 
@@ -108,6 +110,7 @@ struct bld_context {
    struct nv_basic_block *else_bb[BLD_MAX_COND_NESTING];
    int cond_lvl;
    struct nv_basic_block *loop_bb[BLD_MAX_LOOP_NESTING];
+   struct nv_basic_block *brkt_bb[BLD_MAX_LOOP_NESTING];
    int loop_lvl;
 
    struct bld_value_stack tvs[BLD_MAX_TEMPS][4]; /* TGSI_FILE_TEMPORARY */
@@ -127,6 +130,51 @@ struct bld_context {
    uint num_immds;
 };
 
+static INLINE struct nv_value *
+bld_fetch(struct bld_context *bld, struct bld_value_stack *stk, int i, int c)
+{
+   stk[i * 4 + c].loop_use |= 1 << bld->loop_lvl;
+
+   return stk[i * 4 + c].top;
+}
+
+static void
+bld_store_loop_var(struct bld_context *, struct bld_value_stack *);
+
+static INLINE void
+bld_store(struct bld_context *bld, struct bld_value_stack *stk, int i, int c,
+          struct nv_value *val)
+{
+   bld_store_loop_var(bld, &stk[i * 4 + c]);
+
+   stk[i * 4 + c].top = val;
+}
+
+static INLINE void
+bld_clear_def_use(struct bld_value_stack *stk, int n, int lvl)
+{
+   int i;
+   const uint16_t mask = ~(1 << lvl);
+
+   for (i = 0; i < n * 4; ++i) {
+      stk[i].loop_def &= mask;
+      stk[i].loop_use &= mask;
+   }
+}
+
+#define FETCH_TEMP(i, c)    bld_fetch(bld, &bld->tvs[0][0], i, c)
+#define STORE_TEMP(i, c, v) bld_store(bld, &bld->tvs[0][0], i, c, (v))
+#define FETCH_ADDR(i, c)    bld_fetch(bld, &bld->avs[0][0], i, c)
+#define STORE_ADDR(i, c, v) bld_store(bld, &bld->avs[0][0], i, c, (v))
+#define FETCH_PRED(i, c)    bld_fetch(bld, &bld->pvs[0][0], i, c)
+#define STORE_PRED(i, c, v) bld_store(bld, &bld->pvs[0][0], i, c, (v))
+
+#define STORE_OUTR(i, c, v)                                         \
+   do {                                                             \
+      bld->ovs[i][c].top = (v);                                     \
+      bld->outputs_written[(i) / 8] |= 1 << (((i) * 4 + (c)) % 32); \
+   } while (0)
+
 static INLINE void
 bld_warn_uninitialized(struct bld_context *bld, int kind,
                        struct bld_value_stack *stk, struct nv_basic_block *b)
@@ -134,8 +182,8 @@ bld_warn_uninitialized(struct bld_context *bld, int kind,
    long i = (stk - &bld->tvs[0][0]) / 4;
    long c = (stk - &bld->tvs[0][0]) & 3;
 
-   debug_printf("WARNING: TEMP[%li].%li %s used uninitialized in BB:%i\n",
-                i, c, kind ? "may be" : "is", b->id);
+   debug_printf("WARNING: TEMP[%li].%c %s used uninitialized in BB:%i\n",
+                i, (int)('x' + c), kind ? "may be" : "is", b->id);
 }
 
 static INLINE struct nv_value *
@@ -182,7 +230,8 @@ fetch_by_bb(struct bld_value_stack *stack,
       return;
    }
    for (i = 0; i < b->num_in; ++i)
-      fetch_by_bb(stack, vals, n, b->in[i]);
+      if (b->in_kind[i] != CFG_EDGE_BACK)
+         fetch_by_bb(stack, vals, n, b->in[i]);
 }
 
 static INLINE struct nv_value *
@@ -237,12 +286,15 @@ bld_phi(struct bld_context *bld, struct nv_basic_block *b,
       }
 
       for (i = 0; i < n; ++i) {
+         /* if value dominates b, continue to the redefinitions */
          if (nvbb_dominated_by(b, vals[i]->insn->bb))
             continue;
 
+         /* if value dominates any in-block, b should be the dom frontier */
          for (j = 0; j < b->num_in; ++j)
             if (nvbb_dominated_by(b->in[j], vals[i]->insn->bb))
                break;
+         /* otherwise, find the dominance frontier and put the phi there */
          if (j == b->num_in) {
             in = nvbb_dom_frontier(vals[i]->insn->bb);
             val = bld_phi(bld, in, stack);
@@ -269,6 +321,7 @@ bld_phi(struct bld_context *bld, struct nv_basic_block *b,
 static INLINE struct nv_value *
 bld_fetch_global(struct bld_context *bld, struct bld_value_stack *stack)
 {
+   stack->loop_use |= 1 << bld->loop_lvl;
    return bld_phi(bld, bld->pc->current_block, stack);
 }
 
@@ -288,6 +341,79 @@ bld_imm_u32(struct bld_context *bld, uint32_t u)
    bld->saved_immd[n] = new_value(bld->pc, NV_FILE_IMM, NV_TYPE_U32);
    bld->saved_immd[n]->reg.imm.u32 = u;
    return bld->saved_immd[n];
+}
+
+static void
+bld_replace_value(struct nv_pc *, struct nv_basic_block *, struct nv_value *,
+                  struct nv_value *);
+
+/* When setting a variable inside a loop, and we have used it before in the
+ * loop, we need to insert a phi function in the loop header.
+ */
+static void
+bld_store_loop_var(struct bld_context *bld, struct bld_value_stack *stk)
+{
+   struct nv_basic_block *bb;
+   struct nv_instruction *phi;
+   struct nv_value *val;
+   int ll;
+   uint16_t loop_def = stk->loop_def;
+
+   if (!(ll = bld->loop_lvl))
+      return;
+   stk->loop_def |= 1 << ll;
+
+   if ((~stk->loop_use | loop_def) & (1 << ll))
+      return;
+
+#if 0
+   debug_printf("TEMP[%li].%c used before loop redef (def=%x/use=%x)\n",
+                (stk - &bld->tvs[0][0]) / 4,
+                (int)('x' + ((stk - &bld->tvs[0][0]) & 3)),
+                loop_def, stk->loop_use);
+#endif
+
+   stk->loop_def |= 1 << ll;
+
+   assert(bld->loop_bb[ll - 1]->num_in == 1);
+
+   /* get last assignment from outside this loop, could be from bld_phi */
+   val = stk->body[stk->size - 1];
+
+   /* create the phi in the loop entry block */
+
+   bb = bld->pc->current_block;
+   bld->pc->current_block = bld->loop_bb[ll - 1];
+
+   phi = new_instruction(bld->pc, NV_OP_PHI);
+
+   bld_def(phi, 0, new_value(bld->pc, val->reg.file, val->reg.type));
+
+   bld->pc->pass_seq++;
+   bld_replace_value(bld->pc, bld->loop_bb[ll - 1], val, phi->def[0]);
+
+   assert(!stk->top);
+   bld_vals_push_val(stk, phi->def[0]);
+
+   phi->target = (struct nv_basic_block *)stk; /* cheat */
+
+   nv_reference(bld->pc, &phi->src[0], val);
+   nv_reference(bld->pc, &phi->src[1], phi->def[0]);
+
+   bld->pc->current_block = bb;
+}
+
+static void
+bld_loop_end(struct bld_context *bld, struct nv_basic_block *bb)
+{
+   struct nv_instruction *phi;
+   struct nv_value *val;
+
+   for (phi = bb->phi; phi && phi->opcode == NV_OP_PHI; phi = phi->next) {
+      val = bld_fetch_global(bld, (struct bld_value_stack *)phi->target);
+      nv_reference(bld->pc, &phi->src[1], val);
+      phi->target = NULL;
+   }
 }
 
 static INLINE struct nv_value *
@@ -432,7 +558,8 @@ bld_kil(struct bld_context *bld, struct nv_value *src)
 
 static void
 bld_flow(struct bld_context *bld, uint opcode, ubyte cc,
-         struct nv_value *src, boolean plan_reconverge)
+         struct nv_value *src, struct nv_basic_block *target,
+         boolean plan_reconverge)
 {
    struct nv_instruction *nvi;
 
@@ -442,7 +569,9 @@ bld_flow(struct bld_context *bld, uint opcode, ubyte cc,
    nvi = new_instruction(bld->pc, opcode);
    nvi->is_terminator = 1;
    nvi->cc = cc;
-   nvi->flags_src = new_ref(bld->pc, src);
+   nvi->target = target;
+   if (src)
+      nvi->flags_src = new_ref(bld->pc, src);
 }
 
 static ubyte
@@ -1105,14 +1234,14 @@ bld_instruction(struct bld_context *bld,
    {
       struct nv_basic_block *b = new_basic_block(bld->pc);
 
-      nvbb_attach_block(bld->pc->current_block, b);
+      nvbb_attach_block(bld->pc->current_block, b, CFG_EDGE_FORWARD);
 
       bld->join_bb[bld->cond_lvl] = bld->pc->current_block;
       bld->cond_bb[bld->cond_lvl] = bld->pc->current_block;
 
       src1 = bld_predicate(bld, emit_fetch(bld, insn, 0, 0));
 
-      bld_flow(bld, NV_OP_BRA, NV_CC_EQ, src1, FALSE);
+      bld_flow(bld, NV_OP_BRA, NV_CC_EQ, src1, NULL, FALSE);
 
       ++bld->cond_lvl;
       bld_new_block(bld, b);
@@ -1123,7 +1252,7 @@ bld_instruction(struct bld_context *bld,
       struct nv_basic_block *b = new_basic_block(bld->pc);
 
       --bld->cond_lvl;
-      nvbb_attach_block(bld->join_bb[bld->cond_lvl], b);
+      nvbb_attach_block(bld->join_bb[bld->cond_lvl], b, CFG_EDGE_FORWARD);
 
       bld->cond_bb[bld->cond_lvl]->exit->target = b;
       bld->cond_bb[bld->cond_lvl] = bld->pc->current_block;
@@ -1134,13 +1263,13 @@ bld_instruction(struct bld_context *bld,
       bld_new_block(bld, b);
    }
       break;
-   case TGSI_OPCODE_ENDIF: /* XXX: deal with ENDIF; ENDIF; */
+   case TGSI_OPCODE_ENDIF:
    {
       struct nv_basic_block *b = new_basic_block(bld->pc);
 
       --bld->cond_lvl;
-      nvbb_attach_block(bld->pc->current_block, b);
-      nvbb_attach_block(bld->cond_bb[bld->cond_lvl], b);
+      nvbb_attach_block(bld->pc->current_block, b, CFG_EDGE_FORWARD);
+      nvbb_attach_block(bld->cond_bb[bld->cond_lvl], b, CFG_EDGE_FORWARD);
 
       bld->cond_bb[bld->cond_lvl]->exit->target = b;
 
@@ -1154,16 +1283,58 @@ bld_instruction(struct bld_context *bld,
    }
       break;
    case TGSI_OPCODE_BGNLOOP:
-      assert(0);
+   {
+      struct nv_basic_block *bl = new_basic_block(bld->pc);
+      struct nv_basic_block *bb = new_basic_block(bld->pc);
+
+      bld->loop_bb[bld->loop_lvl] = bl;
+      bld->brkt_bb[bld->loop_lvl] = bb;
+
+      bld_flow(bld, NV_OP_BREAKADDR, NV_CC_TR, NULL, bb, FALSE);
+
+      nvbb_attach_block(bld->pc->current_block, bl, CFG_EDGE_LOOP_ENTER);
+
+      bld_new_block(bld, bld->loop_bb[bld->loop_lvl++]);
+
+      if (bld->loop_lvl == bld->pc->loop_nesting_bound)
+         bld->pc->loop_nesting_bound++;
+
+      bld_clear_def_use(&bld->tvs[0][0], BLD_MAX_TEMPS, bld->loop_lvl);
+      bld_clear_def_use(&bld->avs[0][0], BLD_MAX_ADDRS, bld->loop_lvl);
+      bld_clear_def_use(&bld->pvs[0][0], BLD_MAX_PREDS, bld->loop_lvl);
+   }
       break;
    case TGSI_OPCODE_BRK:
-      assert(0);
+   {
+      struct nv_basic_block *bb = bld->brkt_bb[bld->loop_lvl - 1];
+
+      bld_flow(bld, NV_OP_BREAK, NV_CC_TR, NULL, bb, FALSE);
+
+      /* XXX: don't do this for redundant BRKs */
+      nvbb_attach_block(bld->pc->current_block, bb, CFG_EDGE_LOOP_LEAVE);
+   }
       break;
    case TGSI_OPCODE_CONT:
-      assert(0);
+   {
+      struct nv_basic_block *bb = bld->loop_bb[bld->loop_lvl - 1];
+
+      bld_flow(bld, NV_OP_BRA, NV_CC_TR, NULL, bb, FALSE);
+
+      nvbb_attach_block(bld->pc->current_block, bb, CFG_EDGE_BACK);
+   }
       break;
    case TGSI_OPCODE_ENDLOOP:
-      assert(0);
+   {
+      struct nv_basic_block *bb = bld->loop_bb[--bld->loop_lvl];
+
+      bld_flow(bld, NV_OP_BRA, NV_CC_TR, NULL, bb, FALSE);
+
+      nvbb_attach_block(bld->pc->current_block, bb, CFG_EDGE_BACK);
+
+      bld_loop_end(bld, bb); /* replace loop-side operand of the phis */
+
+      bld_new_block(bld, bld->brkt_bb[bld->loop_lvl]);
+   }
       break;
    case TGSI_OPCODE_ABS:
    case TGSI_OPCODE_CEIL:
@@ -1298,6 +1469,17 @@ bld_instruction(struct bld_context *bld,
       emit_store(bld, insn, c, dst0[c]);
 }
 
+static INLINE void
+bld_free_value_trackers(struct bld_value_stack *base, int n)
+{
+   int i, c;
+
+   for (i = 0; i < n; ++i)
+      for (c = 0; c < 4; ++c)
+         if (base[i * 4 + c].body)
+            FREE(base[i * 4 + c].body);
+}
+
 int
 nv50_tgsi_to_nc(struct nv_pc *pc, struct nv50_translation_info *ti)
 {
@@ -1309,7 +1491,7 @@ nv50_tgsi_to_nc(struct nv_pc *pc, struct nv50_translation_info *ti)
    bld->pc = pc;
    bld->ti = ti;
 
-   pc->loop_nesting_bound = 1; /* XXX: should work with 0 */
+   pc->loop_nesting_bound = 1;
 
    c = util_bitcount(bld->ti->p->fp.interp >> 24);
    if (c && ti->p->type == PIPE_SHADER_FRAGMENT) {
@@ -1335,18 +1517,23 @@ nv50_tgsi_to_nc(struct nv_pc *pc, struct nv50_translation_info *ti)
       }
    }
 
+   bld_free_value_trackers(&bld->tvs[0][0], BLD_MAX_TEMPS);
+   bld_free_value_trackers(&bld->avs[0][0], BLD_MAX_ADDRS);
+   bld_free_value_trackers(&bld->pvs[0][0], BLD_MAX_PREDS);
+
+   bld_free_value_trackers(&bld->ovs[0][0], PIPE_MAX_SHADER_OUTPUTS);
+
    FREE(bld);
    return 0;
 }
 
-#if 0
 /* If a variable is assigned in a loop, replace all references to the value
  * from outside the loop with a phi value.
  */
 static void
-bld_adjust_nv_refs(struct nv_pc *pc, struct nv_basic_block *b,
-                   struct nv_value *old_val,
-                   struct nv_value *new_val)
+bld_replace_value(struct nv_pc *pc, struct nv_basic_block *b,
+                  struct nv_value *old_val,
+                  struct nv_value *new_val)
 {
    struct nv_instruction *nvi;
 
@@ -1361,12 +1548,12 @@ bld_adjust_nv_refs(struct nv_pc *pc, struct nv_basic_block *b,
       if (nvi->flags_src && nvi->flags_src->value == old_val)
          nv_reference(pc, &nvi->flags_src, new_val);
    }
+
    b->pass_seq = pc->pass_seq;
 
    if (b->out[0] && b->out[0]->pass_seq < pc->pass_seq)
-      bld_adjust_nv_refs(pc, b, old_val, new_val);
+      bld_replace_value(pc, b->out[0], old_val, new_val);
 
    if (b->out[1] && b->out[1]->pass_seq < pc->pass_seq)
-      bld_adjust_nv_refs(pc, b, old_val, new_val);
+      bld_replace_value(pc, b->out[1], old_val, new_val);
 }
-#endif

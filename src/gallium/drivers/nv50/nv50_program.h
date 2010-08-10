@@ -92,6 +92,15 @@ struct nv50_program {
 #define NV50_INTERP_FLAT     (1 << 1)
 #define NV50_INTERP_CENTROID (1 << 2)
 
+#define NV50_PROG_MAX_SUBROUTINES 8
+
+/* analyze TGSI and see which TEMP[] are used as subroutine inputs/outputs */
+struct nv50_subroutine {
+   int id;
+   uint32_t argv[4][1]; /* 4 bitmasks, for each of xyzw, only allow 32 TEMPs */
+   uint32_t retv[4][1];
+};
+
 struct nv50_translation_info {
    struct nv50_program *p;
    unsigned inst_nr;
@@ -108,6 +117,8 @@ struct nv50_translation_info {
    uint32_t *immd32;
    unsigned immd32_nr;
    ubyte edgeflag_out;
+   struct nv50_subroutine subr[NV50_PROG_MAX_SUBROUTINES];
+   int subr_nr;
 };
 
 int nv50_generate_code(struct nv50_translation_info *ti);

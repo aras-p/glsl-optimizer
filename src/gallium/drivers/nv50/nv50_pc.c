@@ -75,7 +75,8 @@ nv50_nvi_can_use_imm(struct nv_instruction *nvi, int s)
    case NV_OP_XOR:
    case NV_OP_SHL:
    case NV_OP_SHR:
-      return (s == 1) && (nvi->def[0]->reg.file == NV_FILE_GPR);
+      return (s == 1) && (nvi->src[0]->value->reg.file == NV_FILE_GPR) &&
+         (nvi->def[0]->reg.file == NV_FILE_GPR);
    case NV_OP_MOV:
       assert(s == 0);
       return (nvi->def[0]->reg.file == NV_FILE_GPR);
@@ -87,6 +88,12 @@ nv50_nvi_can_use_imm(struct nv_instruction *nvi, int s)
 boolean
 nv50_nvi_can_load(struct nv_instruction *nvi, int s, struct nv_value *value)
 {
+   int i;
+
+   for (i = 0; i < 3 && nvi->src[i]; ++i)
+      if (nvi->src[i]->value->reg.file == NV_FILE_IMM)
+         return FALSE;
+
    switch (nvi->opcode) {
    case NV_OP_ABS:
    case NV_OP_ADD:
@@ -189,37 +196,89 @@ nv_pc_free_refs(struct nv_pc *pc)
       FREE(pc->refs[i]);
 }
 
+static const char *
+edge_name(ubyte type)
+{
+   switch (type) {
+   case CFG_EDGE_FORWARD: return "forward";
+   case CFG_EDGE_BACK: return "back";
+   case CFG_EDGE_LOOP_ENTER: return "loop";
+   case CFG_EDGE_LOOP_LEAVE: return "break";
+   default:
+      return "?";
+   }
+}
+
 void
-nv_print_program(struct nv_basic_block *b)
+nv_pc_pass_in_order(struct nv_basic_block *root, nv_pc_pass_func f, void *priv)
+{
+   struct nv_basic_block *bb[64], *bbb[16], *b;
+   int j, p, pp;
+
+   bb[0] = root;
+   p = 1;
+   pp = 0;
+
+   while (p > 0) {
+      b = bb[--p];
+      b->priv = 0;
+
+      for (j = 1; j >= 0; --j) {
+         if (!b->out[j])
+            continue;
+
+         switch (b->out_kind[j]) {
+         case CFG_EDGE_BACK:
+            continue;
+         case CFG_EDGE_FORWARD:
+            if (++b->out[j]->priv == b->out[j]->num_in)
+               bb[p++] = b->out[j];
+            break;
+         case CFG_EDGE_LOOP_ENTER:
+            bb[p++] = b->out[j];
+            break;
+         case CFG_EDGE_LOOP_LEAVE:
+            bbb[pp++] = b->out[j];
+            break;
+         default:
+            assert(0);
+            break;
+         }
+      }
+
+      f(priv, b);
+
+      if (!p)
+         while (pp > 0)
+            bb[p++] = bbb[--pp];
+   }
+}
+
+static void
+nv_do_print_program(void *priv, struct nv_basic_block *b)
 {
    struct nv_instruction *i = b->phi;
 
-   b->priv = 0;
-
    debug_printf("=== BB %i ", b->id);
    if (b->out[0])
-      debug_printf("(--0> %i) ", b->out[0]->id);
+      debug_printf("[%s -> %i] ", edge_name(b->out_kind[0]), b->out[0]->id);
    if (b->out[1])
-      debug_printf("(--1> %i) ", b->out[1]->id);
+      debug_printf("[%s -> %i] ", edge_name(b->out_kind[1]), b->out[1]->id);
    debug_printf("===\n");
 
+   i = b->phi;
    if (!i)
       i = b->entry;
    for (; i; i = i->next)
       nv_print_instruction(i);
+}
 
-   if (!b->out[0]) {
-      debug_printf("END\n\n");
-      return;
-   }
-   if (!b->out[1] && ++(b->out[0]->priv) != b->out[0]->num_in)
-      return;
+void
+nv_print_program(struct nv_basic_block *root)
+{
+   nv_pc_pass_in_order(root, nv_do_print_program, root);
 
-   if (b->out[0] != b)
-      nv_print_program(b->out[0]);
-
-   if (b->out[1] && b->out[1] != b)
-      nv_print_program(b->out[1]);
+   debug_printf("END\n\n");
 }
 
 static INLINE void
@@ -254,7 +313,7 @@ nv50_emit_program(struct nv_pc *pc)
    assert(pc->emit == &code[pc->bin_size / 4]);
 
    /* XXX: we can do better than this ... */
-   if ((pc->emit[-2] & 2) || (pc->emit[-1] & 3) == 3) {
+   if (!(pc->emit[-2] & 1) || (pc->emit[-2] & 2) || (pc->emit[-1] & 3) == 3) {
       pc->emit[0] = 0xf0000001;
       pc->emit[1] = 0xe0000000;
       pc->bin_size += 8;
@@ -281,6 +340,7 @@ nv50_generate_code(struct nv50_translation_info *ti)
    ret = nv50_tgsi_to_nc(pc, ti);
    if (ret)
       goto out;
+   nv_print_program(pc->root);
 
    /* optimization */
    ret = nv_pc_exec_pass0(pc);
@@ -454,30 +514,40 @@ nv_nvi_permute(struct nv_instruction *i1, struct nv_instruction *i2)
       i1->next->prev = i1;
 }
 
-void nvbb_attach_block(struct nv_basic_block *parent, struct nv_basic_block *b)
+void
+nvbb_attach_block(struct nv_basic_block *parent,
+                  struct nv_basic_block *b, ubyte edge_kind)
 {
+   assert(b->num_in < 8);
+
    if (parent->out[0]) {
       assert(!parent->out[1]);
       parent->out[1] = b;
-   } else
+      parent->out_kind[1] = edge_kind;
+   } else {
       parent->out[0] = b;
+      parent->out_kind[0] = edge_kind;
+   }
 
-   b->in[b->num_in++] = parent;
+   b->in[b->num_in] = parent;
+   b->in_kind[b->num_in++] = edge_kind;
 }
 
-int
+/* NOTE: all BRKs are treated as conditional, so there are 2 outgoing BBs */
+
+boolean
 nvbb_dominated_by(struct nv_basic_block *b, struct nv_basic_block *d)
 {
-   int j, n;
+   int j;
 
    if (b == d)
-      return 1;
+      return TRUE;
 
-   n = 0;
    for (j = 0; j < b->num_in; ++j)
-      n += nvbb_dominated_by(b->in[j], d);
+      if ((b->in_kind[j] != CFG_EDGE_BACK) && !nvbb_dominated_by(b->in[j], d))
+         return FALSE;
 
-   return (n && (n == b->num_in)) ? 1 : 0;
+   return j ? TRUE : FALSE;
 }
 
 /* check if bf (future) can be reached from bp (past) */
@@ -490,27 +560,45 @@ nvbb_reachable_by(struct nv_basic_block *bf, struct nv_basic_block *bp,
    if (bp == bt)
       return FALSE;
 
-   if (bp->out[0] && bp->out[0] != bp &&
+   if (bp->out[0] && bp->out_kind[0] != CFG_EDGE_BACK &&
        nvbb_reachable_by(bf, bp->out[0], bt))
       return TRUE;
-   if (bp->out[1] && bp->out[1] != bp &&
+   if (bp->out[1] && bp->out_kind[1] != CFG_EDGE_BACK &&
        nvbb_reachable_by(bf, bp->out[1], bt))
       return TRUE;
    return FALSE;
 }
 
+static struct nv_basic_block *
+nvbb_find_dom_frontier(struct nv_basic_block *b, struct nv_basic_block *df)
+{
+   int i;
+
+   if (!nvbb_dominated_by(df, b)) {
+      for (i = 0; i < df->num_in; ++i) {
+         if (df->in_kind[i] == CFG_EDGE_BACK)
+            continue;
+         if (nvbb_dominated_by(df->in[i], b))
+            return df;
+      }
+   }
+   for (i = 0; i < 2 && b->out[i]; ++i) {
+      if (b->out_kind[i] == CFG_EDGE_BACK)
+         continue;
+      if ((df = nvbb_find_dom_frontier(b, b->out[i])))
+         return df;
+   }
+   return NULL;
+}
+
 struct nv_basic_block *
 nvbb_dom_frontier(struct nv_basic_block *b)
 {
-   struct nv_basic_block *df = b->out[0];
+   struct nv_basic_block *df;
+   int i;
 
-   assert(df);
-   while (nvbb_dominated_by(df, b) ||
-          (!nvbb_dominated_by(df->in[0], b) &&
-           (!df->in[1] || !nvbb_dominated_by(df->in[1], b)))) {
-      df = df->out[0];
-      assert(df);
-   }
-   assert(df);
-   return df;
+   for (i = 0; i < 2 && b->out[i]; ++i)
+      if ((df = nvbb_find_dom_frontier(b, b->out[i])))
+         return df;
+   return NULL;
 }

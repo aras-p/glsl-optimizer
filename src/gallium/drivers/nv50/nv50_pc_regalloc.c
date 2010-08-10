@@ -358,6 +358,18 @@ try_join_values(struct nv_pc_pass *ctx, struct nv_value *a, struct nv_value *b)
    do_join_values(ctx, a, b);
 }
 
+static INLINE boolean
+need_new_else_block(struct nv_basic_block *b, struct nv_basic_block *p)
+{
+   int i = 0, n = 0;
+
+   for (; i < 2; ++i)
+      if (p->out[i] && p->out_kind[i] != CFG_EDGE_LOOP_LEAVE)
+         ++n;
+
+   return (b->num_in > 1) && (n == 2);
+}
+
 /* For each operand of each PHI in b, generate a new value by inserting a MOV
  * at the end of the block it is coming from and replace the operand with its
  * result. This eliminates liveness conflicts and enables us to let values be
@@ -377,7 +389,7 @@ pass_generate_phi_movs(struct nv_pc_pass *ctx, struct nv_basic_block *b)
       p = pn = b->in[n];
       assert(p);
 
-      if (b->num_in > 1 && p->out[0] && p->out[1]) {
+      if (need_new_else_block(b, p)) {
          pn = new_basic_block(ctx->pc);
 
          if (p->out[0] == b)
@@ -481,32 +493,19 @@ pass_join_values(struct nv_pc_pass *ctx, int iter)
 }
 
 /* Order the instructions so that live intervals can be expressed in numbers. */
-static int
-pass_order_instructions(struct nv_pc_pass *ctx, struct nv_basic_block *b)
+static void
+pass_order_instructions(void *priv, struct nv_basic_block *b)
 {
+   struct nv_pc_pass *ctx = (struct nv_pc_pass *)priv;
    struct nv_instruction *i;
 
-   b->priv = 0;
+   b->pass_seq = ctx->pc->pass_seq;
 
    assert(!b->exit || !b->exit->next);
    for (i = b->phi; i; i = i->next) {
       i->serial = ctx->num_insns;
       ctx->insns[ctx->num_insns++] = i;
    }
-
-   b->pass_seq = ctx->pc->pass_seq;
-
-   if (!b->out[0])
-      return 0;
-   if (!b->out[1] && ++(b->out[0]->priv) != b->out[0]->num_in)
-      return 0;
-
-   if (b->out[0] != b)
-      pass_order_instructions(ctx, b->out[0]);
-   if (b->out[1] && b->out[1] != b)
-      pass_order_instructions(ctx, b->out[1]);
-
-   return 0;
 }
 
 static void
@@ -691,13 +690,15 @@ pass_build_intervals(struct nv_pc_pass *ctx, struct nv_basic_block *b)
    }
 
    /* remaining live-outs are live until the end */
-   for (j = 0; j < ctx->pc->num_values; ++j) {
-      if (!(b->live_set[j / 32] & (1 << (j % 32))))
-         continue;
+   if (b->exit) {
+      for (j = 0; j < ctx->pc->num_values; ++j) {
+         if (!(b->live_set[j / 32] & (1 << (j % 32))))
+            continue;
 #ifdef NV50_RA_DEBUG_LIVEI
-      debug_printf("adding range for live value %i\n", j);
+         debug_printf("adding range for live value %i\n", j);
 #endif
-      add_range(&ctx->pc->values[j], b, b->exit->serial + 1);
+         add_range(&ctx->pc->values[j], b, b->exit->serial + 1);
+      }
    }
    debug_printf("%s: looping through instructions now\n", __func__);
 
@@ -905,10 +906,7 @@ nv_pc_exec_pass1(struct nv_pc *pc)
    }
 
    pc->pass_seq++;
-   ret = pass_order_instructions(ctx, pc->root);
-   assert(!ret && "order instructions");
-   if (ret)
-      goto out;
+   nv_pc_pass_in_order(pc->root, pass_order_instructions, ctx);
 
    pc->pass_seq++;
    ret = pass_build_intervals(ctx, pc->root);

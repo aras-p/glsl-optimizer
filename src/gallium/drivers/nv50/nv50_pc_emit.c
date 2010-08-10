@@ -694,7 +694,7 @@ emit_flow(struct nv_pc *pc, struct nv_instruction *i, ubyte flow_op)
 
    set_pred(pc, i);
 
-   if (i->target) {
+   if (i->target && (i->opcode != NV_OP_BREAK)) {
       new_fixup(pc, NV_FIXUP_CFLOW_RELOC, i->target->bin_pos, 0x7ff800, 11);
       pc->emit[0] |= (i->target->bin_pos / 4) << 11;
    }
