@@ -1245,5 +1245,9 @@ rbug_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
 
    rbug_screen_add_to_list(rb_screen, contexts, rb_pipe);
 
+   if (debug_get_bool_option("GALLIUM_RBUG_START_BLOCKED", FALSE)) {
+      rb_pipe->draw_blocked = RBUG_BLOCK_BEFORE;
+   }
+
    return &rb_pipe->base;
 }
