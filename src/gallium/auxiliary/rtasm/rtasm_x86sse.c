@@ -586,6 +586,20 @@ void x86_mov( struct x86_function *p,
    emit_op_modrm( p, 0x8b, 0x89, dst, src );
 }
 
+void x86_movzx8(struct x86_function *p, struct x86_reg dst, struct x86_reg src )
+{
+   DUMP_RR( dst, src );
+   emit_2ub(p, 0x0f, 0xb6);
+   emit_modrm(p, dst, src);
+}
+
+void x86_movzx16(struct x86_function *p, struct x86_reg dst, struct x86_reg src )
+{
+   DUMP_RR( dst, src );
+   emit_2ub(p, 0x0f, 0xb7);
+   emit_modrm(p, dst, src);
+}
+
 void x86_xor( struct x86_function *p,
 	      struct x86_reg dst,
 	      struct x86_reg src )

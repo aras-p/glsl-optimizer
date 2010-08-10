@@ -85,6 +85,18 @@ struct translate {
                                 unsigned instance_id,
                                 void *output_buffer);
 
+   void (PIPE_CDECL *run_elts16)( struct translate *,
+                                const uint16_t *elts,
+                                unsigned count,
+                                unsigned instance_id,
+                                void *output_buffer);
+
+   void (PIPE_CDECL *run_elts8)( struct translate *,
+                                const uint8_t *elts,
+                                unsigned count,
+                                unsigned instance_id,
+                                void *output_buffer);
+
    void (PIPE_CDECL *run)( struct translate *,
                            unsigned start,
                            unsigned count,

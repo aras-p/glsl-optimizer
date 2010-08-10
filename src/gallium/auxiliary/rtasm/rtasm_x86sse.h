@@ -237,6 +237,8 @@ void x86_dec( struct x86_function *p, struct x86_reg reg );
 void x86_inc( struct x86_function *p, struct x86_reg reg );
 void x86_lea( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void x86_mov( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
+void x86_movzx8( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
+void x86_movzx16( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void x86_mul( struct x86_function *p, struct x86_reg src );
 void x86_imul( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void x86_or( struct x86_function *p, struct x86_reg dst, struct x86_reg src );

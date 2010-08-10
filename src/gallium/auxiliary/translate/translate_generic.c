@@ -441,6 +441,38 @@ static void PIPE_CDECL generic_run_elts( struct translate *translate,
    }
 }
 
+static void PIPE_CDECL generic_run_elts16( struct translate *translate,
+                                         const uint16_t *elts,
+                                         unsigned count,
+                                         unsigned instance_id,
+                                         void *output_buffer )
+{
+   struct translate_generic *tg = translate_generic(translate);
+   char *vert = output_buffer;
+   unsigned i;
+
+   for (i = 0; i < count; i++) {
+      generic_run_one(tg, *elts++, instance_id, vert);
+      vert += tg->translate.key.output_stride;
+   }
+}
+
+static void PIPE_CDECL generic_run_elts8( struct translate *translate,
+                                         const uint8_t *elts,
+                                         unsigned count,
+                                         unsigned instance_id,
+                                         void *output_buffer )
+{
+   struct translate_generic *tg = translate_generic(translate);
+   char *vert = output_buffer;
+   unsigned i;
+
+   for (i = 0; i < count; i++) {
+      generic_run_one(tg, *elts++, instance_id, vert);
+      vert += tg->translate.key.output_stride;
+   }
+}
+
 static void PIPE_CDECL generic_run( struct translate *translate,
                                     unsigned start,
                                     unsigned count,
@@ -498,6 +530,8 @@ struct translate *translate_generic_create( const struct translate_key *key )
    tg->translate.release = generic_release;
    tg->translate.set_buffer = generic_set_buffer;
    tg->translate.run_elts = generic_run_elts;
+   tg->translate.run_elts16 = generic_run_elts16;
+   tg->translate.run_elts8 = generic_run_elts8;
    tg->translate.run = generic_run;
 
    for (i = 0; i < key->nr_elements; i++) {

@@ -67,6 +67,8 @@ struct translate_sse {
 
    struct x86_function linear_func;
    struct x86_function elt_func;
+   struct x86_function elt16_func;
+   struct x86_function elt8_func;
    struct x86_function *func;
 
    boolean loaded_identity;
@@ -362,7 +364,7 @@ static boolean translate_attr( struct translate_sse *p,
 
 
 static boolean init_inputs( struct translate_sse *p,
-                            boolean linear )
+                            unsigned index_size )
 {
    unsigned i;
    struct x86_reg instance_id = x86_make_disp(p->machine_EDX,
@@ -372,7 +374,7 @@ static boolean init_inputs( struct translate_sse *p,
       struct translate_buffer_varient *varient = &p->buffer_varient[i];
       struct translate_buffer *buffer = &p->buffer[varient->buffer_index];
 
-      if (linear || varient->instance_divisor) {
+      if (!index_size || varient->instance_divisor) {
          struct x86_reg buf_stride   = x86_make_disp(p->machine_EDX,
                                                      get_offset(p, &buffer->stride));
          struct x86_reg buf_ptr      = x86_make_disp(p->machine_EDX,
@@ -421,7 +423,7 @@ static boolean init_inputs( struct translate_sse *p,
          /* In the linear case, keep the buffer pointer instead of the
           * index number.
           */
-         if (linear && p->nr_buffer_varients == 1)
+         if (!index_size && p->nr_buffer_varients == 1)
             x86_mov(p->func, elt, tmp_EAX);
          else
             x86_mov(p->func, buf_ptr, tmp_EAX);
@@ -433,7 +435,7 @@ static boolean init_inputs( struct translate_sse *p,
 
 
 static struct x86_reg get_buffer_ptr( struct translate_sse *p,
-                                      boolean linear,
+                                      unsigned index_size,
                                       unsigned var_idx,
                                       struct x86_reg elt )
 {
@@ -441,10 +443,10 @@ static struct x86_reg get_buffer_ptr( struct translate_sse *p,
       return x86_make_disp(p->machine_EDX,
                            get_offset(p, &p->instance_id));
    }
-   if (linear && p->nr_buffer_varients == 1) {
+   if (!index_size && p->nr_buffer_varients == 1) {
       return p->idx_EBX;
    }
-   else if (linear || p->buffer_varient[var_idx].instance_divisor) {
+   else if (!index_size || p->buffer_varient[var_idx].instance_divisor) {
       struct x86_reg ptr = p->tmp_EAX;
       struct x86_reg buf_ptr = 
          x86_make_disp(p->machine_EDX, 
@@ -469,8 +471,19 @@ static struct x86_reg get_buffer_ptr( struct translate_sse *p,
 
       /* Calculate pointer to current attrib:
        */
-      x86_mov(p->func, ptr, buf_stride);
-      x86_imul(p->func, ptr, elt);
+      switch(index_size)
+      {
+      case 1:
+         x86_movzx8(p->func, ptr, elt);
+         break;
+      case 2:
+         x86_movzx16(p->func, ptr, elt);
+         break;
+      case 4:
+         x86_mov(p->func, ptr, elt);
+         break;
+      }
+      x86_imul(p->func, ptr, buf_stride);
       x86_add(p->func, ptr, buf_base_ptr);
       return ptr;
    }
@@ -479,9 +492,9 @@ static struct x86_reg get_buffer_ptr( struct translate_sse *p,
 
 
 static boolean incr_inputs( struct translate_sse *p, 
-                            boolean linear )
+                            unsigned index_size )
 {
-   if (linear && p->nr_buffer_varients == 1) {
+   if (!index_size && p->nr_buffer_varients == 1) {
       struct x86_reg stride = x86_make_disp(p->machine_EDX,
                                             get_offset(p, &p->buffer[0].stride));
 
@@ -490,7 +503,7 @@ static boolean incr_inputs( struct translate_sse *p,
          sse_prefetchnta(p->func, x86_make_disp(p->idx_EBX, 192));
       }
    }
-   else if (linear) {
+   else if (!index_size) {
       unsigned i;
 
       /* Is this worthwhile??
@@ -511,7 +524,7 @@ static boolean incr_inputs( struct translate_sse *p,
       }
    } 
    else {
-      x86_lea(p->func, p->idx_EBX, x86_make_disp(p->idx_EBX, 4));
+      x86_lea(p->func, p->idx_EBX, x86_make_disp(p->idx_EBX, index_size));
    }
    
    return TRUE;
@@ -536,7 +549,7 @@ static boolean incr_inputs( struct translate_sse *p,
  */
 static boolean build_vertex_emit( struct translate_sse *p,
 				  struct x86_function *func,
-				  boolean linear )
+				  unsigned index_size )
 {
    int fixup, label;
    unsigned j;
@@ -585,13 +598,13 @@ static boolean build_vertex_emit( struct translate_sse *p,
 
    /* always load, needed or not:
     */
-   init_inputs(p, linear);
+   init_inputs(p, index_size);
 
    /* Note address for loop jump
     */
    label = x86_get_label(p->func);
    {
-      struct x86_reg elt = linear ? p->idx_EBX : x86_deref(p->idx_EBX);
+      struct x86_reg elt = !index_size ? p->idx_EBX : x86_deref(p->idx_EBX);
       int last_varient = -1;
       struct x86_reg vb;
 
@@ -603,7 +616,7 @@ static boolean build_vertex_emit( struct translate_sse *p,
           */
          if (varient != last_varient) {
             last_varient = varient;
-            vb = get_buffer_ptr(p, linear, varient, elt);
+            vb = get_buffer_ptr(p, index_size, varient, elt);
          }
          
          if (!translate_attr( p, a, 
@@ -621,7 +634,7 @@ static boolean build_vertex_emit( struct translate_sse *p,
 
       /* Incr index
        */ 
-      incr_inputs( p, linear );
+      incr_inputs( p, index_size );
    }
 
    /* decr count, loop if not zero
@@ -736,10 +749,16 @@ struct translate *translate_sse2_create( const struct translate_key *key )
 
    if (0) debug_printf("nr_buffers: %d\n", p->nr_buffers);
 
-   if (!build_vertex_emit(p, &p->linear_func, TRUE))
+   if (!build_vertex_emit(p, &p->linear_func, 0))
       goto fail;
 
-   if (!build_vertex_emit(p, &p->elt_func, FALSE))
+   if (!build_vertex_emit(p, &p->elt_func, 4))
+      goto fail;
+
+   if (!build_vertex_emit(p, &p->elt16_func, 2))
+      goto fail;
+
+   if (!build_vertex_emit(p, &p->elt8_func, 1))
       goto fail;
 
    p->translate.run = (void*)x86_get_func(&p->linear_func);
@@ -748,6 +767,14 @@ struct translate *translate_sse2_create( const struct translate_key *key )
 
    p->translate.run_elts = (void*)x86_get_func(&p->elt_func);
    if (p->translate.run_elts == NULL)
+      goto fail;
+
+   p->translate.run_elts16 = (void*)x86_get_func(&p->elt16_func);
+   if (p->translate.run_elts16 == NULL)
+      goto fail;
+
+   p->translate.run_elts8 = (void*)x86_get_func(&p->elt8_func);
+   if (p->translate.run_elts8 == NULL)
       goto fail;
 
    return &p->translate;
