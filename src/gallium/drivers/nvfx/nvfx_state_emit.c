@@ -15,6 +15,7 @@ nvfx_state_validate_common(struct nvfx_context *nvfx)
 	if(nvfx != nvfx->screen->cur_ctx)
 	{
 		nvfx->dirty = ~0;
+		nvfx->hw_vtxelt_nr = 16;
 		nvfx->screen->cur_ctx = nvfx;
 	}
 
@@ -86,7 +87,7 @@ nvfx_state_validate_common(struct nvfx_context *nvfx)
 	if(dirty & NVFX_NEW_STIPPLE)
 		nvfx_state_stipple_validate(nvfx);
 
-	if(dirty & (NVFX_NEW_FRAGPROG | NVFX_NEW_FRAGCONST))
+	if(dirty & (NVFX_NEW_FRAGPROG | NVFX_NEW_FRAGCONST | NVFX_NEW_VERTPROG | NVFX_NEW_SPRITE))
 	{
 		nvfx_fragprog_validate(nvfx);
 		if(dirty & NVFX_NEW_FRAGPROG)

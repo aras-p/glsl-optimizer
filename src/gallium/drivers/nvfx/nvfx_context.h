@@ -45,6 +45,7 @@
 #define NVFX_NEW_VERTCONST	(1 << 14)
 #define NVFX_NEW_FRAGCONST	(1 << 15)
 #define NVFX_NEW_INDEX	(1 << 16)
+#define NVFX_NEW_SPRITE  (1 << 17)
 
 struct nvfx_rasterizer_state {
 	struct pipe_rasterizer_state pipe;

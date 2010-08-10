@@ -1,7 +1,7 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_state.h"
-#include "util/u_inlines.h"
+#include "util/u_linkage.h"
 
 #include "pipe/p_shader_tokens.h"
 #include "tgsi/tgsi_parse.h"
@@ -61,7 +61,7 @@ temp(struct nvfx_vpc *vpc)
 	return nvfx_sr(NVFXSR_TEMP, idx);
 }
 
-static INLINE void
+static inline void
 release_temps(struct nvfx_vpc *vpc)
 {
 	vpc->r_temps &= ~vpc->r_temps_discard;
@@ -339,7 +339,7 @@ nvfx_vp_arith(struct nvfx_context* nvfx, struct nvfx_vpc *vpc, int slot, int op,
 	emit_src(nvfx, vpc, hw, 2, s2);
 }
 
-static INLINE struct nvfx_sreg
+static inline struct nvfx_sreg
 tgsi_src(struct nvfx_vpc *vpc, const struct tgsi_full_src_register *fsrc) {
 	struct nvfx_sreg src = { 0 };
 
@@ -385,14 +385,14 @@ tgsi_dst(struct nvfx_vpc *vpc, const struct tgsi_full_dst_register *fdst) {
 		dst = vpc->r_address[fdst->Register.Index];
 		break;
 	default:
-		NOUVEAU_ERR("bad dst file\n");
+		NOUVEAU_ERR("bad dst file %i\n", fdst->Register.File);
 		break;
 	}
 
 	return dst;
 }
 
-static INLINE int
+static inline int
 tgsi_mask(uint tgsi)
 {
 	int mask = 0;
@@ -650,12 +650,8 @@ nvfx_vertprog_parse_decl_output(struct nvfx_context* nvfx, struct nvfx_vpc *vpc,
 		hw = NVFX_VP(INST_DEST_PSZ);
 		break;
 	case TGSI_SEMANTIC_GENERIC:
-		if (fdec->Semantic.Index <= 7) {
-			hw = NVFX_VP(INST_DEST_TC(fdec->Semantic.Index));
-		} else {
-			NOUVEAU_ERR("bad generic semantic index\n");
-			return FALSE;
-		}
+		hw = (vpc->vp->generic_to_fp_input[fdec->Semantic.Index] & 0xf)
+			+ NVFX_VP(INST_DEST_TC(0)) - NVFX_FP_OP_INPUT_SRC_TC(0);
 		break;
 	case TGSI_SEMANTIC_EDGEFLAG:
 		/* not really an error just a fallback */
@@ -675,6 +671,29 @@ nvfx_vertprog_prepare(struct nvfx_context* nvfx, struct nvfx_vpc *vpc)
 {
 	struct tgsi_parse_context p;
 	int high_temp = -1, high_addr = -1, nr_imm = 0, i;
+	struct util_semantic_set set;
+	unsigned char sem_layout[8];
+	unsigned sem_layout_size;
+	unsigned num_outputs;
+
+	num_outputs = util_semantic_set_from_program_file(&set, vpc->vp->pipe.tokens, TGSI_FILE_OUTPUT);
+
+	if(num_outputs > 8) {
+		NOUVEAU_ERR("too many vertex program outputs: %i\n", num_outputs);
+		return FALSE;
+	}
+	util_semantic_layout_from_set(sem_layout, &set, 8, 8);
+
+	/* hope 0xf is (0, 0, 0, 1) initialized; otherwise, we are _probably_ not required to do this */
+	memset(vpc->vp->generic_to_fp_input, 0x0f, sizeof(vpc->vp->generic_to_fp_input));
+	vpc->vp->texcoord_ouput_mask = 0;
+	for(int i = 0; i < 8; ++i) {
+		if(sem_layout[i] == 0xff)
+			continue;
+		vpc->vp->texcoord_ouput_mask |= (1 << i);
+		//printf("vp: GENERIC[%i] to fpreg %i\n", sem_layout[i], NVFX_FP_OP_INPUT_SRC_TC(0) + i);
+		vpc->vp->generic_to_fp_input[sem_layout[i]] = 0xf0 | (NVFX_FP_OP_INPUT_SRC_TC(0) + i);
+	}
 
 	tgsi_parse_init(&p, vpc->vp->pipe.tokens);
 	while (!tgsi_parse_end_of_tokens(&p)) {

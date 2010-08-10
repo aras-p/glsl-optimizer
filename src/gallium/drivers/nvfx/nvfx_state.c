@@ -91,6 +91,7 @@ nvfx_rasterizer_state_create(struct pipe_context *pipe,
 	/*XXX: ignored:
 	 * 	point_smooth -nohw
 	 * 	multisample
+	 *     sprite_coord_origin
 	 */
 
 	sb_method(sb, NV34TCL_SHADE_MODEL, 1);
@@ -150,20 +151,6 @@ nvfx_rasterizer_state_create(struct pipe_context *pipe,
 		sb_data(sb, fui(cso->offset_units * 2));
 	}
 
-	sb_method(sb, NV34TCL_POINT_SPRITE, 1);
-	if (cso->point_quad_rasterization) {
-		unsigned psctl = (1 << 0), i;
-
-		for (i = 0; i < 8; i++) {
-			if ((cso->sprite_coord_enable >> i) & 1)
-				psctl |= (1 << (8 + i));
-		}
-
-		sb_data(sb, psctl);
-	} else {
-		sb_data(sb, 0);
-	}
-
 	rsso->pipe = *cso;
 	rsso->sb_len = sb_len(sb, rsso->sb);
 	return (void *)rsso;
@@ -188,6 +175,12 @@ nvfx_rasterizer_state_bind(struct pipe_context *pipe, void *hwcso)
 		{
 			nvfx->dirty |= NVFX_NEW_STIPPLE;
 			nvfx->draw_dirty |= NVFX_NEW_STIPPLE;
+		}
+
+		if(((struct nvfx_rasterizer_state*)hwcso)->pipe.point_quad_rasterization != nvfx->rasterizer->pipe.point_quad_rasterization
+				|| ((struct nvfx_rasterizer_state*)hwcso)->pipe.sprite_coord_enable != nvfx->rasterizer->pipe.sprite_coord_enable)
+		{
+			nvfx->dirty |= NVFX_NEW_SPRITE;
 		}
 	}
 
@@ -280,9 +273,13 @@ nvfx_vp_state_create(struct pipe_context *pipe,
 	struct nvfx_context *nvfx = nvfx_context(pipe);
 	struct nvfx_vertex_program *vp;
 
+	// TODO: use a 64-bit atomic here!
+	static unsigned long long id = 0;
+
 	vp = CALLOC(1, sizeof(struct nvfx_vertex_program));
 	vp->pipe.tokens = tgsi_dup_tokens(cso->tokens);
 	vp->draw = draw_create_vertex_shader(nvfx->draw, &vp->pipe);
+	vp->id = ++id;
 
 	return (void *)vp;
 }
