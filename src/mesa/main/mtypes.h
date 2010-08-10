@@ -2481,29 +2481,29 @@ struct gl_framebuffer
 
 
 /**
- * Limits for vertex and fragment programs.
+ * Limits for vertex and fragment programs/shaders.
  */
 struct gl_program_constants
 {
    /* logical limits */
    GLuint MaxInstructions;
-   GLuint MaxAluInstructions; /* fragment programs only, for now */
-   GLuint MaxTexInstructions; /* fragment programs only, for now */
-   GLuint MaxTexIndirections; /* fragment programs only, for now */
+   GLuint MaxAluInstructions;
+   GLuint MaxTexInstructions;
+   GLuint MaxTexIndirections;
    GLuint MaxAttribs;
    GLuint MaxTemps;
-   GLuint MaxAddressRegs; /* vertex program only, for now */
+   GLuint MaxAddressRegs;
    GLuint MaxParameters;
    GLuint MaxLocalParams;
    GLuint MaxEnvParams;
    /* native/hardware limits */
    GLuint MaxNativeInstructions;
-   GLuint MaxNativeAluInstructions; /* fragment programs only, for now */
-   GLuint MaxNativeTexInstructions; /* fragment programs only, for now */
-   GLuint MaxNativeTexIndirections; /* fragment programs only, for now */
+   GLuint MaxNativeAluInstructions;
+   GLuint MaxNativeTexInstructions;
+   GLuint MaxNativeTexIndirections;
    GLuint MaxNativeAttribs;
    GLuint MaxNativeTemps;
-   GLuint MaxNativeAddressRegs; /* vertex program only, for now */
+   GLuint MaxNativeAddressRegs;
    GLuint MaxNativeParameters;
    /* For shaders */
    GLuint MaxUniformComponents;
