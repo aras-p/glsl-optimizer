@@ -47,6 +47,7 @@ bool do_if_to_cond_assign(exec_list *instructions);
 bool do_mat_op_to_vec(exec_list *instructions);
 bool do_mod_to_fract(exec_list *instructions);
 bool do_structure_splitting(exec_list *instructions);
+bool do_sub_to_add_neg(exec_list *instructions);
 bool do_swizzle_swizzle(exec_list *instructions);
 bool do_tree_grafting(exec_list *instructions);
 bool do_vec_index_to_cond_assign(exec_list *instructions);
