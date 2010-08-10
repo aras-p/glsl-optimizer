@@ -81,6 +81,7 @@ void rc_move_output(struct radeon_compiler * c, unsigned output, unsigned new_ou
 void rc_copy_output(struct radeon_compiler * c, unsigned output, unsigned dup_output);
 void rc_transform_fragment_wpos(struct radeon_compiler * c, unsigned wpos, unsigned new_input,
                                 int full_vtransform);
+void rc_transform_fragment_face(struct radeon_compiler *c, unsigned face);
 
 struct r300_fragment_program_compiler {
 	struct radeon_compiler Base;

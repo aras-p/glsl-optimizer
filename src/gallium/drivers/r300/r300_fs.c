@@ -72,6 +72,11 @@ void r300_shader_read_fs_inputs(struct tgsi_shader_info* info,
                 fs_inputs->wpos = i;
                 break;
 
+            case TGSI_SEMANTIC_FACE:
+                assert(index == 0);
+                fs_inputs->face = i;
+                break;
+
             default:
                 fprintf(stderr, "r300: FP: Unknown input semantic: %i\n",
                         info->input_semantic_name[i]);
@@ -119,6 +124,9 @@ static void allocate_hardware_inputs(
         if (inputs->color[i] != ATTR_UNUSED) {
             allocate(mydata, inputs->color[i], reg++);
         }
+    }
+    if (inputs->face != ATTR_UNUSED) {
+        allocate(mydata, inputs->face, reg++);
     }
     for (i = 0; i < ATTR_GENERIC_COUNT; i++) {
         if (inputs->generic[i] != ATTR_UNUSED) {
@@ -360,13 +368,14 @@ static void r300_translate_fragment_shader(
 {
     struct r300_fragment_program_compiler compiler;
     struct tgsi_to_rc ttr;
-    int wpos;
+    int wpos, face;
     unsigned i;
 
     tgsi_scan_shader(tokens, &shader->info);
     r300_shader_read_fs_inputs(&shader->info, &shader->inputs);
 
     wpos = shader->inputs.wpos;
+    face = shader->inputs.face;
 
     /* Setup the compiler. */
     memset(&compiler, 0, sizeof(compiler));
@@ -404,6 +413,10 @@ static void r300_translate_fragment_shader(
     if (wpos != ATTR_UNUSED) {
         /* Moving the input to some other reg is not really necessary. */
         rc_transform_fragment_wpos(&compiler.Base, wpos, wpos, TRUE);
+    }
+
+    if (face != ATTR_UNUSED) {
+        rc_transform_fragment_face(&compiler.Base, face);
     }
 
     /* Invoke the compiler */

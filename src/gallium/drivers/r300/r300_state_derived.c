@@ -46,6 +46,11 @@ enum r300_rs_swizzle {
     SWIZ_0001,
 };
 
+enum r300_rs_col_write_type {
+    WRITE_COLOR = 0,
+    WRITE_FACE
+};
+
 static void r300_draw_emit_attrib(struct r300_context* r300,
                                   enum attrib_emit emit,
                                   enum interp_mode interp,
@@ -203,8 +208,10 @@ static void r300_rs_col(struct r300_rs_block* rs, int id, int ptr,
     rs->inst[id] |= R300_RS_INST_COL_ID(id);
 }
 
-static void r300_rs_col_write(struct r300_rs_block* rs, int id, int fp_offset)
+static void r300_rs_col_write(struct r300_rs_block* rs, int id, int fp_offset,
+                              enum r300_rs_col_write_type type)
 {
+    assert(type != WRITE_COLOR);
     rs->inst[id] |= R300_RS_INST_COL_CN_WRITE |
                     R300_RS_INST_COL_ADDR(fp_offset);
 }
@@ -252,10 +259,16 @@ static void r500_rs_col(struct r300_rs_block* rs, int id, int ptr,
     rs->inst[id] |= R500_RS_INST_COL_ID(id);
 }
 
-static void r500_rs_col_write(struct r300_rs_block* rs, int id, int fp_offset)
+static void r500_rs_col_write(struct r300_rs_block* rs, int id, int fp_offset,
+                              enum r300_rs_col_write_type type)
 {
-    rs->inst[id] |= R500_RS_INST_COL_CN_WRITE |
-                    R500_RS_INST_COL_ADDR(fp_offset);
+    if (type == WRITE_FACE)
+        rs->inst[id] |= R500_RS_INST_COL_CN_WRITE_BACKFACE |
+                        R500_RS_INST_COL_ADDR(fp_offset);
+    else
+        rs->inst[id] |= R500_RS_INST_COL_CN_WRITE |
+                        R500_RS_INST_COL_ADDR(fp_offset);
+
 }
 
 static void r500_rs_tex(struct r300_rs_block* rs, int id, int ptr,
@@ -305,7 +318,7 @@ static void r300_update_rs_block(struct r300_context *r300)
     struct r300_rs_block rs = {0};
     int i, col_count = 0, tex_count = 0, fp_offset = 0, count, loc = 0, tex_ptr = 0;
     void (*rX00_rs_col)(struct r300_rs_block*, int, int, enum r300_rs_swizzle);
-    void (*rX00_rs_col_write)(struct r300_rs_block*, int, int);
+    void (*rX00_rs_col_write)(struct r300_rs_block*, int, int, enum r300_rs_col_write_type);
     void (*rX00_rs_tex)(struct r300_rs_block*, int, int, enum r300_rs_swizzle);
     void (*rX00_rs_tex_write)(struct r300_rs_block*, int, int);
     boolean any_bcolor_used = vs_outputs->bcolor[0] != ATTR_UNUSED ||
@@ -350,7 +363,7 @@ static void r300_update_rs_block(struct r300_context *r300)
 
             /* Write it to the FS input register if it's needed by the FS. */
             if (fs_inputs->color[i] != ATTR_UNUSED) {
-                rX00_rs_col_write(&rs, col_count, fp_offset);
+                rX00_rs_col_write(&rs, col_count, fp_offset, WRITE_COLOR);
                 fp_offset++;
 
                 DBG(r300, DBG_RS,
@@ -396,6 +409,24 @@ static void r300_update_rs_block(struct r300_context *r300)
                 tex_ptr += 4;
             }
         }
+    }
+
+    /* gl_FrontFacing.
+     * Note that we can use either the two-sided color selection based on
+     * the front and back vertex shader colors, or gl_FrontFacing,
+     * but not both! It locks up otherwise.
+     *
+     * In Direct3D 9, the two-sided color selection can be used
+     * with shaders 2.0 only, while gl_FrontFacing can be used
+     * with shaders 3.0 only. The hardware apparently hasn't been designed
+     * to support both at the same time. */
+    if (r300->screen->caps.is_r500 && fs_inputs->face != ATTR_UNUSED &&
+        !(any_bcolor_used && r300->two_sided_color)) {
+        rX00_rs_col(&rs, col_count, col_count, SWIZ_XYZW);
+        rX00_rs_col_write(&rs, col_count, fp_offset, WRITE_FACE);
+        fp_offset++;
+        col_count++;
+        DBG(r300, DBG_RS, "r300: Rasterized FACE written to FS.\n");
     }
 
     /* Rasterize texture coordinates. */
