@@ -462,7 +462,7 @@ _mesa_init_current(GLcontext *ctx)
 
 
 /**
- * Init vertex/fragment program limits.
+ * Init vertex/fragment/geometry program limits.
  * Important: drivers should override these with actual limits.
  */
 static void
@@ -477,16 +477,18 @@ init_program_limits(GLenum type, struct gl_program_constants *prog)
    prog->MaxLocalParams = MAX_PROGRAM_LOCAL_PARAMS;
    prog->MaxUniformComponents = 4 * MAX_UNIFORMS;
 
-   if (type == GL_VERTEX_PROGRAM_ARB) {
+   switch (type) {
+   case GL_VERTEX_PROGRAM_ARB:
       prog->MaxParameters = MAX_VERTEX_PROGRAM_PARAMS;
       prog->MaxAttribs = MAX_NV_VERTEX_PROGRAM_INPUTS;
       prog->MaxAddressRegs = MAX_VERTEX_PROGRAM_ADDRESS_REGS;
-   }
-   else if (type == GL_FRAGMENT_PROGRAM_ARB) {
+      break;
+   case GL_FRAGMENT_PROGRAM_ARB:
       prog->MaxParameters = MAX_NV_FRAGMENT_PROGRAM_PARAMS;
       prog->MaxAttribs = MAX_NV_FRAGMENT_PROGRAM_INPUTS;
       prog->MaxAddressRegs = MAX_FRAGMENT_PROGRAM_ADDRESS_REGS;
-   } else {
+      break;
+   case MESA_GEOMETRY_PROGRAM:
       prog->MaxParameters = MAX_NV_VERTEX_PROGRAM_PARAMS;
       prog->MaxAttribs = MAX_NV_VERTEX_PROGRAM_INPUTS;
       prog->MaxAddressRegs = MAX_VERTEX_PROGRAM_ADDRESS_REGS;
@@ -497,6 +499,9 @@ init_program_limits(GLenum type, struct gl_program_constants *prog)
       prog->MaxGeometryUniformComponents = MAX_GEOMETRY_UNIFORM_COMPONENTS;
       prog->MaxGeometryOutputVertices = MAX_GEOMETRY_OUTPUT_VERTICES;
       prog->MaxGeometryTotalOutputComponents = MAX_GEOMETRY_TOTAL_OUTPUT_COMPONENTS;
+      break;
+   default:
+      assert(0 && "Bad program type in init_program_limits()");
    }
 
    /* Set the native limits to zero.  This implies that there is no native
