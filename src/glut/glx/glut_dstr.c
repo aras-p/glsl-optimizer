@@ -232,7 +232,7 @@ loadVisuals(int *nitems_return)
   XVisualInfo *vinfo, **vlist, template;
   FrameBufferMode *fbmodes, *mode;
   int n, i, j, rc, glcapable;
-#if defined(GLX_VERSION_1_1) && defined(GLX_SGIS_multisample)
+#if defined(GLX_VERSION_1_1) && (defined(GLX_SGIS_multisample) || defined(GLX_ARB_multisample))
   int multisample;
 #endif
 #if defined(GLX_VERSION_1_1) && defined(GLX_EXT_visual_info)
@@ -275,8 +275,9 @@ loadVisuals(int *nitems_return)
     }
   }
 
-#if defined(GLX_VERSION_1_1) && defined(GLX_SGIS_multisample)
-  multisample = __glutIsSupportedByGLX("GLX_SGIS_multisample");
+#if defined(GLX_VERSION_1_1) && (defined(GLX_SGIS_multisample) || defined(GLX_ARB_multisample))
+  multisample = __glutIsSupportedByGLX("GLX_SGIS_multisample") ||
+                __glutIsSupportedByGLX("GLX_ARB_multisample");
 #endif
 #if defined(GLX_VERSION_1_1) && defined(GLX_EXT_visual_info)
   visual_info = __glutIsSupportedByGLX("GLX_EXT_visual_info");
@@ -572,7 +573,7 @@ loadVisuals(int *nitems_return)
 #else
                 mode->cap[TRANSPARENT] = 0;
 #endif
-#if defined(GLX_VERSION_1_1) && defined(GLX_SGIS_multisample)
+#if defined(GLX_VERSION_1_1) && (defined(GLX_SGIS_multisample) || defined(GLX_ARB_multisample))
                 if (multisample) {
                   rc = __glut_glXGetFBConfigAttribSGIX(__glutDisplay,
 		    fbc, GLX_SAMPLES_SGIS, &mode->cap[SAMPLES]);
@@ -1250,8 +1251,9 @@ parseModeString(char *mode, int *ncriteria, Bool * allowDoubleAsSingle,
     word = strtok(NULL, " \t");
   }
 
-#if defined(GLX_VERSION_1_1) && defined(GLX_SGIS_multisample)
-  if (__glutIsSupportedByGLX("GLX_SGIS_multisample")) {
+#if defined(GLX_VERSION_1_1) && (defined(GLX_SGIS_multisample) || defined(GLX_ARB_multisample))
+  if (__glutIsSupportedByGLX("GLX_SGIS_multisample") ||
+      __glutIsSupportedByGLX("GLX_ARB_multisample")) {
     if (!(mask & (1 << SAMPLES))) {
       criteria[n].capability = SAMPLES;
       criteria[n].comparison = EQ;
