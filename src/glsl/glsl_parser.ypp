@@ -35,8 +35,16 @@
 %}
 
 %pure-parser
-%locations
 %error-verbose
+
+%locations
+%initial-action {
+   @$.first_line = 1;
+   @$.first_column = 1;
+   @$.last_line = 1;
+   @$.last_column = 1;
+   @$.source = 0;
+}
 
 %lex-param   {void *scanner}
 %parse-param {struct _mesa_glsl_parse_state *state}
