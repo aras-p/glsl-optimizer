@@ -64,6 +64,14 @@ struct translate_generic {
       unsigned input_stride;
       unsigned max_index;
 
+      /* this value is set to -1 if this is a normal element with output_format != input_format:
+       * in this case, u_format is used to do a full conversion
+       *
+       * this value is set to the format size in bytes if output_format == input_format or for 32-bit instance ids:
+       * in this case, memcpy is used to copy this amount of bytes
+       */
+      int copy_size;
+
    } attrib[PIPE_MAX_ATTRIBS];
 
    unsigned nr_attrib;
@@ -354,8 +362,6 @@ static emit_func get_emit_func( enum pipe_format format )
    }
 }
 
-
-
 /**
  * Fetch vertex attributes for 'count' vertices.
  */
@@ -380,9 +386,10 @@ static void PIPE_CDECL generic_run_elts( struct translate *translate,
 	 float data[4];
 	 char *dst = vert + tg->attrib[attr].output_offset;
 
-         if (tg->attrib[attr].type == TRANSLATE_ELEMENT_NORMAL) {
+	 if (tg->attrib[attr].type == TRANSLATE_ELEMENT_NORMAL) {
             const uint8_t *src;
             unsigned index;
+            int copy_size;
 
             if (tg->attrib[attr].instance_divisor) {
                index = instance_id / tg->attrib[attr].instance_divisor;
@@ -396,27 +403,34 @@ static void PIPE_CDECL generic_run_elts( struct translate *translate,
             src = tg->attrib[attr].input_ptr +
                   tg->attrib[attr].input_stride * index;
 
-            tg->attrib[attr].fetch( data, src, 0, 0 );
+            copy_size = tg->attrib[attr].copy_size;
+            if(likely(copy_size >= 0))
+               memcpy(dst, src, copy_size);
+            else
+            {
+               tg->attrib[attr].fetch( data, src, 0, 0 );
 
-            if (0)
-               debug_printf("Fetch elt attr %d  from %p  stride %d  div %u  max %u  index %d:  "
-                            " %f, %f, %f, %f \n",
-                            attr,
-                            tg->attrib[attr].input_ptr,
-                            tg->attrib[attr].input_stride,
-                            tg->attrib[attr].instance_divisor,
-                            tg->attrib[attr].max_index,
-                            index,
-                            data[0], data[1],data[2], data[3]);
+               if (0)
+                  debug_printf("Fetch elt attr %d  from %p  stride %d  div %u  max %u  index %d:  "
+                               " %f, %f, %f, %f \n",
+                               attr,
+                               tg->attrib[attr].input_ptr,
+                               tg->attrib[attr].input_stride,
+                               tg->attrib[attr].instance_divisor,
+                               tg->attrib[attr].max_index,
+                               index,
+                               data[0], data[1],data[2], data[3]);
+               tg->attrib[attr].emit( data, dst );
+            }
          } else {
-            data[0] = (float)instance_id;
+            if(likely(tg->attrib[attr].copy_size >= 0))
+               memcpy(data, &instance_id, 4);
+            else
+            {
+               data[0] = (float)instance_id;
+               tg->attrib[attr].emit( data, dst );
+            }
          }
-
-         if (0)
-            debug_printf("vert %d/%d attr %d: %f %f %f %f\n",
-                         i, elt, attr, data[0], data[1], data[2], data[3]);
-
-	 tg->attrib[attr].emit( data, dst );
       }
       vert += tg->translate.key.output_stride;
    }
@@ -448,6 +462,7 @@ static void PIPE_CDECL generic_run( struct translate *translate,
          if (tg->attrib[attr].type == TRANSLATE_ELEMENT_NORMAL) {
             const uint8_t *src;
             unsigned index;
+            int copy_size;
 
             if (tg->attrib[attr].instance_divisor) {
                index = instance_id / tg->attrib[attr].instance_divisor;
@@ -462,25 +477,33 @@ static void PIPE_CDECL generic_run( struct translate *translate,
             src = tg->attrib[attr].input_ptr +
                   tg->attrib[attr].input_stride * index;
 
-            tg->attrib[attr].fetch( data, src, 0, 0 );
+            copy_size = tg->attrib[attr].copy_size;
+            if(likely(copy_size >= 0))
+               memcpy(dst, src, copy_size);
+            else
+            {
+               tg->attrib[attr].fetch( data, src, 0, 0 );
 
-            if (0)
-               debug_printf("Fetch linear attr %d  from %p  stride %d  index %d: "
+               if (0)
+                  debug_printf("Fetch linear attr %d  from %p  stride %d  index %d: "
                             " %f, %f, %f, %f \n",
                             attr,
                             tg->attrib[attr].input_ptr,
                             tg->attrib[attr].input_stride,
                             index,
                             data[0], data[1],data[2], data[3]);
+
+               tg->attrib[attr].emit( data, dst );
+            }
          } else {
-            data[0] = (float)instance_id;
+            if(likely(tg->attrib[attr].copy_size >= 0))
+               memcpy(data, &instance_id, 4);
+            else
+            {
+               data[0] = (float)instance_id;
+               tg->attrib[attr].emit( data, dst );
+            }
          }
-
-         if (0)
-            debug_printf("vert %d attr %d: %f %f %f %f\n",
-                         i, attr, data[0], data[1], data[2], data[3]);
-
-	 tg->attrib[attr].emit( data, dst );
       }
       
       vert += tg->translate.key.output_stride;
@@ -544,9 +567,28 @@ struct translate *translate_generic_create( const struct translate_key *key )
       tg->attrib[i].input_offset = key->element[i].input_offset;
       tg->attrib[i].instance_divisor = key->element[i].instance_divisor;
 
-      tg->attrib[i].emit = get_emit_func(key->element[i].output_format);
       tg->attrib[i].output_offset = key->element[i].output_offset;
 
+      tg->attrib[i].copy_size = -1;
+      if (tg->attrib[i].type == TRANSLATE_ELEMENT_INSTANCE_ID)
+      {
+            if(key->element[i].output_format == PIPE_FORMAT_R32_USCALED
+                  || key->element[i].output_format == PIPE_FORMAT_R32_SSCALED)
+               tg->attrib[i].copy_size = 4;
+      }
+      else
+      {
+         if(key->element[i].input_format == key->element[i].output_format
+               && format_desc->block.width == 1
+               && format_desc->block.height == 1
+               && !(format_desc->block.bits & 7))
+            tg->attrib[i].copy_size = format_desc->block.bits >> 3;
+      }
+
+      if(tg->attrib[i].copy_size < 0)
+	      tg->attrib[i].emit = get_emit_func(key->element[i].output_format);
+      else
+	      tg->attrib[i].emit  = NULL;
    }
 
    tg->nr_attrib = key->nr_elements;
