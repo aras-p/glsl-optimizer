@@ -260,13 +260,13 @@ static void setup_tri_coefficients( struct lp_setup_context *setup,
 {
    unsigned fragcoord_usage_mask = TGSI_WRITEMASK_XYZ;
    unsigned slot;
+   unsigned i;
 
    /* setup interpolation for all the remaining attributes:
     */
    for (slot = 0; slot < setup->fs.nr_inputs; slot++) {
       unsigned vert_attr = setup->fs.input[slot].src_index;
       unsigned usage_mask = setup->fs.input[slot].usage_mask;
-      unsigned i;
 
       switch (setup->fs.input[slot].interp) {
       case LP_INTERP_CONSTANT:
@@ -316,6 +316,34 @@ static void setup_tri_coefficients( struct lp_setup_context *setup,
    /* The internal position input is in slot zero:
     */
    setup_fragcoord_coef(tri, info, 0, fragcoord_usage_mask);
+
+   if (0) {
+      for (i = 0; i < NUM_CHANNELS; i++) {
+         float a0   = tri->inputs.a0  [0][i];
+         float dadx = tri->inputs.dadx[0][i];
+         float dady = tri->inputs.dady[0][i];
+
+         debug_printf("POS.%c: a0 = %f, dadx = %f, dady = %f\n",
+                      "xyzw"[i],
+                      a0, dadx, dady);
+      }
+
+      for (slot = 0; slot < setup->fs.nr_inputs; slot++) {
+         unsigned usage_mask = setup->fs.input[slot].usage_mask;
+         for (i = 0; i < NUM_CHANNELS; i++) {
+            if (usage_mask & (1 << i)) {
+               float a0   = tri->inputs.a0  [1 + slot][i];
+               float dadx = tri->inputs.dadx[1 + slot][i];
+               float dady = tri->inputs.dady[1 + slot][i];
+
+               debug_printf("IN[%u].%c: a0 = %f, dadx = %f, dady = %f\n",
+                            slot,
+                            "xyzw"[i],
+                            a0, dadx, dady);
+            }
+         }
+      }
+   }
 }
 
 
