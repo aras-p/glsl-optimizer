@@ -494,6 +494,21 @@ int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *s
 			noutput++;
 		}
 	}
+	/* add fake pixel export */
+	if (ctx.type == TGSI_PROCESSOR_FRAGMENT && !noutput) {
+		memset(&output[0], 0, sizeof(struct r600_bc_output));
+		output[0].gpr = 0;
+		output[0].elem_size = 3;
+		output[0].swizzle_x = 7;
+		output[0].swizzle_y = 7;
+		output[0].swizzle_z = 7;
+		output[0].swizzle_w = 7;
+		output[0].barrier = 1;
+		output[0].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PARAM;
+		output[0].array_base = 0;
+		output[0].inst = V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT;
+		noutput++;
+	}
 	/* set export done on last export of each type */
 	for (i = noutput - 1, output_done = 0; i >= 0; i--) {
 		if (i == (noutput - 1)) {

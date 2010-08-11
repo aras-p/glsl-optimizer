@@ -167,8 +167,7 @@ int r600_bc_add_literal(struct r600_bc *bc, const u32 *value)
 	struct r600_bc_alu *alu;
 
 	if (bc->cf_last == NULL) {
-		R600_ERR("no last CF\n");
-		return -EINVAL;
+		return 0;
 	}
 	if (bc->cf_last->inst == V_SQ_CF_WORD1_SQ_CF_INST_TEX) {
 		return 0;

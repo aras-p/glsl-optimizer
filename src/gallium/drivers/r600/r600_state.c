@@ -727,7 +727,7 @@ static struct radeon_state *r600_db(struct r600_context *rctx)
 	struct r600_resource *rbuffer;
 	struct radeon_state *rstate;
 	const struct pipe_framebuffer_state *state = &rctx->framebuffer->state.framebuffer;
-	unsigned level = state->cbufs[0]->level;
+	unsigned level;
 	unsigned pitch, slice, format;
 
 	if (state->zsbuf == NULL)
