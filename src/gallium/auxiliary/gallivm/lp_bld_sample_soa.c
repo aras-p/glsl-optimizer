@@ -1219,8 +1219,7 @@ lp_build_cube_ima(struct lp_build_context *coord_bld, LLVMValueRef coord)
    /* ima = -0.5 / abs(coord); */
    LLVMValueRef negHalf = lp_build_const_vec(coord_bld->type, -0.5);
    LLVMValueRef absCoord = lp_build_abs(coord_bld, coord);
-   LLVMValueRef ima = lp_build_mul(coord_bld, negHalf,
-                                   lp_build_rcp(coord_bld, absCoord));
+   LLVMValueRef ima = lp_build_div(coord_bld, negHalf, absCoord);
    return ima;
 }
 
