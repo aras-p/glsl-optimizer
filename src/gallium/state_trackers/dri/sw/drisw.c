@@ -201,7 +201,7 @@ drisw_allocate_textures(struct dri_drawable *drawable,
    struct pipe_resource templ;
    unsigned width, height;
    boolean resized;
-   int i;
+   unsigned i;
 
    width  = drawable->dPriv->w;
    height = drawable->dPriv->h;
@@ -222,7 +222,7 @@ drisw_allocate_textures(struct dri_drawable *drawable,
    templ.depth0 = 1;
    templ.last_level = 0;
 
-   for (i = 0; i < ST_ATTACHMENT_COUNT; i++) {
+   for (i = 0; i < count; i++) {
       enum pipe_format format;
       unsigned bind;
 
