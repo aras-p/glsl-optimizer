@@ -1,4 +1,12 @@
-/* Implement transfers using staging resources like in DirectX 10/11 */
+/* Direct3D 10/11 has no concept of transfers. Applications instead
+ * create resources with a STAGING or DYNAMIC usage, copy between them
+ * and the real resource and use Map to map the STAGING/DYNAMIC resource.
+ *
+ * This util module allows to implement Gallium drivers as a Direct3D
+ * driver would be implemented: transfers allocate a resource with
+ * PIPE_USAGE_STAGING, and copy the data between it and the real resource
+ * with resource_copy_region.
+ */
 
 #ifndef U_STAGING_H
 #define U_STAGING_H
