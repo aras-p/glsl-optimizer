@@ -24,8 +24,8 @@
 #include "pipe/p_state.h"
 #include "util/u_inlines.h"
 #include "util/u_format.h"
+#include "util/u_split_prim.h"
 
-#include "nouveau/nouveau_util.h"
 #include "nv50_context.h"
 #include "nv50_resource.h"
 
