@@ -525,7 +525,7 @@ do_triangle_ccw(struct lp_setup_context *setup,
    info.dx20 = info.v2[0][0] - info.v0[0][0];
    info.dy01 = info.v0[0][1] - info.v1[0][1];
    info.dy20 = info.v2[0][1] - info.v0[0][1];
-   info.oneoverarea = 1.0 / (info.dx01 * info.dy20 - info.dx20 * info.dy01);
+   info.oneoverarea = 1.0f / (info.dx01 * info.dy20 - info.dx20 * info.dy01);
    info.frontfacing = frontfacing;
 
    /* Setup parameter interpolants:
