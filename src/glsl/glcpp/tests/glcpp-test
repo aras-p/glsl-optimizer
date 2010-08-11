@@ -1,5 +1,7 @@
 #!/bin/sh
 
+trap 'rm $test.valgrind-errors; exit 1' INT QUIT
+
 total=0
 pass=0
 clean=0
