@@ -28,6 +28,8 @@
 void
 glcpp_error (YYLTYPE *locp, glcpp_parser_t *parser, const char *fmt, ...)
 {
+	va_list ap;
+
 	parser->error = 1;
 	parser->info_log = talloc_asprintf_append(parser->info_log,
 						  "%u:%u(%u): "
@@ -35,7 +37,6 @@ glcpp_error (YYLTYPE *locp, glcpp_parser_t *parser, const char *fmt, ...)
 						  locp->source,
 						  locp->first_line,
 						  locp->first_column);
-	va_list ap;
 	va_start(ap, fmt);
 	parser->info_log = talloc_vasprintf_append(parser->info_log, fmt, ap);
 	va_end(ap);
@@ -45,13 +46,14 @@ glcpp_error (YYLTYPE *locp, glcpp_parser_t *parser, const char *fmt, ...)
 void
 glcpp_warning (YYLTYPE *locp, glcpp_parser_t *parser, const char *fmt, ...)
 {
+	va_list ap;
+
 	parser->info_log = talloc_asprintf_append(parser->info_log,
 						  "%u:%u(%u): "
 						  "preprocessor warning: ",
 						  locp->source,
 						  locp->first_line,
 						  locp->first_column);
-	va_list ap;
 	va_start(ap, fmt);
 	parser->info_log = talloc_vasprintf_append(parser->info_log, fmt, ap);
 	va_end(ap);
