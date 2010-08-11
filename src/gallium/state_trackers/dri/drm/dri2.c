@@ -67,57 +67,6 @@ static const __DRI2flushExtension dri2FlushExtension = {
 };
 
 /**
- * These are used for GLX_EXT_texture_from_pixmap
- */
-static void
-dri2_set_tex_buffer2(__DRIcontext *pDRICtx, GLint target,
-                     GLint format, __DRIdrawable *dPriv)
-{
-   struct dri_context *ctx = dri_context(pDRICtx);
-   struct dri_drawable *drawable = dri_drawable(dPriv);
-   struct pipe_resource *pt;
-
-   dri_drawable_validate_att(drawable, ST_ATTACHMENT_FRONT_LEFT);
-
-   pt = drawable->textures[ST_ATTACHMENT_FRONT_LEFT];
-
-   if (pt) {
-      enum pipe_format internal_format = pt->format;
-
-      if (format == __DRI_TEXTURE_FORMAT_RGB)  {
-         /* only need to cover the formats recognized by dri_fill_st_visual */
-         switch (internal_format) {
-         case PIPE_FORMAT_B8G8R8A8_UNORM:
-            internal_format = PIPE_FORMAT_B8G8R8X8_UNORM;
-            break;
-         case PIPE_FORMAT_A8R8G8B8_UNORM:
-            internal_format = PIPE_FORMAT_X8R8G8B8_UNORM;
-            break;
-         default:
-            break;
-         }
-      }
-
-      ctx->st->teximage(ctx->st,
-            (target == GL_TEXTURE_2D) ? ST_TEXTURE_2D : ST_TEXTURE_RECT,
-            0, internal_format, pt, FALSE);
-   }
-}
-
-static void
-dri2_set_tex_buffer(__DRIcontext *pDRICtx, GLint target,
-                    __DRIdrawable *dPriv)
-{
-   dri2_set_tex_buffer2(pDRICtx, target, __DRI_TEXTURE_FORMAT_RGBA, dPriv);
-}
-
-static const __DRItexBufferExtension dri2TexBufferExtension = {
-    { __DRI_TEX_BUFFER, __DRI_TEX_BUFFER_VERSION },
-   dri2_set_tex_buffer,
-   dri2_set_tex_buffer2,
-};
-
-/**
  * Retrieve __DRIbuffer from the DRI loader.
  */
 static __DRIbuffer *
@@ -454,7 +403,7 @@ static const __DRIextension *dri_screen_extensions[] = {
    &driCopySubBufferExtension.base,
    &driSwapControlExtension.base,
    &driMediaStreamCounterExtension.base,
-   &dri2TexBufferExtension.base,
+   &driTexBufferExtension.base,
    &dri2FlushExtension.base,
    &dri2ImageExtension.base,
    &dri2ConfigQueryExtension.base,

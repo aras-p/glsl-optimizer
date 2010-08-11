@@ -93,6 +93,8 @@ void
 dri_drawable_validate_att(struct dri_drawable *drawable,
                           enum st_attachment_type statt);
 
+extern const __DRItexBufferExtension driTexBufferExtension;
+
 #endif
 
 /* vim: set sw=3 ts=8 sts=3 expandtab: */
