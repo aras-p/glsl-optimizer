@@ -337,6 +337,11 @@ static void r300_update_rs_block(struct r300_context *r300)
         rX00_rs_tex_write = r300_rs_tex_write;
     }
 
+    /* 0x5555 copied from classic, which means:
+     * Select user color 0 for COLOR0 up to COLOR7.
+     * What the hell does that mean? */
+    rs.vap_vtx_state_cntl = 0x5555;
+
     /* The position is always present in VAP. */
     rs.vap_vsm_vtx_assm |= R300_INPUT_CNTL_POS;
     rs.vap_out_vtx_fmt[0] |= R300_VAP_OUTPUT_VTX_FMT_0__POS_PRESENT;
