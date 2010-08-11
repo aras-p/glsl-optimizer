@@ -158,9 +158,9 @@ dri_destroy_buffer(__DRIdrawable * dPriv)
 
 /**
  * Validate the texture at an attachment.  Allocate the texture if it does not
- * exist.
+ * exist.  Used by the TFP extension.
  */
-void
+static void
 dri_drawable_validate_att(struct dri_drawable *drawable,
                           enum st_attachment_type statt)
 {
@@ -181,7 +181,6 @@ dri_drawable_validate_att(struct dri_drawable *drawable,
 
    drawable->texture_stamp = drawable->dPriv->lastStamp - 1;
 
-   /* this calles into the manager */
    drawable->base.validate(&drawable->base, statts, count, NULL);
 }
 

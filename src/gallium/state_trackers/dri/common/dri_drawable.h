@@ -89,10 +89,6 @@ dri_drawable_get_format(struct dri_drawable *drawable,
                         enum pipe_format *format,
                         unsigned *bind);
 
-void
-dri_drawable_validate_att(struct dri_drawable *drawable,
-                          enum st_attachment_type statt);
-
 extern const __DRItexBufferExtension driTexBufferExtension;
 
 #endif
