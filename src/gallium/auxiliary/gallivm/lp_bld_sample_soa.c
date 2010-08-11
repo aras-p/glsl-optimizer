@@ -811,7 +811,7 @@ lp_build_minify(struct lp_build_sample_context *bld,
                 LLVMValueRef base_size,
                 LLVMValueRef level)
 {
-   LLVMValueRef size = LLVMBuildAShr(bld->builder, base_size, level, "minify");
+   LLVMValueRef size = LLVMBuildLShr(bld->builder, base_size, level, "minify");
    size = lp_build_max(&bld->int_coord_bld, size, bld->int_coord_bld.one);
    return size;
 }
