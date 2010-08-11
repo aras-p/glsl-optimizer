@@ -207,6 +207,12 @@ emit_B8G8R8A8_UNORM( const float *attrib, void *ptr)
    out[3] = TO_8_UNORM(attrib[3]);
 }
 
+static void 
+emit_NULL( const float *attrib, void *ptr )
+{
+   /* do nothing is the only sensible option */
+}
+
 static emit_func get_emit_func( enum pipe_format format )
 {
    switch (format) {
@@ -343,7 +349,8 @@ static emit_func get_emit_func( enum pipe_format format )
       return &emit_A8R8G8B8_UNORM;
 
    default:
-      return NULL;
+      assert(0); 
+      return &emit_NULL;
    }
 }
 
@@ -538,12 +545,8 @@ struct translate *translate_generic_create( const struct translate_key *key )
       tg->attrib[i].instance_divisor = key->element[i].instance_divisor;
 
       tg->attrib[i].emit = get_emit_func(key->element[i].output_format);
-      if(!tg->attrib[i].emit)
-      {
-         FREE(tg);
-         return NULL;
-      }
       tg->attrib[i].output_offset = key->element[i].output_offset;
+
    }
 
    tg->nr_attrib = key->nr_elements;
