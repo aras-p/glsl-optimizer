@@ -45,7 +45,7 @@ _mesa_print_ir(exec_list *instructions,
 	 const glsl_type *const s = state->user_structures[i];
 
 	 printf("(structure (%s) (%s@%p) (%u) (\n",
-		s->name, s->name, s, s->length);
+		s->name, s->name, (void *) s, s->length);
 
 	 for (unsigned j = 0; j < s->length; j++) {
 	    printf("\t((");
@@ -83,7 +83,7 @@ print_type(const glsl_type *t)
       printf(" %u)", t->length);
    } else if ((t->base_type == GLSL_TYPE_STRUCT)
 	      && (strncmp("gl_", t->name, 3) != 0)) {
-      printf("%s@%p", t->name, t);
+      printf("%s@%p", t->name, (void *) t);
    } else {
       printf("%s", t->name);
    }
@@ -104,7 +104,7 @@ void ir_print_visitor::visit(ir_variable *ir)
 	  cent, inv, mode[ir->mode], interp[ir->interpolation]);
 
    print_type(ir->type);
-   printf(" %s@%p)", ir->name, ir);
+   printf(" %s@%p)", ir->name, (void *) ir);
 }
 
 
@@ -266,7 +266,7 @@ void ir_print_visitor::visit(ir_swizzle *ir)
 void ir_print_visitor::visit(ir_dereference_variable *ir)
 {
    ir_variable *var = ir->variable_referenced();
-   printf("(var_ref %s@%p) ", var->name, var);
+   printf("(var_ref %s@%p) ", var->name, (void *) var);
 }
 
 
