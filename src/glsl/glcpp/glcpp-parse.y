@@ -223,14 +223,22 @@ control_line:
 		talloc_free ($2);
 	}
 |	HASH_IF conditional_tokens NEWLINE {
-		/* If we're skipping to the next #elif/#else case or to #endif,
-		 * don't bother expanding or parsing the expression.
-		 */
-		if (parser->skip_stack != NULL && parser->skip_stack->type != SKIP_NO_SKIP) {
+		/* Be careful to only evaluate the 'if' expression if
+		 * we are not skipping. When we are skipping, we
+		 * simply push a new 0-valued 'if' onto the skip
+		 * stack.
+		 *
+		 * This avoids generating diagnostics for invalid
+		 * expressions that are being skipped. */
+		if (parser->skip_stack == NULL ||
+		    parser->skip_stack->type == SKIP_NO_SKIP)
+		{
+			_glcpp_parser_expand_if (parser, IF_EXPANDED, $2);
+		}	
+		else
+		{
 			_glcpp_parser_skip_stack_push_if (parser, & @1, 0);
 			parser->skip_stack->type = SKIP_TO_ENDIF;
-		} else {
-			_glcpp_parser_expand_if (parser, IF_EXPANDED, $2);
 		}
 	}
 |	HASH_IFDEF IDENTIFIER junk NEWLINE {
@@ -244,23 +252,37 @@ control_line:
 		_glcpp_parser_skip_stack_push_if (parser, & @1, macro == NULL);
 	}
 |	HASH_ELIF conditional_tokens NEWLINE {
-		/* If we just finished a non-skipped #if/#ifdef/#ifndef block,
-		 * don't bother expanding or parsing the expression.
-		 */
-		if (parser->skip_stack != NULL && parser->skip_stack->type == SKIP_NO_SKIP)
-			parser->skip_stack->type = SKIP_TO_ENDIF;
-		else
+		/* Be careful to only evaluate the 'elif' expression
+		 * if we are not skipping. When we are skipping, we
+		 * simply change to a 0-valued 'elif' on the skip
+		 * stack.
+		 *
+		 * This avoids generating diagnostics for invalid
+		 * expressions that are being skipped. */
+		if (parser->skip_stack &&
+		    parser->skip_stack->type == SKIP_TO_ELSE)
+		{
 			_glcpp_parser_expand_if (parser, ELIF_EXPANDED, $2);
+		}
+		else
+		{
+			_glcpp_parser_skip_stack_change_if (parser, & @1,
+							    "elif", 0);
+		}
 	}
 |	HASH_ELIF NEWLINE {
-		/* #elif without an expression results in a warning if the
-		 * condition doesn't matter (we just handled #if 1 or such)
-		 * but an error otherwise. */
-		if (parser->skip_stack != NULL && parser->skip_stack->type == SKIP_NO_SKIP) {
-			parser->skip_stack->type = SKIP_TO_ENDIF;
-			glcpp_warning(& @1, parser, "ignoring illegal #elif without expression");
-		} else {
+		/* #elif without an expression is an error unless we
+		 * are skipping. */
+		if (parser->skip_stack &&
+		    parser->skip_stack->type == SKIP_TO_ELSE)
+		{
 			glcpp_error(& @1, parser, "#elif needs an expression");
+		}
+		else
+		{
+			_glcpp_parser_skip_stack_change_if (parser, & @1,
+							    "elif", 0);
+			glcpp_warning(& @1, parser, "ignoring illegal #elif without expression");
 		}
 	}
 |	HASH_ELSE NEWLINE {
