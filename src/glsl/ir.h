@@ -60,7 +60,7 @@ enum ir_node_type {
    ir_type_return,
    ir_type_swizzle,
    ir_type_texture,
-   ir_type_max, /**< maximum ir_type enum number, for validation */
+   ir_type_max /**< maximum ir_type enum number, for validation */
 };
 
 /**
