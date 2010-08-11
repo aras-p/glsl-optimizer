@@ -276,7 +276,7 @@ control_line:
 		if (parser->skip_stack &&
 		    parser->skip_stack->type == SKIP_TO_ELSE)
 		{
-			glcpp_error(& @1, parser, "#elif needs an expression");
+			glcpp_error(& @1, parser, "#elif with no expression");
 		}
 		else
 		{

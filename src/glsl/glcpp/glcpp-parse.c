@@ -1950,7 +1950,7 @@ yyreduce:
 		if (parser->skip_stack &&
 		    parser->skip_stack->type == SKIP_TO_ELSE)
 		{
-			glcpp_error(& (yylsp[(1) - (2)]), parser, "#elif needs an expression");
+			glcpp_error(& (yylsp[(1) - (2)]), parser, "#elif with no expression");
 		}
 		else
 		{
