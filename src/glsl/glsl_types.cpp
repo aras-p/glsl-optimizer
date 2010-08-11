@@ -400,7 +400,7 @@ glsl_type::get_array_instance(const glsl_type *base, unsigned array_size)
     * named 'foo'.
     */
    char key[128];
-   snprintf(key, sizeof(key), "%p[%u]", base, array_size);
+   snprintf(key, sizeof(key), "%p[%u]", (void *) base, array_size);
 
    const glsl_type *t = (glsl_type *) hash_table_find(array_types, key);
    if (t == NULL) {
@@ -458,7 +458,7 @@ glsl_type::record_key_hash(const void *a)
 	 break;
 
       size += snprintf(& hash_key[size], sizeof(hash_key) - size,
-		       "%p", key->fields.structure[i].type);
+		       "%p", (void *) key->fields.structure[i].type);
    }
 
    return hash_table_string_hash(& hash_key);

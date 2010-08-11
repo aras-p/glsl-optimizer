@@ -64,7 +64,7 @@ do_dead_code(exec_list *instructions)
 
       if (debug) {
 	 printf("%s@%p: %d refs, %d assigns, %sdeclared in our scope\n",
-		entry->var->name, entry->var,
+		entry->var->name, (void *) entry->var,
 		entry->referenced_count, entry->assigned_count,
 		entry->declaration ? "" : "not ");
       }
@@ -85,7 +85,7 @@ do_dead_code(exec_list *instructions)
 
 	    if (debug) {
 	       printf("Removed assignment to %s@%p\n",
-		      entry->var->name, entry->var);
+		      entry->var->name, (void *) entry->var);
 	    }
 	 }
       } else {
@@ -97,7 +97,7 @@ do_dead_code(exec_list *instructions)
 
 	 if (debug) {
 	    printf("Removed declaration of %s@%p\n",
-		   entry->var->name, entry->var);
+		   entry->var->name, (void *) entry->var);
 	 }
       }
    }
