@@ -625,16 +625,16 @@ static const yytype_int8 yyrhs[] =
 static const yytype_uint16 yyrline[] =
 {
        0,   180,   180,   182,   186,   189,   194,   195,   199,   202,
-     208,   211,   214,   217,   225,   236,   241,   246,   255,   266,
-     269,   272,   281,   285,   294,   299,   300,   303,   306,   309,
-     312,   315,   318,   321,   324,   327,   330,   333,   336,   339,
-     342,   345,   348,   351,   354,   357,   360,   363,   366,   372,
-     377,   385,   386,   390,   396,   397,   400,   402,   409,   413,
-     417,   422,   428,   436,   442,   450,   454,   458,   462,   466,
-     473,   474,   475,   476,   477,   478,   479,   480,   481,   482,
-     483,   484,   485,   486,   487,   488,   489,   490,   491,   492,
-     493,   494,   495,   496,   497,   498,   499,   500,   501,   502,
-     503
+     208,   211,   214,   217,   225,   244,   249,   254,   273,   288,
+     291,   294,   303,   307,   316,   321,   322,   325,   328,   331,
+     334,   337,   340,   343,   346,   349,   352,   355,   358,   361,
+     364,   367,   370,   373,   376,   379,   382,   385,   388,   394,
+     399,   407,   408,   412,   418,   419,   422,   424,   431,   435,
+     439,   444,   450,   458,   464,   472,   476,   480,   484,   488,
+     495,   496,   497,   498,   499,   500,   501,   502,   503,   504,
+     505,   506,   507,   508,   509,   510,   511,   512,   513,   514,
+     515,   516,   517,   518,   519,   520,   521,   522,   523,   524,
+     525
 };
 #endif
 
@@ -1873,14 +1873,22 @@ yyreduce:
 /* Line 1455 of yacc.c  */
 #line 225 "glcpp/glcpp-parse.y"
     {
-		/* If we're skipping to the next #elif/#else case or to #endif,
-		 * don't bother expanding or parsing the expression.
-		 */
-		if (parser->skip_stack != NULL && parser->skip_stack->type != SKIP_NO_SKIP) {
+		/* Be careful to only evaluate the 'if' expression if
+		 * we are not skipping. When we are skipping, we
+		 * simply push a new 0-valued 'if' onto the skip
+		 * stack.
+		 *
+		 * This avoids generating diagnostics for invalid
+		 * expressions that are being skipped. */
+		if (parser->skip_stack == NULL ||
+		    parser->skip_stack->type == SKIP_NO_SKIP)
+		{
+			_glcpp_parser_expand_if (parser, IF_EXPANDED, (yyvsp[(2) - (3)].token_list));
+		}	
+		else
+		{
 			_glcpp_parser_skip_stack_push_if (parser, & (yylsp[(1) - (3)]), 0);
 			parser->skip_stack->type = SKIP_TO_ENDIF;
-		} else {
-			_glcpp_parser_expand_if (parser, IF_EXPANDED, (yyvsp[(2) - (3)].token_list));
 		}
 	;}
     break;
@@ -1888,7 +1896,7 @@ yyreduce:
   case 15:
 
 /* Line 1455 of yacc.c  */
-#line 236 "glcpp/glcpp-parse.y"
+#line 244 "glcpp/glcpp-parse.y"
     {
 		macro_t *macro = hash_table_find (parser->defines, (yyvsp[(2) - (4)].str));
 		talloc_free ((yyvsp[(2) - (4)].str));
@@ -1899,7 +1907,7 @@ yyreduce:
   case 16:
 
 /* Line 1455 of yacc.c  */
-#line 241 "glcpp/glcpp-parse.y"
+#line 249 "glcpp/glcpp-parse.y"
     {
 		macro_t *macro = hash_table_find (parser->defines, (yyvsp[(2) - (4)].str));
 		talloc_free ((yyvsp[(2) - (4)].str));
@@ -1910,31 +1918,45 @@ yyreduce:
   case 17:
 
 /* Line 1455 of yacc.c  */
-#line 246 "glcpp/glcpp-parse.y"
+#line 254 "glcpp/glcpp-parse.y"
     {
-		/* If we just finished a non-skipped #if/#ifdef/#ifndef block,
-		 * don't bother expanding or parsing the expression.
-		 */
-		if (parser->skip_stack != NULL && parser->skip_stack->type == SKIP_NO_SKIP)
-			parser->skip_stack->type = SKIP_TO_ENDIF;
-		else
+		/* Be careful to only evaluate the 'elif' expression
+		 * if we are not skipping. When we are skipping, we
+		 * simply change to a 0-valued 'elif' on the skip
+		 * stack.
+		 *
+		 * This avoids generating diagnostics for invalid
+		 * expressions that are being skipped. */
+		if (parser->skip_stack &&
+		    parser->skip_stack->type == SKIP_TO_ELSE)
+		{
 			_glcpp_parser_expand_if (parser, ELIF_EXPANDED, (yyvsp[(2) - (3)].token_list));
+		}
+		else
+		{
+			_glcpp_parser_skip_stack_change_if (parser, & (yylsp[(1) - (3)]),
+							    "elif", 0);
+		}
 	;}
     break;
 
   case 18:
 
 /* Line 1455 of yacc.c  */
-#line 255 "glcpp/glcpp-parse.y"
+#line 273 "glcpp/glcpp-parse.y"
     {
-		/* #elif without an expression results in a warning if the
-		 * condition doesn't matter (we just handled #if 1 or such)
-		 * but an error otherwise. */
-		if (parser->skip_stack != NULL && parser->skip_stack->type == SKIP_NO_SKIP) {
-			parser->skip_stack->type = SKIP_TO_ENDIF;
-			glcpp_warning(& (yylsp[(1) - (2)]), parser, "ignoring illegal #elif without expression");
-		} else {
+		/* #elif without an expression is an error unless we
+		 * are skipping. */
+		if (parser->skip_stack &&
+		    parser->skip_stack->type == SKIP_TO_ELSE)
+		{
 			glcpp_error(& (yylsp[(1) - (2)]), parser, "#elif needs an expression");
+		}
+		else
+		{
+			_glcpp_parser_skip_stack_change_if (parser, & (yylsp[(1) - (2)]),
+							    "elif", 0);
+			glcpp_warning(& (yylsp[(1) - (2)]), parser, "ignoring illegal #elif without expression");
 		}
 	;}
     break;
@@ -1942,7 +1964,7 @@ yyreduce:
   case 19:
 
 /* Line 1455 of yacc.c  */
-#line 266 "glcpp/glcpp-parse.y"
+#line 288 "glcpp/glcpp-parse.y"
     {
 		_glcpp_parser_skip_stack_change_if (parser, & (yylsp[(1) - (2)]), "else", 1);
 	;}
@@ -1951,7 +1973,7 @@ yyreduce:
   case 20:
 
 /* Line 1455 of yacc.c  */
-#line 269 "glcpp/glcpp-parse.y"
+#line 291 "glcpp/glcpp-parse.y"
     {
 		_glcpp_parser_skip_stack_pop (parser, & (yylsp[(1) - (2)]));
 	;}
@@ -1960,7 +1982,7 @@ yyreduce:
   case 21:
 
 /* Line 1455 of yacc.c  */
-#line 272 "glcpp/glcpp-parse.y"
+#line 294 "glcpp/glcpp-parse.y"
     {
 		macro_t *macro = hash_table_find (parser->defines, "__VERSION__");
 		if (macro) {
@@ -1975,7 +1997,7 @@ yyreduce:
   case 23:
 
 /* Line 1455 of yacc.c  */
-#line 285 "glcpp/glcpp-parse.y"
+#line 307 "glcpp/glcpp-parse.y"
     {
 		if (strlen ((yyvsp[(1) - (1)].str)) >= 3 && strncmp ((yyvsp[(1) - (1)].str), "0x", 2) == 0) {
 			(yyval.ival) = strtoll ((yyvsp[(1) - (1)].str) + 2, NULL, 16);
@@ -1990,7 +2012,7 @@ yyreduce:
   case 24:
 
 /* Line 1455 of yacc.c  */
-#line 294 "glcpp/glcpp-parse.y"
+#line 316 "glcpp/glcpp-parse.y"
     {
 		(yyval.ival) = (yyvsp[(1) - (1)].ival);
 	;}
@@ -1999,7 +2021,7 @@ yyreduce:
   case 26:
 
 /* Line 1455 of yacc.c  */
-#line 300 "glcpp/glcpp-parse.y"
+#line 322 "glcpp/glcpp-parse.y"
     {
 		(yyval.ival) = (yyvsp[(1) - (3)].ival) || (yyvsp[(3) - (3)].ival);
 	;}
@@ -2008,7 +2030,7 @@ yyreduce:
   case 27:
 
 /* Line 1455 of yacc.c  */
-#line 303 "glcpp/glcpp-parse.y"
+#line 325 "glcpp/glcpp-parse.y"
     {
 		(yyval.ival) = (yyvsp[(1) - (3)].ival) && (yyvsp[(3) - (3)].ival);
 	;}
@@ -2017,7 +2039,7 @@ yyreduce:
   case 28:
 
 /* Line 1455 of yacc.c  */
-#line 306 "glcpp/glcpp-parse.y"
+#line 328 "glcpp/glcpp-parse.y"
     {
 		(yyval.ival) = (yyvsp[(1) - (3)].ival) | (yyvsp[(3) - (3)].ival);
 	;}
@@ -2026,7 +2048,7 @@ yyreduce:
   case 29:
 
 /* Line 1455 of yacc.c  */
-#line 309 "glcpp/glcpp-parse.y"
+#line 331 "glcpp/glcpp-parse.y"
     {
 		(yyval.ival) = (yyvsp[(1) - (3)].ival) ^ (yyvsp[(3) - (3)].ival);
 	;}
@@ -2035,7 +2057,7 @@ yyreduce:
   case 30:
 
 /* Line 1455 of yacc.c  */
-#line 312 "glcpp/glcpp-parse.y"
+#line 334 "glcpp/glcpp-parse.y"
     {
 		(yyval.ival) = (yyvsp[(1) - (3)].ival) & (yyvsp[(3) - (3)].ival);
 	;}
@@ -2044,7 +2066,7 @@ yyreduce:
   case 31:
 
 /* Line 1455 of yacc.c  */
-#line 315 "glcpp/glcpp-parse.y"
+#line 337 "glcpp/glcpp-parse.y"
     {
 		(yyval.ival) = (yyvsp[(1) - (3)].ival) != (yyvsp[(3) - (3)].ival);
 	;}
@@ -2053,7 +2075,7 @@ yyreduce:
   case 32:
 
 /* Line 1455 of yacc.c  */
-#line 318 "glcpp/glcpp-parse.y"
+#line 340 "glcpp/glcpp-parse.y"
     {
 		(yyval.ival) = (yyvsp[(1) - (3)].ival) == (yyvsp[(3) - (3)].ival);
 	;}
@@ -2062,7 +2084,7 @@ yyreduce:
   case 33:
 
 /* Line 1455 of yacc.c  */
-#line 321 "glcpp/glcpp-parse.y"
+#line 343 "glcpp/glcpp-parse.y"
     {
 		(yyval.ival) = (yyvsp[(1) - (3)].ival) >= (yyvsp[(3) - (3)].ival);
 	;}
@@ -2071,7 +2093,7 @@ yyreduce:
   case 34:
 
 /* Line 1455 of yacc.c  */
-#line 324 "glcpp/glcpp-parse.y"
+#line 346 "glcpp/glcpp-parse.y"
     {
 		(yyval.ival) = (yyvsp[(1) - (3)].ival) <= (yyvsp[(3) - (3)].ival);
 	;}
@@ -2080,7 +2102,7 @@ yyreduce:
   case 35:
 
 /* Line 1455 of yacc.c  */
-#line 327 "glcpp/glcpp-parse.y"
+#line 349 "glcpp/glcpp-parse.y"
     {
 		(yyval.ival) = (yyvsp[(1) - (3)].ival) > (yyvsp[(3) - (3)].ival);
 	;}
@@ -2089,7 +2111,7 @@ yyreduce:
   case 36:
 
 /* Line 1455 of yacc.c  */
-#line 330 "glcpp/glcpp-parse.y"
+#line 352 "glcpp/glcpp-parse.y"
     {
 		(yyval.ival) = (yyvsp[(1) - (3)].ival) < (yyvsp[(3) - (3)].ival);
 	;}
@@ -2098,7 +2120,7 @@ yyreduce:
   case 37:
 
 /* Line 1455 of yacc.c  */
-#line 333 "glcpp/glcpp-parse.y"
+#line 355 "glcpp/glcpp-parse.y"
     {
 		(yyval.ival) = (yyvsp[(1) - (3)].ival) >> (yyvsp[(3) - (3)].ival);
 	;}
@@ -2107,7 +2129,7 @@ yyreduce:
   case 38:
 
 /* Line 1455 of yacc.c  */
-#line 336 "glcpp/glcpp-parse.y"
+#line 358 "glcpp/glcpp-parse.y"
     {
 		(yyval.ival) = (yyvsp[(1) - (3)].ival) << (yyvsp[(3) - (3)].ival);
 	;}
@@ -2116,7 +2138,7 @@ yyreduce:
   case 39:
 
 /* Line 1455 of yacc.c  */
-#line 339 "glcpp/glcpp-parse.y"
+#line 361 "glcpp/glcpp-parse.y"
     {
 		(yyval.ival) = (yyvsp[(1) - (3)].ival) - (yyvsp[(3) - (3)].ival);
 	;}
@@ -2125,7 +2147,7 @@ yyreduce:
   case 40:
 
 /* Line 1455 of yacc.c  */
-#line 342 "glcpp/glcpp-parse.y"
+#line 364 "glcpp/glcpp-parse.y"
     {
 		(yyval.ival) = (yyvsp[(1) - (3)].ival) + (yyvsp[(3) - (3)].ival);
 	;}
@@ -2134,7 +2156,7 @@ yyreduce:
   case 41:
 
 /* Line 1455 of yacc.c  */
-#line 345 "glcpp/glcpp-parse.y"
+#line 367 "glcpp/glcpp-parse.y"
     {
 		(yyval.ival) = (yyvsp[(1) - (3)].ival) % (yyvsp[(3) - (3)].ival);
 	;}
@@ -2143,7 +2165,7 @@ yyreduce:
   case 42:
 
 /* Line 1455 of yacc.c  */
-#line 348 "glcpp/glcpp-parse.y"
+#line 370 "glcpp/glcpp-parse.y"
     {
 		(yyval.ival) = (yyvsp[(1) - (3)].ival) / (yyvsp[(3) - (3)].ival);
 	;}
@@ -2152,7 +2174,7 @@ yyreduce:
   case 43:
 
 /* Line 1455 of yacc.c  */
-#line 351 "glcpp/glcpp-parse.y"
+#line 373 "glcpp/glcpp-parse.y"
     {
 		(yyval.ival) = (yyvsp[(1) - (3)].ival) * (yyvsp[(3) - (3)].ival);
 	;}
@@ -2161,7 +2183,7 @@ yyreduce:
   case 44:
 
 /* Line 1455 of yacc.c  */
-#line 354 "glcpp/glcpp-parse.y"
+#line 376 "glcpp/glcpp-parse.y"
     {
 		(yyval.ival) = ! (yyvsp[(2) - (2)].ival);
 	;}
@@ -2170,7 +2192,7 @@ yyreduce:
   case 45:
 
 /* Line 1455 of yacc.c  */
-#line 357 "glcpp/glcpp-parse.y"
+#line 379 "glcpp/glcpp-parse.y"
     {
 		(yyval.ival) = ~ (yyvsp[(2) - (2)].ival);
 	;}
@@ -2179,7 +2201,7 @@ yyreduce:
   case 46:
 
 /* Line 1455 of yacc.c  */
-#line 360 "glcpp/glcpp-parse.y"
+#line 382 "glcpp/glcpp-parse.y"
     {
 		(yyval.ival) = - (yyvsp[(2) - (2)].ival);
 	;}
@@ -2188,7 +2210,7 @@ yyreduce:
   case 47:
 
 /* Line 1455 of yacc.c  */
-#line 363 "glcpp/glcpp-parse.y"
+#line 385 "glcpp/glcpp-parse.y"
     {
 		(yyval.ival) = + (yyvsp[(2) - (2)].ival);
 	;}
@@ -2197,7 +2219,7 @@ yyreduce:
   case 48:
 
 /* Line 1455 of yacc.c  */
-#line 366 "glcpp/glcpp-parse.y"
+#line 388 "glcpp/glcpp-parse.y"
     {
 		(yyval.ival) = (yyvsp[(2) - (3)].ival);
 	;}
@@ -2206,7 +2228,7 @@ yyreduce:
   case 49:
 
 /* Line 1455 of yacc.c  */
-#line 372 "glcpp/glcpp-parse.y"
+#line 394 "glcpp/glcpp-parse.y"
     {
 		(yyval.string_list) = _string_list_create (parser);
 		_string_list_append_item ((yyval.string_list), (yyvsp[(1) - (1)].str));
@@ -2217,7 +2239,7 @@ yyreduce:
   case 50:
 
 /* Line 1455 of yacc.c  */
-#line 377 "glcpp/glcpp-parse.y"
+#line 399 "glcpp/glcpp-parse.y"
     {
 		(yyval.string_list) = (yyvsp[(1) - (3)].string_list);	
 		_string_list_append_item ((yyval.string_list), (yyvsp[(3) - (3)].str));
@@ -2228,14 +2250,14 @@ yyreduce:
   case 51:
 
 /* Line 1455 of yacc.c  */
-#line 385 "glcpp/glcpp-parse.y"
+#line 407 "glcpp/glcpp-parse.y"
     { (yyval.token_list) = NULL; ;}
     break;
 
   case 53:
 
 /* Line 1455 of yacc.c  */
-#line 390 "glcpp/glcpp-parse.y"
+#line 412 "glcpp/glcpp-parse.y"
     {
 		yyerror (& (yylsp[(1) - (2)]), parser, "Invalid tokens after #");
 	;}
@@ -2244,14 +2266,14 @@ yyreduce:
   case 54:
 
 /* Line 1455 of yacc.c  */
-#line 396 "glcpp/glcpp-parse.y"
+#line 418 "glcpp/glcpp-parse.y"
     { (yyval.token_list) = NULL; ;}
     break;
 
   case 57:
 
 /* Line 1455 of yacc.c  */
-#line 402 "glcpp/glcpp-parse.y"
+#line 424 "glcpp/glcpp-parse.y"
     {
 		glcpp_warning(&(yylsp[(1) - (1)]), parser, "extra tokens at end of directive");
 	;}
@@ -2260,7 +2282,7 @@ yyreduce:
   case 58:
 
 /* Line 1455 of yacc.c  */
-#line 409 "glcpp/glcpp-parse.y"
+#line 431 "glcpp/glcpp-parse.y"
     {
 		int v = hash_table_find (parser->defines, (yyvsp[(2) - (2)].str)) ? 1 : 0;
 		(yyval.token) = _token_create_ival (parser, INTEGER, v);
@@ -2270,7 +2292,7 @@ yyreduce:
   case 59:
 
 /* Line 1455 of yacc.c  */
-#line 413 "glcpp/glcpp-parse.y"
+#line 435 "glcpp/glcpp-parse.y"
     {
 		int v = hash_table_find (parser->defines, (yyvsp[(3) - (4)].str)) ? 1 : 0;
 		(yyval.token) = _token_create_ival (parser, INTEGER, v);
@@ -2280,7 +2302,7 @@ yyreduce:
   case 61:
 
 /* Line 1455 of yacc.c  */
-#line 422 "glcpp/glcpp-parse.y"
+#line 444 "glcpp/glcpp-parse.y"
     {
 		parser->space_tokens = 1;
 		(yyval.token_list) = _token_list_create (parser);
@@ -2292,7 +2314,7 @@ yyreduce:
   case 62:
 
 /* Line 1455 of yacc.c  */
-#line 428 "glcpp/glcpp-parse.y"
+#line 450 "glcpp/glcpp-parse.y"
     {
 		(yyval.token_list) = (yyvsp[(1) - (2)].token_list);
 		_token_list_append ((yyval.token_list), (yyvsp[(2) - (2)].token));
@@ -2303,7 +2325,7 @@ yyreduce:
   case 63:
 
 /* Line 1455 of yacc.c  */
-#line 436 "glcpp/glcpp-parse.y"
+#line 458 "glcpp/glcpp-parse.y"
     {
 		parser->space_tokens = 1;
 		(yyval.token_list) = _token_list_create (parser);
@@ -2315,7 +2337,7 @@ yyreduce:
   case 64:
 
 /* Line 1455 of yacc.c  */
-#line 442 "glcpp/glcpp-parse.y"
+#line 464 "glcpp/glcpp-parse.y"
     {
 		(yyval.token_list) = (yyvsp[(1) - (2)].token_list);
 		_token_list_append ((yyval.token_list), (yyvsp[(2) - (2)].token));
@@ -2326,7 +2348,7 @@ yyreduce:
   case 65:
 
 /* Line 1455 of yacc.c  */
-#line 450 "glcpp/glcpp-parse.y"
+#line 472 "glcpp/glcpp-parse.y"
     {
 		(yyval.token) = _token_create_str (parser, IDENTIFIER, (yyvsp[(1) - (1)].str));
 		(yyval.token)->location = yylloc;
@@ -2336,7 +2358,7 @@ yyreduce:
   case 66:
 
 /* Line 1455 of yacc.c  */
-#line 454 "glcpp/glcpp-parse.y"
+#line 476 "glcpp/glcpp-parse.y"
     {
 		(yyval.token) = _token_create_str (parser, INTEGER_STRING, (yyvsp[(1) - (1)].str));
 		(yyval.token)->location = yylloc;
@@ -2346,7 +2368,7 @@ yyreduce:
   case 67:
 
 /* Line 1455 of yacc.c  */
-#line 458 "glcpp/glcpp-parse.y"
+#line 480 "glcpp/glcpp-parse.y"
     {
 		(yyval.token) = _token_create_ival (parser, (yyvsp[(1) - (1)].ival), (yyvsp[(1) - (1)].ival));
 		(yyval.token)->location = yylloc;
@@ -2356,7 +2378,7 @@ yyreduce:
   case 68:
 
 /* Line 1455 of yacc.c  */
-#line 462 "glcpp/glcpp-parse.y"
+#line 484 "glcpp/glcpp-parse.y"
     {
 		(yyval.token) = _token_create_str (parser, OTHER, (yyvsp[(1) - (1)].str));
 		(yyval.token)->location = yylloc;
@@ -2366,7 +2388,7 @@ yyreduce:
   case 69:
 
 /* Line 1455 of yacc.c  */
-#line 466 "glcpp/glcpp-parse.y"
+#line 488 "glcpp/glcpp-parse.y"
     {
 		(yyval.token) = _token_create_ival (parser, SPACE, SPACE);
 		(yyval.token)->location = yylloc;
@@ -2376,224 +2398,224 @@ yyreduce:
   case 70:
 
 /* Line 1455 of yacc.c  */
-#line 473 "glcpp/glcpp-parse.y"
+#line 495 "glcpp/glcpp-parse.y"
     { (yyval.ival) = '['; ;}
     break;
 
   case 71:
 
 /* Line 1455 of yacc.c  */
-#line 474 "glcpp/glcpp-parse.y"
+#line 496 "glcpp/glcpp-parse.y"
     { (yyval.ival) = ']'; ;}
     break;
 
   case 72:
 
 /* Line 1455 of yacc.c  */
-#line 475 "glcpp/glcpp-parse.y"
+#line 497 "glcpp/glcpp-parse.y"
     { (yyval.ival) = '('; ;}
     break;
 
   case 73:
 
 /* Line 1455 of yacc.c  */
-#line 476 "glcpp/glcpp-parse.y"
+#line 498 "glcpp/glcpp-parse.y"
     { (yyval.ival) = ')'; ;}
     break;
 
   case 74:
 
 /* Line 1455 of yacc.c  */
-#line 477 "glcpp/glcpp-parse.y"
+#line 499 "glcpp/glcpp-parse.y"
     { (yyval.ival) = '{'; ;}
     break;
 
   case 75:
 
 /* Line 1455 of yacc.c  */
-#line 478 "glcpp/glcpp-parse.y"
+#line 500 "glcpp/glcpp-parse.y"
     { (yyval.ival) = '}'; ;}
     break;
 
   case 76:
 
 /* Line 1455 of yacc.c  */
-#line 479 "glcpp/glcpp-parse.y"
+#line 501 "glcpp/glcpp-parse.y"
     { (yyval.ival) = '.'; ;}
     break;
 
   case 77:
 
 /* Line 1455 of yacc.c  */
-#line 480 "glcpp/glcpp-parse.y"
+#line 502 "glcpp/glcpp-parse.y"
     { (yyval.ival) = '&'; ;}
     break;
 
   case 78:
 
 /* Line 1455 of yacc.c  */
-#line 481 "glcpp/glcpp-parse.y"
+#line 503 "glcpp/glcpp-parse.y"
     { (yyval.ival) = '*'; ;}
     break;
 
   case 79:
 
 /* Line 1455 of yacc.c  */
-#line 482 "glcpp/glcpp-parse.y"
+#line 504 "glcpp/glcpp-parse.y"
     { (yyval.ival) = '+'; ;}
     break;
 
   case 80:
 
 /* Line 1455 of yacc.c  */
-#line 483 "glcpp/glcpp-parse.y"
+#line 505 "glcpp/glcpp-parse.y"
     { (yyval.ival) = '-'; ;}
     break;
 
   case 81:
 
 /* Line 1455 of yacc.c  */
-#line 484 "glcpp/glcpp-parse.y"
+#line 506 "glcpp/glcpp-parse.y"
     { (yyval.ival) = '~'; ;}
     break;
 
   case 82:
 
 /* Line 1455 of yacc.c  */
-#line 485 "glcpp/glcpp-parse.y"
+#line 507 "glcpp/glcpp-parse.y"
     { (yyval.ival) = '!'; ;}
     break;
 
   case 83:
 
 /* Line 1455 of yacc.c  */
-#line 486 "glcpp/glcpp-parse.y"
+#line 508 "glcpp/glcpp-parse.y"
     { (yyval.ival) = '/'; ;}
     break;
 
   case 84:
 
 /* Line 1455 of yacc.c  */
-#line 487 "glcpp/glcpp-parse.y"
+#line 509 "glcpp/glcpp-parse.y"
     { (yyval.ival) = '%'; ;}
     break;
 
   case 85:
 
 /* Line 1455 of yacc.c  */
-#line 488 "glcpp/glcpp-parse.y"
+#line 510 "glcpp/glcpp-parse.y"
     { (yyval.ival) = LEFT_SHIFT; ;}
     break;
 
   case 86:
 
 /* Line 1455 of yacc.c  */
-#line 489 "glcpp/glcpp-parse.y"
+#line 511 "glcpp/glcpp-parse.y"
     { (yyval.ival) = RIGHT_SHIFT; ;}
     break;
 
   case 87:
 
 /* Line 1455 of yacc.c  */
-#line 490 "glcpp/glcpp-parse.y"
+#line 512 "glcpp/glcpp-parse.y"
     { (yyval.ival) = '<'; ;}
     break;
 
   case 88:
 
 /* Line 1455 of yacc.c  */
-#line 491 "glcpp/glcpp-parse.y"
+#line 513 "glcpp/glcpp-parse.y"
     { (yyval.ival) = '>'; ;}
     break;
 
   case 89:
 
 /* Line 1455 of yacc.c  */
-#line 492 "glcpp/glcpp-parse.y"
+#line 514 "glcpp/glcpp-parse.y"
     { (yyval.ival) = LESS_OR_EQUAL; ;}
     break;
 
   case 90:
 
 /* Line 1455 of yacc.c  */
-#line 493 "glcpp/glcpp-parse.y"
+#line 515 "glcpp/glcpp-parse.y"
     { (yyval.ival) = GREATER_OR_EQUAL; ;}
     break;
 
   case 91:
 
 /* Line 1455 of yacc.c  */
-#line 494 "glcpp/glcpp-parse.y"
+#line 516 "glcpp/glcpp-parse.y"
     { (yyval.ival) = EQUAL; ;}
     break;
 
   case 92:
 
 /* Line 1455 of yacc.c  */
-#line 495 "glcpp/glcpp-parse.y"
+#line 517 "glcpp/glcpp-parse.y"
     { (yyval.ival) = NOT_EQUAL; ;}
     break;
 
   case 93:
 
 /* Line 1455 of yacc.c  */
-#line 496 "glcpp/glcpp-parse.y"
+#line 518 "glcpp/glcpp-parse.y"
     { (yyval.ival) = '^'; ;}
     break;
 
   case 94:
 
 /* Line 1455 of yacc.c  */
-#line 497 "glcpp/glcpp-parse.y"
+#line 519 "glcpp/glcpp-parse.y"
     { (yyval.ival) = '|'; ;}
     break;
 
   case 95:
 
 /* Line 1455 of yacc.c  */
-#line 498 "glcpp/glcpp-parse.y"
+#line 520 "glcpp/glcpp-parse.y"
     { (yyval.ival) = AND; ;}
     break;
 
   case 96:
 
 /* Line 1455 of yacc.c  */
-#line 499 "glcpp/glcpp-parse.y"
+#line 521 "glcpp/glcpp-parse.y"
     { (yyval.ival) = OR; ;}
     break;
 
   case 97:
 
 /* Line 1455 of yacc.c  */
-#line 500 "glcpp/glcpp-parse.y"
+#line 522 "glcpp/glcpp-parse.y"
     { (yyval.ival) = ';'; ;}
     break;
 
   case 98:
 
 /* Line 1455 of yacc.c  */
-#line 501 "glcpp/glcpp-parse.y"
+#line 523 "glcpp/glcpp-parse.y"
     { (yyval.ival) = ','; ;}
     break;
 
   case 99:
 
 /* Line 1455 of yacc.c  */
-#line 502 "glcpp/glcpp-parse.y"
+#line 524 "glcpp/glcpp-parse.y"
     { (yyval.ival) = '='; ;}
     break;
 
   case 100:
 
 /* Line 1455 of yacc.c  */
-#line 503 "glcpp/glcpp-parse.y"
+#line 525 "glcpp/glcpp-parse.y"
     { (yyval.ival) = PASTE; ;}
     break;
 
 
 
 /* Line 1455 of yacc.c  */
-#line 2597 "glcpp/glcpp-parse.c"
+#line 2619 "glcpp/glcpp-parse.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -2812,7 +2834,7 @@ yyreturn:
 
 
 /* Line 1675 of yacc.c  */
-#line 506 "glcpp/glcpp-parse.y"
+#line 528 "glcpp/glcpp-parse.y"
 
 
 string_list_t *
