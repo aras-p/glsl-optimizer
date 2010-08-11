@@ -65,6 +65,11 @@ struct regalloc_state {
 
 	struct hardware_register * HwTemporary;
 	unsigned int NumHwTemporaries;
+	/**
+	 * If an instruction is inside of a loop, end_loop will be the
+	 * IP of the ENDLOOP instruction, otherwise end_loop will be 0
+	 */
+	int end_loop;
 };
 
 static void print_live_intervals(struct live_intervals * src)
@@ -178,10 +183,10 @@ static void scan_callback(void * data, struct rc_instruction * inst,
 		else
 			reg->Live.Start = inst->IP;
 		reg->Live.End = inst->IP;
-	} else {
-		if (inst->IP > reg->Live.End)
-			reg->Live.End = inst->IP;
-	}
+	} else if (s->end_loop)
+		reg->Live.End = s->end_loop;
+	else if (inst->IP > reg->Live.End)
+		reg->Live.End = inst->IP;
 }
 
 static void compute_live_intervals(struct regalloc_state * s)
@@ -191,6 +196,31 @@ static void compute_live_intervals(struct regalloc_state * s)
 	for(struct rc_instruction * inst = s->C->Program.Instructions.Next;
 	    inst != &s->C->Program.Instructions;
 	    inst = inst->Next) {
+
+		/* For all instructions inside of a loop, the ENDLOOP
+		 * instruction is used as the end of the live interval. */
+		if (inst->U.I.Opcode == RC_OPCODE_BGNLOOP && !s->end_loop) {
+			int loops = 1;
+			struct rc_instruction * tmp;
+			for(tmp = inst->Next;
+					tmp != &s->C->Program.Instructions;
+					tmp = tmp->Next) {
+				if (tmp->U.I.Opcode == RC_OPCODE_BGNLOOP) {
+					loops++;
+					break;
+				} else if (tmp->U.I.Opcode
+							== RC_OPCODE_ENDLOOP) {
+					if(!--loops) {
+						s->end_loop = tmp->IP;
+						break;
+					}
+				}
+			}
+		}
+
+		if (inst->IP == s->end_loop)
+			s->end_loop = 0;
+
 		rc_for_all_reads_mask(inst, scan_callback, s);
 		rc_for_all_writes_mask(inst, scan_callback, s);
 	}
