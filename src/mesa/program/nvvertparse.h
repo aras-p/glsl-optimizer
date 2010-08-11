@@ -29,6 +29,7 @@
 #ifndef NVVERTPARSE_H
 #define NVVERTPARSE_H
 
+#include "main/mtypes.h"
 
 extern void
 _mesa_parse_nv_vertex_program(GLcontext *ctx, GLenum target,
