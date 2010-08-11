@@ -22,7 +22,7 @@ util_staging_resource_template(struct pipe_resource *pt, unsigned width, unsigne
    template->flags = 0;
 }
 
-INLINE struct util_staging_transfer *
+struct util_staging_transfer *
 util_staging_transfer_new(struct pipe_context *pipe,
            struct pipe_resource *pt,
            struct pipe_subresource sr,
