@@ -30,6 +30,9 @@
 #define PROG_CACHE_H
 
 
+#include "main/mtypes.h"
+
+
 /** Opaque type */
 struct gl_program_cache;
 
