@@ -23,8 +23,7 @@ INCLUDE_DIRS = \
 CORE_MESA = \
 	$(TOP)/src/mesa/libmesa.a \
 	$(TOP)/src/mapi/glapi/libglapi.a \
-	$(TOP)/src/glsl/cl/libglslcl.a \
-	$(TOP)/src/glsl/pp/libglslpp.a
+	$(TOP)/src/glsl/libglsl.a
 
 .c.o:
 	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
