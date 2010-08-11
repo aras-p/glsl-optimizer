@@ -1274,7 +1274,7 @@ lp_build_rcp(struct lp_build_context *bld,
        * when we have a better system in place to track minimum precision.
        */
 
-#if 0
+#if 1
       /*
        * Do one Newton-Raphson step to improve precision:
        *
@@ -1291,7 +1291,7 @@ lp_build_rcp(struct lp_build_context *bld,
       res = LLVMBuildFSub(bld->builder, two, res, "");
       res = LLVMBuildFMul(bld->builder, res, rcp_a, "");
 
-      return rcp_a;
+      return res;
 #else
       return lp_build_intrinsic_unary(bld->builder, "llvm.x86.sse.rcp.ps", lp_build_vec_type(type), a);
 #endif
