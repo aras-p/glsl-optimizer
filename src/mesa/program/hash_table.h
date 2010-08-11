@@ -31,8 +31,6 @@
 #ifndef HASH_TABLE_H
 #define HASH_TABLE_H
 
-#include <string.h>
-
 struct hash_table;
 
 typedef unsigned (*hash_func_t)(const void *key);
