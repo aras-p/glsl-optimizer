@@ -22,7 +22,7 @@ util_staging_resource_template(struct pipe_resource *pt, unsigned width, unsigne
    template->flags = 0;
 }
 
-inline struct util_staging_transfer *
+INLINE struct util_staging_transfer *
 util_staging_transfer_new(struct pipe_context *pipe,
            struct pipe_resource *pt,
            struct pipe_subresource sr,
@@ -61,9 +61,10 @@ util_staging_transfer_new(struct pipe_context *pipe,
    if (usage & PIPE_TRANSFER_READ)
    {
       struct pipe_subresource dstsr;
+      unsigned zi;
       dstsr.face = 0;
       dstsr.level = 0;
-      for(unsigned zi = 0; zi < box->depth; ++zi)
+      for(zi = 0; zi < box->depth; ++zi)
          pipe->resource_copy_region(pipe, tx->staging_resource, dstsr, 0, 0, 0, tx->base.resource, sr, box->x, box->y, box->z + zi, box->width, box->height);
    }
 
@@ -79,9 +80,10 @@ util_staging_transfer_destroy(struct pipe_context *pipe, struct pipe_transfer *p
    {
       if(tx->base.usage & PIPE_TRANSFER_WRITE) {
          struct pipe_subresource srcsr;
+         unsigned zi;
          srcsr.face = 0;
          srcsr.level = 0;
-         for(unsigned zi = 0; zi < tx->base.box.depth; ++zi)
+         for(zi = 0; zi < tx->base.box.depth; ++zi)
             pipe->resource_copy_region(pipe, tx->base.resource, tx->base.sr, tx->base.box.x, tx->base.box.y, tx->base.box.z + zi, tx->staging_resource, srcsr, 0, 0, 0, tx->base.box.width, tx->base.box.height);
       }
 
