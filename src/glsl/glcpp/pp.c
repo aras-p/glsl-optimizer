@@ -151,6 +151,9 @@ preprocess(void *talloc_ctx, const char **shader, char **info_log,
 
 	glcpp_parser_parse (parser);
 
+	if (parser->skip_stack)
+		glcpp_error (&parser->skip_stack->loc, parser, "Unterminated #if\n");
+
 	*info_log = talloc_strdup_append(*info_log, parser->info_log);
 
 	talloc_steal(talloc_ctx, parser->output);

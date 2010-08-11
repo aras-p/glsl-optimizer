@@ -1016,8 +1016,6 @@ glcpp_parser_parse (glcpp_parser_t *parser)
 void
 glcpp_parser_destroy (glcpp_parser_t *parser)
 {
-	if (parser->skip_stack)
-		glcpp_error (&parser->skip_stack->loc, parser, "Unterminated #if\n");
 	glcpp_lex_destroy (parser->scanner);
 	hash_table_dtor (parser->defines);
 	talloc_free (parser);
