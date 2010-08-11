@@ -105,8 +105,8 @@ int r600_pipe_shader_create(struct pipe_context *ctx,
 	struct r600_screen *rscreen = r600_screen(ctx->screen);
 	int r;
 
-//fprintf(stderr, "--------------------------------------------------------------\n");
-//tgsi_dump(tokens, 0);
+fprintf(stderr, "--------------------------------------------------------------\n");
+tgsi_dump(tokens, 0);
 	if (rpshader == NULL)
 		return -ENOMEM;
 	rpshader->shader.family = radeon_get_family(rscreen->rw);
@@ -120,7 +120,7 @@ int r600_pipe_shader_create(struct pipe_context *ctx,
 		R600_ERR("building bytecode failed !\n");
 		return r;
 	}
-//fprintf(stderr, "______________________________________________________________\n");
+fprintf(stderr, "______________________________________________________________\n");
 	return 0;
 }
 
@@ -155,11 +155,14 @@ static int r600_pipe_shader_vs(struct pipe_context *ctx, struct r600_context_sta
 
 static int r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_context_state *rpshader)
 {
+	const struct pipe_rasterizer_state *rasterizer;
 	struct r600_screen *rscreen = r600_screen(ctx->screen);
 	struct r600_shader *rshader = &rpshader->shader;
+	struct r600_context *rctx = r600_context(ctx);
 	struct radeon_state *state;
 	unsigned i, tmp, exports_ps, num_cout;
 
+	rasterizer = &rctx->rasterizer->state.rasterizer;
 	rpshader->rstate = radeon_state_decref(rpshader->rstate);
 	state = radeon_state(rscreen->rw, R600_PS_SHADER_TYPE, R600_PS_SHADER);
 	if (state == NULL)
@@ -170,6 +173,9 @@ static int r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_context_sta
 		if (rshader->input[i].name == TGSI_SEMANTIC_COLOR ||
 			rshader->input[i].name == TGSI_SEMANTIC_BCOLOR) {
 			tmp |= S_028644_FLAT_SHADE(rshader->flat_shade);
+		}
+		if (rasterizer->sprite_coord_enable & (1 << i)) {
+			tmp |= S_028644_PT_SPRITE_TEX(1);
 		}
 		state->states[R600_PS_SHADER__SPI_PS_INPUT_CNTL_0 + i] = tmp;
 	}
@@ -340,7 +346,7 @@ int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *s
 	struct tgsi_full_immediate *immediate;
 	struct r600_shader_ctx ctx;
 	struct r600_bc_output output[32];
-	unsigned output_done;
+	unsigned output_done, noutput;
 	unsigned opcode;
 	int i, r = 0, pos0;
 
@@ -418,7 +424,8 @@ int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *s
 		}
 	}
 	/* export output */
-	for (i = 0, pos0 = 0; i < shader->noutput; i++) {
+	noutput = shader->noutput;
+	for (i = 0, pos0 = 0; i < noutput; i++) {
 		memset(&output[i], 0, sizeof(struct r600_bc_output));
 		output[i].gpr = shader->output[i].gpr;
 		output[i].elem_size = 3;
@@ -430,13 +437,19 @@ int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *s
 		output[i].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PARAM;
 		output[i].array_base = i - pos0;
 		output[i].inst = V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT;
-		switch (ctx.type == TGSI_PROCESSOR_VERTEX) {
+		switch (ctx.type) {
 		case TGSI_PROCESSOR_VERTEX:
 			if (shader->output[i].name == TGSI_SEMANTIC_POSITION) {
 				output[i].array_base = 60;
 				output[i].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_POS;
 				/* position doesn't count in array_base */
-				pos0 = 1;
+				pos0++;
+			}
+			if (shader->output[i].name == TGSI_SEMANTIC_PSIZE) {
+				output[i].array_base = 61;
+				output[i].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_POS;
+				/* position doesn't count in array_base */
+				pos0++;
 			}
 			break;
 		case TGSI_PROCESSOR_FRAGMENT:
@@ -457,17 +470,42 @@ int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *s
 			r = -EINVAL;
 			goto out_err;
 		}
-		if (i == (shader->noutput - 1)) {
-			output[i].end_of_program = 1;
+	}
+	/* add fake param output for vertex shader if no param is exported */
+	if (ctx.type == TGSI_PROCESSOR_VERTEX) {
+		for (i = 0, pos0 = 0; i < noutput; i++) {
+			if (output[i].type == V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PARAM) {
+				pos0 = 1;
+				break;
+			}
+		}
+		if (!pos0) {
+			memset(&output[i], 0, sizeof(struct r600_bc_output));
+			output[i].gpr = 0;
+			output[i].elem_size = 3;
+			output[i].swizzle_x = 0;
+			output[i].swizzle_y = 1;
+			output[i].swizzle_z = 2;
+			output[i].swizzle_w = 3;
+			output[i].barrier = 1;
+			output[i].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PARAM;
+			output[i].array_base = 0;
+			output[i].inst = V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT;
+			noutput++;
 		}
 	}
-	for (i = shader->noutput - 1, output_done = 0; i >= 0; i--) {
+	/* set export done on last export of each type */
+	for (i = noutput - 1, output_done = 0; i >= 0; i--) {
+		if (i == (noutput - 1)) {
+			output[i].end_of_program = 1;
+		}
 		if (!(output_done & (1 << output[i].type))) {
 			output_done |= (1 << output[i].type);
 			output[i].inst = V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT_DONE;
 		}
 	}
-	for (i = 0; i < shader->noutput; i++) {
+	/* add output to bytecode */
+	for (i = 0; i < noutput; i++) {
 		r = r600_bc_add_output(ctx.bc, &output[i]);
 		if (r)
 			goto out_err;

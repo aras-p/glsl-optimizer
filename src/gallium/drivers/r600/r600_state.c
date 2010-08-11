@@ -769,6 +769,7 @@ static struct radeon_state *r600_rasterizer(struct r600_context *rctx)
 	float offset_units = 0, offset_scale = 0;
 	char depth = 0;
 	unsigned offset_db_fmt_cntl = 0;
+	unsigned tmp;
 
 	if (fb->zsbuf) {
 		offset_units = state->offset_units;
@@ -800,6 +801,18 @@ static struct radeon_state *r600_rasterizer(struct r600_context *rctx)
 	if (rstate == NULL)
 		return NULL;
 	rstate->states[R600_RASTERIZER__SPI_INTERP_CONTROL_0] = 0x00000001;
+	if (state->sprite_coord_enable) {
+		rstate->states[R600_RASTERIZER__SPI_INTERP_CONTROL_0] |=
+				S_0286D4_PNT_SPRITE_ENA(1) |
+				S_0286D4_PNT_SPRITE_OVRD_X(2) |
+				S_0286D4_PNT_SPRITE_OVRD_Y(3) |
+				S_0286D4_PNT_SPRITE_OVRD_Z(0) |
+				S_0286D4_PNT_SPRITE_OVRD_W(1);
+		if (state->sprite_coord_mode != PIPE_SPRITE_COORD_UPPER_LEFT) {
+			rstate->states[R600_RASTERIZER__SPI_INTERP_CONTROL_0] |=
+					S_0286D4_PNT_SPRITE_TOP_1(1);
+		}
+	}
 	rstate->states[R600_RASTERIZER__PA_CL_CLIP_CNTL] = 0x00000000;
 	rstate->states[R600_RASTERIZER__PA_SU_SC_MODE_CNTL] = 0x00080000 |
 			S_028814_CULL_FRONT((state->cull_face & PIPE_FACE_FRONT) ? 1 : 0) |
@@ -808,10 +821,14 @@ static struct radeon_state *r600_rasterizer(struct r600_context *rctx)
 			S_028814_POLY_OFFSET_FRONT_ENABLE(state->offset_tri) |
 			S_028814_POLY_OFFSET_BACK_ENABLE(state->offset_tri) |
 			S_028814_POLY_OFFSET_PARA_ENABLE(state->offset_tri);
-	rstate->states[R600_RASTERIZER__PA_CL_VS_OUT_CNTL] = 0x00000000;
+	rstate->states[R600_RASTERIZER__PA_CL_VS_OUT_CNTL] =
+			S_02881C_USE_VTX_POINT_SIZE(state->point_size_per_vertex) |
+			S_02881C_VS_OUT_MISC_VEC_ENA(state->point_size_per_vertex);
 	rstate->states[R600_RASTERIZER__PA_CL_NANINF_CNTL] = 0x00000000;
-	rstate->states[R600_RASTERIZER__PA_SU_POINT_SIZE] = 0x00080008;
-	rstate->states[R600_RASTERIZER__PA_SU_POINT_MINMAX] = 0x00000000;
+	/* point size 12.4 fixed point */
+	tmp = (unsigned)(state->point_size * 8.0 / 2.0);
+	rstate->states[R600_RASTERIZER__PA_SU_POINT_SIZE] = S_028A00_HEIGHT(tmp) | S_028A00_WIDTH(tmp);
+	rstate->states[R600_RASTERIZER__PA_SU_POINT_MINMAX] = 0x80000000;
 	rstate->states[R600_RASTERIZER__PA_SU_LINE_CNTL] = 0x00000008;
 	rstate->states[R600_RASTERIZER__PA_SC_LINE_STIPPLE] = 0x00000005;
 	rstate->states[R600_RASTERIZER__PA_SC_MPASS_PS_CNTL] = 0x00000000;

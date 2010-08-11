@@ -654,6 +654,13 @@
 #define   S_028E0C_OFFSET(x)                           (((x) & 0xFFFFFFFF) << 0)
 #define   G_028E0C_OFFSET(x)                           (((x) >> 0) & 0xFFFFFFFF)
 #define   C_028E0C_OFFSET                              0x00000000
+#define R_028A00_PA_SU_POINT_SIZE                    0x028A00
+#define   S_028A00_HEIGHT(x)                           (((x) & 0xFFFF) << 0)
+#define   G_028A00_HEIGHT(x)                           (((x) >> 0) & 0xFFFF)
+#define   C_028A00_HEIGHT                              0xFFFF0000
+#define   S_028A00_WIDTH(x)                            (((x) & 0xFFFF) << 16)
+#define   G_028A00_WIDTH(x)                            (((x) >> 16) & 0xFFFF)
+#define   C_028A00_WIDTH                               0x0000FFFF
 #define R_028A40_VGT_GS_MODE                         0x028A40
 #define   S_028A40_MODE(x)                             (((x) & 0x3) << 0)
 #define   G_028A40_MODE(x)                             (((x) >> 0) & 0x3)
@@ -1153,6 +1160,79 @@
 #define     V_008958_DI_PT_2D_FILL_RECT_LIST           0x0000001A
 #define     V_008958_DI_PT_2D_LINE_STRIP               0x0000001B
 #define     V_008958_DI_PT_2D_TRI_STRIP                0x0000001C
+#define R_02881C_PA_CL_VS_OUT_CNTL                   0x02881C
+#define   S_02881C_CLIP_DIST_ENA_0(x)                  (((x) & 0x1) << 0)
+#define   G_02881C_CLIP_DIST_ENA_0(x)                  (((x) >> 0) & 0x1)
+#define   C_02881C_CLIP_DIST_ENA_0                     0xFFFFFFFE
+#define   S_02881C_CLIP_DIST_ENA_1(x)                  (((x) & 0x1) << 1)
+#define   G_02881C_CLIP_DIST_ENA_1(x)                  (((x) >> 1) & 0x1)
+#define   C_02881C_CLIP_DIST_ENA_1                     0xFFFFFFFD
+#define   S_02881C_CLIP_DIST_ENA_2(x)                  (((x) & 0x1) << 2)
+#define   G_02881C_CLIP_DIST_ENA_2(x)                  (((x) >> 2) & 0x1)
+#define   C_02881C_CLIP_DIST_ENA_2                     0xFFFFFFFB
+#define   S_02881C_CLIP_DIST_ENA_3(x)                  (((x) & 0x1) << 3)
+#define   G_02881C_CLIP_DIST_ENA_3(x)                  (((x) >> 3) & 0x1)
+#define   C_02881C_CLIP_DIST_ENA_3                     0xFFFFFFF7
+#define   S_02881C_CLIP_DIST_ENA_4(x)                  (((x) & 0x1) << 4)
+#define   G_02881C_CLIP_DIST_ENA_4(x)                  (((x) >> 4) & 0x1)
+#define   C_02881C_CLIP_DIST_ENA_4                     0xFFFFFFEF
+#define   S_02881C_CLIP_DIST_ENA_5(x)                  (((x) & 0x1) << 5)
+#define   G_02881C_CLIP_DIST_ENA_5(x)                  (((x) >> 5) & 0x1)
+#define   C_02881C_CLIP_DIST_ENA_5                     0xFFFFFFDF
+#define   S_02881C_CLIP_DIST_ENA_6(x)                  (((x) & 0x1) << 6)
+#define   G_02881C_CLIP_DIST_ENA_6(x)                  (((x) >> 6) & 0x1)
+#define   C_02881C_CLIP_DIST_ENA_6                     0xFFFFFFBF
+#define   S_02881C_CLIP_DIST_ENA_7(x)                  (((x) & 0x1) << 7)
+#define   G_02881C_CLIP_DIST_ENA_7(x)                  (((x) >> 7) & 0x1)
+#define   C_02881C_CLIP_DIST_ENA_7                     0xFFFFFF7F
+#define   S_02881C_CULL_DIST_ENA_0(x)                  (((x) & 0x1) << 8)
+#define   G_02881C_CULL_DIST_ENA_0(x)                  (((x) >> 8) & 0x1)
+#define   C_02881C_CULL_DIST_ENA_0                     0xFFFFFEFF
+#define   S_02881C_CULL_DIST_ENA_1(x)                  (((x) & 0x1) << 9)
+#define   G_02881C_CULL_DIST_ENA_1(x)                  (((x) >> 9) & 0x1)
+#define   C_02881C_CULL_DIST_ENA_1                     0xFFFFFDFF
+#define   S_02881C_CULL_DIST_ENA_2(x)                  (((x) & 0x1) << 10)
+#define   G_02881C_CULL_DIST_ENA_2(x)                  (((x) >> 10) & 0x1)
+#define   C_02881C_CULL_DIST_ENA_2                     0xFFFFFBFF
+#define   S_02881C_CULL_DIST_ENA_3(x)                  (((x) & 0x1) << 11)
+#define   G_02881C_CULL_DIST_ENA_3(x)                  (((x) >> 11) & 0x1)
+#define   C_02881C_CULL_DIST_ENA_3                     0xFFFFF7FF
+#define   S_02881C_CULL_DIST_ENA_4(x)                  (((x) & 0x1) << 12)
+#define   G_02881C_CULL_DIST_ENA_4(x)                  (((x) >> 12) & 0x1)
+#define   C_02881C_CULL_DIST_ENA_4                     0xFFFFEFFF
+#define   S_02881C_CULL_DIST_ENA_5(x)                  (((x) & 0x1) << 13)
+#define   G_02881C_CULL_DIST_ENA_5(x)                  (((x) >> 13) & 0x1)
+#define   C_02881C_CULL_DIST_ENA_5                     0xFFFFDFFF
+#define   S_02881C_CULL_DIST_ENA_6(x)                  (((x) & 0x1) << 14)
+#define   G_02881C_CULL_DIST_ENA_6(x)                  (((x) >> 14) & 0x1)
+#define   C_02881C_CULL_DIST_ENA_6                     0xFFFFBFFF
+#define   S_02881C_CULL_DIST_ENA_7(x)                  (((x) & 0x1) << 15)
+#define   G_02881C_CULL_DIST_ENA_7(x)                  (((x) >> 15) & 0x1)
+#define   C_02881C_CULL_DIST_ENA_7                     0xFFFF7FFF
+#define   S_02881C_USE_VTX_POINT_SIZE(x)               (((x) & 0x1) << 16)
+#define   G_02881C_USE_VTX_POINT_SIZE(x)               (((x) >> 16) & 0x1)
+#define   C_02881C_USE_VTX_POINT_SIZE                  0xFFFEFFFF
+#define   S_02881C_USE_VTX_EDGE_FLAG(x)                (((x) & 0x1) << 17)
+#define   G_02881C_USE_VTX_EDGE_FLAG(x)                (((x) >> 17) & 0x1)
+#define   C_02881C_USE_VTX_EDGE_FLAG                   0xFFFDFFFF
+#define   S_02881C_USE_VTX_RENDER_TARGET_INDX(x)       (((x) & 0x1) << 18)
+#define   G_02881C_USE_VTX_RENDER_TARGET_INDX(x)       (((x) >> 18) & 0x1)
+#define   C_02881C_USE_VTX_RENDER_TARGET_INDX          0xFFFBFFFF
+#define   S_02881C_USE_VTX_VIEWPORT_INDX(x)            (((x) & 0x1) << 19)
+#define   G_02881C_USE_VTX_VIEWPORT_INDX(x)            (((x) >> 19) & 0x1)
+#define   C_02881C_USE_VTX_VIEWPORT_INDX               0xFFF7FFFF
+#define   S_02881C_USE_VTX_KILL_FLAG(x)                (((x) & 0x1) << 20)
+#define   G_02881C_USE_VTX_KILL_FLAG(x)                (((x) >> 20) & 0x1)
+#define   C_02881C_USE_VTX_KILL_FLAG                   0xFFEFFFFF
+#define   S_02881C_VS_OUT_MISC_VEC_ENA(x)              (((x) & 0x1) << 21)
+#define   G_02881C_VS_OUT_MISC_VEC_ENA(x)              (((x) >> 21) & 0x1)
+#define   C_02881C_VS_OUT_MISC_VEC_ENA                 0xFFDFFFFF
+#define   S_02881C_VS_OUT_CCDIST0_VEC_ENA(x)           (((x) & 0x1) << 22)
+#define   G_02881C_VS_OUT_CCDIST0_VEC_ENA(x)           (((x) >> 22) & 0x1)
+#define   C_02881C_VS_OUT_CCDIST0_VEC_ENA              0xFFBFFFFF
+#define   S_02881C_VS_OUT_CCDIST1_VEC_ENA(x)           (((x) & 0x1) << 23)
+#define   G_02881C_VS_OUT_CCDIST1_VEC_ENA(x)           (((x) >> 23) & 0x1)
+#define   C_02881C_VS_OUT_CCDIST1_VEC_ENA              0xFF7FFFFF
 #define R_028868_SQ_PGM_RESOURCES_VS                 0x028868
 #define   S_028868_NUM_GPRS(x)                         (((x) & 0xFF) << 0)
 #define   G_028868_NUM_GPRS(x)                         (((x) >> 0) & 0xFF)
