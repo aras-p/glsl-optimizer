@@ -241,6 +241,16 @@ control_line:
 			parser->skip_stack->type = SKIP_TO_ENDIF;
 		}
 	}
+|	HASH_IF NEWLINE {
+		/* #if without an expression is only an error if we
+		 *  are not skipping */
+		if (parser->skip_stack == NULL ||
+		    parser->skip_stack->type == SKIP_NO_SKIP)
+		{
+			glcpp_error(& @1, parser, "#if with no expression");
+		}	
+		_glcpp_parser_skip_stack_push_if (parser, & @1, 0);
+	}
 |	HASH_IFDEF IDENTIFIER junk NEWLINE {
 		macro_t *macro = hash_table_find (parser->defines, $2);
 		talloc_free ($2);
