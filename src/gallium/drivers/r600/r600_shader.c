@@ -537,6 +537,7 @@ static int tgsi_src(struct r600_shader_ctx *ctx,
 	if (tgsi_src->Register.File == TGSI_FILE_IMMEDIATE) {
 		r600_src->sel = 0;
 	}
+	r600_src->neg = tgsi_src->Register.Negate;
 	r600_src->sel += ctx->file_offset[tgsi_src->Register.File];
 	return 0;
 }
