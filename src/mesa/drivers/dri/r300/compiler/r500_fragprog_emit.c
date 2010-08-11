@@ -70,6 +70,10 @@ struct loop_info {
 	int * Brks;
 	int BrkCount;
 	int BrkReserved;
+
+	int * Conts;
+	int ContCount;
+	int ContReserved;
 };
 
 struct emit_state {
@@ -413,15 +417,18 @@ static void emit_flowcontrol(struct emit_state * s, struct rc_instruction * inst
 			;
 		break;
 
-	case RC_OPCODE_CONTINUE:
+	case RC_OPCODE_CONT:
 		loop = &s->Loops[s->CurrentLoopDepth - 1];
-		s->Code->inst[newip].inst2 = R500_FC_OP_JUMP
+		memory_pool_array_reserve(&s->C->Pool, int, loop->Conts,
+					loop->ContCount, loop->ContReserved, 1);
+		loop->Conts[loop->ContCount++] = newip;
+		s->Code->inst[newip].inst2 = R500_FC_OP_CONTINUE
 			| R500_FC_JUMP_FUNC(0xff)
 			| R500_FC_B_OP1_DECR
 			| R500_FC_B_POP_CNT(
 				s->CurrentBranchDepth -	loop->BranchDepth)
+			| R500_FC_IGNORE_UNCOVERED
 			;
-		s->Code->inst[newip].inst3 = R500_FC_JUMP_ADDR(loop->BgnLoop);
 		break;
 
 	case RC_OPCODE_ENDLOOP:
@@ -448,6 +455,12 @@ static void emit_flowcontrol(struct emit_state * s, struct rc_instruction * inst
 		while(loop->BrkCount--) {
 			s->Code->inst[loop->Brks[loop->BrkCount]].inst3 =
 						R500_FC_JUMP_ADDR(newip + 1);
+		}
+
+		/* Set jump address for CONT instructions. */
+		while(loop->ContCount--) {
+			s->Code->inst[loop->Conts[loop->ContCount]].inst3 =
+						R500_FC_JUMP_ADDR(newip);
 		}
 		s->CurrentLoopDepth--;
 		break;

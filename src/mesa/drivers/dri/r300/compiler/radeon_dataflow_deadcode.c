@@ -274,7 +274,7 @@ void rc_dataflow_deadcode(struct radeon_compiler * c, rc_dataflow_mark_outputs_f
 			}
 			break;
 		}
-		case RC_OPCODE_CONTINUE:
+		case RC_OPCODE_CONT:
 			break;
 		case RC_OPCODE_ENDIF:
 			push_branch(&s);
