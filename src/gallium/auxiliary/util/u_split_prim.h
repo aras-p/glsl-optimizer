@@ -1,7 +1,7 @@
 /* Originally written by Ben Skeggs for the nv50 driver*/
 #include <pipe/p_defines.h>
 
-struct u_split_prim {
+struct util_split_prim {
    void *priv;
    void (*emit)(void *priv, unsigned start, unsigned count);
    void (*edge)(void *priv, boolean enabled);
@@ -17,7 +17,7 @@ struct u_split_prim {
 };
 
 static INLINE void
-u_split_prim_init(struct u_split_prim *s,
+util_split_prim_init(struct util_split_prim *s,
                   unsigned mode, unsigned start, unsigned count)
 {
    if (mode == PIPE_PRIM_LINE_LOOP) {
@@ -35,7 +35,7 @@ u_split_prim_init(struct u_split_prim *s,
 }
 
 static INLINE boolean
-u_split_prim_next(struct u_split_prim *s, unsigned max_verts)
+util_split_prim_next(struct util_split_prim *s, unsigned max_verts)
 {
    int repeat = 0;
 

@@ -311,7 +311,7 @@ nv50_draw_elements_inline(struct pipe_context *pipe,
 	struct pipe_transfer *transfer;
 	struct instance a[16];
 	struct inline_ctx ctx;
-	struct u_split_prim s;
+	struct util_split_prim s;
 	boolean nzi = FALSE;
 	unsigned overhead;
 
@@ -347,7 +347,7 @@ nv50_draw_elements_inline(struct pipe_context *pipe,
 		unsigned max_verts;
 		boolean done;
 
-		u_split_prim_init(&s, mode, start, count);
+		util_split_prim_init(&s, mode, start, count);
 		do {
 			if (AVAIL_RING(chan) < (overhead + 6)) {
 				FIRE_RING(chan);
@@ -366,7 +366,7 @@ nv50_draw_elements_inline(struct pipe_context *pipe,
 
 			BEGIN_RING(chan, tesla, NV50TCL_VERTEX_BEGIN, 1);
 			OUT_RING  (chan, nv50_prim(s.mode) | (nzi ? (1<<28) : 0));
-			done = u_split_prim_next(&s, max_verts);
+			done = util_split_prim_next(&s, max_verts);
 			BEGIN_RING(chan, tesla, NV50TCL_VERTEX_END, 1);
 			OUT_RING  (chan, 0);
 		} while (!done);
