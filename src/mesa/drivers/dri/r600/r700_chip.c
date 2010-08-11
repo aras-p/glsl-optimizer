@@ -265,17 +265,6 @@ static void r700SendVTXState(GLcontext *ctx, struct radeon_state_atom *atom)
     if (context->radeon.tcl.aos_count == 0)
 	    return;
 
-    BEGIN_BATCH_NO_AUTOSTATE(6);
-    R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_CTL_CONST, 1));
-    R600_OUT_BATCH(mmSQ_VTX_BASE_VTX_LOC - ASIC_CTL_CONST_BASE_INDEX);
-    R600_OUT_BATCH(0);
-
-    R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_CTL_CONST, 1));
-    R600_OUT_BATCH(mmSQ_VTX_START_INST_LOC - ASIC_CTL_CONST_BASE_INDEX);
-    R600_OUT_BATCH(0);
-    END_BATCH();
-    COMMIT_BATCH();
-
     for(i=0; i<VERT_ATTRIB_MAX; i++) {
 	    if(vp->mesa_program->Base.InputsRead & (1 << i))
 	    {
@@ -1480,9 +1469,6 @@ static int check_vtx(GLcontext *ctx, struct radeon_state_atom *atom)
 	context_t *context = R700_CONTEXT(ctx);
 	int count = context->radeon.tcl.aos_count * 18;
 
-	if (count)
-		count += 6;
-
 	radeon_print(RADEON_STATE, RADEON_TRACE, "%s %d\n", __func__, count);
 	return count;
 }
@@ -1605,7 +1591,7 @@ void r600InitAtoms(context_t *context)
 	ALLOC_STATE(ps, always, 24, r700SendPSState);
 	ALLOC_STATE(vs_consts, vs_consts, (2 + (R700_MAX_DX9_CONSTS * 4)), r700SendVSConsts);
 	ALLOC_STATE(ps_consts, ps_consts, (2 + (R700_MAX_DX9_CONSTS * 4)), r700SendPSConsts);
-	ALLOC_STATE(vtx, vtx, (6 + (VERT_ATTRIB_MAX * 18)), r700SendVTXState);
+	ALLOC_STATE(vtx, vtx, (VERT_ATTRIB_MAX * 18), r700SendVTXState);
 	ALLOC_STATE(tx, tx, (R700_TEXTURE_NUMBERUNITS * 20), r700SendTexState);
 	ALLOC_STATE(tx_smplr, tx, (R700_TEXTURE_NUMBERUNITS * 5), r700SendTexSamplerState);
 	ALLOC_STATE(tx_brdr_clr, tx, (R700_TEXTURE_NUMBERUNITS * 6), r700SendTexBorderColorState);

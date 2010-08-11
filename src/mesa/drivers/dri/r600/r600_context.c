@@ -73,6 +73,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define need_GL_VERSION_2_0
 #define need_GL_VERSION_2_1
+#define need_GL_ARB_draw_elements_base_vertex
 #define need_GL_ARB_occlusion_query
 #define need_GL_ARB_point_parameters
 #define need_GL_ARB_vertex_program
@@ -141,6 +142,7 @@ static const struct dri_extension card_extensions[] = {
   {"GL_NV_vertex_program",		GL_NV_vertex_program_functions},
   {"GL_SGIS_generate_mipmap",		NULL},
   {"GL_ARB_pixel_buffer_object",        NULL},
+  {"GL_ARB_draw_elements_base_vertex",	GL_ARB_draw_elements_base_vertex_functions },
   {NULL,				NULL}
   /* *INDENT-ON* */
 };
