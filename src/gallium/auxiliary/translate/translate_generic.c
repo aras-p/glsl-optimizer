@@ -554,3 +554,83 @@ struct translate *translate_generic_create( const struct translate_key *key )
 
    return &tg->translate;
 }
+
+boolean translate_generic_is_output_format_supported(enum pipe_format format)
+{
+   switch(format)
+   {
+   case PIPE_FORMAT_R64G64B64A64_FLOAT: return TRUE;
+   case PIPE_FORMAT_R64G64B64_FLOAT: return TRUE;
+   case PIPE_FORMAT_R64G64_FLOAT: return TRUE;
+   case PIPE_FORMAT_R64_FLOAT: return TRUE;
+
+   case PIPE_FORMAT_R32G32B32A32_FLOAT: return TRUE;
+   case PIPE_FORMAT_R32G32B32_FLOAT: return TRUE;
+   case PIPE_FORMAT_R32G32_FLOAT: return TRUE;
+   case PIPE_FORMAT_R32_FLOAT: return TRUE;
+
+   case PIPE_FORMAT_R32G32B32A32_USCALED: return TRUE;
+   case PIPE_FORMAT_R32G32B32_USCALED: return TRUE;
+   case PIPE_FORMAT_R32G32_USCALED: return TRUE;
+   case PIPE_FORMAT_R32_USCALED: return TRUE;
+
+   case PIPE_FORMAT_R32G32B32A32_SSCALED: return TRUE;
+   case PIPE_FORMAT_R32G32B32_SSCALED: return TRUE;
+   case PIPE_FORMAT_R32G32_SSCALED: return TRUE;
+   case PIPE_FORMAT_R32_SSCALED: return TRUE;
+
+   case PIPE_FORMAT_R32G32B32A32_UNORM: return TRUE;
+   case PIPE_FORMAT_R32G32B32_UNORM: return TRUE;
+   case PIPE_FORMAT_R32G32_UNORM: return TRUE;
+   case PIPE_FORMAT_R32_UNORM: return TRUE;
+
+   case PIPE_FORMAT_R32G32B32A32_SNORM: return TRUE;
+   case PIPE_FORMAT_R32G32B32_SNORM: return TRUE;
+   case PIPE_FORMAT_R32G32_SNORM: return TRUE;
+   case PIPE_FORMAT_R32_SNORM: return TRUE;
+
+   case PIPE_FORMAT_R16G16B16A16_USCALED: return TRUE;
+   case PIPE_FORMAT_R16G16B16_USCALED: return TRUE;
+   case PIPE_FORMAT_R16G16_USCALED: return TRUE;
+   case PIPE_FORMAT_R16_USCALED: return TRUE;
+
+   case PIPE_FORMAT_R16G16B16A16_SSCALED: return TRUE;
+   case PIPE_FORMAT_R16G16B16_SSCALED: return TRUE;
+   case PIPE_FORMAT_R16G16_SSCALED: return TRUE;
+   case PIPE_FORMAT_R16_SSCALED: return TRUE;
+
+   case PIPE_FORMAT_R16G16B16A16_UNORM: return TRUE;
+   case PIPE_FORMAT_R16G16B16_UNORM: return TRUE;
+   case PIPE_FORMAT_R16G16_UNORM: return TRUE;
+   case PIPE_FORMAT_R16_UNORM: return TRUE;
+
+   case PIPE_FORMAT_R16G16B16A16_SNORM: return TRUE;
+   case PIPE_FORMAT_R16G16B16_SNORM: return TRUE;
+   case PIPE_FORMAT_R16G16_SNORM: return TRUE;
+   case PIPE_FORMAT_R16_SNORM: return TRUE;
+
+   case PIPE_FORMAT_R8G8B8A8_USCALED: return TRUE;
+   case PIPE_FORMAT_R8G8B8_USCALED: return TRUE;
+   case PIPE_FORMAT_R8G8_USCALED: return TRUE;
+   case PIPE_FORMAT_R8_USCALED: return TRUE;
+
+   case PIPE_FORMAT_R8G8B8A8_SSCALED: return TRUE;
+   case PIPE_FORMAT_R8G8B8_SSCALED: return TRUE;
+   case PIPE_FORMAT_R8G8_SSCALED: return TRUE;
+   case PIPE_FORMAT_R8_SSCALED: return TRUE;
+
+   case PIPE_FORMAT_R8G8B8A8_UNORM: return TRUE;
+   case PIPE_FORMAT_R8G8B8_UNORM: return TRUE;
+   case PIPE_FORMAT_R8G8_UNORM: return TRUE;
+   case PIPE_FORMAT_R8_UNORM: return TRUE;
+
+   case PIPE_FORMAT_R8G8B8A8_SNORM: return TRUE;
+   case PIPE_FORMAT_R8G8B8_SNORM: return TRUE;
+   case PIPE_FORMAT_R8G8_SNORM: return TRUE;
+   case PIPE_FORMAT_R8_SNORM: return TRUE;
+
+   case PIPE_FORMAT_A8R8G8B8_UNORM: return TRUE;
+   case PIPE_FORMAT_B8G8R8A8_UNORM: return TRUE;
+   default: return FALSE;
+   }
+}
