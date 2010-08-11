@@ -92,8 +92,11 @@ util_split_prim_next(struct util_split_prim *s, unsigned max_verts)
       max_verts &= ~1;
       repeat = 2;
       break;
-   default:
+   case PIPE_PRIM_POINTS:
       break;
+   default:
+      /* TODO: implement adjacency primitives */
+      assert(0);
    }
 
    s->emit (s->priv, s->p_start, max_verts);
