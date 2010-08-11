@@ -128,7 +128,7 @@ int main(int argc, char** argv)
    for (output_format = 1; output_format < PIPE_FORMAT_COUNT; ++output_format)
    {
       const struct util_format_description* output_format_desc = util_format_description(output_format);
-      unsigned output_format_size = util_format_get_stride(output_format, 1);
+      unsigned output_format_size;
       if (!output_format_desc
             || !output_format_desc->fetch_rgba_float
             || !output_format_desc->pack_rgba_float
@@ -137,10 +137,12 @@ int main(int argc, char** argv)
             || !translate_is_output_format_supported(output_format))
          continue;
 
+      output_format_size = util_format_get_stride(output_format, 1);
+
       for (input_format = 1; input_format < PIPE_FORMAT_COUNT; ++input_format)
       {
          const struct util_format_description* input_format_desc = util_format_description(input_format);
-         unsigned input_format_size = util_format_get_stride(input_format, 1);
+         unsigned input_format_size;
          struct translate* translate[2];
          unsigned fail = 0;
          unsigned used_generic = 0;
@@ -152,6 +154,8 @@ int main(int argc, char** argv)
                || input_format_desc->layout != UTIL_FORMAT_LAYOUT_PLAIN
                || !translate_is_output_format_supported(input_format))
             continue;
+
+         input_format_size = util_format_get_stride(input_format, 1);
 
          key.element[0].input_format = input_format;
          key.element[0].output_format = output_format;
