@@ -260,6 +260,18 @@ st_new_renderbuffer_fb(enum pipe_format format, int samples, boolean sw)
    case PIPE_FORMAT_R16G16B16A16_SNORM:
       strb->Base.InternalFormat = GL_RGBA16;
       break;
+   case PIPE_FORMAT_R8_UNORM:
+      strb->Base.InternalFormat = GL_R8;
+      break;
+   case PIPE_FORMAT_R8G8_UNORM:
+      strb->Base.InternalFormat = GL_RG8;
+      break;
+   case PIPE_FORMAT_R16_UNORM:
+      strb->Base.InternalFormat = GL_R16;
+      break;
+   case PIPE_FORMAT_R16G16_UNORM:
+      strb->Base.InternalFormat = GL_RG16;
+      break;
    default:
       _mesa_problem(NULL,
 		    "Unexpected format in st_new_renderbuffer_fb");

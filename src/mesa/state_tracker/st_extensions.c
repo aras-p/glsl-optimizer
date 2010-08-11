@@ -373,6 +373,12 @@ void st_init_extensions(struct st_context *st)
       ctx->Extensions.EXT_texture_sRGB = GL_TRUE;
    }
 
+   if (screen->is_format_supported(screen, PIPE_FORMAT_R8G8_UNORM,
+                                   PIPE_TEXTURE_2D, 0,
+                                   PIPE_BIND_SAMPLER_VIEW, 0)) {
+      ctx->Extensions.ARB_texture_rg = GL_TRUE;
+   }
+
    /* s3tc support */
    if (screen->is_format_supported(screen, PIPE_FORMAT_DXT5_RGBA,
                                    PIPE_TEXTURE_2D, 0,

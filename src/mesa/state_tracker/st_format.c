@@ -202,6 +202,14 @@ st_mesa_format_to_pipe_format(gl_format mesaFormat)
    case MESA_FORMAT_SARGB8:
       return PIPE_FORMAT_B8G8R8A8_SRGB;
 #endif
+   case MESA_FORMAT_R8:
+      return PIPE_FORMAT_R8_UNORM;
+   case MESA_FORMAT_R16:
+      return PIPE_FORMAT_R16_UNORM;
+   case MESA_FORMAT_RG88:
+      return PIPE_FORMAT_R8G8_UNORM;
+   case MESA_FORMAT_RG1616:
+      return PIPE_FORMAT_R16G16_UNORM;
    default:
       assert(0);
       return PIPE_FORMAT_NONE;
@@ -299,6 +307,15 @@ st_pipe_format_to_mesa_format(enum pipe_format format)
    case PIPE_FORMAT_B8G8R8A8_SRGB:
       return MESA_FORMAT_SARGB8;
 #endif
+
+   case PIPE_FORMAT_R8_UNORM:
+      return MESA_FORMAT_R8;
+   case PIPE_FORMAT_R16_UNORM:
+      return MESA_FORMAT_R16;
+   case PIPE_FORMAT_R8G8_UNORM:
+      return MESA_FORMAT_RG88;
+   case PIPE_FORMAT_R16G16_UNORM:
+      return MESA_FORMAT_RG1616;
    default:
       assert(0);
       return MESA_FORMAT_NONE;
@@ -687,6 +704,55 @@ st_choose_format(struct pipe_screen *screen, GLenum internalFormat,
          return PIPE_FORMAT_L8_SRGB;
       return default_srgba_format( screen, target, sample_count, bindings,
                                    geom_flags );
+
+   case GL_RED:
+   case GL_R8:
+      if (screen->is_format_supported(screen, PIPE_FORMAT_R8_UNORM, target,
+				      sample_count, bindings, geom_flags))
+	      return PIPE_FORMAT_R8_UNORM;
+      return PIPE_FORMAT_NONE;
+   case GL_RG:
+   case GL_RG8:
+      if (screen->is_format_supported(screen, PIPE_FORMAT_R8G8_UNORM, target,
+				      sample_count, bindings, geom_flags))
+	      return PIPE_FORMAT_R8G8_UNORM;
+      return PIPE_FORMAT_NONE;
+
+   case GL_R16:
+      if (screen->is_format_supported(screen, PIPE_FORMAT_R16_UNORM, target,
+				      sample_count, bindings, geom_flags))
+	      return PIPE_FORMAT_R16_UNORM;
+      return PIPE_FORMAT_NONE;
+
+   case GL_RG16:
+      if (screen->is_format_supported(screen, PIPE_FORMAT_R16G16_UNORM, target,
+				      sample_count, bindings, geom_flags))
+	      return PIPE_FORMAT_R16G16_UNORM;
+      return PIPE_FORMAT_NONE;
+
+   case GL_COMPRESSED_RED_RGTC1:
+      if (screen->is_format_supported(screen, PIPE_FORMAT_RGTC1_UNORM, target,
+				      sample_count, bindings, geom_flags))
+	      return PIPE_FORMAT_RGTC1_UNORM;
+      return PIPE_FORMAT_NONE;
+
+   case GL_COMPRESSED_SIGNED_RED_RGTC1:
+      if (screen->is_format_supported(screen, PIPE_FORMAT_RGTC1_SNORM, target,
+				      sample_count, bindings, geom_flags))
+	      return PIPE_FORMAT_RGTC1_SNORM;
+      return PIPE_FORMAT_NONE;
+
+   case GL_COMPRESSED_RG_RGTC2:
+      if (screen->is_format_supported(screen, PIPE_FORMAT_RGTC2_UNORM, target,
+				      sample_count, bindings, geom_flags))
+	      return PIPE_FORMAT_RGTC2_UNORM;
+      return PIPE_FORMAT_NONE;
+
+   case GL_COMPRESSED_SIGNED_RG_RGTC2:
+      if (screen->is_format_supported(screen, PIPE_FORMAT_RGTC2_SNORM, target,
+				      sample_count, bindings, geom_flags))
+	      return PIPE_FORMAT_RGTC2_SNORM;
+      return PIPE_FORMAT_NONE;
 
    default:
       return PIPE_FORMAT_NONE;
