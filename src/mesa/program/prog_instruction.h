@@ -38,7 +38,7 @@
 #define PROG_INSTRUCTION_H
 
 
-#include "main/mfeatures.h"
+#include "main/glheader.h"
 
 
 /**
