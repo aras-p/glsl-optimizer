@@ -68,7 +68,7 @@ static ir_dereference *read_record_ref(_mesa_glsl_parse_state *, s_list *);
 
 void
 _mesa_glsl_read_ir(_mesa_glsl_parse_state *state, exec_list *instructions,
-		   const char *src)
+		   const char *src, bool scan_for_protos)
 {
    s_expression *expr = s_expression::read_expression(state, src);
    if (expr == NULL) {
@@ -76,9 +76,11 @@ _mesa_glsl_read_ir(_mesa_glsl_parse_state *state, exec_list *instructions,
       return;
    }
    
-   scan_for_prototypes(state, instructions, expr);
-   if (state->error)
-      return;
+   if (scan_for_protos) {
+      scan_for_prototypes(state, instructions, expr);
+      if (state->error)
+	 return;
+   }
 
    read_instructions(state, instructions, expr, NULL);
    talloc_free(expr);
@@ -276,7 +278,12 @@ read_function_sig(_mesa_glsl_parse_state *st, ir_function *f, s_list *list,
    }
 
    ir_function_signature *sig = f->exact_matching_signature(&hir_parameters);
-   if (sig != NULL) {
+   if (sig == NULL && skip_body) {
+      /* If scanning for prototypes, generate a new signature. */
+      sig = new(ctx) ir_function_signature(return_type);
+      sig->is_built_in = true;
+      f->add_signature(sig);
+   } else if (sig != NULL) {
       const char *badvar = sig->qualifiers_match(&hir_parameters);
       if (badvar != NULL) {
 	 ir_read_error(st, list, "function `%s' parameter `%s' qualifiers "
@@ -290,10 +297,11 @@ read_function_sig(_mesa_glsl_parse_state *st, ir_function *f, s_list *list,
 	 return;
       }
    } else {
-      sig = new(ctx) ir_function_signature(return_type);
-      sig->is_built_in = true;
-      f->add_signature(sig);
+      /* No prototype for this body exists - skip it. */
+      st->symbols->pop_scope();
+      return;
    }
+   assert(sig != NULL);
 
    sig->replace_parameters(&hir_parameters);
 

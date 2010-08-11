@@ -164,7 +164,8 @@ glcpp/glcpp-lex.c: glcpp/glcpp-lex.l
 glcpp/glcpp-parse.c: glcpp/glcpp-parse.y
 	bison -v -o "$@" --defines=glcpp/glcpp-parse.h $<
 
-builtin_function.cpp: builtins/*/*
-	./builtins/tools/generate_builtins.pl > builtin_function.cpp
+builtin_function.cpp: builtins/profiles/* builtins/ir/* builtins/tools/generate_builtins.py builtins/tools/texture_builtins.py
+	cp builtins/tools/builtin_function.cpp .
+	./builtins/tools/generate_builtins.py > builtin_function.cpp
 
 -include depend

@@ -1,4 +1,3 @@
-/* -*- c++ -*- */
 /*
  * Copyright © 2010 Intel Corporation
  *
@@ -22,13 +21,19 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#pragma once
-#ifndef IR_READER_H
-#define IR_READER_H
+#include <stdio.h>
+#include "glsl_parser_extras.h"
 
-#include "ir.h"
+/* A dummy file.  When compiling prototypes, we don't care about builtins.
+ * We really don't want to half-compile builtin_functions.cpp and fail, though.
+ */
+void
+_mesa_glsl_release_functions(void)
+{
+}
 
-void _mesa_glsl_read_ir(_mesa_glsl_parse_state *state, exec_list *instructions,
-			const char *src, bool scan_for_prototypes);
-
-#endif /* IR_READER_H */
+void
+_mesa_glsl_initialize_functions(exec_list *instructions,
+			        struct _mesa_glsl_parse_state *state)
+{
+}
