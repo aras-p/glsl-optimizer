@@ -595,6 +595,27 @@ struct dd_function_table {
    
    /*@}*/
 
+   /**
+    * \name GLSL shader/program functions.
+    */
+   /*@{*/
+   /**
+    * Called when a shader is compiled.
+    *
+    * Note that not all shader objects get ShaderCompile called on
+    * them.  Notably, the shaders containing builtin functions do not
+    * have CompileShader() called, so if lowering passes are done they
+    * need to also be performed in LinkShader().
+    */
+   GLboolean (*CompileShader)(GLcontext *ctx, struct gl_shader *shader);
+   /**
+    * Called when a shader program is linked.
+    *
+    * This gives drivers an opportunity to clone the IR and make their
+    * own transformations on it for the purposes of code generation.
+    */
+   GLboolean (*LinkShader)(GLcontext *ctx, struct gl_shader_program *shader);
+   /*@}*/
 
    /**
     * \name State-changing functions.

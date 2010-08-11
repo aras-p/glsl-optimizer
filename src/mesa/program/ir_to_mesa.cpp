@@ -2543,6 +2543,72 @@ get_mesa_program(GLcontext *ctx, struct gl_shader_program *shader_program,
 }
 
 extern "C" {
+GLboolean
+_mesa_ir_compile_shader(GLcontext *ctx, struct gl_shader *shader)
+{
+   assert(shader->CompileStatus);
+
+   return GL_TRUE;
+}
+
+GLboolean
+_mesa_ir_link_shader(GLcontext *ctx, struct gl_shader_program *prog)
+{
+   assert(prog->LinkStatus);
+
+   for (unsigned i = 0; i < prog->_NumLinkedShaders; i++) {
+      bool progress;
+      exec_list *ir = prog->_LinkedShaders[i]->ir;
+
+      do {
+	 progress = false;
+
+	 /* Lowering */
+	 do_mat_op_to_vec(ir);
+	 do_mod_to_fract(ir);
+	 do_div_to_mul_rcp(ir);
+	 do_explog_to_explog2(ir);
+
+	 progress = do_common_optimization(ir, true) || progress;
+
+	 if (ctx->Shader.EmitNoIfs)
+	    progress = do_if_to_cond_assign(ir) || progress;
+
+	 progress = do_vec_index_to_cond_assign(ir) || progress;
+      } while (progress);
+
+      validate_ir_tree(ir);
+   }
+
+   for (unsigned i = 0; i < prog->_NumLinkedShaders; i++) {
+      struct gl_program *linked_prog;
+      bool ok = true;
+
+      linked_prog = get_mesa_program(ctx, prog, prog->_LinkedShaders[i]);
+
+      link_uniforms_to_shared_uniform_list(prog->Uniforms, linked_prog);
+
+      switch (prog->_LinkedShaders[i]->Type) {
+      case GL_VERTEX_SHADER:
+	 _mesa_reference_vertprog(ctx, &prog->VertexProgram,
+				  (struct gl_vertex_program *)linked_prog);
+	 ok = ctx->Driver.ProgramStringNotify(ctx, GL_VERTEX_PROGRAM_ARB,
+					      linked_prog);
+	 break;
+      case GL_FRAGMENT_SHADER:
+	 _mesa_reference_fragprog(ctx, &prog->FragmentProgram,
+				  (struct gl_fragment_program *)linked_prog);
+	 ok = ctx->Driver.ProgramStringNotify(ctx, GL_FRAGMENT_PROGRAM_ARB,
+					      linked_prog);
+	 break;
+      }
+      if (!ok) {
+	 return GL_FALSE;
+      }
+   }
+
+   return GL_TRUE;
+}
 
 void
 _mesa_glsl_compile_shader(GLcontext *ctx, struct gl_shader *shader)
@@ -2604,7 +2670,12 @@ _mesa_glsl_compile_shader(GLcontext *ctx, struct gl_shader *shader)
    reparent_ir(shader->ir, shader);
 
    talloc_free(state);
- }
+
+   if (shader->CompileStatus) {
+      if (!ctx->Driver.CompileShader(ctx, shader))
+	 shader->CompileStatus = GL_FALSE;
+   }
+}
 
 void
 _mesa_glsl_link_shader(GLcontext *ctx, struct gl_shader_program *prog)
@@ -2639,57 +2710,8 @@ _mesa_glsl_link_shader(GLcontext *ctx, struct gl_shader_program *prog)
    }
 
    if (prog->LinkStatus) {
-      for (unsigned i = 0; i < prog->_NumLinkedShaders; i++) {
-	 bool progress;
-	 exec_list *ir = prog->_LinkedShaders[i]->ir;
-
-	 do {
-	    progress = false;
-
-	    /* Lowering */
-	    do_mat_op_to_vec(ir);
-	    do_mod_to_fract(ir);
-	    do_div_to_mul_rcp(ir);
-	    do_explog_to_explog2(ir);
-
-	    progress = do_common_optimization(ir, true) || progress;
-
-	    if (ctx->Shader.EmitNoIfs)
-	       progress = do_if_to_cond_assign(ir) || progress;
-
-	    progress = do_vec_index_to_cond_assign(ir) || progress;
-	 } while (progress);
-      }
-   }
-
-   if (prog->LinkStatus) {
-      for (i = 0; i < prog->_NumLinkedShaders; i++) {
-	 struct gl_program *linked_prog;
-	 bool ok = true;
-
-	 linked_prog = get_mesa_program(ctx, prog,
-					prog->_LinkedShaders[i]);
-
-	 link_uniforms_to_shared_uniform_list(prog->Uniforms, linked_prog);
-
-	 switch (prog->_LinkedShaders[i]->Type) {
-	 case GL_VERTEX_SHADER:
-	    _mesa_reference_vertprog(ctx, &prog->VertexProgram,
-				     (struct gl_vertex_program *)linked_prog);
-	    ok = ctx->Driver.ProgramStringNotify(ctx, GL_VERTEX_PROGRAM_ARB,
-						 linked_prog);
-	    break;
-	 case GL_FRAGMENT_SHADER:
-	    _mesa_reference_fragprog(ctx, &prog->FragmentProgram,
-				     (struct gl_fragment_program *)linked_prog);
-	    ok = ctx->Driver.ProgramStringNotify(ctx, GL_FRAGMENT_PROGRAM_ARB,
-						 linked_prog);
-	    break;
-	 }
-	 if (!ok) {
-	    prog->LinkStatus = GL_FALSE;
-	 }
-      }
+      if (!ctx->Driver.LinkShader(ctx, prog))
+	 prog->LinkStatus = GL_FALSE;
    }
 }
 
