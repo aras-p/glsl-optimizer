@@ -87,6 +87,11 @@ _mesa_reference_shader(GLcontext *ctx, struct gl_shader **ptr,
    }
 }
 
+void
+_mesa_init_shader(GLcontext *ctx, struct gl_shader *shader)
+{
+   shader->RefCount = 1;
+}
 
 /**
  * Allocate a new gl_shader object, initialize it.
@@ -99,10 +104,10 @@ _mesa_new_shader(GLcontext *ctx, GLuint name, GLenum type)
    assert(type == GL_FRAGMENT_SHADER || type == GL_VERTEX_SHADER ||
           type == GL_GEOMETRY_SHADER_ARB);
    shader = talloc_zero(NULL, struct gl_shader);
+   shader->Type = type;
+   shader->Name = name;
    if (shader) {
-      shader->Type = type;
-      shader->Name = name;
-      shader->RefCount = 1;
+      _mesa_init_shader(ctx, shader);
    }
    return shader;
 }
@@ -224,6 +229,18 @@ _mesa_reference_shader_program(GLcontext *ctx,
    }
 }
 
+void
+_mesa_init_shader_program(GLcontext *ctx, struct gl_shader_program *prog)
+{
+   prog->Type = GL_SHADER_PROGRAM_MESA;
+   prog->RefCount = 1;
+   prog->Attributes = _mesa_new_parameter_list();
+#if FEATURE_ARB_geometry_shader4
+   prog->Geom.VerticesOut = 0;
+   prog->Geom.InputType = GL_TRIANGLES;
+   prog->Geom.OutputType = GL_TRIANGLE_STRIP;
+#endif
+}
 
 /**
  * Allocate a new gl_shader_program object, initialize it.
@@ -235,15 +252,8 @@ _mesa_new_shader_program(GLcontext *ctx, GLuint name)
    struct gl_shader_program *shProg;
    shProg = talloc_zero(NULL, struct gl_shader_program);
    if (shProg) {
-      shProg->Type = GL_SHADER_PROGRAM_MESA;
       shProg->Name = name;
-      shProg->RefCount = 1;
-      shProg->Attributes = _mesa_new_parameter_list();
-#if FEATURE_ARB_geometry_shader4
-      shProg->Geom.VerticesOut = 0;
-      shProg->Geom.InputType = GL_TRIANGLES;
-      shProg->Geom.OutputType = GL_TRIANGLE_STRIP;
-#endif
+      _mesa_init_shader_program(ctx, shProg);
    }
    return shProg;
 }

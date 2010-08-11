@@ -104,6 +104,9 @@ C_SOURCES = \
 	$(COMMON_SOURCES) \
 	$(DRIVER_SOURCES)
 
+CXX_SOURCES = \
+	brw_fs.cpp
+
 ASM_SOURCES = 
 
 DRIVER_DEFINES = -I../intel

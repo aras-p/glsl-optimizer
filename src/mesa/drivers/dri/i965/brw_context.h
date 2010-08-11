@@ -179,6 +179,16 @@ struct brw_fragment_program {
    GLbitfield tex_units_used;
 };
 
+struct brw_shader {
+   struct gl_shader base;
+
+   /** Shader IR transformed for native compile, at link time. */
+   struct exec_list *ir;
+};
+
+struct brw_shader_program {
+   struct gl_shader_program base;
+};
 
 /* Data about a particular attempt to compile a program.  Note that
  * there can be many of these, each in a different GL state

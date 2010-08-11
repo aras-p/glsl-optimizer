@@ -231,5 +231,8 @@ void brwInitFragProgFuncs( struct dd_function_table *functions )
    functions->DeleteProgram = brwDeleteProgram;
    functions->IsProgramNative = brwIsProgramNative;
    functions->ProgramStringNotify = brwProgramStringNotify;
+
+   functions->CompileShader = brw_compile_shader;
+   functions->LinkShader = brw_link_shader;
 }
 
