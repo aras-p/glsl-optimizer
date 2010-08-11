@@ -118,35 +118,6 @@ static const __DRItexBufferExtension dri2TexBufferExtension = {
 };
 
 /**
- * Get the format and binding of an attachment.
- */
-static INLINE void
-dri2_drawable_get_format(struct dri_drawable *drawable,
-                         enum st_attachment_type statt,
-                         enum pipe_format *format,
-                         unsigned *bind)
-{
-   switch (statt) {
-   case ST_ATTACHMENT_FRONT_LEFT:
-   case ST_ATTACHMENT_BACK_LEFT:
-   case ST_ATTACHMENT_FRONT_RIGHT:
-   case ST_ATTACHMENT_BACK_RIGHT:
-      *format = drawable->stvis.color_format;
-      *bind = PIPE_BIND_RENDER_TARGET | PIPE_BIND_SAMPLER_VIEW;
-      break;
-   case ST_ATTACHMENT_DEPTH_STENCIL:
-      *format = drawable->stvis.depth_stencil_format;
-      *bind = PIPE_BIND_DEPTH_STENCIL; /* XXX sampler? */
-      break;
-   default:
-      *format = PIPE_FORMAT_NONE;
-      *bind = 0;
-      break;
-   }
-}
-
-
-/**
  * Retrieve __DRIbuffer from the DRI loader.
  */
 static __DRIbuffer *
@@ -176,7 +147,7 @@ dri2_drawable_get_buffers(struct dri_drawable *drawable,
       unsigned bind;
       int att, bpp;
 
-      dri2_drawable_get_format(drawable, statts[i], &format, &bind);
+      dri_drawable_get_format(drawable, statts[i], &format, &bind);
       if (format == PIPE_FORMAT_NONE)
          continue;
 
@@ -318,7 +289,7 @@ dri2_drawable_process_buffers(struct dri_drawable *drawable,
          break;
       }
 
-      dri2_drawable_get_format(drawable, statt, &format, &bind);
+      dri_drawable_get_format(drawable, statt, &format, &bind);
       if (statt == ST_ATTACHMENT_INVALID || format == PIPE_FORMAT_NONE)
          continue;
 
