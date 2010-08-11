@@ -513,7 +513,11 @@ struct __DRIscreenRec {
      * 
      * This pointer is never touched by the DRI layer.
      */
+#ifdef __cplusplus
+    void *priv;
+#else
     void *private;
+#endif
 
     /* Extensions provided by the loader. */
     const __DRIgetDrawableInfoExtension *getDrawableInfo;
