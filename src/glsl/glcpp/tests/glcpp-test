@@ -9,7 +9,7 @@ for test in *.c; do
     echo -n "Testing $test..."
     ../glcpp < $test > $test.out
     total=$((total+1))
-    if cmp $test.expected $test.out; then
+    if cmp $test.expected $test.out >/dev/null 2>&1; then
 	echo "PASS"
 	pass=$((pass+1))
     else

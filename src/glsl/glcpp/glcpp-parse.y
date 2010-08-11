@@ -142,7 +142,15 @@ add_builtin_define(glcpp_parser_t *parser, const char *name, int value);
 
 %pure-parser
 %error-verbose
+
 %locations
+%initial-action {
+	@$.first_line = 1;
+	@$.first_column = 1;
+	@$.last_line = 1;
+	@$.last_column = 1;
+	@$.source = 0;
+}
 
 %parse-param {glcpp_parser_t *parser}
 %lex-param {glcpp_parser_t *parser}

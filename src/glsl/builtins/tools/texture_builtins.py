@@ -211,9 +211,9 @@ with open(path.join(builtins_dir, "EXT_texture_array", "textures"), 'w') as sys.
 
 with open(path.join(builtins_dir, "EXT_texture_array_fs", "textures"), 'w') as sys.stdout:
     print "((function texture1DArray"
-    generate_sigs("", "txb", "1DArray")  # MOVE TO _fs
+    generate_sigs("", "txb", "1DArray")
     print ")\n (function texture2DArray"
-    generate_sigs("", "txb", "2DArray")  # MOVE TO _fs
+    generate_sigs("", "txb", "2DArray")
     print ")\n (function shadow1DArray"
     generate_sigs("", "txb", "1DArrayShadow")
     print "))"
