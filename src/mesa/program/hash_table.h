@@ -147,6 +147,6 @@ int
 hash_table_pointer_compare(const void *key1, const void *key2);
 
 #ifdef __cplusplus
-};
+}
 #endif
 #endif /* HASH_TABLE_H */
