@@ -30,6 +30,7 @@
 #include "intel_regions.h"
 #include "intel_tex_layout.h"
 #include "main/enums.h"
+#include "main/formats.h"
 
 #define FILE_DEBUG_FLAG DEBUG_MIPTREE
 

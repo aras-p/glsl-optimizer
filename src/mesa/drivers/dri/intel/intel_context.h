@@ -32,7 +32,6 @@
 
 #include "main/mtypes.h"
 #include "main/mm.h"
-#include "texmem.h"
 #include "dri_metaops.h"
 #include "drm.h"
 #include "intel_bufmgr.h"
