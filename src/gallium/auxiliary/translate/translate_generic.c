@@ -187,9 +187,15 @@ ATTRIB( R8G8B8_SNORM,    3, char, TO_8_SNORM )
 ATTRIB( R8G8_SNORM,      2, char, TO_8_SNORM )
 ATTRIB( R8_SNORM,        1, char, TO_8_SNORM )
 
-ATTRIB( A8R8G8B8_UNORM,       4, ubyte, TO_8_UNORM )
-/*ATTRIB( R8G8B8A8_UNORM,       4, ubyte, TO_8_UNORM )*/
-
+static void
+emit_A8R8G8B8_UNORM( const float *attrib, void *ptr)
+{
+   ubyte *out = (ubyte *)ptr;
+   out[0] = TO_8_UNORM(attrib[3]);
+   out[1] = TO_8_UNORM(attrib[0]);
+   out[2] = TO_8_UNORM(attrib[1]);
+   out[3] = TO_8_UNORM(attrib[2]);
+}
 
 static void
 emit_B8G8R8A8_UNORM( const float *attrib, void *ptr)
