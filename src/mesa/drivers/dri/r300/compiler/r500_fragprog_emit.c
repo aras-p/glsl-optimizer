@@ -433,7 +433,6 @@ static void emit_flowcontrol(struct emit_state * s, struct rc_instruction * inst
 
 	case RC_OPCODE_ENDLOOP:
 	{
-		unsigned int i;
 		loop = &s->Loops[s->CurrentLoopDepth - 1];
 		/* Emit ENDLOOP */
 		s->Code->inst[newip].inst2 = R500_FC_OP_ENDLOOP
