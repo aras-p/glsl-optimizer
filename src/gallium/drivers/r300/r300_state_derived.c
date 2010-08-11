@@ -35,7 +35,6 @@
 #include "r300_state_inlines.h"
 #include "r300_texture.h"
 #include "r300_vs.h"
-#include "r300_winsys.h"
 
 /* r300_state_derived: Various bits of state which are dependent upon
  * currently bound CSO data. */
