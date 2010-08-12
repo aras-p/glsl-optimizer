@@ -151,7 +151,7 @@ glcpp/glcpp: $(GLCPP_OBJECTS) libglsl.a
 	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
 
 glsl_lexer.cpp: glsl_lexer.lpp
-	flex --never-interactive --outfile="$@"  $<
+	flex -o$@  $<
 
 glsl_parser.cpp: glsl_parser.ypp
 	bison -v -o "$@" -p "_mesa_glsl_" --defines=glsl_parser.h $<
