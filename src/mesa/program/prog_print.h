@@ -26,6 +26,16 @@
 #ifndef PROG_PRINT_H
 #define PROG_PRINT_H
 
+#include <stdio.h>
+
+#include "main/glheader.h"
+#include "main/mtypes.h"
+
+struct gl_program;
+struct gl_program_parameter_list;
+struct gl_shader;
+struct prog_instruction;
+
 
 /**
  * The output style to use when printing programs.
