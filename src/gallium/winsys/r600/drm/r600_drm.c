@@ -45,7 +45,7 @@ boolean r600_buffer_get_handle(struct radeon *rw,
 			       struct winsys_handle *whandle)
 {
 	struct drm_gem_flink flink;
-	struct r600_resource* rbuffer = (struct r600_buffer*)buf;
+	struct r600_resource* rbuffer = (struct r600_resource*)buf;
 
 	if (whandle->type == DRM_API_HANDLE_TYPE_SHARED) {
 		if (!rbuffer->flink) {
