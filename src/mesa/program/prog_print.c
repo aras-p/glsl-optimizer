@@ -1032,7 +1032,9 @@ _mesa_write_shader_to_file(const struct gl_shader *shader)
    fprintf(f, "/* Compile status: %s */\n",
            shader->CompileStatus ? "ok" : "fail");
    fprintf(f, "/* Log Info: */\n");
-   fputs(shader->InfoLog, f);
+   if (shader->InfoLog) {
+      fputs(shader->InfoLog, f);
+   }
    if (shader->CompileStatus && shader->Program) {
       fprintf(f, "/* GPU code */\n");
       fprintf(f, "/*\n");
