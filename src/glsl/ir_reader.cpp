@@ -297,7 +297,7 @@ read_function_sig(_mesa_glsl_parse_state *st, ir_function *f, s_list *list,
 
    sig->replace_parameters(&hir_parameters);
 
-   if (!skip_body) {
+   if (!skip_body && !body_list->subexpressions.is_empty()) {
       if (sig->is_defined) {
 	 ir_read_error(st, list, "function %s redefined", f->name);
 	 return;
