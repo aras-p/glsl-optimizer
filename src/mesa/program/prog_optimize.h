@@ -27,6 +27,7 @@
 
 
 #include "main/config.h"
+#include "main/mtypes.h"
 
 
 struct gl_program;
