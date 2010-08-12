@@ -48,7 +48,6 @@
 
 %lex-param   {void *scanner}
 %parse-param {struct _mesa_glsl_parse_state *state}
-%name-prefix "_mesa_glsl_"
 
 %union {
    int n;
