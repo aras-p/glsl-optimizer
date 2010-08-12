@@ -62,6 +62,7 @@ print << 'EOF';
  */
 
 #include <stdio.h>
+#include "main/compiler.h"
 #include "glsl_parser_extras.h"
 #include "ir_reader.h"
 #include "program.h"
@@ -110,10 +111,6 @@ foreach $version (@versions) {
 }
 
 print << 'EOF';
-#ifndef Elements
-#define Elements(x) (sizeof(x)/sizeof(*(x)))
-#endif
-
 void *builtin_mem_ctx = NULL;
 
 void
