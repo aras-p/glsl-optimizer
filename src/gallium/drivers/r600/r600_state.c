@@ -770,7 +770,7 @@ static struct radeon_state *r600_rasterizer(struct r600_context *rctx)
 	char depth = 0;
 	unsigned offset_db_fmt_cntl = 0;
 	unsigned tmp;
-
+	unsigned prov_vtx = 1;
 	if (fb->zsbuf) {
 		offset_units = state->offset_units;
 		offset_scale = state->offset_scale * 12.0f;
@@ -796,6 +796,9 @@ static struct radeon_state *r600_rasterizer(struct r600_context *rctx)
 	}
 	offset_db_fmt_cntl |= S_028DF8_POLY_OFFSET_NEG_NUM_DB_BITS(depth);
 
+	if (state->flatshade_first)
+		prov_vtx = 0;
+
 	rctx->flat_shade = state->flatshade;
 	rstate = radeon_state(rscreen->rw, R600_RASTERIZER_TYPE, R600_RASTERIZER);
 	if (rstate == NULL)
@@ -814,13 +817,14 @@ static struct radeon_state *r600_rasterizer(struct r600_context *rctx)
 		}
 	}
 	rstate->states[R600_RASTERIZER__PA_CL_CLIP_CNTL] = 0x00000000;
-	rstate->states[R600_RASTERIZER__PA_SU_SC_MODE_CNTL] = 0x00080000 |
-			S_028814_CULL_FRONT((state->cull_face & PIPE_FACE_FRONT) ? 1 : 0) |
-			S_028814_CULL_BACK((state->cull_face & PIPE_FACE_BACK) ? 1 : 0) |
-			S_028814_FACE(!state->front_ccw) |
-			S_028814_POLY_OFFSET_FRONT_ENABLE(state->offset_tri) |
-			S_028814_POLY_OFFSET_BACK_ENABLE(state->offset_tri) |
-			S_028814_POLY_OFFSET_PARA_ENABLE(state->offset_tri);
+	rstate->states[R600_RASTERIZER__PA_SU_SC_MODE_CNTL] =
+		S_028814_PROVOKING_VTX_LAST(prov_vtx) |
+		S_028814_CULL_FRONT((state->cull_face & PIPE_FACE_FRONT) ? 1 : 0) |
+		S_028814_CULL_BACK((state->cull_face & PIPE_FACE_BACK) ? 1 : 0) |
+		S_028814_FACE(!state->front_ccw) |
+		S_028814_POLY_OFFSET_FRONT_ENABLE(state->offset_tri) |
+		S_028814_POLY_OFFSET_BACK_ENABLE(state->offset_tri) |
+		S_028814_POLY_OFFSET_PARA_ENABLE(state->offset_tri);
 	rstate->states[R600_RASTERIZER__PA_CL_VS_OUT_CNTL] =
 			S_02881C_USE_VTX_POINT_SIZE(state->point_size_per_vertex) |
 			S_02881C_VS_OUT_MISC_VEC_ENA(state->point_size_per_vertex);
