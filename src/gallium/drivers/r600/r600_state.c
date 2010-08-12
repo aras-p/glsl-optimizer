@@ -1169,8 +1169,16 @@ static struct radeon_state *r600_resource(struct r600_context *rctx,
 	struct r600_resource *rbuffer;
 	struct radeon_state *rstate;
 	unsigned format;
+	uint32_t word4 = 0, yuv_format = 0;
+	unsigned char swizzle[4];
 
-	format = r600_translate_colorformat(view->texture->format);
+	swizzle[0] = view->swizzle_r;
+	swizzle[1] = view->swizzle_g;
+	swizzle[2] = view->swizzle_b;
+	swizzle[3] = view->swizzle_a;
+	format = r600_translate_texformat(view->texture->format,
+					  swizzle,
+					  &word4, &yuv_format);
 	if (format == ~0)
 		return NULL;
 	desc = util_format_description(view->texture->format);
@@ -1204,18 +1212,10 @@ static struct radeon_state *r600_resource(struct r600_context *rctx,
 	rstate->states[R600_PS_RESOURCE__RESOURCE0_WORD2] = 0;
 	rstate->states[R600_PS_RESOURCE__RESOURCE0_WORD3] = tmp->offset[1] >> 8;
 	rstate->states[R600_PS_RESOURCE__RESOURCE0_WORD4] =
-			S_038010_FORMAT_COMP_X(r600_format_type(UTIL_FORMAT_TYPE_UNSIGNED)) |
-			S_038010_FORMAT_COMP_Y(r600_format_type(UTIL_FORMAT_TYPE_UNSIGNED)) |
-			S_038010_FORMAT_COMP_Z(r600_format_type(UTIL_FORMAT_TYPE_UNSIGNED)) |
-			S_038010_FORMAT_COMP_W(r600_format_type(UTIL_FORMAT_TYPE_UNSIGNED)) |
+		        word4 | 
 			S_038010_NUM_FORMAT_ALL(V_038010_SQ_NUM_FORMAT_NORM) |
 			S_038010_SRF_MODE_ALL(V_038010_SFR_MODE_NO_ZERO) |
 			S_038010_REQUEST_SIZE(1) |
-			S_038010_DST_SEL_X(r600_tex_swizzle(view->swizzle_b)) |
-			S_038010_DST_SEL_Y(r600_tex_swizzle(view->swizzle_g)) |
-			S_038010_DST_SEL_Z(r600_tex_swizzle(view->swizzle_r)) |
-			S_038010_DST_SEL_W(r600_tex_swizzle(view->swizzle_a)) |
-		        S_038010_FORCE_DEGAMMA(desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB ? 1 : 0) |
 			S_038010_BASE_LEVEL(view->first_level);
 	rstate->states[R600_PS_RESOURCE__RESOURCE0_WORD5] =
 			S_038014_LAST_LEVEL(view->last_level) |

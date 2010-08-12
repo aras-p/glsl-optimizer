@@ -33,6 +33,7 @@
 #include "r600_screen.h"
 #include "r600_context.h"
 #include "r600_resource.h"
+#include "r600d.h"
 
 extern struct u_resource_vtbl r600_texture_vtbl;
 
@@ -276,4 +277,251 @@ void r600_init_screen_texture_functions(struct pipe_screen *screen)
 {
 	screen->get_tex_surface = r600_get_tex_surface;
 	screen->tex_surface_destroy = r600_tex_surface_destroy;
+}
+
+static unsigned r600_get_swizzle_combined(const unsigned char *swizzle_format,
+					  const unsigned char *swizzle_view)
+{
+    unsigned i;
+    unsigned char swizzle[4];
+    unsigned result = 0;
+    const uint32_t swizzle_shift[4] = {
+	    16, 19, 22, 25,
+    };
+    const uint32_t swizzle_bit[4] = {
+	    0, 1, 2, 3,
+    };
+
+    if (swizzle_view) {
+        /* Combine two sets of swizzles. */
+        for (i = 0; i < 4; i++) {
+            swizzle[i] = swizzle_view[i] <= UTIL_FORMAT_SWIZZLE_W ?
+                         swizzle_format[swizzle_view[i]] : swizzle_view[i];
+        }
+    } else {
+        memcpy(swizzle, swizzle_format, 4);
+    }
+
+    /* Get swizzle. */
+    for (i = 0; i < 4; i++) {
+        switch (swizzle[i]) {
+            case UTIL_FORMAT_SWIZZLE_Y:
+                result |= swizzle_bit[1] << swizzle_shift[i];
+                break;
+            case UTIL_FORMAT_SWIZZLE_Z:
+                result |= swizzle_bit[2] << swizzle_shift[i];
+                break;
+            case UTIL_FORMAT_SWIZZLE_W:
+                result |= swizzle_bit[3] << swizzle_shift[i];
+                break;
+            case UTIL_FORMAT_SWIZZLE_0:
+                result |= V_038010_SQ_SEL_0 << swizzle_shift[i];
+                break;
+            case UTIL_FORMAT_SWIZZLE_1:
+                result |= V_038010_SQ_SEL_1 << swizzle_shift[i];
+                break;
+            default: /* UTIL_FORMAT_SWIZZLE_X */
+                result |= swizzle_bit[0] << swizzle_shift[i];
+        }
+    }
+    return result;
+}
+
+/* texture format translate */
+uint32_t r600_translate_texformat(enum pipe_format format,
+				  const unsigned char *swizzle_view, 
+				  uint32_t *word4_p, uint32_t *yuv_format_p)
+{
+	uint32_t result = 0, word4 = 0, yuv_format = 0;
+	const struct util_format_description *desc;
+	boolean uniform = TRUE;
+	int i;
+	const uint32_t sign_bit[4] = {
+		S_038010_FORMAT_COMP_X(V_038010_SQ_FORMAT_COMP_SIGNED),
+		S_038010_FORMAT_COMP_Y(V_038010_SQ_FORMAT_COMP_SIGNED),
+		S_038010_FORMAT_COMP_Z(V_038010_SQ_FORMAT_COMP_SIGNED),
+		S_038010_FORMAT_COMP_W(V_038010_SQ_FORMAT_COMP_SIGNED)
+	};
+	desc = util_format_description(format);
+
+	/* Colorspace (return non-RGB formats directly). */
+	switch (desc->colorspace) {
+		/* Depth stencil formats */
+	case UTIL_FORMAT_COLORSPACE_ZS:
+		switch (format) {
+		case PIPE_FORMAT_Z16_UNORM:
+			result = V_028010_DEPTH_16;
+			goto out_word4;
+		case PIPE_FORMAT_Z24X8_UNORM:
+			result = V_028010_DEPTH_X8_24;
+			goto out_word4;
+		case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
+			result = V_028010_DEPTH_8_24;
+			goto out_word4;
+		default:
+			goto out_unknown;
+		}
+
+	case UTIL_FORMAT_COLORSPACE_YUV:
+		yuv_format |= (1 << 30);
+		switch (format) {
+                case PIPE_FORMAT_UYVY:
+                case PIPE_FORMAT_YUYV:
+		default:
+			break;
+		}
+		goto out_unknown; /* TODO */
+		
+	case UTIL_FORMAT_COLORSPACE_SRGB:
+		word4 |= S_038010_FORCE_DEGAMMA(1);
+		if (format == PIPE_FORMAT_L8A8_SRGB || format == PIPE_FORMAT_L8_SRGB)
+			goto out_unknown; /* fails for some reason - TODO */
+		break;
+
+	default:
+		break;
+	}
+	
+	word4 |= r600_get_swizzle_combined(desc->swizzle, swizzle_view);
+
+	/* S3TC formats. TODO */
+	if (desc->layout == UTIL_FORMAT_LAYOUT_S3TC) {
+		goto out_unknown;
+	}
+
+
+	for (i = 0; i < desc->nr_channels; i++) {	
+		if (desc->channel[i].type == UTIL_FORMAT_TYPE_SIGNED) {
+			word4 |= sign_bit[i];
+		}
+	}
+
+	/* R8G8Bx_SNORM - TODO CxV8U8 */
+
+	/* RGTC - TODO */
+
+	/* See whether the components are of the same size. */
+	for (i = 1; i < desc->nr_channels; i++) {
+		uniform = uniform && desc->channel[0].size == desc->channel[i].size;
+	}
+	
+	/* Non-uniform formats. */
+	if (!uniform) {
+		switch(desc->nr_channels) {
+		case 3:
+			if (desc->channel[0].size == 5 &&
+			    desc->channel[1].size == 6 &&
+			    desc->channel[2].size == 5) {
+				result |= V_0280A0_COLOR_5_6_5;
+				goto out_word4;
+			}
+			goto out_unknown;
+		case 4:
+			if (desc->channel[0].size == 5 &&
+			    desc->channel[1].size == 5 &&
+			    desc->channel[2].size == 5 &&
+			    desc->channel[3].size == 1) {
+				result |= V_0280A0_COLOR_1_5_5_5;
+				goto out_word4;
+			}
+			if (desc->channel[0].size == 10 &&
+			    desc->channel[1].size == 10 &&
+			    desc->channel[2].size == 10 &&
+			    desc->channel[3].size == 2) {
+				result |= V_0280A0_COLOR_10_10_10_2;
+				goto out_word4;
+			}
+			goto out_unknown;
+		}
+		goto out_unknown;
+	}
+
+	/* uniform formats */
+	switch (desc->channel[0].type) {
+	case UTIL_FORMAT_TYPE_UNSIGNED:
+	case UTIL_FORMAT_TYPE_SIGNED:
+		if (!desc->channel[0].normalized &&
+		    desc->colorspace != UTIL_FORMAT_COLORSPACE_SRGB) {
+			goto out_unknown;
+		}
+
+		switch (desc->channel[0].size) {
+		case 4:
+			switch (desc->nr_channels) {
+			case 2:
+				result |= V_0280A0_COLOR_4_4;
+				goto out_word4;
+			case 4:
+				result |= V_0280A0_COLOR_4_4_4_4;
+				goto out_word4;
+			}
+			goto out_unknown;
+		case 8:
+			switch (desc->nr_channels) {
+			case 1:
+				result |= V_0280A0_COLOR_8;
+				goto out_word4;
+			case 2:
+				result |= V_0280A0_COLOR_8_8;
+				goto out_word4;
+			case 4:
+				result |= V_0280A0_COLOR_8_8_8_8;
+				goto out_word4;
+			}
+			goto out_unknown;
+		case 16:
+			switch (desc->nr_channels) {
+			case 1:
+				result |= V_0280A0_COLOR_16;
+				goto out_word4;
+			case 2:
+				result |= V_0280A0_COLOR_16_16;
+				goto out_word4;
+			case 4:
+				result |= V_0280A0_COLOR_16_16_16_16;
+				goto out_word4;
+			}
+		}
+		goto out_unknown;
+
+	case UTIL_FORMAT_TYPE_FLOAT:
+		switch (desc->channel[0].size) {
+		case 16:
+			switch (desc->nr_channels) {
+			case 1:
+				result |= V_0280A0_COLOR_16_FLOAT;
+				goto out_word4;
+			case 2:
+				result |= V_0280A0_COLOR_16_16_FLOAT;
+				goto out_word4;
+			case 4:
+				result |= V_0280A0_COLOR_16_16_16_16_FLOAT;
+				goto out_word4;
+			}
+			goto out_unknown;
+		case 32:
+			switch (desc->nr_channels) {
+			case 1:
+				result |= V_0280A0_COLOR_32_FLOAT;
+				goto out_word4;
+			case 2:
+				result |= V_0280A0_COLOR_32_32_FLOAT;
+				goto out_word4;
+			case 4:
+				result |= V_0280A0_COLOR_32_32_32_32_FLOAT;
+				goto out_word4;
+			}
+		}
+		
+	}
+out_word4:
+	if (word4_p)
+		*word4_p = word4;
+	if (yuv_format_p)
+		*yuv_format_p = yuv_format;
+//	fprintf(stderr,"returning %08x %08x %08x\n", result, word4, yuv_format);
+	return result;
+out_unknown:
+//	R600_ERR("Unable to handle texformat %d %s\n", format, util_format_name(format));
+	return ~0;
 }

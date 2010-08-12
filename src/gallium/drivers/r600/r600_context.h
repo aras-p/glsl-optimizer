@@ -175,4 +175,7 @@ extern int r600_pipe_shader_update(struct pipe_context *ctx,
 #define R600_ERR(fmt, args...) \
 	fprintf(stderr, "EE %s/%s:%d - "fmt, __FILE__, __func__, __LINE__, ##args)
 
+uint32_t r600_translate_texformat(enum pipe_format format,
+				  const unsigned char *swizzle_view, 
+				  uint32_t *word4_p, uint32_t *yuv_format_p);
 #endif
