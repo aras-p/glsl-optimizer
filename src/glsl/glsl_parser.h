@@ -197,35 +197,36 @@
      CAST = 413,
      NAMESPACE = 414,
      USING = 415,
-     COMMON = 416,
-     PARTITION = 417,
-     ACTIVE = 418,
-     SAMPLERBUFFER = 419,
-     FILTER = 420,
-     IMAGE1D = 421,
-     IMAGE2D = 422,
-     IMAGE3D = 423,
-     IMAGECUBE = 424,
-     IMAGE1DARRAY = 425,
-     IMAGE2DARRAY = 426,
-     IIMAGE1D = 427,
-     IIMAGE2D = 428,
-     IIMAGE3D = 429,
-     IIMAGECUBE = 430,
-     IIMAGE1DARRAY = 431,
-     IIMAGE2DARRAY = 432,
-     UIMAGE1D = 433,
-     UIMAGE2D = 434,
-     UIMAGE3D = 435,
-     UIMAGECUBE = 436,
-     UIMAGE1DARRAY = 437,
-     UIMAGE2DARRAY = 438,
-     IMAGE1DSHADOW = 439,
-     IMAGE2DSHADOW = 440,
-     IMAGEBUFFER = 441,
-     IIMAGEBUFFER = 442,
-     UIMAGEBUFFER = 443,
-     ROW_MAJOR = 444
+     ERROR_TOK = 416,
+     COMMON = 417,
+     PARTITION = 418,
+     ACTIVE = 419,
+     SAMPLERBUFFER = 420,
+     FILTER = 421,
+     IMAGE1D = 422,
+     IMAGE2D = 423,
+     IMAGE3D = 424,
+     IMAGECUBE = 425,
+     IMAGE1DARRAY = 426,
+     IMAGE2DARRAY = 427,
+     IIMAGE1D = 428,
+     IIMAGE2D = 429,
+     IIMAGE3D = 430,
+     IIMAGECUBE = 431,
+     IIMAGE1DARRAY = 432,
+     IIMAGE2DARRAY = 433,
+     UIMAGE1D = 434,
+     UIMAGE2D = 435,
+     UIMAGE3D = 436,
+     UIMAGECUBE = 437,
+     UIMAGE1DARRAY = 438,
+     UIMAGE2DARRAY = 439,
+     IMAGE1DSHADOW = 440,
+     IMAGE2DSHADOW = 441,
+     IMAGEBUFFER = 442,
+     IIMAGEBUFFER = 443,
+     UIMAGEBUFFER = 444,
+     ROW_MAJOR = 445
    };
 #endif
 
@@ -267,7 +268,7 @@ typedef union YYSTYPE
 
 
 /* Line 1676 of yacc.c  */
-#line 271 "glsl_parser.h"
+#line 272 "glsl_parser.h"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
