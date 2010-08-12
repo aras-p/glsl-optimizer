@@ -1,12 +1,12 @@
 GLSL optimizer
 ==============
 
-A C++ library that takes out GLSL shaders, does some GPU-independent optimizations on them
+A C++ library that takes GLSL shaders, does some GPU-independent optimizations on them
 and outputs GLSL back. Optimizations are function inlining, dead code removal, copy propagation,
-constant folding, arithmetic optimizations and so on.
+constant folding, constant propagation, arithmetic optimizations and so on.
 
 Almost all actual code is [Mesa 3D's GLSL2](http://cgit.freedesktop.org/mesa/mesa/log/?h=glsl2)
-compiler; all this library does is spits out GLSL back instead.
+compiler; all this library does is spits out optimized GLSL back.
 
 Apparently quite a few mobile platforms are pretty bad at optimizing GLSL shaders; and
 unfortunately they *also* lack offline shader compilers. So using a GLSL optimizer offline
