@@ -87,6 +87,7 @@ struct blitter_context_priv
    void *dsa_write_depth_keep_stencil;
    void *dsa_keep_depth_stencil;
    void *dsa_keep_depth_write_stencil;
+   void *dsa_flush_depth_stencil;
 
    void *velem_state;
 
@@ -157,6 +158,12 @@ struct blitter_context *util_blitter_create(struct pipe_context *pipe)
       pipe->create_depth_stencil_alpha_state(pipe, &dsa);
 
    dsa.depth.writemask = 1;
+   ctx->dsa_flush_depth_stencil =
+      pipe->create_depth_stencil_alpha_state(pipe, &dsa);
+
+   dsa.depth.enabled = 1;
+   dsa.depth.writemask = 1;
+   dsa.depth.func = PIPE_FUNC_ALWAYS;
    ctx->dsa_write_depth_keep_stencil =
       pipe->create_depth_stencil_alpha_state(pipe, &dsa);
 
@@ -935,6 +942,45 @@ void util_blitter_clear_depth_stencil(struct blitter_context *blitter,
 
    blitter_set_dst_dimensions(ctx, dstsurf->width, dstsurf->height);
    blitter->draw_rectangle(blitter, dstx, dsty, dstx+width, dsty+height, depth,
+                           UTIL_BLITTER_ATTRIB_NONE, NULL);
+   blitter_restore_CSOs(ctx);
+}
+
+/* Clear a region of a depth stencil surface. */
+void util_blitter_flush_depth_stencil(struct blitter_context *blitter,
+                                      struct pipe_surface *dstsurf)
+{
+   struct blitter_context_priv *ctx = (struct blitter_context_priv*)blitter;
+   struct pipe_context *pipe = ctx->base.pipe;
+   struct pipe_framebuffer_state fb_state;
+
+   assert(dstsurf->texture);
+   if (!dstsurf->texture)
+      return;
+
+   /* check the saved state */
+   blitter_check_saved_CSOs(ctx);
+   assert(blitter->saved_fb_state.nr_cbufs != ~0);
+
+   /* bind CSOs */
+   pipe->bind_blend_state(pipe, ctx->blend_keep_color);
+   pipe->bind_depth_stencil_alpha_state(pipe, ctx->dsa_flush_depth_stencil);
+
+   pipe->bind_rasterizer_state(pipe, ctx->rs_state);
+   pipe->bind_fs_state(pipe, blitter_get_fs_col(ctx, 0));
+   pipe->bind_vs_state(pipe, ctx->vs_col);
+   pipe->bind_vertex_elements_state(pipe, ctx->velem_state);
+
+   /* set a framebuffer state */
+   fb_state.width = dstsurf->width;
+   fb_state.height = dstsurf->height;
+   fb_state.nr_cbufs = 0;
+   fb_state.cbufs[0] = 0;
+   fb_state.zsbuf = dstsurf;
+   pipe->set_framebuffer_state(pipe, &fb_state);
+
+   blitter_set_dst_dimensions(ctx, dstsurf->width, dstsurf->height);
+   blitter->draw_rectangle(blitter, 0, 0, dstsurf->width, dstsurf->height, 0,
                            UTIL_BLITTER_ATTRIB_NONE, NULL);
    blitter_restore_CSOs(ctx);
 }
