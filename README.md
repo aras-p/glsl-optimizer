@@ -16,8 +16,9 @@ a dozen times faster on one mobile platform!
 Usage
 -----
 
-Visual Studio 2008 and Xcode 3.2 project files for a static library are provided in
-`src/glsl/msvc/mesaglsl2.vcproj` and `src/glsl/xcode/mesaglsl2` respectively.
+Visual Studio 2008 (Windows, x86) and Xcode 3.2 (Mac, i386) project files for a static
+library are provided in `src/glsl/msvc/mesaglsl2.vcproj` and `src/glsl/xcode/mesaglsl2`
+respectively.
 
 Interface for the library is `src/glsl/glsl_optimizer.h`. General usage is:
  
