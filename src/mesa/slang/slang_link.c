@@ -1206,11 +1206,11 @@ _slang_link(GLcontext *ctx,
       vertNotify = ctx->Driver.ProgramStringNotify(ctx, GL_FRAGMENT_PROGRAM_ARB,
                                                  &shProg->FragmentProgram->Base);
       if (ctx->Shader.Flags & GLSL_DUMP) {
-         printf("Mesa pre-link fragment program:\n");
+         fprintf(stderr, "Mesa pre-link fragment program:\n");
          _mesa_print_program(&fragProg->Base);
          _mesa_print_program_parameters(ctx, &fragProg->Base);
 
-         printf("Mesa post-link fragment program:\n");
+         fprintf(stderr, "Mesa post-link fragment program:\n");
          _mesa_print_program(&shProg->FragmentProgram->Base);
          _mesa_print_program_parameters(ctx, &shProg->FragmentProgram->Base);
       }
@@ -1229,11 +1229,11 @@ _slang_link(GLcontext *ctx,
       geomNotify = ctx->Driver.ProgramStringNotify(ctx, MESA_GEOMETRY_PROGRAM,
                                                    &shProg->GeometryProgram->Base);
       if (ctx->Shader.Flags & GLSL_DUMP) {
-         printf("Mesa pre-link geometry program:\n");
+         fprintf(stderr, "Mesa pre-link geometry program:\n");
          _mesa_print_program(&geomProg->Base);
          _mesa_print_program_parameters(ctx, &geomProg->Base);
 
-         printf("Mesa post-link geometry program:\n");
+         fprintf(stderr, "Mesa post-link geometry program:\n");
          _mesa_print_program(&shProg->GeometryProgram->Base);
          _mesa_print_program_parameters(ctx, &shProg->GeometryProgram->Base);
       }
@@ -1247,11 +1247,11 @@ _slang_link(GLcontext *ctx,
       fragNotify = ctx->Driver.ProgramStringNotify(ctx, GL_VERTEX_PROGRAM_ARB,
                                                    &shProg->VertexProgram->Base);
       if (ctx->Shader.Flags & GLSL_DUMP) {
-         printf("Mesa pre-link vertex program:\n");
+         fprintf(stderr, "Mesa pre-link vertex program:\n");
          _mesa_print_program(&vertProg->Base);
          _mesa_print_program_parameters(ctx, &vertProg->Base);
 
-         printf("Mesa post-link vertex program:\n");
+         fprintf(stderr, "Mesa post-link vertex program:\n");
          _mesa_print_program(&shProg->VertexProgram->Base);
          _mesa_print_program_parameters(ctx, &shProg->VertexProgram->Base);
       }
@@ -1266,10 +1266,10 @@ _slang_link(GLcontext *ctx,
    }
 
    if (ctx->Shader.Flags & GLSL_DUMP) {
-      printf("Varying vars:\n");
+      fprintf(stderr, "Varying vars:\n");
       _mesa_print_parameter_list(shProg->Varying);
       if (shProg->InfoLog) {
-         printf("Info Log: %s\n", shProg->InfoLog);
+         fprintf(stderr, "Info Log: %s\n", shProg->InfoLog);
       }
    }
 
