@@ -30,6 +30,20 @@
 #include <util/u_cpu_detect.h>
 #include <rtasm/rtasm_cpu.h>
 
+/* don't use this for serious use */
+static double rand_double()
+{
+   const double rm = (double)RAND_MAX + 1;
+   double div = 1;
+   double v = 0;
+   for(unsigned i = 0; i < 4; ++i)
+   {
+      div *= rm;
+      v += (double)rand() / div;
+   }
+   return v;
+}
+
 int main(int argc, char** argv)
 {
    struct translate *(*create_fn)(const struct translate_key *key) = 0;
@@ -129,17 +143,17 @@ int main(int argc, char** argv)
    key.element[0].type = TRANSLATE_ELEMENT_NORMAL;
    key.element[0].instance_divisor = 0;
 
-   srand48(4359025);
+   srand(4359025);
 
    /* avoid negative values that work badly when converted to unsigned format*/
-   for (i = 0; i < buffer_size / sizeof(unsigned); ++i)
-      ((unsigned*)byte_buffer)[i] = mrand48() & 0x7f7f7f7f;
+   for (i = 0; i < buffer_size; ++i)
+      byte_buffer[i] = rand() & 0x7f7f7f7f;
 
    for (i = 0; i < buffer_size / sizeof(float); ++i)
-      float_buffer[i] = (float)drand48();
+      float_buffer[i] = (float)rand_double();
 
    for (i = 0; i < buffer_size / sizeof(double); ++i)
-      double_buffer[i] = drand48();
+      double_buffer[i] = rand_double();
 
    for (output_format = 1; output_format < PIPE_FORMAT_COUNT; ++output_format)
    {
