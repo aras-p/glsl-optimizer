@@ -121,6 +121,7 @@ C_SOURCES = \
 	util/u_handle_table.c \
 	util/u_hash.c \
 	util/u_hash_table.c \
+	util/u_index_modify.c \
 	util/u_keymap.c \
 	util/u_linear.c \
 	util/u_linkage.c \

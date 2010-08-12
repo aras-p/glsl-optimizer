@@ -29,6 +29,7 @@
 
 #include "r300_context.h"
 #include "translate/translate.h"
+#include "util/u_index_modify.h"
 
 void r300_begin_vertex_translate(struct r300_context *r300)
 {
@@ -188,111 +189,6 @@ void r300_end_vertex_translate(struct r300_context *r300)
                             NULL);
 }
 
-static void r300_shorten_ubyte_elts(struct r300_context* r300,
-                                    struct pipe_resource** elts,
-                                    int index_bias,
-                                    unsigned start,
-                                    unsigned count)
-{
-    struct pipe_context* context = &r300->context;
-    struct pipe_screen* screen = r300->context.screen;
-    struct pipe_resource* new_elts;
-    unsigned char *in_map;
-    unsigned short *out_map;
-    struct pipe_transfer *src_transfer, *dst_transfer;
-    unsigned i;
-
-    new_elts = pipe_buffer_create(screen,
-                                  PIPE_BIND_INDEX_BUFFER,
-                                  2 * count);
-
-    in_map = pipe_buffer_map(context, *elts, PIPE_TRANSFER_READ, &src_transfer);
-    out_map = pipe_buffer_map(context, new_elts, PIPE_TRANSFER_WRITE, &dst_transfer);
-
-    in_map += start;
-
-    for (i = 0; i < count; i++) {
-        *out_map = (unsigned short)(*in_map + index_bias);
-        in_map++;
-        out_map++;
-    }
-
-    pipe_buffer_unmap(context, *elts, src_transfer);
-    pipe_buffer_unmap(context, new_elts, dst_transfer);
-
-    *elts = new_elts;
-}
-
-static void r300_rebuild_ushort_elts(struct r300_context *r300,
-                                     struct pipe_resource **elts,
-                                     int index_bias,
-                                     unsigned start, unsigned count)
-{
-    struct pipe_context *context = &r300->context;
-    struct pipe_transfer *in_transfer = NULL;
-    struct pipe_transfer *out_transfer = NULL;
-    struct pipe_resource *new_elts;
-    unsigned short *in_map;
-    unsigned short *out_map;
-    unsigned i;
-
-    new_elts = pipe_buffer_create(context->screen,
-                                  PIPE_BIND_INDEX_BUFFER,
-                                  2 * count);
-
-    in_map = pipe_buffer_map(context, *elts,
-                             PIPE_TRANSFER_READ, &in_transfer);
-    out_map = pipe_buffer_map(context, new_elts,
-                              PIPE_TRANSFER_WRITE, &out_transfer);
-
-    in_map += start;
-    for (i = 0; i < count; i++) {
-        *out_map = (unsigned short)(*in_map + index_bias);
-        in_map++;
-        out_map++;
-    }
-
-    pipe_buffer_unmap(context, *elts, in_transfer);
-    pipe_buffer_unmap(context, new_elts, out_transfer);
-
-    *elts = new_elts;
-}
-
-static void r300_rebuild_uint_elts(struct r300_context *r300,
-                                   struct pipe_resource **elts,
-                                   int index_bias,
-                                   unsigned start, unsigned count)
-{
-    struct pipe_context *context = &r300->context;
-    struct pipe_transfer *in_transfer = NULL;
-    struct pipe_transfer *out_transfer = NULL;
-    struct pipe_resource *new_elts;
-    unsigned int *in_map;
-    unsigned int *out_map;
-    unsigned i;
-
-    new_elts = pipe_buffer_create(context->screen,
-                                  PIPE_BIND_INDEX_BUFFER,
-                                  2 * count);
-
-    in_map = pipe_buffer_map(context, *elts,
-                             PIPE_TRANSFER_READ, &in_transfer);
-    out_map = pipe_buffer_map(context, new_elts,
-                              PIPE_TRANSFER_WRITE, &out_transfer);
-
-    in_map += start;
-    for (i = 0; i < count; i++) {
-        *out_map = (unsigned int)(*in_map + index_bias);
-        in_map++;
-        out_map++;
-    }
-
-    pipe_buffer_unmap(context, *elts, in_transfer);
-    pipe_buffer_unmap(context, new_elts, out_transfer);
-
-    *elts = new_elts;
-}
-
 void r300_translate_index_buffer(struct r300_context *r300,
                                  struct pipe_resource **index_buffer,
                                  unsigned *index_size, unsigned index_offset,
@@ -300,21 +196,21 @@ void r300_translate_index_buffer(struct r300_context *r300,
 {
     switch (*index_size) {
         case 1:
-            r300_shorten_ubyte_elts(r300, index_buffer, index_offset, *start, count);
+            util_shorten_ubyte_elts(&r300->context, index_buffer, index_offset, *start, count);
             *index_size = 2;
             *start = 0;
             break;
 
         case 2:
             if (*start % 2 != 0 || index_offset) {
-                r300_rebuild_ushort_elts(r300, index_buffer, index_offset, *start, count);
+                util_rebuild_ushort_elts(&r300->context, index_buffer, index_offset, *start, count);
                 *start = 0;
             }
             break;
 
         case 4:
             if (index_offset) {
-                r300_rebuild_uint_elts(r300, index_buffer, index_offset, *start, count);
+                util_rebuild_uint_elts(&r300->context, index_buffer, index_offset, *start, count);
                 *start = 0;
             }
             break;
