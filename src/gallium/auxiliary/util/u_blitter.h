@@ -200,8 +200,6 @@ void util_blitter_clear_depth_stencil(struct blitter_context *blitter,
                                       unsigned dstx, unsigned dsty,
                                       unsigned width, unsigned height);
 
-void util_blitter_flush_depth_stencil(struct blitter_context *blitter,
-                                      struct pipe_surface *dstsurf);
 /* The functions below should be used to save currently bound constant state
  * objects inside a driver. The objects are automatically restored at the end
  * of the util_blitter_{clear, copy_region, fill_region} functions and then

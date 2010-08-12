@@ -279,7 +279,9 @@ void r300_flush_depth_stencil(struct pipe_context *pipe,
                                             PIPE_BIND_DEPTH_STENCIL);
     r300->z_decomp_rd = TRUE;
     r300_blitter_begin(r300, R300_CLEAR_SURFACE);
-    util_blitter_flush_depth_stencil(r300->blitter, dstsurf);
+    util_blitter_clear_depth_stencil(r300->blitter, dstsurf,
+                                     PIPE_CLEAR_DEPTH, 0, 0,
+                                     0, 0, dstsurf->width, dstsurf->height);
     r300_blitter_end(r300);
     r300->z_decomp_rd = FALSE;
 
