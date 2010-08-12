@@ -11,8 +11,11 @@ env = env.Clone()
 env.Prepend(LIBPATH = [graw.dir])
 env.Prepend(LIBS = ['graw'] + gallium)
 
-if platform == 'sunos5':
+if platform in ('freebsd8', 'sunos5'):
     env.Append(LIBS = ['m'])
+
+if platform == 'freebsd8':
+    env.Append(LIBS = ['pthread'])
 
 progs = [
     'clear',
