@@ -37,7 +37,11 @@ int main(int argc, char** argv)
    struct translate_key key;
    unsigned output_format;
    unsigned input_format;
+   unsigned buffer_size = 4096;
    unsigned char* buffer[5];
+   unsigned char* byte_buffer;
+   float* float_buffer;
+   double* double_buffer;
    unsigned count = 4;
    unsigned i, j, k;
    unsigned passed = 0;
@@ -111,8 +115,12 @@ int main(int argc, char** argv)
       return 2;
    }
 
-   for (i = 0; i < Elements(buffer); ++i)
-      buffer[i] = align_malloc(4096, 4096);
+   for (i = 1; i < Elements(buffer); ++i)
+      buffer[i] = align_malloc(buffer_size, 4096);
+
+   byte_buffer = align_malloc(buffer_size, 4096);
+   float_buffer = align_malloc(buffer_size, 4096);
+   double_buffer = align_malloc(buffer_size, 4096);
 
    key.nr_elements = 1;
    key.element[0].input_buffer = 0;
@@ -121,14 +129,24 @@ int main(int argc, char** argv)
    key.element[0].type = TRANSLATE_ELEMENT_NORMAL;
    key.element[0].instance_divisor = 0;
 
-   srand(4359025);
-   for (i = 0; i < 4096; ++i)
-      buffer[0][i] = rand() & 0x7f; /* avoid negative values that work badly when converted to unsigned format*/
+   srand48(4359025);
+
+   /* avoid negative values that work badly when converted to unsigned format*/
+   for (i = 0; i < buffer_size / sizeof(unsigned); ++i)
+      ((unsigned*)byte_buffer)[i] = mrand48() & 0x7f7f7f7f;
+
+   for (i = 0; i < buffer_size / sizeof(float); ++i)
+      float_buffer[i] = (float)drand48();
+
+   for (i = 0; i < buffer_size / sizeof(double); ++i)
+      double_buffer[i] = drand48();
 
    for (output_format = 1; output_format < PIPE_FORMAT_COUNT; ++output_format)
    {
       const struct util_format_description* output_format_desc = util_format_description(output_format);
       unsigned output_format_size;
+      unsigned output_normalized = 0;
+
       if (!output_format_desc
             || !output_format_desc->fetch_rgba_float
             || !output_format_desc->pack_rgba_float
@@ -136,6 +154,12 @@ int main(int argc, char** argv)
             || output_format_desc->layout != UTIL_FORMAT_LAYOUT_PLAIN
             || !translate_is_output_format_supported(output_format))
          continue;
+
+      for(i = 0; i < output_format_desc->nr_channels; ++i)
+      {
+         if(output_format_desc->channel[i].type != UTIL_FORMAT_TYPE_FLOAT)
+            output_normalized |= (1 << output_format_desc->channel[i].normalized);
+      }
 
       output_format_size = util_format_get_stride(output_format, 1);
 
@@ -146,6 +170,8 @@ int main(int argc, char** argv)
          struct translate* translate[2];
          unsigned fail = 0;
          unsigned used_generic = 0;
+         unsigned input_normalized = 0;
+         boolean input_is_float = FALSE;
 
          if (!input_format_desc
                || !input_format_desc->fetch_rgba_float
@@ -156,6 +182,22 @@ int main(int argc, char** argv)
             continue;
 
          input_format_size = util_format_get_stride(input_format, 1);
+
+         for(i = 0; i < input_format_desc->nr_channels; ++i)
+         {
+            if(input_format_desc->channel[i].type == UTIL_FORMAT_TYPE_FLOAT)
+            {
+               input_is_float = 1;
+               input_normalized |= 1 << 1;
+            }
+            else
+               input_normalized |= (1 << input_format_desc->channel[i].normalized);
+         }
+
+         if(((input_normalized | output_normalized) == 3)
+               || ((input_normalized & 1) && (output_normalized & 1)
+                     && input_format_size * output_format_desc->nr_channels > output_format_size * input_format_desc->nr_channels))
+            continue;
 
          key.element[0].input_format = input_format;
          key.element[0].output_format = output_format;
@@ -175,6 +217,18 @@ int main(int argc, char** argv)
             if(!translate[1])
                continue;
          }
+
+         for(i = 1; i < 5; ++i)
+            memset(buffer[i], 0xcd - (0x22 * i), 4096);
+
+         if(input_is_float && input_format_desc->channel[0].size == 32)
+            buffer[0] = (unsigned char*)float_buffer;
+         else if(input_is_float && input_format_desc->channel[0].size == 64)
+            buffer[0] = (unsigned char*)double_buffer;
+         else if(input_is_float)
+            abort();
+         else
+            buffer[0] = byte_buffer;
 
          translate[0]->set_buffer(translate[0], 0, buffer[0], input_format_size, ~0);
          translate[0]->run(translate[0], 0, count, 0, buffer[1]);
@@ -208,7 +262,7 @@ int main(int argc, char** argv)
                used_generic ? "[GENERIC]" : "",
                input_format_desc->name, output_format_desc->name, input_format_desc->name, output_format_desc->name, input_format_desc->name);
 
-         if (fail)
+         if (1)
          {
             for (i = 0; i < Elements(buffer); ++i)
             {
