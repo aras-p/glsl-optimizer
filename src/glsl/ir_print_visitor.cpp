@@ -405,19 +405,23 @@ ir_print_visitor::visit(ir_if *ir)
    printf(")\n");
 
    indent();
-   printf("(\n");
-   indentation++;
+   if (!ir->else_instructions.is_empty()) {
+      printf("(\n");
+      indentation++;
 
-   foreach_iter(exec_list_iterator, iter, ir->else_instructions) {
-      ir_instruction *const inst = (ir_instruction *) iter.get();
+      foreach_iter(exec_list_iterator, iter, ir->else_instructions) {
+	 ir_instruction *const inst = (ir_instruction *) iter.get();
 
+	 indent();
+	 inst->accept(this);
+	 printf("\n");
+      }
+      indentation--;
       indent();
-      inst->accept(this);
-      printf("\n");
+      printf("))\n");
+   } else {
+      printf("())\n");
    }
-   indentation--;
-   indent();
-   printf("))\n");
 }
 
 
