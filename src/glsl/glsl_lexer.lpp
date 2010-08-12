@@ -46,6 +46,16 @@
       }								 \
    } while (0)
 
+#define RESERVED_WORD(version, token)					\
+   do {									\
+      if (yyextra->language_version >= version) {			\
+	 return token;							\
+      } else {								\
+	 _mesa_glsl_error(yylloc, yyextra,				\
+			  "Illegal use of reserved word `%s'", yytext);	\
+	 return ERROR_TOK;						\
+      }									\
+   } while (0)
 %}
 
 %option bison-bridge bison-locations reentrant noyywrap
@@ -252,49 +262,49 @@ false			{
 
 
     /* Reserved words in GLSL 1.10. */
-asm		return ASM;
-class		return CLASS;
-union		return UNION;
-enum		return ENUM;
-typedef		return TYPEDEF;
-template	return TEMPLATE;
-this		return THIS;
-packed		return PACKED;
-goto		return GOTO;
-switch		return SWITCH;
-default		return DEFAULT;
-inline		return INLINE_TOK;
-noinline	return NOINLINE;
-volatile	return VOLATILE;
-public		return PUBLIC_TOK;
-static		return STATIC;
-extern		return EXTERN;
-external	return EXTERNAL;
-interface	return INTERFACE;
-long		return LONG;
-short		return SHORT;
-double		return DOUBLE;
-half		return HALF;
-fixed		return FIXED;
-unsigned	return UNSIGNED;
-input		return INPUT;
-output		return OUTPUT;
-hvec2		return HVEC2;
-hvec3		return HVEC3;
-hvec4		return HVEC4;
-dvec2		return DVEC2;
-dvec3		return DVEC3;
-dvec4		return DVEC4;
-fvec2		return FVEC2;
-fvec3		return FVEC3;
-fvec4		return FVEC4;
+asm		RESERVED_WORD(999, ASM);
+class		RESERVED_WORD(999, CLASS);
+union		RESERVED_WORD(999, UNION);
+enum		RESERVED_WORD(999, ENUM);
+typedef		RESERVED_WORD(999, TYPEDEF);
+template	RESERVED_WORD(999, TEMPLATE);
+this		RESERVED_WORD(999, THIS);
+packed		RESERVED_WORD(999, PACKED);
+goto		RESERVED_WORD(999, GOTO);
+switch		RESERVED_WORD(130, SWITCH);
+default		RESERVED_WORD(130, DEFAULT);
+inline		RESERVED_WORD(999, INLINE_TOK);
+noinline	RESERVED_WORD(999, NOINLINE);
+volatile	RESERVED_WORD(999, VOLATILE);
+public		RESERVED_WORD(999, PUBLIC_TOK);
+static		RESERVED_WORD(999, STATIC);
+extern		RESERVED_WORD(999, EXTERN);
+external	RESERVED_WORD(999, EXTERNAL);
+interface	RESERVED_WORD(999, INTERFACE);
+long		RESERVED_WORD(999, LONG);
+short		RESERVED_WORD(999, SHORT);
+double		RESERVED_WORD(999, DOUBLE);
+half		RESERVED_WORD(999, HALF);
+fixed		RESERVED_WORD(999, FIXED);
+unsigned	RESERVED_WORD(999, UNSIGNED);
+input		RESERVED_WORD(999, INPUT);
+output		RESERVED_WORD(999, OUTPUT);
+hvec2		RESERVED_WORD(999, HVEC2);
+hvec3		RESERVED_WORD(999, HVEC3);
+hvec4		RESERVED_WORD(999, HVEC4);
+dvec2		RESERVED_WORD(999, DVEC2);
+dvec3		RESERVED_WORD(999, DVEC3);
+dvec4		RESERVED_WORD(999, DVEC4);
+fvec2		RESERVED_WORD(999, FVEC2);
+fvec3		RESERVED_WORD(999, FVEC3);
+fvec4		RESERVED_WORD(999, FVEC4);
 sampler2DRect		return SAMPLER2DRECT;
-sampler3DRect		return SAMPLER3DRECT;
+sampler3DRect		RESERVED_WORD(999, SAMPLER3DRECT);
 sampler2DRectShadow	return SAMPLER2DRECTSHADOW;
-sizeof		return SIZEOF;
-cast		return CAST;
-namespace	return NAMESPACE;
-using		return USING;
+sizeof		RESERVED_WORD(999, SIZEOF);
+cast		RESERVED_WORD(999, CAST);
+namespace	RESERVED_WORD(999, NAMESPACE);
+using		RESERVED_WORD(999, USING);
 
     /* Additional reserved words in GLSL 1.20. */
 lowp		TOKEN_OR_IDENTIFIER(120, LOWP);
