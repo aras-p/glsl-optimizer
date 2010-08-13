@@ -30,8 +30,38 @@
   inspired by http://swapped.cc/halloc/
 */
 
-#include "replace.h"
 #include "talloc.h"
+#include <string.h>
+
+#define TALLOC_MIN(a,b) ((a)<(b)?(a):(b))
+
+/* Visual C++ 2008 compatibility */
+#if defined(_MSC_VER) && !defined(_cplusplus)
+typedef size_t ssize_t;
+#define inline __inline
+#endif
+
+/* Xcode/gcc4.0 compatibility */
+#if defined(__APPLE__) || defined(__MINGW32__)
+static size_t strnlen (const char* s, size_t n)
+{
+	size_t i;
+	for (i = 0; i < n; ++i)
+	{
+		if (s[i] == '\0')
+			break;
+	}
+	return i;
+}
+#endif
+
+/* Visual C++ 2008 & Xcode/gcc4.0 compatibility */
+#if !defined(_cplusplus) && (defined(WIN32) || defined(__APPLE__))
+typedef int bool;
+#define false 0
+#define true 1
+#endif
+
 
 #ifdef TALLOC_BUILD_VERSION_MAJOR
 #if (TALLOC_VERSION_MAJOR != TALLOC_BUILD_VERSION_MAJOR)
@@ -1200,7 +1230,7 @@ void *_talloc_realloc(const void *context, void *ptr, size_t size, const char *n
 		}
 
 		if (new_ptr) {
-			memcpy(new_ptr, tc, MIN(tc->size,size) + TC_HDR_SIZE);
+			memcpy(new_ptr, tc, TALLOC_MIN(tc->size,size) + TC_HDR_SIZE);
 		}
 	}
 	else {
@@ -1686,7 +1716,7 @@ char *talloc_strndup_append_buffer(char *s, const char *a, size_t n)
 	return __talloc_strlendup_append(s, slen, a, strnlen(a, n));
 }
 
-#ifndef HAVE_VA_COPY
+#ifndef va_copy
 #ifdef HAVE___VA_COPY
 #define va_copy(dest, src) __va_copy(dest, src)
 #else
@@ -1703,7 +1733,12 @@ char *talloc_vasprintf(const void *t, const char *fmt, va_list ap)
 
 	/* this call looks strange, but it makes it work on older solaris boxes */
 	va_copy(ap2, ap);
+	#ifdef _MSC_VER
+	/* MSVC runtime needs to use _vcsprintf to return buffer size; vsnprintf would return -1 */
+	len = _vscprintf(fmt, ap2);
+	#else
 	len = vsnprintf(&c, 1, fmt, ap2);
+	#endif
 	va_end(ap2);
 	if (unlikely(len < 0)) {
 		return NULL;
@@ -1748,7 +1783,12 @@ static inline char *__talloc_vaslenprintf_append(char *s, size_t slen,
 	char c;
 
 	va_copy(ap2, ap);
+	#ifdef _MSC_VER
+	/* MSVC runtime needs to use _vcsprintf to return buffer size; vsnprintf would return -1 */
+	alen = _vscprintf(fmt, ap2);
+	#else
 	alen = vsnprintf(&c, 1, fmt, ap2);
+	#endif
 	va_end(ap2);
 
 	if (alen <= 0) {
