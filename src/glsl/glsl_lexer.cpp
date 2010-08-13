@@ -1415,17 +1415,17 @@ return CONST_TOK;
 case 17:
 YY_RULE_SETUP
 #line 131 "glsl_lexer.lpp"
-return BOOL;
+return BOOL_TOK;
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
 #line 132 "glsl_lexer.lpp"
-return FLOAT;
+return FLOAT_TOK;
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
 #line 133 "glsl_lexer.lpp"
-return INT;
+return INT_TOK;
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
@@ -1520,17 +1520,17 @@ return VEC4;
 case 38:
 YY_RULE_SETUP
 #line 154 "glsl_lexer.lpp"
-return MAT2;
+return MAT2X2;
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
 #line 155 "glsl_lexer.lpp"
-return MAT3;
+return MAT3X3;
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
 #line 156 "glsl_lexer.lpp"
-return MAT4;
+return MAT4X4;
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
@@ -1580,17 +1580,17 @@ TOKEN_OR_IDENTIFIER(120, MAT4X4);
 case 50:
 YY_RULE_SETUP
 #line 167 "glsl_lexer.lpp"
-return IN;
+return IN_TOK;
 	YY_BREAK
 case 51:
 YY_RULE_SETUP
 #line 168 "glsl_lexer.lpp"
-return OUT;
+return OUT_TOK;
 	YY_BREAK
 case 52:
 YY_RULE_SETUP
 #line 169 "glsl_lexer.lpp"
-return INOUT;
+return INOUT_TOK;
 	YY_BREAK
 case 53:
 YY_RULE_SETUP
@@ -1665,7 +1665,7 @@ return STRUCT;
 case 67:
 YY_RULE_SETUP
 #line 187 "glsl_lexer.lpp"
-return VOID;
+return VOID_TOK;
 	YY_BREAK
 case 68:
 YY_RULE_SETUP
@@ -1894,7 +1894,7 @@ RESERVED_WORD(999, THIS);
 case 105:
 YY_RULE_SETUP
 #line 272 "glsl_lexer.lpp"
-RESERVED_WORD(999, PACKED);
+RESERVED_WORD(999, PACKED_TOK);
 	YY_BREAK
 case 106:
 YY_RULE_SETUP
@@ -1954,17 +1954,17 @@ RESERVED_WORD(999, INTERFACE);
 case 117:
 YY_RULE_SETUP
 #line 284 "glsl_lexer.lpp"
-RESERVED_WORD(999, LONG);
+RESERVED_WORD(999, LONG_TOK);
 	YY_BREAK
 case 118:
 YY_RULE_SETUP
 #line 285 "glsl_lexer.lpp"
-RESERVED_WORD(999, SHORT);
+RESERVED_WORD(999, SHORT_TOK);
 	YY_BREAK
 case 119:
 YY_RULE_SETUP
 #line 286 "glsl_lexer.lpp"
-RESERVED_WORD(999, DOUBLE);
+RESERVED_WORD(999, DOUBLE_TOK);
 	YY_BREAK
 case 120:
 YY_RULE_SETUP
@@ -1974,7 +1974,7 @@ RESERVED_WORD(999, HALF);
 case 121:
 YY_RULE_SETUP
 #line 288 "glsl_lexer.lpp"
-RESERVED_WORD(999, FIXED);
+RESERVED_WORD(999, FIXED_TOK);
 	YY_BREAK
 case 122:
 YY_RULE_SETUP
@@ -1984,7 +1984,7 @@ RESERVED_WORD(999, UNSIGNED);
 case 123:
 YY_RULE_SETUP
 #line 290 "glsl_lexer.lpp"
-RESERVED_WORD(999, INPUT);
+RESERVED_WORD(999, INPUT_TOK);
 	YY_BREAK
 case 124:
 YY_RULE_SETUP
