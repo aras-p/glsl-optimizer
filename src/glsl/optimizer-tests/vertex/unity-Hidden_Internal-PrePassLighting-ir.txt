@@ -10,10 +10,6 @@ struct appdata {
 uniform vec4 _ProjectionParams;
 vec4 ComputeScreenPos (
   in vec4 pos
-);
-
-vec4 ComputeScreenPos (
-  in vec4 pos
 )
 {
   vec4 o;
@@ -31,10 +27,6 @@ vec4 ComputeScreenPos (
   o.zw = vec2(tmpvar_4.xy);
   return o;
 }
-
-v2f vert (
-  in appdata v
-);
 
 v2f vert (
   in appdata v

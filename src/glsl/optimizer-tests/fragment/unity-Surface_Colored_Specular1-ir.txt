@@ -19,11 +19,6 @@ uniform sampler2D _MainTex;
 void surf (
   in Input IN,
   inout MySurfaceOutput o
-);
-
-void surf (
-  in Input IN,
-  inout MySurfaceOutput o
 )
 {
   vec4 spec;
@@ -44,10 +39,6 @@ void surf (
   tmpvar_6 = 0.250000;
   o.Specular = tmpvar_6;
 }
-
-vec4 frag_surf (
-  in v2f_surf IN
-);
 
 vec4 frag_surf (
   in v2f_surf IN

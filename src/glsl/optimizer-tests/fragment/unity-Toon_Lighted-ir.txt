@@ -26,11 +26,6 @@ uniform vec4 _Color;
 void surf (
   in Input IN,
   inout SurfaceOutput o
-);
-
-void surf (
-  in Input IN,
-  inout SurfaceOutput o
 )
 {
   vec4 c;
@@ -46,12 +41,6 @@ void surf (
   tmpvar_4 = c.w;
   o.Alpha = tmpvar_4;
 }
-
-vec4 LightingToonRamp (
-  in SurfaceOutput s,
-  in vec3 lightDir,
-  in float atten
-);
 
 vec4 LightingToonRamp (
   in SurfaceOutput s,
@@ -83,10 +72,6 @@ vec4 LightingToonRamp (
   c.w = float(vec4(tmpvar_7));
   return c;
 }
-
-vec4 frag_surf (
-  in v2f_surf IN
-);
 
 vec4 frag_surf (
   in v2f_surf IN

@@ -11,11 +11,6 @@ uniform vec4 _CenterRadius;
 vec2 MultiplyUV (
   in mat4 mat,
   in vec2 inUV
-);
-
-vec2 MultiplyUV (
-  in mat4 mat,
-  in vec2 inUV
 )
 {
   vec4 temp;
@@ -32,10 +27,6 @@ vec2 MultiplyUV (
   temp = tmpvar_3;
   return temp.xy;
 }
-
-v2f vert (
-  in appdata_img v
-);
 
 v2f vert (
   in appdata_img v

@@ -33,11 +33,6 @@ void xll_clip (
 void surf (
   in Input IN,
   inout SurfaceOutput o
-);
-
-void surf (
-  in Input IN,
-  inout SurfaceOutput o
 )
 {
   vec4 c;
@@ -57,11 +52,6 @@ void surf (
 vec4 LightingLambert_PrePass (
   in SurfaceOutput s,
   in vec4 light
-);
-
-vec4 LightingLambert_PrePass (
-  in SurfaceOutput s,
-  in vec4 light
 )
 {
   vec4 c;
@@ -73,10 +63,6 @@ vec4 LightingLambert_PrePass (
   c.w = float(vec4(tmpvar_2));
   return c;
 }
-
-vec4 frag_surf (
-  in v2f_surf IN
-);
 
 vec4 frag_surf (
   in v2f_surf IN

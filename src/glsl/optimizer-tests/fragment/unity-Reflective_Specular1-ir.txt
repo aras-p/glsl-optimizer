@@ -22,11 +22,6 @@ uniform vec4 _Color;
 void surf (
   in Input IN,
   inout SurfaceOutput o
-);
-
-void surf (
-  in Input IN,
-  inout SurfaceOutput o
 )
 {
   vec4 reflcol;
@@ -64,10 +59,6 @@ void surf (
   tmpvar_11 = (reflcol.w * _ReflectColor.w);
   o.Alpha = tmpvar_11;
 }
-
-vec4 frag_surf (
-  in v2f_surf IN
-);
 
 vec4 frag_surf (
   in v2f_surf IN

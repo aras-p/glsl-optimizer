@@ -6,10 +6,6 @@ uniform sampler2D _MainTex;
 uniform float _AccumOrig;
 vec4 frag (
   in v2f i
-);
-
-vec4 frag (
-  in v2f i
 )
 {
   vec4 tmpvar_1;

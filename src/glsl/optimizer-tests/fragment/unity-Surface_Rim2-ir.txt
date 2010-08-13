@@ -134,11 +134,6 @@ mat4 xll_saturate (
 void surf (
   in Input IN,
   inout SurfaceOutput o
-);
-
-void surf (
-  in Input IN,
-  inout SurfaceOutput o
 )
 {
   float rim;
@@ -166,11 +161,6 @@ void surf (
 vec4 LightingLambert_PrePass (
   in SurfaceOutput s,
   in vec4 light
-);
-
-vec4 LightingLambert_PrePass (
-  in SurfaceOutput s,
-  in vec4 light
 )
 {
   vec4 c;
@@ -185,18 +175,10 @@ vec4 LightingLambert_PrePass (
 
 vec3 DecodeLightmap (
   in vec4 color
-);
-
-vec3 DecodeLightmap (
-  in vec4 color
 )
 {
   return (2.000000 * color.xyz);
 }
-
-vec4 frag_surf (
-  in v2f_surf IN
-);
 
 vec4 frag_surf (
   in v2f_surf IN

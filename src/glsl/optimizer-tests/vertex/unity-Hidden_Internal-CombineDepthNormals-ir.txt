@@ -9,10 +9,6 @@ struct appdata {
 uniform vec4 _CameraNormalsTexture_ST;
 v2f vert (
   in appdata v
-);
-
-v2f vert (
-  in appdata v
 )
 {
   v2f o;

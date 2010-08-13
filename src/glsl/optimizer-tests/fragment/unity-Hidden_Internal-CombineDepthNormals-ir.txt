@@ -7,18 +7,10 @@ uniform sampler2D _CameraNormalsTexture;
 uniform sampler2D _CameraDepthTexture;
 float Linear01Depth (
   in float z
-);
-
-float Linear01Depth (
-  in float z
 )
 {
   return (1.000000 / ((_ZBufferParams.x * z) + _ZBufferParams.y));
 }
-
-vec2 EncodeViewNormalStereo (
-  in vec3 n
-);
 
 vec2 EncodeViewNormalStereo (
   in vec3 n
@@ -40,10 +32,6 @@ vec2 EncodeViewNormalStereo (
   enc = tmpvar_4;
   return enc;
 }
-
-vec2 EncodeFloatRG (
-  in float v
-);
 
 vec2 EncodeFloatRG (
   in float v
@@ -75,11 +63,6 @@ vec2 EncodeFloatRG (
 vec4 EncodeDepthNormal (
   in float depth,
   in vec3 normal
-);
-
-vec4 EncodeDepthNormal (
-  in float depth,
-  in vec3 normal
 )
 {
   vec4 enc;
@@ -95,10 +78,6 @@ vec4 EncodeDepthNormal (
   enc.zw = vec2(tmpvar_4.xy);
   return enc;
 }
-
-vec4 frag (
-  in v2f i
-);
 
 vec4 frag (
   in v2f i

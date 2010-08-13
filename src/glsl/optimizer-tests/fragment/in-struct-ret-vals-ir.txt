@@ -5,10 +5,6 @@ struct v2f {
 };
 vec4 xlat_main (
   in v2f i
-);
-
-vec4 xlat_main (
-  in v2f i
 )
 {
   vec4 c;

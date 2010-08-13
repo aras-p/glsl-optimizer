@@ -17,11 +17,6 @@ uniform sampler2D _MainTex;
 void surf (
   in Input IN,
   inout SurfaceOutput o
-);
-
-void surf (
-  in Input IN,
-  inout SurfaceOutput o
 )
 {
   vec2 uv;
@@ -37,10 +32,6 @@ void surf (
   tmpvar_4 = tmpvar_3.xyz;
   o.Albedo = tmpvar_4;
 }
-
-vec4 frag_surf (
-  in v2f_surf IN
-);
 
 vec4 frag_surf (
   in v2f_surf IN

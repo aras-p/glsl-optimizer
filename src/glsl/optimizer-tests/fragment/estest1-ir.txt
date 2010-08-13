@@ -10,10 +10,6 @@ uniform sampler2D _Detail;
 uniform vec4 _Color;
 vec4 frag (
   in v2f i
-);
-
-vec4 frag (
-  in v2f i
 )
 {
   vec4 c;

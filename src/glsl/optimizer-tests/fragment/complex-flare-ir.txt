@@ -2,11 +2,6 @@ uniform sampler2D _FlareTexture;
 vec4 xlat_main (
   in vec4 color,
   in vec2 texcoord
-);
-
-vec4 xlat_main (
-  in vec4 color,
-  in vec2 texcoord
 )
 {
   vec4 tmpvar_1;

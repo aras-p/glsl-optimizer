@@ -16,10 +16,6 @@ void xll_clip (
 
 vec2 EncodeViewNormalStereo (
   in vec3 n
-);
-
-vec2 EncodeViewNormalStereo (
-  in vec3 n
 )
 {
   vec2 enc;
@@ -38,10 +34,6 @@ vec2 EncodeViewNormalStereo (
   enc = tmpvar_4;
   return enc;
 }
-
-vec2 EncodeFloatRG (
-  in float v
-);
 
 vec2 EncodeFloatRG (
   in float v
@@ -73,11 +65,6 @@ vec2 EncodeFloatRG (
 vec4 EncodeDepthNormal (
   in float depth,
   in vec3 normal
-);
-
-vec4 EncodeDepthNormal (
-  in float depth,
-  in vec3 normal
 )
 {
   vec4 enc;
@@ -93,10 +80,6 @@ vec4 EncodeDepthNormal (
   enc.zw = vec2(tmpvar_4.xy);
   return enc;
 }
-
-vec4 frag (
-  in v2f i
-);
 
 vec4 frag (
   in v2f i

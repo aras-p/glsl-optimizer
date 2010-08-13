@@ -147,10 +147,6 @@ mat4 xll_saturate (
 
 vec4 UnpackNormal (
   in vec4 packednormal
-);
-
-vec4 UnpackNormal (
-  in vec4 packednormal
 )
 {
   vec4 normal;
@@ -164,11 +160,6 @@ vec4 UnpackNormal (
   normal.z = float(vec3(tmpvar_3));
   return normal;
 }
-
-void surf (
-  in Input IN,
-  inout LeafSurfaceOutput o
-);
 
 void surf (
   in Input IN,
@@ -212,13 +203,6 @@ void surf (
   tmpvar_14 = tmpvar_13;
   o.Normal = tmpvar_14;
 }
-
-vec4 LightingTreeLeaf (
-  in LeafSurfaceOutput s,
-  in vec3 lightDir,
-  in vec3 viewDir,
-  in float atten
-);
 
 vec4 LightingTreeLeaf (
   in LeafSurfaceOutput s,
@@ -288,10 +272,6 @@ vec4 LightingTreeLeaf (
   c.xyz = tmpvar_20.xyz;
   return c;
 }
-
-vec4 frag_surf (
-  in v2f_surf IN
-);
 
 vec4 frag_surf (
   in v2f_surf IN

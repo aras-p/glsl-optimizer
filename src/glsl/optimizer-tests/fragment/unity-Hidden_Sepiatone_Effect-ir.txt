@@ -5,10 +5,6 @@ struct v2f_img {
 uniform sampler2D _MainTex;
 vec4 frag (
   in v2f_img i
-);
-
-vec4 frag (
-  in v2f_img i
 )
 {
   vec4 xlat_var_output;

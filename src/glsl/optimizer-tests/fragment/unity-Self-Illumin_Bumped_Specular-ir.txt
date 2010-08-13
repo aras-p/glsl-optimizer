@@ -25,10 +25,6 @@ uniform vec4 _Color;
 uniform sampler2D _BumpMap;
 vec4 UnpackNormal (
   in vec4 packednormal
-);
-
-vec4 UnpackNormal (
-  in vec4 packednormal
 )
 {
   vec4 normal;
@@ -42,11 +38,6 @@ vec4 UnpackNormal (
   normal.z = float(vec3(tmpvar_3));
   return normal;
 }
-
-void surf (
-  in Input IN,
-  inout SurfaceOutput o
-);
 
 void surf (
   in Input IN,
@@ -90,10 +81,6 @@ void surf (
   tmpvar_13 = tmpvar_12;
   o.Normal = tmpvar_13;
 }
-
-vec4 frag_surf (
-  in v2f_surf IN
-);
 
 vec4 frag_surf (
   in v2f_surf IN

@@ -22,10 +22,6 @@ uniform sampler2D _ShadowMapTexture;
 uniform sampler2D _Decal;
 float unitySampleShadow (
   in vec4 shadowCoord
-);
-
-float unitySampleShadow (
-  in vec4 shadowCoord
 )
 {
   float shadow;
@@ -36,11 +32,6 @@ float unitySampleShadow (
   shadow = tmpvar_2;
   return shadow;
 }
-
-void surf (
-  in Input IN,
-  inout SurfaceOutput o
-);
 
 void surf (
   in Input IN,
@@ -56,18 +47,10 @@ void surf (
 
 vec3 DecodeLightmap (
   in vec4 color
-);
-
-vec3 DecodeLightmap (
-  in vec4 color
 )
 {
   return (2.000000 * color.xyz);
 }
-
-vec4 frag_surf (
-  in v2f_surf IN
-);
 
 vec4 frag_surf (
   in v2f_surf IN

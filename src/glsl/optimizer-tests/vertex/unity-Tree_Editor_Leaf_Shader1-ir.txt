@@ -32,10 +32,6 @@ uniform vec4 _LightShadowData;
 uniform vec4 _Color;
 vec4 Squash (
   in vec4 pos
-);
-
-vec4 Squash (
-  in vec4 pos
 )
 {
   vec3 planeNormal;
@@ -73,13 +69,6 @@ vec4 Squash (
   pos = tmpvar_11;
   return pos;
 }
-
-void ExpandBillboard (
-  in mat4 mat,
-  inout vec4 pos,
-  inout vec3 normal,
-  inout vec4 tangent
-);
 
 void ExpandBillboard (
   in mat4 mat,
@@ -142,10 +131,6 @@ void ExpandBillboard (
 
 vec4 TriangleWave (
   in vec4 x
-);
-
-vec4 TriangleWave (
-  in vec4 x
 )
 {
   vec4 tmpvar_1;
@@ -157,18 +142,10 @@ vec4 TriangleWave (
 
 vec4 SmoothCurve (
   in vec4 x
-);
-
-vec4 SmoothCurve (
-  in vec4 x
 )
 {
   return ((x * x) * (3.000000 - (2.000000 * x)));
 }
-
-vec4 SmoothTriangleWave (
-  in vec4 x
-);
 
 vec4 SmoothTriangleWave (
   in vec4 x
@@ -180,12 +157,6 @@ vec4 SmoothTriangleWave (
   tmpvar_2 = SmoothCurve (tmpvar_1);
   return tmpvar_2;
 }
-
-vec4 AnimateVertex (
-  in vec4 pos,
-  in vec3 normal,
-  in vec4 animParams
-);
 
 vec4 AnimateVertex (
   in vec4 pos,
@@ -259,10 +230,6 @@ vec4 AnimateVertex (
 
 void TreeVertLeaf (
   inout appdata_full v
-);
-
-void TreeVertLeaf (
-  inout appdata_full v
 )
 {
   ExpandBillboard (gl_ModelViewMatrixInverseTranspose, v.vertex, v.normal, v.tangent);
@@ -299,10 +266,6 @@ void TreeVertLeaf (
   tmpvar_12 = tmpvar_11;
   v.tangent.xyz = tmpvar_12.xyz;
 }
-
-v2f_surf vert_surf (
-  in appdata_full v
-);
 
 v2f_surf vert_surf (
   in appdata_full v

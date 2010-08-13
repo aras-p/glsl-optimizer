@@ -26,12 +26,6 @@ void PositionFog (
   in vec4 v,
   out vec4 pos,
   out float fog
-);
-
-void PositionFog (
-  in vec4 v,
-  out vec4 pos,
-  out float fog
 )
 {
   vec4 tmpvar_1;
@@ -44,10 +38,6 @@ void PositionFog (
 
 vec3 ObjSpaceLightDir (
   in vec4 v
-);
-
-vec3 ObjSpaceLightDir (
-  in vec4 v
 )
 {
   vec3 objSpaceLightPos;
@@ -56,10 +46,6 @@ vec3 ObjSpaceLightDir (
   objSpaceLightPos = tmpvar_1;
   return ((objSpaceLightPos.xyz * unity_Scale.w) - v.xyz);
 }
-
-v2f_surf vert_surf (
-  in appdata_full v
-);
 
 v2f_surf vert_surf (
   in appdata_full v

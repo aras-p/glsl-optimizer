@@ -24,23 +24,12 @@ uniform vec4 _ProjectionParams;
 void vert (
   inout appdata_full v,
   out Input o
-);
-
-void vert (
-  inout appdata_full v,
-  out Input o
 )
 {
   vec3 tmpvar_1;
   tmpvar_1 = ((v.normal * 0.500000) + 0.500000);
   o.foo = tmpvar_1;
 }
-
-void PositionFog (
-  in vec4 v,
-  out vec4 pos,
-  out float fog
-);
 
 void PositionFog (
   in vec4 v,
@@ -55,10 +44,6 @@ void PositionFog (
   tmpvar_2 = pos.z;
   fog = tmpvar_2;
 }
-
-vec4 ComputeScreenPos (
-  in vec4 pos
-);
 
 vec4 ComputeScreenPos (
   in vec4 pos
@@ -79,10 +64,6 @@ vec4 ComputeScreenPos (
   o.zw = vec2(tmpvar_4.xy);
   return o;
 }
-
-v2f_surf vert_surf (
-  in appdata_full v
-);
 
 v2f_surf vert_surf (
   in appdata_full v

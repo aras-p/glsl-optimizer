@@ -147,10 +147,6 @@ mat3 xll_constructMat3 (
 
 float Luminance (
   in vec3 c
-);
-
-float Luminance (
-  in vec3 c
 )
 {
   float tmpvar_1;
@@ -160,18 +156,10 @@ float Luminance (
 
 float Linear01Depth (
   in float z
-);
-
-float Linear01Depth (
-  in float z
 )
 {
   return (1.000000 / ((_ZBufferParams.x * z) + _ZBufferParams.y));
 }
-
-float DecodeFloatRGBA (
-  in vec4 enc
-);
 
 float DecodeFloatRGBA (
   in vec4 enc
@@ -188,10 +176,6 @@ float DecodeFloatRGBA (
 
 float SampleCubeDistance (
   in vec3 vec
-);
-
-float SampleCubeDistance (
-  in vec3 vec
 )
 {
   vec4 packDist;
@@ -204,11 +188,6 @@ float SampleCubeDistance (
   tmpvar_3 = DecodeFloatRGBA (packDist);
   return tmpvar_3;
 }
-
-float unitySampleShadow (
-  in vec3 vec,
-  in float mydist
-);
 
 float unitySampleShadow (
   in vec3 vec,
@@ -229,11 +208,6 @@ float unitySampleShadow (
   };
   return tmpvar_3;
 }
-
-float ComputeShadow (
-  in vec3 vec,
-  in vec2 uv
-);
 
 float ComputeShadow (
   in vec3 vec,
@@ -268,10 +242,6 @@ float ComputeShadow (
   return tmpvar_9;
   return 1.000000;
 }
-
-vec4 frag (
-  in v2f i
-);
 
 vec4 frag (
   in v2f i

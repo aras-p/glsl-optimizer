@@ -36,11 +36,6 @@ void xll_clip (
 void surf (
   in Input IN,
   inout SurfaceOutput o
-);
-
-void surf (
-  in Input IN,
-  inout SurfaceOutput o
 )
 {
   vec4 tex;
@@ -62,13 +57,6 @@ void surf (
   tmpvar_6 = _Shininess;
   o.Specular = tmpvar_6;
 }
-
-vec4 LightingBlinnPhong (
-  in SurfaceOutput s,
-  in vec3 lightDir,
-  in vec3 viewDir,
-  in float atten
-);
 
 vec4 LightingBlinnPhong (
   in SurfaceOutput s,
@@ -114,10 +102,6 @@ vec4 LightingBlinnPhong (
   c.w = float(vec4(tmpvar_12));
   return c;
 }
-
-vec4 frag_surf (
-  in v2f_surf IN
-);
 
 vec4 frag_surf (
   in v2f_surf IN

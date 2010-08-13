@@ -16,21 +16,12 @@ struct v2f_surf {
 void surf (
   in Input IN,
   inout SurfaceOutput o
-);
-
-void surf (
-  in Input IN,
-  inout SurfaceOutput o
 )
 {
   vec3 tmpvar_1;
   tmpvar_1 = vec3(1.000000, 0.000000, 0.000000);
   o.Emission = tmpvar_1;
 }
-
-vec4 frag_surf (
-  in v2f_surf IN
-);
 
 vec4 frag_surf (
   in v2f_surf IN

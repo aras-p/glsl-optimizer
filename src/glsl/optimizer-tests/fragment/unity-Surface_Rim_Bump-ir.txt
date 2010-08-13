@@ -132,10 +132,6 @@ mat4 xll_saturate (
 
 vec4 UnpackNormal (
   in vec4 packednormal
-);
-
-vec4 UnpackNormal (
-  in vec4 packednormal
 )
 {
   vec4 normal;
@@ -149,11 +145,6 @@ vec4 UnpackNormal (
   normal.z = float(vec3(tmpvar_3));
   return normal;
 }
-
-void surf (
-  in Input IN,
-  inout SurfaceOutput o
-);
 
 void surf (
   in Input IN,
@@ -193,20 +184,12 @@ void surf (
 
 float UnitySpotCookie (
   in vec4 LightCoord
-);
-
-float UnitySpotCookie (
-  in vec4 LightCoord
 )
 {
   vec4 tmpvar_1;
   tmpvar_1 = texture2D (_LightTexture0, ((LightCoord.xy / LightCoord.w) + 0.500000));
   return tmpvar_1.w;
 }
-
-float UnitySpotAttenuate (
-  in vec3 LightCoord
-);
 
 float UnitySpotAttenuate (
   in vec3 LightCoord
@@ -222,12 +205,6 @@ float UnitySpotAttenuate (
   tmpvar_4 = texture2D (_LightTextureB0, tmpvar_3);
   return tmpvar_4.w;
 }
-
-vec4 LightingLambert (
-  in SurfaceOutput s,
-  in vec3 lightDir,
-  in float atten
-);
 
 vec4 LightingLambert (
   in SurfaceOutput s,
@@ -252,10 +229,6 @@ vec4 LightingLambert (
   c.w = float(vec4(tmpvar_5));
   return c;
 }
-
-vec4 frag_surf (
-  in v2f_surf IN
-);
 
 vec4 frag_surf (
   in v2f_surf IN

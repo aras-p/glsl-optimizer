@@ -46,10 +46,6 @@ mat3 xll_constructMat3 (
 
 vec3 WorldSpaceLightDir (
   in vec4 v
-);
-
-vec3 WorldSpaceLightDir (
-  in vec4 v
 )
 {
   vec3 worldPos;
@@ -58,12 +54,6 @@ vec3 WorldSpaceLightDir (
   worldPos = tmpvar_1;
   return _WorldSpaceLightPos0.xyz;
 }
-
-void PositionFog (
-  in vec4 v,
-  out vec4 pos,
-  out float fog
-);
 
 void PositionFog (
   in vec4 v,
@@ -78,10 +68,6 @@ void PositionFog (
   tmpvar_2 = pos.z;
   fog = tmpvar_2;
 }
-
-v2f_surf vert_surf (
-  in appdata_full v
-);
 
 v2f_surf vert_surf (
   in appdata_full v

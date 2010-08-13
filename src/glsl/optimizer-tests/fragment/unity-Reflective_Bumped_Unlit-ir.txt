@@ -15,10 +15,6 @@ uniform samplerCube _Cube;
 uniform sampler2D _BumpMap;
 vec4 UnpackNormal (
   in vec4 packednormal
-);
-
-vec4 UnpackNormal (
-  in vec4 packednormal
 )
 {
   vec4 normal;
@@ -32,10 +28,6 @@ vec4 UnpackNormal (
   normal.z = float(vec3(tmpvar_3));
   return normal;
 }
-
-vec4 frag (
-  in v2f i
-);
 
 vec4 frag (
   in v2f i

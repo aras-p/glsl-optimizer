@@ -20,10 +20,6 @@ vec4 xll_tex2Dlod (
 
 v2f vert (
   in appdata_base v
-);
-
-v2f vert (
-  in appdata_base v
 )
 {
   v2f o;

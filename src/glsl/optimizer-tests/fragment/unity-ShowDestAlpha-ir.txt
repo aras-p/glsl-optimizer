@@ -3,10 +3,6 @@ struct v2f {
 };
 vec4 frag (
   in v2f i
-);
-
-vec4 frag (
-  in v2f i
 )
 {
   return vec4(1.000000, 1.000000, 1.000000, 1.000000);

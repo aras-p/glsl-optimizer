@@ -17,12 +17,6 @@ void TerrainBillboardTree (
   inout vec4 pos,
   in vec2 offset,
   in float offsetz
-);
-
-void TerrainBillboardTree (
-  inout vec4 pos,
-  in vec2 offset,
-  in float offsetz
 )
 {
   float absRadius;
@@ -77,10 +71,6 @@ void TerrainBillboardTree (
   tmpvar_16 = (pos.xyz + tmpvar_15);
   pos.xyz = tmpvar_16.xyz;
 }
-
-v2f vert (
-  in appdata_tree_billboard v
-);
 
 v2f vert (
   in appdata_tree_billboard v

@@ -7,18 +7,10 @@ uniform sampler2D _MainTex;
 uniform sampler2D _CameraDepthTexture;
 float LinearEyeDepth (
   in float z
-);
-
-float LinearEyeDepth (
-  in float z
 )
 {
   return (1.000000 / ((_ZBufferParams.z * z) + _ZBufferParams.w));
 }
-
-vec4 frag (
-  in v2f_img i
-);
 
 vec4 frag (
   in v2f_img i

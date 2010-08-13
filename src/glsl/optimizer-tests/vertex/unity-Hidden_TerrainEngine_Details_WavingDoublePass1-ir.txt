@@ -51,12 +51,6 @@ void FastSinCos (
   in vec4 val,
   out vec4 s,
   out vec4 c
-);
-
-void FastSinCos (
-  in vec4 val,
-  out vec4 s,
-  out vec4 c
 )
 {
   vec4 cos8;
@@ -105,13 +99,6 @@ void FastSinCos (
   tmpvar_12 = ((((1.000000 + (r5 * cos8.x)) + (r6 * cos8.y)) + (r7 * cos8.z)) + (r8 * cos8.w));
   c = tmpvar_12;
 }
-
-void TerrainWaveGrass (
-  inout vec4 vertex,
-  in float waveAmount,
-  in vec3 color,
-  out vec4 outColor
-);
 
 void TerrainWaveGrass (
   inout vec4 vertex,
@@ -210,10 +197,6 @@ void TerrainWaveGrass (
 
 void vert (
   inout appdata_full v
-);
-
-void vert (
-  inout appdata_full v
 )
 {
   vec4 color;
@@ -226,10 +209,6 @@ void vert (
   tmpvar_2 = color;
   v.color = tmpvar_2;
 }
-
-vec3 WorldSpaceLightDir (
-  in vec4 v
-);
 
 vec3 WorldSpaceLightDir (
   in vec4 v
@@ -246,12 +225,6 @@ void PositionFog (
   in vec4 v,
   out vec4 pos,
   out float fog
-);
-
-void PositionFog (
-  in vec4 v,
-  out vec4 pos,
-  out float fog
 )
 {
   vec4 tmpvar_1;
@@ -261,10 +234,6 @@ void PositionFog (
   tmpvar_2 = pos.z;
   fog = tmpvar_2;
 }
-
-v2f_surf vert_surf (
-  in appdata_full v
-);
 
 v2f_surf vert_surf (
   in appdata_full v

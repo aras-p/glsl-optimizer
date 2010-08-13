@@ -29,11 +29,6 @@ void xll_clip (
 void surf (
   in Input IN,
   inout SurfaceOutput o
-);
-
-void surf (
-  in Input IN,
-  inout SurfaceOutput o
 )
 {
   vec4 c;
@@ -49,10 +44,6 @@ void surf (
   tmpvar_4 = c.w;
   o.Alpha = tmpvar_4;
 }
-
-vec4 frag_surf (
-  in v2f_surf IN
-);
 
 vec4 frag_surf (
   in v2f_surf IN

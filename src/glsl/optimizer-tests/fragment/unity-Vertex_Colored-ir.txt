@@ -9,10 +9,6 @@ varying vec4 xlv_FOG;
 uniform sampler2D _MainTex;
 vec4 frag (
   in v2f i
-);
-
-vec4 frag (
-  in v2f i
 )
 {
   vec4 tmpvar_1;

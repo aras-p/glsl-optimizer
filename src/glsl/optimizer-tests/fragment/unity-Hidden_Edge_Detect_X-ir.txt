@@ -6,10 +6,6 @@ uniform float _Treshold;
 uniform sampler2D _MainTex;
 vec4 frag (
   in v2f i
-);
-
-vec4 frag (
-  in v2f i
 )
 {
   float len;

@@ -16,10 +16,6 @@ uniform vec3 _TerrainTreeLightDirections[4];
 uniform vec4 _TerrainTreeLightColors[4];
 v2f vert (
   in appdata_full v
-);
-
-v2f vert (
-  in appdata_full v
 )
 {
   float diff;

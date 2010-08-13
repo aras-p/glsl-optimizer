@@ -24,10 +24,6 @@ uniform mat4 _Object2World;
 uniform vec4 _LightShadowData;
 v2f_surf vert_surf (
   in appdata_full v
-);
-
-v2f_surf vert_surf (
-  in appdata_full v
 )
 {
   vec4 wpos;

@@ -64,10 +64,6 @@ mat3 xll_constructMat3 (
 
 vec4 Squash (
   in vec4 pos
-);
-
-vec4 Squash (
-  in vec4 pos
 )
 {
   vec3 planeNormal;
@@ -109,11 +105,6 @@ vec4 Squash (
 void TerrainAnimateTree (
   inout vec4 pos,
   in float alpha
-);
-
-void TerrainAnimateTree (
-  inout vec4 pos,
-  in float alpha
 )
 {
   vec3 bent;
@@ -142,18 +133,10 @@ void TerrainAnimateTree (
 
 void treevertex (
   inout appdata_full v
-);
-
-void treevertex (
-  inout appdata_full v
 )
 {
   TerrainAnimateTree (v.vertex, v.color.w);
 }
-
-vec3 ShadeSH9 (
-  in vec4 normal
-);
 
 vec3 ShadeSH9 (
   in vec4 normal
@@ -205,19 +188,6 @@ vec3 ShadeSH9 (
   x3 = tmpvar_15;
   return ((x1 + x2) + x3);
 }
-
-vec3 Shade4PointLights (
-  in vec4 lightPosX,
-  in vec4 lightPosY,
-  in vec4 lightPosZ,
-  in vec3 lightColor0,
-  in vec3 lightColor1,
-  in vec3 lightColor2,
-  in vec3 lightColor3,
-  in vec4 lightAttenSq,
-  in vec3 pos,
-  in vec3 normal
-);
 
 vec3 Shade4PointLights (
   in vec4 lightPosX,
@@ -312,12 +282,6 @@ void PositionFog (
   in vec4 v,
   out vec4 pos,
   out float fog
-);
-
-void PositionFog (
-  in vec4 v,
-  out vec4 pos,
-  out float fog
 )
 {
   vec4 tmpvar_1;
@@ -327,10 +291,6 @@ void PositionFog (
   tmpvar_2 = pos.z;
   fog = tmpvar_2;
 }
-
-vec4 ComputeScreenPos (
-  in vec4 pos
-);
 
 vec4 ComputeScreenPos (
   in vec4 pos
@@ -351,10 +311,6 @@ vec4 ComputeScreenPos (
   o.zw = vec2(tmpvar_4.xy);
   return o;
 }
-
-v2f_surf vert_surf (
-  in appdata_full v
-);
 
 v2f_surf vert_surf (
   in appdata_full v

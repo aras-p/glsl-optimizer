@@ -9,10 +9,6 @@ struct appdata_base {
 };
 v2f vert (
   in appdata_base v
-);
-
-v2f vert (
-  in appdata_base v
 )
 {
   v2f o;

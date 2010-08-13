@@ -28,10 +28,6 @@ uniform vec4 _Color;
 uniform sampler2D _BumpMap;
 vec4 UnpackNormal (
   in vec4 packednormal
-);
-
-vec4 UnpackNormal (
-  in vec4 packednormal
 )
 {
   vec4 normal;
@@ -45,11 +41,6 @@ vec4 UnpackNormal (
   normal.z = float(vec3(tmpvar_3));
   return normal;
 }
-
-void surf (
-  in Input IN,
-  inout SurfaceOutput o
-);
 
 void surf (
   in Input IN,
@@ -97,11 +88,6 @@ void surf (
 vec4 LightingBlinnPhong_PrePass (
   in SurfaceOutput s,
   in vec4 light
-);
-
-vec4 LightingBlinnPhong_PrePass (
-  in SurfaceOutput s,
-  in vec4 light
 )
 {
   vec4 c;
@@ -117,10 +103,6 @@ vec4 LightingBlinnPhong_PrePass (
   c.w = float(vec4(tmpvar_3));
   return c;
 }
-
-vec4 frag_surf (
-  in v2f_surf IN
-);
 
 vec4 frag_surf (
   in v2f_surf IN

@@ -66,12 +66,6 @@ void FastSinCos (
   in vec4 val,
   out vec4 s,
   out vec4 c
-);
-
-void FastSinCos (
-  in vec4 val,
-  out vec4 s,
-  out vec4 c
 )
 {
   vec4 cos8;
@@ -120,13 +114,6 @@ void FastSinCos (
   tmpvar_12 = ((((1.000000 + (r5 * cos8.x)) + (r6 * cos8.y)) + (r7 * cos8.z)) + (r8 * cos8.w));
   c = tmpvar_12;
 }
-
-void TerrainWaveGrass (
-  inout vec4 vertex,
-  in float waveAmount,
-  in vec3 color,
-  out vec4 outColor
-);
 
 void TerrainWaveGrass (
   inout vec4 vertex,
@@ -226,11 +213,6 @@ void TerrainWaveGrass (
 void TerrainBillboardGrass (
   inout vec4 pos,
   in vec2 offset
-);
-
-void TerrainBillboardGrass (
-  inout vec4 pos,
-  in vec2 offset
 )
 {
   vec3 grasspos;
@@ -254,10 +236,6 @@ void TerrainBillboardGrass (
 
 void vert (
   inout appdata_full v
-);
-
-void vert (
-  inout appdata_full v
 )
 {
   vec4 color;
@@ -271,10 +249,6 @@ void vert (
   tmpvar_2 = color;
   v.color = tmpvar_2;
 }
-
-vec3 ShadeSH9 (
-  in vec4 normal
-);
 
 vec3 ShadeSH9 (
   in vec4 normal
@@ -326,19 +300,6 @@ vec3 ShadeSH9 (
   x3 = tmpvar_15;
   return ((x1 + x2) + x3);
 }
-
-vec3 Shade4PointLights (
-  in vec4 lightPosX,
-  in vec4 lightPosY,
-  in vec4 lightPosZ,
-  in vec3 lightColor0,
-  in vec3 lightColor1,
-  in vec3 lightColor2,
-  in vec3 lightColor3,
-  in vec4 lightAttenSq,
-  in vec3 pos,
-  in vec3 normal
-);
 
 vec3 Shade4PointLights (
   in vec4 lightPosX,
@@ -433,12 +394,6 @@ void PositionFog (
   in vec4 v,
   out vec4 pos,
   out float fog
-);
-
-void PositionFog (
-  in vec4 v,
-  out vec4 pos,
-  out float fog
 )
 {
   vec4 tmpvar_1;
@@ -448,10 +403,6 @@ void PositionFog (
   tmpvar_2 = pos.z;
   fog = tmpvar_2;
 }
-
-v2f_surf vert_surf (
-  in appdata_full v
-);
 
 v2f_surf vert_surf (
   in appdata_full v

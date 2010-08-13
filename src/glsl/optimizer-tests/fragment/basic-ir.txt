@@ -1,5 +1,3 @@
-vec4 xlat_main ();
-
 vec4 xlat_main ()
 {
   return vec4(1.000000, 1.000000, 1.000000, 1.000000);

@@ -6,10 +6,6 @@ uniform vec4 _Tint;
 uniform samplerCube _Tex;
 vec4 frag (
   in v2f i
-);
-
-vec4 frag (
-  in v2f i
 )
 {
   vec4 col;

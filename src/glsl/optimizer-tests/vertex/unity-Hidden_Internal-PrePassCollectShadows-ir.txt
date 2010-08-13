@@ -10,10 +10,6 @@ struct appdata {
 };
 v2f vert (
   in appdata v
-);
-
-v2f vert (
-  in appdata v
 )
 {
   v2f o;

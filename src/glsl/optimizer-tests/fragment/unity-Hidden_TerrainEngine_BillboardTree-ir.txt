@@ -17,10 +17,6 @@ void xll_clip (
 
 vec4 frag (
   in v2f xlat_var_input
-);
-
-vec4 frag (
-  in v2f xlat_var_input
 )
 {
   vec4 col;

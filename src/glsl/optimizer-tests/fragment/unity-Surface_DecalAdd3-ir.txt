@@ -23,11 +23,6 @@ uniform sampler2D _Decal;
 void surf (
   in Input IN,
   inout SurfaceOutput o
-);
-
-void surf (
-  in Input IN,
-  inout SurfaceOutput o
 )
 {
   vec4 tmpvar_1;
@@ -36,12 +31,6 @@ void surf (
   tmpvar_2 = (tmpvar_1.xyz * 0.500000);
   o.Albedo = tmpvar_2;
 }
-
-vec4 LightingLambert (
-  in SurfaceOutput s,
-  in vec3 lightDir,
-  in float atten
-);
 
 vec4 LightingLambert (
   in SurfaceOutput s,
@@ -66,10 +55,6 @@ vec4 LightingLambert (
   c.w = float(vec4(tmpvar_5));
   return c;
 }
-
-vec4 frag_surf (
-  in v2f_surf IN
-);
 
 vec4 frag_surf (
   in v2f_surf IN

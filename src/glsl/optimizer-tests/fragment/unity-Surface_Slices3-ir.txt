@@ -142,11 +142,6 @@ mat4 xll_saturate (
 void surf (
   in Input IN,
   inout SurfaceOutput o
-);
-
-void surf (
-  in Input IN,
-  inout SurfaceOutput o
 )
 {
   float tmpvar_1;
@@ -158,10 +153,6 @@ void surf (
   tmpvar_3 = tmpvar_2.xyz;
   o.Albedo = tmpvar_3;
 }
-
-vec2 EncodeFloatRG (
-  in float v
-);
 
 vec2 EncodeFloatRG (
   in float v
@@ -189,10 +180,6 @@ vec2 EncodeFloatRG (
   enc.x = tmpvar_6;
   return enc;
 }
-
-vec4 frag_surf (
-  in v2f_surf IN
-);
 
 vec4 frag_surf (
   in v2f_surf IN

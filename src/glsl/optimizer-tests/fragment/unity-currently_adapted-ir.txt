@@ -7,10 +7,6 @@ uniform sampler2D _CurTex;
 uniform vec4 _AdaptParams;
 vec4 frag (
   in v2f_img i
-);
-
-vec4 frag (
-  in v2f_img i
 )
 {
   vec4 valNew;

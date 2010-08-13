@@ -8,10 +8,6 @@ struct appdata_combiner {
 };
 v2f_combiner vertcombiner (
   in appdata_combiner v
-);
-
-v2f_combiner vertcombiner (
-  in appdata_combiner v
 )
 {
   v2f_combiner o;

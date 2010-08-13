@@ -112,10 +112,6 @@ mat4 xll_saturate (
 
 vec4 frag (
   in v2f_img i
-);
-
-vec4 frag (
-  in v2f_img i
 )
 {
   float shadow;

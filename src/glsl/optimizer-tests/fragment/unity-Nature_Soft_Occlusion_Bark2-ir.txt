@@ -19,11 +19,6 @@ uniform vec4 _Color;
 void surf (
   in Input IN,
   inout SurfaceOutput o
-);
-
-void surf (
-  in Input IN,
-  inout SurfaceOutput o
 )
 {
   vec4 c;
@@ -39,10 +34,6 @@ void surf (
   tmpvar_4 = c.w;
   o.Alpha = tmpvar_4;
 }
-
-vec4 EncodeFloatRGBA (
-  in float v
-);
 
 vec4 EncodeFloatRGBA (
   in float v
@@ -70,10 +61,6 @@ vec4 EncodeFloatRGBA (
   enc = tmpvar_6;
   return enc;
 }
-
-vec4 frag_surf (
-  in v2f_surf IN
-);
 
 vec4 frag_surf (
   in v2f_surf IN

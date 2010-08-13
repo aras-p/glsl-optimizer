@@ -19,13 +19,6 @@ void ExpandBillboard (
   inout vec4 pos,
   inout vec3 normal,
   inout vec4 tangent
-);
-
-void ExpandBillboard (
-  in mat4 mat,
-  inout vec4 pos,
-  inout vec3 normal,
-  inout vec4 tangent
 )
 {
   vec3 tanb;
@@ -79,10 +72,6 @@ void ExpandBillboard (
   tmpvar_18 = tmpvar_17;
   tangent = tmpvar_18;
 }
-
-v2f vert (
-  in appdata_full v
-);
 
 v2f vert (
   in appdata_full v

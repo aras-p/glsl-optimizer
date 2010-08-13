@@ -10,10 +10,6 @@ uniform vec4 _Intensity;
 uniform sampler2D _GrainTex;
 vec4 frag (
   in v2f i
-);
-
-vec4 frag (
-  in v2f i
 )
 {
   vec3 scratch;

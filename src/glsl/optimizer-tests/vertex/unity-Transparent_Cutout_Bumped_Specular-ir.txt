@@ -41,10 +41,6 @@ mat3 xll_constructMat3 (
 
 v2f_surf vert_surf (
   in appdata_full v
-);
-
-v2f_surf vert_surf (
-  in appdata_full v
 )
 {
   mat3 rotation;

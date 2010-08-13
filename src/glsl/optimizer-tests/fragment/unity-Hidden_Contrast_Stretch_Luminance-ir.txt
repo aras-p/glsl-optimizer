@@ -5,20 +5,12 @@ struct v2f_img {
 uniform sampler2D _MainTex;
 float Luminance (
   in vec3 c
-);
-
-float Luminance (
-  in vec3 c
 )
 {
   float tmpvar_1;
   tmpvar_1 = dot (c, vec3(0.220000, 0.707000, 0.071000));
   return tmpvar_1;
 }
-
-vec4 frag (
-  in v2f_img i
-);
 
 vec4 frag (
   in v2f_img i

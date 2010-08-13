@@ -39,10 +39,6 @@ mat3 xll_constructMat3 (
 
 vec4 Squash (
   in vec4 pos
-);
-
-vec4 Squash (
-  in vec4 pos
 )
 {
   vec3 planeNormal;
@@ -84,11 +80,6 @@ vec4 Squash (
 void TerrainAnimateTree (
   inout vec4 pos,
   in float alpha
-);
-
-void TerrainAnimateTree (
-  inout vec4 pos,
-  in float alpha
 )
 {
   vec3 bent;
@@ -114,10 +105,6 @@ void TerrainAnimateTree (
   tmpvar_8 = tmpvar_7;
   pos = tmpvar_8;
 }
-
-v2f vert (
-  in appdata v
-);
 
 v2f vert (
   in appdata v

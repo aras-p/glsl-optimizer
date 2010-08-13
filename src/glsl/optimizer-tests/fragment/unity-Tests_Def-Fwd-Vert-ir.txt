@@ -21,23 +21,12 @@ uniform vec4 _LightColor0;
 void surf (
   in Input IN,
   inout SurfaceOutput o
-);
-
-void surf (
-  in Input IN,
-  inout SurfaceOutput o
 )
 {
   vec3 tmpvar_1;
   tmpvar_1 = vec3(0.000000, 1.000000, 0.000000);
   o.Emission = tmpvar_1;
 }
-
-vec4 LightingLambert (
-  in SurfaceOutput s,
-  in vec3 lightDir,
-  in float atten
-);
 
 vec4 LightingLambert (
   in SurfaceOutput s,
@@ -62,10 +51,6 @@ vec4 LightingLambert (
   c.w = float(vec4(tmpvar_5));
   return c;
 }
-
-vec4 frag_surf (
-  in v2f_surf IN
-);
 
 vec4 frag_surf (
   in v2f_surf IN

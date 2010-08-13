@@ -22,10 +22,6 @@ uniform sampler2D _DecalBump;
 uniform sampler2D _Decal;
 vec4 UnpackNormal (
   in vec4 packednormal
-);
-
-vec4 UnpackNormal (
-  in vec4 packednormal
 )
 {
   vec4 normal;
@@ -39,11 +35,6 @@ vec4 UnpackNormal (
   normal.z = float(vec3(tmpvar_3));
   return normal;
 }
-
-void surf (
-  in Input IN,
-  inout SurfaceOutput o
-);
 
 void surf (
   in Input IN,
@@ -68,18 +59,10 @@ void surf (
 
 vec3 DecodeLightmap (
   in vec4 color
-);
-
-vec3 DecodeLightmap (
-  in vec4 color
 )
 {
   return (2.000000 * color.xyz);
 }
-
-vec4 frag_surf (
-  in v2f_surf IN
-);
 
 vec4 frag_surf (
   in v2f_surf IN

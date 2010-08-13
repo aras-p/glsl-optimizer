@@ -9,10 +9,6 @@ struct v2f {
 uniform vec4 _CenterRadius;
 v2f vert (
   in appdata_img v
-);
-
-v2f vert (
-  in appdata_img v
 )
 {
   v2f o;

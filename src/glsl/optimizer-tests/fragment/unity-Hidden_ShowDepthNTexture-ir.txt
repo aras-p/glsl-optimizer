@@ -6,10 +6,6 @@ uniform sampler2D _MainTex;
 uniform sampler2D _CameraDepthNormalsTexture;
 vec3 DecodeViewNormalStereo (
   in vec4 enc4
-);
-
-vec3 DecodeViewNormalStereo (
-  in vec4 enc4
 )
 {
   vec3 n;
@@ -46,10 +42,6 @@ vec3 DecodeViewNormalStereo (
 
 float DecodeFloatRG (
   in vec2 enc
-);
-
-float DecodeFloatRG (
-  in vec2 enc
 )
 {
   vec2 kDecodeDot;
@@ -60,12 +52,6 @@ float DecodeFloatRG (
   tmpvar_2 = dot (enc, kDecodeDot);
   return tmpvar_2;
 }
-
-void DecodeDepthNormal (
-  in vec4 enc,
-  out float depth,
-  out vec3 normal
-);
 
 void DecodeDepthNormal (
   in vec4 enc,
@@ -84,10 +70,6 @@ void DecodeDepthNormal (
   tmpvar_4 = tmpvar_3;
   normal = tmpvar_4;
 }
-
-vec4 frag (
-  in v2f_img i
-);
 
 vec4 frag (
   in v2f_img i

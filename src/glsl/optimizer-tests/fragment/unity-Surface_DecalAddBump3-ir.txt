@@ -25,10 +25,6 @@ uniform sampler2D _DecalBump;
 uniform sampler2D _Decal;
 float unitySampleShadow (
   in vec4 shadowCoord
-);
-
-float unitySampleShadow (
-  in vec4 shadowCoord
 )
 {
   float shadow;
@@ -39,10 +35,6 @@ float unitySampleShadow (
   shadow = tmpvar_2;
   return shadow;
 }
-
-vec4 UnpackNormal (
-  in vec4 packednormal
-);
 
 vec4 UnpackNormal (
   in vec4 packednormal
@@ -59,11 +51,6 @@ vec4 UnpackNormal (
   normal.z = float(vec3(tmpvar_3));
   return normal;
 }
-
-void surf (
-  in Input IN,
-  inout SurfaceOutput o
-);
 
 void surf (
   in Input IN,
@@ -90,12 +77,6 @@ vec4 LightingLambert (
   in SurfaceOutput s,
   in vec3 lightDir,
   in float atten
-);
-
-vec4 LightingLambert (
-  in SurfaceOutput s,
-  in vec3 lightDir,
-  in float atten
 )
 {
   vec4 c;
@@ -115,10 +96,6 @@ vec4 LightingLambert (
   c.w = float(vec4(tmpvar_5));
   return c;
 }
-
-vec4 frag_surf (
-  in v2f_surf IN
-);
 
 vec4 frag_surf (
   in v2f_surf IN

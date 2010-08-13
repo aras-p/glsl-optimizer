@@ -11,10 +11,6 @@ struct appdata_t {
 uniform vec4 _FlareTexture_ST;
 v2f vert (
   in appdata_t v
-);
-
-v2f vert (
-  in appdata_t v
 )
 {
   v2f o;

@@ -20,10 +20,6 @@ uniform sampler2D _MainTex1;
 uniform sampler2D _MainTex0;
 vec4 frag (
   in v2f i
-);
-
-vec4 frag (
-  in v2f i
 )
 {
   vec4 col;

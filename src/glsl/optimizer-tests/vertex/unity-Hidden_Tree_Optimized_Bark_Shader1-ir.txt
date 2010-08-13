@@ -20,10 +20,6 @@ uniform mat4 _Object2World;
 uniform vec4 _Color;
 vec4 Squash (
   in vec4 pos
-);
-
-vec4 Squash (
-  in vec4 pos
 )
 {
   vec3 planeNormal;
@@ -64,10 +60,6 @@ vec4 Squash (
 
 vec4 TriangleWave (
   in vec4 x
-);
-
-vec4 TriangleWave (
-  in vec4 x
 )
 {
   vec4 tmpvar_1;
@@ -79,18 +71,10 @@ vec4 TriangleWave (
 
 vec4 SmoothCurve (
   in vec4 x
-);
-
-vec4 SmoothCurve (
-  in vec4 x
 )
 {
   return ((x * x) * (3.000000 - (2.000000 * x)));
 }
-
-vec4 SmoothTriangleWave (
-  in vec4 x
-);
 
 vec4 SmoothTriangleWave (
   in vec4 x
@@ -102,12 +86,6 @@ vec4 SmoothTriangleWave (
   tmpvar_2 = SmoothCurve (tmpvar_1);
   return tmpvar_2;
 }
-
-vec4 AnimateVertex (
-  in vec4 pos,
-  in vec3 normal,
-  in vec4 animParams
-);
 
 vec4 AnimateVertex (
   in vec4 pos,
@@ -181,10 +159,6 @@ vec4 AnimateVertex (
 
 void TreeVertBark (
   inout appdata_full v
-);
-
-void TreeVertBark (
-  inout appdata_full v
 )
 {
   vec3 tmpvar_1;
@@ -220,10 +194,6 @@ void TreeVertBark (
   tmpvar_12 = tmpvar_11;
   v.tangent.xyz = tmpvar_12.xyz;
 }
-
-v2f_surf vert_surf (
-  in appdata_full v
-);
 
 v2f_surf vert_surf (
   in appdata_full v

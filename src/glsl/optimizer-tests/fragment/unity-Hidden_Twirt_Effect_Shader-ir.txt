@@ -8,11 +8,6 @@ uniform vec4 _CenterRadius;
 vec2 MultiplyUV (
   in mat4 mat,
   in vec2 inUV
-);
-
-vec2 MultiplyUV (
-  in mat4 mat,
-  in vec2 inUV
 )
 {
   vec4 temp;
@@ -29,10 +24,6 @@ vec2 MultiplyUV (
   temp = tmpvar_3;
   return temp.xy;
 }
-
-vec4 frag (
-  in v2f i
-);
 
 vec4 frag (
   in v2f i

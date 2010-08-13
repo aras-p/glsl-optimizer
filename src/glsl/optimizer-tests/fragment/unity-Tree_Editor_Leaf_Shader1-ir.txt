@@ -149,10 +149,6 @@ mat4 xll_saturate (
 
 vec4 UnpackNormal (
   in vec4 packednormal
-);
-
-vec4 UnpackNormal (
-  in vec4 packednormal
 )
 {
   vec4 normal;
@@ -166,11 +162,6 @@ vec4 UnpackNormal (
   normal.z = float(vec3(tmpvar_3));
   return normal;
 }
-
-void surf (
-  in Input IN,
-  inout LeafSurfaceOutput o
-);
 
 void surf (
   in Input IN,
@@ -217,10 +208,6 @@ void surf (
 
 vec2 EncodeFloatRG (
   in float v
-);
-
-vec2 EncodeFloatRG (
-  in float v
 )
 {
   vec2 enc;
@@ -245,10 +232,6 @@ vec2 EncodeFloatRG (
   enc.x = tmpvar_6;
   return enc;
 }
-
-vec4 frag_surf (
-  in v2f_surf IN
-);
 
 vec4 frag_surf (
   in v2f_surf IN

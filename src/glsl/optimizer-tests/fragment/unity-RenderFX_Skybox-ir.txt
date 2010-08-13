@@ -7,11 +7,6 @@ uniform vec4 _Tint;
 vec4 skybox_frag (
   in v2f i,
   in sampler2D smp
-);
-
-vec4 skybox_frag (
-  in v2f i,
-  in sampler2D smp
 )
 {
   vec4 col;
@@ -29,10 +24,6 @@ vec4 skybox_frag (
   col.w = float(vec4(tmpvar_4));
   return col;
 }
-
-vec4 frag (
-  in v2f i
-);
 
 vec4 frag (
   in v2f i

@@ -15,10 +15,6 @@ uniform vec4 _LightShadowData;
 uniform sampler2D _CameraDepthTexture;
 float unitySampleShadow (
   in vec4 eyePos
-);
-
-float unitySampleShadow (
-  in vec4 eyePos
 )
 {
   float shadow;
@@ -89,18 +85,10 @@ float unitySampleShadow (
 
 float Linear01Depth (
   in float z
-);
-
-float Linear01Depth (
-  in float z
 )
 {
   return (1.000000 / ((_ZBufferParams.x * z) + _ZBufferParams.y));
 }
-
-vec2 EncodeFloatRG (
-  in float v
-);
 
 vec2 EncodeFloatRG (
   in float v
@@ -128,10 +116,6 @@ vec2 EncodeFloatRG (
   enc.x = tmpvar_6;
   return enc;
 }
-
-vec4 frag (
-  in v2f i
-);
 
 vec4 frag (
   in v2f i

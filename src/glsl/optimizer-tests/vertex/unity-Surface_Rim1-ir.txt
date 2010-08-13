@@ -25,12 +25,6 @@ void PositionFog (
   in vec4 v,
   out vec4 pos,
   out float fog
-);
-
-void PositionFog (
-  in vec4 v,
-  out vec4 pos,
-  out float fog
 )
 {
   vec4 tmpvar_1;
@@ -40,10 +34,6 @@ void PositionFog (
   tmpvar_2 = pos.z;
   fog = tmpvar_2;
 }
-
-vec3 ObjSpaceViewDir (
-  in vec4 v
-);
 
 vec3 ObjSpaceViewDir (
   in vec4 v
@@ -58,10 +48,6 @@ vec3 ObjSpaceViewDir (
   objSpaceCameraPos = tmpvar_2;
   return (objSpaceCameraPos - v.xyz);
 }
-
-vec4 ComputeScreenPos (
-  in vec4 pos
-);
 
 vec4 ComputeScreenPos (
   in vec4 pos
@@ -82,10 +68,6 @@ vec4 ComputeScreenPos (
   o.zw = vec2(tmpvar_4.xy);
   return o;
 }
-
-v2f_surf vert_surf (
-  in appdata_full v
-);
 
 v2f_surf vert_surf (
   in appdata_full v
