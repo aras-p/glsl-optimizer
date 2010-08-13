@@ -105,7 +105,8 @@ C_SOURCES = \
 	$(DRIVER_SOURCES)
 
 CXX_SOURCES = \
-	brw_fs.cpp
+	brw_fs.cpp \
+	brw_fs_channel_expressions.cpp
 
 ASM_SOURCES = 
 

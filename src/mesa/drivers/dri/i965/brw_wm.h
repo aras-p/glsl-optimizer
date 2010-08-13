@@ -465,4 +465,6 @@ GLboolean brw_link_shader(GLcontext *ctx, struct gl_shader_program *prog);
 struct gl_shader *brw_new_shader(GLcontext *ctx, GLuint name, GLuint type);
 struct gl_shader_program *brw_new_shader_program(GLcontext *ctx, GLuint name);
 
+GLboolean brw_do_channel_expressions(struct exec_list *instructions);
+
 #endif

@@ -36,6 +36,7 @@ extern "C" {
 #include "brw_wm.h"
 #include "talloc.h"
 }
+#include "../glsl/ir_optimization.h"
 
 struct gl_shader *
 brw_new_shader(GLcontext *ctx, GLuint name, GLuint type)
@@ -75,6 +76,20 @@ brw_compile_shader(GLcontext *ctx, struct gl_shader *shader)
 GLboolean
 brw_link_shader(GLcontext *ctx, struct gl_shader_program *prog)
 {
+   static int using_new_fs = -1;
+
+   if (using_new_fs == -1)
+      using_new_fs = getenv("INTEL_NEW_FS") != NULL;
+
+   for (unsigned i = 0; i < prog->_NumLinkedShaders; i++) {
+      struct gl_shader *shader = prog->_LinkedShaders[i];
+
+      if (using_new_fs && shader->Type == GL_FRAGMENT_SHADER) {
+	 do_mat_op_to_vec(shader->ir);
+	 brw_do_channel_expressions(shader->ir);
+      }
+   }
+
    if (!_mesa_ir_link_shader(ctx, prog))
       return GL_FALSE;
 
