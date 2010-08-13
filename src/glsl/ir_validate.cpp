@@ -33,7 +33,7 @@
  * a dereference chain.
  */
 
-#include <inttypes.h>
+#include <stdint.h>
 #include "ir.h"
 #include "ir_hierarchical_visitor.h"
 #include "program/hash_table.h"
