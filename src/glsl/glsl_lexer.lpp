@@ -128,9 +128,9 @@ HASH		^{SPC}#{SPC}
 
 attribute	return ATTRIBUTE;
 const		return CONST_TOK;
-bool		return BOOL;
-float		return FLOAT;
-int		return INT;
+bool		return BOOL_TOK;
+float		return FLOAT_TOK;
+int		return INT_TOK;
 
 break		return BREAK;
 continue	return CONTINUE;
@@ -164,9 +164,9 @@ mat4x2		TOKEN_OR_IDENTIFIER(120, MAT4X2);
 mat4x3		TOKEN_OR_IDENTIFIER(120, MAT4X3);
 mat4x4		TOKEN_OR_IDENTIFIER(120, MAT4X4);
 
-in		return IN;
-out		return OUT;
-inout		return INOUT;
+in		return IN_TOK;
+out		return OUT_TOK;
+inout		return INOUT_TOK;
 uniform		return UNIFORM;
 varying		return VARYING;
 centroid	TOKEN_OR_IDENTIFIER(120, CENTROID);
@@ -184,7 +184,7 @@ sampler1DShadow	return SAMPLER1DSHADOW;
 sampler2DShadow	return SAMPLER2DSHADOW;
 
 struct		return STRUCT;
-void		return VOID;
+void		return VOID_TOK;
 
 layout		{
 		  if ((yyextra->language_version >= 140)
@@ -269,7 +269,7 @@ enum		RESERVED_WORD(999, ENUM);
 typedef		RESERVED_WORD(999, TYPEDEF);
 template	RESERVED_WORD(999, TEMPLATE);
 this		RESERVED_WORD(999, THIS);
-packed		RESERVED_WORD(999, PACKED);
+packed		RESERVED_WORD(999, PACKED_TOK);
 goto		RESERVED_WORD(999, GOTO);
 switch		RESERVED_WORD(130, SWITCH);
 default		RESERVED_WORD(130, DEFAULT);
@@ -281,13 +281,13 @@ static		RESERVED_WORD(999, STATIC);
 extern		RESERVED_WORD(999, EXTERN);
 external	RESERVED_WORD(999, EXTERNAL);
 interface	RESERVED_WORD(999, INTERFACE);
-long		RESERVED_WORD(999, LONG);
-short		RESERVED_WORD(999, SHORT);
-double		RESERVED_WORD(999, DOUBLE);
+long		RESERVED_WORD(999, LONG_TOK);
+short		RESERVED_WORD(999, SHORT_TOK);
+double		RESERVED_WORD(999, DOUBLE_TOK);
 half		RESERVED_WORD(999, HALF);
-fixed		RESERVED_WORD(999, FIXED);
+fixed		RESERVED_WORD(999, FIXED_TOK);
 unsigned	RESERVED_WORD(999, UNSIGNED);
-input		RESERVED_WORD(999, INPUT);
+input		RESERVED_WORD(999, INPUT_TOK);
 output		RESERVED_WORD(999, OUTPUT);
 hvec2		RESERVED_WORD(999, HVEC2);
 hvec3		RESERVED_WORD(999, HVEC3);
