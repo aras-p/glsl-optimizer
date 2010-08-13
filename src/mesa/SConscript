@@ -10,6 +10,7 @@ if env['platform'] != 'winddk':
 	
 	env.Append(CPPPATH = [
 		'#/src/mapi',
+		'#/src/glsl',
 		'#/src/mesa',
 	])
 	
@@ -19,6 +20,7 @@ if env['platform'] != 'winddk':
 			'BUILD_GL32', # declare gl* as __declspec(dllexport) in Mesa headers 
 			'WIN32_THREADS', # use Win32 thread API
 		])	 
+        env.Prepend(CPPPATH = ['#src/talloc'])
 
 	#
 	# Source files
@@ -200,6 +202,7 @@ if env['platform'] != 'winddk':
 	program_sources = [
 		'program/arbprogparse.c',
 		'program/hash_table.c',
+        'program/ir_to_mesa.cpp',
 		'program/lex.yy.c',
 		'program/nvfragparse.c',
 		'program/nvvertparse.c',
@@ -248,8 +251,7 @@ if env['platform'] != 'winddk':
 		program_sources +
 		vbo_sources +
 		vf_sources +
-		statetracker_sources +
-		slang_sources
+		statetracker_sources
 	)
 
 	#
@@ -327,7 +329,7 @@ if env['platform'] != 'winddk':
 		# build dir) to the include path  
 		env.Append(CPPPATH = [matypes[0].dir])
 
-	SConscript('slang/library/SConscript')
+	#SConscript('slang/library/SConscript')
 
 	#
 	# Libraries
