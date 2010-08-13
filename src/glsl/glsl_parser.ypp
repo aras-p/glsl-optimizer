@@ -80,7 +80,7 @@
 %token ATTRIBUTE CONST_TOK BOOL FLOAT INT UINT
 %token BREAK CONTINUE DO ELSE FOR IF DISCARD RETURN SWITCH CASE DEFAULT
 %token BVEC2 BVEC3 BVEC4 IVEC2 IVEC3 IVEC4 UVEC2 UVEC3 UVEC4 VEC2 VEC3 VEC4
-%token MAT2 MAT3 MAT4 CENTROID IN OUT INOUT UNIFORM VARYING
+%token CENTROID IN OUT INOUT UNIFORM VARYING
 %token NOPERSPECTIVE FLAT SMOOTH
 %token MAT2X2 MAT2X3 MAT2X4
 %token MAT3X2 MAT3X3 MAT3X4
@@ -1101,9 +1101,6 @@ basic_type_specifier_nonarray:
 	| UVEC2			{ $$ = ast_uvec2; }
 	| UVEC3			{ $$ = ast_uvec3; }
 	| UVEC4			{ $$ = ast_uvec4; }
-	| MAT2			{ $$ = ast_mat2; }
-	| MAT3			{ $$ = ast_mat3; }
-	| MAT4			{ $$ = ast_mat4; }
 	| MAT2X2		{ $$ = ast_mat2; }
 	| MAT2X3		{ $$ = ast_mat2x3; }
 	| MAT2X4		{ $$ = ast_mat2x4; }
