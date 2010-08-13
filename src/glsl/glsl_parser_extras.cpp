@@ -737,6 +737,7 @@ do_common_optimization(exec_list *ir, bool linked)
    progress = do_if_return(ir) || progress;
    progress = do_vec_index_to_swizzle(ir) || progress;
    progress = do_swizzle_swizzle(ir) || progress;
+   progress = do_noop_swizzle(ir) || progress;
 
    return progress;
 }

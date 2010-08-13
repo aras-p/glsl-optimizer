@@ -55,6 +55,7 @@ CXX_SOURCES = \
 	ir_import_prototypes.cpp \
 	ir_mat_op_to_vec.cpp \
 	ir_mod_to_fract.cpp \
+	ir_noop_swizzle.cpp \
 	ir_print_visitor.cpp \
 	ir_reader.cpp \
 	ir_rvalue_visitor.cpp \
