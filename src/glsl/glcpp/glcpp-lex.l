@@ -43,7 +43,7 @@ void glcpp_set_column (int  column_no , yyscan_t yyscanner);
       yylloc->first_line = yylineno;                            \
       yycolumn += yyleng;                                       \
    } while(0);
-#define YY_USER_INIT yylineno = 0; yycolumn = 0;
+#define YY_USER_INIT yylineno = 1; yycolumn = 1;
 %}
 
 %option bison-bridge bison-locations reentrant noyywrap

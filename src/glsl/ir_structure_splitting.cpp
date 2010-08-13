@@ -401,7 +401,7 @@ do_structure_splitting(exec_list *instructions)
 
       if (debug) {
 	 printf("structure %s@%p: decl %d, whole_access %d\n",
-		entry->var->name, entry->var, entry->declaration,
+		entry->var->name, (void *) entry->var, entry->declaration,
 		entry->whole_structure_access);
       }
 

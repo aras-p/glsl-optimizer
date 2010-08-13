@@ -82,14 +82,14 @@ ir_validate::visit(ir_dereference_variable *ir)
 {
    if ((ir->var == NULL) || (ir->var->as_variable() == NULL)) {
       printf("ir_dereference_variable @ %p does not specify a variable %p\n",
-	     ir, ir->var);
+	     (void *) ir, (void *) ir->var);
       abort();
    }
 
    if (hash_table_find(ht, ir->var) == NULL) {
       printf("ir_dereference_variable @ %p specifies undeclared variable "
 	     "`%s' @ %p\n",
-	     ir, ir->var->name, ir->var);
+	     (void *) ir, ir->var->name, (void *) ir->var);
       abort();
    }
 
@@ -122,8 +122,8 @@ ir_validate::visit_enter(ir_function *ir)
       printf("Function definition nested inside another function "
 	     "definition:\n");
       printf("%s %p inside %s %p\n",
-	     ir->name, ir,
-	     this->current_function->name, this->current_function);
+	     ir->name, (void *) ir,
+	     this->current_function->name, (void *) this->current_function);
       abort();
    }
 
@@ -154,9 +154,9 @@ ir_validate::visit_enter(ir_function_signature *ir)
       printf("Function signature nested inside wrong function "
 	     "definition:\n");
       printf("%p inside %s %p instead of %s %p\n",
-	     ir,
-	     this->current_function->name, this->current_function,
-	     ir->function_name(), ir->function());
+	     (void *) ir,
+	     this->current_function->name, (void *) this->current_function,
+	     ir->function_name(), (void *) ir->function());
       abort();
    }
 

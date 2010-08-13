@@ -48,7 +48,6 @@
 
 %lex-param   {void *scanner}
 %parse-param {struct _mesa_glsl_parse_state *state}
-%name-prefix "_mesa_glsl_"
 
 %union {
    int n;
@@ -115,6 +114,8 @@
 %token HVEC2 HVEC3 HVEC4 DVEC2 DVEC3 DVEC4 FVEC2 FVEC3 FVEC4
 %token SAMPLER2DRECT SAMPLER3DRECT SAMPLER2DRECTSHADOW
 %token SIZEOF CAST NAMESPACE USING
+
+%token ERROR_TOK
 
 %token COMMON PARTITION ACTIVE SAMPLERBUFFER FILTER
 %token  IMAGE1D  IMAGE2D  IMAGE3D  IMAGECUBE  IMAGE1DARRAY  IMAGE2DARRAY

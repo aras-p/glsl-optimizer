@@ -92,7 +92,7 @@ extern void
 _mesa_free_shader_state(GLcontext *ctx);
 
 #ifdef __cplusplus
-};
+}
 #endif
 
 #endif /* SHADEROBJ_H */
