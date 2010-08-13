@@ -36,9 +36,9 @@
 #define INT_TO_FIXED(x) ((GLfixed) ((x) << 16))
 #define FLOAT_TO_FIXED(x) ((GLfixed) ((x) * 65536.0))
 
-#if defined(WIN32) || defined(_WIN32_WCE)
+#if defined(_MSC_VER)
 /* Oddly, the fpclassify() function doesn't exist in such a form
- * on Windows.  This is an implementation using slightly different
+ * on MSVC.  This is an implementation using slightly different
  * lower-level Windows functions.
  */
 #include <float.h>
@@ -72,7 +72,7 @@ fpclassify(double x)
 
 #elif defined(__APPLE__) || defined(__CYGWIN__) || defined(__FreeBSD__) || \
      defined(__OpenBSD__) || defined(__NetBSD__) || defined(__DragonFly__) || \
-     (defined(__sun) && defined(__C99FEATURES__))
+     (defined(__sun) && defined(__C99FEATURES__)) || defined(__MINGW32__)
 
 /* fpclassify is available. */
 
