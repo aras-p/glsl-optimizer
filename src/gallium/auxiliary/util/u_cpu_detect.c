@@ -391,23 +391,6 @@ util_cpu_detect(void)
 
    memset(&util_cpu_caps, 0, sizeof util_cpu_caps);
 
-   /* Check for arch type */
-#if defined(PIPE_ARCH_MIPS)
-   util_cpu_caps.arch = UTIL_CPU_ARCH_MIPS;
-#elif defined(PIPE_ARCH_ALPHA)
-   util_cpu_caps.arch = UTIL_CPU_ARCH_ALPHA;
-#elif defined(PIPE_ARCH_SPARC)
-   util_cpu_caps.arch = UTIL_CPU_ARCH_SPARC;
-#elif defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
-   util_cpu_caps.arch = UTIL_CPU_ARCH_X86;
-   util_cpu_caps.little_endian = 1;
-#elif defined(PIPE_ARCH_PPC)
-   util_cpu_caps.arch = UTIL_CPU_ARCH_POWERPC;
-   util_cpu_caps.little_endian = 0;
-#else
-   util_cpu_caps.arch = UTIL_CPU_ARCH_UNKNOWN;
-#endif
-
    /* Count the number of CPUs in system */
 #if defined(PIPE_OS_WINDOWS)
    {
@@ -504,7 +487,6 @@ util_cpu_detect(void)
 
 #ifdef DEBUG
    if (debug_get_option_dump_cpu()) {
-      debug_printf("util_cpu_caps.arch = %i\n", util_cpu_caps.arch);
       debug_printf("util_cpu_caps.nr_cpus = %u\n", util_cpu_caps.nr_cpus);
 
       debug_printf("util_cpu_caps.x86_cpu_type = %u\n", util_cpu_caps.x86_cpu_type);

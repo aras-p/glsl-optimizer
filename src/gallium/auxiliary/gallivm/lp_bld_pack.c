@@ -171,14 +171,13 @@ lp_build_unpack2(LLVMBuilderRef builder,
       msb = lp_build_zero(src_type);
 
    /* Interleave bits */
-   if(util_cpu_caps.little_endian) {
+#ifdef PIPE_ARCH_LITTLE_ENDIAN
       *dst_lo = lp_build_interleave2(builder, src_type, src, msb, 0);
       *dst_hi = lp_build_interleave2(builder, src_type, src, msb, 1);
-   }
-   else {
+#else
       *dst_lo = lp_build_interleave2(builder, src_type, msb, src, 0);
       *dst_hi = lp_build_interleave2(builder, src_type, msb, src, 1);
-   }
+#endif
 
    /* Cast the result into the new type (twice as wide) */
 

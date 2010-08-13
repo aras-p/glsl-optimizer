@@ -1840,7 +1840,11 @@ lp_build_sample_2d_linear_aos(struct lp_build_sample_context *bld,
       unsigned i, j;
 
       for(j = 0; j < h16.type.length; j += 4) {
-         unsigned subindex = util_cpu_caps.little_endian ? 0 : 1;
+#ifdef PIPE_ARCH_LITTLE_ENDIAN
+         unsigned subindex = 0;
+#else
+         unsigned subindex = 1;
+#endif
          LLVMValueRef index;
 
          index = LLVMConstInt(elem_type, j/2 + subindex, 0);
