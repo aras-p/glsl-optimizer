@@ -36,7 +36,8 @@ static double rand_double()
    const double rm = (double)RAND_MAX + 1;
    double div = 1;
    double v = 0;
-   for(unsigned i = 0; i < 4; ++i)
+   unsigned i;
+   for(i = 0; i < 4; ++i)
    {
       div *= rm;
       v += (double)rand() / div;
