@@ -107,29 +107,37 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 
 	/* Shader limits. */
 	case PIPE_CAP_MAX_VS_INSTRUCTIONS:
+		return 16384;  //max native instructions, not greater than max instructions
 	case PIPE_CAP_MAX_VS_ALU_INSTRUCTIONS:
 	case PIPE_CAP_MAX_VS_TEX_INSTRUCTIONS:
 	case PIPE_CAP_MAX_VS_TEX_INDIRECTIONS:
+		return 16384;
 	case PIPE_CAP_MAX_FS_INSTRUCTIONS:
+		return 16384; //max program native instructions
 	case PIPE_CAP_MAX_FS_ALU_INSTRUCTIONS:
+		return 16384; //max program native ALU instructions
 	case PIPE_CAP_MAX_FS_TEX_INSTRUCTIONS:
+		return 16384; //max program native texture instructions
 	case PIPE_CAP_MAX_FS_TEX_INDIRECTIONS:
-		return 8192;
+		return 2048; //max program native texture indirections
 	case PIPE_CAP_MAX_VS_CONTROL_FLOW_DEPTH:
 	case PIPE_CAP_MAX_FS_CONTROL_FLOW_DEPTH:
 		return 8; /* FIXME */
 	case PIPE_CAP_MAX_VS_INPUTS:
+		return 16; //max native attributes
 	case PIPE_CAP_MAX_FS_INPUTS:
-		return 32;
+		return 10; //max native attributes
 	case PIPE_CAP_MAX_VS_TEMPS:
+		return 256; //max native temporaries
 	case PIPE_CAP_MAX_FS_TEMPS:
-		return 128;
+		return 256; //max native temporaries
 	case PIPE_CAP_MAX_VS_ADDRS:
 	case PIPE_CAP_MAX_FS_ADDRS:
-		return 1; /* FIXME Isn't this equal to TEMPS? */
+		return 1; //max native address registers/* FIXME Isn't this equal to TEMPS? */
 	case PIPE_CAP_MAX_VS_CONSTS:
+		return 256; //max native parameters
 	case PIPE_CAP_MAX_FS_CONSTS:
-		return 256; /* FIXME I believe this should be much higher. */
+		return 256; //max program native parameters
 	case PIPE_CAP_MAX_CONST_BUFFERS:
 		return 1;
 	case PIPE_CAP_MAX_CONST_BUFFER_SIZE: /* in bytes */
