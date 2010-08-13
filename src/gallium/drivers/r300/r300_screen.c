@@ -115,7 +115,6 @@ static int r300_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
         case PIPE_CAP_TEXTURE_MIRROR_REPEAT:
         case PIPE_CAP_BLEND_EQUATION_SEPARATE:
         case PIPE_CAP_TEXTURE_SWIZZLE:
-        case PIPE_CAP_DEPTH_CLAMP:
             return 1;
 
         /* Unsupported features (boolean caps). */
@@ -124,6 +123,7 @@ static int r300_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
         case PIPE_CAP_TGSI_CONT_SUPPORTED:
         case PIPE_CAP_INDEP_BLEND_ENABLE:
         case PIPE_CAP_INDEP_BLEND_FUNC:
+        case PIPE_CAP_DEPTH_CLAMP: /* XXX implemented, but breaks Regnum Online */
             return 0;
 
         /* Texturing. */
