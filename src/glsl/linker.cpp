@@ -116,6 +116,38 @@ private:
 };
 
 
+/**
+ * Visitor that determines whether or not a variable is ever read.
+ */
+class find_deref_visitor : public ir_hierarchical_visitor {
+public:
+   find_deref_visitor(const char *name)
+      : name(name), found(false)
+   {
+      /* empty */
+   }
+
+   virtual ir_visitor_status visit(ir_dereference_variable *ir)
+   {
+      if (strcmp(this->name, ir->var->name) == 0) {
+	 this->found = true;
+	 return visit_stop;
+      }
+
+      return visit_continue;
+   }
+
+   bool variable_found() const
+   {
+      return this->found;
+   }
+
+private:
+   const char *name;       /**< Find writes to a variable with this name. */
+   bool found;             /**< Was a write to the variable found? */
+};
+
+
 void
 linker_error_printf(gl_shader_program *prog, const char *fmt, ...)
 {
@@ -1042,7 +1074,10 @@ assign_attribute_locations(gl_shader_program *prog, unsigned max_attribute_index
     * be explicitly assigned by via glBindAttribLocation.  Mark it as reserved
     * to prevent it from being automatically allocated below.
     */
-   used_locations |= (1 << 0);
+   find_deref_visitor find("gl_Vertex");
+   find.run(sh->ir);
+   if (find.variable_found())
+      used_locations |= (1 << 0);
 
    for (unsigned i = 0; i < num_attr; i++) {
       /* Mask representing the contiguous slots that will be used by this
