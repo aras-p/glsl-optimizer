@@ -29,6 +29,7 @@
 #include "glsl_types.h"
 #include "builtin_types.h"
 extern "C" {
+#include "main/imports.h"
 #include "program/hash_table.h"
 }
 

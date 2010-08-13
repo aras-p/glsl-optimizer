@@ -29,7 +29,7 @@
  * and log2 operations.
  */
 
-#include <math.h>
+#include "main/imports.h"
 #include "ir.h"
 #include "glsl_types.h"
 

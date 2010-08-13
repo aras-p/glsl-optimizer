@@ -578,6 +578,12 @@ _mesa_error( __GLcontext *ctx, GLenum error, const char *fmtString, ... );
 extern void
 _mesa_debug( const __GLcontext *ctx, const char *fmtString, ... );
 
+
+#if defined(_MSC_VER) && !defined(snprintf)
+#define snprintf _snprintf
+#endif
+
+
 #ifdef __cplusplus
 }
 #endif
