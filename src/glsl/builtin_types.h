@@ -21,10 +21,6 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef Elements
-#define Elements(x) (sizeof(x)/sizeof(*(x)))
-#endif
-
 const glsl_type glsl_type::_error_type =
    glsl_type(GL_INVALID_ENUM, GLSL_TYPE_ERROR, 0, 0, "");
 

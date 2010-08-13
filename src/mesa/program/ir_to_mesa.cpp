@@ -31,6 +31,7 @@
  */
 
 #include <stdio.h>
+#include "main/compiler.h"
 #include "ir.h"
 #include "ir_visitor.h"
 #include "ir_print_visitor.h"

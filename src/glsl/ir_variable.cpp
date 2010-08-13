@@ -21,14 +21,11 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+#include "main/compiler.h"
 #include "ir.h"
 #include "glsl_parser_extras.h"
 #include "glsl_symbol_table.h"
 #include "builtin_variables.h"
-
-#ifndef Elements
-#define Elements(x) (sizeof(x)/sizeof(*(x)))
-#endif
 
 static void generate_ARB_draw_buffers_variables(exec_list *,
 						struct _mesa_glsl_parse_state *,

@@ -23,6 +23,7 @@
  */
 
 #include <stdio.h>
+#include "main/compiler.h"
 #include "glsl_parser_extras.h"
 #include "ir_reader.h"
 #include "program.h"
@@ -4798,10 +4799,6 @@ static const char *builtins_EXT_texture_array_fs_textures = {
 static const char *functions_for_EXT_texture_array_fs [] = {
    builtins_EXT_texture_array_fs_textures,
 };
-
-#ifndef Elements
-#define Elements(x) (sizeof(x)/sizeof(*(x)))
-#endif
 
 void *builtin_mem_ctx = NULL;
 

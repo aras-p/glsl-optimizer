@@ -23,6 +23,7 @@
 
 #include <cstdio>
 #include <stdlib.h>
+#include "main/compiler.h"
 #include "glsl_symbol_table.h"
 #include "glsl_parser_extras.h"
 #include "glsl_types.h"
