@@ -34,9 +34,8 @@
  * (rebased) index buffer as the draw elements.
  */
 static boolean
-CONCAT(vsplit_segment_fast_, ELT_TYPE)(struct vsplit_frontend *vsplit,
-                                       unsigned flags,
-                                       unsigned istart, unsigned icount)
+CONCAT(vsplit_primitive_, ELT_TYPE)(struct vsplit_frontend *vsplit,
+                                    unsigned istart, unsigned icount)
 {
    struct draw_context *draw = vsplit->draw;
    const ELT_TYPE *ib = (const ELT_TYPE *) draw->pt.user.elts;
@@ -44,10 +43,25 @@ CONCAT(vsplit_segment_fast_, ELT_TYPE)(struct vsplit_frontend *vsplit,
    const unsigned max_index = draw->pt.user.max_index;
    const int elt_bias = draw->pt.user.eltBias;
    unsigned fetch_start, fetch_count;
-   const ushort *draw_elts;
+   const ushort *draw_elts = NULL;
    unsigned i;
 
-   assert(icount <= vsplit->segment_size);
+   /* use the ib directly */
+   if (min_index == 0 && sizeof(ib[0]) == sizeof(draw_elts[0])) {
+      if (icount > vsplit->max_vertices)
+         return FALSE;
+
+      for (i = 0; i < icount; i++) {
+         ELT_TYPE idx = ib[istart + i];
+         assert(idx >= min_index && idx <= max_index);
+      }
+      draw_elts = (const ushort *) ib;
+   }
+   else {
+      /* have to go through vsplit->draw_elts */
+      if (icount > vsplit->segment_size)
+         return FALSE;
+   }
 
    /* this is faster only when we fetch less elements than the normal path */
    if (max_index - min_index > icount - 1)
@@ -65,14 +79,7 @@ CONCAT(vsplit_segment_fast_, ELT_TYPE)(struct vsplit_frontend *vsplit,
    fetch_start = min_index + elt_bias;
    fetch_count = max_index - min_index + 1;
 
-   if (min_index == 0 && sizeof(ib[0]) == sizeof(draw_elts[0])) {
-      for (i = 0; i < icount; i++) {
-         ELT_TYPE idx = ib[istart + i];
-         assert(idx >= min_index && idx <= max_index);
-      }
-      draw_elts = (const ushort *) ib;
-   }
-   else {
+   if (!draw_elts) {
       if (min_index == 0) {
          for (i = 0; i < icount; i++) {
             ELT_TYPE idx = ib[istart + i];
@@ -95,7 +102,7 @@ CONCAT(vsplit_segment_fast_, ELT_TYPE)(struct vsplit_frontend *vsplit,
 
    return vsplit->middle->run_linear_elts(vsplit->middle,
                                           fetch_start, fetch_count,
-                                          draw_elts, icount, flags);
+                                          draw_elts, icount, 0x0);
 }
 
 /**
@@ -170,12 +177,6 @@ CONCAT(vsplit_segment_simple_, ELT_TYPE)(struct vsplit_frontend *vsplit,
                                          unsigned istart,
                                          unsigned icount)
 {
-   /* the primitive is not splitted */
-   if (!(flags)) {
-      if (CONCAT(vsplit_segment_fast_, ELT_TYPE)(vsplit,
-               flags, istart, icount))
-         return;
-   }
    CONCAT(vsplit_segment_cache_, ELT_TYPE)(vsplit,
          flags, istart, icount, FALSE, 0, FALSE, 0);
 }
@@ -212,6 +213,9 @@ CONCAT(vsplit_segment_fan_, ELT_TYPE)(struct vsplit_frontend *vsplit,
    const unsigned max_count_simple = vsplit->segment_size;                 \
    const unsigned max_count_loop = vsplit->segment_size - 1;               \
    const unsigned max_count_fan = vsplit->segment_size;
+
+#define PRIMITIVE(istart, icount)   \
+   CONCAT(vsplit_primitive_, ELT_TYPE)(vsplit, istart, icount)
 
 #else /* ELT_TYPE */
 
@@ -273,6 +277,8 @@ vsplit_segment_fan_linear(struct vsplit_frontend *vsplit, unsigned flags,
    const unsigned max_count_simple = vsplit->max_vertices;                 \
    const unsigned max_count_loop = vsplit->segment_size - 1;               \
    const unsigned max_count_fan = vsplit->segment_size;
+
+#define PRIMITIVE(istart, icount) FALSE
 
 #define ELT_TYPE linear
 

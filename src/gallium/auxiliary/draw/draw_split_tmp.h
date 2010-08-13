@@ -47,6 +47,10 @@ FUNC(FUNC_VARS)
    if (count < first)
       return;
 
+   /* try flushing the entire primitive */
+   if (PRIMITIVE(start, count))
+      return;
+
    /* must be able to at least flush two complete primitives */
    assert(max_count_simple >= first + incr &&
           max_count_loop >= first + incr &&
@@ -166,6 +170,7 @@ FUNC(FUNC_VARS)
 #undef FUNC_VARS
 #undef LOCAL_VARS
 
+#undef PRIMITIVE
 #undef SEGMENT_SIMPLE
 #undef SEGMENT_LOOP
 #undef SEGMENT_FAN
