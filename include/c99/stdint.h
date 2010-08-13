@@ -110,6 +110,9 @@ typedef unsigned __int32   uintptr_t;
 #define INT64_C(__val)    __val##i64
 #define UINT64_C(__val)   __val##ui64
 
+typedef int64_t            intmax_t;
+typedef uint64_t           uintmax_t;
+
 #else
 #error "Unsupported compiler"
 #endif
