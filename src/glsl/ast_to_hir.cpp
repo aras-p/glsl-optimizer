@@ -986,7 +986,7 @@ ast_expression::hir(exec_list *instructions,
 
       assert(operations[this->oper] == ir_binop_mod);
 
-      struct ir_rvalue *temp_rhs;
+      ir_rvalue *temp_rhs;
       temp_rhs = new(ctx) ir_expression(operations[this->oper], type,
 					op[0], op[1]);
 
@@ -1107,7 +1107,7 @@ ast_expression::hir(exec_list *instructions,
 
       type = arithmetic_result_type(op[0], op[1], false, state, & loc);
 
-      struct ir_rvalue *temp_rhs;
+      ir_rvalue *temp_rhs;
       temp_rhs = new(ctx) ir_expression(operations[this->oper], type,
 					op[0], op[1]);
 
@@ -1131,7 +1131,7 @@ ast_expression::hir(exec_list *instructions,
 
       type = arithmetic_result_type(op[0], op[1], false, state, & loc);
 
-      struct ir_rvalue *temp_rhs;
+      ir_rvalue *temp_rhs;
       temp_rhs = new(ctx) ir_expression(operations[this->oper], type,
 					op[0], op[1]);
 
@@ -1453,7 +1453,7 @@ ast_type_specifier::glsl_type(const char **name,
 
 static void
 apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
-				 struct ir_variable *var,
+				 ir_variable *var,
 				 struct _mesa_glsl_parse_state *state,
 				 YYLTYPE *loc)
 {
@@ -1620,7 +1620,7 @@ ast_declarator_list::hir(exec_list *instructions,
 
    foreach_list_typed (ast_declaration, decl, link, &this->declarations) {
       const struct glsl_type *var_type;
-      struct ir_variable *var;
+      ir_variable *var;
 
       /* FINISHME: Emit a warning if a variable declaration shadows a
        * FINISHME: declaration at a higher scope.

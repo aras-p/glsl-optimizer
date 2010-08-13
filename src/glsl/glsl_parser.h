@@ -245,21 +245,21 @@ typedef union YYSTYPE
       unsigned i;
    } type_qualifier;
 
-   struct ast_node *node;
-   struct ast_type_specifier *type_specifier;
-   struct ast_fully_specified_type *fully_specified_type;
-   struct ast_function *function;
-   struct ast_parameter_declarator *parameter_declarator;
-   struct ast_function_definition *function_definition;
-   struct ast_compound_statement *compound_statement;
-   struct ast_expression *expression;
-   struct ast_declarator_list *declarator_list;
-   struct ast_struct_specifier *struct_specifier;
-   struct ast_declaration *declaration;
+   ast_node *node;
+   ast_type_specifier *type_specifier;
+   ast_fully_specified_type *fully_specified_type;
+   ast_function *function;
+   ast_parameter_declarator *parameter_declarator;
+   ast_function_definition *function_definition;
+   ast_compound_statement *compound_statement;
+   ast_expression *expression;
+   ast_declarator_list *declarator_list;
+   ast_struct_specifier *struct_specifier;
+   ast_declaration *declaration;
 
    struct {
-      struct ast_node *cond;
-      struct ast_expression *rest;
+      ast_node *cond;
+      ast_expression *rest;
    } for_rest_statement;
 
 

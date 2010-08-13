@@ -29,7 +29,6 @@
 #include "list.h"
 #include "glsl_parser_extras.h"
 
-struct ir_instruction;
 struct _mesa_glsl_parse_state;
 
 struct YYLTYPE;
@@ -657,8 +656,8 @@ public:
 extern void
 _mesa_ast_to_hir(exec_list *instructions, struct _mesa_glsl_parse_state *state);
 
-extern struct ir_rvalue *
-_mesa_ast_field_selection_to_hir(const struct ast_expression *expr,
+extern ir_rvalue *
+_mesa_ast_field_selection_to_hir(const ast_expression *expr,
 				 exec_list *instructions,
 				 struct _mesa_glsl_parse_state *state);
 

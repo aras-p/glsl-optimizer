@@ -347,21 +347,21 @@ typedef union YYSTYPE
       unsigned i;
    } type_qualifier;
 
-   struct ast_node *node;
-   struct ast_type_specifier *type_specifier;
-   struct ast_fully_specified_type *fully_specified_type;
-   struct ast_function *function;
-   struct ast_parameter_declarator *parameter_declarator;
-   struct ast_function_definition *function_definition;
-   struct ast_compound_statement *compound_statement;
-   struct ast_expression *expression;
-   struct ast_declarator_list *declarator_list;
-   struct ast_struct_specifier *struct_specifier;
-   struct ast_declaration *declaration;
+   ast_node *node;
+   ast_type_specifier *type_specifier;
+   ast_fully_specified_type *fully_specified_type;
+   ast_function *function;
+   ast_parameter_declarator *parameter_declarator;
+   ast_function_definition *function_definition;
+   ast_compound_statement *compound_statement;
+   ast_expression *expression;
+   ast_declarator_list *declarator_list;
+   ast_struct_specifier *struct_specifier;
+   ast_declaration *declaration;
 
    struct {
-      struct ast_node *cond;
-      struct ast_expression *rest;
+      ast_node *cond;
+      ast_expression *rest;
    } for_rest_statement;
 
 
@@ -4609,7 +4609,7 @@ yyreduce:
 /* Line 1455 of yacc.c  */
 #line 1193 "glsl_parser.ypp"
     {
-	   (yyval.node) = (struct ast_node *) (yyvsp[(1) - (1)].declarator_list);
+	   (yyval.node) = (ast_node *) (yyvsp[(1) - (1)].declarator_list);
 	   (yyvsp[(1) - (1)].declarator_list)->link.self_link();
 	;}
     break;
@@ -4619,7 +4619,7 @@ yyreduce:
 /* Line 1455 of yacc.c  */
 #line 1198 "glsl_parser.ypp"
     {
-	   (yyval.node) = (struct ast_node *) (yyvsp[(1) - (2)].node);
+	   (yyval.node) = (ast_node *) (yyvsp[(1) - (2)].node);
 	   (yyval.node)->link.insert_before(& (yyvsp[(2) - (2)].declarator_list)->link);
 	;}
     break;
@@ -4687,7 +4687,7 @@ yyreduce:
 
 /* Line 1455 of yacc.c  */
 #line 1263 "glsl_parser.ypp"
-    { (yyval.node) = (struct ast_node *) (yyvsp[(1) - (1)].compound_statement); ;}
+    { (yyval.node) = (ast_node *) (yyvsp[(1) - (1)].compound_statement); ;}
     break;
 
   case 234:
@@ -4730,7 +4730,7 @@ yyreduce:
 
 /* Line 1455 of yacc.c  */
 #line 1297 "glsl_parser.ypp"
-    { (yyval.node) = (struct ast_node *) (yyvsp[(1) - (1)].compound_statement); ;}
+    { (yyval.node) = (ast_node *) (yyvsp[(1) - (1)].compound_statement); ;}
     break;
 
   case 242:
@@ -4855,7 +4855,7 @@ yyreduce:
 /* Line 1455 of yacc.c  */
 #line 1385 "glsl_parser.ypp"
     {
-	   (yyval.node) = (struct ast_node *) (yyvsp[(1) - (1)].expression);
+	   (yyval.node) = (ast_node *) (yyvsp[(1) - (1)].expression);
 	;}
     break;
 
