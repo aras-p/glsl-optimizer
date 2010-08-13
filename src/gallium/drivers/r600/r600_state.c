@@ -379,6 +379,8 @@ static void r600_set_scissor_state(struct pipe_context *ctx,
 
 	rstate = r600_context_state(rctx, pipe_scissor_type, state);
 	r600_bind_state(ctx, rstate);
+	/* refcount is taken care of this */
+	r600_delete_state(ctx, rstate);
 }
 
 static void r600_set_stencil_ref(struct pipe_context *ctx,
@@ -389,6 +391,8 @@ static void r600_set_stencil_ref(struct pipe_context *ctx,
 
 	rstate = r600_context_state(rctx, pipe_stencil_ref_type, state);
 	r600_bind_state(ctx, rstate);
+	/* refcount is taken care of this */
+	r600_delete_state(ctx, rstate);
 }
 
 static void r600_set_vertex_buffers(struct pipe_context *ctx,
@@ -433,6 +437,7 @@ static void r600_set_viewport_state(struct pipe_context *ctx,
 
 	rstate = r600_context_state(rctx, pipe_viewport_type, state);
 	r600_bind_state(ctx, rstate);
+	r600_delete_state(ctx, rstate);
 }
 
 void r600_init_state_functions(struct r600_context *rctx)

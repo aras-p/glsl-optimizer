@@ -112,6 +112,7 @@ struct radeon_ctx *radeon_ctx_decref(struct radeon_ctx *ctx)
 		ctx->bo[i] = radeon_bo_decref(ctx->radeon, ctx->bo[i]);
 	}
 	ctx->radeon = radeon_decref(ctx->radeon);
+	free(ctx->state);
 	free(ctx->draw);
 	free(ctx->bo);
 	free(ctx->pm4);
