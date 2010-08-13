@@ -25,11 +25,7 @@
 #include "ast.h"
 #include "glsl_types.h"
 #include "ir.h"
-
-inline unsigned min(unsigned a, unsigned b)
-{
-   return (a < b) ? a : b;
-}
+#include "main/macros.h"
 
 static ir_rvalue *
 convert_component(ir_rvalue *src, const glsl_type *desired_type);
@@ -781,8 +777,8 @@ emit_inline_matrix_constructor(const glsl_type *type,
 	 { 1, 1, 1, 0 }
       };
 
-      const unsigned cols_to_init = min(type->matrix_columns,
-					type->vector_elements);
+      const unsigned cols_to_init = MIN2(type->matrix_columns,
+					 type->vector_elements);
       for (unsigned i = 0; i < cols_to_init; i++) {
 	 ir_constant *const col_idx = new(ctx) ir_constant(i);
 	 ir_rvalue *const col_ref = new(ctx) ir_dereference_array(var, col_idx);
@@ -875,8 +871,8 @@ emit_inline_matrix_constructor(const glsl_type *type,
       for (unsigned i = 1; i < src_matrix->type->vector_elements; i++)
 	 swiz[i] = i;
 
-      const unsigned last_col = min(src_matrix->type->matrix_columns,
-				    var->type->matrix_columns);
+      const unsigned last_col = MIN2(src_matrix->type->matrix_columns,
+				     var->type->matrix_columns);
       const unsigned write_mask = (1U << var->type->vector_elements) - 1;
 
       for (unsigned i = 0; i < last_col; i++) {
@@ -938,8 +934,8 @@ emit_inline_matrix_constructor(const glsl_type *type,
 	  * single vec4, for example, can completely fill a mat2.
 	  */
 	 if (rhs_components >= components_remaining_this_column) {
-	    const unsigned count = min(rhs_components,
-				       components_remaining_this_column);
+	    const unsigned count = MIN2(rhs_components,
+					components_remaining_this_column);
 
 	    rhs_var_ref = new(ctx) ir_dereference_variable(rhs_var);
 
