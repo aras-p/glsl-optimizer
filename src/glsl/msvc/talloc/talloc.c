@@ -30,16 +30,49 @@
   inspired by http://swapped.cc/halloc/
 */
 
-//#include "replace.h"
 #include "talloc.h"
 #include <string.h>
 
 #define TALLOC_MIN(a,b) ((a)<(b)?(a):(b))
-#ifdef _MSC_VER
+
+/* Visual C++ 2008 compatibility */
+#if defined(_MSC_VER) && !defined(_cplusplus)
 typedef size_t ssize_t;
+#define inline __inline
 #endif
-#ifdef __cplusplus
-extern "C" {
+
+/* Xcode/gcc4.0 compatibility */
+#if defined(__APPLE__)
+static size_t strnlen (const char* s, size_t n)
+{
+	size_t i;
+	for (i = 0; i < n; ++i)
+	{
+		if (s[i] == '\0')
+			break;
+	}
+	return i;
+}
+#endif
+
+/* Visual C++ 2008 & Xcode/gcc4.0 compatibility */
+#if !defined(_cplusplus) && (defined(_MSC_VER) || defined(__APPLE__))
+typedef int bool;
+#define false 0
+#define true 1
+#endif
+
+
+#ifdef TALLOC_BUILD_VERSION_MAJOR
+#if (TALLOC_VERSION_MAJOR != TALLOC_BUILD_VERSION_MAJOR)
+#error "TALLOC_VERSION_MAJOR != TALLOC_BUILD_VERSION_MAJOR"
+#endif
+#endif
+
+#ifdef TALLOC_BUILD_VERSION_MINOR
+#if (TALLOC_VERSION_MINOR != TALLOC_BUILD_VERSION_MINOR)
+#error "TALLOC_VERSION_MINOR != TALLOC_BUILD_VERSION_MINOR"
+#endif
 #endif
 
 /* use this to force every realloc to change the pointer, to stress test
@@ -49,7 +82,11 @@ extern "C" {
 
 #define MAX_TALLOC_SIZE 0x10000000
 #define TALLOC_MAGIC_BASE 0xe814ec70
-#define TALLOC_MAGIC (TALLOC_MAGIC_BASE)
+#define TALLOC_MAGIC ( \
+	TALLOC_MAGIC_BASE + \
+	(TALLOC_VERSION_MAJOR << 12) + \
+	(TALLOC_VERSION_MINOR << 4) \
+)
 
 #define TALLOC_FLAG_FREE 0x01
 #define TALLOC_FLAG_LOOP 0x02
@@ -95,6 +132,7 @@ extern "C" {
    NULL
 */
 static void *null_context;
+static void *autofree_context;
 
 struct talloc_reference_handle {
 	struct talloc_reference_handle *next, *prev;
@@ -131,22 +169,77 @@ struct talloc_chunk {
 #define TC_HDR_SIZE ((sizeof(struct talloc_chunk)+15)&~15)
 #define TC_PTR_FROM_CHUNK(tc) ((void *)(TC_HDR_SIZE + (char*)tc))
 
+int talloc_version_major(void)
+{
+	return TALLOC_VERSION_MAJOR;
+}
+
+int talloc_version_minor(void)
+{
+	return TALLOC_VERSION_MINOR;
+}
+
+static void (*talloc_log_fn)(const char *message);
+
+void talloc_set_log_fn(void (*log_fn)(const char *message))
+{
+	talloc_log_fn = log_fn;
+}
+
 static void talloc_log(const char *fmt, ...) PRINTF_ATTRIBUTE(1,2);
 static void talloc_log(const char *fmt, ...)
 {
+	va_list ap;
+	char *message;
+
+	if (!talloc_log_fn) {
+		return;
+	}
+
+	va_start(ap, fmt);
+	message = talloc_vasprintf(NULL, fmt, ap);
+	va_end(ap);
+
+	talloc_log_fn(message);
+	talloc_free(message);
+}
+
+static void talloc_log_stderr(const char *message)
+{
+	fprintf(stderr, "%s", message);
+}
+
+void talloc_set_log_stderr(void)
+{
+	talloc_set_log_fn(talloc_log_stderr);
+}
+
+static void (*talloc_abort_fn)(const char *reason);
+
+void talloc_set_abort_fn(void (*abort_fn)(const char *reason))
+{
+	talloc_abort_fn = abort_fn;
 }
 
 static void talloc_abort(const char *reason)
 {
 	talloc_log("%s\n", reason);
-	TALLOC_ABORT(reason);
+
+	if (!talloc_abort_fn) {
+		TALLOC_ABORT(reason);
+	}
+
+	talloc_abort_fn(reason);
 }
 
 static void talloc_abort_magic(unsigned magic)
 {
-	talloc_log("Bad talloc magic[0x%08X] expected[0x%08X]\n",
-		   magic,
-		   TALLOC_MAGIC);
+	unsigned striped = magic - TALLOC_MAGIC_BASE;
+	unsigned major = (striped & 0xFFFFF000) >> 12;
+	unsigned minor = (striped & 0x00000FF0) >> 4;
+	talloc_log("Bad talloc magic[0x%08X/%u/%u] expected[0x%08X/%u/%u]\n",
+		   magic, major, minor,
+		   TALLOC_MAGIC, TALLOC_VERSION_MAJOR, TALLOC_VERSION_MINOR);
 	talloc_abort("Bad talloc magic value - wrong talloc version used/mixed");
 }
 
@@ -232,6 +325,15 @@ void *talloc_parent(const void *ptr)
 {
 	struct talloc_chunk *tc = talloc_parent_chunk(ptr);
 	return tc? TC_PTR_FROM_CHUNK(tc) : NULL;
+}
+
+/*
+  find parents name
+*/
+const char *talloc_parent_name(const void *ptr)
+{
+	struct talloc_chunk *tc = talloc_parent_chunk(ptr);
+	return tc? tc->name : NULL;
 }
 
 /*
@@ -402,6 +504,17 @@ void _talloc_set_destructor(const void *ptr, int (*destructor)(void *))
 }
 
 /*
+  increase the reference count on a piece of memory. 
+*/
+int talloc_increase_ref_count(const void *ptr)
+{
+	if (unlikely(!talloc_reference(null_context, ptr))) {
+		return -1;
+	}
+	return 0;
+}
+
+/*
   helper for talloc_reference()
 
   this is referenced by a function pointer and should not be inline
@@ -438,6 +551,37 @@ static inline void *_talloc_named_const(const void *context, size_t size, const 
 	_talloc_set_name_const(ptr, name);
 
 	return ptr;
+}
+
+/*
+  make a secondary reference to a pointer, hanging off the given context.
+  the pointer remains valid until both the original caller and this given
+  context are freed.
+  
+  the major use for this is when two different structures need to reference the 
+  same underlying data, and you want to be able to free the two instances separately,
+  and in either order
+*/
+void *_talloc_reference_loc(const void *context, const void *ptr, const char *location)
+{
+	struct talloc_chunk *tc;
+	struct talloc_reference_handle *handle;
+	if (unlikely(ptr == NULL)) return NULL;
+
+	tc = talloc_chunk_from_ptr(ptr);
+	handle = (struct talloc_reference_handle *)_talloc_named_const(context,
+						   sizeof(struct talloc_reference_handle),
+						   TALLOC_MAGIC_REFERENCE);
+	if (unlikely(handle == NULL)) return NULL;
+
+	/* note that we hang the destructor off the handle, not the
+	   main context as that allows the caller to still setup their
+	   own destructor on the context if they want to */
+	talloc_set_destructor(handle, talloc_reference_destructor);
+	handle->ptr = discard_const_p(void, ptr);
+	handle->location = location;
+	_TLIST_ADD(tc->refs, handle);
+	return handle->ptr;
 }
 
 static void *_talloc_steal_internal(const void *new_ctx, const void *ptr);
@@ -644,6 +788,40 @@ void *_talloc_steal_loc(const void *new_ctx, const void *ptr, const char *locati
 	return _talloc_steal_internal(new_ctx, ptr);
 }
 
+/* 
+   this is like a talloc_steal(), but you must supply the old
+   parent. This resolves the ambiguity in a talloc_steal() which is
+   called on a context that has more than one parent (via references)
+
+   The old parent can be either a reference or a parent
+*/
+void *talloc_reparent(const void *old_parent, const void *new_parent, const void *ptr)
+{
+	struct talloc_chunk *tc;
+	struct talloc_reference_handle *h;
+
+	if (unlikely(ptr == NULL)) {
+		return NULL;
+	}
+
+	if (old_parent == talloc_parent(ptr)) {
+		return _talloc_steal_internal(new_parent, ptr);
+	}
+
+	tc = talloc_chunk_from_ptr(ptr);
+	for (h=tc->refs;h;h=h->next) {
+		if (talloc_parent(h) == old_parent) {
+			if (_talloc_steal_internal(new_parent, h) != h) {
+				return NULL;
+			}
+			return discard_const_p(void, ptr);
+		}
+	}	
+
+	/* it wasn't a parent */
+	return NULL;
+}
+
 /*
   remove a secondary reference to a pointer. This undo's what
   talloc_reference() has done. The context and pointer arguments
@@ -756,6 +934,32 @@ const char *talloc_set_name(const void *ptr, const char *fmt, ...)
 
 
 /*
+  create a named talloc pointer. Any talloc pointer can be named, and
+  talloc_named() operates just like talloc() except that it allows you
+  to name the pointer.
+*/
+void *talloc_named(const void *context, size_t size, const char *fmt, ...)
+{
+	va_list ap;
+	void *ptr;
+	const char *name;
+
+	ptr = __talloc(context, size);
+	if (unlikely(ptr == NULL)) return NULL;
+
+	va_start(ap, fmt);
+	name = talloc_set_name_v(ptr, fmt, ap);
+	va_end(ap);
+
+	if (unlikely(name == NULL)) {
+		_talloc_free_internal(ptr, __location__);
+		return NULL;
+	}
+
+	return ptr;
+}
+
+/*
   return the name of a talloc ptr, or "UNNAMED"
 */
 const char *talloc_get_name(const void *ptr)
@@ -770,6 +974,57 @@ const char *talloc_get_name(const void *ptr)
 	return "UNNAMED";
 }
 
+
+/*
+  check if a pointer has the given name. If it does, return the pointer,
+  otherwise return NULL
+*/
+void *talloc_check_name(const void *ptr, const char *name)
+{
+	const char *pname;
+	if (unlikely(ptr == NULL)) return NULL;
+	pname = talloc_get_name(ptr);
+	if (likely(pname == name || strcmp(pname, name) == 0)) {
+		return discard_const_p(void, ptr);
+	}
+	return NULL;
+}
+
+static void talloc_abort_type_missmatch(const char *location,
+					const char *name,
+					const char *expected)
+{
+	const char *reason;
+
+	reason = talloc_asprintf(NULL,
+				 "%s: Type mismatch: name[%s] expected[%s]",
+				 location,
+				 name?name:"NULL",
+				 expected);
+	if (!reason) {
+		reason = "Type mismatch";
+	}
+
+	talloc_abort(reason);
+}
+
+void *_talloc_get_type_abort(const void *ptr, const char *name, const char *location)
+{
+	const char *pname;
+
+	if (unlikely(ptr == NULL)) {
+		talloc_abort_type_missmatch(location, NULL, name);
+		return NULL;
+	}
+
+	pname = talloc_get_name(ptr);
+	if (likely(pname == name || strcmp(pname, name) == 0)) {
+		return discard_const_p(void, ptr);
+	}
+
+	talloc_abort_type_missmatch(location, pname, name);
+	return NULL;
+}
 
 /*
   this is for compatibility with older versions of talloc
@@ -802,6 +1057,52 @@ void *talloc_init(const char *fmt, ...)
 	return ptr;
 }
 
+/*
+  this is a replacement for the Samba3 talloc_destroy_pool functionality. It
+  should probably not be used in new code. It's in here to keep the talloc
+  code consistent across Samba 3 and 4.
+*/
+void talloc_free_children(void *ptr)
+{
+	struct talloc_chunk *tc;
+
+	if (unlikely(ptr == NULL)) {
+		return;
+	}
+
+	tc = talloc_chunk_from_ptr(ptr);
+
+	while (tc->child) {
+		/* we need to work out who will own an abandoned child
+		   if it cannot be freed. In priority order, the first
+		   choice is owner of any remaining reference to this
+		   pointer, the second choice is our parent, and the
+		   final choice is the null context. */
+		void *child = TC_PTR_FROM_CHUNK(tc->child);
+		const void *new_parent = null_context;
+		if (unlikely(tc->child->refs)) {
+			struct talloc_chunk *p = talloc_parent_chunk(tc->child->refs);
+			if (p) new_parent = TC_PTR_FROM_CHUNK(p);
+		}
+		if (unlikely(talloc_free(child) == -1)) {
+			if (new_parent == null_context) {
+				struct talloc_chunk *p = talloc_parent_chunk(ptr);
+				if (p) new_parent = TC_PTR_FROM_CHUNK(p);
+			}
+			_talloc_steal_internal(new_parent, child);
+		}
+	}
+
+	if ((tc->flags & TALLOC_FLAG_POOL)
+	    && (*talloc_pool_objectcount(tc) == 1)) {
+		tc->pool = ((char *)tc + TC_HDR_SIZE + TALLOC_POOL_HDR_SIZE);
+#if defined(DEVELOPER) && defined(VALGRIND_MAKE_MEM_NOACCESS)
+		VALGRIND_MAKE_MEM_NOACCESS(
+			tc->pool, tc->size - TALLOC_POOL_HDR_SIZE);
+#endif
+	}
+}
+
 /* 
    Allocate a bit of memory as a child of an existing pointer
 */
@@ -811,8 +1112,16 @@ void *_talloc(const void *context, size_t size)
 }
 
 /*
+  externally callable talloc_set_name_const()
+*/
+void talloc_set_name_const(const void *ptr, const char *name)
+{
+	_talloc_set_name_const(ptr, name);
+}
+
+/*
   create a named talloc pointer. Any talloc pointer can be named, and
-  talloc_named_const() operates just like talloc() except that it allows you
+  talloc_named() operates just like talloc() except that it allows you
   to name the pointer.
 */
 void *talloc_named_const(const void *context, size_t size, const char *name)
@@ -958,6 +1267,231 @@ void *_talloc_realloc(const void *context, void *ptr, size_t size, const char *n
 	return TC_PTR_FROM_CHUNK(tc);
 }
 
+/*
+  a wrapper around talloc_steal() for situations where you are moving a pointer
+  between two structures, and want the old pointer to be set to NULL
+*/
+void *_talloc_move(const void *new_ctx, const void *_pptr)
+{
+	const void **pptr = discard_const_p(const void *,_pptr);
+	void *ret = talloc_steal(new_ctx, discard_const_p(void, *pptr));
+	(*pptr) = NULL;
+	return ret;
+}
+
+/*
+  return the total size of a talloc pool (subtree)
+*/
+size_t talloc_total_size(const void *ptr)
+{
+	size_t total = 0;
+	struct talloc_chunk *c, *tc;
+
+	if (ptr == NULL) {
+		ptr = null_context;
+	}
+	if (ptr == NULL) {
+		return 0;
+	}
+
+	tc = talloc_chunk_from_ptr(ptr);
+
+	if (tc->flags & TALLOC_FLAG_LOOP) {
+		return 0;
+	}
+
+	tc->flags |= TALLOC_FLAG_LOOP;
+
+	if (likely(tc->name != TALLOC_MAGIC_REFERENCE)) {
+		total = tc->size;
+	}
+	for (c=tc->child;c;c=c->next) {
+		total += talloc_total_size(TC_PTR_FROM_CHUNK(c));
+	}
+
+	tc->flags &= ~TALLOC_FLAG_LOOP;
+
+	return total;
+}
+
+/*
+  return the total number of blocks in a talloc pool (subtree)
+*/
+size_t talloc_total_blocks(const void *ptr)
+{
+	size_t total = 0;
+	struct talloc_chunk *c, *tc;
+
+	if (ptr == NULL) {
+		ptr = null_context;
+	}
+	if (ptr == NULL) {
+		return 0;
+	}
+
+	tc = talloc_chunk_from_ptr(ptr);
+
+	if (tc->flags & TALLOC_FLAG_LOOP) {
+		return 0;
+	}
+
+	tc->flags |= TALLOC_FLAG_LOOP;
+
+	total++;
+	for (c=tc->child;c;c=c->next) {
+		total += talloc_total_blocks(TC_PTR_FROM_CHUNK(c));
+	}
+
+	tc->flags &= ~TALLOC_FLAG_LOOP;
+
+	return total;
+}
+
+/*
+  return the number of external references to a pointer
+*/
+size_t talloc_reference_count(const void *ptr)
+{
+	struct talloc_chunk *tc = talloc_chunk_from_ptr(ptr);
+	struct talloc_reference_handle *h;
+	size_t ret = 0;
+
+	for (h=tc->refs;h;h=h->next) {
+		ret++;
+	}
+	return ret;
+}
+
+/*
+  report on memory usage by all children of a pointer, giving a full tree view
+*/
+void talloc_report_depth_cb(const void *ptr, int depth, int max_depth,
+			    void (*callback)(const void *ptr,
+			  		     int depth, int max_depth,
+					     int is_ref,
+					     void *private_data),
+			    void *private_data)
+{
+	struct talloc_chunk *c, *tc;
+
+	if (ptr == NULL) {
+		ptr = null_context;
+	}
+	if (ptr == NULL) return;
+
+	tc = talloc_chunk_from_ptr(ptr);
+
+	if (tc->flags & TALLOC_FLAG_LOOP) {
+		return;
+	}
+
+	callback(ptr, depth, max_depth, 0, private_data);
+
+	if (max_depth >= 0 && depth >= max_depth) {
+		return;
+	}
+
+	tc->flags |= TALLOC_FLAG_LOOP;
+	for (c=tc->child;c;c=c->next) {
+		if (c->name == TALLOC_MAGIC_REFERENCE) {
+			struct talloc_reference_handle *h = (struct talloc_reference_handle *)TC_PTR_FROM_CHUNK(c);
+			callback(h->ptr, depth + 1, max_depth, 1, private_data);
+		} else {
+			talloc_report_depth_cb(TC_PTR_FROM_CHUNK(c), depth + 1, max_depth, callback, private_data);
+		}
+	}
+	tc->flags &= ~TALLOC_FLAG_LOOP;
+}
+
+static void talloc_report_depth_FILE_helper(const void *ptr, int depth, int max_depth, int is_ref, void *_f)
+{
+	const char *name = talloc_get_name(ptr);
+	FILE *f = (FILE *)_f;
+
+	if (is_ref) {
+		fprintf(f, "%*sreference to: %s\n", depth*4, "", name);
+		return;
+	}
+
+	if (depth == 0) {
+		fprintf(f,"%stalloc report on '%s' (total %6lu bytes in %3lu blocks)\n", 
+			(max_depth < 0 ? "full " :""), name,
+			(unsigned long)talloc_total_size(ptr),
+			(unsigned long)talloc_total_blocks(ptr));
+		return;
+	}
+
+	fprintf(f, "%*s%-30s contains %6lu bytes in %3lu blocks (ref %d) %p\n", 
+		depth*4, "",
+		name,
+		(unsigned long)talloc_total_size(ptr),
+		(unsigned long)talloc_total_blocks(ptr),
+		(int)talloc_reference_count(ptr), ptr);
+
+#if 0
+	fprintf(f, "content: ");
+	if (talloc_total_size(ptr)) {
+		int tot = talloc_total_size(ptr);
+		int i;
+
+		for (i = 0; i < tot; i++) {
+			if ((((char *)ptr)[i] > 31) && (((char *)ptr)[i] < 126)) {
+				fprintf(f, "%c", ((char *)ptr)[i]);
+			} else {
+				fprintf(f, "~%02x", ((char *)ptr)[i]);
+			}
+		}
+	}
+	fprintf(f, "\n");
+#endif
+}
+
+/*
+  report on memory usage by all children of a pointer, giving a full tree view
+*/
+void talloc_report_depth_file(const void *ptr, int depth, int max_depth, FILE *f)
+{
+	if (f) {
+		talloc_report_depth_cb(ptr, depth, max_depth, talloc_report_depth_FILE_helper, f);
+		fflush(f);
+	}
+}
+
+/*
+  report on memory usage by all children of a pointer, giving a full tree view
+*/
+void talloc_report_full(const void *ptr, FILE *f)
+{
+	talloc_report_depth_file(ptr, 0, -1, f);
+}
+
+/*
+  report on memory usage by all children of a pointer
+*/
+void talloc_report(const void *ptr, FILE *f)
+{
+	talloc_report_depth_file(ptr, 0, 1, f);
+}
+
+/*
+  report on any memory hanging off the null context
+*/
+static void talloc_report_null(void)
+{
+	if (talloc_total_size(null_context) != 0) {
+		talloc_report(null_context, stderr);
+	}
+}
+
+/*
+  report on any memory hanging off the null context
+*/
+static void talloc_report_null_full(void)
+{
+	if (talloc_total_size(null_context) != 0) {
+		talloc_report_full(null_context, stderr);
+	}
+}
 
 /*
   enable tracking of the NULL context
@@ -966,7 +1500,64 @@ void talloc_enable_null_tracking(void)
 {
 	if (null_context == NULL) {
 		null_context = _talloc_named_const(NULL, 0, "null_context");
+		if (autofree_context != NULL) {
+			talloc_reparent(NULL, null_context, autofree_context);
+		}
 	}
+}
+
+/*
+  enable tracking of the NULL context, not moving the autofree context
+  into the NULL context. This is needed for the talloc testsuite
+*/
+void talloc_enable_null_tracking_no_autofree(void)
+{
+	if (null_context == NULL) {
+		null_context = _talloc_named_const(NULL, 0, "null_context");
+	}
+}
+
+/*
+  disable tracking of the NULL context
+*/
+void talloc_disable_null_tracking(void)
+{
+	if (null_context != NULL) {
+		/* we have to move any children onto the real NULL
+		   context */
+		struct talloc_chunk *tc, *tc2;
+		tc = talloc_chunk_from_ptr(null_context);
+		for (tc2 = tc->child; tc2; tc2=tc2->next) {
+			if (tc2->parent == tc) tc2->parent = NULL;
+			if (tc2->prev == tc) tc2->prev = NULL;
+		}
+		for (tc2 = tc->next; tc2; tc2=tc2->next) {
+			if (tc2->parent == tc) tc2->parent = NULL;
+			if (tc2->prev == tc) tc2->prev = NULL;
+		}
+		tc->child = NULL;
+		tc->next = NULL;
+	}
+	talloc_free(null_context);
+	null_context = NULL;
+}
+
+/*
+  enable leak reporting on exit
+*/
+void talloc_enable_leak_report(void)
+{
+	talloc_enable_null_tracking();
+	atexit(talloc_report_null);
+}
+
+/*
+  enable full leak reporting on exit
+*/
+void talloc_enable_leak_report_full(void)
+{
+	talloc_enable_null_tracking();
+	atexit(talloc_report_null_full);
 }
 
 /* 
@@ -981,6 +1572,20 @@ void *_talloc_zero(const void *ctx, size_t size, const char *name)
 	}
 
 	return p;
+}
+
+/*
+  memdup with a talloc. 
+*/
+void *_talloc_memdup(const void *t, const void *p, size_t size, const char *name)
+{
+	void *newp = _talloc_named_const(t, size, name);
+
+	if (likely(newp)) {
+		memcpy(newp, p, size);
+	}
+
+	return newp;
 }
 
 static inline char *__talloc_strlendup(const void *t, const char *p, size_t len)
@@ -1004,6 +1609,15 @@ char *talloc_strdup(const void *t, const char *p)
 {
 	if (unlikely(!p)) return NULL;
 	return __talloc_strlendup(t, p, strlen(p));
+}
+
+/*
+  strndup with a talloc
+*/
+char *talloc_strndup(const void *t, const char *p, size_t n)
+{
+	if (unlikely(!p)) return NULL;
+	return __talloc_strlendup(t, p, strnlen(p, n));
 }
 
 static inline char *__talloc_strlendup_append(char *s, size_t slen,
@@ -1038,6 +1652,70 @@ char *talloc_strdup_append(char *s, const char *a)
 	return __talloc_strlendup_append(s, strlen(s), a, strlen(a));
 }
 
+/*
+ * Appends at the end of the talloc'ed buffer,
+ * not the end of the string.
+ */
+char *talloc_strdup_append_buffer(char *s, const char *a)
+{
+	size_t slen;
+
+	if (unlikely(!s)) {
+		return talloc_strdup(NULL, a);
+	}
+
+	if (unlikely(!a)) {
+		return s;
+	}
+
+	slen = talloc_get_size(s);
+	if (likely(slen > 0)) {
+		slen--;
+	}
+
+	return __talloc_strlendup_append(s, slen, a, strlen(a));
+}
+
+/*
+ * Appends at the end of the string.
+ */
+char *talloc_strndup_append(char *s, const char *a, size_t n)
+{
+	if (unlikely(!s)) {
+		return talloc_strdup(NULL, a);
+	}
+
+	if (unlikely(!a)) {
+		return s;
+	}
+
+	return __talloc_strlendup_append(s, strlen(s), a, strnlen(a, n));
+}
+
+/*
+ * Appends at the end of the talloc'ed buffer,
+ * not the end of the string.
+ */
+char *talloc_strndup_append_buffer(char *s, const char *a, size_t n)
+{
+	size_t slen;
+
+	if (unlikely(!s)) {
+		return talloc_strdup(NULL, a);
+	}
+
+	if (unlikely(!a)) {
+		return s;
+	}
+
+	slen = talloc_get_size(s);
+	if (likely(slen > 0)) {
+		slen--;
+	}
+
+	return __talloc_strlendup_append(s, slen, a, strnlen(a, n));
+}
+
 #ifndef HAVE_VA_COPY
 #ifdef HAVE___VA_COPY
 #define va_copy(dest, src) __va_copy(dest, src)
@@ -1056,6 +1734,7 @@ char *talloc_vasprintf(const void *t, const char *fmt, va_list ap)
 	/* this call looks strange, but it makes it work on older solaris boxes */
 	va_copy(ap2, ap);
 	#ifdef _MSC_VER
+	/* MSVC runtime needs to use _vcsprintf to return buffer size; vsnprintf would return -1 */
 	len = _vscprintf(fmt, ap2);
 	#else
 	len = vsnprintf(&c, 1, fmt, ap2);
@@ -1105,6 +1784,7 @@ static inline char *__talloc_vaslenprintf_append(char *s, size_t slen,
 
 	va_copy(ap2, ap);
 	#ifdef _MSC_VER
+	/* MSVC runtime needs to use _vcsprintf to return buffer size; vsnprintf would return -1 */
 	alen = _vscprintf(fmt, ap2);
 	#else
 	alen = vsnprintf(&c, 1, fmt, ap2);
@@ -1147,6 +1827,27 @@ char *talloc_vasprintf_append(char *s, const char *fmt, va_list ap)
 	return __talloc_vaslenprintf_append(s, strlen(s), fmt, ap);
 }
 
+/**
+ * Realloc @p s to append the formatted result of @p fmt and @p ap,
+ * and return @p s, which may have moved. Always appends at the
+ * end of the talloc'ed buffer, not the end of the string.
+ **/
+char *talloc_vasprintf_append_buffer(char *s, const char *fmt, va_list ap)
+{
+	size_t slen;
+
+	if (unlikely(!s)) {
+		return talloc_vasprintf(NULL, fmt, ap);
+	}
+
+	slen = talloc_get_size(s);
+	if (likely(slen > 0)) {
+		slen--;
+	}
+
+	return __talloc_vaslenprintf_append(s, slen, fmt, ap);
+}
+
 /*
   Realloc @p s to append the formatted result of @p fmt and return @p
   s, which may have moved.  Good for gradually accumulating output
@@ -1163,6 +1864,21 @@ char *talloc_asprintf_append(char *s, const char *fmt, ...)
 }
 
 /*
+  Realloc @p s to append the formatted result of @p fmt and return @p
+  s, which may have moved.  Good for gradually accumulating output
+  into a buffer.
+ */
+char *talloc_asprintf_append_buffer(char *s, const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	s = talloc_vasprintf_append_buffer(s, fmt, ap);
+	va_end(ap);
+	return s;
+}
+
+/*
   alloc an array, checking for integer overflow in the array size
 */
 void *_talloc_array(const void *ctx, size_t el_size, unsigned count, const char *name)
@@ -1174,6 +1890,17 @@ void *_talloc_array(const void *ctx, size_t el_size, unsigned count, const char 
 }
 
 /*
+  alloc an zero array, checking for integer overflow in the array size
+*/
+void *_talloc_zero_array(const void *ctx, size_t el_size, unsigned count, const char *name)
+{
+	if (count >= MAX_TALLOC_SIZE/el_size) {
+		return NULL;
+	}
+	return _talloc_zero(ctx, el_size * count, name);
+}
+
+/*
   realloc an array, checking for integer overflow in the array size
 */
 void *_talloc_realloc_array(const void *ctx, void *ptr, size_t el_size, unsigned count, const char *name)
@@ -1182,6 +1909,42 @@ void *_talloc_realloc_array(const void *ctx, void *ptr, size_t el_size, unsigned
 		return NULL;
 	}
 	return _talloc_realloc(ctx, ptr, el_size * count, name);
+}
+
+/*
+  a function version of talloc_realloc(), so it can be passed as a function pointer
+  to libraries that want a realloc function (a realloc function encapsulates
+  all the basic capabilities of an allocation library, which is why this is useful)
+*/
+void *talloc_realloc_fn(const void *context, void *ptr, size_t size)
+{
+	return _talloc_realloc(context, ptr, size, NULL);
+}
+
+
+static int talloc_autofree_destructor(void *ptr)
+{
+	autofree_context = NULL;
+	return 0;
+}
+
+static void talloc_autofree(void)
+{
+	talloc_free(autofree_context);
+}
+
+/*
+  return a context which will be auto-freed on exit
+  this is useful for reducing the noise in leak reports
+*/
+void *talloc_autofree_context(void)
+{
+	if (autofree_context == NULL) {
+		autofree_context = _talloc_named_const(NULL, 0, "autofree_context");
+		talloc_set_destructor(autofree_context, talloc_autofree_destructor);
+		atexit(talloc_autofree);
+	}
+	return autofree_context;
 }
 
 size_t talloc_get_size(const void *context)
@@ -1198,6 +1961,54 @@ size_t talloc_get_size(const void *context)
 	tc = talloc_chunk_from_ptr(context);
 
 	return tc->size;
+}
+
+/*
+  find a parent of this context that has the given name, if any
+*/
+void *talloc_find_parent_byname(const void *context, const char *name)
+{
+	struct talloc_chunk *tc;
+
+	if (context == NULL) {
+		return NULL;
+	}
+
+	tc = talloc_chunk_from_ptr(context);
+	while (tc) {
+		if (tc->name && strcmp(tc->name, name) == 0) {
+			return TC_PTR_FROM_CHUNK(tc);
+		}
+		while (tc && tc->prev) tc = tc->prev;
+		if (tc) {
+			tc = tc->parent;
+		}
+	}
+	return NULL;
+}
+
+/*
+  show the parentage of a context
+*/
+void talloc_show_parents(const void *context, FILE *file)
+{
+	struct talloc_chunk *tc;
+
+	if (context == NULL) {
+		fprintf(file, "talloc no parents for NULL\n");
+		return;
+	}
+
+	tc = talloc_chunk_from_ptr(context);
+	fprintf(file, "talloc parents of '%s'\n", talloc_get_name(context));
+	while (tc) {
+		fprintf(file, "\t'%s'\n", talloc_get_name(TC_PTR_FROM_CHUNK(tc)));
+		while (tc && tc->prev) tc = tc->prev;
+		if (tc) {
+			tc = tc->parent;
+		}
+	}
+	fflush(file);
 }
 
 /*
@@ -1221,7 +2032,3 @@ int talloc_is_parent(const void *context, const void *ptr)
 	}
 	return 0;
 }
-
-#ifdef __cplusplus
-}
-#endif
