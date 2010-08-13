@@ -21,6 +21,8 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
 #include "r300_context.h"
+#include "r300_emit.h"
+#include "r300_hyperz.h"
 #include "r300_texture.h"
 #include "r300_winsys.h"
 
@@ -177,8 +179,7 @@ static void r300_clear(struct pipe_context* pipe,
 
     /* Enable fast Z clear.
      * The zbuffer must be in micro-tiled mode, otherwise it locks up. */
-    if ((buffers & (PIPE_CLEAR_DEPTH|PIPE_CLEAR_STENCIL)) && has_hyperz) {
-      
+    if ((buffers & PIPE_CLEAR_DEPTHSTENCIL) && has_hyperz) {
         hyperz_dcv = hyperz->zb_depthclearvalue =
             r300_depth_clear_value(fb->zsbuf->format, depth, stencil);
 
@@ -206,13 +207,40 @@ static void r300_clear(struct pipe_context* pipe,
     }
 
     /* Clear. */
-    r300_blitter_begin(r300, R300_CLEAR);
-    util_blitter_clear(r300->blitter,
-                       width,
-                       height,
-                       fb->nr_cbufs,
-                       buffers, rgba, depth, stencil);
-    r300_blitter_end(r300);
+    if (buffers) {
+        /* Clear using the blitter. */
+        r300_blitter_begin(r300, R300_CLEAR);
+        util_blitter_clear(r300->blitter,
+                           width,
+                           height,
+                           fb->nr_cbufs,
+                           buffers, rgba, depth, stencil);
+        r300_blitter_end(r300);
+    } else if (r300->zmask_clear.dirty) {
+        /* Just clear zmask and hiz now, this does not use a standard draw
+         * procedure. */
+        unsigned dwords;
+
+        /* Calculate zmask_clear and hiz_clear atom sizes. */
+        r300_update_hyperz_state(r300);
+        dwords = r300->zmask_clear.size +
+                 (r300->hiz_clear.dirty ? r300->hiz_clear.size : 0) +
+                 r300_get_num_cs_end_dwords(r300);
+
+        /* Reserve CS space. */
+        if (dwords > (r300->cs->ndw - r300->cs->cdw)) {
+            r300->context.flush(&r300->context, 0, NULL);
+        }
+
+        /* Emit clear packets. */
+        r300_emit_zmask_clear(r300, r300->zmask_clear.size,
+                              r300->zmask_clear.state);
+        if (r300->hiz_clear.dirty)
+            r300_emit_hiz_clear(r300, r300->hiz_clear.size,
+                                r300->hiz_clear.state);
+    } else {
+        assert(0);
+    }
 
     /* Disable CBZB clear. */
     if (r300->cbzb_clear) {
