@@ -151,13 +151,13 @@ glcpp/glcpp: $(GLCPP_OBJECTS) libglsl.a
 	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
 
 glsl_lexer.cpp: glsl_lexer.lpp
-	flex -o$@  $<
+	flex --nounistd -o$@  $<
 
 glsl_parser.cpp: glsl_parser.ypp
 	bison -v -o "$@" -p "_mesa_glsl_" --defines=glsl_parser.h $<
 
 glcpp/glcpp-lex.c: glcpp/glcpp-lex.l
-	flex --never-interactive --outfile="$@" $<
+	flex --nounistd -o$@  $<
 
 glcpp/glcpp-parse.c: glcpp/glcpp-parse.y
 	bison -v -o "$@" --defines=glcpp/glcpp-parse.h $<
