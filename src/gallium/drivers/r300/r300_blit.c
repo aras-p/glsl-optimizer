@@ -176,7 +176,7 @@ static void r300_clear(struct pipe_context* pipe,
     uint32_t width = fb->width;
     uint32_t height = fb->height;
     boolean has_hyperz = r300->rws->get_value(r300->rws, R300_CAN_HYPERZ);
-    uint32_t hyperz_dcv = 0;
+    uint32_t hyperz_dcv = hyperz->zb_depthclearvalue;
 
     /* Enable fast Z clear.
      * The zbuffer must be in micro-tiled mode, otherwise it locks up. */

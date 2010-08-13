@@ -796,7 +796,7 @@ static void
                 r300->z_compression, r300->z_fastfill,
                 tex->zmask_mem[level] ? tex->zmask_mem[level]->ofs : 0xdeadbeef);
         }
-            
+
         /* Polygon offset depends on the zbuffer bit depth. */
         if (r300->zbuffer_bpp != zbuffer_bpp) {
             r300->zbuffer_bpp = zbuffer_bpp;
