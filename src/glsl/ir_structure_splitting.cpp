@@ -35,6 +35,7 @@
 #include "ir.h"
 #include "ir_visitor.h"
 #include "ir_print_visitor.h"
+#include "ir_rvalue_visitor.h"
 #include "glsl_types.h"
 
 static bool debug = false;
@@ -165,7 +166,7 @@ ir_structure_reference_visitor::visit_enter(ir_function_signature *ir)
    return visit_continue_with_parent;
 }
 
-class ir_structure_splitting_visitor : public ir_hierarchical_visitor {
+class ir_structure_splitting_visitor : public ir_rvalue_visitor {
 public:
    ir_structure_splitting_visitor(exec_list *vars)
    {
@@ -177,17 +178,9 @@ public:
    }
 
    virtual ir_visitor_status visit_leave(ir_assignment *);
-   virtual ir_visitor_status visit_leave(ir_call *);
-   virtual ir_visitor_status visit_leave(ir_dereference_array *);
-   virtual ir_visitor_status visit_leave(ir_dereference_record *);
-   virtual ir_visitor_status visit_leave(ir_expression *);
-   virtual ir_visitor_status visit_leave(ir_if *);
-   virtual ir_visitor_status visit_leave(ir_return *);
-   virtual ir_visitor_status visit_leave(ir_swizzle *);
-   virtual ir_visitor_status visit_leave(ir_texture *);
 
    void split_deref(ir_dereference **deref);
-   void split_rvalue(ir_rvalue **rvalue);
+   void handle_rvalue(ir_rvalue **rvalue);
    struct variable_entry *get_splitting_entry(ir_variable *var);
 
    exec_list *variable_list;
@@ -239,7 +232,7 @@ ir_structure_splitting_visitor::split_deref(ir_dereference **deref)
 }
 
 void
-ir_structure_splitting_visitor::split_rvalue(ir_rvalue **rvalue)
+ir_structure_splitting_visitor::handle_rvalue(ir_rvalue **rvalue)
 {
    if (!*rvalue)
       return;
@@ -251,66 +244,6 @@ ir_structure_splitting_visitor::split_rvalue(ir_rvalue **rvalue)
 
    split_deref(&deref);
    *rvalue = deref;
-}
-
-ir_visitor_status
-ir_structure_splitting_visitor::visit_leave(ir_expression *ir)
-{
-   unsigned int operand;
-
-   for (operand = 0; operand < ir->get_num_operands(); operand++) {
-      split_rvalue(&ir->operands[operand]);
-   }
-
-   return visit_continue;
-}
-
-ir_visitor_status
-ir_structure_splitting_visitor::visit_leave(ir_texture *ir)
-{
-   split_rvalue(&ir->coordinate);
-   split_rvalue(&ir->projector);
-   split_rvalue(&ir->shadow_comparitor);
-
-   switch (ir->op) {
-   case ir_tex:
-      break;
-   case ir_txb:
-      split_rvalue(&ir->lod_info.bias);
-      break;
-   case ir_txf:
-   case ir_txl:
-      split_rvalue(&ir->lod_info.lod);
-      break;
-   case ir_txd:
-      split_rvalue(&ir->lod_info.grad.dPdx);
-      split_rvalue(&ir->lod_info.grad.dPdy);
-      break;
-   }
-
-   return visit_continue;
-}
-
-ir_visitor_status
-ir_structure_splitting_visitor::visit_leave(ir_swizzle *ir)
-{
-   split_rvalue(&ir->val);
-   return visit_continue;
-}
-
-ir_visitor_status
-ir_structure_splitting_visitor::visit_leave(ir_dereference_array *ir)
-{
-   split_rvalue(&ir->array_index);
-   split_rvalue(&ir->array);
-   return visit_continue;
-}
-
-ir_visitor_status
-ir_structure_splitting_visitor::visit_leave(ir_dereference_record *ir)
-{
-   split_rvalue(&ir->record);
-   return visit_continue;
 }
 
 ir_visitor_status
@@ -349,44 +282,14 @@ ir_structure_splitting_visitor::visit_leave(ir_assignment *ir)
       }
       ir->remove();
    } else {
-      split_rvalue(&ir->rhs);
+      handle_rvalue(&ir->rhs);
       split_deref(&ir->lhs);
    }
 
-   split_rvalue(&ir->condition);
+   handle_rvalue(&ir->condition);
 
    return visit_continue;
 }
-
-ir_visitor_status
-ir_structure_splitting_visitor::visit_leave(ir_call *ir)
-{
-   foreach_iter(exec_list_iterator, iter, *ir) {
-      ir_rvalue *param = (ir_rvalue *)iter.get();
-      ir_rvalue *new_param = param;
-      split_rvalue(&new_param);
-
-      if (new_param != param) {
-	 param->replace_with(new_param);
-      }
-   }
-   return visit_continue;
-}
-
-ir_visitor_status
-ir_structure_splitting_visitor::visit_leave(ir_return *ir)
-{
-   split_rvalue(&ir->value);;
-   return visit_continue;
-}
-
-ir_visitor_status
-ir_structure_splitting_visitor::visit_leave(ir_if *ir)
-{
-   split_rvalue(&ir->condition);
-   return visit_continue;
-}
-
 
 bool
 do_structure_splitting(exec_list *instructions)

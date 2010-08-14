@@ -30,6 +30,7 @@
 
 #include "ir.h"
 #include "ir_visitor.h"
+#include "ir_rvalue_visitor.h"
 #include "ir_optimization.h"
 #include "glsl_types.h"
 
@@ -37,7 +38,7 @@
  * Visitor class for replacing expressions with ir_constant values.
  */
 
-class ir_algebraic_visitor : public ir_hierarchical_visitor {
+class ir_algebraic_visitor : public ir_rvalue_visitor {
 public:
    ir_algebraic_visitor()
    {
@@ -48,16 +49,8 @@ public:
    {
    }
 
-   virtual ir_visitor_status visit_leave(ir_assignment *);
-   virtual ir_visitor_status visit_leave(ir_call *);
-   virtual ir_visitor_status visit_leave(ir_dereference_array *);
-   virtual ir_visitor_status visit_leave(ir_expression *);
-   virtual ir_visitor_status visit_leave(ir_if *);
-   virtual ir_visitor_status visit_leave(ir_return *);
-   virtual ir_visitor_status visit_leave(ir_swizzle *);
-   virtual ir_visitor_status visit_leave(ir_texture *);
-
-   ir_rvalue *handle_expression(ir_rvalue *in_ir);
+   ir_rvalue *handle_expression(ir_expression *ir);
+   void handle_rvalue(ir_rvalue **rvalue);
    bool reassociate_constant(ir_expression *ir1,
 			     int const_index,
 			     ir_constant *constant,
@@ -224,22 +217,15 @@ ir_algebraic_visitor::reassociate_constant(ir_expression *ir1, int const_index,
 }
 
 ir_rvalue *
-ir_algebraic_visitor::handle_expression(ir_rvalue *in_ir)
+ir_algebraic_visitor::handle_expression(ir_expression *ir)
 {
-   ir_expression *ir = (ir_expression *)in_ir;
    ir_constant *op_const[2] = {NULL, NULL};
    ir_expression *op_expr[2] = {NULL, NULL};
    unsigned int i;
 
-   if (!in_ir)
-      return NULL;
-
-   if (in_ir->ir_type != ir_type_expression)
-      return in_ir;
-
    for (i = 0; i < ir->get_num_operands(); i++) {
       if (ir->operands[i]->type->is_matrix())
-	 return in_ir;
+	 return ir;
 
       op_const[i] = ir->operands[i]->constant_expression_value();
       op_expr[i] = ir->operands[i]->as_expression();
@@ -379,97 +365,21 @@ ir_algebraic_visitor::handle_expression(ir_rvalue *in_ir)
       break;
    }
 
-   return in_ir;
+   return ir;
 }
 
-ir_visitor_status
-ir_algebraic_visitor::visit_leave(ir_expression *ir)
+void
+ir_algebraic_visitor::handle_rvalue(ir_rvalue **rvalue)
 {
-   unsigned int operand;
+   if (!*rvalue)
+      return;
 
-   for (operand = 0; operand < ir->get_num_operands(); operand++) {
-      ir->operands[operand] = handle_expression(ir->operands[operand]);
-   }
+   ir_expression *expr = (*rvalue)->as_expression();
+   if (!expr)
+      return;
 
-   return visit_continue;
+   *rvalue = handle_expression(expr);
 }
-
-ir_visitor_status
-ir_algebraic_visitor::visit_leave(ir_texture *ir)
-{
-   ir->coordinate = handle_expression(ir->coordinate);
-   ir->projector = handle_expression(ir->projector);
-   ir->shadow_comparitor = handle_expression(ir->shadow_comparitor);
-
-   switch (ir->op) {
-   case ir_tex:
-      break;
-   case ir_txb:
-      ir->lod_info.bias = handle_expression(ir->lod_info.bias);
-      break;
-   case ir_txf:
-   case ir_txl:
-      ir->lod_info.lod = handle_expression(ir->lod_info.lod);
-      break;
-   case ir_txd:
-      ir->lod_info.grad.dPdx = handle_expression(ir->lod_info.grad.dPdx);
-      ir->lod_info.grad.dPdy = handle_expression(ir->lod_info.grad.dPdy);
-      break;
-   }
-
-   return visit_continue;
-}
-
-ir_visitor_status
-ir_algebraic_visitor::visit_leave(ir_swizzle *ir)
-{
-   ir->val = handle_expression(ir->val);
-   return visit_continue;
-}
-
-ir_visitor_status
-ir_algebraic_visitor::visit_leave(ir_dereference_array *ir)
-{
-   ir->array_index = handle_expression(ir->array_index);
-   return visit_continue;
-}
-
-ir_visitor_status
-ir_algebraic_visitor::visit_leave(ir_assignment *ir)
-{
-   ir->rhs = handle_expression(ir->rhs);
-   ir->condition = handle_expression(ir->condition);
-   return visit_continue;
-}
-
-ir_visitor_status
-ir_algebraic_visitor::visit_leave(ir_call *ir)
-{
-   foreach_iter(exec_list_iterator, iter, *ir) {
-      ir_rvalue *param = (ir_rvalue *)iter.get();
-      ir_rvalue *new_param = handle_expression(param);
-
-      if (new_param != param) {
-	 param->replace_with(new_param);
-      }
-   }
-   return visit_continue;
-}
-
-ir_visitor_status
-ir_algebraic_visitor::visit_leave(ir_return *ir)
-{
-   ir->value = handle_expression(ir->value);;
-   return visit_continue;
-}
-
-ir_visitor_status
-ir_algebraic_visitor::visit_leave(ir_if *ir)
-{
-   ir->condition = handle_expression(ir->condition);
-   return visit_continue;
-}
-
 
 bool
 do_algebraic(exec_list *instructions)
