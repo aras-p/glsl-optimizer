@@ -68,6 +68,7 @@
 #include "eglscreen.h"
 #include "eglmode.h"
 #include "eglimage.h"
+#include "eglsync.h"
 
 
 /**
@@ -126,6 +127,8 @@
 #define _EGL_CHECK_MODE(disp, m, ret, drv) \
    _EGL_CHECK_OBJECT(disp, Mode, m, ret, drv)
 
+#define _EGL_CHECK_SYNC(disp, s, ret, drv) \
+   _EGL_CHECK_OBJECT(disp, Sync, s, ret, drv)
 
 
 static INLINE _EGLDriver *
@@ -183,6 +186,26 @@ _eglCheckConfig(_EGLDisplay *disp, _EGLConfig *conf, const char *msg)
    }
    return drv;
 }
+
+
+#ifdef EGL_KHR_reusable_sync
+
+
+static INLINE _EGLDriver *
+_eglCheckSync(_EGLDisplay *disp, _EGLSync *s, const char *msg)
+{
+   _EGLDriver *drv = _eglCheckDisplay(disp, msg);
+   if (!drv)
+      return NULL;
+   if (!s) {
+      _eglError(EGL_BAD_PARAMETER, msg);
+      return NULL;
+   }
+   return drv;
+}
+
+
+#endif /* EGL_KHR_reusable_sync */
 
 
 #ifdef EGL_MESA_screen_surface
@@ -1243,6 +1266,90 @@ eglDestroyImageKHR(EGLDisplay dpy, EGLImageKHR image)
 
 
 #endif /* EGL_KHR_image_base */
+
+
+#ifdef EGL_KHR_reusable_sync
+
+
+EGLSyncKHR EGLAPIENTRY
+eglCreateSyncKHR(EGLDisplay dpy, EGLenum type, const EGLint *attrib_list)
+{
+   _EGLDisplay *disp = _eglLockDisplay(dpy);
+   _EGLDriver *drv;
+   _EGLSync *sync;
+   EGLSyncKHR ret;
+
+   _EGL_CHECK_DISPLAY(disp, EGL_NO_SYNC_KHR, drv);
+
+   sync = drv->API.CreateSyncKHR(drv, disp, type, attrib_list);
+   ret = (sync) ? _eglLinkSync(sync, disp) : EGL_NO_SYNC_KHR;
+
+   RETURN_EGL_EVAL(disp, ret);
+}
+
+
+EGLBoolean EGLAPIENTRY
+eglDestroySyncKHR(EGLDisplay dpy, EGLSyncKHR sync)
+{
+   _EGLDisplay *disp = _eglLockDisplay(dpy);
+   _EGLSync *s = _eglLookupSync(sync, disp);
+   _EGLDriver *drv;
+   EGLBoolean ret;
+
+   _EGL_CHECK_SYNC(disp, s, EGL_FALSE, drv);
+   _eglUnlinkSync(s);
+   ret = drv->API.DestroySyncKHR(drv, disp, s);
+
+   RETURN_EGL_EVAL(disp, ret);
+}
+
+
+EGLint EGLAPIENTRY
+eglClientWaitSyncKHR(EGLDisplay dpy, EGLSyncKHR sync, EGLint flags, EGLTimeKHR timeout)
+{
+   _EGLDisplay *disp = _eglLockDisplay(dpy);
+   _EGLSync *s = _eglLookupSync(sync, disp);
+   _EGLDriver *drv;
+   EGLint ret;
+
+   _EGL_CHECK_SYNC(disp, s, EGL_FALSE, drv);
+   ret = drv->API.ClientWaitSyncKHR(drv, disp, s, flags, timeout);
+
+   RETURN_EGL_EVAL(disp, ret);
+}
+
+
+EGLBoolean EGLAPIENTRY
+eglSignalSyncKHR(EGLDisplay dpy, EGLSyncKHR sync, EGLenum mode)
+{
+   _EGLDisplay *disp = _eglLockDisplay(dpy);
+   _EGLSync *s = _eglLookupSync(sync, disp);
+   _EGLDriver *drv;
+   EGLBoolean ret;
+
+   _EGL_CHECK_SYNC(disp, s, EGL_FALSE, drv);
+   ret = drv->API.SignalSyncKHR(drv, disp, s, mode);
+
+   RETURN_EGL_EVAL(disp, ret);
+}
+
+
+EGLBoolean EGLAPIENTRY
+eglGetSyncAttribKHR(EGLDisplay dpy, EGLSyncKHR sync, EGLint attribute, EGLint *value)
+{
+   _EGLDisplay *disp = _eglLockDisplay(dpy);
+   _EGLSync *s = _eglLookupSync(sync, disp);
+   _EGLDriver *drv;
+   EGLBoolean ret;
+
+   _EGL_CHECK_SYNC(disp, s, EGL_FALSE, drv);
+   ret = drv->API.GetSyncAttribKHR(drv, disp, s, attribute, value);
+
+   RETURN_EGL_EVAL(disp, ret);
+}
+
+
+#endif /* EGL_KHR_reusable_sync */
 
 
 #ifdef EGL_NOK_swap_region
