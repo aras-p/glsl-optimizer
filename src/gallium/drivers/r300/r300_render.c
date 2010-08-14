@@ -186,20 +186,14 @@ enum r300_prepare_flags {
  * \param cs_dwords     The number of dwords to reserve in CS.
  * \param aos_offset    The offset passed to emit_aos.
  * \param index_bias    The index bias to emit.
- * \param end_cs_dwords The number of free dwords which must be available
- *                      at the end of CS after drawing in case the CS space
- *                      management is performed by a draw_* function manually.
- *                      The parameter may be NULL.
  */
 static void r300_prepare_for_rendering(struct r300_context *r300,
                                        enum r300_prepare_flags flags,
                                        struct pipe_resource *index_buffer,
                                        unsigned cs_dwords,
                                        int aos_offset,
-                                       int index_bias,
-                                       unsigned *end_cs_dwords)
+                                       int index_bias)
 {
-    unsigned end_dwords    = 0;
     boolean flushed        = FALSE;
     boolean first_draw     = flags & PREP_FIRST_DRAW;
     boolean emit_aos       = flags & PREP_EMIT_AOS;
@@ -221,11 +215,7 @@ static void r300_prepare_for_rendering(struct r300_context *r300,
             cs_dwords += 7; /* emit_aos_swtcl */
     }
 
-    /* Emitted in flush. */
-    end_dwords += 26; /* emit_query_end */
-    end_dwords += r300->hyperz_state.size + 2; /* emit_hyperz_end + zcache flush */
-
-    cs_dwords += end_dwords;
+    cs_dwords += r300_get_num_cs_end_dwords(r300);
 
     /* Reserve requested CS space. */
     if (cs_dwords > (r300->cs->ndw - r300->cs->cdw)) {
@@ -250,9 +240,6 @@ static void r300_prepare_for_rendering(struct r300_context *r300,
         if (emit_aos_swtcl)
             r300_emit_aos_swtcl(r300, indexed);
     }
-
-    if (end_cs_dwords)
-        *end_cs_dwords = end_dwords;
 }
 
 static boolean immd_is_good_idea(struct r300_context *r300,
@@ -353,7 +340,7 @@ static void r300_emit_draw_arrays_immediate(struct r300_context *r300,
 
     dwords = 9 + count * vertex_size;
 
-    r300_prepare_for_rendering(r300, PREP_FIRST_DRAW, NULL, dwords, 0, 0, NULL);
+    r300_prepare_for_rendering(r300, PREP_FIRST_DRAW, NULL, dwords, 0, 0);
 
     BEGIN_CS(dwords);
     OUT_CS_REG(R300_GA_COLOR_CONTROL,
@@ -533,7 +520,7 @@ static void r300_draw_range_elements(struct pipe_context* pipe,
     /* 15 dwords for emit_draw_elements */
     r300_prepare_for_rendering(r300,
         PREP_FIRST_DRAW | PREP_VALIDATE_VBOS | PREP_EMIT_AOS | PREP_INDEXED,
-        indexBuffer, 15, buffer_offset, indexBias, NULL);
+        indexBuffer, 15, buffer_offset, indexBias);
 
     if (alt_num_verts || count <= 65535) {
         r300_emit_draw_elements(r300, indexBuffer, indexSize,
@@ -552,7 +539,7 @@ static void r300_draw_range_elements(struct pipe_context* pipe,
             if (count) {
                 r300_prepare_for_rendering(r300,
                     PREP_VALIDATE_VBOS | PREP_EMIT_AOS | PREP_INDEXED,
-                    indexBuffer, 15, buffer_offset, indexBias, NULL);
+                    indexBuffer, 15, buffer_offset, indexBias);
             }
         } while (count);
     }
@@ -597,7 +584,7 @@ static void r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
     } else {
         /* 9 spare dwords for emit_draw_arrays. */
         r300_prepare_for_rendering(r300, PREP_FIRST_DRAW | PREP_VALIDATE_VBOS | PREP_EMIT_AOS,
-                               NULL, 9, start, 0, NULL);
+                               NULL, 9, start, 0);
 
         if (alt_num_verts || count <= 65535) {
             r300_emit_draw_arrays(r300, mode, count);
@@ -613,7 +600,7 @@ static void r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
                 if (count) {
                     r300_prepare_for_rendering(r300,
                         PREP_VALIDATE_VBOS | PREP_EMIT_AOS, NULL, 9,
-                        start, 0, NULL);
+                        start, 0);
                 }
             } while (count);
         }
@@ -854,7 +841,7 @@ static void r300_render_draw_arrays(struct vbuf_render* render,
     (void) i; (void) ptr;
 
     r300_prepare_for_rendering(r300, PREP_FIRST_DRAW | PREP_EMIT_AOS_SWTCL,
-                               NULL, dwords, 0, 0, NULL);
+                               NULL, dwords, 0, 0);
 
     DBG(r300, DBG_DRAW, "r300: render_draw_arrays (count: %d)\n", count);
 
@@ -907,7 +894,8 @@ static void r300_render_draw_elements(struct vbuf_render* render,
      * indices than it can fit in CS. */
     r300_prepare_for_rendering(r300,
         PREP_FIRST_DRAW | PREP_EMIT_AOS_SWTCL | PREP_INDEXED,
-        NULL, 256, 0, 0, &end_cs_dwords);
+        NULL, 256, 0, 0);
+    end_cs_dwords = r300_get_num_cs_end_dwords(r300);
 
     while (count) {
         free_dwords = r300->cs->ndw - r300->cs->cdw;
@@ -937,7 +925,8 @@ static void r300_render_draw_elements(struct vbuf_render* render,
         if (count) {
             r300_prepare_for_rendering(r300,
                 PREP_EMIT_AOS_SWTCL | PREP_INDEXED,
-                NULL, 256, 0, 0, &end_cs_dwords);
+                NULL, 256, 0, 0);
+            end_cs_dwords = r300_get_num_cs_end_dwords(r300);
         }
     }
 }
@@ -1031,7 +1020,7 @@ static void r300_blitter_draw_rectangle(struct blitter_context *blitter,
     r300->clip_state.dirty = FALSE;
     r300->viewport_state.dirty = FALSE;
 
-    r300_prepare_for_rendering(r300, PREP_FIRST_DRAW, NULL, dwords, 0, 0, NULL);
+    r300_prepare_for_rendering(r300, PREP_FIRST_DRAW, NULL, dwords, 0, 0);
 
     DBG(r300, DBG_DRAW, "r300: draw_rectangle\n");
 

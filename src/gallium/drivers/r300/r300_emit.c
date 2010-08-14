@@ -1209,6 +1209,17 @@ unsigned r300_get_num_dirty_dwords(struct r300_context *r300)
     return dwords;
 }
 
+unsigned r300_get_num_cs_end_dwords(struct r300_context *r300)
+{
+    unsigned dwords = 0;
+
+    /* Emitted in flush. */
+    dwords += 26; /* emit_query_end */
+    dwords += r300->hyperz_state.size + 2; /* emit_hyperz_end + zcache flush */
+
+    return dwords;
+}
+
 /* Emit all dirty state. */
 void r300_emit_dirty_state(struct r300_context* r300)
 {
