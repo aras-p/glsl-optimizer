@@ -74,6 +74,11 @@ Trace
 Wrapper driver. Trace dumps an XML record of the calls made to the
 :ref:`Context` and :ref:`Screen` objects that it wraps.
 
+Rbug
+^^^^
+
+Wrapper driver. :ref:`rbug` driver used with stand alone rbug-gui.
+
 State Trackers
 --------------
 
