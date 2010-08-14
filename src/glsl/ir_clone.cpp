@@ -335,7 +335,7 @@ ir_constant::clone(void *mem_ctx, struct hash_table *ht) const
    }
 
    default:
-      assert(!"Should not get here."); break;
+      assert(!"Should not get here.");
       return NULL;
    }
 }
