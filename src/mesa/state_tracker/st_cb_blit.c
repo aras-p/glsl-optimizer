@@ -188,8 +188,13 @@ st_BlitFramebuffer(GLcontext *ctx,
          /* blitting depth and stencil separately */
 
          if (mask & GL_DEPTH_BUFFER_BIT) {
-            /* blit Z only */
-            _mesa_problem(ctx, "st_BlitFramebuffer(DEPTH) not completed");
+            util_blit_pixels(st->blit, srcDepthRb->texture,
+                             u_subresource(srcDepthRb->surface->face,
+                                           srcDepthRb->surface->level),
+                             srcX0, srcY0, srcX1, srcY1,
+                             srcDepthRb->surface->zslice,
+                             dstDepthSurf, dstX0, dstY0, dstX1, dstY1,
+                             0.0, pFilter);
          }
 
          if (mask & GL_STENCIL_BUFFER_BIT) {
