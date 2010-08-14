@@ -23,7 +23,6 @@
 #include "xf86drm.h"
 #include "radeon_priv.h"
 #include "radeon_drm.h"
-#include "r600d.h"
 
 enum radeon_family radeon_get_family(struct radeon *radeon)
 {

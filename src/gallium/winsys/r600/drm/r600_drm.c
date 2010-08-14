@@ -31,7 +31,6 @@
 #include "radeon_priv.h"
 #include "r600_screen.h"
 #include "r600_resource.h"
-#include "r600_public.h"
 #include "r600_drm_public.h"
 #include "state_tracker/drm_driver.h"
 
