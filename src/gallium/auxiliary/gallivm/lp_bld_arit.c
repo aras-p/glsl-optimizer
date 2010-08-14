@@ -1,6 +1,6 @@
 /**************************************************************************
  *
- * Copyright 2009 VMware, Inc.
+ * Copyright 2009-2010 VMware, Inc.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -57,6 +57,19 @@
 #include "lp_bld_logic.h"
 #include "lp_bld_pack.h"
 #include "lp_bld_arit.h"
+
+
+/*
+ * XXX: Increasing eliminates some artifacts, but adds others, most
+ * noticeably corruption in the Earth halo in Google Earth.
+ */
+#define RCP_NEWTON_STEPS 0
+
+#define RSQRT_NEWTON_STEPS 0
+
+#define EXP_POLY_DEGREE 3
+
+#define LOG_POLY_DEGREE 5
 
 
 /**
@@ -1248,6 +1261,31 @@ lp_build_sqrt(struct lp_build_context *bld,
 }
 
 
+/**
+ * Do one Newton-Raphson step to improve reciprocate precision:
+ *
+ *   x_{i+1} = x_i * (2 - a * x_i)
+ *
+ * See also:
+ * - http://en.wikipedia.org/wiki/Division_(digital)#Newton.E2.80.93Raphson_division
+ * - http://softwarecommunity.intel.com/articles/eng/1818.htm
+ */
+static INLINE LLVMValueRef
+lp_build_rcp_refine(struct lp_build_context *bld,
+                    LLVMValueRef a,
+                    LLVMValueRef rcp_a)
+{
+   LLVMValueRef two = lp_build_const_vec(bld->type, 2.0);
+   LLVMValueRef res;
+
+   res = LLVMBuildFMul(bld->builder, a, rcp_a, "");
+   res = LLVMBuildFSub(bld->builder, two, res, "");
+   res = LLVMBuildFMul(bld->builder, rcp_a, res, "");
+
+   return res;
+}
+
+
 LLVMValueRef
 lp_build_rcp(struct lp_build_context *bld,
              LLVMValueRef a)
@@ -1269,35 +1307,46 @@ lp_build_rcp(struct lp_build_context *bld,
       return LLVMConstFDiv(bld->one, a);
 
    if(util_cpu_caps.has_sse && type.width == 32 && type.length == 4) {
-      /*
-       * XXX: Added precision is not always necessary, so only enable this
-       * when we have a better system in place to track minimum precision.
-       */
-
-#if 1
-      /*
-       * Do one Newton-Raphson step to improve precision:
-       *
-       *   x1 = (2 - a * rcp(a)) * rcp(a)
-       */
-
-      LLVMValueRef two = lp_build_const_vec(bld->type, 2.0);
-      LLVMValueRef rcp_a;
       LLVMValueRef res;
+      unsigned i;
 
-      rcp_a = lp_build_intrinsic_unary(bld->builder, "llvm.x86.sse.rcp.ps", lp_build_vec_type(type), a);
+      res = lp_build_intrinsic_unary(bld->builder, "llvm.x86.sse.rcp.ps", bld->vec_type, a);
 
-      res = LLVMBuildFMul(bld->builder, a, rcp_a, "");
-      res = LLVMBuildFSub(bld->builder, two, res, "");
-      res = LLVMBuildFMul(bld->builder, res, rcp_a, "");
+      for (i = 0; i < RCP_NEWTON_STEPS; ++i) {
+         res = lp_build_rcp_refine(bld, a, res);
+      }
 
       return res;
-#else
-      return lp_build_intrinsic_unary(bld->builder, "llvm.x86.sse.rcp.ps", lp_build_vec_type(type), a);
-#endif
    }
 
    return LLVMBuildFDiv(bld->builder, bld->one, a, "");
+}
+
+
+/**
+ * Do one Newton-Raphson step to improve rsqrt precision:
+ *
+ *   x_{i+1} = 0.5 * x_i * (3.0 - a * x_i * x_i)
+ *
+ * See also:
+ * - http://softwarecommunity.intel.com/articles/eng/1818.htm
+ */
+static INLINE LLVMValueRef
+lp_build_rsqrt_refine(struct lp_build_context *bld,
+                      LLVMValueRef a,
+                      LLVMValueRef rsqrt_a)
+{
+   LLVMValueRef half = lp_build_const_vec(bld->type, 0.5);
+   LLVMValueRef three = lp_build_const_vec(bld->type, 3.0);
+   LLVMValueRef res;
+
+   res = LLVMBuildFMul(bld->builder, rsqrt_a, rsqrt_a, "");
+   res = LLVMBuildFMul(bld->builder, a, res, "");
+   res = LLVMBuildFSub(bld->builder, three, res, "");
+   res = LLVMBuildFMul(bld->builder, rsqrt_a, res, "");
+   res = LLVMBuildFMul(bld->builder, half, res, "");
+
+   return res;
 }
 
 
@@ -1314,8 +1363,18 @@ lp_build_rsqrt(struct lp_build_context *bld,
 
    assert(type.floating);
 
-   if(util_cpu_caps.has_sse && type.width == 32 && type.length == 4)
-      return lp_build_intrinsic_unary(bld->builder, "llvm.x86.sse.rsqrt.ps", lp_build_vec_type(type), a);
+   if(util_cpu_caps.has_sse && type.width == 32 && type.length == 4) {
+      LLVMValueRef res;
+      unsigned i;
+
+      res = lp_build_intrinsic_unary(bld->builder, "llvm.x86.sse.rsqrt.ps", bld->vec_type, a);
+
+      for (i = 0; i < RSQRT_NEWTON_STEPS; ++i) {
+         res = lp_build_rsqrt_refine(bld, a, res);
+      }
+
+      return res;
+   }
 
    return lp_build_rcp(bld, lp_build_sqrt(bld, a));
 }
@@ -1819,10 +1878,6 @@ lp_build_log(struct lp_build_context *bld,
 
    return lp_build_mul(bld, log2, lp_build_exp2(bld, x));
 }
-
-
-#define EXP_POLY_DEGREE 3
-#define LOG_POLY_DEGREE 5
 
 
 /**
