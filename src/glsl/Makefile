@@ -164,8 +164,13 @@ glcpp/glcpp-lex.c: glcpp/glcpp-lex.l
 glcpp/glcpp-parse.c: glcpp/glcpp-parse.y
 	bison -v -o "$@" --defines=glcpp/glcpp-parse.h $<
 
-builtin_function.cpp: builtins/profiles/* builtins/ir/* builtins/tools/generate_builtins.py builtins/tools/texture_builtins.py
+builtins: builtin_function.cpp builtins/profiles/* builtins/ir/* builtins/tools/generate_builtins.py builtins/tools/texture_builtins.py
+	@echo Bootstrapping the compiler...
 	cp builtins/tools/builtin_function.cpp .
+	make glsl_compiler
+	@echo Regenerating builtin_function.cpp...
 	./builtins/tools/generate_builtins.py > builtin_function.cpp
+	@echo Rebuilding the real compiler...
+	make glsl_compiler
 
 -include depend
