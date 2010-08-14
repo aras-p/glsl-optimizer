@@ -279,11 +279,14 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
         case 3:
         case 4:
         case 6:
+            return FALSE;
+#if 0
             if (usage != PIPE_BIND_RENDER_TARGET ||
                 !util_format_is_rgba8_variant(
                     util_format_description(format))) {
                 return FALSE;
             }
+#endif
             break;
         default:
             return FALSE;

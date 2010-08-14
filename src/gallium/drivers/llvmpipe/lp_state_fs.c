@@ -75,6 +75,7 @@
 #include "gallivm/lp_bld_type.h"
 #include "gallivm/lp_bld_const.h"
 #include "gallivm/lp_bld_conv.h"
+#include "gallivm/lp_bld_init.h"
 #include "gallivm/lp_bld_intr.h"
 #include "gallivm/lp_bld_logic.h"
 #include "gallivm/lp_bld_tgsi.h"
@@ -676,6 +677,11 @@ generate_fragment(struct llvmpipe_context *lp,
 		     color_ptr);
    }
 
+#ifdef PIPE_ARCH_X86
+   /* Avoid corrupting the FPU stack on 32bit OSes. */
+   lp_build_intrinsic(builder, "llvm.x86.mmx.emms", LLVMVoidType(), NULL, 0);
+#endif
+
    LLVMBuildRetVoid(builder);
 
    LLVMDisposeBuilder(builder);
@@ -710,6 +716,7 @@ generate_fragment(struct llvmpipe_context *lp,
       if (gallivm_debug & GALLIVM_DEBUG_ASM) {
          lp_disassemble(f);
       }
+      lp_func_delete_body(function);
    }
 }
 

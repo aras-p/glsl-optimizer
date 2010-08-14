@@ -32,7 +32,7 @@
 #define GET_H
 
 
-#include "mtypes.h"
+#include "glheader.h"
 
 
 extern void GLAPIENTRY

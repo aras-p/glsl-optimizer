@@ -35,6 +35,7 @@
 #include "r300_state_inlines.h"
 #include "r300_texture.h"
 #include "r300_vs.h"
+#include "r300_winsys.h"
 
 /* r300_state_derived: Various bits of state which are dependent upon
  * currently bound CSO data. */
@@ -213,19 +214,19 @@ static void r300_rs_tex(struct r300_rs_block* rs, int id, int ptr,
                         enum r300_rs_swizzle swiz)
 {
     if (swiz == SWIZ_X001) {
-        rs->ip[id] |= R300_RS_TEX_PTR(ptr*4) |
+        rs->ip[id] |= R300_RS_TEX_PTR(ptr) |
                       R300_RS_SEL_S(R300_RS_SEL_C0) |
                       R300_RS_SEL_T(R300_RS_SEL_K0) |
                       R300_RS_SEL_R(R300_RS_SEL_K0) |
                       R300_RS_SEL_Q(R300_RS_SEL_K1);
     } else if (swiz == SWIZ_XY01) {
-        rs->ip[id] |= R300_RS_TEX_PTR(ptr*4) |
+        rs->ip[id] |= R300_RS_TEX_PTR(ptr) |
                       R300_RS_SEL_S(R300_RS_SEL_C0) |
                       R300_RS_SEL_T(R300_RS_SEL_C1) |
                       R300_RS_SEL_R(R300_RS_SEL_K0) |
                       R300_RS_SEL_Q(R300_RS_SEL_K1);
     } else {
-        rs->ip[id] |= R300_RS_TEX_PTR(ptr*4) |
+        rs->ip[id] |= R300_RS_TEX_PTR(ptr) |
                       R300_RS_SEL_S(R300_RS_SEL_C0) |
                       R300_RS_SEL_T(R300_RS_SEL_C1) |
                       R300_RS_SEL_R(R300_RS_SEL_C2) |
@@ -261,23 +262,21 @@ static void r500_rs_col_write(struct r300_rs_block* rs, int id, int fp_offset)
 static void r500_rs_tex(struct r300_rs_block* rs, int id, int ptr,
 			enum r300_rs_swizzle swiz)
 {
-    int rs_tex_comp = ptr*4;
-
     if (swiz == SWIZ_X001) {
-        rs->ip[id] |= R500_RS_SEL_S(rs_tex_comp) |
+        rs->ip[id] |= R500_RS_SEL_S(ptr) |
                       R500_RS_SEL_T(R500_RS_IP_PTR_K0) |
                       R500_RS_SEL_R(R500_RS_IP_PTR_K0) |
                       R500_RS_SEL_Q(R500_RS_IP_PTR_K1);
     } else if (swiz == SWIZ_XY01) {
-        rs->ip[id] |= R500_RS_SEL_S(rs_tex_comp) |
-                      R500_RS_SEL_T(rs_tex_comp + 1) |
+        rs->ip[id] |= R500_RS_SEL_S(ptr) |
+                      R500_RS_SEL_T(ptr + 1) |
                       R500_RS_SEL_R(R500_RS_IP_PTR_K0) |
                       R500_RS_SEL_Q(R500_RS_IP_PTR_K1);
     } else {
-        rs->ip[id] |= R500_RS_SEL_S(rs_tex_comp) |
-                      R500_RS_SEL_T(rs_tex_comp + 1) |
-                      R500_RS_SEL_R(rs_tex_comp + 2) |
-                      R500_RS_SEL_Q(rs_tex_comp + 3);
+        rs->ip[id] |= R500_RS_SEL_S(ptr) |
+                      R500_RS_SEL_T(ptr + 1) |
+                      R500_RS_SEL_R(ptr + 2) |
+                      R500_RS_SEL_Q(ptr + 3);
     }
     rs->inst[id] |= R500_RS_INST_TEX_ID(id);
 }
@@ -305,7 +304,7 @@ static void r300_update_rs_block(struct r300_context *r300)
     struct r300_shader_semantics *vs_outputs = &vs->outputs;
     struct r300_shader_semantics *fs_inputs = &r300_fs(r300)->shader->inputs;
     struct r300_rs_block rs = {0};
-    int i, col_count = 0, tex_count = 0, fp_offset = 0, count, loc = 0;
+    int i, col_count = 0, tex_count = 0, fp_offset = 0, count, loc = 0, tex_ptr = 0;
     void (*rX00_rs_col)(struct r300_rs_block*, int, int, enum r300_rs_swizzle);
     void (*rX00_rs_col_write)(struct r300_rs_block*, int, int);
     void (*rX00_rs_tex)(struct r300_rs_block*, int, int, enum r300_rs_swizzle);
@@ -393,8 +392,9 @@ static void r300_update_rs_block(struct r300_context *r300)
                 stream_loc_notcl[loc++] = 6 + tex_count;
 
                 /* Rasterize it. */
-                rX00_rs_tex(&rs, tex_count, tex_count, SWIZ_XYZW);
+                rX00_rs_tex(&rs, tex_count, tex_ptr, SWIZ_XYZW);
                 tex_count++;
+                tex_ptr += 4;
             }
         }
     }
@@ -412,7 +412,7 @@ static void r300_update_rs_block(struct r300_context *r300)
             }
 
             /* Rasterize it. */
-            rX00_rs_tex(&rs, tex_count, tex_count,
+            rX00_rs_tex(&rs, tex_count, tex_ptr,
 			sprite_coord ? SWIZ_XY01 : SWIZ_XYZW);
 
             /* Write it to the FS input register if it's needed by the FS. */
@@ -429,6 +429,7 @@ static void r300_update_rs_block(struct r300_context *r300)
                     i, sprite_coord ? " (sprite coord)" : "");
             }
             tex_count++;
+            tex_ptr += sprite_coord ? 2 : 4;
         } else {
             /* Skip the FS input register, leave it uninitialized. */
             /* If we try to set it to (0,0,0,1), it will lock up. */
@@ -449,7 +450,7 @@ static void r300_update_rs_block(struct r300_context *r300)
         stream_loc_notcl[loc++] = 6 + tex_count;
 
         /* Rasterize it. */
-        rX00_rs_tex(&rs, tex_count, tex_count, SWIZ_X001);
+        rX00_rs_tex(&rs, tex_count, tex_ptr, SWIZ_X001);
 
         /* Write it to the FS input register if it's needed by the FS. */
         if (fs_inputs->fog != ATTR_UNUSED) {
@@ -461,6 +462,7 @@ static void r300_update_rs_block(struct r300_context *r300)
             DBG(r300, DBG_RS, "r300: Rasterized fog unused.\n");
         }
         tex_count++;
+        tex_ptr += 4;
     } else {
         /* Skip the FS input register, leave it uninitialized. */
         /* If we try to set it to (0,0,0,1), it will lock up. */
@@ -480,7 +482,7 @@ static void r300_update_rs_block(struct r300_context *r300)
         stream_loc_notcl[loc++] = 6 + tex_count;
 
         /* Rasterize it. */
-        rX00_rs_tex(&rs, tex_count, tex_count, SWIZ_XYZW);
+        rX00_rs_tex(&rs, tex_count, tex_ptr, SWIZ_XYZW);
 
         /* Write it to the FS input register. */
         rX00_rs_tex_write(&rs, tex_count, fp_offset);
@@ -489,6 +491,7 @@ static void r300_update_rs_block(struct r300_context *r300)
 
         fp_offset++;
         tex_count++;
+        tex_ptr += 4;
     }
 
     /* Invalidate the rest of the no-TCL (GA) stream locations. */
@@ -507,7 +510,7 @@ static void r300_update_rs_block(struct r300_context *r300)
     DBG(r300, DBG_RS, "r300: --- Rasterizer status ---: colors: %i, "
         "generics: %i.\n", col_count, tex_count);
 
-    rs.count = (tex_count*4) | (col_count << R300_IC_COUNT_SHIFT) |
+    rs.count = MIN2(tex_ptr, 32) | (col_count << R300_IC_COUNT_SHIFT) |
         R300_HIRES_EN;
 
     count = MAX3(col_count, tex_count, 1);
@@ -691,5 +694,6 @@ void r300_update_derived_state(struct r300_context* r300)
         }
     }
 
-    r300_update_hyperz_state(r300);
+    if (r300->rws->get_value(r300->rws, R300_CAN_HYPERZ))
+        r300_update_hyperz_state(r300);
 }

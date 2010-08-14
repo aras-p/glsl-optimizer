@@ -37,6 +37,8 @@
 #include "gallivm/lp_bld_debug.h"
 #include "gallivm/lp_bld_tgsi.h"
 #include "gallivm/lp_bld_printf.h"
+#include "gallivm/lp_bld_intr.h"
+#include "gallivm/lp_bld_init.h"
 
 #include "tgsi/tgsi_exec.h"
 #include "tgsi/tgsi_dump.h"
@@ -793,6 +795,11 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant)
 
    sampler->destroy(sampler);
 
+#ifdef PIPE_ARCH_X86
+   /* Avoid corrupting the FPU stack on 32bit OSes. */
+   lp_build_intrinsic(builder, "llvm.x86.mmx.emms", LLVMVoidType(), NULL, 0);
+#endif
+
    LLVMBuildRetVoid(builder);
 
    LLVMDisposeBuilder(builder);
@@ -820,6 +827,7 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant)
    if (gallivm_debug & GALLIVM_DEBUG_ASM) {
       lp_disassemble(code);
    }
+   lp_func_delete_body(variant->function);
 }
 
 
@@ -963,6 +971,11 @@ draw_llvm_generate_elts(struct draw_llvm *llvm, struct draw_llvm_variant *varian
 
    sampler->destroy(sampler);
 
+#ifdef PIPE_ARCH_X86
+   /* Avoid corrupting the FPU stack on 32bit OSes. */
+   lp_build_intrinsic(builder, "llvm.x86.mmx.emms", LLVMVoidType(), NULL, 0);
+#endif
+
    LLVMBuildRetVoid(builder);
 
    LLVMDisposeBuilder(builder);
@@ -990,6 +1003,7 @@ draw_llvm_generate_elts(struct draw_llvm *llvm, struct draw_llvm_variant *varian
    if (gallivm_debug & GALLIVM_DEBUG_ASM) {
       lp_disassemble(code);
    }
+   lp_func_delete_body(variant->function_elts);
 }
 
 void

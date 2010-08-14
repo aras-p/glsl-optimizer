@@ -29,6 +29,7 @@ struct r600_shader_io {
 	unsigned		name;
 	unsigned		gpr;
 	int			sid;
+	unsigned		interpolate;
 };
 
 struct r600_shader {

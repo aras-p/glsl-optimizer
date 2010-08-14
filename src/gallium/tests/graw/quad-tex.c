@@ -12,6 +12,7 @@
 #include "util/u_debug.h"       /* debug_dump_surface_bmp() */
 #include "util/u_inlines.h"
 #include "util/u_memory.h"      /* Offset() */
+#include "util/u_draw_quad.h"
 #include "util/u_box.h"    
 
 enum pipe_format formats[] = {
@@ -146,7 +147,7 @@ static void draw( void )
    float clear_color[4] = {.5,.5,.5,1};
 
    ctx->clear(ctx, PIPE_CLEAR_COLOR, clear_color, 0, 0);
-   ctx->draw_arrays(ctx, PIPE_PRIM_QUADS, 0, 4);
+   util_draw_arrays(ctx, PIPE_PRIM_QUADS, 0, 4);
    ctx->flush(ctx, PIPE_FLUSH_RENDER_CACHE, NULL);
 
 #if 0

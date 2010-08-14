@@ -30,6 +30,9 @@
 #define ST_ATOM_SHADER_H
 
 
+struct st_context;
+struct translated_vertex_program;
+
 extern void
 st_free_translated_vertex_programs(struct st_context *st,
                                    struct translated_vertex_program *xvp);

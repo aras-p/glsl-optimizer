@@ -41,7 +41,6 @@
 
 #if defined(PIPE_ARCH_SSE)
 
-#include <xmmintrin.h>
 #include <emmintrin.h>
 
 

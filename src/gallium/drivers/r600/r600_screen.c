@@ -24,15 +24,15 @@
  *      Jerome Glisse
  *      Corbin Simpson
  */
-#include <util/u_inlines.h>
-#include <util/u_format.h>
-#include <util/u_memory.h>
-#include "r600_resource.h"
+#include <stdio.h>
+#include "util/u_inlines.h"
+#include "util/u_format.h"
+#include "util/u_memory.h"
 #include "r600_screen.h"
-#include "r600_texture.h"
 #include "r600_context.h"
 #include "r600_public.h"
-#include <stdio.h>
+#include "r600_resource.h"
+#include "r600_state_inlines.h"
 
 static const char* r600_get_vendor(struct pipe_screen* pscreen)
 {
@@ -107,7 +107,7 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER:
 		return 0;
 	default:
-		debug_printf("r600: unknown param %d\n", param);
+		R600_ERR("r600: unknown param %d\n", param);
 		return 0;
 	}
 }
@@ -125,7 +125,7 @@ static float r600_get_paramf(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_MAX_TEXTURE_LOD_BIAS:
 		return 16.0f;
 	default:
-		debug_printf("r600: unsupported paramf %d\n", param);
+		R600_ERR("r600: unsupported paramf %d\n", param);
 		return 0.0f;
 	}
 }
@@ -134,108 +134,51 @@ static boolean r600_is_format_supported(struct pipe_screen* screen,
 					enum pipe_format format,
 					enum pipe_texture_target target,
 					unsigned sample_count,
-					unsigned bindings,
+					unsigned usage,
 					unsigned geom_flags)
 {
+	unsigned retval = 0;
 	if (target >= PIPE_MAX_TEXTURE_TYPES) {
-		debug_printf("r600: unsupported texture type %d\n", target);
+		R600_ERR("r600: unsupported texture type %d\n", target);
 		return FALSE;
 	}
-	switch (format) {
-	case PIPE_FORMAT_B4G4R4A4_UNORM:
-	case PIPE_FORMAT_B5G6R5_UNORM:
-	case PIPE_FORMAT_B5G5R5A1_UNORM:
-	case PIPE_FORMAT_A8_UNORM:
-	case PIPE_FORMAT_L8_UNORM:
-	case PIPE_FORMAT_A8R8G8B8_SRGB:
-	case PIPE_FORMAT_R8G8B8A8_SRGB:
-	case PIPE_FORMAT_DXT1_RGB:
-	case PIPE_FORMAT_DXT1_RGBA:
-	case PIPE_FORMAT_DXT3_RGBA:
-	case PIPE_FORMAT_DXT5_RGBA:
-	case PIPE_FORMAT_UYVY:
-	case PIPE_FORMAT_L8_SRGB:
-	case PIPE_FORMAT_L8A8_SRGB:
-	case PIPE_FORMAT_L8A8_UNORM:
-	case PIPE_FORMAT_A8R8G8B8_UNORM:
-	case PIPE_FORMAT_X8R8G8B8_UNORM:
-	case PIPE_FORMAT_R8G8B8A8_UNORM:
-	case PIPE_FORMAT_R8G8B8X8_UNORM:
-	case PIPE_FORMAT_B8G8R8A8_UNORM:
-	case PIPE_FORMAT_B8G8R8X8_UNORM:
-	case PIPE_FORMAT_A8B8G8R8_SRGB:
-	case PIPE_FORMAT_B8G8R8A8_SRGB:
-	case PIPE_FORMAT_I8_UNORM:
-	case PIPE_FORMAT_Z16_UNORM:
-	case PIPE_FORMAT_X8Z24_UNORM:
-	case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
-	case PIPE_FORMAT_Z32_UNORM:
-	case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
-	case PIPE_FORMAT_Z24X8_UNORM:
-		return TRUE;
-	default:
-		/* Unknown format... */
-		break;
-	}
-	return FALSE;
-}
 
-struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
-						struct pipe_resource *texture,
-						struct pipe_subresource sr,
-						unsigned usage,
-						const struct pipe_box *box)
-{
-	struct r600_texture *rtex = (struct r600_texture*)texture;
-	struct r600_transfer *trans;
+	/* Multisample */
+	if (sample_count > 1)
+		return FALSE;
 
-	trans = CALLOC_STRUCT(r600_transfer);
-	if (trans == NULL)
-		return NULL;
-	pipe_resource_reference(&trans->transfer.resource, texture);
-	trans->transfer.sr = sr;
-	trans->transfer.usage = usage;
-	trans->transfer.box = *box;
-	trans->transfer.stride = rtex->stride[sr.level];
-	trans->offset = r600_texture_get_offset(rtex, sr.level, box->z, sr.face);
-	return &trans->transfer;
-}
-
-void r600_texture_transfer_destroy(struct pipe_context *ctx,
-				   struct pipe_transfer *trans)
-{
-	pipe_resource_reference(&trans->resource, NULL);
-	FREE(trans);
-}
-
-void* r600_texture_transfer_map(struct pipe_context *ctx,
-				struct pipe_transfer* transfer)
-{
-	struct r600_transfer *rtransfer = (struct r600_transfer*)transfer;
-	struct r600_texture *rtex = (struct r600_texture*)transfer->resource;
-	char *map;
-	enum pipe_format format = rtex->b.b.format;
-
-	map = pipe_buffer_map(ctx, rtex->buffer,
-			      transfer->usage,
-			      &rtransfer->buffer_transfer);
-
-	if (!map) {
-		return NULL;
+	if ((usage & PIPE_BIND_SAMPLER_VIEW) &&
+	    r600_is_sampler_format_supported(format)) {
+		retval |= PIPE_BIND_SAMPLER_VIEW;
 	}
 
-	return map + rtransfer->offset +
-		transfer->box.y / util_format_get_blockheight(format) * transfer->stride +
-		transfer->box.x / util_format_get_blockwidth(format) * util_format_get_blocksize(format);
-}
+	if ((usage & (PIPE_BIND_RENDER_TARGET |
+                  PIPE_BIND_DISPLAY_TARGET |
+                  PIPE_BIND_SCANOUT |
+                  PIPE_BIND_SHARED)) &&
+	    r600_is_colorbuffer_format_supported(format)) {
+		retval |= usage &
+			(PIPE_BIND_RENDER_TARGET |
+			 PIPE_BIND_DISPLAY_TARGET |
+			 PIPE_BIND_SCANOUT |
+			 PIPE_BIND_SHARED);
+	}
 
-void r600_texture_transfer_unmap(struct pipe_context *ctx,
-				 struct pipe_transfer* transfer)
-{
-	struct r600_transfer *rtransfer = (struct r600_transfer*)transfer;
-	struct r600_texture *rtex = (struct r600_texture*)transfer->resource;
+	if ((usage & PIPE_BIND_DEPTH_STENCIL) &&
+	    r600_is_zs_format_supported(format)) {
+		retval |= PIPE_BIND_DEPTH_STENCIL;
+	}
 
-	pipe_buffer_unmap(ctx, rtex->buffer, rtransfer->buffer_transfer);
+	if ((usage & PIPE_BIND_VERTEX_BUFFER) &&
+	    r600_is_vertex_format_supported(format))
+		retval |= PIPE_BIND_VERTEX_BUFFER;
+
+	if (usage & PIPE_BIND_TRANSFER_READ)
+		retval |= PIPE_BIND_TRANSFER_READ;
+	if (usage & PIPE_BIND_TRANSFER_WRITE)
+		retval |= PIPE_BIND_TRANSFER_WRITE;
+
+	return retval == usage;
 }
 
 static void r600_destroy_screen(struct pipe_screen* pscreen)

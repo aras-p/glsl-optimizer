@@ -1,6 +1,6 @@
 /**************************************************************************
  *
- * Copyright 2009, VMware, Inc.
+ * Copyright 2010 VMware, Inc.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -25,13 +25,17 @@
  *
  **************************************************************************/
 
-#ifndef DRI2_H
-#define DRI2_H
+#ifndef LP_BLD_ASSERT_H
+#define LP_BLD_ASSERT_H
 
-#include "dri_drawable.h"
-#include "dri_wrapper.h"
 
-const __DRIconfig **
-dri2_init_screen(__DRIscreen * sPriv);
+#include "lp_bld.h"
 
-#endif /* DRI2_H */
+
+LLVMValueRef
+lp_build_assert(LLVMBuilderRef builder, LLVMValueRef condition,
+                const char *msg);
+
+
+#endif
+

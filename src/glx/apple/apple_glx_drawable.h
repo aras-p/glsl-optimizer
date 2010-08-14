@@ -211,7 +211,7 @@ bool apple_glx_pbuffer_get_event_mask(GLXDrawable d, unsigned long *mask);
 
 /* Pixmaps */
 
-/* mode is a __GLcontextModes * */
+/* mode is a struct glx_config * */
 /* Returns true if an error occurred. */
 bool apple_glx_pixmap_create(Display * dpy, int screen, Pixmap pixmap,
                              const void *mode);

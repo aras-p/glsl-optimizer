@@ -30,6 +30,9 @@
 #define ST_CB_CLEAR_H
 
 
+struct dd_function_table;
+struct st_context;
+
 extern void
 st_init_clear(struct st_context *st);
 

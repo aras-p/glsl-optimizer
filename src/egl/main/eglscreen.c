@@ -16,13 +16,20 @@
 #include <string.h>
 
 #include "egldisplay.h"
-#include "eglglobals.h"
 #include "eglcurrent.h"
 #include "eglmode.h"
 #include "eglconfig.h"
 #include "eglsurface.h"
 #include "eglscreen.h"
 #include "eglmutex.h"
+
+
+#ifdef EGL_MESA_screen_surface
+
+
+/* ugh, no atomic op? */
+static _EGL_DECLARE_MUTEX(_eglNextScreenHandleMutex);
+static EGLScreenMESA _eglNextScreenHandle = 1;
 
 
 /**
@@ -33,10 +40,10 @@ static EGLScreenMESA
 _eglAllocScreenHandle(void)
 {
    EGLScreenMESA s;
-   
-   _eglLockMutex(_eglGlobal.Mutex);
-   s = _eglGlobal.FreeScreenHandle++;
-   _eglUnlockMutex(_eglGlobal.Mutex);
+
+   _eglLockMutex(&_eglNextScreenHandleMutex);
+   s = _eglNextScreenHandle++;
+   _eglUnlockMutex(&_eglNextScreenHandleMutex);
 
    return s;
 }
@@ -263,3 +270,5 @@ _eglDestroyScreen(_EGLScreen *scrn)
    free(scrn);
 }
 
+
+#endif /* EGL_MESA_screen_surface */

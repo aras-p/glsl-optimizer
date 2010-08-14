@@ -75,6 +75,8 @@ void trace_dump_transfer(const struct pipe_transfer *state);
 
 void trace_dump_vertex_buffer(const struct pipe_vertex_buffer *state);
 
+void trace_dump_index_buffer(const struct pipe_index_buffer *state);
+
 void trace_dump_vertex_element(const struct pipe_vertex_element *state);
 
 

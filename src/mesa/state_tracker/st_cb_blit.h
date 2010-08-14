@@ -29,8 +29,10 @@
 #define ST_CB_BLIT_H
 
 
-#include "main/mtypes.h"
-#include "st_context.h"
+#include "main/compiler.h"
+
+struct dd_function_table;
+struct st_context;
 
 
 extern void

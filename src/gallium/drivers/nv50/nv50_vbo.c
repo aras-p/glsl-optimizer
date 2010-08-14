@@ -173,7 +173,7 @@ instance_step(struct nv50_context *nv50, struct instance *a)
 	}
 }
 
-void
+static void
 nv50_draw_arrays_instanced(struct pipe_context *pipe,
 			   unsigned mode, unsigned start, unsigned count,
 			   unsigned startInstance, unsigned instanceCount)
@@ -218,13 +218,6 @@ nv50_draw_arrays_instanced(struct pipe_context *pipe,
 
 		prim |= (1 << 28);
 	}
-}
-
-void
-nv50_draw_arrays(struct pipe_context *pipe, unsigned mode, unsigned start,
-		 unsigned count)
-{
-	nv50_draw_arrays_instanced(pipe, mode, start, count, 0, 1);
 }
 
 struct inline_ctx {
@@ -384,7 +377,7 @@ nv50_draw_elements_inline(struct pipe_context *pipe,
 	pipe_buffer_unmap(pipe, indexBuffer, transfer);
 }
 
-void
+static void
 nv50_draw_elements_instanced(struct pipe_context *pipe,
 			     struct pipe_resource *indexBuffer,
 			     unsigned indexSize, int indexBias,
@@ -464,13 +457,34 @@ nv50_draw_elements_instanced(struct pipe_context *pipe,
 }
 
 void
-nv50_draw_elements(struct pipe_context *pipe,
-		   struct pipe_resource *indexBuffer,
-		   unsigned indexSize, int indexBias,
-		   unsigned mode, unsigned start, unsigned count)
+nv50_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
 {
-	nv50_draw_elements_instanced(pipe, indexBuffer, indexSize, indexBias,
-				     mode, start, count, 0, 1);
+	struct nv50_context *nv50 = nv50_context(pipe);
+
+	if (info->indexed && nv50->idxbuf.buffer) {
+		unsigned offset;
+
+		assert(nv50->idxbuf.offset % nv50->idxbuf.index_size == 0);
+		offset = nv50->idxbuf.offset / nv50->idxbuf.index_size;
+
+		nv50_draw_elements_instanced(pipe,
+					     nv50->idxbuf.buffer,
+					     nv50->idxbuf.index_size,
+					     info->index_bias,
+					     info->mode,
+					     info->start + offset,
+					     info->count,
+					     info->start_instance,
+					     info->instance_count);
+	}
+	else {
+		nv50_draw_arrays_instanced(pipe,
+					   info->mode,
+					   info->start,
+					   info->count,
+					   info->start_instance,
+					   info->instance_count);
+	}
 }
 
 static INLINE boolean

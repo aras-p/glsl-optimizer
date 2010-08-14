@@ -68,8 +68,7 @@ struct clip_stage {
 };
 
 
-/* This is a bit confusing:
- */
+/** Cast wrapper */
 static INLINE struct clip_stage *clip_stage( struct draw_stage *stage )
 {
    return (struct clip_stage *)stage;
@@ -81,18 +80,22 @@ static INLINE struct clip_stage *clip_stage( struct draw_stage *stage )
 
 /* All attributes are float[4], so this is easy:
  */
-static void interp_attr( float *fdst,
+static void interp_attr( float dst[4],
 			 float t,
-			 const float *fin,
-			 const float *fout )
+			 const float in[4],
+			 const float out[4] )
 {  
-   fdst[0] = LINTERP( t, fout[0], fin[0] );
-   fdst[1] = LINTERP( t, fout[1], fin[1] );
-   fdst[2] = LINTERP( t, fout[2], fin[2] );
-   fdst[3] = LINTERP( t, fout[3], fin[3] );
+   dst[0] = LINTERP( t, out[0], in[0] );
+   dst[1] = LINTERP( t, out[1], in[1] );
+   dst[2] = LINTERP( t, out[2], in[2] );
+   dst[3] = LINTERP( t, out[3], in[3] );
 }
 
 
+/**
+ * Copy front/back, primary/secondary colors from src vertex to dst vertex.
+ * Used when flat shading.
+ */
 static void copy_colors( struct draw_stage *stage,
 			 struct vertex_header *dst,
 			 const struct vertex_header *src )
@@ -121,20 +124,17 @@ static void interp( const struct clip_stage *clip,
 
    /* Vertex header.
     */
-   {
-      dst->clipmask = 0;
-      dst->edgeflag = 0;        /* will get overwritten later */
-      dst->pad = 0;
-      dst->vertex_id = UNDEFINED_VERTEX_ID;
-   }
+   dst->clipmask = 0;
+   dst->edgeflag = 0;        /* will get overwritten later */
+   dst->pad = 0;
+   dst->vertex_id = UNDEFINED_VERTEX_ID;
 
-   /* Clip coordinates:  interpolate normally
+   /* Interpolate the clip-space coords.
     */
-   {
-      interp_attr(dst->clip, t, in->clip, out->clip);
-   }
+   interp_attr(dst->clip, t, in->clip, out->clip);
 
-   /* Do the projective divide and insert window coordinates:
+   /* Do the projective divide and viewport transformation to get
+    * new window coordinates:
     */
    {
       const float *pos = dst->clip;

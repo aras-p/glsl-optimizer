@@ -195,6 +195,8 @@ softpipe_set_constant_buffer(struct pipe_context *pipe,
    }
 
    softpipe->mapped_constants[shader][index] = data;
+   softpipe->const_buffer_size[shader][index] = size;
+
    softpipe->dirty |= SP_NEW_CONSTANTS;
 }
 

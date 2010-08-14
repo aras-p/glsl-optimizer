@@ -106,13 +106,19 @@ struct r300_dsa_state {
 };
 
 struct r300_hyperz_state {
+    int current_func; /* -1 after a clear before first op */
+    int flush;
     /* This is actually a command buffer with named dwords. */
+    uint32_t cb_flush_begin;
+    uint32_t zb_zcache_ctlstat;     /* R300_ZB_CACHE_CNTL */
     uint32_t cb_begin;
     uint32_t zb_bw_cntl;            /* R300_ZB_BW_CNTL */
     uint32_t cb_reg1;
     uint32_t zb_depthclearvalue;    /* R300_ZB_DEPTHCLEARVALUE */
     uint32_t cb_reg2;
     uint32_t sc_hyperz;             /* R300_SC_HYPERZ */
+    uint32_t cb_reg3;
+    uint32_t gb_z_peq_config;       /* R300_GB_Z_PEQ_CONFIG: 0x4028 */
 };
 
 struct r300_gpu_flush {
@@ -321,6 +327,7 @@ struct r300_surface {
 
     /* Whether the CBZB clear is allowed on the surface. */
     boolean cbzb_allowed;
+
 };
 
 struct r300_texture_desc {
@@ -386,6 +393,10 @@ struct r300_texture {
     struct r300_texture_format_state tx_format;
     /* All bits should be filled in. */
     struct r300_texture_fb_state fb_state;
+
+    /* hyper-z memory allocs */
+    struct mem_block *hiz_mem[R300_MAX_TEXTURE_LEVELS];
+    struct mem_block *zmask_mem[R300_MAX_TEXTURE_LEVELS];
 
     /* This is the level tiling flags were last time set for.
      * It's used to prevent redundant tiling-flags changes from happening.*/
@@ -512,6 +523,10 @@ struct r300_context {
     struct r300_atom texture_cache_inval;
     /* GPU flush. */
     struct r300_atom gpu_flush;
+    /* HiZ clear */
+    struct r300_atom hiz_clear;
+    /* zmask clear */
+    struct r300_atom zmask_clear;
 
     /* Invariant state. This must be emitted to get the engine started. */
     struct r300_atom invariant_state;
@@ -523,6 +538,8 @@ struct r300_context {
     /* Vertex elements for Gallium. */
     struct r300_vertex_element_state *velems;
     bool any_user_vbs;
+
+    struct pipe_index_buffer index_buffer;
 
     /* Vertex info for Draw. */
     struct vertex_info vertex_info;
@@ -547,8 +564,19 @@ struct r300_context {
     boolean two_sided_color;
     /* Incompatible vertex buffer layout? (misaligned stride or buffer_offset) */
     boolean incompatible_vb_layout;
-
+    /* Whether fast zclear is enabled. */
+    boolean z_fastfill;
+#define R300_Z_COMPRESS_44 1
+#define RV350_Z_COMPRESS_88 2
+    int z_compression;
+    boolean hiz_enable;
     boolean cbzb_clear;
+    boolean z_decomp_rd;
+
+    /* two mem block managers for hiz/zmask ram space */
+    struct mem_block *hiz_mm;
+    struct mem_block *zmask_mm;
+
     /* upload managers */
     struct u_upload_mgr *upload_vb;
     struct u_upload_mgr *upload_ib;
@@ -619,7 +647,8 @@ void r300_plug_in_stencil_ref_fallback(struct r300_context *r300);
 /* r300_state.c */
 enum r300_fb_state_change {
     R300_CHANGED_FB_STATE = 0,
-    R300_CHANGED_CBZB_FLAG
+    R300_CHANGED_CBZB_FLAG,
+    R300_CHANGED_ZCLEAR_FLAG
 };
 
 void r300_mark_fb_state_dirty(struct r300_context *r300,

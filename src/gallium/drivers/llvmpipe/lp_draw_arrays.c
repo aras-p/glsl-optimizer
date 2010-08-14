@@ -49,20 +49,11 @@
  * the drawing to the 'draw' module.
  */
 static void
-llvmpipe_draw_range_elements_instanced(struct pipe_context *pipe,
-                                       struct pipe_resource *indexBuffer,
-                                       unsigned indexSize,
-                                       int indexBias,
-                                       unsigned minIndex,
-                                       unsigned maxIndex,
-                                       unsigned mode,
-                                       unsigned start,
-                                       unsigned count,
-                                       unsigned startInstance,
-                                       unsigned instanceCount)
+llvmpipe_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
 {
    struct llvmpipe_context *lp = llvmpipe_context(pipe);
    struct draw_context *draw = lp->draw;
+   void *mapped_indices = NULL;
    unsigned i;
 
    if (lp->dirty)
@@ -77,27 +68,25 @@ llvmpipe_draw_range_elements_instanced(struct pipe_context *pipe,
    }
 
    /* Map index buffer, if present */
-   if (indexBuffer) {
-      void *mapped_indexes = llvmpipe_resource_data(indexBuffer);
-      draw_set_mapped_element_buffer_range(draw,
-                                           indexSize,
-                                           indexBias,
-                                           minIndex,
-                                           maxIndex,
-                                           mapped_indexes);
+   if (info->indexed && lp->index_buffer.buffer) {
+      char *indices = (char *) llvmpipe_resource_data(lp->index_buffer.buffer);
+      mapped_indices = (void *) (indices + lp->index_buffer.offset);
    }
-   else {
-      /* no index/element buffer */
-      draw_set_mapped_element_buffer_range(draw, 0, 0, start,
-                                           start + count - 1, NULL);
-   }
+
+   draw_set_mapped_element_buffer_range(draw, (mapped_indices) ?
+                                        lp->index_buffer.index_size : 0,
+                                        info->index_bias,
+                                        info->min_index,
+                                        info->max_index,
+                                        mapped_indices);
+
    llvmpipe_prepare_vertex_sampling(lp,
                                     lp->num_vertex_sampler_views,
                                     lp->vertex_sampler_views);
 
    /* draw! */
-   draw_arrays_instanced(draw, mode, start, count,
-                         startInstance, instanceCount);
+   draw_arrays_instanced(draw, info->mode, info->start, info->count,
+         info->start_instance, info->instance_count);
 
    /*
     * unmap vertex/index buffers
@@ -105,7 +94,7 @@ llvmpipe_draw_range_elements_instanced(struct pipe_context *pipe,
    for (i = 0; i < lp->num_vertex_buffers; i++) {
       draw_set_mapped_vertex_buffer(draw, i, NULL);
    }
-   if (indexBuffer) {
+   if (mapped_indices) {
       draw_set_mapped_element_buffer(draw, 0, 0, NULL);
    }
    llvmpipe_cleanup_vertex_sampling(lp);
@@ -119,112 +108,8 @@ llvmpipe_draw_range_elements_instanced(struct pipe_context *pipe,
 }
 
 
-static void
-llvmpipe_draw_arrays_instanced(struct pipe_context *pipe,
-                               unsigned mode,
-                               unsigned start,
-                               unsigned count,
-                               unsigned startInstance,
-                               unsigned instanceCount)
-{
-   llvmpipe_draw_range_elements_instanced(pipe,
-                                          NULL, /* no indexBuffer */
-                                          0, 0, /* indexSize, indexBias */
-                                          0, ~0, /* minIndex, maxIndex */
-                                          mode,
-                                          start,
-                                          count,
-                                          startInstance,
-                                          instanceCount);
-}
-
-
-static void
-llvmpipe_draw_elements_instanced(struct pipe_context *pipe,
-                                 struct pipe_resource *indexBuffer,
-                                 unsigned indexSize,
-                                 int indexBias,
-                                 unsigned mode,
-                                 unsigned start,
-                                 unsigned count,
-                                 unsigned startInstance,
-                                 unsigned instanceCount)
-{
-   llvmpipe_draw_range_elements_instanced(pipe,
-                                          indexBuffer,
-                                          indexSize, indexBias,
-                                          0, ~0, /* minIndex, maxIndex */
-                                          mode,
-                                          start,
-                                          count,
-                                          startInstance,
-                                          instanceCount);
-}
-
-
-static void
-llvmpipe_draw_elements(struct pipe_context *pipe,
-                       struct pipe_resource *indexBuffer,
-                       unsigned indexSize,
-                       int indexBias,
-                       unsigned mode,
-                       unsigned start,
-                       unsigned count)
-{
-   llvmpipe_draw_range_elements_instanced(pipe,
-                                          indexBuffer,
-                                          indexSize, indexBias,
-                                          0, 0xffffffff,  /* min, maxIndex */
-                                          mode, start, count,
-                                          0,  /* startInstance */
-                                          1);  /* instanceCount */
-}
-
-
-static void
-llvmpipe_draw_range_elements(struct pipe_context *pipe,
-                             struct pipe_resource *indexBuffer,
-                             unsigned indexSize,
-                             int indexBias,
-                             unsigned min_index,
-                             unsigned max_index,
-                             unsigned mode,
-                             unsigned start,
-                             unsigned count)
-{
-   llvmpipe_draw_range_elements_instanced(pipe,
-                                          indexBuffer,
-                                          indexSize, indexBias,
-                                          min_index, max_index,
-                                          mode, start, count,
-                                          0,  /* startInstance */
-                                          1);  /* instanceCount */
-}
-
-
-static void
-llvmpipe_draw_arrays(struct pipe_context *pipe,
-                     unsigned mode,
-                     unsigned start,
-                     unsigned count)
-{
-   llvmpipe_draw_range_elements_instanced(pipe,
-                                          NULL,  /* indexBuffer */
-                                          0,  /* indexSize */
-                                          0,  /* indexBias */
-                                          0, ~0,  /* min, maxIndex */
-                                          mode, start, count,
-                                          0,  /* startInstance */
-                                          1);  /* instanceCount */
-}
-
-
 void
 llvmpipe_init_draw_funcs(struct llvmpipe_context *llvmpipe)
 {
-   llvmpipe->pipe.draw_arrays = llvmpipe_draw_arrays;
-   llvmpipe->pipe.draw_elements = llvmpipe_draw_elements;
-   llvmpipe->pipe.draw_range_elements = llvmpipe_draw_range_elements;
-   llvmpipe->pipe.draw_arrays_instanced = llvmpipe_draw_arrays_instanced;
-   llvmpipe->pipe.draw_elements_instanced = llvmpipe_draw_elements_instanced;
+   llvmpipe->pipe.draw_vbo = llvmpipe_draw_vbo;
 }

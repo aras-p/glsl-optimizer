@@ -31,7 +31,7 @@
 #ifndef CLIP_H
 #define CLIP_H
 
-#include "mtypes.h"
+#include "glheader.h"
 
 extern void GLAPIENTRY 
 _mesa_ClipPlane( GLenum plane, const GLdouble *equation );

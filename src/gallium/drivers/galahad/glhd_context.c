@@ -48,68 +48,13 @@ galahad_destroy(struct pipe_context *_pipe)
 }
 
 static void
-galahad_draw_arrays(struct pipe_context *_pipe,
-                     unsigned prim,
-                     unsigned start,
-                     unsigned count)
+galahad_draw_vbo(struct pipe_context *_pipe,
+                 const struct pipe_draw_info *info)
 {
    struct galahad_context *glhd_pipe = galahad_context(_pipe);
    struct pipe_context *pipe = glhd_pipe->pipe;
 
-   pipe->draw_arrays(pipe,
-                     prim,
-                     start,
-                     count);
-}
-
-static void
-galahad_draw_elements(struct pipe_context *_pipe,
-                       struct pipe_resource *_indexResource,
-                       unsigned indexSize,
-                       int indexBias,
-                       unsigned prim,
-                       unsigned start,
-                       unsigned count)
-{
-   struct galahad_context *glhd_pipe = galahad_context(_pipe);
-   struct galahad_resource *glhd_resource = galahad_resource(_indexResource);
-   struct pipe_context *pipe = glhd_pipe->pipe;
-   struct pipe_resource *indexResource = glhd_resource->resource;
-
-   pipe->draw_elements(pipe,
-                       indexResource,
-                       indexSize,
-                       indexBias,
-                       prim,
-                       start,
-                       count);
-}
-
-static void
-galahad_draw_range_elements(struct pipe_context *_pipe,
-                             struct pipe_resource *_indexResource,
-                             unsigned indexSize,
-                             int indexBias,
-                             unsigned minIndex,
-                             unsigned maxIndex,
-                             unsigned mode,
-                             unsigned start,
-                             unsigned count)
-{
-   struct galahad_context *glhd_pipe = galahad_context(_pipe);
-   struct galahad_resource *glhd_resource = galahad_resource(_indexResource);
-   struct pipe_context *pipe = glhd_pipe->pipe;
-   struct pipe_resource *indexResource = glhd_resource->resource;
-
-   pipe->draw_range_elements(pipe,
-                             indexResource,
-                             indexSize,
-                             indexBias,
-                             minIndex,
-                             maxIndex,
-                             mode,
-                             start,
-                             count);
+   pipe->draw_vbo(pipe, info);
 }
 
 static struct pipe_query *
@@ -650,6 +595,41 @@ galahad_set_vertex_buffers(struct pipe_context *_pipe,
                             num_buffers,
                             buffers);
 }
+
+static void
+galahad_set_index_buffer(struct pipe_context *_pipe,
+                         const struct pipe_index_buffer *_ib)
+{
+   struct galahad_context *glhd_pipe = galahad_context(_pipe);
+   struct pipe_context *pipe = glhd_pipe->pipe;
+   struct pipe_index_buffer unwrapped_ib, *ib = NULL;
+
+   if (_ib->buffer) {
+      switch (_ib->index_size) {
+      case 1:
+      case 2:
+      case 4:
+         break;
+      default:
+         glhd_warn("index buffer %p has unrecognized index size %d",
+               _ib->buffer, _ib->index_size);
+         break;
+      }
+   }
+   else if (_ib->offset || _ib->index_size) {
+      glhd_warn("non-indexed state with index offset %d and index size %d",
+            _ib->offset, _ib->index_size);
+   }
+
+   if (_ib) {
+      unwrapped_ib = *_ib;
+      unwrapped_ib.buffer = galahad_resource_unwrap(_ib->buffer);
+      ib = &unwrapped_ib;
+   }
+
+   pipe->set_index_buffer(pipe, ib);
+}
+
 static void
 galahad_resource_copy_region(struct pipe_context *_pipe,
                               struct pipe_resource *_dst,
@@ -934,9 +914,7 @@ galahad_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
    glhd_pipe->base.draw = NULL;
 
    glhd_pipe->base.destroy = galahad_destroy;
-   glhd_pipe->base.draw_arrays = galahad_draw_arrays;
-   glhd_pipe->base.draw_elements = galahad_draw_elements;
-   glhd_pipe->base.draw_range_elements = galahad_draw_range_elements;
+   glhd_pipe->base.draw_vbo = galahad_draw_vbo;
    glhd_pipe->base.create_query = galahad_create_query;
    glhd_pipe->base.destroy_query = galahad_destroy_query;
    glhd_pipe->base.begin_query = galahad_begin_query;
@@ -976,6 +954,7 @@ galahad_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
    glhd_pipe->base.set_fragment_sampler_views = galahad_set_fragment_sampler_views;
    glhd_pipe->base.set_vertex_sampler_views = galahad_set_vertex_sampler_views;
    glhd_pipe->base.set_vertex_buffers = galahad_set_vertex_buffers;
+   glhd_pipe->base.set_index_buffer = galahad_set_index_buffer;
    glhd_pipe->base.resource_copy_region = galahad_resource_copy_region;
    glhd_pipe->base.clear = galahad_clear;
    glhd_pipe->base.clear_render_target = galahad_clear_render_target;

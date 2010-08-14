@@ -31,15 +31,18 @@
 #include <util/u_memory.h>
 #include "state_tracker/drm_driver.h"
 #include "r600_screen.h"
-#include "r600_texture.h"
+#include "r600_context.h"
+#include "r600_resource.h"
 
 extern struct u_resource_vtbl r600_texture_vtbl;
 
-unsigned long r600_texture_get_offset(struct r600_texture *rtex, unsigned level, unsigned zslice, unsigned face)
+static unsigned long r600_texture_get_offset(struct r600_resource_texture *rtex,
+					unsigned level, unsigned zslice,
+					unsigned face)
 {
 	unsigned long offset = rtex->offset[level];
 
-	switch (rtex->b.b.target) {
+	switch (rtex->resource.base.b.target) {
 	case PIPE_TEXTURE_3D:
 		assert(face == 0);
 		return offset + zslice * rtex->layer_size[level];
@@ -52,67 +55,68 @@ unsigned long r600_texture_get_offset(struct r600_texture *rtex, unsigned level,
 	}
 }
 
-static void r600_setup_miptree(struct r600_screen *rscreen, struct r600_texture *rtex)
+static void r600_setup_miptree(struct r600_screen *rscreen, struct r600_resource_texture *rtex)
 {
-	struct pipe_resource *ptex = &rtex->b.b;
-	unsigned long w, h, stride, size, layer_size, i, offset;
+	struct pipe_resource *ptex = &rtex->resource.base.b;
+	unsigned long w, h, pitch, size, layer_size, i, offset;
 
+	rtex->bpt = util_format_get_blocksize(ptex->format);
 	for (i = 0, offset = 0; i <= ptex->last_level; i++) {
 		w = u_minify(ptex->width0, i);
 		h = u_minify(ptex->height0, i);
-		stride = align(util_format_get_stride(ptex->format, w), 32);
-		layer_size = stride * h;
+		pitch = util_format_get_stride(ptex->format, align(w, 64));
+		layer_size = pitch * h;
 		if (ptex->target == PIPE_TEXTURE_CUBE)
 			size = layer_size * 6;
 		else
 			size = layer_size * u_minify(ptex->depth0, i);
 		rtex->offset[i] = offset;
 		rtex->layer_size[i] = layer_size;
-		rtex->pitch[i] = stride / util_format_get_blocksize(ptex->format);
-		rtex->stride[i] = stride;
-		offset += align(size, 32);
+		rtex->pitch[i] = pitch;
+		offset += size;
 	}
 	rtex->size = offset;
 }
 
 struct pipe_resource *r600_texture_create(struct pipe_screen *screen,
-					  const struct pipe_resource *templ)
+						const struct pipe_resource *templ)
 {
-	struct r600_texture *rtex = CALLOC_STRUCT(r600_texture);
+	struct r600_resource_texture *rtex;
+	struct r600_resource *resource;
 	struct r600_screen *rscreen = r600_screen(screen);
-	struct pipe_resource templ_buf;
 
+	rtex = CALLOC_STRUCT(r600_resource_texture);
 	if (!rtex) {
 		return NULL;
 	}
-	rtex->b.b = *templ;
-	rtex->b.vtbl = &r600_texture_vtbl;
-	pipe_reference_init(&rtex->b.b.reference, 1);
-	rtex->b.b.screen = screen;
+	resource = &rtex->resource;
+	resource->base.b = *templ;
+	resource->base.vtbl = &r600_texture_vtbl;
+	pipe_reference_init(&resource->base.b.reference, 1);
+	resource->base.b.screen = screen;
 	r600_setup_miptree(rscreen, rtex);
 
-	memset(&templ_buf, 0, sizeof(struct pipe_resource));
-	templ_buf.target = PIPE_BUFFER;
-	templ_buf.format = PIPE_FORMAT_R8_UNORM;
-	templ_buf.usage = templ->usage;
-	templ_buf.bind = templ->bind;
-	templ_buf.width0 = rtex->size;
-	templ_buf.height0 = 1;
-	templ_buf.depth0 = 1;
-
-	rtex->buffer = screen->resource_create(screen, &templ_buf);
-	if (!rtex->buffer) {
+	/* FIXME alignment 4096 enought ? too much ? */
+	resource->domain = r600_domain_from_usage(resource->base.b.bind);
+	resource->bo = radeon_bo(rscreen->rw, 0, rtex->size, 4096, NULL);
+	if (resource->bo == NULL) {
 		FREE(rtex);
 		return NULL;
 	}
-	return &rtex->b.b;
+
+	return &resource->base.b;
 }
 
 static void r600_texture_destroy(struct pipe_screen *screen,
 				 struct pipe_resource *ptex)
 {
-	struct r600_texture *rtex = (struct r600_texture*)ptex;
+	struct r600_resource_texture *rtex = (struct r600_resource_texture*)ptex;
+	struct r600_resource *resource = &rtex->resource;
+	struct r600_screen *rscreen = r600_screen(screen);
 
+	if (resource->bo) {
+		radeon_bo_decref(rscreen->rw, resource->bo);
+	}
 	FREE(rtex);
 }
 
@@ -121,7 +125,7 @@ static struct pipe_surface *r600_get_tex_surface(struct pipe_screen *screen,
 						unsigned face, unsigned level,
 						unsigned zslice, unsigned flags)
 {
-	struct r600_texture *rtex = (struct r600_texture*)texture;
+	struct r600_resource_texture *rtex = (struct r600_resource_texture*)texture;
 	struct pipe_surface *surface = CALLOC_STRUCT(pipe_surface);
 	unsigned long offset;
 
@@ -149,71 +153,115 @@ static void r600_tex_surface_destroy(struct pipe_surface *surface)
 }
 
 struct pipe_resource *r600_texture_from_handle(struct pipe_screen *screen,
-					       const struct pipe_resource *base,
+					       const struct pipe_resource *templ,
 					       struct winsys_handle *whandle)
 {
-	struct pipe_resource *buffer;
-	struct r600_texture *rtex;
+	struct radeon *rw = (struct radeon*)screen->winsys;
+	struct r600_resource_texture *rtex;
+	struct r600_resource *resource;
+	struct radeon_bo *bo = NULL;
 
-	buffer = r600_buffer_from_handle(screen, whandle);
-	if (buffer == NULL) {
+	bo = radeon_bo(rw, whandle->handle, 0, 0, NULL);
+	if (bo == NULL) {
 		return NULL;
 	}
 
 	/* Support only 2D textures without mipmaps */
-	if (base->target != PIPE_TEXTURE_2D || base->depth0 != 1 || base->last_level != 0)
+	if (templ->target != PIPE_TEXTURE_2D || templ->depth0 != 1 || templ->last_level != 0)
 		return NULL;
 
-	rtex = CALLOC_STRUCT(r600_texture);
+	rtex = CALLOC_STRUCT(r600_resource_texture);
 	if (rtex == NULL)
 		return NULL;
 
-	/* one ref already taken */
-	rtex->buffer = buffer;
-
-	rtex->b.b = *base;
-	rtex->b.vtbl = &r600_texture_vtbl;
-	pipe_reference_init(&rtex->b.b.reference, 1);
-	rtex->b.b.screen = screen;
-	rtex->stride_override = whandle->stride;
-	rtex->pitch[0] = whandle->stride / util_format_get_blocksize(base->format);
-	rtex->stride[0] = whandle->stride;
+	resource = &rtex->resource;
+	resource->base.b = *templ;
+	resource->base.vtbl = &r600_texture_vtbl;
+	pipe_reference_init(&resource->base.b.reference, 1);
+	resource->base.b.screen = screen;
+	resource->bo = bo;
+	rtex->pitch_override = whandle->stride;
+	rtex->bpt = util_format_get_blocksize(templ->format);
+	rtex->pitch[0] = whandle->stride;
 	rtex->offset[0] = 0;
-	rtex->size = align(rtex->stride[0] * base->height0, 32);
+	rtex->size = align(rtex->pitch[0] * templ->height0, 64);
 
-	return &rtex->b.b;
-}
-
-static boolean r600_texture_get_handle(struct pipe_screen* screen,
-				       struct pipe_resource *texture,
-				       struct winsys_handle *whandle)
-{
-	struct r600_screen *rscreen = r600_screen(screen);
-	struct r600_texture* rtex = (struct r600_texture*)texture;
-
-	if (!rtex) {
-		return FALSE;
-	}
-
-	whandle->stride = rtex->stride[0];
-
-	r600_buffer_get_handle(rscreen->rw, rtex->buffer, whandle);
-
-	return TRUE;
+	return &resource->base.b;
 }
 
 static unsigned int r600_texture_is_referenced(struct pipe_context *context,
 						struct pipe_resource *texture,
 						unsigned face, unsigned level)
 {
-	struct r600_texture *rtex = (struct r600_texture*)texture;
+	/* FIXME */
+	return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
+}
 
-	return r600_buffer_is_referenced_by_cs(context, rtex->buffer, face, level);
+struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
+						struct pipe_resource *texture,
+						struct pipe_subresource sr,
+						unsigned usage,
+						const struct pipe_box *box)
+{
+	struct r600_resource_texture *rtex = (struct r600_resource_texture*)texture;
+	struct r600_transfer *trans;
+
+	trans = CALLOC_STRUCT(r600_transfer);
+	if (trans == NULL)
+		return NULL;
+	pipe_resource_reference(&trans->transfer.resource, texture);
+	trans->transfer.sr = sr;
+	trans->transfer.usage = usage;
+	trans->transfer.box = *box;
+	trans->transfer.stride = rtex->pitch[sr.level];
+	trans->offset = r600_texture_get_offset(rtex, sr.level, box->z, sr.face);
+	return &trans->transfer;
+}
+
+void r600_texture_transfer_destroy(struct pipe_context *ctx,
+				   struct pipe_transfer *trans)
+{
+	pipe_resource_reference(&trans->resource, NULL);
+	FREE(trans);
+}
+
+void* r600_texture_transfer_map(struct pipe_context *ctx,
+				struct pipe_transfer* transfer)
+{
+	struct r600_transfer *rtransfer = (struct r600_transfer*)transfer;
+	struct r600_resource *resource;
+	enum pipe_format format = transfer->resource->format;
+	struct r600_screen *rscreen = r600_screen(ctx->screen);
+	char *map;
+
+	r600_flush(ctx, 0, NULL);
+
+	resource = (struct r600_resource *)transfer->resource;
+	if (radeon_bo_map(rscreen->rw, resource->bo)) {
+		return NULL;
+	}
+	radeon_bo_wait(rscreen->rw, resource->bo);
+
+	map = resource->bo->data;
+
+	return map + rtransfer->offset +
+		transfer->box.y / util_format_get_blockheight(format) * transfer->stride +
+		transfer->box.x / util_format_get_blockwidth(format) * util_format_get_blocksize(format);
+}
+
+void r600_texture_transfer_unmap(struct pipe_context *ctx,
+				 struct pipe_transfer* transfer)
+{
+	struct r600_screen *rscreen = r600_screen(ctx->screen);
+	struct r600_resource *resource;
+
+	resource = (struct r600_resource *)transfer->resource;
+	radeon_bo_unmap(rscreen->rw, resource->bo);
 }
 
 struct u_resource_vtbl r600_texture_vtbl =
 {
-	r600_texture_get_handle,	/* get_handle */
+	u_default_resource_get_handle,	/* get_handle */
 	r600_texture_destroy,		/* resource_destroy */
 	r600_texture_is_referenced,	/* is_resource_referenced */
 	r600_texture_get_transfer,	/* get_transfer */

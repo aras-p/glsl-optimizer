@@ -83,85 +83,26 @@ trace_surface_unwrap(struct trace_context *tr_ctx,
 
 
 static INLINE void
-trace_context_draw_arrays(struct pipe_context *_pipe,
-                          unsigned mode, unsigned start, unsigned count)
+trace_context_draw_vbo(struct pipe_context *_pipe,
+                       const struct pipe_draw_info *info)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
    struct pipe_context *pipe = tr_ctx->pipe;
 
-   trace_dump_call_begin("pipe_context", "draw_arrays");
+   trace_dump_call_begin("pipe_context", "draw_vbo");
 
-   trace_dump_arg(ptr, pipe);
-   trace_dump_arg(uint, mode);
-   trace_dump_arg(uint, start);
-   trace_dump_arg(uint, count);
+   trace_dump_arg(ptr,  pipe);
+   trace_dump_arg(bool, info->indexed);
+   trace_dump_arg(uint, info->mode);
+   trace_dump_arg(uint, info->start);
+   trace_dump_arg(uint, info->count);
+   trace_dump_arg(uint, info->start_instance);
+   trace_dump_arg(uint, info->instance_count);
+   trace_dump_arg(int,  info->index_bias);
+   trace_dump_arg(uint, info->min_index);
+   trace_dump_arg(uint, info->max_index);
 
-   pipe->draw_arrays(pipe, mode, start, count);
-
-   trace_dump_call_end();
-}
-
-
-static INLINE void
-trace_context_draw_elements(struct pipe_context *_pipe,
-                            struct pipe_resource *_indexBuffer,
-                            unsigned indexSize, int indexBias,
-                            unsigned mode, unsigned start, unsigned count)
-{
-   struct trace_context *tr_ctx = trace_context(_pipe);
-   struct trace_resource *tr_buf = trace_resource(_indexBuffer);
-   struct pipe_context *pipe = tr_ctx->pipe;
-   struct pipe_resource *indexBuffer = tr_buf->resource;
-
-   trace_dump_call_begin("pipe_context", "draw_elements");
-
-   trace_dump_arg(ptr, pipe);
-   trace_dump_arg(ptr, indexBuffer);
-   trace_dump_arg(uint, indexSize);
-   trace_dump_arg(int, indexBias);
-   trace_dump_arg(uint, mode);
-   trace_dump_arg(uint, start);
-   trace_dump_arg(uint, count);
-
-   pipe->draw_elements(pipe, indexBuffer, indexSize, indexBias,
-                       mode, start, count);
-
-   trace_dump_call_end();
-}
-
-
-static INLINE void
-trace_context_draw_range_elements(struct pipe_context *_pipe,
-                                  struct pipe_resource *_indexBuffer,
-                                  unsigned indexSize,
-                                  int indexBias,
-                                  unsigned minIndex,
-                                  unsigned maxIndex,
-                                  unsigned mode,
-                                  unsigned start,
-                                  unsigned count)
-{
-   struct trace_context *tr_ctx = trace_context(_pipe);
-   struct trace_resource *tr_buf = trace_resource(_indexBuffer);
-   struct pipe_context *pipe = tr_ctx->pipe;
-   struct pipe_resource *indexBuffer = tr_buf->resource;
-
-   trace_dump_call_begin("pipe_context", "draw_range_elements");
-
-   trace_dump_arg(ptr, pipe);
-   trace_dump_arg(ptr, indexBuffer);
-   trace_dump_arg(uint, indexSize);
-   trace_dump_arg(int, indexBias);
-   trace_dump_arg(uint, minIndex);
-   trace_dump_arg(uint, maxIndex);
-   trace_dump_arg(uint, mode);
-   trace_dump_arg(uint, start);
-   trace_dump_arg(uint, count);
-
-   pipe->draw_range_elements(pipe,
-                             indexBuffer, indexSize, indexBias,
-                             minIndex, maxIndex,
-                             mode, start, count);
+   pipe->draw_vbo(pipe, info);
 
    trace_dump_call_end();
 }
@@ -1045,6 +986,30 @@ trace_context_set_vertex_buffers(struct pipe_context *_pipe,
 
 
 static INLINE void
+trace_context_set_index_buffer(struct pipe_context *_pipe,
+                               const struct pipe_index_buffer *_ib)
+{
+   struct trace_context *tr_ctx = trace_context(_pipe);
+   struct pipe_context *pipe = tr_ctx->pipe;
+   struct pipe_index_buffer unwrapped_ib, *ib = NULL;
+
+   if (_ib) {
+      unwrapped_ib = *_ib;
+      unwrapped_ib.buffer = trace_resource_unwrap(tr_ctx, _ib->buffer);
+      ib = &unwrapped_ib;
+   }
+
+   trace_dump_call_begin("pipe_context", "set_index_buffer");
+
+   trace_dump_arg(ptr, pipe);
+   trace_dump_arg(index_buffer, ib);
+
+   pipe->set_index_buffer(pipe, ib);
+
+   trace_dump_call_end();
+}
+
+static INLINE void
 trace_context_resource_copy_region(struct pipe_context *_pipe,
                                    struct pipe_resource *dst,
                                    struct pipe_subresource subdst,
@@ -1433,9 +1398,7 @@ trace_context_create(struct trace_screen *tr_scr,
    tr_ctx->base.screen = &tr_scr->base;
 
    tr_ctx->base.destroy = trace_context_destroy;
-   tr_ctx->base.draw_arrays = trace_context_draw_arrays;
-   tr_ctx->base.draw_elements = trace_context_draw_elements;
-   tr_ctx->base.draw_range_elements = trace_context_draw_range_elements;
+   tr_ctx->base.draw_vbo = trace_context_draw_vbo;
    tr_ctx->base.create_query = trace_context_create_query;
    tr_ctx->base.destroy_query = trace_context_destroy_query;
    tr_ctx->base.begin_query = trace_context_begin_query;
@@ -1477,6 +1440,7 @@ trace_context_create(struct trace_screen *tr_scr,
    tr_ctx->base.create_sampler_view = trace_create_sampler_view;
    tr_ctx->base.sampler_view_destroy = trace_sampler_view_destroy;
    tr_ctx->base.set_vertex_buffers = trace_context_set_vertex_buffers;
+   tr_ctx->base.set_index_buffer = trace_context_set_index_buffer;
    tr_ctx->base.resource_copy_region = trace_context_resource_copy_region;
    tr_ctx->base.clear = trace_context_clear;
    tr_ctx->base.clear_render_target = trace_context_clear_render_target;

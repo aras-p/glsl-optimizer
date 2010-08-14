@@ -39,6 +39,7 @@
 #include <llvm/Target/TargetOptions.h>
 #include <llvm/ExecutionEngine/ExecutionEngine.h>
 #include <llvm/ExecutionEngine/JITEventListener.h>
+#include <llvm/Support/CommandLine.h>
 
 #include "pipe/p_config.h"
 #include "util/u_debug.h"
@@ -141,4 +142,35 @@ lp_set_target_options(void)
 #if 0
    llvm::UnsafeFPMath = true;
 #endif
+
+#if 0
+   /*
+    * LLVM will generate MMX instructions for vectors <= 64 bits, leading to
+    * innefficient code, and in 32bit systems, to the corruption of the FPU
+    * stack given that it expects the user to generate the EMMS instructions.
+    *
+    * See also:
+    * - http://llvm.org/bugs/show_bug.cgi?id=3287
+    * - http://l4.me.uk/post/2009/06/07/llvm-wrinkle-3-configuration-what-configuration/
+    *
+    * XXX: Unfortunately this is not working.
+    */
+   static boolean first = FALSE;
+   if (first) {
+      static const char* options[] = {
+         "prog",
+         "-disable-mmx"
+      };
+      llvm::cl::ParseCommandLineOptions(2, const_cast<char**>(options));
+      first = FALSE;
+   }
+#endif
+}
+
+
+extern "C" void
+lp_func_delete_body(LLVMValueRef FF)
+{
+   llvm::Function *func = llvm::unwrap<llvm::Function>(FF);
+   func->deleteBody();
 }

@@ -281,7 +281,7 @@ cell_set_fragment_sampler_views(struct pipe_context *pipe,
          struct pipe_resource *new_tex = new_view ? new_view->texture : NULL;
 
          pipe_sampler_view_reference(&cell->fragment_sampler_views[i],
-                                     views[i]);
+                                     new_view);
          pipe_resource_reference((struct pipe_resource **) &cell->texture[i],
                                 (struct pipe_resource *) new_tex);
 

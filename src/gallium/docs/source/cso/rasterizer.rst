@@ -126,11 +126,15 @@ sprite_coord_enable
 
 Specifies if a texture unit has its texture coordinates replaced or not. This
 is a packed bitfield containing the enable for all texcoords -- if all bits
-are zero, point sprites are effectively disabled. If any bit is set, then
-point_smooth and point_quad_rasterization are ignored; point smoothing is
-disabled and points are always rasterized as quads. If enabled, the four
-vertices of the resulting quad will be assigned texture coordinates,
-according to sprite_coord_mode.
+are zero, point sprites are effectively disabled. 
+
+If any bit is set, then point_smooth MUST be disabled (there are no
+round sprites) and point_quad_rasterization MUST be true (sprites are
+always rasterized as quads).  Any mismatch between these states should
+be considered a bug in the state-tracker.
+
+If enabled, the four vertices of the resulting quad will be assigned
+texture coordinates, according to sprite_coord_mode.
 
 sprite_coord_mode
 ^^^^^^^^^^^^^^^^^
@@ -141,20 +145,23 @@ have coordinates (0,0,0,1). For PIPE_SPRITE_COORD_UPPER_LEFT, the upper-left
 vertex will have coordinates (0,0,0,1).
 This state is used by :ref:`Draw` to generate texcoords.
 
-.. note::
-
-    When geometry shaders are available, a special geometry shader could be
-    used instead of this functionality, to convert incoming points into quads
-    with the proper texture coordinates.
-
 point_quad_rasterization
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-Determines if points should be rasterized as quads or points. Certain APIs,
-like Direct3D, always use quad rasterization for points, regardless of
-whether point sprites are enabled or not. If this state is enabled, point
-smoothing and antialiasing are disabled. If it is disabled, point sprite
-coordinates are not generated.
+Determines if points should be rasterized according to quad or point
+rasterization rules.
+
+OpenGL actually has quite different rasterization rules for points and
+point sprites - hence this indicates if points should be rasterized as
+points or according to point sprite (which decomposes them into quads,
+basically) rules.
+
+Additionally Direct3D will always use quad rasterization rules for
+points, regardless of whether point sprites are enabled or not.
+
+If this state is enabled, point smoothing and antialiasing are
+disabled. If it is disabled, point sprite coordinates are not
+generated.
 
 .. note::
 

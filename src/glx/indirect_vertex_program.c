@@ -37,7 +37,7 @@
 static void
 do_vertex_attrib_enable(GLuint index, GLboolean val)
 {
-   __GLXcontext *gc = __glXGetCurrentContext();
+   struct glx_context *gc = __glXGetCurrentContext();
    __GLXattribute *state = (__GLXattribute *) (gc->client_state_private);
 
    if (!__glXSetArrayEnable(state, GL_VERTEX_ATTRIB_ARRAY_POINTER_ARB,
@@ -65,7 +65,7 @@ static void
 get_parameter(unsigned opcode, unsigned size, GLenum target, GLuint index,
               void *params)
 {
-   __GLXcontext *const gc = __glXGetCurrentContext();
+   struct glx_context *const gc = __glXGetCurrentContext();
    Display *const dpy = gc->currentDpy;
    const GLuint cmdlen = 12;
 
@@ -122,7 +122,7 @@ void
 __indirect_glGetVertexAttribPointervNV(GLuint index, GLenum pname,
                                        GLvoid ** pointer)
 {
-   __GLXcontext *const gc = __glXGetCurrentContext();
+   struct glx_context *const gc = __glXGetCurrentContext();
    __GLXattribute *state = (__GLXattribute *) (gc->client_state_private);
 
    if (pname != GL_VERTEX_ATTRIB_ARRAY_POINTER_ARB) {
@@ -177,7 +177,7 @@ get_attrib_array_data(__GLXattribute * state, GLuint index, GLenum cap,
 
 
 static void
-get_vertex_attrib(__GLXcontext * gc, unsigned vop,
+get_vertex_attrib(struct glx_context * gc, unsigned vop,
                   GLuint index, GLenum pname, xReply * reply)
 {
    Display *const dpy = gc->currentDpy;
@@ -195,7 +195,7 @@ get_vertex_attrib(__GLXcontext * gc, unsigned vop,
 void
 __indirect_glGetVertexAttribivARB(GLuint index, GLenum pname, GLint * params)
 {
-   __GLXcontext *const gc = __glXGetCurrentContext();
+   struct glx_context *const gc = __glXGetCurrentContext();
    Display *const dpy = gc->currentDpy;
    __GLXattribute *state = (__GLXattribute *) (gc->client_state_private);
    xGLXSingleReply reply;
@@ -229,7 +229,7 @@ void
 __indirect_glGetVertexAttribfvARB(GLuint index, GLenum pname,
                                   GLfloat * params)
 {
-   __GLXcontext *const gc = __glXGetCurrentContext();
+   struct glx_context *const gc = __glXGetCurrentContext();
    Display *const dpy = gc->currentDpy;
    __GLXattribute *state = (__GLXattribute *) (gc->client_state_private);
    xGLXSingleReply reply;
@@ -263,7 +263,7 @@ void
 __indirect_glGetVertexAttribdvARB(GLuint index, GLenum pname,
                                   GLdouble * params)
 {
-   __GLXcontext *const gc = __glXGetCurrentContext();
+   struct glx_context *const gc = __glXGetCurrentContext();
    Display *const dpy = gc->currentDpy;
    __GLXattribute *state = (__GLXattribute *) (gc->client_state_private);
    xGLXSingleReply reply;

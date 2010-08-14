@@ -21,7 +21,6 @@ if env['dri']:
 	source = [ 'dri_context.c',
 		'dri_drawable.c',
 		'dri_screen.c',
-		'dri1_helper.c',
 		'dri2.c',
 		]
     )

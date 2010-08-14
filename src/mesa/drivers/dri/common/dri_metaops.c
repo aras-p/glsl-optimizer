@@ -29,6 +29,7 @@
 #include "main/arbprogram.h"
 #include "main/arrayobj.h"
 #include "main/bufferobj.h"
+#include "main/context.h"
 #include "main/enable.h"
 #include "main/matrix.h"
 #include "main/texstate.h"

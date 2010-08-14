@@ -259,6 +259,12 @@ draw_print_arrays(struct draw_context *draw, uint prim, int start, uint count)
       for (j = 0; j < draw->pt.nr_vertex_elements; j++) {
          uint buf = draw->pt.vertex_element[j].vertex_buffer_index;
          ubyte *ptr = (ubyte *) draw->pt.user.vbuffer[buf];
+
+         if (draw->pt.vertex_element[j].instance_divisor) {
+            ii = draw->instance_id / draw->pt.vertex_element[j].instance_divisor;
+         }
+
+         ptr += draw->pt.vertex_buffer[buf].buffer_offset;
          ptr += draw->pt.vertex_buffer[buf].stride * ii;
          ptr += draw->pt.vertex_element[j].src_offset;
 
@@ -341,19 +347,22 @@ draw_arrays_instanced(struct draw_context *draw,
    unsigned reduced_prim = u_reduced_prim(mode);
    unsigned instance;
 
+   assert(instanceCount > 0);
+
    if (reduced_prim != draw->reduced_prim) {
       draw_do_flush(draw, DRAW_FLUSH_STATE_CHANGE);
       draw->reduced_prim = reduced_prim;
    }
 
    if (0)
-      draw_print_arrays(draw, mode, start, MIN2(count, 20));
+      debug_printf("draw_arrays(mode=%u start=%u count=%u):\n",
+                   mode, start, count);
+
+   if (0)
+      tgsi_dump(draw->vs.vertex_shader->state.tokens, 0);
 
    if (0) {
       unsigned int i;
-      debug_printf("draw_arrays(mode=%u start=%u count=%u):\n",
-                   mode, start, count);
-      tgsi_dump(draw->vs.vertex_shader->state.tokens, 0);
       debug_printf("Elements:\n");
       for (i = 0; i < draw->pt.nr_vertex_elements; i++) {
          debug_printf("  %u: src_offset=%u  inst_div=%u   vbuf=%u  format=%s\n",
@@ -373,6 +382,9 @@ draw_arrays_instanced(struct draw_context *draw,
                       draw->pt.user.vbuffer[i]);
       }
    }
+
+   if (0)
+      draw_print_arrays(draw, mode, start, MIN2(count, 20));
 
    for (instance = 0; instance < instanceCount; instance++) {
       draw->instance_id = instance + startInstance;

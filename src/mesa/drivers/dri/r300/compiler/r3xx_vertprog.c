@@ -633,7 +633,7 @@ static struct rc_swizzle_caps r300_vertprog_swizzle_caps = {
 void r3xx_compile_vertex_program(struct r300_vertex_program_compiler* compiler)
 {
 	struct emulate_loop_state loop_state;
-	
+
 	compiler->Base.SwizzleCaps = &r300_vertprog_swizzle_caps;
 
 	addArtificialOutputs(compiler);
@@ -643,13 +643,12 @@ void r3xx_compile_vertex_program(struct r300_vertex_program_compiler* compiler)
 	/* XXX Ideally this should be done only for r3xx, but since
 	 * we don't have branching support for r5xx, we use the emulation
 	 * on all chipsets. */
-	rc_transform_unroll_loops(&compiler->Base, &loop_state);
-	
-	debug_program_log(compiler, "after transform loops");
-	
+
 	if (compiler->Base.is_r500){
+		rc_transform_loops(&compiler->Base, &loop_state);
 		rc_emulate_loops(&loop_state, R500_VS_MAX_ALU);
 	} else {
+		rc_transform_loops(&compiler->Base, &loop_state);
 		rc_emulate_loops(&loop_state, R300_VS_MAX_ALU);
 	}
 	debug_program_log(compiler, "after emulate loops");

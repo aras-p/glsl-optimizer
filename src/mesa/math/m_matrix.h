@@ -32,6 +32,8 @@
 #define _M_MATRIX_H
 
 
+#include "main/glheader.h"
+
 
 /**
  * \name Symbolic names to some of the entries in the matrix

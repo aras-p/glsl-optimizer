@@ -43,6 +43,12 @@
 #include "lp_scene.h"
 
 
+#ifdef DEBUG
+int jit_line = 0;
+const struct lp_rast_state *jit_state = NULL;
+#endif
+
+
 /**
  * Begin rasterizing a scene.
  * Called once per scene by one thread.
@@ -368,14 +374,15 @@ lp_rast_store_linear_color( struct lp_rasterizer_task *task,
 
    for (buf = 0; buf < rast->state.nr_cbufs; buf++) {
       struct pipe_surface *cbuf = scene->fb.cbufs[buf];
-      const unsigned face = cbuf->face, level = cbuf->level;
+      const unsigned face_slice = cbuf->face + cbuf->zslice;
+      const unsigned level = cbuf->level;
       struct llvmpipe_resource *lpt = llvmpipe_resource(cbuf->texture);
 
       if (!task->color_tiles[buf])
          continue;
 
       llvmpipe_unswizzle_cbuf_tile(lpt,
-                                   face,
+                                   face_slice,
                                    level,
                                    task->x, task->y,
                                    task->color_tiles[buf]);
@@ -418,6 +425,7 @@ lp_rast_shade_tile(struct lp_rasterizer_task *task,
          depth = lp_rast_get_depth_block_pointer(task, tile_x + x, tile_y + y);
 
          /* run shader on 4x4 block */
+         BEGIN_JIT_CALL(state);
          variant->jit_function[RAST_WHOLE]( &state->jit_context,
                                             tile_x + x, tile_y + y,
                                             inputs->facing,
@@ -428,6 +436,7 @@ lp_rast_shade_tile(struct lp_rasterizer_task *task,
                                             depth,
                                             0xffff,
                                             &task->vis_counter);
+         END_JIT_CALL();
       }
    }
 }
@@ -497,6 +506,7 @@ lp_rast_shade_quads_mask(struct lp_rasterizer_task *task,
    assert(lp_check_alignment(state->jit_context.blend_color, 16));
 
    /* run shader on 4x4 block */
+   BEGIN_JIT_CALL(state);
    variant->jit_function[RAST_EDGE_TEST](&state->jit_context,
                                          x, y,
                                          inputs->facing,
@@ -507,6 +517,7 @@ lp_rast_shade_quads_mask(struct lp_rasterizer_task *task,
                                          depth,
                                          mask,
                                          &task->vis_counter);
+   END_JIT_CALL();
 }
 
 

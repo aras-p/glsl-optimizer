@@ -149,6 +149,7 @@ C_SOURCES = \
 
 GALLIVM_SOURCES = \
         gallivm/lp_bld_arit.c \
+        gallivm/lp_bld_assert.c \
         gallivm/lp_bld_const.c \
         gallivm/lp_bld_conv.c \
         gallivm/lp_bld_debug.c \

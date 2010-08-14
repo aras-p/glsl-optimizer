@@ -121,7 +121,8 @@ struct nvfx_context {
 	struct pipe_stencil_ref stencil_ref;
 	struct pipe_viewport_state viewport;
 	struct pipe_framebuffer_state framebuffer;
-	struct pipe_resource *idxbuf;
+	struct pipe_index_buffer idxbuf;
+	struct pipe_resource *idxbuf_buffer;
 	unsigned idxbuf_format;
 	struct nvfx_sampler_state *tex_sampler[PIPE_MAX_SAMPLERS];
 	struct pipe_sampler_view *fragment_sampler_views[PIPE_MAX_SAMPLERS];
@@ -235,13 +236,8 @@ extern void nvfx_init_transfer_functions(struct nvfx_context *nvfx);
 /* nvfx_vbo.c */
 extern boolean nvfx_vbo_validate(struct nvfx_context *nvfx);
 extern void nvfx_vbo_relocate(struct nvfx_context *nvfx);
-extern void nvfx_draw_arrays(struct pipe_context *, unsigned mode,
-				unsigned start, unsigned count);
-extern void nvfx_draw_elements(struct pipe_context *pipe,
-                               struct pipe_resource *indexBuffer,
-                               unsigned indexSize, int indexBias,
-                               unsigned mode, unsigned start,
-                               unsigned count);
+extern void nvfx_draw_vbo(struct pipe_context *pipe,
+                          const struct pipe_draw_info *info);
 
 /* nvfx_vertprog.c */
 extern boolean nvfx_vertprog_validate(struct nvfx_context *nvfx);

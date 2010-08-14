@@ -43,16 +43,9 @@ static void r300_flush(struct pipe_context* pipe,
     u_upload_flush(r300->upload_vb);
     u_upload_flush(r300->upload_ib);
 
-    /* We probably need to flush Draw, but we may have been called from
-     * within Draw. This feels kludgy, but it might be the best thing.
-     *
-     * Of course, the best thing is to kill Draw with fire. :3 */
-    if (r300->draw && !r300->draw->flushing) {
-        draw_flush(r300->draw);
-    }
-
     if (r300->dirty_hw) {
-        r300_emit_hyperz_end(r300);
+        if (r300->rws->get_value(r300->rws, R300_CAN_HYPERZ))
+            r300_emit_hyperz_end(r300);
         r300_emit_query_end(r300);
 
         r300->flush_counter++;

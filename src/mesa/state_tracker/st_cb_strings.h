@@ -30,6 +30,8 @@
 #define ST_CB_STRINGS_H
 
 
+struct dd_function_table;
+
 extern void
 st_init_string_functions(struct dd_function_table *functions);
 

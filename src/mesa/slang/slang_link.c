@@ -756,6 +756,8 @@ _slang_update_inputs_outputs(struct gl_program *prog)
    prog->InputsRead = 0x0;
    prog->OutputsWritten = 0x0;
 
+   prog->IndirectRegisterFiles = 0x0;
+
    for (i = 0; i < prog->NumInstructions; i++) {
       const struct prog_instruction *inst = prog->Instructions + i;
       const GLuint numSrc = _mesa_num_inst_src_regs(inst->Opcode);
@@ -774,6 +776,9 @@ _slang_update_inputs_outputs(struct gl_program *prog)
          else if (inst->SrcReg[j].File == PROGRAM_ADDRESS) {
             maxAddrReg = MAX2(maxAddrReg, (GLuint) (inst->SrcReg[j].Index + 1));
          }
+
+         if (inst->SrcReg[j].RelAddr)
+            prog->IndirectRegisterFiles |= (1 << inst->SrcReg[j].File);
       }
 
       if (inst->DstReg.File == PROGRAM_OUTPUT) {
@@ -784,6 +789,8 @@ _slang_update_inputs_outputs(struct gl_program *prog)
       else if (inst->DstReg.File == PROGRAM_ADDRESS) {
          maxAddrReg = MAX2(maxAddrReg, inst->DstReg.Index + 1);
       }
+      if (inst->DstReg.RelAddr)
+         prog->IndirectRegisterFiles |= (1 << inst->DstReg.File);
    }
    prog->NumAddressRegs = maxAddrReg;
 }

@@ -28,6 +28,7 @@
 #ifndef RESTART_H
 #define RESTART_H
 
+#include "glheader.h"
 
 extern void GLAPIENTRY
 _mesa_PrimitiveRestart(void);

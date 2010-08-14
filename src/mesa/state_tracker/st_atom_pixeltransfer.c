@@ -37,6 +37,7 @@
 #include "main/image.h"
 #include "main/macros.h"
 #include "program/program.h"
+#include "program/prog_cache.h"
 #include "program/prog_instruction.h"
 #include "program/prog_parameter.h"
 #include "program/prog_print.h"

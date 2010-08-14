@@ -30,6 +30,7 @@
 #include "r300_cb.h"
 #include "r300_context.h"
 #include "r300_emit.h"
+#include "r300_hyperz.h"
 #include "r300_screen.h"
 #include "r300_screen_buffer.h"
 #include "r300_winsys.h"
@@ -114,6 +115,10 @@ static void r300_destroy_context(struct pipe_context* context)
     u_upload_destroy(r300->upload_vb);
     u_upload_destroy(r300->upload_ib);
 
+    /* setup hyper-z mm */
+    if (r300->rws->get_value(r300->rws, R300_CAN_HYPERZ))
+        r300_hyperz_destroy_mm(r300);
+
     translate_cache_destroy(r300->tran.translate_cache);
 
     r300_release_referenced_objects(r300);
@@ -166,6 +171,9 @@ static void r300_setup_atoms(struct r300_context* r300)
     boolean is_r500 = r300->screen->caps.is_r500;
     boolean has_tcl = r300->screen->caps.has_tcl;
     boolean drm_2_3_0 = r300->rws->get_value(r300->rws, R300_VID_DRM_2_3_0);
+    boolean drm_2_6_0 = r300->rws->get_value(r300->rws, R300_VID_DRM_2_6_0);
+    boolean has_hyperz = r300->rws->get_value(r300->rws, R300_CAN_HYPERZ);
+    boolean has_hiz_ram = r300->screen->caps.hiz_ram > 0;
 
     /* Create the actual atom list.
      *
@@ -188,8 +196,8 @@ static void r300_setup_atoms(struct r300_context* r300)
     R300_INIT_ATOM(gpu_flush, 9);
     R300_INIT_ATOM(aa_state, 4);
     R300_INIT_ATOM(fb_state, 0);
+    R300_INIT_ATOM(hyperz_state, is_r500 || (is_rv350 && drm_2_6_0) ? 10 : 8);
     /* ZB (unpipelined), SC. */
-    R300_INIT_ATOM(hyperz_state, 6);
     R300_INIT_ATOM(ztop_state, 2);
     /* ZB, FG. */
     R300_INIT_ATOM(dsa_state, is_r500 ? 8 : 6);
@@ -220,6 +228,13 @@ static void r300_setup_atoms(struct r300_context* r300)
     /* TX. */
     R300_INIT_ATOM(texture_cache_inval, 2);
     R300_INIT_ATOM(textures_state, 0);
+    if (has_hyperz) {
+        /* HiZ Clear */
+        if (has_hiz_ram)
+            R300_INIT_ATOM(hiz_clear, 0);
+        /* zmask clear */
+        R300_INIT_ATOM(zmask_clear, 0);
+    }
     /* ZB (unpipelined), SU. */
     R300_INIT_ATOM(query_start, 4);
 
@@ -282,8 +297,7 @@ static void r300_init_states(struct pipe_context *pipe)
             (struct r300_vap_invariant_state*)r300->vap_invariant_state.state;
     struct r300_invariant_state *invariant =
             (struct r300_invariant_state*)r300->invariant_state.state;
-    struct r300_hyperz_state *hyperz =
-            (struct r300_hyperz_state*)r300->hyperz_state.state;
+
     CB_LOCALS;
 
     pipe->set_blend_color(pipe, &bc);
@@ -351,10 +365,20 @@ static void r300_init_states(struct pipe_context *pipe)
 
     /* Initialize the hyperz state. */
     {
-        BEGIN_CB(&hyperz->cb_begin, r300->hyperz_state.size);
+        struct r300_hyperz_state *hyperz =
+            (struct r300_hyperz_state*)r300->hyperz_state.state;
+        BEGIN_CB(&hyperz->cb_flush_begin, r300->hyperz_state.size);
+        OUT_CB_REG(R300_ZB_ZCACHE_CTLSTAT,
+                   R300_ZB_ZCACHE_CTLSTAT_ZC_FLUSH_FLUSH_AND_FREE);
         OUT_CB_REG(R300_ZB_BW_CNTL, 0);
         OUT_CB_REG(R300_ZB_DEPTHCLEARVALUE, 0);
         OUT_CB_REG(R300_SC_HYPERZ, R300_SC_HYPERZ_ADJ_2);
+
+        if (r300->screen->caps.is_r500 ||
+            (r300->screen->caps.is_rv350 &&
+             r300->rws->get_value(r300->rws, R300_VID_DRM_2_6_0))) {
+            OUT_CB_REG(R300_GB_Z_PEQ_CONFIG, 0);
+        }
         END_CB;
     }
 }
@@ -414,6 +438,10 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     r300_init_render_functions(r300);
 
     rws->cs_set_flush(r300->cs, r300_flush_cb, r300);
+
+    /* setup hyper-z mm */
+    if (r300->rws->get_value(r300->rws, R300_CAN_HYPERZ))
+        r300_hyperz_init_mm(r300);
 
     r300->upload_ib = u_upload_create(&r300->context,
 				      32 * 1024, 16,

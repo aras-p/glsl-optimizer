@@ -38,9 +38,6 @@
 #include "dri_screen.h"
 #include "dri_context.h"
 #include "dri_drawable.h"
-#include "dri2.h"
-
-#include "GL/internal/dri_interface.h"
 
 /**
  * DRI2 flush extension.
@@ -354,7 +351,8 @@ dri2_allocate_textures(struct dri_drawable *drawable,
    unsigned num_buffers = count;
 
    buffers = dri2_drawable_get_buffers(drawable, statts, &num_buffers);
-   dri2_drawable_process_buffers(drawable, buffers, num_buffers);
+   if (buffers)
+      dri2_drawable_process_buffers(drawable, buffers, num_buffers);
 }
 
 static void
@@ -497,7 +495,7 @@ static const __DRIextension *dri_screen_extensions[] = {
  *
  * Returns the __GLcontextModes supported by this driver.
  */
-const __DRIconfig **
+static const __DRIconfig **
 dri2_init_screen(__DRIscreen * sPriv)
 {
    const __DRIconfig **configs;
@@ -510,9 +508,6 @@ dri2_init_screen(__DRIscreen * sPriv)
 
    screen->sPriv = sPriv;
    screen->fd = sPriv->fd;
-   screen->lookup_egl_image = dri2_lookup_egl_image;
-   screen->allocate_textures = dri2_allocate_textures;
-   screen->flush_frontbuffer = dri2_flush_frontbuffer;
 
    sPriv->private = (void *)screen;
    sPriv->extensions = dri_screen_extensions;
@@ -533,6 +528,64 @@ fail:
    FREE(screen);
    return NULL;
 }
+
+static boolean
+dri2_create_context(gl_api api, const __GLcontextModes * visual,
+                    __DRIcontext * cPriv, void *sharedContextPrivate)
+{
+   struct dri_context *ctx = NULL;
+
+   if (!dri_create_context(api, visual, cPriv, sharedContextPrivate))
+      return FALSE;
+
+   ctx = cPriv->driverPrivate;
+
+   ctx->lookup_egl_image = dri2_lookup_egl_image;
+
+   return TRUE;
+}
+
+static boolean
+dri2_create_buffer(__DRIscreen * sPriv,
+                   __DRIdrawable * dPriv,
+                   const __GLcontextModes * visual, boolean isPixmap)
+{
+   struct dri_drawable *drawable = NULL;
+
+   if (!dri_create_buffer(sPriv, dPriv, visual, isPixmap))
+      return FALSE;
+
+   drawable = dPriv->driverPrivate;
+
+   drawable->allocate_textures = dri2_allocate_textures;
+   drawable->flush_frontbuffer = dri2_flush_frontbuffer;
+
+   return TRUE;
+}
+
+/**
+ * DRI driver virtual function table.
+ *
+ * DRI versions differ in their implementation of init_screen and swap_buffers.
+ */
+const struct __DriverAPIRec driDriverAPI = {
+   .InitScreen = NULL,
+   .InitScreen2 = dri2_init_screen,
+   .DestroyScreen = dri_destroy_screen,
+   .CreateContext = dri2_create_context,
+   .DestroyContext = dri_destroy_context,
+   .CreateBuffer = dri2_create_buffer,
+   .DestroyBuffer = dri_destroy_buffer,
+   .MakeCurrent = dri_make_current,
+   .UnbindContext = dri_unbind_context,
+
+   .GetSwapInfo = NULL,
+   .GetDrawableMSC = NULL,
+   .WaitForMSC = NULL,
+
+   .SwapBuffers = NULL,
+   .CopySubBuffer = NULL,
+};
 
 /* This is the table of extensions that the loader will dlsym() for. */
 PUBLIC const __DRIextension *__driDriverExtensions[] = {

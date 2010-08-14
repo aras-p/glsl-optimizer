@@ -127,6 +127,7 @@ struct r600_bc {
 	unsigned			ncf;
 	unsigned			ngpr;
 	unsigned			nresource;
+	unsigned			force_add_cf;
 	u32				*bytecode;
 };
 

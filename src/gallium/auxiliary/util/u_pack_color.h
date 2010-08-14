@@ -425,6 +425,53 @@ util_pack_color(const float rgba[4], enum pipe_format format, union util_color *
    }
 }
  
+/* Integer versions of util_pack_z and util_pack_z_stencil - useful for
+ * constructing clear masks.
+ */
+static INLINE uint
+util_pack_uint_z(enum pipe_format format, unsigned z)
+{
+   switch (format) {
+   case PIPE_FORMAT_Z16_UNORM:
+      return z & 0xffff;
+   case PIPE_FORMAT_Z32_UNORM:
+   case PIPE_FORMAT_Z32_FLOAT:
+      return z;
+   case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
+   case PIPE_FORMAT_Z24X8_UNORM:
+      return z & 0xffffff;
+   case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
+   case PIPE_FORMAT_X8Z24_UNORM:
+      return (z & 0xffffff) << 8;
+   case PIPE_FORMAT_S8_USCALED:
+      return 0;
+   default:
+      debug_print_format("gallium: unhandled format in util_pack_z()", format);
+      assert(0);
+      return 0;
+   }
+}
+
+static INLINE uint
+util_pack_uint_z_stencil(enum pipe_format format, double z, uint s)
+{
+   unsigned packed = util_pack_uint_z(format, z);
+
+   s &= 0xff;
+
+   switch (format) {
+   case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
+      return packed | (s << 24);
+   case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
+      return packed | s;
+   case PIPE_FORMAT_S8_USCALED:
+      return packed | s;
+   default:
+      return packed;
+   }
+}
+
+
 
 /**
  * Note: it's assumed that z is in [0,1]

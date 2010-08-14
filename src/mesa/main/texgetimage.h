@@ -27,6 +27,7 @@
 #ifndef TEXGETIMAGE_H
 #define TEXGETIMAGE_H
 
+#include "mtypes.h"
 
 extern void
 _mesa_get_teximage(GLcontext *ctx, GLenum target, GLint level,

@@ -58,6 +58,7 @@
 #include "util/u_inlines.h"
 #include "util/u_format.h"
 #include "util/u_prim.h"
+#include "util/u_draw_quad.h"
 #include "draw/draw_context.h"
 #include "cso_cache/cso_context.h"
 
@@ -494,6 +495,49 @@ setup_non_interleaved_attribs(GLcontext *ctx,
 }
 
 
+static void
+setup_index_buffer(GLcontext *ctx,
+                   const struct _mesa_index_buffer *ib,
+                   struct pipe_index_buffer *ibuffer)
+{
+   struct st_context *st = st_context(ctx);
+   struct pipe_context *pipe = st->pipe;
+
+   memset(ibuffer, 0, sizeof(*ibuffer));
+   if (ib) {
+      struct gl_buffer_object *bufobj = ib->obj;
+
+      switch (ib->type) {
+      case GL_UNSIGNED_INT:
+         ibuffer->index_size = 4;
+         break;
+      case GL_UNSIGNED_SHORT:
+         ibuffer->index_size = 2;
+         break;
+      case GL_UNSIGNED_BYTE:
+         ibuffer->index_size = 1;
+         break;
+      default:
+         assert(0);
+	 return;
+      }
+
+      /* get/create the index buffer object */
+      if (bufobj && bufobj->Name) {
+         /* elements/indexes are in a real VBO */
+         struct st_buffer_object *stobj = st_buffer_object(bufobj);
+         pipe_resource_reference(&ibuffer->buffer, stobj->buffer);
+         ibuffer->offset = pointer_to_offset(ib->ptr);
+      }
+      else {
+         /* element/indicies are in user space memory */
+         ibuffer->buffer =
+            pipe_user_buffer_create(pipe->screen, (void *) ib->ptr,
+                                    ib->count * ibuffer->index_size,
+                                    PIPE_BIND_INDEX_BUFFER);
+      }
+   }
+}
 
 /**
  * Prior to drawing, check that any uniforms referenced by the
@@ -568,8 +612,11 @@ st_draw_vbo(GLcontext *ctx,
    GLuint attr;
    struct pipe_vertex_element velements[PIPE_MAX_ATTRIBS];
    unsigned num_vbuffers, num_velements;
+   struct pipe_index_buffer ibuffer;
    GLboolean userSpace = GL_FALSE;
    GLboolean vertDataEdgeFlags;
+   struct pipe_draw_info info;
+   unsigned i;
 
    /* Mesa core state should have been validated already */
    assert(ctx->NewState == 0x0);
@@ -647,113 +694,35 @@ st_draw_vbo(GLcontext *ctx,
    if (num_vbuffers == 0 || num_velements == 0)
       return;
 
-   /* do actual drawing */
+   setup_index_buffer(ctx, ib, &ibuffer);
+   pipe->set_index_buffer(pipe, &ibuffer);
+
+   util_draw_init_info(&info);
    if (ib) {
-      /* indexed primitive */
-      struct gl_buffer_object *bufobj = ib->obj;
-      struct pipe_resource *indexBuf = NULL;
-      unsigned indexSize, indexOffset, i;
-
-      switch (ib->type) {
-      case GL_UNSIGNED_INT:
-         indexSize = 4;
-         break;
-      case GL_UNSIGNED_SHORT:
-         indexSize = 2;
-         break;
-      case GL_UNSIGNED_BYTE:
-         indexSize = 1;
-         break;
-      default:
-         assert(0);
-	 return;
-      }
-
-      /* get/create the index buffer object */
-      if (bufobj && bufobj->Name) {
-         /* elements/indexes are in a real VBO */
-         struct st_buffer_object *stobj = st_buffer_object(bufobj);
-         pipe_resource_reference(&indexBuf, stobj->buffer);
-         indexOffset = pointer_to_offset(ib->ptr) / indexSize;
-      }
-      else {
-         /* element/indicies are in user space memory */
-         indexBuf = pipe_user_buffer_create(pipe->screen, (void *) ib->ptr,
-                                            ib->count * indexSize,
-					    PIPE_BIND_INDEX_BUFFER);
-         indexOffset = 0;
-      }
-
-      /* draw */
-      if (pipe->draw_range_elements && min_index != ~0 && max_index != ~0) {
-         /* XXX: exercise temporary path to pass min/max directly
-          * through to driver & draw module.  These interfaces still
-          * need a bit of work...
-          */
-         for (i = 0; i < nr_prims; i++) {
-            unsigned vcount = prims[i].count;
-            unsigned prim = translate_prim(ctx, prims[i].mode);
-
-            if (u_trim_pipe_prim(prims[i].mode, &vcount)) {
-               pipe->draw_range_elements(pipe, indexBuf, indexSize,
-                                         prims[i].basevertex,
-                                         min_index, max_index, prim,
-                                         prims[i].start + indexOffset, vcount);
-            }
-         }
-      }
-      else {
-         for (i = 0; i < nr_prims; i++) {
-            unsigned vcount = prims[i].count;
-            unsigned prim = translate_prim(ctx, prims[i].mode);
-            
-            if (u_trim_pipe_prim(prims[i].mode, &vcount)) {
-               if (prims[i].num_instances == 1) {
-                  pipe->draw_elements(pipe, indexBuf,
-                                      indexSize,
-                                      prims[i].basevertex,
-                                      prim,
-                                      prims[i].start + indexOffset,
-                                      vcount);
-               }
-               else {
-                  pipe->draw_elements_instanced(pipe, indexBuf,
-                                                indexSize,
-                                                prims[i].basevertex,
-                                                prim,
-                                                prims[i].start + indexOffset,
-                                                vcount,
-                                                0, /* startInstance */
-                                                prims[i].num_instances);
-               }
-            }
-         }
-      }
-
-      pipe_resource_reference(&indexBuf, NULL);
-   }
-   else {
-      /* non-indexed */
-      GLuint i;
-
-      for (i = 0; i < nr_prims; i++) {
-         unsigned vcount = prims[i].count;
-         unsigned prim = translate_prim(ctx, prims[i].mode);
-
-         if (u_trim_pipe_prim(prims[i].mode, &vcount)) {
-            if (prims[i].num_instances == 1) {
-               pipe->draw_arrays(pipe, prim, prims[i].start, vcount);
-            }
-            else {
-               pipe->draw_arrays_instanced(pipe, prim,
-                                           prims[i].start,
-                                           vcount,
-                                           0, /* startInstance */
-                                           prims[i].num_instances);
-            }
-         }
+      info.indexed = TRUE;
+      if (min_index != ~0 && max_index != ~0) {
+         info.min_index = min_index;
+         info.max_index = max_index;
       }
    }
+
+   /* do actual drawing */
+   for (i = 0; i < nr_prims; i++) {
+      info.mode = translate_prim( ctx, prims[i].mode );
+      info.start = prims[i].start;
+      info.count = prims[i].count;
+      info.instance_count = prims[i].num_instances;
+      info.index_bias = prims[i].basevertex;
+      if (!ib) {
+         info.min_index = info.start;
+         info.max_index = info.start + info.count - 1;
+      }
+
+      if (u_trim_pipe_prim(info.mode, &info.count))
+         pipe->draw_vbo(pipe, &info);
+   }
+
+   pipe_resource_reference(&ibuffer.buffer, NULL);
 
    /* unreference buffers (frees wrapped user-space buffer objects) */
    for (attr = 0; attr < num_vbuffers; attr++) {

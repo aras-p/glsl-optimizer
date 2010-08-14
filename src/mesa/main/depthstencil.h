@@ -26,6 +26,7 @@
 #ifndef DEPTHSTENCIL_H
 #define DEPTHSTENCIL_H
 
+#include "mtypes.h"
 
 extern struct gl_renderbuffer *
 _mesa_new_z24_renderbuffer_wrapper(GLcontext *ctx,

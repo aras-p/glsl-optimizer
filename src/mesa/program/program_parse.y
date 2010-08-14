@@ -835,6 +835,7 @@ srcReg: USED_IDENTIFIER /* temporaryReg | progParamSingle */
 	   $$.Base.File = $1->param_binding_type;
 
 	   if ($3.Base.RelAddr) {
+              state->prog->IndirectRegisterFiles |= (1 << $$.Base.File);
 	      $1->param_accessed_indirectly = 1;
 
 	      $$.Base.RelAddr = 1;
@@ -934,7 +935,7 @@ addrRegRelOffset:              { $$ = 0; }
 
 addrRegPosOffset: INTEGER
 	{
-	   if (($1 < 0) || ($1 > 63)) {
+	   if (($1 < 0) || ($1 > 4095)) {
               char s[100];
               _mesa_snprintf(s, sizeof(s),
                              "relative address offset too large (%d)", $1);
@@ -948,7 +949,7 @@ addrRegPosOffset: INTEGER
 
 addrRegNegOffset: INTEGER
 	{
-	   if (($1 < 0) || ($1 > 64)) {
+	   if (($1 < 0) || ($1 > 4096)) {
               char s[100];
               _mesa_snprintf(s, sizeof(s),
                              "relative address offset too large (%d)", $1);

@@ -155,6 +155,9 @@ intel_region_alloc_internal(struct intel_context *intel,
    }
 
    region = calloc(sizeof(*region), 1);
+   if (region == NULL)
+      return region;
+
    region->cpp = cpp;
    region->width = width;
    region->height = height;
@@ -189,6 +192,9 @@ intel_region_alloc(struct intel_context *intel,
 
    region = intel_region_alloc_internal(intel, cpp, width, height,
 					aligned_pitch / cpp, buffer);
+   if (region == NULL)
+      return region;
+
    region->tiling = tiling;
 
    return region;

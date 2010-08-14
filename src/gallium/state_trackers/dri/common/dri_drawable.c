@@ -30,9 +30,7 @@
  */
 
 #include "dri_screen.h"
-#include "dri_context.h"
 #include "dri_drawable.h"
-#include "dri1_helper.h"
 
 #include "pipe/p_screen.h"
 #include "util/u_format.h"
@@ -68,10 +66,10 @@ dri_st_framebuffer_validate(struct st_framebuffer_iface *stfbi,
    new_stamp = (drawable->texture_stamp != drawable->dPriv->lastStamp);
 
    if (new_stamp || new_mask || screen->broken_invalidate) {
-      if (new_stamp && screen->update_drawable_info)
-         screen->update_drawable_info(drawable);
+      if (new_stamp && drawable->update_drawable_info)
+         drawable->update_drawable_info(drawable);
 
-      screen->allocate_textures(drawable, statts, count);
+      drawable->allocate_textures(drawable, statts, count);
 
       /* add existing textures */
       for (i = 0; i < ST_ATTACHMENT_COUNT; i++) {
@@ -100,10 +98,9 @@ dri_st_framebuffer_flush_front(struct st_framebuffer_iface *stfbi,
 {
    struct dri_drawable *drawable =
       (struct dri_drawable *) stfbi->st_manager_private;
-   struct dri_screen *screen = dri_screen(drawable->sPriv);
 
    /* XXX remove this and just set the correct one on the framebuffer */
-   screen->flush_frontbuffer(drawable, statt);
+   drawable->flush_frontbuffer(drawable, statt);
 
    return TRUE;
 }
@@ -138,8 +135,6 @@ dri_create_buffer(__DRIscreen * sPriv,
    drawable->dPriv = dPriv;
    dPriv->driverPrivate = (void *)drawable;
 
-   drawable->desired_fences = 2;
-
    return GL_TRUE;
 fail:
    FREE(drawable);
@@ -152,14 +147,10 @@ dri_destroy_buffer(__DRIdrawable * dPriv)
    struct dri_drawable *drawable = dri_drawable(dPriv);
    int i;
 
-   dri1_swap_fences_clear(drawable);
-
-   dri1_destroy_pipe_surface(drawable);
+   pipe_surface_reference(&drawable->drisw_surface, NULL);
 
    for (i = 0; i < ST_ATTACHMENT_COUNT; i++)
       pipe_resource_reference(&drawable->textures[i], NULL);
-
-   drawable->desired_fences = 0;
 
    FREE(drawable);
 }

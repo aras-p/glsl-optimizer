@@ -14,7 +14,6 @@
 #include "egldefines.h"
 #include "egldisplay.h"
 #include "egldriver.h"
-#include "eglglobals.h"
 #include "egllog.h"
 #include "eglmisc.h"
 #include "eglmode.h"

@@ -34,31 +34,37 @@
 
 static void r600_blitter_save_states(struct r600_context *rctx)
 {
-	util_blitter_save_blend(rctx->blitter,
-					rctx->draw->state[R600_BLEND]);
-	util_blitter_save_depth_stencil_alpha(rctx->blitter,
-					rctx->draw->state[R600_DSA]);
-	util_blitter_save_stencil_ref(rctx->blitter, &rctx->stencil_ref);
-	util_blitter_save_rasterizer(rctx->blitter,
-					rctx->draw->state[R600_RASTERIZER]);
-	util_blitter_save_fragment_shader(rctx->blitter,
-					rctx->ps_shader);
-	util_blitter_save_vertex_shader(rctx->blitter,
-					rctx->vs_shader);
-	util_blitter_save_vertex_elements(rctx->blitter,
-					rctx->vertex_elements);
-	util_blitter_save_viewport(rctx->blitter,
-					&rctx->viewport);
+	util_blitter_save_blend(rctx->blitter, rctx->blend);
+	util_blitter_save_depth_stencil_alpha(rctx->blitter, rctx->dsa);
+	if (rctx->stencil_ref) {
+		util_blitter_save_stencil_ref(rctx->blitter,
+					&rctx->stencil_ref->state.stencil_ref);
+	}
+	util_blitter_save_rasterizer(rctx->blitter, rctx->rasterizer);
+	util_blitter_save_fragment_shader(rctx->blitter, rctx->ps_shader);
+	util_blitter_save_vertex_shader(rctx->blitter, rctx->vs_shader);
+	util_blitter_save_vertex_elements(rctx->blitter, rctx->vertex_elements);
+	if (rctx->viewport) {
+		util_blitter_save_viewport(rctx->blitter, &rctx->viewport->state.viewport);
+	}
 	/* XXX util_blitter_save_clip(rctx->blitter, &rctx->clip); */
 	util_blitter_save_vertex_buffers(rctx->blitter, rctx->nvertex_buffer,
-					 rctx->vertex_buffer);
+					rctx->vertex_buffer);
+
+	/* remove ptr so they don't get deleted */
+	rctx->blend = NULL;
+	rctx->vs_shader = NULL;
+	rctx->ps_shader = NULL;
+	rctx->rasterizer = NULL;
+	rctx->dsa = NULL;
+	rctx->vertex_elements = NULL;
 }
 
 static void r600_clear(struct pipe_context *ctx, unsigned buffers,
 		       const float *rgba, double depth, unsigned stencil)
 {
 	struct r600_context *rctx = r600_context(ctx);
-	struct pipe_framebuffer_state *fb = &rctx->fb_state;
+	struct pipe_framebuffer_state *fb = &rctx->framebuffer->state.framebuffer;
 
 	r600_blitter_save_states(rctx);
 	util_blitter_clear(rctx->blitter, fb->width, fb->height,
@@ -73,9 +79,10 @@ static void r600_clear_render_target(struct pipe_context *pipe,
 				     unsigned width, unsigned height)
 {
 	struct r600_context *rctx = r600_context(pipe);
+	struct pipe_framebuffer_state *fb = &rctx->framebuffer->state.framebuffer;
 
 	r600_blitter_save_states(rctx);
-	util_blitter_save_framebuffer(rctx->blitter, &rctx->fb_state);
+	util_blitter_save_framebuffer(rctx->blitter, fb);
 
 	util_blitter_clear_render_target(rctx->blitter, dst, rgba,
 					 dstx, dsty, width, height);
@@ -90,9 +97,10 @@ static void r600_clear_depth_stencil(struct pipe_context *pipe,
 				     unsigned width, unsigned height)
 {
 	struct r600_context *rctx = r600_context(pipe);
+	struct pipe_framebuffer_state *fb = &rctx->framebuffer->state.framebuffer;
 
 	r600_blitter_save_states(rctx);
-	util_blitter_save_framebuffer(rctx->blitter, &rctx->fb_state);
+	util_blitter_save_framebuffer(rctx->blitter, fb);
 
 	util_blitter_clear_depth_stencil(rctx->blitter, dst, clear_flags, depth, stencil,
 					 dstx, dsty, width, height);

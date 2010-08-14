@@ -29,6 +29,10 @@
 #define ST_CB_XFORMFB_H
 
 
+#include "main/compiler.h"
+
+struct dd_function_table;
+
 #if FEATURE_EXT_transform_feedback
 
 extern void

@@ -29,6 +29,8 @@
 #ifndef NVPROGRAM_H
 #define NVPROGRAM_H
 
+#include "glheader.h"
+#include "mtypes.h"
 
 extern void GLAPIENTRY
 _mesa_ExecuteProgramNV(GLenum target, GLuint id, const GLfloat *params);

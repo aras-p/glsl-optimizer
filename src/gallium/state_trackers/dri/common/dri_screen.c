@@ -30,20 +30,10 @@
  */
 
 #include "utils.h"
-#ifndef __NOT_HAVE_DRM_H
-#include "vblank.h"
-#endif
 #include "xmlpool.h"
 
 #include "dri_screen.h"
 #include "dri_context.h"
-#include "dri_drawable.h"
-#include "dri1_helper.h"
-#ifndef __NOT_HAVE_DRM_H
-#include "dri2.h"
-#else
-#include "drisw.h"
-#endif
 
 #include "util/u_inlines.h"
 #include "pipe/p_screen.h"
@@ -303,11 +293,10 @@ dri_get_egl_image(struct st_manager *smapi,
 {
    struct dri_context *ctx =
       (struct dri_context *)stctxi->st_manager_private;
-   struct dri_screen *screen = dri_screen(ctx->sPriv);
    __DRIimage *img = NULL;
 
-   if (screen->lookup_egl_image) {
-      img = screen->lookup_egl_image(ctx, egl_image);
+   if (ctx->lookup_egl_image) {
+      img = ctx->lookup_egl_image(ctx, egl_image);
    }
 
    if (!img)
@@ -355,8 +344,6 @@ dri_destroy_option_cache(struct dri_screen * screen)
 void
 dri_destroy_screen_helper(struct dri_screen * screen)
 {
-   dri1_destroy_pipe_context(screen);
-
    if (screen->st_api && screen->st_api->destroy)
       screen->st_api->destroy(screen->st_api);
 
@@ -366,7 +353,7 @@ dri_destroy_screen_helper(struct dri_screen * screen)
    dri_destroy_option_cache(screen);
 }
 
-static void
+void
 dri_destroy_screen(__DRIscreen * sPriv)
 {
    struct dri_screen *screen = dri_screen(sPriv);
@@ -401,39 +388,5 @@ dri_init_screen_helper(struct dri_screen *screen,
 
    return dri_fill_in_modes(screen, pixel_bits);
 }
-
-/**
- * DRI driver virtual function table.
- *
- * DRI versions differ in their implementation of init_screen and swap_buffers.
- */
-const struct __DriverAPIRec driDriverAPI = {
-   .DestroyScreen = dri_destroy_screen,
-   .CreateContext = dri_create_context,
-   .DestroyContext = dri_destroy_context,
-   .CreateBuffer = dri_create_buffer,
-   .DestroyBuffer = dri_destroy_buffer,
-   .MakeCurrent = dri_make_current,
-   .UnbindContext = dri_unbind_context,
-
-#ifndef __NOT_HAVE_DRM_H
-
-   .GetSwapInfo = NULL,
-   .GetDrawableMSC = NULL,
-   .WaitForMSC = NULL,
-   .InitScreen2 = dri2_init_screen,
-
-   .InitScreen = NULL,
-   .SwapBuffers = NULL,
-   .CopySubBuffer = NULL,
-
-#else
-
-   .InitScreen = drisw_init_screen,
-   .SwapBuffers = drisw_swap_buffers,
-
-#endif
-
-};
 
 /* vim: set sw=3 ts=8 sts=3 expandtab: */

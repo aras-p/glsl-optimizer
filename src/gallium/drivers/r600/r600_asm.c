@@ -91,6 +91,7 @@ static int r600_bc_add_cf(struct r600_bc *bc)
 	bc->cf_last = cf;
 	bc->ncf++;
 	bc->ndw += 2;
+	bc->force_add_cf = 0;
 	return 0;
 }
 
@@ -118,13 +119,18 @@ int r600_bc_add_alu(struct r600_bc *bc, const struct r600_bc_alu *alu)
 	nalu->nliteral = 0;
 
 	/* cf can contains only alu or only vtx or only tex */
-	if (bc->cf_last == NULL || bc->cf_last->inst != (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU << 3)) {
+	if (bc->cf_last == NULL || bc->cf_last->inst != (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU << 3) ||
+		bc->force_add_cf) {
+		/* at most 128 slots, one add alu can add 4 slots + 4 constant worst case */
 		r = r600_bc_add_cf(bc);
 		if (r) {
 			free(nalu);
 			return r;
 		}
 		bc->cf_last->inst = V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU << 3;
+	}
+	if (alu->last && (bc->cf_last->ndw >> 1) >= 124) {
+		bc->force_add_cf = 1;
 	}
 	/* number of gpr == the last gpr used in any alu */
 	for (i = 0; i < 3; i++) {
@@ -294,6 +300,7 @@ int r600_bc_alu_build(struct r600_bc *bc, struct r600_bc_alu *alu, unsigned id)
 					S_SQ_ALU_WORD0_LAST(alu->last);
 		bc->bytecode[id++] = S_SQ_ALU_WORD1_DST_GPR(alu->dst.sel) |
 					S_SQ_ALU_WORD1_DST_CHAN(alu->dst.chan) |
+					S_SQ_ALU_WORD1_CLAMP(alu->dst.clamp) |
 					S_SQ_ALU_WORD1_OP3_SRC2_SEL(alu->src[2].sel) |
 					S_SQ_ALU_WORD1_OP3_SRC2_CHAN(alu->src[2].chan) |
 					S_SQ_ALU_WORD1_OP3_SRC2_NEG(alu->src[2].neg) |
@@ -309,6 +316,7 @@ int r600_bc_alu_build(struct r600_bc *bc, struct r600_bc_alu *alu, unsigned id)
 					S_SQ_ALU_WORD0_LAST(alu->last);
 		bc->bytecode[id++] = S_SQ_ALU_WORD1_DST_GPR(alu->dst.sel) |
 					S_SQ_ALU_WORD1_DST_CHAN(alu->dst.chan) |
+					S_SQ_ALU_WORD1_CLAMP(alu->dst.clamp) |
 					S_SQ_ALU_WORD1_OP2_SRC0_ABS(alu->src[0].abs) |
 					S_SQ_ALU_WORD1_OP2_SRC1_ABS(alu->src[1].abs) |
 					S_SQ_ALU_WORD1_OP2_WRITE_MASK(alu->dst.write) |

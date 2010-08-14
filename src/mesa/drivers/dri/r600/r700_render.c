@@ -625,11 +625,11 @@ static void r700SetupStreams(GLcontext *ctx, const struct gl_client_array *input
 
         stride = (input[i]->StrideB == 0) ? getTypeSize(input[i]->Type) * input[i]->Size : input[i]->StrideB;
 
-        if (input[i]->Type == GL_DOUBLE || input[i]->Type == GL_UNSIGNED_INT || input[i]->Type == GL_INT ||
+        if (input[i]->Type == GL_DOUBLE || input[i]->Type == GL_UNSIGNED_INT || input[i]->Type == GL_INT
 #if MESA_BIG_ENDIAN
-            getTypeSize(input[i]->Type) != 4 || 
+            || getTypeSize(input[i]->Type) != 4
 #endif
-            stride < 4) 
+            ) 
         {
             r700ConvertAttrib(ctx, count, input[i], &context->stream_desc[index]);
         } 
@@ -637,19 +637,10 @@ static void r700SetupStreams(GLcontext *ctx, const struct gl_client_array *input
         {
             if (input[i]->BufferObj->Name) 
             {
-                if (stride % 4 != 0) 
-                {
-                    assert(((intptr_t) input[i]->Ptr) % input[i]->StrideB == 0);
-                    r700AlignDataToDword(ctx, input[i], count, &context->stream_desc[index]);
-                    context->stream_desc[index].is_named_bo = GL_FALSE;
-                } 
-                else 
-                {
-                    context->stream_desc[index].stride = input[i]->StrideB;
-                    context->stream_desc[index].bo_offset = (intptr_t) input[i]->Ptr;
-                    context->stream_desc[index].bo = get_radeon_buffer_object(input[i]->BufferObj)->bo;
-                    context->stream_desc[index].is_named_bo = GL_TRUE;
-                }
+                context->stream_desc[index].stride = input[i]->StrideB;
+                context->stream_desc[index].bo_offset = (intptr_t) input[i]->Ptr;
+                context->stream_desc[index].bo = get_radeon_buffer_object(input[i]->BufferObj)->bo;
+                context->stream_desc[index].is_named_bo = GL_TRUE;
             } 
             else 
             {
@@ -976,6 +967,10 @@ static void r700DrawPrims(GLcontext *ctx,
 			  GLuint max_index)
 {
 	GLboolean retval = GL_FALSE;
+
+	context_t *context = R700_CONTEXT(ctx);
+	radeonContextPtr radeon = &context->radeon;
+	radeon_prepare_render(radeon);
 
 	/* This check should get folded into just the places that
 	 * min/max index are really needed.

@@ -76,7 +76,7 @@ struct dri2_display
 };
 
 struct dri2_screen {
-   __GLXscreenConfigs base;
+   struct glx_screen base;
 
    __DRIscreen *driScreen;
    __GLXDRIscreen vtable;
@@ -94,8 +94,7 @@ struct dri2_screen {
 
 struct dri2_context
 {
-   __GLXcontext base;
-   __GLXDRIcontext dri_vtable;
+   struct glx_context base;
    __DRIcontext *driContext;
 };
 
@@ -114,7 +113,7 @@ struct dri2_drawable
 static const struct glx_context_vtable dri2_context_vtable;
 
 static void
-dri2_destroy_context(__GLXcontext *context)
+dri2_destroy_context(struct glx_context *context)
 {
    struct dri2_context *pcp = (struct dri2_context *) context;
    struct dri2_screen *psc = (struct dri2_screen *) context->psc;
@@ -133,20 +132,28 @@ dri2_destroy_context(__GLXcontext *context)
 }
 
 static Bool
-dri2BindContext(__GLXcontext *context,
-		__GLXDRIdrawable *draw, __GLXDRIdrawable *read)
+dri2_bind_context(struct glx_context *context, struct glx_context *old,
+		  GLXDrawable draw, GLXDrawable read)
 {
    struct dri2_context *pcp = (struct dri2_context *) context;
    struct dri2_screen *psc = (struct dri2_screen *) pcp->base.psc;
-   struct dri2_drawable *pdr = (struct dri2_drawable *) draw;
-   struct dri2_drawable *prd = (struct dri2_drawable *) read;
+   struct dri2_drawable *pdraw, *pread;
 
-   return (*psc->core->bindContext) (pcp->driContext,
-				     pdr->driDrawable, prd->driDrawable);
+   pdraw = (struct dri2_drawable *) driFetchDrawable(context, draw);
+   pread = (struct dri2_drawable *) driFetchDrawable(context, read);
+
+   if (pdraw == NULL || pread == NULL)
+      return GLXBadDrawable;
+
+   if ((*psc->core->bindContext) (pcp->driContext,
+				  pdraw->driDrawable, pread->driDrawable))
+      return Success;
+
+   return GLXBadContext;
 }
 
 static void
-dri2UnbindContext(__GLXcontext *context)
+dri2_unbind_context(struct glx_context *context, struct glx_context *new)
 {
    struct dri2_context *pcp = (struct dri2_context *) context;
    struct dri2_screen *psc = (struct dri2_screen *) pcp->base.psc;
@@ -154,14 +161,14 @@ dri2UnbindContext(__GLXcontext *context)
    (*psc->core->unbindContext) (pcp->driContext);
 }
 
-static __GLXcontext *
-dri2_create_context(__GLXscreenConfigs *base,
-		    const __GLcontextModes * mode,
-		    GLXContext shareList, int renderType)
+static struct glx_context *
+dri2_create_context(struct glx_screen *base,
+		    struct glx_config *config_base,
+		    struct glx_context *shareList, int renderType)
 {
    struct dri2_context *pcp, *pcp_shared;
    struct dri2_screen *psc = (struct dri2_screen *) base;
-   __GLXDRIconfigPrivate *config = (__GLXDRIconfigPrivate *) mode;
+   __GLXDRIconfigPrivate *config = (__GLXDRIconfigPrivate *) config_base;
    __DRIcontext *shared = NULL;
 
    if (shareList) {
@@ -174,7 +181,7 @@ dri2_create_context(__GLXscreenConfigs *base,
       return NULL;
 
    memset(pcp, 0, sizeof *pcp);
-   if (!glx_context_init(&pcp->base, &psc->base, mode)) {
+   if (!glx_context_init(&pcp->base, &psc->base, &config->base)) {
       Xfree(pcp);
       return NULL;
    }
@@ -189,9 +196,6 @@ dri2_create_context(__GLXscreenConfigs *base,
    }
 
    pcp->base.vtable = &dri2_context_vtable;
-   pcp->base.driContext = &pcp->dri_vtable;
-   pcp->dri_vtable.bindContext = dri2BindContext;
-   pcp->dri_vtable.unbindContext = dri2UnbindContext;
 
    return &pcp->base;
 }
@@ -201,7 +205,7 @@ dri2DestroyDrawable(__GLXDRIdrawable *base)
 {
    struct dri2_screen *psc = (struct dri2_screen *) base->psc;
    struct dri2_drawable *pdraw = (struct dri2_drawable *) base;
-   __GLXdisplayPrivate *dpyPriv = psc->base.display;
+   struct glx_display *dpyPriv = psc->base.display;
    struct dri2_display *pdp = (struct dri2_display *)dpyPriv->dri2Display;
 
    __glxHashDelete(pdp->dri2Hash, pdraw->base.xDrawable);
@@ -211,13 +215,13 @@ dri2DestroyDrawable(__GLXDRIdrawable *base)
 }
 
 static __GLXDRIdrawable *
-dri2CreateDrawable(__GLXscreenConfigs *base, XID xDrawable,
-		   GLXDrawable drawable, const __GLcontextModes * modes)
+dri2CreateDrawable(struct glx_screen *base, XID xDrawable,
+		   GLXDrawable drawable, struct glx_config *config_base)
 {
    struct dri2_drawable *pdraw;
    struct dri2_screen *psc = (struct dri2_screen *) base;
-   __GLXDRIconfigPrivate *config = (__GLXDRIconfigPrivate *) modes;
-   __GLXdisplayPrivate *dpyPriv;
+   __GLXDRIconfigPrivate *config = (__GLXDRIconfigPrivate *) config_base;
+   struct glx_display *dpyPriv;
    struct dri2_display *pdp;
    GLint vblank_mode = DRI_CONF_VBLANK_DEF_INTERVAL_1;
 
@@ -288,7 +292,7 @@ dri2CreateDrawable(__GLXscreenConfigs *base, XID xDrawable,
 #ifdef X_DRI2GetMSC
 
 static int
-dri2DrawableGetMSC(__GLXscreenConfigs *psc, __GLXDRIdrawable *pdraw,
+dri2DrawableGetMSC(struct glx_screen *psc, __GLXDRIdrawable *pdraw,
 		   int64_t *ust, int64_t *msc, int64_t *sbc)
 {
    CARD64 dri2_ust, dri2_msc, dri2_sbc;
@@ -402,7 +406,7 @@ dri2_copy_drawable(struct dri2_drawable *priv, int dest, int src)
 }
 
 static void
-dri2_wait_x(__GLXcontext *gc)
+dri2_wait_x(struct glx_context *gc)
 {
    struct dri2_drawable *priv = (struct dri2_drawable *)
       GetGLXDRIDrawable(gc->currentDpy, gc->currentDrawable);
@@ -414,7 +418,7 @@ dri2_wait_x(__GLXcontext *gc)
 }
 
 static void
-dri2_wait_gl(__GLXcontext *gc)
+dri2_wait_gl(struct glx_context *gc)
 {
    struct dri2_drawable *priv = (struct dri2_drawable *)
       GetGLXDRIDrawable(gc->currentDpy, gc->currentDrawable);
@@ -429,20 +433,20 @@ static void
 dri2FlushFrontBuffer(__DRIdrawable *driDrawable, void *loaderPrivate)
 {
    struct dri2_drawable *pdraw = loaderPrivate;
-   __GLXdisplayPrivate *priv = __glXInitialize(pdraw->base.psc->dpy);
+   struct glx_display *priv = __glXInitialize(pdraw->base.psc->dpy);
    struct dri2_display *pdp = (struct dri2_display *)priv->dri2Display;
-   GLXContext gc = __glXGetCurrentContext();
+   struct glx_context *gc = __glXGetCurrentContext();
 
    /* Old servers don't send invalidate events */
    if (!pdp->invalidateAvailable)
-       dri2InvalidateBuffers(priv->dpy, pdraw->base.drawable);
+       dri2InvalidateBuffers(priv->dpy, pdraw->base.xDrawable);
 
    dri2_wait_gl(gc);
 }
 
 
 static void
-dri2DestroyScreen(__GLXscreenConfigs *base)
+dri2DestroyScreen(struct glx_screen *base)
 {
    struct dri2_screen *psc = (struct dri2_screen *) base;
 
@@ -490,11 +494,11 @@ dri2SwapBuffers(__GLXDRIdrawable *pdraw, int64_t target_msc, int64_t divisor,
 		int64_t remainder)
 {
     struct dri2_drawable *priv = (struct dri2_drawable *) pdraw;
-    __GLXdisplayPrivate *dpyPriv = __glXInitialize(priv->base.psc->dpy);
+    struct glx_display *dpyPriv = __glXInitialize(priv->base.psc->dpy);
     struct dri2_screen *psc = (struct dri2_screen *) priv->base.psc;
     struct dri2_display *pdp =
 	(struct dri2_display *)dpyPriv->dri2Display;
-    CARD64 ret;
+    CARD64 ret = 0;
 
 #ifdef __DRI2_FLUSH
     if (psc->f)
@@ -503,7 +507,7 @@ dri2SwapBuffers(__GLXDRIdrawable *pdraw, int64_t target_msc, int64_t divisor,
 
     /* Old servers don't send invalidate events */
     if (!pdp->invalidateAvailable)
-       dri2InvalidateBuffers(dpyPriv->dpy, pdraw->drawable);
+       dri2InvalidateBuffers(dpyPriv->dpy, pdraw->xDrawable);
 
     /* Old servers can't handle swapbuffers */
     if (!pdp->swapAvailable) {
@@ -646,16 +650,17 @@ dri2_bind_tex_image(Display * dpy,
 		    GLXDrawable drawable,
 		    int buffer, const int *attrib_list)
 {
-   GLXContext gc = __glXGetCurrentContext();
+   struct glx_context *gc = __glXGetCurrentContext();
    struct dri2_context *pcp = (struct dri2_context *) gc;
    __GLXDRIdrawable *base = GetGLXDRIDrawable(dpy, drawable);
-   __GLXdisplayPrivate *dpyPriv = __glXInitialize(dpy);
+   struct glx_display *dpyPriv = __glXInitialize(dpy);
    struct dri2_drawable *pdraw = (struct dri2_drawable *) base;
    struct dri2_display *pdp =
       (struct dri2_display *) dpyPriv->dri2Display;
-   struct dri2_screen *psc = (struct dri2_screen *) base->psc;
+   struct dri2_screen *psc;
 
    if (pdraw != NULL) {
+      psc = (struct dri2_screen *) base->psc;
 
 #if __DRI2_FLUSH_VERSION >= 3
       if (!pdp->invalidateAvailable && psc->f)
@@ -684,6 +689,8 @@ dri2_release_tex_image(Display * dpy, GLXDrawable drawable, int buffer)
 
 static const struct glx_context_vtable dri2_context_vtable = {
    dri2_destroy_context,
+   dri2_bind_context,
+   dri2_unbind_context,
    dri2_wait_gl,
    dri2_wait_x,
    DRI_glXUseXFont,
@@ -724,8 +731,8 @@ static const struct glx_screen_vtable dri2_screen_vtable = {
    dri2_create_context
 };
 
-static __GLXscreenConfigs *
-dri2CreateScreen(int screen, __GLXdisplayPrivate * priv)
+static struct glx_screen *
+dri2CreateScreen(int screen, struct glx_display * priv)
 {
    const __DRIconfig **driver_configs;
    const __DRIextension **extensions;
@@ -876,7 +883,7 @@ dri2DestroyDisplay(__GLXDRIdisplay * dpy)
 _X_HIDDEN __GLXDRIdrawable *
 dri2GetGlxDrawableFromXDrawableId(Display *dpy, XID id)
 {
-   __GLXdisplayPrivate *d = __glXInitialize(dpy);
+   struct glx_display *d = __glXInitialize(dpy);
    struct dri2_display *pdp = (struct dri2_display *) d->dri2Display;
    __GLXDRIdrawable *pdraw;
 

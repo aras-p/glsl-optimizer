@@ -30,7 +30,9 @@
 #define ST_CB_FEEDBACK_H
 
 
-#include "main/mtypes.h"
+#include "main/compiler.h"
+
+struct dd_function_table;
 
 #if FEATURE_feedback
 

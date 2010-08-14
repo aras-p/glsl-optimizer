@@ -29,6 +29,8 @@
 #define ST_CB_CONDRENDER_H
 
 
+struct dd_function_table;
+
 extern void st_init_cond_render_functions(struct dd_function_table *functions);
 
 

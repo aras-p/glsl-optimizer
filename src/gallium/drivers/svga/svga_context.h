@@ -190,6 +190,7 @@ struct svga_state
    struct svga_vertex_shader *vs;
 
    struct pipe_vertex_buffer vb[PIPE_MAX_ATTRIBS];
+   struct pipe_index_buffer ib;
    struct pipe_resource *cb[PIPE_SHADER_TYPES];
 
    struct pipe_framebuffer_state framebuffer;

@@ -557,6 +557,23 @@ print_temp(const struct tgsi_exec_machine *mach, uint index)
 #endif
 
 
+void
+tgsi_exec_set_constant_buffers(struct tgsi_exec_machine *mach,
+                               unsigned num_bufs,
+                               const void **bufs,
+                               const unsigned *buf_sizes)
+{
+   unsigned i;
+
+   for (i = 0; i < num_bufs; i++) {
+      mach->Consts[i] = bufs[i];
+      mach->ConstsSize[i] = buf_sizes[i];
+   }
+}
+
+
+
+
 /**
  * Check if there's a potential src/dst register data dependency when
  * using SOA execution.
@@ -631,6 +648,10 @@ tgsi_exec_machine_bind_shader(
 #endif
 
    util_init_math();
+
+   if (numSamplers) {
+      assert(samplers);
+   }
 
    mach->Tokens = tokens;
    mach->Samplers = samplers;
@@ -1040,6 +1061,8 @@ fetch_src_file_channel(const struct tgsi_exec_machine *mach,
 {
    uint i;
 
+   assert(swizzle < 4);
+
    switch (file) {
    case TGSI_FILE_CONSTANT:
       for (i = 0; i < QUAD_SIZE; i++) {
@@ -1049,9 +1072,23 @@ fetch_src_file_channel(const struct tgsi_exec_machine *mach,
          if (index->i[i] < 0) {
             chan->u[i] = 0;
          } else {
-            const uint *p = (const uint *)mach->Consts[index2D->i[i]];
-
-            chan->u[i] = p[index->i[i] * 4 + swizzle];
+            /* NOTE: copying the const value as a uint instead of float */
+            const uint constbuf = index2D->i[i];
+            const uint *buf = (const uint *)mach->Consts[constbuf];
+            const int pos = index->i[i] * 4 + swizzle;
+            /* const buffer bounds check */
+            if (pos < 0 || pos >= mach->ConstsSize[constbuf]) {
+               if (0) {
+                  /* Debug: print warning */
+                  static int count = 0;
+                  if (count++ < 100)
+                     debug_printf("TGSI Exec: const buffer index %d"
+                                  " out of bounds\n", pos);
+               }
+               chan->u[i] = 0;
+            }
+            else
+               chan->u[i] = buf[pos];
          }
       }
       break;
@@ -1065,9 +1102,10 @@ fetch_src_file_channel(const struct tgsi_exec_machine *mach,
                          index2D->i[i] * TGSI_EXEC_MAX_INPUT_ATTRIBS + index->i[i],
                          index2D->i[i], index->i[i]);
                          }*/
-         chan->u[i] = mach->Inputs[index2D->i[i] *
-                                   TGSI_EXEC_MAX_INPUT_ATTRIBS +
-                                   index->i[i]].xyzw[swizzle].u[i];
+         int pos = index2D->i[i] * TGSI_EXEC_MAX_INPUT_ATTRIBS + index->i[i];
+         assert(pos >= 0);
+         assert(pos < Elements(mach->Inputs));
+         chan->u[i] = mach->Inputs[pos].xyzw[swizzle].u[i];
       }
       break;
 
@@ -1187,7 +1225,7 @@ fetch_source(const struct tgsi_exec_machine *mach,
       index2.i[1] =
       index2.i[2] =
       index2.i[3] = reg->Indirect.Index;
-
+      assert(reg->Indirect.File == TGSI_FILE_ADDRESS);
       /* get current value of address register[swizzle] */
       swizzle = tgsi_util_get_src_register_swizzle( &reg->Indirect, CHAN_X );
       fetch_src_file_channel(mach,

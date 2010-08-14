@@ -29,8 +29,9 @@
 #ifndef ST_CB_EGLIMAGE_H
 #define ST_CB_EGLIMAGE_H
 
-#include "main/mtypes.h"
-#include "main/dd.h"
+#include "main/compiler.h"
+
+struct dd_function_table;
 
 #if FEATURE_OES_EGL_image
 

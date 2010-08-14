@@ -11,7 +11,6 @@ struct _egl_global _eglGlobal =
 {
    &_eglGlobalMutex,       /* Mutex */
    NULL,                   /* DisplayList */
-   1,                      /* FreeScreenHandle */
    2,                      /* NumAtExitCalls */
    {
       /* default AtExitCalls, called in reverse order */

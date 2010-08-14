@@ -28,7 +28,6 @@
 #include "main/extensions.h"
 
 #include "intel_extensions.h"
-#include "utils.h"
 
 static const char *es2_extensions[] = {
    /* Used by mesa internally (cf all_mesa_extensions in ../common/utils.c) */

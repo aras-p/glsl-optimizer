@@ -1,3 +1,4 @@
+from sys import executable as python_cmd
 import distutils.version
 
 Import('*')
@@ -16,7 +17,7 @@ env.CodeGenerate(
 	target = 'lp_tile_soa.c',
 	script = 'lp_tile_soa.py',
 	source = ['#src/gallium/auxiliary/util/u_format.csv'],
-	command = 'python $SCRIPT $SOURCE > $TARGET'
+	command = python_cmd + ' $SCRIPT $SOURCE > $TARGET'
 )
 
 # XXX: Our dependency scanner only finds depended modules in relative dirs.

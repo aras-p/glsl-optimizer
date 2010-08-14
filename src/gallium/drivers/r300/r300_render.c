@@ -223,7 +223,8 @@ static void r300_prepare_for_rendering(struct r300_context *r300,
 
     /* Emitted in flush. */
     end_dwords += 26; /* emit_query_end */
-    end_dwords += r300->hyperz_state.size; /* emit_hyperz_end */
+    if (r300->rws->get_value(r300->rws, R300_CAN_HYPERZ))
+        end_dwords += r300->hyperz_state.size + 2; /* emit_hyperz_end + zcache flush */
 
     cs_dwords += end_dwords;
 
@@ -566,19 +567,6 @@ static void r300_draw_range_elements(struct pipe_context* pipe,
     }
 }
 
-/* Simple helpers for context setup. Should probably be moved to util. */
-static void r300_draw_elements(struct pipe_context* pipe,
-                               struct pipe_resource* indexBuffer,
-                               unsigned indexSize, int indexBias, unsigned mode,
-                               unsigned start, unsigned count)
-{
-    struct r300_context *r300 = r300_context(pipe);
-
-    pipe->draw_range_elements(pipe, indexBuffer, indexSize, indexBias,
-                              0, r300->vertex_buffer_max_index,
-                              mode, start, count);
-}
-
 static void r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
                              unsigned start, unsigned count)
 {
@@ -638,111 +626,104 @@ static void r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
     }
 }
 
+static void r300_draw_vbo(struct pipe_context* pipe,
+                          const struct pipe_draw_info *info)
+{
+    struct r300_context* r300 = r300_context(pipe);
+
+    if (info->indexed && r300->index_buffer.buffer) {
+        unsigned offset;
+
+        assert(r300->index_buffer.offset % r300->index_buffer.index_size == 0);
+        offset = r300->index_buffer.offset / r300->index_buffer.index_size;
+
+        r300_draw_range_elements(pipe,
+                                 r300->index_buffer.buffer,
+                                 r300->index_buffer.index_size,
+                                 info->index_bias,
+                                 info->min_index,
+                                 info->max_index,
+                                 info->mode,
+                                 info->start + offset,
+                                 info->count);
+    }
+    else {
+        r300_draw_arrays(pipe,
+                         info->mode,
+                         info->start,
+                         info->count);
+    }
+}
+
 /****************************************************************************
  * The rest of this file is for SW TCL rendering only. Please be polite and *
  * keep these functions separated so that they are easier to locate. ~C.    *
  ***************************************************************************/
 
-/* SW TCL arrays, using Draw. */
-static void r300_swtcl_draw_arrays(struct pipe_context* pipe,
-                                   unsigned mode,
-                                   unsigned start,
-                                   unsigned count)
-{
-    struct r300_context* r300 = r300_context(pipe);
-    struct pipe_transfer *vb_transfer[PIPE_MAX_ATTRIBS];
-    int i;
-
-    if (r300->skip_rendering) {
-        return;
-    }
-
-    if (!u_trim_pipe_prim(mode, &count)) {
-        return;
-    }
-
-    r300_update_derived_state(r300);
-
-    for (i = 0; i < r300->vertex_buffer_count; i++) {
-        void* buf = pipe_buffer_map(pipe,
-                                    r300->vertex_buffer[i].buffer,
-                                    PIPE_TRANSFER_READ,
-				    &vb_transfer[i]);
-        draw_set_mapped_vertex_buffer(r300->draw, i, buf);
-    }
-
-    draw_set_mapped_element_buffer(r300->draw, 0, 0, NULL);
-
-    draw_arrays(r300->draw, mode, start, count);
-
-    /* XXX Not sure whether this is the best fix.
-     * It prevents CS from being rejected and weird assertion failures. */
-    draw_flush(r300->draw);
-
-    for (i = 0; i < r300->vertex_buffer_count; i++) {
-        pipe_buffer_unmap(pipe, r300->vertex_buffer[i].buffer,
-			  vb_transfer[i]);
-        draw_set_mapped_vertex_buffer(r300->draw, i, NULL);
-    }
-}
-
 /* SW TCL elements, using Draw. */
-static void r300_swtcl_draw_range_elements(struct pipe_context* pipe,
-                                           struct pipe_resource* indexBuffer,
-                                           unsigned indexSize,
-                                           int indexBias,
-                                           unsigned minIndex,
-                                           unsigned maxIndex,
-                                           unsigned mode,
-                                           unsigned start,
-                                           unsigned count)
+static void r300_swtcl_draw_vbo(struct pipe_context* pipe,
+                                const struct pipe_draw_info *info)
 {
     struct r300_context* r300 = r300_context(pipe);
     struct pipe_transfer *vb_transfer[PIPE_MAX_ATTRIBS];
-    struct pipe_transfer *ib_transfer;
+    struct pipe_transfer *ib_transfer = NULL;
+    unsigned count = info->count;
     int i;
-    void* indices;
+    void* indices = NULL;
 
     if (r300->skip_rendering) {
         return;
     }
 
-    if (!u_trim_pipe_prim(mode, &count)) {
+    if (!u_trim_pipe_prim(info->mode, &count)) {
         return;
     }
 
     r300_update_derived_state(r300);
 
     for (i = 0; i < r300->vertex_buffer_count; i++) {
-        void* buf = pipe_buffer_map(pipe,
-                                    r300->vertex_buffer[i].buffer,
-                                    PIPE_TRANSFER_READ,
-				    &vb_transfer[i]);
-        draw_set_mapped_vertex_buffer(r300->draw, i, buf);
+        if (r300->vertex_buffer[i].buffer) {
+            void *buf = pipe_buffer_map(pipe,
+                                  r300->vertex_buffer[i].buffer,
+                                  PIPE_TRANSFER_READ,
+                                  &vb_transfer[i]);
+            draw_set_mapped_vertex_buffer(r300->draw, i, buf);
+        }
     }
 
-    indices = pipe_buffer_map(pipe, indexBuffer,
-                              PIPE_TRANSFER_READ, &ib_transfer);
-    draw_set_mapped_element_buffer_range(r300->draw, indexSize, indexBias,
-                                         minIndex, maxIndex, indices);
+    if (info->indexed && r300->index_buffer.buffer) {
+        indices = pipe_buffer_map(pipe, r300->index_buffer.buffer,
+                                  PIPE_TRANSFER_READ, &ib_transfer);
+        if (indices)
+            indices = (void *) ((char *) indices + r300->index_buffer.offset);
+    }
 
-    draw_arrays(r300->draw, mode, start, count);
+    draw_set_mapped_element_buffer_range(r300->draw, (indices) ?
+                                         r300->index_buffer.index_size : 0,
+                                         info->index_bias,
+                                         info->min_index,
+                                         info->max_index,
+                                         indices);
+
+    draw_arrays(r300->draw, info->mode, info->start, count);
 
     /* XXX Not sure whether this is the best fix.
      * It prevents CS from being rejected and weird assertion failures. */
     draw_flush(r300->draw);
 
     for (i = 0; i < r300->vertex_buffer_count; i++) {
-        pipe_buffer_unmap(pipe, r300->vertex_buffer[i].buffer,
-			  vb_transfer[i]);
-        draw_set_mapped_vertex_buffer(r300->draw, i, NULL);
+        if (r300->vertex_buffer[i].buffer) {
+            pipe_buffer_unmap(pipe, r300->vertex_buffer[i].buffer,
+                              vb_transfer[i]);
+            draw_set_mapped_vertex_buffer(r300->draw, i, NULL);
+        }
     }
 
-    pipe_buffer_unmap(pipe, indexBuffer,
-		      ib_transfer);
-    draw_set_mapped_element_buffer_range(r300->draw, 0, 0,
-                                         start, start + count - 1,
-                                         NULL);
+    if (ib_transfer) {
+        pipe_buffer_unmap(pipe, r300->index_buffer.buffer, ib_transfer);
+        draw_set_mapped_element_buffer_range(r300->draw, 0, 0, info->start,
+                info->start + count - 1, NULL);
+    }
 }
 
 /* Object for rendering using Draw. */
@@ -819,6 +800,8 @@ static void* r300_render_map_vertices(struct vbuf_render* render)
 					  r300render->vbo,
                                           PIPE_TRANSFER_WRITE,
 					  &r300render->vbo_transfer);
+
+    assert(r300render->vbo_ptr);
 
     return ((uint8_t*)r300render->vbo_ptr + r300render->vbo_offset);
 }
@@ -1141,16 +1124,11 @@ static void r300_resource_resolve(struct pipe_context* pipe,
 
 void r300_init_render_functions(struct r300_context *r300)
 {
-    /* Set generic functions. */
-    r300->context.draw_elements = r300_draw_elements;
-
     /* Set draw functions based on presence of HW TCL. */
     if (r300->screen->caps.has_tcl) {
-        r300->context.draw_arrays = r300_draw_arrays;
-        r300->context.draw_range_elements = r300_draw_range_elements;
+        r300->context.draw_vbo = r300_draw_vbo;
     } else {
-        r300->context.draw_arrays = r300_swtcl_draw_arrays;
-        r300->context.draw_range_elements = r300_swtcl_draw_range_elements;
+        r300->context.draw_vbo = r300_swtcl_draw_vbo;
     }
 
     r300->context.resource_resolve = r300_resource_resolve;

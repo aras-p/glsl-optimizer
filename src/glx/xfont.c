@@ -212,7 +212,7 @@ isvalid(XFontStruct * fs, int which)
 }
 
 _X_HIDDEN void
-DRI_glXUseXFont(GLXContext CC, Font font, int first, int count, int listbase)
+DRI_glXUseXFont(struct glx_context *CC, Font font, int first, int count, int listbase)
 {
    Display *dpy;
    Window win;

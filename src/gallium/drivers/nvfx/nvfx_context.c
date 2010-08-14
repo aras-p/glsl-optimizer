@@ -55,8 +55,7 @@ nvfx_create(struct pipe_screen *pscreen, void *priv)
 	nvfx->pipe.screen = pscreen;
 	nvfx->pipe.priv = priv;
 	nvfx->pipe.destroy = nvfx_destroy;
-	nvfx->pipe.draw_arrays = nvfx_draw_arrays;
-	nvfx->pipe.draw_elements = nvfx_draw_elements;
+	nvfx->pipe.draw_vbo = nvfx_draw_vbo;
 	nvfx->pipe.clear = nvfx_clear;
 	nvfx->pipe.flush = nvfx_flush;
 

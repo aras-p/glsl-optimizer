@@ -25,5 +25,12 @@
  *
  **************************************************************************/
 
+#ifndef ST_CB_VIEWPORT_H
+#define ST_CB_VIEWPORT_H
+
+struct dd_function_table;
+
 extern void
 st_init_viewport_functions(struct dd_function_table *functions);
+
+#endif /* ST_CB_VIEW_PORT_H */

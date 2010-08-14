@@ -1,6 +1,7 @@
 
 #include "context.h"
 #include "colormac.h"
+#include "macros.h"
 #include "texfetch.h"
 #include "texrender.h"
 #include "renderbuffer.h"

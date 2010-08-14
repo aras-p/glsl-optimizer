@@ -512,6 +512,7 @@ _mesa_clone_program(GLcontext *ctx, const struct gl_program *prog)
    if (prog->Attributes)
       clone->Attributes = _mesa_clone_parameter_list(prog->Attributes);
    memcpy(clone->LocalParams, prog->LocalParams, sizeof(clone->LocalParams));
+   clone->IndirectRegisterFiles = prog->IndirectRegisterFiles;
    clone->NumInstructions = prog->NumInstructions;
    clone->NumTemporaries = prog->NumTemporaries;
    clone->NumParameters = prog->NumParameters;

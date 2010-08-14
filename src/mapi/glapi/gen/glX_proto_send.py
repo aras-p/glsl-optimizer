@@ -220,7 +220,7 @@ __glXReadReply( Display *dpy, size_t size, void * dest, GLboolean reply_is_alway
 }
 
 NOINLINE void
-__glXReadPixelReply( Display *dpy, __GLXcontext * gc, unsigned max_dim,
+__glXReadPixelReply( Display *dpy, struct glx_context * gc, unsigned max_dim,
     GLint width, GLint height, GLint depth, GLenum format, GLenum type,
     void * dest, GLboolean dimensions_in_reply )
 {
@@ -264,7 +264,7 @@ __glXReadPixelReply( Display *dpy, __GLXcontext * gc, unsigned max_dim,
 #define X_GLXSingle 0
 
 NOINLINE FASTCALL GLubyte *
-__glXSetupSingleRequest( __GLXcontext * gc, GLint sop, GLint cmdlen )
+__glXSetupSingleRequest( struct glx_context * gc, GLint sop, GLint cmdlen )
 {
     xGLXSingleReq * req;
     Display * const dpy = gc->currentDpy;
@@ -279,7 +279,7 @@ __glXSetupSingleRequest( __GLXcontext * gc, GLint sop, GLint cmdlen )
 }
 
 NOINLINE FASTCALL GLubyte *
-__glXSetupVendorRequest( __GLXcontext * gc, GLint code, GLint vop, GLint cmdlen )
+__glXSetupVendorRequest( struct glx_context * gc, GLint code, GLint vop, GLint cmdlen )
 {
     xGLXVendorPrivateReq * req;
     Display * const dpy = gc->currentDpy;
@@ -371,10 +371,10 @@ const GLuint __glXDefaultPixelStore[9] = { 0, 0, 0, 0, 0, 0, 0, 0, 1 };
 				print '#define %s %d' % (func.opcode_vendor_name(name), func.glx_vendorpriv)
 				print '%s gl%s(%s)' % (func.return_type, func_name, func.get_parameter_string())
 				print '{'
-				print '    __GLXcontext * const gc = __glXGetCurrentContext();'
+				print '    struct glx_context * const gc = __glXGetCurrentContext();'
 				print ''
 				print '#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)'
-				print '    if (gc->driContext) {'
+				print '    if (gc->isDirect) {'
 				print '    %sCALL_%s(GET_DISPATCH(), (%s));' % (ret_string, func.name, func.get_called_parameter_string())
 				print '    } else'
 				print '#endif'
@@ -408,7 +408,7 @@ const GLuint __glXDefaultPixelStore[9] = { 0, 0, 0, 0, 0, 0, 0, 0, 1 };
 		print """static FASTCALL NOINLINE void
 generic_%u_byte( GLint rop, const void * ptr )
 {
-    __GLXcontext * const gc = __glXGetCurrentContext();
+    struct glx_context * const gc = __glXGetCurrentContext();
     const GLuint cmdlen = %u;
 
     emit_header(gc->pc, rop, cmdlen);
@@ -523,7 +523,7 @@ generic_%u_byte( GLint rop, const void * ptr )
 
 
 	def common_func_print_just_start(self, f, name):
-		print '    __GLXcontext * const gc = __glXGetCurrentContext();'
+		print '    struct glx_context * const gc = __glXGetCurrentContext();'
 
 		# The only reason that single and vendor private commands need
 		# a variable called 'dpy' is becuase they use the SyncHandle
@@ -971,15 +971,15 @@ extern HIDDEN NOINLINE CARD32 __glXReadReply( Display *dpy, size_t size,
     void * dest, GLboolean reply_is_always_array );
 
 extern HIDDEN NOINLINE void __glXReadPixelReply( Display *dpy,
-    __GLXcontext * gc, unsigned max_dim, GLint width, GLint height,
+    struct glx_context * gc, unsigned max_dim, GLint width, GLint height,
     GLint depth, GLenum format, GLenum type, void * dest,
     GLboolean dimensions_in_reply );
 
 extern HIDDEN NOINLINE FASTCALL GLubyte * __glXSetupSingleRequest(
-    __GLXcontext * gc, GLint sop, GLint cmdlen );
+    struct glx_context * gc, GLint sop, GLint cmdlen );
 
 extern HIDDEN NOINLINE FASTCALL GLubyte * __glXSetupVendorRequest(
-    __GLXcontext * gc, GLint code, GLint vop, GLint cmdlen );
+    struct glx_context * gc, GLint code, GLint vop, GLint cmdlen );
 """
 
 

@@ -10,9 +10,15 @@
 #include <assert.h>
 #include <X11/Xlib.h>
 #include <X11/Xproto.h>
+#include <X11/Xlibint.h>
 #include <X11/extensions/Xext.h>
 #include <X11/extensions/extutil.h>
 #include <sys/time.h>
+
+#include "GL/glxproto.h"
+#include "GL/glxtokens.h"
+#include "GL/gl.h" /* for GL types needed by __GLcontextModes */
+#include "GL/internal/glcore.h"  /* for __GLcontextModes */
 
 #include "glxinit.h"
 
@@ -55,9 +61,9 @@ static /* const */ XExtensionHooks __glXExtensionHooks = {
   NULL,                   /* error_string */
 };
 
-XEXT_GENERATE_FIND_DISPLAY(__glXFindDisplay, __glXExtensionInfo,
-                           __glXExtensionName, &__glXExtensionHooks,
-                           __GLX_NUMBER_EVENTS, NULL)
+static XEXT_GENERATE_FIND_DISPLAY(__glXFindDisplay, __glXExtensionInfo,
+				  __glXExtensionName, &__glXExtensionHooks,
+				  __GLX_NUMBER_EVENTS, NULL)
 
 static GLint
 _gl_convert_from_x_visual_type(int visualType)
@@ -71,6 +77,17 @@ _gl_convert_from_x_visual_type(int visualType)
 
    return ((unsigned) visualType < NUM_VISUAL_TYPES)
       ? glx_visual_types[visualType] : GLX_NONE;
+}
+
+static void
+_gl_context_modes_destroy(__GLcontextModes * modes)
+{
+   while (modes != NULL) {
+      __GLcontextModes *const next = modes->next;
+
+      Xfree(modes);
+      modes = next;
+   }
 }
 
 static __GLcontextModes *
@@ -116,18 +133,7 @@ _gl_context_modes_create(unsigned count, size_t minimum_size)
    return base;
 }
 
-_X_HIDDEN void
-_gl_context_modes_destroy(__GLcontextModes * modes)
-{
-   while (modes != NULL) {
-      __GLcontextModes *const next = modes->next;
-
-      Xfree(modes);
-      modes = next;
-   }
-}
-
-_X_HIDDEN char *
+static char *
 __glXQueryServerString(Display * dpy, int opcode, CARD32 screen, CARD32 name)
 {
    xGLXGenericGetStringReq *req;
@@ -194,10 +200,6 @@ FreeScreenConfigs(__GLXdisplayPrivate * priv)
          _gl_context_modes_destroy(psc->configs);
          psc->configs = NULL;   /* NOTE: just for paranoia */
       }
-      if (psc->visuals) {
-         _gl_context_modes_destroy(psc->visuals);
-         psc->visuals = NULL;   /* NOTE: just for paranoia */
-      }
       Xfree((char *) psc->serverGLXexts);
    }
    XFree((char *) priv->screenConfigs);
@@ -215,14 +217,8 @@ __glXFreeDisplayPrivate(XExtData * extension)
 
    priv = (__GLXdisplayPrivate *) extension->private_data;
    FreeScreenConfigs(priv);
-   if (priv->serverGLXvendor) {
-      Xfree((char *) priv->serverGLXvendor);
-      priv->serverGLXvendor = 0x0;      /* to protect against double free's */
-   }
-   if (priv->serverGLXversion) {
+   if (priv->serverGLXversion)
       Xfree((char *) priv->serverGLXversion);
-      priv->serverGLXversion = 0x0;     /* to protect against double free's */
-   }
 
    Xfree((char *) priv);
    return 0;
@@ -234,6 +230,10 @@ __glXFreeDisplayPrivate(XExtData * extension)
 ** Query the version of the GLX extension.  This procedure works even if
 ** the client extension is not completely set up.
 */
+
+#define GLX_MAJOR_VERSION 1       /* current version numbers */
+#define GLX_MINOR_VERSION 4
+
 static Bool
 QueryVersion(Display * dpy, int opcode, int *major, int *minor)
 {
@@ -263,7 +263,13 @@ QueryVersion(Display * dpy, int opcode, int *major, int *minor)
    return GL_TRUE;
 }
 
-_X_HIDDEN void
+#define __GLX_MIN_CONFIG_PROPS	18
+#define __GLX_MAX_CONFIG_PROPS	500
+#define __GLX_EXT_CONFIG_PROPS 	10
+#define __GLX_TOTAL_CONFIG       (__GLX_MIN_CONFIG_PROPS +      \
+                                    2 * __GLX_EXT_CONFIG_PROPS)
+
+static void
 __glXInitializeVisualConfigFromTags(__GLcontextModes * config, int count,
                                     const INT32 * bp, Bool tagged_only,
                                     Bool fbconfig_style_tags)
@@ -506,35 +512,6 @@ createConfigsFromProperties(Display * dpy, int nvisuals, int nprops,
 }
 
 static GLboolean
-getVisualConfigs(__GLXscreenConfigs *psc,
-                 __GLXdisplayPrivate *priv, int screen)
-{
-   xGLXGetVisualConfigsReq *req;
-   xGLXGetVisualConfigsReply reply;
-   Display *dpy = priv->dpy;
-
-   LockDisplay(dpy);
-
-   psc->visuals = NULL;
-   GetReq(GLXGetVisualConfigs, req);
-   req->reqType = priv->majorOpcode;
-   req->glxCode = X_GLXGetVisualConfigs;
-   req->screen = screen;
-
-   if (!_XReply(dpy, (xReply *) & reply, 0, False))
-      goto out;
-
-   psc->visuals = createConfigsFromProperties(dpy,
-                                              reply.numVisuals,
-                                              reply.numProps,
-                                              screen, GL_FALSE);
-
- out:
-   UnlockDisplay(dpy);
-   return psc->visuals != NULL;
-}
-
-static GLboolean
 getFBConfigs(__GLXscreenConfigs *psc, __GLXdisplayPrivate *priv, int screen)
 {
    xGLXGetFBConfigsReq *fb_req;
@@ -581,32 +558,6 @@ getFBConfigs(__GLXscreenConfigs *psc, __GLXdisplayPrivate *priv, int screen)
    return psc->configs != NULL;
 }
 
-_X_HIDDEN Bool
-glx_screen_init(__GLXscreenConfigs *psc,
-               int screen, __GLXdisplayPrivate * priv)
-{
-   /* Initialize per screen dynamic client GLX extensions */
-   psc->ext_list_first_time = GL_TRUE;
-   psc->scr = screen;
-   psc->dpy = priv->dpy;
-
-   getVisualConfigs(psc, priv, screen);
-   getFBConfigs(psc, priv, screen);
-
-   return GL_TRUE;
-}
-
-static __GLXscreenConfigs *
-createIndirectScreen()
-{
-   __GLXscreenConfigs *psc;
-
-   psc = Xmalloc(sizeof *psc);
-   memset(psc, 0, sizeof *psc);
-
-   return psc;
-}
-
 static GLboolean
 AllocAndFetchScreenConfigs(Display * dpy, __GLXdisplayPrivate * priv)
 {
@@ -630,10 +581,10 @@ AllocAndFetchScreenConfigs(Display * dpy, __GLXdisplayPrivate * priv)
    }
 
    for (i = 0; i < screens; i++) {
-      psc = createIndirectScreen();
+      psc = Xcalloc(1, sizeof *psc);
       if (!psc)
          return GL_FALSE;
-      glx_screen_init(psc, i, priv);
+      getFBConfigs(psc, priv, i);
       priv->screenConfigs[i] = psc;
    }
 
@@ -682,12 +633,7 @@ __glXInitialize(Display * dpy)
     ** structures from the server.
     */
    dpyPriv->majorOpcode = info->codes->major_opcode;
-   dpyPriv->majorVersion = major;
-   dpyPriv->minorVersion = minor;
    dpyPriv->dpy = dpy;
-
-   dpyPriv->serverGLXvendor = NULL;
-   dpyPriv->serverGLXversion = NULL;
 
    if (!AllocAndFetchScreenConfigs(dpy, dpyPriv)) {
       Xfree(dpyPriv);

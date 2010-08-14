@@ -28,6 +28,7 @@
 #define REMAP_H
 
 
+#include "main/compiler.h"
 #include "main/mfeatures.h"
 
 struct gl_function_pool_remap {

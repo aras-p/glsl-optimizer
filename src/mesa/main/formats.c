@@ -26,7 +26,6 @@
 
 #include "imports.h"
 #include "formats.h"
-#include "config.h"
 
 
 /**

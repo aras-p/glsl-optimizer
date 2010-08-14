@@ -34,13 +34,8 @@
 #include "r300_reg.h"
 
 struct r300_stencilref_context {
-    void (*draw_arrays)(struct pipe_context *pipe,
-                        unsigned mode, unsigned start, unsigned count);
-
-    void (*draw_range_elements)(
-        struct pipe_context *pipe, struct pipe_resource *indexBuffer,
-        unsigned indexSize, int indexBias, unsigned minIndex, unsigned maxIndex,
-        unsigned mode, unsigned start, unsigned count);
+    void (*draw_vbo)(struct pipe_context *pipe,
+                     const struct pipe_draw_info *info);
 
     uint32_t rs_cull_mode;
     uint32_t zb_stencilrefmask;
@@ -105,41 +100,19 @@ static void r300_stencilref_end(struct r300_context *r300)
     r300->dsa_state.dirty = TRUE;
 }
 
-static void r300_stencilref_draw_arrays(struct pipe_context *pipe, unsigned mode,
-                                        unsigned start, unsigned count)
+static void r300_stencilref_draw_vbo(struct pipe_context *pipe,
+                                     const struct pipe_draw_info *info)
 {
     struct r300_context *r300 = r300_context(pipe);
     struct r300_stencilref_context *sr = r300->stencilref_fallback;
 
     if (!r300_stencilref_needed(r300)) {
-        sr->draw_arrays(pipe, mode, start, count);
+        sr->draw_vbo(pipe, info);
     } else {
         r300_stencilref_begin(r300);
-        sr->draw_arrays(pipe, mode, start, count);
+        sr->draw_vbo(pipe, info);
         r300_stencilref_switch_side(r300);
-        sr->draw_arrays(pipe, mode, start, count);
-        r300_stencilref_end(r300);
-    }
-}
-
-static void r300_stencilref_draw_range_elements(
-    struct pipe_context *pipe, struct pipe_resource *indexBuffer,
-    unsigned indexSize, int indexBias, unsigned minIndex, unsigned maxIndex,
-    unsigned mode, unsigned start, unsigned count)
-{
-    struct r300_context *r300 = r300_context(pipe);
-    struct r300_stencilref_context *sr = r300->stencilref_fallback;
-
-    if (!r300_stencilref_needed(r300)) {
-        sr->draw_range_elements(pipe, indexBuffer, indexSize, indexBias,
-                                minIndex, maxIndex, mode, start, count);
-    } else {
-        r300_stencilref_begin(r300);
-        sr->draw_range_elements(pipe, indexBuffer, indexSize, indexBias,
-                                minIndex, maxIndex, mode, start, count);
-        r300_stencilref_switch_side(r300);
-        sr->draw_range_elements(pipe, indexBuffer, indexSize, indexBias,
-                                minIndex, maxIndex, mode, start, count);
+        sr->draw_vbo(pipe, info);
         r300_stencilref_end(r300);
     }
 }
@@ -148,11 +121,9 @@ void r300_plug_in_stencil_ref_fallback(struct r300_context *r300)
 {
     r300->stencilref_fallback = CALLOC_STRUCT(r300_stencilref_context);
 
-    /* Save original draw functions. */
-    r300->stencilref_fallback->draw_arrays = r300->context.draw_arrays;
-    r300->stencilref_fallback->draw_range_elements = r300->context.draw_range_elements;
+    /* Save original draw function. */
+    r300->stencilref_fallback->draw_vbo = r300->context.draw_vbo;
 
-    /* Override the draw functions. */
-    r300->context.draw_arrays = r300_stencilref_draw_arrays;
-    r300->context.draw_range_elements = r300_stencilref_draw_range_elements;
+    /* Override the draw function. */
+    r300->context.draw_vbo = r300_stencilref_draw_vbo;
 }

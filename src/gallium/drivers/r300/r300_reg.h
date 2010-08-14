@@ -3436,6 +3436,7 @@ enum {
 #   define R300_VBPNTR_SIZE1(x)    (((x) >> 2) << 16)
 #   define R300_VBPNTR_STRIDE1(x)  (((x) >> 2) << 24)
 
+#define R300_PACKET3_3D_CLEAR_ZMASK         0x00003200
 #define R300_PACKET3_INDX_BUFFER            0x00003300
 #    define R300_INDX_BUFFER_DST_SHIFT          0
 #    define R300_INDX_BUFFER_SKIP_SHIFT         16
