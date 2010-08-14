@@ -959,14 +959,6 @@ static yyconst flex_int16_t yy_chk[1076] =
 #define INITIAL 0
 #define PP 1
 
-#ifndef YY_NO_UNISTD_H
-/* Special case for "unistd.h", since it is non-ANSI. We include it way
- * down here because we want the user's section 1 to have been scanned first.
- * The user has a chance to override it with an option.
- */
-#include <unistd.h>
-#endif
-
 #define YY_EXTRA_TYPE struct _mesa_glsl_parse_state *
 
 /* Holds the entire state of the reentrant scanner. */
@@ -1203,7 +1195,7 @@ YY_DECL
 #line 76 "glsl_lexer.lpp"
 
 
-#line 1207 "glsl_lexer.cpp"
+#line 1199 "glsl_lexer.cpp"
 
     yylval = yylval_param;
 
@@ -2263,7 +2255,7 @@ YY_RULE_SETUP
 #line 356 "glsl_lexer.lpp"
 ECHO;
 	YY_BREAK
-#line 2267 "glsl_lexer.cpp"
+#line 2259 "glsl_lexer.cpp"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(PP):
 	yyterminate();
