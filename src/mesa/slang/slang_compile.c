@@ -36,6 +36,7 @@
 #include "program/prog_print.h"
 #include "program/prog_parameter.h"
 #include "../../glsl/pp/sl_pp_public.h"
+#include "../../glsl/pp/sl_pp_purify.h"
 #include "../../glsl/cl/sl_cl_parse.h"
 #include "slang_codegen.h"
 #include "slang_compile.h"
