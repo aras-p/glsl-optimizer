@@ -39,7 +39,6 @@
 #include "util/u_memory.h"
 
 #include "xf86drm.h"
-#include <sys/ioctl.h>
 
 static struct radeon_libdrm_winsys *
 radeon_winsys_create(int fd)
