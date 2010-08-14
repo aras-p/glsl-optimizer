@@ -526,6 +526,7 @@ type_size(const struct glsl_type *type)
       return 0;
    default:
       assert(0);
+      return 0;
    }
 }
 
