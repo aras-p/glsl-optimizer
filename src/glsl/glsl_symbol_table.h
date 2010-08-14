@@ -40,7 +40,7 @@ extern "C" {
  * Wraps the existing \c _mesa_symbol_table data structure to enforce some
  * type safe and some symbol table invariants.
  */
-class glsl_symbol_table {
+struct glsl_symbol_table {
 private:
    enum glsl_symbol_name_space {
       glsl_variable_name_space = 0,

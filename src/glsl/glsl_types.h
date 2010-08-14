@@ -35,6 +35,7 @@ extern "C" {
 }
 
 struct _mesa_glsl_parse_state;
+struct glsl_symbol_table;
 
 extern "C" void
 _mesa_glsl_initialize_types(struct _mesa_glsl_parse_state *state);
@@ -209,7 +210,7 @@ struct glsl_type {
    /**
     * Generate the constructor for this type and add it to the symbol table
     */
-   class ir_function *generate_constructor(class glsl_symbol_table *) const;
+   class ir_function *generate_constructor(glsl_symbol_table *) const;
 
    /**
     * Query the total number of scalars that make up a scalar, vector or matrix
@@ -449,12 +450,12 @@ private:
     * the world in a public header file.
     */
    /*@{*/
-   static void generate_110_types(class glsl_symbol_table *);
-   static void generate_120_types(class glsl_symbol_table *);
-   static void generate_130_types(class glsl_symbol_table *);
-   static void generate_ARB_texture_rectangle_types(class glsl_symbol_table *,
+   static void generate_110_types(glsl_symbol_table *);
+   static void generate_120_types(glsl_symbol_table *);
+   static void generate_130_types(glsl_symbol_table *);
+   static void generate_ARB_texture_rectangle_types(glsl_symbol_table *,
 						    bool);
-   static void generate_EXT_texture_array_types(class glsl_symbol_table *,
+   static void generate_EXT_texture_array_types(glsl_symbol_table *,
 						bool);
    /*@}*/
 

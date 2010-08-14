@@ -1383,11 +1383,11 @@ _mesa_glsl_release_functions(void);
 extern void
 reparent_ir(exec_list *list, void *mem_ctx);
 
-class glsl_symbol_table;
+struct glsl_symbol_table;
 
 extern void
 import_prototypes(const exec_list *source, exec_list *dest,
-		  class glsl_symbol_table *symbols, void *mem_ctx);
+		  struct glsl_symbol_table *symbols, void *mem_ctx);
 
 extern bool
 ir_has_call(ir_instruction *ir);
