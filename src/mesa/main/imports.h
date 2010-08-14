@@ -116,6 +116,34 @@ typedef union { GLfloat f; GLint i; } fi_type;
 #endif
 
 
+/**
+ * \name Work-arounds for platforms that lack C99 math functions
+ */
+/*@{*/
+#if (_XOPEN_SOURCE < 600) && !defined(_ISOC99_SOURCE) \
+   && (!defined(__STDC_VERSION__) || (__STDC_VERSION__ < 199901L))
+#define acosf(f) ((float) acos(f))
+#define asinf(f) ((float) asin(f))
+#define atan2f(f) ((float) atan2(f))
+#define atanf(f) ((float) atan(f))
+#define cielf(f) ((float) ciel(f))
+#define cosf(f) ((float) cos(f))
+#define coshf(f) ((float) cosh(f))
+#define expf(f) ((float) exp(f))
+#define exp2f(f) ((float) exp2(f))
+#define floorf(f) ((float) floor(f))
+#define logf(f) ((float) log(f))
+#define log2f(f) ((float) log2(f))
+#define powf(f) ((float) pow(f))
+#define sinf(f) ((float) sin(f))
+#define sinhf(f) ((float) sinh(f))
+#define sqrtf(f) ((float) sqrt(f))
+#define tanf(f) ((float) tan(f))
+#define tanhf(f) ((float) tanh(f))
+#define truncf(f) ((float) trunc(f))
+#endif
+/*@}*/
+
 /***
  *** LOG2: Log base 2 of float
  ***/
