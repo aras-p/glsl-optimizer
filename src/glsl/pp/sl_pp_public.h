@@ -28,13 +28,9 @@
 #ifndef SL_PP_PUBLIC_H
 #define SL_PP_PUBLIC_H
 
-
 struct sl_pp_context;
-
-
-#include "sl_pp_purify.h"
-#include "sl_pp_token.h"
-
+struct sl_pp_purify_options;
+struct sl_pp_token_info;
 
 struct sl_pp_context *
 sl_pp_context_create(const char *input,

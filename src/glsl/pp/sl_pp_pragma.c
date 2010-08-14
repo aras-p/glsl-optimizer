@@ -29,6 +29,7 @@
 #include <string.h>
 #include "sl_pp_context.h"
 #include "sl_pp_process.h"
+#include "sl_pp_token.h"
 
 
 int

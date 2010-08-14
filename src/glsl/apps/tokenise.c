@@ -30,6 +30,8 @@
 #include <string.h>
 #include <assert.h>
 #include "../pp/sl_pp_public.h"
+#include "../pp/sl_pp_purify.h"
+#include "../pp/sl_pp_token.h"
 
 
 int

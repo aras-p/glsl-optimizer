@@ -30,6 +30,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "../pp/sl_pp_public.h"
+#include "../pp/sl_pp_purify.h"
 
 
 int
