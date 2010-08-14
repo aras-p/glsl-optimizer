@@ -121,7 +121,8 @@ typedef union { GLfloat f; GLint i; } fi_type;
  */
 /*@{*/
 #if (_XOPEN_SOURCE < 600) && !defined(_ISOC99_SOURCE) \
-   && (!defined(__STDC_VERSION__) || (__STDC_VERSION__ < 199901L))
+   && (!defined(__STDC_VERSION__) || (__STDC_VERSION__ < 199901L)) \
+   && (!defined(_MSC_VER) || (_MSC_VER < 1400))
 #define acosf(f) ((float) acos(f))
 #define asinf(f) ((float) asin(f))
 #define atan2f(x,y) ((float) atan2(x,y))
