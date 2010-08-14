@@ -34,6 +34,7 @@
 #include "egl_g3d.h"
 #include "egl_g3d_api.h"
 #include "egl_g3d_image.h"
+#include "egl_g3d_sync.h"
 #include "egl_g3d_st.h"
 #include "egl_g3d_loader.h"
 #include "native.h"
@@ -805,6 +806,13 @@ egl_g3d_init_driver_api(_EGLDriver *drv)
 
    drv->API.CreateImageKHR = egl_g3d_create_image;
    drv->API.DestroyImageKHR = egl_g3d_destroy_image;
+
+#ifdef EGL_KHR_reusable_sync
+   drv->API.CreateSyncKHR = egl_g3d_create_sync;
+   drv->API.DestroySyncKHR = egl_g3d_destroy_sync;
+   drv->API.ClientWaitSyncKHR = egl_g3d_client_wait_sync;
+   drv->API.SignalSyncKHR = egl_g3d_signal_sync;
+#endif
 
 #ifdef EGL_MESA_screen_surface
    drv->API.CreateScreenSurfaceMESA = egl_g3d_create_screen_surface;

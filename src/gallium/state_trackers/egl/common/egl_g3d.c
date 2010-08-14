@@ -530,6 +530,8 @@ egl_g3d_initialize(_EGLDriver *drv, _EGLDisplay *dpy,
    if (gdpy->native->get_param(gdpy->native, NATIVE_PARAM_USE_NATIVE_BUFFER))
       dpy->Extensions.KHR_image_pixmap = EGL_TRUE;
 
+   dpy->Extensions.KHR_reusable_sync = EGL_TRUE;
+
    if (egl_g3d_add_configs(drv, dpy, 1) == 1) {
       _eglError(EGL_NOT_INITIALIZED, "eglInitialize(unable to add configs)");
       goto fail;
