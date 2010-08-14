@@ -96,7 +96,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
-#include <stdint.h>
+#include <inttypes.h>
 
 #include "glcpp.h"
 #include "main/mtypes.h"
