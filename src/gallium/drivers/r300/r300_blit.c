@@ -99,9 +99,6 @@ static boolean r300_cbzb_clear_allowed(struct r300_context *r300,
     struct pipe_framebuffer_state *fb =
         (struct pipe_framebuffer_state*)r300->fb_state.state;
 
-    if (r300->z_fastfill)
-        clear_buffers &= ~(PIPE_CLEAR_DEPTH | PIPE_CLEAR_STENCIL);
-
     /* Only color clear allowed, and only one colorbuffer. */
     if (clear_buffers != PIPE_CLEAR_COLOR || fb->nr_cbufs != 1)
         return FALSE;
@@ -186,8 +183,10 @@ static void r300_clear(struct pipe_context* pipe,
             r300_depth_clear_value(fb->zsbuf->format, depth, stencil);
 
         r300_mark_fb_state_dirty(r300, R300_CHANGED_ZCLEAR_FLAG);
-        if (r300->z_compression || r300->z_fastfill)
+        if (r300_texture(fb->zsbuf->texture)->zmask_mem[fb->zsbuf->level]) {
             r300->zmask_clear.dirty = TRUE;
+            buffers &= ~PIPE_CLEAR_DEPTHSTENCIL;
+        }
         if (r300->hiz_enable)
             r300->hiz_clear.dirty = TRUE;
     }
@@ -220,6 +219,15 @@ static void r300_clear(struct pipe_context* pipe,
         r300->cbzb_clear = FALSE;
         hyperz->zb_depthclearvalue = hyperz_dcv;
         r300_mark_fb_state_dirty(r300, R300_CHANGED_CBZB_FLAG);
+    }
+
+    /* Enable fastfill.
+     *
+     * If we cleared the zmask, it's dirty now. The Hyper-Z state update
+     * looks for a dirty zmask and enables fastfill accordingly. */
+    if (fb->zsbuf &&
+        r300_texture(fb->zsbuf->texture)->dirty_zmask[fb->zsbuf->level]) {
+        r300->hyperz_state.dirty = TRUE;
     }
 
     /* XXX this flush "fixes" a hardlock in the cubestorm xscreensaver */

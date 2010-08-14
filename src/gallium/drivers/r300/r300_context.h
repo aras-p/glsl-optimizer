@@ -565,8 +565,6 @@ struct r300_context {
     boolean two_sided_color;
     /* Incompatible vertex buffer layout? (misaligned stride or buffer_offset) */
     boolean incompatible_vb_layout;
-    /* Whether fast zclear is enabled. */
-    boolean z_fastfill;
 #define R300_Z_COMPRESS_44 1
 #define RV350_Z_COMPRESS_88 2
     int z_compression;
