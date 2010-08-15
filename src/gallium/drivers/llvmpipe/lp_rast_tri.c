@@ -115,17 +115,35 @@ block_full_16(struct lp_rasterizer_task *task,
 
 
 static INLINE unsigned
-build_mask(int c, const int *step)
+build_mask(int c, int dcdx, int dcdy)
 {
    int mask = 0;
-   int i;
 
-   for (i = 0; i < 16; i++) {
-      mask |= ((c + step[i]) >> 31) & (1 << i);
-   }
-   
+   int c0 = c;
+   int c1 = c0 + dcdx;
+   int c2 = c1 + dcdx;
+   int c3 = c2 + dcdx;
+
+   mask |= ((c0 + 0 * dcdy) >> 31) & (1 << 0);
+   mask |= ((c0 + 1 * dcdy) >> 31) & (1 << 2);
+   mask |= ((c0 + 2 * dcdy) >> 31) & (1 << 8);
+   mask |= ((c0 + 3 * dcdy) >> 31) & (1 << 10);
+   mask |= ((c1 + 0 * dcdy) >> 31) & (1 << 1);
+   mask |= ((c1 + 1 * dcdy) >> 31) & (1 << 3);
+   mask |= ((c1 + 2 * dcdy) >> 31) & (1 << 9);
+   mask |= ((c1 + 3 * dcdy) >> 31) & (1 << 11); 
+   mask |= ((c2 + 0 * dcdy) >> 31) & (1 << 4);
+   mask |= ((c2 + 1 * dcdy) >> 31) & (1 << 6);
+   mask |= ((c2 + 2 * dcdy) >> 31) & (1 << 12);
+   mask |= ((c2 + 3 * dcdy) >> 31) & (1 << 14);
+   mask |= ((c3 + 0 * dcdy) >> 31) & (1 << 5);
+   mask |= ((c3 + 1 * dcdy) >> 31) & (1 << 7);
+   mask |= ((c3 + 2 * dcdy) >> 31) & (1 << 13);
+   mask |= ((c3 + 3 * dcdy) >> 31) & (1 << 15);
+  
    return mask;
 }
+
 
 
 #define TAG(x) x##_1
