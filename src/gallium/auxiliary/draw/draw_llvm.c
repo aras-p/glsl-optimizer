@@ -210,13 +210,6 @@ draw_llvm_create(struct draw_context *draw)
 {
    struct draw_llvm *llvm;
 
-#ifdef PIPE_ARCH_X86
-   util_cpu_detect();
-   /* require SSE2 due to LLVM PR6960. */
-   if (!util_cpu_caps.has_sse2)
-       return NULL;
-#endif
-
    llvm = CALLOC_STRUCT( draw_llvm );
    if (!llvm)
       return NULL;

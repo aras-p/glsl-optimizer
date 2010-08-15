@@ -34,6 +34,7 @@
 #include "pipe/p_context.h"
 #include "util/u_memory.h"
 #include "util/u_math.h"
+#include "util/u_cpu_detect.h"
 #include "draw_context.h"
 #include "draw_vs.h"
 #include "draw_gs.h"
@@ -41,6 +42,25 @@
 #if HAVE_LLVM
 #include "gallivm/lp_bld_init.h"
 #include "draw_llvm.h"
+
+static boolean
+draw_get_option_use_llvm(void)
+{
+   static boolean first = TRUE;
+   static boolean value;
+   if (first) {
+      first = FALSE;
+      value = debug_get_bool_option("DRAW_USE_LLVM", TRUE);
+
+#ifdef PIPE_ARCH_X86
+      util_cpu_detect();
+      /* require SSE2 due to LLVM PR6960. */
+      if (!util_cpu_caps.has_sse2)
+         value = FALSE;
+#endif
+   }
+   return value;
+}
 #endif
 
 struct draw_context *draw_create( struct pipe_context *pipe )
@@ -50,10 +70,13 @@ struct draw_context *draw_create( struct pipe_context *pipe )
       goto fail;
 
 #if HAVE_LLVM
-   lp_build_init();
-   assert(lp_build_engine);
-   draw->engine = lp_build_engine;
-   draw->llvm = draw_llvm_create(draw);
+   if(draw_get_option_use_llvm())
+   {
+      lp_build_init();
+      assert(lp_build_engine);
+      draw->engine = lp_build_engine;
+      draw->llvm = draw_llvm_create(draw);
+   }
 #endif
 
    if (!draw_init(draw))
@@ -135,7 +158,8 @@ void draw_destroy( struct draw_context *draw )
    draw_vs_destroy( draw );
    draw_gs_destroy( draw );
 #ifdef HAVE_LLVM
-   draw_llvm_destroy( draw->llvm );
+   if(draw->llvm)
+      draw_llvm_destroy( draw->llvm );
 #endif
 
    FREE( draw );
@@ -659,7 +683,8 @@ draw_set_mapped_texture(struct draw_context *draw,
                         const void *data[DRAW_MAX_TEXTURE_LEVELS])
 {
 #ifdef HAVE_LLVM
-   draw_llvm_set_mapped_texture(draw,
+   if(draw->llvm)
+      draw_llvm_set_mapped_texture(draw,
                                 sampler_idx,
                                 width, height, depth, last_level,
                                 row_stride, img_stride, data);

@@ -43,9 +43,6 @@
 
 DEBUG_GET_ONCE_BOOL_OPTION(draw_fse, "DRAW_FSE", FALSE)
 DEBUG_GET_ONCE_BOOL_OPTION(draw_no_fse, "DRAW_NO_FSE", FALSE)
-#ifdef HAVE_LLVM
-DEBUG_GET_ONCE_BOOL_OPTION(draw_use_llvm, "DRAW_USE_LLVM", TRUE)
-#endif
 
 /* Overall we split things into:
  *     - frontend -- prepare fetch_elts, draw_elts - eg vsplit
@@ -140,7 +137,7 @@ boolean draw_pt_init( struct draw_context *draw )
       return FALSE;
 
 #if HAVE_LLVM
-   if (debug_get_option_draw_use_llvm())
+   if (draw->llvm)
       draw->pt.middle.llvm = draw_pt_fetch_pipeline_or_emit_llvm( draw );
 #endif
 
