@@ -26,7 +26,6 @@
 #define SLANG_COMPILE_FUNCTION_H
 
 #include "main/glheader.h"
-#include "slang_compile_function.h"
 #include "slang_compile_operation.h"
 #include "slang_compile_variable.h"
 #include "slang_log.h"
