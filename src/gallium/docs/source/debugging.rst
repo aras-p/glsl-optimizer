@@ -15,36 +15,36 @@ program from that console.
 Common
 """"""
 
-GALLIUM_PRINT_OPTIONS <bool> (false)
+.. envvar:: GALLIUM_PRINT_OPTIONS <bool> (false)
 
 This options controls if the debug variables should be printed to stderr.
 This is probably the most usefull variable since it allows you to find
 which variables a driver responds to.
 
-GALLIUM_RBUG <bool> (false)
+.. envvar:: GALLIUM_RBUG <bool> (false)
 
 Controls if the :ref:`rbug` should be used.
 
-GALLIUM_TRACE <string> ("")
+.. envvar:: GALLIUM_TRACE <string> ("")
 
 If not set tracing is not used, if set it will write the output to the file
 specifed by the variable. So setting it to "trace.xml" will write the output
 to the file "trace.xml".
 
-GALLIUM_DUMP_CPU <bool> (false)
+.. envvar:: GALLIUM_DUMP_CPU <bool> (false)
 
 Dump information about the current cpu that the driver is running on.
 
-TGSI_PRINT_SANITY <bool> (false)
+.. envvar:: TGSI_PRINT_SANITY <bool> (false)
 
 Gallium has a inbuilt shader sanity checker, this option controls if results
 from it should be printed. This include warnings such as unused variables.
 
-DRAW_USE_LLVM <bool> (false)
+.. envvar:: DRAW_USE_LLVM <bool> (false)
 
 Should the :ref:`draw` module use llvm for vertex and geometry shaders.
 
-ST_DEBUG <flags> (0x0)
+.. envvar:: ST_DEBUG <flags> (0x0)
 
 Debug :ref:`flags` for the GL state tracker.
 
@@ -52,23 +52,23 @@ Debug :ref:`flags` for the GL state tracker.
 Driver specific
 """""""""""""""
 
-I915_DEBUG <flags> (0x0)
+.. envvar:: I915_DEBUG <flags> (0x0)
 
 Debug :ref:`flags` for the i915 driver.
 
-I915_NO_HW <bool> (false)
+.. envvar:: I915_NO_HW <bool> (false)
 
 Stop the i915 driver from submitting commands to the hardware.
 
-I915_DUMP_CMD <bool> (false)
+.. envvar:: I915_DUMP_CMD <bool> (false)
 
 Dump all commands going to the hardware.
 
-LP_DEBUG <flags> (0x0)
+.. envvar:: LP_DEBUG <flags> (0x0)
 
 Debug :ref:`flags` for the llvmpipe driver.
 
-LP_NUM_THREADS <int> (num cpus)
+.. envvar:: LP_NUM_THREADS <int> (num cpus)
 
 Number of threads that the llvmpipe driver should use.
 
