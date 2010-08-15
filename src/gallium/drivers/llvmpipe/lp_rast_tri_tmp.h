@@ -152,31 +152,28 @@ TAG(lp_rast_triangle)(struct lp_rasterizer_task *task,
    struct lp_rast_plane plane[NR_PLANES];
    int c[NR_PLANES];
    unsigned outmask, inmask, partmask, partial_mask;
-   unsigned j, nr_planes = 0;
+   unsigned j = 0;
 
-   while (plane_mask) {
-      int i = ffs(plane_mask) - 1;
-      plane[nr_planes] = tri->plane[i];
-      plane_mask &= ~(1 << i);
-      nr_planes++;
-   };
-
-   assert(nr_planes == NR_PLANES);
    outmask = 0;                 /* outside one or more trivial reject planes */
    partmask = 0;                /* outside one or more trivial accept planes */
 
-   for (j = 0; j < NR_PLANES; j++) {
+   while (plane_mask) {
+      int i = ffs(plane_mask) - 1;
+      plane[j] = tri->plane[i];
+      plane_mask &= ~(1 << i);
       c[j] = plane[j].c + plane[j].dcdy * y - plane[j].dcdx * x;
-   }
 
-   for (j = 0; j < NR_PLANES; j++) {
-      const int dcdx = -plane[j].dcdx * 16;
-      const int dcdy = plane[j].dcdy * 16;
-      const int cox = c[j] + plane[j].eo * 16;
-      const int cio = c[j] + plane[j].ei * 16 - 1;
+      {
+	 const int dcdx = -plane[j].dcdx * 16;
+	 const int dcdy = plane[j].dcdy * 16;
+	 const int cox = c[j] + plane[j].eo * 16;
+	 const int cio = c[j] + plane[j].ei * 16 - 1;
 
-      outmask |= build_mask_linear(cox, dcdx, dcdy);
-      partmask |= build_mask_linear(cio, dcdx, dcdy);
+	 outmask |= build_mask_linear(cox, dcdx, dcdy);
+	 partmask |= build_mask_linear(cio, dcdx, dcdy);
+      }
+
+      j++;
    }
 
    if (outmask == 0xffff)
