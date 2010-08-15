@@ -398,6 +398,7 @@ struct r300_texture {
     struct mem_block *hiz_mem[R300_MAX_TEXTURE_LEVELS];
     struct mem_block *zmask_mem[R300_MAX_TEXTURE_LEVELS];
     boolean zmask_in_use[R300_MAX_TEXTURE_LEVELS];
+    boolean hiz_in_use[R300_MAX_TEXTURE_LEVELS];
 
     /* This is the level tiling flags were last time set for.
      * It's used to prevent redundant tiling-flags changes from happening.*/
@@ -568,7 +569,6 @@ struct r300_context {
 #define R300_Z_COMPRESS_44 1
 #define RV350_Z_COMPRESS_88 2
     int z_compression;
-    boolean hiz_enable;
     boolean cbzb_clear;
     boolean z_decomp_rd;
 

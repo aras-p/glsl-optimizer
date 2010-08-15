@@ -1046,6 +1046,9 @@ void r300_emit_hiz_clear(struct r300_context *r300, unsigned size, void *state)
         r300_emit_hiz_line_clear(r300, offset, stride, 0xffffffff);
     }
     z->current_func = -1;
+
+    /* Mark the current zbuffer's hiz ram as in use. */
+    tex->hiz_in_use[fb->zsbuf->level] = TRUE;
 }
 
 void r300_emit_zmask_clear(struct r300_context *r300, unsigned size, void *state)

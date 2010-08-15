@@ -752,7 +752,6 @@ static void
 
     r300_mark_fb_state_dirty(r300, R300_CHANGED_FB_STATE);
 
-    r300->hiz_enable = false;
     r300->z_compression = false;
     
     if (state->zsbuf) {
@@ -779,17 +778,13 @@ static void
             /* work out whether we can support zmask features on this buffer */
             r300_zmask_alloc_block(r300, zs_surf, compress);
 
-            if (tex->hiz_mem[level]) {
-                r300->hiz_enable = 1;
-            }
-
             if (tex->zmask_mem[level]) {
                 /* compression causes hangs on 16-bit */
                 if (zbuffer_bpp == 24)
                     r300->z_compression = compress;
             }
             DBG(r300, DBG_HYPERZ,
-                "hyper-z features: hiz: %d @ %08x z-compression: %d z-fastfill: %d @ %08x\n", r300->hiz_enable,
+                "hyper-z features: hiz: %d @ %08x z-compression: %d z-fastfill: %d @ %08x\n", tex->hiz_mem[level] ? 1 : 0,
                 tex->hiz_mem[level] ? tex->hiz_mem[level]->ofs : 0xdeadbeef,
                 r300->z_compression, tex->zmask_mem[level] ? 1 : 0,
                 tex->zmask_mem[level] ? tex->zmask_mem[level]->ofs : 0xdeadbeef);

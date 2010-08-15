@@ -172,6 +172,8 @@ static void r300_clear(struct pipe_context* pipe,
         (struct pipe_framebuffer_state*)r300->fb_state.state;
     struct r300_hyperz_state *hyperz =
         (struct r300_hyperz_state*)r300->hyperz_state.state;
+    struct r300_texture *zstex =
+            fb->zsbuf ? r300_texture(fb->zsbuf->texture) : NULL;
     uint32_t width = fb->width;
     uint32_t height = fb->height;
     boolean has_hyperz = r300->rws->get_value(r300->rws, R300_CAN_HYPERZ);
@@ -184,11 +186,11 @@ static void r300_clear(struct pipe_context* pipe,
             r300_depth_clear_value(fb->zsbuf->format, depth, stencil);
 
         r300_mark_fb_state_dirty(r300, R300_CHANGED_ZCLEAR_FLAG);
-        if (r300_texture(fb->zsbuf->texture)->zmask_mem[fb->zsbuf->level]) {
+        if (zstex->zmask_mem[fb->zsbuf->level]) {
             r300->zmask_clear.dirty = TRUE;
             buffers &= ~PIPE_CLEAR_DEPTHSTENCIL;
         }
-        if (r300->hiz_enable)
+        if (zstex->hiz_mem[fb->zsbuf->level])
             r300->hiz_clear.dirty = TRUE;
     }
 
@@ -249,12 +251,13 @@ static void r300_clear(struct pipe_context* pipe,
         r300_mark_fb_state_dirty(r300, R300_CHANGED_CBZB_FLAG);
     }
 
-    /* Enable fastfill.
+    /* Enable fastfill and/or hiz.
      *
-     * If we cleared the zmask, it's in use now. The Hyper-Z state update
-     * looks if zmask is in use and enables fastfill accordingly. */
-    if (fb->zsbuf &&
-        r300_texture(fb->zsbuf->texture)->zmask_in_use[fb->zsbuf->level]) {
+     * If we cleared zmask/hiz, it's in use now. The Hyper-Z state update
+     * looks if zmask/hiz is in use and enables fastfill accordingly. */
+    if (zstex &&
+        (zstex->zmask_in_use[fb->zsbuf->level] ||
+         zstex->hiz_in_use[fb->zsbuf->level])) {
         r300->hyperz_state.dirty = TRUE;
     }
 

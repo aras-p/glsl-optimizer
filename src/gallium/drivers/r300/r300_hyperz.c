@@ -131,7 +131,10 @@ static void r300_update_hyperz(struct r300_context* r300)
         (struct r300_hyperz_state*)r300->hyperz_state.state;
     struct pipe_framebuffer_state *fb =
         (struct pipe_framebuffer_state*)r300->fb_state.state;
+    struct r300_texture *zstex =
+            fb->zsbuf ? r300_texture(fb->zsbuf->texture) : NULL;
     boolean zmask_in_use = FALSE;
+    boolean hiz_in_use = FALSE;
 
     z->gb_z_peq_config = 0;
     z->zb_bw_cntl = 0;
@@ -143,13 +146,14 @@ static void r300_update_hyperz(struct r300_context* r300)
         return;
     }
 
-    if (!fb->zsbuf)
+    if (!zstex)
         return;
 
     if (!r300->rws->get_value(r300->rws, R300_CAN_HYPERZ))
         return;
 
-    zmask_in_use = r300_texture(fb->zsbuf->texture)->zmask_in_use[fb->zsbuf->level];
+    zmask_in_use = zstex->zmask_in_use[fb->zsbuf->level];
+    hiz_in_use = zstex->hiz_in_use[fb->zsbuf->level];
 
     /* Z fastfill. */
     if (zmask_in_use) {
@@ -167,7 +171,7 @@ static void r300_update_hyperz(struct r300_context* r300)
     if (r300->z_compression == RV350_Z_COMPRESS_88)
         z->gb_z_peq_config |= R300_GB_Z_PEQ_CONFIG_Z_PEQ_SIZE_8_8;
 
-    if (r300->hiz_enable) {
+    if (hiz_in_use) {
         bool can_hiz = r300_can_hiz(r300);
         if (can_hiz) {
             z->zb_bw_cntl |= R300_HIZ_ENABLE;
@@ -177,8 +181,8 @@ static void r300_update_hyperz(struct r300_context* r300)
         }
     }
 
+    /* R500-specific features and optimizations. */
     if (r300->screen->caps.is_r500) {
-        /* XXX Are these bits really available on RV350? */
         z->zb_bw_cntl |= R500_HIZ_FP_EXP_BITS_3;
         z->zb_bw_cntl |=
                 R500_HIZ_EQUAL_REJECT_ENABLE |
