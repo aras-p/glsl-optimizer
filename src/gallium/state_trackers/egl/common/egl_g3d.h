@@ -111,6 +111,9 @@ struct egl_g3d_sync {
    /* the mutex protects only the condvar, not the struct */
    pipe_mutex mutex;
    pipe_condvar condvar;
+
+   /* for fence sync */
+   struct pipe_fence_handle *fence;
 };
 _EGL_DRIVER_TYPECAST(egl_g3d_sync, _EGLSync, obj)
 

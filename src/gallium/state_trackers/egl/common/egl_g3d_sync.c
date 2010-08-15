@@ -71,6 +71,60 @@ egl_g3d_signal_sync_condvar(struct egl_g3d_sync *gsync)
    pipe_mutex_unlock(gsync->mutex);
 }
 
+/**
+ * Insert a fence command to the command stream of the current context.
+ */
+static EGLint
+egl_g3d_insert_fence_sync(struct egl_g3d_sync *gsync)
+{
+   _EGLContext *ctx = _eglGetCurrentContext();
+   struct egl_g3d_context *gctx = egl_g3d_context(ctx);
+
+   /* already checked in egl_g3d_create_sync */
+   assert(gctx);
+
+   /* insert the fence command */
+   gctx->stctxi->flush(gctx->stctxi, 0x0, &gsync->fence);
+   if (!gsync->fence)
+      gsync->base.SyncStatus = EGL_SIGNALED_KHR;
+
+   return EGL_SUCCESS;
+}
+
+/**
+ * Wait for the fence sync to be signaled.
+ */
+static EGLint
+egl_g3d_wait_fence_sync(struct egl_g3d_sync *gsync, EGLTimeKHR timeout)
+{
+   EGLint ret;
+
+   if (gsync->fence) {
+      _EGLDisplay *dpy = gsync->base.Resource.Display;
+      struct egl_g3d_display *gdpy = egl_g3d_display(dpy);
+      struct pipe_screen *screen = gdpy->native->screen;
+      struct pipe_fence_handle *fence = gsync->fence;
+
+      gsync->fence = NULL;
+
+      _eglUnlockMutex(&dpy->Mutex);
+      /* no timed finish? */
+      screen->fence_finish(screen, fence, 0x0);
+      ret = EGL_CONDITION_SATISFIED_KHR;
+      _eglLockMutex(&dpy->Mutex);
+
+      gsync->base.SyncStatus = EGL_SIGNALED_KHR;
+
+      screen->fence_reference(screen, &fence, NULL);
+      egl_g3d_signal_sync_condvar(gsync);
+   }
+   else {
+      ret = egl_g3d_wait_sync_condvar(gsync, timeout);
+   }
+
+   return ret;
+}
+
 static INLINE void
 egl_g3d_ref_sync(struct egl_g3d_sync *gsync)
 {
@@ -83,6 +137,14 @@ egl_g3d_unref_sync(struct egl_g3d_sync *gsync)
    if (p_atomic_dec_zero(&gsync->refs)) {
       pipe_condvar_destroy(gsync->condvar);
       pipe_mutex_destroy(gsync->mutex);
+
+      if (gsync->fence) {
+         struct egl_g3d_display *gdpy =
+            egl_g3d_display(gsync->base.Resource.Display);
+         struct pipe_screen *screen = gdpy->native->screen;
+
+         screen->fence_reference(screen, &gsync->fence, NULL);
+      }
 
       FREE(gsync);
    }
@@ -115,6 +177,9 @@ egl_g3d_create_sync(_EGLDriver *drv, _EGLDisplay *dpy,
    switch (type) {
    case EGL_SYNC_REUSABLE_KHR:
       err = EGL_SUCCESS;
+      break;
+   case EGL_SYNC_FENCE_KHR:
+      err = egl_g3d_insert_fence_sync(gsync);
       break;
    default:
       err = EGL_BAD_ATTRIBUTE;
@@ -181,6 +246,8 @@ egl_g3d_client_wait_sync(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSync *sync,
          case EGL_SYNC_REUSABLE_KHR:
             ret = egl_g3d_wait_sync_condvar(gsync, timeout);
             break;
+         case EGL_SYNC_FENCE_KHR:
+            ret = egl_g3d_wait_fence_sync(gsync, timeout);
          default:
             break;
          }

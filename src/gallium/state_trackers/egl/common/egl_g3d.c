@@ -531,6 +531,7 @@ egl_g3d_initialize(_EGLDriver *drv, _EGLDisplay *dpy,
       dpy->Extensions.KHR_image_pixmap = EGL_TRUE;
 
    dpy->Extensions.KHR_reusable_sync = EGL_TRUE;
+   dpy->Extensions.KHR_fence_sync = EGL_TRUE;
 
    if (egl_g3d_add_configs(drv, dpy, 1) == 1) {
       _eglError(EGL_NOT_INITIALIZED, "eglInitialize(unable to add configs)");
