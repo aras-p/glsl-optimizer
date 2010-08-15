@@ -64,6 +64,9 @@ typedef enum {
 	 * dst.c = d src0.c / dy */
 	RC_OPCODE_DDY,
 
+	/** scalar instruction: dst = src0.x*src1.x + src0.y*src1.y */
+	RC_OPCODE_DP2,
+
 	/** scalar instruction: dst = src0.x*src1.x + src0.y*src1.y + src0.z*src1.z */
 	RC_OPCODE_DP3,
 

@@ -95,6 +95,12 @@ struct rc_opcode_info rc_opcodes[MAX_RC_OPCODE] = {
 		.IsComponentwise = 1
 	},
 	{
+		.Opcode = RC_OPCODE_DP2,
+		.Name = "DP2",
+		.NumSrcRegs = 2,
+		.HasDstReg = 1
+	},
+	{
 		.Opcode = RC_OPCODE_DP3,
 		.Name = "DP3",
 		.NumSrcRegs = 2,
@@ -441,6 +447,10 @@ void rc_compute_sources_for_writemask(
 		switch(opcode->Opcode) {
 		case RC_OPCODE_ARL:
 			srcmasks[0] |= RC_MASK_X;
+			break;
+		case RC_OPCODE_DP2:
+			srcmasks[0] |= RC_MASK_XY;
+			srcmasks[1] |= RC_MASK_XY;
 			break;
 		case RC_OPCODE_DP3:
 			srcmasks[0] |= RC_MASK_XYZ;
