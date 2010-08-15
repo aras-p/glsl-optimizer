@@ -25,13 +25,14 @@
 #if !defined SLANG_COMPILE_H
 #define SLANG_COMPILE_H
 
-#include "main/imports.h"
+#include "main/glheader.h"
 #include "main/mtypes.h"
-#include "slang_typeinfo.h"
-#include "slang_compile_variable.h"
-#include "slang_compile_struct.h"
-#include "slang_compile_operation.h"
 #include "slang_compile_function.h"
+#include "slang_compile_struct.h"
+#include "slang_compile_variable.h"
+#include "slang_utility.h"
+
+struct slang_code_object_;
 
 #if defined __cplusplus
 extern "C" {
