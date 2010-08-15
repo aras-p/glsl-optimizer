@@ -67,7 +67,7 @@ block_full_16(struct lp_rasterizer_task *task,
 	 block_full_4(task, tri, x + ix, y + iy);
 }
 
-
+#if !defined(PIPE_ARCH_SSE)
 static INLINE unsigned
 build_mask(int c, int dcdx, int dcdy)
 {
@@ -98,6 +98,7 @@ build_mask(int c, int dcdx, int dcdy)
    return mask;
 }
 
+
 static INLINE unsigned
 build_mask_linear(int c, int dcdx, int dcdy)
 {
@@ -127,6 +128,81 @@ build_mask_linear(int c, int dcdx, int dcdy)
   
    return mask;
 }
+#else
+#include <emmintrin.h>
+#include "util/u_sse.h"
+
+
+static INLINE unsigned
+build_mask_linear(int c, int dcdx, int dcdy)
+{
+   __m128i cstep0 = _mm_setr_epi32(c, c+dcdx, c+dcdx*2, c+dcdx*3);
+   __m128i xdcdy = _mm_set1_epi32(dcdy);
+
+   /* Get values across the quad
+    */
+   __m128i cstep1 = _mm_add_epi32(cstep0, xdcdy);
+   __m128i cstep2 = _mm_add_epi32(cstep1, xdcdy);
+   __m128i cstep3 = _mm_add_epi32(cstep2, xdcdy);
+
+   /* pack pairs of results into epi16
+    */
+   __m128i cstep01 = _mm_packs_epi32(cstep0, cstep1);
+   __m128i cstep23 = _mm_packs_epi32(cstep2, cstep3);
+
+   /* pack into epi8, preserving sign bits
+    */
+   __m128i result = _mm_packs_epi16(cstep01, cstep23);
+
+   /* extract sign bits to create mask
+    */
+   return _mm_movemask_epi8(result);
+}
+
+static INLINE unsigned
+build_mask(int c, int dcdx, int dcdy)
+{
+   __m128i step = _mm_setr_epi32(0, dcdx, dcdy, dcdx + dcdy);
+   __m128i c0 = _mm_set1_epi32(c);
+
+   /* Get values across the quad
+    */
+   __m128i cstep0 = _mm_add_epi32(c0, step);
+
+   /* Scale up step for moving between quads.  This should probably
+    * be an arithmetic shift left, but there doesn't seem to be
+    * such a thing in SSE.  It's unlikely that the step value is
+    * going to be large enough to overflow across 4 pixels, though
+    * if it is that big, rendering will be incorrect anyway.
+    */
+   __m128i step4 = _mm_slli_epi32(step, 1);
+
+   /* Get values for the remaining quads:
+    */
+   __m128i cstep1 = _mm_add_epi32(cstep0, 
+				  _mm_shuffle_epi32(step4, _MM_SHUFFLE(1,1,1,1)));
+   __m128i cstep2 = _mm_add_epi32(cstep0,
+				  _mm_shuffle_epi32(step4, _MM_SHUFFLE(2,2,2,2)));
+   __m128i cstep3 = _mm_add_epi32(cstep2,
+				  _mm_shuffle_epi32(step4, _MM_SHUFFLE(1,1,1,1)));
+
+   /* pack pairs of results into epi16
+    */
+   __m128i cstep01 = _mm_packs_epi32(cstep0, cstep1);
+   __m128i cstep23 = _mm_packs_epi32(cstep2, cstep3);
+
+   /* pack into epi8, preserving sign bits
+    */
+   __m128i result = _mm_packs_epi16(cstep01, cstep23);
+
+   /* extract sign bits to create mask
+    */
+   return _mm_movemask_epi8(result);
+}
+
+#endif
+
+
 
 
 #define TAG(x) x##_1
