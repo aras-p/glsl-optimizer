@@ -98,6 +98,7 @@ _eglUpdateExtensionsString(_EGLDisplay *dpy)
    _EGL_CHECK_EXTENSION(KHR_gl_renderbuffer_image);
 
    _EGL_CHECK_EXTENSION(KHR_reusable_sync);
+   _EGL_CHECK_EXTENSION(KHR_fence_sync);
 
    _EGL_CHECK_EXTENSION(KHR_surfaceless_gles1);
    _EGL_CHECK_EXTENSION(KHR_surfaceless_gles2);

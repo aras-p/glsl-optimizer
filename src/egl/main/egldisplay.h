@@ -64,6 +64,7 @@ struct _egl_extensions
    EGLBoolean KHR_gl_renderbuffer_image;
 
    EGLBoolean KHR_reusable_sync;
+   EGLBoolean KHR_fence_sync;
 
    EGLBoolean KHR_surfaceless_gles1;
    EGLBoolean KHR_surfaceless_gles2;

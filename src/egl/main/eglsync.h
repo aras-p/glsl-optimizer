@@ -19,6 +19,7 @@ struct _egl_sync
 
    EGLenum Type;
    EGLenum SyncStatus;
+   EGLenum SyncCondition;
 };
 
 

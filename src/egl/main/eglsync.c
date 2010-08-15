@@ -46,7 +46,8 @@ _eglInitSync(_EGLSync *sync, _EGLDisplay *dpy, EGLenum type,
 {
    EGLint err;
 
-   if (!(type == EGL_SYNC_REUSABLE_KHR && dpy->Extensions.KHR_reusable_sync))
+   if (!(type == EGL_SYNC_REUSABLE_KHR && dpy->Extensions.KHR_reusable_sync) &&
+       !(type == EGL_SYNC_FENCE_KHR && dpy->Extensions.KHR_fence_sync))
       return _eglError(EGL_BAD_ATTRIBUTE, "eglCreateSyncKHR");
 
    memset(sync, 0, sizeof(*sync));
@@ -55,6 +56,7 @@ _eglInitSync(_EGLSync *sync, _EGLDisplay *dpy, EGLenum type,
 
    sync->Type = type;
    sync->SyncStatus = EGL_UNSIGNALED_KHR;
+   sync->SyncCondition = EGL_SYNC_PRIOR_COMMANDS_COMPLETE_KHR;
 
    err = _eglParseSyncAttribList(sync, attrib_list);
    if (err != EGL_SUCCESS)
@@ -108,6 +110,11 @@ _eglGetSyncAttribKHR(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSync *sync,
       break;
    case EGL_SYNC_STATUS_KHR:
       *value = sync->SyncStatus;
+      break;
+   case EGL_SYNC_CONDITION_KHR:
+      if (sync->Type != EGL_SYNC_FENCE_KHR)
+         return _eglError(EGL_BAD_ATTRIBUTE, "eglGetSyncAttribKHR");
+      *value = sync->SyncCondition;
       break;
    default:
       return _eglError(EGL_BAD_ATTRIBUTE, "eglGetSyncAttribKHR");
