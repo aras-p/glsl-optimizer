@@ -464,6 +464,43 @@ static void transform_SNE(struct radeon_compiler* c,
 	rc_remove_instruction(inst);
 }
 
+static void transform_SSG(struct radeon_compiler* c,
+	struct rc_instruction* inst)
+{
+	/* result = sign(x)
+	 *
+	 *   CMP tmp0, -x, 1, 0
+	 *   CMP tmp1, x, 1, 0
+	 *   ADD result, tmp0, -tmp1;
+	 */
+	unsigned tmp0, tmp1;
+
+	/* 0 < x */
+	tmp0 = rc_find_free_temporary(c);
+	emit3(c, inst->Prev, RC_OPCODE_CMP, 0,
+	      dstregtmpmask(tmp0, inst->U.I.DstReg.WriteMask),
+	      negate(inst->U.I.SrcReg[0]),
+	      builtin_one,
+	      builtin_zero);
+
+	/* x < 0 */
+	tmp1 = rc_find_free_temporary(c);
+	emit3(c, inst->Prev, RC_OPCODE_CMP, 0,
+	      dstregtmpmask(tmp1, inst->U.I.DstReg.WriteMask),
+	      inst->U.I.SrcReg[0],
+	      builtin_one,
+	      builtin_zero);
+
+	/* Either both are zero, or one of them is one and the other is zero. */
+	/* result = tmp0 - tmp1 */
+	emit2(c, inst->Prev, RC_OPCODE_ADD, 0,
+	      inst->U.I.DstReg,
+	      srcreg(RC_FILE_TEMPORARY, tmp0),
+	      negate(srcreg(RC_FILE_TEMPORARY, tmp1)));
+
+	rc_remove_instruction(inst);
+}
+
 static void transform_SUB(struct radeon_compiler* c,
 	struct rc_instruction* inst)
 {
@@ -530,6 +567,7 @@ int radeonTransformALU(
 	case RC_OPCODE_SLE: transform_SLE(c, inst); return 1;
 	case RC_OPCODE_SLT: transform_SLT(c, inst); return 1;
 	case RC_OPCODE_SNE: transform_SNE(c, inst); return 1;
+	case RC_OPCODE_SSG: transform_SSG(c, inst); return 1;
 	case RC_OPCODE_SUB: transform_SUB(c, inst); return 1;
 	case RC_OPCODE_SWZ: transform_SWZ(c, inst); return 1;
 	case RC_OPCODE_XPD: transform_XPD(c, inst); return 1;
@@ -672,6 +710,41 @@ static void transform_r300_vertex_SLE(struct radeon_compiler* c,
 	inst->U.I.SrcReg[1].Negate ^= RC_MASK_XYZW;
 }
 
+static void transform_r300_vertex_SSG(struct radeon_compiler* c,
+	struct rc_instruction* inst)
+{
+	/* result = sign(x)
+	 *
+	 *   SLT tmp0, 0, x;
+	 *   SLT tmp1, x, 0;
+	 *   ADD result, tmp0, -tmp1;
+	 */
+	unsigned tmp0, tmp1;
+
+	/* 0 < x */
+	tmp0 = rc_find_free_temporary(c);
+	emit2(c, inst->Prev, RC_OPCODE_SLT, 0,
+	      dstregtmpmask(tmp0, inst->U.I.DstReg.WriteMask),
+	      builtin_zero,
+	      inst->U.I.SrcReg[0]);
+
+	/* x < 0 */
+	tmp1 = rc_find_free_temporary(c);
+	emit2(c, inst->Prev, RC_OPCODE_SLT, 0,
+	      dstregtmpmask(tmp1, inst->U.I.DstReg.WriteMask),
+	      inst->U.I.SrcReg[0],
+	      builtin_zero);
+
+	/* Either both are zero, or one of them is one and the other is zero. */
+	/* result = tmp0 - tmp1 */
+	emit2(c, inst->Prev, RC_OPCODE_ADD, 0,
+	      inst->U.I.DstReg,
+	      srcreg(RC_FILE_TEMPORARY, tmp0),
+	      negate(srcreg(RC_FILE_TEMPORARY, tmp1)));
+
+	rc_remove_instruction(inst);
+}
+
 /**
  * For use with radeonLocalTransform, this transforms non-native ALU
  * instructions of the r300 up to r500 vertex engine.
@@ -705,6 +778,7 @@ int r300_transform_vertex_alu(
 			return 1;
 		}
 		return 0;
+	case RC_OPCODE_SSG: transform_r300_vertex_SSG(c, inst); return 1;
 	case RC_OPCODE_SUB: transform_SUB(c, inst); return 1;
 	case RC_OPCODE_SWZ: transform_SWZ(c, inst); return 1;
 	case RC_OPCODE_XPD: transform_XPD(c, inst); return 1;

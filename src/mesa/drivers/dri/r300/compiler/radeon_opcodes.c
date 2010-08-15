@@ -295,6 +295,13 @@ struct rc_opcode_info rc_opcodes[MAX_RC_OPCODE] = {
 		.IsComponentwise = 1
 	},
 	{
+		.Opcode = RC_OPCODE_SSG,
+		.Name = "SSG",
+		.NumSrcRegs = 1,
+		.HasDstReg = 1,
+		.IsComponentwise = 1
+	},
+	{
 		.Opcode = RC_OPCODE_SUB,
 		.Name = "SUB",
 		.NumSrcRegs = 2,

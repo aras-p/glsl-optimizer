@@ -154,6 +154,9 @@ typedef enum {
 	/** vec4 instruction: dst.c = (src0.c != src1.c) ? 1.0 : 0.0 */
 	RC_OPCODE_SNE,
 
+	/** vec4 instruction: dst.c = (src0.c < 0 ?) -1 : ((src0.c > 0) : 1 : 0) */
+	RC_OPCODE_SSG,
+
 	/** vec4 instruction: dst.c = src0.c - src1.c */
 	RC_OPCODE_SUB,
 
