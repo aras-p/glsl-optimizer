@@ -128,18 +128,21 @@ update_tss_binding(struct svga_context *svga,
          goto fail;
 
       for (i = 0; i < queue.bind_count; i++) {
+         struct svga_winsys_surface *handle;
+
          ts[i].stage = queue.bind[i].unit;
          ts[i].name = SVGA3D_TS_BIND_TEXTURE;
 
          if (queue.bind[i].view->v) {
-            svga->swc->surface_relocation(svga->swc,
-                                          &ts[i].value,
-                                          queue.bind[i].view->v->handle,
-                                          SVGA_RELOC_READ);
+            handle = queue.bind[i].view->v->handle;
          }
          else {
-            ts[i].value = SVGA3D_INVALID_ID;
+            handle = NULL;
          }
+         svga->swc->surface_relocation(svga->swc,
+                                       &ts[i].value,
+                                       handle,
+                                       SVGA_RELOC_READ);
          
          queue.bind[i].view->dirty = FALSE;
       }
