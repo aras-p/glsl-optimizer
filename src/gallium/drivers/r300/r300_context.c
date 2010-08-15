@@ -158,12 +158,14 @@ void r300_flush_cb(void *data)
 }
 
 #define R300_INIT_ATOM(atomname, atomsize) \
+ do { \
     r300->atomname.name = #atomname; \
     r300->atomname.state = NULL; \
     r300->atomname.size = atomsize; \
     r300->atomname.emit = r300_emit_##atomname; \
     r300->atomname.dirty = FALSE; \
-    insert_at_tail(&r300->atom_list, &r300->atomname);
+    insert_at_tail(&r300->atom_list, &r300->atomname); \
+ } while (0)
 
 static void r300_setup_atoms(struct r300_context* r300)
 {
