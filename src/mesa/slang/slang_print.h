@@ -3,6 +3,12 @@
 #ifndef SLANG_PRINT
 #define SLANG_PRINT
 
+#include "main/glheader.h"
+#include "slang_compile_function.h"
+#include "slang_compile_operation.h"
+#include "slang_compile_variable.h"
+#include "slang_typeinfo.h"
+
 extern void
 slang_print_function(const slang_function *f, GLboolean body);
 
