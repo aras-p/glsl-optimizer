@@ -25,7 +25,7 @@
 #ifndef SLANG_LINK_H
 #define SLANG_LINK_H 1
 
-#include "slang_compile.h"
+#include "main/mtypes.h"
 
 
 extern void
