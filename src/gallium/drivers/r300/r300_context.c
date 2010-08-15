@@ -457,7 +457,8 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
 
     /* setup hyper-z mm */
     if (r300->rws->get_value(r300->rws, R300_CAN_HYPERZ))
-        r300_hyperz_init_mm(r300);
+        if (!r300_hyperz_init_mm(r300))
+            goto fail;
 
     r300->upload_ib = u_upload_create(&r300->context,
 				      32 * 1024, 16,
