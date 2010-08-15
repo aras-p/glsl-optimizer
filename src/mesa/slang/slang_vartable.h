@@ -2,6 +2,9 @@
 #ifndef SLANG_VARTABLE_H
 #define SLANG_VARTABLE_H
 
+#include "main/glheader.h"
+#include "slang_utility.h"
+
 struct slang_ir_storage_;
 
 typedef struct slang_var_table_ slang_var_table;
