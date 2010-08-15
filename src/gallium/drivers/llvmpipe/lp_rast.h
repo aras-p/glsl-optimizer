@@ -256,5 +256,9 @@ void lp_rast_begin_query(struct lp_rasterizer_task *,
 void lp_rast_end_query(struct lp_rasterizer_task *,
                        const union lp_rast_cmd_arg );
 
+void
+lp_rast_triangle_3_16(struct lp_rasterizer_task *task,
+                      const union lp_rast_cmd_arg arg);
+
 
 #endif

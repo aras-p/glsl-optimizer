@@ -157,3 +157,85 @@ build_mask_linear(int c, int dcdx, int dcdy)
 #define NR_PLANES 7
 #include "lp_rast_tri_tmp.h"
 
+
+/* Special case for 3 plane triangle which is contained entirely
+ * within a 16x16 block.
+ */
+void
+lp_rast_triangle_3_16(struct lp_rasterizer_task *task,
+                      const union lp_rast_cmd_arg arg)
+{
+   const struct lp_rast_triangle *tri = arg.triangle.tri;
+   const struct lp_rast_plane *plane = tri->plane;
+   unsigned mask = arg.triangle.plane_mask;
+   const int x = task->x + (mask & 0xf) * 16;
+   const int y = task->y + (mask >> 4) * 16;
+   unsigned outmask, inmask, partmask, partial_mask;
+   unsigned j;
+   int c[3];
+
+   outmask = 0;                 /* outside one or more trivial reject planes */
+   partmask = 0;                /* outside one or more trivial accept planes */
+
+   for (j = 0; j < 3; j++) {
+      c[j] = plane[j].c + plane[j].dcdy * y - plane[j].dcdx * x;
+
+      {
+	 const int dcdx = -plane[j].dcdx * 4;
+	 const int dcdy = plane[j].dcdy * 4;
+	 const int cox = c[j] + plane[j].eo * 4;
+	 const int cio = c[j] + plane[j].ei * 4 - 1;
+
+	 outmask |= build_mask_linear(cox, dcdx, dcdy);
+	 partmask |= build_mask_linear(cio, dcdx, dcdy);
+      }
+   }
+
+   if (outmask == 0xffff)
+      return;
+
+   /* Mask of sub-blocks which are inside all trivial accept planes:
+    */
+   inmask = ~partmask & 0xffff;
+
+   /* Mask of sub-blocks which are inside all trivial reject planes,
+    * but outside at least one trivial accept plane:
+    */
+   partial_mask = partmask & ~outmask;
+
+   assert((partial_mask & inmask) == 0);
+
+   /* Iterate over partials:
+    */
+   while (partial_mask) {
+      int i = ffs(partial_mask) - 1;
+      int ix = (i & 3) * 4;
+      int iy = (i >> 2) * 4;
+      int px = x + ix;
+      int py = y + iy; 
+      int cx[3];
+
+      partial_mask &= ~(1 << i);
+
+      for (j = 0; j < 3; j++)
+         cx[j] = (c[j] 
+		  - plane[j].dcdx * ix
+		  + plane[j].dcdy * iy);
+
+      do_block_4_3(task, tri, plane, px, py, cx);
+   }
+
+   /* Iterate over fulls: 
+    */
+   while (inmask) {
+      int i = ffs(inmask) - 1;
+      int ix = (i & 3) * 4;
+      int iy = (i >> 2) * 4;
+      int px = x + ix;
+      int py = y + iy; 
+
+      inmask &= ~(1 << i);
+
+      block_full_4(task, tri, px, py);
+   }
+}

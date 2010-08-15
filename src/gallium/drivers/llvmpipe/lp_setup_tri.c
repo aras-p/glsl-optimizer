@@ -643,6 +643,26 @@ do_triangle_ccw(struct lp_setup_context *setup,
 
    /* Convert to tile coordinates, and inclusive ranges:
     */
+   if (nr_planes == 3) {
+      int ix0 = minx / 16;
+      int iy0 = miny / 16;
+      int ix1 = (maxx-1) / 16;
+      int iy1 = (maxy-1) / 16;
+      
+      if (iy0 == iy1 && ix0 == ix1)
+      {
+
+	 /* Triangle is contained in a single 16x16 block:
+	  */
+	 int mask = (ix0 & 3) | ((iy0 & 3) << 4);
+
+	 lp_scene_bin_command( scene, ix0/4, iy0/4,
+			       lp_rast_triangle_3_16,
+			       lp_rast_arg_triangle(tri, mask) );
+	 return;
+      }
+   }
+
    ix0 = minx / TILE_SIZE;
    iy0 = miny / TILE_SIZE;
    ix1 = (maxx-1) / TILE_SIZE;
