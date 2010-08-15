@@ -26,6 +26,10 @@
 #define SLANG_COMPILE_OPERATION_H
 
 
+#include "main/glheader.h"
+#include "slang_compile_variable.h"
+#include "slang_utility.h"
+
 /**
  * Types of slang operations.
  * These are the types of the AST (abstract syntax tree) nodes.
