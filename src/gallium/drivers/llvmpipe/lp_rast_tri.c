@@ -113,6 +113,21 @@ block_full_16(struct lp_rasterizer_task *task,
 	 block_full_4(task, tri, x + ix, y + iy);
 }
 
+
+static INLINE unsigned
+build_mask(int c, const int *step)
+{
+   int mask = 0;
+   int i;
+
+   for (i = 0; i < 16; i++) {
+      mask |= ((c + step[i]) >> 31) & (1 << i);
+   }
+   
+   return mask;
+}
+
+
 #define TAG(x) x##_1
 #define NR_PLANES 1
 #include "lp_rast_tri_tmp.h"

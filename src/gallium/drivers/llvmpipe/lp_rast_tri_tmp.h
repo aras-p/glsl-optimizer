@@ -46,19 +46,11 @@ TAG(do_block_4)(struct lp_rasterizer_task *task,
                 int x, int y,
                 const int *c)
 {
-   unsigned mask = 0;
-   int i;
+   unsigned mask = 0xffff;
+   int j;
 
-   for (i = 0; i < 16; i++) {
-      int any_negative = 0;
-      int j;
-
-      for (j = 0; j < NR_PLANES; j++) 
-         any_negative |= (c[j] - 1 + plane[j].step[i]);
-         
-      any_negative >>= 31;
-
-      mask |= (~any_negative) & (1 << i);
+   for (j = 0; j < NR_PLANES; j++) {
+      mask &= ~build_mask(c[j] - 1, plane[j].step);
    }
 
    /* Now pass to the shader:
