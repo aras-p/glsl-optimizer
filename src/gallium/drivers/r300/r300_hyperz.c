@@ -131,7 +131,7 @@ static void r300_update_hyperz(struct r300_context* r300)
         (struct r300_hyperz_state*)r300->hyperz_state.state;
     struct pipe_framebuffer_state *fb =
         (struct pipe_framebuffer_state*)r300->fb_state.state;
-    boolean dirty_zmask = FALSE;
+    boolean zmask_in_use = FALSE;
 
     z->gb_z_peq_config = 0;
     z->zb_bw_cntl = 0;
@@ -149,15 +149,15 @@ static void r300_update_hyperz(struct r300_context* r300)
     if (!r300->rws->get_value(r300->rws, R300_CAN_HYPERZ))
         return;
 
-    dirty_zmask = r300_texture(fb->zsbuf->texture)->dirty_zmask[fb->zsbuf->level];
+    zmask_in_use = r300_texture(fb->zsbuf->texture)->zmask_in_use[fb->zsbuf->level];
 
     /* Z fastfill. */
-    if (dirty_zmask) {
+    if (zmask_in_use) {
         z->zb_bw_cntl |= R300_FAST_FILL_ENABLE; /*  | R300_FORCE_COMPRESSED_STENCIL_VALUE_ENABLE;*/
     }
 
     /* Zbuffer compression. */
-    if (dirty_zmask && r300->z_compression) {
+    if (zmask_in_use && r300->z_compression) {
         z->zb_bw_cntl |= R300_RD_COMP_ENABLE;
         if (r300->z_decomp_rd == false)
             z->zb_bw_cntl |= R300_WR_COMP_ENABLE;

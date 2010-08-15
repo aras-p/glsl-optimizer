@@ -251,10 +251,10 @@ static void r300_clear(struct pipe_context* pipe,
 
     /* Enable fastfill.
      *
-     * If we cleared the zmask, it's dirty now. The Hyper-Z state update
-     * looks for a dirty zmask and enables fastfill accordingly. */
+     * If we cleared the zmask, it's in use now. The Hyper-Z state update
+     * looks if zmask is in use and enables fastfill accordingly. */
     if (fb->zsbuf &&
-        r300_texture(fb->zsbuf->texture)->dirty_zmask[fb->zsbuf->level]) {
+        r300_texture(fb->zsbuf->texture)->zmask_in_use[fb->zsbuf->level]) {
         r300->hyperz_state.dirty = TRUE;
     }
 
@@ -307,7 +307,7 @@ void r300_flush_depth_stencil(struct pipe_context *pipe,
 
     if (!tex->zmask_mem[subdst.level])
         return;
-    if (!tex->dirty_zmask[subdst.level])
+    if (!tex->zmask_in_use[subdst.level])
         return;
 
     dstsurf = pipe->screen->get_tex_surface(pipe->screen, dst,
@@ -319,7 +319,7 @@ void r300_flush_depth_stencil(struct pipe_context *pipe,
     r300_blitter_end(r300);
     r300->z_decomp_rd = FALSE;
 
-    tex->dirty_zmask[subdst.level] = FALSE;
+    tex->zmask_in_use[subdst.level] = FALSE;
 }
 
 /* Copy a block of pixels from one surface to another using HW. */

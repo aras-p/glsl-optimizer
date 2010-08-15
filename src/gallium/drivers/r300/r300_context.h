@@ -397,7 +397,7 @@ struct r300_texture {
     /* hyper-z memory allocs */
     struct mem_block *hiz_mem[R300_MAX_TEXTURE_LEVELS];
     struct mem_block *zmask_mem[R300_MAX_TEXTURE_LEVELS];
-    boolean dirty_zmask[R300_MAX_TEXTURE_LEVELS];
+    boolean zmask_in_use[R300_MAX_TEXTURE_LEVELS];
 
     /* This is the level tiling flags were last time set for.
      * It's used to prevent redundant tiling-flags changes from happening.*/
