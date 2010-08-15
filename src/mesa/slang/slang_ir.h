@@ -37,6 +37,7 @@
 #include "slang_compile.h"
 #include "slang_label.h"
 #include "main/mtypes.h"
+#include "program/prog_instruction.h"
 
 
 /**
