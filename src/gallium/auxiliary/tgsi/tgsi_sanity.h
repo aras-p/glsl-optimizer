@@ -36,7 +36,7 @@ extern "C" {
 
 /* Check the given token stream for errors and common mistakes.
  * Diagnostic messages are printed out to the debug output, and is
- * controlled by the debug option TGSI_PRINT_SANITY (default true).
+ * controlled by the debug option TGSI_PRINT_SANITY (default false).
  * Returns TRUE if there are no errors, even though there could be some warnings.
  */
 boolean
