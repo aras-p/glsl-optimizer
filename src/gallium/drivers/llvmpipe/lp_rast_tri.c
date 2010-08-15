@@ -144,6 +144,35 @@ build_mask(int c, int dcdx, int dcdy)
    return mask;
 }
 
+static INLINE unsigned
+build_mask_linear(int c, int dcdx, int dcdy)
+{
+   int mask = 0;
+
+   int c0 = c;
+   int c1 = c0 + dcdy;
+   int c2 = c1 + dcdy;
+   int c3 = c2 + dcdy;
+
+   mask |= ((c0 + 0 * dcdx) >> 31) & (1 << 0);
+   mask |= ((c0 + 1 * dcdx) >> 31) & (1 << 1);
+   mask |= ((c0 + 2 * dcdx) >> 31) & (1 << 2);
+   mask |= ((c0 + 3 * dcdx) >> 31) & (1 << 3);
+   mask |= ((c1 + 0 * dcdx) >> 31) & (1 << 4);
+   mask |= ((c1 + 1 * dcdx) >> 31) & (1 << 5);
+   mask |= ((c1 + 2 * dcdx) >> 31) & (1 << 6);
+   mask |= ((c1 + 3 * dcdx) >> 31) & (1 << 7); 
+   mask |= ((c2 + 0 * dcdx) >> 31) & (1 << 8);
+   mask |= ((c2 + 1 * dcdx) >> 31) & (1 << 9);
+   mask |= ((c2 + 2 * dcdx) >> 31) & (1 << 10);
+   mask |= ((c2 + 3 * dcdx) >> 31) & (1 << 11);
+   mask |= ((c3 + 0 * dcdx) >> 31) & (1 << 12);
+   mask |= ((c3 + 1 * dcdx) >> 31) & (1 << 13);
+   mask |= ((c3 + 2 * dcdx) >> 31) & (1 << 14);
+   mask |= ((c3 + 3 * dcdx) >> 31) & (1 << 15);
+  
+   return mask;
+}
 
 
 #define TAG(x) x##_1
