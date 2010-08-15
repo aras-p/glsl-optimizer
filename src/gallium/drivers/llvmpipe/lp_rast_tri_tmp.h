@@ -73,24 +73,19 @@ TAG(do_block_16)(struct lp_rasterizer_task *task,
                  const int *c)
 {
    unsigned outmask, inmask, partmask, partial_mask;
-   unsigned i, j;
+   unsigned j;
 
    outmask = 0;                 /* outside one or more trivial reject planes */
    partmask = 0;                /* outside one or more trivial accept planes */
 
    for (j = 0; j < NR_PLANES; j++) {
-      const int *step = plane[j].step;
-      const int eo = plane[j].eo * 4;
-      const int ei = plane[j].ei * 4;
-      const int cox = c[j] + eo;
-      const int cio = ei - 1 - eo;
+      const int dcdx = plane[j].step[1] * 4;
+      const int dcdy = plane[j].step[2] * 4;
+      const int cox = c[j] + plane[j].eo * 4;
+      const int cio = c[j] + plane[j].ei * 4 - 1;
 
-      for (i = 0; i < 16; i++) {
-         int out = cox + step[i] * 4;
-         int part = out + cio;
-         outmask  |= (out >> 31) & (1 << i);
-         partmask |= (part >> 31) & (1 << i);
-      }
+      outmask |= build_mask(cox, dcdx, dcdy);
+      partmask |= build_mask(cio, dcdx, dcdy);
    }
 
    if (outmask == 0xffff)
@@ -151,7 +146,7 @@ TAG(lp_rast_triangle)(struct lp_rasterizer_task *task,
    struct lp_rast_plane plane[NR_PLANES];
    int c[NR_PLANES];
    unsigned outmask, inmask, partmask, partial_mask;
-   unsigned i, j, nr_planes = 0;
+   unsigned j, nr_planes = 0;
 
    while (plane_mask) {
       int i = ffs(plane_mask) - 1;
@@ -165,21 +160,17 @@ TAG(lp_rast_triangle)(struct lp_rasterizer_task *task,
    partmask = 0;                /* outside one or more trivial accept planes */
 
    for (j = 0; j < NR_PLANES; j++) {
-      const int *step = plane[j].step;
-      const int eo = plane[j].eo * 16;
-      const int ei = plane[j].ei * 16;
-      int cox, cio;
-
       c[j] = plane[j].c + plane[j].dcdy * y - plane[j].dcdx * x;
-      cox = c[j] + eo;
-      cio = ei - 1 - eo;
+   }
 
-      for (i = 0; i < 16; i++) {
-         int out = cox + step[i] * 16;
-         int part = out + cio;
-         outmask  |= (out >> 31) & (1 << i);
-         partmask |= (part >> 31) & (1 << i);
-      }
+   for (j = 0; j < NR_PLANES; j++) {
+      const int dcdx = plane[j].step[1] * 16;
+      const int dcdy = plane[j].step[2] * 16;
+      const int cox = c[j] + plane[j].eo * 16;
+      const int cio = c[j] + plane[j].ei * 16 - 1;
+
+      outmask |= build_mask(cox, dcdx, dcdy);
+      partmask |= build_mask(cio, dcdx, dcdy);
    }
 
    if (outmask == 0xffff)
