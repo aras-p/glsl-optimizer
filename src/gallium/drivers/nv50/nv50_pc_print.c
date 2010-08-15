@@ -59,7 +59,7 @@ static const char *nv_opcode_names[NV_OP_COUNT + 1] = {
    "shl",
    "shr",
    "rcp",
-   "(undefined)",
+   "undef",
    "rsqrt",
    "lg2",
    "sin",

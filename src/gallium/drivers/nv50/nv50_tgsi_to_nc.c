@@ -22,19 +22,6 @@
 
 /* XXX: need to clean this up so we get the typecasting right more naturally */
 
-/* LOOP FIXME 1
- * In bld_store_loop_var, only replace values that belong to the TGSI register
- * written.
- * For TGSI MOV, we only associate the source value with the value tracker of
- * the destination, instead of generating an actual MOV.
- *
- * Possible solution: generate PHI functions in loop headers in advance.
- */
-/* LOOP FIXME 2:
- * In fetch_by_bb, when going back through a break-block, we miss all of the
- * definitions from inside the loop.
- */
-
 #include <unistd.h>
 
 #include "nv50_context.h"
@@ -78,6 +65,24 @@ bld_vals_push_val(struct bld_value_stack *stk, struct nv_value *val)
    stk->body[stk->size++] = val;
 }
 
+static INLINE boolean
+bld_vals_del_val(struct bld_value_stack *stk, struct nv_value *val)
+{
+   unsigned i;
+
+   for (i = stk->size - 1; i >= 0; --i)
+      if (stk->body[i] == val)
+         break;
+   if (i < 0)
+      return FALSE;
+
+   if (i != stk->size - 1)
+      stk->body[i] = stk->body[stk->size - 1];
+
+   --stk->size; /* XXX: old size in REALLOC */
+   return TRUE;
+}
+
 static INLINE void
 bld_vals_push(struct bld_value_stack *stk)
 {
@@ -118,7 +123,7 @@ struct bld_context {
    struct bld_value_stack pvs[BLD_MAX_PREDS][4]; /* TGSI_FILE_PREDICATE */
    struct bld_value_stack ovs[PIPE_MAX_SHADER_OUTPUTS][4];
 
-   uint32_t outputs_written[PIPE_MAX_SHADER_OUTPUTS / 32];
+   uint32_t outputs_written[(PIPE_MAX_SHADER_OUTPUTS + 31) / 32];
 
    struct nv_value *frgcrd[4];
    struct nv_value *sysval[4];
@@ -130,6 +135,21 @@ struct bld_context {
    uint num_immds;
 };
 
+static INLINE ubyte
+bld_stack_file(struct bld_context *bld, struct bld_value_stack *stk)
+{
+   if (stk < &bld->avs[0][0])
+      return NV_FILE_GPR;
+   else
+   if (stk < &bld->pvs[0][0])
+      return NV_FILE_ADDR;
+   else
+   if (stk < &bld->ovs[0][0])
+      return NV_FILE_FLAGS;
+   else
+      return NV_FILE_OUT;
+}
+
 static INLINE struct nv_value *
 bld_fetch(struct bld_context *bld, struct bld_value_stack *stk, int i, int c)
 {
@@ -138,16 +158,29 @@ bld_fetch(struct bld_context *bld, struct bld_value_stack *stk, int i, int c)
    return stk[i * 4 + c].top;
 }
 
-static void
-bld_store_loop_var(struct bld_context *, struct bld_value_stack *);
+static struct nv_value *
+bld_loop_phi(struct bld_context *, struct bld_value_stack *, struct nv_value *);
 
+/* If a variable is defined in a loop without prior use, we don't need
+ * a phi in the loop header to account for backwards flow.
+ *
+ * However, if this variable is then also used outside the loop, we do
+ * need a phi after all. But we must not use this phi's def inside the
+ * loop, so we can eliminate the phi if it is unused later.
+ */
 static INLINE void
 bld_store(struct bld_context *bld, struct bld_value_stack *stk, int i, int c,
           struct nv_value *val)
 {
-   bld_store_loop_var(bld, &stk[i * 4 + c]);
+   const uint16_t m = 1 << bld->loop_lvl;
 
-   stk[i * 4 + c].top = val;
+   stk = &stk[i * 4 + c];
+
+   if (bld->loop_lvl && !(m & (stk->loop_def | stk->loop_use)))
+      bld_loop_phi(bld, stk, val);
+
+   stk->top = val;
+   stk->loop_def |= 1 << bld->loop_lvl;
 }
 
 static INLINE void
@@ -181,6 +214,9 @@ bld_warn_uninitialized(struct bld_context *bld, int kind,
 {
    long i = (stk - &bld->tvs[0][0]) / 4;
    long c = (stk - &bld->tvs[0][0]) & 3;
+
+   if (c == 3)
+      c = -1;
 
    debug_printf("WARNING: TEMP[%li].%c %s used uninitialized in BB:%i\n",
                 i, (int)('x' + c), kind ? "may be" : "is", b->id);
@@ -237,6 +273,14 @@ fetch_by_bb(struct bld_value_stack *stack,
 static INLINE struct nv_value *
 bld_load_imm_u32(struct bld_context *bld, uint32_t u);
 
+static INLINE struct nv_value *
+bld_undef(struct bld_context *bld, ubyte file)
+{
+   struct nv_instruction *nvi = new_instruction(bld->pc, NV_OP_UNDEF);
+
+   return bld_def(nvi, 0, new_value(bld->pc, file, NV_TYPE_U32));
+}
+
 static struct nv_value *
 bld_phi(struct bld_context *bld, struct nv_basic_block *b,
         struct bld_value_stack *stack)
@@ -267,21 +311,19 @@ bld_phi(struct bld_context *bld, struct nv_basic_block *b,
             if (in->num_in == 1) {
                in = in->in[0];
             } else {
-               if (!nvbb_reachable_by(in->in[0], vals[0]->insn->bb, b)) {
+               if (!nvbb_reachable_by(in->in[0], vals[0]->insn->bb, b))
                   in = in->in[0];
-                  break;
-               }
-               if (!nvbb_reachable_by(in->in[1], vals[0]->insn->bb, b)) {
+               else
+               if (!nvbb_reachable_by(in->in[1], vals[0]->insn->bb, b))
                   in = in->in[1];
-                  break;
-               }
-               in = in->in[0];
+               else
+                  in = in->in[0];
             }
          }
          bld->pc->current_block = in;
 
          /* should make this a no-op */
-         bld_vals_push_val(stack, bld_load_imm_u32(bld, 0));
+         bld_vals_push_val(stack, bld_undef(bld, vals[0]->reg.file));
          continue;
       }
 
@@ -318,10 +360,55 @@ bld_phi(struct bld_context *bld, struct nv_basic_block *b,
    return phi->def[0];
 }
 
+static struct nv_value *
+bld_loop_phi(struct bld_context *bld, struct bld_value_stack *stack,
+             struct nv_value *def)
+{
+   struct nv_basic_block *bb = bld->pc->current_block;
+   struct nv_instruction *phi;
+   struct nv_value *val;
+
+   val = bld_phi(bld, bld->pc->current_block, stack);
+   if (!val) {
+      bld->pc->current_block = bld->loop_bb[bld->loop_lvl - 1]->in[0];
+
+      val = bld_undef(bld, bld_stack_file(bld, stack));
+   }
+
+   bld->pc->current_block = bld->loop_bb[bld->loop_lvl - 1];
+
+   phi = new_instruction(bld->pc, NV_OP_PHI);
+
+   bld_def(phi, 0, new_value_like(bld->pc, val));
+   if (!def)
+      def = phi->def[0];
+
+   bld_vals_push_val(stack, phi->def[0]);
+
+   phi->target = (struct nv_basic_block *)stack; /* cheat */
+
+   nv_reference(bld->pc, &phi->src[0], val);
+   nv_reference(bld->pc, &phi->src[1], def);
+
+   bld->pc->current_block = bb;
+
+   return phi->def[0];
+}
+
 static INLINE struct nv_value *
 bld_fetch_global(struct bld_context *bld, struct bld_value_stack *stack)
 {
-   stack->loop_use |= 1 << bld->loop_lvl;
+   const uint16_t m = 1 << bld->loop_lvl;
+   const uint16_t use = stack->loop_use;
+
+   stack->loop_use |= m;
+
+   /* If neither used nor def'd inside the loop, build a phi in foresight,
+    * so we don't have to replace stuff later on, which requires tracking.
+    */
+   if (bld->loop_lvl && !((use | stack->loop_def) & m))
+      return bld_loop_phi(bld, stack, NULL);
+
    return bld_phi(bld, bld->pc->current_block, stack);
 }
 
@@ -347,72 +434,50 @@ static void
 bld_replace_value(struct nv_pc *, struct nv_basic_block *, struct nv_value *,
                   struct nv_value *);
 
-/* When setting a variable inside a loop, and we have used it before in the
- * loop, we need to insert a phi function in the loop header.
+/* Replace the source of the phi in the loop header by the last assignment,
+ * or eliminate the phi function if there is no assignment inside the loop.
+ *
+ * Redundancy situation 1 - (used) but (not redefined) value:
+ *  %3 = phi %0, %3 = %3 is used
+ *  %3 = phi %0, %4 = is new definition
+ *
+ * Redundancy situation 2 - (not used) but (redefined) value:
+ *  %3 = phi %0, %2 = %2 is used, %3 could be used outside, deleted by DCE
  */
-static void
-bld_store_loop_var(struct bld_context *bld, struct bld_value_stack *stk)
-{
-   struct nv_basic_block *bb;
-   struct nv_instruction *phi;
-   struct nv_value *val;
-   int ll;
-   uint16_t loop_def = stk->loop_def;
-
-   if (!(ll = bld->loop_lvl))
-      return;
-   stk->loop_def |= 1 << ll;
-
-   if ((~stk->loop_use | loop_def) & (1 << ll))
-      return;
-
-#if 0
-   debug_printf("TEMP[%li].%c used before loop redef (def=%x/use=%x)\n",
-                (stk - &bld->tvs[0][0]) / 4,
-                (int)('x' + ((stk - &bld->tvs[0][0]) & 3)),
-                loop_def, stk->loop_use);
-#endif
-
-   stk->loop_def |= 1 << ll;
-
-   assert(bld->loop_bb[ll - 1]->num_in == 1);
-
-   /* get last assignment from outside this loop, could be from bld_phi */
-   val = stk->body[stk->size - 1];
-
-   /* create the phi in the loop entry block */
-
-   bb = bld->pc->current_block;
-   bld->pc->current_block = bld->loop_bb[ll - 1];
-
-   phi = new_instruction(bld->pc, NV_OP_PHI);
-
-   bld_def(phi, 0, new_value(bld->pc, val->reg.file, val->reg.type));
-
-   bld->pc->pass_seq++;
-   bld_replace_value(bld->pc, bld->loop_bb[ll - 1], val, phi->def[0]);
-
-   assert(!stk->top);
-   bld_vals_push_val(stk, phi->def[0]);
-
-   phi->target = (struct nv_basic_block *)stk; /* cheat */
-
-   nv_reference(bld->pc, &phi->src[0], val);
-   nv_reference(bld->pc, &phi->src[1], phi->def[0]);
-
-   bld->pc->current_block = bb;
-}
-
 static void
 bld_loop_end(struct bld_context *bld, struct nv_basic_block *bb)
 {
-   struct nv_instruction *phi;
+   struct nv_instruction *phi, *next;
    struct nv_value *val;
+   struct bld_value_stack *stk;
+   int s;
 
-   for (phi = bb->phi; phi && phi->opcode == NV_OP_PHI; phi = phi->next) {
-      val = bld_fetch_global(bld, (struct bld_value_stack *)phi->target);
-      nv_reference(bld->pc, &phi->src[1], val);
+   for (phi = bb->phi; phi && phi->opcode == NV_OP_PHI; phi = next) {
+      next = phi->next;
+
+      stk = (struct bld_value_stack *)phi->target;
       phi->target = NULL;
+
+      val = bld_fetch_global(bld, stk);
+
+      nv_reference(bld->pc, &phi->src[1], val);
+
+      s = -1;
+      if (phi->src[0]->value == phi->def[0] ||
+          phi->src[0]->value == phi->src[1]->value)
+         s = 1;
+      else
+      if (phi->src[1]->value == phi->def[0])
+         s = 0;
+
+      if (s >= 0) {
+         bld_vals_del_val(stk, phi->def[0]);
+
+         ++bld->pc->pass_seq;
+         bld_replace_value(bld->pc, bb, phi->def[0], phi->src[s]->value);
+
+         nv_nvi_delete(phi);
+      }
    }
 }
 
@@ -437,7 +502,7 @@ bld_insn_1(struct bld_context *bld, uint opcode, struct nv_value *src0)
 
 static struct nv_value *
 bld_insn_2(struct bld_context *bld, uint opcode,
-	      struct nv_value *src0, struct nv_value *src1)
+           struct nv_value *src0, struct nv_value *src1)
 {
    struct nv_instruction *insn = new_instruction(bld->pc, opcode);
 
@@ -449,8 +514,8 @@ bld_insn_2(struct bld_context *bld, uint opcode,
 
 static struct nv_value *
 bld_insn_3(struct bld_context *bld, uint opcode,
-              struct nv_value *src0, struct nv_value *src1,
-              struct nv_value *src2)
+           struct nv_value *src0, struct nv_value *src1,
+           struct nv_value *src2)
 {
    struct nv_instruction *insn = new_instruction(bld->pc, opcode);
 

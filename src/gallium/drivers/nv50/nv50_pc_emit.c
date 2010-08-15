@@ -1130,6 +1130,7 @@ nv50_emit_instruction(struct nv_pc *pc, struct nv_instruction *i)
       pc->emit[1] = 0xe0000000;
       break;
    case NV_OP_PHI:
+   case NV_OP_UNDEF:
    case NV_OP_SUB:
       NOUVEAU_ERR("operation \"%s\" should have been eliminated\n",
 		  nv_opcode_name(i->opcode));

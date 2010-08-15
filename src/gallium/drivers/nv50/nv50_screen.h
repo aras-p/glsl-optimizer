@@ -22,10 +22,10 @@ struct nv50_screen {
 
 	struct nouveau_resource *immd_heap;
 
-	struct pipe_resource *strm_vbuf[16];
-
 	struct nouveau_bo *tic;
 	struct nouveau_bo *tsc;
+
+	struct nouveau_bo *stack_bo;
 
 	boolean force_push;
 };

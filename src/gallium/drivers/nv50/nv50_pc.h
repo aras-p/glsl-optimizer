@@ -47,7 +47,7 @@
 #define NV_OP_SHL       17
 #define NV_OP_SHR       18
 #define NV_OP_RCP       19
-/* gap */
+#define NV_OP_UNDEF     20
 #define NV_OP_RSQ       21
 #define NV_OP_LG2       22
 #define NV_OP_SIN       23
@@ -358,6 +358,12 @@ new_value(struct nv_pc *pc, ubyte file, ubyte type)
    value->reg.file = file;
    value->reg.type = type;
    return value;
+}
+
+static INLINE struct nv_value *
+new_value_like(struct nv_pc *pc, struct nv_value *like)
+{
+   return new_value(pc, like->reg.file, like->reg.type);
 }
 
 static INLINE struct nv_ref *

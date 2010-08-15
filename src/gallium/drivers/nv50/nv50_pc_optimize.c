@@ -89,7 +89,7 @@ inst_cullable(struct nv_instruction *nvi)
 static INLINE boolean
 nvi_isnop(struct nv_instruction *nvi)
 {
-   if (nvi->opcode == NV_OP_EXPORT)
+   if (nvi->opcode == NV_OP_EXPORT || nvi->opcode == NV_OP_UNDEF)
       return TRUE;
 
    if (nvi->fixed ||
@@ -849,7 +849,7 @@ nv_pass_dce(struct nv_pass_dce *ctx, struct nv_basic_block *b)
    int j;
    struct nv_instruction *nvi, *next;
 
-   for (nvi = b->entry; nvi; nvi = next) {
+   for (nvi = b->phi ? b->phi : b->entry; nvi; nvi = next) {
       next = nvi->next;
 
       if (inst_cullable(nvi)) {
