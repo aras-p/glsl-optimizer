@@ -1,10 +1,9 @@
 #ifndef SLANG_LABEL_H
 #define SLANG_LABEL_H 1
 
-#include "main/imports.h"
-#include "main/mtypes.h"
-#include "program/prog_instruction.h"
+#include "main/glheader.h"
 
+struct gl_program;
 
 struct slang_label_
 {
