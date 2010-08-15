@@ -37,52 +37,6 @@
 #include "lp_tile_soa.h"
 
 
-/**
- * Map an index in [0,15] to an x,y position, multiplied by 4.
- * This is used to get the position of each subtile in a 4x4
- * grid of edge step values.
- * Note: we can use some bit twiddling to compute these values instead
- * of using a look-up table, but there's no measurable performance
- * difference.
- */
-static const int pos_table4[16][2] = {
-   { 0, 0 },
-   { 4, 0 },
-   { 0, 4 },
-   { 4, 4 },
-   { 8, 0 },
-   { 12, 0 },
-   { 8, 4 },
-   { 12, 4 },
-   { 0, 8 },
-   { 4, 8 },
-   { 0, 12 },
-   { 4, 12 },
-   { 8, 8 },
-   { 12, 8 },
-   { 8, 12 },
-   { 12, 12 }
-};
-
-
-static const int pos_table16[16][2] = {
-   { 0, 0 },
-   { 16, 0 },
-   { 0, 16 },
-   { 16, 16 },
-   { 32, 0 },
-   { 48, 0 },
-   { 32, 16 },
-   { 48, 16 },
-   { 0, 32 },
-   { 16, 32 },
-   { 0, 48 },
-   { 16, 48 },
-   { 32, 32 },
-   { 48, 32 },
-   { 32, 48 },
-   { 48, 48 }
-};
 
 
 /**
