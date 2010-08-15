@@ -120,7 +120,7 @@ typedef union { GLfloat f; GLint i; } fi_type;
  * \name Work-arounds for platforms that lack C99 math functions
  */
 /*@{*/
-#if (_XOPEN_SOURCE < 600) && !defined(_ISOC99_SOURCE) \
+#if (defined(_XOPEN_SOURCE) && (_XOPEN_SOURCE < 600)) && !defined(_ISOC99_SOURCE) \
    && (!defined(__STDC_VERSION__) || (__STDC_VERSION__ < 199901L)) \
    && (!defined(_MSC_VER) || (_MSC_VER < 1400))
 #define acosf(f) ((float) acos(f))
