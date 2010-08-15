@@ -151,6 +151,9 @@ nvfx_rasterizer_state_create(struct pipe_context *pipe,
 		sb_data(sb, fui(cso->offset_units * 2));
 	}
 
+	sb_method(sb, NV34TCL_FLATSHADE_FIRST, 1);
+	sb_data(sb, cso->flatshade_first);
+
 	rsso->pipe = *cso;
 	rsso->sb_len = sb_len(sb, rsso->sb);
 	return (void *)rsso;

@@ -50,7 +50,7 @@
 struct nvfx_rasterizer_state {
 	struct pipe_rasterizer_state pipe;
 	unsigned sb_len;
-	uint32_t sb[32];
+	uint32_t sb[34];
 };
 
 struct nvfx_zsa_state {
