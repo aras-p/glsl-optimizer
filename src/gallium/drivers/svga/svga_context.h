@@ -382,6 +382,7 @@ struct svga_context
 #define SVGA_NEW_ZERO_STRIDE         0x2000000
 #define SVGA_NEW_TEXTURE_FLAGS       0x4000000
 #define SVGA_NEW_STENCIL_REF         0x8000000
+#define SVGA_NEW_COMMAND_BUFFER      0x10000000
 
 
 

@@ -56,6 +56,7 @@ static int
 update_tss_binding(struct svga_context *svga, 
                    unsigned dirty )
 {
+   boolean reemit = !!(dirty & SVGA_NEW_COMMAND_BUFFER);
    unsigned i;
    unsigned count = MAX2( svga->curr.num_sampler_views,
                           svga->state.hw_draw.num_views );
@@ -107,12 +108,18 @@ update_tss_binding(struct svga_context *svga,
                                                 max_lod);
       }
 
-      if (view->dirty) {
+      /*
+       * We need to reemit non-null texture bindings, even when they are not
+       * dirty, to ensure that the resources are paged in.
+       */
+
+      if (view->dirty ||
+          (reemit && view->v)) {
          queue.bind[queue.bind_count].unit = i;
          queue.bind[queue.bind_count].view = view;
          queue.bind_count++;
       } 
-      else if (view->v) {
+      if (!view->dirty && view->v) {
          svga_validate_sampler_view(svga, view->v);
       }
    }
@@ -160,7 +167,8 @@ fail:
 struct svga_tracked_state svga_hw_tss_binding = {
    "texture binding emit",
    SVGA_NEW_TEXTURE_BINDING |
-   SVGA_NEW_SAMPLER,
+   SVGA_NEW_SAMPLER |
+   SVGA_NEW_COMMAND_BUFFER,
    update_tss_binding
 };
 
