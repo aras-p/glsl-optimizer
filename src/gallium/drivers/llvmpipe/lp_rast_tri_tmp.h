@@ -51,8 +51,8 @@ TAG(do_block_4)(struct lp_rasterizer_task *task,
 
    for (j = 0; j < NR_PLANES; j++) {
       mask &= ~build_mask(c[j] - 1, 
-			  plane[j].step[1],
-			  plane[j].step[2]);
+			  -plane[j].dcdx,
+			  plane[j].dcdy);
    }
 
    /* Now pass to the shader:
@@ -79,8 +79,8 @@ TAG(do_block_16)(struct lp_rasterizer_task *task,
    partmask = 0;                /* outside one or more trivial accept planes */
 
    for (j = 0; j < NR_PLANES; j++) {
-      const int dcdx = plane[j].step[1] * 4;
-      const int dcdy = plane[j].step[2] * 4;
+      const int dcdx = -plane[j].dcdx * 4;
+      const int dcdy = plane[j].dcdy * 4;
       const int cox = c[j] + plane[j].eo * 4;
       const int cio = c[j] + plane[j].ei * 4 - 1;
 
@@ -164,8 +164,8 @@ TAG(lp_rast_triangle)(struct lp_rasterizer_task *task,
    }
 
    for (j = 0; j < NR_PLANES; j++) {
-      const int dcdx = plane[j].step[1] * 16;
-      const int dcdy = plane[j].step[2] * 16;
+      const int dcdx = -plane[j].dcdx * 16;
+      const int dcdy = plane[j].dcdy * 16;
       const int cox = c[j] + plane[j].eo * 16;
       const int cio = c[j] + plane[j].ei * 16 - 1;
 
