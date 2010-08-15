@@ -237,9 +237,12 @@ static void r300_clear(struct pipe_context* pipe,
         /* Emit clear packets. */
         r300_emit_zmask_clear(r300, r300->zmask_clear.size,
                               r300->zmask_clear.state);
-        if (r300->hiz_clear.dirty)
+        r300->zmask_clear.dirty = FALSE;
+        if (r300->hiz_clear.dirty) {
             r300_emit_hiz_clear(r300, r300->hiz_clear.size,
                                 r300->hiz_clear.state);
+            r300->hiz_clear.dirty = FALSE;
+        }
     } else {
         assert(0);
     }
