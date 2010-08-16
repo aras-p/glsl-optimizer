@@ -2715,6 +2715,15 @@ ast_struct_specifier::hir(exec_list *instructions,
 
       decl_list->type->specifier->hir(instructions, state);
 
+      /* Section 10.9 of the GLSL ES 1.00 specification states that
+       * embedded structure definitions have been removed from the language.
+       */
+      if (state->es_shader && decl_list->type->specifier->structure != NULL) {
+	 YYLTYPE loc = this->get_location();
+	 _mesa_glsl_error(&loc, state, "Embedded structure definitions are "
+			  "not allowed in GLSL ES 1.00.");
+      }
+
       const glsl_type *decl_type =
 	 decl_list->type->specifier->glsl_type(& type_name, state);
 
