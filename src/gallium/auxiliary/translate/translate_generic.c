@@ -372,7 +372,7 @@ static ALWAYS_INLINE void PIPE_CDECL generic_run_one( struct translate_generic *
 
    for (attr = 0; attr < nr_attrs; attr++) {
       float data[4];
-      char *dst = vert + tg->attrib[attr].output_offset;
+      uint8_t *dst = (uint8_t *)vert + tg->attrib[attr].output_offset;
 
       if (tg->attrib[attr].type == TRANSLATE_ELEMENT_NORMAL) {
          const uint8_t *src;
