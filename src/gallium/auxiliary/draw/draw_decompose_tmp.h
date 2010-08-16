@@ -257,7 +257,7 @@ FUNC(FUNC_VARS)
             flags = (DRAW_PIPE_RESET_STIPPLE |
                      DRAW_PIPE_EDGE_FLAG_0);
             if (!(prim_flags & DRAW_SPLIT_BEFORE))
-               flags |= DRAW_PIPE_EDGE_FLAG_1;
+               flags |= DRAW_PIPE_EDGE_FLAG_2;
 
             edge_next = DRAW_PIPE_EDGE_FLAG_0;
             edge_finish =
