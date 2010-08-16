@@ -50,6 +50,7 @@ void glcpp_set_column (int  column_no , yyscan_t yyscanner);
 %option extra-type="glcpp_parser_t *"
 %option prefix="glcpp_"
 %option stack
+%option never-interactive
 
 %x DONE COMMENT UNREACHABLE
 

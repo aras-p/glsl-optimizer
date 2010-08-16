@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
-from os import path
 import sys
+import StringIO
 
 def vec_type(g, size):
     if size == 1:
@@ -95,204 +95,255 @@ def generate_fiu_sigs(tex_inst, sampler_type, use_proj = False, unused_fields = 
     generate_sigs("i", tex_inst, sampler_type, use_proj, unused_fields)
     generate_sigs("u", tex_inst, sampler_type, use_proj, unused_fields)
 
-builtins_dir = path.join(path.dirname(path.abspath(__file__)), "..")
+def start_function(name):
+    sys.stdout = StringIO.StringIO()
+    print "((function " + name
 
-with open(path.join(builtins_dir, "130", "texture"), 'w') as sys.stdout:
-    print "((function texture"
+def end_function(fs, name):
+    print "))"
+    fs[name] = sys.stdout.getvalue();
+    sys.stdout.close()
+
+# Generate all the functions and store them in the supplied dictionary.
+# This is better than writing them to actual files since they should never be
+# edited; it'd also be easy to confuse them with the many hand-generated files.
+#
+# Takes a dictionary as an argument.
+def generate_texture_functions(fs):
+    start_function("texture")
     generate_fiu_sigs("tex", "1D")
     generate_fiu_sigs("tex", "2D")
     generate_fiu_sigs("tex", "3D")
     generate_fiu_sigs("tex", "Cube")
     generate_fiu_sigs("tex", "1DArray")
     generate_fiu_sigs("tex", "2DArray")
-    print "))"
 
-# txb variants are only allowed within a fragment shader (GLSL 1.30 p. 86)
-with open(path.join(builtins_dir, "130_fs", "texture"), 'w') as sys.stdout:
-    print "((function texture"
     generate_fiu_sigs("txb", "1D")
     generate_fiu_sigs("txb", "2D")
     generate_fiu_sigs("txb", "3D")
     generate_fiu_sigs("txb", "Cube")
     generate_fiu_sigs("txb", "1DArray")
     generate_fiu_sigs("txb", "2DArray")
-    print "))"
+    end_function(fs, "texture")
 
-with open(path.join(builtins_dir, "130", "textureProj"), 'w') as sys.stdout:
-    print "((function textureProj"
+    start_function("textureProj")
     generate_fiu_sigs("tex", "1D", True)
     generate_fiu_sigs("tex", "1D", True, 2)
     generate_fiu_sigs("tex", "2D", True)
     generate_fiu_sigs("tex", "2D", True, 1)
     generate_fiu_sigs("tex", "3D", True)
-    print "))"
 
-with open(path.join(builtins_dir, "130_fs", "textureProj"), 'w') as sys.stdout:
-    print "((function textureProj"
     generate_fiu_sigs("txb", "1D", True)
     generate_fiu_sigs("txb", "1D", True, 2)
     generate_fiu_sigs("txb", "2D", True)
     generate_fiu_sigs("txb", "2D", True, 1)
     generate_fiu_sigs("txb", "3D", True)
-    print "))"
+    end_function(fs, "textureProj")
 
-with open(path.join(builtins_dir, "130", "textureLod"), 'w') as sys.stdout:
-    print "((function textureLod"
+    start_function("textureLod")
     generate_fiu_sigs("txl", "1D")
     generate_fiu_sigs("txl", "2D")
     generate_fiu_sigs("txl", "3D")
     generate_fiu_sigs("txl", "Cube")
     generate_fiu_sigs("txl", "1DArray")
     generate_fiu_sigs("txl", "2DArray")
-    print "))"
+    end_function(fs, "textureLod")
 
-with open(path.join(builtins_dir, "130", "texelFetch"), 'w') as sys.stdout:
-    print "((function texelFetch"
+    start_function("texelFetch")
     generate_fiu_sigs("txf", "1D")
     generate_fiu_sigs("txf", "2D")
     generate_fiu_sigs("txf", "3D")
     generate_fiu_sigs("txf", "1DArray")
     generate_fiu_sigs("txf", "2DArray")
-    print "))"
+    end_function(fs, "texelFetch")
 
-with open(path.join(builtins_dir, "130", "textureProjLod"), 'w') as sys.stdout:
-    print "((function textureProjLod"
+    start_function("textureProjLod")
     generate_fiu_sigs("txl", "1D", True)
     generate_fiu_sigs("txl", "1D", True, 2)
     generate_fiu_sigs("txl", "2D", True)
     generate_fiu_sigs("txl", "2D", True, 1)
     generate_fiu_sigs("txl", "3D", True)
-    print "))"
+    end_function(fs, "textureProjLod")
 
-with open(path.join(builtins_dir, "130", "textureGrad"), 'w') as sys.stdout:
-    print "((function textureGrad"
+    start_function("textureGrad")
     generate_fiu_sigs("txd", "1D")
     generate_fiu_sigs("txd", "2D")
     generate_fiu_sigs("txd", "3D")
     generate_fiu_sigs("txd", "Cube")
     generate_fiu_sigs("txd", "1DArray")
     generate_fiu_sigs("txd", "2DArray")
-    print ")\n)"
+    end_function(fs, "textureGrad")
 
-with open(path.join(builtins_dir, "130", "textureProjGrad"), 'w') as sys.stdout:
-    print "((function textureProjGrad"
+    start_function("textureProjGrad")
     generate_fiu_sigs("txd", "1D", True)
     generate_fiu_sigs("txd", "1D", True, 2)
     generate_fiu_sigs("txd", "2D", True)
     generate_fiu_sigs("txd", "2D", True, 1)
     generate_fiu_sigs("txd", "3D", True)
-    print "))"
+    end_function(fs, "textureProjGrad")
 
-# ARB_texture_rectangle extension
-with open(path.join(builtins_dir, "ARB_texture_rectangle", "textures"), 'w') as sys.stdout:
-    print "((function texture2DRect"
+    # ARB_texture_rectangle extension
+    start_function("texture2DRect")
     generate_sigs("", "tex", "2DRect")
-    print ")\n (function shadow2DRect"
+    end_function(fs, "texture2DRect")
+
+    start_function("texture2DRectProj")
+    generate_sigs("", "tex", "2DRect", True)
+    generate_sigs("", "tex", "2DRect", True, 1)
+    end_function(fs, "texture2DRectProj")
+
+    start_function("shadow2DRect")
     generate_sigs("", "tex", "2DRectShadow")
-    print "))"
+    end_function(fs, "shadow2DRect")
 
-# EXT_texture_array extension
-with open(path.join(builtins_dir, "EXT_texture_array", "textures"), 'w') as sys.stdout:
-    print "((function texture1DArray"
+    start_function("shadow2DRectProj")
+    generate_sigs("", "tex", "2DRectShadow", True)
+    end_function(fs, "shadow2DRectProj")
+
+    # EXT_texture_array extension
+    start_function("texture1DArray")
     generate_sigs("", "tex", "1DArray")
-    print ")\n (function texture1DArrayLod"
-    generate_sigs("", "txl", "1DArray")
-    print ")\n (function texture2DArray"
-    generate_sigs("", "tex", "2DArray")
-    print ")\n (function texture2DArrayLod"
-    generate_sigs("", "txl", "2DArray")
-    print ")\n (function shadow1DArray"
-    generate_sigs("", "tex", "1DArrayShadow")
-    print ")\n (function shadow1DArrayLod"
-    generate_sigs("", "txl", "1DArrayShadow")
-    print ")\n (function shadow2DArray"
-    generate_sigs("", "tex", "2DArrayShadow")
-    print "))"
-
-with open(path.join(builtins_dir, "EXT_texture_array_fs", "textures"), 'w') as sys.stdout:
-    print "((function texture1DArray"
     generate_sigs("", "txb", "1DArray")
-    print ")\n (function texture2DArray"
-    generate_sigs("", "txb", "2DArray")
-    print ")\n (function shadow1DArray"
-    generate_sigs("", "txb", "1DArrayShadow")
-    print "))"
+    end_function(fs, "texture1DArray")
 
-# Deprecated (110/120 style) functions with silly names:
-with open(path.join(builtins_dir, "110", "textures"), 'w') as sys.stdout:
-    print "((function texture1D"
+    start_function("texture1DArrayLod")
+    generate_sigs("", "txl", "1DArray")
+    end_function(fs, "texture1DArrayLod")
+
+    start_function("texture2DArray")
+    generate_sigs("", "tex", "2DArray")
+    generate_sigs("", "txb", "2DArray")
+    end_function(fs, "texture2DArray")
+
+    start_function("texture2DArrayLod")
+    generate_sigs("", "txl", "2DArray")
+    end_function(fs, "texture2DArrayLod")
+
+    start_function("shadow1DArray")
+    generate_sigs("", "tex", "1DArrayShadow")
+    generate_sigs("", "txb", "1DArrayShadow")
+    end_function(fs, "shadow1DArray")
+
+    start_function("shadow1DArrayLod")
+    generate_sigs("", "txl", "1DArrayShadow")
+    end_function(fs, "shadow1DArrayLod")
+
+    start_function("shadow2DArray")
+    generate_sigs("", "tex", "2DArrayShadow")
+    end_function(fs, "shadow2DArray")
+
+    # Deprecated (110/120 style) functions with silly names:
+    start_function("texture1D")
     generate_sigs("", "tex", "1D")
-    print ")\n (function texture1DLod"
+    generate_sigs("", "txb", "1D")
+    end_function(fs, "texture1D")
+
+    start_function("texture1DLod")
     generate_sigs("", "txl", "1D")
-    print ")\n (function texture1DProj"
+    end_function(fs, "texture1DLod")
+
+    start_function("texture1DProj")
     generate_sigs("", "tex", "1D", True)
     generate_sigs("", "tex", "1D", True, 2)
-    print ")\n (function texture1DProjLod"
-    generate_sigs("", "txl", "1D", True)
-    generate_sigs("", "txl", "1D", True, 2)
-    print ")\n (function texture2D"
-    generate_sigs("", "tex", "2D")
-    print ")\n(function texture2DLod"
-    generate_sigs("", "txl", "2D")
-    print ")\n (function texture2DProj"
-    generate_sigs("", "tex", "2D", True)
-    generate_sigs("", "tex", "2D", True, 1)
-    print ")\n (function texture2DProjLod"
-    generate_sigs("", "txl", "2D", True)
-    generate_sigs("", "txl", "2D", True, 1)
-    print ")\n (function texture3D"
-    generate_sigs("", "tex", "3D")
-    print ")\n (function texture3DLod"
-    generate_sigs("", "txl", "3D")
-    print ")\n (function texture3DProj"
-    generate_sigs("", "tex", "3D", True)
-    print ")\n (function texture3DProjLod"
-    generate_sigs("", "txl", "3D", True)
-    print ")\n (function textureCube"
-    generate_sigs("", "tex", "Cube")
-    print ")\n (function textureCubeLod"
-    generate_sigs("", "txl", "Cube")
-    print ")\n (function shadow1D"
-    generate_sigs("", "tex", "1DShadow", False, 1)
-    print ")\n (function shadow1DLod"
-    generate_sigs("", "txl", "1DShadow", False, 1)
-    print ")\n (function shadow1DProj"
-    generate_sigs("", "tex", "1DShadow", True, 1)
-    print ")\n (function shadow1DProjLod"
-    generate_sigs("", "txl", "1DShadow", True, 1)
-    print ")\n (function shadow2D"
-    generate_sigs("", "tex", "2DShadow")
-    print ")\n (function shadow2DLod"
-    generate_sigs("", "txl", "2DShadow")
-    print ")\n (function shadow2DProj"
-    generate_sigs("", "tex", "2DShadow", True)
-    print ")\n (function shadow2DProjLod"
-    generate_sigs("", "txl", "2DShadow", True)
-    print "))"
-
-with open(path.join(builtins_dir, "110_fs", "textures"), 'w') as sys.stdout:
-    print "((function texture1D"
-    generate_sigs("", "txb", "1D")
-    print ")\n (function texture1DProj"
     generate_sigs("", "txb", "1D", True)
     generate_sigs("", "txb", "1D", True, 2)
-    print ")\n (function texture2D"
+    end_function(fs, "texture1DProj")
+
+    start_function("texture1DProjLod")
+    generate_sigs("", "txl", "1D", True)
+    generate_sigs("", "txl", "1D", True, 2)
+    end_function(fs, "texture1DProjLod")
+
+    start_function("texture2D")
+    generate_sigs("", "tex", "2D")
     generate_sigs("", "txb", "2D")
-    print ")\n (function texture2DProj"
+    end_function(fs, "texture2D")
+
+    start_function("texture2DLod")
+    generate_sigs("", "txl", "2D")
+    end_function(fs, "texture2DLod")
+
+    start_function("texture2DProj")
+    generate_sigs("", "tex", "2D", True)
+    generate_sigs("", "tex", "2D", True, 1)
     generate_sigs("", "txb", "2D", True)
     generate_sigs("", "txb", "2D", True, 1)
-    print ")\n (function texture3D"
+    end_function(fs, "texture2DProj")
+
+    start_function("texture2DProjLod")
+    generate_sigs("", "txl", "2D", True)
+    generate_sigs("", "txl", "2D", True, 1)
+    end_function(fs, "texture2DProjLod")
+
+    start_function("texture3D")
+    generate_sigs("", "tex", "3D")
     generate_sigs("", "txb", "3D")
-    print ")\n (function texture3DProj"
+    end_function(fs, "texture3D")
+
+    start_function("texture3DLod")
+    generate_sigs("", "txl", "3D")
+    end_function(fs, "texture3DLod")
+
+    start_function("texture3DProj")
+    generate_sigs("", "tex", "3D", True)
     generate_sigs("", "txb", "3D", True)
-    print ")\n (function textureCube"
+    end_function(fs, "texture3DProj")
+
+    start_function("texture3DProjLod")
+    generate_sigs("", "txl", "3D", True)
+    end_function(fs, "texture3DProjLod")
+
+    start_function("textureCube")
+    generate_sigs("", "tex", "Cube")
     generate_sigs("", "txb", "Cube")
-    print ")\n (function shadow1D"
+    end_function(fs, "textureCube")
+
+    start_function("textureCubeLod")
+    generate_sigs("", "txl", "Cube")
+    end_function(fs, "textureCubeLod")
+
+    start_function("shadow1D")
+    generate_sigs("", "tex", "1DShadow", False, 1)
     generate_sigs("", "txb", "1DShadow", False, 1)
-    print ")\n (function shadow1DProj"
+    end_function(fs, "shadow1D")
+
+    start_function("shadow1DLod")
+    generate_sigs("", "txl", "1DShadow", False, 1)
+    end_function(fs, "shadow1DLod")
+
+    start_function("shadow1DProj")
+    generate_sigs("", "tex", "1DShadow", True, 1)
     generate_sigs("", "txb", "1DShadow", True, 1)
-    print ")\n (function shadow2D"
+    end_function(fs, "shadow1DProj")
+
+    start_function("shadow1DProjLod")
+    generate_sigs("", "txl", "1DShadow", True, 1)
+    end_function(fs, "shadow1DProjLod")
+
+    start_function("shadow2D")
+    generate_sigs("", "tex", "2DShadow")
     generate_sigs("", "txb", "2DShadow")
-    print ")\n (function shadow2DProj"
+    end_function(fs, "shadow2D")
+
+    start_function("shadow2DLod")
+    generate_sigs("", "txl", "2DShadow")
+    end_function(fs, "shadow2DLod")
+
+    start_function("shadow2DProj")
+    generate_sigs("", "tex", "2DShadow", True)
     generate_sigs("", "txb", "2DShadow", True)
-    print "))"
+    end_function(fs, "shadow2DProj")
+
+    start_function("shadow2DProjLod")
+    generate_sigs("", "txl", "2DShadow", True)
+    end_function(fs, "shadow2DProjLod")
+
+    sys.stdout = sys.__stdout__
+    return fs
+
+# If you actually run this script, it'll print out all the functions.
+if __name__ == "__main__":
+    fs = {}
+    generate_texture_functions(fs);
+    for k, v in fs.iteritems():
+	print v

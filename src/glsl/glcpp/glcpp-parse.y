@@ -32,7 +32,7 @@
 #include "main/mtypes.h"
 
 #define glcpp_print(stream, str) stream = talloc_strdup_append(stream, str)
-#define glcpp_printf(stream, fmt, args...) \
+#define glcpp_printf(stream, fmt, args, ...) \
 	stream = talloc_asprintf_append(stream, fmt, args)
 
 static void

@@ -526,6 +526,7 @@ type_size(const struct glsl_type *type)
       return 0;
    default:
       assert(0);
+      return 0;
    }
 }
 
@@ -980,51 +981,51 @@ static const struct {
    bool array_indexed;
 } statevars[] = {
    {"gl_DepthRange", "near",
-    {STATE_DEPTH_RANGE, 0, 0}, SWIZZLE_XXXX},
+    {STATE_DEPTH_RANGE, 0, 0}, SWIZZLE_XXXX, false},
    {"gl_DepthRange", "far",
-    {STATE_DEPTH_RANGE, 0, 0}, SWIZZLE_YYYY},
+    {STATE_DEPTH_RANGE, 0, 0}, SWIZZLE_YYYY, false},
    {"gl_DepthRange", "diff",
-    {STATE_DEPTH_RANGE, 0, 0}, SWIZZLE_ZZZZ},
+    {STATE_DEPTH_RANGE, 0, 0}, SWIZZLE_ZZZZ, false},
 
    {"gl_ClipPlane", NULL,
     {STATE_CLIPPLANE, 0, 0}, SWIZZLE_XYZW, true}
 ,
    {"gl_Point", "size",
-    {STATE_POINT_SIZE}, SWIZZLE_XXXX},
+    {STATE_POINT_SIZE}, SWIZZLE_XXXX, false},
    {"gl_Point", "sizeMin",
-    {STATE_POINT_SIZE}, SWIZZLE_YYYY},
+    {STATE_POINT_SIZE}, SWIZZLE_YYYY, false},
    {"gl_Point", "sizeMax",
-    {STATE_POINT_SIZE}, SWIZZLE_ZZZZ},
+    {STATE_POINT_SIZE}, SWIZZLE_ZZZZ, false},
    {"gl_Point", "fadeThresholdSize",
-    {STATE_POINT_SIZE}, SWIZZLE_WWWW},
+    {STATE_POINT_SIZE}, SWIZZLE_WWWW, false},
    {"gl_Point", "distanceConstantAttenuation",
-    {STATE_POINT_ATTENUATION}, SWIZZLE_XXXX},
+    {STATE_POINT_ATTENUATION}, SWIZZLE_XXXX, false},
    {"gl_Point", "distanceLinearAttenuation",
-    {STATE_POINT_ATTENUATION}, SWIZZLE_YYYY},
+    {STATE_POINT_ATTENUATION}, SWIZZLE_YYYY, false},
    {"gl_Point", "distanceQuadraticAttenuation",
-    {STATE_POINT_ATTENUATION}, SWIZZLE_ZZZZ},
+    {STATE_POINT_ATTENUATION}, SWIZZLE_ZZZZ, false},
 
    {"gl_FrontMaterial", "emission",
-    {STATE_MATERIAL, 0, STATE_EMISSION}, SWIZZLE_XYZW},
+    {STATE_MATERIAL, 0, STATE_EMISSION}, SWIZZLE_XYZW, false},
    {"gl_FrontMaterial", "ambient",
-    {STATE_MATERIAL, 0, STATE_AMBIENT}, SWIZZLE_XYZW},
+    {STATE_MATERIAL, 0, STATE_AMBIENT}, SWIZZLE_XYZW, false},
    {"gl_FrontMaterial", "diffuse",
-    {STATE_MATERIAL, 0, STATE_DIFFUSE}, SWIZZLE_XYZW},
+    {STATE_MATERIAL, 0, STATE_DIFFUSE}, SWIZZLE_XYZW, false},
    {"gl_FrontMaterial", "specular",
-    {STATE_MATERIAL, 0, STATE_SPECULAR}, SWIZZLE_XYZW},
+    {STATE_MATERIAL, 0, STATE_SPECULAR}, SWIZZLE_XYZW, false},
    {"gl_FrontMaterial", "shininess",
-    {STATE_MATERIAL, 0, STATE_SHININESS}, SWIZZLE_XXXX},
+    {STATE_MATERIAL, 0, STATE_SHININESS}, SWIZZLE_XXXX, false},
 
    {"gl_BackMaterial", "emission",
-    {STATE_MATERIAL, 1, STATE_EMISSION}, SWIZZLE_XYZW},
+    {STATE_MATERIAL, 1, STATE_EMISSION}, SWIZZLE_XYZW, false},
    {"gl_BackMaterial", "ambient",
-    {STATE_MATERIAL, 1, STATE_AMBIENT}, SWIZZLE_XYZW},
+    {STATE_MATERIAL, 1, STATE_AMBIENT}, SWIZZLE_XYZW, false},
    {"gl_BackMaterial", "diffuse",
-    {STATE_MATERIAL, 1, STATE_DIFFUSE}, SWIZZLE_XYZW},
+    {STATE_MATERIAL, 1, STATE_DIFFUSE}, SWIZZLE_XYZW, false},
    {"gl_BackMaterial", "specular",
-    {STATE_MATERIAL, 1, STATE_SPECULAR}, SWIZZLE_XYZW},
+    {STATE_MATERIAL, 1, STATE_SPECULAR}, SWIZZLE_XYZW, false},
    {"gl_BackMaterial", "shininess",
-    {STATE_MATERIAL, 1, STATE_SHININESS}, SWIZZLE_XXXX},
+    {STATE_MATERIAL, 1, STATE_SHININESS}, SWIZZLE_XXXX, false},
 
    {"gl_LightSource", "ambient",
     {STATE_LIGHT, 0, STATE_AMBIENT}, SWIZZLE_XYZW, true},
@@ -1052,12 +1053,12 @@ static const struct {
     {STATE_LIGHT, 0, STATE_ATTENUATION}, SWIZZLE_ZZZZ, true},
 
    {"gl_LightModel", NULL,
-    {STATE_LIGHTMODEL_AMBIENT, 0}, SWIZZLE_XYZW},
+    {STATE_LIGHTMODEL_AMBIENT, 0}, SWIZZLE_XYZW, false},
 
    {"gl_FrontLightModelProduct", NULL,
-    {STATE_LIGHTMODEL_SCENECOLOR, 0}, SWIZZLE_XYZW},
+    {STATE_LIGHTMODEL_SCENECOLOR, 0}, SWIZZLE_XYZW, false},
    {"gl_BackLightModelProduct", NULL,
-    {STATE_LIGHTMODEL_SCENECOLOR, 1}, SWIZZLE_XYZW},
+    {STATE_LIGHTMODEL_SCENECOLOR, 1}, SWIZZLE_XYZW, false},
 
    {"gl_FrontLightProduct", "ambient",
     {STATE_LIGHTPROD, 0, 0, STATE_AMBIENT}, SWIZZLE_XYZW, true},
@@ -1095,15 +1096,15 @@ static const struct {
     {STATE_TEXGEN, 0, STATE_TEXGEN_OBJECT_Q}, SWIZZLE_XYZW, true},
 
    {"gl_Fog", "color",
-    {STATE_FOG_COLOR}, SWIZZLE_XYZW},
+    {STATE_FOG_COLOR}, SWIZZLE_XYZW, false},
    {"gl_Fog", "density",
-    {STATE_FOG_PARAMS}, SWIZZLE_XXXX},
+    {STATE_FOG_PARAMS}, SWIZZLE_XXXX, false},
    {"gl_Fog", "start",
-    {STATE_FOG_PARAMS}, SWIZZLE_YYYY},
+    {STATE_FOG_PARAMS}, SWIZZLE_YYYY, false},
    {"gl_Fog", "end",
-    {STATE_FOG_PARAMS}, SWIZZLE_ZZZZ},
+    {STATE_FOG_PARAMS}, SWIZZLE_ZZZZ, false},
    {"gl_Fog", "scale",
-    {STATE_FOG_PARAMS}, SWIZZLE_WWWW},
+    {STATE_FOG_PARAMS}, SWIZZLE_WWWW, false},
 };
 
 static ir_to_mesa_src_reg
@@ -2543,6 +2544,72 @@ get_mesa_program(GLcontext *ctx, struct gl_shader_program *shader_program,
 }
 
 extern "C" {
+GLboolean
+_mesa_ir_compile_shader(GLcontext *ctx, struct gl_shader *shader)
+{
+   assert(shader->CompileStatus);
+
+   return GL_TRUE;
+}
+
+GLboolean
+_mesa_ir_link_shader(GLcontext *ctx, struct gl_shader_program *prog)
+{
+   assert(prog->LinkStatus);
+
+   for (unsigned i = 0; i < prog->_NumLinkedShaders; i++) {
+      bool progress;
+      exec_list *ir = prog->_LinkedShaders[i]->ir;
+
+      do {
+	 progress = false;
+
+	 /* Lowering */
+	 do_mat_op_to_vec(ir);
+	 do_mod_to_fract(ir);
+	 do_div_to_mul_rcp(ir);
+	 do_explog_to_explog2(ir);
+
+	 progress = do_common_optimization(ir, true) || progress;
+
+	 if (ctx->Shader.EmitNoIfs)
+	    progress = do_if_to_cond_assign(ir) || progress;
+
+	 progress = do_vec_index_to_cond_assign(ir) || progress;
+      } while (progress);
+
+      validate_ir_tree(ir);
+   }
+
+   for (unsigned i = 0; i < prog->_NumLinkedShaders; i++) {
+      struct gl_program *linked_prog;
+      bool ok = true;
+
+      linked_prog = get_mesa_program(ctx, prog, prog->_LinkedShaders[i]);
+
+      link_uniforms_to_shared_uniform_list(prog->Uniforms, linked_prog);
+
+      switch (prog->_LinkedShaders[i]->Type) {
+      case GL_VERTEX_SHADER:
+	 _mesa_reference_vertprog(ctx, &prog->VertexProgram,
+				  (struct gl_vertex_program *)linked_prog);
+	 ok = ctx->Driver.ProgramStringNotify(ctx, GL_VERTEX_PROGRAM_ARB,
+					      linked_prog);
+	 break;
+      case GL_FRAGMENT_SHADER:
+	 _mesa_reference_fragprog(ctx, &prog->FragmentProgram,
+				  (struct gl_fragment_program *)linked_prog);
+	 ok = ctx->Driver.ProgramStringNotify(ctx, GL_FRAGMENT_PROGRAM_ARB,
+					      linked_prog);
+	 break;
+      }
+      if (!ok) {
+	 return GL_FALSE;
+      }
+   }
+
+   return GL_TRUE;
+}
 
 void
 _mesa_glsl_compile_shader(GLcontext *ctx, struct gl_shader *shader)
@@ -2567,38 +2634,11 @@ _mesa_glsl_compile_shader(GLcontext *ctx, struct gl_shader *shader)
    if (!state->error && !shader->ir->is_empty()) {
       validate_ir_tree(shader->ir);
 
-      /* Lowering */
-      do_mat_op_to_vec(shader->ir);
-      do_mod_to_fract(shader->ir);
-      do_div_to_mul_rcp(shader->ir);
-      do_sub_to_add_neg(shader->ir);
-
-      /* Optimization passes */
-      bool progress;
-      do {
-	 progress = false;
-
-	 progress = do_if_simplification(shader->ir) || progress;
-	 progress = do_copy_propagation(shader->ir) || progress;
-	 progress = do_dead_code_local(shader->ir) || progress;
-	 progress = do_dead_code_unlinked(shader->ir) || progress;
-	 progress = do_tree_grafting(shader->ir) || progress;
-	 progress = do_constant_propagation(shader->ir) || progress;
-	 progress = do_constant_variable_unlinked(shader->ir) || progress;
-	 progress = do_constant_folding(shader->ir) || progress;
-	 progress = do_algebraic(shader->ir) || progress;
-	 progress = do_if_return(shader->ir) || progress;
-	 if (ctx->Shader.EmitNoIfs)
-	    progress = do_if_to_cond_assign(shader->ir) || progress;
-
-	 progress = do_vec_index_to_swizzle(shader->ir) || progress;
-	 /* Do this one after the previous to let the easier pass handle
-	  * constant vector indexing.
-	  */
-	 progress = do_vec_index_to_cond_assign(shader->ir) || progress;
-
-	 progress = do_swizzle_swizzle(shader->ir) || progress;
-      } while (progress);
+      /* Do some optimization at compile time to reduce shader IR size
+       * and reduce later work if the same shader is linked multiple times
+       */
+      while (do_common_optimization(shader->ir, false))
+	 ;
 
       validate_ir_tree(shader->ir);
    }
@@ -2631,7 +2671,12 @@ _mesa_glsl_compile_shader(GLcontext *ctx, struct gl_shader *shader)
    reparent_ir(shader->ir, shader);
 
    talloc_free(state);
- }
+
+   if (shader->CompileStatus) {
+      if (!ctx->Driver.CompileShader(ctx, shader))
+	 shader->CompileStatus = GL_FALSE;
+   }
+}
 
 void
 _mesa_glsl_link_shader(GLcontext *ctx, struct gl_shader_program *prog)
@@ -2666,33 +2711,8 @@ _mesa_glsl_link_shader(GLcontext *ctx, struct gl_shader_program *prog)
    }
 
    if (prog->LinkStatus) {
-      for (i = 0; i < prog->_NumLinkedShaders; i++) {
-	 struct gl_program *linked_prog;
-	 bool ok = true;
-
-	 linked_prog = get_mesa_program(ctx, prog,
-					prog->_LinkedShaders[i]);
-
-	 link_uniforms_to_shared_uniform_list(prog->Uniforms, linked_prog);
-
-	 switch (prog->_LinkedShaders[i]->Type) {
-	 case GL_VERTEX_SHADER:
-	    _mesa_reference_vertprog(ctx, &prog->VertexProgram,
-				     (struct gl_vertex_program *)linked_prog);
-	    ok = ctx->Driver.ProgramStringNotify(ctx, GL_VERTEX_PROGRAM_ARB,
-						 linked_prog);
-	    break;
-	 case GL_FRAGMENT_SHADER:
-	    _mesa_reference_fragprog(ctx, &prog->FragmentProgram,
-				     (struct gl_fragment_program *)linked_prog);
-	    ok = ctx->Driver.ProgramStringNotify(ctx, GL_FRAGMENT_PROGRAM_ARB,
-						 linked_prog);
-	    break;
-	 }
-	 if (!ok) {
-	    prog->LinkStatus = GL_FALSE;
-	 }
-      }
+      if (!ctx->Driver.LinkShader(ctx, prog))
+	 prog->LinkStatus = GL_FALSE;
    }
 }
 

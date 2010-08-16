@@ -55,8 +55,10 @@ CXX_SOURCES = \
 	ir_import_prototypes.cpp \
 	ir_mat_op_to_vec.cpp \
 	ir_mod_to_fract.cpp \
+	ir_noop_swizzle.cpp \
 	ir_print_visitor.cpp \
 	ir_reader.cpp \
+	ir_rvalue_visitor.cpp \
 	ir_set_program_inouts.cpp \
 	ir_structure_splitting.cpp \
 	ir_sub_to_add_neg.cpp \
@@ -151,18 +153,24 @@ glcpp/glcpp: $(GLCPP_OBJECTS) libglsl.a
 	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
 
 glsl_lexer.cpp: glsl_lexer.lpp
-	flex -o$@  $<
+	flex --nounistd -o$@  $<
 
 glsl_parser.cpp: glsl_parser.ypp
 	bison -v -o "$@" -p "_mesa_glsl_" --defines=glsl_parser.h $<
 
 glcpp/glcpp-lex.c: glcpp/glcpp-lex.l
-	flex --never-interactive --outfile="$@" $<
+	flex --nounistd -o$@  $<
 
 glcpp/glcpp-parse.c: glcpp/glcpp-parse.y
 	bison -v -o "$@" --defines=glcpp/glcpp-parse.h $<
 
-builtin_function.cpp: builtins/*/*
-	./builtins/tools/generate_builtins.pl > builtin_function.cpp
+builtins: builtin_function.cpp builtins/profiles/* builtins/ir/* builtins/tools/generate_builtins.py builtins/tools/texture_builtins.py
+	@echo Bootstrapping the compiler...
+	cp builtins/tools/builtin_function.cpp .
+	make glsl_compiler
+	@echo Regenerating builtin_function.cpp...
+	./builtins/tools/generate_builtins.py > builtin_function.cpp
+	@echo Rebuilding the real compiler...
+	make glsl_compiler
 
 -include depend

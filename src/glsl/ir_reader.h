@@ -29,6 +29,6 @@
 #include "ir.h"
 
 void _mesa_glsl_read_ir(_mesa_glsl_parse_state *state, exec_list *instructions,
-			const char *src);
+			const char *src, bool scan_for_prototypes);
 
 #endif /* IR_READER_H */

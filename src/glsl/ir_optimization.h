@@ -28,6 +28,8 @@
  * Prototypes for optimization passes to be called by the compiler and drivers.
  */
 
+bool do_common_optimization(exec_list *ir, bool linked);
+
 bool do_algebraic(exec_list *instructions);
 bool do_constant_folding(exec_list *instructions);
 bool do_constant_variable(exec_list *instructions);
@@ -46,6 +48,7 @@ bool do_if_simplification(exec_list *instructions);
 bool do_if_to_cond_assign(exec_list *instructions);
 bool do_mat_op_to_vec(exec_list *instructions);
 bool do_mod_to_fract(exec_list *instructions);
+bool do_noop_swizzle(exec_list *instructions);
 bool do_structure_splitting(exec_list *instructions);
 bool do_sub_to_add_neg(exec_list *instructions);
 bool do_swizzle_swizzle(exec_list *instructions);

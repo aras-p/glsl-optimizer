@@ -36,6 +36,7 @@
 
 #include "ir.h"
 #include "ir_visitor.h"
+#include "ir_rvalue_visitor.h"
 #include "ir_basic_block.h"
 #include "ir_optimization.h"
 #include "glsl_types.h"
@@ -72,7 +73,7 @@ public:
    unsigned write_mask;
 };
 
-class ir_constant_propagation_visitor : public ir_hierarchical_visitor {
+class ir_constant_propagation_visitor : public ir_rvalue_visitor {
 public:
    ir_constant_propagation_visitor()
    {
@@ -90,12 +91,8 @@ public:
    virtual ir_visitor_status visit_enter(class ir_function_signature *);
    virtual ir_visitor_status visit_enter(class ir_function *);
    virtual ir_visitor_status visit_enter(class ir_assignment *);
-   virtual ir_visitor_status visit_leave(class ir_assignment *);
-   virtual ir_visitor_status visit_enter(class ir_expression *);
    virtual ir_visitor_status visit_enter(class ir_call *);
    virtual ir_visitor_status visit_enter(class ir_if *);
-   virtual ir_visitor_status visit_enter(class ir_dereference_array *);
-   virtual ir_visitor_status visit_enter(class ir_texture *);
 
    void add_constant(ir_assignment *ir);
    void kill(ir_variable *ir, unsigned write_mask);
@@ -221,30 +218,20 @@ ir_constant_propagation_visitor::visit_enter(ir_function_signature *ir)
 ir_visitor_status
 ir_constant_propagation_visitor::visit_enter(ir_assignment *ir)
 {
-   handle_rvalue(&ir->condition);
+   /* Inline accepting children, skipping the LHS. */
+   ir->rhs->accept(this);
    handle_rvalue(&ir->rhs);
 
-   return visit_continue;
-}
+   if (ir->condition) {
+      ir->condition->accept(this);
+      handle_rvalue(&ir->condition);
+   }
 
-ir_visitor_status
-ir_constant_propagation_visitor::visit_leave(ir_assignment *ir)
-{
    kill(ir->lhs->variable_referenced(), ir->write_mask);
 
    add_constant(ir);
 
-   return visit_continue;
-}
-
-ir_visitor_status
-ir_constant_propagation_visitor::visit_enter(ir_expression *ir)
-{
-   for (unsigned int i = 0; i < ir->get_num_operands(); i++) {
-      handle_rvalue(&ir->operands[i]);
-   }
-
-   return visit_continue;
+   return visit_continue_with_parent;
 }
 
 ir_visitor_status
@@ -328,39 +315,6 @@ ir_constant_propagation_visitor::visit_enter(ir_if *ir)
 
    /* handle_if_block() already descended into the children. */
    return visit_continue_with_parent;
-}
-
-ir_visitor_status
-ir_constant_propagation_visitor::visit_enter(ir_dereference_array *ir)
-{
-   handle_rvalue(&ir->array_index);
-   return visit_continue;
-}
-
-ir_visitor_status
-ir_constant_propagation_visitor::visit_enter(ir_texture *ir)
-{
-   handle_rvalue(&ir->coordinate);
-   handle_rvalue(&ir->projector);
-   handle_rvalue(&ir->shadow_comparitor);
-
-   switch (ir->op) {
-   case ir_tex:
-      break;
-   case ir_txb:
-      handle_rvalue(&ir->lod_info.bias);
-      break;
-   case ir_txf:
-   case ir_txl:
-      handle_rvalue(&ir->lod_info.lod);
-      break;
-   case ir_txd:
-      handle_rvalue(&ir->lod_info.grad.dPdx);
-      handle_rvalue(&ir->lod_info.grad.dPdy);
-      break;
-   }
-
-   return visit_continue;
 }
 
 ir_visitor_status

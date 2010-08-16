@@ -36,7 +36,6 @@
 
 #include "main/glheader.h"
 #include "main/config.h"
-#include "main/compiler.h"
 #include "main/mfeatures.h"
 #include "glapi/glapi.h"
 #include "math/m_matrix.h"	/* GLmatrix */
@@ -1807,6 +1806,11 @@ struct gl_program
    GLubyte SamplerUnits[MAX_SAMPLERS];
    /** Which texture target is being sampled (TEXTURE_1D/2D/3D/etc_INDEX) */
    gl_texture_index SamplerTargets[MAX_SAMPLERS];
+
+   /** Bitmask of which register files are read/written with indirect
+    * addressing.  Mask of (1 << PROGRAM_x) bits.
+    */
+   GLbitfield IndirectRegisterFiles;
 
    /** Logical counts */
    /*@{*/

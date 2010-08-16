@@ -311,6 +311,30 @@ ir_mat_op_to_vec_visitor::visit_leave(ir_assignment *assign)
 
    /* OK, time to break down this matrix operation. */
    switch (expr->operation) {
+   case ir_unop_neg: {
+      const unsigned mask = (1U << result_var->type->vector_elements) - 1;
+
+      /* Apply the operation to each column.*/
+      for (i = 0; i < matrix_columns; i++) {
+	 ir_rvalue *op0 = get_column(op_var[0], i);
+	 ir_dereference *result = get_column(result_var, i);
+	 ir_expression *column_expr;
+	 ir_assignment *column_assign;
+
+	 column_expr = new(base_ir) ir_expression(expr->operation,
+						  result->type,
+						  op0,
+						  NULL);
+
+	 column_assign = new(base_ir) ir_assignment(result,
+						    column_expr,
+						    NULL,
+						    mask);
+	 assert(column_assign->write_mask != 0);
+	 base_ir->insert_before(column_assign);
+      }
+      break;
+   }
    case ir_binop_add:
    case ir_binop_sub:
    case ir_binop_div:

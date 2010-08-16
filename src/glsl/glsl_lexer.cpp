@@ -959,14 +959,6 @@ static yyconst flex_int16_t yy_chk[1076] =
 #define INITIAL 0
 #define PP 1
 
-#ifndef YY_NO_UNISTD_H
-/* Special case for "unistd.h", since it is non-ANSI. We include it way
- * down here because we want the user's section 1 to have been scanned first.
- * The user has a chance to override it with an option.
- */
-#include <unistd.h>
-#endif
-
 #define YY_EXTRA_TYPE struct _mesa_glsl_parse_state *
 
 /* Holds the entire state of the reentrant scanner. */
@@ -1203,7 +1195,7 @@ YY_DECL
 #line 76 "glsl_lexer.lpp"
 
 
-#line 1207 "glsl_lexer.cpp"
+#line 1199 "glsl_lexer.cpp"
 
     yylval = yylval_param;
 
@@ -1415,17 +1407,17 @@ return CONST_TOK;
 case 17:
 YY_RULE_SETUP
 #line 131 "glsl_lexer.lpp"
-return BOOL_T;
+return BOOL_TOK;
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
 #line 132 "glsl_lexer.lpp"
-return FLOAT_T;
+return FLOAT_TOK;
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
 #line 133 "glsl_lexer.lpp"
-return INT_T;
+return INT_TOK;
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
@@ -1520,17 +1512,17 @@ return VEC4;
 case 38:
 YY_RULE_SETUP
 #line 154 "glsl_lexer.lpp"
-return MAT2_T;
+return MAT2X2;
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
 #line 155 "glsl_lexer.lpp"
-return MAT3;
+return MAT3X3;
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
 #line 156 "glsl_lexer.lpp"
-return MAT4;
+return MAT4X4;
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
@@ -1580,17 +1572,17 @@ TOKEN_OR_IDENTIFIER(120, MAT4X4);
 case 50:
 YY_RULE_SETUP
 #line 167 "glsl_lexer.lpp"
-return IN_T;
+return IN_TOK;
 	YY_BREAK
 case 51:
 YY_RULE_SETUP
 #line 168 "glsl_lexer.lpp"
-return OUT_T;
+return OUT_TOK;
 	YY_BREAK
 case 52:
 YY_RULE_SETUP
 #line 169 "glsl_lexer.lpp"
-return INOUT;
+return INOUT_TOK;
 	YY_BREAK
 case 53:
 YY_RULE_SETUP
@@ -1665,7 +1657,7 @@ return STRUCT;
 case 67:
 YY_RULE_SETUP
 #line 187 "glsl_lexer.lpp"
-return VOID_T;
+return VOID_TOK;
 	YY_BREAK
 case 68:
 YY_RULE_SETUP
@@ -1894,7 +1886,7 @@ RESERVED_WORD(999, THIS);
 case 105:
 YY_RULE_SETUP
 #line 272 "glsl_lexer.lpp"
-RESERVED_WORD(999, PACKED);
+RESERVED_WORD(999, PACKED_TOK);
 	YY_BREAK
 case 106:
 YY_RULE_SETUP
@@ -1954,17 +1946,17 @@ RESERVED_WORD(999, INTERFACE);
 case 117:
 YY_RULE_SETUP
 #line 284 "glsl_lexer.lpp"
-RESERVED_WORD(999, LONG_T);
+RESERVED_WORD(999, LONG_TOK);
 	YY_BREAK
 case 118:
 YY_RULE_SETUP
 #line 285 "glsl_lexer.lpp"
-RESERVED_WORD(999, SHORT_T);
+RESERVED_WORD(999, SHORT_TOK);
 	YY_BREAK
 case 119:
 YY_RULE_SETUP
 #line 286 "glsl_lexer.lpp"
-RESERVED_WORD(999, DOUBLE_T);
+RESERVED_WORD(999, DOUBLE_TOK);
 	YY_BREAK
 case 120:
 YY_RULE_SETUP
@@ -1974,7 +1966,7 @@ RESERVED_WORD(999, HALF);
 case 121:
 YY_RULE_SETUP
 #line 288 "glsl_lexer.lpp"
-RESERVED_WORD(999, FIXED_T);
+RESERVED_WORD(999, FIXED_TOK);
 	YY_BREAK
 case 122:
 YY_RULE_SETUP
@@ -1984,12 +1976,12 @@ RESERVED_WORD(999, UNSIGNED);
 case 123:
 YY_RULE_SETUP
 #line 290 "glsl_lexer.lpp"
-RESERVED_WORD(999, INPUT_T);
+RESERVED_WORD(999, INPUT_TOK);
 	YY_BREAK
 case 124:
 YY_RULE_SETUP
 #line 291 "glsl_lexer.lpp"
-RESERVED_WORD(999, OUTPUT_T);
+RESERVED_WORD(999, OUTPUT);
 	YY_BREAK
 case 125:
 YY_RULE_SETUP
@@ -2263,7 +2255,7 @@ YY_RULE_SETUP
 #line 356 "glsl_lexer.lpp"
 ECHO;
 	YY_BREAK
-#line 2267 "glsl_lexer.cpp"
+#line 2259 "glsl_lexer.cpp"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(PP):
 	yyterminate();
