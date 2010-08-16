@@ -1632,8 +1632,7 @@ ir_to_mesa_visitor::visit(ir_dereference_record *ir)
  * ir_dereference handler.
  */
 static struct ir_to_mesa_dst_reg
-get_assignment_lhs(ir_dereference *ir, ir_to_mesa_visitor *v,
-		   ir_to_mesa_src_reg *r)
+get_assignment_lhs(ir_dereference *ir, ir_to_mesa_visitor *v)
 {
    /* The LHS must be a dereference.  If the LHS is a variable indexed array
     * access of a vector, it must be separated into a series conditional moves
@@ -1662,7 +1661,7 @@ ir_to_mesa_visitor::visit(ir_assignment *ir)
    ir->rhs->accept(this);
    r = this->result;
 
-   l = get_assignment_lhs(ir->lhs, this, &r);
+   l = get_assignment_lhs(ir->lhs, this);
 
    /* FINISHME: This should really set to the correct maximal writemask for each
     * FINISHME: component written (in the loops below).  This case can only
@@ -2554,6 +2553,7 @@ GLboolean
 _mesa_ir_compile_shader(GLcontext *ctx, struct gl_shader *shader)
 {
    assert(shader->CompileStatus);
+   (void) ctx;
 
    return GL_TRUE;
 }
