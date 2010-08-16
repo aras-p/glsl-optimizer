@@ -109,12 +109,14 @@ nvfx_state_validate_common(struct nvfx_context *nvfx)
 	if(dirty & NVFX_NEW_SR)
 		nvfx_state_sr_validate(nvfx);
 
-/* Having this depend on FB looks wrong, but it seems
-   necessary to make this work on nv3x
+/* All these dependencies are wrong, but otherwise
+   etracer, neverball, foobillard, glest totally misrender
    TODO: find the right fix
 */
-	if(dirty & (NVFX_NEW_VIEWPORT | NVFX_NEW_FB))
+	if(dirty & (NVFX_NEW_VIEWPORT | NVFX_NEW_RAST | NVFX_NEW_ZSA) || (all_swizzled > 0))
+	{
 		nvfx_state_viewport_validate(nvfx);
+	}
 
 	if(flush_tex_cache)
 	{
