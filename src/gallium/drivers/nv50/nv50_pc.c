@@ -125,6 +125,20 @@ nv50_nvi_can_load(struct nv_instruction *nvi, int s, struct nv_value *value)
    }
 }
 
+/* Return whether this instruction can be executed conditionally. */
+boolean
+nv50_nvi_can_predicate(struct nv_instruction *nvi)
+{
+   int i;
+
+   if (nvi->flags_src)
+      return FALSE;
+   for (i = 0; i < 4 && nvi->src[i]; ++i)
+      if (nvi->src[i]->value->reg.file == NV_FILE_IMM)
+         return FALSE;
+   return TRUE;
+}
+
 ubyte
 nv50_supported_src_mods(uint opcode, int s)
 {

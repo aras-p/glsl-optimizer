@@ -591,7 +591,7 @@ bld_get_address(struct bld_context *bld, int id, struct nv_value *indirect)
 
 
 static struct nv_value *
-bld_predicate(struct bld_context *bld, struct nv_value *src)
+bld_predicate(struct bld_context *bld, struct nv_value *src, boolean bool_only)
 {
    struct nv_instruction *nvi = src->insn;
 
@@ -600,6 +600,14 @@ bld_predicate(struct bld_context *bld, struct nv_value *src)
        nvi->bb != bld->pc->current_block) {
       nvi = new_instruction(bld->pc, NV_OP_CVT);
       nv_reference(bld->pc, &nvi->src[0], src);
+   } else
+   if (bool_only) {
+      while (nvi->opcode == NV_OP_ABS || nvi->opcode == NV_OP_CVT ||
+             nvi->opcode == NV_OP_NEG) {
+         /* TGSI SET gets conversion to f32, we only need source 0/~0 */
+         if (!nvi->def[0]->insn->flags_src)
+            nvi = nvi->src[0]->value->insn;
+      }
    }
 
    if (!nvi->flags_def) {
@@ -614,7 +622,7 @@ bld_kil(struct bld_context *bld, struct nv_value *src)
 {
    struct nv_instruction *nvi;
 
-   src = bld_predicate(bld, src);
+   src = bld_predicate(bld, src, FALSE);
    nvi = new_instruction(bld->pc, NV_OP_KIL);
    nvi->fixed = 1;
    nvi->flags_src = new_ref(bld->pc, src);
@@ -1223,7 +1231,7 @@ bld_instruction(struct bld_context *bld,
          src0 = emit_fetch(bld, insn, 0, c);
          src1 = emit_fetch(bld, insn, 1, c);
          src2 = emit_fetch(bld, insn, 2, c);
-         src0 = bld_predicate(bld, src0);
+         src0 = bld_predicate(bld, src0, FALSE);
 
          src1 = bld_insn_1(bld, NV_OP_MOV, src1);
          src1->insn->flags_src = new_ref(bld->pc, src0);
@@ -1304,7 +1312,7 @@ bld_instruction(struct bld_context *bld,
       bld->join_bb[bld->cond_lvl] = bld->pc->current_block;
       bld->cond_bb[bld->cond_lvl] = bld->pc->current_block;
 
-      src1 = bld_predicate(bld, emit_fetch(bld, insn, 0, 0));
+      src1 = bld_predicate(bld, emit_fetch(bld, insn, 0, 0), TRUE);
 
       bld_flow(bld, NV_OP_BRA, NV_CC_EQ, src1, NULL, FALSE);
 

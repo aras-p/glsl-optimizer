@@ -432,6 +432,7 @@ void nv_print_program(struct nv_basic_block *b);
 boolean nv_op_commutative(uint opcode);
 int nv50_indirect_opnd(struct nv_instruction *);
 boolean nv50_nvi_can_use_imm(struct nv_instruction *, int s);
+boolean nv50_nvi_can_predicate(struct nv_instruction *);
 boolean nv50_nvi_can_load(struct nv_instruction *, int s, struct nv_value *);
 ubyte nv50_supported_src_mods(uint opcode, int s);
 int nv_nvi_refcount(struct nv_instruction *);

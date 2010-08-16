@@ -119,6 +119,15 @@ nvi_isnop(struct nv_instruction *nvi)
    return values_equal(nvi->def[0], nvi->src[0]->value);
 }
 
+struct nv_pass {
+   struct nv_pc *pc;
+   int n;
+   void *priv;
+};
+
+static int
+nv_pass_flatten(struct nv_pass *ctx, struct nv_basic_block *b);
+
 static void
 nv_pc_pass_pre_emission(void *priv, struct nv_basic_block *b)
 {
@@ -204,6 +213,13 @@ nv_pc_pass_pre_emission(void *priv, struct nv_basic_block *b)
 int
 nv_pc_exec_pass2(struct nv_pc *pc)
 {
+   struct nv_pass pass;
+
+   pass.pc = pc;
+
+   pc->pass_seq++;
+   nv_pass_flatten(&pass, pc->root);
+
    debug_printf("preparing %u blocks for emission\n", pc->num_blocks);
 
    pc->bb_list = CALLOC(pc->num_blocks, sizeof(struct nv_basic_block *));
@@ -272,12 +288,6 @@ check_swap_src_0_1(struct nv_instruction *nvi)
    if (nvi->opcode == NV_OP_SET && nvi->src[0] != src0)
       nvi->set_cond = cc_swapped[nvi->set_cond];
 }
-
-struct nv_pass {
-   struct nv_pc *pc;
-   int n;
-   void *priv;
-};
 
 static int
 nv_pass_fold_stores(struct nv_pass *ctx, struct nv_basic_block *b)
@@ -863,24 +873,95 @@ nv_pass_dce(struct nv_pass_dce *ctx, struct nv_basic_block *b)
    return 0;
 }
 
+/* Register allocation inserted ELSE blocks for all IF/ENDIF without ELSE.
+ * Returns TRUE if @bb initiates an IF/ELSE/ENDIF clause, or is an IF with
+ * BREAK and dummy ELSE block.
+ */
 static INLINE boolean
-bb_simple_if_endif(struct nv_basic_block *bb)
+bb_is_if_else_endif(struct nv_basic_block *bb)
 {
-   return (bb->out[0] && bb->out[1] &&
-           bb->out[0]->out[0] == bb->out[1] &&
-           !bb->out[0]->out[1]);
+   if (!bb->out[0] || !bb->out[1])
+      return FALSE;
+
+   if (bb->out[0]->out_kind[0] == CFG_EDGE_LOOP_LEAVE) {
+      return (bb->out[0]->out[1] == bb->out[1]->out[0] &&
+              !bb->out[1]->out[1]);
+   } else {
+      return (bb->out[0]->out[0] == bb->out[1]->out[0] &&
+              !bb->out[0]->out[1] &&
+              !bb->out[1]->out[1]);
+   }
 }
 
+/* predicate instructions and remove branch at the end */
+static void
+predicate_instructions(struct nv_pc *pc, struct nv_basic_block *b,
+                       struct nv_value *p, ubyte cc)
+{
+   struct nv_instruction *nvi;
+
+   if (!b->entry)
+      return;
+   for (nvi = b->entry; nvi->next; nvi = nvi->next) {
+      if (!nvi_isnop(nvi)) {
+         nvi->cc = cc;
+         nv_reference(pc, &nvi->flags_src, p);
+      }
+   }
+
+   if (nvi->opcode == NV_OP_BRA)
+      nv_nvi_delete(nvi);
+   else
+   if (!nvi_isnop(nvi)) {
+      nvi->cc = cc;
+      nv_reference(pc, &nvi->flags_src, p);
+   }
+}
+
+/* NOTE: Run this after register allocation, we can just cut out the cflow
+ * instructions and hook the predicates to the conditional OPs if they are
+ * not using immediates; better than inserting SELECT to join definitions.
+ *
+ * NOTE: Should adapt prior optimization to make this possible more often.
+ */
 static int
 nv_pass_flatten(struct nv_pass *ctx, struct nv_basic_block *b)
 {
-   int j;
+   struct nv_instruction *nvi;
+   struct nv_value *pred;
+   int i;
+   int n0 = 0, n1 = 0;
 
-   if (bb_simple_if_endif(b)) {
-      ++ctx->n;
-      debug_printf("nv_pass_flatten: total IF/ENDIF constructs: %i\n", ctx->n);
+   if (bb_is_if_else_endif(b)) {
+
+      debug_printf("nv_pass_flatten: IF/ELSE/ENDIF construct at BB:%i\n", b->id);
+
+      for (n0 = 0, nvi = b->out[0]->entry; nvi; nvi = nvi->next, ++n0)
+         if (!nv50_nvi_can_predicate(nvi))
+            break;
+      if (!nvi) {
+         for (n1 = 0, nvi = b->out[1]->entry; nvi; nvi = nvi->next, ++n1)
+            if (!nv50_nvi_can_predicate(nvi))
+               break;
+         if (nvi) {
+            debug_printf("cannot predicate: "); nv_print_instruction(nvi);
+         }
+      } else {
+         debug_printf("cannot predicate: "); nv_print_instruction(nvi);
+      }
+
+      if (!nvi && n0 < 12 && n1 < 12) { /* 12 as arbitrary limit */
+         assert(b->exit && b->exit->flags_src);
+         pred = b->exit->flags_src->value;
+
+         predicate_instructions(ctx->pc, b->out[0], pred, NV_CC_NE | NV_CC_U);
+         predicate_instructions(ctx->pc, b->out[1], pred, NV_CC_EQ);
+
+         assert(b->exit && b->exit->opcode == NV_OP_BRA);
+         nv_nvi_delete(b->exit);
+      }
    }
-   DESCEND_ARBITRARY(j, nv_pass_flatten);
+   DESCEND_ARBITRARY(i, nv_pass_flatten);
 
    return 0;
 }
@@ -959,11 +1040,6 @@ nv_pc_exec_pass0(struct nv_pc *pc)
 
    pass.n = 0;
    pass.pc = pc;
-
-   pc->pass_seq++;
-   ret = nv_pass_flatten(&pass, pc->root);
-   if (ret)
-      return ret;
 
    /* Do this first, so we don't have to pay attention
     * to whether sources are supported memory loads.
