@@ -315,7 +315,7 @@ nv_pass_fold_stores(struct nv_pass *ctx, struct nv_basic_block *b)
       for (j = 0; j < 4 && nvi->src[j]; ++j)
          if (nvi->src[j]->value->reg.file == NV_FILE_IMM)
             break;
-      if (j < 4)
+      if (j < 4 && nvi->src[j])
          continue;
 
       nvi->def[0] = sti->def[0];
