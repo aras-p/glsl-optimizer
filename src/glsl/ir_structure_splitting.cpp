@@ -138,6 +138,7 @@ ir_structure_reference_visitor::visit(ir_dereference_variable *ir)
 ir_visitor_status
 ir_structure_reference_visitor::visit_enter(ir_dereference_record *ir)
 {
+   (void) ir;
    /* Don't descend into the ir_dereference_variable below. */
    return visit_continue_with_parent;
 }
