@@ -2093,8 +2093,11 @@ ir_to_mesa_visitor::visit(ir_texture *ir)
    case GLSL_SAMPLER_DIM_RECT:
       inst->tex_target = TEXTURE_RECT_INDEX;
       break;
+   case GLSL_SAMPLER_DIM_BUF:
+      assert(!"FINISHME: Implement ARB_texture_buffer_object");
+      break;
    default:
-      assert(!"FINISHME: other texture targets");
+      assert(!"Should not get here.");
    }
 
    this->result = result_src;
