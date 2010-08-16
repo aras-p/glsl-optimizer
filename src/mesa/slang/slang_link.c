@@ -42,6 +42,7 @@
 #include "program/prog_statevars.h"
 #include "program/prog_uniform.h"
 #include "slang_builtin.h"
+#include "slang_compile.h"
 #include "slang_link.h"
 
 
