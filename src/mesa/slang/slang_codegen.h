@@ -32,6 +32,7 @@
 #include "slang_compile_variable.h"
 #include "slang_typeinfo.h"
 #include "slang_utility.h"
+#include "slang_vartable.h"
 
 struct slang_function_;
 
