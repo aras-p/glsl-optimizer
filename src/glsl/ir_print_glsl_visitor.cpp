@@ -31,6 +31,10 @@ static char* print_type(char* buffer, const glsl_type *t, bool arraySize);
 static char* print_type_post(char* buffer, const glsl_type *t, bool arraySize);
 
 
+#define WRITE_MASK_SAVE unsigned _savedWriteMask = this->writeMask; this->writeMask = ~0
+#define WRITE_MASK_LOAD this->writeMask = _savedWriteMask
+
+
 class ir_print_glsl_visitor : public ir_visitor {
 public:
 	ir_print_glsl_visitor(char* buf, PrintGlslMode mode_)
@@ -311,6 +315,7 @@ static const char *const operator_glsl_strs[] = {
 
 void ir_print_glsl_visitor::visit(ir_expression *ir)
 {
+	WRITE_MASK_SAVE;
 	if (ir->get_num_operands() == 1) {
 		if (ir->operation >= ir_unop_f2i && ir->operation <= ir_unop_u2f) {
 			buffer = print_type(buffer, ir->type, true);
@@ -333,11 +338,13 @@ void ir_print_glsl_visitor::visit(ir_expression *ir)
 			ir->operands[1]->accept(this);
 		buffer = talloc_asprintf_append(buffer, ")");
 	}
+	WRITE_MASK_LOAD;
 }
 
 
 void ir_print_glsl_visitor::visit(ir_texture *ir)
 {
+   WRITE_MASK_SAVE;
    buffer = talloc_asprintf_append(buffer, "(%s ", ir->opcode_string());
 
    ir->sampler->accept(this);
@@ -382,6 +389,7 @@ void ir_print_glsl_visitor::visit(ir_texture *ir)
       break;
    };
    buffer = talloc_asprintf_append(buffer, ")");
+   WRITE_MASK_LOAD;
 }
 
 
@@ -403,10 +411,9 @@ void ir_print_glsl_visitor::visit(ir_swizzle *ir)
 		}
 	}
 
-	unsigned oldWriteMask = this->writeMask;
-	this->writeMask = ~0;
+	WRITE_MASK_SAVE;
 	ir->val->accept(this);
-	this->writeMask = oldWriteMask;
+	WRITE_MASK_LOAD;
 	
 	if (ir->val->type == glsl_type::float_type)
 	{
@@ -434,29 +441,55 @@ void ir_print_glsl_visitor::visit(ir_dereference_variable *ir)
 
 void ir_print_glsl_visitor::visit(ir_dereference_array *ir)
 {
+   WRITE_MASK_SAVE;
    ir->array->accept(this);
    buffer = talloc_asprintf_append(buffer, "[");
    ir->array_index->accept(this);
    buffer = talloc_asprintf_append(buffer, "]");
+   WRITE_MASK_LOAD;
 }
 
 
 void ir_print_glsl_visitor::visit(ir_dereference_record *ir)
 {
+   WRITE_MASK_SAVE;
    ir->record->accept(this);
    buffer = talloc_asprintf_append(buffer, ".%s", ir->field);
+   WRITE_MASK_LOAD;
 }
 
+static const glsl_type* get_masked_type (ir_instruction *ir, unsigned write_mask)
+{
+	const glsl_type* type = ir->type;
+
+	ir_swizzle* swiz = ir->as_swizzle();
+	if (swiz && swiz->val->type != glsl_type::float_type)
+	{
+		unsigned k = 0;
+		for (unsigned i = 0; i < swiz->mask.num_components; i++) {
+			if (write_mask & (1<<i))
+				++k;
+		}
+		assert (k);
+		type = glsl_type::get_instance(type->base_type, k, 1);
+	}
+
+	return type;
+}
 
 void ir_print_glsl_visitor::visit(ir_assignment *ir)
 {
    if (ir->condition)
    {
+      WRITE_MASK_SAVE;
       ir->condition->accept(this);
+	  WRITE_MASK_LOAD;
 	  buffer = talloc_asprintf_append(buffer, " ");
    }
 
+   WRITE_MASK_SAVE;
    ir->lhs->accept(this);
+   WRITE_MASK_LOAD;
 
    char mask[5];
    unsigned j = 0;
@@ -474,24 +507,10 @@ void ir_print_glsl_visitor::visit(ir_assignment *ir)
 	   }
 	   lhsType = glsl_type::get_instance(lhsType->base_type, j, 1);
 	   this->writeMask = ~0;
-	   ir_swizzle* sw = ir->rhs->as_swizzle();
-	   if (sw && sw->val->type != glsl_type::float_type)
-	   {
+
+	   rhsType = get_masked_type (ir->rhs, ir->write_mask);
+	   if (rhsType != ir->rhs->type)
 		   this->writeMask = ir->write_mask;
-		   const unsigned swiz[4] = {
-			   sw->mask.x,
-			   sw->mask.y,
-			   sw->mask.z,
-			   sw->mask.w,
-		   };
-		   unsigned k = 0;
-		   for (unsigned i = 0; i < sw->mask.num_components; i++) {
-			   if ((this->writeMask & (1<<i)) /*&& (swiz[i] == i)*/)
-				   ++k;
-		   }
-		   assert (k);
-		   rhsType = glsl_type::get_instance(rhsType->base_type, k, 1);
-	   }
    }
    mask[j] = '\0';
    if (mask[0])
@@ -548,8 +567,10 @@ void ir_print_glsl_visitor::visit(ir_constant *ir)
    buffer = talloc_asprintf_append(buffer, "(");
 
    if (ir->type->is_array()) {
+      WRITE_MASK_SAVE;
       for (unsigned i = 0; i < ir->type->length; i++)
 	 ir->get_array_element(i)->accept(this);
+	  WRITE_MASK_LOAD;
    } else {
       for (unsigned i = 0; i < ir->type->components(); i++) {
 	 if (i != 0)
@@ -570,6 +591,7 @@ void ir_print_glsl_visitor::visit(ir_constant *ir)
 void
 ir_print_glsl_visitor::visit(ir_call *ir)
 {
+   WRITE_MASK_SAVE;
    buffer = talloc_asprintf_append(buffer, "%s (", ir->callee_name());
    bool first = true;
    foreach_iter(exec_list_iterator, iter, *ir) {
@@ -580,12 +602,14 @@ ir_print_glsl_visitor::visit(ir_call *ir)
 	  first = false;
    }
    buffer = talloc_asprintf_append(buffer, ")");
+   WRITE_MASK_LOAD;
 }
 
 
 void
 ir_print_glsl_visitor::visit(ir_return *ir)
 {
+   WRITE_MASK_SAVE;
    buffer = talloc_asprintf_append(buffer, "return");
 
    ir_rvalue *const value = ir->get_value();
@@ -593,24 +617,28 @@ ir_print_glsl_visitor::visit(ir_return *ir)
       buffer = talloc_asprintf_append(buffer, " ");
       value->accept(this);
    }
+   WRITE_MASK_LOAD;
 }
 
 
 void
 ir_print_glsl_visitor::visit(ir_discard *ir)
 {
+   WRITE_MASK_SAVE;
    buffer = talloc_asprintf_append(buffer, "discard");
 
    if (ir->condition != NULL) {
       buffer = talloc_asprintf_append(buffer, " TODO ");
       ir->condition->accept(this);
    }
+   WRITE_MASK_LOAD;
 }
 
 
 void
 ir_print_glsl_visitor::visit(ir_if *ir)
 {
+   WRITE_MASK_SAVE;
    buffer = talloc_asprintf_append(buffer, "if (");
    ir->condition->accept(this);
 
@@ -645,6 +673,7 @@ ir_print_glsl_visitor::visit(ir_if *ir)
 	   indent();
 	   buffer = talloc_asprintf_append(buffer, "}");
    }
+   WRITE_MASK_LOAD;
 }
 
 
@@ -653,6 +682,7 @@ ir_print_glsl_visitor::visit(ir_loop *ir)
 {
 	bool noData = (ir->counter == NULL && ir->from == NULL && ir->to == NULL && ir->increment == NULL);
 	if (noData) {
+		WRITE_MASK_SAVE;
 		buffer = talloc_asprintf_append(buffer, "while (true) {\n");
 		indentation++;
 		foreach_iter(exec_list_iterator, iter, ir->body_instructions) {
@@ -664,6 +694,7 @@ ir_print_glsl_visitor::visit(ir_loop *ir)
 		indentation--;
 		indent();
 		buffer = talloc_asprintf_append(buffer, "}");
+		WRITE_MASK_LOAD;
 		return;
 	}
 
