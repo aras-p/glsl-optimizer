@@ -461,7 +461,9 @@ void ir_print_glsl_visitor::visit(ir_assignment *ir)
    char mask[5];
    unsigned j = 0;
    const glsl_type* lhsType = ir->lhs->type;
+   const glsl_type* rhsType = ir->rhs->type;
    unsigned oldWriteMask = this->writeMask;
+   bool hasWriteMask = false;
    if (ir->lhs->type->vector_elements > 1 && ir->write_mask != (1<<ir->lhs->type->vector_elements)-1)
    {
 	   for (unsigned i = 0; i < 4; i++) {
@@ -471,20 +473,41 @@ void ir_print_glsl_visitor::visit(ir_assignment *ir)
 		   }
 	   }
 	   lhsType = glsl_type::get_instance(lhsType->base_type, j, 1);
-	   this->writeMask = ir->rhs->as_swizzle() ? ir->write_mask : ~0;
+	   this->writeMask = ~0;
+	   ir_swizzle* sw = ir->rhs->as_swizzle();
+	   if (sw && sw->val->type != glsl_type::float_type)
+	   {
+		   this->writeMask = ir->write_mask;
+		   const unsigned swiz[4] = {
+			   sw->mask.x,
+			   sw->mask.y,
+			   sw->mask.z,
+			   sw->mask.w,
+		   };
+		   unsigned k = 0;
+		   for (unsigned i = 0; i < sw->mask.num_components; i++) {
+			   if ((this->writeMask & (1<<i)) /*&& (swiz[i] == i)*/)
+				   ++k;
+		   }
+		   assert (k);
+		   rhsType = glsl_type::get_instance(rhsType->base_type, k, 1);
+	   }
    }
    mask[j] = '\0';
    if (mask[0])
    {
 	   buffer = talloc_asprintf_append(buffer, ".%s", mask);
+	   hasWriteMask = true;
    }
 
    buffer = talloc_asprintf_append(buffer, " = ");
 
-   bool typeMismatch = (lhsType != ir->rhs->type);
+   bool typeMismatch = (lhsType != rhsType);
+   const bool addSwizzle = hasWriteMask && typeMismatch;
    if (typeMismatch)
    {
-	   buffer = print_type(buffer, lhsType, true);
+	   if (!addSwizzle)
+		buffer = print_type(buffer, lhsType, true);
 	   buffer = talloc_asprintf_append(buffer, "(");
    }
 
@@ -493,6 +516,8 @@ void ir_print_glsl_visitor::visit(ir_assignment *ir)
    if (typeMismatch)
    {
 	   buffer = talloc_asprintf_append(buffer, ")");
+	   if (addSwizzle)
+		   buffer = talloc_asprintf_append(buffer, ".%s", mask);
    }
 
    this->writeMask = oldWriteMask;
