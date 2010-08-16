@@ -153,7 +153,7 @@ static void r300_destroy_context(struct pipe_context* context)
         FREE(r300->ztop_state.state);
         FREE(r300->fs_constants.state);
         FREE(r300->vs_constants.state);
-        if (r300->vertex_stream_state.state) {
+        if (!r300->screen->caps.has_tcl) {
             FREE(r300->vertex_stream_state.state);
         }
     }
