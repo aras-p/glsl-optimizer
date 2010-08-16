@@ -555,26 +555,27 @@ void ir_print_glsl_visitor::visit(ir_assignment *ir)
 
 void ir_print_glsl_visitor::visit(ir_constant *ir)
 {
-	if (ir->type == glsl_type::float_type)
+	const glsl_type* type = ir->type;
+	if (type->is_vector() && this->writeMask != (1<<type->vector_elements)-1)
+		type = get_masked_type (ir, this->writeMask);
+
+	if (type == glsl_type::float_type)
 	{
 		buffer = talloc_asprintf_append(buffer, "%f", ir->value.f[0]);
 		return;
 	}
-	else if (ir->type == glsl_type::int_type)
+	else if (type == glsl_type::int_type)
 	{
 		buffer = talloc_asprintf_append(buffer, "%d", ir->value.i[0]);
 		return;
 	}
-	else if (ir->type == glsl_type::uint_type)
+	else if (type == glsl_type::uint_type)
 	{
 		buffer = talloc_asprintf_append(buffer, "%u", ir->value.u[0]);
 		return;
 	}
 
    const glsl_type *const base_type = ir->type->get_base_type();
-   const glsl_type* type = ir->type;
-   if (type->is_vector() && this->writeMask != (1<<type->vector_elements)-1)
-	   type = get_masked_type (ir, this->writeMask);
 
    buffer = print_type(buffer, type, true);
    buffer = talloc_asprintf_append(buffer, "(");
