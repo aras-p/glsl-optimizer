@@ -1499,9 +1499,10 @@ set_default_state(context_t *context)
     R600_OUT_BATCH_REGVAL(PA_SU_VTX_CNTL, (PIX_CENTER_bit) |
         (X_ROUND_TO_EVEN << PA_SU_VTX_CNTL__ROUND_MODE_shift) |
         (X_1_256TH << QUANT_MODE_shift));
+    R600_OUT_BATCH_REGVAL(PA_SC_AA_CONFIG, 0);
 
     R600_OUT_BATCH_REGSEQ(VGT_MAX_VTX_INDX, 4);
-    R600_OUT_BATCH(2048);
+    R600_OUT_BATCH(0xffffff);
     R600_OUT_BATCH(0);
     R600_OUT_BATCH(0);
     R600_OUT_BATCH(0);
@@ -1614,7 +1615,7 @@ unsigned r600_blit(GLcontext *ctx,
     /* Flush is needed to make sure that source buffer has correct data */
     radeonFlush(ctx);
 
-    rcommonEnsureCmdBufSpace(&context->radeon, 308, __FUNCTION__);
+    rcommonEnsureCmdBufSpace(&context->radeon, 311, __FUNCTION__);
 
     /* load shaders */
     load_shaders(context->radeon.glCtx);
@@ -1623,7 +1624,7 @@ unsigned r600_blit(GLcontext *ctx,
         return GL_FALSE;
 
     /* set clear state */
-    /* 117 */
+    /* 120 */
     set_default_state(context);
 
     /* shaders */
