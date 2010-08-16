@@ -141,7 +141,12 @@ nvfx_transfer_destroy(struct pipe_context *pipe, struct pipe_transfer *ptx)
 		FREE(ptx);
 	}
 	else
+	{
+		struct nouveau_channel* chan = nvfx_context(pipe)->screen->base.channel;
 		util_staging_transfer_destroy(pipe, ptx);
+
+		FIRE_RING(chan);
+	}
 }
 
 void *
