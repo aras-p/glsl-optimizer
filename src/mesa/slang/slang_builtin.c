@@ -35,8 +35,10 @@
 #include "program/prog_instruction.h"
 #include "program/prog_parameter.h"
 #include "program/prog_statevars.h"
-#include "slang/slang_ir.h"
 #include "slang/slang_builtin.h"
+#include "slang/slang_compile_struct.h"
+#include "slang/slang_ir.h"
+#include "slang/slang_typeinfo.h"
 
 
 /** special state token (see below) */
