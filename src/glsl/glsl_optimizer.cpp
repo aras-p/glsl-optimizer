@@ -133,6 +133,7 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 			progress = do_vec_index_to_swizzle(ir) || progress;
 			progress = do_vec_index_to_cond_assign(ir) || progress;
 			progress = do_swizzle_swizzle(ir) || progress;
+			progress = do_noop_swizzle(ir) || progress;
 		} while (progress);
 
 		validate_ir_tree(ir);
