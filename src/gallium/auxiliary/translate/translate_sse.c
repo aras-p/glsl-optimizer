@@ -849,6 +849,7 @@ static boolean translate_attr_convert( struct translate_sse *p,
    else if(!memcmp(&output_desc->channel[0], &input_desc->channel[0], sizeof(output_desc->channel[0])))
    {
       struct x86_reg tmp = p->tmp_EAX;
+      unsigned i;
       if(input_desc->channel[0].size == 8 && input_desc->nr_channels == 4 && output_desc->nr_channels == 4
                      && swizzle[0] == UTIL_FORMAT_SWIZZLE_W
                      && swizzle[1] == UTIL_FORMAT_SWIZZLE_Z
@@ -862,7 +863,7 @@ static boolean translate_attr_convert( struct translate_sse *p,
          return TRUE;
       }
 
-      for(unsigned i = 0; i < output_desc->nr_channels; ++i)
+      for(i = 0; i < output_desc->nr_channels; ++i)
       {
          switch(output_desc->channel[0].size)
          {
