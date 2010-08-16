@@ -38,7 +38,7 @@ const ubyte nv50_inst_min_size_tab[NV_OP_COUNT] =
    0, 0, 0, 8, 8, 4, 4, 4, 8, 4, 4, 8, 8, 8, 8, 8, /* 15 */
    8, 8, 8, 4, 0, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 4, /* 31 */
    8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 4, /* 47 */
-   4, 8, 8, 8, 8, 8, 0, 0
+   4, 8, 8, 8, 8, 8, 0, 0, 8
 };
 
 /* XXX: silence, you ! */
@@ -69,6 +69,9 @@ nv50_inst_min_size(struct nv_instruction *i)
    }
 
    if (i->flags_def || i->flags_src || i->src[4])
+      return 8;
+
+   if (i->is_join)
       return 8;
 
    if (i->src[2]) {
@@ -1126,6 +1129,7 @@ nv50_emit_instruction(struct nv_pc *pc, struct nv_instruction *i)
       emit_flow(pc, i, 0xa);
       break;
    case NV_OP_NOP:
+   case NV_OP_JOIN:
       pc->emit[0] = 0xf0000001;
       pc->emit[1] = 0xe0000000;
       break;
@@ -1139,6 +1143,11 @@ nv50_emit_instruction(struct nv_pc *pc, struct nv_instruction *i)
       NOUVEAU_ERR("unhandled NV_OP: %d\n", i->opcode);
       abort();
       break;
+   }
+
+   if (i->is_join) {
+      assert(i->is_long && !(pc->emit[1] & 1));
+      pc->emit[1] |= 2;
    }
 
    assert((pc->emit[0] & 1) == i->is_long);

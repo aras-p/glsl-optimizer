@@ -80,7 +80,7 @@ inst_commutation_legal(struct nv_instruction *a,
 static INLINE boolean
 inst_cullable(struct nv_instruction *nvi)
 {
-   return (!(nvi->is_terminator ||
+   return (!(nvi->is_terminator || nvi->is_join ||
              nvi->target ||
              nvi->fixed ||
              nv_nvi_refcount(nvi)));
@@ -95,7 +95,8 @@ nvi_isnop(struct nv_instruction *nvi)
    if (nvi->fixed ||
        nvi->is_terminator ||
        nvi->flags_src ||
-       nvi->flags_def)
+       nvi->flags_def ||
+       nvi->is_join)
       return FALSE;
 
    if (nvi->def[0]->join->reg.id < 0)
@@ -934,7 +935,7 @@ nv_pass_flatten(struct nv_pass *ctx, struct nv_basic_block *b)
 
    if (bb_is_if_else_endif(b)) {
 
-      debug_printf("nv_pass_flatten: IF/ELSE/ENDIF construct at BB:%i\n", b->id);
+      debug_printf("pass_flatten: IF/ELSE/ENDIF construct at BB:%i\n", b->id);
 
       for (n0 = 0, nvi = b->out[0]->entry; nvi; nvi = nvi->next, ++n0)
          if (!nv50_nvi_can_predicate(nvi))
@@ -959,6 +960,15 @@ nv_pass_flatten(struct nv_pass *ctx, struct nv_basic_block *b)
 
          assert(b->exit && b->exit->opcode == NV_OP_BRA);
          nv_nvi_delete(b->exit);
+
+         if (b->exit && b->exit->opcode == NV_OP_JOINAT)
+            nv_nvi_delete(b->exit);
+
+         if ((nvi = b->out[0]->out[0]->entry)) {
+            nvi->is_join = 0;
+            if (nvi->opcode == NV_OP_JOIN)
+               nv_nvi_delete(nvi);
+         }
       }
    }
    DESCEND_ARBITRARY(i, nv_pass_flatten);

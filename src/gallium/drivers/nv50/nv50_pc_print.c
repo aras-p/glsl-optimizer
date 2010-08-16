@@ -95,6 +95,7 @@ static const char *nv_opcode_names[NV_OP_COUNT + 1] = {
    "nop",
    "select",
    "export",
+   "join",
    "BAD_OP"
 };
 

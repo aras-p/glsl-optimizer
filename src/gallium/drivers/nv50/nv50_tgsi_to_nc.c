@@ -1314,7 +1314,7 @@ bld_instruction(struct bld_context *bld,
 
       src1 = bld_predicate(bld, emit_fetch(bld, insn, 0, 0), TRUE);
 
-      bld_flow(bld, NV_OP_BRA, NV_CC_EQ, src1, NULL, FALSE);
+      bld_flow(bld, NV_OP_BRA, NV_CC_EQ, src1, NULL, (bld->cond_lvl == 0));
 
       ++bld->cond_lvl;
       bld_new_block(bld, b);
@@ -1346,13 +1346,12 @@ bld_instruction(struct bld_context *bld,
 
       bld->cond_bb[bld->cond_lvl]->exit->target = b;
 
-      if (0 && bld->join_bb[bld->cond_lvl]) {
-         bld->join_bb[bld->cond_lvl]->exit->prev->target = b;
-
-         new_instruction(bld->pc, NV_OP_NOP)->is_join = TRUE;
-      }
-
       bld_new_block(bld, b);
+
+      if (!bld->cond_lvl && bld->join_bb[bld->cond_lvl]) {
+         bld->join_bb[bld->cond_lvl]->exit->prev->target = b;
+         new_instruction(bld->pc, NV_OP_JOIN)->is_join = TRUE;
+      }
    }
       break;
    case TGSI_OPCODE_BGNLOOP:
