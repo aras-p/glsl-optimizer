@@ -27,7 +27,7 @@
 #define SLANG_MEM_H
 
 
-#include "main/imports.h"
+#include "main/glheader.h"
 
 
 typedef struct slang_mempool_ slang_mempool;

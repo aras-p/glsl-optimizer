@@ -7,6 +7,7 @@
  */
 
 
+#include "main/imports.h"
 #include "main/mtypes.h"
 #include "program/prog_instruction.h"
 #include "slang_label.h"
