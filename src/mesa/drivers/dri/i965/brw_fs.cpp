@@ -31,11 +31,13 @@ extern "C" {
 #include "program/prog_parameter.h"
 #include "program/prog_print.h"
 #include "program/prog_optimize.h"
+#include "program/hash_table.h"
 #include "brw_context.h"
 #include "brw_eu.h"
 #include "brw_wm.h"
 #include "talloc.h"
 }
+#include "../glsl/glsl_types.h"
 #include "../glsl/ir_optimization.h"
 #include "../glsl/ir_print_visitor.h"
 
@@ -49,6 +51,16 @@ enum register_file {
 
 enum fs_opcodes {
    FS_OPCODE_FB_WRITE = 256,
+   FS_OPCODE_RCP,
+   FS_OPCODE_RSQ,
+   FS_OPCODE_SQRT,
+   FS_OPCODE_EXP2,
+   FS_OPCODE_LOG2,
+   FS_OPCODE_POW,
+   FS_OPCODE_SIN,
+   FS_OPCODE_COS,
+   FS_OPCODE_DDX,
+   FS_OPCODE_DDY,
 };
 
 static int using_new_fs = -1;
@@ -125,15 +137,72 @@ brw_link_shader(GLcontext *ctx, struct gl_shader_program *prog)
    return GL_TRUE;
 }
 
+static int
+type_size(const struct glsl_type *type)
+{
+   unsigned int size, i;
+
+   switch (type->base_type) {
+   case GLSL_TYPE_UINT:
+   case GLSL_TYPE_INT:
+   case GLSL_TYPE_FLOAT:
+   case GLSL_TYPE_BOOL:
+      if (type->is_matrix()) {
+	 /* In case of incoming uniform/varying matrices, match their
+	  * allocation behavior.  FINISHME: We could just use
+	  * glsl_type->components() for variables and temps within the
+	  * shader.
+	  */
+	 return type->matrix_columns * 4;
+      } else {
+	 return type->vector_elements;
+      }
+   case GLSL_TYPE_ARRAY:
+      /* FINISHME: uniform/varying arrays. */
+      return type_size(type->fields.array) * type->length;
+   case GLSL_TYPE_STRUCT:
+      size = 0;
+      for (i = 0; i < type->length; i++) {
+	 size += type_size(type->fields.structure[i].type);
+      }
+      return size;
+   case GLSL_TYPE_SAMPLER:
+      /* Samplers take up no register space, since they're baked in at
+       * link time.
+       */
+      return 0;
+   default:
+      assert(!"not reached");
+      return 0;
+   }
+}
+
 class fs_reg {
 public:
+   /* Callers of this talloc-based new need not call delete. It's
+    * easier to just talloc_free 'ctx' (or any of its ancestors). */
+   static void* operator new(size_t size, void *ctx)
+   {
+      void *node;
+
+      node = talloc_size(ctx, size);
+      assert(node != NULL);
+
+      return node;
+   }
+
+   /** Generic unset register constructor. */
    fs_reg()
    {
       this->file = BAD_FILE;
       this->reg = 0;
+      this->reg_offset = 0;
       this->hw_reg = -1;
+      this->negate = 0;
+      this->abs = 0;
    }
 
+   /** Immediate value constructor. */
    fs_reg(float f)
    {
       this->file = IMM;
@@ -141,8 +210,11 @@ public:
       this->hw_reg = 0;
       this->type = BRW_REGISTER_TYPE_F;
       this->imm.f = f;
+      this->negate = 0;
+      this->abs = 0;
    }
 
+   /** Immediate value constructor. */
    fs_reg(int32_t i)
    {
       this->file = IMM;
@@ -150,8 +222,11 @@ public:
       this->hw_reg = 0;
       this->type = BRW_REGISTER_TYPE_D;
       this->imm.i = i;
+      this->negate = 0;
+      this->abs = 0;
    }
 
+   /** Immediate value constructor. */
    fs_reg(uint32_t u)
    {
       this->file = IMM;
@@ -159,24 +234,25 @@ public:
       this->hw_reg = 0;
       this->type = BRW_REGISTER_TYPE_UD;
       this->imm.u = u;
+      this->negate = 0;
+      this->abs = 0;
    }
 
-   fs_reg(enum register_file file, int hw_reg)
-   {
-      this->file = file;
-      this->reg = 0;
-      this->hw_reg = hw_reg;
-      this->type = BRW_REGISTER_TYPE_F;
-   }
+   fs_reg(enum register_file file, int hw_reg);
+   fs_reg(class fs_visitor *v, const struct glsl_type *type);
 
    /** Register file: ARF, GRF, MRF, IMM. */
    enum register_file file;
    /** Abstract register number.  0 = fixed hw reg */
    int reg;
+   /** Offset within the abstract register. */
+   int reg_offset;
    /** HW register number.  Generally unset until register allocation. */
    int hw_reg;
    /** Register type.  BRW_REGISTER_TYPE_* */
    int type;
+   bool negate;
+   bool abs;
 
    /** Value for file == BRW_IMMMEDIATE_FILE */
    union {
@@ -209,6 +285,9 @@ public:
       this->dst = reg_undef;
       this->src[0] = reg_undef;
       this->src[1] = reg_undef;
+      this->saturate = false;
+      this->conditional_mod = BRW_CONDITIONAL_NONE;
+      this->predicated = false;
    }
    fs_inst(int opcode, fs_reg dst, fs_reg src0)
    {
@@ -216,6 +295,9 @@ public:
       this->dst = dst;
       this->src[0] = src0;
       this->src[1] = reg_undef;
+      this->saturate = false;
+      this->conditional_mod = BRW_CONDITIONAL_NONE;
+      this->predicated = false;
    }
    fs_inst(int opcode, fs_reg dst, fs_reg src0, fs_reg src1)
    {
@@ -223,14 +305,20 @@ public:
       this->dst = dst;
       this->src[0] = src0;
       this->src[1] = src1;
+      this->saturate = false;
+      this->conditional_mod = BRW_CONDITIONAL_NONE;
+      this->predicated = false;
    }
 
    int opcode; /* BRW_OPCODE_* or FS_OPCODE_* */
    fs_reg dst;
    fs_reg src[2];
+   bool saturate;
+   bool predicated;
+   int conditional_mod; /**< BRW_CONDITIONAL_* */
 };
 
-class fs_visitor : public ir_hierarchical_visitor
+class fs_visitor : public ir_visitor
 {
 public:
 
@@ -240,27 +328,520 @@ public:
       this->p = &c->func;
       this->mem_ctx = talloc_new(NULL);
       this->shader = shader;
+      this->fail = false;
+      this->next_abstract_grf = 1;
+      this->variable_ht = hash_table_ctor(0,
+					  hash_table_pointer_hash,
+					  hash_table_pointer_compare);
+
+      this->frag_color = NULL;
+      this->frag_data = NULL;
+      this->frag_depth = NULL;
    }
    ~fs_visitor()
    {
       talloc_free(this->mem_ctx);
+      hash_table_dtor(this->variable_ht);
    }
 
+   fs_reg *variable_storage(ir_variable *var);
+
+   void visit(ir_variable *ir);
+   void visit(ir_assignment *ir);
+   void visit(ir_dereference_variable *ir);
+   void visit(ir_dereference_record *ir);
+   void visit(ir_dereference_array *ir);
+   void visit(ir_expression *ir);
+   void visit(ir_texture *ir);
+   void visit(ir_if *ir);
+   void visit(ir_constant *ir);
+   void visit(ir_swizzle *ir);
+   void visit(ir_return *ir);
+   void visit(ir_loop *ir);
+   void visit(ir_loop_jump *ir);
+   void visit(ir_discard *ir);
+   void visit(ir_call *ir);
+   void visit(ir_function *ir);
+   void visit(ir_function_signature *ir);
+
    fs_inst *emit(fs_inst inst);
+   void assign_regs();
    void generate_code();
    void generate_fb_write(fs_inst *inst);
 
    void emit_dummy_fs();
+   void emit_fb_writes();
 
    struct brw_wm_compile *c;
    struct brw_compile *p;
    struct brw_shader *shader;
    void *mem_ctx;
    exec_list instructions;
+   int next_abstract_grf;
+   struct hash_table *variable_ht;
+   ir_variable *frag_color, *frag_data, *frag_depth;
+
+   bool fail;
+
+   /* Result of last visit() method. */
+   fs_reg result;
 
    int grf_used;
 
 };
+
+/** Fixed HW reg constructor. */
+fs_reg::fs_reg(enum register_file file, int hw_reg)
+{
+   this->file = file;
+   this->reg = 0;
+   this->reg_offset = 0;
+   this->hw_reg = hw_reg;
+   this->type = BRW_REGISTER_TYPE_F;
+   this->negate = 0;
+   this->abs = 0;
+}
+
+/** Automatic reg constructor. */
+fs_reg::fs_reg(class fs_visitor *v, const struct glsl_type *type)
+{
+   this->file = GRF;
+   this->reg = v->next_abstract_grf;
+   this->reg_offset = 0;
+   v->next_abstract_grf += type_size(type);
+   this->hw_reg = -1;
+   this->negate = 0;
+   this->abs = 0;
+
+   switch (type->base_type) {
+   case GLSL_TYPE_FLOAT:
+      this->type = BRW_REGISTER_TYPE_F;
+      break;
+   case GLSL_TYPE_INT:
+   case GLSL_TYPE_BOOL:
+      this->type = BRW_REGISTER_TYPE_D;
+      break;
+   case GLSL_TYPE_UINT:
+      this->type = BRW_REGISTER_TYPE_UD;
+      break;
+   default:
+      assert(!"not reached");
+      this->type =  BRW_REGISTER_TYPE_F;
+      break;
+   }
+}
+
+fs_reg *
+fs_visitor::variable_storage(ir_variable *var)
+{
+   return (fs_reg *)hash_table_find(this->variable_ht, var);
+}
+
+void
+fs_visitor::visit(ir_variable *ir)
+{
+   fs_reg *reg;
+
+   /* FINISHME */
+   assert(ir->mode != ir_var_uniform &&
+	  ir->mode != ir_var_in &&
+	  ir->mode != ir_var_inout);
+
+   if (strcmp(ir->name, "gl_FragColor") == 0) {
+      this->frag_color = ir;
+   }
+
+   if (strcmp(ir->name, "gl_FragData") == 0) {
+      this->frag_data = ir;
+   }
+
+   reg = new(this->mem_ctx) fs_reg(this, ir->type);
+
+   hash_table_insert(this->variable_ht, reg, ir);
+}
+
+void
+fs_visitor::visit(ir_dereference_variable *ir)
+{
+   fs_reg *reg = variable_storage(ir->var);
+   this->result = *reg;
+}
+
+void
+fs_visitor::visit(ir_dereference_record *ir)
+{
+   assert(!"FINISHME");
+}
+
+void
+fs_visitor::visit(ir_dereference_array *ir)
+{
+   assert(!"FINISHME");
+}
+
+void
+fs_visitor::visit(ir_expression *ir)
+{
+   unsigned int operand;
+   fs_reg op[2], temp;
+   fs_reg result;
+   fs_inst *inst;
+
+   for (operand = 0; operand < ir->get_num_operands(); operand++) {
+      ir->operands[operand]->accept(this);
+      if (this->result.file == BAD_FILE) {
+	 ir_print_visitor v;
+	 printf("Failed to get tree for expression operand:\n");
+	 ir->operands[operand]->accept(&v);
+	 this->fail = true;
+      }
+      op[operand] = this->result;
+
+      /* Matrix expression operands should have been broken down to vector
+       * operations already.
+       */
+      assert(!ir->operands[operand]->type->is_matrix());
+      /* And then those vector operands should have been broken down to scalar.
+       */
+      assert(!ir->operands[operand]->type->is_vector());
+   }
+
+   /* Storage for our result.  If our result goes into an assignment, it will
+    * just get copy-propagated out, so no worries.
+    */
+   this->result = fs_reg(this, ir->type);
+
+   switch (ir->operation) {
+   case ir_unop_logic_not:
+      emit(fs_inst(BRW_OPCODE_ADD, this->result, op[0], fs_reg(-1)));
+      break;
+   case ir_unop_neg:
+      this->result = op[0];
+      op[0].negate = ~op[0].negate;
+      break;
+   case ir_unop_abs:
+      this->result = op[0];
+      op[0].abs = true;
+      break;
+   case ir_unop_sign:
+      temp = fs_reg(this, ir->type);
+
+      inst = emit(fs_inst(BRW_OPCODE_CMP, this->result, op[0], fs_reg(0.0f)));
+      inst->conditional_mod = BRW_CONDITIONAL_G;
+
+      inst = emit(fs_inst(BRW_OPCODE_CMP, temp, op[0], fs_reg(0.0f)));
+      inst->conditional_mod = BRW_CONDITIONAL_L;
+
+      temp.negate = true;
+      emit(fs_inst(BRW_OPCODE_ADD, this->result, this->result, temp));
+
+      break;
+   case ir_unop_rcp:
+      emit(fs_inst(FS_OPCODE_RCP, this->result, op[0]));
+      break;
+
+   case ir_unop_exp2:
+      emit(fs_inst(FS_OPCODE_EXP2, this->result, op[0]));
+      break;
+   case ir_unop_log2:
+      emit(fs_inst(FS_OPCODE_LOG2, this->result, op[0]));
+      break;
+   case ir_unop_exp:
+   case ir_unop_log:
+      assert(!"not reached: should be handled by ir_explog_to_explog2");
+      break;
+   case ir_unop_sin:
+      emit(fs_inst(FS_OPCODE_SIN, this->result, op[0]));
+      break;
+   case ir_unop_cos:
+      emit(fs_inst(FS_OPCODE_COS, this->result, op[0]));
+      break;
+
+   case ir_unop_dFdx:
+      emit(fs_inst(FS_OPCODE_DDX, this->result, op[0]));
+      break;
+   case ir_unop_dFdy:
+      emit(fs_inst(FS_OPCODE_DDY, this->result, op[0]));
+      break;
+
+   case ir_binop_add:
+      emit(fs_inst(BRW_OPCODE_ADD, this->result, op[0], op[1]));
+      break;
+   case ir_binop_sub:
+      assert(!"not reached: should be handled by ir_sub_to_add_neg");
+      break;
+
+   case ir_binop_mul:
+      emit(fs_inst(BRW_OPCODE_MUL, this->result, op[0], op[1]));
+      break;
+   case ir_binop_div:
+      assert(!"not reached: should be handled by ir_div_to_mul_rcp");
+   case ir_binop_mod:
+      assert(!"ir_binop_mod should have been converted to b * fract(a/b)");
+      break;
+
+   case ir_binop_less:
+      inst = emit(fs_inst(BRW_OPCODE_CMP, this->result, op[0], op[1]));
+      inst->conditional_mod = BRW_CONDITIONAL_L;
+      break;
+   case ir_binop_greater:
+      inst = emit(fs_inst(BRW_OPCODE_CMP, this->result, op[0], op[1]));
+      inst->conditional_mod = BRW_CONDITIONAL_G;
+      break;
+   case ir_binop_lequal:
+      inst = emit(fs_inst(BRW_OPCODE_CMP, this->result, op[0], op[1]));
+      inst->conditional_mod = BRW_CONDITIONAL_LE;
+      break;
+   case ir_binop_gequal:
+      inst = emit(fs_inst(BRW_OPCODE_CMP, this->result, op[0], op[1]));
+      inst->conditional_mod = BRW_CONDITIONAL_GE;
+      break;
+   case ir_binop_equal:
+      inst = emit(fs_inst(BRW_OPCODE_CMP, this->result, op[0], op[1]));
+      inst->conditional_mod = BRW_CONDITIONAL_Z;
+      break;
+   case ir_binop_nequal:
+      inst = emit(fs_inst(BRW_OPCODE_CMP, this->result, op[0], op[1]));
+      inst->conditional_mod = BRW_CONDITIONAL_NZ;
+      break;
+
+   case ir_binop_logic_xor:
+      emit(fs_inst(BRW_OPCODE_XOR, this->result, op[0], op[1]));
+      break;
+
+   case ir_binop_logic_or:
+      emit(fs_inst(BRW_OPCODE_OR, this->result, op[0], op[1]));
+      break;
+
+   case ir_binop_logic_and:
+      emit(fs_inst(BRW_OPCODE_AND, this->result, op[0], op[1]));
+      break;
+
+   case ir_binop_dot:
+   case ir_binop_cross:
+   case ir_unop_any:
+      assert(!"not reached: should be handled by brw_channel_expressions");
+      break;
+
+   case ir_unop_sqrt:
+      emit(fs_inst(FS_OPCODE_SQRT, this->result, op[0]));
+      break;
+
+   case ir_unop_rsq:
+      emit(fs_inst(FS_OPCODE_RSQ, this->result, op[0]));
+      break;
+
+   case ir_unop_i2f:
+   case ir_unop_b2f:
+   case ir_unop_b2i:
+      emit(fs_inst(BRW_OPCODE_MOV, this->result, op[0]));
+      break;
+   case ir_unop_f2i:
+      emit(fs_inst(BRW_OPCODE_RNDZ, this->result, op[0]));
+      break;
+   case ir_unop_f2b:
+   case ir_unop_i2b:
+      inst = emit(fs_inst(BRW_OPCODE_CMP, this->result, op[0], fs_reg(0.0f)));
+      inst->conditional_mod = BRW_CONDITIONAL_NZ;
+
+   case ir_unop_trunc:
+      emit(fs_inst(BRW_OPCODE_RNDD, this->result, op[0]));
+      break;
+   case ir_unop_ceil:
+      op[0].negate = ~op[0].negate;
+      inst = emit(fs_inst(BRW_OPCODE_RNDD, this->result, op[0]));
+      this->result.negate = true;
+      break;
+   case ir_unop_floor:
+      inst = emit(fs_inst(BRW_OPCODE_RNDD, this->result, op[0]));
+      break;
+   case ir_unop_fract:
+      inst = emit(fs_inst(BRW_OPCODE_FRC, this->result, op[0]));
+      break;
+
+   case ir_binop_min:
+      inst = emit(fs_inst(BRW_OPCODE_CMP, this->result, op[0], op[1]));
+      inst->conditional_mod = BRW_CONDITIONAL_L;
+
+      inst = emit(fs_inst(BRW_OPCODE_SEL, this->result, op[0], op[1]));
+      inst->predicated = true;
+      break;
+   case ir_binop_max:
+      inst = emit(fs_inst(BRW_OPCODE_CMP, this->result, op[0], op[1]));
+      inst->conditional_mod = BRW_CONDITIONAL_G;
+
+      inst = emit(fs_inst(BRW_OPCODE_SEL, this->result, op[0], op[1]));
+      inst->predicated = true;
+      break;
+
+   case ir_binop_pow:
+      inst = emit(fs_inst(FS_OPCODE_POW, this->result, op[0], op[1]));
+      break;
+
+   case ir_unop_bit_not:
+   case ir_unop_u2f:
+   case ir_binop_lshift:
+   case ir_binop_rshift:
+   case ir_binop_bit_and:
+   case ir_binop_bit_xor:
+   case ir_binop_bit_or:
+      assert(!"GLSL 1.30 features unsupported");
+      break;
+   }
+}
+
+void
+fs_visitor::visit(ir_assignment *ir)
+{
+   struct fs_reg l, r;
+   int i;
+   int write_mask;
+   fs_inst *inst;
+
+   /* FINISHME: arrays on the lhs */
+   ir->lhs->accept(this);
+   l = this->result;
+
+   ir->rhs->accept(this);
+   r = this->result;
+
+   /* FINISHME: This should really set to the correct maximal writemask for each
+    * FINISHME: component written (in the loops below).  This case can only
+    * FINISHME: occur for matrices, arrays, and structures.
+    */
+   if (ir->write_mask == 0) {
+      assert(!ir->lhs->type->is_scalar() && !ir->lhs->type->is_vector());
+      write_mask = WRITEMASK_XYZW;
+   } else {
+      assert(ir->lhs->type->is_vector() || ir->lhs->type->is_scalar());
+      write_mask = ir->write_mask;
+   }
+
+   assert(l.file != BAD_FILE);
+   assert(r.file != BAD_FILE);
+
+   if (ir->condition) {
+      /* Get the condition bool into the predicate. */
+      ir->condition->accept(this);
+      inst = emit(fs_inst(BRW_OPCODE_CMP, this->result, fs_reg(0)));
+      inst->conditional_mod = BRW_CONDITIONAL_NZ;
+   }
+
+   for (i = 0; i < type_size(ir->lhs->type); i++) {
+      if (i < 4 && !(write_mask & (1 << i)))
+	 continue;
+
+      inst = emit(fs_inst(BRW_OPCODE_MOV, l, r));
+      if (ir->condition)
+	 inst->predicated = true;
+      l.reg_offset++;
+      r.reg_offset++;
+   }
+}
+
+void
+fs_visitor::visit(ir_texture *ir)
+{
+   assert(!"FINISHME");
+}
+
+void
+fs_visitor::visit(ir_swizzle *ir)
+{
+   assert(!"FINISHME");
+}
+
+void
+fs_visitor::visit(ir_discard *ir)
+{
+   assert(!"FINISHME");
+}
+
+void
+fs_visitor::visit(ir_constant *ir)
+{
+   fs_reg reg(this, ir->type);
+   this->result = reg;
+
+   for (unsigned int i = 0; i < ir->type->vector_elements; i++) {
+      switch (ir->type->base_type) {
+      case GLSL_TYPE_FLOAT:
+	 emit(fs_inst(BRW_OPCODE_MOV, reg, fs_reg(ir->value.f[i])));
+	 break;
+      case GLSL_TYPE_UINT:
+	 emit(fs_inst(BRW_OPCODE_MOV, reg, fs_reg(ir->value.u[i])));
+	 break;
+      case GLSL_TYPE_INT:
+	 emit(fs_inst(BRW_OPCODE_MOV, reg, fs_reg(ir->value.i[i])));
+	 break;
+      case GLSL_TYPE_BOOL:
+	 emit(fs_inst(BRW_OPCODE_MOV, reg, fs_reg((int)ir->value.b[i])));
+	 break;
+      default:
+	 assert(!"Non-float/uint/int/bool constant");
+      }
+      reg.reg_offset++;
+   }
+}
+
+void
+fs_visitor::visit(ir_if *ir)
+{
+   assert(!"FINISHME");
+}
+
+void
+fs_visitor::visit(ir_loop *ir)
+{
+   assert(!"FINISHME");
+}
+
+void
+fs_visitor::visit(ir_loop_jump *ir)
+{
+   assert(!"FINISHME");
+}
+
+void
+fs_visitor::visit(ir_call *ir)
+{
+   assert(!"FINISHME");
+}
+
+void
+fs_visitor::visit(ir_return *ir)
+{
+   assert(!"FINISHME");
+}
+
+void
+fs_visitor::visit(ir_function *ir)
+{
+   /* Ignore function bodies other than main() -- we shouldn't see calls to
+    * them since they should all be inlined before we get to ir_to_mesa.
+    */
+   if (strcmp(ir->name, "main") == 0) {
+      const ir_function_signature *sig;
+      exec_list empty;
+
+      sig = ir->matching_signature(&empty);
+
+      assert(sig);
+
+      foreach_iter(exec_list_iterator, iter, sig->body) {
+	 ir_instruction *ir = (ir_instruction *)iter.get();
+
+	 ir->accept(this);
+      }
+   }
+}
+
+void
+fs_visitor::visit(ir_function_signature *ir)
+{
+   assert(!"not reached");
+   (void)ir;
+}
 
 fs_inst *
 fs_visitor::emit(fs_inst inst)
@@ -298,6 +879,24 @@ fs_visitor::emit_dummy_fs()
 }
 
 void
+fs_visitor::emit_fb_writes()
+{
+   assert(this->frag_color || !"FINISHME: MRT");
+   fs_reg color = *(variable_storage(this->frag_color));
+
+   for (int i = 0; i < 4; i++) {
+      emit(fs_inst(BRW_OPCODE_MOV,
+		   fs_reg(MRF, 2 + i),
+		   color));
+      color.reg_offset++;
+   }
+
+   emit(fs_inst(FS_OPCODE_FB_WRITE,
+		fs_reg(0),
+		fs_reg(0)));
+}
+
+void
 fs_visitor::generate_fb_write(fs_inst *inst)
 {
    GLboolean eot = 1; /* FINISHME: MRT */
@@ -325,6 +924,37 @@ fs_visitor::generate_fb_write(fs_inst *inst)
 		nr,
 		0,
 		eot);
+}
+
+static void
+trivial_assign_reg(int header_size, fs_reg *reg)
+{
+   if (reg->file == GRF && reg->reg != 0) {
+      reg->hw_reg = header_size + reg->reg + reg->reg_offset;
+      reg->reg = 0;
+   }
+}
+
+void
+fs_visitor::assign_regs()
+{
+   int header_size = 2; /* FINISHME: header */
+   int last_grf = 0;
+
+   /* FINISHME: trivial assignment of register numbers */
+   foreach_iter(exec_list_iterator, iter, this->instructions) {
+      fs_inst *inst = (fs_inst *)iter.get();
+
+      trivial_assign_reg(header_size, &inst->dst);
+      trivial_assign_reg(header_size, &inst->src[0]);
+      trivial_assign_reg(header_size, &inst->src[1]);
+
+      last_grf = MAX2(last_grf, inst->dst.hw_reg);
+      last_grf = MAX2(last_grf, inst->src[0].hw_reg);
+      last_grf = MAX2(last_grf, inst->src[1].hw_reg);
+   }
+
+   this->grf_used = last_grf;
 }
 
 void
@@ -365,8 +995,15 @@ fs_visitor::generate_code()
 	    /* Probably unused. */
 	    src[i] = brw_null_reg();
 	 }
+	 if (inst->src[i].abs)
+	    src[i] = brw_abs(src[i]);
+	 if (inst->src[i].negate)
+	    src[i] = negate(src[i]);
       }
       dst = brw_vec8_reg(inst->dst.file, inst->dst.hw_reg, 0);
+
+      brw_set_conditionalmod(p, inst->conditional_mod);
+      brw_set_predicate_control(p, inst->predicated);
 
       switch (inst->opcode) {
       case BRW_OPCODE_MOV:
@@ -422,9 +1059,21 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c)
    /* Now the main event: Visit the shader IR and generate our FS IR for it.
     */
    fs_visitor v(c, shader);
-   visit_list_elements(&v, shader->ir);
 
-   v.emit_dummy_fs();
+   if (0) {
+      v.emit_dummy_fs();
+   } else {
+      /* Generate FS IR for main().  (the visitor only descends into
+       * functions called "main").
+       */
+      visit_exec_list(shader->ir, &v);
+
+      if (v.fail)
+	 return GL_FALSE;
+
+      v.emit_fb_writes();
+      v.assign_regs();
+   }
 
    v.generate_code();
 
