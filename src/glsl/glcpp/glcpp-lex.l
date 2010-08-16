@@ -88,10 +88,8 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 		return SPACE;
 }
 
-{HASH}(version) {
+{HASH}version {
 	yylval->str = talloc_strdup (yyextra, yytext);
-	yylineno++;
-	yycolumn = 0;
 	yyextra->space_tokens = 0;
 	return HASH_VERSION;
 }
