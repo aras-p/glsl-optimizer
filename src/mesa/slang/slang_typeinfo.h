@@ -25,11 +25,9 @@
 #ifndef SLANG_TYPEINFO_H
 #define SLANG_TYPEINFO_H 1
 
-#include "main/imports.h"
-#include "main/mtypes.h"
+#include "main/glheader.h"
 #include "slang_log.h"
 #include "slang_utility.h"
-#include "slang_vartable.h"
 
 
 struct slang_operation_;
