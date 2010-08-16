@@ -394,6 +394,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\ir_noop_swizzle.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\ir_optimization.h"
 					>
 				</File>
@@ -422,7 +426,19 @@
 					>
 				</File>
 				<File
+					RelativePath="..\ir_rvalue_visitor.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\ir_rvalue_visitor.h"
+					>
+				</File>
+				<File
 					RelativePath="..\ir_structure_splitting.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\ir_sub_to_add_neg.cpp"
 					>
 				</File>
 				<File
