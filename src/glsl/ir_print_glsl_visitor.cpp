@@ -489,14 +489,12 @@ void ir_print_glsl_visitor::visit(ir_assignment *ir)
 
    WRITE_MASK_SAVE;
    ir->lhs->accept(this);
-   WRITE_MASK_LOAD;
 
    char mask[5];
    unsigned j = 0;
    const glsl_type* lhsType = ir->lhs->type;
    const glsl_type* rhsType = ir->rhs->type;
    unsigned oldWriteMask = this->writeMask;
-   bool hasWriteMask = false;
    if (ir->lhs->type->vector_elements > 1 && ir->write_mask != (1<<ir->lhs->type->vector_elements)-1)
    {
 	   for (unsigned i = 0; i < 4; i++) {
@@ -506,13 +504,11 @@ void ir_print_glsl_visitor::visit(ir_assignment *ir)
 		   }
 	   }
 	   lhsType = glsl_type::get_instance(lhsType->base_type, j, 1);
-	   this->writeMask = ~0;
-
+	   this->writeMask = ir->write_mask;
 	   rhsType = get_masked_type (ir->rhs, ir->write_mask);
-	   if (rhsType != ir->rhs->type)
-		   this->writeMask = ir->write_mask;
    }
    mask[j] = '\0';
+   bool hasWriteMask = false;
    if (mask[0])
    {
 	   buffer = talloc_asprintf_append(buffer, ".%s", mask);
@@ -538,6 +534,8 @@ void ir_print_glsl_visitor::visit(ir_assignment *ir)
 	   if (addSwizzle)
 		   buffer = talloc_asprintf_append(buffer, ".%s", mask);
    }
+
+   WRITE_MASK_LOAD;
 
    this->writeMask = oldWriteMask;
 }
