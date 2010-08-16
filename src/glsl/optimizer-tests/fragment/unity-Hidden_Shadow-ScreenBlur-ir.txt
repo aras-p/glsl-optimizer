@@ -128,9 +128,9 @@ vec4 frag (
   tmpvar_1 = 0;
   i_1 = tmpvar_1;
   vec4 tmpvar_2;
-  tmpvar_2.xy = vec2(i.uv.xy);
-  tmpvar_2.z = float(vec4(0.000000));
-  tmpvar_2.w = float(vec4(0.000000));
+  tmpvar_2.xy = i.uv.xy;
+  tmpvar_2.z = (vec4(0.000000)).z;
+  tmpvar_2.w = (vec4(0.000000)).w;
   vec4 tmpvar_3;
   tmpvar_3 = tmpvar_2;
   coord = tmpvar_3;

@@ -2,7 +2,7 @@ void main ()
 {
   vec4 c;
   c.x = gl_FragCoord.y;
-  c.yzw = vec3(vec4(4.000000, 4.000000, 5.000000, 6.000000));
+  c.yzw = (vec4(4.000000, 4.000000, 5.000000, 6.000000)).yzw;
   gl_FragColor = c;
 }
 

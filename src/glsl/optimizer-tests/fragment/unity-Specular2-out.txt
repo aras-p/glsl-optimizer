@@ -21,7 +21,7 @@ void main ()
   float tmpvar_61;
   tmpvar_61 = (light.w * tmpvar_34.w);
   c.xyz = (((tmpvar_34.xyz * _Color.xyz) * light.xyz) + ((light.xyz * _SpecColor.xyz) * tmpvar_61)).xyz;
-  c.w = float(vec4(((tmpvar_34.w * _Color.w) + (tmpvar_61 * _SpecColor.w))));
+  c.w = (vec4(((tmpvar_34.w * _Color.w) + (tmpvar_61 * _SpecColor.w)))).w;
   gl_FragData[0] = c.xyzw;
 }
 

@@ -86,7 +86,7 @@ vec4 LightingLambert (
   c.xyz = tmpvar_4.xyz;
   float tmpvar_5;
   tmpvar_5 = s.Alpha;
-  c.w = float(vec4(tmpvar_5));
+  c.w = (vec4(tmpvar_5)).w;
   return c;
 }
 
@@ -139,7 +139,7 @@ vec4 frag_surf (
   c = tmpvar_14;
   float tmpvar_15;
   tmpvar_15 = 0.000000;
-  c.w = float(vec4(tmpvar_15));
+  c.w = (vec4(tmpvar_15)).w;
   return c;
 }
 

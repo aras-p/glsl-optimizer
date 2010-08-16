@@ -16,8 +16,8 @@ void main ()
   float tmpvar_42;
   tmpvar_42 = (1.000000 - abs (tmpvar_3.w));
   vec4 tmpvar_43;
-  tmpvar_43.xyz = vec3(tmpvar_5.xyz);
-  tmpvar_43.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_43.xyz = tmpvar_5.xyz;
+  tmpvar_43.w = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).w;
   tmpvar_90 = mix (tmpvar_5, normalize ((tmpvar_43 * gl_ModelViewMatrixInverseTranspose)).xyz, vec3(tmpvar_42));
   vec4 tmpvar_59;
   tmpvar_59 = (gl_ModelViewProjectionMatrix * (gl_Vertex.xyzw + ((tmpvar_3 * gl_ModelViewMatrixInverseTranspose) * tmpvar_42)));
@@ -33,13 +33,13 @@ void main ()
   };
   gl_Position = tmpvar_59.xyzw;
   vec4 tmpvar_17;
-  tmpvar_17.xy = vec2(tmpvar_60.xy);
-  tmpvar_17.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
-  tmpvar_17.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_17.xy = tmpvar_60.xy;
+  tmpvar_17.z = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).z;
+  tmpvar_17.w = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).w;
   gl_TexCoord[0] = tmpvar_17;
   vec4 tmpvar_19;
-  tmpvar_19.xyz = vec3((lightColor * tmpvar_11.w).xyz);
-  tmpvar_19.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_19.xyz = (lightColor * tmpvar_11.w).xyz;
+  tmpvar_19.w = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).w;
   gl_TexCoord[1] = tmpvar_19;
 }
 

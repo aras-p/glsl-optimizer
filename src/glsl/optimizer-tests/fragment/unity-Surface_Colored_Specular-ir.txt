@@ -118,7 +118,7 @@ vec4 LightingColoredSpecular (
   c.xyz = tmpvar_12.xyz;
   float tmpvar_13;
   tmpvar_13 = s.Alpha;
-  c.w = float(vec4(tmpvar_13));
+  c.w = (vec4(tmpvar_13)).w;
   return c;
 }
 
@@ -175,7 +175,7 @@ vec4 frag_surf (
   c = tmpvar_16;
   float tmpvar_17;
   tmpvar_17 = 0.000000;
-  c.w = float(vec4(tmpvar_17));
+  c.w = (vec4(tmpvar_17)).w;
   return c;
 }
 

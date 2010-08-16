@@ -116,7 +116,7 @@ vec4 LightingBlinnPhong (
   c.xyz = tmpvar_11.xyz;
   float tmpvar_12;
   tmpvar_12 = (s.Alpha + (((_LightColor0.w * _SpecColor.w) * spec) * atten));
-  c.w = float(vec4(tmpvar_12));
+  c.w = (vec4(tmpvar_12)).w;
   return c;
 }
 
@@ -173,7 +173,7 @@ vec4 frag_surf (
   c = tmpvar_16;
   float tmpvar_17;
   tmpvar_17 = 0.000000;
-  c.w = float(vec4(tmpvar_17));
+  c.w = (vec4(tmpvar_17)).w;
   return c;
 }
 

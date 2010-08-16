@@ -15,7 +15,7 @@ void main ()
   float tmpvar_23;
   tmpvar_23 = cos (tmpvar_20);
   uv.x = ((tmpvar_23 * tmpvar_4.x) - (tmpvar_21 * tmpvar_4.y));
-  uv.y = float(vec2(((tmpvar_21 * tmpvar_4.x) + (tmpvar_23 * tmpvar_4.y))));
+  uv.y = (vec2(((tmpvar_21 * tmpvar_4.x) + (tmpvar_23 * tmpvar_4.y)))).y;
   vec2 tmpvar_27;
   tmpvar_27 = (uv + _CenterRadius.xy);
   uv = tmpvar_27;

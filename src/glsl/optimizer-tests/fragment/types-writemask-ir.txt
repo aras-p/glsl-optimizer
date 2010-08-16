@@ -6,7 +6,7 @@ void main ()
   c.x = tmpvar_1;
   vec3 tmpvar_2;
   tmpvar_2 = vec3(4.000000, 5.000000, 6.000000);
-  c.yzw = vec3(tmpvar_2.xyz);
+  c.yzw = tmpvar_2.xyz;
   vec4 tmpvar_3;
   tmpvar_3 = c;
   gl_FragColor = tmpvar_3;

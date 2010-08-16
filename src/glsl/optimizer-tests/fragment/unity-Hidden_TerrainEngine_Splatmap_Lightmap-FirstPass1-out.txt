@@ -24,7 +24,7 @@ void main ()
   light.xyz = (tmpvar_62.xyz + mix ((2.000000 * texture2D (unity_LightmapInd, tmpvar_11.xy).xyz), (2.000000 * texture2D (unity_Lightmap, tmpvar_11.xy).xyz), vec3(clamp (tmpvar_11.z, 0.000000, 1.000000)))).xyz;
   vec4 c;
   c.xyz = (((((tmpvar_47.x * texture2D (_Splat0, tmpvar_3.zw).xyz) + (tmpvar_47.y * texture2D (_Splat1, tmpvar_5.xy).xyz)) + (tmpvar_47.z * texture2D (_Splat2, tmpvar_5.zw).xyz)) + (tmpvar_47.w * texture2D (_Splat3, gl_TexCoord[2].xy).xyz)) * light.xyz).xyz;
-  c.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
+  c.w = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).w;
   gl_FragData[0] = c.xyzw;
 }
 

@@ -101,7 +101,7 @@ vec4 frag_surf (
   c.xyz = tmpvar_14.xyz;
   float tmpvar_15;
   tmpvar_15 = o.Alpha;
-  c.w = float(vec4(tmpvar_15));
+  c.w = (vec4(tmpvar_15)).w;
   return c;
 }
 

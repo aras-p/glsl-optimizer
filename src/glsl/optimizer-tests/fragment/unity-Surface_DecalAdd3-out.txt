@@ -9,7 +9,7 @@ void main ()
   tmpvar_31 = (texture2D (_Decal, gl_TexCoord[0].xy).xyz * 0.500000);
   vec4 c_i0;
   c_i0.xyz = ((tmpvar_31 * _LightColor0.xyz) * (max (0.000000, dot (gl_TexCoord[1].xyz, _WorldSpaceLightPos0.xyz)) * 2.000000)).xyz;
-  c_i0.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
+  c_i0.w = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).w;
   c = c_i0;
   c.xyz = (c_i0.xyz + (tmpvar_31 * gl_TexCoord[2].xyz)).xyz;
   gl_FragData[0] = c.xyzw;

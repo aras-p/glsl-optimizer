@@ -27,7 +27,7 @@ void main ()
   float tmpvar_68;
   tmpvar_68 = (light.w * tmpvar_38.w);
   c_i0.xyz = ((tmpvar_40.xyz * light.xyz) + ((light.xyz * _SpecColor.xyz) * tmpvar_68)).xyz;
-  c_i0.w = float(vec4((tmpvar_40.w + (tmpvar_68 * _SpecColor.w))));
+  c_i0.w = (vec4((tmpvar_40.w + (tmpvar_68 * _SpecColor.w)))).w;
   col = c_i0;
   col.xyz = (c_i0.xyz + (tmpvar_40.xyz * texture2D (_Illum, tmpvar_3.zw).w)).xyz;
   gl_FragData[0] = col.xyzw;

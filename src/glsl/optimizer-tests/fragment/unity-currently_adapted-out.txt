@@ -13,12 +13,12 @@ void main ()
   tmpvar_13 = ((texture2D (_CurTex, tmpvar_2).xy - tmpvar_10) * _AdaptParams.x);
   delta = tmpvar_13;
   delta.x = (sign (tmpvar_13.x) * max (0.003922, abs (tmpvar_13.x)));
-  delta.y = float(vec2((sign (delta.y) * max (0.003922, abs (delta.y)))));
+  delta.y = (vec2((sign (delta.y) * max (0.003922, abs (delta.y))))).y;
   valNew.xy = (tmpvar_10 + delta);
   valNew.x = max (valNew.x, _AdaptParams.z);
-  valNew.y = float(vec2(min (valNew.y, _AdaptParams.y)));
-  valNew.z = float(vec3(((valNew.x - valNew.y) + 0.010000)));
-  valNew.w = float(vec4((valNew.y / valNew.z)));
+  valNew.y = (vec2(min (valNew.y, _AdaptParams.y))).y;
+  valNew.z = (vec3(((valNew.x - valNew.y) + 0.010000))).z;
+  valNew.w = (vec4((valNew.y / valNew.z))).w;
   gl_FragData[0] = valNew.xyzw;
 }
 

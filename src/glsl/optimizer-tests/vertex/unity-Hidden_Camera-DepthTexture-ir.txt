@@ -86,7 +86,7 @@ v2f vert (
   o.uv.x = tmpvar_2;
   float tmpvar_3;
   tmpvar_3 = float((v.texcoord.y > 0.000000));
-  o.uv.y = float(vec2(tmpvar_3));
+  o.uv.y = (vec2(tmpvar_3)).y;
   return o;
 }
 
@@ -125,9 +125,9 @@ void main ()
   tmpvar_12 = tmpvar_11;
   gl_Position = tmpvar_12;
   vec4 tmpvar_13;
-  tmpvar_13.xy = vec2(xl_retval.uv.xy);
-  tmpvar_13.z = float(vec4(0.000000));
-  tmpvar_13.w = float(vec4(0.000000));
+  tmpvar_13.xy = xl_retval.uv.xy;
+  tmpvar_13.z = (vec4(0.000000)).z;
+  tmpvar_13.w = (vec4(0.000000)).w;
   vec4 tmpvar_14;
   tmpvar_14 = tmpvar_13;
   gl_TexCoord[0] = tmpvar_14;

@@ -9,12 +9,12 @@ void main ()
   vec3 wn;
   vec4 normal_i0;
   normal_i0.xy = ((texture2D (_BumpMap, gl_TexCoord[1].xy).wy * 2.000000) - 1.000000);
-  normal_i0.z = float(vec3(sqrt (((1.000000 - (normal_i0.x * normal_i0.x)) - (normal_i0.y * normal_i0.y)))));
+  normal_i0.z = (vec3(sqrt (((1.000000 - (normal_i0.x * normal_i0.x)) - (normal_i0.y * normal_i0.y))))).z;
   vec4 tmpvar_31;
   tmpvar_31 = texture2D (_MainTex, gl_TexCoord[0].xy);
   wn.x = dot (gl_TexCoord[3].xyz, normal_i0.xyz);
-  wn.y = float(vec2(dot (gl_TexCoord[4].xyz, normal_i0.xyz)));
-  wn.z = float(vec3(dot (gl_TexCoord[5].xyz, normal_i0.xyz)));
+  wn.y = (vec2(dot (gl_TexCoord[4].xyz, normal_i0.xyz))).y;
+  wn.z = (vec3(dot (gl_TexCoord[5].xyz, normal_i0.xyz))).z;
   vec4 tmpvar_41;
   tmpvar_41 = (gl_LightModel.ambient * tmpvar_31);
   c = tmpvar_41;

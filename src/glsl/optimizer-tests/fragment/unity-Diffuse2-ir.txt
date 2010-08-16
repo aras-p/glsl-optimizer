@@ -157,7 +157,7 @@ vec4 LightingLambert_PrePass (
   c.xyz = tmpvar_1.xyz;
   float tmpvar_2;
   tmpvar_2 = s.Alpha;
-  c.w = float(vec4(tmpvar_2));
+  c.w = (vec4(tmpvar_2)).w;
   return c;
 }
 

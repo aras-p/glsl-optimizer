@@ -28,7 +28,7 @@ vec4 UnpackNormal (
   tmpvar_2 = sqrt (((1.000000 - (normal.x * normal.x)) - (normal.y * normal.y)));
   float tmpvar_3;
   tmpvar_3 = tmpvar_2;
-  normal.z = float(vec3(tmpvar_3));
+  normal.z = (vec3(tmpvar_3)).z;
   return normal;
 }
 

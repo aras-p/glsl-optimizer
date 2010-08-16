@@ -75,7 +75,7 @@ vec4 EncodeDepthNormal (
   tmpvar_3 = EncodeFloatRG (depth);
   vec2 tmpvar_4;
   tmpvar_4 = tmpvar_3;
-  enc.zw = vec2(tmpvar_4.xy);
+  enc.zw = tmpvar_4.xy;
   return enc;
 }
 
@@ -105,7 +105,7 @@ vec4 frag (
   n.xyz = tmpvar_7.xyz;
   float tmpvar_8;
   tmpvar_8 = -(n.z);
-  n.z = float(vec3(tmpvar_8));
+  n.z = (vec3(tmpvar_8)).z;
   vec4 tmpvar_10;
   if ((d < 0.999985)) {
     vec4 tmpvar_9;

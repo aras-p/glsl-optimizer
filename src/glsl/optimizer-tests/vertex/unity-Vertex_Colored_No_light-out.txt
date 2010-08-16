@@ -4,9 +4,9 @@ void main ()
   gl_Position = (gl_ModelViewProjectionMatrix * gl_Vertex.xyzw).xyzw;
   gl_FrontColor = gl_Color.xyzw;
   vec4 tmpvar_13;
-  tmpvar_13.xy = vec2(((gl_MultiTexCoord0.xy * _MainTex_ST.xy) + _MainTex_ST.zw).xy);
-  tmpvar_13.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
-  tmpvar_13.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_13.xy = ((gl_MultiTexCoord0.xy * _MainTex_ST.xy) + _MainTex_ST.zw).xy;
+  tmpvar_13.z = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).z;
+  tmpvar_13.w = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).w;
   gl_TexCoord[0] = tmpvar_13;
 }
 

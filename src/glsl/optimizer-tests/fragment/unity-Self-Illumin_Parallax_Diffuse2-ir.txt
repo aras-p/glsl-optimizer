@@ -41,7 +41,7 @@ vec4 UnpackNormal (
   tmpvar_2 = sqrt (((1.000000 - (normal.x * normal.x)) - (normal.y * normal.y)));
   float tmpvar_3;
   tmpvar_3 = tmpvar_2;
-  normal.z = float(vec3(tmpvar_3));
+  normal.z = (vec3(tmpvar_3)).z;
   return normal;
 }
 
@@ -62,7 +62,7 @@ vec2 ParallaxOffset (
   v = tmpvar_3;
   float tmpvar_4;
   tmpvar_4 = (v.z + 0.420000);
-  v.z = float(vec3(tmpvar_4));
+  v.z = (vec3(tmpvar_4)).z;
   return (h * (v.xy / v.z));
 }
 
@@ -131,7 +131,7 @@ vec4 LightingLambert_PrePass (
   c.xyz = tmpvar_1.xyz;
   float tmpvar_2;
   tmpvar_2 = s.Alpha;
-  c.w = float(vec4(tmpvar_2));
+  c.w = (vec4(tmpvar_2)).w;
   return c;
 }
 

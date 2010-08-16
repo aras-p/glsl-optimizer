@@ -44,14 +44,14 @@ vec4 ComputeScreenPos (
   tmpvar_1 = (pos * 0.500000);
   o = tmpvar_1;
   vec2 tmpvar_2;
-  tmpvar_2.x = float(vec2(o.x));
-  tmpvar_2.y = float(vec2((o.y * _ProjectionParams.x)));
+  tmpvar_2.x = (vec2(o.x)).x;
+  tmpvar_2.y = (vec2((o.y * _ProjectionParams.x))).y;
   vec2 tmpvar_3;
   tmpvar_3 = (tmpvar_2 + o.w);
   o.xy = tmpvar_3.xy;
   vec2 tmpvar_4;
   tmpvar_4 = pos.zw;
-  o.zw = vec2(tmpvar_4.xy);
+  o.zw = tmpvar_4.xy;
   return o;
 }
 
@@ -77,7 +77,7 @@ v2f_surf vert_surf (
   o.hip_lmapFade.xy = tmpvar_5.xy;
   float tmpvar_6;
   tmpvar_6 = ((-((gl_ModelViewMatrix * v.vertex).z) * unity_LightmapFade.z) + unity_LightmapFade.w);
-  o.hip_lmapFade.z = float(vec3(tmpvar_6));
+  o.hip_lmapFade.z = (vec3(tmpvar_6)).z;
   return o;
 }
 
@@ -126,23 +126,23 @@ void main ()
   tmpvar_16 = tmpvar_15;
   gl_Position = tmpvar_16;
   vec4 tmpvar_17;
-  tmpvar_17.x = float(vec4(xl_retval.fog));
-  tmpvar_17.y = float(vec4(0.000000));
-  tmpvar_17.z = float(vec4(0.000000));
-  tmpvar_17.w = float(vec4(0.000000));
+  tmpvar_17.x = (vec4(xl_retval.fog)).x;
+  tmpvar_17.y = (vec4(0.000000)).y;
+  tmpvar_17.z = (vec4(0.000000)).z;
+  tmpvar_17.w = (vec4(0.000000)).w;
   vec4 tmpvar_18;
   tmpvar_18 = tmpvar_17;
   xlv_FOG = tmpvar_18;
   vec4 tmpvar_19;
-  tmpvar_19.xy = vec2(xl_retval.hip_pack0.xy);
-  tmpvar_19.z = float(vec4(0.000000));
-  tmpvar_19.w = float(vec4(0.000000));
+  tmpvar_19.xy = xl_retval.hip_pack0.xy;
+  tmpvar_19.z = (vec4(0.000000)).z;
+  tmpvar_19.w = (vec4(0.000000)).w;
   vec4 tmpvar_20;
   tmpvar_20 = tmpvar_19;
   gl_TexCoord[0] = tmpvar_20;
   vec4 tmpvar_21;
-  tmpvar_21.xyz = vec3(xl_retval.worldPos.xyz);
-  tmpvar_21.w = float(vec4(0.000000));
+  tmpvar_21.xyz = xl_retval.worldPos.xyz;
+  tmpvar_21.w = (vec4(0.000000)).w;
   vec4 tmpvar_22;
   tmpvar_22 = tmpvar_21;
   gl_TexCoord[1] = tmpvar_22;
@@ -152,8 +152,8 @@ void main ()
   tmpvar_24 = tmpvar_23;
   gl_TexCoord[2] = tmpvar_24;
   vec4 tmpvar_25;
-  tmpvar_25.xyz = vec3(xl_retval.hip_lmapFade.xyz);
-  tmpvar_25.w = float(vec4(0.000000));
+  tmpvar_25.xyz = xl_retval.hip_lmapFade.xyz;
+  tmpvar_25.w = (vec4(0.000000)).w;
   vec4 tmpvar_26;
   tmpvar_26 = tmpvar_25;
   gl_TexCoord[3] = tmpvar_26;

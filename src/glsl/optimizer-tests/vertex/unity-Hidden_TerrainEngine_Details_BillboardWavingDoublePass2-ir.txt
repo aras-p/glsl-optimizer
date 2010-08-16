@@ -148,10 +148,10 @@ void TerrainWaveGrass (
   tmpvar_20 = dot (s, _waveZmove);
   float tmpvar_21;
   tmpvar_21 = tmpvar_20;
-  waveMove.z = float(vec3(tmpvar_21));
+  waveMove.z = (vec3(tmpvar_21)).z;
   vec2 tmpvar_22;
   tmpvar_22 = (vertex.xz - (waveMove.xz * _WaveAndDistance.z));
-  vertex.xz = vec2(tmpvar_22.xy);
+  vertex.xz = tmpvar_22.xy;
   vec3 tmpvar_23;
   tmpvar_23 = vec3(lighting);
   vec3 tmpvar_24;
@@ -164,7 +164,7 @@ void TerrainWaveGrass (
   outColor.xyz = tmpvar_26.xyz;
   float tmpvar_27;
   tmpvar_27 = 1.000000;
-  outColor.w = float(vec4(tmpvar_27));
+  outColor.w = (vec4(tmpvar_27)).w;
 }
 
 void TerrainBillboardGrass (
@@ -224,11 +224,11 @@ v2f_surf vert_surf (
   o.pos = tmpvar_3;
   float tmpvar_4;
   tmpvar_4 = (o.pos.z + unity_LightShadowBias.x);
-  o.pos.z = float(vec3(tmpvar_4));
+  o.pos.z = (vec3(tmpvar_4)).z;
   if ((o.pos.z < -(o.pos.w))) {
     float tmpvar_5;
     tmpvar_5 = -(o.pos.w);
-    o.pos.z = float(vec3(tmpvar_5));
+    o.pos.z = (vec3(tmpvar_5)).z;
   };
   return o;
 }
@@ -278,9 +278,9 @@ void main ()
   tmpvar_16 = tmpvar_15;
   gl_Position = tmpvar_16;
   vec4 tmpvar_17;
-  tmpvar_17.xy = vec2(xl_retval.hip_pack0.xy);
-  tmpvar_17.z = float(vec4(0.000000));
-  tmpvar_17.w = float(vec4(0.000000));
+  tmpvar_17.xy = xl_retval.hip_pack0.xy;
+  tmpvar_17.z = (vec4(0.000000)).z;
+  tmpvar_17.w = (vec4(0.000000)).w;
   vec4 tmpvar_18;
   tmpvar_18 = tmpvar_17;
   gl_TexCoord[1] = tmpvar_18;

@@ -18,14 +18,14 @@ void main ()
   tmpvar_44 = texture2D (_LightMap, tmpvar_3.zw);
   vec4 normal;
   normal.xy = ((texture2D (_BumpMap, tmpvar_82).wy * 2.000000) - 1.000000);
-  normal.z = float(vec3(sqrt (((1.000000 - (normal.x * normal.x)) - (normal.y * normal.y)))));
+  normal.z = (vec3(sqrt (((1.000000 - (normal.x * normal.x)) - (normal.y * normal.y))))).z;
   vec4 tmpvar_59;
   tmpvar_59 = -(log2 (texture2DProj (_LightBuffer, gl_TexCoord[1].xyzw)));
   light = tmpvar_59;
   light.xyz = (tmpvar_59.xyz + unity_Ambient.xyz).xyz;
   vec4 c;
   c.xyz = (tmpvar_43 * light.xyz).xyz;
-  c.w = float(vec4((tmpvar_44.w * _Color.w)));
+  c.w = (vec4((tmpvar_44.w * _Color.w))).w;
   col = c;
   col.xyz = (c.xyz + (tmpvar_44.xyz * tmpvar_43.xyz)).xyz;
   gl_FragData[0] = col.xyzw;

@@ -14,10 +14,10 @@ void main ()
   tmpvar_35 = tmpvar_33.w;
   vec4 c_i0_i1;
   c_i0_i1.xyz = ((tmpvar_34 * _LightColor0.xyz) * (max (0.000000, dot (gl_TexCoord[1].xyz, _WorldSpaceLightPos0.xyz)) * 2.000000)).xyz;
-  c_i0_i1.w = float(vec4(tmpvar_35));
+  c_i0_i1.w = (vec4(tmpvar_35)).w;
   c = c_i0_i1;
   c.xyz = (c_i0_i1.xyz + (tmpvar_34 * gl_TexCoord[2].xyz)).xyz;
-  c.w = float(vec4(tmpvar_35));
+  c.w = (vec4(tmpvar_35)).w;
   gl_FragData[0] = c.xyzw;
 }
 

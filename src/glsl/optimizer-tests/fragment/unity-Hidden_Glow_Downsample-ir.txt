@@ -40,7 +40,7 @@ vec4 frag (
   c.xyz = tmpvar_11.xyz;
   float tmpvar_12;
   tmpvar_12 = 0.000000;
-  c.w = float(vec4(tmpvar_12));
+  c.w = (vec4(tmpvar_12)).w;
   return c;
 }
 

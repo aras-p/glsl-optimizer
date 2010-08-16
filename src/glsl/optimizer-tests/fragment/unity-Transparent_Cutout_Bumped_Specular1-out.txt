@@ -23,7 +23,7 @@ void main ()
   tmpvar_44 = (tmpvar_40.w * _Color.w);
   vec4 normal;
   normal.xy = ((texture2D (_BumpMap, tmpvar_80).wy * 2.000000) - 1.000000);
-  normal.z = float(vec3(sqrt (((1.000000 - (normal.x * normal.x)) - (normal.y * normal.y)))));
+  normal.z = (vec3(sqrt (((1.000000 - (normal.x * normal.x)) - (normal.y * normal.y))))).z;
   float x;
   x = (tmpvar_44 - _Cutoff);
   if ((x < 0.000000)) {
@@ -37,7 +37,7 @@ void main ()
   float tmpvar_61;
   tmpvar_61 = (light.w * tmpvar_43);
   c.xyz = ((tmpvar_42 * light.xyz) + ((light.xyz * _SpecColor.xyz) * tmpvar_61)).xyz;
-  c.w = float(vec4((tmpvar_44 + (tmpvar_61 * _SpecColor.w))));
+  c.w = (vec4((tmpvar_44 + (tmpvar_61 * _SpecColor.w)))).w;
   gl_FragData[0] = c.xyzw;
 }
 

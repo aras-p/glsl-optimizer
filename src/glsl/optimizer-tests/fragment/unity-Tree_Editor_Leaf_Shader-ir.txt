@@ -157,7 +157,7 @@ vec4 UnpackNormal (
   tmpvar_2 = sqrt (((1.000000 - (normal.x * normal.x)) - (normal.y * normal.y)));
   float tmpvar_3;
   tmpvar_3 = tmpvar_2;
-  normal.z = float(vec3(tmpvar_3));
+  normal.z = (vec3(tmpvar_3)).z;
   return normal;
 }
 
@@ -330,7 +330,7 @@ vec4 frag_surf (
   c = tmpvar_18;
   float tmpvar_19;
   tmpvar_19 = o.Alpha;
-  c.w = float(vec4(tmpvar_19));
+  c.w = (vec4(tmpvar_19)).w;
   return c;
 }
 

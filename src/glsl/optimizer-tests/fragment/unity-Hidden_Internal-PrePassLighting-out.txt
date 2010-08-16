@@ -66,13 +66,13 @@ void main ()
   float tmpvar_71;
   tmpvar_71 = ComputeShadow (-(tmpvar_62), tmpvar_50);
   vec4 tmpvar_73;
-  tmpvar_73.xyz = vec3(vpos.xyz);
-  tmpvar_73.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
+  tmpvar_73.xyz = vpos.xyz;
+  tmpvar_73.w = (vec4(1.000000, 1.000000, 1.000000, 1.000000)).w;
   float tmpvar_75;
   tmpvar_75 = ((atten * tmpvar_71) * textureCube (_LightTexture0, (_ViewToCookie * tmpvar_73).xyz).w);
   atten = tmpvar_75;
   res.xyz = (_LightColor.xyz * (max (0.000000, dot (lightDir, normal)) * tmpvar_75)).xyz;
-  res.w = float(vec4(((pow (max (0.000000, dot (normalize ((lightDir - normalize (vpos))), normal)), (nspec.w * 128.000000)) * clamp (tmpvar_75, 0.000000, 1.000000)) * dot (_LightColor.xyz, vec3(0.220000, 0.707000, 0.071000)))));
+  res.w = (vec4(((pow (max (0.000000, dot (normalize ((lightDir - normalize (vpos))), normal)), (nspec.w * 128.000000)) * clamp (tmpvar_75, 0.000000, 1.000000)) * dot (_LightColor.xyz, vec3(0.220000, 0.707000, 0.071000))))).w;
   vec4 tmpvar_99;
   tmpvar_99 = (res * clamp ((1.000000 - ((vpos.z * unity_LightmapFade.z) + unity_LightmapFade.w)), 0.000000, 1.000000));
   res = tmpvar_99;

@@ -6,8 +6,8 @@ void main ()
   vec4 tmpvar_12;
   tmpvar_12 = (_Color * texture2D (_MainTex, gl_TexCoord[0].xy));
   vec4 tmpvar_15;
-  tmpvar_15.xyz = vec3(((2.000000 * textureCube (_ToonShade, gl_TexCoord[1].xyz).xyz) * tmpvar_12.xyz).xyz);
-  tmpvar_15.w = float(tmpvar_12.w);
+  tmpvar_15.xyz = ((2.000000 * textureCube (_ToonShade, gl_TexCoord[1].xyz).xyz) * tmpvar_12.xyz).xyz;
+  tmpvar_15.w = tmpvar_12.w;
   gl_FragData[0] = tmpvar_15.xyzw;
 }
 

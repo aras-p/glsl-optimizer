@@ -7,10 +7,10 @@ void main ()
   vec4 tmpvar_11;
   tmpvar_11 = texture2D (_MainTex, gl_TexCoord[0].xy);
   vec2 tmpvar_17;
-  tmpvar_17.x = float(vec2((dot (tmpvar_11.xyz, vec3(0.220000, 0.707000, 0.071000)) + _RampOffset)));
-  tmpvar_17.y = float(vec2(0.500000, 0.500000));
+  tmpvar_17.x = (vec2((dot (tmpvar_11.xyz, vec3(0.220000, 0.707000, 0.071000)) + _RampOffset))).x;
+  tmpvar_17.y = (vec2(0.500000, 0.500000)).y;
   xlat_var_output = texture2D (_RampTex, tmpvar_17);
-  xlat_var_output.w = float(tmpvar_11.w);
+  xlat_var_output.w = tmpvar_11.w;
   gl_FragData[0] = xlat_var_output.xyzw;
 }
 

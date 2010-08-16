@@ -11,12 +11,12 @@ void main ()
   float tmpvar_44;
   tmpvar_44 = ((dot (gl_TexCoord[1].xyz, gl_TexCoord[2].xyz) * 0.500000) + 0.500000);
   vec2 tmpvar_45;
-  tmpvar_45.x = float(vec2(tmpvar_44));
-  tmpvar_45.y = float(vec2(tmpvar_44));
+  tmpvar_45.x = (vec2(tmpvar_44)).x;
+  tmpvar_45.y = (vec2(tmpvar_44)).y;
   c_i0_i1.xyz = ((((texture2D (_MainTex, gl_TexCoord[0].xy) * _Color).xyz * _LightColor0.xyz) * texture2D (_Ramp, tmpvar_45).xyz) * (texture2D (_LightTexture0, gl_TexCoord[3].xy).w * 2.000000)).xyz;
-  c_i0_i1.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
+  c_i0_i1.w = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).w;
   c = c_i0_i1;
-  c.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
+  c.w = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).w;
   gl_FragData[0] = c.xyzw;
 }
 

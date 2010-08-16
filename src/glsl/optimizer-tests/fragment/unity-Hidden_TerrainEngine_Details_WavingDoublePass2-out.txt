@@ -25,7 +25,7 @@ void main ()
   light.xyz = (tmpvar_35.xyz + unity_Ambient.xyz).xyz;
   vec4 c_i0;
   c_i0.xyz = (tmpvar_30 * light.xyz).xyz;
-  c_i0.w = float(vec4(tmpvar_31));
+  c_i0.w = (vec4(tmpvar_31)).w;
   gl_FragData[0] = c_i0.xyzw;
 }
 

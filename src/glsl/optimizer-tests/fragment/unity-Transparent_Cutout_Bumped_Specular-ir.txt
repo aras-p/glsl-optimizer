@@ -43,7 +43,7 @@ vec4 UnpackNormal (
   tmpvar_2 = sqrt (((1.000000 - (normal.x * normal.x)) - (normal.y * normal.y)));
   float tmpvar_3;
   tmpvar_3 = tmpvar_2;
-  normal.z = float(vec3(tmpvar_3));
+  normal.z = (vec3(tmpvar_3)).z;
   return normal;
 }
 
@@ -121,12 +121,12 @@ vec4 frag_surf (
   tmpvar_10 = dot (IN.TtoV1, o.Normal);
   float tmpvar_11;
   tmpvar_11 = tmpvar_10;
-  viewN.y = float(vec2(tmpvar_11));
+  viewN.y = (vec2(tmpvar_11)).y;
   float tmpvar_12;
   tmpvar_12 = dot (IN.TtoV2, o.Normal);
   float tmpvar_13;
   tmpvar_13 = tmpvar_12;
-  viewN.z = float(vec3(tmpvar_13));
+  viewN.z = (vec3(tmpvar_13)).z;
   vec3 tmpvar_14;
   tmpvar_14 = viewN;
   o.Normal = tmpvar_14;
@@ -135,7 +135,7 @@ vec4 frag_surf (
   res.xyz = tmpvar_15.xyz;
   float tmpvar_16;
   tmpvar_16 = o.Specular;
-  res.w = float(vec4(tmpvar_16));
+  res.w = (vec4(tmpvar_16)).w;
   return res;
 }
 

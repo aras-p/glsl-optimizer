@@ -20,7 +20,7 @@ void main ()
   tmpvar_60 = texture2D (_MainTex, tmpvar_3.xy);
   vec4 normal;
   normal.xy = ((texture2D (_BumpMap, tmpvar_3.zw).wy * 2.000000) - 1.000000);
-  normal.z = float(vec3(sqrt (((1.000000 - (normal.x * normal.x)) - (normal.y * normal.y)))));
+  normal.z = (vec3(sqrt (((1.000000 - (normal.x * normal.x)) - (normal.y * normal.y))))).z;
   vec3 tmpvar_72;
   tmpvar_72 = normal.xyz;
   vec3 tmpvar_81;
@@ -31,9 +31,9 @@ void main ()
   float tmpvar_100;
   tmpvar_100 = (pow (max (0.000000, dot (tmpvar_72, normalize ((tmpvar_81 + normalize (gl_TexCoord[2].xyz))))), (_Shininess * 128.000000)) * tmpvar_60.w);
   c_i0_i1.xyz = (((((tmpvar_60 * _Color).xyz * _LightColor0.xyz) * max (0.000000, dot (tmpvar_72, tmpvar_81))) + ((_LightColor0.xyz * _SpecColor.xyz) * tmpvar_100)) * (atten * 2.000000)).xyz;
-  c_i0_i1.w = float(vec4((((textureCube (_Cube, tmpvar_125) * tmpvar_60.w).w * _ReflectColor.w) + (((_LightColor0.w * _SpecColor.w) * tmpvar_100) * atten))));
+  c_i0_i1.w = (vec4((((textureCube (_Cube, tmpvar_125) * tmpvar_60.w).w * _ReflectColor.w) + (((_LightColor0.w * _SpecColor.w) * tmpvar_100) * atten)))).w;
   c = c_i0_i1;
-  c.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
+  c.w = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).w;
   gl_FragData[0] = c.xyzw;
 }
 

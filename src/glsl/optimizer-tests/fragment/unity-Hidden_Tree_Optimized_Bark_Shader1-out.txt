@@ -6,7 +6,7 @@ void main ()
   vec2 tmpvar_52;
   vec4 normal;
   normal.xy = ((texture2D (_BumpSpecMap, tmpvar_52).wy * 2.000000) - 1.000000);
-  normal.z = float(vec3(sqrt (((1.000000 - (normal.x * normal.x)) - (normal.y * normal.y)))));
+  normal.z = (vec3(sqrt (((1.000000 - (normal.x * normal.x)) - (normal.y * normal.y))))).z;
   gl_FragData[0] = vec4(0.000000, 0.000000, 0.000000, 0.000000);
 }
 

@@ -148,10 +148,10 @@ void TerrainWaveGrass (
   tmpvar_20 = dot (s, _waveZmove);
   float tmpvar_21;
   tmpvar_21 = tmpvar_20;
-  waveMove.z = float(vec3(tmpvar_21));
+  waveMove.z = (vec3(tmpvar_21)).z;
   vec2 tmpvar_22;
   tmpvar_22 = (vertex.xz - (waveMove.xz * _WaveAndDistance.z));
-  vertex.xz = vec2(tmpvar_22.xy);
+  vertex.xz = tmpvar_22.xy;
   vec3 tmpvar_23;
   tmpvar_23 = vec3(lighting);
   vec3 tmpvar_24;
@@ -164,7 +164,7 @@ void TerrainWaveGrass (
   outColor.xyz = tmpvar_26.xyz;
   float tmpvar_27;
   tmpvar_27 = 1.000000;
-  outColor.w = float(vec4(tmpvar_27));
+  outColor.w = (vec4(tmpvar_27)).w;
 }
 
 void vert (
@@ -205,14 +205,14 @@ vec4 ComputeScreenPos (
   tmpvar_1 = (pos * 0.500000);
   o = tmpvar_1;
   vec2 tmpvar_2;
-  tmpvar_2.x = float(vec2(o.x));
-  tmpvar_2.y = float(vec2((o.y * _ProjectionParams.x)));
+  tmpvar_2.x = (vec2(o.x)).x;
+  tmpvar_2.y = (vec2((o.y * _ProjectionParams.x))).y;
   vec2 tmpvar_3;
   tmpvar_3 = (tmpvar_2 + o.w);
   o.xy = tmpvar_3.xy;
   vec2 tmpvar_4;
   tmpvar_4 = pos.zw;
-  o.zw = vec2(tmpvar_4.xy);
+  o.zw = tmpvar_4.xy;
   return o;
 }
 
@@ -282,17 +282,17 @@ void main ()
   tmpvar_16 = tmpvar_15;
   gl_Position = tmpvar_16;
   vec4 tmpvar_17;
-  tmpvar_17.x = float(vec4(xl_retval.fog));
-  tmpvar_17.y = float(vec4(0.000000));
-  tmpvar_17.z = float(vec4(0.000000));
-  tmpvar_17.w = float(vec4(0.000000));
+  tmpvar_17.x = (vec4(xl_retval.fog)).x;
+  tmpvar_17.y = (vec4(0.000000)).y;
+  tmpvar_17.z = (vec4(0.000000)).z;
+  tmpvar_17.w = (vec4(0.000000)).w;
   vec4 tmpvar_18;
   tmpvar_18 = tmpvar_17;
   xlv_FOG = tmpvar_18;
   vec4 tmpvar_19;
-  tmpvar_19.xy = vec2(xl_retval.hip_pack0.xy);
-  tmpvar_19.z = float(vec4(0.000000));
-  tmpvar_19.w = float(vec4(0.000000));
+  tmpvar_19.xy = xl_retval.hip_pack0.xy;
+  tmpvar_19.z = (vec4(0.000000)).z;
+  tmpvar_19.w = (vec4(0.000000)).w;
   vec4 tmpvar_20;
   tmpvar_20 = tmpvar_19;
   gl_TexCoord[0] = tmpvar_20;

@@ -33,7 +33,7 @@ void main ()
   tmpvar_79 = tmpvar_77.x;
   vec4 normal;
   normal.xy = ((tmpvar_77.wy * 2.000000) - 1.000000);
-  normal.z = float(vec3(sqrt (((1.000000 - (normal.x * normal.x)) - (normal.y * normal.y)))));
+  normal.z = (vec3(sqrt (((1.000000 - (normal.x * normal.x)) - (normal.y * normal.y))))).z;
   vec3 tmpvar_85;
   tmpvar_85 = normal.xyz;
   float x;
@@ -48,7 +48,7 @@ void main ()
   tmpvar_101 = max (0.000000, -(tmpvar_94));
   c_i0_i1.xyz = ((((tmpvar_71 * (max (0.000000, ((tmpvar_94 * 0.500000) + 0.500000)) + ((tmpvar_74 * tmpvar_101) * 2.000000))) + ((pow (max (0.000000, dot (tmpvar_85, normalize ((tmpvar_7 + normalize (tmpvar_9.xyz))))), (tmpvar_79 * 128.000000)) * tmpvar_75) * (1.000000 - clamp (ceil (tmpvar_101), 0.000000, 1.000000)))) * _LightColor0.xyz) * 2.000000).xyz;
   c = c_i0_i1;
-  c.w = float(vec4(tmpvar_76));
+  c.w = (vec4(tmpvar_76)).w;
   gl_FragData[0] = c.xyzw;
 }
 

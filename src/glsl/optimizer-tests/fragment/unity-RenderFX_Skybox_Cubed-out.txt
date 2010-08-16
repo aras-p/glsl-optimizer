@@ -6,7 +6,7 @@ void main ()
   vec4 tmpvar_9;
   tmpvar_9 = textureCube (_Tex, gl_TexCoord[0].xyz);
   col.xyz = ((tmpvar_9.xyz + _Tint.xyz) - 0.500000).xyz;
-  col.w = float(vec4((tmpvar_9.w * _Tint.w)));
+  col.w = (vec4((tmpvar_9.w * _Tint.w))).w;
   gl_FragData[0] = col.xyzw;
 }
 

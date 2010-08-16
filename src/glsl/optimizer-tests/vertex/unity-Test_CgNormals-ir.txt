@@ -45,8 +45,8 @@ v2f vert (
   tmpvar_3 = (tmpvar_2 * v.normal);
   normal = tmpvar_3;
   vec4 tmpvar_4;
-  tmpvar_4.xyz = vec3(((normal * 0.500000) + 0.500000).xyz);
-  tmpvar_4.w = float(vec4(1.000000));
+  tmpvar_4.xyz = ((normal * 0.500000) + 0.500000).xyz;
+  tmpvar_4.w = (vec4(1.000000)).w;
   vec4 tmpvar_5;
   tmpvar_5 = tmpvar_4;
   o.color = tmpvar_5;

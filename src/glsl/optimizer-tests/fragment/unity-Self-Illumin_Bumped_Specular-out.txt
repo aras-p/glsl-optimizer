@@ -9,14 +9,14 @@ void main ()
   vec3 viewN;
   vec4 normal;
   normal.xy = ((texture2D (_BumpMap, gl_TexCoord[0].xy).wy * 2.000000) - 1.000000);
-  normal.z = float(vec3(sqrt (((1.000000 - (normal.x * normal.x)) - (normal.y * normal.y)))));
+  normal.z = (vec3(sqrt (((1.000000 - (normal.x * normal.x)) - (normal.y * normal.y))))).z;
   vec3 tmpvar_57;
   tmpvar_57 = normal.xyz;
   viewN.x = dot (gl_TexCoord[1].xyz, tmpvar_57);
-  viewN.y = float(vec2(dot (gl_TexCoord[2].xyz, tmpvar_57)));
-  viewN.z = float(vec3(dot (gl_TexCoord[3].xyz, tmpvar_57)));
+  viewN.y = (vec2(dot (gl_TexCoord[2].xyz, tmpvar_57))).y;
+  viewN.z = (vec3(dot (gl_TexCoord[3].xyz, tmpvar_57))).z;
   res.xyz = ((viewN * vec3(0.500000, 0.500000, -0.500000)) + 0.500000).xyz;
-  res.w = float(vec4(_Shininess));
+  res.w = (vec4(_Shininess)).w;
   gl_FragData[0] = res.xyzw;
 }
 

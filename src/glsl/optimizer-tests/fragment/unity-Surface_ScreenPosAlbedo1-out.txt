@@ -13,7 +13,7 @@ void main ()
   light.xyz = (tmpvar_32.xyz + unity_Ambient.xyz).xyz;
   vec4 c;
   c.xyz = (texture2D (_MainTex, ((tmpvar_3.xy / tmpvar_3.w) * vec2(2.000000, 1.000000))).xyz * light.xyz).xyz;
-  c.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
+  c.w = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).w;
   gl_FragData[0] = c.xyzw;
 }
 

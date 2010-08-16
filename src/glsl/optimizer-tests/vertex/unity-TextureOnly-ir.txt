@@ -35,9 +35,9 @@ void main ()
   tmpvar_6 = tmpvar_5;
   gl_Position = tmpvar_6;
   vec4 tmpvar_7;
-  tmpvar_7.xy = vec2(xl_retval.uv.xy);
-  tmpvar_7.z = float(vec4(0.000000));
-  tmpvar_7.w = float(vec4(0.000000));
+  tmpvar_7.xy = xl_retval.uv.xy;
+  tmpvar_7.z = (vec4(0.000000)).z;
+  tmpvar_7.w = (vec4(0.000000)).w;
   vec4 tmpvar_8;
   tmpvar_8 = tmpvar_7;
   gl_TexCoord[0] = tmpvar_8;

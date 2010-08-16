@@ -43,7 +43,7 @@ vec4 UnpackNormal (
   tmpvar_2 = sqrt (((1.000000 - (normal.x * normal.x)) - (normal.y * normal.y)));
   float tmpvar_3;
   tmpvar_3 = tmpvar_2;
-  normal.z = float(vec3(tmpvar_3));
+  normal.z = (vec3(tmpvar_3)).z;
   return normal;
 }
 
@@ -95,7 +95,7 @@ vec4 LightingLambert (
   c.xyz = tmpvar_4.xyz;
   float tmpvar_5;
   tmpvar_5 = s.Alpha;
-  c.w = float(vec4(tmpvar_5));
+  c.w = (vec4(tmpvar_5)).w;
   return c;
 }
 
@@ -140,7 +140,7 @@ vec4 frag_surf (
   c = tmpvar_10;
   float tmpvar_11;
   tmpvar_11 = o.Alpha;
-  c.w = float(vec4(tmpvar_11));
+  c.w = (vec4(tmpvar_11)).w;
   return c;
 }
 

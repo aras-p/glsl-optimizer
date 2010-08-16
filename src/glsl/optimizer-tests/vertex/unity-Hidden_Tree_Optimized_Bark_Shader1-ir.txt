@@ -29,9 +29,9 @@ vec4 Squash (
   tmpvar_1 = pos.xyz;
   projectedVertex = tmpvar_1;
   vec3 tmpvar_2;
-  tmpvar_2.x = float(vec3(0.000000));
-  tmpvar_2.y = float(vec3(_SquashPlaneNormal.w));
-  tmpvar_2.z = float(vec3(0.000000));
+  tmpvar_2.x = (vec3(0.000000)).x;
+  tmpvar_2.y = (vec3(_SquashPlaneNormal.w)).y;
+  tmpvar_2.z = (vec3(0.000000)).z;
   vec3 tmpvar_3;
   tmpvar_3 = tmpvar_2;
   planePoint = tmpvar_3;
@@ -50,8 +50,8 @@ vec4 Squash (
   vec3 tmpvar_9;
   tmpvar_9 = mix (projectedVertex, pos.xyz, tmpvar_8);
   vec4 tmpvar_10;
-  tmpvar_10.xyz = vec3(tmpvar_9.xyz);
-  tmpvar_10.w = float(vec4(1.000000));
+  tmpvar_10.xyz = tmpvar_9.xyz;
+  tmpvar_10.w = (vec4(1.000000)).w;
   vec4 tmpvar_11;
   tmpvar_11 = tmpvar_10;
   pos = tmpvar_11;
@@ -124,8 +124,8 @@ vec4 AnimateVertex (
   tmpvar_8 = tmpvar_7;
   fVtxPhase = tmpvar_8;
   vec2 tmpvar_9;
-  tmpvar_9.x = float(vec2(fVtxPhase));
-  tmpvar_9.y = float(vec2(fBranchPhase));
+  tmpvar_9.x = (vec2(fVtxPhase)).x;
+  tmpvar_9.y = (vec2(fBranchPhase)).y;
   vec2 tmpvar_10;
   tmpvar_10 = (_TimeX + tmpvar_9);
   vWavesIn = tmpvar_10;
@@ -147,7 +147,7 @@ vec4 AnimateVertex (
   bend = tmpvar_16;
   float tmpvar_17;
   tmpvar_17 = (animParams.w * fBranchAmp);
-  bend.y = float(vec2(tmpvar_17));
+  bend.y = (vec2(tmpvar_17)).y;
   vec3 tmpvar_18;
   tmpvar_18 = (pos.xyz + (((vWavesSum.xyx * bend) + ((_Wind.xyz * vWavesSum.y) * animParams.w)) * _Wind.w));
   pos.xyz = tmpvar_18.xyz;
@@ -165,8 +165,8 @@ void TreeVertBark (
   tmpvar_1 = (v.vertex.xyz * _Scale.xyz);
   v.vertex.xyz = tmpvar_1.xyz;
   vec4 tmpvar_2;
-  tmpvar_2.xy = vec2(v.color.xy.xy);
-  tmpvar_2.zw = vec2(v.texcoord1.xy.xy);
+  tmpvar_2.xy = v.color.xy.xy;
+  tmpvar_2.zw = v.texcoord1.xy.xy;
   vec4 tmpvar_3;
   tmpvar_3 = AnimateVertex (v.vertex, v.normal, tmpvar_2);
   vec4 tmpvar_4;
@@ -178,8 +178,8 @@ void TreeVertBark (
   tmpvar_6 = tmpvar_5;
   v.vertex = tmpvar_6;
   vec4 tmpvar_7;
-  tmpvar_7.xyz = vec3((v.color.w * _Color.xyz).xyz);
-  tmpvar_7.w = float(vec4(_Color.w));
+  tmpvar_7.xyz = (v.color.w * _Color.xyz).xyz;
+  tmpvar_7.w = (vec4(_Color.w)).w;
   vec4 tmpvar_8;
   tmpvar_8 = tmpvar_7;
   v.color = tmpvar_8;
@@ -206,11 +206,11 @@ v2f_surf vert_surf (
   o.pos = tmpvar_1;
   float tmpvar_2;
   tmpvar_2 = (o.pos.z + unity_LightShadowBias.x);
-  o.pos.z = float(vec3(tmpvar_2));
+  o.pos.z = (vec3(tmpvar_2)).z;
   if ((o.pos.z < -(o.pos.w))) {
     float tmpvar_3;
     tmpvar_3 = -(o.pos.w);
-    o.pos.z = float(vec3(tmpvar_3));
+    o.pos.z = (vec3(tmpvar_3)).z;
   };
   return o;
 }

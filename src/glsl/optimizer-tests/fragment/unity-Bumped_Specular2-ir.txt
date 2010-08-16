@@ -143,7 +143,7 @@ vec4 UnpackNormal (
   tmpvar_2 = sqrt (((1.000000 - (normal.x * normal.x)) - (normal.y * normal.y)));
   float tmpvar_3;
   tmpvar_3 = tmpvar_2;
-  normal.z = float(vec3(tmpvar_3));
+  normal.z = (vec3(tmpvar_3)).z;
   return normal;
 }
 
@@ -196,7 +196,7 @@ vec4 LightingBlinnPhong_PrePass (
   c.xyz = tmpvar_2.xyz;
   float tmpvar_3;
   tmpvar_3 = (s.Alpha + (spec * _SpecColor.w));
-  c.w = float(vec4(tmpvar_3));
+  c.w = (vec4(tmpvar_3)).w;
   return c;
 }
 

@@ -3,9 +3,9 @@ void main ()
 {
   gl_Position = (gl_ModelViewProjectionMatrix * gl_Vertex.xyzw).xyzw;
   vec4 tmpvar_9;
-  tmpvar_9.xy = vec2(((gl_MultiTexCoord0.xy * _CameraNormalsTexture_ST.xy) + _CameraNormalsTexture_ST.zw).xy);
-  tmpvar_9.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
-  tmpvar_9.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_9.xy = ((gl_MultiTexCoord0.xy * _CameraNormalsTexture_ST.xy) + _CameraNormalsTexture_ST.zw).xy;
+  tmpvar_9.z = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).z;
+  tmpvar_9.w = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).w;
   gl_TexCoord[0] = tmpvar_9;
 }
 

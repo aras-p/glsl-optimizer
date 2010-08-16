@@ -5,25 +5,25 @@ void main ()
   vec2 tmpvar_3;
   tmpvar_3 = gl_MultiTexCoord0.xy;
   vec4 tmpvar_23;
-  tmpvar_23.x = float(tmpvar_3.x);
-  tmpvar_23.y = float(tmpvar_3.y);
-  tmpvar_23.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
-  tmpvar_23.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_23.x = tmpvar_3.x;
+  tmpvar_23.y = tmpvar_3.y;
+  tmpvar_23.z = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).z;
+  tmpvar_23.w = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).w;
   gl_Position = (gl_ModelViewProjectionMatrix * gl_Vertex.xyzw).xyzw;
   vec4 tmpvar_9;
-  tmpvar_9.xy = vec2((gl_TextureMatrix[0] * tmpvar_23).xy);
-  tmpvar_9.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
-  tmpvar_9.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_9.xy = (gl_TextureMatrix[0] * tmpvar_23).xy;
+  tmpvar_9.z = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).z;
+  tmpvar_9.w = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).w;
   gl_TexCoord[0] = tmpvar_9;
   vec4 tmpvar_11;
-  tmpvar_11.xy = vec2(((tmpvar_3 * _GrainOffsetScale.zw) + _GrainOffsetScale.xy).xy);
-  tmpvar_11.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
-  tmpvar_11.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_11.xy = ((tmpvar_3 * _GrainOffsetScale.zw) + _GrainOffsetScale.xy).xy;
+  tmpvar_11.z = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).z;
+  tmpvar_11.w = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).w;
   gl_TexCoord[1] = tmpvar_11;
   vec4 tmpvar_13;
-  tmpvar_13.xy = vec2(((tmpvar_3 * _ScratchOffsetScale.zw) + _ScratchOffsetScale.xy).xy);
-  tmpvar_13.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
-  tmpvar_13.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_13.xy = ((tmpvar_3 * _ScratchOffsetScale.zw) + _ScratchOffsetScale.xy).xy;
+  tmpvar_13.z = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).z;
+  tmpvar_13.w = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).w;
   gl_TexCoord[2] = tmpvar_13;
 }
 

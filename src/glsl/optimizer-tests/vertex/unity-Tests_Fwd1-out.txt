@@ -16,23 +16,23 @@ void main ()
   tmpvar_45[2] = _Object2World[2].xyz;
   gl_Position = tmpvar_38.xyzw;
   vec4 tmpvar_17;
-  tmpvar_17.x = float(tmpvar_38.z);
-  tmpvar_17.y = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
-  tmpvar_17.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
-  tmpvar_17.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_17.x = tmpvar_38.z;
+  tmpvar_17.y = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).y;
+  tmpvar_17.z = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).z;
+  tmpvar_17.w = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).w;
   xlv_FOG = tmpvar_17;
   vec4 tmpvar_19;
-  tmpvar_19.xyz = vec3((tmpvar_45 * (gl_Normal.xyz * unity_Scale.w)).xyz);
-  tmpvar_19.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_19.xyz = (tmpvar_45 * (gl_Normal.xyz * unity_Scale.w)).xyz;
+  tmpvar_19.w = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).w;
   gl_TexCoord[0] = tmpvar_19;
   vec4 tmpvar_21;
-  tmpvar_21.xyz = vec3(_WorldSpaceLightPos0.xyz);
-  tmpvar_21.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_21.xyz = _WorldSpaceLightPos0.xyz;
+  tmpvar_21.w = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).w;
   gl_TexCoord[1] = tmpvar_21;
   vec4 tmpvar_23;
-  tmpvar_23.xy = vec2((_LightMatrix0 * (_Object2World * tmpvar_1)).xy);
-  tmpvar_23.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
-  tmpvar_23.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_23.xy = (_LightMatrix0 * (_Object2World * tmpvar_1)).xy;
+  tmpvar_23.z = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).z;
+  tmpvar_23.w = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).w;
   gl_TexCoord[2] = tmpvar_23;
 }
 

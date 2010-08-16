@@ -28,10 +28,10 @@ vec4 frag (
   yuv.x = tmpvar_4;
   float tmpvar_5;
   tmpvar_5 = ((col.z - yuv.x) * 0.492000);
-  yuv.y = float(vec2(tmpvar_5));
+  yuv.y = (vec2(tmpvar_5)).y;
   float tmpvar_6;
   tmpvar_6 = ((col.x - yuv.x) * 0.877000);
-  yuv.z = float(vec3(tmpvar_6));
+  yuv.z = (vec3(tmpvar_6)).z;
   vec4 tmpvar_7;
   tmpvar_7 = texture2D (_GrainTex, i.uvg);
   vec3 tmpvar_8;
@@ -45,10 +45,10 @@ vec4 frag (
   col.x = tmpvar_10;
   float tmpvar_11;
   tmpvar_11 = (((yuv.z * -(0.581000)) + (yuv.y * -(0.395000))) + yuv.x);
-  col.y = float(vec2(tmpvar_11));
+  col.y = (vec2(tmpvar_11)).y;
   float tmpvar_12;
   tmpvar_12 = ((yuv.y * 2.032000) + yuv.x);
-  col.z = float(vec3(tmpvar_12));
+  col.z = (vec3(tmpvar_12)).z;
   vec4 tmpvar_13;
   tmpvar_13 = texture2D (_ScratchTex, i.uvs);
   vec3 tmpvar_14;

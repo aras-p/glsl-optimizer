@@ -13,11 +13,11 @@ void main ()
   float tmpvar_53;
   tmpvar_53 = (2.000000 / dot (tmpvar_51.xyz, tmpvar_51.xyz));
   n_i0.xy = (tmpvar_53 * tmpvar_51.xy);
-  n_i0.z = float(vec3((tmpvar_53 - 1.000000)));
+  n_i0.z = (vec3((tmpvar_53 - 1.000000))).z;
   col.x = dot (tmpvar_39.zw, vec2(1.000000, 0.003922));
-  col.y = float(vec2(((n_i0.x * 0.500000) + 0.500000)));
-  col.z = float(vec3(((n_i0.y * 0.500000) + 0.500000)));
-  col.w = float(texture2D (_MainTex, tmpvar_2).w);
+  col.y = (vec2(((n_i0.x * 0.500000) + 0.500000))).y;
+  col.z = (vec3(((n_i0.y * 0.500000) + 0.500000))).z;
+  col.w = texture2D (_MainTex, tmpvar_2).w;
   gl_FragData[0] = col.xyzw;
 }
 

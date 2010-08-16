@@ -16,13 +16,13 @@ vec3 DecodeViewNormalStereo (
   tmpvar_1 = 1.777700;
   kScale = tmpvar_1;
   vec3 tmpvar_2;
-  tmpvar_2.x = float(vec3((2.000000 * kScale)));
-  tmpvar_2.y = float(vec3((2.000000 * kScale)));
-  tmpvar_2.z = float(vec3(0.000000));
+  tmpvar_2.x = (vec3((2.000000 * kScale))).x;
+  tmpvar_2.y = (vec3((2.000000 * kScale))).y;
+  tmpvar_2.z = (vec3(0.000000)).z;
   vec3 tmpvar_3;
-  tmpvar_3.x = float(vec3(-(kScale)));
-  tmpvar_3.y = float(vec3(-(kScale)));
-  tmpvar_3.z = float(vec3(1.000000));
+  tmpvar_3.x = (vec3(-(kScale))).x;
+  tmpvar_3.y = (vec3(-(kScale))).y;
+  tmpvar_3.z = (vec3(1.000000)).z;
   vec3 tmpvar_4;
   tmpvar_4 = ((enc4.xyz * tmpvar_2) + tmpvar_3);
   nn = tmpvar_4;
@@ -36,7 +36,7 @@ vec3 DecodeViewNormalStereo (
   n.xy = tmpvar_7.xy;
   float tmpvar_8;
   tmpvar_8 = (g - 1.000000);
-  n.z = float(vec3(tmpvar_8));
+  n.z = (vec3(tmpvar_8)).z;
   return n;
 }
 
@@ -96,13 +96,13 @@ vec4 frag (
   col.x = tmpvar_5;
   float tmpvar_6;
   tmpvar_6 = ((n.x * 0.500000) + 0.500000);
-  col.y = float(vec2(tmpvar_6));
+  col.y = (vec2(tmpvar_6)).y;
   float tmpvar_7;
   tmpvar_7 = ((n.y * 0.500000) + 0.500000);
-  col.z = float(vec3(tmpvar_7));
+  col.z = (vec3(tmpvar_7)).z;
   float tmpvar_8;
   tmpvar_8 = tex.w;
-  col.w = float(vec4(tmpvar_8));
+  col.w = (vec4(tmpvar_8)).w;
   return col;
 }
 

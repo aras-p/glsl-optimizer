@@ -4,10 +4,10 @@ void main ()
   vec4 tmpvar_11;
   tmpvar_11 = (gl_ModelViewProjectionMatrix * gl_Vertex.xyzw);
   vec2 tmpvar_12;
-  tmpvar_12.x = float(tmpvar_11.x);
-  tmpvar_12.y = float(tmpvar_11.y);
+  tmpvar_12.x = tmpvar_11.x;
+  tmpvar_12.y = tmpvar_11.y;
   tmpvar_24.xy = ((tmpvar_12 + tmpvar_11.w) * 0.500000);
-  tmpvar_24.zw = vec2(tmpvar_11.zw);
+  tmpvar_24.zw = tmpvar_11.zw;
   gl_Position = tmpvar_11.xyzw;
   gl_TexCoord[0] = tmpvar_24.xyzw;
 }

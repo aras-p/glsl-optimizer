@@ -7,7 +7,7 @@ void main ()
   vec4 tmpvar_11;
   tmpvar_11 = texture2D (_MainTex, gl_TexCoord[0].xy);
   col.xyz = ((tmpvar_11.xyz * tmpvar_2.xyz) * 2.000000).xyz;
-  col.w = float(vec4((tmpvar_2.w * tmpvar_11.w)));
+  col.w = (vec4((tmpvar_2.w * tmpvar_11.w))).w;
   gl_FragData[0] = mix (vec4(0.500000, 0.500000, 0.500000, 0.500000), col, col.wwww).xyzw;
 }
 

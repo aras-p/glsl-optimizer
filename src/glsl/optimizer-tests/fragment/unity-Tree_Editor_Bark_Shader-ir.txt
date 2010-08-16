@@ -37,7 +37,7 @@ vec4 UnpackNormal (
   tmpvar_2 = sqrt (((1.000000 - (normal.x * normal.x)) - (normal.y * normal.y)));
   float tmpvar_3;
   tmpvar_3 = tmpvar_2;
-  normal.z = float(vec3(tmpvar_3));
+  normal.z = (vec3(tmpvar_3)).z;
   return normal;
 }
 
@@ -118,7 +118,7 @@ vec4 LightingTreeBark (
   c.xyz = tmpvar_11.xyz;
   float tmpvar_12;
   tmpvar_12 = (((_LightColor0.w * spec) * atten) * s.Alpha);
-  c.w = float(vec4(tmpvar_12));
+  c.w = (vec4(tmpvar_12)).w;
   return c;
 }
 
@@ -166,7 +166,7 @@ vec4 frag_surf (
   c = tmpvar_12;
   float tmpvar_13;
   tmpvar_13 = 0.000000;
-  c.w = float(vec4(tmpvar_13));
+  c.w = (vec4(tmpvar_13)).w;
   return c;
 }
 

@@ -42,7 +42,7 @@ vec4 UnpackNormal (
   tmpvar_2 = sqrt (((1.000000 - (normal.x * normal.x)) - (normal.y * normal.y)));
   float tmpvar_3;
   tmpvar_3 = tmpvar_2;
-  normal.z = float(vec3(tmpvar_3));
+  normal.z = (vec3(tmpvar_3)).z;
   return normal;
 }
 
@@ -63,7 +63,7 @@ vec2 ParallaxOffset (
   v = tmpvar_3;
   float tmpvar_4;
   tmpvar_4 = (v.z + 0.420000);
-  v.z = float(vec3(tmpvar_4));
+  v.z = (vec3(tmpvar_4)).z;
   return (h * (v.xy / v.z));
 }
 
@@ -165,7 +165,7 @@ vec4 LightingLambert (
   c.xyz = tmpvar_4.xyz;
   float tmpvar_5;
   tmpvar_5 = s.Alpha;
-  c.w = float(vec4(tmpvar_5));
+  c.w = (vec4(tmpvar_5)).w;
   return c;
 }
 
@@ -221,7 +221,7 @@ vec4 frag_surf (
   c = tmpvar_15;
   float tmpvar_16;
   tmpvar_16 = 0.000000;
-  c.w = float(vec4(tmpvar_16));
+  c.w = (vec4(tmpvar_16)).w;
   return c;
 }
 

@@ -30,12 +30,12 @@ void main ()
   tmpvar_42 = abs (tmpvar_38);
   pos.xyz = (pos.xyz + mix (((((_TreeBillboardCameraUp.xyz * max (0.000000, tmpvar_38)) * 2.000000) - (vec3(0.000000, 1.000000, 0.000000) * tmpvar_42)) - ((_TreeBillboardCameraUp.xyz * tmpvar_42) * _TreeBillboardCameraFront.w)), (_TreeBillboardCameraUp.xyz * tmpvar_38), _TreeBillboardCameraUp.www)).xyz;
   tmpvar_68.x = tmpvar_5.x;
-  tmpvar_68.y = float(vec2(float((tmpvar_5.y > 0.000000))));
+  tmpvar_68.y = (vec2(float((tmpvar_5.y > 0.000000)))).y;
   gl_Position = (gl_ModelViewProjectionMatrix * pos).xyzw;
   vec4 tmpvar_13;
-  tmpvar_13.xy = vec2(tmpvar_68.xy);
-  tmpvar_13.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
-  tmpvar_13.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
+  tmpvar_13.xy = tmpvar_68.xy;
+  tmpvar_13.z = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).z;
+  tmpvar_13.w = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).w;
   gl_TexCoord[0] = tmpvar_13;
 }
 
