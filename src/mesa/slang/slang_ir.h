@@ -33,11 +33,11 @@
 #define SLANG_IR_H
 
 
-#include "main/imports.h"
-#include "slang_compile.h"
-#include "slang_label.h"
+#include "main/glheader.h"
 #include "main/mtypes.h"
 #include "program/prog_instruction.h"
+#include "slang_compile_variable.h"
+#include "slang_label.h"
 
 
 /**
