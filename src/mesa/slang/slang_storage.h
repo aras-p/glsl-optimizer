@@ -25,7 +25,12 @@
 #ifndef SLANG_STORAGE_H
 #define SLANG_STORAGE_H
 
-#include "slang_compile.h"
+#include "main/glheader.h"
+#include "slang_compile_function.h"
+#include "slang_compile_struct.h"
+#include "slang_compile_variable.h"
+#include "slang_typeinfo.h"
+#include "slang_utility.h"
 
 
 /*
