@@ -17,17 +17,17 @@ void main ()
   gl_Position = tmpvar_38.xyzw;
   vec4 tmpvar_17;
   tmpvar_17.x = tmpvar_38.z;
-  tmpvar_17.y = float(0.000000);
-  tmpvar_17.z = float(0.000000);
-  tmpvar_17.w = float(0.000000);
+  tmpvar_17.y = 0.000000;
+  tmpvar_17.z = 0.000000;
+  tmpvar_17.w = 0.000000;
   xlv_FOG = tmpvar_17;
   vec4 tmpvar_19;
   tmpvar_19.xyz = (tmpvar_45 * (gl_Normal.xyz * unity_Scale.w)).xyz;
-  tmpvar_19.w = float(0.000000);
+  tmpvar_19.w = 0.000000;
   gl_TexCoord[0] = tmpvar_19;
   vec4 tmpvar_21;
   tmpvar_21.xyz = (_WorldSpaceLightPos0.xyz - (_Object2World * tmpvar_1).xyz).xyz;
-  tmpvar_21.w = float(0.000000);
+  tmpvar_21.w = 0.000000;
   gl_TexCoord[1] = tmpvar_21;
   gl_TexCoord[2] = (_LightMatrix0 * (_Object2World * tmpvar_1)).xyzw;
 }

@@ -18,14 +18,14 @@ void main ()
   gl_Position = tmpvar_31.xyzw;
   vec4 tmpvar_17;
   tmpvar_17.x = tmpvar_31.z;
-  tmpvar_17.y = float(0.000000);
-  tmpvar_17.z = float(0.000000);
-  tmpvar_17.w = float(0.000000);
+  tmpvar_17.y = 0.000000;
+  tmpvar_17.z = 0.000000;
+  tmpvar_17.w = 0.000000;
   xlv_FOG = tmpvar_17;
   vec4 tmpvar_19;
   tmpvar_19.xy = ((gl_MultiTexCoord0.xy * _MainTex_ST.xy) + _MainTex_ST.zw).xy;
-  tmpvar_19.z = float(0.000000);
-  tmpvar_19.w = float(0.000000);
+  tmpvar_19.z = 0.000000;
+  tmpvar_19.w = 0.000000;
   gl_TexCoord[0] = tmpvar_19;
   gl_TexCoord[1] = o_i0.xyzw;
 }

@@ -11,7 +11,7 @@ void main ()
   normal.xy = ((texture2D (_DecalBump, tmpvar_3.zw).wy * 2.000000) - 1.000000);
   normal.z = (vec3(sqrt (((1.000000 - (normal.x * normal.x)) - (normal.y * normal.y))))).z;
   c.xyz = ((texture2D (_Decal, tmpvar_3.xy).xyz * 0.500000) * (2.000000 * texture2D (unity_Lightmap, gl_TexCoord[1].xy).xyz)).xyz;
-  c.w = float(0.000000);
+  c.w = 0.000000;
   gl_FragData[0] = c.xyzw;
 }
 

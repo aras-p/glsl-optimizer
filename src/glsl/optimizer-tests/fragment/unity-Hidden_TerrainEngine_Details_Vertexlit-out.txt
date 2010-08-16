@@ -13,7 +13,7 @@ void main ()
   c_i0_i1.xyz = ((tmpvar_37.xyz * _LightColor0.xyz) * ((max (0.000000, dot (gl_TexCoord[1].xyz, normalize (gl_TexCoord[2].xyz))) * texture2D (_LightTexture0, vec2(dot (tmpvar_11, tmpvar_11))).w) * 2.000000)).xyz;
   c_i0_i1.w = tmpvar_37.w;
   c = c_i0_i1;
-  c.w = float(0.000000);
+  c.w = 0.000000;
   gl_FragData[0] = c.xyzw;
 }
 

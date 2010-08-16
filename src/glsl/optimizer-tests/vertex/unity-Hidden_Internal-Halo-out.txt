@@ -5,8 +5,8 @@ void main ()
   gl_FrontColor = gl_Color.xyzw;
   vec4 tmpvar_13;
   tmpvar_13.xy = ((gl_MultiTexCoord0.xy * _HaloFalloff_ST.xy) + _HaloFalloff_ST.zw).xy;
-  tmpvar_13.z = float(0.000000);
-  tmpvar_13.w = float(0.000000);
+  tmpvar_13.z = 0.000000;
+  tmpvar_13.w = 0.000000;
   gl_TexCoord[0] = tmpvar_13;
 }
 

@@ -22,7 +22,7 @@ void main ()
   light.xyz = (tmpvar_33.xyz + unity_Ambient.xyz).xyz;
   vec4 c;
   c.xyz = (texture2D (_MainTex, tmpvar_20).xyz * light.xyz).xyz;
-  c.w = float(0.000000);
+  c.w = 0.000000;
   gl_FragData[0] = c.xyzw;
 }
 

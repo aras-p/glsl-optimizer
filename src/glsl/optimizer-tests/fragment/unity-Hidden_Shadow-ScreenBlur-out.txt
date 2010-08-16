@@ -12,8 +12,8 @@ void main ()
   i_1 = 0;
   vec4 tmpvar_14;
   tmpvar_14.xy = gl_TexCoord[0].xy;
-  tmpvar_14.z = float(0.000000);
-  tmpvar_14.w = float(0.000000);
+  tmpvar_14.z = 0.000000;
+  tmpvar_14.w = 0.000000;
   coord = tmpvar_14;
   vec4 tmpvar_16;
   tmpvar_16 = texture2D (_MainTex, tmpvar_14.xy);

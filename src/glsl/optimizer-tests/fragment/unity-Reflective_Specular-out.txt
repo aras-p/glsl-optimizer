@@ -30,7 +30,7 @@ void main ()
   c_i0_i1.xyz = (((((tmpvar_56 * _Color).xyz * _LightColor0.xyz) * max (0.000000, dot (tmpvar_5, tmpvar_68))) + ((_LightColor0.xyz * _SpecColor.xyz) * tmpvar_92)) * (atten * 2.000000)).xyz;
   c_i0_i1.w = (vec4((((textureCube (_Cube, tmpvar_118) * tmpvar_56.w).w * _ReflectColor.w) + (((_LightColor0.w * _SpecColor.w) * tmpvar_92) * atten)))).w;
   c = c_i0_i1;
-  c.w = float(0.000000);
+  c.w = 0.000000;
   gl_FragData[0] = c.xyzw;
 }
 

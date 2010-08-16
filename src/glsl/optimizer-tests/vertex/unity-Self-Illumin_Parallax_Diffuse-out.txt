@@ -37,22 +37,22 @@ void main ()
   tmpvar_41[2].z = tmpvar_5.z;
   vec4 tmpvar_58;
   tmpvar_58.xyz = _WorldSpaceCameraPos.xyz;
-  tmpvar_58.w = float(1.000000);
+  tmpvar_58.w = 1.000000;
   gl_Position = tmpvar_35.xyzw;
   vec4 tmpvar_17;
   tmpvar_17.x = tmpvar_35.z;
-  tmpvar_17.y = float(0.000000);
-  tmpvar_17.z = float(0.000000);
-  tmpvar_17.w = float(0.000000);
+  tmpvar_17.y = 0.000000;
+  tmpvar_17.z = 0.000000;
+  tmpvar_17.w = 0.000000;
   xlv_FOG = tmpvar_17;
   gl_TexCoord[0] = tmpvar_100.xyzw;
   vec4 tmpvar_21;
   tmpvar_21.xyz = (tmpvar_41 * (((_World2Object * tmpvar_58).xyz * unity_Scale.w) - tmpvar_1.xyz)).xyz;
-  tmpvar_21.w = float(0.000000);
+  tmpvar_21.w = 0.000000;
   gl_TexCoord[1] = tmpvar_21;
   vec4 tmpvar_23;
   tmpvar_23.xyz = (tmpvar_41 * (((_World2Object * _WorldSpaceLightPos0).xyz * unity_Scale.w) - tmpvar_1.xyz)).xyz;
-  tmpvar_23.w = float(0.000000);
+  tmpvar_23.w = 0.000000;
   gl_TexCoord[2] = tmpvar_23;
   gl_TexCoord[3] = (_LightMatrix0 * (_Object2World * tmpvar_1)).xyzw;
 }

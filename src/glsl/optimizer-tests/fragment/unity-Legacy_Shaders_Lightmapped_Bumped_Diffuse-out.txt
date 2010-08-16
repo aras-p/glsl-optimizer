@@ -18,7 +18,7 @@ void main ()
   c_i0.xyz = (((texture2D (_MainTex, tmpvar_3.xy).xyz * _Color.xyz) * _LightColor0.xyz) * ((max (0.000000, dot (normal.xyz, gl_TexCoord[1].xyz)) * texture2D (_LightTexture0, gl_TexCoord[2].xy).w) * 2.000000)).xyz;
   c_i0.w = (vec4((texture2D (_LightMap, tmpvar_90).w * _Color.w))).w;
   c = c_i0;
-  c.w = float(0.000000);
+  c.w = 0.000000;
   gl_FragData[0] = c.xyzw;
 }
 

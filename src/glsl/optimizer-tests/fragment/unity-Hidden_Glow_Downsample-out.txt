@@ -13,7 +13,7 @@ void main ()
   c = tmpvar_23;
   c.xyz = (tmpvar_23.xyz * _Color.xyz).xyz;
   c.xyz = (c.xyz * (c.w + _Color.w)).xyz;
-  c.w = float(0.000000);
+  c.w = 0.000000;
   gl_FragData[0] = c.xyzw;
 }
 

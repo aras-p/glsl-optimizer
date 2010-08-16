@@ -15,7 +15,7 @@ void main ()
   viewN.y = (vec2(dot (gl_TexCoord[2].xyz, tmpvar_53))).y;
   viewN.z = (vec3(dot (gl_TexCoord[3].xyz, tmpvar_53))).z;
   res.xyz = ((viewN * vec3(0.500000, 0.500000, -0.500000)) + 0.500000).xyz;
-  res.w = float(0.000000);
+  res.w = 0.000000;
   gl_FragData[0] = res.xyzw;
 }
 

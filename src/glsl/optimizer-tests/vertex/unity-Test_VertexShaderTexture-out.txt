@@ -9,14 +9,14 @@ void main ()
   tmpvar_35 = tmpvar_1;
   vec4 tmpvar_16;
   tmpvar_16.xy = tmpvar_5.xy;
-  tmpvar_16.z = float(0.000000);
-  tmpvar_16.w = float(0.000000);
+  tmpvar_16.z = 0.000000;
+  tmpvar_16.w = 0.000000;
   tmpvar_35.y = (vec2((tmpvar_1.y + (texture2DLod (_MainTex, tmpvar_16.xy, 0.000000).x * 2.000000)))).y;
   gl_Position = (gl_ModelViewProjectionMatrix * tmpvar_35).xyzw;
   vec4 tmpvar_11;
   tmpvar_11.xy = tmpvar_5.xy;
-  tmpvar_11.z = float(0.000000);
-  tmpvar_11.w = float(0.000000);
+  tmpvar_11.z = 0.000000;
+  tmpvar_11.w = 0.000000;
   gl_TexCoord[0] = tmpvar_11;
 }
 

@@ -6,7 +6,7 @@ void main ()
 {
   vec4 c;
   c.xyz = ((texture2D (_Decal, gl_TexCoord[0].xy).xyz * 0.500000) * min ((2.000000 * texture2D (unity_Lightmap, gl_TexCoord[2].xy).xyz), vec3((texture2DProj (_ShadowMapTexture, gl_TexCoord[3].xyzw).x * 2.000000)))).xyz;
-  c.w = float(0.000000);
+  c.w = 0.000000;
   gl_FragData[0] = c.xyzw;
 }
 

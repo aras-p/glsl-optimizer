@@ -22,7 +22,7 @@ void main ()
   c_i0_i1.xyz = ((tmpvar_45.xyz * _LightColor0.xyz) * (max (0.000000, dot (gl_TexCoord[1].xyz, gl_TexCoord[2].xyz)) * 2.000000)).xyz;
   c_i0_i1.w = tmpvar_45.w;
   c = c_i0_i1;
-  c.w = float(0.000000);
+  c.w = 0.000000;
   gl_FragData[0] = c.xyzw;
 }
 

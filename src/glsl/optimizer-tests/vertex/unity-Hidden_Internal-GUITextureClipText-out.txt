@@ -8,13 +8,13 @@ void main ()
   gl_FrontColor = gl_Color.xyzw;
   vec4 tmpvar_13;
   tmpvar_13.xy = ((gl_MultiTexCoord0.xy * _MainTex_ST.xy) + _MainTex_ST.zw).xy;
-  tmpvar_13.z = float(0.000000);
-  tmpvar_13.w = float(0.000000);
+  tmpvar_13.z = 0.000000;
+  tmpvar_13.w = 0.000000;
   gl_TexCoord[0] = tmpvar_13;
   vec4 tmpvar_15;
   tmpvar_15.xy = (_GUIClipTextureMatrix * (gl_ModelViewMatrix * tmpvar_1)).xy;
-  tmpvar_15.z = float(0.000000);
-  tmpvar_15.w = float(0.000000);
+  tmpvar_15.z = 0.000000;
+  tmpvar_15.w = 0.000000;
   gl_TexCoord[1] = tmpvar_15;
 }
 

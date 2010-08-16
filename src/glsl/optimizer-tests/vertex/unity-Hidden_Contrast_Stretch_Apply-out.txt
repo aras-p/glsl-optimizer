@@ -6,20 +6,20 @@ void main ()
   vec4 tmpvar_21;
   tmpvar_21.x = tmpvar_3.x;
   tmpvar_21.y = tmpvar_3.y;
-  tmpvar_21.z = float(0.000000);
-  tmpvar_21.w = float(0.000000);
+  tmpvar_21.z = 0.000000;
+  tmpvar_21.w = 0.000000;
   tmpvar_39[0] = (gl_TextureMatrix[0] * tmpvar_21).xy;
   tmpvar_39[1] = vec2(0.500000, 0.500000);
   gl_Position = (gl_ModelViewProjectionMatrix * gl_Vertex.xyzw).xyzw;
   vec4 tmpvar_9;
   tmpvar_9.xy = tmpvar_39[0].xy;
-  tmpvar_9.z = float(0.000000);
-  tmpvar_9.w = float(0.000000);
+  tmpvar_9.z = 0.000000;
+  tmpvar_9.w = 0.000000;
   gl_TexCoord[0] = tmpvar_9;
   vec4 tmpvar_11;
   tmpvar_11.xy = tmpvar_39[1].xy;
-  tmpvar_11.z = float(0.000000);
-  tmpvar_11.w = float(0.000000);
+  tmpvar_11.z = 0.000000;
+  tmpvar_11.w = 0.000000;
   gl_TexCoord[1] = tmpvar_11;
 }
 

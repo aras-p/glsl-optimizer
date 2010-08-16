@@ -34,8 +34,8 @@ void main ()
   gl_Position = (gl_ModelViewProjectionMatrix * pos).xyzw;
   vec4 tmpvar_13;
   tmpvar_13.xy = tmpvar_68.xy;
-  tmpvar_13.z = float(0.000000);
-  tmpvar_13.w = float(0.000000);
+  tmpvar_13.z = 0.000000;
+  tmpvar_13.w = 0.000000;
   gl_TexCoord[0] = tmpvar_13;
 }
 
