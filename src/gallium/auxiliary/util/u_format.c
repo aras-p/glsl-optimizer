@@ -432,6 +432,50 @@ util_format_translate(enum pipe_format dst_format,
     * TODO: Add a special case for formats that are mere swizzles of each other
     */
 
+   if (src_format_desc->colorspace == UTIL_FORMAT_COLORSPACE_ZS ||
+       dst_format_desc->colorspace == UTIL_FORMAT_COLORSPACE_ZS) {
+      float *tmp_z = NULL;
+      uint8_t *tmp_s = NULL;
+
+      assert(x_step == 1);
+      assert(y_step == 1);
+
+      if (src_format_desc->unpack_z_float &&
+          dst_format_desc->pack_z_float) {
+         tmp_z = MALLOC(width * sizeof *tmp_z);
+      }
+
+      if (src_format_desc->unpack_s_8uscaled &&
+          dst_format_desc->pack_s_8uscaled) {
+         tmp_s = MALLOC(width * sizeof *tmp_s);
+      }
+
+      while (height--) {
+         if (tmp_z) {
+            src_format_desc->unpack_z_float(tmp_z, 0, src_row, src_stride, width, 1);
+            dst_format_desc->pack_z_float(dst_row, dst_stride, tmp_z, 0, width, 1);
+         }
+
+         if (tmp_s) {
+            src_format_desc->unpack_s_8uscaled(tmp_s, 0, src_row, src_stride, width, 1);
+            dst_format_desc->pack_s_8uscaled(dst_row, dst_stride, tmp_s, 0, width, 1);
+         }
+
+         dst_row += dst_step;
+         src_row += src_step;
+      }
+
+      if (tmp_s) {
+         FREE(tmp_s);
+      }
+
+      if (tmp_z) {
+         FREE(tmp_z);
+      }
+
+      return;
+   }
+
    if (util_format_fits_8unorm(src_format_desc) ||
        util_format_fits_8unorm(dst_format_desc)) {
       unsigned tmp_stride;
