@@ -143,7 +143,6 @@ lp_set_target_options(void)
    llvm::UnsafeFPMath = true;
 #endif
 
-#if 0
    /*
     * LLVM will generate MMX instructions for vectors <= 64 bits, leading to
     * innefficient code, and in 32bit systems, to the corruption of the FPU
@@ -152,10 +151,8 @@ lp_set_target_options(void)
     * See also:
     * - http://llvm.org/bugs/show_bug.cgi?id=3287
     * - http://l4.me.uk/post/2009/06/07/llvm-wrinkle-3-configuration-what-configuration/
-    *
-    * XXX: Unfortunately this is not working.
     */
-   static boolean first = FALSE;
+   static boolean first = TRUE;
    if (first) {
       static const char* options[] = {
          "prog",
@@ -164,7 +161,6 @@ lp_set_target_options(void)
       llvm::cl::ParseCommandLineOptions(2, const_cast<char**>(options));
       first = FALSE;
    }
-#endif
 }
 
 
