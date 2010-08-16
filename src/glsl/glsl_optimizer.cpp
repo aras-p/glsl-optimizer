@@ -4,6 +4,7 @@
 #include "glsl_parser.h"
 #include "ir_optimization.h"
 #include "ir_print_glsl_visitor.h"
+#include "ir_print_visitor.h"
 #include "program.h"
 
 extern "C" struct gl_shader *

@@ -471,7 +471,7 @@ void ir_print_glsl_visitor::visit(ir_assignment *ir)
 		   }
 	   }
 	   lhsType = glsl_type::get_instance(lhsType->base_type, j, 1);
-	   this->writeMask = ir->write_mask;
+	   this->writeMask = ir->rhs->as_swizzle() ? ir->write_mask : ~0;
    }
    mask[j] = '\0';
    if (mask[0])
