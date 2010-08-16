@@ -84,7 +84,7 @@ void main ()
   vec2 tmpvar_217;
   tmpvar_217.x = float(tmpvar_216.x);
   tmpvar_217.y = float(vec2((tmpvar_216.y * _ProjectionParams.x)));
-  o_i0.xy = (tmpvar_217 + tmpvar_216.w).xy;
+  o_i0.xy = (tmpvar_217 + tmpvar_216.w);
   o_i0.zw = vec2(tmpvar_154.zw);
   gl_Position = tmpvar_154.xyzw;
   vec4 tmpvar_17;

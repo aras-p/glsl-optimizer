@@ -27,7 +27,7 @@ void main ()
   vec4 tmpvar_153;
   vec4 tmpvar_59;
   tmpvar_59 = (gl_ModelViewProjectionMatrix * tmpvar_1);
-  tmpvar_153.xy = ((tmpvar_7.xy * _MainTex_ST.xy) + _MainTex_ST.zw).xy;
+  tmpvar_153.xy = ((tmpvar_7.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
   tmpvar_153.zw = vec2(((tmpvar_7.xy * _BumpMap_ST.xy) + _BumpMap_ST.zw).xy);
   mat3 tmpvar_68;
   tmpvar_68[0] = _Object2World[0].xyz;

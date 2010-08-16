@@ -20,7 +20,7 @@ void main ()
   vec4 tmpvar_106;
   vec4 tmpvar_38;
   tmpvar_38 = (gl_ModelViewProjectionMatrix * tmpvar_1);
-  tmpvar_106.xy = ((tmpvar_7.xy * _MainTex_ST.xy) + _MainTex_ST.zw).xy;
+  tmpvar_106.xy = ((tmpvar_7.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
   tmpvar_106.zw = vec2(((tmpvar_7.xy * _BumpMap_ST.xy) + _BumpMap_ST.zw).xy);
   vec4 o_i0;
   vec4 tmpvar_45;
@@ -29,7 +29,7 @@ void main ()
   vec2 tmpvar_46;
   tmpvar_46.x = float(tmpvar_45.x);
   tmpvar_46.y = float(vec2((tmpvar_45.y * _ProjectionParams.x)));
-  o_i0.xy = (tmpvar_46 + tmpvar_45.w).xy;
+  o_i0.xy = (tmpvar_46 + tmpvar_45.w);
   o_i0.zw = vec2(tmpvar_38.zw);
   vec3 tmpvar_51;
   tmpvar_51 = (cross (tmpvar_5, tmpvar_3.xyz) * tmpvar_3.w);

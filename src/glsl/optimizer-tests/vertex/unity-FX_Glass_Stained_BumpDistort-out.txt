@@ -8,7 +8,7 @@ void main ()
   vec2 tmpvar_26;
   tmpvar_26.x = float(tmpvar_25.x);
   tmpvar_26.y = float(tmpvar_25.y);
-  tmpvar_62.xy = ((tmpvar_26 + tmpvar_25.w) * 0.500000).xy;
+  tmpvar_62.xy = ((tmpvar_26 + tmpvar_25.w) * 0.500000);
   tmpvar_62.zw = vec2(tmpvar_25.zw);
   vec4 tmpvar_31;
   tmpvar_31.x = float(tmpvar_3.x);

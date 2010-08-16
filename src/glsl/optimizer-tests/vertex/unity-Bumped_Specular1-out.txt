@@ -21,7 +21,7 @@ void main ()
   vec4 tmpvar_100;
   vec4 tmpvar_35;
   tmpvar_35 = (gl_ModelViewProjectionMatrix * tmpvar_1);
-  tmpvar_100.xy = ((tmpvar_7.xy * _MainTex_ST.xy) + _MainTex_ST.zw).xy;
+  tmpvar_100.xy = ((tmpvar_7.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
   tmpvar_100.zw = vec2(((tmpvar_7.xy * _BumpMap_ST.xy) + _BumpMap_ST.zw).xy);
   vec3 tmpvar_40;
   tmpvar_40 = (cross (tmpvar_5, tmpvar_3.xyz) * tmpvar_3.w);

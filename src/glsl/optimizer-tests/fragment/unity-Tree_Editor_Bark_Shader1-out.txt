@@ -15,7 +15,7 @@ void main ()
   vec2 tmpvar_50;
   tmpvar_50 = gl_TexCoord[0].xy;
   vec4 normal;
-  normal.xy = ((texture2D (_BumpMap, tmpvar_50).wy * 2.000000) - 1.000000).xy;
+  normal.xy = ((texture2D (_BumpMap, tmpvar_50).wy * 2.000000) - 1.000000);
   normal.z = float(vec3(sqrt (((1.000000 - (normal.x * normal.x)) - (normal.y * normal.y)))));
   vec3 tmpvar_70;
   tmpvar_70 = normal.xyz;

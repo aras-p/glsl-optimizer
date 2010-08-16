@@ -23,7 +23,7 @@ void main ()
   vec4 tmpvar_69;
   tmpvar_69 = (texture2D (_MainTex, (tmpvar_3.xy + _ret_val_i0)) * _Color);
   vec4 normal;
-  normal.xy = ((texture2D (_BumpMap, (tmpvar_50 + _ret_val_i0)).wy * 2.000000) - 1.000000).xy;
+  normal.xy = ((texture2D (_BumpMap, (tmpvar_50 + _ret_val_i0)).wy * 2.000000) - 1.000000);
   normal.z = float(vec3(sqrt (((1.000000 - (normal.x * normal.x)) - (normal.y * normal.y)))));
   vec4 tmpvar_83;
   tmpvar_83 = -(log2 (texture2DProj (_LightBuffer, gl_TexCoord[2].xyzw)));

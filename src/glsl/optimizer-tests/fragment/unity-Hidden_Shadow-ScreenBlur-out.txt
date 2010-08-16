@@ -25,14 +25,14 @@ void main ()
   float tmpvar_23;
   tmpvar_23 = unity_ShadowBlurParams.x;
   diffTolerance = tmpvar_23;
-  mask.xy = (tmpvar_16.xy * tmpvar_23).xy;
+  mask.xy = (tmpvar_16.xy * tmpvar_23);
   while (true) {
     if ((i_1 >= 8)) {
       break;
     };
     vec4 tmpvar_25;
     tmpvar_25 = texture2D (_MainTex, (coord + (radius * _BlurOffsets[i_1])).xy);
-    mask.xy = (mask.xy + (clamp ((diffTolerance - abs ((dist - (tmpvar_25.z + (tmpvar_25.w / 255.000000))))), 0.000000, 1.000000) * tmpvar_25.xy)).xy;
+    mask.xy = (mask.xy + (clamp ((diffTolerance - abs ((dist - (tmpvar_25.z + (tmpvar_25.w / 255.000000))))), 0.000000, 1.000000) * tmpvar_25.xy));
     i_1 = (i_1 + 1);
   };
   gl_FragData[0] = vec4((mask.x / mask.y));

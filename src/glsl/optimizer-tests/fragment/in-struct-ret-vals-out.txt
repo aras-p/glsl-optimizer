@@ -4,7 +4,7 @@ void main ()
   tmpvar_4 = gl_Color.xyzw;
   vec4 c;
   c = tmpvar_4;
-  c.xy = (tmpvar_4.xy + gl_TexCoord[0].xy).xy;
+  c.xy = (tmpvar_4.xy + gl_TexCoord[0].xy);
   gl_FragData[0] = c.xyzw;
 }
 

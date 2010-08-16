@@ -12,7 +12,7 @@ void main ()
   vec4 tmpvar_92;
   vec4 tmpvar_34;
   tmpvar_34 = (gl_ModelViewProjectionMatrix * gl_Vertex.xyzw);
-  tmpvar_92.xy = ((tmpvar_7.xy * _Decal_ST.xy) + _Decal_ST.zw).xy;
+  tmpvar_92.xy = ((tmpvar_7.xy * _Decal_ST.xy) + _Decal_ST.zw);
   tmpvar_92.zw = vec2(((tmpvar_7.xy * _DecalBump_ST.xy) + _DecalBump_ST.zw).xy);
   gl_Position = tmpvar_34.xyzw;
   vec4 tmpvar_17;

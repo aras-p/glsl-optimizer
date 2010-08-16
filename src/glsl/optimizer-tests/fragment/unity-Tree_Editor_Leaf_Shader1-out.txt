@@ -26,7 +26,7 @@ void main ()
   vec2 tmpvar_54;
   tmpvar_54 = gl_TexCoord[5].xy;
   vec4 normal;
-  normal.xy = ((texture2D (_BumpMap, tmpvar_54).wy * 2.000000) - 1.000000).xy;
+  normal.xy = ((texture2D (_BumpMap, tmpvar_54).wy * 2.000000) - 1.000000);
   normal.z = float(vec3(sqrt (((1.000000 - (normal.x * normal.x)) - (normal.y * normal.y)))));
   float x;
   x = ((texture2D (_MainTex, tmpvar_54).w * gl_Color.w) - _Cutoff);

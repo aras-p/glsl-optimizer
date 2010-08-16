@@ -20,7 +20,7 @@ void main ()
   vec4 tmpvar_135;
   vec4 tmpvar_48;
   tmpvar_48 = (gl_ModelViewProjectionMatrix * tmpvar_1);
-  tmpvar_135.xy = ((tmpvar_7.xy * _MainTex_ST.xy) + _MainTex_ST.zw).xy;
+  tmpvar_135.xy = ((tmpvar_7.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
   tmpvar_135.zw = vec2(((tmpvar_7.xy * _BumpMap_ST.xy) + _BumpMap_ST.zw).xy);
   vec4 tmpvar_54;
   tmpvar_54.xyz = vec3(_WorldSpaceCameraPos.xyz);
@@ -59,7 +59,7 @@ void main ()
   vec2 tmpvar_89;
   tmpvar_89.x = float(tmpvar_88.x);
   tmpvar_89.y = float(vec2((tmpvar_88.y * _ProjectionParams.x)));
-  o_i0.xy = (tmpvar_89 + tmpvar_88.w).xy;
+  o_i0.xy = (tmpvar_89 + tmpvar_88.w);
   o_i0.zw = vec2(tmpvar_48.zw);
   gl_Position = tmpvar_48.xyzw;
   vec4 tmpvar_17;

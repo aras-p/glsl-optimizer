@@ -10,7 +10,7 @@ void main ()
   vec4 tmpvar_7;
   tmpvar_7 = gl_MultiTexCoord0.xyzw;
   vec4 tmpvar_129;
-  tmpvar_129.xy = ((tmpvar_7.xy * _MainTex_ST.xy) + _MainTex_ST.zw).xy;
+  tmpvar_129.xy = ((tmpvar_7.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
   tmpvar_129.zw = vec2(((tmpvar_7.xy * _BumpMap_ST.xy) + _BumpMap_ST.zw).xy);
   vec3 tmpvar_54;
   tmpvar_54 = (cross (tmpvar_5, tmpvar_3.xyz) * tmpvar_3.w);

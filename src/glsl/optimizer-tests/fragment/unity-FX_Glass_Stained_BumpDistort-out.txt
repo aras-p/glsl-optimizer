@@ -10,9 +10,9 @@ void main ()
   vec4 tmpvar_35;
   tmpvar_35 = tmpvar_2;
   vec4 normal;
-  normal.xy = ((texture2D (_BumpMap, gl_TexCoord[1].xy).wy * 2.000000) - 1.000000).xy;
+  normal.xy = ((texture2D (_BumpMap, gl_TexCoord[1].xy).wy * 2.000000) - 1.000000);
   normal.z = float(vec3(sqrt (((1.000000 - (normal.x * normal.x)) - (normal.y * normal.y)))));
-  tmpvar_35.xy = ((((normal.xy * _BumpAmt) * _GrabTexture_TexelSize.xy) * tmpvar_2.z) + tmpvar_2.xy).xy;
+  tmpvar_35.xy = ((((normal.xy * _BumpAmt) * _GrabTexture_TexelSize.xy) * tmpvar_2.z) + tmpvar_2.xy);
   gl_FragData[0] = (texture2DProj (_GrabTexture, tmpvar_35) * texture2D (_MainTex, gl_TexCoord[2].xy)).xyzw;
 }
 

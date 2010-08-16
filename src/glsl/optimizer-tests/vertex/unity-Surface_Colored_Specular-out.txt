@@ -16,7 +16,7 @@ void main ()
   vec4 tmpvar_107;
   vec4 tmpvar_43;
   tmpvar_43 = (gl_ModelViewProjectionMatrix * tmpvar_1);
-  tmpvar_107.xy = ((tmpvar_7.xy * _MainTex_ST.xy) + _MainTex_ST.zw).xy;
+  tmpvar_107.xy = ((tmpvar_7.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
   tmpvar_107.zw = vec2(((tmpvar_7.xy * _SpecMap_ST.xy) + _SpecMap_ST.zw).xy);
   mat3 tmpvar_52;
   tmpvar_52[0] = _Object2World[0].xyz;

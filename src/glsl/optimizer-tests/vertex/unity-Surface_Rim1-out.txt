@@ -22,7 +22,7 @@ void main ()
   vec2 tmpvar_44;
   tmpvar_44.x = float(tmpvar_43.x);
   tmpvar_44.y = float(vec2((tmpvar_43.y * _ProjectionParams.x)));
-  o_i0.xy = (tmpvar_44 + tmpvar_43.w).xy;
+  o_i0.xy = (tmpvar_44 + tmpvar_43.w);
   o_i0.zw = vec2(tmpvar_38.zw);
   vec3 tmpvar_49;
   tmpvar_49 = (cross (tmpvar_5, tmpvar_3.xyz) * tmpvar_3.w);

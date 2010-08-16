@@ -33,9 +33,9 @@ void main ()
   vec4 tmpvar_204;
   vec4 tmpvar_86;
   tmpvar_86 = (gl_ModelViewProjectionMatrix * tmpvar_1);
-  tmpvar_203.xy = ((tmpvar_7.xy * _Control_ST.xy) + _Control_ST.zw).xy;
+  tmpvar_203.xy = ((tmpvar_7.xy * _Control_ST.xy) + _Control_ST.zw);
   tmpvar_203.zw = vec2(((tmpvar_7.xy * _Splat0_ST.xy) + _Splat0_ST.zw).xy);
-  tmpvar_204.xy = ((tmpvar_7.xy * _Splat1_ST.xy) + _Splat1_ST.zw).xy;
+  tmpvar_204.xy = ((tmpvar_7.xy * _Splat1_ST.xy) + _Splat1_ST.zw);
   tmpvar_204.zw = vec2(((tmpvar_7.xy * _Splat2_ST.xy) + _Splat2_ST.zw).xy);
   mat3 tmpvar_98;
   tmpvar_98[0] = _Object2World[0].xyz;
@@ -75,7 +75,7 @@ void main ()
   vec2 tmpvar_153;
   tmpvar_153.x = float(tmpvar_152.x);
   tmpvar_153.y = float(vec2((tmpvar_152.y * _ProjectionParams.x)));
-  o_i0.xy = (tmpvar_153 + tmpvar_152.w).xy;
+  o_i0.xy = (tmpvar_153 + tmpvar_152.w);
   o_i0.zw = vec2(tmpvar_86.zw);
   gl_Position = tmpvar_86.xyzw;
   vec4 tmpvar_17;

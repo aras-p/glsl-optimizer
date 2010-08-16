@@ -17,9 +17,9 @@ void main ()
   vec2 tmpvar_36;
   tmpvar_36.x = float(tmpvar_35.x);
   tmpvar_36.y = float(vec2((tmpvar_35.y * _ProjectionParams.x)));
-  o_i0.xy = (tmpvar_36 + tmpvar_35.w).xy;
+  o_i0.xy = (tmpvar_36 + tmpvar_35.w);
   o_i0.zw = vec2(tmpvar_31.zw);
-  tmpvar_73.xy = ((gl_MultiTexCoord1.xy * unity_LightmapST.xy) + unity_LightmapST.zw).xy;
+  tmpvar_73.xy = ((gl_MultiTexCoord1.xy * unity_LightmapST.xy) + unity_LightmapST.zw);
   tmpvar_73.z = float(vec3(((-((gl_ModelViewMatrix * tmpvar_1).z) * unity_LightmapFade.z) + unity_LightmapFade.w)));
   gl_Position = tmpvar_31.xyzw;
   vec4 tmpvar_17;

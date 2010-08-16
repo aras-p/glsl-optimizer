@@ -12,7 +12,7 @@ void main ()
   vec3 normal;
   normal = tmpvar_4.xyz;
   vec4 enc;
-  enc.xy = ((((normal.xy / (normal.z + 1.000000)) / 1.777700) * 0.500000) + 0.500000).xy;
+  enc.xy = ((((normal.xy / (normal.z + 1.000000)) / 1.777700) * 0.500000) + 0.500000);
   vec2 enc_i0_i1;
   vec2 tmpvar_56;
   tmpvar_56 = fract ((vec2(1.000000, 255.000000) * tmpvar_4.w));

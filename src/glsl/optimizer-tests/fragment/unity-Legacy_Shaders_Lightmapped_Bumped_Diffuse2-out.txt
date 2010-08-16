@@ -17,7 +17,7 @@ void main ()
   vec4 tmpvar_44;
   tmpvar_44 = texture2D (_LightMap, tmpvar_3.zw);
   vec4 normal;
-  normal.xy = ((texture2D (_BumpMap, tmpvar_82).wy * 2.000000) - 1.000000).xy;
+  normal.xy = ((texture2D (_BumpMap, tmpvar_82).wy * 2.000000) - 1.000000);
   normal.z = float(vec3(sqrt (((1.000000 - (normal.x * normal.x)) - (normal.y * normal.y)))));
   vec4 tmpvar_59;
   tmpvar_59 = -(log2 (texture2DProj (_LightBuffer, gl_TexCoord[1].xyzw)));

@@ -24,7 +24,7 @@ void main ()
   vec4 tmpvar_78;
   tmpvar_78 = (texture2D (_MainTex, (tmpvar_3.xy + _ret_val_i0)) * _Color);
   vec4 normal;
-  normal.xy = ((texture2D (_BumpMap, (tmpvar_58 + _ret_val_i0)).wy * 2.000000) - 1.000000).xy;
+  normal.xy = ((texture2D (_BumpMap, (tmpvar_58 + _ret_val_i0)).wy * 2.000000) - 1.000000);
   normal.z = float(vec3(sqrt (((1.000000 - (normal.x * normal.x)) - (normal.y * normal.y)))));
   vec4 c_i0_i1;
   c_i0_i1.xyz = ((tmpvar_78.xyz * _LightColor0.xyz) * ((max (0.000000, dot (normal.xyz, gl_TexCoord[2].xyz)) * texture2D (_LightTexture0, gl_TexCoord[3].xy).w) * 2.000000)).xyz;

@@ -16,12 +16,12 @@ void main ()
   tmpvar_9.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[0] = tmpvar_9;
   vec4 tmpvar_11;
-  tmpvar_11.xy = vec2(((tmpvar_3.xy * _GrainOffsetScale.zw) + _GrainOffsetScale.xy).xy);
+  tmpvar_11.xy = vec2(((tmpvar_3 * _GrainOffsetScale.zw) + _GrainOffsetScale.xy).xy);
   tmpvar_11.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_11.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[1] = tmpvar_11;
   vec4 tmpvar_13;
-  tmpvar_13.xy = vec2(((tmpvar_3.xy * _ScratchOffsetScale.zw) + _ScratchOffsetScale.xy).xy);
+  tmpvar_13.xy = vec2(((tmpvar_3 * _ScratchOffsetScale.zw) + _ScratchOffsetScale.xy).xy);
   tmpvar_13.z = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   tmpvar_13.w = float(vec4(0.000000, 0.000000, 0.000000, 0.000000));
   gl_TexCoord[2] = tmpvar_13;

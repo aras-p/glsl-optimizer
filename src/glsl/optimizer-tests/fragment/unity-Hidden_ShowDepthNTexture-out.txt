@@ -12,7 +12,7 @@ void main ()
   tmpvar_51 = ((tmpvar_39.xyz * vec3(3.555400, 3.555400, 0.000000)) + vec3(-1.777700, -1.777700, 1.000000));
   float tmpvar_53;
   tmpvar_53 = (2.000000 / dot (tmpvar_51.xyz, tmpvar_51.xyz));
-  n_i0.xy = (tmpvar_53 * tmpvar_51.xy).xy;
+  n_i0.xy = (tmpvar_53 * tmpvar_51.xy);
   n_i0.z = float(vec3((tmpvar_53 - 1.000000)));
   col.x = dot (tmpvar_39.zw, vec2(1.000000, 0.003922));
   col.y = float(vec2(((n_i0.x * 0.500000) + 0.500000)));

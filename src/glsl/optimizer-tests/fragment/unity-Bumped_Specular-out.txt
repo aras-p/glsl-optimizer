@@ -18,7 +18,7 @@ void main ()
   vec3 tmpvar_61;
   tmpvar_61 = (tmpvar_59.xyz * _Color.xyz);
   vec4 normal;
-  normal.xy = ((texture2D (_BumpMap, tmpvar_3.zw).wy * 2.000000) - 1.000000).xy;
+  normal.xy = ((texture2D (_BumpMap, tmpvar_3.zw).wy * 2.000000) - 1.000000);
   normal.z = float(vec3(sqrt (((1.000000 - (normal.x * normal.x)) - (normal.y * normal.y)))));
   vec3 tmpvar_71;
   tmpvar_71 = normal.xyz;

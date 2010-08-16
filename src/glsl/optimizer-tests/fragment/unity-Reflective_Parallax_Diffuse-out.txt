@@ -29,7 +29,7 @@ void main ()
   vec4 tmpvar_86;
   tmpvar_86 = texture2D (_MainTex, (tmpvar_3.xy + _ret_val_i0));
   vec4 normal;
-  normal.xy = ((texture2D (_BumpMap, (tmpvar_68 + _ret_val_i0)).wy * 2.000000) - 1.000000).xy;
+  normal.xy = ((texture2D (_BumpMap, (tmpvar_68 + _ret_val_i0)).wy * 2.000000) - 1.000000);
   normal.z = float(vec3(sqrt (((1.000000 - (normal.x * normal.x)) - (normal.y * normal.y)))));
   vec3 LightCoord_i0;
   LightCoord_i0 = tmpvar_9.xyz;

@@ -57,7 +57,7 @@ void main ()
   vertex.xz = vec2((pos.xz - (waveMove.xz * _WaveAndDistance.z)).xy);
   outColor.xyz = ((tmpvar_11.xyz * mix (vec3(0.500000, 0.500000, 0.500000), _WavingTint.xyz, vec3((dot (tmpvar_154, vec4(0.674200, 0.674200, 0.269680, 0.134840)) * 0.700000)))) * 2.000000).xyz;
   outColor.w = float(vec4(1.000000, 1.000000, 1.000000, 1.000000));
-  tmpvar_200 = ((tmpvar_7.xy * _MainTex_ST.xy) + _MainTex_ST.zw).xy;
+  tmpvar_200 = ((tmpvar_7.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
   vec4 tmpvar_172;
   tmpvar_172 = (gl_ModelViewProjectionMatrix * vertex);
   tmpvar_199 = tmpvar_172;

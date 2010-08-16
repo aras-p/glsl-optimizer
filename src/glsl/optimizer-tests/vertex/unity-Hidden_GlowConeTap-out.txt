@@ -22,7 +22,7 @@ void main ()
   vec2 tmpvar_28;
   tmpvar_28.x = float(vec2(tmpvar_18));
   tmpvar_28.y = float(vec2(tmpvar_19));
-  tmpvar_49[0].xy = (_ret_val_i0 + tmpvar_28).xy;
+  tmpvar_49[0].xy = (_ret_val_i0 + tmpvar_28);
   vec2 tmpvar_30;
   tmpvar_30.x = float(vec2(-(tmpvar_18)));
   tmpvar_30.y = float(vec2(tmpvar_19));
@@ -30,7 +30,7 @@ void main ()
   vec2 tmpvar_32;
   tmpvar_32.x = float(vec2(tmpvar_18));
   tmpvar_32.y = float(vec2(-(tmpvar_19)));
-  tmpvar_49[1].xy = (_ret_val_i0 + tmpvar_32).xy;
+  tmpvar_49[1].xy = (_ret_val_i0 + tmpvar_32);
   vec2 tmpvar_34;
   tmpvar_34.x = float(vec2(-(tmpvar_18)));
   tmpvar_34.y = float(vec2(-(tmpvar_19)));

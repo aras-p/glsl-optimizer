@@ -22,7 +22,7 @@ void main ()
   vec3 tmpvar_110;
   vec4 tmpvar_38;
   tmpvar_38 = (gl_ModelViewProjectionMatrix * tmpvar_1);
-  tmpvar_107.xy = ((tmpvar_7.xy * _MainTex_ST.xy) + _MainTex_ST.zw).xy;
+  tmpvar_107.xy = ((tmpvar_7.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
   tmpvar_107.zw = vec2(((tmpvar_7.xy * _BumpMap_ST.xy) + _BumpMap_ST.zw).xy);
   vec4 o_i0;
   vec4 tmpvar_44;
@@ -31,9 +31,9 @@ void main ()
   vec2 tmpvar_45;
   tmpvar_45.x = float(tmpvar_44.x);
   tmpvar_45.y = float(vec2((tmpvar_44.y * _ProjectionParams.x)));
-  o_i0.xy = (tmpvar_45 + tmpvar_44.w).xy;
+  o_i0.xy = (tmpvar_45 + tmpvar_44.w);
   o_i0.zw = vec2(tmpvar_38.zw);
-  tmpvar_110.xy = ((gl_MultiTexCoord1.xy * unity_LightmapST.xy) + unity_LightmapST.zw).xy;
+  tmpvar_110.xy = ((gl_MultiTexCoord1.xy * unity_LightmapST.xy) + unity_LightmapST.zw);
   tmpvar_110.z = float(vec3(((-((gl_ModelViewMatrix * tmpvar_1).z) * unity_LightmapFade.z) + unity_LightmapFade.w)));
   vec3 tmpvar_52;
   tmpvar_52 = (cross (tmpvar_5, tmpvar_3.xyz) * tmpvar_3.w);

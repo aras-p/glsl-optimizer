@@ -8,7 +8,7 @@ void main ()
   vec4 tmpvar_72;
   vec4 tmpvar_31;
   tmpvar_31 = (gl_ModelViewProjectionMatrix * gl_Vertex.xyzw);
-  tmpvar_72.xy = ((gl_MultiTexCoord0.xy * _MainTex_ST.xy) + _MainTex_ST.zw).xy;
+  tmpvar_72.xy = ((gl_MultiTexCoord0.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
   tmpvar_72.zw = vec2(((gl_MultiTexCoord1.xy * _LightMap_ST.xy) + _LightMap_ST.zw).xy);
   vec4 o_i0;
   vec4 tmpvar_37;
@@ -17,7 +17,7 @@ void main ()
   vec2 tmpvar_38;
   tmpvar_38.x = float(tmpvar_37.x);
   tmpvar_38.y = float(vec2((tmpvar_37.y * _ProjectionParams.x)));
-  o_i0.xy = (tmpvar_38 + tmpvar_37.w).xy;
+  o_i0.xy = (tmpvar_38 + tmpvar_37.w);
   o_i0.zw = vec2(tmpvar_31.zw);
   gl_Position = tmpvar_31.xyzw;
   vec4 tmpvar_17;

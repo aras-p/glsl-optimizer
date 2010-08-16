@@ -25,7 +25,7 @@ void main ()
   vec4 tmpvar_157;
   vec4 tmpvar_61;
   tmpvar_61 = (gl_ModelViewProjectionMatrix * gl_Vertex.xyzw);
-  tmpvar_157.xy = ((tmpvar_7.xy * _Decal_ST.xy) + _Decal_ST.zw).xy;
+  tmpvar_157.xy = ((tmpvar_7.xy * _Decal_ST.xy) + _Decal_ST.zw);
   tmpvar_157.zw = vec2(((tmpvar_7.xy * _DecalBump_ST.xy) + _DecalBump_ST.zw).xy);
   mat3 tmpvar_70;
   tmpvar_70[0] = _Object2World[0].xyz;
@@ -63,7 +63,7 @@ void main ()
   vec2 tmpvar_115;
   tmpvar_115.x = float(tmpvar_114.x);
   tmpvar_115.y = float(vec2((tmpvar_114.y * _ProjectionParams.x)));
-  o_i0.xy = (tmpvar_115 + tmpvar_114.w).xy;
+  o_i0.xy = (tmpvar_115 + tmpvar_114.w);
   o_i0.zw = vec2(tmpvar_61.zw);
   gl_Position = tmpvar_61.xyzw;
   vec4 tmpvar_17;
