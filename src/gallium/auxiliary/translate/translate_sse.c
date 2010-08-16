@@ -495,7 +495,6 @@ static boolean translate_attr_convert( struct translate_sse *p,
          || a->output_format == PIPE_FORMAT_R32G32B32A32_FLOAT))
    {
       struct x86_reg dataXMM = x86_make_reg(file_XMM, 0);
-      struct x86_reg tmpXMM = x86_make_reg(file_XMM, 1);
 
       for(i = 0; i < output_desc->nr_channels; ++i)
       {
