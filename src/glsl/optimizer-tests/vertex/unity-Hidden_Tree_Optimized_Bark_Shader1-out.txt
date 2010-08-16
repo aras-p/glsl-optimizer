@@ -37,14 +37,14 @@ void main ()
   pos.xyz = (tmpvar_190.xyz + (((tmpvar_144.xyx * bend) + ((_Wind.xyz * tmpvar_144.y) * tmpvar_120.w)) * _Wind.w)).xyz;
   pos.xyz = (pos.xyz + (tmpvar_120.z * _Wind.xyz)).xyz;
   vec3 tmpvar_153;
-  tmpvar_153.x = (vec3(0.000000, 0.000000, 0.000000)).x;
+  tmpvar_153.x = float(0.000000);
   tmpvar_153.y = _SquashPlaneNormal.w;
-  tmpvar_153.z = (vec3(0.000000, 0.000000, 0.000000)).z;
+  tmpvar_153.z = float(0.000000);
   vec3 tmpvar_155;
   tmpvar_155 = _SquashPlaneNormal.xyz;
   vec4 tmpvar_161;
   tmpvar_161.xyz = mix ((pos.xyz + (dot (tmpvar_155, (tmpvar_153 - pos.xyz)) * tmpvar_155)), pos.xyz, vec3(_SquashAmount)).xyz;
-  tmpvar_161.w = (vec4(1.000000, 1.000000, 1.000000, 1.000000)).w;
+  tmpvar_161.w = float(1.000000);
   tmpvar_190 = tmpvar_161;
   vec4 tmpvar_170;
   tmpvar_170 = (gl_ModelViewProjectionMatrix * tmpvar_161);

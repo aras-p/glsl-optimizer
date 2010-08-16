@@ -16,8 +16,8 @@ void main ()
   vec4 tmpvar_24;
   tmpvar_24.x = inUV.x;
   tmpvar_24.y = inUV.y;
-  tmpvar_24.z = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).z;
-  tmpvar_24.w = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).w;
+  tmpvar_24.z = float(0.000000);
+  tmpvar_24.w = float(0.000000);
   _ret_val_i0 = (gl_TextureMatrix[0] * tmpvar_24).xy;
   vec2 tmpvar_28;
   tmpvar_28.x = (vec2(tmpvar_18)).x;

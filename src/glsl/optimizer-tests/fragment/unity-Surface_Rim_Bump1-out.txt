@@ -18,9 +18,9 @@ void main ()
   normal.z = (vec3(sqrt (((1.000000 - (normal.x * normal.x)) - (normal.y * normal.y))))).z;
   vec4 c_i0;
   c_i0.xyz = ((texture2D (_MainTex, tmpvar_44).xyz * _LightColor0.xyz) * ((max (0.000000, dot (normal.xyz, normalize (gl_TexCoord[1].xyz))) * (texture2D (_LightTextureB0, vec2(dot (tmpvar_7, tmpvar_7))).w * textureCube (_LightTexture0, tmpvar_7).w)) * 2.000000)).xyz;
-  c_i0.w = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).w;
+  c_i0.w = float(0.000000);
   c = c_i0;
-  c.w = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).w;
+  c.w = float(0.000000);
   gl_FragData[0] = c.xyzw;
 }
 

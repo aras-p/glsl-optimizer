@@ -30,7 +30,7 @@ void main ()
   c_i0_i1.xyz = ((tmpvar_78.xyz * _LightColor0.xyz) * ((max (0.000000, dot (normal.xyz, gl_TexCoord[2].xyz)) * texture2D (_LightTexture0, gl_TexCoord[3].xy).w) * 2.000000)).xyz;
   c_i0_i1.w = tmpvar_78.w;
   c = c_i0_i1;
-  c.w = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).w;
+  c.w = float(0.000000);
   gl_FragData[0] = c.xyzw;
 }
 

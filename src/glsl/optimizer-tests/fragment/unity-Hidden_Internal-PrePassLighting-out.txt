@@ -67,7 +67,7 @@ void main ()
   tmpvar_71 = ComputeShadow (-(tmpvar_62), tmpvar_50);
   vec4 tmpvar_73;
   tmpvar_73.xyz = vpos.xyz;
-  tmpvar_73.w = (vec4(1.000000, 1.000000, 1.000000, 1.000000)).w;
+  tmpvar_73.w = float(1.000000);
   float tmpvar_75;
   tmpvar_75 = ((atten * tmpvar_71) * textureCube (_LightTexture0, (_ViewToCookie * tmpvar_73).xyz).w);
   atten = tmpvar_75;

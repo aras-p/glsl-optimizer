@@ -47,7 +47,7 @@ void main ()
   c_i0_i1.xyz = ((((tmpvar_89.xyz * _LightColor0.xyz) * max (0.000000, dot (tmpvar_102, tmpvar_105))) + ((_LightColor0.xyz * _SpecColor.xyz) * tmpvar_125)) * (atten * 2.000000)).xyz;
   c_i0_i1.w = (vec4((tmpvar_89.w + (((_LightColor0.w * _SpecColor.w) * tmpvar_125) * atten)))).w;
   c = c_i0_i1;
-  c.w = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).w;
+  c.w = float(0.000000);
   gl_FragData[0] = c.xyzw;
 }
 

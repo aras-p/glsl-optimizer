@@ -25,12 +25,12 @@ void main ()
   gl_Position = tmpvar_23.xyzw;
   vec4 tmpvar_17;
   tmpvar_17.xy = tmpvar_24.xy;
-  tmpvar_17.z = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).z;
-  tmpvar_17.w = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).w;
+  tmpvar_17.z = float(0.000000);
+  tmpvar_17.w = float(0.000000);
   gl_TexCoord[0] = tmpvar_17;
   vec4 tmpvar_19;
   tmpvar_19.xyz = (lightColor * tmpvar_11.w).xyz;
-  tmpvar_19.w = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).w;
+  tmpvar_19.w = float(0.000000);
   gl_TexCoord[1] = tmpvar_19;
 }
 

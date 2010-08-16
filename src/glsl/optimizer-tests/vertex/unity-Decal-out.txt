@@ -21,18 +21,18 @@ void main ()
   gl_Position = tmpvar_38.xyzw;
   vec4 tmpvar_17;
   tmpvar_17.x = tmpvar_38.z;
-  tmpvar_17.y = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).y;
-  tmpvar_17.z = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).z;
-  tmpvar_17.w = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).w;
+  tmpvar_17.y = float(0.000000);
+  tmpvar_17.z = float(0.000000);
+  tmpvar_17.w = float(0.000000);
   xlv_FOG = tmpvar_17;
   gl_TexCoord[0] = tmpvar_90.xyzw;
   vec4 tmpvar_21;
   tmpvar_21.xyz = (tmpvar_47 * (gl_Normal.xyz * unity_Scale.w)).xyz;
-  tmpvar_21.w = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).w;
+  tmpvar_21.w = float(0.000000);
   gl_TexCoord[1] = tmpvar_21;
   vec4 tmpvar_23;
   tmpvar_23.xyz = _WorldSpaceLightPos0.xyz;
-  tmpvar_23.w = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).w;
+  tmpvar_23.w = float(0.000000);
   gl_TexCoord[2] = tmpvar_23;
 }
 

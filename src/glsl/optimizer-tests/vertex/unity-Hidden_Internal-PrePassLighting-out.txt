@@ -20,7 +20,7 @@ void main ()
   gl_TexCoord[0] = o_i0.xyzw;
   vec4 tmpvar_11;
   tmpvar_11.xyz = mix (((gl_ModelViewMatrix * tmpvar_1).xyz * vec3(-1.000000, -1.000000, 1.000000)), tmpvar_3, vec3(float((tmpvar_3.z != 0.000000)))).xyz;
-  tmpvar_11.w = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).w;
+  tmpvar_11.w = float(0.000000);
   gl_TexCoord[1] = tmpvar_11;
 }
 

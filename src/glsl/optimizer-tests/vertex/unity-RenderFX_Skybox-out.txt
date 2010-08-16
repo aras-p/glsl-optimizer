@@ -3,8 +3,8 @@ void main ()
   gl_Position = (gl_ModelViewProjectionMatrix * gl_Vertex.xyzw).xyzw;
   vec4 tmpvar_9;
   tmpvar_9.xy = gl_MultiTexCoord0.xy;
-  tmpvar_9.z = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).z;
-  tmpvar_9.w = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).w;
+  tmpvar_9.z = float(0.000000);
+  tmpvar_9.w = float(0.000000);
   gl_TexCoord[0] = tmpvar_9;
 }
 

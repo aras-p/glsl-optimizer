@@ -14,22 +14,22 @@ void main ()
   pos.xyz = (tmpvar_1.xyz * _Scale.xyz).xyz;
   vec4 tmpvar_73;
   tmpvar_73.xyz = pos.xyz;
-  tmpvar_73.w = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).w;
+  tmpvar_73.w = float(0.000000);
   pos.xyz = mix (pos.xyz, (_TerrainEngineBendTree * tmpvar_73).xyz, gl_Color.www).xyz;
   vec3 tmpvar_81;
-  tmpvar_81.x = (vec3(0.000000, 0.000000, 0.000000)).x;
+  tmpvar_81.x = float(0.000000);
   tmpvar_81.y = _SquashPlaneNormal.w;
-  tmpvar_81.z = (vec3(0.000000, 0.000000, 0.000000)).z;
+  tmpvar_81.z = float(0.000000);
   vec3 tmpvar_83;
   tmpvar_83 = _SquashPlaneNormal.xyz;
   vec4 tmpvar_89;
   tmpvar_89.xyz = mix ((pos.xyz + (dot (tmpvar_83, (tmpvar_81 - pos.xyz)) * tmpvar_83)), pos.xyz, vec3(_SquashAmount)).xyz;
-  tmpvar_89.w = (vec4(1.000000, 1.000000, 1.000000, 1.000000)).w;
+  tmpvar_89.w = float(1.000000);
   pos = tmpvar_89;
   gl_Position = (gl_ModelViewProjectionMatrix * tmpvar_89).xyzw;
   vec4 tmpvar_17;
   tmpvar_17.xyz = ((_Object2World * tmpvar_89).xyz - _LightPositionRange.xyz).xyz;
-  tmpvar_17.w = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).w;
+  tmpvar_17.w = float(0.000000);
   gl_TexCoord[0] = tmpvar_17;
 }
 

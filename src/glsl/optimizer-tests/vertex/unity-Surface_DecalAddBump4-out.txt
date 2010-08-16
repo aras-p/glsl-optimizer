@@ -57,7 +57,7 @@ void main ()
   tmpvar_100[2].z = tmpvar_5.z;
   vec4 tmpvar_115;
   tmpvar_115.xyz = tmpvar_97.xyz;
-  tmpvar_115.w = (vec4(1.000000, 1.000000, 1.000000, 1.000000)).w;
+  tmpvar_115.w = float(1.000000);
   vec3 x2;
   vec3 x1;
   x1.x = dot (unity_SHAr, tmpvar_115);
@@ -92,18 +92,18 @@ void main ()
   gl_Position = tmpvar_84.xyzw;
   vec4 tmpvar_17;
   tmpvar_17.x = tmpvar_84.z;
-  tmpvar_17.y = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).y;
-  tmpvar_17.z = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).z;
-  tmpvar_17.w = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).w;
+  tmpvar_17.y = float(0.000000);
+  tmpvar_17.z = float(0.000000);
+  tmpvar_17.w = float(0.000000);
   xlv_FOG = tmpvar_17;
   gl_TexCoord[0] = tmpvar_206.xyzw;
   vec4 tmpvar_21;
   tmpvar_21.xyz = (tmpvar_100 * (_World2Object * _WorldSpaceLightPos0).xyz).xyz;
-  tmpvar_21.w = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).w;
+  tmpvar_21.w = float(0.000000);
   gl_TexCoord[1] = tmpvar_21;
   vec4 tmpvar_23;
   tmpvar_23.xyz = (((x1 + x2) + (unity_SHC.xyz * ((tmpvar_115.x * tmpvar_115.x) - (tmpvar_115.y * tmpvar_115.y)))) + ((((unity_LightColor0 * tmpvar_154.x) + (unity_LightColor1 * tmpvar_154.y)) + (unity_LightColor2 * tmpvar_154.z)) + (unity_LightColor3 * tmpvar_154.w))).xyz;
-  tmpvar_23.w = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).w;
+  tmpvar_23.w = float(0.000000);
   gl_TexCoord[2] = tmpvar_23;
   gl_TexCoord[3] = o_i0.xyzw;
 }

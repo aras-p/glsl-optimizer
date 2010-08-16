@@ -30,16 +30,16 @@ void main ()
   gl_Position = tmpvar_35.xyzw;
   vec4 tmpvar_17;
   tmpvar_17.x = tmpvar_35.z;
-  tmpvar_17.y = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).y;
-  tmpvar_17.z = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).z;
-  tmpvar_17.w = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).w;
+  tmpvar_17.y = float(0.000000);
+  tmpvar_17.z = float(0.000000);
+  tmpvar_17.w = float(0.000000);
   xlv_FOG = tmpvar_17;
   gl_TexCoord[0] = tmpvar_87.xyzw;
   gl_TexCoord[1] = tmpvar_88.xyzw;
   vec4 tmpvar_23;
   tmpvar_23.xy = ((tmpvar_7.xy * _Splat3_ST.xy) + _Splat3_ST.zw).xy;
-  tmpvar_23.z = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).z;
-  tmpvar_23.w = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).w;
+  tmpvar_23.z = float(0.000000);
+  tmpvar_23.w = float(0.000000);
   gl_TexCoord[2] = tmpvar_23;
   gl_TexCoord[3] = o_i0.xyzw;
 }

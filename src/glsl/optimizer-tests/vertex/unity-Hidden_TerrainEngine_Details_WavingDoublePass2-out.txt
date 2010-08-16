@@ -35,7 +35,7 @@ void main ()
   waveMove.z = (vec3(dot (tmpvar_154, vec4(0.006000, 0.020000, -0.020000, 0.100000)))).z;
   vertex.xz = (tmpvar_1.xz - (waveMove.xz * _WaveAndDistance.z)).xy;
   outColor.xyz = ((tmpvar_11.xyz * mix (vec3(0.500000, 0.500000, 0.500000), _WavingTint.xyz, vec3((dot (tmpvar_150, vec4(0.674200, 0.674200, 0.269680, 0.134840)) * 0.700000)))) * 2.000000).xyz;
-  outColor.w = (vec4(1.000000, 1.000000, 1.000000, 1.000000)).w;
+  outColor.w = float(1.000000);
   vec4 tmpvar_166;
   tmpvar_166 = (gl_ModelViewProjectionMatrix * vertex);
   vec4 o_i0;
@@ -50,14 +50,14 @@ void main ()
   gl_Position = tmpvar_166.xyzw;
   vec4 tmpvar_17;
   tmpvar_17.x = tmpvar_166.z;
-  tmpvar_17.y = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).y;
-  tmpvar_17.z = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).z;
-  tmpvar_17.w = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).w;
+  tmpvar_17.y = float(0.000000);
+  tmpvar_17.z = float(0.000000);
+  tmpvar_17.w = float(0.000000);
   xlv_FOG = tmpvar_17;
   vec4 tmpvar_19;
   tmpvar_19.xy = ((gl_MultiTexCoord0.xy * _MainTex_ST.xy) + _MainTex_ST.zw).xy;
-  tmpvar_19.z = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).z;
-  tmpvar_19.w = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).w;
+  tmpvar_19.z = float(0.000000);
+  tmpvar_19.w = float(0.000000);
   gl_TexCoord[0] = tmpvar_19;
   gl_FrontColor = outColor.xyzw;
   gl_TexCoord[1] = o_i0.xyzw;

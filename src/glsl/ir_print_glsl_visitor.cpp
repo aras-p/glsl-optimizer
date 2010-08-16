@@ -474,6 +474,18 @@ static const glsl_type* get_masked_type (ir_instruction *ir, unsigned write_mask
 		type = glsl_type::get_instance(type->base_type, k, 1);
 	}
 
+	ir_constant* cons = ir->as_constant();
+	if (cons && cons->type->is_vector())
+	{
+		unsigned k = 0;
+		for (unsigned i = 0; i < cons->type->components(); ++i) {
+			if (write_mask & (1<<i))
+				++k;
+		}
+		assert (k);
+		type = glsl_type::get_instance(type->base_type, k, 1);
+	}
+
 	return type;
 }
 
@@ -560,8 +572,11 @@ void ir_print_glsl_visitor::visit(ir_constant *ir)
 	}
 
    const glsl_type *const base_type = ir->type->get_base_type();
+   const glsl_type* type = ir->type;
+   if (type->is_vector() && this->writeMask != (1<<type->vector_elements)-1)
+	   type = get_masked_type (ir, this->writeMask);
 
-   buffer = print_type(buffer, ir->type, true);
+   buffer = print_type(buffer, type, true);
    buffer = talloc_asprintf_append(buffer, "(");
 
    if (ir->type->is_array()) {
@@ -570,9 +585,13 @@ void ir_print_glsl_visitor::visit(ir_constant *ir)
 	 ir->get_array_element(i)->accept(this);
 	  WRITE_MASK_LOAD;
    } else {
+      bool first = true;
       for (unsigned i = 0; i < ir->type->components(); i++) {
-	 if (i != 0)
+		  if (!(this->writeMask & (1<<i)))
+			  continue;
+	 if (!first)
 	    buffer = talloc_asprintf_append(buffer, ", ");
+	 first = false;
 	 switch (base_type->base_type) {
 	 case GLSL_TYPE_UINT:  buffer = talloc_asprintf_append(buffer, "%u", ir->value.u[i]); break;
 	 case GLSL_TYPE_INT:   buffer = talloc_asprintf_append(buffer, "%d", ir->value.i[i]); break;

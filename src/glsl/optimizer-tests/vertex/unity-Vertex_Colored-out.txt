@@ -7,19 +7,19 @@ void main ()
   gl_Position = tmpvar_24.xyzw;
   vec4 tmpvar_13;
   tmpvar_13.x = tmpvar_24.z;
-  tmpvar_13.y = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).y;
-  tmpvar_13.z = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).z;
-  tmpvar_13.w = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).w;
+  tmpvar_13.y = float(0.000000);
+  tmpvar_13.z = float(0.000000);
+  tmpvar_13.w = float(0.000000);
   xlv_FOG = tmpvar_13;
   gl_FrontColor = gl_Color.xyzw;
   vec4 tmpvar_17;
   tmpvar_17.xy = ((gl_MultiTexCoord0.xy * _MainTex_ST.xy) + _MainTex_ST.zw).xy;
-  tmpvar_17.z = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).z;
-  tmpvar_17.w = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).w;
+  tmpvar_17.z = float(0.000000);
+  tmpvar_17.w = float(0.000000);
   gl_TexCoord[0] = tmpvar_17;
   vec4 tmpvar_19;
   tmpvar_19.xyz = gl_Normal.xyz;
-  tmpvar_19.w = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).w;
+  tmpvar_19.w = float(0.000000);
   gl_TexCoord[1] = tmpvar_19;
 }
 

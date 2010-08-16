@@ -3,16 +3,16 @@ void main ()
 {
   vec4 tmpvar_18;
   tmpvar_18.xyz = gl_Normal.xyz;
-  tmpvar_18.w = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).w;
+  tmpvar_18.w = float(0.000000);
   gl_Position = (gl_ModelViewProjectionMatrix * gl_Vertex.xyzw).xyzw;
   vec4 tmpvar_11;
   tmpvar_11.xy = ((gl_MultiTexCoord0.xy * _MainTex_ST.xy) + _MainTex_ST.zw).xy;
-  tmpvar_11.z = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).z;
-  tmpvar_11.w = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).w;
+  tmpvar_11.z = float(0.000000);
+  tmpvar_11.w = float(0.000000);
   gl_TexCoord[0] = tmpvar_11;
   vec4 tmpvar_13;
   tmpvar_13.xyz = (gl_ModelViewMatrix * tmpvar_18).xyz;
-  tmpvar_13.w = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).w;
+  tmpvar_13.w = float(0.000000);
   gl_TexCoord[1] = tmpvar_13;
 }
 

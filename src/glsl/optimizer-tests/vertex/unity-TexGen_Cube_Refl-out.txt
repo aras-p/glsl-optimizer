@@ -7,15 +7,15 @@ void main ()
   tmpvar_1 = gl_Vertex.xyzw;
   vec4 tmpvar_22;
   tmpvar_22.xyz = _WorldSpaceCameraPos.xyz;
-  tmpvar_22.w = (vec4(1.000000, 1.000000, 1.000000, 1.000000)).w;
+  tmpvar_22.w = float(1.000000);
   vec4 tmpvar_28;
   tmpvar_28.xyz = reflect (-(normalize ((((_World2Object * tmpvar_22).xyz * unity_Scale.w) - tmpvar_1.xyz))), gl_Normal.xyz).xyz;
-  tmpvar_28.w = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).w;
+  tmpvar_28.w = float(0.000000);
   gl_Position = (gl_ModelViewProjectionMatrix * tmpvar_1).xyzw;
   gl_FrontColor = gl_Color.xyzw;
   vec4 tmpvar_13;
   tmpvar_13.xyz = (gl_ModelViewMatrix * tmpvar_28).xyz;
-  tmpvar_13.w = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).w;
+  tmpvar_13.w = float(0.000000);
   gl_TexCoord[0] = tmpvar_13;
 }
 

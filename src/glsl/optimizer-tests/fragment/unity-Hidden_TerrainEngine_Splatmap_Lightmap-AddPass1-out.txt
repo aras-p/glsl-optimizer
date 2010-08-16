@@ -21,7 +21,7 @@ void main ()
   light.xyz = (tmpvar_56.xyz + unity_Ambient.xyz).xyz;
   vec4 c;
   c.xyz = (((((tmpvar_41.x * texture2D (_Splat0, tmpvar_3.zw).xyz) + (tmpvar_41.y * texture2D (_Splat1, tmpvar_5.xy).xyz)) + (tmpvar_41.z * texture2D (_Splat2, tmpvar_5.zw).xyz)) + (tmpvar_41.w * texture2D (_Splat3, gl_TexCoord[2].xy).xyz)) * light.xyz).xyz;
-  c.w = (vec4(0.000000, 0.000000, 0.000000, 0.000000)).w;
+  c.w = float(0.000000);
   gl_FragData[0] = c.xyzw;
 }
 
