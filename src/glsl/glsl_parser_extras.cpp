@@ -54,9 +54,17 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct __GLcontextRec *ctx,
 
    /* Set default language version and extensions */
    this->language_version = 110;
+   this->es_shader = false;
    this->ARB_texture_rectangle_enable = true;
 
    if (ctx != NULL) {
+      /* OpenGL ES 2.0 has different defaults from desktop GL. */
+      if (ctx->API == API_OPENGLES2) {
+	 this->language_version = 100;
+	 this->es_shader = true;
+	 this->ARB_texture_rectangle_enable = false;
+      }
+
       this->extensions = &ctx->Extensions;
 
       this->Const.MaxLights = ctx->Const.MaxLights;

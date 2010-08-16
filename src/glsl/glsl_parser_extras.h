@@ -68,6 +68,7 @@ struct _mesa_glsl_parse_state {
    exec_list translation_unit;
    glsl_symbol_table *symbols;
 
+   bool es_shader;
    unsigned language_version;
    enum _mesa_glsl_parser_targets target;
 

@@ -222,6 +222,8 @@ version_statement:
 	| VERSION INTCONSTANT EOL
 	{
 	   switch ($2) {
+	   case 100:
+	      state->es_shader = true;
 	   case 110:
 	   case 120:
 	   case 130:
