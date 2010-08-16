@@ -211,7 +211,7 @@ static void r300_rs_col(struct r300_rs_block* rs, int id, int ptr,
 static void r300_rs_col_write(struct r300_rs_block* rs, int id, int fp_offset,
                               enum r300_rs_col_write_type type)
 {
-    assert(type != WRITE_COLOR);
+    assert(type == WRITE_COLOR);
     rs->inst[id] |= R300_RS_INST_COL_CN_WRITE |
                     R300_RS_INST_COL_ADDR(fp_offset);
 }
