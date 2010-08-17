@@ -496,16 +496,19 @@ nv50_fp_linkage_validate(struct nv50_context *nv50)
       m = nv50_vec4_map(map, m, lin,
                         &fp->in[i], (n < vp->out_nr) ? &vp->out[n] : &dummy);
 	}
+
    /* PrimitiveID either is replaced by the system value, or
     * written by the geometry shader into an output register
     */
    if (fp->gp.primid < 0x40) {
-      map[m / 4] |= vp->gp.primid << ((m % 4) * 8);
+      i = (m % 4) * 8;
+      map[m / 4] = (map[m / 4] & ~(0xff << i)) | (vp->gp.primid << i);
       primid = m++;
    }
 
    if (nv50->rasterizer->pipe.point_size_per_vertex) {
-      map[m / 4] |= vp->vp.psiz << ((m % 4) * 8);
+      i = (m % 4) * 8;
+      map[m / 4] = (map[m / 4] & ~(0xff << i)) | (vp->vp.psiz << i);
       psiz = (m++ << 4) | 1;
    }
 
@@ -532,7 +535,6 @@ nv50_fp_linkage_validate(struct nv50_context *nv50)
       so_datap (so, map, n);
    }
 
-   //colors = 0x01000404;
    so_method(so, tesla, NV50TCL_MAP_SEMANTIC_0, 4);
    so_data  (so, colors);
    so_data  (so, clip);
