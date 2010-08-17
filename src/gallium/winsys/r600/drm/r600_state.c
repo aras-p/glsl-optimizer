@@ -233,7 +233,7 @@ static int r600_state_pm4_config(struct radeon_state *state)
 	state->pm4[state->cpm4++] = 0x80000000;
 	state->pm4[state->cpm4++] = 0x80000000;
 	state->pm4[state->cpm4++] = PKT3(PKT3_EVENT_WRITE, 0);
-	state->pm4[state->cpm4++] = 0x00000016;
+	state->pm4[state->cpm4++] = EVENT_TYPE_CACHE_FLUSH_AND_INV_EVENT;
 	state->pm4[state->cpm4++] = PKT3(PKT3_SET_CONFIG_REG, 1);
 	state->pm4[state->cpm4++] = 0x00000010;
 	state->pm4[state->cpm4++] = 0x00028000;
@@ -246,7 +246,7 @@ static int r700_state_pm4_config(struct radeon_state *state)
 	state->pm4[state->cpm4++] = 0x80000000;
 	state->pm4[state->cpm4++] = 0x80000000;
 	state->pm4[state->cpm4++] = PKT3(PKT3_EVENT_WRITE, 0);
-	state->pm4[state->cpm4++] = 0x00000016;
+	state->pm4[state->cpm4++] = EVENT_TYPE_CACHE_FLUSH_AND_INV_EVENT;
 	state->pm4[state->cpm4++] = PKT3(PKT3_SET_CONFIG_REG, 1);
 	state->pm4[state->cpm4++] = 0x00000010;
 	state->pm4[state->cpm4++] = 0x00028000;
@@ -314,7 +314,7 @@ static int r600_state_pm4_draw(struct radeon_state *state)
 		state->pm4[state->cpm4++] = state->states[R600_DRAW__VGT_DRAW_INITIATOR];
 	}
 	state->pm4[state->cpm4++] = PKT3(PKT3_EVENT_WRITE, 0);
-	state->pm4[state->cpm4++] = 0x00000016;
+	state->pm4[state->cpm4++] = EVENT_TYPE_CACHE_FLUSH_AND_INV_EVENT;
 	return 0;
 }
 
