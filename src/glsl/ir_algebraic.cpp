@@ -43,6 +43,7 @@ public:
    ir_algebraic_visitor()
    {
       this->progress = false;
+      this->mem_ctx = NULL;
    }
 
    virtual ~ir_algebraic_visitor()
@@ -59,6 +60,8 @@ public:
 			     int op1,
 			     ir_expression *ir2,
 			     int op2);
+
+   void *mem_ctx;
    bool progress;
 };
 
@@ -231,6 +234,9 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
       op_expr[i] = ir->operands[i]->as_expression();
    }
 
+   if (this->mem_ctx == NULL)
+      this->mem_ctx = talloc_parent(ir);
+
    switch (ir->operation) {
    case ir_unop_logic_not: {
       enum ir_expression_operation new_op = ir_unop_logic_not;
@@ -254,10 +260,10 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
 
       if (new_op != ir_unop_logic_not) {
 	 this->progress = true;
-	 return new(ir) ir_expression(new_op,
-				      ir->type,
-				      op_expr[0]->operands[0],
-				      op_expr[0]->operands[1]);
+	 return new(mem_ctx) ir_expression(new_op,
+					   ir->type,
+					   op_expr[0]->operands[0],
+					   op_expr[0]->operands[1]);
       }
 
       break;
@@ -287,10 +293,10 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
    case ir_binop_sub:
       if (is_vec_zero(op_const[0])) {
 	 this->progress = true;
-	 return new(ir) ir_expression(ir_unop_neg,
-				      ir->type,
-				      ir->operands[1],
-				      NULL);
+	 return new(mem_ctx) ir_expression(ir_unop_neg,
+					   ir->type,
+					   ir->operands[1],
+					   NULL);
       }
       if (is_vec_zero(op_const[1])) {
 	 this->progress = true;
@@ -328,10 +334,10 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
    case ir_binop_div:
       if (is_vec_one(op_const[0]) && ir->type->base_type == GLSL_TYPE_FLOAT) {
 	 this->progress = true;
-	 return new(ir) ir_expression(ir_unop_rcp,
-				      ir->type,
-				      ir->operands[1],
-				      NULL);
+	 return new(mem_ctx) ir_expression(ir_unop_rcp,
+					   ir->type,
+					   ir->operands[1],
+					   NULL);
       }
       if (is_vec_one(op_const[1])) {
 	 this->progress = true;
@@ -353,10 +359,10 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
       /* As far as we know, all backends are OK with rsq. */
       if (op_expr[0] && op_expr[0]->operation == ir_unop_sqrt) {
 	 this->progress = true;
-	 return new(ir) ir_expression(ir_unop_rsq,
-				      ir->type,
-				      op_expr[0]->operands[0],
-				      NULL);
+	 return new(mem_ctx) ir_expression(ir_unop_rsq,
+					   ir->type,
+					   op_expr[0]->operands[0],
+					   NULL);
       }
 
       break;
