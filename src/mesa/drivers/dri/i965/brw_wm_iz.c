@@ -152,6 +152,6 @@ void brw_wm_lookup_iz( GLuint line_aa,
       reg+=2;
    }
 
-   key->nr_depth_regs = (reg+1)/2;
+   key->nr_payload_regs = reg;
 }
 
