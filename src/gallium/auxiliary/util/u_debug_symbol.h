@@ -43,6 +43,9 @@ extern "C" {
 
 
 void
+debug_symbol_name(const void *addr, char* buf, unsigned size);
+
+void
 debug_symbol_print(const void *addr);
 
 

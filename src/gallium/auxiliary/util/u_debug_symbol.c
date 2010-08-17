@@ -33,6 +33,7 @@
  */
 
 #include "pipe/p_compiler.h"
+#include "u_string.h"
 
 #include "u_debug.h"
 #include "u_debug_symbol.h"
@@ -113,8 +114,8 @@ BOOL WINAPI j_SymGetSymFromAddr(HANDLE hProcess, DWORD Address, PDWORD Displacem
 }
 
 
-static INLINE boolean
-debug_symbol_print_imagehlp(const void *addr)
+static INLINE void
+debug_symbol_name_imagehlp(const void *addr, char* buf, unsigned size)
 {
    HANDLE hProcess;
    BYTE symbolBuffer[1024];
@@ -131,25 +132,34 @@ debug_symbol_print_imagehlp(const void *addr)
       if(j_SymInitialize(hProcess, NULL, TRUE))
          bSymInitialized = TRUE;
    }
-      
+
    if(!j_SymGetSymFromAddr(hProcess, (DWORD)addr, &dwDisplacement, pSymbol))
-      return FALSE;
-
-   debug_printf("\t%s\n", pSymbol->Name);
-
-   return TRUE;
-   
+      buf[0] = 0;
+   else
+   {
+      strncpy(buf, pSymbol->Name, size);
+      buf[size - 1] = 0;
+   }
 }
 #endif
 
+void
+debug_symbol_name(const void *addr, char* buf, unsigned size)
+{
+#if defined(PIPE_SUBSYSTEM_WINDOWS_USER) && defined(PIPE_ARCH_X86)
+   debug_symbol_name_imagehlp(addr, buf, size);
+   if(buf[0])
+      return;
+#endif
+
+   util_snprintf(buf, size, "%p", addr);
+   buf[size - 1] = 0;
+}
 
 void
 debug_symbol_print(const void *addr)
 {
-#if defined(PIPE_SUBSYSTEM_WINDOWS_USER) && defined(PIPE_ARCH_X86)
-   if(debug_symbol_print_imagehlp(addr))
-      return;
-#endif
-   
-   debug_printf("\t%p\n", addr);
+   char buf[1024];
+   debug_symbol_name(addr, buf, sizeof(buf));
+   debug_printf("\t%s\n", buf);
 }
