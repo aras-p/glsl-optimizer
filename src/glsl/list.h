@@ -378,6 +378,23 @@ struct exec_list {
    }
 
    /**
+    * Remove the first node from a list and return it
+    *
+    * \return
+    * The first node in the list or \c NULL if the list is empty.
+    *
+    * \sa exec_list::get_head
+    */
+   exec_node *pop_head()
+   {
+      exec_node *const n = this->get_head();
+      if (n != NULL)
+	 n->remove();
+
+      return n;
+   }
+
+   /**
     * Move all of the nodes from this list to the target list
     */
    void move_nodes_to(exec_list *target)
