@@ -983,6 +983,41 @@ upload_program(struct i915_fragment_program *p)
 			 0);
          break;
 
+      case OPCODE_SSG:
+	 dst = get_result_vector(p, inst);
+	 flags = get_result_flags(inst);
+         src0 = src_vector(p, &inst->SrcReg[0], program);
+	 tmp = i915_get_utemp(p);
+
+	 /* tmp = (src < 0.0) */
+	 i915_emit_arith(p,
+			 A0_SLT,
+			 tmp,
+			 flags, 0,
+			 src0,
+			 swizzle(src0, ZERO, ZERO, ZERO, ZERO),
+			 0);
+
+	 /* dst = (0.0 < src) */
+	 i915_emit_arith(p,
+			 A0_SLT,
+			 dst,
+			 flags, 0,
+			 swizzle(src0, ZERO, ZERO, ZERO, ZERO),
+			 src0,
+			 0);
+
+	 /* dst = (src > 0.0) - (src < 0.0) */
+	 i915_emit_arith(p,
+			 A0_ADD,
+			 dst,
+			 flags, 0,
+			 dst,
+			 negate(tmp, 1, 1, 1, 1),
+			 0);
+
+         break;
+
       case OPCODE_SUB:
          src0 = src_vector(p, &inst->SrcReg[0], program);
          src1 = src_vector(p, &inst->SrcReg[1], program);
