@@ -250,7 +250,7 @@ vec4 LightingTreeLeaf (
   tmpvar_12 = ((s.Translucency * trans) * 2.0);
   translucencyColor = tmpvar_12;
   float tmpvar_13;
-  tmpvar_13 = max (0.0, ((diff * 0.500000) + 0.500000));
+  tmpvar_13 = max (0.0, ((diff * 0.5) + 0.5));
   float tmpvar_14;
   tmpvar_14 = tmpvar_13;
   diff = tmpvar_14;

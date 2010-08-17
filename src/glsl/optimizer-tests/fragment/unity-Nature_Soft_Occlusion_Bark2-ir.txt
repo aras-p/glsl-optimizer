@@ -46,7 +46,7 @@ vec4 EncodeFloatRGBA (
   tmpvar_1 = vec4(1.0, 255.0, 65025.0, 160580992.0);
   kEncodeMul = tmpvar_1;
   float tmpvar_2;
-  tmpvar_2 = 0.003922;
+  tmpvar_2 = 0.00392157;
   kEncodeBit = tmpvar_2;
   vec4 tmpvar_3;
   tmpvar_3 = (kEncodeMul * v);

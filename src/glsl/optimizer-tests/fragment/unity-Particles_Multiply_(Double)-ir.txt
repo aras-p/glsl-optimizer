@@ -24,7 +24,7 @@ vec4 frag (
   vec4 tmpvar_5;
   tmpvar_5 = vec4(col.w);
   vec4 tmpvar_6;
-  tmpvar_6 = mix (vec4(0.500000, 0.500000, 0.500000, 0.500000), col, tmpvar_5);
+  tmpvar_6 = mix (vec4(0.5, 0.5, 0.5, 0.5), col, tmpvar_5);
   return tmpvar_6;
 }
 

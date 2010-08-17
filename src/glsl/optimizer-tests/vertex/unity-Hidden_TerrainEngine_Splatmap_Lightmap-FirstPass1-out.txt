@@ -25,7 +25,7 @@ void main ()
   tmpvar_96.zw = ((tmpvar_7.xy * _Splat2_ST.xy) + _Splat2_ST.zw).xy;
   vec4 o_i0;
   vec4 tmpvar_46;
-  tmpvar_46 = (tmpvar_37 * 0.500000);
+  tmpvar_46 = (tmpvar_37 * 0.5);
   o_i0 = tmpvar_46;
   vec2 tmpvar_47;
   tmpvar_47.x = tmpvar_46.x;

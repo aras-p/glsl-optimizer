@@ -19,7 +19,7 @@ v2f vert (
   tmpvar_3.x = (vec2(o.vertex.x)).x;
   tmpvar_3.y = (vec2((o.vertex.y * scale))).y;
   vec2 tmpvar_4;
-  tmpvar_4 = ((tmpvar_3 + o.vertex.w) * 0.500000);
+  tmpvar_4 = ((tmpvar_3 + o.vertex.w) * 0.5);
   o.uv.xy = tmpvar_4.xy;
   vec2 tmpvar_5;
   tmpvar_5 = o.vertex.zw;

@@ -58,7 +58,7 @@ void main ()
   x2.z = (vec3(dot (unity_SHBb, tmpvar_101))).z;
   vec4 o_i0;
   vec4 tmpvar_114;
-  tmpvar_114 = (tmpvar_61 * 0.500000);
+  tmpvar_114 = (tmpvar_61 * 0.5);
   o_i0 = tmpvar_114;
   vec2 tmpvar_115;
   tmpvar_115.x = tmpvar_114.x;

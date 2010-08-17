@@ -8,6 +8,6 @@ void main ()
   tmpvar_11 = texture2D (_MainTex, gl_TexCoord[0].xy);
   col.xyz = ((tmpvar_11.xyz * tmpvar_2.xyz) * 2.0).xyz;
   col.w = (vec4((tmpvar_2.w * tmpvar_11.w))).w;
-  gl_FragData[0] = mix (vec4(0.500000, 0.500000, 0.500000, 0.500000), col, col.wwww).xyzw;
+  gl_FragData[0] = mix (vec4(0.5, 0.5, 0.5, 0.5), col, col.wwww).xyzw;
 }
 

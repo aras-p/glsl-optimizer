@@ -12,7 +12,7 @@ void main ()
   vec2 tmpvar_20;
   tmpvar_20 = gl_TexCoord[0].xy;
   float x;
-  x = (fract (((tmpvar_5.y + (tmpvar_5.z * 0.100000)) * 5.0)) - 0.500000);
+  x = (fract (((tmpvar_5.y + (tmpvar_5.z * 0.1)) * 5.0)) - 0.5);
   if ((x < 0.0)) {
     discard;
   };

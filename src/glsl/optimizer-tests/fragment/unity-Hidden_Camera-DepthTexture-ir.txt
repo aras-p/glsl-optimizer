@@ -22,7 +22,7 @@ vec4 frag (
   vec4 tmpvar_2;
   tmpvar_2 = tmpvar_1;
   texcol = tmpvar_2;
-  xll_clip ((texcol.w - 0.001000));
+  xll_clip ((texcol.w - 0.001));
   return vec4(0.0, 0.0, 0.0, 0.0);
 }
 

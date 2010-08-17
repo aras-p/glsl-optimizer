@@ -46,7 +46,7 @@ void main ()
   tmpvar_94 = dot (tmpvar_85, tmpvar_7);
   float tmpvar_101;
   tmpvar_101 = max (0.0, -(tmpvar_94));
-  c_i0_i1.xyz = ((((tmpvar_71 * (max (0.0, ((tmpvar_94 * 0.500000) + 0.500000)) + ((tmpvar_74 * tmpvar_101) * 2.0))) + ((pow (max (0.0, dot (tmpvar_85, normalize ((tmpvar_7 + normalize (tmpvar_9.xyz))))), (tmpvar_79 * 128.0)) * tmpvar_75) * (1.0 - clamp (ceil (tmpvar_101), 0.0, 1.0)))) * _LightColor0.xyz) * 2.0).xyz;
+  c_i0_i1.xyz = ((((tmpvar_71 * (max (0.0, ((tmpvar_94 * 0.5) + 0.5)) + ((tmpvar_74 * tmpvar_101) * 2.0))) + ((pow (max (0.0, dot (tmpvar_85, normalize ((tmpvar_7 + normalize (tmpvar_9.xyz))))), (tmpvar_79 * 128.0)) * tmpvar_75) * (1.0 - clamp (ceil (tmpvar_101), 0.0, 1.0)))) * _LightColor0.xyz) * 2.0).xyz;
   c = c_i0_i1;
   c.w = (vec4(tmpvar_76)).w;
   gl_FragData[0] = c.xyzw;

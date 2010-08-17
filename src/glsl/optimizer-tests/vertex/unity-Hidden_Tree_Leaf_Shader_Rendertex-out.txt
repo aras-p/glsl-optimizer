@@ -28,7 +28,7 @@ void main ()
     if ((i >= 4)) {
       break;
     };
-    lightColor = (lightColor + (_TerrainTreeLightColors[i] * max (0.0, ((dot (_TerrainTreeLightDirections[i].xyz, tmpvar_90) * 0.500000) + 0.500000))).xyz);
+    lightColor = (lightColor + (_TerrainTreeLightColors[i] * max (0.0, ((dot (_TerrainTreeLightDirections[i].xyz, tmpvar_90) * 0.5) + 0.5))).xyz);
     i = (i + 1);
   };
   gl_Position = tmpvar_59.xyzw;

@@ -20,7 +20,7 @@ void main ()
   tmpvar_12 = gl_TexCoord[5].xyz;
   vec4 res;
   float x;
-  x = (fract (((tmpvar_12.y + (tmpvar_12.z * 0.100000)) * 5.0)) - 0.500000);
+  x = (fract (((tmpvar_12.y + (tmpvar_12.z * 0.1)) * 5.0)) - 0.5);
   if ((x < 0.0)) {
     discard;
   };
@@ -45,7 +45,7 @@ void main ()
   vec2 tmpvar_70;
   tmpvar_70 = fract ((vec2(1.0, 255.0) * (1.0 - (tmpvar_42 * _ProjectionParams.w)).x));
   enc = tmpvar_70;
-  enc.x = (tmpvar_70.x - (tmpvar_70.y * 0.003922));
+  enc.x = (tmpvar_70.x - (tmpvar_70.y * 0.00392157));
   res.zw = enc.xy;
   gl_FragData[0] = res.xyzw;
 }

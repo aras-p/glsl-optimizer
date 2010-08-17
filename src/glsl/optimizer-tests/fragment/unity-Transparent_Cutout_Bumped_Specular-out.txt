@@ -28,7 +28,7 @@ void main ()
   viewN.x = dot (tmpvar_4, tmpvar_52);
   viewN.y = (vec2(dot (tmpvar_6, tmpvar_52))).y;
   viewN.z = (vec3(dot (tmpvar_8, tmpvar_52))).z;
-  res.xyz = ((viewN * vec3(0.500000, 0.500000, -0.500000)) + 0.500000).xyz;
+  res.xyz = ((viewN * vec3(0.5, 0.5, -0.5)) + 0.5).xyz;
   res.w = (vec4(_Shininess)).w;
   gl_FragData[0] = res.xyzw;
 }

@@ -4,7 +4,7 @@ void main ()
   vec4 tmpvar_53;
   vec4 tmpvar_22;
   tmpvar_22 = (gl_ModelViewProjectionMatrix * gl_Vertex.xyzw);
-  tmpvar_53.xyz = ((gl_Color.xyz + (gl_Normal.xyz * 0.300000)) * 0.500000).xyz;
+  tmpvar_53.xyz = ((gl_Color.xyz + (gl_Normal.xyz * 0.3)) * 0.5).xyz;
   tmpvar_53.w = 1.0;
   gl_Position = tmpvar_22.xyzw;
   vec4 tmpvar_13;

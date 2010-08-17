@@ -12,7 +12,7 @@ void main ()
   tmpvar_72.zw = ((gl_MultiTexCoord1.xy * _Detail_ST.xy) + _Detail_ST.zw).xy;
   vec4 o_i0;
   vec4 tmpvar_37;
-  tmpvar_37 = (tmpvar_31 * 0.500000);
+  tmpvar_37 = (tmpvar_31 * 0.5);
   o_i0 = tmpvar_37;
   vec2 tmpvar_38;
   tmpvar_38.x = tmpvar_37.x;

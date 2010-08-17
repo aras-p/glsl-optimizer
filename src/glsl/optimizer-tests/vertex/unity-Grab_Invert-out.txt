@@ -6,7 +6,7 @@ void main ()
   vec2 tmpvar_12;
   tmpvar_12.x = tmpvar_11.x;
   tmpvar_12.y = tmpvar_11.y;
-  tmpvar_24.xy = ((tmpvar_12 + tmpvar_11.w) * 0.500000);
+  tmpvar_24.xy = ((tmpvar_12 + tmpvar_11.w) * 0.5);
   tmpvar_24.zw = tmpvar_11.zw;
   gl_Position = tmpvar_11.xyzw;
   gl_TexCoord[0] = tmpvar_24.xyzw;

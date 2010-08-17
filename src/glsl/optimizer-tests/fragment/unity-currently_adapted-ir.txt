@@ -31,7 +31,7 @@ vec4 frag (
   float tmpvar_7;
   tmpvar_7 = abs (delta.x);
   float tmpvar_8;
-  tmpvar_8 = max (0.003922, tmpvar_7);
+  tmpvar_8 = max (0.00392157, tmpvar_7);
   float tmpvar_9;
   tmpvar_9 = (tmpvar_6 * tmpvar_8);
   delta.x = tmpvar_9;
@@ -40,7 +40,7 @@ vec4 frag (
   float tmpvar_11;
   tmpvar_11 = abs (delta.y);
   float tmpvar_12;
-  tmpvar_12 = max (0.003922, tmpvar_11);
+  tmpvar_12 = max (0.00392157, tmpvar_11);
   float tmpvar_13;
   tmpvar_13 = (tmpvar_10 * tmpvar_12);
   delta.y = (vec2(tmpvar_13)).y;
@@ -58,7 +58,7 @@ vec4 frag (
   tmpvar_18 = tmpvar_17;
   valNew.y = (vec2(tmpvar_18)).y;
   float tmpvar_19;
-  tmpvar_19 = ((valNew.x - valNew.y) + 0.010000);
+  tmpvar_19 = ((valNew.x - valNew.y) + 0.01);
   valNew.z = (vec3(tmpvar_19)).z;
   float tmpvar_20;
   tmpvar_20 = (valNew.y / valNew.z);

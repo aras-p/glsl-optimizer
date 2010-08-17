@@ -21,7 +21,7 @@ void main ()
   tmpvar_59[2] = _Object2World[2].xyz;
   vec4 o_i0;
   vec4 tmpvar_66;
-  tmpvar_66 = (tmpvar_44 * 0.500000);
+  tmpvar_66 = (tmpvar_44 * 0.5);
   o_i0 = tmpvar_66;
   vec2 tmpvar_67;
   tmpvar_67.x = tmpvar_66.x;

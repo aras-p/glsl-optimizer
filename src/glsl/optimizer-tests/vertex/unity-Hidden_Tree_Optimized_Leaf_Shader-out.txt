@@ -56,13 +56,13 @@ void main ()
   tmpvar_202.x = (vec2(dot (tmpvar_309.xyz, vec3((tmpvar_191.y + tmpvar_198))))).x;
   tmpvar_202.y = (vec2(tmpvar_198)).y;
   vec4 tmpvar_211;
-  tmpvar_211 = abs (((fract ((((fract (((_TimeX + tmpvar_202).xxyy * vec4(1.975000, 0.793000, 0.375000, 0.193000))) * 2.0) - 1.0) + 0.500000)) * 2.0) - 1.0));
+  tmpvar_211 = abs (((fract ((((fract (((_TimeX + tmpvar_202).xxyy * vec4(1.975, 0.793, 0.375, 0.193))) * 2.0) - 1.0) + 0.5)) * 2.0) - 1.0));
   vec4 _ret_val_i0;
   _ret_val_i0 = ((tmpvar_211 * tmpvar_211) * (3.0 - (2.0 * tmpvar_211)));
   vec2 tmpvar_215;
   tmpvar_215 = (_ret_val_i0.xz + _ret_val_i0.yw);
-  bend = ((tmpvar_191.y * 0.100000) * tmpvar_184.xyz);
-  bend.y = (vec2((tmpvar_191.w * 0.300000))).y;
+  bend = ((tmpvar_191.y * 0.1) * tmpvar_184.xyz);
+  bend.y = (vec2((tmpvar_191.w * 0.3))).y;
   pos_i0.xyz = (tmpvar_309.xyz + (((tmpvar_215.xyx * bend) + ((_Wind.xyz * tmpvar_215.y) * tmpvar_191.w)) * _Wind.w)).xyz;
   pos_i0.xyz = (pos_i0.xyz + (tmpvar_191.z * _Wind.xyz)).xyz;
   vec3 tmpvar_224;

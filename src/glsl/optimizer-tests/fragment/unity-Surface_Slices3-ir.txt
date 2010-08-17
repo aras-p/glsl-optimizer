@@ -145,8 +145,8 @@ void surf (
 )
 {
   float tmpvar_1;
-  tmpvar_1 = fract (((IN.worldPos.y + (IN.worldPos.z * 0.100000)) * 5.0));
-  xll_clip ((tmpvar_1 - 0.500000));
+  tmpvar_1 = fract (((IN.worldPos.y + (IN.worldPos.z * 0.1)) * 5.0));
+  xll_clip ((tmpvar_1 - 0.5));
   vec4 tmpvar_2;
   tmpvar_2 = texture2D (_MainTex, IN.uv_MainTex);
   vec3 tmpvar_3;
@@ -165,7 +165,7 @@ vec2 EncodeFloatRG (
   tmpvar_1 = vec2(1.0, 255.0);
   kEncodeMul = tmpvar_1;
   float tmpvar_2;
-  tmpvar_2 = 0.003922;
+  tmpvar_2 = 0.00392157;
   kEncodeBit = tmpvar_2;
   vec2 tmpvar_3;
   tmpvar_3 = (kEncodeMul * v);

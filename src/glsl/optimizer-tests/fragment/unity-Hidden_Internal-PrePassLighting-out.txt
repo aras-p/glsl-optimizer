@@ -25,9 +25,9 @@ float ComputeShadow (
   tmpvar_5 = (tmpvar_32 * vec);
   vec = tmpvar_5;
   float tmpvar_8;
-  tmpvar_8 = ((length (tmpvar_5) * _LightPositionRange.w) * 0.970000);
+  tmpvar_8 = ((length (tmpvar_5) * _LightPositionRange.w) * 0.97);
   float tmpvar_43;
-  tmpvar_43 = dot (textureCube (_ShadowMapTexture, tmpvar_5), vec4(1.0, 0.003922, 0.000015, 0.000000));
+  tmpvar_43 = dot (textureCube (_ShadowMapTexture, tmpvar_5), vec4(1.0, 0.00392157, 1.53787e-005, 0.0));
   float tmpvar_45;
   if ((tmpvar_43 < tmpvar_8)) {
     tmpvar_45 = _LightShadowData.x;
@@ -72,7 +72,7 @@ void main ()
   tmpvar_75 = ((atten * tmpvar_71) * textureCube (_LightTexture0, (_ViewToCookie * tmpvar_73).xyz).w);
   atten = tmpvar_75;
   res.xyz = (_LightColor.xyz * (max (0.0, dot (lightDir, normal)) * tmpvar_75)).xyz;
-  res.w = (vec4(((pow (max (0.0, dot (normalize ((lightDir - normalize (vpos))), normal)), (nspec.w * 128.0)) * clamp (tmpvar_75, 0.0, 1.0)) * dot (_LightColor.xyz, vec3(0.220000, 0.707000, 0.071000))))).w;
+  res.w = (vec4(((pow (max (0.0, dot (normalize ((lightDir - normalize (vpos))), normal)), (nspec.w * 128.0)) * clamp (tmpvar_75, 0.0, 1.0)) * dot (_LightColor.xyz, vec3(0.22, 0.707, 0.071))))).w;
   vec4 tmpvar_99;
   tmpvar_99 = (res * clamp ((1.0 - ((vpos.z * unity_LightmapFade.z) + unity_LightmapFade.w)), 0.0, 1.0));
   res = tmpvar_99;

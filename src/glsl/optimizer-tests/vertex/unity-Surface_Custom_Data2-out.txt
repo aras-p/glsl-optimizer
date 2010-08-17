@@ -12,7 +12,7 @@ void main ()
   tmpvar_36 = (gl_ModelViewProjectionMatrix * tmpvar_1);
   vec4 o_i0_i1;
   vec4 tmpvar_40;
-  tmpvar_40 = (tmpvar_36 * 0.500000);
+  tmpvar_40 = (tmpvar_36 * 0.5);
   o_i0_i1 = tmpvar_40;
   vec2 tmpvar_41;
   tmpvar_41.x = tmpvar_40.x;
@@ -29,7 +29,7 @@ void main ()
   tmpvar_17.w = 0.0;
   xlv_FOG = tmpvar_17;
   vec4 tmpvar_19;
-  tmpvar_19.xyz = ((gl_Normal.xyz * 0.500000) + 0.500000).xyz;
+  tmpvar_19.xyz = ((gl_Normal.xyz * 0.5) + 0.5).xyz;
   tmpvar_19.w = 0.0;
   gl_TexCoord[0] = tmpvar_19;
   gl_TexCoord[1] = o_i0_i1.xyzw;

@@ -52,7 +52,7 @@ void vert (
 )
 {
   vec3 tmpvar_1;
-  tmpvar_1 = ((v.normal * 0.500000) + 0.500000);
+  tmpvar_1 = ((v.normal * 0.5) + 0.5);
   o.foo = tmpvar_1;
 }
 

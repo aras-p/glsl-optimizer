@@ -13,7 +13,7 @@ void main ()
   vec4 tmpvar_23;
   tmpvar_23 = (gl_ModelViewProjectionMatrix * tmpvar_1);
   temp = ((tmpvar_1.xzxz * _WaveScale) + _WaveOffset).xyzw;
-  tmpvar_56[0] = (temp.xy * vec2(0.400000, 0.450000));
+  tmpvar_56[0] = (temp.xy * vec2(0.4, 0.45));
   tmpvar_56[1] = temp.wz;
   vec4 tmpvar_30;
   tmpvar_30.xyz = _WorldSpaceCameraPos.xyz;

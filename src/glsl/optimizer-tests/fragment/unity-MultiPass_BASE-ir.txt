@@ -5,7 +5,7 @@ vec4 frag (
   in v2f i
 )
 {
-  return vec4(0.250000, 0.0, 0.0, 0.0);
+  return vec4(0.25, 0.0, 0.0, 0.0);
 }
 
 void main ()

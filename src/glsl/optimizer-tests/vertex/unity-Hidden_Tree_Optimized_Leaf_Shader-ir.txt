@@ -132,7 +132,7 @@ vec4 TriangleWave (
 )
 {
   vec4 tmpvar_1;
-  tmpvar_1 = fract ((x + 0.500000));
+  tmpvar_1 = fract ((x + 0.5));
   vec4 tmpvar_2;
   tmpvar_2 = abs (((tmpvar_1 * 2.0) - 1.0));
   return tmpvar_2;
@@ -172,10 +172,10 @@ vec4 AnimateVertex (
   float fBranchAmp;
   float fDetailAmp;
   float tmpvar_1;
-  tmpvar_1 = 0.100000;
+  tmpvar_1 = 0.1;
   fDetailAmp = tmpvar_1;
   float tmpvar_2;
-  tmpvar_2 = 0.300000;
+  tmpvar_2 = 0.3;
   fBranchAmp = tmpvar_2;
   float tmpvar_3;
   tmpvar_3 = dot (_Object2World[3].xyz, vec3(1.0, 1.0, 1.0));
@@ -199,7 +199,7 @@ vec4 AnimateVertex (
   tmpvar_10 = (_TimeX + tmpvar_9);
   vWavesIn = tmpvar_10;
   vec4 tmpvar_11;
-  tmpvar_11 = fract ((vWavesIn.xxyy * vec4(1.975000, 0.793000, 0.375000, 0.193000)));
+  tmpvar_11 = fract ((vWavesIn.xxyy * vec4(1.975, 0.793, 0.375, 0.193)));
   vec4 tmpvar_12;
   tmpvar_12 = ((tmpvar_11 * 2.0) - 1.0);
   vWaves = tmpvar_12;

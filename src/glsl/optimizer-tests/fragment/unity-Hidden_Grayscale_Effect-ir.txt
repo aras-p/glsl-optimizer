@@ -10,7 +10,7 @@ float Luminance (
 )
 {
   float tmpvar_1;
-  tmpvar_1 = dot (c, vec3(0.220000, 0.707000, 0.071000));
+  tmpvar_1 = dot (c, vec3(0.22, 0.707, 0.071));
   return tmpvar_1;
 }
 
@@ -34,7 +34,7 @@ vec4 frag (
   grayscale = tmpvar_4;
   vec2 tmpvar_5;
   tmpvar_5.x = (vec2((grayscale + _RampOffset))).x;
-  tmpvar_5.y = (vec2(0.500000)).y;
+  tmpvar_5.y = (vec2(0.5)).y;
   vec2 tmpvar_6;
   tmpvar_6 = tmpvar_5;
   remap = tmpvar_6;

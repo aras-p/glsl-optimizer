@@ -24,7 +24,7 @@ void main ()
   tmpvar_17.w = 0.0;
   xlv_FOG = tmpvar_17;
   vec4 tmpvar_19;
-  tmpvar_19.xyz = ((tmpvar_5 * 0.500000) + 0.500000).xyz;
+  tmpvar_19.xyz = ((tmpvar_5 * 0.5) + 0.5).xyz;
   tmpvar_19.w = 0.0;
   gl_TexCoord[0] = tmpvar_19;
   vec4 tmpvar_21;

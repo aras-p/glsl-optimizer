@@ -217,7 +217,7 @@ vec2 EncodeFloatRG (
   tmpvar_1 = vec2(1.0, 255.0);
   kEncodeMul = tmpvar_1;
   float tmpvar_2;
-  tmpvar_2 = 0.003922;
+  tmpvar_2 = 0.00392157;
   kEncodeBit = tmpvar_2;
   vec2 tmpvar_3;
   tmpvar_3 = (kEncodeMul * v);

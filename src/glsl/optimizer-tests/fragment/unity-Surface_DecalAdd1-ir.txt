@@ -22,7 +22,7 @@ void surf (
   vec4 tmpvar_1;
   tmpvar_1 = texture2D (_MainTex, IN.uv_MainTex);
   vec3 tmpvar_2;
-  tmpvar_2 = (tmpvar_1.xyz * 0.500000);
+  tmpvar_2 = (tmpvar_1.xyz * 0.5);
   o.Albedo = tmpvar_2;
 }
 
@@ -53,7 +53,7 @@ vec4 frag_surf (
   o.Normal = tmpvar_6;
   surf (surfIN, o);
   vec3 tmpvar_7;
-  tmpvar_7 = ((o.Normal * vec3(0.500000, 0.500000, -0.500000)) + 0.500000);
+  tmpvar_7 = ((o.Normal * vec3(0.5, 0.5, -0.5)) + 0.5);
   res.xyz = tmpvar_7.xyz;
   float tmpvar_8;
   tmpvar_8 = o.Specular;

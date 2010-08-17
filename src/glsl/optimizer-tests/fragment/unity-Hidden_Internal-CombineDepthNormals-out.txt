@@ -18,16 +18,16 @@ void main ()
     vec3 normal;
     normal = n.xyz;
     vec4 enc;
-    enc.xy = ((((normal.xy / (normal.z + 1.0)) / 1.777700) * 0.500000) + 0.500000);
+    enc.xy = ((((normal.xy / (normal.z + 1.0)) / 1.7777) * 0.5) + 0.5);
     vec2 enc_i0_i1;
     vec2 tmpvar_63;
     tmpvar_63 = fract ((vec2(1.0, 255.0) * _ret_val_i0));
     enc_i0_i1 = tmpvar_63;
-    enc_i0_i1.x = (tmpvar_63.x - (tmpvar_63.y * 0.003922));
+    enc_i0_i1.x = (tmpvar_63.x - (tmpvar_63.y * 0.00392157));
     enc.zw = enc_i0_i1.xy;
     tmpvar_48 = enc;
   } else {
-    tmpvar_48 = vec4(0.500000, 0.500000, 1.0, 1.0);
+    tmpvar_48 = vec4(0.5, 0.5, 1.0, 1.0);
   };
   gl_FragData[0] = tmpvar_48.xyzw;
 }

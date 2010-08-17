@@ -41,7 +41,7 @@ void surf (
   vec4 tmpvar_1;
   tmpvar_1 = texture2D (_Decal, IN.uv_Decal);
   vec3 tmpvar_2;
-  tmpvar_2 = (tmpvar_1.xyz * 0.500000);
+  tmpvar_2 = (tmpvar_1.xyz * 0.5);
   o.Albedo = tmpvar_2;
 }
 

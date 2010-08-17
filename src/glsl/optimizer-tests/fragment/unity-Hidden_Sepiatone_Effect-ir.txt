@@ -12,7 +12,7 @@ vec4 frag (
   float Y;
   vec4 original;
   vec4 tmpvar_1;
-  tmpvar_1 = vec4(0.191000, -0.054000, -0.221000, 0.0);
+  tmpvar_1 = vec4(0.191, -0.054, -0.221, 0.0);
   sepiaConvert = tmpvar_1;
   vec4 tmpvar_2;
   tmpvar_2 = texture2D (_MainTex, i.uv);
@@ -20,7 +20,7 @@ vec4 frag (
   tmpvar_3 = tmpvar_2;
   original = tmpvar_3;
   float tmpvar_4;
-  tmpvar_4 = dot (vec3(0.299000, 0.587000, 0.114000), original.xyz);
+  tmpvar_4 = dot (vec3(0.299, 0.587, 0.114), original.xyz);
   float tmpvar_5;
   tmpvar_5 = tmpvar_4;
   Y = tmpvar_5;

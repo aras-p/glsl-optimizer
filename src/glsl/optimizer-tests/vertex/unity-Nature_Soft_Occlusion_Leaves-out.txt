@@ -79,7 +79,7 @@ void main ()
   tmpvar_207 = (max (vec4(0.0, 0.0, 0.0, 0.0), ((((tmpvar_191 * tmpvar_166.x) + (tmpvar_192 * tmpvar_166.y)) + (tmpvar_193 * tmpvar_166.z)) * inversesqrt (tmpvar_197))) * 1.0/((1.0 + (tmpvar_197 * unity_4LightAtten0))));
   vec4 o_i0;
   vec4 tmpvar_216;
-  tmpvar_216 = (tmpvar_154 * 0.500000);
+  tmpvar_216 = (tmpvar_154 * 0.5);
   o_i0 = tmpvar_216;
   vec2 tmpvar_217;
   tmpvar_217.x = tmpvar_216.x;

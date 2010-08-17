@@ -43,13 +43,13 @@ void main ()
   tmpvar_199.x = (vec2(dot (tmpvar_301.xyz, vec3((tmpvar_188.y + tmpvar_195))))).x;
   tmpvar_199.y = (vec2(tmpvar_195)).y;
   vec4 tmpvar_208;
-  tmpvar_208 = abs (((fract ((((fract (((_TimeX + tmpvar_199).xxyy * vec4(1.975000, 0.793000, 0.375000, 0.193000))) * 2.0) - 1.0) + 0.500000)) * 2.0) - 1.0));
+  tmpvar_208 = abs (((fract ((((fract (((_TimeX + tmpvar_199).xxyy * vec4(1.975, 0.793, 0.375, 0.193))) * 2.0) - 1.0) + 0.5)) * 2.0) - 1.0));
   vec4 _ret_val_i0;
   _ret_val_i0 = ((tmpvar_208 * tmpvar_208) * (3.0 - (2.0 * tmpvar_208)));
   vec2 tmpvar_212;
   tmpvar_212 = (_ret_val_i0.xz + _ret_val_i0.yw);
-  bend = ((tmpvar_188.y * 0.100000) * mix (tmpvar_5, normalize ((tmpvar_171 * gl_ModelViewMatrixInverseTranspose)).xyz, vec3(tmpvar_170)).xyz);
-  bend.y = (vec2((tmpvar_188.w * 0.300000))).y;
+  bend = ((tmpvar_188.y * 0.1) * mix (tmpvar_5, normalize ((tmpvar_171 * gl_ModelViewMatrixInverseTranspose)).xyz, vec3(tmpvar_170)).xyz);
+  bend.y = (vec2((tmpvar_188.w * 0.3))).y;
   pos_i0.xyz = (tmpvar_301.xyz + (((tmpvar_212.xyx * bend) + ((_Wind.xyz * tmpvar_212.y) * tmpvar_188.w)) * _Wind.w)).xyz;
   pos_i0.xyz = (pos_i0.xyz + (tmpvar_188.z * _Wind.xyz)).xyz;
   vec3 tmpvar_221;

@@ -20,7 +20,7 @@ void main ()
   vec3 tmpvar_68;
   tmpvar_68 = normalize (gl_TexCoord[2].xyz);
   v = tmpvar_68;
-  v.z = (vec3((tmpvar_68.z + 0.420000))).z;
+  v.z = (vec3((tmpvar_68.z + 0.42))).z;
   _ret_val_i0 = (((texture2D (_ParallaxMap, tmpvar_55).w * _Parallax) - (_Parallax / 2.0)) * (v.xy / v.z));
   vec4 tmpvar_76;
   tmpvar_76 = (texture2D (_MainTex, (tmpvar_3.xy + _ret_val_i0)) * _Color);

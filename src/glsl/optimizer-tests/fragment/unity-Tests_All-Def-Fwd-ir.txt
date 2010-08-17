@@ -35,7 +35,7 @@ float UnitySpotCookie (
 )
 {
   vec4 tmpvar_1;
-  tmpvar_1 = texture2D (_LightTexture0, ((LightCoord.xy / LightCoord.w) + 0.500000));
+  tmpvar_1 = texture2D (_LightTexture0, ((LightCoord.xy / LightCoord.w) + 0.5));
   return tmpvar_1.w;
 }
 

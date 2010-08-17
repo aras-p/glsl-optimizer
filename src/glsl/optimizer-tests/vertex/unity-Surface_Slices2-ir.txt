@@ -41,7 +41,7 @@ vec4 ComputeScreenPos (
 {
   vec4 o;
   vec4 tmpvar_1;
-  tmpvar_1 = (pos * 0.500000);
+  tmpvar_1 = (pos * 0.5);
   o = tmpvar_1;
   vec2 tmpvar_2;
   tmpvar_2.x = (vec2(o.x)).x;

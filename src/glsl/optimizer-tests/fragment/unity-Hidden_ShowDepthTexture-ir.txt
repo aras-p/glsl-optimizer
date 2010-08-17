@@ -33,7 +33,7 @@ vec4 frag (
   float tmpvar_5;
   tmpvar_5 = LinearEyeDepth (depth.x);
   float tmpvar_6;
-  tmpvar_6 = (tmpvar_5 * 0.010000);
+  tmpvar_6 = (tmpvar_5 * 0.01);
   z = tmpvar_6;
   vec4 tmpvar_7;
   tmpvar_7 = tex;

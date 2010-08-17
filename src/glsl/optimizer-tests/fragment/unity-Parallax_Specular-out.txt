@@ -25,7 +25,7 @@ void main ()
   vec3 tmpvar_83;
   tmpvar_83 = normalize (tmpvar_5);
   v = tmpvar_83;
-  v.z = (vec3((tmpvar_83.z + 0.420000))).z;
+  v.z = (vec3((tmpvar_83.z + 0.42))).z;
   _ret_val_i0 = (((texture2D (_ParallaxMap, tmpvar_71).w * _Parallax) - (_Parallax / 2.0)) * (v.xy / v.z));
   vec4 tmpvar_89;
   tmpvar_89 = texture2D (_MainTex, (tmpvar_3.xy + _ret_val_i0));
@@ -39,7 +39,7 @@ void main ()
   vec3 LightCoord_i0;
   LightCoord_i0 = tmpvar_9.xyz;
   float atten;
-  atten = ((float((tmpvar_9.z > 0.0)) * texture2D (_LightTexture0, ((tmpvar_9.xy / tmpvar_9.w) + 0.500000)).w) * texture2D (_LightTextureB0, vec2(dot (LightCoord_i0, LightCoord_i0))).w);
+  atten = ((float((tmpvar_9.z > 0.0)) * texture2D (_LightTexture0, ((tmpvar_9.xy / tmpvar_9.w) + 0.5)).w) * texture2D (_LightTextureB0, vec2(dot (LightCoord_i0, LightCoord_i0))).w);
   vec4 c_i0;
   float tmpvar_128;
   tmpvar_128 = (pow (max (0.0, dot (tmpvar_101, normalize ((tmpvar_104 + normalize (tmpvar_5.xyz))))), (_Shininess * 128.0)) * tmpvar_89.w);

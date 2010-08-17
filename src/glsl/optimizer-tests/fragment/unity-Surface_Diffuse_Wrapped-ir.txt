@@ -48,7 +48,7 @@ vec4 LightingWrapLambert (
   tmpvar_2 = tmpvar_1;
   NdotL = tmpvar_2;
   float tmpvar_3;
-  tmpvar_3 = ((NdotL * 0.500000) + 0.500000);
+  tmpvar_3 = ((NdotL * 0.5) + 0.5);
   diff = tmpvar_3;
   vec3 tmpvar_4;
   tmpvar_4 = ((s.Albedo * _LightColor0.xyz) * ((diff * atten) * 2.0));

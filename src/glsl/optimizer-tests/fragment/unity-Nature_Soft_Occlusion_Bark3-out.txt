@@ -31,7 +31,7 @@ void main ()
   vec2 tmpvar_69;
   tmpvar_69 = fract ((vec2(1.0, 255.0) * (1.0 - (tmpvar_41 * _ProjectionParams.w)).x));
   enc = tmpvar_69;
-  enc.x = (tmpvar_69.x - (tmpvar_69.y * 0.003922));
+  enc.x = (tmpvar_69.x - (tmpvar_69.y * 0.00392157));
   res.zw = enc.xy;
   gl_FragData[0] = res.xyzw;
 }

@@ -37,7 +37,7 @@ void main ()
   vec2 tmpvar_75;
   tmpvar_75 = fract ((vec2(1.0, 255.0) * (1.0 - _ret_val_i0)));
   enc = tmpvar_75;
-  enc.x = (tmpvar_75.x - (tmpvar_75.y * 0.003922));
+  enc.x = (tmpvar_75.x - (tmpvar_75.y * 0.00392157));
   res.zw = enc.xy;
   gl_FragData[0] = res.xyzw;
 }

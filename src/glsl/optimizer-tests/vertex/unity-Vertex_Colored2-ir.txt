@@ -32,7 +32,7 @@ v2f vert (
   v2f o;
   PositionFog (v.vertex, o.pos, o.fog);
   vec3 tmpvar_1;
-  tmpvar_1 = ((v.color.xyz + (v.normal * 0.300000)) * 0.500000);
+  tmpvar_1 = ((v.color.xyz + (v.normal * 0.3)) * 0.5);
   o.color.xyz = tmpvar_1.xyz;
   float tmpvar_2;
   tmpvar_2 = 1.0;

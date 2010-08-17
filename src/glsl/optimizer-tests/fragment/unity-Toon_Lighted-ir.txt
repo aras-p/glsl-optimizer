@@ -54,7 +54,7 @@ vec4 LightingToonRamp (
   float tmpvar_1;
   tmpvar_1 = dot (s.Normal, lightDir);
   float tmpvar_2;
-  tmpvar_2 = ((tmpvar_1 * 0.500000) + 0.500000);
+  tmpvar_2 = ((tmpvar_1 * 0.5) + 0.5);
   d = tmpvar_2;
   vec2 tmpvar_3;
   tmpvar_3.x = (vec2(d)).x;

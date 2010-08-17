@@ -34,7 +34,7 @@ void surf (
   vec4 tmpvar_1;
   tmpvar_1 = texture2D (_MainTex, IN.uv_MainTex);
   vec3 tmpvar_2;
-  tmpvar_2 = (tmpvar_1.xyz * 0.300000);
+  tmpvar_2 = (tmpvar_1.xyz * 0.3);
   o.Albedo = tmpvar_2;
   vec4 tmpvar_3;
   tmpvar_3 = texture2D (_SpecMap, IN.uv_SpecMap);
@@ -45,7 +45,7 @@ void surf (
   tmpvar_5 = spec.xyz;
   o.GlossColor = tmpvar_5;
   float tmpvar_6;
-  tmpvar_6 = 0.250000;
+  tmpvar_6 = 0.25;
   o.Specular = tmpvar_6;
 }
 
@@ -54,7 +54,7 @@ float UnitySpotCookie (
 )
 {
   vec4 tmpvar_1;
-  tmpvar_1 = texture2D (_LightTexture0, ((LightCoord.xy / LightCoord.w) + 0.500000));
+  tmpvar_1 = texture2D (_LightTexture0, ((LightCoord.xy / LightCoord.w) + 0.5));
   return tmpvar_1.w;
 }
 

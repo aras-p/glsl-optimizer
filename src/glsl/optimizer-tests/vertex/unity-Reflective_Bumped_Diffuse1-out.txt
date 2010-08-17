@@ -57,7 +57,7 @@ void main ()
   tmpvar_86.w = tmpvar_68.z;
   vec4 o_i0;
   vec4 tmpvar_90;
-  tmpvar_90 = (tmpvar_50 * 0.500000);
+  tmpvar_90 = (tmpvar_50 * 0.5);
   o_i0 = tmpvar_90;
   vec2 tmpvar_91;
   tmpvar_91.x = tmpvar_90.x;

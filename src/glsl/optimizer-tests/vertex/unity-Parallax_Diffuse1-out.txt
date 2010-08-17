@@ -23,7 +23,7 @@ void main ()
   tmpvar_99.zw = ((tmpvar_7.xy * _BumpMap_ST.xy) + _BumpMap_ST.zw).xy;
   vec4 o_i0;
   vec4 tmpvar_42;
-  tmpvar_42 = (tmpvar_36 * 0.500000);
+  tmpvar_42 = (tmpvar_36 * 0.5);
   o_i0 = tmpvar_42;
   vec2 tmpvar_43;
   tmpvar_43.x = tmpvar_42.x;

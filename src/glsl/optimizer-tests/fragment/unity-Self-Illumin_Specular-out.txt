@@ -23,7 +23,7 @@ void main ()
   vec3 LightCoord_i0;
   LightCoord_i0 = tmpvar_11.xyz;
   float atten;
-  atten = ((float((tmpvar_11.z > 0.0)) * texture2D (_LightTexture0, ((tmpvar_11.xy / tmpvar_11.w) + 0.500000)).w) * texture2D (_LightTextureB0, vec2(dot (LightCoord_i0, LightCoord_i0))).w);
+  atten = ((float((tmpvar_11.z > 0.0)) * texture2D (_LightTexture0, ((tmpvar_11.xy / tmpvar_11.w) + 0.5)).w) * texture2D (_LightTextureB0, vec2(dot (LightCoord_i0, LightCoord_i0))).w);
   vec4 c_i0_i1;
   float tmpvar_88;
   tmpvar_88 = (pow (max (0.0, dot (tmpvar_5, normalize ((tmpvar_64 + normalize (gl_TexCoord[3].xyz))))), (_Shininess * 128.0)) * tmpvar_54.w);

@@ -53,7 +53,7 @@ v2f vert (
   tmpvar_1 = ((v.vertex.xzxz * _WaveScale) + _WaveOffset);
   temp = tmpvar_1.xyzw;
   vec2 tmpvar_2;
-  tmpvar_2 = (temp.xy * vec2(0.400000, 0.450000));
+  tmpvar_2 = (temp.xy * vec2(0.4, 0.45));
   o.bumpuv[0] = tmpvar_2;
   vec2 tmpvar_3;
   tmpvar_3 = temp.wz;

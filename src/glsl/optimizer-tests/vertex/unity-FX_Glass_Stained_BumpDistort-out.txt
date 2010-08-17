@@ -8,7 +8,7 @@ void main ()
   vec2 tmpvar_26;
   tmpvar_26.x = tmpvar_25.x;
   tmpvar_26.y = tmpvar_25.y;
-  tmpvar_62.xy = ((tmpvar_26 + tmpvar_25.w) * 0.500000);
+  tmpvar_62.xy = ((tmpvar_26 + tmpvar_25.w) * 0.5);
   tmpvar_62.zw = tmpvar_25.zw;
   vec4 tmpvar_31;
   tmpvar_31.x = tmpvar_3.x;

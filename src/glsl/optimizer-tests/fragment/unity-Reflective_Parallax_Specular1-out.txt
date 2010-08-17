@@ -27,7 +27,7 @@ void main ()
   vec3 tmpvar_81;
   tmpvar_81 = normalize (tmpvar_5);
   v = tmpvar_81;
-  v.z = (vec3((tmpvar_81.z + 0.420000))).z;
+  v.z = (vec3((tmpvar_81.z + 0.42))).z;
   _ret_val_i0 = (((texture2D (_ParallaxMap, tmpvar_69).w * _Parallax) - (_Parallax / 2.0)) * (v.xy / v.z));
   vec4 tmpvar_87;
   tmpvar_87 = texture2D (_MainTex, (tmpvar_3.xy + _ret_val_i0));

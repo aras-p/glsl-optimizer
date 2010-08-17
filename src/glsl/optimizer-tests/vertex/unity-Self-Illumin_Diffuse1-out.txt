@@ -19,7 +19,7 @@ void main ()
   tmpvar_80.zw = ((tmpvar_7.xy * _Illum_ST.xy) + _Illum_ST.zw).xy;
   vec4 o_i0;
   vec4 tmpvar_39;
-  tmpvar_39 = (tmpvar_33 * 0.500000);
+  tmpvar_39 = (tmpvar_33 * 0.5);
   o_i0 = tmpvar_39;
   vec2 tmpvar_40;
   tmpvar_40.x = tmpvar_39.x;

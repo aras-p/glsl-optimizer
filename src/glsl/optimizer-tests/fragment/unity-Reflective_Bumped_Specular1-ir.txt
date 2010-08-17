@@ -140,7 +140,7 @@ vec4 frag_surf (
   tmpvar_13 = viewN;
   o.Normal = tmpvar_13;
   vec3 tmpvar_14;
-  tmpvar_14 = ((o.Normal * vec3(0.500000, 0.500000, -0.500000)) + 0.500000);
+  tmpvar_14 = ((o.Normal * vec3(0.5, 0.5, -0.5)) + 0.5);
   res.xyz = tmpvar_14.xyz;
   float tmpvar_15;
   tmpvar_15 = o.Specular;

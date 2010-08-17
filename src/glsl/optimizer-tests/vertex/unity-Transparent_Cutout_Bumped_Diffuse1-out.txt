@@ -8,7 +8,7 @@ void main ()
   tmpvar_31 = (gl_ModelViewProjectionMatrix * gl_Vertex.xyzw);
   vec4 o_i0;
   vec4 tmpvar_36;
-  tmpvar_36 = (tmpvar_31 * 0.500000);
+  tmpvar_36 = (tmpvar_31 * 0.5);
   o_i0 = tmpvar_36;
   vec2 tmpvar_37;
   tmpvar_37.x = tmpvar_36.x;
