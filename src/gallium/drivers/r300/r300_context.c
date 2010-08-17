@@ -119,14 +119,14 @@ static void r300_destroy_context(struct pipe_context* context)
     if (r300->upload_ib)
         u_upload_destroy(r300->upload_ib);
 
-    if (r300->zmask_mm)
-        r300_hyperz_destroy_mm(r300);
-
     if (r300->tran.translate_cache)
         translate_cache_destroy(r300->tran.translate_cache);
 
     /* XXX: This function assumes r300->query_list was initialized */
     r300_release_referenced_objects(r300);
+
+    if (r300->zmask_mm)
+        r300_hyperz_destroy_mm(r300);
 
     if (r300->cs)
         r300->rws->cs_destroy(r300->cs);
