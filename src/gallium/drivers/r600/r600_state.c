@@ -268,6 +268,14 @@ static void r600_set_blend_color(struct pipe_context *ctx,
 static void r600_set_clip_state(struct pipe_context *ctx,
 				const struct pipe_clip_state *state)
 {
+	struct r600_screen *rscreen = r600_screen(ctx->screen);
+	struct r600_context *rctx = r600_context(ctx);
+	struct r600_context_state *rstate;
+
+	rstate = r600_context_state(rctx, pipe_clip_type, state);
+	r600_bind_state(ctx, rstate);
+	/* refcount is taken care of this */
+	r600_delete_state(ctx, rstate);
 }
 
 static void r600_set_constant_buffer(struct pipe_context *ctx,
@@ -668,6 +676,29 @@ static struct radeon_state *r600_blend(struct r600_context *rctx)
 	return rstate;
 }
 
+static struct radeon_state *r600_ucp(struct r600_context *rctx, int clip)
+{
+	struct r600_screen *rscreen = rctx->screen;
+	struct radeon_state *rstate;
+	const struct pipe_clip_state *state = &rctx->clip->state.clip;
+
+	rstate = radeon_state(rscreen->rw, R600_CLIP_TYPE, R600_CLIP + clip);
+	if (rstate == NULL)
+		return NULL;
+
+	rstate->states[R600_CLIP__PA_CL_UCP_X_0] = fui(state->ucp[clip][0]);
+	rstate->states[R600_CLIP__PA_CL_UCP_Y_0] = fui(state->ucp[clip][1]);
+	rstate->states[R600_CLIP__PA_CL_UCP_Z_0] = fui(state->ucp[clip][2]);
+	rstate->states[R600_CLIP__PA_CL_UCP_W_0] = fui(state->ucp[clip][3]);
+
+	if (radeon_state_pm4(rstate)) {
+		radeon_state_decref(rstate);
+		return NULL;
+	}
+	return rstate;
+
+}
+
 static struct radeon_state *r600_cb(struct r600_context *rctx, int cb)
 {
 	struct r600_screen *rscreen = rctx->screen;
@@ -769,6 +800,7 @@ static struct radeon_state *r600_rasterizer(struct r600_context *rctx)
 {
 	const struct pipe_rasterizer_state *state = &rctx->rasterizer->state.rasterizer;
 	const struct pipe_framebuffer_state *fb = &rctx->framebuffer->state.framebuffer;
+	const struct pipe_clip_state *clip = NULL;
 	struct r600_screen *rscreen = rctx->screen;
 	struct radeon_state *rstate;
 	float offset_units = 0, offset_scale = 0;
@@ -776,6 +808,9 @@ static struct radeon_state *r600_rasterizer(struct r600_context *rctx)
 	unsigned offset_db_fmt_cntl = 0;
 	unsigned tmp;
 	unsigned prov_vtx = 1;
+
+	if (rctx->clip)
+		clip = &rctx->clip->state.clip;
 	if (fb->zsbuf) {
 		offset_units = state->offset_units;
 		offset_scale = state->offset_scale * 12.0f;
@@ -821,7 +856,11 @@ static struct radeon_state *r600_rasterizer(struct r600_context *rctx)
 					S_0286D4_PNT_SPRITE_TOP_1(1);
 		}
 	}
-	rstate->states[R600_RASTERIZER__PA_CL_CLIP_CNTL] = 0x00000000;
+	rstate->states[R600_RASTERIZER__PA_CL_CLIP_CNTL] = 0;
+	if (clip && clip->nr) {
+		rstate->states[R600_RASTERIZER__PA_CL_CLIP_CNTL] = S_028810_PS_UCP_MODE(3) | ((1 << clip->nr) - 1);
+		rstate->states[R600_RASTERIZER__PA_CL_CLIP_CNTL] |= S_028810_CLIP_DISABLE(clip->depth_clamp);
+	}
 	rstate->states[R600_RASTERIZER__PA_SU_SC_MODE_CNTL] =
 		S_028814_PROVOKING_VTX_LAST(prov_vtx) |
 		S_028814_CULL_FRONT((state->cull_face & PIPE_FACE_FRONT) ? 1 : 0) |
@@ -1301,6 +1340,10 @@ int r600_context_hw_states(struct r600_context *rctx)
 	unsigned i;
 	int r;
 	int nr_cbufs = rctx->framebuffer->state.framebuffer.nr_cbufs;
+	int ucp_nclip = 0;
+
+	if (rctx->clip) 
+		ucp_nclip = rctx->clip->state.clip.nr;
 
 	/* free previous TODO determine what need to be updated, what
 	 * doesn't
@@ -1315,6 +1358,9 @@ int r600_context_hw_states(struct r600_context *rctx)
 	rctx->hw_states.viewport = radeon_state_decref(rctx->hw_states.viewport);
 	for (i = 0; i < 8; i++) {
 		rctx->hw_states.cb[i] = radeon_state_decref(rctx->hw_states.cb[i]);
+	}
+	for (i = 0; i < 6; i++) {
+		rctx->hw_states.ucp[i] = radeon_state_decref(rctx->hw_states.ucp[i]);
 	}
 	for (i = 0; i < rctx->hw_states.ps_nresource; i++) {
 		radeon_state_decref(rctx->hw_states.ps_resource[i]);
@@ -1335,6 +1381,9 @@ int r600_context_hw_states(struct r600_context *rctx)
 	rctx->hw_states.viewport = r600_viewport(rctx);
 	for (i = 0; i < nr_cbufs; i++) {
 		rctx->hw_states.cb[i] = r600_cb(rctx, i);
+	}
+	for (i = 0; i < ucp_nclip; i++) {
+		rctx->hw_states.ucp[i] = r600_ucp(rctx, i);
 	}
 	rctx->hw_states.db = r600_db(rctx);
 	rctx->hw_states.cb_cntl = r600_cb_cntl(rctx);
@@ -1357,6 +1406,11 @@ int r600_context_hw_states(struct r600_context *rctx)
 	rctx->hw_states.ps_nresource = rctx->ps_nsampler_view;
 
 	/* bind states */
+	for (i = 0; i < ucp_nclip; i++) {
+		r = radeon_draw_set(rctx->draw, rctx->hw_states.ucp[i]);
+		if (r)
+			return r;
+	}
 	r = radeon_draw_set(rctx->draw, rctx->hw_states.db);
 	if (r)
 		return r;

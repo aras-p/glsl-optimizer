@@ -47,12 +47,14 @@ static void r600_blitter_save_states(struct r600_context *rctx)
 	if (rctx->viewport) {
 		util_blitter_save_viewport(rctx->blitter, &rctx->viewport->state.viewport);
 	}
-	/* XXX util_blitter_save_clip(rctx->blitter, &rctx->clip); */
+	if (rctx->clip)
+ 	    util_blitter_save_clip(rctx->blitter, &rctx->clip->state.clip);
 	util_blitter_save_vertex_buffers(rctx->blitter, rctx->nvertex_buffer,
 					rctx->vertex_buffer);
 
 	/* remove ptr so they don't get deleted */
 	rctx->blend = NULL;
+	rctx->clip = NULL;
 	rctx->vs_shader = NULL;
 	rctx->ps_shader = NULL;
 	rctx->rasterizer = NULL;

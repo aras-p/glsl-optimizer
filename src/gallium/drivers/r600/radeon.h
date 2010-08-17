@@ -191,8 +191,8 @@ struct radeon_ctx {
  * R600/R700
  */
 
-#define R600_NSTATE				1280
-#define R600_NTYPE				32
+#define R600_NSTATE				1286
+#define R600_NTYPE				33
 
 #define R600_CONFIG				0
 #define R600_CONFIG_TYPE				0
@@ -254,10 +254,13 @@ struct radeon_ctx {
 #define R600_CB7_TYPE				28
 #define R600_DB				1277
 #define R600_DB_TYPE				29
-#define R600_VGT				1278
-#define R600_VGT_TYPE				30
-#define R600_DRAW				1279
-#define R600_DRAW_TYPE				31
+#define R600_CLIP				1278
+#define R600_CLIP_TYPE				30
+#define R600_VGT				1284
+#define R600_VGT_TYPE				31
+#define R600_DRAW				1285
+#define R600_DRAW_TYPE				32
+
 /* R600_CONFIG */
 #define R600_CONFIG__SQ_CONFIG			0
 #define R600_CONFIG__SQ_GPR_RESOURCE_MGMT_1			1
@@ -643,5 +646,11 @@ struct radeon_ctx {
 #define R600_DRAW__VGT_DRAW_INITIATOR			3
 #define R600_DRAW_SIZE				4
 #define R600_DRAW_PM4				128
-
+/* R600_CLIP */
+#define R600_CLIP__PA_CL_UCP_X_0  0
+#define R600_CLIP__PA_CL_UCP_Y_0  1
+#define R600_CLIP__PA_CL_UCP_Z_0  2
+#define R600_CLIP__PA_CL_UCP_W_0  3
+#define R600_CLIP_SIZE  4
+#define R600_CLIP_PM4 128
 #endif

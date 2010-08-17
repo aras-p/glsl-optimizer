@@ -283,6 +283,13 @@ static const struct radeon_register R600_VS_CONSTANT_names[] = {
 	{0x0003100C, 0, 0, "SQ_ALU_CONSTANT3_256"},
 };
 
+static const struct radeon_register R600_UCP_names[] = {
+	{0x00028e20, 0, 0, "PA_CL_UCP0_X"},
+	{0x00028e24, 0, 0, "PA_CL_UCP0_Y"},
+	{0x00028e28, 0, 0, "PA_CL_UCP0_Z"},
+	{0x00028e2c, 0, 0, "PA_CL_UCP0_W"},
+};
+
 static const struct radeon_register R600_PS_RESOURCE_names[] = {
 	{0x00038000, 0, 0, "RESOURCE0_WORD0"},
 	{0x00038004, 0, 0, "RESOURCE0_WORD1"},
@@ -503,8 +510,10 @@ static struct radeon_type R600_types[] = {
 	{ 128, 1275, 0x00000000, 0x00000000, 0x0000, 0, "R600_CB6", 7, r600_state_pm4_cb0, R600_CB6_names},
 	{ 128, 1276, 0x00000000, 0x00000000, 0x0000, 0, "R600_CB7", 7, r600_state_pm4_cb0, R600_CB7_names},
 	{ 128, 1277, 0x00000000, 0x00000000, 0x0000, 0, "R600_DB", 6, r600_state_pm4_db, R600_DB_names},
-	{ 128, 1278, 0x00000000, 0x00000000, 0x0000, 0, "R600_VGT", 11, r600_state_pm4_vgt, R600_VGT_names},
-	{ 128, 1279, 0x00000000, 0x00000000, 0x0000, 0, "R600_DRAW", 4, r600_state_pm4_draw, R600_DRAW_names},
+	{ 128, 1278, 0x00028e20, 0x00028e70, 0x0010, 0, "R600_UCP", 4, r600_state_pm4_generic, R600_UCP_names},
+	{ 128, 1284, 0x00000000, 0x00000000, 0x0000, 0, "R600_VGT", 11, r600_state_pm4_vgt, R600_VGT_names},
+	{ 128, 1285, 0x00000000, 0x00000000, 0x0000, 0, "R600_DRAW", 4, r600_state_pm4_draw, R600_DRAW_names},
+
 };
 
 static struct radeon_type R700_types[] = {
@@ -538,8 +547,9 @@ static struct radeon_type R700_types[] = {
 	{ 128, 1275, 0x00000000, 0x00000000, 0x0000, 0, "R600_CB6", 7, r600_state_pm4_cb0, R600_CB6_names},
 	{ 128, 1276, 0x00000000, 0x00000000, 0x0000, 0, "R600_CB7", 7, r600_state_pm4_cb0, R600_CB7_names},
 	{ 128, 1277, 0x00000000, 0x00000000, 0x0000, 0, "R600_DB", 6, r700_state_pm4_db, R600_DB_names},
-	{ 128, 1278, 0x00000000, 0x00000000, 0x0000, 0, "R600_VGT", 11, r600_state_pm4_vgt, R600_VGT_names},
-	{ 128, 1279, 0x00000000, 0x00000000, 0x0000, 0, "R600_DRAW", 4, r600_state_pm4_draw, R600_DRAW_names},
+	{ 128, 1278, 0x00028e20, 0x00028e70, 0x0010, 0, "R600_UCP", 4, r600_state_pm4_generic, R600_UCP_names},
+	{ 128, 1284, 0x00000000, 0x00000000, 0x0000, 0, "R600_VGT", 11, r600_state_pm4_vgt, R600_VGT_names},
+	{ 128, 1285, 0x00000000, 0x00000000, 0x0000, 0, "R600_DRAW", 4, r600_state_pm4_draw, R600_DRAW_names},
 };
 
 #endif
