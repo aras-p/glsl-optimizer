@@ -904,8 +904,8 @@ emit_inline_matrix_constructor(const glsl_type *type,
 	 instructions->push_tail(inst);
       }
    } else {
-      const unsigned rows = type->matrix_columns;
-      const unsigned cols = type->vector_elements;
+      const unsigned cols = type->matrix_columns;
+      const unsigned rows = type->vector_elements;
       unsigned col_idx = 0;
       unsigned row_idx = 0;
 
