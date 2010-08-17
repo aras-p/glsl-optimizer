@@ -72,6 +72,7 @@ extern "C" {
 #include <talloc.h>
 }
 
+#include "main/compiler.h"
 #include "main/mtypes.h"
 #include "main/macros.h"
 #include "main/shaderobj.h"

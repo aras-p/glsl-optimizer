@@ -309,7 +309,7 @@ control_line:
 			talloc_free (macro);
 		}
 		add_builtin_define (parser, "__VERSION__", $2);
-		glcpp_printf(parser->output, "#version %" PRIiMAX "\n", $2);
+		glcpp_printf(parser->output, "#version %" PRIiMAX, $2);
 	}
 |	HASH NEWLINE
 ;

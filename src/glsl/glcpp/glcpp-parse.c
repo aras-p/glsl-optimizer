@@ -2016,7 +2016,7 @@ yyreduce:
 			talloc_free (macro);
 		}
 		add_builtin_define (parser, "__VERSION__", (yyvsp[(2) - (3)].ival));
-		glcpp_printf(parser->output, "#version %" PRIiMAX "\n", (yyvsp[(2) - (3)].ival));
+		glcpp_printf(parser->output, "#version %" PRIiMAX, (yyvsp[(2) - (3)].ival));
 	;}
     break;
 
