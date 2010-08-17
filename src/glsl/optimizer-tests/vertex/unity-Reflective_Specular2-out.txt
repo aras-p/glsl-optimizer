@@ -14,7 +14,7 @@ void main ()
   tmpvar_44 = (gl_ModelViewProjectionMatrix * tmpvar_1);
   vec4 tmpvar_49;
   tmpvar_49.xyz = _WorldSpaceCameraPos.xyz;
-  tmpvar_49.w = 1.000000;
+  tmpvar_49.w = 1.0;
   mat3 tmpvar_59;
   tmpvar_59[0] = _Object2World[0].xyz;
   tmpvar_59[1] = _Object2World[1].xyz;
@@ -31,18 +31,18 @@ void main ()
   gl_Position = tmpvar_44.xyzw;
   vec4 tmpvar_17;
   tmpvar_17.x = tmpvar_44.z;
-  tmpvar_17.y = 0.000000;
-  tmpvar_17.z = 0.000000;
-  tmpvar_17.w = 0.000000;
+  tmpvar_17.y = 0.0;
+  tmpvar_17.z = 0.0;
+  tmpvar_17.w = 0.0;
   xlv_FOG = tmpvar_17;
   vec4 tmpvar_19;
   tmpvar_19.xy = ((gl_MultiTexCoord0.xy * _MainTex_ST.xy) + _MainTex_ST.zw).xy;
-  tmpvar_19.z = 0.000000;
-  tmpvar_19.w = 0.000000;
+  tmpvar_19.z = 0.0;
+  tmpvar_19.w = 0.0;
   gl_TexCoord[0] = tmpvar_19;
   vec4 tmpvar_21;
   tmpvar_21.xyz = (tmpvar_59 * reflect (-((((_World2Object * tmpvar_49).xyz * unity_Scale.w) - tmpvar_1.xyz)), gl_Normal.xyz)).xyz;
-  tmpvar_21.w = 0.000000;
+  tmpvar_21.w = 0.0;
   gl_TexCoord[1] = tmpvar_21;
   gl_TexCoord[2] = o_i0.xyzw;
 }

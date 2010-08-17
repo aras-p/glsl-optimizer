@@ -9,7 +9,7 @@ void xll_clip (
   in float x
 )
 {
-  if ((x < 0.000000)) {
+  if ((x < 0.0)) {
     discard;
   };
 }
@@ -24,7 +24,7 @@ vec2 EncodeViewNormalStereo (
   tmpvar_1 = 1.777700;
   kScale = tmpvar_1;
   vec2 tmpvar_2;
-  tmpvar_2 = (n.xy / (n.z + 1.000000));
+  tmpvar_2 = (n.xy / (n.z + 1.0));
   enc = tmpvar_2;
   vec2 tmpvar_3;
   tmpvar_3 = (enc / kScale);
@@ -43,7 +43,7 @@ vec2 EncodeFloatRG (
   float kEncodeBit;
   vec2 kEncodeMul;
   vec2 tmpvar_1;
-  tmpvar_1 = vec2(1.000000, 255.000000);
+  tmpvar_1 = vec2(1.0, 255.0);
   kEncodeMul = tmpvar_1;
   float tmpvar_2;
   tmpvar_2 = 0.003922;
@@ -102,7 +102,7 @@ void main ()
   v2f xlt_i;
   vec4 xl_retval;
   vec4 tmpvar_1;
-  tmpvar_1 = vec4(0.000000, 0.000000, 0.000000, 0.000000);
+  tmpvar_1 = vec4(0.0, 0.0, 0.0, 0.0);
   xlt_i.pos = tmpvar_1;
   vec2 tmpvar_2;
   tmpvar_2 = gl_TexCoord[0].xy;

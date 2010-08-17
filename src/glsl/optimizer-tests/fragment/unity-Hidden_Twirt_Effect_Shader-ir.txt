@@ -14,8 +14,8 @@ vec2 MultiplyUV (
   vec4 tmpvar_1;
   tmpvar_1.x = (vec4(inUV.x)).x;
   tmpvar_1.y = (vec4(inUV.y)).y;
-  tmpvar_1.z = (vec4(0.000000)).z;
-  tmpvar_1.w = (vec4(0.000000)).w;
+  tmpvar_1.z = (vec4(0.0)).z;
+  tmpvar_1.w = (vec4(0.0)).w;
   vec4 tmpvar_2;
   tmpvar_2 = tmpvar_1;
   temp = tmpvar_2;
@@ -47,7 +47,7 @@ vec4 frag (
   float tmpvar_5;
   tmpvar_5 = length (tmp);
   float tmpvar_6;
-  tmpvar_6 = min (1.000000, tmpvar_5);
+  tmpvar_6 = min (1.0, tmpvar_5);
   float tmpvar_7;
   tmpvar_7 = tmpvar_6;
   t = tmpvar_7;
@@ -71,7 +71,7 @@ void main ()
   v2f xlt_i;
   vec4 xl_retval;
   vec4 tmpvar_1;
-  tmpvar_1 = vec4(0.000000, 0.000000, 0.000000, 0.000000);
+  tmpvar_1 = vec4(0.0, 0.0, 0.0, 0.0);
   xlt_i.pos = tmpvar_1;
   vec2 tmpvar_2;
   tmpvar_2 = gl_TexCoord[0].xy;

@@ -26,12 +26,12 @@ void main ()
   tmpvar_83 = normalize (tmpvar_5);
   v = tmpvar_83;
   v.z = (vec3((tmpvar_83.z + 0.420000))).z;
-  _ret_val_i0 = (((texture2D (_ParallaxMap, tmpvar_71).w * _Parallax) - (_Parallax / 2.000000)) * (v.xy / v.z));
+  _ret_val_i0 = (((texture2D (_ParallaxMap, tmpvar_71).w * _Parallax) - (_Parallax / 2.0)) * (v.xy / v.z));
   vec4 tmpvar_89;
   tmpvar_89 = texture2D (_MainTex, (tmpvar_3.xy + _ret_val_i0));
   vec4 normal;
-  normal.xy = ((texture2D (_BumpMap, (tmpvar_71 + _ret_val_i0)).wy * 2.000000) - 1.000000);
-  normal.z = (vec3(sqrt (((1.000000 - (normal.x * normal.x)) - (normal.y * normal.y))))).z;
+  normal.xy = ((texture2D (_BumpMap, (tmpvar_71 + _ret_val_i0)).wy * 2.0) - 1.0);
+  normal.z = (vec3(sqrt (((1.0 - (normal.x * normal.x)) - (normal.y * normal.y))))).z;
   vec3 tmpvar_101;
   tmpvar_101 = normal.xyz;
   vec3 tmpvar_104;
@@ -39,14 +39,14 @@ void main ()
   vec3 LightCoord_i0;
   LightCoord_i0 = tmpvar_9.xyz;
   float atten;
-  atten = ((float((tmpvar_9.z > 0.000000)) * texture2D (_LightTexture0, ((tmpvar_9.xy / tmpvar_9.w) + 0.500000)).w) * texture2D (_LightTextureB0, vec2(dot (LightCoord_i0, LightCoord_i0))).w);
+  atten = ((float((tmpvar_9.z > 0.0)) * texture2D (_LightTexture0, ((tmpvar_9.xy / tmpvar_9.w) + 0.500000)).w) * texture2D (_LightTextureB0, vec2(dot (LightCoord_i0, LightCoord_i0))).w);
   vec4 c_i0;
   float tmpvar_128;
-  tmpvar_128 = (pow (max (0.000000, dot (tmpvar_101, normalize ((tmpvar_104 + normalize (tmpvar_5.xyz))))), (_Shininess * 128.000000)) * tmpvar_89.w);
-  c_i0.xyz = (((((tmpvar_89.xyz * _Color.xyz) * _LightColor0.xyz) * max (0.000000, dot (tmpvar_101, tmpvar_104))) + ((_LightColor0.xyz * _SpecColor.xyz) * tmpvar_128)) * (atten * 2.000000)).xyz;
+  tmpvar_128 = (pow (max (0.0, dot (tmpvar_101, normalize ((tmpvar_104 + normalize (tmpvar_5.xyz))))), (_Shininess * 128.0)) * tmpvar_89.w);
+  c_i0.xyz = (((((tmpvar_89.xyz * _Color.xyz) * _LightColor0.xyz) * max (0.0, dot (tmpvar_101, tmpvar_104))) + ((_LightColor0.xyz * _SpecColor.xyz) * tmpvar_128)) * (atten * 2.0)).xyz;
   c_i0.w = (vec4(((tmpvar_89.w * _Color.w) + (((_LightColor0.w * _SpecColor.w) * tmpvar_128) * atten)))).w;
   c = c_i0;
-  c.w = 0.000000;
+  c.w = 0.0;
   gl_FragData[0] = c.xyzw;
 }
 

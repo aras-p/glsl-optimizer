@@ -17,7 +17,7 @@ vec4 frag (
   vec4 tmpvar_2;
   tmpvar_2 = texture2D (_MainTex, xlat_var_input.uv.xy);
   vec3 tmpvar_3;
-  tmpvar_3 = (col.xyz * (2.000000 * tmpvar_2.xyz));
+  tmpvar_3 = (col.xyz * (2.0 * tmpvar_2.xyz));
   col.xyz = tmpvar_3.xyz;
   return col;
 }
@@ -27,7 +27,7 @@ void main ()
   v2f xlt_xlat_var_input;
   vec4 xl_retval;
   vec4 tmpvar_1;
-  tmpvar_1 = vec4(0.000000, 0.000000, 0.000000, 0.000000);
+  tmpvar_1 = vec4(0.0, 0.0, 0.0, 0.0);
   xlt_xlat_var_input.pos = tmpvar_1;
   float tmpvar_2;
   tmpvar_2 = xlv_FOG.x;

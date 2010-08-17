@@ -24,13 +24,13 @@ void main ()
   tmpvar_38 = (tmpvar_34.w * _Color.w);
   float x;
   x = (tmpvar_38 - _Cutoff);
-  if ((x < 0.000000)) {
+  if ((x < 0.0)) {
     discard;
   };
   vec4 tmpvar_43;
   tmpvar_43 = -(log2 (texture2DProj (_LightBuffer, tmpvar_5)));
   light = tmpvar_43;
-  light.xyz = (tmpvar_43.xyz + mix ((2.000000 * texture2D (unity_LightmapInd, tmpvar_7.xy).xyz), (2.000000 * texture2D (unity_Lightmap, tmpvar_7.xy).xyz), vec3(clamp (tmpvar_7.z, 0.000000, 1.000000)))).xyz;
+  light.xyz = (tmpvar_43.xyz + mix ((2.0 * texture2D (unity_LightmapInd, tmpvar_7.xy).xyz), (2.0 * texture2D (unity_Lightmap, tmpvar_7.xy).xyz), vec3(clamp (tmpvar_7.z, 0.0, 1.0)))).xyz;
   vec4 c;
   float tmpvar_61;
   tmpvar_61 = (light.w * tmpvar_37);

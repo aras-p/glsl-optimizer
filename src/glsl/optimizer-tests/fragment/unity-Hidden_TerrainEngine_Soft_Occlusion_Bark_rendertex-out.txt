@@ -6,7 +6,7 @@ void main ()
   tmpvar_5 = gl_Color.xyzw;
   vec4 col;
   col = tmpvar_5;
-  col.xyz = (tmpvar_5.xyz * (2.000000 * texture2D (_MainTex, gl_TexCoord[0].xy).xyz)).xyz;
+  col.xyz = (tmpvar_5.xyz * (2.0 * texture2D (_MainTex, gl_TexCoord[0].xy).xyz)).xyz;
   gl_FragData[0] = col.xyzw;
 }
 

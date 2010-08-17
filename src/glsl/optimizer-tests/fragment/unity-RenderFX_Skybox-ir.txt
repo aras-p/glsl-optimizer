@@ -39,7 +39,7 @@ void main ()
   v2f xlt_i;
   vec4 xl_retval;
   vec4 tmpvar_1;
-  tmpvar_1 = vec4(0.000000, 0.000000, 0.000000, 0.000000);
+  tmpvar_1 = vec4(0.0, 0.0, 0.0, 0.0);
   xlt_i.vertex = tmpvar_1;
   vec2 tmpvar_2;
   tmpvar_2 = gl_TexCoord[0].xy;

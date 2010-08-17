@@ -11,23 +11,23 @@ void main ()
   n = tmpvar_41;
   float _ret_val_i0;
   _ret_val_i0 = 1.0/(((_ZBufferParams.x * texture2D (_CameraDepthTexture, tmpvar_2).x) + _ZBufferParams.y));
-  n.xyz = ((tmpvar_41.xyz * 2.000000) - 1.000000).xyz;
+  n.xyz = ((tmpvar_41.xyz * 2.0) - 1.0).xyz;
   n.z = (vec3(-(n.z))).z;
   vec4 tmpvar_48;
   if ((_ret_val_i0 < 0.999985)) {
     vec3 normal;
     normal = n.xyz;
     vec4 enc;
-    enc.xy = ((((normal.xy / (normal.z + 1.000000)) / 1.777700) * 0.500000) + 0.500000);
+    enc.xy = ((((normal.xy / (normal.z + 1.0)) / 1.777700) * 0.500000) + 0.500000);
     vec2 enc_i0_i1;
     vec2 tmpvar_63;
-    tmpvar_63 = fract ((vec2(1.000000, 255.000000) * _ret_val_i0));
+    tmpvar_63 = fract ((vec2(1.0, 255.0) * _ret_val_i0));
     enc_i0_i1 = tmpvar_63;
     enc_i0_i1.x = (tmpvar_63.x - (tmpvar_63.y * 0.003922));
     enc.zw = enc_i0_i1.xy;
     tmpvar_48 = enc;
   } else {
-    tmpvar_48 = vec4(0.500000, 0.500000, 1.000000, 1.000000);
+    tmpvar_48 = vec4(0.500000, 0.500000, 1.0, 1.0);
   };
   gl_FragData[0] = tmpvar_48.xyzw;
 }

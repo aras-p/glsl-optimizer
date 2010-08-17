@@ -6,7 +6,7 @@ void surf (
 )
 {
   vec4 tmpvar_1;
-  tmpvar_1 = vec4(1.000000, 1.000000, 1.000000, 1.000000);
+  tmpvar_1 = vec4(1.0, 1.0, 1.0, 1.0);
   o.color = tmpvar_1;
 }
 

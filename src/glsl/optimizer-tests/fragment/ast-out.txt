@@ -2,26 +2,26 @@ void main ()
 {
   int i;
   float a;
-  if ((gl_FragCoord.x == 1.000000)) {
+  if ((gl_FragCoord.x == 1.0)) {
     discard;
   };
-  a = 4.000000;
+  a = 4.0;
   i = 0;
   while (true) {
     if ((i >= 10)) {
       break;
     };
-    a = (a + 1.000000);
+    a = (a + 1.0);
     i = (i + 1);
   };
   while (true) {
-    a = (a + 2.000000);
+    a = (a + 2.0);
     break;
   };
   float tmpvar_8;
-  tmpvar_8 = (a + 1.000000);
+  tmpvar_8 = (a + 1.0);
   float tmpvar_14;
-  tmpvar_14 = 1.0/(sqrt ((-((tmpvar_8 * tmpvar_8)) - 1.000000)));
+  tmpvar_14 = 1.0/(sqrt ((-((tmpvar_8 * tmpvar_8)) - 1.0)));
   a = tmpvar_14;
   gl_FragColor = vec4(tmpvar_14);
 }

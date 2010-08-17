@@ -11,7 +11,7 @@ void xll_clip (
   in float x
 )
 {
-  if ((x < 0.000000)) {
+  if ((x < 0.0)) {
     discard;
   };
 }
@@ -27,12 +27,12 @@ vec4 frag (
   tmpvar_2 = tmpvar_1;
   col = tmpvar_2;
   vec3 tmpvar_3;
-  tmpvar_3 = (col.xyz * (2.000000 * xlat_var_input.color.xyz));
+  tmpvar_3 = (col.xyz * (2.0 * xlat_var_input.color.xyz));
   col.xyz = tmpvar_3.xyz;
   float tmpvar_4;
-  tmpvar_4 = (col.w * (2.000000 * _HalfOverCutoff));
+  tmpvar_4 = (col.w * (2.0 * _HalfOverCutoff));
   col.w = (vec4(tmpvar_4)).w;
-  xll_clip ((col.w - 1.000000));
+  xll_clip ((col.w - 1.0));
   return col;
 }
 
@@ -41,7 +41,7 @@ void main ()
   v2f xlt_xlat_var_input;
   vec4 xl_retval;
   vec4 tmpvar_1;
-  tmpvar_1 = vec4(0.000000, 0.000000, 0.000000, 0.000000);
+  tmpvar_1 = vec4(0.0, 0.0, 0.0, 0.0);
   xlt_xlat_var_input.pos = tmpvar_1;
   float tmpvar_2;
   tmpvar_2 = xlv_FOG.x;

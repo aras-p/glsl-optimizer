@@ -3,6 +3,6 @@ uniform vec4 _WorldSpaceLightPos0;
 uniform vec4 _LightColor0;
 void main ()
 {
-  gl_FragData[0] = vec4(0.000000, 1.000000, 0.000000, 0.000000);
+  gl_FragData[0] = vec4(0.0, 1.0, 0.0, 0.0);
 }
 

@@ -3,9 +3,9 @@ void main ()
 {
   float x;
   x = (texture2D (_MainTex, gl_TexCoord[0].xy).w - 0.001000);
-  if ((x < 0.000000)) {
+  if ((x < 0.0)) {
     discard;
   };
-  gl_FragData[0] = vec4(0.000000, 0.000000, 0.000000, 0.000000);
+  gl_FragData[0] = vec4(0.0, 0.0, 0.0, 0.0);
 }
 

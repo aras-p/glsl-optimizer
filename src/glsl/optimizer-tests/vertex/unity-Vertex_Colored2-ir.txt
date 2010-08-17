@@ -35,7 +35,7 @@ v2f vert (
   tmpvar_1 = ((v.color.xyz + (v.normal * 0.300000)) * 0.500000);
   o.color.xyz = tmpvar_1.xyz;
   float tmpvar_2;
-  tmpvar_2 = 1.000000;
+  tmpvar_2 = 1.0;
   o.color.w = (vec4(tmpvar_2)).w;
   vec2 tmpvar_3;
   tmpvar_3 = v.texcoord;
@@ -79,9 +79,9 @@ void main ()
   gl_Position = tmpvar_12;
   vec4 tmpvar_13;
   tmpvar_13.x = (vec4(xl_retval.fog)).x;
-  tmpvar_13.y = (vec4(0.000000)).y;
-  tmpvar_13.z = (vec4(0.000000)).z;
-  tmpvar_13.w = (vec4(0.000000)).w;
+  tmpvar_13.y = (vec4(0.0)).y;
+  tmpvar_13.z = (vec4(0.0)).z;
+  tmpvar_13.w = (vec4(0.0)).w;
   vec4 tmpvar_14;
   tmpvar_14 = tmpvar_13;
   xlv_FOG = tmpvar_14;
@@ -92,8 +92,8 @@ void main ()
   gl_FrontColor = tmpvar_16;
   vec4 tmpvar_17;
   tmpvar_17.xy = xl_retval.texcoord.xy;
-  tmpvar_17.z = (vec4(0.000000)).z;
-  tmpvar_17.w = (vec4(0.000000)).w;
+  tmpvar_17.z = (vec4(0.0)).z;
+  tmpvar_17.w = (vec4(0.0)).w;
   vec4 tmpvar_18;
   tmpvar_18 = tmpvar_17;
   gl_TexCoord[0] = tmpvar_18;

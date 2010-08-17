@@ -21,7 +21,7 @@ vec4 frag (
   vec4 tmpvar_3;
   tmpvar_3 = texture2D (_Detail, i.uv1);
   vec4 tmpvar_4;
-  tmpvar_4 = ((c * tmpvar_3) * 2.000000);
+  tmpvar_4 = ((c * tmpvar_3) * 2.0);
   c = tmpvar_4;
   return c;
 }

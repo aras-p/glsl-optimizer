@@ -20,10 +20,10 @@ void main ()
   tmpvar_47 = (c_i0 * _Color);
   c_i0 = tmpvar_47;
   vec4 c_i0_i1;
-  c_i0_i1.xyz = ((tmpvar_47.xyz * _LightColor0.xyz) * ((max (0.000000, dot (gl_TexCoord[1].xyz, gl_TexCoord[2].xyz)) * texture2D (_LightTexture0, gl_TexCoord[3].xy).w) * 2.000000)).xyz;
+  c_i0_i1.xyz = ((tmpvar_47.xyz * _LightColor0.xyz) * ((max (0.0, dot (gl_TexCoord[1].xyz, gl_TexCoord[2].xyz)) * texture2D (_LightTexture0, gl_TexCoord[3].xy).w) * 2.0)).xyz;
   c_i0_i1.w = tmpvar_47.w;
   c = c_i0_i1;
-  c.w = 0.000000;
+  c.w = 0.0;
   gl_FragData[0] = c.xyzw;
 }
 

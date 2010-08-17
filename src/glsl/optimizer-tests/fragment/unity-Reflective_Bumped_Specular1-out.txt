@@ -9,8 +9,8 @@ void main ()
   vec4 res;
   vec3 viewN;
   vec4 normal;
-  normal.xy = ((texture2D (_BumpMap, gl_TexCoord[0].xy).wy * 2.000000) - 1.000000);
-  normal.z = (vec3(sqrt (((1.000000 - (normal.x * normal.x)) - (normal.y * normal.y))))).z;
+  normal.xy = ((texture2D (_BumpMap, gl_TexCoord[0].xy).wy * 2.0) - 1.0);
+  normal.z = (vec3(sqrt (((1.0 - (normal.x * normal.x)) - (normal.y * normal.y))))).z;
   vec3 tmpvar_57;
   tmpvar_57 = normal.xyz;
   viewN.x = dot (gl_TexCoord[1].xyz, tmpvar_57);

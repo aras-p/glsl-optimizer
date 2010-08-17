@@ -4,7 +4,7 @@ void main ()
 {
   vec4 res;
   res.xyz = ((gl_TexCoord[0].xyz * vec3(0.500000, 0.500000, -0.500000)) + 0.500000).xyz;
-  res.w = 0.000000;
+  res.w = 0.0;
   gl_FragData[0] = res.xyzw;
 }
 

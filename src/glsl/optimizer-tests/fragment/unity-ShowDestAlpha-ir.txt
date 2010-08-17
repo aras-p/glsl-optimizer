@@ -5,7 +5,7 @@ vec4 frag (
   in v2f i
 )
 {
-  return vec4(1.000000, 1.000000, 1.000000, 1.000000);
+  return vec4(1.0, 1.0, 1.0, 1.0);
 }
 
 void main ()
@@ -13,7 +13,7 @@ void main ()
   v2f xlt_i;
   vec4 xl_retval;
   vec4 tmpvar_1;
-  tmpvar_1 = vec4(0.000000, 0.000000, 0.000000, 0.000000);
+  tmpvar_1 = vec4(0.0, 0.0, 0.0, 0.0);
   xlt_i.vertex = tmpvar_1;
   vec4 tmpvar_2;
   tmpvar_2 = frag (xlt_i);

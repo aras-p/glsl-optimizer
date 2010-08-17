@@ -19,8 +19,8 @@ void main ()
   gl_Position = tmpvar_19.xyzw;
   gl_TexCoord[0] = o_i0.xyzw;
   vec4 tmpvar_11;
-  tmpvar_11.xyz = mix (((gl_ModelViewMatrix * tmpvar_1).xyz * vec3(-1.000000, -1.000000, 1.000000)), tmpvar_3, vec3(float((tmpvar_3.z != 0.000000)))).xyz;
-  tmpvar_11.w = 0.000000;
+  tmpvar_11.xyz = mix (((gl_ModelViewMatrix * tmpvar_1).xyz * vec3(-1.0, -1.0, 1.0)), tmpvar_3, vec3(float((tmpvar_3.z != 0.0)))).xyz;
+  tmpvar_11.w = 0.0;
   gl_TexCoord[1] = tmpvar_11;
 }
 

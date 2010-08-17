@@ -19,28 +19,28 @@ void main ()
   gl_Position = (gl_ModelViewProjectionMatrix * tmpvar_1).xyzw;
   vec4 tmpvar_17;
   tmpvar_17.xyz = (_World2Shadow * tmpvar_35).xyz;
-  tmpvar_17.w = 0.000000;
+  tmpvar_17.w = 0.0;
   gl_TexCoord[0] = tmpvar_17;
   vec4 tmpvar_19;
   tmpvar_19.xyz = (_World2Shadow1 * tmpvar_35).xyz;
-  tmpvar_19.w = 0.000000;
+  tmpvar_19.w = 0.0;
   gl_TexCoord[1] = tmpvar_19;
   vec4 tmpvar_21;
   tmpvar_21.xyz = (_World2Shadow2 * tmpvar_35).xyz;
-  tmpvar_21.w = 0.000000;
+  tmpvar_21.w = 0.0;
   gl_TexCoord[2] = tmpvar_21;
   vec4 tmpvar_23;
   tmpvar_23.xyz = (_World2Shadow3 * tmpvar_35).xyz;
-  tmpvar_23.w = 0.000000;
+  tmpvar_23.w = 0.0;
   gl_TexCoord[3] = tmpvar_23;
   vec4 tmpvar_25;
   tmpvar_25.xy = tmpvar_85.xy;
-  tmpvar_25.z = 0.000000;
-  tmpvar_25.w = 0.000000;
+  tmpvar_25.z = 0.0;
+  tmpvar_25.w = 0.0;
   gl_TexCoord[4] = tmpvar_25;
   vec4 tmpvar_27;
   tmpvar_27.xyz = (_Object2World * tmpvar_1).xyz;
-  tmpvar_27.w = 0.000000;
+  tmpvar_27.w = 0.0;
   gl_TexCoord[5] = tmpvar_27;
 }
 

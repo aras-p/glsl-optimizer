@@ -44,18 +44,18 @@ void main ()
   tmpvar_49[2].z = tmpvar_5.z;
   vec4 tmpvar_62;
   tmpvar_62.xyz = _WorldSpaceCameraPos.xyz;
-  tmpvar_62.w = 1.000000;
+  tmpvar_62.w = 1.0;
   gl_Position = tmpvar_36.xyzw;
   vec4 tmpvar_17;
   tmpvar_17.x = tmpvar_36.z;
-  tmpvar_17.y = 0.000000;
-  tmpvar_17.z = 0.000000;
-  tmpvar_17.w = 0.000000;
+  tmpvar_17.y = 0.0;
+  tmpvar_17.z = 0.0;
+  tmpvar_17.w = 0.0;
   xlv_FOG = tmpvar_17;
   gl_TexCoord[0] = tmpvar_99.xyzw;
   vec4 tmpvar_21;
   tmpvar_21.xyz = (tmpvar_49 * (((_World2Object * tmpvar_62).xyz * unity_Scale.w) - tmpvar_1.xyz)).xyz;
-  tmpvar_21.w = 0.000000;
+  tmpvar_21.w = 0.0;
   gl_TexCoord[1] = tmpvar_21;
   gl_TexCoord[2] = o_i0.xyzw;
 }

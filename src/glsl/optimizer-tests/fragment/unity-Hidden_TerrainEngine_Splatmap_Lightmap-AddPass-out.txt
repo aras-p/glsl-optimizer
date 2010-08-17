@@ -19,8 +19,8 @@ void main ()
   vec3 tmpvar_61;
   tmpvar_61 = ((((tmpvar_52.x * texture2D (_Splat0, tmpvar_3.zw).xyz) + (tmpvar_52.y * texture2D (_Splat1, tmpvar_5.xy).xyz)) + (tmpvar_52.z * texture2D (_Splat2, tmpvar_5.zw).xyz)) + (tmpvar_52.w * texture2D (_Splat3, gl_TexCoord[2].xy).xyz));
   vec4 c_i0;
-  c_i0.xyz = ((tmpvar_61 * _LightColor0.xyz) * ((max (0.000000, dot (gl_TexCoord[3].xyz, _WorldSpaceLightPos0.xyz)) * texture2DProj (_ShadowMapTexture, gl_TexCoord[5].xyzw).x) * 2.000000)).xyz;
-  c_i0.w = 0.000000;
+  c_i0.xyz = ((tmpvar_61 * _LightColor0.xyz) * ((max (0.0, dot (gl_TexCoord[3].xyz, _WorldSpaceLightPos0.xyz)) * texture2DProj (_ShadowMapTexture, gl_TexCoord[5].xyzw).x) * 2.0)).xyz;
+  c_i0.w = 0.0;
   c = c_i0;
   c.xyz = (c_i0.xyz + (tmpvar_61 * gl_TexCoord[4].xyz)).xyz;
   gl_FragData[0] = c.xyzw;

@@ -31,15 +31,15 @@ void main ()
   gl_Position = tmpvar_33.xyzw;
   vec4 tmpvar_17;
   tmpvar_17.x = tmpvar_33.z;
-  tmpvar_17.y = 0.000000;
-  tmpvar_17.z = 0.000000;
-  tmpvar_17.w = 0.000000;
+  tmpvar_17.y = 0.0;
+  tmpvar_17.z = 0.0;
+  tmpvar_17.w = 0.0;
   xlv_FOG = tmpvar_17;
   gl_TexCoord[0] = tmpvar_80.xyzw;
   gl_TexCoord[1] = o_i0.xyzw;
   vec4 tmpvar_23;
   tmpvar_23.xyz = tmpvar_82.xyz;
-  tmpvar_23.w = 0.000000;
+  tmpvar_23.w = 0.0;
   gl_TexCoord[2] = tmpvar_23;
 }
 

@@ -10,7 +10,7 @@ v2f vert (
   float scale;
   v2f o;
   float tmpvar_1;
-  tmpvar_1 = 1.000000;
+  tmpvar_1 = 1.0;
   scale = tmpvar_1;
   vec4 tmpvar_2;
   tmpvar_2 = (gl_ModelViewProjectionMatrix * vertex);

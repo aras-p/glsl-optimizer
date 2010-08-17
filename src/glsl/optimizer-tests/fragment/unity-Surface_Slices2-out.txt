@@ -15,17 +15,17 @@ void main ()
   vec2 tmpvar_26;
   tmpvar_26 = gl_TexCoord[0].xy;
   float x;
-  x = (fract (((tmpvar_5.y + (tmpvar_5.z * 0.100000)) * 5.000000)) - 0.500000);
-  if ((x < 0.000000)) {
+  x = (fract (((tmpvar_5.y + (tmpvar_5.z * 0.100000)) * 5.0)) - 0.500000);
+  if ((x < 0.0)) {
     discard;
   };
   vec4 tmpvar_39;
   tmpvar_39 = -(log2 (texture2DProj (_LightBuffer, tmpvar_7)));
   light = tmpvar_39;
-  light.xyz = (tmpvar_39.xyz + mix ((2.000000 * texture2D (unity_LightmapInd, tmpvar_9.xy).xyz), (2.000000 * texture2D (unity_Lightmap, tmpvar_9.xy).xyz), vec3(clamp (tmpvar_9.z, 0.000000, 1.000000)))).xyz;
+  light.xyz = (tmpvar_39.xyz + mix ((2.0 * texture2D (unity_LightmapInd, tmpvar_9.xy).xyz), (2.0 * texture2D (unity_Lightmap, tmpvar_9.xy).xyz), vec3(clamp (tmpvar_9.z, 0.0, 1.0)))).xyz;
   vec4 c;
   c.xyz = (texture2D (_MainTex, tmpvar_26).xyz * light.xyz).xyz;
-  c.w = 0.000000;
+  c.w = 0.0;
   gl_FragData[0] = c.xyzw;
 }
 

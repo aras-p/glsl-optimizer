@@ -22,7 +22,7 @@ void main ()
   tmpvar_64 = (tmpvar_60 * (gl_Normal.xyz * unity_Scale.w));
   vec4 tmpvar_66;
   tmpvar_66.xyz = tmpvar_64.xyz;
-  tmpvar_66.w = 1.000000;
+  tmpvar_66.w = 1.0;
   vec3 x2;
   vec3 x1;
   x1.x = dot (unity_SHAr, tmpvar_66);
@@ -36,22 +36,22 @@ void main ()
   gl_Position = tmpvar_52.xyzw;
   vec4 tmpvar_17;
   tmpvar_17.x = tmpvar_52.z;
-  tmpvar_17.y = 0.000000;
-  tmpvar_17.z = 0.000000;
-  tmpvar_17.w = 0.000000;
+  tmpvar_17.y = 0.0;
+  tmpvar_17.z = 0.0;
+  tmpvar_17.w = 0.0;
   xlv_FOG = tmpvar_17;
   vec4 tmpvar_19;
   tmpvar_19.xy = ((gl_MultiTexCoord0.xy * _Decal_ST.xy) + _Decal_ST.zw).xy;
-  tmpvar_19.z = 0.000000;
-  tmpvar_19.w = 0.000000;
+  tmpvar_19.z = 0.0;
+  tmpvar_19.w = 0.0;
   gl_TexCoord[0] = tmpvar_19;
   vec4 tmpvar_21;
   tmpvar_21.xyz = tmpvar_64.xyz;
-  tmpvar_21.w = 0.000000;
+  tmpvar_21.w = 0.0;
   gl_TexCoord[1] = tmpvar_21;
   vec4 tmpvar_23;
   tmpvar_23.xyz = ((x1 + x2) + (unity_SHC.xyz * ((tmpvar_66.x * tmpvar_66.x) - (tmpvar_66.y * tmpvar_66.y)))).xyz;
-  tmpvar_23.w = 0.000000;
+  tmpvar_23.w = 0.0;
   gl_TexCoord[2] = tmpvar_23;
 }
 

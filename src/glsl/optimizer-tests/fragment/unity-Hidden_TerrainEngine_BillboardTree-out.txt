@@ -9,7 +9,7 @@ void main ()
   col.xyz = (tmpvar_12.xyz * gl_Color.xyz).xyz;
   float x;
   x = col.w;
-  if ((x < 0.000000)) {
+  if ((x < 0.0)) {
     discard;
   };
   gl_FragData[0] = col.xyzw;

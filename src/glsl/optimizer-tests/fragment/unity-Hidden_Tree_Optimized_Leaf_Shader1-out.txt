@@ -36,13 +36,13 @@ void main ()
   float tmpvar_81;
   tmpvar_81 = tmpvar_79.x;
   vec4 normal;
-  normal.xy = ((tmpvar_79.wy * 2.000000) - 1.000000);
-  normal.z = (vec3(sqrt (((1.000000 - (normal.x * normal.x)) - (normal.y * normal.y))))).z;
+  normal.xy = ((tmpvar_79.wy * 2.0) - 1.0);
+  normal.z = (vec3(sqrt (((1.0 - (normal.x * normal.x)) - (normal.y * normal.y))))).z;
   vec3 tmpvar_87;
   tmpvar_87 = normal.xyz;
   float x;
   x = (tmpvar_78 - _Cutoff);
-  if ((x < 0.000000)) {
+  if ((x < 0.0)) {
     discard;
   };
   vec3 tmpvar_90;
@@ -51,8 +51,8 @@ void main ()
   float tmpvar_103;
   tmpvar_103 = dot (tmpvar_87, tmpvar_90);
   float tmpvar_110;
-  tmpvar_110 = max (0.000000, -(tmpvar_103));
-  c_i0_i1.xyz = ((((tmpvar_73 * (max (0.000000, ((tmpvar_103 * 0.500000) + 0.500000)) + ((tmpvar_76 * tmpvar_110) * 2.000000))) + ((pow (max (0.000000, dot (tmpvar_87, normalize ((tmpvar_90 + normalize (tmpvar_9.xyz))))), (tmpvar_81 * 128.000000)) * tmpvar_77) * (1.000000 - clamp (ceil (tmpvar_110), 0.000000, 1.000000)))) * _LightColor0.xyz) * ((texture2D (_LightTextureB0, vec2(dot (tmpvar_11, tmpvar_11))).w * textureCube (_LightTexture0, tmpvar_11).w) * 2.000000)).xyz;
+  tmpvar_110 = max (0.0, -(tmpvar_103));
+  c_i0_i1.xyz = ((((tmpvar_73 * (max (0.0, ((tmpvar_103 * 0.500000) + 0.500000)) + ((tmpvar_76 * tmpvar_110) * 2.0))) + ((pow (max (0.0, dot (tmpvar_87, normalize ((tmpvar_90 + normalize (tmpvar_9.xyz))))), (tmpvar_81 * 128.0)) * tmpvar_77) * (1.0 - clamp (ceil (tmpvar_110), 0.0, 1.0)))) * _LightColor0.xyz) * ((texture2D (_LightTextureB0, vec2(dot (tmpvar_11, tmpvar_11))).w * textureCube (_LightTexture0, tmpvar_11).w) * 2.0)).xyz;
   c = c_i0_i1;
   c.w = (vec4(tmpvar_78)).w;
   gl_FragData[0] = c.xyzw;

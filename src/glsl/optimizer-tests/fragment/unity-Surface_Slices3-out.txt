@@ -20,8 +20,8 @@ void main ()
   tmpvar_12 = gl_TexCoord[5].xyz;
   vec4 res;
   float x;
-  x = (fract (((tmpvar_12.y + (tmpvar_12.z * 0.100000)) * 5.000000)) - 0.500000);
-  if ((x < 0.000000)) {
+  x = (fract (((tmpvar_12.y + (tmpvar_12.z * 0.100000)) * 5.0)) - 0.500000);
+  if ((x < 0.0)) {
     discard;
   };
   vec4 tmpvar_42;
@@ -30,20 +30,20 @@ void main ()
   tmpvar_50 = (vec4(greaterThanEqual (tmpvar_42, _LightSplitsNear)).xyzw * vec4(lessThan (tmpvar_42, _LightSplitsFar)).xyzw);
   vec4 tmpvar_51;
   tmpvar_51.xyz = ((((tmpvar_2 * tmpvar_50.x) + (tmpvar_4 * tmpvar_50.y)) + (tmpvar_6 * tmpvar_50.z)) + (tmpvar_8 * tmpvar_50.w)).xyz;
-  tmpvar_51.w = 1.000000;
+  tmpvar_51.w = 1.0;
   vec4 tmpvar_53;
   tmpvar_53 = texture2D (_ShadowMapTexture, tmpvar_51.xy);
   float tmpvar_54;
   if ((tmpvar_53.x < tmpvar_51.z)) {
     tmpvar_54 = _LightShadowData.x;
   } else {
-    tmpvar_54 = 1.000000;
+    tmpvar_54 = 1.0;
   };
-  res.x = clamp ((tmpvar_54 + clamp (tmpvar_10.y, 0.000000, 1.000000)), 0.000000, 1.000000);
-  res.y = 1.000000;
+  res.x = clamp ((tmpvar_54 + clamp (tmpvar_10.y, 0.0, 1.0)), 0.0, 1.0);
+  res.y = 1.0;
   vec2 enc;
   vec2 tmpvar_70;
-  tmpvar_70 = fract ((vec2(1.000000, 255.000000) * (1.000000 - (tmpvar_42 * _ProjectionParams.w)).x));
+  tmpvar_70 = fract ((vec2(1.0, 255.0) * (1.0 - (tmpvar_42 * _ProjectionParams.w)).x));
   enc = tmpvar_70;
   enc.x = (tmpvar_70.x - (tmpvar_70.y * 0.003922));
   res.zw = enc.xy;

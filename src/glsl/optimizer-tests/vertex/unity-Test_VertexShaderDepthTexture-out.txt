@@ -9,14 +9,14 @@ void main ()
   tmpvar_35 = tmpvar_1;
   vec4 tmpvar_16;
   tmpvar_16.xy = tmpvar_5.xy;
-  tmpvar_16.z = 0.000000;
-  tmpvar_16.w = 0.000000;
-  tmpvar_35.y = (vec2((tmpvar_1.y + ((1.000000 - texture2DLod (_CameraDepthTexture, tmpvar_16.xy, 0.000000).x) * 3.000000)))).y;
+  tmpvar_16.z = 0.0;
+  tmpvar_16.w = 0.0;
+  tmpvar_35.y = (vec2((tmpvar_1.y + ((1.0 - texture2DLod (_CameraDepthTexture, tmpvar_16.xy, 0.0).x) * 3.0)))).y;
   gl_Position = (gl_ModelViewProjectionMatrix * tmpvar_35).xyzw;
   vec4 tmpvar_11;
   tmpvar_11.xy = tmpvar_5.xy;
-  tmpvar_11.z = 0.000000;
-  tmpvar_11.w = 0.000000;
+  tmpvar_11.z = 0.0;
+  tmpvar_11.w = 0.0;
   gl_TexCoord[0] = tmpvar_11;
 }
 

@@ -65,10 +65,10 @@ vec4 LightingToonRamp (
   tmpvar_5 = tmpvar_4.xyz;
   ramp = tmpvar_5;
   vec3 tmpvar_6;
-  tmpvar_6 = (((s.Albedo * _LightColor0.xyz) * ramp) * (atten * 2.000000));
+  tmpvar_6 = (((s.Albedo * _LightColor0.xyz) * ramp) * (atten * 2.0));
   c.xyz = tmpvar_6.xyz;
   float tmpvar_7;
-  tmpvar_7 = 0.000000;
+  tmpvar_7 = 0.0;
   c.w = (vec4(tmpvar_7)).w;
   return c;
 }
@@ -85,19 +85,19 @@ vec4 frag_surf (
   tmpvar_1 = IN.hip_pack0.xy;
   surfIN.uv_MainTex = tmpvar_1;
   vec3 tmpvar_2;
-  tmpvar_2 = vec3(0.000000, 0.000000, 0.000000);
+  tmpvar_2 = vec3(0.0, 0.0, 0.0);
   o.Albedo = tmpvar_2;
   vec3 tmpvar_3;
-  tmpvar_3 = vec3(0.000000, 0.000000, 0.000000);
+  tmpvar_3 = vec3(0.0, 0.0, 0.0);
   o.Emission = tmpvar_3;
   float tmpvar_4;
-  tmpvar_4 = 0.000000;
+  tmpvar_4 = 0.0;
   o.Specular = tmpvar_4;
   float tmpvar_5;
-  tmpvar_5 = 0.000000;
+  tmpvar_5 = 0.0;
   o.Alpha = tmpvar_5;
   float tmpvar_6;
-  tmpvar_6 = 0.000000;
+  tmpvar_6 = 0.0;
   o.Gloss = tmpvar_6;
   vec3 tmpvar_7;
   tmpvar_7 = IN.normal;
@@ -109,12 +109,12 @@ vec4 frag_surf (
   vec4 tmpvar_9;
   tmpvar_9 = texture2D (_LightTexture0, IN._LightCoord);
   vec4 tmpvar_10;
-  tmpvar_10 = LightingToonRamp (o, lightDir, (tmpvar_9.w * 1.000000));
+  tmpvar_10 = LightingToonRamp (o, lightDir, (tmpvar_9.w * 1.0));
   vec4 tmpvar_11;
   tmpvar_11 = tmpvar_10;
   c = tmpvar_11;
   float tmpvar_12;
-  tmpvar_12 = 0.000000;
+  tmpvar_12 = 0.0;
   c.w = (vec4(tmpvar_12)).w;
   return c;
 }
@@ -124,7 +124,7 @@ void main ()
   v2f_surf xlt_IN;
   vec4 xl_retval;
   vec4 tmpvar_1;
-  tmpvar_1 = vec4(0.000000, 0.000000, 0.000000, 0.000000);
+  tmpvar_1 = vec4(0.0, 0.0, 0.0, 0.0);
   xlt_IN.pos = tmpvar_1;
   float tmpvar_2;
   tmpvar_2 = xlv_FOG.x;

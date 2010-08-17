@@ -13,24 +13,24 @@ void main ()
   vec4 tmpvar_31;
   tmpvar_31.x = tmpvar_3.x;
   tmpvar_31.y = tmpvar_3.y;
-  tmpvar_31.z = 0.000000;
-  tmpvar_31.w = 0.000000;
+  tmpvar_31.z = 0.0;
+  tmpvar_31.w = 0.0;
   vec4 tmpvar_37;
   tmpvar_37.x = tmpvar_3.x;
   tmpvar_37.y = tmpvar_3.y;
-  tmpvar_37.z = 0.000000;
-  tmpvar_37.w = 0.000000;
+  tmpvar_37.z = 0.0;
+  tmpvar_37.w = 0.0;
   gl_Position = tmpvar_25.xyzw;
   gl_TexCoord[0] = tmpvar_62.xyzw;
   vec4 tmpvar_11;
   tmpvar_11.xy = (gl_TextureMatrix[1] * tmpvar_31).xy;
-  tmpvar_11.z = 0.000000;
-  tmpvar_11.w = 0.000000;
+  tmpvar_11.z = 0.0;
+  tmpvar_11.w = 0.0;
   gl_TexCoord[1] = tmpvar_11;
   vec4 tmpvar_13;
   tmpvar_13.xy = (gl_TextureMatrix[2] * tmpvar_37).xy;
-  tmpvar_13.z = 0.000000;
-  tmpvar_13.w = 0.000000;
+  tmpvar_13.z = 0.0;
+  tmpvar_13.w = 0.0;
   gl_TexCoord[2] = tmpvar_13;
 }
 

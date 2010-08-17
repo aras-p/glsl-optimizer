@@ -32,14 +32,14 @@ void main ()
   gl_Position = tmpvar_28.xyzw;
   vec4 tmpvar_17;
   tmpvar_17.x = tmpvar_28.z;
-  tmpvar_17.y = 0.000000;
-  tmpvar_17.z = 0.000000;
-  tmpvar_17.w = 0.000000;
+  tmpvar_17.y = 0.0;
+  tmpvar_17.z = 0.0;
+  tmpvar_17.w = 0.0;
   xlv_FOG = tmpvar_17;
   gl_TexCoord[0] = tmpvar_79.xyzw;
   vec4 tmpvar_21;
   tmpvar_21.xyz = (tmpvar_34 * (_World2Object * _WorldSpaceLightPos0).xyz).xyz;
-  tmpvar_21.w = 0.000000;
+  tmpvar_21.w = 0.0;
   gl_TexCoord[1] = tmpvar_21;
 }
 

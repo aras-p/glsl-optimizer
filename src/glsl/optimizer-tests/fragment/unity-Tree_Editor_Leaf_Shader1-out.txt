@@ -26,11 +26,11 @@ void main ()
   vec2 tmpvar_54;
   tmpvar_54 = gl_TexCoord[5].xy;
   vec4 normal;
-  normal.xy = ((texture2D (_BumpMap, tmpvar_54).wy * 2.000000) - 1.000000);
-  normal.z = (vec3(sqrt (((1.000000 - (normal.x * normal.x)) - (normal.y * normal.y))))).z;
+  normal.xy = ((texture2D (_BumpMap, tmpvar_54).wy * 2.0) - 1.0);
+  normal.z = (vec3(sqrt (((1.0 - (normal.x * normal.x)) - (normal.y * normal.y))))).z;
   float x;
   x = ((texture2D (_MainTex, tmpvar_54).w * gl_Color.w) - _Cutoff);
-  if ((x < 0.000000)) {
+  if ((x < 0.0)) {
     discard;
   };
   vec4 tmpvar_78;
@@ -39,20 +39,20 @@ void main ()
   tmpvar_86 = (vec4(greaterThanEqual (tmpvar_78, _LightSplitsNear)).xyzw * vec4(lessThan (tmpvar_78, _LightSplitsFar)).xyzw);
   vec4 tmpvar_87;
   tmpvar_87.xyz = ((((tmpvar_2 * tmpvar_86.x) + (tmpvar_4 * tmpvar_86.y)) + (tmpvar_6 * tmpvar_86.z)) + (tmpvar_8 * tmpvar_86.w)).xyz;
-  tmpvar_87.w = 1.000000;
+  tmpvar_87.w = 1.0;
   vec4 tmpvar_89;
   tmpvar_89 = texture2D (_ShadowMapTexture, tmpvar_87.xy);
   float tmpvar_90;
   if ((tmpvar_89.x < tmpvar_87.z)) {
     tmpvar_90 = _LightShadowData.x;
   } else {
-    tmpvar_90 = 1.000000;
+    tmpvar_90 = 1.0;
   };
-  res.x = clamp ((tmpvar_90 + clamp (tmpvar_10.y, 0.000000, 1.000000)), 0.000000, 1.000000);
-  res.y = 1.000000;
+  res.x = clamp ((tmpvar_90 + clamp (tmpvar_10.y, 0.0, 1.0)), 0.0, 1.0);
+  res.y = 1.0;
   vec2 enc;
   vec2 tmpvar_106;
-  tmpvar_106 = fract ((vec2(1.000000, 255.000000) * (1.000000 - (tmpvar_78 * _ProjectionParams.w)).x));
+  tmpvar_106 = fract ((vec2(1.0, 255.0) * (1.0 - (tmpvar_78 * _ProjectionParams.w)).x));
   enc = tmpvar_106;
   enc.x = (tmpvar_106.x - (tmpvar_106.y * 0.003922));
   res.zw = enc.xy;

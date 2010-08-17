@@ -9,11 +9,11 @@ void main ()
   tmpvar_48[1] = gl_TexCoord[1].xy;
   vec4 col;
   vec4 normal;
-  normal.xy = ((texture2D (_BumpMap, tmpvar_48[0]).wy * 2.000000) - 1.000000);
-  normal.z = (vec3(sqrt (((1.000000 - (normal.x * normal.x)) - (normal.y * normal.y))))).z;
+  normal.xy = ((texture2D (_BumpMap, tmpvar_48[0]).wy * 2.0) - 1.0);
+  normal.z = (vec3(sqrt (((1.0 - (normal.x * normal.x)) - (normal.y * normal.y))))).z;
   vec4 normal_i0;
-  normal_i0.xy = ((texture2D (_BumpMap, tmpvar_48[1]).wy * 2.000000) - 1.000000);
-  normal_i0.z = (vec3(sqrt (((1.000000 - (normal_i0.x * normal_i0.x)) - (normal_i0.y * normal_i0.y))))).z;
+  normal_i0.xy = ((texture2D (_BumpMap, tmpvar_48[1]).wy * 2.0) - 1.0);
+  normal_i0.z = (vec3(sqrt (((1.0 - (normal_i0.x * normal_i0.x)) - (normal_i0.y * normal_i0.y))))).z;
   float tmpvar_37;
   tmpvar_37 = dot (gl_TexCoord[2].xyz, ((normal.xyz + normal_i0.xyz) * 0.500000));
   vec2 tmpvar_39;

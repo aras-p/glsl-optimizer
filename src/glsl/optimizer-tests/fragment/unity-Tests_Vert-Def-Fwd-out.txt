@@ -2,6 +2,6 @@ varying vec4 xlv_FOG;
 uniform vec4 _LightColor0;
 void main ()
 {
-  gl_FragData[0] = vec4(0.000000, 0.000000, 0.000000, 0.000000);
+  gl_FragData[0] = vec4(0.0, 0.0, 0.0, 0.0);
 }
 

@@ -29,7 +29,7 @@ float xll_saturate (
 )
 {
   float tmpvar_1;
-  tmpvar_1 = clamp (x, 0.000000, 1.000000);
+  tmpvar_1 = clamp (x, 0.0, 1.0);
   return tmpvar_1;
 }
 
@@ -38,7 +38,7 @@ vec2 xll_saturate (
 )
 {
   vec2 tmpvar_1;
-  tmpvar_1 = clamp (x, 0.000000, 1.000000);
+  tmpvar_1 = clamp (x, 0.0, 1.0);
   return tmpvar_1;
 }
 
@@ -47,7 +47,7 @@ vec3 xll_saturate (
 )
 {
   vec3 tmpvar_1;
-  tmpvar_1 = clamp (x, 0.000000, 1.000000);
+  tmpvar_1 = clamp (x, 0.0, 1.0);
   return tmpvar_1;
 }
 
@@ -56,7 +56,7 @@ vec4 xll_saturate (
 )
 {
   vec4 tmpvar_1;
-  tmpvar_1 = clamp (x, 0.000000, 1.000000);
+  tmpvar_1 = clamp (x, 0.0, 1.0);
   return tmpvar_1;
 }
 
@@ -65,9 +65,9 @@ mat2 xll_saturate (
 )
 {
   vec2 tmpvar_1;
-  tmpvar_1 = clamp (m[0], 0.000000, 1.000000);
+  tmpvar_1 = clamp (m[0], 0.0, 1.0);
   vec2 tmpvar_2;
-  tmpvar_2 = clamp (m[1], 0.000000, 1.000000);
+  tmpvar_2 = clamp (m[1], 0.0, 1.0);
   mat2 tmpvar_3;
   vec2 tmpvar_4;
   tmpvar_4 = tmpvar_1;
@@ -83,11 +83,11 @@ mat3 xll_saturate (
 )
 {
   vec3 tmpvar_1;
-  tmpvar_1 = clamp (m[0], 0.000000, 1.000000);
+  tmpvar_1 = clamp (m[0], 0.0, 1.0);
   vec3 tmpvar_2;
-  tmpvar_2 = clamp (m[1], 0.000000, 1.000000);
+  tmpvar_2 = clamp (m[1], 0.0, 1.0);
   vec3 tmpvar_3;
-  tmpvar_3 = clamp (m[2], 0.000000, 1.000000);
+  tmpvar_3 = clamp (m[2], 0.0, 1.0);
   mat3 tmpvar_4;
   vec3 tmpvar_5;
   tmpvar_5 = tmpvar_1;
@@ -106,13 +106,13 @@ mat4 xll_saturate (
 )
 {
   vec4 tmpvar_1;
-  tmpvar_1 = clamp (m[0], 0.000000, 1.000000);
+  tmpvar_1 = clamp (m[0], 0.0, 1.0);
   vec4 tmpvar_2;
-  tmpvar_2 = clamp (m[1], 0.000000, 1.000000);
+  tmpvar_2 = clamp (m[1], 0.0, 1.0);
   vec4 tmpvar_3;
-  tmpvar_3 = clamp (m[2], 0.000000, 1.000000);
+  tmpvar_3 = clamp (m[2], 0.0, 1.0);
   vec4 tmpvar_4;
-  tmpvar_4 = clamp (m[3], 0.000000, 1.000000);
+  tmpvar_4 = clamp (m[3], 0.0, 1.0);
   mat4 tmpvar_5;
   vec4 tmpvar_6;
   tmpvar_6 = tmpvar_1;
@@ -156,7 +156,7 @@ vec2 EncodeFloatRG (
   float kEncodeBit;
   vec2 kEncodeMul;
   vec2 tmpvar_1;
-  tmpvar_1 = vec2(1.000000, 255.000000);
+  tmpvar_1 = vec2(1.0, 255.0);
   kEncodeMul = tmpvar_1;
   float tmpvar_2;
   tmpvar_2 = 0.003922;
@@ -190,19 +190,19 @@ vec4 frag_surf (
   Input surfIN;
   SurfaceOutput o;
   vec3 tmpvar_1;
-  tmpvar_1 = vec3(0.000000, 0.000000, 0.000000);
+  tmpvar_1 = vec3(0.0, 0.0, 0.0);
   o.Albedo = tmpvar_1;
   vec3 tmpvar_2;
-  tmpvar_2 = vec3(0.000000, 0.000000, 0.000000);
+  tmpvar_2 = vec3(0.0, 0.0, 0.0);
   o.Emission = tmpvar_2;
   float tmpvar_3;
-  tmpvar_3 = 0.000000;
+  tmpvar_3 = 0.0;
   o.Specular = tmpvar_3;
   float tmpvar_4;
-  tmpvar_4 = 0.000000;
+  tmpvar_4 = 0.0;
   o.Alpha = tmpvar_4;
   float tmpvar_5;
-  tmpvar_5 = 0.000000;
+  tmpvar_5 = 0.0;
   o.Gloss = tmpvar_5;
   surf (surfIN, o);
   vec4 tmpvar_6;
@@ -229,7 +229,7 @@ vec4 frag_surf (
   weights = tmpvar_14;
   vec4 tmpvar_15;
   tmpvar_15.xyz = ((((IN._ShadowCoord0 * weights.x) + (IN._ShadowCoord1 * weights.y)) + (IN._ShadowCoord2 * weights.z)) + (IN._ShadowCoord3 * weights.w)).xyz;
-  tmpvar_15.w = (vec4(1.000000)).w;
+  tmpvar_15.w = (vec4(1.0)).w;
   vec4 tmpvar_16;
   tmpvar_16 = tmpvar_15;
   coord = tmpvar_16;
@@ -239,7 +239,7 @@ vec4 frag_surf (
   if ((tmpvar_17.x < coord.z)) {
     tmpvar_18 = _LightShadowData.x;
   } else {
-    tmpvar_18 = 1.000000;
+    tmpvar_18 = 1.0;
   };
   float tmpvar_19;
   tmpvar_19 = tmpvar_18;
@@ -255,10 +255,10 @@ vec4 frag_surf (
   tmpvar_23 = faded;
   res.x = tmpvar_23;
   float tmpvar_24;
-  tmpvar_24 = 1.000000;
+  tmpvar_24 = 1.0;
   res.y = (vec2(tmpvar_24)).y;
   vec2 tmpvar_25;
-  tmpvar_25 = EncodeFloatRG ((1.000000 - (z * _ProjectionParams.w)).x);
+  tmpvar_25 = EncodeFloatRG ((1.0 - (z * _ProjectionParams.w)).x);
   vec2 tmpvar_26;
   tmpvar_26 = tmpvar_25;
   res.zw = tmpvar_26.xy;
@@ -270,7 +270,7 @@ void main ()
   v2f_surf xlt_IN;
   vec4 xl_retval;
   vec4 tmpvar_1;
-  tmpvar_1 = vec4(0.000000, 0.000000, 0.000000, 0.000000);
+  tmpvar_1 = vec4(0.0, 0.0, 0.0, 0.0);
   xlt_IN.pos = tmpvar_1;
   vec3 tmpvar_2;
   tmpvar_2 = gl_TexCoord[0].xyz;

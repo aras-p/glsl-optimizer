@@ -17,10 +17,10 @@ vec4 frag (
   tmpvar_2 = tmpvar_1;
   tex = tmpvar_2;
   vec3 tmpvar_3;
-  tmpvar_3 = (((_TintColor.xyz * tex.xyz) * i.color.xyz) * 2.000000);
+  tmpvar_3 = (((_TintColor.xyz * tex.xyz) * i.color.xyz) * 2.0);
   col.xyz = tmpvar_3.xyz;
   float tmpvar_4;
-  tmpvar_4 = ((1.000000 - tex.w) * ((_TintColor.w * i.color.w) * 2.000000));
+  tmpvar_4 = ((1.0 - tex.w) * ((_TintColor.w * i.color.w) * 2.0));
   col.w = (vec4(tmpvar_4)).w;
   return col;
 }
@@ -30,7 +30,7 @@ void main ()
   v2f xlt_i;
   vec4 xl_retval;
   vec4 tmpvar_1;
-  tmpvar_1 = vec4(0.000000, 0.000000, 0.000000, 0.000000);
+  tmpvar_1 = vec4(0.0, 0.0, 0.0, 0.0);
   xlt_i.vertex = tmpvar_1;
   vec4 tmpvar_2;
   tmpvar_2 = gl_Color.xyzw;

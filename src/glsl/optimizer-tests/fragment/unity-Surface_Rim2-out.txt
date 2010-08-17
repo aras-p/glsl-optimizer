@@ -14,12 +14,12 @@ void main ()
   vec4 tmpvar_58;
   tmpvar_58 = -(log2 (texture2DProj (_LightBuffer, gl_TexCoord[2].xyzw)));
   light = tmpvar_58;
-  light.xyz = (tmpvar_58.xyz + mix ((2.000000 * texture2D (unity_LightmapInd, tmpvar_11.xy).xyz), (2.000000 * texture2D (unity_Lightmap, tmpvar_11.xy).xyz), vec3(clamp (tmpvar_11.z, 0.000000, 1.000000)))).xyz;
+  light.xyz = (tmpvar_58.xyz + mix ((2.0 * texture2D (unity_LightmapInd, tmpvar_11.xy).xyz), (2.0 * texture2D (unity_Lightmap, tmpvar_11.xy).xyz), vec3(clamp (tmpvar_11.z, 0.0, 1.0)))).xyz;
   vec4 c;
   c.xyz = (texture2D (_MainTex, gl_TexCoord[0].xy).xyz * light.xyz).xyz;
-  c.w = 0.000000;
+  c.w = 0.0;
   col = c;
-  col.xyz = (c.xyz + (_RimColor.xyz * pow ((1.000000 - clamp (dot (normalize (gl_TexCoord[1].xyz), gl_TexCoord[3].xyz), 0.000000, 1.000000)), _RimPower))).xyz;
+  col.xyz = (c.xyz + (_RimColor.xyz * pow ((1.0 - clamp (dot (normalize (gl_TexCoord[1].xyz), gl_TexCoord[3].xyz), 0.0, 1.0)), _RimPower))).xyz;
   gl_FragData[0] = col.xyzw;
 }
 

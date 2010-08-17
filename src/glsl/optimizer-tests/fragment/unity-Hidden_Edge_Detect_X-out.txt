@@ -11,11 +11,11 @@ void main ()
   tmpvar_13 = texture2D (_MainTex, tmpvar_25[0]);
   original = tmpvar_13;
   vec3 tmpvar_20;
-  tmpvar_20 = (((tmpvar_13.xyz * 2.000000) - texture2D (_MainTex, tmpvar_25[1]).xyz) - texture2D (_MainTex, tmpvar_25[2]).xyz);
+  tmpvar_20 = (((tmpvar_13.xyz * 2.0) - texture2D (_MainTex, tmpvar_25[1]).xyz) - texture2D (_MainTex, tmpvar_25[2]).xyz);
   float tmpvar_21;
   tmpvar_21 = dot (tmpvar_20, tmpvar_20);
   if ((tmpvar_21 >= _Treshold)) {
-    original.xyz = vec3(0.000000, 0.000000, 0.000000);
+    original.xyz = vec3(0.0, 0.0, 0.0);
   };
   gl_FragData[0] = original.xyzw;
 }

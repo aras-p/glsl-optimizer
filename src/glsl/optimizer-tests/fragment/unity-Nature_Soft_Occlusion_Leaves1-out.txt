@@ -17,7 +17,7 @@ void main ()
   tmpvar_28 = tmpvar_26.w;
   float x;
   x = (tmpvar_28 - _Cutoff);
-  if ((x < 0.000000)) {
+  if ((x < 0.0)) {
     discard;
   };
   vec4 tmpvar_32;
