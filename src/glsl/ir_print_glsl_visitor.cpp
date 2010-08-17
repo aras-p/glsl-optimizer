@@ -26,6 +26,7 @@
 #include "glsl_types.h"
 #include "glsl_parser_extras.h"
 #include "ir_unused_structs.h"
+#include <math.h>
 
 static char* print_type(char* buffer, const glsl_type *t, bool arraySize);
 static char* print_type_post(char* buffer, const glsl_type *t, bool arraySize);
