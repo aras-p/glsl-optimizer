@@ -108,7 +108,7 @@ typedef enum AddressMode
 typedef enum SrcRegisterType 
 {
     SRC_REG_TEMPORARY      = 0,
-    SRC_REG_INPUT          = 1,
+    SRC_REG_GPR            = 1,
     SRC_REG_CONSTANT       = 2,
     SRC_REG_ALT_TEMPORARY  = 3,
     SRC_REC_LITERAL        = 4, 

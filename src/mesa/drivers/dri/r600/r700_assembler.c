@@ -1357,7 +1357,7 @@ GLboolean assemble_src(r700_AssemblerBase *pAsm,
             break;      
         case PROGRAM_INPUT:
             setaddrmode_PVSSRC(&(pAsm->S[fld].src), ADDR_ABSOLUTE); 
-            pAsm->S[fld].src.rtype = SRC_REG_INPUT;
+            pAsm->S[fld].src.rtype = SRC_REG_GPR;
             switch (pAsm->currentShaderType)
             {
             case SPT_FP:
@@ -1368,6 +1368,19 @@ GLboolean assemble_src(r700_AssemblerBase *pAsm,
                 break;
             }
             break;      
+        case PROGRAM_OUTPUT:
+            setaddrmode_PVSSRC(&(pAsm->S[fld].src), ADDR_ABSOLUTE);
+            pAsm->S[fld].src.rtype = SRC_REG_GPR;
+            switch (pAsm->currentShaderType)
+            {
+            case SPT_FP:
+                pAsm->S[fld].src.reg = pAsm->uiFP_OutputMap[pILInst->SrcReg[src].Index];
+                break;
+            case SPT_VP:
+                pAsm->S[fld].src.reg = pAsm->ucVP_OutputMap[pILInst->SrcReg[src].Index];
+                break;
+            }
+            break;
         default:
             radeon_error("Invalid source argument type : %d \n", pILInst->SrcReg[src].File);
             return GL_FALSE;
@@ -1521,7 +1534,7 @@ GLboolean tex_src(r700_AssemblerBase *pAsm)
                         bValidTexCoord = GL_TRUE;
                         pAsm->S[0].src.reg   =
                             pAsm->ucVP_AttributeMap[pILInst->SrcReg[0].Index];
-                        pAsm->S[0].src.rtype = SRC_REG_INPUT;
+                        pAsm->S[0].src.rtype = SRC_REG_GPR;
                         break;
                 }
             }
@@ -1544,7 +1557,7 @@ GLboolean tex_src(r700_AssemblerBase *pAsm)
                         bValidTexCoord = GL_TRUE;
                         pAsm->S[0].src.reg   =
                             pAsm->uiFP_AttributeMap[pILInst->SrcReg[0].Index];
-                        pAsm->S[0].src.rtype = SRC_REG_INPUT;
+                        pAsm->S[0].src.rtype = SRC_REG_GPR;
                         break;
                     case FRAG_ATTRIB_FACE:
                         fprintf(stderr, "FRAG_ATTRIB_FACE unsupported\n");
@@ -1560,7 +1573,7 @@ GLboolean tex_src(r700_AssemblerBase *pAsm)
 				    bValidTexCoord = GL_TRUE;
                     pAsm->S[0].src.reg   =
                         pAsm->uiFP_AttributeMap[pILInst->SrcReg[0].Index];
-                    pAsm->S[0].src.rtype = SRC_REG_INPUT;
+                    pAsm->S[0].src.rtype = SRC_REG_GPR;
                 }
             }
 
@@ -1745,7 +1758,7 @@ GLboolean assemble_alu_src(R700ALUInstruction*  alu_instruction_ptr,
     else 
     {
         if ( (pSource->rtype == SRC_REG_TEMPORARY) || 
-             (pSource->rtype == SRC_REG_INPUT)
+             (pSource->rtype == SRC_REG_GPR)
         ) 
         {
             src_sel = pSource->reg;
@@ -2384,7 +2397,7 @@ GLboolean assemble_alu_instruction(r700_AssemblerBase *pAsm)
                     default: channel_swizzle = SQ_SEL_MASK; break;
                 }
                 if ( ((pSource[j]->rtype == SRC_REG_TEMPORARY) || 
-                     (pSource[j]->rtype == SRC_REG_INPUT))
+                     (pSource[j]->rtype == SRC_REG_GPR))
                      && (channel_swizzle <= SQ_SEL_W) )
                 {                    
                     chan_counter[channel_swizzle]++;                        
