@@ -291,6 +291,8 @@ def generate(env):
                 ]
         if env['machine'] == 'x86_64':
             ccflags += ['-m64']
+            if platform == 'darwin':
+                ccflags += ['-fno-common']
         # See also:
         # - http://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html
         ccflags += [
