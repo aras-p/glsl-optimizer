@@ -1002,7 +1002,7 @@ trace_context_set_index_buffer(struct pipe_context *_pipe,
    trace_dump_call_begin("pipe_context", "set_index_buffer");
 
    trace_dump_arg(ptr, pipe);
-   trace_dump_arg(index_buffer, ib);
+   trace_dump_arg(index_buffer, _ib);
 
    pipe->set_index_buffer(pipe, ib);
 
