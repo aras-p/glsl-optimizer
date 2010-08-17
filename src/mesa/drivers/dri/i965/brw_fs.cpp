@@ -46,6 +46,7 @@ enum register_file {
    GRF = BRW_GENERAL_REGISTER_FILE,
    MRF = BRW_MESSAGE_REGISTER_FILE,
    IMM = BRW_IMMEDIATE_VALUE,
+   FIXED_HW_REG,
    BAD_FILE
 };
 
@@ -61,6 +62,7 @@ enum fs_opcodes {
    FS_OPCODE_COS,
    FS_OPCODE_DDX,
    FS_OPCODE_DDY,
+   FS_OPCODE_LINTERP,
 };
 
 static int using_new_fs = -1;
@@ -117,6 +119,10 @@ brw_link_shader(GLcontext *ctx, struct gl_shader_program *prog)
 	 clone_ir_list(mem_ctx, shader->ir, shader->base.ir);
 
 	 do_mat_op_to_vec(shader->ir);
+	 do_div_to_mul_rcp(shader->ir);
+	 do_sub_to_add_neg(shader->ir);
+	 do_explog_to_explog2(shader->ir);
+
 	 brw_do_channel_expressions(shader->ir);
 	 brw_do_vector_splitting(shader->ir);
 
@@ -238,6 +244,18 @@ public:
       this->abs = 0;
    }
 
+   /** Fixed brw_reg Immediate value constructor. */
+   fs_reg(struct brw_reg fixed_hw_reg)
+   {
+      this->file = FIXED_HW_REG;
+      this->fixed_hw_reg = fixed_hw_reg;
+      this->reg = 0;
+      this->hw_reg = 0;
+      this->type = fixed_hw_reg.type;
+      this->negate = 0;
+      this->abs = 0;
+   }
+
    fs_reg(enum register_file file, int hw_reg);
    fs_reg(class fs_visitor *v, const struct glsl_type *type);
 
@@ -253,6 +271,7 @@ public:
    int type;
    bool negate;
    bool abs;
+   struct brw_reg fixed_hw_reg;
 
    /** Value for file == BRW_IMMMEDIATE_FILE */
    union {
@@ -262,7 +281,7 @@ public:
    } imm;
 };
 
-static const fs_reg reg_undef(BAD_FILE, -1);
+static const fs_reg reg_undef;
 static const fs_reg reg_null(ARF, BRW_ARF_NULL);
 
 class fs_inst : public exec_node {
@@ -282,23 +301,21 @@ public:
    fs_inst()
    {
       this->opcode = BRW_OPCODE_NOP;
-      this->dst = reg_undef;
-      this->src[0] = reg_undef;
-      this->src[1] = reg_undef;
       this->saturate = false;
       this->conditional_mod = BRW_CONDITIONAL_NONE;
       this->predicated = false;
    }
+
    fs_inst(int opcode, fs_reg dst, fs_reg src0)
    {
       this->opcode = opcode;
       this->dst = dst;
       this->src[0] = src0;
-      this->src[1] = reg_undef;
       this->saturate = false;
       this->conditional_mod = BRW_CONDITIONAL_NONE;
       this->predicated = false;
    }
+
    fs_inst(int opcode, fs_reg dst, fs_reg src0, fs_reg src1)
    {
       this->opcode = opcode;
@@ -310,9 +327,21 @@ public:
       this->predicated = false;
    }
 
+   fs_inst(int opcode, fs_reg dst, fs_reg src0, fs_reg src1, fs_reg src2)
+   {
+      this->opcode = opcode;
+      this->dst = dst;
+      this->src[0] = src0;
+      this->src[1] = src1;
+      this->src[2] = src2;
+      this->saturate = false;
+      this->conditional_mod = BRW_CONDITIONAL_NONE;
+      this->predicated = false;
+   }
+
    int opcode; /* BRW_OPCODE_* or FS_OPCODE_* */
    fs_reg dst;
-   fs_reg src[2];
+   fs_reg src[3];
    bool saturate;
    bool predicated;
    int conditional_mod; /**< BRW_CONDITIONAL_* */
@@ -326,6 +355,8 @@ public:
    {
       this->c = c;
       this->p = &c->func;
+      this->brw = p->brw;
+      this->intel = &brw->intel;
       this->mem_ctx = talloc_new(NULL);
       this->shader = shader;
       this->fail = false;
@@ -337,6 +368,7 @@ public:
       this->frag_color = NULL;
       this->frag_data = NULL;
       this->frag_depth = NULL;
+      this->first_non_payload_grf = 0;
    }
    ~fs_visitor()
    {
@@ -365,13 +397,23 @@ public:
    void visit(ir_function_signature *ir);
 
    fs_inst *emit(fs_inst inst);
+   void assign_urb_setup();
    void assign_regs();
    void generate_code();
    void generate_fb_write(fs_inst *inst);
+   void generate_linterp(fs_inst *inst, struct brw_reg dst,
+			 struct brw_reg *src);
+   void generate_math(fs_inst *inst, struct brw_reg dst, struct brw_reg *src);
 
    void emit_dummy_fs();
+   void emit_interpolation();
+   void emit_pinterp(int location);
    void emit_fb_writes();
 
+   struct brw_reg interp_reg(int location, int channel);
+
+   struct brw_context *brw;
+   struct intel_context *intel;
    struct brw_wm_compile *c;
    struct brw_compile *p;
    struct brw_shader *shader;
@@ -380,11 +422,19 @@ public:
    int next_abstract_grf;
    struct hash_table *variable_ht;
    ir_variable *frag_color, *frag_data, *frag_depth;
+   int first_non_payload_grf;
 
    bool fail;
 
    /* Result of last visit() method. */
    fs_reg result;
+
+   fs_reg pixel_x;
+   fs_reg pixel_y;
+   fs_reg pixel_w;
+   fs_reg delta_x;
+   fs_reg delta_y;
+   fs_reg interp_attrs[64];
 
    int grf_used;
 
@@ -440,22 +490,25 @@ fs_visitor::variable_storage(ir_variable *var)
 void
 fs_visitor::visit(ir_variable *ir)
 {
-   fs_reg *reg;
+   fs_reg *reg = NULL;
 
    /* FINISHME */
-   assert(ir->mode != ir_var_uniform &&
-	  ir->mode != ir_var_in &&
-	  ir->mode != ir_var_inout);
+   assert(ir->mode != ir_var_uniform);
 
    if (strcmp(ir->name, "gl_FragColor") == 0) {
       this->frag_color = ir;
-   }
-
-   if (strcmp(ir->name, "gl_FragData") == 0) {
+   } else if (strcmp(ir->name, "gl_FragData") == 0) {
       this->frag_data = ir;
+   } else if (strcmp(ir->name, "gl_FragDepth") == 0) {
+      this->frag_depth = ir;
    }
 
-   reg = new(this->mem_ctx) fs_reg(this, ir->type);
+   if (ir->mode == ir_var_in) {
+      reg = &this->interp_attrs[ir->location];
+   }
+
+   if (!reg)
+      reg = new(this->mem_ctx) fs_reg(this, ir->type);
 
    hash_table_insert(this->variable_ht, reg, ir);
 }
@@ -576,6 +629,7 @@ fs_visitor::visit(ir_expression *ir)
       break;
    case ir_binop_div:
       assert(!"not reached: should be handled by ir_div_to_mul_rcp");
+      break;
    case ir_binop_mod:
       assert(!"ir_binop_mod should have been converted to b * fract(a/b)");
       break;
@@ -748,7 +802,35 @@ fs_visitor::visit(ir_texture *ir)
 void
 fs_visitor::visit(ir_swizzle *ir)
 {
-   assert(!"FINISHME");
+   ir->val->accept(this);
+   fs_reg val = this->result;
+
+   fs_reg result = fs_reg(this, ir->type);
+   this->result = result;
+
+   for (unsigned int i = 0; i < ir->type->vector_elements; i++) {
+      fs_reg channel = val;
+      int swiz = 0;
+
+      switch (i) {
+      case 0:
+	 swiz = ir->mask.x;
+	 break;
+      case 1:
+	 swiz = ir->mask.y;
+	 break;
+      case 2:
+	 swiz = ir->mask.z;
+	 break;
+      case 3:
+	 swiz = ir->mask.w;
+	 break;
+      }
+
+      channel.reg_offset += swiz;
+      emit(fs_inst(BRW_OPCODE_MOV, result, channel));
+      result.reg_offset++;
+   }
 }
 
 void
@@ -878,6 +960,118 @@ fs_visitor::emit_dummy_fs()
 			fs_reg(0)));
 }
 
+/* The register location here is relative to the start of the URB
+ * data.  It will get adjusted to be a real location before
+ * generate_code() time.
+ */
+struct brw_reg
+fs_visitor::interp_reg(int location, int channel)
+{
+   int regnr = location * 2 + channel / 2;
+   int stride = (channel & 1) * 4;
+
+   return brw_vec1_grf(regnr, stride);
+}
+
+/** Emits the interpolation for the varying inputs. */
+void
+fs_visitor::emit_interpolation()
+{
+   struct brw_reg g1_uw = retype(brw_vec1_grf(1, 0), BRW_REGISTER_TYPE_UW);
+   /* For now, the source regs for the setup URB data will be unset,
+    * since we don't know until codegen how many push constants we'll
+    * use, and therefore what the setup URB offset is.
+    */
+   fs_reg src_reg = reg_undef;
+
+   /* Compute the pixel centers. */
+   this->pixel_x = fs_reg(this, glsl_type::uint_type);
+   this->pixel_y = fs_reg(this, glsl_type::uint_type);
+   emit(fs_inst(BRW_OPCODE_ADD,
+		this->pixel_x,
+		fs_reg(stride(suboffset(g1_uw, 4), 2, 4, 0)),
+		fs_reg(brw_imm_v(0x10101010))));
+   emit(fs_inst(BRW_OPCODE_ADD,
+		this->pixel_y,
+		fs_reg(stride(suboffset(g1_uw, 5), 2, 4, 0)),
+		fs_reg(brw_imm_v(0x11001100))));
+
+   /* Compute the offsets from vertex 0 to the pixel centers */
+   this->delta_x = fs_reg(this, glsl_type::float_type);
+   this->delta_y = fs_reg(this, glsl_type::float_type);
+   emit(fs_inst(BRW_OPCODE_ADD,
+		this->delta_x,
+		this->pixel_x,
+		fs_reg(negate(brw_vec1_grf(1, 0)))));
+   emit(fs_inst(BRW_OPCODE_ADD,
+		this->delta_y,
+		this->pixel_y,
+		fs_reg(brw_vec1_grf(1, 1))));
+
+   /* Compute wpos.  Unlike many other varying inputs, we usually need it
+    * to produce 1/w, and the varying variable wouldn't show up.
+    */
+   fs_reg wpos = fs_reg(this, glsl_type::vec4_type);
+   this->interp_attrs[FRAG_ATTRIB_WPOS] = wpos;
+   emit(fs_inst(BRW_OPCODE_MOV, wpos, this->pixel_x)); /* FINISHME: ARB_fcc */
+   wpos.reg_offset++;
+   emit(fs_inst(BRW_OPCODE_MOV, wpos, this->pixel_y)); /* FINISHME: ARB_fcc */
+   wpos.reg_offset++;
+   emit(fs_inst(FS_OPCODE_LINTERP, wpos, this->delta_x, this->delta_y,
+		interp_reg(FRAG_ATTRIB_WPOS, 2)));
+   wpos.reg_offset++;
+   emit(fs_inst(FS_OPCODE_LINTERP, wpos, this->delta_x, this->delta_y,
+		interp_reg(FRAG_ATTRIB_WPOS, 3)));
+   /* Compute the pixel W value from wpos.w. */
+   this->pixel_w = fs_reg(this, glsl_type::float_type);
+   emit(fs_inst(FS_OPCODE_RCP, this->pixel_w, wpos));
+
+   /* FINISHME: gl_FrontFacing */
+
+   foreach_iter(exec_list_iterator, iter, *this->shader->ir) {
+      ir_instruction *ir = (ir_instruction *)iter.get();
+      ir_variable *var = ir->as_variable();
+
+      if (!var)
+	 continue;
+
+      if (var->mode != ir_var_in)
+	 continue;
+
+      /* If it's already set up (WPOS), skip. */
+      if (var->location == 0)
+	 continue;
+
+      emit_pinterp(var->location);
+   }
+}
+
+void
+fs_visitor::emit_pinterp(int location)
+{
+   fs_reg interp_attr = fs_reg(this, glsl_type::vec4_type);
+   this->interp_attrs[location] = interp_attr;
+
+   for (unsigned int i = 0; i < 4; i++) {
+      struct brw_reg interp = interp_reg(location, i);
+      emit(fs_inst(FS_OPCODE_LINTERP,
+		   interp_attr,
+		   this->delta_x,
+		   this->delta_y,
+		   fs_reg(interp)));
+      interp_attr.reg_offset++;
+   }
+   interp_attr.reg_offset -= 4;
+
+   for (unsigned int i = 0; i < 4; i++) {
+      emit(fs_inst(BRW_OPCODE_MUL,
+		   interp_attr,
+		   interp_attr,
+		   this->pixel_w));
+      interp_attr.reg_offset++;
+   }
+}
+
 void
 fs_visitor::emit_fb_writes()
 {
@@ -926,19 +1120,129 @@ fs_visitor::generate_fb_write(fs_inst *inst)
 		eot);
 }
 
+void
+fs_visitor::generate_linterp(fs_inst *inst,
+			     struct brw_reg dst, struct brw_reg *src)
+{
+   struct brw_reg delta_x = src[0];
+   struct brw_reg delta_y = src[1];
+   struct brw_reg interp = src[2];
+
+   if (brw->has_pln &&
+       delta_y.nr == delta_x.nr + 1 &&
+       (intel->gen >= 6 || (delta_x.nr & 1) == 0)) {
+      brw_PLN(p, dst, interp, delta_x);
+   } else {
+      brw_LINE(p, brw_null_reg(), interp, delta_x);
+      brw_MAC(p, dst, suboffset(interp, 1), delta_y);
+   }
+}
+
+void
+fs_visitor::generate_math(fs_inst *inst,
+			  struct brw_reg dst, struct brw_reg *src)
+{
+   int op;
+
+   switch (inst->opcode) {
+   case FS_OPCODE_RCP:
+      op = BRW_MATH_FUNCTION_INV;
+      break;
+   case FS_OPCODE_RSQ:
+      op = BRW_MATH_FUNCTION_RSQ;
+      break;
+   case FS_OPCODE_SQRT:
+      op = BRW_MATH_FUNCTION_SQRT;
+      break;
+   case FS_OPCODE_EXP2:
+      op = BRW_MATH_FUNCTION_EXP;
+      break;
+   case FS_OPCODE_LOG2:
+      op = BRW_MATH_FUNCTION_LOG;
+      break;
+   case FS_OPCODE_POW:
+      op = BRW_MATH_FUNCTION_POW;
+      break;
+   case FS_OPCODE_SIN:
+      op = BRW_MATH_FUNCTION_SIN;
+      break;
+   case FS_OPCODE_COS:
+      op = BRW_MATH_FUNCTION_COS;
+      break;
+   default:
+      assert(!"not reached: unknown math function");
+      op = 0;
+      break;
+   }
+
+   brw_MOV(p, brw_message_reg(2), src[0]);
+   if (inst->opcode == FS_OPCODE_POW) {
+      brw_MOV(p, brw_message_reg(3), src[1]);
+   }
+
+   brw_math(p, dst,
+	    op,
+	    inst->saturate ? BRW_MATH_SATURATE_SATURATE :
+	    BRW_MATH_SATURATE_NONE,
+	    2, brw_null_reg(),
+	    BRW_MATH_DATA_VECTOR,
+	    BRW_MATH_PRECISION_FULL);
+}
+
 static void
 trivial_assign_reg(int header_size, fs_reg *reg)
 {
    if (reg->file == GRF && reg->reg != 0) {
-      reg->hw_reg = header_size + reg->reg + reg->reg_offset;
+      reg->hw_reg = header_size + reg->reg - 1 + reg->reg_offset;
       reg->reg = 0;
    }
 }
 
 void
+fs_visitor::assign_urb_setup()
+{
+   int urb_start = c->key.nr_payload_regs; /* FINISHME: push constants */
+   int interp_reg_nr[FRAG_ATTRIB_MAX];
+
+   c->prog_data.urb_read_length = 0;
+
+   /* Figure out where each of the incoming setup attributes lands. */
+   for (unsigned int i = 0; i < FRAG_ATTRIB_MAX; i++) {
+      interp_reg_nr[i] = -1;
+
+      if (i != FRAG_ATTRIB_WPOS &&
+	  !(brw->fragment_program->Base.InputsRead & BITFIELD64_BIT(i)))
+	 continue;
+
+      /* Each attribute is 4 setup channels, each of which is half a reg. */
+      interp_reg_nr[i] = urb_start + c->prog_data.urb_read_length;
+      c->prog_data.urb_read_length += 2;
+   }
+
+   /* Map the register numbers for FS_OPCODE_LINTERP so that it uses
+    * the correct setup input.
+    */
+   foreach_iter(exec_list_iterator, iter, this->instructions) {
+      fs_inst *inst = (fs_inst *)iter.get();
+
+      if (inst->opcode != FS_OPCODE_LINTERP)
+	 continue;
+
+      assert(inst->src[2].file == FIXED_HW_REG);
+
+      int location = inst->src[2].fixed_hw_reg.nr / 2;
+      assert(interp_reg_nr[location] != -1);
+      inst->src[2].fixed_hw_reg.nr = (interp_reg_nr[location] +
+				      (inst->src[2].fixed_hw_reg.nr & 1));
+   }
+
+   this->first_non_payload_grf = urb_start + c->prog_data.urb_read_length;
+}
+
+void
 fs_visitor::assign_regs()
 {
-   int header_size = 2; /* FINISHME: header */
+   int header_size = this->first_non_payload_grf;
    int last_grf = 0;
 
    /* FINISHME: trivial assignment of register numbers */
@@ -957,50 +1261,60 @@ fs_visitor::assign_regs()
    this->grf_used = last_grf;
 }
 
+static struct brw_reg brw_reg_from_fs_reg(fs_reg *reg)
+{
+   struct brw_reg brw_reg;
+
+   switch (reg->file) {
+   case GRF:
+   case ARF:
+   case MRF:
+      brw_reg = brw_vec8_reg(reg->file,
+			    reg->hw_reg, 0);
+      brw_reg = retype(brw_reg, reg->type);
+      break;
+   case IMM:
+      switch (reg->type) {
+      case BRW_REGISTER_TYPE_F:
+	 brw_reg = brw_imm_f(reg->imm.f);
+	 break;
+      case BRW_REGISTER_TYPE_D:
+	 brw_reg = brw_imm_f(reg->imm.i);
+	 break;
+      case BRW_REGISTER_TYPE_UD:
+	 brw_reg = brw_imm_f(reg->imm.u);
+	 break;
+      default:
+	 assert(!"not reached");
+	 break;
+      }
+      break;
+   case FIXED_HW_REG:
+      brw_reg = reg->fixed_hw_reg;
+      break;
+   case BAD_FILE:
+      /* Probably unused. */
+      brw_reg = brw_null_reg();
+   }
+   if (reg->abs)
+      brw_reg = brw_abs(brw_reg);
+   if (reg->negate)
+      brw_reg = negate(brw_reg);
+
+   return brw_reg;
+}
+
 void
 fs_visitor::generate_code()
 {
-   this->grf_used = 2; /* header */
-
    foreach_iter(exec_list_iterator, iter, this->instructions) {
       fs_inst *inst = (fs_inst *)iter.get();
-      struct brw_reg src[2], dst;
+      struct brw_reg src[3], dst;
 
-      for (unsigned int i = 0; i < 2; i++) {
-	 switch (inst->src[i].file) {
-	 case GRF:
-	 case ARF:
-	 case MRF:
-	    src[i] = brw_vec8_reg(inst->src[i].file,
-				  inst->src[i].hw_reg, 0);
-	    src[i] = retype(src[i], inst->src[i].type);
-	    break;
-	 case IMM:
-	    switch (inst->src[i].type) {
-	    case BRW_REGISTER_TYPE_F:
-	       src[i] = brw_imm_f(inst->src[i].imm.f);
-	       break;
-	    case BRW_REGISTER_TYPE_D:
-	       src[i] = brw_imm_f(inst->src[i].imm.i);
-	       break;
-	    case BRW_REGISTER_TYPE_UD:
-	       src[i] = brw_imm_f(inst->src[i].imm.u);
-	       break;
-	    default:
-	       assert(!"not reached");
-	       break;
-	    }
-	    break;
-	 case BAD_FILE:
-	    /* Probably unused. */
-	    src[i] = brw_null_reg();
-	 }
-	 if (inst->src[i].abs)
-	    src[i] = brw_abs(src[i]);
-	 if (inst->src[i].negate)
-	    src[i] = negate(src[i]);
+      for (unsigned int i = 0; i < 3; i++) {
+	 src[i] = brw_reg_from_fs_reg(&inst->src[i]);
       }
-      dst = brw_vec8_reg(inst->dst.file, inst->dst.hw_reg, 0);
+      dst = brw_reg_from_fs_reg(&inst->dst);
 
       brw_set_conditionalmod(p, inst->conditional_mod);
       brw_set_predicate_control(p, inst->predicated);
@@ -1008,6 +1322,25 @@ fs_visitor::generate_code()
       switch (inst->opcode) {
       case BRW_OPCODE_MOV:
 	 brw_MOV(p, dst, src[0]);
+	 break;
+      case BRW_OPCODE_ADD:
+	 brw_ADD(p, dst, src[0], src[1]);
+	 break;
+      case BRW_OPCODE_MUL:
+	 brw_MUL(p, dst, src[0], src[1]);
+	 break;
+      case FS_OPCODE_RCP:
+      case FS_OPCODE_RSQ:
+      case FS_OPCODE_SQRT:
+      case FS_OPCODE_EXP2:
+      case FS_OPCODE_LOG2:
+      case FS_OPCODE_POW:
+      case FS_OPCODE_SIN:
+      case FS_OPCODE_COS:
+	 generate_math(inst, dst, src);
+	 break;
+      case FS_OPCODE_LINTERP:
+	 generate_linterp(inst, dst, src);
 	 break;
       case FS_OPCODE_FB_WRITE:
 	 generate_fb_write(inst);
@@ -1063,6 +1396,8 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c)
    if (0) {
       v.emit_dummy_fs();
    } else {
+      v.emit_interpolation();
+
       /* Generate FS IR for main().  (the visitor only descends into
        * functions called "main").
        */
@@ -1072,6 +1407,7 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c)
 	 return GL_FALSE;
 
       v.emit_fb_writes();
+      v.assign_urb_setup();
       v.assign_regs();
    }
 
@@ -1086,7 +1422,6 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c)
 
    c->prog_data.nr_params = 0; /* FINISHME */
    c->prog_data.first_curbe_grf = c->key.nr_payload_regs;
-   c->prog_data.urb_read_length = 1; /* FINISHME: attrs */
    c->prog_data.curb_read_length = 0; /* FINISHME */
    c->prog_data.total_grf = v.grf_used;
    c->prog_data.total_scratch = 0;
