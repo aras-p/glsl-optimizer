@@ -552,6 +552,13 @@ void ir_print_glsl_visitor::visit(ir_assignment *ir)
    this->writeMask = oldWriteMask;
 }
 
+static char* print_float (char* buffer, float f)
+{
+	const char* fmt = "%f";
+	if (fmodf(f,1.0f) == 0.0f)
+		fmt = "%.1f";
+	return talloc_asprintf_append (buffer, fmt, f);
+}
 
 void ir_print_glsl_visitor::visit(ir_constant *ir)
 {
@@ -561,7 +568,7 @@ void ir_print_glsl_visitor::visit(ir_constant *ir)
 
 	if (type == glsl_type::float_type)
 	{
-		buffer = talloc_asprintf_append(buffer, "%f", ir->value.f[0]);
+		buffer = print_float (buffer, ir->value.f[0]);
 		return;
 	}
 	else if (type == glsl_type::int_type)
@@ -596,7 +603,7 @@ void ir_print_glsl_visitor::visit(ir_constant *ir)
 	 switch (base_type->base_type) {
 	 case GLSL_TYPE_UINT:  buffer = talloc_asprintf_append(buffer, "%u", ir->value.u[i]); break;
 	 case GLSL_TYPE_INT:   buffer = talloc_asprintf_append(buffer, "%d", ir->value.i[i]); break;
-	 case GLSL_TYPE_FLOAT: buffer = talloc_asprintf_append(buffer, "%f", ir->value.f[i]); break;
+	 case GLSL_TYPE_FLOAT: buffer = print_float(buffer, ir->value.f[i]); break;
 	 case GLSL_TYPE_BOOL:  buffer = talloc_asprintf_append(buffer, "%d", ir->value.b[i]); break;
 	 default: assert(0);
 	 }
