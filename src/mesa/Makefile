@@ -43,6 +43,8 @@ MESA_INCLUDES := $(INCLUDE_DIRS)
 ES1_INCLUDES := -I$(TOP)/src/mapi/es1api $(INCLUDE_DIRS)
 ES2_INCLUDES := -I$(TOP)/src/mapi/es2api $(INCLUDE_DIRS)
 MESA_INCLUDES := -I$(TOP)/src/glsl $(MESA_INCLUDES)
+ES1_INCLUDES := -I$(TOP)/src/glsl $(ES1_INCLUDES)
+ES2_INCLUDES := -I$(TOP)/src/glsl $(ES2_INCLUDES)
 # For symbol_table.h in glsl compiler headers.
 MESA_INCLUDES := -I$(TOP)/src/mesa/shader $(MESA_INCLUDES)
 
@@ -68,11 +70,17 @@ $(MESA_OBJ_DIR)/%.o: %.S
 $(ES1_OBJ_DIR)/%.o: %.c
 	$(call mesa-cc-c,ES1)
 
+$(ES1_OBJ_DIR)/%.o: %.cpp
+	$(call mesa-cxx-c,ES1)
+
 $(ES1_OBJ_DIR)/%.o: %.S
 	$(call mesa-cc-c,ES1)
 
 $(ES2_OBJ_DIR)/%.o: %.c
 	$(call mesa-cc-c,ES2)
+
+$(ES2_OBJ_DIR)/%.o: %.cpp
+	$(call mesa-cxx-c,ES2)
 
 $(ES2_OBJ_DIR)/%.o: %.S
 	$(call mesa-cc-c,ES2)
