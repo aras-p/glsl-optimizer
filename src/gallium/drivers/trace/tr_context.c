@@ -885,7 +885,7 @@ trace_sampler_view_destroy(struct pipe_context *_pipe,
    trace_dump_arg(ptr, pipe);
    trace_dump_arg(ptr, view);
 
-   pipe->sampler_view_destroy(pipe, view);
+   pipe_sampler_view_reference(&tr_view->sampler_view, NULL);
 
    trace_dump_call_end();
 
