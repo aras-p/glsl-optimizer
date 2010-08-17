@@ -1903,6 +1903,9 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 	    case OPCODE_SWZ:
 		emit_alu1(p, brw_MOV, dst, dst_flags, args[0]);
 		break;
+	    case OPCODE_DP2:
+		emit_dp2(p, dst, dst_flags, args[0], args[1]);
+		break;
 	    case OPCODE_DP3:
 		emit_dp3(p, dst, dst_flags, args[0], args[1]);
 		break;
@@ -1970,6 +1973,9 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 	    case OPCODE_SNE:
 		emit_sop(p, dst, dst_flags,
 			 BRW_CONDITIONAL_NEQ, args[0], args[1]);
+		break;
+	    case OPCODE_SSG:
+		emit_sign(p, dst, dst_flags, args[0]);
 		break;
 	    case OPCODE_MUL:
 		emit_alu2(p, brw_MUL, dst, dst_flags, args[0], args[1]);
@@ -2111,7 +2117,7 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
     if (INTEL_DEBUG & DEBUG_WM) {
       printf("wm-native:\n");
       for (i = 0; i < p->nr_insn; i++)
-	 brw_disasm(stderr, &p->store[i], intel->gen);
+	 brw_disasm(stdout, &p->store[i], intel->gen);
       printf("\n");
     }
 }

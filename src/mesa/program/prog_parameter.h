@@ -142,7 +142,7 @@ _mesa_use_uniform(struct gl_program_parameter_list *paramList,
 
 extern GLint
 _mesa_add_sampler(struct gl_program_parameter_list *paramList,
-                  const char *name, GLenum datatype);
+                  const char *name, GLenum datatype, int array_length);
 
 extern GLint
 _mesa_add_varying(struct gl_program_parameter_list *paramList,

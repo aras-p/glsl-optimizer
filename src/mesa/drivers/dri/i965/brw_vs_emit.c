@@ -502,6 +502,23 @@ static void emit_cmp( struct brw_compile *p,
    brw_set_predicate_control(p, BRW_PREDICATE_NONE);
 }
 
+static void emit_sign(struct brw_vs_compile *c,
+		      struct brw_reg dst,
+		      struct brw_reg arg0)
+{
+   struct brw_compile *p = &c->func;
+
+   brw_MOV(p, dst, brw_imm_f(0));
+
+   brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_L, arg0, brw_imm_f(0));
+   brw_MOV(p, dst, brw_imm_f(-1.0));
+   brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+
+   brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_G, arg0, brw_imm_f(0));
+   brw_MOV(p, dst, brw_imm_f(1.0));
+   brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+}
+
 static void emit_max( struct brw_compile *p, 
 		      struct brw_reg dst,
 		      struct brw_reg arg0,
@@ -1547,7 +1564,8 @@ void brw_vs_emit(struct brw_vs_compile *c )
 
    if (INTEL_DEBUG & DEBUG_VS) {
       printf("vs-mesa:\n");
-      _mesa_print_program(&c->vp->program.Base); 
+      _mesa_fprint_program_opt(stdout, &c->vp->program.Base, PROG_PRINT_DEBUG,
+			       GL_TRUE);
       printf("\n");
    }
 
@@ -1732,6 +1750,9 @@ void brw_vs_emit(struct brw_vs_compile *c )
       case OPCODE_SLE:
          unalias2(c, dst, args[0], args[1], emit_sle);
          break;
+      case OPCODE_SSG:
+         unalias1(c, dst, args[0], emit_sign);
+         break;
       case OPCODE_SUB:
 	 brw_ADD(p, dst, args[0], negate(args[1]));
 	 break;
@@ -1903,7 +1924,7 @@ void brw_vs_emit(struct brw_vs_compile *c )
 
       printf("vs-native:\n");
       for (i = 0; i < p->nr_insn; i++)
-	 brw_disasm(stderr, &p->store[i], intel->gen);
+	 brw_disasm(stdout, &p->store[i], intel->gen);
       printf("\n");
    }
 }

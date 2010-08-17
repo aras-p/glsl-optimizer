@@ -32,7 +32,7 @@
 #include "brw_context.h"
 #include "brw_wm.h"
 #include "brw_state.h"
-
+#include "main/formats.h"
 
 /** Return number of src args for given instruction */
 GLuint brw_wm_nr_args( GLuint opcode )

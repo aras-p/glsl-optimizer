@@ -2084,6 +2084,15 @@ struct gl_shader
    struct gl_program *Program;  /**< Post-compile assembly code */
    GLchar *InfoLog;
    struct gl_sl_pragmas Pragmas;
+
+   unsigned Version;       /**< GLSL version used for linking */
+
+   struct exec_list *ir;
+   struct glsl_symbol_table *symbols;
+
+   /** Shaders containing built-in functions that are used for linking. */
+   struct gl_shader *builtins_to_link[16];
+   unsigned num_builtins_to_link;
 };
 
 
@@ -2129,6 +2138,16 @@ struct gl_shader_program
    GLboolean Validated;
    GLboolean _Used;        /**< Ever used for drawing? */
    GLchar *InfoLog;
+
+   unsigned Version;       /**< GLSL version used for linking */
+
+   /**
+    * Per-stage shaders resulting from the first stage of linking.
+    */
+   /*@{*/
+   GLuint _NumLinkedShaders;
+   struct gl_shader *_LinkedShaders[2];
+   /*@}*/
 };   
 
 
@@ -2154,6 +2173,11 @@ struct gl_shader_state
    GLboolean EmitCondCodes;             /**< Use condition codes? */
    GLboolean EmitComments;              /**< Annotated instructions */
    GLboolean EmitNVTempInitialization;  /**< 0-fill NV temp registers */
+   /**
+    * Attempts to flatten all ir_if (OPCODE_IF) for GPUs that can't
+    * support control flow.
+    */
+   GLboolean EmitNoIfs;
    void *MemPool;
    GLbitfield Flags;                    /**< Mask of GLSL_x flags */
    struct gl_sl_pragmas DefaultPragmas; /**< Default #pragma settings */

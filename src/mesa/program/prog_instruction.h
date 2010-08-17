@@ -401,7 +401,7 @@ struct prog_instruction
    /**
     * For BRA and CAL instructions, the location to jump to.
     * For BGNLOOP, points to ENDLOOP (and vice-versa).
-    * For BRK, points to BGNLOOP (which points to ENDLOOP).
+    * For BRK, points to ENDLOOP
     * For IF, points to ELSE or ENDIF.
     * For ELSE, points to ENDIF.
     */

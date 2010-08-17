@@ -668,6 +668,28 @@ void emit_cmp(struct brw_compile *p,
    }
 }
 
+void emit_sign(struct brw_compile *p,
+	       const struct brw_reg *dst,
+	       GLuint mask,
+	       const struct brw_reg *arg0)
+{
+   GLuint i;
+
+   for (i = 0; i < 4; i++) {
+      if (mask & (1<<i)) {
+	 brw_MOV(p, dst[i], brw_imm_f(0.0));
+
+	 brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_L, arg0[i], brw_imm_f(0));
+	 brw_MOV(p, dst[i], brw_imm_f(-1.0));
+	 brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+
+	 brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_G, arg0[i], brw_imm_f(0));
+	 brw_MOV(p, dst[i], brw_imm_f(1.0));
+	 brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+      }
+   }
+}
+
 void emit_max(struct brw_compile *p,
 	      const struct brw_reg *dst,
 	      GLuint mask,
@@ -706,6 +728,27 @@ void emit_min(struct brw_compile *p,
 	 brw_set_predicate_control_flag_value(p, 0xff);
       }
    }
+}
+
+
+void emit_dp2(struct brw_compile *p,
+	      const struct brw_reg *dst,
+	      GLuint mask,
+	      const struct brw_reg *arg0,
+	      const struct brw_reg *arg1)
+{
+   int dst_chan = _mesa_ffs(mask & WRITEMASK_XYZW) - 1;
+
+   if (!(mask & WRITEMASK_XYZW))
+      return; /* Do not emit dead code */
+
+   assert(is_power_of_two(mask & WRITEMASK_XYZW));
+
+   brw_MUL(p, brw_null_reg(), arg0[0], arg1[0]);
+
+   brw_set_saturate(p, (mask & SATURATE) ? 1 : 0);
+   brw_MAC(p, dst[dst_chan], arg0[1], arg1[1]);
+   brw_set_saturate(p, 0);
 }
 
 
@@ -1562,6 +1605,10 @@ void brw_wm_emit( struct brw_wm_compile *c )
 	 emit_ddxy(p, dst, dst_flags, GL_FALSE, args[0]);
 	 break;
 
+      case OPCODE_DP2:
+	 emit_dp2(p, dst, dst_flags, args[0], args[1]);
+	 break;
+
       case OPCODE_DP3:
 	 emit_dp3(p, dst, dst_flags, args[0], args[1]);
 	 break;
@@ -1673,6 +1720,10 @@ void brw_wm_emit( struct brw_wm_compile *c )
 	 emit_sne(p, dst, dst_flags, args[0], args[1]);
 	break;
 
+      case OPCODE_SSG:
+	 emit_sign(p, dst, dst_flags, args[0]);
+	 break;
+
       case OPCODE_LIT:
 	 emit_lit(c, dst, dst_flags, args[0]);
 	 break;
@@ -1724,7 +1775,7 @@ void brw_wm_emit( struct brw_wm_compile *c )
 
      printf("wm-native:\n");
      for (i = 0; i < p->nr_insn; i++)
-	 brw_disasm(stderr, &p->store[i], p->brw->intel.gen);
+	 brw_disasm(stdout, &p->store[i], p->brw->intel.gen);
       printf("\n");
    }
 }

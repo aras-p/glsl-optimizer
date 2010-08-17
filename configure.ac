@@ -463,6 +463,8 @@ xxlib|xdri|xosmesa)
     ;;
 esac
 
+PKG_CHECK_MODULES([TALLOC], [talloc])
+
 dnl
 dnl Driver specific build directories
 dnl
@@ -853,7 +855,7 @@ if test "$mesa_driver" = dri; then
         [AC_MSG_ERROR([Expat required for DRI.])])
 
     # put all the necessary libs together
-    DRI_LIB_DEPS="$SELINUX_LIBS $LIBDRM_LIBS $EXPAT_LIB -lm -lpthread $DLOPEN_LIBS"
+    DRI_LIB_DEPS="$SELINUX_LIBS $LIBDRM_LIBS $EXPAT_LIB -lm -lpthread $DLOPEN_LIBS $TALLOC_LIBS"
 fi
 AC_SUBST([DRI_DIRS])
 AC_SUBST([EXPAT_INCLUDES])

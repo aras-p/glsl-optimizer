@@ -142,6 +142,23 @@ hash_table_insert(struct hash_table *ht, void *data, const void *key)
     insert_at_head(& ht->buckets[bucket], & node->link);
 }
 
+void
+hash_table_remove(struct hash_table *ht, const void *key)
+{
+    const unsigned hash_value = (*ht->hash)(key);
+    const unsigned bucket = hash_value % ht->num_buckets;
+    struct node *node;
+
+    foreach(node, & ht->buckets[bucket]) {
+       struct hash_node *hn = (struct hash_node *) node;
+
+       if ((*ht->compare)(hn->key, key) == 0) {
+	  remove_from_list(node);
+	  free(node);
+	  return;
+       }
+    }
+}
 
 unsigned
 hash_table_string_hash(const void *key)
@@ -156,4 +173,18 @@ hash_table_string_hash(const void *key)
     }
 
     return hash;
+}
+
+
+unsigned
+hash_table_pointer_hash(const void *key)
+{
+   return (unsigned)((uintptr_t) key / sizeof(void *));
+}
+
+
+int
+hash_table_pointer_compare(const void *key1, const void *key2)
+{
+   return key1 == key2 ? 0 : 1;
 }

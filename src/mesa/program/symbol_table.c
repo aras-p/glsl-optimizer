@@ -58,7 +58,9 @@ struct symbol {
      */
     int name_space;
 
-    
+    /** Scope depth where this symbol was defined. */
+    unsigned depth;
+
     /**
      * Arbitrary user supplied data.
      */
@@ -73,7 +75,7 @@ struct symbol_header {
     struct symbol_header *next;
 
     /** Symbol name. */
-    const char *name;
+    char *name;
 
     /** Linked list of symbols with the same name. */
     struct symbol *symbols;
@@ -104,6 +106,9 @@ struct _mesa_symbol_table {
 
     /** List of all symbol headers in the table. */
     struct symbol_header *hdr;
+
+    /** Current scope depth. */
+    unsigned depth;
 };
 
 
@@ -157,6 +162,7 @@ _mesa_symbol_table_pop_scope(struct _mesa_symbol_table *table)
     struct symbol *sym = scope->symbols;
 
     table->current_scope = scope->next;
+    table->depth--;
 
     free(scope);
 
@@ -184,6 +190,7 @@ _mesa_symbol_table_push_scope(struct _mesa_symbol_table *table)
     
     scope->next = table->current_scope;
     table->current_scope = scope;
+    table->depth++;
 }
 
 
@@ -261,6 +268,36 @@ _mesa_symbol_table_iterator_next(struct _mesa_symbol_table_iterator *iter)
 }
 
 
+/**
+ * Determine the scope "distance" of a symbol from the current scope
+ *
+ * \return
+ * A non-negative number for the number of scopes between the current scope
+ * and the scope where a symbol was defined.  A value of zero means the current
+ * scope.  A negative number if the symbol does not exist.
+ */
+int
+_mesa_symbol_table_symbol_scope(struct _mesa_symbol_table *table,
+				int name_space, const char *name)
+{
+    struct symbol_header *const hdr = find_symbol(table, name);
+    struct symbol *sym;
+
+    if (hdr != NULL) {
+       for (sym = hdr->symbols; sym != NULL; sym = sym->next_with_same_name) {
+	  assert(sym->hdr == hdr);
+
+	  if ((name_space == -1) || (sym->name_space == name_space)) {
+	     assert(sym->depth <= table->depth);
+	     return sym->depth - table->depth;
+	  }
+       }
+    }
+
+    return -1;
+}
+
+
 void *
 _mesa_symbol_table_find_symbol(struct _mesa_symbol_table *table,
                                int name_space, const char *name)
@@ -300,14 +337,26 @@ _mesa_symbol_table_add_symbol(struct _mesa_symbol_table *table,
 
     if (hdr == NULL) {
         hdr = calloc(1, sizeof(*hdr));
-        hdr->name = name;
+        hdr->name = strdup(name);
 
-        hash_table_insert(table->ht, hdr, name);
+        hash_table_insert(table->ht, hdr, hdr->name);
 	hdr->next = table->hdr;
 	table->hdr = hdr;
     }
 
     check_symbol_table(table);
+
+    /* If the symbol already exists in this namespace at this scope, it cannot
+     * be added to the table.
+     */
+    for (sym = hdr->symbols
+	 ; (sym != NULL) && (sym->name_space != name_space)
+	 ; sym = sym->next_with_same_name) {
+       /* empty */
+    }
+
+    if (sym && (sym->depth == table->depth))
+       return -1;
 
     sym = calloc(1, sizeof(*sym));
     sym->next_with_same_name = hdr->symbols;
@@ -315,6 +364,7 @@ _mesa_symbol_table_add_symbol(struct _mesa_symbol_table *table,
     sym->hdr = hdr;
     sym->name_space = name_space;
     sym->data = declaration;
+    sym->depth = table->depth;
 
     assert(sym->hdr == hdr);
 
@@ -354,6 +404,7 @@ _mesa_symbol_table_dtor(struct _mesa_symbol_table *table)
 
    for (hdr = table->hdr; hdr != NULL; hdr = next) {
        next = hdr->next;
+       free(hdr->name);
        free(hdr);
    }
 
