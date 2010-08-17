@@ -2627,6 +2627,11 @@ _mesa_glsl_compile_shader(GLcontext *ctx, struct gl_shader *shader)
    state->error = preprocess(state, &source, &state->info_log,
 			     &ctx->Extensions);
 
+   if (ctx->Shader.Flags & GLSL_DUMP) {
+      printf("GLSL source for shader %d:\n", shader->Name);
+      printf("%s\n", shader->Source);
+   }
+
    if (!state->error) {
      _mesa_glsl_lexer_ctor(state, source);
      _mesa_glsl_parse(state);
@@ -2662,15 +2667,10 @@ _mesa_glsl_compile_shader(GLcontext *ctx, struct gl_shader *shader)
       _mesa_write_shader_to_file(shader);
    }
 
-   if (ctx->Shader.Flags & GLSL_DUMP) {
-      printf("GLSL source for shader %d:\n", shader->Name);
-      printf("%s\n", shader->Source);
-
-      if (shader->CompileStatus) {
-	 printf("GLSL IR for shader %d:\n", shader->Name);
-	 _mesa_print_ir(shader->ir, NULL);
-	 printf("\n\n");
-      }
+   if ((ctx->Shader.Flags & GLSL_DUMP) && shader->CompileStatus) {
+      printf("GLSL IR for shader %d:\n", shader->Name);
+      _mesa_print_ir(shader->ir, NULL);
+      printf("\n\n");
    }
 
    /* Retain any live IR, but trash the rest. */
