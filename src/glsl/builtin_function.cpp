@@ -12016,6 +12016,7 @@ static const char *functions_for_EXT_texture_array_vert [] = {
    builtin_texture2DArray,
    builtin_texture1DArray,
 };
+#if 0 // MSVC workaround until string gets smaller than 64k
 static const char *prototypes_for_130_frag =
    "(\n"
    "(function radians\n"
@@ -16834,6 +16835,8 @@ static const char *functions_for_130_frag [] = {
    builtin_mix,
    builtin_dot,
 };
+#endif // MSVC workaround until string gets smaller than 64k
+
 static const char *prototypes_for_ARB_texture_rectangle_vert =
    "(\n"
    "(function texture2DRect\n"
@@ -16897,6 +16900,8 @@ static const char *functions_for_ARB_texture_rectangle_vert [] = {
    builtin_shadow2DRect,
    builtin_texture2DRectProj,
 };
+
+#if 0 // MSVC workaround until string gets smaller than 64k
 static const char *prototypes_for_130_vert =
    "(\n"
    "(function radians\n"
@@ -21629,6 +21634,8 @@ static const char *functions_for_130_vert [] = {
    builtin_mix,
    builtin_dot,
 };
+#endif // MSVC workaround until string gets smaller than 64k
+
 static const char *prototypes_for_ARB_texture_rectangle_frag =
    "(\n"
    "(function texture2DRect\n"
@@ -24321,6 +24328,7 @@ _mesa_glsl_initialize_functions(exec_list *instructions,
       state->num_builtins_to_link++;
    }
 
+   #if 0 // MSVC workaround until string gets smaller than 64k
    if (state->target == fragment_shader && state->language_version == 130) {
       static gl_shader *sh = NULL;
       if (sh == NULL) {
@@ -24336,6 +24344,7 @@ _mesa_glsl_initialize_functions(exec_list *instructions,
       state->builtins_to_link[state->num_builtins_to_link] = sh;
       state->num_builtins_to_link++;
    }
+	#endif
 
    if (state->target == vertex_shader && state->ARB_texture_rectangle_enable) {
       static gl_shader *sh = NULL;
@@ -24353,6 +24362,7 @@ _mesa_glsl_initialize_functions(exec_list *instructions,
       state->num_builtins_to_link++;
    }
 
+   #if 0 // MSVC workaround until string gets smaller than 64k
    if (state->target == vertex_shader && state->language_version == 130) {
       static gl_shader *sh = NULL;
       if (sh == NULL) {
@@ -24368,6 +24378,7 @@ _mesa_glsl_initialize_functions(exec_list *instructions,
       state->builtins_to_link[state->num_builtins_to_link] = sh;
       state->num_builtins_to_link++;
    }
+   #endif
 
    if (state->target == fragment_shader && state->ARB_texture_rectangle_enable) {
       static gl_shader *sh = NULL;
