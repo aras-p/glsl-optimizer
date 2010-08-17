@@ -119,17 +119,17 @@ endif
 
 # OpenGL state tracker
 GL_CPPFLAGS := -I$(TOP)/src/mesa $(API_DEFINES)
-GL_SYS := -lpthread -lm -L$(TOP)/$(LIB_DIR) -l$(GL_LIB)
+GL_SYS := $(DRI_LIB_DEPS) -L$(TOP)/$(LIB_DIR) -l$(GL_LIB)
 GL_LIBS := $(TOP)/src/mesa/libmesagallium.a
 
 # OpenGL ES 1.x state tracker
 GLESv1_CM_CPPFLAGS := -I$(TOP)/src/mesa
-GLESv1_CM_SYS := -lpthread -lm -L$(TOP)/$(LIB_DIR) -l$(GLESv1_CM_LIB)
+GLESv1_CM_SYS := $(DRI_LIB_DEPS) -L$(TOP)/$(LIB_DIR) -l$(GLESv1_CM_LIB)
 GLESv1_CM_LIBS := $(TOP)/src/mesa/libes1gallium.a
 
 # OpenGL ES 2.x state tracker
 GLESv2_CPPFLAGS := -I$(TOP)/src/mesa
-GLESv2_SYS := -lpthread -lm -L$(TOP)/$(LIB_DIR) -l$(GLESv2_LIB)
+GLESv2_SYS := $(DRI_LIB_DEPS) -L$(TOP)/$(LIB_DIR) -l$(GLESv2_LIB)
 GLESv2_LIBS := $(TOP)/src/mesa/libes2gallium.a
 
 # OpenVG state tracker
