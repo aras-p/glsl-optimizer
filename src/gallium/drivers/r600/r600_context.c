@@ -34,6 +34,7 @@
 #include "r600_resource.h"
 #include "r600d.h"
 
+
 static void r600_destroy_context(struct pipe_context *context)
 {
 	struct r600_context *rctx = r600_context(context);
@@ -46,26 +47,34 @@ void r600_flush(struct pipe_context *ctx, unsigned flags,
 {
 	struct r600_context *rctx = r600_context(ctx);
 	struct r600_screen *rscreen = rctx->screen;
+	struct r600_query *rquery;
 	static int dc = 0;
 	char dname[256];
 
+	/* suspend queries */
+	r600_queries_suspend(rctx);
 	if (radeon_ctx_pm4(rctx->ctx))
-		return;
+		goto out;
 	/* FIXME dumping should be removed once shader support instructions
 	 * without throwing bad code
 	 */
 	if (!rctx->ctx->cpm4)
 		goto out;
 	sprintf(dname, "gallium-%08d.bof", dc);
-	if (dc < 1)
+	if (dc < 10)
 		radeon_ctx_dump_bof(rctx->ctx, dname);
 #if 1
 	radeon_ctx_submit(rctx->ctx);
 #endif
+	LIST_FOR_EACH_ENTRY(rquery, &rctx->query_list, list) {
+		rquery->flushed = true;
+	}
 	dc++;
 out:
 	rctx->ctx = radeon_ctx_decref(rctx->ctx);
 	rctx->ctx = radeon_ctx(rscreen->rw);
+	/* resume queries */
+	r600_queries_resume(rctx);
 }
 
 static void r600_init_config(struct r600_context *rctx)

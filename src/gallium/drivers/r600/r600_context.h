@@ -30,8 +30,31 @@
 #include <tgsi/tgsi_parse.h>
 #include <tgsi/tgsi_util.h>
 #include <util/u_blitter.h>
+#include <util/u_double_list.h>
 #include "radeon.h"
 #include "r600_shader.h"
+
+#define R600_QUERY_STATE_STARTED	(1 << 0)
+#define R600_QUERY_STATE_ENDED		(1 << 1)
+#define R600_QUERY_STATE_SUSPENDED	(1 << 2)
+
+struct r600_query {
+	u64					result;
+	/* The kind of query. Currently only OQ is supported. */
+	unsigned				type;
+	/* How many results have been written, in dwords. It's incremented
+	 * after end_query and flush. */
+	unsigned				num_results;
+	/* if we've flushed the query */
+	boolean					flushed;
+	unsigned				state;
+	/* The buffer where query results are stored. */
+	struct radeon_bo			*buffer;
+	unsigned				buffer_size;
+	/* linked list of queries */
+	struct list_head			list;
+	struct radeon_state			*rstate;
+};
 
 /* XXX move this to a more appropriate place */
 union pipe_states {
@@ -142,13 +165,19 @@ struct r600_context {
 	struct r600_vertex_element	*vertex_elements;
 	struct pipe_vertex_buffer	vertex_buffer[PIPE_MAX_ATTRIBS];
 	struct pipe_index_buffer	index_buffer;
-	struct pipe_blend_color         blend_color;
+	struct pipe_blend_color		blend_color;
+	struct list_head		query_list;
 };
 
 /* Convenience cast wrapper. */
 static INLINE struct r600_context *r600_context(struct pipe_context *pipe)
 {
     return (struct r600_context*)pipe;
+}
+
+static INLINE struct r600_query* r600_query(struct pipe_query* q)
+{
+    return (struct r600_query*)q;
 }
 
 struct r600_context_state *r600_context_state(struct r600_context *rctx, unsigned type, const void *state);
@@ -179,4 +208,10 @@ extern int r600_pipe_shader_update(struct pipe_context *ctx,
 uint32_t r600_translate_texformat(enum pipe_format format,
 				  const unsigned char *swizzle_view, 
 				  uint32_t *word4_p, uint32_t *yuv_format_p);
+
+/* query */
+extern void r600_queries_resume(struct pipe_context *ctx);
+extern void r600_queries_suspend(struct pipe_context *ctx);
+
+
 #endif

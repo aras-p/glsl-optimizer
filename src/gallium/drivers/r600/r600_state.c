@@ -268,7 +268,6 @@ static void r600_set_blend_color(struct pipe_context *ctx,
 static void r600_set_clip_state(struct pipe_context *ctx,
 				const struct pipe_clip_state *state)
 {
-	struct r600_screen *rscreen = r600_screen(ctx->screen);
 	struct r600_context *rctx = r600_context(ctx);
 	struct r600_context_state *rstate;
 

@@ -38,6 +38,8 @@ static int r600_state_pm4_shader(struct radeon_state *state);
 static int r600_state_pm4_draw(struct radeon_state *state);
 static int r600_state_pm4_config(struct radeon_state *state);
 static int r600_state_pm4_generic(struct radeon_state *state);
+static int r600_state_pm4_query_begin(struct radeon_state *state);
+static int r600_state_pm4_query_end(struct radeon_state *state);
 static int r700_state_pm4_config(struct radeon_state *state);
 static int r700_state_pm4_cb0(struct radeon_state *state);
 static int r700_state_pm4_db(struct radeon_state *state);
@@ -238,6 +240,40 @@ static int r600_state_pm4_config(struct radeon_state *state)
 	state->pm4[state->cpm4++] = 0x00000010;
 	state->pm4[state->cpm4++] = 0x00028000;
 	return r600_state_pm4_generic(state);
+}
+
+static int r600_state_pm4_query_begin(struct radeon_state *state)
+{
+	int r;
+
+	state->cpm4 = 0;
+	state->pm4[state->cpm4++] = PKT3(PKT3_EVENT_WRITE, 2);
+	state->pm4[state->cpm4++] = EVENT_TYPE_ZPASS_DONE;
+	state->pm4[state->cpm4++] = state->states[0];
+	state->pm4[state->cpm4++] = 0x0;
+	state->pm4[state->cpm4++] = PKT3(PKT3_NOP, 0);
+	r = radeon_state_reloc(state, state->cpm4, 0);
+	if (r)
+		return r;
+	state->pm4[state->cpm4++] = state->bo[0]->handle;
+	return 0;
+}
+
+static int r600_state_pm4_query_end(struct radeon_state *state)
+{
+	int r;
+
+	state->cpm4 = 0;
+	state->pm4[state->cpm4++] = PKT3(PKT3_EVENT_WRITE, 2);
+	state->pm4[state->cpm4++] = EVENT_TYPE_ZPASS_DONE;
+	state->pm4[state->cpm4++] = state->states[0];
+	state->pm4[state->cpm4++] = 0x0;
+	state->pm4[state->cpm4++] = PKT3(PKT3_NOP, 0);
+	r = radeon_state_reloc(state, state->cpm4, 0);
+	if (r)
+		return r;
+	state->pm4[state->cpm4++] = state->bo[0]->handle;
+	return 0;
 }
 
 static int r700_state_pm4_config(struct radeon_state *state)

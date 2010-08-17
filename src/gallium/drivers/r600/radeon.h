@@ -151,6 +151,7 @@ struct radeon_ctx *radeon_ctx(struct radeon *radeon);
 struct radeon_ctx *radeon_ctx_decref(struct radeon_ctx *ctx);
 struct radeon_ctx *radeon_ctx_incref(struct radeon_ctx *ctx);
 int radeon_ctx_set_draw(struct radeon_ctx *ctx, struct radeon_draw *draw);
+int radeon_ctx_set_query_state(struct radeon_ctx *ctx, struct radeon_state *state);
 int radeon_ctx_set_draw_new(struct radeon_ctx *ctx, struct radeon_draw *draw);
 int radeon_ctx_pm4(struct radeon_ctx *ctx);
 int radeon_ctx_submit(struct radeon_ctx *ctx);
@@ -191,8 +192,8 @@ struct radeon_ctx {
  * R600/R700
  */
 
-#define R600_NSTATE				1286
-#define R600_NTYPE				33
+#define R600_NSTATE				1288
+#define R600_NTYPE				35
 
 #define R600_CONFIG				0
 #define R600_CONFIG_TYPE				0
@@ -252,14 +253,18 @@ struct radeon_ctx {
 #define R600_CB6_TYPE				27
 #define R600_CB7				1276
 #define R600_CB7_TYPE				28
-#define R600_DB				1277
-#define R600_DB_TYPE				29
-#define R600_CLIP				1278
-#define R600_CLIP_TYPE				30
-#define R600_VGT				1284
-#define R600_VGT_TYPE				31
-#define R600_DRAW				1285
-#define R600_DRAW_TYPE				32
+#define R600_QUERY_BEGIN			1277
+#define R600_QUERY_BEGIN_TYPE			29
+#define R600_QUERY_END				1278
+#define R600_QUERY_END_TYPE			30
+#define R600_DB					1279
+#define R600_DB_TYPE				31
+#define R600_CLIP				1280
+#define R600_CLIP_TYPE				32
+#define R600_VGT				1286
+#define R600_VGT_TYPE				33
+#define R600_DRAW				1287
+#define R600_DRAW_TYPE				34
 
 /* R600_CONFIG */
 #define R600_CONFIG__SQ_CONFIG			0
@@ -653,4 +658,9 @@ struct radeon_ctx {
 #define R600_CLIP__PA_CL_UCP_W_0  3
 #define R600_CLIP_SIZE  4
 #define R600_CLIP_PM4 128
+/* R600 QUERY BEGIN/END */
+#define R600_QUERY__OFFSET			0
+#define R600_QUERY_SIZE				1
+#define R600_QUERY_PM4				128
+
 #endif

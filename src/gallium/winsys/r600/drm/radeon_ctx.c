@@ -224,6 +224,41 @@ static int radeon_ctx_state_schedule(struct radeon_ctx *ctx, struct radeon_state
 	return 0;
 }
 
+int radeon_ctx_set_query_state(struct radeon_ctx *ctx, struct radeon_state *state)
+{
+	void *tmp;
+	int r = 0;
+
+	/* !!! ONLY ACCEPT QUERY STATE HERE !!! */
+	if (state->type != R600_QUERY_BEGIN_TYPE && state->type != R600_QUERY_END_TYPE) {
+		return -EINVAL;
+	}
+	r = radeon_state_pm4(state);
+	if (r)
+		return r;
+	if ((ctx->draw_cpm4 + state->cpm4) > RADEON_CTX_MAX_PM4) {
+		/* need to flush */
+		return -EBUSY;
+	}
+	if (state->cpm4 >= RADEON_CTX_MAX_PM4) {
+		fprintf(stderr, "%s single state too big %d, max %d\n",
+			__func__, state->cpm4, RADEON_CTX_MAX_PM4);
+		return -EINVAL;
+	}
+	tmp = realloc(ctx->state, (ctx->nstate + 1) * sizeof(void*));
+	if (tmp == NULL)
+		return -ENOMEM;
+	ctx->state = tmp;
+	ctx->state[ctx->nstate++] = radeon_state_incref(state);
+	/* BEGIN/END query are balanced in the same cs so account for END
+	 * END query when scheduling BEGIN query
+	 */
+	if (state->type == R600_QUERY_BEGIN_TYPE) {
+		ctx->draw_cpm4 += state->cpm4 * 2;
+	}
+	return 0;
+}
+
 int radeon_ctx_set_draw_new(struct radeon_ctx *ctx, struct radeon_draw *draw)
 {
 	struct radeon_draw *pdraw = NULL;
@@ -366,7 +401,6 @@ printf("%d pm4\n", ctx->cpm4);
 		if (bo == NULL)
 			goto out_err;
 		size = bof_int32(ctx->bo[i]->size);
-printf("[%d] %d bo\n", i, size);
 		if (size == NULL)
 			goto out_err;
 		if (bof_object_set(bo, "size", size))

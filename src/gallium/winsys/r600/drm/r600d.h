@@ -82,6 +82,7 @@
 #define PKT3_SET_CTL_CONST                     0x6F
 #define PKT3_SURFACE_BASE_UPDATE               0x73
 
+#define EVENT_TYPE_ZPASS_DONE                  0x15
 #define EVENT_TYPE_CACHE_FLUSH_AND_INV_EVENT   0x16
 
 #define PKT_TYPE_S(x)                   (((x) & 0x3) << 30)

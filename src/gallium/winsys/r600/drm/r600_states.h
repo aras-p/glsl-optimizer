@@ -479,6 +479,10 @@ static const struct radeon_register R600_DRAW_names[] = {
 	{0x000287F0, 0, 0, "VGT_DRAW_INITIATOR"},
 };
 
+static const struct radeon_register R600_VGT_EVENT_names[] = {
+	{0x00028A90, 1, 0, "VGT_EVENT_INITIATOR"},
+};
+
 static struct radeon_type R600_types[] = {
 	{ 128,    0, 0x00000000, 0x00000000, 0x0000, 0, "R600_CONFIG", 41, r600_state_pm4_config, R600_CONFIG_names},
 	{ 128,    1, 0x00000000, 0x00000000, 0x0000, 0, "R600_CB_CNTL", 18, r600_state_pm4_generic, R600_CB_CNTL_names},
@@ -509,11 +513,12 @@ static struct radeon_type R600_types[] = {
 	{ 128, 1274, 0x00000000, 0x00000000, 0x0000, 0, "R600_CB5", 7, r600_state_pm4_cb0, R600_CB5_names},
 	{ 128, 1275, 0x00000000, 0x00000000, 0x0000, 0, "R600_CB6", 7, r600_state_pm4_cb0, R600_CB6_names},
 	{ 128, 1276, 0x00000000, 0x00000000, 0x0000, 0, "R600_CB7", 7, r600_state_pm4_cb0, R600_CB7_names},
-	{ 128, 1277, 0x00000000, 0x00000000, 0x0000, 0, "R600_DB", 6, r600_state_pm4_db, R600_DB_names},
-	{ 128, 1278, 0x00028e20, 0x00028e70, 0x0010, 0, "R600_UCP", 4, r600_state_pm4_generic, R600_UCP_names},
-	{ 128, 1284, 0x00000000, 0x00000000, 0x0000, 0, "R600_VGT", 11, r600_state_pm4_vgt, R600_VGT_names},
-	{ 128, 1285, 0x00000000, 0x00000000, 0x0000, 0, "R600_DRAW", 4, r600_state_pm4_draw, R600_DRAW_names},
-
+	{ 128, 1277, 0x00000000, 0x00000000, 0x0000, 0, "R600_QUERY_BEGIN", 1, r600_state_pm4_query_begin, R600_VGT_EVENT_names},
+	{ 128, 1278, 0x00000000, 0x00000000, 0x0000, 0, "R600_QUERY_END", 1, r600_state_pm4_query_end, R600_VGT_EVENT_names},
+	{ 128, 1279, 0x00000000, 0x00000000, 0x0000, 0, "R600_DB", 6, r600_state_pm4_db, R600_DB_names},
+	{ 128, 1280, 0x00028e20, 0x00028e70, 0x0010, 0, "R600_UCP", 4, r600_state_pm4_generic, R600_UCP_names},
+	{ 128, 1286, 0x00000000, 0x00000000, 0x0000, 0, "R600_VGT", 11, r600_state_pm4_vgt, R600_VGT_names},
+	{ 128, 1287, 0x00000000, 0x00000000, 0x0000, 0, "R600_DRAW", 4, r600_state_pm4_draw, R600_DRAW_names},
 };
 
 static struct radeon_type R700_types[] = {
@@ -546,10 +551,12 @@ static struct radeon_type R700_types[] = {
 	{ 128, 1274, 0x00000000, 0x00000000, 0x0000, 0, "R600_CB5", 7, r600_state_pm4_cb0, R600_CB5_names},
 	{ 128, 1275, 0x00000000, 0x00000000, 0x0000, 0, "R600_CB6", 7, r600_state_pm4_cb0, R600_CB6_names},
 	{ 128, 1276, 0x00000000, 0x00000000, 0x0000, 0, "R600_CB7", 7, r600_state_pm4_cb0, R600_CB7_names},
-	{ 128, 1277, 0x00000000, 0x00000000, 0x0000, 0, "R600_DB", 6, r700_state_pm4_db, R600_DB_names},
-	{ 128, 1278, 0x00028e20, 0x00028e70, 0x0010, 0, "R600_UCP", 4, r600_state_pm4_generic, R600_UCP_names},
-	{ 128, 1284, 0x00000000, 0x00000000, 0x0000, 0, "R600_VGT", 11, r600_state_pm4_vgt, R600_VGT_names},
-	{ 128, 1285, 0x00000000, 0x00000000, 0x0000, 0, "R600_DRAW", 4, r600_state_pm4_draw, R600_DRAW_names},
+	{ 128, 1277, 0x00000000, 0x00000000, 0x0000, 0, "R600_QUERY_BEGIN", 1, r600_state_pm4_query_begin, R600_VGT_EVENT_names},
+	{ 128, 1278, 0x00000000, 0x00000000, 0x0000, 0, "R600_QUERY_END", 1, r600_state_pm4_query_end, R600_VGT_EVENT_names},
+	{ 128, 1279, 0x00000000, 0x00000000, 0x0000, 0, "R600_DB", 6, r700_state_pm4_db, R600_DB_names},
+	{ 128, 1280, 0x00028e20, 0x00028e70, 0x0010, 0, "R600_UCP", 4, r600_state_pm4_generic, R600_UCP_names},
+	{ 128, 1286, 0x00000000, 0x00000000, 0x0000, 0, "R600_VGT", 11, r600_state_pm4_vgt, R600_VGT_names},
+	{ 128, 1287, 0x00000000, 0x00000000, 0x0000, 0, "R600_DRAW", 4, r600_state_pm4_draw, R600_DRAW_names},
 };
 
 #endif
