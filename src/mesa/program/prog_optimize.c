@@ -758,7 +758,11 @@ _mesa_remove_extra_moves(struct gl_program *prog)
          nesting--;
          break;
       case OPCODE_MOV:
-         if (i > 0 && can_downward_mov_be_modifed(mov) && nesting == 0) {
+         if (i > 0 &&
+             can_downward_mov_be_modifed(mov) &&
+             mov->SrcReg[0].File == PROGRAM_TEMPORARY &&
+             nesting == 0)
+         {
 
             /* see if this MOV can be removed */
             const GLuint id = mov->SrcReg[0].Index;
