@@ -1007,6 +1007,13 @@ nv_pass_cse(struct nv_pass *ctx, struct nv_basic_block *b)
                 ik->flags_def || ir->flags_def)
                continue; /* and also not with flags, for now */
 
+            assert(ik->def[0] && ir->def[0]);
+
+            if (ik->def[0]->reg.file == NV_FILE_OUT ||
+                ir->def[0]->reg.file == NV_FILE_OUT ||
+                !values_equal(ik->def[0], ir->def[0]))
+               continue;
+
             for (s = 0; s < 3; ++s) {
                struct nv_value *a, *b;
 
