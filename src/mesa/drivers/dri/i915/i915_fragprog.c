@@ -143,6 +143,20 @@ src_vector(struct i915_fragment_program *p,
       }
       break;
 
+   case PROGRAM_OUTPUT:
+      switch (source->Index) {
+      case FRAG_RESULT_COLOR:
+	 src = UREG(REG_TYPE_OC, 0);
+	 break;
+      case FRAG_RESULT_DEPTH:
+	 src = UREG(REG_TYPE_OD, 0);
+	 break;
+      default:
+	 i915_program_error(p, "Bad source->Index: %d", source->Index);
+	 return 0;
+      }
+      break;
+
       /* Various paramters and env values.  All emitted to
        * hardware as program constants.
        */
