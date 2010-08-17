@@ -741,7 +741,7 @@ static struct radeon_state *r600_cb(struct r600_context *rctx, int cb)
 		S_0280A0_SOURCE_FORMAT(1) |
 		S_0280A0_NUMBER_TYPE(ntype);
 
-	rstate->states[R600_CB0__CB_COLOR0_BASE] = 0x00000000;
+	rstate->states[R600_CB0__CB_COLOR0_BASE] = rtex->offset[level] >> 8;
 	rstate->states[R600_CB0__CB_COLOR0_INFO] = color_info;
 	rstate->states[R600_CB0__CB_COLOR0_SIZE] = S_028060_PITCH_TILE_MAX(pitch) |
 						S_028060_SLICE_TILE_MAX(slice);
@@ -782,7 +782,7 @@ static struct radeon_state *r600_db(struct r600_context *rctx)
 	pitch = (rtex->pitch[level] / rtex->bpt) / 8 - 1;
 	slice = (rtex->pitch[level] / rtex->bpt) * state->zsbuf->height / 64 - 1;
 	format = r600_translate_dbformat(state->zsbuf->texture->format);
-	rstate->states[R600_DB__DB_DEPTH_BASE] = 0x00000000;
+	rstate->states[R600_DB__DB_DEPTH_BASE] = rtex->offset[level] >> 8;
 	rstate->states[R600_DB__DB_DEPTH_INFO] = 0x00010000 |
 					S_028010_FORMAT(format);
 	rstate->states[R600_DB__DB_DEPTH_VIEW] = 0x00000000;
