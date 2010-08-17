@@ -143,11 +143,34 @@ debug_symbol_name_imagehlp(const void *addr, char* buf, unsigned size)
 }
 #endif
 
+#ifdef __GLIBC__
+#include <execinfo.h>
+
+/* This can only provide dynamic symbols, or binary offsets into a file.
+ *
+ * To fix this, post-process the output with tools/addr2line.sh
+ */
+static INLINE void
+debug_symbol_name_glibc(const void *addr, char* buf, unsigned size)
+{
+   char** syms = backtrace_symbols((void**)&addr, 1);
+   strncpy(buf, syms[0], size);
+   buf[size - 1] = 0;
+   free(syms);
+}
+#endif
+
 void
 debug_symbol_name(const void *addr, char* buf, unsigned size)
 {
 #if defined(PIPE_SUBSYSTEM_WINDOWS_USER) && defined(PIPE_ARCH_X86)
    debug_symbol_name_imagehlp(addr, buf, size);
+   if(buf[0])
+      return;
+#endif
+
+#ifdef __GLIBC__
+   debug_symbol_name_glibc(addr, buf, size);
    if(buf[0])
       return;
 #endif
