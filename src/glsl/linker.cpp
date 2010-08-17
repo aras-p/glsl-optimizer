@@ -1104,6 +1104,28 @@ assign_attribute_locations(gl_shader_program *prog, unsigned max_attribute_index
 }
 
 
+/**
+ * Demote shader outputs that are not read to being just plain global variables
+ */
+void
+demote_unread_shader_outputs(gl_shader *sh)
+{
+   foreach_list(node, sh->ir) {
+      ir_variable *const var = ((ir_instruction *) node)->as_variable();
+
+      if ((var == NULL) || (var->mode != ir_var_out))
+	 continue;
+
+      /* An 'out' variable is only really a shader output if its value is read
+       * by the following stage.
+       */
+      if (var->location == -1) {
+	 var->mode = ir_var_auto;
+      }
+   }
+}
+
+
 void
 assign_varying_locations(struct gl_shader_program *prog,
 			 gl_shader *producer, gl_shader *consumer)
@@ -1152,19 +1174,7 @@ assign_varying_locations(struct gl_shader_program *prog,
       input_index++;
    }
 
-   foreach_list(node, producer->ir) {
-      ir_variable *const var = ((ir_instruction *) node)->as_variable();
-
-      if ((var == NULL) || (var->mode != ir_var_out))
-	 continue;
-
-      /* An 'out' variable is only really a shader output if its value is read
-       * by the following stage.
-       */
-      if (var->location == -1) {
-	 var->mode = ir_var_auto;
-      }
-   }
+   demote_unread_shader_outputs(producer);
 
    foreach_list(node, consumer->ir) {
       ir_variable *const var = ((ir_instruction *) node)->as_variable();
@@ -1320,7 +1330,7 @@ link_shaders(struct gl_shader_program *prog)
 
    assign_uniform_locations(prog);
 
-   if (prog->_LinkedShaders[0]->Type == GL_VERTEX_SHADER)
+   if (prog->_LinkedShaders[0]->Type == GL_VERTEX_SHADER) {
       /* FINISHME: The value of the max_attribute_index parameter is
        * FINISHME: implementation dependent based on the value of
        * FINISHME: GL_MAX_VERTEX_ATTRIBS.  GL_MAX_VERTEX_ATTRIBS must be
@@ -1328,6 +1338,10 @@ link_shaders(struct gl_shader_program *prog)
        */
       if (!assign_attribute_locations(prog, 16))
 	 goto done;
+
+      if (prog->_NumLinkedShaders == 1)
+	 demote_unread_shader_outputs(prog->_LinkedShaders[0]);
+   }
 
    for (unsigned i = 1; i < prog->_NumLinkedShaders; i++)
       assign_varying_locations(prog,
