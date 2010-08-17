@@ -862,11 +862,6 @@ void emit_math1(struct brw_wm_compile *c,
 
    assert(is_power_of_two(mask & WRITEMASK_XYZW));
 
-   /* If compressed, this will write message reg 2,3 from arg0.x's 16
-    * channels.
-    */
-   brw_MOV(p, brw_message_reg(2), arg0[0]);
-
    /* Send two messages to perform all 16 operations:
     */
    brw_push_insn_state(p);
@@ -876,7 +871,7 @@ void emit_math1(struct brw_wm_compile *c,
 	    function,
 	    saturate,
 	    2,
-	    brw_null_reg(),
+	    arg0[0],
 	    BRW_MATH_DATA_VECTOR,
 	    BRW_MATH_PRECISION_FULL);
 
@@ -887,7 +882,7 @@ void emit_math1(struct brw_wm_compile *c,
 	       function,
 	       saturate,
 	       3,
-	       brw_null_reg(),
+	       sechalf(arg0[0]),
 	       BRW_MATH_DATA_VECTOR,
 	       BRW_MATH_PRECISION_FULL);
    }
@@ -916,13 +911,6 @@ void emit_math2(struct brw_wm_compile *c,
    brw_push_insn_state(p);
 
    brw_set_compression_control(p, BRW_COMPRESSION_NONE);
-   brw_MOV(p, brw_message_reg(2), arg0[0]);
-   if (c->dispatch_width == 16) {
-      brw_set_compression_control(p, BRW_COMPRESSION_2NDHALF);
-      brw_MOV(p, brw_message_reg(4), sechalf(arg0[0]));
-   }
-
-   brw_set_compression_control(p, BRW_COMPRESSION_NONE);
    brw_MOV(p, brw_message_reg(3), arg1[0]);
    if (c->dispatch_width == 16) {
       brw_set_compression_control(p, BRW_COMPRESSION_2NDHALF);
@@ -935,7 +923,7 @@ void emit_math2(struct brw_wm_compile *c,
 	    function,
 	    saturate,
 	    2,
-	    brw_null_reg(),
+	    arg0[0],
 	    BRW_MATH_DATA_VECTOR,
 	    BRW_MATH_PRECISION_FULL);
 
@@ -948,7 +936,7 @@ void emit_math2(struct brw_wm_compile *c,
 	       function,
 	       saturate,
 	       4,
-	       brw_null_reg(),
+	       sechalf(arg0[0]),
 	       BRW_MATH_DATA_VECTOR,
 	       BRW_MATH_PRECISION_FULL);
    }
