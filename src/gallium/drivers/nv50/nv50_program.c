@@ -484,6 +484,7 @@ nv50_prog_scan(struct nv50_translation_info *ti)
    struct tgsi_parse_context parse;
    int ret;
 
+   p->vp.edgeflag = 0x40;
    p->vp.psiz = 0x40;
    p->vp.bfc[0] = 0x40;
    p->vp.bfc[1] = 0x40;
