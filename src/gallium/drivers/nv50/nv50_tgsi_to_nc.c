@@ -685,6 +685,8 @@ translate_opcode(uint opcode)
    case TGSI_OPCODE_CEIL: return NV_OP_CEIL;
    case TGSI_OPCODE_FLR: return NV_OP_FLOOR;
    case TGSI_OPCODE_TRUNC: return NV_OP_TRUNC;
+   case TGSI_OPCODE_COS: return NV_OP_COS;
+   case TGSI_OPCODE_SIN: return NV_OP_SIN;
    case TGSI_OPCODE_DDX: return NV_OP_DFDX;
    case TGSI_OPCODE_DDY: return NV_OP_DFDY;
    case TGSI_OPCODE_F2I:
@@ -1226,6 +1228,14 @@ bld_instruction(struct bld_context *bld,
          dst0[c] = bld_insn_2(bld, opcode, src0, src1);
       }
       break;
+   case TGSI_OPCODE_ARL:
+      src1 = bld_imm_u32(bld, 4);
+      FOR_EACH_DST0_ENABLED_CHANNEL(c, insn) {
+         src0 = emit_fetch(bld, insn, 0, c);
+         (temp = bld_insn_1(bld, NV_OP_FLOOR, temp))->reg.type = NV_TYPE_S32;
+         dst0[c] = bld_insn_2(bld, NV_OP_SHL, temp, src1);
+      }
+      break;
    case TGSI_OPCODE_CMP:
       FOR_EACH_DST0_ENABLED_CHANNEL(c, insn) {
          src0 = emit_fetch(bld, insn, 0, c);
@@ -1245,19 +1255,19 @@ bld_instruction(struct bld_context *bld,
       }
       break;
    case TGSI_OPCODE_COS:
+   case TGSI_OPCODE_SIN:
       src0 = emit_fetch(bld, insn, 0, 0);
       temp = bld_insn_1(bld, NV_OP_PRESIN, src0);
       if (insn->Dst[0].Register.WriteMask & 7)
-         temp = bld_insn_1(bld, NV_OP_COS, temp);
+         temp = bld_insn_1(bld, opcode, temp);
       for (c = 0; c < 3; ++c)
          if (insn->Dst[0].Register.WriteMask & (1 << c))
             dst0[c] = temp;
       if (!(insn->Dst[0].Register.WriteMask & (1 << 3)))
          break;
-      /* XXX: if src0.x is src0.w, don't emit new insns */
       src0 = emit_fetch(bld, insn, 0, 3);
       temp = bld_insn_1(bld, NV_OP_PRESIN, src0);
-      dst0[3] = bld_insn_1(bld, NV_OP_COS, temp);
+      dst0[3] = bld_insn_1(bld, opcode, temp);
       break;
    case TGSI_OPCODE_DP3:
       src0 = emit_fetch(bld, insn, 0, 0);
@@ -1302,6 +1312,9 @@ bld_instruction(struct bld_context *bld,
          src0 = emit_fetch(bld, insn, 0, c);
          bld_kil(bld, src0);
       }
+      break;
+   case TGSI_OPCODE_KILP:
+      (new_instruction(bld->pc, NV_OP_KIL))->fixed = 1;
       break;
    case TGSI_OPCODE_IF:
    {
@@ -1496,6 +1509,20 @@ bld_instruction(struct bld_context *bld,
          dst0[c]->reg.type = NV_TYPE_F32;
       }
       break;
+   case TGSI_OPCODE_SCS:
+      if (insn->Dst[0].Register.WriteMask & 0x3) {
+         src0 = emit_fetch(bld, insn, 0, 0);
+         temp = bld_insn_1(bld, NV_OP_PRESIN, src0);
+         if (insn->Dst[0].Register.WriteMask & 0x1)
+            dst0[0] = bld_insn_1(bld, NV_OP_COS, temp);
+         if (insn->Dst[0].Register.WriteMask & 0x2)
+            dst0[1] = bld_insn_1(bld, NV_OP_SIN, temp);
+      }
+      if (insn->Dst[0].Register.WriteMask & 0x4)
+         dst0[2] = bld_imm_f32(bld, 0.0f);
+      if (insn->Dst[0].Register.WriteMask & 0x8)
+         dst0[3] = bld_imm_f32(bld, 1.0f);
+      break;
    case TGSI_OPCODE_SUB:
       FOR_EACH_DST0_ENABLED_CHANNEL(c, insn) {
          src0 = emit_fetch(bld, insn, 0, c);
@@ -1527,12 +1554,15 @@ bld_instruction(struct bld_context *bld,
          dst0[c]->insn->src[2]->mod ^= NV_MOD_NEG;
       }
       break;
+   case TGSI_OPCODE_RET:
+      (new_instruction(bld->pc, NV_OP_RET))->fixed = 1;
+      break;
    case TGSI_OPCODE_END:
       if (bld->ti->p->type == PIPE_SHADER_FRAGMENT)
          bld_export_outputs(bld);
       break;
    default:
-      NOUVEAU_ERR("nv_bld: unhandled opcode %u\n", insn->Instruction.Opcode);
+      NOUVEAU_ERR("unhandled opcode %u\n", insn->Instruction.Opcode);
       abort();
       break;
    }

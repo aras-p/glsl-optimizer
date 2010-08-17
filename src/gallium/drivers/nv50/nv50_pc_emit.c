@@ -748,8 +748,30 @@ emit_bitop2(struct nv_pc *pc, struct nv_instruction *i)
 }
 
 static void
+emit_arl(struct nv_pc *pc, struct nv_instruction *i)
+{
+   assert(SFILE(i, 0) == NV_FILE_GPR);
+   assert(SFILE(i, 1) == NV_FILE_IMM);
+
+   assert(!i->flags_def);
+
+   pc->emit[0] = 0x00000001;
+   pc->emit[1] = 0xc0000000;
+
+   set_dst(pc, i->def[0]);
+   set_pred(pc, i);
+   set_src_0(pc, i->src[0]);
+   pc->emit[0] |= (get_immd_u32(i->src[1]) & 0x3f) << 16;
+}
+
+static void
 emit_shift(struct nv_pc *pc, struct nv_instruction *i)
 {
+   if (DFILE(i, 0) == NV_FILE_ADDR) {
+      emit_arl(pc, i);
+      return;
+   }
+
    pc->emit[0] = 0x30000001;
    pc->emit[1] = 0xc4000000;
 
