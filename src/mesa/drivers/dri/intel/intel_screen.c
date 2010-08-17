@@ -70,7 +70,7 @@ PUBLIC const char __driConfigOptions[] =
 	 DRI_CONF_DESC(en, "Enable early Z in classic mode (unstable, 945-only).")
       DRI_CONF_OPT_END
 
-      DRI_CONF_OPT_BEGIN(fragment_shader, bool, false)
+      DRI_CONF_OPT_BEGIN(fragment_shader, bool, true)
 	 DRI_CONF_DESC(en, "Enable limited ARB_fragment_shader support on 915/945.")
       DRI_CONF_OPT_END
 
