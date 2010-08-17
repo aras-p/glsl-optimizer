@@ -1454,7 +1454,7 @@ set_default_state(context_t *context)
 	    SETbit(sq_dyn_gpr_cntl_ps_flush_req, VS_PC_LIMIT_ENABLE_bit);
     }
 
-    BEGIN_BATCH_NO_AUTOSTATE(117);
+    BEGIN_BATCH_NO_AUTOSTATE(120);
     R600_OUT_BATCH_REGSEQ(SQ_CONFIG, 6);
     R600_OUT_BATCH(sq_config);
     R600_OUT_BATCH(sq_gpr_resource_mgmt_1);
