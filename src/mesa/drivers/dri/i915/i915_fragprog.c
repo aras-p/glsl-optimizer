@@ -472,6 +472,18 @@ upload_program(struct i915_fragment_program *p)
 			 swizzle(tmp, X, X, X, X));
          break;
 
+      case OPCODE_DP2:
+         src0 = src_vector(p, &inst->SrcReg[0], program);
+         src1 = src_vector(p, &inst->SrcReg[1], program);
+	 i915_emit_arith(p,
+			 A0_DP3,
+                         get_result_vector(p, inst),
+                         get_result_flags(inst), 0,
+			 swizzle(src0, X, Y, ZERO, ZERO),
+			 swizzle(src1, X, Y, ZERO, ZERO),
+			 0);
+         break;
+
       case OPCODE_DP3:
          EMIT_2ARG_ARITH(A0_DP3);
          break;
