@@ -3017,7 +3017,14 @@ GLboolean assemble_DOT(r700_AssemblerBase *pAsm)
         return GL_FALSE;
     }
 
-    if(OPCODE_DP3 == pAsm->pILInst[pAsm->uiCurInst].Opcode)
+    if(OPCODE_DP2 == pAsm->pILInst[pAsm->uiCurInst].Opcode)
+    {
+       zerocomp_PVSSRC(&(pAsm->S[0].src),2);
+       zerocomp_PVSSRC(&(pAsm->S[0].src),3);
+       zerocomp_PVSSRC(&(pAsm->S[1].src),2);
+       zerocomp_PVSSRC(&(pAsm->S[1].src),3);
+    }
+    else if(OPCODE_DP3 == pAsm->pILInst[pAsm->uiCurInst].Opcode)
     {
         zerocomp_PVSSRC(&(pAsm->S[0].src), 3);
         zerocomp_PVSSRC(&(pAsm->S[1].src), 3);
@@ -5694,6 +5701,7 @@ GLboolean AssembleInstr(GLuint uiFirstInst,
                 return GL_FALSE;
             break;  
 
+        case OPCODE_DP2:
         case OPCODE_DP3: 
         case OPCODE_DP4: 
         case OPCODE_DPH: 
@@ -6019,7 +6027,7 @@ GLboolean AssembleInstr(GLuint uiFirstInst,
             return GL_TRUE;
 
         default:
-            radeon_error("internal: unknown instruction\n");
+            radeon_error("r600: unknown instruction %d\n", pILInst[i].Opcode);
             return GL_FALSE;
         }
     }
