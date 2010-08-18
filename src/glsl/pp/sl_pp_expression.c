@@ -27,8 +27,10 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include "sl_pp_context.h"
 #include "sl_pp_expression.h"
 #include "sl_pp_public.h"
+#include "sl_pp_token.h"
 
 
 struct parse_context {

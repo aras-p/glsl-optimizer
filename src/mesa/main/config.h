@@ -177,7 +177,7 @@
 /**
  * Per-program constants (power of two)
  *
- * \c MAX_PROGRAM_LOCAL_PARAMS and \c MAX_UNIFORMS are just the assmebly shader
+ * \c MAX_PROGRAM_LOCAL_PARAMS and \c MAX_UNIFORMS are just the assembly shader
  * and GLSL shader names for the same thing.  They should \b always have the
  * same value.  Each refers to the number of vec4 values supplied as
  * per-program parameters.

@@ -28,8 +28,8 @@
 #ifndef SL_PP_EXPRESSION_H
 #define SL_PP_EXPRESSION_H
 
-#include "sl_pp_context.h"
-#include "sl_pp_token.h"
+struct sl_pp_context;
+struct sl_pp_token_info;
 
 
 int

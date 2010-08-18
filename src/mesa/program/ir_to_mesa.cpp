@@ -813,10 +813,34 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
       ir_to_mesa_emit_op2(ir, OPCODE_SGE, result_dst, op[0], op[1]);
       break;
    case ir_binop_equal:
-      ir_to_mesa_emit_op2(ir, OPCODE_SEQ, result_dst, op[0], op[1]);
+      /* "==" operator producing a scalar boolean. */
+      if (ir->operands[0]->type->is_vector() ||
+	  ir->operands[1]->type->is_vector()) {
+	 ir_to_mesa_src_reg temp = get_temp(glsl_type::vec4_type);
+	 ir_to_mesa_emit_op2(ir, OPCODE_SNE,
+			     ir_to_mesa_dst_reg_from_src(temp), op[0], op[1]);
+	 ir_to_mesa_emit_op2(ir, OPCODE_DP4, result_dst, temp, temp);
+	 ir_to_mesa_emit_op2(ir, OPCODE_SEQ,
+			     result_dst, result_src, src_reg_for_float(0.0));
+      } else {
+	 ir_to_mesa_emit_op2(ir, OPCODE_SEQ, result_dst, op[0], op[1]);
+      }
+      break;
+   case ir_binop_nequal:
+      /* "!=" operator producing a scalar boolean. */
+      if (ir->operands[0]->type->is_vector() ||
+	  ir->operands[1]->type->is_vector()) {
+	 ir_to_mesa_src_reg temp = get_temp(glsl_type::vec4_type);
+	 ir_to_mesa_emit_op2(ir, OPCODE_SNE,
+			     ir_to_mesa_dst_reg_from_src(temp), op[0], op[1]);
+	 ir_to_mesa_emit_op2(ir, OPCODE_DP4, result_dst, temp, temp);
+	 ir_to_mesa_emit_op2(ir, OPCODE_SNE,
+			     result_dst, result_src, src_reg_for_float(0.0));
+      } else {
+	 ir_to_mesa_emit_op2(ir, OPCODE_SNE, result_dst, op[0], op[1]);
+      }
       break;
    case ir_binop_logic_xor:
-   case ir_binop_nequal:
       ir_to_mesa_emit_op2(ir, OPCODE_SNE, result_dst, op[0], op[1]);
       break;
 
@@ -2105,11 +2129,11 @@ ir_to_mesa_visitor::visit(ir_texture *ir)
 void
 ir_to_mesa_visitor::visit(ir_return *ir)
 {
-   assert(current_function);
-
    if (ir->get_value()) {
       ir_to_mesa_dst_reg l;
       int i;
+
+      assert(current_function);
 
       ir->get_value()->accept(this);
       ir_to_mesa_src_reg r = this->result;
@@ -2627,6 +2651,11 @@ _mesa_glsl_compile_shader(GLcontext *ctx, struct gl_shader *shader)
    state->error = preprocess(state, &source, &state->info_log,
 			     &ctx->Extensions);
 
+   if (ctx->Shader.Flags & GLSL_DUMP) {
+      printf("GLSL source for shader %d:\n", shader->Name);
+      printf("%s\n", shader->Source);
+   }
+
    if (!state->error) {
      _mesa_glsl_lexer_ctor(state, source);
      _mesa_glsl_parse(state);
@@ -2662,15 +2691,10 @@ _mesa_glsl_compile_shader(GLcontext *ctx, struct gl_shader *shader)
       _mesa_write_shader_to_file(shader);
    }
 
-   if (ctx->Shader.Flags & GLSL_DUMP) {
-      printf("GLSL source for shader %d:\n", shader->Name);
-      printf("%s\n", shader->Source);
-
-      if (shader->CompileStatus) {
-	 printf("GLSL IR for shader %d:\n", shader->Name);
-	 _mesa_print_ir(shader->ir, NULL);
-	 printf("\n\n");
-      }
+   if ((ctx->Shader.Flags & GLSL_DUMP) && shader->CompileStatus) {
+      printf("GLSL IR for shader %d:\n", shader->Name);
+      _mesa_print_ir(shader->ir, NULL);
+      printf("\n\n");
    }
 
    /* Retain any live IR, but trash the rest. */

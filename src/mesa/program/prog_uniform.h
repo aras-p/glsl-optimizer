@@ -31,8 +31,7 @@
 #ifndef PROG_UNIFORM_H
 #define PROG_UNIFORM_H
 
-#include "main/mtypes.h"
-#include "prog_statevars.h"
+#include "main/glheader.h"
 
 
 /**

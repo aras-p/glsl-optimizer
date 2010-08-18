@@ -519,7 +519,21 @@ ir_constant *
 ir_constant::get_array_element(unsigned i) const
 {
    assert(this->type->is_array());
-   assert(i < this->type->length);
+
+   /* From page 35 (page 41 of the PDF) of the GLSL 1.20 spec:
+    *
+    *     "Behavior is undefined if a shader subscripts an array with an index
+    *     less than 0 or greater than or equal to the size the array was
+    *     declared with."
+    *
+    * Most out-of-bounds accesses are removed before things could get this far.
+    * There are cases where non-constant array index values can get constant
+    * folded.
+    */
+   if (int(i) < 0)
+      i = 0;
+   else if (i >= this->type->length)
+      i = this->type->length - 1;
 
    return array_elements[i];
 }

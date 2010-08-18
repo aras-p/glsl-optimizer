@@ -28,11 +28,6 @@
 #ifndef SL_PP_TOKEN_UTIL_H
 #define SL_PP_TOKEN_UTIL_H
 
-#include <assert.h>
-#include <stdlib.h>
-#include "sl_pp_token.h"
-
-
 struct sl_pp_context;
 
 /*
