@@ -570,7 +570,7 @@ pipe_tex_to_tgsi_tex(enum pipe_texture_target pipe_tex_target)
    case PIPE_TEXTURE_2D:
       return TGSI_TEXTURE_2D;
    case PIPE_TEXTURE_RECT:
-      return TGSI_TEXTURE_2D;
+      return TGSI_TEXTURE_RECT;
    case PIPE_TEXTURE_3D:
       return TGSI_TEXTURE_3D;
    case PIPE_TEXTURE_CUBE:
