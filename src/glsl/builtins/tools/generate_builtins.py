@@ -38,6 +38,14 @@ def run_compiler(args):
     command = [compiler_path, '--dump-lir'] + args
     p = Popen(command, 1, stdout=PIPE, shell=False)
     output = p.communicate()[0]
+
+    # Clean up output a bit by killing whitespace before a closing paren.
+    kill_paren_whitespace = re.compile(r'[ \n]*\)', re.MULTILINE);
+    output = kill_paren_whitespace.sub(')', output);
+
+    # Also toss any duplicate newlines
+    output = output.replace('\n\n', '\n')
+
     return (output, p.returncode)
 
 def write_profile(filename, profile):
@@ -50,6 +58,10 @@ def write_profile(filename, profile):
     # Kill any global variable declarations.  We don't want them.
     kill_globals = re.compile(r'^\(declare.*\n', re.MULTILINE);
     proto_ir = kill_globals.sub('', proto_ir)
+
+    # Kill pointer addresses.  They're not necessary in prototypes and just
+    # clutter the diff output.
+    proto_ir = re.sub(r'@0x[0-9a-f]+', '', proto_ir);
 
     print 'static const char *prototypes_for_' + profile + ' ='
     print stringify(proto_ir), ';'
