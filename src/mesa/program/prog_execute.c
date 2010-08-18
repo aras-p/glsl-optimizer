@@ -1679,6 +1679,22 @@ _mesa_execute_program(GLcontext * ctx,
             store_vector4(inst, machine, color);
          }
          break;
+      case OPCODE_TXL:
+         /* Texel lookup with explicit LOD */
+         {
+            GLfloat texcoord[4], color[4], lod;
+
+            fetch_vector4(&inst->SrcReg[0], machine, texcoord);
+
+            /* texcoord[3] is the LOD */
+            lod = texcoord[3];
+
+	    machine->FetchTexelLod(ctx, texcoord, lod,
+				   machine->Samplers[inst->TexSrcUnit], color);
+
+            store_vector4(inst, machine, color);
+         }
+         break;
       case OPCODE_TXP:         /* GL_ARB_fragment_program only */
          /* Texture lookup w/ projective divide */
          {
