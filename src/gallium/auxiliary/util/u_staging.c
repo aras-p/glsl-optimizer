@@ -8,7 +8,7 @@ util_staging_resource_template(struct pipe_resource *pt, unsigned width, unsigne
 {
    memset(template, 0, sizeof(struct pipe_resource));
    if(pt->target != PIPE_BUFFER && depth <= 1)
-      template->target = PIPE_TEXTURE_2D;
+      template->target = PIPE_TEXTURE_RECT;
    else
       template->target = pt->target;
    template->format = pt->format;
