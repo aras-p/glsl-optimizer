@@ -101,7 +101,6 @@ do_dead_code(exec_list *instructions)
 	 }
       }
    }
-   talloc_free(v.mem_ctx);
 
    return progress;
 }
