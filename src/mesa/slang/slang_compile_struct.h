@@ -29,6 +29,9 @@
 extern "C" {
 #endif
 
+#include "main/glheader.h"
+#include "slang_utility.h"
+
 struct slang_function_;
 
 typedef struct slang_struct_scope_

@@ -32,6 +32,7 @@
 #include "sl_pp_public.h"
 #include "sl_pp_macro.h"
 #include "sl_pp_process.h"
+#include "sl_pp_token.h"
 
 
 static void

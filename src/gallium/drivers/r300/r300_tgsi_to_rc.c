@@ -126,7 +126,7 @@ static unsigned translate_opcode(unsigned opcode)
      /* case TGSI_OPCODE_SAD: return RC_OPCODE_SAD; */
      /* case TGSI_OPCODE_TXF: return RC_OPCODE_TXF; */
      /* case TGSI_OPCODE_TXQ: return RC_OPCODE_TXQ; */
-     /* case TGSI_OPCODE_CONT: return RC_OPCODE_CONT; */
+        case TGSI_OPCODE_CONT: return RC_OPCODE_CONT;
      /* case TGSI_OPCODE_EMIT: return RC_OPCODE_EMIT; */
      /* case TGSI_OPCODE_ENDPRIM: return RC_OPCODE_ENDPRIM; */
      /* case TGSI_OPCODE_BGNLOOP2: return RC_OPCODE_BGNLOOP2; */

@@ -207,7 +207,7 @@ void r300_translate_vertex_shader(struct r300_context *r300,
     compiler.Base.max_temp_regs = 32;
 
     if (compiler.Base.Debug) {
-        debug_printf("r300: Initial vertex program\n");
+        DBG(r300, DBG_VP, "r300: Initial vertex program\n");
         tgsi_dump(vs->state.tokens, 0);
     }
 
@@ -227,8 +227,7 @@ void r300_translate_vertex_shader(struct r300_context *r300,
     /* Invoke the compiler */
     r3xx_compile_vertex_program(&compiler);
     if (compiler.Base.Error) {
-        /* XXX We should fallback using Draw. */
-        fprintf(stderr, "r300 VP: Compiler error:\n%sUsing a dummy shader"
+        DBG(r300, DBG_VP, "r300 VP: Compiler error:\n%sUsing a dummy shader"
                 " instead.\nIf there's an 'unknown opcode' message, please"
                 " file a bug report and attach this log.\n", compiler.Base.ErrorMsg);
 

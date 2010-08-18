@@ -1283,7 +1283,7 @@ void emit_fb_write(struct brw_wm_compile *c,
 	  * + 1 for the second half we get destination + 4.
 	  */
 	 brw_MOV(p,
-		 brw_message_reg(nr + channel + (1 << 7)),
+		 brw_message_reg(nr + channel + BRW_MRF_COMPR4),
 		 arg0[channel]);
       } else {
 	 /*  mov (8) m2.0<1>:ud   r28.0<8;8,1>:ud  { Align1 } */
@@ -1712,12 +1712,20 @@ void brw_wm_emit( struct brw_wm_compile *c )
 		      inst->dst[i]->spill_slot);
    }
 
+   /* Only properly tested on ILK */
+   if (p->brw->intel.gen == 5) {
+     brw_remove_duplicate_mrf_moves(p);
+     if (c->dispatch_width == 16)
+	brw_remove_grf_to_mrf_moves(p);
+   }
+
    if (INTEL_DEBUG & DEBUG_WM) {
       int i;
 
-      printf("wm-native:\n");
-      for (i = 0; i < p->nr_insn; i++)
+     printf("wm-native:\n");
+     for (i = 0; i < p->nr_insn; i++)
 	 brw_disasm(stderr, &p->store[i], p->brw->intel.gen);
       printf("\n");
    }
 }
+

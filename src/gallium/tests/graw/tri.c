@@ -10,6 +10,7 @@
 
 #include "util/u_debug.h"       /* debug_dump_surface_bmp() */
 #include "util/u_memory.h"      /* Offset() */
+#include "util/u_draw_quad.h"
 
 enum pipe_format formats[] = {
    PIPE_FORMAT_R8G8B8A8_UNORM,
@@ -134,7 +135,7 @@ static void draw( void )
    float clear_color[4] = {1,0,1,1};
 
    ctx->clear(ctx, PIPE_CLEAR_COLOR, clear_color, 0, 0);
-   ctx->draw_arrays(ctx, PIPE_PRIM_TRIANGLES, 0, 3);
+   util_draw_arrays(ctx, PIPE_PRIM_TRIANGLES, 0, 3);
    ctx->flush(ctx, PIPE_FLUSH_RENDER_CACHE, NULL);
 
 #if 0

@@ -105,6 +105,8 @@ struct translate *translate_lookup_or_create( struct translate_context *tctx,
 
 struct translate *translate_create( const struct translate_key *key );
 
+boolean translate_is_output_format_supported(enum pipe_format format);
+
 static INLINE int translate_keysize( const struct translate_key *key )
 {
    return 2 * sizeof(int) + key->nr_elements * sizeof(struct translate_element);
@@ -138,5 +140,6 @@ struct translate *translate_sse2_create( const struct translate_key *key );
 
 struct translate *translate_generic_create( const struct translate_key *key );
 
+boolean translate_generic_is_output_format_supported(enum pipe_format format);
 
 #endif

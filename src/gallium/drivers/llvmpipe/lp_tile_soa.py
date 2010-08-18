@@ -293,34 +293,7 @@ def generate_ssse3():
     print '''
 #if defined(PIPE_ARCH_SSE)
 
-
-#if defined(PIPE_ARCH_SSSE3)
-
-#include <tmmintrin.h>
-
-#else
-
-#include <emmintrin.h>
-
-/**
- * Describe _mm_shuffle_epi8() with gcc extended inline assembly, for cases
- * where -mssse3 is not supported/enabled.
- *
- * MSVC will never get in here as its intrinsics support do not rely on
- * compiler command line options.
- */
-static __inline __m128i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
-_mm_shuffle_epi8(__m128i a, __m128i mask)
-{
-    __m128i result;
-    __asm__("pshufb %1, %0"
-            : "=x" (result)
-            : "xm" (mask), "0" (a));
-    return result;
-}
-
-#endif
-
+#include "util/u_sse.h"
 
 static void
 lp_tile_b8g8r8a8_unorm_swizzle_4ub_ssse3(uint8_t *dst,

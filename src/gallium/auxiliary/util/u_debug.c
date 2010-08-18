@@ -88,7 +88,7 @@ debug_get_option_should_print(void)
     * but its cool since we set first to false
     */
    first = FALSE;
-   value = debug_get_bool_option("GALLIUM_PRINT_OPTIONS", TRUE);
+   value = debug_get_bool_option("GALLIUM_PRINT_OPTIONS", FALSE);
    /* XXX should we print this option? Currently it wont */
    return value;
 }

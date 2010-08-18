@@ -30,7 +30,6 @@
 #include <stdio.h>
 
 #include "../r300_reg.h"
-#include "radeon_emulate_loops.h"
 
 /**
  * Rewrite IF instructions to use the ALU result special register.
@@ -58,31 +57,6 @@ int r500_transform_IF(
 	inst->U.I.SrcReg[0].Negate = 0;
 
 	return 1;
-}
-
-/**
- * Rewrite loops to make them easier to emit.  This is not a local
- * transformation, because it modifies and reorders an entire block of code.
- */
-void r500_transform_unroll_loops(struct radeon_compiler * c,
-						struct emulate_loop_state *s)
-{
-	int i;
-	
-	rc_transform_unroll_loops(c, s);
-	
-	for( i = s->LoopCount - 1; i >= 0; i-- ){
-		struct rc_instruction * inst_continue;
-		if(!s->Loops[i].EndLoop){
-			continue;
-		}
-		/* Insert a continue instruction at the end of the loop.  This
-		 * is required in order to emit loops correctly. */
-		inst_continue = rc_insert_new_instruction(c,
-						s->Loops[i].EndIf->Prev);
-		inst_continue->U.I.Opcode = RC_OPCODE_CONTINUE;
-	}
-
 }
 
 static int r500_swizzle_is_native(rc_opcode opcode, struct rc_src_register reg)

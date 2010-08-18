@@ -1,6 +1,11 @@
 static unsigned trim( unsigned count, unsigned first, unsigned incr )
 {
-   return count - (count - first) % incr; 
+   /*
+    * count either has been trimmed in draw_pt_arrays or is set to
+    * (driver)_fetch_max which is hopefully always larger than first.
+    */
+   assert(count >= first);
+   return count - (count - first) % incr;
 }
 
 static void FUNC(struct draw_pt_front_end *frontend,

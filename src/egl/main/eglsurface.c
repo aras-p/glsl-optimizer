@@ -30,6 +30,50 @@ _eglClampSwapInterval(_EGLSurface *surf, EGLint interval)
 }
 
 
+#ifdef EGL_MESA_screen_surface
+static EGLint
+_eglParseScreenSurfaceAttribList(_EGLSurface *surf, const EGLint *attrib_list)
+{
+   EGLint i, err = EGL_SUCCESS;
+
+   if (!attrib_list)
+      return EGL_SUCCESS;
+
+   for (i = 0; attrib_list[i] != EGL_NONE; i++) {
+      EGLint attr = attrib_list[i++];
+      EGLint val = attrib_list[i];
+
+      switch (attr) {
+      case EGL_WIDTH:
+         if (val < 0) {
+            err = EGL_BAD_PARAMETER;
+            break;
+         }
+         surf->Width = val;
+         break;
+      case EGL_HEIGHT:
+         if (val < 0) {
+            err = EGL_BAD_PARAMETER;
+            break;
+         }
+         surf->Height = val;
+         break;
+      default:
+         err = EGL_BAD_ATTRIBUTE;
+         break;
+      }
+
+      if (err != EGL_SUCCESS) {
+         _eglLog(_EGL_WARNING, "bad surface attribute 0x%04x", attr);
+         break;
+      }
+   }
+
+   return err;
+}
+#endif /* EGL_MESA_screen_surface */
+
+
 /**
  * Parse the list of surface attributes and return the proper error code.
  */
@@ -44,6 +88,11 @@ _eglParseSurfaceAttribList(_EGLSurface *surf, const EGLint *attrib_list)
    if (!attrib_list)
       return EGL_SUCCESS;
 
+#ifdef EGL_MESA_screen_surface
+   if (type == EGL_SCREEN_BIT_MESA)
+      return _eglParseScreenSurfaceAttribList(surf, attrib_list);
+#endif
+
    if (dpy->Extensions.NOK_texture_from_pixmap)
       texture_type |= EGL_PIXMAP_BIT;
 
@@ -52,12 +101,8 @@ _eglParseSurfaceAttribList(_EGLSurface *surf, const EGLint *attrib_list)
       EGLint val = attrib_list[i];
 
       switch (attr) {
-      /* common (except for screen surfaces) attributes */
+      /* common attributes */
       case EGL_VG_COLORSPACE:
-         if (type == EGL_SCREEN_BIT_MESA) {
-            err = EGL_BAD_ATTRIBUTE;
-            break;
-         }
          switch (val) {
          case EGL_VG_COLORSPACE_sRGB:
          case EGL_VG_COLORSPACE_LINEAR:
@@ -71,10 +116,6 @@ _eglParseSurfaceAttribList(_EGLSurface *surf, const EGLint *attrib_list)
          surf->VGColorspace = val;
          break;
       case EGL_VG_ALPHA_FORMAT:
-         if (type == EGL_SCREEN_BIT_MESA) {
-            err = EGL_BAD_ATTRIBUTE;
-            break;
-         }
          switch (val) {
          case EGL_VG_ALPHA_FORMAT_NONPRE:
          case EGL_VG_ALPHA_FORMAT_PRE:
@@ -101,7 +142,7 @@ _eglParseSurfaceAttribList(_EGLSurface *surf, const EGLint *attrib_list)
          break;
       /* pbuffer surface attributes */
       case EGL_WIDTH:
-         if (type != EGL_PBUFFER_BIT && type != EGL_SCREEN_BIT_MESA) {
+         if (type != EGL_PBUFFER_BIT) {
             err = EGL_BAD_ATTRIBUTE;
             break;
          }
@@ -112,7 +153,7 @@ _eglParseSurfaceAttribList(_EGLSurface *surf, const EGLint *attrib_list)
          surf->Width = val;
          break;
       case EGL_HEIGHT:
-         if (type != EGL_PBUFFER_BIT && type != EGL_SCREEN_BIT_MESA) {
+         if (type != EGL_PBUFFER_BIT) {
             err = EGL_BAD_ATTRIBUTE;
             break;
          }
@@ -129,6 +170,7 @@ _eglParseSurfaceAttribList(_EGLSurface *surf, const EGLint *attrib_list)
          }
          surf->LargestPbuffer = !!val;
          break;
+      /* for eglBindTexImage */
       case EGL_TEXTURE_FORMAT:
          if (!(type & texture_type)) {
             err = EGL_BAD_ATTRIBUTE;
@@ -210,10 +252,12 @@ _eglInitSurface(_EGLSurface *surf, _EGLDisplay *dpy, EGLint type,
    case EGL_PBUFFER_BIT:
       func = "eglCreatePBufferSurface";
       break;
+#ifdef EGL_MESA_screen_surface
    case EGL_SCREEN_BIT_MESA:
       func = "eglCreateScreenSurface";
       renderBuffer = EGL_SINGLE_BUFFER; /* XXX correct? */
       break;
+#endif
    default:
       _eglLog(_EGL_WARNING, "Bad type in _eglInitSurface");
       return EGL_FALSE;

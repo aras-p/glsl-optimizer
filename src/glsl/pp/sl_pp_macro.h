@@ -28,9 +28,6 @@
 #ifndef SL_PP_MACRO_H
 #define SL_PP_MACRO_H
 
-#include "sl_pp_token.h"
-
-
 struct sl_pp_context;
 struct sl_pp_process_state;
 struct sl_pp_token_buffer;

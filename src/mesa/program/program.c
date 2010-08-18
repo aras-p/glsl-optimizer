@@ -55,12 +55,20 @@ _mesa_init_program(GLcontext *ctx)
 
    /*
     * If this assertion fails, we need to increase the field
-    * size for register indexes.
+    * size for register indexes (see INST_INDEX_BITS).
     */
    ASSERT(ctx->Const.VertexProgram.MaxUniformComponents / 4
           <= (1 << INST_INDEX_BITS));
    ASSERT(ctx->Const.FragmentProgram.MaxUniformComponents / 4
           <= (1 << INST_INDEX_BITS));
+
+   ASSERT(ctx->Const.VertexProgram.MaxTemps <= (1 << INST_INDEX_BITS));
+   ASSERT(ctx->Const.VertexProgram.MaxLocalParams <= (1 << INST_INDEX_BITS));
+   ASSERT(ctx->Const.FragmentProgram.MaxTemps <= (1 << INST_INDEX_BITS));
+   ASSERT(ctx->Const.FragmentProgram.MaxLocalParams <= (1 << INST_INDEX_BITS));
+
+   ASSERT(ctx->Const.VertexProgram.MaxUniformComponents <= 4 * MAX_UNIFORMS);
+   ASSERT(ctx->Const.FragmentProgram.MaxUniformComponents <= 4 * MAX_UNIFORMS);
 
    /* If this fails, increase prog_instruction::TexSrcUnit size */
    ASSERT(MAX_TEXTURE_UNITS < (1 << 5));
@@ -512,6 +520,7 @@ _mesa_clone_program(GLcontext *ctx, const struct gl_program *prog)
    if (prog->Attributes)
       clone->Attributes = _mesa_clone_parameter_list(prog->Attributes);
    memcpy(clone->LocalParams, prog->LocalParams, sizeof(clone->LocalParams));
+   clone->IndirectRegisterFiles = prog->IndirectRegisterFiles;
    clone->NumInstructions = prog->NumInstructions;
    clone->NumTemporaries = prog->NumTemporaries;
    clone->NumParameters = prog->NumParameters;

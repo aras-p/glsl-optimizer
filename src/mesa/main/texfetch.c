@@ -34,7 +34,7 @@
 
 
 #include "colormac.h"
-#include "context.h"
+#include "macros.h"
 #include "texcompress.h"
 #include "texcompress_fxt1.h"
 #include "texcompress_s3tc.h"

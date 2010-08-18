@@ -26,6 +26,11 @@
 #ifndef RENDERBUFFER_H
 #define RENDERBUFFER_H
 
+#include "glheader.h"
+#include "mtypes.h"
+
+struct gl_framebuffer;
+struct gl_renderbuffer;
 
 extern void
 _mesa_init_renderbuffer(struct gl_renderbuffer *rb, GLuint name);

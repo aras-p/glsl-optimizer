@@ -102,7 +102,7 @@ do_copy_texsubimage(struct intel_context *intel,
    GLcontext *ctx = &intel->ctx;
    const struct intel_region *src = get_teximage_source(intel, internalFormat);
 
-   if (!intelImage->mt || !src) {
+   if (!intelImage->mt || !src || !src->buffer) {
       if (INTEL_DEBUG & DEBUG_FALLBACKS)
 	 fprintf(stderr, "%s fail %p %p (0x%08x)\n",
 		 __FUNCTION__, intelImage->mt, src, internalFormat);

@@ -97,6 +97,11 @@ _mesa_init_fbobjects(GLcontext *ctx)
    DummyRenderbuffer.Delete = delete_dummy_renderbuffer;
 }
 
+struct gl_framebuffer *
+_mesa_get_incomplete_framebuffer(void)
+{
+   return &DummyFramebuffer;
+}
 
 /**
  * Helper routine for getting a gl_renderbuffer.

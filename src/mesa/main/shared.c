@@ -32,7 +32,6 @@
 #include "imports.h"
 #include "mtypes.h"
 #include "hash.h"
-#include "arrayobj.h"
 #if FEATURE_ATI_fragment_shader
 #include "atifragshader.h"
 #endif

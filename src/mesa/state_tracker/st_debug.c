@@ -55,6 +55,8 @@ static const struct debug_named_value st_debug_flags[] = {
    { "query",    DEBUG_QUERY, NULL },
    DEBUG_NAMED_VALUE_END
 };
+
+DEBUG_GET_ONCE_FLAGS_OPTION(st_debug, "ST_DEBUG", st_debug_flags, 0)
 #endif
 
 
@@ -62,7 +64,7 @@ void
 st_debug_init(void)
 {
 #ifdef DEBUG
-   ST_DEBUG = debug_get_flags_option("ST_DEBUG", st_debug_flags, 0 );
+   ST_DEBUG = debug_get_option_st_debug();
 #endif
 }
 

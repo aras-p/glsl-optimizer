@@ -95,15 +95,19 @@ struct egl_g3d_image {
    unsigned zslice;
 };
 
+/* standard typecasts */
+_EGL_DRIVER_STANDARD_TYPECASTS(egl_g3d)
+_EGL_DRIVER_TYPECAST(egl_g3d_image, _EGLImage, obj)
+
+#ifdef EGL_MESA_screen_surface
+
 struct egl_g3d_screen {
    _EGLScreen base;
    const struct native_connector *native;
    const struct native_mode **native_modes;
 };
-
-/* standard typecasts */
-_EGL_DRIVER_STANDARD_TYPECASTS(egl_g3d)
 _EGL_DRIVER_TYPECAST(egl_g3d_screen, _EGLScreen, obj)
-_EGL_DRIVER_TYPECAST(egl_g3d_image, _EGLImage, obj)
+
+#endif /* EGL_MESA_screen_surface */
 
 #endif /* _EGL_G3D_H_ */

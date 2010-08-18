@@ -253,7 +253,10 @@ struct tgsi_exec_machine
    struct tgsi_sampler           **Samplers;
 
    unsigned                      ImmLimit;
+
    const void *Consts[PIPE_MAX_CONSTANT_BUFFERS];
+   unsigned ConstsSize[PIPE_MAX_CONSTANT_BUFFERS];
+
    const struct tgsi_token       *Tokens;   /**< Declarations, instructions */
    unsigned                      Processor; /**< TGSI_PROCESSOR_x */
 
@@ -365,6 +368,13 @@ tgsi_set_exec_mask(struct tgsi_exec_machine *mach,
    mask[2] = ch2 ? ~0 : 0;
    mask[3] = ch3 ? ~0 : 0;
 }
+
+
+extern void
+tgsi_exec_set_constant_buffers(struct tgsi_exec_machine *mach,
+                               unsigned num_bufs,
+                               const void **bufs,
+                               const unsigned *buf_sizes);
 
 
 #if defined __cplusplus

@@ -186,20 +186,14 @@ enum r300_prepare_flags {
  * \param cs_dwords     The number of dwords to reserve in CS.
  * \param aos_offset    The offset passed to emit_aos.
  * \param index_bias    The index bias to emit.
- * \param end_cs_dwords The number of free dwords which must be available
- *                      at the end of CS after drawing in case the CS space
- *                      management is performed by a draw_* function manually.
- *                      The parameter may be NULL.
  */
 static void r300_prepare_for_rendering(struct r300_context *r300,
                                        enum r300_prepare_flags flags,
                                        struct pipe_resource *index_buffer,
                                        unsigned cs_dwords,
                                        int aos_offset,
-                                       int index_bias,
-                                       unsigned *end_cs_dwords)
+                                       int index_bias)
 {
-    unsigned end_dwords    = 0;
     boolean flushed        = FALSE;
     boolean first_draw     = flags & PREP_FIRST_DRAW;
     boolean emit_aos       = flags & PREP_EMIT_AOS;
@@ -221,11 +215,7 @@ static void r300_prepare_for_rendering(struct r300_context *r300,
             cs_dwords += 7; /* emit_aos_swtcl */
     }
 
-    /* Emitted in flush. */
-    end_dwords += 26; /* emit_query_end */
-    end_dwords += r300->hyperz_state.size; /* emit_hyperz_end */
-
-    cs_dwords += end_dwords;
+    cs_dwords += r300_get_num_cs_end_dwords(r300);
 
     /* Reserve requested CS space. */
     if (cs_dwords > (r300->cs->ndw - r300->cs->cdw)) {
@@ -250,9 +240,6 @@ static void r300_prepare_for_rendering(struct r300_context *r300,
         if (emit_aos_swtcl)
             r300_emit_aos_swtcl(r300, indexed);
     }
-
-    if (end_cs_dwords)
-        *end_cs_dwords = end_dwords;
 }
 
 static boolean immd_is_good_idea(struct r300_context *r300,
@@ -353,7 +340,7 @@ static void r300_emit_draw_arrays_immediate(struct r300_context *r300,
 
     dwords = 9 + count * vertex_size;
 
-    r300_prepare_for_rendering(r300, PREP_FIRST_DRAW, NULL, dwords, 0, 0, NULL);
+    r300_prepare_for_rendering(r300, PREP_FIRST_DRAW, NULL, dwords, 0, 0);
 
     BEGIN_CS(dwords);
     OUT_CS_REG(R300_GA_COLOR_CONTROL,
@@ -533,7 +520,7 @@ static void r300_draw_range_elements(struct pipe_context* pipe,
     /* 15 dwords for emit_draw_elements */
     r300_prepare_for_rendering(r300,
         PREP_FIRST_DRAW | PREP_VALIDATE_VBOS | PREP_EMIT_AOS | PREP_INDEXED,
-        indexBuffer, 15, buffer_offset, indexBias, NULL);
+        indexBuffer, 15, buffer_offset, indexBias);
 
     if (alt_num_verts || count <= 65535) {
         r300_emit_draw_elements(r300, indexBuffer, indexSize,
@@ -552,7 +539,7 @@ static void r300_draw_range_elements(struct pipe_context* pipe,
             if (count) {
                 r300_prepare_for_rendering(r300,
                     PREP_VALIDATE_VBOS | PREP_EMIT_AOS | PREP_INDEXED,
-                    indexBuffer, 15, buffer_offset, indexBias, NULL);
+                    indexBuffer, 15, buffer_offset, indexBias);
             }
         } while (count);
     }
@@ -564,19 +551,6 @@ static void r300_draw_range_elements(struct pipe_context* pipe,
     if (translate) {
         r300_end_vertex_translate(r300);
     }
-}
-
-/* Simple helpers for context setup. Should probably be moved to util. */
-static void r300_draw_elements(struct pipe_context* pipe,
-                               struct pipe_resource* indexBuffer,
-                               unsigned indexSize, int indexBias, unsigned mode,
-                               unsigned start, unsigned count)
-{
-    struct r300_context *r300 = r300_context(pipe);
-
-    pipe->draw_range_elements(pipe, indexBuffer, indexSize, indexBias,
-                              0, r300->vertex_buffer_max_index,
-                              mode, start, count);
 }
 
 static void r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
@@ -610,7 +584,7 @@ static void r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
     } else {
         /* 9 spare dwords for emit_draw_arrays. */
         r300_prepare_for_rendering(r300, PREP_FIRST_DRAW | PREP_VALIDATE_VBOS | PREP_EMIT_AOS,
-                               NULL, 9, start, 0, NULL);
+                               NULL, 9, start, 0);
 
         if (alt_num_verts || count <= 65535) {
             r300_emit_draw_arrays(r300, mode, count);
@@ -626,7 +600,7 @@ static void r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
                 if (count) {
                     r300_prepare_for_rendering(r300,
                         PREP_VALIDATE_VBOS | PREP_EMIT_AOS, NULL, 9,
-                        start, 0, NULL);
+                        start, 0);
                 }
             } while (count);
         }
@@ -638,111 +612,104 @@ static void r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
     }
 }
 
+static void r300_draw_vbo(struct pipe_context* pipe,
+                          const struct pipe_draw_info *info)
+{
+    struct r300_context* r300 = r300_context(pipe);
+
+    if (info->indexed && r300->index_buffer.buffer) {
+        unsigned offset;
+
+        assert(r300->index_buffer.offset % r300->index_buffer.index_size == 0);
+        offset = r300->index_buffer.offset / r300->index_buffer.index_size;
+
+        r300_draw_range_elements(pipe,
+                                 r300->index_buffer.buffer,
+                                 r300->index_buffer.index_size,
+                                 info->index_bias,
+                                 info->min_index,
+                                 info->max_index,
+                                 info->mode,
+                                 info->start + offset,
+                                 info->count);
+    }
+    else {
+        r300_draw_arrays(pipe,
+                         info->mode,
+                         info->start,
+                         info->count);
+    }
+}
+
 /****************************************************************************
  * The rest of this file is for SW TCL rendering only. Please be polite and *
  * keep these functions separated so that they are easier to locate. ~C.    *
  ***************************************************************************/
 
-/* SW TCL arrays, using Draw. */
-static void r300_swtcl_draw_arrays(struct pipe_context* pipe,
-                                   unsigned mode,
-                                   unsigned start,
-                                   unsigned count)
-{
-    struct r300_context* r300 = r300_context(pipe);
-    struct pipe_transfer *vb_transfer[PIPE_MAX_ATTRIBS];
-    int i;
-
-    if (r300->skip_rendering) {
-        return;
-    }
-
-    if (!u_trim_pipe_prim(mode, &count)) {
-        return;
-    }
-
-    r300_update_derived_state(r300);
-
-    for (i = 0; i < r300->vertex_buffer_count; i++) {
-        void* buf = pipe_buffer_map(pipe,
-                                    r300->vertex_buffer[i].buffer,
-                                    PIPE_TRANSFER_READ,
-				    &vb_transfer[i]);
-        draw_set_mapped_vertex_buffer(r300->draw, i, buf);
-    }
-
-    draw_set_mapped_element_buffer(r300->draw, 0, 0, NULL);
-
-    draw_arrays(r300->draw, mode, start, count);
-
-    /* XXX Not sure whether this is the best fix.
-     * It prevents CS from being rejected and weird assertion failures. */
-    draw_flush(r300->draw);
-
-    for (i = 0; i < r300->vertex_buffer_count; i++) {
-        pipe_buffer_unmap(pipe, r300->vertex_buffer[i].buffer,
-			  vb_transfer[i]);
-        draw_set_mapped_vertex_buffer(r300->draw, i, NULL);
-    }
-}
-
 /* SW TCL elements, using Draw. */
-static void r300_swtcl_draw_range_elements(struct pipe_context* pipe,
-                                           struct pipe_resource* indexBuffer,
-                                           unsigned indexSize,
-                                           int indexBias,
-                                           unsigned minIndex,
-                                           unsigned maxIndex,
-                                           unsigned mode,
-                                           unsigned start,
-                                           unsigned count)
+static void r300_swtcl_draw_vbo(struct pipe_context* pipe,
+                                const struct pipe_draw_info *info)
 {
     struct r300_context* r300 = r300_context(pipe);
     struct pipe_transfer *vb_transfer[PIPE_MAX_ATTRIBS];
-    struct pipe_transfer *ib_transfer;
+    struct pipe_transfer *ib_transfer = NULL;
+    unsigned count = info->count;
     int i;
-    void* indices;
+    void* indices = NULL;
 
     if (r300->skip_rendering) {
         return;
     }
 
-    if (!u_trim_pipe_prim(mode, &count)) {
+    if (!u_trim_pipe_prim(info->mode, &count)) {
         return;
     }
 
     r300_update_derived_state(r300);
 
     for (i = 0; i < r300->vertex_buffer_count; i++) {
-        void* buf = pipe_buffer_map(pipe,
-                                    r300->vertex_buffer[i].buffer,
-                                    PIPE_TRANSFER_READ,
-				    &vb_transfer[i]);
-        draw_set_mapped_vertex_buffer(r300->draw, i, buf);
+        if (r300->vertex_buffer[i].buffer) {
+            void *buf = pipe_buffer_map(pipe,
+                                  r300->vertex_buffer[i].buffer,
+                                  PIPE_TRANSFER_READ,
+                                  &vb_transfer[i]);
+            draw_set_mapped_vertex_buffer(r300->draw, i, buf);
+        }
     }
 
-    indices = pipe_buffer_map(pipe, indexBuffer,
-                              PIPE_TRANSFER_READ, &ib_transfer);
-    draw_set_mapped_element_buffer_range(r300->draw, indexSize, indexBias,
-                                         minIndex, maxIndex, indices);
+    if (info->indexed && r300->index_buffer.buffer) {
+        indices = pipe_buffer_map(pipe, r300->index_buffer.buffer,
+                                  PIPE_TRANSFER_READ, &ib_transfer);
+        if (indices)
+            indices = (void *) ((char *) indices + r300->index_buffer.offset);
+    }
 
-    draw_arrays(r300->draw, mode, start, count);
+    draw_set_mapped_element_buffer_range(r300->draw, (indices) ?
+                                         r300->index_buffer.index_size : 0,
+                                         info->index_bias,
+                                         info->min_index,
+                                         info->max_index,
+                                         indices);
+
+    draw_arrays(r300->draw, info->mode, info->start, count);
 
     /* XXX Not sure whether this is the best fix.
      * It prevents CS from being rejected and weird assertion failures. */
     draw_flush(r300->draw);
 
     for (i = 0; i < r300->vertex_buffer_count; i++) {
-        pipe_buffer_unmap(pipe, r300->vertex_buffer[i].buffer,
-			  vb_transfer[i]);
-        draw_set_mapped_vertex_buffer(r300->draw, i, NULL);
+        if (r300->vertex_buffer[i].buffer) {
+            pipe_buffer_unmap(pipe, r300->vertex_buffer[i].buffer,
+                              vb_transfer[i]);
+            draw_set_mapped_vertex_buffer(r300->draw, i, NULL);
+        }
     }
 
-    pipe_buffer_unmap(pipe, indexBuffer,
-		      ib_transfer);
-    draw_set_mapped_element_buffer_range(r300->draw, 0, 0,
-                                         start, start + count - 1,
-                                         NULL);
+    if (ib_transfer) {
+        pipe_buffer_unmap(pipe, r300->index_buffer.buffer, ib_transfer);
+        draw_set_mapped_element_buffer_range(r300->draw, 0, 0, info->start,
+                info->start + count - 1, NULL);
+    }
 }
 
 /* Object for rendering using Draw. */
@@ -820,6 +787,8 @@ static void* r300_render_map_vertices(struct vbuf_render* render)
                                           PIPE_TRANSFER_WRITE,
 					  &r300render->vbo_transfer);
 
+    assert(r300render->vbo_ptr);
+
     return ((uint8_t*)r300render->vbo_ptr + r300render->vbo_offset);
 }
 
@@ -872,7 +841,7 @@ static void r300_render_draw_arrays(struct vbuf_render* render,
     (void) i; (void) ptr;
 
     r300_prepare_for_rendering(r300, PREP_FIRST_DRAW | PREP_EMIT_AOS_SWTCL,
-                               NULL, dwords, 0, 0, NULL);
+                               NULL, dwords, 0, 0);
 
     DBG(r300, DBG_DRAW, "r300: render_draw_arrays (count: %d)\n", count);
 
@@ -925,7 +894,8 @@ static void r300_render_draw_elements(struct vbuf_render* render,
      * indices than it can fit in CS. */
     r300_prepare_for_rendering(r300,
         PREP_FIRST_DRAW | PREP_EMIT_AOS_SWTCL | PREP_INDEXED,
-        NULL, 256, 0, 0, &end_cs_dwords);
+        NULL, 256, 0, 0);
+    end_cs_dwords = r300_get_num_cs_end_dwords(r300);
 
     while (count) {
         free_dwords = r300->cs->ndw - r300->cs->cdw;
@@ -955,7 +925,8 @@ static void r300_render_draw_elements(struct vbuf_render* render,
         if (count) {
             r300_prepare_for_rendering(r300,
                 PREP_EMIT_AOS_SWTCL | PREP_INDEXED,
-                NULL, 256, 0, 0, &end_cs_dwords);
+                NULL, 256, 0, 0);
+            end_cs_dwords = r300_get_num_cs_end_dwords(r300);
         }
     }
 }
@@ -1049,7 +1020,7 @@ static void r300_blitter_draw_rectangle(struct blitter_context *blitter,
     r300->clip_state.dirty = FALSE;
     r300->viewport_state.dirty = FALSE;
 
-    r300_prepare_for_rendering(r300, PREP_FIRST_DRAW, NULL, dwords, 0, 0, NULL);
+    r300_prepare_for_rendering(r300, PREP_FIRST_DRAW, NULL, dwords, 0, 0);
 
     DBG(r300, DBG_DRAW, "r300: draw_rectangle\n");
 
@@ -1141,16 +1112,11 @@ static void r300_resource_resolve(struct pipe_context* pipe,
 
 void r300_init_render_functions(struct r300_context *r300)
 {
-    /* Set generic functions. */
-    r300->context.draw_elements = r300_draw_elements;
-
     /* Set draw functions based on presence of HW TCL. */
     if (r300->screen->caps.has_tcl) {
-        r300->context.draw_arrays = r300_draw_arrays;
-        r300->context.draw_range_elements = r300_draw_range_elements;
+        r300->context.draw_vbo = r300_draw_vbo;
     } else {
-        r300->context.draw_arrays = r300_swtcl_draw_arrays;
-        r300->context.draw_range_elements = r300_swtcl_draw_range_elements;
+        r300->context.draw_vbo = r300_swtcl_draw_vbo;
     }
 
     r300->context.resource_resolve = r300_resource_resolve;

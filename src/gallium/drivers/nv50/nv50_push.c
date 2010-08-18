@@ -2,8 +2,8 @@
 #include "pipe/p_state.h"
 #include "util/u_inlines.h"
 #include "util/u_format.h"
+#include "util/u_split_prim.h"
 
-#include "nouveau/nouveau_util.h"
 #include "nv50_context.h"
 #include "nv50_resource.h"
 
@@ -217,7 +217,7 @@ nv50_push_elements_instanced(struct pipe_context *pipe,
                                4; /* potential edgeflag enable/disable */
    const unsigned v_overhead = 1 + /* VERTEX_DATA packet header */
                                2; /* potential edgeflag modification */
-   struct u_split_prim s;
+   struct util_split_prim s;
    unsigned vtx_size;
    boolean nzi = FALSE;
    int i;
@@ -335,7 +335,7 @@ nv50_push_elements_instanced(struct pipe_context *pipe,
          ctx.attr[i].map = (uint8_t *)ctx.attr[i].map + ctx.attr[i].stride;
       }
 
-      u_split_prim_init(&s, mode, start, count);
+      util_split_prim_init(&s, mode, start, count);
       do {
          if (AVAIL_RING(chan) < p_overhead + (6 * vtx_size)) {
             FIRE_RING(chan);
@@ -351,7 +351,7 @@ nv50_push_elements_instanced(struct pipe_context *pipe,
 
          BEGIN_RING(chan, tesla, NV50TCL_VERTEX_BEGIN, 1);
          OUT_RING  (chan, nv50_prim(s.mode) | (nzi ? (1 << 28) : 0));
-         done = u_split_prim_next(&s, max_verts);
+         done = util_split_prim_next(&s, max_verts);
          BEGIN_RING(chan, tesla, NV50TCL_VERTEX_END, 1);
          OUT_RING  (chan, 0);
       } while (!done);

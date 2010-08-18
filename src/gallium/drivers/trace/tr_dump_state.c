@@ -533,6 +533,26 @@ void trace_dump_vertex_buffer(const struct pipe_vertex_buffer *state)
 }
 
 
+void trace_dump_index_buffer(const struct pipe_index_buffer *state)
+{
+   if (!trace_dumping_enabled_locked())
+      return;
+
+   if(!state) {
+      trace_dump_null();
+      return;
+   }
+
+   trace_dump_struct_begin("pipe_index_buffer");
+
+   trace_dump_member(uint, state, index_size);
+   trace_dump_member(uint, state, offset);
+   trace_dump_member(resource_ptr, state, buffer);
+
+   trace_dump_struct_end();
+}
+
+
 void trace_dump_vertex_element(const struct pipe_vertex_element *state)
 {
    if (!trace_dumping_enabled_locked())

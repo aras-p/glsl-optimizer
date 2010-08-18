@@ -85,7 +85,7 @@ nvfx_vbo_set_idxbuf(struct nvfx_context *nvfx, struct pipe_resource *ib,
 	unsigned type;
 
 	if (!ib) {
-		nvfx->idxbuf = NULL;
+		nvfx->idxbuf_buffer = NULL;
 		nvfx->idxbuf_format = 0xdeadbeef;
 		return FALSE;
 	}
@@ -104,10 +104,10 @@ nvfx_vbo_set_idxbuf(struct nvfx_context *nvfx, struct pipe_resource *ib,
 		return FALSE;
 	}
 
-	if (ib != nvfx->idxbuf ||
+	if (ib != nvfx->idxbuf_buffer ||
 	    type != nvfx->idxbuf_format) {
 		nvfx->dirty |= NVFX_NEW_ARRAYS;
-		nvfx->idxbuf = ib;
+		nvfx->idxbuf_buffer = ib;
 		nvfx->idxbuf_format = type;
 	}
 
@@ -158,7 +158,7 @@ nvfx_vbo_static_attrib(struct nvfx_context *nvfx,
 	pipe_buffer_unmap(&nvfx->pipe, vb->buffer, transfer);
 }
 
-void
+static void
 nvfx_draw_arrays(struct pipe_context *pipe,
 		 unsigned mode, unsigned start, unsigned count)
 {
@@ -463,7 +463,7 @@ nvfx_draw_elements_vbo(struct pipe_context *pipe,
 	}
 }
 
-void
+static void
 nvfx_draw_elements(struct pipe_context *pipe,
 		   struct pipe_resource *indexBuffer,
 		   unsigned indexSize, int indexBias,
@@ -491,11 +491,38 @@ nvfx_draw_elements(struct pipe_context *pipe,
 	pipe->flush(pipe, 0, NULL);
 }
 
+void
+nvfx_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
+{
+	struct nvfx_context *nvfx = nvfx_context(pipe);
+
+	if (info->indexed && nvfx->idxbuf.buffer) {
+		unsigned offset;
+
+		assert(nvfx->idxbuf.offset % nvfx->idxbuf.index_size == 0);
+		offset = nvfx->idxbuf.offset / nvfx->idxbuf.index_size;
+
+		nvfx_draw_elements(pipe,
+				   nvfx->idxbuf.buffer,
+				   nvfx->idxbuf.index_size,
+				   info->index_bias,
+				   info->mode,
+				   info->start + offset,
+				   info->count);
+	}
+	else {
+		nvfx_draw_arrays(pipe,
+				info->mode,
+				info->start,
+				info->count);
+	}
+}
+
 boolean
 nvfx_vbo_validate(struct nvfx_context *nvfx)
 {
 	struct nouveau_channel* chan = nvfx->screen->base.channel;
-	struct pipe_resource *ib = nvfx->idxbuf;
+	struct pipe_resource *ib = nvfx->idxbuf_buffer;
 	unsigned ib_format = nvfx->idxbuf_format;
 	int i;
 	int elements = MAX2(nvfx->vtxelt->num_elements, nvfx->hw_vtxelt_nr);
@@ -610,10 +637,10 @@ nvfx_vbo_relocate(struct nvfx_context *nvfx)
 		}
 	}
 
-	if(nvfx->idxbuf)
+	if(nvfx->idxbuf_buffer)
 	{
 		unsigned ib_flags = nvfx->screen->index_buffer_reloc_flags | NOUVEAU_BO_RD | NOUVEAU_BO_DUMMY;
-		struct nouveau_bo* bo = nvfx_resource(nvfx->idxbuf)->bo;
+		struct nouveau_bo* bo = nvfx_resource(nvfx->idxbuf_buffer)->bo;
 
 		assert(nvfx->screen->index_buffer_reloc_flags);
 

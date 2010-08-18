@@ -104,9 +104,6 @@ struct lp_rast_plane {
 
    int dcdx;
    int dcdy;
-   
-   /* edge/step info for 3 edges and 4x4 block of pixels */
-   const int *step;
 };
 
 /**
@@ -118,8 +115,6 @@ struct lp_rast_plane {
 struct lp_rast_triangle {
    /* inputs for the shader */
    struct lp_rast_shader_inputs inputs;
-
-   int step[3][16];
 
 #ifdef DEBUG
    float v[3][2];

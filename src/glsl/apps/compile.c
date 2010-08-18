@@ -30,6 +30,7 @@
 #include <string.h>
 #include <assert.h>
 #include "../pp/sl_pp_public.h"
+#include "../pp/sl_pp_purify.h"
 #include "../cl/sl_cl_parse.h"
 
 

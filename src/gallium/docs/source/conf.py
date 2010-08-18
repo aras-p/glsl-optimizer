@@ -22,7 +22,7 @@ sys.path.append(os.path.abspath('exts'))
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.pngmath', 'tgsi']
+extensions = ['sphinx.ext.pngmath', 'formatting']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -38,7 +38,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Gallium'
-copyright = u'2009, VMWare, X.org, Nouveau'
+copyright = u'2009, VMware, X.org, Nouveau'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -176,7 +176,7 @@ htmlhelp_basename = 'Galliumdoc'
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
   ('index', 'Gallium.tex', u'Gallium Documentation',
-   u'VMWare, X.org, Nouveau', 'manual'),
+   u'VMware, X.org, Nouveau', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of

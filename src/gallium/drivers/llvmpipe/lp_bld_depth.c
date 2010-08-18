@@ -258,16 +258,16 @@ lp_build_stencil_op_single(struct lp_build_context *bld,
    }
 
    if (stencil->writemask != stencilMax) {
-      /* compute res = (res & mask) | (stencilVals & ~mask) */
-      LLVMValueRef mask = lp_build_const_int_vec(type, stencil->writemask);
-      LLVMValueRef cmask = LLVMBuildNot(bld->builder, mask, "notWritemask");
-      LLVMValueRef t1 = LLVMBuildAnd(bld->builder, res, mask, "t1");
-      LLVMValueRef t2 = LLVMBuildAnd(bld->builder, stencilVals, cmask, "t2");
-      res = LLVMBuildOr(bld->builder, t1, t2, "t1_or_t2");
+      /* mask &= stencil->writemask */
+      LLVMValueRef writemask = lp_build_const_int_vec(type, stencil->writemask);
+      mask = LLVMBuildAnd(bld->builder, mask, writemask, "");
+      /* res = (res & mask) | (stencilVals & ~mask) */
+      res = lp_build_select_bitwise(bld, writemask, res, stencilVals);
    }
-
-   /* only the update the vector elements enabled by 'mask' */
-   res = lp_build_select(bld, mask, res, stencilVals);
+   else {
+      /* res = mask ? res : stencilVals */
+      res = lp_build_select(bld, mask, res, stencilVals);
+   }
 
    return res;
 }
@@ -662,9 +662,9 @@ lp_build_depth_stencil_test(LLVMBuilderRef builder,
          }
 
          /* Mix the old and new Z buffer values.
-          * z_dst[i] = zselectmask[i] ? z_src[i] : z_dst[i]
+          * z_dst[i] = (zselectmask[i] & z_src[i]) | (~zselectmask[i] & z_dst[i])
           */
-         z_dst = lp_build_select(&bld, zselectmask, z_src, z_dst);
+         z_dst = lp_build_select_bitwise(&bld, zselectmask, z_src, z_dst);
       }
 
       if (stencil[0].enabled) {

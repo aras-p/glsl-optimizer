@@ -179,6 +179,9 @@ radeonReadPixels(GLcontext * ctx,
                  GLenum format, GLenum type,
                  const struct gl_pixelstore_attrib *pack, GLvoid * pixels)
 {
+    radeonContextPtr radeon = RADEON_CONTEXT(ctx);
+    radeon_prepare_render(radeon);
+
     if (do_blit_readpixels(ctx, x, y, width, height, format, type, pack, pixels))
         return;
 

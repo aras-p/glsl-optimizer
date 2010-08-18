@@ -189,7 +189,7 @@ struct pb_buffer *radeon_drm_bufmgr_create_buffer_from_handle(struct pb_manager 
     pipe_reference_init(&buf->base.base.reference, 1);
     buf->base.base.alignment = 0;
     buf->base.base.usage = PB_USAGE_GPU_WRITE | PB_USAGE_GPU_READ;
-    buf->base.base.size = 0;
+    buf->base.base.size = bo->size;
     buf->base.vtbl = &radeon_drm_buffer_vtbl;
     buf->mgr = mgr;
 

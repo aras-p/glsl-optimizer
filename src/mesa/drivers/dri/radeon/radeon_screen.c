@@ -213,6 +213,10 @@ static const GLuint __driNConfigOptions = 17;
 
 static int getSwapInfo( __DRIdrawable *dPriv, __DRIswapInfo * sInfo );
 
+#ifndef RADEON_INFO_TILE_CONFIG
+#define RADEON_INFO_TILE_CONFIG 0x6
+#endif
+
 static int
 radeonGetParam(__DRIscreen *sPriv, int param, void *value)
 {
@@ -231,6 +235,9 @@ radeonGetParam(__DRIscreen *sPriv, int param, void *value)
           break;
       case RADEON_PARAM_NUM_Z_PIPES:
           info.request = RADEON_INFO_NUM_Z_PIPES;
+          break;
+      case RADEON_INFO_TILE_CONFIG:
+	  info.request = RADEON_INFO_TILE_CONFIG;
           break;
       default:
           return -EINVAL;
@@ -375,6 +382,21 @@ static const __DRItexBufferExtension r600TexBufferExtension = {
    r600SetTexBuffer2, /* +r6/r7 */
 };
 #endif
+
+static void
+radeonDRI2Flush(__DRIdrawable *drawable)
+{
+    radeonContextPtr rmesa;
+
+    rmesa = (radeonContextPtr) drawable->driContextPriv->driverPrivate;
+    radeonFlush(rmesa->glCtx);
+}
+
+static const struct __DRI2flushExtensionRec radeonFlushExtension = {
+    { __DRI2_FLUSH, __DRI2_FLUSH_VERSION },
+    radeonDRI2Flush,
+    dri2InvalidateDrawable,
+};
 
 static int radeon_set_screen_flags(radeonScreenPtr screen, int device_id)
 {
@@ -1305,6 +1327,56 @@ radeonCreateScreen2(__DRIscreen *sPriv)
    else
 	   screen->chip_flags |= RADEON_CLASS_R600;
 
+   /* r6xx+ tiling */
+   if (IS_R600_CLASS(screen) && (sPriv->drm_version.minor >= 6)) {
+	   ret = radeonGetParam(sPriv, RADEON_INFO_TILE_CONFIG, &temp);
+	   if (ret)
+		   fprintf(stderr, "failed to get tiling info\n");
+	   else {
+		   screen->tile_config = temp;
+		   screen->r7xx_bank_op = 0;
+		   switch((screen->tile_config & 0xe) >> 1) {
+		   case 0:
+			   screen->num_channels = 1;
+			   break;
+		   case 1:
+			   screen->num_channels = 2;
+			   break;
+		   case 2:
+			   screen->num_channels = 4;
+			   break;
+		   case 3:
+			   screen->num_channels = 8;
+			   break;
+		   default:
+			   fprintf(stderr, "bad channels\n");
+			   break;
+		   }
+		   switch((screen->tile_config & 0x30) >> 4) {
+		   case 0:
+			   screen->num_banks = 4;
+			   break;
+		   case 1:
+			   screen->num_banks = 8;
+			   break;
+		   default:
+			   fprintf(stderr, "bad banks\n");
+			   break;
+		   }
+		   switch((screen->tile_config & 0xc0) >> 6) {
+		   case 0:
+			   screen->group_bytes = 256;
+			   break;
+		   case 1:
+			   screen->group_bytes = 512;
+			   break;
+		   default:
+			   fprintf(stderr, "bad group_bytes\n");
+			   break;
+		   }
+	   }
+   }
+
    if (IS_R300_CLASS(screen)) {
        ret = radeonGetParam(sPriv, RADEON_PARAM_NUM_GB_PIPES, &temp);
        if (ret) {
@@ -1378,6 +1450,8 @@ radeonCreateScreen2(__DRIscreen *sPriv)
 #if defined(RADEON_R600)
    screen->extensions[i++] = &r600TexBufferExtension.base;
 #endif
+
+   screen->extensions[i++] = &radeonFlushExtension.base;
 
    screen->extensions[i++] = NULL;
    sPriv->extensions = screen->extensions;

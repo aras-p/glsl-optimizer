@@ -27,7 +27,10 @@
 #define TEXGEN_H
 
 
-#include "main/mtypes.h"
+#include "compiler.h"
+#include "glheader.h"
+
+struct _glapi_table;
 
 
 #if FEATURE_texgen

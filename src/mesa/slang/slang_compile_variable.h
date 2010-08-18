@@ -26,7 +26,9 @@
 #define SLANG_COMPILE_VARIABLE_H
 
 
-struct slang_ir_storage_;
+#include "main/glheader.h"
+#include "slang_typeinfo.h"
+#include "slang_utility.h"
 
 
 /**

@@ -489,7 +489,7 @@ get_indirect_offsets(struct lp_build_tgsi_soa_context *bld,
                               int_vec_type, "");
 
    /* addr_vec = addr_vec * 4 */
-   addr_vec = lp_build_mul(&bld->base, addr_vec, vec4);
+   addr_vec = lp_build_mul(&bld->int_bld, addr_vec, vec4);
 
    return addr_vec;
 }
@@ -533,7 +533,7 @@ emit_fetch(
                                             reg->Register.Index * 4 + swizzle);
 
          /* index_vec = index_vec + addr_vec */
-         index_vec = lp_build_add(&bld->base, index_vec, addr_vec);
+         index_vec = lp_build_add(&bld->int_bld, index_vec, addr_vec);
 
          /* Gather values from the constant buffer */
          res = build_gather(bld, bld->consts_ptr, index_vec);
@@ -612,11 +612,9 @@ emit_fetch(
    case TGSI_UTIL_SIGN_SET:
       /* TODO: Use bitwese OR for floating point */
       res = lp_build_abs( &bld->base, res );
-      res = LLVMBuildNeg( bld->base.builder, res, "" );
-      break;
-
+      /* fall through */
    case TGSI_UTIL_SIGN_TOGGLE:
-      res = LLVMBuildNeg( bld->base.builder, res, "" );
+      res = lp_build_negate( &bld->base, res );
       break;
 
    case TGSI_UTIL_SIGN_KEEP:
@@ -773,7 +771,9 @@ emit_store(
       addr = LLVMBuildExtractElement(bld->base.builder,
                                      addr, LLVMConstInt(LLVMInt32Type(), 0, 0),
                                      "");
-      addr = lp_build_mul(&bld->base, addr, LLVMConstInt(LLVMInt32Type(), 4, 0));
+      addr = LLVMBuildMul(bld->base.builder,
+                          addr, LLVMConstInt(LLVMInt32Type(), 4, 0),
+                          "");
    }
 
    switch( reg->Register.File ) {

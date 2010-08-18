@@ -24,15 +24,15 @@
  *      Jerome Glisse
  *      Corbin Simpson
  */
-#include <util/u_inlines.h>
-#include <util/u_format.h>
-#include <util/u_memory.h>
-#include "r600_resource.h"
+#include <stdio.h>
+#include "util/u_inlines.h"
+#include "util/u_format.h"
+#include "util/u_memory.h"
 #include "r600_screen.h"
-#include "r600_texture.h"
 #include "r600_context.h"
 #include "r600_public.h"
-#include <stdio.h>
+#include "r600_resource.h"
+#include "r600_state_inlines.h"
 
 static const char* r600_get_vendor(struct pipe_screen* pscreen)
 {
@@ -53,61 +53,102 @@ static const char* r600_get_name(struct pipe_screen* pscreen)
 static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 {
 	switch (param) {
-	case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
-	case PIPE_CAP_MAX_COMBINED_SAMPLERS:
-		return 16;
+	/* Supported features (boolean caps). */
 	case PIPE_CAP_NPOT_TEXTURES:
-		return 1;
 	case PIPE_CAP_TWO_SIDED_STENCIL:
-		return 1;
 	case PIPE_CAP_GLSL:
-		return 1;
 	case PIPE_CAP_DUAL_SOURCE_BLEND:
-		return 1;
 	case PIPE_CAP_ANISOTROPIC_FILTER:
-		return 1;
 	case PIPE_CAP_POINT_SPRITE:
-		return 1;
-	case PIPE_CAP_MAX_RENDER_TARGETS:
-		/* FIXME some r6xx are buggy and can only do 4 */
-		return 8;
 	case PIPE_CAP_OCCLUSION_QUERY:
-		return 1;
 	case PIPE_CAP_TEXTURE_SHADOW_MAP:
+	case PIPE_CAP_TEXTURE_MIRROR_CLAMP:
+	case PIPE_CAP_TEXTURE_MIRROR_REPEAT:
+	case PIPE_CAP_BLEND_EQUATION_SEPARATE:
+	case PIPE_CAP_SM3:
+	case PIPE_CAP_TEXTURE_SWIZZLE:
+	case PIPE_CAP_INDEP_BLEND_ENABLE:
+	case PIPE_CAP_DEPTHSTENCIL_CLEAR_SEPARATE:
 		return 1;
+
+	/* Unsupported features (boolean caps). */
+	case PIPE_CAP_TIMER_QUERY:
+	case PIPE_CAP_TGSI_CONT_SUPPORTED:
+	case PIPE_CAP_STREAM_OUTPUT:
+	case PIPE_CAP_INDEP_BLEND_FUNC: /* FIXME allow this */
+	case PIPE_CAP_GEOMETRY_SHADER4:
+	case PIPE_CAP_DEPTH_CLAMP: /* FIXME allow this */
+		return 0;
+
+	/* Texturing. */
 	case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
 	case PIPE_CAP_MAX_TEXTURE_3D_LEVELS:
 	case PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS:
-		/* FIXME not sure here */
-		return 13;
-	case PIPE_CAP_TEXTURE_MIRROR_CLAMP:
-		return 1;
-	case PIPE_CAP_TEXTURE_MIRROR_REPEAT:
-		return 1;
+		return 14;
 	case PIPE_CAP_MAX_VERTEX_TEXTURE_UNITS:
 		/* FIXME allow this once infrastructure is there */
 		return 0;
-	case PIPE_CAP_TGSI_CONT_SUPPORTED:
-		return 0;
-	case PIPE_CAP_BLEND_EQUATION_SEPARATE:
-		return 1;
-	case PIPE_CAP_SM3:
-		return 1;
-	case PIPE_CAP_INDEP_BLEND_ENABLE:
-		return 1;
-	case PIPE_CAP_INDEP_BLEND_FUNC:
-		/* FIXME allow this */
-		return 0;
-	case PIPE_CAP_DEPTHSTENCIL_CLEAR_SEPARATE:
-		return 1;
+	case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
+	case PIPE_CAP_MAX_COMBINED_SAMPLERS:
+		return 16;
+
+	/* Render targets. */
+	case PIPE_CAP_MAX_RENDER_TARGETS:
+		/* FIXME some r6xx are buggy and can only do 4 */
+		return 8;
+
+	/* Fragment coordinate conventions. */
 	case PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT:
 	case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER:
 		return 1;
 	case PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT:
 	case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER:
 		return 0;
+
+	/* Shader limits. */
+	case PIPE_CAP_MAX_VS_INSTRUCTIONS:
+		return 16384;  //max native instructions, not greater than max instructions
+	case PIPE_CAP_MAX_VS_ALU_INSTRUCTIONS:
+	case PIPE_CAP_MAX_VS_TEX_INSTRUCTIONS:
+	case PIPE_CAP_MAX_VS_TEX_INDIRECTIONS:
+		return 16384;
+	case PIPE_CAP_MAX_FS_INSTRUCTIONS:
+		return 16384; //max program native instructions
+	case PIPE_CAP_MAX_FS_ALU_INSTRUCTIONS:
+		return 16384; //max program native ALU instructions
+	case PIPE_CAP_MAX_FS_TEX_INSTRUCTIONS:
+		return 16384; //max program native texture instructions
+	case PIPE_CAP_MAX_FS_TEX_INDIRECTIONS:
+		return 2048; //max program native texture indirections
+	case PIPE_CAP_MAX_VS_CONTROL_FLOW_DEPTH:
+	case PIPE_CAP_MAX_FS_CONTROL_FLOW_DEPTH:
+		return 8; /* FIXME */
+	case PIPE_CAP_MAX_VS_INPUTS:
+		return 16; //max native attributes
+	case PIPE_CAP_MAX_FS_INPUTS:
+		return 10; //max native attributes
+	case PIPE_CAP_MAX_VS_TEMPS:
+		return 256; //max native temporaries
+	case PIPE_CAP_MAX_FS_TEMPS:
+		return 256; //max native temporaries
+	case PIPE_CAP_MAX_VS_ADDRS:
+	case PIPE_CAP_MAX_FS_ADDRS:
+		return 1; //max native address registers/* FIXME Isn't this equal to TEMPS? */
+	case PIPE_CAP_MAX_VS_CONSTS:
+		return 256; //max native parameters
+	case PIPE_CAP_MAX_FS_CONSTS:
+		return 256; //max program native parameters
+	case PIPE_CAP_MAX_CONST_BUFFERS:
+		return 1;
+	case PIPE_CAP_MAX_CONST_BUFFER_SIZE: /* in bytes */
+		return 4096;
+	case PIPE_CAP_MAX_PREDICATE_REGISTERS:
+	case PIPE_CAP_MAX_VS_PREDS:
+	case PIPE_CAP_MAX_FS_PREDS:
+		return 0; /* FIXME */
+
 	default:
-		debug_printf("r600: unknown param %d\n", param);
+		R600_ERR("r600: unknown param %d\n", param);
 		return 0;
 	}
 }
@@ -125,7 +166,7 @@ static float r600_get_paramf(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_MAX_TEXTURE_LOD_BIAS:
 		return 16.0f;
 	default:
-		debug_printf("r600: unsupported paramf %d\n", param);
+		R600_ERR("r600: unsupported paramf %d\n", param);
 		return 0.0f;
 	}
 }
@@ -134,108 +175,51 @@ static boolean r600_is_format_supported(struct pipe_screen* screen,
 					enum pipe_format format,
 					enum pipe_texture_target target,
 					unsigned sample_count,
-					unsigned bindings,
+					unsigned usage,
 					unsigned geom_flags)
 {
+	unsigned retval = 0;
 	if (target >= PIPE_MAX_TEXTURE_TYPES) {
-		debug_printf("r600: unsupported texture type %d\n", target);
+		R600_ERR("r600: unsupported texture type %d\n", target);
 		return FALSE;
 	}
-	switch (format) {
-	case PIPE_FORMAT_B4G4R4A4_UNORM:
-	case PIPE_FORMAT_B5G6R5_UNORM:
-	case PIPE_FORMAT_B5G5R5A1_UNORM:
-	case PIPE_FORMAT_A8_UNORM:
-	case PIPE_FORMAT_L8_UNORM:
-	case PIPE_FORMAT_A8R8G8B8_SRGB:
-	case PIPE_FORMAT_R8G8B8A8_SRGB:
-	case PIPE_FORMAT_DXT1_RGB:
-	case PIPE_FORMAT_DXT1_RGBA:
-	case PIPE_FORMAT_DXT3_RGBA:
-	case PIPE_FORMAT_DXT5_RGBA:
-	case PIPE_FORMAT_UYVY:
-	case PIPE_FORMAT_L8_SRGB:
-	case PIPE_FORMAT_L8A8_SRGB:
-	case PIPE_FORMAT_L8A8_UNORM:
-	case PIPE_FORMAT_A8R8G8B8_UNORM:
-	case PIPE_FORMAT_X8R8G8B8_UNORM:
-	case PIPE_FORMAT_R8G8B8A8_UNORM:
-	case PIPE_FORMAT_R8G8B8X8_UNORM:
-	case PIPE_FORMAT_B8G8R8A8_UNORM:
-	case PIPE_FORMAT_B8G8R8X8_UNORM:
-	case PIPE_FORMAT_A8B8G8R8_SRGB:
-	case PIPE_FORMAT_B8G8R8A8_SRGB:
-	case PIPE_FORMAT_I8_UNORM:
-	case PIPE_FORMAT_Z16_UNORM:
-	case PIPE_FORMAT_X8Z24_UNORM:
-	case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
-	case PIPE_FORMAT_Z32_UNORM:
-	case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
-	case PIPE_FORMAT_Z24X8_UNORM:
-		return TRUE;
-	default:
-		/* Unknown format... */
-		break;
-	}
-	return FALSE;
-}
 
-struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
-						struct pipe_resource *texture,
-						struct pipe_subresource sr,
-						unsigned usage,
-						const struct pipe_box *box)
-{
-	struct r600_texture *rtex = (struct r600_texture*)texture;
-	struct r600_transfer *trans;
+	/* Multisample */
+	if (sample_count > 1)
+		return FALSE;
 
-	trans = CALLOC_STRUCT(r600_transfer);
-	if (trans == NULL)
-		return NULL;
-	pipe_resource_reference(&trans->transfer.resource, texture);
-	trans->transfer.sr = sr;
-	trans->transfer.usage = usage;
-	trans->transfer.box = *box;
-	trans->transfer.stride = rtex->stride[sr.level];
-	trans->offset = r600_texture_get_offset(rtex, sr.level, box->z, sr.face);
-	return &trans->transfer;
-}
-
-void r600_texture_transfer_destroy(struct pipe_context *ctx,
-				   struct pipe_transfer *trans)
-{
-	pipe_resource_reference(&trans->resource, NULL);
-	FREE(trans);
-}
-
-void* r600_texture_transfer_map(struct pipe_context *ctx,
-				struct pipe_transfer* transfer)
-{
-	struct r600_transfer *rtransfer = (struct r600_transfer*)transfer;
-	struct r600_texture *rtex = (struct r600_texture*)transfer->resource;
-	char *map;
-	enum pipe_format format = rtex->b.b.format;
-
-	map = pipe_buffer_map(ctx, rtex->buffer,
-			      transfer->usage,
-			      &rtransfer->buffer_transfer);
-
-	if (!map) {
-		return NULL;
+	if ((usage & PIPE_BIND_SAMPLER_VIEW) &&
+	    r600_is_sampler_format_supported(format)) {
+		retval |= PIPE_BIND_SAMPLER_VIEW;
 	}
 
-	return map + rtransfer->offset +
-		transfer->box.y / util_format_get_blockheight(format) * transfer->stride +
-		transfer->box.x / util_format_get_blockwidth(format) * util_format_get_blocksize(format);
-}
+	if ((usage & (PIPE_BIND_RENDER_TARGET |
+                  PIPE_BIND_DISPLAY_TARGET |
+                  PIPE_BIND_SCANOUT |
+                  PIPE_BIND_SHARED)) &&
+	    r600_is_colorbuffer_format_supported(format)) {
+		retval |= usage &
+			(PIPE_BIND_RENDER_TARGET |
+			 PIPE_BIND_DISPLAY_TARGET |
+			 PIPE_BIND_SCANOUT |
+			 PIPE_BIND_SHARED);
+	}
 
-void r600_texture_transfer_unmap(struct pipe_context *ctx,
-				 struct pipe_transfer* transfer)
-{
-	struct r600_transfer *rtransfer = (struct r600_transfer*)transfer;
-	struct r600_texture *rtex = (struct r600_texture*)transfer->resource;
+	if ((usage & PIPE_BIND_DEPTH_STENCIL) &&
+	    r600_is_zs_format_supported(format)) {
+		retval |= PIPE_BIND_DEPTH_STENCIL;
+	}
 
-	pipe_buffer_unmap(ctx, rtex->buffer, rtransfer->buffer_transfer);
+	if ((usage & PIPE_BIND_VERTEX_BUFFER) &&
+	    r600_is_vertex_format_supported(format))
+		retval |= PIPE_BIND_VERTEX_BUFFER;
+
+	if (usage & PIPE_BIND_TRANSFER_READ)
+		retval |= PIPE_BIND_TRANSFER_READ;
+	if (usage & PIPE_BIND_TRANSFER_WRITE)
+		retval |= PIPE_BIND_TRANSFER_WRITE;
+
+	return retval == usage;
 }
 
 static void r600_destroy_screen(struct pipe_screen* pscreen)

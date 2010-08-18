@@ -1,6 +1,6 @@
 /**************************************************************************
  *
- * Copyright 2010 VMWare, Inc.
+ * Copyright 2010 VMware, Inc.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -254,6 +254,7 @@ llvm_pipeline_generic( struct draw_pt_middle_end *middle,
    if ((opt & PT_SHADE) && gshader) {
       draw_geometry_shader_run(gshader,
                                draw->pt.user.gs_constants,
+                               draw->pt.user.gs_constants_size,
                                vert_info,
                                prim_info,
                                &gs_vert_info,

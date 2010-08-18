@@ -68,36 +68,6 @@ extern int radeon_is_family_compatible(unsigned family1, unsigned family2);
 extern int radeon_reg_id(struct radeon *radeon, unsigned offset, unsigned *typeid, unsigned *stateid, unsigned *id);
 extern unsigned radeon_type_from_id(struct radeon *radeon, unsigned id);
 
-/*
- * radeon context functions
- */
-#pragma pack(1)
-struct radeon_cs_reloc {
-	uint32_t	handle;
-	uint32_t	read_domain;
-	uint32_t	write_domain;
-	uint32_t	flags;
-};
-#pragma pack()
-
-struct radeon_ctx {
-	int				refcount;
-	struct radeon			*radeon;
-	u32				*pm4;
-	u32				cpm4;
-	u32				draw_cpm4;
-	unsigned			id;
-	unsigned			next_id;
-	unsigned			nreloc;
-	struct radeon_cs_reloc		*reloc;
-	unsigned			nbo;
-	struct radeon_bo		**bo;
-	unsigned			ndraw;
-	struct radeon_draw		*cdraw;
-	struct radeon_draw		**draw;
-	unsigned			nstate;
-	struct radeon_state		**state;
-};
 
 int radeon_ctx_set_bo_new(struct radeon_ctx *ctx, struct radeon_bo *bo);
 struct radeon_bo *radeon_ctx_get_bo(struct radeon_ctx *ctx, unsigned reloc);

@@ -988,17 +988,22 @@ void radeonTransformKILP(struct radeon_compiler * c)
 	for (inst = c->Program.Instructions.Next;
 			inst != &c->Program.Instructions; inst = inst->Next) {
 
-		if (inst->U.I.Opcode != RC_OPCODE_KILP
-			|| inst->Prev->U.I.Opcode != RC_OPCODE_IF
-			|| inst->Next->U.I.Opcode != RC_OPCODE_ENDIF) {
+		if (inst->U.I.Opcode != RC_OPCODE_KILP)
 			continue;
-		}
-		inst->U.I.Opcode = RC_OPCODE_KIL;
-		inst->U.I.SrcReg[0] = negate(absolute(inst->Prev->U.I.SrcReg[0]));
 
-		/* Remove IF */
-		rc_remove_instruction(inst->Prev);
-		/* Remove ENDIF */
-		rc_remove_instruction(inst->Next);
+		inst->U.I.Opcode = RC_OPCODE_KIL;
+
+		if (inst->Prev->U.I.Opcode != RC_OPCODE_IF
+				|| inst->Next->U.I.Opcode != RC_OPCODE_ENDIF) {
+			inst->U.I.SrcReg[0] = negate(builtin_one);
+		} else {
+
+			inst->U.I.SrcReg[0] =
+				negate(absolute(inst->Prev->U.I.SrcReg[0]));
+			/* Remove IF */
+			rc_remove_instruction(inst->Prev);
+			/* Remove ENDIF */
+			rc_remove_instruction(inst->Next);
+		}
 	}
 }

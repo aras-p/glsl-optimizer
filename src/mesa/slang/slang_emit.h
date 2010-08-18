@@ -25,11 +25,9 @@
 #ifndef SLANG_EMIT_H
 #define SLANG_EMIT_H
 
-
-#include "main/imports.h"
-#include "slang_compile.h"
+#include "main/glheader.h"
 #include "slang_ir.h"
-#include "main/mtypes.h"
+#include "slang_vartable.h"
 
 
 extern GLuint

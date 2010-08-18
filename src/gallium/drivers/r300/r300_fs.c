@@ -72,6 +72,11 @@ void r300_shader_read_fs_inputs(struct tgsi_shader_info* info,
                 fs_inputs->wpos = i;
                 break;
 
+            case TGSI_SEMANTIC_FACE:
+                assert(index == 0);
+                fs_inputs->face = i;
+                break;
+
             default:
                 fprintf(stderr, "r300: FP: Unknown input semantic: %i\n",
                         info->input_semantic_name[i]);
@@ -119,6 +124,9 @@ static void allocate_hardware_inputs(
         if (inputs->color[i] != ATTR_UNUSED) {
             allocate(mydata, inputs->color[i], reg++);
         }
+    }
+    if (inputs->face != ATTR_UNUSED) {
+        allocate(mydata, inputs->face, reg++);
     }
     for (i = 0; i < ATTR_GENERIC_COUNT; i++) {
         if (inputs->generic[i] != ATTR_UNUSED) {
@@ -173,7 +181,7 @@ static void get_external_state(
             t = (struct r300_texture*)texstate->sampler_views[i]->base.texture;
 
             /* XXX this should probably take into account STR, not just S. */
-            if (t->uses_pitch) {
+            if (t->desc.is_npot) {
                 switch (s->state.wrap_s) {
                     case PIPE_TEX_WRAP_REPEAT:
                         state->unit[i].wrap_mode = RC_WRAP_REPEAT;
@@ -248,13 +256,18 @@ static void r300_emit_fs_code_to_buffer(
 
         shader->cb_code_size = 19 +
                                ((code->inst_end + 1) * 6) +
-                               imm_count * 7;
+                               imm_count * 7 +
+			       code->int_constant_count * 2;
 
         NEW_CB(shader->cb_code, shader->cb_code_size);
         OUT_CB_REG(R500_US_CONFIG, R500_ZERO_TIMES_ANYTHING_EQUALS_ZERO);
         OUT_CB_REG(R500_US_PIXSIZE, code->max_temp_idx);
         OUT_CB_REG(R500_US_FC_CTRL, code->us_fc_ctrl);
-        OUT_CB_REG(R500_US_CODE_RANGE,
+        for(i = 0; i < code->int_constant_count; i++){
+		OUT_CB_REG(R500_US_FC_INT_CONST_0 + (i * 4),
+						code->int_constants[i]);
+	}
+	OUT_CB_REG(R500_US_CODE_RANGE,
                    R500_US_CODE_RANGE_ADDR(0) | R500_US_CODE_RANGE_SIZE(code->inst_end));
         OUT_CB_REG(R500_US_CODE_OFFSET, 0);
         OUT_CB_REG(R500_US_CODE_ADDR,
@@ -355,13 +368,14 @@ static void r300_translate_fragment_shader(
 {
     struct r300_fragment_program_compiler compiler;
     struct tgsi_to_rc ttr;
-    int wpos;
+    int wpos, face;
     unsigned i;
 
     tgsi_scan_shader(tokens, &shader->info);
     r300_shader_read_fs_inputs(&shader->info, &shader->inputs);
 
     wpos = shader->inputs.wpos;
+    face = shader->inputs.face;
 
     /* Setup the compiler. */
     memset(&compiler, 0, sizeof(compiler));
@@ -378,7 +392,7 @@ static void r300_translate_fragment_shader(
     find_output_registers(&compiler, shader);
 
     if (compiler.Base.Debug) {
-        debug_printf("r300: Initial fragment program\n");
+        DBG(r300, DBG_FP, "r300: Initial fragment program\n");
         tgsi_dump(tokens, 0);
     }
 
@@ -401,6 +415,10 @@ static void r300_translate_fragment_shader(
         rc_transform_fragment_wpos(&compiler.Base, wpos, wpos, TRUE);
     }
 
+    if (face != ATTR_UNUSED) {
+        rc_transform_fragment_face(&compiler.Base, face);
+    }
+
     /* Invoke the compiler */
     r3xx_compile_fragment_program(&compiler);
 
@@ -413,7 +431,7 @@ static void r300_translate_fragment_shader(
     }
 
     if (compiler.Base.Error) {
-        fprintf(stderr, "r300 FP: Compiler Error:\n%sUsing a dummy shader"
+        DBG(r300, DBG_FP, "r300 FP: Compiler Error:\n%sUsing a dummy shader"
                 " instead.\nIf there's an 'unknown opcode' message, please"
                 " file a bug report and attach this log.\n", compiler.Base.ErrorMsg);
 

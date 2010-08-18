@@ -38,11 +38,13 @@ static const struct debug_named_value debug_options[] = {
     { "fall", DBG_FALL, "Fallbacks (for debugging)" },
     { "rs", DBG_RS, "Rasterizer (for debugging)" },
     { "fb", DBG_FB, "Framebuffer (for debugging)" },
+    { "cbzb", DBG_CBZB, "Fast color clear info (for debugging)" },
     { "fakeocc", DBG_FAKE_OCC, "Use fake occlusion queries (for debugging)" },
     { "anisohq", DBG_ANISOHQ, "High quality anisotropic filtering (for benchmarking)" },
     { "notiling", DBG_NO_TILING, "Disable tiling (for benchmarking)" },
     { "noimmd", DBG_NO_IMMD, "Disable immediate mode (for benchmarking)" },
     { "stats", DBG_STATS, "Gather statistics" },
+    { "hyperz", DBG_HYPERZ, "HyperZ (for debugging)" },
 
     /* must be last */
     DEBUG_NAMED_VALUE_END

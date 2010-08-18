@@ -24,8 +24,8 @@
 #include "pipe/p_state.h"
 #include "util/u_inlines.h"
 #include "util/u_format.h"
+#include "util/u_split_prim.h"
 
-#include "nouveau/nouveau_util.h"
 #include "nv50_context.h"
 #include "nv50_resource.h"
 
@@ -83,7 +83,7 @@ instance_step(struct nv50_context *nv50, struct instance *a)
 	}
 }
 
-void
+static void
 nv50_draw_arrays_instanced(struct pipe_context *pipe,
 			   unsigned mode, unsigned start, unsigned count,
 			   unsigned startInstance, unsigned instanceCount)
@@ -128,13 +128,6 @@ nv50_draw_arrays_instanced(struct pipe_context *pipe,
 
 		prim |= (1 << 28);
 	}
-}
-
-void
-nv50_draw_arrays(struct pipe_context *pipe, unsigned mode, unsigned start,
-		 unsigned count)
-{
-	nv50_draw_arrays_instanced(pipe, mode, start, count, 0, 1);
 }
 
 struct inline_ctx {
@@ -228,7 +221,7 @@ nv50_draw_elements_inline(struct pipe_context *pipe,
 	struct pipe_transfer *transfer;
 	struct instance a[16];
 	struct inline_ctx ctx;
-	struct u_split_prim s;
+	struct util_split_prim s;
 	boolean nzi = FALSE;
 	unsigned overhead;
 
@@ -264,7 +257,7 @@ nv50_draw_elements_inline(struct pipe_context *pipe,
 		unsigned max_verts;
 		boolean done;
 
-		u_split_prim_init(&s, mode, start, count);
+		util_split_prim_init(&s, mode, start, count);
 		do {
 			if (AVAIL_RING(chan) < (overhead + 6)) {
 				FIRE_RING(chan);
@@ -283,7 +276,7 @@ nv50_draw_elements_inline(struct pipe_context *pipe,
 
 			BEGIN_RING(chan, tesla, NV50TCL_VERTEX_BEGIN, 1);
 			OUT_RING  (chan, nv50_prim(s.mode) | (nzi ? (1<<28) : 0));
-			done = u_split_prim_next(&s, max_verts);
+			done = util_split_prim_next(&s, max_verts);
 			BEGIN_RING(chan, tesla, NV50TCL_VERTEX_END, 1);
 			OUT_RING  (chan, 0);
 		} while (!done);
@@ -294,7 +287,7 @@ nv50_draw_elements_inline(struct pipe_context *pipe,
 	pipe_buffer_unmap(pipe, indexBuffer, transfer);
 }
 
-void
+static void
 nv50_draw_elements_instanced(struct pipe_context *pipe,
 			     struct pipe_resource *indexBuffer,
 			     unsigned indexSize, int indexBias,
@@ -374,13 +367,34 @@ nv50_draw_elements_instanced(struct pipe_context *pipe,
 }
 
 void
-nv50_draw_elements(struct pipe_context *pipe,
-		   struct pipe_resource *indexBuffer,
-		   unsigned indexSize, int indexBias,
-		   unsigned mode, unsigned start, unsigned count)
+nv50_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
 {
-	nv50_draw_elements_instanced(pipe, indexBuffer, indexSize, indexBias,
-				     mode, start, count, 0, 1);
+	struct nv50_context *nv50 = nv50_context(pipe);
+
+	if (info->indexed && nv50->idxbuf.buffer) {
+		unsigned offset;
+
+		assert(nv50->idxbuf.offset % nv50->idxbuf.index_size == 0);
+		offset = nv50->idxbuf.offset / nv50->idxbuf.index_size;
+
+		nv50_draw_elements_instanced(pipe,
+					     nv50->idxbuf.buffer,
+					     nv50->idxbuf.index_size,
+					     info->index_bias,
+					     info->mode,
+					     info->start + offset,
+					     info->count,
+					     info->start_instance,
+					     info->instance_count);
+	}
+	else {
+		nv50_draw_arrays_instanced(pipe,
+					   info->mode,
+					   info->start,
+					   info->count,
+					   info->start_instance,
+					   info->instance_count);
+	}
 }
 
 static INLINE boolean

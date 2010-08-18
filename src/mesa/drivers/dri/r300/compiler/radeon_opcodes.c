@@ -386,8 +386,8 @@ struct rc_opcode_info rc_opcodes[MAX_RC_OPCODE] = {
 		.NumSrcRegs = 0,
 	},
 	{
-		.Opcode = RC_OPCODE_CONTINUE,
-		.Name = "CONTINUE",
+		.Opcode = RC_OPCODE_CONT,
+		.Name = "CONT",
 		.IsFlowControl = 1,
 		.NumSrcRegs = 0
 	},

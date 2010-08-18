@@ -28,6 +28,8 @@
 #ifndef SL_CL_PARSE_H
 #define SL_CL_PARSE_H
 
+struct sl_pp_context;
+
 int
 sl_cl_compile(struct sl_pp_context *context,
               unsigned int shader_type,

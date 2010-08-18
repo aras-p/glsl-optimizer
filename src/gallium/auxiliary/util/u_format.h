@@ -631,6 +631,44 @@ util_format_has_alpha(enum pipe_format format)
 }
 
 /**
+ * Return the matching SRGB format, or PIPE_FORMAT_NONE if none.
+ */
+static INLINE enum pipe_format
+util_format_srgb(enum pipe_format format)
+{
+   switch (format) {
+   case PIPE_FORMAT_L8_UNORM:
+      return PIPE_FORMAT_L8_SRGB;
+   case PIPE_FORMAT_L8A8_UNORM:
+      return PIPE_FORMAT_L8A8_SRGB;
+   case PIPE_FORMAT_R8G8B8_UNORM:
+      return PIPE_FORMAT_R8G8B8_SRGB;
+   case PIPE_FORMAT_A8B8G8R8_UNORM:
+      return PIPE_FORMAT_A8B8G8R8_SRGB;
+   case PIPE_FORMAT_X8B8G8R8_UNORM:
+      return PIPE_FORMAT_X8B8G8R8_SRGB;
+   case PIPE_FORMAT_B8G8R8A8_UNORM:
+      return PIPE_FORMAT_B8G8R8A8_SRGB;
+   case PIPE_FORMAT_B8G8R8X8_UNORM:
+      return PIPE_FORMAT_B8G8R8X8_SRGB;
+   case PIPE_FORMAT_A8R8G8B8_UNORM:
+      return PIPE_FORMAT_A8R8G8B8_SRGB;
+   case PIPE_FORMAT_X8R8G8B8_UNORM:
+      return PIPE_FORMAT_X8R8G8B8_SRGB;
+   case PIPE_FORMAT_DXT1_RGB:
+      return PIPE_FORMAT_DXT1_SRGB;
+   case PIPE_FORMAT_DXT1_RGBA:
+      return PIPE_FORMAT_DXT1_SRGBA;
+   case PIPE_FORMAT_DXT3_RGBA:
+      return PIPE_FORMAT_DXT3_SRGBA;
+   case PIPE_FORMAT_DXT5_RGBA:
+      return PIPE_FORMAT_DXT5_SRGBA;
+   default:
+      return PIPE_FORMAT_NONE;
+   }
+}
+
+/**
  * Return the number of components stored.
  * Formats with block size != 1x1 will always have 1 component (the block).
  */

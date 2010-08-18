@@ -131,6 +131,7 @@ C_SOURCES = \
 	util/u_sampler.c \
 	util/u_simple_shaders.c \
 	util/u_snprintf.c \
+	util/u_staging.c \
 	util/u_surface.c \
 	util/u_surfaces.c \
 	util/u_texture.c \
@@ -149,6 +150,7 @@ C_SOURCES = \
 
 GALLIVM_SOURCES = \
         gallivm/lp_bld_arit.c \
+        gallivm/lp_bld_assert.c \
         gallivm/lp_bld_const.c \
         gallivm/lp_bld_conv.c \
         gallivm/lp_bld_debug.c \

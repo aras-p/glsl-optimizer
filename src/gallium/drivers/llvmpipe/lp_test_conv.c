@@ -35,6 +35,7 @@
 
 
 #include "util/u_pointer.h"
+#include "gallivm/lp_bld_init.h"
 #include "gallivm/lp_bld_type.h"
 #include "gallivm/lp_bld_const.h"
 #include "gallivm/lp_bld_conv.h"
@@ -152,8 +153,7 @@ test_one(unsigned verbose,
 {
    LLVMModuleRef module = NULL;
    LLVMValueRef func = NULL;
-   LLVMExecutionEngineRef engine = NULL;
-   LLVMModuleProviderRef provider = NULL;
+   LLVMExecutionEngineRef engine = lp_build_engine;
    LLVMPassManagerRef pass = NULL;
    char *error = NULL;
    conv_test_ptr_t conv_test_ptr;
@@ -202,15 +202,6 @@ test_one(unsigned verbose,
       abort();
    }
    LLVMDisposeMessage(error);
-
-   provider = LLVMCreateModuleProviderForExistingModule(module);
-   if (LLVMCreateJITCompiler(&engine, provider, 1, &error)) {
-      if(verbose < 1)
-         dump_conv_types(stderr, src_type, dst_type);
-      fprintf(stderr, "%s\n", error);
-      LLVMDisposeMessage(error);
-      abort();
-   }
 
 #if 0
    pass = LLVMCreatePassManager();
@@ -351,7 +342,6 @@ test_one(unsigned verbose,
 
    LLVMFreeMachineCodeForFunction(engine, func);
 
-   LLVMDisposeExecutionEngine(engine);
    if(pass)
       LLVMDisposePassManager(pass);
 

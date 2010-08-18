@@ -38,7 +38,7 @@
 #include "u_cpu_detect.h"
 
 #if defined(PIPE_ARCH_PPC)
-#if defined(PIPE_OS_DARWIN)
+#if defined(PIPE_OS_APPLE)
 #include <sys/sysctl.h>
 #else
 #include <signal.h>
@@ -73,9 +73,15 @@
 #endif
 
 
+DEBUG_GET_ONCE_BOOL_OPTION(dump_cpu, "GALLIUM_DUMP_CPU", FALSE)
+
+
 struct util_cpu_caps util_cpu_caps;
 
+#if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
 static int has_cpuid(void);
+#endif
+
 
 #if defined(PIPE_ARCH_X86)
 
@@ -132,7 +138,7 @@ win32_sig_handler_sse(EXCEPTION_POINTERS* ep)
 #endif /* PIPE_ARCH_X86 */
 
 
-#if defined(PIPE_ARCH_PPC) && !defined(PIPE_OS_DARWIN)
+#if defined(PIPE_ARCH_PPC) && !defined(PIPE_OS_APPLE)
 static jmp_buf  __lv_powerpc_jmpbuf;
 static volatile sig_atomic_t __lv_powerpc_canjump = 0;
 
@@ -153,7 +159,7 @@ sigill_handler(int sig)
 static void
 check_os_altivec_support(void)
 {
-#if defined(PIPE_OS_DARWIN)
+#if defined(PIPE_OS_APPLE)
    int sels[2] = {CTL_HW, HW_VECTORUNIT};
    int has_vu = 0;
    int len = sizeof (has_vu);
@@ -166,8 +172,8 @@ check_os_altivec_support(void)
          util_cpu_caps.has_altivec = 1;
       }
    }
-#else /* !PIPE_OS_DARWIN */
-   /* no Darwin, do it the brute-force way */
+#else /* !PIPE_OS_APPLE */
+   /* not on Apple/Darwin, do it the brute-force way */
    /* this is borrowed from the libmpeg2 library */
    signal(SIGILL, sigill_handler);
    if (setjmp(__lv_powerpc_jmpbuf)) {
@@ -184,7 +190,7 @@ check_os_altivec_support(void)
       signal(SIGILL, SIG_DFL);
       util_cpu_caps.has_altivec = 1;
    }
-#endif /* PIPE_OS_DARWIN */
+#endif /* !PIPE_OS_APPLE */
 }
 #endif /* PIPE_ARCH_PPC */
 
@@ -385,23 +391,6 @@ util_cpu_detect(void)
 
    memset(&util_cpu_caps, 0, sizeof util_cpu_caps);
 
-   /* Check for arch type */
-#if defined(PIPE_ARCH_MIPS)
-   util_cpu_caps.arch = UTIL_CPU_ARCH_MIPS;
-#elif defined(PIPE_ARCH_ALPHA)
-   util_cpu_caps.arch = UTIL_CPU_ARCH_ALPHA;
-#elif defined(PIPE_ARCH_SPARC)
-   util_cpu_caps.arch = UTIL_CPU_ARCH_SPARC;
-#elif defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
-   util_cpu_caps.arch = UTIL_CPU_ARCH_X86;
-   util_cpu_caps.little_endian = 1;
-#elif defined(PIPE_ARCH_PPC)
-   util_cpu_caps.arch = UTIL_CPU_ARCH_POWERPC;
-   util_cpu_caps.little_endian = 0;
-#else
-   util_cpu_caps.arch = UTIL_CPU_ARCH_UNKNOWN;
-#endif
-
    /* Count the number of CPUs in system */
 #if defined(PIPE_OS_WINDOWS)
    {
@@ -497,23 +486,24 @@ util_cpu_detect(void)
 #endif /* PIPE_ARCH_PPC */
 
 #ifdef DEBUG
-   debug_printf("util_cpu_caps.arch = %i\n", util_cpu_caps.arch);
-   debug_printf("util_cpu_caps.nr_cpus = %u\n", util_cpu_caps.nr_cpus);
+   if (debug_get_option_dump_cpu()) {
+      debug_printf("util_cpu_caps.nr_cpus = %u\n", util_cpu_caps.nr_cpus);
 
-   debug_printf("util_cpu_caps.x86_cpu_type = %u\n", util_cpu_caps.x86_cpu_type);
-   debug_printf("util_cpu_caps.cacheline = %u\n", util_cpu_caps.cacheline);
+      debug_printf("util_cpu_caps.x86_cpu_type = %u\n", util_cpu_caps.x86_cpu_type);
+      debug_printf("util_cpu_caps.cacheline = %u\n", util_cpu_caps.cacheline);
 
-   debug_printf("util_cpu_caps.has_tsc = %u\n", util_cpu_caps.has_tsc);
-   debug_printf("util_cpu_caps.has_mmx = %u\n", util_cpu_caps.has_mmx);
-   debug_printf("util_cpu_caps.has_mmx2 = %u\n", util_cpu_caps.has_mmx2);
-   debug_printf("util_cpu_caps.has_sse = %u\n", util_cpu_caps.has_sse);
-   debug_printf("util_cpu_caps.has_sse2 = %u\n", util_cpu_caps.has_sse2);
-   debug_printf("util_cpu_caps.has_sse3 = %u\n", util_cpu_caps.has_sse3);
-   debug_printf("util_cpu_caps.has_ssse3 = %u\n", util_cpu_caps.has_ssse3);
-   debug_printf("util_cpu_caps.has_sse4_1 = %u\n", util_cpu_caps.has_sse4_1);
-   debug_printf("util_cpu_caps.has_3dnow = %u\n", util_cpu_caps.has_3dnow);
-   debug_printf("util_cpu_caps.has_3dnow_ext = %u\n", util_cpu_caps.has_3dnow_ext);
-   debug_printf("util_cpu_caps.has_altivec = %u\n", util_cpu_caps.has_altivec);
+      debug_printf("util_cpu_caps.has_tsc = %u\n", util_cpu_caps.has_tsc);
+      debug_printf("util_cpu_caps.has_mmx = %u\n", util_cpu_caps.has_mmx);
+      debug_printf("util_cpu_caps.has_mmx2 = %u\n", util_cpu_caps.has_mmx2);
+      debug_printf("util_cpu_caps.has_sse = %u\n", util_cpu_caps.has_sse);
+      debug_printf("util_cpu_caps.has_sse2 = %u\n", util_cpu_caps.has_sse2);
+      debug_printf("util_cpu_caps.has_sse3 = %u\n", util_cpu_caps.has_sse3);
+      debug_printf("util_cpu_caps.has_ssse3 = %u\n", util_cpu_caps.has_ssse3);
+      debug_printf("util_cpu_caps.has_sse4_1 = %u\n", util_cpu_caps.has_sse4_1);
+      debug_printf("util_cpu_caps.has_3dnow = %u\n", util_cpu_caps.has_3dnow);
+      debug_printf("util_cpu_caps.has_3dnow_ext = %u\n", util_cpu_caps.has_3dnow_ext);
+      debug_printf("util_cpu_caps.has_altivec = %u\n", util_cpu_caps.has_altivec);
+   }
 #endif
 
    util_cpu_detect_initialized = TRUE;

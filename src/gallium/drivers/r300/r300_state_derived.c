@@ -46,6 +46,11 @@ enum r300_rs_swizzle {
     SWIZ_0001,
 };
 
+enum r300_rs_col_write_type {
+    WRITE_COLOR = 0,
+    WRITE_FACE
+};
+
 static void r300_draw_emit_attrib(struct r300_context* r300,
                                   enum attrib_emit emit,
                                   enum interp_mode interp,
@@ -203,8 +208,10 @@ static void r300_rs_col(struct r300_rs_block* rs, int id, int ptr,
     rs->inst[id] |= R300_RS_INST_COL_ID(id);
 }
 
-static void r300_rs_col_write(struct r300_rs_block* rs, int id, int fp_offset)
+static void r300_rs_col_write(struct r300_rs_block* rs, int id, int fp_offset,
+                              enum r300_rs_col_write_type type)
 {
+    assert(type != WRITE_COLOR);
     rs->inst[id] |= R300_RS_INST_COL_CN_WRITE |
                     R300_RS_INST_COL_ADDR(fp_offset);
 }
@@ -213,19 +220,19 @@ static void r300_rs_tex(struct r300_rs_block* rs, int id, int ptr,
                         enum r300_rs_swizzle swiz)
 {
     if (swiz == SWIZ_X001) {
-        rs->ip[id] |= R300_RS_TEX_PTR(ptr*4) |
+        rs->ip[id] |= R300_RS_TEX_PTR(ptr) |
                       R300_RS_SEL_S(R300_RS_SEL_C0) |
                       R300_RS_SEL_T(R300_RS_SEL_K0) |
                       R300_RS_SEL_R(R300_RS_SEL_K0) |
                       R300_RS_SEL_Q(R300_RS_SEL_K1);
     } else if (swiz == SWIZ_XY01) {
-        rs->ip[id] |= R300_RS_TEX_PTR(ptr*4) |
+        rs->ip[id] |= R300_RS_TEX_PTR(ptr) |
                       R300_RS_SEL_S(R300_RS_SEL_C0) |
                       R300_RS_SEL_T(R300_RS_SEL_C1) |
                       R300_RS_SEL_R(R300_RS_SEL_K0) |
                       R300_RS_SEL_Q(R300_RS_SEL_K1);
     } else {
-        rs->ip[id] |= R300_RS_TEX_PTR(ptr*4) |
+        rs->ip[id] |= R300_RS_TEX_PTR(ptr) |
                       R300_RS_SEL_S(R300_RS_SEL_C0) |
                       R300_RS_SEL_T(R300_RS_SEL_C1) |
                       R300_RS_SEL_R(R300_RS_SEL_C2) |
@@ -252,32 +259,36 @@ static void r500_rs_col(struct r300_rs_block* rs, int id, int ptr,
     rs->inst[id] |= R500_RS_INST_COL_ID(id);
 }
 
-static void r500_rs_col_write(struct r300_rs_block* rs, int id, int fp_offset)
+static void r500_rs_col_write(struct r300_rs_block* rs, int id, int fp_offset,
+                              enum r300_rs_col_write_type type)
 {
-    rs->inst[id] |= R500_RS_INST_COL_CN_WRITE |
-                    R500_RS_INST_COL_ADDR(fp_offset);
+    if (type == WRITE_FACE)
+        rs->inst[id] |= R500_RS_INST_COL_CN_WRITE_BACKFACE |
+                        R500_RS_INST_COL_ADDR(fp_offset);
+    else
+        rs->inst[id] |= R500_RS_INST_COL_CN_WRITE |
+                        R500_RS_INST_COL_ADDR(fp_offset);
+
 }
 
 static void r500_rs_tex(struct r300_rs_block* rs, int id, int ptr,
 			enum r300_rs_swizzle swiz)
 {
-    int rs_tex_comp = ptr*4;
-
     if (swiz == SWIZ_X001) {
-        rs->ip[id] |= R500_RS_SEL_S(rs_tex_comp) |
+        rs->ip[id] |= R500_RS_SEL_S(ptr) |
                       R500_RS_SEL_T(R500_RS_IP_PTR_K0) |
                       R500_RS_SEL_R(R500_RS_IP_PTR_K0) |
                       R500_RS_SEL_Q(R500_RS_IP_PTR_K1);
     } else if (swiz == SWIZ_XY01) {
-        rs->ip[id] |= R500_RS_SEL_S(rs_tex_comp) |
-                      R500_RS_SEL_T(rs_tex_comp + 1) |
+        rs->ip[id] |= R500_RS_SEL_S(ptr) |
+                      R500_RS_SEL_T(ptr + 1) |
                       R500_RS_SEL_R(R500_RS_IP_PTR_K0) |
                       R500_RS_SEL_Q(R500_RS_IP_PTR_K1);
     } else {
-        rs->ip[id] |= R500_RS_SEL_S(rs_tex_comp) |
-                      R500_RS_SEL_T(rs_tex_comp + 1) |
-                      R500_RS_SEL_R(rs_tex_comp + 2) |
-                      R500_RS_SEL_Q(rs_tex_comp + 3);
+        rs->ip[id] |= R500_RS_SEL_S(ptr) |
+                      R500_RS_SEL_T(ptr + 1) |
+                      R500_RS_SEL_R(ptr + 2) |
+                      R500_RS_SEL_Q(ptr + 3);
     }
     rs->inst[id] |= R500_RS_INST_TEX_ID(id);
 }
@@ -305,9 +316,9 @@ static void r300_update_rs_block(struct r300_context *r300)
     struct r300_shader_semantics *vs_outputs = &vs->outputs;
     struct r300_shader_semantics *fs_inputs = &r300_fs(r300)->shader->inputs;
     struct r300_rs_block rs = {0};
-    int i, col_count = 0, tex_count = 0, fp_offset = 0, count, loc = 0;
+    int i, col_count = 0, tex_count = 0, fp_offset = 0, count, loc = 0, tex_ptr = 0;
     void (*rX00_rs_col)(struct r300_rs_block*, int, int, enum r300_rs_swizzle);
-    void (*rX00_rs_col_write)(struct r300_rs_block*, int, int);
+    void (*rX00_rs_col_write)(struct r300_rs_block*, int, int, enum r300_rs_col_write_type);
     void (*rX00_rs_tex)(struct r300_rs_block*, int, int, enum r300_rs_swizzle);
     void (*rX00_rs_tex_write)(struct r300_rs_block*, int, int);
     boolean any_bcolor_used = vs_outputs->bcolor[0] != ATTR_UNUSED ||
@@ -325,6 +336,11 @@ static void r300_update_rs_block(struct r300_context *r300)
         rX00_rs_tex       = r300_rs_tex;
         rX00_rs_tex_write = r300_rs_tex_write;
     }
+
+    /* 0x5555 copied from classic, which means:
+     * Select user color 0 for COLOR0 up to COLOR7.
+     * What the hell does that mean? */
+    rs.vap_vtx_state_cntl = 0x5555;
 
     /* The position is always present in VAP. */
     rs.vap_vsm_vtx_assm |= R300_INPUT_CNTL_POS;
@@ -352,7 +368,7 @@ static void r300_update_rs_block(struct r300_context *r300)
 
             /* Write it to the FS input register if it's needed by the FS. */
             if (fs_inputs->color[i] != ATTR_UNUSED) {
-                rX00_rs_col_write(&rs, col_count, fp_offset);
+                rX00_rs_col_write(&rs, col_count, fp_offset, WRITE_COLOR);
                 fp_offset++;
 
                 DBG(r300, DBG_RS,
@@ -393,10 +409,29 @@ static void r300_update_rs_block(struct r300_context *r300)
                 stream_loc_notcl[loc++] = 6 + tex_count;
 
                 /* Rasterize it. */
-                rX00_rs_tex(&rs, tex_count, tex_count, SWIZ_XYZW);
+                rX00_rs_tex(&rs, tex_count, tex_ptr, SWIZ_XYZW);
                 tex_count++;
+                tex_ptr += 4;
             }
         }
+    }
+
+    /* gl_FrontFacing.
+     * Note that we can use either the two-sided color selection based on
+     * the front and back vertex shader colors, or gl_FrontFacing,
+     * but not both! It locks up otherwise.
+     *
+     * In Direct3D 9, the two-sided color selection can be used
+     * with shaders 2.0 only, while gl_FrontFacing can be used
+     * with shaders 3.0 only. The hardware apparently hasn't been designed
+     * to support both at the same time. */
+    if (r300->screen->caps.is_r500 && fs_inputs->face != ATTR_UNUSED &&
+        !(any_bcolor_used && r300->two_sided_color)) {
+        rX00_rs_col(&rs, col_count, col_count, SWIZ_XYZW);
+        rX00_rs_col_write(&rs, col_count, fp_offset, WRITE_FACE);
+        fp_offset++;
+        col_count++;
+        DBG(r300, DBG_RS, "r300: Rasterized FACE written to FS.\n");
     }
 
     /* Rasterize texture coordinates. */
@@ -412,7 +447,7 @@ static void r300_update_rs_block(struct r300_context *r300)
             }
 
             /* Rasterize it. */
-            rX00_rs_tex(&rs, tex_count, tex_count,
+            rX00_rs_tex(&rs, tex_count, tex_ptr,
 			sprite_coord ? SWIZ_XY01 : SWIZ_XYZW);
 
             /* Write it to the FS input register if it's needed by the FS. */
@@ -429,6 +464,7 @@ static void r300_update_rs_block(struct r300_context *r300)
                     i, sprite_coord ? " (sprite coord)" : "");
             }
             tex_count++;
+            tex_ptr += sprite_coord ? 2 : 4;
         } else {
             /* Skip the FS input register, leave it uninitialized. */
             /* If we try to set it to (0,0,0,1), it will lock up. */
@@ -449,7 +485,7 @@ static void r300_update_rs_block(struct r300_context *r300)
         stream_loc_notcl[loc++] = 6 + tex_count;
 
         /* Rasterize it. */
-        rX00_rs_tex(&rs, tex_count, tex_count, SWIZ_X001);
+        rX00_rs_tex(&rs, tex_count, tex_ptr, SWIZ_X001);
 
         /* Write it to the FS input register if it's needed by the FS. */
         if (fs_inputs->fog != ATTR_UNUSED) {
@@ -461,6 +497,7 @@ static void r300_update_rs_block(struct r300_context *r300)
             DBG(r300, DBG_RS, "r300: Rasterized fog unused.\n");
         }
         tex_count++;
+        tex_ptr += 4;
     } else {
         /* Skip the FS input register, leave it uninitialized. */
         /* If we try to set it to (0,0,0,1), it will lock up. */
@@ -480,7 +517,7 @@ static void r300_update_rs_block(struct r300_context *r300)
         stream_loc_notcl[loc++] = 6 + tex_count;
 
         /* Rasterize it. */
-        rX00_rs_tex(&rs, tex_count, tex_count, SWIZ_XYZW);
+        rX00_rs_tex(&rs, tex_count, tex_ptr, SWIZ_XYZW);
 
         /* Write it to the FS input register. */
         rX00_rs_tex_write(&rs, tex_count, fp_offset);
@@ -489,6 +526,7 @@ static void r300_update_rs_block(struct r300_context *r300)
 
         fp_offset++;
         tex_count++;
+        tex_ptr += 4;
     }
 
     /* Invalidate the rest of the no-TCL (GA) stream locations. */
@@ -507,7 +545,7 @@ static void r300_update_rs_block(struct r300_context *r300)
     DBG(r300, DBG_RS, "r300: --- Rasterizer status ---: colors: %i, "
         "generics: %i.\n", col_count, tex_count);
 
-    rs.count = (tex_count*4) | (col_count << R300_IC_COUNT_SHIFT) |
+    rs.count = MIN2(tex_ptr, 32) | (col_count << R300_IC_COUNT_SHIFT) |
         R300_HIRES_EN;
 
     count = MAX3(col_count, tex_count, 1);
@@ -528,15 +566,9 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
     struct r300_sampler_state *sampler;
     struct r300_sampler_view *view;
     struct r300_texture *tex;
-    unsigned min_level, max_level, i, size;
+    unsigned min_level, max_level, i, j, size;
     unsigned count = MIN2(state->sampler_view_count,
                           state->sampler_state_count);
-    unsigned char depth_swizzle[4] = {
-        UTIL_FORMAT_SWIZZLE_X,
-        UTIL_FORMAT_SWIZZLE_X,
-        UTIL_FORMAT_SWIZZLE_X,
-        UTIL_FORMAT_SWIZZLE_X
-    };
 
     /* The KIL opcode fix, see below. */
     if (!count && !r300->screen->caps.is_r500)
@@ -563,14 +595,29 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
             /* Assign a texture cache region. */
             texstate->format.format1 |= view->texcache_region;
 
-            /* If compare mode is disabled, the sampler view swizzles
-             * are stored in the format.
-             * Otherwise, swizzles must be applied after the compare mode
-             * in the fragment shader. */
-            if (util_format_is_depth_or_stencil(tex->b.b.format)) {
+            /* Depth textures are kinda special. */
+            if (util_format_is_depth_or_stencil(tex->desc.b.b.format)) {
+                unsigned char depth_swizzle[4];
+
+                if (!r300->screen->caps.is_r500 &&
+                    util_format_get_blocksizebits(tex->desc.b.b.format) == 32) {
+                    /* X24x8 is sampled as Y16X16 on r3xx-r4xx.
+                     * The depth here is at the Y component. */
+                    for (j = 0; j < 4; j++)
+                        depth_swizzle[j] = UTIL_FORMAT_SWIZZLE_Y;
+                } else {
+                    for (j = 0; j < 4; j++)
+                        depth_swizzle[j] = UTIL_FORMAT_SWIZZLE_X;
+                }
+
+                /* If compare mode is disabled, sampler view swizzles
+                 * are stored in the format.
+                 * Otherwise, the swizzles must be applied after the compare
+                 * mode in the fragment shader. */
                 if (sampler->state.compare_mode == PIPE_TEX_COMPARE_NONE) {
                     texstate->format.format1 |=
-                        r300_get_swizzle_combined(depth_swizzle, view->swizzle);
+                        r300_get_swizzle_combined(depth_swizzle,
+                                                  view->swizzle);
                 } else {
                     texstate->format.format1 |=
                         r300_get_swizzle_combined(depth_swizzle, 0);
@@ -578,12 +625,12 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
             }
 
             /* to emulate 1D textures through 2D ones correctly */
-            if (tex->b.b.target == PIPE_TEXTURE_1D) {
+            if (tex->desc.b.b.target == PIPE_TEXTURE_1D) {
                 texstate->filter0 &= ~R300_TX_WRAP_T_MASK;
                 texstate->filter0 |= R300_TX_WRAP_T(R300_TX_CLAMP_TO_EDGE);
             }
 
-            if (tex->uses_pitch) {
+            if (tex->desc.is_npot) {
                 /* NPOT textures don't support mip filter, unfortunately.
                  * This prevents incorrect rendering. */
                 texstate->filter0 &= ~R300_TX_MIN_FILTER_MIP_MASK;
@@ -610,7 +657,7 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
                 /* determine min/max levels */
                 /* the MAX_MIP level is the largest (finest) one */
                 max_level = MIN3(sampler->max_lod + view->base.first_level,
-                                 tex->b.b.last_level, view->base.last_level);
+                                 tex->desc.b.b.last_level, view->base.last_level);
                 min_level = MIN2(sampler->min_lod + view->base.first_level,
                                  max_level);
                 texstate->format.format0 |= R300_TX_NUM_LEVELS(max_level);
@@ -665,8 +712,44 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
     }
 }
 
+/* We can't use compressed zbuffers as samplers. */
+static void r300_flush_depth_textures(struct r300_context *r300)
+{
+    struct r300_textures_state *state =
+        (struct r300_textures_state*)r300->textures_state.state;
+    unsigned i, level;
+    unsigned count = MIN2(state->sampler_view_count,
+                          state->sampler_state_count);
+
+    if (r300->z_decomp_rd)
+        return;
+
+    for (i = 0; i < count; i++)
+        if (state->sampler_views[i] && state->sampler_states[i]) {
+            struct pipe_resource *tex = state->sampler_views[i]->base.texture;
+
+            if (tex->target == PIPE_TEXTURE_3D ||
+                tex->target == PIPE_TEXTURE_CUBE)
+                continue;
+
+            /* Ignore non-depth textures.
+             * Also ignore reinterpreted depth textures, e.g. resource_copy. */
+            if (!util_format_is_depth_or_stencil(tex->format))
+                continue;
+
+            for (level = 0; level <= tex->last_level; level++)
+                if (r300_texture(tex)->zmask_in_use[level]) {
+                    /* We don't handle 3D textures and cubemaps yet. */
+                    r300_flush_depth_stencil(&r300->context, tex,
+                                             u_subresource(0, level), 0);
+                }
+        }
+}
+
 void r300_update_derived_state(struct r300_context* r300)
 {
+    r300_flush_depth_textures(r300);
+
     if (r300->textures_state.dirty) {
         r300_merge_textures_and_samplers(r300);
     }

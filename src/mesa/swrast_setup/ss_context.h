@@ -28,9 +28,8 @@
 #ifndef SS_CONTEXT_H
 #define SS_CONTEXT_H
 
-#include "main/mtypes.h"
+#include "main/glheader.h"
 #include "swrast/swrast.h"
-#include "swrast_setup.h"
 #include "tnl/t_context.h"
 
 typedef struct {

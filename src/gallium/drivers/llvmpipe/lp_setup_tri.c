@@ -61,36 +61,6 @@ struct tri_info {
 
 
 
-static const int step_scissor_minx[16] = {
-   0, 1, 0, 1,
-   2, 3, 2, 3,
-   0, 1, 0, 1,
-   2, 3, 2, 3
-};
-
-static const int step_scissor_maxx[16] = {
-    0, -1,  0, -1,
-   -2, -3, -2, -3,
-    0, -1,  0, -1,
-   -2, -3, -2, -3
-};
-
-static const int step_scissor_miny[16] = {
-   0, 0, 1, 1,
-   0, 0, 1, 1,
-   2, 2, 3, 3,
-   2, 2, 3, 3
-};
-
-static const int step_scissor_maxy[16] = {
-    0,  0, -1, -1,
-    0,  0, -1, -1,
-   -2, -2, -3, -3,
-   -2, -2, -3, -3
-};
-
-
-
    
 static INLINE int
 subpixel_snap(float a)
@@ -260,13 +230,13 @@ static void setup_tri_coefficients( struct lp_setup_context *setup,
 {
    unsigned fragcoord_usage_mask = TGSI_WRITEMASK_XYZ;
    unsigned slot;
+   unsigned i;
 
    /* setup interpolation for all the remaining attributes:
     */
    for (slot = 0; slot < setup->fs.nr_inputs; slot++) {
       unsigned vert_attr = setup->fs.input[slot].src_index;
       unsigned usage_mask = setup->fs.input[slot].usage_mask;
-      unsigned i;
 
       switch (setup->fs.input[slot].interp) {
       case LP_INTERP_CONSTANT:
@@ -316,6 +286,34 @@ static void setup_tri_coefficients( struct lp_setup_context *setup,
    /* The internal position input is in slot zero:
     */
    setup_fragcoord_coef(tri, info, 0, fragcoord_usage_mask);
+
+   if (0) {
+      for (i = 0; i < NUM_CHANNELS; i++) {
+         float a0   = tri->inputs.a0  [0][i];
+         float dadx = tri->inputs.dadx[0][i];
+         float dady = tri->inputs.dady[0][i];
+
+         debug_printf("POS.%c: a0 = %f, dadx = %f, dady = %f\n",
+                      "xyzw"[i],
+                      a0, dadx, dady);
+      }
+
+      for (slot = 0; slot < setup->fs.nr_inputs; slot++) {
+         unsigned usage_mask = setup->fs.input[slot].usage_mask;
+         for (i = 0; i < NUM_CHANNELS; i++) {
+            if (usage_mask & (1 << i)) {
+               float a0   = tri->inputs.a0  [1 + slot][i];
+               float dadx = tri->inputs.dadx[1 + slot][i];
+               float dady = tri->inputs.dady[1 + slot][i];
+
+               debug_printf("IN[%u].%c: a0 = %f, dadx = %f, dady = %f\n",
+                            slot,
+                            "xyzw"[i],
+                            a0, dadx, dady);
+            }
+         }
+      }
+   }
 }
 
 
@@ -525,7 +523,7 @@ do_triangle_ccw(struct lp_setup_context *setup,
    info.dx20 = info.v2[0][0] - info.v0[0][0];
    info.dy01 = info.v0[0][1] - info.v1[0][1];
    info.dy20 = info.v2[0][1] - info.v0[0][1];
-   info.oneoverarea = 1.0 / (info.dx01 * info.dy20 - info.dx20 * info.dy01);
+   info.oneoverarea = 1.0f / (info.dx01 * info.dy20 - info.dx20 * info.dy01);
    info.frontfacing = frontfacing;
 
    /* Setup parameter interpolants:
@@ -590,35 +588,6 @@ do_triangle_ccw(struct lp_setup_context *setup,
       /* Calculate trivial accept offsets from the above.
        */
       plane->ei = plane->dcdy - plane->dcdx - plane->eo;
-
-      plane->step = tri->step[i];
-
-      /* Fill in the inputs.step[][] arrays.
-       * We've manually unrolled some loops here.
-       */
-#define SETUP_STEP(j, x, y) \
-      tri->step[i][j] = y * plane->dcdy - x * plane->dcdx
-      
-      SETUP_STEP(0, 0, 0);
-      SETUP_STEP(1, 1, 0);
-      SETUP_STEP(2, 0, 1);
-      SETUP_STEP(3, 1, 1);
-
-      SETUP_STEP(4, 2, 0);
-      SETUP_STEP(5, 3, 0);
-      SETUP_STEP(6, 2, 1);
-      SETUP_STEP(7, 3, 1);
-
-      SETUP_STEP(8, 0, 2);
-      SETUP_STEP(9, 1, 2);
-      SETUP_STEP(10, 0, 3);
-      SETUP_STEP(11, 1, 3);
-
-      SETUP_STEP(12, 2, 2);
-      SETUP_STEP(13, 3, 2);
-      SETUP_STEP(14, 2, 3);
-      SETUP_STEP(15, 3, 3);
-#undef STEP
    }
 
 
@@ -641,28 +610,24 @@ do_triangle_ccw(struct lp_setup_context *setup,
     * these planes elsewhere.
     */
    if (nr_planes == 7) {
-      tri->plane[3].step = step_scissor_minx;
       tri->plane[3].dcdx = -1;
       tri->plane[3].dcdy = 0;
       tri->plane[3].c = 1-minx;
       tri->plane[3].ei = 0;
       tri->plane[3].eo = 1;
 
-      tri->plane[4].step = step_scissor_maxx;
       tri->plane[4].dcdx = 1;
       tri->plane[4].dcdy = 0;
       tri->plane[4].c = maxx;
       tri->plane[4].ei = -1;
       tri->plane[4].eo = 0;
 
-      tri->plane[5].step = step_scissor_miny;
       tri->plane[5].dcdx = 0;
       tri->plane[5].dcdy = 1;
       tri->plane[5].c = 1-miny;
       tri->plane[5].ei = 0;
       tri->plane[5].eo = 1;
 
-      tri->plane[6].step = step_scissor_maxy;
       tri->plane[6].dcdx = 0;
       tri->plane[6].dcdy = -1;
       tri->plane[6].c = maxy;

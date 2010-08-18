@@ -141,7 +141,7 @@ coeffs_init(struct lp_build_interp_soa_context *bld,
                else {
                   dadx = LLVMBuildLoad(builder, LLVMBuildGEP(builder, dadx_ptr, &index, 1, ""), "");
                   dady = LLVMBuildLoad(builder, LLVMBuildGEP(builder, dady_ptr, &index, 1, ""), "");
-                  dadxy = LLVMBuildAdd(builder, dadx, dady, "");
+                  dadxy = LLVMBuildFAdd(builder, dadx, dady, "");
                   attrib_name(dadx, attrib, chan, ".dadx");
                   attrib_name(dady, attrib, chan, ".dady");
                   attrib_name(dadxy, attrib, chan, ".dadxy");
@@ -177,7 +177,7 @@ coeffs_init(struct lp_build_interp_soa_context *bld,
              * dadq2 = 2 * dq
              */
 
-            dadq2 = LLVMBuildAdd(builder, dadq, dadq, "");
+            dadq2 = LLVMBuildFAdd(builder, dadq, dadq, "");
 
             /*
              * a = a0 + x * dadx + y * dady
@@ -193,12 +193,11 @@ coeffs_init(struct lp_build_interp_soa_context *bld,
                a = a0;
                if (interp != LP_INTERP_CONSTANT &&
                    interp != LP_INTERP_FACING) {
-                  a = LLVMBuildAdd(builder, a,
-                                   LLVMBuildMul(builder, bld->x, dadx, ""),
-                                   "");
-                  a = LLVMBuildAdd(builder, a,
-                                   LLVMBuildMul(builder, bld->y, dady, ""),
-                                   "");
+                  LLVMValueRef tmp;
+                  tmp = LLVMBuildFMul(builder, bld->x, dadx, "");
+                  a = LLVMBuildFAdd(builder, a, tmp, "");
+                  tmp = LLVMBuildFMul(builder, bld->y, dady, "");
+                  a = LLVMBuildFAdd(builder, a, tmp, "");
                }
             }
 
@@ -212,7 +211,7 @@ coeffs_init(struct lp_build_interp_soa_context *bld,
              * Compute the attrib values on the upper-left corner of each quad.
              */
 
-            a = LLVMBuildAdd(builder, a, dadq2, "");
+            a = LLVMBuildFAdd(builder, a, dadq2, "");
 
             /*
              * a    *= 1 / w

@@ -46,19 +46,13 @@ TAG(do_block_4)(struct lp_rasterizer_task *task,
                 int x, int y,
                 const int *c)
 {
-   unsigned mask = 0;
-   int i;
+   unsigned mask = 0xffff;
+   int j;
 
-   for (i = 0; i < 16; i++) {
-      int any_negative = 0;
-      int j;
-
-      for (j = 0; j < NR_PLANES; j++) 
-         any_negative |= (c[j] - 1 + plane[j].step[i]);
-         
-      any_negative >>= 31;
-
-      mask |= (~any_negative) & (1 << i);
+   for (j = 0; j < NR_PLANES; j++) {
+      mask &= ~build_mask(c[j] - 1, 
+			  -plane[j].dcdx,
+			  plane[j].dcdy);
    }
 
    /* Now pass to the shader:
@@ -79,24 +73,19 @@ TAG(do_block_16)(struct lp_rasterizer_task *task,
                  const int *c)
 {
    unsigned outmask, inmask, partmask, partial_mask;
-   unsigned i, j;
+   unsigned j;
 
    outmask = 0;                 /* outside one or more trivial reject planes */
    partmask = 0;                /* outside one or more trivial accept planes */
 
    for (j = 0; j < NR_PLANES; j++) {
-      const int *step = plane[j].step;
-      const int eo = plane[j].eo * 4;
-      const int ei = plane[j].ei * 4;
-      const int cox = c[j] + eo;
-      const int cio = ei - 1 - eo;
+      const int dcdx = -plane[j].dcdx * 4;
+      const int dcdy = plane[j].dcdy * 4;
+      const int cox = c[j] + plane[j].eo * 4;
+      const int cio = c[j] + plane[j].ei * 4 - 1;
 
-      for (i = 0; i < 16; i++) {
-         int out = cox + step[i] * 4;
-         int part = out + cio;
-         outmask  |= (out >> 31) & (1 << i);
-         partmask |= (part >> 31) & (1 << i);
-      }
+      outmask |= build_mask_linear(cox, dcdx, dcdy);
+      partmask |= build_mask_linear(cio, dcdx, dcdy);
    }
 
    if (outmask == 0xffff)
@@ -117,14 +106,18 @@ TAG(do_block_16)(struct lp_rasterizer_task *task,
     */
    while (partial_mask) {
       int i = ffs(partial_mask) - 1;
-      int px = x + pos_table4[i][0];
-      int py = y + pos_table4[i][1];
+      int ix = (i & 3) * 4;
+      int iy = (i >> 2) * 4;
+      int px = x + ix;
+      int py = y + iy; 
       int cx[NR_PLANES];
 
-      for (j = 0; j < NR_PLANES; j++)
-         cx[j] = c[j] + plane[j].step[i] * 4;
-
       partial_mask &= ~(1 << i);
+
+      for (j = 0; j < NR_PLANES; j++)
+         cx[j] = (c[j] 
+		  - plane[j].dcdx * ix
+		  + plane[j].dcdy * iy);
 
       TAG(do_block_4)(task, tri, plane, px, py, cx);
    }
@@ -133,8 +126,10 @@ TAG(do_block_16)(struct lp_rasterizer_task *task,
     */
    while (inmask) {
       int i = ffs(inmask) - 1;
-      int px = x + pos_table4[i][0];
-      int py = y + pos_table4[i][1];
+      int ix = (i & 3) * 4;
+      int iy = (i >> 2) * 4;
+      int px = x + ix;
+      int py = y + iy; 
 
       inmask &= ~(1 << i);
 
@@ -157,35 +152,28 @@ TAG(lp_rast_triangle)(struct lp_rasterizer_task *task,
    struct lp_rast_plane plane[NR_PLANES];
    int c[NR_PLANES];
    unsigned outmask, inmask, partmask, partial_mask;
-   unsigned i, j, nr_planes = 0;
+   unsigned j = 0;
 
-   while (plane_mask) {
-      int i = ffs(plane_mask) - 1;
-      plane[nr_planes] = tri->plane[i];
-      plane_mask &= ~(1 << i);
-      nr_planes++;
-   };
-
-   assert(nr_planes == NR_PLANES);
    outmask = 0;                 /* outside one or more trivial reject planes */
    partmask = 0;                /* outside one or more trivial accept planes */
 
-   for (j = 0; j < NR_PLANES; j++) {
-      const int *step = plane[j].step;
-      const int eo = plane[j].eo * 16;
-      const int ei = plane[j].ei * 16;
-      int cox, cio;
-
+   while (plane_mask) {
+      int i = ffs(plane_mask) - 1;
+      plane[j] = tri->plane[i];
+      plane_mask &= ~(1 << i);
       c[j] = plane[j].c + plane[j].dcdy * y - plane[j].dcdx * x;
-      cox = c[j] + eo;
-      cio = ei - 1 - eo;
 
-      for (i = 0; i < 16; i++) {
-         int out = cox + step[i] * 16;
-         int part = out + cio;
-         outmask  |= (out >> 31) & (1 << i);
-         partmask |= (part >> 31) & (1 << i);
+      {
+	 const int dcdx = -plane[j].dcdx * 16;
+	 const int dcdy = plane[j].dcdy * 16;
+	 const int cox = c[j] + plane[j].eo * 16;
+	 const int cio = c[j] + plane[j].ei * 16 - 1;
+
+	 outmask |= build_mask_linear(cox, dcdx, dcdy);
+	 partmask |= build_mask_linear(cio, dcdx, dcdy);
       }
+
+      j++;
    }
 
    if (outmask == 0xffff)
@@ -206,12 +194,16 @@ TAG(lp_rast_triangle)(struct lp_rasterizer_task *task,
     */
    while (partial_mask) {
       int i = ffs(partial_mask) - 1;
-      int px = x + pos_table16[i][0];
-      int py = y + pos_table16[i][1];
+      int ix = (i & 3) * 16;
+      int iy = (i >> 2) * 16;
+      int px = x + ix;
+      int py = y + iy;
       int cx[NR_PLANES];
 
       for (j = 0; j < NR_PLANES; j++)
-         cx[j] = c[j] + plane[j].step[i] * 16;
+         cx[j] = (c[j]
+		  - plane[j].dcdx * ix
+		  + plane[j].dcdy * iy);
 
       partial_mask &= ~(1 << i);
 
@@ -223,8 +215,10 @@ TAG(lp_rast_triangle)(struct lp_rasterizer_task *task,
     */
    while (inmask) {
       int i = ffs(inmask) - 1;
-      int px = x + pos_table16[i][0];
-      int py = y + pos_table16[i][1];
+      int ix = (i & 3) * 16;
+      int iy = (i >> 2) * 16;
+      int px = x + ix;
+      int py = y + iy;
 
       inmask &= ~(1 << i);
 

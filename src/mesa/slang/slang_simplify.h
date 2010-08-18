@@ -26,6 +26,13 @@
 #define SLANG_SIMPLIFY_H
 
 
+#include "main/glheader.h"
+#include "slang_compile.h"
+#include "slang_compile_function.h"
+#include "slang_compile_operation.h"
+#include "slang_log.h"
+#include "slang_utility.h"
+
 extern GLint
 _slang_lookup_constant(const char *name);
 

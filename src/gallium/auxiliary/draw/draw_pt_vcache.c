@@ -95,7 +95,7 @@ static INLINE void
 vcache_check_flush( struct vcache_frontend *vcache )
 {
    if (vcache->draw_count + 6 >= DRAW_MAX ||
-       vcache->fetch_count + 4 >= FETCH_MAX) {
+       vcache->fetch_count + 6 >= FETCH_MAX) {
       vcache_flush( vcache );
    }
 }
@@ -180,59 +180,61 @@ vcache_point( struct vcache_frontend *vcache,
 }
 
 
-static INLINE void 
-vcache_quad( struct vcache_frontend *vcache,
-             unsigned i0,
-             unsigned i1,
-             unsigned i2,
-             unsigned i3 )
+static INLINE void
+vcache_line_adj_flags( struct vcache_frontend *vcache,
+                       unsigned flags,
+                       unsigned a0, unsigned i0, unsigned i1, unsigned a1 )
 {
-   if (vcache->draw->rasterizer->flatshade_first) {
-      /* pass last quad vertex as first triangle vertex */
-      vcache_triangle( vcache, i3, i0, i1 );
-      vcache_triangle( vcache, i3, i1, i2 );
-   }
-   else {
-      /* pass last quad vertex as last triangle vertex */
-      vcache_triangle( vcache, i0, i1, i3 );
-      vcache_triangle( vcache, i1, i2, i3 );
-   }
+   vcache_elt(vcache, a0, 0);
+   vcache_elt(vcache, i0, flags);
+   vcache_elt(vcache, i1, 0);
+   vcache_elt(vcache, a1, 0);
+   vcache_check_flush(vcache);
 }
 
 
-static INLINE void 
-vcache_ef_quad( struct vcache_frontend *vcache,
-                unsigned i0,
-                unsigned i1,
-                unsigned i2,
-                unsigned i3 )
+static INLINE void
+vcache_line_adj( struct vcache_frontend *vcache,
+                 unsigned a0, unsigned i0, unsigned i1, unsigned a1 )
 {
-   if (vcache->draw->rasterizer->flatshade_first) {
-      /* pass last quad vertex as first triangle vertex */
-      vcache_triangle_flags( vcache,
-                             ( DRAW_PIPE_RESET_STIPPLE |
-                               DRAW_PIPE_EDGE_FLAG_0 |
-                               DRAW_PIPE_EDGE_FLAG_1 ),
-                             i3, i0, i1 );
+   vcache_elt(vcache, a0, 0);
+   vcache_elt(vcache, i0, 0);
+   vcache_elt(vcache, i1, 0);
+   vcache_elt(vcache, a1, 0);
+   vcache_check_flush(vcache);
+}
 
-      vcache_triangle_flags( vcache,
-                             ( DRAW_PIPE_EDGE_FLAG_1 |
-                               DRAW_PIPE_EDGE_FLAG_2 ),
-                             i3, i1, i2 );
-   }
-   else {
-      /* pass last quad vertex as last triangle vertex */
-      vcache_triangle_flags( vcache,
-                             ( DRAW_PIPE_RESET_STIPPLE |
-                               DRAW_PIPE_EDGE_FLAG_0 |
-                               DRAW_PIPE_EDGE_FLAG_2 ),
-                             i0, i1, i3 );
 
-      vcache_triangle_flags( vcache,
-                             ( DRAW_PIPE_EDGE_FLAG_0 |
-                               DRAW_PIPE_EDGE_FLAG_1 ),
-                             i1, i2, i3 );
-   }
+static INLINE void
+vcache_triangle_adj_flags( struct vcache_frontend *vcache,
+                           unsigned flags,
+                           unsigned i0, unsigned a0,
+                           unsigned i1, unsigned a1,
+                           unsigned i2, unsigned a2 )
+{
+   vcache_elt(vcache, i0, flags);
+   vcache_elt(vcache, a0, 0);
+   vcache_elt(vcache, i1, 0);
+   vcache_elt(vcache, a1, 0);
+   vcache_elt(vcache, i2, 0);
+   vcache_elt(vcache, a2, 0);
+   vcache_check_flush(vcache);
+}
+
+
+static INLINE void
+vcache_triangle_adj( struct vcache_frontend *vcache,
+                     unsigned i0, unsigned a0,
+                     unsigned i1, unsigned a1,
+                     unsigned i2, unsigned a2 )
+{
+   vcache_elt(vcache, i0, 0);
+   vcache_elt(vcache, a0, 0);
+   vcache_elt(vcache, i1, 0);
+   vcache_elt(vcache, a1, 0);
+   vcache_elt(vcache, i2, 0);
+   vcache_elt(vcache, a2, 0);
+   vcache_check_flush(vcache);
 }
 
 
@@ -240,17 +242,23 @@ vcache_ef_quad( struct vcache_frontend *vcache,
  * this.  The two paths aren't too different though - it may be
  * possible to reunify them.
  */
-#define TRIANGLE(vc,flags,i0,i1,i2) vcache_triangle_flags(vc,flags,i0,i1,i2)
-#define QUAD(vc,i0,i1,i2,i3)        vcache_ef_quad(vc,i0,i1,i2,i3)
-#define LINE(vc,flags,i0,i1)        vcache_line_flags(vc,flags,i0,i1)
-#define POINT(vc,i0)                vcache_point(vc,i0)
+#define TRIANGLE(flags,i0,i1,i2) vcache_triangle_flags(vcache,flags,i0,i1,i2)
+#define LINE(flags,i0,i1)        vcache_line_flags(vcache,flags,i0,i1)
+#define POINT(i0)                vcache_point(vcache,i0)
+#define LINE_ADJ(flags,a0,i0,i1,a1) \
+   vcache_line_adj_flags(vcache,flags,a0,i0,i1,a1)
+#define TRIANGLE_ADJ(flags,i0,a0,i1,a1,i2,a2) \
+   vcache_triangle_adj_flags(vcache,flags,i0,a0,i1,a1,i2,a2)
 #define FUNC vcache_run_extras
 #include "draw_pt_vcache_tmp.h"
 
-#define TRIANGLE(vc,flags,i0,i1,i2) vcache_triangle(vc,i0,i1,i2)
-#define QUAD(vc,i0,i1,i2,i3)        vcache_quad(vc,i0,i1,i2,i3)
-#define LINE(vc,flags,i0,i1)        vcache_line(vc,i0,i1)
-#define POINT(vc,i0)                vcache_point(vc,i0)
+#define TRIANGLE(flags,i0,i1,i2) vcache_triangle(vcache,i0,i1,i2)
+#define LINE(flags,i0,i1)        vcache_line(vcache,i0,i1)
+#define POINT(i0)                vcache_point(vcache,i0)
+#define LINE_ADJ(flags,a0,i0,i1,a1) \
+   vcache_line_adj(vcache,a0,i0,i1,a1)
+#define TRIANGLE_ADJ(flags,i0,a0,i1,a1,i2,a2) \
+   vcache_triangle_adj(vcache,i0,a0,i1,a1,i2,a2)
 #define FUNC vcache_run
 #include "draw_pt_vcache_tmp.h"
 
@@ -339,6 +347,25 @@ format_from_get_elt( pt_elt_func get_elt )
 #endif
 
 
+/**
+ * Check if any vertex attributes use instance divisors.
+ * Note that instance divisors complicate vertex fetching so we need
+ * to take the vcache path when they're in use.
+ */
+static boolean
+any_instance_divisors(const struct draw_context *draw)
+{
+   uint i;
+
+   for (i = 0; i < draw->pt.nr_vertex_elements; i++) {
+      uint div = draw->pt.vertex_element[i].instance_divisor;
+      if (div)
+         return TRUE;
+   }
+   return FALSE;
+}
+
+
 static INLINE void 
 vcache_check_run( struct draw_pt_front_end *frontend, 
                   pt_elt_func get_elt,
@@ -380,6 +407,9 @@ vcache_check_run( struct draw_pt_front_end *frontend,
     * that any arithmetic involving max_index doesn't overflow!
     */
    if (max_index >= (unsigned) DRAW_PIPE_MAX_VERTICES)
+      goto fail;
+
+   if (any_instance_divisors(draw))
       goto fail;
 
    fetch_count = max_index + 1 - min_index;
@@ -518,7 +548,18 @@ vcache_prepare( struct draw_pt_front_end *frontend,
     * which is a separate issue.
     */
    vcache->input_prim = in_prim;
-   vcache->output_prim = u_reduced_prim(in_prim);
+   switch (in_prim) {
+   case PIPE_PRIM_LINES_ADJACENCY:
+   case PIPE_PRIM_LINE_STRIP_ADJACENCY:
+      vcache->output_prim = PIPE_PRIM_LINES_ADJACENCY;
+      break;
+   case PIPE_PRIM_TRIANGLES_ADJACENCY:
+   case PIPE_PRIM_TRIANGLE_STRIP_ADJACENCY:
+      vcache->output_prim = PIPE_PRIM_TRIANGLES_ADJACENCY;
+      break;
+   default:
+      vcache->output_prim = u_reduced_prim(in_prim);
+   }
 
    vcache->middle = middle;
    vcache->opt = opt;

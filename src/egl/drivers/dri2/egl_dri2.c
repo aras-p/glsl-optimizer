@@ -177,9 +177,9 @@ EGLint dri2_to_egl_attribute_map[] = {
    EGL_Y_INVERTED_NOK,		/* __DRI_ATTRIB_YINVERTED */
 };
 
-static void
+static struct dri2_egl_config *
 dri2_add_config(_EGLDisplay *disp, const __DRIconfig *dri_config, int id,
-		int depth, xcb_visualtype_t *visual)
+		int depth, EGLint surface_type)
 {
    struct dri2_egl_config *conf;
    struct dri2_egl_display *dri2_dpy;
@@ -192,6 +192,10 @@ dri2_add_config(_EGLDisplay *disp, const __DRIconfig *dri_config, int id,
    _eglInitConfig(&base, disp, id);
    
    i = 0;
+   double_buffer = 0;
+   bind_to_texture_rgb = 0;
+   bind_to_texture_rgba = 0;
+
    while (dri2_dpy->core->indexConfigAttrib(dri_config, i++, &attrib, &value)) {
       switch (attrib) {
       case __DRI_ATTRIB_RENDER_TYPE:
@@ -242,35 +246,27 @@ dri2_add_config(_EGLDisplay *disp, const __DRIconfig *dri_config, int id,
     * return in the getBuffer callback to get the behaviour we want. */
 
    if (double_buffer)
-      return;
+      return NULL;
 
-   if (visual != NULL) {
-      if (depth != _eglGetConfigKey(&base, EGL_BUFFER_SIZE))
-	 return;
-
-      _eglSetConfigKey(&base, EGL_SURFACE_TYPE,
-		       EGL_WINDOW_BIT | EGL_PIXMAP_BIT | EGL_PBUFFER_BIT |
-		       EGL_SWAP_BEHAVIOR_PRESERVED_BIT);
-
-      _eglSetConfigKey(&base, EGL_NATIVE_VISUAL_ID, visual->visual_id);
-      _eglSetConfigKey(&base, EGL_NATIVE_VISUAL_TYPE, visual->_class);
-   } else {
-      _eglSetConfigKey(&base, EGL_SURFACE_TYPE,
-		       EGL_PIXMAP_BIT | EGL_PBUFFER_BIT);
-   }
+   if (depth > 0 && depth != _eglGetConfigKey(&base, EGL_BUFFER_SIZE))
+      return NULL;
 
    _eglSetConfigKey(&base, EGL_NATIVE_RENDERABLE, EGL_TRUE);
-   _eglSetConfigKey(&base, EGL_BIND_TO_TEXTURE_RGB, bind_to_texture_rgb);
-   if (_eglGetConfigKey(&base, EGL_ALPHA_SIZE) > 0)
-      _eglSetConfigKey(&base,
-		       EGL_BIND_TO_TEXTURE_RGBA, bind_to_texture_rgba);
+
+   _eglSetConfigKey(&base, EGL_SURFACE_TYPE, surface_type);
+   if (surface_type & (EGL_PIXMAP_BIT | EGL_PBUFFER_BIT)) {
+      _eglSetConfigKey(&base, EGL_BIND_TO_TEXTURE_RGB, bind_to_texture_rgb);
+      if (_eglGetConfigKey(&base, EGL_ALPHA_SIZE) > 0)
+	 _eglSetConfigKey(&base,
+			  EGL_BIND_TO_TEXTURE_RGBA, bind_to_texture_rgba);
+   }
 
    _eglSetConfigKey(&base, EGL_RENDERABLE_TYPE, disp->ClientAPIsMask);
    _eglSetConfigKey(&base, EGL_CONFORMANT, disp->ClientAPIsMask);
 
    if (!_eglValidateConfig(&base, EGL_FALSE)) {
       _eglLog(_EGL_DEBUG, "DRI2: failed to validate config %d", id);
-      return;
+      return NULL;
    }
 
    conf = malloc(sizeof *conf);
@@ -279,6 +275,8 @@ dri2_add_config(_EGLDisplay *disp, const __DRIconfig *dri_config, int id,
       conf->dri_config = dri_config;
       _eglAddConfig(disp, &conf->base);
    }
+
+   return conf;
 }
 
 /**
@@ -613,10 +611,19 @@ dri2_add_configs_for_visuals(struct dri2_egl_display *dri2_dpy,
    xcb_depth_iterator_t d;
    xcb_visualtype_t *visuals;
    int i, j, id;
+   struct dri2_egl_config *conf;
+   EGLint surface_type;
 
    s = xcb_setup_roots_iterator(xcb_get_setup(dri2_dpy->conn));
    d = xcb_screen_allowed_depths_iterator(s.data);
    id = 1;
+
+   surface_type =
+      EGL_WINDOW_BIT |
+      EGL_PIXMAP_BIT |
+      EGL_PBUFFER_BIT |
+      EGL_SWAP_BEHAVIOR_PRESERVED_BIT;
+
    while (d.rem > 0) {
       EGLBoolean class_added[6] = { 0, };
 
@@ -626,9 +633,16 @@ dri2_add_configs_for_visuals(struct dri2_egl_display *dri2_dpy,
 	    continue;
 
 	 class_added[visuals[i]._class] = EGL_TRUE;
-	 for (j = 0; dri2_dpy->driver_configs[j]; j++)
-	    dri2_add_config(disp, dri2_dpy->driver_configs[j],
-			    id++, d.data->depth, &visuals[i]);
+	 for (j = 0; dri2_dpy->driver_configs[j]; j++) {
+	    conf = dri2_add_config(disp, dri2_dpy->driver_configs[j],
+				   id++, d.data->depth, surface_type);
+	    if (conf == NULL)
+	       continue;
+	    _eglSetConfigKey(&conf->base,
+			     EGL_NATIVE_VISUAL_ID, visuals[i].visual_id);
+	    _eglSetConfigKey(&conf->base,
+			     EGL_NATIVE_VISUAL_TYPE, visuals[i]._class);
+	 }
       }
 
       xcb_depth_next(&d);      
@@ -737,6 +751,12 @@ dri2_create_screen(_EGLDisplay *disp)
       disp->ClientAPIsMask |= EGL_OPENGL_ES_BIT;
    if (api_mask & (1 << __DRI_API_GLES2))
       disp->ClientAPIsMask |= EGL_OPENGL_ES2_BIT;
+
+   if (dri2_dpy->dri2->base.version >= 2) {
+      disp->Extensions.KHR_surfaceless_gles1 = EGL_TRUE;
+      disp->Extensions.KHR_surfaceless_gles2 = EGL_TRUE;
+      disp->Extensions.KHR_surfaceless_opengl = EGL_TRUE;
+   }
 
    return EGL_TRUE;
 
@@ -948,6 +968,7 @@ dri2_initialize_drm(_EGLDriver *drv, _EGLDisplay *disp,
 		    EGLint *major, EGLint *minor)
 {
    struct dri2_egl_display *dri2_dpy;
+   int i;
 
    dri2_dpy = malloc(sizeof *dri2_dpy);
    if (!dri2_dpy)
@@ -970,9 +991,16 @@ dri2_initialize_drm(_EGLDriver *drv, _EGLDisplay *disp,
    if (!dri2_create_screen(disp))
       goto cleanup_driver;
 
+   for (i = 0; dri2_dpy->driver_configs[i]; i++)
+      dri2_add_config(disp, dri2_dpy->driver_configs[i], i + 1, 0, 0);
+
    disp->Extensions.KHR_image_base = EGL_TRUE;
    disp->Extensions.KHR_gl_renderbuffer_image = EGL_TRUE;
    disp->Extensions.KHR_gl_texture_2D_image = EGL_TRUE;
+
+   /* we're supporting EGL 1.4 */
+   *major = 1;
+   *minor = 4;
 
    return EGL_TRUE;
 
@@ -1041,6 +1069,7 @@ dri2_create_context(_EGLDriver *drv, _EGLDisplay *disp, _EGLConfig *conf,
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
    struct dri2_egl_context *dri2_ctx_shared = dri2_egl_context(share_list);
    struct dri2_egl_config *dri2_config = dri2_egl_config(conf);
+   const __DRIconfig *dri_config;
    int api;
 
    dri2_ctx = malloc(sizeof *dri2_ctx);
@@ -1074,11 +1103,16 @@ dri2_create_context(_EGLDriver *drv, _EGLDisplay *disp, _EGLConfig *conf,
       return NULL;
    }
 
+   if (conf != NULL)
+      dri_config = dri2_config->dri_config;
+   else
+      dri_config = NULL;
+
    if (dri2_dpy->dri2->base.version >= 2) {
       dri2_ctx->dri_context =
 	 dri2_dpy->dri2->createNewContextForAPI(dri2_dpy->dri_screen,
 						api,
-						dri2_config->dri_config,
+						dri_config,
 						dri2_ctx_shared ? 
 						dri2_ctx_shared->dri_context : NULL,
 						dri2_ctx);

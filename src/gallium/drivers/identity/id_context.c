@@ -46,68 +46,13 @@ identity_destroy(struct pipe_context *_pipe)
 }
 
 static void
-identity_draw_arrays(struct pipe_context *_pipe,
-                     unsigned prim,
-                     unsigned start,
-                     unsigned count)
+identity_draw_vbo(struct pipe_context *_pipe,
+                  const struct pipe_draw_info *info)
 {
    struct identity_context *id_pipe = identity_context(_pipe);
    struct pipe_context *pipe = id_pipe->pipe;
 
-   pipe->draw_arrays(pipe,
-                     prim,
-                     start,
-                     count);
-}
-
-static void
-identity_draw_elements(struct pipe_context *_pipe,
-                       struct pipe_resource *_indexResource,
-                       unsigned indexSize,
-                       int indexBias,
-                       unsigned prim,
-                       unsigned start,
-                       unsigned count)
-{
-   struct identity_context *id_pipe = identity_context(_pipe);
-   struct identity_resource *id_resource = identity_resource(_indexResource);
-   struct pipe_context *pipe = id_pipe->pipe;
-   struct pipe_resource *indexResource = id_resource->resource;
-
-   pipe->draw_elements(pipe,
-                       indexResource,
-                       indexSize,
-                       indexBias,
-                       prim,
-                       start,
-                       count);
-}
-
-static void
-identity_draw_range_elements(struct pipe_context *_pipe,
-                             struct pipe_resource *_indexResource,
-                             unsigned indexSize,
-                             int indexBias,
-                             unsigned minIndex,
-                             unsigned maxIndex,
-                             unsigned mode,
-                             unsigned start,
-                             unsigned count)
-{
-   struct identity_context *id_pipe = identity_context(_pipe);
-   struct identity_resource *id_resource = identity_resource(_indexResource);
-   struct pipe_context *pipe = id_pipe->pipe;
-   struct pipe_resource *indexResource = id_resource->resource;
-
-   pipe->draw_range_elements(pipe,
-                             indexResource,
-                             indexSize,
-                             indexBias,
-                             minIndex,
-                             maxIndex,
-                             mode,
-                             start,
-                             count);
+   pipe->draw_vbo(pipe, info);
 }
 
 static struct pipe_query *
@@ -611,6 +556,24 @@ identity_set_vertex_buffers(struct pipe_context *_pipe,
                             num_buffers,
                             buffers);
 }
+
+static void
+identity_set_index_buffer(struct pipe_context *_pipe,
+                          const struct pipe_index_buffer *_ib)
+{
+   struct identity_context *id_pipe = identity_context(_pipe);
+   struct pipe_context *pipe = id_pipe->pipe;
+   struct pipe_index_buffer unwrapped_ib, *ib = NULL;
+
+   if (_ib) {
+      unwrapped_ib = *_ib;
+      unwrapped_ib.buffer = identity_resource_unwrap(_ib->buffer);
+      ib = &unwrapped_ib;
+   }
+
+   pipe->set_index_buffer(pipe, ib);
+}
+
 static void
 identity_resource_copy_region(struct pipe_context *_pipe,
                               struct pipe_resource *_dst,
@@ -889,9 +852,7 @@ identity_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
    id_pipe->base.draw = NULL;
 
    id_pipe->base.destroy = identity_destroy;
-   id_pipe->base.draw_arrays = identity_draw_arrays;
-   id_pipe->base.draw_elements = identity_draw_elements;
-   id_pipe->base.draw_range_elements = identity_draw_range_elements;
+   id_pipe->base.draw_vbo = identity_draw_vbo;
    id_pipe->base.create_query = identity_create_query;
    id_pipe->base.destroy_query = identity_destroy_query;
    id_pipe->base.begin_query = identity_begin_query;
@@ -931,6 +892,7 @@ identity_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
    id_pipe->base.set_fragment_sampler_views = identity_set_fragment_sampler_views;
    id_pipe->base.set_vertex_sampler_views = identity_set_vertex_sampler_views;
    id_pipe->base.set_vertex_buffers = identity_set_vertex_buffers;
+   id_pipe->base.set_index_buffer = identity_set_index_buffer;
    id_pipe->base.resource_copy_region = identity_resource_copy_region;
    id_pipe->base.clear = identity_clear;
    id_pipe->base.clear_render_target = identity_clear_render_target;

@@ -56,6 +56,7 @@
 #define FO_NEW_VERTEX_BUFFER   0x40000
 #define FO_NEW_VERTEX_ELEMENT  0x80000
 #define FO_NEW_SAMPLE_MASK     0x100000
+#define FO_NEW_INDEX_BUFFER    0x200000
 
 
 
@@ -97,6 +98,7 @@ struct failover_context {
    struct pipe_scissor_state scissor;
    struct pipe_viewport_state viewport;
    struct pipe_vertex_buffer vertex_buffers[PIPE_MAX_ATTRIBS];
+   struct pipe_index_buffer index_buffer;
 
    uint num_vertex_buffers;
 

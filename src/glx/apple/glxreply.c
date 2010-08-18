@@ -55,7 +55,7 @@ __glXReadReply(Display * dpy, size_t size, void *dest,
 }
 
 void
-__glXReadPixelReply(Display * dpy, __GLXcontext * gc, unsigned max_dim,
+__glXReadPixelReply(Display * dpy, struct glx_context * gc, unsigned max_dim,
                     GLint width, GLint height, GLint depth, GLenum format,
                     GLenum type, void *dest, GLboolean dimensions_in_reply)
 {
@@ -101,7 +101,7 @@ __glXReadPixelReply(Display * dpy, __GLXcontext * gc, unsigned max_dim,
 
 #if 0
 GLubyte *
-__glXSetupSingleRequest(__GLXcontext * gc, GLint sop, GLint cmdlen)
+__glXSetupSingleRequest(struct glx_context * gc, GLint sop, GLint cmdlen)
 {
    xGLXSingleReq *req;
    Display *const dpy = gc->currentDpy;
@@ -117,7 +117,7 @@ __glXSetupSingleRequest(__GLXcontext * gc, GLint sop, GLint cmdlen)
 #endif
 
 GLubyte *
-__glXSetupVendorRequest(__GLXcontext * gc, GLint code, GLint vop,
+__glXSetupVendorRequest(struct glx_context * gc, GLint code, GLint vop,
                         GLint cmdlen)
 {
    xGLXVendorPrivateReq *req;

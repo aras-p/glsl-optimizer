@@ -20,14 +20,47 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-
 #ifndef R600_RESOURCE_H
 #define R600_RESOURCE_H
+
+#include "util/u_transfer.h"
 
 struct r600_context;
 struct r600_screen;
 
+/* This gets further specialized into either buffer or texture
+ * structures. Use the vtbl struct to choose between the two
+ * underlying implementations.
+ */
+struct r600_resource {
+	struct u_resource		base;
+	struct radeon_bo		*bo;
+	u32				domain;
+	u32				flink;
+	struct pb_buffer		*pb;
+};
+
+struct r600_resource_texture {
+	struct r600_resource		resource;
+	unsigned long			offset[PIPE_MAX_TEXTURE_LEVELS];
+	unsigned long			pitch[PIPE_MAX_TEXTURE_LEVELS];
+	unsigned long			layer_size[PIPE_MAX_TEXTURE_LEVELS];
+	unsigned long			pitch_override;
+	unsigned long			bpt;
+	unsigned long			size;
+};
+
 void r600_init_context_resource_functions(struct r600_context *r600);
 void r600_init_screen_resource_functions(struct r600_screen *r600screen);
+
+/* r600_buffer */
+u32 r600_domain_from_usage(unsigned usage);
+
+/* r600_texture */
+struct pipe_resource *r600_texture_create(struct pipe_screen *screen,
+					const struct pipe_resource *templ);
+struct pipe_resource *r600_texture_from_handle(struct pipe_screen *screen,
+						const struct pipe_resource *base,
+						struct winsys_handle *whandle);
 
 #endif

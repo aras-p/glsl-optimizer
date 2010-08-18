@@ -37,6 +37,8 @@
 #include "main/mtypes.h"
 #include "main/enums.h"
 
+#include "math/m_xform.h"
+
 #include "tnl/t_context.h"
 #include "tnl/t_vertex.h"
 #include "tnl/t_pipeline.h"

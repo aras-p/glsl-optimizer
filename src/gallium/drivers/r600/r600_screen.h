@@ -40,14 +40,6 @@ struct r600_transfer {
 	unsigned			offset;
 };
 
-struct r600_buffer {
-	struct u_resource		b;
-	struct radeon_bo		*bo;
-	u32				domain;
-	u32				flink;
-	struct pb_buffer		*pb;
-};
-
 struct r600_screen {
 	struct pipe_screen		screen;
 	struct radeon			*rw;
@@ -88,17 +80,6 @@ void r600_texture_transfer_unmap(struct pipe_context *ctx,
 int r600_conv_pipe_format(unsigned pformat, unsigned *format);
 int r600_conv_pipe_prim(unsigned pprim, unsigned *prim);
 
-union r600_float_to_u32_u {
-	u32	u;
-	float	f;
-};
-
-static inline u32 r600_float_to_u32(float f)
-{
-	union r600_float_to_u32_u c;
-
-	c.f = f;
-	return c.u;
-}
+void r600_init_screen_texture_functions(struct pipe_screen *screen);
 
 #endif

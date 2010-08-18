@@ -26,6 +26,7 @@
 #ifndef PROGRAMOPT_H
 #define PROGRAMOPT_H 1
 
+#include "main/mtypes.h"
 
 extern void
 _mesa_insert_mvp_code(GLcontext *ctx, struct gl_vertex_program *vprog);

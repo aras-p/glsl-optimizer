@@ -135,5 +135,10 @@ failover_state_emit( struct failover_context *failover )
                                         failover->vertex_buffers );
    }
 
+   if (failover->dirty & FO_NEW_INDEX_BUFFER) {
+      failover->sw->set_index_buffer( failover->sw,
+                                      &failover->index_buffer );
+   }
+
    failover->dirty = 0;
 }

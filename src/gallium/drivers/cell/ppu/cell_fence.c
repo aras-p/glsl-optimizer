@@ -87,6 +87,7 @@ struct cell_buffer_node
 };
 
 
+#if 0
 static void
 cell_add_buffer_to_list(struct cell_context *cell,
                         struct cell_buffer_list *list,
@@ -100,6 +101,7 @@ cell_add_buffer_to_list(struct cell_context *cell,
       list->head = node;
    }
 }
+#endif
 
 
 /**
@@ -113,7 +115,7 @@ cell_free_fenced_buffers(struct cell_context *cell,
                          struct cell_buffer_list *list)
 {
    if (list->head) {
-      struct pipe_screen *ps = cell->pipe.screen;
+      /*struct pipe_screen *ps = cell->pipe.screen;*/
       struct cell_buffer_node *node;
 
       cell_fence_finish(cell, &list->fence);
@@ -146,7 +148,7 @@ cell_free_fenced_buffers(struct cell_context *cell,
 void
 cell_add_fenced_textures(struct cell_context *cell)
 {
-   struct cell_buffer_list *list = &cell->fenced_buffers[cell->cur_batch];
+   /*struct cell_buffer_list *list = &cell->fenced_buffers[cell->cur_batch];*/
    uint i;
 
    for (i = 0; i < cell->num_textures; i++) {

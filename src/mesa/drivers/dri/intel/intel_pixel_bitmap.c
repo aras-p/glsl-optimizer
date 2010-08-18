@@ -45,6 +45,7 @@
 #include "main/attrib.h"
 #include "main/enable.h"
 #include "main/viewport.h"
+#include "main/context.h"
 #include "swrast/swrast.h"
 
 #include "intel_screen.h"

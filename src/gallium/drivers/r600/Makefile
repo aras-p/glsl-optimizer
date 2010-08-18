@@ -9,6 +9,7 @@ LIBRARY_INCLUDES = \
 C_SOURCES = \
 	r600_buffer.c \
 	r600_context.c \
+	r600_shader.c \
 	r600_draw.c \
 	r600_blit.c \
 	r600_helper.c \
@@ -17,11 +18,7 @@ C_SOURCES = \
 	r600_screen.c \
 	r600_state.c \
 	r600_texture.c \
-	r600_shader.c \
-	r600_compiler.c \
-	r600_compiler_tgsi.c \
-	r600_compiler_dump.c \
-	r600_compiler_r600.c \
-	r600_compiler_r700.c
+	r600_asm.c \
+	r700_asm.c
 
 include ../../Makefile.template

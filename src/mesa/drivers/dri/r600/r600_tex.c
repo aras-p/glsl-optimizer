@@ -431,7 +431,7 @@ unsigned r600IsFormatRenderable(gl_format mesa_format)
 	case MESA_FORMAT_Z24_S8:
 	case MESA_FORMAT_Z16:
 	case MESA_FORMAT_Z32:
-	case MESA_FORMAT_SRGBA8:
+	case MESA_FORMAT_SARGB8:
 	case MESA_FORMAT_SLA8:
 	case MESA_FORMAT_SL8:
 		return 1;

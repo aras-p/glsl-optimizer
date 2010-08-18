@@ -29,6 +29,15 @@
 #ifndef ST_CB_FBO_H
 #define ST_CB_FBO_H
 
+#include "main/compiler.h"
+#include "main/glheader.h"
+#include "main/mtypes.h"
+
+#include "pipe/p_compiler.h"
+#include "pipe/p_format.h"
+
+struct dd_function_table;
+struct pipe_context;
 
 /**
  * Derived renderbuffer class.  Just need to add a pointer to the

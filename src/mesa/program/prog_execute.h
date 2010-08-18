@@ -26,6 +26,7 @@
 #define PROG_EXECUTE_H
 
 #include "main/config.h"
+#include "main/mtypes.h"
 
 
 typedef void (*FetchTexelLodFunc)(GLcontext *ctx, const GLfloat texcoord[4],

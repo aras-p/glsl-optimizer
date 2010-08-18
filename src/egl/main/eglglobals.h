@@ -16,8 +16,6 @@ struct _egl_global
    /* the list of all displays */
    _EGLDisplay *DisplayList;
 
-   EGLScreenMESA FreeScreenHandle;
-
    EGLint NumAtExitCalls;
    void (*AtExitCalls[10])(void);
 };

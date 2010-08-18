@@ -80,6 +80,7 @@ if env['platform'] != 'winddk':
 		'main/pixelstore.c',
 		'main/points.c',
 		'main/polygon.c',
+		'main/querymatrix.c',
 		'main/queryobj.c',
 		'main/rastpos.c',
 		'main/readpix.c',

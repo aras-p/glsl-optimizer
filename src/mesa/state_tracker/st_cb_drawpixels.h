@@ -30,7 +30,10 @@
 #define ST_CB_DRAWPIXELS_H
 
 
-#include "main/mtypes.h"
+#include "main/compiler.h"
+
+struct dd_function_table;
+struct st_context;
 
 #if FEATURE_drawpix
 

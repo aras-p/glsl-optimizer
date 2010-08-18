@@ -461,11 +461,11 @@ static void r700TranslateAttrib(GLcontext *ctx, GLuint unLoc, int count, const s
 	stride = (input->StrideB == 0) ? getTypeSize(input->Type) * input->Size 
                                    : input->StrideB;
 
-    if (input->Type == GL_DOUBLE || input->Type == GL_UNSIGNED_INT || input->Type == GL_INT ||
+    if (input->Type == GL_DOUBLE || input->Type == GL_UNSIGNED_INT || input->Type == GL_INT
 #if MESA_BIG_ENDIAN
-        getTypeSize(input->Type) != 4 ||
+        || getTypeSize(input->Type) != 4
 #endif
-        stride < 4) 
+       ) 
     {
         pStreamDesc->type = GL_FLOAT;
 

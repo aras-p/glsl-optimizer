@@ -66,6 +66,24 @@ static void svga_set_vertex_buffers(struct pipe_context *pipe,
 }
 
 
+static void svga_set_index_buffer(struct pipe_context *pipe,
+                                  const struct pipe_index_buffer *ib)
+{
+   struct svga_context *svga = svga_context(pipe);
+
+   if (ib) {
+      pipe_resource_reference(&svga->curr.ib.buffer, ib->buffer);
+      memcpy(&svga->curr.ib, ib, sizeof(svga->curr.ib));
+   }
+   else {
+      pipe_resource_reference(&svga->curr.ib.buffer, NULL);
+      memset(&svga->curr.ib, 0, sizeof(svga->curr.ib));
+   }
+
+   /* TODO make this more like a state */
+}
+
+
 static void *
 svga_create_vertex_elements_state(struct pipe_context *pipe,
                                   unsigned count,
@@ -109,6 +127,7 @@ void svga_cleanup_vertex_state( struct svga_context *svga )
 void svga_init_vertex_functions( struct svga_context *svga )
 {
    svga->pipe.set_vertex_buffers = svga_set_vertex_buffers;
+   svga->pipe.set_index_buffer = svga_set_index_buffer;
    svga->pipe.create_vertex_elements_state = svga_create_vertex_elements_state;
    svga->pipe.bind_vertex_elements_state = svga_bind_vertex_elements_state;
    svga->pipe.delete_vertex_elements_state = svga_delete_vertex_elements_state;

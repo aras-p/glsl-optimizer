@@ -81,10 +81,11 @@ checkOverlayAcceptability(XVisualInfo * vi, unsigned int mode)
   if (GLUT_WIND_HAS_STENCIL(mode) && (value <= 0))
     return 1;
 
-#if defined(GLX_VERSION_1_1) && defined(GLX_SGIS_multisample)
+#if defined(GLX_VERSION_1_1) && (defined(GLX_SGIS_multisample) || defined(GLX_ARB_multisample))
   /* XXX Multisampled overlay color index??  Pretty unlikely. */
   /* Look for multisampling if requested. */
-  if (__glutIsSupportedByGLX("GLX_SGIS_multisample"))
+  if (__glutIsSupportedByGLX("GLX_SGIS_multisample") ||
+      __glutIsSupportedByGLX("GLX_ARB_multisample"))
     glXGetConfig(__glutDisplay, vi, GLX_SAMPLES_SGIS, &value);
   else
     value = 0;

@@ -66,9 +66,6 @@ Unordered access view: view supporting random read/write access (usually from co
 clear
 	+ Gallium supports clearing both render targets and depth/stencil with a single call
 
-draw_range_elements
-	+ Gallium supports indexed draw with explicit range
-
 fence_signalled
 fence_finish
 	+ D3D10/D3D11 don't appear to support explicit fencing; queries can often substitute though, and flushing is supported
@@ -271,31 +268,27 @@ Dispatch (D3D11 only)
 DispatchIndirect (D3D11 only)
 	- Gallium does not support compute shaders
 
-Draw -> draw_arrays
+Draw -> draw_vbo
 	! D3D11 sets primitive modes separately with IaSetTopology: it's not obvious which is better
 
 DrawAuto -> draw_auto
 
-DrawIndexed -> draw_elements
+DrawIndexed -> draw_vbo
 	! D3D11 sets primitive modes separately with IaSetTopology: it's not obvious which is better
-	* may want to add a separate set_index_buffer
-	- Gallium lacks base vertex for indexed draw calls
-	+ D3D11 lacks draw_range_elements functionality, which is required for OpenGL
+	+ D3D11 lacks explicit range, which is required for OpenGL
 
-DrawIndexedInstanced -> draw_elements_instanced
+DrawIndexedInstanced -> draw_vbo
 	! D3D11 sets primitive modes separately with IaSetTopology: it's not obvious which is better
-	* may want to add a separate set_index_buffer
-	- Gallium lacks base vertex for indexed draw calls
 
-DrawIndexedInstancedIndirect (D3D11 only) -> call draw_elements_instanced multiple times in software
-	# this allows to use an hardware buffer to specify the parameters for multiple draw_elements_instanced calls
+DrawIndexedInstancedIndirect (D3D11 only)
+	# this allows to use an hardware buffer to specify the parameters for multiple draw_vbo calls
 	- Gallium does not support draw call parameter buffers and indirect draw
 
-DrawInstanced -> draw_arrays_instanced
+DrawInstanced -> draw_vbo
 	! D3D11 sets primitive modes separately with IaSetTopology: it's not obvious which is better
 
-DrawInstancedIndirect (D3D11 only) -> call draw_arrays_instanced multiple times in software
-	# this allows to use an hardware buffer to specify the parameters for multiple draw_arrays_instanced calls
+DrawInstancedIndirect (D3D11 only)
+	# this allows to use an hardware buffer to specify the parameters for multiple draw_vbo calls
 	- Gallium does not support draw call parameter buffers and indirect draws
 
 DsSetConstantBuffers (D3D11 only)
@@ -332,10 +325,9 @@ HsSetShaderResources (D3D11 only)
 HsSetShaderWithIfaces (D3D11 only)
 	- Gallium does not support hull shaders
 
-IaSetIndexBuffer
-	! Gallium passes this to the draw_elements or draw_elements_instanced calls
+IaSetIndexBuffer -> set_index_buffer
 	+ Gallium supports 8-bit indices
-	! the D3D11 interface allows index-size-unaligned byte offsets into index buffers; it's not clear whether they actually work
+	# the D3D11 interface allows index-size-unaligned byte offsets into the index buffer; most drivers will abort with an assertion
 
 IaSetInputLayout -> bind_vertex_elements_state
 

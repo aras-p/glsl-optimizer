@@ -182,6 +182,7 @@ void draw_pt_emit( struct pt_emit *emit,
 			 0,
 			 ~0);
 
+   /* fetch/translate vertex attribs to fill hw_verts[] */
    translate->run( translate,
 		   0, 
 		   vertex_count,

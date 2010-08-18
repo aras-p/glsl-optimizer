@@ -46,6 +46,10 @@
 #include "lp_query.h"
 #include "lp_setup.h"
 
+
+DEBUG_GET_ONCE_BOOL_OPTION(lp_no_rast, "LP_NO_RAST", FALSE)
+
+
 static void llvmpipe_destroy( struct pipe_context *pipe )
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context( pipe );
@@ -130,7 +134,7 @@ llvmpipe_create_context( struct pipe_screen *screen, void *priv )
 
    /* FIXME: devise alternative to draw_texture_samplers */
 
-   if (debug_get_bool_option( "LP_NO_RAST", FALSE ))
+   if (debug_get_option_lp_no_rast())
       llvmpipe->no_rast = TRUE;
 
    llvmpipe->setup = lp_setup_create( &llvmpipe->pipe,

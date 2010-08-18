@@ -218,25 +218,15 @@ static void so_tri(struct pt_so_emit *so, int i0, int i1, int i2)
 }
 
 
-#define TRIANGLE(gs,i0,i1,i2) so_tri(so,i0,i1,i2)
-#define LINE(gs,i0,i1)        so_line(so,i0,i1)
-#define POINT(gs,i0)          so_point(so,i0)
-#define FUNC so_run_linear
-#define LOCAL_VARS
+#define FUNC         so_run_linear
+#define GET_ELT(idx) (start + (idx))
 #include "draw_so_emit_tmp.h"
-#undef LOCAL_VARS
-#undef FUNC
 
 
-#define TRIANGLE(gs,i0,i1,i2) so_tri(gs,elts[i0],elts[i1],elts[i2])
-#define LINE(gs,i0,i1)        so_line(gs,elts[i0],elts[i1])
-#define POINT(gs,i0)          so_point(gs,elts[i0])
-#define FUNC so_run_elts
-#define LOCAL_VARS                         \
-   const ushort *elts = input_prims->elts;
+#define FUNC         so_run_elts
+#define LOCAL_VARS   const ushort *elts = input_prims->elts;
+#define GET_ELT(idx) (elts[start + (idx)] & ~DRAW_PIPE_FLAG_MASK)
 #include "draw_so_emit_tmp.h"
-#undef LOCAL_VARS
-#undef FUNC
 
 
 void draw_pt_so_emit( struct pt_so_emit *emit,

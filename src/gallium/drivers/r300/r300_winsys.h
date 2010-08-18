@@ -49,6 +49,8 @@ enum r300_value_id {
     R300_VID_Z_PIPES,
     R300_VID_SQUARE_TILING_SUPPORT,
     R300_VID_DRM_2_3_0,
+    R300_VID_DRM_2_6_0,
+    R300_CAN_HYPERZ,
 };
 
 enum r300_reference_domain { /* bitfield */
@@ -184,12 +186,13 @@ struct r300_winsys_screen {
      * \param ws        The winsys this function is called from.
      * \param whandle   A winsys handle pointer as was received from a state
      *                  tracker.
-     * \param stride    A pointer to the stride return variable.
-     *                  The stride is in bytes.
+     * \param stride    The returned buffer stride in bytes.
+     * \param size      The returned buffer size.
      */
     struct r300_winsys_buffer *(*buffer_from_handle)(struct r300_winsys_screen *ws,
                                                      struct winsys_handle *whandle,
-                                                     unsigned *stride);
+                                                     unsigned *stride,
+                                                     unsigned *size);
 
     /**
      * Get a winsys handle from a winsys buffer. The internal structure

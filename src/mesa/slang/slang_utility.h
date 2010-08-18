@@ -26,6 +26,8 @@
 #define SLANG_UTILITY_H
 
 
+#include "main/glheader.h"
+
 /* Compile-time assertions.  If the expression is zero, try to declare an
  * array of size [-1] to cause compilation error.
  */

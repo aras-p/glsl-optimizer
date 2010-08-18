@@ -984,5 +984,7 @@ void brw_set_src1( struct brw_instruction *insn,
 
 /* brw_optimize.c */
 void brw_optimize(struct brw_compile *p);
+void brw_remove_duplicate_mrf_moves(struct brw_compile *p);
+void brw_remove_grf_to_mrf_moves(struct brw_compile *p);
 
 #endif

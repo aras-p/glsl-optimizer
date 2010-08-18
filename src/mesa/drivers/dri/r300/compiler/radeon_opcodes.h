@@ -187,7 +187,7 @@ typedef enum {
 
 	RC_OPCODE_ENDLOOP,
 
-	RC_OPCODE_CONTINUE,
+	RC_OPCODE_CONT,
 
 	/** special instruction, used in R300-R500 fragment program pair instructions
 	 * indicates that the result of the alpha operation shall be replicated

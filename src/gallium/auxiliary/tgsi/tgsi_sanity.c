@@ -33,6 +33,10 @@
 #include "tgsi_info.h"
 #include "tgsi_iterate.h"
 
+
+DEBUG_GET_ONCE_BOOL_OPTION(print_sanity, "TGSI_PRINT_SANITY", FALSE)
+
+
 typedef struct {
    uint file : 28;
    /* max 2 dimensions */
@@ -54,6 +58,8 @@ struct sanity_check_ctx
    uint errors;
    uint warnings;
    uint implied_array_size;
+
+   boolean print;
 };
 
 static INLINE unsigned
@@ -148,6 +154,9 @@ report_error(
 {
    va_list args;
 
+   if (!ctx->print)
+      return;
+
    debug_printf( "Error  : " );
    va_start( args, format );
    _debug_vprintf( format, args );
@@ -163,6 +172,9 @@ report_warning(
    ... )
 {
    va_list args;
+
+   if (!ctx->print)
+      return;
 
    debug_printf( "Warning: " );
    va_start( args, format );
@@ -539,6 +551,7 @@ tgsi_sanity_check(
    ctx.errors = 0;
    ctx.warnings = 0;
    ctx.implied_array_size = 0;
+   ctx.print = debug_get_option_print_sanity();
 
    if (!tgsi_iterate_shader( tokens, &ctx.iter ))
       return FALSE;

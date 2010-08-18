@@ -126,7 +126,6 @@ void util_mempool_set_thread_safety(struct util_mempool *pool,
    pool->threading = threading;
 
    if (threading) {
-      pipe_mutex_init(pool->mutex);
       pool->malloc = util_mempool_malloc_mt;
       pool->free = util_mempool_free_mt;
    } else {
@@ -152,6 +151,8 @@ void util_mempool_create(struct util_mempool *pool,
 
    make_empty_list(&pool->list);
 
+   pipe_mutex_init(pool->mutex);
+
    util_mempool_set_thread_safety(pool, threading);
 }
 
@@ -164,6 +165,5 @@ void util_mempool_destroy(struct util_mempool *pool)
       FREE(page);
    }
 
-   if (pool->threading)
-      pipe_mutex_destroy(pool->mutex);
+   pipe_mutex_destroy(pool->mutex);
 }

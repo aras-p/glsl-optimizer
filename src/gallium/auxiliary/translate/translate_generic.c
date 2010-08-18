@@ -187,9 +187,15 @@ ATTRIB( R8G8B8_SNORM,    3, char, TO_8_SNORM )
 ATTRIB( R8G8_SNORM,      2, char, TO_8_SNORM )
 ATTRIB( R8_SNORM,        1, char, TO_8_SNORM )
 
-ATTRIB( A8R8G8B8_UNORM,       4, ubyte, TO_8_UNORM )
-/*ATTRIB( R8G8B8A8_UNORM,       4, ubyte, TO_8_UNORM )*/
-
+static void
+emit_A8R8G8B8_UNORM( const float *attrib, void *ptr)
+{
+   ubyte *out = (ubyte *)ptr;
+   out[0] = TO_8_UNORM(attrib[3]);
+   out[1] = TO_8_UNORM(attrib[0]);
+   out[2] = TO_8_UNORM(attrib[1]);
+   out[3] = TO_8_UNORM(attrib[2]);
+}
 
 static void
 emit_B8G8R8A8_UNORM( const float *attrib, void *ptr)
@@ -368,23 +374,23 @@ static void PIPE_CDECL generic_run_elts( struct translate *translate,
    /* loop over vertex attributes (vertex shader inputs)
     */
    for (i = 0; i < count; i++) {
-      unsigned elt = *elts++;
+      const unsigned elt = *elts++;
 
       for (attr = 0; attr < nr_attrs; attr++) {
 	 float data[4];
-         const uint8_t *src;
-         unsigned index;
-
-	 char *dst = (vert + 
-		      tg->attrib[attr].output_offset);
+	 char *dst = vert + tg->attrib[attr].output_offset;
 
          if (tg->attrib[attr].type == TRANSLATE_ELEMENT_NORMAL) {
+            const uint8_t *src;
+            unsigned index;
+
             if (tg->attrib[attr].instance_divisor) {
                index = instance_id / tg->attrib[attr].instance_divisor;
             } else {
                index = elt;
             }
 
+            /* clamp to void going out of bounds */
             index = MIN2(index, tg->attrib[attr].max_index);
 
             src = tg->attrib[attr].input_ptr +
@@ -392,11 +398,23 @@ static void PIPE_CDECL generic_run_elts( struct translate *translate,
 
             tg->attrib[attr].fetch( data, src, 0, 0 );
 
+            if (0)
+               debug_printf("Fetch elt attr %d  from %p  stride %d  div %u  max %u  index %d:  "
+                            " %f, %f, %f, %f \n",
+                            attr,
+                            tg->attrib[attr].input_ptr,
+                            tg->attrib[attr].input_stride,
+                            tg->attrib[attr].instance_divisor,
+                            tg->attrib[attr].max_index,
+                            index,
+                            data[0], data[1],data[2], data[3]);
          } else {
             data[0] = (float)instance_id;
          }
-         if (0) debug_printf("vert %d/%d attr %d: %f %f %f %f\n",
-                             i, elt, attr, data[0], data[1], data[2], data[3]);
+
+         if (0)
+            debug_printf("vert %d/%d attr %d: %f %f %f %f\n",
+                         i, elt, attr, data[0], data[1], data[2], data[3]);
 
 	 tg->attrib[attr].emit( data, dst );
       }
@@ -425,29 +443,42 @@ static void PIPE_CDECL generic_run( struct translate *translate,
 
       for (attr = 0; attr < nr_attrs; attr++) {
 	 float data[4];
-
-	 char *dst = (vert + 
-		      tg->attrib[attr].output_offset);
+	 char *dst = vert + tg->attrib[attr].output_offset;
 
          if (tg->attrib[attr].type == TRANSLATE_ELEMENT_NORMAL) {
             const uint8_t *src;
+            unsigned index;
 
             if (tg->attrib[attr].instance_divisor) {
-               src = tg->attrib[attr].input_ptr +
-                     tg->attrib[attr].input_stride *
-                     (instance_id / tg->attrib[attr].instance_divisor);
-            } else {
-               src = tg->attrib[attr].input_ptr +
-                     tg->attrib[attr].input_stride * elt;
+               index = instance_id / tg->attrib[attr].instance_divisor;
+            }
+            else {
+               index = elt;
             }
 
+            /* clamp to void going out of bounds */
+            index = MIN2(index, tg->attrib[attr].max_index);
+
+            src = tg->attrib[attr].input_ptr +
+                  tg->attrib[attr].input_stride * index;
+
             tg->attrib[attr].fetch( data, src, 0, 0 );
+
+            if (0)
+               debug_printf("Fetch linear attr %d  from %p  stride %d  index %d: "
+                            " %f, %f, %f, %f \n",
+                            attr,
+                            tg->attrib[attr].input_ptr,
+                            tg->attrib[attr].input_stride,
+                            index,
+                            data[0], data[1],data[2], data[3]);
          } else {
             data[0] = (float)instance_id;
          }
 
-         if (0) debug_printf("vert %d attr %d: %f %f %f %f\n",
-                             i, attr, data[0], data[1], data[2], data[3]);
+         if (0)
+            debug_printf("vert %d attr %d: %f %f %f %f\n",
+                         i, attr, data[0], data[1], data[2], data[3]);
 
 	 tg->attrib[attr].emit( data, dst );
       }
@@ -522,4 +553,84 @@ struct translate *translate_generic_create( const struct translate_key *key )
 
 
    return &tg->translate;
+}
+
+boolean translate_generic_is_output_format_supported(enum pipe_format format)
+{
+   switch(format)
+   {
+   case PIPE_FORMAT_R64G64B64A64_FLOAT: return TRUE;
+   case PIPE_FORMAT_R64G64B64_FLOAT: return TRUE;
+   case PIPE_FORMAT_R64G64_FLOAT: return TRUE;
+   case PIPE_FORMAT_R64_FLOAT: return TRUE;
+
+   case PIPE_FORMAT_R32G32B32A32_FLOAT: return TRUE;
+   case PIPE_FORMAT_R32G32B32_FLOAT: return TRUE;
+   case PIPE_FORMAT_R32G32_FLOAT: return TRUE;
+   case PIPE_FORMAT_R32_FLOAT: return TRUE;
+
+   case PIPE_FORMAT_R32G32B32A32_USCALED: return TRUE;
+   case PIPE_FORMAT_R32G32B32_USCALED: return TRUE;
+   case PIPE_FORMAT_R32G32_USCALED: return TRUE;
+   case PIPE_FORMAT_R32_USCALED: return TRUE;
+
+   case PIPE_FORMAT_R32G32B32A32_SSCALED: return TRUE;
+   case PIPE_FORMAT_R32G32B32_SSCALED: return TRUE;
+   case PIPE_FORMAT_R32G32_SSCALED: return TRUE;
+   case PIPE_FORMAT_R32_SSCALED: return TRUE;
+
+   case PIPE_FORMAT_R32G32B32A32_UNORM: return TRUE;
+   case PIPE_FORMAT_R32G32B32_UNORM: return TRUE;
+   case PIPE_FORMAT_R32G32_UNORM: return TRUE;
+   case PIPE_FORMAT_R32_UNORM: return TRUE;
+
+   case PIPE_FORMAT_R32G32B32A32_SNORM: return TRUE;
+   case PIPE_FORMAT_R32G32B32_SNORM: return TRUE;
+   case PIPE_FORMAT_R32G32_SNORM: return TRUE;
+   case PIPE_FORMAT_R32_SNORM: return TRUE;
+
+   case PIPE_FORMAT_R16G16B16A16_USCALED: return TRUE;
+   case PIPE_FORMAT_R16G16B16_USCALED: return TRUE;
+   case PIPE_FORMAT_R16G16_USCALED: return TRUE;
+   case PIPE_FORMAT_R16_USCALED: return TRUE;
+
+   case PIPE_FORMAT_R16G16B16A16_SSCALED: return TRUE;
+   case PIPE_FORMAT_R16G16B16_SSCALED: return TRUE;
+   case PIPE_FORMAT_R16G16_SSCALED: return TRUE;
+   case PIPE_FORMAT_R16_SSCALED: return TRUE;
+
+   case PIPE_FORMAT_R16G16B16A16_UNORM: return TRUE;
+   case PIPE_FORMAT_R16G16B16_UNORM: return TRUE;
+   case PIPE_FORMAT_R16G16_UNORM: return TRUE;
+   case PIPE_FORMAT_R16_UNORM: return TRUE;
+
+   case PIPE_FORMAT_R16G16B16A16_SNORM: return TRUE;
+   case PIPE_FORMAT_R16G16B16_SNORM: return TRUE;
+   case PIPE_FORMAT_R16G16_SNORM: return TRUE;
+   case PIPE_FORMAT_R16_SNORM: return TRUE;
+
+   case PIPE_FORMAT_R8G8B8A8_USCALED: return TRUE;
+   case PIPE_FORMAT_R8G8B8_USCALED: return TRUE;
+   case PIPE_FORMAT_R8G8_USCALED: return TRUE;
+   case PIPE_FORMAT_R8_USCALED: return TRUE;
+
+   case PIPE_FORMAT_R8G8B8A8_SSCALED: return TRUE;
+   case PIPE_FORMAT_R8G8B8_SSCALED: return TRUE;
+   case PIPE_FORMAT_R8G8_SSCALED: return TRUE;
+   case PIPE_FORMAT_R8_SSCALED: return TRUE;
+
+   case PIPE_FORMAT_R8G8B8A8_UNORM: return TRUE;
+   case PIPE_FORMAT_R8G8B8_UNORM: return TRUE;
+   case PIPE_FORMAT_R8G8_UNORM: return TRUE;
+   case PIPE_FORMAT_R8_UNORM: return TRUE;
+
+   case PIPE_FORMAT_R8G8B8A8_SNORM: return TRUE;
+   case PIPE_FORMAT_R8G8B8_SNORM: return TRUE;
+   case PIPE_FORMAT_R8G8_SNORM: return TRUE;
+   case PIPE_FORMAT_R8_SNORM: return TRUE;
+
+   case PIPE_FORMAT_A8R8G8B8_UNORM: return TRUE;
+   case PIPE_FORMAT_B8G8R8A8_UNORM: return TRUE;
+   default: return FALSE;
+   }
 }

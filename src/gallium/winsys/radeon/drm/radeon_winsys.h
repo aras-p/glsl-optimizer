@@ -65,6 +65,15 @@ struct radeon_libdrm_winsys {
      */
     boolean drm_2_3_0;
 
+    /* DRM 2.6.0
+     *   - Hyper-Z
+     *   - GB_Z_PEQ_CONFIG allowed on rv350->r4xx, we should initialize it
+     */
+    boolean drm_2_6_0;
+
+    /* hyperz user */
+    boolean hyperz;
+
     /* DRM FD */
     int fd;
 

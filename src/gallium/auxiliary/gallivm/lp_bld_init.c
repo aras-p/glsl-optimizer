@@ -45,6 +45,8 @@ static const struct debug_named_value lp_bld_debug_flags[] = {
    { "nopt",   GALLIVM_DEBUG_NO_OPT, NULL },
    DEBUG_NAMED_VALUE_END
 };
+
+DEBUG_GET_ONCE_FLAGS_OPTION(gallivm_debug, "GALLIVM_DEBUG", lp_bld_debug_flags, 0)
 #endif
 
 
@@ -89,7 +91,7 @@ void
 lp_build_init(void)
 {
 #ifdef DEBUG
-   gallivm_debug = debug_get_flags_option("GALLIVM_DEBUG", lp_bld_debug_flags, 0 );
+   gallivm_debug = debug_get_option_gallivm_debug();
 #endif
 
    lp_set_target_options();

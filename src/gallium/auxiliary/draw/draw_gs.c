@@ -1,6 +1,6 @@
 /**************************************************************************
  *
- * Copyright 2009 VMWare Inc.
+ * Copyright 2009 VMware, Inc.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -75,7 +75,10 @@ draw_gs_set_constants(struct draw_context *draw,
                       const void *constants,
                       unsigned size)
 {
-   /* noop */
+   /* noop. added here for symmetry with the VS
+    * code and in case we'll ever want to allign
+    * the constants, e.g. when we'll change to a
+    * different interpreter */
 }
 
 
@@ -370,32 +373,23 @@ static void gs_tri_adj(struct draw_geometry_shader *shader,
    gs_flush(shader, 1);
 }
 
-#define TRIANGLE(gs,i0,i1,i2) gs_tri(gs,i0,i1,i2)
-#define TRI_ADJ(gs,i0,i1,i2,i3,i4,i5)  gs_tri_adj(gs,i0,i1,i2,i3,i4,i5)
-#define LINE(gs,i0,i1)        gs_line(gs,i0,i1)
-#define LINE_ADJ(gs,i0,i1,i2,i3)    gs_line_adj(gs,i0,i1,i2,i3)
-#define POINT(gs,i0)          gs_point(gs,i0)
-#define FUNC gs_run
-#define LOCAL_VARS
+#define FUNC         gs_run
+#define GET_ELT(idx) (idx)
 #include "draw_gs_tmp.h"
 
 
-#define TRIANGLE(gs,i0,i1,i2) gs_tri(gs,elts[i0],elts[i1],elts[i2])
-#define TRI_ADJ(gs,i0,i1,i2,i3,i4,i5)           \
-   gs_tri_adj(gs,elts[i0],elts[i1],elts[i2],elts[i3], \
-              elts[i4],elts[i5])
-#define LINE(gs,i0,i1)        gs_line(gs,elts[i0],elts[i1])
-#define LINE_ADJ(gs,i0,i1,i2,i3)  gs_line_adj(gs,elts[i0],      \
-                                              elts[i1],         \
-                                              elts[i2],elts[i3])
-#define POINT(gs,i0)          gs_point(gs,elts[i0])
-#define FUNC gs_run_elts
-#define LOCAL_VARS                         \
-   const ushort *elts = input_prims->elts;
+#define FUNC         gs_run_elts
+#define LOCAL_VARS   const ushort *elts = input_prims->elts;
+#define GET_ELT(idx) (elts[idx] & ~DRAW_PIPE_FLAG_MASK)
 #include "draw_gs_tmp.h"
 
+
+/**
+ * Execute geometry shader using TGSI interpreter.
+ */
 int draw_geometry_shader_run(struct draw_geometry_shader *shader,
                              const void *constants[PIPE_MAX_CONSTANT_BUFFERS], 
+                             const unsigned constants_size[PIPE_MAX_CONSTANT_BUFFERS], 
                              const struct draw_vertex_info *input_verts,
                              const struct draw_prim_info *input_prim,
                              struct draw_vertex_info *output_verts,
@@ -405,7 +399,6 @@ int draw_geometry_shader_run(struct draw_geometry_shader *shader,
    unsigned input_stride = input_verts->vertex_size;
    unsigned vertex_size = input_verts->vertex_size;
    struct tgsi_exec_machine *machine = shader->machine;
-   unsigned int i;
    unsigned num_input_verts = input_prim->linear ?
                               input_verts->count :
                               input_prim->count;
@@ -447,9 +440,8 @@ int draw_geometry_shader_run(struct draw_geometry_shader *shader,
    }
    shader->primitive_lengths = MALLOC(max_out_prims * sizeof(unsigned));
 
-   for (i = 0; i < PIPE_MAX_CONSTANT_BUFFERS; i++) {
-      machine->Consts[i] = constants[i];
-   }
+   tgsi_exec_set_constant_buffers(machine, PIPE_MAX_CONSTANT_BUFFERS,
+                                  constants, constants_size);
 
    if (input_prim->linear)
       gs_run(shader, input_prim, input_verts,

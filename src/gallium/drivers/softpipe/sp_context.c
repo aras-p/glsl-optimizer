@@ -282,12 +282,9 @@ softpipe_create_context( struct pipe_screen *screen,
    softpipe->pipe.set_viewport_state = softpipe_set_viewport_state;
    softpipe->pipe.set_stream_output_buffers = softpipe_set_stream_output_buffers;
    softpipe->pipe.set_vertex_buffers = softpipe_set_vertex_buffers;
+   softpipe->pipe.set_index_buffer = softpipe_set_index_buffer;
 
-   softpipe->pipe.draw_arrays = softpipe_draw_arrays;
-   softpipe->pipe.draw_elements = softpipe_draw_elements;
-   softpipe->pipe.draw_range_elements = softpipe_draw_range_elements;
-   softpipe->pipe.draw_arrays_instanced = softpipe_draw_arrays_instanced;
-   softpipe->pipe.draw_elements_instanced = softpipe_draw_elements_instanced;
+   softpipe->pipe.draw_vbo = softpipe_draw_vbo;
    softpipe->pipe.draw_stream_output = softpipe_draw_stream_output;
 
    softpipe->pipe.clear = softpipe_clear;

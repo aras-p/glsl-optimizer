@@ -327,6 +327,8 @@ void r300RunRenderPrimitive(GLcontext * ctx, int start, int end, int prim)
 	BATCH_LOCALS(&rmesa->radeon);
 	int type, num_verts;
 
+	radeon_prepare_render(&rmesa->radeon);
+
 	type = r300PrimitiveType(rmesa, prim);
 	num_verts = r300NumVerts(rmesa, end - start, prim);
 

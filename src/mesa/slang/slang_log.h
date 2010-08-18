@@ -27,6 +27,8 @@
 #define SLANG_LOG_H
 
 
+#include "main/glheader.h"
+
 typedef struct slang_info_log_
 {
    char *text;

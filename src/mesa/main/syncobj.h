@@ -31,7 +31,10 @@
 #ifndef SYNCOBJ_H
 #define SYNCOBJ_H
 
-#include "context.h"
+#include "glheader.h"
+#include "mtypes.h"
+
+struct dd_function_table;
 
 extern void
 _mesa_init_sync_object_functions(struct dd_function_table *driver);

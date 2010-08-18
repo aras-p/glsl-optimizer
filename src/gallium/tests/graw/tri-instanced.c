@@ -13,6 +13,7 @@
 
 #include "util/u_debug.h"       /* debug_dump_surface_bmp() */
 #include "util/u_memory.h"      /* Offset() */
+#include "util/u_draw_quad.h"
 
 
 enum pipe_format formats[] = {
@@ -27,7 +28,6 @@ static const int HEIGHT = 300;
 static struct pipe_screen *screen = NULL;
 static struct pipe_context *ctx = NULL;
 static struct pipe_surface *surf = NULL;
-static struct pipe_resource *indexBuffer = NULL;
 static void *window = NULL;
 
 struct vertex {
@@ -105,6 +105,7 @@ static void set_vertices( void )
 {
    struct pipe_vertex_element ve[3];
    struct pipe_vertex_buffer vbuf[2];
+   struct pipe_index_buffer ibuf;
    void *handle;
 
    memset(ve, 0, sizeof ve);
@@ -151,11 +152,14 @@ static void set_vertices( void )
    ctx->set_vertex_buffers(ctx, 2, vbuf);
 
    /* index data */
-   indexBuffer = screen->user_buffer_create(screen,
+   ibuf.buffer = screen->user_buffer_create(screen,
                                             indices,
                                             sizeof(indices),
                                             PIPE_BIND_VERTEX_BUFFER);
+   ibuf.offset = 0;
+   ibuf.index_size = 2;
 
+   ctx->set_index_buffer(ctx, &ibuf);
 
 }
 
@@ -195,18 +199,19 @@ static void set_fragment_shader( void )
 static void draw( void )
 {
    float clear_color[4] = {1,0,1,1};
+   struct pipe_draw_info info;
 
    ctx->clear(ctx, PIPE_CLEAR_COLOR, clear_color, 0, 0);
 
+   util_draw_init_info(&info);
+   info.indexed = (draw_elements != 0);
+   info.mode = PIPE_PRIM_TRIANGLES;
+   info.start = 0;
+   info.count = 3;
    /* draw NUM_INST triangles */
-   if (draw_elements)
-      ctx->draw_elements_instanced(ctx, indexBuffer, 2,
-                                   0, /* indexBias */
-                                   PIPE_PRIM_TRIANGLES,
-                                   0, 3, /* start, count */
-                                   0, NUM_INST); /* startInst, instCount */
-   else
-      ctx->draw_arrays_instanced(ctx, PIPE_PRIM_TRIANGLES, 0, 3, 0, NUM_INST);
+   info.instance_count = NUM_INST;
+
+   ctx->draw_vbo(ctx, &info);
 
    ctx->flush(ctx, PIPE_FLUSH_RENDER_CACHE, NULL);
 

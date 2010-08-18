@@ -39,7 +39,6 @@
 #include "util/u_memory.h"
 
 #include "xf86drm.h"
-#include <sys/ioctl.h>
 
 static struct radeon_libdrm_winsys *
 radeon_winsys_create(int fd)
@@ -53,6 +52,31 @@ radeon_winsys_create(int fd)
 
     rws->fd = fd;
     return rws;
+}
+
+/* Enable/disable Hyper-Z access. Return TRUE on success. */
+static boolean radeon_set_hyperz_access(int fd, boolean enable)
+{
+#ifndef RADEON_INFO_WANT_HYPERZ
+#define RADEON_INFO_WANT_HYPERZ 7
+#endif
+
+    struct drm_radeon_info info = {0};
+    unsigned value = enable ? 1 : 0;
+
+    if (!debug_get_bool_option("RADEON_HYPERZ", FALSE))
+        return FALSE;
+
+    info.value = (unsigned long)&value;
+    info.request = RADEON_INFO_WANT_HYPERZ;
+
+    if (drmCommandWriteRead(fd, DRM_RADEON_INFO, &info, sizeof(info)) != 0)
+        return FALSE;
+
+    if (enable && !value)
+        return FALSE;
+
+    return TRUE;
 }
 
 /* Helper function to do the ioctls needed for setup and init. */
@@ -103,6 +127,10 @@ static void do_ioctls(int fd, struct radeon_libdrm_winsys* winsys)
     winsys->drm_2_3_0 = version->version_major > 2 ||
                         version->version_minor >= 3;
 
+    winsys->drm_2_6_0 = version->version_major > 2 ||
+                        (version->version_major == 2 &&
+                         version->version_minor >= 6);
+
     info.request = RADEON_INFO_DEVICE_ID;
     retval = drmCommandWriteRead(fd, DRM_RADEON_INFO, &info, sizeof(info));
     if (retval) {
@@ -130,6 +158,8 @@ static void do_ioctls(int fd, struct radeon_libdrm_winsys* winsys)
     }
     winsys->z_pipes = target;
 
+    winsys->hyperz = radeon_set_hyperz_access(fd, TRUE);
+
     retval = drmCommandWriteRead(fd, DRM_RADEON_GEM_INFO,
             &gem_info, sizeof(gem_info));
     if (retval) {
@@ -142,12 +172,14 @@ static void do_ioctls(int fd, struct radeon_libdrm_winsys* winsys)
 
     debug_printf("radeon: Successfully grabbed chipset info from kernel!\n"
                  "radeon: DRM version: %d.%d.%d ID: 0x%04x GB: %d Z: %d\n"
-                 "radeon: GART size: %d MB VRAM size: %d MB\n",
+                 "radeon: GART size: %d MB VRAM size: %d MB\n"
+                 "radeon: HyperZ: %s\n",
                  version->version_major, version->version_minor,
                  version->version_patchlevel, winsys->pci_id,
                  winsys->gb_pipes, winsys->z_pipes,
                  winsys->gart_size / 1024 / 1024,
-                 winsys->vram_size / 1024 / 1024);
+                 winsys->vram_size / 1024 / 1024,
+                 winsys->hyperz ? "YES" : "NO");
 
     drmFreeVersion(version);
 }

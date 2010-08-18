@@ -133,7 +133,7 @@ static void compute_tex_image_offset(radeonContextPtr rmesa, radeon_mipmap_tree 
 	height = _mesa_next_pow_two_32(lvl->height);
 
 	lvl->rowstride = get_texture_image_row_stride(rmesa, mt->mesaFormat, lvl->width, mt->tilebits);
-	lvl->size = get_texture_image_size(mt->mesaFormat, lvl->rowstride, lvl->height, lvl->depth, mt->tilebits);
+	lvl->size = get_texture_image_size(mt->mesaFormat, lvl->rowstride, height, lvl->depth, mt->tilebits);
 
 	assert(lvl->size > 0);
 

@@ -131,6 +131,8 @@ nvfx_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 		return screen->is_nv4x ? 1 : 0;
 	case PIPE_CAP_GEOMETRY_SHADER4:
 		return 0;
+	case PIPE_CAP_DEPTH_CLAMP:
+		return 0; // TODO: implement depth clamp
 	default:
 		NOUVEAU_ERR("Unknown PIPE_CAP %d\n", param);
 		return 0;

@@ -25,6 +25,7 @@
 
 #include "util/u_blitter.h"
 #include "util/u_math.h"
+#include "util/u_mm.h"
 #include "util/u_memory.h"
 #include "util/u_pack_color.h"
 
@@ -43,6 +44,7 @@
 #include "r300_texture.h"
 #include "r300_vs.h"
 #include "r300_winsys.h"
+#include "r300_hyperz.h"
 
 /* r300_state: Functions used to intialize state context by translating
  * Gallium state objects into semi-native r300 state objects. */
@@ -446,7 +448,6 @@ static void r300_set_clip_state(struct pipe_context* pipe,
 
         r300->clip_state.dirty = TRUE;
     } else {
-        draw_flush(r300->draw);
         draw_set_clip_state(r300->draw, state);
     }
 }
@@ -473,13 +474,13 @@ static void*
 
     dsa->dsa = *state;
 
-    /* Depth test setup. */
+    /* Depth test setup. - separate write mask depth for decomp flush */
+    if (state->depth.writemask) {
+        dsa->z_buffer_control |= R300_Z_WRITE_ENABLE;
+    }
+
     if (state->depth.enabled) {
         dsa->z_buffer_control |= R300_Z_ENABLE;
-
-        if (state->depth.writemask) {
-            dsa->z_buffer_control |= R300_Z_WRITE_ENABLE;
-        }
 
         dsa->z_stencil_control |=
             (r300_translate_depth_stencil_function(state->depth.func) <<
@@ -593,6 +594,7 @@ static void r300_bind_dsa_state(struct pipe_context* pipe,
 
     UPDATE_STATE(state, r300->dsa_state);
 
+    r300->hyperz_state.dirty = TRUE; /* Will be updated before the emission. */
     r300_dsa_inject_stencilref(r300);
 }
 
@@ -619,7 +621,8 @@ static void r300_tex_set_tiling_flags(struct r300_context *r300,
 {
     /* Check if the macrotile flag needs to be changed.
      * Skip changing the flags otherwise. */
-    if (tex->mip_macrotile[tex->surface_level] != tex->mip_macrotile[level]) {
+    if (tex->desc.macrotile[tex->surface_level] !=
+        tex->desc.macrotile[level]) {
         /* Tiling determines how DRM treats the buffer data.
          * We must flush CS when changing it if the buffer is referenced. */
         if (r300->rws->cs_is_buffer_referenced(r300->cs,
@@ -627,8 +630,8 @@ static void r300_tex_set_tiling_flags(struct r300_context *r300,
             r300->context.flush(&r300->context, 0, NULL);
 
         r300->rws->buffer_set_tiling(r300->rws, tex->buffer,
-                tex->microtile, tex->mip_macrotile[level],
-                tex->pitch[0] * util_format_get_blocksize(tex->b.b.format));
+                tex->desc.microtile, tex->desc.macrotile[level],
+                tex->desc.stride_in_bytes[0]);
 
         tex->surface_level = level;
     }
@@ -670,8 +673,10 @@ static void r300_print_fb_surf_info(struct pipe_surface *surf, unsigned index,
             surf->zslice, surf->face, surf->level,
             util_format_short_name(surf->format),
 
-            rtex->macrotile ? "YES" : " NO", rtex->microtile ? "YES" : " NO",
-            rtex->hwpitch[0], tex->width0, tex->height0, tex->depth0,
+            rtex->desc.macrotile[0] ? "YES" : " NO",
+            rtex->desc.microtile ? "YES" : " NO",
+            rtex->desc.stride_in_pixels[0],
+            tex->width0, tex->height0, tex->depth0,
             tex->last_level, util_format_short_name(tex->format));
 }
 
@@ -679,6 +684,7 @@ void r300_mark_fb_state_dirty(struct r300_context *r300,
                               enum r300_fb_state_change change)
 {
     struct pipe_framebuffer_state *state = r300->fb_state.state;
+    boolean has_hyperz = r300->rws->get_value(r300->rws, R300_CAN_HYPERZ);
 
     /* What is marked as dirty depends on the enum r300_fb_state_change. */
     r300->gpu_flush.dirty = TRUE;
@@ -695,8 +701,11 @@ void r300_mark_fb_state_dirty(struct r300_context *r300,
 
     if (r300->cbzb_clear)
         r300->fb_state.size += 10;
-    else if (state->zsbuf)
-        r300->fb_state.size += r300->screen->caps.has_hiz ? 18 : 14;
+    else if (state->zsbuf) {
+        r300->fb_state.size += 10;
+        if (has_hyperz)
+            r300->fb_state.size += r300->screen->caps.hiz_ram ? 8 : 4;
+    }
 
     /* The size of the rest of atoms stays the same. */
 }
@@ -708,8 +717,10 @@ static void
     struct r300_context* r300 = r300_context(pipe);
     struct r300_aa_state *aa = (struct r300_aa_state*)r300->aa_state.state;
     struct pipe_framebuffer_state *old_state = r300->fb_state.state;
+    boolean has_hyperz = r300->rws->get_value(r300->rws, R300_CAN_HYPERZ);
     unsigned max_width, max_height, i;
     uint32_t zbuffer_bpp = 0;
+    int blocksize;
 
     if (r300->screen->caps.is_r500) {
         max_width = max_height = 4096;
@@ -723,10 +734,6 @@ static void
         fprintf(stderr, "r300: Implementation error: Render targets are too "
         "big in %s, refusing to bind framebuffer state!\n", __FUNCTION__);
         return;
-    }
-
-    if (r300->draw) {
-        draw_flush(r300->draw);
     }
 
     /* If nr_cbufs is changed from zero to non-zero or vice versa... */
@@ -745,20 +752,50 @@ static void
 
     r300_mark_fb_state_dirty(r300, R300_CHANGED_FB_STATE);
 
-    /* Polygon offset depends on the zbuffer bit depth. */
-    if (state->zsbuf && r300->polygon_offset_enabled) {
-        switch (util_format_get_blocksize(state->zsbuf->texture->format)) {
-            case 2:
-                zbuffer_bpp = 16;
-                break;
-            case 4:
-                zbuffer_bpp = 24;
-                break;
+    r300->z_compression = false;
+    
+    if (state->zsbuf) {
+        blocksize = util_format_get_blocksize(state->zsbuf->texture->format);
+        switch (blocksize) {
+        case 2:
+            zbuffer_bpp = 16;
+            break;
+        case 4:
+            zbuffer_bpp = 24;
+            break;
+        }
+        if (has_hyperz) {
+            struct r300_surface *zs_surf = r300_surface(state->zsbuf);
+            struct r300_texture *tex;
+            int compress = r300->screen->caps.is_rv350 ? RV350_Z_COMPRESS_88 : R300_Z_COMPRESS_44;
+            int level = zs_surf->base.level;
+
+            tex = r300_texture(zs_surf->base.texture);
+
+            /* work out whether we can support hiz on this buffer */
+            r300_hiz_alloc_block(r300, zs_surf);
+        
+            /* work out whether we can support zmask features on this buffer */
+            r300_zmask_alloc_block(r300, zs_surf, compress);
+
+            if (tex->zmask_mem[level]) {
+                /* compression causes hangs on 16-bit */
+                if (zbuffer_bpp == 24)
+                    r300->z_compression = compress;
+            }
+            DBG(r300, DBG_HYPERZ,
+                "hyper-z features: hiz: %d @ %08x z-compression: %d z-fastfill: %d @ %08x\n", tex->hiz_mem[level] ? 1 : 0,
+                tex->hiz_mem[level] ? tex->hiz_mem[level]->ofs : 0xdeadbeef,
+                r300->z_compression, tex->zmask_mem[level] ? 1 : 0,
+                tex->zmask_mem[level] ? tex->zmask_mem[level]->ofs : 0xdeadbeef);
         }
 
+        /* Polygon offset depends on the zbuffer bit depth. */
         if (r300->zbuffer_bpp != zbuffer_bpp) {
             r300->zbuffer_bpp = zbuffer_bpp;
-            r300->rs_state.dirty = TRUE;
+
+            if (r300->polygon_offset_enabled)
+                r300->rs_state.dirty = TRUE;
         }
     }
 
@@ -1016,7 +1053,7 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
 	for (i = 0; i < 8; i++) {
 	    if (state->sprite_coord_enable & (1 << i))
                 stuffing_enable |=
-		    R300_GB_TEX_STR << (R300_GB_TEX0_SOURCE_SHIFT + (i*2));
+                    R300_GB_TEX_ST << (R300_GB_TEX0_SOURCE_SHIFT + (i*2));
 	}
 
         point_texcoord_left = 0.0f;
@@ -1093,14 +1130,11 @@ static void r300_bind_rs_state(struct pipe_context* pipe, void* state)
     boolean last_two_sided_color = r300->two_sided_color;
 
     if (r300->draw && rs) {
-        draw_flush(r300->draw);
         draw_set_rasterizer_state(r300->draw, &rs->rs_draw, state);
     }
 
     if (rs) {
-        r300->polygon_offset_enabled = (rs->rs.offset_point ||
-                                        rs->rs.offset_line ||
-                                        rs->rs.offset_tri);
+        r300->polygon_offset_enabled = rs->polygon_offset_enable;
         r300->sprite_coord_enable = rs->rs.sprite_coord_enable;
         r300->two_sided_color = rs->rs.light_twoside;
     } else {
@@ -1293,7 +1327,7 @@ static void r300_set_fragment_sampler_views(struct pipe_context* pipe,
             /* Set the texrect factor in the fragment shader.
              * Needed for RECT and NPOT fallback. */
             texture = r300_texture(views[i]->texture);
-            if (texture->uses_pitch) {
+            if (texture->desc.is_npot) {
                 r300->fs_rc_constant_state.dirty = TRUE;
             }
 
@@ -1327,6 +1361,7 @@ r300_create_sampler_view(struct pipe_context *pipe,
 {
     struct r300_sampler_view *view = CALLOC_STRUCT(r300_sampler_view);
     struct r300_texture *tex = r300_texture(texture);
+    boolean is_r500 = r300_screen(pipe->screen)->caps.is_r500;
 
     if (view) {
         view->base = *templ;
@@ -1342,8 +1377,9 @@ r300_create_sampler_view(struct pipe_context *pipe,
 
         view->format = tex->tx_format;
         view->format.format1 |= r300_translate_texformat(templ->format,
-                                                         view->swizzle);
-        if (r300_screen(pipe->screen)->caps.is_r500) {
+                                                         view->swizzle,
+                                                         is_r500);
+        if (is_r500) {
             view->format.format2 |= r500_tx_format_msb_bit(templ->format);
         }
     }
@@ -1380,7 +1416,6 @@ static void r300_set_viewport_state(struct pipe_context* pipe,
     r300->viewport = *state;
 
     if (r300->draw) {
-        draw_flush(r300->draw);
         draw_set_viewport_state(r300->draw, state);
         viewport->vte_control = R300_VTX_XY_FMT | R300_VTX_Z_FMT;
         return;
@@ -1481,7 +1516,6 @@ static void r300_set_vertex_buffers(struct pipe_context* pipe,
 
     } else {
         /* SW TCL. */
-        draw_flush(r300->draw);
         draw_set_vertex_buffers(r300->draw, count, buffers);
     }
 
@@ -1498,6 +1532,23 @@ static void r300_set_vertex_buffers(struct pipe_context* pipe,
     memcpy(r300->vertex_buffer, buffers,
         sizeof(struct pipe_vertex_buffer) * count);
     r300->vertex_buffer_count = count;
+}
+
+static void r300_set_index_buffer(struct pipe_context* pipe,
+                                  const struct pipe_index_buffer *ib)
+{
+    struct r300_context* r300 = r300_context(pipe);
+
+    if (ib) {
+        pipe_resource_reference(&r300->index_buffer.buffer, ib->buffer);
+        memcpy(&r300->index_buffer, ib, sizeof(r300->index_buffer));
+    }
+    else {
+        pipe_resource_reference(&r300->index_buffer.buffer, NULL);
+        memset(&r300->index_buffer, 0, sizeof(r300->index_buffer));
+    }
+
+    /* TODO make this more like a state */
 }
 
 /* Initialize the PSC tables. */
@@ -1649,7 +1700,6 @@ static void r300_bind_vertex_elements_state(struct pipe_context *pipe,
     r300->velems = velems;
 
     if (r300->draw) {
-        draw_flush(r300->draw);
         draw_set_vertex_elements(r300->draw, velems->count, velems->velem);
         return;
     }
@@ -1701,10 +1751,12 @@ static void r300_bind_vs_state(struct pipe_context* pipe, void* shader)
     r300->rs_block_state.dirty = TRUE; /* Will be updated before the emission. */
 
     if (r300->screen->caps.has_tcl) {
+        unsigned fc_op_dwords = r300->screen->caps.is_r500 ? 3 : 2;
         r300->vs_state.dirty = TRUE;
         r300->vs_state.size =
                 vs->code.length + 9 +
-                (vs->immediates_count ? vs->immediates_count * 4 + 3 : 0);
+                (vs->immediates_count ? vs->immediates_count * 4 + 3 : 0) +
+        (vs->code.num_fc_ops ? vs->code.num_fc_ops * fc_op_dwords + 4 : 0);
 
         if (vs->externals_count) {
             r300->vs_constants.dirty = TRUE;
@@ -1715,7 +1767,6 @@ static void r300_bind_vs_state(struct pipe_context* pipe, void* shader)
 
         r300->pvs_flush.dirty = TRUE;
     } else {
-        draw_flush(r300->draw);
         draw_bind_vertex_shader(r300->draw,
                 (struct draw_vertex_shader*)vs->draw_vs);
     }
@@ -1847,6 +1898,7 @@ void r300_init_state_functions(struct r300_context* r300)
     r300->context.set_viewport_state = r300_set_viewport_state;
 
     r300->context.set_vertex_buffers = r300_set_vertex_buffers;
+    r300->context.set_index_buffer = r300_set_index_buffer;
 
     r300->context.create_vertex_elements_state = r300_create_vertex_elements_state;
     r300->context.bind_vertex_elements_state = r300_bind_vertex_elements_state;

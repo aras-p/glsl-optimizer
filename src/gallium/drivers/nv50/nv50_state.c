@@ -786,6 +786,20 @@ nv50_set_vertex_buffers(struct pipe_context *pipe, unsigned count,
 	nv50->dirty |= NV50_NEW_ARRAYS;
 }
 
+static void
+nv50_set_index_buffer(struct pipe_context *pipe,
+		      const struct pipe_index_buffer *ib)
+{
+	struct nv50_context *nv50 = nv50_context(pipe);
+
+	if (ib)
+		memcpy(&nv50->idxbuf, ib, sizeof(nv50->idxbuf));
+	else
+		memset(&nv50->idxbuf, 0, sizeof(nv50->idxbuf));
+
+	/* TODO make this more like a state */
+}
+
 static void *
 nv50_vtxelts_state_create(struct pipe_context *pipe,
 			  unsigned num_elements,
@@ -871,5 +885,6 @@ nv50_init_state_functions(struct nv50_context *nv50)
 	nv50->pipe.bind_vertex_elements_state = nv50_vtxelts_state_bind;
 
 	nv50->pipe.set_vertex_buffers = nv50_set_vertex_buffers;
+	nv50->pipe.set_index_buffer = nv50_set_index_buffer;
 }
 

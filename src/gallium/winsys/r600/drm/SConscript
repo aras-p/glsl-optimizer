@@ -1,0 +1,25 @@
+Import('*')
+
+env = env.Clone()
+
+r600_sources = [
+    'bof.c',
+    'r600_state.c',
+    'radeon_ctx.c',
+    'radeon_draw.c',
+    'radeon_state.c',
+    'radeon_bo.c',
+    'radeon_pciid.c',
+    'radeon.c',
+    'r600_drm.c'
+]
+
+env.ParseConfig('pkg-config --cflags libdrm_radeon')
+env.Append(CPPPATH = '#/src/gallium/drivers/r600')
+
+r600winsys = env.ConvenienceLibrary(
+    target ='r600winsys',
+    source = r600_sources,
+)
+
+Export('r600winsys')

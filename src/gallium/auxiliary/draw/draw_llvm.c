@@ -37,6 +37,8 @@
 #include "gallivm/lp_bld_debug.h"
 #include "gallivm/lp_bld_tgsi.h"
 #include "gallivm/lp_bld_printf.h"
+#include "gallivm/lp_bld_intr.h"
+#include "gallivm/lp_bld_init.h"
 
 #include "tgsi/tgsi_exec.h"
 #include "tgsi/tgsi_dump.h"
@@ -681,7 +683,6 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant)
    unsigned i, j;
    struct lp_build_context bld;
    struct lp_build_loop_state lp_loop;
-   struct lp_type vs_type = lp_type_float_vec(32);
    const int max_vertices = 4;
    LLVMValueRef outputs[PIPE_MAX_SHADER_OUTPUTS][NUM_CHANNELS];
    void *code;
@@ -730,7 +731,7 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant)
    builder = LLVMCreateBuilder();
    LLVMPositionBuilderAtEnd(builder, block);
 
-   lp_build_context_init(&bld, builder, vs_type);
+   lp_build_context_init(&bld, builder, lp_type_int(32));
 
    end = lp_build_add(&bld, start, count);
 
@@ -793,6 +794,11 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant)
 
    sampler->destroy(sampler);
 
+#ifdef PIPE_ARCH_X86
+   /* Avoid corrupting the FPU stack on 32bit OSes. */
+   lp_build_intrinsic(builder, "llvm.x86.mmx.emms", LLVMVoidType(), NULL, 0);
+#endif
+
    LLVMBuildRetVoid(builder);
 
    LLVMDisposeBuilder(builder);
@@ -820,6 +826,7 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant)
    if (gallivm_debug & GALLIVM_DEBUG_ASM) {
       lp_disassemble(code);
    }
+   lp_func_delete_body(variant->function);
 }
 
 
@@ -837,9 +844,7 @@ draw_llvm_generate_elts(struct draw_llvm *llvm, struct draw_llvm_variant *varian
    struct draw_context *draw = llvm->draw;
    unsigned i, j;
    struct lp_build_context bld;
-   struct lp_build_context bld_int;
    struct lp_build_loop_state lp_loop;
-   struct lp_type vs_type = lp_type_float_vec(32);
    const int max_vertices = 4;
    LLVMValueRef outputs[PIPE_MAX_SHADER_OUTPUTS][NUM_CHANNELS];
    LLVMValueRef fetch_max;
@@ -891,8 +896,7 @@ draw_llvm_generate_elts(struct draw_llvm *llvm, struct draw_llvm_variant *varian
    builder = LLVMCreateBuilder();
    LLVMPositionBuilderAtEnd(builder, block);
 
-   lp_build_context_init(&bld, builder, vs_type);
-   lp_build_context_init(&bld_int, builder, lp_type_int(32));
+   lp_build_context_init(&bld, builder, lp_type_int(32));
 
    step = LLVMConstInt(LLVMInt32Type(), max_vertices, 0);
 
@@ -927,7 +931,7 @@ draw_llvm_generate_elts(struct draw_llvm *llvm, struct draw_llvm_variant *varian
          /* make sure we're not out of bounds which can happen
           * if fetch_count % 4 != 0, because on the last iteration
           * a few of the 4 vertex fetches will be out of bounds */
-         true_index = lp_build_min(&bld_int, true_index, fetch_max);
+         true_index = lp_build_min(&bld, true_index, fetch_max);
 
          fetch_ptr = LLVMBuildGEP(builder, fetch_elts,
                                   &true_index, 1, "");
@@ -963,6 +967,11 @@ draw_llvm_generate_elts(struct draw_llvm *llvm, struct draw_llvm_variant *varian
 
    sampler->destroy(sampler);
 
+#ifdef PIPE_ARCH_X86
+   /* Avoid corrupting the FPU stack on 32bit OSes. */
+   lp_build_intrinsic(builder, "llvm.x86.mmx.emms", LLVMVoidType(), NULL, 0);
+#endif
+
    LLVMBuildRetVoid(builder);
 
    LLVMDisposeBuilder(builder);
@@ -990,6 +999,7 @@ draw_llvm_generate_elts(struct draw_llvm *llvm, struct draw_llvm_variant *varian
    if (gallivm_debug & GALLIVM_DEBUG_ASM) {
       lp_disassemble(code);
    }
+   lp_func_delete_body(variant->function_elts);
 }
 
 void

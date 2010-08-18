@@ -29,7 +29,9 @@
 #define ST_CB_RASTERPOS_H
 
 
-#include "main/mtypes.h"
+#include "main/compiler.h"
+
+struct dd_function_table;
 
 #if FEATURE_rastpos
 

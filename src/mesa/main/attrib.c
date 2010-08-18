@@ -41,6 +41,7 @@
 #include "hint.h"
 #include "light.h"
 #include "lines.h"
+#include "macros.h"
 #include "matrix.h"
 #include "multisample.h"
 #include "points.h"

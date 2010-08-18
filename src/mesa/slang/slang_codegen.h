@@ -27,9 +27,13 @@
 #define SLANG_CODEGEN_H
 
 
-#include "main/imports.h"
+#include "main/glheader.h"
 #include "slang_compile.h"
+#include "slang_compile_variable.h"
+#include "slang_typeinfo.h"
+#include "slang_utility.h"
 
+struct slang_function_;
 
 #define MAX_LOOP_DEPTH 30
 

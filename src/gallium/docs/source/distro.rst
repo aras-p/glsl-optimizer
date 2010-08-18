@@ -51,10 +51,10 @@ nVidia nv50
 
 Driver for the nVidia nv50 family of GPUs.
 
-VMWare SVGA
+VMware SVGA
 ^^^^^^^^^^^
 
-Driver for VMWare virtualized guest operating system graphics processing.
+Driver for VMware virtualized guest operating system graphics processing.
 
 ATI r300
 ^^^^^^^^
@@ -73,6 +73,11 @@ Trace
 
 Wrapper driver. Trace dumps an XML record of the calls made to the
 :ref:`Context` and :ref:`Screen` objects that it wraps.
+
+Rbug
+^^^^
+
+Wrapper driver. :ref:`rbug` driver used with stand alone rbug-gui.
 
 State Trackers
 --------------

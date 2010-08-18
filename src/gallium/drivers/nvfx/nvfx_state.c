@@ -555,6 +555,20 @@ nvfx_set_vertex_buffers(struct pipe_context *pipe, unsigned count,
 	nvfx->draw_dirty |= NVFX_NEW_ARRAYS;
 }
 
+static void
+nvfx_set_index_buffer(struct pipe_context *pipe,
+		      const struct pipe_index_buffer *ib)
+{
+	struct nvfx_context *nvfx = nvfx_context(pipe);
+
+	if (ib)
+		memcpy(&nvfx->idxbuf, ib, sizeof(nvfx->idxbuf));
+	else
+		memset(&nvfx->idxbuf, 0, sizeof(nvfx->idxbuf));
+
+	/* TODO make this more like a state */
+}
+
 static void *
 nvfx_vtxelts_state_create(struct pipe_context *pipe,
 			  unsigned num_elements,
@@ -635,4 +649,5 @@ nvfx_init_state_functions(struct nvfx_context *nvfx)
 	nvfx->pipe.bind_vertex_elements_state = nvfx_vtxelts_state_bind;
 
 	nvfx->pipe.set_vertex_buffers = nvfx_set_vertex_buffers;
+	nvfx->pipe.set_index_buffer = nvfx_set_index_buffer;
 }

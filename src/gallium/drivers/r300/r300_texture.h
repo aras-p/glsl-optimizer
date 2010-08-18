@@ -35,15 +35,10 @@ unsigned r300_get_swizzle_combined(const unsigned char *swizzle_format,
                                    const unsigned char *swizzle_view);
 
 uint32_t r300_translate_texformat(enum pipe_format format,
-                                  const unsigned char *swizzle_view);
+                                  const unsigned char *swizzle_view,
+                                  boolean is_r500);
 
 uint32_t r500_tx_format_msb_bit(enum pipe_format format);
-
-unsigned r300_texture_get_stride(struct r300_screen* screen,
-                                 struct r300_texture* tex, unsigned level);
-
-unsigned r300_texture_get_offset(struct r300_texture* tex, unsigned level,
-                                 unsigned zslice, unsigned face);
 
 void r300_texture_reinterpret_format(struct pipe_screen *screen,
                                      struct pipe_resource *tex,

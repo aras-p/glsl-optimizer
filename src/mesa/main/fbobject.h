@@ -26,9 +26,13 @@
 #ifndef FBOBJECT_H
 #define FBOBJECT_H
 
+#include "mtypes.h"
 
 extern void
 _mesa_init_fbobjects(GLcontext *ctx);
+
+extern struct gl_framebuffer *
+_mesa_get_incomplete_framebuffer(void);
 
 extern struct gl_renderbuffer *
 _mesa_lookup_renderbuffer(GLcontext *ctx, GLuint id);

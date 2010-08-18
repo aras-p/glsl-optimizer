@@ -29,7 +29,6 @@
 #define SL_PP_CONTEXT_H
 
 #include "sl_pp_dict.h"
-#include "sl_pp_macro.h"
 #include "sl_pp_process.h"
 #include "sl_pp_purify.h"
 #include "sl_pp_token_util.h"

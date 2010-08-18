@@ -27,7 +27,6 @@
 #define ARBPROGRAM_H
 
 
-#include "compiler.h"
 #include "glheader.h"
 
 

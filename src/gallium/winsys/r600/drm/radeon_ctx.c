@@ -112,6 +112,7 @@ struct radeon_ctx *radeon_ctx_decref(struct radeon_ctx *ctx)
 		ctx->bo[i] = radeon_bo_decref(ctx->radeon, ctx->bo[i]);
 	}
 	ctx->radeon = radeon_decref(ctx->radeon);
+	free(ctx->state);
 	free(ctx->draw);
 	free(ctx->bo);
 	free(ctx->pm4);
@@ -151,6 +152,8 @@ int radeon_ctx_submit(struct radeon_ctx *ctx)
 	uint64_t chunk_array[2];
 	int r = 0;
 
+	if (!ctx->cpm4)
+		return 0;
 #if 0
 	for (r = 0; r < ctx->cpm4; r++) {
 		fprintf(stderr, "0x%08X\n", ctx->pm4[r]);

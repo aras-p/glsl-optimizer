@@ -39,7 +39,6 @@
 #define DBG(...) do { if (VERBOSE) fprintf(stderr, __VA_ARGS__); } while(0)
 
 struct const_value {
-	
 	struct radeon_compiler * C;
 	struct rc_src_register * Src;
 	float Value;
@@ -78,17 +77,17 @@ static int src_reg_is_immediate(struct rc_src_register * src,
 	c->Program.Constants.Constants[src->Index].Type==RC_CONSTANT_IMMEDIATE;
 }
 
-static unsigned int loop_calc_iterations(struct emulate_loop_state *s, 
-			struct loop_info * loop, unsigned int max_instructions)
+static unsigned int loop_max_possible_iterations(struct radeon_compiler *c,
+			struct loop_info * loop, unsigned int prog_inst_limit)
 {
-	unsigned int total_i = rc_recompute_ips(s->C);
+	unsigned int total_i = rc_recompute_ips(c);
 	unsigned int loop_i = (loop->EndLoop->IP - loop->BeginLoop->IP) - 1;
 	/* +1 because the program already has one iteration of the loop. */
-	return 1 + ((max_instructions - total_i) / (s->LoopCount * loop_i));
+	return 1 + ((prog_inst_limit - total_i) / loop_i);
 }
 
-static void loop_unroll(struct emulate_loop_state * s,
-			struct loop_info *loop, unsigned int iterations)
+static void unroll_loop(struct radeon_compiler * c, struct loop_info * loop,
+						unsigned int iterations)
 {
 	unsigned int i;
 	struct rc_instruction * ptr;
@@ -99,7 +98,7 @@ static void loop_unroll(struct emulate_loop_state * s,
 	rc_remove_instruction(loop->EndLoop);
 	for( i = 1; i < iterations; i++){
 		for(ptr = first; ptr != last->Next; ptr = ptr->Next){
-			struct rc_instruction *new = rc_alloc_instruction(s->C);
+			struct rc_instruction *new = rc_alloc_instruction(c);
 			memcpy(new, ptr, sizeof(struct rc_instruction));
 			rc_insert_instruction(append_to, new);
 			append_to = new;
@@ -115,7 +114,7 @@ static void update_const_value(void * data, struct rc_instruction * inst,
 	if(value->Src->File != file ||
 	   value->Src->Index != index ||
 	   !(1 << GET_SWZ(value->Src->Swizzle, 0) & mask)){
-	   	return;
+		return;
 	}
 	switch(inst->U.I.Opcode){
 	case RC_OPCODE_MOV:
@@ -140,7 +139,7 @@ static void get_incr_amount(void * data, struct rc_instruction * inst,
 	if(file != RC_FILE_TEMPORARY ||
 	   count_inst->Index != index ||
 	   (1 << GET_SWZ(count_inst->Swz,0) != mask)){
-	   	return;
+		return;
 	}
 	/* Find the index of the counter register. */
 	opcode = rc_get_opcode_info(inst->U.I.Opcode);
@@ -185,13 +184,16 @@ static void get_incr_amount(void * data, struct rc_instruction * inst,
 		count_inst->Unknown = 1;
 		return;
 	}
-	
 }
 
-static int transform_const_loop(struct emulate_loop_state * s,
-						struct loop_info * loop)
+/**
+ * If prog_inst_limit is -1, then all eligible loops will be unrolled regardless
+ * of how many iterations they have.
+ */
+static int try_unroll_loop(struct radeon_compiler * c, struct loop_info * loop,
+						unsigned int prog_inst_limit)
 {
-	int end_loops = 1;
+	int end_loops;
 	int iterations;
 	struct count_inst count_inst;
 	float limit_value;
@@ -201,12 +203,12 @@ static int transform_const_loop(struct emulate_loop_state * s,
 	struct rc_instruction * inst;
 
 	/* Find the counter and the upper limit */
-	
-	if(src_reg_is_immediate(&loop->Cond->U.I.SrcReg[0], s->C)){
+
+	if(src_reg_is_immediate(&loop->Cond->U.I.SrcReg[0], c)){
 		limit = &loop->Cond->U.I.SrcReg[0];
 		counter = &loop->Cond->U.I.SrcReg[1];
 	}
-	else if(src_reg_is_immediate(&loop->Cond->U.I.SrcReg[1], s->C)){
+	else if(src_reg_is_immediate(&loop->Cond->U.I.SrcReg[1], c)){
 		limit = &loop->Cond->U.I.SrcReg[1];
 		counter = &loop->Cond->U.I.SrcReg[0];
 	}
@@ -214,13 +216,13 @@ static int transform_const_loop(struct emulate_loop_state * s,
 		DBG("No constant limit.\n");
 		return 0;
 	}
-	
+
 	/* Find the initial value of the counter */
 	counter_value.Src = counter;
 	counter_value.Value = 0.0f;
 	counter_value.HasValue = 0;
-	counter_value.C = s->C;
-	for(inst = s->C->Program.Instructions.Next; inst != loop->BeginLoop;
+	counter_value.C = c;
+	for(inst = c->Program.Instructions.Next; inst != loop->BeginLoop;
 							inst = inst->Next){
 		rc_for_all_writes_mask(inst, update_const_value, &counter_value);
 	}
@@ -230,11 +232,12 @@ static int transform_const_loop(struct emulate_loop_state * s,
 	}
 	DBG("Initial counter value is %f\n", counter_value.Value);
 	/* Determine how the counter is modified each loop */
-	count_inst.C = s->C;
+	count_inst.C = c;
 	count_inst.Index = counter->Index;
 	count_inst.Swz = counter->Swizzle;
 	count_inst.Amount = 0.0f;
 	count_inst.Unknown = 0;
+	end_loops = 1;
 	for(inst = loop->BeginLoop->Next; end_loops > 0; inst = inst->Next){
 		switch(inst->U.I.Opcode){
 		/* XXX In the future we might want to try to unroll nested
@@ -245,6 +248,16 @@ static int transform_const_loop(struct emulate_loop_state * s,
 		case RC_OPCODE_ENDLOOP:
 			loop->EndLoop = inst;
 			end_loops--;
+			break;
+		case RC_OPCODE_BRK:
+			/* Don't unroll loops if it has a BRK instruction
+			 * other one used when testing the main conditional
+			 * of the loop. */
+
+			/* Make sure we haven't entered a nested loops. */
+			if(inst != loop->Brk && end_loops == 1) {
+				return 0;
+			}
 			break;
 		/* XXX Check if the counter is modified within an if statement.
 		 */
@@ -266,17 +279,20 @@ static int transform_const_loop(struct emulate_loop_state * s,
 	/* Calculate the number of iterations of this loop.  Keeping this
 	 * simple, since we only support increment and decrement loops.
 	 */
-	limit_value = get_constant_value(s->C, limit, 0);
+	limit_value = get_constant_value(c, limit, 0);
 	DBG("Limit is %f.\n", limit_value);
+	/* The iteration calculations are opposite of what you would expect.
+	 * In a normal loop, if the condition is met, then loop continues, but
+	 * with our loops, if the condition is met, the is exited. */
 	switch(loop->Cond->U.I.Opcode){
-	case RC_OPCODE_SGT:
-	case RC_OPCODE_SLT:
+	case RC_OPCODE_SGE:
+	case RC_OPCODE_SLE:
 		iterations = (int) ceilf((limit_value - counter_value.Value) /
 							count_inst.Amount);
 		break;
 
-	case RC_OPCODE_SLE:
-	case RC_OPCODE_SGE:
+	case RC_OPCODE_SGT:
+	case RC_OPCODE_SLT:
 		iterations = (int) floorf((limit_value - counter_value.Value) /
 							count_inst.Amount) + 1;
 		break;
@@ -284,20 +300,115 @@ static int transform_const_loop(struct emulate_loop_state * s,
 		return 0;
 	}
 
+	if (prog_inst_limit > 0
+		&& iterations > loop_max_possible_iterations(c, loop,
+							prog_inst_limit)) {
+		return 0;
+	}
+
 	DBG("Loop will have %d iterations.\n", iterations);
-	
+
 	/* Prepare loop for unrolling */
 	rc_remove_instruction(loop->Cond);
 	rc_remove_instruction(loop->If);
 	rc_remove_instruction(loop->Brk);
 	rc_remove_instruction(loop->EndIf);
-	
-	loop_unroll(s, loop, iterations);
+
+	unroll_loop(c, loop, iterations);
 	loop->EndLoop = NULL;
 	return 1;
 }
 
-/** 
+/**
+ * @param c
+ * @param loop
+ * @param inst A pointer to a BGNLOOP instruction.
+ * @return 1 if all of the members of loop where set.
+ * @return 0 if there was an error and some members of loop are still NULL.
+ */
+static int build_loop_info(struct radeon_compiler * c, struct loop_info * loop,
+						struct rc_instruction * inst)
+{
+	struct rc_instruction * ptr;
+
+	if(inst->U.I.Opcode != RC_OPCODE_BGNLOOP){
+		rc_error(c, "%s: expected BGNLOOP", __FUNCTION__);
+		return 0;
+	}
+
+	memset(loop, 0, sizeof(struct loop_info));
+
+	loop->BeginLoop = inst;
+
+	for(ptr = loop->BeginLoop->Next; !loop->EndLoop; ptr = ptr->Next) {
+
+		if (ptr == &c->Program.Instructions) {
+			rc_error(c, "%s: BGNLOOP without an ENDLOOOP.\n",
+								__FUNCTION__);
+			return 0;
+		}
+
+		switch(ptr->U.I.Opcode){
+		case RC_OPCODE_BGNLOOP:
+		{
+			/* Nested loop, skip ahead to the end. */
+			unsigned int loop_depth = 1;
+			for(ptr = ptr->Next; ptr != &c->Program.Instructions;
+							ptr = ptr->Next){
+				if (ptr->U.I.Opcode == RC_OPCODE_BGNLOOP) {
+					loop_depth++;
+				} else if (ptr->U.I.Opcode == RC_OPCODE_ENDLOOP) {
+					if (!--loop_depth) {
+						break;
+					}
+				}
+			}
+			if (ptr == &c->Program.Instructions) {
+				rc_error(c, "%s: BGNLOOP without an ENDLOOOP\n",
+								__FUNCTION__);
+					return 0;
+			}
+			break;
+		}
+		case RC_OPCODE_BRK:
+			if(ptr->Next->U.I.Opcode != RC_OPCODE_ENDIF
+					|| ptr->Prev->U.I.Opcode != RC_OPCODE_IF
+					|| loop->Brk){
+				continue;
+			}
+			loop->Brk = ptr;
+			loop->If = ptr->Prev;
+			loop->EndIf = ptr->Next;
+			switch(loop->If->Prev->U.I.Opcode){
+			case RC_OPCODE_SLT:
+			case RC_OPCODE_SGE:
+			case RC_OPCODE_SGT:
+			case RC_OPCODE_SLE:
+			case RC_OPCODE_SEQ:
+			case RC_OPCODE_SNE:
+				break;
+			default:
+				rc_error(c, "%s: expected conditional",
+								__FUNCTION__);
+				return 0;
+			}
+			loop->Cond = loop->If->Prev;
+			break;
+
+		case RC_OPCODE_ENDLOOP:
+			loop->EndLoop = ptr;
+			break;
+		}
+	}
+
+	if (loop->BeginLoop && loop->Brk && loop->If && loop->EndIf
+					&& loop->Cond && loop->EndLoop) {
+		return 1;
+	}
+	return 0;
+}
+
+/**
  * This function prepares a loop to be unrolled by converting it into an if
  * statement.  Here is an outline of the conversion process:
  * BGNLOOP;                         	-> BGNLOOP;
@@ -310,72 +421,25 @@ static int transform_const_loop(struct emulate_loop_state * s,
  * ENDLOOP;                         	-> ENDLOOP
  *
  * @param inst A pointer to a BGNLOOP instruction.
- * @return If the loop can be unrolled, a pointer to the first instruction of
- * 		the unrolled loop.
- * 	   Otherwise, A pointer to the ENDLOOP instruction.
- * 	   Null if there is an error.
+ * @return 1 for success, 0 for failure
  */
-static struct rc_instruction * transform_loop(struct emulate_loop_state * s,
+static int transform_loop(struct emulate_loop_state * s,
 						struct rc_instruction * inst)
 {
-	struct loop_info *loop;
-	struct rc_instruction * ptr;
+	struct loop_info * loop;
 
 	memory_pool_array_reserve(&s->C->Pool, struct loop_info,
 			s->Loops, s->LoopCount, s->LoopReserved, 1);
 
 	loop = &s->Loops[s->LoopCount++];
-	memset(loop, 0, sizeof(struct loop_info));
-	if(inst->U.I.Opcode != RC_OPCODE_BGNLOOP){
-		rc_error(s->C, "expected BGNLOOP\n", __FUNCTION__);
-		return NULL;
-	}
-	loop->BeginLoop = inst;
 
-	for(ptr = loop->BeginLoop->Next; !loop->EndLoop; ptr = ptr->Next){
-		switch(ptr->U.I.Opcode){
-		case RC_OPCODE_BGNLOOP:
-			/* Nested loop */
-			ptr = transform_loop(s, ptr);
-			if(!ptr){
-				return NULL;
-			}
-			break;
-		case RC_OPCODE_BRK:
-			loop->Brk = ptr;
-			if(ptr->Next->U.I.Opcode != RC_OPCODE_ENDIF){
-				rc_error(s->C,
-					"%s: expected ENDIF\n",__FUNCTION__);
-				return NULL;
-			}
-			loop->EndIf = ptr->Next;
-			if(ptr->Prev->U.I.Opcode != RC_OPCODE_IF){
-				rc_error(s->C,
-					"%s: expected IF\n", __FUNCTION__);
-				return NULL;
-			}
-			loop->If = ptr->Prev;
-			switch(loop->If->Prev->U.I.Opcode){
-			case RC_OPCODE_SLT:
-			case RC_OPCODE_SGE:
-			case RC_OPCODE_SGT:
-			case RC_OPCODE_SLE:
-			case RC_OPCODE_SEQ:
-			case RC_OPCODE_SNE:
-				break;
-			default:
-				rc_error(s->C, "%s expected conditional\n",
-								__FUNCTION__);
-				return NULL;
-			}
-			loop->Cond = loop->If->Prev;
-			ptr = loop->EndIf;
-			break;
-		case RC_OPCODE_ENDLOOP:
-			loop->EndLoop = ptr;
-			break;
-		}
+	if (!build_loop_info(s->C, loop, inst))
+		return 0;
+
+	if(try_unroll_loop(s->C, loop, s->prog_inst_limit)){
+		return 1;
 	}
+
 	/* Reverse the conditional instruction */
 	switch(loop->Cond->U.I.Opcode){
 	case RC_OPCODE_SGE:
@@ -398,43 +462,51 @@ static struct rc_instruction * transform_loop(struct emulate_loop_state * s,
 		break;
 	default:
 		rc_error(s->C, "loop->Cond is not a conditional.\n");
-		return NULL;
-	}
-	
-	/* Check if the number of loops is known at compile time. */
-	if(transform_const_loop(s, loop)){
-		return loop->BeginLoop->Next;
+		return 0;
 	}
 
-	/* Prepare the loop to be unrolled */
+	/* Prepare the loop to be emulated */
 	rc_remove_instruction(loop->Brk);
 	rc_remove_instruction(loop->EndIf);
 	rc_insert_instruction(loop->EndLoop->Prev, loop->EndIf);
-	return loop->EndLoop;
+	return 1;
 }
 
-void rc_transform_unroll_loops(struct radeon_compiler *c,
-					struct emulate_loop_state * s)
+void rc_transform_loops(struct radeon_compiler *c,
+			struct emulate_loop_state * s, int prog_inst_limit)
 {
 	struct rc_instruction * ptr;
-	
+
 	memset(s, 0, sizeof(struct emulate_loop_state));
 	s->C = c;
-	ptr = s->C->Program.Instructions.Next;
-	while(ptr != &s->C->Program.Instructions) {
+	s->prog_inst_limit = prog_inst_limit;
+	for(ptr = s->C->Program.Instructions.Next;
+			ptr != &s->C->Program.Instructions; ptr = ptr->Next) {
 		if(ptr->Type == RC_INSTRUCTION_NORMAL &&
 					ptr->U.I.Opcode == RC_OPCODE_BGNLOOP){
-			ptr = transform_loop(s, ptr);
-			if(!ptr){
+			if (!transform_loop(s, ptr))
 				return;
-			}
 		}
-		ptr = ptr->Next;
 	}
 }
 
-void rc_emulate_loops(struct emulate_loop_state *s,
-						unsigned int max_instructions)
+void rc_unroll_loops(struct radeon_compiler *c, int prog_inst_limit)
+{
+	struct rc_instruction * inst;
+	struct loop_info loop;
+
+	for(inst = c->Program.Instructions.Next;
+			inst != &c->Program.Instructions; inst = inst->Next) {
+
+		if (inst->U.I.Opcode == RC_OPCODE_BGNLOOP) {
+			if (build_loop_info(c, &loop, inst)) {
+				try_unroll_loop(c, &loop, prog_inst_limit);
+			}
+		}
+	}
+}
+
+void rc_emulate_loops(struct emulate_loop_state *s, int prog_inst_limit)
 {
 	int i;
 	/* Iterate backwards of the list of loops so that loops that nested
@@ -444,8 +516,8 @@ void rc_emulate_loops(struct emulate_loop_state *s,
 		if(!s->Loops[i].EndLoop){
 			continue;
 		}
-		unsigned int iterations = loop_calc_iterations(s, &s->Loops[i],
-							max_instructions);
-		loop_unroll(s, &s->Loops[i], iterations);
+		unsigned int iterations = loop_max_possible_iterations(
+					s->C, &s->Loops[i], prog_inst_limit);
+		unroll_loop(s->C, &s->Loops[i], iterations);
 	}
 }

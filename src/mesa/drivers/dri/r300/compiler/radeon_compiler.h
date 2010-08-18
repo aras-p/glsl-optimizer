@@ -81,6 +81,7 @@ void rc_move_output(struct radeon_compiler * c, unsigned output, unsigned new_ou
 void rc_copy_output(struct radeon_compiler * c, unsigned output, unsigned dup_output);
 void rc_transform_fragment_wpos(struct radeon_compiler * c, unsigned wpos, unsigned new_input,
                                 int full_vtransform);
+void rc_transform_fragment_face(struct radeon_compiler *c, unsigned face);
 
 struct r300_fragment_program_compiler {
 	struct radeon_compiler Base;
@@ -110,8 +111,12 @@ struct r300_vertex_program_compiler {
 
 	void * UserData;
 	void (*SetHwInputOutput)(struct r300_vertex_program_compiler * c);
+
+	int PredicateIndex;
+	unsigned int PredicateMask;
 };
 
 void r3xx_compile_vertex_program(struct r300_vertex_program_compiler* c);
+void r300_vertex_program_dump(struct r300_vertex_program_compiler * c);
 
 #endif /* RADEON_COMPILER_H */

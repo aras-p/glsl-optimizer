@@ -111,7 +111,6 @@ static GLubyte *r200_depth_4byte(const struct radeon_renderbuffer * rrb,
  * two main types:
  * - 1D (akin to macro-linear/micro-tiled on older asics)
  * - 2D (akin to macro-tiled/micro-tiled on older asics)
- * only 1D tiling is implemented below
  */
 #if defined(RADEON_R600)
 static inline GLint r600_1d_tile_helper(const struct radeon_renderbuffer * rrb,
@@ -208,12 +207,190 @@ static inline GLint r600_1d_tile_helper(const struct radeon_renderbuffer * rrb,
     return offset;
 }
 
+static inline GLint r600_log2(GLint n)
+{
+	GLint log2 = 0;
+
+	while (n >>= 1)
+		++log2;
+	return log2;
+}
+
+static inline GLint r600_2d_tile_helper(const struct radeon_renderbuffer * rrb,
+					GLint x, GLint y, GLint is_depth, GLint is_stencil)
+{
+	GLint group_bytes = rrb->group_bytes;
+	GLint num_channels = rrb->num_channels;
+	GLint num_banks = rrb->num_banks;
+	GLint r7xx_bank_op = rrb->r7xx_bank_op;
+	/* */
+	GLint group_bits = r600_log2(group_bytes);
+	GLint channel_bits = r600_log2(num_channels);
+	GLint bank_bits = r600_log2(num_banks);
+	GLint element_bytes = rrb->cpp;
+	GLint num_samples = 1;
+	GLint tile_width = 8;
+	GLint tile_height = 8;
+	GLint tile_thickness = 1;
+	GLint macro_tile_width = num_banks;
+	GLint macro_tile_height = num_channels;
+	GLint pitch_elements = (rrb->pitch / element_bytes) / tile_width;
+	GLint height = rrb->base.Height / tile_height;
+	GLint z = 0;
+	GLint sample_number = 0;
+	/* */
+	GLint tile_bytes;
+	GLint macro_tile_bytes;
+	GLint macro_tiles_per_row;
+	GLint macro_tiles_per_slice;
+	GLint slice_offset;
+	GLint macro_tile_row_index;
+	GLint macro_tile_column_index;
+	GLint macro_tile_offset;
+	GLint pixel_number = 0;
+	GLint element_offset;
+	GLint bank = 0;
+	GLint channel = 0;
+	GLint total_offset;
+	GLint group_mask = (1 << group_bits) - 1;
+	GLint offset_low;
+	GLint offset_high;
+	GLint offset = 0;
+
+	switch (num_channels) {
+	case 2:
+	default:
+		// channel[0] = x[3] ^ y[3]
+		channel |= (((x >> 3) ^ (y >> 3)) & 1) << 0;
+		break;
+	case 4:
+		// channel[0] = x[4] ^ y[3]
+		channel |= (((x >> 4) ^ (y >> 3)) & 1) << 0;
+		// channel[1] = x[3] ^ y[4]
+		channel |= (((x >> 3) ^ (y >> 4)) & 1) << 1;
+		break;
+	case 8:
+		// channel[0] = x[5] ^ y[3]
+		channel |= (((x >> 5) ^ (y >> 3)) & 1) << 0;
+		// channel[0] = x[4] ^ x[5] ^ y[4]
+		channel |= (((x >> 4) ^ (x >> 5) ^ (y >> 4)) & 1) << 1;
+		// channel[0] = x[3] ^ y[5]
+		channel |= (((x >> 3) ^ (y >> 5)) & 1) << 2;
+		break;
+	}
+
+	switch (num_banks) {
+	case 4:
+		// bank[0] = x[3] ^ y[4 + log2(num_channels)]
+		bank |= (((x >> 3) ^ (y >> (4 + channel_bits))) & 1) << 0;
+		if (r7xx_bank_op)
+			// bank[1] = x[3] ^ y[4 + log2(num_channels)] ^ x[5]
+			bank |= (((x >> 4) ^ (y >> (3 + channel_bits)) ^ (x >> 5)) & 1) << 1;
+		else
+			// bank[1] = x[4] ^ y[3 + log2(num_channels)]
+			bank |= (((x >> 4) ^ (y >> (3 + channel_bits))) & 1) << 1;
+		break;
+	case 8:
+		// bank[0] = x[3] ^ y[5 + log2(num_channels)]
+		bank |= (((x >> 3) ^ (y >> (5 + channel_bits))) & 1) << 0;
+		// bank[1] = x[4] ^ y[4 + log2(num_channels)] ^ y[5 + log2(num_channels)]
+		bank |= (((x >> 4) ^ (y >> (4 + channel_bits)) ^ (y >> (5 + channel_bits))) & 1) << 1;
+		if (r7xx_bank_op)
+			// bank[2] = x[5] ^ y[3 + log2(num_channels)] ^ x[6]
+			bank |= (((x >> 5) ^ (y >> (3 + channel_bits)) ^ (x >> 6)) & 1) << 2;
+		else
+			// bank[2] = x[5] ^ y[3 + log2(num_channels)]
+			bank |= (((x >> 5) ^ (y >> (3 + channel_bits))) & 1) << 2;
+		break;
+	}
+
+	tile_bytes = tile_width * tile_height * tile_thickness * element_bytes * num_samples;
+	macro_tile_bytes = macro_tile_width * macro_tile_height * tile_bytes;
+	macro_tiles_per_row = pitch_elements / macro_tile_width;
+	macro_tiles_per_slice = macro_tiles_per_row * (height / macro_tile_height);
+	slice_offset = (z / tile_thickness) * macro_tiles_per_slice * macro_tile_bytes;
+	macro_tile_row_index = (y / tile_height) / macro_tile_height;
+	macro_tile_column_index = (x / tile_width) / macro_tile_width;
+	macro_tile_offset = ((macro_tile_row_index * macro_tiles_per_row) + macro_tile_column_index) * macro_tile_bytes;
+
+	if (is_depth) {
+		GLint pixel_offset = 0;
+
+		pixel_number |= ((x >> 0) & 1) << 0; // pn[0] = x[0]
+		pixel_number |= ((y >> 0) & 1) << 1; // pn[1] = y[0]
+		pixel_number |= ((x >> 1) & 1) << 2; // pn[2] = x[1]
+		pixel_number |= ((y >> 1) & 1) << 3; // pn[3] = y[1]
+		pixel_number |= ((x >> 2) & 1) << 4; // pn[4] = x[2]
+		pixel_number |= ((y >> 2) & 1) << 5; // pn[5] = y[2]
+		switch (element_bytes) {
+		case 2:
+			pixel_offset = pixel_number * element_bytes * num_samples;
+			break;
+		case 4:
+			/* stencil and depth data are stored separately within a tile.
+			 * stencil is stored in a contiguous tile before the depth tile.
+			 * stencil element is 1 byte, depth element is 3 bytes.
+			 * stencil tile is 64 bytes.
+			 */
+			if (is_stencil)
+				pixel_offset = pixel_number * 1 * num_samples;
+			else
+				pixel_offset = (pixel_number * 3 * num_samples) + 64;
+			break;
+		}
+		element_offset = pixel_offset + (sample_number * element_bytes);
+	} else {
+		GLint sample_offset;
+
+		switch (element_bytes) {
+		case 1:
+			pixel_number |= ((x >> 0) & 1) << 0; // pn[0] = x[0]
+			pixel_number |= ((x >> 1) & 1) << 1; // pn[1] = x[1]
+			pixel_number |= ((x >> 2) & 1) << 2; // pn[2] = x[2]
+			pixel_number |= ((y >> 1) & 1) << 3; // pn[3] = y[1]
+			pixel_number |= ((y >> 0) & 1) << 4; // pn[4] = y[0]
+			pixel_number |= ((y >> 2) & 1) << 5; // pn[5] = y[2]
+			break;
+		case 2:
+			pixel_number |= ((x >> 0) & 1) << 0; // pn[0] = x[0]
+			pixel_number |= ((x >> 1) & 1) << 1; // pn[1] = x[1]
+			pixel_number |= ((x >> 2) & 1) << 2; // pn[2] = x[2]
+			pixel_number |= ((y >> 0) & 1) << 3; // pn[3] = y[0]
+			pixel_number |= ((y >> 1) & 1) << 4; // pn[4] = y[1]
+			pixel_number |= ((y >> 2) & 1) << 5; // pn[5] = y[2]
+			break;
+		case 4:
+			pixel_number |= ((x >> 0) & 1) << 0; // pn[0] = x[0]
+			pixel_number |= ((x >> 1) & 1) << 1; // pn[1] = x[1]
+			pixel_number |= ((y >> 0) & 1) << 2; // pn[2] = y[0]
+			pixel_number |= ((x >> 2) & 1) << 3; // pn[3] = x[2]
+			pixel_number |= ((y >> 1) & 1) << 4; // pn[4] = y[1]
+			pixel_number |= ((y >> 2) & 1) << 5; // pn[5] = y[2]
+			break;
+		}
+		sample_offset = sample_number * (tile_bytes / num_samples);
+		element_offset = sample_offset + (pixel_number * element_bytes);
+	}
+	total_offset = (slice_offset + macro_tile_offset) >> (channel_bits + bank_bits);
+	total_offset += element_offset;
+
+	offset_low = total_offset & group_mask;
+	offset_high = (total_offset & ~group_mask) << (channel_bits + bank_bits);
+	offset = (bank << (group_bits + channel_bits)) + (channel << group_bits) + offset_low + offset_high;
+
+	return offset;
+}
+
 /* depth buffers */
 static GLubyte *r600_ptr_depth(const struct radeon_renderbuffer * rrb,
 			       GLint x, GLint y)
 {
     GLubyte *ptr = rrb->bo->ptr;
-    GLint offset = r600_1d_tile_helper(rrb, x, y, 1, 0);
+    GLint offset;
+    if (rrb->bo->flags & RADEON_BO_FLAGS_MACRO_TILE)
+	    offset = r600_2d_tile_helper(rrb, x, y, 1, 0);
+    else
+	    offset = r600_1d_tile_helper(rrb, x, y, 1, 0);
     return &ptr[offset];
 }
 
@@ -221,7 +398,11 @@ static GLubyte *r600_ptr_stencil(const struct radeon_renderbuffer * rrb,
 				 GLint x, GLint y)
 {
     GLubyte *ptr = rrb->bo->ptr;
-    GLint offset = r600_1d_tile_helper(rrb, x, y, 1, 1);
+    GLint offset;
+    if (rrb->bo->flags & RADEON_BO_FLAGS_MACRO_TILE)
+	    offset = r600_2d_tile_helper(rrb, x, y, 1, 1);
+    else
+	    offset = r600_1d_tile_helper(rrb, x, y, 1, 1);
     return &ptr[offset];
 }
 
@@ -235,7 +416,10 @@ static GLubyte *r600_ptr_color(const struct radeon_renderbuffer * rrb,
     if (rrb->has_surface || !(rrb->bo->flags & mask)) {
         offset = x * rrb->cpp + y * rrb->pitch;
     } else {
-	    offset = r600_1d_tile_helper(rrb, x, y, 0, 0);
+	    if (rrb->bo->flags & RADEON_BO_FLAGS_MACRO_TILE)
+		    offset = r600_2d_tile_helper(rrb, x, y, 0, 0);
+	    else
+		    offset = r600_1d_tile_helper(rrb, x, y, 0, 0);
     }
     return &ptr[offset];
 }

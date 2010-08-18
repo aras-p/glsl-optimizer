@@ -83,6 +83,8 @@ lp_build_compare(LLVMBuilderRef builder,
 
    assert(func >= PIPE_FUNC_NEVER);
    assert(func <= PIPE_FUNC_ALWAYS);
+   assert(lp_check_value(type, a));
+   assert(lp_check_value(type, b));
 
    if(func == PIPE_FUNC_NEVER)
       return zeros;
@@ -363,9 +365,55 @@ lp_build_cmp(struct lp_build_context *bld,
 
 
 /**
+ * Return (mask & a) | (~mask & b);
+ */
+LLVMValueRef
+lp_build_select_bitwise(struct lp_build_context *bld,
+                        LLVMValueRef mask,
+                        LLVMValueRef a,
+                        LLVMValueRef b)
+{
+   struct lp_type type = bld->type;
+   LLVMValueRef res;
+
+   assert(lp_check_value(type, a));
+   assert(lp_check_value(type, b));
+
+   if (a == b) {
+      return a;
+   }
+
+   if(type.floating) {
+      LLVMTypeRef int_vec_type = lp_build_int_vec_type(type);
+      a = LLVMBuildBitCast(bld->builder, a, int_vec_type, "");
+      b = LLVMBuildBitCast(bld->builder, b, int_vec_type, "");
+   }
+
+   a = LLVMBuildAnd(bld->builder, a, mask, "");
+
+   /* This often gets translated to PANDN, but sometimes the NOT is
+    * pre-computed and stored in another constant. The best strategy depends
+    * on available registers, so it is not a big deal -- hopefully LLVM does
+    * the right decision attending the rest of the program.
+    */
+   b = LLVMBuildAnd(bld->builder, b, LLVMBuildNot(bld->builder, mask, ""), "");
+
+   res = LLVMBuildOr(bld->builder, a, b, "");
+
+   if(type.floating) {
+      LLVMTypeRef vec_type = lp_build_vec_type(type);
+      res = LLVMBuildBitCast(bld->builder, res, vec_type, "");
+   }
+
+   return res;
+}
+
+
+/**
  * Return mask ? a : b;
  *
- * mask is a bitwise mask, composed of 0 or ~0 for each element.
+ * mask is a bitwise mask, composed of 0 or ~0 for each element. Any other value
+ * will yield unpredictable results.
  */
 LLVMValueRef
 lp_build_select(struct lp_build_context *bld,
@@ -375,6 +423,9 @@ lp_build_select(struct lp_build_context *bld,
 {
    struct lp_type type = bld->type;
    LLVMValueRef res;
+
+   assert(lp_check_value(type, a));
+   assert(lp_check_value(type, b));
 
    if(a == b)
       return a;
@@ -424,27 +475,7 @@ lp_build_select(struct lp_build_context *bld,
       }
    }
    else {
-      if(type.floating) {
-         LLVMTypeRef int_vec_type = lp_build_int_vec_type(type);
-         a = LLVMBuildBitCast(bld->builder, a, int_vec_type, "");
-         b = LLVMBuildBitCast(bld->builder, b, int_vec_type, "");
-      }
-
-      a = LLVMBuildAnd(bld->builder, a, mask, "");
-
-      /* This often gets translated to PANDN, but sometimes the NOT is
-       * pre-computed and stored in another constant. The best strategy depends
-       * on available registers, so it is not a big deal -- hopefully LLVM does
-       * the right decision attending the rest of the program.
-       */
-      b = LLVMBuildAnd(bld->builder, b, LLVMBuildNot(bld->builder, mask, ""), "");
-
-      res = LLVMBuildOr(bld->builder, a, b, "");
-
-      if(type.floating) {
-         LLVMTypeRef vec_type = lp_build_vec_type(type);
-         res = LLVMBuildBitCast(bld->builder, res, vec_type, "");
-      }
+      res = lp_build_select_bitwise(bld, mask, a, b);
    }
 
    return res;
@@ -460,6 +491,9 @@ lp_build_select_aos(struct lp_build_context *bld,
    const struct lp_type type = bld->type;
    const unsigned n = type.length;
    unsigned i, j;
+
+   assert(lp_check_value(type, a));
+   assert(lp_check_value(type, b));
 
    if(a == b)
       return a;
@@ -516,7 +550,22 @@ lp_build_select_aos(struct lp_build_context *bld,
 LLVMValueRef
 lp_build_andc(struct lp_build_context *bld, LLVMValueRef a, LLVMValueRef b)
 {
+   const struct lp_type type = bld->type;
+
+   assert(lp_check_value(type, a));
+   assert(lp_check_value(type, b));
+
+   /* can't do bitwise ops on floating-point values */
+   if(type.floating) {
+      a = LLVMBuildBitCast(bld->builder, a, bld->int_vec_type, "");
+      b = LLVMBuildBitCast(bld->builder, b, bld->int_vec_type, "");
+   }
+
    b = LLVMBuildNot(bld->builder, b, "");
    b = LLVMBuildAnd(bld->builder, a, b, "");
+
+   if(type.floating) {
+      b = LLVMBuildBitCast(bld->builder, b, bld->vec_type, "");
+   }
    return b;
 }

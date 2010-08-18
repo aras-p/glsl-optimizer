@@ -221,6 +221,9 @@ struct r500_fragment_program_code {
 	int max_temp_idx;
 
 	uint32_t us_fc_ctrl;
+
+	uint32_t int_constants[32];
+	uint32_t int_constant_count;
 };
 
 struct rX00_fragment_program_code {
@@ -240,6 +243,12 @@ struct rX00_fragment_program_code {
 #define R500_VS_MAX_ALU	        1024
 #define R500_VS_MAX_ALU_DWORDS  (R500_VS_MAX_ALU * 4)
 #define R300_VS_MAX_TEMPS	32
+/* This is the max for all chipsets (r300-r500) */
+#define R300_VS_MAX_FC_OPS 16
+/* The r500 maximum depth is not just for loops, but any combination of loops
+ * and subroutine jumps. */
+#define R500_VS_MAX_FC_DEPTH 8
+#define R300_VS_MAX_LOOP_DEPTH 1
 
 #define VSF_MAX_INPUTS 32
 #define VSF_MAX_OUTPUTS 32
@@ -260,9 +269,18 @@ struct r300_vertex_program_code {
 
 	uint32_t InputsRead;
 	uint32_t OutputsWritten;
-};
 
-void r300_vertex_program_dump(struct r300_vertex_program_code * vs);
+	unsigned int num_fc_ops;
+	uint32_t fc_ops;
+	union {
+	        uint32_t r300[R300_VS_MAX_FC_OPS];
+		struct {
+			uint32_t lw;
+			uint32_t uw;
+		} r500[R300_VS_MAX_FC_OPS];
+	} fc_op_addrs;
+	int32_t fc_loop_index[R300_VS_MAX_FC_OPS];
+};
 
 #endif /* RADEON_CODE_H */
 

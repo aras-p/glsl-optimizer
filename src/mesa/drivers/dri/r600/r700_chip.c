@@ -265,17 +265,6 @@ static void r700SendVTXState(GLcontext *ctx, struct radeon_state_atom *atom)
     if (context->radeon.tcl.aos_count == 0)
 	    return;
 
-    BEGIN_BATCH_NO_AUTOSTATE(6);
-    R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_CTL_CONST, 1));
-    R600_OUT_BATCH(mmSQ_VTX_BASE_VTX_LOC - ASIC_CTL_CONST_BASE_INDEX);
-    R600_OUT_BATCH(0);
-
-    R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_CTL_CONST, 1));
-    R600_OUT_BATCH(mmSQ_VTX_START_INST_LOC - ASIC_CTL_CONST_BASE_INDEX);
-    R600_OUT_BATCH(0);
-    END_BATCH();
-    COMMIT_BATCH();
-
     for(i=0; i<VERT_ATTRIB_MAX; i++) {
 	    if(vp->mesa_program->Base.InputsRead & (1 << i))
 	    {
@@ -523,9 +512,9 @@ static void r700SetRenderTarget(context_t *context, int id)
 		     CB_COLOR0_INFO__ARRAY_MODE_shift, CB_COLOR0_INFO__ARRAY_MODE_mask);
 	    CLEARbit(r700->render_target[id].CB_COLOR0_INFO.u32All, SOURCE_FORMAT_bit);
             break;
-    case MESA_FORMAT_SRGBA8:
+    case MESA_FORMAT_SARGB8:
             format = COLOR_8_8_8_8;
-            comp_swap = SWAP_STD_REV;
+            comp_swap = SWAP_ALT;
 	    number_type = NUMBER_SRGB;
 	    SETbit(r700->render_target[id].CB_COLOR0_INFO.u32All, SOURCE_FORMAT_bit);
             break;
@@ -617,16 +606,23 @@ static void r700SendDepthTargetState(GLcontext *ctx, struct radeon_state_atom *a
 
 	r700SetDepthTarget(context);
 
-        BEGIN_BATCH_NO_AUTOSTATE(8 + 2);
+        BEGIN_BATCH_NO_AUTOSTATE(7 + 2);
 	R600_OUT_BATCH_REGSEQ(DB_DEPTH_SIZE, 2);
 	R600_OUT_BATCH(r700->DB_DEPTH_SIZE.u32All);
 	R600_OUT_BATCH(r700->DB_DEPTH_VIEW.u32All);
-	R600_OUT_BATCH_REGSEQ(DB_DEPTH_BASE, 2);
+	R600_OUT_BATCH_REGSEQ(DB_DEPTH_BASE, 1);
 	R600_OUT_BATCH(r700->DB_DEPTH_BASE.u32All);
-	R600_OUT_BATCH(r700->DB_DEPTH_INFO.u32All);
 	R600_OUT_BATCH_RELOC(r700->DB_DEPTH_BASE.u32All,
 			     rrb->bo,
 			     r700->DB_DEPTH_BASE.u32All,
+			     0, RADEON_GEM_DOMAIN_VRAM, 0);
+        END_BATCH();
+        BEGIN_BATCH_NO_AUTOSTATE(3 + 2);
+	R600_OUT_BATCH_REGSEQ(DB_DEPTH_INFO, 1);
+	R600_OUT_BATCH(r700->DB_DEPTH_INFO.u32All);
+	R600_OUT_BATCH_RELOC(r700->DB_DEPTH_INFO.u32All,
+			     rrb->bo,
+			     r700->DB_DEPTH_INFO.u32All,
 			     0, RADEON_GEM_DOMAIN_VRAM, 0);
         END_BATCH();
 
@@ -687,25 +683,33 @@ static void r700SendRenderTargetState(GLcontext *ctx, struct radeon_state_atom *
 	BEGIN_BATCH_NO_AUTOSTATE(3 + 2);
 	R600_OUT_BATCH_REGSEQ(CB_COLOR0_TILE + (4 * id), 1);
 	R600_OUT_BATCH(r700->render_target[id].CB_COLOR0_TILE.u32All);
-	R600_OUT_BATCH_RELOC(r700->render_target[id].CB_COLOR0_BASE.u32All,
+	R600_OUT_BATCH_RELOC(r700->render_target[id].CB_COLOR0_TILE.u32All,
 			     rrb->bo,
-			     r700->render_target[id].CB_COLOR0_BASE.u32All,
+			     r700->render_target[id].CB_COLOR0_TILE.u32All,
 			     0, RADEON_GEM_DOMAIN_VRAM, 0);
 	END_BATCH();
 	BEGIN_BATCH_NO_AUTOSTATE(3 + 2);
 	R600_OUT_BATCH_REGSEQ(CB_COLOR0_FRAG + (4 * id), 1);
 	R600_OUT_BATCH(r700->render_target[id].CB_COLOR0_FRAG.u32All);
-	R600_OUT_BATCH_RELOC(r700->render_target[id].CB_COLOR0_BASE.u32All,
+	R600_OUT_BATCH_RELOC(r700->render_target[id].CB_COLOR0_FRAG.u32All,
 			     rrb->bo,
-			     r700->render_target[id].CB_COLOR0_BASE.u32All,
+			     r700->render_target[id].CB_COLOR0_FRAG.u32All,
 			     0, RADEON_GEM_DOMAIN_VRAM, 0);
         END_BATCH();
 
-        BEGIN_BATCH_NO_AUTOSTATE(12);
+        BEGIN_BATCH_NO_AUTOSTATE(9);
 	R600_OUT_BATCH_REGVAL(CB_COLOR0_SIZE + (4 * id), r700->render_target[id].CB_COLOR0_SIZE.u32All);
 	R600_OUT_BATCH_REGVAL(CB_COLOR0_VIEW + (4 * id), r700->render_target[id].CB_COLOR0_VIEW.u32All);
-	R600_OUT_BATCH_REGVAL(CB_COLOR0_INFO + (4 * id), r700->render_target[id].CB_COLOR0_INFO.u32All);
 	R600_OUT_BATCH_REGVAL(CB_COLOR0_MASK + (4 * id), r700->render_target[id].CB_COLOR0_MASK.u32All);
+        END_BATCH();
+
+	BEGIN_BATCH_NO_AUTOSTATE(3 + 2);
+	R600_OUT_BATCH_REGVAL(CB_COLOR0_INFO + (4 * id), r700->render_target[id].CB_COLOR0_INFO.u32All);
+	R600_OUT_BATCH_RELOC(r700->render_target[id].CB_COLOR0_INFO.u32All,
+			     rrb->bo,
+			     r700->render_target[id].CB_COLOR0_INFO.u32All,
+			     0, RADEON_GEM_DOMAIN_VRAM, 0);
+
         END_BATCH();
 
 	COMMIT_BATCH();
@@ -1465,9 +1469,6 @@ static int check_vtx(GLcontext *ctx, struct radeon_state_atom *atom)
 	context_t *context = R700_CONTEXT(ctx);
 	int count = context->radeon.tcl.aos_count * 18;
 
-	if (count)
-		count += 6;
-
 	radeon_print(RADEON_STATE, RADEON_TRACE, "%s %d\n", __func__, count);
 	return count;
 }
@@ -1567,7 +1568,7 @@ void r600InitAtoms(context_t *context)
 	ALLOC_STATE(sq, always, 34, r700SendSQConfig);
 	ALLOC_STATE(db, always, 17, r700SendDBState);
 	ALLOC_STATE(stencil, always, 4, r700SendStencilState);
-	ALLOC_STATE(db_target, always, 12, r700SendDepthTargetState);
+	ALLOC_STATE(db_target, always, 16, r700SendDepthTargetState);
 	ALLOC_STATE(sc, always, 15, r700SendSCState);
 	ALLOC_STATE(scissor, always, 22, r700SendScissorState);
 	ALLOC_STATE(aa, always, 12, r700SendAAState);
@@ -1578,7 +1579,7 @@ void r600InitAtoms(context_t *context)
 	ALLOC_STATE(poly, always, 10, r700SendPolyState);
 	ALLOC_STATE(cb, cb, 18, r700SendCBState);
 	ALLOC_STATE(clrcmp, always, 6, r700SendCBCLRCMPState);
-	ALLOC_STATE(cb_target, always, 29, r700SendRenderTargetState);
+	ALLOC_STATE(cb_target, always, 31, r700SendRenderTargetState);
 	ALLOC_STATE(blnd, blnd, (6 + (R700_MAX_RENDER_TARGETS * 3)), r700SendCBBlendState);
 	ALLOC_STATE(blnd_clr, always, 6, r700SendCBBlendColorState);
 	ALLOC_STATE(sx, always, 9, r700SendSXState);
@@ -1590,7 +1591,7 @@ void r600InitAtoms(context_t *context)
 	ALLOC_STATE(ps, always, 24, r700SendPSState);
 	ALLOC_STATE(vs_consts, vs_consts, (2 + (R700_MAX_DX9_CONSTS * 4)), r700SendVSConsts);
 	ALLOC_STATE(ps_consts, ps_consts, (2 + (R700_MAX_DX9_CONSTS * 4)), r700SendPSConsts);
-	ALLOC_STATE(vtx, vtx, (6 + (VERT_ATTRIB_MAX * 18)), r700SendVTXState);
+	ALLOC_STATE(vtx, vtx, (VERT_ATTRIB_MAX * 18), r700SendVTXState);
 	ALLOC_STATE(tx, tx, (R700_TEXTURE_NUMBERUNITS * 20), r700SendTexState);
 	ALLOC_STATE(tx_smplr, tx, (R700_TEXTURE_NUMBERUNITS * 5), r700SendTexSamplerState);
 	ALLOC_STATE(tx_brdr_clr, tx, (R700_TEXTURE_NUMBERUNITS * 6), r700SendTexBorderColorState);

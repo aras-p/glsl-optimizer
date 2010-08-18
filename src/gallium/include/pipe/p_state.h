@@ -426,6 +426,41 @@ struct pipe_vertex_element
 };
 
 
+/**
+ * An index buffer.  When an index buffer is bound, all indices to vertices
+ * will be looked up in the buffer.
+ */
+struct pipe_index_buffer
+{
+   unsigned index_size;  /**< size of an index, in bytes */
+   unsigned offset;  /**< offset to start of data in buffer, in bytes */
+   struct pipe_resource *buffer; /**< the actual buffer */
+};
+
+
+/**
+ * Information to describe a draw_vbo call.
+ */
+struct pipe_draw_info
+{
+   boolean indexed;  /**< use index buffer */
+
+   unsigned mode;  /**< the mode of the primitive */
+   unsigned start;  /**< the index of the first vertex */
+   unsigned count;  /**< number of vertices */
+
+   unsigned start_instance; /**< first instance id */
+   unsigned instance_count; /**< number of instances */
+
+   /**
+    * For indexed drawing, these fields apply after index lookup.
+    */
+   int index_bias; /**< a bias to be added to each index */
+   unsigned min_index; /**< the min index */
+   unsigned max_index; /**< the max index */
+};
+
+
 #ifdef __cplusplus
 }
 #endif

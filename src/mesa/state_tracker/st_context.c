@@ -28,6 +28,7 @@
 #include "main/imports.h"
 #include "main/context.h"
 #include "main/shaderobj.h"
+#include "program/prog_cache.h"
 #include "vbo/vbo.h"
 #include "glapi/glapi.h"
 #include "st_context.h"
@@ -60,6 +61,9 @@
 #include "pipe/p_context.h"
 #include "util/u_inlines.h"
 #include "cso_cache/cso_context.h"
+
+
+DEBUG_GET_ONCE_BOOL_OPTION(mesa_mvp_dp4, "MESA_MVP_DP4", FALSE)
 
 
 /**
@@ -169,7 +173,7 @@ struct st_context *st_create_context(gl_api api, struct pipe_context *pipe,
    /* XXX: need a capability bit in gallium to query if the pipe
     * driver prefers DP4 or MUL/MAD for vertex transformation.
     */
-   if (debug_get_bool_option("MESA_MVP_DP4", FALSE))
+   if (debug_get_option_mesa_mvp_dp4())
       _mesa_set_mvp_with_dp4( ctx, GL_TRUE );
 
    return st_create_context_priv(ctx, pipe);

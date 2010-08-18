@@ -372,6 +372,76 @@ static const struct radeon_register R600_CB0_names[] = {
 	{0x00028100, 0, 0, "CB_COLOR0_MASK"},
 };
 
+static const struct radeon_register R600_CB1_names[] = {
+	{0x00028044, 1, 0, "CB_COLOR1_BASE"},
+	{0x000280A4, 0, 0, "CB_COLOR1_INFO"},
+	{0x00028064, 0, 0, "CB_COLOR1_SIZE"},
+	{0x00028084, 0, 0, "CB_COLOR1_VIEW"},
+	{0x000280E4, 1, 1, "CB_COLOR1_FRAG"},
+	{0x000280C4, 1, 2, "CB_COLOR1_TILE"},
+	{0x00028104, 0, 0, "CB_COLOR1_MASK"},
+};
+
+static const struct radeon_register R600_CB2_names[] = {
+	{0x00028048, 1, 0, "CB_COLOR2_BASE"},
+	{0x000280A8, 0, 0, "CB_COLOR2_INFO"},
+	{0x00028068, 0, 0, "CB_COLOR2_SIZE"},
+	{0x00028088, 0, 0, "CB_COLOR2_VIEW"},
+	{0x000280E8, 1, 1, "CB_COLOR2_FRAG"},
+	{0x000280C8, 1, 2, "CB_COLOR2_TILE"},
+	{0x00028108, 0, 0, "CB_COLOR2_MASK"},
+};
+
+static const struct radeon_register R600_CB3_names[] = {
+	{0x0002804C, 1, 0, "CB_COLOR3_BASE"},
+	{0x000280AC, 0, 0, "CB_COLOR3_INFO"},
+	{0x0002806C, 0, 0, "CB_COLOR3_SIZE"},
+	{0x0002808C, 0, 0, "CB_COLOR3_VIEW"},
+	{0x000280EC, 1, 1, "CB_COLOR3_FRAG"},
+	{0x000280CC, 1, 2, "CB_COLOR3_TILE"},
+	{0x0002810C, 0, 0, "CB_COLOR3_MASK"},
+};
+
+static const struct radeon_register R600_CB4_names[] = {
+	{0x00028050, 1, 0, "CB_COLOR4_BASE"},
+	{0x000280B0, 0, 0, "CB_COLOR4_INFO"},
+	{0x00028070, 0, 0, "CB_COLOR4_SIZE"},
+	{0x00028090, 0, 0, "CB_COLOR4_VIEW"},
+	{0x000280F0, 1, 1, "CB_COLOR4_FRAG"},
+	{0x000280D0, 1, 2, "CB_COLOR4_TILE"},
+	{0x00028110, 0, 0, "CB_COLOR4_MASK"},
+};
+
+static const struct radeon_register R600_CB5_names[] = {
+	{0x00028054, 1, 0, "CB_COLOR5_BASE"},
+	{0x000280B4, 0, 0, "CB_COLOR5_INFO"},
+	{0x00028074, 0, 0, "CB_COLOR5_SIZE"},
+	{0x00028094, 0, 0, "CB_COLOR5_VIEW"},
+	{0x000280F4, 1, 1, "CB_COLOR5_FRAG"},
+	{0x000280D4, 1, 2, "CB_COLOR5_TILE"},
+	{0x00028114, 0, 0, "CB_COLOR5_MASK"},
+};
+
+static const struct radeon_register R600_CB6_names[] = {
+	{0x00028058, 1, 0, "CB_COLOR6_BASE"},
+	{0x000280B8, 0, 0, "CB_COLOR6_INFO"},
+	{0x00028078, 0, 0, "CB_COLOR6_SIZE"},
+	{0x00028098, 0, 0, "CB_COLOR6_VIEW"},
+	{0x000280F8, 1, 1, "CB_COLOR6_FRAG"},
+	{0x000280D8, 1, 2, "CB_COLOR6_TILE"},
+	{0x00028118, 0, 0, "CB_COLOR6_MASK"},
+};
+
+static const struct radeon_register R600_CB7_names[] = {
+	{0x0002805C, 1, 0, "CB_COLOR7_BASE"},
+	{0x000280BC, 0, 0, "CB_COLOR7_INFO"},
+	{0x0002807C, 0, 0, "CB_COLOR7_SIZE"},
+	{0x0002809C, 0, 0, "CB_COLOR7_VIEW"},
+	{0x000280FC, 1, 1, "CB_COLOR7_FRAG"},
+	{0x000280DC, 1, 2, "CB_COLOR7_TILE"},
+	{0x0002811C, 0, 0, "CB_COLOR7_MASK"},
+};
+
 static const struct radeon_register R600_DB_names[] = {
 	{0x0002800C, 1, 0, "DB_DEPTH_BASE"},
 	{0x00028000, 0, 0, "DB_DEPTH_SIZE"},
@@ -425,9 +495,16 @@ static struct radeon_type R600_types[] = {
 	{ 128, 1233, 0x0000A600, 0x0000A720, 0x0010, 0, "R600_VS_SAMPLER_BORDER", 4, r600_state_pm4_generic, R600_VS_SAMPLER_BORDER_names},
 	{ 128, 1251, 0x0000A800, 0x0000A920, 0x0010, 0, "R600_GS_SAMPLER_BORDER", 4, r600_state_pm4_generic, R600_GS_SAMPLER_BORDER_names},
 	{ 128, 1269, 0x00000000, 0x00000000, 0x0000, 0, "R600_CB0", 7, r600_state_pm4_cb0, R600_CB0_names},
-	{ 128, 1270, 0x00000000, 0x00000000, 0x0000, 0, "R600_DB", 6, r600_state_pm4_db, R600_DB_names},
-	{ 128, 1271, 0x00000000, 0x00000000, 0x0000, 0, "R600_VGT", 11, r600_state_pm4_vgt, R600_VGT_names},
-	{ 128, 1272, 0x00000000, 0x00000000, 0x0000, 0, "R600_DRAW", 4, r600_state_pm4_draw, R600_DRAW_names},
+	{ 128, 1270, 0x00000000, 0x00000000, 0x0000, 0, "R600_CB1", 7, r600_state_pm4_cb0, R600_CB1_names},
+	{ 128, 1271, 0x00000000, 0x00000000, 0x0000, 0, "R600_CB2", 7, r600_state_pm4_cb0, R600_CB2_names},
+	{ 128, 1272, 0x00000000, 0x00000000, 0x0000, 0, "R600_CB3", 7, r600_state_pm4_cb0, R600_CB3_names},
+	{ 128, 1273, 0x00000000, 0x00000000, 0x0000, 0, "R600_CB4", 7, r600_state_pm4_cb0, R600_CB4_names},
+	{ 128, 1274, 0x00000000, 0x00000000, 0x0000, 0, "R600_CB5", 7, r600_state_pm4_cb0, R600_CB5_names},
+	{ 128, 1275, 0x00000000, 0x00000000, 0x0000, 0, "R600_CB6", 7, r600_state_pm4_cb0, R600_CB6_names},
+	{ 128, 1276, 0x00000000, 0x00000000, 0x0000, 0, "R600_CB7", 7, r600_state_pm4_cb0, R600_CB7_names},
+	{ 128, 1277, 0x00000000, 0x00000000, 0x0000, 0, "R600_DB", 6, r600_state_pm4_db, R600_DB_names},
+	{ 128, 1278, 0x00000000, 0x00000000, 0x0000, 0, "R600_VGT", 11, r600_state_pm4_vgt, R600_VGT_names},
+	{ 128, 1279, 0x00000000, 0x00000000, 0x0000, 0, "R600_DRAW", 4, r600_state_pm4_draw, R600_DRAW_names},
 };
 
 static struct radeon_type R700_types[] = {
@@ -453,9 +530,16 @@ static struct radeon_type R700_types[] = {
 	{ 128, 1233, 0x0000A600, 0x0000A720, 0x0010, 0, "R600_VS_SAMPLER_BORDER", 4, r600_state_pm4_generic, R600_VS_SAMPLER_BORDER_names},
 	{ 128, 1251, 0x0000A800, 0x0000A920, 0x0010, 0, "R600_GS_SAMPLER_BORDER", 4, r600_state_pm4_generic, R600_GS_SAMPLER_BORDER_names},
 	{ 128, 1269, 0x00000000, 0x00000000, 0x0000, 0, "R600_CB0", 7, r700_state_pm4_cb0, R600_CB0_names},
-	{ 128, 1270, 0x00000000, 0x00000000, 0x0000, 0, "R600_DB", 6, r700_state_pm4_db, R600_DB_names},
-	{ 128, 1271, 0x00000000, 0x00000000, 0x0000, 0, "R600_VGT", 11, r600_state_pm4_vgt, R600_VGT_names},
-	{ 128, 1272, 0x00000000, 0x00000000, 0x0000, 0, "R600_DRAW", 4, r600_state_pm4_draw, R600_DRAW_names},
+	{ 128, 1270, 0x00000000, 0x00000000, 0x0000, 0, "R600_CB1", 7, r600_state_pm4_cb0, R600_CB1_names},
+	{ 128, 1271, 0x00000000, 0x00000000, 0x0000, 0, "R600_CB2", 7, r600_state_pm4_cb0, R600_CB2_names},
+	{ 128, 1272, 0x00000000, 0x00000000, 0x0000, 0, "R600_CB3", 7, r600_state_pm4_cb0, R600_CB3_names},
+	{ 128, 1273, 0x00000000, 0x00000000, 0x0000, 0, "R600_CB4", 7, r600_state_pm4_cb0, R600_CB4_names},
+	{ 128, 1274, 0x00000000, 0x00000000, 0x0000, 0, "R600_CB5", 7, r600_state_pm4_cb0, R600_CB5_names},
+	{ 128, 1275, 0x00000000, 0x00000000, 0x0000, 0, "R600_CB6", 7, r600_state_pm4_cb0, R600_CB6_names},
+	{ 128, 1276, 0x00000000, 0x00000000, 0x0000, 0, "R600_CB7", 7, r600_state_pm4_cb0, R600_CB7_names},
+	{ 128, 1277, 0x00000000, 0x00000000, 0x0000, 0, "R600_DB", 6, r700_state_pm4_db, R600_DB_names},
+	{ 128, 1278, 0x00000000, 0x00000000, 0x0000, 0, "R600_VGT", 11, r600_state_pm4_vgt, R600_VGT_names},
+	{ 128, 1279, 0x00000000, 0x00000000, 0x0000, 0, "R600_DRAW", 4, r600_state_pm4_draw, R600_DRAW_names},
 };
 
 #endif

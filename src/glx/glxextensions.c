@@ -312,7 +312,7 @@ static const unsigned gl_minor = 4;
 static const char *__glXGLXClientExtensions = NULL;
 
 static void __glXExtensionsCtr(void);
-static void __glXExtensionsCtrScreen(__GLXscreenConfigs * psc);
+static void __glXExtensionsCtrScreen(struct glx_screen * psc);
 static void __glXProcessServerString(const struct extension_info *ext,
                                      const char *server_string,
                                      unsigned char *server_support);
@@ -396,7 +396,7 @@ __glXProcessServerString(const struct extension_info *ext,
 }
 
 void
-__glXEnableDirectExtension(__GLXscreenConfigs * psc, const char *name)
+__glXEnableDirectExtension(struct glx_screen * psc, const char *name)
 {
    __glXExtensionsCtr();
    __glXExtensionsCtrScreen(psc);
@@ -474,7 +474,7 @@ __glXExtensionsCtr(void)
  */
 
 static void
-__glXExtensionsCtrScreen(__GLXscreenConfigs * psc)
+__glXExtensionsCtrScreen(struct glx_screen * psc)
 {
    if (psc->ext_list_first_time) {
       psc->ext_list_first_time = GL_FALSE;
@@ -494,7 +494,7 @@ __glXExtensionsCtrScreen(__GLXscreenConfigs * psc)
  *          \c NULL, then \c GL_FALSE is returned.
  */
 GLboolean
-__glXExtensionBitIsEnabled(__GLXscreenConfigs * psc, unsigned bit)
+__glXExtensionBitIsEnabled(struct glx_screen * psc, unsigned bit)
 {
    GLboolean enabled = GL_FALSE;
 
@@ -513,7 +513,7 @@ __glXExtensionBitIsEnabled(__GLXscreenConfigs * psc, unsigned bit)
  *
  */
 GLboolean
-__glExtensionBitIsEnabled(const __GLXcontext * gc, unsigned bit)
+__glExtensionBitIsEnabled(struct glx_context *gc, unsigned bit)
 {
    GLboolean enabled = GL_FALSE;
 
@@ -594,7 +594,7 @@ __glXGetClientExtensions(void)
  */
 
 void
-__glXCalculateUsableExtensions(__GLXscreenConfigs * psc,
+__glXCalculateUsableExtensions(struct glx_screen * psc,
                                GLboolean display_is_direct_capable,
                                int minor_version)
 {
@@ -675,7 +675,7 @@ __glXCalculateUsableExtensions(__GLXscreenConfigs * psc,
  */
 
 void
-__glXCalculateUsableGLExtensions(__GLXcontext * gc,
+__glXCalculateUsableGLExtensions(struct glx_context * gc,
                                  const char *server_string,
                                  int major_version, int minor_version)
 {

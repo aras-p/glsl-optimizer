@@ -13,6 +13,7 @@
 #include "util/u_debug.h"       /* debug_dump_surface_bmp() */
 #include "util/u_inlines.h"
 #include "util/u_memory.h"      /* Offset() */
+#include "util/u_draw_quad.h"
 #include "util/u_box.h"    
 
 static const char *filename = NULL;
@@ -336,9 +337,9 @@ static void draw( void )
 
    ctx->clear(ctx, PIPE_CLEAR_COLOR, clear_color, 0, 0);
    if (draw_strip)
-      ctx->draw_arrays(ctx, PIPE_PRIM_TRIANGLE_STRIP, 0, 4);
+      util_draw_arrays(ctx, PIPE_PRIM_TRIANGLE_STRIP, 0, 4);
    else
-      ctx->draw_arrays(ctx, PIPE_PRIM_TRIANGLES, 0, 3);
+      util_draw_arrays(ctx, PIPE_PRIM_TRIANGLES, 0, 3);
 
    ctx->flush(ctx, PIPE_FLUSH_RENDER_CACHE, NULL);
 

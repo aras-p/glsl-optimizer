@@ -72,7 +72,7 @@ unsigned r600_check_blit(gl_format mesa_format)
     case MESA_FORMAT_Z24_S8:
     case MESA_FORMAT_Z16:
     case MESA_FORMAT_Z32:
-    case MESA_FORMAT_SRGBA8:
+    case MESA_FORMAT_SARGB8:
     case MESA_FORMAT_SLA8:
     case MESA_FORMAT_SL8:
 	    break;
@@ -320,9 +320,9 @@ set_render_target(context_t *context, struct radeon_bo *bo, gl_format mesa_forma
 	    CLEARbit(cb_color0_info, SOURCE_FORMAT_bit);
 	    SETfield(cb_color0_info, NUMBER_UNORM, NUMBER_TYPE_shift, NUMBER_TYPE_mask);
             break;
-    case MESA_FORMAT_SRGBA8:
+    case MESA_FORMAT_SARGB8:
             format = COLOR_8_8_8_8;
-            comp_swap = SWAP_STD_REV;
+            comp_swap = SWAP_ALT;
 	    SETbit(cb_color0_info, SOURCE_FORMAT_bit);
 	    SETfield(cb_color0_info, NUMBER_SRGB, NUMBER_TYPE_shift, NUMBER_TYPE_mask);
             break;
@@ -390,11 +390,18 @@ set_render_target(context_t *context, struct radeon_bo *bo, gl_format mesa_forma
 			 0, RADEON_GEM_DOMAIN_VRAM | RADEON_GEM_DOMAIN_GTT, 0);
     END_BATCH();
 
-    BEGIN_BATCH_NO_AUTOSTATE(12);
+    BEGIN_BATCH_NO_AUTOSTATE(9);
     R600_OUT_BATCH_REGVAL(CB_COLOR0_SIZE + (4 * id), cb_color0_size);
     R600_OUT_BATCH_REGVAL(CB_COLOR0_VIEW + (4 * id), cb_color0_view);
-    R600_OUT_BATCH_REGVAL(CB_COLOR0_INFO + (4 * id), cb_color0_info);
     R600_OUT_BATCH_REGVAL(CB_COLOR0_MASK + (4 * id), 0);
+    END_BATCH();
+
+    BEGIN_BATCH_NO_AUTOSTATE(3 + 2);
+    R600_OUT_BATCH_REGVAL(CB_COLOR0_INFO + (4 * id), cb_color0_info);
+    R600_OUT_BATCH_RELOC(0,
+			 bo,
+			 0,
+			 0, RADEON_GEM_DOMAIN_VRAM | RADEON_GEM_DOMAIN_GTT, 0);
     END_BATCH();
 
     COMMIT_BATCH();
@@ -1043,17 +1050,17 @@ set_tex_resource(context_t * context,
 	    SETfield(sq_tex_resource4, SQ_SEL_X,
 		     SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_shift, SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_mask);
 	    break;
-    case MESA_FORMAT_SRGBA8:
+    case MESA_FORMAT_SARGB8:
 	    SETfield(sq_tex_resource1, FMT_8_8_8_8,
 		     SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_shift, SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_mask);
 
-	    SETfield(sq_tex_resource4, SQ_SEL_W,
-		     SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_shift, SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_mask);
 	    SETfield(sq_tex_resource4, SQ_SEL_Z,
-		     SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_shift, SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_mask);
+		     SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_shift, SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_mask);
 	    SETfield(sq_tex_resource4, SQ_SEL_Y,
-		     SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_shift, SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_mask);
+		     SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_shift, SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_mask);
 	    SETfield(sq_tex_resource4, SQ_SEL_X,
+		     SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_shift, SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_mask);
+	    SETfield(sq_tex_resource4, SQ_SEL_W,
 		     SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_shift, SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_mask);
 	    SETbit(sq_tex_resource4, SQ_TEX_RESOURCE_WORD4_0__FORCE_DEGAMMA_bit);
 	    break;
@@ -1477,7 +1484,6 @@ set_default_state(context_t *context)
                          (CLRCMP_SEL_SRC << CLRCMP_FCN_SEL_shift));
     R600_OUT_BATCH_REGVAL(SQ_VTX_BASE_VTX_LOC, 0);
     R600_OUT_BATCH_REGVAL(SQ_VTX_START_INST_LOC, 0);
-    R600_OUT_BATCH_REGVAL(DB_DEPTH_INFO, 0);
     R600_OUT_BATCH_REGVAL(DB_DEPTH_CONTROL, 0);
     R600_OUT_BATCH_REGVAL(CB_SHADER_MASK, (OUTPUT0_ENABLE_mask));
     R600_OUT_BATCH_REGVAL(CB_TARGET_MASK, (TARGET0_ENABLE_mask));
@@ -1526,6 +1532,7 @@ set_default_state(context_t *context)
     R600_OUT_BATCH(0);
 
     R600_OUT_BATCH_REGVAL(VGT_STRMOUT_BUFFER_EN, 0);
+    R600_OUT_BATCH_REGVAL(SX_ALPHA_TEST_CONTROL, 0);
 
     END_BATCH();
     COMMIT_BATCH();
@@ -1607,7 +1614,7 @@ unsigned r600_blit(GLcontext *ctx,
     /* Flush is needed to make sure that source buffer has correct data */
     radeonFlush(ctx);
 
-    rcommonEnsureCmdBufSpace(&context->radeon, 304, __FUNCTION__);
+    rcommonEnsureCmdBufSpace(&context->radeon, 308, __FUNCTION__);
 
     /* load shaders */
     load_shaders(context->radeon.glCtx);
@@ -1632,7 +1639,7 @@ unsigned r600_blit(GLcontext *ctx,
     set_tex_sampler(context);
 
     /* dst */
-    /* 27 */
+    /* 31 */
     set_render_target(context, dst_bo, dst_mesaformat,
 		      dst_pitch, dst_width, dst_height, dst_offset);
     /* scissors */

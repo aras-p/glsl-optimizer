@@ -29,6 +29,7 @@
 #include "main/glheader.h"
 #include "main/context.h"
 #include "main/extensions.h"
+#include "main/fbobject.h"
 #include "main/framebuffer.h"
 #include "main/imports.h"
 #include "main/points.h"
@@ -38,8 +39,6 @@
 #include "tnl/tnl.h"
 #include "drivers/common/driverfuncs.h"
 #include "drivers/common/meta.h"
-
-#include "i830_dri.h"
 
 #include "intel_chipset.h"
 #include "intel_buffers.h"
@@ -420,7 +419,7 @@ intel_prepare_render(struct intel_context *intel)
    __DRIdrawable *drawable;
 
    drawable = driContext->driDrawablePriv;
-   if (drawable->dri2.stamp != driContext->dri2.draw_stamp) {
+   if (drawable && drawable->dri2.stamp != driContext->dri2.draw_stamp) {
       if (drawable->lastStamp != drawable->dri2.stamp)
 	 intel_update_renderbuffers(driContext, drawable);
       intel_draw_buffer(&intel->ctx, intel->ctx.DrawBuffer);
@@ -428,7 +427,7 @@ intel_prepare_render(struct intel_context *intel)
    }
 
    drawable = driContext->driReadablePriv;
-   if (drawable->dri2.stamp != driContext->dri2.read_stamp) {
+   if (drawable && drawable->dri2.stamp != driContext->dri2.read_stamp) {
       if (drawable->lastStamp != drawable->dri2.stamp)
 	 intel_update_renderbuffers(driContext, drawable);
       driContext->dri2.read_stamp = drawable->dri2.stamp;
@@ -613,6 +612,7 @@ intelInitContext(struct intel_context *intel,
    __DRIscreen *sPriv = driContextPriv->driScreenPriv;
    struct intel_screen *intelScreen = sPriv->private;
    int bo_reuse_mode;
+   __GLcontextModes visual;
 
    /* we can't do anything without a connection to the device */
    if (intelScreen->bufmgr == NULL)
@@ -622,6 +622,11 @@ intelInitContext(struct intel_context *intel,
    if (!driContextPriv->driScreenPriv->dri2.useInvalidate) {
       intel->saved_viewport = functions->Viewport;
       functions->Viewport = intel_viewport;
+   }
+
+   if (mesaVis == NULL) {
+      memset(&visual, 0, sizeof visual);
+      mesaVis = &visual;
    }
 
    if (!_mesa_initialize_context_for_api(&intel->ctx, api, mesaVis, shareCtx,
@@ -890,14 +895,21 @@ intelMakeCurrent(__DRIcontext * driContextPriv,
    }
 
    if (driContextPriv) {
-      struct gl_framebuffer *fb = driDrawPriv->driverPrivate;
-      struct gl_framebuffer *readFb = driReadPriv->driverPrivate;
+      struct gl_framebuffer *fb, *readFb;
+      
+      if (driDrawPriv == NULL && driReadPriv == NULL) {
+	 fb = _mesa_get_incomplete_framebuffer();
+	 readFb = _mesa_get_incomplete_framebuffer();
+      } else {
+	 fb = driDrawPriv->driverPrivate;
+	 readFb = driReadPriv->driverPrivate;
+	 driContextPriv->dri2.draw_stamp = driDrawPriv->dri2.stamp - 1;
+	 driContextPriv->dri2.read_stamp = driReadPriv->dri2.stamp - 1;
+      }
 
-      driContextPriv->dri2.draw_stamp = driDrawPriv->dri2.stamp - 1;
-      driContextPriv->dri2.read_stamp = driReadPriv->dri2.stamp - 1;
       intel_prepare_render(intel);
       _mesa_make_current(&intel->ctx, fb, readFb);
-
+      
       /* We do this in intel_prepare_render() too, but intel->ctx.DrawBuffer
        * is NULL at that point.  We can't call _mesa_makecurrent()
        * first, since we need the buffer size for the initial

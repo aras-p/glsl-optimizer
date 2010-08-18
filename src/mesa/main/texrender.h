@@ -1,6 +1,7 @@
 #ifndef TEXRENDER_H
 #define TEXRENDER_H
 
+#include "mtypes.h"
 
 extern void
 _mesa_render_texture(GLcontext *ctx,

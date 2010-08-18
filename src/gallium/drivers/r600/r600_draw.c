@@ -33,7 +33,8 @@
 #include <util/u_memory.h>
 #include "r600_screen.h"
 #include "r600_context.h"
-#include "r600d.h"
+#include "r600_resource.h"
+#include "r600_state_inlines.h"
 
 struct r600_draw {
 	struct pipe_context	*ctx;
@@ -51,11 +52,15 @@ static int r600_draw_common(struct r600_draw *draw)
 	struct r600_context *rctx = r600_context(draw->ctx);
 	struct r600_screen *rscreen = rctx->screen;
 	struct radeon_state *vs_resource;
-	struct r600_buffer *rbuffer;
+	struct r600_resource *rbuffer;
 	unsigned i, j, offset, format, prim;
 	u32 vgt_dma_index_type, vgt_draw_initiator;
+	struct pipe_vertex_buffer *vertex_buffer;
 	int r;
 
+	r = r600_context_hw_states(rctx);
+	if (r)
+		return r;
 	switch (draw->index_size) {
 	case 2:
 		vgt_draw_initiator = 0;
@@ -83,29 +88,19 @@ static int r600_draw_common(struct r600_draw *draw)
 	r = r600_pipe_shader_update(draw->ctx, rctx->ps_shader);
 	if (r)
 		return r;
-	r = radeon_draw_set(rctx->draw, rctx->vs_shader->state);
+	r = radeon_draw_set(rctx->draw, rctx->vs_shader->rstate);
 	if (r)
 		return r;
-	r = radeon_draw_set(rctx->draw, rctx->ps_shader->state);
-	if (r)
-		return r;
-	r = radeon_draw_set(rctx->draw, rctx->cb_cntl);
-	if (r)
-		return r;
-	r = radeon_draw_set(rctx->draw, rctx->db);
-	if (r)
-		return r;
-	r = radeon_draw_set(rctx->draw, rctx->config);
+	r = radeon_draw_set(rctx->draw, rctx->ps_shader->rstate);
 	if (r)
 		return r;
 
 	for (i = 0 ; i < rctx->vertex_elements->count; i++) {
 		j = rctx->vertex_elements->elements[i].vertex_buffer_index;
-		rbuffer = (struct r600_buffer*)rctx->vertex_buffer[j].buffer;
-		offset = rctx->vertex_elements->elements[i].src_offset + rctx->vertex_buffer[j].buffer_offset;
-		r = r600_conv_pipe_format(rctx->vertex_elements->elements[i].src_format, &format);
-		if (r)
-			return r;
+		vertex_buffer = &rctx->vertex_buffer[j];
+		rbuffer = (struct r600_resource*)vertex_buffer->buffer;
+		offset = rctx->vertex_elements->elements[i].src_offset + vertex_buffer->buffer_offset;
+		format = r600_translate_colorformat(rctx->vertex_elements->elements[i].src_format);
 		vs_resource = radeon_state(rscreen->rw, R600_VS_RESOURCE_TYPE, R600_VS_RESOURCE + i);
 		if (vs_resource == NULL)
 			return -ENOMEM;
@@ -113,7 +108,7 @@ static int r600_draw_common(struct r600_draw *draw)
 		vs_resource->nbo = 1;
 		vs_resource->states[R600_PS_RESOURCE__RESOURCE0_WORD0] = offset;
 		vs_resource->states[R600_PS_RESOURCE__RESOURCE0_WORD1] = rbuffer->bo->size - offset;
-		vs_resource->states[R600_PS_RESOURCE__RESOURCE0_WORD2] = S_038008_STRIDE(rctx->vertex_buffer[j].stride) |
+		vs_resource->states[R600_PS_RESOURCE__RESOURCE0_WORD2] = S_038008_STRIDE(vertex_buffer->stride) |
 								S_038008_DATA_FORMAT(format);
 		vs_resource->states[R600_PS_RESOURCE__RESOURCE0_WORD3] = 0x00000000;
 		vs_resource->states[R600_PS_RESOURCE__RESOURCE0_WORD4] = 0x00000000;
@@ -132,7 +127,7 @@ static int r600_draw_common(struct r600_draw *draw)
 	draw->draw->states[R600_DRAW__VGT_NUM_INDICES] = draw->count;
 	draw->draw->states[R600_DRAW__VGT_DRAW_INITIATOR] = vgt_draw_initiator;
 	if (draw->index_buffer) {
-		rbuffer = (struct r600_buffer*)draw->index_buffer;
+		rbuffer = (struct r600_resource*)draw->index_buffer;
 		draw->draw->bo[0] = radeon_bo_incref(rscreen->rw, rbuffer->bo);
 		draw->draw->placement[0] = RADEON_GEM_DOMAIN_GTT;
 		draw->draw->placement[1] = RADEON_GEM_DOMAIN_GTT;
@@ -160,58 +155,39 @@ static int r600_draw_common(struct r600_draw *draw)
 		return r;
 	/* FIXME */
 	r = radeon_ctx_set_draw_new(rctx->ctx, rctx->draw);
+	if (r == -EBUSY) {
+		r600_flush(draw->ctx, 0, NULL);
+		r = radeon_ctx_set_draw_new(rctx->ctx, rctx->draw);
+	}
 	if (r)
 		return r;
 	rctx->draw = radeon_draw_duplicate(rctx->draw);
 	return 0;
 }
 
-void r600_draw_range_elements(struct pipe_context *ctx,
-		struct pipe_resource *index_buffer,
-		unsigned index_size, int index_bias, unsigned min_index,
-		unsigned max_index, unsigned mode,
-		unsigned start, unsigned count)
+void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 {
-	struct r600_draw draw;
-	assert(index_bias == 0);
-
-	draw.ctx = ctx;
-	draw.mode = mode;
-	draw.start = start;
-	draw.count = count;
-	draw.index_size = index_size;
-	draw.index_buffer = index_buffer;
-printf("index_size %d min %d max %d  start %d  count %d\n", index_size, min_index, max_index, start, count);
-	r600_draw_common(&draw);
-}
-
-void r600_draw_elements(struct pipe_context *ctx,
-		struct pipe_resource *index_buffer,
-		unsigned index_size, int index_bias, unsigned mode,
-		unsigned start, unsigned count)
-{
-	struct r600_draw draw;
-	assert(index_bias == 0);
-
-	draw.ctx = ctx;
-	draw.mode = mode;
-	draw.start = start;
-	draw.count = count;
-	draw.index_size = index_size;
-	draw.index_buffer = index_buffer;
-	r600_draw_common(&draw);
-}
-
-void r600_draw_arrays(struct pipe_context *ctx, unsigned mode,
-			unsigned start, unsigned count)
-{
+	struct r600_context *rctx = r600_context(ctx);
 	struct r600_draw draw;
 
+	assert(info->index_bias == 0);
+
 	draw.ctx = ctx;
-	draw.mode = mode;
-	draw.start = start;
-	draw.count = count;
-	draw.index_size = 0;
-	draw.index_buffer = NULL;
+	draw.mode = info->mode;
+	draw.start = info->start;
+	draw.count = info->count;
+	if (info->indexed && rctx->index_buffer.buffer) {
+		draw.index_size = rctx->index_buffer.index_size;
+		draw.index_buffer = rctx->index_buffer.buffer;
+
+		assert(rctx->index_buffer.offset %
+				rctx->index_buffer.index_size == 0);
+		draw.start += rctx->index_buffer.offset /
+			rctx->index_buffer.index_size;
+	}
+	else {
+		draw.index_size = 0;
+		draw.index_buffer = NULL;
+	}
 	r600_draw_common(&draw);
 }

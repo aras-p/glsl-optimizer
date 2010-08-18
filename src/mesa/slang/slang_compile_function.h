@@ -25,6 +25,14 @@
 #ifndef SLANG_COMPILE_FUNCTION_H
 #define SLANG_COMPILE_FUNCTION_H
 
+#include "main/glheader.h"
+#include "slang_compile_operation.h"
+#include "slang_compile_variable.h"
+#include "slang_log.h"
+#include "slang_utility.h"
+
+struct slang_name_space_;
+struct slang_operation_;
 
 /**
  * Types of functions.

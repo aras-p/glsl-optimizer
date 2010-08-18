@@ -28,6 +28,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include "sl_pp_token_util.h"
+#include "sl_pp_token.h"
 
 
 int

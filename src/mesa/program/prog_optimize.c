@@ -38,39 +38,116 @@
 
 static GLboolean dbg = GL_FALSE;
 
-/* Returns the mask of channels read from the given srcreg in this instruction.
+#define NO_MASK 0xf
+
+/**
+ * Returns the mask of channels (bitmask of WRITEMASK_X,Y,Z,W) which
+ * are read from the given src in this instruction, We also provide
+ * one optional masks which may mask other components in the dst
+ * register
  */
 static GLuint
-get_src_arg_mask(const struct prog_instruction *inst, int arg)
+get_src_arg_mask(const struct prog_instruction *inst,
+                 GLuint arg, GLuint dst_mask)
 {
-   int writemask = inst->DstReg.WriteMask;
+   GLuint read_mask, channel_mask;
+   GLuint comp;
 
-   if (inst->CondUpdate)
-      writemask = WRITEMASK_XYZW;
+   ASSERT(arg < _mesa_num_inst_src_regs(inst->Opcode));
 
-   switch (inst->Opcode) {
-   case OPCODE_MOV:
-   case OPCODE_ABS:
-   case OPCODE_ADD:
-   case OPCODE_MUL:
-   case OPCODE_SUB:
-      return writemask;
-   case OPCODE_RCP:
-   case OPCODE_SIN:
-   case OPCODE_COS:
-   case OPCODE_RSQ:
-   case OPCODE_POW:
-   case OPCODE_EX2:
-      return WRITEMASK_X;
-   case OPCODE_DP2:
-      return WRITEMASK_XY;
-   case OPCODE_DP3:
-   case OPCODE_XPD:
-      return WRITEMASK_XYZ;
-   default:
-      return WRITEMASK_XYZW;
+   /* Form the dst register, find the written channels */
+   if (inst->CondUpdate) {
+      channel_mask = WRITEMASK_XYZW;
    }
+   else {
+      switch (inst->Opcode) {
+      case OPCODE_MOV:
+      case OPCODE_MIN:
+      case OPCODE_MAX:
+      case OPCODE_ABS:
+      case OPCODE_ADD:
+      case OPCODE_MAD:
+      case OPCODE_MUL:
+      case OPCODE_SUB:
+         channel_mask = inst->DstReg.WriteMask & dst_mask;
+         break;
+      case OPCODE_RCP:
+      case OPCODE_SIN:
+      case OPCODE_COS:
+      case OPCODE_RSQ:
+      case OPCODE_POW:
+      case OPCODE_EX2:
+      case OPCODE_LOG:
+         channel_mask = WRITEMASK_X;
+         break;
+      case OPCODE_DP2:
+         channel_mask = WRITEMASK_XY;
+         break;
+      case OPCODE_DP3:
+      case OPCODE_XPD:
+         channel_mask = WRITEMASK_XYZ;
+         break;
+      default:
+         channel_mask = WRITEMASK_XYZW;
+         break;
+      }
+   }
+
+   /* Now, given the src swizzle and the written channels, find which
+    * components are actually read
+    */
+   read_mask = 0x0;
+   for (comp = 0; comp < 4; ++comp) {
+      const GLuint coord = GET_SWZ(inst->SrcReg[arg].Swizzle, comp);
+      ASSERT(coord < 4);
+      if (channel_mask & (1 << comp) && coord <= SWIZZLE_W)
+         read_mask |= 1 << coord;
+   }
+
+   return read_mask;
 }
+
+
+/**
+ * For a MOV instruction, compute a write mask when src register also has
+ * a mask
+ */
+static GLuint
+get_dst_mask_for_mov(const struct prog_instruction *mov, GLuint src_mask)
+{
+   const GLuint mask = mov->DstReg.WriteMask;
+   GLuint comp;
+   GLuint updated_mask = 0x0;
+
+   ASSERT(mov->Opcode == OPCODE_MOV);
+
+   for (comp = 0; comp < 4; ++comp) {
+      GLuint src_comp;
+      if ((mask & (1 << comp)) == 0)
+         continue;
+      src_comp = GET_SWZ(mov->SrcReg[0].Swizzle, comp);
+      if ((src_mask & (1 << src_comp)) == 0)
+         continue;
+      updated_mask |= 1 << comp;
+   }
+
+   return updated_mask;
+}
+
+
+/**
+ * Ensure that the swizzle is regular.  That is, all of the swizzle
+ * terms are SWIZZLE_X,Y,Z,W and not SWIZZLE_ZERO or SWIZZLE_ONE.
+ */
+static GLboolean
+is_swizzle_regular(GLuint swz)
+{
+   return GET_SWZ(swz,0) <= SWIZZLE_W &&
+          GET_SWZ(swz,1) <= SWIZZLE_W &&
+          GET_SWZ(swz,2) <= SWIZZLE_W &&
+          GET_SWZ(swz,3) <= SWIZZLE_W;
+}
+
 
 /**
  * In 'prog' remove instruction[i] if removeFlags[i] == TRUE.
@@ -148,82 +225,13 @@ replace_regs(struct gl_program *prog, gl_register_file file, const GLint map[])
 
 
 /**
- * Consolidate temporary registers to use low numbers.  For example, if the
- * shader only uses temps 4, 5, 8, replace them with 0, 1, 2.
- */
-static void
-_mesa_consolidate_registers(struct gl_program *prog)
-{
-   GLboolean tempUsed[MAX_PROGRAM_TEMPS];
-   GLint tempMap[MAX_PROGRAM_TEMPS];
-   GLuint tempMax = 0, i;
-
-   if (dbg) {
-      printf("Optimize: Begin register consolidation\n");
-   }
-
-   memset(tempUsed, 0, sizeof(tempUsed));
-
-   for (i = 0; i < MAX_PROGRAM_TEMPS; i++) {
-      tempMap[i] = -1;
-   }
-
-   /* set tempUsed[i] if temporary [i] is referenced */
-   for (i = 0; i < prog->NumInstructions; i++) {
-      const struct prog_instruction *inst = prog->Instructions + i;
-      const GLuint numSrc = _mesa_num_inst_src_regs(inst->Opcode);
-      GLuint j;
-      for (j = 0; j < numSrc; j++) {
-         if (inst->SrcReg[j].File == PROGRAM_TEMPORARY) {
-            const GLuint index = inst->SrcReg[j].Index;
-            ASSERT(index < MAX_PROGRAM_TEMPS);
-            tempUsed[index] = GL_TRUE;
-            tempMax = MAX2(tempMax, index);
-            break;
-         }
-      }
-      if (inst->DstReg.File == PROGRAM_TEMPORARY) {
-         const GLuint index = inst->DstReg.Index;
-         ASSERT(index < MAX_PROGRAM_TEMPS);
-         tempUsed[index] = GL_TRUE;
-         tempMax = MAX2(tempMax, index);
-      }
-   }
-
-   /* allocate a new index for each temp that's used */
-   {
-      GLuint freeTemp = 0;
-      for (i = 0; i <= tempMax; i++) {
-         if (tempUsed[i]) {
-            tempMap[i] = freeTemp++;
-            /*printf("replace %u with %u\n", i, tempMap[i]);*/
-         }
-      }
-      if (freeTemp == tempMax + 1) {
-         /* no consolidation possible */
-         return;
-      }         
-      if (dbg) {
-         printf("Replace regs 0..%u with 0..%u\n", tempMax, freeTemp-1);
-      }
-   }
-
-   replace_regs(prog, PROGRAM_TEMPORARY, tempMap);
-
-   if (dbg) {
-      printf("Optimize: End register consolidation\n");
-   }
-}
-
-
-/**
  * Remove dead instructions from the given program.
  * This is very primitive for now.  Basically look for temp registers
  * that are written to but never read.  Remove any instructions that
  * write to such registers.  Be careful with condition code setters.
  */
-static void
-_mesa_remove_dead_code(struct gl_program *prog)
+static GLboolean
+_mesa_remove_dead_code_global(struct gl_program *prog)
 {
    GLboolean tempRead[MAX_PROGRAM_TEMPS][4];
    GLboolean *removeInst; /* per-instruction removal flag */
@@ -251,7 +259,7 @@ _mesa_remove_dead_code(struct gl_program *prog)
             const GLuint index = inst->SrcReg[j].Index;
             GLuint read_mask;
             ASSERT(index < MAX_PROGRAM_TEMPS);
-	    read_mask = get_src_arg_mask(inst, j);
+	    read_mask = get_src_arg_mask(inst, j, NO_MASK);
 
             if (inst->SrcReg[j].RelAddr) {
                if (dbg)
@@ -260,25 +268,12 @@ _mesa_remove_dead_code(struct gl_program *prog)
             }
 
 	    for (comp = 0; comp < 4; comp++) {
-	       GLuint swz = (inst->SrcReg[j].Swizzle >> (3 * comp)) & 0x7;
-
-	       if ((read_mask & (1 << comp)) == 0)
+	       const GLuint swz = GET_SWZ(inst->SrcReg[j].Swizzle, comp);
+	       ASSERT(swz < 4);
+               if ((read_mask & (1 << swz)) == 0)
 		  continue;
-
-	       switch (swz) {
-	       case SWIZZLE_X:
-		  tempRead[index][0] = GL_TRUE;
-		  break;
-	       case SWIZZLE_Y:
-		  tempRead[index][1] = GL_TRUE;
-		  break;
-	       case SWIZZLE_Z:
-		  tempRead[index][2] = GL_TRUE;
-		  break;
-	       case SWIZZLE_W:
-		  tempRead[index][3] = GL_TRUE;
-		  break;
-	       }
+               if (swz <= SWIZZLE_W)
+                  tempRead[index][swz] = GL_TRUE;
 	    }
          }
       }
@@ -348,10 +343,11 @@ _mesa_remove_dead_code(struct gl_program *prog)
 
 done:
    free(removeInst);
+   return rem != 0;
 }
 
 
-enum temp_use
+enum inst_use
 {
    READ,
    WRITE,
@@ -359,13 +355,19 @@ enum temp_use
    END
 };
 
+
 /**
- * Scan forward in program from 'start' for the next occurance of TEMP[index].
+ * Scan forward in program from 'start' for the next occurances of TEMP[index].
+ * We look if an instruction reads the component given by the masks and if they
+ * are overwritten.
  * Return READ, WRITE, FLOW or END to indicate the next usage or an indicator
  * that we can't look further.
  */
-static enum temp_use
-find_next_temp_use(const struct gl_program *prog, GLuint start, GLuint index)
+static enum inst_use
+find_next_use(const struct gl_program *prog,
+              GLuint start,
+              GLuint index,
+              GLuint mask)
 {
    GLuint i;
 
@@ -373,30 +375,50 @@ find_next_temp_use(const struct gl_program *prog, GLuint start, GLuint index)
       const struct prog_instruction *inst = prog->Instructions + i;
       switch (inst->Opcode) {
       case OPCODE_BGNLOOP:
-      case OPCODE_ENDLOOP:
       case OPCODE_BGNSUB:
+      case OPCODE_BRA:
+      case OPCODE_CAL:
+      case OPCODE_CONT:
+      case OPCODE_IF:
+      case OPCODE_ELSE:
+      case OPCODE_ENDIF:
+      case OPCODE_ENDLOOP:
       case OPCODE_ENDSUB:
+      case OPCODE_RET:
          return FLOW;
+      case OPCODE_END:
+         return END;
       default:
          {
             const GLuint numSrc = _mesa_num_inst_src_regs(inst->Opcode);
             GLuint j;
             for (j = 0; j < numSrc; j++) {
-               if (inst->SrcReg[j].File == PROGRAM_TEMPORARY &&
-                   inst->SrcReg[j].Index == index)
+               if (inst->SrcReg[j].RelAddr ||
+                   (inst->SrcReg[j].File == PROGRAM_TEMPORARY &&
+                   inst->SrcReg[j].Index == index &&
+                   (get_src_arg_mask(inst,j,NO_MASK) & mask)))
                   return READ;
             }
-            if (inst->DstReg.File == PROGRAM_TEMPORARY &&
-                inst->DstReg.Index == index)
-               return WRITE;
+            if (_mesa_num_inst_dst_regs(inst->Opcode) == 1 &&
+                inst->DstReg.File == PROGRAM_TEMPORARY &&
+                inst->DstReg.Index == index) {
+               mask &= ~inst->DstReg.WriteMask;
+               if (mask == 0)
+                  return WRITE;
+            }
          }
       }
    }
-
    return END;
 }
 
-static GLboolean _mesa_is_flow_control_opcode(enum prog_opcode opcode)
+
+/**
+ * Is the given instruction opcode a flow-control opcode?
+ * XXX maybe move this into prog_instruction.[ch]
+ */
+static GLboolean
+_mesa_is_flow_control_opcode(enum prog_opcode opcode)
 {
    switch (opcode) {
    case OPCODE_BGNLOOP:
@@ -416,6 +438,37 @@ static GLboolean _mesa_is_flow_control_opcode(enum prog_opcode opcode)
       return GL_FALSE;
    }
 }
+
+
+/**
+ * Test if the given instruction is a simple MOV (no conditional updating,
+ * not relative addressing, no negation/abs, etc).
+ */
+static GLboolean
+can_downward_mov_be_modifed(const struct prog_instruction *mov)
+{
+   return
+      mov->Opcode == OPCODE_MOV &&
+      mov->CondUpdate == GL_FALSE &&
+      mov->SrcReg[0].RelAddr == 0 &&
+      mov->SrcReg[0].Negate == 0 &&
+      mov->SrcReg[0].Abs == 0 &&
+      mov->SrcReg[0].HasIndex2 == 0 &&
+      mov->SrcReg[0].RelAddr2 == 0 &&
+      mov->DstReg.RelAddr == 0 &&
+      mov->DstReg.CondMask == COND_TR &&
+      mov->SaturateMode == SATURATE_OFF;
+}
+
+
+static GLboolean
+can_upward_mov_be_modifed(const struct prog_instruction *mov)
+{
+   return
+      can_downward_mov_be_modifed(mov) &&
+      mov->DstReg.File == PROGRAM_TEMPORARY;
+}
+
 
 /**
  * Try to remove use of extraneous MOV instructions, to free them up for dead
@@ -444,14 +497,15 @@ _mesa_remove_extra_move_use(struct gl_program *prog)
 
    for (i = 0; i + 1 < prog->NumInstructions; i++) {
       const struct prog_instruction *mov = prog->Instructions + i;
+      GLuint dst_mask, src_mask;
+      if (can_upward_mov_be_modifed(mov) == GL_FALSE)
+         continue;
 
-      if (mov->Opcode != OPCODE_MOV ||
-	  mov->DstReg.File != PROGRAM_TEMPORARY ||
-	  mov->DstReg.RelAddr ||
-	  mov->DstReg.CondMask != COND_TR ||
-	  mov->SaturateMode != SATURATE_OFF ||
-	  mov->SrcReg[0].RelAddr)
-	 continue;
+      /* Scanning the code, we maintain the components which are still active in
+       * these two masks
+       */
+      dst_mask = mov->DstReg.WriteMask;
+      src_mask = get_src_arg_mask(mov, 0, NO_MASK);
 
       /* Walk through remaining instructions until the or src reg gets
        * rewritten or we get into some flow-control, eliminating the use of
@@ -459,61 +513,60 @@ _mesa_remove_extra_move_use(struct gl_program *prog)
        */
       for (j = i + 1; j < prog->NumInstructions; j++) {
 	 struct prog_instruction *inst2 = prog->Instructions + j;
-	 GLuint arg;
+         GLuint arg;
 
 	 if (_mesa_is_flow_control_opcode(inst2->Opcode))
 	     break;
 
 	 /* First rewrite this instruction's args if appropriate. */
 	 for (arg = 0; arg < _mesa_num_inst_src_regs(inst2->Opcode); arg++) {
-	    int comp;
-	    int read_mask = get_src_arg_mask(inst2, arg);
+	    GLuint comp, read_mask;
 
 	    if (inst2->SrcReg[arg].File != mov->DstReg.File ||
 		inst2->SrcReg[arg].Index != mov->DstReg.Index ||
 		inst2->SrcReg[arg].RelAddr ||
 		inst2->SrcReg[arg].Abs)
 	       continue;
+            read_mask = get_src_arg_mask(inst2, arg, NO_MASK);
 
-	    /* Check that all the sources for this arg of inst2 come from inst1
-	     * or constants.
-	     */
-	    for (comp = 0; comp < 4; comp++) {
-	       int src_swz = GET_SWZ(inst2->SrcReg[arg].Swizzle, comp);
-
-	       /* If the MOV didn't write that channel, can't use it. */
-	       if ((read_mask & (1 << comp)) &&
-		   src_swz <= SWIZZLE_W &&
-		   (mov->DstReg.WriteMask & (1 << src_swz)) == 0)
-		  break;
-	    }
-	    if (comp != 4)
-	       continue;
-
-	    /* Adjust the swizzles of inst2 to point at MOV's source */
-	    for (comp = 0; comp < 4; comp++) {
-	       int inst2_swz = GET_SWZ(inst2->SrcReg[arg].Swizzle, comp);
-
-	       if (inst2_swz <= SWIZZLE_W) {
-		  GLuint s = GET_SWZ(mov->SrcReg[0].Swizzle, inst2_swz);
-		  inst2->SrcReg[arg].Swizzle &= ~(7 << (3 * comp));
-		  inst2->SrcReg[arg].Swizzle |= s << (3 * comp);
-		  inst2->SrcReg[arg].Negate ^= (((mov->SrcReg[0].Negate >>
-						  inst2_swz) & 0x1) << comp);
-	       }
-	    }
-	    inst2->SrcReg[arg].File = mov->SrcReg[0].File;
-	    inst2->SrcReg[arg].Index = mov->SrcReg[0].Index;
+	    /* Adjust the swizzles of inst2 to point at MOV's source if ALL the
+             * components read still come from the mov instructions
+             */
+            if (is_swizzle_regular(inst2->SrcReg[arg].Swizzle) &&
+               (read_mask & dst_mask) == read_mask) {
+               for (comp = 0; comp < 4; comp++) {
+                  const GLuint inst2_swz =
+                     GET_SWZ(inst2->SrcReg[arg].Swizzle, comp);
+                  const GLuint s = GET_SWZ(mov->SrcReg[0].Swizzle, inst2_swz);
+                  inst2->SrcReg[arg].Swizzle &= ~(7 << (3 * comp));
+                  inst2->SrcReg[arg].Swizzle |= s << (3 * comp);
+                  inst2->SrcReg[arg].Negate ^= (((mov->SrcReg[0].Negate >>
+                                                  inst2_swz) & 0x1) << comp);
+               }
+               inst2->SrcReg[arg].File = mov->SrcReg[0].File;
+               inst2->SrcReg[arg].Index = mov->SrcReg[0].Index;
+            }
 	 }
 
-	 /* If this instruction overwrote part of the move, our time is up. */
-	 if ((inst2->DstReg.File == mov->DstReg.File &&
-	      (inst2->DstReg.RelAddr ||
-	       inst2->DstReg.Index == mov->DstReg.Index)) ||
-	     (inst2->DstReg.File == mov->SrcReg[0].File &&
-	      (inst2->DstReg.RelAddr ||
-	       inst2->DstReg.Index == mov->SrcReg[0].Index)))
-	    break;
+	 /* The source of MOV is written. This potentially deactivates some
+          * components from the src and dst of the MOV instruction
+          */
+	 if (inst2->DstReg.File == mov->DstReg.File &&
+	     (inst2->DstReg.RelAddr ||
+	      inst2->DstReg.Index == mov->DstReg.Index)) {
+            dst_mask &= ~inst2->DstReg.WriteMask;
+            src_mask = get_src_arg_mask(mov, 0, dst_mask);
+         }
+
+         /* Idem when the destination of mov is written */
+	 if (inst2->DstReg.File == mov->SrcReg[0].File &&
+	     (inst2->DstReg.RelAddr ||
+	      inst2->DstReg.Index == mov->SrcReg[0].Index)) {
+            src_mask &= ~inst2->DstReg.WriteMask;
+            dst_mask &= get_dst_mask_for_mov(mov, src_mask);
+         }
+         if (dst_mask == 0)
+            break;
       }
    }
 
@@ -523,14 +576,151 @@ _mesa_remove_extra_move_use(struct gl_program *prog)
    }
 }
 
+
+/**
+ * Complements dead_code_global. Try to remove code in block of code by
+ * carefully monitoring the swizzles. Both functions should be merged into one
+ * with a proper control flow graph
+ */
+static GLboolean
+_mesa_remove_dead_code_local(struct gl_program *prog)
+{
+   GLboolean *removeInst;
+   GLuint i, arg, rem = 0;
+
+   removeInst = (GLboolean *)
+      calloc(1, prog->NumInstructions * sizeof(GLboolean));
+
+   for (i = 0; i < prog->NumInstructions; i++) {
+      const struct prog_instruction *inst = prog->Instructions + i;
+      const GLuint index = inst->DstReg.Index;
+      const GLuint mask = inst->DstReg.WriteMask;
+      enum inst_use use;
+
+      /* We must deactivate the pass as soon as some indirection is used */
+      if (inst->DstReg.RelAddr)
+         goto done;
+      for (arg = 0; arg < _mesa_num_inst_src_regs(inst->Opcode); arg++)
+         if (inst->SrcReg[arg].RelAddr)
+            goto done;
+
+      if (_mesa_is_flow_control_opcode(inst->Opcode) ||
+          _mesa_num_inst_dst_regs(inst->Opcode) == 0 ||
+          inst->DstReg.File != PROGRAM_TEMPORARY ||
+          inst->DstReg.RelAddr)
+         continue;
+
+      use = find_next_use(prog, i+1, index, mask);
+      if (use == WRITE || use == END)
+         removeInst[i] = GL_TRUE;
+   }
+
+   rem = remove_instructions(prog, removeInst);
+
+done:
+   free(removeInst);
+   return rem != 0;
+}
+
+
+/**
+ * Try to inject the destination of mov as the destination of inst and recompute
+ * the swizzles operators for the sources of inst if required. Return GL_TRUE
+ * of the substitution was possible, GL_FALSE otherwise
+ */
+static GLboolean
+_mesa_merge_mov_into_inst(struct prog_instruction *inst,
+                          const struct prog_instruction *mov)
+{
+   /* Indirection table which associates destination and source components for
+    * the mov instruction
+    */
+   const GLuint mask = get_src_arg_mask(mov, 0, NO_MASK);
+
+   /* Some components are not written by inst. We cannot remove the mov */
+   if (mask != (inst->DstReg.WriteMask & mask))
+      return GL_FALSE;
+
+   /* Depending on the instruction, we may need to recompute the swizzles.
+    * Also, some other instructions (like TEX) are not linear. We will only
+    * consider completely active sources and destinations
+    */
+   switch (inst->Opcode) {
+
+   /* Carstesian instructions: we compute the swizzle */
+   case OPCODE_MOV:
+   case OPCODE_MIN:
+   case OPCODE_MAX:
+   case OPCODE_ABS:
+   case OPCODE_ADD:
+   case OPCODE_MAD:
+   case OPCODE_MUL:
+   case OPCODE_SUB:
+   {
+      GLuint dst_to_src_comp[4] = {0,0,0,0};
+      GLuint dst_comp, arg;
+      for (dst_comp = 0; dst_comp < 4; ++dst_comp) {
+         if (mov->DstReg.WriteMask & (1 << dst_comp)) {
+            const GLuint src_comp = GET_SWZ(mov->SrcReg[0].Swizzle, dst_comp);
+            ASSERT(src_comp < 4);
+            dst_to_src_comp[dst_comp] = src_comp;
+         }
+      }
+
+      /* Patch each source of the instruction */
+      for (arg = 0; arg < _mesa_num_inst_src_regs(inst->Opcode); arg++) {
+         const GLuint arg_swz = inst->SrcReg[arg].Swizzle;
+         inst->SrcReg[arg].Swizzle = 0;
+
+         /* Reset each active component of the swizzle */
+         for (dst_comp = 0; dst_comp < 4; ++dst_comp) {
+            GLuint src_comp, arg_comp;
+            if ((mov->DstReg.WriteMask & (1 << dst_comp)) == 0)
+               continue;
+            src_comp = dst_to_src_comp[dst_comp];
+            ASSERT(src_comp < 4);
+            arg_comp = GET_SWZ(arg_swz, src_comp);
+            ASSERT(arg_comp < 4);
+            inst->SrcReg[arg].Swizzle |= arg_comp << (3*dst_comp);
+         }
+      }
+      inst->DstReg = mov->DstReg;
+      return GL_TRUE;
+   }
+
+   /* Dot products and scalar instructions: we only change the destination */
+   case OPCODE_RCP:
+   case OPCODE_SIN:
+   case OPCODE_COS:
+   case OPCODE_RSQ:
+   case OPCODE_POW:
+   case OPCODE_EX2:
+   case OPCODE_LOG:
+   case OPCODE_DP2:
+   case OPCODE_DP3:
+   case OPCODE_DP4:
+      inst->DstReg = mov->DstReg;
+      return GL_TRUE;
+
+   /* All other instructions require fully active components with no swizzle */
+   default:
+      if (mov->SrcReg[0].Swizzle != SWIZZLE_XYZW ||
+          inst->DstReg.WriteMask != WRITEMASK_XYZW)
+         return GL_FALSE;
+      inst->DstReg = mov->DstReg;
+      return GL_TRUE;
+   }
+}
+
+
 /**
  * Try to remove extraneous MOV instructions from the given program.
  */
-static void
+static GLboolean
 _mesa_remove_extra_moves(struct gl_program *prog)
 {
    GLboolean *removeInst; /* per-instruction removal flag */
-   GLuint i, rem, loopNesting = 0, subroutineNesting = 0;
+   GLuint i, rem = 0, nesting = 0;
 
    if (dbg) {
       printf("Optimize: Begin remove extra moves\n");
@@ -549,29 +739,24 @@ _mesa_remove_extra_moves(struct gl_program *prog)
     */
 
    for (i = 0; i < prog->NumInstructions; i++) {
-      const struct prog_instruction *inst = prog->Instructions + i;
+      const struct prog_instruction *mov = prog->Instructions + i;
 
-      switch (inst->Opcode) {
+      switch (mov->Opcode) {
       case OPCODE_BGNLOOP:
-         loopNesting++;
+      case OPCODE_BGNSUB:
+      case OPCODE_IF:
+         nesting++;
          break;
       case OPCODE_ENDLOOP:
-         loopNesting--;
-         break;
-      case OPCODE_BGNSUB:
-         subroutineNesting++;
-         break;
       case OPCODE_ENDSUB:
-         subroutineNesting--;
+      case OPCODE_ENDIF:
+         nesting--;
          break;
       case OPCODE_MOV:
-         if (i > 0 &&
-             loopNesting == 0 &&
-             subroutineNesting == 0 &&
-             inst->SrcReg[0].File == PROGRAM_TEMPORARY &&
-             inst->SrcReg[0].Swizzle == SWIZZLE_XYZW) {
+         if (i > 0 && can_downward_mov_be_modifed(mov) && nesting == 0) {
+
             /* see if this MOV can be removed */
-            const GLuint tempIndex = inst->SrcReg[0].Index;
+            const GLuint id = mov->SrcReg[0].Index;
             struct prog_instruction *prevInst;
             GLuint prevI;
 
@@ -582,11 +767,13 @@ _mesa_remove_extra_moves(struct gl_program *prog)
             prevInst = prog->Instructions + prevI;
 
             if (prevInst->DstReg.File == PROGRAM_TEMPORARY &&
-                prevInst->DstReg.Index == tempIndex &&
-                prevInst->DstReg.WriteMask == WRITEMASK_XYZW) {
+                prevInst->DstReg.Index == id &&
+                prevInst->DstReg.RelAddr == 0 &&
+                prevInst->DstReg.CondSrc == 0 && 
+                prevInst->DstReg.CondMask == COND_TR) {
 
-               enum temp_use next_use =
-                  find_next_temp_use(prog, i + 1, tempIndex);
+               const GLuint dst_mask = prevInst->DstReg.WriteMask;
+               enum inst_use next_use = find_next_use(prog, i+1, id, dst_mask);
 
                if (next_use == WRITE || next_use == END) {
                   /* OK, we can safely remove this MOV instruction.
@@ -596,18 +783,13 @@ _mesa_remove_extra_moves(struct gl_program *prog)
                    * Into:
                    *   prevI: FOO z, x, y;
                    */
-
-                  /* patch up prev inst */
-                  prevInst->DstReg.File = inst->DstReg.File;
-                  prevInst->DstReg.Index = inst->DstReg.Index;
-
-                  /* flag this instruction for removal */
-                  removeInst[i] = GL_TRUE;
-
-                  if (dbg) {
-                     printf("Remove MOV at %u\n", i);
-                     printf("new prev inst %u: ", prevI);
-                     _mesa_print_instruction(prevInst);
+                  if (_mesa_merge_mov_into_inst(prevInst, mov)) {
+                     removeInst[i] = GL_TRUE;
+                     if (dbg) {
+                        printf("Remove MOV at %u\n", i);
+                        printf("new prev inst %u: ", prevI);
+                        _mesa_print_instruction(prevInst);
+                     }
                   }
                }
             }
@@ -627,6 +809,8 @@ _mesa_remove_extra_moves(struct gl_program *prog)
       printf("Optimize: End remove extra moves.  %u instructions removed\n", rem);
       /*_mesa_print_program(prog);*/
    }
+
+   return rem != 0;
 }
 
 
@@ -712,6 +896,7 @@ compare_start(const void *a, const void *b)
    else
       return 0;
 }
+
 
 /** sort the interval list according to interval starts */
 static void
@@ -1013,6 +1198,17 @@ _mesa_reallocate_registers(struct gl_program *prog)
 }
 
 
+#if 0
+static void
+print_it(GLcontext *ctx, struct gl_program *program, const char *txt) {
+   fprintf(stderr, "%s (%u inst):\n", txt, program->NumInstructions);
+   _mesa_print_program(program);
+   _mesa_print_program_parameters(ctx, program);
+   fprintf(stderr, "\n\n");
+}
+#endif
+
+
 /**
  * Apply optimizations to the given program to eliminate unnecessary
  * instructions, temp regs, etc.
@@ -1020,16 +1216,19 @@ _mesa_reallocate_registers(struct gl_program *prog)
 void
 _mesa_optimize_program(GLcontext *ctx, struct gl_program *program)
 {
-   _mesa_remove_extra_move_use(program);
+   GLboolean any_change;
 
-   if (1)
-      _mesa_remove_dead_code(program);
-
-   if (0) /* not tested much yet */
-      _mesa_remove_extra_moves(program);
-
-   if (0)
-      _mesa_consolidate_registers(program);
-   else
+   /* Stop when no modifications were output */
+   do {
+      any_change = GL_FALSE;
+      _mesa_remove_extra_move_use(program);
+      if (_mesa_remove_dead_code_global(program))
+         any_change = GL_TRUE;
+      if (_mesa_remove_extra_moves(program))
+         any_change = GL_TRUE;
+      if (_mesa_remove_dead_code_local(program))
+         any_change = GL_TRUE;
       _mesa_reallocate_registers(program);
+   } while (any_change);
 }
+
