@@ -175,6 +175,14 @@ static GLboolean brwProgramStringNotify( GLcontext *ctx,
 		      "the end of the function to work around it.\n");
 	 return GL_FALSE;
       }
+
+      if (prog->Instructions[i].Opcode == OPCODE_RET) {
+	 shader_error(ctx, prog,
+		      "i965 driver doesn't yet support \"return\" "
+		      "from main().\n");
+	 return GL_FALSE;
+      }
+
       if (prog->Instructions[i].DstReg.RelAddr &&
 	  prog->Instructions[i].DstReg.File == PROGRAM_INPUT) {
 	 shader_error(ctx, prog,
