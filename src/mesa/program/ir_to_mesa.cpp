@@ -2662,6 +2662,7 @@ _mesa_glsl_compile_shader(GLcontext *ctx, struct gl_shader *shader)
      _mesa_glsl_lexer_dtor(state);
    }
 
+   talloc_free(shader->ir);
    shader->ir = new(shader) exec_list;
    if (!state->error && !state->translation_unit.is_empty())
       _mesa_ast_to_hir(shader->ir, state);
@@ -2706,7 +2707,7 @@ _mesa_glsl_compile_shader(GLcontext *ctx, struct gl_shader *shader)
    }
 
    /* Retain any live IR, but trash the rest. */
-   reparent_ir(shader->ir, shader);
+   reparent_ir(shader->ir, shader->ir);
 
    talloc_free(state);
 
