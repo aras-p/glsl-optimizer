@@ -2212,10 +2212,12 @@ ir_to_mesa_visitor::ir_to_mesa_visitor()
    next_signature_id = 1;
    sampler_map = NULL;
    current_function = NULL;
+   mem_ctx = talloc_new(NULL);
 }
 
 ir_to_mesa_visitor::~ir_to_mesa_visitor()
 {
+   talloc_free(mem_ctx);
    if (this->sampler_map)
       hash_table_dtor(this->sampler_map);
 }
@@ -2444,8 +2446,6 @@ get_mesa_program(GLcontext *ctx, struct gl_shader_program *shader_program,
    prog->Attributes = _mesa_new_parameter_list();
    v.ctx = ctx;
    v.prog = prog;
-
-   v.mem_ctx = talloc_new(NULL);
 
    /* Emit Mesa IR for main(). */
    visit_exec_list(shader->ir, &v);
