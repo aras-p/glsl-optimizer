@@ -69,12 +69,20 @@ load_text_file(void *ctx, const char *file_name)
 }
 
 int
-main (void)
+main (int argc, char *argv[])
 {
+	char *filename = NULL;
 	void *ctx = talloc(NULL, void*);
-	const char *shader = load_text_file(ctx, NULL);
 	char *info_log = talloc_strdup(ctx, "");
-	int ret = preprocess(ctx, &shader, &info_log, NULL);
+	const char *shader;
+	int ret;
+
+	if (argc) {
+		filename = argv[1];
+	}
+
+	shader = load_text_file(ctx, filename);
+	ret = preprocess(ctx, &shader, &info_log, NULL);
 
 	printf("%s", shader);
 	fprintf(stderr, "%s", info_log);
