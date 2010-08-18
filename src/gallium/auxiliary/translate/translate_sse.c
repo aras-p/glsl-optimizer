@@ -96,7 +96,7 @@ struct translate_sse {
     */
    struct x86_reg tmp_EAX;
    struct x86_reg tmp2_EDX;
-   struct x86_reg tmp3_ECX;
+   struct x86_reg src_ECX;
    struct x86_reg idx_ESI;     /* either start+i or &elt[i] */
    struct x86_reg machine_EDI;
    struct x86_reg outbuf_EBX;
@@ -1052,7 +1052,7 @@ static boolean init_inputs( struct translate_sse *p,
 
             if (varient->instance_divisor != 1) {
                struct x86_reg tmp_EDX = p->tmp2_EDX;
-               struct x86_reg tmp_ECX = p->tmp3_ECX;
+               struct x86_reg tmp_ECX = p->src_ECX;
 
                /* TODO: Add x86_shr() to rtasm and use it whenever
                 *       instance divisor is power of two.
@@ -1108,7 +1108,7 @@ static struct x86_reg get_buffer_ptr( struct translate_sse *p,
       return p->idx_ESI;
    }
    else if (!index_size || p->buffer_varient[var_idx].instance_divisor) {
-      struct x86_reg ptr = p->tmp_EAX;
+      struct x86_reg ptr = p->src_ECX;
       struct x86_reg buf_ptr = 
          x86_make_disp(p->machine_EDI,
                        get_offset(p, &p->buffer_varient[var_idx].ptr));
@@ -1118,7 +1118,7 @@ static struct x86_reg get_buffer_ptr( struct translate_sse *p,
       return ptr;
    }
    else {
-      struct x86_reg ptr = p->tmp_EAX;
+      struct x86_reg ptr = p->src_ECX;
       const struct translate_buffer_varient *varient = &p->buffer_varient[var_idx];
 
       struct x86_reg buf_stride = 
@@ -1226,7 +1226,7 @@ static boolean build_vertex_emit( struct translate_sse *p,
    p->machine_EDI   = x86_make_reg(file_REG32, reg_DI);
    p->count_EBP     = x86_make_reg(file_REG32, reg_BP);
    p->tmp2_EDX     = x86_make_reg(file_REG32, reg_DX);
-   p->tmp3_ECX     = x86_make_reg(file_REG32, reg_CX);
+   p->src_ECX     = x86_make_reg(file_REG32, reg_CX);
 
    p->func = func;
    memset(&p->loaded_const, 0, sizeof(p->loaded_const));
