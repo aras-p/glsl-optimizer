@@ -65,6 +65,7 @@ static void r600_setup_miptree(struct r600_screen *rscreen, struct r600_resource
 	for (i = 0, offset = 0; i <= ptex->last_level; i++) {
 		w = u_minify(ptex->width0, i);
 		h = u_minify(ptex->height0, i);
+		h = util_next_power_of_two(h);
 		pitch = util_format_get_stride(ptex->format, align(w, 64));
 		layer_size = pitch * h;
 		if (ptex->target == PIPE_TEXTURE_CUBE)
