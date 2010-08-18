@@ -802,7 +802,7 @@ emit_store(
 
    case TGSI_FILE_PREDICATE:
       lp_exec_mask_store(&bld->exec_mask, pred, value,
-                         bld->preds[index][chan_index]);
+                         bld->preds[reg->Register.Index][chan_index]);
       break;
 
    default:
