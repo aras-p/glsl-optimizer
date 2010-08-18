@@ -51,7 +51,7 @@ public:
 				 hash_table_pointer_hash,
 				 hash_table_pointer_compare);
    }
-   ir_set_program_inouts_visitor()
+   ~ir_set_program_inouts_visitor()
    {
       hash_table_dtor(this->ht);
    }
