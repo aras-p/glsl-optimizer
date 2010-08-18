@@ -1076,7 +1076,7 @@ static const struct {
    {"gl_LightSource", "quadraticAttenuation",
     {STATE_LIGHT, 0, STATE_ATTENUATION}, SWIZZLE_ZZZZ, true},
 
-   {"gl_LightModel", NULL,
+   {"gl_LightModel", "ambient",
     {STATE_LIGHTMODEL_AMBIENT, 0}, SWIZZLE_XYZW, false},
 
    {"gl_FrontLightModelProduct", "sceneColor",
