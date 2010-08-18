@@ -1316,4 +1316,11 @@
 #define   G_0286D4_PNT_SPRITE_TOP_1(x)                 (((x) >> 14) & 0x1)
 #define   C_0286D4_PNT_SPRITE_TOP_1                    0xFFFFBFFF
 
+#define SQ_TEX_INST_LD 0x03
+#define SQ_TEX_INST_GET_GRADIENTS_H 0x7
+#define SQ_TEX_INST_GET_GRADIENTS_V 0x8
+
+#define SQ_TEX_INST_SAMPLE 0x10
+#define SQ_TEX_INST_SAMPLE_L 0x11
+#define SQ_TEX_INST_SAMPLE_C 0x18
 #endif

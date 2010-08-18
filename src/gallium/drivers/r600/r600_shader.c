@@ -1035,73 +1035,68 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 	struct r600_bc_tex tex;
 	struct r600_bc_alu alu;
 	unsigned src_gpr;
-	int r;
+	int r, i;
 
 	src_gpr = ctx->file_offset[inst->Src[0].Register.File] + inst->Src[0].Register.Index;
 
-	/* Add perspective divide */
-	memset(&alu, 0, sizeof(struct r600_bc_alu));
-	alu.inst = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_IEEE;
-	alu.src[0].sel = src_gpr;
-	alu.src[0].chan = tgsi_chan(&inst->Src[0], 3);
-	alu.dst.sel = ctx->temp_reg;
-	alu.dst.chan = 3;
-	alu.last = 1;
-	alu.dst.write = 1;
-	r = r600_bc_add_alu(ctx->bc, &alu);
-	if (r)
-		return r;
+	if (inst->Instruction.Opcode == TGSI_OPCODE_TXP) {
+		/* Add perspective divide */
+		memset(&alu, 0, sizeof(struct r600_bc_alu));
+		alu.inst = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_IEEE;
+		alu.src[0].sel = src_gpr;
+		alu.src[0].chan = tgsi_chan(&inst->Src[0], 3);
+		alu.dst.sel = ctx->temp_reg;
+		alu.dst.chan = 3;
+		alu.last = 1;
+		alu.dst.write = 1;
+		r = r600_bc_add_alu(ctx->bc, &alu);
+		if (r)
+			return r;
+		
+		for (i = 0; i < 3; i++) {
+			memset(&alu, 0, sizeof(struct r600_bc_alu));
+			alu.inst = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MUL;
+			alu.src[0].sel = ctx->temp_reg;
+			alu.src[0].chan = 3;
+			alu.src[1].sel = src_gpr;
+			alu.src[1].chan = tgsi_chan(&inst->Src[0], i);
+			alu.dst.sel = ctx->temp_reg;
+			alu.dst.chan = i;
+			alu.dst.write = 1;
+			r = r600_bc_add_alu(ctx->bc, &alu);
+			if (r)
+				return r;
+		}
+		memset(&alu, 0, sizeof(struct r600_bc_alu));
+		alu.inst = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOV;
+		alu.src[0].sel = 249;
+		alu.src[0].chan = 0;
+		alu.dst.sel = ctx->temp_reg;
+		alu.dst.chan = 3;
+		alu.last = 1;
+		alu.dst.write = 1;
+		r = r600_bc_add_alu(ctx->bc, &alu);
+		if (r)
+			return r;
+		src_gpr = ctx->temp_reg;
+	} else if (inst->Src[0].Register.File != TGSI_FILE_TEMPORARY) {
+		for (i = 0; i < 4; i++) {
+			memset(&alu, 0, sizeof(struct r600_bc_alu));
+			alu.inst = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOV;
+			alu.src[0].sel = src_gpr;
+			alu.src[0].chan = i;
+			alu.dst.sel = ctx->temp_reg;
+			alu.dst.chan = i;
+			if (i == 3)
+				alu.last = 1;
+			alu.dst.write = 1;
+			r = r600_bc_add_alu(ctx->bc, &alu);
+			if (r)
+				return r;
+		}
+		src_gpr = ctx->temp_reg;
+	}
 
-	memset(&alu, 0, sizeof(struct r600_bc_alu));
-	alu.inst = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MUL;
-	alu.src[0].sel = ctx->temp_reg;
-	alu.src[0].chan = 3;
-	alu.src[1].sel = src_gpr;
-	alu.src[1].chan = tgsi_chan(&inst->Src[0], 0);
-	alu.dst.sel = ctx->temp_reg;
-	alu.dst.chan = 0;
-	alu.dst.write = 1;
-	r = r600_bc_add_alu(ctx->bc, &alu);
-	if (r)
-		return r;
-	memset(&alu, 0, sizeof(struct r600_bc_alu));
-	alu.inst = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MUL;
-	alu.src[0].sel = ctx->temp_reg;
-	alu.src[0].chan = 3;
-	alu.src[1].sel = src_gpr;
-	alu.src[1].chan = tgsi_chan(&inst->Src[0], 1);
-	alu.dst.sel = ctx->temp_reg;
-	alu.dst.chan = 1;
-	alu.dst.write = 1;
-	r = r600_bc_add_alu(ctx->bc, &alu);
-	if (r)
-		return r;
-	memset(&alu, 0, sizeof(struct r600_bc_alu));
-	alu.inst = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MUL;
-	alu.src[0].sel = ctx->temp_reg;
-	alu.src[0].chan = 3;
-	alu.src[1].sel = src_gpr;
-	alu.src[1].chan = tgsi_chan(&inst->Src[0], 2);
-	alu.dst.sel = ctx->temp_reg;
-	alu.dst.chan = 2;
-	alu.dst.write = 1;
-	r = r600_bc_add_alu(ctx->bc, &alu);
-	if (r)
-		return r;
-	memset(&alu, 0, sizeof(struct r600_bc_alu));
-	alu.inst = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOV;
-	alu.src[0].sel = 249;
-	alu.src[0].chan = 0;
-	alu.dst.sel = ctx->temp_reg;
-	alu.dst.chan = 3;
-	alu.last = 1;
-	alu.dst.write = 1;
-	r = r600_bc_add_alu(ctx->bc, &alu);
-	if (r)
-		return r;
-	src_gpr = ctx->temp_reg;
-
-	/* TODO use temp if src_gpr is not a temporary reg (File != TEMPORARY) */
 	memset(&tex, 0, sizeof(struct r600_bc_tex));
 	tex.inst = ctx->inst_info->r600_opcode;
 	tex.resource_id = ctx->file_offset[inst->Src[1].Register.File] + inst->Src[1].Register.Index;
@@ -1261,9 +1256,9 @@ static struct r600_shader_tgsi_instruction r600_shader_tgsi_instruction[] = {
 	{TGSI_OPCODE_SLE,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_SNE,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_STR,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
-	{TGSI_OPCODE_TEX,	0, 0x10, tgsi_tex},
+	{TGSI_OPCODE_TEX,	0, SQ_TEX_INST_SAMPLE, tgsi_tex},
 	{TGSI_OPCODE_TXD,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
-	{TGSI_OPCODE_TXP,	0, 0x10, tgsi_tex},
+	{TGSI_OPCODE_TXP,	0, SQ_TEX_INST_SAMPLE, tgsi_tex},
 	{TGSI_OPCODE_UP2H,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_UP2US,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_UP4B,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
