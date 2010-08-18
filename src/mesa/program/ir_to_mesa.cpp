@@ -2691,10 +2691,18 @@ _mesa_glsl_compile_shader(GLcontext *ctx, struct gl_shader *shader)
       _mesa_write_shader_to_file(shader);
    }
 
-   if ((ctx->Shader.Flags & GLSL_DUMP) && shader->CompileStatus) {
-      printf("GLSL IR for shader %d:\n", shader->Name);
-      _mesa_print_ir(shader->ir, NULL);
-      printf("\n\n");
+   if (ctx->Shader.Flags & GLSL_DUMP) {
+      if (shader->CompileStatus) {
+	 printf("GLSL IR for shader %d:\n", shader->Name);
+	 _mesa_print_ir(shader->ir, NULL);
+	 printf("\n\n");
+      } else {
+	 printf("GLSL shader %d failed to compile.\n", shader->Name);
+      }
+      if (shader->InfoLog && shader->InfoLog[0] != 0) {
+	 printf("GLSL shader %d info log:\n", shader->Name);
+	 printf("%s\n", shader->InfoLog);
+      }
    }
 
    /* Retain any live IR, but trash the rest. */
@@ -2741,8 +2749,15 @@ _mesa_glsl_link_shader(GLcontext *ctx, struct gl_shader_program *prog)
    }
 
    if (prog->LinkStatus) {
-      if (!ctx->Driver.LinkShader(ctx, prog))
+      if (!ctx->Driver.LinkShader(ctx, prog)) {
 	 prog->LinkStatus = GL_FALSE;
+	 printf("GLSL shader program %d failed to link\n", prog->Name);
+      }
+
+      if (prog->InfoLog && prog->InfoLog[0] != 0) {
+	 printf("GLSL shader program %d info log:\n", prog->Name);
+	 printf("%s\n", prog->InfoLog);
+      }
    }
 }
 
