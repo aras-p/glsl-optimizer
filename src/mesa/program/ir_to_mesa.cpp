@@ -2266,8 +2266,8 @@ set_branchtargets(ir_to_mesa_visitor *v,
       }
    }
 
-   if_stack = (int *)calloc(if_count, sizeof(*if_stack));
-   loop_stack = (int *)calloc(loop_count, sizeof(*loop_stack));
+   if_stack = talloc_zero_array(v->mem_ctx, int, if_count);
+   loop_stack = talloc_zero_array(v->mem_ctx, int, loop_count);
 
    for (i = 0; i < num_instructions; i++) {
       switch (mesa_instructions[i].Opcode) {
@@ -2319,8 +2319,6 @@ set_branchtargets(ir_to_mesa_visitor *v,
 	 break;
       }
    }
-
-   free(if_stack);
 }
 
 static void
