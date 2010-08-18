@@ -26,6 +26,7 @@
 
 ir_hierarchical_visitor::ir_hierarchical_visitor()
 {
+   this->base_ir = NULL;
    this->callback = NULL;
    this->data = NULL;
 }
