@@ -1079,9 +1079,9 @@ static const struct {
    {"gl_LightModel", NULL,
     {STATE_LIGHTMODEL_AMBIENT, 0}, SWIZZLE_XYZW, false},
 
-   {"gl_FrontLightModelProduct", NULL,
+   {"gl_FrontLightModelProduct", "sceneColor",
     {STATE_LIGHTMODEL_SCENECOLOR, 0}, SWIZZLE_XYZW, false},
-   {"gl_BackLightModelProduct", NULL,
+   {"gl_BackLightModelProduct", "sceneColor",
     {STATE_LIGHTMODEL_SCENECOLOR, 1}, SWIZZLE_XYZW, false},
 
    {"gl_FrontLightProduct", "ambient",
