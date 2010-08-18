@@ -360,6 +360,7 @@ i915_texture_layout(struct i915_texture * tex)
    switch (pt->target) {
    case PIPE_TEXTURE_1D:
    case PIPE_TEXTURE_2D:
+   case PIPE_TEXTURE_RECT:
       if (!i9x5_special_layout(tex))
          i915_texture_layout_2d(tex);
       break;
@@ -605,6 +606,7 @@ i945_texture_layout(struct i915_texture * tex)
    switch (pt->target) {
    case PIPE_TEXTURE_1D:
    case PIPE_TEXTURE_2D:
+   case PIPE_TEXTURE_RECT:
       if (!i9x5_special_layout(tex))
          i945_texture_layout_2d(tex);
       break;
@@ -829,7 +831,8 @@ i915_texture_from_handle(struct pipe_screen * screen,
    buffer = iws->buffer_from_handle(iws, whandle, &stride);
 
    /* Only supports one type */
-   if (template->target != PIPE_TEXTURE_2D ||
+   if ((template->target != PIPE_TEXTURE_2D &&
+       template->target != PIPE_TEXTURE_RECT) ||
        template->last_level != 0 ||
        template->depth0 != 1) {
       return NULL;

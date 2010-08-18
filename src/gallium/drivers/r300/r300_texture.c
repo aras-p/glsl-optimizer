@@ -754,7 +754,8 @@ struct pipe_resource *r300_texture_create(struct pipe_screen *screen,
     /* Refuse to create a texture with size 0. */
     if (!base->width0 ||
         (!base->height0 && (base->target == PIPE_TEXTURE_2D ||
-                            base->target == PIPE_TEXTURE_CUBE)) ||
+                            base->target == PIPE_TEXTURE_CUBE ||
+                            base->target == PIPE_TEXTURE_RECT)) ||
         (!base->depth0 && base->target == PIPE_TEXTURE_3D)) {
         fprintf(stderr, "r300: texture_create: "
                 "Got invalid texture dimensions: %ix%ix%i\n",
@@ -787,7 +788,8 @@ struct pipe_resource *r300_texture_from_handle(struct pipe_screen *screen,
     unsigned stride, size;
 
     /* Support only 2D textures without mipmaps */
-    if (base->target != PIPE_TEXTURE_2D ||
+    if ((base->target != PIPE_TEXTURE_2D &&
+          base->target != PIPE_TEXTURE_RECT) ||
         base->depth0 != 1 ||
         base->last_level != 0) {
         return NULL;

@@ -761,7 +761,7 @@ st_Bitmap(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
    if (pt) {
       struct pipe_sampler_view *sv = st_create_texture_sampler_view(st->pipe, pt);
 
-      assert(pt->target == PIPE_TEXTURE_2D);
+      assert(pt->target == PIPE_TEXTURE_2D || pt->target == PIPE_TEXTURE_RECT);
 
       if (sv) {
          draw_bitmap_quad(ctx, x, y, ctx->Current.RasterPos[2],

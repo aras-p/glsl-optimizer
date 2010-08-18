@@ -67,6 +67,7 @@ resource_is_texture(const struct pipe_resource *resource)
       return FALSE;
    case PIPE_TEXTURE_1D:
    case PIPE_TEXTURE_2D:
+   case PIPE_TEXTURE_RECT:
    case PIPE_TEXTURE_3D:
    case PIPE_TEXTURE_CUBE:
       return TRUE;

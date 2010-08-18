@@ -116,6 +116,7 @@ nv30_fragtex_set(struct nvfx_context *nvfx, int unit)
 		txf |= NV34TCL_TX_FORMAT_CUBIC;
 		/* fall-through */
 	case PIPE_TEXTURE_2D:
+	case PIPE_TEXTURE_RECT:
 		txf |= NV34TCL_TX_FORMAT_DIMS_2D;
 		break;
 	case PIPE_TEXTURE_3D:

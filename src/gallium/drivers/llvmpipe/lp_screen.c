@@ -230,6 +230,7 @@ llvmpipe_is_format_supported( struct pipe_screen *_screen,
    assert(target == PIPE_BUFFER ||
           target == PIPE_TEXTURE_1D ||
           target == PIPE_TEXTURE_2D ||
+          target == PIPE_TEXTURE_RECT ||
           target == PIPE_TEXTURE_3D ||
           target == PIPE_TEXTURE_CUBE);
 

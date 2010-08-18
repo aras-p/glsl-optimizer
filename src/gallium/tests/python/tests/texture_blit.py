@@ -55,7 +55,7 @@ def tex_coords(texture, face, level, zslice):
         [0.0, 1.0],
     ] 
     
-    if texture.target == PIPE_TEXTURE_2D:
+    if texture.target == PIPE_TEXTURE_2D or texture.target == PIPE_TEXTURE_RECT:
         return [[s, t, 0.0] for s, t in st]
     elif texture.target == PIPE_TEXTURE_3D:
         depth = texture.get_depth(level)

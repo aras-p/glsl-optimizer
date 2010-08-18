@@ -176,6 +176,7 @@ texture_dims(enum pipe_texture_target tex)
    case PIPE_TEXTURE_1D:
       return 1;
    case PIPE_TEXTURE_2D:
+   case PIPE_TEXTURE_RECT:
    case PIPE_TEXTURE_CUBE:
       return 2;
    case PIPE_TEXTURE_3D:
@@ -1749,7 +1750,8 @@ lp_build_sample_2d_linear_aos(struct lp_build_sample_context *bld,
    LLVMValueRef unswizzled[4];
    LLVMValueRef stride;
 
-   assert(bld->static_state->target == PIPE_TEXTURE_2D);
+   assert(bld->static_state->target == PIPE_TEXTURE_2D
+         || bld->static_state->target == PIPE_TEXTURE_RECT);
    assert(bld->static_state->min_img_filter == PIPE_TEX_FILTER_LINEAR);
    assert(bld->static_state->mag_img_filter == PIPE_TEX_FILTER_LINEAR);
    assert(bld->static_state->min_mip_filter == PIPE_TEX_MIPFILTER_NONE);
@@ -2077,7 +2079,8 @@ lp_build_sample_soa(LLVMBuilderRef builder,
    }
    else if (util_format_fits_8unorm(bld.format_desc) &&
             bld.format_desc->nr_channels > 1 &&
-            static_state->target == PIPE_TEXTURE_2D &&
+            (static_state->target == PIPE_TEXTURE_2D ||
+                  static_state->target == PIPE_TEXTURE_RECT) &&
             static_state->min_img_filter == PIPE_TEX_FILTER_LINEAR &&
             static_state->mag_img_filter == PIPE_TEX_FILTER_LINEAR &&
             static_state->min_mip_filter == PIPE_TEX_MIPFILTER_NONE &&

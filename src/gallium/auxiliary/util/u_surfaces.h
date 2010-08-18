@@ -22,7 +22,7 @@ struct pipe_surface *util_surfaces_do_get(struct util_surfaces *us, unsigned sur
 static INLINE struct pipe_surface *
 util_surfaces_get(struct util_surfaces *us, unsigned surface_struct_size, struct pipe_screen *pscreen, struct pipe_resource *pt, unsigned face, unsigned level, unsigned zslice, unsigned flags)
 {
-   if(likely(pt->target == PIPE_TEXTURE_2D && us->u.array))
+   if(likely((pt->target == PIPE_TEXTURE_2D || pt->target == PIPE_TEXTURE_RECT) && us->u.array))
    {
       struct pipe_surface *ps = us->u.array[level];
       if(ps)
@@ -52,7 +52,7 @@ void util_surfaces_do_detach(struct util_surfaces *us, struct pipe_surface *ps);
 static INLINE void
 util_surfaces_detach(struct util_surfaces *us, struct pipe_surface *ps)
 {
-   if(likely(ps->texture->target == PIPE_TEXTURE_2D))
+   if(likely(ps->texture->target == PIPE_TEXTURE_2D || ps->texture->target == PIPE_TEXTURE_RECT))
    {
       us->u.array[ps->level] = 0;
       return;

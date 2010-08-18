@@ -569,6 +569,8 @@ pipe_tex_to_tgsi_tex(enum pipe_texture_target pipe_tex_target)
       return TGSI_TEXTURE_1D;
    case PIPE_TEXTURE_2D:
       return TGSI_TEXTURE_2D;
+   case PIPE_TEXTURE_RECT:
+      return TGSI_TEXTURE_2D;
    case PIPE_TEXTURE_3D:
       return TGSI_TEXTURE_3D;
    case PIPE_TEXTURE_CUBE:
@@ -807,6 +809,7 @@ void util_blitter_copy_region(struct blitter_context *blitter,
       /* Draw the quad with the draw_rectangle callback. */
       case PIPE_TEXTURE_1D:
       case PIPE_TEXTURE_2D:
+      case PIPE_TEXTURE_RECT:
          {
             /* Set texture coordinates. */
             float coord[4];

@@ -1199,6 +1199,7 @@ static inline unsigned r600_tex_dim(unsigned dim)
 	case PIPE_TEXTURE_1D:
 		return V_038000_SQ_TEX_DIM_1D;
 	case PIPE_TEXTURE_2D:
+	case PIPE_TEXTURE_RECT:
 		return V_038000_SQ_TEX_DIM_2D;
 	case PIPE_TEXTURE_3D:
 		return V_038000_SQ_TEX_DIM_3D;

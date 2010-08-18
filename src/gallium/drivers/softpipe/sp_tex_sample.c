@@ -1785,6 +1785,7 @@ get_lambda_func(const union sp_sampler_key key)
    case PIPE_TEXTURE_1D:
       return compute_lambda_1d;
    case PIPE_TEXTURE_2D:
+   case PIPE_TEXTURE_RECT:
    case PIPE_TEXTURE_CUBE:
       return compute_lambda_2d;
    case PIPE_TEXTURE_3D:
@@ -1809,6 +1810,7 @@ get_img_filter(const union sp_sampler_key key,
          return img_filter_1d_linear;
       break;
    case PIPE_TEXTURE_2D:
+   case PIPE_TEXTURE_RECT:
       /* Try for fast path:
        */
       if (key.bits.is_pot &&

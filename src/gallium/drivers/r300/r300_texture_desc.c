@@ -184,7 +184,8 @@ static unsigned r300_texture_get_nblocksy(struct r300_texture_desc *desc,
 
         /* This is needed for the kernel checker, unfortunately. */
         if ((desc->b.b.target != PIPE_TEXTURE_1D &&
-             desc->b.b.target != PIPE_TEXTURE_2D) ||
+             desc->b.b.target != PIPE_TEXTURE_2D &&
+             desc->b.b.target != PIPE_TEXTURE_RECT) ||
             desc->b.b.last_level != 0) {
             height = util_next_power_of_two(height);
         }
@@ -202,7 +203,8 @@ static unsigned r300_texture_get_nblocksy(struct r300_texture_desc *desc,
                  * Do so for 3 or more macrotiles in the Y direction. */
                 if (level == 0 && desc->b.b.last_level == 0 &&
                     (desc->b.b.target == PIPE_TEXTURE_1D ||
-                     desc->b.b.target == PIPE_TEXTURE_2D) &&
+                     desc->b.b.target == PIPE_TEXTURE_2D ||
+                     desc->b.b.target == PIPE_TEXTURE_RECT) &&
                     height >= tile_height * 3) {
                     height = align(height, tile_height * 2);
                 }

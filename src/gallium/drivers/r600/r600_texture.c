@@ -170,7 +170,8 @@ struct pipe_resource *r600_texture_from_handle(struct pipe_screen *screen,
 	}
 
 	/* Support only 2D textures without mipmaps */
-	if (templ->target != PIPE_TEXTURE_2D || templ->depth0 != 1 || templ->last_level != 0)
+	if ((templ->target != PIPE_TEXTURE_2D && templ->target != PIPE_TEXTURE_RECT) ||
+	      templ->depth0 != 1 || templ->last_level != 0)
 		return NULL;
 
 	rtex = CALLOC_STRUCT(r600_resource_texture);
