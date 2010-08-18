@@ -1217,7 +1217,7 @@ static struct radeon_state *r600_resource(struct r600_context *rctx,
 	struct r600_resource *rbuffer;
 	struct radeon_state *rstate;
 	unsigned format;
-	uint32_t word4 = 0, yuv_format = 0;
+	uint32_t word4 = 0, yuv_format = 0, pitch = 0;
 	unsigned char swizzle[4];
 
 	swizzle[0] = view->swizzle_r;
@@ -1248,16 +1248,19 @@ static struct radeon_state *r600_resource(struct r600_context *rctx,
 	rstate->placement[2] = RADEON_GEM_DOMAIN_GTT;
 	rstate->placement[3] = RADEON_GEM_DOMAIN_GTT;
 
+	pitch = (tmp->pitch[0] / tmp->bpt);
+	pitch = (pitch + 0x7) & ~0x7;
+	
 	/* FIXME properly handle first level != 0 */
 	rstate->states[R600_PS_RESOURCE__RESOURCE0_WORD0] =
 			S_038000_DIM(r600_tex_dim(view->texture->target)) |
-			S_038000_PITCH(((tmp->pitch[0] / tmp->bpt) / 8) - 1) |
+	                S_038000_PITCH((pitch / 8) - 1) |
 			S_038000_TEX_WIDTH(view->texture->width0 - 1);
 	rstate->states[R600_PS_RESOURCE__RESOURCE0_WORD1] =
 			S_038004_TEX_HEIGHT(view->texture->height0 - 1) |
 			S_038004_TEX_DEPTH(view->texture->depth0 - 1) |
 			S_038004_DATA_FORMAT(format);
-	rstate->states[R600_PS_RESOURCE__RESOURCE0_WORD2] = 0;
+	rstate->states[R600_PS_RESOURCE__RESOURCE0_WORD2] = tmp->offset[0] >> 8;
 	rstate->states[R600_PS_RESOURCE__RESOURCE0_WORD3] = tmp->offset[1] >> 8;
 	rstate->states[R600_PS_RESOURCE__RESOURCE0_WORD4] =
 		        word4 | 
