@@ -2740,7 +2740,7 @@ _mesa_glsl_link_shader(GLcontext *ctx, struct gl_shader_program *prog)
    _mesa_reference_fragprog(ctx, &prog->FragmentProgram, NULL);
 
    if (prog->LinkStatus) {
-      link_shaders(prog);
+      link_shaders(ctx, prog);
 
       /* We don't use the linker's uniforms list, and cook up our own at
        * generate time.

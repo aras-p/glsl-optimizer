@@ -674,7 +674,8 @@ get_main_function_signature(gl_shader *sh)
  * shader is returned.
  */
 static struct gl_shader *
-link_intrastage_shaders(struct gl_shader_program *prog,
+link_intrastage_shaders(GLcontext *ctx,
+			struct gl_shader_program *prog,
 			struct gl_shader **shader_list,
 			unsigned num_shaders)
 {
@@ -747,7 +748,7 @@ link_intrastage_shaders(struct gl_shader_program *prog,
       return NULL;
    }
 
-   gl_shader *const linked = _mesa_new_shader(NULL, 0, main->Type);
+   gl_shader *const linked = ctx->Driver.NewShader(NULL, 0, main->Type);
    linked->ir = new(linked) exec_list;
    clone_ir_list(linked, linked->ir, main->ir);
 
@@ -1212,7 +1213,7 @@ assign_varying_locations(struct gl_shader_program *prog,
 
 
 void
-link_shaders(struct gl_shader_program *prog)
+link_shaders(GLcontext *ctx, struct gl_shader_program *prog)
 {
    prog->LinkStatus = false;
    prog->Validated = false;
@@ -1270,12 +1271,16 @@ link_shaders(struct gl_shader_program *prog)
 
    prog->Version = max_version;
 
+   for (unsigned int i = 0; i < prog->_NumLinkedShaders; i++) {
+      ctx->Driver.DeleteShader(ctx, prog->_LinkedShaders[i]);
+   }
+
    /* Link all shaders for a particular stage and validate the result.
     */
    prog->_NumLinkedShaders = 0;
    if (num_vert_shaders > 0) {
       gl_shader *const sh =
-	 link_intrastage_shaders(prog, vert_shader_list, num_vert_shaders);
+	 link_intrastage_shaders(ctx, prog, vert_shader_list, num_vert_shaders);
 
       if (sh == NULL)
 	 goto done;
@@ -1289,7 +1294,7 @@ link_shaders(struct gl_shader_program *prog)
 
    if (num_frag_shaders > 0) {
       gl_shader *const sh =
-	 link_intrastage_shaders(prog, frag_shader_list, num_frag_shaders);
+	 link_intrastage_shaders(ctx, prog, frag_shader_list, num_frag_shaders);
 
       if (sh == NULL)
 	 goto done;

@@ -209,6 +209,10 @@ int
 main(int argc, char **argv)
 {
    int status = EXIT_SUCCESS;
+   GLcontext local_ctx;
+   GLcontext *ctx = &local_ctx;
+
+   ctx->Driver.NewShader = _mesa_new_shader;
 
    int c;
    int idx = 0;
@@ -265,7 +269,7 @@ main(int argc, char **argv)
    }
 
    if ((status == EXIT_SUCCESS) && do_link)  {
-      link_shaders(whole_program);
+      link_shaders(ctx, whole_program);
       status = (whole_program->LinkStatus) ? EXIT_SUCCESS : EXIT_FAILURE;
 
       if (strlen(whole_program->InfoLog) > 0)
