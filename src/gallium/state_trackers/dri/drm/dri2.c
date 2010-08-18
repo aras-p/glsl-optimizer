@@ -195,7 +195,7 @@ dri2_drawable_process_buffers(struct dri_drawable *drawable,
       pipe_resource_reference(&drawable->textures[i], NULL);
 
    memset(&templ, 0, sizeof(templ));
-   templ.target = PIPE_TEXTURE_2D;
+   templ.target = screen->target;
    templ.last_level = 0;
    templ.width0 = dri_drawable->w;
    templ.height0 = dri_drawable->h;
@@ -342,7 +342,7 @@ dri2_create_image_from_name(__DRIcontext *context,
    memset(&templ, 0, sizeof(templ));
    templ.bind = tex_usage;
    templ.format = pf;
-   templ.target = PIPE_TEXTURE_2D;
+   templ.target = screen->target;
    templ.last_level = 0;
    templ.width0 = width;
    templ.height0 = height;

@@ -216,7 +216,7 @@ drisw_allocate_textures(struct dri_drawable *drawable,
    }
 
    memset(&templ, 0, sizeof(templ));
-   templ.target = PIPE_TEXTURE_2D;
+   templ.target = screen->target;
    templ.width0 = width;
    templ.height0 = height;
    templ.depth0 = 1;
