@@ -314,6 +314,12 @@ _mesa_free_shader_program_data(GLcontext *ctx,
    free(shProg->TransformFeedback.VaryingNames);
    shProg->TransformFeedback.VaryingNames = NULL;
    shProg->TransformFeedback.NumVarying = 0;
+
+
+   for (i = 0; i < shProg->_NumLinkedShaders; i++) {
+      ctx->Driver.DeleteShader(ctx, shProg->_LinkedShaders[i]);
+   }
+   shProg->_NumLinkedShaders = 0;
 }
 
 
