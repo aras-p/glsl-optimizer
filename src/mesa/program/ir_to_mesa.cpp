@@ -1145,7 +1145,7 @@ get_builtin_uniform_reg(struct gl_program *prog,
       if (!field && statevars[i].field) {
 	 assert(!"FINISHME: whole-structure state var dereference");
       }
-      if (field && strcmp(statevars[i].field, field) != 0)
+      if (field && (!statevars[i].field || strcmp(statevars[i].field, field) != 0))
 	 continue;
       break;
    }
