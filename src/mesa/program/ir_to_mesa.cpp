@@ -2129,11 +2129,11 @@ ir_to_mesa_visitor::visit(ir_texture *ir)
 void
 ir_to_mesa_visitor::visit(ir_return *ir)
 {
-   assert(current_function);
-
    if (ir->get_value()) {
       ir_to_mesa_dst_reg l;
       int i;
+
+      assert(current_function);
 
       ir->get_value()->accept(this);
       ir_to_mesa_src_reg r = this->result;
