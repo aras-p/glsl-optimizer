@@ -714,6 +714,9 @@ static void driDestroyScreen(__DRIscreen *psp)
 	   (void)drmUnmap((drmAddress)psp->pSAREA, SAREA_MAX);
 	   (void)drmUnmap((drmAddress)psp->pFB, psp->fbSize);
 	   (void)drmCloseOnce(psp->fd);
+	} else {
+	   driDestroyOptionCache(&psp->optionCache);
+	   driDestroyOptionInfo(&psp->optionInfo);
 	}
 
 	free(psp);
@@ -839,7 +842,6 @@ dri2CreateNewScreen(int scrn, int fd,
     static const __DRIextension *emptyExtensionList[] = { NULL };
     __DRIscreen *psp;
     drmVersionPtr version;
-    driOptionCache options;
 
     if (driDriverAPI.InitScreen2 == NULL)
         return NULL;
@@ -873,8 +875,10 @@ dri2CreateNewScreen(int scrn, int fd,
 
     psp->DriverAPI = driDriverAPI;
 
-    driParseOptionInfo(&options, __dri2ConfigOptions, __dri2NConfigOptions);
-    driParseConfigFiles(&psp->optionCache, &options, psp->myNum, "dri2");
+    driParseOptionInfo(&psp->optionInfo, __dri2ConfigOptions,
+		       __dri2NConfigOptions);
+    driParseConfigFiles(&psp->optionCache, &psp->optionInfo, psp->myNum,
+			"dri2");
 
     return psp;
 }

@@ -536,6 +536,7 @@ struct __DRIscreenRec {
     /* The lock actually in use, old sarea or DRI2 */
     drmLock *lock;
 
+    driOptionCache optionInfo;
     driOptionCache optionCache;
    unsigned int api_mask;
 };
