@@ -625,6 +625,7 @@ GLboolean assemble_LOGIC_PRED(r700_AssemblerBase *pAsm, BITS opcode);
 GLboolean assemble_TRIG(r700_AssemblerBase *pAsm, BITS opcode);
 
 GLboolean assemble_SLT(r700_AssemblerBase *pAsm);
+GLboolean assemble_SSG(r700_AssemblerBase *pAsm);
 GLboolean assemble_STP(r700_AssemblerBase *pAsm);
 GLboolean assemble_TEX(r700_AssemblerBase *pAsm);
 GLboolean assemble_XPD(r700_AssemblerBase *pAsm);

@@ -4369,6 +4369,65 @@ GLboolean assemble_SLT(r700_AssemblerBase *pAsm)
     return GL_TRUE;
 }
  
+GLboolean assemble_SSG(r700_AssemblerBase *pAsm)
+{
+    checkop1(pAsm);
+    
+    GLuint tmp = gethelpr(pAsm);
+    /* tmp = (src > 0 ? 1 : src) */
+    pAsm->D.dst.opcode = SQ_OP3_INST_CNDGT;
+    pAsm->D.dst.op3    = 1;
+    pAsm->D.dst.rtype = DST_REG_TEMPORARY;
+    pAsm->D.dst.reg   = tmp;
+
+    if( GL_FALSE == assemble_src(pAsm, 0, -1) )
+    {
+        return GL_FALSE;
+    }
+
+    setswizzle_PVSSRC(&(pAsm->S[1].src), SQ_SEL_1);
+
+    if( GL_FALSE == assemble_src(pAsm, 0, 2) )
+    {
+        return GL_FALSE;
+    }
+
+    if( GL_FALSE == next_ins(pAsm) )
+    {
+        return GL_FALSE;
+    }
+
+    /* dst = (-tmp > 0 ? -1 : tmp) */
+    pAsm->D.dst.opcode = SQ_OP3_INST_CNDGT;
+    pAsm->D.dst.op3    = 1;
+
+    if( GL_FALSE == assemble_dst(pAsm) )
+    {
+        return GL_FALSE;
+    }
+
+    setaddrmode_PVSSRC(&(pAsm->S[0].src), ADDR_ABSOLUTE);
+    pAsm->S[0].src.rtype = SRC_REG_TEMPORARY;
+    pAsm->S[0].src.reg   = tmp;
+    noswizzle_PVSSRC(&(pAsm->S[0].src));
+    neg_PVSSRC(&(pAsm->S[0].src));
+
+    setswizzle_PVSSRC(&(pAsm->S[1].src), SQ_SEL_1);
+    neg_PVSSRC(&(pAsm->S[1].src));
+
+    setaddrmode_PVSSRC(&(pAsm->S[2].src), ADDR_ABSOLUTE);
+    pAsm->S[2].src.rtype = SRC_REG_TEMPORARY;
+    pAsm->S[2].src.reg   = tmp;
+    noswizzle_PVSSRC(&(pAsm->S[2].src));
+
+    if( GL_FALSE == next_ins(pAsm) )
+    {
+        return GL_FALSE;
+    }
+
+    return GL_TRUE;
+}
+
 GLboolean assemble_STP(r700_AssemblerBase *pAsm) 
 {
     return GL_TRUE;
@@ -5892,6 +5951,13 @@ GLboolean AssembleInstr(GLuint uiFirstInst,
         //    if ( GL_FALSE == assemble_STP(pR700AsmCode) ) 
         //        return GL_FALSE;
         //    break;
+
+        case OPCODE_SSG:
+            if ( GL_FALSE == assemble_SSG(pR700AsmCode) )
+            {
+                return GL_FALSE;
+            }
+            break;
 
         case OPCODE_SWZ: 
             if ( GL_FALSE == assemble_MOV(pR700AsmCode) ) 
