@@ -707,6 +707,8 @@ static void driDestroyScreen(__DRIscreen *psp)
 	 * stream open to the X-server anymore.
 	 */
 
+       _mesa_destroy_shader_compiler();
+
 	if (psp->DriverAPI.DestroyScreen)
 	    (*psp->DriverAPI.DestroyScreen)(psp);
 
