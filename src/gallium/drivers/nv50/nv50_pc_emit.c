@@ -596,8 +596,12 @@ emit_interp(struct nv_pc *pc, struct nv_instruction *i)
    if (i->centroid)
       pc->emit[0] |= 1 << 24;
 
+   assert(i->is_long || !i->flags_src);
+
    if (i->is_long) {
-      pc->emit[1] |= 0x0780 |
+      set_pred(pc, i);
+
+      pc->emit[1] |=
 	      (pc->emit[0] & (3 << 24)) >> (24 - 16) |
 	      (pc->emit[0] & (1 <<  8)) >> (18 -  8);
 
