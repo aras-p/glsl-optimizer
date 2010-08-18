@@ -2395,11 +2395,17 @@ ast_selection_statement::hir(exec_list *instructions,
 
    ir_if *const stmt = new(ctx) ir_if(condition);
 
-   if (then_statement != NULL)
+   if (then_statement != NULL) {
+      state->symbols->push_scope();
       then_statement->hir(& stmt->then_instructions, state);
+      state->symbols->pop_scope();
+   }
 
-   if (else_statement != NULL)
+   if (else_statement != NULL) {
+      state->symbols->push_scope();
       else_statement->hir(& stmt->else_instructions, state);
+      state->symbols->pop_scope();
+   }
 
    instructions->push_tail(stmt);
 
