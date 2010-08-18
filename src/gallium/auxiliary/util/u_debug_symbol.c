@@ -33,10 +33,12 @@
  */
 
 #include "pipe/p_compiler.h"
+#include "os/os_thread.h"
 #include "u_string.h"
 
 #include "u_debug.h"
 #include "u_debug_symbol.h"
+#include "u_hash_table.h"
 
 #if defined(PIPE_SUBSYSTEM_WINDOWS_USER) && defined(PIPE_ARCH_X86)
    
@@ -185,4 +187,42 @@ debug_symbol_print(const void *addr)
    char buf[1024];
    debug_symbol_name(addr, buf, sizeof(buf));
    debug_printf("\t%s\n", buf);
+}
+
+struct util_hash_table* symbols_hash;
+pipe_mutex symbols_mutex;
+
+static unsigned hash_ptr(void* p)
+{
+   return (unsigned)(uintptr_t)p;
+}
+
+static int compare_ptr(void* a, void* b)
+{
+   if(a == b)
+      return 0;
+   else if(a < b)
+      return -1;
+   else
+      return 1;
+}
+
+const char*
+debug_symbol_name_cached(const void *addr)
+{
+   const char* name;
+   pipe_mutex_lock(symbols_mutex);
+   if(!symbols_hash)
+      symbols_hash = util_hash_table_create(hash_ptr, compare_ptr);
+   name = util_hash_table_get(symbols_hash, (void*)addr);
+   if(!name)
+   {
+      char buf[1024];
+      debug_symbol_name(addr, buf, sizeof(buf));
+      name = strdup(buf);
+
+      util_hash_table_set(symbols_hash, (void*)addr, (void*)name);
+   }
+   pipe_mutex_unlock(symbols_mutex);
+   return name;
 }
