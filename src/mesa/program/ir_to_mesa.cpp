@@ -2633,6 +2633,7 @@ _mesa_ir_link_shader(GLcontext *ctx, struct gl_shader_program *prog)
       if (!ok) {
 	 return GL_FALSE;
       }
+      _mesa_reference_program(ctx, &linked_prog, NULL);
    }
 
    return GL_TRUE;
