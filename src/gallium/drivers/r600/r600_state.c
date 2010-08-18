@@ -874,7 +874,7 @@ static struct radeon_state *r600_rasterizer(struct r600_context *rctx)
 			S_02881C_VS_OUT_MISC_VEC_ENA(state->point_size_per_vertex);
 	rstate->states[R600_RASTERIZER__PA_CL_NANINF_CNTL] = 0x00000000;
 	/* point size 12.4 fixed point */
-	tmp = (unsigned)(state->point_size * 8.0 / 2.0);
+	tmp = (unsigned)(state->point_size * 8.0);
 	rstate->states[R600_RASTERIZER__PA_SU_POINT_SIZE] = S_028A00_HEIGHT(tmp) | S_028A00_WIDTH(tmp);
 	rstate->states[R600_RASTERIZER__PA_SU_POINT_MINMAX] = 0x80000000;
 	rstate->states[R600_RASTERIZER__PA_SU_LINE_CNTL] = 0x00000008;
