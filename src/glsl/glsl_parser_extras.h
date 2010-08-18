@@ -209,6 +209,4 @@ extern bool _mesa_glsl_process_extension(const char *name, YYLTYPE *name_locp,
 extern const char *
 _mesa_glsl_shader_target_name(enum _mesa_glsl_parser_targets target);
 
-void do_ir_to_mesa(exec_list *instructions);
-
 #endif /* GLSL_PARSER_EXTRAS_H */
