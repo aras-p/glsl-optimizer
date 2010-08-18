@@ -2412,7 +2412,6 @@ struct gl_program *
 get_mesa_program(GLcontext *ctx, struct gl_shader_program *shader_program,
 		 struct gl_shader *shader)
 {
-   void *mem_ctx = shader_program;
    ir_to_mesa_visitor v;
    struct prog_instruction *mesa_instructions, *mesa_inst;
    ir_instruction **mesa_instruction_annotation;
@@ -2490,7 +2489,7 @@ get_mesa_program(GLcontext *ctx, struct gl_shader_program *shader_program,
    mesa_instructions =
       (struct prog_instruction *)calloc(num_instructions,
 					sizeof(*mesa_instructions));
-   mesa_instruction_annotation = talloc_array(mem_ctx, ir_instruction *,
+   mesa_instruction_annotation = talloc_array(v.mem_ctx, ir_instruction *,
 					      num_instructions);
 
    mesa_inst = mesa_instructions;
