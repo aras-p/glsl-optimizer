@@ -38,6 +38,7 @@ struct xmesa_st_framebuffer {
    struct pipe_screen *screen;
 
    struct st_visual stvis;
+   enum pipe_texture_target target;
 
    unsigned texture_width, texture_height, texture_mask;
    struct pipe_resource *textures[ST_ATTACHMENT_COUNT];
@@ -139,7 +140,7 @@ xmesa_st_framebuffer_validate_textures(struct st_framebuffer_iface *stfbi,
    }
 
    memset(&templ, 0, sizeof(templ));
-   templ.target = PIPE_TEXTURE_2D;
+   templ.target = xstfb->target;
    templ.width0 = width;
    templ.height0 = height;
    templ.depth0 = 1;
@@ -279,6 +280,10 @@ xmesa_create_st_framebuffer(XMesaDisplay xmdpy, XMesaBuffer b)
    xstfb->buffer = b;
    xstfb->screen = xmdpy->screen;
    xstfb->stvis = b->xm_visual->stvis;
+   if(xstfb->screen->get_param(xstfb->screen, PIPE_CAP_NPOT_TEXTURES))
+      xstfb->target = PIPE_TEXTURE_2D;
+   else
+      xstfb->target = PIPE_TEXTURE_RECT;
 
    stfbi->visual = &xstfb->stvis;
    stfbi->flush_front = xmesa_st_framebuffer_flush_front;
