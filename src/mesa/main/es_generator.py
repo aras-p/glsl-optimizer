@@ -609,7 +609,7 @@ for funcName in keys:
     # is to create them ourselves.
     if funcName in allSpecials:
         print "/* this function is special and is defined elsewhere */"
-    print "extern %s GLAPIENTRY %s(%s);" % (returnType, passthroughFuncName, passthroughDeclarationString)
+    print "extern %s GL_APIENTRY %s(%s);" % (returnType, passthroughFuncName, passthroughDeclarationString)
 
     # A function may be a core function (i.e. it exists in
     # the core specification), a core addition (extension
@@ -662,7 +662,7 @@ for funcName in keys:
             print
             continue
 
-        print "static %s %s(%s)" % (returnType, fullFuncName, declarationString)
+        print "static %s GL_APIENTRY %s(%s)" % (returnType, fullFuncName, declarationString)
         print "{"
 
         # Start printing our code pieces.  Start with any local
