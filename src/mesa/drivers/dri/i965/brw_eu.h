@@ -633,6 +633,8 @@ static INLINE struct brw_reg brw_swizzle( struct brw_reg reg,
 					    GLuint z,
 					    GLuint w)
 {
+   assert(reg.file != BRW_IMMEDIATE_VALUE);
+
    reg.dw1.bits.swizzle = BRW_SWIZZLE4(BRW_GET_SWZ(reg.dw1.bits.swizzle, x),
 				       BRW_GET_SWZ(reg.dw1.bits.swizzle, y),
 				       BRW_GET_SWZ(reg.dw1.bits.swizzle, z),
@@ -650,6 +652,7 @@ static INLINE struct brw_reg brw_swizzle1( struct brw_reg reg,
 static INLINE struct brw_reg brw_writemask( struct brw_reg reg,
 					      GLuint mask )
 {
+   assert(reg.file != BRW_IMMEDIATE_VALUE);
    reg.dw1.bits.writemask &= mask;
    return reg;
 }
@@ -657,6 +660,7 @@ static INLINE struct brw_reg brw_writemask( struct brw_reg reg,
 static INLINE struct brw_reg brw_set_writemask( struct brw_reg reg,
 						  GLuint mask )
 {
+   assert(reg.file != BRW_IMMEDIATE_VALUE);
    reg.dw1.bits.writemask = mask;
    return reg;
 }

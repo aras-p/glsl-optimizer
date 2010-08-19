@@ -1180,10 +1180,12 @@ static struct brw_reg get_arg( struct brw_vs_compile *c,
 
    /* Convert 3-bit swizzle to 2-bit.  
     */
-   reg.dw1.bits.swizzle = BRW_SWIZZLE4(GET_SWZ(src->Swizzle, 0),
-				       GET_SWZ(src->Swizzle, 1),
-				       GET_SWZ(src->Swizzle, 2),
-				       GET_SWZ(src->Swizzle, 3));
+   if (reg.file != BRW_IMMEDIATE_VALUE) {
+      reg.dw1.bits.swizzle = BRW_SWIZZLE4(GET_SWZ(src->Swizzle, 0),
+					  GET_SWZ(src->Swizzle, 1),
+					  GET_SWZ(src->Swizzle, 2),
+					  GET_SWZ(src->Swizzle, 3));
+   }
 
    /* Note this is ok for non-swizzle instructions: 
     */
@@ -1229,6 +1231,7 @@ static struct brw_reg get_dst( struct brw_vs_compile *c,
       reg = brw_null_reg();
    }
 
+   assert(reg.type != BRW_IMMEDIATE_VALUE);
    reg.dw1.bits.writemask = dst.WriteMask;
 
    return reg;
