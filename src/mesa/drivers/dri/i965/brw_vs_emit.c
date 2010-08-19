@@ -1562,6 +1562,7 @@ void brw_vs_emit(struct brw_vs_compile *c )
    const GLuint nr_insns = c->vp->program.Base.NumInstructions;
    GLuint insn, if_depth = 0, loop_depth = 0;
    struct brw_instruction *if_inst[MAX_IF_DEPTH], *loop_inst[MAX_LOOP_DEPTH] = { 0 };
+   int if_depth_in_loop[MAX_LOOP_DEPTH];
    const struct brw_indirect stack_index = brw_indirect(0, 0);   
    GLuint index;
    GLuint file;
@@ -1575,6 +1576,7 @@ void brw_vs_emit(struct brw_vs_compile *c )
 
    brw_set_compression_control(p, BRW_COMPRESSION_NONE);
    brw_set_access_mode(p, BRW_ALIGN_16);
+   if_depth_in_loop[loop_depth] = 0;
 
    for (insn = 0; insn < nr_insns; insn++) {
        GLuint i;
@@ -1613,7 +1615,8 @@ void brw_vs_emit(struct brw_vs_compile *c )
       const struct prog_instruction *inst = &c->vp->program.Base.Instructions[insn];
       struct brw_reg args[3], dst;
       GLuint i;
-      
+      struct brw_instruction *temp;
+
 #if 0
       printf("%d: ", insn);
       _mesa_print_instruction(inst);
@@ -1781,6 +1784,7 @@ void brw_vs_emit(struct brw_vs_compile *c )
 	 if_inst[if_depth] = brw_IF(p, BRW_EXECUTE_8);
 	 /* Note that brw_IF smashes the predicate_control field. */
 	 if_inst[if_depth]->header.predicate_control = get_predicate(inst);
+	 if_depth_in_loop[loop_depth]++;
 	 if_depth++;
 	 break;
       case OPCODE_ELSE:
@@ -1790,18 +1794,22 @@ void brw_vs_emit(struct brw_vs_compile *c )
       case OPCODE_ENDIF:
          assert(if_depth > 0);
 	 brw_ENDIF(p, if_inst[--if_depth]);
+	 if_depth_in_loop[loop_depth]--;
 	 break;			
       case OPCODE_BGNLOOP:
          loop_inst[loop_depth++] = brw_DO(p, BRW_EXECUTE_8);
+	 if_depth_in_loop[loop_depth] = 0;
          break;
       case OPCODE_BRK:
 	 brw_set_predicate_control(p, get_predicate(inst));
-         brw_BREAK(p);
+	 temp = brw_BREAK(p);
+	 temp->bits3.if_else.pop_count = if_depth_in_loop[loop_depth];
 	 brw_set_predicate_control(p, BRW_PREDICATE_NONE);
          break;
       case OPCODE_CONT:
 	 brw_set_predicate_control(p, get_predicate(inst));
-         brw_CONT(p);
+	 temp = brw_CONT(p);
+	 temp->bits3.if_else.pop_count = if_depth_in_loop[loop_depth];
          brw_set_predicate_control(p, BRW_PREDICATE_NONE);
          break;
       case OPCODE_ENDLOOP: 
@@ -1821,12 +1829,10 @@ void brw_vs_emit(struct brw_vs_compile *c )
                if (inst0->header.opcode == BRW_OPCODE_BREAK &&
 		   inst0->bits3.if_else.jump_count == 0) {
                   inst0->bits3.if_else.jump_count = br * (inst1 - inst0 + 1);
-                  inst0->bits3.if_else.pop_count = 0;
                }
                else if (inst0->header.opcode == BRW_OPCODE_CONTINUE &&
 			inst0->bits3.if_else.jump_count == 0) {
                   inst0->bits3.if_else.jump_count = br * (inst1 - inst0);
-                  inst0->bits3.if_else.pop_count = 0;
                }
             }
          }
