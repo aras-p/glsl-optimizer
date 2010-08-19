@@ -1154,7 +1154,7 @@ void XMesaFlush( XMesaContext c )
          xmdpy->screen->fence_finish(xmdpy->screen, fence, 0);
          xmdpy->screen->fence_reference(xmdpy->screen, &fence, NULL);
       }
-      XSync( c->xm_visual->display, False );
+      XFlush( c->xm_visual->display );
    }
 }
 
