@@ -190,11 +190,13 @@ static boolean emit_load_sse2( struct translate_sse *p,
    case 2:
       x86_movzx16(p->func, tmp, src);
       sse2_movd(p->func, data, tmp);
+      break;
    case 3:
       x86_movzx8(p->func, tmp, x86_make_disp(src, 2));
       x86_shl_imm(p->func, tmp, 16);
       x86_mov16(p->func, tmp, src);
       sse2_movd(p->func, data, tmp);
+      break;
    case 4:
       sse2_movd(p->func, data, src);
       break;
