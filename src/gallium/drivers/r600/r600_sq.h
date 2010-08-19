@@ -583,4 +583,20 @@
 #define   G_SQ_TEX_WORD2_SRC_SEL_W(x)                                (((x) >> 29) & 0x7)
 #define   C_SQ_TEX_WORD2_SRC_SEL_W                                   0x1FFFFFFF
 
+/*
+ * 248	SQ_ALU_SRC_0: special constant 0.0.
+ * 249	SQ_ALU_SRC_1: special constant 1.0 float.
+ * 250	SQ_ALU_SRC_1_INT: special constant 1 integer.
+ * 251	SQ_ALU_SRC_M_1_INT: special constant -1 integer.
+ * 252	SQ_ALU_SRC_0_5: special constant 0.5 float.
+ * 253	SQ_ALU_SRC_LITERAL: literal constant.
+ * 254	SQ_ALU_SRC_PV: previous vector result.
+ * 255	SQ_ALU_SRC_PS: previous scalar result.
+ */
+#define SQ_ALU_SRC_0 248
+#define SQ_ALU_SRC_1 249
+#define SQ_ALU_SRC_1_INT 250
+#define SQ_ALU_SRC_M_1_INT 251
+#define SQ_ALU_SRC_0_5 252
+
 #endif
