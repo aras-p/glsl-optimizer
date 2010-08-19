@@ -584,6 +584,10 @@
 #define   C_SQ_TEX_WORD2_SRC_SEL_W                                   0x1FFFFFFF
 
 /*
+ * 244  ALU_SRC_1_DBL_L: special constant 1.0 double-float, LSW. (RV670+)
+ * 245  ALU_SRC_1_DBL_M: special constant 1.0 double-float, MSW. (RV670+)
+ * 246  ALU_SRC_0_5_DBL_L: special constant 0.5 double-float, LSW. (RV670+)
+ * 247  ALU_SRC_0_5_DBL_M: special constant 0.5 double-float, MSW. (RV670+)
  * 248	SQ_ALU_SRC_0: special constant 0.0.
  * 249	SQ_ALU_SRC_1: special constant 1.0 float.
  * 250	SQ_ALU_SRC_1_INT: special constant 1 integer.

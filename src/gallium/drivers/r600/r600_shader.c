@@ -362,9 +362,15 @@ int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *s
 	shader->processor_type = ctx.type;
 
 	/* register allocations */
-	/* Values [0,127] correspond to GPR[0..127]. 
-	 * Values [256,511] correspond to cfile constants c[0..255]. 
+	/* Values [0,127] correspond to GPR[0..127].
+	 * Values [128,159] correspond to constant buffer bank 0
+	 * Values [160,191] correspond to constant buffer bank 1
+	 * Values [256,511] correspond to cfile constants c[0..255].
 	 * Other special values are shown in the list below.
+	 * 244  ALU_SRC_1_DBL_L: special constant 1.0 double-float, LSW. (RV670+)
+	 * 245  ALU_SRC_1_DBL_M: special constant 1.0 double-float, MSW. (RV670+)
+	 * 246  ALU_SRC_0_5_DBL_L: special constant 0.5 double-float, LSW. (RV670+)
+	 * 247  ALU_SRC_0_5_DBL_M: special constant 0.5 double-float, MSW. (RV670+)
 	 * 248	SQ_ALU_SRC_0: special constant 0.0.
 	 * 249	SQ_ALU_SRC_1: special constant 1.0 float.
 	 * 250	SQ_ALU_SRC_1_INT: special constant 1 integer.
