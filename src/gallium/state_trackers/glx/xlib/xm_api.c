@@ -263,7 +263,6 @@ xmesa_get_window_size(Display *dpy, XMesaBuffer b,
    Status stat;
 
    pipe_mutex_lock(xmdpy->mutex);
-   XSync(b->xm_visual->display, 0); /* added for Chromium */
    stat = get_drawable_size(dpy, b->ws.drawable, width, height);
    pipe_mutex_unlock(xmdpy->mutex);
 
