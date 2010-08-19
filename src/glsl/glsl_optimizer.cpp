@@ -141,7 +141,7 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 			progress = do_constant_folding(ir) || progress; debug_print_ir ("After const folding", ir, state);
 			progress = do_algebraic(ir) || progress; debug_print_ir ("After algebraic", ir, state);
 			progress = do_vec_index_to_swizzle(ir) || progress; debug_print_ir ("After vec index to swizzle", ir, state);
-			progress = do_vec_index_to_cond_assign(ir) || progress; debug_print_ir ("After vec index to cond assign", ir, state);
+			//progress = do_vec_index_to_cond_assign(ir) || progress; debug_print_ir ("After vec index to cond assign", ir, state);
 			progress = do_swizzle_swizzle(ir) || progress; debug_print_ir ("After swizzle swizzle", ir, state);
 			progress = do_noop_swizzle(ir) || progress; debug_print_ir ("After noop swizzle", ir, state);
 		} while (progress);
