@@ -2750,6 +2750,11 @@ _mesa_glsl_link_shader(GLcontext *ctx, struct gl_shader_program *prog)
    if (prog->LinkStatus) {
       if (!ctx->Driver.LinkShader(ctx, prog)) {
 	 prog->LinkStatus = GL_FALSE;
+      }
+   }
+
+   if (ctx->Shader.Flags & GLSL_DUMP) {
+      if (!prog->LinkStatus) {
 	 printf("GLSL shader program %d failed to link\n", prog->Name);
       }
 
