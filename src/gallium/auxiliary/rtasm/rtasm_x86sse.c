@@ -2105,8 +2105,9 @@ struct x86_reg x86_fn_arg( struct x86_function *p,
       case 4:
          return x86_make_reg(file_REG32, reg_R9);
       default:
+	 /* Win64 allocates stack slots as if it pushed the first 4 arguments too */
          return x86_make_disp(x86_make_reg(file_REG32, reg_SP),
-               p->stack_offset + (arg - 4) * 8);     /* ??? */
+               p->stack_offset + arg * 8);
       }
    case X86_64_STD_ABI:
       switch(arg)
