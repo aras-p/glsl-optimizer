@@ -254,6 +254,7 @@ void util_blitter_destroy(struct blitter_context *blitter)
                                           ctx->dsa_write_depth_keep_stencil);
    pipe->delete_depth_stencil_alpha_state(pipe, ctx->dsa_write_depth_stencil);
    pipe->delete_depth_stencil_alpha_state(pipe, ctx->dsa_keep_depth_write_stencil);
+   pipe->delete_depth_stencil_alpha_state(pipe, ctx->dsa_flush_depth_stencil);
 
    pipe->delete_rasterizer_state(pipe, ctx->rs_state);
    pipe->delete_vs_state(pipe, ctx->vs_col);
