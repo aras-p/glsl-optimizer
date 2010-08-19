@@ -27,7 +27,6 @@
 
 #include "i830_context.h"
 #include "main/imports.h"
-#include "texmem.h"
 #include "tnl/tnl.h"
 #include "tnl/t_vertex.h"
 #include "tnl/t_context.h"
