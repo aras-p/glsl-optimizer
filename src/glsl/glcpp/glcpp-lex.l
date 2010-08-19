@@ -100,6 +100,37 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 	return OTHER;
 }
 
+{HASH}line{HSPACE}+{DECIMAL_INTEGER}{HSPACE}+{DECIMAL_INTEGER}{HSPACE}*$ {
+	/* Eat characters until the first digit is
+	 * encountered
+	 */
+	char *ptr = yytext;
+	while (!isdigit(*ptr))
+		ptr++;
+
+	/* Subtract one from the line number because
+	 * yylineno is zero-based instead of
+	 * one-based.
+	 */
+	yylineno = strtol(ptr, &ptr, 0) - 1;
+	yylloc->source = strtol(ptr, NULL, 0);
+}
+
+{HASH}line{HSPACE}+{DECIMAL_INTEGER}{HSPACE}*$ {
+	/* Eat characters until the first digit is
+	 * encountered
+	 */
+	char *ptr = yytext;
+	while (!isdigit(*ptr))
+		ptr++;
+
+	/* Subtract one from the line number because
+	 * yylineno is zero-based instead of
+	 * one-based.
+	 */
+	yylineno = strtol(ptr, &ptr, 0) - 1;
+}
+
 {HASH}ifdef/.*\n {
 	yyextra->lexing_if = 1;
 	yyextra->space_tokens = 0;
