@@ -38,8 +38,7 @@ struct translate *translate_create( const struct translate_key *key )
 {
    struct translate *translate = NULL;
 
-/* TODO: enable Win64 once it has actually been tested */
-#if defined(PIPE_ARCH_X86) || (defined(PIPE_ARCH_X86_64) && !defined(_WIN64))
+#if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
    translate = translate_sse2_create( key );
    if (translate)
       return translate;
