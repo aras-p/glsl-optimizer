@@ -56,6 +56,8 @@ public:
 		       ir_variable *a_var, ir_variable *b_var);
    void do_mul_mat_scalar(ir_variable *result_var,
 			  ir_variable *a_var, ir_variable *b_var);
+   void do_equal_mat_mat(ir_variable *result_var, ir_variable *a_var,
+			 ir_variable *b_var, bool test_equal);
 
    void *mem_ctx;
    bool made_progress;
@@ -267,25 +269,104 @@ ir_mat_op_to_vec_visitor::do_mul_mat_scalar(ir_variable *result_var,
    }
 }
 
+void
+ir_mat_op_to_vec_visitor::do_equal_mat_mat(ir_variable *result_var,
+					   ir_variable *a_var,
+					   ir_variable *b_var,
+					   bool test_equal)
+{
+   /* This essentially implements the following GLSL:
+    *
+    * bool equal(mat4 a, mat4 b)
+    * {
+    *   return !any(bvec4(a[0] != b[0],
+    *                     a[1] != b[1],
+    *                     a[2] != b[2],
+    *                     a[3] != b[3]);
+    * }
+    *
+    * bool nequal(mat4 a, mat4 b)
+    * {
+    *   return any(bvec4(a[0] != b[0],
+    *                    a[1] != b[1],
+    *                    a[2] != b[2],
+    *                    a[3] != b[3]);
+    * }
+    */
+   const unsigned columns = a_var->type->matrix_columns;
+   const glsl_type *const bvec_type =
+      glsl_type::get_instance(GLSL_TYPE_BOOL, columns, 1);
+
+   ir_variable *const tmp_bvec =
+      new(this->mem_ctx) ir_variable(bvec_type, "mat_cmp_bvec",
+				     ir_var_temporary);
+   this->base_ir->insert_before(tmp_bvec);
+
+   for (unsigned i = 0; i < columns; i++) {
+      ir_dereference *const op0 = get_column(a_var, i);
+      ir_dereference *const op1 = get_column(b_var, i);
+
+      ir_expression *const cmp =
+	 new(this->mem_ctx) ir_expression(ir_binop_nequal,
+					  glsl_type::bool_type, op0, op1);
+
+      ir_rvalue *const swiz =
+	 new(this->mem_ctx) ir_swizzle(cmp, i, i, i, i, columns);
+
+      ir_dereference *const lhs =
+	 new(this->mem_ctx) ir_dereference_variable(tmp_bvec);
+
+      ir_assignment *const assign =
+	 new(this->mem_ctx) ir_assignment(lhs, swiz, NULL, (1U << i));
+
+      this->base_ir->insert_before(assign);
+   }
+
+   ir_rvalue *const val =
+      new(this->mem_ctx) ir_dereference_variable(tmp_bvec);
+
+   ir_expression *any =
+      new(this->mem_ctx) ir_expression(ir_unop_any, glsl_type::bool_type,
+				       val, NULL);
+
+   if (test_equal)
+      any = new(this->mem_ctx) ir_expression(ir_unop_logic_not,
+					     glsl_type::bool_type,
+					     any, NULL);
+
+   ir_rvalue *const result =
+      new(this->mem_ctx) ir_dereference_variable(result_var);
+
+   ir_assignment *const assign =
+	 new(mem_ctx) ir_assignment(result, any, NULL);
+   base_ir->insert_before(assign);
+}
+
+static bool
+has_matrix_operand(const ir_expression *expr, unsigned &columns)
+{
+   for (unsigned i = 0; i < expr->get_num_operands(); i++) {
+      if (expr->operands[i]->type->is_matrix()) {
+	 columns = expr->operands[i]->type->matrix_columns;
+	 return true;
+      }
+   }
+
+   return false;
+}
+
+
 ir_visitor_status
 ir_mat_op_to_vec_visitor::visit_leave(ir_assignment *orig_assign)
 {
    ir_expression *orig_expr = orig_assign->rhs->as_expression();
-   bool found_matrix = false;
    unsigned int i, matrix_columns = 1;
    ir_variable *op_var[2];
 
    if (!orig_expr)
       return visit_continue;
 
-   for (i = 0; i < orig_expr->get_num_operands(); i++) {
-      if (orig_expr->operands[i]->type->is_matrix()) {
-	 found_matrix = true;
-	 matrix_columns = orig_expr->operands[i]->type->matrix_columns;
-	 break;
-      }
-   }
-   if (!found_matrix)
+   if (!has_matrix_operand(orig_expr, matrix_columns))
       return visit_continue;
 
    mem_ctx = talloc_parent(orig_assign);
@@ -391,6 +472,13 @@ ir_mat_op_to_vec_visitor::visit_leave(ir_assignment *orig_assign)
 	 }
       }
       break;
+
+   case ir_binop_equal:
+   case ir_binop_nequal:
+      do_equal_mat_mat(result_var, op_var[1], op_var[0],
+		       (orig_expr->operation == ir_binop_equal));
+      break;
+
    default:
       printf("FINISHME: Handle matrix operation for %s\n",
 	     orig_expr->operator_string());
