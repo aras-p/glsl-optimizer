@@ -113,9 +113,17 @@ nvfx_state_validate_common(struct nvfx_context *nvfx)
    etracer, neverball, foobillard, glest totally misrender
    TODO: find the right fix
 */
-	if(dirty & (NVFX_NEW_VIEWPORT | NVFX_NEW_RAST | NVFX_NEW_ZSA) || (all_swizzled > 0))
+	if(dirty & (NVFX_NEW_VIEWPORT | NVFX_NEW_RAST | NVFX_NEW_ZSA) || (all_swizzled >= 0))
 	{
 		nvfx_state_viewport_validate(nvfx);
+	}
+
+	if(dirty & NVFX_NEW_ZSA || (all_swizzled >= 0))
+	{
+		WAIT_RING(chan, 3);
+		OUT_RING(chan, RING_3D(NV34TCL_DEPTH_WRITE_ENABLE, 2));
+		OUT_RING(chan, nvfx->framebuffer.zsbuf && nvfx->zsa->pipe.depth.writemask);
+	        OUT_RING(chan, nvfx->framebuffer.zsbuf && nvfx->zsa->pipe.depth.enabled);
 	}
 
 	if(flush_tex_cache)

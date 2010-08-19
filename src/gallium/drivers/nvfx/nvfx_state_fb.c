@@ -252,6 +252,10 @@ nvfx_framebuffer_validate(struct nvfx_context *nvfx, unsigned prepare_result)
 			OUT_RING(chan, nvfx->hw_zeta.pitch);
 		}
 	}
+	else if(nvfx->is_nv4x) {
+		OUT_RING(chan, RING_3D(NV40TCL_ZETA_PITCH, 1));
+		OUT_RING(chan, 64);
+	}
 
 	OUT_RING(chan, RING_3D(NV34TCL_RT_ENABLE, 1));
 	OUT_RING(chan, rt_enable);

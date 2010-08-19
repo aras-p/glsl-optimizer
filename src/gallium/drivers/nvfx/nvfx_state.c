@@ -207,10 +207,8 @@ nvfx_depth_stencil_alpha_state_create(struct pipe_context *pipe,
 	struct nvfx_zsa_state *zsaso = CALLOC(1, sizeof(*zsaso));
 	struct nouveau_statebuf_builder sb = sb_init(zsaso->sb);
 
-	sb_method(sb, NV34TCL_DEPTH_FUNC, 3);
+	sb_method(sb, NV34TCL_DEPTH_FUNC, 1);
 	sb_data  (sb, nvgl_comparison_op(cso->depth.func));
-	sb_data  (sb, cso->depth.writemask ? 1 : 0);
-	sb_data  (sb, cso->depth.enabled ? 1 : 0);
 
 	sb_method(sb, NV34TCL_ALPHA_FUNC_ENABLE, 3);
 	sb_data  (sb, cso->alpha.enabled ? 1 : 0);
