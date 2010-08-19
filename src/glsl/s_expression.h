@@ -113,7 +113,7 @@ private:
 class s_symbol : public s_expression
 {
 public:
-   s_symbol(const char *);
+   s_symbol(const char *, size_t);
 
    bool is_symbol() const { return true; }
 
