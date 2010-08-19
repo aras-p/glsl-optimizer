@@ -76,6 +76,27 @@ int r600_bc_init(struct r600_bc *bc, enum radeon_family family)
 {
 	LIST_INITHEAD(&bc->cf);
 	bc->family = family;
+	switch (bc->family) {
+	case CHIP_R600:
+	case CHIP_RV610:
+	case CHIP_RV630:
+	case CHIP_RV670:
+	case CHIP_RV620:
+	case CHIP_RV635:
+	case CHIP_RS780:
+	case CHIP_RS880:
+		bc->chiprev = 0;
+		break;
+	case CHIP_RV770:
+	case CHIP_RV730:
+	case CHIP_RV710:
+	case CHIP_RV740:
+		bc->chiprev = 1;
+		break;
+	default:
+		R600_ERR("unknown family %d\n", bc->family);
+		return -EINVAL;
+	}
 	return 0;
 }
 
@@ -418,21 +439,11 @@ int r600_bc_build(struct r600_bc *bc)
 		switch (cf->inst) {
 		case (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU << 3):
 			LIST_FOR_EACH_ENTRY(alu, &cf->alu, list) {
-				switch (bc->family) {
-				case CHIP_R600:
-				case CHIP_RV610:
-				case CHIP_RV630:
-				case CHIP_RV670:
-				case CHIP_RV620:
-				case CHIP_RV635:
-				case CHIP_RS780:
-				case CHIP_RS880:
+				switch(bc->chiprev) {
+				case 0:
 					r = r600_bc_alu_build(bc, alu, addr);
 					break;
-				case CHIP_RV770:
-				case CHIP_RV730:
-				case CHIP_RV710:
-				case CHIP_RV740:
+				case 1:
 					r = r700_bc_alu_build(bc, alu, addr);
 					break;
 				default:
