@@ -2743,7 +2743,7 @@ _mesa_glsl_link_shader(GLcontext *ctx, struct gl_shader_program *prog)
       /* We don't use the linker's uniforms list, and cook up our own at
        * generate time.
        */
-      free(prog->Uniforms);
+      _mesa_free_uniform_list(prog->Uniforms);
       prog->Uniforms = _mesa_new_uniform_list();
    }
 
