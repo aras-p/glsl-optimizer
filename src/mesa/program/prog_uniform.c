@@ -44,6 +44,10 @@ void
 _mesa_free_uniform_list(struct gl_uniform_list *list)
 {
    GLuint i;
+
+   if (!list)
+      return;
+
    for (i = 0; i < list->NumUniforms; i++) {
       free((void *) list->Uniforms[i].Name);
    }
