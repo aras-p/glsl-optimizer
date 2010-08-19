@@ -21,7 +21,7 @@ nv30_sampler_state_init(struct pipe_context *pipe,
 			ps->en |= NV34TCL_TX_ENABLE_ANISO_2X;
 	}
 
-	limit = CLAMP(cso->lod_bias, -16.0, 15.0);
+	limit = CLAMP(cso->lod_bias, -16.0, 15.0 + (255.0 / 256.0));
 	ps->filt |= (int)(cso->lod_bias * 256.0) & 0x1fff;
 
 	ps->max_lod = (int)CLAMP(cso->max_lod, 0.0, 15.0);
