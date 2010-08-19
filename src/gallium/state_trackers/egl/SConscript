@@ -21,6 +21,7 @@ if 'egl' in env['statetrackers']:
         'common/egl_g3d_api.c',
         'common/egl_g3d_image.c',
         'common/egl_g3d_st.c',
+        'common/egl_g3d_sync.c',
         'common/native_helper.c',
     ]
 

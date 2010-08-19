@@ -36,6 +36,7 @@ if env['platform'] != 'winddk':
 		'eglscreen.c',
 		'eglstring.c',
 		'eglsurface.c',
+		'eglsync.c',
 	]
 
 	egl = env.SharedLibrary(
