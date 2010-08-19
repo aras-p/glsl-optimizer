@@ -246,7 +246,7 @@ nvfx_push_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
 		uint8_t* map;
 		unsigned step;
 	} per_instance[16];
-	unsigned p_overhead = 0
+	unsigned p_overhead = 64 /* magic fix */
 			+ 4 /* begin/end */
 			+ 4; /* potential edgeflag enable/disable */
 
@@ -367,6 +367,14 @@ nvfx_push_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
 
 			if(max_verts >= 16)
 			{
+				/* XXX: any command a lot of times seems to (mostly) fix corruption that would otherwise happen */
+				int i;
+				for(i = 0; i < 32; ++i)
+				{
+					OUT_RING(chan, RING_3D(0x1dac, 1));
+					OUT_RING(chan, 0);
+				}
+
 				OUT_RING(chan, RING_3D(NV34TCL_VERTEX_BEGIN_END, 1));
 				OUT_RING(chan, hw_mode);
 				done = util_split_prim_next(&s, max_verts);
