@@ -904,6 +904,9 @@ ir_call::constant_expression_value()
 	 case GLSL_TYPE_FLOAT:
 	    data.b[c] = op[0]->value.f[c] == op[1]->value.f[c];
 	    break;
+	 case GLSL_TYPE_BOOL:
+	    data.b[c] = op[0]->value.b[c] == op[1]->value.b[c];
+	    break;
 	 default:
 	    assert(!"Should not get here.");
 	 }
@@ -1046,6 +1049,9 @@ ir_call::constant_expression_value()
 	    break;
 	 case GLSL_TYPE_FLOAT:
 	    data.b[c] = op[0]->value.f[c] != op[1]->value.f[c];
+	    break;
+	 case GLSL_TYPE_BOOL:
+	    data.b[c] = op[0]->value.b[c] != op[1]->value.b[c];
 	    break;
 	 default:
 	    assert(!"Should not get here.");

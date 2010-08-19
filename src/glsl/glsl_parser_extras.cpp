@@ -741,3 +741,33 @@ do_common_optimization(exec_list *ir, bool linked)
 
    return progress;
 }
+
+extern "C" {
+
+/**
+ * To be called at GL teardown time, this frees compiler datastructures.
+ *
+ * After calling this, any previously compiled shaders and shader
+ * programs would be invalid.  So this should happen at approximately
+ * program exit.
+ */
+void
+_mesa_destroy_shader_compiler(void)
+{
+   _mesa_destroy_shader_compiler_caches();
+
+   _mesa_glsl_release_types();
+}
+
+/**
+ * Releases compiler caches to trade off performance for memory.
+ *
+ * Intended to be used with glReleaseShaderCompiler().
+ */
+void
+_mesa_destroy_shader_compiler_caches(void)
+{
+   _mesa_glsl_release_functions();
+}
+
+}

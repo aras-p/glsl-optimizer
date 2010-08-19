@@ -2212,10 +2212,12 @@ ir_to_mesa_visitor::ir_to_mesa_visitor()
    next_signature_id = 1;
    sampler_map = NULL;
    current_function = NULL;
+   mem_ctx = talloc_new(NULL);
 }
 
 ir_to_mesa_visitor::~ir_to_mesa_visitor()
 {
+   talloc_free(mem_ctx);
    if (this->sampler_map)
       hash_table_dtor(this->sampler_map);
 }
@@ -2264,8 +2266,8 @@ set_branchtargets(ir_to_mesa_visitor *v,
       }
    }
 
-   if_stack = (int *)calloc(if_count, sizeof(*if_stack));
-   loop_stack = (int *)calloc(loop_count, sizeof(*loop_stack));
+   if_stack = talloc_zero_array(v->mem_ctx, int, if_count);
+   loop_stack = talloc_zero_array(v->mem_ctx, int, loop_count);
 
    for (i = 0; i < num_instructions; i++) {
       switch (mesa_instructions[i].Opcode) {
@@ -2317,8 +2319,6 @@ set_branchtargets(ir_to_mesa_visitor *v,
 	 break;
       }
    }
-
-   free(if_stack);
 }
 
 static void
@@ -2410,7 +2410,6 @@ struct gl_program *
 get_mesa_program(GLcontext *ctx, struct gl_shader_program *shader_program,
 		 struct gl_shader *shader)
 {
-   void *mem_ctx = shader_program;
    ir_to_mesa_visitor v;
    struct prog_instruction *mesa_instructions, *mesa_inst;
    ir_instruction **mesa_instruction_annotation;
@@ -2444,8 +2443,6 @@ get_mesa_program(GLcontext *ctx, struct gl_shader_program *shader_program,
    prog->Attributes = _mesa_new_parameter_list();
    v.ctx = ctx;
    v.prog = prog;
-
-   v.mem_ctx = talloc_new(NULL);
 
    /* Emit Mesa IR for main(). */
    visit_exec_list(shader->ir, &v);
@@ -2490,7 +2487,7 @@ get_mesa_program(GLcontext *ctx, struct gl_shader_program *shader_program,
    mesa_instructions =
       (struct prog_instruction *)calloc(num_instructions,
 					sizeof(*mesa_instructions));
-   mesa_instruction_annotation = talloc_array(mem_ctx, ir_instruction *,
+   mesa_instruction_annotation = talloc_array(v.mem_ctx, ir_instruction *,
 					      num_instructions);
 
    mesa_inst = mesa_instructions;
@@ -2636,6 +2633,7 @@ _mesa_ir_link_shader(GLcontext *ctx, struct gl_shader_program *prog)
       if (!ok) {
 	 return GL_FALSE;
       }
+      _mesa_reference_program(ctx, &linked_prog, NULL);
    }
 
    return GL_TRUE;
@@ -2662,6 +2660,7 @@ _mesa_glsl_compile_shader(GLcontext *ctx, struct gl_shader *shader)
      _mesa_glsl_lexer_dtor(state);
    }
 
+   talloc_free(shader->ir);
    shader->ir = new(shader) exec_list;
    if (!state->error && !state->translation_unit.is_empty())
       _mesa_ast_to_hir(shader->ir, state);
@@ -2691,14 +2690,22 @@ _mesa_glsl_compile_shader(GLcontext *ctx, struct gl_shader *shader)
       _mesa_write_shader_to_file(shader);
    }
 
-   if ((ctx->Shader.Flags & GLSL_DUMP) && shader->CompileStatus) {
-      printf("GLSL IR for shader %d:\n", shader->Name);
-      _mesa_print_ir(shader->ir, NULL);
-      printf("\n\n");
+   if (ctx->Shader.Flags & GLSL_DUMP) {
+      if (shader->CompileStatus) {
+	 printf("GLSL IR for shader %d:\n", shader->Name);
+	 _mesa_print_ir(shader->ir, NULL);
+	 printf("\n\n");
+      } else {
+	 printf("GLSL shader %d failed to compile.\n", shader->Name);
+      }
+      if (shader->InfoLog && shader->InfoLog[0] != 0) {
+	 printf("GLSL shader %d info log:\n", shader->Name);
+	 printf("%s\n", shader->InfoLog);
+      }
    }
 
    /* Retain any live IR, but trash the rest. */
-   reparent_ir(shader->ir, shader);
+   reparent_ir(shader->ir, shader->ir);
 
    talloc_free(state);
 
@@ -2731,18 +2738,30 @@ _mesa_glsl_link_shader(GLcontext *ctx, struct gl_shader_program *prog)
    _mesa_reference_fragprog(ctx, &prog->FragmentProgram, NULL);
 
    if (prog->LinkStatus) {
-      link_shaders(prog);
+      link_shaders(ctx, prog);
 
       /* We don't use the linker's uniforms list, and cook up our own at
        * generate time.
        */
-      free(prog->Uniforms);
+      _mesa_free_uniform_list(prog->Uniforms);
       prog->Uniforms = _mesa_new_uniform_list();
    }
 
    if (prog->LinkStatus) {
-      if (!ctx->Driver.LinkShader(ctx, prog))
+      if (!ctx->Driver.LinkShader(ctx, prog)) {
 	 prog->LinkStatus = GL_FALSE;
+      }
+   }
+
+   if (ctx->Shader.Flags & GLSL_DUMP) {
+      if (!prog->LinkStatus) {
+	 printf("GLSL shader program %d failed to link\n", prog->Name);
+      }
+
+      if (prog->InfoLog && prog->InfoLog[0] != 0) {
+	 printf("GLSL shader program %d info log:\n", prog->Name);
+	 printf("%s\n", prog->InfoLog);
+      }
    }
 }
 

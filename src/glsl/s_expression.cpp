@@ -28,9 +28,9 @@
 #include <assert.h>
 #include "s_expression.h"
 
-s_symbol::s_symbol(const char *tmp)
+s_symbol::s_symbol(const char *tmp, size_t n)
 {
-   this->str = talloc_strdup (this, tmp);
+   this->str = talloc_strndup (this, tmp, n);
    assert(this->str != NULL);
 }
 
@@ -51,26 +51,34 @@ s_list::length() const
 static s_expression *
 read_atom(void *ctx, const char *& src)
 {
-   char buf[101];
-   int n;
-   if (sscanf(src, " %100[^( \v\t\r\n)]%n", buf, &n) != 1)
+   s_expression *expr = NULL;
+
+   // Skip leading spaces.
+   src += strspn(src, " \v\t\r\n");
+
+   size_t n = strcspn(src, "( \v\t\r\n)");
+   if (n == 0)
       return NULL; // no atom
-   src += n;
 
    // Check if the atom is a number.
    char *float_end = NULL;
-   double f = strtod(buf, &float_end);
-   if (float_end != buf) {
+   double f = strtod(src, &float_end);
+   if (float_end != src) {
       char *int_end = NULL;
-      int i = strtol(buf, &int_end, 10);
+      int i = strtol(src, &int_end, 10);
       // If strtod matched more characters, it must have a decimal part
       if (float_end > int_end)
-	 return new(ctx) s_float(f);
-
-      return new(ctx) s_int(i);
+	 expr = new(ctx) s_float(f);
+      else
+	 expr = new(ctx) s_int(i);
+   } else {
+      // Not a number; return a symbol.
+      expr = new(ctx) s_symbol(src, n);
    }
-   // Not a number; return a symbol.
-   return new(ctx) s_symbol(buf);
+
+   src += n;
+
+   return expr;
 }
 
 s_expression *
@@ -82,10 +90,10 @@ s_expression::read_expression(void *ctx, const char *&src)
    if (atom != NULL)
       return atom;
 
-   char c;
-   int n;
-   if (sscanf(src, " %c%n", &c, &n) == 1 && c == '(') {
-      src += n;
+   // Skip leading spaces.
+   src += strspn(src, " \v\t\r\n");
+   if (src[0] == '(') {
+      ++src;
 
       s_list *list = new(ctx) s_list;
       s_expression *expr;
@@ -93,11 +101,12 @@ s_expression::read_expression(void *ctx, const char *&src)
       while ((expr = read_expression(ctx, src)) != NULL) {
 	 list->subexpressions.push_tail(expr);
       }
-      if (sscanf(src, " %c%n", &c, &n) != 1 || c != ')') {
+      src += strspn(src, " \v\t\r\n");
+      if (src[0] != ')') {
 	 printf("Unclosed expression (check your parenthesis).\n");
 	 return NULL;
       }
-      src += n;
+      ++src;
       return list;
    }
    return NULL;

@@ -47,6 +47,38 @@ vec2  atan(vec2  y_over_x);
 vec3  atan(vec3  y_over_x);
 vec4  atan(vec4  y_over_x);
 
+float sinh(float x);
+vec2  sinh(vec2  x);
+vec3  sinh(vec3  x);
+vec4  sinh(vec4  x);
+
+float cosh(float x);
+vec2  cosh(vec2  x);
+vec3  cosh(vec3  x);
+vec4  cosh(vec4  x);
+
+float tanh(float x);
+vec2  tanh(vec2  x);
+vec3  tanh(vec3  x);
+vec4  tanh(vec4  x);
+
+#if 0
+float asinh(float x);
+vec2  asinh(vec2  x);
+vec3  asinh(vec3  x);
+vec4  asinh(vec4  x);
+
+float acosh(float x);
+vec2  acosh(vec2  x);
+vec3  acosh(vec3  x);
+vec4  acosh(vec4  x);
+
+float atanh(float x);
+vec2  atanh(vec2  x);
+vec3  atanh(vec3  x);
+vec4  atanh(vec4  x);
+#endif
+
 /*
  * 8.2 - Exponential Functions
  */

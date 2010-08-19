@@ -30,4 +30,4 @@ extern "C" {
 }
 
 extern void
-link_shaders(struct gl_shader_program *prog);
+link_shaders(GLcontext *ctx, struct gl_shader_program *prog);

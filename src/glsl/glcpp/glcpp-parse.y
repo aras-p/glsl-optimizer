@@ -63,6 +63,9 @@ _string_list_contains (string_list_t *list, const char *member, int *index);
 static int
 _string_list_length (string_list_t *list);
 
+static int
+_string_list_equal (string_list_t *a, string_list_t *b);
+
 static argument_list_t *
 _argument_list_create (void *ctx);
 
@@ -94,6 +97,9 @@ _token_list_append (token_list_t *list, token_t *token);
 
 static void
 _token_list_append_list (token_list_t *list, token_list_t *tail);
+
+static int
+_token_list_equal_ignoring_space (token_list_t *a, token_list_t *b);
 
 static active_list_t *
 _active_list_push (active_list_t *list,
@@ -604,6 +610,31 @@ _string_list_length (string_list_t *list)
 	return length;
 }
 
+int
+_string_list_equal (string_list_t *a, string_list_t *b)
+{
+	string_node_t *node_a, *node_b;
+
+	if (a == NULL && b == NULL)
+		return 1;
+
+	if (a == NULL || b == NULL)
+		return 0;
+
+	for (node_a = a->head, node_b = b->head;
+	     node_a && node_b;
+	     node_a = node_a->next, node_b = node_b->next)
+	{
+		if (strcmp (node_a->str, node_b->str))
+			return 0;
+	}
+
+	/* Catch the case of lists being different lengths, (which
+	 * would cause the loop above to terminate after the shorter
+	 * list). */
+	return node_a == node_b;
+}
+
 argument_list_t *
 _argument_list_create (void *ctx)
 {
@@ -779,6 +810,61 @@ _token_list_trim_trailing_space (token_list_t *list)
 			tail = next;
 		}
 	}
+}
+
+int
+_token_list_equal_ignoring_space (token_list_t *a, token_list_t *b)
+{
+	token_node_t *node_a, *node_b;
+
+	node_a = a->head;
+	node_b = b->head;
+
+	while (1)
+	{
+		if (node_a == NULL && node_b == NULL)
+			break;
+
+		if (node_a == NULL || node_b == NULL)
+			return 0;
+
+		if (node_a->token->type == SPACE) {
+			node_a = node_a->next;
+			continue;
+		}
+
+		if (node_b->token->type == SPACE) {
+			node_b = node_b->next;
+			continue;
+		}
+
+		if (node_a->token->type != node_b->token->type)
+			return 0;
+
+		switch (node_a->token->type) {
+		case INTEGER:
+			if (node_a->token->value.ival != 
+			    node_b->token->value.ival)
+			{
+				return 0;
+			}
+			break;
+		case IDENTIFIER:
+		case INTEGER_STRING:
+		case OTHER:
+			if (strcmp (node_a->token->value.str,
+				    node_b->token->value.str))
+			{
+				return 0;
+			}
+			break;
+		}
+
+		node_a = node_a->next;
+		node_b = node_b->next;
+	}
+
+	return 1;
 }
 
 static void
@@ -1522,13 +1608,28 @@ _check_for_reserved_macro_name (glcpp_parser_t *parser, YYLTYPE *loc,
 	}
 }
 
+static int
+_macro_equal (macro_t *a, macro_t *b)
+{
+	if (a->is_function != b->is_function)
+		return 0;
+
+	if (a->is_function) {
+		if (! _string_list_equal (a->parameters, b->parameters))
+			return 0;
+	}
+
+	return _token_list_equal_ignoring_space (a->replacements,
+						 b->replacements);
+}
+
 void
 _define_object_macro (glcpp_parser_t *parser,
 		      YYLTYPE *loc,
 		      const char *identifier,
 		      token_list_t *replacements)
 {
-	macro_t *macro;
+	macro_t *macro, *previous;
 
 	if (loc != NULL)
 		_check_for_reserved_macro_name(parser, loc, identifier);
@@ -1540,6 +1641,16 @@ _define_object_macro (glcpp_parser_t *parser,
 	macro->identifier = talloc_strdup (macro, identifier);
 	macro->replacements = talloc_steal (macro, replacements);
 
+	previous = hash_table_find (parser->defines, identifier);
+	if (previous) {
+		if (_macro_equal (macro, previous)) {
+			talloc_free (macro);
+			return;
+		}
+		glcpp_error (loc, parser, "Redefinition of macro %s\n",
+			     identifier);
+	}
+
 	hash_table_insert (parser->defines, macro, identifier);
 }
 
@@ -1550,7 +1661,7 @@ _define_function_macro (glcpp_parser_t *parser,
 			string_list_t *parameters,
 			token_list_t *replacements)
 {
-	macro_t *macro;
+	macro_t *macro, *previous;
 
 	_check_for_reserved_macro_name(parser, loc, identifier);
 
@@ -1560,6 +1671,16 @@ _define_function_macro (glcpp_parser_t *parser,
 	macro->parameters = talloc_steal (macro, parameters);
 	macro->identifier = talloc_strdup (macro, identifier);
 	macro->replacements = talloc_steal (macro, replacements);
+
+	previous = hash_table_find (parser->defines, identifier);
+	if (previous) {
+		if (_macro_equal (macro, previous)) {
+			talloc_free (macro);
+			return;
+		}
+		glcpp_error (loc, parser, "Redefinition of macro %s\n",
+			     identifier);
+	}
 
 	hash_table_insert (parser->defines, macro, identifier);
 }

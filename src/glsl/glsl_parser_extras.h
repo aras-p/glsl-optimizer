@@ -178,6 +178,9 @@ extern void _mesa_glsl_warning(const YYLTYPE *locp,
 extern "C" {
 extern int preprocess(void *ctx, const char **shader, char **info_log,
 		      const struct gl_extensions *extensions);
+
+extern void _mesa_destroy_shader_compiler();
+extern void _mesa_destroy_shader_compiler_caches();
 }
 
 extern void _mesa_glsl_lexer_ctor(struct _mesa_glsl_parse_state *state,
@@ -208,7 +211,5 @@ extern bool _mesa_glsl_process_extension(const char *name, YYLTYPE *name_locp,
  */
 extern const char *
 _mesa_glsl_shader_target_name(enum _mesa_glsl_parser_targets target);
-
-void do_ir_to_mesa(exec_list *instructions);
 
 #endif /* GLSL_PARSER_EXTRAS_H */

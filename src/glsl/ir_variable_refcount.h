@@ -67,7 +67,7 @@ public:
 
    ~ir_variable_refcount_visitor(void)
    {
-      this->mem_ctx = talloc_new(NULL);
+      talloc_free(this->mem_ctx);
    }
 
    virtual ir_visitor_status visit(ir_variable *);
