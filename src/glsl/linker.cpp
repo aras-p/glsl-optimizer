@@ -843,7 +843,7 @@ assign_uniform_locations(struct gl_shader_program *prog)
 
 	    n->u[0].Name = strdup(var->name);
 	    for (unsigned j = 1; j < vec4_slots; j++)
-	       n->u[j].Name = n->u[0].Name;
+	       n->u[j].Name = strdup(var->name);
 
 	    hash_table_insert(ht, n, n->u[0].Name);
 	    uniforms.push_tail(& n->link);
