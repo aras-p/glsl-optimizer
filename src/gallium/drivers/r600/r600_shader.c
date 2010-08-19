@@ -674,6 +674,126 @@ static int tgsi_op2(struct r600_shader_ctx *ctx)
 	return 0;
 }
 
+/* 
+ * r600 - trunc to -PI..PI range
+ * r700 - normalize by dividing by 2PI
+ * see fdo bug 27901
+ */
+static int tgsi_trig(struct r600_shader_ctx *ctx)
+{
+	struct tgsi_full_instruction *inst = &ctx->parse.FullToken.FullInstruction;
+	struct r600_bc_alu_src r600_src[3];
+	struct r600_bc_alu alu;
+	int i, r;
+	uint32_t lit_vals[4];
+
+	memset(lit_vals, 0, 4*4);
+	r = tgsi_split_constant(ctx, r600_src);
+	if (r)
+		return r;
+	lit_vals[0] = fui(1.0 /(3.1415926535 * 2));
+	lit_vals[1] = fui(0.5f);
+
+	memset(&alu, 0, sizeof(struct r600_bc_alu));
+	alu.inst = V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_MULADD;
+	alu.is_op3 = 1;
+
+	alu.dst.chan = 0;
+	alu.dst.sel = ctx->temp_reg;
+	alu.dst.write = 1;
+
+	alu.src[0] = r600_src[0];
+	alu.src[0].chan = tgsi_chan(&inst->Src[0], 0);
+		
+	alu.src[1].sel = SQ_ALU_SRC_LITERAL;
+	alu.src[1].chan = 0;
+	alu.src[2].sel = SQ_ALU_SRC_LITERAL;
+	alu.src[2].chan = 1;
+	alu.last = 1;
+	r = r600_bc_add_alu(ctx->bc, &alu);
+	if (r)
+		return r;
+	r = r600_bc_add_literal(ctx->bc, lit_vals);
+	if (r)
+		return r;
+
+	memset(&alu, 0, sizeof(struct r600_bc_alu));
+	alu.inst = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FRACT;
+		
+	alu.dst.chan = 0;
+	alu.dst.sel = ctx->temp_reg;
+	alu.dst.write = 1;
+
+	alu.src[0].sel = ctx->temp_reg;
+	alu.src[0].chan = 0;
+	alu.last = 1;
+	r = r600_bc_add_alu(ctx->bc, &alu);
+	if (r)
+		return r;
+
+	if (ctx->bc->chiprev == 0) {
+		lit_vals[0] = fui(3.1415926535897f * 2.0f);
+		lit_vals[1] = fui(-3.1415926535897f);
+	} else {
+		lit_vals[0] = fui(1.0f);
+		lit_vals[1] = fui(-0.5f);
+	}
+
+	memset(&alu, 0, sizeof(struct r600_bc_alu));
+	alu.inst = V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_MULADD;
+	alu.is_op3 = 1;
+
+	alu.dst.chan = 0;
+	alu.dst.sel = ctx->temp_reg;
+	alu.dst.write = 1;
+
+	alu.src[0].sel = ctx->temp_reg;
+	alu.src[0].chan = 0;
+		
+	alu.src[1].sel = SQ_ALU_SRC_LITERAL;
+	alu.src[1].chan = 0;
+	alu.src[2].sel = SQ_ALU_SRC_LITERAL;
+	alu.src[2].chan = 1;
+	alu.last = 1;
+	r = r600_bc_add_alu(ctx->bc, &alu);
+	if (r)
+		return r;
+	r = r600_bc_add_literal(ctx->bc, lit_vals);
+	if (r)
+		return r;
+
+	memset(&alu, 0, sizeof(struct r600_bc_alu));
+	alu.inst = ctx->inst_info->r600_opcode;
+	alu.dst.chan = 0;
+	alu.dst.sel = ctx->temp_reg;
+	alu.dst.write = 1;
+
+	alu.src[0].sel = ctx->temp_reg;
+	alu.src[0].chan = 0;
+	alu.last = 1;
+	r = r600_bc_add_alu(ctx->bc, &alu);
+	if (r)
+		return r;
+
+	/* replicate result */
+	for (i = 0; i < 4; i++) {
+		memset(&alu, 0, sizeof(struct r600_bc_alu));
+		alu.src[0].sel = ctx->temp_reg;
+		alu.inst = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOV;
+		alu.dst.chan = i;
+		r = tgsi_dst(ctx, &inst->Dst[0], i, &alu.dst);
+		if (r)
+			return r;
+		alu.dst.write = (inst->Dst[0].Register.WriteMask >> i) & 1;
+		if (i == 3)
+			alu.last = 1;
+		r = r600_bc_add_alu(ctx->bc, &alu);
+		if (r)
+			return r;
+	}
+	return 0;
+}
+
 static int tgsi_kill(struct r600_shader_ctx *ctx)
 {
 	struct tgsi_full_instruction *inst = &ctx->parse.FullToken.FullInstruction;
@@ -1300,7 +1420,7 @@ static struct r600_shader_tgsi_instruction r600_shader_tgsi_instruction[] = {
 	{TGSI_OPCODE_ABS,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOV, tgsi_op2},
 	{TGSI_OPCODE_RCC,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_DPH,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
-	{TGSI_OPCODE_COS,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
+	{TGSI_OPCODE_COS,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_COS, tgsi_trig},
 	{TGSI_OPCODE_DDX,	0, SQ_TEX_INST_GET_GRADIENTS_H, tgsi_tex},
 	{TGSI_OPCODE_DDY,	0, SQ_TEX_INST_GET_GRADIENTS_V, tgsi_tex},
 	{TGSI_OPCODE_KILP,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},  /* predicated kill */
@@ -1312,7 +1432,7 @@ static struct r600_shader_tgsi_instruction r600_shader_tgsi_instruction[] = {
 	{TGSI_OPCODE_SEQ,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETE, tgsi_op2},
 	{TGSI_OPCODE_SFL,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_SGT,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETGT, tgsi_op2},
-	{TGSI_OPCODE_SIN,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
+	{TGSI_OPCODE_SIN,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SIN, tgsi_trig},
 	{TGSI_OPCODE_SLE,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETGE, tgsi_slt},
 	{TGSI_OPCODE_SNE,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETNE, tgsi_op2},
 	{TGSI_OPCODE_STR,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},

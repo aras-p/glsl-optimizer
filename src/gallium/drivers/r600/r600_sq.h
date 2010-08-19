@@ -598,5 +598,6 @@
 #define SQ_ALU_SRC_1_INT 250
 #define SQ_ALU_SRC_M_1_INT 251
 #define SQ_ALU_SRC_0_5 252
+#define SQ_ALU_SRC_LITERAL 253
 
 #endif
