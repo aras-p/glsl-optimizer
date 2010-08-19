@@ -357,6 +357,10 @@ void r300_zmask_alloc_block(struct r300_context *r300, struct r300_surface *surf
         tex->desc.b.b.target != PIPE_TEXTURE_2D)
         return;
 
+    /* Cannot flush zmask of 16-bit zbuffers. */
+    if (util_format_get_blocksizebits(tex->desc.b.b.format) == 16)
+        return;
+
     if (tex->zmask_mem[level])
         return;
 
