@@ -146,7 +146,9 @@ lp_fence_signal(struct lp_fence *fence)
       debug_printf("%s count=%u rank=%u\n", __FUNCTION__,
                    fence->count, fence->rank);
 
-   pipe_condvar_signal(fence->signalled);
+   /* Wakeup all threads waiting on the mutex:
+    */
+   pipe_condvar_broadcast(fence->signalled);
 
    pipe_mutex_unlock(fence->mutex);
 }
