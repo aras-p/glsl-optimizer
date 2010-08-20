@@ -86,7 +86,9 @@ draw_pt_arrays(struct draw_context *draw,
          opt |= PT_PIPELINE;
       }
 
-      if (!draw->bypass_clipping && !draw->pt.test_fse) {
+      if ((draw->clip_xy ||
+           draw->clip_z ||
+           draw->clip_user) && !draw->pt.test_fse) {
          opt |= PT_CLIPTEST;
       }
 

@@ -106,6 +106,8 @@ boolean draw_init(struct draw_context *draw)
    ASSIGN_4V( draw->plane[4],  0,  0,  1, 1 ); /* yes these are correct */
    ASSIGN_4V( draw->plane[5],  0,  0, -1, 1 ); /* mesa's a bit wonky */
    draw->nr_planes = 6;
+   draw->clip_xy = 1;
+   draw->clip_z = 1;
 
 
    draw->reduced_prim = ~0; /* != any of PIPE_PRIM_x */
@@ -186,6 +188,14 @@ void draw_set_mrd(struct draw_context *draw, double mrd)
 }
 
 
+static void update_clip_flags( struct draw_context *draw )
+{
+   draw->clip_xy = !draw->driver.bypass_clip_xy;
+   draw->clip_z = (!draw->driver.bypass_clip_z &&
+                   !draw->depth_clamp);
+   draw->clip_user = (draw->nr_planes > 6);
+}
+
 /**
  * Register new primitive rasterization/rendering state.
  * This causes the drawing pipeline to be rebuilt.
@@ -200,18 +210,25 @@ void draw_set_rasterizer_state( struct draw_context *draw,
       draw->rasterizer = raster;
       draw->rast_handle = rast_handle;
 
-      draw->bypass_clipping = draw->driver.bypass_clipping;
-   }
+  }
 }
 
-
+/* With a little more work, llvmpipe will be able to turn this off and
+ * do its own x/y clipping.  
+ *
+ * Some hardware can turn off clipping altogether - in particular any
+ * hardware with a TNL unit can do its own clipping, even if it is
+ * relying on the draw module for some other reason.
+ */
 void draw_set_driver_clipping( struct draw_context *draw,
-                               boolean bypass_clipping )
+                               boolean bypass_clip_xy,
+                               boolean bypass_clip_z )
 {
    draw_do_flush( draw, DRAW_FLUSH_STATE_CHANGE );
 
-   draw->driver.bypass_clipping = bypass_clipping;
-   draw->bypass_clipping = draw->driver.bypass_clipping;
+   draw->driver.bypass_clip_xy = bypass_clip_xy;
+   draw->driver.bypass_clip_z = bypass_clip_z;
+   update_clip_flags(draw);
 }
 
 
@@ -241,6 +258,8 @@ void draw_set_clip_state( struct draw_context *draw,
    memcpy(&draw->plane[6], clip->ucp, clip->nr * sizeof(clip->ucp[0]));
    draw->nr_planes = 6 + clip->nr;
    draw->depth_clamp = clip->depth_clamp;
+
+   update_clip_flags(draw);
 }
 
 

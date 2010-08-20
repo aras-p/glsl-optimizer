@@ -221,7 +221,9 @@ boolean draw_pt_post_vs_run( struct pt_post_vs *pvs,
 			     struct draw_vertex_info *info );
 
 void draw_pt_post_vs_prepare( struct pt_post_vs *pvs,
-			      boolean bypass_clipping,
+			      boolean clip_xy,
+			      boolean clip_z,
+			      boolean clip_user,
 			      boolean bypass_viewport,
 			      boolean opengl,
 			      boolean need_edgeflags );

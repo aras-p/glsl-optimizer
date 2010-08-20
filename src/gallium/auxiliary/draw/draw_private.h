@@ -176,13 +176,19 @@ struct draw_context
    } pt;
 
    struct {
-      boolean bypass_clipping;
-      boolean bypass_vs;
+      boolean bypass_clip_xy;
+      boolean bypass_clip_z;
    } driver;
 
    boolean flushing;         /**< debugging/sanity */
    boolean suspend_flushing; /**< internally set */
-   boolean bypass_clipping;  /**< set if either api or driver bypass_clipping true */
+
+   /* Flags set if API requires clipping in these planes and the
+    * driver doesn't indicate that it can do it for us.
+    */
+   boolean clip_xy;
+   boolean clip_z;
+   boolean clip_user;
 
    boolean force_passthrough; /**< never clip or shade */
 

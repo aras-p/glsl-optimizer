@@ -212,7 +212,8 @@ void draw_set_render( struct draw_context *draw,
 		      struct vbuf_render *render );
 
 void draw_set_driver_clipping( struct draw_context *draw,
-                               boolean bypass_clipping );
+                               boolean bypass_clip_xy,
+                               boolean bypass_clip_z );
 
 void draw_set_force_passthrough( struct draw_context *draw, 
                                  boolean enable );

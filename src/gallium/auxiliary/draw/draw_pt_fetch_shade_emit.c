@@ -102,7 +102,7 @@ static void fse_prepare( struct draw_pt_middle_end *middle,
                                fse->key.nr_inputs);     /* inputs - fetch from api format */
 
    fse->key.viewport = !draw->identity_viewport;
-   fse->key.clip = !draw->bypass_clipping;
+   fse->key.clip = draw->clip_xy || draw->clip_z || draw->clip_user;
    fse->key.const_vbuffers = 0;
 
    memset(fse->key.element, 0, 
