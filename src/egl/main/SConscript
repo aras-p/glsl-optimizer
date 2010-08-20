@@ -42,7 +42,7 @@ if env['platform'] != 'winddk':
 
 	egl = env.SharedLibrary(
 		target = 'libEGL',
-		source = egl_sources,
+		source = egl_sources + ['egl.def'],
 	)
 
 	env.InstallSharedLibrary(egl, version=(1, 4, 0))
