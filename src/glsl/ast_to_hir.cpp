@@ -2149,7 +2149,6 @@ ast_function::hir(exec_list *instructions,
 	    YYLTYPE loc = this->get_location();
 
 	    _mesa_glsl_error(& loc, state, "function `%s' redefined", name);
-	    sig = NULL;
 	 }
       }
    } else if (state->symbols->name_declared_this_scope(name)) {
@@ -2159,7 +2158,7 @@ ast_function::hir(exec_list *instructions,
 
       _mesa_glsl_error(& loc, state, "function name `%s' conflicts with "
 		       "non-function", name);
-      sig = NULL;
+      return NULL;
    } else {
       f = new(ctx) ir_function(name);
       state->symbols->add_function(f->name, f);
@@ -2207,6 +2206,8 @@ ast_function_definition::hir(exec_list *instructions,
    prototype->hir(instructions, state);
 
    ir_function_signature *signature = prototype->signature;
+   if (signature == NULL)
+      return NULL;
 
    assert(state->current_function == NULL);
    state->current_function = signature;
