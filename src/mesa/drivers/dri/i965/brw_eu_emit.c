@@ -75,6 +75,8 @@ static void brw_set_dest( struct brw_instruction *insn,
       else {
 	 insn->bits1.da16.dest_subreg_nr = dest.subnr / 16;
 	 insn->bits1.da16.dest_writemask = dest.dw1.bits.writemask;
+	 /* even ignored in da16, still need to set as '01' */
+	 insn->bits1.da16.dest_horiz_stride = 1;
       }
    }
    else {
@@ -90,6 +92,8 @@ static void brw_set_dest( struct brw_instruction *insn,
       }
       else {
 	 insn->bits1.ia16.dest_indirect_offset = dest.dw1.bits.indirect_offset;
+	 /* even ignored in da16, still need to set as '01' */
+	 insn->bits1.ia16.dest_horiz_stride = 1;
       }
    }
 

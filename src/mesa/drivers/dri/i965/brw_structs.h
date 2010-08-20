@@ -1360,7 +1360,7 @@ struct brw_instruction
 	 GLuint dest_writemask:4;
 	 GLuint dest_subreg_nr:1;
 	 GLuint dest_reg_nr:8;
-	 GLuint pad1:2;
+	 GLuint dest_horiz_stride:2;
 	 GLuint dest_address_mode:1;
       } da16;
 
@@ -1374,7 +1374,7 @@ struct brw_instruction
 	 GLuint dest_writemask:4;
 	 GLint dest_indirect_offset:6;
 	 GLuint dest_subreg_nr:3;
-	 GLuint pad1:2;
+	 GLuint dest_horiz_stride:2;
 	 GLuint dest_address_mode:1;
       } ia16;
    } bits1;
