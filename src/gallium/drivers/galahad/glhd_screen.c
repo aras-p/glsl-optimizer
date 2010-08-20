@@ -144,7 +144,6 @@ galahad_screen_resource_create(struct pipe_screen *_screen,
          glhd_warn("Requested NPOT (%ux%u) non-rectangle texture without NPOT support", templat->width0, templat->height0);
    }
 
-   /* TODO: allow this for OpenCL flexible sampling */
    if(templat->target == PIPE_TEXTURE_RECT && templat->last_level)
       glhd_warn("Rectangle textures cannot have mipmaps, but last_level = %u", templat->last_level);
 
