@@ -236,6 +236,16 @@ char *reg_encoding[8] = {
     [7] = "F"
 };
 
+int reg_type_size[8] = {
+    [0] = 4,
+    [1] = 4,
+    [2] = 2,
+    [3] = 2,
+    [4] = 1,
+    [5] = 1,
+    [7] = 4
+};
+
 char *imm_encoding[8] = {
     [0] = "UD",
     [1] = "D",
@@ -482,7 +492,8 @@ static int dest (FILE *file, struct brw_instruction *inst)
 	    if (err == -1)
 		return 0;
 	    if (inst->bits1.da1.dest_subreg_nr)
-		format (file, ".%d", inst->bits1.da1.dest_subreg_nr);
+		format (file, ".%d", inst->bits1.da1.dest_subreg_nr /
+				     reg_type_size[inst->bits1.da1.dest_reg_type]);
 	    format (file, "<%d>", inst->bits1.da1.dest_horiz_stride);
 	    err |= control (file, "dest reg encoding", reg_encoding, inst->bits1.da1.dest_reg_type, NULL);
 	}
@@ -490,7 +501,8 @@ static int dest (FILE *file, struct brw_instruction *inst)
 	{
 	    string (file, "g[a0");
 	    if (inst->bits1.ia1.dest_subreg_nr)
-		format (file, ".%d", inst->bits1.ia1.dest_subreg_nr);
+		format (file, ".%d", inst->bits1.ia1.dest_subreg_nr /
+					reg_type_size[inst->bits1.ia1.dest_reg_type]);
 	    if (inst->bits1.ia1.dest_indirect_offset)
 		format (file, " %d", inst->bits1.ia1.dest_indirect_offset);
 	    string (file, "]");
@@ -506,7 +518,8 @@ static int dest (FILE *file, struct brw_instruction *inst)
 	    if (err == -1)
 		return 0;
 	    if (inst->bits1.da16.dest_subreg_nr)
-		format (file, ".%d", inst->bits1.da16.dest_subreg_nr);
+		format (file, ".%d", inst->bits1.da16.dest_subreg_nr /
+				     reg_type_size[inst->bits1.da16.dest_reg_type]);
 	    string (file, "<1>");
 	    err |= control (file, "writemask", writemask, inst->bits1.da16.dest_writemask, NULL);
 	    err |= control (file, "dest reg encoding", reg_encoding, inst->bits1.da16.dest_reg_type, NULL);
@@ -547,7 +560,7 @@ static int src_da1 (FILE *file, GLuint type, GLuint _reg_file,
     if (err == -1)
 	return 0;
     if (sub_reg_num)
-	format (file, ".%d", sub_reg_num);
+	format (file, ".%d", sub_reg_num / reg_type_size[type]); /* use formal style like spec */
     src_align1_region (file, _vert_stride, _width, _horiz_stride);
     err |= control (file, "src reg encoding", reg_encoding, type, NULL);
     return err;
@@ -601,11 +614,12 @@ static int src_da16 (FILE *file,
     if (err == -1)
 	return 0;
     if (_subreg_nr)
-	format (file, ".%d", _subreg_nr);
+	/* bit4 for subreg number byte addressing. Make this same meaning as
+	   in da1 case, so output looks consistent. */
+	format (file, ".%d", 16 / reg_type_size[_reg_type]);
     string (file, "<");
     err |= control (file, "vert stride", vert_stride, _vert_stride, NULL);
     string (file, ",4,1>");
-    err |= control (file, "src da16 reg type", reg_encoding, _reg_type, NULL);
     /*
      * Three kinds of swizzle display:
      *  identity - nothing printed
