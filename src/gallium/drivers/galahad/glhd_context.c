@@ -972,5 +972,7 @@ galahad_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
 
    glhd_pipe->pipe = pipe;
 
+   glhd_warn("Created context %p", glhd_pipe);
+
    return &glhd_pipe->base;
 }
