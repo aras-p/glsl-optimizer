@@ -322,6 +322,8 @@ setup_bitmap_vertex_data(struct st_context *st, bool normalized,
    const GLfloat clip_y0 = (GLfloat)(y0 / fb_height * 2.0 - 1.0);
    const GLfloat clip_x1 = (GLfloat)(x1 / fb_width * 2.0 - 1.0);
    const GLfloat clip_y1 = (GLfloat)(y1 / fb_height * 2.0 - 1.0);
+   const GLuint max_slots = 1; /* 4096 / sizeof(st->bitmap.vertices); */
+   GLuint i;
 
    if(!normalized)
    {
@@ -339,9 +341,6 @@ setup_bitmap_vertex_data(struct st_context *st, bool normalized,
     * price of allocating a new buffer for each bitmap cache-flush to
     * avoid synchronous rendering.
     */
-   const GLuint max_slots = 1; /* 4096 / sizeof(st->bitmap.vertices); */
-   GLuint i;
-
    if (st->bitmap.vbuf_slot >= max_slots) {
       pipe_resource_reference(&st->bitmap.vbuf, NULL);
       st->bitmap.vbuf_slot = 0;
