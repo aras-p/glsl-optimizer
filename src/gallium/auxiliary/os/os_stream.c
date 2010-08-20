@@ -9,28 +9,20 @@ os_default_stream_vprintf (struct os_stream* stream, const char *format, va_list
 {
    char buf[1024];
    int retval;
-
-   retval = util_vsnprintf(buf, sizeof(buf), format, ap);
+   va_list ap2;
+   va_copy(ap2, ap);
+   retval = util_vsnprintf(buf, sizeof(buf), format, ap2);
+   va_end(ap2);
    if(retval <= 0)
    {}
    else if(retval < sizeof(buf))
       stream->write(stream, buf, retval);
    else
    {
-      int alloc = sizeof(buf);
-      char* str = NULL;
-      for(;;)
-      {
-         alloc += alloc;
-         if(str)
-            FREE(str);
-         str = MALLOC(alloc);
-         if(!str)
-            return -1;
-
-         retval = util_vsnprintf(str, alloc, format, ap);
-      } while(retval >= alloc);
-
+      char* str = MALLOC(retval + 1);
+      if(!str)
+         return -1;
+      retval = util_vsnprintf(str, retval + 1, format, ap);
       if(retval > 0)
          stream->write(stream, str, retval);
       FREE(str);
