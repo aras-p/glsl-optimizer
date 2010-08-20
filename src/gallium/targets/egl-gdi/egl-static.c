@@ -33,6 +33,8 @@
 #include "target-helpers/inline_debug_helper.h"
 #include "egldriver.h"
 
+static struct st_api *stapis[ST_API_COUNT];
+
 static uint
 get_api_mask(void)
 {
@@ -57,7 +59,11 @@ get_api_mask(void)
 static struct st_api *
 get_st_api(enum st_api_type api)
 {
-   struct st_api *stapi = NULL;
+   struct st_api *stapi;
+
+   stapi = stapis[api];
+   if (stapi)
+      return stapi;
 
    switch (api) {
 #if FEATURE_GL
@@ -84,13 +90,33 @@ get_st_api(enum st_api_type api)
          break;
    }
 
+   stapis[api] = stapi;
+
    return stapi;
 }
 
 static struct st_api *
 guess_gl_api(void)
 {
-   return NULL;
+   struct st_api *stapi = NULL;
+
+#if FEATURE_GL
+   stapi = get_st_api(ST_API_OPENGL);
+   if (stapi)
+      return stapi;
+#endif
+#if FEATURE_ES1
+   stapi = get_st_api(ST_API_OPENGL_ES1);
+   if (stapi)
+      return stapi;
+#endif
+#if FEATURE_ES2
+   stapi = get_st_api(ST_API_OPENGL_ES2);
+   if (stapi)
+      return stapi;
+#endif
+
+   return stapi;
 }
 
 static struct pipe_screen *
@@ -127,7 +153,16 @@ init_loader(struct egl_g3d_loader *loader)
 static void
 egl_g3d_unload(_EGLDriver *drv)
 {
+   int i;
+
    egl_g3d_destroy_driver(drv);
+
+   for (i = 0; i < ST_API_COUNT; i++) {
+      if (stapis[i]) {
+         stapis[i]->destroy(stapis[i]);
+         stapis[i] = NULL;
+      }
+   }
 }
 
 static struct egl_g3d_loader loader;
