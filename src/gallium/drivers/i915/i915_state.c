@@ -527,8 +527,6 @@ static void i915_set_constant_buffer(struct pipe_context *pipe,
    struct i915_context *i915 = i915_context(pipe);
    draw_flush(i915->draw);
 
-   assert(index == 0);
-
    /* Make a copy of shader constants.
     * During fragment program translation we may add additional
     * constants to the array.

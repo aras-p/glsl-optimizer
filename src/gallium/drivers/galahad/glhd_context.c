@@ -463,6 +463,15 @@ galahad_set_constant_buffer(struct pipe_context *_pipe,
       glhd_error("Unknown shader type %u", shader);
    }
 
+   if (index &&
+      index >=
+         pipe->screen->get_param(pipe->screen, PIPE_CAP_MAX_CONST_BUFFERS)) {
+      glhd_error("Access to constant buffer %u requested, "
+         "but only %d are supported",
+         index,
+         pipe->screen->get_param(pipe->screen, PIPE_CAP_MAX_CONST_BUFFERS));
+   }
+
    /* XXX hmm? unwrap the input state */
    if (_resource) {
       unwrapped_resource = galahad_resource_unwrap(_resource);
