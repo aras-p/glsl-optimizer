@@ -927,7 +927,6 @@ static void
 llvmpipe_delete_fs_state(struct pipe_context *pipe, void *fs)
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
-   struct pipe_fence_handle *fence = NULL;
    struct lp_fragment_shader *shader = fs;
    struct lp_fs_variant_list_item *li;
 
@@ -940,12 +939,7 @@ llvmpipe_delete_fs_state(struct pipe_context *pipe, void *fs)
     * Flushing alone might not sufficient we need to wait on it too.
     */
 
-   llvmpipe_flush(pipe, 0, &fence);
-
-   if (fence) {
-      pipe->screen->fence_finish(pipe->screen, fence, 0);
-      pipe->screen->fence_reference(pipe->screen, &fence, NULL);
-   }
+   llvmpipe_finish(pipe, __FUNCTION__);
 
    li = first_elem(&shader->variants);
    while(!at_end(&shader->variants, li)) {
@@ -1148,19 +1142,14 @@ llvmpipe_update_fs(struct llvmpipe_context *lp)
       unsigned i;
       if (lp->nr_fs_variants >= LP_MAX_SHADER_VARIANTS) {
          struct pipe_context *pipe = &lp->pipe;
-         struct pipe_fence_handle *fence = NULL;
 
          /*
           * XXX: we need to flush the context until we have some sort of reference
           * counting in fragment shaders as they may still be binned
           * Flushing alone might not be sufficient we need to wait on it too.
           */
-         llvmpipe_flush(pipe, 0, &fence);
+         llvmpipe_finish(pipe, __FUNCTION__);
 
-         if (fence) {
-            pipe->screen->fence_finish(pipe->screen, fence, 0);
-            pipe->screen->fence_reference(pipe->screen, &fence, NULL);
-         }
          for (i = 0; i < LP_MAX_SHADER_VARIANTS / 4; i++) {
             struct lp_fs_variant_list_item *item = last_elem(&lp->fs_variants_list);
             remove_shader_variant(lp, item->base);

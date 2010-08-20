@@ -275,9 +275,10 @@ set_scene_state( struct lp_setup_context *setup,
 void
 lp_setup_flush( struct lp_setup_context *setup,
                 unsigned flags,
-                struct pipe_fence_handle **fence)
+                struct pipe_fence_handle **fence,
+                const char *reason)
 {
-   LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
+   LP_DBG(DEBUG_SETUP, "%s %s\n", __FUNCTION__, reason);
 
    if (setup->scene) {
       if (fence) {

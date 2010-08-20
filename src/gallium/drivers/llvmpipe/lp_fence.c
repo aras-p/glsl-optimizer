@@ -44,6 +44,7 @@
 struct lp_fence *
 lp_fence_create(unsigned rank)
 {
+   static int fence_id;
    struct lp_fence *fence = CALLOC_STRUCT(lp_fence);
 
    pipe_reference_init(&fence->reference, 1);
@@ -51,7 +52,11 @@ lp_fence_create(unsigned rank)
    pipe_mutex_init(fence->mutex);
    pipe_condvar_init(fence->signalled);
 
+   fence->id = fence_id++;
    fence->rank = rank;
+
+   if (LP_DEBUG & DEBUG_FENCE)
+      debug_printf("%s %d\n", __FUNCTION__, fence->id);
 
    return fence;
 }
@@ -61,6 +66,9 @@ lp_fence_create(unsigned rank)
 void
 lp_fence_destroy(struct lp_fence *fence)
 {
+   if (LP_DEBUG & DEBUG_FENCE)
+      debug_printf("%s %d\n", __FUNCTION__, fence->id);
+
    pipe_mutex_destroy(fence->mutex);
    pipe_condvar_destroy(fence->signalled);
    FREE(fence);
@@ -126,13 +134,17 @@ llvmpipe_fence_finish(struct pipe_screen *screen,
 void
 lp_fence_signal(struct lp_fence *fence)
 {
+   if (LP_DEBUG & DEBUG_FENCE)
+      debug_printf("%s %d\n", __FUNCTION__, fence->id);
+
    pipe_mutex_lock(fence->mutex);
 
    fence->count++;
    assert(fence->count <= fence->rank);
 
-   LP_DBG(DEBUG_RAST, "%s count=%u rank=%u\n", __FUNCTION__,
-          fence->count, fence->rank);
+   if (LP_DEBUG & DEBUG_FENCE)
+      debug_printf("%s count=%u rank=%u\n", __FUNCTION__,
+                   fence->count, fence->rank);
 
    pipe_condvar_signal(fence->signalled);
 

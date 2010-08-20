@@ -41,6 +41,7 @@ struct pipe_screen;
 struct lp_fence
 {
    struct pipe_reference reference;
+   unsigned id;
 
    pipe_mutex mutex;
    pipe_condvar signalled;

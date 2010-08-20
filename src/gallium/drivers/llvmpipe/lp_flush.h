@@ -34,8 +34,14 @@ struct pipe_context;
 struct pipe_fence_handle;
 
 void
-llvmpipe_flush(struct pipe_context *pipe, unsigned flags,
-               struct pipe_fence_handle **fence);
+llvmpipe_flush(struct pipe_context *pipe,
+               unsigned flags,
+               struct pipe_fence_handle **fence,
+               const char *reason);
+
+void
+llvmpipe_finish( struct pipe_context *pipe,
+                 const char *reason );
 
 boolean
 llvmpipe_flush_resource(struct pipe_context *pipe,
@@ -45,6 +51,7 @@ llvmpipe_flush_resource(struct pipe_context *pipe,
                         unsigned flush_flags,
                         boolean read_only,
                         boolean cpu_access,
-                        boolean do_not_block);
+                        boolean do_not_block,
+                        const char *reason);
 
 #endif

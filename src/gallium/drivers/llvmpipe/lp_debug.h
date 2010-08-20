@@ -46,6 +46,8 @@ st_print_current(void);
 #define DEBUG_SHOW_TILES    0x200
 #define DEBUG_SHOW_SUBTILES 0x400
 #define DEBUG_COUNTERS      0x800
+#define DEBUG_SCENE         0x1000
+#define DEBUG_FENCE         0x2000
 
 
 #ifdef DEBUG

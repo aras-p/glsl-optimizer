@@ -85,6 +85,14 @@ static void llvmpipe_destroy( struct pipe_context *pipe )
    align_free( llvmpipe );
 }
 
+static void
+do_flush( struct pipe_context *pipe,
+          unsigned flags,
+          struct pipe_fence_handle **fence)
+{
+   llvmpipe_flush(pipe, flags, fence, __FUNCTION__);
+}
+
 
 struct pipe_context *
 llvmpipe_create_context( struct pipe_screen *screen, void *priv )
@@ -109,7 +117,7 @@ llvmpipe_create_context( struct pipe_screen *screen, void *priv )
    llvmpipe->pipe.destroy = llvmpipe_destroy;
    llvmpipe->pipe.set_framebuffer_state = llvmpipe_set_framebuffer_state;
    llvmpipe->pipe.clear = llvmpipe_clear;
-   llvmpipe->pipe.flush = llvmpipe_flush;
+   llvmpipe->pipe.flush = do_flush;
 
    llvmpipe_init_blend_funcs(llvmpipe);
    llvmpipe_init_clip_funcs(llvmpipe);
