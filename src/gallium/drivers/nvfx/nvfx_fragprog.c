@@ -15,6 +15,7 @@
 
 #define MAX_CONSTS 128
 #define MAX_IMM 32
+
 struct nvfx_fpc {
 	struct nvfx_fragment_program *fp;
 
@@ -38,6 +39,10 @@ struct nvfx_fpc {
 	unsigned nr_imm;
 
 	unsigned char generic_to_slot[256]; /* semantic idx for each input semantic */
+
+	struct util_dynarray if_stack;
+	//struct util_dynarray loop_stack;
+	struct util_dynarray label_relocs;
 };
 
 static INLINE struct nvfx_reg
@@ -232,6 +237,134 @@ nvfx_fp_emit(struct nvfx_fpc *fpc, struct nvfx_insn insn)
 #define tex(s,o,u,d,m,s0,s1,s2) \
 	nvfx_insn((s), NVFX_FP_OP_OPCODE_##o, (u), \
                    (d), (m), (s0), none, none)
+
+/* IF src.x != 0, as TGSI specifies */
+static void
+nv40_fp_if(struct nvfx_fpc *fpc, struct nvfx_src src)
+{
+	const struct nvfx_src none = nvfx_src(nvfx_reg(NVFXSR_NONE, 0));
+	struct nvfx_insn insn = arith(0, MOV, none.reg, NVFX_FP_MASK_X, src, none, none);
+	insn.cc_update = 1;
+	nvfx_fp_emit(fpc, insn);
+
+	fpc->inst_offset = fpc->fp->insn_len;
+	grow_insns(fpc, 4);
+	uint32_t *hw = &fpc->fp->insn[fpc->inst_offset];
+	/* I really wonder why fp16 precision is used. Presumably the hardware ignores it? */
+	hw[0] = (NV40_FP_OP_BRA_OPCODE_IF << NVFX_FP_OP_OPCODE_SHIFT) |
+		NV40_FP_OP_OUT_NONE |
+		(NVFX_FP_PRECISION_FP16 << NVFX_FP_OP_PRECISION_SHIFT);
+	/* Use .xxxx swizzle so that we check only src[0].x*/
+	hw[1] = (0 << NVFX_FP_OP_COND_SWZ_X_SHIFT) |
+			(0 << NVFX_FP_OP_COND_SWZ_Y_SHIFT) |
+			(0 << NVFX_FP_OP_COND_SWZ_Z_SHIFT) |
+			(0 << NVFX_FP_OP_COND_SWZ_W_SHIFT) |
+			(NVFX_FP_OP_COND_NE << NVFX_FP_OP_COND_SHIFT);
+	hw[2] = 0; /* | NV40_FP_OP_OPCODE_IS_BRANCH | else_offset */
+	hw[3] = 0; /* | endif_offset */
+	util_dynarray_append(&fpc->if_stack, unsigned, fpc->inst_offset);
+}
+
+/* IF src.x != 0, as TGSI specifies */
+static void
+nv40_fp_cal(struct nvfx_fpc *fpc, unsigned target)
+{
+        struct nvfx_label_relocation reloc;
+        fpc->inst_offset = fpc->fp->insn_len;
+        grow_insns(fpc, 4);
+        uint32_t *hw = &fpc->fp->insn[fpc->inst_offset];
+        /* I really wonder why fp16 precision is used. Presumably the hardware ignores it? */
+        hw[0] = (NV40_FP_OP_BRA_OPCODE_CAL << NVFX_FP_OP_OPCODE_SHIFT);
+        /* Use .xxxx swizzle so that we check only src[0].x*/
+        hw[1] = (NVFX_SWZ_IDENTITY << NVFX_FP_OP_COND_SWZ_ALL_SHIFT) |
+                        (NVFX_FP_OP_COND_TR << NVFX_FP_OP_COND_SHIFT);
+        hw[2] = NV40_FP_OP_OPCODE_IS_BRANCH; /* | call_offset */
+        hw[3] = 0;
+        reloc.target = target;
+        reloc.location = fpc->inst_offset + 2;
+        util_dynarray_append(&fpc->label_relocs, struct nvfx_label_relocation, reloc);
+}
+
+static void
+nv40_fp_ret(struct nvfx_fpc *fpc)
+{
+	fpc->inst_offset = fpc->fp->insn_len;
+	grow_insns(fpc, 4);
+	uint32_t *hw = &fpc->fp->insn[fpc->inst_offset];
+	/* I really wonder why fp16 precision is used. Presumably the hardware ignores it? */
+	hw[0] = (NV40_FP_OP_BRA_OPCODE_RET << NVFX_FP_OP_OPCODE_SHIFT);
+	/* Use .xxxx swizzle so that we check only src[0].x*/
+	hw[1] = (NVFX_SWZ_IDENTITY << NVFX_FP_OP_COND_SWZ_ALL_SHIFT) |
+			(NVFX_FP_OP_COND_TR << NVFX_FP_OP_COND_SHIFT);
+	hw[2] = NV40_FP_OP_OPCODE_IS_BRANCH; /* | call_offset */
+	hw[3] = 0;
+}
+
+static void
+nv40_fp_rep(struct nvfx_fpc *fpc, unsigned count, unsigned target)
+{
+        struct nvfx_label_relocation reloc;
+        fpc->inst_offset = fpc->fp->insn_len;
+        grow_insns(fpc, 4);
+        uint32_t *hw = &fpc->fp->insn[fpc->inst_offset];
+        /* I really wonder why fp16 precision is used. Presumably the hardware ignores it? */
+        hw[0] = (NV40_FP_OP_BRA_OPCODE_REP << NVFX_FP_OP_OPCODE_SHIFT) |
+                        NV40_FP_OP_OUT_NONE |
+                        (NVFX_FP_PRECISION_FP16 << NVFX_FP_OP_PRECISION_SHIFT);
+        /* Use .xxxx swizzle so that we check only src[0].x*/
+        hw[1] = (NVFX_SWZ_IDENTITY << NVFX_FP_OP_COND_SWZ_ALL_SHIFT) |
+                        (NVFX_FP_OP_COND_TR << NVFX_FP_OP_COND_SHIFT);
+        hw[2] = NV40_FP_OP_OPCODE_IS_BRANCH |
+                        (count << NV40_FP_OP_REP_COUNT1_SHIFT) |
+                        (count << NV40_FP_OP_REP_COUNT2_SHIFT) |
+                        (count << NV40_FP_OP_REP_COUNT3_SHIFT);
+        hw[3] = 0; /* | end_offset */
+        reloc.target = target;
+        reloc.location = fpc->inst_offset + 3;
+        util_dynarray_append(&fpc->label_relocs, struct nvfx_label_relocation, reloc);
+        //util_dynarray_append(&fpc->loop_stack, unsigned, target);
+}
+
+/* warning: this only works forward, and probably only if not inside any IF */
+static void
+nv40_fp_bra(struct nvfx_fpc *fpc, unsigned target)
+{
+        struct nvfx_label_relocation reloc;
+        fpc->inst_offset = fpc->fp->insn_len;
+        grow_insns(fpc, 4);
+        uint32_t *hw = &fpc->fp->insn[fpc->inst_offset];
+        /* I really wonder why fp16 precision is used. Presumably the hardware ignores it? */
+        hw[0] = (NV40_FP_OP_BRA_OPCODE_IF << NVFX_FP_OP_OPCODE_SHIFT) |
+                NV40_FP_OP_OUT_NONE |
+                (NVFX_FP_PRECISION_FP16 << NVFX_FP_OP_PRECISION_SHIFT);
+        /* Use .xxxx swizzle so that we check only src[0].x*/
+        hw[1] = (NVFX_SWZ_IDENTITY << NVFX_FP_OP_COND_SWZ_X_SHIFT) |
+                        (NVFX_FP_OP_COND_FL << NVFX_FP_OP_COND_SHIFT);
+        hw[2] = NV40_FP_OP_OPCODE_IS_BRANCH; /* | else_offset */
+        hw[3] = 0; /* | endif_offset */
+        reloc.target = target;
+        reloc.location = fpc->inst_offset + 2;
+        util_dynarray_append(&fpc->label_relocs, struct nvfx_label_relocation, reloc);
+        reloc.target = target;
+        reloc.location = fpc->inst_offset + 3;
+        util_dynarray_append(&fpc->label_relocs, struct nvfx_label_relocation, reloc);
+}
+
+static void
+nv40_fp_brk(struct nvfx_fpc *fpc)
+{
+	fpc->inst_offset = fpc->fp->insn_len;
+	grow_insns(fpc, 4);
+	uint32_t *hw = &fpc->fp->insn[fpc->inst_offset];
+	/* I really wonder why fp16 precision is used. Presumably the hardware ignores it? */
+	hw[0] = (NV40_FP_OP_BRA_OPCODE_BRK << NVFX_FP_OP_OPCODE_SHIFT) |
+		NV40_FP_OP_OUT_NONE;
+	/* Use .xxxx swizzle so that we check only src[0].x*/
+	hw[1] = (NVFX_SWZ_IDENTITY << NVFX_FP_OP_COND_SWZ_X_SHIFT) |
+			(NVFX_FP_OP_COND_TR << NVFX_FP_OP_COND_SHIFT);
+	hw[2] = NV40_FP_OP_OPCODE_IS_BRANCH;
+	hw[3] = 0;
+}
 
 static INLINE struct nvfx_src
 tgsi_src(struct nvfx_fpc *fpc, const struct tgsi_full_src_register *fsrc)
@@ -516,9 +649,6 @@ nvfx_fragprog_parse_instruction(struct nvfx_context* nvfx, struct nvfx_fpc *fpc,
 	case TGSI_OPCODE_RCP:
 		nvfx_fp_emit(fpc, arith(sat, RCP, dst, mask, src[0], none, none));
 		break;
-	case TGSI_OPCODE_RET:
-		assert(0);
-		break;
 	case TGSI_OPCODE_RFL:
 		if(!nvfx->is_nv4x)
 			nvfx_fp_emit(fpc, arith(0, RFL_NV30, dst, mask, src[0], src[1], none));
@@ -604,13 +734,106 @@ nvfx_fragprog_parse_instruction(struct nvfx_context* nvfx, struct nvfx_fpc *fpc,
 		nvfx_fp_emit(fpc, arith(0, MUL, tmp.reg, mask, swz(src[0], Z, X, Y, Y), swz(src[1], Y, Z, X, X), none));
 		nvfx_fp_emit(fpc, arith(sat, MAD, dst, (mask & ~NVFX_FP_MASK_W), swz(src[0], Y, Z, X, X), swz(src[1], Z, X, Y, Y), neg(tmp)));
 		break;
-	default:
+
+	case TGSI_OPCODE_IF:
+		// MOVRC0 R31 (TR0.xyzw), R<src>:
+		// IF (NE.xxxx) ELSE <else> END <end>
+		if(!nvfx->is_nv4x)
+			goto nv3x_cflow;
+		nv40_fp_if(fpc, src[0]);
+		break;
+
+	case TGSI_OPCODE_ELSE:
+	{
+		if(!nvfx->is_nv4x)
+			goto nv3x_cflow;
+		assert(util_dynarray_contains(&fpc->if_stack, unsigned));
+		uint32_t *hw = &fpc->fp->insn[util_dynarray_top(&fpc->if_stack, unsigned)];
+		hw[2] = NV40_FP_OP_OPCODE_IS_BRANCH | fpc->fp->insn_len;
+		break;
+	}
+
+	case TGSI_OPCODE_ENDIF:
+	{
+		if(!nvfx->is_nv4x)
+			goto nv3x_cflow;
+		assert(util_dynarray_contains(&fpc->if_stack, unsigned));
+		uint32_t *hw = &fpc->fp->insn[util_dynarray_pop(&fpc->if_stack, unsigned)];
+		if(!hw[2])
+			hw[2] = NV40_FP_OP_OPCODE_IS_BRANCH | fpc->fp->insn_len;
+		hw[3] = fpc->fp->insn_len;
+		break;
+	}
+
+	case TGSI_OPCODE_BRA:
+		/* This can in limited cases be implemented with an IF with the else and endif labels pointing to the target */
+		/* no state tracker uses this, so don't implement this for now */
+		assert(0);
+		nv40_fp_bra(fpc, finst->Label.Label);
+		break;
+
+	case TGSI_OPCODE_BGNSUB:
+	case TGSI_OPCODE_ENDSUB:
+		/* nothing to do here */
+		break;
+
+	case TGSI_OPCODE_CAL:
+		if(!nvfx->is_nv4x)
+			goto nv3x_cflow;
+		nv40_fp_cal(fpc, finst->Label.Label);
+		break;
+
+	case TGSI_OPCODE_RET:
+		if(!nvfx->is_nv4x)
+			goto nv3x_cflow;
+		nv40_fp_ret(fpc);
+		break;
+
+	case TGSI_OPCODE_BGNLOOP:
+		if(!nvfx->is_nv4x)
+			goto nv3x_cflow;
+		/* TODO: we should support using two nested REPs to allow a > 255 iteration count */
+		nv40_fp_rep(fpc, 255, finst->Label.Label);
+		break;
+
+	case TGSI_OPCODE_ENDLOOP:
+		break;
+
+	case TGSI_OPCODE_BRK:
+		if(!nvfx->is_nv4x)
+			goto nv3x_cflow;
+		nv40_fp_brk(fpc);
+		break;
+
+	case TGSI_OPCODE_CONT:
+	{
+		static int warned = 0;
+		if(!warned) {
+			NOUVEAU_ERR("Sorry, the continue keyword is not implemented: ignoring it.\n");
+			warned = 1;
+		}
+		break;
+	}
+
+        default:
 		NOUVEAU_ERR("invalid opcode %d\n", finst->Instruction.Opcode);
 		return FALSE;
 	}
 
+out:
 	release_temps(fpc);
 	return TRUE;
+nv3x_cflow:
+	{
+		static int warned = 0;
+		if(!warned) {
+			NOUVEAU_ERR(
+					"Sorry, control flow instructions are not supported in hardware on nv3x: ignoring them\n"
+					"If rendering is incorrect, try to disable GLSL support in the application.\n");
+			warned = 1;
+		}
+	}
+	goto out;
 }
 
 static boolean
@@ -734,6 +957,7 @@ nvfx_fragprog_translate(struct nvfx_context *nvfx,
 {
 	struct tgsi_parse_context parse;
 	struct nvfx_fpc *fpc = NULL;
+	struct util_dynarray insns;
 
 	fpc = CALLOC(1, sizeof(struct nvfx_fpc));
 	if (!fpc)
@@ -748,6 +972,7 @@ nvfx_fragprog_translate(struct nvfx_context *nvfx,
 
 	tgsi_parse_init(&parse, fp->pipe.tokens);
 
+	util_dynarray_init(&insns);
 	while (!tgsi_parse_end_of_tokens(&parse)) {
 		tgsi_parse_token(&parse);
 
@@ -756,6 +981,7 @@ nvfx_fragprog_translate(struct nvfx_context *nvfx,
 		{
 			const struct tgsi_full_instruction *finst;
 
+			util_dynarray_append(&insns, unsigned, fp->insn_len);
 			finst = &parse.FullToken.FullInstruction;
 			if (!nvfx_fragprog_parse_instruction(nvfx, fpc, finst))
 				goto out_err;
@@ -765,6 +991,14 @@ nvfx_fragprog_translate(struct nvfx_context *nvfx,
 			break;
 		}
 	}
+	util_dynarray_append(&insns, unsigned, fp->insn_len);
+
+	for(unsigned i = 0; i < fpc->label_relocs.size; i += sizeof(struct nvfx_label_relocation))
+	{
+		struct nvfx_label_relocation* label_reloc = (struct nvfx_label_relocation*)((char*)fpc->label_relocs.data + i);
+		fp->insn[label_reloc->location] |= ((unsigned*)insns.data)[label_reloc->target];
+	}
+	util_dynarray_fini(&insns);
 
 	if(!nvfx->is_nv4x)
 		fp->fp_control |= (fpc->num_regs-1)/2;
@@ -775,7 +1009,7 @@ nvfx_fragprog_translate(struct nvfx_context *nvfx,
 	if(fp->insn)
 		fp->insn[fpc->inst_offset] |= 0x00000001;
 
-	/* Append NOP + END instruction, may or may not be necessary. */
+	/* Append NOP + END instruction for branches to the end of the program */
 	fpc->inst_offset = fp->insn_len;
 	grow_insns(fpc, 4);
 	fp->insn[fpc->inst_offset + 0] = 0x00000001;
@@ -799,6 +1033,9 @@ out_err:
 	tgsi_parse_free(&parse);
 	if (fpc->r_temp)
 		FREE(fpc->r_temp);
+	util_dynarray_fini(&fpc->if_stack);
+	util_dynarray_fini(&fpc->label_relocs);
+	//util_dynarray_fini(&fpc->loop_stack);
 	FREE(fpc);
 }
 
