@@ -230,7 +230,10 @@ MAIN_FILES = \
 	$(DIRECTORY)/src/glsl/Makefile.template				\
 	$(DIRECTORY)/src/glsl/SConscript				\
 	$(DIRECTORY)/src/glsl/*/Makefile				\
-	$(DIRECTORY)/src/glsl/*/*.[ch]					\
+	$(DIRECTORY)/src/glsl/*.[ch]					\
+	$(DIRECTORY)/src/glsl/*.[cly]pp					\
+	$(DIRECTORY)/src/glsl/README					\
+	$(DIRECTORY)/src/glsl/glcpp/README				\
 	$(DIRECTORY)/src/Makefile					\
 	$(DIRECTORY)/src/mesa/Makefile*					\
 	$(DIRECTORY)/src/mesa/sources.mak				\
@@ -240,16 +243,13 @@ MAIN_FILES = \
 	$(DIRECTORY)/src/mesa/depend					\
 	$(MAIN_ES_FILES)						\
 	$(DIRECTORY)/src/mesa/main/*.[chS]				\
+	$(DIRECTORY)/src/mesa/main/*.cpp				\
 	$(DIRECTORY)/src/mesa/main/descrip.mms				\
 	$(DIRECTORY)/src/mesa/math/*.[ch]				\
 	$(DIRECTORY)/src/mesa/math/descrip.mms				\
 	$(DIRECTORY)/src/mesa/program/*.[chly]				\
 	$(DIRECTORY)/src/mesa/program/Makefile				\
 	$(DIRECTORY)/src/mesa/program/descrip.mms			\
-	$(DIRECTORY)/src/mesa/slang/*.[ch]				\
-	$(DIRECTORY)/src/mesa/slang/descrip.mms				\
-	$(DIRECTORY)/src/mesa/slang/library/*.gc			\
-	$(DIRECTORY)/src/mesa/slang/library/Makefile			\
 	$(DIRECTORY)/src/mesa/swrast/*.[ch]				\
 	$(DIRECTORY)/src/mesa/swrast/descrip.mms			\
 	$(DIRECTORY)/src/mesa/swrast_setup/*.[ch]			\
@@ -278,8 +278,6 @@ MAIN_FILES = \
 	$(DIRECTORY)/src/mesa/drivers/x11/Makefile			\
 	$(DIRECTORY)/src/mesa/drivers/x11/descrip.mms			\
 	$(DIRECTORY)/src/mesa/drivers/x11/*.[ch]			\
-	$(DIRECTORY)/src/mesa/drivers/glslcompiler/Makefile		\
-	$(DIRECTORY)/src/mesa/drivers/glslcompiler/glslcompiler.c	\
 	$(DIRECTORY)/src/mesa/ppc/*.[ch]				\
 	$(DIRECTORY)/src/mesa/sparc/*.[chS]				\
 	$(DIRECTORY)/src/mesa/x86/Makefile				\
