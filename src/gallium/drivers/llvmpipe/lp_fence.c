@@ -76,58 +76,6 @@ lp_fence_destroy(struct lp_fence *fence)
 
 
 /**
- * For reference counting.
- * This is a Gallium API function.
- */
-static void
-llvmpipe_fence_reference(struct pipe_screen *screen,
-                         struct pipe_fence_handle **ptr,
-                         struct pipe_fence_handle *fence)
-{
-   struct lp_fence **old = (struct lp_fence **) ptr;
-   struct lp_fence *f = (struct lp_fence *) fence;
-
-   lp_fence_reference(old, f);
-}
-
-
-/**
- * Has the fence been executed/finished?
- * This is a Gallium API function.
- */
-static int
-llvmpipe_fence_signalled(struct pipe_screen *screen,
-                         struct pipe_fence_handle *fence,
-                         unsigned flag)
-{
-   struct lp_fence *f = (struct lp_fence *) fence;
-
-   return f->count == f->rank;
-}
-
-
-/**
- * Wait for the fence to finish.
- * This is a Gallium API function.
- */
-static int
-llvmpipe_fence_finish(struct pipe_screen *screen,
-                      struct pipe_fence_handle *fence_handle,
-                      unsigned flag)
-{
-   struct lp_fence *fence = (struct lp_fence *) fence_handle;
-
-   pipe_mutex_lock(fence->mutex);
-   while (fence->count < fence->rank) {
-      pipe_condvar_wait(fence->signalled, fence->mutex);
-   }
-   pipe_mutex_unlock(fence->mutex);
-
-   return 0;
-}
-
-
-/**
  * Called by the rendering threads to increment the fence counter.
  * When the counter == the rank, the fence is finished.
  */
@@ -153,11 +101,24 @@ lp_fence_signal(struct lp_fence *fence)
    pipe_mutex_unlock(fence->mutex);
 }
 
+boolean
+lp_fence_signalled(struct lp_fence *f)
+{
+   return f->count == f->rank;
+}
 
 void
-llvmpipe_init_screen_fence_funcs(struct pipe_screen *screen)
+lp_fence_wait(struct lp_fence *f)
 {
-   screen->fence_reference = llvmpipe_fence_reference;
-   screen->fence_signalled = llvmpipe_fence_signalled;
-   screen->fence_finish = llvmpipe_fence_finish;
+   if (LP_DEBUG & DEBUG_FENCE)
+      debug_printf("%s %d\n", __FUNCTION__, f->id);
+
+   pipe_mutex_lock(f->mutex);
+   assert(f->issued);
+   while (f->count < f->rank) {
+      pipe_condvar_wait(f->signalled, f->mutex);
+   }
+   pipe_mutex_unlock(f->mutex);
 }
+
+

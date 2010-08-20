@@ -46,6 +46,7 @@ struct lp_fence
    pipe_mutex mutex;
    pipe_condvar signalled;
 
+   boolean issued;
    unsigned rank;
    unsigned count;
 };
@@ -58,6 +59,11 @@ lp_fence_create(unsigned rank);
 void
 lp_fence_signal(struct lp_fence *fence);
 
+boolean
+lp_fence_signalled(struct lp_fence *fence);
+
+void
+lp_fence_wait(struct lp_fence *fence);
 
 void
 llvmpipe_init_screen_fence_funcs(struct pipe_screen *screen);
@@ -77,6 +83,12 @@ lp_fence_reference(struct lp_fence **ptr,
    }
    
    *ptr = f;
+}
+
+static INLINE boolean
+lp_fence_issued(const struct lp_fence *fence)
+{
+   return fence->issued;
 }
 
 

@@ -317,6 +317,51 @@ llvmpipe_destroy_screen( struct pipe_screen *_screen )
 
 
 
+
+/**
+ * Fence reference counting.
+ */
+static void
+llvmpipe_fence_reference(struct pipe_screen *screen,
+                         struct pipe_fence_handle **ptr,
+                         struct pipe_fence_handle *fence)
+{
+   struct lp_fence **old = (struct lp_fence **) ptr;
+   struct lp_fence *f = (struct lp_fence *) fence;
+
+   lp_fence_reference(old, f);
+}
+
+
+/**
+ * Has the fence been executed/finished?
+ */
+static int
+llvmpipe_fence_signalled(struct pipe_screen *screen,
+                         struct pipe_fence_handle *fence,
+                         unsigned flag)
+{
+   struct lp_fence *f = (struct lp_fence *) fence;
+   return lp_fence_signalled(f);
+}
+
+
+/**
+ * Wait for the fence to finish.
+ */
+static int
+llvmpipe_fence_finish(struct pipe_screen *screen,
+                      struct pipe_fence_handle *fence_handle,
+                      unsigned flag)
+{
+   struct lp_fence *f = (struct lp_fence *) fence_handle;
+
+   lp_fence_wait(f);
+   return 0;
+}
+
+
+
 /**
  * Create a new pipe_screen object
  * Note: we're not presently subclassing pipe_screen (no llvmpipe_screen).
@@ -354,9 +399,11 @@ llvmpipe_create_screen(struct sw_winsys *winsys)
 
    screen->base.context_create = llvmpipe_create_context;
    screen->base.flush_frontbuffer = llvmpipe_flush_frontbuffer;
+   screen->base.fence_reference = llvmpipe_fence_reference;
+   screen->base.fence_signalled = llvmpipe_fence_signalled;
+   screen->base.fence_finish = llvmpipe_fence_finish;
 
    llvmpipe_init_screen_resource_funcs(&screen->base);
-   llvmpipe_init_screen_fence_funcs(&screen->base);
 
    lp_jit_screen_init(screen);
 

@@ -288,6 +288,8 @@ lp_setup_flush( struct lp_setup_context *setup,
          *fence = lp_setup_fence( setup );
       }
 
+      if (setup->scene->fence)
+         setup->scene->fence->issued = TRUE;
    }
 
    set_scene_state( setup, SETUP_FLUSHED );
