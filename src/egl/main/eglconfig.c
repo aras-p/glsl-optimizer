@@ -460,11 +460,14 @@ _eglMatchConfig(const _EGLConfig *conf, const _EGLConfig *criteria)
       }
 
       if (!matched) {
-#ifdef DEBUG
+#ifndef DEBUG
+         /* only print the common errors when DEBUG is not defined */
+         if (attr != EGL_RENDERABLE_TYPE)
+            break;
+#endif
          _eglLog(_EGL_DEBUG,
                "the value (0x%x) of attribute 0x%04x did not meet the criteria (0x%x)",
                val, attr, cmp);
-#endif
          break;
       }
    }

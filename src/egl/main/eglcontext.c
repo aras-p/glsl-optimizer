@@ -83,15 +83,6 @@ _eglParseContextAttribList(_EGLContext *ctx, const EGLint *attrib_list)
       }
    }
 
-   if (err == EGL_SUCCESS && ctx->Config) {
-      EGLint renderable_type, api_bit;
-
-      renderable_type = GET_CONFIG_ATTRIB(ctx->Config, EGL_RENDERABLE_TYPE);
-      api_bit = _eglGetContextAPIBit(ctx);
-      if (!(renderable_type & api_bit))
-         err = EGL_BAD_CONFIG;
-   }
-
    return err;
 }
 
@@ -121,6 +112,17 @@ _eglInitContext(_EGLContext *ctx, _EGLDisplay *dpy, _EGLConfig *conf,
    ctx->ClientVersion = 1; /* the default, per EGL spec */
 
    err = _eglParseContextAttribList(ctx, attrib_list);
+   if (err == EGL_SUCCESS && ctx->Config) {
+      EGLint renderable_type, api_bit;
+
+      renderable_type = GET_CONFIG_ATTRIB(ctx->Config, EGL_RENDERABLE_TYPE);
+      api_bit = _eglGetContextAPIBit(ctx);
+      if (!(renderable_type & api_bit)) {
+         _eglLog(_EGL_DEBUG, "context api is 0x%x while config supports 0x%x",
+               api_bit, renderable_type);
+         err = EGL_BAD_CONFIG;
+      }
+   }
    if (err != EGL_SUCCESS)
       return _eglError(err, "eglCreateContext");
 
