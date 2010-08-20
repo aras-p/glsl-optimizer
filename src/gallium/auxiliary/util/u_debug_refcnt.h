@@ -11,6 +11,10 @@
 #include <pipe/p_config.h>
 #include <pipe/p_state.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if defined(DEBUG) && (!defined(PIPE_OS_WINDOWS) || defined(PIPE_SUBSYSTEM_WINDOWS_USER))
 extern int debug_refcnt_state;
 
@@ -24,6 +28,10 @@ static INLINE void debug_reference(const struct pipe_reference* p, void* get_des
 #else
 static INLINE void debug_reference(const struct pipe_reference* p, void* get_desc, const char* op)
 {}
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* U_DEBUG_REFCNT_H_ */
