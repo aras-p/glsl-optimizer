@@ -1098,7 +1098,7 @@ static const struct {
    {"gl_BackLightProduct", "specular",
     {STATE_LIGHTPROD, 0, 1, STATE_SPECULAR}, SWIZZLE_XYZW, true},
 
-   {"gl_TextureEnvColor", "ambient",
+   {"gl_TextureEnvColor", NULL,
     {STATE_TEXENV_COLOR, 0}, SWIZZLE_XYZW, true},
 
    {"gl_EyePlaneS", NULL,
