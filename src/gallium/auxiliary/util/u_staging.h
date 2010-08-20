@@ -21,15 +21,15 @@ struct util_staging_transfer {
 };
 
 /* user must be stride, slice_stride and offset */
-/* pt->usage == PIPE_USAGE_DYNAMIC should be a good value to pass for direct */
-/* staging resource is currently created with PIPE_USAGE_DYNAMIC */
+/* pt->usage == PIPE_USAGE_DYNAMIC || pt->usage == PIPE_USAGE_STAGING should be a good value to pass for direct */
+/* staging resource is currently created with PIPE_USAGE_STAGING */
 struct util_staging_transfer *
-util_staging_transfer_new(struct pipe_context *pipe,
+util_staging_transfer_init(struct pipe_context *pipe,
            struct pipe_resource *pt,
            struct pipe_subresource sr,
            unsigned usage,
            const struct pipe_box *box,
-           bool direct);
+           bool direct, struct util_staging_transfer *tx);
 
 void
 util_staging_transfer_destroy(struct pipe_context *pipe, struct pipe_transfer *ptx);

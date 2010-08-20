@@ -23,20 +23,16 @@ util_staging_resource_template(struct pipe_resource *pt, unsigned width, unsigne
 }
 
 struct util_staging_transfer *
-util_staging_transfer_new(struct pipe_context *pipe,
+util_staging_transfer_init(struct pipe_context *pipe,
            struct pipe_resource *pt,
            struct pipe_subresource sr,
            unsigned usage,
            const struct pipe_box *box,
-           bool direct)
+           bool direct, struct util_staging_transfer *tx)
 {
    struct pipe_screen *pscreen = pipe->screen;
-   struct util_staging_transfer *tx;
-   struct pipe_resource staging_resource_template;
 
-   tx = CALLOC_STRUCT(util_staging_transfer);
-   if (!tx)
-      return NULL;
+   struct pipe_resource staging_resource_template;
 
    pipe_resource_reference(&tx->base.resource, pt);
    tx->base.sr = sr;
