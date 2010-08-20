@@ -1305,13 +1305,14 @@ struct brw_instruction
       GLuint access_mode:1;
       GLuint mask_control:1;
       GLuint dependency_control:2;
-      GLuint compression_control:2;
+      GLuint compression_control:2; /* gen6: quater control */
       GLuint thread_control:2;
       GLuint predicate_control:4;
       GLuint predicate_inverse:1;
       GLuint execution_size:3;
       GLuint destreg__conditionalmod:4; /* destreg - send, conditionalmod - others */
-      GLuint pad0:2;
+      GLuint acc_wr_control:1;
+      GLuint cmpt_control:1;
       GLuint debug_control:1;
       GLuint saturate:1;
    } header;

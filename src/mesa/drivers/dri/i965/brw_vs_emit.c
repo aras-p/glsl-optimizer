@@ -1397,6 +1397,7 @@ static void emit_vertex_write( struct brw_vs_compile *c)
     * of zeros followed by two sets of NDC coordinates:
     */
    brw_set_access_mode(p, BRW_ALIGN_1);
+   brw_set_acc_write_control(p, 0);
 
    /* The VUE layout is documented in Volume 2a. */
    if (intel->gen >= 6) {
@@ -1577,6 +1578,8 @@ void brw_vs_emit(struct brw_vs_compile *c )
    brw_set_compression_control(p, BRW_COMPRESSION_NONE);
    brw_set_access_mode(p, BRW_ALIGN_16);
    if_depth_in_loop[loop_depth] = 0;
+
+   brw_set_acc_write_control(p, 1);
 
    for (insn = 0; insn < nr_insns; insn++) {
        GLuint i;

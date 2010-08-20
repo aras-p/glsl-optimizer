@@ -159,6 +159,11 @@ char *saturate[2] = {
     [1] = ".sat"
 };
 
+char *accwr[2] = {
+    [0] = "",
+    [1] = "AccWrEnable"
+};
+
 char *exec_size[8] = {
     [0] = "1",
     [1] = "2",
@@ -993,6 +998,8 @@ int brw_disasm (FILE *file, struct brw_instruction *inst, int gen)
 			   inst->header.compression_control, &space);
 	}
 	err |= control (file, "thread control", thread_ctrl, inst->header.thread_control, &space);
+	if (gen >= 6)
+	    err |= control (file, "acc write control", accwr, inst->header.acc_wr_control, &space);
 	if (inst->header.opcode == BRW_OPCODE_SEND)
 	    err |= control (file, "end of thread", end_of_thread,
 			    inst->bits3.generic.end_of_thread, &space);
