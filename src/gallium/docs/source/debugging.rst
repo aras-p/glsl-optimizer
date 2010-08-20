@@ -21,6 +21,10 @@ This option controls if the debug variables should be printed to stderr. This
 is probably the most useful variable, since it allows you to find which
 variables a driver uses.
 
+.. envvar:: GALLIUM_GALAHAD <bool> (false)
+
+Controls if the :ref:`galahad` sanity checker module should be used.
+
 .. envvar:: GALLIUM_RBUG <bool> (false)
 
 Controls if the :ref:`rbug` should be used.
