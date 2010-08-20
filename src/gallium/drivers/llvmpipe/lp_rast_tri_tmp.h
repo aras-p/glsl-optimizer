@@ -102,6 +102,8 @@ TAG(do_block_16)(struct lp_rasterizer_task *task,
 
    assert((partial_mask & inmask) == 0);
 
+   LP_COUNT_ADD(nr_empty_4, util_bitcount(0xffff & ~(partial_mask | inmask)));
+
    /* Iterate over partials:
     */
    while (partial_mask) {
@@ -113,6 +115,8 @@ TAG(do_block_16)(struct lp_rasterizer_task *task,
       int cx[NR_PLANES];
 
       partial_mask &= ~(1 << i);
+
+      LP_COUNT(nr_partially_covered_4);
 
       for (j = 0; j < NR_PLANES; j++)
          cx[j] = (c[j] 
@@ -133,6 +137,7 @@ TAG(do_block_16)(struct lp_rasterizer_task *task,
 
       inmask &= ~(1 << i);
 
+      LP_COUNT(nr_fully_covered_4);
       block_full_4(task, tri, px, py);
    }
 }
@@ -189,6 +194,8 @@ TAG(lp_rast_triangle)(struct lp_rasterizer_task *task,
    partial_mask = partmask & ~outmask;
 
    assert((partial_mask & inmask) == 0);
+
+   LP_COUNT_ADD(nr_empty_16, util_bitcount(0xffff & ~(partial_mask | inmask)));
 
    /* Iterate over partials:
     */
