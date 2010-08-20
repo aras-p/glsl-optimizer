@@ -73,7 +73,8 @@ static struct os_stream
 os_log_stream_struct = {
    &os_log_stream_close,
    &os_log_stream_write,
-   &os_log_stream_flush
+   &os_log_stream_flush,
+   &os_default_stream_vprintf,
 };
 
 
