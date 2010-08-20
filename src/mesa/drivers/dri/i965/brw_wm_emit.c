@@ -1255,6 +1255,7 @@ static void fire_fb_write( struct brw_wm_compile *c,
    /* Send framebuffer write message: */
 /*  send (16) null.0<1>:uw m0               r0.0<8;8,1>:uw   0x85a04000:ud    { Align1 EOT } */
    brw_fb_WRITE(p,
+		c->dispatch_width,
 		dst,
 		base_reg,
 		retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UW),
@@ -1376,17 +1377,10 @@ void emit_fb_write(struct brw_wm_compile *c,
    }
    /* skip over the regs populated above:
     */
-   if (intel->gen < 6) {
-      nr += 8; /* XXX: always uses SIMD16 write currently. */
-   } else {
-      if (c->dispatch_width == 16)
-	 nr += 8;
-      else
-	 nr += 4;
-
-      /* Subtract off the message header, since we send headerless. */
-      nr -= 2;
-   }
+   if (c->dispatch_width == 16)
+      nr += 8;
+   else
+      nr += 4;
 
    brw_pop_insn_state(p);
 
@@ -1418,6 +1412,11 @@ void emit_fb_write(struct brw_wm_compile *c,
          brw_MOV(p, brw_message_reg(nr), arg1[comp]);
       }
       nr += 2;
+   }
+
+   if (intel->gen >= 6) {
+      /* Subtract off the message header, since we send headerless. */
+      nr -= 2;
    }
 
    if (!c->key.runtime_check_aads_emit) {

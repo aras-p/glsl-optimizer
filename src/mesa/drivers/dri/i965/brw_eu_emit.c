@@ -1350,6 +1350,7 @@ void brw_dp_READ_4_vs_relative(struct brw_compile *p,
 
 
 void brw_fb_WRITE(struct brw_compile *p,
+		  int dispatch_width,
                   struct brw_reg dest,
                   GLuint msg_reg_nr,
                   struct brw_reg src0,
@@ -1370,17 +1371,17 @@ void brw_fb_WRITE(struct brw_compile *p,
        /* headerless version, just submit color payload */
        src0 = brw_message_reg(msg_reg_nr);
 
-       if (msg_length >= 8)
-	  msg_control = BRW_DATAPORT_RENDER_TARGET_WRITE_SIMD16_SINGLE_SOURCE;
-       else
-	  msg_control = BRW_DATAPORT_RENDER_TARGET_WRITE_SIMD8_SINGLE_SOURCE_SUBSPAN01;
        msg_type = BRW_DATAPORT_WRITE_MESSAGE_RENDER_TARGET_WRITE_GEN6;
    } else {
       insn->header.destreg__conditionalmod = msg_reg_nr;
 
-      msg_control = BRW_DATAPORT_RENDER_TARGET_WRITE_SIMD16_SINGLE_SOURCE;
-       msg_type = BRW_DATAPORT_WRITE_MESSAGE_RENDER_TARGET_WRITE;
+      msg_type = BRW_DATAPORT_WRITE_MESSAGE_RENDER_TARGET_WRITE;
    }
+
+   if (dispatch_width == 16)
+      msg_control = BRW_DATAPORT_RENDER_TARGET_WRITE_SIMD16_SINGLE_SOURCE;
+   else
+      msg_control = BRW_DATAPORT_RENDER_TARGET_WRITE_SIMD8_SINGLE_SOURCE_SUBSPAN01;
 
    brw_set_dest(insn, dest);
    brw_set_src0(insn, src0);
