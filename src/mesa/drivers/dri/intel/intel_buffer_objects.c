@@ -202,6 +202,9 @@ intel_bufferobj_subdata(GLcontext * ctx,
    struct intel_context *intel = intel_context(ctx);
    struct intel_buffer_object *intel_obj = intel_buffer_object(obj);
 
+   if (size == 0)
+      return;
+
    assert(intel_obj);
 
    if (intel_obj->region)
@@ -424,6 +427,9 @@ intel_bufferobj_flush_mapped_range(GLcontext *ctx, GLenum target,
     * there's no work to do.
     */
    if (intel_obj->range_map_buffer == NULL)
+      return;
+
+   if (length == 0)
       return;
 
    temp_bo = drm_intel_bo_alloc(intel->bufmgr, "range map flush", length, 64);
