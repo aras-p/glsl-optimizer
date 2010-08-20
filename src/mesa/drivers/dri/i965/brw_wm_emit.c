@@ -1230,6 +1230,7 @@ static void fire_fb_write( struct brw_wm_compile *c,
 			   GLuint eot )
 {
    struct brw_compile *p = &c->func;
+   struct intel_context *intel = &p->brw->intel;
    struct brw_reg dst;
 
    if (c->dispatch_width == 16)
@@ -1240,6 +1241,7 @@ static void fire_fb_write( struct brw_wm_compile *c,
    /* Pass through control information:
     */
 /*  mov (8) m1.0<1>:ud   r1.0<8;8,1>:ud   { Align1 NoMask } */
+   if (intel->gen < 6) /* gen6, use headerless for fb write */
    {
       brw_push_insn_state(p);
       brw_set_mask_control(p, BRW_MASK_DISABLE); /* ? */
@@ -1297,6 +1299,8 @@ void emit_fb_write(struct brw_wm_compile *c,
    struct intel_context *intel = &brw->intel;
    GLuint nr = 2;
    GLuint channel;
+   int step = 0;
+   int base_reg; /* For gen6 fb write with no header, starting from color payload directly!. */
 
    /* Reserve a space for AA - may not be needed:
     */
@@ -1307,6 +1311,11 @@ void emit_fb_write(struct brw_wm_compile *c,
     * (ie RGBARGBA) in the result:  [Do the saturation here]
     */
    brw_push_insn_state(p);
+
+   if (intel->gen >= 6)
+	base_reg = nr;
+   else
+	base_reg = 0;
 
    for (channel = 0; channel < 4; channel++) {
       if (intel->gen >= 6) {
@@ -1339,6 +1348,16 @@ void emit_fb_write(struct brw_wm_compile *c,
 	 brw_MOV(p,
 		 brw_message_reg(nr + channel + BRW_MRF_COMPR4),
 		 arg0[channel]);
+      } else if (intel->gen >= 6) {
+	  brw_set_compression_control(p, BRW_COMPRESSION_NONE);
+	  brw_MOV(p, brw_message_reg(nr + channel + step), arg0[channel]); 
+	  if (c->dispatch_width == 16) {
+	      brw_set_compression_control(p, BRW_COMPRESSION_NONE);
+	      brw_MOV(p,
+		      brw_message_reg(nr + channel + step + 1),
+		      sechalf(arg0[channel]));
+	      ++step;
+	  }
       } else {
 	 /*  mov (8) m2.0<1>:ud   r28.0<8;8,1>:ud  { Align1 } */
 	 /*  mov (8) m6.0<1>:ud   r29.0<8;8,1>:ud  { Align1 SecHalf } */
@@ -1357,7 +1376,18 @@ void emit_fb_write(struct brw_wm_compile *c,
    }
    /* skip over the regs populated above:
     */
-   nr += 8;
+   if (intel->gen < 6) {
+      nr += 8; /* XXX: always uses SIMD16 write currently. */
+   } else {
+      if (c->dispatch_width == 16)
+	 nr += 8;
+      else
+	 nr += 4;
+
+      /* Subtract off the message header, since we send headerless. */
+      nr -= 2;
+   }
+
    brw_pop_insn_state(p);
 
    if (c->key.source_depth_to_render_target)
@@ -1394,7 +1424,7 @@ void emit_fb_write(struct brw_wm_compile *c,
       if (c->key.aa_dest_stencil_reg)
 	 emit_aa(c, arg1, 2);
 
-      fire_fb_write(c, 0, nr, target, eot);
+      fire_fb_write(c, base_reg, nr, target, eot);
    }
    else {
       struct brw_reg v1_null_ud = vec1(retype(brw_null_reg(), BRW_REGISTER_TYPE_UD));

@@ -372,9 +372,23 @@ static void brw_set_dp_write_message( struct brw_context *brw,
 				      GLuint send_commit_msg)
 {
    struct intel_context *intel = &brw->intel;
-   brw_set_src1(insn, brw_imm_d(0));
+   brw_set_src1(insn, brw_imm_ud(0));
 
-   if (intel->gen == 5) {
+   if (intel->gen >= 6) {
+       insn->bits3.dp_render_cache.binding_table_index = binding_table_index;
+       insn->bits3.dp_render_cache.msg_control = msg_control;
+       insn->bits3.dp_render_cache.pixel_scoreboard_clear = pixel_scoreboard_clear;
+       insn->bits3.dp_render_cache.msg_type = msg_type;
+       insn->bits3.dp_render_cache.send_commit_msg = send_commit_msg;
+       insn->bits3.dp_render_cache.header_present = 0; /* XXX */
+       insn->bits3.dp_render_cache.response_length = response_length;
+       insn->bits3.dp_render_cache.msg_length = msg_length;
+       insn->bits3.dp_render_cache.end_of_thread = end_of_thread;
+       insn->header.destreg__conditionalmod = BRW_MESSAGE_TARGET_DATAPORT_WRITE;
+	/* XXX really need below? */
+       insn->bits2.send_gen5.sfid = BRW_MESSAGE_TARGET_DATAPORT_WRITE;
+       insn->bits2.send_gen5.end_of_thread = end_of_thread;
+   } else if (intel->gen == 5) {
        insn->bits3.dp_write_gen5.binding_table_index = binding_table_index;
        insn->bits3.dp_write_gen5.msg_control = msg_control;
        insn->bits3.dp_write_gen5.pixel_scoreboard_clear = pixel_scoreboard_clear;
@@ -1344,22 +1358,40 @@ void brw_fb_WRITE(struct brw_compile *p,
                   GLuint response_length,
                   GLboolean eot)
 {
-   struct brw_instruction *insn = next_insn(p, BRW_OPCODE_SEND);
-   
+   struct intel_context *intel = &p->brw->intel;
+   struct brw_instruction *insn;
+   GLuint msg_control, msg_type;
+
+   insn = next_insn(p, BRW_OPCODE_SEND);
    insn->header.predicate_control = 0; /* XXX */
-   insn->header.compression_control = BRW_COMPRESSION_NONE; 
-   insn->header.destreg__conditionalmod = msg_reg_nr;
-  
+   insn->header.compression_control = BRW_COMPRESSION_NONE;
+
+   if (intel->gen >= 6) {
+       /* headerless version, just submit color payload */
+       src0 = brw_message_reg(msg_reg_nr);
+
+       if (msg_length >= 8)
+	  msg_control = BRW_DATAPORT_RENDER_TARGET_WRITE_SIMD16_SINGLE_SOURCE;
+       else
+	  msg_control = BRW_DATAPORT_RENDER_TARGET_WRITE_SIMD8_SINGLE_SOURCE_SUBSPAN01;
+       msg_type = BRW_DATAPORT_WRITE_MESSAGE_RENDER_TARGET_WRITE_GEN6;
+   } else {
+      insn->header.destreg__conditionalmod = msg_reg_nr;
+
+      msg_control = BRW_DATAPORT_RENDER_TARGET_WRITE_SIMD16_SINGLE_SOURCE;
+       msg_type = BRW_DATAPORT_WRITE_MESSAGE_RENDER_TARGET_WRITE;
+   }
+
    brw_set_dest(insn, dest);
    brw_set_src0(insn, src0);
    brw_set_dp_write_message(p->brw,
 			    insn,
 			    binding_table_index,
-			    BRW_DATAPORT_RENDER_TARGET_WRITE_SIMD16_SINGLE_SOURCE, /* msg_control */
-			    BRW_DATAPORT_WRITE_MESSAGE_RENDER_TARGET_WRITE, /* msg_type */
+			    msg_control,
+			    msg_type,
 			    msg_length,
 			    1,	/* pixel scoreboard */
-			    response_length, 
+			    response_length,
 			    eot,
 			    0 /* send_commit_msg */);
 }
