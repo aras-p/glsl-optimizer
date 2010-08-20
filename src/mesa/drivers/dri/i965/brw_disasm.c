@@ -949,6 +949,11 @@ int brw_disasm (FILE *file, struct brw_instruction *inst, int gen)
 			    inst->bits3.urb.used, &space);
 	    err |= control (file, "urb complete", urb_complete,
 			    inst->bits3.urb.complete, &space);
+	    if (gen >= 5) {
+		format (file, " mlen %d, rlen %d\n",
+			inst->bits3.urb_gen5.msg_length,
+			inst->bits3.urb_gen5.response_length);
+	    }
 	    break;
 	case BRW_MESSAGE_TARGET_THREAD_SPAWNER:
 	    break;
