@@ -711,9 +711,9 @@ static int tgsi_trig(struct r600_shader_ctx *ctx)
 	alu.src[0] = r600_src[0];
 	alu.src[0].chan = tgsi_chan(&inst->Src[0], 0);
 		
-	alu.src[1].sel = SQ_ALU_SRC_LITERAL;
+	alu.src[1].sel = V_SQ_ALU_SRC_LITERAL;
 	alu.src[1].chan = 0;
-	alu.src[2].sel = SQ_ALU_SRC_LITERAL;
+	alu.src[2].sel = V_SQ_ALU_SRC_LITERAL;
 	alu.src[2].chan = 1;
 	alu.last = 1;
 	r = r600_bc_add_alu(ctx->bc, &alu);
@@ -756,9 +756,9 @@ static int tgsi_trig(struct r600_shader_ctx *ctx)
 	alu.src[0].sel = ctx->temp_reg;
 	alu.src[0].chan = 0;
 		
-	alu.src[1].sel = SQ_ALU_SRC_LITERAL;
+	alu.src[1].sel = V_SQ_ALU_SRC_LITERAL;
 	alu.src[1].chan = 0;
-	alu.src[2].sel = SQ_ALU_SRC_LITERAL;
+	alu.src[2].sel = V_SQ_ALU_SRC_LITERAL;
 	alu.src[2].chan = 1;
 	alu.last = 1;
 	r = r600_bc_add_alu(ctx->bc, &alu);
@@ -810,7 +810,7 @@ static int tgsi_kill(struct r600_shader_ctx *ctx)
 		memset(&alu, 0, sizeof(struct r600_bc_alu));
 		alu.inst = ctx->inst_info->r600_opcode;
 		alu.dst.chan = i;
-		alu.src[0].sel = SQ_ALU_SRC_0;
+		alu.src[0].sel = V_SQ_ALU_SRC_0;
 		r = tgsi_src(ctx, &inst->Src[0], &alu.src[1]);
 		if (r)
 			return r;
@@ -869,7 +869,7 @@ static int tgsi_lit(struct r600_shader_ctx *ctx)
 	/* dst.x, <- 1.0  */
 	memset(&alu, 0, sizeof(struct r600_bc_alu));
 	alu.inst = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOV;
-	alu.src[0].sel  = SQ_ALU_SRC_1; /*1.0*/
+	alu.src[0].sel  = V_SQ_ALU_SRC_1; /*1.0*/
 	alu.src[0].chan = 0;
 	r = tgsi_dst(ctx, &inst->Dst[0], 0, &alu.dst);
 	if (r)
@@ -885,7 +885,7 @@ static int tgsi_lit(struct r600_shader_ctx *ctx)
 	r = tgsi_src(ctx, &inst->Src[0], &alu.src[0]);
 	if (r)
 		return r;
-	alu.src[1].sel  = SQ_ALU_SRC_0; /*0.0*/
+	alu.src[1].sel  = V_SQ_ALU_SRC_0; /*0.0*/
 	alu.src[1].chan = tgsi_chan(&inst->Src[0], 0);
 	r = tgsi_dst(ctx, &inst->Dst[0], 1, &alu.dst);
 	if (r)
@@ -906,7 +906,7 @@ static int tgsi_lit(struct r600_shader_ctx *ctx)
 	/* dst.w, <- 1.0  */
 	memset(&alu, 0, sizeof(struct r600_bc_alu));
 	alu.inst = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOV;
-	alu.src[0].sel  = SQ_ALU_SRC_1;
+	alu.src[0].sel  = V_SQ_ALU_SRC_1;
 	alu.src[0].chan = 0;
 	r = tgsi_dst(ctx, &inst->Dst[0], 3, &alu.dst);
 	if (r)
@@ -1050,7 +1050,7 @@ static int tgsi_ssg(struct r600_shader_ctx *ctx)
 	struct tgsi_full_instruction *inst = &ctx->parse.FullToken.FullInstruction;
 	struct r600_bc_alu alu;
 	struct r600_bc_alu_src r600_src[3];
-	int i, j, r;
+	int i, r;
 
 	r = tgsi_split_constant(ctx, r600_src);
 	if (r)
@@ -1067,7 +1067,7 @@ static int tgsi_ssg(struct r600_shader_ctx *ctx)
 		alu.src[0] = r600_src[0];
 		alu.src[0].chan = tgsi_chan(&inst->Src[0], i);
 
-		alu.src[1].sel = SQ_ALU_SRC_1;
+		alu.src[1].sel = V_SQ_ALU_SRC_1;
 
 		alu.src[2] = r600_src[0];
 		alu.src[2].chan = tgsi_chan(&inst->Src[0], i);
@@ -1090,7 +1090,7 @@ static int tgsi_ssg(struct r600_shader_ctx *ctx)
 		alu.src[0].sel = ctx->temp_reg;
 		alu.src[0].neg = 1;
 
-		alu.src[1].sel = SQ_ALU_SRC_1;
+		alu.src[1].sel = V_SQ_ALU_SRC_1;
 		alu.src[1].neg = 1;
 
 		alu.src[2].sel = ctx->temp_reg;
@@ -1192,13 +1192,13 @@ static int tgsi_dp(struct r600_shader_ctx *ctx)
 		switch (ctx->inst_info->tgsi_opcode) {
 		case TGSI_OPCODE_DP2:
 			if (i > 1) {
-				alu.src[0].sel = alu.src[1].sel = SQ_ALU_SRC_0;
+				alu.src[0].sel = alu.src[1].sel = V_SQ_ALU_SRC_0;
 				alu.src[0].chan = alu.src[1].chan = 0;
 			}
 			break;
 		case TGSI_OPCODE_DP3:
 			if (i > 2) {
-				alu.src[0].sel = alu.src[1].sel = SQ_ALU_SRC_0;
+				alu.src[0].sel = alu.src[1].sel = V_SQ_ALU_SRC_0;
 				alu.src[0].chan = alu.src[1].chan = 0;
 			}
 			break;
@@ -1255,7 +1255,7 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 		}
 		memset(&alu, 0, sizeof(struct r600_bc_alu));
 		alu.inst = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOV;
-		alu.src[0].sel = SQ_ALU_SRC_1;
+		alu.src[0].sel = V_SQ_ALU_SRC_1;
 		alu.src[0].chan = 0;
 		alu.dst.sel = ctx->temp_reg;
 		alu.dst.chan = 3;
@@ -1322,7 +1322,7 @@ static int tgsi_lrp(struct r600_shader_ctx *ctx)
 	for (i = 0; i < 4; i++) {
 		memset(&alu, 0, sizeof(struct r600_bc_alu));
 		alu.inst = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_ADD;
-		alu.src[0].sel = SQ_ALU_SRC_1;
+		alu.src[0].sel = V_SQ_ALU_SRC_1;
 		alu.src[0].chan = 0;
 		alu.src[1] = r600_src[0];
 		alu.src[1].chan = tgsi_chan(&inst->Src[0], i);

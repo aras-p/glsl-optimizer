@@ -980,15 +980,19 @@ static struct radeon_state *r600_dsa(struct r600_context *rctx)
 	struct r600_screen *rscreen = rctx->screen;
 	unsigned db_depth_control, alpha_test_control, alpha_ref, db_shader_control;
 	unsigned stencil_ref_mask, stencil_ref_mask_bf;
-	struct r600_shader *rshader = &rctx->ps_shader->shader;
+	struct r600_shader *rshader;
 	struct radeon_state *rstate;
 	int i;
 
+	if (rctx->ps_shader == NULL) {
+		return NULL;
+	}
 	rstate = radeon_state(rscreen->rw, R600_DSA_TYPE, R600_DSA);
 	if (rstate == NULL)
 		return NULL;
 
 	db_shader_control = 0x210;
+	rshader = &rctx->ps_shader->shader;
 	for (i = 0; i < rshader->noutput; i++) {
 		if (rshader->output[i].name == TGSI_SEMANTIC_POSITION)
 			db_shader_control |= 1;
