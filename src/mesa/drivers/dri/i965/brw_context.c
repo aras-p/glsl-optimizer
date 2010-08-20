@@ -144,7 +144,8 @@ GLboolean brwCreateContext( int api,
       brw->CMD_VF_STATISTICS = CMD_VF_STATISTICS_GM45;
       brw->CMD_PIPELINE_SELECT = CMD_PIPELINE_SELECT_GM45;
       brw->has_surface_tile_offset = GL_TRUE;
-      brw->has_compr4 = GL_TRUE;
+      if (intel->gen < 6)
+	  brw->has_compr4 = GL_TRUE;
       brw->has_aa_line_parameters = GL_TRUE;
       brw->has_pln = GL_TRUE;
   } else {
