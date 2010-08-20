@@ -66,6 +66,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r700_state.h"
 #include "r700_ioctl.h"
 
+#include "evergreen_context.h"
+#include "evergreen_state.h"
+#include "evergreen_tex.h"
+#include "evergreen_ioctl.h"
+#include "evergreen_oglprog.h"
 
 #include "utils.h"
 
@@ -247,6 +252,19 @@ static void r600_init_vtbl(radeonContextPtr radeon)
 
 static void r600InitConstValues(GLcontext *ctx, radeonScreenPtr screen)
 {
+    context_t         *context = R700_CONTEXT(ctx);
+    R700_CHIP_CONTEXT *r700    = (R700_CHIP_CONTEXT*)(&context->hw);
+
+    if(  (context->radeon.radeonScreen->chip_family >= CHIP_FAMILY_CEDAR)
+       &&(context->radeon.radeonScreen->chip_family <= CHIP_FAMILY_HEMLOCK) )
+    {
+        r700->bShaderUseMemConstant = GL_TRUE;
+    }
+    else
+    {
+        r700->bShaderUseMemConstant = GL_FALSE;
+    }
+
 	ctx->Const.MaxTextureImageUnits = 16;
 	/* 8 per clause on r6xx, 16 on r7xx
 	 * but I think mesa only supports 8 at the moment
@@ -381,18 +399,45 @@ GLboolean r600CreateContext(gl_api api,
 	r600ParseOptions(r600, screen);
 
 	r600->radeon.radeonScreen = screen;
-	r600_init_vtbl(&r600->radeon);
 
+    if(screen->chip_family >= CHIP_FAMILY_CEDAR)
+    {
+	    evergreen_init_vtbl(&r600->radeon);
+    }
+    else
+    {
+        r600_init_vtbl(&r600->radeon);
+    }
+    
 	/* Init default driver functions then plug in our R600-specific functions
 	 * (the texture functions are especially important)
 	 */
 	_mesa_init_driver_functions(&functions);
 
-	r700InitStateFuncs(&r600->radeon, &functions);
-	r600InitTextureFuncs(&r600->radeon, &functions);
-	r700InitShaderFuncs(&functions);
+    if(screen->chip_family >= CHIP_FAMILY_CEDAR)
+    {
+        evergreenCreateChip(r600);
+        evergreenInitStateFuncs(&r600->radeon, &functions);
+	    evergreenInitTextureFuncs(&r600->radeon, &functions);
+	    evergreenInitShaderFuncs(&functions);
+    }
+    else
+    {
+	    r700InitStateFuncs(&r600->radeon, &functions);
+	    r600InitTextureFuncs(&r600->radeon, &functions);
+	    r700InitShaderFuncs(&functions);
+    }
+    
 	radeonInitQueryObjFunctions(&functions);
-	r700InitIoctlFuncs(&functions);
+
+    if(screen->chip_family >= CHIP_FAMILY_CEDAR)
+    {
+        evergreenInitIoctlFuncs(&functions);
+    }
+    else
+    {
+	    r700InitIoctlFuncs(&functions);
+    }
 	radeonInitBufferObjectFuncs(&functions);
 
 	if (!radeonInitContext(&r600->radeon, &functions,
@@ -435,16 +480,46 @@ GLboolean r600CreateContext(gl_api api,
 
 	radeon_init_debug();
 
-	r700InitDraw(ctx);
+    if(screen->chip_family >= CHIP_FAMILY_CEDAR)
+    {
+        evergreenInitDraw(ctx);
+    }
+    else
+    {
+	    r700InitDraw(ctx);
+    }
 
 	radeon_fbo_init(&r600->radeon);
    	radeonInitSpanFuncs( ctx );
 	r600InitCmdBuf(r600);
-	r700InitState(r600->radeon.glCtx);
+
+    if(screen->chip_family >= CHIP_FAMILY_CEDAR)
+    {
+        evergreenInitState(r600->radeon.glCtx);
+    }
+    else
+    {
+	    r700InitState(r600->radeon.glCtx);
+    }
 
 	r600InitGLExtensions(ctx);
 
 	return GL_TRUE;
+}
+
+void r600DestroyContext(__DRIcontext *driContextPriv )
+{
+    void      *pChip;
+    context_t *context = (context_t *) driContextPriv->driverPrivate;
+
+    assert(context);
+
+    pChip = context->pChip;
+
+    /* destroy context first, free pChip, in case there are things flush to asic. */
+    radeonDestroyContext(driContextPriv);
+
+    FREE(pChip);
 }
 
 

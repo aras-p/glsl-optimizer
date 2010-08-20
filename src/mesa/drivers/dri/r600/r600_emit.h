@@ -52,4 +52,14 @@ extern GLboolean r600EmitShader(GLcontext * ctx,
 extern GLboolean r600DeleteShader(GLcontext * ctx, 
                                  void * shaderbo);
 
+extern GLboolean r600AllocShaderConsts(GLcontext * ctx,
+                                void ** constbo,			 
+                                int sizeinBYTE,
+                                char * szShaderUsage);
+GLboolean r600EmitShaderConsts(GLcontext * ctx,
+                               void * constbo,
+                               int    bo_offset,
+                               GLvoid * data,
+                               int sizeinBYTE);
+
 #endif

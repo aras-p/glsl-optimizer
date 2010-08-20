@@ -28,21 +28,21 @@
 
 #include "main/glheader.h"
 #include "main/imports.h"
-
 #include "program/program.h"
+
 #include "tnl/tnl.h"
 
 #include "r600_context.h"
 #include "r600_emit.h"
 
-#include "r700_oglprog.h"
-#include "r700_fragprog.h"
-#include "r700_vertprog.h"
+#include "evergreen_oglprog.h"
+#include "evergreen_fragprog.h"
+#include "evergreen_vertprog.h"
 
 
-static void freeVertProgCache(GLcontext *ctx, struct r700_vertex_program_cont *cache)
+static void evergreen_freeVertProgCache(GLcontext *ctx, struct r700_vertex_program_cont *cache)
 {
-	struct r700_vertex_program *tmp, *vp = cache->progs;
+	struct evergreen_vertex_program *tmp, *vp = cache->progs;
 
 	while (vp) {
 		tmp = vp->next;
@@ -64,14 +64,14 @@ static void freeVertProgCache(GLcontext *ctx, struct r700_vertex_program_cont *c
 	}
 }
 
-static struct gl_program *r700NewProgram(GLcontext * ctx, 
+static struct gl_program *evergreenNewProgram(GLcontext * ctx, 
                                          GLenum target,
 					                     GLuint id)
 {
 	struct gl_program *pProgram = NULL;
 
-    struct r700_vertex_program_cont *vpc;
-	struct r700_fragment_program *fp;
+    struct evergreen_vertex_program_cont *vpc;
+	struct evergreen_fragment_program *fp;
 
 	radeon_print(RADEON_SHADER, RADEON_VERBOSE,
 			"%s %u, %u\n", __func__, target, id);
@@ -80,7 +80,7 @@ static struct gl_program *r700NewProgram(GLcontext * ctx,
     {
     case GL_VERTEX_STATE_PROGRAM_NV:
     case GL_VERTEX_PROGRAM_ARB:	    
-        vpc       = CALLOC_STRUCT(r700_vertex_program_cont);
+        vpc       = CALLOC_STRUCT(evergreen_vertex_program_cont);
 	    pProgram = _mesa_init_vertex_program(ctx, 
                                              &vpc->mesa_program,
 					                         target, 
@@ -89,7 +89,7 @@ static struct gl_program *r700NewProgram(GLcontext * ctx,
 	    break;
     case GL_FRAGMENT_PROGRAM_NV:
     case GL_FRAGMENT_PROGRAM_ARB:
-		fp       = CALLOC_STRUCT(r700_fragment_program);
+		fp       = CALLOC_STRUCT(evergreen_fragment_program);
 		pProgram = _mesa_init_fragment_program(ctx, 
                                                &fp->mesa_program,
 						                       target, 
@@ -103,16 +103,16 @@ static struct gl_program *r700NewProgram(GLcontext * ctx,
 
 	    break;
     default:
-	    _mesa_problem(ctx, "Bad target in r700NewProgram");
+	    _mesa_problem(ctx, "Bad target in evergreenNewProgram");
     }
 
 	return pProgram;
 }
 
-static void r700DeleteProgram(GLcontext * ctx, struct gl_program *prog)
+static void evergreenDeleteProgram(GLcontext * ctx, struct gl_program *prog)
 {
-    struct r700_vertex_program_cont *vpc = (struct r700_vertex_program_cont *)prog;
-    struct r700_fragment_program * fp;
+    struct evergreen_vertex_program_cont *vpc = (struct evergreen_vertex_program_cont *)prog;
+    struct evergreen_fragment_program * fp;
 
 	radeon_print(RADEON_SHADER, RADEON_VERBOSE,
 			"%s %p\n", __func__, prog);
@@ -121,11 +121,11 @@ static void r700DeleteProgram(GLcontext * ctx, struct gl_program *prog)
     {
     case GL_VERTEX_STATE_PROGRAM_NV:
     case GL_VERTEX_PROGRAM_ARB:	    
-	    freeVertProgCache(ctx, vpc);
+	    evergreen_freeVertProgCache(ctx, vpc);
 	    break;
     case GL_FRAGMENT_PROGRAM_NV:
     case GL_FRAGMENT_PROGRAM_ARB:
-		fp = (struct r700_fragment_program*)prog;
+		fp = (struct evergreen_fragment_program*)prog;
         /* Release DMA region */
 
         r600DeleteShader(ctx, fp->shaderbo);
@@ -140,26 +140,26 @@ static void r700DeleteProgram(GLcontext * ctx, struct gl_program *prog)
         Clean_Up_Shader(&(fp->r700Shader));
 	    break;
     default:
-	    _mesa_problem(ctx, "Bad target in r700NewProgram");
+	    _mesa_problem(ctx, "Bad target in evergreenNewProgram");
     }
 
 	_mesa_delete_program(ctx, prog);
 }
 
 static GLboolean
-r700ProgramStringNotify(GLcontext * ctx, GLenum target, struct gl_program *prog)
+evergreenProgramStringNotify(GLcontext * ctx, GLenum target, struct gl_program *prog)
 {
-	struct r700_vertex_program_cont *vpc = (struct r700_vertex_program_cont *)prog;
-	struct r700_fragment_program * fp = (struct r700_fragment_program*)prog;
+	struct evergreen_vertex_program_cont *vpc = (struct evergreen_vertex_program_cont *)prog;
+	struct evergreen_fragment_program * fp = (struct evergreen_fragment_program*)prog;
 
 	switch (target) {
 	case GL_VERTEX_PROGRAM_ARB:
-		freeVertProgCache(ctx, vpc);
+		evergreen_freeVertProgCache(ctx, vpc);
 		vpc->progs = NULL;
 		break;
 	case GL_FRAGMENT_PROGRAM_ARB:
 		r600DeleteShader(ctx, fp->shaderbo);
-
+		
         if(NULL != fp->constbo0)
         {
 		    r600DeleteShader(ctx, fp->constbo0);
@@ -178,16 +178,16 @@ r700ProgramStringNotify(GLcontext * ctx, GLenum target, struct gl_program *prog)
 	return GL_TRUE;
 }
 
-static GLboolean r700IsProgramNative(GLcontext * ctx, GLenum target, struct gl_program *prog)
+static GLboolean evergreenIsProgramNative(GLcontext * ctx, GLenum target, struct gl_program *prog)
 {
 
 	return GL_TRUE;
 }
 
-void r700InitShaderFuncs(struct dd_function_table *functions)
+void evergreenInitShaderFuncs(struct dd_function_table *functions)
 {
-	functions->NewProgram = r700NewProgram;
-	functions->DeleteProgram = r700DeleteProgram;
-	functions->ProgramStringNotify = r700ProgramStringNotify;
-	functions->IsProgramNative = r700IsProgramNative;
+	functions->NewProgram = evergreenNewProgram;
+	functions->DeleteProgram = evergreenDeleteProgram;
+	functions->ProgramStringNotify = evergreenProgramStringNotify;
+	functions->IsProgramNative = evergreenIsProgramNative;
 }

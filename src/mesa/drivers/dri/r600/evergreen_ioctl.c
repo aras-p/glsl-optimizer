@@ -24,52 +24,30 @@
  *   Richard Li <RichardZ.Li@amd.com>, <richardradeon@gmail.com>
  */
 
-#ifndef _R700_FRAGPROG_H_
-#define _R700_FRAGPROG_H_
+#include <sched.h>
+#include <errno.h>
 
+#include "main/glheader.h"
+#include "main/imports.h"
+#include "main/macros.h"
+#include "main/context.h"
+#include "main/simple_list.h"
+
+#include "radeon_common.h"
 #include "r600_context.h"
-#include "r700_assembler.h"
 
-struct r700_fragment_program
+#include "evergreen_ioctl.h"
+
+#include "r700_clear.h"
+
+void evergreenClear(GLcontext * ctx, GLbitfield mask)
+{    
+    r700Clear(ctx, mask);
+}
+
+void evergreenInitIoctlFuncs(struct dd_function_table *functions)
 {
-	struct gl_fragment_program mesa_program;
-
-    r700_AssemblerBase r700AsmCode;
-	R700_Shader        r700Shader;
-
-	GLboolean translated;
-    GLboolean loaded;
-	GLboolean error;
-
-    void * shaderbo;
-
-	GLuint k0used;
-    void * constbo0;
-
-	GLboolean WritesDepth;
-	GLuint optimization;
-};
-
-/* Internal */
-void insert_wpos_code(GLcontext *ctx, struct gl_fragment_program *fprog);
-
-void Map_Fragment_Program(r700_AssemblerBase         *pAsm,
-			  struct gl_fragment_program *mesa_fp,
-                          GLcontext *ctx); 
-GLboolean Find_Instruction_Dependencies_fp(struct r700_fragment_program *fp,
-					   struct gl_fragment_program   *mesa_fp);
-
-GLboolean r700TranslateFragmentShader(struct r700_fragment_program *fp,
-				      struct gl_fragment_program   *mesa_vp,
-                                      GLcontext *ctx); 
-
-/* Interface */
-extern void r700SelectFragmentShader(GLcontext *ctx);
-
-extern GLboolean r700SetupFragmentProgram(GLcontext * ctx);
-
-extern void *    r700GetActiveFpShaderBo(GLcontext * ctx);
-
-extern void *    r700GetActiveFpShaderConstBo(GLcontext * ctx);
-
-#endif /*_R700_FRAGPROG_H_*/
+	functions->Clear = evergreenClear;
+	functions->Finish = radeonFinish;
+	functions->Flush = radeonFlush;
+}

@@ -32,19 +32,20 @@
 #include <math.h>
 
 #include "main/imports.h"
+
 #include "program/prog_parameter.h"
 #include "program/prog_statevars.h"
 #include "program/program.h"
 
 #include "r600_context.h"
 #include "r600_cmdbuf.h"
-#include "r600_emit.h"
 
-#include "r700_fragprog.h"
+#include "evergreen_vertprog.h"
+#include "evergreen_fragprog.h"
 
 #include "r700_debug.h"
 
-void insert_wpos_code(GLcontext *ctx, struct gl_fragment_program *fprog)
+void evergreen_insert_wpos_code(GLcontext *ctx, struct gl_fragment_program *fprog)
 {
     static const gl_state_index winstate[STATE_LENGTH]
          = { STATE_INTERNAL, STATE_FB_SIZE, 0, 0, 0};
@@ -93,7 +94,7 @@ void insert_wpos_code(GLcontext *ctx, struct gl_fragment_program *fprog)
 }
 
 //TODO : Validate FP input with VP output.
-void Map_Fragment_Program(r700_AssemblerBase         *pAsm,
+void evergreen_Map_Fragment_Program(r700_AssemblerBase         *pAsm,
 						  struct gl_fragment_program *mesa_fp,
                           GLcontext *ctx) 
 {
@@ -102,8 +103,8 @@ void Map_Fragment_Program(r700_AssemblerBase         *pAsm,
     GLuint       ui;
 
     /* match fp inputs with vp exports. */
-    struct r700_vertex_program_cont *vpc =
-		       (struct r700_vertex_program_cont *)ctx->VertexProgram._Current;
+    struct evergreen_vertex_program_cont *vpc =
+		       (struct evergreen_vertex_program_cont *)ctx->VertexProgram._Current;
     GLbitfield OutputsWritten = vpc->mesa_program.Base.OutputsWritten;
     
 	pAsm->number_used_registers = 0;
@@ -157,8 +158,8 @@ void Map_Fragment_Program(r700_AssemblerBase         *pAsm,
 #else
     if( (mesa_fp->Base.InputsRead >> FRAG_ATTRIB_VAR0) > 0 )
     {
-	    struct r700_vertex_program_cont *vpc =
-		       (struct r700_vertex_program_cont *)ctx->VertexProgram._Current;
+	    struct evergreen_vertex_program_cont *vpc =
+		       (struct evergreen_vertex_program_cont *)ctx->VertexProgram._Current;
         struct gl_program_parameter_list * VsVarying = vpc->mesa_program.Base.Varying;
         struct gl_program_parameter_list * PsVarying = mesa_fp->Base.Varying;
         struct gl_program_parameter      * pVsParam;
@@ -211,6 +212,8 @@ void Map_Fragment_Program(r700_AssemblerBase         *pAsm,
         pAsm->uiFP_AttributeMap[FRAG_ATTRIB_PNTC] = pAsm->number_used_registers++;
     }
 
+    pAsm->uIIns = pAsm->number_used_registers;
+
 /* Map temporary registers (GPRs) */
     pAsm->starting_temp_register_number = pAsm->number_used_registers;
 
@@ -227,23 +230,22 @@ void Map_Fragment_Program(r700_AssemblerBase         *pAsm,
 	pAsm->number_of_exports = 0;
 	pAsm->number_of_colorandz_exports = 0; /* don't include stencil and mask out. */
 	pAsm->starting_export_register_number = pAsm->number_used_registers;
-
-    for (i = 0; i < FRAG_RESULT_MAX; ++i)
-    {
-        unBit = 1 << i;
-        if (mesa_fp->Base.OutputsWritten & unBit)
-        {
-            if (i == FRAG_RESULT_DEPTH)
-            {
-                pAsm->depth_export_register_number = pAsm->number_used_registers;
-                pAsm->pR700Shader->depthIsExported = 1;
-            }
-
-            pAsm->uiFP_OutputMap[i] = pAsm->number_used_registers++;
-            ++pAsm->number_of_exports;
-            ++pAsm->number_of_colorandz_exports;
-        }
-    }
+	unBit = 1 << FRAG_RESULT_COLOR;
+	if(mesa_fp->Base.OutputsWritten & unBit)
+	{
+		pAsm->uiFP_OutputMap[FRAG_RESULT_COLOR] = pAsm->number_used_registers++;
+		pAsm->number_of_exports++;
+		pAsm->number_of_colorandz_exports++;
+	}
+	unBit = 1 << FRAG_RESULT_DEPTH;
+	if(mesa_fp->Base.OutputsWritten & unBit)
+	{
+        pAsm->depth_export_register_number = pAsm->number_used_registers;
+		pAsm->uiFP_OutputMap[FRAG_RESULT_DEPTH] = pAsm->number_used_registers++;
+		pAsm->number_of_exports++;
+		pAsm->number_of_colorandz_exports++;
+		pAsm->pR700Shader->depthIsExported = 1;
+	}
 
     pAsm->pucOutMask = (unsigned char*) MALLOC(pAsm->number_of_exports);
     for(ui=0; ui<pAsm->number_of_exports; ui++)
@@ -256,7 +258,7 @@ void Map_Fragment_Program(r700_AssemblerBase         *pAsm,
     pAsm->uFirstHelpReg = pAsm->number_used_registers;
 }
 
-GLboolean Find_Instruction_Dependencies_fp(struct r700_fragment_program *fp,
+GLboolean evergreen_Find_Instruction_Dependencies_fp(struct evergreen_fragment_program *fp,
 					                	struct gl_fragment_program   *mesa_fp)
 {
     GLuint i, j;
@@ -358,13 +360,10 @@ GLboolean Find_Instruction_Dependencies_fp(struct r700_fragment_program *fp,
     return GL_TRUE;
 }
 
-GLboolean r700TranslateFragmentShader(struct r700_fragment_program *fp,
+GLboolean evergreenTranslateFragmentShader(struct evergreen_fragment_program *fp,
 							     struct gl_fragment_program   *mesa_fp,
                                  GLcontext *ctx) 
 {
-    context_t *context = R700_CONTEXT(ctx);      
-    R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
-
 	GLuint    number_of_colors_exported;
 	GLboolean z_enabled = GL_FALSE;
 	GLuint    unBit, shadow_unit;
@@ -375,21 +374,14 @@ GLboolean r700TranslateFragmentShader(struct r700_fragment_program *fp,
 
     //Init_Program
 	Init_r700_AssemblerBase( SPT_FP, &(fp->r700AsmCode), &(fp->r700Shader) );
-
-    if(GL_TRUE == r700->bShaderUseMemConstant)
-    {
-        fp->r700AsmCode.bUseMemConstant = GL_TRUE;
-    }
-    else
-    {
-        fp->r700AsmCode.bUseMemConstant = GL_FALSE;
-    }
-
-    fp->r700AsmCode.unAsic = 7;
+        
+    fp->constbo0 = NULL;
+    fp->r700AsmCode.bUseMemConstant = GL_TRUE;  
+    fp->r700AsmCode.unAsic = 8;
 
     if(mesa_fp->Base.InputsRead & FRAG_BIT_WPOS)
     {
-        insert_wpos_code(ctx, mesa_fp);
+        evergreen_insert_wpos_code(ctx, mesa_fp);
     }
 
     /* add/map  consts for ARB_shadow_ambient */
@@ -409,9 +401,9 @@ GLboolean r700TranslateFragmentShader(struct r700_fragment_program *fp,
         }
     }
 
-    Map_Fragment_Program(&(fp->r700AsmCode), mesa_fp, ctx); 
+    evergreen_Map_Fragment_Program(&(fp->r700AsmCode), mesa_fp, ctx); 
 
-    if( GL_FALSE == Find_Instruction_Dependencies_fp(fp, mesa_fp) )
+    if( GL_FALSE == evergreen_Find_Instruction_Dependencies_fp(fp, mesa_fp) )
 	{
 		return GL_FALSE;
     }
@@ -473,10 +465,10 @@ GLboolean r700TranslateFragmentShader(struct r700_fragment_program *fp,
 	return GL_TRUE;
 }
 
-void r700SelectFragmentShader(GLcontext *ctx)
+void evergreenSelectFragmentShader(GLcontext *ctx)
 {
-    context_t *context = R700_CONTEXT(ctx);
-    struct r700_fragment_program *fp = (struct r700_fragment_program *)
+    context_t *context = EVERGREEN_CONTEXT(ctx);
+    struct evergreen_fragment_program *fp = (struct evergreen_fragment_program *)
 	    (ctx->FragmentProgram._Current);
     if (context->radeon.radeonScreen->chip_family < CHIP_FAMILY_RV770)
     {
@@ -484,30 +476,30 @@ void r700SelectFragmentShader(GLcontext *ctx)
     }
 
     if (GL_FALSE == fp->translated)
-	    r700TranslateFragmentShader(fp, &(fp->mesa_program), ctx); 
+	    evergreenTranslateFragmentShader(fp, &(fp->mesa_program), ctx); 
 }
 
-void * r700GetActiveFpShaderBo(GLcontext * ctx)
+void * evergreenGetActiveFpShaderBo(GLcontext * ctx)
 {
-    struct r700_fragment_program *fp = (struct r700_fragment_program *)
+    struct evergreen_fragment_program *fp = (struct evergreen_fragment_program *)
 	                                   (ctx->FragmentProgram._Current);
 
     return fp->shaderbo;
 }
 
-void * r700GetActiveFpShaderConstBo(GLcontext * ctx)
+void * evergreenGetActiveFpShaderConstBo(GLcontext * ctx)
 {
-    struct r700_fragment_program *fp = (struct r700_fragment_program *)
+    struct evergreen_fragment_program *fp = (struct evergreen_fragment_program *)
 	                                   (ctx->FragmentProgram._Current);
 
     return fp->constbo0;
 }
 
-GLboolean r700SetupFragmentProgram(GLcontext * ctx)
+GLboolean evergreenSetupFragmentProgram(GLcontext * ctx)
 {
-    context_t *context = R700_CONTEXT(ctx);
-    R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
-    struct r700_fragment_program *fp = (struct r700_fragment_program *)
+    context_t *context = EVERGREEN_CONTEXT(ctx);
+    EVERGREEN_CHIP_CONTEXT *evergreen = GET_EVERGREEN_CHIP(context);
+    struct evergreen_fragment_program *fp = (struct evergreen_fragment_program *)
 	                                   (ctx->FragmentProgram._Current);
     r700_AssemblerBase         *pAsm = &(fp->r700AsmCode);
     struct gl_fragment_program *mesa_fp = &(fp->mesa_program);
@@ -526,192 +518,181 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
 		    Assemble( &(fp->r700Shader) );
 	    }
 
-        /* Load fp to gpu */
         r600EmitShader(ctx,
                        &(fp->shaderbo),
                        (GLvoid *)(fp->r700Shader.pProgram),
                        fp->r700Shader.uShaderBinaryDWORDSize,
                        "FS");
-
+        
         fp->loaded = GL_TRUE;
     }
-
-    DumpHwBinary(DUMP_PIXEL_SHADER, (GLvoid *)(fp->r700Shader.pProgram),
-                 fp->r700Shader.uShaderBinaryDWORDSize);
 
     /* TODO : enable this after MemUse fixed *=
     (context->chipobj.MemUse)(context, fp->shadercode.buf->id);
     */
 
-    R600_STATECHANGE(context, ps);
+    EVERGREEN_STATECHANGE(context, sq);
 
-    r700->ps.SQ_PGM_RESOURCES_PS.u32All = 0;
-    SETbit(r700->ps.SQ_PGM_RESOURCES_PS.u32All, PGM_RESOURCES__PRIME_CACHE_ON_DRAW_bit);
+    evergreen->SQ_PGM_RESOURCES_PS.u32All = 0;
+    SETbit(evergreen->SQ_PGM_RESOURCES_PS.u32All, PGM_RESOURCES__PRIME_CACHE_ON_DRAW_bit);
 
-    r700->ps.SQ_PGM_START_PS.u32All = 0; /* set from buffer obj */
+    evergreen->ps.SQ_ALU_CONST_CACHE_PS_0.u32All = 0; 
+    evergreen->ps.SQ_PGM_START_PS.u32All = 0;         
 
-    R600_STATECHANGE(context, spi);
+    EVERGREEN_STATECHANGE(context, spi);
 
     unNumOfReg = fp->r700Shader.nRegs + 1;
 
-    ui = (r700->SPI_PS_IN_CONTROL_0.u32All & NUM_INTERP_mask) / (1 << NUM_INTERP_shift);
+    ui = (evergreen->SPI_PS_IN_CONTROL_0.u32All & NUM_INTERP_mask) / (1 << NUM_INTERP_shift);
 
     /* PS uses fragment.position */
     if (mesa_fp->Base.InputsRead & (1 << FRAG_ATTRIB_WPOS))
     {
         ui += 1;
-        SETfield(r700->SPI_PS_IN_CONTROL_0.u32All, ui, NUM_INTERP_shift, NUM_INTERP_mask);
-        SETfield(r700->SPI_PS_IN_CONTROL_0.u32All, CENTERS_ONLY, BARYC_SAMPLE_CNTL_shift, BARYC_SAMPLE_CNTL_mask);
-        SETbit(r700->SPI_PS_IN_CONTROL_0.u32All, POSITION_ENA_bit);
-        SETbit(r700->SPI_INPUT_Z.u32All, PROVIDE_Z_TO_SPI_bit);
+        SETfield(evergreen->SPI_PS_IN_CONTROL_0.u32All, ui, NUM_INTERP_shift, NUM_INTERP_mask);
+        SETfield(evergreen->SPI_PS_IN_CONTROL_0.u32All, CENTERS_ONLY, BARYC_SAMPLE_CNTL_shift, BARYC_SAMPLE_CNTL_mask);
+        SETbit(evergreen->SPI_PS_IN_CONTROL_0.u32All, POSITION_ENA_bit);
+        SETbit(evergreen->SPI_INPUT_Z.u32All, PROVIDE_Z_TO_SPI_bit);
     }
     else
     {
-        CLEARbit(r700->SPI_PS_IN_CONTROL_0.u32All, POSITION_ENA_bit);
-        CLEARbit(r700->SPI_INPUT_Z.u32All, PROVIDE_Z_TO_SPI_bit);
+        CLEARbit(evergreen->SPI_PS_IN_CONTROL_0.u32All, POSITION_ENA_bit);
+        CLEARbit(evergreen->SPI_INPUT_Z.u32All, PROVIDE_Z_TO_SPI_bit);
     }
 
     if (mesa_fp->Base.InputsRead & (1 << FRAG_ATTRIB_FACE))
     {
         ui += 1;
-        SETfield(r700->SPI_PS_IN_CONTROL_0.u32All, ui, NUM_INTERP_shift, NUM_INTERP_mask);
-        SETbit(r700->SPI_PS_IN_CONTROL_1.u32All, FRONT_FACE_ENA_bit);
-        SETbit(r700->SPI_PS_IN_CONTROL_1.u32All, FRONT_FACE_ALL_BITS_bit);
-        SETfield(r700->SPI_PS_IN_CONTROL_1.u32All, pAsm->uiFP_AttributeMap[FRAG_ATTRIB_FACE], FRONT_FACE_ADDR_shift, FRONT_FACE_ADDR_mask);
+        SETfield(evergreen->SPI_PS_IN_CONTROL_0.u32All, ui, NUM_INTERP_shift, NUM_INTERP_mask);
+        SETbit(evergreen->SPI_PS_IN_CONTROL_1.u32All, FRONT_FACE_ENA_bit);
+        SETbit(evergreen->SPI_PS_IN_CONTROL_1.u32All, FRONT_FACE_ALL_BITS_bit);
+        SETfield(evergreen->SPI_PS_IN_CONTROL_1.u32All, pAsm->uiFP_AttributeMap[FRAG_ATTRIB_FACE], FRONT_FACE_ADDR_shift, FRONT_FACE_ADDR_mask);
     }
     else
     {
-        CLEARbit(r700->SPI_PS_IN_CONTROL_1.u32All, FRONT_FACE_ENA_bit);
+        CLEARbit(evergreen->SPI_PS_IN_CONTROL_1.u32All, FRONT_FACE_ENA_bit);
     }
 
-    /* see if we need any point_sprite replacements, also increase num_interp
-     * as there's no vp output for them */
-    if (ctx->Point.PointSprite)
+    /* see if we need any point_sprite replacements */
+    for (i = VERT_RESULT_TEX0; i<= VERT_RESULT_TEX7; i++)
     {
-        for (i = FRAG_ATTRIB_TEX0; i<= FRAG_ATTRIB_TEX7; i++)
-        {
-            if (ctx->Point.CoordReplace[i - FRAG_ATTRIB_TEX0] == GL_TRUE)
-            {
-                ui++;
-                point_sprite = GL_TRUE;
-            }
-        }
+        if(ctx->Point.CoordReplace[i - VERT_RESULT_TEX0] == GL_TRUE)
+            point_sprite = GL_TRUE;
     }
-
-    if( mesa_fp->Base.InputsRead & (1 << FRAG_ATTRIB_PNTC))
-        ui++;
 
     if ((mesa_fp->Base.InputsRead & (1 << FRAG_ATTRIB_PNTC)) || point_sprite)
     {
-        SETfield(r700->SPI_PS_IN_CONTROL_0.u32All, ui, NUM_INTERP_shift, NUM_INTERP_mask);
-        SETbit(r700->SPI_INTERP_CONTROL_0.u32All, PNT_SPRITE_ENA_bit);
-        SETfield(r700->SPI_INTERP_CONTROL_0.u32All, SPI_PNT_SPRITE_SEL_S, PNT_SPRITE_OVRD_X_shift, PNT_SPRITE_OVRD_X_mask);
-        SETfield(r700->SPI_INTERP_CONTROL_0.u32All, SPI_PNT_SPRITE_SEL_T, PNT_SPRITE_OVRD_Y_shift, PNT_SPRITE_OVRD_Y_mask);
-        SETfield(r700->SPI_INTERP_CONTROL_0.u32All, SPI_PNT_SPRITE_SEL_0, PNT_SPRITE_OVRD_Z_shift, PNT_SPRITE_OVRD_Z_mask);
-        SETfield(r700->SPI_INTERP_CONTROL_0.u32All, SPI_PNT_SPRITE_SEL_1, PNT_SPRITE_OVRD_W_shift, PNT_SPRITE_OVRD_W_mask);
-        /* Like e.g. viewport and winding, point sprite coordinates are
-         * inverted when rendering to FBO. */
-        if ((ctx->Point.SpriteOrigin == GL_LOWER_LEFT) == !ctx->DrawBuffer->Name)
-            SETbit(r700->SPI_INTERP_CONTROL_0.u32All, PNT_SPRITE_TOP_1_bit);
+        /* for FRAG_ATTRIB_PNTC we need to increase num_interp */
+        if(mesa_fp->Base.InputsRead & (1 << FRAG_ATTRIB_PNTC))
+        {
+            ui++;
+            SETfield(evergreen->SPI_PS_IN_CONTROL_0.u32All, ui, NUM_INTERP_shift, NUM_INTERP_mask);
+        }
+        SETbit(evergreen->SPI_INTERP_CONTROL_0.u32All, PNT_SPRITE_ENA_bit);
+        SETfield(evergreen->SPI_INTERP_CONTROL_0.u32All, SPI_PNT_SPRITE_SEL_S, PNT_SPRITE_OVRD_X_shift, PNT_SPRITE_OVRD_X_mask);
+        SETfield(evergreen->SPI_INTERP_CONTROL_0.u32All, SPI_PNT_SPRITE_SEL_T, PNT_SPRITE_OVRD_Y_shift, PNT_SPRITE_OVRD_Y_mask);
+        SETfield(evergreen->SPI_INTERP_CONTROL_0.u32All, SPI_PNT_SPRITE_SEL_0, PNT_SPRITE_OVRD_Z_shift, PNT_SPRITE_OVRD_Z_mask);
+        SETfield(evergreen->SPI_INTERP_CONTROL_0.u32All, SPI_PNT_SPRITE_SEL_1, PNT_SPRITE_OVRD_W_shift, PNT_SPRITE_OVRD_W_mask);
+        if(ctx->Point.SpriteOrigin == GL_LOWER_LEFT)
+            SETbit(evergreen->SPI_INTERP_CONTROL_0.u32All, PNT_SPRITE_TOP_1_bit);
         else
-            CLEARbit(r700->SPI_INTERP_CONTROL_0.u32All, PNT_SPRITE_TOP_1_bit);
+            CLEARbit(evergreen->SPI_INTERP_CONTROL_0.u32All, PNT_SPRITE_TOP_1_bit);
     }
     else
     {
-        CLEARbit(r700->SPI_INTERP_CONTROL_0.u32All, PNT_SPRITE_ENA_bit);
+        CLEARbit(evergreen->SPI_INTERP_CONTROL_0.u32All, PNT_SPRITE_ENA_bit);
     }
 
 
     ui = (unNumOfReg < ui) ? ui : unNumOfReg;
 
-    SETfield(r700->ps.SQ_PGM_RESOURCES_PS.u32All, ui, NUM_GPRS_shift, NUM_GPRS_mask);
+    SETfield(evergreen->SQ_PGM_RESOURCES_PS.u32All, ui, NUM_GPRS_shift, NUM_GPRS_mask);
 
-    CLEARbit(r700->ps.SQ_PGM_RESOURCES_PS.u32All, UNCACHED_FIRST_INST_bit);
+    CLEARbit(evergreen->SQ_PGM_RESOURCES_PS.u32All, UNCACHED_FIRST_INST_bit);
 
     if(fp->r700Shader.uStackSize) /* we don't use branch for now, it should be zero. */
 	{
-        SETfield(r700->ps.SQ_PGM_RESOURCES_PS.u32All, fp->r700Shader.uStackSize,
+        SETfield(evergreen->SQ_PGM_RESOURCES_PS.u32All, fp->r700Shader.uStackSize,
                  STACK_SIZE_shift, STACK_SIZE_mask);
     }
 
-    SETfield(r700->ps.SQ_PGM_EXPORTS_PS.u32All, fp->r700Shader.exportMode,
+    SETfield(evergreen->SQ_PGM_EXPORTS_PS.u32All, fp->r700Shader.exportMode,
              EXPORT_MODE_shift, EXPORT_MODE_mask);
 
     // emit ps input map
-    struct r700_vertex_program_cont *vpc =
-		       (struct r700_vertex_program_cont *)ctx->VertexProgram._Current;
+    struct evergreen_vertex_program_cont *vpc =
+		       (struct evergreen_vertex_program_cont *)ctx->VertexProgram._Current;
     GLbitfield OutputsWritten = vpc->mesa_program.Base.OutputsWritten;
     
-    for(ui = 0; ui < R700_MAX_SHADER_EXPORTS; ui++)
-        r700->SPI_PS_INPUT_CNTL[ui].u32All = 0;
+    for(ui = 0; ui < EVERGREEN_MAX_SHADER_EXPORTS; ui++)
+        evergreen->SPI_PS_INPUT_CNTL[ui].u32All = 0;
 
     unBit = 1 << FRAG_ATTRIB_WPOS;
     if(mesa_fp->Base.InputsRead & unBit)
     {
             ui = pAsm->uiFP_AttributeMap[FRAG_ATTRIB_WPOS];
-            SETbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, SEL_CENTROID_bit);
-            SETfield(r700->SPI_PS_INPUT_CNTL[ui].u32All, ui,
+            SETbit(evergreen->SPI_PS_INPUT_CNTL[ui].u32All, SEL_CENTROID_bit);
+            SETfield(evergreen->SPI_PS_INPUT_CNTL[ui].u32All, ui,
                      SEMANTIC_shift, SEMANTIC_mask);
-            if (r700->SPI_INTERP_CONTROL_0.u32All & FLAT_SHADE_ENA_bit)
-                    SETbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
+            if (evergreen->SPI_INTERP_CONTROL_0.u32All & FLAT_SHADE_ENA_bit)
+                    SETbit(evergreen->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
             else
-                    CLEARbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
+                    CLEARbit(evergreen->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
     }
 
     unBit = 1 << VERT_RESULT_COL0;
     if(OutputsWritten & unBit)
     {
 	    ui = pAsm->uiFP_AttributeMap[FRAG_ATTRIB_COL0];
-	    SETbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, SEL_CENTROID_bit);
-	    SETfield(r700->SPI_PS_INPUT_CNTL[ui].u32All, ui,
+	    SETbit(evergreen->SPI_PS_INPUT_CNTL[ui].u32All, SEL_CENTROID_bit);
+	    SETfield(evergreen->SPI_PS_INPUT_CNTL[ui].u32All, ui,
 		     SEMANTIC_shift, SEMANTIC_mask);
-	    if (r700->SPI_INTERP_CONTROL_0.u32All & FLAT_SHADE_ENA_bit)
-		    SETbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
+	    if (evergreen->SPI_INTERP_CONTROL_0.u32All & FLAT_SHADE_ENA_bit)
+		    SETbit(evergreen->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
 	    else
-		    CLEARbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
+		    CLEARbit(evergreen->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
     }
 
     unBit = 1 << VERT_RESULT_COL1;
     if(OutputsWritten & unBit)
     {
 	    ui = pAsm->uiFP_AttributeMap[FRAG_ATTRIB_COL1];
-	    SETbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, SEL_CENTROID_bit);
-	    SETfield(r700->SPI_PS_INPUT_CNTL[ui].u32All, ui,
+	    SETbit(evergreen->SPI_PS_INPUT_CNTL[ui].u32All, SEL_CENTROID_bit);
+	    SETfield(evergreen->SPI_PS_INPUT_CNTL[ui].u32All, ui,
 		     SEMANTIC_shift, SEMANTIC_mask);
-	    if (r700->SPI_INTERP_CONTROL_0.u32All & FLAT_SHADE_ENA_bit)
-		    SETbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
+	    if (evergreen->SPI_INTERP_CONTROL_0.u32All & FLAT_SHADE_ENA_bit)
+		    SETbit(evergreen->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
 	    else
-		    CLEARbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
+		    CLEARbit(evergreen->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
     }
 
     unBit = 1 << VERT_RESULT_FOGC;
     if(OutputsWritten & unBit)
     {
             ui = pAsm->uiFP_AttributeMap[FRAG_ATTRIB_FOGC];
-            SETbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, SEL_CENTROID_bit);
-            SETfield(r700->SPI_PS_INPUT_CNTL[ui].u32All, ui,
+            SETbit(evergreen->SPI_PS_INPUT_CNTL[ui].u32All, SEL_CENTROID_bit);
+            SETfield(evergreen->SPI_PS_INPUT_CNTL[ui].u32All, ui,
                      SEMANTIC_shift, SEMANTIC_mask);
-            if (r700->SPI_INTERP_CONTROL_0.u32All & FLAT_SHADE_ENA_bit)
-                    SETbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
+            if (evergreen->SPI_INTERP_CONTROL_0.u32All & FLAT_SHADE_ENA_bit)
+                    SETbit(evergreen->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
             else
-                    CLEARbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
+                    CLEARbit(evergreen->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
     }
 
     for(i=0; i<8; i++)
     {
-	    GLboolean coord_replace = ctx->Point.PointSprite && ctx->Point.CoordReplace[i];
 	    unBit = 1 << (VERT_RESULT_TEX0 + i);
-	    if ((OutputsWritten & unBit) || coord_replace)
+	    if(OutputsWritten & unBit)
 	    {
 		    ui = pAsm->uiFP_AttributeMap[FRAG_ATTRIB_TEX0 + i];
-		    SETbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, SEL_CENTROID_bit);
-		    SETfield(r700->SPI_PS_INPUT_CNTL[ui].u32All, ui,
+		    SETbit(evergreen->SPI_PS_INPUT_CNTL[ui].u32All, SEL_CENTROID_bit);
+		    SETfield(evergreen->SPI_PS_INPUT_CNTL[ui].u32All, ui,
 			     SEMANTIC_shift, SEMANTIC_mask);
-		    CLEARbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
+		    CLEARbit(evergreen->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
 		    /* ARB_point_sprite */
-		    if (coord_replace)
+		    if(ctx->Point.CoordReplace[i] == GL_TRUE)
 		    {
-			     SETbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, PT_SPRITE_TEX_bit);
+			     SETbit(evergreen->SPI_PS_INPUT_CNTL[ui].u32All, PT_SPRITE_TEX_bit);
 		    }
 	    }
     }
@@ -720,26 +701,26 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
     if(mesa_fp->Base.InputsRead & unBit)
     {
             ui = pAsm->uiFP_AttributeMap[FRAG_ATTRIB_FACE];
-            SETbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, SEL_CENTROID_bit);
-            SETfield(r700->SPI_PS_INPUT_CNTL[ui].u32All, ui,
+            SETbit(evergreen->SPI_PS_INPUT_CNTL[ui].u32All, SEL_CENTROID_bit);
+            SETfield(evergreen->SPI_PS_INPUT_CNTL[ui].u32All, ui,
                      SEMANTIC_shift, SEMANTIC_mask);
-            if (r700->SPI_INTERP_CONTROL_0.u32All & FLAT_SHADE_ENA_bit)
-                    SETbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
+            if (evergreen->SPI_INTERP_CONTROL_0.u32All & FLAT_SHADE_ENA_bit)
+                    SETbit(evergreen->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
             else
-                    CLEARbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
+                    CLEARbit(evergreen->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
     }
     unBit = 1 << FRAG_ATTRIB_PNTC;
     if(mesa_fp->Base.InputsRead & unBit)
     {
             ui = pAsm->uiFP_AttributeMap[FRAG_ATTRIB_PNTC];
-            SETbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, SEL_CENTROID_bit);
-            SETfield(r700->SPI_PS_INPUT_CNTL[ui].u32All, ui,
+            SETbit(evergreen->SPI_PS_INPUT_CNTL[ui].u32All, SEL_CENTROID_bit);
+            SETfield(evergreen->SPI_PS_INPUT_CNTL[ui].u32All, ui,
                      SEMANTIC_shift, SEMANTIC_mask);
-            if (r700->SPI_INTERP_CONTROL_0.u32All & FLAT_SHADE_ENA_bit)
-                    SETbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
+            if (evergreen->SPI_INTERP_CONTROL_0.u32All & FLAT_SHADE_ENA_bit)
+                    SETbit(evergreen->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
             else
-                    CLEARbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
-            SETbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, PT_SPRITE_TEX_bit);
+                    CLEARbit(evergreen->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
+            SETbit(evergreen->SPI_PS_INPUT_CNTL[ui].u32All, PT_SPRITE_TEX_bit);
     }
 
 
@@ -751,23 +732,18 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
         if(OutputsWritten & unBit)
 		{
             ui = pAsm->uiFP_AttributeMap[i-VERT_RESULT_VAR0+FRAG_ATTRIB_VAR0];
-            SETbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, SEL_CENTROID_bit);
-            SETfield(r700->SPI_PS_INPUT_CNTL[ui].u32All, ui,
+            SETbit(evergreen->SPI_PS_INPUT_CNTL[ui].u32All, SEL_CENTROID_bit);
+            SETfield(evergreen->SPI_PS_INPUT_CNTL[ui].u32All, ui,
 		             SEMANTIC_shift, SEMANTIC_mask);
-            if (r700->SPI_INTERP_CONTROL_0.u32All & FLAT_SHADE_ENA_bit)
-		        SETbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
+            if (evergreen->SPI_INTERP_CONTROL_0.u32All & FLAT_SHADE_ENA_bit)
+		        SETbit(evergreen->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
             else
-		        CLEARbit(r700->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
+		        CLEARbit(evergreen->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
         }
     }
 
-    exportCount = (r700->ps.SQ_PGM_EXPORTS_PS.u32All & EXPORT_MODE_mask) / (1 << EXPORT_MODE_shift);
-    if (r700->CB_SHADER_CONTROL.u32All != ((1 << exportCount) - 1))
-    {
-	    R600_STATECHANGE(context, cb);
-	    r700->CB_SHADER_CONTROL.u32All = (1 << exportCount) - 1;
-    }
-
+    exportCount = (evergreen->SQ_PGM_EXPORTS_PS.u32All & EXPORT_MODE_mask) / (1 << EXPORT_MODE_shift);
+    
     /* sent out shader constants. */
     paramList = fp->mesa_program.Base.Parameters;
 
@@ -775,50 +751,54 @@ GLboolean r700SetupFragmentProgram(GLcontext * ctx)
     {
 	    _mesa_load_state_parameters(ctx, paramList);
 
-	    if (paramList->NumParameters > R700_MAX_DX9_CONSTS)
+	    if (paramList->NumParameters > EVERGREEN_MAX_DX9_CONSTS)
 		    return GL_FALSE;
 
-	    R600_STATECHANGE(context, ps_consts);
+	    EVERGREEN_STATECHANGE(context, sq);
 
-	    r700->ps.num_consts = paramList->NumParameters;
+	    evergreen->ps.num_consts = paramList->NumParameters;
 
 	    unNumParamData = paramList->NumParameters;
 
 	    for(ui=0; ui<unNumParamData; ui++) {
-		        r700->ps.consts[ui][0].f32All = paramList->ParameterValues[ui][0];
-		        r700->ps.consts[ui][1].f32All = paramList->ParameterValues[ui][1];
-		        r700->ps.consts[ui][2].f32All = paramList->ParameterValues[ui][2];
-		        r700->ps.consts[ui][3].f32All = paramList->ParameterValues[ui][3];
+		        evergreen->ps.consts[ui][0].f32All = paramList->ParameterValues[ui][0];
+		        evergreen->ps.consts[ui][1].f32All = paramList->ParameterValues[ui][1];
+		        evergreen->ps.consts[ui][2].f32All = paramList->ParameterValues[ui][2];
+		        evergreen->ps.consts[ui][3].f32All = paramList->ParameterValues[ui][3];
 	    }
-
+        
         /* Load fp constants to gpu */
-        if( (GL_TRUE == r700->bShaderUseMemConstant) && (unNumParamData > 0) )
-        {
-            r600EmitShader(ctx,
-                           &(fp->constbo0),
-                           (GLvoid *)&(paramList->ParameterValues[0][0]),
-                           unNumParamData * 4,
-                           "FS Const");
+        if(unNumParamData > 0) 
+        {            
+            radeonAllocDmaRegion(&context->radeon, 
+                                &context->fp_Constbo, 
+                                &context->fp_bo_offset, 
+                                256, 
+                                256);            
+            r600EmitShaderConsts(ctx,
+                                 context->fp_Constbo,
+                                 context->fp_bo_offset,         
+                                 (GLvoid *)&(evergreen->ps.consts[0][0]),
+                                 unNumParamData * 4 * 4);
         }
-
     } else
-	    r700->ps.num_consts = 0;
+	    evergreen->ps.num_consts = 0;
 
     COMPILED_SUB * pCompiledSub;
     GLuint uj;
-    GLuint unConstOffset = r700->ps.num_consts;
+    GLuint unConstOffset = evergreen->ps.num_consts;
     for(ui=0; ui<pAsm->unNumPresub; ui++)
     {
         pCompiledSub = pAsm->presubs[ui].pCompiledSub;
 
-        r700->ps.num_consts += pCompiledSub->NumParameters;
+        evergreen->ps.num_consts += pCompiledSub->NumParameters;
 
         for(uj=0; uj<pCompiledSub->NumParameters; uj++)
         {
-            r700->ps.consts[uj + unConstOffset][0].f32All = pCompiledSub->ParameterValues[uj][0];
-		    r700->ps.consts[uj + unConstOffset][1].f32All = pCompiledSub->ParameterValues[uj][1];
-		    r700->ps.consts[uj + unConstOffset][2].f32All = pCompiledSub->ParameterValues[uj][2];
-		    r700->ps.consts[uj + unConstOffset][3].f32All = pCompiledSub->ParameterValues[uj][3];
+            evergreen->ps.consts[uj + unConstOffset][0].f32All = pCompiledSub->ParameterValues[uj][0];
+		    evergreen->ps.consts[uj + unConstOffset][1].f32All = pCompiledSub->ParameterValues[uj][1];
+		    evergreen->ps.consts[uj + unConstOffset][2].f32All = pCompiledSub->ParameterValues[uj][2];
+		    evergreen->ps.consts[uj + unConstOffset][3].f32All = pCompiledSub->ParameterValues[uj][3];
         }
         unConstOffset += pCompiledSub->NumParameters;
     }

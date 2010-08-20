@@ -473,7 +473,14 @@ void r600InitCmdBuf(context_t *r600) /* from rcommonInitCmdBuf */
 	radeonContextPtr rmesa = &r600->radeon;
 	GLuint size;
 
-	r600InitAtoms(r600);
+    if(r600->radeon.radeonScreen->chip_family >= CHIP_FAMILY_CEDAR)
+    {
+        evergreenInitAtoms(r600);
+    }
+    else
+    {
+        r600InitAtoms(r600);
+    }	
 
 	/* Initialize command buffer */
 	size = 256 * driQueryOptioni(&rmesa->optionCache,

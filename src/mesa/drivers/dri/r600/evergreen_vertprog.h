@@ -25,8 +25,8 @@
  */
 
 
-#ifndef _R700_VERTPROG_H_
-#define _R700_VERTPROG_H_
+#ifndef _EVERGREEN_VERTPROG_H_
+#define _EVERGREEN_VERTPROG_H_
 
 #include "main/glheader.h"
 #include "main/mtypes.h" 
@@ -34,19 +34,19 @@
 #include "r700_shader.h"
 #include "r700_assembler.h"
 
-typedef struct ArrayDesc //TEMP
+typedef struct evergreenArrayDesc //TEMP
 {
 	GLint size;   //number of data element
 	GLenum type;  //data element type
 	GLsizei stride;
 	GLenum format; //GL_RGBA or GL_BGRA
-} ArrayDesc;
+} evergreenArrayDesc;
 
-struct r700_vertex_program 
+struct evergreen_vertex_program 
 {
     struct gl_vertex_program *mesa_program; /* Must be first */
 
-    struct r700_vertex_program *next;
+    struct evergreen_vertex_program *next;
 
     r700_AssemblerBase r700AsmCode;
     R700_Shader        r700Shader;
@@ -59,49 +59,49 @@ struct r700_vertex_program
 	GLuint K0used;
     void * constbo0;
 
-    ArrayDesc              aos_desc[VERT_ATTRIB_MAX];
+    evergreenArrayDesc              aos_desc[VERT_ATTRIB_MAX];
 };
 
-struct r700_vertex_program_cont
+struct evergreen_vertex_program_cont
 {
     struct gl_vertex_program mesa_program;
 
-    struct r700_vertex_program *progs;
+    struct evergreen_vertex_program *progs;
 };
 
 //Internal
-unsigned int Map_Vertex_Output(r700_AssemblerBase       *pAsm, 
+unsigned int evergreen_Map_Vertex_Output(r700_AssemblerBase       *pAsm, 
 			       struct gl_vertex_program *mesa_vp,
 			       unsigned int unStart);
-unsigned int Map_Vertex_Input(r700_AssemblerBase       *pAsm, 
+unsigned int evergreen_Map_Vertex_Input(r700_AssemblerBase       *pAsm, 
 			      struct gl_vertex_program *mesa_vp,
 			      unsigned int unStart);
-GLboolean Process_Vertex_Program_Vfetch_Instructions(
-	struct r700_vertex_program *vp,
+GLboolean evergreen_Process_Vertex_Program_Vfetch_Instructions(
+	struct evergreen_vertex_program *vp,
 	struct gl_vertex_program   *mesa_vp);
-GLboolean Process_Vertex_Program_Vfetch_Instructions2(
+GLboolean evergreen_Process_Vertex_Program_Vfetch_Instructions2(
     GLcontext *ctx,
-	struct r700_vertex_program *vp,
+	struct evergreen_vertex_program *vp,
 	struct gl_vertex_program   *mesa_vp);
-void Map_Vertex_Program(GLcontext *ctx,
-            struct r700_vertex_program *vp,
+void evergreen_Map_Vertex_Program(GLcontext *ctx,
+            struct evergreen_vertex_program *vp,
 			struct gl_vertex_program   *mesa_vp);
-GLboolean Find_Instruction_Dependencies_vp(struct r700_vertex_program *vp,
+GLboolean evergreen_Find_Instruction_Dependencies_vp(struct evergreen_vertex_program *vp,
 					   struct gl_vertex_program   *mesa_vp);
 
-struct r700_vertex_program* r700TranslateVertexShader(GLcontext *ctx,
+struct evergreen_vertex_program* evergreenTranslateVertexShader(GLcontext *ctx,
 						      struct gl_vertex_program   *mesa_vp);
 
 /* Interface */
-extern void r700SelectVertexShader(GLcontext *ctx);
-extern void r700SetVertexFormat(GLcontext *ctx, const struct gl_client_array *arrays[], int count);
+extern void evergreenSelectVertexShader(GLcontext *ctx);
+extern void evergreenSetVertexFormat(GLcontext *ctx, const struct gl_client_array *arrays[], int count);
 
-extern GLboolean r700SetupVertexProgram(GLcontext * ctx);
+extern GLboolean evergreenSetupVertexProgram(GLcontext * ctx);
 
-extern void *    r700GetActiveVpShaderBo(GLcontext * ctx);
+extern void * evergreenGetActiveVpShaderBo(GLcontext * ctx);
 
-extern void * r700GetActiveVpShaderConstBo(GLcontext * ctx);
+extern void * evergreenGetActiveVpShaderConstBo(GLcontext * ctx);
 
-extern int getTypeSize(GLenum type);
+extern int evergreen_getTypeSize(GLenum type);
 
-#endif /* _R700_VERTPROG_H_ */
+#endif /* _EVERGREEN_VERTPROG_H_ */

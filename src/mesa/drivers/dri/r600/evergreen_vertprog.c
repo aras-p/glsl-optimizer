@@ -42,13 +42,12 @@
 #include "radeon_debug.h"
 #include "r600_context.h"
 #include "r600_cmdbuf.h"
-#include "r600_emit.h"
 #include "program/programopt.h"
 
 #include "r700_debug.h"
-#include "r700_vertprog.h"
+#include "evergreen_vertprog.h"
 
-unsigned int Map_Vertex_Output(r700_AssemblerBase       *pAsm, 
+unsigned int evergreen_Map_Vertex_Output(r700_AssemblerBase       *pAsm, 
 					           struct gl_vertex_program *mesa_vp,
 					           unsigned int unStart)
 {
@@ -124,7 +123,7 @@ unsigned int Map_Vertex_Output(r700_AssemblerBase       *pAsm,
 	return (unTotal - unStart);
 }
 
-unsigned int Map_Vertex_Input(r700_AssemblerBase       *pAsm, 
+unsigned int evergreen_Map_Vertex_Input(r700_AssemblerBase       *pAsm, 
 					  struct gl_vertex_program *mesa_vp,
 					  unsigned int unStart)
 {
@@ -142,8 +141,8 @@ unsigned int Map_Vertex_Input(r700_AssemblerBase       *pAsm,
 	return (unTotal - unStart);
 }
 
-GLboolean Process_Vertex_Program_Vfetch_Instructions(
-						struct r700_vertex_program *vp,
+GLboolean evergreen_Process_Vertex_Program_Vfetch_Instructions(
+						struct evergreen_vertex_program *vp,
 						struct gl_vertex_program   *mesa_vp)
 {
 	int i;
@@ -169,9 +168,9 @@ GLboolean Process_Vertex_Program_Vfetch_Instructions(
 	return GL_TRUE;
 }
 
-GLboolean Process_Vertex_Program_Vfetch_Instructions2(
+GLboolean evergreen_Process_Vertex_Program_Vfetch_Instructions2(
     GLcontext *ctx,
-	struct r700_vertex_program *vp,
+	struct evergreen_vertex_program *vp,
 	struct gl_vertex_program   *mesa_vp)
 {
     int i;
@@ -183,7 +182,7 @@ GLboolean Process_Vertex_Program_Vfetch_Instructions2(
 
     for(i=0; i<context->nNumActiveAos; i++)
     {
-        assemble_vfetch_instruction2(&vp->r700AsmCode,
+        EG_assemble_vfetch_instruction(&vp->r700AsmCode,
                                       vp->r700AsmCode.ucVP_AttributeMap[context->stream_desc[i].element],
                                       context->stream_desc[i].type,
                                       context->stream_desc[i].size,
@@ -197,8 +196,8 @@ GLboolean Process_Vertex_Program_Vfetch_Instructions2(
     return GL_TRUE;
 }
 
-void Map_Vertex_Program(GLcontext *ctx,
-                        struct r700_vertex_program *vp,
+void evergreen_Map_Vertex_Program(GLcontext *ctx,
+                        struct evergreen_vertex_program *vp,
 						struct gl_vertex_program   *mesa_vp)
 {
     GLuint ui;
@@ -210,18 +209,18 @@ void Map_Vertex_Program(GLcontext *ctx,
 	pAsm->starting_vfetch_register_number = pAsm->number_used_registers;
 
     // Map Inputs: Add 1 to mapping since R0 is used for index
-	num_inputs = Map_Vertex_Input(pAsm, mesa_vp, pAsm->number_used_registers);
+	num_inputs = evergreen_Map_Vertex_Input(pAsm, mesa_vp, pAsm->number_used_registers);
 	pAsm->number_used_registers += num_inputs;
 
 	// Create VFETCH instructions for inputs
-        if (GL_TRUE != Process_Vertex_Program_Vfetch_Instructions2(ctx, vp, mesa_vp) )
+        if (GL_TRUE != evergreen_Process_Vertex_Program_Vfetch_Instructions2(ctx, vp, mesa_vp) )
 	{
-		radeon_error("Calling Process_Vertex_Program_Vfetch_Instructions2 return error. \n");
+		radeon_error("Calling evergreen_Process_Vertex_Program_Vfetch_Instructions2 return error. \n");
 		return;
 	}
 
 	// Map Outputs
-	pAsm->number_of_exports = Map_Vertex_Output(pAsm, mesa_vp, pAsm->number_used_registers);
+	pAsm->number_of_exports = evergreen_Map_Vertex_Output(pAsm, mesa_vp, pAsm->number_used_registers);
 
 	pAsm->starting_export_register_number = pAsm->number_used_registers;
 
@@ -251,7 +250,7 @@ void Map_Vertex_Program(GLcontext *ctx,
     pAsm->uFirstHelpReg = pAsm->number_used_registers;
 }
 
-GLboolean Find_Instruction_Dependencies_vp(struct r700_vertex_program *vp,
+GLboolean evergreen_Find_Instruction_Dependencies_vp(struct evergreen_vertex_program *vp,
 					                	struct gl_vertex_program   *mesa_vp)
 {
     GLuint i, j;
@@ -301,19 +300,17 @@ GLboolean Find_Instruction_Dependencies_vp(struct r700_vertex_program *vp,
     return GL_TRUE;
 }
 
-struct r700_vertex_program* r700TranslateVertexShader(GLcontext *ctx,
+struct evergreen_vertex_program* evergreenTranslateVertexShader(GLcontext *ctx,
 						      struct gl_vertex_program *mesa_vp)
 {
-	context_t *context = R700_CONTEXT(ctx);
+	context_t *context = EVERGREEN_CONTEXT(ctx);
 
-    R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
-
-	struct r700_vertex_program *vp;
+	struct evergreen_vertex_program *vp;
 	unsigned int i;
 
 	vp = calloc(1, sizeof(*vp));
 	vp->mesa_program = _mesa_clone_vertex_program(ctx, mesa_vp);
-
+    
     vp->constbo0 = NULL;
 
 	if (mesa_vp->IsPositionInvariant)
@@ -336,21 +333,13 @@ struct r700_vertex_program* r700TranslateVertexShader(GLcontext *ctx,
 
 	//Init_Program
 	Init_r700_AssemblerBase(SPT_VP, &(vp->r700AsmCode), &(vp->r700Shader) );
+        
+    vp->r700AsmCode.bUseMemConstant = GL_TRUE;  
+    vp->r700AsmCode.unAsic = 8;
 
-    if(GL_TRUE == r700->bShaderUseMemConstant)
-    {
-        vp->r700AsmCode.bUseMemConstant = GL_TRUE;
-    }
-    else
-    {
-        vp->r700AsmCode.bUseMemConstant = GL_FALSE;
-    }
+	evergreen_Map_Vertex_Program(ctx, vp, vp->mesa_program );
 
-    vp->r700AsmCode.unAsic = 7;
-
-	Map_Vertex_Program(ctx, vp, vp->mesa_program );
-
-	if(GL_FALSE == Find_Instruction_Dependencies_vp(vp, vp->mesa_program))
+	if(GL_FALSE == evergreen_Find_Instruction_Dependencies_vp(vp, vp->mesa_program))
 	{
 		return NULL;
 	}
@@ -393,16 +382,16 @@ struct r700_vertex_program* r700TranslateVertexShader(GLcontext *ctx,
 	return vp;
 }
 
-void r700SelectVertexShader(GLcontext *ctx)
+void evergreenSelectVertexShader(GLcontext *ctx)
 {
-    context_t *context = R700_CONTEXT(ctx);
-    struct r700_vertex_program_cont *vpc;
-    struct r700_vertex_program *vp;
+    context_t *context = EVERGREEN_CONTEXT(ctx);
+    struct evergreen_vertex_program_cont *vpc;
+    struct evergreen_vertex_program *vp;
     unsigned int i;
     GLboolean match;
     GLbitfield InputsRead;
 
-    vpc = (struct r700_vertex_program_cont *)ctx->VertexProgram._Current;
+    vpc = (struct evergreen_vertex_program_cont *)ctx->VertexProgram._Current;
 
     InputsRead = vpc->mesa_program.Base.InputsRead;
     if (vpc->mesa_program.IsPositionInvariant)
@@ -429,7 +418,7 @@ void r700SelectVertexShader(GLcontext *ctx)
 	}
     }
 
-    vp = r700TranslateVertexShader(ctx, &(vpc->mesa_program));
+    vp = evergreenTranslateVertexShader(ctx, &(vpc->mesa_program));
     if(!vp)
     {
 	radeon_error("Failed to translate vertex shader. \n");
@@ -441,7 +430,7 @@ void r700SelectVertexShader(GLcontext *ctx)
     return;
 }
 
-int getTypeSize(GLenum type)
+int evergreen_getTypeSize(GLenum type)
 {
     switch (type) 
     {
@@ -467,22 +456,22 @@ int getTypeSize(GLenum type)
     }
 }
 
-static void r700TranslateAttrib(GLcontext *ctx, GLuint unLoc, int count, const struct gl_client_array *input)
+static void evergreenTranslateAttrib(GLcontext *ctx, GLuint unLoc, int count, const struct gl_client_array *input)
 {
-    context_t *context = R700_CONTEXT(ctx);
+    context_t *context = EVERGREEN_CONTEXT(ctx);
     
     StreamDesc * pStreamDesc = &(context->stream_desc[context->nNumActiveAos]);
 
 	GLuint stride;
 
-	stride = (input->StrideB == 0) ? getTypeSize(input->Type) * input->Size 
+	stride = (input->StrideB == 0) ? evergreen_getTypeSize(input->Type) * input->Size 
                                    : input->StrideB;
 
-    if (input->Type == GL_DOUBLE || input->Type == GL_UNSIGNED_INT || input->Type == GL_INT
+    if (input->Type == GL_DOUBLE || input->Type == GL_UNSIGNED_INT || input->Type == GL_INT ||
 #if MESA_BIG_ENDIAN
-        || getTypeSize(input->Type) != 4
+        evergreen_getTypeSize(input->Type) != 4 ||
 #endif
-       ) 
+        stride < 4) 
     {
         pStreamDesc->type = GL_FLOAT;
 
@@ -500,7 +489,7 @@ static void r700TranslateAttrib(GLcontext *ctx, GLuint unLoc, int count, const s
     else 
     {
         pStreamDesc->type = input->Type;
-        pStreamDesc->dwords = (getTypeSize(input->Type) * input->Size + 3)/ 4;
+        pStreamDesc->dwords = (evergreen_getTypeSize(input->Type) * input->Size + 3)/ 4;
         if (!input->BufferObj->Name) 
         {
             if (input->StrideB == 0) 
@@ -509,7 +498,7 @@ static void r700TranslateAttrib(GLcontext *ctx, GLuint unLoc, int count, const s
             } 
             else 
             {
-                pStreamDesc->stride = (getTypeSize(pStreamDesc->type) * input->Size + 3) & ~3;
+                pStreamDesc->stride = (evergreen_getTypeSize(pStreamDesc->type) * input->Size + 3) & ~3;
             }
 
             pStreamDesc->is_named_bo = GL_FALSE;
@@ -553,11 +542,11 @@ static void r700TranslateAttrib(GLcontext *ctx, GLuint unLoc, int count, const s
 	context->nNumActiveAos++;
 }
 
-void r700SetVertexFormat(GLcontext *ctx, const struct gl_client_array *arrays[], int count)
+void evergreenSetVertexFormat(GLcontext *ctx, const struct gl_client_array *arrays[], int count)
 {
-    context_t *context = R700_CONTEXT(ctx);
-    struct r700_vertex_program *vpc
-           = (struct r700_vertex_program *)ctx->VertexProgram._Current;
+    context_t *context = EVERGREEN_CONTEXT(ctx);
+    struct evergreen_vertex_program *vpc
+           = (struct evergreen_vertex_program *)ctx->VertexProgram._Current;
 
     struct gl_vertex_program * mesa_vp = (struct gl_vertex_program *)&(vpc->mesa_program);
     unsigned int unLoc = 0;
@@ -573,7 +562,7 @@ void r700SetVertexFormat(GLcontext *ctx, const struct gl_client_array *arrays[],
     {
         if(unBit & 1)
         {
-            r700TranslateAttrib(ctx, unLoc, count, arrays[unLoc]);
+            evergreenTranslateAttrib(ctx, unLoc, count, arrays[unLoc]);
         }
 
         unBit >>= 1;
@@ -582,10 +571,10 @@ void r700SetVertexFormat(GLcontext *ctx, const struct gl_client_array *arrays[],
     context->radeon.tcl.aos_count = context->nNumActiveAos;
 }
 
-void * r700GetActiveVpShaderBo(GLcontext * ctx)
+void * evergreenGetActiveVpShaderBo(GLcontext * ctx)
 {
-    context_t *context = R700_CONTEXT(ctx);
-    struct r700_vertex_program *vp = context->selected_vp;;
+    context_t *context = EVERGREEN_CONTEXT(ctx);
+    struct evergreen_vertex_program *vp = context->selected_vp;;
 
     if (vp)
 	return vp->shaderbo;
@@ -593,10 +582,10 @@ void * r700GetActiveVpShaderBo(GLcontext * ctx)
 	return NULL;
 }
 
-void * r700GetActiveVpShaderConstBo(GLcontext * ctx)
+void * evergreenGetActiveVpShaderConstBo(GLcontext * ctx)
 {
-    context_t *context = R700_CONTEXT(ctx);
-    struct r700_vertex_program *vp = context->selected_vp;;
+    context_t *context = EVERGREEN_CONTEXT(ctx);
+    struct evergreen_vertex_program *vp = context->selected_vp;;
 
     if (vp)
 	return vp->constbo0;
@@ -604,11 +593,11 @@ void * r700GetActiveVpShaderConstBo(GLcontext * ctx)
 	return NULL;
 }
 
-GLboolean r700SetupVertexProgram(GLcontext * ctx)
+GLboolean evergreenSetupVertexProgram(GLcontext * ctx)
 {
-    context_t *context = R700_CONTEXT(ctx);
-    R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
-    struct r700_vertex_program *vp = context->selected_vp;
+    context_t *context = EVERGREEN_CONTEXT(ctx);
+    EVERGREEN_CHIP_CONTEXT *evergreen = GET_EVERGREEN_CHIP(context);
+    struct evergreen_vertex_program *vp = context->selected_vp;
 
     struct gl_program_parameter_list *paramList;
     unsigned int unNumParamData;
@@ -627,70 +616,43 @@ GLboolean r700SetupVertexProgram(GLcontext * ctx)
                        (GLvoid *)(vp->r700Shader.pProgram),
                        vp->r700Shader.uShaderBinaryDWORDSize,
                        "VS");
-
-        if(GL_TRUE == r700->bShaderUseMemConstant)
-        {
-            paramList = vp->mesa_program->Base.Parameters;
-            if(NULL != paramList)
-            {
-                unNumParamData = paramList->NumParameters;
-                r600AllocShaderConsts(ctx,
-                               &(vp->constbo0),                       
-                               unNumParamData *4*4,
-                               "VSCON");
-            }
-        }        
-
+   
         vp->loaded = GL_TRUE;
     }
 
-    DumpHwBinary(DUMP_VERTEX_SHADER, (GLvoid *)(vp->r700Shader.pProgram),
-                 vp->r700Shader.uShaderBinaryDWORDSize);
-
+    EVERGREEN_STATECHANGE(context, vs);      
+    
     /* TODO : enable this after MemUse fixed *=
     (context->chipobj.MemUse)(context, vp->shadercode.buf->id);
-    */
+    */       
 
-    R600_STATECHANGE(context, vs);
-    R600_STATECHANGE(context, fs); /* hack */
-
-    r700->vs.SQ_PGM_RESOURCES_VS.u32All = 0;
-    SETbit(r700->vs.SQ_PGM_RESOURCES_VS.u32All, PGM_RESOURCES__PRIME_CACHE_ON_DRAW_bit);
-
-    r700->vs.SQ_ALU_CONST_CACHE_VS_0.u32All = 0; /* set from buffer object. */
+    evergreen->SQ_PGM_RESOURCES_VS.u32All = 0;
+    SETbit(evergreen->SQ_PGM_RESOURCES_VS.u32All, PGM_RESOURCES__PRIME_CACHE_ON_DRAW_bit);
     
-    r700->vs.SQ_PGM_START_VS.u32All = 0;
+    evergreen->vs.SQ_ALU_CONST_CACHE_VS_0.u32All = 0; /* set from buffer object. */
+    
+    evergreen->vs.SQ_PGM_START_VS.u32All = 0;
 
-    SETfield(r700->vs.SQ_PGM_RESOURCES_VS.u32All, vp->r700Shader.nRegs + 1,
+    SETfield(evergreen->SQ_PGM_RESOURCES_VS.u32All, vp->r700Shader.nRegs + 1,
              NUM_GPRS_shift, NUM_GPRS_mask);
 
     if(vp->r700Shader.uStackSize) /* we don't use branch for now, it should be zero. */
 	{
-        SETfield(r700->vs.SQ_PGM_RESOURCES_VS.u32All, vp->r700Shader.uStackSize,
+        SETfield(evergreen->SQ_PGM_RESOURCES_VS.u32All, vp->r700Shader.uStackSize,
                  STACK_SIZE_shift, STACK_SIZE_mask);
     }
 
-    R600_STATECHANGE(context, spi);
+    EVERGREEN_STATECHANGE(context, spi);
 
-    if(vp->mesa_program->Base.OutputsWritten & (1 << VERT_RESULT_PSIZ)) {
-        R600_STATECHANGE(context, cl);
-        SETbit(r700->PA_CL_VS_OUT_CNTL.u32All, USE_VTX_POINT_SIZE_bit);
-        SETbit(r700->PA_CL_VS_OUT_CNTL.u32All, VS_OUT_MISC_VEC_ENA_bit);
-    } else if (r700->PA_CL_VS_OUT_CNTL.u32All != 0) {
-        R600_STATECHANGE(context, cl);
-        CLEARbit(r700->PA_CL_VS_OUT_CNTL.u32All, USE_VTX_POINT_SIZE_bit);
-        CLEARbit(r700->PA_CL_VS_OUT_CNTL.u32All, VS_OUT_MISC_VEC_ENA_bit);
-    }
-
-    SETfield(r700->SPI_VS_OUT_CONFIG.u32All,
+    SETfield(evergreen->SPI_VS_OUT_CONFIG.u32All,
 	     vp->r700Shader.nParamExports ? (vp->r700Shader.nParamExports - 1) : 0,
              VS_EXPORT_COUNT_shift, VS_EXPORT_COUNT_mask);
-    SETfield(r700->SPI_PS_IN_CONTROL_0.u32All, vp->r700Shader.nParamExports,
+    SETfield(evergreen->SPI_PS_IN_CONTROL_0.u32All, vp->r700Shader.nParamExports,
              NUM_INTERP_shift, NUM_INTERP_mask);
 
     /*
-    SETbit(r700->SPI_PS_IN_CONTROL_0.u32All, PERSP_GRADIENT_ENA_bit);
-    CLEARbit(r700->SPI_PS_IN_CONTROL_0.u32All, LINEAR_GRADIENT_ENA_bit);
+    SETbit(evergreen->SPI_PS_IN_CONTROL_0.u32All, PERSP_GRADIENT_ENA_bit);
+    CLEARbit(evergreen->SPI_PS_IN_CONTROL_0.u32All, LINEAR_GRADIENT_ENA_bit);
     */
 
     /* sent out shader constants. */
@@ -705,59 +667,60 @@ GLboolean r700SetupVertexProgram(GLcontext * ctx)
          
 	    _mesa_load_state_parameters(ctx, paramList);
 
-	    if (paramList->NumParameters > R700_MAX_DX9_CONSTS)
+	    if (paramList->NumParameters > EVERGREEN_MAX_DX9_CONSTS)
 		    return GL_FALSE;
 
-	    R600_STATECHANGE(context, vs_consts);
+	    EVERGREEN_STATECHANGE(context, vs);
 
-	    r700->vs.num_consts = paramList->NumParameters;
+	    evergreen->vs.num_consts = paramList->NumParameters;
 
 	    unNumParamData = paramList->NumParameters;
 
 	    for(ui=0; ui<unNumParamData; ui++) {
             if(paramList->Parameters[ui].Type == PROGRAM_UNIFORM) 
             {
-                r700->vs.consts[ui][0].f32All = paramListOrginal->ParameterValues[ui][0];
-		        r700->vs.consts[ui][1].f32All = paramListOrginal->ParameterValues[ui][1];
-		        r700->vs.consts[ui][2].f32All = paramListOrginal->ParameterValues[ui][2];
-		        r700->vs.consts[ui][3].f32All = paramListOrginal->ParameterValues[ui][3];
+                evergreen->vs.consts[ui][0].f32All = paramListOrginal->ParameterValues[ui][0];
+		        evergreen->vs.consts[ui][1].f32All = paramListOrginal->ParameterValues[ui][1];
+		        evergreen->vs.consts[ui][2].f32All = paramListOrginal->ParameterValues[ui][2];
+		        evergreen->vs.consts[ui][3].f32All = paramListOrginal->ParameterValues[ui][3];
             }
             else
             {
-		        r700->vs.consts[ui][0].f32All = paramList->ParameterValues[ui][0];
-		        r700->vs.consts[ui][1].f32All = paramList->ParameterValues[ui][1];
-		        r700->vs.consts[ui][2].f32All = paramList->ParameterValues[ui][2];
-		        r700->vs.consts[ui][3].f32All = paramList->ParameterValues[ui][3];
+		        evergreen->vs.consts[ui][0].f32All = paramList->ParameterValues[ui][0];
+		        evergreen->vs.consts[ui][1].f32All = paramList->ParameterValues[ui][1];
+		        evergreen->vs.consts[ui][2].f32All = paramList->ParameterValues[ui][2];
+		        evergreen->vs.consts[ui][3].f32All = paramList->ParameterValues[ui][3];
             }
 	    }
 
-        /* Load vp constants to gpu */
-        if(GL_TRUE == r700->bShaderUseMemConstant)
-        {
-            r600EmitShaderConsts(ctx,
-                           vp->constbo0,
-                           0,
-                           (GLvoid *)&(r700->vs.consts[0][0]),
-                           unNumParamData * 4 * 4);
-        }
+        radeonAllocDmaRegion(&context->radeon, 
+                             &context->vp_Constbo, 
+                             &context->vp_bo_offset, 
+                             256, 
+                             256);        
+        r600EmitShaderConsts(ctx,
+                             context->vp_Constbo,
+                             context->vp_bo_offset,
+                             (GLvoid *)&(evergreen->vs.consts[0][0]),
+                             unNumParamData * 4 * 4);
     } else
-	    r700->vs.num_consts = 0;
+	    evergreen->vs.num_consts = 0;
 
     COMPILED_SUB * pCompiledSub;
     GLuint uj;
-    GLuint unConstOffset = r700->vs.num_consts;
+    GLuint unConstOffset = evergreen->vs.num_consts;
     for(ui=0; ui<vp->r700AsmCode.unNumPresub; ui++)
     {
         pCompiledSub = vp->r700AsmCode.presubs[ui].pCompiledSub;
 
-        r700->vs.num_consts += pCompiledSub->NumParameters;
+        evergreen->vs.num_consts += pCompiledSub->NumParameters;
 
         for(uj=0; uj<pCompiledSub->NumParameters; uj++)
         {
-            r700->vs.consts[uj + unConstOffset][0].f32All = pCompiledSub->ParameterValues[uj][0];
-		    r700->vs.consts[uj + unConstOffset][1].f32All = pCompiledSub->ParameterValues[uj][1];
-		    r700->vs.consts[uj + unConstOffset][2].f32All = pCompiledSub->ParameterValues[uj][2];
-		    r700->vs.consts[uj + unConstOffset][3].f32All = pCompiledSub->ParameterValues[uj][3];
+            evergreen->vs.consts[uj + unConstOffset][0].f32All = pCompiledSub->ParameterValues[uj][0];
+		    evergreen->vs.consts[uj + unConstOffset][1].f32All = pCompiledSub->ParameterValues[uj][1];
+		    evergreen->vs.consts[uj + unConstOffset][2].f32All = pCompiledSub->ParameterValues[uj][2];
+		    evergreen->vs.consts[uj + unConstOffset][3].f32All = pCompiledSub->ParameterValues[uj][3];
         }
         unConstOffset += pCompiledSub->NumParameters;
     }

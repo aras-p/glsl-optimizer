@@ -24,13 +24,13 @@
  *   Richard Li <RichardZ.Li@amd.com>, <richardradeon@gmail.com>
  */
 
-#ifndef _R700_FRAGPROG_H_
-#define _R700_FRAGPROG_H_
+#ifndef _EVERGREEN_FRAGPROG_H_
+#define _EVERGREEN_FRAGPROG_H_
 
 #include "r600_context.h"
 #include "r700_assembler.h"
 
-struct r700_fragment_program
+struct evergreen_fragment_program
 {
 	struct gl_fragment_program mesa_program;
 
@@ -51,25 +51,25 @@ struct r700_fragment_program
 };
 
 /* Internal */
-void insert_wpos_code(GLcontext *ctx, struct gl_fragment_program *fprog);
+void evergreen_insert_wpos_code(GLcontext *ctx, struct gl_fragment_program *fprog);
 
-void Map_Fragment_Program(r700_AssemblerBase         *pAsm,
+void evergreen_Map_Fragment_Program(r700_AssemblerBase         *pAsm,
 			  struct gl_fragment_program *mesa_fp,
                           GLcontext *ctx); 
-GLboolean Find_Instruction_Dependencies_fp(struct r700_fragment_program *fp,
+GLboolean evergreen_Find_Instruction_Dependencies_fp(struct evergreen_fragment_program *fp,
 					   struct gl_fragment_program   *mesa_fp);
 
-GLboolean r700TranslateFragmentShader(struct r700_fragment_program *fp,
+GLboolean evergreenTranslateFragmentShader(struct evergreen_fragment_program *fp,
 				      struct gl_fragment_program   *mesa_vp,
                                       GLcontext *ctx); 
 
 /* Interface */
-extern void r700SelectFragmentShader(GLcontext *ctx);
+extern void evergreenSelectFragmentShader(GLcontext *ctx);
 
-extern GLboolean r700SetupFragmentProgram(GLcontext * ctx);
+extern GLboolean evergreenSetupFragmentProgram(GLcontext * ctx);
 
-extern void *    r700GetActiveFpShaderBo(GLcontext * ctx);
+extern void *    evergreenGetActiveFpShaderBo(GLcontext * ctx);
 
-extern void *    r700GetActiveFpShaderConstBo(GLcontext * ctx);
+extern void *    evergreenGetActiveFpShaderConstBo(GLcontext * ctx);
 
-#endif /*_R700_FRAGPROG_H_*/
+#endif /*_EVERGREEN_FRAGPROG_H_*/
