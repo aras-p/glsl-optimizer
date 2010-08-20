@@ -132,8 +132,15 @@ void
 tgsi_parse_token(
    struct tgsi_parse_context *ctx );
 
-unsigned
-tgsi_num_tokens(const struct tgsi_token *tokens);
+static INLINE unsigned
+tgsi_num_tokens(const struct tgsi_token *tokens)
+{
+   struct tgsi_header header = *(const struct tgsi_header *) tokens;
+   return header.HeaderSize + header.BodySize;
+}
+
+void
+tgsi_dump_tokens(const struct tgsi_token *tokens);
 
 struct tgsi_token *
 tgsi_dup_tokens(const struct tgsi_token *tokens);

@@ -282,17 +282,6 @@ tgsi_parse_token(
 }
 
 
-unsigned
-tgsi_num_tokens(const struct tgsi_token *tokens)
-{
-   struct tgsi_parse_context ctx;
-   if (tgsi_parse_init(&ctx, tokens) == TGSI_PARSE_OK) {
-      unsigned len = (ctx.FullHeader.Header.HeaderSize +
-                      ctx.FullHeader.Header.BodySize);
-      return len;
-   }
-   return 0;
-}
 
 
 /**
@@ -318,4 +307,20 @@ tgsi_alloc_tokens(unsigned num_tokens)
 {
    unsigned bytes = num_tokens * sizeof(struct tgsi_token);
    return (struct tgsi_token *) MALLOC(bytes);
+}
+
+
+void
+tgsi_dump_tokens(const struct tgsi_token *tokens)
+{
+   const unsigned *dwords = (const unsigned *)tokens;
+   int nr = tgsi_num_tokens(tokens);
+   int i;
+   
+   assert(sizeof(*tokens) == sizeof(unsigned));
+
+   debug_printf("const unsigned tokens[%d] = {\n", nr);
+   for (i = 0; i < nr; i++)
+      debug_printf("0x%08x,\n", dwords[i]);
+   debug_printf("};\n");
 }
