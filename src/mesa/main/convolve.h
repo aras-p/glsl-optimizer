@@ -70,6 +70,8 @@ _mesa_init_convolve_dispatch(struct _glapi_table *disp);
 
 #else /* FEATURE_convolve */
 
+#include "main/compiler.h"
+
 #define _MESA_INIT_CONVOLVE_FUNCTIONS(driver, impl) do { } while (0)
 
 static INLINE void GLAPIENTRY

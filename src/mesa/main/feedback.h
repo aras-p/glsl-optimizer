@@ -63,6 +63,8 @@ _mesa_init_feedback_dispatch(struct _glapi_table *disp);
 
 #else /* FEATURE_feedback */
 
+#include "main/compiler.h"
+
 #define _MESA_INIT_FEEDBACK_FUNCTIONS(driver, impl) do { } while (0)
 
 static INLINE void

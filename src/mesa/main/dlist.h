@@ -81,6 +81,8 @@ extern void _mesa_init_dlist_dispatch(struct _glapi_table *disp);
 
 #else /* FEATURE_dlist */
 
+#include "main/compiler.h"
+
 #define _MESA_INIT_DLIST_FUNCTIONS(driver, impl) do { } while (0)
 #define _MESA_INIT_DLIST_VTXFMT(vfmt, impl) do { } while (0)
 

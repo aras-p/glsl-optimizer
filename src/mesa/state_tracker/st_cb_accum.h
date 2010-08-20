@@ -41,6 +41,8 @@ extern void st_init_accum_functions(struct dd_function_table *functions);
 
 #else
 
+#include "main/compiler.h"
+
 static INLINE void
 st_clear_accum_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
 {

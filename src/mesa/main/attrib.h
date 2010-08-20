@@ -48,6 +48,8 @@ _mesa_init_attrib_dispatch(struct _glapi_table *disp);
 
 #else /* FEATURE_attrib_stack */
 
+#include "main/compiler.h"
+
 static INLINE void
 _mesa_PushClientAttrib( GLbitfield mask )
 {
