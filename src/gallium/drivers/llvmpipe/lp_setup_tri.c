@@ -819,9 +819,10 @@ static void triangle_both( struct lp_setup_context *setup,
    const float fy = v1[0][1] - v2[0][1];
 
    /* det = cross(e,f).z */
-   if (ex * fy - ey * fx < 0.0f) 
+   const float det = ex * fy - ey * fx;
+   if (det < 0.0f) 
       triangle_ccw( setup, v0, v1, v2 );
-   else
+   else if (det > 0.0f)
       triangle_cw( setup, v0, v1, v2 );
 }
 
