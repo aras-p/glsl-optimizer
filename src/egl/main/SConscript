@@ -12,6 +12,7 @@ if env['platform'] != 'winddk':
 		'_EGL_NATIVE_PLATFORM=_EGL_PLATFORM_WINDOWS',
 		'_EGL_DRIVER_SEARCH_DIR=\\"\\"',
 		'_EGL_OS_WINDOWS',
+		'_EGL_GET_CORE_ADDRESSES',
 		'KHRONOS_DLL_EXPORTS',
 	])
 
