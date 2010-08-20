@@ -253,27 +253,6 @@ PROGRAM_SOURCES = \
 SHADER_CXX_SOURCES = \
 	program/ir_to_mesa.cpp
 
-SLANG_SOURCES =	\
-	slang/slang_builtin.c	\
-	slang/slang_codegen.c	\
-	slang/slang_compile.c	\
-	slang/slang_compile_function.c	\
-	slang/slang_compile_operation.c	\
-	slang/slang_compile_struct.c	\
-	slang/slang_compile_variable.c	\
-	slang/slang_emit.c	\
-	slang/slang_ir.c	\
-	slang/slang_label.c	\
-	slang/slang_link.c	\
-	slang/slang_log.c	\
-	slang/slang_mem.c	\
-	slang/slang_print.c	\
-	slang/slang_simplify.c	\
-	slang/slang_storage.c	\
-	slang/slang_typeinfo.c	\
-	slang/slang_vartable.c	\
-	slang/slang_utility.c
-
 ASM_C_SOURCES =	\
 	x86/common_x86.c \
 	x86/x86_xform.c \
