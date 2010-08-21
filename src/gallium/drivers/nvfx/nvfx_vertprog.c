@@ -30,23 +30,24 @@
 #define NVFX_VP_INST_DEST_CLIP(n) ((~0 - 6) + (n))
 
 struct nvfx_vpc {
+	struct nvfx_context* nvfx;
 	struct nvfx_vertex_program *vp;
 
 	struct nvfx_vertex_program_exec *vpi;
 
 	unsigned r_temps;
 	unsigned r_temps_discard;
-	struct nvfx_sreg r_result[PIPE_MAX_SHADER_OUTPUTS];
-	struct nvfx_sreg *r_address;
-	struct nvfx_sreg *r_temp;
+	struct nvfx_reg r_result[PIPE_MAX_SHADER_OUTPUTS];
+	struct nvfx_reg *r_address;
+	struct nvfx_reg *r_temp;
 
-	struct nvfx_sreg *imm;
+	struct nvfx_reg *imm;
 	unsigned nr_imm;
 
 	unsigned hpos_idx;
 };
 
-static struct nvfx_sreg
+static struct nvfx_reg
 temp(struct nvfx_vpc *vpc)
 {
 	int idx = ffs(~vpc->r_temps) - 1;
@@ -54,12 +55,12 @@ temp(struct nvfx_vpc *vpc)
 	if (idx < 0) {
 		NOUVEAU_ERR("out of temps!!\n");
 		assert(0);
-		return nvfx_sr(NVFXSR_TEMP, 0);
+		return nvfx_reg(NVFXSR_TEMP, 0);
 	}
 
 	vpc->r_temps |= (1 << idx);
 	vpc->r_temps_discard |= (1 << idx);
-	return nvfx_sr(NVFXSR_TEMP, idx);
+	return nvfx_reg(NVFXSR_TEMP, idx);
 }
 
 static inline void
@@ -69,7 +70,7 @@ release_temps(struct nvfx_vpc *vpc)
 	vpc->r_temps_discard = 0;
 }
 
-static struct nvfx_sreg
+static struct nvfx_reg
 constant(struct nvfx_vpc *vpc, int pipe, float x, float y, float z, float w)
 {
 	struct nvfx_vertex_program *vp = vpc->vp;
@@ -79,7 +80,7 @@ constant(struct nvfx_vpc *vpc, int pipe, float x, float y, float z, float w)
 	if (pipe >= 0) {
 		for (idx = 0; idx < vp->nr_consts; idx++) {
 			if (vp->consts[idx].index == pipe)
-				return nvfx_sr(NVFXSR_CONST, idx);
+				return nvfx_reg(NVFXSR_CONST, idx);
 		}
 	}
 
@@ -92,35 +93,35 @@ constant(struct nvfx_vpc *vpc, int pipe, float x, float y, float z, float w)
 	vpd->value[1] = y;
 	vpd->value[2] = z;
 	vpd->value[3] = w;
-	return nvfx_sr(NVFXSR_CONST, idx);
+	return nvfx_reg(NVFXSR_CONST, idx);
 }
 
-#define arith(cc,s,o,d,m,s0,s1,s2) \
-	nvfx_vp_arith(nvfx, (cc), NVFX_VP_INST_SLOT_##s, NVFX_VP_INST_##s##_OP_##o, (d), (m), (s0), (s1), (s2))
+#define arith(s,o,d,m,s0,s1,s2) \
+	nvfx_insn(0, (NVFX_VP_INST_SLOT_##s << 7) | NVFX_VP_INST_##s##_OP_##o, -1, (d), (m), (s0), (s1), (s2))
 
 static void
-emit_src(struct nvfx_context* nvfx, struct nvfx_vpc *vpc, uint32_t *hw, int pos, struct nvfx_sreg src)
+emit_src(struct nvfx_context* nvfx, struct nvfx_vpc *vpc, uint32_t *hw, int pos, struct nvfx_src src)
 {
 	struct nvfx_vertex_program *vp = vpc->vp;
 	uint32_t sr = 0;
 
-	switch (src.type) {
+	switch (src.reg.type) {
 	case NVFXSR_TEMP:
 		sr |= (NVFX_VP(SRC_REG_TYPE_TEMP) << NVFX_VP(SRC_REG_TYPE_SHIFT));
-		sr |= (src.index << NVFX_VP(SRC_TEMP_SRC_SHIFT));
+		sr |= (src.reg.index << NVFX_VP(SRC_TEMP_SRC_SHIFT));
 		break;
 	case NVFXSR_INPUT:
 		sr |= (NVFX_VP(SRC_REG_TYPE_INPUT) <<
 		       NVFX_VP(SRC_REG_TYPE_SHIFT));
-		vp->ir |= (1 << src.index);
-		hw[1] |= (src.index << NVFX_VP(INST_INPUT_SRC_SHIFT));
+		vp->ir |= (1 << src.reg.index);
+		hw[1] |= (src.reg.index << NVFX_VP(INST_INPUT_SRC_SHIFT));
 		break;
 	case NVFXSR_CONST:
 		sr |= (NVFX_VP(SRC_REG_TYPE_CONST) <<
 		       NVFX_VP(SRC_REG_TYPE_SHIFT));
 		assert(vpc->vpi->const_index == -1 ||
-		       vpc->vpi->const_index == src.index);
-		vpc->vpi->const_index = src.index;
+		       vpc->vpi->const_index == src.reg.index);
+		vpc->vpi->const_index = src.reg.index;
 		break;
 	case NVFXSR_NONE:
 		sr |= (NVFX_VP(SRC_REG_TYPE_INPUT) <<
@@ -163,7 +164,7 @@ emit_src(struct nvfx_context* nvfx, struct nvfx_vpc *vpc, uint32_t *hw, int pos,
 }
 
 static void
-emit_dst(struct nvfx_context* nvfx, struct nvfx_vpc *vpc, uint32_t *hw, int slot, struct nvfx_sreg dst)
+emit_dst(struct nvfx_context* nvfx, struct nvfx_vpc *vpc, uint32_t *hw, int slot, struct nvfx_reg dst)
 {
 	struct nvfx_vertex_program *vp = vpc->vp;
 
@@ -173,13 +174,10 @@ emit_dst(struct nvfx_context* nvfx, struct nvfx_vpc *vpc, uint32_t *hw, int slot
 			hw[0] |= (dst.index << NV30_VP_INST_DEST_TEMP_ID_SHIFT);
 		else {
 			hw[3] |= NV40_VP_INST_DEST_MASK;
-			if (slot == 0) {
-				hw[0] |= (dst.index <<
-					  NV40_VP_INST_VEC_DEST_TEMP_SHIFT);
-			} else {
-				hw[3] |= (dst.index <<
-					  NV40_VP_INST_SCA_DEST_TEMP_SHIFT);
-			}
+			if (slot == 0)
+				hw[0] |= (dst.index << NV40_VP_INST_VEC_DEST_TEMP_SHIFT);
+			else
+				hw[3] |= (dst.index << NV40_VP_INST_SCA_DEST_TEMP_SHIFT);
 		}
 		break;
 	case NVFXSR_OUTPUT:
@@ -279,12 +277,12 @@ emit_dst(struct nvfx_context* nvfx, struct nvfx_vpc *vpc, uint32_t *hw, int slot
 }
 
 static void
-nvfx_vp_arith(struct nvfx_context* nvfx, struct nvfx_vpc *vpc, int slot, int op,
-	      struct nvfx_sreg dst, int mask,
-	      struct nvfx_sreg s0, struct nvfx_sreg s1,
-	      struct nvfx_sreg s2)
+nvfx_vp_emit(struct nvfx_vpc *vpc, struct nvfx_insn insn)
 {
+	struct nvfx_context* nvfx = vpc->nvfx;
 	struct nvfx_vertex_program *vp = vpc->vp;
+	unsigned slot = insn.op >> 7;
+	unsigned op = insn.op & 0x7f;
 	uint32_t *hw;
 
 	vp->insns = realloc(vp->insns, ++vp->nr_insns * sizeof(*vpc->vpi));
@@ -311,51 +309,51 @@ nvfx_vp_arith(struct nvfx_context* nvfx, struct nvfx_vpc *vpc, int slot, int op,
 //		hw[3] |= NVFX_VP(INST_SCA_DEST_TEMP_MASK);
 //		hw[3] |= (mask << NVFX_VP(INST_VEC_WRITEMASK_SHIFT));
 
-		if (dst.type == NVFXSR_OUTPUT) {
+		if (insn.dst.type == NVFXSR_OUTPUT) {
 			if (slot)
-				hw[3] |= (mask << NV30_VP_INST_SDEST_WRITEMASK_SHIFT);
+				hw[3] |= (insn.mask << NV30_VP_INST_SDEST_WRITEMASK_SHIFT);
 			else
-				hw[3] |= (mask << NV30_VP_INST_VDEST_WRITEMASK_SHIFT);
+				hw[3] |= (insn.mask << NV30_VP_INST_VDEST_WRITEMASK_SHIFT);
 		} else {
 			if (slot)
-				hw[3] |= (mask << NV30_VP_INST_STEMP_WRITEMASK_SHIFT);
+				hw[3] |= (insn.mask << NV30_VP_INST_STEMP_WRITEMASK_SHIFT);
 			else
-				hw[3] |= (mask << NV30_VP_INST_VTEMP_WRITEMASK_SHIFT);
+				hw[3] |= (insn.mask << NV30_VP_INST_VTEMP_WRITEMASK_SHIFT);
 		}
 	 } else {
 		if (slot == 0) {
 			hw[1] |= (op << NV40_VP_INST_VEC_OPCODE_SHIFT);
 			hw[3] |= NV40_VP_INST_SCA_DEST_TEMP_MASK;
-			hw[3] |= (mask << NV40_VP_INST_VEC_WRITEMASK_SHIFT);
+			hw[3] |= (insn.mask << NV40_VP_INST_VEC_WRITEMASK_SHIFT);
 	    } else {
 			hw[1] |= (op << NV40_VP_INST_SCA_OPCODE_SHIFT);
 			hw[0] |= (NV40_VP_INST_VEC_DEST_TEMP_MASK | (1 << 20));
-			hw[3] |= (mask << NV40_VP_INST_SCA_WRITEMASK_SHIFT);
+			hw[3] |= (insn.mask << NV40_VP_INST_SCA_WRITEMASK_SHIFT);
 		}
 	}
 
-	emit_dst(nvfx, vpc, hw, slot, dst);
-	emit_src(nvfx, vpc, hw, 0, s0);
-	emit_src(nvfx, vpc, hw, 1, s1);
-	emit_src(nvfx, vpc, hw, 2, s2);
+	emit_dst(nvfx, vpc, hw, slot, insn.dst);
+	emit_src(nvfx, vpc, hw, 0, insn.src[0]);
+	emit_src(nvfx, vpc, hw, 1, insn.src[1]);
+	emit_src(nvfx, vpc, hw, 2, insn.src[2]);
 }
 
-static inline struct nvfx_sreg
+static inline struct nvfx_src
 tgsi_src(struct nvfx_vpc *vpc, const struct tgsi_full_src_register *fsrc) {
-	struct nvfx_sreg src = { 0 };
+	struct nvfx_src src;
 
 	switch (fsrc->Register.File) {
 	case TGSI_FILE_INPUT:
-		src = nvfx_sr(NVFXSR_INPUT, fsrc->Register.Index);
+		src.reg = nvfx_reg(NVFXSR_INPUT, fsrc->Register.Index);
 		break;
 	case TGSI_FILE_CONSTANT:
-		src = constant(vpc, fsrc->Register.Index, 0, 0, 0, 0);
+		src.reg = constant(vpc, fsrc->Register.Index, 0, 0, 0, 0);
 		break;
 	case TGSI_FILE_IMMEDIATE:
-		src = vpc->imm[fsrc->Register.Index];
+		src.reg = vpc->imm[fsrc->Register.Index];
 		break;
 	case TGSI_FILE_TEMPORARY:
-		src = vpc->r_temp[fsrc->Register.Index];
+		src.reg = vpc->r_temp[fsrc->Register.Index];
 		break;
 	default:
 		NOUVEAU_ERR("bad src file\n");
@@ -371,9 +369,9 @@ tgsi_src(struct nvfx_vpc *vpc, const struct tgsi_full_src_register *fsrc) {
 	return src;
 }
 
-static INLINE struct nvfx_sreg
+static INLINE struct nvfx_reg
 tgsi_dst(struct nvfx_vpc *vpc, const struct tgsi_full_dst_register *fdst) {
-	struct nvfx_sreg dst = { 0 };
+	struct nvfx_reg dst;
 
 	switch (fdst->Register.File) {
 	case TGSI_FILE_OUTPUT:
@@ -409,8 +407,9 @@ static boolean
 nvfx_vertprog_parse_instruction(struct nvfx_context* nvfx, struct nvfx_vpc *vpc,
 				const struct tgsi_full_instruction *finst)
 {
-	struct nvfx_sreg src[3], dst, tmp;
-	struct nvfx_sreg none = nvfx_sr(NVFXSR_NONE, 0);
+	struct nvfx_src src[3], tmp;
+	struct nvfx_reg dst;
+	struct nvfx_src none = nvfx_src(nvfx_reg(NVFXSR_NONE, 0));
 	int mask;
 	int ai = -1, ci = -1, ii = -1;
 	int i;
@@ -438,9 +437,8 @@ nvfx_vertprog_parse_instruction(struct nvfx_context* nvfx, struct nvfx_vpc *vpc,
 				ai = fsrc->Register.Index;
 				src[i] = tgsi_src(vpc, fsrc);
 			} else {
-				src[i] = temp(vpc);
-				arith(vpc, VEC, MOV, src[i], NVFX_VP_MASK_ALL,
-				      tgsi_src(vpc, fsrc), none, none);
+				src[i] = nvfx_src(temp(vpc));
+				nvfx_vp_emit(vpc, arith(VEC, MOV, src[i].reg, NVFX_VP_MASK_ALL, tgsi_src(vpc, fsrc), none, none));
 			}
 			break;
 		case TGSI_FILE_CONSTANT:
@@ -449,9 +447,8 @@ nvfx_vertprog_parse_instruction(struct nvfx_context* nvfx, struct nvfx_vpc *vpc,
 				ci = fsrc->Register.Index;
 				src[i] = tgsi_src(vpc, fsrc);
 			} else {
-				src[i] = temp(vpc);
-				arith(vpc, VEC, MOV, src[i], NVFX_VP_MASK_ALL,
-				      tgsi_src(vpc, fsrc), none, none);
+				src[i] = nvfx_src(temp(vpc));
+				nvfx_vp_emit(vpc, arith(VEC, MOV, src[i].reg, NVFX_VP_MASK_ALL, tgsi_src(vpc, fsrc), none, none));
 			}
 			break;
 		case TGSI_FILE_IMMEDIATE:
@@ -460,9 +457,8 @@ nvfx_vertprog_parse_instruction(struct nvfx_context* nvfx, struct nvfx_vpc *vpc,
 				ii = fsrc->Register.Index;
 				src[i] = tgsi_src(vpc, fsrc);
 			} else {
-				src[i] = temp(vpc);
-				arith(vpc, VEC, MOV, src[i], NVFX_VP_MASK_ALL,
-				      tgsi_src(vpc, fsrc), none, none);
+				src[i] = nvfx_src(temp(vpc));
+				nvfx_vp_emit(vpc, arith(VEC, MOV, src[i].reg, NVFX_VP_MASK_ALL, tgsi_src(vpc, fsrc), none, none));
 			}
 			break;
 		case TGSI_FILE_TEMPORARY:
@@ -479,127 +475,121 @@ nvfx_vertprog_parse_instruction(struct nvfx_context* nvfx, struct nvfx_vpc *vpc,
 
 	switch (finst->Instruction.Opcode) {
 	case TGSI_OPCODE_ABS:
-		arith(vpc, VEC, MOV, dst, mask, abs(src[0]), none, none);
+		nvfx_vp_emit(vpc, arith(VEC, MOV, dst, mask, abs(src[0]), none, none));
 		break;
 	case TGSI_OPCODE_ADD:
-		arith(vpc, VEC, ADD, dst, mask, src[0], none, src[1]);
+		nvfx_vp_emit(vpc, arith(VEC, ADD, dst, mask, src[0], none, src[1]));
 		break;
 	case TGSI_OPCODE_ARL:
-		arith(vpc, VEC, ARL, dst, mask, src[0], none, none);
+		nvfx_vp_emit(vpc, arith(VEC, ARL, dst, mask, src[0], none, none));
 		break;
 	case TGSI_OPCODE_COS:
-		arith(vpc, SCA, COS, dst, mask, none, none, src[0]);
+		nvfx_vp_emit(vpc, arith(SCA, COS, dst, mask, none, none, src[0]));
 		break;
 	case TGSI_OPCODE_DP3:
-		arith(vpc, VEC, DP3, dst, mask, src[0], src[1], none);
+		nvfx_vp_emit(vpc, arith(VEC, DP3, dst, mask, src[0], src[1], none));
 		break;
 	case TGSI_OPCODE_DP4:
-		arith(vpc, VEC, DP4, dst, mask, src[0], src[1], none);
+		nvfx_vp_emit(vpc, arith(VEC, DP4, dst, mask, src[0], src[1], none));
 		break;
 	case TGSI_OPCODE_DPH:
-		arith(vpc, VEC, DPH, dst, mask, src[0], src[1], none);
+		nvfx_vp_emit(vpc, arith(VEC, DPH, dst, mask, src[0], src[1], none));
 		break;
 	case TGSI_OPCODE_DST:
-		arith(vpc, VEC, DST, dst, mask, src[0], src[1], none);
+		nvfx_vp_emit(vpc, arith(VEC, DST, dst, mask, src[0], src[1], none));
 		break;
 	case TGSI_OPCODE_EX2:
-		arith(vpc, SCA, EX2, dst, mask, none, none, src[0]);
+		nvfx_vp_emit(vpc, arith(SCA, EX2, dst, mask, none, none, src[0]));
 		break;
 	case TGSI_OPCODE_EXP:
-		arith(vpc, SCA, EXP, dst, mask, none, none, src[0]);
+		nvfx_vp_emit(vpc, arith(SCA, EXP, dst, mask, none, none, src[0]));
 		break;
 	case TGSI_OPCODE_FLR:
-		arith(vpc, VEC, FLR, dst, mask, src[0], none, none);
+		nvfx_vp_emit(vpc, arith(VEC, FLR, dst, mask, src[0], none, none));
 		break;
 	case TGSI_OPCODE_FRC:
-		arith(vpc, VEC, FRC, dst, mask, src[0], none, none);
+		nvfx_vp_emit(vpc, arith(VEC, FRC, dst, mask, src[0], none, none));
 		break;
 	case TGSI_OPCODE_LG2:
-		arith(vpc, SCA, LG2, dst, mask, none, none, src[0]);
+		nvfx_vp_emit(vpc, arith(SCA, LG2, dst, mask, none, none, src[0]));
 		break;
 	case TGSI_OPCODE_LIT:
-		arith(vpc, SCA, LIT, dst, mask, none, none, src[0]);
+		nvfx_vp_emit(vpc, arith(SCA, LIT, dst, mask, none, none, src[0]));
 		break;
 	case TGSI_OPCODE_LOG:
-		arith(vpc, SCA, LOG, dst, mask, none, none, src[0]);
+		nvfx_vp_emit(vpc, arith(SCA, LOG, dst, mask, none, none, src[0]));
 		break;
 	case TGSI_OPCODE_LRP:
-		tmp = temp(vpc);
-		arith(vpc, VEC, MAD, tmp, mask, neg(src[0]), src[2], src[2]);
-		arith(vpc, VEC, MAD, dst, mask, src[0], src[1], tmp);
+		tmp = nvfx_src(temp(vpc));
+		nvfx_vp_emit(vpc, arith(VEC, MAD, tmp.reg, mask, neg(src[0]), src[2], src[2]));
+		nvfx_vp_emit(vpc, arith(VEC, MAD, dst, mask, src[0], src[1], tmp));
 		break;
 	case TGSI_OPCODE_MAD:
-		arith(vpc, VEC, MAD, dst, mask, src[0], src[1], src[2]);
+		nvfx_vp_emit(vpc, arith(VEC, MAD, dst, mask, src[0], src[1], src[2]));
 		break;
 	case TGSI_OPCODE_MAX:
-		arith(vpc, VEC, MAX, dst, mask, src[0], src[1], none);
+		nvfx_vp_emit(vpc, arith(VEC, MAX, dst, mask, src[0], src[1], none));
 		break;
 	case TGSI_OPCODE_MIN:
-		arith(vpc, VEC, MIN, dst, mask, src[0], src[1], none);
+		nvfx_vp_emit(vpc, arith(VEC, MIN, dst, mask, src[0], src[1], none));
 		break;
 	case TGSI_OPCODE_MOV:
-		arith(vpc, VEC, MOV, dst, mask, src[0], none, none);
+		nvfx_vp_emit(vpc, arith(VEC, MOV, dst, mask, src[0], none, none));
 		break;
 	case TGSI_OPCODE_MUL:
-		arith(vpc, VEC, MUL, dst, mask, src[0], src[1], none);
+		nvfx_vp_emit(vpc, arith(VEC, MUL, dst, mask, src[0], src[1], none));
 		break;
 	case TGSI_OPCODE_POW:
-		tmp = temp(vpc);
-		arith(vpc, SCA, LG2, tmp, NVFX_VP_MASK_X, none, none,
-		      swz(src[0], X, X, X, X));
-		arith(vpc, VEC, MUL, tmp, NVFX_VP_MASK_X, swz(tmp, X, X, X, X),
-		      swz(src[1], X, X, X, X), none);
-		arith(vpc, SCA, EX2, dst, mask, none, none,
-		      swz(tmp, X, X, X, X));
+		tmp = nvfx_src(temp(vpc));
+		nvfx_vp_emit(vpc, arith(SCA, LG2, tmp.reg, NVFX_VP_MASK_X, none, none, swz(src[0], X, X, X, X)));
+		nvfx_vp_emit(vpc, arith(VEC, MUL, tmp.reg, NVFX_VP_MASK_X, swz(tmp, X, X, X, X), swz(src[1], X, X, X, X), none));
+		nvfx_vp_emit(vpc, arith(SCA, EX2, dst, mask, none, none, swz(tmp, X, X, X, X)));
 		break;
 	case TGSI_OPCODE_RCP:
-		arith(vpc, SCA, RCP, dst, mask, none, none, src[0]);
+		nvfx_vp_emit(vpc, arith(SCA, RCP, dst, mask, none, none, src[0]));
 		break;
 	case TGSI_OPCODE_RET:
 		break;
 	case TGSI_OPCODE_RSQ:
-		arith(vpc, SCA, RSQ, dst, mask, none, none, abs(src[0]));
+		nvfx_vp_emit(vpc, arith(SCA, RSQ, dst, mask, none, none, abs(src[0])));
 		break;
 	case TGSI_OPCODE_SEQ:
-		arith(vpc, VEC, SEQ, dst, mask, src[0], src[1], none);
+		nvfx_vp_emit(vpc, arith(VEC, SEQ, dst, mask, src[0], src[1], none));
 		break;
 	case TGSI_OPCODE_SFL:
-		arith(vpc, VEC, SFL, dst, mask, src[0], src[1], none);
+		nvfx_vp_emit(vpc, arith(VEC, SFL, dst, mask, src[0], src[1], none));
 		break;
 	case TGSI_OPCODE_SGE:
-		arith(vpc, VEC, SGE, dst, mask, src[0], src[1], none);
+		nvfx_vp_emit(vpc, arith(VEC, SGE, dst, mask, src[0], src[1], none));
 		break;
 	case TGSI_OPCODE_SGT:
-		arith(vpc, VEC, SGT, dst, mask, src[0], src[1], none);
+		nvfx_vp_emit(vpc, arith(VEC, SGT, dst, mask, src[0], src[1], none));
 		break;
 	case TGSI_OPCODE_SIN:
-		arith(vpc, SCA, SIN, dst, mask, none, none, src[0]);
+		nvfx_vp_emit(vpc, arith(SCA, SIN, dst, mask, none, none, src[0]));
 		break;
 	case TGSI_OPCODE_SLE:
-		arith(vpc, VEC, SLE, dst, mask, src[0], src[1], none);
+		nvfx_vp_emit(vpc, arith(VEC, SLE, dst, mask, src[0], src[1], none));
 		break;
 	case TGSI_OPCODE_SLT:
-		arith(vpc, VEC, SLT, dst, mask, src[0], src[1], none);
+		nvfx_vp_emit(vpc, arith(VEC, SLT, dst, mask, src[0], src[1], none));
 		break;
 	case TGSI_OPCODE_SNE:
-		arith(vpc, VEC, SNE, dst, mask, src[0], src[1], none);
+		nvfx_vp_emit(vpc, arith(VEC, SNE, dst, mask, src[0], src[1], none));
 		break;
 	case TGSI_OPCODE_SSG:
-		arith(vpc, VEC, SSG, dst, mask, src[0], src[1], none);
+		nvfx_vp_emit(vpc, arith(VEC, SSG, dst, mask, src[0], src[1], none));
 		break;
 	case TGSI_OPCODE_STR:
-		arith(vpc, VEC, STR, dst, mask, src[0], src[1], none);
+		nvfx_vp_emit(vpc, arith(VEC, STR, dst, mask, src[0], src[1], none));
 		break;
 	case TGSI_OPCODE_SUB:
-		arith(vpc, VEC, ADD, dst, mask, src[0], none, neg(src[1]));
+		nvfx_vp_emit(vpc, arith(VEC, ADD, dst, mask, src[0], none, neg(src[1])));
 		break;
 	case TGSI_OPCODE_XPD:
-		tmp = temp(vpc);
-		arith(vpc, VEC, MUL, tmp, mask,
-		      swz(src[0], Z, X, Y, Y), swz(src[1], Y, Z, X, X), none);
-		arith(vpc, VEC, MAD, dst, (mask & ~NVFX_VP_MASK_W),
-		      swz(src[0], Y, Z, X, X), swz(src[1], Z, X, Y, Y),
-		      neg(tmp));
+		tmp = nvfx_src(temp(vpc));
+		nvfx_vp_emit(vpc, arith(VEC, MUL, tmp.reg, mask, swz(src[0], Z, X, Y, Y), swz(src[1], Y, Z, X, X), none));
+		nvfx_vp_emit(vpc, arith(VEC, MAD, dst, (mask & ~NVFX_VP_MASK_W), swz(src[0], Y, Z, X, X), swz(src[1], Z, X, Y, Y), neg(tmp)));
 		break;
 	default:
 		NOUVEAU_ERR("invalid opcode %d\n", finst->Instruction.Opcode);
@@ -663,7 +653,7 @@ nvfx_vertprog_parse_decl_output(struct nvfx_context* nvfx, struct nvfx_vpc *vpc,
 		return FALSE;
 	}
 
-	vpc->r_result[idx] = nvfx_sr(NVFXSR_OUTPUT, hw);
+	vpc->r_result[idx] = nvfx_reg(NVFXSR_OUTPUT, hw);
 	return TRUE;
 }
 
@@ -758,18 +748,18 @@ nvfx_vertprog_prepare(struct nvfx_context* nvfx, struct nvfx_vpc *vpc)
 	tgsi_parse_free(&p);
 
 	if (nr_imm) {
-		vpc->imm = CALLOC(nr_imm, sizeof(struct nvfx_sreg));
+		vpc->imm = CALLOC(nr_imm, sizeof(struct nvfx_reg));
 		assert(vpc->imm);
 	}
 
 	if (++high_temp) {
-		vpc->r_temp = CALLOC(high_temp, sizeof(struct nvfx_sreg));
+		vpc->r_temp = CALLOC(high_temp, sizeof(struct nvfx_reg));
 		for (i = 0; i < high_temp; i++)
 			vpc->r_temp[i] = temp(vpc);
 	}
 
 	if (++high_addr) {
-		vpc->r_address = CALLOC(high_addr, sizeof(struct nvfx_sreg));
+		vpc->r_address = CALLOC(high_addr, sizeof(struct nvfx_reg));
 		for (i = 0; i < high_addr; i++)
 			vpc->r_address[i] = temp(vpc);
 	}
@@ -786,12 +776,13 @@ nvfx_vertprog_translate(struct nvfx_context *nvfx,
 {
 	struct tgsi_parse_context parse;
 	struct nvfx_vpc *vpc = NULL;
-	struct nvfx_sreg none = nvfx_sr(NVFXSR_NONE, 0);
+	struct nvfx_src none = nvfx_src(nvfx_reg(NVFXSR_NONE, 0));
 	int i;
 
 	vpc = CALLOC(1, sizeof(struct nvfx_vpc));
 	if (!vpc)
 		return;
+	vpc->nvfx = nvfx;
 	vpc->vp = vp;
 
 	if (!nvfx_vertprog_prepare(nvfx, vpc)) {
@@ -844,23 +835,23 @@ nvfx_vertprog_translate(struct nvfx_context *nvfx,
 
 	/* Write out HPOS if it was redirected to a temp earlier */
 	if (vpc->r_result[vpc->hpos_idx].type != NVFXSR_OUTPUT) {
-		struct nvfx_sreg hpos = nvfx_sr(NVFXSR_OUTPUT,
+		struct nvfx_reg hpos = nvfx_reg(NVFXSR_OUTPUT,
 						NVFX_VP(INST_DEST_POS));
-		struct nvfx_sreg htmp = vpc->r_result[vpc->hpos_idx];
+		struct nvfx_src htmp = nvfx_src(vpc->r_result[vpc->hpos_idx]);
 
-		arith(vpc, VEC, MOV, hpos, NVFX_VP_MASK_ALL, htmp, none, none);
+		nvfx_vp_emit(vpc, arith(VEC, MOV, hpos, NVFX_VP_MASK_ALL, htmp, none, none));
 	}
 
 	/* Insert code to handle user clip planes */
 	for (i = 0; i < vp->ucp.nr; i++) {
-		struct nvfx_sreg cdst = nvfx_sr(NVFXSR_OUTPUT,
+		struct nvfx_reg cdst = nvfx_reg(NVFXSR_OUTPUT,
 						NVFX_VP_INST_DEST_CLIP(i));
-		struct nvfx_sreg ceqn = constant(vpc, -1,
+		struct nvfx_src ceqn = nvfx_src(constant(vpc, -1,
 						 nvfx->clip.ucp[i][0],
 						 nvfx->clip.ucp[i][1],
 						 nvfx->clip.ucp[i][2],
-						 nvfx->clip.ucp[i][3]);
-		struct nvfx_sreg htmp = vpc->r_result[vpc->hpos_idx];
+						 nvfx->clip.ucp[i][3]));
+		struct nvfx_src htmp = nvfx_src(vpc->r_result[vpc->hpos_idx]);
 		unsigned mask;
 
 		switch (i) {
@@ -872,7 +863,7 @@ nvfx_vertprog_translate(struct nvfx_context *nvfx,
 			goto out_err;
 		}
 
-		arith(vpc, VEC, DP4, cdst, mask, htmp, ceqn, none);
+		nvfx_vp_emit(vpc, arith(VEC, DP4, cdst, mask, htmp, ceqn, none));
 	}
 
 	vp->insns[vp->nr_insns - 1].data[3] |= NVFX_VP_INST_LAST;

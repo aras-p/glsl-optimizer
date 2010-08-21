@@ -405,51 +405,88 @@
 #define NVFX_SWZ_Z 2
 #define NVFX_SWZ_W 3
 
-#define swz(s,x,y,z,w) nvfx_sr_swz((s), NVFX_SWZ_##x, NVFX_SWZ_##y, NVFX_SWZ_##z, NVFX_SWZ_##w)
-#define neg(s) nvfx_sr_neg((s))
-#define abs(s) nvfx_sr_abs((s))
-#define scale(s,v) nvfx_sr_scale((s), NVFX_FP_OP_DST_SCALE_##v)
+#define swz(s,x,y,z,w) nvfx_src_swz((s), NVFX_SWZ_##x, NVFX_SWZ_##y, NVFX_SWZ_##z, NVFX_SWZ_##w)
+#define neg(s) nvfx_src_neg((s))
+#define abs(s) nvfx_src_abs((s))
 
-struct nvfx_sreg {
-	int type;
-	int index;
-
-	int dst_scale;
-
-	int negate;
-	int abs;
-	int swz[4];
-
-	int cc_update;
-	int cc_update_reg;
-	int cc_test;
-	int cc_test_reg;
-	int cc_swz[4];
+struct nvfx_reg {
+	uint8_t type;
+	uint32_t index;
 };
 
-static INLINE struct nvfx_sreg
-nvfx_sr(int type, int index)
+struct nvfx_src {
+	struct nvfx_reg reg;
+
+	/* src only */
+	uint8_t negate : 1;
+	uint8_t abs : 1;
+	uint8_t swz[4];
+};
+
+struct nvfx_insn
 {
-	struct nvfx_sreg temp = {
-		.type = type,
-		.index = index,
-		.dst_scale = 0,
-		.abs = 0,
-		.negate = 0,
-		.swz = { 0, 1, 2, 3 },
+	uint8_t op;
+	char scale;
+	int8_t unit;
+	uint8_t mask;
+	uint8_t cc_swz[4];
+
+	uint8_t sat : 1;
+	uint8_t cc_update : 1;
+	uint8_t cc_update_reg : 1;
+	uint8_t cc_test : 3;
+	uint8_t cc_test_reg : 1;
+
+	struct nvfx_reg dst;
+	struct nvfx_src src[3];
+};
+
+static INLINE struct nvfx_insn
+nvfx_insn(boolean sat, unsigned op, int unit, struct nvfx_reg dst, unsigned mask, struct nvfx_src s0, struct nvfx_src s1, struct nvfx_src s2)
+{
+	struct nvfx_insn insn = {
+		.op = op,
+		.scale = 0,
+		.unit = unit,
+		.sat = sat,
+		.mask = mask,
 		.cc_update = 0,
 		.cc_update_reg = 0,
 		.cc_test = NVFX_COND_TR,
 		.cc_test_reg = 0,
 		.cc_swz = { 0, 1, 2, 3 },
+		.dst = dst,
+		.src = {s0, s1, s2}
+	};
+	return insn;
+}
+
+static INLINE struct nvfx_reg
+nvfx_reg(int type, int index)
+{
+	struct nvfx_reg temp = {
+		.type = type,
+		.index = index,
 	};
 	return temp;
 }
 
-static INLINE struct nvfx_sreg
-nvfx_sr_swz(struct nvfx_sreg src, int x, int y, int z, int w)
+static INLINE struct nvfx_src
+nvfx_src(struct nvfx_reg reg)
 {
-	struct nvfx_sreg dst = src;
+	struct nvfx_src temp = {
+		.reg = reg,
+		.abs = 0,
+		.negate = 0,
+		.swz = { 0, 1, 2, 3 },
+	};
+	return temp;
+}
+
+static INLINE struct nvfx_src
+nvfx_src_swz(struct nvfx_src src, int x, int y, int z, int w)
+{
+	struct nvfx_src dst = src;
 
 	dst.swz[NVFX_SWZ_X] = src.swz[x];
 	dst.swz[NVFX_SWZ_Y] = src.swz[y];
@@ -458,24 +495,17 @@ nvfx_sr_swz(struct nvfx_sreg src, int x, int y, int z, int w)
 	return dst;
 }
 
-static INLINE struct nvfx_sreg
-nvfx_sr_neg(struct nvfx_sreg src)
+static INLINE struct nvfx_src
+nvfx_src_neg(struct nvfx_src src)
 {
 	src.negate = !src.negate;
 	return src;
 }
 
-static INLINE struct nvfx_sreg
-nvfx_sr_abs(struct nvfx_sreg src)
+static INLINE struct nvfx_src
+nvfx_src_abs(struct nvfx_src src)
 {
 	src.abs = 1;
-	return src;
-}
-
-static INLINE struct nvfx_sreg
-nvfx_sr_scale(struct nvfx_sreg src, int scale)
-{
-	src.dst_scale = scale;
 	return src;
 }
 
