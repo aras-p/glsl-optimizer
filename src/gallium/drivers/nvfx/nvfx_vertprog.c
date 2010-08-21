@@ -29,6 +29,12 @@
 
 #define NVFX_VP_INST_DEST_CLIP(n) ((~0 - 6) + (n))
 
+struct nvfx_loop_entry
+{
+	unsigned brk_target;
+	unsigned cont_target;
+};
+
 struct nvfx_vpc {
 	struct nvfx_context* nvfx;
 	struct nvfx_vertex_program *vp;
@@ -45,6 +51,9 @@ struct nvfx_vpc {
 	unsigned nr_imm;
 
 	unsigned hpos_idx;
+
+	struct util_dynarray label_relocs;
+	struct util_dynarray loop_stack;
 };
 
 static struct nvfx_reg
@@ -169,6 +178,17 @@ emit_dst(struct nvfx_context* nvfx, struct nvfx_vpc *vpc, uint32_t *hw, int slot
 	struct nvfx_vertex_program *vp = vpc->vp;
 
 	switch (dst.type) {
+	case NVFXSR_NONE:
+		if(!nvfx->is_nv4x)
+			hw[0] |= NV30_VP_INST_DEST_TEMP_ID_MASK;
+		else {
+			hw[3] |= NV40_VP_INST_DEST_MASK;
+			if (slot == 0)
+				hw[0] |= NV40_VP_INST_VEC_DEST_TEMP_MASK;
+			else
+				hw[3] |= NV40_VP_INST_SCA_DEST_TEMP_MASK;
+		}
+		break;
 	case NVFXSR_TEMP:
 		if(!nvfx->is_nv4x)
 			hw[0] |= (dst.index << NV30_VP_INST_DEST_TEMP_ID_SHIFT);
@@ -254,7 +274,7 @@ emit_dst(struct nvfx_context* nvfx, struct nvfx_vpc *vpc, uint32_t *hw, int slot
 
 		if(!nvfx->is_nv4x) {
 			hw[3] |= (dst.index << NV30_VP_INST_DEST_SHIFT);
-			hw[0] |= NV30_VP_INST_VEC_DEST_TEMP_MASK | (1<<20);
+			hw[0] |= NV30_VP_INST_VEC_DEST_TEMP_MASK;
 
 			/*XXX: no way this is entirely correct, someone needs to
 			 *     figure out what exactly it is.
@@ -264,7 +284,7 @@ emit_dst(struct nvfx_context* nvfx, struct nvfx_vpc *vpc, uint32_t *hw, int slot
 			hw[3] |= (dst.index << NV40_VP_INST_DEST_SHIFT);
 			if (slot == 0) {
 				hw[0] |= NV40_VP_INST_VEC_RESULT;
-				hw[0] |= NV40_VP_INST_VEC_DEST_TEMP_MASK | (1<<20);
+				hw[0] |= NV40_VP_INST_VEC_DEST_TEMP_MASK;
 			} else {
 				hw[3] |= NV40_VP_INST_SCA_RESULT;
 				hw[3] |= NV40_VP_INST_SCA_DEST_TEMP_MASK;
@@ -292,11 +312,13 @@ nvfx_vp_emit(struct nvfx_vpc *vpc, struct nvfx_insn insn)
 
 	hw = vpc->vpi->data;
 
-	hw[0] |= (NVFX_COND_TR << NVFX_VP(INST_COND_SHIFT));
-	hw[0] |= ((0 << NVFX_VP(INST_COND_SWZ_X_SHIFT)) |
-		  (1 << NVFX_VP(INST_COND_SWZ_Y_SHIFT)) |
-		  (2 << NVFX_VP(INST_COND_SWZ_Z_SHIFT)) |
-		  (3 << NVFX_VP(INST_COND_SWZ_W_SHIFT)));
+	hw[0] |= (insn.cc_test << NVFX_VP(INST_COND_SHIFT));
+	hw[0] |= ((insn.cc_swz[0] << NVFX_VP(INST_COND_SWZ_X_SHIFT)) |
+		  (insn.cc_swz[1] << NVFX_VP(INST_COND_SWZ_Y_SHIFT)) |
+		  (insn.cc_swz[2] << NVFX_VP(INST_COND_SWZ_Z_SHIFT)) |
+		  (insn.cc_swz[3] << NVFX_VP(INST_COND_SWZ_W_SHIFT)));
+	if(insn.cc_update)
+		hw[0] |= NVFX_VP(INST_COND_UPDATE_ENABLE);
 
 	if(!nvfx->is_nv4x) {
 		if(slot == 0)
@@ -327,7 +349,7 @@ nvfx_vp_emit(struct nvfx_vpc *vpc, struct nvfx_insn insn)
 			hw[3] |= (insn.mask << NV40_VP_INST_VEC_WRITEMASK_SHIFT);
 	    } else {
 			hw[1] |= (op << NV40_VP_INST_SCA_OPCODE_SHIFT);
-			hw[0] |= (NV40_VP_INST_VEC_DEST_TEMP_MASK | (1 << 20));
+			hw[0] |= NV40_VP_INST_VEC_DEST_TEMP_MASK ;
 			hw[3] |= (insn.mask << NV40_VP_INST_SCA_WRITEMASK_SHIFT);
 		}
 	}
@@ -374,6 +396,9 @@ tgsi_dst(struct nvfx_vpc *vpc, const struct tgsi_full_dst_register *fdst) {
 	struct nvfx_reg dst;
 
 	switch (fdst->Register.File) {
+	case TGSI_FILE_NULL:
+		dst = nvfx_reg(NVFXSR_NONE, 0);
+		break;
 	case TGSI_FILE_OUTPUT:
 		dst = vpc->r_result[fdst->Register.Index];
 		break;
@@ -405,11 +430,14 @@ tgsi_mask(uint tgsi)
 
 static boolean
 nvfx_vertprog_parse_instruction(struct nvfx_context* nvfx, struct nvfx_vpc *vpc,
-				const struct tgsi_full_instruction *finst)
+				unsigned idx, const struct tgsi_full_instruction *finst)
 {
 	struct nvfx_src src[3], tmp;
 	struct nvfx_reg dst;
 	struct nvfx_src none = nvfx_src(nvfx_reg(NVFXSR_NONE, 0));
+	struct nvfx_insn insn;
+	struct nvfx_label_relocation reloc;
+	struct nvfx_loop_entry loop;
 	int mask;
 	int ai = -1, ci = -1, ii = -1;
 	int i;
@@ -548,8 +576,6 @@ nvfx_vertprog_parse_instruction(struct nvfx_context* nvfx, struct nvfx_vpc *vpc,
 	case TGSI_OPCODE_RCP:
 		nvfx_vp_emit(vpc, arith(SCA, RCP, dst, mask, none, none, src[0]));
 		break;
-	case TGSI_OPCODE_RET:
-		break;
 	case TGSI_OPCODE_RSQ:
 		nvfx_vp_emit(vpc, arith(SCA, RSQ, dst, mask, none, none, abs(src[0])));
 		break;
@@ -591,6 +617,84 @@ nvfx_vertprog_parse_instruction(struct nvfx_context* nvfx, struct nvfx_vpc *vpc,
 		nvfx_vp_emit(vpc, arith(VEC, MUL, tmp.reg, mask, swz(src[0], Z, X, Y, Y), swz(src[1], Y, Z, X, X), none));
 		nvfx_vp_emit(vpc, arith(VEC, MAD, dst, (mask & ~NVFX_VP_MASK_W), swz(src[0], Y, Z, X, X), swz(src[1], Z, X, Y, Y), neg(tmp)));
 		break;
+
+	case TGSI_OPCODE_IF:
+		insn = arith(VEC, MOV, none.reg, NVFX_VP_MASK_X, src[0], none, none);
+		insn.cc_update = 1;
+		nvfx_vp_emit(vpc, insn);
+
+		reloc.location = vpc->vp->nr_insns;
+		reloc.target = finst->Label.Label + 1;
+		util_dynarray_append(&vpc->label_relocs, struct nvfx_label_relocation, reloc);
+
+		insn = arith(SCA, BRA, none.reg, 0, none, none, none);
+		insn.cc_test = NVFX_COND_EQ;
+		insn.cc_swz[0] = insn.cc_swz[1] = insn.cc_swz[2] = insn.cc_swz[3] = 0;
+		nvfx_vp_emit(vpc, insn);
+		break;
+
+	case TGSI_OPCODE_ELSE:
+	case TGSI_OPCODE_BRA:
+	case TGSI_OPCODE_CAL:
+		reloc.location = vpc->vp->nr_insns;
+		reloc.target = finst->Label.Label;
+		util_dynarray_append(&vpc->label_relocs, struct nvfx_label_relocation, reloc);
+
+		if(finst->Instruction.Opcode == TGSI_OPCODE_CAL)
+			insn = arith(SCA, CAL, none.reg, 0, none, none, none);
+		else
+			insn = arith(SCA, BRA, none.reg, 0, none, none, none);
+		nvfx_vp_emit(vpc, insn);
+		break;
+
+	case TGSI_OPCODE_RET:
+		tmp = none;
+		tmp.swz[0] = tmp.swz[1] = tmp.swz[2] = tmp.swz[3] = 0;
+		nvfx_vp_emit(vpc, arith(SCA, RET, none.reg, 0, none, none, tmp));
+		break;
+
+	case TGSI_OPCODE_BGNSUB:
+	case TGSI_OPCODE_ENDSUB:
+	case TGSI_OPCODE_ENDIF:
+		/* nothing to do here */
+		break;
+
+	case TGSI_OPCODE_BGNLOOP:
+		loop.cont_target = idx;
+		loop.brk_target = finst->Label.Label + 1;
+		util_dynarray_append(&vpc->loop_stack, struct nvfx_loop_entry, loop);
+		break;
+
+	case TGSI_OPCODE_ENDLOOP:
+		loop = util_dynarray_pop(&vpc->loop_stack, struct nvfx_loop_entry);
+
+		reloc.location = vpc->vp->nr_insns;
+		reloc.target = loop.cont_target;
+		util_dynarray_append(&vpc->label_relocs, struct nvfx_label_relocation, reloc);
+
+		nvfx_vp_emit(vpc, arith(SCA, BRA, none.reg, 0, none, none, none));
+		break;
+
+	case TGSI_OPCODE_CONT:
+		loop = util_dynarray_top(&vpc->loop_stack, struct nvfx_loop_entry);
+
+		reloc.location = vpc->vp->nr_insns;
+		reloc.target = loop.cont_target;
+		util_dynarray_append(&vpc->label_relocs, struct nvfx_label_relocation, reloc);
+
+		nvfx_vp_emit(vpc, arith(SCA, BRA, none.reg, 0, none, none, none));
+		break;
+
+	case TGSI_OPCODE_BRK:
+		loop = util_dynarray_top(&vpc->loop_stack, struct nvfx_loop_entry);
+
+		reloc.location = vpc->vp->nr_insns;
+		reloc.target = loop.brk_target;
+		util_dynarray_append(&vpc->label_relocs, struct nvfx_label_relocation, reloc);
+
+		nvfx_vp_emit(vpc, arith(SCA, BRA, none.reg, 0, none, none, none));
+		break;
+
 	default:
 		NOUVEAU_ERR("invalid opcode %d\n", finst->Instruction.Opcode);
 		return FALSE;
@@ -777,6 +881,7 @@ nvfx_vertprog_translate(struct nvfx_context *nvfx,
 	struct tgsi_parse_context parse;
 	struct nvfx_vpc *vpc = NULL;
 	struct nvfx_src none = nvfx_src(nvfx_reg(NVFXSR_NONE, 0));
+	struct util_dynarray insns;
 	int i;
 
 	vpc = CALLOC(1, sizeof(struct nvfx_vpc));
@@ -801,6 +906,7 @@ nvfx_vertprog_translate(struct nvfx_context *nvfx,
 
 	tgsi_parse_init(&parse, vp->pipe.tokens);
 
+	util_dynarray_init(&insns);
 	while (!tgsi_parse_end_of_tokens(&parse)) {
 		tgsi_parse_token(&parse);
 
@@ -823,8 +929,10 @@ nvfx_vertprog_translate(struct nvfx_context *nvfx,
 		case TGSI_TOKEN_TYPE_INSTRUCTION:
 		{
 			const struct tgsi_full_instruction *finst;
+			unsigned idx = insns.size >> 2;
+			util_dynarray_append(&insns, unsigned, vp->nr_insns);
 			finst = &parse.FullToken.FullInstruction;
-			if (!nvfx_vertprog_parse_instruction(nvfx, vpc, finst))
+			if (!nvfx_vertprog_parse_instruction(nvfx, vpc, idx, finst))
 				goto out_err;
 		}
 			break;
@@ -832,6 +940,25 @@ nvfx_vertprog_translate(struct nvfx_context *nvfx,
 			break;
 		}
 	}
+
+	util_dynarray_append(&insns, unsigned, vp->nr_insns);
+
+	for(unsigned i = 0; i < vpc->label_relocs.size; i += sizeof(struct nvfx_label_relocation))
+	{
+		struct nvfx_label_relocation* label_reloc = (struct nvfx_label_relocation*)((char*)vpc->label_relocs.data + i);
+		struct nvfx_label_relocation hw_reloc;
+
+		hw_reloc.location = label_reloc->location;
+		hw_reloc.target = ((unsigned*)insns.data)[label_reloc->target];
+
+		//debug_printf("hw %u -> tgsi %u = hw %u\n", hw_reloc.location, label_reloc->target, hw_reloc.target);
+
+		util_dynarray_append(&vp->branch_relocs, struct nvfx_label_relocation, hw_reloc);
+	}
+	util_dynarray_fini(&insns);
+	util_dynarray_trim(&vp->branch_relocs);
+
+	/* XXX: what if we add a RET before?!  make sure we jump here...*/
 
 	/* Write out HPOS if it was redirected to a temp earlier */
 	if (vpc->r_result[vpc->hpos_idx].type != NVFXSR_OUTPUT) {
@@ -866,7 +993,11 @@ nvfx_vertprog_translate(struct nvfx_context *nvfx,
 		nvfx_vp_emit(vpc, arith(VEC, DP4, cdst, mask, htmp, ceqn, none));
 	}
 
-	vp->insns[vp->nr_insns - 1].data[3] |= NVFX_VP_INST_LAST;
+	//vp->insns[vp->nr_insns - 1].data[3] |= NVFX_VP_INST_LAST;
+
+	/* Append NOP + END instruction for branches to the end of the program */
+	nvfx_vp_emit(vpc, arith(VEC, NOP, none.reg, 0, none, none, none));
+        vp->insns[vp->nr_insns - 1].data[3] |= NVFX_VP_INST_LAST | 0x1000;
 
 	if(debug_get_option_nvfx_dump_vp())
 	{
@@ -879,9 +1010,12 @@ nvfx_vertprog_translate(struct nvfx_context *nvfx,
 		debug_printf("\n");
 	}
 
+	vp->exec_start = -1;
 	vp->translated = TRUE;
 out_err:
 	tgsi_parse_free(&parse);
+	util_dynarray_fini(&vpc->label_relocs);
+	util_dynarray_fini(&vpc->loop_stack);
 	if (vpc->r_temp)
 		FREE(vpc->r_temp);
 	if (vpc->r_address)
@@ -977,11 +1111,27 @@ nvfx_vertprog_validate(struct nvfx_context *nvfx)
 	 * fixup offsets and register IDs.
 	 */
 	if (vp->exec_start != vp->exec->start) {
-		for (i = 0; i < vp->nr_insns; i++) {
-			struct nvfx_vertex_program_exec *vpi = &vp->insns[i];
+		//printf("vp_relocs %u -> %u\n", vp->exec_start, vp->exec->start);
+		for(unsigned i = 0; i < vp->branch_relocs.size; i += sizeof(struct nvfx_label_relocation))
+		{
+			struct nvfx_label_relocation* reloc = (struct nvfx_label_relocation*)((char*)vp->branch_relocs.data + i);
+			uint32_t* hw = vp->insns[reloc->location].data;
+			unsigned target = vp->exec->start + reloc->target;
 
-			if (vpi->has_branch_offset) {
-				assert(0);
+			//debug_printf("vp_reloc hw %u -> hw %u\n", reloc->location, target);
+
+			if(!nvfx->is_nv4x)
+			{
+				hw[2] &=~ NV30_VP_INST_IADDR_MASK;
+				hw[2] |= (target & 0x1ff) << NV30_VP_INST_IADDR_SHIFT;
+			}
+			else
+			{
+				hw[3] &=~ NV40_VP_INST_IADDRL_MASK;
+				hw[3] |= (target & 7) << NV40_VP_INST_IADDRL_SHIFT;
+
+				hw[2] &=~ NV40_VP_INST_IADDRH_MASK;
+				hw[2] |= ((target >> 3) & 0x3f) << NV40_VP_INST_IADDRH_SHIFT;
 			}
 		}
 
