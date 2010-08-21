@@ -509,7 +509,7 @@ nvfx_src_abs(struct nvfx_src src)
 	return src;
 }
 
-struct nvfx_label_relocation {
+struct nvfx_relocation {
         unsigned location;
         unsigned target;
 };

@@ -9,7 +9,6 @@
 
 struct nvfx_vertex_program_exec {
 	uint32_t data[4];
-	int const_index;
 };
 
 struct nvfx_vertex_program_data {
@@ -46,6 +45,7 @@ struct nvfx_vertex_program {
 	uint32_t clip_ctrl;
 
 	struct util_dynarray branch_relocs;
+	struct util_dynarray const_relocs;
 };
 
 struct nvfx_fragment_program_data {

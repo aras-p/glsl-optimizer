@@ -270,7 +270,7 @@ nv40_fp_if(struct nvfx_fpc *fpc, struct nvfx_src src)
 static void
 nv40_fp_cal(struct nvfx_fpc *fpc, unsigned target)
 {
-        struct nvfx_label_relocation reloc;
+        struct nvfx_relocation reloc;
         uint32_t *hw;
         fpc->inst_offset = fpc->fp->insn_len;
         grow_insns(fpc, 4);
@@ -284,7 +284,7 @@ nv40_fp_cal(struct nvfx_fpc *fpc, unsigned target)
         hw[3] = 0;
         reloc.target = target;
         reloc.location = fpc->inst_offset + 2;
-        util_dynarray_append(&fpc->label_relocs, struct nvfx_label_relocation, reloc);
+        util_dynarray_append(&fpc->label_relocs, struct nvfx_relocation, reloc);
 }
 
 static void
@@ -306,7 +306,7 @@ nv40_fp_ret(struct nvfx_fpc *fpc)
 static void
 nv40_fp_rep(struct nvfx_fpc *fpc, unsigned count, unsigned target)
 {
-        struct nvfx_label_relocation reloc;
+        struct nvfx_relocation reloc;
         uint32_t *hw;
         fpc->inst_offset = fpc->fp->insn_len;
         grow_insns(fpc, 4);
@@ -325,7 +325,7 @@ nv40_fp_rep(struct nvfx_fpc *fpc, unsigned count, unsigned target)
         hw[3] = 0; /* | end_offset */
         reloc.target = target;
         reloc.location = fpc->inst_offset + 3;
-        util_dynarray_append(&fpc->label_relocs, struct nvfx_label_relocation, reloc);
+        util_dynarray_append(&fpc->label_relocs, struct nvfx_relocation, reloc);
         //util_dynarray_append(&fpc->loop_stack, unsigned, target);
 }
 
@@ -333,7 +333,7 @@ nv40_fp_rep(struct nvfx_fpc *fpc, unsigned count, unsigned target)
 static void
 nv40_fp_bra(struct nvfx_fpc *fpc, unsigned target)
 {
-        struct nvfx_label_relocation reloc;
+        struct nvfx_relocation reloc;
         uint32_t *hw;
         fpc->inst_offset = fpc->fp->insn_len;
         grow_insns(fpc, 4);
@@ -349,10 +349,10 @@ nv40_fp_bra(struct nvfx_fpc *fpc, unsigned target)
         hw[3] = 0; /* | endif_offset */
         reloc.target = target;
         reloc.location = fpc->inst_offset + 2;
-        util_dynarray_append(&fpc->label_relocs, struct nvfx_label_relocation, reloc);
+        util_dynarray_append(&fpc->label_relocs, struct nvfx_relocation, reloc);
         reloc.target = target;
         reloc.location = fpc->inst_offset + 3;
-        util_dynarray_append(&fpc->label_relocs, struct nvfx_label_relocation, reloc);
+        util_dynarray_append(&fpc->label_relocs, struct nvfx_relocation, reloc);
 }
 
 static void
@@ -1041,9 +1041,9 @@ nvfx_fragprog_translate(struct nvfx_context *nvfx,
 	}
 	util_dynarray_append(&insns, unsigned, fp->insn_len);
 
-	for(unsigned i = 0; i < fpc->label_relocs.size; i += sizeof(struct nvfx_label_relocation))
+	for(unsigned i = 0; i < fpc->label_relocs.size; i += sizeof(struct nvfx_relocation))
 	{
-		struct nvfx_label_relocation* label_reloc = (struct nvfx_label_relocation*)((char*)fpc->label_relocs.data + i);
+		struct nvfx_relocation* label_reloc = (struct nvfx_relocation*)((char*)fpc->label_relocs.data + i);
 		fp->insn[label_reloc->location] |= ((unsigned*)insns.data)[label_reloc->target];
 	}
 	util_dynarray_fini(&insns);
