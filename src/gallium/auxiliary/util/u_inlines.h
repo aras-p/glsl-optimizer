@@ -69,7 +69,9 @@ pipe_is_referenced(struct pipe_reference *reference)
  * \return TRUE if the object's refcount hits zero and should be destroyed.
  */
 static INLINE boolean
-pipe_reference_described(struct pipe_reference *ptr, struct pipe_reference *reference, void* get_desc)
+pipe_reference_described(struct pipe_reference *ptr, 
+                         struct pipe_reference *reference, 
+                         debug_reference_descriptor get_desc)
 {
    boolean destroy = FALSE;
 
@@ -96,7 +98,8 @@ pipe_reference_described(struct pipe_reference *ptr, struct pipe_reference *refe
 static INLINE boolean
 pipe_reference(struct pipe_reference *ptr, struct pipe_reference *reference)
 {
-   return pipe_reference_described(ptr, reference, debug_describe_reference);
+   return pipe_reference_described(ptr, reference, 
+                                   (debug_reference_descriptor)debug_describe_reference);
 }
 
 static INLINE void
@@ -104,7 +107,8 @@ pipe_surface_reference(struct pipe_surface **ptr, struct pipe_surface *surf)
 {
    struct pipe_surface *old_surf = *ptr;
 
-   if (pipe_reference_described(&(*ptr)->reference, &surf->reference, debug_describe_surface))
+   if (pipe_reference_described(&(*ptr)->reference, &surf->reference, 
+                                (debug_reference_descriptor)debug_describe_surface))
       old_surf->texture->screen->tex_surface_destroy(old_surf);
    *ptr = surf;
 }
@@ -114,7 +118,8 @@ pipe_resource_reference(struct pipe_resource **ptr, struct pipe_resource *tex)
 {
    struct pipe_resource *old_tex = *ptr;
 
-   if (pipe_reference_described(&(*ptr)->reference, &tex->reference, debug_describe_resource))
+   if (pipe_reference_described(&(*ptr)->reference, &tex->reference, 
+                                (debug_reference_descriptor)debug_describe_resource))
       old_tex->screen->resource_destroy(old_tex->screen, old_tex);
    *ptr = tex;
 }
@@ -124,7 +129,8 @@ pipe_sampler_view_reference(struct pipe_sampler_view **ptr, struct pipe_sampler_
 {
    struct pipe_sampler_view *old_view = *ptr;
 
-   if (pipe_reference_described(&(*ptr)->reference, &view->reference, debug_describe_sampler_view))
+   if (pipe_reference_described(&(*ptr)->reference, &view->reference,
+                                (debug_reference_descriptor)debug_describe_sampler_view))
       old_view->context->sampler_view_destroy(old_view->context, old_view);
    *ptr = view;
 }

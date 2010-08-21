@@ -84,7 +84,7 @@ static void dump_stack(const char* symbols[STACK_LEN])
    os_stream_write(stream, "\n", 1);
 }
 
-void debug_reference_slowpath(const struct pipe_reference* p, void* pget_desc, int change)
+void debug_reference_slowpath(const struct pipe_reference* p, debug_reference_descriptor get_desc, int change)
 {
    if(debug_refcnt_state < 0)
       return;
@@ -107,7 +107,6 @@ void debug_reference_slowpath(const struct pipe_reference* p, void* pget_desc, i
       const char* symbols[STACK_LEN];
       char buf[1024];
 
-      void (*get_desc)(char*, const struct pipe_reference*) = pget_desc;
       unsigned i;
       unsigned refcnt = p->count;
       unsigned serial;
