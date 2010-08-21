@@ -1110,7 +1110,11 @@ nvfx_vertprog_validate(struct nvfx_context *nvfx)
 			}
 
 			if (nouveau_resource_alloc(heap, vplen, vp, &vp->exec))
-				assert(0);
+			{
+				debug_printf("Vertex shader too long: %u instructions\n", vplen);
+				nvfx->fallback_swtnl |= NVFX_NEW_VERTPROG;
+				return FALSE;
+			}
 		}
 
 		upload_code = TRUE;
@@ -1129,7 +1133,11 @@ nvfx_vertprog_validate(struct nvfx_context *nvfx)
 			}
 
 			if (nouveau_resource_alloc(heap, vp->nr_consts, vp, &vp->data))
-				assert(0);
+                        {
+                                debug_printf("Vertex shader uses too many constants: %u constants\n", vp->nr_consts);
+                                nvfx->fallback_swtnl |= NVFX_NEW_VERTPROG;
+                                return FALSE;
+                        }
 		}
 
 		/*XXX: handle this some day */
