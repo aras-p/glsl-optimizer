@@ -44,6 +44,8 @@ debug_describe_resource(char* buf, const struct pipe_resource *ptr)
       util_sprintf(buf, "pipe_texture1d<%u,%s,%u>", ptr->width0, util_format_short_name(ptr->format), ptr->last_level);
    else if(ptr->target == PIPE_TEXTURE_2D)
       util_sprintf(buf, "pipe_texture2d<%u,%u,%s,%u>", ptr->width0, ptr->height0, util_format_short_name(ptr->format), ptr->last_level);
+   else if(ptr->target == PIPE_TEXTURE_RECT)
+      util_sprintf(buf, "pipe_texture_rect<%u,%u,%s>", ptr->width0, ptr->height0, util_format_short_name(ptr->format));
    else if(ptr->target == PIPE_TEXTURE_CUBE)
       util_sprintf(buf, "pipe_texture_cube<%u,%u,%s,%u>", ptr->width0, ptr->height0, util_format_short_name(ptr->format), ptr->last_level);
    else if(ptr->target == PIPE_TEXTURE_3D)
