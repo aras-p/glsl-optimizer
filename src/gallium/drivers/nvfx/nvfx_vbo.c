@@ -419,7 +419,6 @@ nvfx_vtxelts_state_create(struct pipe_context *pipe,
 			  unsigned num_elements,
 			  const struct pipe_vertex_element *elements)
 {
-	struct nvfx_context* nvfx = nvfx_context(pipe);
 	struct nvfx_vtxelt_state *cso = CALLOC_STRUCT(nvfx_vtxelt_state);
         struct translate_key transkey;
         unsigned per_vertex_size[16];

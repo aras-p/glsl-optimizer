@@ -312,7 +312,7 @@ extern void nvfx_vertprog_destroy(struct nvfx_context *,
 extern void nvfx_push_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info);
 
 /* must WAIT_RING(chan, ncomp + 1) or equivalent beforehand! */
-static inline void nvfx_emit_vtx_attr(struct nouveau_channel* chan, unsigned attrib, float* v, unsigned ncomp)
+static inline void nvfx_emit_vtx_attr(struct nouveau_channel* chan, unsigned attrib, const float* v, unsigned ncomp)
 {
 	switch (ncomp) {
 	case 4:

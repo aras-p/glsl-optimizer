@@ -801,7 +801,6 @@ nvfx_vertprog_prepare(struct nvfx_context* nvfx, struct nvfx_vpc *vpc)
 	int high_temp = -1, high_addr = -1, nr_imm = 0, i;
 	struct util_semantic_set set;
 	unsigned char sem_layout[8];
-	unsigned sem_layout_size;
 	unsigned num_outputs;
 
 	num_outputs = util_semantic_set_from_program_file(&set, vpc->vp->pipe.tokens, TGSI_FILE_OUTPUT);
@@ -1061,7 +1060,6 @@ out_err:
 boolean
 nvfx_vertprog_validate(struct nvfx_context *nvfx)
 {
-	struct pipe_context *pipe = &nvfx->pipe;
 	struct nvfx_screen *screen = nvfx->screen;
 	struct nouveau_channel *chan = screen->base.channel;
 	struct nouveau_grobj *eng3d = screen->eng3d;
@@ -1200,7 +1198,7 @@ nvfx_vertprog_validate(struct nvfx_context *nvfx)
 		float *map = NULL;
 
 		if (constbuf)
-			map = nvfx_buffer(constbuf)->data;
+			map = (float*)nvfx_buffer(constbuf)->data;
 
 		for (i = 0; i < vp->nr_consts; i++) {
 			struct nvfx_vertex_program_data *vpd = &vp->consts[i];
