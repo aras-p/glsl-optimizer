@@ -725,12 +725,25 @@ nvfx_fragprog_parse_instruction(struct nvfx_context* nvfx, struct nvfx_fpc *fpc,
 	case TGSI_OPCODE_TEX:
 		nvfx_fp_emit(fpc, tex(sat, TEX, unit, dst, mask, src[0], none, none));
 		break;
-	case TGSI_OPCODE_TXB:
-		nvfx_fp_emit(fpc, tex(sat, TXB, unit, dst, mask, src[0], none, none));
-		break;
-	case TGSI_OPCODE_TXP:
-		nvfx_fp_emit(fpc, tex(sat, TXP, unit, dst, mask, src[0], none, none));
-		break;
+        case TGSI_OPCODE_TRUNC:
+                tmp = nvfx_src(temp(fpc));
+                insn = arith(0, MOV, none.reg, mask, src[0], none, none);
+                insn.cc_update = 1;
+                nvfx_fp_emit(fpc, insn);
+
+                nvfx_fp_emit(fpc, arith(0, FLR, tmp.reg, mask, abs(src[0]), none, none));
+                nvfx_fp_emit(fpc, arith(sat, MOV, dst, mask, tmp, none, none));
+
+                insn = arith(sat, MOV, dst, mask, neg(tmp), none, none);
+                insn.cc_test = NVFX_COND_LT;
+                nvfx_fp_emit(fpc, insn);
+                break;
+        case TGSI_OPCODE_TXB:
+                nvfx_fp_emit(fpc, tex(sat, TXB, unit, dst, mask, src[0], none, none));
+                break;
+        case TGSI_OPCODE_TXP:
+                nvfx_fp_emit(fpc, tex(sat, TXP, unit, dst, mask, src[0], none, none));
+                break;
 	case TGSI_OPCODE_XPD:
 		tmp = nvfx_src(temp(fpc));
 		nvfx_fp_emit(fpc, arith(0, MUL, tmp.reg, mask, swz(src[0], Z, X, Y, Y), swz(src[1], Y, Z, X, X), none));
