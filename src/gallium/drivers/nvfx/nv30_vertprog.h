@@ -68,7 +68,7 @@
 #define NV30_VP_INST_DEST_TEMP_ID_SHIFT        16
 #define NV30_VP_INST_DEST_TEMP_ID_MASK        (0x0F << 16)
 #define NV30_VP_INST_COND_UPDATE_ENABLE        (1<<15)
-#define NV30_VP_INST_VEC_DEST_TEMP_MASK      (0xF << 16)
+#define NV30_VP_INST_VEC_DEST_TEMP_MASK      (0x1F << 16)
 #define NV30_VP_INST_COND_TEST_ENABLE        (1<<14)
 #define NV30_VP_INST_COND_SHIFT          11
 #define NV30_VP_INST_COND_MASK          (0x07 << 11)
@@ -111,7 +111,7 @@
 #define NV30_VP_INST_SRC2H_SHIFT        0    /*NV20*/
 #define NV30_VP_INST_SRC2H_MASK          (0x7FF << 0)  /* NV30_VP_SRC2_HIGH_MASK >> 4*/
 #define NV30_VP_INST_IADDR_SHIFT        2
-#define NV30_VP_INST_IADDR_MASK          (0xF <<  28)   /* NV30_VP_SRC2_LOW_MASK << 28 */
+#define NV30_VP_INST_IADDR_MASK          (0x1FF <<  2)   /* NV30_VP_SRC2_LOW_MASK << 28 */
 
 /* DWORD 3 */
 #define NV30_VP_INST_SRC2L_SHIFT        28    /*NV20*/

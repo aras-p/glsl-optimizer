@@ -44,7 +44,7 @@
 #define NV40_VP_INST_SRC1_ABS                                          (1 << 22)
 #define NV40_VP_INST_SRC0_ABS                                          (1 << 21)
 #define NV40_VP_INST_VEC_DEST_TEMP_SHIFT                                      15
-#define NV40_VP_INST_VEC_DEST_TEMP_MASK                             (0x1F << 15)
+#define NV40_VP_INST_VEC_DEST_TEMP_MASK                             (0x3F << 15)
 #define NV40_VP_INST_COND_TEST_ENABLE                                  (1 << 13)
 #define NV40_VP_INST_COND_SHIFT                                               10
 #define NV40_VP_INST_COND_MASK                                       (0x7 << 10)
@@ -100,7 +100,7 @@
 #define NV40_VP_INST_SRC2H_SHIFT                                               0
 #define NV40_VP_INST_SRC2H_MASK                                      (0x3F << 0)
 #define NV40_VP_INST_IADDRH_SHIFT                                              0
-#define NV40_VP_INST_IADDRH_MASK                                     (0x1F << 0)
+#define NV40_VP_INST_IADDRH_MASK                                     (0x3F << 0)
 
 /* ---- OPCODE BITS 31:0 / data DWORD 3 --- */
 #define NV40_VP_INST_IADDRL_SHIFT                                             29
