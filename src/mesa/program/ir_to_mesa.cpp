@@ -1076,12 +1076,12 @@ static const struct {
    {"gl_LightSource", "quadraticAttenuation",
     {STATE_LIGHT, 0, STATE_ATTENUATION}, SWIZZLE_ZZZZ, true},
 
-   {"gl_LightModel", NULL,
+   {"gl_LightModel", "ambient",
     {STATE_LIGHTMODEL_AMBIENT, 0}, SWIZZLE_XYZW, false},
 
-   {"gl_FrontLightModelProduct", NULL,
+   {"gl_FrontLightModelProduct", "sceneColor",
     {STATE_LIGHTMODEL_SCENECOLOR, 0}, SWIZZLE_XYZW, false},
-   {"gl_BackLightModelProduct", NULL,
+   {"gl_BackLightModelProduct", "sceneColor",
     {STATE_LIGHTMODEL_SCENECOLOR, 1}, SWIZZLE_XYZW, false},
 
    {"gl_FrontLightProduct", "ambient",
@@ -1098,7 +1098,7 @@ static const struct {
    {"gl_BackLightProduct", "specular",
     {STATE_LIGHTPROD, 0, 1, STATE_SPECULAR}, SWIZZLE_XYZW, true},
 
-   {"gl_TextureEnvColor", "ambient",
+   {"gl_TextureEnvColor", NULL,
     {STATE_TEXENV_COLOR, 0}, SWIZZLE_XYZW, true},
 
    {"gl_EyePlaneS", NULL,
@@ -1145,7 +1145,7 @@ get_builtin_uniform_reg(struct gl_program *prog,
       if (!field && statevars[i].field) {
 	 assert(!"FINISHME: whole-structure state var dereference");
       }
-      if (field && strcmp(statevars[i].field, field) != 0)
+      if (field && (!statevars[i].field || strcmp(statevars[i].field, field) != 0))
 	 continue;
       break;
    }

@@ -2101,6 +2101,18 @@ ast_function::hir(exec_list *instructions,
 
    const char *const name = identifier;
 
+   /* From page 15 (page 21 of the PDF) of the GLSL 1.10 spec,
+    *
+    *   "Identifiers starting with "gl_" are reserved for use by
+    *   OpenGL, and may not be declared in a shader as either a
+    *   variable or a function."
+    */
+   if (strncmp(name, "gl_", 3) == 0) {
+      YYLTYPE loc = this->get_location();
+      _mesa_glsl_error(&loc, state,
+		       "identifier `%s' uses reserved `gl_' prefix", name);
+   }
+
    /* Convert the list of function parameters to HIR now so that they can be
     * used below to compare this function's signature with previously seen
     * signatures for functions with the same name.
@@ -2151,7 +2163,6 @@ ast_function::hir(exec_list *instructions,
 	    YYLTYPE loc = this->get_location();
 
 	    _mesa_glsl_error(& loc, state, "function `%s' redefined", name);
-	    sig = NULL;
 	 }
       }
    } else if (state->symbols->name_declared_this_scope(name)) {
@@ -2161,7 +2172,7 @@ ast_function::hir(exec_list *instructions,
 
       _mesa_glsl_error(& loc, state, "function name `%s' conflicts with "
 		       "non-function", name);
-      sig = NULL;
+      return NULL;
    } else {
       f = new(ctx) ir_function(name);
       state->symbols->add_function(f->name, f);
@@ -2209,6 +2220,8 @@ ast_function_definition::hir(exec_list *instructions,
    prototype->hir(instructions, state);
 
    ir_function_signature *signature = prototype->signature;
+   if (signature == NULL)
+      return NULL;
 
    assert(state->current_function == NULL);
    state->current_function = signature;
