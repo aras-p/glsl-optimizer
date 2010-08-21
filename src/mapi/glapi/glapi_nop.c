@@ -49,17 +49,8 @@
 #include "glapi/glapi.h"
 
 
-/*
- * These stubs are kept so that the old DRI drivers still load.
- */
-PUBLIC void
-_glapi_noop_enable_warnings(GLboolean enable);
-
-PUBLIC void
-_glapi_set_warning_func(_glapi_proc func);
-
 void
-_glapi_noop_enable_warnings(GLboolean enable)
+_glapi_noop_enable_warnings(unsigned char enable)
 {
 }
 
