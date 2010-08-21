@@ -427,14 +427,17 @@ nvfx_vtxelts_state_create(struct pipe_context *pipe,
 			  const struct pipe_vertex_element *elements)
 {
 	struct nvfx_vtxelt_state *cso = CALLOC_STRUCT(nvfx_vtxelt_state);
-        struct translate_key transkey;
-        unsigned per_vertex_size[16];
-        unsigned vb_compacted_index[16];
+	struct translate_key transkey;
+	unsigned per_vertex_size[16];
+	unsigned vb_compacted_index[16];
 
-        memset(per_vertex_size, 0, sizeof(per_vertex_size));
+	if(num_elements > 16)
+	{
+		_debug_printf("Error: application attempted to use %u vertex elements, but only 16 are supported: ignoring the rest\n");
+		num_elements = 16;
+	}
 
-	assert(num_elements < 16); /* not doing fallbacks yet */
-
+	memset(per_vertex_size, 0, sizeof(per_vertex_size));
 	memcpy(cso->pipe, elements, num_elements * sizeof(elements[0]));
 	cso->num_elements = num_elements;
 	cso->needs_translate = FALSE;
