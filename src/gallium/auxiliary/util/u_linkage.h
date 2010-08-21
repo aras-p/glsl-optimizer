@@ -56,9 +56,10 @@ void util_semantic_layout_from_set(unsigned char *layout, const struct util_sema
 static INLINE void
 util_semantic_table_from_layout(unsigned char *table, unsigned char *layout, unsigned char first_slot_value, unsigned char num_slots)
 {
+   int i;
    memset(table, 0xff, sizeof(table));
 
-   for(int i = 0; i < num_slots; ++i)
+   for(i = 0; i < num_slots; ++i)
       table[layout[i]] = first_slot_value + i;
 }
 
