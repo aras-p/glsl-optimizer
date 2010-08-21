@@ -11,6 +11,7 @@ nvfx_state_validate_common(struct nvfx_context *nvfx)
 	unsigned still_dirty = 0;
 	int all_swizzled = -1;
 	boolean flush_tex_cache = FALSE;
+	unsigned render_temps;
 
 	if(nvfx != nvfx->screen->cur_ctx)
 	{
@@ -141,7 +142,7 @@ nvfx_state_validate_common(struct nvfx_context *nvfx)
 
 	nvfx->dirty = dirty & still_dirty;
 
-	unsigned render_temps = nvfx->state.render_temps;
+	render_temps = nvfx->state.render_temps;
 	if(render_temps)
 	{
 		for(int i = 0; i < nvfx->framebuffer.nr_cbufs; ++i)

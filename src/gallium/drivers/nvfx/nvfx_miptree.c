@@ -155,9 +155,10 @@ struct pipe_resource *
 nvfx_miptree_create(struct pipe_screen *pscreen, const struct pipe_resource *pt)
 {
 	struct nvfx_miptree* mt = nvfx_miptree_create_skeleton(pscreen, pt);
+        unsigned size;
 	nvfx_miptree_choose_format(mt);
 
-        unsigned size = nvfx_miptree_layout(mt);
+        size = nvfx_miptree_layout(mt);
 
 	mt->base.bo = nouveau_screen_bo_new(pscreen, 256, pt->usage, pt->bind, size);
 
@@ -173,6 +174,7 @@ struct pipe_resource *
 nvfx_miptree_from_handle(struct pipe_screen *pscreen, const struct pipe_resource *template, struct winsys_handle *whandle)
 {
         struct nvfx_miptree* mt = nvfx_miptree_create_skeleton(pscreen, template);
+        unsigned stride;
         if(whandle->stride) {
 		mt->linear_pitch = whandle->stride;
 		mt->base.base.flags |= NVFX_RESOURCE_FLAG_LINEAR;
@@ -181,7 +183,6 @@ nvfx_miptree_from_handle(struct pipe_screen *pscreen, const struct pipe_resource
 
         nvfx_miptree_layout(mt);
 
-        unsigned stride;
         mt->base.bo = nouveau_screen_bo_from_handle(pscreen, whandle, &stride);
         if (mt->base.bo == NULL) {
                 FREE(mt);

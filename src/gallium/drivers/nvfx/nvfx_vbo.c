@@ -58,6 +58,10 @@ static unsigned nvfx_decide_upload_mode(struct pipe_context *pipe, const struct 
 	unsigned inline_cost = 0;
 	unsigned unique_vertices;
 	unsigned upload_mode;
+	float best_index_cost_for_hardware_vertices_as_inline_cost;
+	boolean prefer_hardware_indices;
+	unsigned index_inline_cost;
+	unsigned index_hardware_cost;
 	if (info->indexed)
 		unique_vertices = util_guess_unique_indices_count(info->mode, info->count);
 	else
@@ -108,10 +112,10 @@ static unsigned nvfx_decide_upload_mode(struct pipe_context *pipe, const struct 
 		inline_cost += vbi->per_vertex_size * info->count;
 	}
 
-	float best_index_cost_for_hardware_vertices_as_inline_cost = 0.0f;
-	boolean prefer_hardware_indices = FALSE;
-	unsigned index_inline_cost = 0;
-	unsigned index_hardware_cost = 0;
+	best_index_cost_for_hardware_vertices_as_inline_cost = 0.0f;
+	prefer_hardware_indices = FALSE;
+	index_inline_cost = 0;
+	index_hardware_cost = 0;
 
 	if (info->indexed)
 	{
@@ -336,12 +340,15 @@ nvfx_vbo_validate(struct nvfx_context *nvfx)
 void
 nvfx_vbo_relocate(struct nvfx_context *nvfx)
 {
+	struct nouveau_channel* chan;
+	unsigned vb_flags;
+	int i;
+
         if(!nvfx->use_vertex_buffers)
                 return;
 
-	struct nouveau_channel* chan = nvfx->screen->base.channel;
-	unsigned vb_flags = nvfx->screen->vertex_buffer_reloc_flags | NOUVEAU_BO_RD | NOUVEAU_BO_DUMMY;
-	int i;
+	chan = nvfx->screen->base.channel;
+	vb_flags = nvfx->screen->vertex_buffer_reloc_flags | NOUVEAU_BO_RD | NOUVEAU_BO_DUMMY;
 
 	MARK_RING(chan, 2 * 16 + 3, 2 * 16 + 3);
         for (i = 0; i < nvfx->vtxelt->num_per_vertex; i++) {
@@ -422,9 +429,9 @@ nvfx_vtxelts_state_create(struct pipe_context *pipe,
 	struct nvfx_vtxelt_state *cso = CALLOC_STRUCT(nvfx_vtxelt_state);
         struct translate_key transkey;
         unsigned per_vertex_size[16];
-        memset(per_vertex_size, 0, sizeof(per_vertex_size));
-
         unsigned vb_compacted_index[16];
+
+        memset(per_vertex_size, 0, sizeof(per_vertex_size));
 
 	assert(num_elements < 16); /* not doing fallbacks yet */
 

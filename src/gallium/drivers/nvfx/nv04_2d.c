@@ -257,6 +257,9 @@ nv04_region_assert(struct nv04_region* rgn, unsigned w, unsigned h)
 static inline int
 nv04_region_is_contiguous(struct nv04_region* rgn, int w, int h)
 {
+	int surf_min;
+	int rect_min;
+
 	if(rgn->pitch)
 		return rgn->pitch == w << rgn->bpps;
 
@@ -275,8 +278,8 @@ nv04_region_is_contiguous(struct nv04_region* rgn, int w, int h)
 	if(rgn->d > 1)
 		return 0;
 
-	int surf_min = MIN2(rgn->w, rgn->h);
-	int rect_min = MIN2(w, h);
+	surf_min = MIN2(rgn->w, rgn->h);
+	rect_min = MIN2(w, h);
 
 	if((rect_min == surf_min) || (w == h) || (w == 2 * h))
 		return 1;
@@ -361,8 +364,10 @@ nv04_region_do_align_offset(struct nv04_region* rgn, unsigned w, unsigned h, int
 {
 	if(rgn->pitch > 0)
 	{
+		int delta;
+
 		assert(!(rgn->offset & ((1 << rgn->bpps) - 1))); // fatal!
-		int delta = rgn->offset & ((1 << shift) - 1);
+		delta = rgn->offset & ((1 << shift) - 1);
 
 		if(h <= 1)
 		{
@@ -388,19 +393,22 @@ nv04_region_do_align_offset(struct nv04_region* rgn, unsigned w, unsigned h, int
 	}
 	else
 	{
+		int size;
+		int min;
+		int v;
+
 		// we don't care about the alignment of 3D surfaces since the 2D engine can't use them
 		if(rgn->d < 0)
 			return -1;
 
-		int size;
-		int min = MIN2(rgn->w, rgn->h);
+		min = MIN2(rgn->w, rgn->h);
 		size = min * min << rgn->bpps;
 
 		// this is unfixable, and should not be happening
 		if(rgn->offset & (size - 1))
 			return -1;
 
-		int v = (rgn->offset & ((1 << shift) - 1)) / size;
+		v = (rgn->offset & ((1 << shift) - 1)) / size;
 		rgn->offset -= v * size;
 
 		if(rgn->h == min)
@@ -457,6 +465,10 @@ nv04_region_align(struct nv04_region* rgn, unsigned w, unsigned h, int shift)
 void
 nv04_region_copy_cpu(struct nv04_region* dst, struct nv04_region* src, int w, int h)
 {
+	uint8_t* mdst;
+	uint8_t* msrc;
+	int size;
+
 	if(dst->bo != src->bo)
 	{
 		nouveau_bo_map(dst->bo, NOUVEAU_BO_WR);
@@ -465,10 +477,10 @@ nv04_region_copy_cpu(struct nv04_region* dst, struct nv04_region* src, int w, in
 	else
 		nouveau_bo_map(dst->bo, NOUVEAU_BO_WR | NOUVEAU_BO_RD);
 
-	uint8_t* mdst = dst->bo->map + dst->offset;
-	uint8_t* msrc = src->bo->map + src->offset;
+	mdst = (uint8_t*)dst->bo->map + dst->offset;
+	msrc = (uint8_t*)src->bo->map + src->offset;
 
-	int size = w << dst->bpps;
+	size = w << dst->bpps;
 
 	nv04_region_assert(dst, w, h);
 	nv04_region_assert(src, w, h);
@@ -548,6 +560,7 @@ simple:
 		int* dswy;
 		int* sswx;
 		int* sswy;
+		int dir;
 
 		if(!dst->pitch)
 		{
@@ -569,7 +582,7 @@ simple:
 				sswy[iy] = nv04_swizzle_bits(0, src->y + iy, src->z, src->w, src->h, src->d);
 		}
 
-		int dir = 1;
+		dir = 1;
 		/* do backwards copies for overlapping swizzled surfaces */
 		if(dst->pitch == src->pitch && dst->offset == src->offset)
 		{
@@ -611,7 +624,7 @@ simple:
 void
 nv04_region_fill_cpu(struct nv04_region* dst, int w, int h, unsigned value)
 {
-	uint8_t* mdst = (nouveau_bo_map(dst->bo, NOUVEAU_BO_WR), dst->bo->map + dst->offset);
+	uint8_t* mdst = (nouveau_bo_map(dst->bo, NOUVEAU_BO_WR), (uint8_t*)dst->bo->map + dst->offset);
 
 #ifdef NV04_REGION_DEBUG
 	fprintf(stderr, "\tRGN_FILL_CPU ");
@@ -727,11 +740,12 @@ nv04_region_copy_swizzle(struct nv04_2d_context *ctx,
 	unsigned ex = (dst->x + w - 1) >> max_shift;
 	unsigned ey = (dst->y + h - 1) >> max_shift;
 	unsigned chunks = (ex - sx + 1) * (ey - sy + 1);
+	unsigned chunk_size;
 	if(dst->w < cw)
 		cw = dst->w;
 	if(dst->h < ch)
 		ch = dst->h;
-	unsigned chunk_size = cw * ch << dst->bpps;
+	chunk_size = cw * ch << dst->bpps;
 
 #ifdef NV04_REGION_DEBUG
 	fprintf(stderr, "\tRGN_COPY_SWIZZLE [%i, %i: %i] ", w, h, dst->bpps);
@@ -770,10 +784,12 @@ nv04_region_copy_swizzle(struct nv04_2d_context *ctx,
 	  for (int cx = sx; cx <= ex; ++cx) {
 	    int rx = MAX2(0, (int)(dst->x - cw * cx));
 	    int rw = MIN2((int)cw, (int)(dst->x - cw * cx + w)) - rx;
+	    unsigned dst_offset;
+	    unsigned src_offset;
 
 	    BEGIN_RING(chan, swzsurf, NV04_SWIZZLED_SURFACE_OFFSET, 1);
 
-	    unsigned dst_offset = dst->offset + (nv04_swizzle_bits_2d(cx * cw, cy * ch, dst->w, dst->h) << dst->bpps);
+	    dst_offset = dst->offset + (nv04_swizzle_bits_2d(cx * cw, cy * ch, dst->w, dst->h) << dst->bpps);
 	    assert(dst_offset <= dst->bo->size);
 	    assert(dst_offset + chunk_size <= dst->bo->size);
 	    OUT_RELOCl(chan, dst->bo, dst_offset,
@@ -795,7 +811,7 @@ nv04_region_copy_swizzle(struct nv04_2d_context *ctx,
 	    OUT_RING  (chan, src->pitch |
 			     NV03_SCALED_IMAGE_FROM_MEMORY_FORMAT_ORIGIN_CENTER |
 			     NV03_SCALED_IMAGE_FROM_MEMORY_FORMAT_FILTER_POINT_SAMPLE);
-	    unsigned src_offset = src->offset + (cy * ch + ry + src->y - dst->y) * src->pitch + ((cx * cw + rx + src->x - dst->x) << src->bpps);
+	    src_offset = src->offset + (cy * ch + ry + src->y - dst->y) * src->pitch + ((cx * cw + rx + src->x - dst->x) << src->bpps);
 	    assert(src_offset <= src->bo->size);
 	    assert(src_offset + (src->pitch * (rh - 1)) + (rw << src->bpps) <= src->bo->size);
 	    OUT_RELOCl(chan, src->bo, src_offset,

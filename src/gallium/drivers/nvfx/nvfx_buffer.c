@@ -89,7 +89,7 @@ void nvfx_buffer_upload(struct nvfx_buffer* buffer)
 		// TODO: may want to use a temporary in some cases
 		nouveau_bo_map(buffer->base.bo, NOUVEAU_BO_WR
 				| (buffer->dirty_unsynchronized ? NOUVEAU_BO_NOSYNC : 0));
-		memcpy(buffer->base.bo->map + buffer->dirty_begin, buffer->data + buffer->dirty_begin, dirty);
+		memcpy((uint8_t*)buffer->base.bo->map + buffer->dirty_begin, buffer->data + buffer->dirty_begin, dirty);
 		nouveau_bo_unmap(buffer->base.bo);
 		buffer->dirty_begin = buffer->dirty_end = 0;
 	}

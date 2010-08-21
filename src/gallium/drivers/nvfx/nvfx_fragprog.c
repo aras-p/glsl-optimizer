@@ -244,12 +244,13 @@ nv40_fp_if(struct nvfx_fpc *fpc, struct nvfx_src src)
 {
 	const struct nvfx_src none = nvfx_src(nvfx_reg(NVFXSR_NONE, 0));
 	struct nvfx_insn insn = arith(0, MOV, none.reg, NVFX_FP_MASK_X, src, none, none);
+	uint32_t *hw;
 	insn.cc_update = 1;
 	nvfx_fp_emit(fpc, insn);
 
 	fpc->inst_offset = fpc->fp->insn_len;
 	grow_insns(fpc, 4);
-	uint32_t *hw = &fpc->fp->insn[fpc->inst_offset];
+	hw = &fpc->fp->insn[fpc->inst_offset];
 	/* I really wonder why fp16 precision is used. Presumably the hardware ignores it? */
 	hw[0] = (NV40_FP_OP_BRA_OPCODE_IF << NVFX_FP_OP_OPCODE_SHIFT) |
 		NV40_FP_OP_OUT_NONE |
@@ -270,9 +271,10 @@ static void
 nv40_fp_cal(struct nvfx_fpc *fpc, unsigned target)
 {
         struct nvfx_label_relocation reloc;
+        uint32_t *hw;
         fpc->inst_offset = fpc->fp->insn_len;
         grow_insns(fpc, 4);
-        uint32_t *hw = &fpc->fp->insn[fpc->inst_offset];
+        hw = &fpc->fp->insn[fpc->inst_offset];
         /* I really wonder why fp16 precision is used. Presumably the hardware ignores it? */
         hw[0] = (NV40_FP_OP_BRA_OPCODE_CAL << NVFX_FP_OP_OPCODE_SHIFT);
         /* Use .xxxx swizzle so that we check only src[0].x*/
@@ -288,9 +290,10 @@ nv40_fp_cal(struct nvfx_fpc *fpc, unsigned target)
 static void
 nv40_fp_ret(struct nvfx_fpc *fpc)
 {
+	uint32_t *hw;
 	fpc->inst_offset = fpc->fp->insn_len;
 	grow_insns(fpc, 4);
-	uint32_t *hw = &fpc->fp->insn[fpc->inst_offset];
+	hw = &fpc->fp->insn[fpc->inst_offset];
 	/* I really wonder why fp16 precision is used. Presumably the hardware ignores it? */
 	hw[0] = (NV40_FP_OP_BRA_OPCODE_RET << NVFX_FP_OP_OPCODE_SHIFT);
 	/* Use .xxxx swizzle so that we check only src[0].x*/
@@ -304,9 +307,10 @@ static void
 nv40_fp_rep(struct nvfx_fpc *fpc, unsigned count, unsigned target)
 {
         struct nvfx_label_relocation reloc;
+        uint32_t *hw;
         fpc->inst_offset = fpc->fp->insn_len;
         grow_insns(fpc, 4);
-        uint32_t *hw = &fpc->fp->insn[fpc->inst_offset];
+        hw = &fpc->fp->insn[fpc->inst_offset];
         /* I really wonder why fp16 precision is used. Presumably the hardware ignores it? */
         hw[0] = (NV40_FP_OP_BRA_OPCODE_REP << NVFX_FP_OP_OPCODE_SHIFT) |
                         NV40_FP_OP_OUT_NONE |
@@ -330,9 +334,10 @@ static void
 nv40_fp_bra(struct nvfx_fpc *fpc, unsigned target)
 {
         struct nvfx_label_relocation reloc;
+        uint32_t *hw;
         fpc->inst_offset = fpc->fp->insn_len;
         grow_insns(fpc, 4);
-        uint32_t *hw = &fpc->fp->insn[fpc->inst_offset];
+        hw = &fpc->fp->insn[fpc->inst_offset];
         /* I really wonder why fp16 precision is used. Presumably the hardware ignores it? */
         hw[0] = (NV40_FP_OP_BRA_OPCODE_IF << NVFX_FP_OP_OPCODE_SHIFT) |
                 NV40_FP_OP_OUT_NONE |
@@ -353,9 +358,10 @@ nv40_fp_bra(struct nvfx_fpc *fpc, unsigned target)
 static void
 nv40_fp_brk(struct nvfx_fpc *fpc)
 {
+	uint32_t *hw;
 	fpc->inst_offset = fpc->fp->insn_len;
 	grow_insns(fpc, 4);
-	uint32_t *hw = &fpc->fp->insn[fpc->inst_offset];
+	hw = &fpc->fp->insn[fpc->inst_offset];
 	/* I really wonder why fp16 precision is used. Presumably the hardware ignores it? */
 	hw[0] = (NV40_FP_OP_BRA_OPCODE_BRK << NVFX_FP_OP_OPCODE_SHIFT) |
 		NV40_FP_OP_OUT_NONE;
@@ -778,20 +784,22 @@ nvfx_fragprog_parse_instruction(struct nvfx_context* nvfx, struct nvfx_fpc *fpc,
 
 	case TGSI_OPCODE_ELSE:
 	{
+		uint32_t *hw;
 		if(!nvfx->is_nv4x)
 			goto nv3x_cflow;
 		assert(util_dynarray_contains(&fpc->if_stack, unsigned));
-		uint32_t *hw = &fpc->fp->insn[util_dynarray_top(&fpc->if_stack, unsigned)];
+		hw = &fpc->fp->insn[util_dynarray_top(&fpc->if_stack, unsigned)];
 		hw[2] = NV40_FP_OP_OPCODE_IS_BRANCH | fpc->fp->insn_len;
 		break;
 	}
 
 	case TGSI_OPCODE_ENDIF:
 	{
+		uint32_t *hw;
 		if(!nvfx->is_nv4x)
 			goto nv3x_cflow;
 		assert(util_dynarray_contains(&fpc->if_stack, unsigned));
-		uint32_t *hw = &fpc->fp->insn[util_dynarray_pop(&fpc->if_stack, unsigned)];
+		hw = &fpc->fp->insn[util_dynarray_pop(&fpc->if_stack, unsigned)];
 		if(!hw[2])
 			hw[2] = NV40_FP_OP_OPCODE_IS_BRANCH | fpc->fp->insn_len;
 		hw[3] = fpc->fp->insn_len;
@@ -1097,6 +1105,8 @@ nvfx_fragprog_validate(struct nvfx_context *nvfx)
 	struct nouveau_channel* chan = nvfx->screen->base.channel;
 	struct nvfx_fragment_program *fp = nvfx->fragprog;
 	int update = 0;
+	struct nvfx_vertex_program* vp;
+	unsigned sprite_coord_enable;
 
 	if (!fp->translated)
 	{
@@ -1135,13 +1145,14 @@ nvfx_fragprog_validate(struct nvfx_context *nvfx)
 	if (nvfx->dirty & (NVFX_NEW_FRAGCONST | NVFX_NEW_FRAGPROG))
 		update = TRUE;
 
-	struct nvfx_vertex_program* vp = nvfx->render_mode == HW ? nvfx->vertprog : nvfx->swtnl.vertprog;
+	vp = nvfx->render_mode == HW ? nvfx->vertprog : nvfx->swtnl.vertprog;
 	if (fp->last_vp_id != vp->id) {
 		char* vp_sem_table = vp->generic_to_fp_input;
 		unsigned char* fp_semantics = fp->slot_to_generic;
 		unsigned diff = 0;
+		unsigned char* cur_slots;
 		fp->last_vp_id = nvfx->vertprog->id;
-		unsigned char* cur_slots = fp->slot_to_fp_input;
+		cur_slots = fp->slot_to_fp_input;
 		for(unsigned i = 0; i < fp->num_slots; ++i) {
 			unsigned char slot_mask = vp_sem_table[fp_semantics[i]];
 			diff |= (slot_mask >> 4) & (slot_mask ^ cur_slots[i]);
@@ -1161,7 +1172,7 @@ nvfx_fragprog_validate(struct nvfx_context *nvfx)
 	}
 
 	// last_sprite_coord_enable
-	unsigned sprite_coord_enable = nvfx->rasterizer->pipe.point_quad_rasterization * nvfx->rasterizer->pipe.sprite_coord_enable;
+	sprite_coord_enable = nvfx->rasterizer->pipe.point_quad_rasterization * nvfx->rasterizer->pipe.sprite_coord_enable;
 	if(fp->last_sprite_coord_enable != sprite_coord_enable)
 	{
 		unsigned texcoord_mask = vp->texcoord_ouput_mask;
@@ -1199,6 +1210,9 @@ nvfx_fragprog_validate(struct nvfx_context *nvfx)
 	}
 
 	if(update) {
+		int offset;
+		uint32_t* fpmap;
+
 		++fp->bo_prog_idx;
 		if(fp->bo_prog_idx >= fp->progs_per_bo)
 		{
@@ -1209,6 +1223,9 @@ nvfx_fragprog_validate(struct nvfx_context *nvfx)
 			else
 			{
 				struct nvfx_fragment_program_bo* fpbo = os_malloc_aligned(sizeof(struct nvfx_fragment_program) + (fp->prog_size + 8) * fp->progs_per_bo, 16);
+				uint8_t* map;
+				uint8_t* buf;
+
 				fpbo->slots = (unsigned char*)&fpbo->insn[(fp->prog_size) * fp->progs_per_bo];
 				memset(fpbo->slots, 0, 8 * fp->progs_per_bo);
 				if(fp->fpbo)
@@ -1225,8 +1242,8 @@ nvfx_fragprog_validate(struct nvfx_context *nvfx)
 				nouveau_bo_new(nvfx->screen->base.device, NOUVEAU_BO_VRAM | NOUVEAU_BO_MAP, 64, fp->prog_size * fp->progs_per_bo, &fpbo->bo);
 				nouveau_bo_map(fpbo->bo, NOUVEAU_BO_NOSYNC);
 
-				uint8_t* map = fpbo->bo->map;
-				uint8_t* buf = (uint8_t*)fpbo->insn;
+				map = fpbo->bo->map;
+				buf = (uint8_t*)fpbo->insn;
 				for(unsigned i = 0; i < fp->progs_per_bo; ++i)
 				{
 					memcpy(buf, fp->insn, fp->insn_len * 4);
@@ -1238,8 +1255,8 @@ nvfx_fragprog_validate(struct nvfx_context *nvfx)
 			fp->bo_prog_idx = 0;
 		}
 
-		int offset = fp->bo_prog_idx * fp->prog_size;
-		uint32_t* fpmap = (uint32_t*)((char*)fp->fpbo->bo->map + offset);
+		offset = fp->bo_prog_idx * fp->prog_size;
+		fpmap = (uint32_t*)((char*)fp->fpbo->bo->map + offset);
 
 		if(nvfx->constbuf[PIPE_SHADER_FRAGMENT]) {
 			struct pipe_resource* constbuf = nvfx->constbuf[PIPE_SHADER_FRAGMENT];

@@ -60,14 +60,17 @@ nvfx_region_set_format(struct nv04_region* rgn, enum pipe_format format)
 		rgn->bpps = 2;
 		break;
 	default:
-		assert(util_is_pot(bits));
-		int shift = util_logbase2(bits) - 3;
-		assert(shift >= 2);
-		rgn->bpps = 2;
-		shift -= 2;
+		{
+			int shift;
+			assert(util_is_pot(bits));
+			shift = util_logbase2(bits) - 3;
+			assert(shift >= 2);
+			rgn->bpps = 2;
+			shift -= 2;
 
-		rgn->x = util_format_get_nblocksx(format, rgn->x) << shift;
-		rgn->y = util_format_get_nblocksy(format, rgn->y);
+			rgn->x = util_format_get_nblocksx(format, rgn->x) << shift;
+			rgn->y = util_format_get_nblocksy(format, rgn->y);
+		}
 	}
 }
 
@@ -241,26 +244,29 @@ nvfx_resource_copy_region(struct pipe_context *pipe,
 		  unsigned srcx, unsigned srcy, unsigned srcz,
 		  unsigned w, unsigned h)
 {
+	static int copy_threshold = -1;
 	struct nv04_2d_context *ctx = nvfx_screen(pipe->screen)->eng2d;
 	struct nv04_region dst, src;
+	int dst_to_gpu;
+	int src_on_gpu;
+	boolean small;
+	int ret;
 
 	if(!w || !h)
 		return;
 
-	static int copy_threshold = -1;
 	if(copy_threshold < 0)
 		copy_threshold = debug_get_num_option("NOUVEAU_COPY_THRESHOLD", 4);
 
-	int dst_to_gpu = dstr->usage != PIPE_USAGE_DYNAMIC && dstr->usage != PIPE_USAGE_STAGING;
-	int src_on_gpu = nvfx_resource_on_gpu(srcr);
+	dst_to_gpu = dstr->usage != PIPE_USAGE_DYNAMIC && dstr->usage != PIPE_USAGE_STAGING;
+	src_on_gpu = nvfx_resource_on_gpu(srcr);
 
 	nvfx_region_init_for_subresource(&dst, dstr, subdst, dstx, dsty, dstz, TRUE);
 	nvfx_region_init_for_subresource(&src, srcr, subsrc, srcx, srcy, srcz, FALSE);
 	w = util_format_get_stride(dstr->format, w) >> dst.bpps;
 	h = util_format_get_nblocksy(dstr->format, h);
 
-	int ret;
-	boolean small = (w * h <= copy_threshold);
+	small = (w * h <= copy_threshold);
 	if((!dst_to_gpu || !src_on_gpu) && small)
 		ret = -1; /* use the CPU */
 	else
@@ -309,6 +315,7 @@ nvfx_surface_fill(struct pipe_context* pipe, struct pipe_surface *dsts,
 {
 	struct nv04_2d_context *ctx = nvfx_screen(pipe->screen)->eng2d;
 	struct nv04_region dst;
+	int ret;
 	/* Always try to use the GPU right now, if possible
 	 * If the user wanted the surface data on the CPU, he would have cleared with memset (hopefully) */
 
@@ -318,7 +325,7 @@ nvfx_surface_fill(struct pipe_context* pipe, struct pipe_surface *dsts,
 	w = util_format_get_stride(dsts->format, w) >> dst.bpps;
 	h = util_format_get_nblocksy(dsts->format, h);
 
-	int ret = nv04_region_fill_2d(ctx, &dst, w, h, value);
+	ret = nv04_region_fill_2d(ctx, &dst, w, h, value);
 	if(ret > 0 && dsts->texture->bind & PIPE_BIND_RENDER_TARGET)
 		return 1;
 	else if(ret)
