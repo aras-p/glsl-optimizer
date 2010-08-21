@@ -753,6 +753,12 @@ nvfx_fragprog_parse_instruction(struct nvfx_context* nvfx, struct nvfx_fpc *fpc,
         case TGSI_OPCODE_TXB:
                 nvfx_fp_emit(fpc, tex(sat, TXB, unit, dst, mask, src[0], none, none));
                 break;
+        case TGSI_OPCODE_TXL:
+                if(nvfx->is_nv4x)
+                        nvfx_fp_emit(fpc, tex(sat, TXL_NV40, unit, dst, mask, src[0], none, none));
+                else /* unsupported on nv30, use TEX and hope they like it */
+                        nvfx_fp_emit(fpc, tex(sat, TEX, unit, dst, mask, src[0], none, none));
+                break;
         case TGSI_OPCODE_TXP:
                 nvfx_fp_emit(fpc, tex(sat, TXP, unit, dst, mask, src[0], none, none));
                 break;
