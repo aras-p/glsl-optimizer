@@ -2,10 +2,12 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_state.h"
 #include "util/u_inlines.h"
+#include "util/u_debug.h"
 
 #include "pipe/p_shader_tokens.h"
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_util.h"
+#include "tgsi/tgsi_dump.h"
 
 #include "nvfx_context.h"
 #include "nvfx_shader.h"
@@ -748,6 +750,8 @@ out_err:
 	return FALSE;
 }
 
+DEBUG_GET_ONCE_BOOL_OPTION(nvfx_dump_fp, "NVFX_DUMP_FP", FALSE)
+
 static void
 nvfx_fragprog_translate(struct nvfx_context *nvfx,
 			struct nvfx_fragment_program *fp)
@@ -802,6 +806,17 @@ nvfx_fragprog_translate(struct nvfx_context *nvfx,
 	fp->insn[fpc->inst_offset + 1] = 0x00000000;
 	fp->insn[fpc->inst_offset + 2] = 0x00000000;
 	fp->insn[fpc->inst_offset + 3] = 0x00000000;
+
+	if(debug_get_option_nvfx_dump_fp())
+	{
+		debug_printf("\n");
+		tgsi_dump(fp->pipe.tokens, 0);
+
+		debug_printf("\n%s fragment program:\n", nvfx->is_nv4x ? "nv4x" : "nv3x");
+		for (unsigned i = 0; i < fp->insn_len; i += 4)
+			debug_printf("%3u: %08x %08x %08x %08x\n", i >> 2, fp->insn[i], fp->insn[i + 1], fp->insn[i + 2], fp->insn[i + 3]);
+		debug_printf("\n");
+	}
 
 	fp->translated = TRUE;
 out_err:

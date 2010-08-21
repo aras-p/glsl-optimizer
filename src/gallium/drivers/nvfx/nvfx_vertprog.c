@@ -2,6 +2,7 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_state.h"
 #include "util/u_linkage.h"
+#include "util/u_debug.h"
 
 #include "pipe/p_shader_tokens.h"
 #include "tgsi/tgsi_parse.h"
@@ -777,6 +778,8 @@ nvfx_vertprog_prepare(struct nvfx_context* nvfx, struct nvfx_vpc *vpc)
 	return TRUE;
 }
 
+DEBUG_GET_ONCE_BOOL_OPTION(nvfx_dump_vp, "NVFX_DUMP_VP", FALSE)
+
 static void
 nvfx_vertprog_translate(struct nvfx_context *nvfx,
 			struct nvfx_vertex_program *vp)
@@ -873,6 +876,18 @@ nvfx_vertprog_translate(struct nvfx_context *nvfx,
 	}
 
 	vp->insns[vp->nr_insns - 1].data[3] |= NVFX_VP_INST_LAST;
+
+	if(debug_get_option_nvfx_dump_vp())
+	{
+		debug_printf("\n");
+		tgsi_dump(vp->pipe.tokens, 0);
+
+		debug_printf("\n%s vertex program:\n", nvfx->is_nv4x ? "nv4x" : "nv3x");
+		for (i = 0; i < vp->nr_insns; i++)
+			debug_printf("%3u: %08x %08x %08x %08x\n", i, vp->insns[i].data[0], vp->insns[i].data[1], vp->insns[i].data[2], vp->insns[i].data[3]);
+		debug_printf("\n");
+	}
+
 	vp->translated = TRUE;
 out_err:
 	tgsi_parse_free(&parse);
@@ -1025,14 +1040,6 @@ nvfx_vertprog_validate(struct nvfx_context *nvfx)
 
 	/* Upload vtxprog */
 	if (upload_code) {
-#if 0
-		for (i = 0; i < vp->nr_insns; i++) {
-			NOUVEAU_MSG("VP %d: 0x%08x\n", i, vp->insns[i].data[0]);
-			NOUVEAU_MSG("VP %d: 0x%08x\n", i, vp->insns[i].data[1]);
-			NOUVEAU_MSG("VP %d: 0x%08x\n", i, vp->insns[i].data[2]);
-			NOUVEAU_MSG("VP %d: 0x%08x\n", i, vp->insns[i].data[3]);
-		}
-#endif
 		BEGIN_RING(chan, eng3d, NV34TCL_VP_UPLOAD_FROM_ID, 1);
 		OUT_RING  (chan, vp->exec->start);
 		for (i = 0; i < vp->nr_insns; i++) {
