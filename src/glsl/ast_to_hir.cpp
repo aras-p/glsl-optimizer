@@ -1973,6 +1973,7 @@ ast_declarator_list::hir(exec_list *instructions,
       const bool added_variable =
 	 state->symbols->add_variable(var->name, var);
       assert(added_variable);
+      (void) added_variable;
    }
 
 
