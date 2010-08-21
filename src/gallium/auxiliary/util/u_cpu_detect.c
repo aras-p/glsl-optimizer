@@ -83,61 +83,6 @@ static int has_cpuid(void);
 #endif
 
 
-#if defined(PIPE_ARCH_X86)
-
-/* The sigill handlers */
-#if defined(PIPE_OS_LINUX) /*&& defined(_POSIX_SOURCE) && defined(X86_FXSR_MAGIC)*/
-static void
-sigill_handler_sse(int signal, struct sigcontext sc)
-{
-   /* Both the "xorps %%xmm0,%%xmm0" and "divps %xmm0,%%xmm1"
-    * instructions are 3 bytes long.  We must increment the instruction
-    * pointer manually to avoid repeated execution of the offending
-    * instruction.
-    *
-    * If the SIGILL is caused by a divide-by-zero when unmasked
-    * exceptions aren't supported, the SIMD FPU status and control
-    * word will be restored at the end of the test, so we don't need
-    * to worry about doing it here.  Besides, we may not be able to...
-    */
-   sc.eip += 3;
-
-   util_cpu_caps.has_sse=0;
-}
-
-static void
-sigfpe_handler_sse(int signal, struct sigcontext sc)
-{
-   if (sc.fpstate->magic != 0xffff) {
-      /* Our signal context has the extended FPU state, so reset the
-       * divide-by-zero exception mask and clear the divide-by-zero
-       * exception bit.
-       */
-      sc.fpstate->mxcsr |= 0x00000200;
-      sc.fpstate->mxcsr &= 0xfffffffb;
-   } else {
-      /* If we ever get here, we're completely hosed.
-      */
-   }
-}
-#endif /* PIPE_OS_LINUX && _POSIX_SOURCE && X86_FXSR_MAGIC */
-
-#if defined(PIPE_OS_WINDOWS)
-static LONG CALLBACK
-win32_sig_handler_sse(EXCEPTION_POINTERS* ep)
-{
-   if(ep->ExceptionRecord->ExceptionCode==EXCEPTION_ILLEGAL_INSTRUCTION){
-      ep->ContextRecord->Eip +=3;
-      util_cpu_caps.has_sse=0;
-      return EXCEPTION_CONTINUE_EXECUTION;
-   }
-   return EXCEPTION_CONTINUE_SEARCH;
-}
-#endif /* PIPE_OS_WINDOWS */
-
-#endif /* PIPE_ARCH_X86 */
-
-
 #if defined(PIPE_ARCH_PPC) && !defined(PIPE_OS_APPLE)
 static jmp_buf  __lv_powerpc_jmpbuf;
 static volatile sig_atomic_t __lv_powerpc_canjump = 0;
