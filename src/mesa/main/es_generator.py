@@ -215,6 +215,10 @@ extern void _mesa_error(void *ctx, GLenum error, const char *fmtString, ... );
 #ifdef IN_DRI_DRIVER
 #define _GLAPI_USE_REMAP_TABLE
 #endif
+/* glapi uses GLAPIENTRY while GLES headers define GL_APIENTRY */
+#ifndef GLAPIENTRY
+#define GLAPIENTRY GL_APIENTRY
+#endif
 #include "%sapi/glapi/glapitable.h"
 #include "%sapi/glapi/glapioffsets.h"
 #include "%sapi/glapi/glapidispatch.h"
@@ -603,6 +607,8 @@ for funcName in keys:
     # are complete; remove the extra ", " at the front of each.
     passthroughDeclarationString = passthroughDeclarationString[2:]
     passthroughCallString = passthroughCallString[2:]
+    if not passthroughDeclarationString:
+        passthroughDeclarationString = "void"
 
     # The Mesa functions are scattered across all the Mesa
     # header files.  The easiest way to manage declarations
