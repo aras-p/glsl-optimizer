@@ -66,7 +66,8 @@ llvm_middle_end_prepare( struct draw_pt_middle_end *middle,
    struct draw_context *draw = fpme->draw;
    struct llvm_vertex_shader *shader =
       llvm_vertex_shader(draw->vs.vertex_shader);
-   struct draw_llvm_variant_key key;
+   char store[DRAW_LLVM_MAX_VARIANT_KEY_SIZE];
+   struct draw_llvm_variant_key *key;
    struct draw_llvm_variant *variant = NULL;
    struct draw_llvm_variant_list_item *li;
    unsigned i;
@@ -125,11 +126,14 @@ llvm_middle_end_prepare( struct draw_pt_middle_end *middle,
       *max_vertices = 4096;
    }
 
-   draw_llvm_make_variant_key(fpme->llvm, &key);
+   /* return even number */
+   *max_vertices = *max_vertices & ~1;
+   
+   key = draw_llvm_make_variant_key(fpme->llvm, store);
 
    li = first_elem(&shader->variants);
    while(!at_end(&shader->variants, li)) {
-      if(memcmp(&li->base->key, &key, sizeof key) == 0) {
+      if(memcmp(&li->base->key, key, shader->variant_key_size) == 0) {
          variant = li->base;
          break;
       }
@@ -152,7 +156,7 @@ llvm_middle_end_prepare( struct draw_pt_middle_end *middle,
          }
       }
 
-      variant = draw_llvm_create_variant(fpme->llvm, nr);
+      variant = draw_llvm_create_variant(fpme->llvm, nr, key);
 
       if (variant) {
          insert_at_head(&shader->variants, &variant->list_item_local);
