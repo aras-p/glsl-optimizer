@@ -301,7 +301,6 @@ static struct pipe_resource *
 alloc_texture(struct st_context *st, GLsizei width, GLsizei height,
               enum pipe_format texFormat)
 {
-   struct pipe_context *pipe = st->pipe;
    struct pipe_resource *pt;
 
    pt = st_texture_create(st, st->internal_target, texFormat, 0,
