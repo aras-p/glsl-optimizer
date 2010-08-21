@@ -433,7 +433,7 @@ nvfx_vtxelts_state_create(struct pipe_context *pipe,
 
 	if(num_elements > 16)
 	{
-		_debug_printf("Error: application attempted to use %u vertex elements, but only 16 are supported: ignoring the rest\n");
+		_debug_printf("Error: application attempted to use %u vertex elements, but only 16 are supported: ignoring the rest\n", num_elements);
 		num_elements = 16;
 	}
 
