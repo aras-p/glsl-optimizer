@@ -38,20 +38,30 @@ debug_describe_reference(char* buf, const struct pipe_reference*ptr)
 void
 debug_describe_resource(char* buf, const struct pipe_resource *ptr)
 {
-   if(ptr->target == PIPE_BUFFER)
+   switch(ptr->target)
+   {
+   case PIPE_BUFFER:
       util_sprintf(buf, "pipe_buffer<%u>", (unsigned)util_format_get_stride(ptr->format, ptr->width0));
-   else if(ptr->target == PIPE_TEXTURE_1D)
+      break;
+   case PIPE_TEXTURE_1D:
       util_sprintf(buf, "pipe_texture1d<%u,%s,%u>", ptr->width0, util_format_short_name(ptr->format), ptr->last_level);
-   else if(ptr->target == PIPE_TEXTURE_2D)
+      break;
+   case PIPE_TEXTURE_2D:
       util_sprintf(buf, "pipe_texture2d<%u,%u,%s,%u>", ptr->width0, ptr->height0, util_format_short_name(ptr->format), ptr->last_level);
-   else if(ptr->target == PIPE_TEXTURE_RECT)
+      break;
+   case PIPE_TEXTURE_RECT:
       util_sprintf(buf, "pipe_texture_rect<%u,%u,%s>", ptr->width0, ptr->height0, util_format_short_name(ptr->format));
-   else if(ptr->target == PIPE_TEXTURE_CUBE)
+      break;
+   case PIPE_TEXTURE_CUBE:
       util_sprintf(buf, "pipe_texture_cube<%u,%u,%s,%u>", ptr->width0, ptr->height0, util_format_short_name(ptr->format), ptr->last_level);
-   else if(ptr->target == PIPE_TEXTURE_3D)
+      break;
+   case PIPE_TEXTURE_3D:
       util_sprintf(buf, "pipe_texture3d<%u,%u,%u,%s,%u>", ptr->width0, ptr->height0, ptr->depth0, util_format_short_name(ptr->format), ptr->last_level);
-   else
+      break;
+   default:
       util_sprintf(buf, "pipe_martian_resource<%u>", ptr->target);
+      break;
+   }
 }
 
 void
