@@ -59,6 +59,7 @@ public:
       this->function = this->symbols->get_function(ir->name);
       if (!this->function) {
 	 this->function = new(this->mem_ctx) ir_function(ir->name);
+	 this->function->is_builtin = ir->is_builtin;
 
 	 list->push_tail(this->function);
 
@@ -86,7 +87,6 @@ public:
 	 new(mem_ctx) ir_function_signature(ir->return_type);
 
       copy->is_defined = false;
-      copy->is_built_in = ir->is_built_in;
 
       /* Clone the parameter list, but NOT the body.
        */

@@ -982,7 +982,6 @@ ir_function_signature::ir_function_signature(const glsl_type *return_type)
    : return_type(return_type), is_defined(false), _function(NULL)
 {
    this->ir_type = ir_type_function_signature;
-   this->is_built_in = false;
 }
 
 
@@ -1034,6 +1033,7 @@ ir_function::ir_function(const char *name)
 {
    this->ir_type = ir_type_function;
    this->name = talloc_strdup(this, name);
+   this->is_builtin = false;
 }
 
 

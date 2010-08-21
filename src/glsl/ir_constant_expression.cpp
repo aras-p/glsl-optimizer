@@ -785,7 +785,7 @@ ir_call::constant_expression_value()
     * "Function calls to user-defined functions (non-built-in functions)
     *  cannot be used to form constant expressions."
     */
-   if (!this->callee->is_built_in)
+   if (!this->callee->function()->is_builtin)
       return NULL;
 
    unsigned num_parameters = 0;

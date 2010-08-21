@@ -153,14 +153,8 @@ void ir_print_visitor::visit(ir_function_signature *ir)
 
 void ir_print_visitor::visit(ir_function *ir)
 {
-   bool found_non_builtin_proto = false;
-
-   foreach_iter(exec_list_iterator, iter, *ir) {
-      ir_function_signature *const sig = (ir_function_signature *) iter.get();
-      if (sig->is_defined || !sig->is_built_in)
-	 found_non_builtin_proto = true;
-   }
-   if (!found_non_builtin_proto)
+   /* Don't print built-in functions as part of the IR. */
+   if (ir->is_builtin)
       return;
 
    printf("(function %s\n", ir->name);
