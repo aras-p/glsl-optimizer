@@ -13,7 +13,7 @@ void
 debug_describe_resource(char* buf, const struct pipe_resource *ptr)
 {
    if(ptr->target == PIPE_BUFFER)
-      util_sprintf(buf, "pipe_buffer<%u>", util_format_get_stride(ptr->format, ptr->width0));
+      util_sprintf(buf, "pipe_buffer<%u>", (unsigned)util_format_get_stride(ptr->format, ptr->width0));
    else if(ptr->target == PIPE_TEXTURE_1D)
       util_sprintf(buf, "pipe_texture1d<%u,%s,%u>", ptr->width0, util_format_short_name(ptr->format), ptr->last_level);
    else if(ptr->target == PIPE_TEXTURE_2D)
