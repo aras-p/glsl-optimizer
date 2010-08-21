@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
 
-import re, glob, sys
+import re, glob
 from os import path
 from subprocess import Popen, PIPE
 
