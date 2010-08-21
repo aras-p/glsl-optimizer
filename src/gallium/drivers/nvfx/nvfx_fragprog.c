@@ -536,7 +536,7 @@ nvfx_fragprog_parse_instruction(struct nvfx_context* nvfx, struct nvfx_fpc *fpc,
 		nvfx_fp_emit(fpc, arith(sat, ADD, dst, mask, src[0], src[1], none));
 		break;
 	case TGSI_OPCODE_CMP:
-		insn = arith(0, MOV, none.reg, 0xf, src[0], none, none);
+		insn = arith(0, MOV, none.reg, mask, src[0], none, none);
 		insn.cc_update = 1;
 		nvfx_fp_emit(fpc, insn);
 
