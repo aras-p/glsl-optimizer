@@ -567,6 +567,8 @@ nvfx_vertprog_parse_instruction(struct nvfx_context* nvfx, struct nvfx_vpc *vpc,
 	case TGSI_OPCODE_MUL:
 		nvfx_vp_emit(vpc, arith(VEC, MUL, dst, mask, src[0], src[1], none));
 		break;
+	case TGSI_OPCODE_NOP:
+		break;
 	case TGSI_OPCODE_POW:
 		tmp = nvfx_src(temp(vpc));
 		nvfx_vp_emit(vpc, arith(SCA, LG2, tmp.reg, NVFX_VP_MASK_X, none, none, swz(src[0], X, X, X, X)));

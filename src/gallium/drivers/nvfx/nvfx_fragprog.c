@@ -636,6 +636,8 @@ nvfx_fragprog_parse_instruction(struct nvfx_context* nvfx, struct nvfx_fpc *fpc,
 	case TGSI_OPCODE_MUL:
 		nvfx_fp_emit(fpc, arith(sat, MUL, dst, mask, src[0], src[1], none));
 		break;
+	case TGSI_OPCODE_NOP:
+		break;
 	case TGSI_OPCODE_POW:
 		if(!nvfx->is_nv4x)
 			nvfx_fp_emit(fpc, arith(sat, POW_NV30, dst, mask, src[0], src[1], none));
