@@ -63,7 +63,11 @@ util_semantic_set_from_program_file(struct util_semantic_set *set, const struct 
       semantic_index = info.output_semantic_index;
    }
    else
+   {
       assert(0);
+      semantic_name = NULL;
+      semantic_index = NULL;
+   }
 
    tgsi_parse_init(&parse, tokens);
 
