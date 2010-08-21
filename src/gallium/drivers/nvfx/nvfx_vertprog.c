@@ -514,6 +514,11 @@ nvfx_vertprog_parse_instruction(struct nvfx_context* nvfx, struct nvfx_vpc *vpc,
 	case TGSI_OPCODE_COS:
 		nvfx_vp_emit(vpc, arith(SCA, COS, dst, mask, none, none, src[0]));
 		break;
+        case TGSI_OPCODE_DP2:
+                tmp = nvfx_src(temp(vpc));
+                nvfx_vp_emit(vpc, arith(VEC, MUL, tmp.reg, NVFX_VP_MASK_X | NVFX_VP_MASK_Y, src[0], src[1], none));
+                nvfx_vp_emit(vpc, arith(VEC, ADD, dst, mask, swz(tmp, X, X, X, X), swz(tmp, Y, Y, Y, Y), none));
+                break;
 	case TGSI_OPCODE_DP3:
 		nvfx_vp_emit(vpc, arith(VEC, DP3, dst, mask, src[0], src[1], none));
 		break;
