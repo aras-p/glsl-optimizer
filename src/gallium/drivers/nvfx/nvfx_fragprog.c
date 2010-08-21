@@ -457,7 +457,7 @@ nvfx_fragprog_parse_instruction(struct nvfx_context* nvfx, struct nvfx_fpc *fpc,
 {
 	const struct nvfx_src none = nvfx_src(nvfx_reg(NVFXSR_NONE, 0));
 	struct nvfx_insn insn;
-	struct nvfx_src src[3], tmp;
+	struct nvfx_src src[3], tmp, tmp2;
 	struct nvfx_reg dst;
 	int mask, sat, unit = 0;
 	int ai = -1, ci = -1, ii = -1;
@@ -721,6 +721,13 @@ nvfx_fragprog_parse_instruction(struct nvfx_context* nvfx, struct nvfx_fpc *fpc,
 	case TGSI_OPCODE_SNE:
 		nvfx_fp_emit(fpc, arith(sat, SNE, dst, mask, src[0], src[1], none));
 		break;
+	case TGSI_OPCODE_SSG:
+		tmp = nvfx_src(temp(fpc));
+		tmp2 = nvfx_src(temp(fpc));
+		nvfx_fp_emit(fpc, arith(0, SGT, tmp.reg, mask, src[0], nvfx_src(nvfx_reg(NVFXSR_CONST, 0)), none));
+		nvfx_fp_emit(fpc, arith(0, SLT, tmp.reg, mask, src[0], nvfx_src(nvfx_reg(NVFXSR_CONST, 0)), none));
+		nvfx_fp_emit(fpc, arith(sat, ADD, dst, mask, tmp, neg(tmp2), none));
+		break;
 	case TGSI_OPCODE_STR:
 		nvfx_fp_emit(fpc, arith(sat, STR, dst, mask, src[0], src[1], none));
 		break;
@@ -896,6 +903,8 @@ nvfx_fragprog_prepare(struct nvfx_context* nvfx, struct nvfx_fpc *fpc)
 	struct tgsi_parse_context p;
 	int high_temp = -1, i;
 	struct util_semantic_set set;
+	float const0v[4] = {0, 0, 0, 0};
+	struct nvfx_reg const0;
 
 	fpc->fp->num_slots = util_semantic_set_from_program_file(&set, fpc->fp->pipe.tokens, TGSI_FILE_INPUT);
 	if(fpc->fp->num_slots > 8)
@@ -904,6 +913,9 @@ nvfx_fragprog_prepare(struct nvfx_context* nvfx, struct nvfx_fpc *fpc)
 	util_semantic_table_from_layout(fpc->generic_to_slot, fpc->fp->slot_to_generic, 0, 8);
 
 	memset(fpc->fp->slot_to_fp_input, 0xff, sizeof(fpc->fp->slot_to_fp_input));
+
+	const0 = constant(fpc, -1, const0v);
+	assert(const0.index == 0);
 
 	tgsi_parse_init(&p, fpc->fp->pipe.tokens);
 	while (!tgsi_parse_end_of_tokens(&p)) {
