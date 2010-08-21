@@ -153,8 +153,7 @@ upload_wm_state(struct brw_context *brw)
 
    dw6 |= GEN6_WM_PERSPECTIVE_PIXEL_BARYCENTRIC;
 
-   /* This should probably be FS inputs read */
-   dw6 |= brw_count_bits(brw->vs.prog_data->outputs_written) <<
+   dw6 |= brw_count_bits(brw->fragment_program->Base.InputsRead) <<
       GEN6_WM_NUM_SF_OUTPUTS_SHIFT;
 
    BEGIN_BATCH(9);

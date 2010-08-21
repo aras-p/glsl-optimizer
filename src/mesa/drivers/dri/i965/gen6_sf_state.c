@@ -33,20 +33,29 @@
 #include "intel_batchbuffer.h"
 
 static uint32_t
-get_attr_override(struct brw_context *brw, int attr)
+get_attr_override(struct brw_context *brw, int fs_attr)
 {
-   uint32_t attr_override;
-   int attr_index = 0, i;
+   int attr_index = 0, i, vs_attr;
+
+   if (fs_attr <= FRAG_ATTRIB_TEX7)
+      vs_attr = fs_attr;
+   else if (fs_attr == FRAG_ATTRIB_FACE)
+      vs_attr = 0; /* XXX */
+   else if (fs_attr == FRAG_ATTRIB_PNTC)
+      vs_attr = 0; /* XXX */
+   else {
+      assert(fs_attr >= FRAG_ATTRIB_VAR0);
+      vs_attr = fs_attr - FRAG_ATTRIB_VAR0 + VERT_RESULT_VAR0;
+   }
 
    /* Find the source index (0 = first attribute after the 4D position)
     * for this output attribute.  attr is currently a VERT_RESULT_* but should
     * be FRAG_ATTRIB_*.
     */
-   for (i = 0; i < attr; i++) {
+   for (i = 0; i < vs_attr; i++) {
       if (brw->vs.prog_data->outputs_written & BITFIELD64_BIT(i))
 	 attr_index++;
    }
-   attr_override = attr_index;
 
    return attr_index;
 }
@@ -58,8 +67,7 @@ upload_sf_state(struct brw_context *brw)
    GLcontext *ctx = &intel->ctx;
    /* CACHE_NEW_VS_PROG */
    uint32_t num_inputs = brw_count_bits(brw->vs.prog_data->outputs_written);
-   /* This should probably be FS inputs read */
-   uint32_t num_outputs = brw_count_bits(brw->vs.prog_data->outputs_written);
+   uint32_t num_outputs = brw_count_bits(brw->fragment_program->Base.InputsRead);
    uint32_t dw1, dw2, dw3, dw4;
    int i;
    /* _NEW_BUFFER */
@@ -144,11 +152,8 @@ upload_sf_state(struct brw_context *brw)
    for (i = 0; i < 8; i++) {
       uint32_t attr_overrides = 0;
 
-      /* These should be generating FS inputs read instead of VS
-       * outputs written
-       */
       for (; attr < 64; attr++) {
-	 if (brw->vs.prog_data->outputs_written & BITFIELD64_BIT(attr)) {
+	 if (brw->fragment_program->Base.InputsRead & BITFIELD64_BIT(attr)) {
 	    attr_overrides |= get_attr_override(brw, attr);
 	    attr++;
 	    break;
@@ -156,7 +161,7 @@ upload_sf_state(struct brw_context *brw)
       }
 
       for (; attr < 64; attr++) {
-	 if (brw->vs.prog_data->outputs_written & BITFIELD64_BIT(attr)) {
+	 if (brw->fragment_program->Base.InputsRead & BITFIELD64_BIT(attr)) {
 	    attr_overrides |= get_attr_override(brw, attr) << 16;
 	    attr++;
 	    break;
