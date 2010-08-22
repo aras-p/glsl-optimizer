@@ -238,7 +238,7 @@ void draw_pipeline_run( struct draw_context *draw,
       const unsigned count = prim_info->primitive_lengths[i];
 
 #if DEBUG
-      /* make sure none of the element indexes go outside the vertex buffer */
+      /* Warn if one of the element indexes go outside the vertex buffer */
       {
          unsigned max_index = 0x0, i;
          /* find the largest element index */
@@ -247,7 +247,12 @@ void draw_pipeline_run( struct draw_context *draw,
             if (index > max_index)
                max_index = index;
          }
-         assert(max_index <= vert_info->count);
+         if (max_index >= vert_info->count) {
+            debug_printf("%s: max_index (%u) outside vertex buffer (%u)\n",
+                         __FUNCTION__,
+                         max_index,
+                         vert_info->count);
+         }
       }
 #endif
 
