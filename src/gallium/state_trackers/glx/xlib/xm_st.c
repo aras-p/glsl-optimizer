@@ -211,6 +211,12 @@ xmesa_st_framebuffer_validate(struct st_framebuffer_iface *stfbi,
    /* record newly allocated textures */
    new_mask = statt_mask & ~xstfb->texture_mask;
 
+   /* If xmesa_strict_invalidate is not set, we will not yet have
+    * called XGetGeometry().  Do so here:
+    */
+   if (!xmesa_strict_invalidate)
+      xmesa_check_buffer_size(xstfb->buffer);
+
    resized = (xstfb->buffer->width != xstfb->texture_width ||
               xstfb->buffer->height != xstfb->texture_height);
 
@@ -252,7 +258,8 @@ xmesa_st_framebuffer_flush_front(struct st_framebuffer_iface *stfbi,
    boolean ret;
 
    ret = xmesa_st_framebuffer_display(stfbi, statt);
-   if (ret)
+
+   if (ret && xmesa_strict_invalidate)
       xmesa_check_buffer_size(xstfb->buffer);
 
    return ret;
@@ -327,7 +334,8 @@ xmesa_swap_st_framebuffer(struct st_framebuffer_iface *stfbi)
          *back = tmp;
       }
 
-      xmesa_check_buffer_size(xstfb->buffer);
+      if (xmesa_strict_invalidate)
+	 xmesa_check_buffer_size(xstfb->buffer);
    }
 }
 

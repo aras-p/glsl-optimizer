@@ -72,10 +72,35 @@
 static struct xm_driver driver;
 static struct st_api *stapi;
 
+/* Default strict invalidate to false.  This means we will not call
+ * XGetGeometry after every swapbuffers, which allows swapbuffers to
+ * remain asynchronous.  For apps running at 100fps with synchronous
+ * swapping, a 10% boost is typical.  For gears, I see closer to 20%
+ * speedup.
+ *
+ * Note that the work of copying data on swapbuffers doesn't disappear
+ * - this change just allows the X server to execute the PutImage
+ * asynchronously without us effectively blocked until its completion.
+ *
+ * This speeds up even llvmpipe's threaded rasterization as the
+ * swapbuffers operation was a large part of the serial component of
+ * an llvmpipe frame.
+ *
+ * The downside of this is correctness - applications which don't call
+ * glViewport on window resizes will get incorrect rendering.  A
+ * better solution would be to have per-frame but asynchronous
+ * invalidation.  Xcb almost looks as if it could provide this, but
+ * the API doesn't seem to quite be there.
+ */
+boolean xmesa_strict_invalidate = FALSE;
+
 void xmesa_set_driver( const struct xm_driver *templ )
 {
    driver = *templ;
    stapi = driver.create_st_api();
+
+   xmesa_strict_invalidate =
+      debug_get_bool_option("XMESA_STRICT_INVALIDATE", FALSE);
 }
 
 
@@ -91,7 +116,12 @@ static int
 xmesa_get_param(struct st_manager *smapi,
                 enum st_manager_param param)
 {
-   return 0;
+   switch(param) {
+   case ST_MANAGER_BROKEN_INVALIDATE:
+      return !xmesa_strict_invalidate;
+   default:
+      return 0;
+   }
 }
 
 static XMesaDisplay
