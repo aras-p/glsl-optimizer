@@ -24,6 +24,7 @@
  *      Jerome Glisse
  *      Corbin Simpson
  */
+#include <errno.h>
 #include <pipe/p_screen.h>
 #include <util/u_format.h>
 #include <util/u_math.h>
@@ -33,6 +34,7 @@
 #include "r600_screen.h"
 #include "r600_context.h"
 #include "r600_resource.h"
+#include "r600_state_inlines.h"
 #include "r600d.h"
 
 extern struct u_resource_vtbl r600_texture_vtbl;
@@ -91,6 +93,8 @@ static void r600_setup_miptree(struct r600_screen *rscreen, struct r600_resource
 		rtex->offset[i] = offset;
 		rtex->layer_size[i] = layer_size;
 		rtex->pitch[i] = pitch;
+		rtex->width[i] = w;
+		rtex->height[i] = h;
 		offset += size;
 	}
 	rtex->size = offset;
@@ -130,9 +134,18 @@ static void r600_texture_destroy(struct pipe_screen *screen,
 	struct r600_resource_texture *rtex = (struct r600_resource_texture*)ptex;
 	struct r600_resource *resource = &rtex->resource;
 	struct r600_screen *rscreen = r600_screen(screen);
+	unsigned i;
 
 	if (resource->bo) {
 		radeon_bo_decref(rscreen->rw, resource->bo);
+	}
+	if (rtex->uncompressed) {
+		radeon_bo_decref(rscreen->rw, rtex->uncompressed);
+	}
+	for (i = 0; i < PIPE_MAX_TEXTURE_LEVELS; i++) {
+		radeon_state_decref(rtex->scissor[i]);
+		radeon_state_decref(rtex->cb0[i]);
+		radeon_state_decref(rtex->db[i]);
 	}
 	FREE(rtex);
 }
@@ -594,4 +607,219 @@ out_word4:
 out_unknown:
 	R600_ERR("Unable to handle texformat %d %s\n", format, util_format_name(format));
 	return ~0;
+}
+
+int r600_texture_from_depth(struct pipe_context *ctx, struct r600_resource_texture *rtexture, unsigned level)
+{
+	struct r600_screen *rscreen = r600_screen(ctx->screen);
+	int r;
+
+	if (!rtexture->depth) {
+		/* This shouldn't happen maybe print a warning */
+		return 0;
+	}
+	if (rtexture->uncompressed && !rtexture->dirty) {
+		/* Uncompressed bo already in good state */
+		return 0;
+	}
+
+	/* allocate uncompressed texture */
+	if (rtexture->uncompressed == NULL) {
+		rtexture->uncompressed = radeon_bo(rscreen->rw, 0, rtexture->size, 4096, NULL);
+		if (rtexture->uncompressed == NULL) {
+			return -ENOMEM;
+		}
+	}
+
+	/* render a rectangle covering whole buffer to uncompress depth */
+	r = r600_blit_uncompress_depth(ctx, rtexture, level);
+R600_ERR("---step0 %d\n", r);
+	if (r) {
+		return r;
+	}
+
+	rtexture->dirty = 0;
+	return 0;
+}
+
+static struct radeon_state *r600_texture_state_scissor(struct r600_screen *rscreen,
+					struct r600_resource_texture *rtexture,
+					unsigned level)
+{
+	struct radeon_state *rstate;
+
+	rstate = radeon_state(rscreen->rw, R600_SCISSOR_TYPE, R600_SCISSOR);
+	if (rstate == NULL)
+		return NULL;
+
+	/* set states (most default value are 0 and struct already
+	 * initialized to 0, thus avoid resetting them)
+	 */
+	rstate->states[R600_SCISSOR__PA_SC_CLIPRECT_0_BR] = S_028244_BR_X(rtexture->width[level]) | S_028244_BR_Y(rtexture->height[level]);
+	rstate->states[R600_SCISSOR__PA_SC_CLIPRECT_0_TL] = 0x80000000;
+	rstate->states[R600_SCISSOR__PA_SC_CLIPRECT_1_BR] = S_028244_BR_X(rtexture->width[level]) | S_028244_BR_Y(rtexture->height[level]);
+	rstate->states[R600_SCISSOR__PA_SC_CLIPRECT_1_TL] = 0x80000000;
+	rstate->states[R600_SCISSOR__PA_SC_CLIPRECT_2_BR] = S_028244_BR_X(rtexture->width[level]) | S_028244_BR_Y(rtexture->height[level]);
+	rstate->states[R600_SCISSOR__PA_SC_CLIPRECT_2_TL] = 0x80000000;
+	rstate->states[R600_SCISSOR__PA_SC_CLIPRECT_3_BR] = S_028244_BR_X(rtexture->width[level]) | S_028244_BR_Y(rtexture->height[level]);
+	rstate->states[R600_SCISSOR__PA_SC_CLIPRECT_3_TL] = 0x80000000;
+	rstate->states[R600_SCISSOR__PA_SC_CLIPRECT_RULE] = 0x0000FFFF;
+	rstate->states[R600_SCISSOR__PA_SC_EDGERULE] = 0xAAAAAAAA;
+	rstate->states[R600_SCISSOR__PA_SC_GENERIC_SCISSOR_BR] = S_028244_BR_X(rtexture->width[level]) | S_028244_BR_Y(rtexture->height[level]);
+	rstate->states[R600_SCISSOR__PA_SC_GENERIC_SCISSOR_TL] = 0x80000000;
+	rstate->states[R600_SCISSOR__PA_SC_SCREEN_SCISSOR_BR] = S_028244_BR_X(rtexture->width[level]) | S_028244_BR_Y(rtexture->height[level]);
+	rstate->states[R600_SCISSOR__PA_SC_SCREEN_SCISSOR_TL] = 0x80000000;
+	rstate->states[R600_SCISSOR__PA_SC_VPORT_SCISSOR_0_BR] = S_028244_BR_X(rtexture->width[level]) | S_028244_BR_Y(rtexture->height[level]);
+	rstate->states[R600_SCISSOR__PA_SC_VPORT_SCISSOR_0_TL] = 0x80000000;
+	rstate->states[R600_SCISSOR__PA_SC_WINDOW_SCISSOR_BR] = S_028244_BR_X(rtexture->width[level]) | S_028244_BR_Y(rtexture->height[level]);
+	rstate->states[R600_SCISSOR__PA_SC_WINDOW_SCISSOR_TL] = 0x80000000;
+
+	if (radeon_state_pm4(rstate)) {
+		radeon_state_decref(rstate);
+		return NULL;
+	}
+	return rstate;
+}
+
+static struct radeon_state *r600_texture_state_cb0(struct r600_screen *rscreen,
+				struct r600_resource_texture *rtexture,
+				unsigned level)
+{
+	struct radeon_state *rstate;
+	struct r600_resource *rbuffer;
+	unsigned pitch, slice;
+	unsigned color_info;
+	unsigned format, swap, ntype;
+	const struct util_format_description *desc;
+
+	rstate = radeon_state(rscreen->rw, R600_CB0_TYPE, R600_CB0);
+	if (rstate == NULL)
+		return NULL;
+	rbuffer = &rtexture->resource;
+
+	/* set states (most default value are 0 and struct already
+	 * initialized to 0, thus avoid resetting them)
+	 */
+	pitch = (rtexture->pitch[level] / rtexture->bpt) / 8 - 1;
+	slice = (rtexture->pitch[level] / rtexture->bpt) * rtexture->height[level] / 64 - 1;
+	ntype = 0;
+	desc = util_format_description(rbuffer->base.b.format);
+	if (desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB)
+		ntype = V_0280A0_NUMBER_SRGB;
+	format = r600_translate_colorformat(rtexture->resource.base.b.format);
+	swap = r600_translate_colorswap(rtexture->resource.base.b.format);
+	color_info = S_0280A0_FORMAT(format) |
+		S_0280A0_COMP_SWAP(swap) |
+		S_0280A0_BLEND_CLAMP(1) |
+		S_0280A0_NUMBER_TYPE(ntype);
+	if (desc->colorspace == UTIL_FORMAT_COLORSPACE_ZS) {
+R600_ERR("CB0 uncompressed texture %p (handle)%d %d 0x%02X\n", rtexture, rtexture->uncompressed->handle, rtexture->resource.base.b.format, format);
+format = 17;
+		rstate->bo[0] = radeon_bo_incref(rscreen->rw, rtexture->uncompressed);
+		rstate->bo[1] = radeon_bo_incref(rscreen->rw, rtexture->uncompressed);
+		rstate->bo[2] = radeon_bo_incref(rscreen->rw, rtexture->uncompressed);
+		rstate->placement[0] = RADEON_GEM_DOMAIN_GTT;
+		rstate->placement[2] = RADEON_GEM_DOMAIN_GTT;
+		rstate->placement[4] = RADEON_GEM_DOMAIN_GTT;
+		rstate->nbo = 3;
+	} else {
+		rstate->bo[0] = radeon_bo_incref(rscreen->rw, rbuffer->bo);
+		rstate->bo[1] = radeon_bo_incref(rscreen->rw, rbuffer->bo);
+		rstate->bo[2] = radeon_bo_incref(rscreen->rw, rbuffer->bo);
+		rstate->placement[0] = RADEON_GEM_DOMAIN_GTT;
+		rstate->placement[2] = RADEON_GEM_DOMAIN_GTT;
+		rstate->placement[4] = RADEON_GEM_DOMAIN_GTT;
+		rstate->nbo = 3;
+		color_info |= S_0280A0_SOURCE_FORMAT(1);
+	}
+	rstate->states[R600_CB0__CB_COLOR0_BASE] = rtexture->offset[level] >> 8;
+	rstate->states[R600_CB0__CB_COLOR0_INFO] = color_info;
+	rstate->states[R600_CB0__CB_COLOR0_SIZE] = S_028060_PITCH_TILE_MAX(pitch) |
+						S_028060_SLICE_TILE_MAX(slice);
+
+	if (radeon_state_pm4(rstate)) {
+		radeon_state_decref(rstate);
+		return NULL;
+	}
+	return rstate;
+}
+
+static struct radeon_state *r600_texture_state_db(struct r600_screen *rscreen,
+				struct r600_resource_texture *rtexture,
+				unsigned level)
+{
+	struct radeon_state *rstate;
+	struct r600_resource *rbuffer;
+	unsigned pitch, slice, format;
+
+	rstate = radeon_state(rscreen->rw, R600_DB_TYPE, R600_DB);
+	if (rstate == NULL)
+		return NULL;
+	rbuffer = &rtexture->resource;
+
+	/* set states (most default value are 0 and struct already
+	 * initialized to 0, thus avoid resetting them)
+	 */
+	pitch = (rtexture->pitch[level] / rtexture->bpt) / 8 - 1;
+	slice = (rtexture->pitch[level] / rtexture->bpt) * rtexture->height[level] / 64 - 1;
+	format = r600_translate_dbformat(rbuffer->base.b.format);
+	rstate->states[R600_DB__DB_DEPTH_BASE] = rtexture->offset[level] >> 8;
+	rstate->states[R600_DB__DB_DEPTH_INFO] = S_028010_ARRAY_MODE(rtexture->array_mode) |
+					S_028010_FORMAT(format);
+	rstate->states[R600_DB__DB_DEPTH_VIEW] = 0x00000000;
+	rstate->states[R600_DB__DB_PREFETCH_LIMIT] = (rtexture->height[level] / 8) -1;
+	rstate->states[R600_DB__DB_DEPTH_SIZE] = S_028000_PITCH_TILE_MAX(pitch) |
+						S_028000_SLICE_TILE_MAX(slice);
+R600_ERR("DB handle %d  %p %d\n", rbuffer->bo->handle, rtexture, rbuffer->base.b.format);
+	rstate->bo[0] = radeon_bo_incref(rscreen->rw, rbuffer->bo);
+	rstate->placement[0] = RADEON_GEM_DOMAIN_GTT;
+	rstate->nbo = 1;
+
+	if (radeon_state_pm4(rstate)) {
+		radeon_state_decref(rstate);
+		return NULL;
+	}
+	return rstate;
+}
+
+int r600_texture_scissor(struct pipe_context *ctx, struct r600_resource_texture *rtexture, unsigned level)
+{
+	struct r600_screen *rscreen = r600_screen(ctx->screen);
+
+	if (rtexture->scissor[level] == NULL) {
+		rtexture->scissor[level] = r600_texture_state_scissor(rscreen, rtexture, level);
+		if (rtexture->scissor[level] == NULL) {
+			R600_ERR("failed to create scissor for uncompressing depth\n");
+			return -ENOMEM;
+		}
+	}
+	return 0;
+}
+
+int r600_texture_cb0(struct pipe_context *ctx, struct r600_resource_texture *rtexture, unsigned level)
+{
+	struct r600_screen *rscreen = r600_screen(ctx->screen);
+
+	if (rtexture->cb0[level] == NULL) {
+		rtexture->cb0[level] = r600_texture_state_cb0(rscreen, rtexture, level);
+		if (rtexture->cb0[level] == NULL) {
+			R600_ERR("failed to create cb0 state for texture\n");
+			return -ENOMEM;
+		}
+	}
+	return 0;
+}
+
+int r600_texture_db(struct pipe_context *ctx, struct r600_resource_texture *rtexture, unsigned level)
+{
+	struct r600_screen *rscreen = r600_screen(ctx->screen);
+
+	if (rtexture->db[level] == NULL) {
+		rtexture->db[level] = r600_texture_state_db(rscreen, rtexture, level);
+		if (rtexture->db[level] == NULL) {
+			R600_ERR("failed to create db state for texture\n");
+			return -ENOMEM;
+		}
+	}
+	return 0;
 }

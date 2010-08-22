@@ -776,7 +776,9 @@ static struct radeon_state *r600_db(struct r600_context *rctx)
 	rtex->tilled = 1;
 	rtex->array_mode = 2;
 	rtex->tile_type = 1;
+	rtex->depth = 1;
 	rbuffer = &rtex->resource;
+R600_ERR("DB handle %d   %p  %d\n", rbuffer->bo->handle, rtex, state->zsbuf->texture->format);
 	rstate->bo[0] = radeon_bo_incref(rscreen->rw, rbuffer->bo);
 	rstate->nbo = 1;
 	rstate->placement[0] = RADEON_GEM_DOMAIN_VRAM;
@@ -785,7 +787,7 @@ static struct radeon_state *r600_db(struct r600_context *rctx)
 	slice = (rtex->pitch[level] / rtex->bpt) * state->zsbuf->height / 64 - 1;
 	format = r600_translate_dbformat(state->zsbuf->texture->format);
 	rstate->states[R600_DB__DB_DEPTH_BASE] = rtex->offset[level] >> 8;
-	rstate->states[R600_DB__DB_DEPTH_INFO] = 0x00010000 |
+	rstate->states[R600_DB__DB_DEPTH_INFO] = S_028010_ARRAY_MODE(rtex->array_mode) |
 					S_028010_FORMAT(format);
 	rstate->states[R600_DB__DB_DEPTH_VIEW] = 0x00000000;
 	rstate->states[R600_DB__DB_PREFETCH_LIMIT] = (state->zsbuf->height / 8) -1;
@@ -1214,10 +1216,11 @@ static inline unsigned r600_tex_dim(unsigned dim)
 	}
 }
 
-static struct radeon_state *r600_resource(struct r600_context *rctx,
+static struct radeon_state *r600_resource(struct pipe_context *ctx,
 					const struct pipe_sampler_view *view,
 					unsigned id)
 {
+	struct r600_context *rctx = r600_context(ctx);
 	struct r600_screen *rscreen = rctx->screen;
 	const struct util_format_description *desc;
 	struct r600_resource_texture *tmp;
@@ -1225,7 +1228,8 @@ static struct radeon_state *r600_resource(struct r600_context *rctx,
 	struct radeon_state *rstate;
 	unsigned format;
 	uint32_t word4 = 0, yuv_format = 0, pitch = 0;
-	unsigned char swizzle[4];
+	unsigned char swizzle[4], array_mode = 0, tile_type = 0;
+	int r;
 
 	swizzle[0] = view->swizzle_r;
 	swizzle[1] = view->swizzle_g;
@@ -1247,8 +1251,23 @@ static struct radeon_state *r600_resource(struct r600_context *rctx,
 	}
 	tmp = (struct r600_resource_texture*)view->texture;
 	rbuffer = &tmp->resource;
-	rstate->bo[0] = radeon_bo_incref(rscreen->rw, rbuffer->bo);
-	rstate->bo[1] = radeon_bo_incref(rscreen->rw, rbuffer->bo);
+	if (tmp->depth) {
+		r = r600_texture_from_depth(ctx, tmp, view->first_level);
+		if (r) {
+			return NULL;
+		}
+format = r600_translate_colorformat(view->texture->format);
+R600_ERR("DEPTH TEXTURE %d rtex %p %d 0x%02X\n", tmp->uncompressed->handle, tmp, view->texture->format, format);
+format = 17;
+		rstate->bo[0] = radeon_bo_incref(rscreen->rw, tmp->uncompressed);
+		rstate->bo[1] = radeon_bo_incref(rscreen->rw, tmp->uncompressed);
+//		array_mode = tmp->array_mode;
+//		tile_type = tmp->tile_type;
+	} else {
+R600_ERR("NOT DEPTH TEXTURE\n");
+		rstate->bo[0] = radeon_bo_incref(rscreen->rw, rbuffer->bo);
+		rstate->bo[1] = radeon_bo_incref(rscreen->rw, rbuffer->bo);
+	}
 	rstate->nbo = 2;
 	rstate->placement[0] = RADEON_GEM_DOMAIN_GTT;
 	rstate->placement[1] = RADEON_GEM_DOMAIN_GTT;
@@ -1261,8 +1280,8 @@ static struct radeon_state *r600_resource(struct r600_context *rctx,
 	/* FIXME properly handle first level != 0 */
 	rstate->states[R600_PS_RESOURCE__RESOURCE0_WORD0] =
 			S_038000_DIM(r600_tex_dim(view->texture->target)) |
-			S_038000_TILE_MODE(tmp->array_mode) |
-			S_038000_TILE_TYPE(tmp->tile_type) |
+			S_038000_TILE_MODE(array_mode) |
+			S_038000_TILE_TYPE(tile_type) |
 			S_038000_PITCH((pitch / 8) - 1) |
 			S_038000_TEX_WIDTH(view->texture->width0 - 1);
 	rstate->states[R600_PS_RESOURCE__RESOURCE0_WORD1] =
@@ -1347,8 +1366,9 @@ static struct radeon_state *r600_cb_cntl(struct r600_context *rctx)
 	return rstate;
 }
 
-int r600_context_hw_states(struct r600_context *rctx)
+int r600_context_hw_states(struct pipe_context *ctx)
 {
+	struct r600_context *rctx = r600_context(ctx);
 	unsigned i;
 	int r;
 	int nr_cbufs = rctx->framebuffer->state.framebuffer.nr_cbufs;
@@ -1410,7 +1430,7 @@ int r600_context_hw_states(struct r600_context *rctx)
 	rctx->hw_states.ps_nsampler = rctx->ps_nsampler;
 	for (i = 0; i < rctx->ps_nsampler_view; i++) {
 		if (rctx->ps_sampler_view[i]) {
-			rctx->hw_states.ps_resource[i] = r600_resource(rctx,
+			rctx->hw_states.ps_resource[i] = r600_resource(ctx,
 							&rctx->ps_sampler_view[i]->state.sampler_view,
 							R600_PS_RESOURCE + i);
 		}

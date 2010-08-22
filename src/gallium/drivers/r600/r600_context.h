@@ -186,7 +186,7 @@ struct r600_context_state *r600_context_state_decref(struct r600_context_state *
 void r600_flush(struct pipe_context *ctx, unsigned flags,
 			struct pipe_fence_handle **fence);
 
-int r600_context_hw_states(struct r600_context *rctx);
+int r600_context_hw_states(struct pipe_context *ctx);
 
 void r600_draw_vbo(struct pipe_context *ctx,
                    const struct pipe_draw_info *info);

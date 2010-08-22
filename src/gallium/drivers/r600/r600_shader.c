@@ -150,6 +150,7 @@ static int r600_pipe_shader_vs(struct pipe_context *ctx, struct r600_context_sta
 	rpshader->rstate->bo[1] = radeon_bo_incref(rscreen->rw, rpshader->bo);
 	rpshader->rstate->nbo = 2;
 	rpshader->rstate->placement[0] = RADEON_GEM_DOMAIN_GTT;
+	rpshader->rstate->placement[2] = RADEON_GEM_DOMAIN_GTT;
 	return radeon_state_pm4(state);
 }
 

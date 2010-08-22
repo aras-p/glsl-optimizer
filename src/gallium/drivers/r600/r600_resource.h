@@ -44,6 +44,8 @@ struct r600_resource_texture {
 	struct r600_resource		resource;
 	unsigned long			offset[PIPE_MAX_TEXTURE_LEVELS];
 	unsigned long			pitch[PIPE_MAX_TEXTURE_LEVELS];
+	unsigned long			width[PIPE_MAX_TEXTURE_LEVELS];
+	unsigned long			height[PIPE_MAX_TEXTURE_LEVELS];
 	unsigned long			layer_size[PIPE_MAX_TEXTURE_LEVELS];
 	unsigned long			pitch_override;
 	unsigned long			bpt;
@@ -51,6 +53,12 @@ struct r600_resource_texture {
 	unsigned			tilled;
 	unsigned			array_mode;
 	unsigned			tile_type;
+	unsigned			depth;
+	unsigned			dirty;
+	struct radeon_bo		*uncompressed;
+	struct radeon_state		*scissor[PIPE_MAX_TEXTURE_LEVELS];
+	struct radeon_state		*cb0[PIPE_MAX_TEXTURE_LEVELS];
+	struct radeon_state		*db[PIPE_MAX_TEXTURE_LEVELS];
 };
 
 void r600_init_context_resource_functions(struct r600_context *r600);

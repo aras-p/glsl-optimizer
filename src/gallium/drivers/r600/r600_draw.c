@@ -58,7 +58,7 @@ static int r600_draw_common(struct r600_draw *draw)
 	struct pipe_vertex_buffer *vertex_buffer;
 	int r;
 
-	r = r600_context_hw_states(rctx);
+	r = r600_context_hw_states(draw->ctx);
 	if (r)
 		return r;
 	switch (draw->index_size) {
