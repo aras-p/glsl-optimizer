@@ -2569,6 +2569,14 @@ get_mesa_program(GLcontext *ctx, struct gl_shader_program *shader_program,
       mesa_inst->TexShadow = inst->tex_shadow;
       mesa_instruction_annotation[i] = inst->ir;
 
+      /* Set IndirectRegisterFiles. */
+      if (mesa_inst->DstReg.RelAddr)
+         prog->IndirectRegisterFiles |= 1 << mesa_inst->DstReg.File;
+
+      for (unsigned src = 0; src < 3; src++)
+         if (mesa_inst->SrcReg[src].RelAddr)
+            prog->IndirectRegisterFiles |= 1 << mesa_inst->SrcReg[src].File;
+
       if (ctx->Shader.EmitNoIfs && mesa_inst->Opcode == OPCODE_IF) {
 	 shader_program->InfoLog =
 	    talloc_asprintf_append(shader_program->InfoLog,
