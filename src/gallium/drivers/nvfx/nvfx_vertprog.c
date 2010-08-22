@@ -379,6 +379,8 @@ tgsi_src(struct nvfx_vpc *vpc, const struct tgsi_full_src_register *fsrc) {
 		break;
 	default:
 		NOUVEAU_ERR("bad src file\n");
+		src.reg.index = 0;
+		src.reg.type = 0;
 		break;
 	}
 
@@ -410,6 +412,8 @@ tgsi_dst(struct nvfx_vpc *vpc, const struct tgsi_full_dst_register *fdst) {
 		break;
 	default:
 		NOUVEAU_ERR("bad dst file %i\n", fdst->Register.File);
+		dst.index = 0;
+		dst.type = 0;
 		break;
 	}
 

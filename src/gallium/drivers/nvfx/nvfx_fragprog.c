@@ -418,6 +418,8 @@ tgsi_src(struct nvfx_fpc *fpc, const struct tgsi_full_src_register *fsrc)
 		break;
 	default:
 		NOUVEAU_ERR("bad src file\n");
+		src.reg.index = 0;
+		src.reg.type = 0;
 		break;
 	}
 
