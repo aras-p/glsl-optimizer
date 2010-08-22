@@ -900,44 +900,52 @@ static struct rc_swizzle_caps r300_vertprog_swizzle_caps = {
 };
 
 
-void r3xx_compile_vertex_program(struct r300_vertex_program_compiler* compiler)
+void r3xx_compile_vertex_program(struct r300_vertex_program_compiler *c)
 {
 	struct emulate_loop_state loop_state;
 
-	compiler->Base.SwizzleCaps = &r300_vertprog_swizzle_caps;
+	c->Base.SwizzleCaps = &r300_vertprog_swizzle_caps;
 
-	addArtificialOutputs(compiler);
+	addArtificialOutputs(c);
 
-	debug_program_log(compiler, "before compilation");
+	debug_program_log(c, "before compilation");
 
-	if (compiler->Base.is_r500)
-		rc_transform_loops(&compiler->Base, &loop_state, R500_VS_MAX_ALU);
+	if (c->Base.is_r500)
+		rc_transform_loops(&c->Base, &loop_state, R500_VS_MAX_ALU);
 	else
-		rc_transform_loops(&compiler->Base, &loop_state, R300_VS_MAX_ALU);
+		rc_transform_loops(&c->Base, &loop_state, R300_VS_MAX_ALU);
+	if (c->Base.Error)
+		return;
 
-	debug_program_log(compiler, "after emulate loops");
+	debug_program_log(c, "after emulate loops");
 
-	if (!compiler->Base.is_r500) {
-		rc_emulate_branches(&compiler->Base);
-		debug_program_log(compiler, "after emulate branches");
+	if (!c->Base.is_r500) {
+		rc_emulate_branches(&c->Base);
+		if (c->Base.Error)
+			return;
+		debug_program_log(c, "after emulate branches");
 	}
 
-	if (compiler->Base.is_r500) {
+	if (c->Base.is_r500) {
 		struct radeon_program_transformation transformations[] = {
 			{ &r300_transform_vertex_alu, 0 },
 			{ &r300_transform_trig_scale_vertex, 0 }
 		};
-		radeonLocalTransform(&compiler->Base, 2, transformations);
+		radeonLocalTransform(&c->Base, 2, transformations);
+		if (c->Base.Error)
+			return;
 
-		debug_program_log(compiler, "after native rewrite");
+		debug_program_log(c, "after native rewrite");
 	} else {
 		struct radeon_program_transformation transformations[] = {
 			{ &r300_transform_vertex_alu, 0 },
 			{ &radeonTransformTrigSimple, 0 }
 		};
-		radeonLocalTransform(&compiler->Base, 2, transformations);
+		radeonLocalTransform(&c->Base, 2, transformations);
+		if (c->Base.Error)
+			return;
 
-		debug_program_log(compiler, "after native rewrite");
+		debug_program_log(c, "after native rewrite");
 
 		/* Note: This pass has to be done seperately from ALU rewrite,
 		 * because it needs to check every instruction.
@@ -945,9 +953,11 @@ void r3xx_compile_vertex_program(struct r300_vertex_program_compiler* compiler)
 		struct radeon_program_transformation transformations2[] = {
 			{ &transform_nonnative_modifiers, 0 },
 		};
-		radeonLocalTransform(&compiler->Base, 1, transformations2);
+		radeonLocalTransform(&c->Base, 1, transformations2);
+		if (c->Base.Error)
+			return;
 
-		debug_program_log(compiler, "after emulate modifiers");
+		debug_program_log(c, "after emulate modifiers");
 	}
 
 	{
@@ -958,40 +968,50 @@ void r3xx_compile_vertex_program(struct r300_vertex_program_compiler* compiler)
 		struct radeon_program_transformation transformations[] = {
 			{ &transform_source_conflicts, 0 },
 		};
-		radeonLocalTransform(&compiler->Base, 1, transformations);
+		radeonLocalTransform(&c->Base, 1, transformations);
+		if (c->Base.Error)
+			return;
 	}
 
-	debug_program_log(compiler, "after source conflict resolve");
+	debug_program_log(c, "after source conflict resolve");
 
-	rc_dataflow_deadcode(&compiler->Base, &dataflow_outputs_mark_used, compiler);
+	rc_dataflow_deadcode(&c->Base, &dataflow_outputs_mark_used, c);
+	if (c->Base.Error)
+		return;
 
-	debug_program_log(compiler, "after deadcode");
+	debug_program_log(c, "after deadcode");
 
-	rc_dataflow_swizzles(&compiler->Base);
+	rc_dataflow_swizzles(&c->Base);
+	if (c->Base.Error)
+		return;
 
-	debug_program_log(compiler, "after dataflow");
+	debug_program_log(c, "after dataflow");
 
-	allocate_temporary_registers(compiler);
+	allocate_temporary_registers(c);
+	if (c->Base.Error)
+		return;
 
-	debug_program_log(compiler, "after register allocation");
+	debug_program_log(c, "after register allocation");
 
 
-	translate_vertex_program(compiler);
+	translate_vertex_program(c);
+	if (c->Base.Error)
+		return;
 
-	rc_constants_copy(&compiler->code->constants, &compiler->Base.Program.Constants);
+	rc_constants_copy(&c->code->constants, &c->Base.Program.Constants);
 
-	compiler->code->InputsRead = compiler->Base.Program.InputsRead;
-	compiler->code->OutputsWritten = compiler->Base.Program.OutputsWritten;
+	c->code->InputsRead = c->Base.Program.InputsRead;
+	c->code->OutputsWritten = c->Base.Program.OutputsWritten;
 
-	if (compiler->Base.Debug) {
+	if (c->Base.Debug) {
 		fprintf(stderr, "Final vertex program code:\n");
-		r300_vertex_program_dump(compiler);
+		r300_vertex_program_dump(c);
 	}
 
 	/* Check the number of constants. */
-	if (!compiler->Base.Error &&
-	    compiler->Base.Program.Constants.Count > 256) {
-		rc_error(&compiler->Base, "Too many constants. Max: 256, Got: %i\n",
-			 compiler->Base.Program.Constants.Count);
+	if (!c->Base.Error &&
+	    c->Base.Program.Constants.Count > 256) {
+		rc_error(&c->Base, "Too many constants. Max: 256, Got: %i\n",
+			 c->Base.Program.Constants.Count);
 	}
 }
