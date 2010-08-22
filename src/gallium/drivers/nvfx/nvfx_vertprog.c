@@ -9,6 +9,8 @@
 #include "tgsi/tgsi_dump.h"
 #include "tgsi/tgsi_util.h"
 
+#include "draw/draw_context.h"
+
 #include "nvfx_context.h"
 #include "nvfx_state.h"
 #include "nvfx_resource.h"
