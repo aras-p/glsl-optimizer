@@ -556,10 +556,10 @@ simple:
 	}
 	else
 	{
-		int* dswx;
-		int* dswy;
-		int* sswx;
-		int* sswy;
+		int* dswx = NULL;
+		int* dswy = NULL;
+		int* sswx = NULL;
+		int* sswy = NULL;
 		int dir;
 
 		if(!dst->pitch)
