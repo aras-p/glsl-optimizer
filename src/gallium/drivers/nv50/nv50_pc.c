@@ -327,7 +327,7 @@ nv50_emit_program(struct nv_pc *pc)
    assert(pc->emit == &code[pc->bin_size / 4]);
 
    /* XXX: we can do better than this ... */
-   if (!(pc->emit[-2] & 1) || (pc->emit[-2] & 2) || (pc->emit[-1] & 3) == 3) {
+   if (!(pc->emit[-2] & 1) || (pc->emit[-2] & 2) || (pc->emit[-1] & 3)) {
       pc->emit[0] = 0xf0000001;
       pc->emit[1] = 0xe0000000;
       pc->bin_size += 8;
