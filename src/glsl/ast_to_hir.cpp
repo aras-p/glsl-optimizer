@@ -1973,6 +1973,7 @@ ast_declarator_list::hir(exec_list *instructions,
       const bool added_variable =
 	 state->symbols->add_variable(var->name, var);
       assert(added_variable);
+      (void) added_variable;
    }
 
 
@@ -2040,12 +2041,21 @@ ast_parameter_declarator::hir(exec_list *instructions,
       return NULL;
    }
 
+   /* This only handles "vec4 foo[..]".  The earlier specifier->glsl_type(...)
+    * call already handled the "vec4[..] foo" case.
+    */
+   if (this->is_array) {
+      type = process_array_type(type, this->array_size, state);
+   }
+
+   if (type->array_size() == 0) {
+      _mesa_glsl_error(&loc, state, "arrays passed as parameters must have "
+		       "a declared size.");
+      type = glsl_type::error_type;
+   }
+
    is_void = false;
    ir_variable *var = new(ctx) ir_variable(type, this->identifier, ir_var_in);
-
-   /* FINISHME: Handle array declarations.  Note that this requires
-    * FINISHME: complete handling of constant expressions.
-    */
 
    /* Apply any specified qualifiers to the parameter declaration.  Note that
     * for function parameters the default mode is 'in'.

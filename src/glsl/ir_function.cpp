@@ -139,6 +139,9 @@ parameter_lists_match(const exec_list *list_a, const exec_list *list_b)
 	  */
 	 score = (type_compare(actual->type, param->type) == 0) ? 0 : -1;
 	 break;
+
+      default:
+	 assert(false);
       }
 
       if (score < 0)
