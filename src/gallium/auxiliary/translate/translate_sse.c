@@ -62,6 +62,30 @@ struct translate_buffer_varient {
 
 #define ELEMENT_BUFFER_INSTANCE_ID  1001
 
+#define NUM_CONSTS 7
+
+enum
+{
+   CONST_IDENTITY,
+   CONST_INV_127,
+   CONST_INV_255,
+   CONST_INV_32767,
+   CONST_INV_65535,
+   CONST_INV_2147483647,
+   CONST_255
+};
+
+#define C(v) {(float)(v), (float)(v), (float)(v), (float)(v)}
+static float consts[NUM_CONSTS][4] = {
+      {0, 0, 0, 1},
+      C(1.0 / 127.0),
+      C(1.0 / 255.0),
+      C(1.0 / 32767.0),
+      C(1.0 / 65535.0),
+      C(1.0 / 2147483647.0),
+      C(255.0)
+};
+#undef C
 
 struct translate_sse {
    struct translate translate;
@@ -72,11 +96,9 @@ struct translate_sse {
    struct x86_function elt8_func;
    struct x86_function *func;
 
-   boolean loaded_identity;
-   boolean loaded_const[5];
-
-   float identity[4];
-   float const_value[5][4];
+   PIPE_ALIGN_VAR(16) float consts[NUM_CONSTS][4];
+   int8_t reg_to_const[16];
+   int8_t const_to_reg[NUM_CONSTS];
 
    struct translate_buffer buffer[PIPE_MAX_ATTRIBS];
    unsigned nr_buffers;
@@ -108,69 +130,38 @@ static int get_offset( const void *a, const void *b )
    return (const char *)b - (const char *)a;
 }
 
-
-
-static struct x86_reg get_identity( struct translate_sse *p )
+static struct x86_reg get_const( struct translate_sse *p, unsigned id)
 {
-   struct x86_reg reg = x86_make_reg(file_XMM, 7);
+   struct x86_reg reg;
+   unsigned i;
 
-   if (!p->loaded_identity) {
-      p->loaded_identity = TRUE;
-      p->identity[0] = 0;
-      p->identity[1] = 0;
-      p->identity[2] = 0;
-      p->identity[3] = 1;
+   if(p->const_to_reg[id] >= 0)
+      return x86_make_reg(file_XMM, p->const_to_reg[id]);
 
-      sse_movups(p->func, reg, 
-		 x86_make_disp(p->machine_EDI,
-			       get_offset(p, &p->identity[0])));
+   for(i = 2; i < 8; ++i)
+   {
+      if(p->reg_to_const[i] < 0)
+         break;
    }
 
-   return reg;
-}
+   /* TODO: be smarter here */
+   if(i == 8)
+      --i;
 
-static struct x86_reg get_const( struct translate_sse *p, unsigned i, float v)
-{
-   struct x86_reg reg = x86_make_reg(file_XMM, 2 + i);
+   reg = x86_make_reg(file_XMM, i);
 
-   if (!p->loaded_const[i]) {
-      p->loaded_const[i] = TRUE;
-      p->const_value[i][0] =
-         p->const_value[i][1] =
-         p->const_value[i][2] =
-         p->const_value[i][3] = v;
+   if(p->reg_to_const[i] >= 0)
+      p->const_to_reg[p->reg_to_const[i]] = -1;
 
-      sse_movups(p->func, reg,
-                 x86_make_disp(p->machine_EDI,
-                               get_offset(p, &p->const_value[i][0])));
-   }
+   p->reg_to_const[i] = id;
+   p->const_to_reg[id] = i;
+
+   /* TODO: this should happen outside the loop, if possible */
+   sse_movaps(p->func, reg,
+         x86_make_disp(p->machine_EDI,
+               get_offset(p, &p->consts[id][0])));
 
    return reg;
-}
-
-static struct x86_reg get_inv_127( struct translate_sse *p )
-{
-   return get_const(p, 0, 1.0f / 127.0f);
-}
-
-static struct x86_reg get_inv_255( struct translate_sse *p )
-{
-   return get_const(p, 1, 1.0f / 255.0f);
-}
-
-static struct x86_reg get_inv_32767( struct translate_sse *p )
-{
-   return get_const(p, 2, 1.0f / 32767.0f);
-}
-
-static struct x86_reg get_inv_65535( struct translate_sse *p )
-{
-   return get_const(p, 3, 1.0f / 65535.0f);
-}
-
-static struct x86_reg get_inv_2147483647( struct translate_sse *p )
-{
-   return get_const(p, 4, 1.0f / 2147483647.0f);
 }
 
 /* load the data in a SSE2 register, padding with zeros */
@@ -247,16 +238,16 @@ static void emit_load_float32( struct translate_sse *p,
        */
       sse_movss(p->func, data, arg0);
       if(out_chans == CHANNELS_0001)
-         sse_orps(p->func, data, get_identity(p) );
+         sse_orps(p->func, data, get_const(p, CONST_IDENTITY) );
       break;
    case 2:
       /* 0 0 0 1
        * a b 0 1
        */
       if(out_chans == CHANNELS_0001)
-         sse_shufps(p->func, data, get_identity(p), SHUF(X, Y, Z, W) );
+         sse_shufps(p->func, data, get_const(p, CONST_IDENTITY), SHUF(X, Y, Z, W) );
       else if(out_chans > 2)
-         sse_movlhps(p->func, data, get_identity(p) );
+         sse_movlhps(p->func, data, get_const(p, CONST_IDENTITY) );
       sse_movlps(p->func, data, arg0);
       break;
    case 3:
@@ -269,7 +260,7 @@ static void emit_load_float32( struct translate_sse *p,
        */
       sse_movss(p->func, data, x86_make_disp(arg0, 8));
       if(out_chans == CHANNELS_0001)
-         sse_shufps(p->func, data, get_identity(p), SHUF(X,Y,Z,W) );
+         sse_shufps(p->func, data, get_const(p, CONST_IDENTITY), SHUF(X,Y,Z,W) );
       sse_shufps(p->func, data, data, SHUF(Y,Z,X,W) );
       sse_movlps(p->func, data, arg0);
       break;
@@ -298,15 +289,15 @@ static void emit_load_float64to32( struct translate_sse *p,
       else
          sse2_cvtsd2ss(p->func, data, data);
       if(out_chans == CHANNELS_0001)
-         sse_shufps(p->func, data, get_identity(p), SHUF(X, Y, Z, W)  );
+         sse_shufps(p->func, data, get_const(p, CONST_IDENTITY), SHUF(X, Y, Z, W)  );
       break;
    case 2:
       sse2_movupd(p->func, data, arg0);
       sse2_cvtpd2ps(p->func, data, data);
       if(out_chans == CHANNELS_0001)
-         sse_shufps(p->func, data, get_identity(p), SHUF(X, Y, Z, W) );
+         sse_shufps(p->func, data, get_const(p, CONST_IDENTITY), SHUF(X, Y, Z, W) );
       else if(out_chans > 2)
-         sse_movlhps(p->func, data, get_identity(p) );
+         sse_movlhps(p->func, data, get_const(p, CONST_IDENTITY) );
        break;
    case 3:
       sse2_movupd(p->func, data, arg0);
@@ -318,7 +309,7 @@ static void emit_load_float64to32( struct translate_sse *p,
          sse2_cvtsd2ss(p->func, tmpXMM, tmpXMM);
       sse_movlhps(p->func, data, tmpXMM);
       if(out_chans == CHANNELS_0001)
-         sse_orps(p->func, data, get_identity(p) );
+         sse_orps(p->func, data, get_const(p, CONST_IDENTITY) );
       break;
    case 4:
       sse2_movupd(p->func, data, arg0);
@@ -526,11 +517,11 @@ static boolean translate_attr_convert( struct translate_sse *p,
             {
             case 8:
                /* TODO: this may be inefficient due to get_identity() being used both as a float and integer register */
-               sse2_punpcklbw(p->func, dataXMM, get_identity(p));
-               sse2_punpcklbw(p->func, dataXMM, get_identity(p));
+               sse2_punpcklbw(p->func, dataXMM, get_const(p, CONST_IDENTITY));
+               sse2_punpcklbw(p->func, dataXMM, get_const(p, CONST_IDENTITY));
                break;
             case 16:
-               sse2_punpcklwd(p->func, dataXMM, get_identity(p));
+               sse2_punpcklwd(p->func, dataXMM, get_const(p, CONST_IDENTITY));
                break;
             case 32: /* we lose precision here */
                sse2_psrld_imm(p->func, dataXMM, 1);
@@ -545,13 +536,13 @@ static boolean translate_attr_convert( struct translate_sse *p,
                switch(input_desc->channel[0].size)
                {
                case 8:
-                  factor = get_inv_255(p);
+                  factor = get_const(p, CONST_INV_255);
                   break;
                case 16:
-                  factor = get_inv_65535(p);
+                  factor = get_const(p, CONST_INV_65535);
                   break;
                case 32:
-                  factor = get_inv_2147483647(p);
+                  factor = get_const(p, CONST_INV_2147483647);
                   break;
                default:
                   assert(0);
@@ -595,13 +586,13 @@ static boolean translate_attr_convert( struct translate_sse *p,
                switch(input_desc->channel[0].size)
                {
                case 8:
-                  factor = get_inv_127(p);
+                  factor = get_const(p, CONST_INV_127);
                   break;
                case 16:
-                  factor = get_inv_32767(p);
+                  factor = get_const(p, CONST_INV_32767);
                   break;
                case 32:
-                  factor = get_inv_2147483647(p);
+                  factor = get_const(p, CONST_INV_2147483647);
                   break;
                default:
                   assert(0);
@@ -750,12 +741,12 @@ static boolean translate_attr_convert( struct translate_sse *p,
         	       sse2_psrlw_imm(p->func, dataXMM, 1);
             }
             else
-               sse2_punpcklbw(p->func, dataXMM, get_identity(p));
+               sse2_punpcklbw(p->func, dataXMM, get_const(p, CONST_IDENTITY));
             break;
          case UTIL_FORMAT_TYPE_SIGNED:
             if(input_desc->channel[0].normalized)
             {
-               sse2_movq(p->func, tmpXMM, get_identity(p));
+               sse2_movq(p->func, tmpXMM, get_const(p, CONST_IDENTITY));
                sse2_punpcklbw(p->func, tmpXMM, dataXMM);
                sse2_psllw_imm(p->func, dataXMM, 9);
                sse2_psrlw_imm(p->func, dataXMM, 8);
@@ -1020,6 +1011,7 @@ static boolean translate_attr_convert( struct translate_sse *p,
       }
       return TRUE;
    }
+
    return FALSE;
 }
 
@@ -1245,8 +1237,6 @@ static boolean build_vertex_emit( struct translate_sse *p,
    p->src_ECX     = x86_make_reg(file_REG32, reg_CX);
 
    p->func = func;
-   memset(&p->loaded_const, 0, sizeof(p->loaded_const));
-   p->loaded_identity = FALSE;
 
    x86_init_func(p->func);
 
@@ -1406,7 +1396,7 @@ static void translate_sse_release( struct translate *translate )
    x86_release_func( &p->linear_func );
    x86_release_func( &p->elt_func );
 
-   FREE(p);
+   os_free_aligned(p);
 }
 
 
@@ -1419,9 +1409,14 @@ struct translate *translate_sse2_create( const struct translate_key *key )
    if (!rtasm_cpu_has_sse())
       goto fail;
 
-   p = CALLOC_STRUCT( translate_sse );
+   p = os_malloc_aligned(sizeof(struct translate_sse), 16);
    if (p == NULL) 
       goto fail;
+   memset(p, 0, sizeof(*p));
+
+   memcpy(p->consts, consts, sizeof(consts));
+   memset(p->reg_to_const, 0xff, sizeof(p->reg_to_const));
+   memset(p->const_to_reg, 0xff, sizeof(p->const_to_reg));
 
    p->translate.key = *key;
    p->translate.release = translate_sse_release;
