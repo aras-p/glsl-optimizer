@@ -247,6 +247,7 @@ nv04_region_assert(struct nv04_region* rgn, unsigned w, unsigned h)
 
 	assert(rgn->offset <= (int)rgn->bo->size);
 	assert(end <= rgn->bo->size);
+	(void) end;
 	if(!rgn->pitch) {
 		assert(util_is_pot(rgn->w));
 		assert(util_is_pot(rgn->h));
