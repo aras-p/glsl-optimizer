@@ -885,6 +885,12 @@ void brw_math( struct brw_compile *p,
 	       GLuint data_type,
 	       GLuint precision );
 
+void brw_math2(struct brw_compile *p,
+	       struct brw_reg dest,
+	       GLuint function,
+	       struct brw_reg src0,
+	       struct brw_reg src1);
+
 void brw_dp_READ_16( struct brw_compile *p,
 		     struct brw_reg dest,
 		     GLuint scratch_offset );

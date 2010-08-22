@@ -1131,6 +1131,29 @@ void brw_math( struct brw_compile *p,
    }
 }
 
+/** Extended math function, float[8].
+ */
+void brw_math2(struct brw_compile *p,
+	       struct brw_reg dest,
+	       GLuint function,
+	       struct brw_reg src0,
+	       struct brw_reg src1)
+{
+   struct intel_context *intel = &p->brw->intel;
+   struct brw_instruction *insn = next_insn(p, BRW_OPCODE_MATH);
+
+   assert(intel->gen >= 6);
+
+   /* Math is the same ISA format as other opcodes, except that CondModifier
+    * becomes FC[3:0] and ThreadCtrl becomes FC[5:4].
+    */
+   insn->header.destreg__conditionalmod = function;
+
+   brw_set_dest(insn, dest);
+   brw_set_src0(insn, src0);
+   brw_set_src1(insn, src1);
+}
+
 /**
  * Extended math function, float[16].
  * Use 2 send instructions.

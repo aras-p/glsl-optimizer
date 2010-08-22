@@ -918,10 +918,8 @@ void emit_math2(struct brw_wm_compile *c,
 		const struct brw_reg *arg1)
 {
    struct brw_compile *p = &c->func;
+   struct intel_context *intel = &p->brw->intel;
    int dst_chan = _mesa_ffs(mask & WRITEMASK_XYZW) - 1;
-   GLuint saturate = ((mask & SATURATE) ?
-		      BRW_MATH_SATURATE_SATURATE :
-		      BRW_MATH_SATURATE_NONE);
 
    if (!(mask & WRITEMASK_XYZW))
       return; /* Do not emit dead code */
@@ -930,35 +928,103 @@ void emit_math2(struct brw_wm_compile *c,
 
    brw_push_insn_state(p);
 
-   brw_set_compression_control(p, BRW_COMPRESSION_NONE);
-   brw_MOV(p, brw_message_reg(3), arg1[0]);
-   if (c->dispatch_width == 16) {
-      brw_set_compression_control(p, BRW_COMPRESSION_2NDHALF);
-      brw_MOV(p, brw_message_reg(5), sechalf(arg1[0]));
-   }
-
-   brw_set_compression_control(p, BRW_COMPRESSION_NONE);
-   brw_math(p, 
-	    dst[dst_chan],
-	    function,
-	    saturate,
-	    2,
-	    arg0[0],
-	    BRW_MATH_DATA_VECTOR,
-	    BRW_MATH_PRECISION_FULL);
-
-   /* Send two messages to perform all 16 operations:
+   /* math can only operate on up to a vec8 at a time, so in
+    * dispatch_width==16 we have to do the second half manually.
     */
-   if (c->dispatch_width == 16) {
-      brw_set_compression_control(p, BRW_COMPRESSION_2NDHALF);
+   if (intel->gen >= 6) {
+      struct brw_reg src0 = arg0[0];
+      struct brw_reg src1 = arg1[0];
+      struct brw_reg temp_dst = dst[dst_chan];
+
+      if (arg0[0].hstride == BRW_HORIZONTAL_STRIDE_0) {
+	 if (arg1[0].hstride == BRW_HORIZONTAL_STRIDE_0) {
+	    /* Both scalar arguments.  Do scalar calc. */
+	    src0.hstride = BRW_HORIZONTAL_STRIDE_1;
+	    src1.hstride = BRW_HORIZONTAL_STRIDE_1;
+	    temp_dst.hstride = BRW_HORIZONTAL_STRIDE_1;
+	    temp_dst.width = BRW_WIDTH_1;
+
+	    if (arg0[0].subnr != 0) {
+	       brw_MOV(p, temp_dst, src0);
+	       src0 = temp_dst;
+
+	       /* Ouch.  We've used the temp as a dst, and we still
+		* need a temp to store arg1 in, because src and dst
+		* offsets have to be equal.  Leaving this up to
+		* glsl2-965 to handle correctly.
+		*/
+	       assert(arg1[0].subnr == 0);
+	    } else if (arg1[0].subnr != 0) {
+	       brw_MOV(p, temp_dst, src1);
+	       src1 = temp_dst;
+	    }
+	 } else {
+	    brw_MOV(p, temp_dst, src0);
+	    src0 = temp_dst;
+	 }
+      } else if (arg1[0].hstride == BRW_HORIZONTAL_STRIDE_0) {
+	 brw_MOV(p, temp_dst, src1);
+	 src1 = temp_dst;
+      }
+
+      brw_set_saturate(p, (mask & SATURATE) ? 1 : 0);
+      brw_set_compression_control(p, BRW_COMPRESSION_NONE);
+      brw_math2(p,
+		temp_dst,
+		function,
+		src0,
+		src1);
+      if (c->dispatch_width == 16) {
+	 brw_set_compression_control(p, BRW_COMPRESSION_2NDHALF);
+	 brw_math2(p,
+		   sechalf(temp_dst),
+		   function,
+		   sechalf(src0),
+		   sechalf(src1));
+      }
+
+      /* Splat a scalar result into all the channels. */
+      if (arg0[0].hstride == BRW_HORIZONTAL_STRIDE_0 &&
+	  arg1[0].hstride == BRW_HORIZONTAL_STRIDE_0) {
+	 temp_dst.hstride = BRW_HORIZONTAL_STRIDE_0;
+	 temp_dst.vstride = BRW_VERTICAL_STRIDE_0;
+	 brw_MOV(p, dst[dst_chan], temp_dst);
+      }
+   } else {
+      GLuint saturate = ((mask & SATURATE) ?
+			 BRW_MATH_SATURATE_SATURATE :
+			 BRW_MATH_SATURATE_NONE);
+
+      brw_set_compression_control(p, BRW_COMPRESSION_NONE);
+      brw_MOV(p, brw_message_reg(3), arg1[0]);
+      if (c->dispatch_width == 16) {
+	 brw_set_compression_control(p, BRW_COMPRESSION_2NDHALF);
+	 brw_MOV(p, brw_message_reg(5), sechalf(arg1[0]));
+      }
+
+      brw_set_compression_control(p, BRW_COMPRESSION_NONE);
       brw_math(p,
-	       offset(dst[dst_chan],1),
+	       dst[dst_chan],
 	       function,
 	       saturate,
-	       4,
-	       sechalf(arg0[0]),
+	       2,
+	       arg0[0],
 	       BRW_MATH_DATA_VECTOR,
 	       BRW_MATH_PRECISION_FULL);
+
+      /* Send two messages to perform all 16 operations:
+       */
+      if (c->dispatch_width == 16) {
+	 brw_set_compression_control(p, BRW_COMPRESSION_2NDHALF);
+	 brw_math(p,
+		  offset(dst[dst_chan],1),
+		  function,
+		  saturate,
+		  4,
+		  sechalf(arg0[0]),
+		  BRW_MATH_DATA_VECTOR,
+		  BRW_MATH_PRECISION_FULL);
+      }
    }
    brw_pop_insn_state(p);
 }
