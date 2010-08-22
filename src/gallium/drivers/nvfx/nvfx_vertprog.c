@@ -1272,4 +1272,6 @@ nvfx_vertprog_destroy(struct nvfx_context *nvfx, struct nvfx_vertex_program *vp)
 	vp->data_start_min = 0;
 
 	vp->ir = vp->or = vp->clip_ctrl = 0;
+	util_dynarray_fini(&vp->branch_relocs);
+	util_dynarray_fini(&vp->const_relocs);
 }
