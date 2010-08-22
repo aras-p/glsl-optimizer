@@ -281,7 +281,7 @@ static void emit_depthbuffer(struct brw_context *brw)
       }
 
       assert(region->tiling != I915_TILING_X);
-      if (IS_GEN6(intel->intelScreen->deviceID))
+      if (intel->gen >= 6)
 	 assert(region->tiling != I915_TILING_NONE);
 
       BEGIN_BATCH(len);

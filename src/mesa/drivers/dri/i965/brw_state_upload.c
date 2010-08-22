@@ -351,7 +351,7 @@ void brw_validate_state( struct brw_context *brw )
 
    brw_add_validated_bo(brw, intel->batch->buf);
 
-   if (IS_GEN6(intel->intelScreen->deviceID)) {
+   if (intel->gen >= 6) {
       atoms = gen6_atoms;
       num_atoms = ARRAY_SIZE(gen6_atoms);
    } else {
@@ -425,7 +425,7 @@ void brw_upload_state(struct brw_context *brw)
    const struct brw_tracked_state **atoms;
    int num_atoms;
 
-   if (IS_GEN6(intel->intelScreen->deviceID)) {
+   if (intel->gen >= 6) {
       atoms = gen6_atoms;
       num_atoms = ARRAY_SIZE(gen6_atoms);
    } else {

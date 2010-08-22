@@ -476,7 +476,7 @@ static void brw_emit_vertices(struct brw_context *brw)
    if (brw->vb.nr_enabled == 0) {
       BEGIN_BATCH(3);
       OUT_BATCH((CMD_VERTEX_ELEMENT << 16) | 1);
-      if (IS_GEN6(intel->intelScreen->deviceID)) {
+      if (intel->gen >= 6) {
 	 OUT_BATCH((0 << GEN6_VE0_INDEX_SHIFT) |
 		   GEN6_VE0_VALID |
 		   (BRW_SURFACEFORMAT_R32G32B32A32_FLOAT << BRW_VE0_FORMAT_SHIFT) |
@@ -553,7 +553,7 @@ static void brw_emit_vertices(struct brw_context *brw)
 	 break;
       }
 
-      if (IS_GEN6(intel->intelScreen->deviceID)) {
+      if (intel->gen >= 6) {
 	 OUT_BATCH((i << GEN6_VE0_INDEX_SHIFT) |
 		   GEN6_VE0_VALID |
 		   (format << BRW_VE0_FORMAT_SHIFT) |
