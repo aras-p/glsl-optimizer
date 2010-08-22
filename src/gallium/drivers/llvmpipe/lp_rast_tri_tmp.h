@@ -81,11 +81,14 @@ TAG(do_block_16)(struct lp_rasterizer_task *task,
    for (j = 0; j < NR_PLANES; j++) {
       const int dcdx = -plane[j].dcdx * 4;
       const int dcdy = plane[j].dcdy * 4;
-      const int cox = c[j] + plane[j].eo * 4;
-      const int cio = c[j] + plane[j].ei * 4 - 1;
+      const int cox = plane[j].eo * 4;
+      const int cio = plane[j].ei * 4 - 1;
 
-      outmask |= build_mask_linear(cox, dcdx, dcdy);
-      partmask |= build_mask_linear(cio, dcdx, dcdy);
+      build_masks(c[j] + cox,
+		  cio - cox,
+		  dcdx, dcdy, 
+		  &outmask,   /* sign bits from c[i][0..15] + cox */
+		  &partmask); /* sign bits from c[i][0..15] + cio */
    }
 
    if (outmask == 0xffff)
@@ -171,11 +174,14 @@ TAG(lp_rast_triangle)(struct lp_rasterizer_task *task,
       {
 	 const int dcdx = -plane[j].dcdx * 16;
 	 const int dcdy = plane[j].dcdy * 16;
-	 const int cox = c[j] + plane[j].eo * 16;
-	 const int cio = c[j] + plane[j].ei * 16 - 1;
+	 const int cox = plane[j].eo * 16;
+	 const int cio = plane[j].ei * 16 - 1;
 
-	 outmask |= build_mask_linear(cox, dcdx, dcdy);
-	 partmask |= build_mask_linear(cio, dcdx, dcdy);
+	 build_masks(c[j] + cox,
+		     cio - cox,
+		     dcdx, dcdy, 
+		     &outmask,   /* sign bits from c[i][0..15] + cox */
+		     &partmask); /* sign bits from c[i][0..15] + cio */
       }
 
       j++;

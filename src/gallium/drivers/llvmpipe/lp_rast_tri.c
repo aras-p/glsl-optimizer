@@ -128,9 +128,69 @@ build_mask_linear(int c, int dcdx, int dcdy)
   
    return mask;
 }
+
+
+static INLINE void
+build_masks(int c, 
+	    int cdiff,
+	    int dcdx,
+	    int dcdy,
+	    unsigned *outmask,
+	    unsigned *partmask)
+{
+   *outmask |= build_mask_linear(c, dcdx, dcdy);
+   *partmask |= build_mask_linear(c + cdiff, dcdx, dcdy);
+}
+
 #else
 #include <emmintrin.h>
 #include "util/u_sse.h"
+
+
+static INLINE void
+build_masks(int c, 
+	    int cdiff,
+	    int dcdx,
+	    int dcdy,
+	    unsigned *outmask,
+	    unsigned *partmask)
+{
+   __m128i cstep0 = _mm_setr_epi32(c, c+dcdx, c+dcdx*2, c+dcdx*3);
+   __m128i xdcdy = _mm_set1_epi32(dcdy);
+
+   /* Get values across the quad
+    */
+   __m128i cstep1 = _mm_add_epi32(cstep0, xdcdy);
+   __m128i cstep2 = _mm_add_epi32(cstep1, xdcdy);
+   __m128i cstep3 = _mm_add_epi32(cstep2, xdcdy);
+
+   {
+      __m128i cstep01, cstep23, result;
+
+      cstep01 = _mm_packs_epi32(cstep0, cstep1);
+      cstep23 = _mm_packs_epi32(cstep2, cstep3);
+      result = _mm_packs_epi16(cstep01, cstep23);
+
+      *outmask |= _mm_movemask_epi8(result);
+   }
+
+
+   {
+      __m128i cio4 = _mm_set1_epi32(cdiff);
+      __m128i cstep01, cstep23, result;
+
+      cstep0 = _mm_add_epi32(cstep0, cio4);
+      cstep1 = _mm_add_epi32(cstep1, cio4);
+      cstep2 = _mm_add_epi32(cstep2, cio4);
+      cstep3 = _mm_add_epi32(cstep3, cio4);
+
+      cstep01 = _mm_packs_epi32(cstep0, cstep1);
+      cstep23 = _mm_packs_epi32(cstep2, cstep3);
+      result = _mm_packs_epi16(cstep01, cstep23);
+
+      *partmask |= _mm_movemask_epi8(result);
+   }
+}
 
 
 static INLINE unsigned
@@ -263,11 +323,14 @@ lp_rast_triangle_3_16(struct lp_rasterizer_task *task,
       {
 	 const int dcdx = -plane[j].dcdx * 4;
 	 const int dcdy = plane[j].dcdy * 4;
-	 const int cox = c[j] + plane[j].eo * 4;
-	 const int cio = c[j] + plane[j].ei * 4 - 1;
+	 const int cox = plane[j].eo * 4;
+	 const int cio = plane[j].ei * 4 - 1;
 
-	 outmask |= build_mask_linear(cox, dcdx, dcdy);
-	 partmask |= build_mask_linear(cio, dcdx, dcdy);
+	 build_masks(c[j] + cox,
+		     cio - cox,
+		     dcdx, dcdy, 
+		     &outmask,   /* sign bits from c[i][0..15] + cox */
+		     &partmask); /* sign bits from c[i][0..15] + cio */
       }
    }
 
