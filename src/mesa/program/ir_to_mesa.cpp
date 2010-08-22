@@ -78,6 +78,10 @@ typedef struct ir_to_mesa_src_reg {
    ir_to_mesa_src_reg()
    {
       this->file = PROGRAM_UNDEFINED;
+      this->index = 0;
+      this->swizzle = 0;
+      this->negate = 0;
+      this->reladdr = NULL;
    }
 
    int file; /**< PROGRAM_* from Mesa */
