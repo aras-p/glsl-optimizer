@@ -174,7 +174,8 @@ nvfx_rasterizer_state_bind(struct pipe_context *pipe, void *hwcso)
 		}
 
 		if(((struct nvfx_rasterizer_state*)hwcso)->pipe.point_quad_rasterization != nvfx->rasterizer->pipe.point_quad_rasterization
-				|| ((struct nvfx_rasterizer_state*)hwcso)->pipe.sprite_coord_enable != nvfx->rasterizer->pipe.sprite_coord_enable)
+				|| ((struct nvfx_rasterizer_state*)hwcso)->pipe.sprite_coord_enable != nvfx->rasterizer->pipe.sprite_coord_enable
+				|| ((struct nvfx_rasterizer_state*)hwcso)->pipe.sprite_coord_mode != nvfx->rasterizer->pipe.sprite_coord_mode)
 		{
 			nvfx->dirty |= NVFX_NEW_SPRITE;
 		}

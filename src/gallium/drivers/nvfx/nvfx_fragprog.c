@@ -25,6 +25,7 @@ struct nvfx_fpc {
 	unsigned long long r_temps_discard;
 	struct nvfx_reg r_result[PIPE_MAX_SHADER_OUTPUTS];
 	struct nvfx_reg *r_temp;
+	unsigned sprite_coord_temp;
 
 	int num_regs;
 
@@ -114,9 +115,10 @@ emit_src(struct nvfx_fpc *fpc, int pos, struct nvfx_src src)
 		sr |= (src.reg.index << NVFX_FP_REG_SRC_SHIFT);
 		break;
 	case NVFXSR_RELOCATED:
-		sr |= (NVFX_FP_REG_TYPE_INPUT << NVFX_FP_REG_TYPE_SHIFT);
+		sr |= (NVFX_FP_REG_TYPE_TEMP << NVFX_FP_REG_TYPE_SHIFT);
+		sr |= (fpc->sprite_coord_temp << NVFX_FP_REG_SRC_SHIFT);
 		//printf("adding relocation at %x for %x\n", fpc->inst_offset, src.index);
-		util_dynarray_append(&fpc->fp->slot_relocations[src.reg.index], unsigned, fpc->inst_offset);
+		util_dynarray_append(&fpc->fp->slot_relocations[src.reg.index], unsigned, fpc->inst_offset + pos + 1);
 		break;
 	case NVFXSR_CONST:
 		if (!fpc->have_const) {
@@ -1003,7 +1005,8 @@ DEBUG_GET_ONCE_BOOL_OPTION(nvfx_dump_fp, "NVFX_DUMP_FP", FALSE)
 
 static struct nvfx_fragment_program*
 nvfx_fragprog_translate(struct nvfx_context *nvfx,
-			struct nvfx_pipe_fragment_program *pfp)
+			struct nvfx_pipe_fragment_program *pfp,
+			boolean emulate_sprite_flipping)
 {
 	struct tgsi_parse_context parse;
 	struct nvfx_fpc *fpc = NULL;
@@ -1027,8 +1030,20 @@ nvfx_fragprog_translate(struct nvfx_context *nvfx,
 		goto out_err;
 
 	tgsi_parse_init(&parse, pfp->pipe.tokens);
-
 	util_dynarray_init(&insns);
+
+	if(emulate_sprite_flipping)
+	{
+		struct nvfx_reg reg = temp(fpc);
+		struct nvfx_src sprite_input = nvfx_src(nvfx_reg(NVFXSR_RELOCATED, fp->num_slots));
+		float v[4] = {1, -1, 0, 0};
+		struct nvfx_src imm = nvfx_src(constant(fpc, -1, v));
+
+		fpc->sprite_coord_temp = reg.index;
+		fpc->r_temps_discard = 0ULL;
+		nvfx_fp_emit(fpc, arith(0, MAD, reg, NVFX_FP_MASK_ALL, sprite_input, swz(imm, X, Y, X, X), swz(imm, Z, X, Z, Z)));
+	}
+
 	while (!tgsi_parse_end_of_tokens(&parse)) {
 		tgsi_parse_token(&parse);
 
@@ -1166,14 +1181,16 @@ nvfx_fragprog_validate(struct nvfx_context *nvfx)
 	struct nouveau_channel* chan = nvfx->screen->base.channel;
 	struct nvfx_pipe_fragment_program *pfp = nvfx->fragprog;
 	struct nvfx_vertex_program* vp;
-	unsigned sprite_coord_enable;
-	unsigned key = 0;
+	unsigned sprite_coord_enable = nvfx->rasterizer->pipe.point_quad_rasterization * nvfx->rasterizer->pipe.sprite_coord_enable;
+	// TODO: correct or flipped?
+	boolean emulate_sprite_flipping = sprite_coord_enable && nvfx->rasterizer->pipe.sprite_coord_mode;
+	unsigned key = emulate_sprite_flipping;
 	struct nvfx_fragment_program* fp;
 
 	fp = pfp->fps[key];
 	if (!fp)
 	{
-		fp = nvfx_fragprog_translate(nvfx, pfp);
+		fp = nvfx_fragprog_translate(nvfx, pfp, emulate_sprite_flipping);
 
 		if(!fp)
 		{
@@ -1193,7 +1210,8 @@ nvfx_fragprog_validate(struct nvfx_context *nvfx)
 				}
 			}
 
-			fp = nvfx_fragprog_translate(nvfx, nvfx->dummy_fs);
+			fp = nvfx_fragprog_translate(nvfx, nvfx->dummy_fs, FALSE);
+			emulate_sprite_flipping = FALSE;
 
 			if(!fp)
 			{
@@ -1205,21 +1223,19 @@ nvfx_fragprog_validate(struct nvfx_context *nvfx)
 		pfp->fps[key] = fp;
 	}
 
-	nvfx->hw_fragprog = fp;
-
 	vp = nvfx->render_mode == HW ? nvfx->vertprog : nvfx->swtnl.vertprog;
-        sprite_coord_enable = nvfx->rasterizer->pipe.point_quad_rasterization * nvfx->rasterizer->pipe.sprite_coord_enable;
 
 	if (fp->last_vp_id != vp->id || fp->last_sprite_coord_enable != sprite_coord_enable) {
-		int sprite_input = -1;
+		int sprite_real_input = -1;
+		int sprite_reloc_input;
 		unsigned i;
 		fp->last_vp_id = vp->id;
 		fp->last_sprite_coord_enable = sprite_coord_enable;
 
 		if(sprite_coord_enable)
 		{
-			sprite_input = vp->sprite_fp_input;
-			if(sprite_input < 0)
+			sprite_real_input = vp->sprite_fp_input;
+			if(sprite_real_input < 0)
 			{
 				unsigned used_texcoords = 0;
 				for(unsigned i = 0; i < fp->num_slots; ++i) {
@@ -1232,19 +1248,24 @@ nvfx_fragprog_validate(struct nvfx_context *nvfx)
 					}
 				}
 
-				sprite_input = NVFX_FP_OP_INPUT_SRC_TC(__builtin_ctz(~used_texcoords));
+				sprite_real_input = NVFX_FP_OP_INPUT_SRC_TC(__builtin_ctz(~used_texcoords));
 			}
 
-			fp->point_sprite_control |= (1 << (sprite_input - NVFX_FP_OP_INPUT_SRC_TC0 + 8));
+			fp->point_sprite_control |= (1 << (sprite_real_input - NVFX_FP_OP_INPUT_SRC_TC0 + 8));
 		}
 		else
 			fp->point_sprite_control = 0;
+
+		if(emulate_sprite_flipping)
+		   sprite_reloc_input = 0;
+		else
+		   sprite_reloc_input = sprite_real_input;
 
 		for(i = 0; i < fp->num_slots; ++i) {
 			unsigned generic = fp->slot_to_generic[i];
 			if((1 << generic) & sprite_coord_enable)
 			{
-				if(fp->slot_to_fp_input[i] != sprite_input)
+				if(fp->slot_to_fp_input[i] != sprite_reloc_input)
 					goto update_slots;
 			}
 			else
@@ -1255,6 +1276,12 @@ nvfx_fragprog_validate(struct nvfx_context *nvfx)
 			}
 		}
 
+		if(emulate_sprite_flipping)
+		{
+			if(fp->slot_to_fp_input[fp->num_slots] != sprite_real_input)
+				goto update_slots;
+		}
+
 		if(0)
 		{
 update_slots:
@@ -1263,21 +1290,23 @@ update_slots:
 			{
 				unsigned generic = fp->slot_to_generic[i];
 				if((1 << generic) & sprite_coord_enable)
-					fp->slot_to_fp_input[i] = sprite_input;
+					fp->slot_to_fp_input[i] = sprite_reloc_input;
 				else
 					fp->slot_to_fp_input[i] = vp->generic_to_fp_input[generic] & 0xf;
 			}
 
+			fp->slot_to_fp_input[fp->num_slots] = sprite_real_input;
+
 			if(nvfx->is_nv4x)
 			{
 				fp->or = 0;
-				for(i = 0; i < fp->num_slots; ++i) {
+				for(i = 0; i <= fp->num_slots; ++i) {
 					unsigned fp_input = fp->slot_to_fp_input[i];
 					if(fp_input == NVFX_FP_OP_INPUT_SRC_TC(8))
 						fp->or |= (1 << 12);
 					else if(fp_input == NVFX_FP_OP_INPUT_SRC_TC(9))
 						fp->or |= (1 << 13);
-					else if(fp_input != 0xf)
+					else if(fp_input >= NVFX_FP_OP_INPUT_SRC_TC(0) && fp_input <= NVFX_FP_OP_INPUT_SRC_TC(7))
 						fp->or |= (1 << (fp_input - NVFX_FP_OP_INPUT_SRC_TC0 + 14));
 				}
 			}
@@ -1292,7 +1321,7 @@ update_slots:
 	  * one bound to this fragment program.
 	  * Doing such a check would likely be a pessimization.
 	  */
-	if (nvfx->dirty & (NVFX_NEW_FRAGCONST | NVFX_NEW_FRAGPROG)) {
+	if ((nvfx->hw_fragprog != fp) || (nvfx->dirty & (NVFX_NEW_FRAGPROG | NVFX_NEW_FRAGCONST))) {
 		int offset;
 		uint32_t* fpmap;
 
@@ -1365,22 +1394,53 @@ update:
 		 */
 		if(fp->progs_left_with_obsolete_slot_assignments) {
 			unsigned char* fpbo_slots = &fp->fpbo->slots[fp->bo_prog_idx * 8];
-			for(unsigned i = 0; i < fp->num_slots; ++i) {
+			/* also relocate sprite coord slot, if any */
+			for(unsigned i = 0; i <= fp->num_slots; ++i) {
 				unsigned value = fp->slot_to_fp_input[i];;
 				if(value != fpbo_slots[i]) {
-					unsigned* p = (unsigned*)fp->slot_relocations[i].data;
-					unsigned* pend = (unsigned*)((char*)fp->slot_relocations[i].data + fp->slot_relocations[i].size);
-					for(; p != pend; ++p) {
-						unsigned off = *p;
-						unsigned dw = fp->insn[off];
-						dw = (dw & ~NVFX_FP_OP_INPUT_SRC_MASK) | (value << NVFX_FP_OP_INPUT_SRC_SHIFT);
-						nvfx_fp_memcpy(&fpmap[*p], &dw, sizeof(dw));
+					unsigned* p;
+					unsigned* begin = (unsigned*)fp->slot_relocations[i].data;
+					unsigned* end = (unsigned*)((char*)fp->slot_relocations[i].data + fp->slot_relocations[i].size);
+					//printf("fp %p reloc slot %u/%u: %u -> %u\n", fp, i, fp->num_slots, fpbo_slots[i], value);
+					if(value == 0)
+					{
+						/* was relocated to an input, switch type to temporary */
+						for(p = begin; p != end; ++p) {
+							unsigned off = *p;
+							unsigned dw = fp->insn[off];
+							dw &=~ NVFX_FP_REG_TYPE_MASK;
+							//printf("reloc_tmp at %x\n", off);
+							nvfx_fp_memcpy(&fpmap[off], &dw, sizeof(dw));
+						}
+					} else {
+						if(!fpbo_slots[i])
+						{
+							/* was relocated to a temporary, switch type to input */
+							for(p= begin; p != end; ++p) {
+								unsigned off = *p;
+								unsigned dw = fp->insn[off];
+								//printf("reloc_in at %x\n", off);
+								dw |= NVFX_FP_REG_TYPE_INPUT << NVFX_FP_REG_TYPE_SHIFT;
+								nvfx_fp_memcpy(&fpmap[off], &dw, sizeof(dw));
+							}
+						}
+
+						/* set the correct input index */
+						for(p = begin; p != end; ++p) {
+							unsigned off = *p & ~3;
+							unsigned dw = fp->insn[off];
+							//printf("reloc&~3 at %x\n", off);
+							dw = (dw & ~NVFX_FP_OP_INPUT_SRC_MASK) | (value << NVFX_FP_OP_INPUT_SRC_SHIFT);
+							nvfx_fp_memcpy(&fpmap[off], &dw, sizeof(dw));
+						}
 					}
 					fpbo_slots[i] = value;
 				}
 			}
 			--fp->progs_left_with_obsolete_slot_assignments;
 		}
+
+		nvfx->hw_fragprog = fp;
 
 		MARK_RING(chan, 8, 1);
 		OUT_RING(chan, RING_3D(NV34TCL_FP_ACTIVE_PROGRAM, 1));
@@ -1491,15 +1551,18 @@ nvfx_fp_state_bind(struct pipe_context *pipe, void *hwcso)
 static void
 nvfx_fp_state_delete(struct pipe_context *pipe, void *hwcso)
 {
-        struct nvfx_context *nvfx = nvfx_context(pipe);
-        struct nvfx_pipe_fragment_program *pfp = hwcso;
-        unsigned i;
+	struct nvfx_context *nvfx = nvfx_context(pipe);
+	struct nvfx_pipe_fragment_program *pfp = hwcso;
+	unsigned i;
 
-        for(i = 0; i < Elements(pfp->fps); ++i)
-        {
-        	nvfx_fragprog_destroy(nvfx, pfp->fps[i]);
-        	FREE(pfp->fps[i]);
-        }
+	for(i = 0; i < Elements(pfp->fps); ++i)
+	{
+		if(pfp->fps[i])
+		{
+			nvfx_fragprog_destroy(nvfx, pfp->fps[i]);
+			FREE(pfp->fps[i]);
+		}
+	}
 
         FREE((void*)pfp->pipe.tokens);
         FREE(pfp);

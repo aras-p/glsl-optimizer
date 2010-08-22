@@ -71,10 +71,11 @@ struct nvfx_fragment_program {
 	struct nvfx_fragment_program_data *consts;
 	unsigned nr_consts;
 
+	/* the slot at num_slots is for the sprite coordinate, if any */
 	unsigned num_slots; /* how many input semantics? */
-	unsigned char slot_to_generic[8]; /* semantics */
-	unsigned char slot_to_fp_input[8]; /* current assignment of slots for each used semantic */
-	struct util_dynarray slot_relocations[8];
+	unsigned char slot_to_generic[10]; /* semantics */
+	unsigned char slot_to_fp_input[11]; /* current assignment of slots for each used semantic */
+	struct util_dynarray slot_relocations[11];
 
 	/* This is reset to progs on any relocation update, and decreases every time we
 	 * move to a new prog due to a constant update
@@ -99,7 +100,7 @@ struct nvfx_pipe_fragment_program {
         struct pipe_shader_state pipe;
         struct tgsi_shader_info info;
 
-        struct nvfx_fragment_program* fps[1];
+        struct nvfx_fragment_program* fps[2];
 };
 
 #endif
