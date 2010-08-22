@@ -90,10 +90,10 @@ nouveau_LIBS := \
 	$(TOP)/src/gallium/drivers/nv50/libnv50.a \
 	$(TOP)/src/gallium/drivers/nouveau/libnouveau.a
 
-# radeon pipe driver
-radeon_CPPFLAGS :=
-radeon_SYS := -ldrm -ldrm_radeon
-radeon_LIBS := \
+# r300 pipe driver
+r300_CPPFLAGS :=
+r300_SYS := -ldrm -ldrm_radeon
+r300_LIBS := \
 	$(TOP)/src/gallium/winsys/radeon/drm/libradeonwinsys.a \
 	$(TOP)/src/gallium/drivers/r300/libr300.a
 
@@ -151,7 +151,7 @@ ifneq ($(findstring nouveau/drm,$(GALLIUM_WINSYS_DIRS)),)
 OUTPUTS += nouveau
 endif
 ifneq ($(findstring radeon/drm,$(GALLIUM_WINSYS_DIRS)),)
-OUTPUTS += radeon
+OUTPUTS += r300
 endif
 ifneq ($(findstring svga/drm,$(GALLIUM_WINSYS_DIRS)),)
 OUTPUTS += vmwgfx
@@ -188,8 +188,8 @@ $(OUTPUT_PATH)/$(PIPE_PREFIX)i965.so: pipe_i965.o $(i965_LIBS)
 $(OUTPUT_PATH)/$(PIPE_PREFIX)nouveau.so: pipe_nouveau.o $(nouveau_LIBS)
 	$(call mklib,nouveau)
 
-$(OUTPUT_PATH)/$(PIPE_PREFIX)radeon.so: pipe_radeon.o $(radeon_LIBS)
-	$(call mklib,radeon)
+$(OUTPUT_PATH)/$(PIPE_PREFIX)r300.so: pipe_r300.o $(r300_LIBS)
+	$(call mklib,r300)
 
 $(OUTPUT_PATH)/$(PIPE_PREFIX)vmwgfx.so: pipe_vmwgfx.o $(vmwgfx_LIBS)
 	$(call mklib,vmwgfx)
