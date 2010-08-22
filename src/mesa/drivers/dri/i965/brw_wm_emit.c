@@ -1312,7 +1312,6 @@ void emit_fb_write(struct brw_wm_compile *c,
    struct intel_context *intel = &brw->intel;
    GLuint nr = 2;
    GLuint channel;
-   int step = 0;
    int base_reg; /* For gen6 fb write with no header, starting from color payload directly!. */
 
    /* Reserve a space for AA - may not be needed:
@@ -1342,7 +1341,11 @@ void emit_fb_write(struct brw_wm_compile *c,
 	  * m + 6: a0
 	  * m + 7: a1
 	  */
-	 brw_MOV(p, brw_message_reg(nr + channel * 2), arg0[channel]);
+	 if (c->dispatch_width == 16) {
+	    brw_MOV(p, brw_message_reg(nr + channel * 2), arg0[channel]);
+	 } else {
+	    brw_MOV(p, brw_message_reg(nr + channel), arg0[channel]);
+	 }
       } else if (c->dispatch_width == 16 && brw->has_compr4) {
 	 /* pre-gen6 SIMD16 single source DP write looks like:
 	  * m + 0: r0
@@ -1361,16 +1364,6 @@ void emit_fb_write(struct brw_wm_compile *c,
 	 brw_MOV(p,
 		 brw_message_reg(nr + channel + BRW_MRF_COMPR4),
 		 arg0[channel]);
-      } else if (intel->gen >= 6) {
-	  brw_set_compression_control(p, BRW_COMPRESSION_NONE);
-	  brw_MOV(p, brw_message_reg(nr + channel + step), arg0[channel]); 
-	  if (c->dispatch_width == 16) {
-	      brw_set_compression_control(p, BRW_COMPRESSION_NONE);
-	      brw_MOV(p,
-		      brw_message_reg(nr + channel + step + 1),
-		      sechalf(arg0[channel]));
-	      ++step;
-	  }
       } else {
 	 /*  mov (8) m2.0<1>:ud   r28.0<8;8,1>:ud  { Align1 } */
 	 /*  mov (8) m6.0<1>:ud   r29.0<8;8,1>:ud  { Align1 SecHalf } */
