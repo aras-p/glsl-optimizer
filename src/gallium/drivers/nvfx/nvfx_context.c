@@ -33,6 +33,9 @@ nvfx_destroy(struct pipe_context *pipe)
 {
 	struct nvfx_context *nvfx = nvfx_context(pipe);
 
+	if(nvfx->dummy_fs)
+		pipe->delete_fs_state(pipe, nvfx->dummy_fs);
+
 	for(unsigned i = 0; i < nvfx->vtxbuf_nr; ++i)
 		pipe_resource_reference(&nvfx->vtxbuf[i].buffer, 0);
 	pipe_resource_reference(&nvfx->idxbuf.buffer, 0);
@@ -42,6 +45,7 @@ nvfx_destroy(struct pipe_context *pipe)
 
 	if (nvfx->draw)
 		draw_destroy(nvfx->draw);
+
 	FREE(nvfx);
 }
 

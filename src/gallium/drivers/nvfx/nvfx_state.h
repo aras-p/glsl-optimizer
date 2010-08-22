@@ -61,10 +61,6 @@ struct nvfx_fragment_program_bo {
 };
 
 struct nvfx_fragment_program {
-	struct pipe_shader_state pipe;
-	struct tgsi_shader_info info;
-
-	boolean translated;
 	unsigned samplers;
 	unsigned point_sprite_control;
 	unsigned or;
@@ -99,5 +95,11 @@ struct nvfx_fragment_program {
 	struct nvfx_fragment_program_bo* fpbo;
 };
 
+struct nvfx_pipe_fragment_program {
+        struct pipe_shader_state pipe;
+        struct tgsi_shader_info info;
+
+        struct nvfx_fragment_program* fps[1];
+};
 
 #endif

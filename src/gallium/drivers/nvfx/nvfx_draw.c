@@ -274,19 +274,19 @@ emit_attrib(struct nvfx_context *nvfx, unsigned hw, unsigned emit,
 void
 nvfx_vtxfmt_validate(struct nvfx_context *nvfx)
 {
-	struct nvfx_fragment_program *fp = nvfx->fragprog;
+	struct nvfx_pipe_fragment_program *pfp = nvfx->fragprog;
 	unsigned colour = 0, texcoords = 0, fog = 0, i;
 
 	/* Determine needed fragprog inputs */
-	for (i = 0; i < fp->info.num_inputs; i++) {
-		switch (fp->info.input_semantic_name[i]) {
+	for (i = 0; i < pfp->info.num_inputs; i++) {
+		switch (pfp->info.input_semantic_name[i]) {
 		case TGSI_SEMANTIC_POSITION:
 			break;
 		case TGSI_SEMANTIC_COLOR:
-			colour |= (1 << fp->info.input_semantic_index[i]);
+			colour |= (1 << pfp->info.input_semantic_index[i]);
 			break;
 		case TGSI_SEMANTIC_GENERIC:
-			texcoords |= (1 << fp->info.input_semantic_index[i]);
+			texcoords |= (1 << pfp->info.input_semantic_index[i]);
 			break;
 		case TGSI_SEMANTIC_FOG:
 			fog = 1;

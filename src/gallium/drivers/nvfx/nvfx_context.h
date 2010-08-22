@@ -161,7 +161,7 @@ struct nvfx_context {
 	unsigned stipple[32];
 	struct pipe_clip_state clip;
 	struct nvfx_vertex_program *vertprog;
-	struct nvfx_fragment_program *fragprog;
+	struct nvfx_pipe_fragment_program *fragprog;
 	struct pipe_resource *constbuf[PIPE_SHADER_TYPES];
 	unsigned constbuf_nr[PIPE_SHADER_TYPES];
 	struct nvfx_rasterizer_state *rasterizer;
@@ -174,6 +174,8 @@ struct nvfx_context {
 	struct pipe_index_buffer idxbuf;
 	struct nvfx_sampler_state *tex_sampler[PIPE_MAX_SAMPLERS];
 	struct pipe_sampler_view *fragment_sampler_views[PIPE_MAX_SAMPLERS];
+	struct nvfx_pipe_fragment_program* dummy_fs;
+
 	unsigned nr_samplers;
 	unsigned nr_textures;
 	unsigned dirty_samplers;
@@ -195,6 +197,7 @@ struct nvfx_context {
 	struct nvfx_render_target hw_zeta;
 	int hw_pointsprite_control;
 	int hw_vp_output;
+	struct nvfx_fragment_program* hw_fragprog;
 };
 
 static INLINE struct nvfx_context *

@@ -8,6 +8,7 @@
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_util.h"
 #include "tgsi/tgsi_dump.h"
+#include "tgsi/tgsi_ureg.h"
 
 #include "nvfx_context.h"
 #include "nvfx_shader.h"
@@ -17,6 +18,7 @@
 #define MAX_IMM 32
 
 struct nvfx_fpc {
+	struct nvfx_pipe_fragment_program* pfp;
 	struct nvfx_fragment_program *fp;
 
 	unsigned r_temps;
@@ -379,27 +381,27 @@ tgsi_src(struct nvfx_fpc *fpc, const struct tgsi_full_src_register *fsrc)
 
 	switch (fsrc->Register.File) {
 	case TGSI_FILE_INPUT:
-		if(fpc->fp->info.input_semantic_name[fsrc->Register.Index] == TGSI_SEMANTIC_POSITION) {
-			assert(fpc->fp->info.input_semantic_index[fsrc->Register.Index] == 0);
+		if(fpc->pfp->info.input_semantic_name[fsrc->Register.Index] == TGSI_SEMANTIC_POSITION) {
+			assert(fpc->pfp->info.input_semantic_index[fsrc->Register.Index] == 0);
 			src.reg = nvfx_reg(NVFXSR_INPUT, NVFX_FP_OP_INPUT_SRC_POSITION);
-		} else if(fpc->fp->info.input_semantic_name[fsrc->Register.Index] == TGSI_SEMANTIC_COLOR) {
-			if(fpc->fp->info.input_semantic_index[fsrc->Register.Index] == 0)
+		} else if(fpc->pfp->info.input_semantic_name[fsrc->Register.Index] == TGSI_SEMANTIC_COLOR) {
+			if(fpc->pfp->info.input_semantic_index[fsrc->Register.Index] == 0)
 				src.reg = nvfx_reg(NVFXSR_INPUT, NVFX_FP_OP_INPUT_SRC_COL0);
-			else if(fpc->fp->info.input_semantic_index[fsrc->Register.Index] == 1)
+			else if(fpc->pfp->info.input_semantic_index[fsrc->Register.Index] == 1)
 				src.reg = nvfx_reg(NVFXSR_INPUT, NVFX_FP_OP_INPUT_SRC_COL1);
 			else
 				assert(0);
-		} else if(fpc->fp->info.input_semantic_name[fsrc->Register.Index] == TGSI_SEMANTIC_FOG) {
-			assert(fpc->fp->info.input_semantic_index[fsrc->Register.Index] == 0);
+		} else if(fpc->pfp->info.input_semantic_name[fsrc->Register.Index] == TGSI_SEMANTIC_FOG) {
+			assert(fpc->pfp->info.input_semantic_index[fsrc->Register.Index] == 0);
 			src.reg = nvfx_reg(NVFXSR_INPUT, NVFX_FP_OP_INPUT_SRC_FOGC);
-		} else if(fpc->fp->info.input_semantic_name[fsrc->Register.Index] == TGSI_SEMANTIC_FACE) {
+		} else if(fpc->pfp->info.input_semantic_name[fsrc->Register.Index] == TGSI_SEMANTIC_FACE) {
 			/* TODO: check this has the correct values */
 			/* XXX: what do we do for nv30 here (assuming it lacks facing)?!  */
-			assert(fpc->fp->info.input_semantic_index[fsrc->Register.Index] == 0);
+			assert(fpc->pfp->info.input_semantic_index[fsrc->Register.Index] == 0);
 			src.reg = nvfx_reg(NVFXSR_INPUT, NV40_FP_OP_INPUT_SRC_FACING);
 		} else {
-			assert(fpc->fp->info.input_semantic_name[fsrc->Register.Index] == TGSI_SEMANTIC_GENERIC);
-			src.reg = nvfx_reg(NVFXSR_RELOCATED, fpc->generic_to_slot[fpc->fp->info.input_semantic_index[fsrc->Register.Index]]);
+			assert(fpc->pfp->info.input_semantic_name[fsrc->Register.Index] == TGSI_SEMANTIC_GENERIC);
+			src.reg = nvfx_reg(NVFXSR_RELOCATED, fpc->generic_to_slot[fpc->pfp->info.input_semantic_index[fsrc->Register.Index]]);
 		}
 		break;
 	case TGSI_FILE_CONSTANT:
@@ -922,7 +924,7 @@ nvfx_fragprog_prepare(struct nvfx_context* nvfx, struct nvfx_fpc *fpc)
 	float const0v[4] = {0, 0, 0, 0};
 	struct nvfx_reg const0;
 
-	fpc->fp->num_slots = util_semantic_set_from_program_file(&set, fpc->fp->pipe.tokens, TGSI_FILE_INPUT);
+	fpc->fp->num_slots = util_semantic_set_from_program_file(&set, fpc->pfp->pipe.tokens, TGSI_FILE_INPUT);
 	if(fpc->fp->num_slots > 8)
 		return FALSE;
 	util_semantic_layout_from_set(fpc->fp->slot_to_generic, &set, 0, 8);
@@ -933,7 +935,7 @@ nvfx_fragprog_prepare(struct nvfx_context* nvfx, struct nvfx_fpc *fpc)
 	const0 = constant(fpc, -1, const0v);
 	assert(const0.index == 0);
 
-	tgsi_parse_init(&p, fpc->fp->pipe.tokens);
+	tgsi_parse_init(&p, fpc->pfp->pipe.tokens);
 	while (!tgsi_parse_end_of_tokens(&p)) {
 		const union tgsi_full_token *tok = &p.FullToken;
 
@@ -999,26 +1001,32 @@ out_err:
 
 DEBUG_GET_ONCE_BOOL_OPTION(nvfx_dump_fp, "NVFX_DUMP_FP", FALSE)
 
-static void
+static struct nvfx_fragment_program*
 nvfx_fragprog_translate(struct nvfx_context *nvfx,
-			struct nvfx_fragment_program *fp)
+			struct nvfx_pipe_fragment_program *pfp)
 {
 	struct tgsi_parse_context parse;
 	struct nvfx_fpc *fpc = NULL;
 	struct util_dynarray insns;
+	struct nvfx_fragment_program* fp = NULL;
+        const int min_size = 4096;
 
-	fpc = CALLOC(1, sizeof(struct nvfx_fpc));
+	fp = CALLOC_STRUCT(nvfx_fragment_program);
+	if(!fp)
+		goto out_err;
+
+	fpc = CALLOC_STRUCT(nvfx_fpc);
 	if (!fpc)
-		return;
+		goto out_err;
+
+	fpc->pfp = pfp;
 	fpc->fp = fp;
 	fpc->num_regs = 2;
 
-	if (!nvfx_fragprog_prepare(nvfx, fpc)) {
-		FREE(fpc);
-		return;
-	}
+	if (!nvfx_fragprog_prepare(nvfx, fpc))
+		goto out_err;
 
-	tgsi_parse_init(&parse, fp->pipe.tokens);
+	tgsi_parse_init(&parse, pfp->pipe.tokens);
 
 	util_dynarray_init(&insns);
 	while (!tgsi_parse_end_of_tokens(&parse)) {
@@ -1068,7 +1076,7 @@ nvfx_fragprog_translate(struct nvfx_context *nvfx,
 	if(debug_get_option_nvfx_dump_fp())
 	{
 		debug_printf("\n");
-		tgsi_dump(fp->pipe.tokens, 0);
+		tgsi_dump(pfp->pipe.tokens, 0);
 
 		debug_printf("\n%s fragment program:\n", nvfx->is_nv4x ? "nv4x" : "nv3x");
 		for (unsigned i = 0; i < fp->insn_len; i += 4)
@@ -1076,15 +1084,37 @@ nvfx_fragprog_translate(struct nvfx_context *nvfx,
 		debug_printf("\n");
 	}
 
-	fp->translated = TRUE;
-out_err:
+        fp->prog_size = (fp->insn_len * 4 + 63) & ~63;
+
+        if(fp->prog_size >= min_size)
+                fp->progs_per_bo = 1;
+        else
+                fp->progs_per_bo = min_size / fp->prog_size;
+        fp->bo_prog_idx = fp->progs_per_bo - 1;
+
+out:
 	tgsi_parse_free(&parse);
-	if (fpc->r_temp)
-		FREE(fpc->r_temp);
-	util_dynarray_fini(&fpc->if_stack);
-	util_dynarray_fini(&fpc->label_relocs);
-	//util_dynarray_fini(&fpc->loop_stack);
-	FREE(fpc);
+	if(fpc)
+	{
+		if (fpc->r_temp)
+			FREE(fpc->r_temp);
+		util_dynarray_fini(&fpc->if_stack);
+		util_dynarray_fini(&fpc->label_relocs);
+		//util_dynarray_fini(&fpc->loop_stack);
+		FREE(fpc);
+	}
+	return fp;
+
+out_err:
+	_debug_printf("Error: failed to compile this fragment program:\n");
+	tgsi_dump(pfp->pipe.tokens, 0);
+
+	if(fp)
+	{
+		FREE(fp);
+		fp = NULL;
+	}
+	goto out;
 }
 
 static inline void
@@ -1134,42 +1164,48 @@ void
 nvfx_fragprog_validate(struct nvfx_context *nvfx)
 {
 	struct nouveau_channel* chan = nvfx->screen->base.channel;
-	struct nvfx_fragment_program *fp = nvfx->fragprog;
-	int update = 0;
+	struct nvfx_pipe_fragment_program *pfp = nvfx->fragprog;
 	struct nvfx_vertex_program* vp;
 	unsigned sprite_coord_enable;
-	boolean update_pointsprite = !!(nvfx->dirty & NVFX_NEW_FRAGPROG);
+	unsigned key = 0;
+	struct nvfx_fragment_program* fp;
 
-	if (!fp->translated)
+	fp = pfp->fps[key];
+	if (!fp)
 	{
-		const int min_size = 4096;
+		fp = nvfx_fragprog_translate(nvfx, pfp);
 
-		nvfx_fragprog_translate(nvfx, fp);
-		if (!fp->translated) {
-			static unsigned dummy[8] = {1, 0, 0, 0, 1, 0, 0, 0};
-			static int warned = 0;
-			if(!warned)
+		if(!fp)
+		{
+			if(!nvfx->dummy_fs)
 			{
-				fprintf(stderr, "nvfx: failed to translate fragment program!\n");
-				warned = 1;
+				struct ureg_program *ureg = ureg_create( TGSI_PROCESSOR_FRAGMENT );
+				if (ureg)
+				{
+					ureg_END( ureg );
+					nvfx->dummy_fs = ureg_create_shader_and_destroy( ureg, &nvfx->pipe );
+				}
+
+				if(!nvfx->dummy_fs)
+				{
+					_debug_printf("Error: unable to create a dummy fragment shader: aborting.");
+					abort();
+				}
 			}
 
-			/* use dummy program: we cannot fail here */
-			fp->translated = TRUE;
-			fp->insn = malloc(sizeof(dummy));
-			memcpy(fp->insn, dummy, sizeof(dummy));
-			fp->insn_len = sizeof(dummy) / sizeof(dummy[0]);
+			fp = nvfx_fragprog_translate(nvfx, nvfx->dummy_fs);
+
+			if(!fp)
+			{
+				_debug_printf("Error: unable to compile even a dummy fragment shader: aborting.");
+				abort();
+			}
 		}
-		update = TRUE;
 
-		fp->prog_size = (fp->insn_len * 4 + 63) & ~63;
-
-		if(fp->prog_size >= min_size)
-			fp->progs_per_bo = 1;
-		else
-			fp->progs_per_bo = min_size / fp->prog_size;
-		fp->bo_prog_idx = fp->progs_per_bo - 1;
+		pfp->fps[key] = fp;
 	}
+
+	nvfx->hw_fragprog = fp;
 
 	vp = nvfx->render_mode == HW ? nvfx->vertprog : nvfx->swtnl.vertprog;
         sprite_coord_enable = nvfx->rasterizer->pipe.point_quad_rasterization * nvfx->rasterizer->pipe.sprite_coord_enable;
@@ -1391,7 +1427,7 @@ void
 nvfx_fragprog_relocate(struct nvfx_context *nvfx)
 {
 	struct nouveau_channel* chan = nvfx->screen->base.channel;
-	struct nvfx_fragment_program *fp = nvfx->fragprog;
+	struct nvfx_fragment_program *fp = nvfx->hw_fragprog;
 	struct nouveau_bo* bo = fp->fpbo->bo;
 	int offset = fp->bo_prog_idx * fp->prog_size;
 	unsigned fp_flags = NOUVEAU_BO_VRAM | NOUVEAU_BO_RD; // TODO: GART?
@@ -1433,14 +1469,14 @@ static void *
 nvfx_fp_state_create(struct pipe_context *pipe,
                      const struct pipe_shader_state *cso)
 {
-        struct nvfx_fragment_program *fp;
+        struct nvfx_pipe_fragment_program *pfp;
 
-        fp = CALLOC(1, sizeof(struct nvfx_fragment_program));
-        fp->pipe.tokens = tgsi_dup_tokens(cso->tokens);
+        pfp = CALLOC(1, sizeof(struct nvfx_pipe_fragment_program));
+        pfp->pipe.tokens = tgsi_dup_tokens(cso->tokens);
 
-        tgsi_scan_shader(fp->pipe.tokens, &fp->info);
+        tgsi_scan_shader(pfp->pipe.tokens, &pfp->info);
 
-        return (void *)fp;
+        return (void *)pfp;
 }
 
 static void
@@ -1456,11 +1492,17 @@ static void
 nvfx_fp_state_delete(struct pipe_context *pipe, void *hwcso)
 {
         struct nvfx_context *nvfx = nvfx_context(pipe);
-        struct nvfx_fragment_program *fp = hwcso;
+        struct nvfx_pipe_fragment_program *pfp = hwcso;
+        unsigned i;
 
-        nvfx_fragprog_destroy(nvfx, fp);
-        FREE((void*)fp->pipe.tokens);
-        FREE(fp);
+        for(i = 0; i < Elements(pfp->fps); ++i)
+        {
+        	nvfx_fragprog_destroy(nvfx, pfp->fps[i]);
+        	FREE(pfp->fps[i]);
+        }
+
+        FREE((void*)pfp->pipe.tokens);
+        FREE(pfp);
 }
 
 void
