@@ -56,10 +56,6 @@ struct lp_fragment_shader_variant_key
    unsigned flatshade:1;
    unsigned occlusion_count:1;
 
-   struct {
-      ubyte colormask;
-   } cbuf_blend[PIPE_MAX_COLOR_BUFS];
-
    struct lp_sampler_static_state sampler[PIPE_MAX_SAMPLERS];
 };
 
