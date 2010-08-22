@@ -73,7 +73,9 @@
 #endif
 
 
+#if DEBUG
 DEBUG_GET_ONCE_BOOL_OPTION(dump_cpu, "GALLIUM_DUMP_CPU", FALSE)
+#endif
 
 
 struct util_cpu_caps util_cpu_caps;
