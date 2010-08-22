@@ -484,6 +484,21 @@ static void translate_vertex_program(struct r300_vertex_program_compiler * compi
 		if (!valid_dst(compiler->code, &vpi->DstReg))
 			continue;
 
+		if (rc_get_opcode_info(vpi->Opcode)->HasDstReg) {
+			/* Relative addressing of destination operands is not supported yet. */
+			if (vpi->DstReg.RelAddr) {
+				rc_error(&compiler->Base, "Vertex program does not support relative "
+					 "addressing of destination operands (yet).\n");
+				return;
+			}
+
+			/* Neither is Saturate. */
+			if (vpi->SaturateMode != RC_SATURATE_NONE) {
+				rc_error(&compiler->Base, "Vertex program does not support the Saturate "
+					 "modifier (yet).\n");
+			}
+		}
+
 		if (compiler->code->length >= R500_VS_MAX_ALU_DWORDS ||
 		    (compiler->code->length >= R300_VS_MAX_ALU_DWORDS && !compiler->Base.is_r500)) {
 			rc_error(&compiler->Base, "Vertex program has too many instructions\n");
@@ -971,5 +986,12 @@ void r3xx_compile_vertex_program(struct r300_vertex_program_compiler* compiler)
 	if (compiler->Base.Debug) {
 		fprintf(stderr, "Final vertex program code:\n");
 		r300_vertex_program_dump(compiler);
+	}
+
+	/* Check the number of constants. */
+	if (!compiler->Base.Error &&
+	    compiler->Base.Program.Constants.Count > 256) {
+		rc_error(&compiler->Base, "Too many constants. Max: 256, Got: %i\n",
+			 compiler->Base.Program.Constants.Count);
 	}
 }

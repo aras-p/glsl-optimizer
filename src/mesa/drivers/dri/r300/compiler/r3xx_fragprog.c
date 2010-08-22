@@ -224,4 +224,14 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 			r300FragmentProgramDump(c->code);
 		}
 	}
+
+	/* Check the number of constants. */
+	if (!c->Base.Error) {
+		unsigned max = c->Base.is_r500 ? R500_PFS_NUM_CONST_REGS : R300_PFS_NUM_CONST_REGS;
+
+		if (c->Base.Program.Constants.Count > max) {
+			rc_error(&c->Base, "Too many constants. Max: %i, Got: %i\n",
+				 max, c->Base.Program.Constants.Count);
+		}
+	}
 }
