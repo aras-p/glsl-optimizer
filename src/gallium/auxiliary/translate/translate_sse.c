@@ -1011,6 +1011,32 @@ static boolean translate_attr_convert( struct translate_sse *p,
       }
       return TRUE;
    }
+   /* special case for draw's EMIT_4UB (RGBA) and EMIT_4UB_BGRA */
+   else if((x86_target_caps(p->func) & X86_SSE2) &&
+         a->input_format == PIPE_FORMAT_R32G32B32A32_FLOAT && (0
+               || a->output_format == PIPE_FORMAT_B8G8R8A8_UNORM
+               || a->output_format == PIPE_FORMAT_R8G8B8A8_UNORM
+         ))
+   {
+      struct x86_reg dataXMM = x86_make_reg(file_XMM, 0);
+
+      /* load */
+      sse_movups(p->func, dataXMM, src);
+
+      if (a->output_format == PIPE_FORMAT_B8G8R8A8_UNORM)
+         sse_shufps(p->func, dataXMM, dataXMM, SHUF(2,1,0,3));
+
+      /* scale by 255.0 */
+      sse_mulps(p->func, dataXMM, get_const(p, CONST_255));
+
+      /* pack and emit */
+      sse2_cvtps2dq(p->func, dataXMM, dataXMM);
+      sse2_packssdw(p->func, dataXMM, dataXMM);
+      sse2_packuswb(p->func, dataXMM, dataXMM);
+      sse2_movd(p->func, dst, dataXMM);
+
+      return TRUE;
+   }
 
    return FALSE;
 }
