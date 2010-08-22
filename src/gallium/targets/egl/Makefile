@@ -97,6 +97,13 @@ r300_LIBS := \
 	$(TOP)/src/gallium/winsys/radeon/drm/libradeonwinsys.a \
 	$(TOP)/src/gallium/drivers/r300/libr300.a
 
+# r600 pipe driver
+r600_CPPFLAGS :=
+r600_SYS := -ldrm -ldrm_radeon
+r600_LIBS := \
+	$(TOP)/src/gallium/winsys/r600/drm/libr600winsys.a \
+	$(TOP)/src/gallium/drivers/r600/libr600.a
+
 # vmwgfx pipe driver
 vmwgfx_CPPFLAGS :=
 vmwgfx_SYS :=
@@ -153,6 +160,9 @@ endif
 ifneq ($(findstring radeon/drm,$(GALLIUM_WINSYS_DIRS)),)
 OUTPUTS += r300
 endif
+ifneq ($(findstring r600/drm,$(GALLIUM_WINSYS_DIRS)),)
+OUTPUTS += r600
+endif
 ifneq ($(findstring svga/drm,$(GALLIUM_WINSYS_DIRS)),)
 OUTPUTS += vmwgfx
 endif
@@ -190,6 +200,9 @@ $(OUTPUT_PATH)/$(PIPE_PREFIX)nouveau.so: pipe_nouveau.o $(nouveau_LIBS)
 
 $(OUTPUT_PATH)/$(PIPE_PREFIX)r300.so: pipe_r300.o $(r300_LIBS)
 	$(call mklib,r300)
+
+$(OUTPUT_PATH)/$(PIPE_PREFIX)r600.so: pipe_r600.o $(r600_LIBS)
+	$(call mklib,r600)
 
 $(OUTPUT_PATH)/$(PIPE_PREFIX)vmwgfx.so: pipe_vmwgfx.o $(vmwgfx_LIBS)
 	$(call mklib,vmwgfx)
