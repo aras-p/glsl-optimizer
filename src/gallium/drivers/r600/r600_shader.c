@@ -105,8 +105,8 @@ int r600_pipe_shader_create(struct pipe_context *ctx,
 	struct r600_screen *rscreen = r600_screen(ctx->screen);
 	int r;
 
-fprintf(stderr, "--------------------------------------------------------------\n");
-tgsi_dump(tokens, 0);
+//fprintf(stderr, "--------------------------------------------------------------\n");
+//tgsi_dump(tokens, 0);
 	if (rpshader == NULL)
 		return -ENOMEM;
 	rpshader->shader.family = radeon_get_family(rscreen->rw);
@@ -120,7 +120,7 @@ tgsi_dump(tokens, 0);
 		R600_ERR("building bytecode failed !\n");
 		return r;
 	}
-fprintf(stderr, "______________________________________________________________\n");
+//fprintf(stderr, "______________________________________________________________\n");
 	return 0;
 }
 

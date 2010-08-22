@@ -52,7 +52,7 @@ void r600_flush(struct pipe_context *ctx, unsigned flags,
 	char dname[256];
 
 	/* suspend queries */
-	r600_queries_suspend(rctx);
+	r600_queries_suspend(ctx);
 	if (radeon_ctx_pm4(rctx->ctx))
 		goto out;
 	/* FIXME dumping should be removed once shader support instructions
@@ -61,8 +61,10 @@ void r600_flush(struct pipe_context *ctx, unsigned flags,
 	if (!rctx->ctx->cpm4)
 		goto out;
 	sprintf(dname, "gallium-%08d.bof", dc);
-	if (dc < 10)
+	if (dc < 2) {
 		radeon_ctx_dump_bof(rctx->ctx, dname);
+		R600_ERR("dumped %s\n", dname);
+	}
 #if 1
 	radeon_ctx_submit(rctx->ctx);
 #endif
@@ -74,7 +76,7 @@ out:
 	rctx->ctx = radeon_ctx_decref(rctx->ctx);
 	rctx->ctx = radeon_ctx(rscreen->rw);
 	/* resume queries */
-	r600_queries_resume(rctx);
+	r600_queries_resume(ctx);
 }
 
 static void r600_init_config(struct r600_context *rctx)

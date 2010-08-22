@@ -120,7 +120,8 @@ static void r600_clear_depth_stencil(struct pipe_context *ctx,
 	r600_queries_resume(ctx);
 }
 
-static void r600_resource_copy_region(struct pipe_context *pipe,
+
+static void r600_resource_copy_region(struct pipe_context *ctx,
 				      struct pipe_resource *dst,
 				      struct pipe_subresource subdst,
 				      unsigned dstx, unsigned dsty, unsigned dstz,
@@ -129,8 +130,28 @@ static void r600_resource_copy_region(struct pipe_context *pipe,
 				      unsigned srcx, unsigned srcy, unsigned srcz,
 				      unsigned width, unsigned height)
 {
-	util_resource_copy_region(pipe, dst, subdst, dstx, dsty, dstz,
-				  src, subsrc, srcx, srcy, srcz, width, height);
+	struct r600_context *rctx = r600_context(ctx);
+	struct pipe_framebuffer_state *fb = &rctx->framebuffer->state.framebuffer;
+	struct pipe_sampler_state *samplers[PIPE_MAX_ATTRIBS];
+	struct pipe_sampler_view_state *sampler_views[PIPE_MAX_ATTRIBS];
+	unsigned i;
+
+	for (i = 0; i < rctx->ps_nsampler_view; i++) {
+		sampler_views[i] = &rctx->ps_sampler_view[i]->state.sampler_view;
+	}
+	for (i = 0; i < rctx->ps_nsampler; i++) {
+		samplers[i] = &rctx->ps_sampler[i]->state.sampler;
+	}
+	r600_blitter_save_states(ctx);
+	util_blitter_save_framebuffer(rctx->blitter, fb);
+	util_blitter_save_fragment_sampler_states(rctx->blitter, rctx->ps_nsampler, samplers);
+	util_blitter_save_fragment_sampler_views(rctx->blitter, rctx->ps_nsampler_view, sampler_views);
+
+	util_blitter_copy_region(rctx->blitter, dst, subdst, dstx, dsty, dstz,
+			src, subsrc, srcx, srcy, srcz, width, height,
+			TRUE);
+	/* resume queries */
+	r600_queries_resume(ctx);
 }
 
 void r600_init_blit_functions(struct r600_context *rctx)

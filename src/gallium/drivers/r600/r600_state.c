@@ -773,6 +773,9 @@ static struct radeon_state *r600_db(struct r600_context *rctx)
 		return NULL;
 
 	rtex = (struct r600_resource_texture*)state->zsbuf->texture;
+	rtex->tilled = 1;
+	rtex->array_mode = 2;
+	rtex->tile_type = 1;
 	rbuffer = &rtex->resource;
 	rstate->bo[0] = radeon_bo_incref(rscreen->rw, rbuffer->bo);
 	rstate->nbo = 1;
@@ -1258,7 +1261,9 @@ static struct radeon_state *r600_resource(struct r600_context *rctx,
 	/* FIXME properly handle first level != 0 */
 	rstate->states[R600_PS_RESOURCE__RESOURCE0_WORD0] =
 			S_038000_DIM(r600_tex_dim(view->texture->target)) |
-	                S_038000_PITCH((pitch / 8) - 1) |
+			S_038000_TILE_MODE(tmp->array_mode) |
+			S_038000_TILE_TYPE(tmp->tile_type) |
+			S_038000_PITCH((pitch / 8) - 1) |
 			S_038000_TEX_WIDTH(view->texture->width0 - 1);
 	rstate->states[R600_PS_RESOURCE__RESOURCE0_WORD1] =
 			S_038004_TEX_HEIGHT(view->texture->height0 - 1) |

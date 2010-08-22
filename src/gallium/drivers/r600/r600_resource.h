@@ -48,6 +48,9 @@ struct r600_resource_texture {
 	unsigned long			pitch_override;
 	unsigned long			bpt;
 	unsigned long			size;
+	unsigned			tilled;
+	unsigned			array_mode;
+	unsigned			tile_type;
 };
 
 void r600_init_context_resource_functions(struct r600_context *r600);

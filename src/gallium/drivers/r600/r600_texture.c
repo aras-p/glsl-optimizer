@@ -37,6 +37,21 @@
 
 extern struct u_resource_vtbl r600_texture_vtbl;
 
+/* Copy from a tiled texture to a detiled one. */
+static void r600_copy_from_tiled_texture(struct pipe_context *ctx, struct r600_transfer *rtransfer)
+{
+	struct pipe_transfer *transfer = (struct pipe_transfer*)rtransfer;
+	struct pipe_resource *texture = transfer->resource;
+	struct pipe_subresource subdst;
+
+	subdst.face = 0;
+	subdst.level = 0;
+	ctx->resource_copy_region(ctx, rtransfer->linear_texture,
+				subdst, 0, 0, 0, texture, transfer->sr,
+				transfer->box.x, transfer->box.y, transfer->box.z,
+				transfer->box.width, transfer->box.height);
+}
+
 static unsigned long r600_texture_get_offset(struct r600_resource_texture *rtex,
 					unsigned level, unsigned zslice,
 					unsigned face)
@@ -106,7 +121,6 @@ struct pipe_resource *r600_texture_create(struct pipe_screen *screen,
 		FREE(rtex);
 		return NULL;
 	}
-
 	return &resource->base.b;
 }
 
@@ -208,6 +222,7 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 						const struct pipe_box *box)
 {
 	struct r600_resource_texture *rtex = (struct r600_resource_texture*)texture;
+	struct pipe_resource resource;
 	struct r600_transfer *trans;
 
 	trans = CALLOC_STRUCT(r600_transfer);
@@ -219,14 +234,56 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 	trans->transfer.box = *box;
 	trans->transfer.stride = rtex->pitch[sr.level];
 	trans->offset = r600_texture_get_offset(rtex, sr.level, box->z, sr.face);
+	if (rtex->tilled) {
+		resource.target = PIPE_TEXTURE_2D;
+		resource.format = texture->format;
+		resource.width0 = box->width;
+		resource.height0 = box->height;
+		resource.depth0 = 0;
+		resource.last_level = 0;
+		resource.nr_samples = 0;
+		resource.usage = PIPE_USAGE_DYNAMIC;
+		resource.bind = 0;
+		resource.flags = 0;
+		/* For texture reading, the temporary (detiled) texture is used as
+		 * a render target when blitting from a tiled texture. */
+		if (usage & PIPE_TRANSFER_READ) {
+			resource.bind |= PIPE_BIND_RENDER_TARGET;
+		}
+		/* For texture writing, the temporary texture is used as a sampler
+		 * when blitting into a tiled texture. */
+		if (usage & PIPE_TRANSFER_WRITE) {
+			resource.bind |= PIPE_BIND_SAMPLER_VIEW;
+		}
+		/* Create the temporary texture. */
+		trans->linear_texture = ctx->screen->resource_create(ctx->screen, &resource);
+		if (trans->linear_texture == NULL) {
+			R600_ERR("failed to create temporary texture to hold untiled copy\n");
+			pipe_resource_reference(&trans->transfer.resource, NULL);
+			FREE(trans);
+			return NULL;
+		}
+		if (usage & PIPE_TRANSFER_READ) {
+			/* We cannot map a tiled texture directly because the data is
+			 * in a different order, therefore we do detiling using a blit. */
+			r600_copy_from_tiled_texture(ctx, trans);
+			/* Always referenced in the blit. */
+			ctx->flush(ctx, 0, NULL);
+		}
+	}
 	return &trans->transfer;
 }
 
 void r600_texture_transfer_destroy(struct pipe_context *ctx,
-				   struct pipe_transfer *trans)
+				   struct pipe_transfer *transfer)
 {
-	pipe_resource_reference(&trans->resource, NULL);
-	FREE(trans);
+	struct r600_transfer *rtransfer = (struct r600_transfer*)transfer;
+
+	if (rtransfer->linear_texture) {
+		pipe_resource_reference(&rtransfer->linear_texture, NULL);
+	}
+	pipe_resource_reference(&transfer->resource, NULL);
+	FREE(transfer);
 }
 
 void* r600_texture_transfer_map(struct pipe_context *ctx,
@@ -239,14 +296,20 @@ void* r600_texture_transfer_map(struct pipe_context *ctx,
 	char *map;
 
 	r600_flush(ctx, 0, NULL);
-
-	resource = (struct r600_resource *)transfer->resource;
+	if (rtransfer->linear_texture) {
+		resource = (struct r600_resource *)rtransfer->linear_texture;
+	} else {
+		resource = (struct r600_resource *)transfer->resource;
+	}
 	if (radeon_bo_map(rscreen->rw, resource->bo)) {
 		return NULL;
 	}
 	radeon_bo_wait(rscreen->rw, resource->bo);
 
 	map = resource->bo->data;
+	if (rtransfer->linear_texture) {
+		return map;
+	}
 
 	return map + rtransfer->offset +
 		transfer->box.y / util_format_get_blockheight(format) * transfer->stride +
@@ -256,10 +319,15 @@ void* r600_texture_transfer_map(struct pipe_context *ctx,
 void r600_texture_transfer_unmap(struct pipe_context *ctx,
 				 struct pipe_transfer* transfer)
 {
+	struct r600_transfer *rtransfer = (struct r600_transfer*)transfer;
 	struct r600_screen *rscreen = r600_screen(ctx->screen);
 	struct r600_resource *resource;
 
-	resource = (struct r600_resource *)transfer->resource;
+	if (rtransfer->linear_texture) {
+		resource = (struct r600_resource *)rtransfer->linear_texture;
+	} else {
+		resource = (struct r600_resource *)transfer->resource;
+	}
 	radeon_bo_unmap(rscreen->rw, resource->bo);
 }
 
@@ -283,51 +351,51 @@ void r600_init_screen_texture_functions(struct pipe_screen *screen)
 }
 
 static unsigned r600_get_swizzle_combined(const unsigned char *swizzle_format,
-					  const unsigned char *swizzle_view)
+		const unsigned char *swizzle_view)
 {
-    unsigned i;
-    unsigned char swizzle[4];
-    unsigned result = 0;
-    const uint32_t swizzle_shift[4] = {
-	    16, 19, 22, 25,
-    };
-    const uint32_t swizzle_bit[4] = {
-	    0, 1, 2, 3,
-    };
+	unsigned i;
+	unsigned char swizzle[4];
+	unsigned result = 0;
+	const uint32_t swizzle_shift[4] = {
+		16, 19, 22, 25,
+	};
+	const uint32_t swizzle_bit[4] = {
+		0, 1, 2, 3,
+	};
 
-    if (swizzle_view) {
-        /* Combine two sets of swizzles. */
-        for (i = 0; i < 4; i++) {
-            swizzle[i] = swizzle_view[i] <= UTIL_FORMAT_SWIZZLE_W ?
-                         swizzle_format[swizzle_view[i]] : swizzle_view[i];
-        }
-    } else {
-        memcpy(swizzle, swizzle_format, 4);
-    }
+	if (swizzle_view) {
+		/* Combine two sets of swizzles. */
+		for (i = 0; i < 4; i++) {
+			swizzle[i] = swizzle_view[i] <= UTIL_FORMAT_SWIZZLE_W ?
+				swizzle_format[swizzle_view[i]] : swizzle_view[i];
+		}
+	} else {
+		memcpy(swizzle, swizzle_format, 4);
+	}
 
-    /* Get swizzle. */
-    for (i = 0; i < 4; i++) {
-        switch (swizzle[i]) {
-            case UTIL_FORMAT_SWIZZLE_Y:
-                result |= swizzle_bit[1] << swizzle_shift[i];
-                break;
-            case UTIL_FORMAT_SWIZZLE_Z:
-                result |= swizzle_bit[2] << swizzle_shift[i];
-                break;
-            case UTIL_FORMAT_SWIZZLE_W:
-                result |= swizzle_bit[3] << swizzle_shift[i];
-                break;
-            case UTIL_FORMAT_SWIZZLE_0:
-                result |= V_038010_SQ_SEL_0 << swizzle_shift[i];
-                break;
-            case UTIL_FORMAT_SWIZZLE_1:
-                result |= V_038010_SQ_SEL_1 << swizzle_shift[i];
-                break;
-            default: /* UTIL_FORMAT_SWIZZLE_X */
-                result |= swizzle_bit[0] << swizzle_shift[i];
-        }
-    }
-    return result;
+	/* Get swizzle. */
+	for (i = 0; i < 4; i++) {
+		switch (swizzle[i]) {
+		case UTIL_FORMAT_SWIZZLE_Y:
+			result |= swizzle_bit[1] << swizzle_shift[i];
+			break;
+		case UTIL_FORMAT_SWIZZLE_Z:
+			result |= swizzle_bit[2] << swizzle_shift[i];
+			break;
+		case UTIL_FORMAT_SWIZZLE_W:
+			result |= swizzle_bit[3] << swizzle_shift[i];
+			break;
+		case UTIL_FORMAT_SWIZZLE_0:
+			result |= V_038010_SQ_SEL_0 << swizzle_shift[i];
+			break;
+		case UTIL_FORMAT_SWIZZLE_1:
+			result |= V_038010_SQ_SEL_1 << swizzle_shift[i];
+			break;
+		default: /* UTIL_FORMAT_SWIZZLE_X */
+			result |= swizzle_bit[0] << swizzle_shift[i];
+		}
+	}
+	return result;
 }
 
 /* texture format translate */
@@ -353,13 +421,13 @@ uint32_t r600_translate_texformat(enum pipe_format format,
 	case UTIL_FORMAT_COLORSPACE_ZS:
 		switch (format) {
 		case PIPE_FORMAT_Z16_UNORM:
-			result = V_028010_DEPTH_16;
+			result = V_0280A0_COLOR_16;
 			goto out_word4;
 		case PIPE_FORMAT_Z24X8_UNORM:
-			result = V_028010_DEPTH_X8_24;
+			result = V_0280A0_COLOR_8_24;
 			goto out_word4;
 		case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
-			result = V_028010_DEPTH_8_24;
+			result = V_0280A0_COLOR_8_24;
 			goto out_word4;
 		default:
 			goto out_unknown;
@@ -522,9 +590,8 @@ out_word4:
 		*word4_p = word4;
 	if (yuv_format_p)
 		*yuv_format_p = yuv_format;
-//	fprintf(stderr,"returning %08x %08x %08x\n", result, word4, yuv_format);
 	return result;
 out_unknown:
-//	R600_ERR("Unable to handle texformat %d %s\n", format, util_format_name(format));
+	R600_ERR("Unable to handle texformat %d %s\n", format, util_format_name(format));
 	return ~0;
 }
