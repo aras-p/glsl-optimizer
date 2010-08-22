@@ -624,10 +624,9 @@ static void allocate_temporary_registers(struct r300_vertex_program_compiler * c
 	struct temporary_allocation * ta;
 	unsigned int i, j;
 
-	compiler->code->num_temporaries = 0;
 	memset(hwtemps, 0, sizeof(hwtemps));
 
-	/* Pass 1: Count original temporaries and allocate structures */
+	/* Pass 1: Count original temporaries. */
 	for(inst = compiler->Base.Program.Instructions.Next; inst != &compiler->Base.Program.Instructions; inst = inst->Next) {
 		const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->U.I.Opcode);
 
@@ -645,12 +644,30 @@ static void allocate_temporary_registers(struct r300_vertex_program_compiler * c
 			}
 		}
 	}
+	compiler->code->num_temporaries = num_orig_temps;
 
+	/* Pass 2: If there is relative addressing of temporaries, we cannot change register indices. Give up. */
+	for (inst = compiler->Base.Program.Instructions.Next; inst != &compiler->Base.Program.Instructions; inst = inst->Next) {
+		const struct rc_opcode_info *opcode = rc_get_opcode_info(inst->U.I.Opcode);
+
+		if (opcode->HasDstReg)
+			if (inst->U.I.DstReg.RelAddr)
+				return;
+
+		for (i = 0; i < opcode->NumSrcRegs; ++i) {
+			if (inst->U.I.SrcReg[i].File == RC_FILE_TEMPORARY &&
+			    inst->U.I.SrcReg[i].RelAddr) {
+				return;
+			}
+		}
+	}
+
+	compiler->code->num_temporaries = 0;
 	ta = (struct temporary_allocation*)memory_pool_malloc(&compiler->Base.Pool,
 			sizeof(struct temporary_allocation) * num_orig_temps);
 	memset(ta, 0, sizeof(struct temporary_allocation) * num_orig_temps);
 
-	/* Pass 2: Determine original temporary lifetimes */
+	/* Pass 3: Determine original temporary lifetimes */
 	for(inst = compiler->Base.Program.Instructions.Next; inst != &compiler->Base.Program.Instructions; inst = inst->Next) {
 		const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->U.I.Opcode);
 		/* Instructions inside of loops need to use the ENDLOOP
@@ -685,7 +702,7 @@ static void allocate_temporary_registers(struct r300_vertex_program_compiler * c
 		}
 	}
 
-	/* Pass 3: Register allocation */
+	/* Pass 4: Register allocation */
 	for(inst = compiler->Base.Program.Instructions.Next; inst != &compiler->Base.Program.Instructions; inst = inst->Next) {
 		const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->U.I.Opcode);
 
@@ -937,9 +954,12 @@ void r3xx_compile_vertex_program(struct r300_vertex_program_compiler* compiler)
 
 	rc_dataflow_swizzles(&compiler->Base);
 
+	debug_program_log(compiler, "after dataflow");
+
 	allocate_temporary_registers(compiler);
 
-	debug_program_log(compiler, "after dataflow");
+	debug_program_log(compiler, "after register allocation");
+
 
 	translate_vertex_program(compiler);
 
