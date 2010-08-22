@@ -1518,7 +1518,7 @@ nvfx_fragprog_destroy(struct nvfx_context *nvfx,
 		while(fpbo != fp->fpbo);
 	}
 
-	for(i = 0; i < 8; ++i)
+	for(i = 0; i < Elements(fp->slot_relocations); ++i)
 		util_dynarray_fini(&fp->slot_relocations[i]);
 
 	if (fp->insn_len)
