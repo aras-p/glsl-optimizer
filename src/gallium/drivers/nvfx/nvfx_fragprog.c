@@ -21,8 +21,8 @@ struct nvfx_fpc {
 	struct nvfx_pipe_fragment_program* pfp;
 	struct nvfx_fragment_program *fp;
 
-	unsigned r_temps;
-	unsigned r_temps_discard;
+	unsigned long long r_temps;
+	unsigned long long r_temps_discard;
 	struct nvfx_reg r_result[PIPE_MAX_SHADER_OUTPUTS];
 	struct nvfx_reg *r_temp;
 
@@ -50,7 +50,7 @@ struct nvfx_fpc {
 static INLINE struct nvfx_reg
 temp(struct nvfx_fpc *fpc)
 {
-	int idx = ffs(~fpc->r_temps) - 1;
+	int idx = ffsll(~fpc->r_temps) - 1;
 
 	if (idx < 0) {
 		NOUVEAU_ERR("out of temps!!\n");
@@ -58,8 +58,8 @@ temp(struct nvfx_fpc *fpc)
 		return nvfx_reg(NVFXSR_TEMP, 0);
 	}
 
-	fpc->r_temps |= (1 << idx);
-	fpc->r_temps_discard |= (1 << idx);
+	fpc->r_temps |= (1ULL << idx);
+	fpc->r_temps_discard |= (1ULL << idx);
 	return nvfx_reg(NVFXSR_TEMP, idx);
 }
 
@@ -67,7 +67,7 @@ static INLINE void
 release_temps(struct nvfx_fpc *fpc)
 {
 	fpc->r_temps &= ~fpc->r_temps_discard;
-	fpc->r_temps_discard = 0;
+	fpc->r_temps_discard = 0ULL;
 }
 
 static INLINE struct nvfx_reg
@@ -911,7 +911,7 @@ nvfx_fragprog_parse_decl_output(struct nvfx_context* nvfx, struct nvfx_fpc *fpc,
 	}
 
 	fpc->r_result[idx] = nvfx_reg(NVFXSR_OUTPUT, hw);
-	fpc->r_temps |= (1 << hw);
+	fpc->r_temps |= (1ULL << hw);
 	return TRUE;
 }
 
@@ -987,7 +987,7 @@ nvfx_fragprog_prepare(struct nvfx_context* nvfx, struct nvfx_fpc *fpc)
 		fpc->r_temp = CALLOC(high_temp, sizeof(struct nvfx_reg));
 		for (i = 0; i < high_temp; i++)
 			fpc->r_temp[i] = temp(fpc);
-		fpc->r_temps_discard = 0;
+		fpc->r_temps_discard = 0ULL;
 	}
 
 	return TRUE;
