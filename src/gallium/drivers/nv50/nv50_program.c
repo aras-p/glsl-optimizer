@@ -306,6 +306,7 @@ alloc_temp(struct nv50_pc *pc, struct nv50_reg *dst)
 	return NULL;
 }
 
+#if 0
 /* release the hardware resource held by r */
 static void
 release_hw(struct nv50_pc *pc, struct nv50_reg *r)
@@ -321,6 +322,7 @@ release_hw(struct nv50_pc *pc, struct nv50_reg *r)
 	if (r->index == -1)
 		FREE(r);
 }
+#endif
 
 static void
 free_temp(struct nv50_pc *pc, struct nv50_reg *r)
@@ -885,6 +887,7 @@ set_half_src(struct nv50_pc *pc, struct nv50_reg *src, int lh,
 	e->inst[pos / 32] |= ((src->hw * 2) + lh) << (pos % 32);
 }
 
+#if 0
 static void
 emit_mov_from_pred(struct nv50_pc *pc, struct nv50_reg *dst, int pred)
 {
@@ -897,6 +900,7 @@ emit_mov_from_pred(struct nv50_pc *pc, struct nv50_reg *dst, int pred)
 
 	emit(pc, e);
 }
+#endif
 
 static void
 emit_mov_to_pred(struct nv50_pc *pc, int pred, struct nv50_reg *src)
