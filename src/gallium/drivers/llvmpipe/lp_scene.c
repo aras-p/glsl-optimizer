@@ -163,12 +163,15 @@ lp_scene_reset(struct lp_scene *scene )
 
    /* Free all but last binner command lists:
     */
-   for (i = 0; i < TILES_X; i++) {
-      for (j = 0; j < TILES_Y; j++) {
+   for (i = 0; i < scene->tiles_x; i++) {
+      for (j = 0; j < scene->tiles_y; j++) {
          lp_scene_bin_reset(scene, i, j);
       }
    }
 
+   /* If there are any bins which weren't cleared by the loop above,
+    * they will be caught (on debug builds at least) by this assert:
+    */
    assert(lp_scene_is_empty(scene));
 
    /* Free all but last binned data block:
