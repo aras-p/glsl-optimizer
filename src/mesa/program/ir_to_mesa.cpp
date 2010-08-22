@@ -1369,7 +1369,7 @@ ir_to_mesa_visitor::visit(ir_dereference_array *ir)
    if (deref_var && strncmp(deref_var->var->name,
 			    "gl_TextureMatrix",
 			    strlen("gl_TextureMatrix")) == 0) {
-      struct variable_storage *entry;
+      variable_storage *entry;
 
       entry = get_builtin_matrix_ref(this->mem_ctx, this->prog, deref_var->var,
 				     ir->array_index);
