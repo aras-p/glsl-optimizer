@@ -852,10 +852,22 @@ void emit_math1(struct brw_wm_compile *c,
 		const struct brw_reg *arg0)
 {
    struct brw_compile *p = &c->func;
+   struct intel_context *intel = &p->brw->intel;
    int dst_chan = _mesa_ffs(mask & WRITEMASK_XYZW) - 1;
    GLuint saturate = ((mask & SATURATE) ?
 		      BRW_MATH_SATURATE_SATURATE :
 		      BRW_MATH_SATURATE_NONE);
+   struct brw_reg src;
+
+   if (intel->gen >= 6 && arg0[0].hstride == BRW_HORIZONTAL_STRIDE_0) {
+      /* Gen6 math requires that source and dst horizontal stride be 1.
+       *
+       */
+      src = *dst;
+      brw_MOV(p, src, arg0[0]);
+   } else {
+      src = arg0[0];
+   }
 
    if (!(mask & WRITEMASK_XYZW))
       return; /* Do not emit dead code */
@@ -871,7 +883,7 @@ void emit_math1(struct brw_wm_compile *c,
 	    function,
 	    saturate,
 	    2,
-	    arg0[0],
+	    src,
 	    BRW_MATH_DATA_VECTOR,
 	    BRW_MATH_PRECISION_FULL);
 
@@ -882,7 +894,7 @@ void emit_math1(struct brw_wm_compile *c,
 	       function,
 	       saturate,
 	       3,
-	       sechalf(arg0[0]),
+	       sechalf(src),
 	       BRW_MATH_DATA_VECTOR,
 	       BRW_MATH_PRECISION_FULL);
    }
