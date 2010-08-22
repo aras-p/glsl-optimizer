@@ -2630,18 +2630,10 @@ ast_struct_specifier::hir(exec_list *instructions,
       glsl_type::get_record_instance(fields, decl_count, name);
 
    YYLTYPE loc = this->get_location();
-   if (!state->symbols->add_type(name, t)) {
+   ir_function *ctor = t->generate_constructor();
+   if (!state->symbols->add_type(name, t, ctor)) {
       _mesa_glsl_error(& loc, state, "struct `%s' previously defined", name);
    } else {
-      /* This logic is a bit tricky.  It is an error to declare a structure at
-       * global scope if there is also a function with the same name.
-       */
-      if ((state->current_function == NULL)
-	  && (state->symbols->get_function(name) != NULL)) {
-	 _mesa_glsl_error(& loc, state, "name `%s' previously defined", name);
-      } else {
-	 t->generate_constructor(state->symbols);
-      }
 
       const glsl_type **s = (const glsl_type **)
 	 realloc(state->user_structures,

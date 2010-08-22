@@ -208,9 +208,9 @@ struct glsl_type {
 					       unsigned num_fields,
 					       const char *name);
    /**
-    * Generate the constructor for this type and add it to the symbol table
+    * Generate the constructor for this type and return it
     */
-   class ir_function *generate_constructor(glsl_symbol_table *) const;
+   class ir_function *generate_constructor() const;
 
    /**
     * Query the total number of scalars that make up a scalar, vector or matrix

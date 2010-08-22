@@ -34,6 +34,8 @@ extern "C" {
 #include "ir.h"
 #include "glsl_types.h"
 
+class symbol_table_entry;
+
 /**
  * Facade class for _mesa_symbol_table
  *
@@ -42,12 +44,6 @@ extern "C" {
  */
 struct glsl_symbol_table {
 private:
-   enum glsl_symbol_name_space {
-      glsl_variable_name_space = 0,
-      glsl_type_name_space = 1,
-      glsl_function_name_space = 2
-   };
-
    static int
    _glsl_symbol_table_destructor (glsl_symbol_table *table)
    {
@@ -80,33 +76,18 @@ public:
       talloc_free(table);
    }
    
-   glsl_symbol_table()
-   {
-      table = _mesa_symbol_table_ctor();
-   }
+   glsl_symbol_table();
+   ~glsl_symbol_table();
 
-   ~glsl_symbol_table()
-   {
-      _mesa_symbol_table_dtor(table);
-   }
+   unsigned int language_version;
 
-   void push_scope()
-   {
-      _mesa_symbol_table_push_scope(table);
-   }
-
-   void pop_scope()
-   {
-      _mesa_symbol_table_pop_scope(table);
-   }
+   void push_scope();
+   void pop_scope();
 
    /**
     * Determine whether a name was declared at the current scope
     */
-   bool name_declared_this_scope(const char *name)
-   {
-      return _mesa_symbol_table_symbol_scope(table, -1, name) == 0;
-   }
+   bool name_declared_this_scope(const char *name);
 
    /**
     * \name Methods to add symbols to the table
@@ -116,56 +97,26 @@ public:
     * reduces the clarity of the intention of code that uses these methods.
     */
    /*@{*/
-   bool add_variable(const char *name, ir_variable *v)
-   {
-      return _mesa_symbol_table_add_symbol(table, glsl_variable_name_space,
-					   name, v) == 0;
-   }
-
-   bool add_type(const char *name, const glsl_type *t)
-   {
-      return _mesa_symbol_table_add_symbol(table, glsl_type_name_space,
-					   name, (void *) t) == 0;
-   }
-
-   bool add_function(const char *name, ir_function *f)
-   {
-      return _mesa_symbol_table_add_symbol(table, glsl_function_name_space,
-					   name, f) == 0;
-   }
-
-   bool remove_function(const char *name, ir_function *f)
-   {
-      return _mesa_symbol_table_add_symbol(table, glsl_function_name_space,
-					   name, f) == 0;
-   }
+   bool add_variable(const char *name, ir_variable *v);
+   bool add_type(const char *name, const glsl_type *t,
+	         ir_function *constructor = NULL);
+   bool add_function(const char *name, ir_function *f);
    /*@}*/
 
    /**
     * \name Methods to get symbols from the table
     */
    /*@{*/
-   ir_variable *get_variable(const char *name)
-   {
-      return (ir_variable *)
-	 _mesa_symbol_table_find_symbol(table, glsl_variable_name_space, name);
-   }
-
-   glsl_type *get_type(const char *name)
-   {
-      return (glsl_type *)
-	 _mesa_symbol_table_find_symbol(table, glsl_type_name_space, name);
-   }
-
-   ir_function *get_function(const char *name)
-   {
-      return (ir_function *)
-	 _mesa_symbol_table_find_symbol(table, glsl_function_name_space, name);
-   }
+   ir_variable *get_variable(const char *name);
+   const glsl_type *get_type(const char *name);
+   ir_function *get_function(const char *name);
    /*@}*/
 
 private:
+   symbol_table_entry *get_entry(const char *name);
+
    struct _mesa_symbol_table *table;
+   void *mem_ctx;
 };
 
 #endif /* GLSL_SYMBOL_TABLE */

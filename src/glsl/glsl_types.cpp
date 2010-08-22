@@ -233,18 +233,11 @@ _mesa_glsl_release_types(void)
 
 
 ir_function *
-glsl_type::generate_constructor(glsl_symbol_table *symtab) const
+glsl_type::generate_constructor() const
 {
-   void *ctx = symtab;
+   void *ctx = (void *) this;
 
-   /* Generate the function name and add it to the symbol table.
-    */
    ir_function *const f = new(ctx) ir_function(name);
-
-   bool added = symtab->add_function(name, f);
-   assert(added);
-   (void) added;
-
    ir_function_signature *const sig = new(ctx) ir_function_signature(this);
    f->add_signature(sig);
 

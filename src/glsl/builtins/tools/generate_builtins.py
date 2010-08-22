@@ -133,6 +133,7 @@ read_builtins(GLenum target, const char *protos, const char **functions, unsigne
       new(sh) _mesa_glsl_parse_state(NULL, target, sh);
 
    st->language_version = 130;
+   st->symbols->language_version = 130;
    st->ARB_texture_rectangle_enable = true;
    st->EXT_texture_array_enable = true;
    _mesa_glsl_initialize_types(st);
