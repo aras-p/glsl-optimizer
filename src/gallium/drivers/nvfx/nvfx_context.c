@@ -75,6 +75,10 @@ nvfx_create(struct pipe_screen *pscreen, void *priv)
 	screen->base.channel->user_private = nvfx;
 
 	nvfx->is_nv4x = screen->is_nv4x;
+	/* TODO: it seems that nv30 might have fixed function clipping usable with vertex programs
+	 * However, my code for that doesn't work, so use vp clipping for all cards, which works.
+	 */
+	nvfx->use_vp_clipping = TRUE;
 
 	nvfx_init_query_functions(nvfx);
 	nvfx_init_surface_functions(nvfx);

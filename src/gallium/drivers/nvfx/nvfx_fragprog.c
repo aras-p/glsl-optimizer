@@ -1468,19 +1468,6 @@ update:
 			nvfx->hw_pointsprite_control = pointsprite_control;
 		}
 	}
-
-	if(nvfx->is_nv4x)
-	{
-		unsigned vp_output = vp->or | fp->or;
-
-		if(vp_output != nvfx->hw_vp_output)
-		{
-			WAIT_RING(chan, 2);
-			OUT_RING(chan, RING_3D(NV40TCL_VP_RESULT_EN, 1));
-			OUT_RING(chan, vp_output);
-			nvfx->hw_vp_output = vp_output;
-		}
-	}
 }
 
 void

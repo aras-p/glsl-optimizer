@@ -24,8 +24,6 @@ struct nvfx_vertex_program {
 
 	boolean translated;
 
-	struct pipe_clip_state ucp;
-
 	struct nvfx_vertex_program_exec *insns;
 	unsigned nr_insns;
 	struct nvfx_vertex_program_data *consts;
@@ -42,7 +40,7 @@ struct nvfx_vertex_program {
 
 	uint32_t ir;
 	uint32_t or;
-	uint32_t clip_ctrl;
+	int clip_nr;
 
 	struct util_dynarray branch_relocs;
 	struct util_dynarray const_relocs;

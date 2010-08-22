@@ -29,8 +29,6 @@
 #include "nv30_vertprog.h"
 #include "nv40_vertprog.h"
 
-#define NVFX_VP_INST_DEST_CLIP(n) ((~0 - 6) + (n))
-
 struct nvfx_loop_entry
 {
 	unsigned brk_target;
@@ -205,52 +203,33 @@ emit_dst(struct nvfx_context* nvfx, struct nvfx_vpc *vpc, uint32_t *hw, int slot
 		break;
 	case NVFXSR_OUTPUT:
 		/* TODO: this may be wrong because on nv30 COL0 and BFC0 are swapped */
-		switch (dst.index) {
-		case NVFX_VP_INST_DEST_CLIP(0):
-			vp->or |= (1 << 6);
-			vp->clip_ctrl |= NV34TCL_VP_CLIP_PLANES_ENABLE_PLANE0;
-			dst.index = NVFX_VP(INST_DEST_FOGC);
-			break;
-		case NVFX_VP_INST_DEST_CLIP(1):
-			vp->or |= (1 << 7);
-			vp->clip_ctrl |= NV34TCL_VP_CLIP_PLANES_ENABLE_PLANE1;
-			dst.index = NVFX_VP(INST_DEST_FOGC);
-			break;
-		case NVFX_VP_INST_DEST_CLIP(2):
-			vp->or |= (1 << 8);
-			vp->clip_ctrl |= NV34TCL_VP_CLIP_PLANES_ENABLE_PLANE2;
-			dst.index = NVFX_VP(INST_DEST_FOGC);
-			break;
-		case NVFX_VP_INST_DEST_CLIP(3):
-			vp->or |= (1 << 9);
-			vp->clip_ctrl |= NV34TCL_VP_CLIP_PLANES_ENABLE_PLANE3;
-			dst.index = NVFX_VP(INST_DEST_PSZ);
-			break;
-		case NVFX_VP_INST_DEST_CLIP(4):
-			vp->or |= (1 << 10);
-			vp->clip_ctrl |= NV34TCL_VP_CLIP_PLANES_ENABLE_PLANE4;
-			dst.index = NVFX_VP(INST_DEST_PSZ);
-			break;
-		case NVFX_VP_INST_DEST_CLIP(5):
-			vp->or |= (1 << 11);
-			vp->clip_ctrl |= NV34TCL_VP_CLIP_PLANES_ENABLE_PLANE5;
-			dst.index = NVFX_VP(INST_DEST_PSZ);
-			break;
-		default:
-			if(nvfx->is_nv4x) {
-				/* we don't need vp->or on nv3x
-				 * texcoords are handled by fragment program
-				 */
-				switch (dst.index) {
-				case NV40_VP_INST_DEST_COL0 : vp->or |= (1 << 0); break;
-				case NV40_VP_INST_DEST_COL1 : vp->or |= (1 << 1); break;
-				case NV40_VP_INST_DEST_BFC0 : vp->or |= (1 << 2); break;
-				case NV40_VP_INST_DEST_BFC1 : vp->or |= (1 << 3); break;
-				case NV40_VP_INST_DEST_FOGC: vp->or |= (1 << 4); break;
-				case NV40_VP_INST_DEST_PSZ  : vp->or |= (1 << 5); break;
-				}
+		if(nvfx->is_nv4x) {
+			switch (dst.index) {
+			case NV30_VP_INST_DEST_CLP(0):
+				dst.index = NVFX_VP(INST_DEST_FOGC);
+				break;
+			case NV30_VP_INST_DEST_CLP(1):
+				dst.index = NVFX_VP(INST_DEST_FOGC);
+				break;
+			case NV30_VP_INST_DEST_CLP(2):
+				dst.index = NVFX_VP(INST_DEST_FOGC);
+				break;
+			case NV30_VP_INST_DEST_CLP(3):
+				dst.index = NVFX_VP(INST_DEST_PSZ);
+				break;
+			case NV30_VP_INST_DEST_CLP(4):
+				dst.index = NVFX_VP(INST_DEST_PSZ);
+				break;
+			case NV30_VP_INST_DEST_CLP(5):
+				dst.index = NVFX_VP(INST_DEST_PSZ);
+				break;
+			case NV40_VP_INST_DEST_COL0 : vp->or |= (1 << 0); break;
+			case NV40_VP_INST_DEST_COL1 : vp->or |= (1 << 1); break;
+			case NV40_VP_INST_DEST_BFC0 : vp->or |= (1 << 2); break;
+			case NV40_VP_INST_DEST_BFC1 : vp->or |= (1 << 3); break;
+			case NV40_VP_INST_DEST_FOGC: vp->or |= (1 << 4); break;
+			case NV40_VP_INST_DEST_PSZ  : vp->or |= (1 << 5); break;
 			}
-			break;
 		}
 
 		if(!nvfx->is_nv4x) {
@@ -914,6 +893,13 @@ nvfx_vertprog_translate(struct nvfx_context *nvfx,
 	vpc->nvfx = nvfx;
 	vpc->vp = vp;
 
+	/* reserve space for ucps */
+	if(nvfx->use_vp_clipping)
+	{
+		for(i = 0; i < 6; ++i)
+			constant(vpc, -1, 0, 0, 0, 0);
+	}
+
 	if (!nvfx_vertprog_prepare(nvfx, vpc)) {
 		FREE(vpc);
 		return;
@@ -923,7 +909,8 @@ nvfx_vertprog_translate(struct nvfx_context *nvfx,
 	 * planes are enabled.  We need to append code to the vtxprog
 	 * to handle clip planes later.
 	 */
-	if (vp->ucp.nr)  {
+	/* TODO: maybe support patching this depending on whether there are ucps: not sure if it is really matters much */
+	if (nvfx->use_vp_clipping)  {
 		vpc->r_result[vpc->hpos_idx] = temp(vpc);
 		vpc->r_temps_discard = 0;
 	}
@@ -994,34 +981,39 @@ nvfx_vertprog_translate(struct nvfx_context *nvfx,
 	}
 
 	/* Insert code to handle user clip planes */
-	for (i = 0; i < vp->ucp.nr; i++) {
-		struct nvfx_reg cdst = nvfx_reg(NVFXSR_OUTPUT,
-						NVFX_VP_INST_DEST_CLIP(i));
-		struct nvfx_src ceqn = nvfx_src(constant(vpc, -1,
-						 nvfx->clip.ucp[i][0],
-						 nvfx->clip.ucp[i][1],
-						 nvfx->clip.ucp[i][2],
-						 nvfx->clip.ucp[i][3]));
-		struct nvfx_src htmp = nvfx_src(vpc->r_result[vpc->hpos_idx]);
-		unsigned mask;
+	if(nvfx->use_vp_clipping)
+	{
+		for (i = 0; i < 6; i++) {
+			struct nvfx_reg cdst = nvfx_reg(NVFXSR_OUTPUT, NV30_VP_INST_DEST_CLP(i));
+			struct nvfx_src ceqn = nvfx_src(nvfx_reg(NVFXSR_CONST, i));
+			struct nvfx_src htmp = nvfx_src(vpc->r_result[vpc->hpos_idx]);
+			unsigned mask;
 
-		switch (i) {
-		case 0: case 3: mask = NVFX_VP_MASK_Y; break;
-		case 1: case 4: mask = NVFX_VP_MASK_Z; break;
-		case 2: case 5: mask = NVFX_VP_MASK_W; break;
-		default:
-			NOUVEAU_ERR("invalid clip dist #%d\n", i);
-			goto out_err;
+			if(nvfx->is_nv4x)
+			{
+				switch (i) {
+				case 0: case 3: mask = NVFX_VP_MASK_Y; break;
+				case 1: case 4: mask = NVFX_VP_MASK_Z; break;
+				case 2: case 5: mask = NVFX_VP_MASK_W; break;
+				default:
+					NOUVEAU_ERR("invalid clip dist #%d\n", i);
+					goto out_err;
+				}
+			}
+			else
+				mask = NVFX_VP_MASK_X;
+
+			nvfx_vp_emit(vpc, arith(VEC, DP4, cdst, mask, htmp, ceqn, none));
 		}
-
-		nvfx_vp_emit(vpc, arith(VEC, DP4, cdst, mask, htmp, ceqn, none));
 	}
+	else
+	{
+		if(vp->nr_insns)
+			vp->insns[vp->nr_insns - 1].data[3] |= NVFX_VP_INST_LAST;
 
-	//vp->insns[vp->nr_insns - 1].data[3] |= NVFX_VP_INST_LAST;
-
-	/* Append NOP + END instruction for branches to the end of the program */
-	nvfx_vp_emit(vpc, arith(VEC, NOP, none.reg, 0, none, none, none));
-        vp->insns[vp->nr_insns - 1].data[3] |= NVFX_VP_INST_LAST | 0x1000;
+		nvfx_vp_emit(vpc, arith(VEC, NOP, none.reg, 0, none, none, none));
+		vp->insns[vp->nr_insns - 1].data[3] |= NVFX_VP_INST_LAST;
+	}
 
 	if(debug_get_option_nvfx_dump_vp())
 	{
@@ -1034,6 +1026,7 @@ nvfx_vertprog_translate(struct nvfx_context *nvfx,
 		debug_printf("\n");
 	}
 
+	vp->clip_nr = -1;
 	vp->exec_start = -1;
 	vp->translated = TRUE;
 out_err:
@@ -1063,13 +1056,6 @@ nvfx_vertprog_validate(struct nvfx_context *nvfx)
 	if (nvfx->render_mode == HW) {
 		vp = nvfx->vertprog;
 		constbuf = nvfx->constbuf[PIPE_SHADER_VERTEX];
-
-		// TODO: ouch! can't we just use constant slots for these?!
-		if ((nvfx->dirty & NVFX_NEW_UCP) ||
-		    memcmp(&nvfx->clip, &vp->ucp, sizeof(vp->ucp))) {
-			nvfx_vertprog_destroy(nvfx, vp);
-			memcpy(&vp->ucp, &nvfx->clip, sizeof(vp->ucp));
-		}
 	} else {
 		vp = nvfx->swtnl.vertprog;
 		constbuf = NULL;
@@ -1169,7 +1155,7 @@ nvfx_vertprog_validate(struct nvfx_context *nvfx)
 		vp->exec_start = vp->exec->start;
 	}
 
-	if (vp->nr_consts && vp->data_start != vp->data->start) {
+	if (vp->data_start != vp->data->start) {
 		for(unsigned i = 0; i < vp->const_relocs.size; i += sizeof(struct nvfx_relocation))
 		{
 			struct nvfx_relocation* reloc = (struct nvfx_relocation*)((char*)vp->const_relocs.data + i);
@@ -1182,6 +1168,7 @@ nvfx_vertprog_validate(struct nvfx_context *nvfx)
 		}
 
 		vp->data_start = vp->data->start;
+		upload_code = TRUE;
 	}
 
 	/* Update + Upload constant values */
@@ -1191,7 +1178,7 @@ nvfx_vertprog_validate(struct nvfx_context *nvfx)
 		if (constbuf)
 			map = (float*)nvfx_buffer(constbuf)->data;
 
-		for (i = 0; i < vp->nr_consts; i++) {
+		for (i = nvfx->use_vp_clipping ? 6 : 0; i < vp->nr_consts; i++) {
 			struct nvfx_vertex_program_data *vpd = &vp->consts[i];
 
 			if (vpd->index >= 0) {
@@ -1217,9 +1204,10 @@ nvfx_vertprog_validate(struct nvfx_context *nvfx)
 			BEGIN_RING(chan, eng3d, NV34TCL_VP_UPLOAD_INST(0), 4);
 			OUT_RINGp (chan, vp->insns[i].data, 4);
 		}
+		vp->clip_nr = -1;
 	}
 
-	if(nvfx->dirty & (NVFX_NEW_VERTPROG | NVFX_NEW_UCP))
+	if(nvfx->dirty & (NVFX_NEW_VERTPROG))
 	{
 		WAIT_RING(chan, 6);
 		OUT_RING(chan, RING_3D(NV34TCL_VP_START_FROM_ID, 1));
@@ -1228,8 +1216,6 @@ nvfx_vertprog_validate(struct nvfx_context *nvfx)
 			OUT_RING(chan, RING_3D(NV40TCL_VP_ATTRIB_EN, 1));
 			OUT_RING(chan, vp->ir);
 		}
-		OUT_RING(chan, RING_3D(NV34TCL_VP_CLIP_PLANES_ENABLE, 1));
-		OUT_RING(chan, vp->clip_ctrl);
 	}
 
 	return TRUE;
@@ -1238,27 +1224,15 @@ nvfx_vertprog_validate(struct nvfx_context *nvfx)
 void
 nvfx_vertprog_destroy(struct nvfx_context *nvfx, struct nvfx_vertex_program *vp)
 {
-	vp->translated = FALSE;
-
-	if (vp->nr_insns) {
+	if (vp->nr_insns)
 		FREE(vp->insns);
-		vp->insns = NULL;
-		vp->nr_insns = 0;
-	}
 
-	if (vp->nr_consts) {
+	if (vp->nr_consts)
 		FREE(vp->consts);
-		vp->consts = NULL;
-		vp->nr_consts = 0;
-	}
 
 	nouveau_resource_free(&vp->exec);
-	vp->exec_start = 0;
 	nouveau_resource_free(&vp->data);
-	vp->data_start = 0;
-	vp->data_start_min = 0;
 
-	vp->ir = vp->or = vp->clip_ctrl = 0;
 	util_dynarray_fini(&vp->branch_relocs);
 	util_dynarray_fini(&vp->const_relocs);
 }

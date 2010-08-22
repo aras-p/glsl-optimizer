@@ -90,11 +90,93 @@ nvfx_state_validate_common(struct nvfx_context *nvfx)
 	if(dirty & NVFX_NEW_STIPPLE)
 		nvfx_state_stipple_validate(nvfx);
 
+       if(nvfx->dirty & NVFX_NEW_UCP)
+	{
+		unsigned enables[7] =
+		{
+				0,
+				NV34TCL_VP_CLIP_PLANES_ENABLE_PLANE0,
+				NV34TCL_VP_CLIP_PLANES_ENABLE_PLANE0 | NV34TCL_VP_CLIP_PLANES_ENABLE_PLANE1,
+				NV34TCL_VP_CLIP_PLANES_ENABLE_PLANE0 | NV34TCL_VP_CLIP_PLANES_ENABLE_PLANE1 | NV34TCL_VP_CLIP_PLANES_ENABLE_PLANE2,
+				NV34TCL_VP_CLIP_PLANES_ENABLE_PLANE0 | NV34TCL_VP_CLIP_PLANES_ENABLE_PLANE1 | NV34TCL_VP_CLIP_PLANES_ENABLE_PLANE2 | NV34TCL_VP_CLIP_PLANES_ENABLE_PLANE3,
+				NV34TCL_VP_CLIP_PLANES_ENABLE_PLANE0 | NV34TCL_VP_CLIP_PLANES_ENABLE_PLANE1 | NV34TCL_VP_CLIP_PLANES_ENABLE_PLANE2 | NV34TCL_VP_CLIP_PLANES_ENABLE_PLANE3 | NV34TCL_VP_CLIP_PLANES_ENABLE_PLANE4,
+				NV34TCL_VP_CLIP_PLANES_ENABLE_PLANE0 | NV34TCL_VP_CLIP_PLANES_ENABLE_PLANE1 | NV34TCL_VP_CLIP_PLANES_ENABLE_PLANE2 | NV34TCL_VP_CLIP_PLANES_ENABLE_PLANE3 | NV34TCL_VP_CLIP_PLANES_ENABLE_PLANE4 | NV34TCL_VP_CLIP_PLANES_ENABLE_PLANE5,
+		};
+
+		if(!nvfx->use_vp_clipping)
+		{
+			WAIT_RING(chan, 2);
+			OUT_RING(chan, RING_3D(NV34TCL_VP_CLIP_PLANES_ENABLE, 1));
+			OUT_RING(chan, 0);
+
+			WAIT_RING(chan, 6 * 4 + 1);
+			OUT_RING(chan, RING_3D(NV34TCL_VP_CLIP_PLANE_A(0), nvfx->clip.nr * 4));
+			OUT_RINGp(chan, &nvfx->clip.ucp[0][0], nvfx->clip.nr * 4);
+		}
+
+		WAIT_RING(chan, 2);
+		OUT_RING(chan, RING_3D(NV34TCL_VP_CLIP_PLANES_ENABLE, 1));
+		OUT_RING(chan, enables[nvfx->clip.nr]);
+	}
+
+	if(nvfx->use_vp_clipping && (nvfx->dirty & (NVFX_NEW_UCP | NVFX_NEW_VERTPROG)))
+	{
+		unsigned i;
+		struct nvfx_vertex_program* vp = nvfx->vertprog;
+		if(nvfx->clip.nr != vp->clip_nr)
+		{
+			unsigned idx;
+			WAIT_RING(chan, 14);
+
+			/* remove last instruction bit */
+			if(vp->clip_nr >= 0)
+			{
+				idx = vp->nr_insns - 7 + vp->clip_nr;
+				OUT_RING(chan, RING_3D(NV34TCL_VP_UPLOAD_FROM_ID, 1));
+				OUT_RING(chan,  vp->exec->start + idx);
+				OUT_RING(chan, RING_3D(NV34TCL_VP_UPLOAD_INST(0), 4));
+				OUT_RINGp (chan, vp->insns[idx].data, 4);
+			}
+
+			 /* set last instruction bit */
+			idx = vp->nr_insns - 7 + nvfx->clip.nr;
+			OUT_RING(chan, RING_3D(NV34TCL_VP_UPLOAD_FROM_ID, 1));
+			OUT_RING(chan,  vp->exec->start + idx);
+			OUT_RING(chan, RING_3D(NV34TCL_VP_UPLOAD_INST(0), 4));
+			OUT_RINGp(chan, vp->insns[idx].data, 3);
+			OUT_RING(chan, vp->insns[idx].data[3] | 1);
+			vp->clip_nr = nvfx->clip.nr;
+		}
+
+		// TODO: only do this for the ones changed
+		WAIT_RING(chan, 6 * 6);
+		for(i = 0; i < nvfx->clip.nr; ++i)
+		{
+			OUT_RING(chan, RING_3D(NV34TCL_VP_UPLOAD_CONST_ID, 5));
+			OUT_RING(chan, vp->data->start + i);
+			OUT_RINGp (chan, nvfx->clip.ucp[i], 4);
+		}
+	}
+
 	if(dirty & (NVFX_NEW_FRAGPROG | NVFX_NEW_FRAGCONST | NVFX_NEW_VERTPROG | NVFX_NEW_SPRITE))
 	{
 		nvfx_fragprog_validate(nvfx);
 		if(dirty & NVFX_NEW_FRAGPROG)
 			flush_tex_cache = TRUE; // TODO: do we need this?
+	}
+
+	if(nvfx->is_nv4x)
+	{
+		unsigned vp_output = nvfx->vertprog->or | nvfx->hw_fragprog->or;
+		vp_output |= (1 << (nvfx->clip.nr + 6)) - (1 << 6);
+
+		if(vp_output != nvfx->hw_vp_output)
+		{
+			WAIT_RING(chan, 2);
+			OUT_RING(chan, RING_3D(NV40TCL_VP_RESULT_EN, 1));
+			OUT_RING(chan, vp_output);
+			nvfx->hw_vp_output = vp_output;
+		}
 	}
 
 	if(all_swizzled >= 0)

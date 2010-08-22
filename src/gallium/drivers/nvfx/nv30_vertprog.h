@@ -125,7 +125,7 @@
 #define NV30_VP_INST_VDEST_WRITEMASK_SHIFT      12    /*NV20*/
 #define NV30_VP_INST_VDEST_WRITEMASK_MASK      (0x0F << 12)  /*NV20*/
 #define NV30_VP_INST_DEST_SHIFT        2
-#define NV30_VP_INST_DEST_MASK        (0x0F <<  2)
+#define NV30_VP_INST_DEST_MASK        (0x1F <<  2)
 #  define NV30_VP_INST_DEST_POS  0
 #  define NV30_VP_INST_DEST_BFC0  1
 #  define NV30_VP_INST_DEST_BFC1  2
@@ -133,7 +133,8 @@
 #  define NV30_VP_INST_DEST_COL1  4
 #  define NV30_VP_INST_DEST_FOGC  5
 #  define NV30_VP_INST_DEST_PSZ   6
-#  define NV30_VP_INST_DEST_TC(n)  (8+n)
+#  define NV30_VP_INST_DEST_TC(n)  (8+(n))
+#  define NV30_VP_INST_DEST_CLP(n) (17 + (n))
 
 /* Useful to split the source selection regs into their pieces */
 #define NV30_VP_SRC0_HIGH_SHIFT                                                6
