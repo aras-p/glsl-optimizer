@@ -1488,7 +1488,7 @@ AC_ARG_ENABLE([gallium-radeon],
     [enable_gallium_radeon=auto])
 if test "x$enable_gallium_radeon" = xyes; then
     GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS r300"
-    gallium_check_st "radeon/drm" "dri-radeong" "xorg-radeon"
+    gallium_check_st "radeon/drm" "dri-r300" "xorg-radeon"
 elif test "x$enable_gallium_radeon" = xauto; then
     GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS r300"
 fi

@@ -23,4 +23,4 @@ create_screen(int fd)
    return screen;
 }
 
-DRM_DRIVER_DESCRIPTOR("radeon", "radeon", create_screen)
+DRM_DRIVER_DESCRIPTOR("r300", "radeon", create_screen)

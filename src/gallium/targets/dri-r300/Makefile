@@ -1,7 +1,7 @@
 TOP = ../../../..
 include $(TOP)/configs/current
 
-LIBNAME = radeong_dri.so
+LIBNAME = r300_dri.so
 
 PIPE_DRIVERS = \
 	$(TOP)/src/gallium/state_trackers/dri/drm/libdridrm.a \
