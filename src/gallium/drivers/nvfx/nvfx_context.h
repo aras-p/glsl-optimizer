@@ -193,6 +193,8 @@ struct nvfx_context {
 	uint32_t hw_txf[8];
 	struct nvfx_render_target hw_rt[4];
 	struct nvfx_render_target hw_zeta;
+	int hw_pointsprite_control;
+	int hw_vp_output;
 };
 
 static INLINE struct nvfx_context *

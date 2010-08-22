@@ -235,24 +235,10 @@ emit_dst(struct nvfx_context* nvfx, struct nvfx_vpc *vpc, uint32_t *hw, int slot
 			dst.index = NVFX_VP(INST_DEST_PSZ);
 			break;
 		default:
-			if(!nvfx->is_nv4x) {
-				switch (dst.index) {
-				case NV30_VP_INST_DEST_COL0 : vp->or |= (1 << 0); break;
-				case NV30_VP_INST_DEST_COL1 : vp->or |= (1 << 1); break;
-				case NV30_VP_INST_DEST_BFC0 : vp->or |= (1 << 2); break;
-				case NV30_VP_INST_DEST_BFC1 : vp->or |= (1 << 3); break;
-				case NV30_VP_INST_DEST_FOGC: vp->or |= (1 << 4); break;
-				case NV30_VP_INST_DEST_PSZ  : vp->or |= (1 << 5); break;
-				case NV30_VP_INST_DEST_TC(0): vp->or |= (1 << 14); break;
-				case NV30_VP_INST_DEST_TC(1): vp->or |= (1 << 15); break;
-				case NV30_VP_INST_DEST_TC(2): vp->or |= (1 << 16); break;
-				case NV30_VP_INST_DEST_TC(3): vp->or |= (1 << 17); break;
-				case NV30_VP_INST_DEST_TC(4): vp->or |= (1 << 18); break;
-				case NV30_VP_INST_DEST_TC(5): vp->or |= (1 << 19); break;
-				case NV30_VP_INST_DEST_TC(6): vp->or |= (1 << 20); break;
-				case NV30_VP_INST_DEST_TC(7): vp->or |= (1 << 21); break;
-				}
-			} else {
+			if(nvfx->is_nv4x) {
+				/* we don't need vp->or on nv3x
+				 * texcoords are handled by fragment program
+				 */
 				switch (dst.index) {
 				case NV40_VP_INST_DEST_COL0 : vp->or |= (1 << 0); break;
 				case NV40_VP_INST_DEST_COL1 : vp->or |= (1 << 1); break;
@@ -260,14 +246,6 @@ emit_dst(struct nvfx_context* nvfx, struct nvfx_vpc *vpc, uint32_t *hw, int slot
 				case NV40_VP_INST_DEST_BFC1 : vp->or |= (1 << 3); break;
 				case NV40_VP_INST_DEST_FOGC: vp->or |= (1 << 4); break;
 				case NV40_VP_INST_DEST_PSZ  : vp->or |= (1 << 5); break;
-				case NV40_VP_INST_DEST_TC(0): vp->or |= (1 << 14); break;
-				case NV40_VP_INST_DEST_TC(1): vp->or |= (1 << 15); break;
-				case NV40_VP_INST_DEST_TC(2): vp->or |= (1 << 16); break;
-				case NV40_VP_INST_DEST_TC(3): vp->or |= (1 << 17); break;
-				case NV40_VP_INST_DEST_TC(4): vp->or |= (1 << 18); break;
-				case NV40_VP_INST_DEST_TC(5): vp->or |= (1 << 19); break;
-				case NV40_VP_INST_DEST_TC(6): vp->or |= (1 << 20); break;
-				case NV40_VP_INST_DEST_TC(7): vp->or |= (1 << 21); break;
 				}
 			}
 			break;
@@ -817,13 +795,21 @@ nvfx_vertprog_prepare(struct nvfx_context* nvfx, struct nvfx_vpc *vpc)
 
 	/* hope 0xf is (0, 0, 0, 1) initialized; otherwise, we are _probably_ not required to do this */
 	memset(vpc->vp->generic_to_fp_input, 0x0f, sizeof(vpc->vp->generic_to_fp_input));
-	vpc->vp->texcoord_ouput_mask = 0;
 	for(int i = 0; i < 8; ++i) {
 		if(sem_layout[i] == 0xff)
 			continue;
-		vpc->vp->texcoord_ouput_mask |= (1 << i);
 		//printf("vp: GENERIC[%i] to fpreg %i\n", sem_layout[i], NVFX_FP_OP_INPUT_SRC_TC(0) + i);
-		vpc->vp->generic_to_fp_input[sem_layout[i]] = 0xf0 | (NVFX_FP_OP_INPUT_SRC_TC(0) + i);
+		vpc->vp->generic_to_fp_input[sem_layout[i]] = 0xf0 | NVFX_FP_OP_INPUT_SRC_TC(i);
+	}
+
+	vpc->vp->sprite_fp_input = -1;
+	for(int i = 0; i < 8; ++i)
+	{
+		if(sem_layout[i] == 0xff)
+		{
+			vpc->vp->sprite_fp_input = NVFX_FP_OP_INPUT_SRC_TC(i);
+			break;
+		}
 	}
 
 	tgsi_parse_init(&p, vpc->vp->pipe.tokens);
@@ -1233,13 +1219,12 @@ nvfx_vertprog_validate(struct nvfx_context *nvfx)
 
 	if(nvfx->dirty & (NVFX_NEW_VERTPROG | NVFX_NEW_UCP))
 	{
-		WAIT_RING(chan, 7);
+		WAIT_RING(chan, 6);
 		OUT_RING(chan, RING_3D(NV34TCL_VP_START_FROM_ID, 1));
 		OUT_RING(chan, vp->exec->start);
 		if(nvfx->is_nv4x) {
-			OUT_RING(chan, RING_3D(NV40TCL_VP_ATTRIB_EN, 2));
+			OUT_RING(chan, RING_3D(NV40TCL_VP_ATTRIB_EN, 1));
 			OUT_RING(chan, vp->ir);
-			OUT_RING(chan, vp->or);
 		}
 		OUT_RING(chan, RING_3D(NV34TCL_VP_CLIP_PLANES_ENABLE, 1));
 		OUT_RING(chan, vp->clip_ctrl);

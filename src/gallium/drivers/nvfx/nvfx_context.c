@@ -90,6 +90,8 @@ nvfx_create(struct pipe_screen *pscreen, void *priv)
 
 	/* set these to that we init them on first validation */
 	nvfx->state.scissor_enabled = ~0;
+	nvfx->hw_pointsprite_control = -1;
+	nvfx->hw_vp_output = -1;
 	nvfx->use_vertex_buffers = -1;
 
 	LIST_INITHEAD(&nvfx->render_cache);

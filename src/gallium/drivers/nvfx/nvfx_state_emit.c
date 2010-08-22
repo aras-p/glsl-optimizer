@@ -17,6 +17,8 @@ nvfx_state_validate_common(struct nvfx_context *nvfx)
 	{
 		nvfx->dirty = ~0;
 		nvfx->hw_vtxelt_nr = 16;
+		nvfx->hw_pointsprite_control = -1;
+		nvfx->hw_vp_output = -1;
 		nvfx->screen->cur_ctx = nvfx;
 	}
 

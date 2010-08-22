@@ -32,7 +32,7 @@ struct nvfx_vertex_program {
 	unsigned nr_consts;
 
 	char generic_to_fp_input[256];
-	unsigned texcoord_ouput_mask;
+	int sprite_fp_input;
 
 	struct nouveau_resource *exec;
 	unsigned exec_start;
@@ -67,6 +67,7 @@ struct nvfx_fragment_program {
 	boolean translated;
 	unsigned samplers;
 	unsigned point_sprite_control;
+	unsigned or;
 
 	uint32_t *insn;
 	int       insn_len;

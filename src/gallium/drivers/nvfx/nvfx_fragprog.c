@@ -1101,6 +1101,35 @@ nvfx_fp_memcpy(void* dst, const void* src, size_t len)
 #endif
 }
 
+/* The hardware only supports immediate constants inside the fragment program,
+ * and at least on nv30 doesn't support an indirect linkage table.
+ *
+ * Hence, we need to patch the fragment program itself both to update constants
+ * and update linkage.
+ *
+ * Using a single fragment program would entail unacceptable stalls if the GPU is
+ * already rendering with that fragment program.
+ * Thus, we instead use a "rotating queue" of buffer objects, each of which is
+ * packed with multiple versions of the same program.
+ *
+ * Whenever we need to patch something, we move to the next program and
+ * patch it. If all buffer objects are in use by the GPU, we allocate another one,
+ * expanding the queue.
+ *
+ * As an additional optimization, we record when all the programs have the
+ * current input slot configuration, and at that point we stop patching inputs.
+ * This happens, for instance, if a given fragment program is always used with
+ * the same vertex program (i.e. always with GLSL), or if the layouts match
+ * enough (non-GLSL).
+ *
+ * Note that instead of using multiple programs, we could push commands
+ * on the FIFO to patch a single program: it's not fully clear which option is
+ * faster, but my guess is that the current way is faster.
+ *
+ * We also track the previous slot assignments for each version and don't
+ * patch if they are the same (this could perhaps be removed).
+ */
+
 void
 nvfx_fragprog_validate(struct nvfx_context *nvfx)
 {
@@ -1109,6 +1138,7 @@ nvfx_fragprog_validate(struct nvfx_context *nvfx)
 	int update = 0;
 	struct nvfx_vertex_program* vp;
 	unsigned sprite_coord_enable;
+	boolean update_pointsprite = !!(nvfx->dirty & NVFX_NEW_FRAGPROG);
 
 	if (!fp->translated)
 	{
@@ -1141,80 +1171,96 @@ nvfx_fragprog_validate(struct nvfx_context *nvfx)
 		fp->bo_prog_idx = fp->progs_per_bo - 1;
 	}
 
-	/* we must update constants even on "just" fragprog changes, because
-	   we don't check whether the current constant buffer matches the latest
-	   one bound to this fragment program */
-	if (nvfx->dirty & (NVFX_NEW_FRAGCONST | NVFX_NEW_FRAGPROG))
-		update = TRUE;
-
 	vp = nvfx->render_mode == HW ? nvfx->vertprog : nvfx->swtnl.vertprog;
-	if (fp->last_vp_id != vp->id) {
-		char* vp_sem_table = vp->generic_to_fp_input;
-		unsigned char* fp_semantics = fp->slot_to_generic;
-		unsigned diff = 0;
-		unsigned char* cur_slots;
-		fp->last_vp_id = nvfx->vertprog->id;
-		cur_slots = fp->slot_to_fp_input;
-		for(unsigned i = 0; i < fp->num_slots; ++i) {
-			unsigned char slot_mask = vp_sem_table[fp_semantics[i]];
-			diff |= (slot_mask >> 4) & (slot_mask ^ cur_slots[i]);
-		}
+        sprite_coord_enable = nvfx->rasterizer->pipe.point_quad_rasterization * nvfx->rasterizer->pipe.sprite_coord_enable;
 
-		if(diff)
+	if (fp->last_vp_id != vp->id || fp->last_sprite_coord_enable != sprite_coord_enable) {
+		int sprite_input = -1;
+		unsigned i;
+		fp->last_vp_id = vp->id;
+		fp->last_sprite_coord_enable = sprite_coord_enable;
+
+		if(sprite_coord_enable)
 		{
-			for(unsigned i = 0; i < fp->num_slots; ++i) {
-				/* if 0xff, then this will write to the dummy value at fp->last_layout_mask[0] */
-				fp->slot_to_fp_input[i] = vp_sem_table[fp_semantics[i]] & 0xf;
-				//printf("fp: GENERIC[%i] from fpreg %i\n", fp_semantics[i], fp->slot_to_fp_input[i]);
+			sprite_input = vp->sprite_fp_input;
+			if(sprite_input < 0)
+			{
+				unsigned used_texcoords = 0;
+				for(unsigned i = 0; i < fp->num_slots; ++i) {
+					unsigned generic = fp->slot_to_generic[i];
+					if(!((1 << generic) & sprite_coord_enable))
+					{
+						unsigned char slot_mask = vp->generic_to_fp_input[generic];
+						if(slot_mask >= 0xf0)
+							used_texcoords |= 1 << ((slot_mask & 0xf) - NVFX_FP_OP_INPUT_SRC_TC0);
+					}
+				}
+
+				sprite_input = NVFX_FP_OP_INPUT_SRC_TC(__builtin_ctz(~used_texcoords));
 			}
 
-			fp->progs_left_with_obsolete_slot_assignments = fp->progs;
-			update = TRUE;
+			fp->point_sprite_control |= (1 << (sprite_input - NVFX_FP_OP_INPUT_SRC_TC0 + 8));
 		}
-	}
+		else
+			fp->point_sprite_control = 0;
 
-	// last_sprite_coord_enable
-	sprite_coord_enable = nvfx->rasterizer->pipe.point_quad_rasterization * nvfx->rasterizer->pipe.sprite_coord_enable;
-	if(fp->last_sprite_coord_enable != sprite_coord_enable)
-	{
-		unsigned texcoord_mask = vp->texcoord_ouput_mask;
-		fp->last_sprite_coord_enable = sprite_coord_enable;
-		fp->point_sprite_control = 0;
-		for(unsigned i = 0; i < fp->num_slots; ++i) {
-			if((1 << fp->slot_to_generic[i]) & sprite_coord_enable)
+		for(i = 0; i < fp->num_slots; ++i) {
+			unsigned generic = fp->slot_to_generic[i];
+			if((1 << generic) & sprite_coord_enable)
 			{
-				unsigned fpin = fp->slot_to_fp_input[i];
-				//printf("sprite: slot %i generic %i had texcoord %i\n", i, fp->slot_to_generic[i], fpin - NVFX_FP_OP_INPUT_SRC_TC0);
-				if(fpin >= 0x0f)
-				{
-					unsigned tc = __builtin_ctz(~texcoord_mask);
-					texcoord_mask |= (1 << tc);
-					fp->slot_to_fp_input[i] = fpin = NVFX_FP_OP_INPUT_SRC_TC(tc);
-
-					fp->progs_left_with_obsolete_slot_assignments = fp->progs;
-					update = TRUE;
-				}
-				//printf("sprite: slot %i texcoord %i\n", i, fpin - NVFX_FP_OP_INPUT_SRC_TC0);
-				fp->point_sprite_control |= (1 << (fpin - NVFX_FP_OP_INPUT_SRC_TC0 + 8));
+				if(fp->slot_to_fp_input[i] != sprite_input)
+					goto update_slots;
 			}
 			else
 			{
-				unsigned fpin = fp->slot_to_fp_input[i];
-				if(!(vp->texcoord_ouput_mask & (1 << (fpin - NVFX_FP_OP_INPUT_SRC_TC0))))
-				{
-					fp->slot_to_fp_input[i] = 0x0f;
+				unsigned char slot_mask = vp->generic_to_fp_input[generic];
+				if((slot_mask >> 4) & (slot_mask ^ fp->slot_to_fp_input[i]))
+					goto update_slots;
+			}
+		}
 
-					fp->progs_left_with_obsolete_slot_assignments = fp->progs;
-					update = TRUE;
+		if(0)
+		{
+update_slots:
+			/* optimization: we start updating from the slot we found the first difference in */
+			for(; i < fp->num_slots; ++i)
+			{
+				unsigned generic = fp->slot_to_generic[i];
+				if((1 << generic) & sprite_coord_enable)
+					fp->slot_to_fp_input[i] = sprite_input;
+				else
+					fp->slot_to_fp_input[i] = vp->generic_to_fp_input[generic] & 0xf;
+			}
+
+			if(nvfx->is_nv4x)
+			{
+				fp->or = 0;
+				for(i = 0; i < fp->num_slots; ++i) {
+					unsigned fp_input = fp->slot_to_fp_input[i];
+					if(fp_input == NVFX_FP_OP_INPUT_SRC_TC(8))
+						fp->or |= (1 << 12);
+					else if(fp_input == NVFX_FP_OP_INPUT_SRC_TC(9))
+						fp->or |= (1 << 13);
+					else if(fp_input != 0xf)
+						fp->or |= (1 << (fp_input - NVFX_FP_OP_INPUT_SRC_TC0 + 14));
 				}
 			}
+
+			fp->progs_left_with_obsolete_slot_assignments = fp->progs;
+			goto update;
 		}
 	}
 
-	if(update) {
+	/* We must update constants even on "just" fragprog changes, because
+	  * we don't check whether the current constant buffer matches the latest
+	  * one bound to this fragment program.
+	  * Doing such a check would likely be a pessimization.
+	  */
+	if (nvfx->dirty & (NVFX_NEW_FRAGCONST | NVFX_NEW_FRAGPROG)) {
 		int offset;
 		uint32_t* fpmap;
 
+update:
 		++fp->bo_prog_idx;
 		if(fp->bo_prog_idx >= fp->progs_per_bo)
 		{
@@ -1278,6 +1324,9 @@ nvfx_fragprog_validate(struct nvfx_context *nvfx)
 			}
 		}
 
+		/* we only do this if we aren't sure that all program versions have the
+		 * current slot assignments, otherwise we just update constants for speed
+		 */
 		if(fp->progs_left_with_obsolete_slot_assignments) {
 			unsigned char* fpbo_slots = &fp->fpbo->slots[fp->bo_prog_idx * 8];
 			for(unsigned i = 0; i < fp->num_slots; ++i) {
@@ -1296,10 +1345,7 @@ nvfx_fragprog_validate(struct nvfx_context *nvfx)
 			}
 			--fp->progs_left_with_obsolete_slot_assignments;
 		}
-	}
 
-	if(update || (nvfx->dirty & NVFX_NEW_FRAGPROG)) {
-		int offset = fp->bo_prog_idx * fp->prog_size;
 		MARK_RING(chan, 8, 1);
 		OUT_RING(chan, RING_3D(NV34TCL_FP_ACTIVE_PROGRAM, 1));
 		OUT_RELOC(chan, fp->fpbo->bo, offset, NOUVEAU_BO_VRAM |
@@ -1316,11 +1362,28 @@ nvfx_fragprog_validate(struct nvfx_context *nvfx)
 		}
 	}
 
-	if(nvfx->dirty & (NVFX_NEW_FRAGPROG | NVFX_NEW_SPRITE))
 	{
-		WAIT_RING(chan, 2);
-		OUT_RING(chan, RING_3D(NV34TCL_POINT_SPRITE, 1));
-		OUT_RING(chan, fp->point_sprite_control | nvfx->rasterizer->pipe.point_quad_rasterization);
+		unsigned pointsprite_control = fp->point_sprite_control | nvfx->rasterizer->pipe.point_quad_rasterization;
+		if(pointsprite_control != nvfx->hw_pointsprite_control)
+		{
+			WAIT_RING(chan, 2);
+			OUT_RING(chan, RING_3D(NV34TCL_POINT_SPRITE, 1));
+			OUT_RING(chan, pointsprite_control);
+			nvfx->hw_pointsprite_control = pointsprite_control;
+		}
+	}
+
+	if(nvfx->is_nv4x)
+	{
+		unsigned vp_output = vp->or | fp->or;
+
+		if(vp_output != nvfx->hw_vp_output)
+		{
+			WAIT_RING(chan, 2);
+			OUT_RING(chan, RING_3D(NV40TCL_VP_RESULT_EN, 1));
+			OUT_RING(chan, vp_output);
+			nvfx->hw_vp_output = vp_output;
+		}
 	}
 }
 
