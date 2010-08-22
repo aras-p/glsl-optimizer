@@ -59,6 +59,7 @@ struct r600_resource_texture {
 	struct radeon_state		*scissor[PIPE_MAX_TEXTURE_LEVELS];
 	struct radeon_state		*cb0[PIPE_MAX_TEXTURE_LEVELS];
 	struct radeon_state		*db[PIPE_MAX_TEXTURE_LEVELS];
+	struct radeon_state		*viewport[PIPE_MAX_TEXTURE_LEVELS];
 };
 
 void r600_init_context_resource_functions(struct r600_context *r600);

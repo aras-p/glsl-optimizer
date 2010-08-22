@@ -775,10 +775,10 @@ static struct radeon_state *r600_db(struct r600_context *rctx)
 	rtex = (struct r600_resource_texture*)state->zsbuf->texture;
 	rtex->tilled = 1;
 	rtex->array_mode = 2;
-	rtex->tile_type = 1;
+	rtex->tile_type = 0;
 	rtex->depth = 1;
 	rbuffer = &rtex->resource;
-R600_ERR("DB handle %d   %p  %d\n", rbuffer->bo->handle, rtex, state->zsbuf->texture->format);
+
 	rstate->bo[0] = radeon_bo_incref(rscreen->rw, rbuffer->bo);
 	rstate->nbo = 1;
 	rstate->placement[0] = RADEON_GEM_DOMAIN_VRAM;
@@ -1256,15 +1256,9 @@ static struct radeon_state *r600_resource(struct pipe_context *ctx,
 		if (r) {
 			return NULL;
 		}
-format = r600_translate_colorformat(view->texture->format);
-R600_ERR("DEPTH TEXTURE %d rtex %p %d 0x%02X\n", tmp->uncompressed->handle, tmp, view->texture->format, format);
-format = 17;
 		rstate->bo[0] = radeon_bo_incref(rscreen->rw, tmp->uncompressed);
 		rstate->bo[1] = radeon_bo_incref(rscreen->rw, tmp->uncompressed);
-//		array_mode = tmp->array_mode;
-//		tile_type = tmp->tile_type;
 	} else {
-R600_ERR("NOT DEPTH TEXTURE\n");
 		rstate->bo[0] = radeon_bo_incref(rscreen->rw, rbuffer->bo);
 		rstate->bo[1] = radeon_bo_incref(rscreen->rw, rbuffer->bo);
 	}

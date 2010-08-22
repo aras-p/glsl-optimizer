@@ -262,7 +262,7 @@ static INLINE uint32_t r600_translate_colorformat(enum pipe_format format)
 
 	case PIPE_FORMAT_Z24X8_UNORM:
 	case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
-		return V_0280A0_COLOR_24_8;
+		return V_0280A0_COLOR_8_24;
 
 		/* 64-bit buffers. */
 	case PIPE_FORMAT_R16G16B16A16_UNORM:

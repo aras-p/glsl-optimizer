@@ -149,7 +149,6 @@ struct r600_blit_states {
 	struct radeon_state	*rasterizer;
 	struct radeon_state	*dsa;
 	struct radeon_state	*blend;
-	struct radeon_state	*viewport;
 	struct radeon_state	*cb_cntl;
 	struct radeon_state	*config;
 	struct radeon_state	*vgt;
@@ -490,33 +489,6 @@ static struct radeon_state *r600_blit_state_blend(struct r600_screen *rscreen)
 	return rstate;
 }
 
-static struct radeon_state *r600_blit_state_viewport(struct r600_screen *rscreen)
-{
-	struct radeon_state *rstate;
-
-	rstate = radeon_state(rscreen->rw, R600_VIEWPORT_TYPE, R600_VIEWPORT);
-	if (rstate == NULL)
-		return NULL;
-
-	/* set states (most default value are 0 and struct already
-	 * initialized to 0, thus avoid resetting them)
-	 */
-	rstate->states[R600_VIEWPORT__PA_CL_VPORT_XOFFSET_0] = 0x42FA0000;
-	rstate->states[R600_VIEWPORT__PA_CL_VPORT_XSCALE_0] = 0x42FA0000;
-	rstate->states[R600_VIEWPORT__PA_CL_VPORT_YOFFSET_0] = 0x42FA0000;
-	rstate->states[R600_VIEWPORT__PA_CL_VPORT_YSCALE_0] = 0xC2FA0000;
-	rstate->states[R600_VIEWPORT__PA_CL_VPORT_ZOFFSET_0] = 0x3F000000;
-	rstate->states[R600_VIEWPORT__PA_CL_VPORT_ZSCALE_0] = 0x3F000000;
-	rstate->states[R600_VIEWPORT__PA_CL_VTE_CNTL] = 0x0000043F;
-	rstate->states[R600_VIEWPORT__PA_SC_VPORT_ZMAX_0] = 0x3F800000;
-
-	if (radeon_state_pm4(rstate)) {
-		radeon_state_decref(rstate);
-		return NULL;
-	}
-	return rstate;
-}
-
 static struct radeon_state *r600_blit_state_cb_cntl(struct r600_screen *rscreen)
 {
 	struct radeon_state *rstate;
@@ -604,11 +576,6 @@ static int r600_blit_states_init(struct pipe_context *ctx, struct r600_blit_stat
 		R600_ERR("failed creating blend state\n");
 		return -ENOMEM;
 	}
-	bstates->viewport = r600_blit_state_viewport(rscreen);
-	if (bstates->viewport == NULL) {
-		R600_ERR("failed creating viewport state\n");
-		return -ENOMEM;
-	}
 	bstates->cb_cntl = r600_blit_state_cb_cntl(rscreen);
 	if (bstates->cb_cntl == NULL) {
 		R600_ERR("failed creating cb_cntl state\n");
@@ -628,7 +595,6 @@ static void r600_blit_states_destroy(struct pipe_context *ctx, struct r600_blit_
 	radeon_state_decref(bstates->rasterizer);
 	radeon_state_decref(bstates->dsa);
 	radeon_state_decref(bstates->blend);
-	radeon_state_decref(bstates->viewport);
 	radeon_state_decref(bstates->cb_cntl);
 	radeon_state_decref(bstates->config);
 	radeon_state_decref(bstates->vgt);
@@ -663,12 +629,16 @@ int r600_blit_uncompress_depth(struct pipe_context *ctx, struct r600_resource_te
 	if (r) {
 		return r;
 	}
+	r = r600_texture_viewport(ctx, rtexture, level);
+	if (r) {
+		return r;
+	}
 
 	r = r600_blit_states_init(ctx, &bstates);
 	if (r) {
 		return r;
 	}
-	bstates.dsa->states[R600_DSA__DB_RENDER_CONTROL] = 0x000000EC;
+	bstates.dsa->states[R600_DSA__DB_RENDER_CONTROL] = 0x0000008C;
 	bstates.cb_cntl->states[R600_CB_CNTL__CB_TARGET_MASK] = 0x00000001;
 	/* force rebuild */
 	bstates.dsa->cpm4 = bstates.cb_cntl->cpm4 = 0;
@@ -702,10 +672,6 @@ int r600_blit_uncompress_depth(struct pipe_context *ctx, struct r600_resource_te
 		goto out;
 	}
 	r = radeon_draw_set(draw, bstates.blend);
-	if (r) {
-		goto out;
-	}
-	r = radeon_draw_set(draw, bstates.viewport);
 	if (r) {
 		goto out;
 	}
@@ -746,6 +712,10 @@ int r600_blit_uncompress_depth(struct pipe_context *ctx, struct r600_resource_te
 		goto out;
 	}
 	r = radeon_draw_set(draw, bstates.vs_constant3);
+	if (r) {
+		goto out;
+	}
+	r = radeon_draw_set(draw, rtexture->viewport[level]);
 	if (r) {
 		goto out;
 	}

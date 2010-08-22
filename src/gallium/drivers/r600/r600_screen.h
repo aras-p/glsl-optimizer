@@ -80,6 +80,7 @@ int r600_texture_scissor(struct pipe_context *ctx, struct r600_resource_texture 
 int r600_texture_cb0(struct pipe_context *ctx, struct r600_resource_texture *rtexture, unsigned level);
 int r600_texture_db(struct pipe_context *ctx, struct r600_resource_texture *rtexture, unsigned level);
 int r600_texture_from_depth(struct pipe_context *ctx, struct r600_resource_texture *rtexture, unsigned level);
+int r600_texture_viewport(struct pipe_context *ctx, struct r600_resource_texture *rtexture, unsigned level);
 
 /* r600_blit.c */
 int r600_blit_uncompress_depth(struct pipe_context *ctx, struct r600_resource_texture *rtexture, unsigned level);

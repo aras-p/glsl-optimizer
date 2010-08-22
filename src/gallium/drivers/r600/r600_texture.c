@@ -247,7 +247,7 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 	trans->transfer.box = *box;
 	trans->transfer.stride = rtex->pitch[sr.level];
 	trans->offset = r600_texture_get_offset(rtex, sr.level, box->z, sr.face);
-	if (rtex->tilled) {
+	if (rtex->tilled && !rtex->depth) {
 		resource.target = PIPE_TEXTURE_2D;
 		resource.format = texture->format;
 		resource.width0 = box->width;
@@ -303,30 +303,40 @@ void* r600_texture_transfer_map(struct pipe_context *ctx,
 				struct pipe_transfer* transfer)
 {
 	struct r600_transfer *rtransfer = (struct r600_transfer*)transfer;
-	struct r600_resource *resource;
+	struct radeon_bo *bo;
 	enum pipe_format format = transfer->resource->format;
 	struct r600_screen *rscreen = r600_screen(ctx->screen);
+	struct r600_resource_texture *rtex;
+	unsigned long offset = 0;
 	char *map;
+	int r;
 
 	r600_flush(ctx, 0, NULL);
 	if (rtransfer->linear_texture) {
-		resource = (struct r600_resource *)rtransfer->linear_texture;
+		bo = ((struct r600_resource *)rtransfer->linear_texture)->bo;
 	} else {
-		resource = (struct r600_resource *)transfer->resource;
+		rtex = (struct r600_resource_texture*)transfer->resource;
+		if (rtex->depth) {
+			r = r600_texture_from_depth(ctx, rtex, transfer->sr.level);
+			if (r) {
+				return NULL;
+			}
+			r600_flush(ctx, 0, NULL);
+			bo = rtex->uncompressed;
+		} else {
+			bo = ((struct r600_resource *)transfer->resource)->bo;
+		}
+		offset = rtransfer->offset +
+			transfer->box.y / util_format_get_blockheight(format) * transfer->stride +
+			transfer->box.x / util_format_get_blockwidth(format) * util_format_get_blocksize(format);
 	}
-	if (radeon_bo_map(rscreen->rw, resource->bo)) {
+	if (radeon_bo_map(rscreen->rw, bo)) {
 		return NULL;
 	}
-	radeon_bo_wait(rscreen->rw, resource->bo);
+	radeon_bo_wait(rscreen->rw, bo);
 
-	map = resource->bo->data;
-	if (rtransfer->linear_texture) {
-		return map;
-	}
-
-	return map + rtransfer->offset +
-		transfer->box.y / util_format_get_blockheight(format) * transfer->stride +
-		transfer->box.x / util_format_get_blockwidth(format) * util_format_get_blocksize(format);
+	map = bo->data;
+	return map + offset;
 }
 
 void r600_texture_transfer_unmap(struct pipe_context *ctx,
@@ -334,14 +344,20 @@ void r600_texture_transfer_unmap(struct pipe_context *ctx,
 {
 	struct r600_transfer *rtransfer = (struct r600_transfer*)transfer;
 	struct r600_screen *rscreen = r600_screen(ctx->screen);
-	struct r600_resource *resource;
+	struct r600_resource_texture *rtex;
+	struct radeon_bo *bo;
 
 	if (rtransfer->linear_texture) {
-		resource = (struct r600_resource *)rtransfer->linear_texture;
+		bo = ((struct r600_resource *)rtransfer->linear_texture)->bo;
 	} else {
-		resource = (struct r600_resource *)transfer->resource;
+		rtex = (struct r600_resource_texture*)transfer->resource;
+		if (rtex->depth) {
+			bo = rtex->uncompressed;
+		} else {
+			bo = ((struct r600_resource *)transfer->resource)->bo;
+		}
 	}
-	radeon_bo_unmap(rscreen->rw, resource->bo);
+	radeon_bo_unmap(rscreen->rw, bo);
 }
 
 struct u_resource_vtbl r600_texture_vtbl =
@@ -633,7 +649,6 @@ int r600_texture_from_depth(struct pipe_context *ctx, struct r600_resource_textu
 
 	/* render a rectangle covering whole buffer to uncompress depth */
 	r = r600_blit_uncompress_depth(ctx, rtexture, level);
-R600_ERR("---step0 %d\n", r);
 	if (r) {
 		return r;
 	}
@@ -708,13 +723,7 @@ static struct radeon_state *r600_texture_state_cb0(struct r600_screen *rscreen,
 		ntype = V_0280A0_NUMBER_SRGB;
 	format = r600_translate_colorformat(rtexture->resource.base.b.format);
 	swap = r600_translate_colorswap(rtexture->resource.base.b.format);
-	color_info = S_0280A0_FORMAT(format) |
-		S_0280A0_COMP_SWAP(swap) |
-		S_0280A0_BLEND_CLAMP(1) |
-		S_0280A0_NUMBER_TYPE(ntype);
 	if (desc->colorspace == UTIL_FORMAT_COLORSPACE_ZS) {
-R600_ERR("CB0 uncompressed texture %p (handle)%d %d 0x%02X\n", rtexture, rtexture->uncompressed->handle, rtexture->resource.base.b.format, format);
-format = 17;
 		rstate->bo[0] = radeon_bo_incref(rscreen->rw, rtexture->uncompressed);
 		rstate->bo[1] = radeon_bo_incref(rscreen->rw, rtexture->uncompressed);
 		rstate->bo[2] = radeon_bo_incref(rscreen->rw, rtexture->uncompressed);
@@ -722,6 +731,7 @@ format = 17;
 		rstate->placement[2] = RADEON_GEM_DOMAIN_GTT;
 		rstate->placement[4] = RADEON_GEM_DOMAIN_GTT;
 		rstate->nbo = 3;
+		color_info = 0;
 	} else {
 		rstate->bo[0] = radeon_bo_incref(rscreen->rw, rbuffer->bo);
 		rstate->bo[1] = radeon_bo_incref(rscreen->rw, rbuffer->bo);
@@ -730,8 +740,12 @@ format = 17;
 		rstate->placement[2] = RADEON_GEM_DOMAIN_GTT;
 		rstate->placement[4] = RADEON_GEM_DOMAIN_GTT;
 		rstate->nbo = 3;
-		color_info |= S_0280A0_SOURCE_FORMAT(1);
+		color_info = S_0280A0_SOURCE_FORMAT(1);
 	}
+	color_info |= S_0280A0_FORMAT(format) |
+		S_0280A0_COMP_SWAP(swap) |
+		S_0280A0_BLEND_CLAMP(1) |
+		S_0280A0_NUMBER_TYPE(ntype);
 	rstate->states[R600_CB0__CB_COLOR0_BASE] = rtexture->offset[level] >> 8;
 	rstate->states[R600_CB0__CB_COLOR0_INFO] = color_info;
 	rstate->states[R600_CB0__CB_COLOR0_SIZE] = S_028060_PITCH_TILE_MAX(pitch) |
@@ -770,7 +784,6 @@ static struct radeon_state *r600_texture_state_db(struct r600_screen *rscreen,
 	rstate->states[R600_DB__DB_PREFETCH_LIMIT] = (rtexture->height[level] / 8) -1;
 	rstate->states[R600_DB__DB_DEPTH_SIZE] = S_028000_PITCH_TILE_MAX(pitch) |
 						S_028000_SLICE_TILE_MAX(slice);
-R600_ERR("DB handle %d  %p %d\n", rbuffer->bo->handle, rtexture, rbuffer->base.b.format);
 	rstate->bo[0] = radeon_bo_incref(rscreen->rw, rbuffer->bo);
 	rstate->placement[0] = RADEON_GEM_DOMAIN_GTT;
 	rstate->nbo = 1;
@@ -796,6 +809,35 @@ int r600_texture_scissor(struct pipe_context *ctx, struct r600_resource_texture 
 	return 0;
 }
 
+static struct radeon_state *r600_texture_state_viewport(struct r600_screen *rscreen,
+					struct r600_resource_texture *rtexture,
+					unsigned level)
+{
+	struct radeon_state *rstate;
+
+	rstate = radeon_state(rscreen->rw, R600_VIEWPORT_TYPE, R600_VIEWPORT);
+	if (rstate == NULL)
+		return NULL;
+
+	/* set states (most default value are 0 and struct already
+	 * initialized to 0, thus avoid resetting them)
+	 */
+	rstate->states[R600_VIEWPORT__PA_CL_VPORT_XOFFSET_0] = fui((float)rtexture->width[level]/2.0);
+	rstate->states[R600_VIEWPORT__PA_CL_VPORT_XSCALE_0] = fui((float)rtexture->width[level]/2.0);
+	rstate->states[R600_VIEWPORT__PA_CL_VPORT_YOFFSET_0] = fui((float)rtexture->height[level]/2.0);
+	rstate->states[R600_VIEWPORT__PA_CL_VPORT_YSCALE_0] = fui((float)-rtexture->height[level]/2.0);
+	rstate->states[R600_VIEWPORT__PA_CL_VPORT_ZOFFSET_0] = 0x3F000000;
+	rstate->states[R600_VIEWPORT__PA_CL_VPORT_ZSCALE_0] = 0x3F000000;
+	rstate->states[R600_VIEWPORT__PA_CL_VTE_CNTL] = 0x0000043F;
+	rstate->states[R600_VIEWPORT__PA_SC_VPORT_ZMAX_0] = 0x3F800000;
+
+	if (radeon_state_pm4(rstate)) {
+		radeon_state_decref(rstate);
+		return NULL;
+	}
+	return rstate;
+}
+
 int r600_texture_cb0(struct pipe_context *ctx, struct r600_resource_texture *rtexture, unsigned level)
 {
 	struct r600_screen *rscreen = r600_screen(ctx->screen);
@@ -818,6 +860,20 @@ int r600_texture_db(struct pipe_context *ctx, struct r600_resource_texture *rtex
 		rtexture->db[level] = r600_texture_state_db(rscreen, rtexture, level);
 		if (rtexture->db[level] == NULL) {
 			R600_ERR("failed to create db state for texture\n");
+			return -ENOMEM;
+		}
+	}
+	return 0;
+}
+
+int r600_texture_viewport(struct pipe_context *ctx, struct r600_resource_texture *rtexture, unsigned level)
+{
+	struct r600_screen *rscreen = r600_screen(ctx->screen);
+
+	if (rtexture->viewport[level] == NULL) {
+		rtexture->viewport[level] = r600_texture_state_viewport(rscreen, rtexture, level);
+		if (rtexture->viewport[level] == NULL) {
+			R600_ERR("failed to create viewport state for texture\n");
 			return -ENOMEM;
 		}
 	}
