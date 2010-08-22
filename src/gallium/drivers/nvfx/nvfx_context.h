@@ -244,8 +244,8 @@ nvfx_framebuffer_relocate(struct nvfx_context *nvfx);
 extern void nvfx_fragprog_destroy(struct nvfx_context *,
 				    struct nvfx_fragment_program *);
 extern void nvfx_fragprog_validate(struct nvfx_context *nvfx);
-extern void
-nvfx_fragprog_relocate(struct nvfx_context *nvfx);
+extern void nvfx_fragprog_relocate(struct nvfx_context *nvfx);
+extern void nvfx_init_fragprog_functions(struct nvfx_context *nvfx);
 
 /* nvfx_fragtex.c */
 extern void nvfx_init_sampling_functions(struct nvfx_context *nvfx);
@@ -308,6 +308,7 @@ extern unsigned nvfx_vertex_formats[];
 extern boolean nvfx_vertprog_validate(struct nvfx_context *nvfx);
 extern void nvfx_vertprog_destroy(struct nvfx_context *,
 				  struct nvfx_vertex_program *);
+extern void nvfx_init_vertprog_functions(struct nvfx_context *nvfx);
 
 /* nvfx_push.c */
 extern void nvfx_push_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info);

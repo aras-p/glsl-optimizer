@@ -260,80 +260,6 @@ nvfx_depth_stencil_alpha_state_delete(struct pipe_context *pipe, void *hwcso)
 	FREE(zsaso);
 }
 
-static void *
-nvfx_vp_state_create(struct pipe_context *pipe,
-		     const struct pipe_shader_state *cso)
-{
-	struct nvfx_context *nvfx = nvfx_context(pipe);
-	struct nvfx_vertex_program *vp;
-
-	// TODO: use a 64-bit atomic here!
-	static unsigned long long id = 0;
-
-	vp = CALLOC(1, sizeof(struct nvfx_vertex_program));
-	vp->pipe.tokens = tgsi_dup_tokens(cso->tokens);
-	vp->draw = draw_create_vertex_shader(nvfx->draw, &vp->pipe);
-	vp->id = ++id;
-
-	return (void *)vp;
-}
-
-static void
-nvfx_vp_state_bind(struct pipe_context *pipe, void *hwcso)
-{
-	struct nvfx_context *nvfx = nvfx_context(pipe);
-
-	nvfx->vertprog = hwcso;
-	nvfx->dirty |= NVFX_NEW_VERTPROG;
-	nvfx->draw_dirty |= NVFX_NEW_VERTPROG;
-}
-
-static void
-nvfx_vp_state_delete(struct pipe_context *pipe, void *hwcso)
-{
-	struct nvfx_context *nvfx = nvfx_context(pipe);
-	struct nvfx_vertex_program *vp = hwcso;
-
-	draw_delete_vertex_shader(nvfx->draw, vp->draw);
-	nvfx_vertprog_destroy(nvfx, vp);
-	FREE((void*)vp->pipe.tokens);
-	FREE(vp);
-}
-
-static void *
-nvfx_fp_state_create(struct pipe_context *pipe,
-		     const struct pipe_shader_state *cso)
-{
-	struct nvfx_fragment_program *fp;
-
-	fp = CALLOC(1, sizeof(struct nvfx_fragment_program));
-	fp->pipe.tokens = tgsi_dup_tokens(cso->tokens);
-
-	tgsi_scan_shader(fp->pipe.tokens, &fp->info);
-
-	return (void *)fp;
-}
-
-static void
-nvfx_fp_state_bind(struct pipe_context *pipe, void *hwcso)
-{
-	struct nvfx_context *nvfx = nvfx_context(pipe);
-
-	nvfx->fragprog = hwcso;
-	nvfx->dirty |= NVFX_NEW_FRAGPROG;
-}
-
-static void
-nvfx_fp_state_delete(struct pipe_context *pipe, void *hwcso)
-{
-	struct nvfx_context *nvfx = nvfx_context(pipe);
-	struct nvfx_fragment_program *fp = hwcso;
-
-	nvfx_fragprog_destroy(nvfx, fp);
-	FREE((void*)fp->pipe.tokens);
-	FREE(fp);
-}
-
 static void
 nvfx_set_blend_color(struct pipe_context *pipe,
 		     const struct pipe_blend_color *bcol)
@@ -449,14 +375,6 @@ nvfx_init_state_functions(struct nvfx_context *nvfx)
 		nvfx_depth_stencil_alpha_state_bind;
 	nvfx->pipe.delete_depth_stencil_alpha_state =
 		nvfx_depth_stencil_alpha_state_delete;
-
-	nvfx->pipe.create_vs_state = nvfx_vp_state_create;
-	nvfx->pipe.bind_vs_state = nvfx_vp_state_bind;
-	nvfx->pipe.delete_vs_state = nvfx_vp_state_delete;
-
-	nvfx->pipe.create_fs_state = nvfx_fp_state_create;
-	nvfx->pipe.bind_fs_state = nvfx_fp_state_bind;
-	nvfx->pipe.delete_fs_state = nvfx_fp_state_delete;
 
 	nvfx->pipe.set_blend_color = nvfx_set_blend_color;
         nvfx->pipe.set_stencil_ref = nvfx_set_stencil_ref;

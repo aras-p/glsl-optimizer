@@ -1428,3 +1428,45 @@ nvfx_fragprog_destroy(struct nvfx_context *nvfx,
 	if (fp->insn_len)
 		FREE(fp->insn);
 }
+
+static void *
+nvfx_fp_state_create(struct pipe_context *pipe,
+                     const struct pipe_shader_state *cso)
+{
+        struct nvfx_fragment_program *fp;
+
+        fp = CALLOC(1, sizeof(struct nvfx_fragment_program));
+        fp->pipe.tokens = tgsi_dup_tokens(cso->tokens);
+
+        tgsi_scan_shader(fp->pipe.tokens, &fp->info);
+
+        return (void *)fp;
+}
+
+static void
+nvfx_fp_state_bind(struct pipe_context *pipe, void *hwcso)
+{
+        struct nvfx_context *nvfx = nvfx_context(pipe);
+
+        nvfx->fragprog = hwcso;
+        nvfx->dirty |= NVFX_NEW_FRAGPROG;
+}
+
+static void
+nvfx_fp_state_delete(struct pipe_context *pipe, void *hwcso)
+{
+        struct nvfx_context *nvfx = nvfx_context(pipe);
+        struct nvfx_fragment_program *fp = hwcso;
+
+        nvfx_fragprog_destroy(nvfx, fp);
+        FREE((void*)fp->pipe.tokens);
+        FREE(fp);
+}
+
+void
+nvfx_init_fragprog_functions(struct nvfx_context *nvfx)
+{
+        nvfx->pipe.create_fs_state = nvfx_fp_state_create;
+        nvfx->pipe.bind_fs_state = nvfx_fp_state_bind;
+        nvfx->pipe.delete_fs_state = nvfx_fp_state_delete;
+}

@@ -1260,3 +1260,51 @@ nvfx_vertprog_destroy(struct nvfx_context *nvfx, struct nvfx_vertex_program *vp)
 	util_dynarray_fini(&vp->branch_relocs);
 	util_dynarray_fini(&vp->const_relocs);
 }
+
+static void *
+nvfx_vp_state_create(struct pipe_context *pipe,
+                     const struct pipe_shader_state *cso)
+{
+        struct nvfx_context *nvfx = nvfx_context(pipe);
+        struct nvfx_vertex_program *vp;
+
+        // TODO: use a 64-bit atomic here!
+        static unsigned long long id = 0;
+
+        vp = CALLOC(1, sizeof(struct nvfx_vertex_program));
+        vp->pipe.tokens = tgsi_dup_tokens(cso->tokens);
+        vp->draw = draw_create_vertex_shader(nvfx->draw, &vp->pipe);
+        vp->id = ++id;
+
+        return (void *)vp;
+}
+
+static void
+nvfx_vp_state_bind(struct pipe_context *pipe, void *hwcso)
+{
+        struct nvfx_context *nvfx = nvfx_context(pipe);
+
+        nvfx->vertprog = hwcso;
+        nvfx->dirty |= NVFX_NEW_VERTPROG;
+        nvfx->draw_dirty |= NVFX_NEW_VERTPROG;
+}
+
+static void
+nvfx_vp_state_delete(struct pipe_context *pipe, void *hwcso)
+{
+        struct nvfx_context *nvfx = nvfx_context(pipe);
+        struct nvfx_vertex_program *vp = hwcso;
+
+        draw_delete_vertex_shader(nvfx->draw, vp->draw);
+        nvfx_vertprog_destroy(nvfx, vp);
+        FREE((void*)vp->pipe.tokens);
+        FREE(vp);
+}
+
+void
+nvfx_init_vertprog_functions(struct nvfx_context *nvfx)
+{
+        nvfx->pipe.create_vs_state = nvfx_vp_state_create;
+        nvfx->pipe.bind_vs_state = nvfx_vp_state_bind;
+        nvfx->pipe.delete_vs_state = nvfx_vp_state_delete;
+}

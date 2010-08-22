@@ -77,6 +77,8 @@ nvfx_create(struct pipe_screen *pscreen, void *priv)
 	nvfx_init_state_functions(nvfx);
 	nvfx_init_sampling_functions(nvfx);
 	nvfx_init_vbo_functions(nvfx);
+	nvfx_init_fragprog_functions(nvfx);
+	nvfx_init_vertprog_functions(nvfx);
 	nvfx_init_resource_functions(&nvfx->pipe);
 	nvfx_init_transfer_functions(&nvfx->pipe);
 
