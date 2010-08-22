@@ -2235,6 +2235,8 @@ mesa_src_reg_from_ir_src_reg(ir_to_mesa_src_reg reg)
    mesa_reg.Negate = reg.negate;
    mesa_reg.Abs = 0;
    mesa_reg.HasIndex2 = GL_FALSE;
+   mesa_reg.RelAddr2 = 0;
+   mesa_reg.Index2 = 0;
 
    return mesa_reg;
 }
