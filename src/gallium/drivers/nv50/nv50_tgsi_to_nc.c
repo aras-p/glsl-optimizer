@@ -1199,6 +1199,25 @@ bld_tex(struct bld_context *bld, struct nv_value *dst0[4],
    nvi->tex_argc = arg;
 }
 
+static INLINE struct nv_value *
+bld_dot(struct bld_context *bld, const struct tgsi_full_instruction *insn,
+	int n)
+{
+   struct nv_value *dotp, *src0, *src1;
+   int c;
+
+   src0 = emit_fetch(bld, insn, 0, 0);
+   src1 = emit_fetch(bld, insn, 1, 0);
+   dotp = bld_insn_2(bld, NV_OP_MUL, src0, src1);
+
+   for (c = 1; c < n; ++c) {
+      src0 = emit_fetch(bld, insn, 0, c);
+      src1 = emit_fetch(bld, insn, 1, c);
+      dotp = bld_insn_3(bld, NV_OP_MAD, src0, src1, dotp);
+   }
+   return dotp;
+}
+
 #define FOR_EACH_DST0_ENABLED_CHANNEL(chan, inst) \
    for (chan = 0; chan < 4; ++chan)               \
       if ((inst)->Dst[0].Register.WriteMask & (1 << chan))
@@ -1232,7 +1251,7 @@ bld_instruction(struct bld_context *bld,
       src1 = bld_imm_u32(bld, 4);
       FOR_EACH_DST0_ENABLED_CHANNEL(c, insn) {
          src0 = emit_fetch(bld, insn, 0, c);
-         (temp = bld_insn_1(bld, NV_OP_FLOOR, temp))->reg.type = NV_TYPE_S32;
+         (temp = bld_insn_1(bld, NV_OP_FLOOR, src0))->reg.type = NV_TYPE_S32;
          dst0[c] = bld_insn_2(bld, NV_OP_SHL, temp, src1);
       }
       break;
@@ -1269,27 +1288,18 @@ bld_instruction(struct bld_context *bld,
       temp = bld_insn_1(bld, NV_OP_PRESIN, src0);
       dst0[3] = bld_insn_1(bld, opcode, temp);
       break;
+   case TGSI_OPCODE_DP2:
+      temp = bld_dot(bld, insn, 2);
+      FOR_EACH_DST0_ENABLED_CHANNEL(c, insn)
+         dst0[c] = temp;
+      break;
    case TGSI_OPCODE_DP3:
-      src0 = emit_fetch(bld, insn, 0, 0);
-      src1 = emit_fetch(bld, insn, 1, 0);
-      temp = bld_insn_2(bld, NV_OP_MUL, src0, src1);
-      for (c = 1; c < 3; ++c) {
-         src0 = emit_fetch(bld, insn, 0, c);
-         src1 = emit_fetch(bld, insn, 1, c);
-         temp = bld_insn_3(bld, NV_OP_MAD, src0, src1, temp);
-      }
+      temp = bld_dot(bld, insn, 3);
       FOR_EACH_DST0_ENABLED_CHANNEL(c, insn)
          dst0[c] = temp;
       break;
    case TGSI_OPCODE_DP4:
-      src0 = emit_fetch(bld, insn, 0, 0);
-      src1 = emit_fetch(bld, insn, 1, 0);
-      temp = bld_insn_2(bld, NV_OP_MUL, src0, src1);
-      for (c = 1; c < 4; ++c) {
-         src0 = emit_fetch(bld, insn, 0, c);
-         src1 = emit_fetch(bld, insn, 1, c);
-         temp = bld_insn_3(bld, NV_OP_MAD, src0, src1, temp);
-      }
+      temp = bld_dot(bld, insn, 4);
       FOR_EACH_DST0_ENABLED_CHANNEL(c, insn)
          dst0[c] = temp;
       break;
