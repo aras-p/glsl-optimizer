@@ -73,7 +73,7 @@
 #endif
 
 
-#if DEBUG
+#ifdef DEBUG
 DEBUG_GET_ONCE_BOOL_OPTION(dump_cpu, "GALLIUM_DUMP_CPU", FALSE)
 #endif
 
