@@ -173,13 +173,6 @@ nvfx_rasterizer_state_bind(struct pipe_context *pipe, void *hwcso)
 			nvfx->draw_dirty |= NVFX_NEW_SCISSOR;
 		}
 
-		if(((struct nvfx_rasterizer_state*)hwcso)->pipe.poly_stipple_enable
-					!= nvfx->rasterizer->pipe.poly_stipple_enable)
-		{
-			nvfx->dirty |= NVFX_NEW_STIPPLE;
-			nvfx->draw_dirty |= NVFX_NEW_STIPPLE;
-		}
-
 		if(((struct nvfx_rasterizer_state*)hwcso)->pipe.point_quad_rasterization != nvfx->rasterizer->pipe.point_quad_rasterization
 				|| ((struct nvfx_rasterizer_state*)hwcso)->pipe.sprite_coord_enable != nvfx->rasterizer->pipe.sprite_coord_enable)
 		{

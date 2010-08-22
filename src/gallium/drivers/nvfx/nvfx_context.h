@@ -68,7 +68,6 @@ struct nvfx_blend_state {
 
 struct nvfx_state {
 	unsigned scissor_enabled;
-	unsigned stipple_enabled;
 	unsigned fp_samplers;
 	unsigned render_temps;
 };
