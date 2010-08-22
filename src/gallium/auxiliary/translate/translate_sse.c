@@ -553,6 +553,13 @@ static boolean translate_attr_convert( struct translate_sse *p,
                case 32:
                   factor = get_inv_2147483647(p);
                   break;
+               default:
+                  assert(0);
+                  factor.disp = 0;
+                  factor.file = 0;
+                  factor.idx = 0;
+                  factor.mod = 0;
+                  break;
                }
                sse_mulps(p->func, dataXMM, factor);
             }
@@ -595,6 +602,13 @@ static boolean translate_attr_convert( struct translate_sse *p,
                   break;
                case 32:
                   factor = get_inv_2147483647(p);
+                  break;
+               default:
+                  assert(0);
+                  factor.disp = 0;
+                  factor.file = 0;
+                  factor.idx = 0;
+                  factor.mod = 0;
                   break;
                }
                sse_mulps(p->func, dataXMM, factor);
