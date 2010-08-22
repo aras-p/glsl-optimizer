@@ -808,7 +808,7 @@ generate_variant(struct llvmpipe_context *lp,
    variant->list_item_local.base = variant;
    variant->no = shader->variants_created++;
 
-   memcpy(&variant->key, key, sizeof *key);
+   memcpy(&variant->key, key, shader->variant_key_size);
 
    if (gallivm_debug & GALLIVM_DEBUG_IR) {
       debug_printf("llvmpipe: Creating fragment shader #%u variant #%u:\n", 
@@ -840,6 +840,7 @@ llvmpipe_create_fs_state(struct pipe_context *pipe,
                          const struct pipe_shader_state *templ)
 {
    struct lp_fragment_shader *shader;
+   int nr_samplers;
 
    shader = CALLOC_STRUCT(lp_fragment_shader);
    if (!shader)
@@ -853,6 +854,11 @@ llvmpipe_create_fs_state(struct pipe_context *pipe,
 
    /* we need to keep a local copy of the tokens */
    shader->base.tokens = tgsi_dup_tokens(templ->tokens);
+
+   nr_samplers = shader->info.file_max[TGSI_FILE_SAMPLER] + 1;
+
+   shader->variant_key_size = Offset(struct lp_fragment_shader_variant_key,
+				     sampler[nr_samplers]);
 
    if (LP_DEBUG & DEBUG_TGSI) {
       unsigned attrib;
@@ -1027,7 +1033,7 @@ make_variant_key(struct llvmpipe_context *lp,
 {
    unsigned i;
 
-   memset(key, 0, sizeof *key);
+   memset(key, 0, shader->variant_key_size);
 
    if (lp->framebuffer.zsbuf) {
       if (lp->depth_stencil->depth.enabled) {
@@ -1097,9 +1103,17 @@ make_variant_key(struct llvmpipe_context *lp,
       }
    }
 
-   for(i = 0; i < PIPE_MAX_SAMPLERS; ++i)
-      if(shader->info.file_mask[TGSI_FILE_SAMPLER] & (1 << i))
-         lp_sampler_static_state(&key->sampler[i], lp->fragment_sampler_views[i], lp->sampler[i]);
+   /* This value will be the same for all the variants of a given shader:
+    */
+   key->nr_samplers = shader->info.file_max[TGSI_FILE_SAMPLER] + 1;
+
+   for(i = 0; i < key->nr_samplers; ++i) {
+      if(shader->info.file_mask[TGSI_FILE_SAMPLER] & (1 << i)) {
+         lp_sampler_static_state(&key->sampler[i],
+				 lp->fragment_sampler_views[i],
+				 lp->sampler[i]);
+      }
+   }
 }
 
 /**
@@ -1118,7 +1132,7 @@ llvmpipe_update_fs(struct llvmpipe_context *lp)
 
    li = first_elem(&shader->variants);
    while(!at_end(&shader->variants, li)) {
-      if(memcmp(&li->base->key, &key, sizeof key) == 0) {
+      if(memcmp(&li->base->key, &key, shader->variant_key_size) == 0) {
          variant = li->base;
          break;
       }

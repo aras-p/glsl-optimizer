@@ -53,6 +53,7 @@ struct lp_fragment_shader_variant_key
    struct pipe_blend_state blend;
    enum pipe_format zsbuf_format;
    unsigned nr_cbufs:8;
+   unsigned nr_samplers:8;	/* actually derivable from just the shader */
    unsigned flatshade:1;
    unsigned occlusion_count:1;
 
@@ -93,6 +94,7 @@ struct lp_fragment_shader
    struct lp_fs_variant_list_item variants;
 
    /* For debugging/profiling purposes */
+   unsigned variant_key_size;
    unsigned no;
    unsigned variants_created;
    unsigned variants_cached;
