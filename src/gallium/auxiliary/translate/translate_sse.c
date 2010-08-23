@@ -1224,6 +1224,7 @@ static boolean incr_inputs( struct translate_sse *p,
       }
    } 
    else {
+      x64_rexw(p->func);
       x86_lea(p->func, p->idx_ESI, x86_make_disp(p->idx_ESI, index_size));
    }
    
