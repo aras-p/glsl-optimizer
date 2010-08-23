@@ -1817,6 +1817,7 @@ ir_to_mesa_visitor::visit(ir_constant *ir)
       }
 
       this->result = mat;
+      return;
    }
 
    src_reg.file = PROGRAM_CONSTANT;
