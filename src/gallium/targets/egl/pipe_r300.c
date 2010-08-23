@@ -24,4 +24,4 @@ create_screen(int fd)
 }
 
 PUBLIC
-DRM_DRIVER_DESCRIPTOR("r300", "r300", create_screen)
+DRM_DRIVER_DESCRIPTOR("r300", "radeon", create_screen)
