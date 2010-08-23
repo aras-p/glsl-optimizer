@@ -21,6 +21,7 @@ struct nvfx_fpc {
 	struct nvfx_pipe_fragment_program* pfp;
 	struct nvfx_fragment_program *fp;
 
+	unsigned max_temps;
 	unsigned long long r_temps;
 	unsigned long long r_temps_discard;
 	struct nvfx_reg r_result[PIPE_MAX_SHADER_OUTPUTS];
@@ -51,9 +52,9 @@ struct nvfx_fpc {
 static INLINE struct nvfx_reg
 temp(struct nvfx_fpc *fpc)
 {
-	int idx = ffsll(~fpc->r_temps) - 1;
+	int idx = __builtin_ctzll(~fpc->r_temps);
 
-	if (idx < 0) {
+	if (idx >= fpc->max_temps) {
 		NOUVEAU_ERR("out of temps!!\n");
 		assert(0);
 		return nvfx_reg(NVFXSR_TEMP, 0);
@@ -1022,6 +1023,7 @@ nvfx_fragprog_translate(struct nvfx_context *nvfx,
 	if (!fpc)
 		goto out_err;
 
+	fpc->max_temps = nvfx->is_nv4x ? 48 : 32;
 	fpc->pfp = pfp;
 	fpc->fp = fp;
 	fpc->num_regs = 2;
