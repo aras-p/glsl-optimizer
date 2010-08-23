@@ -30,3 +30,26 @@ The __LINE__ and __FILE__ macros are not yet supported.
 A file that ends with a function-like macro name as the last
 non-whitespace token will result in a parse error, (where it should be
 passed through as is).
+
+Known deviations from the specification
+---------------------------------------
+As mentoned above, the GLSL specification (as of 1.30.10) is fairly
+vague on some aspects of the preprocessor, and we've been using C99 to
+fill in details. Here is a list of cases where we have deviated from
+the behavior specified in C99 to obtain better compatibility with
+other GLSL implementations:
+
+  * Redefining a macro with a different value
+
+    C89 says that a macro "may be redefined ... provided that the
+    second definition [is equivalent]" (Section 3.8.3 Macro
+    Replacement/constraints)
+
+    C99 is even more explicit, saying tthat a macro "shall not be
+    redefined by another #define preprocessing directive unless the
+    second definition [is equivalent]" (Section 6.10.3 Macro
+    Replacement/Constraints)
+
+    In spite of this, glcpp emits a warning rather than an error for
+    non-equivalent redefinition of macros since this matches the
+    behavior of other, widely-used implementations.

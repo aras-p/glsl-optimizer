@@ -1687,8 +1687,8 @@ _define_object_macro (glcpp_parser_t *parser,
 			talloc_free (macro);
 			return;
 		}
-		glcpp_error (loc, parser, "Redefinition of macro %s\n",
-			     identifier);
+		glcpp_warning (loc, parser, "Redefinition of macro %s\n",
+			       identifier);
 	}
 
 	hash_table_insert (parser->defines, macro, identifier);
@@ -1718,8 +1718,8 @@ _define_function_macro (glcpp_parser_t *parser,
 			talloc_free (macro);
 			return;
 		}
-		glcpp_error (loc, parser, "Redefinition of macro %s\n",
-			     identifier);
+		glcpp_warning (loc, parser, "Redefinition of macro %s\n",
+			       identifier);
 	}
 
 	hash_table_insert (parser->defines, macro, identifier);
