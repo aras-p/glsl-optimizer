@@ -1181,8 +1181,11 @@ nvfx_fragprog_validate(struct nvfx_context *nvfx)
 	struct nouveau_channel* chan = nvfx->screen->base.channel;
 	struct nvfx_pipe_fragment_program *pfp = nvfx->fragprog;
 	struct nvfx_vertex_program* vp;
-	unsigned sprite_coord_enable = nvfx->rasterizer->pipe.point_quad_rasterization * nvfx->rasterizer->pipe.sprite_coord_enable;
-	// TODO: correct or flipped?
+	/* Gallium always puts the point coord in GENERIC[0]
+	 * TODO: this is wrong, Gallium needs to be fixed
+	 */
+	unsigned sprite_coord_enable = nvfx->rasterizer->pipe.point_quad_rasterization * (nvfx->rasterizer->pipe.sprite_coord_enable | 1);
+
 	boolean emulate_sprite_flipping = sprite_coord_enable && nvfx->rasterizer->pipe.sprite_coord_mode;
 	unsigned key = emulate_sprite_flipping;
 	struct nvfx_fragment_program* fp;
