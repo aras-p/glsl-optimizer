@@ -28,6 +28,7 @@
 
 #include "ir.h"
 #include "ir_visitor.h"
+#include "ir_rvalue_visitor.h"
 #include "ir_optimization.h"
 #include "glsl_types.h"
 
@@ -35,7 +36,7 @@
  * Visitor class for replacing expressions with ir_constant values.
  */
 
-class ir_constant_folding_visitor : public ir_visitor {
+class ir_constant_folding_visitor : public ir_rvalue_visitor {
 public:
    ir_constant_folding_visitor()
    {
@@ -47,40 +48,16 @@ public:
       /* empty */
    }
 
-   /**
-    * \name Visit methods
-    *
-    * As typical for the visitor pattern, there must be one \c visit method for
-    * each concrete subclass of \c ir_instruction.  Virtual base classes within
-    * the hierarchy should not have \c visit methods.
-    */
-   /*@{*/
-   virtual void visit(ir_variable *);
-   virtual void visit(ir_function_signature *);
-   virtual void visit(ir_function *);
-   virtual void visit(ir_expression *);
-   virtual void visit(ir_texture *);
-   virtual void visit(ir_swizzle *);
-   virtual void visit(ir_dereference_variable *);
-   virtual void visit(ir_dereference_array *);
-   virtual void visit(ir_dereference_record *);
-   virtual void visit(ir_assignment *);
-   virtual void visit(ir_constant *);
-   virtual void visit(ir_call *);
-   virtual void visit(ir_return *);
-   virtual void visit(ir_discard *);
-   virtual void visit(ir_if *);
-   virtual void visit(ir_loop *);
-   virtual void visit(ir_loop_jump *);
-   /*@}*/
+   virtual ir_visitor_status visit_enter(ir_assignment *ir);
+   virtual ir_visitor_status visit_enter(ir_call *ir);
 
-   void fold_constant(ir_rvalue **rvalue);
+   virtual void handle_rvalue(ir_rvalue **rvalue);
 
    bool progress;
 };
 
 void
-ir_constant_folding_visitor::fold_constant(ir_rvalue **rvalue)
+ir_constant_folding_visitor::handle_rvalue(ir_rvalue **rvalue)
 {
    if (*rvalue == NULL || (*rvalue)->ir_type == ir_type_constant)
       return;
@@ -94,104 +71,20 @@ ir_constant_folding_visitor::fold_constant(ir_rvalue **rvalue)
    }
 }
 
-void
-ir_constant_folding_visitor::visit(ir_variable *ir)
+ir_visitor_status
+ir_constant_folding_visitor::visit_enter(ir_assignment *ir)
 {
-   (void) ir;
-}
-
-
-void
-ir_constant_folding_visitor::visit(ir_function_signature *ir)
-{
-   visit_exec_list(&ir->body, this);
-}
-
-
-void
-ir_constant_folding_visitor::visit(ir_function *ir)
-{
-   foreach_iter(exec_list_iterator, iter, *ir) {
-      ir_function_signature *const sig = (ir_function_signature *) iter.get();
-      sig->accept(this);
-   }
-}
-
-void
-ir_constant_folding_visitor::visit(ir_expression *ir)
-{
-   unsigned int operand;
-
-   for (operand = 0; operand < ir->get_num_operands(); operand++) {
-      fold_constant(&ir->operands[operand]);
-   }
-}
-
-
-void
-ir_constant_folding_visitor::visit(ir_texture *ir)
-{
-   fold_constant(&ir->coordinate);
-   fold_constant(&ir->projector);
-   fold_constant(&ir->shadow_comparitor);
-
-   switch (ir->op) {
-   case ir_tex:
-      break;
-   case ir_txb:
-      fold_constant(&ir->lod_info.bias);
-      break;
-   case ir_txf:
-   case ir_txl:
-      fold_constant(&ir->lod_info.lod);
-      break;
-   case ir_txd:
-      fold_constant(&ir->lod_info.grad.dPdx);
-      fold_constant(&ir->lod_info.grad.dPdy);
-      break;
-   }
-}
-
-
-void
-ir_constant_folding_visitor::visit(ir_swizzle *ir)
-{
-   fold_constant(&ir->val);
-}
-
-
-void
-ir_constant_folding_visitor::visit(ir_dereference_variable *ir)
-{
-   (void) ir;
-}
-
-
-void
-ir_constant_folding_visitor::visit(ir_dereference_array *ir)
-{
-   fold_constant(&ir->array_index);
-   ir->array->accept(this);
-}
-
-
-void
-ir_constant_folding_visitor::visit(ir_dereference_record *ir)
-{
-   ir->record->accept(this);
-}
-
-
-void
-ir_constant_folding_visitor::visit(ir_assignment *ir)
-{
-   fold_constant(&ir->rhs);
+   ir->rhs->accept(this);
+   handle_rvalue(&ir->rhs);
 
    if (ir->condition) {
+      ir->condition->accept(this);
+      handle_rvalue(&ir->condition);
+
+      ir_constant *const_val = ir->condition->as_constant();
       /* If the condition is constant, either remove the condition or
        * remove the never-executed assignment.
        */
-      ir_constant *const_val = ir->condition->constant_expression_value();
       if (const_val) {
 	 if (const_val->value.b[0])
 	    ir->condition = NULL;
@@ -200,66 +93,33 @@ ir_constant_folding_visitor::visit(ir_assignment *ir)
 	 this->progress = true;
       }
    }
+
+   /* Don't descend into the LHS because we want it to stay as a
+    * variable dereference.  FINISHME: We probably should to get array
+    * indices though.
+    */
+   return visit_continue_with_parent;
 }
 
-
-void
-ir_constant_folding_visitor::visit(ir_constant *ir)
+ir_visitor_status
+ir_constant_folding_visitor::visit_enter(ir_call *ir)
 {
-   (void) ir;
-}
-
-
-void
-ir_constant_folding_visitor::visit(ir_call *ir)
-{
+   exec_list_iterator sig_iter = ir->get_callee()->parameters.iterator();
    foreach_iter(exec_list_iterator, iter, *ir) {
-      ir_rvalue *param = (ir_rvalue *)iter.get();
-      ir_rvalue *new_param = param;
-      fold_constant(&new_param);
+      ir_rvalue *param_rval = (ir_rvalue *)iter.get();
+      ir_variable *sig_param = (ir_variable *)sig_iter.get();
 
-      if (new_param != param) {
-	 param->replace_with(new_param);
+      if (sig_param->mode == ir_var_in) {
+	 ir_rvalue *new_param = param_rval;
+
+	 handle_rvalue(&new_param);
+	 if (new_param != param_rval) {
+	    param_rval->replace_with(new_param);
+	 }
       }
    }
-}
 
-
-void
-ir_constant_folding_visitor::visit(ir_return *ir)
-{
-   fold_constant(&ir->value);
-}
-
-
-void
-ir_constant_folding_visitor::visit(ir_discard *ir)
-{
-   (void) ir;
-}
-
-
-void
-ir_constant_folding_visitor::visit(ir_if *ir)
-{
-   fold_constant(&ir->condition);
-
-   visit_exec_list(&ir->then_instructions, this);
-   visit_exec_list(&ir->else_instructions, this);
-}
-
-
-void
-ir_constant_folding_visitor::visit(ir_loop *ir)
-{
-   (void) ir;
-}
-
-
-void
-ir_constant_folding_visitor::visit(ir_loop_jump *ir)
-{
-   (void) ir;
+   return visit_continue_with_parent;
 }
 
 bool
@@ -267,7 +127,7 @@ do_constant_folding(exec_list *instructions)
 {
    ir_constant_folding_visitor constant_folding;
 
-   visit_exec_list(instructions, &constant_folding);
+   visit_list_elements(&constant_folding, instructions);
 
    return constant_folding.progress;
 }

@@ -188,10 +188,15 @@ ir_tree_grafting_visitor::visit_enter(ir_function_signature *ir)
 ir_visitor_status
 ir_tree_grafting_visitor::visit_enter(ir_call *ir)
 {
+   exec_list_iterator sig_iter = ir->get_callee()->parameters.iterator();
    /* Reminder: iterating ir_call iterates its parameters. */
    foreach_iter(exec_list_iterator, iter, *ir) {
+      ir_variable *sig_param = (ir_variable *)sig_iter.get();
       ir_rvalue *ir = (ir_rvalue *)iter.get();
       ir_rvalue *new_ir = ir;
+
+      if (sig_param->mode != ir_var_in)
+	 continue;
 
       if (do_graft(&new_ir)) {
 	 ir->replace_with(new_ir);
