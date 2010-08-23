@@ -216,7 +216,7 @@ util_clear_render_target(struct pipe_context *pipe,
    assert(dst->texture);
    if (!dst->texture)
       return;
-   util_pack_color(rgba, dst->texture->format, &uc);
+
    dst_trans = pipe_get_transfer(pipe,
 				 dst->texture,
 				 dst->face,
@@ -232,46 +232,10 @@ util_clear_render_target(struct pipe_context *pipe,
    if (dst_map) {
       assert(dst_trans->stride > 0);
 
-      switch (util_format_get_blocksize(dst->texture->format)) {
-      case 1:
-      case 2:
-      case 4:
-         util_pack_color(rgba, dst->texture->format, &uc);
-         util_fill_rect(dst_map, dst->texture->format,
-                        dst_trans->stride,
-                        0, 0, width, height, uc.ui);
-         break;
-      case 8:
-      {
-	 /* expand the 4-byte clear value to an 8-byte value */
-	 /* should probably not convert back from ubyte but not
-	    sure what this code really achieved since it doesn't even
-	    check for format type... */
-	 ushort *row = (ushort *) dst_map;
-	 ushort val0 = UBYTE_TO_USHORT((uc.ui >>  0) & 0xff);
-	 ushort val1 = UBYTE_TO_USHORT((uc.ui >>  8) & 0xff);
-	 ushort val2 = UBYTE_TO_USHORT((uc.ui >> 16) & 0xff);
-	 ushort val3 = UBYTE_TO_USHORT((uc.ui >> 24) & 0xff);
-	 unsigned i, j;
-	 val0 = (val0 << 8) | val0;
-	 val1 = (val1 << 8) | val1;
-	 val2 = (val2 << 8) | val2;
-	 val3 = (val3 << 8) | val3;
-	 for (i = 0; i < height; i++) {
-	    for (j = 0; j < width; j++) {
-	       row[j*4+0] = val0;
-	       row[j*4+1] = val1;
-	       row[j*4+2] = val2;
-	       row[j*4+3] = val3;
-	    }
-	    row += dst_trans->stride/2;
-	 }
-      }
-      break;
-      default:
-         assert(0);
-         break;
-      }
+      util_pack_color(rgba, dst->texture->format, &uc);
+      util_fill_rect(dst_map, dst->texture->format,
+                     dst_trans->stride,
+                     0, 0, width, height, &uc);
    }
 
    pipe->transfer_unmap(pipe, dst_trans);

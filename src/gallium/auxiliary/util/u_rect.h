@@ -36,6 +36,7 @@
 
 
 #include "pipe/p_format.h"
+#include "util/u_pack_color.h"
 
 
 extern void
@@ -47,7 +48,7 @@ util_copy_rect(ubyte * dst, enum pipe_format format,
 extern void
 util_fill_rect(ubyte * dst, enum pipe_format format,
                unsigned dst_stride, unsigned dst_x, unsigned dst_y,
-               unsigned width, unsigned height, uint32_t value);
+               unsigned width, unsigned height, union util_color *uc);
 
 
 #endif /* U_RECT_H */

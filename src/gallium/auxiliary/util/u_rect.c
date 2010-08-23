@@ -32,6 +32,7 @@
 
 #include "util/u_format.h"
 #include "util/u_rect.h"
+#include "util/u_pack_color.h"
 
 
 /**
@@ -94,7 +95,7 @@ util_fill_rect(ubyte * dst,
                unsigned dst_y,
                unsigned width,
                unsigned height,
-               uint32_t value)
+               union util_color *uc)
 {
    unsigned i, j;
    unsigned width_size;
@@ -110,40 +111,54 @@ util_fill_rect(ubyte * dst,
    dst_y /= blockheight;
    width = (width + blockwidth - 1)/blockwidth;
    height = (height + blockheight - 1)/blockheight;
-   
+
    dst += dst_x * blocksize;
    dst += dst_y * dst_stride;
    width_size = width * blocksize;
-   
+
    switch (blocksize) {
    case 1:
       if(dst_stride == width_size)
-	 memset(dst, (ubyte) value, height * width_size);
+         memset(dst, uc->ub, height * width_size);
       else {
-	 for (i = 0; i < height; i++) {
-	    memset(dst, (ubyte) value, width_size);
-	    dst += dst_stride;
-	 }
+         for (i = 0; i < height; i++) {
+            memset(dst, uc->ub, width_size);
+            dst += dst_stride;
+         }
       }
       break;
    case 2:
       for (i = 0; i < height; i++) {
-	 uint16_t *row = (uint16_t *)dst;
-	 for (j = 0; j < width; j++)
-	    *row++ = (uint16_t) value;
-	 dst += dst_stride;
+         uint16_t *row = (uint16_t *)dst;
+         for (j = 0; j < width; j++)
+            *row++ = uc->us;
+         dst += dst_stride;
       }
       break;
    case 4:
       for (i = 0; i < height; i++) {
-	 uint32_t *row = (uint32_t *)dst;
-	 for (j = 0; j < width; j++)
-	    *row++ = value;
-	 dst += dst_stride;
+         uint32_t *row = (uint32_t *)dst;
+         for (j = 0; j < width; j++)
+            *row++ = uc->ui;
+         dst += dst_stride;
+      }
+      break;
+   case 8:
+   case 12:
+   case 16:
+   case 24:
+   case 32:
+      for (i = 0; i < height; i++) {
+         ubyte *row = dst;
+         for (j = 0; j < width; j++) {
+            memcpy(row, uc, blocksize);
+            row += blocksize;
+         }
+         dst += dst_stride;
       }
       break;
    default:
-	 assert(0);
-	 break;
+      assert(0);
+      break;
    }
 }
