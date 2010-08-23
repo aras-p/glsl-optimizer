@@ -961,6 +961,7 @@ void r300_emit_vs_constants(struct r300_context* r300,
     unsigned count =
         ((struct r300_vertex_shader*)r300->vs_state.state)->externals_count;
     struct r300_constant_buffer *buf = (struct r300_constant_buffer*)state;
+    unsigned i;
     CS_LOCALS(r300);
 
     if (!count)
@@ -971,7 +972,14 @@ void r300_emit_vs_constants(struct r300_context* r300,
                (r300->screen->caps.is_r500 ?
                R500_PVS_CONST_START : R300_PVS_CONST_START));
     OUT_CS_ONE_REG(R300_VAP_PVS_UPLOAD_DATA, count * 4);
-    OUT_CS_TABLE(buf->ptr, count * 4);
+    if (buf->remap_table){
+        for (i = 0; i < count; i++) {
+            uint32_t *data = &buf->ptr[buf->remap_table[i]*4];
+            OUT_CS_TABLE(data, 4);
+        }
+    } else {
+        OUT_CS_TABLE(buf->ptr, count * 4);
+    }
     END_CS;
 }
 

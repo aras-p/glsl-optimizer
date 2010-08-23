@@ -254,6 +254,8 @@ struct r300_ztop_state {
 struct r300_constant_buffer {
     /* Buffer of constants */
     uint32_t *ptr;
+    /* Remapping table. */
+    unsigned *remap_table;
 };
 
 /* Query object.

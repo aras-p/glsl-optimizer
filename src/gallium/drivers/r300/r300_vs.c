@@ -196,6 +196,7 @@ void r300_translate_vertex_shader(struct r300_context *r300,
 {
     struct r300_vertex_program_compiler compiler;
     struct tgsi_to_rc ttr;
+    unsigned i;
 
     /* Setup the compiler */
     rc_init(&compiler.Base);
@@ -205,6 +206,7 @@ void r300_translate_vertex_shader(struct r300_context *r300,
     compiler.UserData = vs;
     compiler.Base.is_r500 = r300->screen->caps.is_r500;
     compiler.Base.max_temp_regs = 32;
+    compiler.Base.remove_unused_constants = TRUE;
 
     if (compiler.Base.Debug) {
         DBG(r300, DBG_VP, "r300: Initial vertex program\n");
@@ -227,9 +229,8 @@ void r300_translate_vertex_shader(struct r300_context *r300,
     /* Invoke the compiler */
     r3xx_compile_vertex_program(&compiler);
     if (compiler.Base.Error) {
-        DBG(r300, DBG_VP, "r300 VP: Compiler error:\n%sUsing a dummy shader"
-                " instead.\nIf there's an 'unknown opcode' message, please"
-                " file a bug report and attach this log.\n", compiler.Base.ErrorMsg);
+        fprintf(stderr, "r300 VP: Compiler error:\n%sUsing a dummy shader"
+                " instead.\n", compiler.Base.ErrorMsg);
 
         if (vs->dummy) {
             fprintf(stderr, "r300 VP: Cannot compile the dummy shader! "
@@ -243,7 +244,15 @@ void r300_translate_vertex_shader(struct r300_context *r300,
     }
 
     /* Initialize numbers of constants for each type. */
-    vs->externals_count = ttr.immediate_offset;
+    vs->externals_count = 0;
+    for (i = 0;
+         i < vs->code.constants.Count &&
+         vs->code.constants.Constants[i].Type == RC_CONSTANT_EXTERNAL; i++) {
+        vs->externals_count = i+1;
+    }
+    for (; i < vs->code.constants.Count; i++) {
+        assert(vs->code.constants.Constants[i].Type == RC_CONSTANT_IMMEDIATE);
+    }
     vs->immediates_count = vs->code.constants.Count - vs->externals_count;
 
     /* And, finally... */
