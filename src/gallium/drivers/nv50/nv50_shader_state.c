@@ -384,7 +384,7 @@ nv50_pntc_replace(struct nv50_context *nv50, uint32_t pntc[8], unsigned m)
             break;
 
       if (j < vp->out_nr) {
-         ubyte en = nv50->rasterizer->pipe.sprite_coord_enable;
+         uint32_t en = nv50->rasterizer->pipe.sprite_coord_enable;
 
          if (!(en & (1 << vp->out[j].si))) {
             m += n;
@@ -547,7 +547,7 @@ nv50_fp_linkage_validate(struct nv50_context *nv50)
    so_method(so, tesla, NV50TCL_NOPERSPECTIVE_BITMAP(0), 4);
    so_datap (so, lin, 4);
 
-   if (nv50->rasterizer->pipe.sprite_coord_enable) { /* XXX: gl_PointCoord */
+   if (nv50->rasterizer->pipe.point_quad_rasterization) {
       so_method(so, tesla, NV50TCL_POINT_SPRITE_CTRL, 1);
       so_data  (so,
                 nv50_pntc_replace(nv50, pntc, (interp >> 8) & 0xff));
