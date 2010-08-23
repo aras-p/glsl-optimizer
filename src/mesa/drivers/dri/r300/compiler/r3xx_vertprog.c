@@ -31,6 +31,7 @@
 #include "radeon_swizzle.h"
 #include "radeon_emulate_branches.h"
 #include "radeon_emulate_loops.h"
+#include "radeon_remove_constants.h"
 
 struct loop {
 	int BgnLoop;
@@ -993,6 +994,14 @@ void r3xx_compile_vertex_program(struct r300_vertex_program_compiler *c)
 
 	debug_program_log(c, "after register allocation");
 
+	if (c->Base.remove_unused_constants) {
+		rc_remove_unused_constants(&c->Base,
+					   &c->code->constants_remap_table);
+		if (c->Base.Error)
+			return;
+
+		debug_program_log(c, "after constants cleanup");
+	}
 
 	translate_vertex_program(c);
 	if (c->Base.Error)
