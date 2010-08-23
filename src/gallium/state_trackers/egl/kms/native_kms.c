@@ -38,6 +38,10 @@
 
 #include "native_kms.h"
 
+/* see get_drm_screen_name */
+#include <radeon_drm.h>
+#include "radeon/drm/radeon_drm.h"
+
 static boolean
 kms_surface_validate(struct native_surface *nsurf, uint attachment_mask,
                      unsigned int *seq_num, struct pipe_resource **textures,
@@ -664,6 +668,27 @@ kms_display_destroy(struct native_display *ndpy)
    FREE(kdpy);
 }
 
+static const char *
+get_drm_screen_name(int fd, drmVersionPtr version)
+{
+   const char *name = version->name;
+
+   if (name && !strcmp(name, "radeon")) {
+      int chip_id;
+      struct drm_radeon_info info;
+
+      memset(&info, 0, sizeof(info));
+      info.request = RADEON_INFO_DEVICE_ID;
+      info.value = pointer_to_intptr(&chip_id);
+      if (drmCommandWriteRead(fd, DRM_RADEON_INFO, &info, sizeof(info)) != 0)
+         return NULL;
+
+      name = is_r3xx(chip_id) ? "r300" : "r600";
+   }
+
+   return name;
+}
+
 /**
  * Initialize KMS and pipe screen.
  */
@@ -672,6 +697,7 @@ kms_display_init_screen(struct native_display *ndpy)
 {
    struct kms_display *kdpy = kms_display(ndpy);
    drmVersionPtr version;
+   const char *name;
 
    version = drmGetVersion(kdpy->fd);
    if (!version) {
@@ -679,8 +705,11 @@ kms_display_init_screen(struct native_display *ndpy)
       return FALSE;
    }
 
-   kdpy->base.screen = kdpy->event_handler->new_drm_screen(&kdpy->base,
-         version->name, kdpy->fd);;
+   name = get_drm_screen_name(kdpy->fd, version);
+   if (name) {
+      kdpy->base.screen =
+         kdpy->event_handler->new_drm_screen(&kdpy->base, name, kdpy->fd);
+   }
    drmFreeVersion(version);
 
    if (!kdpy->base.screen) {
