@@ -25,15 +25,13 @@
  * 
  **************************************************************************/
 
-#include "main/mtypes.h"
-#include "main/context.h"
-
 #include "pipe/p_format.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_screen.h"
 
 #include "util/u_format.h"
 #include "util/u_debug.h"
+#include "util/u_memory.h"
 
 #include "stw_icd.h"
 #include "stw_device.h"
