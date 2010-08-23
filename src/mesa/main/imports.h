@@ -120,7 +120,7 @@ typedef union { GLfloat f; GLint i; } fi_type;
  * \name Work-arounds for platforms that lack C99 math functions
  */
 /*@{*/
-#if (defined(_XOPEN_SOURCE) && (_XOPEN_SOURCE < 600)) && !defined(_ISOC99_SOURCE) \
+#if (!defined(_XOPEN_SOURCE) || (_XOPEN_SOURCE < 600)) && !defined(_ISOC99_SOURCE) \
    && (!defined(__STDC_VERSION__) || (__STDC_VERSION__ < 199901L)) \
    && (!defined(_MSC_VER) || (_MSC_VER < 1400))
 #define acosf(f) ((float) acos(f))
@@ -141,7 +141,12 @@ typedef union { GLfloat f; GLint i; } fi_type;
 #define sqrtf(f) ((float) sqrt(f))
 #define tanf(f) ((float) tan(f))
 #define tanhf(f) ((float) tanh(f))
-#define truncf(f) ((float) trunc(f))
+#endif
+
+#if defined(_MSC_VER)
+static INLINE float truncf(float x) { return x < 0.0f ? ceilf(x) : floorf(x); }
+static INLINE float exp2f(float x) { return powf(2.0f, x); }
+static INLINE float log2f(float x) { return logf(x) * 1.442695041f; }
 #endif
 /*@}*/
 
