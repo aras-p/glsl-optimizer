@@ -50,7 +50,7 @@
 				WarningLevel="3"
 				DebugInformationFormat="4"
 				DisableSpecificWarnings="4291;4996;4800;4099;4244;4018"
-				ForcedIncludeFiles="msvccompat.h"
+				ForcedIncludeFiles=""
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -116,7 +116,7 @@
 				WarningLevel="3"
 				DebugInformationFormat="1"
 				DisableSpecificWarnings="4291;4996;4800;4099;4244;4018"
-				ForcedIncludeFiles="msvccompat.h"
+				ForcedIncludeFiles=""
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -554,6 +554,54 @@
 					</File>
 					<File
 						RelativePath="..\..\mesa\program\symbol_table.h"
+						>
+					</File>
+				</Filter>
+				<Filter
+					Name="main"
+					>
+					<File
+						RelativePath="..\..\mesa\main\compiler.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\mesa\main\config.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\mesa\main\dd.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\mesa\main\extensions.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\mesa\main\glheader.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\mesa\main\imports.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\mesa\main\macros.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\mesa\main\mfeatures.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\mesa\main\mtypes.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\mesa\main\shaderobj.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\mesa\main\simple_list.h"
 						>
 					</File>
 				</Filter>
