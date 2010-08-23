@@ -68,6 +68,7 @@ IDENTIFIER	[_a-zA-Z][_a-zA-Z0-9]*
 PUNCTUATION	[][(){}.&*~!/%<>^|;,=+-]
 OTHER		[^][(){}.&*~!/%<>^|;,=#[:space:]+-]+
 
+DIGITS			[0-9][0-9]*
 DECIMAL_INTEGER		[1-9][0-9]*[uU]?
 OCTAL_INTEGER		0[0-7]*[uU]?
 HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
@@ -105,7 +106,7 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 	return OTHER;
 }
 
-{HASH}line{HSPACE}+{DECIMAL_INTEGER}{HSPACE}+{DECIMAL_INTEGER}{HSPACE}*$ {
+{HASH}line{HSPACE}+{DIGITS}{HSPACE}+{DIGITS}{HSPACE}*$ {
 	/* Eat characters until the first digit is
 	 * encountered
 	 */
@@ -121,7 +122,7 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 	yylloc->source = strtol(ptr, NULL, 0);
 }
 
-{HASH}line{HSPACE}+{DECIMAL_INTEGER}{HSPACE}*$ {
+{HASH}line{HSPACE}+{DIGITS}{HSPACE}*$ {
 	/* Eat characters until the first digit is
 	 * encountered
 	 */
