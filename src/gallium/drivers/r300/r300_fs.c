@@ -257,17 +257,17 @@ static void r300_emit_fs_code_to_buffer(
         shader->cb_code_size = 19 +
                                ((code->inst_end + 1) * 6) +
                                imm_count * 7 +
-			       code->int_constant_count * 2;
+                               code->int_constant_count * 2;
 
         NEW_CB(shader->cb_code, shader->cb_code_size);
         OUT_CB_REG(R500_US_CONFIG, R500_ZERO_TIMES_ANYTHING_EQUALS_ZERO);
         OUT_CB_REG(R500_US_PIXSIZE, code->max_temp_idx);
         OUT_CB_REG(R500_US_FC_CTRL, code->us_fc_ctrl);
         for(i = 0; i < code->int_constant_count; i++){
-		OUT_CB_REG(R500_US_FC_INT_CONST_0 + (i * 4),
-						code->int_constants[i]);
-	}
-	OUT_CB_REG(R500_US_CODE_RANGE,
+                OUT_CB_REG(R500_US_FC_INT_CONST_0 + (i * 4),
+                                                code->int_constants[i]);
+        }
+        OUT_CB_REG(R500_US_CODE_RANGE,
                    R500_US_CODE_RANGE_ADDR(0) | R500_US_CODE_RANGE_SIZE(code->inst_end));
         OUT_CB_REG(R500_US_CODE_OFFSET, 0);
         OUT_CB_REG(R500_US_CODE_ADDR,
