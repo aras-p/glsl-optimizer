@@ -809,6 +809,56 @@ struct uniform_node {
    unsigned slots;
 };
 
+/**
+ * Update the sizes of linked shader uniform arrays to the maximum
+ * array index used.
+ *
+ * From page 81 (page 95 of the PDF) of the OpenGL 2.1 spec:
+ *
+ *     If one or more elements of an array are active,
+ *     GetActiveUniform will return the name of the array in name,
+ *     subject to the restrictions listed above. The type of the array
+ *     is returned in type. The size parameter contains the highest
+ *     array element index used, plus one. The compiler or linker
+ *     determines the highest index used.  There will be only one
+ *     active uniform reported by the GL per uniform array.
+
+ */
+static void
+update_uniform_array_sizes(struct gl_shader_program *prog)
+{
+   for (unsigned i = 0; i < prog->_NumLinkedShaders; i++) {
+      foreach_list(node, prog->_LinkedShaders[i]->ir) {
+	 ir_variable *const var = ((ir_instruction *) node)->as_variable();
+
+	 if ((var == NULL) || (var->mode != ir_var_uniform) ||
+	     !var->type->is_array())
+	    continue;
+
+	 unsigned int size = var->max_array_access;
+	 for (unsigned j = 0; j < prog->_NumLinkedShaders; j++) {
+	    foreach_list(node2, prog->_LinkedShaders[j]->ir) {
+	       ir_variable *other_var = ((ir_instruction *) node2)->as_variable();
+	       if (!other_var)
+		  continue;
+
+	       if (strcmp(var->name, other_var->name) == 0 &&
+		   other_var->max_array_access > size) {
+		  size = other_var->max_array_access;
+	       }
+	    }
+	 }
+	 if (size + 1 != var->type->fields.array->length) {
+	    var->type = glsl_type::get_array_instance(var->type->fields.array,
+						      size + 1);
+	    /* FINISHME: We should update the types of array
+	     * dereferences of this variable now.
+	     */
+	 }
+      }
+   }
+}
+
 void
 assign_uniform_locations(struct gl_shader_program *prog)
 {
@@ -817,6 +867,8 @@ assign_uniform_locations(struct gl_shader_program *prog)
    unsigned total_uniforms = 0;
    hash_table *ht = hash_table_ctor(32, hash_table_string_hash,
 				    hash_table_string_compare);
+
+   update_uniform_array_sizes(prog);
 
    for (unsigned i = 0; i < prog->_NumLinkedShaders; i++) {
       unsigned next_position = 0;

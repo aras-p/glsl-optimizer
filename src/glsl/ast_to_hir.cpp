@@ -1258,6 +1258,11 @@ ast_expression::hir(exec_list *instructions,
 	 }
       } else if (array->type->array_size() == 0) {
 	 _mesa_glsl_error(&loc, state, "unsized array index must be constant");
+      } else {
+	 if (array->type->is_array()) {
+	    ir_variable *v = array->whole_variable_referenced();
+	    v->max_array_access = array->type->array_size();
+	 }
       }
 
       if (error_emitted)
