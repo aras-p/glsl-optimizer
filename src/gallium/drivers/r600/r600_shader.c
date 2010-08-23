@@ -1446,6 +1446,55 @@ static int tgsi_lrp(struct r600_shader_ctx *ctx)
 	return tgsi_helper_copy(ctx, inst);
 }
 
+static int tgsi_cmp(struct r600_shader_ctx *ctx)
+{
+	struct tgsi_full_instruction *inst = &ctx->parse.FullToken.FullInstruction;
+	struct r600_bc_alu_src r600_src[3];
+	struct r600_bc_alu alu;
+	int use_temp = 0;
+	int i, r;
+
+	r = tgsi_split_constant(ctx, r600_src);
+	if (r)
+		return r;
+
+	if (inst->Dst[0].Register.WriteMask != 0xf)
+		use_temp = 1;
+
+	for (i = 0; i < 4; i++) {
+		memset(&alu, 0, sizeof(struct r600_bc_alu));
+		alu.inst = V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_CNDGE;
+		alu.src[0] = r600_src[0];
+		alu.src[0].chan = tgsi_chan(&inst->Src[0], i);
+
+		alu.src[1] = r600_src[2];
+		alu.src[1].chan = tgsi_chan(&inst->Src[2], i);
+
+		alu.src[2] = r600_src[1];
+		alu.src[2].chan = tgsi_chan(&inst->Src[1], i);
+
+		if (use_temp)
+			alu.dst.sel = ctx->temp_reg;
+		else {
+			r = tgsi_dst(ctx, &inst->Dst[0], i, &alu.dst);
+			if (r)
+				return r;
+		}
+		alu.dst.chan = i;
+		alu.dst.write = 1;
+		alu.is_op3 = 1;
+		if (i == 3)
+			alu.last = 1;
+		r = r600_bc_add_alu(ctx->bc, &alu);
+		if (r)
+			return r;
+	}       
+	if (use_temp)
+		return tgsi_helper_copy(ctx, inst);
+	return 0;
+}
+
+
 static struct r600_shader_tgsi_instruction r600_shader_tgsi_instruction[] = {
 	{TGSI_OPCODE_ARL,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_MOV,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOV, tgsi_op2},
@@ -1516,7 +1565,7 @@ static struct r600_shader_tgsi_instruction r600_shader_tgsi_instruction[] = {
 	{TGSI_OPCODE_CAL,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_RET,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_SSG,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_ssg},
-	{TGSI_OPCODE_CMP,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
+	{TGSI_OPCODE_CMP,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_cmp},
 	{TGSI_OPCODE_SCS,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_TXB,	0, SQ_TEX_INST_SAMPLE_L, tgsi_tex},
 	{TGSI_OPCODE_NRM,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
