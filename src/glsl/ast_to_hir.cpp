@@ -1827,24 +1827,32 @@ ast_declarator_list::hir(exec_list *instructions,
 	    ir_rvalue *new_rhs = validate_assignment(state, var->type, rhs);
 	    if (new_rhs != NULL) {
 	       rhs = new_rhs;
+
+	       ir_constant *constant_value = rhs->constant_expression_value();
+	       if (!constant_value) {
+		  _mesa_glsl_error(& initializer_loc, state,
+				   "initializer of %s variable `%s' must be a "
+				   "constant expression",
+				   (this->type->qualifier.constant)
+				   ? "const" : "uniform",
+				   decl->identifier);
+		  if (var->type->is_numeric()) {
+		     /* Reduce cascading errors. */
+		     var->constant_value = ir_constant::zero(ctx, var->type);
+		  }
+	       } else {
+		  rhs = constant_value;
+		  var->constant_value = constant_value;
+	       }
 	    } else {
 	       _mesa_glsl_error(&initializer_loc, state,
 			        "initializer of type %s cannot be assigned to "
 				"variable of type %s",
 				rhs->type->name, var->type->name);
-	    }
-
-	    ir_constant *constant_value = rhs->constant_expression_value();
-	    if (!constant_value) {
-	       _mesa_glsl_error(& initializer_loc, state,
-				"initializer of %s variable `%s' must be a "
-				"constant expression",
-				(this->type->qualifier.constant)
-				? "const" : "uniform",
-				decl->identifier);
-	    } else {
-	       rhs = constant_value;
-	       var->constant_value = constant_value;
+	       if (var->type->is_numeric()) {
+		  /* Reduce cascading errors. */
+		  var->constant_value = ir_constant::zero(ctx, var->type);
+	       }
 	    }
 	 }
 
