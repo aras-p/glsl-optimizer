@@ -911,7 +911,7 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
    case ir_unop_f2b:
    case ir_unop_i2b:
       ir_to_mesa_emit_op2(ir, OPCODE_SNE, result_dst,
-			  result_src, src_reg_for_float(0.0));
+			  op[0], src_reg_for_float(0.0));
       break;
    case ir_unop_trunc:
       ir_to_mesa_emit_op1(ir, OPCODE_TRUNC, result_dst, op[0]);
