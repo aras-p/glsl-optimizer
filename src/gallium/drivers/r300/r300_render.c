@@ -726,8 +726,6 @@ struct r300_render {
     unsigned hwprim;
 
     /* VBO */
-    struct pipe_resource* vbo;
-    size_t vbo_size;
     size_t vbo_offset;
     size_t vbo_max_used;
     void * vbo_ptr;
@@ -759,31 +757,31 @@ static boolean r300_render_allocate_vertices(struct vbuf_render* render,
     struct pipe_screen* screen = r300->context.screen;
     size_t size = (size_t)vertex_size * (size_t)count;
 
-    if (size + r300render->vbo_offset > r300render->vbo_size)
+    if (size + r300render->vbo_offset > r300->draw_vbo_size)
     {
-        pipe_resource_reference(&r300->vbo, NULL);
-        r300render->vbo = pipe_buffer_create(screen,
-                                             PIPE_BIND_VERTEX_BUFFER,
-                                             R300_MAX_DRAW_VBO_SIZE);
+	pipe_resource_reference(&r300->vbo, NULL);
+        r300->vbo = pipe_buffer_create(screen,
+				       PIPE_BIND_VERTEX_BUFFER,
+				       R300_MAX_DRAW_VBO_SIZE);
         r300render->vbo_offset = 0;
-        r300render->vbo_size = R300_MAX_DRAW_VBO_SIZE;
+        r300->draw_vbo_size = R300_MAX_DRAW_VBO_SIZE;
     }
 
     r300render->vertex_size = vertex_size;
-    r300->vbo = r300render->vbo;
     r300->vbo_offset = r300render->vbo_offset;
 
-    return (r300render->vbo) ? TRUE : FALSE;
+    return (r300->vbo) ? TRUE : FALSE;
 }
 
 static void* r300_render_map_vertices(struct vbuf_render* render)
 {
     struct r300_render* r300render = r300_render(render);
+    struct r300_context* r300 = r300render->r300;
 
     assert(!r300render->vbo_transfer);
 
     r300render->vbo_ptr = pipe_buffer_map(&r300render->r300->context,
-					  r300render->vbo,
+					  r300->vbo,
                                           PIPE_TRANSFER_WRITE,
 					  &r300render->vbo_transfer);
 
@@ -798,12 +796,13 @@ static void r300_render_unmap_vertices(struct vbuf_render* render,
 {
     struct r300_render* r300render = r300_render(render);
     struct pipe_context* context = &r300render->r300->context;
+    struct r300_context* r300 = r300render->r300;
 
     assert(r300render->vbo_transfer);
 
     r300render->vbo_max_used = MAX2(r300render->vbo_max_used,
                                     r300render->vertex_size * (max + 1));
-    pipe_buffer_unmap(context, r300render->vbo, r300render->vbo_transfer);
+    pipe_buffer_unmap(context, r300->vbo, r300render->vbo_transfer);
 
     r300render->vbo_transfer = NULL;
 }
@@ -880,7 +879,7 @@ static void r300_render_draw_elements(struct vbuf_render* render,
     struct r300_context* r300 = r300render->r300;
     int i;
     unsigned end_cs_dwords;
-    unsigned max_index = (r300render->vbo_size - r300render->vbo_offset) /
+    unsigned max_index = (r300->draw_vbo_size - r300render->vbo_offset) /
                          (r300render->r300->vertex_info.size * 4) - 1;
     unsigned short_count;
     unsigned free_dwords;
@@ -956,8 +955,6 @@ static struct vbuf_render* r300_render_create(struct r300_context* r300)
     r300render->base.release_vertices = r300_render_release_vertices;
     r300render->base.destroy = r300_render_destroy;
 
-    r300render->vbo = NULL;
-    r300render->vbo_size = 0;
     r300render->vbo_offset = 0;
 
     return &r300render->base;
@@ -984,6 +981,14 @@ struct draw_stage* r300_draw_stage(struct r300_context* r300)
     draw_set_render(r300->draw, render);
 
     return stage;
+}
+
+void r300_draw_flush_vbuf(struct r300_context *r300)
+{
+    struct r300_render *r300render;
+
+    pipe_resource_reference(&r300->vbo, NULL);
+    r300->draw_vbo_size = 0;
 }
 
 /****************************************************************************

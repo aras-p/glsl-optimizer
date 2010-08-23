@@ -43,6 +43,8 @@ static void r300_flush(struct pipe_context* pipe,
     u_upload_flush(r300->upload_vb);
     u_upload_flush(r300->upload_ib);
 
+    if (r300->draw)
+	r300_draw_flush_vbuf(r300);
     if (r300->dirty_hw) {
         r300_emit_hyperz_end(r300);
         r300_emit_query_end(r300);
