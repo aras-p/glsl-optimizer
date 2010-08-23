@@ -34,7 +34,6 @@
 
 #include "pipe/p_compiler.h"
 #include "dri_wrapper.h"
-#include "main/mtypes.h"
 
 struct pipe_context;
 struct pipe_fence;
