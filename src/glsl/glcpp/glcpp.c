@@ -25,6 +25,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <string.h>
+#include <errno.h>
 #include "glcpp.h"
 
 extern int yydebug;
@@ -35,10 +37,18 @@ load_text_file(void *ctx, const char *file_name)
 	char *text = NULL;
 	struct stat st;
 	ssize_t total_read = 0;
-	int fd = file_name == NULL ? STDIN_FILENO : open(file_name, O_RDONLY);
+	int fd;
 
-	if (fd < 0) {
-		return NULL;
+	if (file_name == NULL || strcmp(file_name, "-") == 0) {
+	   fd = STDIN_FILENO;
+	} else {
+	   fd = open (file_name, O_RDONLY);
+
+	   if (fd < 0) {
+	      fprintf (stderr, "Failed to open file %s: %s\n",
+		       file_name, strerror (errno));
+	      return NULL;
+	   }
 	}
 
 	if (fstat(fd, & st) == 0) {
@@ -82,6 +92,9 @@ main (int argc, char *argv[])
 	}
 
 	shader = load_text_file(ctx, filename);
+	if (shader == NULL)
+	   return 1;
+
 	ret = preprocess(ctx, &shader, &info_log, NULL);
 
 	printf("%s", shader);
