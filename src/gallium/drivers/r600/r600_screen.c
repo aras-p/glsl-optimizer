@@ -69,6 +69,7 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_TEXTURE_SWIZZLE:
 	case PIPE_CAP_INDEP_BLEND_ENABLE:
 	case PIPE_CAP_DEPTHSTENCIL_CLEAR_SEPARATE:
+	case PIPE_CAP_DEPTH_CLAMP:
 		return 1;
 
 	/* Unsupported features (boolean caps). */
@@ -77,7 +78,6 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_STREAM_OUTPUT:
 	case PIPE_CAP_INDEP_BLEND_FUNC: /* FIXME allow this */
 	case PIPE_CAP_GEOMETRY_SHADER4:
-	case PIPE_CAP_DEPTH_CLAMP: /* FIXME allow this */
 		return 0;
 
 	/* Texturing. */

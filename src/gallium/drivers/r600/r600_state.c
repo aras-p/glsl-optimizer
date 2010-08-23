@@ -861,9 +861,10 @@ static struct radeon_state *r600_rasterizer(struct r600_context *rctx)
 		}
 	}
 	rstate->states[R600_RASTERIZER__PA_CL_CLIP_CNTL] = 0;
-	if (clip && clip->nr) {
+	if (clip) {
 		rstate->states[R600_RASTERIZER__PA_CL_CLIP_CNTL] = S_028810_PS_UCP_MODE(3) | ((1 << clip->nr) - 1);
-		rstate->states[R600_RASTERIZER__PA_CL_CLIP_CNTL] |= S_028810_CLIP_DISABLE(clip->depth_clamp);
+		rstate->states[R600_RASTERIZER__PA_CL_CLIP_CNTL] |= S_028810_ZCLIP_NEAR_DISABLE(clip->depth_clamp);
+		rstate->states[R600_RASTERIZER__PA_CL_CLIP_CNTL] |= S_028810_ZCLIP_FAR_DISABLE(clip->depth_clamp);
 	}
 	rstate->states[R600_RASTERIZER__PA_SU_SC_MODE_CNTL] =
 		S_028814_PROVOKING_VTX_LAST(prov_vtx) |
