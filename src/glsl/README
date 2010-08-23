@@ -180,6 +180,7 @@ ir.h (new enum)
 ir.cpp:get_num_operands() (used for ir_reader)
 ir.cpp:operator_strs (used for ir_reader)
 ir_constant_expression.cpp (you probably want to be able to constant fold)
+ir_validate.cpp (check users have the right types)
 
 You may also need to update the backends if they will see the new expr type:
 

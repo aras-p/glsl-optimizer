@@ -184,6 +184,7 @@ ir_expression::get_num_operands(ir_expression_operation op)
       1, /* ir_unop_i2b */
       1, /* ir_unop_b2i */
       1, /* ir_unop_u2f */
+      1, /* ir_unop_any */
 
       1, /* ir_unop_trunc */
       1, /* ir_unop_ceil */
@@ -252,6 +253,7 @@ static const char *const operator_strs[] = {
    "i2b",
    "b2i",
    "u2f",
+   "any",
    "trunc",
    "ceil",
    "floor",
