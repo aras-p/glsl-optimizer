@@ -42,6 +42,7 @@
 
 #include "util/u_blit.h"
 #include "util/u_draw_quad.h"
+#include "util/u_format.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "util/u_sampler.h"
@@ -56,7 +57,8 @@ struct blit_state
    struct cso_context *cso;
 
    struct pipe_blend_state blend;
-   struct pipe_depth_stencil_alpha_state depthstencil;
+   struct pipe_depth_stencil_alpha_state depthstencil_keep;
+   struct pipe_depth_stencil_alpha_state depthstencil_write;
    struct pipe_rasterizer_state rasterizer;
    struct pipe_sampler_state sampler;
    struct pipe_viewport_state viewport;
@@ -66,6 +68,7 @@ struct blit_state
 
    void *vs;
    void *fs[TGSI_WRITEMASK_XYZW + 1];
+   void *fs_depth;
 
    struct pipe_resource *vbuf;  /**< quad vertices */
    unsigned vbuf_slot;
@@ -96,7 +99,11 @@ util_create_blit(struct pipe_context *pipe, struct cso_context *cso)
    ctx->blend.rt[0].colormask = PIPE_MASK_RGBA;
 
    /* no-op depth/stencil/alpha */
-   memset(&ctx->depthstencil, 0, sizeof(ctx->depthstencil));
+   memset(&ctx->depthstencil_keep, 0, sizeof(ctx->depthstencil_keep));
+   memset(&ctx->depthstencil_write, 0, sizeof(ctx->depthstencil_write));
+   ctx->depthstencil_write.depth.enabled = 1;
+   ctx->depthstencil_write.depth.writemask = 1;
+   ctx->depthstencil_write.depth.func = PIPE_FUNC_ALWAYS;
 
    /* rasterizer */
    memset(&ctx->rasterizer, 0, sizeof(ctx->rasterizer));
@@ -168,6 +175,9 @@ util_destroy_blit(struct blit_state *ctx)
    for (i = 0; i < Elements(ctx->fs); i++)
       if (ctx->fs[i])
          pipe->delete_fs_state(pipe, ctx->fs[i]);
+
+   if (ctx->fs_depth)
+      pipe->delete_fs_state(pipe, ctx->fs_depth);
 
    pipe_resource_reference(&ctx->vbuf, NULL);
 
@@ -276,7 +286,7 @@ regions_overlap(int srcX0, int srcY0,
  * \param writemask  controls which channels in the dest surface are sourced
  *                   from the src surface.  Disabled channels are sourced
  *                   from (0,0,0,1).
- * XXX need some control over blitting Z and/or stencil.
+ * XXX need some control over blitting stencil.
  */
 void
 util_blit_pixels_writemask(struct blit_state *ctx,
@@ -299,7 +309,7 @@ util_blit_pixels_writemask(struct blit_state *ctx,
    const int srcW = abs(srcX1 - srcX0);
    const int srcH = abs(srcY1 - srcY0);
    unsigned offset;
-   boolean overlap;
+   boolean overlap, dst_is_depth;
    float s0, t0, s1, t1;
    boolean normalized;
 
@@ -444,14 +454,15 @@ util_blit_pixels_writemask(struct blit_state *ctx,
       }
    }
 
+   dst_is_depth = util_format_is_depth_or_stencil(dst->format);
 
    assert(screen->is_format_supported(screen, sampler_view->format, ctx->internal_target,
                                       sampler_view->texture->nr_samples,
                                       PIPE_BIND_SAMPLER_VIEW, 0));
    assert(screen->is_format_supported(screen, dst->format, ctx->internal_target,
                                       dst->texture->nr_samples,
-                                      PIPE_BIND_RENDER_TARGET, 0));
-
+                                      dst_is_depth ? PIPE_BIND_DEPTH_STENCIL :
+                                                     PIPE_BIND_RENDER_TARGET, 0));
    /* save state (restored below) */
    cso_save_blend(ctx->cso);
    cso_save_depth_stencil_alpha(ctx->cso);
@@ -467,7 +478,9 @@ util_blit_pixels_writemask(struct blit_state *ctx,
 
    /* set misc state we care about */
    cso_set_blend(ctx->cso, &ctx->blend);
-   cso_set_depth_stencil_alpha(ctx->cso, &ctx->depthstencil);
+   cso_set_depth_stencil_alpha(ctx->cso,
+                               dst_is_depth ? &ctx->depthstencil_write :
+                                              &ctx->depthstencil_keep);
    cso_set_rasterizer(ctx->cso, &ctx->rasterizer);
    cso_set_clip(ctx->cso, &ctx->clip);
    cso_set_vertex_elements(ctx->cso, 2, ctx->velem);
@@ -496,22 +509,35 @@ util_blit_pixels_writemask(struct blit_state *ctx,
    /* texture */
    cso_set_fragment_sampler_views(ctx->cso, 1, &sampler_view);
 
-   if (ctx->fs[writemask] == NULL)
-      ctx->fs[writemask] =
-         util_make_fragment_tex_shader_writemask(pipe, TGSI_TEXTURE_2D,
-                                                 TGSI_INTERPOLATE_LINEAR,
-                                                 writemask);
-
    /* shaders */
-   cso_set_fragment_shader_handle(ctx->cso, ctx->fs[writemask]);
+   if (dst_is_depth) {
+      if (ctx->fs_depth == NULL)
+         ctx->fs_depth =
+            util_make_fragment_tex_shader_writedepth(pipe, TGSI_TEXTURE_2D,
+                                                     TGSI_INTERPOLATE_LINEAR);
+
+      cso_set_fragment_shader_handle(ctx->cso, ctx->fs_depth);
+   } else {
+      if (ctx->fs[writemask] == NULL)
+         ctx->fs[writemask] =
+            util_make_fragment_tex_shader_writemask(pipe, TGSI_TEXTURE_2D,
+                                                    TGSI_INTERPOLATE_LINEAR,
+                                                    writemask);
+
+      cso_set_fragment_shader_handle(ctx->cso, ctx->fs[writemask]);
+   }
    cso_set_vertex_shader_handle(ctx->cso, ctx->vs);
 
    /* drawing dest */
    memset(&fb, 0, sizeof(fb));
    fb.width = dst->width;
    fb.height = dst->height;
-   fb.nr_cbufs = 1;
-   fb.cbufs[0] = dst;
+   if (dst_is_depth) {
+      fb.zsbuf = dst;
+   } else {
+      fb.nr_cbufs = 1;
+      fb.cbufs[0] = dst;
+   }
    cso_set_framebuffer(ctx->cso, &fb);
 
    /* draw quad */
@@ -644,7 +670,7 @@ util_blit_pixels_tex(struct blit_state *ctx,
 
    /* set misc state we care about */
    cso_set_blend(ctx->cso, &ctx->blend);
-   cso_set_depth_stencil_alpha(ctx->cso, &ctx->depthstencil);
+   cso_set_depth_stencil_alpha(ctx->cso, &ctx->depthstencil_keep);
    cso_set_rasterizer(ctx->cso, &ctx->rasterizer);
    cso_set_clip(ctx->cso, &ctx->clip);
    cso_set_vertex_elements(ctx->cso, 2, ctx->velem);
