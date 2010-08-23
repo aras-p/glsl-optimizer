@@ -26,11 +26,10 @@
  *    Chia-I Wu <olv@lunarg.com>
  */
 
-#include "util/u_memory.h"
-#include "util/u_inlines.h"
-
 #include "xm_api.h"
 #include "xm_st.h"
+
+#include "util/u_inlines.h"
 
 struct xmesa_st_framebuffer {
    XMesaDisplay display;
