@@ -775,7 +775,7 @@ static struct radeon_state *r600_db(struct r600_context *rctx)
 	rtex = (struct r600_resource_texture*)state->zsbuf->texture;
 	rtex->tilled = 1;
 	rtex->array_mode = 2;
-	rtex->tile_type = 0;
+	rtex->tile_type = 1;
 	rtex->depth = 1;
 	rbuffer = &rtex->resource;
 

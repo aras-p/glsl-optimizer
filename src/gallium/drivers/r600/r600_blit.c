@@ -242,7 +242,7 @@ static struct radeon_state *r600_blit_state_vs_shader(struct r600_screen *rscree
 {
 	struct radeon_state *rstate;
 	struct radeon_bo *bo;
-	u32 shader_bc[] = {
+	u32 shader_bc_r600[] = {
 		0x00000004, 0x81000400,
 		0x00000008, 0xA01C0000,
 		0xC001A03C, 0x94000688,
@@ -260,6 +260,24 @@ static struct radeon_state *r600_blit_state_vs_shader(struct r600_screen *rscree
 		0x00000802, 0x40801910,
 		0x80000C02, 0x60801910
 	};
+	u32 shader_bc_r700[] = {
+		0x00000004, 0x81000400,
+		0x00000008, 0xA01C0000,
+		0xC001A03C, 0x94000688,
+		0xC0024000, 0x94200688,
+		0x7C000000, 0x002D1001,
+		0x00080000, 0x00000000,
+		0x7C000100, 0x002D1002,
+		0x00080000, 0x00000000,
+		0x00000001, 0x00600C90,
+		0x00000401, 0x20600C90,
+		0x00000801, 0x40600C90,
+		0x80000C01, 0x60600C90,
+		0x00000002, 0x00800C90,
+		0x00000402, 0x20800C90,
+		0x00000802, 0x40800C90,
+		0x80000C02, 0x60800C90
+	};
 
 	/* simple shader */
 	bo = radeon_bo(rscreen->rw, 0, 128, 4096, NULL);
@@ -270,7 +288,19 @@ static struct radeon_state *r600_blit_state_vs_shader(struct r600_screen *rscree
 		radeon_bo_decref(rscreen->rw, bo);
 		return NULL;
 	}
-	memcpy(bo->data, shader_bc, 128);
+	switch (rscreen->chip_class) {
+	case R600:
+		memcpy(bo->data, shader_bc_r600, 128);
+		break;
+	case R700:
+		memcpy(bo->data, shader_bc_r700, 128);
+		break;
+	default:
+		R600_ERR("unsupported chip family\n");
+		radeon_bo_unmap(rscreen->rw, bo);
+		radeon_bo_decref(rscreen->rw, bo);
+		return NULL;
+	}
 	radeon_bo_unmap(rscreen->rw, bo);
 
 	rstate = radeon_state(rscreen->rw, R600_VS_SHADER_TYPE, R600_VS_SHADER);
@@ -303,13 +333,21 @@ static struct radeon_state *r600_blit_state_ps_shader(struct r600_screen *rscree
 {
 	struct radeon_state *rstate;
 	struct radeon_bo *bo;
-	u32 shader_bc[] = {
+	u32 shader_bc_r600[] = {
 		0x00000002, 0xA00C0000,
 		0xC0008000, 0x94200688,
 		0x00000000, 0x00201910,
 		0x00000400, 0x20201910,
 		0x00000800, 0x40201910,
 		0x80000C00, 0x60201910
+	};
+	u32 shader_bc_r700[] = {
+		0x00000002, 0xA00C0000,
+		0xC0008000, 0x94200688,
+		0x00000000, 0x00200C90,
+		0x00000400, 0x20200C90,
+		0x00000800, 0x40200C90,
+		0x80000C00, 0x60200C90
 	};
 
 	/* simple shader */
@@ -321,7 +359,19 @@ static struct radeon_state *r600_blit_state_ps_shader(struct r600_screen *rscree
 	if (radeon_bo_map(rscreen->rw, bo)) {
 		return NULL;
 	}
-	memcpy(bo->data, shader_bc, 48);
+	switch (rscreen->chip_class) {
+	case R600:
+		memcpy(bo->data, shader_bc_r600, 48);
+		break;
+	case R700:
+		memcpy(bo->data, shader_bc_r700, 48);
+		break;
+	default:
+		R600_ERR("unsupported chip family\n");
+		radeon_bo_unmap(rscreen->rw, bo);
+		radeon_bo_decref(rscreen->rw, bo);
+		return NULL;
+	}
 	radeon_bo_unmap(rscreen->rw, bo);
 
 	rstate = radeon_state(rscreen->rw, R600_PS_SHADER_TYPE, R600_PS_SHADER);

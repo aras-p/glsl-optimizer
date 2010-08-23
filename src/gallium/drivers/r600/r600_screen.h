@@ -42,9 +42,16 @@ struct r600_transfer {
 	struct pipe_resource		*linear_texture;
 };
 
+enum chip_class {
+	R600,
+	R700,
+	EVERGREEN,
+};
+
 struct r600_screen {
 	struct pipe_screen		screen;
 	struct radeon			*rw;
+	enum chip_class			chip_class;
 };
 
 static INLINE struct r600_screen *r600_screen(struct pipe_screen *screen)
