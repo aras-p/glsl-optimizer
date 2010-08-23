@@ -19,7 +19,8 @@ nouveau_drm_destroy_winsys(struct pipe_winsys *s)
 {
 	struct nouveau_winsys *nv_winsys = nouveau_winsys(s);
 	struct nouveau_screen *nv_screen= nouveau_screen(nv_winsys->pscreen);
-	nouveau_device_close(&nv_screen->device);
+	if (nv_screen)
+		nouveau_device_close(&nv_screen->device);
 	FREE(nv_winsys);
 }
 
