@@ -2138,7 +2138,13 @@ ast_function::hir(exec_list *instructions,
    const glsl_type *return_type =
       this->return_type->specifier->glsl_type(& return_type_name, state);
 
-   assert(return_type != NULL);
+   if (!return_type) {
+      YYLTYPE loc = this->get_location();
+      _mesa_glsl_error(&loc, state,
+		       "function `%s' has undeclared return type `%s'",
+		       name, return_type_name);
+      return_type = glsl_type::error_type;
+   }
 
    /* From page 56 (page 62 of the PDF) of the GLSL 1.30 spec:
     * "No qualifier is allowed on the return type of a function."
