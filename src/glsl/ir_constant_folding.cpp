@@ -117,6 +117,7 @@ ir_constant_folding_visitor::visit_enter(ir_call *ir)
 	    param_rval->replace_with(new_param);
 	 }
       }
+      sig_iter.next();
    }
 
    return visit_continue_with_parent;

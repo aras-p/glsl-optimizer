@@ -202,6 +202,7 @@ ir_tree_grafting_visitor::visit_enter(ir_call *ir)
 	 ir->replace_with(new_ir);
 	 return visit_stop;
       }
+      sig_iter.next();
    }
 
    return visit_continue;
