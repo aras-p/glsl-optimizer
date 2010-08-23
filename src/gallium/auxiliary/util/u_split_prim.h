@@ -48,7 +48,7 @@ util_split_prim_next(struct util_split_prim *s, unsigned max_verts)
       }
    }
 
-   if (s->p_start + s->close_first + max_verts >= s->p_end) {
+   if ((s->p_end - s->p_start) + s->close_first <= max_verts) {
       s->emit(s->priv, s->p_start, s->p_end - s->p_start);
       if (s->close_first)
          s->emit(s->priv, s->start, 1);
