@@ -20,6 +20,7 @@ nvfx_state_validate_common(struct nvfx_context *nvfx)
 		nvfx->hw_pointsprite_control = -1;
 		nvfx->hw_vp_output = -1;
 		nvfx->screen->cur_ctx = nvfx;
+		nvfx->relocs_needed = NVFX_RELOCATE_ALL;
 	}
 
 	/* These can trigger use the of 3D engine to copy temporaries.
@@ -244,12 +245,12 @@ nvfx_state_validate_common(struct nvfx_context *nvfx)
 	return TRUE;
 }
 
-void
-nvfx_state_emit(struct nvfx_context *nvfx)
+inline void
+nvfx_state_relocate(struct nvfx_context *nvfx, unsigned relocs)
 {
 	struct nouveau_channel* chan = nvfx->screen->base.channel;
 	/* we need to ensure there is enough space to output relocations in one go */
-	unsigned max_relocs = 0
+	const unsigned max_relocs = 0
 	      + 16 /* vertex buffers, incl. dma flag */
 	      + 2 /* index buffer plus format+dma flag */
 	      + 2 * 5 /* 4 cbufs + zsbuf, plus dma objects */
@@ -257,22 +258,19 @@ nvfx_state_emit(struct nvfx_context *nvfx)
 	      + 2 * 4 /* vertex textures plus format+dma flag */
 	      + 1 /* fragprog incl dma flag */
 	      ;
-	MARK_RING(chan, max_relocs * 2, max_relocs * 2);
-	nvfx_state_relocate(nvfx);
-}
 
-void
-nvfx_state_relocate(struct nvfx_context *nvfx)
-{
-	nvfx_framebuffer_relocate(nvfx);
-	nvfx_fragtex_relocate(nvfx);
-	nvfx_fragprog_relocate(nvfx);
-	if (nvfx->render_mode == HW)
-	{
+	MARK_RING(chan, max_relocs * 2, max_relocs * 2);
+
+	if(relocs & NVFX_RELOCATE_FRAMEBUFFER)
+		nvfx_framebuffer_relocate(nvfx);
+	if(relocs & NVFX_RELOCATE_FRAGTEX)
+		nvfx_fragtex_relocate(nvfx);
+	if(relocs & NVFX_RELOCATE_FRAGPROG)
+		nvfx_fragprog_relocate(nvfx);
+	if(relocs & NVFX_RELOCATE_VTXBUF)
 		nvfx_vbo_relocate(nvfx);
-		if(nvfx->use_index_buffer)
-			nvfx_idxbuf_relocate(nvfx);
-	}
+	if(relocs & NVFX_RELOCATE_IDXBUF)
+		nvfx_idxbuf_relocate(nvfx);
 }
 
 boolean

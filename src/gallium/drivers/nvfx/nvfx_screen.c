@@ -377,6 +377,14 @@ nvfx_screen_get_vertex_buffer_flags(struct nvfx_screen* screen)
 	return vram_hack ? NOUVEAU_BO_VRAM : NOUVEAU_BO_GART;
 }
 
+static void nvfx_channel_flush_notify(struct nouveau_channel* chan)
+{
+	struct nvfx_screen* screen = chan->user_private;
+	struct nvfx_context* nvfx = screen->cur_ctx;
+	if(nvfx)
+		nvfx->relocs_needed = NVFX_RELOCATE_ALL;
+}
+
 struct pipe_screen *
 nvfx_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 {
@@ -398,6 +406,9 @@ nvfx_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 		return NULL;
 	}
 	chan = screen->base.channel;
+	screen->cur_ctx = NULL;
+	chan->user_private = screen;
+	chan->flush_notify = nvfx_channel_flush_notify;
 
 	pscreen->winsys = ws;
 	pscreen->destroy = nvfx_screen_destroy;

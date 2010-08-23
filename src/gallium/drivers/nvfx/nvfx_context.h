@@ -47,6 +47,13 @@
 #define NVFX_NEW_INDEX	(1 << 16)
 #define NVFX_NEW_SPRITE  (1 << 17)
 
+#define NVFX_RELOCATE_FRAMEBUFFER (1 << 0)
+#define NVFX_RELOCATE_FRAGTEX (1 << 1)
+#define NVFX_RELOCATE_FRAGPROG (1 << 2)
+#define NVFX_RELOCATE_VTXBUF (1 << 3)
+#define NVFX_RELOCATE_IDXBUF (1 << 4)
+#define NVFX_RELOCATE_ALL 0x1f
+
 struct nvfx_rasterizer_state {
 	struct pipe_rasterizer_state pipe;
 	unsigned sb_len;
@@ -199,6 +206,8 @@ struct nvfx_context {
 	int hw_pointsprite_control;
 	int hw_vp_output;
 	struct nvfx_fragment_program* hw_fragprog;
+
+	unsigned relocs_needed;
 };
 
 static INLINE struct nvfx_context *
@@ -290,10 +299,25 @@ extern void nvfx_state_sr_validate(struct nvfx_context *nvfx);
 extern void nvfx_state_zsa_validate(struct nvfx_context *nvfx);
 
 /* nvfx_state_emit.c */
-extern void nvfx_state_relocate(struct nvfx_context *nvfx);
+extern void nvfx_state_relocate(struct nvfx_context *nvfx, unsigned relocs);
 extern boolean nvfx_state_validate(struct nvfx_context *nvfx);
 extern boolean nvfx_state_validate_swtnl(struct nvfx_context *nvfx);
-extern void nvfx_state_emit(struct nvfx_context *nvfx);
+
+static inline void
+nvfx_state_emit(struct nvfx_context *nvfx)
+{
+        unsigned relocs = NVFX_RELOCATE_FRAMEBUFFER | NVFX_RELOCATE_FRAGTEX | NVFX_RELOCATE_FRAGPROG;
+        if (nvfx->render_mode == HW)
+        {
+                relocs |= NVFX_RELOCATE_VTXBUF;
+                if(nvfx->use_index_buffer)
+                        relocs |= NVFX_RELOCATE_IDXBUF;
+        }
+
+        relocs &= nvfx->relocs_needed;
+        if(relocs)
+                nvfx_state_relocate(nvfx, relocs);
+}
 
 /* nvfx_transfer.c */
 extern void nvfx_init_transfer_functions(struct pipe_context *pipe);

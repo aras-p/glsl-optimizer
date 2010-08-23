@@ -334,6 +334,7 @@ nvfx_vbo_validate(struct nvfx_context *nvfx)
 	OUT_RING(chan, 0);
 
 	nvfx->hw_vtxelt_nr = nvfx->vtxelt->num_elements;
+	nvfx->relocs_needed &=~ NVFX_RELOCATE_VTXBUF;
 	return TRUE;
 }
 
@@ -362,6 +363,7 @@ nvfx_vbo_relocate(struct nvfx_context *nvfx)
 				vb_flags | NOUVEAU_BO_LOW | NOUVEAU_BO_OR,
 				0, NV34TCL_VTXBUF_ADDRESS_DMA1);
 	}
+        nvfx->relocs_needed &=~ NVFX_RELOCATE_VTXBUF;
 }
 
 static void
@@ -382,6 +384,7 @@ nvfx_idxbuf_emit(struct nvfx_context* nvfx, unsigned ib_flags)
 	OUT_RELOC(chan, bo, nvfx->idxbuf.offset + 1, ib_flags | NOUVEAU_BO_LOW, 0, 0);
 	OUT_RELOC(chan, bo, ib_format, ib_flags | NOUVEAU_BO_OR,
 			0, NV34TCL_IDXBUF_FORMAT_DMA1);
+	nvfx->relocs_needed &=~ NVFX_RELOCATE_IDXBUF;
 }
 
 void

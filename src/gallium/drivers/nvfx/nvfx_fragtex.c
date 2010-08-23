@@ -205,6 +205,7 @@ nvfx_fragtex_validate(struct nvfx_context *nvfx)
 		}
 	}
 	nvfx->dirty_samplers = 0;
+	nvfx->relocs_needed &=~ NVFX_RELOCATE_FRAGTEX;
 }
 
 void
@@ -231,6 +232,7 @@ nvfx_fragtex_relocate(struct nvfx_context *nvfx)
 		OUT_RELOC(chan, bo, nvfx->hw_txf[unit], tex_flags | NOUVEAU_BO_OR | NOUVEAU_BO_DUMMY,
 				NV34TCL_TX_FORMAT_DMA0, NV34TCL_TX_FORMAT_DMA1);
 	}
+	nvfx->relocs_needed &=~ NVFX_RELOCATE_FRAGTEX;
 }
 
 void

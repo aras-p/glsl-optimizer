@@ -278,6 +278,7 @@ nvfx_framebuffer_validate(struct nvfx_context *nvfx, unsigned prepare_result)
 		OUT_RING(chan, RING_3D(NV34TCL_VIEWPORT_TX_ORIGIN, 1));
 		OUT_RING(chan, 0);
 	}
+	nvfx->relocs_needed &=~ NVFX_RELOCATE_FRAMEBUFFER;
 }
 
 void
@@ -307,4 +308,5 @@ nvfx_framebuffer_relocate(struct nvfx_context *nvfx)
 	DO(NV40, 3);
 
 	DO_(nvfx->hw_zeta, NV34, ZETA);
+	nvfx->relocs_needed &=~ NVFX_RELOCATE_FRAMEBUFFER;
 }

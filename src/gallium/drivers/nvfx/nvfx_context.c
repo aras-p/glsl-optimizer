@@ -46,6 +46,9 @@ nvfx_destroy(struct pipe_context *pipe)
 	if (nvfx->draw)
 		draw_destroy(nvfx->draw);
 
+	if(nvfx->screen->cur_ctx == nvfx)
+		nvfx->screen->cur_ctx = NULL;
+
 	FREE(nvfx);
 }
 
@@ -71,8 +74,6 @@ nvfx_create(struct pipe_screen *pscreen, void *priv)
 	nvfx->pipe.draw_vbo = nvfx_draw_vbo;
 	nvfx->pipe.clear = nvfx_clear;
 	nvfx->pipe.flush = nvfx_flush;
-
-	screen->base.channel->user_private = nvfx;
 
 	nvfx->is_nv4x = screen->is_nv4x;
 	/* TODO: it seems that nv30 might have fixed function clipping usable with vertex programs
@@ -103,6 +104,7 @@ nvfx_create(struct pipe_screen *pscreen, void *priv)
 	nvfx->hw_pointsprite_control = -1;
 	nvfx->hw_vp_output = -1;
 	nvfx->use_vertex_buffers = -1;
+	nvfx->relocs_needed = NVFX_RELOCATE_ALL;
 
 	LIST_INITHEAD(&nvfx->render_cache);
 

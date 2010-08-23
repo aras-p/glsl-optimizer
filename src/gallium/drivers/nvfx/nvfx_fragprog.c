@@ -1471,6 +1471,8 @@ update:
 			nvfx->hw_pointsprite_control = pointsprite_control;
 		}
 	}
+
+	nvfx->relocs_needed &=~ NVFX_RELOCATE_FRAGPROG;
 }
 
 void
@@ -1487,6 +1489,7 @@ nvfx_fragprog_relocate(struct nvfx_context *nvfx)
 	OUT_RELOC(chan, bo, offset, fp_flags | NOUVEAU_BO_LOW |
 		      NOUVEAU_BO_OR, NV34TCL_FP_ACTIVE_PROGRAM_DMA0,
 		      NV34TCL_FP_ACTIVE_PROGRAM_DMA1);
+	nvfx->relocs_needed &=~ NVFX_RELOCATE_FRAGPROG;
 }
 
 void
