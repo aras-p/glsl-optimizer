@@ -31,47 +31,63 @@
 
 extern int yydebug;
 
+/* Read from fd until EOF and return a string of everything read.
+ */
 static char *
-load_text_file(void *ctx, const char *file_name)
+load_text_fd (void *ctx, int fd)
 {
+#define CHUNK 4096
 	char *text = NULL;
-	struct stat st;
+	ssize_t text_size = 0;
 	ssize_t total_read = 0;
+	ssize_t bytes;
+
+	while (1) {
+		if (total_read + CHUNK + 1 > text_size) {
+			text_size = text_size ? text_size * 2 : CHUNK + 1;
+			text = talloc_realloc_size (ctx, text, text_size);
+			if (text == NULL) {
+				fprintf (stderr, "Out of memory\n");
+				return NULL;
+			}
+		}
+		bytes = read (fd, text + total_read, CHUNK);
+		if (bytes < 0) {
+			fprintf (stderr, "Error while reading: %s\n",
+				 strerror (errno));
+			talloc_free (text);
+			return NULL;
+		}
+
+		if (bytes == 0) {
+			break;
+		}
+
+		total_read += bytes;
+	}
+
+	text[total_read] = '\0';
+
+	return text;
+}
+
+static char *
+load_text_file(void *ctx, const char *filename)
+{
+	char *text;
 	int fd;
 
-	if (file_name == NULL || strcmp(file_name, "-") == 0) {
-	   fd = STDIN_FILENO;
-	} else {
-	   fd = open (file_name, O_RDONLY);
+	if (filename == NULL || strcmp (filename, "-") == 0)
+		return load_text_fd (ctx, STDIN_FILENO);
 
-	   if (fd < 0) {
-	      fprintf (stderr, "Failed to open file %s: %s\n",
-		       file_name, strerror (errno));
-	      return NULL;
-	   }
+	fd = open (filename, O_RDONLY);
+	if (fd < 0) {
+		fprintf (stderr, "Failed to open file %s: %s\n",
+			 filename, strerror (errno));
+		return NULL;
 	}
 
-	if (fstat(fd, & st) == 0) {
-		text = (char *) talloc_size(ctx, st.st_size + 1);
-		if (text != NULL) {
-			do {
-				ssize_t bytes = read(fd, text + total_read,
-						     st.st_size - total_read);
-				if (bytes < 0) {
-					text = NULL;
-					break;
-				}
-
-				if (bytes == 0) {
-					break;
-				}
-
-				total_read += bytes;
-			} while (total_read < st.st_size);
-
-			text[total_read] = '\0';
-		}
-	}
+	text = load_text_fd (ctx, fd);
 
 	close(fd);
 
@@ -91,7 +107,7 @@ main (int argc, char *argv[])
 		filename = argv[1];
 	}
 
-	shader = load_text_file(ctx, filename);
+	shader = load_text_file (ctx, filename);
 	if (shader == NULL)
 	   return 1;
 
