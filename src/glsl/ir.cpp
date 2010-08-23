@@ -21,8 +21,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 #include <string.h>
-#include "main/imports.h"
-#include "main/macros.h"
+#include "main/core.h" /* for MAX2 */
 #include "ir.h"
 #include "ir_visitor.h"
 #include "glsl_types.h"

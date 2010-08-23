@@ -49,8 +49,7 @@
  * parser (and lexer) sources.
  */
 
-#include "main/imports.h"
-#include "main/extensions.h"
+#include "main/core.h" /* for struct gl_extensions */
 #include "glsl_symbol_table.h"
 #include "glsl_parser_extras.h"
 #include "ast.h"

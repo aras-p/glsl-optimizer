@@ -35,7 +35,7 @@
  */
 
 extern "C" {
-#include "main/mtypes.h"
+#include "main/core.h" /* for struct gl_program */
 #include "program/hash_table.h"
 }
 #include "ir.h"

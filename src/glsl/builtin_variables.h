@@ -21,7 +21,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include "main/mtypes.h"
+#include "main/core.h" /* for slot numbers */
 
 struct builtin_variable {
    enum ir_variable_mode mode;

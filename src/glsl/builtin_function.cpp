@@ -23,7 +23,7 @@
  */
 
 #include <stdio.h>
-#include "main/compiler.h"
+#include "main/core.h" /* for struct gl_shader */
 #include "glsl_parser_extras.h"
 #include "ir_reader.h"
 #include "program.h"

@@ -23,13 +23,12 @@
 
 #include <cstdio>
 #include <stdlib.h>
-#include "main/compiler.h"
+#include "main/core.h" /* for Elements */
 #include "glsl_symbol_table.h"
 #include "glsl_parser_extras.h"
 #include "glsl_types.h"
 #include "builtin_types.h"
 extern "C" {
-#include "main/imports.h"
 #include "program/hash_table.h"
 }
 

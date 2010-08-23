@@ -100,7 +100,7 @@
 #include <inttypes.h>
 
 #include "glcpp.h"
-#include "main/mtypes.h"
+#include "main/core.h" /* for struct gl_extensions */
 
 #define glcpp_print(stream, str) stream = talloc_strdup_append(stream, str)
 #define glcpp_printf(stream, fmt, args, ...) \
