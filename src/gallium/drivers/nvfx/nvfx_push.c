@@ -368,11 +368,15 @@ nvfx_push_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
 			if(max_verts >= 16)
 			{
 				/* XXX: any command a lot of times seems to (mostly) fix corruption that would otherwise happen */
-				int i;
-				for(i = 0; i < 32; ++i)
+				/* this seems to cause issues on nv3x, and also be unneeded there */
+				if(nvfx->is_nv4x)
 				{
-					OUT_RING(chan, RING_3D(0x1dac, 1));
-					OUT_RING(chan, 0);
+					int i;
+					for(i = 0; i < 32; ++i)
+					{
+						OUT_RING(chan, RING_3D(0x1dac, 1));
+						OUT_RING(chan, 0);
+					}
 				}
 
 				OUT_RING(chan, RING_3D(NV34TCL_VERTEX_BEGIN_END, 1));
