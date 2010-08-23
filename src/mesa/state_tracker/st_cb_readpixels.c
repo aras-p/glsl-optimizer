@@ -68,6 +68,10 @@ st_read_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
    ubyte *stmap;
    GLint j;
 
+   if (strb->Base.Wrapped) {
+      strb = st_renderbuffer(strb->Base.Wrapped);
+   }
+
    if (st_fb_orientation(ctx->DrawBuffer) == Y_0_TOP) {
       y = ctx->DrawBuffer->Height - y - height;
    }
@@ -359,6 +363,9 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
    }
    else if (format == GL_DEPTH_COMPONENT) {
       strb = st_renderbuffer(ctx->ReadBuffer->_DepthBuffer);
+      if (strb->Base.Wrapped) {
+         strb = st_renderbuffer(strb->Base.Wrapped);
+      }
    }
    else {
       /* Read color buffer */
