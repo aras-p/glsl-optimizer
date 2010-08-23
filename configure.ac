@@ -464,6 +464,8 @@ xxlib|xdri|xosmesa)
 esac
 
 PKG_CHECK_MODULES([TALLOC], [talloc])
+AC_SUBST([TALLOC_LIBS])
+AC_SUBST([TALLOC_CFLAGS])
 
 dnl
 dnl Driver specific build directories

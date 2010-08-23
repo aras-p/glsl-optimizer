@@ -75,7 +75,7 @@ CXX_SOURCES = \
 
 LIBS = \
 	$(TOP)/src/glsl/libglsl.a \
-	$(shell pkg-config --libs talloc)
+	$(TALLOC_LIBS)
 
 APPS = glsl_compiler glcpp/glcpp
 
@@ -104,6 +104,7 @@ OBJECTS = \
 	$(CXX_SOURCES:.cpp=.o)
 
 INCLUDES = \
+	$(TALLOC_CFLAGS) \
 	-I. \
 	-I../mesa \
 	-I../mapi \
