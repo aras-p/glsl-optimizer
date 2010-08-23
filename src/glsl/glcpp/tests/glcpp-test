@@ -27,13 +27,14 @@ echo ""
 echo "====== Testing for valgrind cleanliness ======"
 for test in *.c; do
     echo -n "Testing $test with valgrind..."
-    if valgrind --error-exitcode=1 --log-file=$test.valgrind-errors ../glcpp < $test >/dev/null; then
+    valgrind --error-exitcode=31 --log-file=$test.valgrind-errors ../glcpp < $test >/dev/null 2>&1
+    if [ "$?" = "31" ]; then
+	echo "ERRORS"
+	cat $test.valgrind-errors
+    else
 	echo "CLEAN"
 	clean=$((clean+1))
 	rm $test.valgrind-errors
-    else
-	echo "ERRORS"
-	cat $test.valgrind-errors
     fi
 done
 
