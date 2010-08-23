@@ -64,6 +64,21 @@ _mesa_ast_to_hir(exec_list *instructions, struct _mesa_glsl_parse_state *state)
 
    state->current_function = NULL;
 
+   /* Section 4.2 of the GLSL 1.20 specification states:
+    * "The built-in functions are scoped in a scope outside the global scope
+    *  users declare global variables in.  That is, a shader's global scope,
+    *  available for user-defined functions and global variables, is nested
+    *  inside the scope containing the built-in functions."
+    *
+    * Since built-in functions like ftransform() access built-in variables,
+    * it follows that those must be in the outer scope as well.
+    *
+    * We push scope here to create this nesting effect...but don't pop.
+    * This way, a shader's globals are still in the symbol table for use
+    * by the linker.
+    */
+   state->symbols->push_scope();
+
    foreach_list_typed (ast_node, ast, link, & state->translation_unit)
       ast->hir(instructions, state);
 }
@@ -1890,11 +1905,12 @@ ast_declarator_list::hir(exec_list *instructions,
       /* Check if this declaration is actually a re-declaration, either to
        * resize an array or add qualifiers to an existing variable.
        *
-       * This is allowed for variables in the current scope.
+       * This is allowed for variables in the current scope, or when at
+       * global scope (for built-ins in the implicit outer scope).
        */
       ir_variable *earlier = state->symbols->get_variable(decl->identifier);
-      if (earlier != NULL
-          && state->symbols->name_declared_this_scope(decl->identifier)) {
+      if (earlier != NULL && (state->current_function == NULL ||
+	  state->symbols->name_declared_this_scope(decl->identifier))) {
 
 	 /* From page 24 (page 30 of the PDF) of the GLSL 1.50 spec,
 	  *
@@ -2178,7 +2194,7 @@ ast_function::hir(exec_list *instructions,
     * that the previously seen signature does not have an associated definition.
     */
    f = state->symbols->get_function(name, false);
-   if (f != NULL) {
+   if (f != NULL && !f->is_builtin) {
       sig = f->exact_matching_signature(&hir_parameters);
       if (sig != NULL) {
 	 const char *badvar = sig->qualifiers_match(&hir_parameters);
