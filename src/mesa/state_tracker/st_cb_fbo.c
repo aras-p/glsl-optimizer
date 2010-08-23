@@ -448,6 +448,30 @@ st_validate_attachment(struct pipe_screen *screen,
 
 
 /**
+ * Check if two renderbuffer attachments name a combined depth/stencil
+ * renderbuffer.
+ */
+GLboolean
+st_is_depth_stencil_combined(const struct gl_renderbuffer_attachment *depth,
+                             const struct gl_renderbuffer_attachment *stencil)
+{
+   assert(depth && stencil);
+
+   if (depth->Type == stencil->Type) {
+      if (depth->Type == GL_RENDERBUFFER_EXT &&
+          depth->Renderbuffer == stencil->Renderbuffer)
+         return GL_TRUE;
+
+      if (depth->Type == GL_TEXTURE &&
+          depth->Texture == stencil->Texture)
+         return GL_TRUE;
+   }
+
+   return GL_FALSE;
+}
+ 
+
+/**
  * Check that the framebuffer configuration is valid in terms of what
  * the driver can support.
  *

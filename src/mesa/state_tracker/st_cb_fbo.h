@@ -88,4 +88,9 @@ st_get_renderbuffer_sampler_view(struct st_renderbuffer *rb,
                                  struct pipe_context *pipe);
 
 
+extern GLboolean
+st_is_depth_stencil_combined(const struct gl_renderbuffer_attachment *depth,
+                             const struct gl_renderbuffer_attachment *stencil);
+
+
 #endif /* ST_CB_FBO_H */
