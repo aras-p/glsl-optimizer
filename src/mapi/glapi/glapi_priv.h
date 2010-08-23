@@ -26,9 +26,30 @@
 #ifndef _GLAPI_PRIV_H
 #define _GLAPI_PRIV_H
 
-#include "glthread.h"
-#include "glapi.h"
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
 
+#ifdef HAVE_DIX_CONFIG_H
+#include <dix-config.h>
+#include "glapi/mesa.h"
+#else /* HAVE_DIX_CONFIG_H */
+#define GL_GLEXT_PROTOTYPES
+#include "GL/gl.h"
+#include "GL/glext.h"
+
+#ifndef GL_FIXED
+typedef int GLfixed;
+typedef int GLclampx;
+#endif
+
+#ifndef GL_OES_EGL_image
+typedef void *GLeglImageOES;
+#endif
+
+#endif /* HAVE_DIX_CONFIG_H */
+
+#include "glapi/glapi.h"
 
 
 /* getproc */
