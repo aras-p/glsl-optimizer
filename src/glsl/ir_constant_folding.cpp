@@ -49,6 +49,7 @@ public:
    }
 
    virtual ir_visitor_status visit_enter(ir_assignment *ir);
+   virtual ir_visitor_status visit_enter(ir_call *ir);
 
    virtual void handle_rvalue(ir_rvalue **rvalue);
 
@@ -97,6 +98,27 @@ ir_constant_folding_visitor::visit_enter(ir_assignment *ir)
     * variable dereference.  FINISHME: We probably should to get array
     * indices though.
     */
+   return visit_continue_with_parent;
+}
+
+ir_visitor_status
+ir_constant_folding_visitor::visit_enter(ir_call *ir)
+{
+   exec_list_iterator sig_iter = ir->get_callee()->parameters.iterator();
+   foreach_iter(exec_list_iterator, iter, *ir) {
+      ir_rvalue *param_rval = (ir_rvalue *)iter.get();
+      ir_variable *sig_param = (ir_variable *)sig_iter.get();
+
+      if (sig_param->mode == ir_var_in) {
+	 ir_rvalue *new_param = param_rval;
+
+	 handle_rvalue(&new_param);
+	 if (new_param != param_rval) {
+	    param_rval->replace_with(new_param);
+	 }
+      }
+   }
+
    return visit_continue_with_parent;
 }
 
