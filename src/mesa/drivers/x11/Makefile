@@ -57,9 +57,10 @@ default: $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME)
 
 
 $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME): $(OBJECTS) $(CORE_MESA)
-	@ $(MKLIB) -o $(GL_LIB) -linker '$(CC)' -ldflags '$(LDFLAGS)' \
+	@ $(MKLIB) -o $(GL_LIB) -linker '$(CXX)' -ldflags '$(LDFLAGS)' \
 		-major $(GL_MAJOR) -minor $(GL_MINOR) -patch $(GL_TINY) \
-		-install $(TOP)/$(LIB_DIR) $(MKLIB_OPTIONS) \
+		-install $(TOP)/$(LIB_DIR) \
+		-cplusplus $(MKLIB_OPTIONS) \
 		-id $(INSTALL_LIB_DIR)/lib$(GL_LIB).$(GL_MAJOR).dylib \
 		$(GL_LIB_DEPS) $(OBJECTS) $(CORE_MESA)
 

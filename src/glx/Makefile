@@ -71,8 +71,9 @@ default: depend $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME)
 
 # Make libGL
 $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME): $(OBJECTS) $(GLAPI_LIB) Makefile
-	$(MKLIB) -o $(GL_LIB) -linker '$(CC)' -ldflags '$(LDFLAGS)' \
-		-major 1 -minor 2 $(MKLIB_OPTIONS) \
+	$(MKLIB) -o $(GL_LIB) -linker '$(CXX)' -ldflags '$(LDFLAGS)' \
+		-major 1 -minor 2 \
+		-cplusplus $(MKLIB_OPTIONS) \
 		-install $(TOP)/$(LIB_DIR) -id $(INSTALL_LIB_DIR)/lib$(GL_LIB).1.dylib \
 		$(GL_LIB_DEPS) $(OBJECTS) $(GLAPI_LIB)
 

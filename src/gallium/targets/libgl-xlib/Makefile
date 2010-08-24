@@ -68,8 +68,9 @@ $(TOP)/$(LIB_DIR)/gallium:
 # Make the libGL.so library
 $(TOP)/$(LIB_DIR)/gallium/$(GL_LIB_NAME): $(XLIB_TARGET_OBJECTS) $(LIBS) Makefile
 	$(TOP)/bin/mklib -o $(GL_LIB) \
-		-linker "$(CC)" \
+		-linker "$(CXX)" \
 		-major $(GL_MAJOR) -minor $(GL_MINOR) -patch $(GL_TINY) \
+		-cplusplus \
 		-install $(TOP)/$(LIB_DIR)/gallium \
 		$(MKLIB_OPTIONS) $(XLIB_TARGET_OBJECTS) \
 		-Wl,--start-group $(LIBS) -Wl,--end-group $(GL_LIB_DEPS)
