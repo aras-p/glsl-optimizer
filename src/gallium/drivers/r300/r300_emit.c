@@ -180,9 +180,18 @@ void r300_emit_fs_constants(struct r300_context* r300, unsigned size, void *stat
 
     BEGIN_CS(size);
     OUT_CS_REG_SEQ(R300_PFS_PARAM_0_X, count * 4);
-    for (i = 0; i < count; i++)
-        for (j = 0; j < 4; j++)
-            OUT_CS(pack_float24(*(float*)&buf->ptr[i*4+j]));
+    if (buf->remap_table){
+        for (i = 0; i < count; i++) {
+            uint32_t *data = &buf->ptr[buf->remap_table[i]*4];
+            for (j = 0; j < 4; j++)
+                OUT_CS(pack_float24(data[j]));
+        }
+    } else {
+        for (i = 0; i < count; i++)
+            for (j = 0; j < 4; j++)
+                OUT_CS(pack_float24(*(float*)&buf->ptr[i*4+j]));
+    }
+
     END_CS;
 }
 
@@ -226,7 +235,7 @@ void r500_emit_fs_constants(struct r300_context* r300, unsigned size, void *stat
 {
     struct r300_fragment_shader *fs = r300_fs(r300);
     struct r300_constant_buffer *buf = (struct r300_constant_buffer*)state;
-    unsigned count = fs->shader->externals_count * 4;
+    unsigned count = fs->shader->externals_count;
     CS_LOCALS(r300);
 
     if (count == 0)
@@ -234,8 +243,15 @@ void r500_emit_fs_constants(struct r300_context* r300, unsigned size, void *stat
 
     BEGIN_CS(size);
     OUT_CS_REG(R500_GA_US_VECTOR_INDEX, R500_GA_US_VECTOR_INDEX_TYPE_CONST);
-    OUT_CS_ONE_REG(R500_GA_US_VECTOR_DATA, count);
-    OUT_CS_TABLE(buf->ptr, count);
+    OUT_CS_ONE_REG(R500_GA_US_VECTOR_DATA, count * 4);
+    if (buf->remap_table){
+        for (unsigned i = 0; i < count; i++) {
+            uint32_t *data = &buf->ptr[buf->remap_table[i]*4];
+            OUT_CS_TABLE(data, 4);
+        }
+    } else {
+        OUT_CS_TABLE(buf->ptr, count * 4);
+    }
     END_CS;
 }
 

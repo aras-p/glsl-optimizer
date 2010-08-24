@@ -865,6 +865,9 @@ void r300_mark_fs_code_dirty(struct r300_context *r300)
         r300->fs_rc_constant_state.size = fs->shader->rc_state_count * 5;
         r300->fs_constants.size = fs->shader->externals_count * 4 + 1;
     }
+
+    ((struct r300_constant_buffer*)r300->fs_constants.state)->remap_table =
+            fs->shader->code.constants_remap_table;
 }
 
 /* Bind fragment shader state. */

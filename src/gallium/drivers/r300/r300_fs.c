@@ -386,6 +386,7 @@ static void r300_translate_fragment_shader(
     compiler.state = shader->compare_state;
     compiler.Base.is_r500 = r300->screen->caps.is_r500;
     compiler.Base.max_temp_regs = compiler.Base.is_r500 ? 128 : 32;
+    compiler.Base.remove_unused_constants = TRUE;
     compiler.AllocateHwInputs = &allocate_hardware_inputs;
     compiler.UserData = &shader->inputs;
 
@@ -446,7 +447,12 @@ static void r300_translate_fragment_shader(
     }
 
     /* Initialize numbers of constants for each type. */
-    shader->externals_count = ttr.immediate_offset;
+    shader->externals_count = 0;
+    for (i = 0;
+         i < shader->code.constants.Count &&
+         shader->code.constants.Constants[i].Type == RC_CONSTANT_EXTERNAL; i++) {
+        shader->externals_count = i+1;
+    }
     shader->immediates_count = 0;
     shader->rc_state_count = 0;
 
