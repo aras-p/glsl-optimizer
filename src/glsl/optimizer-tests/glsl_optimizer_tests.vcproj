@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9.00"
-	Name="glsloptimizer"
+	Name="glsl_optimizer_tests"
 	ProjectGUID="{BB382242-6EBB-445F-989C-B9BA61D17965}"
-	RootNamespace="glsloptimizer"
+	RootNamespace="glsl_optimizer_tests"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="196613"
 	>
@@ -174,7 +174,7 @@
 	</References>
 	<Files>
 		<File
-			RelativePath="..\glsl_optimizer_main.cpp"
+			RelativePath=".\glsl_optimizer_tests.cpp"
 			>
 		</File>
 	</Files>
