@@ -34,6 +34,18 @@
 #include "ir_variable_refcount.h"
 #include "glsl_types.h"
 
+
+// constructor
+variable_entry::variable_entry(ir_variable *var)
+{
+   this->var = var;
+   assign = NULL;
+   assigned_count = 0;
+   declaration = false;
+   referenced_count = 0;
+}
+
+
 variable_entry *
 ir_variable_refcount_visitor::get_variable_entry(ir_variable *var)
 {

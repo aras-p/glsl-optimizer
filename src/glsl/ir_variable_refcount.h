@@ -36,14 +36,7 @@
 class variable_entry : public exec_node
 {
 public:
-   variable_entry(ir_variable *var)
-   {
-      this->var = var;
-      assign = NULL;
-      referenced_count = 0;
-      assigned_count = 0;
-      declaration = false;
-   }
+   variable_entry(ir_variable *var);
 
    ir_variable *var; /* The key: the variable's pointer. */
    ir_assignment *assign; /* An assignment to the variable, if any */
