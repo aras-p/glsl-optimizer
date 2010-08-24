@@ -985,8 +985,6 @@ struct draw_stage* r300_draw_stage(struct r300_context* r300)
 
 void r300_draw_flush_vbuf(struct r300_context *r300)
 {
-    struct r300_render *r300render;
-
     pipe_resource_reference(&r300->vbo, NULL);
     r300->draw_vbo_size = 0;
 }
