@@ -877,6 +877,83 @@ update_uniform_array_sizes(struct gl_shader_program *prog)
    }
 }
 
+static void
+add_uniform(void *mem_ctx, exec_list *uniforms, struct hash_table *ht,
+	    const char *name, const glsl_type *type, GLenum shader_type,
+	    unsigned *next_shader_pos, unsigned *total_uniforms)
+{
+   if (type->is_record()) {
+      for (unsigned int i = 0; i < type->length; i++) {
+	 const glsl_type *field_type = type->fields.structure[i].type;
+	 char *field_name = talloc_asprintf(mem_ctx, "%s.%s", name,
+					    type->fields.structure[i].name);
+
+	 add_uniform(mem_ctx, uniforms, ht, field_name, field_type,
+		     shader_type, next_shader_pos, total_uniforms);
+      }
+   } else {
+      uniform_node *n = (uniform_node *) hash_table_find(ht, name);
+      unsigned int vec4_slots;
+      const glsl_type *array_elem_type = NULL;
+
+      if (type->is_array()) {
+	 array_elem_type = type->fields.array;
+	 /* Array of structures. */
+	 if (array_elem_type->is_record()) {
+	    for (unsigned int i = 0; i < type->length; i++) {
+	       char *elem_name = talloc_asprintf(mem_ctx, "%s[%d]", name, i);
+	       add_uniform(mem_ctx, uniforms, ht, elem_name, array_elem_type,
+			   shader_type, next_shader_pos, total_uniforms);
+	    }
+	    return;
+	 }
+      }
+
+      /* Fix the storage size of samplers at 1 vec4 each. Be sure to pad out
+       * vectors to vec4 slots.
+       */
+      if (type->is_array()) {
+	 if (array_elem_type->is_sampler())
+	    vec4_slots = type->length;
+	 else
+	    vec4_slots = type->length * array_elem_type->matrix_columns;
+      } else if (type->is_sampler()) {
+	 vec4_slots = 1;
+      } else {
+	 vec4_slots = type->matrix_columns;
+      }
+
+      if (n == NULL) {
+	 n = (uniform_node *) calloc(1, sizeof(struct uniform_node));
+	 n->u = (gl_uniform *) calloc(1, sizeof(struct gl_uniform));
+	 n->slots = vec4_slots;
+
+	 n->u->Name = strdup(name);
+	 n->u->VertPos = -1;
+	 n->u->FragPos = -1;
+	 n->u->GeomPos = -1;
+	 (*total_uniforms)++;
+
+	 hash_table_insert(ht, n, name);
+	 uniforms->push_tail(& n->link);
+      }
+
+      switch (shader_type) {
+      case GL_VERTEX_SHADER:
+	 n->u->VertPos = *next_shader_pos;
+	 break;
+      case GL_FRAGMENT_SHADER:
+	 n->u->FragPos = *next_shader_pos;
+	 break;
+      case GL_GEOMETRY_SHADER:
+	 n->u->GeomPos = *next_shader_pos;
+	 break;
+      }
+
+      (*next_shader_pos) += vec4_slots;
+   }
+}
+
 void
 assign_uniform_locations(struct gl_shader_program *prog)
 {
@@ -885,6 +962,7 @@ assign_uniform_locations(struct gl_shader_program *prog)
    unsigned total_uniforms = 0;
    hash_table *ht = hash_table_ctor(32, hash_table_string_hash,
 				    hash_table_string_compare);
+   void *mem_ctx = talloc_new(NULL);
 
    update_uniform_array_sizes(prog);
 
@@ -897,53 +975,22 @@ assign_uniform_locations(struct gl_shader_program *prog)
 	 if ((var == NULL) || (var->mode != ir_var_uniform))
 	    continue;
 
-	 const unsigned vec4_slots = (var->component_slots() + 3) / 4;
-	 if (vec4_slots == 0) {
-	    /* If we've got a sampler or an aggregate of them, the size can
-	     * end up zero.  Don't allocate any space.
+	 if (strncmp(var->name, "gl_", 3) == 0) {
+	    /* At the moment, we don't allocate uniform locations for
+	     * builtin uniforms.  It's permitted by spec, and we'll
+	     * likely switch to doing that at some point, but not yet.
 	     */
 	    continue;
 	 }
 
-	 uniform_node *n = (uniform_node *) hash_table_find(ht, var->name);
-	 if (n == NULL) {
-	    n = (uniform_node *) calloc(1, sizeof(struct uniform_node));
-	    n->u = (gl_uniform *) calloc(vec4_slots, sizeof(struct gl_uniform));
-	    n->slots = vec4_slots;
-
-	    n->u[0].Name = strdup(var->name);
-	    for (unsigned j = 1; j < vec4_slots; j++)
-	       n->u[j].Name = strdup(var->name);
-
-	    hash_table_insert(ht, n, n->u[0].Name);
-	    uniforms.push_tail(& n->link);
-	    total_uniforms += vec4_slots;
-	 }
-
-	 if (var->constant_value != NULL)
-	    for (unsigned j = 0; j < vec4_slots; j++)
-	       n->u[j].Initialized = true;
-
 	 var->location = next_position;
-
-	 for (unsigned j = 0; j < vec4_slots; j++) {
-	    switch (prog->_LinkedShaders[i]->Type) {
-	    case GL_VERTEX_SHADER:
-	       n->u[j].VertPos = next_position;
-	       break;
-	    case GL_FRAGMENT_SHADER:
-	       n->u[j].FragPos = next_position;
-	       break;
-	    case GL_GEOMETRY_SHADER:
-	       /* FINISHME: Support geometry shaders. */
-	       assert(prog->_LinkedShaders[i]->Type != GL_GEOMETRY_SHADER);
-	       break;
-	    }
-
-	    next_position++;
-	 }
+	 add_uniform(mem_ctx, &uniforms, ht, var->name, var->type,
+		     prog->_LinkedShaders[i]->Type,
+		     &next_position, &total_uniforms);
       }
    }
+
+   talloc_free(mem_ctx);
 
    gl_uniform_list *ul = (gl_uniform_list *)
       calloc(1, sizeof(gl_uniform_list));
@@ -960,8 +1007,8 @@ assign_uniform_locations(struct gl_shader_program *prog)
       next = (uniform_node *) node->link.next;
 
       node->link.remove();
-      memcpy(&ul->Uniforms[idx], node->u, sizeof(gl_uniform) * node->slots);
-      idx += node->slots;
+      memcpy(&ul->Uniforms[idx], node->u, sizeof(gl_uniform));
+      idx++;
 
       free(node->u);
       free(node);
