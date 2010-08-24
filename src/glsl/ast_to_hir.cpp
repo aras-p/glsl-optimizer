@@ -1887,22 +1887,22 @@ ast_declarator_list::hir(exec_list *instructions,
 			  "const declaration of `%s' must be initialized");
       }
 
-      /* Attempt to add the variable to the symbol table.  If this fails, it
-       * means the variable has already been declared at this scope.  Arrays
-       * fudge this rule a little bit.
+      /* Check if this declaration is actually a re-declaration, either to
+       * resize an array or add qualifiers to an existing variable.
        *
-       * From page 24 (page 30 of the PDF) of the GLSL 1.50 spec,
-       *
-       *    "It is legal to declare an array without a size and then
-       *    later re-declare the same name as an array of the same
-       *    type and specify a size."
+       * This is allowed for variables in the current scope.
        */
-      if (state->symbols->name_declared_this_scope(decl->identifier)) {
-	 ir_variable *const earlier =
-	    state->symbols->get_variable(decl->identifier);
+      ir_variable *earlier = state->symbols->get_variable(decl->identifier);
+      if (earlier != NULL
+          && state->symbols->name_declared_this_scope(decl->identifier)) {
 
-	 if ((earlier != NULL)
-	     && (earlier->type->array_size() == 0)
+	 /* From page 24 (page 30 of the PDF) of the GLSL 1.50 spec,
+	  *
+	  * "It is legal to declare an array without a size and then
+	  *  later re-declare the same name as an array of the same
+	  *  type and specify a size."
+	  */
+	 if ((earlier->type->array_size() == 0)
 	     && var->type->is_array()
 	     && (var->type->element_type() == earlier->type->element_type())) {
 	    /* FINISHME: This doesn't match the qualifiers on the two
@@ -1934,11 +1934,10 @@ ast_declarator_list::hir(exec_list *instructions,
 	    earlier->type = var->type;
 	    delete var;
 	    var = NULL;
-	 } else if (state->extensions->ARB_fragment_coord_conventions &&
-		    (earlier != NULL) &&
-		    (strcmp(var->name, "gl_FragCoord") == 0) &&
-		    earlier->type == var->type &&
-		    earlier->mode == var->mode) {
+	 } else if (state->extensions->ARB_fragment_coord_conventions
+		    && strcmp(var->name, "gl_FragCoord") == 0
+		    && earlier->type == var->type
+		    && earlier->mode == var->mode) {
 	    /* Allow redeclaration of gl_FragCoord for ARB_fcc layout
 	     * qualifiers.
 	     */
@@ -1946,15 +1945,16 @@ ast_declarator_list::hir(exec_list *instructions,
 	    earlier->pixel_center_integer = var->pixel_center_integer;
 	 } else {
 	    YYLTYPE loc = this->get_location();
-
-	    _mesa_glsl_error(& loc, state, "`%s' redeclared",
-			     decl->identifier);
+	    _mesa_glsl_error(&loc, state, "`%s' redeclared", decl->identifier);
 	 }
 
 	 continue;
       }
 
-      /* From page 15 (page 21 of the PDF) of the GLSL 1.10 spec,
+      /* By now, we know it's a new variable declaration (we didn't hit the
+       * above "continue").
+       *
+       * From page 15 (page 21 of the PDF) of the GLSL 1.10 spec,
        *
        *   "Identifiers starting with "gl_" are reserved for use by
        *   OpenGL, and may not be declared in a shader as either a
@@ -1969,6 +1969,25 @@ ast_declarator_list::hir(exec_list *instructions,
 			  decl->identifier);
       }
 
+      /* Add the variable to the symbol table.  Note that the initializer's
+       * IR was already processed earlier (though it hasn't been emitted yet),
+       * without the variable in scope.
+       *
+       * This differs from most C-like languages, but it follows the GLSL
+       * specification.  From page 28 (page 34 of the PDF) of the GLSL 1.50
+       * spec:
+       *
+       *     "Within a declaration, the scope of a name starts immediately
+       *     after the initializer if present or immediately after the name
+       *     being declared if not."
+       */
+      if (!state->symbols->add_variable(var->name, var)) {
+	 YYLTYPE loc = this->get_location();
+	 _mesa_glsl_error(&loc, state, "name `%s' already taken in the "
+			  "current scope", decl->identifier);
+	 continue;
+      }
+
       /* Push the variable declaration to the top.  It means that all
        * the variable declarations will appear in a funny
        * last-to-first order, but otherwise we run into trouble if a
@@ -1978,20 +1997,6 @@ ast_declarator_list::hir(exec_list *instructions,
        */
       instructions->push_head(var);
       instructions->append_list(&initializer_instructions);
-
-      /* Add the variable to the symbol table after processing the initializer.
-       * This differs from most C-like languages, but it follows the GLSL
-       * specification.  From page 28 (page 34 of the PDF) of the GLSL 1.50
-       * spec:
-       *
-       *     "Within a declaration, the scope of a name starts immediately
-       *     after the initializer if present or immediately after the name
-       *     being declared if not."
-       */
-      const bool added_variable =
-	 state->symbols->add_variable(var->name, var);
-      assert(added_variable);
-      (void) added_variable;
    }
 
 
