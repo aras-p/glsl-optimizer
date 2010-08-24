@@ -158,4 +158,16 @@ void lp_setup_update_state( struct lp_setup_context *setup );
 
 void lp_setup_destroy( struct lp_setup_context *setup );
 
+void
+lp_setup_print_triangle(struct lp_setup_context *setup,
+                        const float (*v0)[4],
+                        const float (*v1)[4],
+                        const float (*v2)[4]);
+
+void
+lp_setup_print_vertex(struct lp_setup_context *setup,
+                      const char *name,
+                      const float (*v)[4]);
+
 #endif
+

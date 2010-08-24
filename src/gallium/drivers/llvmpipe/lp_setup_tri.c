@@ -357,31 +357,67 @@ alloc_triangle(struct lp_scene *scene,
    return tri;
 }
 
+void
+lp_setup_print_vertex(struct lp_setup_context *setup,
+                      const char *name,
+                      const float (*v)[4])
+{
+   int i, j;
+
+   debug_printf("   wpos (%s[0]) xyzw %f %f %f %f\n",
+                name,
+                v[0][0], v[0][1], v[0][2], v[0][3]);
+
+   for (i = 0; i < setup->fs.nr_inputs; i++) {
+      const float *in = v[setup->fs.input[i].src_index];
+
+      debug_printf("  in[%d] (%s[%d]) %s%s%s%s ",
+                   i, 
+                   name, setup->fs.input[i].src_index,
+                   (setup->fs.input[i].usage_mask & 0x1) ? "x" : " ",
+                   (setup->fs.input[i].usage_mask & 0x2) ? "y" : " ",
+                   (setup->fs.input[i].usage_mask & 0x4) ? "z" : " ",
+                   (setup->fs.input[i].usage_mask & 0x8) ? "w" : " ");
+
+      for (j = 0; j < 4; j++)
+         if (setup->fs.input[i].usage_mask & (1<<j))
+            debug_printf("%.5f ", in[j]);
+
+      debug_printf("\n");
+   }
+}
+
 
 /**
  * Print triangle vertex attribs (for debug).
  */
-static void
-print_triangle(struct lp_setup_context *setup,
-               const float (*v1)[4],
-               const float (*v2)[4],
-               const float (*v3)[4])
+void
+lp_setup_print_triangle(struct lp_setup_context *setup,
+                        const float (*v0)[4],
+                        const float (*v1)[4],
+                        const float (*v2)[4])
 {
-   uint i;
+   debug_printf("triangle\n");
 
-   debug_printf("llvmpipe triangle\n");
-   for (i = 0; i < 1 + setup->fs.nr_inputs; i++) {
-      debug_printf("  v1[%d]:  %f %f %f %f\n", i,
-                   v1[i][0], v1[i][1], v1[i][2], v1[i][3]);
+   {
+      const float ex = v0[0][0] - v2[0][0];
+      const float ey = v0[0][1] - v2[0][1];
+      const float fx = v1[0][0] - v2[0][0];
+      const float fy = v1[0][1] - v2[0][1];
+
+      /* det = cross(e,f).z */
+      const float det = ex * fy - ey * fx;
+      if (det < 0.0f) 
+         debug_printf("   - ccw\n");
+      else if (det > 0.0f)
+         debug_printf("   - cw\n");
+      else
+         debug_printf("   - zero area\n");
    }
-   for (i = 0; i < 1 + setup->fs.nr_inputs; i++) {
-      debug_printf("  v2[%d]:  %f %f %f %f\n", i,
-                   v2[i][0], v2[i][1], v2[i][2], v2[i][3]);
-   }
-   for (i = 0; i < 1 + setup->fs.nr_inputs; i++) {
-      debug_printf("  v3[%d]:  %f %f %f %f\n", i,
-                   v3[i][0], v3[i][1], v3[i][2], v3[i][3]);
-   }
+
+   lp_setup_print_vertex(setup, "v0", v0);
+   lp_setup_print_vertex(setup, "v1", v1);
+   lp_setup_print_vertex(setup, "v2", v2);
 }
 
 
@@ -421,7 +457,7 @@ do_triangle_ccw(struct lp_setup_context *setup,
    int nr_planes = 3;
       
    if (0)
-      print_triangle(setup, v1, v2, v3);
+      lp_setup_print_triangle(setup, v1, v2, v3);
 
    if (setup->scissor_test) {
       nr_planes = 7;
