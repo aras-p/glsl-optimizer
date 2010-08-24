@@ -27,6 +27,11 @@
  */
 
 #include "entry.h"
+#include "u_current.h"
+#include "u_macros.h"
+
+/* define macros for use by assembly dispatchers */
+#define ENTRY_CURRENT_TABLE U_STRINGIFY(u_current_table)
 
 #if defined(USE_X86_ASM) && defined(__GNUC__)
 #   ifdef GLX_USE_TLS
@@ -39,7 +44,6 @@
 #else
 
 #include <stdlib.h>
-#include "u_current.h"
 
 /* C version of the public entries */
 #define MAPI_TMP_DEFINES

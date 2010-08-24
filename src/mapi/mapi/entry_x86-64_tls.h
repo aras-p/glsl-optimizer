@@ -46,7 +46,7 @@ __asm__(".section .note.ABI-tag, \"a\"\n\t"
 __asm__(".text");
 
 __asm__("x86_64_current_tls:\n\t"
-	"movq u_current_table@GOTTPOFF(%rip), %rax\n\t"
+	"movq " ENTRY_CURRENT_TABLE "@GOTTPOFF(%rip), %rax\n\t"
 	"ret");
 
 __asm__(".balign 32\n"
@@ -59,7 +59,7 @@ __asm__(".balign 32\n"
    func ":"
 
 #define STUB_ASM_CODE(slot)                              \
-   "movq u_current_table@GOTTPOFF(%rip), %rax\n\t"   \
+   "movq " ENTRY_CURRENT_TABLE "@GOTTPOFF(%rip), %rax\n\t"  \
    "movq %fs:(%rax), %r11\n\t"                           \
    "jmp *(8 * " slot ")(%r11)"
 

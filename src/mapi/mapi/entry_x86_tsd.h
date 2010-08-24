@@ -43,7 +43,7 @@ __asm__(".text\n"
    func ":"
 
 #define STUB_ASM_CODE(slot)         \
-   "movl u_current_table, %eax\n\t" \
+   "movl " ENTRY_CURRENT_TABLE ", %eax\n\t" \
    "testl %eax, %eax\n\t"           \
    "je 1f\n\t"                      \
    "jmp *(4 * " slot ")(%eax)\n"    \
