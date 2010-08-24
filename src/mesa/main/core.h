@@ -59,7 +59,7 @@ extern "C" {
 #include "program/prog_uniform.h"
 
 #ifdef __cplusplus
-};
+}
 #endif
 
 
