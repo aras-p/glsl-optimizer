@@ -229,13 +229,9 @@ build_mask(int c, int dcdx, int dcdy)
     */
    __m128i cstep0 = _mm_add_epi32(c0, step);
 
-   /* Scale up step for moving between quads.  This should probably
-    * be an arithmetic shift left, but there doesn't seem to be
-    * such a thing in SSE.  It's unlikely that the step value is
-    * going to be large enough to overflow across 4 pixels, though
-    * if it is that big, rendering will be incorrect anyway.
+   /* Scale up step for moving between quads.
     */
-   __m128i step4 = _mm_slli_epi32(step, 1);
+   __m128i step4 = _mm_add_epi32(step, step);
 
    /* Get values for the remaining quads:
     */
