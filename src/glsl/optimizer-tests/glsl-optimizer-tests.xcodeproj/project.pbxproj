@@ -18,7 +18,14 @@
 			isa = PBXContainerItemProxy;
 			containerPortal = 2B47D9C51209C72F00937F2C /* mesaglsl2.xcodeproj */;
 			proxyType = 2;
-			remoteGlobalIDString = D2AAC046055464E500DB518D /* libmesaglsl2.a */;
+			remoteGlobalIDString = D2AAC046055464E500DB518D;
+			remoteInfo = mesaglsl2;
+		};
+		2B6A99D81223B1170059FBED /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2B47D9C51209C72F00937F2C /* mesaglsl2.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = D2AAC045055464E500DB518D /* mesaglsl2 */;
 			remoteInfo = mesaglsl2;
 		};
 /* End PBXContainerItemProxy section */
@@ -107,6 +114,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				2B6A99D91223B1170059FBED /* PBXTargetDependency */,
 			);
 			name = "glsl-optimizer-test";
 			productInstallPath = "$(HOME)/bin";
@@ -157,6 +165,14 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		2B6A99D91223B1170059FBED /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = mesaglsl2;
+			targetProxy = 2B6A99D81223B1170059FBED /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		1DEB928608733DD80010E9CD /* Debug */ = {
