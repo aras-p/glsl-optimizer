@@ -30,377 +30,41 @@
 #include "radeon_priv.h"
 #include "r600d.h"
 
-static int r600_state_pm4_resource(struct radeon_state *state);
-static int r600_state_pm4_cb0(struct radeon_state *state);
-static int r600_state_pm4_vgt(struct radeon_state *state);
-static int r600_state_pm4_db(struct radeon_state *state);
-static int r600_state_pm4_shader(struct radeon_state *state);
-static int r600_state_pm4_draw(struct radeon_state *state);
-static int r600_state_pm4_config(struct radeon_state *state);
-static int r600_state_pm4_generic(struct radeon_state *state);
-static int r600_state_pm4_query_begin(struct radeon_state *state);
-static int r600_state_pm4_query_end(struct radeon_state *state);
-static int r700_state_pm4_config(struct radeon_state *state);
-static int r700_state_pm4_cb0(struct radeon_state *state);
-static int r700_state_pm4_db(struct radeon_state *state);
+static const struct radeon_type R600_types[];
+static const struct radeon_type R700_types[];
+#define R600_FLUSH_RESOURCE	((~C_0085F0_TC_ACTION_ENA) | (~C_0085F0_VC_ACTION_ENA))
+#define R600_FLUSH_CB0		(~C_0085F0_CB0_DEST_BASE_ENA)
+#define R600_FLUSH_CB1		(~C_0085F0_CB1_DEST_BASE_ENA)
+#define R600_FLUSH_CB2		(~C_0085F0_CB2_DEST_BASE_ENA)
+#define R600_FLUSH_CB3		(~C_0085F0_CB3_DEST_BASE_ENA)
+#define R600_FLUSH_CB4		(~C_0085F0_CB4_DEST_BASE_ENA)
+#define R600_FLUSH_CB5		(~C_0085F0_CB5_DEST_BASE_ENA)
+#define R600_FLUSH_CB6		(~C_0085F0_CB6_DEST_BASE_ENA)
+#define R600_FLUSH_CB7		(~C_0085F0_CB7_DEST_BASE_ENA)
+#define R600_FLUSH_DB		(~C_0085F0_DB_DEST_BASE_ENA)
+#define R600_DIRTY_ALL		0xFFFFFFFF
+#define R600_DIRTY_ALL2		(R600_FLUSH_RESOURCE | R600_FLUSH_DB | R600_FLUSH_CB0\
+				R600_FLUSH_CB1 | R600_FLUSH_CB2 | R600_FLUSH_CB3\
+				R600_FLUSH_CB4 | R600_FLUSH_CB5 | R600_FLUSH_CB6\
+				R600_FLUSH_CB7)
 
-#include "r600_states.h"
-
-/*
- * r600/r700 state functions
- */
-static int r600_state_pm4_bytecode(struct radeon_state *state, unsigned offset, unsigned id, unsigned nreg)
+static int r600_ctx_bo_flush(struct radeon_ctx *ctx, struct radeon_bo *bo, u32 flags, u32 *placement)
 {
-	const struct radeon_register *regs = state->radeon->type[state->type].regs;
-	unsigned i;
-	int r;
+	unsigned size;
 
-	if (!offset) {
-		fprintf(stderr, "%s invalid register for state %d %d\n",
-			__func__, state->type, id);
-		return -EINVAL;
+	if (7 > ctx->npm4) {
+		return -EBUSY;
 	}
-	if (offset >= R600_CONFIG_REG_OFFSET && offset < R600_CONFIG_REG_END) {
-		state->pm4[state->cpm4++] = PKT3(PKT3_SET_CONFIG_REG, nreg);
-		state->pm4[state->cpm4++] = (offset - R600_CONFIG_REG_OFFSET) >> 2;
-		for (i = 0; i < nreg; i++) {
-			state->pm4[state->cpm4++] = state->states[id + i];
-		}
-		for (i = 0; i < nreg; i++) {
-			if (regs[id + i].need_reloc) {
-				state->pm4[state->cpm4++] = PKT3(PKT3_NOP, 0);
-				r = radeon_state_reloc(state, state->cpm4, regs[id + i].bo_id);
-				if (r)
-					return r;
-				state->pm4[state->cpm4++] = state->bo[regs[id + i].bo_id]->handle;
-			}
-		}
-		return 0;
-	}
-	if (offset >= R600_CONTEXT_REG_OFFSET && offset < R600_CONTEXT_REG_END) {
-		state->pm4[state->cpm4++] = PKT3(PKT3_SET_CONTEXT_REG, nreg);
-		state->pm4[state->cpm4++] = (offset - R600_CONTEXT_REG_OFFSET) >> 2;
-		for (i = 0; i < nreg; i++) {
-			state->pm4[state->cpm4++] = state->states[id + i];
-		}
-		for (i = 0; i < nreg; i++) {
-			if (regs[id + i].need_reloc) {
-				state->pm4[state->cpm4++] = PKT3(PKT3_NOP, 0);
-				r = radeon_state_reloc(state, state->cpm4, regs[id + i].bo_id);
-				if (r)
-					return r;
-				state->pm4[state->cpm4++] = state->bo[regs[id + i].bo_id]->handle;
-			}
-		}
-		return 0;
-	}
-	if (offset >= R600_ALU_CONST_OFFSET && offset < R600_ALU_CONST_END) {
-		state->pm4[state->cpm4++] = PKT3(PKT3_SET_ALU_CONST, nreg);
-		state->pm4[state->cpm4++] = (offset - R600_ALU_CONST_OFFSET) >> 2;
-		for (i = 0; i < nreg; i++) {
-			state->pm4[state->cpm4++] = state->states[id + i];
-		}
-		return 0;
-	}
-	if (offset >= R600_SAMPLER_OFFSET && offset < R600_SAMPLER_END) {
-		state->pm4[state->cpm4++] = PKT3(PKT3_SET_SAMPLER, nreg);
-		state->pm4[state->cpm4++] = (offset - R600_SAMPLER_OFFSET) >> 2;
-		for (i = 0; i < nreg; i++) {
-			state->pm4[state->cpm4++] = state->states[id + i];
-		}
-		return 0;
-	}
-	fprintf(stderr, "%s unsupported offset 0x%08X\n", __func__, offset);
-	return -EINVAL;
-}
-
-static int r600_state_pm4_generic(struct radeon_state *state)
-{
-	struct radeon *radeon = state->radeon;
-	unsigned i, offset, nreg, type, coffset, loffset, soffset;
-	unsigned start;
-	int r;
-
-	if (!state->nstates)
-		return 0;
-	type = state->type;
-	soffset = (state->id - radeon->type[type].id) * radeon->type[type].stride;
-	offset = loffset = radeon->type[type].regs[0].offset + soffset;
-	start = 0;
-	for (i = 1, nreg = 1; i < state->nstates; i++) {
-		coffset = radeon->type[type].regs[i].offset + soffset;
-		if (coffset == (loffset + 4)) {
-			nreg++;
-			loffset = coffset;
-		} else {
-			r = r600_state_pm4_bytecode(state, offset, start, nreg);
-			if (r) {
-				fprintf(stderr, "%s invalid 0x%08X %d\n", __func__, start, nreg);
-				return r;
-			}
-			offset = loffset = coffset;
-			nreg = 1;
-			start = i;
-		}
-	}
-	return r600_state_pm4_bytecode(state, offset, start, nreg);
-}
-
-static void r600_state_pm4_with_flush(struct radeon_state *state, u32 flags)
-{
-	unsigned i, j, add, size;
-
-	state->nreloc = 0;
-	for (i = 0; i < state->nbo; i++) {
-		for (j = 0, add = 1; j < state->nreloc; j++) {
-			if (state->bo[state->reloc_bo_id[j]] == state->bo[i]) {
-				add = 0;
-				break;
-			}
-		}
-		if (add) {
-			state->reloc_bo_id[state->nreloc++] = i;
-		}
-	}
-	for (i = 0; i < state->nreloc; i++) {
-		size = (state->bo[state->reloc_bo_id[i]]->size + 255) >> 8;
-		state->pm4[state->cpm4++] = PKT3(PKT3_SURFACE_SYNC, 3);
-		state->pm4[state->cpm4++] = flags;
-		state->pm4[state->cpm4++] = size;
-		state->pm4[state->cpm4++] = 0x00000000;
-		state->pm4[state->cpm4++] = 0x0000000A;
-		state->pm4[state->cpm4++] = PKT3(PKT3_NOP, 0);
-		state->reloc_pm4_id[i] = state->cpm4;
-		state->pm4[state->cpm4++] = state->bo[state->reloc_bo_id[i]]->handle;
-	}
-}
-
-static int r600_state_pm4_cb0(struct radeon_state *state)
-{
-	int r;
-
-	r600_state_pm4_with_flush(state, S_0085F0_CB_ACTION_ENA(1) |
-				S_0085F0_CB0_DEST_BASE_ENA(1));
-	r = r600_state_pm4_generic(state);
-	if (r)
-		return r;
-	state->pm4[state->cpm4++] = PKT3(PKT3_SURFACE_BASE_UPDATE, 0);
-	state->pm4[state->cpm4++] = 0x00000002;
-	return 0;
-}
-
-static int r700_state_pm4_cb0(struct radeon_state *state)
-{
-	int r;
-
-	r600_state_pm4_with_flush(state, S_0085F0_CB_ACTION_ENA(1) |
-				S_0085F0_CB0_DEST_BASE_ENA(1));
-	r = r600_state_pm4_generic(state);
-	if (r)
-		return r;
-	return 0;
-}
-
-static int r600_state_pm4_db(struct radeon_state *state)
-{
-	int r;
-
-	r600_state_pm4_with_flush(state, S_0085F0_DB_ACTION_ENA(1) |
-				S_0085F0_DB_DEST_BASE_ENA(1));
-	r = r600_state_pm4_generic(state);
-	if (r)
-		return r;
-	state->pm4[state->cpm4++] = PKT3(PKT3_SURFACE_BASE_UPDATE, 0);
-	state->pm4[state->cpm4++] = 0x00000001;
-	return 0;
-}
-
-static int r700_state_pm4_db(struct radeon_state *state)
-{
-	int r;
-
-	r600_state_pm4_with_flush(state, S_0085F0_DB_ACTION_ENA(1) |
-				S_0085F0_DB_DEST_BASE_ENA(1));
-	r = r600_state_pm4_generic(state);
-	if (r)
-		return r;
-	return 0;
-}
-
-static int r600_state_pm4_config(struct radeon_state *state)
-{
-	state->pm4[state->cpm4++] = PKT3(PKT3_START_3D_CMDBUF, 0);
-	state->pm4[state->cpm4++] = 0x00000000;
-	state->pm4[state->cpm4++] = PKT3(PKT3_CONTEXT_CONTROL, 1);
-	state->pm4[state->cpm4++] = 0x80000000;
-	state->pm4[state->cpm4++] = 0x80000000;
-	state->pm4[state->cpm4++] = PKT3(PKT3_EVENT_WRITE, 0);
-	state->pm4[state->cpm4++] = EVENT_TYPE_CACHE_FLUSH_AND_INV_EVENT;
-	state->pm4[state->cpm4++] = PKT3(PKT3_SET_CONFIG_REG, 1);
-	state->pm4[state->cpm4++] = 0x00000010;
-	state->pm4[state->cpm4++] = 0x00028000;
-	return r600_state_pm4_generic(state);
-}
-
-static int r600_state_pm4_query_begin(struct radeon_state *state)
-{
-	int r;
-
-	state->cpm4 = 0;
-	state->pm4[state->cpm4++] = PKT3(PKT3_EVENT_WRITE, 2);
-	state->pm4[state->cpm4++] = EVENT_TYPE_ZPASS_DONE;
-	state->pm4[state->cpm4++] = state->states[0];
-	state->pm4[state->cpm4++] = 0x0;
-	state->pm4[state->cpm4++] = PKT3(PKT3_NOP, 0);
-	r = radeon_state_reloc(state, state->cpm4, 0);
-	if (r)
-		return r;
-	state->pm4[state->cpm4++] = state->bo[0]->handle;
-	return 0;
-}
-
-static int r600_state_pm4_query_end(struct radeon_state *state)
-{
-	int r;
-
-	state->cpm4 = 0;
-	state->pm4[state->cpm4++] = PKT3(PKT3_EVENT_WRITE, 2);
-	state->pm4[state->cpm4++] = EVENT_TYPE_ZPASS_DONE;
-	state->pm4[state->cpm4++] = state->states[0];
-	state->pm4[state->cpm4++] = 0x0;
-	state->pm4[state->cpm4++] = PKT3(PKT3_NOP, 0);
-	r = radeon_state_reloc(state, state->cpm4, 0);
-	if (r)
-		return r;
-	state->pm4[state->cpm4++] = state->bo[0]->handle;
-	return 0;
-}
-
-static int r700_state_pm4_config(struct radeon_state *state)
-{
-	state->pm4[state->cpm4++] = PKT3(PKT3_CONTEXT_CONTROL, 1);
-	state->pm4[state->cpm4++] = 0x80000000;
-	state->pm4[state->cpm4++] = 0x80000000;
-	state->pm4[state->cpm4++] = PKT3(PKT3_EVENT_WRITE, 0);
-	state->pm4[state->cpm4++] = EVENT_TYPE_CACHE_FLUSH_AND_INV_EVENT;
-	state->pm4[state->cpm4++] = PKT3(PKT3_SET_CONFIG_REG, 1);
-	state->pm4[state->cpm4++] = 0x00000010;
-	state->pm4[state->cpm4++] = 0x00028000;
-	return r600_state_pm4_generic(state);
-}
-
-static int r600_state_pm4_shader(struct radeon_state *state)
-{
-	r600_state_pm4_with_flush(state, S_0085F0_SH_ACTION_ENA(1));
-	return r600_state_pm4_generic(state);
-}
-
-static int r600_state_pm4_vgt(struct radeon_state *state)
-{
-	int r;
-
-	r = r600_state_pm4_bytecode(state, R_028400_VGT_MAX_VTX_INDX, R600_VGT__VGT_MAX_VTX_INDX, 1);
-	if (r)
-		return r;
-	r = r600_state_pm4_bytecode(state, R_028404_VGT_MIN_VTX_INDX, R600_VGT__VGT_MIN_VTX_INDX, 1);
-	if (r)
-		return r;
-	r = r600_state_pm4_bytecode(state, R_028408_VGT_INDX_OFFSET, R600_VGT__VGT_INDX_OFFSET, 1);
-	if (r)
-		return r;
-	r = r600_state_pm4_bytecode(state, R_02840C_VGT_MULTI_PRIM_IB_RESET_INDX, R600_VGT__VGT_MULTI_PRIM_IB_RESET_INDX, 1);
-	if (r)
-		return r;
-	r = r600_state_pm4_bytecode(state, R_008958_VGT_PRIMITIVE_TYPE, R600_VGT__VGT_PRIMITIVE_TYPE, 1);
-	if (r)
-		return r;
-	state->pm4[state->cpm4++] = PKT3(PKT3_INDEX_TYPE, 0);
-	state->pm4[state->cpm4++] = state->states[R600_VGT__VGT_DMA_INDEX_TYPE];
-	state->pm4[state->cpm4++] = PKT3(PKT3_NUM_INSTANCES, 0);
-	state->pm4[state->cpm4++] = state->states[R600_VGT__VGT_DMA_NUM_INSTANCES];
-	return 0;
-}
-
-static int r600_state_pm4_draw(struct radeon_state *state)
-{
-	unsigned i;
-	int r;
-
-	if (state->nbo) {
-		state->pm4[state->cpm4++] = PKT3(PKT3_DRAW_INDEX, 3);
-		state->pm4[state->cpm4++] = state->states[R600_DRAW__VGT_DMA_BASE];
-		state->pm4[state->cpm4++] = state->states[R600_DRAW__VGT_DMA_BASE_HI];
-		state->pm4[state->cpm4++] = state->states[R600_DRAW__VGT_NUM_INDICES];
-		state->pm4[state->cpm4++] = state->states[R600_DRAW__VGT_DRAW_INITIATOR];
-		state->pm4[state->cpm4++] = PKT3(PKT3_NOP, 0);
-		r = radeon_state_reloc(state, state->cpm4, 0);
-		if (r)
-			return r;
-		state->pm4[state->cpm4++] = state->bo[0]->handle;
-	} else if  (state->nimmd) {
-		state->pm4[state->cpm4++] = PKT3(PKT3_DRAW_INDEX_IMMD, state->nimmd + 1);
-		state->pm4[state->cpm4++] = state->states[R600_DRAW__VGT_NUM_INDICES];
-		state->pm4[state->cpm4++] = state->states[R600_DRAW__VGT_DRAW_INITIATOR];
-		for (i = 0; i < state->nimmd; i++) {
-			state->pm4[state->cpm4++] = state->immd[i];
-		}
-	} else {
-		state->pm4[state->cpm4++] = PKT3(PKT3_DRAW_INDEX_AUTO, 1);
-		state->pm4[state->cpm4++] = state->states[R600_DRAW__VGT_NUM_INDICES];
-		state->pm4[state->cpm4++] = state->states[R600_DRAW__VGT_DRAW_INITIATOR];
-	}
-	state->pm4[state->cpm4++] = PKT3(PKT3_EVENT_WRITE, 0);
-	state->pm4[state->cpm4++] = EVENT_TYPE_CACHE_FLUSH_AND_INV_EVENT;
-	return 0;
-}
-
-static int r600_state_pm4_resource(struct radeon_state *state)
-{
-	u32 flags, type, nbo, offset, soffset;
-	int r;
-
-	soffset = (state->id - state->radeon->type[state->type].id) * state->radeon->type[state->type].stride;
-	type = G_038018_TYPE(state->states[6]);
-	switch (type) {
-	case 2:
-		flags = S_0085F0_TC_ACTION_ENA(1);
-		nbo = 2;
-		break;
-	case 3:
-		flags = S_0085F0_VC_ACTION_ENA(1);
-		nbo = 1;
-		break;
-	default:
-		return 0;
-	}
-	if (state->nbo != nbo) {
-		fprintf(stderr, "%s need %d bo got %d\n", __func__, nbo, state->nbo);
-		return -EINVAL;
-	}
-	r600_state_pm4_with_flush(state, flags);
-	offset = state->radeon->type[state->type].regs[0].offset + soffset;
-	state->pm4[state->cpm4++] = PKT3(PKT3_SET_RESOURCE, 7);
-	state->pm4[state->cpm4++] = (offset - R_038000_SQ_TEX_RESOURCE_WORD0_0) >> 2;
-	state->pm4[state->cpm4++] = state->states[0];
-	state->pm4[state->cpm4++] = state->states[1];
-	state->pm4[state->cpm4++] = state->states[2];
-	state->pm4[state->cpm4++] = state->states[3];
-	state->pm4[state->cpm4++] = state->states[4];
-	state->pm4[state->cpm4++] = state->states[5];
-	state->pm4[state->cpm4++] = state->states[6];
-	state->pm4[state->cpm4++] = PKT3(PKT3_NOP, 0);
-	r = radeon_state_reloc(state, state->cpm4, 0);
-	if (r)
-		return r;
-	state->pm4[state->cpm4++] = state->bo[0]->handle;
-	if (type == 2) {
-		state->pm4[state->cpm4++] = PKT3(PKT3_NOP, 0);
-		r = radeon_state_reloc(state, state->cpm4, 1);
-		if (r)
-			return r;
-		state->pm4[state->cpm4++] = state->bo[1]->handle;
-	}
-	return 0;
+	size = (bo->size + 255) >> 8;
+	ctx->pm4[ctx->id++] = PKT3(PKT3_SURFACE_SYNC, 3);
+	ctx->pm4[ctx->id++] = flags;
+	ctx->pm4[ctx->id++] = size;
+	ctx->pm4[ctx->id++] = 0x00000000;
+	ctx->pm4[ctx->id++] = 0x0000000A;
+	ctx->pm4[ctx->id++] = PKT3(PKT3_NOP, 0);
+	ctx->pm4[ctx->id++] = 0x00000000;
+	ctx->npm4 -= 7;
+	return radeon_ctx_reloc(ctx, bo, ctx->id - 1, placement);
 }
 
 int r600_init(struct radeon *radeon)
@@ -414,7 +78,6 @@ int r600_init(struct radeon *radeon)
 	case CHIP_RV635:
 	case CHIP_RS780:
 	case CHIP_RS880:
-		radeon->ntype = R600_NTYPE;
 		radeon->nstate = R600_NSTATE;
 		radeon->type = R600_types;
 		break;
@@ -422,7 +85,6 @@ int r600_init(struct radeon *radeon)
 	case CHIP_RV730:
 	case CHIP_RV710:
 	case CHIP_RV740:
-		radeon->ntype = R600_NTYPE;
 		radeon->nstate = R600_NSTATE;
 		radeon->type = R700_types;
 		break;
@@ -431,5 +93,7696 @@ int r600_init(struct radeon *radeon)
 			__func__, radeon->device);
 		return -EINVAL;
 	}
+	radeon->bo_flush = &r600_ctx_bo_flush;
 	return 0;
 }
+
+/* CONFIG */
+#define R600_CONFIG_header_cpm4 12
+static const u32 R600_CONFIG_header_pm4[R600_CONFIG_header_cpm4] = {
+	0xC0002400,
+	0x00000000,
+	0xC0012800,
+	0x80000000,
+	0x80000000,
+	0xC0004600,
+	0x00000016,
+	0xC0016800,
+	0x00000010,
+	0x00028000,
+	0xC0066800,
+	0x00000300,
+};
+#define R700_CONFIG_header_cpm4 10
+u32 R700_CONFIG_header_pm4[R700_CONFIG_header_cpm4] = {
+	0xC0012800,
+	0x80000000,
+	0x80000000,
+	0xC0004600,
+	0x00000016,
+	0xC0016800,
+	0x00000010,
+	0x00028000,
+	0xC0066800,
+	0x00000300,
+};
+#define R600_CONFIG_state_cpm4 67
+u32 R600_CONFIG_state_pm4[R600_CONFIG_state_cpm4] = {
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0xC0016800,
+	0x00000363,
+	0x00000000,
+	0xC0016800,
+	0x00000542,
+	0x00000000,
+	0xC0016800,
+	0x000005C5,
+	0x00000000,
+	0xC0016800,
+	0x0000060C,
+	0x00000000,
+	0xC0016800,
+	0x0000060E,
+	0x00000000,
+	0xC0016900,
+	0x000000D4,
+	0x00000000,
+	0xC0016900,
+	0x000001B2,
+	0x00000000,
+	0xC0016900,
+	0x000001E8,
+	0x00000000,
+	0xC0096900,
+	0x0000022A,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0xC00D6900,
+	0x00000284,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0xC0016900,
+	0x00000293,
+	0x00000000,
+	0xC0036900,
+	0x000002AC,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0xC0016900,
+	0x000002C8,
+	0x00000000,
+};
+#define R600_CB_CNTL_header_cpm4 2
+u32 R600_CB_CNTL_header_pm4[R600_CB_CNTL_header_cpm4] = {
+	0xC0046900,
+	0x00000048,
+};
+#define R600_CB_CNTL_state_cpm4 32
+u32 R600_CB_CNTL_state_pm4[R600_CB_CNTL_state_cpm4] = {
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0xC0026900,
+	0x0000008E,
+	0x00000000,
+	0x00000000,
+	0xC0036900,
+	0x00000109,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0xC0016900,
+	0x00000202,
+	0x00000000,
+	0xC0016900,
+	0x00000301,
+	0x00000000,
+	0xC0026900,
+	0x00000307,
+	0x00000000,
+	0x00000000,
+	0xC0046900,
+	0x0000030C,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0xC0016900,
+	0x00000312,
+	0x00000000,
+};
+#define R600_RASTERIZER_header_cpm4 2
+u32 R600_RASTERIZER_header_pm4[R600_RASTERIZER_header_cpm4] = {
+	0xC0016900,
+	0x000001B5,
+};
+#define R600_RASTERIZER_state_cpm4 35
+u32 R600_RASTERIZER_state_pm4[R600_RASTERIZER_state_cpm4] = {
+	0x00000000,
+	0xC0026900,
+	0x00000204,
+	0x00000000,
+	0x00000000,
+	0xC0026900,
+	0x00000207,
+	0x00000000,
+	0x00000000,
+	0xC0046900,
+	0x00000280,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0xC0016900,
+	0x00000292,
+	0x00000000,
+	0xC0016900,
+	0x00000300,
+	0x00000000,
+	0xC0046900,
+	0x00000303,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0xC0066900,
+	0x0000037E,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+};
+
+/* R600_VIEWPORT */
+#define R600_VIEWPORT_header_cpm4 2
+u32 R600_VIEWPORT_header_pm4[R600_VIEWPORT_header_cpm4] = {
+	0xC0026900,
+	0x000000B4,
+};
+#define R600_VIEWPORT_state_cpm4 23
+u32 R600_VIEWPORT_state_pm4[R600_VIEWPORT_state_cpm4] = {
+	0x00000000,
+	0x00000000,
+	0xC0016900,
+	0x0000010F,
+	0x00000000,
+	0xC0016900,
+	0x00000111,
+	0x00000000,
+	0xC0016900,
+	0x00000113,
+	0x00000000,
+	0xC0016900,
+	0x00000110,
+	0x00000000,
+	0xC0016900,
+	0x00000112,
+	0x00000000,
+	0xC0016900,
+	0x00000114,
+	0x00000000,
+	0xC0016900,
+	0x00000206,
+	0x00000000,
+};
+#define R600_SCISSOR_header_cpm4 2
+u32 R600_SCISSOR_header_pm4[R600_SCISSOR_header_cpm4] = {
+	0xC0026900,
+	0x0000000C,
+};
+#define R600_SCISSOR_state_cpm4 25
+u32 R600_SCISSOR_state_pm4[R600_SCISSOR_state_cpm4] = {
+	0x00000000,
+	0x00000000,
+	0xC00D6900,
+	0x00000080,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0xC0026900,
+	0x00000090,
+	0x00000000,
+	0x00000000,
+	0xC0026900,
+	0x00000094,
+	0x00000000,
+	0x00000000,
+};
+
+/* R600_BLEND */
+#define R600_BLEND_header_cpm4 2
+u32 R600_BLEND_header_pm4[R600_BLEND_header_cpm4] = {
+	0xC0046900,
+	0x00000105,
+};
+#define R600_BLEND_state_cpm4 17
+u32 R600_BLEND_state_pm4[R600_BLEND_state_cpm4] = {
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0xC0086900,
+	0x000001E0,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0xC0016900,
+	0x00000201,
+	0x00000000,
+};
+
+/* R600_DSA */
+#define R600_DSA_header_cpm4 2
+u32 R600_DSA_header_pm4[R600_DSA_header_cpm4] = {
+	0xC0026900,
+	0x0000000A,
+};
+#define R600_DSA_state_cpm4 34
+u32 R600_DSA_state_pm4[R600_DSA_state_cpm4] = {
+	0x00000000,
+	0x00000000,
+	0xC0016900,
+	0x00000104,
+	0x00000000,
+	0xC0036900,
+	0x0000010C,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0xC0026900,
+	0x000001B8,
+	0x00000000,
+	0x00000000,
+	0xC0016900,
+	0x000001B7,
+	0x00000000,
+	0xC0016900,
+	0x00000200,
+	0x00000000,
+	0xC0016900,
+	0x00000203,
+	0x00000000,
+	0xC0026900,
+	0x00000343,
+	0x00000000,
+	0x00000000,
+	0xC0026900,
+	0x0000034B,
+	0x00000000,
+	0x00000000,
+	0xC0016900,
+	0x00000351,
+	0x00000000,
+};
+
+/* R600_UCP */
+#define R600_UCP_header_cpm4 2
+u32 R600_UCP0_header_pm4[R600_UCP_header_cpm4] = {
+	0xC0046900,
+	0x00000388,
+};
+u32 R600_UCP1_header_pm4[R600_UCP_header_cpm4] = {
+	0xC0046900,
+	0x0000038C,
+};
+u32 R600_UCP2_header_pm4[R600_UCP_header_cpm4] = {
+	0xC0046900,
+	0x00000390,
+};
+u32 R600_UCP3_header_pm4[R600_UCP_header_cpm4] = {
+	0xC0046900,
+	0x00000394,
+};
+u32 R600_UCP4_header_pm4[R600_UCP_header_cpm4] = {
+	0xC0046900,
+	0x00000398,
+};
+u32 R600_UCP5_header_pm4[R600_UCP_header_cpm4] = {
+	0xC0046900,
+	0x0000039C,
+};
+#define R600_UCP_state_cpm4 4
+u32 R600_UCP_state_pm4[R600_UCP_state_cpm4] = {
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+};
+
+/* R600_VGT */
+#define R600_VGT_header_cpm4 2
+u32 R600_VGT_header_pm4[R600_VGT_header_cpm4] = {
+	0xC0046900,
+	0x00000100,
+};
+#define R600_VGT_state_cpm4 11
+u32 R600_VGT_state_pm4[R600_VGT_state_cpm4] = {
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0xC0016800,
+	0x00000256,
+	0x00000000,
+	0xC0002A00,
+	0x00000000,
+	0xC0002F00,
+	0x00000000,
+};
+
+/* R600_QUERY */
+#define R600_QUERY_header_cpm4 2
+u32 R600_QUERY_header_pm4[R600_QUERY_header_cpm4] = {
+	0xC0024600,
+	0x00000015,
+};
+#define R600_QUERY_state_cpm4 4
+u32 R600_QUERY_state_pm4[R600_QUERY_state_cpm4] = {
+	0x00000000,
+	0x00000000,
+	0xC0001000,
+	0x00000000,
+};
+
+/* R600_DRAW_AUTO */
+#define R600_DRAW_AUTO_header_cpm4 1
+u32 R600_DRAW_AUTO_header_pm4[R600_DRAW_AUTO_header_cpm4] = {
+	0xC0012D00,
+};
+#define R600_DRAW_AUTO_state_cpm4 4
+u32 R600_DRAW_AUTO_state_pm4[R600_DRAW_AUTO_state_cpm4] = {
+	0x00000000,
+	0x00000000,
+	0xC0004600,
+	0x00000016,
+};
+
+/* R600_DRAW */
+#define R600_DRAW_header_cpm4 1
+u32 R600_DRAW_header_pm4[R600_DRAW_header_cpm4] = {
+	0xC0032B00,
+};
+#define R600_DRAW_state_cpm4 8
+u32 R600_DRAW_state_pm4[R600_DRAW_state_cpm4] = {
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0xC0001000,
+	0x00000000,
+	0xC0004600,
+	0x00000016,
+};
+
+/* R600_VS_SHADER */
+#define R600_VS_SHADER_header_cpm4 2
+u32 R600_VS_SHADER_header_pm4[R600_VS_SHADER_header_cpm4] = {
+	0xC0206900,
+	0x000000E0,
+};
+#define R600_VS_SHADER_state_cpm4 69
+u32 R600_VS_SHADER_state_pm4[R600_VS_SHADER_state_cpm4] = {
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0xC00A6900,
+	0x00000185,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0xC0016900,
+	0x000001B1,
+	0x00000000,
+	0xC0016900,
+	0x00000216,
+	0x00000000,
+	0xC0001000,
+	0x00000000,
+	0xC0016900,
+	0x0000021A,
+	0x00000000,
+	0xC0016900,
+	0x00000225,
+	0x00000000,
+	0xC0001000,
+	0x00000000,
+	0xC0016900,
+	0x00000229,
+	0x00000000,
+	0xC0016900,
+	0x00000234,
+	0x00000000,
+	0xC0016900,
+	0x00000237,
+	0x00000000,
+};
+
+/* R600_PS_SHADER */
+#define R600_PS_SHADER_header_cpm4 2
+u32 R600_PS_SHADER_header_pm4[R600_PS_SHADER_header_cpm4] = {
+	0xC0206900,
+	0x00000191,
+};
+#define R600_PS_SHADER_state_cpm4 51
+u32 R600_PS_SHADER_state_pm4[R600_PS_SHADER_state_cpm4] = {
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0xC0026900,
+	0x000001B3,
+	0x00000000,
+	0x00000000,
+	0xC0016900,
+	0x000001B6,
+	0x00000000,
+	0xC0016900,
+	0x00000210,
+	0x00000000,
+	0xC0001000,
+	0x00000000,
+	0xC0026900,
+	0x00000214,
+	0x00000000,
+	0x00000000,
+	0xC0016900,
+	0x00000233,
+	0x00000000,
+};
+
+/* R600_DB */
+#define R600_DB_header_cpm4 2
+u32 R600_DB_header_pm4[R600_DB_header_cpm4] = {
+	0xC0016900,
+	0x00000003,
+};
+#define R600_DB_state_cpm4 18
+u32 R600_DB_state_pm4[R600_DB_state_cpm4] = {
+	0x00000000,
+	0xC0001000,
+	0x00000000,
+	0xC0026900,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0xC0016900,
+	0x00000004,
+	0x00000000,
+	0xC0016900,
+	0x00000349,
+	0x00000000,
+	0xC0016900,
+	0x0000034D,
+	0x00000000,
+	0xC0007300,
+	0x00000001,
+};
+
+/* R600_CB0 */
+#define R600_CB0_header_cpm4 2
+u32 R600_CB0_header_pm4[R600_CB0_header_cpm4] = {
+	0xC0016900,
+	0x00000010,
+};
+#define R600_CB0_state_cpm4 27
+u32 R600_CB0_state_pm4[R600_CB0_state_cpm4] = {
+	0x00000000,
+	0xC0001000,
+	0x00000000,
+	0xC0016900,
+	0x00000028,
+	0x00000000,
+	0xC0016900,
+	0x00000018,
+	0x00000000,
+	0xC0016900,
+	0x00000020,
+	0x00000000,
+	0xC0016900,
+	0x00000038,
+	0x00000000,
+	0xC0001000,
+	0x00000000,
+	0xC0016900,
+	0x00000030,
+	0x00000000,
+	0xC0001000,
+	0x00000000,
+	0xC0016900,
+	0x00000040,
+	0x00000000,
+	0xC0007300,
+	0x00000002,
+};
+
+/* R600_CB1 */
+#define R600_CB1_header_cpm4 2
+u32 R600_CB1_header_pm4[R600_CB1_header_cpm4] = {
+	0xC0016900,
+	0x00000011,
+};
+#define R600_CB1_state_cpm4 27
+u32 R600_CB1_state_pm4[R600_CB1_state_cpm4] = {
+	0x00000000,
+	0xC0001000,
+	0x00000000,
+	0xC0016900,
+	0x00000029,
+	0x00000000,
+	0xC0016900,
+	0x00000019,
+	0x00000000,
+	0xC0016900,
+	0x00000021,
+	0x00000000,
+	0xC0016900,
+	0x00000039,
+	0x00000000,
+	0xC0001000,
+	0x00000000,
+	0xC0016900,
+	0x00000031,
+	0x00000000,
+	0xC0001000,
+	0x00000000,
+	0xC0016900,
+	0x00000041,
+	0x00000000,
+	0xC0007300,
+	0x00000002,
+};
+
+/* R600_CB2 */
+#define R600_CB2_header_cpm4 2
+u32 R600_CB2_header_pm4[R600_CB2_header_cpm4] = {
+	0xC0016900,
+	0x00000012,
+};
+#define R600_CB2_state_cpm4 27
+u32 R600_CB2_state_pm4[R600_CB2_state_cpm4] = {
+	0x00000000,
+	0xC0001000,
+	0x00000004,
+	0xC0016900,
+	0x0000002A,
+	0x00000000,
+	0xC0016900,
+	0x0000001A,
+	0x00000000,
+	0xC0016900,
+	0x00000022,
+	0x00000000,
+	0xC0016900,
+	0x0000003A,
+	0x00000000,
+	0xC0001000,
+	0x00000000,
+	0xC0016900,
+	0x00000032,
+	0x00000000,
+	0xC0001000,
+	0x00000000,
+	0xC0016900,
+	0x00000042,
+	0x00000000,
+	0xC0007300,
+	0x00000002,
+};
+
+/* R600_CB3 */
+#define R600_CB3_header_cpm4 2
+u32 R600_CB3_header_pm4[R600_CB3_header_cpm4] = {
+	0xC0016900,
+	0x00000013,
+};
+#define R600_CB3_state_cpm4 27
+u32 R600_CB3_state_pm4[R600_CB3_state_cpm4] = {
+	0x00000000,
+	0xC0001000,
+	0x00000004,
+	0xC0016900,
+	0x0000002B,
+	0x00000000,
+	0xC0016900,
+	0x0000001B,
+	0x00000000,
+	0xC0016900,
+	0x00000023,
+	0x00000000,
+	0xC0016900,
+	0x0000003B,
+	0x00000000,
+	0xC0001000,
+	0x00000000,
+	0xC0016900,
+	0x00000033,
+	0x00000000,
+	0xC0001000,
+	0x00000000,
+	0xC0016900,
+	0x00000043,
+	0x00000000,
+	0xC0007300,
+	0x00000002,
+};
+
+/* R600_CB4 */
+#define R600_CB4_header_cpm4 2
+u32 R600_CB4_header_pm4[R600_CB4_header_cpm4] = {
+	0xC0016900,
+	0x00000014,
+};
+#define R600_CB4_state_cpm4 27
+u32 R600_CB4_state_pm4[R600_CB4_state_cpm4] = {
+	0x00000000,
+	0xC0001000,
+	0x00000004,
+	0xC0016900,
+	0x0000002C,
+	0x00000000,
+	0xC0016900,
+	0x0000001C,
+	0x00000000,
+	0xC0016900,
+	0x00000024,
+	0x00000000,
+	0xC0016900,
+	0x0000003C,
+	0x00000000,
+	0xC0001000,
+	0x00000000,
+	0xC0016900,
+	0x00000034,
+	0x00000000,
+	0xC0001000,
+	0x00000000,
+	0xC0016900,
+	0x00000044,
+	0x00000000,
+	0xC0007300,
+	0x00000002,
+};
+
+/* R600_CB5 */
+#define R600_CB5_header_cpm4 2
+u32 R600_CB5_header_pm4[R600_CB5_header_cpm4] = {
+	0xC0016900,
+	0x00000015,
+};
+#define R600_CB5_state_cpm4 27
+u32 R600_CB5_state_pm4[R600_CB5_state_cpm4] = {
+	0x00000000,
+	0xC0001000,
+	0x00000004,
+	0xC0016900,
+	0x0000002D,
+	0x00000000,
+	0xC0016900,
+	0x0000001D,
+	0x00000000,
+	0xC0016900,
+	0x00000025,
+	0x00000000,
+	0xC0016900,
+	0x0000003D,
+	0x00000000,
+	0xC0001000,
+	0x00000000,
+	0xC0016900,
+	0x00000035,
+	0x00000000,
+	0xC0001000,
+	0x00000000,
+	0xC0016900,
+	0x00000045,
+	0x00000000,
+	0xC0007300,
+	0x00000002,
+};
+
+/* R600_CB6 */
+#define R600_CB6_header_cpm4 2
+u32 R600_CB6_header_pm4[R600_CB6_header_cpm4] = {
+	0xC0016900,
+	0x00000016,
+};
+#define R600_CB6_state_cpm4 27
+u32 R600_CB6_state_pm4[R600_CB6_state_cpm4] = {
+	0x00000000,
+	0xC0001000,
+	0x00000004,
+	0xC0016900,
+	0x0000002E,
+	0x00000000,
+	0xC0016900,
+	0x0000001E,
+	0x00000000,
+	0xC0016900,
+	0x00000026,
+	0x00000000,
+	0xC0016900,
+	0x0000003E,
+	0x00000000,
+	0xC0001000,
+	0x00000000,
+	0xC0016900,
+	0x00000036,
+	0x00000000,
+	0xC0001000,
+	0x00000000,
+	0xC0016900,
+	0x00000046,
+	0x00000000,
+	0xC0007300,
+	0x00000002,
+};
+
+/* R600_CB7 */
+#define R600_CB7_header_cpm4 2
+u32 R600_CB7_header_pm4[R600_CB7_header_cpm4] = {
+	0xC0016900,
+	0x00000017,
+};
+#define R600_CB7_state_cpm4 27
+u32 R600_CB7_state_pm4[R600_CB7_state_cpm4] = {
+	0x00000000,
+	0xC0001000,
+	0x00000004,
+	0xC0016900,
+	0x0000002F,
+	0x00000000,
+	0xC0016900,
+	0x0000001F,
+	0x00000000,
+	0xC0016900,
+	0x00000027,
+	0x00000000,
+	0xC0016900,
+	0x0000003F,
+	0x00000000,
+	0xC0001000,
+	0x00000000,
+	0xC0016900,
+	0x00000037,
+	0x00000000,
+	0xC0001000,
+	0x00000000,
+	0xC0016900,
+	0x00000047,
+	0x00000000,
+	0xC0007300,
+	0x00000002,
+};
+
+/* R600_CONSTANT */
+#define R600_CONSTANT_header_cpm4 2
+u32 R600_PS_CONSTANT0_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000000,
+};
+u32 R600_PS_CONSTANT1_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000004,
+};
+u32 R600_PS_CONSTANT2_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000008,
+};
+u32 R600_PS_CONSTANT3_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000000C,
+};
+u32 R600_PS_CONSTANT4_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000010,
+};
+u32 R600_PS_CONSTANT5_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000014,
+};
+u32 R600_PS_CONSTANT6_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000018,
+};
+u32 R600_PS_CONSTANT7_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000001C,
+};
+u32 R600_PS_CONSTANT8_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000020,
+};
+u32 R600_PS_CONSTANT9_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000024,
+};
+u32 R600_PS_CONSTANT10_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000028,
+};
+u32 R600_PS_CONSTANT11_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000002C,
+};
+u32 R600_PS_CONSTANT12_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000030,
+};
+u32 R600_PS_CONSTANT13_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000034,
+};
+u32 R600_PS_CONSTANT14_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000038,
+};
+u32 R600_PS_CONSTANT15_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000003C,
+};
+u32 R600_PS_CONSTANT16_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000040,
+};
+u32 R600_PS_CONSTANT17_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000044,
+};
+u32 R600_PS_CONSTANT18_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000048,
+};
+u32 R600_PS_CONSTANT19_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000004C,
+};
+u32 R600_PS_CONSTANT20_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000050,
+};
+u32 R600_PS_CONSTANT21_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000054,
+};
+u32 R600_PS_CONSTANT22_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000058,
+};
+u32 R600_PS_CONSTANT23_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000005C,
+};
+u32 R600_PS_CONSTANT24_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000060,
+};
+u32 R600_PS_CONSTANT25_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000064,
+};
+u32 R600_PS_CONSTANT26_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000068,
+};
+u32 R600_PS_CONSTANT27_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000006C,
+};
+u32 R600_PS_CONSTANT28_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000070,
+};
+u32 R600_PS_CONSTANT29_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000074,
+};
+u32 R600_PS_CONSTANT30_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000078,
+};
+u32 R600_PS_CONSTANT31_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000007C,
+};
+u32 R600_PS_CONSTANT32_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000080,
+};
+u32 R600_PS_CONSTANT33_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000084,
+};
+u32 R600_PS_CONSTANT34_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000088,
+};
+u32 R600_PS_CONSTANT35_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000008C,
+};
+u32 R600_PS_CONSTANT36_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000090,
+};
+u32 R600_PS_CONSTANT37_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000094,
+};
+u32 R600_PS_CONSTANT38_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000098,
+};
+u32 R600_PS_CONSTANT39_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000009C,
+};
+u32 R600_PS_CONSTANT40_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000000A0,
+};
+u32 R600_PS_CONSTANT41_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000000A4,
+};
+u32 R600_PS_CONSTANT42_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000000A8,
+};
+u32 R600_PS_CONSTANT43_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000000AC,
+};
+u32 R600_PS_CONSTANT44_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000000B0,
+};
+u32 R600_PS_CONSTANT45_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000000B4,
+};
+u32 R600_PS_CONSTANT46_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000000B8,
+};
+u32 R600_PS_CONSTANT47_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000000BC,
+};
+u32 R600_PS_CONSTANT48_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000000C0,
+};
+u32 R600_PS_CONSTANT49_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000000C4,
+};
+u32 R600_PS_CONSTANT50_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000000C8,
+};
+u32 R600_PS_CONSTANT51_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000000CC,
+};
+u32 R600_PS_CONSTANT52_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000000D0,
+};
+u32 R600_PS_CONSTANT53_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000000D4,
+};
+u32 R600_PS_CONSTANT54_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000000D8,
+};
+u32 R600_PS_CONSTANT55_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000000DC,
+};
+u32 R600_PS_CONSTANT56_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000000E0,
+};
+u32 R600_PS_CONSTANT57_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000000E4,
+};
+u32 R600_PS_CONSTANT58_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000000E8,
+};
+u32 R600_PS_CONSTANT59_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000000EC,
+};
+u32 R600_PS_CONSTANT60_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000000F0,
+};
+u32 R600_PS_CONSTANT61_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000000F4,
+};
+u32 R600_PS_CONSTANT62_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000000F8,
+};
+u32 R600_PS_CONSTANT63_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000000FC,
+};
+u32 R600_PS_CONSTANT64_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000100,
+};
+u32 R600_PS_CONSTANT65_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000104,
+};
+u32 R600_PS_CONSTANT66_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000108,
+};
+u32 R600_PS_CONSTANT67_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000010C,
+};
+u32 R600_PS_CONSTANT68_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000110,
+};
+u32 R600_PS_CONSTANT69_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000114,
+};
+u32 R600_PS_CONSTANT70_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000118,
+};
+u32 R600_PS_CONSTANT71_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000011C,
+};
+u32 R600_PS_CONSTANT72_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000120,
+};
+u32 R600_PS_CONSTANT73_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000124,
+};
+u32 R600_PS_CONSTANT74_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000128,
+};
+u32 R600_PS_CONSTANT75_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000012C,
+};
+u32 R600_PS_CONSTANT76_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000130,
+};
+u32 R600_PS_CONSTANT77_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000134,
+};
+u32 R600_PS_CONSTANT78_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000138,
+};
+u32 R600_PS_CONSTANT79_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000013C,
+};
+u32 R600_PS_CONSTANT80_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000140,
+};
+u32 R600_PS_CONSTANT81_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000144,
+};
+u32 R600_PS_CONSTANT82_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000148,
+};
+u32 R600_PS_CONSTANT83_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000014C,
+};
+u32 R600_PS_CONSTANT84_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000150,
+};
+u32 R600_PS_CONSTANT85_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000154,
+};
+u32 R600_PS_CONSTANT86_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000158,
+};
+u32 R600_PS_CONSTANT87_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000015C,
+};
+u32 R600_PS_CONSTANT88_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000160,
+};
+u32 R600_PS_CONSTANT89_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000164,
+};
+u32 R600_PS_CONSTANT90_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000168,
+};
+u32 R600_PS_CONSTANT91_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000016C,
+};
+u32 R600_PS_CONSTANT92_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000170,
+};
+u32 R600_PS_CONSTANT93_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000174,
+};
+u32 R600_PS_CONSTANT94_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000178,
+};
+u32 R600_PS_CONSTANT95_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000017C,
+};
+u32 R600_PS_CONSTANT96_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000180,
+};
+u32 R600_PS_CONSTANT97_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000184,
+};
+u32 R600_PS_CONSTANT98_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000188,
+};
+u32 R600_PS_CONSTANT99_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000018C,
+};
+u32 R600_PS_CONSTANT100_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000190,
+};
+u32 R600_PS_CONSTANT101_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000194,
+};
+u32 R600_PS_CONSTANT102_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000198,
+};
+u32 R600_PS_CONSTANT103_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000019C,
+};
+u32 R600_PS_CONSTANT104_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000001A0,
+};
+u32 R600_PS_CONSTANT105_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000001A4,
+};
+u32 R600_PS_CONSTANT106_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000001A8,
+};
+u32 R600_PS_CONSTANT107_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000001AC,
+};
+u32 R600_PS_CONSTANT108_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000001B0,
+};
+u32 R600_PS_CONSTANT109_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000001B4,
+};
+u32 R600_PS_CONSTANT110_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000001B8,
+};
+u32 R600_PS_CONSTANT111_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000001BC,
+};
+u32 R600_PS_CONSTANT112_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000001C0,
+};
+u32 R600_PS_CONSTANT113_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000001C4,
+};
+u32 R600_PS_CONSTANT114_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000001C8,
+};
+u32 R600_PS_CONSTANT115_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000001CC,
+};
+u32 R600_PS_CONSTANT116_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000001D0,
+};
+u32 R600_PS_CONSTANT117_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000001D4,
+};
+u32 R600_PS_CONSTANT118_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000001D8,
+};
+u32 R600_PS_CONSTANT119_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000001DC,
+};
+u32 R600_PS_CONSTANT120_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000001E0,
+};
+u32 R600_PS_CONSTANT121_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000001E4,
+};
+u32 R600_PS_CONSTANT122_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000001E8,
+};
+u32 R600_PS_CONSTANT123_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000001EC,
+};
+u32 R600_PS_CONSTANT124_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000001F0,
+};
+u32 R600_PS_CONSTANT125_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000001F4,
+};
+u32 R600_PS_CONSTANT126_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000001F8,
+};
+u32 R600_PS_CONSTANT127_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000001FC,
+};
+u32 R600_PS_CONSTANT128_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000200,
+};
+u32 R600_PS_CONSTANT129_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000204,
+};
+u32 R600_PS_CONSTANT130_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000208,
+};
+u32 R600_PS_CONSTANT131_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000020C,
+};
+u32 R600_PS_CONSTANT132_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000210,
+};
+u32 R600_PS_CONSTANT133_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000214,
+};
+u32 R600_PS_CONSTANT134_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000218,
+};
+u32 R600_PS_CONSTANT135_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000021C,
+};
+u32 R600_PS_CONSTANT136_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000220,
+};
+u32 R600_PS_CONSTANT137_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000224,
+};
+u32 R600_PS_CONSTANT138_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000228,
+};
+u32 R600_PS_CONSTANT139_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000022C,
+};
+u32 R600_PS_CONSTANT140_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000230,
+};
+u32 R600_PS_CONSTANT141_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000234,
+};
+u32 R600_PS_CONSTANT142_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000238,
+};
+u32 R600_PS_CONSTANT143_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000023C,
+};
+u32 R600_PS_CONSTANT144_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000240,
+};
+u32 R600_PS_CONSTANT145_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000244,
+};
+u32 R600_PS_CONSTANT146_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000248,
+};
+u32 R600_PS_CONSTANT147_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000024C,
+};
+u32 R600_PS_CONSTANT148_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000250,
+};
+u32 R600_PS_CONSTANT149_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000254,
+};
+u32 R600_PS_CONSTANT150_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000258,
+};
+u32 R600_PS_CONSTANT151_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000025C,
+};
+u32 R600_PS_CONSTANT152_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000260,
+};
+u32 R600_PS_CONSTANT153_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000264,
+};
+u32 R600_PS_CONSTANT154_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000268,
+};
+u32 R600_PS_CONSTANT155_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000026C,
+};
+u32 R600_PS_CONSTANT156_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000270,
+};
+u32 R600_PS_CONSTANT157_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000274,
+};
+u32 R600_PS_CONSTANT158_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000278,
+};
+u32 R600_PS_CONSTANT159_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000027C,
+};
+u32 R600_PS_CONSTANT160_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000280,
+};
+u32 R600_PS_CONSTANT161_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000284,
+};
+u32 R600_PS_CONSTANT162_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000288,
+};
+u32 R600_PS_CONSTANT163_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000028C,
+};
+u32 R600_PS_CONSTANT164_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000290,
+};
+u32 R600_PS_CONSTANT165_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000294,
+};
+u32 R600_PS_CONSTANT166_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000298,
+};
+u32 R600_PS_CONSTANT167_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000029C,
+};
+u32 R600_PS_CONSTANT168_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000002A0,
+};
+u32 R600_PS_CONSTANT169_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000002A4,
+};
+u32 R600_PS_CONSTANT170_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000002A8,
+};
+u32 R600_PS_CONSTANT171_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000002AC,
+};
+u32 R600_PS_CONSTANT172_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000002B0,
+};
+u32 R600_PS_CONSTANT173_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000002B4,
+};
+u32 R600_PS_CONSTANT174_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000002B8,
+};
+u32 R600_PS_CONSTANT175_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000002BC,
+};
+u32 R600_PS_CONSTANT176_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000002C0,
+};
+u32 R600_PS_CONSTANT177_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000002C4,
+};
+u32 R600_PS_CONSTANT178_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000002C8,
+};
+u32 R600_PS_CONSTANT179_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000002CC,
+};
+u32 R600_PS_CONSTANT180_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000002D0,
+};
+u32 R600_PS_CONSTANT181_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000002D4,
+};
+u32 R600_PS_CONSTANT182_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000002D8,
+};
+u32 R600_PS_CONSTANT183_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000002DC,
+};
+u32 R600_PS_CONSTANT184_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000002E0,
+};
+u32 R600_PS_CONSTANT185_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000002E4,
+};
+u32 R600_PS_CONSTANT186_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000002E8,
+};
+u32 R600_PS_CONSTANT187_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000002EC,
+};
+u32 R600_PS_CONSTANT188_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000002F0,
+};
+u32 R600_PS_CONSTANT189_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000002F4,
+};
+u32 R600_PS_CONSTANT190_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000002F8,
+};
+u32 R600_PS_CONSTANT191_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000002FC,
+};
+u32 R600_PS_CONSTANT192_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000300,
+};
+u32 R600_PS_CONSTANT193_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000304,
+};
+u32 R600_PS_CONSTANT194_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000308,
+};
+u32 R600_PS_CONSTANT195_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000030C,
+};
+u32 R600_PS_CONSTANT196_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000310,
+};
+u32 R600_PS_CONSTANT197_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000314,
+};
+u32 R600_PS_CONSTANT198_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000318,
+};
+u32 R600_PS_CONSTANT199_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000031C,
+};
+u32 R600_PS_CONSTANT200_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000320,
+};
+u32 R600_PS_CONSTANT201_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000324,
+};
+u32 R600_PS_CONSTANT202_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000328,
+};
+u32 R600_PS_CONSTANT203_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000032C,
+};
+u32 R600_PS_CONSTANT204_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000330,
+};
+u32 R600_PS_CONSTANT205_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000334,
+};
+u32 R600_PS_CONSTANT206_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000338,
+};
+u32 R600_PS_CONSTANT207_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000033C,
+};
+u32 R600_PS_CONSTANT208_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000340,
+};
+u32 R600_PS_CONSTANT209_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000344,
+};
+u32 R600_PS_CONSTANT210_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000348,
+};
+u32 R600_PS_CONSTANT211_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000034C,
+};
+u32 R600_PS_CONSTANT212_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000350,
+};
+u32 R600_PS_CONSTANT213_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000354,
+};
+u32 R600_PS_CONSTANT214_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000358,
+};
+u32 R600_PS_CONSTANT215_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000035C,
+};
+u32 R600_PS_CONSTANT216_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000360,
+};
+u32 R600_PS_CONSTANT217_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000364,
+};
+u32 R600_PS_CONSTANT218_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000368,
+};
+u32 R600_PS_CONSTANT219_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000036C,
+};
+u32 R600_PS_CONSTANT220_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000370,
+};
+u32 R600_PS_CONSTANT221_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000374,
+};
+u32 R600_PS_CONSTANT222_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000378,
+};
+u32 R600_PS_CONSTANT223_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000037C,
+};
+u32 R600_PS_CONSTANT224_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000380,
+};
+u32 R600_PS_CONSTANT225_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000384,
+};
+u32 R600_PS_CONSTANT226_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000388,
+};
+u32 R600_PS_CONSTANT227_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000038C,
+};
+u32 R600_PS_CONSTANT228_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000390,
+};
+u32 R600_PS_CONSTANT229_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000394,
+};
+u32 R600_PS_CONSTANT230_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000398,
+};
+u32 R600_PS_CONSTANT231_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000039C,
+};
+u32 R600_PS_CONSTANT232_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000003A0,
+};
+u32 R600_PS_CONSTANT233_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000003A4,
+};
+u32 R600_PS_CONSTANT234_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000003A8,
+};
+u32 R600_PS_CONSTANT235_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000003AC,
+};
+u32 R600_PS_CONSTANT236_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000003B0,
+};
+u32 R600_PS_CONSTANT237_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000003B4,
+};
+u32 R600_PS_CONSTANT238_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000003B8,
+};
+u32 R600_PS_CONSTANT239_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000003BC,
+};
+u32 R600_PS_CONSTANT240_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000003C0,
+};
+u32 R600_PS_CONSTANT241_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000003C4,
+};
+u32 R600_PS_CONSTANT242_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000003C8,
+};
+u32 R600_PS_CONSTANT243_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000003CC,
+};
+u32 R600_PS_CONSTANT244_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000003D0,
+};
+u32 R600_PS_CONSTANT245_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000003D4,
+};
+u32 R600_PS_CONSTANT246_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000003D8,
+};
+u32 R600_PS_CONSTANT247_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000003DC,
+};
+u32 R600_PS_CONSTANT248_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000003E0,
+};
+u32 R600_PS_CONSTANT249_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000003E4,
+};
+u32 R600_PS_CONSTANT250_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000003E8,
+};
+u32 R600_PS_CONSTANT251_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000003EC,
+};
+u32 R600_PS_CONSTANT252_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000003F0,
+};
+u32 R600_PS_CONSTANT253_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000003F4,
+};
+u32 R600_PS_CONSTANT254_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000003F8,
+};
+u32 R600_PS_CONSTANT255_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000003FC,
+};
+u32 R600_VS_CONSTANT0_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000400,
+};
+u32 R600_VS_CONSTANT1_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000404,
+};
+u32 R600_VS_CONSTANT2_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000408,
+};
+u32 R600_VS_CONSTANT3_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000040C,
+};
+u32 R600_VS_CONSTANT4_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000410,
+};
+u32 R600_VS_CONSTANT5_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000414,
+};
+u32 R600_VS_CONSTANT6_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000418,
+};
+u32 R600_VS_CONSTANT7_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000041C,
+};
+u32 R600_VS_CONSTANT8_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000420,
+};
+u32 R600_VS_CONSTANT9_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000424,
+};
+u32 R600_VS_CONSTANT10_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000428,
+};
+u32 R600_VS_CONSTANT11_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000042C,
+};
+u32 R600_VS_CONSTANT12_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000430,
+};
+u32 R600_VS_CONSTANT13_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000434,
+};
+u32 R600_VS_CONSTANT14_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000438,
+};
+u32 R600_VS_CONSTANT15_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000043C,
+};
+u32 R600_VS_CONSTANT16_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000440,
+};
+u32 R600_VS_CONSTANT17_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000444,
+};
+u32 R600_VS_CONSTANT18_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000448,
+};
+u32 R600_VS_CONSTANT19_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000044C,
+};
+u32 R600_VS_CONSTANT20_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000450,
+};
+u32 R600_VS_CONSTANT21_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000454,
+};
+u32 R600_VS_CONSTANT22_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000458,
+};
+u32 R600_VS_CONSTANT23_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000045C,
+};
+u32 R600_VS_CONSTANT24_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000460,
+};
+u32 R600_VS_CONSTANT25_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000464,
+};
+u32 R600_VS_CONSTANT26_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000468,
+};
+u32 R600_VS_CONSTANT27_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000046C,
+};
+u32 R600_VS_CONSTANT28_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000470,
+};
+u32 R600_VS_CONSTANT29_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000474,
+};
+u32 R600_VS_CONSTANT30_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000478,
+};
+u32 R600_VS_CONSTANT31_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000047C,
+};
+u32 R600_VS_CONSTANT32_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000480,
+};
+u32 R600_VS_CONSTANT33_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000484,
+};
+u32 R600_VS_CONSTANT34_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000488,
+};
+u32 R600_VS_CONSTANT35_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000048C,
+};
+u32 R600_VS_CONSTANT36_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000490,
+};
+u32 R600_VS_CONSTANT37_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000494,
+};
+u32 R600_VS_CONSTANT38_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000498,
+};
+u32 R600_VS_CONSTANT39_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000049C,
+};
+u32 R600_VS_CONSTANT40_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000004A0,
+};
+u32 R600_VS_CONSTANT41_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000004A4,
+};
+u32 R600_VS_CONSTANT42_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000004A8,
+};
+u32 R600_VS_CONSTANT43_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000004AC,
+};
+u32 R600_VS_CONSTANT44_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000004B0,
+};
+u32 R600_VS_CONSTANT45_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000004B4,
+};
+u32 R600_VS_CONSTANT46_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000004B8,
+};
+u32 R600_VS_CONSTANT47_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000004BC,
+};
+u32 R600_VS_CONSTANT48_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000004C0,
+};
+u32 R600_VS_CONSTANT49_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000004C4,
+};
+u32 R600_VS_CONSTANT50_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000004C8,
+};
+u32 R600_VS_CONSTANT51_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000004CC,
+};
+u32 R600_VS_CONSTANT52_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000004D0,
+};
+u32 R600_VS_CONSTANT53_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000004D4,
+};
+u32 R600_VS_CONSTANT54_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000004D8,
+};
+u32 R600_VS_CONSTANT55_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000004DC,
+};
+u32 R600_VS_CONSTANT56_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000004E0,
+};
+u32 R600_VS_CONSTANT57_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000004E4,
+};
+u32 R600_VS_CONSTANT58_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000004E8,
+};
+u32 R600_VS_CONSTANT59_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000004EC,
+};
+u32 R600_VS_CONSTANT60_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000004F0,
+};
+u32 R600_VS_CONSTANT61_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000004F4,
+};
+u32 R600_VS_CONSTANT62_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000004F8,
+};
+u32 R600_VS_CONSTANT63_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000004FC,
+};
+u32 R600_VS_CONSTANT64_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000500,
+};
+u32 R600_VS_CONSTANT65_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000504,
+};
+u32 R600_VS_CONSTANT66_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000508,
+};
+u32 R600_VS_CONSTANT67_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000050C,
+};
+u32 R600_VS_CONSTANT68_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000510,
+};
+u32 R600_VS_CONSTANT69_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000514,
+};
+u32 R600_VS_CONSTANT70_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000518,
+};
+u32 R600_VS_CONSTANT71_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000051C,
+};
+u32 R600_VS_CONSTANT72_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000520,
+};
+u32 R600_VS_CONSTANT73_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000524,
+};
+u32 R600_VS_CONSTANT74_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000528,
+};
+u32 R600_VS_CONSTANT75_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000052C,
+};
+u32 R600_VS_CONSTANT76_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000530,
+};
+u32 R600_VS_CONSTANT77_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000534,
+};
+u32 R600_VS_CONSTANT78_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000538,
+};
+u32 R600_VS_CONSTANT79_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000053C,
+};
+u32 R600_VS_CONSTANT80_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000540,
+};
+u32 R600_VS_CONSTANT81_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000544,
+};
+u32 R600_VS_CONSTANT82_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000548,
+};
+u32 R600_VS_CONSTANT83_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000054C,
+};
+u32 R600_VS_CONSTANT84_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000550,
+};
+u32 R600_VS_CONSTANT85_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000554,
+};
+u32 R600_VS_CONSTANT86_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000558,
+};
+u32 R600_VS_CONSTANT87_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000055C,
+};
+u32 R600_VS_CONSTANT88_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000560,
+};
+u32 R600_VS_CONSTANT89_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000564,
+};
+u32 R600_VS_CONSTANT90_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000568,
+};
+u32 R600_VS_CONSTANT91_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000056C,
+};
+u32 R600_VS_CONSTANT92_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000570,
+};
+u32 R600_VS_CONSTANT93_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000574,
+};
+u32 R600_VS_CONSTANT94_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000578,
+};
+u32 R600_VS_CONSTANT95_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000057C,
+};
+u32 R600_VS_CONSTANT96_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000580,
+};
+u32 R600_VS_CONSTANT97_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000584,
+};
+u32 R600_VS_CONSTANT98_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000588,
+};
+u32 R600_VS_CONSTANT99_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000058C,
+};
+u32 R600_VS_CONSTANT100_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000590,
+};
+u32 R600_VS_CONSTANT101_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000594,
+};
+u32 R600_VS_CONSTANT102_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000598,
+};
+u32 R600_VS_CONSTANT103_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000059C,
+};
+u32 R600_VS_CONSTANT104_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000005A0,
+};
+u32 R600_VS_CONSTANT105_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000005A4,
+};
+u32 R600_VS_CONSTANT106_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000005A8,
+};
+u32 R600_VS_CONSTANT107_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000005AC,
+};
+u32 R600_VS_CONSTANT108_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000005B0,
+};
+u32 R600_VS_CONSTANT109_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000005B4,
+};
+u32 R600_VS_CONSTANT110_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000005B8,
+};
+u32 R600_VS_CONSTANT111_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000005BC,
+};
+u32 R600_VS_CONSTANT112_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000005C0,
+};
+u32 R600_VS_CONSTANT113_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000005C4,
+};
+u32 R600_VS_CONSTANT114_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000005C8,
+};
+u32 R600_VS_CONSTANT115_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000005CC,
+};
+u32 R600_VS_CONSTANT116_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000005D0,
+};
+u32 R600_VS_CONSTANT117_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000005D4,
+};
+u32 R600_VS_CONSTANT118_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000005D8,
+};
+u32 R600_VS_CONSTANT119_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000005DC,
+};
+u32 R600_VS_CONSTANT120_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000005E0,
+};
+u32 R600_VS_CONSTANT121_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000005E4,
+};
+u32 R600_VS_CONSTANT122_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000005E8,
+};
+u32 R600_VS_CONSTANT123_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000005EC,
+};
+u32 R600_VS_CONSTANT124_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000005F0,
+};
+u32 R600_VS_CONSTANT125_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000005F4,
+};
+u32 R600_VS_CONSTANT126_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000005F8,
+};
+u32 R600_VS_CONSTANT127_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000005FC,
+};
+u32 R600_VS_CONSTANT128_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000600,
+};
+u32 R600_VS_CONSTANT129_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000604,
+};
+u32 R600_VS_CONSTANT130_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000608,
+};
+u32 R600_VS_CONSTANT131_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000060C,
+};
+u32 R600_VS_CONSTANT132_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000610,
+};
+u32 R600_VS_CONSTANT133_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000614,
+};
+u32 R600_VS_CONSTANT134_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000618,
+};
+u32 R600_VS_CONSTANT135_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000061C,
+};
+u32 R600_VS_CONSTANT136_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000620,
+};
+u32 R600_VS_CONSTANT137_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000624,
+};
+u32 R600_VS_CONSTANT138_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000628,
+};
+u32 R600_VS_CONSTANT139_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000062C,
+};
+u32 R600_VS_CONSTANT140_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000630,
+};
+u32 R600_VS_CONSTANT141_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000634,
+};
+u32 R600_VS_CONSTANT142_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000638,
+};
+u32 R600_VS_CONSTANT143_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000063C,
+};
+u32 R600_VS_CONSTANT144_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000640,
+};
+u32 R600_VS_CONSTANT145_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000644,
+};
+u32 R600_VS_CONSTANT146_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000648,
+};
+u32 R600_VS_CONSTANT147_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000064C,
+};
+u32 R600_VS_CONSTANT148_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000650,
+};
+u32 R600_VS_CONSTANT149_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000654,
+};
+u32 R600_VS_CONSTANT150_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000658,
+};
+u32 R600_VS_CONSTANT151_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000065C,
+};
+u32 R600_VS_CONSTANT152_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000660,
+};
+u32 R600_VS_CONSTANT153_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000664,
+};
+u32 R600_VS_CONSTANT154_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000668,
+};
+u32 R600_VS_CONSTANT155_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000066C,
+};
+u32 R600_VS_CONSTANT156_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000670,
+};
+u32 R600_VS_CONSTANT157_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000674,
+};
+u32 R600_VS_CONSTANT158_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000678,
+};
+u32 R600_VS_CONSTANT159_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000067C,
+};
+u32 R600_VS_CONSTANT160_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000680,
+};
+u32 R600_VS_CONSTANT161_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000684,
+};
+u32 R600_VS_CONSTANT162_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000688,
+};
+u32 R600_VS_CONSTANT163_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000068C,
+};
+u32 R600_VS_CONSTANT164_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000690,
+};
+u32 R600_VS_CONSTANT165_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000694,
+};
+u32 R600_VS_CONSTANT166_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000698,
+};
+u32 R600_VS_CONSTANT167_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000069C,
+};
+u32 R600_VS_CONSTANT168_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000006A0,
+};
+u32 R600_VS_CONSTANT169_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000006A4,
+};
+u32 R600_VS_CONSTANT170_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000006A8,
+};
+u32 R600_VS_CONSTANT171_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000006AC,
+};
+u32 R600_VS_CONSTANT172_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000006B0,
+};
+u32 R600_VS_CONSTANT173_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000006B4,
+};
+u32 R600_VS_CONSTANT174_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000006B8,
+};
+u32 R600_VS_CONSTANT175_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000006BC,
+};
+u32 R600_VS_CONSTANT176_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000006C0,
+};
+u32 R600_VS_CONSTANT177_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000006C4,
+};
+u32 R600_VS_CONSTANT178_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000006C8,
+};
+u32 R600_VS_CONSTANT179_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000006CC,
+};
+u32 R600_VS_CONSTANT180_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000006D0,
+};
+u32 R600_VS_CONSTANT181_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000006D4,
+};
+u32 R600_VS_CONSTANT182_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000006D8,
+};
+u32 R600_VS_CONSTANT183_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000006DC,
+};
+u32 R600_VS_CONSTANT184_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000006E0,
+};
+u32 R600_VS_CONSTANT185_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000006E4,
+};
+u32 R600_VS_CONSTANT186_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000006E8,
+};
+u32 R600_VS_CONSTANT187_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000006EC,
+};
+u32 R600_VS_CONSTANT188_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000006F0,
+};
+u32 R600_VS_CONSTANT189_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000006F4,
+};
+u32 R600_VS_CONSTANT190_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000006F8,
+};
+u32 R600_VS_CONSTANT191_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000006FC,
+};
+u32 R600_VS_CONSTANT192_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000700,
+};
+u32 R600_VS_CONSTANT193_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000704,
+};
+u32 R600_VS_CONSTANT194_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000708,
+};
+u32 R600_VS_CONSTANT195_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000070C,
+};
+u32 R600_VS_CONSTANT196_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000710,
+};
+u32 R600_VS_CONSTANT197_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000714,
+};
+u32 R600_VS_CONSTANT198_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000718,
+};
+u32 R600_VS_CONSTANT199_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000071C,
+};
+u32 R600_VS_CONSTANT200_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000720,
+};
+u32 R600_VS_CONSTANT201_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000724,
+};
+u32 R600_VS_CONSTANT202_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000728,
+};
+u32 R600_VS_CONSTANT203_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000072C,
+};
+u32 R600_VS_CONSTANT204_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000730,
+};
+u32 R600_VS_CONSTANT205_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000734,
+};
+u32 R600_VS_CONSTANT206_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000738,
+};
+u32 R600_VS_CONSTANT207_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000073C,
+};
+u32 R600_VS_CONSTANT208_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000740,
+};
+u32 R600_VS_CONSTANT209_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000744,
+};
+u32 R600_VS_CONSTANT210_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000748,
+};
+u32 R600_VS_CONSTANT211_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000074C,
+};
+u32 R600_VS_CONSTANT212_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000750,
+};
+u32 R600_VS_CONSTANT213_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000754,
+};
+u32 R600_VS_CONSTANT214_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000758,
+};
+u32 R600_VS_CONSTANT215_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000075C,
+};
+u32 R600_VS_CONSTANT216_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000760,
+};
+u32 R600_VS_CONSTANT217_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000764,
+};
+u32 R600_VS_CONSTANT218_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000768,
+};
+u32 R600_VS_CONSTANT219_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000076C,
+};
+u32 R600_VS_CONSTANT220_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000770,
+};
+u32 R600_VS_CONSTANT221_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000774,
+};
+u32 R600_VS_CONSTANT222_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000778,
+};
+u32 R600_VS_CONSTANT223_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000077C,
+};
+u32 R600_VS_CONSTANT224_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000780,
+};
+u32 R600_VS_CONSTANT225_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000784,
+};
+u32 R600_VS_CONSTANT226_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000788,
+};
+u32 R600_VS_CONSTANT227_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000078C,
+};
+u32 R600_VS_CONSTANT228_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000790,
+};
+u32 R600_VS_CONSTANT229_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000794,
+};
+u32 R600_VS_CONSTANT230_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x00000798,
+};
+u32 R600_VS_CONSTANT231_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x0000079C,
+};
+u32 R600_VS_CONSTANT232_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000007A0,
+};
+u32 R600_VS_CONSTANT233_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000007A4,
+};
+u32 R600_VS_CONSTANT234_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000007A8,
+};
+u32 R600_VS_CONSTANT235_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000007AC,
+};
+u32 R600_VS_CONSTANT236_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000007B0,
+};
+u32 R600_VS_CONSTANT237_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000007B4,
+};
+u32 R600_VS_CONSTANT238_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000007B8,
+};
+u32 R600_VS_CONSTANT239_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000007BC,
+};
+u32 R600_VS_CONSTANT240_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000007C0,
+};
+u32 R600_VS_CONSTANT241_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000007C4,
+};
+u32 R600_VS_CONSTANT242_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000007C8,
+};
+u32 R600_VS_CONSTANT243_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000007CC,
+};
+u32 R600_VS_CONSTANT244_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000007D0,
+};
+u32 R600_VS_CONSTANT245_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000007D4,
+};
+u32 R600_VS_CONSTANT246_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000007D8,
+};
+u32 R600_VS_CONSTANT247_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000007DC,
+};
+u32 R600_VS_CONSTANT248_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000007E0,
+};
+u32 R600_VS_CONSTANT249_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000007E4,
+};
+u32 R600_VS_CONSTANT250_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000007E8,
+};
+u32 R600_VS_CONSTANT251_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000007EC,
+};
+u32 R600_VS_CONSTANT252_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000007F0,
+};
+u32 R600_VS_CONSTANT253_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000007F4,
+};
+u32 R600_VS_CONSTANT254_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000007F8,
+};
+u32 R600_VS_CONSTANT255_header_pm4[R600_CONSTANT_header_cpm4] = {
+	0xC0046A00,
+	0x000007FC,
+};
+#define R600_CONSTANT_state_cpm4 4
+u32 R600_CONSTANT_state_pm4[R600_CONSTANT_state_cpm4] = {
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+};
+
+
+/* R600_RESOURCE */
+#define R600_RESOURCE_header_cpm4 2
+u32 R600_PS_RESOURCE0_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000000,
+};
+u32 R600_PS_RESOURCE1_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000007,
+};
+u32 R600_PS_RESOURCE2_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000000E,
+};
+u32 R600_PS_RESOURCE3_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000015,
+};
+u32 R600_PS_RESOURCE4_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000001C,
+};
+u32 R600_PS_RESOURCE5_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000023,
+};
+u32 R600_PS_RESOURCE6_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000002A,
+};
+u32 R600_PS_RESOURCE7_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000031,
+};
+u32 R600_PS_RESOURCE8_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000038,
+};
+u32 R600_PS_RESOURCE9_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000003F,
+};
+u32 R600_PS_RESOURCE10_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000046,
+};
+u32 R600_PS_RESOURCE11_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000004D,
+};
+u32 R600_PS_RESOURCE12_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000054,
+};
+u32 R600_PS_RESOURCE13_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000005B,
+};
+u32 R600_PS_RESOURCE14_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000062,
+};
+u32 R600_PS_RESOURCE15_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000069,
+};
+u32 R600_PS_RESOURCE16_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000070,
+};
+u32 R600_PS_RESOURCE17_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000077,
+};
+u32 R600_PS_RESOURCE18_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000007E,
+};
+u32 R600_PS_RESOURCE19_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000085,
+};
+u32 R600_PS_RESOURCE20_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000008C,
+};
+u32 R600_PS_RESOURCE21_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000093,
+};
+u32 R600_PS_RESOURCE22_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000009A,
+};
+u32 R600_PS_RESOURCE23_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000000A1,
+};
+u32 R600_PS_RESOURCE24_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000000A8,
+};
+u32 R600_PS_RESOURCE25_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000000AF,
+};
+u32 R600_PS_RESOURCE26_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000000B6,
+};
+u32 R600_PS_RESOURCE27_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000000BD,
+};
+u32 R600_PS_RESOURCE28_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000000C4,
+};
+u32 R600_PS_RESOURCE29_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000000CB,
+};
+u32 R600_PS_RESOURCE30_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000000D2,
+};
+u32 R600_PS_RESOURCE31_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000000D9,
+};
+u32 R600_PS_RESOURCE32_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000000E0,
+};
+u32 R600_PS_RESOURCE33_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000000E7,
+};
+u32 R600_PS_RESOURCE34_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000000EE,
+};
+u32 R600_PS_RESOURCE35_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000000F5,
+};
+u32 R600_PS_RESOURCE36_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000000FC,
+};
+u32 R600_PS_RESOURCE37_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000103,
+};
+u32 R600_PS_RESOURCE38_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000010A,
+};
+u32 R600_PS_RESOURCE39_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000111,
+};
+u32 R600_PS_RESOURCE40_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000118,
+};
+u32 R600_PS_RESOURCE41_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000011F,
+};
+u32 R600_PS_RESOURCE42_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000126,
+};
+u32 R600_PS_RESOURCE43_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000012D,
+};
+u32 R600_PS_RESOURCE44_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000134,
+};
+u32 R600_PS_RESOURCE45_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000013B,
+};
+u32 R600_PS_RESOURCE46_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000142,
+};
+u32 R600_PS_RESOURCE47_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000149,
+};
+u32 R600_PS_RESOURCE48_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000150,
+};
+u32 R600_PS_RESOURCE49_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000157,
+};
+u32 R600_PS_RESOURCE50_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000015E,
+};
+u32 R600_PS_RESOURCE51_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000165,
+};
+u32 R600_PS_RESOURCE52_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000016C,
+};
+u32 R600_PS_RESOURCE53_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000173,
+};
+u32 R600_PS_RESOURCE54_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000017A,
+};
+u32 R600_PS_RESOURCE55_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000181,
+};
+u32 R600_PS_RESOURCE56_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000188,
+};
+u32 R600_PS_RESOURCE57_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000018F,
+};
+u32 R600_PS_RESOURCE58_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000196,
+};
+u32 R600_PS_RESOURCE59_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000019D,
+};
+u32 R600_PS_RESOURCE60_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000001A4,
+};
+u32 R600_PS_RESOURCE61_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000001AB,
+};
+u32 R600_PS_RESOURCE62_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000001B2,
+};
+u32 R600_PS_RESOURCE63_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000001B9,
+};
+u32 R600_PS_RESOURCE64_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000001C0,
+};
+u32 R600_PS_RESOURCE65_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000001C7,
+};
+u32 R600_PS_RESOURCE66_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000001CE,
+};
+u32 R600_PS_RESOURCE67_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000001D5,
+};
+u32 R600_PS_RESOURCE68_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000001DC,
+};
+u32 R600_PS_RESOURCE69_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000001E3,
+};
+u32 R600_PS_RESOURCE70_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000001EA,
+};
+u32 R600_PS_RESOURCE71_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000001F1,
+};
+u32 R600_PS_RESOURCE72_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000001F8,
+};
+u32 R600_PS_RESOURCE73_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000001FF,
+};
+u32 R600_PS_RESOURCE74_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000206,
+};
+u32 R600_PS_RESOURCE75_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000020D,
+};
+u32 R600_PS_RESOURCE76_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000214,
+};
+u32 R600_PS_RESOURCE77_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000021B,
+};
+u32 R600_PS_RESOURCE78_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000222,
+};
+u32 R600_PS_RESOURCE79_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000229,
+};
+u32 R600_PS_RESOURCE80_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000230,
+};
+u32 R600_PS_RESOURCE81_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000237,
+};
+u32 R600_PS_RESOURCE82_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000023E,
+};
+u32 R600_PS_RESOURCE83_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000245,
+};
+u32 R600_PS_RESOURCE84_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000024C,
+};
+u32 R600_PS_RESOURCE85_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000253,
+};
+u32 R600_PS_RESOURCE86_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000025A,
+};
+u32 R600_PS_RESOURCE87_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000261,
+};
+u32 R600_PS_RESOURCE88_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000268,
+};
+u32 R600_PS_RESOURCE89_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000026F,
+};
+u32 R600_PS_RESOURCE90_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000276,
+};
+u32 R600_PS_RESOURCE91_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000027D,
+};
+u32 R600_PS_RESOURCE92_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000284,
+};
+u32 R600_PS_RESOURCE93_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000028B,
+};
+u32 R600_PS_RESOURCE94_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000292,
+};
+u32 R600_PS_RESOURCE95_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000299,
+};
+u32 R600_PS_RESOURCE96_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000002A0,
+};
+u32 R600_PS_RESOURCE97_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000002A7,
+};
+u32 R600_PS_RESOURCE98_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000002AE,
+};
+u32 R600_PS_RESOURCE99_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000002B5,
+};
+u32 R600_PS_RESOURCE100_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000002BC,
+};
+u32 R600_PS_RESOURCE101_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000002C3,
+};
+u32 R600_PS_RESOURCE102_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000002CA,
+};
+u32 R600_PS_RESOURCE103_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000002D1,
+};
+u32 R600_PS_RESOURCE104_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000002D8,
+};
+u32 R600_PS_RESOURCE105_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000002DF,
+};
+u32 R600_PS_RESOURCE106_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000002E6,
+};
+u32 R600_PS_RESOURCE107_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000002ED,
+};
+u32 R600_PS_RESOURCE108_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000002F4,
+};
+u32 R600_PS_RESOURCE109_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000002FB,
+};
+u32 R600_PS_RESOURCE110_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000302,
+};
+u32 R600_PS_RESOURCE111_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000309,
+};
+u32 R600_PS_RESOURCE112_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000310,
+};
+u32 R600_PS_RESOURCE113_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000317,
+};
+u32 R600_PS_RESOURCE114_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000031E,
+};
+u32 R600_PS_RESOURCE115_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000325,
+};
+u32 R600_PS_RESOURCE116_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000032C,
+};
+u32 R600_PS_RESOURCE117_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000333,
+};
+u32 R600_PS_RESOURCE118_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000033A,
+};
+u32 R600_PS_RESOURCE119_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000341,
+};
+u32 R600_PS_RESOURCE120_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000348,
+};
+u32 R600_PS_RESOURCE121_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000034F,
+};
+u32 R600_PS_RESOURCE122_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000356,
+};
+u32 R600_PS_RESOURCE123_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000035D,
+};
+u32 R600_PS_RESOURCE124_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000364,
+};
+u32 R600_PS_RESOURCE125_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000036B,
+};
+u32 R600_PS_RESOURCE126_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000372,
+};
+u32 R600_PS_RESOURCE127_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000379,
+};
+u32 R600_PS_RESOURCE128_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000380,
+};
+u32 R600_PS_RESOURCE129_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000387,
+};
+u32 R600_PS_RESOURCE130_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000038E,
+};
+u32 R600_PS_RESOURCE131_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000395,
+};
+u32 R600_PS_RESOURCE132_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000039C,
+};
+u32 R600_PS_RESOURCE133_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000003A3,
+};
+u32 R600_PS_RESOURCE134_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000003AA,
+};
+u32 R600_PS_RESOURCE135_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000003B1,
+};
+u32 R600_PS_RESOURCE136_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000003B8,
+};
+u32 R600_PS_RESOURCE137_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000003BF,
+};
+u32 R600_PS_RESOURCE138_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000003C6,
+};
+u32 R600_PS_RESOURCE139_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000003CD,
+};
+u32 R600_PS_RESOURCE140_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000003D4,
+};
+u32 R600_PS_RESOURCE141_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000003DB,
+};
+u32 R600_PS_RESOURCE142_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000003E2,
+};
+u32 R600_PS_RESOURCE143_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000003E9,
+};
+u32 R600_PS_RESOURCE144_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000003F0,
+};
+u32 R600_PS_RESOURCE145_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000003F7,
+};
+u32 R600_PS_RESOURCE146_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000003FE,
+};
+u32 R600_PS_RESOURCE147_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000405,
+};
+u32 R600_PS_RESOURCE148_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000040C,
+};
+u32 R600_PS_RESOURCE149_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000413,
+};
+u32 R600_PS_RESOURCE150_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000041A,
+};
+u32 R600_PS_RESOURCE151_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000421,
+};
+u32 R600_PS_RESOURCE152_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000428,
+};
+u32 R600_PS_RESOURCE153_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000042F,
+};
+u32 R600_PS_RESOURCE154_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000436,
+};
+u32 R600_PS_RESOURCE155_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000043D,
+};
+u32 R600_PS_RESOURCE156_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000444,
+};
+u32 R600_PS_RESOURCE157_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000044B,
+};
+u32 R600_PS_RESOURCE158_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000452,
+};
+u32 R600_PS_RESOURCE159_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000459,
+};
+u32 R600_VS_RESOURCE0_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000460,
+};
+u32 R600_VS_RESOURCE1_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000467,
+};
+u32 R600_VS_RESOURCE2_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000046E,
+};
+u32 R600_VS_RESOURCE3_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000475,
+};
+u32 R600_VS_RESOURCE4_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000047C,
+};
+u32 R600_VS_RESOURCE5_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000483,
+};
+u32 R600_VS_RESOURCE6_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000048A,
+};
+u32 R600_VS_RESOURCE7_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000491,
+};
+u32 R600_VS_RESOURCE8_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000498,
+};
+u32 R600_VS_RESOURCE9_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000049F,
+};
+u32 R600_VS_RESOURCE10_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000004A6,
+};
+u32 R600_VS_RESOURCE11_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000004AD,
+};
+u32 R600_VS_RESOURCE12_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000004B4,
+};
+u32 R600_VS_RESOURCE13_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000004BB,
+};
+u32 R600_VS_RESOURCE14_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000004C2,
+};
+u32 R600_VS_RESOURCE15_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000004C9,
+};
+u32 R600_VS_RESOURCE16_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000004D0,
+};
+u32 R600_VS_RESOURCE17_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000004D7,
+};
+u32 R600_VS_RESOURCE18_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000004DE,
+};
+u32 R600_VS_RESOURCE19_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000004E5,
+};
+u32 R600_VS_RESOURCE20_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000004EC,
+};
+u32 R600_VS_RESOURCE21_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000004F3,
+};
+u32 R600_VS_RESOURCE22_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000004FA,
+};
+u32 R600_VS_RESOURCE23_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000501,
+};
+u32 R600_VS_RESOURCE24_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000508,
+};
+u32 R600_VS_RESOURCE25_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000050F,
+};
+u32 R600_VS_RESOURCE26_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000516,
+};
+u32 R600_VS_RESOURCE27_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000051D,
+};
+u32 R600_VS_RESOURCE28_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000524,
+};
+u32 R600_VS_RESOURCE29_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000052B,
+};
+u32 R600_VS_RESOURCE30_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000532,
+};
+u32 R600_VS_RESOURCE31_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000539,
+};
+u32 R600_VS_RESOURCE32_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000540,
+};
+u32 R600_VS_RESOURCE33_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000547,
+};
+u32 R600_VS_RESOURCE34_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000054E,
+};
+u32 R600_VS_RESOURCE35_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000555,
+};
+u32 R600_VS_RESOURCE36_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000055C,
+};
+u32 R600_VS_RESOURCE37_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000563,
+};
+u32 R600_VS_RESOURCE38_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000056A,
+};
+u32 R600_VS_RESOURCE39_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000571,
+};
+u32 R600_VS_RESOURCE40_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000578,
+};
+u32 R600_VS_RESOURCE41_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000057F,
+};
+u32 R600_VS_RESOURCE42_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000586,
+};
+u32 R600_VS_RESOURCE43_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000058D,
+};
+u32 R600_VS_RESOURCE44_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000594,
+};
+u32 R600_VS_RESOURCE45_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000059B,
+};
+u32 R600_VS_RESOURCE46_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000005A2,
+};
+u32 R600_VS_RESOURCE47_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000005A9,
+};
+u32 R600_VS_RESOURCE48_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000005B0,
+};
+u32 R600_VS_RESOURCE49_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000005B7,
+};
+u32 R600_VS_RESOURCE50_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000005BE,
+};
+u32 R600_VS_RESOURCE51_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000005C5,
+};
+u32 R600_VS_RESOURCE52_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000005CC,
+};
+u32 R600_VS_RESOURCE53_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000005D3,
+};
+u32 R600_VS_RESOURCE54_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000005DA,
+};
+u32 R600_VS_RESOURCE55_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000005E1,
+};
+u32 R600_VS_RESOURCE56_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000005E8,
+};
+u32 R600_VS_RESOURCE57_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000005EF,
+};
+u32 R600_VS_RESOURCE58_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000005F6,
+};
+u32 R600_VS_RESOURCE59_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000005FD,
+};
+u32 R600_VS_RESOURCE60_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000604,
+};
+u32 R600_VS_RESOURCE61_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000060B,
+};
+u32 R600_VS_RESOURCE62_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000612,
+};
+u32 R600_VS_RESOURCE63_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000619,
+};
+u32 R600_VS_RESOURCE64_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000620,
+};
+u32 R600_VS_RESOURCE65_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000627,
+};
+u32 R600_VS_RESOURCE66_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000062E,
+};
+u32 R600_VS_RESOURCE67_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000635,
+};
+u32 R600_VS_RESOURCE68_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000063C,
+};
+u32 R600_VS_RESOURCE69_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000643,
+};
+u32 R600_VS_RESOURCE70_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000064A,
+};
+u32 R600_VS_RESOURCE71_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000651,
+};
+u32 R600_VS_RESOURCE72_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000658,
+};
+u32 R600_VS_RESOURCE73_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000065F,
+};
+u32 R600_VS_RESOURCE74_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000666,
+};
+u32 R600_VS_RESOURCE75_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000066D,
+};
+u32 R600_VS_RESOURCE76_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000674,
+};
+u32 R600_VS_RESOURCE77_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000067B,
+};
+u32 R600_VS_RESOURCE78_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000682,
+};
+u32 R600_VS_RESOURCE79_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000689,
+};
+u32 R600_VS_RESOURCE80_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000690,
+};
+u32 R600_VS_RESOURCE81_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000697,
+};
+u32 R600_VS_RESOURCE82_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000069E,
+};
+u32 R600_VS_RESOURCE83_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000006A5,
+};
+u32 R600_VS_RESOURCE84_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000006AC,
+};
+u32 R600_VS_RESOURCE85_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000006B3,
+};
+u32 R600_VS_RESOURCE86_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000006BA,
+};
+u32 R600_VS_RESOURCE87_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000006C1,
+};
+u32 R600_VS_RESOURCE88_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000006C8,
+};
+u32 R600_VS_RESOURCE89_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000006CF,
+};
+u32 R600_VS_RESOURCE90_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000006D6,
+};
+u32 R600_VS_RESOURCE91_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000006DD,
+};
+u32 R600_VS_RESOURCE92_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000006E4,
+};
+u32 R600_VS_RESOURCE93_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000006EB,
+};
+u32 R600_VS_RESOURCE94_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000006F2,
+};
+u32 R600_VS_RESOURCE95_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000006F9,
+};
+u32 R600_VS_RESOURCE96_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000700,
+};
+u32 R600_VS_RESOURCE97_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000707,
+};
+u32 R600_VS_RESOURCE98_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000070E,
+};
+u32 R600_VS_RESOURCE99_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000715,
+};
+u32 R600_VS_RESOURCE100_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000071C,
+};
+u32 R600_VS_RESOURCE101_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000723,
+};
+u32 R600_VS_RESOURCE102_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000072A,
+};
+u32 R600_VS_RESOURCE103_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000731,
+};
+u32 R600_VS_RESOURCE104_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000738,
+};
+u32 R600_VS_RESOURCE105_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000073F,
+};
+u32 R600_VS_RESOURCE106_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000746,
+};
+u32 R600_VS_RESOURCE107_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000074D,
+};
+u32 R600_VS_RESOURCE108_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000754,
+};
+u32 R600_VS_RESOURCE109_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000075B,
+};
+u32 R600_VS_RESOURCE110_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000762,
+};
+u32 R600_VS_RESOURCE111_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000769,
+};
+u32 R600_VS_RESOURCE112_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000770,
+};
+u32 R600_VS_RESOURCE113_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000777,
+};
+u32 R600_VS_RESOURCE114_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000077E,
+};
+u32 R600_VS_RESOURCE115_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000785,
+};
+u32 R600_VS_RESOURCE116_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000078C,
+};
+u32 R600_VS_RESOURCE117_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000793,
+};
+u32 R600_VS_RESOURCE118_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000079A,
+};
+u32 R600_VS_RESOURCE119_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000007A1,
+};
+u32 R600_VS_RESOURCE120_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000007A8,
+};
+u32 R600_VS_RESOURCE121_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000007AF,
+};
+u32 R600_VS_RESOURCE122_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000007B6,
+};
+u32 R600_VS_RESOURCE123_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000007BD,
+};
+u32 R600_VS_RESOURCE124_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000007C4,
+};
+u32 R600_VS_RESOURCE125_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000007CB,
+};
+u32 R600_VS_RESOURCE126_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000007D2,
+};
+u32 R600_VS_RESOURCE127_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000007D9,
+};
+u32 R600_VS_RESOURCE128_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000007E0,
+};
+u32 R600_VS_RESOURCE129_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000007E7,
+};
+u32 R600_VS_RESOURCE130_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000007EE,
+};
+u32 R600_VS_RESOURCE131_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000007F5,
+};
+u32 R600_VS_RESOURCE132_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000007FC,
+};
+u32 R600_VS_RESOURCE133_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000803,
+};
+u32 R600_VS_RESOURCE134_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000080A,
+};
+u32 R600_VS_RESOURCE135_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000811,
+};
+u32 R600_VS_RESOURCE136_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000818,
+};
+u32 R600_VS_RESOURCE137_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000081F,
+};
+u32 R600_VS_RESOURCE138_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000826,
+};
+u32 R600_VS_RESOURCE139_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000082D,
+};
+u32 R600_VS_RESOURCE140_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000834,
+};
+u32 R600_VS_RESOURCE141_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000083B,
+};
+u32 R600_VS_RESOURCE142_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000842,
+};
+u32 R600_VS_RESOURCE143_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000849,
+};
+u32 R600_VS_RESOURCE144_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000850,
+};
+u32 R600_VS_RESOURCE145_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000857,
+};
+u32 R600_VS_RESOURCE146_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000085E,
+};
+u32 R600_VS_RESOURCE147_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000865,
+};
+u32 R600_VS_RESOURCE148_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000086C,
+};
+u32 R600_VS_RESOURCE149_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000873,
+};
+u32 R600_VS_RESOURCE150_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000087A,
+};
+u32 R600_VS_RESOURCE151_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000881,
+};
+u32 R600_VS_RESOURCE152_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000888,
+};
+u32 R600_VS_RESOURCE153_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000088F,
+};
+u32 R600_VS_RESOURCE154_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000896,
+};
+u32 R600_VS_RESOURCE155_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000089D,
+};
+u32 R600_VS_RESOURCE156_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000008A4,
+};
+u32 R600_VS_RESOURCE157_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000008AB,
+};
+u32 R600_VS_RESOURCE158_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000008B2,
+};
+u32 R600_VS_RESOURCE159_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000008B9,
+};
+u32 R600_FS_RESOURCE0_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000008C0,
+};
+u32 R600_FS_RESOURCE1_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000008C7,
+};
+u32 R600_FS_RESOURCE2_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000008CE,
+};
+u32 R600_FS_RESOURCE3_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000008D5,
+};
+u32 R600_FS_RESOURCE4_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000008DC,
+};
+u32 R600_FS_RESOURCE5_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000008E3,
+};
+u32 R600_FS_RESOURCE6_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000008EA,
+};
+u32 R600_FS_RESOURCE7_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000008F1,
+};
+u32 R600_FS_RESOURCE8_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000008F8,
+};
+u32 R600_FS_RESOURCE9_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000008FF,
+};
+u32 R600_FS_RESOURCE10_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000906,
+};
+u32 R600_FS_RESOURCE11_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000090D,
+};
+u32 R600_FS_RESOURCE12_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000914,
+};
+u32 R600_FS_RESOURCE13_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000091B,
+};
+u32 R600_FS_RESOURCE14_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000922,
+};
+u32 R600_FS_RESOURCE15_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000929,
+};
+u32 R600_GS_RESOURCE0_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000930,
+};
+u32 R600_GS_RESOURCE1_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000937,
+};
+u32 R600_GS_RESOURCE2_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000093E,
+};
+u32 R600_GS_RESOURCE3_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000945,
+};
+u32 R600_GS_RESOURCE4_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000094C,
+};
+u32 R600_GS_RESOURCE5_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000953,
+};
+u32 R600_GS_RESOURCE6_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000095A,
+};
+u32 R600_GS_RESOURCE7_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000961,
+};
+u32 R600_GS_RESOURCE8_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000968,
+};
+u32 R600_GS_RESOURCE9_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000096F,
+};
+u32 R600_GS_RESOURCE10_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000976,
+};
+u32 R600_GS_RESOURCE11_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000097D,
+};
+u32 R600_GS_RESOURCE12_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000984,
+};
+u32 R600_GS_RESOURCE13_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x0000098B,
+};
+u32 R600_GS_RESOURCE14_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000992,
+};
+u32 R600_GS_RESOURCE15_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000999,
+};
+u32 R600_GS_RESOURCE16_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000009A0,
+};
+u32 R600_GS_RESOURCE17_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000009A7,
+};
+u32 R600_GS_RESOURCE18_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000009AE,
+};
+u32 R600_GS_RESOURCE19_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000009B5,
+};
+u32 R600_GS_RESOURCE20_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000009BC,
+};
+u32 R600_GS_RESOURCE21_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000009C3,
+};
+u32 R600_GS_RESOURCE22_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000009CA,
+};
+u32 R600_GS_RESOURCE23_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000009D1,
+};
+u32 R600_GS_RESOURCE24_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000009D8,
+};
+u32 R600_GS_RESOURCE25_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000009DF,
+};
+u32 R600_GS_RESOURCE26_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000009E6,
+};
+u32 R600_GS_RESOURCE27_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000009ED,
+};
+u32 R600_GS_RESOURCE28_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000009F4,
+};
+u32 R600_GS_RESOURCE29_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x000009FB,
+};
+u32 R600_GS_RESOURCE30_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000A02,
+};
+u32 R600_GS_RESOURCE31_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000A09,
+};
+u32 R600_GS_RESOURCE32_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000A10,
+};
+u32 R600_GS_RESOURCE33_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000A17,
+};
+u32 R600_GS_RESOURCE34_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000A1E,
+};
+u32 R600_GS_RESOURCE35_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000A25,
+};
+u32 R600_GS_RESOURCE36_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000A2C,
+};
+u32 R600_GS_RESOURCE37_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000A33,
+};
+u32 R600_GS_RESOURCE38_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000A3A,
+};
+u32 R600_GS_RESOURCE39_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000A41,
+};
+u32 R600_GS_RESOURCE40_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000A48,
+};
+u32 R600_GS_RESOURCE41_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000A4F,
+};
+u32 R600_GS_RESOURCE42_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000A56,
+};
+u32 R600_GS_RESOURCE43_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000A5D,
+};
+u32 R600_GS_RESOURCE44_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000A64,
+};
+u32 R600_GS_RESOURCE45_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000A6B,
+};
+u32 R600_GS_RESOURCE46_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000A72,
+};
+u32 R600_GS_RESOURCE47_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000A79,
+};
+u32 R600_GS_RESOURCE48_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000A80,
+};
+u32 R600_GS_RESOURCE49_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000A87,
+};
+u32 R600_GS_RESOURCE50_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000A8E,
+};
+u32 R600_GS_RESOURCE51_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000A95,
+};
+u32 R600_GS_RESOURCE52_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000A9C,
+};
+u32 R600_GS_RESOURCE53_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000AA3,
+};
+u32 R600_GS_RESOURCE54_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000AAA,
+};
+u32 R600_GS_RESOURCE55_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000AB1,
+};
+u32 R600_GS_RESOURCE56_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000AB8,
+};
+u32 R600_GS_RESOURCE57_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000ABF,
+};
+u32 R600_GS_RESOURCE58_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000AC6,
+};
+u32 R600_GS_RESOURCE59_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000ACD,
+};
+u32 R600_GS_RESOURCE60_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000AD4,
+};
+u32 R600_GS_RESOURCE61_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000ADB,
+};
+u32 R600_GS_RESOURCE62_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000AE2,
+};
+u32 R600_GS_RESOURCE63_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000AE9,
+};
+u32 R600_GS_RESOURCE64_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000AF0,
+};
+u32 R600_GS_RESOURCE65_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000AF7,
+};
+u32 R600_GS_RESOURCE66_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000AFE,
+};
+u32 R600_GS_RESOURCE67_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000B05,
+};
+u32 R600_GS_RESOURCE68_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000B0C,
+};
+u32 R600_GS_RESOURCE69_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000B13,
+};
+u32 R600_GS_RESOURCE70_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000B1A,
+};
+u32 R600_GS_RESOURCE71_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000B21,
+};
+u32 R600_GS_RESOURCE72_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000B28,
+};
+u32 R600_GS_RESOURCE73_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000B2F,
+};
+u32 R600_GS_RESOURCE74_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000B36,
+};
+u32 R600_GS_RESOURCE75_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000B3D,
+};
+u32 R600_GS_RESOURCE76_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000B44,
+};
+u32 R600_GS_RESOURCE77_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000B4B,
+};
+u32 R600_GS_RESOURCE78_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000B52,
+};
+u32 R600_GS_RESOURCE79_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000B59,
+};
+u32 R600_GS_RESOURCE80_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000B60,
+};
+u32 R600_GS_RESOURCE81_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000B67,
+};
+u32 R600_GS_RESOURCE82_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000B6E,
+};
+u32 R600_GS_RESOURCE83_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000B75,
+};
+u32 R600_GS_RESOURCE84_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000B7C,
+};
+u32 R600_GS_RESOURCE85_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000B83,
+};
+u32 R600_GS_RESOURCE86_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000B8A,
+};
+u32 R600_GS_RESOURCE87_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000B91,
+};
+u32 R600_GS_RESOURCE88_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000B98,
+};
+u32 R600_GS_RESOURCE89_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000B9F,
+};
+u32 R600_GS_RESOURCE90_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000BA6,
+};
+u32 R600_GS_RESOURCE91_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000BAD,
+};
+u32 R600_GS_RESOURCE92_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000BB4,
+};
+u32 R600_GS_RESOURCE93_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000BBB,
+};
+u32 R600_GS_RESOURCE94_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000BC2,
+};
+u32 R600_GS_RESOURCE95_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000BC9,
+};
+u32 R600_GS_RESOURCE96_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000BD0,
+};
+u32 R600_GS_RESOURCE97_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000BD7,
+};
+u32 R600_GS_RESOURCE98_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000BDE,
+};
+u32 R600_GS_RESOURCE99_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000BE5,
+};
+u32 R600_GS_RESOURCE100_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000BEC,
+};
+u32 R600_GS_RESOURCE101_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000BF3,
+};
+u32 R600_GS_RESOURCE102_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000BFA,
+};
+u32 R600_GS_RESOURCE103_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000C01,
+};
+u32 R600_GS_RESOURCE104_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000C08,
+};
+u32 R600_GS_RESOURCE105_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000C0F,
+};
+u32 R600_GS_RESOURCE106_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000C16,
+};
+u32 R600_GS_RESOURCE107_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000C1D,
+};
+u32 R600_GS_RESOURCE108_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000C24,
+};
+u32 R600_GS_RESOURCE109_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000C2B,
+};
+u32 R600_GS_RESOURCE110_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000C32,
+};
+u32 R600_GS_RESOURCE111_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000C39,
+};
+u32 R600_GS_RESOURCE112_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000C40,
+};
+u32 R600_GS_RESOURCE113_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000C47,
+};
+u32 R600_GS_RESOURCE114_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000C4E,
+};
+u32 R600_GS_RESOURCE115_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000C55,
+};
+u32 R600_GS_RESOURCE116_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000C5C,
+};
+u32 R600_GS_RESOURCE117_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000C63,
+};
+u32 R600_GS_RESOURCE118_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000C6A,
+};
+u32 R600_GS_RESOURCE119_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000C71,
+};
+u32 R600_GS_RESOURCE120_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000C78,
+};
+u32 R600_GS_RESOURCE121_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000C7F,
+};
+u32 R600_GS_RESOURCE122_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000C86,
+};
+u32 R600_GS_RESOURCE123_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000C8D,
+};
+u32 R600_GS_RESOURCE124_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000C94,
+};
+u32 R600_GS_RESOURCE125_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000C9B,
+};
+u32 R600_GS_RESOURCE126_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000CA2,
+};
+u32 R600_GS_RESOURCE127_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000CA9,
+};
+u32 R600_GS_RESOURCE128_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000CB0,
+};
+u32 R600_GS_RESOURCE129_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000CB7,
+};
+u32 R600_GS_RESOURCE130_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000CBE,
+};
+u32 R600_GS_RESOURCE131_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000CC5,
+};
+u32 R600_GS_RESOURCE132_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000CCC,
+};
+u32 R600_GS_RESOURCE133_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000CD3,
+};
+u32 R600_GS_RESOURCE134_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000CDA,
+};
+u32 R600_GS_RESOURCE135_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000CE1,
+};
+u32 R600_GS_RESOURCE136_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000CE8,
+};
+u32 R600_GS_RESOURCE137_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000CEF,
+};
+u32 R600_GS_RESOURCE138_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000CF6,
+};
+u32 R600_GS_RESOURCE139_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000CFD,
+};
+u32 R600_GS_RESOURCE140_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000D04,
+};
+u32 R600_GS_RESOURCE141_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000D0B,
+};
+u32 R600_GS_RESOURCE142_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000D12,
+};
+u32 R600_GS_RESOURCE143_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000D19,
+};
+u32 R600_GS_RESOURCE144_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000D20,
+};
+u32 R600_GS_RESOURCE145_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000D27,
+};
+u32 R600_GS_RESOURCE146_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000D2E,
+};
+u32 R600_GS_RESOURCE147_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000D35,
+};
+u32 R600_GS_RESOURCE148_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000D3C,
+};
+u32 R600_GS_RESOURCE149_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000D43,
+};
+u32 R600_GS_RESOURCE150_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000D4A,
+};
+u32 R600_GS_RESOURCE151_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000D51,
+};
+u32 R600_GS_RESOURCE152_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000D58,
+};
+u32 R600_GS_RESOURCE153_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000D5F,
+};
+u32 R600_GS_RESOURCE154_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000D66,
+};
+u32 R600_GS_RESOURCE155_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000D6D,
+};
+u32 R600_GS_RESOURCE156_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000D74,
+};
+u32 R600_GS_RESOURCE157_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000D7B,
+};
+u32 R600_GS_RESOURCE158_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000D82,
+};
+u32 R600_GS_RESOURCE159_header_pm4[R600_RESOURCE_header_cpm4] = {
+	0xC0076D00,
+	0x00000D89,
+};
+#define R600_RESOURCE_state_cpm4 11
+u32 R600_RESOURCE_state_pm4[R600_RESOURCE_state_cpm4] = {
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x80000000,
+	0xC0001000,
+	0x00000000,
+	0xC0001000,
+	0x00000000,
+};
+
+/* R600_SAMPLER */
+#define R600_SAMPLER_header_cpm4 2
+u32 R600_PS_SAMPLER0_header_pm4[R600_SAMPLER_header_cpm4] = {
+	0xC0036E00,
+	0x00000000,
+};
+u32 R600_PS_SAMPLER1_header_pm4[R600_SAMPLER_header_cpm4] = {
+	0xC0036E00,
+	0x00000003,
+};
+u32 R600_PS_SAMPLER2_header_pm4[R600_SAMPLER_header_cpm4] = {
+	0xC0036E00,
+	0x00000006,
+};
+u32 R600_PS_SAMPLER3_header_pm4[R600_SAMPLER_header_cpm4] = {
+	0xC0036E00,
+	0x00000009,
+};
+u32 R600_PS_SAMPLER4_header_pm4[R600_SAMPLER_header_cpm4] = {
+	0xC0036E00,
+	0x0000000C,
+};
+u32 R600_PS_SAMPLER5_header_pm4[R600_SAMPLER_header_cpm4] = {
+	0xC0036E00,
+	0x0000000F,
+};
+u32 R600_PS_SAMPLER6_header_pm4[R600_SAMPLER_header_cpm4] = {
+	0xC0036E00,
+	0x00000012,
+};
+u32 R600_PS_SAMPLER7_header_pm4[R600_SAMPLER_header_cpm4] = {
+	0xC0036E00,
+	0x00000015,
+};
+u32 R600_PS_SAMPLER8_header_pm4[R600_SAMPLER_header_cpm4] = {
+	0xC0036E00,
+	0x00000018,
+};
+u32 R600_PS_SAMPLER9_header_pm4[R600_SAMPLER_header_cpm4] = {
+	0xC0036E00,
+	0x0000001B,
+};
+u32 R600_PS_SAMPLER10_header_pm4[R600_SAMPLER_header_cpm4] = {
+	0xC0036E00,
+	0x0000001E,
+};
+u32 R600_PS_SAMPLER11_header_pm4[R600_SAMPLER_header_cpm4] = {
+	0xC0036E00,
+	0x00000021,
+};
+u32 R600_PS_SAMPLER12_header_pm4[R600_SAMPLER_header_cpm4] = {
+	0xC0036E00,
+	0x00000024,
+};
+u32 R600_PS_SAMPLER13_header_pm4[R600_SAMPLER_header_cpm4] = {
+	0xC0036E00,
+	0x00000027,
+};
+u32 R600_PS_SAMPLER14_header_pm4[R600_SAMPLER_header_cpm4] = {
+	0xC0036E00,
+	0x0000002A,
+};
+u32 R600_PS_SAMPLER15_header_pm4[R600_SAMPLER_header_cpm4] = {
+	0xC0036E00,
+	0x0000002D,
+};
+u32 R600_PS_SAMPLER16_header_pm4[R600_SAMPLER_header_cpm4] = {
+	0xC0036E00,
+	0x00000030,
+};
+u32 R600_PS_SAMPLER17_header_pm4[R600_SAMPLER_header_cpm4] = {
+	0xC0036E00,
+	0x00000033,
+};
+u32 R600_VS_SAMPLER0_header_pm4[R600_SAMPLER_header_cpm4] = {
+	0xC0036E00,
+	0x00000036,
+};
+u32 R600_VS_SAMPLER1_header_pm4[R600_SAMPLER_header_cpm4] = {
+	0xC0036E00,
+	0x00000039,
+};
+u32 R600_VS_SAMPLER2_header_pm4[R600_SAMPLER_header_cpm4] = {
+	0xC0036E00,
+	0x0000003C,
+};
+u32 R600_VS_SAMPLER3_header_pm4[R600_SAMPLER_header_cpm4] = {
+	0xC0036E00,
+	0x0000003F,
+};
+u32 R600_VS_SAMPLER4_header_pm4[R600_SAMPLER_header_cpm4] = {
+	0xC0036E00,
+	0x00000042,
+};
+u32 R600_VS_SAMPLER5_header_pm4[R600_SAMPLER_header_cpm4] = {
+	0xC0036E00,
+	0x00000045,
+};
+u32 R600_VS_SAMPLER6_header_pm4[R600_SAMPLER_header_cpm4] = {
+	0xC0036E00,
+	0x00000048,
+};
+u32 R600_VS_SAMPLER7_header_pm4[R600_SAMPLER_header_cpm4] = {
+	0xC0036E00,
+	0x0000004B,
+};
+u32 R600_VS_SAMPLER8_header_pm4[R600_SAMPLER_header_cpm4] = {
+	0xC0036E00,
+	0x0000004E,
+};
+u32 R600_VS_SAMPLER9_header_pm4[R600_SAMPLER_header_cpm4] = {
+	0xC0036E00,
+	0x00000051,
+};
+u32 R600_VS_SAMPLER10_header_pm4[R600_SAMPLER_header_cpm4] = {
+	0xC0036E00,
+	0x00000054,
+};
+u32 R600_VS_SAMPLER11_header_pm4[R600_SAMPLER_header_cpm4] = {
+	0xC0036E00,
+	0x00000057,
+};
+u32 R600_VS_SAMPLER12_header_pm4[R600_SAMPLER_header_cpm4] = {
+	0xC0036E00,
+	0x0000005A,
+};
+u32 R600_VS_SAMPLER13_header_pm4[R600_SAMPLER_header_cpm4] = {
+	0xC0036E00,
+	0x0000005D,
+};
+u32 R600_VS_SAMPLER14_header_pm4[R600_SAMPLER_header_cpm4] = {
+	0xC0036E00,
+	0x00000060,
+};
+u32 R600_VS_SAMPLER15_header_pm4[R600_SAMPLER_header_cpm4] = {
+	0xC0036E00,
+	0x00000063,
+};
+u32 R600_VS_SAMPLER16_header_pm4[R600_SAMPLER_header_cpm4] = {
+	0xC0036E00,
+	0x00000066,
+};
+u32 R600_VS_SAMPLER17_header_pm4[R600_SAMPLER_header_cpm4] = {
+	0xC0036E00,
+	0x00000069,
+};
+u32 R600_GS_SAMPLER0_header_pm4[R600_SAMPLER_header_cpm4] = {
+	0xC0036E00,
+	0x0000006C,
+};
+u32 R600_GS_SAMPLER1_header_pm4[R600_SAMPLER_header_cpm4] = {
+	0xC0036E00,
+	0x0000006F,
+};
+u32 R600_GS_SAMPLER2_header_pm4[R600_SAMPLER_header_cpm4] = {
+	0xC0036E00,
+	0x00000072,
+};
+u32 R600_GS_SAMPLER3_header_pm4[R600_SAMPLER_header_cpm4] = {
+	0xC0036E00,
+	0x00000075,
+};
+u32 R600_GS_SAMPLER4_header_pm4[R600_SAMPLER_header_cpm4] = {
+	0xC0036E00,
+	0x00000078,
+};
+u32 R600_GS_SAMPLER5_header_pm4[R600_SAMPLER_header_cpm4] = {
+	0xC0036E00,
+	0x0000007B,
+};
+u32 R600_GS_SAMPLER6_header_pm4[R600_SAMPLER_header_cpm4] = {
+	0xC0036E00,
+	0x0000007E,
+};
+u32 R600_GS_SAMPLER7_header_pm4[R600_SAMPLER_header_cpm4] = {
+	0xC0036E00,
+	0x00000081,
+};
+u32 R600_GS_SAMPLER8_header_pm4[R600_SAMPLER_header_cpm4] = {
+	0xC0036E00,
+	0x00000084,
+};
+u32 R600_GS_SAMPLER9_header_pm4[R600_SAMPLER_header_cpm4] = {
+	0xC0036E00,
+	0x00000087,
+};
+u32 R600_GS_SAMPLER10_header_pm4[R600_SAMPLER_header_cpm4] = {
+	0xC0036E00,
+	0x0000008A,
+};
+u32 R600_GS_SAMPLER11_header_pm4[R600_SAMPLER_header_cpm4] = {
+	0xC0036E00,
+	0x0000008D,
+};
+u32 R600_GS_SAMPLER12_header_pm4[R600_SAMPLER_header_cpm4] = {
+	0xC0036E00,
+	0x00000090,
+};
+u32 R600_GS_SAMPLER13_header_pm4[R600_SAMPLER_header_cpm4] = {
+	0xC0036E00,
+	0x00000093,
+};
+u32 R600_GS_SAMPLER14_header_pm4[R600_SAMPLER_header_cpm4] = {
+	0xC0036E00,
+	0x00000096,
+};
+u32 R600_GS_SAMPLER15_header_pm4[R600_SAMPLER_header_cpm4] = {
+	0xC0036E00,
+	0x00000099,
+};
+u32 R600_GS_SAMPLER16_header_pm4[R600_SAMPLER_header_cpm4] = {
+	0xC0036E00,
+	0x0000009C,
+};
+u32 R600_GS_SAMPLER17_header_pm4[R600_SAMPLER_header_cpm4] = {
+	0xC0036E00,
+	0x0000009F,
+};
+#define R600_SAMPLER_state_cpm4 3
+u32 R600_SAMPLER_state_pm4[R600_SAMPLER_state_cpm4] = {
+	0x00000000,
+	0x00000000,
+	0x00000000,
+};
+
+/* R600_SAMPLER_BORDER */
+#define R600_SAMPLER_BORDER_header_cpm4 2
+u32 R600_PS_SAMPLER_BORDER0_header_pm4[R600_SAMPLER_BORDER_header_cpm4] = {
+	0xC0046800,
+	0x00000900,
+};
+u32 R600_PS_SAMPLER_BORDER1_header_pm4[R600_SAMPLER_BORDER_header_cpm4] = {
+	0xC0046800,
+	0x00000904,
+};
+u32 R600_PS_SAMPLER_BORDER2_header_pm4[R600_SAMPLER_BORDER_header_cpm4] = {
+	0xC0046800,
+	0x00000908,
+};
+u32 R600_PS_SAMPLER_BORDER3_header_pm4[R600_SAMPLER_BORDER_header_cpm4] = {
+	0xC0046800,
+	0x0000090C,
+};
+u32 R600_PS_SAMPLER_BORDER4_header_pm4[R600_SAMPLER_BORDER_header_cpm4] = {
+	0xC0046800,
+	0x00000910,
+};
+u32 R600_PS_SAMPLER_BORDER5_header_pm4[R600_SAMPLER_BORDER_header_cpm4] = {
+	0xC0046800,
+	0x00000914,
+};
+u32 R600_PS_SAMPLER_BORDER6_header_pm4[R600_SAMPLER_BORDER_header_cpm4] = {
+	0xC0046800,
+	0x00000918,
+};
+u32 R600_PS_SAMPLER_BORDER7_header_pm4[R600_SAMPLER_BORDER_header_cpm4] = {
+	0xC0046800,
+	0x0000091C,
+};
+u32 R600_PS_SAMPLER_BORDER8_header_pm4[R600_SAMPLER_BORDER_header_cpm4] = {
+	0xC0046800,
+	0x00000920,
+};
+u32 R600_PS_SAMPLER_BORDER9_header_pm4[R600_SAMPLER_BORDER_header_cpm4] = {
+	0xC0046800,
+	0x00000924,
+};
+u32 R600_PS_SAMPLER_BORDER10_header_pm4[R600_SAMPLER_BORDER_header_cpm4] = {
+	0xC0046800,
+	0x00000928,
+};
+u32 R600_PS_SAMPLER_BORDER11_header_pm4[R600_SAMPLER_BORDER_header_cpm4] = {
+	0xC0046800,
+	0x0000092C,
+};
+u32 R600_PS_SAMPLER_BORDER12_header_pm4[R600_SAMPLER_BORDER_header_cpm4] = {
+	0xC0046800,
+	0x00000930,
+};
+u32 R600_PS_SAMPLER_BORDER13_header_pm4[R600_SAMPLER_BORDER_header_cpm4] = {
+	0xC0046800,
+	0x00000934,
+};
+u32 R600_PS_SAMPLER_BORDER14_header_pm4[R600_SAMPLER_BORDER_header_cpm4] = {
+	0xC0046800,
+	0x00000938,
+};
+u32 R600_PS_SAMPLER_BORDER15_header_pm4[R600_SAMPLER_BORDER_header_cpm4] = {
+	0xC0046800,
+	0x0000093C,
+};
+u32 R600_PS_SAMPLER_BORDER16_header_pm4[R600_SAMPLER_BORDER_header_cpm4] = {
+	0xC0046800,
+	0x00000940,
+};
+u32 R600_PS_SAMPLER_BORDER17_header_pm4[R600_SAMPLER_BORDER_header_cpm4] = {
+	0xC0046800,
+	0x00000944,
+};
+u32 R600_VS_SAMPLER_BORDER0_header_pm4[R600_SAMPLER_BORDER_header_cpm4] = {
+	0xC0046800,
+	0x00000980,
+};
+u32 R600_VS_SAMPLER_BORDER1_header_pm4[R600_SAMPLER_BORDER_header_cpm4] = {
+	0xC0046800,
+	0x00000984,
+};
+u32 R600_VS_SAMPLER_BORDER2_header_pm4[R600_SAMPLER_BORDER_header_cpm4] = {
+	0xC0046800,
+	0x00000988,
+};
+u32 R600_VS_SAMPLER_BORDER3_header_pm4[R600_SAMPLER_BORDER_header_cpm4] = {
+	0xC0046800,
+	0x0000098C,
+};
+u32 R600_VS_SAMPLER_BORDER4_header_pm4[R600_SAMPLER_BORDER_header_cpm4] = {
+	0xC0046800,
+	0x00000990,
+};
+u32 R600_VS_SAMPLER_BORDER5_header_pm4[R600_SAMPLER_BORDER_header_cpm4] = {
+	0xC0046800,
+	0x00000994,
+};
+u32 R600_VS_SAMPLER_BORDER6_header_pm4[R600_SAMPLER_BORDER_header_cpm4] = {
+	0xC0046800,
+	0x00000998,
+};
+u32 R600_VS_SAMPLER_BORDER7_header_pm4[R600_SAMPLER_BORDER_header_cpm4] = {
+	0xC0046800,
+	0x0000099C,
+};
+u32 R600_VS_SAMPLER_BORDER8_header_pm4[R600_SAMPLER_BORDER_header_cpm4] = {
+	0xC0046800,
+	0x000009A0,
+};
+u32 R600_VS_SAMPLER_BORDER9_header_pm4[R600_SAMPLER_BORDER_header_cpm4] = {
+	0xC0046800,
+	0x000009A4,
+};
+u32 R600_VS_SAMPLER_BORDER10_header_pm4[R600_SAMPLER_BORDER_header_cpm4] = {
+	0xC0046800,
+	0x000009A8,
+};
+u32 R600_VS_SAMPLER_BORDER11_header_pm4[R600_SAMPLER_BORDER_header_cpm4] = {
+	0xC0046800,
+	0x000009AC,
+};
+u32 R600_VS_SAMPLER_BORDER12_header_pm4[R600_SAMPLER_BORDER_header_cpm4] = {
+	0xC0046800,
+	0x000009B0,
+};
+u32 R600_VS_SAMPLER_BORDER13_header_pm4[R600_SAMPLER_BORDER_header_cpm4] = {
+	0xC0046800,
+	0x000009B4,
+};
+u32 R600_VS_SAMPLER_BORDER14_header_pm4[R600_SAMPLER_BORDER_header_cpm4] = {
+	0xC0046800,
+	0x000009B8,
+};
+u32 R600_VS_SAMPLER_BORDER15_header_pm4[R600_SAMPLER_BORDER_header_cpm4] = {
+	0xC0046800,
+	0x000009BC,
+};
+u32 R600_VS_SAMPLER_BORDER16_header_pm4[R600_SAMPLER_BORDER_header_cpm4] = {
+	0xC0046800,
+	0x000009C0,
+};
+u32 R600_VS_SAMPLER_BORDER17_header_pm4[R600_SAMPLER_BORDER_header_cpm4] = {
+	0xC0046800,
+	0x000009C4,
+};
+u32 R600_GS_SAMPLER_BORDER0_header_pm4[R600_SAMPLER_BORDER_header_cpm4] = {
+	0xC0046800,
+	0x00000A00,
+};
+u32 R600_GS_SAMPLER_BORDER1_header_pm4[R600_SAMPLER_BORDER_header_cpm4] = {
+	0xC0046800,
+	0x00000A04,
+};
+u32 R600_GS_SAMPLER_BORDER2_header_pm4[R600_SAMPLER_BORDER_header_cpm4] = {
+	0xC0046800,
+	0x00000A08,
+};
+u32 R600_GS_SAMPLER_BORDER3_header_pm4[R600_SAMPLER_BORDER_header_cpm4] = {
+	0xC0046800,
+	0x00000A0C,
+};
+u32 R600_GS_SAMPLER_BORDER4_header_pm4[R600_SAMPLER_BORDER_header_cpm4] = {
+	0xC0046800,
+	0x00000A10,
+};
+u32 R600_GS_SAMPLER_BORDER5_header_pm4[R600_SAMPLER_BORDER_header_cpm4] = {
+	0xC0046800,
+	0x00000A14,
+};
+u32 R600_GS_SAMPLER_BORDER6_header_pm4[R600_SAMPLER_BORDER_header_cpm4] = {
+	0xC0046800,
+	0x00000A18,
+};
+u32 R600_GS_SAMPLER_BORDER7_header_pm4[R600_SAMPLER_BORDER_header_cpm4] = {
+	0xC0046800,
+	0x00000A1C,
+};
+u32 R600_GS_SAMPLER_BORDER8_header_pm4[R600_SAMPLER_BORDER_header_cpm4] = {
+	0xC0046800,
+	0x00000A20,
+};
+u32 R600_GS_SAMPLER_BORDER9_header_pm4[R600_SAMPLER_BORDER_header_cpm4] = {
+	0xC0046800,
+	0x00000A24,
+};
+u32 R600_GS_SAMPLER_BORDER10_header_pm4[R600_SAMPLER_BORDER_header_cpm4] = {
+	0xC0046800,
+	0x00000A28,
+};
+u32 R600_GS_SAMPLER_BORDER11_header_pm4[R600_SAMPLER_BORDER_header_cpm4] = {
+	0xC0046800,
+	0x00000A2C,
+};
+u32 R600_GS_SAMPLER_BORDER12_header_pm4[R600_SAMPLER_BORDER_header_cpm4] = {
+	0xC0046800,
+	0x00000A30,
+};
+u32 R600_GS_SAMPLER_BORDER13_header_pm4[R600_SAMPLER_BORDER_header_cpm4] = {
+	0xC0046800,
+	0x00000A34,
+};
+u32 R600_GS_SAMPLER_BORDER14_header_pm4[R600_SAMPLER_BORDER_header_cpm4] = {
+	0xC0046800,
+	0x00000A38,
+};
+u32 R600_GS_SAMPLER_BORDER15_header_pm4[R600_SAMPLER_BORDER_header_cpm4] = {
+	0xC0046800,
+	0x00000A3C,
+};
+u32 R600_GS_SAMPLER_BORDER16_header_pm4[R600_SAMPLER_BORDER_header_cpm4] = {
+	0xC0046800,
+	0x00000A40,
+};
+u32 R600_GS_SAMPLER_BORDER17_header_pm4[R600_SAMPLER_BORDER_header_cpm4] = {
+	0xC0046800,
+	0x00000A44,
+};
+#define R600_SAMPLER_BORDER_state_cpm4 4
+u32 R600_SAMPLER_BORDER_state_pm4[R600_SAMPLER_BORDER_state_cpm4] = {
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+};
+
+static const struct radeon_type R600_types[] = {
+	{R600_CONFIG_header_pm4, R600_CONFIG_header_cpm4, R600_CONFIG_state_pm4, R600_CONFIG_state_cpm4, 0, 0},
+	{R600_CB_CNTL_header_pm4, R600_CB_CNTL_header_cpm4, R600_CB_CNTL_state_pm4, R600_CB_CNTL_state_cpm4, 0, 0},
+	{R600_RASTERIZER_header_pm4, R600_RASTERIZER_header_cpm4, R600_RASTERIZER_state_pm4, R600_RASTERIZER_state_cpm4, 0, 0},
+	{R600_VIEWPORT_header_pm4, R600_VIEWPORT_header_cpm4, R600_VIEWPORT_state_pm4, R600_VIEWPORT_state_cpm4, 0, 0},
+	{R600_SCISSOR_header_pm4, R600_SCISSOR_header_cpm4, R600_SCISSOR_state_pm4, R600_SCISSOR_state_cpm4, 0, 0},
+	{R600_BLEND_header_pm4, R600_BLEND_header_cpm4, R600_BLEND_state_pm4, R600_BLEND_state_cpm4, 0, 0},
+	{R600_DSA_header_pm4, R600_DSA_header_cpm4, R600_DSA_state_pm4, R600_DSA_state_cpm4, 0, 0},
+	{R600_VGT_header_pm4, R600_VGT_header_cpm4, R600_VGT_state_pm4, R600_VGT_state_cpm4, 0, 0},
+	{R600_QUERY_header_pm4, R600_QUERY_header_cpm4, R600_QUERY_state_pm4, R600_QUERY_state_cpm4, 0, 0},
+	{R600_QUERY_header_pm4, R600_QUERY_header_cpm4, R600_QUERY_state_pm4, R600_QUERY_state_cpm4, 0, 0},
+	{R600_VS_SHADER_header_pm4, R600_VS_SHADER_header_cpm4, R600_VS_SHADER_state_pm4, R600_VS_SHADER_state_cpm4, 0, 0},
+	{R600_PS_SHADER_header_pm4, R600_PS_SHADER_header_cpm4, R600_PS_SHADER_state_pm4, R600_PS_SHADER_state_cpm4, 0, 0},
+	{R600_DB_header_pm4, R600_DB_header_cpm4, R600_DB_state_pm4, R600_DB_state_cpm4, R600_FLUSH_DB, R600_DIRTY_ALL},
+	{R600_CB0_header_pm4, R600_CB0_header_cpm4, R600_CB0_state_pm4, R600_CB0_state_cpm4, R600_FLUSH_CB0, R600_DIRTY_ALL},
+	{R600_CB1_header_pm4, R600_CB1_header_cpm4, R600_CB1_state_pm4, R600_CB1_state_cpm4, R600_FLUSH_CB1, R600_DIRTY_ALL},
+	{R600_CB2_header_pm4, R600_CB2_header_cpm4, R600_CB2_state_pm4, R600_CB2_state_cpm4, R600_FLUSH_CB2, R600_DIRTY_ALL},
+	{R600_CB3_header_pm4, R600_CB3_header_cpm4, R600_CB3_state_pm4, R600_CB3_state_cpm4, R600_FLUSH_CB3, R600_DIRTY_ALL},
+	{R600_CB4_header_pm4, R600_CB4_header_cpm4, R600_CB4_state_pm4, R600_CB4_state_cpm4, R600_FLUSH_CB4, R600_DIRTY_ALL},
+	{R600_CB5_header_pm4, R600_CB5_header_cpm4, R600_CB5_state_pm4, R600_CB5_state_cpm4, R600_FLUSH_CB5, R600_DIRTY_ALL},
+	{R600_CB6_header_pm4, R600_CB6_header_cpm4, R600_CB6_state_pm4, R600_CB6_state_cpm4, R600_FLUSH_CB6, R600_DIRTY_ALL},
+	{R600_CB7_header_pm4, R600_CB7_header_cpm4, R600_CB7_state_pm4, R600_CB7_state_cpm4, R600_FLUSH_CB7, R600_DIRTY_ALL},
+	{R600_UCP0_header_pm4, R600_UCP_header_cpm4, R600_UCP_state_pm4, R600_UCP_state_cpm4, 0, 0},
+	{R600_UCP1_header_pm4, R600_UCP_header_cpm4, R600_UCP_state_pm4, R600_UCP_state_cpm4, 0, 0},
+	{R600_UCP2_header_pm4, R600_UCP_header_cpm4, R600_UCP_state_pm4, R600_UCP_state_cpm4, 0, 0},
+	{R600_UCP3_header_pm4, R600_UCP_header_cpm4, R600_UCP_state_pm4, R600_UCP_state_cpm4, 0, 0},
+	{R600_UCP4_header_pm4, R600_UCP_header_cpm4, R600_UCP_state_pm4, R600_UCP_state_cpm4, 0, 0},
+	{R600_UCP5_header_pm4, R600_UCP_header_cpm4, R600_UCP_state_pm4, R600_UCP_state_cpm4, 0, 0},
+	{R600_PS_RESOURCE0_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE1_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE2_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE3_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE4_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE5_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE6_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE7_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE8_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE9_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE10_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE11_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE12_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE13_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE14_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE15_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE16_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE17_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE18_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE19_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE20_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE21_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE22_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE23_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE24_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE25_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE26_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE27_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE28_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE29_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE30_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE31_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE32_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE33_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE34_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE35_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE36_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE37_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE38_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE39_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE40_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE41_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE42_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE43_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE44_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE45_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE46_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE47_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE48_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE49_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE50_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE51_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE52_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE53_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE54_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE55_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE56_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE57_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE58_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE59_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE60_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE61_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE62_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE63_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE64_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE65_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE66_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE67_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE68_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE69_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE70_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE71_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE72_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE73_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE74_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE75_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE76_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE77_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE78_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE79_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE80_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE81_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE82_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE83_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE84_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE85_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE86_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE87_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE88_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE89_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE90_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE91_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE92_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE93_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE94_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE95_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE96_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE97_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE98_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE99_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE100_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE101_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE102_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE103_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE104_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE105_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE106_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE107_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE108_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE109_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE110_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE111_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE112_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE113_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE114_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE115_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE116_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE117_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE118_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE119_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE120_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE121_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE122_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE123_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE124_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE125_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE126_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE127_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE128_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE129_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE130_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE131_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE132_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE133_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE134_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE135_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE136_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE137_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE138_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE139_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE140_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE141_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE142_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE143_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE144_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE145_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE146_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE147_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE148_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE149_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE150_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE151_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE152_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE153_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE154_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE155_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE156_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE157_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE158_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE159_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE0_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE1_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE2_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE3_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE4_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE5_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE6_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE7_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE8_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE9_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE10_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE11_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE12_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE13_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE14_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE15_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE16_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE17_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE18_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE19_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE20_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE21_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE22_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE23_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE24_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE25_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE26_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE27_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE28_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE29_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE30_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE31_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE32_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE33_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE34_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE35_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE36_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE37_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE38_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE39_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE40_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE41_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE42_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE43_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE44_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE45_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE46_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE47_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE48_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE49_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE50_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE51_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE52_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE53_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE54_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE55_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE56_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE57_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE58_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE59_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE60_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE61_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE62_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE63_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE64_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE65_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE66_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE67_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE68_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE69_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE70_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE71_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE72_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE73_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE74_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE75_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE76_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE77_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE78_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE79_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE80_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE81_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE82_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE83_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE84_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE85_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE86_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE87_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE88_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE89_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE90_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE91_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE92_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE93_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE94_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE95_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE96_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE97_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE98_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE99_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE100_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE101_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE102_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE103_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE104_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE105_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE106_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE107_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE108_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE109_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE110_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE111_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE112_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE113_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE114_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE115_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE116_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE117_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE118_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE119_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE120_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE121_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE122_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE123_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE124_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE125_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE126_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE127_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE128_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE129_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE130_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE131_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE132_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE133_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE134_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE135_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE136_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE137_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE138_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE139_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE140_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE141_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE142_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE143_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE144_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE145_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE146_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE147_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE148_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE149_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE150_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE151_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE152_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE153_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE154_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE155_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE156_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE157_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE158_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE159_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_FS_RESOURCE0_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_FS_RESOURCE1_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_FS_RESOURCE2_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_FS_RESOURCE3_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_FS_RESOURCE4_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_FS_RESOURCE5_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_FS_RESOURCE6_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_FS_RESOURCE7_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_FS_RESOURCE8_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_FS_RESOURCE9_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_FS_RESOURCE10_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_FS_RESOURCE11_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_FS_RESOURCE12_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_FS_RESOURCE13_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_FS_RESOURCE14_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_FS_RESOURCE15_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE0_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE1_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE2_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE3_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE4_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE5_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE6_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE7_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE8_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE9_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE10_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE11_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE12_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE13_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE14_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE15_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE16_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE17_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE18_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE19_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE20_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE21_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE22_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE23_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE24_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE25_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE26_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE27_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE28_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE29_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE30_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE31_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE32_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE33_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE34_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE35_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE36_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE37_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE38_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE39_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE40_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE41_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE42_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE43_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE44_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE45_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE46_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE47_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE48_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE49_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE50_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE51_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE52_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE53_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE54_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE55_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE56_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE57_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE58_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE59_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE60_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE61_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE62_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE63_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE64_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE65_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE66_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE67_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE68_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE69_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE70_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE71_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE72_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE73_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE74_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE75_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE76_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE77_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE78_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE79_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE80_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE81_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE82_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE83_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE84_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE85_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE86_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE87_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE88_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE89_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE90_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE91_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE92_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE93_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE94_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE95_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE96_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE97_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE98_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE99_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE100_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE101_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE102_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE103_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE104_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE105_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE106_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE107_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE108_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE109_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE110_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE111_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE112_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE113_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE114_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE115_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE116_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE117_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE118_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE119_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE120_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE121_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE122_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE123_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE124_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE125_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE126_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE127_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE128_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE129_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE130_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE131_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE132_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE133_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE134_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE135_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE136_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE137_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE138_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE139_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE140_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE141_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE142_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE143_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE144_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE145_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE146_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE147_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE148_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE149_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE150_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE151_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE152_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE153_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE154_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE155_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE156_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE157_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE158_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE159_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_CONSTANT0_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT1_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT2_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT3_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT4_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT5_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT6_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT7_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT8_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT9_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT10_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT11_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT12_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT13_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT14_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT15_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT16_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT17_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT18_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT19_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT20_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT21_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT22_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT23_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT24_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT25_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT26_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT27_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT28_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT29_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT30_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT31_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT32_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT33_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT34_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT35_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT36_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT37_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT38_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT39_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT40_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT41_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT42_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT43_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT44_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT45_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT46_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT47_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT48_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT49_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT50_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT51_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT52_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT53_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT54_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT55_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT56_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT57_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT58_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT59_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT60_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT61_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT62_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT63_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT64_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT65_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT66_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT67_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT68_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT69_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT70_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT71_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT72_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT73_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT74_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT75_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT76_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT77_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT78_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT79_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT80_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT81_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT82_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT83_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT84_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT85_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT86_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT87_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT88_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT89_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT90_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT91_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT92_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT93_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT94_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT95_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT96_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT97_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT98_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT99_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT100_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT101_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT102_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT103_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT104_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT105_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT106_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT107_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT108_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT109_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT110_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT111_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT112_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT113_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT114_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT115_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT116_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT117_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT118_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT119_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT120_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT121_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT122_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT123_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT124_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT125_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT126_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT127_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT128_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT129_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT130_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT131_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT132_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT133_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT134_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT135_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT136_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT137_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT138_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT139_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT140_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT141_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT142_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT143_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT144_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT145_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT146_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT147_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT148_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT149_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT150_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT151_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT152_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT153_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT154_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT155_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT156_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT157_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT158_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT159_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT160_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT161_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT162_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT163_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT164_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT165_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT166_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT167_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT168_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT169_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT170_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT171_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT172_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT173_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT174_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT175_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT176_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT177_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT178_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT179_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT180_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT181_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT182_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT183_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT184_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT185_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT186_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT187_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT188_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT189_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT190_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT191_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT192_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT193_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT194_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT195_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT196_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT197_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT198_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT199_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT200_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT201_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT202_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT203_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT204_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT205_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT206_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT207_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT208_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT209_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT210_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT211_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT212_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT213_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT214_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT215_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT216_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT217_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT218_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT219_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT220_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT221_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT222_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT223_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT224_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT225_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT226_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT227_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT228_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT229_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT230_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT231_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT232_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT233_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT234_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT235_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT236_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT237_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT238_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT239_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT240_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT241_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT242_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT243_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT244_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT245_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT246_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT247_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT248_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT249_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT250_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT251_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT252_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT253_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT254_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT255_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT0_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT1_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT2_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT3_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT4_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT5_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT6_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT7_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT8_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT9_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT10_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT11_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT12_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT13_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT14_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT15_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT16_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT17_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT18_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT19_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT20_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT21_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT22_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT23_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT24_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT25_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT26_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT27_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT28_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT29_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT30_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT31_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT32_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT33_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT34_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT35_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT36_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT37_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT38_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT39_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT40_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT41_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT42_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT43_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT44_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT45_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT46_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT47_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT48_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT49_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT50_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT51_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT52_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT53_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT54_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT55_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT56_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT57_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT58_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT59_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT60_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT61_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT62_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT63_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT64_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT65_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT66_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT67_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT68_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT69_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT70_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT71_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT72_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT73_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT74_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT75_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT76_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT77_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT78_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT79_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT80_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT81_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT82_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT83_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT84_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT85_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT86_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT87_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT88_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT89_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT90_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT91_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT92_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT93_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT94_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT95_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT96_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT97_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT98_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT99_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT100_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT101_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT102_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT103_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT104_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT105_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT106_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT107_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT108_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT109_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT110_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT111_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT112_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT113_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT114_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT115_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT116_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT117_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT118_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT119_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT120_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT121_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT122_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT123_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT124_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT125_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT126_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT127_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT128_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT129_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT130_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT131_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT132_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT133_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT134_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT135_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT136_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT137_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT138_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT139_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT140_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT141_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT142_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT143_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT144_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT145_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT146_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT147_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT148_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT149_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT150_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT151_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT152_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT153_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT154_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT155_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT156_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT157_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT158_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT159_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT160_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT161_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT162_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT163_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT164_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT165_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT166_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT167_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT168_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT169_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT170_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT171_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT172_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT173_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT174_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT175_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT176_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT177_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT178_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT179_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT180_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT181_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT182_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT183_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT184_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT185_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT186_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT187_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT188_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT189_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT190_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT191_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT192_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT193_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT194_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT195_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT196_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT197_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT198_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT199_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT200_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT201_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT202_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT203_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT204_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT205_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT206_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT207_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT208_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT209_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT210_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT211_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT212_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT213_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT214_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT215_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT216_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT217_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT218_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT219_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT220_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT221_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT222_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT223_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT224_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT225_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT226_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT227_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT228_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT229_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT230_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT231_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT232_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT233_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT234_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT235_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT236_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT237_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT238_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT239_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT240_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT241_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT242_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT243_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT244_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT245_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT246_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT247_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT248_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT249_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT250_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT251_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT252_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT253_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT254_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT255_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER0_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER1_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER2_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER3_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER4_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER5_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER6_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER7_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER8_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER9_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER10_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER11_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER12_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER13_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER14_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER15_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER16_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER17_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER0_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER1_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER2_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER3_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER4_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER5_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER6_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER7_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER8_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER9_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER10_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER11_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER12_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER13_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER14_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER15_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER16_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER17_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER0_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER1_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER2_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER3_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER4_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER5_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER6_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER7_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER8_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER9_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER10_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER11_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER12_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER13_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER14_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER15_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER16_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER17_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER_BORDER0_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER_BORDER1_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER_BORDER2_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER_BORDER3_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER_BORDER4_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER_BORDER5_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER_BORDER6_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER_BORDER7_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER_BORDER8_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER_BORDER9_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER_BORDER10_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER_BORDER11_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER_BORDER12_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER_BORDER13_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER_BORDER14_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER_BORDER15_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER_BORDER16_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER_BORDER17_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER_BORDER0_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER_BORDER1_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER_BORDER2_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER_BORDER3_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER_BORDER4_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER_BORDER5_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER_BORDER6_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER_BORDER7_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER_BORDER8_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER_BORDER9_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER_BORDER10_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER_BORDER11_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER_BORDER12_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER_BORDER13_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER_BORDER14_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER_BORDER15_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER_BORDER16_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER_BORDER17_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER_BORDER0_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER_BORDER1_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER_BORDER2_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER_BORDER3_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER_BORDER4_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER_BORDER5_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER_BORDER6_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER_BORDER7_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER_BORDER8_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER_BORDER9_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER_BORDER10_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER_BORDER11_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER_BORDER12_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER_BORDER13_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER_BORDER14_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER_BORDER15_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER_BORDER16_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER_BORDER17_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_DRAW_AUTO_header_pm4, R600_DRAW_AUTO_header_cpm4, R600_DRAW_AUTO_state_pm4, R600_DRAW_AUTO_state_cpm4, 0, 0},
+	{R600_DRAW_header_pm4, R600_DRAW_header_cpm4, R600_DRAW_state_pm4, R600_DRAW_state_cpm4, 0, 0}
+};
+
+static const struct radeon_type R700_types[] = {
+	{R700_CONFIG_header_pm4, R700_CONFIG_header_cpm4, R600_CONFIG_state_pm4, R600_CONFIG_state_cpm4, 0, 0},
+	{R600_CB_CNTL_header_pm4, R600_CB_CNTL_header_cpm4, R600_CB_CNTL_state_pm4, R600_CB_CNTL_state_cpm4, 0, 0},
+	{R600_RASTERIZER_header_pm4, R600_RASTERIZER_header_cpm4, R600_RASTERIZER_state_pm4, R600_RASTERIZER_state_cpm4, 0, 0},
+	{R600_VIEWPORT_header_pm4, R600_VIEWPORT_header_cpm4, R600_VIEWPORT_state_pm4, R600_VIEWPORT_state_cpm4, 0, 0},
+	{R600_SCISSOR_header_pm4, R600_SCISSOR_header_cpm4, R600_SCISSOR_state_pm4, R600_SCISSOR_state_cpm4, 0, 0},
+	{R600_BLEND_header_pm4, R600_BLEND_header_cpm4, R600_BLEND_state_pm4, R600_BLEND_state_cpm4, 0, 0},
+	{R600_DSA_header_pm4, R600_DSA_header_cpm4, R600_DSA_state_pm4, R600_DSA_state_cpm4, 0, 0},
+	{R600_VGT_header_pm4, R600_VGT_header_cpm4, R600_VGT_state_pm4, R600_VGT_state_cpm4, 0, 0},
+	{R600_QUERY_header_pm4, R600_QUERY_header_cpm4, R600_QUERY_state_pm4, R600_QUERY_state_cpm4, 0, 0},
+	{R600_QUERY_header_pm4, R600_QUERY_header_cpm4, R600_QUERY_state_pm4, R600_QUERY_state_cpm4, 0, 0},
+	{R600_VS_SHADER_header_pm4, R600_VS_SHADER_header_cpm4, R600_VS_SHADER_state_pm4, R600_VS_SHADER_state_cpm4, 0, 0},
+	{R600_PS_SHADER_header_pm4, R600_PS_SHADER_header_cpm4, R600_PS_SHADER_state_pm4, R600_PS_SHADER_state_cpm4, 0, 0},
+	{R600_DB_header_pm4, R600_DB_header_cpm4, R600_DB_state_pm4, R600_DB_state_cpm4, R600_FLUSH_DB, R600_DIRTY_ALL},
+	{R600_CB0_header_pm4, R600_CB0_header_cpm4, R600_CB0_state_pm4, R600_CB0_state_cpm4, R600_FLUSH_CB0, R600_DIRTY_ALL},
+	{R600_CB1_header_pm4, R600_CB1_header_cpm4, R600_CB1_state_pm4, R600_CB1_state_cpm4, R600_FLUSH_CB1, R600_DIRTY_ALL},
+	{R600_CB2_header_pm4, R600_CB2_header_cpm4, R600_CB2_state_pm4, R600_CB2_state_cpm4, R600_FLUSH_CB2, R600_DIRTY_ALL},
+	{R600_CB3_header_pm4, R600_CB3_header_cpm4, R600_CB3_state_pm4, R600_CB3_state_cpm4, R600_FLUSH_CB3, R600_DIRTY_ALL},
+	{R600_CB4_header_pm4, R600_CB4_header_cpm4, R600_CB4_state_pm4, R600_CB4_state_cpm4, R600_FLUSH_CB4, R600_DIRTY_ALL},
+	{R600_CB5_header_pm4, R600_CB5_header_cpm4, R600_CB5_state_pm4, R600_CB5_state_cpm4, R600_FLUSH_CB5, R600_DIRTY_ALL},
+	{R600_CB6_header_pm4, R600_CB6_header_cpm4, R600_CB6_state_pm4, R600_CB6_state_cpm4, R600_FLUSH_CB6, R600_DIRTY_ALL},
+	{R600_CB7_header_pm4, R600_CB7_header_cpm4, R600_CB7_state_pm4, R600_CB7_state_cpm4, R600_FLUSH_CB7, R600_DIRTY_ALL},
+	{R600_UCP0_header_pm4, R600_UCP_header_cpm4, R600_UCP_state_pm4, R600_UCP_state_cpm4, 0, 0},
+	{R600_UCP1_header_pm4, R600_UCP_header_cpm4, R600_UCP_state_pm4, R600_UCP_state_cpm4, 0, 0},
+	{R600_UCP2_header_pm4, R600_UCP_header_cpm4, R600_UCP_state_pm4, R600_UCP_state_cpm4, 0, 0},
+	{R600_UCP3_header_pm4, R600_UCP_header_cpm4, R600_UCP_state_pm4, R600_UCP_state_cpm4, 0, 0},
+	{R600_UCP4_header_pm4, R600_UCP_header_cpm4, R600_UCP_state_pm4, R600_UCP_state_cpm4, 0, 0},
+	{R600_UCP5_header_pm4, R600_UCP_header_cpm4, R600_UCP_state_pm4, R600_UCP_state_cpm4, 0, 0},
+	{R600_PS_RESOURCE0_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE1_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE2_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE3_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE4_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE5_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE6_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE7_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE8_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE9_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE10_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE11_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE12_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE13_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE14_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE15_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE16_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE17_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE18_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE19_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE20_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE21_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE22_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE23_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE24_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE25_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE26_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE27_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE28_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE29_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE30_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE31_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE32_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE33_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE34_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE35_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE36_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE37_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE38_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE39_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE40_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE41_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE42_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE43_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE44_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE45_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE46_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE47_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE48_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE49_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE50_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE51_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE52_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE53_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE54_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE55_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE56_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE57_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE58_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE59_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE60_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE61_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE62_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE63_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE64_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE65_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE66_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE67_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE68_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE69_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE70_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE71_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE72_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE73_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE74_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE75_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE76_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE77_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE78_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE79_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE80_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE81_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE82_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE83_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE84_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE85_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE86_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE87_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE88_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE89_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE90_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE91_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE92_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE93_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE94_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE95_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE96_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE97_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE98_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE99_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE100_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE101_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE102_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE103_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE104_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE105_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE106_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE107_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE108_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE109_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE110_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE111_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE112_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE113_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE114_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE115_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE116_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE117_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE118_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE119_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE120_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE121_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE122_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE123_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE124_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE125_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE126_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE127_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE128_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE129_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE130_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE131_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE132_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE133_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE134_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE135_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE136_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE137_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE138_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE139_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE140_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE141_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE142_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE143_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE144_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE145_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE146_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE147_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE148_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE149_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE150_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE151_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE152_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE153_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE154_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE155_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE156_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE157_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE158_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_RESOURCE159_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE0_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE1_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE2_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE3_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE4_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE5_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE6_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE7_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE8_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE9_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE10_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE11_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE12_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE13_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE14_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE15_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE16_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE17_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE18_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE19_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE20_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE21_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE22_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE23_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE24_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE25_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE26_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE27_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE28_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE29_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE30_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE31_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE32_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE33_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE34_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE35_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE36_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE37_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE38_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE39_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE40_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE41_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE42_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE43_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE44_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE45_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE46_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE47_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE48_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE49_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE50_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE51_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE52_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE53_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE54_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE55_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE56_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE57_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE58_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE59_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE60_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE61_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE62_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE63_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE64_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE65_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE66_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE67_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE68_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE69_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE70_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE71_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE72_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE73_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE74_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE75_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE76_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE77_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE78_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE79_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE80_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE81_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE82_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE83_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE84_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE85_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE86_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE87_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE88_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE89_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE90_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE91_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE92_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE93_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE94_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE95_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE96_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE97_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE98_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE99_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE100_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE101_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE102_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE103_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE104_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE105_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE106_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE107_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE108_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE109_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE110_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE111_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE112_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE113_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE114_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE115_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE116_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE117_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE118_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE119_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE120_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE121_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE122_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE123_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE124_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE125_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE126_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE127_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE128_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE129_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE130_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE131_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE132_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE133_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE134_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE135_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE136_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE137_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE138_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE139_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE140_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE141_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE142_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE143_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE144_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE145_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE146_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE147_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE148_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE149_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE150_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE151_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE152_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE153_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE154_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE155_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE156_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE157_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE158_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_VS_RESOURCE159_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_FS_RESOURCE0_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_FS_RESOURCE1_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_FS_RESOURCE2_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_FS_RESOURCE3_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_FS_RESOURCE4_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_FS_RESOURCE5_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_FS_RESOURCE6_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_FS_RESOURCE7_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_FS_RESOURCE8_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_FS_RESOURCE9_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_FS_RESOURCE10_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_FS_RESOURCE11_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_FS_RESOURCE12_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_FS_RESOURCE13_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_FS_RESOURCE14_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_FS_RESOURCE15_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE0_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE1_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE2_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE3_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE4_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE5_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE6_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE7_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE8_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE9_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE10_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE11_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE12_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE13_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE14_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE15_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE16_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE17_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE18_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE19_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE20_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE21_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE22_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE23_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE24_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE25_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE26_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE27_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE28_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE29_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE30_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE31_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE32_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE33_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE34_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE35_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE36_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE37_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE38_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE39_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE40_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE41_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE42_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE43_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE44_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE45_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE46_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE47_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE48_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE49_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE50_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE51_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE52_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE53_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE54_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE55_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE56_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE57_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE58_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE59_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE60_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE61_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE62_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE63_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE64_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE65_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE66_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE67_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE68_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE69_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE70_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE71_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE72_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE73_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE74_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE75_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE76_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE77_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE78_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE79_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE80_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE81_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE82_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE83_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE84_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE85_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE86_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE87_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE88_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE89_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE90_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE91_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE92_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE93_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE94_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE95_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE96_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE97_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE98_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE99_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE100_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE101_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE102_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE103_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE104_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE105_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE106_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE107_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE108_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE109_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE110_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE111_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE112_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE113_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE114_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE115_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE116_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE117_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE118_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE119_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE120_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE121_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE122_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE123_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE124_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE125_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE126_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE127_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE128_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE129_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE130_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE131_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE132_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE133_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE134_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE135_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE136_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE137_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE138_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE139_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE140_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE141_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE142_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE143_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE144_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE145_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE146_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE147_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE148_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE149_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE150_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE151_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE152_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE153_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE154_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE155_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE156_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE157_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE158_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_GS_RESOURCE159_header_pm4, R600_RESOURCE_header_cpm4, R600_RESOURCE_state_pm4, R600_RESOURCE_state_cpm4, R600_FLUSH_RESOURCE, 0},
+	{R600_PS_CONSTANT0_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT1_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT2_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT3_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT4_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT5_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT6_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT7_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT8_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT9_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT10_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT11_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT12_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT13_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT14_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT15_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT16_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT17_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT18_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT19_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT20_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT21_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT22_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT23_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT24_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT25_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT26_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT27_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT28_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT29_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT30_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT31_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT32_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT33_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT34_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT35_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT36_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT37_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT38_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT39_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT40_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT41_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT42_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT43_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT44_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT45_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT46_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT47_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT48_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT49_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT50_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT51_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT52_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT53_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT54_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT55_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT56_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT57_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT58_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT59_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT60_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT61_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT62_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT63_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT64_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT65_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT66_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT67_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT68_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT69_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT70_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT71_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT72_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT73_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT74_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT75_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT76_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT77_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT78_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT79_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT80_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT81_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT82_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT83_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT84_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT85_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT86_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT87_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT88_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT89_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT90_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT91_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT92_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT93_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT94_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT95_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT96_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT97_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT98_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT99_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT100_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT101_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT102_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT103_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT104_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT105_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT106_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT107_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT108_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT109_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT110_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT111_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT112_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT113_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT114_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT115_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT116_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT117_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT118_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT119_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT120_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT121_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT122_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT123_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT124_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT125_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT126_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT127_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT128_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT129_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT130_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT131_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT132_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT133_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT134_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT135_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT136_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT137_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT138_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT139_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT140_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT141_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT142_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT143_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT144_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT145_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT146_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT147_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT148_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT149_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT150_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT151_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT152_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT153_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT154_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT155_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT156_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT157_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT158_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT159_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT160_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT161_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT162_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT163_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT164_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT165_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT166_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT167_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT168_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT169_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT170_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT171_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT172_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT173_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT174_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT175_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT176_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT177_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT178_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT179_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT180_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT181_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT182_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT183_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT184_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT185_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT186_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT187_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT188_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT189_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT190_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT191_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT192_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT193_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT194_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT195_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT196_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT197_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT198_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT199_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT200_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT201_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT202_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT203_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT204_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT205_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT206_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT207_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT208_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT209_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT210_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT211_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT212_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT213_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT214_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT215_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT216_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT217_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT218_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT219_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT220_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT221_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT222_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT223_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT224_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT225_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT226_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT227_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT228_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT229_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT230_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT231_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT232_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT233_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT234_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT235_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT236_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT237_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT238_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT239_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT240_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT241_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT242_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT243_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT244_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT245_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT246_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT247_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT248_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT249_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT250_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT251_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT252_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT253_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT254_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_CONSTANT255_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT0_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT1_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT2_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT3_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT4_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT5_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT6_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT7_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT8_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT9_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT10_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT11_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT12_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT13_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT14_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT15_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT16_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT17_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT18_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT19_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT20_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT21_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT22_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT23_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT24_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT25_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT26_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT27_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT28_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT29_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT30_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT31_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT32_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT33_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT34_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT35_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT36_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT37_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT38_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT39_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT40_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT41_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT42_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT43_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT44_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT45_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT46_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT47_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT48_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT49_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT50_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT51_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT52_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT53_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT54_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT55_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT56_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT57_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT58_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT59_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT60_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT61_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT62_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT63_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT64_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT65_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT66_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT67_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT68_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT69_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT70_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT71_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT72_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT73_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT74_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT75_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT76_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT77_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT78_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT79_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT80_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT81_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT82_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT83_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT84_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT85_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT86_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT87_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT88_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT89_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT90_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT91_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT92_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT93_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT94_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT95_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT96_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT97_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT98_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT99_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT100_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT101_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT102_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT103_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT104_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT105_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT106_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT107_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT108_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT109_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT110_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT111_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT112_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT113_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT114_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT115_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT116_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT117_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT118_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT119_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT120_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT121_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT122_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT123_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT124_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT125_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT126_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT127_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT128_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT129_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT130_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT131_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT132_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT133_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT134_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT135_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT136_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT137_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT138_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT139_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT140_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT141_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT142_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT143_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT144_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT145_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT146_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT147_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT148_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT149_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT150_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT151_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT152_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT153_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT154_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT155_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT156_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT157_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT158_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT159_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT160_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT161_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT162_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT163_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT164_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT165_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT166_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT167_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT168_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT169_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT170_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT171_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT172_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT173_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT174_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT175_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT176_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT177_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT178_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT179_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT180_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT181_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT182_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT183_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT184_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT185_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT186_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT187_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT188_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT189_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT190_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT191_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT192_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT193_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT194_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT195_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT196_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT197_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT198_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT199_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT200_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT201_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT202_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT203_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT204_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT205_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT206_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT207_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT208_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT209_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT210_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT211_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT212_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT213_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT214_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT215_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT216_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT217_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT218_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT219_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT220_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT221_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT222_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT223_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT224_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT225_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT226_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT227_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT228_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT229_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT230_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT231_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT232_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT233_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT234_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT235_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT236_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT237_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT238_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT239_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT240_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT241_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT242_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT243_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT244_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT245_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT246_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT247_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT248_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT249_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT250_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT251_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT252_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT253_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT254_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_VS_CONSTANT255_header_pm4, R600_CONSTANT_header_cpm4, R600_CONSTANT_state_pm4, R600_CONSTANT_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER0_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER1_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER2_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER3_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER4_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER5_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER6_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER7_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER8_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER9_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER10_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER11_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER12_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER13_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER14_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER15_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER16_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER17_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER0_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER1_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER2_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER3_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER4_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER5_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER6_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER7_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER8_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER9_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER10_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER11_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER12_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER13_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER14_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER15_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER16_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER17_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER0_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER1_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER2_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER3_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER4_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER5_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER6_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER7_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER8_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER9_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER10_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER11_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER12_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER13_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER14_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER15_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER16_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER17_header_pm4, R600_SAMPLER_header_cpm4, R600_SAMPLER_state_pm4, R600_SAMPLER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER_BORDER0_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER_BORDER1_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER_BORDER2_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER_BORDER3_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER_BORDER4_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER_BORDER5_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER_BORDER6_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER_BORDER7_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER_BORDER8_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER_BORDER9_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER_BORDER10_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER_BORDER11_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER_BORDER12_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER_BORDER13_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER_BORDER14_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER_BORDER15_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER_BORDER16_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_PS_SAMPLER_BORDER17_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER_BORDER0_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER_BORDER1_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER_BORDER2_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER_BORDER3_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER_BORDER4_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER_BORDER5_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER_BORDER6_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER_BORDER7_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER_BORDER8_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER_BORDER9_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER_BORDER10_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER_BORDER11_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER_BORDER12_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER_BORDER13_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER_BORDER14_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER_BORDER15_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER_BORDER16_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_VS_SAMPLER_BORDER17_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER_BORDER0_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER_BORDER1_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER_BORDER2_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER_BORDER3_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER_BORDER4_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER_BORDER5_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER_BORDER6_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER_BORDER7_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER_BORDER8_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER_BORDER9_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER_BORDER10_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER_BORDER11_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER_BORDER12_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER_BORDER13_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER_BORDER14_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER_BORDER15_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER_BORDER16_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_GS_SAMPLER_BORDER17_header_pm4, R600_SAMPLER_BORDER_header_cpm4, R600_SAMPLER_BORDER_state_pm4, R600_SAMPLER_BORDER_state_cpm4, 0, 0},
+	{R600_DRAW_AUTO_header_pm4, R600_DRAW_AUTO_header_cpm4, R600_DRAW_AUTO_state_pm4, R600_DRAW_AUTO_state_cpm4, 0, 0},
+	{R600_DRAW_header_pm4, R600_DRAW_header_cpm4, R600_DRAW_state_pm4, R600_DRAW_state_cpm4, 0, 0}
+};

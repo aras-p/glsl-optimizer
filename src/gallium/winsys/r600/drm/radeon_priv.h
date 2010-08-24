@@ -30,25 +30,17 @@ struct radeon_ctx;
  * radeon functions
  */
 typedef int (*radeon_state_pm4_t)(struct radeon_state *state);
-struct radeon_register {
-	unsigned			offset;
-	unsigned			need_reloc;
-	unsigned			bo_id;
-	char				name[64];
-};
 
 struct radeon_type {
-	unsigned			npm4;
-	unsigned			id;
-	unsigned			range_start;
-	unsigned			range_end;
-	unsigned			stride;
-	unsigned			immediate;
-	char				name[64];
-	unsigned			nstates;
-	radeon_state_pm4_t		pm4;
-	const struct radeon_register	*regs;
+	const u32			*header_pm4;
+	const u32			header_cpm4;
+	const u32			*state_pm4;
+	const u32			state_cpm4;
+	const u32			flush_flags;
+	const u32			dirty_flags;
 };
+
+typedef int (*radeon_ctx_bo_flush_t)(struct radeon_ctx *ctx, struct radeon_bo *bo, u32 flags, u32 *placement);
 
 struct radeon {
 	int				fd;
@@ -56,8 +48,8 @@ struct radeon {
 	unsigned			device;
 	unsigned			family;
 	unsigned			nstate;
-	unsigned			ntype;
 	const struct radeon_type	*type;
+	radeon_ctx_bo_flush_t		bo_flush;
 };
 
 extern struct radeon *radeon_new(int fd, unsigned device);
@@ -68,12 +60,9 @@ extern int radeon_is_family_compatible(unsigned family1, unsigned family2);
 extern int radeon_reg_id(struct radeon *radeon, unsigned offset, unsigned *typeid, unsigned *stateid, unsigned *id);
 extern unsigned radeon_type_from_id(struct radeon *radeon, unsigned id);
 
-
-int radeon_ctx_set_bo_new(struct radeon_ctx *ctx, struct radeon_bo *bo);
-struct radeon_bo *radeon_ctx_get_bo(struct radeon_ctx *ctx, unsigned reloc);
-void radeon_ctx_get_placement(struct radeon_ctx *ctx, unsigned reloc, u32 *placement);
-int radeon_ctx_set_draw_new(struct radeon_ctx *ctx, struct radeon_draw *draw);
 int radeon_ctx_draw(struct radeon_ctx *ctx);
+int radeon_ctx_reloc(struct radeon_ctx *ctx, struct radeon_bo *bo,
+			unsigned id, unsigned *placement);
 
 /*
  * r600/r700 context functions
@@ -90,7 +79,6 @@ extern int radeon_state_register_set(struct radeon_state *state, unsigned offset
 extern struct radeon_state *radeon_state_duplicate(struct radeon_state *state);
 extern int radeon_state_replace_always(struct radeon_state *ostate, struct radeon_state *nstate);
 extern int radeon_state_pm4_generic(struct radeon_state *state);
-extern int radeon_state_reloc(struct radeon_state *state, unsigned id, unsigned bo_id);
 
 /*
  * radeon draw functions

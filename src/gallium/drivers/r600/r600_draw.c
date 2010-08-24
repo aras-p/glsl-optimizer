@@ -101,19 +101,21 @@ static int r600_draw_common(struct r600_draw *draw)
 		rbuffer = (struct r600_resource*)vertex_buffer->buffer;
 		offset = rctx->vertex_elements->elements[i].src_offset + vertex_buffer->buffer_offset;
 		format = r600_translate_colorformat(rctx->vertex_elements->elements[i].src_format);
-		vs_resource = radeon_state(rscreen->rw, R600_VS_RESOURCE_TYPE, R600_VS_RESOURCE + i);
+		vs_resource = radeon_state(rscreen->rw, R600_VS_RESOURCE0 + i);
 		if (vs_resource == NULL)
 			return -ENOMEM;
 		vs_resource->bo[0] = radeon_bo_incref(rscreen->rw, rbuffer->bo);
 		vs_resource->nbo = 1;
-		vs_resource->states[R600_PS_RESOURCE__RESOURCE0_WORD0] = offset;
-		vs_resource->states[R600_PS_RESOURCE__RESOURCE0_WORD1] = rbuffer->bo->size - offset;
-		vs_resource->states[R600_PS_RESOURCE__RESOURCE0_WORD2] = S_038008_STRIDE(vertex_buffer->stride) |
+		vs_resource->reloc_pm4_id[0] = R600_RESOURCE__RESOURCE_BO0_ID;
+		vs_resource->reloc_pm4_id[1] = R600_RESOURCE__RESOURCE_BO1_ID;
+		vs_resource->states[R600_RESOURCE__RESOURCE_WORD0] = offset;
+		vs_resource->states[R600_RESOURCE__RESOURCE_WORD1] = rbuffer->bo->size - offset;
+		vs_resource->states[R600_RESOURCE__RESOURCE_WORD2] = S_038008_STRIDE(vertex_buffer->stride) |
 								S_038008_DATA_FORMAT(format);
-		vs_resource->states[R600_PS_RESOURCE__RESOURCE0_WORD3] = 0x00000000;
-		vs_resource->states[R600_PS_RESOURCE__RESOURCE0_WORD4] = 0x00000000;
-		vs_resource->states[R600_PS_RESOURCE__RESOURCE0_WORD5] = 0x00000000;
-		vs_resource->states[R600_PS_RESOURCE__RESOURCE0_WORD6] = 0xC0000000;
+		vs_resource->states[R600_RESOURCE__RESOURCE_WORD3] = 0x00000000;
+		vs_resource->states[R600_RESOURCE__RESOURCE_WORD4] = 0x00000000;
+		vs_resource->states[R600_RESOURCE__RESOURCE_WORD5] = 0x00000000;
+		vs_resource->states[R600_RESOURCE__RESOURCE_WORD6] = 0xC0000000;
 		vs_resource->placement[0] = RADEON_GEM_DOMAIN_GTT;
 		vs_resource->placement[1] = RADEON_GEM_DOMAIN_GTT;
 		r = radeon_draw_set_new(rctx->draw, vs_resource);
@@ -121,22 +123,29 @@ static int r600_draw_common(struct r600_draw *draw)
 			return r;
 	}
 	/* FIXME start need to change winsys */
-	draw->draw = radeon_state(rscreen->rw, R600_DRAW_TYPE, R600_DRAW);
-	if (draw->draw == NULL)
-		return -ENOMEM;
-	draw->draw->states[R600_DRAW__VGT_NUM_INDICES] = draw->count;
-	draw->draw->states[R600_DRAW__VGT_DRAW_INITIATOR] = vgt_draw_initiator;
 	if (draw->index_buffer) {
+		draw->draw = radeon_state(rscreen->rw, R600_DRAW);
+		if (draw->draw == NULL)
+			return -ENOMEM;
+		draw->draw->states[R600_DRAW__VGT_NUM_INDICES] = draw->count;
+		draw->draw->states[R600_DRAW__VGT_DRAW_INITIATOR] = vgt_draw_initiator;
 		rbuffer = (struct r600_resource*)draw->index_buffer;
 		draw->draw->bo[0] = radeon_bo_incref(rscreen->rw, rbuffer->bo);
 		draw->draw->placement[0] = RADEON_GEM_DOMAIN_GTT;
 		draw->draw->placement[1] = RADEON_GEM_DOMAIN_GTT;
 		draw->draw->nbo = 1;
+		draw->draw->reloc_pm4_id[0] = R600_DRAW__INDICES_BO_ID;
+	} else {
+		draw->draw = radeon_state(rscreen->rw, R600_DRAW_AUTO);
+		if (draw->draw == NULL)
+			return -ENOMEM;
+		draw->draw->states[R600_DRAW_AUTO__VGT_NUM_INDICES] = draw->count;
+		draw->draw->states[R600_DRAW_AUTO__VGT_DRAW_INITIATOR] = vgt_draw_initiator;
 	}
 	r = radeon_draw_set_new(rctx->draw, draw->draw);
 	if (r)
 		return r;
-	draw->vgt = radeon_state(rscreen->rw, R600_VGT_TYPE, R600_VGT);
+	draw->vgt = radeon_state(rscreen->rw, R600_VGT);
 	if (draw->vgt == NULL)
 		return -ENOMEM;
 	draw->vgt->states[R600_VGT__VGT_PRIMITIVE_TYPE] = prim;
@@ -145,23 +154,18 @@ static int r600_draw_common(struct r600_draw *draw)
 	draw->vgt->states[R600_VGT__VGT_INDX_OFFSET] = draw->start;
 	draw->vgt->states[R600_VGT__VGT_MULTI_PRIM_IB_RESET_INDX] = 0x00000000;
 	draw->vgt->states[R600_VGT__VGT_DMA_INDEX_TYPE] = vgt_dma_index_type;
-	draw->vgt->states[R600_VGT__VGT_PRIMITIVEID_EN] = 0x00000000;
 	draw->vgt->states[R600_VGT__VGT_DMA_NUM_INSTANCES] = 0x00000001;
-	draw->vgt->states[R600_VGT__VGT_MULTI_PRIM_IB_RESET_EN] = 0x00000000;
-	draw->vgt->states[R600_VGT__VGT_INSTANCE_STEP_RATE_0] = 0x00000000;
-	draw->vgt->states[R600_VGT__VGT_INSTANCE_STEP_RATE_1] = 0x00000000;
 	r = radeon_draw_set_new(rctx->draw, draw->vgt);
 	if (r)
 		return r;
 	/* FIXME */
-	r = radeon_ctx_set_draw_new(rctx->ctx, rctx->draw);
+	r = radeon_ctx_set_draw(rctx->ctx, rctx->draw);
 	if (r == -EBUSY) {
 		r600_flush(draw->ctx, 0, NULL);
-		r = radeon_ctx_set_draw_new(rctx->ctx, rctx->draw);
+		r = radeon_ctx_set_draw(rctx->ctx, rctx->draw);
 	}
 	if (r)
 		return r;
-	rctx->draw = radeon_draw_duplicate(rctx->draw);
 	return 0;
 }
 

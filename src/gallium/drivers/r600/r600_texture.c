@@ -663,7 +663,7 @@ static struct radeon_state *r600_texture_state_scissor(struct r600_screen *rscre
 {
 	struct radeon_state *rstate;
 
-	rstate = radeon_state(rscreen->rw, R600_SCISSOR_TYPE, R600_SCISSOR);
+	rstate = radeon_state(rscreen->rw, R600_SCISSOR);
 	if (rstate == NULL)
 		return NULL;
 
@@ -707,7 +707,7 @@ static struct radeon_state *r600_texture_state_cb0(struct r600_screen *rscreen,
 	unsigned format, swap, ntype;
 	const struct util_format_description *desc;
 
-	rstate = radeon_state(rscreen->rw, R600_CB0_TYPE, R600_CB0);
+	rstate = radeon_state(rscreen->rw, R600_CB0);
 	if (rstate == NULL)
 		return NULL;
 	rbuffer = &rtexture->resource;
@@ -742,13 +742,16 @@ static struct radeon_state *r600_texture_state_cb0(struct r600_screen *rscreen,
 		rstate->nbo = 3;
 		color_info = S_0280A0_SOURCE_FORMAT(1);
 	}
+	rstate->reloc_pm4_id[0] = R600_CB__CB_COLOR0_BASE_BO_ID;
+	rstate->reloc_pm4_id[1] = R600_CB__CB_COLOR0_FRAG_BO_ID;
+	rstate->reloc_pm4_id[2] = R600_CB__CB_COLOR0_TILE_BO_ID;
 	color_info |= S_0280A0_FORMAT(format) |
 		S_0280A0_COMP_SWAP(swap) |
 		S_0280A0_BLEND_CLAMP(1) |
 		S_0280A0_NUMBER_TYPE(ntype);
-	rstate->states[R600_CB0__CB_COLOR0_BASE] = rtexture->offset[level] >> 8;
-	rstate->states[R600_CB0__CB_COLOR0_INFO] = color_info;
-	rstate->states[R600_CB0__CB_COLOR0_SIZE] = S_028060_PITCH_TILE_MAX(pitch) |
+	rstate->states[R600_CB__CB_COLOR0_BASE] = rtexture->offset[level] >> 8;
+	rstate->states[R600_CB__CB_COLOR0_INFO] = color_info;
+	rstate->states[R600_CB__CB_COLOR0_SIZE] = S_028060_PITCH_TILE_MAX(pitch) |
 						S_028060_SLICE_TILE_MAX(slice);
 
 	if (radeon_state_pm4(rstate)) {
@@ -766,7 +769,7 @@ static struct radeon_state *r600_texture_state_db(struct r600_screen *rscreen,
 	struct r600_resource *rbuffer;
 	unsigned pitch, slice, format;
 
-	rstate = radeon_state(rscreen->rw, R600_DB_TYPE, R600_DB);
+	rstate = radeon_state(rscreen->rw, R600_DB);
 	if (rstate == NULL)
 		return NULL;
 	rbuffer = &rtexture->resource;
@@ -784,6 +787,7 @@ static struct radeon_state *r600_texture_state_db(struct r600_screen *rscreen,
 	rstate->states[R600_DB__DB_PREFETCH_LIMIT] = (rtexture->height[level] / 8) -1;
 	rstate->states[R600_DB__DB_DEPTH_SIZE] = S_028000_PITCH_TILE_MAX(pitch) |
 						S_028000_SLICE_TILE_MAX(slice);
+	rstate->reloc_pm4_id[0] = R600_DB__DB_DEPTH_BASE_BO_ID;
 	rstate->bo[0] = radeon_bo_incref(rscreen->rw, rbuffer->bo);
 	rstate->placement[0] = RADEON_GEM_DOMAIN_GTT;
 	rstate->nbo = 1;
@@ -815,7 +819,7 @@ static struct radeon_state *r600_texture_state_viewport(struct r600_screen *rscr
 {
 	struct radeon_state *rstate;
 
-	rstate = radeon_state(rscreen->rw, R600_VIEWPORT_TYPE, R600_VIEWPORT);
+	rstate = radeon_state(rscreen->rw, R600_VIEWPORT);
 	if (rstate == NULL)
 		return NULL;
 

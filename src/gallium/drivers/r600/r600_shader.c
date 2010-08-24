@@ -132,7 +132,7 @@ static int r600_pipe_shader_vs(struct pipe_context *ctx, struct r600_context_sta
 	unsigned i, tmp;
 
 	rpshader->rstate = radeon_state_decref(rpshader->rstate);
-	state = radeon_state(rscreen->rw, R600_VS_SHADER_TYPE, R600_VS_SHADER);
+	state = radeon_state(rscreen->rw, R600_VS_SHADER);
 	if (state == NULL)
 		return -ENOMEM;
 	for (i = 0; i < 10; i++) {
@@ -151,6 +151,8 @@ static int r600_pipe_shader_vs(struct pipe_context *ctx, struct r600_context_sta
 	rpshader->rstate->nbo = 2;
 	rpshader->rstate->placement[0] = RADEON_GEM_DOMAIN_GTT;
 	rpshader->rstate->placement[2] = RADEON_GEM_DOMAIN_GTT;
+	state->reloc_pm4_id[0] = R600_VS_SHADER__SQ_PGM_START_VS_BO_ID;
+	state->reloc_pm4_id[1] = R600_VS_SHADER__SQ_PGM_START_FS_BO_ID;
 	return radeon_state_pm4(state);
 }
 
@@ -165,7 +167,7 @@ static int r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_context_sta
 
 	rasterizer = &rctx->rasterizer->state.rasterizer;
 	rpshader->rstate = radeon_state_decref(rpshader->rstate);
-	state = radeon_state(rscreen->rw, R600_PS_SHADER_TYPE, R600_PS_SHADER);
+	state = radeon_state(rscreen->rw, R600_PS_SHADER);
 	if (state == NULL)
 		return -ENOMEM;
 	for (i = 0; i < rshader->ninput; i++) {
@@ -204,6 +206,7 @@ static int r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_context_sta
 	rpshader->rstate->bo[0] = radeon_bo_incref(rscreen->rw, rpshader->bo);
 	rpshader->rstate->nbo = 1;
 	rpshader->rstate->placement[0] = RADEON_GEM_DOMAIN_GTT;
+	state->reloc_pm4_id[0] = R600_PS_SHADER__SQ_PGM_START_PS_BO_ID;
 	return radeon_state_pm4(state);
 }
 

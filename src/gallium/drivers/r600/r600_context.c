@@ -53,12 +53,10 @@ void r600_flush(struct pipe_context *ctx, unsigned flags,
 
 	/* suspend queries */
 	r600_queries_suspend(ctx);
-	if (radeon_ctx_pm4(rctx->ctx))
-		goto out;
 	/* FIXME dumping should be removed once shader support instructions
 	 * without throwing bad code
 	 */
-	if (!rctx->ctx->cpm4)
+	if (!rctx->ctx->id)
 		goto out;
 	sprintf(dname, "gallium-%08d.bof", dc);
 	if (dc < 2) {
@@ -73,8 +71,7 @@ void r600_flush(struct pipe_context *ctx, unsigned flags,
 	}
 	dc++;
 out:
-	rctx->ctx = radeon_ctx_decref(rctx->ctx);
-	rctx->ctx = radeon_ctx(rscreen->rw);
+	radeon_ctx_clear(rctx->ctx);
 	/* resume queries */
 	r600_queries_resume(ctx);
 }
@@ -218,7 +215,7 @@ static void r600_init_config(struct r600_context *rctx)
 		num_es_stack_entries = 0;
 		break;
 	}
-	rctx->hw_states.config = radeon_state(rctx->rw, R600_CONFIG_TYPE, R600_CONFIG);
+	rctx->hw_states.config = radeon_state(rctx->rw, R600_CONFIG);
 
 	rctx->hw_states.config->states[R600_CONFIG__SQ_CONFIG] = 0x00000000;
 	switch (family) {
