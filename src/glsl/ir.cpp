@@ -21,8 +21,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 #include <string.h>
-#include "main/imports.h"
-#include "main/macros.h"
+#include "main/core.h" /* for MAX2 */
 #include "ir.h"
 #include "ir_visitor.h"
 #include "glsl_types.h"
@@ -184,6 +183,7 @@ ir_expression::get_num_operands(ir_expression_operation op)
       1, /* ir_unop_i2b */
       1, /* ir_unop_b2i */
       1, /* ir_unop_u2f */
+      1, /* ir_unop_any */
 
       1, /* ir_unop_trunc */
       1, /* ir_unop_ceil */
@@ -252,6 +252,7 @@ static const char *const operator_strs[] = {
    "i2b",
    "b2i",
    "u2f",
+   "any",
    "trunc",
    "ceil",
    "floor",

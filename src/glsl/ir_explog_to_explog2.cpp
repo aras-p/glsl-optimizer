@@ -29,7 +29,7 @@
  * and log2 operations.
  */
 
-#include <math.h>
+#include "main/core.h" /* for log2f on MSVC */
 #include "ir.h"
 #include "glsl_types.h"
 

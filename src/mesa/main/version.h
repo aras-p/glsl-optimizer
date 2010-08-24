@@ -1,7 +1,9 @@
 /*
+ * Mesa 3-D graphics library
+ * Version:  7.9
+ *
  * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
  * Copyright (C) 2009  VMware, Inc.  All Rights Reserved.
- * Copyright © 2010 Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -21,7 +23,38 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "main/core.h"
+
+#ifndef VERSION_H
+#define VERSION_H
+
+
+#include "mtypes.h"
+
+
+/* Mesa version */
+#define MESA_MAJOR 7
+#define MESA_MINOR 9
+#define MESA_PATCH 0
+#define MESA_VERSION_STRING "7.9-devel"
+
+/* To make version comparison easy */
+#define MESA_VERSION(a,b,c) (((a) << 16) + ((b) << 8) + (c))
+#define MESA_VERSION_CODE MESA_VERSION(MESA_MAJOR, MESA_MINOR, MESA_PATCH)
+
+
+/* OpenGL API version */
+#define OPENGL_MAJOR 2
+#define OPENGL_MINOR 1
+#define OPENGL_PATCH 0
+#define OPENGL_VERSION_STRING "2.1"
+
+/* To make version comparison easy */
+#define OPENGL_VERSION(a,b,c) (((a) << 16) + ((b) << 8) + (c))
+#define OPENGL_VERSION_CODE OPENGL_VERSION(OPENGL_MAJOR, OPENGL_MINOR, OPENGL_PATCH)
+
 
 extern void
-link_shaders(GLcontext *ctx, struct gl_shader_program *prog);
+_mesa_compute_version(GLcontext *ctx);
+
+
+#endif /* VERSION_H */

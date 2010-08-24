@@ -34,7 +34,7 @@
  */
 
 #include <math.h>
-#include "main/macros.h"
+#include "main/core.h" /* for MAX2, MIN2, CLAMP */
 #include "ir.h"
 #include "ir_visitor.h"
 #include "glsl_types.h"
@@ -146,6 +146,15 @@ ir_expression::constant_expression_value()
       assert(op[0]->type->is_integer());
       for (unsigned c = 0; c < op[0]->type->components(); c++) {
 	 data.b[c] = bool(op[0]->value.u[c]);
+      }
+      break;
+
+   case ir_unop_any:
+      assert(op[0]->type->is_boolean());
+      data.b[0] = false;
+      for (unsigned c = 0; c < op[0]->type->components(); c++) {
+	 if (op[0]->value.b[c])
+	    data.b[0] = true;
       }
       break;
 

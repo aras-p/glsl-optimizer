@@ -100,7 +100,7 @@
 #include <inttypes.h>
 
 #include "glcpp.h"
-#include "main/mtypes.h"
+#include "main/core.h" /* for struct gl_extensions */
 
 #if (defined(_MSC_VER))
 #define strtoll(p, e, b) _strtoi64(p, e, b) 

@@ -29,7 +29,7 @@ extern "C" {
 #include <talloc.h>
 }
 
-#include "main/mtypes.h"
+#include "main/core.h"
 #include "glsl_symbol_table.h"
 #include "glsl_parser_extras.h"
 #include "ir.h"

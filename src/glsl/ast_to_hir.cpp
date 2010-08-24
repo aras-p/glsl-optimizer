@@ -49,8 +49,7 @@
  * parser (and lexer) sources.
  */
 
-#include "main/imports.h"
-#include "main/extensions.h"
+#include "main/core.h" /* for struct gl_extensions */
 #include "glsl_symbol_table.h"
 #include "glsl_parser_extras.h"
 #include "ast.h"
@@ -1258,6 +1257,11 @@ ast_expression::hir(exec_list *instructions,
 	 }
       } else if (array->type->array_size() == 0) {
 	 _mesa_glsl_error(&loc, state, "unsized array index must be constant");
+      } else {
+	 if (array->type->is_array()) {
+	    ir_variable *v = array->whole_variable_referenced();
+	    v->max_array_access = array->type->array_size();
+	 }
       }
 
       if (error_emitted)
@@ -1822,24 +1826,32 @@ ast_declarator_list::hir(exec_list *instructions,
 	    ir_rvalue *new_rhs = validate_assignment(state, var->type, rhs);
 	    if (new_rhs != NULL) {
 	       rhs = new_rhs;
+
+	       ir_constant *constant_value = rhs->constant_expression_value();
+	       if (!constant_value) {
+		  _mesa_glsl_error(& initializer_loc, state,
+				   "initializer of %s variable `%s' must be a "
+				   "constant expression",
+				   (this->type->qualifier.constant)
+				   ? "const" : "uniform",
+				   decl->identifier);
+		  if (var->type->is_numeric()) {
+		     /* Reduce cascading errors. */
+		     var->constant_value = ir_constant::zero(ctx, var->type);
+		  }
+	       } else {
+		  rhs = constant_value;
+		  var->constant_value = constant_value;
+	       }
 	    } else {
 	       _mesa_glsl_error(&initializer_loc, state,
 			        "initializer of type %s cannot be assigned to "
 				"variable of type %s",
 				rhs->type->name, var->type->name);
-	    }
-
-	    ir_constant *constant_value = rhs->constant_expression_value();
-	    if (!constant_value) {
-	       _mesa_glsl_error(& initializer_loc, state,
-				"initializer of %s variable `%s' must be a "
-				"constant expression",
-				(this->type->qualifier.constant)
-				? "const" : "uniform",
-				decl->identifier);
-	    } else {
-	       rhs = constant_value;
-	       var->constant_value = constant_value;
+	       if (var->type->is_numeric()) {
+		  /* Reduce cascading errors. */
+		  var->constant_value = ir_constant::zero(ctx, var->type);
+	       }
 	    }
 	 }
 
@@ -2135,7 +2147,13 @@ ast_function::hir(exec_list *instructions,
    const glsl_type *return_type =
       this->return_type->specifier->glsl_type(& return_type_name, state);
 
-   assert(return_type != NULL);
+   if (!return_type) {
+      YYLTYPE loc = this->get_location();
+      _mesa_glsl_error(&loc, state,
+		       "function `%s' has undeclared return type `%s'",
+		       name, return_type_name);
+      return_type = glsl_type::error_type;
+   }
 
    /* From page 56 (page 62 of the PDF) of the GLSL 1.30 spec:
     * "No qualifier is allowed on the return type of a function."

@@ -606,6 +606,7 @@ enum ir_expression_operation {
    ir_unop_i2b,      /**< int-to-boolean conversion */
    ir_unop_b2i,      /**< Boolean-to-int conversion */
    ir_unop_u2f,      /**< Unsigned-to-float conversion. */
+   ir_unop_any,
 
    /**
     * \name Unary floating-point rounding operations.

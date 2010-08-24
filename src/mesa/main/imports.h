@@ -143,11 +143,11 @@ typedef union { GLfloat f; GLint i; } fi_type;
 #define tanhf(f) ((float) tanh(f))
 #endif
 
-#if (defined(_MSC_VER))
-static __inline float truncf (float x) { return (x < 0.0f) ? ceilf(x) : floorf(x); }
-static __inline float exp2f (float x) { return powf (2.0f, x); }
-static __inline float log2f (float x) { return logf (x) / logf (2.0f); }
-static __inline int isblank (int ch) { return ch==' ' || ch=='\t'; }
+#if defined(_MSC_VER)
+static INLINE float truncf(float x) { return x < 0.0f ? ceilf(x) : floorf(x); }
+static INLINE float exp2f(float x) { return powf(2.0f, x); }
+static INLINE float log2f(float x) { return logf(x) * 1.442695041f; }
+static INLINE int isblank (int ch) { return ch==' ' || ch=='\t'; }
 #endif
 /*@}*/
 
@@ -578,6 +578,12 @@ _mesa_error( __GLcontext *ctx, GLenum error, const char *fmtString, ... );
 
 extern void
 _mesa_debug( const __GLcontext *ctx, const char *fmtString, ... );
+
+
+#if defined(_MSC_VER) && !defined(snprintf)
+#define snprintf _snprintf
+#endif
+
 
 #ifdef __cplusplus
 }

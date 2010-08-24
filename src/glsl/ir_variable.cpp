@@ -21,7 +21,6 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include "main/compiler.h"
 #include "ir.h"
 #include "glsl_parser_extras.h"
 #include "glsl_symbol_table.h"

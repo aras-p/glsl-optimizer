@@ -844,6 +844,26 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
 	 ir_to_mesa_emit_op2(ir, OPCODE_SNE, result_dst, op[0], op[1]);
       }
       break;
+
+   case ir_unop_any:
+      switch (ir->operands[0]->type->vector_elements) {
+      case 4:
+	 ir_to_mesa_emit_op2(ir, OPCODE_DP4, result_dst, op[0], op[0]);
+	 break;
+      case 3:
+	 ir_to_mesa_emit_op2(ir, OPCODE_DP3, result_dst, op[0], op[0]);
+	 break;
+      case 2:
+	 ir_to_mesa_emit_op2(ir, OPCODE_DP2, result_dst, op[0], op[0]);
+	 break;
+      default:
+	 assert(!"unreached: ir_unop_any of non-bvec");
+	 break;
+      }
+      ir_to_mesa_emit_op2(ir, OPCODE_SNE,
+			  result_dst, result_src, src_reg_for_float(0.0));
+      break;
+
    case ir_binop_logic_xor:
       ir_to_mesa_emit_op2(ir, OPCODE_SNE, result_dst, op[0], op[1]);
       break;
@@ -911,7 +931,7 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
    case ir_unop_f2b:
    case ir_unop_i2b:
       ir_to_mesa_emit_op2(ir, OPCODE_SNE, result_dst,
-			  result_src, src_reg_for_float(0.0));
+			  op[0], src_reg_for_float(0.0));
       break;
    case ir_unop_trunc:
       ir_to_mesa_emit_op1(ir, OPCODE_TRUNC, result_dst, op[0]);
@@ -1817,6 +1837,7 @@ ir_to_mesa_visitor::visit(ir_constant *ir)
       }
 
       this->result = mat;
+      return;
    }
 
    src_reg.file = PROGRAM_CONSTANT;

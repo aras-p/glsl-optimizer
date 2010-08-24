@@ -1,7 +1,8 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
 
-import re, glob
+import re
+from glob import glob
 from os import path
 from subprocess import Popen, PIPE
 
@@ -12,7 +13,7 @@ builtins_dir = path.join(path.dirname(path.abspath(__file__)), "..")
 
 # Read the files in builtins/ir/*...add them to the supplied dictionary.
 def read_ir_files(fs):
-    for filename in glob.glob(path.join(path.join(builtins_dir, 'ir'), '*')):
+    for filename in glob(path.join(path.join(builtins_dir, 'ir'), '*')):
         with open(filename) as f:
             fs[path.basename(filename)] = f.read()
 
@@ -29,7 +30,7 @@ def stringify(s):
 
 def write_function_definitions():
     fs = get_builtin_definitions()
-    for k, v in fs.iteritems():
+    for k, v in sorted(fs.iteritems()):
         print 'static const char *builtin_' + k + ' ='
         print stringify(v), ';'
 
@@ -74,7 +75,7 @@ def write_profile(filename, profile):
         function_names.add(func.group(1))
 
     print 'static const char *functions_for_' + profile + ' [] = {'
-    for func in function_names:
+    for func in sorted(function_names):
         print '   builtin_' + func + ','
     print '};'
 
@@ -85,7 +86,7 @@ def write_profiles():
 
 def get_profile_list():
     profiles = []
-    for pfile in glob.glob(path.join(path.join(builtins_dir, 'profiles'), '*')):
+    for pfile in sorted(glob(path.join(path.join(builtins_dir, 'profiles'), '*'))):
         profiles.append((pfile, path.basename(pfile).replace('.', '_')))
     return profiles
 
@@ -115,7 +116,7 @@ if __name__ == "__main__":
  */
 
 #include <stdio.h>
-#include "main/compiler.h"
+#include "main/core.h" /* for struct gl_shader */
 #include "glsl_parser_extras.h"
 #include "ir_reader.h"
 #include "program.h"

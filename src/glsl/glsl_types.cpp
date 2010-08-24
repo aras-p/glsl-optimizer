@@ -23,7 +23,7 @@
 
 #include <cstdio>
 #include <stdlib.h>
-#include "main/compiler.h"
+#include "main/core.h" /* for Elements */
 #include "glsl_symbol_table.h"
 #include "glsl_parser_extras.h"
 #include "glsl_types.h"
@@ -40,7 +40,7 @@ void
 glsl_type::init_talloc_type_ctx(void)
 {
    if (glsl_type::mem_ctx == NULL) {
-      glsl_type::mem_ctx = talloc_init("glsl_type");
+      glsl_type::mem_ctx = talloc_autofree_context();
       assert(glsl_type::mem_ctx != NULL);
    }
 }
@@ -229,11 +229,6 @@ _mesa_glsl_release_types(void)
       hash_table_dtor(glsl_type::record_types);
       glsl_type::record_types = NULL;
    }
-
-   if (glsl_type::mem_ctx != NULL) {
-      talloc_free(glsl_type::mem_ctx);
-      glsl_type::mem_ctx = NULL;
-   }
 }
 
 
@@ -248,6 +243,7 @@ glsl_type::generate_constructor(glsl_symbol_table *symtab) const
 
    bool added = symtab->add_function(name, f);
    assert(added);
+   (void) added;
 
    ir_function_signature *const sig = new(ctx) ir_function_signature(this);
    f->add_signature(sig);

@@ -25,7 +25,7 @@
 #include "ast.h"
 #include "glsl_types.h"
 #include "ir.h"
-#include "main/macros.h"
+#include "main/core.h" /* for MIN2 */
 
 static ir_rvalue *
 convert_component(ir_rvalue *src, const glsl_type *desired_type);

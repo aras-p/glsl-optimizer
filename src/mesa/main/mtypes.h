@@ -1632,10 +1632,9 @@ struct gl_array_attrib
 
    GLbitfield NewState;		/**< mask of _NEW_ARRAY_* values */
 
-#if FEATURE_ARB_vertex_buffer_object
+   /* GL_ARB_vertex_buffer_object */
    struct gl_buffer_object *ArrayBufferObj;
    struct gl_buffer_object *ElementArrayBufferObj;
-#endif
 };
 
 
@@ -2264,39 +2263,26 @@ struct gl_shared_state
     */
    /*@{*/
    struct _mesa_HashTable *Programs; /**< All vertex/fragment programs */
-#if FEATURE_ARB_vertex_program
    struct gl_vertex_program *DefaultVertexProgram;
-#endif
-#if FEATURE_ARB_fragment_program
    struct gl_fragment_program *DefaultFragmentProgram;
-#endif
-#if FEATURE_ARB_geometry_shader4
    struct gl_geometry_program *DefaultGeometryProgram;
-#endif
    /*@}*/
 
-#if FEATURE_ATI_fragment_shader
+   /* GL_ATI_fragment_shader */
    struct _mesa_HashTable *ATIShaders;
    struct ati_fragment_shader *DefaultFragmentShader;
-#endif
 
-#if FEATURE_ARB_vertex_buffer_object || FEATURE_ARB_pixel_buffer_object
    struct _mesa_HashTable *BufferObjects;
-#endif
 
-#if FEATURE_ARB_shader_objects
    /** Table of both gl_shader and gl_shader_program objects */
    struct _mesa_HashTable *ShaderObjects;
-#endif
 
-#if FEATURE_EXT_framebuffer_object
+   /* GL_EXT_framebuffer_object */
    struct _mesa_HashTable *RenderBuffers;
    struct _mesa_HashTable *FrameBuffers;
-#endif
 
-#if FEATURE_ARB_sync
+   /* GL_ARB_sync */
    struct simple_node SyncObjects;
-#endif
 
    void *DriverData;  /**< Device driver shared state */
 };
@@ -2531,14 +2517,13 @@ struct gl_program_constants
    GLuint MaxNativeParameters;
    /* For shaders */
    GLuint MaxUniformComponents;
-#if FEATURE_ARB_geometry_shader4
+   /* GL_ARB_geometry_shader4 */
    GLuint MaxGeometryTextureImageUnits;
    GLuint MaxGeometryVaryingComponents;
    GLuint MaxVertexVaryingComponents;
    GLuint MaxGeometryUniformComponents;
    GLuint MaxGeometryOutputVertices;
    GLuint MaxGeometryTotalOutputComponents;
-#endif
 };
 
 
@@ -2786,12 +2771,8 @@ struct gl_extensions
    GLboolean SGIS_texture_lod;
    GLboolean TDFX_texture_compression_FXT1;
    GLboolean S3_s3tc;
-#if FEATURE_OES_EGL_image
    GLboolean OES_EGL_image;
-#endif
-#if FEATURE_OES_draw_texture
    GLboolean OES_draw_texture;
-#endif /* FEATURE_OES_draw_texture */
    /** The extension string */
    const GLubyte *String;
    /** Number of supported extensions */
@@ -3232,9 +3213,8 @@ struct __GLcontextRec
 
    struct gl_meta_state *Meta;  /**< for "meta" operations */
 
-#if FEATURE_EXT_framebuffer_object
+   /* GL_EXT_framebuffer_object */
    struct gl_renderbuffer *CurrentRenderbuffer;
-#endif
 
    GLenum ErrorValue;        /**< Last error code */
 

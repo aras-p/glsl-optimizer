@@ -27,7 +27,7 @@
 
 extern "C" {
 #include <talloc.h>
-#include "main/mtypes.h"
+#include "main/core.h" /* for struct __GLcontextRec */
 }
 
 #include "ast.h"
