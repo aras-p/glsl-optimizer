@@ -315,6 +315,11 @@ lp_setup_bind_framebuffer( struct lp_setup_context *setup,
     * scene.
     */
    util_copy_framebuffer_state(&setup->fb, fb);
+   setup->framebuffer.x0 = 0;
+   setup->framebuffer.y0 = 0;
+   setup->framebuffer.x1 = fb->width-1;
+   setup->framebuffer.y1 = fb->height-1;
+   setup->dirty |= LP_SETUP_NEW_SCISSOR;
 }
 
 
@@ -472,8 +477,12 @@ lp_setup_set_triangle_state( struct lp_setup_context *setup,
    setup->ccw_is_frontface = ccw_is_frontface;
    setup->cullmode = cull_mode;
    setup->triangle = first_triangle;
-   setup->scissor_test = scissor;
    setup->pixel_offset = gl_rasterization_rules ? 0.5f : 0.0f;
+
+   if (setup->scissor_test != scissor) {
+      setup->dirty |= LP_SETUP_NEW_SCISSOR;
+      setup->scissor_test = scissor;
+   }
 }
 
 
@@ -562,10 +571,11 @@ lp_setup_set_scissor( struct lp_setup_context *setup,
 
    assert(scissor);
 
-   if (memcmp(&setup->scissor.current, scissor, sizeof(*scissor)) != 0) {
-      setup->scissor.current = *scissor; /* struct copy */
-      setup->dirty |= LP_SETUP_NEW_SCISSOR;
-   }
+   setup->scissor.x0 = scissor->minx;
+   setup->scissor.x1 = scissor->maxx-1;
+   setup->scissor.y0 = scissor->miny;
+   setup->scissor.y1 = scissor->maxy-1;
+   setup->dirty |= LP_SETUP_NEW_SCISSOR;
 }
 
 
@@ -805,6 +815,15 @@ lp_setup_update_state( struct lp_setup_context *setup )
          for (i = 0; i < Elements(setup->fs.current_tex); i++) {
             if (setup->fs.current_tex[i])
                lp_scene_add_resource_reference(scene, setup->fs.current_tex[i]);
+   if (setup->dirty & LP_SETUP_NEW_SCISSOR) {
+      setup->draw_region = setup->framebuffer;
+      if (setup->scissor_test) {
+         u_rect_possible_intersection(&setup->scissor,
+                                      &setup->draw_region);
+      }
+   }
+                                      
+
          }
       }
    }

@@ -41,6 +41,7 @@
 #include "lp_scene.h"
 
 #include "draw/draw_vbuf.h"
+#include "util/u_rect.h"
 
 #define LP_SETUP_NEW_FS          0x01
 #define LP_SETUP_NEW_CONSTANTS   0x02
@@ -92,6 +93,9 @@ struct lp_setup_context
    float pixel_offset;
 
    struct pipe_framebuffer_state fb;
+   struct u_rect framebuffer;
+   struct u_rect scissor;
+   struct u_rect draw_region;   /* intersection of fb & scissor */
 
    struct {
       unsigned flags;
@@ -127,9 +131,6 @@ struct lp_setup_context
       uint8_t *stored;
    } blend_color;
 
-   struct {
-      struct pipe_scissor_state current;
-   } scissor;
 
    unsigned dirty;   /**< bitmask of LP_SETUP_NEW_x bits */
 

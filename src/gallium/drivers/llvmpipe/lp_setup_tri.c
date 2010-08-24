@@ -31,6 +31,7 @@
 
 #include "util/u_math.h"
 #include "util/u_memory.h"
+#include "util/u_rect.h"
 #include "lp_perf.h"
 #include "lp_setup_context.h"
 #include "lp_rast.h"
@@ -450,7 +451,7 @@ do_triangle_ccw(struct lp_setup_context *setup,
    struct lp_rast_triangle *tri;
    struct tri_info info;
    int area;
-   int minx, maxx, miny, maxy;
+   struct u_rect bbox;
    int ix0, ix1, iy0, iy1;
    unsigned tri_bytes;
    int i;
@@ -466,6 +467,50 @@ do_triangle_ccw(struct lp_setup_context *setup,
       nr_planes = 3;
    }
 
+   /* x/y positions in fixed point */
+   info.x[0] = subpixel_snap(v1[0][0] - setup->pixel_offset);
+   info.x[1] = subpixel_snap(v2[0][0] - setup->pixel_offset);
+   info.x[2] = subpixel_snap(v3[0][0] - setup->pixel_offset);
+   info.y[0] = subpixel_snap(v1[0][1] - setup->pixel_offset);
+   info.y[1] = subpixel_snap(v2[0][1] - setup->pixel_offset);
+   info.y[2] = subpixel_snap(v3[0][1] - setup->pixel_offset);
+
+
+
+   /* Bounding rectangle (in pixels) */
+   {
+      /* Yes this is necessary to accurately calculate bounding boxes
+       * with the two fill-conventions we support.  GL (normally) ends
+       * up needing a bottom-left fill convention, which requires
+       * slightly different rounding.
+       */
+      int adj = (setup->pixel_offset != 0) ? 1 : 0;
+
+      bbox.x0 = (MIN3(info.x[0], info.x[1], info.x[2]) + (FIXED_ONE-1)) >> FIXED_ORDER;
+      bbox.x1 = (MAX3(info.x[0], info.x[1], info.x[2]) + (FIXED_ONE-1)) >> FIXED_ORDER;
+      bbox.y0 = (MIN3(info.y[0], info.y[1], info.y[2]) + (FIXED_ONE-1) + adj) >> FIXED_ORDER;
+      bbox.y1 = (MAX3(info.y[0], info.y[1], info.y[2]) + (FIXED_ONE-1) + adj) >> FIXED_ORDER;
+
+      /* Inclusive coordinates:
+       */
+      bbox.x1--;
+      bbox.y1--;
+   }
+
+   if (bbox.x1 < bbox.x0 ||
+       bbox.y1 < bbox.y0) {
+      if (0) debug_printf("empty bounding box\n");
+      LP_COUNT(nr_culled_tris);
+      return;
+   }
+
+   if (!u_rect_test_intersection(&setup->draw_region, &bbox)) {
+      if (0) debug_printf("offscreen\n");
+      LP_COUNT(nr_culled_tris);
+      return;
+   }
+
+   u_rect_find_intersection(&setup->draw_region, &bbox);
 
    tri = alloc_triangle(scene,
                         setup->fs.nr_inputs,
@@ -482,14 +527,6 @@ do_triangle_ccw(struct lp_setup_context *setup,
    tri->v[1][1] = v2[0][1];
    tri->v[2][1] = v3[0][1];
 #endif
-
-   /* x/y positions in fixed point */
-   info.x[0] = subpixel_snap(v1[0][0] - setup->pixel_offset);
-   info.x[1] = subpixel_snap(v2[0][0] - setup->pixel_offset);
-   info.x[2] = subpixel_snap(v3[0][0] - setup->pixel_offset);
-   info.y[0] = subpixel_snap(v1[0][1] - setup->pixel_offset);
-   info.y[1] = subpixel_snap(v2[0][1] - setup->pixel_offset);
-   info.y[2] = subpixel_snap(v3[0][1] - setup->pixel_offset);
 
    tri->plane[0].dcdy = info.x[0] - info.x[1];
    tri->plane[1].dcdy = info.x[1] - info.x[2];
@@ -514,40 +551,6 @@ do_triangle_ccw(struct lp_setup_context *setup,
       return;
    }
 
-   /* Bounding rectangle (in pixels) */
-   {
-      /* Yes this is necessary to accurately calculate bounding boxes
-       * with the two fill-conventions we support.  GL (normally) ends
-       * up needing a bottom-left fill convention, which requires
-       * slightly different rounding.
-       */
-      int adj = (setup->pixel_offset != 0) ? 1 : 0;
-
-      minx = (MIN3(info.x[0], info.x[1], info.x[2]) + (FIXED_ONE-1)) >> FIXED_ORDER;
-      maxx = (MAX3(info.x[0], info.x[1], info.x[2]) + (FIXED_ONE-1)) >> FIXED_ORDER;
-      miny = (MIN3(info.y[0], info.y[1], info.y[2]) + (FIXED_ONE-1) + adj) >> FIXED_ORDER;
-      maxy = (MAX3(info.y[0], info.y[1], info.y[2]) + (FIXED_ONE-1) + adj) >> FIXED_ORDER;
-   }
-
-   if (setup->scissor_test) {
-      minx = MAX2(minx, setup->scissor.current.minx);
-      maxx = MIN2(maxx, setup->scissor.current.maxx);
-      miny = MAX2(miny, setup->scissor.current.miny);
-      maxy = MIN2(maxy, setup->scissor.current.maxy);
-   }
-   else {
-      minx = MAX2(minx, 0);
-      miny = MAX2(miny, 0);
-      maxx = MIN2(maxx, scene->fb.width);
-      maxy = MIN2(maxy, scene->fb.height);
-   }
-
-
-   if (miny >= maxy || minx >= maxx) {
-      lp_scene_putback_data( scene, tri_bytes );
-      LP_COUNT(nr_culled_tris);
-      return;
-   }
 
    /* 
     */
@@ -648,25 +651,25 @@ do_triangle_ccw(struct lp_setup_context *setup,
    if (nr_planes == 7) {
       tri->plane[3].dcdx = -1;
       tri->plane[3].dcdy = 0;
-      tri->plane[3].c = 1-minx;
+      tri->plane[3].c = 1-bbox.x0;
       tri->plane[3].ei = 0;
       tri->plane[3].eo = 1;
 
       tri->plane[4].dcdx = 1;
       tri->plane[4].dcdy = 0;
-      tri->plane[4].c = maxx;
+      tri->plane[4].c = bbox.x1+1;
       tri->plane[4].ei = -1;
       tri->plane[4].eo = 0;
 
       tri->plane[5].dcdx = 0;
       tri->plane[5].dcdy = 1;
-      tri->plane[5].c = 1-miny;
+      tri->plane[5].c = 1-bbox.y0;
       tri->plane[5].ei = 0;
       tri->plane[5].eo = 1;
 
       tri->plane[6].dcdx = 0;
       tri->plane[6].dcdy = -1;
-      tri->plane[6].c = maxy;
+      tri->plane[6].c = bbox.y1+1;
       tri->plane[6].ei = -1;
       tri->plane[6].eo = 0;
    }
@@ -680,10 +683,10 @@ do_triangle_ccw(struct lp_setup_context *setup,
    /* Convert to tile coordinates, and inclusive ranges:
     */
    if (nr_planes == 3) {
-      int ix0 = minx / 16;
-      int iy0 = miny / 16;
-      int ix1 = (maxx-1) / 16;
-      int iy1 = (maxy-1) / 16;
+      int ix0 = bbox.x0 / 16;
+      int iy0 = bbox.y0 / 16;
+      int ix1 = bbox.x1 / 16;
+      int iy1 = bbox.y1 / 16;
       
       if (iy0 == iy1 && ix0 == ix1)
       {
@@ -699,10 +702,10 @@ do_triangle_ccw(struct lp_setup_context *setup,
       }
    }
 
-   ix0 = minx / TILE_SIZE;
-   iy0 = miny / TILE_SIZE;
-   ix1 = (maxx-1) / TILE_SIZE;
-   iy1 = (maxy-1) / TILE_SIZE;
+   ix0 = bbox.x0 / TILE_SIZE;
+   iy0 = bbox.y0 / TILE_SIZE;
+   ix1 = bbox.x1 / TILE_SIZE;
+   iy1 = bbox.y1 / TILE_SIZE;
 
    /*
     * Clamp to framebuffer size
