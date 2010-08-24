@@ -41,7 +41,7 @@ void
 glsl_type::init_talloc_type_ctx(void)
 {
    if (glsl_type::mem_ctx == NULL) {
-      glsl_type::mem_ctx = talloc_init("glsl_type");
+      glsl_type::mem_ctx = talloc_autofree_context();
       assert(glsl_type::mem_ctx != NULL);
    }
 }
@@ -229,11 +229,6 @@ _mesa_glsl_release_types(void)
    if (glsl_type::record_types != NULL) {
       hash_table_dtor(glsl_type::record_types);
       glsl_type::record_types = NULL;
-   }
-
-   if (glsl_type::mem_ctx != NULL) {
-      talloc_free(glsl_type::mem_ctx);
-      glsl_type::mem_ctx = NULL;
    }
 }
 
