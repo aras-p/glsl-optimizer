@@ -261,12 +261,10 @@ public:
 			  int mul_operand);
 
    int add_uniform(const char *name,
-		   const glsl_type *type,
-		   ir_constant *constant);
+		   const glsl_type *type);
    void add_aggregate_uniform(ir_instruction *ir,
 			      const char *name,
 			      const struct glsl_type *type,
-			      ir_constant *constant,
 			      struct ir_to_mesa_dst_reg temp);
 
    struct hash_table *sampler_map;
@@ -1307,8 +1305,7 @@ get_builtin_matrix_ref(void *mem_ctx, struct gl_program *prog, ir_variable *var,
 
 int
 ir_to_mesa_visitor::add_uniform(const char *name,
-				const glsl_type *type,
-				ir_constant *constant)
+				const glsl_type *type)
 {
    int len;
 
@@ -1319,65 +1316,11 @@ ir_to_mesa_visitor::add_uniform(const char *name,
       len = type_size(type) * 4;
    }
 
-   float *values = NULL;
-   if (constant && type->is_array()) {
-      values = (float *)malloc(type->length * 4 * sizeof(float));
-
-      assert(type->fields.array->is_scalar() ||
-	     type->fields.array->is_vector() ||
-	     !"FINISHME: uniform array initializers for non-vector");
-
-      for (unsigned int i = 0; i < type->length; i++) {
-	 ir_constant *element = constant->array_elements[i];
-	 unsigned int c;
-
-	 for (c = 0; c < type->fields.array->vector_elements; c++) {
-	    switch (type->fields.array->base_type) {
-	    case GLSL_TYPE_FLOAT:
-	       values[4 * i + c] = element->value.f[c];
-	       break;
-	    case GLSL_TYPE_INT:
-	       values[4 * i + c] = element->value.i[c];
-	       break;
-	    case GLSL_TYPE_UINT:
-	       values[4 * i + c] = element->value.u[c];
-	       break;
-	    case GLSL_TYPE_BOOL:
-	       values[4 * i + c] = element->value.b[c];
-	       break;
-	    default:
-	       assert(!"not reached");
-	    }
-	 }
-      }
-   } else if (constant) {
-      values = (float *)malloc(16 * sizeof(float));
-      for (unsigned int i = 0; i < type->components(); i++) {
-	 switch (type->base_type) {
-	 case GLSL_TYPE_FLOAT:
-	    values[i] = constant->value.f[i];
-	    break;
-	 case GLSL_TYPE_INT:
-	    values[i] = constant->value.i[i];
-	    break;
-	 case GLSL_TYPE_UINT:
-	    values[i] = constant->value.u[i];
-	    break;
-	 case GLSL_TYPE_BOOL:
-	    values[i] = constant->value.b[i];
-	    break;
-	 default:
-	    assert(!"not reached");
-	 }
-      }
-   }
-
    int loc = _mesa_add_uniform(this->prog->Parameters,
 			       name,
 			       len,
 			       type->gl_type,
-			       values);
-   free(values);
+			       NULL);
 
    return loc;
 }
@@ -1389,17 +1332,12 @@ void
 ir_to_mesa_visitor::add_aggregate_uniform(ir_instruction *ir,
 					  const char *name,
 					  const struct glsl_type *type,
-					  ir_constant *constant,
 					  struct ir_to_mesa_dst_reg temp)
 {
    int loc;
 
    if (type->is_record()) {
       void *mem_ctx = talloc_new(NULL);
-      ir_constant *field_constant = NULL;
-
-      if (constant)
-	 field_constant = (ir_constant *)constant->components.get_head();
 
       for (unsigned int i = 0; i < type->length; i++) {
 	 const glsl_type *field_type = type->fields.structure[i].type;
@@ -1407,11 +1345,8 @@ ir_to_mesa_visitor::add_aggregate_uniform(ir_instruction *ir,
 	 add_aggregate_uniform(ir,
 			       talloc_asprintf(mem_ctx, "%s.%s", name,
 					       type->fields.structure[i].name),
-			       field_type, field_constant, temp);
+			       field_type, temp);
 	 temp.index += type_size(field_type);
-
-	 if (constant)
-	    field_constant = (ir_constant *)field_constant->next;
       }
 
       talloc_free(mem_ctx);
@@ -1421,7 +1356,7 @@ ir_to_mesa_visitor::add_aggregate_uniform(ir_instruction *ir,
 
    assert(type->is_vector() || type->is_scalar() || !"FINISHME: other types");
 
-   loc = add_uniform(name, type, constant);
+   loc = add_uniform(name, type);
 
    ir_to_mesa_src_reg uniform(PROGRAM_UNIFORM, loc, type);
 
@@ -1485,14 +1420,12 @@ ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
 	    this->variables.push_tail(entry);
 
 	    add_aggregate_uniform(ir->var, ir->var->name, ir->var->type,
-				  ir->var->constant_value,
 				  ir_to_mesa_dst_reg_from_src(temp));
 	    break;
 	 }
 
 	 loc = add_uniform(ir->var->name,
-			   ir->var->type,
-			   ir->var->constant_value);
+			   ir->var->type);
 
 	 /* Always mark the uniform used at this point.  If it isn't
 	  * used, dead code elimination should have nuked the decl already.
@@ -2433,6 +2366,105 @@ link_uniforms_to_shared_uniform_list(struct gl_uniform_list *uniforms,
    }
 }
 
+static void
+set_uniform_initializer(GLcontext *ctx, void *mem_ctx,
+			struct gl_shader_program *shader_program,
+			const char *name, const glsl_type *type,
+			ir_constant *val)
+{
+   if (type->is_record()) {
+      ir_constant *field_constant;
+
+      field_constant = (ir_constant *)val->components.get_head();
+
+      for (unsigned int i = 0; i < type->length; i++) {
+	 const glsl_type *field_type = type->fields.structure[i].type;
+	 const char *field_name = talloc_asprintf(mem_ctx, "%s.%s", name,
+					    type->fields.structure[i].name);
+	 set_uniform_initializer(ctx, mem_ctx, shader_program, field_name,
+				 field_type, field_constant);
+	 field_constant = (ir_constant *)field_constant->next;
+      }
+      return;
+   }
+
+   int loc = _mesa_get_uniform_location(ctx, shader_program, name);
+
+   if (loc == -1) {
+      shader_program->InfoLog =
+	 talloc_asprintf_append(shader_program->InfoLog,
+				"Couldn't find uniform for "
+				"initializer %s\n", name);
+      shader_program->LinkStatus = false;
+      abort();
+   }
+
+   for (unsigned int i = 0; i < (type->is_array() ? type->length : 1); i++) {
+      ir_constant *element;
+      const glsl_type *element_type;
+      if (type->is_array()) {
+	 element = val->array_elements[i];
+	 element_type = type->fields.array;
+      } else {
+	 element = val;
+	 element_type = type;
+      }
+
+      void *values;
+
+      if (element_type->base_type == GLSL_TYPE_BOOL) {
+	 int *conv = talloc_array(mem_ctx, int, element_type->components());
+	 for (unsigned int j = 0; j < element_type->components(); j++) {
+	    conv[j] = element->value.b[j];
+	 }
+	 values = (void *)conv;
+	 element_type = glsl_type::get_instance(GLSL_TYPE_INT,
+						element_type->vector_elements,
+						1);
+      } else {
+	 values = &element->value;
+      }
+
+      if (element_type->is_matrix()) {
+	 _mesa_uniform_matrix(ctx, shader_program,
+			      element_type->matrix_columns,
+			      element_type->vector_elements,
+			      loc, 1, GL_FALSE, (GLfloat *)values);
+	 loc += element_type->matrix_columns;
+      } else {
+	 _mesa_uniform(ctx, shader_program, loc, element_type->matrix_columns,
+		       values, element_type->gl_type);
+	 loc += type_size(element_type);
+      }
+   }
+}
+
+static void
+set_uniform_initializers(GLcontext *ctx,
+			 struct gl_shader_program *shader_program)
+{
+   void *mem_ctx = NULL;
+
+   for (unsigned int i = 0; i < shader_program->_NumLinkedShaders; i++) {
+      struct gl_shader *shader = shader_program->_LinkedShaders[i];
+      foreach_iter(exec_list_iterator, iter, *shader->ir) {
+	 ir_instruction *ir = (ir_instruction *)iter.get();
+	 ir_variable *var = ir->as_variable();
+
+	 if (!var || var->mode != ir_var_uniform || !var->constant_value)
+	    continue;
+
+	 if (!mem_ctx)
+	    mem_ctx = talloc_new(NULL);
+
+	 set_uniform_initializer(ctx, mem_ctx, shader_program, var->name,
+				 var->type, var->constant_value);
+      }
+   }
+
+   talloc_free(mem_ctx);
+}
+
 struct gl_program *
 get_mesa_program(GLcontext *ctx, struct gl_shader_program *shader_program,
 		 struct gl_shader *shader)
@@ -2779,6 +2811,8 @@ _mesa_glsl_link_shader(GLcontext *ctx, struct gl_shader_program *prog)
 	 prog->LinkStatus = GL_FALSE;
       }
    }
+
+   set_uniform_initializers(ctx, prog);
 
    if (ctx->Shader.Flags & GLSL_DUMP) {
       if (!prog->LinkStatus) {
