@@ -45,6 +45,7 @@ ir_variable_refcount_visitor::get_variable_entry(ir_variable *var)
    }
 
    variable_entry *entry = new(mem_ctx) variable_entry(var);
+   assert(entry->referenced_count == 0);
    this->variable_list.push_tail(entry);
    return entry;
 }
