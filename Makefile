@@ -187,8 +187,6 @@ GLUT_NAME = MesaGLUT-$(VERSION)
 
 # This is part of MAIN_FILES
 MAIN_ES_FILES = \
-	$(DIRECTORY)/src/mesa/es/Makefile				\
-	$(DIRECTORY)/src/mesa/es/sources.mak				\
 	$(DIRECTORY)/src/mesa/main/*.xml				\
 	$(DIRECTORY)/src/mesa/main/*.py					\
 	$(DIRECTORY)/src/mesa/main/*.dtd
@@ -229,7 +227,6 @@ MAIN_FILES = \
 	$(DIRECTORY)/src/glsl/Makefile					\
 	$(DIRECTORY)/src/glsl/Makefile.template				\
 	$(DIRECTORY)/src/glsl/SConscript				\
-	$(DIRECTORY)/src/glsl/*/Makefile				\
 	$(DIRECTORY)/src/glsl/*.[ch]					\
 	$(DIRECTORY)/src/glsl/*.[cly]pp					\
 	$(DIRECTORY)/src/glsl/README					\
@@ -243,7 +240,6 @@ MAIN_FILES = \
 	$(DIRECTORY)/src/mesa/depend					\
 	$(MAIN_ES_FILES)						\
 	$(DIRECTORY)/src/mesa/main/*.[chS]				\
-	$(DIRECTORY)/src/mesa/main/*.cpp				\
 	$(DIRECTORY)/src/mesa/main/descrip.mms				\
 	$(DIRECTORY)/src/mesa/math/*.[ch]				\
 	$(DIRECTORY)/src/mesa/math/descrip.mms				\
@@ -329,7 +325,6 @@ GALLIUM_FILES = \
 	$(DIRECTORY)/src/gallium/Makefile.template			\
 	$(DIRECTORY)/src/gallium/SConscript				\
 	$(DIRECTORY)/src/gallium/targets/Makefile.dri			\
-	$(DIRECTORY)/src/gallium/targets/Makefile.egl			\
 	$(DIRECTORY)/src/gallium/*/Makefile				\
 	$(DIRECTORY)/src/gallium/*/SConscript				\
 	$(DIRECTORY)/src/gallium/*/*/Makefile				\
