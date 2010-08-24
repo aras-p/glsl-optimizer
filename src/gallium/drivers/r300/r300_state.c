@@ -1795,47 +1795,28 @@ static void r300_set_constant_buffer(struct pipe_context *pipe,
     struct r300_context* r300 = r300_context(pipe);
     struct r300_constant_buffer *cbuf;
     uint32_t *mapped = r300_buffer(buf)->user_buffer;
-    int max_size = 0, max_size_bytes = 0, clamped_size = 0;
 
     switch (shader) {
         case PIPE_SHADER_VERTEX:
             cbuf = (struct r300_constant_buffer*)r300->vs_constants.state;
-            max_size = 256;
             break;
         case PIPE_SHADER_FRAGMENT:
             cbuf = (struct r300_constant_buffer*)r300->fs_constants.state;
-            if (r300->screen->caps.is_r500) {
-                max_size = 256;
-            } else {
-                max_size = 32;
-            }
             break;
         default:
             assert(0);
             return;
     }
-    max_size_bytes = max_size * 4 * sizeof(float);
 
     if (buf == NULL || buf->width0 == 0 ||
         (mapped = r300_buffer(buf)->constant_buffer) == NULL) {
-        cbuf->count = 0;
         return;
     }
 
     if (shader == PIPE_SHADER_FRAGMENT ||
         (shader == PIPE_SHADER_VERTEX && r300->screen->caps.has_tcl)) {
         assert((buf->width0 % (4 * sizeof(float))) == 0);
-
-        /* Check the size of the constant buffer. */
-        /* XXX Subtract immediates and RC_STATE_* variables. */
-        if (buf->width0 > max_size_bytes) {
-            fprintf(stderr, "r300: Max size of the constant buffer is "
-                          "%i*4 floats.\n", max_size);
-        }
-
-        clamped_size = MIN2(buf->width0, max_size_bytes);
-        cbuf->count = clamped_size / (4 * sizeof(float));
-        cbuf->ptr = mapped;
+        cbuf->ptr = mapped + index*4;
     }
 
     if (shader == PIPE_SHADER_VERTEX) {
