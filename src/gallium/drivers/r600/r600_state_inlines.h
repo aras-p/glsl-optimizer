@@ -264,6 +264,9 @@ static INLINE uint32_t r600_translate_colorformat(enum pipe_format format)
 	case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
 		return V_0280A0_COLOR_8_24;
 
+	case PIPE_FORMAT_R32_FLOAT:
+		return V_0280A0_COLOR_32_FLOAT;
+
 		/* 64-bit buffers. */
 	case PIPE_FORMAT_R16G16B16A16_UNORM:
 	case PIPE_FORMAT_R16G16B16A16_SNORM:
