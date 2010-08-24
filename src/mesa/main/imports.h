@@ -147,6 +147,7 @@ typedef union { GLfloat f; GLint i; } fi_type;
 static __inline float truncf (float x) { return (x < 0.0f) ? ceilf(x) : floorf(x); }
 static __inline float exp2f (float x) { return powf (2.0f, x); }
 static __inline float log2f (float x) { return logf (x) / logf (2.0f); }
+static __inline int isblank (int ch) { return ch==' ' || ch=='\t'; }
 #endif
 /*@}*/
 

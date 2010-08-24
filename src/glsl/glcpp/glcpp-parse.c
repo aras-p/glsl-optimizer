@@ -102,6 +102,10 @@
 #include "glcpp.h"
 #include "main/mtypes.h"
 
+#if (defined(_MSC_VER))
+#define strtoll(p, e, b) _strtoi64(p, e, b) 
+#endif
+
 #define glcpp_print(stream, str) stream = talloc_strdup_append(stream, str)
 #define glcpp_printf(stream, fmt, args, ...) \
 	stream = talloc_asprintf_append(stream, fmt, args)
