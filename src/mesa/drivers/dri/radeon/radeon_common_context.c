@@ -93,6 +93,11 @@ static const char* get_chip_family_name(int chip_family)
 	case CHIP_FAMILY_RV730: return "RV730";
 	case CHIP_FAMILY_RV710: return "RV710";
 	case CHIP_FAMILY_RV740: return "RV740";
+	case CHIP_FAMILY_CEDAR: return "CEDAR";
+	case CHIP_FAMILY_REDWOOD: return "REDWOOD";
+	case CHIP_FAMILY_JUNIPER: return "JUNIPER";
+	case CHIP_FAMILY_CYPRESS: return "CYPRESS";
+	case CHIP_FAMILY_HEMLOCK: return "HEMLOCK";
 	default: return "unknown";
 	}
 }
