@@ -41,7 +41,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../../talloc;../../../include;../../mesa;../../mapi;."
+				AdditionalIncludeDirectories="../../talloc;../../../include;../../mesa;../../mapi;../../../include/c99"
 				PreprocessorDefinitions="WIN32;_DEBUG;_LIB;NOMINMAX;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE;snprintf=_snprintf"
 				MinimalRebuild="false"
 				BasicRuntimeChecks="3"
@@ -108,7 +108,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="../../talloc;../../../include;../../mesa;../../mapi;."
+				AdditionalIncludeDirectories="../../talloc;../../../include;../../mesa;../../mapi;../../../include/c99"
 				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;NOMINMAX;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE;snprintf=_snprintf"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
@@ -533,6 +533,90 @@
 					RelativePath="..\s_expression.h"
 					>
 				</File>
+				<Filter
+					Name="glcpp"
+					>
+					<File
+						RelativePath="..\glcpp\glcpp-lex.c"
+						>
+					</File>
+					<File
+						RelativePath="..\glcpp\glcpp-lex.l"
+						>
+						<FileConfiguration
+							Name="Debug|Win32"
+							ExcludedFromBuild="true"
+							>
+							<Tool
+								Name="VCCustomBuildTool"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release|Win32"
+							ExcludedFromBuild="true"
+							>
+							<Tool
+								Name="VCCustomBuildTool"
+							/>
+						</FileConfiguration>
+					</File>
+					<File
+						RelativePath="..\glcpp\glcpp-parse.c"
+						>
+					</File>
+					<File
+						RelativePath="..\glcpp\glcpp-parse.h"
+						>
+					</File>
+					<File
+						RelativePath="..\glcpp\glcpp-parse.y"
+						>
+						<FileConfiguration
+							Name="Debug|Win32"
+							ExcludedFromBuild="true"
+							>
+							<Tool
+								Name="VCCustomBuildTool"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release|Win32"
+							ExcludedFromBuild="true"
+							>
+							<Tool
+								Name="VCCustomBuildTool"
+							/>
+						</FileConfiguration>
+					</File>
+					<File
+						RelativePath="..\glcpp\glcpp.c"
+						>
+						<FileConfiguration
+							Name="Debug|Win32"
+							ExcludedFromBuild="true"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release|Win32"
+							ExcludedFromBuild="true"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+							/>
+						</FileConfiguration>
+					</File>
+					<File
+						RelativePath="..\glcpp\glcpp.h"
+						>
+					</File>
+					<File
+						RelativePath="..\glcpp\pp.c"
+						>
+					</File>
+				</Filter>
 			</Filter>
 			<Filter
 				Name="mesa"
