@@ -131,7 +131,7 @@ depend: $(ALL_SOURCES) Makefile
 
 # Remove .o and backup files
 clean:
-	rm -f $(OBJECTS) lib$(LIBNAME).a depend depend.bak
+	rm -f $(GLCPP_OBJECTS) $(GLSL2_OBJECTS) $(OBJECTS) lib$(LIBNAME).a depend depend.bak
 	-rm -f $(APPS)
 
 # Dummy target
