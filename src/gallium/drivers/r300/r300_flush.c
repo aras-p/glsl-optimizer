@@ -45,9 +45,12 @@ static void r300_flush(struct pipe_context* pipe,
 
     if (r300->draw)
 	r300_draw_flush_vbuf(r300);
+
     if (r300->dirty_hw) {
         r300_emit_hyperz_end(r300);
         r300_emit_query_end(r300);
+        if (r500_index_bias_supported(r300))
+            r500_emit_index_bias(r300, 0);
 
         r300->flush_counter++;
         r300->rws->cs_flush(r300->cs);

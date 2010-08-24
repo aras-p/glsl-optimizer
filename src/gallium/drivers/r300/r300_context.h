@@ -650,8 +650,10 @@ void r300_translate_index_buffer(struct r300_context *r300,
 /* r300_render_stencilref.c */
 void r300_plug_in_stencil_ref_fallback(struct r300_context *r300);
 
-/* r300 render */
+/* r300_render.c */
 void r300_draw_flush_vbuf(struct r300_context *r300);
+boolean r500_index_bias_supported(struct r300_context *r300);
+void r500_emit_index_bias(struct r300_context *r300, int index_bias);
 
 /* r300_state.c */
 enum r300_fb_state_change {

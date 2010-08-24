@@ -118,13 +118,13 @@ static uint32_t r300_provoking_vertex_fixes(struct r300_context *r300,
     return color_control;
 }
 
-static boolean index_bias_supported(struct r300_context *r300)
+boolean r500_index_bias_supported(struct r300_context *r300)
 {
     return r300->screen->caps.is_r500 &&
            r300->rws->get_value(r300->rws, R300_VID_DRM_2_3_0);
 }
 
-static void r500_emit_index_bias(struct r300_context *r300, int index_bias)
+void r500_emit_index_bias(struct r300_context *r300, int index_bias)
 {
     CS_LOCALS(r300);
 
@@ -199,7 +199,7 @@ static void r300_prepare_for_rendering(struct r300_context *r300,
     boolean emit_aos       = flags & PREP_EMIT_AOS;
     boolean emit_aos_swtcl = flags & PREP_EMIT_AOS_SWTCL;
     boolean indexed        = flags & PREP_INDEXED;
-    boolean hw_index_bias  = index_bias_supported(r300);
+    boolean hw_index_bias  = r500_index_bias_supported(r300);
 
     /* Add dirty state, index offset, and AOS. */
     if (first_draw) {
@@ -506,7 +506,7 @@ static void r300_draw_range_elements(struct pipe_context* pipe,
         translate = TRUE;
     }
 
-    if (indexBias && !index_bias_supported(r300)) {
+    if (indexBias && !r500_index_bias_supported(r300)) {
         r300_split_index_bias(r300, indexBias, &buffer_offset, &index_offset);
     }
 
