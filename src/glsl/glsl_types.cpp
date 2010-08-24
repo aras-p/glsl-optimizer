@@ -243,6 +243,7 @@ glsl_type::generate_constructor(glsl_symbol_table *symtab) const
 
    bool added = symtab->add_function(name, f);
    assert(added);
+   (void) added;
 
    ir_function_signature *const sig = new(ctx) ir_function_signature(this);
    f->add_signature(sig);
