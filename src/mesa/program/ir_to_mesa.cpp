@@ -260,13 +260,6 @@ public:
    GLboolean try_emit_mad(ir_expression *ir,
 			  int mul_operand);
 
-   int add_uniform(const char *name,
-		   const glsl_type *type);
-   void add_aggregate_uniform(ir_instruction *ir,
-			      const char *name,
-			      const struct glsl_type *type,
-			      struct ir_to_mesa_dst_reg temp);
-
    struct hash_table *sampler_map;
 
    void set_sampler_location(ir_variable *sampler, int location);
@@ -522,10 +515,10 @@ type_size(const struct glsl_type *type)
       }
       return size;
    case GLSL_TYPE_SAMPLER:
-      /* Samplers take up no register space, since they're baked in at
-       * link time.
+      /* Samplers take up one slot in UNIFORMS[], but they're baked in
+       * at link time.
        */
-      return 0;
+      return 1;
    default:
       assert(0);
       return 0;
@@ -1290,7 +1283,6 @@ get_builtin_matrix_ref(void *mem_ctx, struct gl_program *prog, ir_variable *var,
 	    tokens[1] = 0; /* unused array index */
 	    base_pos = add_matrix_ref(prog, tokens);
 	 }
-	 tokens[4] = matrices[i].modifier;
 
 	 entry = new(mem_ctx) variable_storage(var,
 					       PROGRAM_STATE_VAR,
@@ -1303,76 +1295,10 @@ get_builtin_matrix_ref(void *mem_ctx, struct gl_program *prog, ir_variable *var,
    return NULL;
 }
 
-int
-ir_to_mesa_visitor::add_uniform(const char *name,
-				const glsl_type *type)
-{
-   int len;
-
-   if (type->is_vector() ||
-       type->is_scalar()) {
-      len = type->vector_elements;
-   } else {
-      len = type_size(type) * 4;
-   }
-
-   int loc = _mesa_add_uniform(this->prog->Parameters,
-			       name,
-			       len,
-			       type->gl_type,
-			       NULL);
-
-   return loc;
-}
-
-/* Recursively add all the members of the aggregate uniform as uniform names
- * to Mesa, moving those uniforms to our structured temporary.
- */
-void
-ir_to_mesa_visitor::add_aggregate_uniform(ir_instruction *ir,
-					  const char *name,
-					  const struct glsl_type *type,
-					  struct ir_to_mesa_dst_reg temp)
-{
-   int loc;
-
-   if (type->is_record()) {
-      void *mem_ctx = talloc_new(NULL);
-
-      for (unsigned int i = 0; i < type->length; i++) {
-	 const glsl_type *field_type = type->fields.structure[i].type;
-
-	 add_aggregate_uniform(ir,
-			       talloc_asprintf(mem_ctx, "%s.%s", name,
-					       type->fields.structure[i].name),
-			       field_type, temp);
-	 temp.index += type_size(field_type);
-      }
-
-      talloc_free(mem_ctx);
-
-      return;
-   }
-
-   assert(type->is_vector() || type->is_scalar() || !"FINISHME: other types");
-
-   loc = add_uniform(name, type);
-
-   ir_to_mesa_src_reg uniform(PROGRAM_UNIFORM, loc, type);
-
-   for (int i = 0; i < type_size(type); i++) {
-      ir_to_mesa_emit_op1(ir, OPCODE_MOV, temp, uniform);
-      temp.index++;
-      uniform.index++;
-   }
-}
-
-
 void
 ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
 {
    variable_storage *entry = find_variable_storage(ir->var);
-   unsigned int loc;
 
    if (!entry) {
       switch (ir->var->mode) {
@@ -1382,7 +1308,6 @@ ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
 	 if (entry)
 	    break;
 
-	 /* FINISHME: Fix up uniform name for arrays and things */
 	 if (ir->var->type->base_type == GLSL_TYPE_SAMPLER ||
 	     (ir->var->type->base_type == GLSL_TYPE_ARRAY &&
 	      ir->var->type->fields.array->base_type == GLSL_TYPE_SAMPLER)) {
@@ -1404,30 +1329,8 @@ ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
 	    break;
 	 }
 
-	 assert(ir->var->type->gl_type != 0 &&
-		ir->var->type->gl_type != GL_INVALID_ENUM);
-
-	 /* Oh, the joy of aggregate types in Mesa.  Like constants,
-	  * we can only really do vec4s.  So, make a temp, chop the
-	  * aggregate up into vec4s, and move those vec4s to the temp.
-	  */
-	 if (ir->var->type->is_record()) {
-	    ir_to_mesa_src_reg temp = get_temp(ir->var->type);
-
-	    entry = new(mem_ctx) variable_storage(ir->var,
-						  temp.file,
-						  temp.index);
-	    this->variables.push_tail(entry);
-
-	    add_aggregate_uniform(ir->var, ir->var->name, ir->var->type,
-				  ir_to_mesa_dst_reg_from_src(temp));
-	    break;
-	 }
-
-	 loc = add_uniform(ir->var->name,
-			   ir->var->type);
-
-	 entry = new(mem_ctx) variable_storage(ir->var, PROGRAM_UNIFORM, loc);
+	 entry = new(mem_ctx) variable_storage(ir->var, PROGRAM_UNIFORM,
+					       ir->var->location);
 	 this->variables.push_tail(entry);
 	 break;
       case ir_var_in:
@@ -2338,25 +2241,81 @@ count_resources(struct gl_program *prog)
    _mesa_update_shader_textures_used(prog);
 }
 
-/* Each stage has some uniforms in its Parameters list.  The Uniforms
- * list for the linked shader program has a pointer to these uniforms
- * in each of the stage's Parameters list, so that their values can be
- * updated when a uniform is set.
+/* Add the uniforms to the parameters.  The linker chose locations
+ * in our parameters lists (which weren't created yet), which the
+ * uniforms code will use to poke values into our parameters list
+ * when uniforms are updated.
  */
 static void
-link_uniforms_to_shared_uniform_list(struct gl_uniform_list *uniforms,
-				     struct gl_program *prog)
+add_uniforms_to_parameters_list(struct gl_shader_program *shader_program,
+				struct gl_shader *shader,
+				struct gl_program *prog)
 {
    unsigned int i;
 
-   for (i = 0; i < prog->Parameters->NumParameters; i++) {
-      const struct gl_program_parameter *p = prog->Parameters->Parameters + i;
+   for (i = 0; i < shader_program->Uniforms->NumUniforms; i++) {
+      struct gl_uniform *uniform = shader_program->Uniforms->Uniforms + i;
+      const glsl_type *type = uniform->Type;
+      unsigned int size;
+      int parameter_index = -1;
 
-      if (p->Type == PROGRAM_UNIFORM || p->Type == PROGRAM_SAMPLER) {
-	 struct gl_uniform *uniform =
-	    _mesa_append_uniform(uniforms, p->Name, prog->Target, i);
-	 if (uniform)
-	    uniform->Initialized = p->Initialized;
+      switch (shader->Type) {
+      case GL_VERTEX_SHADER:
+	 parameter_index = uniform->VertPos;
+	 break;
+      case GL_FRAGMENT_SHADER:
+	 parameter_index = uniform->FragPos;
+	 break;
+      case GL_GEOMETRY_SHADER:
+	 parameter_index = uniform->GeomPos;
+	 break;
+      }
+
+      /* Only add uniforms used in our target. */
+      if (parameter_index == -1)
+	 continue;
+
+      if (type->is_vector() ||
+	  type->is_scalar()) {
+	 size = type->vector_elements;
+      } else {
+	 size = type_size(type) * 4;
+      }
+
+      if (type->is_sampler() ||
+	  (type->is_array() && type->fields.array->is_sampler())) {
+	 int array_length;
+
+	 if (type->is_array())
+	    array_length = type->length;
+	 else
+	    array_length = 1;
+
+	 (void)_mesa_add_sampler(prog->Parameters,
+				 uniform->Name,
+				 type->gl_type,
+				 array_length);
+      } else {
+	 GLint index = _mesa_lookup_parameter_index(prog->Parameters, -1,
+						    uniform->Name);
+
+	 if (index < 0) {
+	    index = _mesa_add_parameter(prog->Parameters, PROGRAM_UNIFORM,
+					uniform->Name, size, type->gl_type,
+					NULL, NULL, 0x0);
+
+	    /* The location chosen in the Parameters list here (returned
+	     * from _mesa_add_uniform) has to match what the linker chose.
+	     */
+	    if (index != parameter_index) {
+	       shader_program->InfoLog =
+		  talloc_asprintf_append(shader_program->InfoLog,
+					 "Allocation of uniform `%s' to target "
+					 "failed (%d vs %d)\n", uniform->Name,
+					 index, parameter_index);
+	       shader_program->LinkStatus = false;
+	    }
+	 }
       }
    }
 }
@@ -2497,6 +2456,8 @@ get_mesa_program(GLcontext *ctx, struct gl_shader_program *shader_program,
    prog->Attributes = _mesa_new_parameter_list();
    v.ctx = ctx;
    v.prog = prog;
+
+   add_uniforms_to_parameters_list(shader_program, shader, prog);
 
    /* Emit Mesa IR for main(). */
    visit_exec_list(shader->ir, &v);
@@ -2676,8 +2637,6 @@ _mesa_ir_link_shader(GLcontext *ctx, struct gl_shader_program *prog)
 
       linked_prog = get_mesa_program(ctx, prog, prog->_LinkedShaders[i]);
 
-      link_uniforms_to_shared_uniform_list(prog->Uniforms, linked_prog);
-
       switch (prog->_LinkedShaders[i]->Type) {
       case GL_VERTEX_SHADER:
 	 _mesa_reference_vertprog(ctx, &prog->VertexProgram,
@@ -2801,12 +2760,6 @@ _mesa_glsl_link_shader(GLcontext *ctx, struct gl_shader_program *prog)
 
    if (prog->LinkStatus) {
       link_shaders(ctx, prog);
-
-      /* We don't use the linker's uniforms list, and cook up our own at
-       * generate time.
-       */
-      _mesa_free_uniform_list(prog->Uniforms);
-      prog->Uniforms = _mesa_new_uniform_list();
    }
 
    if (prog->LinkStatus) {
