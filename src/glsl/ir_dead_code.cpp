@@ -92,6 +92,14 @@ do_dead_code(exec_list *instructions)
 	 /* If there are no assignments or references to the variable left,
 	  * then we can remove its declaration.
 	  */
+
+	 /* uniform initializers are precious, and could get used by another
+	  * stage.
+	  */
+	 if (entry->var->mode == ir_var_uniform &&
+	     entry->var->constant_value)
+	    continue;
+
 	 entry->var->remove();
 	 progress = true;
 
