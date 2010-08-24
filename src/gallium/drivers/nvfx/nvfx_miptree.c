@@ -10,8 +10,6 @@
 #include "nouveau/nouveau_screen.h"
 #include "nvfx_screen.h"
 #include "nvfx_resource.h"
-#include "nvfx_transfer.h"
-#include "nv04_2d.h"
 
 static void
 nvfx_miptree_choose_format(struct nvfx_miptree *mt)

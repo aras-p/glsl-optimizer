@@ -2,7 +2,6 @@
 #include "pipe/p_context.h"
 #include "util/u_staging.h"
 #include "nvfx_resource.h"
-#include "nvfx_transfer.h"
 #include "nouveau/nouveau_screen.h"
 
 static unsigned int

@@ -32,7 +32,6 @@
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "util/u_pack_color.h"
-#include "util/u_rect.h"
 #include "util/u_blitter.h"
 
 #include "nouveau/nouveau_winsys.h"
