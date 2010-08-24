@@ -1255,6 +1255,9 @@ static boolean build_vertex_emit( struct translate_sse *p,
    int fixup, label;
    unsigned j;
 
+   memset(p->reg_to_const, 0xff, sizeof(p->reg_to_const));
+   memset(p->const_to_reg, 0xff, sizeof(p->const_to_reg));
+
    p->tmp_EAX       = x86_make_reg(file_REG32, reg_AX);
    p->idx_ESI       = x86_make_reg(file_REG32, reg_SI);
    p->outbuf_EBX    = x86_make_reg(file_REG32, reg_BX);
@@ -1440,10 +1443,7 @@ struct translate *translate_sse2_create( const struct translate_key *key )
    if (p == NULL) 
       goto fail;
    memset(p, 0, sizeof(*p));
-
    memcpy(p->consts, consts, sizeof(consts));
-   memset(p->reg_to_const, 0xff, sizeof(p->reg_to_const));
-   memset(p->const_to_reg, 0xff, sizeof(p->const_to_reg));
 
    p->translate.key = *key;
    p->translate.release = translate_sse_release;
