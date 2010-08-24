@@ -707,6 +707,10 @@
 			RelativePath=".\msvccompat.h"
 			>
 		</File>
+		<File
+			RelativePath="..\..\..\README.md"
+			>
+		</File>
 	</Files>
 	<Globals>
 	</Globals>

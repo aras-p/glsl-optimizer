@@ -29,7 +29,7 @@ Interface for the library is `src/glsl/glsl_optimizer.h`. General usage is:
  
 	ctx = glslopt_initialize();
 	for (lots of shaders) {
-		shader = glslopt_optimize (ctx, shaderType, shaderSource);
+		shader = glslopt_optimize (ctx, shaderType, shaderSource, options);
 		if (glslopt_get_status (shader)) {
 			newSource = glslopt_get_output (shader);
 		} else {
@@ -42,9 +42,6 @@ Interface for the library is `src/glsl/glsl_optimizer.h`. General usage is:
 Notes
 -----
 
-* Does not support GLSL preprocessor. All input shader source should be
-  already preprocessed. For my use case it's not needed, so I did not
-  bother compiling Mesa's one. Shouldn't be hard if you need it.
 * I haven't checked if/how it works with higher GLSL versions than the
   default (1.10?), or with GLSL ES syntax.
   

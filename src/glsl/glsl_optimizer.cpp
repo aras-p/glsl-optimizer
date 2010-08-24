@@ -86,7 +86,7 @@ static inline void debug_print_ir (const char* name, exec_list* ir, _mesa_glsl_p
 	#endif
 }
 
-glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, const char* shaderSource)
+glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, const char* shaderSource, unsigned options)
 {
 	glslopt_shader* shader = new (ctx->mem_ctx) glslopt_shader ();
 
@@ -105,6 +105,17 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 
 	_mesa_glsl_parse_state* state = new (ctx->mem_ctx) _mesa_glsl_parse_state (NULL, glType, ctx->mem_ctx);
 	state->error = 0;
+
+	if (!(options & kGlslOptionSkipPreprocessor))
+	{
+		state->error = preprocess (state, &shaderSource, &state->info_log, state->extensions);
+		if (state->error)
+		{
+			shader->status = !state->error;
+			shader->infoLog = state->info_log;
+			return shader;
+		}
+	}
 
 	_mesa_glsl_lexer_ctor (state, shaderSource);
 	_mesa_glsl_parse (state);

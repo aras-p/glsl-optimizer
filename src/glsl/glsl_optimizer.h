@@ -10,7 +10,7 @@
 
  ctx = glslopt_initialize();
  for (lots of shaders) {
-   shader = glslopt_optimize (ctx, shaderType, shaderSource);
+   shader = glslopt_optimize (ctx, shaderType, shaderSource, options);
    if (glslopt_get_status (shader)) {
      newSource = glslopt_get_output (shader);
    } else {
@@ -29,10 +29,15 @@ enum glslopt_shader_type {
 	kGlslOptShaderFragment,
 };
 
+// Options flags for glsl_optimize
+enum glslopt_options {
+	kGlslOptionSkipPreprocessor = (1<<0), // Skip preprocessing shader source. Saves some time if you know you don't need it.
+};
+
 glslopt_ctx* glslopt_initialize ();
 void glslopt_cleanup (glslopt_ctx* ctx);
 
-glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, const char* shaderSource);
+glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, const char* shaderSource, unsigned options);
 bool glslopt_get_status (glslopt_shader* shader);
 const char* glslopt_get_output (glslopt_shader* shader);
 const char* glslopt_get_raw_output (glslopt_shader* shader);
