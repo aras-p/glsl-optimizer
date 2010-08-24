@@ -315,27 +315,6 @@ _mesa_add_uniform(struct gl_program_parameter_list *paramList,
 
 
 /**
- * Mark the named uniform as 'used'.
- */
-void
-_mesa_use_uniform(struct gl_program_parameter_list *paramList,
-                  const char *name)
-{
-   GLuint i;
-   for (i = 0; i < paramList->NumParameters; i++) {
-      struct gl_program_parameter *p = paramList->Parameters + i;
-      if ((p->Type == PROGRAM_UNIFORM || p->Type == PROGRAM_SAMPLER) &&
-          strcmp(p->Name, name) == 0) {
-         p->Used = GL_TRUE;
-         /* Note that large uniforms may occupy several slots so we're
-          * not done searching yet.
-          */
-      }
-   }
-}
-
-
-/**
  * Add a sampler to the parameter list.
  * \param name  uniform's name
  * \param datatype  GL_SAMPLER_2D, GL_SAMPLER_2D_RECT_ARB, etc.
@@ -658,7 +637,6 @@ _mesa_clone_parameter_list(const struct gl_program_parameter_list *list)
                                     list->ParameterValues[i], NULL, 0x0);
       ASSERT(j >= 0);
       pCopy = clone->Parameters + j;
-      pCopy->Used = p->Used;
       pCopy->Flags = p->Flags;
       /* copy state indexes */
       if (p->Type == PROGRAM_STATE_VAR) {

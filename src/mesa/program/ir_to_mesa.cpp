@@ -1427,11 +1427,6 @@ ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
 	 loc = add_uniform(ir->var->name,
 			   ir->var->type);
 
-	 /* Always mark the uniform used at this point.  If it isn't
-	  * used, dead code elimination should have nuked the decl already.
-	  */
-	 this->prog->Parameters->Parameters[loc].Used = GL_TRUE;
-
 	 entry = new(mem_ctx) variable_storage(ir->var, PROGRAM_UNIFORM, loc);
 	 this->variables.push_tail(entry);
 	 break;
