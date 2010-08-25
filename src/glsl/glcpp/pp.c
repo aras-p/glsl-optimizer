@@ -25,6 +25,7 @@
 #include <string.h>
 #include <ctype.h>
 #include "glcpp.h"
+#include "main/core.h" /* for isblank() on MSVC */
 
 void
 glcpp_error (YYLTYPE *locp, glcpp_parser_t *parser, const char *fmt, ...)

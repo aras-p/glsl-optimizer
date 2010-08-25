@@ -148,6 +148,7 @@ static INLINE float truncf(float x) { return x < 0.0f ? ceilf(x) : floorf(x); }
 static INLINE float exp2f(float x) { return powf(2.0f, x); }
 static INLINE float log2f(float x) { return logf(x) * 1.442695041f; }
 static INLINE int isblank(int ch) { return ch == ' ' || ch == '\t'; }
+#define strtoll(p, e, b) _strtoi64(p, e, b)
 #endif
 /*@}*/
 
