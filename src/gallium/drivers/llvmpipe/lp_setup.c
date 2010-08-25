@@ -815,6 +815,10 @@ lp_setup_update_state( struct lp_setup_context *setup )
          for (i = 0; i < Elements(setup->fs.current_tex); i++) {
             if (setup->fs.current_tex[i])
                lp_scene_add_resource_reference(scene, setup->fs.current_tex[i]);
+         }
+      }
+   }
+
    if (setup->dirty & LP_SETUP_NEW_SCISSOR) {
       setup->draw_region = setup->framebuffer;
       if (setup->scissor_test) {
@@ -823,11 +827,6 @@ lp_setup_update_state( struct lp_setup_context *setup )
       }
    }
                                       
-
-         }
-      }
-   }
-
    setup->dirty = 0;
 
    assert(setup->fs.stored);
