@@ -996,8 +996,10 @@ nvfx_fragprog_prepare(struct nvfx_context* nvfx, struct nvfx_fpc *fpc)
 	return TRUE;
 
 out_err:
-	if (fpc->r_temp)
+	if (fpc->r_temp) {
 		FREE(fpc->r_temp);
+		fpc->r_temp = NULL;
+	}
 	tgsi_parse_free(&p);
 	return FALSE;
 }
