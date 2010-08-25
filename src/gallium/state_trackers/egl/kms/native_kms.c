@@ -588,7 +588,9 @@ kms_display_get_configs(struct native_display *ndpy, int *num_configs)
 
       nconf->color_format = format;
 
-      nconf->scanout_bit = TRUE;
+      /* support KMS */
+      if (kdpy->resources)
+         nconf->scanout_bit = TRUE;
    }
 
    configs = MALLOC(sizeof(*configs));
@@ -746,32 +748,32 @@ kms_create_display(int fd, struct native_event_handler *event_handler,
       return NULL;
    }
 
-   /* resources are fixed, unlike crtc, connector, or encoder */
-   kdpy->resources = drmModeGetResources(kdpy->fd);
-   if (!kdpy->resources) {
-      kms_display_destroy(&kdpy->base);
-      return NULL;
-   }
-
-   kdpy->saved_crtcs =
-      CALLOC(kdpy->resources->count_crtcs, sizeof(*kdpy->saved_crtcs));
-   if (!kdpy->saved_crtcs) {
-      kms_display_destroy(&kdpy->base);
-      return NULL;
-   }
-
-   kdpy->shown_surfaces =
-      CALLOC(kdpy->resources->count_crtcs, sizeof(*kdpy->shown_surfaces));
-   if (!kdpy->shown_surfaces) {
-      kms_display_destroy(&kdpy->base);
-      return NULL;
-   }
-
    kdpy->base.destroy = kms_display_destroy;
    kdpy->base.get_param = kms_display_get_param;
    kdpy->base.get_configs = kms_display_get_configs;
 
-   kdpy->base.modeset = &kms_display_modeset;
+   /* resources are fixed, unlike crtc, connector, or encoder */
+   kdpy->resources = drmModeGetResources(kdpy->fd);
+   if (kdpy->resources) {
+      kdpy->saved_crtcs =
+         CALLOC(kdpy->resources->count_crtcs, sizeof(*kdpy->saved_crtcs));
+      if (!kdpy->saved_crtcs) {
+         kms_display_destroy(&kdpy->base);
+         return NULL;
+      }
+
+      kdpy->shown_surfaces =
+         CALLOC(kdpy->resources->count_crtcs, sizeof(*kdpy->shown_surfaces));
+      if (!kdpy->shown_surfaces) {
+         kms_display_destroy(&kdpy->base);
+         return NULL;
+      }
+
+      kdpy->base.modeset = &kms_display_modeset;
+   }
+   else {
+      _eglLog(_EGL_DEBUG, "Failed to get KMS resources.  Disable modeset.");
+   }
 
    return &kdpy->base;
 }
