@@ -1,11 +1,11 @@
 #ifndef __NVFX_SCREEN_H__
 #define __NVFX_SCREEN_H__
 
+#include "pipe/p_compiler.h"
 #include "util/u_double_list.h"
 #include "nouveau/nouveau_screen.h"
-#include "nvfx_context.h"
 
-struct nv04_2d_context;
+struct pipe_screen;
 
 struct nvfx_screen {
 	struct nouveau_screen base;
