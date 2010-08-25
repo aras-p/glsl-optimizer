@@ -1126,7 +1126,11 @@ nv04_region_fill_gdirect(struct nv04_2d_context *ctx, struct nv04_region* dst, i
 		cs2d_format = NV04_CONTEXT_SURFACES_2D_FORMAT_Y32;
 	}
 	else
+	{
 		assert(0);
+		gdirect_format = 0;
+		cs2d_format = 0;
+	}
 
 	MARK_RING (chan, 15, 4);
 	BEGIN_RING(chan, surf2d, NV04_CONTEXT_SURFACES_2D_DMA_IMAGE_SOURCE, 2);
