@@ -940,9 +940,9 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
     uint32_t stuffing_enable;       /* R300_GB_ENABLE: 0x4008 */
 
     /* Point sprites texture coordinates, 0: lower left, 1: upper right */
-    float point_texcoord_left;      /* R300_GA_POINT_S0: 0x4200 */
+    float point_texcoord_left = 0;  /* R300_GA_POINT_S0: 0x4200 */
     float point_texcoord_bottom = 0;/* R300_GA_POINT_T0: 0x4204 */
-    float point_texcoord_right;     /* R300_GA_POINT_S1: 0x4208 */
+    float point_texcoord_right = 1; /* R300_GA_POINT_S1: 0x4208 */
     float point_texcoord_top = 0;   /* R300_GA_POINT_T1: 0x420c */
     CB_LOCALS;
 
@@ -1063,9 +1063,6 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
                 stuffing_enable |=
                     R300_GB_TEX_ST << (R300_GB_TEX0_SOURCE_SHIFT + (i*2));
         }
-
-        point_texcoord_left = 0.0f;
-        point_texcoord_right = 1.0f;
 
         switch (state->sprite_coord_mode) {
             case PIPE_SPRITE_COORD_UPPER_LEFT:
