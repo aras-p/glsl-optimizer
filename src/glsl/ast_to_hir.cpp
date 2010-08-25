@@ -2197,17 +2197,16 @@ ast_function::hir(exec_list *instructions,
 	    _mesa_glsl_error(& loc, state, "function `%s' redefined", name);
 	 }
       }
-   } else if (state->symbols->name_declared_this_scope(name)) {
-      /* This function name shadows a non-function use of the same name.
-       */
-      YYLTYPE loc = this->get_location();
-
-      _mesa_glsl_error(& loc, state, "function name `%s' conflicts with "
-		       "non-function", name);
-      return NULL;
    } else {
       f = new(ctx) ir_function(name);
-      state->symbols->add_function(f->name, f);
+      if (!state->symbols->add_function(f->name, f)) {
+	 /* This function name shadows a non-function use of the same name. */
+	 YYLTYPE loc = this->get_location();
+
+	 _mesa_glsl_error(&loc, state, "function name `%s' conflicts with "
+			  "non-function", name);
+	 return NULL;
+      }
 
       /* Emit the new function header */
       instructions->push_tail(f);
