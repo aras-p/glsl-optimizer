@@ -284,36 +284,6 @@ _mesa_add_unnamed_constant(struct gl_program_parameter_list *paramList,
    return pos;
 }
 
-
-/**
- * Add a uniform to the parameter list.
- * Note that if the uniform is an array, size may be greater than
- * what's implied by the datatype.
- * \param name  uniform's name
- * \param size  number of floats to allocate
- * \param datatype  GL_FLOAT_VEC3, GL_FLOAT_MAT4, etc.
- */
-GLint
-_mesa_add_uniform(struct gl_program_parameter_list *paramList,
-                  const char *name, GLuint size, GLenum datatype,
-                  const GLfloat *values)
-{
-   GLint i = _mesa_lookup_parameter_index(paramList, -1, name);
-   ASSERT(datatype != GL_NONE);
-   if (i >= 0 && paramList->Parameters[i].Type == PROGRAM_UNIFORM) {
-      ASSERT(paramList->Parameters[i].Size == size);
-      ASSERT(paramList->Parameters[i].DataType == datatype);
-      /* already in list */
-      return i;
-   }
-   else {
-      i = _mesa_add_parameter(paramList, PROGRAM_UNIFORM, name,
-                              size, datatype, values, NULL, 0x0);
-      return i;
-   }
-}
-
-
 /**
  * Add a sampler to the parameter list.
  * \param name  uniform's name
