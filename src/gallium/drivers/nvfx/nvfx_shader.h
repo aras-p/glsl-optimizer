@@ -1,6 +1,10 @@
 #ifndef __NVFX_SHADER_H__
 #define __NVFX_SHADER_H__
 
+#include <stdint.h>
+
+#include "pipe/p_compiler.h"
+
 #define NVFX_SWZ_IDENTITY ((3 << 6) | (2 << 4) | (1 << 2) | (0 << 0))
 
 /* this will resolve to either the NV30 or the NV40 version
