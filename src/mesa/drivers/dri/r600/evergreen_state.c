@@ -338,7 +338,6 @@ static void evergreenSetBlendState(GLcontext * ctx) //diff : CB_COLOR_CONTROL, C
 {
 	context_t *context = EVERGREEN_CONTEXT(ctx);
 	EVERGREEN_CHIP_CONTEXT *evergreen = GET_EVERGREEN_CHIP(context);
-	int id = 0;
 	uint32_t blend_reg = 0, eqn, eqnA;
 
 	EVERGREEN_STATECHANGE(context, cb);
