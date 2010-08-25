@@ -950,6 +950,11 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
     rs->rs = *state;
     rs->rs_draw = *state;
 
+    /* Generate point sprite texture coordinates in GENERIC0
+     * if point_quad_rasterization is TRUE. */
+    rs->rs.sprite_coord_enable = state->point_quad_rasterization *
+                                 (state->sprite_coord_enable | 1);
+
     /* Override some states for Draw. */
     rs->rs_draw.sprite_coord_enable = 0; /* We can do this in HW. */
 
@@ -1051,10 +1056,10 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
 
     /* Point sprites */
     stuffing_enable = 0;
-    if (state->sprite_coord_enable) {
+    if (rs->rs.sprite_coord_enable) {
         stuffing_enable = R300_GB_POINT_STUFF_ENABLE;
         for (i = 0; i < 8; i++) {
-            if (state->sprite_coord_enable & (1 << i))
+            if (rs->rs.sprite_coord_enable & (1 << i))
                 stuffing_enable |=
                     R300_GB_TEX_ST << (R300_GB_TEX0_SOURCE_SHIFT + (i*2));
         }
