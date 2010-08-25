@@ -892,6 +892,76 @@ static int swizzle_is_native(rc_opcode opcode, struct rc_src_register reg)
 	return 1;
 }
 
+static void transform_negative_addressing(struct r300_vertex_program_compiler *c,
+					  struct rc_instruction *arl,
+					  struct rc_instruction *end,
+					  int min_offset)
+{
+	struct rc_instruction *inst, *add;
+	unsigned const_swizzle;
+
+	/* Transform ARL */
+	add = rc_insert_new_instruction(&c->Base, arl->Prev);
+	add->U.I.Opcode = RC_OPCODE_ADD;
+	add->U.I.DstReg.File = RC_FILE_TEMPORARY;
+	add->U.I.DstReg.Index = rc_find_free_temporary(&c->Base);
+	add->U.I.DstReg.WriteMask = RC_MASK_X;
+	add->U.I.SrcReg[0] = arl->U.I.SrcReg[0];
+	add->U.I.SrcReg[1].File = RC_FILE_CONSTANT;
+	add->U.I.SrcReg[1].Index = rc_constants_add_immediate_scalar(&c->Base.Program.Constants,
+								     min_offset, &const_swizzle);
+	add->U.I.SrcReg[1].Swizzle = const_swizzle;
+
+	arl->U.I.SrcReg[0].File = RC_FILE_TEMPORARY;
+	arl->U.I.SrcReg[0].Index = add->U.I.DstReg.Index;
+	arl->U.I.SrcReg[0].Swizzle = RC_SWIZZLE_XXXX;
+
+	/* Rewrite offsets up to and excluding inst. */
+	for (inst = arl->Next; inst != end; inst = inst->Next) {
+		const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->U.I.Opcode);
+
+		for (unsigned i = 0; i < opcode->NumSrcRegs; i++)
+			if (inst->U.I.SrcReg[i].RelAddr)
+				inst->U.I.SrcReg[i].Index -= min_offset;
+	}
+}
+
+static void rc_emulate_negative_addressing(struct r300_vertex_program_compiler *c)
+{
+	struct rc_instruction *inst, *lastARL = NULL;
+	int min_offset = 0;
+
+	for (inst = c->Base.Program.Instructions.Next; inst != &c->Base.Program.Instructions; inst = inst->Next) {
+		const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->U.I.Opcode);
+
+		if (inst->U.I.Opcode == RC_OPCODE_ARL) {
+			if (lastARL != NULL && min_offset < 0)
+				transform_negative_addressing(c, lastARL, inst, min_offset);
+
+			lastARL = inst;
+			min_offset = 0;
+			continue;
+		}
+
+		for (unsigned i = 0; i < opcode->NumSrcRegs; i++) {
+			if (inst->U.I.SrcReg[i].RelAddr &&
+			    inst->U.I.SrcReg[i].Index < 0) {
+				/* ARL must precede any indirect addressing. */
+				if (lastARL == NULL) {
+					rc_error(&c->Base, "Vertex shader: Found relative addressing without ARL.");
+					return;
+				}
+
+				if (inst->U.I.SrcReg[i].Index < min_offset)
+					min_offset = inst->U.I.SrcReg[i].Index;
+			}
+		}
+	}
+
+	if (lastARL != NULL && min_offset < 0)
+		transform_negative_addressing(c, lastARL, inst, min_offset);
+}
+
 static void debug_program_log(struct r300_vertex_program_compiler* c, const char * where)
 {
 	if (c->Base.Debug) {
@@ -932,6 +1002,10 @@ void r3xx_compile_vertex_program(struct r300_vertex_program_compiler *c)
 			return;
 		debug_program_log(c, "after emulate branches");
 	}
+
+	rc_emulate_negative_addressing(c);
+
+	debug_program_log(c, "after negative addressing emulation");
 
 	if (c->Base.is_r500) {
 		struct radeon_program_transformation transformations[] = {
