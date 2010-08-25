@@ -809,6 +809,10 @@ egl_g3d_init_driver_api(_EGLDriver *drv)
 
    drv->API.CreateImageKHR = egl_g3d_create_image;
    drv->API.DestroyImageKHR = egl_g3d_destroy_image;
+#ifdef EGL_MESA_drm_image
+   drv->API.CreateDRMImageMESA = egl_g3d_create_drm_image;
+   drv->API.ExportDRMImageMESA = egl_g3d_export_drm_image;
+#endif
 
 #ifdef EGL_KHR_reusable_sync
    drv->API.CreateSyncKHR = egl_g3d_create_sync;

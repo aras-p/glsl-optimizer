@@ -537,6 +537,9 @@ egl_g3d_initialize(_EGLDriver *drv, _EGLDisplay *dpy,
    dpy->Extensions.KHR_surfaceless_gles2 = EGL_TRUE;
    dpy->Extensions.KHR_surfaceless_opengl = EGL_TRUE;
 
+   if (dpy->Platform == _EGL_PLATFORM_DRM)
+      dpy->Extensions.MESA_drm_image = EGL_TRUE;
+
    if (egl_g3d_add_configs(drv, dpy, 1) == 1) {
       _eglError(EGL_NOT_INITIALIZED, "eglInitialize(unable to add configs)");
       goto fail;
