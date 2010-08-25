@@ -38,7 +38,8 @@ CONCAT(vsplit_primitive_, ELT_TYPE)(struct vsplit_frontend *vsplit,
                                     unsigned istart, unsigned icount)
 {
    struct draw_context *draw = vsplit->draw;
-   const ELT_TYPE *ib = (const ELT_TYPE *) draw->pt.user.elts;
+   const ELT_TYPE *ib = (const ELT_TYPE *)
+      ((const char *) draw->pt.user.elts + draw->pt.index_buffer.offset);
    const unsigned min_index = draw->pt.user.min_index;
    const unsigned max_index = draw->pt.user.max_index;
    const int elt_bias = draw->pt.user.eltBias;
@@ -119,7 +120,8 @@ CONCAT(vsplit_segment_cache_, ELT_TYPE)(struct vsplit_frontend *vsplit,
                                         boolean close, unsigned iclose)
 {
    struct draw_context *draw = vsplit->draw;
-   const ELT_TYPE *ib = (const ELT_TYPE *) draw->pt.user.elts;
+   const ELT_TYPE *ib = (const ELT_TYPE *)
+      ((const char *) draw->pt.user.elts + draw->pt.index_buffer.offset);
    const int ibias = draw->pt.user.eltBias;
    unsigned i;
 

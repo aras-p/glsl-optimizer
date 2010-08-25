@@ -39,6 +39,7 @@
 #include "util/u_math.h"
 #include "util/u_prim.h"
 #include "util/u_format.h"
+#include "util/u_draw.h"
 
 
 DEBUG_GET_ONCE_BOOL_OPTION(draw_fse, "DRAW_FSE", FALSE)
@@ -189,24 +190,29 @@ draw_print_arrays(struct draw_context *draw, uint prim, int start, uint count)
       uint ii = 0;
       uint j;
 
-      if (draw->pt.user.elts) {
+      if (draw->pt.user.eltSize) {
+         const char *elts;
+
          /* indexed arrays */
+         elts = (const char *) draw->pt.user.elts;
+         elts += draw->pt.index_buffer.offset;
+
          switch (draw->pt.user.eltSize) {
          case 1:
             {
-               const ubyte *elem = (const ubyte *) draw->pt.user.elts;
+               const ubyte *elem = (const ubyte *) elts;
                ii = elem[start + i];
             }
             break;
          case 2:
             {
-               const ushort *elem = (const ushort *) draw->pt.user.elts;
+               const ushort *elem = (const ushort *) elts;
                ii = elem[start + i];
             }
             break;
          case 4:
             {
-               const uint *elem = (const uint *) draw->pt.user.elts;
+               const uint *elem = (const uint *) elts;
                ii = elem[start + i];
             }
             break;
@@ -292,17 +298,9 @@ draw_arrays(struct draw_context *draw, unsigned prim,
 
 
 /**
- * Draw vertex arrays.
- * This is the main entrypoint into the drawing module.
- * If drawing an indexed primitive, the draw_set_mapped_element_buffer_range()
- * function should have already been called to specify the element/index buffer
- * information.
- *
- * \param prim  one of PIPE_PRIM_x
- * \param start  index of first vertex to draw
- * \param count  number of vertices to draw
- * \param startInstance  number for the first primitive instance (usually 0).
- * \param instanceCount  number of instances to draw (1=non-instanced)
+ * Instanced drawing.
+ * draw_set_mapped_element_buffer must be called before calling this function.
+ * \sa draw_vbo
  */
 void
 draw_arrays_instanced(struct draw_context *draw,
@@ -312,10 +310,49 @@ draw_arrays_instanced(struct draw_context *draw,
                       unsigned startInstance,
                       unsigned instanceCount)
 {
-   unsigned reduced_prim = u_reduced_prim(mode);
+   struct pipe_draw_info info;
+
+   util_draw_init_info(&info);
+
+   info.mode = mode;
+   info.start = start;
+   info.count = count;
+   info.start_instance = startInstance;
+   info.instance_count = instanceCount;
+
+   info.indexed = (draw->pt.user.elts != NULL);
+   info.index_bias = draw->pt.user.eltBias;
+   info.min_index = draw->pt.user.min_index;
+   info.max_index = draw->pt.user.max_index;
+
+   draw_vbo(draw, &info);
+}
+
+
+/**
+ * Draw vertex arrays.
+ * This is the main entrypoint into the drawing module.  If drawing an indexed
+ * primitive, the draw_set_index_buffer() and draw_set_mapped_index_buffer()
+ * functions should have already been called to specify the element/index
+ * buffer information.
+ */
+void
+draw_vbo(struct draw_context *draw,
+         const struct pipe_draw_info *info)
+{
+   unsigned reduced_prim = u_reduced_prim(info->mode);
    unsigned instance;
 
-   assert(instanceCount > 0);
+   assert(info->instance_count > 0);
+   if (info->indexed)
+      assert(draw->pt.user.elts);
+
+   draw->pt.user.eltSize =
+      (info->indexed) ? draw->pt.index_buffer.index_size : 0;
+
+   draw->pt.user.eltBias = info->index_bias;
+   draw->pt.user.min_index = info->min_index;
+   draw->pt.user.max_index = info->max_index;
 
    if (reduced_prim != draw->reduced_prim) {
       draw_do_flush(draw, DRAW_FLUSH_STATE_CHANGE);
@@ -323,8 +360,8 @@ draw_arrays_instanced(struct draw_context *draw,
    }
 
    if (0)
-      debug_printf("draw_arrays(mode=%u start=%u count=%u):\n",
-                   mode, start, count);
+      debug_printf("draw_vbo(mode=%u start=%u count=%u):\n",
+                   info->mode, info->start, info->count);
 
    if (0)
       tgsi_dump(draw->vs.vertex_shader->state.tokens, 0);
@@ -352,10 +389,10 @@ draw_arrays_instanced(struct draw_context *draw,
    }
 
    if (0)
-      draw_print_arrays(draw, mode, start, MIN2(count, 20));
+      draw_print_arrays(draw, info->mode, info->start, MIN2(info->count, 20));
 
-   for (instance = 0; instance < instanceCount; instance++) {
-      draw->instance_id = instance + startInstance;
-      draw_pt_arrays(draw, mode, start, count);
+   for (instance = 0; instance < info->instance_count; instance++) {
+      draw->instance_id = instance + info->start_instance;
+      draw_pt_arrays(draw, info->mode, info->start, info->count);
    }
 }

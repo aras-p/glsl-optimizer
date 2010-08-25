@@ -160,6 +160,12 @@ void draw_set_vertex_elements(struct draw_context *draw,
 			      unsigned count,
                               const struct pipe_vertex_element *elements);
 
+void draw_set_index_buffer(struct draw_context *draw,
+                           const struct pipe_index_buffer *ib);
+
+void draw_set_mapped_index_buffer(struct draw_context *draw,
+                                  const void *elements);
+
 void
 draw_set_mapped_element_buffer_range( struct draw_context *draw,
                                       unsigned eltSize,
@@ -195,6 +201,9 @@ draw_set_so_state(struct draw_context *draw,
 /***********************************************************************
  * draw_pt.c 
  */
+
+void draw_vbo(struct draw_context *draw,
+              const struct pipe_draw_info *info);
 
 void draw_arrays(struct draw_context *draw, unsigned prim,
 		 unsigned start, unsigned count);

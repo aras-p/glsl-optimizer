@@ -149,6 +149,8 @@ struct draw_context
       struct pipe_vertex_element vertex_element[PIPE_MAX_ATTRIBS];
       unsigned nr_vertex_elements;
 
+      struct pipe_index_buffer index_buffer;
+
       /* user-space vertex data, buffers */
       struct {
          /** vertex element/index buffer (ex: glDrawElements) */
