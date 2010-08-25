@@ -22,7 +22,7 @@ r300compiler = env.ConvenienceLibrary(
         'radeon_pair_schedule.c',
         'radeon_pair_regalloc.c',
         'radeon_optimize.c',
-        'radeon_remove_constants.c'
+        'radeon_remove_constants.c',
         'radeon_rename_regs.c',
         'radeon_emulate_branches.c',
         'radeon_emulate_loops.c',
