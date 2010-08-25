@@ -285,43 +285,6 @@ _mesa_add_unnamed_constant(struct gl_program_parameter_list *paramList,
 }
 
 /**
- * Add a sampler to the parameter list.
- * \param name  uniform's name
- * \param datatype  GL_SAMPLER_2D, GL_SAMPLER_2D_RECT_ARB, etc.
- * \param index  the sampler number (as seen in TEX instructions)
- * \return  sampler index (starting at zero) or -1 if error
- */
-GLint
-_mesa_add_sampler(struct gl_program_parameter_list *paramList,
-                  const char *name, GLenum datatype, int array_length)
-{
-   GLint i = _mesa_lookup_parameter_index(paramList, -1, name);
-   if (i >= 0 && paramList->Parameters[i].Type == PROGRAM_SAMPLER) {
-      ASSERT(paramList->Parameters[i].Size == 4 * array_length);
-      ASSERT(paramList->Parameters[i].DataType == datatype);
-      /* already in list */
-      return (GLint) paramList->ParameterValues[i][0];
-   }
-   else {
-      GLuint i;
-       /* One integer texture unit number goes in each parameter location. */
-      const GLint size = 4 * array_length;
-      GLfloat value[4];
-      GLint numSamplers = 0;
-      for (i = 0; i < paramList->NumParameters; i++) {
-         if (paramList->Parameters[i].Type == PROGRAM_SAMPLER)
-            numSamplers++;
-      }
-      value[0] = (GLfloat) numSamplers;
-      value[1] = value[2] = value[3] = 0.0F;
-      (void) _mesa_add_parameter(paramList, PROGRAM_SAMPLER, name,
-                                 size, datatype, value, NULL, 0x0);
-      return numSamplers;
-   }
-}
-
-
-/**
  * Add parameter representing a varying variable.
  */
 GLint
