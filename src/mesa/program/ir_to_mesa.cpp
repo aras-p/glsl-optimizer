@@ -173,6 +173,7 @@ public:
 
    GLcontext *ctx;
    struct gl_program *prog;
+   struct gl_shader_program *shader_program;
 
    int next_temp;
 
@@ -260,10 +261,7 @@ public:
    GLboolean try_emit_mad(ir_expression *ir,
 			  int mul_operand);
 
-   struct hash_table *sampler_map;
-
-   void set_sampler_location(ir_variable *sampler, int location);
-   int get_sampler_location(ir_variable *sampler);
+   int get_sampler_uniform_value(ir_dereference *deref);
 
    void *mem_ctx;
 };
@@ -366,25 +364,6 @@ ir_to_mesa_visitor::ir_to_mesa_emit_op0(ir_instruction *ir,
 			      ir_to_mesa_undef,
 			      ir_to_mesa_undef,
 			      ir_to_mesa_undef);
-}
-
-void
-ir_to_mesa_visitor::set_sampler_location(ir_variable *sampler, int location)
-{
-   if (this->sampler_map == NULL) {
-      this->sampler_map = hash_table_ctor(0, hash_table_pointer_hash,
-					  hash_table_pointer_compare);
-   }
-
-   hash_table_insert(this->sampler_map, (void *)(uintptr_t)location, sampler);
-}
-
-int
-ir_to_mesa_visitor::get_sampler_location(ir_variable *sampler)
-{
-   void *result = hash_table_find(this->sampler_map, sampler);
-
-   return (int)(uintptr_t)result;
 }
 
 inline ir_to_mesa_dst_reg
@@ -1308,27 +1287,6 @@ ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
 	 if (entry)
 	    break;
 
-	 if (ir->var->type->base_type == GLSL_TYPE_SAMPLER ||
-	     (ir->var->type->base_type == GLSL_TYPE_ARRAY &&
-	      ir->var->type->fields.array->base_type == GLSL_TYPE_SAMPLER)) {
-	    int array_length;
-
-	    if (ir->var->type->base_type == GLSL_TYPE_ARRAY)
-	       array_length = ir->var->type->length;
-	    else
-	       array_length = 1;
-	    int sampler = _mesa_add_sampler(this->prog->Parameters,
-					    ir->var->name,
-					    ir->var->type->gl_type,
-					    array_length);
-	    set_sampler_location(ir->var, sampler);
-
-	    entry = new(mem_ctx) variable_storage(ir->var, PROGRAM_SAMPLER,
-						  sampler);
-	    this->variables.push_tail(entry);
-	    break;
-	 }
-
 	 entry = new(mem_ctx) variable_storage(ir->var, PROGRAM_UNIFORM,
 					       ir->var->location);
 	 this->variables.push_tail(entry);
@@ -1825,6 +1783,91 @@ ir_to_mesa_visitor::visit(ir_call *ir)
    this->result = entry->return_reg;
 }
 
+class get_sampler_name : public ir_hierarchical_visitor
+{
+public:
+   get_sampler_name(ir_to_mesa_visitor *mesa, ir_dereference *last)
+   {
+      this->mem_ctx = mesa->mem_ctx;
+      this->mesa = mesa;
+      this->name = NULL;
+      this->offset = 0;
+      this->last = last;
+   }
+
+   virtual ir_visitor_status visit(ir_dereference_variable *ir)
+   {
+      this->name = ir->var->name;
+      return visit_continue;
+   }
+
+   virtual ir_visitor_status visit_leave(ir_dereference_record *ir)
+   {
+      this->name = talloc_asprintf(mem_ctx, "%s.%s", name, ir->field);
+      return visit_continue;
+   }
+
+   virtual ir_visitor_status visit_leave(ir_dereference_array *ir)
+   {
+      ir_constant *index = ir->array_index->as_constant();
+      int i;
+
+      if (index) {
+	 i = index->value.i[0];
+      } else {
+	 /* GLSL 1.10 and 1.20 allowed variable sampler array indices,
+	  * while GLSL 1.30 requires that the array indices be
+	  * constant integer expressions.  We don't expect any driver
+	  * to actually work with a really variable array index, so
+	  * all that would work would be an unrolled loop counter that ends
+	  * up being constant above.
+	  */
+	 mesa->shader_program->InfoLog =
+	    talloc_asprintf_append(mesa->shader_program->InfoLog,
+				   "warning: Variable sampler array index "
+				   "unsupported.\nThis feature of the language "
+				   "was removed in GLSL 1.20 and is unlikely "
+				   "to be supported for 1.10 in Mesa.\n");
+	 i = 0;
+      }
+      if (ir != last) {
+	 this->name = talloc_asprintf(mem_ctx, "%s[%d]", name, i);
+      } else {
+	 offset = i;
+      }
+      return visit_continue;
+   }
+
+   ir_to_mesa_visitor *mesa;
+   const char *name;
+   void *mem_ctx;
+   int offset;
+   ir_dereference *last;
+};
+
+int
+ir_to_mesa_visitor::get_sampler_uniform_value(ir_dereference *sampler)
+{
+   get_sampler_name getname(this, sampler);
+
+   sampler->accept(&getname);
+
+   GLint index = _mesa_lookup_parameter_index(prog->Parameters, -1,
+					      getname.name);
+
+   if (index < 0) {
+      this->shader_program->InfoLog =
+	 talloc_asprintf_append(this->shader_program->InfoLog,
+				"failed to find sampler named %s.\n",
+				getname.name);
+      this->shader_program->LinkStatus = GL_FALSE;
+      return 0;
+   }
+
+   index += getname.offset;
+
+   return this->prog->Parameters->ParameterValues[index][0];
+}
 
 void
 ir_to_mesa_visitor::visit(ir_texture *ir)
@@ -1925,34 +1968,9 @@ ir_to_mesa_visitor::visit(ir_texture *ir)
    if (ir->shadow_comparitor)
       inst->tex_shadow = GL_TRUE;
 
-   ir_variable *sampler = ir->sampler->variable_referenced();
+   inst->sampler = get_sampler_uniform_value(ir->sampler);
 
-   /* generate the mapping, remove when we generate storage at
-    * declaration time
-    */
-   ir->sampler->accept(this);
-
-   inst->sampler = get_sampler_location(sampler);
-
-   ir_dereference_array *sampler_array = ir->sampler->as_dereference_array();
-   if (sampler_array) {
-      ir_constant *array_index =
-	 sampler_array->array_index->constant_expression_value();
-
-      /* GLSL 1.10 and 1.20 allowed variable sampler array indices,
-       * while GLSL 1.30 requires that the array indices be constant
-       * integer expressions.  We don't expect any driver to actually
-       * work with a really variable array index, and in 1.20 all that
-       * would work would be an unrolled loop counter, so assert that
-       * we ended up with a constant at least..
-       */
-      assert(array_index);
-      inst->sampler += array_index->value.i[0];
-   }
-
-   const glsl_type *sampler_type = sampler->type;
-   while (sampler_type->base_type == GLSL_TYPE_ARRAY)
-      sampler_type = sampler_type->fields.array;
+   const glsl_type *sampler_type = ir->sampler->type;
 
    switch (sampler_type->sampler_dimensionality) {
    case GLSL_SAMPLER_DIM_1D:
@@ -2066,7 +2084,6 @@ ir_to_mesa_visitor::ir_to_mesa_visitor()
    result.file = PROGRAM_UNDEFINED;
    next_temp = 1;
    next_signature_id = 1;
-   sampler_map = NULL;
    current_function = NULL;
    mem_ctx = talloc_new(NULL);
 }
@@ -2074,8 +2091,6 @@ ir_to_mesa_visitor::ir_to_mesa_visitor()
 ir_to_mesa_visitor::~ir_to_mesa_visitor()
 {
    talloc_free(mem_ctx);
-   if (this->sampler_map)
-      hash_table_dtor(this->sampler_map);
 }
 
 static struct prog_src_register
@@ -2222,12 +2237,6 @@ count_resources(struct gl_program *prog)
    for (i = 0; i < prog->NumInstructions; i++) {
       struct prog_instruction *inst = &prog->Instructions[i];
 
-      /* Instead of just using the uniform's value to map to a
-       * sampler, Mesa first allocates a separate number for the
-       * sampler (_mesa_add_sampler), then we reindex it down to a
-       * small integer (sampler_map[], SamplersUsed), then that gets
-       * mapped to the uniform's value, and we get an actual sampler.
-       */
       if (_mesa_is_tex_instruction(inst->Opcode)) {
 	 prog->SamplerTargets[inst->TexSrcUnit] =
 	    (gl_texture_index)inst->TexSrcTarget;
@@ -2252,6 +2261,7 @@ add_uniforms_to_parameters_list(struct gl_shader_program *shader_program,
 				struct gl_program *prog)
 {
    unsigned int i;
+   unsigned int next_sampler = 0;
 
    for (i = 0; i < shader_program->Uniforms->NumUniforms; i++) {
       struct gl_uniform *uniform = shader_program->Uniforms->Uniforms + i;
@@ -2282,39 +2292,41 @@ add_uniforms_to_parameters_list(struct gl_shader_program *shader_program,
 	 size = type_size(type) * 4;
       }
 
+      gl_register_file file;
       if (type->is_sampler() ||
 	  (type->is_array() && type->fields.array->is_sampler())) {
-	 int array_length;
-
-	 if (type->is_array())
-	    array_length = type->length;
-	 else
-	    array_length = 1;
-
-	 (void)_mesa_add_sampler(prog->Parameters,
-				 uniform->Name,
-				 type->gl_type,
-				 array_length);
+	 file = PROGRAM_SAMPLER;
       } else {
-	 GLint index = _mesa_lookup_parameter_index(prog->Parameters, -1,
-						    uniform->Name);
+	 file = PROGRAM_UNIFORM;
+      }
 
-	 if (index < 0) {
-	    index = _mesa_add_parameter(prog->Parameters, PROGRAM_UNIFORM,
-					uniform->Name, size, type->gl_type,
-					NULL, NULL, 0x0);
+      GLint index = _mesa_lookup_parameter_index(prog->Parameters, -1,
+						 uniform->Name);
 
-	    /* The location chosen in the Parameters list here (returned
-	     * from _mesa_add_uniform) has to match what the linker chose.
-	     */
-	    if (index != parameter_index) {
-	       shader_program->InfoLog =
-		  talloc_asprintf_append(shader_program->InfoLog,
-					 "Allocation of uniform `%s' to target "
-					 "failed (%d vs %d)\n", uniform->Name,
-					 index, parameter_index);
-	       shader_program->LinkStatus = false;
-	    }
+      if (index < 0) {
+	 index = _mesa_add_parameter(prog->Parameters, file,
+				     uniform->Name, size, type->gl_type,
+				     NULL, NULL, 0x0);
+
+	 /* Sampler uniform values are stored in prog->SamplerUnits,
+	  * and the entry in that array is selected by this index we
+	  * store in ParameterValues[].
+	  */
+	 if (file == PROGRAM_SAMPLER) {
+	    for (unsigned int j = 0; j < size / 4; j++)
+	       prog->Parameters->ParameterValues[index + j][0] = next_sampler++;
+	 }
+
+	 /* The location chosen in the Parameters list here (returned
+	  * from _mesa_add_uniform) has to match what the linker chose.
+	  */
+	 if (index != parameter_index) {
+	    shader_program->InfoLog =
+	       talloc_asprintf_append(shader_program->InfoLog,
+				      "Allocation of uniform `%s' to target "
+				      "failed (%d vs %d)\n", uniform->Name,
+				      index, parameter_index);
+	    shader_program->LinkStatus = false;
 	 }
       }
    }
@@ -2456,6 +2468,7 @@ get_mesa_program(GLcontext *ctx, struct gl_shader_program *shader_program,
    prog->Attributes = _mesa_new_parameter_list();
    v.ctx = ctx;
    v.prog = prog;
+   v.shader_program = shader_program;
 
    add_uniforms_to_parameters_list(shader_program, shader, prog);
 
