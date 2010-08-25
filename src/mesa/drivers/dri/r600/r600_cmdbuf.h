@@ -198,8 +198,8 @@ do {								\
 		R600_OUT_BATCH(((reg) - R600_SET_CONFIG_REG_OFFSET) >> 2);	\
 	} else if ((reg) >= R600_SET_CONTEXT_REG_OFFSET && (reg) < R600_SET_CONTEXT_REG_END) { \
 		R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_CONTEXT_REG, (num)));	\
-		R600_OUT_BATCH(((reg) - R600_SET_CONTEXT_REG_OFFSET) >> 2);	\	
-	} else if ((reg) >= EG_SET_RESOURCE_OFFSET && (reg) < EG_SET_RESOURCE_END) { \ 
+		R600_OUT_BATCH(((reg) - R600_SET_CONTEXT_REG_OFFSET) >> 2);	\
+	} else if ((reg) >= EG_SET_RESOURCE_OFFSET && (reg) < EG_SET_RESOURCE_END) { \
 		R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_RESOURCE, (num)));	\
 		R600_OUT_BATCH(((reg) - EG_SET_RESOURCE_OFFSET) >> 2);	\
     } else if ((reg) >= EG_SET_LOOP_CONST_OFFSET && (reg) < EG_SET_LOOP_CONST_END) { \
