@@ -466,7 +466,7 @@ static void translate_vertex_program(struct r300_vertex_program_compiler * compi
 {
 	struct rc_instruction *rci;
 
-	struct loop * loops;
+	struct loop * loops = NULL;
 	int current_loop_depth = 0;
 	int loops_reserved = 0;
 
@@ -559,10 +559,16 @@ static void translate_vertex_program(struct r300_vertex_program_compiler * compi
 		}
 		case RC_OPCODE_ENDLOOP:
 		{
-			struct loop * l = &loops[current_loop_depth - 1];
-			unsigned int act_addr = l->BgnLoop - 1;
-			unsigned int last_addr = (compiler->code->length / 4) - 1;
-			unsigned int ret_addr = l->BgnLoop;
+			struct loop * l;
+			unsigned int act_addr;
+			unsigned int last_addr;
+			unsigned int ret_addr;
+
+			assert(loops);
+			l = &loops[current_loop_depth - 1];
+			act_addr = l->BgnLoop - 1;
+			last_addr = (compiler->code->length / 4) - 1;
+			ret_addr = l->BgnLoop;
 
 			if (loops_reserved >= R300_VS_MAX_FC_OPS) {
 				rc_error(&compiler->Base,
