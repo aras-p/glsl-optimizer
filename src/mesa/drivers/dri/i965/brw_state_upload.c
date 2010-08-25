@@ -35,7 +35,6 @@
 #include "brw_state.h"
 #include "intel_batchbuffer.h"
 #include "intel_buffers.h"
-#include "intel_chipset.h"
 
 /* This is used to initialize brw->state.atoms[].  We could use this
  * list directly except for a single atom, brw_constant_buffer, which
