@@ -161,19 +161,18 @@ brw_is_grf_written(const struct brw_instruction *inst,
    return left < right;
 }
 
-/* Specific path for message register since we need to handle the compr4 case */
-static INLINE GLboolean
-brw_is_mrf_written(const struct brw_instruction *inst, int reg_index, int size)
+static GLboolean
+brw_is_mrf_written_alu(const struct brw_instruction *inst,
+		       int reg_index, int size)
 {
    if (inst_opcode[inst->header.opcode].ndst == 0)
       return GL_FALSE;
 
-   if (inst->bits1.da1.dest_address_mode != BRW_ADDRESS_DIRECT)
-      if (inst->bits1.ia1.dest_reg_file == BRW_MESSAGE_REGISTER_FILE)
-         return GL_TRUE;
-
    if (inst->bits1.da1.dest_reg_file != BRW_MESSAGE_REGISTER_FILE)
       return GL_FALSE;
+
+   if (inst->bits1.da1.dest_address_mode != BRW_ADDRESS_DIRECT)
+      return GL_TRUE;
 
    const int reg_start = reg_index * REG_SIZE;
    const int reg_end = reg_start + size;
@@ -187,8 +186,6 @@ brw_is_mrf_written(const struct brw_instruction *inst, int reg_index, int size)
     */
    if (is_compr4 && inst->header.execution_size != BRW_EXECUTE_16)
       return GL_TRUE;
-
-   GLboolean is_written = GL_FALSE;
 
    /* Here we write mrf_{i} and mrf_{i+4}. So we read two times 8 elements */
    if (is_compr4) {
@@ -210,7 +207,8 @@ brw_is_mrf_written(const struct brw_instruction *inst, int reg_index, int size)
       const int left1 = MAX2(write_start1, reg_start);
       const int right1 = MIN2(write_end1, reg_end);
 
-      is_written = left0 < right0 || left1 < right1;
+      if (left0 < right0 || left1 < right1)
+	 return GL_TRUE;
    }
    else {
       int length;
@@ -223,25 +221,41 @@ brw_is_mrf_written(const struct brw_instruction *inst, int reg_index, int size)
                             + inst->bits1.da1.dest_subreg_nr;
       const int write_end = write_start + length;
       const int left = MAX2(write_start, reg_start);
-      const int right = MIN2(write_end, reg_end);;
+      const int right = MIN2(write_end, reg_end);
 
-      is_written = left < right;
+      if (left < right)
+	 return GL_TRUE;
    }
 
-   /* SEND may perform an implicit mov to a mrf register */
-   if (is_written == GL_FALSE &&
-       inst->header.opcode == BRW_OPCODE_SEND &&
-       inst->bits1.da1.src0_reg_file != 0) {
+   return GL_FALSE;
+}
 
-      const int mrf_start = inst->header.destreg__conditionalmod;
-      const int write_start = mrf_start * REG_SIZE;
-      const int write_end = write_start + REG_SIZE;
-      const int left = MAX2(write_start, reg_start);
-      const int right = MIN2(write_end, reg_end);;
-      is_written = left < right;
-   }
+/* SEND may perform an implicit mov to a mrf register */
+static GLboolean brw_is_mrf_written_send(const struct brw_instruction *inst,
+					 int reg_index, int size)
+{
 
-   return is_written;
+   const int reg_start = reg_index * REG_SIZE;
+   const int reg_end = reg_start + size;
+   const int mrf_start = inst->header.destreg__conditionalmod;
+   const int write_start = mrf_start * REG_SIZE;
+   const int write_end = write_start + REG_SIZE;
+   const int left = MAX2(write_start, reg_start);
+   const int right = MIN2(write_end, reg_end);
+
+   if (inst->header.opcode != BRW_OPCODE_SEND ||
+       inst->bits1.da1.src0_reg_file == 0)
+      return GL_FALSE;
+
+   return left < right;
+}
+
+/* Specific path for message register since we need to handle the compr4 case */
+static INLINE GLboolean
+brw_is_mrf_written(const struct brw_instruction *inst, int reg_index, int size)
+{
+   return (brw_is_mrf_written_alu(inst, reg_index, size) ||
+	   brw_is_mrf_written_send(inst, reg_index, size));
 }
 
 static INLINE GLboolean
