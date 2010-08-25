@@ -46,6 +46,7 @@
 #include "r600_context.h"
 #include "r600_cmdbuf.h"
 
+#include "evergreen_fragprog.h"
 #include "evergreen_vertprog.h"
 
 #include "evergreen_state.h"
