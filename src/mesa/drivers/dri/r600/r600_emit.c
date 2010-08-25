@@ -56,7 +56,6 @@ GLboolean r600AllocShaderConsts(GLcontext * ctx,
 {
 	radeonContextPtr radeonctx = RADEON_CONTEXT(ctx);
 	struct radeon_bo * pbo;
-	uint32_t *out;
 
     if(sizeinBYTE < 64) /* SQ_ALU_CONST_BUFFER_SIZE need 64 bytes at least to be non 0 */
     {
