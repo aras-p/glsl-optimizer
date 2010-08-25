@@ -644,6 +644,8 @@ get_programiv(GLcontext *ctx, GLuint program, GLenum pname, GLint *params)
       break;
    case GL_ACTIVE_UNIFORM_MAX_LENGTH:
       *params = _mesa_longest_uniform_name(shProg->Uniforms);
+      if (*params > 0)
+         (*params)++;  /* add one for terminating zero */
       break;
    case GL_PROGRAM_BINARY_LENGTH_OES:
       *params = 0;
