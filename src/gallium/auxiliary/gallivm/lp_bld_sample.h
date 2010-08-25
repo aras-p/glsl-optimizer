@@ -36,6 +36,8 @@
 #define LP_BLD_SAMPLE_H
 
 
+#include "pipe/p_format.h"
+
 #include "gallivm/lp_bld.h"
 
 struct pipe_resource;
