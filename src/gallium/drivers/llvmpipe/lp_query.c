@@ -37,7 +37,6 @@
 #include "lp_flush.h"
 #include "lp_fence.h"
 #include "lp_query.h"
-#include "lp_rast.h"
 #include "lp_state.h"
 
 
