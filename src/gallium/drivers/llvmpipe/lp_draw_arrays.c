@@ -68,25 +68,17 @@ llvmpipe_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
    }
 
    /* Map index buffer, if present */
-   if (info->indexed && lp->index_buffer.buffer) {
-      char *indices = (char *) llvmpipe_resource_data(lp->index_buffer.buffer);
-      mapped_indices = (void *) (indices + lp->index_buffer.offset);
-   }
+   if (info->indexed && lp->index_buffer.buffer)
+      mapped_indices = llvmpipe_resource_data(lp->index_buffer.buffer);
 
-   draw_set_mapped_element_buffer_range(draw, (mapped_indices) ?
-                                        lp->index_buffer.index_size : 0,
-                                        info->index_bias,
-                                        info->min_index,
-                                        info->max_index,
-                                        mapped_indices);
+   draw_set_mapped_index_buffer(draw, mapped_indices);
 
    llvmpipe_prepare_vertex_sampling(lp,
                                     lp->num_vertex_sampler_views,
                                     lp->vertex_sampler_views);
 
    /* draw! */
-   draw_arrays_instanced(draw, info->mode, info->start, info->count,
-         info->start_instance, info->instance_count);
+   draw_vbo(draw, info);
 
    /*
     * unmap vertex/index buffers
@@ -95,7 +87,7 @@ llvmpipe_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
       draw_set_mapped_vertex_buffer(draw, i, NULL);
    }
    if (mapped_indices) {
-      draw_set_mapped_element_buffer(draw, 0, 0, NULL);
+      draw_set_mapped_index_buffer(draw, NULL);
    }
    llvmpipe_cleanup_vertex_sampling(lp);
 

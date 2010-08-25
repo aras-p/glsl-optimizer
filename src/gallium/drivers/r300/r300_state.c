@@ -1556,7 +1556,12 @@ static void r300_set_index_buffer(struct pipe_context* pipe,
         memset(&r300->index_buffer, 0, sizeof(r300->index_buffer));
     }
 
-    /* TODO make this more like a state */
+    if (r300->screen->caps.has_tcl) {
+       /* TODO make this more like a state */
+    }
+    else {
+       draw_set_index_buffer(r300->draw, ib);
+    }
 }
 
 /* Initialize the PSC tables. */

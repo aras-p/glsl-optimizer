@@ -100,5 +100,5 @@ softpipe_set_index_buffer(struct pipe_context *pipe,
    else
       memset(&softpipe->index_buffer, 0, sizeof(softpipe->index_buffer));
 
-   /* TODO make this more like a state */
+   draw_set_index_buffer(softpipe->draw, ib);
 }

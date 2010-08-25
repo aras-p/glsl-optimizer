@@ -75,14 +75,10 @@ softpipe_draw_stream_output(struct pipe_context *pipe, unsigned mode)
    buf = (void*)((int32_t*)buf + offset);
    draw_set_mapped_vertex_buffer(draw, 0, buf);
 
-   draw_set_mapped_element_buffer_range(draw,
-                                        0, 0,
-                                        start,
-                                        start + count - 1,
-                                        NULL);
+   draw_set_mapped_index_buffer(draw, NULL);
 
    /* draw! */
-   draw_arrays_instanced(draw, mode, start, count, 0, 1);
+   draw_arrays(draw, mode, start, count);
 
    /* unmap vertex/index buffers - will cause draw module to flush */
    draw_set_mapped_vertex_buffer(draw, 0, NULL);
@@ -138,28 +134,20 @@ softpipe_draw_vbo(struct pipe_context *pipe,
    }
 
    /* Map index buffer, if present */
-   if (info->indexed && sp->index_buffer.buffer) {
-      char *indices = (char *) softpipe_resource(sp->index_buffer.buffer)->data;
-      mapped_indices = (void *) (indices + sp->index_buffer.offset);
-   }
+   if (info->indexed && sp->index_buffer.buffer)
+      mapped_indices = softpipe_resource(sp->index_buffer.buffer)->data;
 
-   draw_set_mapped_element_buffer_range(draw, (mapped_indices) ?
-                                        sp->index_buffer.index_size : 0,
-                                        info->index_bias,
-                                        info->min_index,
-                                        info->max_index,
-                                        mapped_indices);
+   draw_set_mapped_index_buffer(draw, mapped_indices);
 
    /* draw! */
-   draw_arrays_instanced(draw, info->mode, info->start, info->count,
-         info->start_instance, info->instance_count);
+   draw_vbo(draw, info);
 
    /* unmap vertex/index buffers - will cause draw module to flush */
    for (i = 0; i < sp->num_vertex_buffers; i++) {
       draw_set_mapped_vertex_buffer(draw, i, NULL);
    }
    if (mapped_indices) {
-      draw_set_mapped_element_buffer(draw, 0, 0, NULL);
+      draw_set_mapped_index_buffer(draw, NULL);
    }
 
    /*

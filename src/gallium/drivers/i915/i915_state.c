@@ -817,7 +817,8 @@ static void i915_set_index_buffer(struct pipe_context *pipe,
    else
       memset(&i915->index_buffer, 0, sizeof(i915->index_buffer));
 
-   /* TODO make this more like a state */
+   /* pass-through to draw module */
+   draw_set_index_buffer(i915->draw, ib);
 }
 
 static void

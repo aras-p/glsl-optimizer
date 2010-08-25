@@ -299,7 +299,6 @@ draw_arrays(struct draw_context *draw, unsigned prim,
 
 /**
  * Instanced drawing.
- * draw_set_mapped_element_buffer must be called before calling this function.
  * \sa draw_vbo
  */
 void
@@ -321,9 +320,10 @@ draw_arrays_instanced(struct draw_context *draw,
    info.instance_count = instanceCount;
 
    info.indexed = (draw->pt.user.elts != NULL);
-   info.index_bias = draw->pt.user.eltBias;
-   info.min_index = draw->pt.user.min_index;
-   info.max_index = draw->pt.user.max_index;
+   if (!info.indexed) {
+      info.min_index = start;
+      info.max_index = start + count - 1;
+   }
 
    draw_vbo(draw, &info);
 }

@@ -680,18 +680,11 @@ static void r300_swtcl_draw_vbo(struct pipe_context* pipe,
     if (info->indexed && r300->index_buffer.buffer) {
         indices = pipe_buffer_map(pipe, r300->index_buffer.buffer,
                                   PIPE_TRANSFER_READ, &ib_transfer);
-        if (indices)
-            indices = (void *) ((char *) indices + r300->index_buffer.offset);
     }
 
-    draw_set_mapped_element_buffer_range(r300->draw, (indices) ?
-                                         r300->index_buffer.index_size : 0,
-                                         info->index_bias,
-                                         info->min_index,
-                                         info->max_index,
-                                         indices);
+    draw_set_mapped_index_buffer(r300->draw, indices);
 
-    draw_arrays(r300->draw, info->mode, info->start, count);
+    draw_vbo(r300->draw, info);
 
     /* XXX Not sure whether this is the best fix.
      * It prevents CS from being rejected and weird assertion failures. */
@@ -707,8 +700,7 @@ static void r300_swtcl_draw_vbo(struct pipe_context* pipe,
 
     if (ib_transfer) {
         pipe_buffer_unmap(pipe, r300->index_buffer.buffer, ib_transfer);
-        draw_set_mapped_element_buffer_range(r300->draw, 0, 0, info->start,
-                info->start + count - 1, NULL);
+        draw_set_mapped_index_buffer(r300->draw, NULL);
     }
 }
 

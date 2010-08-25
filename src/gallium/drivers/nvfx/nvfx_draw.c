@@ -239,12 +239,10 @@ nvfx_draw_vbo_swtnl(struct pipe_context *pipe, const struct pipe_draw_info* info
 		draw_set_mapped_vertex_buffer(nvfx->draw, i, map);
 	}
 
-	if (info->indexed) {
-		map = nvfx_buffer(nvfx->idxbuf.buffer)->data + nvfx->idxbuf.offset;
-		draw_set_mapped_element_buffer_range(nvfx->draw, nvfx->idxbuf.index_size, info->index_bias, info->min_index, info->max_index, map);
-	} else {
-		draw_set_mapped_element_buffer(nvfx->draw, 0, 0, NULL);
-	}
+	map = NULL;
+	if (info->indexed && nvfx->idxbuf.buffer)
+		map = nvfx_buffer(nvfx->idxbuf.buffer)->data;
+	draw_set_mapped_index_buffer(nvfx->draw, map);
 
 	if (nvfx->constbuf[PIPE_SHADER_VERTEX]) {
 		const unsigned nr = nvfx->constbuf_nr[PIPE_SHADER_VERTEX];
@@ -254,7 +252,7 @@ nvfx_draw_vbo_swtnl(struct pipe_context *pipe, const struct pipe_draw_info* info
                                                 map, nr);
 	}
 
-	draw_arrays_instanced(nvfx->draw, info->mode, info->start, info->count, info->start_instance, info->instance_count);
+	draw_vbo(nvfx->draw, info);
 
 	draw_flush(nvfx->draw);
 }

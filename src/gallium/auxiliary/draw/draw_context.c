@@ -518,48 +518,6 @@ draw_set_mapped_index_buffer(struct draw_context *draw,
 }
 
 
-/**
- * Tell the drawing context about the index/element buffer to use
- * (ala glDrawElements)
- * If no element buffer is to be used (i.e. glDrawArrays) then this
- * should be called with eltSize=0 and elements=NULL.
- *
- * \param draw  the drawing context
- * \param eltSize  size of each element (1, 2 or 4 bytes)
- * \param elements  the element buffer ptr
- */
-void
-draw_set_mapped_element_buffer_range( struct draw_context *draw,
-                                      unsigned eltSize,
-                                      int eltBias,
-                                      unsigned min_index,
-                                      unsigned max_index,
-                                      const void *elements )
-{
-   struct pipe_index_buffer ib;
-
-   memset(&ib, 0, sizeof(ib));
-   ib.index_size = eltSize;
-   draw_set_index_buffer(draw, &ib);
-
-   draw->pt.user.elts = elements;
-   draw->pt.user.eltBias = eltBias;
-   draw->pt.user.min_index = min_index;
-   draw->pt.user.max_index = max_index;
-}
-
-
-void
-draw_set_mapped_element_buffer( struct draw_context *draw,
-                                unsigned eltSize,
-                                int eltBias,
-                                const void *elements )
-{
-   draw_set_mapped_element_buffer_range(draw,
-         eltSize, eltBias, 0, 0xffffffff, elements);
-}
-
- 
 /* Revamp me please:
  */
 void draw_do_flush( struct draw_context *draw, unsigned flags )

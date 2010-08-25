@@ -335,6 +335,9 @@ nvfx_state_validate_swtnl(struct nvfx_context *nvfx)
 		draw_set_vertex_elements(draw, nvfx->vtxelt->num_elements, nvfx->vtxelt->pipe);
 	}
 
+	if (nvfx->draw_dirty & NVFX_NEW_INDEX)
+		draw_set_index_buffer(draw, &nvfx->idxbuf);
+
 	nvfx_state_validate_common(nvfx);
 
 	nvfx->draw_dirty = 0;
