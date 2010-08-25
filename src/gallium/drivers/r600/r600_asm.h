@@ -47,6 +47,7 @@ struct r600_bc_alu {
 	unsigned			inst;
 	unsigned			last;
 	unsigned			is_op3;
+	unsigned                        predicate;
 	unsigned			nliteral;
 	unsigned			literal_added;
 	u32				value[4];
@@ -114,12 +115,25 @@ struct r600_bc_cf {
 	unsigned			addr;
 	unsigned			ndw;
 	unsigned			id;
+	unsigned                        cond;
+	unsigned                        pop_count;
+	unsigned                        cf_addr; /* control flow addr */
 	struct list_head		alu;
 	struct list_head		tex;
 	struct list_head		vtx;
 	struct r600_bc_output		output;
 };
 
+#define FC_NONE 0
+#define FC_IF 1
+#define FC_LOOP 2
+
+struct r600_cf_stack_entry {
+	int type;
+	struct r600_bc_cf *start;
+	struct r600_bc_cf *mid; /* used to store the else point */
+};
+	
 struct r600_bc {
 	enum radeon_family		family;
 	int chiprev; /* 0 - r600, 1 - r700, 2 - evergreen */
@@ -128,9 +142,13 @@ struct r600_bc {
 	unsigned			ndw;
 	unsigned			ncf;
 	unsigned			ngpr;
+	unsigned                        nstack;
 	unsigned			nresource;
 	unsigned			force_add_cf;
 	u32				*bytecode;
+
+	u32 fc_sp;
+	struct r600_cf_stack_entry fc_stack[32];
 };
 
 int r600_bc_init(struct r600_bc *bc, enum radeon_family family);
@@ -140,5 +158,6 @@ int r600_bc_add_vtx(struct r600_bc *bc, const struct r600_bc_vtx *vtx);
 int r600_bc_add_tex(struct r600_bc *bc, const struct r600_bc_tex *tex);
 int r600_bc_add_output(struct r600_bc *bc, const struct r600_bc_output *output);
 int r600_bc_build(struct r600_bc *bc);
-
+int r600_bc_add_cfinst(struct r600_bc *bc, int inst);
+int r600_bc_add_alu_type(struct r600_bc *bc, const struct r600_bc_alu *alu, int type);
 #endif

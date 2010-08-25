@@ -603,4 +603,9 @@
 #define   G_SQ_TEX_WORD2_SRC_SEL_W(x)                                (((x) >> 29) & 0x7)
 #define   C_SQ_TEX_WORD2_SRC_SEL_W                                   0x1FFFFFFF
 
+#define V_SQ_CF_COND_ACTIVE                             0x00
+#define V_SQ_CF_COND_FALSE                              0x01
+#define V_SQ_CF_COND_BOOL                               0x02
+#define V_SQ_CF_COND_NOT_BOOL                           0x03
+
 #endif

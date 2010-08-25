@@ -128,7 +128,7 @@ int r600_bc_add_output(struct r600_bc *bc, const struct r600_bc_output *output)
 	return 0;
 }
 
-int r600_bc_add_alu(struct r600_bc *bc, const struct r600_bc_alu *alu)
+int r600_bc_add_alu_type(struct r600_bc *bc, const struct r600_bc_alu *alu, int type)
 {
 	struct r600_bc_alu *nalu = r600_bc_alu();
 	struct r600_bc_alu *lalu;
@@ -140,7 +140,7 @@ int r600_bc_add_alu(struct r600_bc *bc, const struct r600_bc_alu *alu)
 	nalu->nliteral = 0;
 
 	/* cf can contains only alu or only vtx or only tex */
-	if (bc->cf_last == NULL || bc->cf_last->inst != (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU << 3) ||
+	if (bc->cf_last == NULL || bc->cf_last->inst != (type << 3) ||
 		bc->force_add_cf) {
 		/* at most 128 slots, one add alu can add 4 slots + 4 constant worst case */
 		r = r600_bc_add_cf(bc);
@@ -148,7 +148,7 @@ int r600_bc_add_alu(struct r600_bc *bc, const struct r600_bc_alu *alu)
 			free(nalu);
 			return r;
 		}
-		bc->cf_last->inst = V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU << 3;
+		bc->cf_last->inst = (type << 3);
 	}
 	if (alu->last && (bc->cf_last->ndw >> 1) >= 124) {
 		bc->force_add_cf = 1;
@@ -183,6 +183,11 @@ int r600_bc_add_alu(struct r600_bc *bc, const struct r600_bc_alu *alu)
 	return 0;
 }
 
+int r600_bc_add_alu(struct r600_bc *bc, const struct r600_bc_alu *alu)
+{
+	return r600_bc_add_alu_type(bc, alu, V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU);
+}
+
 int r600_bc_add_literal(struct r600_bc *bc, const u32 *value)
 {
 	struct r600_bc_alu *alu;
@@ -193,7 +198,13 @@ int r600_bc_add_literal(struct r600_bc *bc, const u32 *value)
 	if (bc->cf_last->inst == V_SQ_CF_WORD1_SQ_CF_INST_TEX) {
 		return 0;
 	}
-	if (bc->cf_last->inst != (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU << 3) ||
+	if (bc->cf_last->inst == V_SQ_CF_WORD1_SQ_CF_INST_JUMP ||
+	    bc->cf_last->inst == V_SQ_CF_WORD1_SQ_CF_INST_ELSE ||
+	    bc->cf_last->inst == V_SQ_CF_WORD1_SQ_CF_INST_POP) {
+		return 0;
+	}
+	if (((bc->cf_last->inst != (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU << 3)) &&
+	     (bc->cf_last->inst != (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_PUSH_BEFORE << 3))) ||
 		LIST_IS_EMPTY(&bc->cf_last->alu)) {
 		R600_ERR("last CF is not ALU (%p)\n", bc->cf_last);
 		return -EINVAL;
@@ -259,6 +270,18 @@ int r600_bc_add_tex(struct r600_bc *bc, const struct r600_bc_tex *tex)
 	/* each texture fetch use 4 dwords */
 	bc->cf_last->ndw += 4;
 	bc->ndw += 4;
+	return 0;
+}
+
+int r600_bc_add_cfinst(struct r600_bc *bc, int inst)
+{
+	int r;
+	r = r600_bc_add_cf(bc);
+	if (r)
+		return r;
+
+	bc->cf_last->cond = V_SQ_CF_COND_ACTIVE;
+	bc->cf_last->inst = inst;
 	return 0;
 }
 
@@ -342,7 +365,9 @@ static int r600_bc_alu_build(struct r600_bc *bc, struct r600_bc_alu *alu, unsign
 					S_SQ_ALU_WORD1_OP2_SRC1_ABS(alu->src[1].abs) |
 					S_SQ_ALU_WORD1_OP2_WRITE_MASK(alu->dst.write) |
 					S_SQ_ALU_WORD1_OP2_ALU_INST(alu->inst) |
-					S_SQ_ALU_WORD1_BANK_SWIZZLE(0);
+					S_SQ_ALU_WORD1_BANK_SWIZZLE(0) |
+			                S_SQ_ALU_WORD1_OP2_UPDATE_EXECUTE_MASK(alu->predicate) |
+		 	                S_SQ_ALU_WORD1_OP2_UPDATE_PRED(alu->predicate);
 	}
 	if (alu->last) {
 		for (i = 0; i < alu->nliteral; i++) {
@@ -358,6 +383,7 @@ static int r600_bc_cf_build(struct r600_bc *bc, struct r600_bc_cf *cf)
 
 	switch (cf->inst) {
 	case (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU << 3):
+	case (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_PUSH_BEFORE << 3):
 		bc->bytecode[id++] = S_SQ_CF_ALU_WORD0_ADDR(cf->addr >> 1);
 		bc->bytecode[id++] = S_SQ_CF_ALU_WORD1_CF_INST(cf->inst >> 3) |
 					S_SQ_CF_ALU_WORD1_BARRIER(1) |
@@ -385,6 +411,16 @@ static int r600_bc_cf_build(struct r600_bc *bc, struct r600_bc_cf *cf)
 			S_SQ_CF_ALLOC_EXPORT_WORD1_CF_INST(cf->output.inst) |
 			S_SQ_CF_ALLOC_EXPORT_WORD1_END_OF_PROGRAM(cf->output.end_of_program);
 		break;
+	case V_SQ_CF_WORD1_SQ_CF_INST_JUMP:
+	case V_SQ_CF_WORD1_SQ_CF_INST_ELSE:
+	case V_SQ_CF_WORD1_SQ_CF_INST_POP:
+		bc->bytecode[id++] = S_SQ_CF_WORD0_ADDR(cf->cf_addr >> 1);
+		bc->bytecode[id++] = S_SQ_CF_WORD1_CF_INST(cf->inst) |
+					S_SQ_CF_WORD1_BARRIER(1) |
+			                S_SQ_CF_WORD1_COND(cf->cond) |
+			                S_SQ_CF_WORD1_POP_COUNT(cf->pop_count);
+
+		break;
 	default:
 		R600_ERR("unsupported CF instruction (0x%X)\n", cf->inst);
 		return -EINVAL;
@@ -401,13 +437,13 @@ int r600_bc_build(struct r600_bc *bc)
 	unsigned addr;
 	int r;
 
-
 	/* first path compute addr of each CF block */
 	/* addr start after all the CF instructions */
 	addr = bc->cf_last->id + 2;
 	LIST_FOR_EACH_ENTRY(cf, &bc->cf, list) {
 		switch (cf->inst) {
 		case (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU << 3):
+		case (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_PUSH_BEFORE << 3):
 			break;
 		case V_SQ_CF_WORD1_SQ_CF_INST_TEX:
 		case V_SQ_CF_WORD1_SQ_CF_INST_VTX:
@@ -418,6 +454,12 @@ int r600_bc_build(struct r600_bc *bc)
 			break;
 		case V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT:
 		case V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT_DONE:
+			break;
+		case V_SQ_CF_WORD1_SQ_CF_INST_JUMP:
+		case V_SQ_CF_WORD1_SQ_CF_INST_ELSE:
+		case V_SQ_CF_WORD1_SQ_CF_INST_POP:
+			/* hack */
+			bc->nstack = 3;
 			break;
 		default:
 			R600_ERR("unsupported CF instruction (0x%X)\n", cf->inst);
@@ -438,6 +480,7 @@ int r600_bc_build(struct r600_bc *bc)
 			return r;
 		switch (cf->inst) {
 		case (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU << 3):
+		case (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_PUSH_BEFORE << 3):
 			LIST_FOR_EACH_ENTRY(alu, &cf->alu, list) {
 				switch(bc->chiprev) {
 				case 0:
@@ -477,6 +520,9 @@ int r600_bc_build(struct r600_bc *bc)
 			break;
 		case V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT:
 		case V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT_DONE:
+		case V_SQ_CF_WORD1_SQ_CF_INST_JUMP:
+		case V_SQ_CF_WORD1_SQ_CF_INST_ELSE:
+		case V_SQ_CF_WORD1_SQ_CF_INST_POP:
 			break;
 		default:
 			R600_ERR("unsupported CF instruction (0x%X)\n", cf->inst);

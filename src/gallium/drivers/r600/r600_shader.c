@@ -144,7 +144,8 @@ static int r600_pipe_shader_vs(struct pipe_context *ctx, struct r600_context_sta
 		state->states[R600_VS_SHADER__SPI_VS_OUT_ID_0 + i / 4] |= tmp;
 	}
 	state->states[R600_VS_SHADER__SPI_VS_OUT_CONFIG] = S_0286C4_VS_EXPORT_COUNT(rshader->noutput - 2);
-	state->states[R600_VS_SHADER__SQ_PGM_RESOURCES_VS] = S_028868_NUM_GPRS(rshader->bc.ngpr);
+	state->states[R600_VS_SHADER__SQ_PGM_RESOURCES_VS] = S_028868_NUM_GPRS(rshader->bc.ngpr) |
+		S_028868_STACK_SIZE(rshader->bc.nstack);
 	rpshader->rstate = state;
 	rpshader->rstate->bo[0] = radeon_bo_incref(rscreen->rw, rpshader->bo);
 	rpshader->rstate->bo[1] = radeon_bo_incref(rscreen->rw, rpshader->bo);
@@ -200,7 +201,8 @@ static int r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_context_sta
 	state->states[R600_PS_SHADER__SPI_PS_IN_CONTROL_0] = S_0286CC_NUM_INTERP(rshader->ninput) |
 							S_0286CC_PERSP_GRADIENT_ENA(1);
 	state->states[R600_PS_SHADER__SPI_PS_IN_CONTROL_1] = 0x00000000;
-	state->states[R600_PS_SHADER__SQ_PGM_RESOURCES_PS] = S_028868_NUM_GPRS(rshader->bc.ngpr);
+	state->states[R600_PS_SHADER__SQ_PGM_RESOURCES_PS] = S_028868_NUM_GPRS(rshader->bc.ngpr) |
+		S_028868_STACK_SIZE(rshader->bc.nstack);
 	state->states[R600_PS_SHADER__SQ_PGM_EXPORTS_PS] = exports_ps;
 	rpshader->rstate = state;
 	rpshader->rstate->bo[0] = radeon_bo_incref(rscreen->rw, rpshader->bo);
@@ -276,10 +278,12 @@ static int tgsi_is_supported(struct r600_shader_ctx *ctx)
 		R600_ERR("predicate unsupported\n");
 		return -EINVAL;
 	}
+#if 0
 	if (i->Instruction.Label) {
 		R600_ERR("label unsupported\n");
 		return -EINVAL;
 	}
+#endif
 	for (j = 0; j < i->Instruction.NumSrcRegs; j++) {
 		if (i->Src[j].Register.Indirect ||
 			i->Src[j].Register.Dimension ||
@@ -1721,6 +1725,90 @@ static int tgsi_exp(struct r600_shader_ctx *ctx)
 	return tgsi_helper_copy(ctx, inst);
 }
 
+static int emit_logic_pred(struct r600_shader_ctx *ctx, int opcode)
+{
+	struct tgsi_full_instruction *inst = &ctx->parse.FullToken.FullInstruction;
+	struct r600_bc_alu alu, *lalu;
+	struct r600_bc_cf *last;
+	int r;
+
+	memset(&alu, 0, sizeof(struct r600_bc_alu));
+	alu.inst = opcode;
+	alu.predicate = 1;
+
+	alu.dst.sel = ctx->temp_reg;
+	alu.dst.write = 1;
+	alu.dst.chan = 0;
+
+	r = tgsi_src(ctx, &inst->Src[0], &alu.src[0]);
+	if (r)
+		return r;
+	alu.src[0].chan = tgsi_chan(&inst->Src[0], 0);
+	alu.src[1].sel = V_SQ_ALU_SRC_0;
+	alu.src[1].chan = 0;
+	
+	alu.last = 1;
+
+	r = r600_bc_add_alu_type(ctx->bc, &alu, V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_PUSH_BEFORE);
+	if (r)
+		return r;
+
+	return 0;
+}
+
+static int pops(struct r600_shader_ctx *ctx, int pops)
+{
+	r600_bc_add_cfinst(ctx->bc, V_SQ_CF_WORD1_SQ_CF_INST_POP);	
+	ctx->bc->cf_last->pop_count = pops;
+	return 0;
+}
+
+static int tgsi_if(struct r600_shader_ctx *ctx)
+{
+	struct tgsi_full_instruction *inst = &ctx->parse.FullToken.FullInstruction;
+
+	emit_logic_pred(ctx, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETNE);
+
+	ctx->bc->fc_sp++;
+	ctx->bc->fc_stack[ctx->bc->fc_sp].type = FC_IF;
+	ctx->bc->fc_stack[ctx->bc->fc_sp].mid = NULL;
+	r600_bc_add_cfinst(ctx->bc, V_SQ_CF_WORD1_SQ_CF_INST_JUMP);
+
+	ctx->bc->fc_stack[ctx->bc->fc_sp].start = ctx->bc->cf_last;
+	return 0;
+}
+
+static int tgsi_else(struct r600_shader_ctx *ctx)
+{
+	struct tgsi_full_instruction *inst = &ctx->parse.FullToken.FullInstruction;
+	r600_bc_add_cfinst(ctx->bc, V_SQ_CF_WORD1_SQ_CF_INST_ELSE);
+	ctx->bc->cf_last->pop_count = 1;
+
+	/* fixup mid */
+	ctx->bc->fc_stack[ctx->bc->fc_sp].mid = ctx->bc->cf_last;
+	ctx->bc->fc_stack[ctx->bc->fc_sp].start->cf_addr = ctx->bc->cf_last->id;
+	return 0;
+}
+
+static int tgsi_endif(struct r600_shader_ctx *ctx)
+{
+	pops(ctx, 1);
+	if (ctx->bc->fc_stack[ctx->bc->fc_sp].type != FC_IF) {
+		R600_ERR("if/endif unbalanced in shader\n");
+		return -1;
+	}
+
+	if (ctx->bc->fc_stack[ctx->bc->fc_sp].mid == NULL) {
+		ctx->bc->fc_stack[ctx->bc->fc_sp].start->cf_addr = ctx->bc->cf_last->id + 2;
+		ctx->bc->fc_stack[ctx->bc->fc_sp].start->pop_count = 1;
+	} else {
+		ctx->bc->fc_stack[ctx->bc->fc_sp].mid->cf_addr = ctx->bc->cf_last->id + 2;
+	}
+	ctx->bc->fc_sp--;
+
+	return 0;
+}
+
 static struct r600_shader_tgsi_instruction r600_shader_tgsi_instruction[] = {
 	{TGSI_OPCODE_ARL,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_MOV,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOV, tgsi_op2},
@@ -1799,12 +1887,12 @@ static struct r600_shader_tgsi_instruction r600_shader_tgsi_instruction[] = {
 	{TGSI_OPCODE_DP2,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_DOT4, tgsi_dp},
 	{TGSI_OPCODE_TXL,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_BRK,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
-	{TGSI_OPCODE_IF,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
+	{TGSI_OPCODE_IF,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_if},
 	/* gap */
 	{75,			0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{76,			0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
-	{TGSI_OPCODE_ELSE,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
-	{TGSI_OPCODE_ENDIF,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
+	{TGSI_OPCODE_ELSE,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_else},
+	{TGSI_OPCODE_ENDIF,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_endif},
 	/* gap */
 	{79,			0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{80,			0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
