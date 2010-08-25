@@ -1259,8 +1259,14 @@ ast_expression::hir(exec_list *instructions,
 	 _mesa_glsl_error(&loc, state, "unsized array index must be constant");
       } else {
 	 if (array->type->is_array()) {
+	    /* whole_variable_referenced can return NULL if the array is a
+	     * member of a structure.  In this case it is safe to not update
+	     * the max_array_access field because it is never used for fields
+	     * of structures.
+	     */
 	    ir_variable *v = array->whole_variable_referenced();
-	    v->max_array_access = array->type->array_size();
+	    if (v != NULL)
+	       v->max_array_access = array->type->array_size();
 	 }
       }
 
