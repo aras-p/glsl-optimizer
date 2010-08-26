@@ -168,6 +168,9 @@ static GLboolean brwProgramStringNotify( GLcontext *ctx,
     * See piglit glsl-{vs,fs}-functions-[23] tests.
     */
    for (i = 0; i < prog->NumInstructions; i++) {
+      struct prog_instruction *inst = prog->Instructions + i;
+      int r;
+
       if (prog->Instructions[i].Opcode == OPCODE_CAL) {
 	 shader_error(ctx, prog,
 		      "i965 driver doesn't yet support uninlined function "
@@ -183,12 +186,15 @@ static GLboolean brwProgramStringNotify( GLcontext *ctx,
 	 return GL_FALSE;
       }
 
-      if (prog->Instructions[i].DstReg.RelAddr &&
-	  prog->Instructions[i].DstReg.File == PROGRAM_INPUT) {
-	 shader_error(ctx, prog,
-		      "Variable indexing of shader inputs unsupported\n");
-	 return GL_FALSE;
+      for (r = 0; r < _mesa_num_inst_src_regs(inst->Opcode); r++) {
+	 if (prog->Instructions[i].SrcReg[r].RelAddr &&
+	     prog->Instructions[i].SrcReg[r].File == PROGRAM_INPUT) {
+	    shader_error(ctx, prog,
+			 "Variable indexing of shader inputs unsupported\n");
+	    return GL_FALSE;
+	 }
       }
+
       if (prog->Instructions[i].DstReg.RelAddr &&
 	  prog->Instructions[i].DstReg.File == PROGRAM_OUTPUT) {
 	 shader_error(ctx, prog,
