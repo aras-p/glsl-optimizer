@@ -940,6 +940,22 @@ _mesa_is_format_compressed(gl_format format)
 
 
 /**
+ * Determine if the given format represents a packed depth/stencil buffer.
+ */
+GLboolean
+_mesa_is_format_packed_depth_stencil(gl_format format)
+{
+   if (format == MESA_FORMAT_Z24_S8
+       || format == MESA_FORMAT_Z24_X8
+       || format == MESA_FORMAT_S8_Z24
+       || format == MESA_FORMAT_X8_Z24)
+      return GL_TRUE;
+
+   return GL_FALSE;
+}
+
+
+/**
  * Return color encoding for given format.
  * \return GL_LINEAR or GL_SRGB
  */
