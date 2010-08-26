@@ -74,12 +74,17 @@ struct radeon_draw *radeon_draw_decref(struct radeon_draw *draw)
 
 int radeon_draw_set_new(struct radeon_draw *draw, struct radeon_state *state)
 {
+	int id;
 	if (state == NULL)
 		return 0;
-	if (state->type >= draw->radeon->ntype)
+
+	id = state->stype->base_id + (state->id + (state->stype->num * state->shader_index));
+	if (id > draw->radeon->nstate)
+	{
 		return -EINVAL;
-	draw->state[state->id] = radeon_state_decref(draw->state[state->id]);
-	draw->state[state->id] = state;
+	}
+	draw->state[id] = radeon_state_decref(draw->state[id]);
+	draw->state[id] = state;
 	return 0;
 }
 

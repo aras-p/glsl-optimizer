@@ -190,7 +190,7 @@ static int r600_blit_state_vs_resources(struct r600_screen *rscreen, struct r600
 	memcpy(bo->data, vbo, 128);
 	radeon_bo_unmap(rscreen->rw, bo);
 
-	rstate = radeon_state(rscreen->rw, R600_VS_RESOURCE_TYPE, R600_VS_RESOURCE + 0);
+	rstate = radeon_state_shader(rscreen->rw, R600_STATE_RESOURCE, 0, R600_SHADER_VS);
 	if (rstate == NULL) {
 		radeon_bo_decref(rscreen->rw, bo);
 		return -ENOMEM;
@@ -215,7 +215,7 @@ static int r600_blit_state_vs_resources(struct r600_screen *rscreen, struct r600
 	}
 	bstates->vs_resource0 = rstate;
 
-	rstate = radeon_state(rscreen->rw, R600_VS_RESOURCE_TYPE, R600_VS_RESOURCE + 1);
+	rstate = radeon_state_shader(rscreen->rw, R600_STATE_RESOURCE, 0, R600_SHADER_VS);
 	if (rstate == NULL) {
 		return -ENOMEM;
 	}
@@ -303,7 +303,7 @@ static struct radeon_state *r600_blit_state_vs_shader(struct r600_screen *rscree
 	}
 	radeon_bo_unmap(rscreen->rw, bo);
 
-	rstate = radeon_state(rscreen->rw, R600_VS_SHADER_TYPE, R600_VS_SHADER);
+	rstate = radeon_state_shader(rscreen->rw, R600_STATE_SHADER, 0, R600_SHADER_VS);
 	if (rstate == NULL) {
 		radeon_bo_decref(rscreen->rw, bo);
 		return NULL;
@@ -374,7 +374,7 @@ static struct radeon_state *r600_blit_state_ps_shader(struct r600_screen *rscree
 	}
 	radeon_bo_unmap(rscreen->rw, bo);
 
-	rstate = radeon_state(rscreen->rw, R600_PS_SHADER_TYPE, R600_PS_SHADER);
+	rstate = radeon_state_shader(rscreen->rw, R600_STATE_SHADER, 0, R600_SHADER_PS);
 	if (rstate == NULL) {
 		radeon_bo_decref(rscreen->rw, bo);
 		return NULL;
@@ -403,8 +403,7 @@ static struct radeon_state *r600_blit_state_vgt(struct r600_screen *rscreen)
 {
 	struct radeon_state *rstate;
 
-	rstate = radeon_state(rscreen->rw, R600_VGT_TYPE, R600_VGT);
-	if (rstate == NULL)
+	rstate = radeon_state(rscreen->rw, R600_STATE_VGT, 0); if (rstate == NULL)
 		return NULL;
 
 	/* set states (most default value are 0 and struct already
@@ -425,7 +424,7 @@ static struct radeon_state *r600_blit_state_draw(struct r600_screen *rscreen)
 {
 	struct radeon_state *rstate;
 
-	rstate = radeon_state(rscreen->rw, R600_DRAW_TYPE, R600_DRAW);
+	rstate = radeon_state(rscreen->rw, R600_STATE_DRAW, 0);
 	if (rstate == NULL)
 		return NULL;
 
@@ -448,7 +447,7 @@ static struct radeon_state *r600_blit_state_vs_constant(struct r600_screen *rscr
 {
 	struct radeon_state *rstate;
 
-	rstate = radeon_state(rscreen->rw, R600_VS_CONSTANT_TYPE, R600_VS_CONSTANT + id);
+	rstate = radeon_state_shader(rscreen->rw, R600_STATE_CONSTANT, id, R600_SHADER_VS);
 	if (rstate == NULL)
 		return NULL;
 
@@ -471,7 +470,7 @@ static struct radeon_state *r600_blit_state_rasterizer(struct r600_screen *rscre
 {
 	struct radeon_state *rstate;
 
-	rstate = radeon_state(rscreen->rw, R600_RASTERIZER_TYPE, R600_RASTERIZER);
+	rstate = radeon_state(rscreen->rw, R600_STATE_RASTERIZER, 0);
 	if (rstate == NULL)
 		return NULL;
 
@@ -500,7 +499,7 @@ static struct radeon_state *r600_blit_state_dsa(struct r600_screen *rscreen)
 {
 	struct radeon_state *rstate;
 
-	rstate = radeon_state(rscreen->rw, R600_DSA_TYPE, R600_DSA);
+	rstate = radeon_state(rscreen->rw, R600_STATE_DSA, 0);
 	if (rstate == NULL)
 		return NULL;
 
@@ -524,7 +523,7 @@ static struct radeon_state *r600_blit_state_blend(struct r600_screen *rscreen)
 {
 	struct radeon_state *rstate;
 
-	rstate = radeon_state(rscreen->rw, R600_BLEND_TYPE, R600_BLEND);
+	rstate = radeon_state(rscreen->rw, R600_STATE_BLEND, 0);
 	if (rstate == NULL)
 		return NULL;
 
@@ -543,7 +542,7 @@ static struct radeon_state *r600_blit_state_cb_cntl(struct r600_screen *rscreen)
 {
 	struct radeon_state *rstate;
 
-	rstate = radeon_state(rscreen->rw, R600_CB_CNTL_TYPE, R600_CB_CNTL);
+	rstate = radeon_state(rscreen->rw, R600_STATE_CB_CNTL, 0);
 	if (rstate == NULL)
 		return NULL;
 

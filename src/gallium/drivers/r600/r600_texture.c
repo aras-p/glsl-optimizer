@@ -663,7 +663,7 @@ static struct radeon_state *r600_texture_state_scissor(struct r600_screen *rscre
 {
 	struct radeon_state *rstate;
 
-	rstate = radeon_state(rscreen->rw, R600_SCISSOR_TYPE, R600_SCISSOR);
+	rstate = radeon_state(rscreen->rw, R600_STATE_SCISSOR, 0);
 	if (rstate == NULL)
 		return NULL;
 
@@ -707,7 +707,7 @@ static struct radeon_state *r600_texture_state_cb0(struct r600_screen *rscreen,
 	unsigned format, swap, ntype;
 	const struct util_format_description *desc;
 
-	rstate = radeon_state(rscreen->rw, R600_CB0_TYPE, R600_CB0);
+	rstate = radeon_state(rscreen->rw, R600_STATE_CB0, 0);
 	if (rstate == NULL)
 		return NULL;
 	rbuffer = &rtexture->resource;
@@ -766,7 +766,7 @@ static struct radeon_state *r600_texture_state_db(struct r600_screen *rscreen,
 	struct r600_resource *rbuffer;
 	unsigned pitch, slice, format;
 
-	rstate = radeon_state(rscreen->rw, R600_DB_TYPE, R600_DB);
+	rstate = radeon_state(rscreen->rw, R600_STATE_DB, 0);
 	if (rstate == NULL)
 		return NULL;
 	rbuffer = &rtexture->resource;
@@ -815,7 +815,7 @@ static struct radeon_state *r600_texture_state_viewport(struct r600_screen *rscr
 {
 	struct radeon_state *rstate;
 
-	rstate = radeon_state(rscreen->rw, R600_VIEWPORT_TYPE, R600_VIEWPORT);
+	rstate = radeon_state(rscreen->rw, R600_STATE_VIEWPORT, 0);
 	if (rstate == NULL)
 		return NULL;
 

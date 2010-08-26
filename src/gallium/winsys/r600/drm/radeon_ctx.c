@@ -216,7 +216,7 @@ static int radeon_ctx_state_schedule(struct radeon_ctx *ctx, struct radeon_state
 		r = radeon_ctx_reloc(ctx, state->bo[bid], cid,
 					&state->placement[bid * 2]);
 		if (r) {
-			fprintf(stderr, "%s state %d failed to reloc\n", __func__, state->type);
+			fprintf(stderr, "%s state %d failed to reloc\n", __func__, state->stype->stype);
 			return r;
 		}
 	}
@@ -230,7 +230,7 @@ int radeon_ctx_set_query_state(struct radeon_ctx *ctx, struct radeon_state *stat
 	int r = 0;
 
 	/* !!! ONLY ACCEPT QUERY STATE HERE !!! */
-	if (state->type != R600_QUERY_BEGIN_TYPE && state->type != R600_QUERY_END_TYPE) {
+	if (state->stype->stype != R600_STATE_QUERY_BEGIN && state->stype->stype != R600_STATE_QUERY_END) {
 		return -EINVAL;
 	}
 	r = radeon_state_pm4(state);
@@ -253,7 +253,7 @@ int radeon_ctx_set_query_state(struct radeon_ctx *ctx, struct radeon_state *stat
 	/* BEGIN/END query are balanced in the same cs so account for END
 	 * END query when scheduling BEGIN query
 	 */
-	if (state->type == R600_QUERY_BEGIN_TYPE) {
+	if (state->stype->stype == R600_STATE_QUERY_BEGIN) {
 		ctx->draw_cpm4 += state->cpm4 * 2;
 	}
 	return 0;

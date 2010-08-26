@@ -283,19 +283,19 @@ static void r600_set_constant_buffer(struct pipe_context *ctx,
 {
 	struct r600_screen *rscreen = r600_screen(ctx->screen);
 	struct r600_context *rctx = r600_context(ctx);
-	unsigned nconstant = 0, i, type, id;
+	unsigned nconstant = 0, i, type, shader_class;
 	struct radeon_state *rstate;
 	struct pipe_transfer *transfer;
 	u32 *ptr;
 
+	type = R600_STATE_CONSTANT;
+
 	switch (shader) {
 	case PIPE_SHADER_VERTEX:
-		id = R600_VS_CONSTANT;
-		type = R600_VS_CONSTANT_TYPE;
+		shader_class = R600_SHADER_VS;
 		break;
 	case PIPE_SHADER_FRAGMENT:
-		id = R600_PS_CONSTANT;
-		type = R600_PS_CONSTANT_TYPE;
+		shader_class = R600_SHADER_PS;
 		break;
 	default:
 		R600_ERR("unsupported %d\n", shader);
@@ -307,7 +307,7 @@ static void r600_set_constant_buffer(struct pipe_context *ctx,
 		if (ptr == NULL)
 			return;
 		for (i = 0; i < nconstant; i++) {
-			rstate = radeon_state(rscreen->rw, type, id + i);
+			rstate = radeon_state_shader(rscreen->rw, type, i, shader_class);
 			if (rstate == NULL)
 				return;
 			rstate->states[R600_PS_CONSTANT__SQ_ALU_CONSTANT0_0] = ptr[i * 4 + 0];
@@ -622,7 +622,7 @@ static struct radeon_state *r600_blend(struct r600_context *rctx)
 	const struct pipe_blend_state *state = &rctx->blend->state.blend;
 	int i;
 
-	rstate = radeon_state(rscreen->rw, R600_BLEND_TYPE, R600_BLEND);
+	rstate = radeon_state(rscreen->rw, R600_STATE_BLEND, 0);
 	if (rstate == NULL)
 		return NULL;
 	rstate->states[R600_BLEND__CB_BLEND_RED] = fui(rctx->blend_color.color[0]);
@@ -681,7 +681,7 @@ static struct radeon_state *r600_ucp(struct r600_context *rctx, int clip)
 	struct radeon_state *rstate;
 	const struct pipe_clip_state *state = &rctx->clip->state.clip;
 
-	rstate = radeon_state(rscreen->rw, R600_CLIP_TYPE, R600_CLIP + clip);
+	rstate = radeon_state(rscreen->rw, R600_STATE_CLIP, clip);
 	if (rstate == NULL)
 		return NULL;
 
@@ -711,7 +711,7 @@ static struct radeon_state *r600_cb(struct r600_context *rctx, int cb)
 	unsigned format, swap, ntype;
 	const struct util_format_description *desc;
 
-	rstate = radeon_state(rscreen->rw, R600_CB0_TYPE + cb, R600_CB0 + cb);
+	rstate = radeon_state(rscreen->rw, R600_STATE_CB0 + cb, 0);
 	if (rstate == NULL)
 		return NULL;
 	rtex = (struct r600_resource_texture*)state->cbufs[cb]->texture;
@@ -768,7 +768,7 @@ static struct radeon_state *r600_db(struct r600_context *rctx)
 	if (state->zsbuf == NULL)
 		return NULL;
 
-	rstate = radeon_state(rscreen->rw, R600_DB_TYPE, R600_DB);
+	rstate = radeon_state(rscreen->rw, R600_STATE_DB, 0);
 	if (rstate == NULL)
 		return NULL;
 
@@ -844,7 +844,7 @@ static struct radeon_state *r600_rasterizer(struct r600_context *rctx)
 		prov_vtx = 0;
 
 	rctx->flat_shade = state->flatshade;
-	rstate = radeon_state(rscreen->rw, R600_RASTERIZER_TYPE, R600_RASTERIZER);
+	rstate = radeon_state(rscreen->rw, R600_STATE_RASTERIZER, 0);
 	if (rstate == NULL)
 		return NULL;
 	rstate->states[R600_RASTERIZER__SPI_INTERP_CONTROL_0] = 0x00000001;
@@ -925,7 +925,7 @@ static struct radeon_state *r600_scissor(struct r600_context *rctx)
 	}
 	tl = S_028240_TL_X(minx) | S_028240_TL_Y(miny) | S_028240_WINDOW_OFFSET_DISABLE(1);
 	br = S_028244_BR_X(maxx) | S_028244_BR_Y(maxy);
-	rstate = radeon_state(rscreen->rw, R600_SCISSOR_TYPE, R600_SCISSOR);
+	rstate = radeon_state(rscreen->rw, R600_STATE_SCISSOR, 0);
 	if (rstate == NULL)
 		return NULL;
 	rstate->states[R600_SCISSOR__PA_SC_SCREEN_SCISSOR_TL] = tl;
@@ -960,7 +960,7 @@ static struct radeon_state *r600_viewport(struct r600_context *rctx)
 	struct r600_screen *rscreen = rctx->screen;
 	struct radeon_state *rstate;
 
-	rstate = radeon_state(rscreen->rw, R600_VIEWPORT_TYPE, R600_VIEWPORT);
+	rstate = radeon_state(rscreen->rw, R600_STATE_VIEWPORT, 0);
 	if (rstate == NULL)
 		return NULL;
 	rstate->states[R600_VIEWPORT__PA_SC_VPORT_ZMIN_0] = 0x00000000;
@@ -993,7 +993,7 @@ static struct radeon_state *r600_dsa(struct r600_context *rctx)
 	if (rctx->ps_shader == NULL) {
 		return NULL;
 	}
-	rstate = radeon_state(rscreen->rw, R600_DSA_TYPE, R600_DSA);
+	rstate = radeon_state(rscreen->rw, R600_STATE_DSA, 0);
 	if (rstate == NULL)
 		return NULL;
 
@@ -1147,7 +1147,7 @@ static struct radeon_state *r600_sampler(struct r600_context *rctx,
 	struct r600_screen *rscreen = rctx->screen;
 	struct radeon_state *rstate;
 
-	rstate = radeon_state(rscreen->rw, R600_PS_SAMPLER_TYPE, id);
+	rstate = radeon_state_shader(rscreen->rw, R600_STATE_SAMPLER, id, R600_SHADER_PS);
 	if (rstate == NULL)
 		return NULL;
 	rstate->states[R600_PS_SAMPLER__SQ_TEX_SAMPLER_WORD0_0] =
@@ -1248,7 +1248,7 @@ static struct radeon_state *r600_resource(struct pipe_context *ctx,
 		R600_ERR("unknow format %d\n", view->texture->format);
 		return NULL;
 	}
-	rstate = radeon_state(rscreen->rw, R600_PS_RESOURCE_TYPE, id);
+	rstate = radeon_state_shader(rscreen->rw, R600_STATE_RESOURCE, id, R600_SHADER_PS);
 	if (rstate == NULL) {
 		return NULL;
 	}
@@ -1344,7 +1344,7 @@ static struct radeon_state *r600_cb_cntl(struct r600_context *rctx)
 			target_mask |= (pbs->rt[0].colormask << (4 * i));
 		}
 	}
-	rstate = radeon_state(rscreen->rw, R600_CB_CNTL_TYPE, R600_CB_CNTL);
+	rstate = radeon_state(rscreen->rw, R600_STATE_CB_CNTL, 0);
 	rstate->states[R600_CB_CNTL__CB_SHADER_MASK] = shader_mask;
 	rstate->states[R600_CB_CNTL__CB_TARGET_MASK] = target_mask;
 	rstate->states[R600_CB_CNTL__CB_COLOR_CONTROL] = color_control;
@@ -1421,7 +1421,7 @@ int r600_context_hw_states(struct pipe_context *ctx)
 		if (rctx->ps_sampler[i]) {
 			rctx->hw_states.ps_sampler[i] = r600_sampler(rctx,
 							&rctx->ps_sampler[i]->state.sampler,
-							R600_PS_SAMPLER + i);
+							i);
 		}
 	}
 	rctx->hw_states.ps_nsampler = rctx->ps_nsampler;
@@ -1429,7 +1429,7 @@ int r600_context_hw_states(struct pipe_context *ctx)
 		if (rctx->ps_sampler_view[i]) {
 			rctx->hw_states.ps_resource[i] = r600_resource(ctx,
 							&rctx->ps_sampler_view[i]->state.sampler_view,
-							R600_PS_RESOURCE + i);
+							i);
 		}
 	}
 	rctx->hw_states.ps_nresource = rctx->ps_nsampler_view;

@@ -98,14 +98,16 @@ struct radeon_bo *radeon_bo_incref(struct radeon *radeon, struct radeon_bo *bo);
 struct radeon_bo *radeon_bo_decref(struct radeon *radeon, struct radeon_bo *bo);
 int radeon_bo_wait(struct radeon *radeon, struct radeon_bo *bo);
 
+struct radeon_stype_info;
 /*
  * states functions
  */
 struct radeon_state {
 	struct radeon			*radeon;
 	unsigned			refcount;
-	unsigned			type;
+	struct radeon_stype_info        *stype;
 	unsigned			id;
+	unsigned                        shader_index;
 	unsigned			nstates;
 	u32				*states;
 	unsigned			npm4;
@@ -124,6 +126,7 @@ struct radeon_state {
 };
 
 struct radeon_state *radeon_state(struct radeon *radeon, u32 type, u32 id);
+struct radeon_state *radeon_state_shader(struct radeon *radeon, u32 type, u32 id, u32 shader_class);
 struct radeon_state *radeon_state_incref(struct radeon_state *state);
 struct radeon_state *radeon_state_decref(struct radeon_state *state);
 int radeon_state_pm4(struct radeon_state *state);
@@ -192,79 +195,42 @@ struct radeon_ctx {
  * R600/R700
  */
 
-#define R600_NSTATE				1288
-#define R600_NTYPE				35
+enum r600_stype {
+	R600_STATE_CONFIG,  
+	R600_STATE_CB_CNTL,
+	R600_STATE_RASTERIZER,
+	R600_STATE_VIEWPORT,
+	R600_STATE_SCISSOR,
+	R600_STATE_BLEND,
+	R600_STATE_DSA,
+	R600_STATE_SHADER,          /* has PS,VS,GS,FS variants */
+	R600_STATE_CONSTANT,        /* has PS,VS,GS,FS variants */
+	R600_STATE_RESOURCE,        /* has PS,VS,GS,FS variants */
+	R600_STATE_SAMPLER,         /* has PS,VS,GS,FS variants */
+	R600_STATE_SAMPLER_BORDER,  /* has PS,VS,GS,FS variants */
+	R600_STATE_CB0,
+	R600_STATE_CB1,
+	R600_STATE_CB2,
+	R600_STATE_CB3,
+	R600_STATE_CB4,
+	R600_STATE_CB5,
+	R600_STATE_CB6,
+	R600_STATE_CB7,
+	R600_STATE_DB,
+	R600_STATE_QUERY_BEGIN,
+	R600_STATE_QUERY_END,
+	R600_STATE_CLIP,
+	R600_STATE_VGT,
+	R600_STATE_DRAW,
+};
 
-#define R600_CONFIG				0
-#define R600_CONFIG_TYPE				0
-#define R600_CB_CNTL				1
-#define R600_CB_CNTL_TYPE				1
-#define R600_RASTERIZER				2
-#define R600_RASTERIZER_TYPE				2
-#define R600_VIEWPORT				3
-#define R600_VIEWPORT_TYPE				3
-#define R600_SCISSOR				4
-#define R600_SCISSOR_TYPE				4
-#define R600_BLEND				5
-#define R600_BLEND_TYPE				5
-#define R600_DSA				6
-#define R600_DSA_TYPE				6
-#define R600_VS_SHADER				7
-#define R600_VS_SHADER_TYPE				7
-#define R600_PS_SHADER				8
-#define R600_PS_SHADER_TYPE				8
-#define R600_PS_CONSTANT				9
-#define R600_PS_CONSTANT_TYPE				9
-#define R600_VS_CONSTANT				265
-#define R600_VS_CONSTANT_TYPE				10
-#define R600_PS_RESOURCE				521
-#define R600_PS_RESOURCE_TYPE				11
-#define R600_VS_RESOURCE				681
-#define R600_VS_RESOURCE_TYPE				12
-#define R600_FS_RESOURCE				841
-#define R600_FS_RESOURCE_TYPE				13
-#define R600_GS_RESOURCE				1001
-#define R600_GS_RESOURCE_TYPE				14
-#define R600_PS_SAMPLER				1161
-#define R600_PS_SAMPLER_TYPE				15
-#define R600_VS_SAMPLER				1179
-#define R600_VS_SAMPLER_TYPE				16
-#define R600_GS_SAMPLER				1197
-#define R600_GS_SAMPLER_TYPE				17
-#define R600_PS_SAMPLER_BORDER				1215
-#define R600_PS_SAMPLER_BORDER_TYPE				18
-#define R600_VS_SAMPLER_BORDER				1233
-#define R600_VS_SAMPLER_BORDER_TYPE				19
-#define R600_GS_SAMPLER_BORDER				1251
-#define R600_GS_SAMPLER_BORDER_TYPE				20
-#define R600_CB0				1269
-#define R600_CB0_TYPE				21
-#define R600_CB1				1270
-#define R600_CB1_TYPE				22
-#define R600_CB2				1271
-#define R600_CB2_TYPE				23
-#define R600_CB3				1272
-#define R600_CB3_TYPE				24
-#define R600_CB4				1273
-#define R600_CB4_TYPE				25
-#define R600_CB5				1274
-#define R600_CB5_TYPE				26
-#define R600_CB6				1275
-#define R600_CB6_TYPE				27
-#define R600_CB7				1276
-#define R600_CB7_TYPE				28
-#define R600_QUERY_BEGIN			1277
-#define R600_QUERY_BEGIN_TYPE			29
-#define R600_QUERY_END				1278
-#define R600_QUERY_END_TYPE			30
-#define R600_DB					1279
-#define R600_DB_TYPE				31
-#define R600_CLIP				1280
-#define R600_CLIP_TYPE				32
-#define R600_VGT				1286
-#define R600_VGT_TYPE				33
-#define R600_DRAW				1287
-#define R600_DRAW_TYPE				34
+enum {
+	R600_SHADER_PS = 1,
+	R600_SHADER_VS,
+	R600_SHADER_GS,
+	R600_SHADER_FS,
+	R600_SHADER_MAX = R600_SHADER_FS,
+};
 
 /* R600_CONFIG */
 #define R600_CONFIG__SQ_CONFIG			0

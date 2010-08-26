@@ -37,17 +37,20 @@ struct radeon_register {
 	char				name[64];
 };
 
-struct radeon_type {
-	unsigned			npm4;
-	unsigned			id;
-	unsigned			range_start;
-	unsigned			range_end;
-	unsigned			stride;
-	unsigned			immediate;
-	char				name[64];
-	unsigned			nstates;
-	radeon_state_pm4_t		pm4;
-	const struct radeon_register	*regs;
+struct radeon_sub_type {
+	int shader_type;
+	const struct radeon_register *regs;
+	unsigned nstates;
+};
+
+struct radeon_stype_info {
+	unsigned stype;
+	unsigned num;
+	unsigned stride;
+	radeon_state_pm4_t pm4;
+	struct radeon_sub_type reginfo[R600_SHADER_MAX];
+	unsigned base_id;
+	unsigned npm4;
 };
 
 struct radeon {
@@ -56,8 +59,8 @@ struct radeon {
 	unsigned			device;
 	unsigned			family;
 	unsigned			nstate;
-	unsigned			ntype;
-	const struct radeon_type	*type;
+	unsigned                        nstype;
+	struct radeon_stype_info *stype;
 };
 
 extern struct radeon *radeon_new(int fd, unsigned device);
@@ -65,9 +68,6 @@ extern struct radeon *radeon_incref(struct radeon *radeon);
 extern struct radeon *radeon_decref(struct radeon *radeon);
 extern unsigned radeon_family_from_device(unsigned device);
 extern int radeon_is_family_compatible(unsigned family1, unsigned family2);
-extern int radeon_reg_id(struct radeon *radeon, unsigned offset, unsigned *typeid, unsigned *stateid, unsigned *id);
-extern unsigned radeon_type_from_id(struct radeon *radeon, unsigned id);
-
 
 int radeon_ctx_set_bo_new(struct radeon_ctx *ctx, struct radeon_bo *bo);
 struct radeon_bo *radeon_ctx_get_bo(struct radeon_ctx *ctx, unsigned reloc);

@@ -218,7 +218,7 @@ static void r600_init_config(struct r600_context *rctx)
 		num_es_stack_entries = 0;
 		break;
 	}
-	rctx->hw_states.config = radeon_state(rctx->rw, R600_CONFIG_TYPE, R600_CONFIG);
+	rctx->hw_states.config = radeon_state(rctx->rw, R600_STATE_CONFIG, 0);
 
 	rctx->hw_states.config->states[R600_CONFIG__SQ_CONFIG] = 0x00000000;
 	switch (family) {

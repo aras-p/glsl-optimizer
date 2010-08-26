@@ -36,7 +36,7 @@ static struct radeon_state *r600_query_begin(struct r600_context *rctx, struct r
 	struct r600_screen *rscreen = rctx->screen;
 	struct radeon_state *rstate;
 
-	rstate = radeon_state(rscreen->rw, R600_QUERY_BEGIN_TYPE, R600_QUERY_BEGIN);
+	rstate = radeon_state(rscreen->rw, R600_STATE_QUERY_BEGIN, 0);
 	if (rstate == NULL)
 		return NULL;
 	rstate->states[R600_QUERY__OFFSET] = rquery->num_results;
@@ -55,7 +55,7 @@ static struct radeon_state *r600_query_end(struct r600_context *rctx, struct r60
 	struct r600_screen *rscreen = rctx->screen;
 	struct radeon_state *rstate;
 
-	rstate = radeon_state(rscreen->rw, R600_QUERY_END_TYPE, R600_QUERY_END);
+	rstate = radeon_state(rscreen->rw, R600_STATE_QUERY_END, 0);
 	if (rstate == NULL)
 		return NULL;
 	rstate->states[R600_QUERY__OFFSET] = rquery->num_results + 8;

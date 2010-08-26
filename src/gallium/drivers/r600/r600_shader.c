@@ -134,7 +134,7 @@ static int r600_pipe_shader_vs(struct pipe_context *ctx, struct r600_context_sta
 	unsigned i, tmp;
 
 	rpshader->rstate = radeon_state_decref(rpshader->rstate);
-	state = radeon_state(rscreen->rw, R600_VS_SHADER_TYPE, R600_VS_SHADER);
+	state = radeon_state_shader(rscreen->rw, R600_STATE_SHADER, 0, R600_SHADER_VS);
 	if (state == NULL)
 		return -ENOMEM;
 	for (i = 0; i < 10; i++) {
@@ -168,7 +168,7 @@ static int r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_context_sta
 
 	rasterizer = &rctx->rasterizer->state.rasterizer;
 	rpshader->rstate = radeon_state_decref(rpshader->rstate);
-	state = radeon_state(rscreen->rw, R600_PS_SHADER_TYPE, R600_PS_SHADER);
+	state = radeon_state_shader(rscreen->rw, R600_STATE_SHADER, 0, R600_SHADER_PS);
 	if (state == NULL)
 		return -ENOMEM;
 	for (i = 0; i < rshader->ninput; i++) {

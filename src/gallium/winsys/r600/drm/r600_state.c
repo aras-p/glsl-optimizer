@@ -30,6 +30,8 @@
 #include "radeon_priv.h"
 #include "r600d.h"
 
+#include "util/u_memory.h"
+
 static int r600_state_pm4_resource(struct radeon_state *state);
 static int r600_state_pm4_cb0(struct radeon_state *state);
 static int r600_state_pm4_vgt(struct radeon_state *state);
@@ -46,18 +48,61 @@ static int r700_state_pm4_db(struct radeon_state *state);
 
 #include "r600_states.h"
 
+
+#define SUB_NONE(param) { { 0, R600_names_##param, (sizeof(R600_names_##param)/sizeof(struct radeon_register)) } }
+#define SUB_PS(param) { R600_SHADER_PS, R600_names_##param, (sizeof(R600_names_##param)/sizeof(struct radeon_register)) }
+#define SUB_VS(param) { R600_SHADER_VS, R600_names_##param, (sizeof(R600_names_##param)/sizeof(struct radeon_register)) }
+#define SUB_GS(param) { R600_SHADER_GS, R600_names_##param, (sizeof(R600_names_##param)/sizeof(struct radeon_register)) }
+#define SUB_FS(param) { R600_SHADER_FS, R600_names_##param, (sizeof(R600_names_##param)/sizeof(struct radeon_register)) }
+
+/* some of these are overriden at runtime for R700 */
+struct radeon_stype_info r600_stypes[] = {
+	{ R600_STATE_CONFIG, 1, 0, r600_state_pm4_config, SUB_NONE(CONFIG), },
+	{ R600_STATE_CB_CNTL, 1, 0, r600_state_pm4_generic, SUB_NONE(CB_CNTL) },
+	{ R600_STATE_RASTERIZER, 1, 0, r600_state_pm4_generic, SUB_NONE(RASTERIZER) },
+	{ R600_STATE_VIEWPORT, 1, 0, r600_state_pm4_generic, SUB_NONE(VIEWPORT) },
+	{ R600_STATE_SCISSOR, 1, 0, r600_state_pm4_generic, SUB_NONE(SCISSOR) },
+	{ R600_STATE_BLEND, 1, 0, r600_state_pm4_generic, SUB_NONE(BLEND), },
+	{ R600_STATE_DSA, 1, 0, r600_state_pm4_generic, SUB_NONE(DSA), },
+	{ R600_STATE_SHADER, 1, 0, r600_state_pm4_shader, { SUB_PS(PS_SHADER), SUB_VS(VS_SHADER) } },
+	{ R600_STATE_CONSTANT, 256, 0x10, r600_state_pm4_generic,  { SUB_PS(PS_CONSTANT), SUB_VS(VS_CONSTANT) } },
+	{ R600_STATE_RESOURCE, 160, 0x1c, r600_state_pm4_resource, { SUB_PS(PS_RESOURCE), SUB_VS(VS_RESOURCE), SUB_GS(GS_RESOURCE), SUB_FS(FS_RESOURCE)} },
+	{ R600_STATE_SAMPLER, 18, 0xc, r600_state_pm4_generic, { SUB_PS(PS_SAMPLER), SUB_VS(VS_SAMPLER), SUB_GS(GS_SAMPLER) } },
+	{ R600_STATE_SAMPLER_BORDER, 18, 0x10, r600_state_pm4_generic, { SUB_PS(PS_SAMPLER_BORDER), SUB_VS(VS_SAMPLER_BORDER), SUB_GS(GS_SAMPLER_BORDER) } },
+	{ R600_STATE_CB0, 1, 0, r600_state_pm4_cb0, SUB_NONE(CB0) },
+	{ R600_STATE_CB1, 1, 0, r600_state_pm4_cb0, SUB_NONE(CB1) },
+	{ R600_STATE_CB2, 1, 0, r600_state_pm4_cb0, SUB_NONE(CB2) },
+	{ R600_STATE_CB3, 1, 0, r600_state_pm4_cb0, SUB_NONE(CB3) },
+	{ R600_STATE_CB4, 1, 0, r600_state_pm4_cb0, SUB_NONE(CB4) },
+	{ R600_STATE_CB5, 1, 0, r600_state_pm4_cb0, SUB_NONE(CB5) },
+	{ R600_STATE_CB6, 1, 0, r600_state_pm4_cb0, SUB_NONE(CB6) },
+	{ R600_STATE_CB7, 1, 0, r600_state_pm4_cb0, SUB_NONE(CB7) },
+	{ R600_STATE_QUERY_BEGIN, 1, 0, r600_state_pm4_query_begin, SUB_NONE(VGT_EVENT) },
+	{ R600_STATE_QUERY_END, 1, 0, r600_state_pm4_query_end, SUB_NONE(VGT_EVENT) },
+	{ R600_STATE_DB, 1, 0, r600_state_pm4_db, SUB_NONE(DB) },
+	{ R600_STATE_CLIP, 6, 0, r600_state_pm4_generic, SUB_NONE(UCP) },
+	{ R600_STATE_VGT, 1, 0, r600_state_pm4_vgt, SUB_NONE(VGT) },
+	{ R600_STATE_DRAW, 1, 0, r600_state_pm4_draw, SUB_NONE(DRAW) },
+};
+#define STYPES_SIZE Elements(r600_stypes)
+
+static const struct radeon_register *get_regs(struct radeon_state *state)
+{
+	return state->stype->reginfo[state->shader_index].regs;
+}
+
 /*
  * r600/r700 state functions
  */
 static int r600_state_pm4_bytecode(struct radeon_state *state, unsigned offset, unsigned id, unsigned nreg)
 {
-	const struct radeon_register *regs = state->radeon->type[state->type].regs;
+	const struct radeon_register *regs = get_regs(state);
 	unsigned i;
 	int r;
 
 	if (!offset) {
 		fprintf(stderr, "%s invalid register for state %d %d\n",
-			__func__, state->type, id);
+			__func__, state->stype->stype, id);
 		return -EINVAL;
 	}
 	if (offset >= R600_CONFIG_REG_OFFSET && offset < R600_CONFIG_REG_END) {
@@ -116,19 +161,18 @@ static int r600_state_pm4_bytecode(struct radeon_state *state, unsigned offset, 
 
 static int r600_state_pm4_generic(struct radeon_state *state)
 {
-	struct radeon *radeon = state->radeon;
-	unsigned i, offset, nreg, type, coffset, loffset, soffset;
+	const struct radeon_register *regs = get_regs(state);
+	unsigned i, offset, nreg, coffset, loffset, soffset;
 	unsigned start;
 	int r;
 
 	if (!state->nstates)
 		return 0;
-	type = state->type;
-	soffset = (state->id - radeon->type[type].id) * radeon->type[type].stride;
-	offset = loffset = radeon->type[type].regs[0].offset + soffset;
+	soffset = state->id * state->stype->stride;
+	offset = loffset = regs[0].offset + soffset;
 	start = 0;
 	for (i = 1, nreg = 1; i < state->nstates; i++) {
-		coffset = radeon->type[type].regs[i].offset + soffset;
+		coffset = regs[i].offset + soffset;
 		if (coffset == (loffset + 4)) {
 			nreg++;
 			loffset = coffset;
@@ -358,8 +402,9 @@ static int r600_state_pm4_resource(struct radeon_state *state)
 {
 	u32 flags, type, nbo, offset, soffset;
 	int r;
+	const struct radeon_register *regs = get_regs(state);
 
-	soffset = (state->id - state->radeon->type[state->type].id) * state->radeon->type[state->type].stride;
+	soffset = state->id * state->stype->stride;
 	type = G_038018_TYPE(state->states[6]);
 	switch (type) {
 	case 2:
@@ -378,7 +423,7 @@ static int r600_state_pm4_resource(struct radeon_state *state)
 		return -EINVAL;
 	}
 	r600_state_pm4_with_flush(state, flags);
-	offset = state->radeon->type[state->type].regs[0].offset + soffset;
+	offset = regs[0].offset + soffset;
 	state->pm4[state->cpm4++] = PKT3(PKT3_SET_RESOURCE, 7);
 	state->pm4[state->cpm4++] = (offset - R_038000_SQ_TEX_RESOURCE_WORD0_0) >> 2;
 	state->pm4[state->cpm4++] = state->states[0];
@@ -403,33 +448,63 @@ static int r600_state_pm4_resource(struct radeon_state *state)
 	return 0;
 }
 
-int r600_init(struct radeon *radeon)
+
+static void r600_modify_type_array(struct radeon *radeon)
 {
+	int i;
 	switch (radeon->family) {
-	case CHIP_R600:
-	case CHIP_RV610:
-	case CHIP_RV630:
-	case CHIP_RV670:
-	case CHIP_RV620:
-	case CHIP_RV635:
-	case CHIP_RS780:
-	case CHIP_RS880:
-		radeon->ntype = R600_NTYPE;
-		radeon->nstate = R600_NSTATE;
-		radeon->type = R600_types;
-		break;
 	case CHIP_RV770:
 	case CHIP_RV730:
 	case CHIP_RV710:
 	case CHIP_RV740:
-		radeon->ntype = R600_NTYPE;
-		radeon->nstate = R600_NSTATE;
-		radeon->type = R700_types;
 		break;
 	default:
-		fprintf(stderr, "%s unknown or unsupported chipset 0x%04X\n",
-			__func__, radeon->device);
-		return -EINVAL;
+		return;
 	}
+
+	/* r700 needs some mods */
+	for (i = 0; i < radeon->nstype; i++) {
+		struct radeon_stype_info *info = &radeon->stype[i];
+		
+		switch(info->stype) {
+		case R600_STATE_CONFIG:
+			info->pm4 = r700_state_pm4_config;
+			break;
+		case R600_STATE_CB0:
+			info->pm4 = r700_state_pm4_cb0;
+			break;
+		case R600_STATE_DB:
+			info->pm4 = r700_state_pm4_db;
+		};
+	}
+}
+
+static void r600_build_types_array(struct radeon *radeon)
+{
+	int i, j;
+	int id = 0;
+
+	for (i = 0; i < STYPES_SIZE; i++) {
+		r600_stypes[i].base_id = id;
+		r600_stypes[i].npm4 = 128;
+		if (r600_stypes[i].reginfo[0].shader_type == 0) {
+			id += r600_stypes[i].num;
+		} else {
+			for (j = 0; j < R600_SHADER_MAX; j++) {
+				if (r600_stypes[i].reginfo[j].shader_type)
+					id += r600_stypes[i].num;					
+			}
+		}
+	}
+	radeon->nstate = id;
+	radeon->stype = r600_stypes;
+	radeon->nstype = STYPES_SIZE;
+
+	r600_modify_type_array(radeon);
+}
+
+int r600_init(struct radeon *radeon)
+{
+	r600_build_types_array(radeon);
 	return 0;
 }

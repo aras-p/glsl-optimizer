@@ -101,7 +101,7 @@ static int r600_draw_common(struct r600_draw *draw)
 		rbuffer = (struct r600_resource*)vertex_buffer->buffer;
 		offset = rctx->vertex_elements->elements[i].src_offset + vertex_buffer->buffer_offset;
 		format = r600_translate_colorformat(rctx->vertex_elements->elements[i].src_format);
-		vs_resource = radeon_state(rscreen->rw, R600_VS_RESOURCE_TYPE, R600_VS_RESOURCE + i);
+		vs_resource = radeon_state_shader(rscreen->rw, R600_STATE_RESOURCE, i, R600_SHADER_VS);
 		if (vs_resource == NULL)
 			return -ENOMEM;
 		vs_resource->bo[0] = radeon_bo_incref(rscreen->rw, rbuffer->bo);
@@ -121,7 +121,7 @@ static int r600_draw_common(struct r600_draw *draw)
 			return r;
 	}
 	/* FIXME start need to change winsys */
-	draw->draw = radeon_state(rscreen->rw, R600_DRAW_TYPE, R600_DRAW);
+	draw->draw = radeon_state(rscreen->rw, R600_STATE_DRAW, 0);
 	if (draw->draw == NULL)
 		return -ENOMEM;
 	draw->draw->states[R600_DRAW__VGT_NUM_INDICES] = draw->count;
@@ -136,7 +136,7 @@ static int r600_draw_common(struct r600_draw *draw)
 	r = radeon_draw_set_new(rctx->draw, draw->draw);
 	if (r)
 		return r;
-	draw->vgt = radeon_state(rscreen->rw, R600_VGT_TYPE, R600_VGT);
+	draw->vgt = radeon_state(rscreen->rw, R600_STATE_VGT, 0);
 	if (draw->vgt == NULL)
 		return -ENOMEM;
 	draw->vgt->states[R600_VGT__VGT_PRIMITIVE_TYPE] = prim;
@@ -169,6 +169,7 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 {
 	struct r600_context *rctx = r600_context(ctx);
 	struct r600_draw draw;
+	int r;
 
 	assert(info->index_bias == 0);
 
@@ -189,5 +190,7 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 		draw.index_size = 0;
 		draw.index_buffer = NULL;
 	}
-	r600_draw_common(&draw);
+	r = r600_draw_common(&draw);
+	if (r)
+	  fprintf(stderr,"draw common failed %d\n", r);
 }
