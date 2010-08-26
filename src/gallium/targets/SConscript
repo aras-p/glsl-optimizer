@@ -9,6 +9,11 @@ if 'mesa' in env['statetrackers']:
     if 'gdi' in env['winsys'] and 'libgl-gdi' not in env['targets']:
         env['targets'].append('libgl-gdi')
 
+if not 'graw-xlib' in env['targets'] and not 'graw-null' in env['targets'] and not env['msvc']:
+        # XXX: disable until MSVC can link correctly
+        SConscript('graw-null/SConscript')
+
+
 if env['dri']:
 	SConscript([
 		'SConscript.dri'

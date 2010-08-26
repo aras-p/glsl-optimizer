@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "state_tracker/graw_dl.h"
+#include "state_tracker/graw.h"
 #include "pipe/p_screen.h"
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
