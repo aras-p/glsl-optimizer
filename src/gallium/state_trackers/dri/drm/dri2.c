@@ -437,6 +437,35 @@ dri2_create_image(__DRIscreen *_screen,
    return img;
 }
 
+static GLboolean
+dri2_query_image(__DRIimage *image, int attrib, int *value)
+{
+   struct winsys_handle whandle;
+   memset(&whandle, 0, sizeof(whandle));
+
+   switch (attrib) {
+   case __DRI_IMAGE_ATTRIB_STRIDE:
+      image->texture->screen->resource_get_handle(image->texture->screen,
+            image->texture, &whandle);
+      *value = whandle.stride;
+      return GL_TRUE;
+   case __DRI_IMAGE_ATTRIB_HANDLE:
+      whandle.type = DRM_API_HANDLE_TYPE_KMS;
+      image->texture->screen->resource_get_handle(image->texture->screen,
+         image->texture, &whandle);
+      *value = whandle.handle;
+      return GL_TRUE;
+   case __DRI_IMAGE_ATTRIB_NAME:
+      whandle.type = DRM_API_HANDLE_TYPE_SHARED;
+      image->texture->screen->resource_get_handle(image->texture->screen,
+         image->texture, &whandle);
+      *value = whandle.handle;
+      return GL_TRUE;
+   default:
+      return GL_FALSE;
+   }
+}
+
 static void
 dri2_destroy_image(__DRIimage *img)
 {
@@ -450,6 +479,7 @@ static struct __DRIimageExtensionRec dri2ImageExtension = {
     dri2_create_image_from_renderbuffer,
     dri2_destroy_image,
     dri2_create_image,
+    dri2_query_image,
 };
 
 /*
