@@ -177,17 +177,19 @@ static void do_wm_prog( struct brw_context *brw,
    /* temporary sanity check assertion */
    ASSERT(fp->isGLSL == brw_wm_is_glsl(&c->fp->program));
 
-   /*
-    * Shader which use GLSL features such as flow control are handled
-    * differently from "simple" shaders.
-    */
-   if (fp->isGLSL) {
-      c->dispatch_width = 8;
-      brw_wm_glsl_emit(brw, c);
-   }
-   else {
-      c->dispatch_width = 16;
-      brw_wm_non_glsl_emit(brw, c);
+   if (!brw_wm_fs_emit(brw, c)) {
+      /*
+       * Shader which use GLSL features such as flow control are handled
+       * differently from "simple" shaders.
+       */
+      if (fp->isGLSL) {
+	 c->dispatch_width = 8;
+	 brw_wm_glsl_emit(brw, c);
+      }
+      else {
+	 c->dispatch_width = 16;
+	 brw_wm_non_glsl_emit(brw, c);
+      }
    }
 
    if (INTEL_DEBUG & DEBUG_WM)

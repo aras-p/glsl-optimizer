@@ -306,6 +306,7 @@ void brw_wm_lookup_iz( GLuint line_aa,
 
 GLboolean brw_wm_is_glsl(const struct gl_fragment_program *fp);
 void brw_wm_glsl_emit(struct brw_context *brw, struct brw_wm_compile *c);
+GLboolean brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c);
 
 /* brw_wm_emit.c */
 void emit_alu1(struct brw_compile *p,

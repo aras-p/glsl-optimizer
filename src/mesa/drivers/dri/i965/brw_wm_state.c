@@ -104,8 +104,22 @@ wm_unit_populate_key(struct brw_context *brw, struct brw_wm_unit_key *key)
    key->uses_kill = fp->UsesKill || ctx->Color.AlphaEnabled;
    key->is_glsl = bfp->isGLSL;
 
-   /* temporary sanity check assertion */
-   ASSERT(bfp->isGLSL == brw_wm_is_glsl(fp));
+   /* If using the fragment shader backend, the program is always
+    * 8-wide.
+    */
+   if (ctx->Shader.CurrentProgram) {
+      int i;
+
+      for (i = 0; i < ctx->Shader.CurrentProgram->_NumLinkedShaders; i++) {
+	 struct brw_shader *shader =
+	    (struct brw_shader *)ctx->Shader.CurrentProgram->_LinkedShaders[i];;
+
+	 if (shader->base.Type == GL_FRAGMENT_SHADER &&
+	     shader->ir != NULL) {
+	    key->is_glsl = GL_TRUE;
+	 }
+      }
+   }
 
    /* _NEW_DEPTH */
    key->stats_wm = intel->stats_wm;
