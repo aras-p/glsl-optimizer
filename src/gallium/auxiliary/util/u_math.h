@@ -566,6 +566,9 @@ util_bswap16(uint16_t n)
 #define MIN3( A, B, C ) MIN2( MIN2( A, B ), C )
 #define MAX3( A, B, C ) MAX2( MAX2( A, B ), C )
 
+#define MIN4( A, B, C, D ) MIN2( MIN2( A, B ), MIN2(C, D) )
+#define MAX4( A, B, C, D ) MAX2( MAX2( A, B ), MIN2(C, D) )
+
 
 /**
  * Align a value, only works pot alignemnts.
