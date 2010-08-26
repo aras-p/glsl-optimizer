@@ -380,6 +380,63 @@ dri2_create_image_from_renderbuffer(__DRIcontext *context,
    return NULL;
 }
 
+static __DRIimage *
+dri2_create_image(__DRIscreen *_screen,
+                   int width, int height, int format,
+                   unsigned int use, void *loaderPrivate)
+{
+   struct dri_screen *screen = dri_screen(_screen);
+   __DRIimage *img;
+   struct pipe_resource templ;
+   unsigned tex_usage;
+   enum pipe_format pf;
+
+   tex_usage = PIPE_BIND_RENDER_TARGET | PIPE_BIND_SAMPLER_VIEW;
+
+   switch (format) {
+   case __DRI_IMAGE_FORMAT_RGB565:
+      pf = PIPE_FORMAT_B5G6R5_UNORM;
+      break;
+   case __DRI_IMAGE_FORMAT_XRGB8888:
+      pf = PIPE_FORMAT_B8G8R8X8_UNORM;
+      break;
+   case __DRI_IMAGE_FORMAT_ARGB8888:
+      pf = PIPE_FORMAT_B8G8R8A8_UNORM;
+      break;
+   default:
+      pf = PIPE_FORMAT_NONE;
+      break;
+   }
+   if (pf == PIPE_FORMAT_NONE)
+      return NULL;
+
+   img = CALLOC_STRUCT(__DRIimageRec);
+   if (!img)
+      return NULL;
+
+   memset(&templ, 0, sizeof(templ));
+   templ.bind = tex_usage;
+   templ.format = pf;
+   templ.target = PIPE_TEXTURE_2D;
+   templ.last_level = 0;
+   templ.width0 = width;
+   templ.height0 = height;
+   templ.depth0 = 1;
+
+   img->texture = screen->base.screen->resource_create(screen->base.screen, &templ);
+   if (!img->texture) {
+      FREE(img);
+      return NULL;
+   }
+
+   img->face = 0;
+   img->level = 0;
+   img->zslice = 0;
+
+   img->loader_private = loaderPrivate;
+   return img;
+}
+
 static void
 dri2_destroy_image(__DRIimage *img)
 {
@@ -392,6 +449,7 @@ static struct __DRIimageExtensionRec dri2ImageExtension = {
     dri2_create_image_from_name,
     dri2_create_image_from_renderbuffer,
     dri2_destroy_image,
+    dri2_create_image,
 };
 
 /*
