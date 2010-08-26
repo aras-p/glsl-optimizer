@@ -116,6 +116,11 @@ struct lp_rast_triangle {
    /* inputs for the shader */
    struct lp_rast_shader_inputs inputs;
 
+   /* XXX: temporarily use these additional fields for line
+    * coefficient setup
+    */
+   float dx, dy; 
+
 #ifdef DEBUG
    float v[3][2];
 #endif

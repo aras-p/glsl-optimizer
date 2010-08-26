@@ -39,35 +39,6 @@
 #define NUM_CHANNELS 4
 
 
-static const int step_scissor_minx[16] = {
-   0, 1, 0, 1,
-   2, 3, 2, 3,
-   0, 1, 0, 1,
-   2, 3, 2, 3
-};
-
-static const int step_scissor_maxx[16] = {
-    0, -1,  0, -1,
-   -2, -3, -2, -3,
-    0, -1,  0, -1,
-   -2, -3, -2, -3
-};
-
-static const int step_scissor_miny[16] = {
-   0, 0, 1, 1,
-   0, 0, 1, 1,
-   2, 2, 3, 3,
-   2, 2, 3, 3
-};
-
-static const int step_scissor_maxy[16] = {
-    0,  0, -1, -1,
-    0,  0, -1, -1,
-   -2, -2, -3, -3,
-   -2, -2, -3, -3
-};
-
-
 
 /**
  * Compute a0 for a constant-valued coefficient (GL_FLAT shading).
@@ -147,6 +118,40 @@ static void perspective_coef( struct lp_setup_context *setup,
                                dady * (v1[0][1] - setup->pixel_offset)));
 }
 
+static void
+setup_fragcoord_coef( struct lp_setup_context *setup,
+                      struct lp_rast_triangle *tri,
+                      float oneoverarea,
+                      unsigned slot,
+                      const float (*v1)[4],
+                      const float (*v2)[4],
+                      unsigned usage_mask)
+{
+   /*X*/
+   if (usage_mask & TGSI_WRITEMASK_X) {
+      tri->inputs.a0[slot][0] = 0.0;
+      tri->inputs.dadx[slot][0] = 1.0;
+      tri->inputs.dady[slot][0] = 0.0;
+   }
+
+   /*Y*/
+   if (usage_mask & TGSI_WRITEMASK_Y) {
+      tri->inputs.a0[slot][1] = 0.0;
+      tri->inputs.dadx[slot][1] = 0.0;
+      tri->inputs.dady[slot][1] = 1.0;
+   }
+
+   /*Z*/
+   if (usage_mask & TGSI_WRITEMASK_Z) {
+      linear_coef(setup, tri, oneoverarea, slot, v1, v2, 0, 2);
+   }
+
+   /*W*/
+   if (usage_mask & TGSI_WRITEMASK_W) {
+      linear_coef(setup, tri, oneoverarea, slot, v1, v2, 0, 3);
+   }
+}
+
 /**
  * Compute the tri->coef[] array dadx, dady, a0 values.
  */
@@ -209,8 +214,8 @@ static void setup_line_coefficients( struct lp_setup_context *setup,
 
    /* The internal position input is in slot zero:
     */
-   lp_setup_fragcoord_coef(setup, tri, oneoverarea, 0, v1, v2, v2,
-                            fragcoord_usage_mask);
+   setup_fragcoord_coef(setup, tri, oneoverarea, 0, v1, v2,
+                        fragcoord_usage_mask);
 }
 
 
@@ -248,6 +253,15 @@ static INLINE boolean sign(float x){
 }  
 
 
+/* Used on positive floats only:
+ */
+static INLINE float fracf(float f)
+{
+   return f - floorf(f);
+}
+
+
+
 static void
 lp_setup_line( struct lp_setup_context *setup,
                const float (*v1)[4],
@@ -257,27 +271,26 @@ lp_setup_line( struct lp_setup_context *setup,
    struct lp_rast_triangle *line;
    float oneoverarea;
    float width = MAX2(1.0, setup->line_width);
-   int minx, maxx, miny, maxy;
-   int ix0, ix1, iy0, iy1;
+   struct u_rect bbox;
    unsigned tri_bytes;
    int x[4]; 
    int y[4];
    int i;
    int nr_planes = 4;
-   boolean opaque;
    
    /* linewidth should be interpreted as integer */
    int fixed_width = subpixel_snap(round(width));
 
-   float xdiamond_offset=0;
-   float ydiamond_offset=0;
-   float xdiamond_offset_end=0;
-   float ydiamond_offset_end=0;
+   float x_offset=0;
+   float y_offset=0;
+   float x_offset_end=0;
+   float y_offset_end=0;
       
    float x1diff;
    float y1diff;
    float x2diff;
    float y2diff;
+   float dx, dy;
 
    boolean draw_start;
    boolean draw_end;
@@ -294,32 +307,20 @@ lp_setup_line( struct lp_setup_context *setup,
       nr_planes = 4;
    }
 
-   line = lp_setup_alloc_triangle(scene,
-                                  setup->fs.nr_inputs,
-                                  nr_planes,
-                                  &tri_bytes);
-   if (!line)
-      return;
 
-#ifdef DEBUG
-   line->v[0][0] = v1[0][0];
-   line->v[1][0] = v2[0][0];   
-   line->v[0][1] = v1[0][1];
-   line->v[1][1] = v2[0][1];
-#endif
-
-   line->dx = v1[0][0] - v2[0][0];
-   line->dy = v1[0][1] - v2[0][1];
+   dx = v1[0][0] - v2[0][0];
+   dy = v1[0][1] - v2[0][1];
   
-/* X-MAJOR LINE */
-   if (fabsf(line->dx) >= fabsf(line->dy)) {
+   /* X-MAJOR LINE */
+   if (fabsf(dx) >= fabsf(dy)) {
+      float dydx = dy / dx;
 
       x1diff = v1[0][0] - (float) floor(v1[0][0]) - 0.5;
       y1diff = v1[0][1] - (float) floor(v1[0][1]) - 0.5;
       x2diff = v2[0][0] - (float) floor(v2[0][0]) - 0.5;
       y2diff = v2[0][1] - (float) floor(v2[0][1]) - 0.5;
 
-      if (y2diff==-0.5 && line->dy<0){
+      if (y2diff==-0.5 && dy<0){
          y2diff = 0.5;
       }
       
@@ -329,19 +330,16 @@ lp_setup_line( struct lp_setup_context *setup,
       if (fabsf(x1diff) + fabsf(y1diff) < 0.5) {
          draw_start = TRUE;
       }
-      else if (sign(x1diff) == sign(-line->dx)) {
+      else if (sign(x1diff) == sign(-dx)) {
          draw_start = FALSE;
       }
-      else if (sign(-y1diff) != sign(line->dy)) {
+      else if (sign(-y1diff) != sign(dy)) {
          draw_start = TRUE;
       }
       else {
          /* do intersection test */
-         float yintersect = v1[0][1] + x1diff*((float)line->dy/(float)line->dx);
-         if (yintersect < ceil(v1[0][1]) && yintersect > floor(v1[0][1])){
-            draw_start = TRUE;
-         }
-         else draw_start = FALSE;
+         float yintersect = fracf(v1[0][1]) + x1diff * dydx;
+         draw_start = (yintersect < 1.0 && yintersect > 0.0);
       }
 
 
@@ -351,101 +349,95 @@ lp_setup_line( struct lp_setup_context *setup,
       if (fabsf(x2diff) + fabsf(y2diff) < 0.5) {
          draw_end = FALSE;
       }
-      else if (sign(x2diff) != sign(-line->dx)) {
+      else if (sign(x2diff) != sign(-dx)) {
          draw_end = FALSE;
       }
-      else if (sign(-y2diff) == sign(line->dy)) {
+      else if (sign(-y2diff) == sign(dy)) {
          draw_end = TRUE;
       }
       else {
          /* do intersection test */
-         float yintersect = v2[0][1] + x2diff*((float)line->dy/(float)line->dx);
-         if (yintersect < ceil(v2[0][1]) && yintersect > floor(v2[0][1])){
-            draw_end = TRUE;
-         }
-         else draw_end = FALSE;
+         float yintersect = fracf(v2[0][1]) + x2diff * dydx;
+         draw_end = (yintersect < 1.0 && yintersect > 0.0);
       }
 
       /* Are we already drawing start/end?
        */
-      will_draw_start = sign(-x1diff) != sign(line->dx);
-      will_draw_end = (sign(x2diff) == sign(-line->dx)) || x2diff==0;
+      will_draw_start = sign(-x1diff) != sign(dx);
+      will_draw_end = (sign(x2diff) == sign(-dx)) || x2diff==0;
 
-      if (line->dx < 0) {
+      if (dx < 0) {
          /* if v2 is to the right of v1, swap pointers */
          const float (*temp)[4] = v1;
          v1 = v2;
          v2 = temp;
-         line->dx = -line->dx;
-         line->dy = -line->dy;
+         dx = -dx;
+         dy = -dy;
          /* Otherwise shift planes appropriately */
          if (will_draw_start != draw_start) {
-            xdiamond_offset_end = - x1diff - 0.5;
-            ydiamond_offset_end = xdiamond_offset_end*(float)line->dy/(float)line->dx;
+            x_offset_end = - x1diff - 0.5;
+            y_offset_end = x_offset_end * dydx;
 
          }
          if (will_draw_end != draw_end) {
-            xdiamond_offset = - x2diff - 0.5;
-            ydiamond_offset = xdiamond_offset*(float)line->dy/(float)line->dx;
+            x_offset = - x2diff - 0.5;
+            y_offset = x_offset * dydx;
          }
 
       }
       else{
          /* Otherwise shift planes appropriately */
          if (will_draw_start != draw_start) {
-            xdiamond_offset = - x1diff + 0.5;
-            ydiamond_offset = xdiamond_offset*(float)line->dy/(float)line->dx;
+            x_offset = - x1diff + 0.5;
+            y_offset = x_offset * dydx;
          }
          if (will_draw_end != draw_end) {
-            xdiamond_offset_end = - x2diff + 0.5;
-            ydiamond_offset_end = xdiamond_offset_end*(float)line->dy/(float)line->dx;
+            x_offset_end = - x2diff + 0.5;
+            y_offset_end = x_offset_end * dydx;
          }
       }
   
       /* x/y positions in fixed point */
-      x[0] = subpixel_snap(v1[0][0] + xdiamond_offset - setup->pixel_offset);
-      x[1] = subpixel_snap(v2[0][0] + xdiamond_offset_end - setup->pixel_offset);
-      x[2] = subpixel_snap(v2[0][0] + xdiamond_offset_end - setup->pixel_offset);
-      x[3] = subpixel_snap(v1[0][0] + xdiamond_offset - setup->pixel_offset);
+      x[0] = subpixel_snap(v1[0][0] + x_offset     - setup->pixel_offset);
+      x[1] = subpixel_snap(v2[0][0] + x_offset_end - setup->pixel_offset);
+      x[2] = subpixel_snap(v2[0][0] + x_offset_end - setup->pixel_offset);
+      x[3] = subpixel_snap(v1[0][0] + x_offset     - setup->pixel_offset);
       
-      y[0] = subpixel_snap(v1[0][1] + ydiamond_offset - setup->pixel_offset) - fixed_width/2;
-      y[1] = subpixel_snap(v2[0][1] + ydiamond_offset_end - setup->pixel_offset) - fixed_width/2;
-      y[2] = subpixel_snap(v2[0][1] + ydiamond_offset_end - setup->pixel_offset) + fixed_width/2;
-      y[3] = subpixel_snap(v1[0][1] + ydiamond_offset - setup->pixel_offset) + fixed_width/2;
+      y[0] = subpixel_snap(v1[0][1] + y_offset     - setup->pixel_offset) - fixed_width/2;
+      y[1] = subpixel_snap(v2[0][1] + y_offset_end - setup->pixel_offset) - fixed_width/2;
+      y[2] = subpixel_snap(v2[0][1] + y_offset_end - setup->pixel_offset) + fixed_width/2;
+      y[3] = subpixel_snap(v1[0][1] + y_offset     - setup->pixel_offset) + fixed_width/2;
       
    }
+   else {
+      const float dxdy = dx / dy;
 
-
-   else{
-/* Y-MAJOR LINE */      
+      /* Y-MAJOR LINE */      
       x1diff = v1[0][0] - (float) floor(v1[0][0]) - 0.5;
       y1diff = v1[0][1] - (float) floor(v1[0][1]) - 0.5;
       x2diff = v2[0][0] - (float) floor(v2[0][0]) - 0.5;
       y2diff = v2[0][1] - (float) floor(v2[0][1]) - 0.5;
 
-      if (x2diff==-0.5 && line->dx<0){
+      if (x2diff==-0.5 && dx<0) {
          x2diff = 0.5;
       }
 
-/* 
- * Diamond exit rule test for starting point 
- */    
+      /* 
+       * Diamond exit rule test for starting point 
+       */    
       if (fabsf(x1diff) + fabsf(y1diff) < 0.5) {
          draw_start = TRUE;
       }
-      else if (sign(-y1diff) == sign(line->dy)) {
+      else if (sign(-y1diff) == sign(dy)) {
          draw_start = FALSE;
       }
-      else if (sign(x1diff) != sign(-line->dx)) {
+      else if (sign(x1diff) != sign(-dx)) {
          draw_start = TRUE;
       }
       else {
          /* do intersection test */
-         float xintersect = v1[0][0] + y1diff*((float)line->dx/(float)line->dy);
-         if (xintersect < ceil(v1[0][0]) && xintersect > floor(v1[0][0])){
-            draw_start = TRUE;
-         }
-         else draw_start = FALSE;
+         float xintersect = fracf(v1[0][0]) + y1diff * dxdy;
+         draw_start = (xintersect < 1.0 && xintersect > 0.0);
       }
 
       /* 
@@ -454,81 +446,66 @@ lp_setup_line( struct lp_setup_context *setup,
       if (fabsf(x2diff) + fabsf(y2diff) < 0.5) {
          draw_end = FALSE;
       }
-      else if (sign(-y2diff) != sign(line->dy) ) {
+      else if (sign(-y2diff) != sign(dy) ) {
          draw_end = FALSE;
       }
-      else if (sign(x2diff) == sign(-line->dx) ) {
+      else if (sign(x2diff) == sign(-dx) ) {
          draw_end = TRUE;
       }
       else {
          /* do intersection test */
-         float xintersect = v2[0][0] + y2diff*((float)line->dx/(float)line->dy);
-         if (xintersect < ceil(v2[0][0]) && xintersect > floor(v2[0][0])){
-            draw_end = TRUE;
-         }
-         else draw_end = FALSE;
+         float xintersect = fracf(v2[0][0]) + y2diff * dxdy;
+         draw_end = (xintersect < 1.0 && xintersect > 0.0);
       }
 
       /* Are we already drawing start/end?
        */
-      will_draw_start = sign(y1diff) == sign(line->dy);
-      will_draw_end = (sign(-y2diff) == sign(line->dy)) || y2diff==0;
+      will_draw_start = sign(y1diff) == sign(dy);
+      will_draw_end = (sign(-y2diff) == sign(dy)) || y2diff==0;
 
-      if (line->dy > 0) {
+      if (dy > 0) {
          /* if v2 is on top of v1, swap pointers */
          const float (*temp)[4] = v1;
          v1 = v2;
          v2 = temp; 
-         line->dx = -line->dx;
-         line->dy = -line->dy;
+         dx = -dx;
+         dy = -dy;
 
          /* Otherwise shift planes appropriately */
          if (will_draw_start != draw_start) {
-            ydiamond_offset_end = - y1diff + 0.5;
-            xdiamond_offset_end = ydiamond_offset_end*(float)line->dx/(float)line->dy;
+            y_offset_end = - y1diff + 0.5;
+            x_offset_end = y_offset_end * dxdy;
          }
          if (will_draw_end != draw_end) {
-            ydiamond_offset = - y2diff + 0.5;
-            xdiamond_offset = ydiamond_offset*(float)line->dx/(float)line->dy;
+            y_offset = - y2diff + 0.5;
+            x_offset = y_offset * dxdy;
          }
       }
-
-      else{
+      else {
          /* Otherwise shift planes appropriately */
          if (will_draw_start != draw_start) {
-            ydiamond_offset = - y1diff - 0.5;
-            xdiamond_offset = ydiamond_offset*(float)line->dx/(float)line->dy;
+            y_offset = - y1diff - 0.5;
+            x_offset = y_offset * dxdy;
                      
          }
          if (will_draw_end != draw_end) {
-            ydiamond_offset_end = - y2diff - 0.5;
-            xdiamond_offset_end = ydiamond_offset_end*(float)line->dx/(float)line->dy;
+            y_offset_end = - y2diff - 0.5;
+            x_offset_end = y_offset_end * dxdy;
          }
       }
  
       /* x/y positions in fixed point */
-      x[0] = subpixel_snap(v1[0][0] + xdiamond_offset - setup->pixel_offset) - fixed_width/2;
-      x[1] = subpixel_snap(v2[0][0] + xdiamond_offset_end - setup->pixel_offset) - fixed_width/2;
-      x[2] = subpixel_snap(v2[0][0] + xdiamond_offset_end - setup->pixel_offset) + fixed_width/2;
-      x[3] = subpixel_snap(v1[0][0] + xdiamond_offset - setup->pixel_offset) + fixed_width/2;
+      x[0] = subpixel_snap(v1[0][0] + x_offset     - setup->pixel_offset) - fixed_width/2;
+      x[1] = subpixel_snap(v2[0][0] + x_offset_end - setup->pixel_offset) - fixed_width/2;
+      x[2] = subpixel_snap(v2[0][0] + x_offset_end - setup->pixel_offset) + fixed_width/2;
+      x[3] = subpixel_snap(v1[0][0] + x_offset     - setup->pixel_offset) + fixed_width/2;
      
-      y[0] = subpixel_snap(v1[0][1] + ydiamond_offset - setup->pixel_offset); 
-      y[1] = subpixel_snap(v2[0][1] + ydiamond_offset_end - setup->pixel_offset);
-      y[2] = subpixel_snap(v2[0][1] + ydiamond_offset_end - setup->pixel_offset);
-      y[3] = subpixel_snap(v1[0][1] + ydiamond_offset - setup->pixel_offset);
+      y[0] = subpixel_snap(v1[0][1] + y_offset     - setup->pixel_offset); 
+      y[1] = subpixel_snap(v2[0][1] + y_offset_end - setup->pixel_offset);
+      y[2] = subpixel_snap(v2[0][1] + y_offset_end - setup->pixel_offset);
+      y[3] = subpixel_snap(v1[0][1] + y_offset     - setup->pixel_offset);
    }
 
-
-   /* calculate the deltas */
-   line->plane[0].dcdy = x[0] - x[1];
-   line->plane[1].dcdy = x[1] - x[2];
-   line->plane[2].dcdy = x[2] - x[3];
-   line->plane[3].dcdy = x[3] - x[0];
-
-   line->plane[0].dcdx = y[0] - y[1];
-   line->plane[1].dcdx = y[1] - y[2];
-   line->plane[2].dcdx = y[2] - y[3];
-   line->plane[3].dcdx = y[3] - y[0];
 
 
    LP_COUNT(nr_tris);
@@ -543,36 +520,69 @@ lp_setup_line( struct lp_setup_context *setup,
        */
       int adj = (setup->pixel_offset != 0) ? 1 : 0;
 
-      minx = (MIN4(x[0], x[1], x[2], x[3]) + (FIXED_ONE-1)) >> FIXED_ORDER;
-      maxx = (MAX4(x[0], x[1], x[2], x[3]) + (FIXED_ONE-1)) >> FIXED_ORDER;
-      miny = (MIN4(y[0], y[1], y[2], y[3]) + (FIXED_ONE-1) + adj) >> FIXED_ORDER;
-      maxy = (MAX4(y[0], y[1], y[2], y[3]) + (FIXED_ONE-1) + adj) >> FIXED_ORDER;
+      bbox.x0 = (MIN4(x[0], x[1], x[2], x[3]) + (FIXED_ONE-1)) >> FIXED_ORDER;
+      bbox.x1 = (MAX4(x[0], x[1], x[2], x[3]) + (FIXED_ONE-1)) >> FIXED_ORDER;
+      bbox.y0 = (MIN4(y[0], y[1], y[2], y[3]) + (FIXED_ONE-1) + adj) >> FIXED_ORDER;
+      bbox.y1 = (MAX4(y[0], y[1], y[2], y[3]) + (FIXED_ONE-1) + adj) >> FIXED_ORDER;
+
+      /* Inclusive coordinates:
+       */
+      bbox.x1--;
+      bbox.y1--;
    }
 
-   if (setup->scissor_test) {
-      minx = MAX2(minx, setup->scissor.current.minx);
-      maxx = MIN2(maxx, setup->scissor.current.maxx);
-      miny = MAX2(miny, setup->scissor.current.miny);
-      maxy = MIN2(maxy, setup->scissor.current.maxy);
-   }
-   else {
-      minx = MAX2(minx, 0);
-      miny = MAX2(miny, 0);
-      maxx = MIN2(maxx, scene->fb.width);
-      maxy = MIN2(maxy, scene->fb.height);
-   }
-
-
-   if (miny >= maxy || minx >= maxx) {
-      lp_scene_putback_data( scene, tri_bytes );
+   if (bbox.x1 < bbox.x0 ||
+       bbox.y1 < bbox.y0) {
+      if (0) debug_printf("empty bounding box\n");
+      LP_COUNT(nr_culled_tris);
       return;
    }
 
-   oneoverarea = 1.0f / (line->dx * line->dx  + line->dy * line->dy);    
+   if (!u_rect_test_intersection(&setup->draw_region, &bbox)) {
+      if (0) debug_printf("offscreen\n");
+      LP_COUNT(nr_culled_tris);
+      return;
+   }
+
+   u_rect_find_intersection(&setup->draw_region, &bbox);
+
+   line = lp_setup_alloc_triangle(scene,
+                                  setup->fs.nr_inputs,
+                                  nr_planes,
+                                  &tri_bytes);
+   if (!line)
+      return;
+
+#ifdef DEBUG
+   line->v[0][0] = v1[0][0];
+   line->v[1][0] = v2[0][0];   
+   line->v[0][1] = v1[0][1];
+   line->v[1][1] = v2[0][1];
+#endif
+
+   line->dx = dx;
+   line->dy = dy;
+
+   /* calculate the deltas */
+   line->plane[0].dcdy = x[0] - x[1];
+   line->plane[1].dcdy = x[1] - x[2];
+   line->plane[2].dcdy = x[2] - x[3];
+   line->plane[3].dcdy = x[3] - x[0];
+
+   line->plane[0].dcdx = y[0] - y[1];
+   line->plane[1].dcdx = y[1] - y[2];
+   line->plane[2].dcdx = y[2] - y[3];
+   line->plane[3].dcdx = y[3] - y[0];
+
+
+   oneoverarea = 1.0f / (dx * dx  + dy * dy);    
 
    /* Setup parameter interpolants:
     */
    setup_line_coefficients( setup, line, oneoverarea, v1, v2); 
+
+   line->inputs.facing = 1.0F;
+   line->inputs.state = setup->fs.stored;
 
    for (i = 0; i < 4; i++) {
       struct lp_rast_plane *plane = &line->plane[i];
@@ -628,35 +638,6 @@ lp_setup_line( struct lp_setup_context *setup,
       /* Calculate trivial accept offsets from the above.
        */
       plane->ei = plane->dcdy - plane->dcdx - plane->eo;
-
-      plane->step = line->step[i];
-
-      /* Fill in the inputs.step[][] arrays.
-       * We've manually unrolled some loops here.
-       */
-#define SETUP_STEP(j, x, y) \
-      line->step[i][j] = y * plane->dcdy - x * plane->dcdx                                     
-      
-      SETUP_STEP(0, 0, 0);
-      SETUP_STEP(1, 1, 0);
-      SETUP_STEP(2, 0, 1);
-      SETUP_STEP(3, 1, 1);
-
-      SETUP_STEP(4, 2, 0);
-      SETUP_STEP(5, 3, 0);
-      SETUP_STEP(6, 2, 1);
-      SETUP_STEP(7, 3, 1);
-
-      SETUP_STEP(8, 0, 2);
-      SETUP_STEP(9, 1, 2);
-      SETUP_STEP(10, 0, 3);
-      SETUP_STEP(11, 1, 3);
-
-      SETUP_STEP(12, 2, 2);
-      SETUP_STEP(13, 3, 2);
-      SETUP_STEP(14, 2, 3);
-      SETUP_STEP(15, 3, 3);
-#undef STEP
    }
 
 
@@ -679,154 +660,34 @@ lp_setup_line( struct lp_setup_context *setup,
     * these planes elsewhere.
     */
    if (nr_planes == 8) {
-      line->plane[4].step = step_scissor_maxx;
-      line->plane[4].dcdx = 1;
+      line->plane[4].dcdx = -1;
       line->plane[4].dcdy = 0;
-      line->plane[4].c = maxx;
-      line->plane[4].ei = -1;
-      line->plane[4].eo = 0;
+      line->plane[4].c = 1-bbox.x0;
+      line->plane[4].ei = 0;
+      line->plane[4].eo = 1;
 
-      line->plane[5].step = step_scissor_miny;
-      line->plane[5].dcdx = 0;
-      line->plane[5].dcdy = 1;
-      line->plane[5].c = 1-miny;
-      line->plane[5].ei = 0;
-      line->plane[5].eo = 1;
+      line->plane[5].dcdx = 1;
+      line->plane[5].dcdy = 0;
+      line->plane[5].c = bbox.x1+1;
+      line->plane[5].ei = -1;
+      line->plane[5].eo = 0;
 
-      line->plane[6].step = step_scissor_maxy;
       line->plane[6].dcdx = 0;
-      line->plane[6].dcdy = -1;
-      line->plane[6].c = maxy;
-      line->plane[6].ei = -1;
-      line->plane[6].eo = 0;
+      line->plane[6].dcdy = 1;
+      line->plane[6].c = 1-bbox.y0;
+      line->plane[6].ei = 0;
+      line->plane[6].eo = 1;
 
-      line->plane[7].step = step_scissor_minx;
-      line->plane[7].dcdx = -1;
-      line->plane[7].dcdy = 0;
-      line->plane[7].c = 1-minx;
-      line->plane[7].ei = 0;
-      line->plane[7].eo = 1;
+      line->plane[7].dcdx = 0;
+      line->plane[7].dcdy = -1;
+      line->plane[7].c = bbox.y1+1;
+      line->plane[7].ei = -1;
+      line->plane[7].eo = 0;
    }
 
-
-   /*
-    * All fields of 'line' are now set.  The remaining code here is
-    * concerned with binning.
-    */
-
-   /* Convert to tile coordinates, and inclusive ranges:
-    */
-   ix0 = minx / TILE_SIZE;
-   iy0 = miny / TILE_SIZE;
-   ix1 = (maxx-1) / TILE_SIZE;
-   iy1 = (maxy-1) / TILE_SIZE;
-
-   /*
-    * Clamp to framebuffer size
-    */
-   assert(ix0 == MAX2(ix0, 0));
-   assert(iy0 == MAX2(iy0, 0));
-   assert(ix1 == MIN2(ix1, scene->tiles_x - 1));
-   assert(iy1 == MIN2(iy1, scene->tiles_y - 1));
-
-   /* Determine which tile(s) intersect the triangle's bounding box
-    */
-   if (iy0 == iy1 && ix0 == ix1)
-   {
-      /* Triangle is contained in a single tile:
-       */
-      lp_scene_bin_command( scene, ix0, iy0,
-                            lp_rast_tri_tab[nr_planes], 
-                            lp_rast_arg_triangle(line, (1<<nr_planes)-1) );
-   }
-   else
-   {
-      int c[8];
-      int ei[8];
-      int eo[8];
-      int xstep[8];
-      int ystep[8];
-      int x, y;
-      int is_blit = -1; /* undetermined */
-      
-      for (i = 0; i < nr_planes; i++) {
-         c[i] = (line->plane[i].c + 
-                 line->plane[i].dcdy * iy0 * TILE_SIZE - 
-                 line->plane[i].dcdx * ix0 * TILE_SIZE);
-
-         ei[i] = line->plane[i].ei << TILE_ORDER;
-         eo[i] = line->plane[i].eo << TILE_ORDER;
-         xstep[i] = -(line->plane[i].dcdx << TILE_ORDER);
-         ystep[i] = line->plane[i].dcdy << TILE_ORDER;
-      }
-
-
-
-      /* Test tile-sized blocks against the triangle.
-       * Discard blocks fully outside the tri.  If the block is fully
-       * contained inside the tri, bin an lp_rast_shade_tile command.
-       * Else, bin a lp_rast_triangle command.
-       */
-      for (y = iy0; y <= iy1; y++)
-      {
-         boolean in = FALSE;  /* are we inside the triangle? */
-         int cx[8];
-
-         for (i = 0; i < nr_planes; i++)
-            cx[i] = c[i];
-
-         for (x = ix0; x <= ix1; x++)
-         {
-            int out = 0;
-            int partial = 0;
-
-            for (i = 0; i < nr_planes; i++) {
-               int planeout = cx[i] + eo[i];
-               int planepartial = cx[i] + ei[i] - 1;
-               out |= (planeout >> 31);
-               partial |= (planepartial >> 31) & (1<<i);      
-            }
-            if (out) {
-               /* do nothing */
-               if (in)
-                  break;  /* exiting triangle, all done with this row */
-               LP_COUNT(nr_empty_64);
-            }
-            else if (partial) {
-               /* Not trivially accepted by at least one plane - 
-                * rasterize/shade partial tile
-                */
-               int count = util_bitcount(partial);
-               in = TRUE;
-               lp_scene_bin_command( scene, x, y,
-                                     lp_rast_tri_tab[count], 
-                                     lp_rast_arg_triangle(line, partial) );
-
-               LP_COUNT(nr_partially_covered_64);
-            }
-            else {
-               /* triangle covers the whole tile- shade whole tile */
-               LP_COUNT(nr_fully_covered_64);
-               in = TRUE;
-               /* leverages on existing code in lp_setup_tri.c */ 
-               do_triangle_ccw_whole_tile(setup, scene, line, x, y,
-                                          opaque, &is_blit);
-            }
-
-            /* Iterate cx values across the region:
-             */
-            for (i = 0; i < nr_planes; i++)
-               cx[i] += xstep[i];
-         }
-      
-         /* Iterate c values down the region:
-          */
-         for (i = 0; i < nr_planes; i++)
-            c[i] += ystep[i];
-      }
-   }
+   lp_setup_bin_triangle(setup, line, &bbox, nr_planes);
 }
-
+   
 
 void lp_setup_choose_line( struct lp_setup_context *setup ) 
 { 

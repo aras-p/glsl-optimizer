@@ -184,9 +184,7 @@ do_triangle_ccw(struct lp_setup_context *setup,
 		const float (*v2)[4],
 		boolean frontfacing )
 {
-
    struct lp_scene *scene = lp_setup_get_current_scene(setup);
-   struct lp_fragment_shader_variant *variant = setup->fs.current.variant;
    struct lp_rast_triangle *tri;
    int x[3];
    int y[3];
@@ -196,7 +194,6 @@ do_triangle_ccw(struct lp_setup_context *setup,
    struct lp_tri_info info;
    int area;
    struct u_rect bbox;
-   int ix0, ix1, iy0, iy1;
    unsigned tri_bytes;
    int i;
    int nr_planes = 3;
@@ -423,6 +420,20 @@ do_triangle_ccw(struct lp_setup_context *setup,
       tri->plane[6].eo = 0;
    }
 
+   lp_setup_bin_triangle( setup, tri, &bbox, nr_planes );
+}
+
+
+void
+lp_setup_bin_triangle( struct lp_setup_context *setup,
+                       struct lp_rast_triangle *tri,
+                       const struct u_rect *bbox,
+                       int nr_planes )
+{
+   struct lp_scene *scene = setup->scene;
+   struct lp_fragment_shader_variant *variant = setup->fs.current.variant;
+   int ix0, ix1, iy0, iy1;
+   int i;
 
    /*
     * All fields of 'tri' are now set.  The remaining code here is
@@ -432,10 +443,10 @@ do_triangle_ccw(struct lp_setup_context *setup,
    /* Convert to tile coordinates, and inclusive ranges:
     */
    if (nr_planes == 3) {
-      int ix0 = bbox.x0 / 16;
-      int iy0 = bbox.y0 / 16;
-      int ix1 = bbox.x1 / 16;
-      int iy1 = bbox.y1 / 16;
+      int ix0 = bbox->x0 / 16;
+      int iy0 = bbox->y0 / 16;
+      int ix1 = bbox->x1 / 16;
+      int iy1 = bbox->y1 / 16;
       
       if (iy0 == iy1 && ix0 == ix1)
       {
@@ -451,10 +462,10 @@ do_triangle_ccw(struct lp_setup_context *setup,
       }
    }
 
-   ix0 = bbox.x0 / TILE_SIZE;
-   iy0 = bbox.y0 / TILE_SIZE;
-   ix1 = bbox.x1 / TILE_SIZE;
-   iy1 = bbox.y1 / TILE_SIZE;
+   ix0 = bbox->x0 / TILE_SIZE;
+   iy0 = bbox->y0 / TILE_SIZE;
+   ix1 = bbox->x1 / TILE_SIZE;
+   iy1 = bbox->y1 / TILE_SIZE;
 
    /*
     * Clamp to framebuffer size

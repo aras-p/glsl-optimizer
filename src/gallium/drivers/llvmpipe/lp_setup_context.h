@@ -171,26 +171,6 @@ lp_setup_print_vertex(struct lp_setup_context *setup,
                       const char *name,
                       const float (*v)[4]);
 
-/** shared code between lp_setup_line and lp_setup_tri */
-extern lp_rast_cmd lp_rast_tri_tab[]; 
-
-void
-do_triangle_ccw_whole_tile(struct lp_setup_context *setup,
-                           struct lp_scene *scene,
-                           struct lp_rast_triangle *tri,
-                           int x, int y,
-                           boolean opaque,
-                           int *is_blit);
-
-
-void 
-lp_setup_tri_coefficients( struct lp_setup_context *setup,
-                           struct lp_rast_triangle *tri,
-                           float oneoverarea,
-                           const float (*v1)[4],
-                           const float (*v2)[4],
-                           const float (*v3)[4],
-                           boolean frontface);
 
 struct lp_rast_triangle *
 lp_setup_alloc_triangle(struct lp_scene *scene,
@@ -199,14 +179,10 @@ lp_setup_alloc_triangle(struct lp_scene *scene,
                         unsigned *tri_size);
 
 void
-lp_setup_fragcoord_coef(struct lp_setup_context *setup,
-                         struct lp_rast_triangle *tri,
-                         float oneoverarea,
-                         unsigned slot,
-                         const float (*v1)[4],
-                         const float (*v2)[4],
-                         const float (*v3)[4],
-                         unsigned usage_mask);
+lp_setup_bin_triangle( struct lp_setup_context *setup,
+                       struct lp_rast_triangle *tri,
+                       const struct u_rect *bbox,
+                       int nr_planes );
 
 #endif
 
