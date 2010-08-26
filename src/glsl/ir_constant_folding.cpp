@@ -62,6 +62,19 @@ ir_constant_folding_visitor::handle_rvalue(ir_rvalue **rvalue)
    if (*rvalue == NULL || (*rvalue)->ir_type == ir_type_constant)
       return;
 
+   /* Note that we do rvalue visitoring on leaving.  So if an
+    * expression has a non-constant operand, no need to go looking
+    * down it to find if it's constant.  This cuts the time of this
+    * pass down drastically.
+    */
+   ir_expression *expr = (*rvalue)->as_expression();
+   if (expr) {
+      for (unsigned int i = 0; i < expr->get_num_operands(); i++) {
+	 if (!expr->operands[i]->as_constant())
+	    return;
+      }
+   }
+
    ir_constant *constant = (*rvalue)->constant_expression_value();
    if (constant) {
       *rvalue = constant;
