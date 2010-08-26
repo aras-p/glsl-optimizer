@@ -182,7 +182,7 @@ void r300_emit_fs_constants(struct r300_context* r300, unsigned size, void *stat
     OUT_CS_REG_SEQ(R300_PFS_PARAM_0_X, count * 4);
     if (buf->remap_table){
         for (i = 0; i < count; i++) {
-            uint32_t *data = &buf->ptr[buf->remap_table[i]*4];
+            float *data = (float*)&buf->ptr[buf->remap_table[i]*4];
             for (j = 0; j < 4; j++)
                 OUT_CS(pack_float24(data[j]));
         }
