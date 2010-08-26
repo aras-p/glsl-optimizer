@@ -72,6 +72,7 @@ CXX_SOURCES = \
 	ir_vec_index_to_swizzle.cpp \
 	linker.cpp \
 	link_functions.cpp \
+	loop_analysis.cpp \
 	s_expression.cpp
 
 LIBS = \
