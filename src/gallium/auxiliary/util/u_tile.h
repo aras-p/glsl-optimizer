@@ -29,7 +29,10 @@
 #define P_TILE_H
 
 #include "pipe/p_compiler.h"
+#include "pipe/p_format.h"
+#include "pipe/p_state.h"
 
+struct pipe_context;
 struct pipe_transfer;
 
 /**
