@@ -461,10 +461,7 @@ public:
  */
 class ir_loop : public ir_instruction {
 public:
-   ir_loop() : from(NULL), to(NULL), increment(NULL), counter(NULL)
-   {
-      ir_type = ir_type_loop;
-   }
+   ir_loop();
 
    virtual ir_loop *clone(void *mem_ctx, struct hash_table *ht) const;
 
@@ -493,12 +490,30 @@ public:
 
    /**
     * \name Loop counter and controls
+    *
+    * Represents a loop like a FORTRAN \c do-loop.
+    *
+    * \note
+    * If \c from and \c to are the same value, the loop will execute once.
     */
    /*@{*/
-   ir_rvalue *from;
-   ir_rvalue *to;
+   ir_rvalue *from;             /** Value of the loop counter on the first
+				 * iteration of the loop.
+				 */
+   ir_rvalue *to;               /** Value of the loop counter on the last
+				 * iteration of the loop.
+				 */
    ir_rvalue *increment;
    ir_variable *counter;
+
+   /**
+    * Comparison operation in the loop terminator.
+    *
+    * If any of the loop control fields are non-\c NULL, this field must be
+    * one of \c ir_binop_less, \c ir_binop_greater, \c ir_binop_lequal,
+    * \c ir_binop_gequal, \c ir_binop_equal, or \c ir_binop_nequal.
+    */
+   int cmp;
    /*@}*/
 };
 

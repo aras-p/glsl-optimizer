@@ -134,6 +134,7 @@ ir_loop::clone(void *mem_ctx, struct hash_table *ht) const
       new_loop->body_instructions.push_tail(ir->clone(mem_ctx, ht));
    }
 
+   new_loop->cmp = this->cmp;
    return new_loop;
 }
 

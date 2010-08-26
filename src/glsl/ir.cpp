@@ -701,6 +701,18 @@ ir_constant::has_value(const ir_constant *c) const
    return true;
 }
 
+
+ir_loop::ir_loop()
+{
+   this->ir_type = ir_type_loop;
+   this->cmp = ir_unop_neg;
+   this->from = NULL;
+   this->to = NULL;
+   this->increment = NULL;
+   this->counter = NULL;
+}
+
+
 ir_dereference_variable::ir_dereference_variable(ir_variable *var)
 {
    this->ir_type = ir_type_dereference_variable;
