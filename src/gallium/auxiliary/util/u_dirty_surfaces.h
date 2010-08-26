@@ -27,8 +27,12 @@
 #ifndef U_DIRTY_SURFACES_H_
 #define U_DIRTY_SURFACES_H_
 
+#include "pipe/p_state.h"
+
 #include "util/u_double_list.h"
 #include "util/u_math.h"
+
+struct pipe_context;
 
 typedef void (*util_dirty_surface_flush_t) (struct pipe_context *, struct pipe_surface *);
 
