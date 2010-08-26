@@ -29,7 +29,6 @@
 #include "main/context.h"
 #include "main/simple_list.h"
 #include "main/imports.h"
-#include "main/extensions.h"
 #include "main/bufferobj.h"
 #include "main/texobj.h"
 
@@ -37,8 +36,6 @@
 #include "evergreen_context.h"
 #include "evergreen_state.h"
 #include "r600_blit.h"
-
-#include "utils.h"
 
 static void evergreen_get_lock(radeonContextPtr rmesa)
 {

@@ -51,7 +51,6 @@
 
 #include "evergreen_state.h"
 #include "evergreen_tex.h"
-#include "evergreen_off.h"
 
 #include "radeon_buffer_objects.h"
 #include "radeon_common_context.h"

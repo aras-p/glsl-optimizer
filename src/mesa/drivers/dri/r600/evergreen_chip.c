@@ -31,7 +31,6 @@
 #include "r600_context.h"
 #include "r600_cmdbuf.h"
 
-#include "evergreen_tex.h"
 #include "evergreen_chip.h"
 #include "evergreen_off.h"
 #include "evergreen_diff.h"

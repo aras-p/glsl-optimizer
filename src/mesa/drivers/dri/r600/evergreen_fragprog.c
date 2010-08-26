@@ -44,8 +44,6 @@
 #include "evergreen_vertprog.h"
 #include "evergreen_fragprog.h"
 
-#include "r700_debug.h"
-
 void evergreen_insert_wpos_code(GLcontext *ctx, struct gl_fragment_program *fprog)
 {
     static const gl_state_index winstate[STATE_LENGTH]

@@ -45,7 +45,6 @@
 #include "r600_emit.h"
 #include "program/programopt.h"
 
-#include "r700_debug.h"
 #include "evergreen_vertprog.h"
 
 unsigned int evergreen_Map_Vertex_Output(r700_AssemblerBase       *pAsm, 
