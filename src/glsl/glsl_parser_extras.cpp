@@ -34,6 +34,7 @@ extern "C" {
 #include "glsl_parser_extras.h"
 #include "glsl_parser.h"
 #include "ir_optimization.h"
+#include "loop_analysis.h"
 
 _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct __GLcontextRec *ctx,
 					       GLenum target, void *mem_ctx)
@@ -738,6 +739,10 @@ do_common_optimization(exec_list *ir, bool linked)
    progress = do_vec_index_to_swizzle(ir) || progress;
    progress = do_swizzle_swizzle(ir) || progress;
    progress = do_noop_swizzle(ir) || progress;
+
+   loop_state *ls = analyze_loop_variables(ir);
+   progress = set_loop_controls(ir, ls) || progress;
+   delete ls;
 
    return progress;
 }

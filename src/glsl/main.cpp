@@ -35,6 +35,7 @@
 #include "ir_optimization.h"
 #include "ir_print_visitor.h"
 #include "program.h"
+#include "loop_analysis.h"
 
 extern "C" struct gl_shader *
 _mesa_new_shader(GLcontext *ctx, GLuint name, GLenum type);
@@ -174,6 +175,10 @@ compile_shader(struct gl_shader *shader)
 	 progress = do_vec_index_to_swizzle(shader->ir) || progress;
 	 progress = do_vec_index_to_cond_assign(shader->ir) || progress;
 	 progress = do_swizzle_swizzle(shader->ir) || progress;
+
+	 loop_state *ls = analyze_loop_variables(shader->ir);
+	 set_loop_controls(shader->ir, ls);
+	 delete ls;
       } while (progress);
 
       validate_ir_tree(shader->ir);
