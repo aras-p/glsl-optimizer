@@ -109,7 +109,7 @@ public:
    /*@{*/
    ir_variable *get_variable(const char *name);
    const glsl_type *get_type(const char *name);
-   ir_function *get_function(const char *name);
+   ir_function *get_function(const char *name, bool return_constructors = true);
    /*@}*/
 
 private:

@@ -147,10 +147,15 @@ const glsl_type *glsl_symbol_table::get_type(const char *name)
    return entry != NULL ? entry->t : NULL;
 }
 
-ir_function *glsl_symbol_table::get_function(const char *name)
+ir_function *glsl_symbol_table::get_function(const char *name,
+					     bool return_constructors)
 {
    symbol_table_entry *entry = get_entry(name);
-   return entry != NULL ? entry->f : NULL;
+   // If there's a type, the function is a constructor; caller may not want it.
+   if (entry != NULL && (return_constructors || entry->t == NULL))
+      return entry->f;
+
+   return NULL;
 }
 
 symbol_table_entry *glsl_symbol_table::get_entry(const char *name)
