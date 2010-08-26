@@ -104,7 +104,7 @@ egl_g3d_create_context(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
    }
 
    gctx->stctxi = gctx->stapi->create_context(gctx->stapi, gdpy->smapi,
-         &gconf->stvis, (gshare) ? gshare->stctxi : NULL);
+         (gconf) ? &gconf->stvis : NULL, (gshare) ? gshare->stctxi : NULL);
    if (!gctx->stctxi) {
       FREE(gctx);
       return NULL;
@@ -438,16 +438,19 @@ egl_g3d_make_current(_EGLDriver *drv, _EGLDisplay *dpy,
       ok = gctx->stapi->make_current(gctx->stapi, gctx->stctxi,
             (gdraw) ? gdraw->stfbi : NULL, (gread) ? gread->stfbi : NULL);
       if (ok) {
-         gctx->stctxi->notify_invalid_framebuffer(gctx->stctxi, gdraw->stfbi);
-         if (gread != gdraw) {
+         if (gdraw) {
+            gctx->stctxi->notify_invalid_framebuffer(gctx->stctxi,
+                  gdraw->stfbi);
+
+            if (gdraw->base.Type == EGL_WINDOW_BIT) {
+               gctx->base.WindowRenderBuffer =
+                  (gdraw->stvis.render_buffer == ST_ATTACHMENT_FRONT_LEFT) ?
+                  EGL_SINGLE_BUFFER : EGL_BACK_BUFFER;
+            }
+         }
+         if (gread && gread != gdraw) {
             gctx->stctxi->notify_invalid_framebuffer(gctx->stctxi,
                   gread->stfbi);
-         }
-
-         if (gdraw->base.Type == EGL_WINDOW_BIT) {
-            gctx->base.WindowRenderBuffer =
-               (gdraw->stvis.render_buffer == ST_ATTACHMENT_FRONT_LEFT) ?
-               EGL_SINGLE_BUFFER : EGL_BACK_BUFFER;
          }
       }
    }
