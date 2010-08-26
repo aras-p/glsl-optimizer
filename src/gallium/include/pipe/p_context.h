@@ -28,19 +28,37 @@
 #ifndef PIPE_CONTEXT_H
 #define PIPE_CONTEXT_H
 
-#include "p_state.h"
-
+#include "p_compiler.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-   
-struct pipe_screen;
+
+struct pipe_blend_color;
+struct pipe_blend_state;
+struct pipe_box;
+struct pipe_clip_state;
+struct pipe_depth_stencil_alpha_state;
+struct pipe_draw_info;
 struct pipe_fence_handle;
-struct pipe_state_cache;
+struct pipe_framebuffer_state;
+struct pipe_index_buffer;
 struct pipe_query;
-struct pipe_winsys;
+struct pipe_poly_stipple;
+struct pipe_rasterizer_state;
+struct pipe_resource;
+struct pipe_sampler_state;
+struct pipe_sampler_view;
+struct pipe_scissor_state;
+struct pipe_shader_state;
+struct pipe_stencil_ref;
+struct pipe_stream_output_state;
+struct pipe_subresource;
+struct pipe_surface;
+struct pipe_vertex_buffer;
+struct pipe_vertex_element;
+struct pipe_viewport_state;
 
 /**
  * Gallium rendering context.  Basically:
