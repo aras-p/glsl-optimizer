@@ -114,42 +114,13 @@ void _mesa_init_all_x86_transform_asm( void )
       _mesa_init_x86_transform_asm();
    }
 
-#ifdef USE_MMX_ASM
-   if ( cpu_has_mmx ) {
-      if ( _mesa_getenv( "MESA_NO_MMX" ) == 0 ) {
-         _mesa_debug(NULL, "MMX cpu detected.\n");
-      } else {
-         _mesa_x86_cpu_features &= ~(X86_FEATURE_MMX);
-      }
+   if (cpu_has_3dnow) {
+      _mesa_init_3dnow_transform_asm();
    }
-#endif
 
-#ifdef USE_3DNOW_ASM
-   if ( cpu_has_3dnow ) {
-      if ( _mesa_getenv( "MESA_NO_3DNOW" ) == 0 ) {
-         _mesa_debug(NULL, "3DNow! cpu detected.\n");
-         _mesa_init_3dnow_transform_asm();
-      } else {
-         _mesa_x86_cpu_features &= ~(X86_FEATURE_3DNOW);
-      }
-   }
-#endif
-
-#ifdef USE_SSE_ASM
    if ( cpu_has_xmm ) {
-      if ( _mesa_getenv( "MESA_NO_SSE" ) == 0 ) {
-         _mesa_debug(NULL, "SSE cpu detected.\n");
-         if ( _mesa_getenv( "MESA_FORCE_SSE" ) == 0 ) {
-            _mesa_check_os_sse_support();
-         }
-         if ( cpu_has_xmm ) {
-            _mesa_init_sse_transform_asm();
-         }
-      } else {
-         _mesa_debug(NULL, "SSE cpu detected, but switched off by user.\n");
-         _mesa_x86_cpu_features &= ~(X86_FEATURE_XMM);
-      }
+      _mesa_init_sse_transform_asm();
    }
-#endif
+
 #endif
 }
