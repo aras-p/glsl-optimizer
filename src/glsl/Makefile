@@ -73,6 +73,7 @@ CXX_SOURCES = \
 	linker.cpp \
 	link_functions.cpp \
 	loop_analysis.cpp \
+	loop_controls.cpp \
 	s_expression.cpp
 
 LIBS = \
