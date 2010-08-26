@@ -381,7 +381,7 @@ add_new_ref:
     * data.
     */
    if (!initializing_scene &&
-       scene->resource_reference_size < LP_SCENE_MAX_RESOURCE_SIZE)
+       scene->resource_reference_size >= LP_SCENE_MAX_RESOURCE_SIZE)
       return FALSE;
 
    return TRUE;
