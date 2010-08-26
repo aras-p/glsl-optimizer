@@ -28,7 +28,7 @@
 #ifndef PIPE_DEFINES_H
 #define PIPE_DEFINES_H
 
-#include "p_format.h"
+#include "p_compiler.h"
 
 #ifdef __cplusplus
 extern "C" {
