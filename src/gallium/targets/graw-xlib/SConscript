@@ -26,7 +26,6 @@ env.Append(CPPPATH = [
 
 sources = [
     'graw_xlib.c',
-    'graw_util.c',
 ]
 
 env.Tool('x11')

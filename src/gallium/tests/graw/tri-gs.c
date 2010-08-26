@@ -2,7 +2,7 @@
  * any utility code, just the graw interface and gallium.
  */
 
-#include "state_tracker/graw.h"
+#include "state_tracker/graw_dl.h"
 #include "pipe/p_screen.h"
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"

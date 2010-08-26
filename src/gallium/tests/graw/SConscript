@@ -1,15 +1,8 @@
 Import('*')
 
-try:
-    graw
-except NameError:
-    print 'warning: graw library not avaiable: skipping build of graw test'
-    Return()
-
 env = env.Clone()
 
-env.Prepend(LIBPATH = [graw.dir])
-env.Prepend(LIBS = ['graw'] + gallium)
+env.Prepend(LIBS = gallium)
 
 if platform in ('freebsd8', 'sunos5'):
     env.Append(LIBS = ['m'])
