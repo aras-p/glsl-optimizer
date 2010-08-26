@@ -1175,7 +1175,6 @@ fs_visitor::generate_math(fs_inst *inst,
       break;
    }
 
-   brw_MOV(p, brw_message_reg(2), src[0]);
    if (inst->opcode == FS_OPCODE_POW) {
       brw_MOV(p, brw_message_reg(3), src[1]);
    }
@@ -1184,7 +1183,7 @@ fs_visitor::generate_math(fs_inst *inst,
 	    op,
 	    inst->saturate ? BRW_MATH_SATURATE_SATURATE :
 	    BRW_MATH_SATURATE_NONE,
-	    2, brw_null_reg(),
+	    2, src[0],
 	    BRW_MATH_DATA_VECTOR,
 	    BRW_MATH_PRECISION_FULL);
 }
