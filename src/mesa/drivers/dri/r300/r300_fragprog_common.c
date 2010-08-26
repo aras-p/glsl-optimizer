@@ -38,7 +38,6 @@
 
 #include "r300_fragprog_common.h"
 
-#include "program/prog_parameter.h"
 #include "program/prog_print.h"
 
 #include "compiler/radeon_compiler.h"
