@@ -26,6 +26,14 @@
  */
 
 extern "C" {
+
+#include <sys/types.h>
+/* Evil hack for using libdrm in a c++ compiler. */
+#define virtual virt
+#include "i915_drm.h"
+#include "intel_bufmgr.h"
+#undef virtual
+
 #include "main/macros.h"
 #include "main/shaderobj.h"
 #include "program/prog_parameter.h"
