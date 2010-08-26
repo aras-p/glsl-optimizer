@@ -1,5 +1,8 @@
 /* Originally written by Ben Skeggs for the nv50 driver*/
-#include <pipe/p_defines.h>
+#include "pipe/p_defines.h"
+#include "pipe/p_compiler.h"
+
+#include "util/u_debug.h"
 
 struct util_split_prim {
    void *priv;
