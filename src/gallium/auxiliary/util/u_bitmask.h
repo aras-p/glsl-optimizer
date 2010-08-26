@@ -36,6 +36,9 @@
 #define U_HANDLE_BITMASK_H_
 
 
+#include "pipe/p_compiler.h"
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
