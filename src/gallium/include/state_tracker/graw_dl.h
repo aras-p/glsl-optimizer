@@ -14,12 +14,13 @@
  * those for parsing text representations of TGSI shaders.
  */
 
+#include  <stdio.h>
 #include "pipe/p_compiler.h"
-#include "pipe/p_format.h"
 #include "pipe/p_context.h"
+#include "pipe/p_format.h"
+#include "pipe/p_state.h"
 #include "util/u_dl.h"
 #include "tgsi/tgsi_text.h"
-#include  <stdio.h>
 
 
 struct pipe_screen;
