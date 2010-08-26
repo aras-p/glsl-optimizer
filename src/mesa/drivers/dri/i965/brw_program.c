@@ -195,10 +195,11 @@ static GLboolean brwProgramStringNotify( GLcontext *ctx,
 	 }
       }
 
-      if (prog->Instructions[i].DstReg.RelAddr &&
+      if (target == GL_FRAGMENT_PROGRAM_ARB &&
+	  prog->Instructions[i].DstReg.RelAddr &&
 	  prog->Instructions[i].DstReg.File == PROGRAM_OUTPUT) {
 	 shader_error(ctx, prog,
-		      "Variable indexing of shader outputs unsupported\n");
+		      "Variable indexing of FS outputs unsupported\n");
 	 return GL_FALSE;
       }
       if (target == GL_FRAGMENT_PROGRAM_ARB) {

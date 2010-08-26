@@ -98,6 +98,23 @@ static void release_tmps( struct brw_vs_compile *c )
    c->last_tmp = c->first_tmp;
 }
 
+static int
+get_first_reladdr_output(struct gl_vertex_program *vp)
+{
+   int i;
+   int first_reladdr_output = VERT_RESULT_MAX;
+
+   for (i = 0; i < vp->Base.NumInstructions; i++) {
+      struct prog_instruction *inst = vp->Base.Instructions + i;
+
+      if (inst->DstReg.File == PROGRAM_OUTPUT &&
+	  inst->DstReg.RelAddr &&
+	  inst->DstReg.Index < first_reladdr_output)
+	 first_reladdr_output = inst->DstReg.Index;
+   }
+
+   return first_reladdr_output;
+}
 
 /**
  * Preallocate GRF register before code emit.
@@ -109,6 +126,7 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
    struct intel_context *intel = &c->func.brw->intel;
    GLuint i, reg = 0, mrf;
    int attributes_in_vue;
+   int first_reladdr_output;
 
    /* Determine whether to use a real constant buffer or use a block
     * of GRF registers for constants.  The later is faster but only
@@ -226,6 +244,7 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
    else
       mrf = 4;
 
+   first_reladdr_output = get_first_reladdr_output(&c->vp->program);
    for (i = 0; i < VERT_RESULT_MAX; i++) {
       if (c->prog_data.outputs_written & BITFIELD64_BIT(i)) {
 	 c->nr_outputs++;
@@ -254,15 +273,16 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
 	     * For attributes beyond the compute-to-MRF, we compute to
 	     * GRFs and they will be written in the second URB_WRITE.
 	     */
-            if (mrf < 15) {
+            if (first_reladdr_output > i && mrf < 15) {
                c->regs[PROGRAM_OUTPUT][i] = brw_message_reg(mrf);
                mrf++;
             }
             else {
-               if (!c->first_overflow_output)
+               if (mrf >= 15 && !c->first_overflow_output)
                   c->first_overflow_output = i;
                c->regs[PROGRAM_OUTPUT][i] = brw_vec8_grf(reg, 0);
                reg++;
+	       mrf++;
             }
 	 }
       }
@@ -1028,12 +1048,10 @@ move_to_reladdr_dst(struct brw_vs_compile *c,
    int reg_size = 32;
    struct brw_reg addr_reg = c->regs[PROGRAM_ADDRESS][0];
    struct brw_reg vp_address = retype(vec1(addr_reg), BRW_REGISTER_TYPE_D);
-   struct brw_reg temp_base = c->regs[inst->DstReg.File][0];
-   GLuint byte_offset = temp_base.nr * 32 + temp_base.subnr;
+   struct brw_reg base = c->regs[inst->DstReg.File][inst->DstReg.Index];
+   GLuint byte_offset = base.nr * 32 + base.subnr;
    struct brw_reg indirect = brw_vec4_indirect(0,0);
    struct brw_reg acc = retype(vec1(get_tmp(c)), BRW_REGISTER_TYPE_UW);
-
-   byte_offset += inst->DstReg.Index * reg_size;
 
    brw_push_insn_state(p);
    brw_set_access_mode(p, BRW_ALIGN_1);
@@ -1320,6 +1338,7 @@ static void emit_vertex_write( struct brw_vs_compile *c)
    struct brw_reg ndc;
    int eot;
    GLuint len_vertex_header = 2;
+   int next_mrf, i;
 
    if (c->key.copy_edgeflag) {
       brw_MOV(p, 
@@ -1436,6 +1455,23 @@ static void emit_vertex_write( struct brw_vs_compile *c)
       brw_MOV(p, brw_message_reg(2), ndc);
       brw_MOV(p, brw_message_reg(3), pos);
       len_vertex_header = 2;
+   }
+
+   /* Move variable-addressed, non-overflow outputs to their MRFs. */
+   next_mrf = 2 + len_vertex_header;
+   for (i = 0; i < VERT_RESULT_MAX; i++) {
+      if (c->first_overflow_output > 0 && i >= c->first_overflow_output)
+	 break;
+      if (!(c->prog_data.outputs_written & BITFIELD64_BIT(i)))
+	 continue;
+
+      if (i >= VERT_RESULT_TEX0 &&
+	  c->regs[PROGRAM_OUTPUT][i].file == BRW_GENERAL_REGISTER_FILE) {
+	 brw_MOV(p, brw_message_reg(next_mrf), c->regs[PROGRAM_OUTPUT][i]);
+	 next_mrf++;
+      } else if (c->regs[PROGRAM_OUTPUT][i].file == BRW_MESSAGE_REGISTER_FILE) {
+	 next_mrf = c->regs[PROGRAM_OUTPUT][i].nr + 1;
+      }
    }
 
    eot = (c->first_overflow_output == 0);
@@ -1920,11 +1956,9 @@ void brw_vs_emit(struct brw_vs_compile *c )
          }
       }
 
-      if (inst->DstReg.RelAddr && inst->DstReg.File == PROGRAM_TEMPORARY) {
-	 /* We don't do RelAddr of PROGRAM_OUTPUT yet, because of the
-	  * compute-to-mrf and the fact that we are allocating
-	  * registers for only the used PROGRAM_OUTPUTs.
-	  */
+      if (inst->DstReg.RelAddr) {
+	 assert(inst->DstReg.File == PROGRAM_TEMPORARY||
+		inst->DstReg.File == PROGRAM_OUTPUT);
 	 move_to_reladdr_dst(c, inst, dst);
       }
 
