@@ -54,7 +54,8 @@ enum register_file {
    GRF = BRW_GENERAL_REGISTER_FILE,
    MRF = BRW_MESSAGE_REGISTER_FILE,
    IMM = BRW_IMMEDIATE_VALUE,
-   FIXED_HW_REG,
+   FIXED_HW_REG, /* a struct brw_reg */
+   UNIFORM, /* prog_data->params[hw_reg] */
    BAD_FILE
 };
 
@@ -419,6 +420,7 @@ public:
    void visit(ir_function_signature *ir);
 
    fs_inst *emit(fs_inst inst);
+   void assign_curb_setup();
    void assign_urb_setup();
    void assign_regs();
    void generate_code();
@@ -521,9 +523,6 @@ fs_visitor::visit(ir_variable *ir)
 {
    fs_reg *reg = NULL;
 
-   /* FINISHME */
-   assert(ir->mode != ir_var_uniform);
-
    if (strcmp(ir->name, "gl_FragColor") == 0) {
       this->frag_color = ir;
    } else if (strcmp(ir->name, "gl_FragData") == 0) {
@@ -535,6 +534,27 @@ fs_visitor::visit(ir_variable *ir)
 
    if (ir->mode == ir_var_in) {
       reg = &this->interp_attrs[ir->location];
+   }
+
+   if (ir->mode == ir_var_uniform) {
+      const float *vec_values;
+      int param_index = c->prog_data.nr_params;
+
+      /* FINISHME: This is wildly incomplete. */
+      assert(ir->type->is_scalar() || ir->type->is_vector());
+
+      const struct gl_program *fp = &this->brw->fragment_program->Base;
+      /* Our support for uniforms is piggy-backed on the struct
+       * gl_fragment_program, because that's where the values actually
+       * get stored, rather than in some global gl_shader_program uniform
+       * store.
+       */
+      vec_values = fp->Parameters->ParameterValues[ir->location];
+      for (unsigned int i = 0; i < ir->type->vector_elements; i++) {
+	 c->prog_data.param[c->prog_data.nr_params++] = &vec_values[i];
+      }
+
+      reg = new(this->mem_ctx) fs_reg(UNIFORM, param_index);
    }
 
    if (!reg)
@@ -1243,9 +1263,33 @@ trivial_assign_reg(int header_size, fs_reg *reg)
 }
 
 void
+fs_visitor::assign_curb_setup()
+{
+   c->prog_data.first_curbe_grf = c->key.nr_payload_regs;
+   c->prog_data.curb_read_length = ALIGN(c->prog_data.nr_params, 8) / 8;
+
+   /* Map the offsets in the UNIFORM file to fixed HW regs. */
+   foreach_iter(exec_list_iterator, iter, this->instructions) {
+      fs_inst *inst = (fs_inst *)iter.get();
+
+      for (unsigned int i = 0; i < 3; i++) {
+	 if (inst->src[i].file == UNIFORM) {
+	    int constant_nr = inst->src[i].hw_reg + inst->src[i].reg_offset;
+	    struct brw_reg brw_reg;
+
+	    brw_reg = brw_vec1_grf(c->prog_data.first_curbe_grf +
+				   constant_nr / 8,
+				   constant_nr % 8);
+	    inst->src[i] = fs_reg(brw_reg);
+	 }
+      }
+   }
+}
+
+void
 fs_visitor::assign_urb_setup()
 {
-   int urb_start = c->key.nr_payload_regs; /* FINISHME: push constants */
+   int urb_start = c->prog_data.first_curbe_grf + c->prog_data.curb_read_length;
    int interp_reg_nr[FRAG_ATTRIB_MAX];
 
    c->prog_data.urb_read_length = 0;
@@ -1339,6 +1383,11 @@ static struct brw_reg brw_reg_from_fs_reg(fs_reg *reg)
    case BAD_FILE:
       /* Probably unused. */
       brw_reg = brw_null_reg();
+      break;
+   case UNIFORM:
+      assert(!"not reached");
+      brw_reg = brw_null_reg();
+      break;
    }
    if (reg->abs)
       brw_reg = brw_abs(brw_reg);
@@ -1479,6 +1528,7 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c)
 	 return GL_FALSE;
 
       v.emit_fb_writes();
+      v.assign_curb_setup();
       v.assign_urb_setup();
       v.assign_regs();
    }
@@ -1509,9 +1559,6 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c)
       printf("\n");
    }
 
-   c->prog_data.nr_params = 0; /* FINISHME */
-   c->prog_data.first_curbe_grf = c->key.nr_payload_regs;
-   c->prog_data.curb_read_length = 0; /* FINISHME */
    c->prog_data.total_grf = v.grf_used;
    c->prog_data.total_scratch = 0;
 
