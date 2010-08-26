@@ -89,7 +89,14 @@ llvmpipe_get_param(struct pipe_screen *screen, enum pipe_cap param)
    case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
       return PIPE_MAX_SAMPLERS;
    case PIPE_CAP_MAX_VERTEX_TEXTURE_UNITS:
-      return PIPE_MAX_VERTEX_SAMPLERS;
+      /* At this time, the draw module and llvmpipe driver only
+       * support vertex shader texture lookups when LLVM is enabled in
+       * the draw module.
+       */
+      if (debug_get_bool_option("DRAW_USE_LLVM", TRUE))
+         return PIPE_MAX_VERTEX_SAMPLERS;
+      else
+         return 0;
    case PIPE_CAP_MAX_COMBINED_SAMPLERS:
       return PIPE_MAX_SAMPLERS + PIPE_MAX_VERTEX_SAMPLERS;
    case PIPE_CAP_NPOT_TEXTURES:
