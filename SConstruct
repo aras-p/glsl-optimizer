@@ -31,7 +31,7 @@ import common
 # Configuration options
 
 default_statetrackers = 'mesa'
-default_targets = 'graw-null'
+default_targets = 'none'
 
 if common.default_platform in ('linux', 'freebsd', 'darwin'):
 	default_drivers = 'softpipe,failover,svga,i915,i965,trace,identity,llvmpipe'
@@ -69,7 +69,6 @@ opts.Add(ListVariable('targets', 'driver targets to build', default_targets,
 		       'egl-swrast',
 		       'egl-vmwgfx',
 		       'graw-xlib',
-		       'graw-null',
 		       'libgl-gdi',
 		       'libgl-xlib',
 		       'xorg-i915',
