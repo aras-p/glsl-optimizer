@@ -644,6 +644,7 @@ static void r700SetupStreams(GLcontext *ctx, const struct gl_client_array *input
 #endif
             ) 
         {
+            assert(count);
             r700ConvertAttrib(ctx, count, input[i], &context->stream_desc[index]);
         } 
         else 

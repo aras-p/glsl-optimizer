@@ -173,7 +173,6 @@ static void r700SetupVTXConstants(GLcontext  * ctx,
 {
     context_t *context = R700_CONTEXT(ctx);
     struct radeon_aos * paos = (struct radeon_aos *)pAos;
-    unsigned int nVBsize;
     BATCH_LOCALS(&context->radeon);
 
     unsigned int uSQ_VTX_CONSTANT_WORD0_0;
@@ -194,18 +193,8 @@ static void r700SetupVTXConstants(GLcontext  * ctx,
     else
 	    r700SyncSurf(context, paos->bo, RADEON_GEM_DOMAIN_GTT, 0, VC_ACTION_ENA_bit);
 
-    if(0 == pStreamDesc->stride)
-    {
-        nVBsize = paos->count * pStreamDesc->size * getTypeSize(pStreamDesc->type);
-    }
-    else
-    {
-        nVBsize = (paos->count - 1) * pStreamDesc->stride
-                  + pStreamDesc->size * getTypeSize(pStreamDesc->type);
-    }
-
     uSQ_VTX_CONSTANT_WORD0_0 = paos->offset;
-    uSQ_VTX_CONSTANT_WORD1_0 = nVBsize - 1;
+    uSQ_VTX_CONSTANT_WORD1_0 = paos->bo->size - paos->offset - 1;
 
     SETfield(uSQ_VTX_CONSTANT_WORD2_0, 0, BASE_ADDRESS_HI_shift, BASE_ADDRESS_HI_mask); /* TODO */
     SETfield(uSQ_VTX_CONSTANT_WORD2_0, pStreamDesc->stride, SQ_VTX_CONSTANT_WORD2_0__STRIDE_shift,
