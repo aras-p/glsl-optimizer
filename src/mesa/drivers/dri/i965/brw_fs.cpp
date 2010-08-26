@@ -37,6 +37,7 @@ extern "C" {
 #include "talloc.h"
 }
 #include "../glsl/ir_optimization.h"
+#include "../glsl/ir_print_visitor.h"
 
 struct gl_shader *
 brw_new_shader(GLcontext *ctx, GLuint name, GLuint type)
@@ -87,6 +88,7 @@ brw_link_shader(GLcontext *ctx, struct gl_shader_program *prog)
       if (using_new_fs && shader->Type == GL_FRAGMENT_SHADER) {
 	 do_mat_op_to_vec(shader->ir);
 	 brw_do_channel_expressions(shader->ir);
+	 brw_do_vector_splitting(shader->ir);
       }
    }
 
