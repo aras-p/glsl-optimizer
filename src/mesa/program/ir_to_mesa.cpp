@@ -1382,7 +1382,8 @@ ir_to_mesa_visitor::visit(ir_dereference_array *ir)
       return;
    }
 
-   if (strncmp(var->name, "gl_", 3) == 0 && var->mode == ir_var_uniform &&
+   if (var &&
+       strncmp(var->name, "gl_", 3) == 0 && var->mode == ir_var_uniform &&
        !var->type->is_matrix()) {
       ir_dereference_record *record = NULL;
       if (ir->array->ir_type == ir_type_dereference_record)
