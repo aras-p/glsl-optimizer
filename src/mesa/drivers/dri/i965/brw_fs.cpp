@@ -292,7 +292,7 @@ public:
    {
       void *node;
 
-      node = talloc_size(ctx, size);
+      node = talloc_zero_size(ctx, size);
       assert(node != NULL);
 
       return node;
@@ -345,6 +345,13 @@ public:
    bool saturate;
    bool predicated;
    int conditional_mod; /**< BRW_CONDITIONAL_* */
+
+   /** @{
+    * Annotation for the generated IR.  One of the two can be set.
+    */
+   ir_instruction *ir;
+   const char *annotation;
+   /** @} */
 };
 
 class fs_visitor : public ir_visitor
@@ -369,6 +376,10 @@ public:
       this->frag_data = NULL;
       this->frag_depth = NULL;
       this->first_non_payload_grf = 0;
+
+      this->current_annotation = NULL;
+      this->annotation_string = NULL;
+      this->annotation_ir = NULL;
    }
    ~fs_visitor()
    {
@@ -423,6 +434,13 @@ public:
    struct hash_table *variable_ht;
    ir_variable *frag_color, *frag_data, *frag_depth;
    int first_non_payload_grf;
+
+   /** @{ debug annotation info */
+   const char *current_annotation;
+   ir_instruction *base_ir;
+   const char **annotation_string;
+   ir_instruction **annotation_ir;
+   /** @} */
 
    bool fail;
 
@@ -912,6 +930,7 @@ fs_visitor::visit(ir_function *ir)
 
       foreach_iter(exec_list_iterator, iter, sig->body) {
 	 ir_instruction *ir = (ir_instruction *)iter.get();
+	 this->base_ir = ir;
 
 	 ir->accept(this);
       }
@@ -930,6 +949,9 @@ fs_visitor::emit(fs_inst inst)
 {
    fs_inst *list_inst = new(mem_ctx) fs_inst;
    *list_inst = inst;
+
+   list_inst->annotation = this->current_annotation;
+   list_inst->ir = this->base_ir;
 
    this->instructions.push_tail(list_inst);
 
@@ -984,7 +1006,7 @@ fs_visitor::emit_interpolation()
     */
    fs_reg src_reg = reg_undef;
 
-   /* Compute the pixel centers. */
+   this->current_annotation = "compute pixel centers";
    this->pixel_x = fs_reg(this, glsl_type::uint_type);
    this->pixel_y = fs_reg(this, glsl_type::uint_type);
    emit(fs_inst(BRW_OPCODE_ADD,
@@ -996,7 +1018,7 @@ fs_visitor::emit_interpolation()
 		fs_reg(stride(suboffset(g1_uw, 5), 2, 4, 0)),
 		fs_reg(brw_imm_v(0x11001100))));
 
-   /* Compute the offsets from vertex 0 to the pixel centers */
+   this->current_annotation = "compute pixel deltas from v0";
    this->delta_x = fs_reg(this, glsl_type::float_type);
    this->delta_y = fs_reg(this, glsl_type::float_type);
    emit(fs_inst(BRW_OPCODE_ADD,
@@ -1008,6 +1030,7 @@ fs_visitor::emit_interpolation()
 		this->pixel_y,
 		fs_reg(brw_vec1_grf(1, 1))));
 
+   this->current_annotation = "compute pos.w and 1/pos.w";
    /* Compute wpos.  Unlike many other varying inputs, we usually need it
     * to produce 1/w, and the varying variable wouldn't show up.
     */
@@ -1042,8 +1065,14 @@ fs_visitor::emit_interpolation()
       if (var->location == 0)
 	 continue;
 
+      this->current_annotation = talloc_asprintf(this->mem_ctx,
+						 "interpolate %s "
+						 "(FRAG_ATTRIB[%d])",
+						 var->name,
+						 var->location);
       emit_pinterp(var->location);
    }
+   this->current_annotation = NULL;
 }
 
 void
@@ -1075,6 +1104,8 @@ fs_visitor::emit_pinterp(int location)
 void
 fs_visitor::emit_fb_writes()
 {
+   this->current_annotation = "FB write";
+
    assert(this->frag_color || !"FINISHME: MRT");
    fs_reg color = *(variable_storage(this->frag_color));
 
@@ -1088,6 +1119,8 @@ fs_visitor::emit_fb_writes()
    emit(fs_inst(FS_OPCODE_FB_WRITE,
 		fs_reg(0),
 		fs_reg(0)));
+
+   this->current_annotation = NULL;
 }
 
 void
@@ -1306,6 +1339,9 @@ static struct brw_reg brw_reg_from_fs_reg(fs_reg *reg)
 void
 fs_visitor::generate_code()
 {
+   unsigned int annotation_len = 0;
+   int last_native_inst = 0;
+
    foreach_iter(exec_list_iterator, iter, this->instructions) {
       fs_inst *inst = (fs_inst *)iter.get();
       struct brw_reg src[3], dst;
@@ -1347,6 +1383,27 @@ fs_visitor::generate_code()
       default:
 	 assert(!"not reached");
       }
+
+      if (annotation_len < p->nr_insn) {
+	 annotation_len *= 2;
+	 if (annotation_len < 16)
+	    annotation_len = 16;
+
+	 this->annotation_string = talloc_realloc(this->mem_ctx,
+						  annotation_string,
+						  const char *,
+						  annotation_len);
+	 this->annotation_ir = talloc_realloc(this->mem_ctx,
+					      annotation_ir,
+					      ir_instruction *,
+					      annotation_len);
+      }
+
+      for (unsigned int i = last_native_inst; i < p->nr_insn; i++) {
+	 this->annotation_string[i] = inst->annotation;
+	 this->annotation_ir[i] = inst->ir;
+      }
+      last_native_inst = p->nr_insn;
    }
 }
 
@@ -1400,7 +1457,11 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c)
       /* Generate FS IR for main().  (the visitor only descends into
        * functions called "main").
        */
-      visit_exec_list(shader->ir, &v);
+      foreach_iter(exec_list_iterator, iter, *shader->ir) {
+	 ir_instruction *ir = (ir_instruction *)iter.get();
+	 v.base_ir = ir;
+	 ir->accept(&v);
+      }
 
       if (v.fail)
 	 return GL_FALSE;
@@ -1413,9 +1474,26 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c)
    v.generate_code();
 
    if (INTEL_DEBUG & DEBUG_WM) {
+      const char *last_annotation_string = NULL;
+      ir_instruction *last_annotation_ir = NULL;
+
       printf("Native code for fragment shader %d:\n", prog->Name);
-      for (unsigned int i = 0; i < p->nr_insn; i++)
+      for (unsigned int i = 0; i < p->nr_insn; i++) {
+	 if (last_annotation_ir != v.annotation_ir[i]) {
+	    last_annotation_ir = v.annotation_ir[i];
+	    if (last_annotation_ir) {
+	       printf("   ");
+	       last_annotation_ir->print();
+	       printf("\n");
+	    }
+	 }
+	 if (last_annotation_string != v.annotation_string[i]) {
+	    last_annotation_string = v.annotation_string[i];
+	    if (last_annotation_string)
+	       printf("   %s\n", last_annotation_string);
+	 }
 	 brw_disasm(stdout, &p->store[i], intel->gen);
+      }
       printf("\n");
    }
 
