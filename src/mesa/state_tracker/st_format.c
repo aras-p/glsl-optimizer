@@ -78,7 +78,9 @@ st_format_datatype(enum pipe_format format)
          return GL_UNSIGNED_SHORT;
       }
       else if (format == PIPE_FORMAT_Z24_UNORM_S8_USCALED ||
-               format == PIPE_FORMAT_S8_USCALED_Z24_UNORM) {
+               format == PIPE_FORMAT_S8_USCALED_Z24_UNORM ||
+               format == PIPE_FORMAT_Z24X8_UNORM ||
+               format == PIPE_FORMAT_X8Z24_UNORM) {
          return GL_UNSIGNED_INT_24_8;
       }
       else {
