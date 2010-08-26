@@ -81,9 +81,9 @@ brw_new_shader(GLcontext *ctx, GLuint name, GLuint type)
    struct brw_shader *shader;
 
    shader = talloc_zero(NULL, struct brw_shader);
-   shader->base.Type = type;
-   shader->base.Name = name;
    if (shader) {
+      shader->base.Type = type;
+      shader->base.Name = name;
       _mesa_init_shader(ctx, &shader->base);
    }
 
@@ -96,6 +96,7 @@ brw_new_shader_program(GLcontext *ctx, GLuint name)
    struct brw_shader_program *prog;
    prog = talloc_zero(NULL, struct brw_shader_program);
    if (prog) {
+      prog->base.Name = name;
       _mesa_init_shader_program(ctx, &prog->base);
    }
    return &prog->base;
@@ -123,6 +124,8 @@ brw_link_shader(GLcontext *ctx, struct gl_shader_program *prog)
 	 void *mem_ctx = talloc_new(NULL);
 	 bool progress;
 
+	 if (shader->ir)
+	    talloc_free(shader->ir);
 	 shader->ir = new(shader) exec_list;
 	 clone_ir_list(mem_ctx, shader->ir, shader->base.ir);
 
@@ -140,7 +143,7 @@ brw_link_shader(GLcontext *ctx, struct gl_shader_program *prog)
 	    progress = do_common_optimization(shader->ir, true) || progress;
 	 } while (progress);
 
-	 reparent_ir(shader->ir, shader);
+	 reparent_ir(shader->ir, shader->ir);
 	 talloc_free(mem_ctx);
       }
    }
