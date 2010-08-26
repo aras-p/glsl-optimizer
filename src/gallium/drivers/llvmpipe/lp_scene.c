@@ -344,6 +344,7 @@ lp_scene_add_resource_reference(struct lp_scene *scene,
    /* Look at existing resource blocks:
     */
    for (ref = scene->resources; ref; ref = ref->next) {
+      last = &ref->next;
 
       /* Search for this resource:
        */
@@ -351,27 +352,27 @@ lp_scene_add_resource_reference(struct lp_scene *scene,
          if (ref->resource[i] == resource)
             return TRUE;
 
-      /* If the block is half-empty, this is the last block.  Append
-       * the reference here.
-       */
-      if (ref->count < RESOURCE_REF_SZ)
-         goto add_new_ref;
-
-      last = &ref->next;
+      if (ref->count < RESOURCE_REF_SZ) {
+         /* If the block is half-empty, then append the reference here.
+          */
+         break;
+      }
    }
 
-   /* Otherwise, need to create a new block:
+   /* Create a new block if no half-empty block was found.
     */
-   *last = lp_scene_alloc(scene, sizeof(struct resource_ref));
-   if (*last) {
+   if (!ref) {
+      assert(*last == NULL);
+      *last = lp_scene_alloc(scene, sizeof *ref);
+      if (*last == NULL)
+          return FALSE;
+
       ref = *last;
       memset(ref, 0, sizeof *ref);
-      goto add_new_ref;
    }
 
-   return FALSE;
-
-add_new_ref:
+   /* Append the reference to the reference block.
+    */
    pipe_resource_reference(&ref->resource[ref->count++], resource);
    scene->resource_reference_size += llvmpipe_resource_size(resource);
 
