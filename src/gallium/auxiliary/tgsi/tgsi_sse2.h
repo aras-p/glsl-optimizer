@@ -32,9 +32,12 @@
 extern "C" {
 #endif
 
+#include "pipe/p_compiler.h"
+
+struct tgsi_exec_machine;
+struct tgsi_interp_coef;
 struct tgsi_token;
 struct x86_function;
-struct tgsi_interp_coef;
 
 unsigned
 tgsi_emit_sse2(
