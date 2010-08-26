@@ -697,6 +697,20 @@ ir_dereference_record::ir_dereference_record(ir_variable *var,
       ? this->record->type->field_type(field) : glsl_type::error_type;
 }
 
+bool type_contains_sampler(const glsl_type *type)
+{
+   if (type->is_array()) {
+      return type_contains_sampler(type->fields.array);
+   } else if (type->is_record()) {
+      for (unsigned int i = 0; i < type->length; i++) {
+	 if (type_contains_sampler(type->fields.structure[i].type))
+	    return true;
+      }
+      return false;
+   } else {
+      return type->is_sampler();
+   }
+}
 
 bool
 ir_dereference::is_lvalue()
@@ -709,6 +723,15 @@ ir_dereference::is_lvalue()
       return false;
 
    if (this->type->is_array() && !var->array_lvalue)
+      return false;
+
+   /* From page 17 (page 23 of the PDF) of the GLSL 1.20 spec:
+    *
+    *    "Samplers cannot be treated as l-values; hence cannot be used
+    *     as out or inout function parameters, nor can they be
+    *     assigned into."
+    */
+   if (type_contains_sampler(this->type))
       return false;
 
    return true;
