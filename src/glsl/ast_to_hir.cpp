@@ -510,7 +510,6 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
    bool error_emitted = (lhs->type->is_error() || rhs->type->is_error());
 
    if (!error_emitted) {
-      /* FINISHME: This does not handle 'foo.bar.a.b.c[5].d = 5' */
       if (!lhs->is_lvalue()) {
 	 _mesa_glsl_error(& lhs_loc, state, "non-lvalue in assignment");
 	 error_emitted = true;
@@ -581,7 +580,6 @@ get_lvalue_copy(exec_list *instructions, ir_rvalue *lvalue)
    void *ctx = talloc_parent(lvalue);
    ir_variable *var;
 
-   /* FINISHME: Give unique names to the temporaries. */
    var = new(ctx) ir_variable(lvalue->type, "_post_incdec_tmp",
 			      ir_var_temporary);
    instructions->push_tail(var);
@@ -1976,14 +1974,10 @@ ast_declarator_list::hir(exec_list *instructions,
        *   OpenGL, and may not be declared in a shader as either a
        *   variable or a function."
        */
-      if (strncmp(decl->identifier, "gl_", 3) == 0) {
-	 /* FINISHME: This should only trigger if we're not redefining
-	  * FINISHME: a builtin (to add a qualifier, for example).
-	  */
+      if (strncmp(decl->identifier, "gl_", 3) == 0)
 	 _mesa_glsl_error(& loc, state,
 			  "identifier `%s' uses reserved `gl_' prefix",
 			  decl->identifier);
-      }
 
       /* Add the variable to the symbol table.  Note that the initializer's
        * IR was already processed earlier (though it hasn't been emitted yet),
