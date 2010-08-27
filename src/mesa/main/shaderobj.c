@@ -104,9 +104,9 @@ _mesa_new_shader(GLcontext *ctx, GLuint name, GLenum type)
    assert(type == GL_FRAGMENT_SHADER || type == GL_VERTEX_SHADER ||
           type == GL_GEOMETRY_SHADER_ARB);
    shader = talloc_zero(NULL, struct gl_shader);
-   shader->Type = type;
-   shader->Name = name;
    if (shader) {
+      shader->Type = type;
+      shader->Name = name;
       _mesa_init_shader(ctx, shader);
    }
    return shader;
