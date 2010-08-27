@@ -1063,7 +1063,10 @@ trace_context_clear(struct pipe_context *_pipe,
 
    trace_dump_arg(ptr, pipe);
    trace_dump_arg(uint, buffers);
-   trace_dump_arg_array(float, rgba, 4);
+   if (rgba)
+      trace_dump_arg_array(float, rgba, 4);
+   else
+      trace_dump_null();
    trace_dump_arg(float, depth);
    trace_dump_arg(uint, stencil);
 
