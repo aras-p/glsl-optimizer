@@ -945,13 +945,9 @@ _mesa_is_format_compressed(gl_format format)
 GLboolean
 _mesa_is_format_packed_depth_stencil(gl_format format)
 {
-   if (format == MESA_FORMAT_Z24_S8
-       || format == MESA_FORMAT_Z24_X8
-       || format == MESA_FORMAT_S8_Z24
-       || format == MESA_FORMAT_X8_Z24)
-      return GL_TRUE;
+   const struct gl_format_info *info = _mesa_get_format_info(format);
 
-   return GL_FALSE;
+   return info->BaseFormat == GL_DEPTH_STENCIL;
 }
 
 
