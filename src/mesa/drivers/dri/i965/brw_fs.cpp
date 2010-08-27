@@ -1513,6 +1513,10 @@ fs_visitor::generate_code()
       case BRW_OPCODE_CMP:
 	 brw_CMP(p, dst, inst->conditional_mod, src[0], src[1]);
 	 break;
+      case BRW_OPCODE_SEL:
+	 brw_SEL(p, dst, src[0], src[1]);
+	 break;
+
       case BRW_OPCODE_IF:
 	 assert(if_stack_depth < 16);
 	 if_stack[if_stack_depth] = brw_IF(p, BRW_EXECUTE_8);
