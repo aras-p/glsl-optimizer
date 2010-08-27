@@ -489,5 +489,8 @@ void lp_scene_end_binning( struct lp_scene *scene )
                    scene->scene_size);
       debug_printf("  data size: %u\n",
                    lp_scene_data_size(scene));
+
+      if (0)
+         lp_debug_bins( scene );
    }
 }

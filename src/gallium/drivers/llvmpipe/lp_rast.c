@@ -594,6 +594,9 @@ do_rasterize_bin(struct lp_rasterizer_task *task,
    const struct cmd_block *block;
    unsigned k;
 
+   if (0)
+      lp_debug_bin(bin);
+
    for (block = bin->head; block; block = block->next) {
       for (k = 0; k < block->count; k++) {
          dispatch[block->cmd[k]]( task, block->arg[k] );

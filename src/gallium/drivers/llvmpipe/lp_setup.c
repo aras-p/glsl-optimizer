@@ -279,6 +279,9 @@ set_scene_state( struct lp_setup_context *setup,
                    states[new_state],
                    (new_state == SETUP_FLUSHED) ? ": " : "",
                    (new_state == SETUP_FLUSHED) ? reason : "");
+
+      if (new_state == SETUP_FLUSHED && setup->scene)
+         lp_debug_draw_bins_by_coverage(setup->scene);
    }
 
    /* wait for a free/empty scene

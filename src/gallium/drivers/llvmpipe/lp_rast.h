@@ -245,4 +245,11 @@ lp_rast_arg_null( void )
 #define LP_RAST_OP_MAX               0xf
 #define LP_RAST_OP_MASK              0xff
 
+void
+lp_debug_bins( struct lp_scene *scene );
+void
+lp_debug_draw_bins_by_cmd_length( struct lp_scene *scene );
+void
+lp_debug_draw_bins_by_coverage( struct lp_scene *scene );
+
 #endif
