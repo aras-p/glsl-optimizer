@@ -172,6 +172,44 @@ lp_rast_cmd lp_rast_tri_tab[9] = {
    lp_rast_triangle_8
 };
 
+
+
+/**
+ * The primitive covers the whole tile- shade whole tile.
+ *
+ * \param tx, ty  the tile position in tiles, not pixels
+ */
+static void
+lp_setup_whole_tile(struct lp_setup_context *setup,
+                    const struct lp_rast_shader_inputs *inputs,
+                    int tx, int ty)
+{
+   struct lp_scene *scene = setup->scene;
+
+   LP_COUNT(nr_fully_covered_64);
+
+   /* if variant is opaque and scissor doesn't effect the tile */
+   if (inputs->opaque) {
+      if (!scene->fb.zsbuf) {
+         /*
+          * All previous rendering will be overwritten so reset the bin.
+          */
+         lp_scene_bin_reset( scene, tx, ty );
+      }
+
+      LP_COUNT(nr_shade_opaque_64);
+      lp_scene_bin_command( scene, tx, ty,
+                            lp_rast_shade_tile_opaque,
+                            lp_rast_arg_inputs(inputs) );
+   } else {
+      LP_COUNT(nr_shade_64);
+      lp_scene_bin_command( scene, tx, ty,
+                            lp_rast_shade_tile,
+                            lp_rast_arg_inputs(inputs) );
+   }
+}
+
+
 /**
  * Do basic setup for triangle rasterization and determine which
  * framebuffer tiles are touched.  Put the triangle in the scene's
@@ -185,6 +223,7 @@ do_triangle_ccw(struct lp_setup_context *setup,
 		boolean frontfacing )
 {
    struct lp_scene *scene = lp_setup_get_current_scene(setup);
+   struct lp_fragment_shader_variant *variant = setup->fs.current.variant;
    struct lp_rast_triangle *tri;
    int x[3];
    int y[3];
@@ -316,6 +355,7 @@ do_triangle_ccw(struct lp_setup_context *setup,
    lp_setup_tri_coef( setup, &tri->inputs, &info );
 
    tri->inputs.facing = frontfacing ? 1.0F : -1.0F;
+   tri->inputs.opaque = variant->opaque;
    tri->inputs.state = setup->fs.stored;
 
 
@@ -431,7 +471,6 @@ lp_setup_bin_triangle( struct lp_setup_context *setup,
                        int nr_planes )
 {
    struct lp_scene *scene = setup->scene;
-   struct lp_fragment_shader_variant *variant = setup->fs.current.variant;
    int ix0, ix1, iy0, iy1;
    int i;
 
@@ -554,13 +593,7 @@ lp_setup_bin_triangle( struct lp_setup_context *setup,
                /* triangle covers the whole tile- shade whole tile */
                LP_COUNT(nr_fully_covered_64);
                in = TRUE;
-	       if (variant->opaque &&
-	           !setup->fb.zsbuf) {
-	          lp_scene_bin_reset( scene, x, y );
-	       }
-               lp_scene_bin_command( scene, x, y,
-				     lp_rast_shade_tile,
-				     lp_rast_arg_inputs(&tri->inputs) );
+               lp_setup_whole_tile(setup, &tri->inputs, x, y);
             }
 
 	    /* Iterate cx values across the region:
