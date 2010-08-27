@@ -1482,6 +1482,17 @@ fs_visitor::generate_code()
       case BRW_OPCODE_MUL:
 	 brw_MUL(p, dst, src[0], src[1]);
 	 break;
+
+      case BRW_OPCODE_AND:
+	 brw_AND(p, dst, src[0], src[1]);
+	 break;
+      case BRW_OPCODE_OR:
+	 brw_OR(p, dst, src[0], src[1]);
+	 break;
+      case BRW_OPCODE_XOR:
+	 brw_XOR(p, dst, src[0], src[1]);
+	 break;
+
       case BRW_OPCODE_CMP:
 	 brw_CMP(p, dst, inst->conditional_mod, src[0], src[1]);
 	 break;
