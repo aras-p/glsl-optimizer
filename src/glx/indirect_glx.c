@@ -168,6 +168,9 @@ indirect_unbind_context(struct glx_context *gc, struct glx_context *new)
    int opcode = __glXSetupForCommand(dpy);
    xGLXMakeCurrentReply reply;
 
+   if (gc == new)
+      return;
+   
    /* We are either switching to no context, away from a indirect
     * context to a direct context or from one dpy to another and have
     * to send a request to the dpy to unbind the previous context.

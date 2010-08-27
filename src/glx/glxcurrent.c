@@ -242,13 +242,13 @@ MakeContextCurrent(Display * dpy, GLXDrawable draw,
       return False;
    }
 
-   if (oldGC != &dummyContext && oldGC != gc) {
+   if (oldGC != &dummyContext) {
       oldGC->vtable->unbind(oldGC, gc);
       oldGC->currentDpy = 0;
       oldGC->currentDrawable = None;
       oldGC->currentReadable = None;
       oldGC->thread_id = 0;
-      if (oldGC->xid == None)
+      if (oldGC->xid == None && oldGC != gc)
 	 /* We are switching away from a context that was
 	  * previously destroyed, so we need to free the memory
 	  * for the old handle.
@@ -257,12 +257,12 @@ MakeContextCurrent(Display * dpy, GLXDrawable draw,
    }
 
    if (gc) {
-      ret = gc->vtable->bind(gc, oldGC, draw, read);
       gc->currentDpy = dpy;
       gc->currentDrawable = draw;
       gc->currentReadable = read;
       gc->thread_id = _glthread_GetID();
       __glXSetCurrentContext(gc);
+      ret = gc->vtable->bind(gc, oldGC, draw, read);
    } else {
       __glXSetCurrentContextNull();
    }

@@ -380,4 +380,29 @@ driFetchDrawable(struct glx_context *gc, GLXDrawable glxDrawable)
    return pdraw;
 }
 
+_X_HIDDEN void
+driReleaseDrawables(struct glx_context *gc)
+{
+   struct glx_display *const priv = __glXInitialize(gc->psc->dpy);
+   __GLXDRIdrawable *pdraw;
+
+   if (priv == NULL)
+      return;
+
+   if (__glxHashLookup(priv->drawHash,
+		       gc->currentDrawable, (void *) &pdraw) == 0) {
+      if (pdraw->drawable == pdraw->xDrawable)
+	 (*pdraw->destroyDrawable)(pdraw);
+      __glxHashDelete(priv->drawHash, gc->currentDrawable);
+   }
+
+   if (gc->currentDrawable != gc->currentReadable &&
+       __glxHashLookup(priv->drawHash,
+		       gc->currentReadable, (void *) &pdraw) == 0) {
+      if (pdraw->drawable == pdraw->xDrawable)
+	 (*pdraw->destroyDrawable)(pdraw);
+      __glxHashDelete(priv->drawHash, gc->currentReadable);
+   }
+}
+
 #endif /* GLX_DIRECT_RENDERING */

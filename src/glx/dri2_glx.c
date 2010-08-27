@@ -124,8 +124,6 @@ dri2_destroy_context(struct glx_context *context)
    if (context->extensions)
       XFree((char *) context->extensions);
 
-   GarbageCollectDRIDrawables(context->psc);
-
    (*psc->core->destroyContext) (pcp->driContext);
 
    Xfree(pcp);
@@ -159,6 +157,8 @@ dri2_unbind_context(struct glx_context *context, struct glx_context *new)
    struct dri2_screen *psc = (struct dri2_screen *) pcp->base.psc;
 
    (*psc->core->unbindContext) (pcp->driContext);
+
+   driReleaseDrawables(&pcp->base);
 }
 
 static struct glx_context *

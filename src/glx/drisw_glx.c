@@ -250,8 +250,6 @@ drisw_destroy_context(struct glx_context *context)
    if (context->extensions)
       XFree((char *) context->extensions);
 
-   GarbageCollectDRIDrawables(context->psc);
-
    (*psc->core->destroyContext) (pcp->driContext);
 
    Xfree(pcp);
@@ -285,6 +283,8 @@ drisw_unbind_context(struct glx_context *context, struct glx_context *new)
    struct drisw_screen *psc = (struct drisw_screen *) pcp->base.psc;
 
    (*psc->core->unbindContext) (pcp->driContext);
+
+   driReleaseDrawables(&pcp->base);
 }
 
 static const struct glx_context_vtable drisw_context_vtable = {

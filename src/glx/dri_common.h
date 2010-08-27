@@ -55,6 +55,9 @@ extern void driDestroyConfigs(const __DRIconfig **configs);
 extern __GLXDRIdrawable *
 driFetchDrawable(struct glx_context *gc, GLXDrawable glxDrawable);
 
+extern void
+driReleaseDrawables(struct glx_context *gc);
+
 extern const __DRIsystemTimeExtension systemTimeExtension;
 
 extern void InfoMessageF(const char *f, ...);

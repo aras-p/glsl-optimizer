@@ -175,6 +175,14 @@ DRI2Error(Display *display, xError *err, XExtCodes *codes, int *ret_code)
 	err->minorCode == X_DRI2CopyRegion)
 	return True;
 
+    /* If the X drawable was destroyed before the GLX drawable, the
+     * DRI2 drawble will be gone by the time we call
+     * DRI2DestroyDrawable.  So just ignore BadDrawable here. */
+    if (err->majorCode == codes->major_opcode &&
+	err->errorCode == BadDrawable &&
+	err->minorCode == X_DRI2DestroyDrawable)
+	return True;
+
     return False;
 }
 
