@@ -165,16 +165,7 @@ type_size(const struct glsl_type *type)
    case GLSL_TYPE_INT:
    case GLSL_TYPE_FLOAT:
    case GLSL_TYPE_BOOL:
-      if (type->is_matrix()) {
-	 /* In case of incoming uniform/varying matrices, match their
-	  * allocation behavior.  FINISHME: We could just use
-	  * glsl_type->components() for variables and temps within the
-	  * shader.
-	  */
-	 return type->matrix_columns * 4;
-      } else {
-	 return type->vector_elements;
-      }
+      return type->components();
    case GLSL_TYPE_ARRAY:
       /* FINISHME: uniform/varying arrays. */
       return type_size(type->fields.array) * type->length;
@@ -579,7 +570,26 @@ fs_visitor::visit(ir_dereference_record *ir)
 void
 fs_visitor::visit(ir_dereference_array *ir)
 {
-   assert(!"FINISHME");
+   ir_constant *index;
+   int element_size;
+
+   ir->array->accept(this);
+   index = ir->array_index->as_constant();
+
+   if (ir->type->is_matrix()) {
+      element_size = ir->type->vector_elements;
+   } else {
+      element_size = type_size(ir->type);
+   }
+
+   if (index) {
+      assert(this->result.file == UNIFORM ||
+	     (this->result.file == GRF &&
+	      this->result.reg != 0));
+      this->result.reg_offset += index->value.i[0] * element_size;
+   } else {
+      assert(!"FINISHME: non-constant matrix column");
+   }
 }
 
 void
