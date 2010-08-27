@@ -32,6 +32,7 @@
 #include "drm_sarea.h"
 #include "utils.h"
 #include "xmlpool.h"
+#include "../glsl/glsl_parser_extras.h"
 
 PUBLIC const char __dri2ConfigOptions[] =
    DRI_CONF_BEGIN
