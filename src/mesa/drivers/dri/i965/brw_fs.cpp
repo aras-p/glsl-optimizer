@@ -530,6 +530,7 @@ fs_visitor::visit(ir_variable *ir)
       this->frag_data = ir;
    } else if (strcmp(ir->name, "gl_FragDepth") == 0) {
       this->frag_depth = ir;
+      assert(!"FINISHME: this hangs currently.");
    }
 
    if (ir->mode == ir_var_in) {
