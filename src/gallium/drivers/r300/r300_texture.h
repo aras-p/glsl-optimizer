@@ -23,6 +23,7 @@
 #ifndef R300_TEXTURE_H
 #define R300_TEXTURE_H
 
+#include "pipe/p_compiler.h"
 #include "pipe/p_format.h"
 
 struct pipe_screen;
