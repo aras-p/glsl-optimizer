@@ -255,9 +255,8 @@ lp_rast_clear_zstencil(struct lp_rasterizer_task *task,
                        const union lp_rast_cmd_arg arg)
 {
    struct lp_rasterizer *rast = task->rast;
-   const struct lp_rast_clearzs *clearzs = arg.clear_zstencil;
-   unsigned clear_value = clearzs->clearzs_value;
-   unsigned clear_mask = clearzs->clearzs_mask;
+   unsigned clear_value = arg.clear_zstencil.value;
+   unsigned clear_mask = arg.clear_zstencil.mask;
    const unsigned height = TILE_SIZE / TILE_VECTOR_HEIGHT;
    const unsigned width = TILE_SIZE * TILE_VECTOR_HEIGHT;
    const unsigned block_size = rast->zsbuf.blocksize;

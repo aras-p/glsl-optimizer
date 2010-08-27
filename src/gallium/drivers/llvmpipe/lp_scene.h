@@ -125,7 +125,6 @@ struct lp_scene {
     */
    unsigned scene_size;
 
-   boolean has_color_clear;
    boolean has_depthstencil_clear;
 
    /**

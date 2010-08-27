@@ -88,10 +88,6 @@ struct lp_rast_shader_inputs {
    const struct lp_rast_state *state;
 };
 
-struct lp_rast_clearzs {
-   unsigned clearzs_value;
-   unsigned clearzs_mask;
-};
 
 struct lp_rast_plane {
    /* one-pixel sized trivial accept offsets for each plane */
@@ -151,7 +147,10 @@ union lp_rast_cmd_arg {
    } triangle;
    const struct lp_rast_state *set_state;
    uint8_t clear_color[4];
-   const struct lp_rast_clearzs *clear_zstencil;
+   struct {
+      unsigned value;
+      unsigned mask;
+   } clear_zstencil;
    struct lp_fence *fence;
    struct llvmpipe_query *query_obj;
 };
@@ -195,12 +194,14 @@ lp_rast_arg_fence( struct lp_fence *fence )
 
 
 static INLINE union lp_rast_cmd_arg
-lp_rast_arg_clearzs( const struct lp_rast_clearzs *clearzs )
+lp_rast_arg_clearzs( unsigned value, unsigned mask )
 {
    union lp_rast_cmd_arg arg;
-   arg.clear_zstencil = clearzs;
+   arg.clear_zstencil.value = value;
+   arg.clear_zstencil.mask = mask;
    return arg;
 }
+
 
 static INLINE union lp_rast_cmd_arg
 lp_rast_arg_null( void )
