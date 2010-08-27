@@ -16766,6 +16766,7 @@ void
 _mesa_glsl_release_functions(void)
 {
     talloc_free(builtin_mem_ctx);
+    builtin_mem_ctx = NULL;
 }
 
 void
