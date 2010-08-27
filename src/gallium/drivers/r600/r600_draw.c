@@ -107,7 +107,7 @@ static int r600_draw_common(struct r600_draw *draw)
 		vs_resource->bo[0] = radeon_bo_incref(rscreen->rw, rbuffer->bo);
 		vs_resource->nbo = 1;
 		vs_resource->states[R600_PS_RESOURCE__RESOURCE0_WORD0] = offset;
-		vs_resource->states[R600_PS_RESOURCE__RESOURCE0_WORD1] = rbuffer->bo->size - offset;
+		vs_resource->states[R600_PS_RESOURCE__RESOURCE0_WORD1] = rbuffer->bo->size - offset - 1;
 		vs_resource->states[R600_PS_RESOURCE__RESOURCE0_WORD2] = S_038008_STRIDE(vertex_buffer->stride) |
 								S_038008_DATA_FORMAT(format);
 		vs_resource->states[R600_PS_RESOURCE__RESOURCE0_WORD3] = 0x00000000;
