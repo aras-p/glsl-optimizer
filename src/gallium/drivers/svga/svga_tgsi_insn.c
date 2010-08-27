@@ -806,6 +806,20 @@ static boolean emit_cmp(struct svga_shader_emitter *emit,
    const struct src_register src2 = translate_src_register(
       emit, &insn->Src[2] );
 
+   if (emit->unit == PIPE_SHADER_VERTEX) {
+      SVGA3dShaderDestToken temp = get_temp(emit);
+      struct src_register zero = scalar(get_zero_immediate(emit), TGSI_SWIZZLE_X);
+
+      /* Since vertex shaders don't support the CMP instruction,
+       * simulate it with SLT and LRP instructions.
+       *    SLT  TMP, SRC0, 0.0
+       *    LRP  DST, TMP, SRC1, SRC2
+       */
+      if (!submit_op2(emit, inst_token(SVGA3DOP_SLT), temp, src0, zero))
+         return FALSE;
+      return submit_op3(emit, inst_token(SVGA3DOP_LRP), dst, src(temp), src1, src2);
+   }
+
    /* CMP  DST, SRC0, SRC2, SRC1 */
    return submit_op3( emit, inst_token( SVGA3DOP_CMP ), dst, src0, src2, src1);
 }
@@ -2679,6 +2693,11 @@ needs_to_create_zero( struct svga_shader_emitter *emit )
 
       if (emit->info.opcode_count[TGSI_OPCODE_DST] >= 1 ||
           emit->info.opcode_count[TGSI_OPCODE_LIT] >= 1)
+         return TRUE;
+   }
+
+   if (emit->unit == PIPE_SHADER_VERTEX) {
+      if (emit->info.opcode_count[TGSI_OPCODE_CMP] >= 1)
          return TRUE;
    }
 
