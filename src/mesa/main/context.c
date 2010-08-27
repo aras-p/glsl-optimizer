@@ -140,6 +140,10 @@
 #include "sparc/sparc.h"
 #endif
 
+#include "glsl_parser_extras.h"
+
+
+
 #ifndef MESA_VERBOSE
 int MESA_VERBOSE = 0;
 #endif
@@ -433,6 +437,11 @@ one_time_init( GLcontext *ctx )
       alreadyCalled = GL_TRUE;
    }
    _glthread_UNLOCK_MUTEX(OneTimeLock);
+
+   /* Hopefully atexit() is widely available.  If not, we may need some
+    * #ifdef tests here.
+    */
+   atexit(_mesa_destroy_shader_compiler);
 
    dummy_enum_func();
 }
