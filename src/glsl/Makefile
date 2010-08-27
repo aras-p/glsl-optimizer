@@ -74,6 +74,7 @@ CXX_SOURCES = \
 	link_functions.cpp \
 	loop_analysis.cpp \
 	loop_controls.cpp \
+	loop_unroll.cpp \
 	s_expression.cpp
 
 LIBS = \

@@ -56,6 +56,10 @@ extern bool
 set_loop_controls(exec_list *instructions, loop_state *ls);
 
 
+extern bool
+unroll_loops(exec_list *instructions, loop_state *ls);
+
+
 /**
  * Tracking for all variables used in a loop
  */
@@ -105,12 +109,22 @@ public:
    hash_table *var_hash;
 
    /**
+    * Maximum number of loop iterations.
+    *
+    * If this value is negative, then the loop may be infinite.  This actually
+    * means that analysis was unable to determine an upper bound on the number
+    * of loop iterations.
+    */
+   int max_iterations;
+
+   /**
     * Number of ir_loop_jump instructions that operate on this loop
     */
    unsigned num_loop_jumps;
 
    loop_variable_state()
    {
+      this->max_iterations = -1;
       this->num_loop_jumps = 0;
       this->var_hash = hash_table_ctor(0, hash_table_pointer_hash,
 				       hash_table_pointer_compare);

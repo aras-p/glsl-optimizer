@@ -177,7 +177,8 @@ compile_shader(struct gl_shader *shader)
 	 progress = do_swizzle_swizzle(shader->ir) || progress;
 
 	 loop_state *ls = analyze_loop_variables(shader->ir);
-	 set_loop_controls(shader->ir, ls);
+	 progress = set_loop_controls(shader->ir, ls) || progress;
+	 progress = unroll_loops(shader->ir, ls) || progress;
 	 delete ls;
       } while (progress);
 

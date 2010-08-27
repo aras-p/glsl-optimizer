@@ -64,7 +64,8 @@ glsl_SOURCES = \
 	ir_vec_index_to_swizzle.cpp \
 	linker.cpp \
 	loop_analysis.cpp \
-	loop_controls.cpp
+	loop_controls.cpp \
+	loop_unroll.cpp
 
 BUILT_SOURCES = glsl_parser.h glsl_parser.cpp glsl_lexer.cpp
 CLEANFILES = $(BUILT_SOURCES)
