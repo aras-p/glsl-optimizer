@@ -1422,10 +1422,10 @@ static struct brw_reg brw_reg_from_fs_reg(fs_reg *reg)
 	 brw_reg = brw_imm_f(reg->imm.f);
 	 break;
       case BRW_REGISTER_TYPE_D:
-	 brw_reg = brw_imm_f(reg->imm.i);
+	 brw_reg = brw_imm_d(reg->imm.i);
 	 break;
       case BRW_REGISTER_TYPE_UD:
-	 brw_reg = brw_imm_f(reg->imm.u);
+	 brw_reg = brw_imm_ud(reg->imm.u);
 	 break;
       default:
 	 assert(!"not reached");
