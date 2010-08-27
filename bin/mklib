@@ -930,6 +930,16 @@ case $ARCH in
 
      CYGWIN*)
 	# GCC-based environment
+
+	if [ "x$LINK" = "x" ] ; then
+	    # -linker was not specified so set default link command now
+            if [ $CPLUSPLUS = 1 ] ; then
+                LINK=g++
+            else
+                LINK=gcc
+            fi
+	fi
+
 	if [ $NOPREFIX = 1 ] ; then
 	    # No "lib" or ".so" part
 	    echo "mklib: Making CYGWIN shared library: " ${LIBNAME}
@@ -965,12 +975,6 @@ case $ARCH in
                 OPTS=${ALTOPTS}
             fi
             echo "mklib: Making CYGWIN shared library: " ${CYGNAME}-${MAJOR}.dll
-
-            if [ $CPLUSPLUS = 1 ] ; then
-                LINK="g++"
-            else
-                LINK="gcc"
-            fi
 
             # rm any old libs
             rm -f ${CYGNAME}-${MAJOR}.dll
