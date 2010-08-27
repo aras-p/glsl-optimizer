@@ -200,6 +200,10 @@ int r600_bc_add_literal(struct r600_bc *bc, const u32 *value)
 	}
 	if (bc->cf_last->inst == V_SQ_CF_WORD1_SQ_CF_INST_JUMP ||
 	    bc->cf_last->inst == V_SQ_CF_WORD1_SQ_CF_INST_ELSE ||
+	    bc->cf_last->inst == V_SQ_CF_WORD1_SQ_CF_INST_LOOP_START_NO_AL ||
+	    bc->cf_last->inst == V_SQ_CF_WORD1_SQ_CF_INST_LOOP_BREAK ||
+	    bc->cf_last->inst == V_SQ_CF_WORD1_SQ_CF_INST_LOOP_CONTINUE ||
+	    bc->cf_last->inst == V_SQ_CF_WORD1_SQ_CF_INST_LOOP_END ||
 	    bc->cf_last->inst == V_SQ_CF_WORD1_SQ_CF_INST_POP) {
 		return 0;
 	}
@@ -414,6 +418,10 @@ static int r600_bc_cf_build(struct r600_bc *bc, struct r600_bc_cf *cf)
 	case V_SQ_CF_WORD1_SQ_CF_INST_JUMP:
 	case V_SQ_CF_WORD1_SQ_CF_INST_ELSE:
 	case V_SQ_CF_WORD1_SQ_CF_INST_POP:
+	case V_SQ_CF_WORD1_SQ_CF_INST_LOOP_START_NO_AL:
+	case V_SQ_CF_WORD1_SQ_CF_INST_LOOP_END:
+	case V_SQ_CF_WORD1_SQ_CF_INST_LOOP_CONTINUE:
+	case V_SQ_CF_WORD1_SQ_CF_INST_LOOP_BREAK:
 		bc->bytecode[id++] = S_SQ_CF_WORD0_ADDR(cf->cf_addr >> 1);
 		bc->bytecode[id++] = S_SQ_CF_WORD1_CF_INST(cf->inst) |
 					S_SQ_CF_WORD1_BARRIER(1) |
@@ -437,6 +445,9 @@ int r600_bc_build(struct r600_bc *bc)
 	unsigned addr;
 	int r;
 
+	if (bc->callstack[0].max > 0)
+	    bc->nstack = ((bc->callstack[0].max + 3) >> 2) + 2;
+
 	/* first path compute addr of each CF block */
 	/* addr start after all the CF instructions */
 	addr = bc->cf_last->id + 2;
@@ -458,8 +469,10 @@ int r600_bc_build(struct r600_bc *bc)
 		case V_SQ_CF_WORD1_SQ_CF_INST_JUMP:
 		case V_SQ_CF_WORD1_SQ_CF_INST_ELSE:
 		case V_SQ_CF_WORD1_SQ_CF_INST_POP:
-			/* hack */
-			bc->nstack = 3;
+		case V_SQ_CF_WORD1_SQ_CF_INST_LOOP_START_NO_AL:
+		case V_SQ_CF_WORD1_SQ_CF_INST_LOOP_END:
+		case V_SQ_CF_WORD1_SQ_CF_INST_LOOP_CONTINUE:
+		case V_SQ_CF_WORD1_SQ_CF_INST_LOOP_BREAK:
 			break;
 		default:
 			R600_ERR("unsupported CF instruction (0x%X)\n", cf->inst);
@@ -520,6 +533,10 @@ int r600_bc_build(struct r600_bc *bc)
 			break;
 		case V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT:
 		case V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT_DONE:
+		case V_SQ_CF_WORD1_SQ_CF_INST_LOOP_START_NO_AL:
+		case V_SQ_CF_WORD1_SQ_CF_INST_LOOP_END:
+		case V_SQ_CF_WORD1_SQ_CF_INST_LOOP_CONTINUE:
+		case V_SQ_CF_WORD1_SQ_CF_INST_LOOP_BREAK:
 		case V_SQ_CF_WORD1_SQ_CF_INST_JUMP:
 		case V_SQ_CF_WORD1_SQ_CF_INST_ELSE:
 		case V_SQ_CF_WORD1_SQ_CF_INST_POP:

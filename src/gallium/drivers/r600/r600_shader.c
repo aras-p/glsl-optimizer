@@ -1650,8 +1650,7 @@ static int tgsi_exp(struct r600_shader_ctx *ctx)
 	struct tgsi_full_instruction *inst = &ctx->parse.FullToken.FullInstruction;
 	struct r600_bc_alu_src r600_src[3];
 	struct r600_bc_alu alu;
-	uint32_t use_temp = 0;
-	int i, r;
+	int r;
 
 	/* result.x = 2^floor(src); */
 	if (inst->Dst[0].Register.WriteMask & 1) {
@@ -1753,8 +1752,7 @@ static int tgsi_exp(struct r600_shader_ctx *ctx)
 static int emit_logic_pred(struct r600_shader_ctx *ctx, int opcode)
 {
 	struct tgsi_full_instruction *inst = &ctx->parse.FullToken.FullInstruction;
-	struct r600_bc_alu alu, *lalu;
-	struct r600_bc_cf *last;
+	struct r600_bc_alu alu;
 	int r;
 
 	memset(&alu, 0, sizeof(struct r600_bc_alu));
@@ -1777,7 +1775,6 @@ static int emit_logic_pred(struct r600_shader_ctx *ctx, int opcode)
 	r = r600_bc_add_alu_type(ctx->bc, &alu, V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_PUSH_BEFORE);
 	if (r)
 		return r;
-
 	return 0;
 }
 
@@ -1788,29 +1785,158 @@ static int pops(struct r600_shader_ctx *ctx, int pops)
 	return 0;
 }
 
+static inline void callstack_decrease_current(struct r600_shader_ctx *ctx, unsigned reason)
+{
+	switch(reason) {
+	case FC_PUSH_VPM:
+		ctx->bc->callstack[ctx->bc->call_sp].current--;
+		break;
+	case FC_PUSH_WQM:
+	case FC_LOOP:
+		ctx->bc->callstack[ctx->bc->call_sp].current -= 4;
+		break;
+	case FC_REP:
+		/* TOODO : for 16 vp asic should -= 2; */
+		ctx->bc->callstack[ctx->bc->call_sp].current --;
+		break;
+	}
+}
+
+static inline void callstack_check_depth(struct r600_shader_ctx *ctx, unsigned reason, unsigned check_max_only)
+{
+	if (check_max_only) {
+		int diff;
+		switch (reason) {
+		case FC_PUSH_VPM:
+			diff = 1;
+			break;
+		case FC_PUSH_WQM:
+			diff = 4;
+			break;
+		}
+		if ((ctx->bc->callstack[ctx->bc->call_sp].current + diff) >
+		    ctx->bc->callstack[ctx->bc->call_sp].max) {
+			ctx->bc->callstack[ctx->bc->call_sp].max =
+				ctx->bc->callstack[ctx->bc->call_sp].current + diff;
+		}
+		return;
+	}					
+	switch (reason) {
+	case FC_PUSH_VPM:
+		ctx->bc->callstack[ctx->bc->call_sp].current++;
+		break;
+	case FC_PUSH_WQM:
+	case FC_LOOP:
+		ctx->bc->callstack[ctx->bc->call_sp].current += 4;
+		break;
+	case FC_REP:
+		ctx->bc->callstack[ctx->bc->call_sp].current++;
+		break;
+	}
+
+	if ((ctx->bc->callstack[ctx->bc->call_sp].current) >
+	    ctx->bc->callstack[ctx->bc->call_sp].max) {
+		ctx->bc->callstack[ctx->bc->call_sp].max =
+			ctx->bc->callstack[ctx->bc->call_sp].current;
+	}
+}
+
+static void fc_set_mid(struct r600_shader_ctx *ctx, int fc_sp)
+{
+	struct r600_cf_stack_entry *sp = &ctx->bc->fc_stack[fc_sp];
+
+	sp->mid = (struct r600_bc_cf **)realloc((void *)sp->mid,
+						sizeof(struct r600_bc_cf *) * (sp->num_mid + 1));
+	sp->mid[sp->num_mid] = ctx->bc->cf_last;
+	sp->num_mid++;
+}
+
+static void fc_pushlevel(struct r600_shader_ctx *ctx, int type)
+{
+	ctx->bc->fc_sp++;
+	ctx->bc->fc_stack[ctx->bc->fc_sp].type = type;
+	ctx->bc->fc_stack[ctx->bc->fc_sp].start = ctx->bc->cf_last;
+}
+
+static void fc_poplevel(struct r600_shader_ctx *ctx)
+{
+	struct r600_cf_stack_entry *sp = &ctx->bc->fc_stack[ctx->bc->fc_sp];
+	if (sp->mid) {
+		free(sp->mid);
+		sp->mid = NULL;
+	}
+	sp->num_mid = 0;
+	sp->start = NULL;
+	sp->type = 0;
+	ctx->bc->fc_sp--;
+}
+
+#if 0
+static int emit_return(struct r600_shader_ctx *ctx)
+{
+	r600_bc_add_cfinst(ctx->bc, V_SQ_CF_WORD1_SQ_CF_INST_RETURN);
+	return 0;
+}
+
+static int emit_jump_to_offset(struct r600_shader_ctx *ctx, int pops, int offset)
+{
+
+	r600_bc_add_cfinst(ctx->bc, V_SQ_CF_WORD1_SQ_CF_INST_JUMP);
+	ctx->bc->cf_last->pop_count = pops;
+	/* TODO work out offset */
+	return 0;
+}
+
+static int emit_setret_in_loop_flag(struct r600_shader_ctx *ctx, unsigned flag_value)
+{
+	return 0;
+}
+
+static void emit_testflag(struct r600_shader_ctx *ctx)
+{
+	
+}
+
+static void emit_return_on_flag(struct r600_shader_ctx *ctx, unsigned ifidx)
+{
+	emit_testflag(ctx);
+	emit_jump_to_offset(ctx, 1, 4);
+	emit_setret_in_loop_flag(ctx, V_SQ_ALU_SRC_0);
+	pops(ctx, ifidx + 1);
+	emit_return(ctx);
+}
+
+static void break_loop_on_flag(struct r600_shader_ctx *ctx, unsigned fc_sp)
+{
+	emit_testflag(ctx);
+
+	r600_bc_add_cfinst(ctx->bc, ctx->inst_info->r600_opcode);
+	ctx->bc->cf_last->pop_count = 1;
+
+	fc_set_mid(ctx, fc_sp);
+
+	pops(ctx, 1);
+}
+#endif
+
 static int tgsi_if(struct r600_shader_ctx *ctx)
 {
-	struct tgsi_full_instruction *inst = &ctx->parse.FullToken.FullInstruction;
-
 	emit_logic_pred(ctx, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETNE);
 
-	ctx->bc->fc_sp++;
-	ctx->bc->fc_stack[ctx->bc->fc_sp].type = FC_IF;
-	ctx->bc->fc_stack[ctx->bc->fc_sp].mid = NULL;
 	r600_bc_add_cfinst(ctx->bc, V_SQ_CF_WORD1_SQ_CF_INST_JUMP);
 
-	ctx->bc->fc_stack[ctx->bc->fc_sp].start = ctx->bc->cf_last;
+	fc_pushlevel(ctx, FC_IF);
+
+	callstack_check_depth(ctx, FC_PUSH_VPM, 0);
 	return 0;
 }
 
 static int tgsi_else(struct r600_shader_ctx *ctx)
 {
-	struct tgsi_full_instruction *inst = &ctx->parse.FullToken.FullInstruction;
 	r600_bc_add_cfinst(ctx->bc, V_SQ_CF_WORD1_SQ_CF_INST_ELSE);
 	ctx->bc->cf_last->pop_count = 1;
 
-	/* fixup mid */
-	ctx->bc->fc_stack[ctx->bc->fc_sp].mid = ctx->bc->cf_last;
+	fc_set_mid(ctx, ctx->bc->fc_sp);
 	ctx->bc->fc_stack[ctx->bc->fc_sp].start->cf_addr = ctx->bc->cf_last->id;
 	return 0;
 }
@@ -1827,10 +1953,76 @@ static int tgsi_endif(struct r600_shader_ctx *ctx)
 		ctx->bc->fc_stack[ctx->bc->fc_sp].start->cf_addr = ctx->bc->cf_last->id + 2;
 		ctx->bc->fc_stack[ctx->bc->fc_sp].start->pop_count = 1;
 	} else {
-		ctx->bc->fc_stack[ctx->bc->fc_sp].mid->cf_addr = ctx->bc->cf_last->id + 2;
+		ctx->bc->fc_stack[ctx->bc->fc_sp].mid[0]->cf_addr = ctx->bc->cf_last->id + 2;
 	}
-	ctx->bc->fc_sp--;
+	fc_poplevel(ctx);
 
+	callstack_decrease_current(ctx, FC_PUSH_VPM);
+	return 0;
+}
+
+static int tgsi_bgnloop(struct r600_shader_ctx *ctx)
+{
+	r600_bc_add_cfinst(ctx->bc, V_SQ_CF_WORD1_SQ_CF_INST_LOOP_START_NO_AL);
+
+	fc_pushlevel(ctx, FC_LOOP);
+
+	/* check stack depth */
+	callstack_check_depth(ctx, FC_LOOP, 0);
+	return 0;
+}
+
+static int tgsi_endloop(struct r600_shader_ctx *ctx)
+{
+	int i;
+
+	r600_bc_add_cfinst(ctx->bc, V_SQ_CF_WORD1_SQ_CF_INST_LOOP_END);
+
+	if (ctx->bc->fc_stack[ctx->bc->fc_sp].type != FC_LOOP) {
+		R600_ERR("loop/endloop in shader code are not paired.\n");
+		return -EINVAL;
+	}
+
+	/* fixup loop pointers - from r600isa
+	   LOOP END points to CF after LOOP START,
+	   LOOP START point to CF after LOOP END
+	   BRK/CONT point to LOOP END CF
+	*/
+	ctx->bc->cf_last->cf_addr = ctx->bc->fc_stack[ctx->bc->fc_sp].start->id + 2;
+
+	ctx->bc->fc_stack[ctx->bc->fc_sp].start->cf_addr = ctx->bc->cf_last->id + 2;
+
+	for (i = 0; i < ctx->bc->fc_stack[ctx->bc->fc_sp].num_mid; i++) {
+		ctx->bc->fc_stack[ctx->bc->fc_sp].mid[i]->cf_addr = ctx->bc->cf_last->id;
+	}
+	/* TODO add LOOPRET support */
+	fc_poplevel(ctx);
+	callstack_decrease_current(ctx, FC_LOOP);
+	return 0;
+}
+
+static int tgsi_loop_brk_cont(struct r600_shader_ctx *ctx)
+{
+	unsigned int fscp;
+
+	for (fscp = ctx->bc->fc_sp; fscp > 0; fscp--)
+	{
+		if (FC_LOOP == ctx->bc->fc_stack[fscp].type)
+			break;
+	}
+
+	if (fscp == 0) {
+		R600_ERR("Break not inside loop/endloop pair\n");
+		return -EINVAL;
+	}
+
+	r600_bc_add_cfinst(ctx->bc, ctx->inst_info->r600_opcode);
+	ctx->bc->cf_last->pop_count = 1;
+
+	fc_set_mid(ctx, fscp);
+
+	pops(ctx, 1);
+	callstack_check_depth(ctx, FC_PUSH_VPM, 1);
 	return 0;
 }
 
@@ -1911,7 +2103,7 @@ static struct r600_shader_tgsi_instruction r600_shader_tgsi_instruction[] = {
 	{TGSI_OPCODE_DIV,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_DP2,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_DOT4, tgsi_dp},
 	{TGSI_OPCODE_TXL,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
-	{TGSI_OPCODE_BRK,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
+	{TGSI_OPCODE_BRK,	0, V_SQ_CF_WORD1_SQ_CF_INST_LOOP_BREAK, tgsi_loop_brk_cont},
 	{TGSI_OPCODE_IF,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_if},
 	/* gap */
 	{75,			0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
@@ -1937,12 +2129,12 @@ static struct r600_shader_tgsi_instruction r600_shader_tgsi_instruction[] = {
 	{TGSI_OPCODE_SAD,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_TXF,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_TXQ,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
-	{TGSI_OPCODE_CONT,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
+	{TGSI_OPCODE_CONT,	0, V_SQ_CF_WORD1_SQ_CF_INST_LOOP_CONTINUE, tgsi_loop_brk_cont},
 	{TGSI_OPCODE_EMIT,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_ENDPRIM,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
-	{TGSI_OPCODE_BGNLOOP,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
+	{TGSI_OPCODE_BGNLOOP,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_bgnloop},
 	{TGSI_OPCODE_BGNSUB,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
-	{TGSI_OPCODE_ENDLOOP,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
+	{TGSI_OPCODE_ENDLOOP,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_endloop},
 	{TGSI_OPCODE_ENDSUB,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	/* gap */
 	{103,			0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},

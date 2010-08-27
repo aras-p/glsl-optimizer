@@ -127,11 +127,23 @@ struct r600_bc_cf {
 #define FC_NONE 0
 #define FC_IF 1
 #define FC_LOOP 2
+#define FC_REP 3
+#define FC_PUSH_VPM 4
+#define FC_PUSH_WQM 5
 
 struct r600_cf_stack_entry {
 	int type;
 	struct r600_bc_cf *start;
-	struct r600_bc_cf *mid; /* used to store the else point */
+	struct r600_bc_cf **mid; /* used to store the else point */
+	int num_mid;
+};
+
+#define SQ_MAX_CALL_DEPTH 0x00000020
+struct r600_cf_callstack {
+	unsigned fc_sp_before_entry;
+	int sub_desc_index;
+	int current;
+	int max;
 };
 	
 struct r600_bc {
@@ -149,6 +161,9 @@ struct r600_bc {
 
 	u32 fc_sp;
 	struct r600_cf_stack_entry fc_stack[32];
+
+	unsigned call_sp;
+	struct r600_cf_callstack callstack[SQ_MAX_CALL_DEPTH];
 };
 
 int r600_bc_init(struct r600_bc *bc, enum radeon_family family);
