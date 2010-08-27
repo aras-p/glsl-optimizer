@@ -1336,12 +1336,12 @@ fs_visitor::assign_curb_setup()
       for (unsigned int i = 0; i < 3; i++) {
 	 if (inst->src[i].file == UNIFORM) {
 	    int constant_nr = inst->src[i].hw_reg + inst->src[i].reg_offset;
-	    struct brw_reg brw_reg;
+	    struct brw_reg brw_reg = brw_vec1_grf(c->prog_data.first_curbe_grf +
+						  constant_nr / 8,
+						  constant_nr % 8);
 
-	    brw_reg = brw_vec1_grf(c->prog_data.first_curbe_grf +
-				   constant_nr / 8,
-				   constant_nr % 8);
-	    inst->src[i] = fs_reg(brw_reg);
+	    inst->src[i].file = FIXED_HW_REG;
+	    inst->src[i].fixed_hw_reg = brw_reg;
 	 }
       }
    }
