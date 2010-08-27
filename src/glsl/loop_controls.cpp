@@ -234,7 +234,7 @@ loop_control_visitor::visit_leave(ir_loop *ir)
 	       const int iterations = calculate_iterations(init, limit,
 							   lv->increment,
 							   cmp);
-	       if (iterations > 0) {
+	       if (iterations >= 0) {
 		  /* If the new iteration count is lower than the previously
 		   * believed iteration count, update the loop control values.
 		   */
@@ -266,6 +266,12 @@ loop_control_visitor::visit_leave(ir_loop *ir)
 	 break;
       }
    }
+
+   /* If we have proven the one of the loop exit conditions is satisifed before
+    * running the loop once, remove the loop.
+    */
+   if (max_iterations == 0)
+      ir->remove();
 
    return visit_continue;
 }
