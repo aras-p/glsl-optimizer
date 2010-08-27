@@ -311,6 +311,14 @@ public:
       this->predicated = false;
    }
 
+   fs_inst(int opcode)
+   {
+      this->opcode = opcode;
+      this->saturate = false;
+      this->conditional_mod = BRW_CONDITIONAL_NONE;
+      this->predicated = false;
+   }
+
    fs_inst(int opcode, fs_reg dst, fs_reg src0)
    {
       this->opcode = opcode;
@@ -932,7 +940,40 @@ fs_visitor::visit(ir_constant *ir)
 void
 fs_visitor::visit(ir_if *ir)
 {
-   assert(!"FINISHME");
+   fs_inst *inst;
+
+   /* Don't point the annotation at the if statement, because then it plus
+    * the then and else blocks get printed.
+    */
+   this->base_ir = ir->condition;
+
+   /* Generate the condition into the condition code. */
+   ir->condition->accept(this);
+   inst = emit(fs_inst(BRW_OPCODE_MOV, fs_reg(brw_null_reg()), this->result));
+   inst->conditional_mod = BRW_CONDITIONAL_NZ;
+
+   inst = emit(fs_inst(BRW_OPCODE_IF));
+   inst->predicated = true;
+
+   foreach_iter(exec_list_iterator, iter, ir->then_instructions) {
+      ir_instruction *ir = (ir_instruction *)iter.get();
+      this->base_ir = ir;
+
+      ir->accept(this);
+   }
+
+   if (!ir->else_instructions.is_empty()) {
+      emit(fs_inst(BRW_OPCODE_ELSE));
+
+      foreach_iter(exec_list_iterator, iter, ir->else_instructions) {
+	 ir_instruction *ir = (ir_instruction *)iter.get();
+	 this->base_ir = ir;
+
+	 ir->accept(this);
+      }
+   }
+
+   emit(fs_inst(BRW_OPCODE_ENDIF));
 }
 
 void
@@ -1415,7 +1456,10 @@ fs_visitor::generate_code()
 {
    unsigned int annotation_len = 0;
    int last_native_inst = 0;
+   struct brw_instruction *if_stack[16];
+   int if_stack_depth = 0;
 
+   memset(&if_stack, 0, sizeof(if_stack));
    foreach_iter(exec_list_iterator, iter, this->instructions) {
       fs_inst *inst = (fs_inst *)iter.get();
       struct brw_reg src[3], dst;
@@ -1437,6 +1481,22 @@ fs_visitor::generate_code()
 	 break;
       case BRW_OPCODE_MUL:
 	 brw_MUL(p, dst, src[0], src[1]);
+	 break;
+      case BRW_OPCODE_CMP:
+	 brw_CMP(p, dst, inst->conditional_mod, src[0], src[1]);
+	 break;
+      case BRW_OPCODE_IF:
+	 assert(if_stack_depth < 16);
+	 if_stack[if_stack_depth] = brw_IF(p, BRW_EXECUTE_8);
+	 if_stack_depth++;
+	 break;
+      case BRW_OPCODE_ELSE:
+	 if_stack[if_stack_depth - 1] =
+	    brw_ELSE(p, if_stack[if_stack_depth - 1]);
+	 break;
+      case BRW_OPCODE_ENDIF:
+	 if_stack_depth--;
+	 brw_ENDIF(p , if_stack[if_stack_depth]);
 	 break;
       case FS_OPCODE_RCP:
       case FS_OPCODE_RSQ:
