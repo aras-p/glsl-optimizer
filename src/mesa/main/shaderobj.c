@@ -118,7 +118,7 @@ _mesa_new_shader(GLcontext *ctx, GLuint name, GLenum type)
  * Called via ctx->Driver.DeleteShader().
  */
 static void
-__mesa_delete_shader(GLcontext *ctx, struct gl_shader *sh)
+_mesa_delete_shader(GLcontext *ctx, struct gl_shader *sh)
 {
    if (sh->Source)
       free((void *) sh->Source);
@@ -338,7 +338,7 @@ _mesa_free_shader_program_data(GLcontext *ctx,
  * Called via ctx->Driver.DeleteShaderProgram().
  */
 static void
-__mesa_delete_shader_program(GLcontext *ctx, struct gl_shader_program *shProg)
+_mesa_delete_shader_program(GLcontext *ctx, struct gl_shader_program *shProg)
 {
    _mesa_free_shader_program_data(ctx, shProg);
 
@@ -400,9 +400,9 @@ void
 _mesa_init_shader_object_functions(struct dd_function_table *driver)
 {
    driver->NewShader = _mesa_new_shader;
-   driver->DeleteShader = __mesa_delete_shader;
+   driver->DeleteShader = _mesa_delete_shader;
    driver->NewShaderProgram = _mesa_new_shader_program;
-   driver->DeleteShaderProgram = __mesa_delete_shader_program;
+   driver->DeleteShaderProgram = _mesa_delete_shader_program;
    driver->CompileShader = _mesa_ir_compile_shader;
    driver->LinkShader = _mesa_ir_link_shader;
 }
