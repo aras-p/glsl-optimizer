@@ -731,6 +731,12 @@ public:
    const char *operator_string();
 
    /**
+    * Return a string representing this expression's operator.
+    */
+   static const char *operator_string(ir_expression_operation);
+
+
+   /**
     * Do a reverse-lookup to translate the given string into an operator.
     */
    static ir_expression_operation get_operator(const char *);
