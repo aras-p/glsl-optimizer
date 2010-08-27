@@ -78,8 +78,6 @@ lp_setup_clear(struct lp_setup_context *setup,
                unsigned clear_stencil,
                unsigned flags);
 
-struct pipe_fence_handle *
-lp_setup_fence( struct lp_setup_context *setup );
 
 
 void

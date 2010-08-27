@@ -165,6 +165,11 @@ TAG(lp_rast_triangle)(struct lp_rasterizer_task *task,
    outmask = 0;                 /* outside one or more trivial reject planes */
    partmask = 0;                /* outside one or more trivial accept planes */
 
+   if (tri->inputs.disable) {
+      /* This triangle was partially binned and has been disabled */
+      return;
+   }
+
    while (plane_mask) {
       int i = ffs(plane_mask) - 1;
       plane[j] = tri->plane[i];

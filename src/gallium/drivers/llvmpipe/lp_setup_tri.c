@@ -179,7 +179,7 @@ lp_rast_cmd lp_rast_tri_tab[9] = {
  *
  * \param tx, ty  the tile position in tiles, not pixels
  */
-static void
+static boolean
 lp_setup_whole_tile(struct lp_setup_context *setup,
                     const struct lp_rast_shader_inputs *inputs,
                     int tx, int ty)
@@ -198,14 +198,14 @@ lp_setup_whole_tile(struct lp_setup_context *setup,
       }
 
       LP_COUNT(nr_shade_opaque_64);
-      lp_scene_bin_command( scene, tx, ty,
-                            lp_rast_shade_tile_opaque,
-                            lp_rast_arg_inputs(inputs) );
+      return lp_scene_bin_command( scene, tx, ty,
+                                  lp_rast_shade_tile_opaque,
+                                  lp_rast_arg_inputs(inputs) );
    } else {
       LP_COUNT(nr_shade_64);
-      lp_scene_bin_command( scene, tx, ty,
-                            lp_rast_shade_tile,
-                            lp_rast_arg_inputs(inputs) );
+      return lp_scene_bin_command( scene, tx, ty,
+                                   lp_rast_shade_tile,
+                                   lp_rast_arg_inputs(inputs) );
    }
 }
 
@@ -215,7 +215,7 @@ lp_setup_whole_tile(struct lp_setup_context *setup,
  * framebuffer tiles are touched.  Put the triangle in the scene's
  * bins for the tiles which we overlap.
  */
-static void
+static boolean
 do_triangle_ccw(struct lp_setup_context *setup,
 		const float (*v0)[4],
 		const float (*v1)[4],
@@ -280,13 +280,13 @@ do_triangle_ccw(struct lp_setup_context *setup,
        bbox.y1 < bbox.y0) {
       if (0) debug_printf("empty bounding box\n");
       LP_COUNT(nr_culled_tris);
-      return;
+      return FALSE;
    }
 
    if (!u_rect_test_intersection(&setup->draw_region, &bbox)) {
       if (0) debug_printf("offscreen\n");
       LP_COUNT(nr_culled_tris);
-      return;
+      return FALSE;
    }
 
    u_rect_find_intersection(&setup->draw_region, &bbox);
@@ -296,7 +296,7 @@ do_triangle_ccw(struct lp_setup_context *setup,
                                  nr_planes,
                                  &tri_bytes);
    if (!tri)
-      return;
+      return FALSE;
 
 #ifdef DEBUG
    tri->v[0][0] = v0[0][0];
@@ -327,7 +327,7 @@ do_triangle_ccw(struct lp_setup_context *setup,
    if (area <= 0) {
       lp_scene_putback_data( scene, tri_bytes );
       LP_COUNT(nr_culled_tris);
-      return;
+      return TRUE;
    }
 
 
@@ -356,6 +356,7 @@ do_triangle_ccw(struct lp_setup_context *setup,
 
    tri->inputs.facing = frontfacing ? 1.0F : -1.0F;
    tri->inputs.opaque = variant->opaque;
+   tri->inputs.disable = FALSE;
    tri->inputs.state = setup->fs.stored;
 
 
@@ -460,11 +461,11 @@ do_triangle_ccw(struct lp_setup_context *setup,
       tri->plane[6].eo = 0;
    }
 
-   lp_setup_bin_triangle( setup, tri, &bbox, nr_planes );
+   return lp_setup_bin_triangle( setup, tri, &bbox, nr_planes );
 }
 
 
-void
+boolean
 lp_setup_bin_triangle( struct lp_setup_context *setup,
                        struct lp_rast_triangle *tri,
                        const struct u_rect *bbox,
@@ -494,10 +495,9 @@ lp_setup_bin_triangle( struct lp_setup_context *setup,
 	  */
 	 int mask = (ix0 & 3) | ((iy0 & 3) << 4);
 
-	 lp_scene_bin_command( scene, ix0/4, iy0/4,
-			       lp_rast_triangle_3_16,
-			       lp_rast_arg_triangle(tri, mask) );
-	 return;
+	 return lp_scene_bin_command( scene, ix0/4, iy0/4,
+                                      lp_rast_triangle_3_16,
+                                      lp_rast_arg_triangle(tri, mask) );
       }
    }
 
@@ -520,9 +520,9 @@ lp_setup_bin_triangle( struct lp_setup_context *setup,
    {
       /* Triangle is contained in a single tile:
        */
-      lp_scene_bin_command( scene, ix0, iy0,
-                            lp_rast_tri_tab[nr_planes], 
-			    lp_rast_arg_triangle(tri, (1<<nr_planes)-1) );
+      return lp_scene_bin_command( scene, ix0, iy0,
+                                   lp_rast_tri_tab[nr_planes], 
+                                   lp_rast_arg_triangle(tri, (1<<nr_planes)-1) );
    }
    else
    {
@@ -583,9 +583,10 @@ lp_setup_bin_triangle( struct lp_setup_context *setup,
                 */
                int count = util_bitcount(partial);
                in = TRUE;
-               lp_scene_bin_command( scene, x, y,
-                                     lp_rast_tri_tab[count], 
-                                     lp_rast_arg_triangle(tri, partial) );
+               if (!lp_scene_bin_command( scene, x, y,
+                                          lp_rast_tri_tab[count], 
+                                          lp_rast_arg_triangle(tri, partial) ))
+                  goto fail;
 
                LP_COUNT(nr_partially_covered_64);
             }
@@ -593,7 +594,8 @@ lp_setup_bin_triangle( struct lp_setup_context *setup,
                /* triangle covers the whole tile- shade whole tile */
                LP_COUNT(nr_fully_covered_64);
                in = TRUE;
-               lp_setup_whole_tile(setup, &tri->inputs, x, y);
+               if (!lp_setup_whole_tile(setup, &tri->inputs, x, y))
+                  goto fail;
             }
 
 	    /* Iterate cx values across the region:
@@ -608,6 +610,16 @@ lp_setup_bin_triangle( struct lp_setup_context *setup,
             c[i] += ystep[i];
       }
    }
+
+   return TRUE;
+
+fail:
+   /* Need to disable any partially binned triangle.  This is easier
+    * than trying to locate all the triangle, shade-tile, etc,
+    * commands which may have been binned.
+    */
+   tri->inputs.disable = TRUE;
+   return FALSE;
 }
 
 
@@ -619,7 +631,13 @@ static void triangle_cw( struct lp_setup_context *setup,
 			 const float (*v1)[4],
 			 const float (*v2)[4] )
 {
-   do_triangle_ccw( setup, v1, v0, v2, !setup->ccw_is_frontface );
+   if (!do_triangle_ccw( setup, v1, v0, v2, !setup->ccw_is_frontface ))
+   {
+      lp_setup_flush_and_restart(setup);
+
+      if (!do_triangle_ccw( setup, v1, v0, v2, !setup->ccw_is_frontface ))
+         assert(0);
+   }
 }
 
 
@@ -631,7 +649,12 @@ static void triangle_ccw( struct lp_setup_context *setup,
 			 const float (*v1)[4],
 			 const float (*v2)[4] )
 {
-   do_triangle_ccw( setup, v0, v1, v2, setup->ccw_is_frontface );
+   if (!do_triangle_ccw( setup, v0, v1, v2, setup->ccw_is_frontface ))
+   {
+      lp_setup_flush_and_restart(setup);
+      if (!do_triangle_ccw( setup, v0, v1, v2, setup->ccw_is_frontface ))
+         assert(0);
+   }
 }
 
 

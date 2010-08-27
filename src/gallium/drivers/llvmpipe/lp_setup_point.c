@@ -210,8 +210,9 @@ subpixel_snap(float a)
 }
 
 
-static void lp_setup_point( struct lp_setup_context *setup,
-                            const float (*v0)[4] )
+static boolean
+try_setup_point( struct lp_setup_context *setup,
+                 const float (*v0)[4] )
 {
    /* x/y positions in fixed point */
    const int sizeAttr = setup->psize;
@@ -259,7 +260,7 @@ static void lp_setup_point( struct lp_setup_context *setup,
    if (!u_rect_test_intersection(&setup->draw_region, &bbox)) {
       if (0) debug_printf("offscreen\n");
       LP_COUNT(nr_culled_tris);
-      return;
+      return TRUE;
    }
 
    u_rect_find_intersection(&setup->draw_region, &bbox);
@@ -269,7 +270,7 @@ static void lp_setup_point( struct lp_setup_context *setup,
                                    nr_planes,
                                    &bytes);
    if (!point)
-      return;
+      return FALSE;
 
 #ifdef DEBUG
    point->v[0][0] = v0[0][0];
@@ -315,7 +316,20 @@ static void lp_setup_point( struct lp_setup_context *setup,
       point->plane[3].eo = 0;
    }
 
-   lp_setup_bin_triangle(setup, point, &bbox, nr_planes);
+   return lp_setup_bin_triangle(setup, point, &bbox, nr_planes);
+}
+
+
+static void lp_setup_point( struct lp_setup_context *setup,
+                           const float (*v0)[4] )
+{
+   if (!try_setup_point( setup, v0 ))
+   {
+      lp_setup_flush_and_restart(setup);
+
+      if (!try_setup_point( setup, v0 ))
+         assert(0);
+   }
 }
 
 

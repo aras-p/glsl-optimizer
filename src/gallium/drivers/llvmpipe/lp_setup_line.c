@@ -263,8 +263,8 @@ static INLINE float fracf(float f)
 
 
 
-static void
-lp_setup_line( struct lp_setup_context *setup,
+static boolean
+try_setup_line( struct lp_setup_context *setup,
                const float (*v1)[4],
                const float (*v2)[4])
 {
@@ -536,13 +536,13 @@ lp_setup_line( struct lp_setup_context *setup,
        bbox.y1 < bbox.y0) {
       if (0) debug_printf("empty bounding box\n");
       LP_COUNT(nr_culled_tris);
-      return;
+      return TRUE;
    }
 
    if (!u_rect_test_intersection(&setup->draw_region, &bbox)) {
       if (0) debug_printf("offscreen\n");
       LP_COUNT(nr_culled_tris);
-      return;
+      return TRUE;
    }
 
    u_rect_find_intersection(&setup->draw_region, &bbox);
@@ -552,7 +552,7 @@ lp_setup_line( struct lp_setup_context *setup,
                                   nr_planes,
                                   &tri_bytes);
    if (!line)
-      return;
+      return FALSE;
 
 #ifdef DEBUG
    line->v[0][0] = v1[0][0];
@@ -687,9 +687,23 @@ lp_setup_line( struct lp_setup_context *setup,
       line->plane[7].eo = 0;
    }
 
-   lp_setup_bin_triangle(setup, line, &bbox, nr_planes);
+   return lp_setup_bin_triangle(setup, line, &bbox, nr_planes);
 }
-   
+
+
+static void lp_setup_line( struct lp_setup_context *setup,
+                           const float (*v0)[4],
+                           const float (*v1)[4] )
+{
+   if (!try_setup_line( setup, v0, v1 ))
+   {
+      lp_setup_flush_and_restart(setup);
+
+      if (!try_setup_line( setup, v0, v1 ))
+         assert(0);
+   }
+}
+
 
 void lp_setup_choose_line( struct lp_setup_context *setup ) 
 { 

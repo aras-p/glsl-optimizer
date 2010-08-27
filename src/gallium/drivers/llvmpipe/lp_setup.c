@@ -70,26 +70,6 @@ lp_setup_get_current_scene(struct lp_setup_context *setup)
 }
 
 
-/**
- * Check if the size of the current scene has exceeded the limit.
- * If so, flush/render it.
- */
-static void
-setup_check_scene_size_and_flush(struct lp_setup_context *setup)
-{
-   if (setup->scene) {
-      struct lp_scene *scene = lp_setup_get_current_scene(setup);
-      unsigned size = lp_scene_get_size(scene);
-
-      if (size > LP_MAX_SCENE_SIZE) {
-         /*printf("LLVMPIPE: scene size = %u, flushing.\n", size);*/
-         set_scene_state( setup, SETUP_FLUSHED );
-         /*assert(lp_scene_get_size(scene) == 0);*/
-      }
-   }
-}
-
-
 static void
 first_triangle( struct lp_setup_context *setup,
                 const float (*v0)[4],
@@ -191,9 +171,10 @@ begin_binning( struct lp_setup_context *setup )
 
    if (setup->fb.nr_cbufs) {
       if (setup->clear.flags & PIPE_CLEAR_COLOR) {
-         lp_scene_bin_everywhere( scene, 
-				  lp_rast_clear_color, 
-				  setup->clear.color );
+         ok = lp_scene_bin_everywhere( scene, 
+                                       lp_rast_clear_color, 
+                                       setup->clear.color );
+         assert(ok);
       }
    }
 
@@ -201,18 +182,20 @@ begin_binning( struct lp_setup_context *setup )
       if (setup->clear.flags & PIPE_CLEAR_DEPTHSTENCIL) {
          if (!need_zsload)
             scene->has_depthstencil_clear = TRUE;
-         lp_scene_bin_everywhere( scene,
-                                  lp_rast_clear_zstencil,
-                                  lp_rast_arg_clearzs(
-                                     setup->clear.zsmask,
-                                     setup->clear.zsvalue));
+         ok = lp_scene_bin_everywhere( scene,
+                                       lp_rast_clear_zstencil,
+                                       lp_rast_arg_clearzs(
+                                          setup->clear.zsmask,
+                                          setup->clear.zsvalue));
+         assert(ok);
       }
    }
 
    if (setup->active_query) {
-      lp_scene_bin_everywhere( scene,
-                               lp_rast_restart_query,
-                               lp_rast_arg_query(setup->active_query) );
+      ok = lp_scene_bin_everywhere( scene,
+                                    lp_rast_restart_query,
+                                    lp_rast_arg_query(setup->active_query) );
+      assert(ok);
    }
       
 
@@ -254,7 +237,6 @@ set_scene_state( struct lp_setup_context *setup,
       /* wait for a free/empty scene
        */
       setup->scene = lp_scene_dequeue(setup->empty_scenes, TRUE);
-      assert(lp_scene_is_empty(setup->scene));
       lp_scene_begin_binning(setup->scene,
                              &setup->fb );
       break;
@@ -333,12 +315,12 @@ lp_setup_bind_framebuffer( struct lp_setup_context *setup,
 }
 
 
-void
-lp_setup_clear( struct lp_setup_context *setup,
-                const float *color,
-                double depth,
-                unsigned stencil,
-                unsigned flags )
+static boolean
+lp_setup_try_clear( struct lp_setup_context *setup,
+                    const float *color,
+                    double depth,
+                    unsigned stencil,
+                    unsigned flags )
 {
    struct lp_scene *scene = lp_setup_get_current_scene(setup);
    uint32_t zsmask = 0;
@@ -371,15 +353,17 @@ lp_setup_clear( struct lp_setup_context *setup,
        * a common usage.
        */
       if (flags & PIPE_CLEAR_COLOR) {
-         lp_scene_bin_everywhere( scene, 
-                                  lp_rast_clear_color,
-                                  setup->clear.color );
+         if (!lp_scene_bin_everywhere( scene, 
+                                       lp_rast_clear_color,
+                                       setup->clear.color ))
+            return FALSE;
       }
 
       if (flags & PIPE_CLEAR_DEPTHSTENCIL) {
-         lp_scene_bin_everywhere( scene,
-                                  lp_rast_clear_zstencil,
-                                  lp_rast_arg_clearzs(zsmask, zsvalue) );
+         if (!lp_scene_bin_everywhere( scene,
+                                       lp_rast_clear_zstencil,
+                                       lp_rast_arg_clearzs(zsmask, zsvalue) ))
+            return FALSE;
       }
    }
    else {
@@ -404,38 +388,27 @@ lp_setup_clear( struct lp_setup_context *setup,
                 sizeof clear_color);
       }
    }
+
+   return TRUE;
 }
 
-
-/**
- * Emit a fence.
- */
-struct pipe_fence_handle *
-lp_setup_fence( struct lp_setup_context *setup )
+void
+lp_setup_clear( struct lp_setup_context *setup,
+                const float *color,
+                double depth,
+                unsigned stencil,
+                unsigned flags )
 {
-   if (setup->scene == NULL)
-      return NULL;
-   else if (setup->num_threads == 0)
-      return NULL;
-   else
-   {
-      struct lp_scene *scene = lp_setup_get_current_scene(setup);
-      const unsigned rank = setup->num_threads;
+   if (!lp_setup_try_clear( setup, color, depth, stencil, flags )) {
+      lp_setup_flush(setup, 0, NULL, __FUNCTION__);
 
-      set_scene_state( setup, SETUP_ACTIVE );
-      
-      assert(scene->fence == NULL);
-
-      /* The caller gets a reference, we keep a copy too, so need to
-       * bump the refcount:
-       */
-      lp_fence_reference(&scene->fence, lp_fence_create(rank));
-
-      LP_DBG(DEBUG_SETUP, "%s rank %u\n", __FUNCTION__, rank);
-
-      return (struct pipe_fence_handle *) scene->fence;
+      if (!lp_setup_try_clear( setup, color, depth, stencil, flags ))
+         assert(0);
    }
 }
+
+
+
 
 
 void 
@@ -698,58 +671,34 @@ lp_setup_is_resource_referenced( const struct lp_setup_context *setup,
 /**
  * Called by vbuf code when we're about to draw something.
  */
-void
-lp_setup_update_state( struct lp_setup_context *setup )
+static boolean
+try_update_scene_state( struct lp_setup_context *setup )
 {
    struct lp_scene *scene;
 
    LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
 
-   setup_check_scene_size_and_flush(setup);
-
    scene = lp_setup_get_current_scene(setup);
 
    assert(setup->fs.current.variant);
-
-   /* Some of the 'draw' pipeline stages may have changed some driver state.
-    * Make sure we've processed those state changes before anything else.
-    *
-    * XXX this is the only place where llvmpipe_context is used in the
-    * setup code.  This may get refactored/changed...
-    */
-   {
-      struct llvmpipe_context *lp = llvmpipe_context(scene->pipe);
-
-      /* Will probably need to move this somewhere else, just need  
-       * to know about vertex shader point size attribute.
-       */
-      setup->psize = lp->psize_slot;
-
-      if (lp->dirty) {
-         llvmpipe_update_derived(lp);
-      }
-      assert(lp->dirty == 0);
-   }
 
    if(setup->dirty & LP_SETUP_NEW_BLEND_COLOR) {
       uint8_t *stored;
       unsigned i, j;
 
       stored = lp_scene_alloc_aligned(scene, 4 * 16, 16);
+      if (!stored)
+         return FALSE;
 
-      if (stored) {
-         /* smear each blend color component across 16 ubyte elements */
-         for (i = 0; i < 4; ++i) {
-            uint8_t c = float_to_ubyte(setup->blend_color.current.color[i]);
-            for (j = 0; j < 16; ++j)
-               stored[i*16 + j] = c;
-         }
-
-         setup->blend_color.stored = stored;
-
-         setup->fs.current.jit_context.blend_color = setup->blend_color.stored;
+      /* smear each blend color component across 16 ubyte elements */
+      for (i = 0; i < 4; ++i) {
+         uint8_t c = float_to_ubyte(setup->blend_color.current.color[i]);
+         for (j = 0; j < 16; ++j)
+            stored[i*16 + j] = c;
       }
 
+      setup->blend_color.stored = stored;
+      setup->fs.current.jit_context.blend_color = setup->blend_color.stored;
       setup->dirty |= LP_SETUP_NEW_FS;
    }
 
@@ -770,13 +719,14 @@ lp_setup_update_state( struct lp_setup_context *setup )
             void *stored;
 
             stored = lp_scene_alloc(scene, current_size);
-            if(stored) {
-               memcpy(stored,
-                      current_data,
-                      current_size);
-               setup->constants.stored_size = current_size;
-               setup->constants.stored_data = stored;
-            }
+            if (!stored)
+               return FALSE;
+
+            memcpy(stored,
+                   current_data,
+                   current_size);
+            setup->constants.stored_size = current_size;
+            setup->constants.stored_data = stored;
          }
       }
       else {
@@ -789,31 +739,37 @@ lp_setup_update_state( struct lp_setup_context *setup )
    }
 
 
-   if(setup->dirty & LP_SETUP_NEW_FS) {
-      if(!setup->fs.stored ||
-         memcmp(setup->fs.stored,
-                &setup->fs.current,
-                sizeof setup->fs.current) != 0) {
+   if (setup->dirty & LP_SETUP_NEW_FS) {
+      if (!setup->fs.stored ||
+          memcmp(setup->fs.stored,
+                 &setup->fs.current,
+                 sizeof setup->fs.current) != 0)
+      {
+         struct lp_rast_state *stored;
+         uint i;
+         
          /* The fs state that's been stored in the scene is different from
           * the new, current state.  So allocate a new lp_rast_state object
           * and append it to the bin's setup data buffer.
           */
-         uint i;
-         struct lp_rast_state *stored =
-            (struct lp_rast_state *) lp_scene_alloc(scene, sizeof *stored);
-         if(stored) {
-            memcpy(stored,
-                   &setup->fs.current,
-                   sizeof setup->fs.current);
-            setup->fs.stored = stored;
-         }
+         stored = (struct lp_rast_state *) lp_scene_alloc(scene, sizeof *stored);
+         if (!stored)
+            return FALSE;
 
+         memcpy(stored,
+                &setup->fs.current,
+                sizeof setup->fs.current);
+         setup->fs.stored = stored;
+         
          /* The scene now references the textures in the rasterization
           * state record.  Note that now.
           */
          for (i = 0; i < Elements(setup->fs.current_tex); i++) {
-            if (setup->fs.current_tex[i])
-               lp_scene_add_resource_reference(scene, setup->fs.current_tex[i]);
+            if (setup->fs.current_tex[i]) {
+               if (!lp_scene_add_resource_reference(scene,
+                                                    setup->fs.current_tex[i]))
+                  return FALSE;
+            }
          }
       }
    }
@@ -829,6 +785,40 @@ lp_setup_update_state( struct lp_setup_context *setup )
    setup->dirty = 0;
 
    assert(setup->fs.stored);
+   return TRUE;
+}
+
+void
+lp_setup_update_state( struct lp_setup_context *setup )
+{
+   /* Some of the 'draw' pipeline stages may have changed some driver state.
+    * Make sure we've processed those state changes before anything else.
+    *
+    * XXX this is the only place where llvmpipe_context is used in the
+    * setup code.  This may get refactored/changed...
+    */
+   {
+      struct llvmpipe_context *lp = llvmpipe_context(setup->pipe);
+      if (lp->dirty) {
+         llvmpipe_update_derived(lp);
+      }
+
+      /* Will probably need to move this somewhere else, just need  
+       * to know about vertex shader point size attribute.
+       */
+      setup->psize = lp->psize_slot;
+
+      assert(lp->dirty == 0);
+   }
+
+   /* XXX: only call into update_scene_state() if we already have a
+    * scene:
+    */
+   if (!try_update_scene_state(setup)) {
+      set_scene_state( setup, SETUP_FLUSHED );
+      if (!try_update_scene_state(setup))
+         assert(0);
+   }
 }
 
 
@@ -881,6 +871,10 @@ lp_setup_create( struct pipe_context *pipe,
       return NULL;
 
    lp_setup_init_vbuf(setup);
+   
+   /* Used only in update_state():
+    */
+   setup->pipe = pipe;
 
    setup->empty_scenes = lp_scene_queue_create();
    if (!setup->empty_scenes)
@@ -932,9 +926,18 @@ lp_setup_begin_query(struct lp_setup_context *setup,
    assert(setup->active_query == NULL);
    
    if (setup->scene) {
-      lp_scene_bin_everywhere(setup->scene,
-                              lp_rast_begin_query,
-                              lp_rast_arg_query(pq));
+      if (!lp_scene_bin_everywhere(setup->scene,
+                                   lp_rast_begin_query,
+                                   lp_rast_arg_query(pq))) {
+         lp_setup_flush_and_restart(setup);
+
+         if (!lp_scene_bin_everywhere(setup->scene,
+                                      lp_rast_begin_query,
+                                      lp_rast_arg_query(pq))) {
+            assert(0);
+            return;
+         }
+      }
    }
 
    setup->active_query = pq;
@@ -963,7 +966,9 @@ lp_setup_end_query(struct lp_setup_context *setup, struct llvmpipe_query *pq)
        */
       lp_fence_reference(&pq->fence, setup->scene->fence);
 
-      lp_scene_bin_everywhere(setup->scene, lp_rast_end_query, dummy);
+      if (!lp_scene_bin_everywhere(setup->scene, lp_rast_end_query, dummy)) {
+         lp_setup_flush(setup, 0, NULL, __FUNCTION__);
+      }
    }
    else {
       lp_fence_reference(&pq->fence, setup->last_fence);
@@ -971,3 +976,14 @@ lp_setup_end_query(struct lp_setup_context *setup, struct llvmpipe_query *pq)
 }
 
 
+void
+lp_setup_flush_and_restart(struct lp_setup_context *setup)
+{
+   if (0) debug_printf("%s\n", __FUNCTION__);
+
+   assert(setup->state == SETUP_ACTIVE);
+   set_scene_state(setup, SETUP_FLUSHED);
+   set_scene_state(setup, SETUP_EMPTY);
+   set_scene_state(setup, SETUP_ACTIVE);
+   lp_setup_update_state(setup);
+}

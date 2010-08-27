@@ -70,6 +70,7 @@ struct lp_setup_context
 {
    struct vbuf_render base;
 
+   struct pipe_context *pipe;
    struct vertex_info *vertex_info;
    uint prim;
    uint vertex_size;
@@ -186,11 +187,13 @@ lp_setup_alloc_triangle(struct lp_scene *scene,
                         unsigned nr_planes,
                         unsigned *tri_size);
 
-void
+boolean
 lp_setup_bin_triangle( struct lp_setup_context *setup,
                        struct lp_rast_triangle *tri,
                        const struct u_rect *bbox,
                        int nr_planes );
+
+void lp_setup_flush_and_restart(struct lp_setup_context *setup);
 
 #endif
 

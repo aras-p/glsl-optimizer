@@ -31,16 +31,19 @@
 #include "util/u_inlines.h"
 #include "util/u_simple_list.h"
 #include "lp_scene.h"
+#include "lp_debug.h"
 #include "lp_scene_queue.h"
 #include "lp_fence.h"
 
 
-/** List of texture references */
-struct texture_ref {
-   struct pipe_resource *texture;
-   struct texture_ref *prev, *next;  /**< linked list w/ u_simple_list.h */
-};
+#define RESOURCE_REF_SZ 32
 
+/** List of resource references */
+struct resource_ref {
+   struct pipe_resource *resource[RESOURCE_REF_SZ];
+   int count;
+   struct resource_ref *next;
+};
 
 
 /**
@@ -51,25 +54,12 @@ struct lp_scene *
 lp_scene_create( struct pipe_context *pipe,
                  struct lp_scene_queue *queue )
 {
-   unsigned i, j;
    struct lp_scene *scene = CALLOC_STRUCT(lp_scene);
    if (!scene)
       return NULL;
 
    scene->pipe = pipe;
    scene->empty_queue = queue;
-
-   for (i = 0; i < TILES_X; i++) {
-      for (j = 0; j < TILES_Y; j++) {
-         struct cmd_bin *bin = lp_scene_get_bin(scene, i, j);
-         bin->commands.head = bin->commands.tail = CALLOC_STRUCT(cmd_block);
-      }
-   }
-
-   scene->data.head =
-      scene->data.tail = CALLOC_STRUCT(data_block);
-
-   make_empty_list(&scene->resources);
 
    pipe_mutex_init(scene->mutex);
 
@@ -83,24 +73,9 @@ lp_scene_create( struct pipe_context *pipe,
 void
 lp_scene_destroy(struct lp_scene *scene)
 {
-   unsigned i, j;
-
    lp_scene_reset(scene);
 
-   for (i = 0; i < TILES_X; i++)
-      for (j = 0; j < TILES_Y; j++) {
-         struct cmd_bin *bin = lp_scene_get_bin(scene, i, j);
-         assert(bin->commands.head == bin->commands.tail);
-         FREE(bin->commands.head);
-         bin->commands.head = NULL;
-         bin->commands.tail = NULL;
-      }
-
-   FREE(scene->data.head);
-   scene->data.head = NULL;
-
    pipe_mutex_destroy(scene->mutex);
-
    FREE(scene);
 }
 
@@ -118,7 +93,7 @@ lp_scene_is_empty(struct lp_scene *scene )
       for (x = 0; x < TILES_X; x++) {
          const struct cmd_bin *bin = lp_scene_get_bin(scene, x, y);
          const struct cmd_block_list *list = &bin->commands;
-         if (list->head != list->tail || list->head->count > 0) {
+         if (list->head) {
             return FALSE;
          }
       }
@@ -127,28 +102,31 @@ lp_scene_is_empty(struct lp_scene *scene )
 }
 
 
-/* Free data for one particular bin.  May be called from the
- * rasterizer thread(s).
+/* Returns true if there has ever been a failed allocation attempt in
+ * this scene.  Used in triangle/rectangle emit to avoid having to
+ * check success at each bin.
+ */
+boolean
+lp_scene_is_oom(struct lp_scene *scene)
+{
+   return scene->alloc_failed;
+}
+
+
+/* Remove all commands from a bin.  Tries to reuse some of the memory
+ * allocated to the bin, however.
  */
 void
 lp_scene_bin_reset(struct lp_scene *scene, unsigned x, unsigned y)
 {
    struct cmd_bin *bin = lp_scene_get_bin(scene, x, y);
    struct cmd_block_list *list = &bin->commands;
-   struct cmd_block *block;
-   struct cmd_block *tmp;
 
-   assert(x < TILES_X);
-   assert(y < TILES_Y);
-
-   for (block = list->head; block != list->tail; block = tmp) {
-      tmp = block->next;
-      FREE(block);
-   }
-
-   assert(list->tail->next == NULL);
    list->head = list->tail;
-   list->head->count = 0;
+   if (list->tail) {
+      list->tail->next = NULL;
+      list->tail->count = 0;
+   }
 }
 
 
@@ -159,13 +137,14 @@ lp_scene_bin_reset(struct lp_scene *scene, unsigned x, unsigned y)
 void
 lp_scene_reset(struct lp_scene *scene )
 {
-   unsigned i, j;
+   int i, j;
 
-   /* Free all but last binner command lists:
+   /* Reset all command lists:
     */
    for (i = 0; i < scene->tiles_x; i++) {
       for (j = 0; j < scene->tiles_y; j++) {
-         lp_scene_bin_reset(scene, i, j);
+         struct cmd_bin *bin = lp_scene_get_bin(scene, i, j);
+         memset(bin, 0, sizeof *bin);
       }
    }
 
@@ -174,39 +153,53 @@ lp_scene_reset(struct lp_scene *scene )
     */
    assert(lp_scene_is_empty(scene));
 
-   /* Free all but last binned data block:
+   /* Decrement texture ref counts
+    */
+   {
+      struct resource_ref *ref;
+      int i, j = 0;
+
+      for (ref = scene->resources; ref; ref = ref->next) {
+         for (i = 0; i < ref->count; i++) {
+            if (LP_DEBUG & DEBUG_SETUP)
+               debug_printf("resource %d: %p %dx%d sz %d\n",
+                            j,
+                            ref->resource[i],
+                            ref->resource[i]->width0,
+                            ref->resource[i]->height0,
+                            llvmpipe_resource_size(ref->resource[i]));
+            j++;
+            pipe_resource_reference(&ref->resource[i], NULL);
+         }
+      }
+
+      if (LP_DEBUG & DEBUG_SETUP)
+         debug_printf("scene %d resources, sz %d\n",
+                      j, scene->resource_reference_size);
+   }
+
+   /* Free all scene data blocks:
     */
    {
       struct data_block_list *list = &scene->data;
       struct data_block *block, *tmp;
 
-      for (block = list->head; block != list->tail; block = tmp) {
+      for (block = list->head; block; block = tmp) {
          tmp = block->next;
          FREE(block);
       }
-         
-      assert(list->tail->next == NULL);
-      list->head = list->tail;
-      list->head->used = 0;
-   }
 
-   /* Release texture refs
-    */
-   {
-      struct resource_ref *ref, *next, *ref_list = &scene->resources;
-      for (ref = ref_list->next; ref != ref_list; ref = next) {
-         next = next_elem(ref);
-         pipe_resource_reference(&ref->resource, NULL);
-         FREE(ref);
-      }
-      make_empty_list(ref_list);
+      list->head = NULL;
    }
 
    lp_fence_reference(&scene->fence, NULL);
 
+   scene->resources = NULL;
    scene->scene_size = 0;
+   scene->resource_reference_size = 0;
 
    scene->has_depthstencil_clear = FALSE;
+   scene->alloc_failed = FALSE;
 }
 
 
@@ -215,12 +208,20 @@ lp_scene_reset(struct lp_scene *scene )
 
 
 struct cmd_block *
-lp_bin_new_cmd_block( struct cmd_block_list *list )
+lp_scene_new_cmd_block( struct lp_scene *scene,
+                        struct cmd_bin *bin )
 {
-   struct cmd_block *block = MALLOC_STRUCT(cmd_block);
+   struct cmd_block *block = lp_scene_alloc(scene, sizeof(struct cmd_block));
    if (block) {
-      list->tail->next = block;
-      list->tail = block;
+      if (bin->commands.tail) {
+         bin->commands.tail->next = block;
+         bin->commands.tail = block;
+      }
+      else {
+         bin->commands.head = block;
+         bin->commands.tail = block;
+      }
+      //memset(block, 0, sizeof *block);
       block->next = NULL;
       block->count = 0;
    }
@@ -229,16 +230,26 @@ lp_bin_new_cmd_block( struct cmd_block_list *list )
 
 
 struct data_block *
-lp_bin_new_data_block( struct data_block_list *list )
+lp_scene_new_data_block( struct lp_scene *scene )
 {
-   struct data_block *block = MALLOC_STRUCT(data_block);
-   if (block) {
-      list->tail->next = block;
-      list->tail = block;
-      block->next = NULL;
-      block->used = 0;
+   if (scene->scene_size + DATA_BLOCK_SIZE > LP_SCENE_MAX_SIZE) {
+      if (0) debug_printf("%s: failed\n", __FUNCTION__);
+      scene->alloc_failed = TRUE;
+      return NULL;
    }
-   return block;
+   else {
+      struct data_block *block = MALLOC_STRUCT(data_block);
+      if (block == NULL)
+         return NULL;
+      
+      scene->scene_size += sizeof *block;
+
+      block->used = 0;
+      block->next = scene->data.head;
+      scene->data.head = block;
+
+      return block;
+   }
 }
 
 
@@ -246,7 +257,7 @@ lp_bin_new_data_block( struct data_block_list *list )
  * Return number of bytes used for all bin data within a scene.
  * This does not include resources (textures) referenced by the scene.
  */
-unsigned
+static unsigned
 lp_scene_data_size( const struct lp_scene *scene )
 {
    unsigned size = 0;
@@ -259,7 +270,7 @@ lp_scene_data_size( const struct lp_scene *scene )
 
 
 /** Return number of bytes used for a single bin */
-unsigned
+static unsigned
 lp_scene_bin_size( const struct lp_scene *scene, unsigned x, unsigned y )
 {
    struct cmd_bin *bin = lp_scene_get_bin((struct lp_scene *) scene, x, y);
@@ -276,18 +287,47 @@ lp_scene_bin_size( const struct lp_scene *scene, unsigned x, unsigned y )
 /**
  * Add a reference to a resource by the scene.
  */
-void
+boolean
 lp_scene_add_resource_reference(struct lp_scene *scene,
                                 struct pipe_resource *resource)
 {
-   struct resource_ref *ref = CALLOC_STRUCT(resource_ref);
-   if (ref) {
-      struct resource_ref *ref_list = &scene->resources;
-      pipe_resource_reference(&ref->resource, resource);
-      insert_at_tail(ref_list, ref);
+   struct resource_ref *ref, **last = &scene->resources;
+   int i;
+
+   /* Look at existing resource blocks:
+    */
+   for (ref = scene->resources; ref; ref = ref->next) {
+
+      /* Search for this resource:
+       */
+      for (i = 0; i < ref->count; i++)
+         if (ref->resource[i] == resource)
+            return TRUE;
+
+      /* If the block is half-empty, this is the last block.  Append
+       * the reference here.
+       */
+      if (ref->count < RESOURCE_REF_SZ)
+         goto add_new_ref;
+
+      last = &ref->next;
    }
 
-   scene->scene_size += llvmpipe_resource_size(resource);
+   /* Otherwise, need to create a new block:
+    */
+   *last = lp_scene_alloc(scene, sizeof(struct resource_ref));
+   if (*last) {
+      ref = *last;
+      memset(ref, 0, sizeof *ref);
+      goto add_new_ref;
+   }
+
+   return FALSE;
+
+add_new_ref:
+   pipe_resource_reference(&ref->resource[ref->count++], resource);
+   scene->resource_reference_size += llvmpipe_resource_size(resource);
+   return scene->resource_reference_size < LP_SCENE_MAX_RESOURCE_SIZE;
 }
 
 
@@ -298,12 +338,15 @@ boolean
 lp_scene_is_resource_referenced(const struct lp_scene *scene,
                                 const struct pipe_resource *resource)
 {
-   const struct resource_ref *ref_list = &scene->resources;
    const struct resource_ref *ref;
-   foreach (ref, ref_list) {
-      if (ref->resource == resource)
-         return TRUE;
+   int i;
+
+   for (ref = scene->resources; ref; ref = ref->next) {
+      for (i = 0; i < ref->count; i++)
+         if (ref->resource[i] == resource)
+            return TRUE;
    }
+
    return FALSE;
 }
 

@@ -369,6 +369,11 @@ lp_rast_shade_tile(struct lp_rasterizer_task *task,
    const unsigned tile_x = task->x, tile_y = task->y;
    unsigned x, y;
 
+   if (inputs->disable) {
+      /* This command was partially binned and has been disabled */
+      return;
+   }
+
    LP_DBG(DEBUG_RAST, "%s\n", __FUNCTION__);
 
    /* render the whole 64x64 tile in 4x4 chunks */
@@ -664,10 +669,6 @@ rasterize_bin(struct lp_rasterizer_task *task,
    }
 
    lp_rast_tile_end(task);
-
-   /* Free data for this bin.
-    */
-   lp_scene_bin_reset( task->rast->curr_scene, x, y);
 }
 
 
@@ -727,7 +728,7 @@ static boolean
 is_empty_bin( const struct cmd_bin *bin )
 {
    if (0) debug_bin(bin);
-   return bin->commands.head->count == 0;
+   return bin->commands.head == NULL;
 }
 
 

@@ -80,6 +80,7 @@ struct lp_rast_state {
 struct lp_rast_shader_inputs {
    float facing;     /** Positive for front-facing, negative for back-facing */
    boolean opaque:1;   /** Is opaque */
+   boolean disable:1;  /** Partially binned, disable this command */
 
    float (*a0)[4];
    float (*dadx)[4];
