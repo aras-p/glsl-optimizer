@@ -125,6 +125,16 @@ compute_vertex_info(struct llvmpipe_context *llvmpipe)
       inputs[i].src_index = vinfo->num_attribs;
       draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_PERSPECTIVE, vs_index);
    }
+
+   /* Figure out if we need pointsize as well.
+    */
+   llvmpipe->psize_slot = draw_find_shader_output(llvmpipe->draw,
+                                                  TGSI_SEMANTIC_PSIZE, 0);
+   if (llvmpipe->psize_slot > 0) {
+      draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_CONSTANT,
+                            llvmpipe->psize_slot);
+   }
+
    llvmpipe->num_inputs = lpfs->info.num_inputs;
 
    draw_compute_vertex_size(vinfo);

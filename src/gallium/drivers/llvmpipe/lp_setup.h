@@ -104,6 +104,10 @@ void
 lp_setup_set_line_state( struct lp_setup_context *setup,
                          float line_width);
 
+void 
+lp_setup_set_point_state( struct lp_setup_context *setup,
+                          float point_size);
+
 void
 lp_setup_set_fs_inputs( struct lp_setup_context *setup,
                         const struct lp_shader_input *interp,

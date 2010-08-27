@@ -155,8 +155,10 @@ llvmpipe_create_context( struct pipe_screen *screen, void *priv )
    draw_install_aapoint_stage(llvmpipe->draw, &llvmpipe->pipe);
    draw_install_pstipple_stage(llvmpipe->draw, &llvmpipe->pipe);
 
-   /* convert points and lines into triangles: */
-   draw_wide_point_threshold(llvmpipe->draw, 0.0);
+   /* convert points and lines into triangles: 
+    * (otherwise, draw points and lines natively)
+    */
+   draw_wide_point_threshold(llvmpipe->draw, 10000.0);
    draw_wide_line_threshold(llvmpipe->draw, 10000.0);
 
 #if USE_DRAW_STAGE_PSTIPPLE

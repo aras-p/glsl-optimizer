@@ -494,6 +494,15 @@ lp_setup_set_line_state( struct lp_setup_context *setup,
    setup->line_width = line_width;
 }
 
+void 
+lp_setup_set_point_state( struct lp_setup_context *setup,
+                          float point_size)
+{
+   LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
+
+   setup->point_size = point_size;
+}
+
 void
 lp_setup_set_fs_inputs( struct lp_setup_context *setup,
                         const struct lp_shader_input *input,
@@ -733,6 +742,12 @@ lp_setup_update_state( struct lp_setup_context *setup )
     */
    {
       struct llvmpipe_context *lp = llvmpipe_context(scene->pipe);
+
+      /* Will probably need to move this somewhere else, just need  
+       * to know about vertex shader point size attribute.
+       */
+      setup->psize = lp->psize_slot;
+
       if (lp->dirty) {
          llvmpipe_update_derived(lp);
       }

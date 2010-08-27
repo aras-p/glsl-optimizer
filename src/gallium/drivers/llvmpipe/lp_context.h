@@ -101,6 +101,9 @@ struct llvmpipe_context {
    
    /** Vertex format */
    struct vertex_info vertex_info;
+   
+   /** Which vertex shader output slot contains point size */
+   int psize_slot;
 
    /** Fragment shader input interpolation info */
    unsigned num_inputs;

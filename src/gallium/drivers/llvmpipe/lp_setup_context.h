@@ -92,6 +92,8 @@ struct lp_setup_context
    unsigned cullmode;
    float pixel_offset;
    float line_width;
+   float point_size;
+   float psize;
 
    struct pipe_framebuffer_state fb;
    struct u_rect framebuffer;
