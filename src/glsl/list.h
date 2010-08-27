@@ -165,6 +165,12 @@ struct exec_node {
       this->prev->next = before;
       this->prev = before;
    }
+
+   /**
+    * Insert another list in the list before the current node
+    */
+   void insert_before(class exec_list *before);
+
    /**
     * Replace the current node with the given node.
     */
@@ -448,6 +454,23 @@ struct exec_list {
    }
 #endif
 };
+
+
+#ifdef __cplusplus
+inline void exec_node::insert_before(exec_list *before)
+{
+   if (before->is_empty())
+      return;
+
+   before->tail_pred->next = this;
+   before->head->prev = this->prev;
+
+   this->prev->next = before->head;
+   this->prev = before->tail_pred;
+
+   before->make_empty();
+}
+#endif
 
 /**
  * This version is safe even if the current node is removed.
