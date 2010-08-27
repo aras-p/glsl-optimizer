@@ -832,12 +832,11 @@ fs_visitor::visit(ir_assignment *ir)
    }
 
    for (i = 0; i < type_size(ir->lhs->type); i++) {
-      if (i < 4 && !(write_mask & (1 << i)))
-	 continue;
-
-      inst = emit(fs_inst(BRW_OPCODE_MOV, l, r));
-      if (ir->condition)
-	 inst->predicated = true;
+      if (i >= 4 || (write_mask & (1 << i))) {
+	 inst = emit(fs_inst(BRW_OPCODE_MOV, l, r));
+	 if (ir->condition)
+	    inst->predicated = true;
+      }
       l.reg_offset++;
       r.reg_offset++;
    }
