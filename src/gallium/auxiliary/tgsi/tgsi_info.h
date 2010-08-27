@@ -28,6 +28,7 @@
 #ifndef TGSI_INFO_H
 #define TGSI_INFO_H
 
+#include "pipe/p_compiler.h"
 #include "pipe/p_shader_tokens.h"
 
 #if defined __cplusplus
