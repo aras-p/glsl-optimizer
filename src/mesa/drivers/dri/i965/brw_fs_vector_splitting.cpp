@@ -281,6 +281,9 @@ ir_vector_splitting_visitor::visit_leave(ir_assignment *ir)
 
 	 if (rhs) {
 	    new_rhs = new(mem_ctx) ir_dereference_variable(rhs->components[i]);
+	    /* If we're writing into a writemask, smear it out to that channel. */
+	    if (!lhs)
+	       new_rhs = new(mem_ctx) ir_swizzle(new_rhs, i, i, i, i, i + 1);
 	 } else {
 	    new_rhs = new(mem_ctx) ir_swizzle(ir->rhs->clone(mem_ctx, NULL),
 					      i, i, i, i, 1);
