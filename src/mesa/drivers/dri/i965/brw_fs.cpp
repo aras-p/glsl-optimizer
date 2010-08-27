@@ -1357,7 +1357,7 @@ fs_visitor::assign_regs()
       last_grf = MAX2(last_grf, inst->src[1].hw_reg);
    }
 
-   this->grf_used = last_grf;
+   this->grf_used = last_grf + 1;
 }
 
 static struct brw_reg brw_reg_from_fs_reg(fs_reg *reg)
