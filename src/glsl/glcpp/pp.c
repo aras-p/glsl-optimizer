@@ -141,7 +141,7 @@ remove_line_continuations(glcpp_parser_t *ctx, const char *shader)
 	return clean;
 }
 
-extern int
+int
 preprocess(void *talloc_ctx, const char **shader, char **info_log,
 	   const struct gl_extensions *extensions)
 {
