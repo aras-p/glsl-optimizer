@@ -157,14 +157,16 @@ static void lp_setup_point( struct lp_setup_context *setup,
    const float size
       = sizeAttr > 0 ? v0[sizeAttr][0]
       : setup->point_size;
-   const float half_width = 0.5F * size;
- 
-   const int x0 = subpixel_snap(v0[0][0] - half_width - setup->pixel_offset);
-   const int x1 = subpixel_snap(v0[0][0] - half_width - setup->pixel_offset);
-   const int x2 = subpixel_snap(v0[0][0] + half_width - setup->pixel_offset);
-   const int y0 = subpixel_snap(v0[0][1] - half_width - setup->pixel_offset);
-   const int y1 = subpixel_snap(v0[0][1] + half_width - setup->pixel_offset);
-   const int y2 = subpixel_snap(v0[0][1] + half_width - setup->pixel_offset);
+   
+   /* Point size as fixed point integer, remove rounding errors 
+    * and gives minimum width for very small points
+    */
+   int fixed_width = MAX2(FIXED_ONE,
+                          (subpixel_snap(size) + FIXED_ONE/2 - 1) & ~(FIXED_ONE-1));
+
+   const int x0 = subpixel_snap(v0[0][0] - setup->pixel_offset) - fixed_width/2;
+   const int y0 = subpixel_snap(v0[0][1] - setup->pixel_offset) - fixed_width/2;
+     
    struct lp_scene *scene = lp_setup_get_current_scene(setup);
    struct lp_rast_triangle *point;
    unsigned bytes;
@@ -182,10 +184,10 @@ static void lp_setup_point( struct lp_setup_context *setup,
        */
       int adj = (setup->pixel_offset != 0) ? 1 : 0;
 
-      bbox.x0 = (MIN3(x0, x1, x2) + (FIXED_ONE-1)) >> FIXED_ORDER;
-      bbox.x1 = (MAX3(x0, x1, x2) + (FIXED_ONE-1)) >> FIXED_ORDER;
-      bbox.y0 = (MIN3(y0, y1, y2) + (FIXED_ONE-1) + adj) >> FIXED_ORDER;
-      bbox.y1 = (MAX3(y0, y1, y2) + (FIXED_ONE-1) + adj) >> FIXED_ORDER;
+      bbox.x0 = (x0 + (FIXED_ONE-1) + adj) >> FIXED_ORDER;
+      bbox.x1 = (x0 + fixed_width + (FIXED_ONE-1) + adj) >> FIXED_ORDER;
+      bbox.y0 = (y0 + (FIXED_ONE-1)) >> FIXED_ORDER;
+      bbox.y1 = (y0 + fixed_width + (FIXED_ONE-1)) >> FIXED_ORDER;
 
       /* Inclusive coordinates:
        */
@@ -214,10 +216,10 @@ static void lp_setup_point( struct lp_setup_context *setup,
 #endif
 
    info.v0 = v0;
-   info.dx01 = x1 - x0;
-   info.dx12 = x2 - x1;
-   info.dy01 = y1 - y0;
-   info.dy12 = y2 - y1;
+   info.dx01 = 0;
+   info.dx12 = fixed_width;
+   info.dy01 = fixed_width;
+   info.dy12 = 0;
    
    /* Setup parameter interpolants:
     */
