@@ -280,7 +280,7 @@ lp_setup_line( struct lp_setup_context *setup,
    int nr_planes = 4;
    
    /* linewidth should be interpreted as integer */
-   int fixed_width = subpixel_snap(round(width));
+   int fixed_width = util_iround(width) * FIXED_ONE;
 
    float x_offset=0;
    float y_offset=0;
