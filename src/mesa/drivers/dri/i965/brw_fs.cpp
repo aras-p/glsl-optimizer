@@ -1483,8 +1483,15 @@ fs_visitor::generate_code()
       case BRW_OPCODE_MUL:
 	 brw_MUL(p, dst, src[0], src[1]);
 	 break;
+
       case BRW_OPCODE_FRC:
 	 brw_FRC(p, dst, src[0]);
+	 break;
+      case BRW_OPCODE_RNDD:
+	 brw_RNDD(p, dst, src[0]);
+	 break;
+      case BRW_OPCODE_RNDZ:
+	 brw_RNDZ(p, dst, src[0]);
 	 break;
 
       case BRW_OPCODE_AND:
