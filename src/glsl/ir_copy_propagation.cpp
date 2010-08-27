@@ -84,7 +84,7 @@ public:
    virtual ir_visitor_status visit_enter(class ir_loop *);
    virtual ir_visitor_status visit_enter(class ir_function_signature *);
    virtual ir_visitor_status visit_enter(class ir_function *);
-   virtual ir_visitor_status visit_enter(class ir_assignment *);
+   virtual ir_visitor_status visit_leave(class ir_assignment *);
    virtual ir_visitor_status visit_enter(class ir_call *);
    virtual ir_visitor_status visit_enter(class ir_if *);
 
@@ -132,30 +132,13 @@ ir_copy_propagation_visitor::visit_enter(ir_function_signature *ir)
 }
 
 ir_visitor_status
-ir_copy_propagation_visitor::visit_enter(ir_assignment *ir)
+ir_copy_propagation_visitor::visit_leave(ir_assignment *ir)
 {
-   ir_visitor_status s;
-
-   /* ir_assignment::accept(ir_hv *v), skipping the LHS so that we can
-    * avoid copy propagating into the LHS.
-    *
-    * Note that this means we won't copy propagate into the derefs of
-    * an array index.  Oh well.
-    */
-
-   s = ir->rhs->accept(this);
-   assert(s == visit_continue);
-
-   if (ir->condition) {
-      s = ir->condition->accept(this);
-      assert(s == visit_continue);
-   }
-
    kill(ir->lhs->variable_referenced());
 
    add_copy(ir);
 
-   return visit_continue_with_parent;
+   return visit_continue;
 }
 
 ir_visitor_status
@@ -175,6 +158,9 @@ ir_copy_propagation_visitor::visit_enter(ir_function *ir)
 ir_visitor_status
 ir_copy_propagation_visitor::visit(ir_dereference_variable *ir)
 {
+   if (this->in_assignee)
+      return visit_continue;
+
    ir_variable *var = ir->var;
 
    foreach_iter(exec_list_iterator, iter, *this->acp) {

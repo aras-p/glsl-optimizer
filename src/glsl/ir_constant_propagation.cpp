@@ -90,7 +90,7 @@ public:
    virtual ir_visitor_status visit_enter(class ir_loop *);
    virtual ir_visitor_status visit_enter(class ir_function_signature *);
    virtual ir_visitor_status visit_enter(class ir_function *);
-   virtual ir_visitor_status visit_enter(class ir_assignment *);
+   virtual ir_visitor_status visit_leave(class ir_assignment *);
    virtual ir_visitor_status visit_enter(class ir_call *);
    virtual ir_visitor_status visit_enter(class ir_if *);
 
@@ -119,7 +119,7 @@ public:
 void
 ir_constant_propagation_visitor::handle_rvalue(ir_rvalue **rvalue)
 {
-   if (!*rvalue)
+   if (this->in_assignee || !*rvalue)
       return;
 
    const glsl_type *type = (*rvalue)->type;
@@ -216,22 +216,16 @@ ir_constant_propagation_visitor::visit_enter(ir_function_signature *ir)
 }
 
 ir_visitor_status
-ir_constant_propagation_visitor::visit_enter(ir_assignment *ir)
+ir_constant_propagation_visitor::visit_leave(ir_assignment *ir)
 {
-   /* Inline accepting children, skipping the LHS. */
-   ir->rhs->accept(this);
-   handle_rvalue(&ir->rhs);
-
-   if (ir->condition) {
-      ir->condition->accept(this);
-      handle_rvalue(&ir->condition);
-   }
+   if (this->in_assignee)
+      return visit_continue;
 
    kill(ir->lhs->variable_referenced(), ir->write_mask);
 
    add_constant(ir);
 
-   return visit_continue_with_parent;
+   return visit_continue;
 }
 
 ir_visitor_status
