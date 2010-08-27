@@ -38,6 +38,15 @@
 
 #define NUM_CHANNELS 4
 
+struct lp_line_info {
+
+   float dx;
+   float dy;
+   float oneoverarea;
+
+   const float (*v1)[4];
+   const float (*v2)[4];
+};
 
 
 /**
@@ -61,26 +70,24 @@ static void constant_coef( struct lp_setup_context *setup,
  */
 static void linear_coef( struct lp_setup_context *setup,
                          struct lp_rast_triangle *tri,
-                         float oneoverarea,
+                         struct lp_line_info *info,
                          unsigned slot,
-                         const float (*v1)[4],
-                         const float (*v2)[4],
                          unsigned vert_attr,
                          unsigned i)
 {
-   float a1 = v1[vert_attr][i]; 
-   float a2 = v2[vert_attr][i];
+   float a1 = info->v1[vert_attr][i]; 
+   float a2 = info->v2[vert_attr][i];
       
    float da21 = a1 - a2;   
-   float dadx = da21 * tri->dx * oneoverarea;
-   float dady = da21 * tri->dy * oneoverarea;
+   float dadx = da21 * info->dx * info->oneoverarea;
+   float dady = da21 * info->dy * info->oneoverarea;
 
    tri->inputs.dadx[slot][i] = dadx;
    tri->inputs.dady[slot][i] = dady;  
    
    tri->inputs.a0[slot][i] = (a1 -
-                              (dadx * (v1[0][0] - setup->pixel_offset) +
-                               dady * (v1[0][1] - setup->pixel_offset)));
+                              (dadx * (info->v1[0][0] - setup->pixel_offset) +
+                               dady * (info->v1[0][1] - setup->pixel_offset)));
 }
 
 
@@ -94,37 +101,33 @@ static void linear_coef( struct lp_setup_context *setup,
  */
 static void perspective_coef( struct lp_setup_context *setup,
                               struct lp_rast_triangle *tri,
-                              float oneoverarea,
+                              struct lp_line_info *info,
                               unsigned slot,
-                              const float (*v1)[4],
-                              const float (*v2)[4],
                               unsigned vert_attr,
                               unsigned i)
 {
    /* premultiply by 1/w  (v[0][3] is always 1/w):
     */
-   float a1 = v1[vert_attr][i] * v1[0][3];
-   float a2 = v2[vert_attr][i] * v2[0][3];
+   float a1 = info->v1[vert_attr][i] * info->v1[0][3];
+   float a2 = info->v2[vert_attr][i] * info->v2[0][3];
 
    float da21 = a1 - a2;   
-   float dadx = da21 * tri->dx * oneoverarea;
-   float dady = da21 * tri->dy * oneoverarea;
+   float dadx = da21 * info->dx * info->oneoverarea;
+   float dady = da21 * info->dy * info->oneoverarea;
 
    tri->inputs.dadx[slot][i] = dadx;
    tri->inputs.dady[slot][i] = dady;
    
    tri->inputs.a0[slot][i] = (a1 -
-                              (dadx * (v1[0][0] - setup->pixel_offset) +
-                               dady * (v1[0][1] - setup->pixel_offset)));
+                              (dadx * (info->v1[0][0] - setup->pixel_offset) +
+                               dady * (info->v1[0][1] - setup->pixel_offset)));
 }
 
 static void
 setup_fragcoord_coef( struct lp_setup_context *setup,
                       struct lp_rast_triangle *tri,
-                      float oneoverarea,
+                      struct lp_line_info *info,
                       unsigned slot,
-                      const float (*v1)[4],
-                      const float (*v2)[4],
                       unsigned usage_mask)
 {
    /*X*/
@@ -143,12 +146,12 @@ setup_fragcoord_coef( struct lp_setup_context *setup,
 
    /*Z*/
    if (usage_mask & TGSI_WRITEMASK_Z) {
-      linear_coef(setup, tri, oneoverarea, slot, v1, v2, 0, 2);
+      linear_coef(setup, tri, info, slot, 0, 2);
    }
 
    /*W*/
    if (usage_mask & TGSI_WRITEMASK_W) {
-      linear_coef(setup, tri, oneoverarea, slot, v1, v2, 0, 3);
+      linear_coef(setup, tri, info, slot, 0, 3);
    }
 }
 
@@ -157,9 +160,7 @@ setup_fragcoord_coef( struct lp_setup_context *setup,
  */
 static void setup_line_coefficients( struct lp_setup_context *setup,
                                      struct lp_rast_triangle *tri,
-                                     float oneoverarea,
-                                     const float (*v1)[4],
-                                     const float (*v2)[4])
+                                     struct lp_line_info *info)
 {
    unsigned fragcoord_usage_mask = TGSI_WRITEMASK_XYZ;
    unsigned slot;
@@ -176,25 +177,25 @@ static void setup_line_coefficients( struct lp_setup_context *setup,
          if (setup->flatshade_first) {
             for (i = 0; i < NUM_CHANNELS; i++)
                if (usage_mask & (1 << i))
-                  constant_coef(setup, tri, slot+1, v1[vert_attr][i], i);
+                  constant_coef(setup, tri, slot+1, info->v1[vert_attr][i], i);
          }
          else {
             for (i = 0; i < NUM_CHANNELS; i++)
                if (usage_mask & (1 << i))
-                  constant_coef(setup, tri, slot+1, v2[vert_attr][i], i);
+                  constant_coef(setup, tri, slot+1, info->v2[vert_attr][i], i);
          }
          break;
 
       case LP_INTERP_LINEAR:
          for (i = 0; i < NUM_CHANNELS; i++)
             if (usage_mask & (1 << i))
-               linear_coef(setup, tri, oneoverarea, slot+1, v1, v2, vert_attr, i);
+               linear_coef(setup, tri, info, slot+1, vert_attr, i);
          break;
 
       case LP_INTERP_PERSPECTIVE:
          for (i = 0; i < NUM_CHANNELS; i++)
             if (usage_mask & (1 << i))
-               perspective_coef(setup, tri, oneoverarea, slot+1, v1, v2, vert_attr, i);
+               perspective_coef(setup, tri, info, slot+1, vert_attr, i);
          fragcoord_usage_mask |= TGSI_WRITEMASK_W;
          break;
 
@@ -214,7 +215,7 @@ static void setup_line_coefficients( struct lp_setup_context *setup,
 
    /* The internal position input is in slot zero:
     */
-   setup_fragcoord_coef(setup, tri, oneoverarea, 0, v1, v2,
+   setup_fragcoord_coef(setup, tri, info, 0,
                         fragcoord_usage_mask);
 }
 
@@ -269,7 +270,7 @@ lp_setup_line( struct lp_setup_context *setup,
 {
    struct lp_scene *scene = lp_setup_get_current_scene(setup);
    struct lp_rast_triangle *line;
-   float oneoverarea;
+   struct lp_line_info info;
    float width = MAX2(1.0, setup->line_width);
    struct u_rect bbox;
    unsigned tri_bytes;
@@ -560,9 +561,6 @@ lp_setup_line( struct lp_setup_context *setup,
    line->v[1][1] = v2[0][1];
 #endif
 
-   line->dx = dx;
-   line->dy = dy;
-
    /* calculate the deltas */
    line->plane[0].dcdy = x[0] - x[1];
    line->plane[1].dcdy = x[1] - x[2];
@@ -575,11 +573,15 @@ lp_setup_line( struct lp_setup_context *setup,
    line->plane[3].dcdx = y[3] - y[0];
 
 
-   oneoverarea = 1.0f / (dx * dx  + dy * dy);    
+   info.oneoverarea = 1.0f / (dx * dx  + dy * dy);    
+   info.dx = dx;
+   info.dy = dy;
+   info.v1 = v1;
+   info.v2 = v2;
 
    /* Setup parameter interpolants:
     */
-   setup_line_coefficients( setup, line, oneoverarea, v1, v2); 
+   setup_line_coefficients( setup, line, &info); 
 
    line->inputs.facing = 1.0F;
    line->inputs.state = setup->fs.stored;
