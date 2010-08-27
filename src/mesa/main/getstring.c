@@ -31,7 +31,7 @@
 #include "extensions.h"
 
 static const GLubyte *
-shading_laguage_version(GLcontext *ctx)
+shading_language_version(GLcontext *ctx)
 {
    switch (ctx->API) {
 #if FEATURE_ARB_shading_language_100
@@ -98,7 +98,7 @@ _mesa_GetString( GLenum name )
          return (const GLubyte *) ctx->Extensions.String;
 #if FEATURE_ARB_shading_language_100 || FEATURE_ES2
       case GL_SHADING_LANGUAGE_VERSION:
-	 return shading_laguage_version(ctx);
+	 return shading_language_version(ctx);
 #endif
 #if FEATURE_NV_fragment_program || FEATURE_ARB_fragment_program || \
     FEATURE_NV_vertex_program || FEATURE_ARB_vertex_program
