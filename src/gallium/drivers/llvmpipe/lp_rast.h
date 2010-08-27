@@ -210,6 +210,14 @@ lp_rast_arg_null( void )
    return arg;
 }
 
+static INLINE union lp_rast_cmd_arg
+lp_rast_arg_query( struct llvmpipe_query *pq )
+{
+   union lp_rast_cmd_arg arg;
+   arg.query_obj = pq;
+   return arg;
+}
+
 
 /**
  * Binnable Commands.
@@ -254,6 +262,9 @@ void lp_rast_store_linear_color( struct lp_rasterizer_task *,
 
 
 void lp_rast_begin_query(struct lp_rasterizer_task *,
+                         const union lp_rast_cmd_arg );
+
+void lp_rast_restart_query(struct lp_rasterizer_task *,
                          const union lp_rast_cmd_arg );
 
 void lp_rast_end_query(struct lp_rasterizer_task *,

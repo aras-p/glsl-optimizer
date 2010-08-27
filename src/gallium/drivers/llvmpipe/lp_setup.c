@@ -154,6 +154,11 @@ lp_setup_rasterize_scene( struct lp_setup_context *setup )
    struct lp_scene *scene = lp_setup_get_current_scene(setup);
    struct llvmpipe_screen *screen = llvmpipe_screen(scene->pipe->screen);
 
+   lp_fence_reference(&setup->last_fence, scene->fence);
+
+   if (setup->last_fence)
+      setup->last_fence->issued = TRUE;
+
    pipe_mutex_lock(screen->rast_mutex);
    lp_scene_rasterize(scene, screen->rast);
    pipe_mutex_unlock(screen->rast_mutex);
@@ -170,6 +175,12 @@ begin_binning( struct lp_setup_context *setup )
 {
    struct lp_scene *scene = lp_setup_get_current_scene(setup);
    boolean need_zsload = FALSE;
+
+   /* Always create a fence when threads are active:
+    */
+   if (setup->num_threads)
+      scene->fence = lp_fence_create(setup->num_threads);
+
    if (setup->fb.zsbuf &&
        ((setup->clear.flags & PIPE_CLEAR_DEPTHSTENCIL) != PIPE_CLEAR_DEPTHSTENCIL) &&
         util_format_is_depth_and_stencil(setup->fb.zsbuf->format))
@@ -197,6 +208,13 @@ begin_binning( struct lp_setup_context *setup )
                                   lp_rast_arg_clearzs(&setup->clear.clearzs) );
       }
    }
+
+   if (setup->active_query) {
+      lp_scene_bin_everywhere( scene,
+                               lp_rast_restart_query,
+                               lp_rast_arg_query(setup->active_query) );
+   }
+      
 
    LP_DBG(DEBUG_SETUP, "%s done\n", __FUNCTION__);
 }
@@ -280,19 +298,11 @@ lp_setup_flush( struct lp_setup_context *setup,
 {
    LP_DBG(DEBUG_SETUP, "%s %s\n", __FUNCTION__, reason);
 
-   if (setup->scene) {
-      if (fence) {
-         /* if we're going to flush the setup/rasterization modules, emit
-          * a fence.
-          */
-         *fence = lp_setup_fence( setup );
-      }
-
-      if (setup->scene->fence)
-         setup->scene->fence->issued = TRUE;
-   }
-
    set_scene_state( setup, SETUP_FLUSHED );
+
+   if (fence) {
+      lp_fence_reference((struct lp_fence **)fence, setup->last_fence);
+   }
 }
 
 
@@ -955,22 +965,16 @@ void
 lp_setup_begin_query(struct lp_setup_context *setup,
                      struct llvmpipe_query *pq)
 {
-   struct lp_scene * scene = lp_setup_get_current_scene(setup);
-   union lp_rast_cmd_arg cmd_arg;
-
    /* init the query to its beginning state */
-   pq->done = FALSE;
-   pq->tile_count = 0;
-   pq->num_tiles = scene->tiles_x * scene->tiles_y;
-   assert(pq->num_tiles > 0);
+   assert(setup->active_query == NULL);
+   
+   if (setup->scene) {
+      lp_scene_bin_everywhere(setup->scene,
+                              lp_rast_begin_query,
+                              lp_rast_arg_query(pq));
+   }
 
-   memset(pq->count, 0, sizeof(pq->count));  /* reset all counters */
-
-   set_scene_state( setup, SETUP_ACTIVE );
-
-   cmd_arg.query_obj = pq;
-   lp_scene_bin_everywhere(scene, lp_rast_begin_query, cmd_arg);
-   pq->binned = TRUE;
+   setup->active_query = pq;
 }
 
 
@@ -980,11 +984,27 @@ lp_setup_begin_query(struct lp_setup_context *setup,
 void
 lp_setup_end_query(struct lp_setup_context *setup, struct llvmpipe_query *pq)
 {
-   struct lp_scene * scene = lp_setup_get_current_scene(setup);
-   union lp_rast_cmd_arg cmd_arg;
+   union lp_rast_cmd_arg dummy = { 0 };
 
-   set_scene_state( setup, SETUP_ACTIVE );
+   assert(setup->active_query == pq);
+   setup->active_query = NULL;
 
-   cmd_arg.query_obj = pq;
-   lp_scene_bin_everywhere(scene, lp_rast_end_query, cmd_arg);
+   /* Setup will automatically re-issue any query which carried over a
+    * scene boundary, and the rasterizer automatically "ends" queries
+    * which are active at the end of a scene, so there is no need to
+    * retry this commands on failure.
+    */
+   if (setup->scene) {
+      /* pq->fence should be the fence of the *last* scene which
+       * contributed to the query result.
+       */
+      lp_fence_reference(&pq->fence, setup->scene->fence);
+
+      lp_scene_bin_everywhere(setup->scene, lp_rast_end_query, dummy);
+   }
+   else {
+      lp_fence_reference(&pq->fence, setup->last_fence);
+   }
 }
+
+

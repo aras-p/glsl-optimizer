@@ -54,9 +54,6 @@ llvmpipe_create_query(struct pipe_context *pipe,
    assert(type == PIPE_QUERY_OCCLUSION_COUNTER);
 
    pq = CALLOC_STRUCT( llvmpipe_query );
-   if (pq) {
-      pipe_mutex_init(pq->mutex);
-   }
 
    return (struct pipe_query *) pq;
 }
@@ -66,12 +63,20 @@ static void
 llvmpipe_destroy_query(struct pipe_context *pipe, struct pipe_query *q)
 {
    struct llvmpipe_query *pq = llvmpipe_query(q);
-   /* query might still be in process if we never waited for the result */
-   if (!pq->done) {
-      llvmpipe_finish(pipe, __FUNCTION__);
+
+   /* Ideally we would refcount queries & not get destroyed until the
+    * last scene had finished with us.
+    */
+   if (pq->fence) {
+      if (!lp_fence_issued(pq->fence))
+         llvmpipe_flush(pipe, 0, NULL, __FUNCTION__);
+
+      if (!lp_fence_signalled(pq->fence))
+         lp_fence_wait(pq->fence);
+
+      lp_fence_reference(&pq->fence, NULL);
    }
 
-   pipe_mutex_destroy(pq->mutex);
    FREE(pq);
 }
 
@@ -84,22 +89,31 @@ llvmpipe_get_query_result(struct pipe_context *pipe,
 {
    struct llvmpipe_query *pq = llvmpipe_query(q);
    uint64_t *result = (uint64_t *)vresult;
+   int i;
 
-   if (!pq->done) {
-      if (wait) {
-         llvmpipe_finish(pipe, __FUNCTION__);
-      }
-      /* this is a bit inconsequent but should be ok */
-      else {
+   if (!pq->fence) {
+      assert(0);                /* query not in issued state */
+      return FALSE;
+   }
+
+   if (!lp_fence_signalled(pq->fence)) {
+      if (!lp_fence_issued(pq->fence))
          llvmpipe_flush(pipe, 0, NULL, __FUNCTION__);
-      }
+         
+      if (!wait)
+         return FALSE;
+
+      lp_fence_wait(pq->fence);
    }
 
-   if (pq->done) {
-      *result = pq->result;
+   /* Sum the results from each of the threads:
+    */
+   *result = 0;
+   for (i = 0; i < LP_MAX_THREADS; i++) {
+      *result += pq->count[i];
    }
 
-   return pq->done;
+   return TRUE;
 }
 
 
@@ -108,14 +122,6 @@ llvmpipe_begin_query(struct pipe_context *pipe, struct pipe_query *q)
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context( pipe );
    struct llvmpipe_query *pq = llvmpipe_query(q);
-
-   /* Check if the query is already in the scene.  If so, we need to
-    * flush the scene now.  Real apps shouldn't re-use a query in a
-    * frame of rendering.
-    */
-   if (pq->binned) {
-      llvmpipe_finish(pipe, __FUNCTION__);
-   }
 
    lp_setup_begin_query(llvmpipe->setup, pq);
 

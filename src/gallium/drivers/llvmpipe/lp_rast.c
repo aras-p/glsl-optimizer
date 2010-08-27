@@ -568,6 +568,11 @@ lp_rast_tile_end(struct lp_rasterizer_task *task)
       lp_rast_store_linear_color(task, dummy);
    }
 
+   if (task->query) {
+      union lp_rast_cmd_arg dummy = {0};
+      lp_rast_end_query(task, dummy);
+   }
+
    /* debug */
    memset(task->color_tiles, 0, sizeof(task->color_tiles));
    task->depth_tile = NULL;
@@ -597,8 +602,26 @@ void
 lp_rast_begin_query(struct lp_rasterizer_task *task,
                     const union lp_rast_cmd_arg arg)
 {
-   /* Reset the per-task counter */
+   struct llvmpipe_query *pq = arg.query_obj;
+
+   assert(task->query == NULL);
    task->vis_counter = 0;
+   task->query = pq;
+   pq->count[task->thread_index] = 0;
+}
+
+
+/* Much like begin_query, but don't reset the counter to zero.
+ */
+void
+lp_rast_restart_query(struct lp_rasterizer_task *task,
+                      const union lp_rast_cmd_arg arg)
+{
+   struct llvmpipe_query *pq = arg.query_obj;
+
+   assert(task->query == NULL);
+   task->vis_counter = 0;
+   task->query = pq;
 }
  
 
@@ -611,35 +634,8 @@ void
 lp_rast_end_query(struct lp_rasterizer_task *task,
                   const union lp_rast_cmd_arg arg)
 {
-   struct llvmpipe_query *pq = arg.query_obj;
-
-   pipe_mutex_lock(pq->mutex);
-   {
-      /* Accumulate the visible fragment counter from this tile in
-       * the query object.
-       */
-      pq->count[task->thread_index] += task->vis_counter;
-
-      /* check if this is the last tile in the scene */
-      pq->tile_count++;
-      if (pq->tile_count == pq->num_tiles) {
-         uint i;
-
-         /* sum the per-thread counters for the query */
-         pq->result = 0;
-         for (i = 0; i < LP_MAX_THREADS; i++) {
-            pq->result += pq->count[i];
-         }
-
-         /* reset counters (in case this query is re-used in the scene) */
-         memset(pq->count, 0, sizeof(pq->count));
-
-         pq->tile_count = 0;
-         pq->binned = FALSE;
-         pq->done = TRUE;
-      }
-   }
-   pipe_mutex_unlock(pq->mutex);
+   task->query->count[task->thread_index] += task->vis_counter;
+   task->query = NULL;
 }
 
 
@@ -697,6 +693,7 @@ static struct {
    RAST(store_linear_color),
    RAST(fence),
    RAST(begin_query),
+   RAST(restart_query),
    RAST(end_query),
 };
 

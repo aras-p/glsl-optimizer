@@ -43,13 +43,7 @@ struct llvmpipe_context;
 
 struct llvmpipe_query {
    uint64_t count[LP_MAX_THREADS];  /**< a counter for each thread */
-   uint64_t result;                 /**< total of all counters */
-
-   pipe_mutex mutex;
-   unsigned num_tiles, tile_count;
-
-   boolean done;
-   boolean binned;  /**< has this query been binned in the scene? */
+   struct lp_fence *fence;      /* fence from last scene this was binned in */
 };
 
 
