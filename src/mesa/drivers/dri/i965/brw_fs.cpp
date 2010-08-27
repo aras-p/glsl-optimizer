@@ -131,6 +131,7 @@ brw_link_shader(GLcontext *ctx, struct gl_shader_program *prog)
 	 clone_ir_list(mem_ctx, shader->ir, shader->base.ir);
 
 	 do_mat_op_to_vec(shader->ir);
+	 do_mod_to_fract(shader->ir);
 	 do_div_to_mul_rcp(shader->ir);
 	 do_sub_to_add_neg(shader->ir);
 	 do_explog_to_explog2(shader->ir);
@@ -1481,6 +1482,9 @@ fs_visitor::generate_code()
 	 break;
       case BRW_OPCODE_MUL:
 	 brw_MUL(p, dst, src[0], src[1]);
+	 break;
+      case BRW_OPCODE_FRC:
+	 brw_FRC(p, dst, src[0]);
 	 break;
 
       case BRW_OPCODE_AND:
