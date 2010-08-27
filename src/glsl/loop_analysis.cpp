@@ -103,6 +103,7 @@ class loop_analysis : public ir_hierarchical_visitor {
 public:
    loop_analysis();
 
+   virtual ir_visitor_status visit(ir_loop_jump *);
    virtual ir_visitor_status visit(ir_dereference_variable *);
 
    virtual ir_visitor_status visit_enter(ir_loop *);
@@ -128,6 +129,22 @@ loop_analysis::loop_analysis()
 
    this->if_statement_depth = 0;
    this->current_assignment = NULL;
+}
+
+
+ir_visitor_status
+loop_analysis::visit(ir_loop_jump *ir)
+{
+   (void) ir;
+
+   assert(!this->state.is_empty());
+
+   loop_variable_state *const ls =
+      (loop_variable_state *) this->state.get_head();
+
+   ls->num_loop_jumps++;
+
+   return visit_continue;
 }
 
 

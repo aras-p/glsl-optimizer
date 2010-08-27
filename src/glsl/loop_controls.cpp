@@ -253,6 +253,10 @@ loop_control_visitor::visit_leave(ir_loop *ir)
 		   * satisfied.
 		   */
 		  if_stmt->remove();
+
+		  assert(ls->num_loop_jumps > 0);
+		  ls->num_loop_jumps--;
+
 		  this->progress = true;
 	       }
 

@@ -104,8 +104,14 @@ public:
     */
    hash_table *var_hash;
 
+   /**
+    * Number of ir_loop_jump instructions that operate on this loop
+    */
+   unsigned num_loop_jumps;
+
    loop_variable_state()
    {
+      this->num_loop_jumps = 0;
       this->var_hash = hash_table_ctor(0, hash_table_pointer_hash,
 				       hash_table_pointer_compare);
    }
