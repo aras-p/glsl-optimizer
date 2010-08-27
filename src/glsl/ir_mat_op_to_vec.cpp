@@ -268,29 +268,30 @@ ir_mat_op_to_vec_visitor::do_mul_mat_scalar(ir_variable *result_var,
 }
 
 ir_visitor_status
-ir_mat_op_to_vec_visitor::visit_leave(ir_assignment *assign)
+ir_mat_op_to_vec_visitor::visit_leave(ir_assignment *orig_assign)
 {
-   ir_expression *expr = assign->rhs->as_expression();
+   ir_expression *orig_expr = orig_assign->rhs->as_expression();
    bool found_matrix = false;
    unsigned int i, matrix_columns = 1;
    ir_variable *op_var[2];
 
-   if (!expr)
+   if (!orig_expr)
       return visit_continue;
 
-   for (i = 0; i < expr->get_num_operands(); i++) {
-      if (expr->operands[i]->type->is_matrix()) {
+   for (i = 0; i < orig_expr->get_num_operands(); i++) {
+      if (orig_expr->operands[i]->type->is_matrix()) {
 	 found_matrix = true;
-	 matrix_columns = expr->operands[i]->type->matrix_columns;
+	 matrix_columns = orig_expr->operands[i]->type->matrix_columns;
 	 break;
       }
    }
    if (!found_matrix)
       return visit_continue;
 
-   mem_ctx = talloc_parent(assign);
+   mem_ctx = talloc_parent(orig_assign);
 
-   ir_dereference_variable *lhs_deref = assign->lhs->as_dereference_variable();
+   ir_dereference_variable *lhs_deref =
+      orig_assign->lhs->as_dereference_variable();
    assert(lhs_deref);
 
    ir_variable *result_var = lhs_deref->var;
@@ -298,23 +299,23 @@ ir_mat_op_to_vec_visitor::visit_leave(ir_assignment *assign)
    /* Store the expression operands in temps so we can use them
     * multiple times.
     */
-   for (i = 0; i < expr->get_num_operands(); i++) {
+   for (i = 0; i < orig_expr->get_num_operands(); i++) {
       ir_assignment *assign;
 
-      op_var[i] = new(mem_ctx) ir_variable(expr->operands[i]->type,
+      op_var[i] = new(mem_ctx) ir_variable(orig_expr->operands[i]->type,
 					   "mat_op_to_vec",
 					   ir_var_temporary);
       base_ir->insert_before(op_var[i]);
 
       lhs_deref = new(mem_ctx) ir_dereference_variable(op_var[i]);
       assign = new(mem_ctx) ir_assignment(lhs_deref,
-					  expr->operands[i],
+					  orig_expr->operands[i],
 					  NULL);
       base_ir->insert_before(assign);
    }
 
    /* OK, time to break down this matrix operation. */
-   switch (expr->operation) {
+   switch (orig_expr->operation) {
    case ir_unop_neg: {
       const unsigned mask = (1U << result_var->type->vector_elements) - 1;
 
@@ -325,7 +326,7 @@ ir_mat_op_to_vec_visitor::visit_leave(ir_assignment *assign)
 	 ir_expression *column_expr;
 	 ir_assignment *column_assign;
 
-	 column_expr = new(mem_ctx) ir_expression(expr->operation,
+	 column_expr = new(mem_ctx) ir_expression(orig_expr->operation,
 						  result->type,
 						  op0,
 						  NULL);
@@ -356,7 +357,7 @@ ir_mat_op_to_vec_visitor::visit_leave(ir_assignment *assign)
 	 ir_expression *column_expr;
 	 ir_assignment *column_assign;
 
-	 column_expr = new(mem_ctx) ir_expression(expr->operation,
+	 column_expr = new(mem_ctx) ir_expression(orig_expr->operation,
 						  result->type,
 						  op0,
 						  op1);
@@ -391,10 +392,11 @@ ir_mat_op_to_vec_visitor::visit_leave(ir_assignment *assign)
       }
       break;
    default:
-      printf("FINISHME: Handle matrix operation for %s\n", expr->operator_string());
+      printf("FINISHME: Handle matrix operation for %s\n",
+	     orig_expr->operator_string());
       abort();
    }
-   assign->remove();
+   orig_assign->remove();
    this->made_progress = true;
 
    return visit_continue;
