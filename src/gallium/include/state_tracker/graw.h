@@ -41,6 +41,7 @@
  * those for parsing text representations of TGSI shaders.
  */
 
+#include "pipe/p_compiler.h"
 #include "pipe/p_format.h"
 
 struct pipe_screen;
