@@ -641,12 +641,12 @@ fs_visitor::visit(ir_expression *ir)
       emit(fs_inst(BRW_OPCODE_ADD, this->result, op[0], fs_reg(-1)));
       break;
    case ir_unop_neg:
-      this->result = op[0];
       op[0].negate = ~op[0].negate;
+      this->result = op[0];
       break;
    case ir_unop_abs:
-      this->result = op[0];
       op[0].abs = true;
+      this->result = op[0];
       break;
    case ir_unop_sign:
       temp = fs_reg(this, ir->type);
