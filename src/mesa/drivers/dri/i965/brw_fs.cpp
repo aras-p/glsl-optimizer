@@ -144,6 +144,8 @@ brw_link_shader(GLcontext *ctx, struct gl_shader_program *prog)
 	    progress = do_common_optimization(shader->ir, true) || progress;
 	 } while (progress);
 
+	 validate_ir_tree(shader->ir);
+
 	 reparent_ir(shader->ir, shader->ir);
 	 talloc_free(mem_ctx);
       }
