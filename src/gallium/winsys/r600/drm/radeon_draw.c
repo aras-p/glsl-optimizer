@@ -76,6 +76,8 @@ int radeon_draw_set_new(struct radeon_draw *draw, struct radeon_state *state)
 {
 	if (state == NULL)
 		return 0;
+	if (state->type >= draw->radeon->ntype)
+		return -EINVAL;
 	draw->state[state->id] = radeon_state_decref(draw->state[state->id]);
 	draw->state[state->id] = state;
 	return 0;
@@ -100,7 +102,6 @@ int radeon_draw_check(struct radeon_draw *draw)
 	for (i = 0, draw->cpm4 = 0; i < draw->nstate; i++) {
 		if (draw->state[i]) {
 			draw->cpm4 += draw->state[i]->cpm4;
-			draw->cpm4 += draw->radeon->type[draw->state[i]->id].header_cpm4;
 		}
 	}
 	return 0;

@@ -132,7 +132,7 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 				      unsigned srcx, unsigned srcy, unsigned srcz,
 				      unsigned width, unsigned height)
 {
-	util_resource_copy_region(ctx, dst, subdst, dstx, dsty, dstz,
+	util_resource_copy_region(pipe, dst, subdst, dstx, dsty, dstz,
 				  src, subsrc, srcx, srcy, srcz, width, height);
 }
 
@@ -190,7 +190,7 @@ static int r600_blit_state_vs_resources(struct r600_screen *rscreen, struct r600
 	memcpy(bo->data, vbo, 128);
 	radeon_bo_unmap(rscreen->rw, bo);
 
-	rstate = radeon_state(rscreen->rw, R600_VS_RESOURCE0 + 0);
+	rstate = radeon_state(rscreen->rw, R600_VS_RESOURCE_TYPE, R600_VS_RESOURCE + 0);
 	if (rstate == NULL) {
 		radeon_bo_decref(rscreen->rw, bo);
 		return -ENOMEM;
@@ -199,35 +199,33 @@ static int r600_blit_state_vs_resources(struct r600_screen *rscreen, struct r600
 	/* set states (most default value are 0 and struct already
 	 * initialized to 0, thus avoid resetting them)
 	 */
-	rstate->states[R600_RESOURCE__RESOURCE_WORD0] = 0x00000000;
-	rstate->states[R600_RESOURCE__RESOURCE_WORD1] = 0x00000080;
-	rstate->states[R600_RESOURCE__RESOURCE_WORD2] = 0x02302000;
-	rstate->states[R600_RESOURCE__RESOURCE_WORD3] = 0x00000000;
-	rstate->states[R600_RESOURCE__RESOURCE_WORD4] = 0x00000000;
-	rstate->states[R600_RESOURCE__RESOURCE_WORD5] = 0x00000000;
-	rstate->states[R600_RESOURCE__RESOURCE_WORD6] = 0xC0000000;
+	rstate->states[R600_VS_RESOURCE__RESOURCE160_WORD0] = 0x00000000;
+	rstate->states[R600_VS_RESOURCE__RESOURCE160_WORD1] = 0x00000080;
+	rstate->states[R600_VS_RESOURCE__RESOURCE160_WORD2] = 0x02302000;
+	rstate->states[R600_VS_RESOURCE__RESOURCE160_WORD3] = 0x00000000;
+	rstate->states[R600_VS_RESOURCE__RESOURCE160_WORD4] = 0x00000000;
+	rstate->states[R600_VS_RESOURCE__RESOURCE160_WORD5] = 0x00000000;
+	rstate->states[R600_VS_RESOURCE__RESOURCE160_WORD6] = 0xC0000000;
 	rstate->bo[0] = bo;
 	rstate->nbo = 1;
 	rstate->placement[0] = RADEON_GEM_DOMAIN_GTT;
-	rstate->reloc_pm4_id[0] = R600_RESOURCE__RESOURCE_BO0_ID;
-	rstate->reloc_pm4_id[1] = R600_RESOURCE__RESOURCE_BO1_ID;
 	if (radeon_state_pm4(rstate)) {
 		radeon_state_decref(rstate);
 		return -ENOMEM;
 	}
 	bstates->vs_resource0 = rstate;
 
-	rstate = radeon_state(rscreen->rw, R600_VS_RESOURCE0 + 1);
+	rstate = radeon_state(rscreen->rw, R600_VS_RESOURCE_TYPE, R600_VS_RESOURCE + 1);
 	if (rstate == NULL) {
 		return -ENOMEM;
 	}
-	rstate->states[R600_RESOURCE__RESOURCE_WORD0] = 0x00000010;
-	rstate->states[R600_RESOURCE__RESOURCE_WORD1] = 0x00000070;
-	rstate->states[R600_RESOURCE__RESOURCE_WORD2] = 0x02302000;
-	rstate->states[R600_RESOURCE__RESOURCE_WORD3] = 0x00000000;
-	rstate->states[R600_RESOURCE__RESOURCE_WORD4] = 0x00000000;
-	rstate->states[R600_RESOURCE__RESOURCE_WORD5] = 0x00000000;
-	rstate->states[R600_RESOURCE__RESOURCE_WORD6] = 0xC0000000;
+	rstate->states[R600_VS_RESOURCE__RESOURCE160_WORD0] = 0x00000010;
+	rstate->states[R600_VS_RESOURCE__RESOURCE160_WORD1] = 0x00000070;
+	rstate->states[R600_VS_RESOURCE__RESOURCE160_WORD2] = 0x02302000;
+	rstate->states[R600_VS_RESOURCE__RESOURCE160_WORD3] = 0x00000000;
+	rstate->states[R600_VS_RESOURCE__RESOURCE160_WORD4] = 0x00000000;
+	rstate->states[R600_VS_RESOURCE__RESOURCE160_WORD5] = 0x00000000;
+	rstate->states[R600_VS_RESOURCE__RESOURCE160_WORD6] = 0xC0000000;
 	rstate->bo[0] = radeon_bo_incref(rscreen->rw, bo);
 	rstate->nbo = 1;
 	rstate->placement[0] = RADEON_GEM_DOMAIN_GTT;
@@ -305,7 +303,7 @@ static struct radeon_state *r600_blit_state_vs_shader(struct r600_screen *rscree
 	}
 	radeon_bo_unmap(rscreen->rw, bo);
 
-	rstate = radeon_state(rscreen->rw, R600_VS_SHADER);
+	rstate = radeon_state(rscreen->rw, R600_VS_SHADER_TYPE, R600_VS_SHADER);
 	if (rstate == NULL) {
 		radeon_bo_decref(rscreen->rw, bo);
 		return NULL;
@@ -323,8 +321,6 @@ static struct radeon_state *r600_blit_state_vs_shader(struct r600_screen *rscree
 	rstate->nbo = 2;
 	rstate->placement[0] = RADEON_GEM_DOMAIN_GTT;
 	rstate->placement[2] = RADEON_GEM_DOMAIN_GTT;
-	rstate->reloc_pm4_id[0] = R600_VS_SHADER__SQ_PGM_START_VS_BO_ID;
-	rstate->reloc_pm4_id[1] = R600_VS_SHADER__SQ_PGM_START_FS_BO_ID;
 
 	if (radeon_state_pm4(rstate)) {
 		radeon_state_decref(rstate);
@@ -378,7 +374,7 @@ static struct radeon_state *r600_blit_state_ps_shader(struct r600_screen *rscree
 	}
 	radeon_bo_unmap(rscreen->rw, bo);
 
-	rstate = radeon_state(rscreen->rw, R600_PS_SHADER);
+	rstate = radeon_state(rscreen->rw, R600_PS_SHADER_TYPE, R600_PS_SHADER);
 	if (rstate == NULL) {
 		radeon_bo_decref(rscreen->rw, bo);
 		return NULL;
@@ -395,7 +391,6 @@ static struct radeon_state *r600_blit_state_ps_shader(struct r600_screen *rscree
 	rstate->bo[0] = bo;
 	rstate->nbo = 1;
 	rstate->placement[0] = RADEON_GEM_DOMAIN_GTT;
-	rstate->reloc_pm4_id[0] = R600_PS_SHADER__SQ_PGM_START_PS_BO_ID;
 
 	if (radeon_state_pm4(rstate)) {
 		radeon_state_decref(rstate);
@@ -408,7 +403,7 @@ static struct radeon_state *r600_blit_state_vgt(struct r600_screen *rscreen)
 {
 	struct radeon_state *rstate;
 
-	rstate = radeon_state(rscreen->rw, R600_VGT);
+	rstate = radeon_state(rscreen->rw, R600_VGT_TYPE, R600_VGT);
 	if (rstate == NULL)
 		return NULL;
 
@@ -430,7 +425,7 @@ static struct radeon_state *r600_blit_state_draw(struct r600_screen *rscreen)
 {
 	struct radeon_state *rstate;
 
-	rstate = radeon_state(rscreen->rw, R600_DRAW);
+	rstate = radeon_state(rscreen->rw, R600_DRAW_TYPE, R600_DRAW);
 	if (rstate == NULL)
 		return NULL;
 
@@ -453,7 +448,7 @@ static struct radeon_state *r600_blit_state_vs_constant(struct r600_screen *rscr
 {
 	struct radeon_state *rstate;
 
-	rstate = radeon_state(rscreen->rw, R600_VS_CONSTANT0 + id);
+	rstate = radeon_state(rscreen->rw, R600_VS_CONSTANT_TYPE, R600_VS_CONSTANT + id);
 	if (rstate == NULL)
 		return NULL;
 
@@ -476,7 +471,7 @@ static struct radeon_state *r600_blit_state_rasterizer(struct r600_screen *rscre
 {
 	struct radeon_state *rstate;
 
-	rstate = radeon_state(rscreen->rw, R600_RASTERIZER);
+	rstate = radeon_state(rscreen->rw, R600_RASTERIZER_TYPE, R600_RASTERIZER);
 	if (rstate == NULL)
 		return NULL;
 
@@ -505,7 +500,7 @@ static struct radeon_state *r600_blit_state_dsa(struct r600_screen *rscreen)
 {
 	struct radeon_state *rstate;
 
-	rstate = radeon_state(rscreen->rw, R600_DSA);
+	rstate = radeon_state(rscreen->rw, R600_DSA_TYPE, R600_DSA);
 	if (rstate == NULL)
 		return NULL;
 
@@ -529,7 +524,7 @@ static struct radeon_state *r600_blit_state_blend(struct r600_screen *rscreen)
 {
 	struct radeon_state *rstate;
 
-	rstate = radeon_state(rscreen->rw, R600_BLEND);
+	rstate = radeon_state(rscreen->rw, R600_BLEND_TYPE, R600_BLEND);
 	if (rstate == NULL)
 		return NULL;
 
@@ -548,7 +543,7 @@ static struct radeon_state *r600_blit_state_cb_cntl(struct r600_screen *rscreen)
 {
 	struct radeon_state *rstate;
 
-	rstate = radeon_state(rscreen->rw, R600_CB_CNTL);
+	rstate = radeon_state(rscreen->rw, R600_CB_CNTL_TYPE, R600_CB_CNTL);
 	if (rstate == NULL)
 		return NULL;
 
@@ -791,10 +786,10 @@ int r600_blit_uncompress_depth(struct pipe_context *ctx, struct r600_resource_te
 	r600_queries_suspend(ctx);
 
 	/* schedule draw*/
-	r = radeon_ctx_set_draw(rctx->ctx, draw);
+	r = radeon_ctx_set_draw_new(rctx->ctx, draw);
 	if (r == -EBUSY) {
 		r600_flush(ctx, 0, NULL);
-		r = radeon_ctx_set_draw(rctx->ctx, draw);
+		r = radeon_ctx_set_draw_new(rctx->ctx, draw);
 	}
 	if (r) {
 		goto out;

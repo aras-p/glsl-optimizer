@@ -153,3 +153,47 @@ struct radeon *radeon_decref(struct radeon *radeon)
 	free(radeon);
 	return NULL;
 }
+
+int radeon_reg_id(struct radeon *radeon, unsigned offset, unsigned *typeid, unsigned *stateid, unsigned *id)
+{
+	unsigned i, j;
+
+	for (i = 0; i < radeon->ntype; i++) {
+		if (radeon->type[i].range_start) {
+			if (offset >= radeon->type[i].range_start && offset < radeon->type[i].range_end) {
+				*typeid = i;
+				j = offset - radeon->type[i].range_start;
+				j /= radeon->type[i].stride;
+				*stateid = radeon->type[i].id + j;
+				*id = (offset - radeon->type[i].range_start - radeon->type[i].stride * j) / 4;
+				return 0;
+			}
+		} else {
+			for (j = 0; j < radeon->type[i].nstates; j++) {
+				if (radeon->type[i].regs[j].offset == offset) {
+					*typeid = i;
+					*stateid = radeon->type[i].id;
+					*id = j;
+					return 0;
+				}
+			}
+		}
+	}
+	fprintf(stderr, "%s unknown register 0x%08X\n", __func__, offset);
+	return -EINVAL;
+}
+
+unsigned radeon_type_from_id(struct radeon *radeon, unsigned id)
+{
+	unsigned i;
+
+	for (i = 0; i < radeon->ntype - 1; i++) {
+		if (radeon->type[i].id == id)
+			return i;
+		if (id > radeon->type[i].id && id < radeon->type[i + 1].id)
+			return i;
+	}
+	if (radeon->type[i].id == id)
+		return i;
+	return -1;
+}
