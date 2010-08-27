@@ -369,6 +369,7 @@ public:
       this->p = &c->func;
       this->brw = p->brw;
       this->intel = &brw->intel;
+      this->ctx = &intel->ctx;
       this->mem_ctx = talloc_new(NULL);
       this->shader = shader;
       this->fail = false;
@@ -431,6 +432,7 @@ public:
 
    struct brw_context *brw;
    struct intel_context *intel;
+   GLcontext *ctx;
    struct brw_wm_compile *c;
    struct brw_compile *p;
    struct brw_shader *shader;
@@ -1453,7 +1455,13 @@ fs_visitor::generate_code()
 	 generate_fb_write(inst);
 	 break;
       default:
-	 assert(!"not reached");
+	 if (inst->opcode < (int)ARRAY_SIZE(brw_opcodes)) {
+	    _mesa_problem(ctx, "Unsupported opcode `%s' in FS",
+			  brw_opcodes[inst->opcode].name);
+	 } else {
+	    _mesa_problem(ctx, "Unsupported opcode %d in FS", inst->opcode);
+	 }
+	 this->fail = true;
       }
 
       if (annotation_len < p->nr_insn) {

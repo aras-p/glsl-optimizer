@@ -702,7 +702,13 @@ struct brw_context
 
 #define BRW_PACKCOLOR8888(r,g,b,a)  ((r<<24) | (g<<16) | (b<<8) | a)
 
-
+struct brw_instruction_info {
+    char    *name;
+    int	    nsrc;
+    int	    ndst;
+    GLboolean is_arith;
+};
+extern const struct brw_instruction_info brw_opcodes[128];
 
 /*======================================================================
  * brw_vtbl.c

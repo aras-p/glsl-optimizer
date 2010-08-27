@@ -32,12 +32,7 @@
 #include "brw_defines.h"
 #include "brw_eu.h"
 
-static const struct {
-    char    *name;
-    int	    nsrc;
-    int	    ndst;
-    GLboolean is_arith;
-} inst_opcode[128] = {
+const struct brw_instruction_info brw_opcodes[128] = {
     [BRW_OPCODE_MOV] = { .name = "mov", .nsrc = 1, .ndst = 1, .is_arith = 1 },
     [BRW_OPCODE_FRC] = { .name = "frc", .nsrc = 1, .ndst = 1, .is_arith = 1 },
     [BRW_OPCODE_RNDU] = { .name = "rndu", .nsrc = 1, .ndst = 1, .is_arith = 1 },
@@ -94,7 +89,7 @@ static const struct {
 static INLINE
 GLboolean brw_is_arithmetic_inst(const struct brw_instruction *inst)
 {
-   return inst_opcode[inst->header.opcode].is_arith;
+   return brw_opcodes[inst->header.opcode].is_arith;
 }
 
 static const GLuint inst_stride[7] = {
@@ -122,7 +117,7 @@ brw_is_grf_written(const struct brw_instruction *inst,
                    int reg_index, int size,
                    int gen)
 {
-   if (inst_opcode[inst->header.opcode].ndst == 0)
+   if (brw_opcodes[inst->header.opcode].ndst == 0)
       return GL_FALSE;
 
    if (inst->bits1.da1.dest_address_mode != BRW_ADDRESS_DIRECT)
@@ -165,7 +160,7 @@ static GLboolean
 brw_is_mrf_written_alu(const struct brw_instruction *inst,
 		       int reg_index, int size)
 {
-   if (inst_opcode[inst->header.opcode].ndst == 0)
+   if (brw_opcodes[inst->header.opcode].ndst == 0)
       return GL_FALSE;
 
    if (inst->bits1.da1.dest_reg_file != BRW_MESSAGE_REGISTER_FILE)
@@ -298,7 +293,7 @@ static INLINE GLboolean
 brw_is_grf_read(const struct brw_instruction *inst, int reg_index, int size)
 {
    int i, j;
-   if (inst_opcode[inst->header.opcode].nsrc == 0)
+   if (brw_opcodes[inst->header.opcode].nsrc == 0)
       return GL_FALSE;
 
    /* Look at first source. We must take into account register regions to
@@ -306,7 +301,7 @@ brw_is_grf_read(const struct brw_instruction *inst, int reg_index, int size)
     * since we do not take into account the fact that some complete registers
     * may be skipped
     */
-   if (inst_opcode[inst->header.opcode].nsrc >= 1) {
+   if (brw_opcodes[inst->header.opcode].nsrc >= 1) {
 
       if (inst->bits2.da1.src0_address_mode != BRW_ADDRESS_DIRECT)
          if (inst->bits1.ia1.src0_reg_file == BRW_GENERAL_REGISTER_FILE)
@@ -341,7 +336,7 @@ brw_is_grf_read(const struct brw_instruction *inst, int reg_index, int size)
    }
 
    /* Second src register */
-   if (inst_opcode[inst->header.opcode].nsrc >= 2) {
+   if (brw_opcodes[inst->header.opcode].nsrc >= 2) {
 
       if (inst->bits3.da1.src1_address_mode != BRW_ADDRESS_DIRECT)
          if (inst->bits1.ia1.src1_reg_file == BRW_GENERAL_REGISTER_FILE)
