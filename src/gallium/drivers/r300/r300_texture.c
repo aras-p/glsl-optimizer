@@ -541,48 +541,55 @@ boolean r300_is_sampler_format_supported(enum pipe_format format)
     return r300_translate_texformat(format, 0, TRUE) != ~0;
 }
 
-static void r300_texture_setup_immutable_state(struct r300_screen* screen,
-                                               struct r300_texture* tex)
+void r300_texture_setup_format_state(struct r300_screen *screen,
+                                     struct r300_texture_desc *desc,
+                                     unsigned level,
+                                     struct r300_texture_format_state *out)
 {
-    struct r300_texture_format_state* f = &tex->tx_format;
-    struct pipe_resource *pt = &tex->desc.b.b;
+    struct pipe_resource *pt = &desc->b.b;
     boolean is_r500 = screen->caps.is_r500;
 
-    /* Set sampler state. */
-    f->format0 = R300_TX_WIDTH((pt->width0 - 1) & 0x7ff) |
-                 R300_TX_HEIGHT((pt->height0 - 1) & 0x7ff);
+    /* Mask out all the fields we change. */
+    out->format0 = 0;
+    out->format1 &= ~R300_TX_FORMAT_TEX_COORD_TYPE_MASK;
+    out->format2 &= R500_TXFORMAT_MSB;
+    out->tile_config = 0;
 
-    if (tex->desc.uses_stride_addressing) {
+    /* Set sampler state. */
+    out->format0 = R300_TX_WIDTH((u_minify(pt->width0, level) - 1) & 0x7ff) |
+                   R300_TX_HEIGHT((u_minify(pt->height0, level) - 1) & 0x7ff);
+
+    if (desc->uses_stride_addressing) {
         /* rectangles love this */
-        f->format0 |= R300_TX_PITCH_EN;
-        f->format2 = (tex->desc.stride_in_pixels[0] - 1) & 0x1fff;
+        out->format0 |= R300_TX_PITCH_EN;
+        out->format2 = (desc->stride_in_pixels[level] - 1) & 0x1fff;
     } else {
         /* Power of two textures (3D, mipmaps, and no pitch),
          * also NPOT textures with a width being POT. */
-        f->format0 |= R300_TX_DEPTH(util_logbase2(pt->depth0) & 0xf);
+        out->format0 |=
+            R300_TX_DEPTH(util_logbase2(u_minify(pt->depth0, level)) & 0xf);
     }
 
-    f->format1 = 0;
     if (pt->target == PIPE_TEXTURE_CUBE) {
-        f->format1 |= R300_TX_FORMAT_CUBIC_MAP;
+        out->format1 |= R300_TX_FORMAT_CUBIC_MAP;
     }
     if (pt->target == PIPE_TEXTURE_3D) {
-        f->format1 |= R300_TX_FORMAT_3D;
+        out->format1 |= R300_TX_FORMAT_3D;
     }
 
     /* large textures on r500 */
     if (is_r500)
     {
         if (pt->width0 > 2048) {
-            f->format2 |= R500_TXWIDTH_BIT11;
+            out->format2 |= R500_TXWIDTH_BIT11;
         }
         if (pt->height0 > 2048) {
-            f->format2 |= R500_TXHEIGHT_BIT11;
+            out->format2 |= R500_TXHEIGHT_BIT11;
         }
     }
 
-    f->tile_config = R300_TXO_MACRO_TILE(tex->desc.macrotile[0]) |
-                     R300_TXO_MICRO_TILE(tex->desc.microtile);
+    out->tile_config = R300_TXO_MACRO_TILE(desc->macrotile[level]) |
+                       R300_TXO_MICRO_TILE(desc->microtile);
 }
 
 static void r300_texture_setup_fb_state(struct r300_screen* screen,
@@ -716,7 +723,7 @@ r300_texture_create_object(struct r300_screen *rscreen,
         return NULL;
     }
     /* Initialize the hardware state. */
-    r300_texture_setup_immutable_state(rscreen, tex);
+    r300_texture_setup_format_state(rscreen, &tex->desc, 0, &tex->tx_format);
     r300_texture_setup_fb_state(rscreen, tex);
 
     tex->desc.b.vtbl = &r300_texture_vtbl;

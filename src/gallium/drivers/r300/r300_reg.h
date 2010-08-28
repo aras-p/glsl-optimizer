@@ -1607,6 +1607,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #	define R300_TX_FORMAT_3D		   (1 << 25)
 #	define R300_TX_FORMAT_CUBIC_MAP		   (2 << 25)
+#	define R300_TX_FORMAT_TEX_COORD_TYPE_MASK  (0x3 << 25)
 
 	/* alpha modes, convenience mostly */
 	/* if you have alpha, pick constant appropriate to the
