@@ -28,6 +28,7 @@
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "pipe/p_shader_tokens.h"
+#include "pipe/p_screen.h"
 
 #include "draw_private.h"
 #include "draw_context.h"
