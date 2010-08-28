@@ -35,7 +35,6 @@
 #include "lp_setup_context.h"
 #include "lp_setup_coef.h"
 #include "lp_rast.h"
-#include "lp_state_fs.h"
 
 #if defined(PIPE_ARCH_SSE)
 #include <emmintrin.h>
