@@ -909,7 +909,7 @@ void r300_emit_vs_state(struct r300_context* r300, unsigned size, void* state)
 
     unsigned pvs_num_slots = MIN3(vtx_mem_size / input_count,
                                   vtx_mem_size / output_count, 10);
-    unsigned pvs_num_controllers = MIN2(vtx_mem_size / temp_count, 6);
+    unsigned pvs_num_controllers = MIN2(vtx_mem_size / temp_count, 5);
 
     unsigned imm_first = vs->externals_count;
     unsigned imm_end = vs->code.constants.Count;
