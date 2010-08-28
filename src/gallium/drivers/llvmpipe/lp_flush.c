@@ -31,6 +31,7 @@
 
 
 #include "pipe/p_defines.h"
+#include "pipe/p_screen.h"
 #include "util/u_string.h"
 #include "draw/draw_context.h"
 #include "lp_flush.h"
