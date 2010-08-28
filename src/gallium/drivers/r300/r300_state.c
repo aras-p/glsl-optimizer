@@ -1213,8 +1213,8 @@ static void*
 
     /* Unfortunately, r300-r500 don't support floating-point mipmap lods. */
     /* We must pass these to the merge function to clamp them properly. */
-    sampler->min_lod = MAX2((unsigned)state->min_lod, 0);
-    sampler->max_lod = MAX2((unsigned)ceilf(state->max_lod), 0);
+    sampler->min_lod = (unsigned)MAX2(state->min_lod, 0);
+    sampler->max_lod = (unsigned)MAX2(ceilf(state->max_lod), 0);
 
     lod_bias = CLAMP((int)(state->lod_bias * 32 + 1), -(1 << 9), (1 << 9) - 1);
 
