@@ -624,7 +624,7 @@ fenced_buffer_copy_storage_to_gpu_locked(struct fenced_buffer *fenced_buf)
    assert(fenced_buf->data);
    assert(fenced_buf->buffer);
 
-   map = pb_map(fenced_buf->buffer, PB_USAGE_CPU_WRITE);
+   map = pb_map(fenced_buf->buffer, PB_USAGE_CPU_WRITE, NULL);
    if(!map)
       return PIPE_ERROR;
 
@@ -644,7 +644,7 @@ fenced_buffer_copy_storage_to_cpu_locked(struct fenced_buffer *fenced_buf)
    assert(fenced_buf->data);
    assert(fenced_buf->buffer);
 
-   map = pb_map(fenced_buf->buffer, PB_USAGE_CPU_READ);
+   map = pb_map(fenced_buf->buffer, PB_USAGE_CPU_READ, NULL);
    if(!map)
       return PIPE_ERROR;
 
@@ -674,7 +674,7 @@ fenced_buffer_destroy(struct pb_buffer *buf)
 
 static void *
 fenced_buffer_map(struct pb_buffer *buf,
-                  unsigned flags)
+                  unsigned flags, void *flush_ctx)
 {
    struct fenced_buffer *fenced_buf = fenced_buffer(buf);
    struct fenced_manager *fenced_mgr = fenced_buf->mgr;
@@ -712,7 +712,7 @@ fenced_buffer_map(struct pb_buffer *buf,
    }
 
    if(fenced_buf->buffer) {
-      map = pb_map(fenced_buf->buffer, flags);
+      map = pb_map(fenced_buf->buffer, flags, flush_ctx);
    }
    else {
       assert(fenced_buf->data);

@@ -167,10 +167,10 @@ pb_cache_buffer_destroy(struct pb_buffer *_buf)
 
 static void *
 pb_cache_buffer_map(struct pb_buffer *_buf, 
-                  unsigned flags)
+		    unsigned flags, void *flush_ctx)
 {
    struct pb_cache_buffer *buf = pb_cache_buffer(_buf);   
-   return pb_map(buf->buffer, flags);
+   return pb_map(buf->buffer, flags, flush_ctx);
 }
 
 
@@ -242,7 +242,7 @@ pb_cache_is_buffer_compat(struct pb_cache_buffer *buf,
    if(!pb_check_usage(desc->usage, buf->base.base.usage))
       return FALSE;
 
-   map = pb_map(buf->buffer, PB_USAGE_DONTBLOCK);
+   map = pb_map(buf->buffer, PB_USAGE_DONTBLOCK, NULL);
    if (!map) {
       return FALSE;
    }

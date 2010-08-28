@@ -89,10 +89,10 @@ static unsigned get_pb_usage_from_transfer_flags(enum pipe_transfer_usage usage)
 
 static void *
 radeon_drm_buffer_map_internal(struct pb_buffer *_buf,
-		      unsigned flags)
+			       unsigned flags, void *flush_ctx)
 {
     struct radeon_drm_buffer *buf = radeon_drm_buffer(_buf);
-    struct radeon_libdrm_cs *cs = buf->cs;
+    struct radeon_libdrm_cs *cs = flush_ctx;
     int write = 0;
 
     if (flags & PB_USAGE_DONTBLOCK) {
@@ -293,12 +293,8 @@ void *radeon_drm_buffer_map(struct r300_winsys_screen *ws,
                             enum pipe_transfer_usage usage)
 {
     struct pb_buffer *_buf = radeon_pb_buffer(buf);
-    struct radeon_drm_buffer *rbuf = get_drm_buffer(_buf);
 
-    if (rbuf)
-        rbuf->cs = radeon_libdrm_cs(cs);
-
-    return pb_map(_buf, get_pb_usage_from_transfer_flags(usage));
+    return pb_map(_buf, get_pb_usage_from_transfer_flags(usage), radeon_libdrm_cs(cs));
 }
 
 void radeon_drm_buffer_unmap(struct r300_winsys_screen *ws,

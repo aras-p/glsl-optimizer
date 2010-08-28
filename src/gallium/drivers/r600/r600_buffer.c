@@ -156,7 +156,7 @@ static void *r600_buffer_transfer_map(struct pipe_context *pipe,
 	int write = 0;
 
 	if (rbuffer->pb) {
-		return (uint8_t*)pb_map(rbuffer->pb, transfer->usage) + transfer->box.x;
+		return (uint8_t*)pb_map(rbuffer->pb, transfer->usage, NULL) + transfer->box.x;
 	}
 	if (transfer->usage & PIPE_TRANSFER_DONTBLOCK) {
 		/* FIXME */

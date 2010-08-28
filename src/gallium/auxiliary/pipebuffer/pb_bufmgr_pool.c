@@ -285,7 +285,7 @@ pool_bufmgr_create(struct pb_manager *provider,
 
    pool->map = pb_map(pool->buffer,
                           PB_USAGE_CPU_READ |
-                          PB_USAGE_CPU_WRITE);
+                          PB_USAGE_CPU_WRITE, NULL);
    if(!pool->map)
       goto failure;
 

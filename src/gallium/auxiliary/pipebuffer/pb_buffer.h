@@ -130,7 +130,7 @@ struct pb_vtbl
     * flags is bitmask of PB_USAGE_CPU_READ/WRITE. 
     */
    void *(*map)( struct pb_buffer *buf, 
-                 unsigned flags );
+                 unsigned flags, void *flush_ctx );
    
    void (*unmap)( struct pb_buffer *buf );
 
@@ -164,13 +164,13 @@ struct pb_vtbl
  */
 static INLINE void *
 pb_map(struct pb_buffer *buf, 
-       unsigned flags)
+       unsigned flags, void *flush_ctx)
 {
    assert(buf);
    if(!buf)
       return NULL;
    assert(pipe_is_referenced(&buf->base.reference));
-   return buf->vtbl->map(buf, flags);
+   return buf->vtbl->map(buf, flags, flush_ctx);
 }
 
 
