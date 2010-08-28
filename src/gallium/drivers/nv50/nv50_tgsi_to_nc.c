@@ -1337,6 +1337,19 @@ bld_instruction(struct bld_context *bld,
       FOR_EACH_DST0_ENABLED_CHANNEL(c, insn)
          dst0[c] = temp;
       break;
+   case TGSI_OPCODE_DST:
+      if (insn->Dst[0].Register.WriteMask & 1)
+         dst0[0] = bld_imm_f32(bld, 1.0f);
+      if (insn->Dst[0].Register.WriteMask & 2) {
+         src0 = emit_fetch(bld, insn, 0, 1);
+         src1 = emit_fetch(bld, insn, 1, 1);
+         dst0[1] = bld_insn_2(bld, NV_OP_MUL, src0, src1);
+      }
+      if (insn->Dst[0].Register.WriteMask & 4)
+         dst0[2] = emit_fetch(bld, insn, 0, 2);
+      if (insn->Dst[0].Register.WriteMask & 8)
+         dst0[3] = emit_fetch(bld, insn, 1, 3);
+      break;
    case TGSI_OPCODE_EX2:
       src0 = emit_fetch(bld, insn, 0, 0);
       temp = bld_insn_1(bld, NV_OP_PREEX2, src0);
