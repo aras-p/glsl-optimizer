@@ -67,6 +67,7 @@ enum fs_opcodes {
    FS_OPCODE_DDX,
    FS_OPCODE_DDY,
    FS_OPCODE_LINTERP,
+   FS_OPCODE_TEX,
 };
 
 static int using_new_fs = -1;
@@ -299,53 +300,52 @@ public:
       return node;
    }
 
-   fs_inst()
+   void init()
    {
       this->opcode = BRW_OPCODE_NOP;
       this->saturate = false;
       this->conditional_mod = BRW_CONDITIONAL_NONE;
       this->predicated = false;
+      this->sampler = 0;
+      this->shadow_compare = false;
+   }
+
+   fs_inst()
+   {
+      init();
    }
 
    fs_inst(int opcode)
    {
+      init();
       this->opcode = opcode;
-      this->saturate = false;
-      this->conditional_mod = BRW_CONDITIONAL_NONE;
-      this->predicated = false;
    }
 
    fs_inst(int opcode, fs_reg dst, fs_reg src0)
    {
+      init();
       this->opcode = opcode;
       this->dst = dst;
       this->src[0] = src0;
-      this->saturate = false;
-      this->conditional_mod = BRW_CONDITIONAL_NONE;
-      this->predicated = false;
    }
 
    fs_inst(int opcode, fs_reg dst, fs_reg src0, fs_reg src1)
    {
+      init();
       this->opcode = opcode;
       this->dst = dst;
       this->src[0] = src0;
       this->src[1] = src1;
-      this->saturate = false;
-      this->conditional_mod = BRW_CONDITIONAL_NONE;
-      this->predicated = false;
    }
 
    fs_inst(int opcode, fs_reg dst, fs_reg src0, fs_reg src1, fs_reg src2)
    {
+      init();
       this->opcode = opcode;
       this->dst = dst;
       this->src[0] = src0;
       this->src[1] = src1;
       this->src[2] = src2;
-      this->saturate = false;
-      this->conditional_mod = BRW_CONDITIONAL_NONE;
-      this->predicated = false;
    }
 
    int opcode; /* BRW_OPCODE_* or FS_OPCODE_* */
@@ -354,6 +354,10 @@ public:
    bool saturate;
    bool predicated;
    int conditional_mod; /**< BRW_CONDITIONAL_* */
+
+   int mlen; /** SEND message length */
+   int sampler;
+   bool shadow_compare;
 
    /** @{
     * Annotation for the generated IR.  One of the two can be set.
@@ -425,6 +429,7 @@ public:
    void generate_fb_write(fs_inst *inst);
    void generate_linterp(fs_inst *inst, struct brw_reg dst,
 			 struct brw_reg *src);
+   void generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src);
    void generate_math(fs_inst *inst, struct brw_reg dst, struct brw_reg *src);
 
    void emit_dummy_fs();
@@ -540,7 +545,8 @@ fs_visitor::visit(ir_variable *ir)
       int param_index = c->prog_data.nr_params;
 
       /* FINISHME: This is wildly incomplete. */
-      assert(ir->type->is_scalar() || ir->type->is_vector());
+      assert(ir->type->is_scalar() || ir->type->is_vector() ||
+	     ir->type->is_sampler());
 
       const struct gl_program *fp = &this->brw->fragment_program->Base;
       /* Our support for uniforms is piggy-backed on the struct
@@ -869,7 +875,71 @@ fs_visitor::visit(ir_assignment *ir)
 void
 fs_visitor::visit(ir_texture *ir)
 {
-   assert(!"FINISHME");
+   int base_mrf = 2;
+   fs_inst *inst = NULL;
+   unsigned int mlen = 0;
+
+   ir->coordinate->accept(this);
+   fs_reg coordinate = this->result;
+
+   if (ir->projector) {
+      fs_reg inv_proj = fs_reg(this, glsl_type::float_type);
+
+      ir->projector->accept(this);
+      emit(fs_inst(FS_OPCODE_RCP, inv_proj, this->result));
+
+      fs_reg proj_coordinate = fs_reg(this, ir->coordinate->type);
+      for (unsigned int i = 0; i < ir->coordinate->type->vector_elements; i++) {
+	 emit(fs_inst(BRW_OPCODE_MUL, proj_coordinate, coordinate, inv_proj));
+	 coordinate.reg_offset++;
+	 proj_coordinate.reg_offset++;
+      }
+      proj_coordinate.reg_offset = 0;
+
+      coordinate = proj_coordinate;
+   }
+
+   for (mlen = 0; mlen < ir->coordinate->type->vector_elements; mlen++) {
+      emit(fs_inst(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), coordinate));
+      coordinate.reg_offset++;
+   }
+
+   /* Pre-Ironlake, the 8-wide sampler always took u,v,r. */
+   if (intel->gen < 5)
+      mlen = 3;
+
+   if (ir->shadow_comparitor) {
+      /* For shadow comparisons, we have to supply u,v,r. */
+      mlen = 3;
+
+      ir->shadow_comparitor->accept(this);
+      emit(fs_inst(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), this->result));
+      mlen++;
+   }
+
+   /* Do we ever want to handle writemasking on texture samples?  Is it
+    * performance relevant?
+    */
+   fs_reg dst = fs_reg(this, glsl_type::vec4_type);
+   this->result = dst;
+
+   switch (ir->op) {
+   case ir_tex:
+      inst = emit(fs_inst(FS_OPCODE_TEX, dst, fs_reg(MRF, base_mrf)));
+      break;
+   case ir_txb:
+   case ir_txl:
+      assert(!"FINISHME");
+      break;
+   case ir_txd:
+   case ir_txf:
+      assert(!"GLSL 1.30 features unsupported");
+      break;
+   }
+
+   if (ir->shadow_comparitor)
+      inst->shadow_compare = true;
+   inst->mlen = mlen;
 }
 
 void
@@ -1309,6 +1379,46 @@ fs_visitor::generate_math(fs_inst *inst,
 	    BRW_MATH_PRECISION_FULL);
 }
 
+void
+fs_visitor::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src)
+{
+   int msg_type;
+
+   if (intel->gen == 5) {
+      if (inst->shadow_compare)
+	 msg_type = BRW_SAMPLER_MESSAGE_SAMPLE_COMPARE_GEN5;
+      else
+	 msg_type = BRW_SAMPLER_MESSAGE_SAMPLE_GEN5;
+   } else {
+      /* Note that G45 and older determines shadow compare and dispatch width
+       * from message length for most messages.
+       */
+      if (inst->shadow_compare)
+	 msg_type = BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE_COMPARE;
+      else
+	 msg_type = BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE;
+   }
+
+   int response_length = 4;
+
+   /* g0 header. */
+   src.nr--;
+
+   brw_SAMPLE(p,
+	      retype(dst, BRW_REGISTER_TYPE_UW),
+	      src.nr,
+	      retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UW),
+              SURF_INDEX_TEXTURE(inst->sampler),
+	      inst->sampler,
+	      WRITEMASK_XYZW,
+	      msg_type,
+	      response_length,
+	      inst->mlen + 1,
+	      0,
+	      1,
+	      BRW_SAMPLER_SIMD_MODE_SIMD8);
+}
+
 static void
 trivial_assign_reg(int header_size, fs_reg *reg)
 {
@@ -1537,6 +1647,9 @@ fs_visitor::generate_code()
 	 break;
       case FS_OPCODE_LINTERP:
 	 generate_linterp(inst, dst, src);
+	 break;
+      case FS_OPCODE_TEX:
+	 generate_tex(inst, dst, src[0]);
 	 break;
       case FS_OPCODE_FB_WRITE:
 	 generate_fb_write(inst);
