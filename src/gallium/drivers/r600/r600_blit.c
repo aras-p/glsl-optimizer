@@ -215,7 +215,7 @@ static int r600_blit_state_vs_resources(struct r600_screen *rscreen, struct r600
 	}
 	bstates->vs_resource0 = rstate;
 
-	rstate = radeon_state_shader(rscreen->rw, R600_STATE_RESOURCE, 0, R600_SHADER_VS);
+	rstate = radeon_state_shader(rscreen->rw, R600_STATE_RESOURCE, 1, R600_SHADER_VS);
 	if (rstate == NULL) {
 		return -ENOMEM;
 	}
