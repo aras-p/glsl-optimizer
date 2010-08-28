@@ -1337,6 +1337,13 @@ bld_instruction(struct bld_context *bld,
       FOR_EACH_DST0_ENABLED_CHANNEL(c, insn)
          dst0[c] = temp;
       break;
+   case TGSI_OPCODE_DPH:
+      src0 = bld_dot(bld, insn, 3);
+      src1 = emit_fetch(bld, insn, 1, 3);
+      temp = bld_insn_2(bld, NV_OP_ADD, src0, src1);
+      FOR_EACH_DST0_ENABLED_CHANNEL(c, insn)
+         dst0[c] = temp;
+      break;
    case TGSI_OPCODE_DST:
       if (insn->Dst[0].Register.WriteMask & 1)
          dst0[0] = bld_imm_f32(bld, 1.0f);
