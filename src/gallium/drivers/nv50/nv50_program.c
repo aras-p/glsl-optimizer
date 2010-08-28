@@ -461,7 +461,7 @@ nv50_fragprog_prepare(struct nv50_translation_info *ti)
    }
    if (depr < p->out_nr) {
       p->out[depr].mask = 0x4;
-      p->out[depr].hw = p->max_out++;
+      p->out[depr].hw = ti->output_map[depr][2] = p->max_out++;
    }
 
    return 0;
