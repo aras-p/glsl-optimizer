@@ -32,9 +32,10 @@
  */
 
 #include "pipe/p_compiler.h"
+#include "pipe/p_context.h"
+#include "pipe/p_screen.h"
 #include "pipe/p_shader_tokens.h"
 #include "pipe/p_state.h"
-#include "pipe/p_context.h"
 #include "tgsi/tgsi_ureg.h"
 #include "st_mesa_to_tgsi.h"
 #include "st_context.h"
