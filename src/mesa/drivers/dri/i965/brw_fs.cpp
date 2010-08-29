@@ -655,14 +655,17 @@ fs_visitor::visit(ir_expression *ir)
    case ir_unop_sign:
       temp = fs_reg(this, ir->type);
 
-      inst = emit(fs_inst(BRW_OPCODE_CMP, this->result, op[0], fs_reg(0.0f)));
+      emit(fs_inst(BRW_OPCODE_MOV, this->result, fs_reg(0.0f)));
+
+      inst = emit(fs_inst(BRW_OPCODE_CMP, reg_null, op[0], fs_reg(0.0f)));
       inst->conditional_mod = BRW_CONDITIONAL_G;
+      inst = emit(fs_inst(BRW_OPCODE_MOV, this->result, fs_reg(1.0f)));
+      inst->predicated = true;
 
-      inst = emit(fs_inst(BRW_OPCODE_CMP, temp, op[0], fs_reg(0.0f)));
+      inst = emit(fs_inst(BRW_OPCODE_CMP, reg_null, op[0], fs_reg(0.0f)));
       inst->conditional_mod = BRW_CONDITIONAL_L;
-
-      temp.negate = true;
-      emit(fs_inst(BRW_OPCODE_ADD, this->result, this->result, temp));
+      inst = emit(fs_inst(BRW_OPCODE_MOV, this->result, fs_reg(-1.0f)));
+      inst->predicated = true;
 
       break;
    case ir_unop_rcp:
