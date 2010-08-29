@@ -1071,13 +1071,48 @@ fs_visitor::visit(ir_if *ir)
 void
 fs_visitor::visit(ir_loop *ir)
 {
-   assert(!"FINISHME");
+   assert(!ir->from);
+   assert(!ir->to);
+   assert(!ir->increment);
+   assert(!ir->counter);
+
+   emit(fs_inst(BRW_OPCODE_DO));
+
+   /* Start a safety counter.  If the user messed up their loop
+    * counting, we don't want to hang the GPU.
+    */
+   fs_reg max_iter = fs_reg(this, glsl_type::int_type);
+   emit(fs_inst(BRW_OPCODE_MOV, max_iter, fs_reg(10000)));
+
+   foreach_iter(exec_list_iterator, iter, ir->body_instructions) {
+      ir_instruction *ir = (ir_instruction *)iter.get();
+      fs_inst *inst;
+
+      this->base_ir = ir;
+      ir->accept(this);
+
+      /* Check the maximum loop iters counter. */
+      inst = emit(fs_inst(BRW_OPCODE_ADD, max_iter, max_iter, fs_reg(-1)));
+      inst->conditional_mod = BRW_CONDITIONAL_Z;
+
+      inst = emit(fs_inst(BRW_OPCODE_BREAK));
+      inst->predicated = true;
+   }
+
+   emit(fs_inst(BRW_OPCODE_WHILE));
 }
 
 void
 fs_visitor::visit(ir_loop_jump *ir)
 {
-   assert(!"FINISHME");
+   switch (ir->mode) {
+   case ir_loop_jump::jump_break:
+      emit(fs_inst(BRW_OPCODE_BREAK));
+      break;
+   case ir_loop_jump::jump_continue:
+      emit(fs_inst(BRW_OPCODE_CONTINUE));
+      break;
+   }
 }
 
 void
@@ -1624,8 +1659,11 @@ fs_visitor::generate_code()
 {
    unsigned int annotation_len = 0;
    int last_native_inst = 0;
-   struct brw_instruction *if_stack[16];
-   int if_stack_depth = 0;
+   struct brw_instruction *if_stack[16], *loop_stack[16];
+   int if_stack_depth = 0, loop_stack_depth = 0;
+   int if_depth_in_loop[16];
+
+   if_depth_in_loop[loop_stack_depth] = 0;
 
    memset(&if_stack, 0, sizeof(if_stack));
    foreach_iter(exec_list_iterator, iter, this->instructions) {
@@ -1691,6 +1729,46 @@ fs_visitor::generate_code()
 	 if_stack_depth--;
 	 brw_ENDIF(p , if_stack[if_stack_depth]);
 	 break;
+
+      case BRW_OPCODE_DO:
+	 loop_stack[loop_stack_depth++] = brw_DO(p, BRW_EXECUTE_8);
+	 if_depth_in_loop[loop_stack_depth] = 0;
+	 break;
+
+      case BRW_OPCODE_BREAK:
+	 brw_BREAK(p, if_depth_in_loop[loop_stack_depth]);
+	 brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+	 break;
+      case BRW_OPCODE_CONTINUE:
+	 brw_CONT(p, if_depth_in_loop[loop_stack_depth]);
+	 brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+	 break;
+
+      case BRW_OPCODE_WHILE: {
+	 struct brw_instruction *inst0, *inst1;
+	 GLuint br = 1;
+
+	 if (intel->gen == 5)
+	    br = 2;
+
+	 assert(loop_stack_depth > 0);
+	 loop_stack_depth--;
+	 inst0 = inst1 = brw_WHILE(p, loop_stack[loop_stack_depth]);
+	 /* patch all the BREAK/CONT instructions from last BGNLOOP */
+	 while (inst0 > loop_stack[loop_stack_depth]) {
+	    inst0--;
+	    if (inst0->header.opcode == BRW_OPCODE_BREAK &&
+		inst0->bits3.if_else.jump_count == 0) {
+	       inst0->bits3.if_else.jump_count = br * (inst1 - inst0 + 1);
+	    }
+	    else if (inst0->header.opcode == BRW_OPCODE_CONTINUE &&
+		     inst0->bits3.if_else.jump_count == 0) {
+	       inst0->bits3.if_else.jump_count = br * (inst1 - inst0);
+	    }
+	 }
+      }
+	 break;
+
       case FS_OPCODE_RCP:
       case FS_OPCODE_RSQ:
       case FS_OPCODE_SQRT:
