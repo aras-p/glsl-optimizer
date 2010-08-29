@@ -140,7 +140,7 @@ galahad_screen_resource_create(struct pipe_screen *_screen,
 
    if(templat->target != PIPE_TEXTURE_RECT && templat->target != PIPE_BUFFER && !screen->get_param(screen, PIPE_CAP_NPOT_TEXTURES))
    {
-      if(!util_is_pot(templat->width0) || !util_is_pot(templat->height0))
+      if(!util_is_power_of_two(templat->width0) || !util_is_power_of_two(templat->height0))
          glhd_warn("Requested NPOT (%ux%u) non-rectangle texture without NPOT support", templat->width0, templat->height0);
    }
 

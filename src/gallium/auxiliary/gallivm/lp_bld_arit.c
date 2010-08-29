@@ -538,7 +538,7 @@ lp_build_mul_imm(struct lp_build_context *bld,
    if(b == 2 && bld->type.floating)
       return lp_build_add(bld, a, a);
 
-   if(util_is_pot(b)) {
+   if(util_is_power_of_two(b)) {
       unsigned shift = ffs(b) - 1;
 
       if(bld->type.floating) {
