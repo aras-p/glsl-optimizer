@@ -839,6 +839,10 @@ static GLboolean evergreenTryDrawPrims(GLcontext *ctx,
     GLuint emit_end = evergreenPredictRenderSize(ctx, prim, ib, nr_prims)
                     + context->radeon.cmdbuf.cs->cdw;
 
+    /* evergreenPredictRenderSize will call radeonReleaseDmaRegions, so update VP/FP const buf after it. */
+    evergreenSetupVPconstants(ctx);
+    evergreenSetupFPconstants(ctx);
+
     evergreenSetupIndexBuffer(ctx, ib);
 
     evergreenSetupStreams(ctx, arrays, max_index + 1);
@@ -849,16 +853,12 @@ static GLboolean evergreenTryDrawPrims(GLcontext *ctx,
 
     for (i = 0; i < nr_prims; ++i)
     {
-/* richard test disable */
-#if 0
 	    if (context->ind_buf.bo)
 		    evergreenRunRenderPrimitive(ctx,
 					   prim[i].start,
 					   prim[i].start + prim[i].count,
 					   prim[i].mode);
 	    else
-#endif //0
-//-------------
 		    evergreenRunRenderPrimitiveImmediate(ctx,
 						    prim[i].start,
 						    prim[i].start + prim[i].count,

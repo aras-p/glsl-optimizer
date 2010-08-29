@@ -501,9 +501,7 @@ GLboolean evergreenSetupFragmentProgram(GLcontext * ctx)
     struct evergreen_fragment_program *fp = (struct evergreen_fragment_program *)
 	                                   (ctx->FragmentProgram._Current);
     r700_AssemblerBase         *pAsm = &(fp->r700AsmCode);
-    struct gl_fragment_program *mesa_fp = &(fp->mesa_program);
-    struct gl_program_parameter_list *paramList;
-    unsigned int unNumParamData;
+    struct gl_fragment_program *mesa_fp = &(fp->mesa_program);    
     unsigned int ui, i;
     unsigned int unNumOfReg;
     unsigned int unBit;
@@ -742,7 +740,22 @@ GLboolean evergreenSetupFragmentProgram(GLcontext * ctx)
     }
 
     exportCount = (evergreen->SQ_PGM_EXPORTS_PS.u32All & EXPORT_MODE_mask) / (1 << EXPORT_MODE_shift);
-    
+
+    return GL_TRUE;
+}
+
+GLboolean evergreenSetupFPconstants(GLcontext * ctx)
+{
+    context_t *context = EVERGREEN_CONTEXT(ctx);
+    EVERGREEN_CHIP_CONTEXT *evergreen = GET_EVERGREEN_CHIP(context);
+    struct evergreen_fragment_program *fp = (struct evergreen_fragment_program *)
+	                                   (ctx->FragmentProgram._Current);
+    r700_AssemblerBase *pAsm = &(fp->r700AsmCode);
+
+    struct gl_program_parameter_list *paramList;
+    unsigned int unNumParamData;
+    unsigned int ui;
+
     /* sent out shader constants. */
     paramList = fp->mesa_program.Base.Parameters;
 
@@ -801,7 +814,4 @@ GLboolean evergreenSetupFragmentProgram(GLcontext * ctx)
         }
         unConstOffset += pCompiledSub->NumParameters;
     }
-
-    return GL_TRUE;
 }
-

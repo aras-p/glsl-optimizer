@@ -68,6 +68,8 @@ extern void evergreenSelectFragmentShader(GLcontext *ctx);
 
 extern GLboolean evergreenSetupFragmentProgram(GLcontext * ctx);
 
+extern GLboolean evergreenSetupFPconstants(GLcontext * ctx);
+
 extern void *    evergreenGetActiveFpShaderBo(GLcontext * ctx);
 
 extern void *    evergreenGetActiveFpShaderConstBo(GLcontext * ctx);

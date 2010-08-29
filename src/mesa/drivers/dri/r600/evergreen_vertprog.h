@@ -98,6 +98,8 @@ extern void evergreenSetVertexFormat(GLcontext *ctx, const struct gl_client_arra
 
 extern GLboolean evergreenSetupVertexProgram(GLcontext * ctx);
 
+extern GLboolean evergreenSetupVPconstants(GLcontext * ctx);
+
 extern void * evergreenGetActiveVpShaderBo(GLcontext * ctx);
 
 extern void * evergreenGetActiveVpShaderConstBo(GLcontext * ctx);

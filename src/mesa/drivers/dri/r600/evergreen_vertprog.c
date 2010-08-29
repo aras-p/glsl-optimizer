@@ -599,10 +599,6 @@ GLboolean evergreenSetupVertexProgram(GLcontext * ctx)
     EVERGREEN_CHIP_CONTEXT *evergreen = GET_EVERGREEN_CHIP(context);
     struct evergreen_vertex_program *vp = context->selected_vp;
 
-    struct gl_program_parameter_list *paramList;
-    unsigned int unNumParamData;
-    unsigned int ui;
-
     if(GL_FALSE == vp->loaded)
     {
 	    if(vp->r700Shader.bNeedsAssembly == GL_TRUE)
@@ -654,6 +650,19 @@ GLboolean evergreenSetupVertexProgram(GLcontext * ctx)
     SETbit(evergreen->SPI_PS_IN_CONTROL_0.u32All, PERSP_GRADIENT_ENA_bit);
     CLEARbit(evergreen->SPI_PS_IN_CONTROL_0.u32All, LINEAR_GRADIENT_ENA_bit);
     */
+
+    return GL_TRUE;
+}
+
+GLboolean evergreenSetupVPconstants(GLcontext * ctx)
+{
+    context_t *context = EVERGREEN_CONTEXT(ctx);
+    EVERGREEN_CHIP_CONTEXT *evergreen = GET_EVERGREEN_CHIP(context);
+    struct evergreen_vertex_program *vp = context->selected_vp;
+
+    struct gl_program_parameter_list *paramList;
+    unsigned int unNumParamData;
+    unsigned int ui;
 
     /* sent out shader constants. */
     paramList = vp->mesa_program->Base.Parameters;
@@ -724,6 +733,4 @@ GLboolean evergreenSetupVertexProgram(GLcontext * ctx)
         }
         unConstOffset += pCompiledSub->NumParameters;
     }
-
-    return GL_TRUE;
 }

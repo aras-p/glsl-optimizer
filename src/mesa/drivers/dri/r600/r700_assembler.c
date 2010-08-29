@@ -4408,7 +4408,14 @@ GLboolean assemble_LIT(r700_AssemblerBase *pAsm)
     swizzleagain_PVSSRC(&(pAsm->S[2].src), SQ_SEL_X, SQ_SEL_X, SQ_SEL_X, SQ_SEL_X);
 
     /* tmp.x = amd MUL_LIT(src.w, dst.z, src.x ) */
-    pAsm->D.dst.opcode   = SQ_OP3_INST_MUL_LIT;
+    if(8 == pAsm->unAsic)
+    {
+        pAsm->D.dst.opcode = EG_OP3_INST_MUL_LIT;
+    }
+    else
+    {
+        pAsm->D.dst.opcode = SQ_OP3_INST_MUL_LIT;
+    }
     pAsm->D.dst.math     = 1;
     pAsm->D.dst.op3      = 1;
     pAsm->D.dst.rtype    = DST_REG_TEMPORARY;
