@@ -1193,7 +1193,7 @@ ast_function_expression::hir(exec_list *instructions,
 	  * causes the matrix to be filled with 0 and the diagonal to be
 	  * filled with the value.
 	  */
-	 ir_constant_data data;
+	 ir_constant_data data = { { 0 } };
 	 ir_constant *const initializer =
 	    (ir_constant *) actual_parameters.head;
 	 if (constructor_type->is_matrix())
