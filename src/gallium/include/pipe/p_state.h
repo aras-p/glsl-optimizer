@@ -43,7 +43,6 @@
 #include "p_compiler.h"
 #include "p_defines.h"
 #include "p_format.h"
-#include "p_screen.h"
 
 
 #ifdef __cplusplus
