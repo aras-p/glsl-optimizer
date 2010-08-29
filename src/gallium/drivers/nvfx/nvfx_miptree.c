@@ -20,9 +20,9 @@ nvfx_miptree_choose_format(struct nvfx_miptree *mt)
 	if(no_swizzle < 0)
 		no_swizzle = debug_get_bool_option("NV40_NO_SWIZZLE", FALSE); /* this will break things on nv30 */
 
-	if (!util_is_pot(pt->width0) ||
-	    !util_is_pot(pt->height0) ||
-	    !util_is_pot(pt->depth0) ||
+	if (!util_is_power_of_two(pt->width0) ||
+	    !util_is_power_of_two(pt->height0) ||
+	    !util_is_power_of_two(pt->depth0) ||
 	    (!nvfx_screen(pt->screen)->is_nv4x && pt->target == PIPE_TEXTURE_RECT)
 	    )
 		uniform_pitch = 1;
@@ -69,7 +69,7 @@ nvfx_miptree_layout(struct nvfx_miptree *mt)
 	if(!nvfx_screen(pt->screen)->is_nv4x)
 	{
 		assert(pt->target == PIPE_TEXTURE_RECT
-			|| (util_is_pot(pt->width0) && util_is_pot(pt->height0)));
+			|| (util_is_power_of_two(pt->width0) && util_is_power_of_two(pt->height0)));
 	}
 
 	for (unsigned l = 0; l <= pt->last_level; l++)

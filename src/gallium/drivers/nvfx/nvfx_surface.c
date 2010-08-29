@@ -61,7 +61,7 @@ nvfx_region_set_format(struct nv04_region* rgn, enum pipe_format format)
 	default:
 		{
 			int shift;
-			assert(util_is_pot(bits));
+			assert(util_is_power_of_two(bits));
 			shift = util_logbase2(bits) - 3;
 			assert(shift >= 2);
 			rgn->bpps = 2;
