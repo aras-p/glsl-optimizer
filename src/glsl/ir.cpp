@@ -326,6 +326,9 @@ ir_constant::ir_constant(float f)
    this->ir_type = ir_type_constant;
    this->type = glsl_type::float_type;
    this->value.f[0] = f;
+   for (int i = 1; i < 16; i++)  {
+      this->value.f[i] = 0;
+   }
 }
 
 ir_constant::ir_constant(unsigned int u)
@@ -333,6 +336,9 @@ ir_constant::ir_constant(unsigned int u)
    this->ir_type = ir_type_constant;
    this->type = glsl_type::uint_type;
    this->value.u[0] = u;
+   for (int i = 1; i < 16; i++) {
+      this->value.u[i] = 0;
+   }
 }
 
 ir_constant::ir_constant(int i)
@@ -340,6 +346,9 @@ ir_constant::ir_constant(int i)
    this->ir_type = ir_type_constant;
    this->type = glsl_type::int_type;
    this->value.i[0] = i;
+   for (int i = 1; i < 16; i++) {
+      this->value.i[i] = 0;
+   }
 }
 
 ir_constant::ir_constant(bool b)
@@ -347,6 +356,9 @@ ir_constant::ir_constant(bool b)
    this->ir_type = ir_type_constant;
    this->type = glsl_type::bool_type;
    this->value.b[0] = b;
+   for (int i = 1; i < 16; i++) {
+      this->value.b[i] = false;
+   }
 }
 
 ir_constant::ir_constant(const ir_constant *c, unsigned i)
