@@ -653,7 +653,7 @@ ir_swizzle::constant_expression_value()
    ir_constant *v = this->val->constant_expression_value();
 
    if (v != NULL) {
-      ir_constant_data data;
+      ir_constant_data data = { { 0 } };
 
       const unsigned swiz_idx[4] = {
 	 this->mask.x, this->mask.y, this->mask.z, this->mask.w
