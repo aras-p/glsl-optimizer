@@ -40,6 +40,7 @@
 #include <llvm/ExecutionEngine/ExecutionEngine.h>
 #include <llvm/ExecutionEngine/JITEventListener.h>
 #include <llvm/Support/CommandLine.h>
+#include <llvm/Support/PrettyStackTrace.h>
 
 #include "pipe/p_config.h"
 #include "util/u_debug.h"
@@ -161,6 +162,13 @@ lp_set_target_options(void)
       llvm::cl::ParseCommandLineOptions(2, const_cast<char**>(options));
       first = FALSE;
    }
+
+   /*
+    * By default LLVM adds a signal handler to output a pretty stack trace.
+    * This signal handler is never removed, causing problems when unloading the
+    * shared object where the gallium driver resides.
+    */
+   llvm::DisablePrettyStackTrace = true;
 }
 
 
