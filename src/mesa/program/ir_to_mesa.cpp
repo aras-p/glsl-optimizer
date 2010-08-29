@@ -1553,7 +1553,7 @@ void
 ir_to_mesa_visitor::visit(ir_constant *ir)
 {
    ir_to_mesa_src_reg src_reg;
-   GLfloat stack_vals[4];
+   GLfloat stack_vals[4] = { 0 };
    GLfloat *values = stack_vals;
    unsigned int i;
 
