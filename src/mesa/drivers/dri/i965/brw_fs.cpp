@@ -68,6 +68,8 @@ enum fs_opcodes {
    FS_OPCODE_DDY,
    FS_OPCODE_LINTERP,
    FS_OPCODE_TEX,
+   FS_OPCODE_TXB,
+   FS_OPCODE_TXL,
 };
 
 static int using_new_fs = -1;
@@ -921,21 +923,32 @@ fs_visitor::visit(ir_texture *ir)
     * performance relevant?
     */
    fs_reg dst = fs_reg(this, glsl_type::vec4_type);
-   this->result = dst;
 
    switch (ir->op) {
    case ir_tex:
       inst = emit(fs_inst(FS_OPCODE_TEX, dst, fs_reg(MRF, base_mrf)));
       break;
    case ir_txb:
+      ir->lod_info.bias->accept(this);
+      emit(fs_inst(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), this->result));
+      mlen++;
+
+      inst = emit(fs_inst(FS_OPCODE_TXB, dst, fs_reg(MRF, base_mrf)));
+      break;
    case ir_txl:
-      assert(!"FINISHME");
+      ir->lod_info.lod->accept(this);
+      emit(fs_inst(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), this->result));
+      mlen++;
+
+      inst = emit(fs_inst(FS_OPCODE_TXL, dst, fs_reg(MRF, base_mrf)));
       break;
    case ir_txd:
    case ir_txf:
       assert(!"GLSL 1.30 features unsupported");
       break;
    }
+
+   this->result = dst;
 
    if (ir->shadow_comparitor)
       inst->shadow_compare = true;
@@ -1382,24 +1395,49 @@ fs_visitor::generate_math(fs_inst *inst,
 void
 fs_visitor::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src)
 {
-   int msg_type;
+   int msg_type = -1;
+   int rlen = 4;
 
    if (intel->gen == 5) {
-      if (inst->shadow_compare)
-	 msg_type = BRW_SAMPLER_MESSAGE_SAMPLE_COMPARE_GEN5;
-      else
-	 msg_type = BRW_SAMPLER_MESSAGE_SAMPLE_GEN5;
+      switch (inst->opcode) {
+      case FS_OPCODE_TEX:
+	 if (inst->shadow_compare) {
+	    msg_type = BRW_SAMPLER_MESSAGE_SAMPLE_COMPARE_GEN5;
+	 } else {
+	    msg_type = BRW_SAMPLER_MESSAGE_SAMPLE_GEN5;
+	 }
+	 break;
+      case FS_OPCODE_TXB:
+	 if (inst->shadow_compare) {
+	    msg_type = BRW_SAMPLER_MESSAGE_SAMPLE_BIAS_COMPARE_GEN5;
+	 } else {
+	    msg_type = BRW_SAMPLER_MESSAGE_SAMPLE_BIAS_GEN5;
+	 }
+	 break;
+      }
    } else {
-      /* Note that G45 and older determines shadow compare and dispatch width
-       * from message length for most messages.
-       */
-      if (inst->shadow_compare)
-	 msg_type = BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE_COMPARE;
-      else
-	 msg_type = BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE;
+      switch (inst->opcode) {
+      case FS_OPCODE_TEX:
+	 /* Note that G45 and older determines shadow compare and dispatch width
+	  * from message length for most messages.
+	  */
+	 if (inst->shadow_compare) {
+	    msg_type = BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE_COMPARE;
+	 } else {
+	    msg_type = BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE;
+	 }
+      case FS_OPCODE_TXB:
+	 if (inst->shadow_compare) {
+	    assert(!"FINISHME: shadow compare with bias.");
+	    msg_type = BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE_BIAS;
+	 } else {
+	    msg_type = BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE_BIAS;
+	    rlen = 8;
+	 }
+	 break;
+      }
    }
-
-   int response_length = 4;
+   assert(msg_type != -1);
 
    /* g0 header. */
    src.nr--;
@@ -1412,7 +1450,7 @@ fs_visitor::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src)
 	      inst->sampler,
 	      WRITEMASK_XYZW,
 	      msg_type,
-	      response_length,
+	      rlen,
 	      inst->mlen + 1,
 	      0,
 	      1,
@@ -1649,6 +1687,8 @@ fs_visitor::generate_code()
 	 generate_linterp(inst, dst, src);
 	 break;
       case FS_OPCODE_TEX:
+      case FS_OPCODE_TXB:
+      case FS_OPCODE_TXL:
 	 generate_tex(inst, dst, src[0]);
 	 break;
       case FS_OPCODE_FB_WRITE:
