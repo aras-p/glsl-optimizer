@@ -803,7 +803,7 @@ read_constant(_mesa_glsl_parse_state *st, s_list *list)
 
    const glsl_type *const base_type = type->get_base_type();
 
-   ir_constant_data data;
+   ir_constant_data data = { { 0 } };
 
    // Read in list of values (at most 16).
    int k = 0;
