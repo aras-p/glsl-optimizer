@@ -27,6 +27,7 @@
 #ifndef U_BLITTER_H
 #define U_BLITTER_H
 
+#include "util/u_framebuffer.h"
 #include "util/u_inlines.h"
 #include "util/u_memory.h"
 
@@ -258,45 +259,12 @@ void util_blitter_save_vertex_shader(struct blitter_context *blitter,
    blitter->saved_vs = vs;
 }
 
-/* XXX This should probably be moved elsewhere. */
-static INLINE
-void util_assign_framebuffer_state(struct pipe_framebuffer_state *dst,
-                                   const struct pipe_framebuffer_state *src)
-{
-   unsigned i;
-
-   if (src) {
-      /* Reference all surfaces. */
-      for (i = 0; i < src->nr_cbufs; i++) {
-         pipe_surface_reference(&dst->cbufs[i], src->cbufs[i]);
-      }
-      for (; i < dst->nr_cbufs; i++) {
-         pipe_surface_reference(&dst->cbufs[i], NULL);
-      }
-
-      pipe_surface_reference(&dst->zsbuf, src->zsbuf);
-
-      dst->nr_cbufs = src->nr_cbufs;
-      dst->width = src->width;
-      dst->height = src->height;
-   } else {
-      /* Set all surfaces to NULL. */
-      for (i = 0; i < dst->nr_cbufs; i++) {
-         pipe_surface_reference(&dst->cbufs[i], NULL);
-      }
-
-      pipe_surface_reference(&dst->zsbuf, NULL);
-
-      dst->nr_cbufs = 0;
-   }
-}
-
 static INLINE
 void util_blitter_save_framebuffer(struct blitter_context *blitter,
                                    const struct pipe_framebuffer_state *state)
 {
    blitter->saved_fb_state.nr_cbufs = 0; /* It's ~0 now, meaning it's unsaved. */
-   util_assign_framebuffer_state(&blitter->saved_fb_state, state);
+   util_copy_framebuffer_state(&blitter->saved_fb_state, state);
 }
 
 static INLINE

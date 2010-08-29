@@ -65,7 +65,7 @@ static void r300_release_referenced_objects(struct r300_context *r300)
     unsigned i;
 
     /* Framebuffer state. */
-    util_assign_framebuffer_state(fb, NULL);
+    util_unreference_framebuffer_state(fb);
 
     /* Textures. */
     for (i = 0; i < textures->sampler_view_count; i++)

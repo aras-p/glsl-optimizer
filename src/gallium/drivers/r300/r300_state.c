@@ -23,7 +23,7 @@
 
 #include "draw/draw_context.h"
 
-#include "util/u_blitter.h"
+#include "util/u_framebuffer.h"
 #include "util/u_math.h"
 #include "util/u_mm.h"
 #include "util/u_memory.h"
@@ -748,7 +748,7 @@ static void
     /* The tiling flags are dependent on the surface miplevel, unfortunately. */
     r300_fb_set_tiling_flags(r300, state);
 
-    util_assign_framebuffer_state(r300->fb_state.state, state);
+    util_copy_framebuffer_state(r300->fb_state.state, state);
 
     r300_mark_fb_state_dirty(r300, R300_CHANGED_FB_STATE);
 

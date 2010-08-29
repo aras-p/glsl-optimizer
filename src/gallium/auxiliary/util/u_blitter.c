@@ -320,7 +320,7 @@ static void blitter_restore_CSOs(struct blitter_context_priv *ctx)
     */
    if (ctx->base.saved_fb_state.nr_cbufs != ~0) {
       pipe->set_framebuffer_state(pipe, &ctx->base.saved_fb_state);
-      util_assign_framebuffer_state(&ctx->base.saved_fb_state, NULL);
+      util_unreference_framebuffer_state(&ctx->base.saved_fb_state);
       ctx->base.saved_fb_state.nr_cbufs = ~0;
    }
 
