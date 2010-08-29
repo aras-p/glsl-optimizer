@@ -70,6 +70,7 @@ enum fs_opcodes {
    FS_OPCODE_TEX,
    FS_OPCODE_TXB,
    FS_OPCODE_TXL,
+   FS_OPCODE_DISCARD,
 };
 
 static int using_new_fs = -1;
@@ -433,6 +434,7 @@ public:
 			 struct brw_reg *src);
    void generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src);
    void generate_math(fs_inst *inst, struct brw_reg dst, struct brw_reg *src);
+   void generate_discard(fs_inst *inst);
 
    void emit_dummy_fs();
    void emit_interpolation();
@@ -995,7 +997,9 @@ fs_visitor::visit(ir_swizzle *ir)
 void
 fs_visitor::visit(ir_discard *ir)
 {
-   assert(!"FINISHME");
+   assert(ir->condition == NULL); /* FINISHME */
+
+   emit(fs_inst(FS_OPCODE_DISCARD));
 }
 
 void
@@ -1460,6 +1464,17 @@ fs_visitor::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src)
 	      BRW_SAMPLER_SIMD_MODE_SIMD8);
 }
 
+void
+fs_visitor::generate_discard(fs_inst *inst)
+{
+   struct brw_reg g0 = retype(brw_vec1_grf(0, 0), BRW_REGISTER_TYPE_UW);
+   brw_push_insn_state(p);
+   brw_set_mask_control(p, BRW_MASK_DISABLE);
+   brw_NOT(p, c->emit_mask_reg, brw_mask_reg(1)); /* IMASK */
+   brw_AND(p, g0, c->emit_mask_reg, g0);
+   brw_pop_insn_state(p);
+}
+
 static void
 trivial_assign_reg(int header_size, fs_reg *reg)
 {
@@ -1693,6 +1708,9 @@ fs_visitor::generate_code()
       case FS_OPCODE_TXB:
       case FS_OPCODE_TXL:
 	 generate_tex(inst, dst, src[0]);
+	 break;
+      case FS_OPCODE_DISCARD:
+	 generate_discard(inst);
 	 break;
       case FS_OPCODE_FB_WRITE:
 	 generate_fb_write(inst);
