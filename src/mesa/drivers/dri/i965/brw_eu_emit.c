@@ -777,7 +777,7 @@ void brw_ENDIF(struct brw_compile *p,
    }
 }
 
-struct brw_instruction *brw_BREAK(struct brw_compile *p)
+struct brw_instruction *brw_BREAK(struct brw_compile *p, int pop_count)
 {
    struct brw_instruction *insn;
    insn = next_insn(p, BRW_OPCODE_BREAK);
@@ -788,10 +788,11 @@ struct brw_instruction *brw_BREAK(struct brw_compile *p)
    insn->header.execution_size = BRW_EXECUTE_8;
    /* insn->header.mask_control = BRW_MASK_DISABLE; */
    insn->bits3.if_else.pad0 = 0;
+   insn->bits3.if_else.pop_count = pop_count;
    return insn;
 }
 
-struct brw_instruction *brw_CONT(struct brw_compile *p)
+struct brw_instruction *brw_CONT(struct brw_compile *p, int pop_count)
 {
    struct brw_instruction *insn;
    insn = next_insn(p, BRW_OPCODE_CONTINUE);
@@ -802,6 +803,7 @@ struct brw_instruction *brw_CONT(struct brw_compile *p)
    insn->header.execution_size = BRW_EXECUTE_8;
    /* insn->header.mask_control = BRW_MASK_DISABLE; */
    insn->bits3.if_else.pad0 = 0;
+   insn->bits3.if_else.pop_count = pop_count;
    return insn;
 }
 

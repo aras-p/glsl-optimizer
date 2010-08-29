@@ -1822,7 +1822,6 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 	struct brw_reg args[3][4], dst[4];
 	int j;
 	int mark = mark_tmps( c );
-	struct brw_instruction *temp;
 
         c->cur_inst = i;
 
@@ -2071,13 +2070,11 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 		if_depth_in_loop[loop_depth] = 0;
 		break;
 	    case OPCODE_BRK:
-		temp = brw_BREAK(p);
-		temp->bits3.if_else.pop_count = if_depth_in_loop[loop_depth];
+		brw_BREAK(p, if_depth_in_loop[loop_depth]);
 		brw_set_predicate_control(p, BRW_PREDICATE_NONE);
 		break;
 	    case OPCODE_CONT:
-		temp = brw_CONT(p);
-		temp->bits3.if_else.pop_count = if_depth_in_loop[loop_depth];
+		brw_CONT(p, if_depth_in_loop[loop_depth]);
 		brw_set_predicate_control(p, BRW_PREDICATE_NONE);
 		break;
 	    case OPCODE_ENDLOOP: 

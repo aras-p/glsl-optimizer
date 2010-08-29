@@ -1654,7 +1654,6 @@ void brw_vs_emit(struct brw_vs_compile *c )
       const struct prog_instruction *inst = &c->vp->program.Base.Instructions[insn];
       struct brw_reg args[3], dst;
       GLuint i;
-      struct brw_instruction *temp;
 
 #if 0
       printf("%d: ", insn);
@@ -1841,14 +1840,12 @@ void brw_vs_emit(struct brw_vs_compile *c )
          break;
       case OPCODE_BRK:
 	 brw_set_predicate_control(p, get_predicate(inst));
-	 temp = brw_BREAK(p);
-	 temp->bits3.if_else.pop_count = if_depth_in_loop[loop_depth];
+	 brw_BREAK(p, if_depth_in_loop[loop_depth]);
 	 brw_set_predicate_control(p, BRW_PREDICATE_NONE);
          break;
       case OPCODE_CONT:
 	 brw_set_predicate_control(p, get_predicate(inst));
-	 temp = brw_CONT(p);
-	 temp->bits3.if_else.pop_count = if_depth_in_loop[loop_depth];
+	 brw_CONT(p, if_depth_in_loop[loop_depth]);
          brw_set_predicate_control(p, BRW_PREDICATE_NONE);
          break;
       case OPCODE_ENDLOOP: 
