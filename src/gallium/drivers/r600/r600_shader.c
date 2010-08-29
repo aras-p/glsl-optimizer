@@ -48,6 +48,8 @@ struct r600_shader_ctx {
 	struct r600_bc				*bc;
 	struct r600_shader			*shader;
 	u32					value[4];
+	u32					*literals;
+	u32					nliterals;
 };
 
 struct r600_shader_tgsi_instruction {
@@ -404,15 +406,24 @@ int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *s
 	ctx.temp_reg = ctx.file_offset[TGSI_FILE_TEMPORARY] +
 			ctx.info.file_count[TGSI_FILE_TEMPORARY];
 
+	ctx.nliterals = 0;
+	ctx.literals = NULL;
+
 	while (!tgsi_parse_end_of_tokens(&ctx.parse)) {
 		tgsi_parse_token(&ctx.parse);
 		switch (ctx.parse.FullToken.Token.Type) {
 		case TGSI_TOKEN_TYPE_IMMEDIATE:
 			immediate = &ctx.parse.FullToken.FullImmediate;
-			ctx.value[0] = immediate->u[0].Uint;
-			ctx.value[1] = immediate->u[1].Uint;
-			ctx.value[2] = immediate->u[2].Uint;
-			ctx.value[3] = immediate->u[3].Uint;
+			ctx.literals = realloc(ctx.literals, (ctx.nliterals + 1) * 16);
+			if(ctx.literals == NULL) {
+				r = -ENOMEM;
+				goto out_err;
+			}
+			ctx.literals[ctx.nliterals * 4 + 0] = immediate->u[0].Uint;
+			ctx.literals[ctx.nliterals * 4 + 1] = immediate->u[1].Uint;
+			ctx.literals[ctx.nliterals * 4 + 2] = immediate->u[2].Uint;
+			ctx.literals[ctx.nliterals * 4 + 3] = immediate->u[3].Uint;
+			ctx.nliterals++;
 			break;
 		case TGSI_TOKEN_TYPE_DECLARATION:
 			r = tgsi_declaration(&ctx);
@@ -540,9 +551,11 @@ int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *s
 		if (r)
 			goto out_err;
 	}
+	free(ctx.literals);
 	tgsi_parse_free(&ctx.parse);
 	return 0;
 out_err:
+	free(ctx.literals);
 	tgsi_parse_free(&ctx.parse);
 	return r;
 }
@@ -562,10 +575,16 @@ static int tgsi_src(struct r600_shader_ctx *ctx,
 			const struct tgsi_full_src_register *tgsi_src,
 			struct r600_bc_alu_src *r600_src)
 {
+	int index;
 	memset(r600_src, 0, sizeof(struct r600_bc_alu_src));
 	r600_src->sel = tgsi_src->Register.Index;
 	if (tgsi_src->Register.File == TGSI_FILE_IMMEDIATE) {
 		r600_src->sel = 0;
+		index = tgsi_src->Register.Index;
+		ctx->value[0] = ctx->literals[index * 4 + 0];
+		ctx->value[1] = ctx->literals[index * 4 + 1];
+		ctx->value[2] = ctx->literals[index * 4 + 2];
+		ctx->value[3] = ctx->literals[index * 4 + 3];
 	}
 	r600_src->neg = tgsi_src->Register.Negate;
 	r600_src->sel += ctx->file_offset[tgsi_src->Register.File];
