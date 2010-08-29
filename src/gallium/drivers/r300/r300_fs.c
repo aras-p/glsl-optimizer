@@ -200,6 +200,9 @@ static void get_external_state(
             default:
                 state->unit[i].wrap_mode = RC_WRAP_NONE;
             }
+
+            if (t->desc.b.b.target == PIPE_TEXTURE_3D)
+                state->unit[i].clamp_and_scale_before_fetch = TRUE;
         }
     }
 }

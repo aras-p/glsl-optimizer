@@ -89,7 +89,7 @@ static const float * get_rc_constant_state(
 {
     struct r300_textures_state* texstate = r300->textures_state.state;
     static float vec[4] = { 0.0, 0.0, 0.0, 1.0 };
-    struct pipe_resource *tex;
+    struct r300_texture *tex;
 
     assert(constant->Type == RC_CONSTANT_STATE);
 
@@ -97,9 +97,17 @@ static const float * get_rc_constant_state(
         /* Factor for converting rectangle coords to
          * normalized coords. Should only show up on non-r500. */
         case RC_STATE_R300_TEXRECT_FACTOR:
-            tex = texstate->sampler_views[constant->u.State[1]]->base.texture;
-            vec[0] = 1.0 / tex->width0;
-            vec[1] = 1.0 / tex->height0;
+            tex = r300_texture(texstate->sampler_views[constant->u.State[1]]->base.texture);
+            vec[0] = 1.0 / tex->desc.width0;
+            vec[1] = 1.0 / tex->desc.height0;
+            break;
+
+        case RC_STATE_R300_TEXSCALE_FACTOR:
+            tex = r300_texture(texstate->sampler_views[constant->u.State[1]]->base.texture);
+            /* Add a small number to the texture size to work around rounding errors in hw. */
+            vec[0] = tex->desc.b.b.width0  / (tex->desc.width0  + 0.001f);
+            vec[1] = tex->desc.b.b.height0 / (tex->desc.height0 + 0.001f);
+            vec[2] = tex->desc.b.b.depth0  / (tex->desc.depth0  + 0.001f);
             break;
 
         case RC_STATE_R300_VIEWPORT_SCALE:

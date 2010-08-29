@@ -252,7 +252,8 @@ int radeonTransformTEX(
 
 	/* Divide by W if needed. */
 	if (inst->U.I.Opcode == RC_OPCODE_TXP &&
-	    (wrapmode == RC_WRAP_REPEAT || wrapmode == RC_WRAP_MIRRORED_REPEAT)) {
+	    (wrapmode == RC_WRAP_REPEAT || wrapmode == RC_WRAP_MIRRORED_REPEAT ||
+	     compiler->state.unit[inst->U.I.TexSrcUnit].clamp_and_scale_before_fetch)) {
 		projective_divide(compiler, inst);
 	}
 
@@ -386,6 +387,35 @@ int radeonTransformTEX(
 		reset_srcreg(&inst->U.I.SrcReg[0]);
 		inst->U.I.SrcReg[0].File = RC_FILE_TEMPORARY;
 		inst->U.I.SrcReg[0].Index = temp;
+	}
+
+	if (inst->U.I.Opcode != RC_OPCODE_KIL &&
+	    compiler->state.unit[inst->U.I.TexSrcUnit].clamp_and_scale_before_fetch) {
+		struct rc_instruction *inst_mov;
+		unsigned temp = rc_find_free_temporary(c);
+
+		/* Saturate XYZ. */
+		inst_mov = rc_insert_new_instruction(c, inst->Prev);
+		inst_mov->U.I.Opcode = RC_OPCODE_MOV;
+		inst_mov->U.I.SaturateMode = RC_SATURATE_ZERO_ONE;
+		inst_mov->U.I.DstReg.File = RC_FILE_TEMPORARY;
+		inst_mov->U.I.DstReg.Index = temp;
+		inst_mov->U.I.DstReg.WriteMask = RC_MASK_XYZ;
+		inst_mov->U.I.SrcReg[0] = inst->U.I.SrcReg[0];
+
+		/* Copy W. */
+		inst_mov = rc_insert_new_instruction(c, inst->Prev);
+		inst_mov->U.I.Opcode = RC_OPCODE_MOV;
+		inst_mov->U.I.DstReg.File = RC_FILE_TEMPORARY;
+		inst_mov->U.I.DstReg.Index = temp;
+		inst_mov->U.I.DstReg.WriteMask = RC_MASK_W;
+		inst_mov->U.I.SrcReg[0] = inst->U.I.SrcReg[0];
+
+		reset_srcreg(&inst->U.I.SrcReg[0]);
+		inst->U.I.SrcReg[0].File = RC_FILE_TEMPORARY;
+		inst->U.I.SrcReg[0].Index = temp;
+
+		scale_texcoords(compiler, inst, RC_STATE_R300_TEXSCALE_FACTOR);
 	}
 
 	/* Cannot write texture to output registers (all chips) or with masks (non-r500) */

@@ -556,18 +556,15 @@ void r300_texture_setup_format_state(struct r300_screen *screen,
     out->tile_config = 0;
 
     /* Set sampler state. */
-    out->format0 = R300_TX_WIDTH((u_minify(pt->width0, level) - 1) & 0x7ff) |
-                   R300_TX_HEIGHT((u_minify(pt->height0, level) - 1) & 0x7ff);
+    out->format0 =
+        R300_TX_WIDTH((u_minify(desc->width0, level) - 1) & 0x7ff) |
+        R300_TX_HEIGHT((u_minify(desc->height0, level) - 1) & 0x7ff) |
+        R300_TX_DEPTH(util_logbase2(u_minify(desc->depth0, level)) & 0xf);
 
     if (desc->uses_stride_addressing) {
         /* rectangles love this */
         out->format0 |= R300_TX_PITCH_EN;
         out->format2 = (desc->stride_in_pixels[level] - 1) & 0x1fff;
-    } else {
-        /* Power of two textures (3D, mipmaps, and no pitch),
-         * also NPOT textures with a width being POT. */
-        out->format0 |=
-            R300_TX_DEPTH(util_logbase2(u_minify(pt->depth0, level)) & 0xf);
     }
 
     if (pt->target == PIPE_TEXTURE_CUBE) {
@@ -580,10 +577,10 @@ void r300_texture_setup_format_state(struct r300_screen *screen,
     /* large textures on r500 */
     if (is_r500)
     {
-        if (pt->width0 > 2048) {
+        if (desc->width0 > 2048) {
             out->format2 |= R500_TXWIDTH_BIT11;
         }
-        if (pt->height0 > 2048) {
+        if (desc->height0 > 2048) {
             out->format2 |= R500_TXHEIGHT_BIT11;
         }
     }

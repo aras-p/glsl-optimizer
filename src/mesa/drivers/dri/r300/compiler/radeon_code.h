@@ -60,6 +60,7 @@ enum {
 
 	RC_STATE_R300_WINDOW_DIMENSION,
 	RC_STATE_R300_TEXRECT_FACTOR,
+	RC_STATE_R300_TEXSCALE_FACTOR,
 	RC_STATE_R300_VIEWPORT_SCALE,
 	RC_STATE_R300_VIEWPORT_OFFSET
 };
@@ -158,7 +159,13 @@ struct r300_fragment_program_external_state {
 		 * If this field is \ref RC_WRAP_NONE (aka 0), no wrapping maths
 		 * will be performed on the coordinates.
 		 */
-		unsigned wrap_mode : 2;
+		unsigned wrap_mode : 3;
+
+		/**
+		 * The coords are scaled after applying the wrap mode emulation
+		 * and right before texture fetch. The scaling factor is given by
+		 * RC_STATE_R300_TEXSCALE_FACTOR. */
+		unsigned clamp_and_scale_before_fetch : 1;
 	} unit[16];
 };
 

@@ -336,6 +336,13 @@ struct r300_texture_desc {
     /* Parent class. */
     struct u_resource b;
 
+    /* Width, height, and depth.
+     * Most of the time, these are equal to pipe_texture::width0, height0,
+     * and depth0. However, NPOT 3D textures must have dimensions aligned
+     * to POT, and this is the only case when these variables differ from
+     * pipe_texture. */
+    unsigned width0, height0, depth0;
+
     /* Buffer tiling.
      * Macrotiling is specified per-level because small mipmaps cannot
      * be macrotiled. */
