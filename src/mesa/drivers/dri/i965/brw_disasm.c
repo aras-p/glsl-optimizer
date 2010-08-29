@@ -888,12 +888,25 @@ int brw_disasm (FILE *file, struct brw_instruction *inst, int gen)
 			    inst->bits3.math.precision, &space);
 	    break;
 	case BRW_MESSAGE_TARGET_SAMPLER:
-	    format (file, " (%d, %d, ",
-		    inst->bits3.sampler.binding_table_index,
-		    inst->bits3.sampler.sampler);
-	    err |= control (file, "sampler target format", sampler_target_format,
-			    inst->bits3.sampler.return_format, NULL);
-	    string (file, ")");
+	    if (gen >= 5) {
+		format (file, " (%d, %d, %d, %d)",
+			inst->bits3.sampler_gen5.binding_table_index,
+			inst->bits3.sampler_gen5.sampler,
+			inst->bits3.sampler_gen5.msg_type,
+			inst->bits3.sampler_gen5.simd_mode);
+	    } else if (0 /* FINISHME: is_g4x */) {
+		format (file, " (%d, %d)",
+			inst->bits3.sampler_g4x.binding_table_index,
+			inst->bits3.sampler_g4x.sampler);
+	    } else {
+		format (file, " (%d, %d, ",
+			inst->bits3.sampler.binding_table_index,
+			inst->bits3.sampler.sampler);
+		err |= control (file, "sampler target format",
+				sampler_target_format,
+				inst->bits3.sampler.return_format, NULL);
+		string (file, ")");
+	    }
 	    break;
 	case BRW_MESSAGE_TARGET_DATAPORT_READ:
 	    if (gen >= 6) {
