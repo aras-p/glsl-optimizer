@@ -44,7 +44,7 @@ unsigned int __glutDisplayMode =
   GLUT_RGB | GLUT_SINGLE | GLUT_DEPTH;
 char *__glutDisplayString = NULL;
 int __glutConnectionFD;
-XSizeHints __glutSizeHints = {0};
+XSizeHints __glutSizeHints;
 int __glutInitWidth = 300, __glutInitHeight = 300;
 int __glutInitX = -1, __glutInitY = -1;
 GLboolean __glutForceDirect = GL_FALSE,
