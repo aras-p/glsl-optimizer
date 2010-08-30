@@ -116,6 +116,22 @@ get_first_reladdr_output(struct gl_vertex_program *vp)
    return first_reladdr_output;
 }
 
+/* Clears the record of which vp_const_buffer elements have been
+ * loaded into our constant buffer registers, for the starts of new
+ * blocks after control flow.
+ */
+static void
+clear_current_const(struct brw_vs_compile *c)
+{
+   unsigned int i;
+
+   if (c->vp->use_const_buffer) {
+      for (i = 0; i < 3; i++) {
+         c->current_const[i].index = -1;
+      }
+   }
+}
+
 /**
  * Preallocate GRF register before code emit.
  * Do things as simply as possible.  Allocate and populate all regs
@@ -313,10 +329,10 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
 
    if (c->vp->use_const_buffer) {
       for (i = 0; i < 3; i++) {
-         c->current_const[i].index = -1;
          c->current_const[i].reg = brw_vec8_grf(reg, 0);
          reg++;
       }
+      clear_current_const(c);
    }
 
    for (i = 0; i < 128; i++) {
@@ -1826,15 +1842,18 @@ void brw_vs_emit(struct brw_vs_compile *c )
 	 if_depth++;
 	 break;
       case OPCODE_ELSE:
+	 clear_current_const(c);
 	 assert(if_depth > 0);
 	 if_inst[if_depth-1] = brw_ELSE(p, if_inst[if_depth-1]);
 	 break;
       case OPCODE_ENDIF:
+	 clear_current_const(c);
          assert(if_depth > 0);
 	 brw_ENDIF(p, if_inst[--if_depth]);
 	 if_depth_in_loop[loop_depth]--;
 	 break;			
       case OPCODE_BGNLOOP:
+	 clear_current_const(c);
          loop_inst[loop_depth++] = brw_DO(p, BRW_EXECUTE_8);
 	 if_depth_in_loop[loop_depth] = 0;
          break;
@@ -1850,6 +1869,7 @@ void brw_vs_emit(struct brw_vs_compile *c )
          break;
       case OPCODE_ENDLOOP: 
          {
+	    clear_current_const(c);
             struct brw_instruction *inst0, *inst1;
 	    GLuint br = 1;
 
