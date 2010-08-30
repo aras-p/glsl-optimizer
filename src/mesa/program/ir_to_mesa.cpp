@@ -2456,7 +2456,7 @@ get_mesa_program(GLcontext *ctx, struct gl_shader_program *shader_program,
       break;
    default:
       assert(!"should not be reached");
-      break;
+      return NULL;
    }
 
    validate_ir_tree(shader->ir);
