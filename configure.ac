@@ -137,7 +137,10 @@ esac
 
 dnl Add flags for gcc and g++
 if test "x$GCC" = xyes; then
-    CFLAGS="$CFLAGS -Wall -Wmissing-prototypes -std=c99 -ffast-math"
+    CFLAGS="$CFLAGS -Wall -Wmissing-prototypes -std=c99"
+    if test "x$CLANG" = "xno"; then
+       CFLAGS="$CFLAGS -ffast-math"
+    fi
 
     # Enable -fvisibility=hidden if using a gcc that supports it
     save_CFLAGS="$CFLAGS"
