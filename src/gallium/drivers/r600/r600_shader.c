@@ -1861,6 +1861,46 @@ static int tgsi_arl(struct r600_shader_ctx *ctx)
 	return 0;
 }
 
+static int tgsi_opdst(struct r600_shader_ctx *ctx)
+{
+	struct tgsi_full_instruction *inst = &ctx->parse.FullToken.FullInstruction;
+	struct r600_bc_alu alu;
+	int i, r = 0;
+
+	for (i = 0; i < 4; i++) {
+		memset(&alu, 0, sizeof(struct r600_bc_alu));
+
+		alu.inst = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MUL;
+		r = tgsi_dst(ctx, &inst->Dst[0], i, &alu.dst);
+		if (r)
+			return r;
+	
+	        if (i == 0 || i == 3) {
+			alu.src[0].sel = V_SQ_ALU_SRC_1;
+		} else {
+			r = tgsi_src(ctx, &inst->Src[0], &alu.src[0]);
+			if (r)
+				return r;
+			alu.src[0].chan = tgsi_chan(&inst->Src[0], i);
+		}
+
+	        if (i == 0 || i == 2) {
+			alu.src[1].sel = V_SQ_ALU_SRC_1;
+		} else {
+			r = tgsi_src(ctx, &inst->Src[1], &alu.src[1]);
+			if (r)
+				return r;
+			alu.src[1].chan = tgsi_chan(&inst->Src[1], i);
+		}
+		if (i == 3)
+			alu.last = 1;
+		r = r600_bc_add_alu(ctx->bc, &alu);
+		if (r)
+			return r;
+	}
+	return 0;
+}
+
 static int emit_logic_pred(struct r600_shader_ctx *ctx, int opcode)
 {
 	struct tgsi_full_instruction *inst = &ctx->parse.FullToken.FullInstruction;
@@ -2150,7 +2190,7 @@ static struct r600_shader_tgsi_instruction r600_shader_tgsi_instruction[] = {
 	{TGSI_OPCODE_ADD,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_ADD, tgsi_op2},
 	{TGSI_OPCODE_DP3,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_DOT4, tgsi_dp},
 	{TGSI_OPCODE_DP4,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_DOT4, tgsi_dp},
-	{TGSI_OPCODE_DST,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
+	{TGSI_OPCODE_DST,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_opdst},
 	{TGSI_OPCODE_MIN,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MIN, tgsi_op2},
 	{TGSI_OPCODE_MAX,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MAX, tgsi_op2},
 	{TGSI_OPCODE_SLT,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETGT, tgsi_op2_swap},
