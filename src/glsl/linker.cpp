@@ -1296,15 +1296,24 @@ assign_varying_locations(struct gl_shader_program *prog,
 
       assert(input_var->location == -1);
 
-      /* FINISHME: Location assignment will need some changes when arrays,
-       * FINISHME: matrices, and structures are allowed as shader inputs /
-       * FINISHME: outputs.
-       */
       output_var->location = output_index;
       input_var->location = input_index;
 
-      output_index++;
-      input_index++;
+      /* FINISHME: Support for "varying" records in GLSL 1.50. */
+      assert(!output_var->type->is_record());
+
+      if (output_var->type->is_array()) {
+	 const unsigned slots = output_var->type->length
+	    * output_var->type->fields.array->matrix_columns;
+
+	 output_index += slots;
+	 input_index += slots;
+      } else {
+	 const unsigned slots = output_var->type->matrix_columns;
+
+	 output_index += slots;
+	 input_index += slots;
+      }
    }
 
    demote_unread_shader_outputs(producer);
