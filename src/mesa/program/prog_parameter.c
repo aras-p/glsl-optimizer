@@ -482,8 +482,10 @@ _mesa_lookup_parameter_constant(const struct gl_program_parameter_list *list,
    assert(vSize >= 1);
    assert(vSize <= 4);
 
-   if (!list)
-      return -1;
+   if (!list) {
+      *posOut = -1;
+      return GL_FALSE;
+   }
 
    for (i = 0; i < list->NumParameters; i++) {
       if (list->Parameters[i].Type == PROGRAM_CONSTANT) {
