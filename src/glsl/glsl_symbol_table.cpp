@@ -104,6 +104,7 @@ bool glsl_symbol_table::add_variable(const char *name, ir_variable *v)
 	    entry->f = existing->f;
 	 int added = _mesa_symbol_table_add_symbol(table, -1, name, entry);
 	 assert(added == 0);
+	 (void)added;
 	 return true;
       }
       return false;
