@@ -57,7 +57,7 @@ struct r600_resource_texture {
 	unsigned			dirty;
 	struct radeon_bo		*uncompressed;
 	struct radeon_state		*scissor[PIPE_MAX_TEXTURE_LEVELS];
-	struct radeon_state		*cb0[PIPE_MAX_TEXTURE_LEVELS];
+	struct radeon_state		*cb[8][PIPE_MAX_TEXTURE_LEVELS];
 	struct radeon_state		*db[PIPE_MAX_TEXTURE_LEVELS];
 	struct radeon_state		*viewport[PIPE_MAX_TEXTURE_LEVELS];
 };

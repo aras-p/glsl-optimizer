@@ -121,7 +121,7 @@ struct r600_context_hw_states {
 	struct radeon_state	*config;
 	struct radeon_state	*cb_cntl;
 	struct radeon_state	*db;
-	struct radeon_state	*ucp[6];
+	struct radeon_state	*ucp;
 	unsigned		ps_nresource;
 	unsigned		ps_nsampler;
 	struct radeon_state	*ps_resource[160];

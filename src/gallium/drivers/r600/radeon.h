@@ -109,13 +109,11 @@ struct radeon_state {
 	unsigned			id;
 	unsigned                        shader_index;
 	unsigned			nstates;
-	u32				*states;
+	u32				states[64];
 	unsigned			npm4;
 	unsigned			cpm4;
 	u32				pm4_crc;
-	u32				*pm4;
-	u32				nimmd;
-	u32				*immd;
+	u32				pm4[128];
 	unsigned			nbo;
 	struct radeon_bo		*bo[4];
 	unsigned			nreloc;
@@ -130,6 +128,7 @@ struct radeon_state *radeon_state_shader(struct radeon *radeon, u32 type, u32 id
 struct radeon_state *radeon_state_incref(struct radeon_state *state);
 struct radeon_state *radeon_state_decref(struct radeon_state *state);
 int radeon_state_pm4(struct radeon_state *state);
+int radeon_state_convert(struct radeon_state *state, u32 stype, u32 id, u32 shader_type);
 
 /*
  * draw functions
@@ -219,7 +218,7 @@ enum r600_stype {
 	R600_STATE_DB,
 	R600_STATE_QUERY_BEGIN,
 	R600_STATE_QUERY_END,
-	R600_STATE_CLIP,
+	R600_STATE_UCP,
 	R600_STATE_VGT,
 	R600_STATE_DRAW,
 };
@@ -613,17 +612,37 @@ enum {
 /* R600_DRAW */
 #define R600_DRAW__VGT_NUM_INDICES			0
 #define R600_DRAW__VGT_DMA_BASE_HI			1
-#define R600_DRAW__VGT_DMA_BASE			2
+#define R600_DRAW__VGT_DMA_BASE				2
 #define R600_DRAW__VGT_DRAW_INITIATOR			3
-#define R600_DRAW_SIZE				4
-#define R600_DRAW_PM4				128
+#define R600_DRAW_SIZE					4
+#define R600_DRAW_PM4					128
 /* R600_CLIP */
-#define R600_CLIP__PA_CL_UCP_X_0  0
-#define R600_CLIP__PA_CL_UCP_Y_0  1
-#define R600_CLIP__PA_CL_UCP_Z_0  2
-#define R600_CLIP__PA_CL_UCP_W_0  3
-#define R600_CLIP_SIZE  4
-#define R600_CLIP_PM4 128
+#define R600_CLIP__PA_CL_UCP_X_0			0
+#define R600_CLIP__PA_CL_UCP_Y_0			1
+#define R600_CLIP__PA_CL_UCP_Z_0			2
+#define R600_CLIP__PA_CL_UCP_W_0			3
+#define R600_CLIP__PA_CL_UCP_X_1			4
+#define R600_CLIP__PA_CL_UCP_Y_1			5
+#define R600_CLIP__PA_CL_UCP_Z_1			6
+#define R600_CLIP__PA_CL_UCP_W_1			7
+#define R600_CLIP__PA_CL_UCP_X_2			8
+#define R600_CLIP__PA_CL_UCP_Y_2			9
+#define R600_CLIP__PA_CL_UCP_Z_2			10
+#define R600_CLIP__PA_CL_UCP_W_2			11
+#define R600_CLIP__PA_CL_UCP_X_3			12
+#define R600_CLIP__PA_CL_UCP_Y_3			13
+#define R600_CLIP__PA_CL_UCP_Z_3			14
+#define R600_CLIP__PA_CL_UCP_W_3			15
+#define R600_CLIP__PA_CL_UCP_X_4			16
+#define R600_CLIP__PA_CL_UCP_Y_4			17
+#define R600_CLIP__PA_CL_UCP_Z_4			18
+#define R600_CLIP__PA_CL_UCP_W_4			19
+#define R600_CLIP__PA_CL_UCP_X_5			20
+#define R600_CLIP__PA_CL_UCP_Y_5			21
+#define R600_CLIP__PA_CL_UCP_Z_5			22
+#define R600_CLIP__PA_CL_UCP_W_5			23
+#define R600_CLIP_SIZE					24
+#define R600_CLIP_PM4					128
 /* R600 QUERY BEGIN/END */
 #define R600_QUERY__OFFSET			0
 #define R600_QUERY_SIZE				1
