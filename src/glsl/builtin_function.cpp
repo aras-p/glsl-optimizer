@@ -16759,183 +16759,117 @@ static const char *functions_for_EXT_texture_array_vert [] = {
    builtin_texture2DArray,
    builtin_texture2DArrayLod,
 };
+static gl_shader *builtin_profiles[10];
 
 void *builtin_mem_ctx = NULL;
 
 void
 _mesa_glsl_release_functions(void)
 {
-    talloc_free(builtin_mem_ctx);
-    builtin_mem_ctx = NULL;
+   talloc_free(builtin_mem_ctx);
+   builtin_mem_ctx = NULL;
+}
+
+static void
+_mesa_read_profile(struct _mesa_glsl_parse_state *state,
+		   exec_list *instructions,
+                   int profile_index,
+		   const char *prototypes,
+		   const char **functions,
+                   int count)
+{
+   gl_shader *sh = builtin_profiles[profile_index];
+
+   if (sh == NULL) {
+      sh = read_builtins(GL_VERTEX_SHADER, prototypes, functions, count);
+      talloc_steal(builtin_mem_ctx, sh);
+      builtin_profiles[profile_index] = sh;
+   }
+
+   import_prototypes(sh->ir, instructions, state->symbols, state);
+   state->builtins_to_link[state->num_builtins_to_link] = sh;
+   state->num_builtins_to_link++;
 }
 
 void
 _mesa_glsl_initialize_functions(exec_list *instructions,
                                 struct _mesa_glsl_parse_state *state)
 {
-   if (builtin_mem_ctx == NULL)
+   if (builtin_mem_ctx == NULL) {
       builtin_mem_ctx = talloc_init("GLSL built-in functions");
+      memset(&builtin_profiles, 0, sizeof(builtin_profiles));
+   }
 
    state->num_builtins_to_link = 0;
 
    if (state->target == fragment_shader && state->language_version == 110) {
-      static gl_shader *sh = NULL;
-      if (sh == NULL) {
-         sh = read_builtins(GL_VERTEX_SHADER,
-                            prototypes_for_110_frag,
-                            functions_for_110_frag,
-                            Elements(functions_for_110_frag ));
-         talloc_steal(builtin_mem_ctx, sh);
-      }
-
-      import_prototypes(sh->ir, instructions, state->symbols,
-                        state);
-      state->builtins_to_link[state->num_builtins_to_link] = sh;
-      state->num_builtins_to_link++;
+      _mesa_read_profile(state, instructions, 0,
+                         prototypes_for_110_frag,
+                         functions_for_110_frag,
+                         Elements(functions_for_110_frag));
    }
 
    if (state->target == vertex_shader && state->language_version == 110) {
-      static gl_shader *sh = NULL;
-      if (sh == NULL) {
-         sh = read_builtins(GL_VERTEX_SHADER,
-                            prototypes_for_110_vert,
-                            functions_for_110_vert,
-                            Elements(functions_for_110_vert ));
-         talloc_steal(builtin_mem_ctx, sh);
-      }
-
-      import_prototypes(sh->ir, instructions, state->symbols,
-                        state);
-      state->builtins_to_link[state->num_builtins_to_link] = sh;
-      state->num_builtins_to_link++;
+      _mesa_read_profile(state, instructions, 1,
+                         prototypes_for_110_vert,
+                         functions_for_110_vert,
+                         Elements(functions_for_110_vert));
    }
 
    if (state->target == fragment_shader && state->language_version == 120) {
-      static gl_shader *sh = NULL;
-      if (sh == NULL) {
-         sh = read_builtins(GL_VERTEX_SHADER,
-                            prototypes_for_120_frag,
-                            functions_for_120_frag,
-                            Elements(functions_for_120_frag ));
-         talloc_steal(builtin_mem_ctx, sh);
-      }
-
-      import_prototypes(sh->ir, instructions, state->symbols,
-                        state);
-      state->builtins_to_link[state->num_builtins_to_link] = sh;
-      state->num_builtins_to_link++;
+      _mesa_read_profile(state, instructions, 2,
+                         prototypes_for_120_frag,
+                         functions_for_120_frag,
+                         Elements(functions_for_120_frag));
    }
 
    if (state->target == vertex_shader && state->language_version == 120) {
-      static gl_shader *sh = NULL;
-      if (sh == NULL) {
-         sh = read_builtins(GL_VERTEX_SHADER,
-                            prototypes_for_120_vert,
-                            functions_for_120_vert,
-                            Elements(functions_for_120_vert ));
-         talloc_steal(builtin_mem_ctx, sh);
-      }
-
-      import_prototypes(sh->ir, instructions, state->symbols,
-                        state);
-      state->builtins_to_link[state->num_builtins_to_link] = sh;
-      state->num_builtins_to_link++;
+      _mesa_read_profile(state, instructions, 3,
+                         prototypes_for_120_vert,
+                         functions_for_120_vert,
+                         Elements(functions_for_120_vert));
    }
 
    if (state->target == fragment_shader && state->language_version == 130) {
-      static gl_shader *sh = NULL;
-      if (sh == NULL) {
-         sh = read_builtins(GL_VERTEX_SHADER,
-                            prototypes_for_130_frag,
-                            functions_for_130_frag,
-                            Elements(functions_for_130_frag ));
-         talloc_steal(builtin_mem_ctx, sh);
-      }
-
-      import_prototypes(sh->ir, instructions, state->symbols,
-                        state);
-      state->builtins_to_link[state->num_builtins_to_link] = sh;
-      state->num_builtins_to_link++;
+      _mesa_read_profile(state, instructions, 4,
+                         prototypes_for_130_frag,
+                         functions_for_130_frag,
+                         Elements(functions_for_130_frag));
    }
 
    if (state->target == vertex_shader && state->language_version == 130) {
-      static gl_shader *sh = NULL;
-      if (sh == NULL) {
-         sh = read_builtins(GL_VERTEX_SHADER,
-                            prototypes_for_130_vert,
-                            functions_for_130_vert,
-                            Elements(functions_for_130_vert ));
-         talloc_steal(builtin_mem_ctx, sh);
-      }
-
-      import_prototypes(sh->ir, instructions, state->symbols,
-                        state);
-      state->builtins_to_link[state->num_builtins_to_link] = sh;
-      state->num_builtins_to_link++;
+      _mesa_read_profile(state, instructions, 5,
+                         prototypes_for_130_vert,
+                         functions_for_130_vert,
+                         Elements(functions_for_130_vert));
    }
 
    if (state->target == fragment_shader && state->ARB_texture_rectangle_enable) {
-      static gl_shader *sh = NULL;
-      if (sh == NULL) {
-         sh = read_builtins(GL_VERTEX_SHADER,
-                            prototypes_for_ARB_texture_rectangle_frag,
-                            functions_for_ARB_texture_rectangle_frag,
-                            Elements(functions_for_ARB_texture_rectangle_frag ));
-         talloc_steal(builtin_mem_ctx, sh);
-      }
-
-      import_prototypes(sh->ir, instructions, state->symbols,
-                        state);
-      state->builtins_to_link[state->num_builtins_to_link] = sh;
-      state->num_builtins_to_link++;
+      _mesa_read_profile(state, instructions, 6,
+                         prototypes_for_ARB_texture_rectangle_frag,
+                         functions_for_ARB_texture_rectangle_frag,
+                         Elements(functions_for_ARB_texture_rectangle_frag));
    }
 
    if (state->target == vertex_shader && state->ARB_texture_rectangle_enable) {
-      static gl_shader *sh = NULL;
-      if (sh == NULL) {
-         sh = read_builtins(GL_VERTEX_SHADER,
-                            prototypes_for_ARB_texture_rectangle_vert,
-                            functions_for_ARB_texture_rectangle_vert,
-                            Elements(functions_for_ARB_texture_rectangle_vert ));
-         talloc_steal(builtin_mem_ctx, sh);
-      }
-
-      import_prototypes(sh->ir, instructions, state->symbols,
-                        state);
-      state->builtins_to_link[state->num_builtins_to_link] = sh;
-      state->num_builtins_to_link++;
+      _mesa_read_profile(state, instructions, 7,
+                         prototypes_for_ARB_texture_rectangle_vert,
+                         functions_for_ARB_texture_rectangle_vert,
+                         Elements(functions_for_ARB_texture_rectangle_vert));
    }
 
    if (state->target == fragment_shader && state->EXT_texture_array_enable) {
-      static gl_shader *sh = NULL;
-      if (sh == NULL) {
-         sh = read_builtins(GL_VERTEX_SHADER,
-                            prototypes_for_EXT_texture_array_frag,
-                            functions_for_EXT_texture_array_frag,
-                            Elements(functions_for_EXT_texture_array_frag ));
-         talloc_steal(builtin_mem_ctx, sh);
-      }
-
-      import_prototypes(sh->ir, instructions, state->symbols,
-                        state);
-      state->builtins_to_link[state->num_builtins_to_link] = sh;
-      state->num_builtins_to_link++;
+      _mesa_read_profile(state, instructions, 8,
+                         prototypes_for_EXT_texture_array_frag,
+                         functions_for_EXT_texture_array_frag,
+                         Elements(functions_for_EXT_texture_array_frag));
    }
 
    if (state->target == vertex_shader && state->EXT_texture_array_enable) {
-      static gl_shader *sh = NULL;
-      if (sh == NULL) {
-         sh = read_builtins(GL_VERTEX_SHADER,
-                            prototypes_for_EXT_texture_array_vert,
-                            functions_for_EXT_texture_array_vert,
-                            Elements(functions_for_EXT_texture_array_vert ));
-         talloc_steal(builtin_mem_ctx, sh);
-      }
-
-      import_prototypes(sh->ir, instructions, state->symbols,
-                        state);
-      state->builtins_to_link[state->num_builtins_to_link] = sh;
-      state->num_builtins_to_link++;
+      _mesa_read_profile(state, instructions, 9,
+                         prototypes_for_EXT_texture_array_vert,
+                         functions_for_EXT_texture_array_vert,
+                         Elements(functions_for_EXT_texture_array_vert));
    }
 
 }
