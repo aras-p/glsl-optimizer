@@ -39,6 +39,7 @@ static const char *es2_extensions[] = {
    "GL_ARB_window_pos",
    "GL_EXT_blend_func_separate",
    "GL_EXT_compiled_vertex_array",
+   "GL_EXT_framebuffer_blit",
    "GL_EXT_multi_draw_arrays",
    "GL_EXT_polygon_offset",
    "GL_EXT_texture_object",
