@@ -1142,8 +1142,9 @@ static int tgsi_ssg(struct r600_shader_ctx *ctx)
 		memset(&alu, 0, sizeof(struct r600_bc_alu));
 		alu.inst = V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_CNDGT;
 		alu.is_op3 = 1;
+
 		alu.dst.sel = ctx->temp_reg;
-		alu.dst.write = 1;
+		alu.dst.chan = i;
 
 		alu.src[0] = r600_src[0];
 		alu.src[0].chan = tgsi_chan(&inst->Src[0], i);
@@ -1158,6 +1159,9 @@ static int tgsi_ssg(struct r600_shader_ctx *ctx)
 		if (r)
 			return r;
 	}
+	r = r600_bc_add_literal(ctx->bc, ctx->value);
+	if (r)
+		return r;
 
 	/* dst = (-tmp > 0 ? -1 : tmp) */
 	for (i = 0; i < 4; i++) {
@@ -1169,14 +1173,15 @@ static int tgsi_ssg(struct r600_shader_ctx *ctx)
 			return r;
 
 		alu.src[0].sel = ctx->temp_reg;
+		alu.src[0].chan = i;
 		alu.src[0].neg = 1;
 
 		alu.src[1].sel = V_SQ_ALU_SRC_1;
 		alu.src[1].neg = 1;
 
 		alu.src[2].sel = ctx->temp_reg;
+		alu.src[2].chan = i;
 
-		alu.dst.write = 1;
 		if (i == 3)
 			alu.last = 1;
 		r = r600_bc_add_alu(ctx->bc, &alu);

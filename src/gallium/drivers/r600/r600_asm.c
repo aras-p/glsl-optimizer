@@ -340,12 +340,15 @@ static int r600_bc_alu_build(struct r600_bc *bc, struct r600_bc_alu *alu, unsign
 	unsigned i;
 
 	/* don't replace gpr by pv or ps for destination register */
+	bc->bytecode[id++] = S_SQ_ALU_WORD0_SRC0_SEL(alu->src[0].sel) |
+				S_SQ_ALU_WORD0_SRC0_CHAN(alu->src[0].chan) |
+				S_SQ_ALU_WORD0_SRC0_NEG(alu->src[0].neg) |
+				S_SQ_ALU_WORD0_SRC1_SEL(alu->src[1].sel) |
+				S_SQ_ALU_WORD0_SRC1_CHAN(alu->src[1].chan) |
+				S_SQ_ALU_WORD0_SRC1_NEG(alu->src[1].neg) |
+				S_SQ_ALU_WORD0_LAST(alu->last);
+
 	if (alu->is_op3) {
-		bc->bytecode[id++] = S_SQ_ALU_WORD0_SRC0_SEL(alu->src[0].sel) |
-					S_SQ_ALU_WORD0_SRC0_CHAN(alu->src[0].chan) |
-					S_SQ_ALU_WORD0_SRC1_SEL(alu->src[1].sel) |
-					S_SQ_ALU_WORD0_SRC1_CHAN(alu->src[1].chan) |
-					S_SQ_ALU_WORD0_LAST(alu->last);
 		bc->bytecode[id++] = S_SQ_ALU_WORD1_DST_GPR(alu->dst.sel) |
 					S_SQ_ALU_WORD1_DST_CHAN(alu->dst.chan) |
 					S_SQ_ALU_WORD1_CLAMP(alu->dst.clamp) |
@@ -355,13 +358,6 @@ static int r600_bc_alu_build(struct r600_bc *bc, struct r600_bc_alu *alu, unsign
 					S_SQ_ALU_WORD1_OP3_ALU_INST(alu->inst) |
 					S_SQ_ALU_WORD1_BANK_SWIZZLE(0);
 	} else {
-		bc->bytecode[id++] = S_SQ_ALU_WORD0_SRC0_SEL(alu->src[0].sel) |
-					S_SQ_ALU_WORD0_SRC0_CHAN(alu->src[0].chan) |
-					S_SQ_ALU_WORD0_SRC0_NEG(alu->src[0].neg) |
-					S_SQ_ALU_WORD0_SRC1_SEL(alu->src[1].sel) |
-					S_SQ_ALU_WORD0_SRC1_CHAN(alu->src[1].chan) |
-					S_SQ_ALU_WORD0_SRC1_NEG(alu->src[1].neg) |
-					S_SQ_ALU_WORD0_LAST(alu->last);
 		bc->bytecode[id++] = S_SQ_ALU_WORD1_DST_GPR(alu->dst.sel) |
 					S_SQ_ALU_WORD1_DST_CHAN(alu->dst.chan) |
 					S_SQ_ALU_WORD1_CLAMP(alu->dst.clamp) |
