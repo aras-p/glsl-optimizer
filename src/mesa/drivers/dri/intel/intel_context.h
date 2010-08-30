@@ -33,12 +33,25 @@
 #include "main/mtypes.h"
 #include "main/mm.h"
 #include "dri_metaops.h"
+
+#ifdef __cplusplus
+extern "C" {
+	/* Evil hack for using libdrm in a c++ compiler. */
+	#define virtual virt
+#endif
+
 #include "drm.h"
 #include "intel_bufmgr.h"
 
 #include "intel_screen.h"
 #include "intel_tex_obj.h"
 #include "i915_drm.h"
+
+#ifdef __cplusplus
+	#undef virtual
+}
+#endif
+
 #include "tnl/t_vertex.h"
 
 #define TAG(x) intel##x
