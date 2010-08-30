@@ -344,8 +344,10 @@ dri_destroy_option_cache(struct dri_screen * screen)
 void
 dri_destroy_screen_helper(struct dri_screen * screen)
 {
-   if (screen->st_api && screen->st_api->destroy)
-      screen->st_api->destroy(screen->st_api);
+   gl_api api;
+   for (api = API_OPENGL; api <= API_OPENGLES2; ++api)
+      if (screen->st_api[api] && screen->st_api[api]->destroy)
+         screen->st_api[api]->destroy(screen->st_api[api]);
 
    if (screen->base.screen)
       screen->base.screen->destroy(screen->base.screen);
@@ -378,9 +380,14 @@ dri_init_screen_helper(struct dri_screen *screen,
 
    screen->base.get_egl_image = dri_get_egl_image;
    screen->base.get_param = dri_get_param;
-   screen->st_api = st_gl_api_create();
 
-   if (!screen->st_api)
+   screen->st_api[API_OPENGL] = st_gl_api_create();
+   screen->st_api[API_OPENGLES1] = st_gl_api_create_es1();
+   screen->st_api[API_OPENGLES2] = st_gl_api_create_es2();
+
+   if (!screen->st_api[API_OPENGL] &&
+       !screen->st_api[API_OPENGLES1] &&
+       !screen->st_api[API_OPENGLES2])
       return NULL;
 
    if(pscreen->get_param(pscreen, PIPE_CAP_NPOT_TEXTURES))

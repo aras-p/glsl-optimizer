@@ -54,12 +54,14 @@ dri_create_context(gl_api api, const __GLcontextModes * visual,
 {
    __DRIscreen *sPriv = cPriv->driScreenPriv;
    struct dri_screen *screen = dri_screen(sPriv);
-   struct st_api *stapi = screen->st_api;
+   struct st_api *stapi;
    struct dri_context *ctx = NULL;
    struct st_context_iface *st_share = NULL;
    struct st_visual stvis;
 
-   if (api != API_OPENGL)
+   assert(api <= API_OPENGLES2);
+   stapi = screen->st_api[api];
+   if (!stapi)
       return GL_FALSE;
 
    if (sharedContextPrivate) {
@@ -71,6 +73,7 @@ dri_create_context(gl_api api, const __GLcontextModes * visual,
       goto fail;
 
    cPriv->driverPrivate = ctx;
+   ctx->api = api;
    ctx->cPriv = cPriv;
    ctx->sPriv = sPriv;
    ctx->lock = screen->drmLock;
@@ -124,7 +127,7 @@ dri_unbind_context(__DRIcontext * cPriv)
    /* dri_util.c ensures cPriv is not null */
    struct dri_screen *screen = dri_screen(cPriv->driScreenPriv);
    struct dri_context *ctx = dri_context(cPriv);
-   struct st_api *stapi = screen->st_api;
+   struct st_api *stapi = screen->st_api[ctx->api];
 
    if (--ctx->bind_count == 0) {
       if (ctx->st == stapi->get_current(stapi)) {
@@ -144,7 +147,7 @@ dri_make_current(__DRIcontext * cPriv,
    /* dri_util.c ensures cPriv is not null */
    struct dri_screen *screen = dri_screen(cPriv->driScreenPriv);
    struct dri_context *ctx = dri_context(cPriv);
-   struct st_api *stapi = screen->st_api;
+   struct st_api *stapi = screen->st_api[ctx->api];
    struct dri_drawable *draw = dri_drawable(driDrawPriv);
    struct dri_drawable *read = dri_drawable(driReadPriv);
    struct st_context_iface *old_st = stapi->get_current(stapi);
@@ -172,10 +175,24 @@ struct dri_context *
 dri_get_current(__DRIscreen *sPriv)
 {
    struct dri_screen *screen = dri_screen(sPriv);
-   struct st_api *stapi = screen->st_api;
-   struct st_context_iface *st;
+   struct st_api *stapi;
+   struct st_context_iface *st = NULL;
+   gl_api api;
 
-   st = stapi->get_current(stapi);
+   /* XXX: How do we do this when the screen supports
+      multiple rendering API's? Pick the first one,
+      like this? (NB: all three API's use the same
+      implementation of get_current (see st_manager.c),
+      so maybe it doesn't matter right now since
+      they'll all return the same result.) */
+   for (api = API_OPENGL; api <= API_OPENGLES2; ++api) {
+      stapi = screen->st_api[api];
+      if (!stapi)
+         continue;
+      st = stapi->get_current(stapi);
+      if (st)
+         break;
+   }
 
    return (struct dri_context *) (st) ? st->st_manager_private : NULL;
 }

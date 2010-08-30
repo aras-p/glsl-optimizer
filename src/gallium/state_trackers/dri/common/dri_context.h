@@ -58,6 +58,7 @@ struct dri_context
    unsigned int bind_count;
 
    /* gallium */
+   gl_api api;
    struct st_context_iface *st;
 
    /* hooks filled in by dri2 & drisw */

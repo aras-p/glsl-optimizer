@@ -439,6 +439,14 @@ dri2_init_screen(__DRIscreen * sPriv)
    if (!configs)
       goto fail;
 
+   sPriv->api_mask = 0;
+   if (screen->st_api[API_OPENGL])
+      sPriv->api_mask |= 1 << __DRI_API_OPENGL;
+   if (screen->st_api[API_OPENGLES1])
+      sPriv->api_mask |= 1 << __DRI_API_GLES;
+   if (screen->st_api[API_OPENGLES2])
+      sPriv->api_mask |= 1 << __DRI_API_GLES2;
+
    screen->auto_fake_front = dri_with_format(sPriv);
    screen->broken_invalidate = !sPriv->dri2.useInvalidate;
 
