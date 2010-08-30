@@ -343,12 +343,26 @@ cross_validate_globals(struct gl_shader_program *prog,
 	 ir_variable *const existing = variables.get_variable(var->name);
 	 if (existing != NULL) {
 	    if (var->type != existing->type) {
-	       linker_error_printf(prog, "%s `%s' declared as type "
-				   "`%s' and type `%s'\n",
-				   mode_string(var),
-				   var->name, var->type->name,
-				   existing->type->name);
-	       return false;
+	       /* Consider the types to be "the same" if both types are arrays
+		* of the same type and one of the arrays is implicitly sized.
+		* In addition, set the type of the linked variable to the
+		* explicitly sized array.
+		*/
+	       if (var->type->is_array()
+		   && existing->type->is_array()
+		   && (var->type->fields.array == existing->type->fields.array)
+		   && ((var->type->length == 0)
+		       || (existing->type->length == 0))) {
+		  if (existing->type->length == 0)
+		     existing->type = var->type;
+	       } else {
+		  linker_error_printf(prog, "%s `%s' declared as type "
+				      "`%s' and type `%s'\n",
+				      mode_string(var),
+				      var->name, var->type->name,
+				      existing->type->name);
+		  return false;
+	       }
 	    }
 
 	    /* FINISHME: Handle non-constant initializers.
