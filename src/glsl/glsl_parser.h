@@ -1,9 +1,10 @@
-/* A Bison parser, made by GNU Bison 2.4.3.  */
+
+/* A Bison parser, made by GNU Bison 2.4.1.  */
 
 /* Skeleton interface for Bison's Yacc-like parsers in C
    
-      Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
-   2009, 2010 Free Software Foundation, Inc.
+      Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006
+   Free Software Foundation, Inc.
    
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -147,82 +148,85 @@
      VERSION = 364,
      EXTENSION = 365,
      LINE = 366,
-     PRAGMA = 367,
-     COLON = 368,
-     EOL = 369,
-     INTERFACE = 370,
-     OUTPUT = 371,
-     LAYOUT_TOK = 372,
-     ASM = 373,
-     CLASS = 374,
-     UNION = 375,
-     ENUM = 376,
-     TYPEDEF = 377,
-     TEMPLATE = 378,
-     THIS = 379,
-     PACKED_TOK = 380,
-     GOTO = 381,
-     INLINE_TOK = 382,
-     NOINLINE = 383,
-     VOLATILE = 384,
-     PUBLIC_TOK = 385,
-     STATIC = 386,
-     EXTERN = 387,
-     EXTERNAL = 388,
-     LONG_TOK = 389,
-     SHORT_TOK = 390,
-     DOUBLE_TOK = 391,
-     HALF = 392,
-     FIXED_TOK = 393,
-     UNSIGNED = 394,
-     INPUT_TOK = 395,
-     OUPTUT = 396,
-     HVEC2 = 397,
-     HVEC3 = 398,
-     HVEC4 = 399,
-     DVEC2 = 400,
-     DVEC3 = 401,
-     DVEC4 = 402,
-     FVEC2 = 403,
-     FVEC3 = 404,
-     FVEC4 = 405,
-     SAMPLER2DRECT = 406,
-     SAMPLER3DRECT = 407,
-     SAMPLER2DRECTSHADOW = 408,
-     SIZEOF = 409,
-     CAST = 410,
-     NAMESPACE = 411,
-     USING = 412,
-     ERROR_TOK = 413,
-     COMMON = 414,
-     PARTITION = 415,
-     ACTIVE = 416,
-     SAMPLERBUFFER = 417,
-     FILTER = 418,
-     IMAGE1D = 419,
-     IMAGE2D = 420,
-     IMAGE3D = 421,
-     IMAGECUBE = 422,
-     IMAGE1DARRAY = 423,
-     IMAGE2DARRAY = 424,
-     IIMAGE1D = 425,
-     IIMAGE2D = 426,
-     IIMAGE3D = 427,
-     IIMAGECUBE = 428,
-     IIMAGE1DARRAY = 429,
-     IIMAGE2DARRAY = 430,
-     UIMAGE1D = 431,
-     UIMAGE2D = 432,
-     UIMAGE3D = 433,
-     UIMAGECUBE = 434,
-     UIMAGE1DARRAY = 435,
-     UIMAGE2DARRAY = 436,
-     IMAGE1DSHADOW = 437,
-     IMAGE2DSHADOW = 438,
-     IMAGEBUFFER = 439,
-     IIMAGEBUFFER = 440,
-     UIMAGEBUFFER = 441,
-     ROW_MAJOR = 442
+     COLON = 367,
+     EOL = 368,
+     INTERFACE = 369,
+     OUTPUT = 370,
+     PRAGMA_DEBUG_ON = 371,
+     PRAGMA_DEBUG_OFF = 372,
+     PRAGMA_OPTIMIZE_ON = 373,
+     PRAGMA_OPTIMIZE_OFF = 374,
+     LAYOUT_TOK = 375,
+     ASM = 376,
+     CLASS = 377,
+     UNION = 378,
+     ENUM = 379,
+     TYPEDEF = 380,
+     TEMPLATE = 381,
+     THIS = 382,
+     PACKED_TOK = 383,
+     GOTO = 384,
+     INLINE_TOK = 385,
+     NOINLINE = 386,
+     VOLATILE = 387,
+     PUBLIC_TOK = 388,
+     STATIC = 389,
+     EXTERN = 390,
+     EXTERNAL = 391,
+     LONG_TOK = 392,
+     SHORT_TOK = 393,
+     DOUBLE_TOK = 394,
+     HALF = 395,
+     FIXED_TOK = 396,
+     UNSIGNED = 397,
+     INPUT_TOK = 398,
+     OUPTUT = 399,
+     HVEC2 = 400,
+     HVEC3 = 401,
+     HVEC4 = 402,
+     DVEC2 = 403,
+     DVEC3 = 404,
+     DVEC4 = 405,
+     FVEC2 = 406,
+     FVEC3 = 407,
+     FVEC4 = 408,
+     SAMPLER2DRECT = 409,
+     SAMPLER3DRECT = 410,
+     SAMPLER2DRECTSHADOW = 411,
+     SIZEOF = 412,
+     CAST = 413,
+     NAMESPACE = 414,
+     USING = 415,
+     ERROR_TOK = 416,
+     COMMON = 417,
+     PARTITION = 418,
+     ACTIVE = 419,
+     SAMPLERBUFFER = 420,
+     FILTER = 421,
+     IMAGE1D = 422,
+     IMAGE2D = 423,
+     IMAGE3D = 424,
+     IMAGECUBE = 425,
+     IMAGE1DARRAY = 426,
+     IMAGE2DARRAY = 427,
+     IIMAGE1D = 428,
+     IIMAGE2D = 429,
+     IIMAGE3D = 430,
+     IIMAGECUBE = 431,
+     IIMAGE1DARRAY = 432,
+     IIMAGE2DARRAY = 433,
+     UIMAGE1D = 434,
+     UIMAGE2D = 435,
+     UIMAGE3D = 436,
+     UIMAGECUBE = 437,
+     UIMAGE1DARRAY = 438,
+     UIMAGE2DARRAY = 439,
+     IMAGE1DSHADOW = 440,
+     IMAGE2DSHADOW = 441,
+     IMAGEBUFFER = 442,
+     IIMAGEBUFFER = 443,
+     UIMAGEBUFFER = 444,
+     ROW_MAJOR = 445
    };
 #endif
 
@@ -232,7 +236,7 @@
 typedef union YYSTYPE
 {
 
-/* Line 1685 of yacc.c  */
+/* Line 1676 of yacc.c  */
 #line 52 "glsl_parser.ypp"
 
    int n;
@@ -263,8 +267,8 @@ typedef union YYSTYPE
 
 
 
-/* Line 1685 of yacc.c  */
-#line 268 "glsl_parser.h"
+/* Line 1676 of yacc.c  */
+#line 272 "glsl_parser.h"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
