@@ -134,10 +134,9 @@ static int r600_pipe_shader_vs(struct pipe_context *ctx, struct r600_context_sta
 	struct radeon_state *state;
 	unsigned i, tmp;
 
-	rpshader->rstate = radeon_state_decref(rpshader->rstate);
-	state = radeon_state_shader(rscreen->rw, R600_STATE_SHADER, 0, R600_SHADER_VS);
-	if (state == NULL)
-		return -ENOMEM;
+	state = &rpshader->rstate;
+	radeon_state_fini(&rpshader->rstate);
+	radeon_state_init(state, rscreen->rw, R600_STATE_SHADER, 0, R600_SHADER_VS);
 	for (i = 0; i < 10; i++) {
 		state->states[R600_VS_SHADER__SPI_VS_OUT_ID_0 + i] = 0;
 	}
@@ -149,12 +148,11 @@ static int r600_pipe_shader_vs(struct pipe_context *ctx, struct r600_context_sta
 	state->states[R600_VS_SHADER__SPI_VS_OUT_CONFIG] = S_0286C4_VS_EXPORT_COUNT(rshader->noutput - 2);
 	state->states[R600_VS_SHADER__SQ_PGM_RESOURCES_VS] = S_028868_NUM_GPRS(rshader->bc.ngpr) |
 		S_028868_STACK_SIZE(rshader->bc.nstack);
-	rpshader->rstate = state;
-	rpshader->rstate->bo[0] = radeon_bo_incref(rscreen->rw, rpshader->bo);
-	rpshader->rstate->bo[1] = radeon_bo_incref(rscreen->rw, rpshader->bo);
-	rpshader->rstate->nbo = 2;
-	rpshader->rstate->placement[0] = RADEON_GEM_DOMAIN_GTT;
-	rpshader->rstate->placement[2] = RADEON_GEM_DOMAIN_GTT;
+	state->bo[0] = radeon_bo_incref(rscreen->rw, rpshader->bo);
+	state->bo[1] = radeon_bo_incref(rscreen->rw, rpshader->bo);
+	state->nbo = 2;
+	state->placement[0] = RADEON_GEM_DOMAIN_GTT;
+	state->placement[2] = RADEON_GEM_DOMAIN_GTT;
 	return radeon_state_pm4(state);
 }
 
@@ -168,11 +166,10 @@ static int r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_context_sta
 	unsigned i, tmp, exports_ps, num_cout;
 	boolean have_pos = FALSE;
 
+	state = &rpshader->rstate;
 	rasterizer = &rctx->rasterizer->state.rasterizer;
-	rpshader->rstate = radeon_state_decref(rpshader->rstate);
-	state = radeon_state_shader(rscreen->rw, R600_STATE_SHADER, 0, R600_SHADER_PS);
-	if (state == NULL)
-		return -ENOMEM;
+	radeon_state_fini(state);
+	radeon_state_init(state, rscreen->rw, R600_STATE_SHADER, 0, R600_SHADER_PS);
 	for (i = 0; i < rshader->ninput; i++) {
 		tmp = S_028644_SEMANTIC(i);
 		tmp |= S_028644_SEL_CENTROID(1);
@@ -214,10 +211,9 @@ static int r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_context_sta
 	state->states[R600_PS_SHADER__SQ_PGM_RESOURCES_PS] = S_028868_NUM_GPRS(rshader->bc.ngpr) |
 		S_028868_STACK_SIZE(rshader->bc.nstack);
 	state->states[R600_PS_SHADER__SQ_PGM_EXPORTS_PS] = exports_ps;
-	rpshader->rstate = state;
-	rpshader->rstate->bo[0] = radeon_bo_incref(rscreen->rw, rpshader->bo);
-	rpshader->rstate->nbo = 1;
-	rpshader->rstate->placement[0] = RADEON_GEM_DOMAIN_GTT;
+	state->bo[0] = radeon_bo_incref(rscreen->rw, rpshader->bo);
+	state->nbo = 1;
+	state->placement[0] = RADEON_GEM_DOMAIN_GTT;
 	return radeon_state_pm4(state);
 }
 

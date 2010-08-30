@@ -146,21 +146,20 @@ void r600_init_blit_functions(struct r600_context *rctx)
 
 
 struct r600_blit_states {
-	struct radeon_state	*rasterizer;
-	struct radeon_state	*dsa;
-	struct radeon_state	*blend;
-	struct radeon_state	*cb_cntl;
-	struct radeon_state	*config;
-	struct radeon_state	*vgt;
-	struct radeon_state	*draw;
-	struct radeon_state	*vs_constant0;
-	struct radeon_state	*vs_constant1;
-	struct radeon_state	*vs_constant2;
-	struct radeon_state	*vs_constant3;
-	struct radeon_state	*ps_shader;
-	struct radeon_state	*vs_shader;
-	struct radeon_state	*vs_resource0;
-	struct radeon_state	*vs_resource1;
+	struct radeon_state	rasterizer;
+	struct radeon_state	dsa;
+	struct radeon_state	blend;
+	struct radeon_state	cb_cntl;
+	struct radeon_state	vgt;
+	struct radeon_state	draw;
+	struct radeon_state	vs_constant0;
+	struct radeon_state	vs_constant1;
+	struct radeon_state	vs_constant2;
+	struct radeon_state	vs_constant3;
+	struct radeon_state	ps_shader;
+	struct radeon_state	vs_shader;
+	struct radeon_state	vs_resource0;
+	struct radeon_state	vs_resource1;
 };
 
 static int r600_blit_state_vs_resources(struct r600_screen *rscreen, struct r600_blit_states *bstates)
@@ -190,11 +189,8 @@ static int r600_blit_state_vs_resources(struct r600_screen *rscreen, struct r600
 	memcpy(bo->data, vbo, 128);
 	radeon_bo_unmap(rscreen->rw, bo);
 
-	rstate = radeon_state_shader(rscreen->rw, R600_STATE_RESOURCE, 0, R600_SHADER_VS);
-	if (rstate == NULL) {
-		radeon_bo_decref(rscreen->rw, bo);
-		return -ENOMEM;
-	}
+	rstate = &bstates->vs_resource0;
+	radeon_state_init(rstate, rscreen->rw, R600_STATE_RESOURCE, 0, R600_SHADER_VS);
 
 	/* set states (most default value are 0 and struct already
 	 * initialized to 0, thus avoid resetting them)
@@ -210,15 +206,12 @@ static int r600_blit_state_vs_resources(struct r600_screen *rscreen, struct r600
 	rstate->nbo = 1;
 	rstate->placement[0] = RADEON_GEM_DOMAIN_GTT;
 	if (radeon_state_pm4(rstate)) {
-		radeon_state_decref(rstate);
+		radeon_state_fini(rstate);
 		return -ENOMEM;
 	}
-	bstates->vs_resource0 = rstate;
 
-	rstate = radeon_state_shader(rscreen->rw, R600_STATE_RESOURCE, 1, R600_SHADER_VS);
-	if (rstate == NULL) {
-		return -ENOMEM;
-	}
+	rstate = &bstates->vs_resource1;
+	radeon_state_init(rstate, rscreen->rw, R600_STATE_RESOURCE, 1, R600_SHADER_VS);
 	rstate->states[R600_VS_RESOURCE__RESOURCE160_WORD0] = 0x00000010;
 	rstate->states[R600_VS_RESOURCE__RESOURCE160_WORD1] = 0x00000070;
 	rstate->states[R600_VS_RESOURCE__RESOURCE160_WORD2] = 0x02302000;
@@ -230,17 +223,15 @@ static int r600_blit_state_vs_resources(struct r600_screen *rscreen, struct r600
 	rstate->nbo = 1;
 	rstate->placement[0] = RADEON_GEM_DOMAIN_GTT;
 	if (radeon_state_pm4(rstate)) {
-		radeon_state_decref(rstate);
+		radeon_state_fini(rstate);
 		return -ENOMEM;
 	}
-	bstates->vs_resource1 = rstate;
 
 	return 0;
 }
 
-static struct radeon_state *r600_blit_state_vs_shader(struct r600_screen *rscreen)
+static void r600_blit_state_vs_shader(struct r600_screen *rscreen, struct radeon_state *rstate)
 {
-	struct radeon_state *rstate;
 	struct radeon_bo *bo;
 	u32 shader_bc_r600[] = {
 		0x00000004, 0x81000400,
@@ -282,11 +273,11 @@ static struct radeon_state *r600_blit_state_vs_shader(struct r600_screen *rscree
 	/* simple shader */
 	bo = radeon_bo(rscreen->rw, 0, 128, 4096, NULL);
 	if (bo == NULL) {
-		return NULL;
+		return;
 	}
 	if (radeon_bo_map(rscreen->rw, bo)) {
 		radeon_bo_decref(rscreen->rw, bo);
-		return NULL;
+		return;
 	}
 	switch (rscreen->chip_class) {
 	case R600:
@@ -299,15 +290,11 @@ static struct radeon_state *r600_blit_state_vs_shader(struct r600_screen *rscree
 		R600_ERR("unsupported chip family\n");
 		radeon_bo_unmap(rscreen->rw, bo);
 		radeon_bo_decref(rscreen->rw, bo);
-		return NULL;
+		return;
 	}
 	radeon_bo_unmap(rscreen->rw, bo);
 
-	rstate = radeon_state_shader(rscreen->rw, R600_STATE_SHADER, 0, R600_SHADER_VS);
-	if (rstate == NULL) {
-		radeon_bo_decref(rscreen->rw, bo);
-		return NULL;
-	}
+	radeon_state_init(rstate, rscreen->rw, R600_STATE_SHADER, 0, R600_SHADER_VS);
 
 	/* set states (most default value are 0 and struct already
 	 * initialized to 0, thus avoid resetting them)
@@ -322,16 +309,11 @@ static struct radeon_state *r600_blit_state_vs_shader(struct r600_screen *rscree
 	rstate->placement[0] = RADEON_GEM_DOMAIN_GTT;
 	rstate->placement[2] = RADEON_GEM_DOMAIN_GTT;
 
-	if (radeon_state_pm4(rstate)) {
-		radeon_state_decref(rstate);
-		return NULL;
-	}
-	return rstate;
+	radeon_state_pm4(rstate);
 }
 
-static struct radeon_state *r600_blit_state_ps_shader(struct r600_screen *rscreen)
+static void r600_blit_state_ps_shader(struct r600_screen *rscreen, struct radeon_state *rstate)
 {
-	struct radeon_state *rstate;
 	struct radeon_bo *bo;
 	u32 shader_bc_r600[] = {
 		0x00000002, 0xA00C0000,
@@ -354,10 +336,10 @@ static struct radeon_state *r600_blit_state_ps_shader(struct r600_screen *rscree
 	bo = radeon_bo(rscreen->rw, 0, 128, 4096, NULL);
 	if (bo == NULL) {
 		radeon_bo_decref(rscreen->rw, bo);
-		return NULL;
+		return;
 	}
 	if (radeon_bo_map(rscreen->rw, bo)) {
-		return NULL;
+		return;
 	}
 	switch (rscreen->chip_class) {
 	case R600:
@@ -370,15 +352,11 @@ static struct radeon_state *r600_blit_state_ps_shader(struct r600_screen *rscree
 		R600_ERR("unsupported chip family\n");
 		radeon_bo_unmap(rscreen->rw, bo);
 		radeon_bo_decref(rscreen->rw, bo);
-		return NULL;
+		return;
 	}
 	radeon_bo_unmap(rscreen->rw, bo);
 
-	rstate = radeon_state_shader(rscreen->rw, R600_STATE_SHADER, 0, R600_SHADER_PS);
-	if (rstate == NULL) {
-		radeon_bo_decref(rscreen->rw, bo);
-		return NULL;
-	}
+	radeon_state_init(rstate, rscreen->rw, R600_STATE_SHADER, 0, R600_SHADER_PS);
 
 	/* set states (most default value are 0 and struct already
 	 * initialized to 0, thus avoid resetting them)
@@ -392,19 +370,12 @@ static struct radeon_state *r600_blit_state_ps_shader(struct r600_screen *rscree
 	rstate->nbo = 1;
 	rstate->placement[0] = RADEON_GEM_DOMAIN_GTT;
 
-	if (radeon_state_pm4(rstate)) {
-		radeon_state_decref(rstate);
-		return NULL;
-	}
-	return rstate;
+	radeon_state_pm4(rstate);
 }
 
-static struct radeon_state *r600_blit_state_vgt(struct r600_screen *rscreen)
+static void r600_blit_state_vgt(struct r600_screen *rscreen, struct radeon_state *rstate)
 {
-	struct radeon_state *rstate;
-
-	rstate = radeon_state(rscreen->rw, R600_STATE_VGT, 0); if (rstate == NULL)
-		return NULL;
+	radeon_state_init(rstate, rscreen->rw, R600_STATE_VGT, 0, 0);
 
 	/* set states (most default value are 0 and struct already
 	 * initialized to 0, thus avoid resetting them)
@@ -413,20 +384,12 @@ static struct radeon_state *r600_blit_state_vgt(struct r600_screen *rscreen)
 	rstate->states[R600_VGT__VGT_MAX_VTX_INDX] = 0x00FFFFFF;
 	rstate->states[R600_VGT__VGT_PRIMITIVE_TYPE] = 0x00000005;
 
-	if (radeon_state_pm4(rstate)) {
-		radeon_state_decref(rstate);
-		return NULL;
-	}
-	return rstate;
+	radeon_state_pm4(rstate);
 }
 
-static struct radeon_state *r600_blit_state_draw(struct r600_screen *rscreen)
+static void r600_blit_state_draw(struct r600_screen *rscreen, struct radeon_state *rstate)
 {
-	struct radeon_state *rstate;
-
-	rstate = radeon_state(rscreen->rw, R600_STATE_DRAW, 0);
-	if (rstate == NULL)
-		return NULL;
+	radeon_state_init(rstate, rscreen->rw, R600_STATE_DRAW, 0, 0);
 
 	/* set states (most default value are 0 and struct already
 	 * initialized to 0, thus avoid resetting them)
@@ -434,22 +397,13 @@ static struct radeon_state *r600_blit_state_draw(struct r600_screen *rscreen)
 	rstate->states[R600_DRAW__VGT_DRAW_INITIATOR] = 0x00000002;
 	rstate->states[R600_DRAW__VGT_NUM_INDICES] = 0x00000004;
 
-	if (radeon_state_pm4(rstate)) {
-		radeon_state_decref(rstate);
-		return NULL;
-	}
-	return rstate;
+	radeon_state_pm4(rstate);
 }
 
-static struct radeon_state *r600_blit_state_vs_constant(struct r600_screen *rscreen,
-					unsigned id, float c0, float c1,
-					float c2, float c3)
+static void r600_blit_state_vs_constant(struct r600_screen *rscreen, struct radeon_state *rstate,
+					unsigned id, float c0, float c1, float c2, float c3)
 {
-	struct radeon_state *rstate;
-
-	rstate = radeon_state_shader(rscreen->rw, R600_STATE_CONSTANT, id, R600_SHADER_VS);
-	if (rstate == NULL)
-		return NULL;
+	radeon_state_init(rstate, rscreen->rw, R600_STATE_CONSTANT, id, R600_SHADER_VS);
 
 	/* set states (most default value are 0 and struct already
 	 * initialized to 0, thus avoid resetting them)
@@ -459,20 +413,12 @@ static struct radeon_state *r600_blit_state_vs_constant(struct r600_screen *rscr
 	rstate->states[R600_VS_CONSTANT__SQ_ALU_CONSTANT2_256] = fui(c2);
 	rstate->states[R600_VS_CONSTANT__SQ_ALU_CONSTANT3_256] = fui(c3);
 
-	if (radeon_state_pm4(rstate)) {
-		radeon_state_decref(rstate);
-		return NULL;
-	}
-	return rstate;
+	radeon_state_pm4(rstate);
 }
 
-static struct radeon_state *r600_blit_state_rasterizer(struct r600_screen *rscreen)
+static void r600_blit_state_rasterizer(struct r600_screen *rscreen, struct radeon_state *rstate)
 {
-	struct radeon_state *rstate;
-
-	rstate = radeon_state(rscreen->rw, R600_STATE_RASTERIZER, 0);
-	if (rstate == NULL)
-		return NULL;
+	radeon_state_init(rstate, rscreen->rw, R600_STATE_RASTERIZER, 0, 0);
 
 	/* set states (most default value are 0 and struct already
 	 * initialized to 0, thus avoid resetting them)
@@ -488,20 +434,12 @@ static struct radeon_state *r600_blit_state_rasterizer(struct r600_screen *rscre
 	rstate->states[R600_RASTERIZER__PA_SU_SC_MODE_CNTL] = 0x00080004;
 	rstate->states[R600_RASTERIZER__SPI_INTERP_CONTROL_0] = 0x00000001;
 
-	if (radeon_state_pm4(rstate)) {
-		radeon_state_decref(rstate);
-		return NULL;
-	}
-	return rstate;
+	radeon_state_pm4(rstate);
 }
 
-static struct radeon_state *r600_blit_state_dsa(struct r600_screen *rscreen)
+static void r600_blit_state_dsa(struct r600_screen *rscreen, struct radeon_state *rstate)
 {
-	struct radeon_state *rstate;
-
-	rstate = radeon_state(rscreen->rw, R600_STATE_DSA, 0);
-	if (rstate == NULL)
-		return NULL;
+	radeon_state_init(rstate, rscreen->rw, R600_STATE_DSA, 0, 0);
 
 	/* set states (most default value are 0 and struct already
 	 * initialized to 0, thus avoid resetting them)
@@ -512,43 +450,18 @@ static struct radeon_state *r600_blit_state_dsa(struct r600_screen *rscreen)
 	rstate->states[R600_DSA__DB_RENDER_OVERRIDE] = 0x0000002A;
 	rstate->states[R600_DSA__DB_SHADER_CONTROL] = 0x00000210;
 
-	if (radeon_state_pm4(rstate)) {
-		radeon_state_decref(rstate);
-		return NULL;
-	}
-	return rstate;
+	radeon_state_pm4(rstate);
 }
 
-static struct radeon_state *r600_blit_state_blend(struct r600_screen *rscreen)
+static void r600_blit_state_blend(struct r600_screen *rscreen, struct radeon_state *rstate)
 {
-	struct radeon_state *rstate;
-
-	rstate = radeon_state(rscreen->rw, R600_STATE_BLEND, 0);
-	if (rstate == NULL)
-		return NULL;
-
-	/* set states (most default value are 0 and struct already
-	 * initialized to 0, thus avoid resetting them)
-	 */
-
-	if (radeon_state_pm4(rstate)) {
-		radeon_state_decref(rstate);
-		return NULL;
-	}
-	return rstate;
+	radeon_state_init(rstate, rscreen->rw, R600_STATE_BLEND, 0, 0);
+	radeon_state_pm4(rstate);
 }
 
-static struct radeon_state *r600_blit_state_cb_cntl(struct r600_screen *rscreen)
+static void r600_blit_state_cb_cntl(struct r600_screen *rscreen, struct radeon_state *rstate)
 {
-	struct radeon_state *rstate;
-
-	rstate = radeon_state(rscreen->rw, R600_STATE_CB_CNTL, 0);
-	if (rstate == NULL)
-		return NULL;
-
-	/* set states (most default value are 0 and struct already
-	 * initialized to 0, thus avoid resetting them)
-	 */
+	radeon_state_init(rstate, rscreen->rw, R600_STATE_CB_CNTL, 0, 0);
 	rstate->states[R600_CB_CNTL__CB_CLRCMP_CONTROL] = 0x01000000;
 	rstate->states[R600_CB_CNTL__CB_CLRCMP_DST] = 0x000000FF;
 	rstate->states[R600_CB_CNTL__CB_CLRCMP_MSK] = 0xFFFFFFFF;
@@ -556,113 +469,42 @@ static struct radeon_state *r600_blit_state_cb_cntl(struct r600_screen *rscreen)
 	rstate->states[R600_CB_CNTL__CB_SHADER_MASK] = 0x0000000F;
 	rstate->states[R600_CB_CNTL__CB_TARGET_MASK] = 0x0000000F;
 	rstate->states[R600_CB_CNTL__PA_SC_AA_MASK] = 0xFFFFFFFF;
-
-	if (radeon_state_pm4(rstate)) {
-		radeon_state_decref(rstate);
-		return NULL;
-	}
-	return rstate;
+	radeon_state_pm4(rstate);
 }
 
 static int r600_blit_states_init(struct pipe_context *ctx, struct r600_blit_states *bstates)
 {
 	struct r600_screen *rscreen = r600_screen(ctx->screen);
-	struct r600_context *rctx = r600_context(ctx);
-	int r;
 
-	bstates->ps_shader = r600_blit_state_ps_shader(rscreen);
-	if (bstates->ps_shader == NULL) {
-		R600_ERR("failed creating ps_shader state\n");
-		return -ENOMEM;
-	}
-	bstates->vs_shader = r600_blit_state_vs_shader(rscreen);
-	if (bstates->vs_shader == NULL) {
-		R600_ERR("failed creating vs_shader state\n");
-		return -ENOMEM;
-	}
-	bstates->vgt = r600_blit_state_vgt(rscreen);
-	if (bstates->vgt == NULL) {
-		R600_ERR("failed creating vgt state\n");
-		return -ENOMEM;
-	}
-	bstates->draw = r600_blit_state_draw(rscreen);
-	if (bstates->draw == NULL) {
-		R600_ERR("failed creating draw state\n");
-		return -ENOMEM;
-	}
-	bstates->vs_constant0 = r600_blit_state_vs_constant(rscreen, 0, 1.0, 0.0, 0.0, 0.0);
-	if (bstates->vs_constant0 == NULL) {
-		R600_ERR("failed creating vs_constant0 state\n");
-		return -ENOMEM;
-	}
-	bstates->vs_constant1 = r600_blit_state_vs_constant(rscreen, 1, 0.0, 1.0, 0.0, 0.0);
-	if (bstates->vs_constant1 == NULL) {
-		R600_ERR("failed creating vs_constant1 state\n");
-		return -ENOMEM;
-	}
-	bstates->vs_constant2 = r600_blit_state_vs_constant(rscreen, 2, 0.0, 0.0, -0.00199900055, 0.0);
-	if (bstates->vs_constant2 == NULL) {
-		R600_ERR("failed creating vs_constant2 state\n");
-		return -ENOMEM;
-	}
-	bstates->vs_constant3 = r600_blit_state_vs_constant(rscreen, 3, 0.0, 0.0, -0.99900049, 1.0);
-	if (bstates->vs_constant3 == NULL) {
-		R600_ERR("failed creating vs_constant3 state\n");
-		return -ENOMEM;
-	}
-	bstates->rasterizer = r600_blit_state_rasterizer(rscreen);
-	if (bstates->rasterizer == NULL) {
-		R600_ERR("failed creating rasterizer state\n");
-		return -ENOMEM;
-	}
-	bstates->dsa = r600_blit_state_dsa(rscreen);
-	if (bstates->dsa == NULL) {
-		R600_ERR("failed creating dsa state\n");
-		return -ENOMEM;
-	}
-	bstates->blend = r600_blit_state_blend(rscreen);
-	if (bstates->blend == NULL) {
-		R600_ERR("failed creating blend state\n");
-		return -ENOMEM;
-	}
-	bstates->cb_cntl = r600_blit_state_cb_cntl(rscreen);
-	if (bstates->cb_cntl == NULL) {
-		R600_ERR("failed creating cb_cntl state\n");
-		return -ENOMEM;
-	}
-	r = r600_blit_state_vs_resources(rscreen, bstates);
-	if (r) {
-		R600_ERR("failed creating vs_resource state\n");
-		return r;
-	}
-	bstates->config = radeon_state_incref(rctx->hw_states.config);
+	r600_blit_state_ps_shader(rscreen, &bstates->ps_shader);
+	r600_blit_state_vs_shader(rscreen, &bstates->vs_shader);
+	r600_blit_state_vgt(rscreen, &bstates->vgt);
+	r600_blit_state_draw(rscreen, &bstates->draw);
+	r600_blit_state_vs_constant(rscreen, &bstates->vs_constant0, 0, 1.0, 0.0, 0.0, 0.0);
+	r600_blit_state_vs_constant(rscreen, &bstates->vs_constant1, 1, 0.0, 1.0, 0.0, 0.0);
+	r600_blit_state_vs_constant(rscreen, &bstates->vs_constant2, 2, 0.0, 0.0, -0.00199900055, 0.0);
+	r600_blit_state_vs_constant(rscreen, &bstates->vs_constant3, 3, 0.0, 0.0, -0.99900049, 1.0);
+	r600_blit_state_rasterizer(rscreen, &bstates->rasterizer);
+	r600_blit_state_dsa(rscreen, &bstates->dsa);
+	r600_blit_state_blend(rscreen, &bstates->blend);
+	r600_blit_state_cb_cntl(rscreen, &bstates->cb_cntl);
+	r600_blit_state_vs_resources(rscreen, bstates);
 	return 0;
 }
 
 static void r600_blit_states_destroy(struct pipe_context *ctx, struct r600_blit_states *bstates)
 {
-	radeon_state_decref(bstates->rasterizer);
-	radeon_state_decref(bstates->dsa);
-	radeon_state_decref(bstates->blend);
-	radeon_state_decref(bstates->cb_cntl);
-	radeon_state_decref(bstates->config);
-	radeon_state_decref(bstates->vgt);
-	radeon_state_decref(bstates->draw);
-	radeon_state_decref(bstates->vs_constant0);
-	radeon_state_decref(bstates->vs_constant1);
-	radeon_state_decref(bstates->vs_constant2);
-	radeon_state_decref(bstates->vs_constant3);
-	radeon_state_decref(bstates->ps_shader);
-	radeon_state_decref(bstates->vs_shader);
-	radeon_state_decref(bstates->vs_resource0);
-	radeon_state_decref(bstates->vs_resource1);
+	radeon_state_fini(&bstates->ps_shader);
+	radeon_state_fini(&bstates->vs_shader);
+	radeon_state_fini(&bstates->vs_resource0);
+	radeon_state_fini(&bstates->vs_resource1);
 }
 
 int r600_blit_uncompress_depth(struct pipe_context *ctx, struct r600_resource_texture *rtexture, unsigned level)
 {
 	struct r600_screen *rscreen = r600_screen(ctx->screen);
 	struct r600_context *rctx = r600_context(ctx);
-	struct radeon_draw *draw = NULL;
+	struct radeon_draw draw;
 	struct r600_blit_states bstates;
 	int r;
 
@@ -687,108 +529,51 @@ int r600_blit_uncompress_depth(struct pipe_context *ctx, struct r600_resource_te
 	if (r) {
 		return r;
 	}
-	bstates.dsa->states[R600_DSA__DB_RENDER_CONTROL] = 0x0000008C;
-	bstates.cb_cntl->states[R600_CB_CNTL__CB_TARGET_MASK] = 0x00000001;
+	bstates.dsa.states[R600_DSA__DB_RENDER_CONTROL] = 0x0000008C;
+	bstates.cb_cntl.states[R600_CB_CNTL__CB_TARGET_MASK] = 0x00000001;
 	/* force rebuild */
-	bstates.dsa->cpm4 = bstates.cb_cntl->cpm4 = 0;
-	if (radeon_state_pm4(bstates.dsa)) {
+	bstates.dsa.cpm4 = bstates.cb_cntl.cpm4 = 0;
+	if (radeon_state_pm4(&bstates.dsa)) {
 		goto out;
 	}
-	if (radeon_state_pm4(bstates.cb_cntl)) {
+	if (radeon_state_pm4(&bstates.cb_cntl)) {
 		goto out;
 	}
 
-	draw = radeon_draw(rscreen->rw);
-	if (draw == NULL) {
+	r = radeon_draw_init(&draw, rscreen->rw);
+	if (r) {
 		R600_ERR("failed creating draw for uncompressing textures\n");
 		goto out;
 	}
 
-	r = radeon_draw_set(draw, bstates.vs_shader);
-	if (r) {
-		goto out;
-	}
-	r = radeon_draw_set(draw, bstates.ps_shader);
-	if (r) {
-		goto out;
-	}
-	r = radeon_draw_set(draw, bstates.rasterizer);
-	if (r) {
-		goto out;
-	}
-	r = radeon_draw_set(draw, bstates.dsa);
-	if (r) {
-		goto out;
-	}
-	r = radeon_draw_set(draw, bstates.blend);
-	if (r) {
-		goto out;
-	}
-	r = radeon_draw_set(draw, bstates.cb_cntl);
-	if (r) {
-		goto out;
-	}
-	r = radeon_draw_set(draw, bstates.config);
-	if (r) {
-		goto out;
-	}
-	r = radeon_draw_set(draw, bstates.vgt);
-	if (r) {
-		goto out;
-	}
-	r = radeon_draw_set(draw, bstates.draw);
-	if (r) {
-		goto out;
-	}
-	r = radeon_draw_set(draw, bstates.vs_resource0);
-	if (r) {
-		goto out;
-	}
-	r = radeon_draw_set(draw, bstates.vs_resource1);
-	if (r) {
-		goto out;
-	}
-	r = radeon_draw_set(draw, bstates.vs_constant0);
-	if (r) {
-		goto out;
-	}
-	r = radeon_draw_set(draw, bstates.vs_constant1);
-	if (r) {
-		goto out;
-	}
-	r = radeon_draw_set(draw, bstates.vs_constant2);
-	if (r) {
-		goto out;
-	}
-	r = radeon_draw_set(draw, bstates.vs_constant3);
-	if (r) {
-		goto out;
-	}
-	r = radeon_draw_set(draw, rtexture->viewport[level]);
-	if (r) {
-		goto out;
-	}
-	r = radeon_draw_set(draw, rtexture->scissor[level]);
-	if (r) {
-		goto out;
-	}
-	r = radeon_draw_set(draw, rtexture->cb[0][level]);
-	if (r) {
-		goto out;
-	}
-	r = radeon_draw_set(draw, rtexture->db[level]);
-	if (r) {
-		goto out;
-	}
+	radeon_draw_bind(&draw, &bstates.vs_shader);
+	radeon_draw_bind(&draw, &bstates.ps_shader);
+	radeon_draw_bind(&draw, &bstates.rasterizer);
+	radeon_draw_bind(&draw, &bstates.dsa);
+	radeon_draw_bind(&draw, &bstates.blend);
+	radeon_draw_bind(&draw, &bstates.cb_cntl);
+	radeon_draw_bind(&draw, &rctx->config);
+	radeon_draw_bind(&draw, &bstates.vgt);
+	radeon_draw_bind(&draw, &bstates.draw);
+	radeon_draw_bind(&draw, &bstates.vs_resource0);
+	radeon_draw_bind(&draw, &bstates.vs_resource1);
+	radeon_draw_bind(&draw, &bstates.vs_constant0);
+	radeon_draw_bind(&draw, &bstates.vs_constant1);
+	radeon_draw_bind(&draw, &bstates.vs_constant2);
+	radeon_draw_bind(&draw, &bstates.vs_constant3);
+	radeon_draw_bind(&draw, &rtexture->viewport[level]);
+	radeon_draw_bind(&draw, &rtexture->scissor[level]);
+	radeon_draw_bind(&draw, &rtexture->cb[0][level]);
+	radeon_draw_bind(&draw, &rtexture->db[level]);
 
 	/* suspend queries */
 	r600_queries_suspend(ctx);
 
 	/* schedule draw*/
-	r = radeon_ctx_set_draw_new(rctx->ctx, draw);
+	r = radeon_ctx_set_draw(&rctx->ctx, &draw);
 	if (r == -EBUSY) {
 		r600_flush(ctx, 0, NULL);
-		r = radeon_ctx_set_draw_new(rctx->ctx, draw);
+		r = radeon_ctx_set_draw(&rctx->ctx, &draw);
 	}
 	if (r) {
 		goto out;

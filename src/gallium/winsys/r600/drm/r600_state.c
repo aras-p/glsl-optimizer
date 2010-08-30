@@ -367,7 +367,6 @@ static int r600_state_pm4_vgt(struct radeon_state *state)
 
 static int r600_state_pm4_draw(struct radeon_state *state)
 {
-	unsigned i;
 	int r;
 
 	if (state->nbo) {
@@ -485,11 +484,10 @@ static void r600_build_types_array(struct radeon *radeon)
 		} else {
 			for (j = 0; j < R600_SHADER_MAX; j++) {
 				if (r600_stypes[i].reginfo[j].shader_type)
-					id += r600_stypes[i].num;					
+					id += r600_stypes[i].num;
 			}
 		}
 	}
-	radeon->nstate = id;
 	radeon->stype = r600_stypes;
 	radeon->nstype = STYPES_SIZE;
 

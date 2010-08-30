@@ -77,6 +77,14 @@ enum radeon_family {
 	CHIP_LAST,
 };
 
+enum {
+	R600_SHADER_PS = 1,
+	R600_SHADER_VS,
+	R600_SHADER_GS,
+	R600_SHADER_FS,
+	R600_SHADER_MAX = R600_SHADER_FS,
+};
+
 enum radeon_family radeon_get_family(struct radeon *rw);
 
 /*
@@ -105,9 +113,10 @@ struct radeon_stype_info;
 struct radeon_state {
 	struct radeon			*radeon;
 	unsigned			refcount;
-	struct radeon_stype_info        *stype;
+	struct radeon_stype_info	*stype;
+	unsigned			state_id;
 	unsigned			id;
-	unsigned                        shader_index;
+	unsigned			shader_index;
 	unsigned			nstates;
 	u32				states[64];
 	unsigned			npm4;
@@ -123,10 +132,8 @@ struct radeon_state {
 	unsigned			bo_dirty[4];
 };
 
-struct radeon_state *radeon_state(struct radeon *radeon, u32 type, u32 id);
-struct radeon_state *radeon_state_shader(struct radeon *radeon, u32 type, u32 id, u32 shader_class);
-struct radeon_state *radeon_state_incref(struct radeon_state *state);
-struct radeon_state *radeon_state_decref(struct radeon_state *state);
+int radeon_state_init(struct radeon_state *rstate, struct radeon *radeon, u32 type, u32 id, u32 shader_class);
+void radeon_state_fini(struct radeon_state *state);
 int radeon_state_pm4(struct radeon_state *state);
 int radeon_state_convert(struct radeon_state *state, u32 stype, u32 id, u32 shader_type);
 
@@ -134,30 +141,13 @@ int radeon_state_convert(struct radeon_state *state, u32 stype, u32 id, u32 shad
  * draw functions
  */
 struct radeon_draw {
-	unsigned			refcount;
 	struct radeon			*radeon;
-	unsigned			nstate;
 	struct radeon_state		**state;
-	unsigned			cpm4;
 };
 
-struct radeon_draw *radeon_draw(struct radeon *radeon);
-struct radeon_draw *radeon_draw_duplicate(struct radeon_draw *draw);
-struct radeon_draw *radeon_draw_incref(struct radeon_draw *draw);
-struct radeon_draw *radeon_draw_decref(struct radeon_draw *draw);
-int radeon_draw_set(struct radeon_draw *draw, struct radeon_state *state);
-int radeon_draw_set_new(struct radeon_draw *draw, struct radeon_state *state);
-int radeon_draw_check(struct radeon_draw *draw);
-
-struct radeon_ctx *radeon_ctx(struct radeon *radeon);
-struct radeon_ctx *radeon_ctx_decref(struct radeon_ctx *ctx);
-struct radeon_ctx *radeon_ctx_incref(struct radeon_ctx *ctx);
-int radeon_ctx_set_draw(struct radeon_ctx *ctx, struct radeon_draw *draw);
-int radeon_ctx_set_query_state(struct radeon_ctx *ctx, struct radeon_state *state);
-int radeon_ctx_set_draw_new(struct radeon_ctx *ctx, struct radeon_draw *draw);
-int radeon_ctx_pm4(struct radeon_ctx *ctx);
-int radeon_ctx_submit(struct radeon_ctx *ctx);
-void radeon_ctx_dump_bof(struct radeon_ctx *ctx, const char *file);
+int radeon_draw_init(struct radeon_draw *draw, struct radeon *radeon);
+void radeon_draw_bind(struct radeon_draw *draw, struct radeon_state *state);
+void radeon_draw_unbind(struct radeon_draw *draw, struct radeon_state *state);
 
 /*
  * radeon context functions
@@ -172,30 +162,30 @@ struct radeon_cs_reloc {
 #pragma pack()
 
 struct radeon_ctx {
-	int				refcount;
 	struct radeon			*radeon;
 	u32				*pm4;
-	u32				cpm4;
-	u32				draw_cpm4;
-	unsigned			id;
-	unsigned			next_id;
+	int				cdwords;
+	int				ndwords;
 	unsigned			nreloc;
 	struct radeon_cs_reloc		*reloc;
 	unsigned			nbo;
 	struct radeon_bo		**bo;
-	unsigned			ndraw;
-	struct radeon_draw		*cdraw;
-	struct radeon_draw		**draw;
-	unsigned			nstate;
-	struct radeon_state		**state;
 };
+
+int radeon_ctx_init(struct radeon_ctx *ctx, struct radeon *radeon);
+void radeon_ctx_fini(struct radeon_ctx *ctx);
+void radeon_ctx_clear(struct radeon_ctx *ctx);
+int radeon_ctx_set_draw(struct radeon_ctx *ctx, struct radeon_draw *draw);
+int radeon_ctx_submit(struct radeon_ctx *ctx);
+void radeon_ctx_dump_bof(struct radeon_ctx *ctx, const char *file);
+int radeon_ctx_set_query_state(struct radeon_ctx *ctx, struct radeon_state *state);
 
 /*
  * R600/R700
  */
 
 enum r600_stype {
-	R600_STATE_CONFIG,  
+	R600_STATE_CONFIG,
 	R600_STATE_CB_CNTL,
 	R600_STATE_RASTERIZER,
 	R600_STATE_VIEWPORT,
@@ -221,14 +211,6 @@ enum r600_stype {
 	R600_STATE_UCP,
 	R600_STATE_VGT,
 	R600_STATE_DRAW,
-};
-
-enum {
-	R600_SHADER_PS = 1,
-	R600_SHADER_VS,
-	R600_SHADER_GS,
-	R600_SHADER_FS,
-	R600_SHADER_MAX = R600_SHADER_FS,
 };
 
 /* R600_CONFIG */

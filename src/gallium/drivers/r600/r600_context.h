@@ -53,7 +53,7 @@ struct r600_query {
 	unsigned				buffer_size;
 	/* linked list of queries */
 	struct list_head			list;
-	struct radeon_state			*rstate;
+	struct radeon_state			rstate;
 };
 
 /* XXX move this to a more appropriate place */
@@ -99,7 +99,7 @@ struct r600_context_state {
 	union pipe_states		state;
 	unsigned			refcount;
 	unsigned			type;
-	struct radeon_state		*rstate;
+	struct radeon_state		rstate;
 	struct r600_shader		shader;
 	struct radeon_bo		*bo;
 };
@@ -112,29 +112,24 @@ struct r600_vertex_element
 };
 
 struct r600_context_hw_states {
-	struct radeon_state	*rasterizer;
-	struct radeon_state	*scissor;
-	struct radeon_state	*dsa;
-	struct radeon_state	*blend;
-	struct radeon_state	*viewport;
-	struct radeon_state	*cb[8];
-	struct radeon_state	*config;
-	struct radeon_state	*cb_cntl;
-	struct radeon_state	*db;
-	struct radeon_state	*ucp;
-	unsigned		ps_nresource;
-	unsigned		ps_nsampler;
-	struct radeon_state	*ps_resource[160];
-	struct radeon_state	*ps_sampler[16];
+	struct radeon_state	rasterizer;
+	struct radeon_state	scissor;
+	struct radeon_state	dsa;
+	struct radeon_state	cb_cntl;
 };
 
 struct r600_context {
 	struct pipe_context		context;
 	struct r600_screen		*screen;
 	struct radeon			*rw;
-	struct radeon_ctx		*ctx;
+	struct radeon_ctx		ctx;
 	struct blitter_context		*blitter;
-	struct radeon_draw		*draw;
+	struct radeon_draw		draw;
+	struct radeon_state		config;
+	/* FIXME get rid of those vs_resource,vs/ps_constant */
+	struct radeon_state		vs_resource[160];
+	struct radeon_state		vs_constant[256];
+	struct radeon_state		ps_constant[256];
 	/* hw states */
 	struct r600_context_hw_states	hw_states;
 	/* pipe states */

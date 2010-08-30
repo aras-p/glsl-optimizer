@@ -31,116 +31,27 @@
 /*
  * draw functions
  */
-struct radeon_draw *radeon_draw(struct radeon *radeon)
+int radeon_draw_init(struct radeon_draw *draw, struct radeon *radeon)
 {
-	struct radeon_draw *draw;
-
-	draw = calloc(1, sizeof(*draw));
-	if (draw == NULL)
-		return NULL;
-	draw->nstate = radeon->nstate;
 	draw->radeon = radeon;
-	draw->refcount = 1;
-	draw->state = calloc(1, sizeof(void*) * draw->nstate);
-	if (draw->state == NULL) {
-		free(draw);
-		return NULL;
-	}
-	return draw;
-}
-
-struct radeon_draw *radeon_draw_incref(struct radeon_draw *draw)
-{
-	draw->refcount++;
-	return draw;
-}
-
-struct radeon_draw *radeon_draw_decref(struct radeon_draw *draw)
-{
-	unsigned i;
-
-	if (draw == NULL)
-		return NULL;
-	if (--draw->refcount > 0)
-		return NULL;
-	for (i = 0; i < draw->nstate; i++) {
-		draw->state[i] = radeon_state_decref(draw->state[i]);
-	}
-	free(draw->state);
-	memset(draw, 0, sizeof(*draw));
-	free(draw);
-	return NULL;
-}
-
-int radeon_draw_set_new(struct radeon_draw *draw, struct radeon_state *state)
-{
-	int id;
-	if (state == NULL)
-		return 0;
-
-	id = state->stype->base_id + (state->id + (state->stype->num * state->shader_index));
-	if (id > draw->radeon->nstate)
-	{
-		return -EINVAL;
-	}
-	draw->state[id] = radeon_state_decref(draw->state[id]);
-	draw->state[id] = state;
+	draw->state = calloc(radeon->nstate_per_shader * R600_SHADER_MAX, sizeof(void*));
+	if (draw->state == NULL)
+		return -ENOMEM;
 	return 0;
 }
 
-int radeon_draw_set(struct radeon_draw *draw, struct radeon_state *state)
+void radeon_draw_bind(struct radeon_draw *draw, struct radeon_state *state)
 {
 	if (state == NULL)
-		return 0;
-	radeon_state_incref(state);
-	return radeon_draw_set_new(draw, state);
+		return;
+	draw->state[state->state_id] = state;
 }
 
-int radeon_draw_check(struct radeon_draw *draw)
+void radeon_draw_unbind(struct radeon_draw *draw, struct radeon_state *state)
 {
-	unsigned i;
-	int r;
-
-	r = radeon_draw_pm4(draw);
-	if (r)
-		return r;
-	for (i = 0, draw->cpm4 = 0; i < draw->nstate; i++) {
-		if (draw->state[i]) {
-			draw->cpm4 += draw->state[i]->cpm4;
-		}
+	if (state == NULL)
+		return;
+	if (draw->state[state->state_id] == state) {
+		draw->state[state->state_id] = NULL;
 	}
-	return 0;
-}
-
-struct radeon_draw *radeon_draw_duplicate(struct radeon_draw *draw)
-{
-	struct radeon_draw *ndraw;
-	unsigned i;
-
-	if (draw == NULL)
-		return NULL;
-	ndraw = radeon_draw(draw->radeon);
-	if (ndraw == NULL) {
-		return NULL;
-	}
-	for (i = 0; i < draw->nstate; i++) {
-		if (radeon_draw_set(ndraw, draw->state[i])) {
-			radeon_draw_decref(ndraw);
-			return NULL;
-		}
-	}
-	return ndraw;
-}
-
-int radeon_draw_pm4(struct radeon_draw *draw)
-{
-	unsigned i;
-	int r;
-
-	for (i = 0; i < draw->nstate; i++) {
-		r = radeon_state_pm4(draw->state[i]);
-		if (r)
-			return r;
-	}
-	return 0;
 }

@@ -133,10 +133,10 @@ static void r600_texture_destroy_state(struct pipe_resource *ptexture)
 	struct r600_resource_texture *rtexture = (struct r600_resource_texture*)ptexture;
 
 	for (int i = 0; i < PIPE_MAX_TEXTURE_LEVELS; i++) {
-		radeon_state_decref(rtexture->scissor[i]);
-		radeon_state_decref(rtexture->db[i]);
+		radeon_state_fini(&rtexture->scissor[i]);
+		radeon_state_fini(&rtexture->db[i]);
 		for (int j = 0; j < 8; j++) {
-			radeon_state_decref(rtexture->cb[j][i]);
+			radeon_state_fini(&rtexture->cb[j][i]);
 		}
 	}
 }
@@ -668,16 +668,13 @@ int r600_texture_from_depth(struct pipe_context *ctx, struct r600_resource_textu
 	return 0;
 }
 
-static struct radeon_state *r600_texture_state_scissor(struct r600_screen *rscreen,
+static void r600_texture_state_scissor(struct r600_screen *rscreen,
 					struct r600_resource_texture *rtexture,
 					unsigned level)
 {
-	struct radeon_state *rstate;
+	struct radeon_state *rstate = &rtexture->scissor[level];
 
-	rstate = radeon_state(rscreen->rw, R600_STATE_SCISSOR, 0);
-	if (rstate == NULL)
-		return NULL;
-
+	radeon_state_init(rstate, rscreen->rw, R600_STATE_SCISSOR, 0, 0);
 	/* set states (most default value are 0 and struct already
 	 * initialized to 0, thus avoid resetting them)
 	 */
@@ -700,16 +697,10 @@ static struct radeon_state *r600_texture_state_scissor(struct r600_screen *rscre
 	rstate->states[R600_SCISSOR__PA_SC_WINDOW_SCISSOR_BR] = S_028244_BR_X(rtexture->width[level]) | S_028244_BR_Y(rtexture->height[level]);
 	rstate->states[R600_SCISSOR__PA_SC_WINDOW_SCISSOR_TL] = 0x80000000;
 
-	if (radeon_state_pm4(rstate)) {
-		radeon_state_decref(rstate);
-		return NULL;
-	}
-	return rstate;
+	radeon_state_pm4(rstate);
 }
 
-static struct radeon_state *r600_texture_state_cb(struct r600_screen *rscreen,
-				struct r600_resource_texture *rtexture,
-				unsigned cb, unsigned level)
+static void r600_texture_state_cb(struct r600_screen *rscreen, struct r600_resource_texture *rtexture, unsigned cb, unsigned level)
 {
 	struct radeon_state *rstate;
 	struct r600_resource *rbuffer;
@@ -718,9 +709,8 @@ static struct radeon_state *r600_texture_state_cb(struct r600_screen *rscreen,
 	unsigned format, swap, ntype;
 	const struct util_format_description *desc;
 
-	rstate = radeon_state(rscreen->rw, R600_STATE_CB0 + cb, 0);
-	if (rstate == NULL)
-		return NULL;
+	rstate = &rtexture->cb[cb][level];
+	radeon_state_init(rstate, rscreen->rw, R600_STATE_CB0 + cb, 0, 0);
 	rbuffer = &rtexture->resource;
 
 	/* set states (most default value are 0 and struct already
@@ -762,24 +752,16 @@ static struct radeon_state *r600_texture_state_cb(struct r600_screen *rscreen,
 	rstate->states[R600_CB0__CB_COLOR0_SIZE] = S_028060_PITCH_TILE_MAX(pitch) |
 						S_028060_SLICE_TILE_MAX(slice);
 
-	if (radeon_state_pm4(rstate)) {
-		radeon_state_decref(rstate);
-		return NULL;
-	}
-	return rstate;
+	radeon_state_pm4(rstate);
 }
 
-static struct radeon_state *r600_texture_state_db(struct r600_screen *rscreen,
-				struct r600_resource_texture *rtexture,
-				unsigned level)
+static void r600_texture_state_db(struct r600_screen *rscreen, struct r600_resource_texture *rtexture, unsigned level)
 {
-	struct radeon_state *rstate;
+	struct radeon_state *rstate = &rtexture->db[level];
 	struct r600_resource *rbuffer;
 	unsigned pitch, slice, format;
 
-	rstate = radeon_state(rscreen->rw, R600_STATE_DB, 0);
-	if (rstate == NULL)
-		return NULL;
+	radeon_state_init(rstate, rscreen->rw, R600_STATE_DB, 0, 0);
 	rbuffer = &rtexture->resource;
 	rtexture->tilled = 1;
 	rtexture->array_mode = 2;
@@ -803,36 +785,24 @@ static struct radeon_state *r600_texture_state_db(struct r600_screen *rscreen,
 	rstate->placement[0] = RADEON_GEM_DOMAIN_GTT;
 	rstate->nbo = 1;
 
-	if (radeon_state_pm4(rstate)) {
-		radeon_state_decref(rstate);
-		return NULL;
-	}
-	return rstate;
+	radeon_state_pm4(rstate);
 }
 
 int r600_texture_scissor(struct pipe_context *ctx, struct r600_resource_texture *rtexture, unsigned level)
 {
 	struct r600_screen *rscreen = r600_screen(ctx->screen);
 
-	if (rtexture->scissor[level] == NULL) {
-		rtexture->scissor[level] = r600_texture_state_scissor(rscreen, rtexture, level);
-		if (rtexture->scissor[level] == NULL) {
-			R600_ERR("failed to create scissor for uncompressing depth\n");
-			return -ENOMEM;
-		}
+	if (!rtexture->scissor[level].cpm4) {
+		r600_texture_state_scissor(rscreen, rtexture, level);
 	}
 	return 0;
 }
 
-static struct radeon_state *r600_texture_state_viewport(struct r600_screen *rscreen,
-					struct r600_resource_texture *rtexture,
-					unsigned level)
+static void r600_texture_state_viewport(struct r600_screen *rscreen, struct r600_resource_texture *rtexture, unsigned level)
 {
-	struct radeon_state *rstate;
+	struct radeon_state *rstate = &rtexture->viewport[level];
 
-	rstate = radeon_state(rscreen->rw, R600_STATE_VIEWPORT, 0);
-	if (rstate == NULL)
-		return NULL;
+	radeon_state_init(rstate, rscreen->rw, R600_STATE_VIEWPORT, 0, 0);
 
 	/* set states (most default value are 0 and struct already
 	 * initialized to 0, thus avoid resetting them)
@@ -846,23 +816,15 @@ static struct radeon_state *r600_texture_state_viewport(struct r600_screen *rscr
 	rstate->states[R600_VIEWPORT__PA_CL_VTE_CNTL] = 0x0000043F;
 	rstate->states[R600_VIEWPORT__PA_SC_VPORT_ZMAX_0] = 0x3F800000;
 
-	if (radeon_state_pm4(rstate)) {
-		radeon_state_decref(rstate);
-		return NULL;
-	}
-	return rstate;
+	radeon_state_pm4(rstate);
 }
 
 int r600_texture_cb(struct pipe_context *ctx, struct r600_resource_texture *rtexture, unsigned cb, unsigned level)
 {
 	struct r600_screen *rscreen = r600_screen(ctx->screen);
 
-	if (rtexture->cb[cb][level] == NULL) {
-		rtexture->cb[cb][level] = r600_texture_state_cb(rscreen, rtexture, cb, level);
-		if (rtexture->cb[cb][level] == NULL) {
-			R600_ERR("failed to create cb%d state for texture\n", cb);
-			return -ENOMEM;
-		}
+	if (!rtexture->cb[cb][level].cpm4) {
+		r600_texture_state_cb(rscreen, rtexture, cb, level);
 	}
 	return 0;
 }
@@ -871,12 +833,8 @@ int r600_texture_db(struct pipe_context *ctx, struct r600_resource_texture *rtex
 {
 	struct r600_screen *rscreen = r600_screen(ctx->screen);
 
-	if (rtexture->db[level] == NULL) {
-		rtexture->db[level] = r600_texture_state_db(rscreen, rtexture, level);
-		if (rtexture->db[level] == NULL) {
-			R600_ERR("failed to create db state for texture\n");
-			return -ENOMEM;
-		}
+	if (!rtexture->db[level].cpm4) {
+		r600_texture_state_db(rscreen, rtexture, level);
 	}
 	return 0;
 }
@@ -885,12 +843,8 @@ int r600_texture_viewport(struct pipe_context *ctx, struct r600_resource_texture
 {
 	struct r600_screen *rscreen = r600_screen(ctx->screen);
 
-	if (rtexture->viewport[level] == NULL) {
-		rtexture->viewport[level] = r600_texture_state_viewport(rscreen, rtexture, level);
-		if (rtexture->viewport[level] == NULL) {
-			R600_ERR("failed to create viewport state for texture\n");
-			return -ENOMEM;
-		}
+	if (!rtexture->viewport[level].cpm4) {
+		r600_texture_state_viewport(rscreen, rtexture, level);
 	}
 	return 0;
 }

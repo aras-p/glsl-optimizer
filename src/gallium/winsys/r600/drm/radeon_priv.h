@@ -58,9 +58,10 @@ struct radeon {
 	int				refcount;
 	unsigned			device;
 	unsigned			family;
-	unsigned			nstate;
-	unsigned                        nstype;
-	struct radeon_stype_info *stype;
+	unsigned			nstype;
+	unsigned			nstate_per_shader;
+	unsigned			*state_type_id;
+	struct radeon_stype_info	*stype;
 };
 
 extern struct radeon *radeon_new(int fd, unsigned device);
@@ -68,12 +69,6 @@ extern struct radeon *radeon_incref(struct radeon *radeon);
 extern struct radeon *radeon_decref(struct radeon *radeon);
 extern unsigned radeon_family_from_device(unsigned device);
 extern int radeon_is_family_compatible(unsigned family1, unsigned family2);
-
-int radeon_ctx_set_bo_new(struct radeon_ctx *ctx, struct radeon_bo *bo);
-struct radeon_bo *radeon_ctx_get_bo(struct radeon_ctx *ctx, unsigned reloc);
-void radeon_ctx_get_placement(struct radeon_ctx *ctx, unsigned reloc, u32 *placement);
-int radeon_ctx_set_draw_new(struct radeon_ctx *ctx, struct radeon_draw *draw);
-int radeon_ctx_draw(struct radeon_ctx *ctx);
 
 /*
  * r600/r700 context functions

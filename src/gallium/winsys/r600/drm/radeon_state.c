@@ -32,9 +32,8 @@
 /*
  * state core functions
  */
-struct radeon_state *radeon_state_shader(struct radeon *radeon, u32 stype, u32 id, u32 shader_type)
+int radeon_state_init(struct radeon_state *state, struct radeon *radeon, u32 stype, u32 id, u32 shader_type)
 {
-	struct radeon_state *state;
 	struct radeon_stype_info *found = NULL;
 	int i, j, shader_index = -1;
 
@@ -67,12 +66,11 @@ struct radeon_state *radeon_state_shader(struct radeon *radeon, u32 stype, u32 i
 
 	if (!found) {
 		fprintf(stderr, "%s invalid type %d/id %d/shader class %d\n", __func__, stype, id, shader_type);
-		return NULL;
+		return -EINVAL;
 	}
 
-	state = calloc(1, sizeof(*state));
-	if (state == NULL)
-		return NULL;
+	memset(state, 0, sizeof(struct radeon_state));
+	state->state_id = radeon->nstate_per_shader * shader_index + radeon->state_type_id[stype] + id;
 	state->stype = found;
 	state->radeon = radeon;
 	state->id = id;
@@ -80,7 +78,7 @@ struct radeon_state *radeon_state_shader(struct radeon *radeon, u32 stype, u32 i
 	state->refcount = 1;
 	state->npm4 = found->npm4;
 	state->nstates = found->reginfo[shader_index].nstates;
-	return state;
+	return 0;
 }
 
 int radeon_state_convert(struct radeon_state *state, u32 stype, u32 id, u32 shader_type)
@@ -130,57 +128,20 @@ int radeon_state_convert(struct radeon_state *state, u32 stype, u32 id, u32 shad
 	state->stype = found;
 	state->id = id;
 	state->shader_index = shader_index;
+	state->state_id = state->radeon->nstate_per_shader * shader_index + state->radeon->state_type_id[stype] + id;
 	return radeon_state_pm4(state);
 }
 
-struct radeon_state *radeon_state(struct radeon *radeon, u32 type, u32 id)
-{
-	return radeon_state_shader(radeon, type, id, 0);
-}
-
-struct radeon_state *radeon_state_duplicate(struct radeon_state *state)
-{
-	struct radeon_state *nstate = radeon_state_shader(state->radeon, state->stype->stype, state->id, (1 << state->shader_index));
-	unsigned i;
-
-	if (state == NULL)
-		return NULL;
-	nstate->cpm4 = state->cpm4;
-	nstate->nbo = state->nbo;
-	nstate->nreloc = state->nreloc;
-	memcpy(nstate->states, state->states, state->nstates * 4);
-	memcpy(nstate->pm4, state->pm4, state->npm4 * 4);
-	memcpy(nstate->placement, state->placement, 8 * 4);
-	memcpy(nstate->reloc_pm4_id, state->reloc_pm4_id, 8 * 4);
-	memcpy(nstate->reloc_bo_id, state->reloc_bo_id, 8 * 4);
-	memcpy(nstate->bo_dirty, state->bo_dirty, 4 * 4);
-	for (i = 0; i < state->nbo; i++) {
-		nstate->bo[i] = radeon_bo_incref(state->radeon, state->bo[i]);
-	}
-	return nstate;
-}
-
-struct radeon_state *radeon_state_incref(struct radeon_state *state)
-{
-	state->refcount++;
-	return state;
-}
-
-struct radeon_state *radeon_state_decref(struct radeon_state *state)
+void radeon_state_fini(struct radeon_state *state)
 {
 	unsigned i;
 
 	if (state == NULL)
 		return NULL;
-	if (--state->refcount > 0) {
-		return NULL;
-	}
 	for (i = 0; i < state->nbo; i++) {
 		state->bo[i] = radeon_bo_decref(state->radeon, state->bo[i]);
 	}
-	memset(state, 0, sizeof(*state));
-	free(state);
-	return NULL;
+	memset(state, 0, sizeof(struct radeon_state));
 }
 
 int radeon_state_replace_always(struct radeon_state *ostate,
