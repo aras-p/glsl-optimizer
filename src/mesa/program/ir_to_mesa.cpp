@@ -105,6 +105,18 @@ extern ir_to_mesa_src_reg ir_to_mesa_undef;
 
 class ir_to_mesa_instruction : public exec_node {
 public:
+   /* Callers of this talloc-based new need not call delete. It's
+    * easier to just talloc_free 'ctx' (or any of its ancestors). */
+   static void* operator new(size_t size, void *ctx)
+   {
+      void *node;
+
+      node = talloc_zero_size(ctx, size);
+      assert(node != NULL);
+
+      return node;
+   }
+
    enum prog_opcode op;
    ir_to_mesa_dst_reg dst_reg;
    ir_to_mesa_src_reg src_reg[3];
