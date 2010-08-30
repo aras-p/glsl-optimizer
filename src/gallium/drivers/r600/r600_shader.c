@@ -1018,6 +1018,10 @@ static int tgsi_lit(struct r600_shader_ctx *ctx)
 	if (r)
 		return r;
 
+	r = r600_bc_add_literal(ctx->bc, ctx->value);
+	if (r)
+		return r;
+
 	if (inst->Dst[0].Register.WriteMask & (1 << 2))
 	{
 		int chan;
@@ -1038,6 +1042,9 @@ static int tgsi_lit(struct r600_shader_ctx *ctx)
 		if (r)
 			return r;
 
+		r = r600_bc_add_literal(ctx->bc, ctx->value);
+		if (r)
+			return r;
 		chan = alu.dst.chan;
 		sel = alu.dst.sel;
 
@@ -1063,6 +1070,9 @@ static int tgsi_lit(struct r600_shader_ctx *ctx)
 		if (r)
 			return r;
 
+		r = r600_bc_add_literal(ctx->bc, ctx->value);
+		if (r)
+			return r;
 		/* dst.z = exp(tmp.x) */
 		memset(&alu, 0, sizeof(struct r600_bc_alu));
 		alu.inst = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_EXP_IEEE;
@@ -1149,6 +1159,9 @@ static int tgsi_trans_srcx_replicate(struct r600_shader_ctx *ctx)
 	alu.dst.write = 1;
 	alu.last = 1;
 	r = r600_bc_add_alu(ctx->bc, &alu);
+	if (r)
+		return r;
+	r = r600_bc_add_literal(ctx->bc, ctx->value);
 	if (r)
 		return r;
 	/* replicate result */
@@ -1760,6 +1773,10 @@ static int tgsi_exp(struct r600_shader_ctx *ctx)
 		if (r)
 			return r;
 
+		r = r600_bc_add_literal(ctx->bc, ctx->value);
+		if (r)
+			return r;
+
 		alu.inst = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_EXP_IEEE;
 		alu.src[0].sel = ctx->temp_reg;
 		alu.src[0].chan = 0;
@@ -1769,6 +1786,10 @@ static int tgsi_exp(struct r600_shader_ctx *ctx)
 		alu.dst.write = 1;
 		alu.last = 1;
 		r = r600_bc_add_alu(ctx->bc, &alu);
+		if (r)
+			return r;
+
+		r = r600_bc_add_literal(ctx->bc, ctx->value);
 		if (r)
 			return r;
 	}
@@ -1796,6 +1817,9 @@ static int tgsi_exp(struct r600_shader_ctx *ctx)
 		r = r600_bc_add_alu(ctx->bc, &alu);
 		if (r)
 			return r;
+		r = r600_bc_add_literal(ctx->bc, ctx->value);
+		if (r)
+			return r;
 	}
 
 	/* result.z = RoughApprox2ToX(tmp);*/
@@ -1816,7 +1840,9 @@ static int tgsi_exp(struct r600_shader_ctx *ctx)
 		r = r600_bc_add_alu(ctx->bc, &alu);
 		if (r)
 			return r;
-
+		r = r600_bc_add_literal(ctx->bc, ctx->value);
+		if (r)
+			return r;
 	}
 
 	/* result.w = 1.0;*/
@@ -1832,6 +1858,9 @@ static int tgsi_exp(struct r600_shader_ctx *ctx)
 		alu.dst.write = 1;
 		alu.last = 1;
 		r = r600_bc_add_alu(ctx->bc, &alu);
+		if (r)
+			return r;
+		r = r600_bc_add_literal(ctx->bc, ctx->value);
 		if (r)
 			return r;
 	}

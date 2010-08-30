@@ -375,6 +375,9 @@ static int r600_bc_alu_build(struct r600_bc *bc, struct r600_bc_alu *alu, unsign
 		 	                S_SQ_ALU_WORD1_OP2_UPDATE_PRED(alu->predicate);
 	}
 	if (alu->last) {
+		if (alu->nliteral && !alu->literal_added) {
+			R600_ERR("Bug in ALU processing for instruction 0x%08x, literal not added correctly\n");
+		}
 		for (i = 0; i < alu->nliteral; i++) {
 			bc->bytecode[id++] = alu->value[i];
 		}
