@@ -101,7 +101,7 @@ static void init_registers( struct brw_wm_compile *c )
 
    assert(nr_interp_regs >= 1);
 
-   c->prog_data.first_curbe_grf = c->key.nr_payload_regs;
+   c->prog_data.first_curbe_grf = ALIGN(c->key.nr_payload_regs, 2);
    c->prog_data.urb_read_length = nr_interp_regs * 2;
    c->prog_data.curb_read_length = c->nr_creg * 2;
 
