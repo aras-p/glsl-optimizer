@@ -64,7 +64,7 @@
 %option prefix="_mesa_glsl_"
 %option extra-type="struct _mesa_glsl_parse_state *"
 
-%x PP
+%x PP PRAGMA
 
 DEC_INT		[1-9][0-9]*
 HEX_INT		0[xX][0-9a-fA-F]+
@@ -110,7 +110,27 @@ HASH		^{SPC}#{SPC}
 				    */
 				   yylineno = strtol(ptr, &ptr, 0) - 1;
 				}
-^[ \t]*#[ \t]*pragma		{ BEGIN PP; return PRAGMA; }
+^{SPC}#{SPC}pragma{SPCP}debug{SPC}\({SPC}on{SPC}\) {
+				  BEGIN PP;
+				  return PRAGMA_DEBUG_ON;
+				}
+^{SPC}#{SPC}pragma{SPCP}debug{SPC}\({SPC}off{SPC}\) {
+				  BEGIN PP;
+				  return PRAGMA_DEBUG_OFF;
+				}
+^{SPC}#{SPC}pragma{SPCP}optimize{SPC}\({SPC}on{SPC}\) {
+				  BEGIN PP;
+				  return PRAGMA_OPTIMIZE_ON;
+				}
+^{SPC}#{SPC}pragma{SPCP}optimize{SPC}\({SPC}off{SPC}\) {
+				  BEGIN PP;
+				  return PRAGMA_OPTIMIZE_OFF;
+				}
+^{SPC}#{SPC}pragma{SPCP}	{ BEGIN PRAGMA; }
+
+<PRAGMA>\n			{ BEGIN 0; yylineno++; yycolumn = 0; }
+<PRAGMA>.			{ }
+
 <PP>\/\/[^\n]*			{ }
 <PP>[ \t\r]*			{ }
 <PP>:				return COLON;
