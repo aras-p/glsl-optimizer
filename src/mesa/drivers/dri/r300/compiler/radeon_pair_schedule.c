@@ -300,6 +300,7 @@ static int destructive_merge_instructions(
 		for(srcp_src = 0; srcp_src < srcp_regs; srcp_src++) {
 			unsigned int arg;
 			int free_source;
+			unsigned int one_way = 0;
 			struct radeon_pair_instruction_source srcp =
 						alpha->RGB.Src[srcp_src];
 			struct radeon_pair_instruction_source temp;
@@ -307,14 +308,27 @@ static int destructive_merge_instructions(
 			 * 3rd arg of 0 means this is not an alpha source. */
 			free_source = rc_pair_alloc_source(rgb, 1, 0,
 							srcp.File, srcp.Index);
-			/* If free_source == srcp_src, then either the
-			 * presubtract source is already in the correct place. */
-			if (free_source == srcp_src)
-				continue;
 			/* If free_source < 0 then there are no free source
 			 * slots. */
 			if (free_source < 0)
 				return 0;
+
+			temp = rgb->RGB.Src[srcp_src];
+			rgb->RGB.Src[srcp_src] = rgb->RGB.Src[free_source];
+			/* srcp needs src0 and src1 to be the same */
+			if (free_source < srcp_src) {
+				if (!temp.Used)
+					continue;
+				free_source = rc_pair_alloc_source(rgb, 1, 0,
+							srcp.File, srcp.Index);
+				one_way = 1;
+			} else {
+				rgb->RGB.Src[free_source] = temp;
+			}
+			/* If free_source == srcp_src, then the presubtract
+			 * source is already in the correct place. */
+			if (free_source == srcp_src)
+				continue;
 			/* Shuffle the sources, so we can put the
 			 * presubtract source in the correct place. */
 			for (arg = 0; arg < rgb_info->NumSrcRegs; arg++) {
@@ -331,12 +345,11 @@ static int destructive_merge_instructions(
 				/* We need to do this just in case register
 				 * is one of the sources already, but in the
 				 * wrong spot. */
-				else if(rgb->RGB.Arg[arg].Source == free_source)
+				else if(rgb->RGB.Arg[arg].Source == free_source
+								&& !one_way) {
 					rgb->RGB.Arg[arg].Source = srcp_src;
+				}
 			}
-			temp = rgb->RGB.Src[srcp_src];
-			rgb->RGB.Src[srcp_src] = rgb->RGB.Src[free_source];
-			rgb->RGB.Src[free_source] = temp;
 		}
 	}
 
@@ -352,6 +365,7 @@ static int destructive_merge_instructions(
 		for(srcp_src = 0; srcp_src < srcp_regs; srcp_src++) {
 			unsigned int arg;
 			int free_source;
+			unsigned int one_way = 0;
 			struct radeon_pair_instruction_source srcp =
 						alpha->Alpha.Src[srcp_src];
 			struct radeon_pair_instruction_source temp;
@@ -359,14 +373,27 @@ static int destructive_merge_instructions(
 			 * 3rd arg of 1 means this is an alpha source. */
 			free_source = rc_pair_alloc_source(rgb, 0, 1,
 							srcp.File, srcp.Index);
-			/* If free_source == srcp_src, then either the
-			 * presubtract source is already in the correct place. */
-			if (free_source == srcp_src)
-				continue;
 			/* If free_source < 0 then there are no free source
 			 * slots. */
 			if (free_source < 0)
 				return 0;
+
+			temp = rgb->Alpha.Src[srcp_src];
+			rgb->Alpha.Src[srcp_src] = rgb->Alpha.Src[free_source];
+			/* srcp needs src0 and src1 to be the same. */
+			if (free_source < srcp_src) {
+				if (!temp.Used)
+					continue;
+				free_source = rc_pair_alloc_source(rgb, 0, 1,
+							temp.File, temp.Index);
+				one_way = 1;
+			} else {
+				rgb->Alpha.Src[free_source] = temp;
+			}
+			/* If free_source == srcp_src, then the presubtract
+			 * source is already in the correct place. */
+			if (free_source == srcp_src)
+				continue;
 			/* Shuffle the sources, so we can put the
 			 * presubtract source in the correct place. */
 			for(arg = 0; arg < rgb_info->NumSrcRegs; arg++) {
@@ -380,12 +407,11 @@ static int destructive_merge_instructions(
 				}
 				if (rgb->RGB.Arg[arg].Source == srcp_src)
 					rgb->RGB.Arg[arg].Source = free_source;
-				else if (rgb->RGB.Arg[arg].Source == free_source)
+				else if (rgb->RGB.Arg[arg].Source == free_source
+								&& !one_way) {
 					rgb->RGB.Arg[arg].Source = srcp_src;
+				}
 			}
-			temp = rgb->Alpha.Src[srcp_src];
-			rgb->Alpha.Src[srcp_src] = rgb->Alpha.Src[free_source];
-			rgb->Alpha.Src[free_source] = temp;
 		}
 	}
 

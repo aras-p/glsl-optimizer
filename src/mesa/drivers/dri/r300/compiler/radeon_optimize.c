@@ -38,6 +38,10 @@ struct peephole_state {
 	unsigned int WriteMask;
 };
 
+typedef void (*rc_presub_replace_fn)(struct peephole_state *,
+						struct rc_instruction *,
+						unsigned int);
+
 static struct rc_src_register chain_srcregs(struct rc_src_register outer, struct rc_src_register inner)
 {
 	struct rc_src_register combine;
@@ -516,6 +520,164 @@ static void peephole_scan_write(void * data, struct rc_instruction * inst,
 	}
 }
 
+static int presub_helper(
+	struct radeon_compiler * c,
+	struct peephole_state * s,
+	rc_presubtract_op presub_opcode,
+	rc_presub_replace_fn presub_replace)
+{
+	struct rc_instruction * inst;
+	unsigned int can_remove = 0;
+	unsigned int cant_sub = 0;
+
+	for(inst = s->Inst->Next; inst != &c->Program.Instructions;
+							inst = inst->Next) {
+		unsigned int i;
+		const struct rc_opcode_info * info =
+					rc_get_opcode_info(inst->U.I.Opcode);
+
+		for(i = 0; i < info->NumSrcRegs; i++) {
+			if(s->Inst->U.I.DstReg.WriteMask !=
+					src_reads_dst_mask(inst->U.I.SrcReg[i],
+						s->Inst->U.I.DstReg)) {
+				continue;
+			}
+			if (cant_sub) {
+				can_remove = 0;
+				break;
+			}
+			/* XXX: There are some situations where instructions
+			 * with more than 2 src registers can use the
+			 * presubtract select, but to keep things simple we
+			 * will disable presubtract on these instructions for
+			 * now. Note: This if statement should not be pulled
+			 * outside of the loop, because it only applies to
+			 * instructions that could potentially use the
+			 * presubtract source. */
+			if (info->NumSrcRegs > 2) {
+				can_remove = 0;
+				break;
+			}
+
+			/* We can't use more than one presubtract value in an
+			 * instruction, unless the two prsubtract operations
+			 * are the same and read from the same registers. */
+			if (inst->U.I.PreSub.Opcode != RC_PRESUB_NONE) {
+				if (inst->U.I.PreSub.Opcode != presub_opcode
+					|| inst->U.I.PreSub.SrcReg[0].File !=
+						s->Inst->U.I.SrcReg[1].File
+					|| inst->U.I.PreSub.SrcReg[0].Index !=
+						s->Inst->U.I.SrcReg[1].Index) {
+
+					can_remove = 0;
+					break;
+				}
+			}
+			presub_replace(s, inst, i);
+			can_remove = 1;
+		}
+		if(!can_remove)
+			break;
+		rc_for_all_writes_mask(inst, peephole_scan_write, s);
+		/* If all components of inst_add's destination register have
+		 * been written to by subsequent instructions, the original
+		 * value of the destination register is no longer valid and
+		 * we can't keep doing substitutions. */
+		if (!s->WriteMask){
+			break;
+		}
+		/* Make this instruction doesn't write to the presubtract source. */
+		if (inst->U.I.DstReg.WriteMask &
+				src_reads_dst_mask(s->Inst->U.I.SrcReg[1],
+							inst->U.I.DstReg)
+				|| info->IsFlowControl) {
+			cant_sub = 1;
+		}
+	}
+	return can_remove;
+}
+
+static void presub_replace_add(struct peephole_state *s,
+						struct rc_instruction * inst,
+						unsigned int src_index)
+{
+	inst->U.I.PreSub.SrcReg[0] = s->Inst->U.I.SrcReg[0];
+	inst->U.I.PreSub.SrcReg[1] = s->Inst->U.I.SrcReg[1];
+	inst->U.I.PreSub.SrcReg[0].Negate = 0;
+	inst->U.I.PreSub.SrcReg[1].Negate = 0;
+	inst->U.I.PreSub.Opcode = RC_PRESUB_ADD;
+	inst->U.I.SrcReg[src_index] = chain_srcregs(inst->U.I.SrcReg[src_index],
+						inst->U.I.PreSub.SrcReg[0]);
+	inst->U.I.SrcReg[src_index].File = RC_FILE_PRESUB;
+	inst->U.I.SrcReg[src_index].Index = RC_PRESUB_ADD;
+}
+
+static int peephole_add_presub_add(
+	struct radeon_compiler * c,
+	struct rc_instruction * inst_add)
+{
+	struct rc_src_register * src0 = NULL;
+	struct rc_src_register * src1 = NULL;
+	unsigned int i;
+	struct peephole_state s;
+
+	if (inst_add->U.I.PreSub.Opcode != RC_PRESUB_NONE)
+		return 0;
+
+	if (inst_add->U.I.SaturateMode)
+		return 0;
+
+	if (inst_add->U.I.SrcReg[0].Swizzle != inst_add->U.I.SrcReg[1].Swizzle)
+		return 0;
+
+	/* src0 and src1 can't have absolute values only one can be negative and they must be all negative or all positive. */
+	for (i = 0; i < 2; i++) {
+		if (inst_add->U.I.SrcReg[i].Abs)
+			return 0;
+		if ((inst_add->U.I.SrcReg[i].Negate
+					& inst_add->U.I.DstReg.WriteMask) ==
+						inst_add->U.I.DstReg.WriteMask) {
+			src0 = &inst_add->U.I.SrcReg[i];
+		} else if (!src1) {
+			src1 = &inst_add->U.I.SrcReg[i];
+		} else {
+			src0 = &inst_add->U.I.SrcReg[i];
+		}
+	}
+
+	if (!src1)
+		return 0;
+
+	/* XXX Only do add for now. */
+	if (src0->Negate)
+		return 0;
+
+	s.Inst = inst_add;
+	s.WriteMask = inst_add->U.I.DstReg.WriteMask;
+	if (presub_helper(c, &s, RC_PRESUB_ADD, presub_replace_add)) {
+		rc_remove_instruction(inst_add);
+		return 1;
+	}
+	return 0;
+}
+
+static void presub_replace_inv(struct peephole_state * s,
+						struct rc_instruction * inst,
+						unsigned int src_index)
+{
+	/* We must be careful not to modify s->Inst, since it
+	 * is possible it will remain part of the program. 
+	 * XXX Maybe pass a struct instead of a pointer for s->Inst.*/
+	inst->U.I.PreSub.SrcReg[0] = s->Inst->U.I.SrcReg[1];
+	inst->U.I.PreSub.SrcReg[0].Negate = 0;
+	inst->U.I.PreSub.Opcode = RC_PRESUB_INV;
+	inst->U.I.SrcReg[src_index] = chain_srcregs(inst->U.I.SrcReg[src_index],
+						inst->U.I.PreSub.SrcReg[0]);
+
+	inst->U.I.SrcReg[src_index].File = RC_FILE_PRESUB;
+	inst->U.I.SrcReg[src_index].Index = RC_PRESUB_INV;
+}
+
 /**
  * PRESUB_INV: ADD TEMP[0], none.1, -TEMP[1]
  * Use the presubtract 1 - src0 for all readers of TEMP[0].  The first source
@@ -531,10 +693,10 @@ static int peephole_add_presub_inv(
 	struct rc_instruction * inst_add)
 {
 	unsigned int i, swz, mask;
-	unsigned int can_remove = 0;
-	unsigned int cant_sub = 0;
-	struct rc_instruction * inst;
 	struct peephole_state s;
+
+	if (inst_add->U.I.PreSub.Opcode != RC_PRESUB_NONE)
+		return 0;
 
 	if (inst_add->U.I.SaturateMode)
 		return 0;
@@ -567,81 +729,7 @@ static int peephole_add_presub_inv(
 	s.Inst = inst_add;
 	s.WriteMask = inst_add->U.I.DstReg.WriteMask;
 
-	/* For all instructions that read inst_add->U.I.DstReg before it is
-	 * written again, use the 1 - src0 presubtact instead. */
-	for(inst = inst_add->Next; inst != &c->Program.Instructions;
-							inst = inst->Next) {
-		const struct rc_opcode_info * info =
-					rc_get_opcode_info(inst->U.I.Opcode);
-
-		for(i = 0; i < info->NumSrcRegs; i++) {
-			if(inst_add->U.I.DstReg.WriteMask !=
-					src_reads_dst_mask(inst->U.I.SrcReg[i],
-						inst_add->U.I.DstReg)) {
-				continue;
-			}
-			if (cant_sub) {
-				can_remove = 0;
-				break;
-			}
-			/* XXX: There are some situations where instructions
-			 * with more than 2 src registers can use the
-			 * presubtract select, but to keep things simple we
-			 * will disable presubtract on these instructions for
-			 * now. Note: This if statement should not be pulled
-			 * outside of the loop, because it only applies to
-			 * instructions that could potentially use the
-			 * presubtract source. */
-			if (info->NumSrcRegs > 2) {
-				can_remove = 0;
-				break;
-			}
-
-			/* We can't use more than one presubtract value in an
-			 * instruction, unless the two prsubtract operations
-			 * are the same and read from the same registers. */
-			if (inst->U.I.PreSub.Opcode != RC_PRESUB_NONE) {
-				if (inst->U.I.PreSub.Opcode != RC_PRESUB_INV
-					|| inst->U.I.PreSub.SrcReg[0].File !=
-						inst_add->U.I.SrcReg[1].File
-					|| inst->U.I.PreSub.SrcReg[0].Index !=
-						inst_add->U.I.SrcReg[1].Index) {
-
-					can_remove = 0;
-					break;
-				}
-			}
-			/* We must be careful not to modify inst_add, since it
-			 * is possible it will remain part of the program. */
-			inst->U.I.PreSub.SrcReg[0] = inst_add->U.I.SrcReg[1];
-			inst->U.I.PreSub.SrcReg[0].Negate = 0;
-			inst->U.I.PreSub.Opcode = RC_PRESUB_INV;
-			inst->U.I.SrcReg[i] = chain_srcregs(inst->U.I.SrcReg[i],
-						inst->U.I.PreSub.SrcReg[0]);
-
-			inst->U.I.SrcReg[i].File = RC_FILE_PRESUB;
-			inst->U.I.SrcReg[i].Index = RC_PRESUB_INV;
-			can_remove = 1;
-		}
-		if(!can_remove)
-			break;
-		rc_for_all_writes_mask(inst, peephole_scan_write, &s);
-		/* If all components of inst_add's destination register have
-		 * been written to by subsequent instructions, the original
-		 * value of the destination register is no longer valid and
-		 * we can't keep doing substitutions. */
-		if (!s.WriteMask){
-			break;
-		}
-		/* Make this instruction doesn't write to the presubtract source. */
-		if (inst->U.I.DstReg.WriteMask &
-				src_reads_dst_mask(inst_add->U.I.SrcReg[1],
-							inst->U.I.DstReg)
-				|| info->IsFlowControl) {
-			cant_sub = 1;
-		}
-	}
-	if(can_remove) {
+	if (presub_helper(c, &s, RC_PRESUB_INV, presub_replace_inv)) {
 		rc_remove_instruction(inst_add);
 		return 1;
 	}
@@ -659,6 +747,8 @@ static int peephole(struct radeon_compiler * c, struct rc_instruction * inst)
 	case RC_OPCODE_ADD:
 		if (c->has_presub) {
 			if(peephole_add_presub_inv(c, inst))
+				return 1;
+			if(peephole_add_presub_add(c, inst))
 				return 1;
 		}
 		break;
