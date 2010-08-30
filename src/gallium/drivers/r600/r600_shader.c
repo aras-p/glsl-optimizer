@@ -987,7 +987,7 @@ static int tgsi_lit(struct r600_shader_ctx *ctx)
 	if (r)
 		return r;
 	alu.src[1].sel  = V_SQ_ALU_SRC_0; /*0.0*/
-	alu.src[1].chan = tgsi_chan(&inst->Src[0], 0);
+	alu.src[1].chan = 0;
 	r = tgsi_dst(ctx, &inst->Dst[0], 1, &alu.dst);
 	if (r)
 		return r;
@@ -1033,7 +1033,7 @@ static int tgsi_lit(struct r600_shader_ctx *ctx)
 		r = tgsi_src(ctx, &inst->Src[0], &alu.src[0]);
 		if (r)
 			return r;
-		alu.src[0].chan = tgsi_chan(&inst->Src[0], 1);
+		alu.src[0].chan = tgsi_chan(&inst->Src[0], 3);
 		r = tgsi_dst(ctx, &inst->Dst[0], 2, &alu.dst);
 		if (r)
 			return r;
@@ -1045,6 +1045,7 @@ static int tgsi_lit(struct r600_shader_ctx *ctx)
 		r = r600_bc_add_literal(ctx->bc, ctx->value);
 		if (r)
 			return r;
+
 		chan = alu.dst.chan;
 		sel = alu.dst.sel;
 
