@@ -861,12 +861,20 @@ static int tgsi_kill(struct r600_shader_ctx *ctx)
 	for (i = 0; i < 4; i++) {
 		memset(&alu, 0, sizeof(struct r600_bc_alu));
 		alu.inst = ctx->inst_info->r600_opcode;
+
 		alu.dst.chan = i;
+
 		alu.src[0].sel = V_SQ_ALU_SRC_0;
-		r = tgsi_src(ctx, &inst->Src[0], &alu.src[1]);
-		if (r)
-			return r;
-		alu.src[1].chan = tgsi_chan(&inst->Src[0], i);
+
+		if (ctx->inst_info->tgsi_opcode == TGSI_OPCODE_KILP) {
+			alu.src[1].sel = V_SQ_ALU_SRC_1;
+			alu.src[1].neg = 1;
+		} else {
+			r = tgsi_src(ctx, &inst->Src[0], &alu.src[1]);
+			if (r)
+				return r;
+			alu.src[1].chan = tgsi_chan(&inst->Src[0], i);
+		}
 		if (i == 3) {
 			alu.last = 1;
 		}
@@ -874,6 +882,13 @@ static int tgsi_kill(struct r600_shader_ctx *ctx)
 		if (r)
 			return r;
 	}
+	r = r600_bc_add_literal(ctx->bc, ctx->value);
+	if (r)
+		return r;
+
+	/* kill must be last in ALU */
+	ctx->bc->force_add_cf = 1;
+	ctx->shader->uses_kill = TRUE;
 	return 0;
 }
 
@@ -2074,7 +2089,7 @@ static struct r600_shader_tgsi_instruction r600_shader_tgsi_instruction[] = {
 	{TGSI_OPCODE_COS,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_COS, tgsi_trig},
 	{TGSI_OPCODE_DDX,	0, SQ_TEX_INST_GET_GRADIENTS_H, tgsi_tex},
 	{TGSI_OPCODE_DDY,	0, SQ_TEX_INST_GET_GRADIENTS_V, tgsi_tex},
-	{TGSI_OPCODE_KILP,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},  /* predicated kill */
+	{TGSI_OPCODE_KILP,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLGT, tgsi_kill},  /* predicated kill */
 	{TGSI_OPCODE_PK2H,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_PK2US,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_PK4B,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},

@@ -999,6 +999,8 @@ static struct radeon_state *r600_dsa(struct r600_context *rctx)
 
 	db_shader_control = 0x210;
 	rshader = &rctx->ps_shader->shader;
+	if (rshader->uses_kill)
+		db_shader_control |= (1 << 6);
 	for (i = 0; i < rshader->noutput; i++) {
 		if (rshader->output[i].name == TGSI_SEMANTIC_POSITION)
 			db_shader_control |= 1;
