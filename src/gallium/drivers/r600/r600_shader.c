@@ -287,7 +287,6 @@ static int tgsi_is_supported(struct r600_shader_ctx *ctx)
 		if (i->Src[j].Register.Dimension ||
 			i->Src[j].Register.Absolute) {
 			R600_ERR("unsupported src %d (dimension %d|absolute %d)\n", j,
-				 i->Src[j].Register.Indirect,
 				 i->Src[j].Register.Dimension,
 				 i->Src[j].Register.Absolute);
 			return -EINVAL;
