@@ -608,4 +608,6 @@
 #define V_SQ_CF_COND_BOOL                               0x02
 #define V_SQ_CF_COND_NOT_BOOL                           0x03
 
+#define V_SQ_REL_ABSOLUTE 0
+#define V_SQ_REL_RELATIVE 1
 #endif

@@ -284,16 +284,18 @@ static int tgsi_is_supported(struct r600_shader_ctx *ctx)
 	}
 #endif
 	for (j = 0; j < i->Instruction.NumSrcRegs; j++) {
-		if (i->Src[j].Register.Indirect ||
-			i->Src[j].Register.Dimension ||
+		if (i->Src[j].Register.Dimension ||
 			i->Src[j].Register.Absolute) {
-			R600_ERR("unsupported src (indirect|dimension|absolute)\n");
+			R600_ERR("unsupported src %d (dimension %d|absolute %d)\n", j,
+				 i->Src[j].Register.Indirect,
+				 i->Src[j].Register.Dimension,
+				 i->Src[j].Register.Absolute);
 			return -EINVAL;
 		}
 	}
 	for (j = 0; j < i->Instruction.NumDstRegs; j++) {
-		if (i->Dst[j].Register.Indirect || i->Dst[j].Register.Dimension) {
-			R600_ERR("unsupported dst (indirect|dimension)\n");
+		if (i->Dst[j].Register.Dimension) {
+			R600_ERR("unsupported dst (dimension)\n");
 			return -EINVAL;
 		}
 	}
@@ -344,6 +346,7 @@ static int tgsi_declaration(struct r600_shader_ctx *ctx)
 	case TGSI_FILE_CONSTANT:
 	case TGSI_FILE_TEMPORARY:
 	case TGSI_FILE_SAMPLER:
+	case TGSI_FILE_ADDRESS:
 		break;
 	default:
 		R600_ERR("unsupported file %d declaration\n", d->Declaration.File);
@@ -586,6 +589,8 @@ static int tgsi_src(struct r600_shader_ctx *ctx,
 		ctx->value[2] = ctx->literals[index * 4 + 2];
 		ctx->value[3] = ctx->literals[index * 4 + 3];
 	}
+	if (tgsi_src->Register.Indirect)
+		r600_src->rel = V_SQ_REL_RELATIVE;
 	r600_src->neg = tgsi_src->Register.Negate;
 	r600_src->sel += ctx->file_offset[tgsi_src->Register.File];
 	return 0;
@@ -602,6 +607,8 @@ static int tgsi_dst(struct r600_shader_ctx *ctx,
 	r600_dst->sel += ctx->file_offset[tgsi_dst->Register.File];
 	r600_dst->chan = swizzle;
 	r600_dst->write = 1;
+	if (tgsi_dst->Register.Indirect)
+		r600_dst->rel = V_SQ_REL_RELATIVE;
 	if (inst->Instruction.Saturate) {
 		r600_dst->clamp = 1;
 	}
@@ -1769,6 +1776,29 @@ static int tgsi_exp(struct r600_shader_ctx *ctx)
 	return tgsi_helper_copy(ctx, inst);
 }
 
+static int tgsi_arl(struct r600_shader_ctx *ctx)
+{
+	/* TODO from r600c, ar values don't persist between clauses */
+	struct tgsi_full_instruction *inst = &ctx->parse.FullToken.FullInstruction;
+	struct r600_bc_alu alu;
+	int r;
+	memset(&alu, 0, sizeof(struct r600_bc_alu));
+
+	alu.inst = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA_FLOOR;
+
+	r = tgsi_src(ctx, &inst->Src[0], &alu.src[0]);
+	if (r)
+		return r;
+	alu.src[0].chan = tgsi_chan(&inst->Src[0], 0);
+
+	alu.last = 1;
+
+	r = r600_bc_add_alu_type(ctx->bc, &alu, V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU);
+	if (r)
+		return r;
+	return 0;
+}
+
 static int emit_logic_pred(struct r600_shader_ctx *ctx, int opcode)
 {
 	struct tgsi_full_instruction *inst = &ctx->parse.FullToken.FullInstruction;
@@ -2047,7 +2077,7 @@ static int tgsi_loop_brk_cont(struct r600_shader_ctx *ctx)
 }
 
 static struct r600_shader_tgsi_instruction r600_shader_tgsi_instruction[] = {
-	{TGSI_OPCODE_ARL,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_unsupported},
+	{TGSI_OPCODE_ARL,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_arl},
 	{TGSI_OPCODE_MOV,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOV, tgsi_op2},
 	{TGSI_OPCODE_LIT,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP, tgsi_lit},
 	{TGSI_OPCODE_RCP,	0, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_IEEE, tgsi_trans_srcx_replicate},

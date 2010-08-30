@@ -31,6 +31,7 @@ struct r600_bc_alu_src {
 	unsigned			chan;
 	unsigned			neg;
 	unsigned			abs;
+	unsigned			rel;
 };
 
 struct r600_bc_alu_dst {
@@ -38,6 +39,7 @@ struct r600_bc_alu_dst {
 	unsigned			chan;
 	unsigned			clamp;
 	unsigned			write;
+	unsigned			rel;
 };
 
 struct r600_bc_alu {
