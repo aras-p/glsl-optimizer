@@ -128,6 +128,7 @@ enum value_extra {
    EXTRA_VERSION_30,
    EXTRA_VERSION_31,
    EXTRA_VERSION_32,
+   EXTRA_VERSION_ES2,
    EXTRA_NEW_BUFFERS, 
    EXTRA_VALID_DRAW_BUFFER,
    EXTRA_VALID_TEXTURE_UNIT,
@@ -325,6 +326,13 @@ extra_NV_vertex_program_ARB_vertex_program_ARB_fragment_program_NV_vertex_progra
 static const int extra_version_30[] = { EXTRA_VERSION_30, EXTRA_END };
 static const int extra_version_31[] = { EXTRA_VERSION_31, EXTRA_END };
 static const int extra_version_32[] = { EXTRA_VERSION_32, EXTRA_END };
+
+static const int
+extra_ARB_vertex_program_version_es2[] = {
+   EXT(ARB_vertex_program),
+   EXTRA_VERSION_ES2,
+   EXTRA_END
+};
 
 #define API_OPENGL_BIT (1 << API_OPENGL)
 #define API_OPENGLES_BIT (1 << API_OPENGLES)
@@ -661,7 +669,8 @@ static const struct value_desc values[] = {
    { GL_STENCIL_BACK_PASS_DEPTH_PASS, CONTEXT_ENUM(Stencil.ZPassFunc[1]), NO_EXTRA },
 
    { GL_MAX_VERTEX_ATTRIBS_ARB,
-     CONTEXT_INT(Const.VertexProgram.MaxAttribs), extra_ARB_vertex_program },
+     CONTEXT_INT(Const.VertexProgram.MaxAttribs),
+     extra_ARB_vertex_program_version_es2 },
 
    /* OES_texture_3D */
    { GL_TEXTURE_BINDING_3D, LOC_CUSTOM, TYPE_INT, TEXTURE_3D_INDEX, NO_EXTRA },
@@ -1674,6 +1683,12 @@ check_extra(GLcontext *ctx, const char *func, const struct value_desc *d)
 	 break;
       case EXTRA_VERSION_32:
 	 if (version >= 32) {
+	    total++;
+	    enabled++;
+	 }
+	 break;
+      case EXTRA_VERSION_ES2:
+	 if (ctx->API == API_OPENGLES2) {
 	    total++;
 	    enabled++;
 	 }
