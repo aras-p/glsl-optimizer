@@ -1028,6 +1028,9 @@ static int tgsi_lit(struct r600_shader_ctx *ctx)
 	r = tgsi_split_constant(ctx, r600_src);
 	if (r)
 		return r;
+	r = tgsi_split_literal_constant(ctx, r600_src);
+	if (r)
+		return r;
 
 	/* dst.x, <- 1.0  */
 	memset(&alu, 0, sizeof(struct r600_bc_alu));
@@ -1052,14 +1055,6 @@ static int tgsi_lit(struct r600_shader_ctx *ctx)
 	if (r)
 		return r;
 	alu.dst.write = (inst->Dst[0].Register.WriteMask >> 1) & 1;
-	r = r600_bc_add_alu(ctx->bc, &alu);
-	if (r)
-		return r;
-
-	/* dst.z = NOP - fill Z slot */
-	memset(&alu, 0, sizeof(struct r600_bc_alu));
-	alu.inst = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP;
-	alu.dst.chan = 2;
 	r = r600_bc_add_alu(ctx->bc, &alu);
 	if (r)
 		return r;
