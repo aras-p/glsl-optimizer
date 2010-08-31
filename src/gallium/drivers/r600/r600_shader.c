@@ -179,7 +179,8 @@ static int r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_context_sta
 		if (rshader->input[i].name == TGSI_SEMANTIC_POSITION)
 			have_pos = TRUE;
 		if (rshader->input[i].name == TGSI_SEMANTIC_COLOR ||
-			rshader->input[i].name == TGSI_SEMANTIC_BCOLOR) {
+		    rshader->input[i].name == TGSI_SEMANTIC_BCOLOR ||
+		    rshader->input[i].name == TGSI_SEMANTIC_POSITION) {
 			tmp |= S_028644_FLAT_SHADE(rshader->flat_shade);
 		}
 		if (rasterizer->sprite_coord_enable & (1 << i)) {
@@ -503,6 +504,8 @@ int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *s
 				output[i].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PIXEL;
 			} else if (shader->output[i].name == TGSI_SEMANTIC_POSITION) {
 				output[i].array_base = 61;
+				output[i].swizzle_x = 2;
+				output[i].swizzle_y = output[i].swizzle_z = output[i].swizzle_w = 7;
 				output[i].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PIXEL;
 			} else {
 				R600_ERR("unsupported fragment output name %d\n", shader->output[i].name);
