@@ -239,8 +239,7 @@ set_dst(struct nv_pc *pc, struct nv_value *value)
    struct nv_reg *reg = &value->join->reg;
 
    if (reg->id < 0) {
-      debug_printf("WARNING: unused dst, hope we can bucket it !\n");
-      pc->emit[0] |= 127 << 2;
+      pc->emit[0] |= (127 << 2) | 1; /* set 'long'-bit to catch bugs */
       pc->emit[1] |= 0x8;
       return;
    }
@@ -249,7 +248,7 @@ set_dst(struct nv_pc *pc, struct nv_value *value)
       pc->emit[1] |= 0x8;
    else
    if (reg->file == NV_FILE_ADDR)
-	   assert(0);
+      assert(0);
 
    pc->emit[0] |= reg->id << 2;
 }
@@ -801,8 +800,8 @@ emit_flop(struct nv_pc *pc, struct nv_instruction *i)
 
    pc->emit[0] = 0x90000000;
 
-   assert(SREG(src0)->type == NV_TYPE_F32);
-   assert(SREG(src0)->file == NV_FILE_GPR);
+   assert(STYPE(i, 0) == NV_TYPE_F32);
+   assert(SFILE(i, 0) == NV_FILE_GPR);
 
    if (!i->is_long) {
       emit_form_MUL(pc, i);
@@ -1057,7 +1056,7 @@ emit_ddy(struct nv_pc *pc, struct nv_instruction *i)
 void
 nv50_emit_instruction(struct nv_pc *pc, struct nv_instruction *i)
 {
-   // nv_print_instruction(i);
+   /* nv_print_instruction(i); */
 
    switch (i->opcode) {
    case NV_OP_MOV:

@@ -23,6 +23,12 @@
 #ifndef __NV50_COMPILER_H__
 #define __NV50_COMPILER_H__
 
+#ifdef NV50PC_DEBUG
+# define NV50_DBGMSG(args...) debug_printf(args)
+#else
+# define NV50_DBGMSG(args...)
+#endif
+
 #include "pipe/p_defines.h"
 #include "util/u_inlines.h"
 #include "util/u_memory.h"

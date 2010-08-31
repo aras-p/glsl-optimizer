@@ -20,6 +20,8 @@
  * SOFTWARE.
  */
 
+/* #define NV50_TGSI2NC_DEBUG */
+
 /* XXX: need to clean this up so we get the typecasting right more naturally */
 
 #include <unistd.h>
@@ -1015,10 +1017,8 @@ emit_fetch(struct bld_context *bld, const struct tgsi_full_instruction *insn,
       abort();
       break;	   
    }
-   if (!res) {
-      debug_printf("WARNING: undefined source value in TGSI instruction\n");
-      return bld_load_imm_u32(bld, 0);
-   }
+   if (!res)
+      return bld_undef(bld, NV_FILE_GPR);
 
    switch (tgsi_util_get_full_src_register_sign_mode(src, chan)) {
    case TGSI_UTIL_SIGN_KEEP:
@@ -1234,7 +1234,9 @@ bld_instruction(struct bld_context *bld,
    int c;
    uint opcode = translate_opcode(insn->Instruction.Opcode);
 
-   tgsi_dump_instruction(insn, 1);
+#ifdef NV50_TGSI2NC_DEBUG
+   debug_printf("bld_instruction:"); tgsi_dump_instruction(insn, 1);
+#endif
 	
    switch (insn->Instruction.Opcode) {
    case TGSI_OPCODE_ADD:

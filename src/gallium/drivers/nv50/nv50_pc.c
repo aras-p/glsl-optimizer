@@ -20,6 +20,8 @@
  * SOFTWARE.
  */
 
+/* #define NV50PC_DEBUG */
+
 #include "nv50_pc.h"
 #include "nv50_program.h"
 
@@ -311,7 +313,7 @@ nv50_emit_program(struct nv_pc *pc)
    uint32_t *code = pc->emit;
    int n;
 
-   debug_printf("emitting program: size = %u\n", pc->bin_size);
+   NV50_DBGMSG("emitting program: size = %u\n", pc->bin_size);
 
    for (n = 0; n < pc->num_blocks; ++n) {
       struct nv_instruction *i;
@@ -336,7 +338,9 @@ nv50_emit_program(struct nv_pc *pc)
    pc->emit = code;
    code[pc->bin_size / 4 - 1] |= 1;
 
+#ifdef NV50PC_DEBUG
    nvcg_show_bincode(pc);
+#endif
 
    return 0;
 }
@@ -354,7 +358,9 @@ nv50_generate_code(struct nv50_translation_info *ti)
    ret = nv50_tgsi_to_nc(pc, ti);
    if (ret)
       goto out;
+#ifdef NV50PC_DEBUG
    nv_print_program(pc->root);
+#endif
 
    /* optimization */
    ret = nv_pc_exec_pass0(pc);
@@ -392,7 +398,7 @@ nv50_generate_code(struct nv50_translation_info *ti)
    ti->p->fixups = pc->fixups;
    ti->p->num_fixups = pc->num_fixups;
 
-   debug_printf("SHADER TRANSLATION - %s\n", ret ? "failure" : "success");
+   NV50_DBGMSG("SHADER TRANSLATION - %s\n", ret ? "failure" : "success");
 
 out:
    nv_pc_free_refs(pc);
@@ -492,7 +498,7 @@ nv_nvi_delete(struct nv_instruction *nvi)
 
    if (nvi == b->phi) {
       if (nvi->opcode != NV_OP_PHI)
-         debug_printf("NOTE: b->phi points to non-PHI instruction\n");
+         NV50_DBGMSG("NOTE: b->phi points to non-PHI instruction\n");
 
       assert(!nvi->prev);
       if (!nvi->next || nvi->next->opcode != NV_OP_PHI)

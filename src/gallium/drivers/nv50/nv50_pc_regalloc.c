@@ -20,6 +20,8 @@
  * SOFTWARE.
  */
 
+/* #define NV50PC_DEBUG */
+
 #include "nv50_context.h"
 #include "nv50_pc.h"
 
@@ -112,14 +114,7 @@ add_range(struct nv_value *val, struct nv_basic_block *b, int end)
    if (bgn < b->entry->serial || bgn > b->exit->serial)
       bgn = b->entry->serial;
 
-   if (bgn > end) {
-      debug_printf("Aieee! BLOCK [%i, %i], RANGE [%i, %i)\n",
-                   b->entry->serial, b->exit->serial, bgn, end);
-   }
    assert(bgn <= end);
-
-   if (bgn < val->insn->serial)
-      debug_printf("WARNING: leaking value %i ?\n", val->n);
 
    add_range_ex(val, bgn, end, NULL);
 }
@@ -559,12 +554,8 @@ pass_build_live_sets(struct nv_pc_pass *ctx, struct nv_basic_block *b)
    struct nv_instruction *i;
    int j, n, ret = 0;
 
-   debug_printf("pass_build_live_sets BB:%i\n", b->id);
-
-   if (b->pass_seq >= ctx->pc->pass_seq) {
-      debug_printf("already visited\n");
+   if (b->pass_seq >= ctx->pc->pass_seq)
       return 0;
-   }
    b->pass_seq = ctx->pc->pass_seq;
 
    /* slight hack for undecidedness: set phi = entry if it's undefined */
@@ -595,13 +586,10 @@ pass_build_live_sets(struct nv_pc_pass *ctx, struct nv_basic_block *b)
                break;
             assert(i->src[j]->value->insn);
 
-            if (nvbb_reachable_by(b, i->src[j]->value->insn->bb, b->out[n])) {
+            if (nvbb_reachable_by(b, i->src[j]->value->insn->bb, b->out[n]))
                live_set_add(b, i->src[j]->value);
-               debug_printf("BB:%i liveset + %i\n", b->id, i->src[j]->value->n);
-            } else {
+            else
                live_set_rem(b, i->src[j]->value);
-               debug_printf("BB:%i liveset - %i\n", b->id, i->src[j]->value->n);
-            }
          }
       }
    }
@@ -653,15 +641,13 @@ static void collect_live_values(struct nv_basic_block *b, const int n)
    }
 }
 
-/* NOTE: the live intervals of phi functions start the the first non-phi instruction */
+/* NOTE: the live intervals of phi functions start at the first non-phi insn. */
 static int
 pass_build_intervals(struct nv_pc_pass *ctx, struct nv_basic_block *b)
 {
    struct nv_instruction *i, *i_stop;
    int j, s;
    const int n = (ctx->pc->num_values + 31) / 32;
-
-   debug_printf("building intervals for BB %i\n", b->id);
 
    /* verify that first block does not have live-in values */
    if (b->num_in == 0)
@@ -700,7 +686,6 @@ pass_build_intervals(struct nv_pc_pass *ctx, struct nv_basic_block *b)
          add_range(&ctx->pc->values[j], b, b->exit->serial + 1);
       }
    }
-   debug_printf("%s: looping through instructions now\n", __func__);
 
    i_stop = b->entry ? b->entry->prev : NULL;
 
@@ -763,8 +748,6 @@ insert_ordered_tail(struct nv_value *list, struct nv_value *nval)
 {
    struct nv_value *elem = list->prev;
 
-   // debug_printf("inserting value %i\n", nval->n);
-
    for (elem = list->prev;
 	elem != list && elem->livei->bgn > nval->livei->bgn;
 	elem = elem->prev);
@@ -817,8 +800,6 @@ pass_linear_scan(struct nv_pc_pass *ctx, int iter)
 
    foreach_s(cur, tmp[0], &unhandled) {
       remove_from_list(cur);
-
-      /* debug_printf("handling value %i\n", cur->n); */
 
       foreach_s(val, tmp[1], &active) {
          if (livei_end(val) <= cur->livei->bgn) {
@@ -878,22 +859,18 @@ nv_pc_exec_pass1(struct nv_pc *pc)
    struct nv_pc_pass *ctx;
    int i, ret;
 
-   debug_printf("REGISTER ALLOCATION - entering\n");
+   NV50_DBGMSG("REGISTER ALLOCATION - entering\n");
 
    ctx = CALLOC_STRUCT(nv_pc_pass);
    if (!ctx)
       return -1;
    ctx->pc = pc;
 
-   nv_print_program(ctx->pc->root);
-
    ctx->insns = CALLOC(NV_PC_MAX_INSTRUCTIONS, sizeof(struct nv_instruction *));
 
    pc->pass_seq++;
    ret = pass_generate_phi_movs(ctx, pc->root);
    assert(!ret);
-
-   nv_print_program(ctx->pc->root);
 
    for (i = 0; i < pc->loop_nesting_bound; ++i) {
       pc->pass_seq++;
@@ -934,8 +911,7 @@ nv_pc_exec_pass1(struct nv_pc *pc)
    for (i = 0; i < pc->num_values; ++i)
       livei_release(&pc->values[i]);
 
-   debug_printf("REGISTER ALLOCATION - leaving\n");
-   nv_print_program(ctx->pc->root);
+   NV50_DBGMSG("REGISTER ALLOCATION - leaving\n");
 
 out:
    FREE(ctx);

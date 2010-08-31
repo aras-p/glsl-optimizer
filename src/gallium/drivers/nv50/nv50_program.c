@@ -20,6 +20,8 @@
  * SOFTWARE.
  */
 
+/* #define NV50_PROGRAM_DEBUG */
+
 #include "nv50_program.h"
 #include "nv50_pc.h"
 #include "nv50_context.h"
@@ -187,8 +189,6 @@ prog_immediate(struct nv50_translation_info *ti,
    int c;
    unsigned n = ++ti->immd32_nr;
 
-   tgsi_dump_immediate(imm);
-
    if (n == (1 << (ffs(n) - 1)))
       ti->immd32 = REALLOC(ti->immd32, (n / 2) * 16, (n * 2) * 16);
 
@@ -228,7 +228,6 @@ prog_decl(struct nv50_translation_info *ti,
       sn = decl->Semantic.Name;
       si = decl->Semantic.Index;
    }
-   tgsi_dump_declaration(decl);
 
    switch (decl->Declaration.File) {
    case TGSI_FILE_INPUT:
@@ -491,6 +490,10 @@ nv50_prog_scan(struct nv50_translation_info *ti)
    p->gp.primid = 0x80;
 
    tgsi_scan_shader(p->pipe.tokens, &ti->scan);
+
+#ifdef NV50_PROGRAM_DEBUG
+   tgsi_dump(p->pipe.tokens, 0);
+#endif
 
    tgsi_parse_init(&parse, p->pipe.tokens);
    while (!tgsi_parse_end_of_tokens(&parse)) {
