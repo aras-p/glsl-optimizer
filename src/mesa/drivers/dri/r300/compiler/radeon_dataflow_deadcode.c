@@ -213,7 +213,7 @@ static void mark_output_use(void * data, unsigned int index, unsigned int mask)
 	mark_used(s, RC_FILE_OUTPUT, index, mask);
 }
 
-void rc_dataflow_deadcode(struct radeon_compiler * c, rc_dataflow_mark_outputs_fn dce, void * userdata)
+void rc_dataflow_deadcode(struct radeon_compiler * c, rc_dataflow_mark_outputs_fn dce)
 {
 	struct deadcode_state s;
 	unsigned int nr_instructions;
@@ -226,7 +226,7 @@ void rc_dataflow_deadcode(struct radeon_compiler * c, rc_dataflow_mark_outputs_f
 	s.Instructions = memory_pool_malloc(&c->Pool, sizeof(struct instruction_state)*nr_instructions);
 	memset(s.Instructions, 0, sizeof(struct instruction_state)*nr_instructions);
 
-	dce(userdata, &s, &mark_output_use);
+	dce(c, &s, &mark_output_use);
 
 	for(struct rc_instruction * inst = c->Program.Instructions.Prev;
 	    inst != &c->Program.Instructions;

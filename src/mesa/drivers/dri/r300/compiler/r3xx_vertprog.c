@@ -1055,7 +1055,7 @@ void r3xx_compile_vertex_program(struct r300_vertex_program_compiler *c)
 
 	debug_program_log(c, "after source conflict resolve");
 
-	rc_dataflow_deadcode(&c->Base, &dataflow_outputs_mark_used, c);
+	rc_dataflow_deadcode(&c->Base, &dataflow_outputs_mark_used);
 	if (c->Base.Error)
 		return;
 

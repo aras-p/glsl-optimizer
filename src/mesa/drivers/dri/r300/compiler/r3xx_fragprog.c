@@ -160,7 +160,7 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 
 	debug_program_log(c, "after native rewrite part 2");
 
-	rc_dataflow_deadcode(&c->Base, &dataflow_outputs_mark_use, c);
+	rc_dataflow_deadcode(&c->Base, &dataflow_outputs_mark_use);
 	if (c->Base.Error)
 		return;
 

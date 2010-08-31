@@ -61,7 +61,7 @@ void rc_remap_registers(struct rc_instruction * inst, rc_remap_register_fn cb, v
 /*@{*/
 typedef void (*rc_dataflow_mark_outputs_fn)(void * userdata, void * data,
 			void (*mark_fn)(void * data, unsigned int index, unsigned int mask));
-void rc_dataflow_deadcode(struct radeon_compiler * c, rc_dataflow_mark_outputs_fn dce, void * userdata);
+void rc_dataflow_deadcode(struct radeon_compiler * c, rc_dataflow_mark_outputs_fn dce);
 void rc_dataflow_swizzles(struct radeon_compiler * c);
 /*@}*/
 
