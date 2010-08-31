@@ -111,7 +111,7 @@ public:
 	 f = new(linked) ir_function(name);
 
       ir_function_signature *linked_sig =
-	 f->matching_signature(&callee->parameters);
+	 f->exact_matching_signature(&callee->parameters);
       if (linked_sig == NULL) {
 	 linked_sig = new(linked) ir_function_signature(callee->return_type);
 	 f->add_signature(linked_sig);
