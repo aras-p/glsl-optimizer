@@ -2264,6 +2264,25 @@ count_resources(struct gl_program *prog)
    _mesa_update_shader_textures_used(prog);
 }
 
+struct uniform_sort {
+   struct gl_uniform *u;
+   int pos;
+};
+
+/* The shader_program->Uniforms list is almost sorted in increasing
+ * uniform->{Frag,Vert}Pos locations, but not quite when there are
+ * uniforms shared between targets.  We need to add parameters in
+ * increasing order for the targets.
+ */
+static int
+sort_uniforms(const void *a, const void *b)
+{
+   struct uniform_sort *u1 = (struct uniform_sort *)a;
+   struct uniform_sort *u2 = (struct uniform_sort *)b;
+
+   return u1->pos - u2->pos;
+}
+
 /* Add the uniforms to the parameters.  The linker chose locations
  * in our parameters lists (which weren't created yet), which the
  * uniforms code will use to poke values into our parameters list
@@ -2275,12 +2294,14 @@ add_uniforms_to_parameters_list(struct gl_shader_program *shader_program,
 				struct gl_program *prog)
 {
    unsigned int i;
-   unsigned int next_sampler = 0;
+   unsigned int next_sampler = 0, num_uniforms = 0;
+   struct uniform_sort *sorted_uniforms;
+
+   sorted_uniforms = talloc_array(NULL, struct uniform_sort,
+				  shader_program->Uniforms->NumUniforms);
 
    for (i = 0; i < shader_program->Uniforms->NumUniforms; i++) {
       struct gl_uniform *uniform = shader_program->Uniforms->Uniforms + i;
-      const glsl_type *type = uniform->Type;
-      unsigned int size;
       int parameter_index = -1;
 
       switch (shader->Type) {
@@ -2296,8 +2317,21 @@ add_uniforms_to_parameters_list(struct gl_shader_program *shader_program,
       }
 
       /* Only add uniforms used in our target. */
-      if (parameter_index == -1)
-	 continue;
+      if (parameter_index != -1) {
+	 sorted_uniforms[num_uniforms].pos = parameter_index;
+	 sorted_uniforms[num_uniforms].u = uniform;
+	 num_uniforms++;
+      }
+   }
+
+   qsort(sorted_uniforms, num_uniforms, sizeof(struct uniform_sort),
+	 sort_uniforms);
+
+   for (i = 0; i < num_uniforms; i++) {
+      struct gl_uniform *uniform = sorted_uniforms[i].u;
+      int parameter_index = sorted_uniforms[i].pos;
+      const glsl_type *type = uniform->Type;
+      unsigned int size;
 
       if (type->is_vector() ||
 	  type->is_scalar()) {
@@ -2344,6 +2378,8 @@ add_uniforms_to_parameters_list(struct gl_shader_program *shader_program,
 	 }
       }
    }
+
+   talloc_free(sorted_uniforms);
 }
 
 static void
