@@ -861,7 +861,6 @@ static int tgsi_trig(struct r600_shader_ctx *ctx)
 		memset(&alu, 0, sizeof(struct r600_bc_alu));
 		alu.src[0].sel = ctx->temp_reg;
 		alu.inst = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOV;
-		alu.dst.chan = i;
 		r = tgsi_dst(ctx, &inst->Dst[0], i, &alu.dst);
 		if (r)
 			return r;
@@ -965,7 +964,12 @@ static int tgsi_lit(struct r600_shader_ctx *ctx)
 {
 	struct tgsi_full_instruction *inst = &ctx->parse.FullToken.FullInstruction;
 	struct r600_bc_alu alu;
+	struct r600_bc_alu_src r600_src[3];
 	int r;
+
+	r = tgsi_split_constant(ctx, r600_src);
+	if (r)
+		return r;
 
 	/* dst.x, <- 1.0  */
 	memset(&alu, 0, sizeof(struct r600_bc_alu));
@@ -983,9 +987,7 @@ static int tgsi_lit(struct r600_shader_ctx *ctx)
 	/* dst.y = max(src.x, 0.0) */
 	memset(&alu, 0, sizeof(struct r600_bc_alu));
 	alu.inst = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MAX;
-	r = tgsi_src(ctx, &inst->Src[0], &alu.src[0]);
-	if (r)
-		return r;
+	alu.src[0] = r600_src[0];
 	alu.src[1].sel  = V_SQ_ALU_SRC_0; /*0.0*/
 	alu.src[1].chan = 0;
 	r = tgsi_dst(ctx, &inst->Dst[0], 1, &alu.dst);
@@ -1030,10 +1032,8 @@ static int tgsi_lit(struct r600_shader_ctx *ctx)
 		/* dst.z = log(src.y) */
 		memset(&alu, 0, sizeof(struct r600_bc_alu));
 		alu.inst = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LOG_CLAMPED;
-		r = tgsi_src(ctx, &inst->Src[0], &alu.src[0]);
-		if (r)
-			return r;
-		alu.src[0].chan = tgsi_chan(&inst->Src[0], 3);
+		alu.src[0] = r600_src[0];
+		alu.src[0].chan = tgsi_chan(&inst->Src[0], 1);
 		r = tgsi_dst(ctx, &inst->Dst[0], 2, &alu.dst);
 		if (r)
 			return r;
@@ -1052,15 +1052,12 @@ static int tgsi_lit(struct r600_shader_ctx *ctx)
 		/* tmp.x = amd MUL_LIT(src.w, dst.z, src.x ) */
 		memset(&alu, 0, sizeof(struct r600_bc_alu));
 		alu.inst = V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_MUL_LIT;
-		r = tgsi_src(ctx, &inst->Src[0], &alu.src[0]);
-		if (r)
-			return r;
+		alu.src[0] = r600_src[0];
 		alu.src[0].chan = tgsi_chan(&inst->Src[0], 3);
 		alu.src[1].sel  = sel;
 		alu.src[1].chan = chan;
-		r = tgsi_src(ctx, &inst->Src[0], &alu.src[2]);
-		if (r)
-			return r;
+
+		alu.src[2] = r600_src[0];
 		alu.src[2].chan = tgsi_chan(&inst->Src[0], 0);
 		alu.dst.sel = ctx->temp_reg;
 		alu.dst.chan = 0;
