@@ -1402,9 +1402,10 @@ link_shaders(GLcontext *ctx, struct gl_shader_program *prog)
     * match shading language versions.  With GLSL 1.30 and later, the versions
     * of all shaders must match.
     */
-   assert(min_version >= 110);
+   assert(min_version >= 100);
    assert(max_version <= 130);
-   if ((max_version >= 130) && (min_version != max_version)) {
+   if ((max_version >= 130 || min_version == 100)
+       && min_version != max_version) {
       linker_error_printf(prog, "all shaders must use same shading "
 			  "language version\n");
       goto done;
