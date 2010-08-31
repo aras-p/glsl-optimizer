@@ -49,7 +49,6 @@
  */
 void radeonLocalTransform(
 	struct radeon_compiler * c,
-	int num_transformations,
 	struct radeon_program_transformation* transformations)
 {
 	struct rc_instruction * inst = c->Program.Instructions.Next;
@@ -60,7 +59,7 @@ void radeonLocalTransform(
 
 		inst = inst->Next;
 
-		for(i = 0; i < num_transformations; ++i) {
+		for(i = 0; transformations[i].function; ++i) {
 			struct radeon_program_transformation* t = transformations + i;
 
 			if (t->function(c, current, t->userData))

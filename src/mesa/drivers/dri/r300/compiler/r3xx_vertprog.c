@@ -1005,9 +1005,10 @@ void r3xx_compile_vertex_program(struct r300_vertex_program_compiler *c)
 	if (c->Base.is_r500) {
 		struct radeon_program_transformation transformations[] = {
 			{ &r300_transform_vertex_alu, 0 },
-			{ &r300_transform_trig_scale_vertex, 0 }
+			{ &r300_transform_trig_scale_vertex, 0 },
+			{ 0, 0 }
 		};
-		radeonLocalTransform(&c->Base, 2, transformations);
+		radeonLocalTransform(&c->Base, transformations);
 		if (c->Base.Error)
 			return;
 
@@ -1015,9 +1016,10 @@ void r3xx_compile_vertex_program(struct r300_vertex_program_compiler *c)
 	} else {
 		struct radeon_program_transformation transformations[] = {
 			{ &r300_transform_vertex_alu, 0 },
-			{ &radeonTransformTrigSimple, 0 }
+			{ &radeonTransformTrigSimple, 0 },
+			{ 0, 0 }
 		};
-		radeonLocalTransform(&c->Base, 2, transformations);
+		radeonLocalTransform(&c->Base, transformations);
 		if (c->Base.Error)
 			return;
 
@@ -1028,8 +1030,9 @@ void r3xx_compile_vertex_program(struct r300_vertex_program_compiler *c)
 		 */
 		struct radeon_program_transformation transformations2[] = {
 			{ &transform_nonnative_modifiers, 0 },
+			{ 0, 0 }
 		};
-		radeonLocalTransform(&c->Base, 1, transformations2);
+		radeonLocalTransform(&c->Base, transformations2);
 		if (c->Base.Error)
 			return;
 
@@ -1043,8 +1046,9 @@ void r3xx_compile_vertex_program(struct r300_vertex_program_compiler *c)
 		 */
 		struct radeon_program_transformation transformations[] = {
 			{ &transform_source_conflicts, 0 },
+			{ 0, 0 }
 		};
-		radeonLocalTransform(&c->Base, 1, transformations);
+		radeonLocalTransform(&c->Base, transformations);
 		if (c->Base.Error)
 			return;
 	}

@@ -123,9 +123,10 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 			{ &r500_transform_IF, 0 },
 			{ &radeonTransformALU, 0 },
 			{ &radeonTransformDeriv, 0 },
-			{ &radeonTransformTrigScale, 0 }
+			{ &radeonTransformTrigScale, 0 },
+			{ 0, 0 }
 		};
-		radeonLocalTransform(&c->Base, 4, transformations);
+		radeonLocalTransform(&c->Base, transformations);
 
 		debug_program_log(c, "after native rewrite part 1");
 
@@ -133,9 +134,10 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 	} else {
 		struct radeon_program_transformation transformations[] = {
 			{ &radeonTransformALU, 0 },
-			{ &radeonTransformTrigSimple, 0 }
+			{ &radeonTransformTrigSimple, 0 },
+			{ 0, 0 }
 		};
-		radeonLocalTransform(&c->Base, 2, transformations);
+		radeonLocalTransform(&c->Base, transformations);
 
 		debug_program_log(c, "after native rewrite part 1");
 
@@ -146,11 +148,12 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 	 * Remember, lowering comes last! */
 	struct radeon_program_transformation common_transformations[] = {
 		{ &radeonTransformTEX, c },
+		{ 0, 0 }
 	};
-	radeonLocalTransform(&c->Base, 1, common_transformations);
+	radeonLocalTransform(&c->Base, common_transformations);
 
 	common_transformations[0].function = &radeonTransformALU;
-	radeonLocalTransform(&c->Base, 1, common_transformations);
+	radeonLocalTransform(&c->Base, common_transformations);
 
 	if (c->Base.Error)
 		return;

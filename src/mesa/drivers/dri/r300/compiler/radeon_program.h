@@ -216,7 +216,6 @@ struct radeon_program_transformation {
 
 void radeonLocalTransform(
 	struct radeon_compiler *c,
-	int num_transformations,
 	struct radeon_program_transformation* transformations);
 
 unsigned int rc_find_free_temporary(struct radeon_compiler * c);
