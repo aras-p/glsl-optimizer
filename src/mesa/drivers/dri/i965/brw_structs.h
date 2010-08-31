@@ -750,7 +750,7 @@ struct gen6_depth_stencil_state
    } ds1;
 
    struct {
-      GLuint pad0:25;
+      GLuint pad0:26;
       GLuint depth_write_enable:1;
       GLuint depth_test_func:3;
       GLuint pad1:1;

@@ -295,7 +295,7 @@ static void emit_depthbuffer(struct brw_context *brw)
 		I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
 		0);
       OUT_BATCH((BRW_SURFACE_MIPMAPLAYOUT_BELOW << 1) |
-		((region->pitch - 1) << 6) |
+		((region->width - 1) << 6) |
 		((region->height - 1) << 19));
       OUT_BATCH(0);
 
