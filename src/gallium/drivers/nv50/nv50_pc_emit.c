@@ -540,8 +540,9 @@ emit_mov(struct nv_pc *pc, struct nv_instruction *i)
       set_a16_bits(pc, SREG(i->src[0])->id);
    } else
    if (DFILE(i, 0) == NV_FILE_FLAGS) {
-      pc->emit[0] = 0x000001fd;
-      pc->emit[1] = 0xa0000788 | (1 << 6);
+      pc->emit[0] = 0x00000001;
+      pc->emit[1] = 0xa0000000 | (1 << 6);
+      set_pred(pc, i);
       pc->emit[0] |= SREG(i->src[0])->id << 9;
       pc->emit[1] |= DREG(i->def[0])->id << 4;
    } else
@@ -984,7 +985,7 @@ emit_tex(struct nv_pc *pc, struct nv_instruction *i)
    pc->emit[0] |= i->tex_t << 9;
    pc->emit[0] |= i->tex_s << 17;
 
-   pc->emit[0] |= i->tex_argc << 22;
+   pc->emit[0] |= (i->tex_argc - 1) << 22;
 
    pc->emit[0] |= (i->tex_mask & 0x3) << 25;
    pc->emit[1] |= (i->tex_mask & 0xc) << 12;
@@ -1000,8 +1001,6 @@ emit_tex(struct nv_pc *pc, struct nv_instruction *i)
    else
    if (i->opcode == NV_OP_TXL)
       pc->emit[1] |= 0x40000000;
-   else
-      pc->emit[0] -= 1 << 22;
 }
 
 static void
@@ -1051,6 +1050,20 @@ emit_ddy(struct nv_pc *pc, struct nv_instruction *i)
 
    set_pred(pc, i);
    set_pred_wr(pc, i);
+}
+
+static void
+emit_quadop(struct nv_pc *pc, struct nv_instruction *i)
+{
+   pc->emit[0] = 0xc0000000;
+   pc->emit[1] = 0x80000000;
+
+   emit_form_ADD(pc, i);
+
+   pc->emit[0] |= i->lanes << 16;
+
+   pc->emit[0] |= (i->quadop & 0x03) << 20;
+   pc->emit[1] |= (i->quadop & 0xfc) << 20;
 }
 
 void
@@ -1132,6 +1145,9 @@ nv50_emit_instruction(struct nv_pc *pc, struct nv_instruction *i)
    case NV_OP_TXL:
       emit_tex(pc, i);
       break;
+   case NV_OP_QUADOP:
+      emit_quadop(pc, i);
+      break;
    case NV_OP_KIL:
       emit_flow(pc, i, 0x0);
       break;
@@ -1162,7 +1178,7 @@ nv50_emit_instruction(struct nv_pc *pc, struct nv_instruction *i)
    case NV_OP_UNDEF:
    case NV_OP_SUB:
       NOUVEAU_ERR("operation \"%s\" should have been eliminated\n",
-		  nv_opcode_name(i->opcode));
+                  nv_opcode_name(i->opcode));
       break;
    default:
       NOUVEAU_ERR("unhandled NV_OP: %d\n", i->opcode);

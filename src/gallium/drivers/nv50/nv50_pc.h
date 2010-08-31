@@ -126,6 +126,7 @@
 #define NV_TYPE_ISINT(t) ((t) <= 5)
 #define NV_TYPE_ISFLT(t) ((t) & 0x08)
 
+/* $cX registers contain 4 bits: OCSZ (Z is bit 0) */
 #define NV_CC_FL 0x0
 #define NV_CC_LT 0x1
 #define NV_CC_EQ 0x2
@@ -135,6 +136,10 @@
 #define NV_CC_GE 0x6
 #define NV_CC_U  0x8
 #define NV_CC_TR 0xf
+#define NV_CC_O  0x10
+#define NV_CC_C  0x11
+#define NV_CC_A  0x12
+#define NV_CC_S  0x13
 
 #define NV_PC_MAX_INSTRUCTIONS 2048
 #define NV_PC_MAX_VALUES (NV_PC_MAX_INSTRUCTIONS * 4)
@@ -241,7 +246,7 @@ struct nv_instruction {
    ubyte saturate : 1;
    ubyte centroid : 1;
    ubyte flat     : 1;
-   ubyte padding  : 4;
+   ubyte lanes    : 4;
    ubyte tex_live : 1;
    /* */
    ubyte tex_t; /* TIC binding */
@@ -459,6 +464,8 @@ boolean nvbb_reachable_by(struct nv_basic_block *, struct nv_basic_block *,
 struct nv_basic_block *nvbb_dom_frontier(struct nv_basic_block *);
 int nvcg_replace_value(struct nv_pc *pc, struct nv_value *old_val,
                        struct nv_value *new_val);
+struct nv_value *nvcg_find_immediate(struct nv_ref *);
+struct nv_value *nvcg_find_constant(struct nv_ref *);
 
 typedef void (*nv_pc_pass_func)(void *priv, struct nv_basic_block *b);
 

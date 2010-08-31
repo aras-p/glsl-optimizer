@@ -1156,8 +1156,8 @@ get_tex_dim(const struct tgsi_full_instruction *insn, int *dim, int *arg)
 
 static void
 load_proj_tex_coords(struct bld_context *bld,
-		     struct nv_value *t[4], int dim,
-		     const struct tgsi_full_instruction *insn)
+                     struct nv_value *t[4], int dim,
+                     const struct tgsi_full_instruction *insn)
 {
    int c, mask = 0;
 
@@ -1188,59 +1188,209 @@ load_proj_tex_coords(struct bld_context *bld,
    }
 }
 
-static void
-bld_tex(struct bld_context *bld, struct nv_value *dst0[4],
-        const struct tgsi_full_instruction *insn)
+/* For a quad of threads / top left, top right, bottom left, bottom right
+ * pixels, do a different operation, and take src0 from a specific thread.
+ */
+#define QOP_ADD 0
+#define QOP_SUBR 1
+#define QOP_SUB 2
+#define QOP_MOV1 3
+
+#define QOP(a, b, c, d) \
+   ((QOP_##a << 0) | (QOP_##b << 2) | (QOP_##c << 4) | (QOP_##d << 6))
+
+static INLINE struct nv_value *
+bld_quadop(struct bld_context *bld, ubyte qop, struct nv_value *src0, int lane,
+           struct nv_value *src1, boolean wp)
+{
+   struct nv_value *val = bld_insn_2(bld, NV_OP_QUADOP, src0, src1);
+   val->insn->lanes = lane;
+   val->insn->quadop = qop;
+   if (wp) {
+      val->insn->flags_def = new_value(bld->pc, NV_FILE_FLAGS, NV_TYPE_U16);
+      val->insn->flags_def->insn = val->insn;
+   }
+   return val;
+}
+
+static INLINE struct nv_value *
+bld_cmov(struct bld_context *bld,
+         struct nv_value *src, ubyte cc, struct nv_value *cr)
+{
+   src = bld_insn_1(bld, NV_OP_MOV, src);
+
+   src->insn->cc = cc;
+   src->insn->flags_src = new_ref(bld->pc, cr);
+
+   return src;
+}
+
+static struct nv_instruction *
+emit_tex(struct bld_context *bld, uint opcode,
+         struct nv_value *dst[4], struct nv_value *t_in[4],
+         int argc, int tic, int tsc, int cube)
 {
    struct nv_value *t[4];
    struct nv_instruction *nvi;
-   uint opcode = translate_opcode(insn->Instruction.Opcode);
-   int arg, dim, c;
+   int c;
 
-   get_tex_dim(insn, &dim, &arg);
-
-   if (insn->Texture.Texture == TGSI_TEXTURE_CUBE) {
-   }
-   // else
-   if (insn->Instruction.Opcode == TGSI_OPCODE_TXP) {
-      load_proj_tex_coords(bld, t, dim, insn);
-   } else
-      for (c = 0; c < dim; ++c)
-         t[c] = emit_fetch(bld, insn, 0, c);
-
-   if (arg != dim)
-      t[dim] = emit_fetch(bld, insn, 0, 2);
-
-   if (insn->Instruction.Opcode == TGSI_OPCODE_TXB ||
-       insn->Instruction.Opcode == TGSI_OPCODE_TXL) {
-      t[arg++] = emit_fetch(bld, insn, 0, 3);
-   }
-
-   for (c = 0; c < arg; ++c) {
-      t[c] = bld_insn_1(bld, NV_OP_MOV, t[c]);
+   /* the inputs to a tex instruction must be separate values */
+   for (c = 0; c < argc; ++c) {
+      t[c] = bld_insn_1(bld, NV_OP_MOV, t_in[c]);
       t[c]->reg.type = NV_TYPE_F32;
+      t[c]->insn->fixed = 1;
    }
 
    nvi = new_instruction(bld->pc, opcode);
 
-   for (c = 0; c < 4; ++c) {
-      nvi->def[c] = dst0[c] = new_value(bld->pc, NV_FILE_GPR, NV_TYPE_F32);
-      nvi->def[c]->insn = nvi;
-   }
-   for (c = 0; c < arg; ++c)
+   for (c = 0; c < 4; ++c)
+      dst[c] = bld_def(nvi, c, new_value(bld->pc, NV_FILE_GPR, NV_TYPE_F32));
+
+   for (c = 0; c < argc; ++c)
       nvi->src[c] = new_ref(bld->pc, t[c]);
 
-   nvi->tex_t = insn->Src[1].Register.Index;
-   nvi->tex_s = 0;
+   nvi->tex_t = tic;
+   nvi->tex_s = tsc;
    nvi->tex_mask = 0xf;
-   nvi->tex_cube = (insn->Texture.Texture == TGSI_TEXTURE_CUBE) ? 1 : 0;
+   nvi->tex_cube = cube;
    nvi->tex_live = 0;
-   nvi->tex_argc = arg;
+   nvi->tex_argc = argc;
+
+   return nvi;
+}
+
+static void
+bld_texlod_sequence(struct bld_context *bld,
+                    struct nv_value *dst[4], struct nv_value *t[4], int arg,
+                    int tic, int tsc, int cube)
+{
+   emit_tex(bld, NV_OP_TXL, dst, t, arg, tic, tsc, cube); /* TODO */
+}
+
+
+/* The lanes of a quad are grouped by the bit in the condition register
+ * they have set, which is selected by differing bias values.
+ * Move the input values for TEX into a new register set for each group
+ * and execute TEX only for a specific group.
+ * We always need to use 4 new registers for the inputs/outputs because
+ * the implicitly calculated derivatives must be correct.
+ */
+static void
+bld_texbias_sequence(struct bld_context *bld,
+                     struct nv_value *dst[4], struct nv_value *t[4], int arg,
+                     int tic, int tsc, int cube)
+{
+   struct nv_instruction *sel, *tex;
+   struct nv_value *bit[4], *cr[4], *res[4][4], *val;
+   int l, c;
+
+   const ubyte cc[4] = { NV_CC_EQ, NV_CC_S, NV_CC_C, NV_CC_O };
+
+   for (l = 0; l < 4; ++l) {
+      bit[l] = bld_load_imm_u32(bld, 1 << l);
+
+      val = bld_quadop(bld, QOP(SUBR, SUBR, SUBR, SUBR),
+                       t[arg - 1], l, t[arg - 1], TRUE);
+
+      cr[l] = bld_cmov(bld, bit[l], NV_CC_EQ, val->insn->flags_def);
+
+      cr[l]->reg.file = NV_FILE_FLAGS;
+      cr[l]->reg.type = NV_TYPE_U16;
+   }
+
+   sel = new_instruction(bld->pc, NV_OP_SELECT);
+
+   for (l = 0; l < 4; ++l)
+      sel->src[l] = new_ref(bld->pc, cr[l]);
+
+   bld_def(sel, 0, new_value(bld->pc, NV_FILE_FLAGS, NV_TYPE_U16));
+
+   for (l = 0; l < 4; ++l) {
+      tex = emit_tex(bld, NV_OP_TXB, dst, t, arg, tic, tsc, cube);
+
+      tex->cc = cc[l];
+      tex->flags_src = new_ref(bld->pc, sel->def[0]);
+
+      for (c = 0; c < 4; ++c)
+         res[l][c] = tex->def[c];
+   }
+
+   for (l = 0; l < 4; ++l)
+      for (c = 0; c < 4; ++c)
+         res[l][c] = bld_cmov(bld, res[l][c], cc[l], sel->def[0]);
+
+   for (c = 0; c < 4; ++c) {
+      sel = new_instruction(bld->pc, NV_OP_SELECT);
+
+      for (l = 0; l < 4; ++l)
+         sel->src[l] = new_ref(bld->pc, res[l][c]);
+
+      bld_def(sel, 0, (dst[c] = new_value(bld->pc, NV_FILE_GPR, NV_TYPE_F32)));
+   }
+}
+
+static boolean
+bld_is_constant(struct nv_value *val)
+{
+   if (val->reg.file == NV_FILE_IMM)
+      return TRUE;
+   return val->insn && nvcg_find_constant(val->insn->src[0]);
+}
+
+static void
+bld_tex(struct bld_context *bld, struct nv_value *dst0[4],
+        const struct tgsi_full_instruction *insn)
+{
+   struct nv_value *t[4], *s[3];
+   uint opcode = translate_opcode(insn->Instruction.Opcode);
+   int arg, dim, c;
+   const int tic = insn->Src[1].Register.Index;
+   const int tsc = 0;
+   const int cube = (insn->Texture.Texture  == TGSI_TEXTURE_CUBE) ? 1 : 0;
+
+   get_tex_dim(insn, &dim, &arg);
+
+   if (!cube && insn->Instruction.Opcode == TGSI_OPCODE_TXP)
+      load_proj_tex_coords(bld, t, dim, insn);
+   else
+      for (c = 0; c < dim; ++c)
+         t[c] = emit_fetch(bld, insn, 0, c);
+
+   if (cube) {
+      assert(dim >= 3);
+      for (c = 0; c < 3; ++c)
+         s[c] = bld_insn_1(bld, NV_OP_ABS, t[c]);
+
+      s[0] = bld_insn_2(bld, NV_OP_MAX, s[0], s[1]);
+      s[0] = bld_insn_2(bld, NV_OP_MAX, s[0], s[2]);
+      s[0] = bld_insn_1(bld, NV_OP_RCP, s[0]);
+
+      for (c = 0; c < 3; ++c)
+         t[c] = bld_insn_2(bld, NV_OP_MUL, t[c], s[0]);
+   }
+
+   if (arg != dim)
+      t[dim] = emit_fetch(bld, insn, 0, 2);
+
+   if (opcode == NV_OP_TXB || opcode == NV_OP_TXL) {
+      t[arg++] = emit_fetch(bld, insn, 0, 3);
+
+      if ((bld->ti->p->type == PIPE_SHADER_FRAGMENT) &&
+          !bld_is_constant(t[arg - 1])) {
+         if (opcode == NV_OP_TXB)
+            bld_texbias_sequence(bld, dst0, t, arg, tic, tsc, cube);
+         else
+            bld_texlod_sequence(bld, dst0, t, arg, tic, tsc, cube);
+         return;
+      }
+   }
+
+   emit_tex(bld, opcode, dst0, t, arg, tic, tsc, cube);
 }
 
 static INLINE struct nv_value *
 bld_dot(struct bld_context *bld, const struct tgsi_full_instruction *insn,
-	int n)
+        int n)
 {
    struct nv_value *dotp, *src0, *src1;
    int c;

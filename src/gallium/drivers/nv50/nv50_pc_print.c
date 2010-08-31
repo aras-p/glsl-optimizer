@@ -102,7 +102,8 @@ static const char *nv_opcode_names[NV_OP_COUNT + 1] = {
 static const char *nv_cond_names[] =
 {
    "never", "lt" , "eq" , "le" , "gt" , "ne" , "ge" , "",
-   "never", "ltu", "equ", "leu", "gtu", "neu", "geu", ""
+   "never", "ltu", "equ", "leu", "gtu", "neu", "geu", "",
+   "o", "c", "a", "s"
 };
 
 static const char *nv_modifier_strings[] =
@@ -144,7 +145,7 @@ nv_type_name(ubyte type)
 static INLINE const char *
 nv_cond_name(ubyte cc)
 {
-   return nv_cond_names[MIN2(cc, 15)];
+   return nv_cond_names[MIN2(cc, 19)];
 }
 
 static INLINE const char *

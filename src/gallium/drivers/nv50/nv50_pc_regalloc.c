@@ -493,10 +493,10 @@ pass_join_values(struct nv_pc_pass *ctx, int iter)
       case NV_OP_SELECT:
          if (!iter)
             break;
-         assert(join_allowed(ctx, i->def[0], i->src[0]->value));
-         assert(join_allowed(ctx, i->def[0], i->src[1]->value));
-         do_join_values(ctx, i->def[0], i->src[0]->value);
-         do_join_values(ctx, i->def[0], i->src[1]->value);
+         for (c = 0; c < 4 && i->src[c]; ++c) {
+            assert(join_allowed(ctx, i->def[0], i->src[c]->value));
+            do_join_values(ctx, i->def[0], i->src[c]->value);
+         }
          break;
       case NV_OP_TEX:
       case NV_OP_TXB:

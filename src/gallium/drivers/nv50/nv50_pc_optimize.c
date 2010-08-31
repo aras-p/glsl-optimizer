@@ -94,14 +94,17 @@ nvi_isnop(struct nv_instruction *nvi)
    if (nvi->opcode == NV_OP_EXPORT || nvi->opcode == NV_OP_UNDEF)
       return TRUE;
 
-   if (nvi->fixed ||
-       nvi->is_terminator ||
-       nvi->flags_src ||
+   /* NOTE: 'fixed' now only means that it shouldn't be optimized away,
+    *  but we can still remove it if it is a no-op move.
+    */
+   if (/* nvi->fixed || */
+       /* nvi->flags_src || */ /* cond. MOV to same register is still NOP */
        nvi->flags_def ||
+       nvi->is_terminator ||
        nvi->is_join)
       return FALSE;
 
-   if (nvi->def[0]->join->reg.id < 0)
+   if (nvi->def[0] && nvi->def[0]->join->reg.id < 0)
       return TRUE;
 
    if (nvi->opcode != NV_OP_MOV && nvi->opcode != NV_OP_SELECT)
@@ -436,22 +439,6 @@ nv_pass_lower_mods(struct nv_pass *ctx, struct nv_basic_block *b)
 
 #define SRC_IS_MUL(s) ((s)->insn && (s)->insn->opcode == NV_OP_MUL)
 
-static struct nv_value *
-find_immediate(struct nv_ref *ref)
-{
-   struct nv_value *src;
-
-   if (!ref)
-      return NULL;
-
-   src = ref->value;
-   while (src->insn && src->insn->opcode == NV_OP_MOV) {
-      assert(!src->insn->src[0]->mod);
-      src = src->insn->src[0]->value;
-   }
-   return (src->reg.file == NV_FILE_IMM) ? src : NULL;
-}
-
 static void
 modifiers_apply(uint32_t *val, ubyte type, ubyte mod)
 {
@@ -663,8 +650,8 @@ nv_pass_lower_arith(struct nv_pass *ctx, struct nv_basic_block *b)
 
       next = nvi->next;
 
-      src0 = find_immediate(nvi->src[0]);
-      src1 = find_immediate(nvi->src[1]);
+      src0 = nvcg_find_immediate(nvi->src[0]);
+      src1 = nvcg_find_immediate(nvi->src[1]);
 
       if (src0 && src1)
          constant_expression(ctx->pc, nvi, src0, src1);
@@ -778,6 +765,7 @@ nv_pass_reload_elim(struct nv_pass_reld_elim *ctx, struct nv_basic_block *b)
          if (ld->def[0]->reg.id >= 0)
             it->value = ld->def[0];
          else
+         if (!ld->fixed)
             nvcg_replace_value(ctx->pc, ld->def[0], it->value);
       } else {
          if (ctx->alloc == LOAD_RECORD_POOL_SIZE)
@@ -979,7 +967,7 @@ nv_pass_cse(struct nv_pass *ctx, struct nv_basic_block *b)
       for (ir = entry; ir; ir = next) {
          next = ir->next;
          for (ik = entry; ik != ir; ik = ik->next) {
-            if (ir->opcode != ik->opcode)
+            if (ir->opcode != ik->opcode || ir->fixed)
                continue;
 
             if (!ir->def[0] || !ik->def[0] ||

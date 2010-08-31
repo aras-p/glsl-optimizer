@@ -204,6 +204,35 @@ nvcg_replace_value(struct nv_pc *pc, struct nv_value *old_val,
    return n;
 }
 
+struct nv_value *
+nvcg_find_constant(struct nv_ref *ref)
+{
+   struct nv_value *src;
+
+   if (!ref)
+      return NULL;
+
+   src = ref->value;
+   while (src->insn && src->insn->opcode == NV_OP_MOV) {
+      assert(!src->insn->src[0]->mod);
+      src = src->insn->src[0]->value;
+   }
+   if ((src->reg.file == NV_FILE_IMM) ||
+       (src->insn && src->insn->opcode == NV_OP_LDA &&
+        src->insn->src[0]->value->reg.file >= NV_FILE_MEM_C(0) &&
+        src->insn->src[0]->value->reg.file <= NV_FILE_MEM_C(15)))
+      return src;
+   return NULL;
+}
+
+struct nv_value *
+nvcg_find_immediate(struct nv_ref *ref)
+{
+   struct nv_value *src = nvcg_find_constant(ref);
+
+   return (src && src->reg.file == NV_FILE_IMM) ? src : NULL;
+}
+
 static void
 nv_pc_free_refs(struct nv_pc *pc)
 {
