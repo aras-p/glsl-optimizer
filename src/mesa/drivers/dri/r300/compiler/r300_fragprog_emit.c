@@ -135,7 +135,7 @@ static int emit_alu(struct r300_emit_state * emit, struct rc_pair_instruction* i
 {
 	PROG_CODE;
 
-	if (code->alu.length >= R300_PFS_MAX_ALU_INST) {
+	if (code->alu.length >= c->Base.max_alu_insts) {
 		error("Too many ALU instructions");
 		return 0;
 	}

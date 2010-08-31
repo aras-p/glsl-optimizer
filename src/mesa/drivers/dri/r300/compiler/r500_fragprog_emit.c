@@ -229,7 +229,7 @@ static void emit_paired(struct r300_fragment_program_compiler *c, struct rc_pair
 {
 	PROG_CODE;
 
-	if (code->inst_end >= 511) {
+	if (code->inst_end >= c->Base.max_alu_insts-1) {
 		error("emit_alu: Too many instructions");
 		return;
 	}
@@ -322,7 +322,7 @@ static int emit_tex(struct r300_fragment_program_compiler *c, struct rc_sub_inst
 {
 	PROG_CODE;
 
-	if (code->inst_end >= 511) {
+	if (code->inst_end >= c->Base.max_alu_insts-1) {
 		error("emit_tex: Too many instructions");
 		return 0;
 	}
@@ -370,7 +370,7 @@ static int emit_tex(struct r300_fragment_program_compiler *c, struct rc_sub_inst
 
 static void emit_flowcontrol(struct emit_state * s, struct rc_instruction * inst)
 {
-	if (s->Code->inst_end >= 511) {
+	if (s->Code->inst_end >= s->C->max_alu_insts-1) {
 		rc_error(s->C, "emit_tex: Too many instructions");
 		return;
 	}
@@ -577,7 +577,7 @@ void r500BuildFragmentProgramHwCode(struct r300_fragment_program_compiler *compi
 		}
 	}
 
-	if (code->max_temp_idx >= 128)
+	if (code->max_temp_idx >= compiler->Base.max_temp_regs)
 		rc_error(&compiler->Base, "Too many hardware temporaries used");
 
 	if (compiler->Base.Error)
@@ -587,7 +587,7 @@ void r500BuildFragmentProgramHwCode(struct r300_fragment_program_compiler *compi
 	    (code->inst[code->inst_end].inst0 & R500_INST_TYPE_MASK) != R500_INST_TYPE_OUT) {
 		/* This may happen when dead-code elimination is disabled or
 		 * when most of the fragment program logic is leading to a KIL */
-		if (code->inst_end >= 511) {
+		if (code->inst_end >= compiler->Base.max_alu_insts-1) {
 			rc_error(&compiler->Base, "Introducing fake OUT: Too many instructions");
 			return;
 		}

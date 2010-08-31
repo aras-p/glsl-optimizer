@@ -985,10 +985,7 @@ void r3xx_compile_vertex_program(struct r300_vertex_program_compiler *c)
 
 	debug_program_log(c, "before compilation");
 
-	if (c->Base.is_r500)
-		rc_transform_loops(&c->Base, R500_VS_MAX_ALU);
-	else
-		rc_transform_loops(&c->Base, R300_VS_MAX_ALU);
+	rc_transform_loops(&c->Base);
 	if (c->Base.Error)
 		return;
 

@@ -42,6 +42,7 @@ struct radeon_compiler {
 	/* Hardware specification. */
 	unsigned is_r500:1;
 	unsigned max_temp_regs;
+	int max_alu_insts;
 
 	/* Whether to remove unused constants and empty holes in constant space. */
 	unsigned remove_unused_constants:1;

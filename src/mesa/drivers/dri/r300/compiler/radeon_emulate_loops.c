@@ -78,12 +78,12 @@ static int src_reg_is_immediate(struct rc_src_register * src,
 }
 
 static unsigned int loop_max_possible_iterations(struct radeon_compiler *c,
-			struct loop_info * loop, unsigned int prog_inst_limit)
+			struct loop_info * loop)
 {
 	unsigned int total_i = rc_recompute_ips(c);
 	unsigned int loop_i = (loop->EndLoop->IP - loop->BeginLoop->IP) - 1;
 	/* +1 because the program already has one iteration of the loop. */
-	return 1 + ((prog_inst_limit - total_i) / loop_i);
+	return 1 + ((c->max_alu_insts - total_i) / loop_i);
 }
 
 static void unroll_loop(struct radeon_compiler * c, struct loop_info * loop,
@@ -187,11 +187,10 @@ static void get_incr_amount(void * data, struct rc_instruction * inst,
 }
 
 /**
- * If prog_inst_limit is -1, then all eligible loops will be unrolled regardless
+ * If c->max_alu_inst is -1, then all eligible loops will be unrolled regardless
  * of how many iterations they have.
  */
-static int try_unroll_loop(struct radeon_compiler * c, struct loop_info * loop,
-						unsigned int prog_inst_limit)
+static int try_unroll_loop(struct radeon_compiler * c, struct loop_info * loop)
 {
 	int end_loops;
 	int iterations;
@@ -300,9 +299,8 @@ static int try_unroll_loop(struct radeon_compiler * c, struct loop_info * loop,
 		return 0;
 	}
 
-	if (prog_inst_limit > 0
-		&& iterations > loop_max_possible_iterations(c, loop,
-							prog_inst_limit)) {
+	if (c->max_alu_insts > 0
+		&& iterations > loop_max_possible_iterations(c, loop)) {
 		return 0;
 	}
 
@@ -436,7 +434,7 @@ static int transform_loop(struct emulate_loop_state * s,
 	if (!build_loop_info(s->C, loop, inst))
 		return 0;
 
-	if(try_unroll_loop(s->C, loop, s->prog_inst_limit)){
+	if(try_unroll_loop(s->C, loop)){
 		return 1;
 	}
 
@@ -472,14 +470,13 @@ static int transform_loop(struct emulate_loop_state * s,
 	return 1;
 }
 
-void rc_transform_loops(struct radeon_compiler *c, int prog_inst_limit)
+void rc_transform_loops(struct radeon_compiler *c)
 {
 	struct emulate_loop_state * s = &c->loop_state;
 	struct rc_instruction * ptr;
 
 	memset(s, 0, sizeof(struct emulate_loop_state));
 	s->C = c;
-	s->prog_inst_limit = prog_inst_limit;
 	for(ptr = s->C->Program.Instructions.Next;
 			ptr != &s->C->Program.Instructions; ptr = ptr->Next) {
 		if(ptr->Type == RC_INSTRUCTION_NORMAL &&
@@ -490,7 +487,7 @@ void rc_transform_loops(struct radeon_compiler *c, int prog_inst_limit)
 	}
 }
 
-void rc_unroll_loops(struct radeon_compiler *c, int prog_inst_limit)
+void rc_unroll_loops(struct radeon_compiler *c)
 {
 	struct rc_instruction * inst;
 	struct loop_info loop;
@@ -500,13 +497,13 @@ void rc_unroll_loops(struct radeon_compiler *c, int prog_inst_limit)
 
 		if (inst->U.I.Opcode == RC_OPCODE_BGNLOOP) {
 			if (build_loop_info(c, &loop, inst)) {
-				try_unroll_loop(c, &loop, prog_inst_limit);
+				try_unroll_loop(c, &loop);
 			}
 		}
 	}
 }
 
-void rc_emulate_loops(struct radeon_compiler *c, int prog_inst_limit)
+void rc_emulate_loops(struct radeon_compiler *c)
 {
 	struct emulate_loop_state * s = &c->loop_state;
 	int i;
@@ -518,7 +515,7 @@ void rc_emulate_loops(struct radeon_compiler *c, int prog_inst_limit)
 			continue;
 		}
 		unsigned int iterations = loop_max_possible_iterations(
-					s->C, &s->Loops[i], prog_inst_limit);
+					s->C, &s->Loops[i]);
 		unroll_loop(s->C, &s->Loops[i], iterations);
 	}
 }

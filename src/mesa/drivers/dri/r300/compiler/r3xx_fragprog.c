@@ -107,12 +107,11 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 
 	debug_program_log(c, "before compilation");
 
-	if (c->Base.is_r500){
-		rc_unroll_loops(&c->Base, R500_PFS_MAX_INST);
+	if (c->Base.is_r500) {
+		rc_unroll_loops(&c->Base);
 		debug_program_log(c, "after unroll loops");
-	}
-	else{
-		rc_transform_loops(&c->Base, -1);
+	} else {
+		rc_transform_loops(&c->Base);
 		debug_program_log(c, "after transform loops");
 
 		rc_emulate_branches(&c->Base);
@@ -165,7 +164,7 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 	debug_program_log(c, "after deadcode");
 
 	if (!c->Base.is_r500) {
-		rc_emulate_loops(&c->Base, R300_PFS_MAX_ALU_INST);
+		rc_emulate_loops(&c->Base);
 		debug_program_log(c, "after emulate loops");
 	}
 
