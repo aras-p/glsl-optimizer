@@ -210,7 +210,7 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 
 	debug_program_log(c, "after pair scheduling");
 
-	rc_pair_regalloc(c, c->Base.max_temp_regs);
+	rc_pair_regalloc(c);
 
 	if (c->Base.Error)
 		return;

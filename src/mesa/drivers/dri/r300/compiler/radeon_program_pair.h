@@ -120,7 +120,7 @@ struct radeon_pair_handler;
 
 void rc_pair_translate(struct r300_fragment_program_compiler *c);
 void rc_pair_schedule(struct r300_fragment_program_compiler *c);
-void rc_pair_regalloc(struct r300_fragment_program_compiler *c, unsigned maxtemps);
+void rc_pair_regalloc(struct r300_fragment_program_compiler *c);
 /*@}*/
 
 #endif /* __RADEON_PROGRAM_PAIR_H_ */

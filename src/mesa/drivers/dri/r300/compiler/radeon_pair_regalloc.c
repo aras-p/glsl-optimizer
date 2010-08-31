@@ -292,8 +292,9 @@ static void alloc_input(void * data, unsigned int input, unsigned int hwreg)
 
 }
 
-void rc_pair_regalloc(struct r300_fragment_program_compiler *c, unsigned maxtemps)
+void rc_pair_regalloc(struct r300_fragment_program_compiler *c)
 {
+	unsigned maxtemps = c->Base.max_temp_regs;
 	struct regalloc_state s;
 
 	memset(&s, 0, sizeof(s));
