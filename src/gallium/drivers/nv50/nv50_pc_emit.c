@@ -729,7 +729,7 @@ emit_bitop2(struct nv_pc *pc, struct nv_instruction *i)
 {
    pc->emit[0] = 0xd0000000;
 
-   if (SFILE(i, 0) == NV_FILE_IMM) {
+   if (SFILE(i, 1) == NV_FILE_IMM) {
       emit_form_IMM(pc, i, 0);
 
       if (i->opcode == NV_OP_OR)
@@ -761,7 +761,7 @@ emit_arl(struct nv_pc *pc, struct nv_instruction *i)
    pc->emit[0] = 0x00000001;
    pc->emit[1] = 0xc0000000;
 
-   set_dst(pc, i->def[0]);
+   pc->emit[0] |= (i->def[0]->reg.id + 1) << 2;
    set_pred(pc, i);
    set_src_0(pc, i->src[0]);
    pc->emit[0] |= (get_immd_u32(i->src[1]) & 0x3f) << 16;

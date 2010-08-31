@@ -264,11 +264,8 @@ check_swap_src_0_1(struct nv_instruction *nvi)
       return;
    assert(src0 && src1);
 
-   if (src1->value->reg.file == NV_FILE_IMM) {
-      /* should only be present from folding a constant MUL part of a MAD */
-      assert(nvi->opcode == NV_OP_ADD);
+   if (src1->value->reg.file == NV_FILE_IMM)
       return;
-   }
 
    if (is_cmem_load(src0->value->insn)) {
       if (!is_cmem_load(src1->value->insn)) {
@@ -305,7 +302,7 @@ nv_pass_fold_stores(struct nv_pass *ctx, struct nv_basic_block *b)
          continue;
 
       nvi = sti->src[0]->value->insn;
-      if (!nvi || nvi->opcode == NV_OP_PHI)
+      if (!nvi || nvi->opcode == NV_OP_PHI || nv_is_vector_op(nvi->opcode))
          continue;
       assert(nvi->def[0] == sti->src[0]->value);
 
@@ -536,9 +533,9 @@ constant_expression(struct nv_pc *pc, struct nv_instruction *nvi,
       break;
    case NV_OP_SUB:
       switch (type) {
-      case NV_TYPE_F32: u.f32 = u0.f32 - u1.f32;
-      case NV_TYPE_U32: u.u32 = u0.u32 - u1.u32;
-      case NV_TYPE_S32: u.s32 = u0.s32 - u1.s32;
+      case NV_TYPE_F32: u.f32 = u0.f32 - u1.f32; break;
+      case NV_TYPE_U32: u.u32 = u0.u32 - u1.u32; break;
+      case NV_TYPE_S32: u.s32 = u0.s32 - u1.s32; break;
       default:
          assert(0);
          break;
