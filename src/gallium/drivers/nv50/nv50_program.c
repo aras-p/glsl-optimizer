@@ -187,13 +187,14 @@ prog_immediate(struct nv50_translation_info *ti,
                const struct tgsi_full_immediate *imm)
 {
    int c;
-   unsigned n = ++ti->immd32_nr;
+   unsigned n = ti->immd32_nr++;
 
-   if (n == (1 << (ffs(n) - 1)))
-      ti->immd32 = REALLOC(ti->immd32, (n / 2) * 16, (n * 2) * 16);
+   assert(ti->immd32_nr <= ti->scan.immediate_count);
 
    for (c = 0; c < 4; ++c)
-      ti->immd32[(n - 1) * 4 + c] = imm->u[c].Uint;
+      ti->immd32[n * 4 + c] = imm->u[c].Uint;
+
+   ti->immd32_ty[n] = imm->Immediate.DataType;
 }
 
 static INLINE unsigned
@@ -495,6 +496,9 @@ nv50_prog_scan(struct nv50_translation_info *ti)
    tgsi_dump(p->pipe.tokens, 0);
 #endif
 
+   ti->immd32 = (uint32_t *)MALLOC(ti->scan.immediate_count * 16);
+   ti->immd32_ty = (ubyte *)MALLOC(ti->scan.immediate_count * sizeof(ubyte));
+
    tgsi_parse_init(&parse, p->pipe.tokens);
    while (!tgsi_parse_end_of_tokens(&parse)) {
       tgsi_parse_token(&parse);
@@ -561,6 +565,8 @@ nv50_program_tx(struct nv50_program *p)
 out:
    if (ti->immd32)
       FREE(ti->immd32);
+   if (ti->immd32_ty)
+      FREE(ti->immd32_ty);
    FREE(ti);
    return ret ? FALSE : TRUE;
 }

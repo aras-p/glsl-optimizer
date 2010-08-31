@@ -116,6 +116,7 @@ struct nv50_translation_info {
    struct tgsi_shader_info scan;
    uint32_t *immd32;
    unsigned immd32_nr;
+   ubyte *immd32_ty;
    ubyte edgeflag_out;
    struct nv50_subroutine subr[NV50_PROG_MAX_SUBROUTINES];
    int subr_nr;

@@ -1022,7 +1022,15 @@ emit_fetch(struct bld_context *bld, const struct tgsi_full_instruction *insn,
    case TGSI_FILE_IMMEDIATE:
       assert(idx < bld->ti->immd32_nr);
       res = bld_load_imm_u32(bld, bld->ti->immd32[idx * 4 + swz]);
-      res->reg.type = type;
+
+      switch (bld->ti->immd32_ty[idx]) {
+      case TGSI_IMM_FLOAT32: res->reg.type = NV_TYPE_F32; break;
+      case TGSI_IMM_UINT32: res->reg.type = NV_TYPE_U32; break;
+      case TGSI_IMM_INT32: res->reg.type = NV_TYPE_S32; break;
+      default:
+         res->reg.type = type;
+         break;
+      }
       break;
    case TGSI_FILE_INPUT:
       res = bld_saved_input(bld, idx, swz);
