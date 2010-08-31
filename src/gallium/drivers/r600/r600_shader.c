@@ -939,10 +939,6 @@ static int tgsi_scs(struct r600_shader_ctx *ctx)
 	struct r600_bc_alu alu;
 	int r;
 
-	r = tgsi_split_constant(ctx, r600_src);
-	if (r)
-		return r;
-
 	r = tgsi_setup_trig(ctx, r600_src);
 	if (r)
 		return r;
