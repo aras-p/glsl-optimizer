@@ -964,6 +964,14 @@ bld_saved_input(struct bld_context *bld, unsigned i, unsigned c)
 static struct nv_value *
 bld_interpolate(struct bld_context *bld, unsigned mode, struct nv_value *val)
 {
+   if (val->reg.id == 255) {
+      /* gl_FrontFacing: 0/~0 to -1.0/+1.0 */
+      val = bld_insn_1(bld, NV_OP_LINTERP, val);
+      val = bld_insn_2(bld, NV_OP_SHL, val, bld_imm_u32(bld, 31));
+      val->insn->src[0]->typecast = NV_TYPE_U32;
+      val = bld_insn_2(bld, NV_OP_XOR, val, bld_imm_f32(bld, -1.0f));
+      val->insn->src[0]->typecast = NV_TYPE_U32;
+   } else
    if (mode & (NV50_INTERP_LINEAR | NV50_INTERP_FLAT))
       val = bld_insn_1(bld, NV_OP_LINTERP, val);
    else
@@ -1029,9 +1037,8 @@ emit_fetch(struct bld_context *bld, const struct tgsi_full_instruction *insn,
       } else {
          assert(src->Dimension.Dimension == 0);
          res = bld_insn_1(bld, NV_OP_LDA, res);
+         assert(res->reg.type == type);
       }
-      assert(res->reg.type == type);
-
       bld->saved_inputs[bld->ti->input_map[idx][swz]] = res;
       break;
    case TGSI_FILE_TEMPORARY:
