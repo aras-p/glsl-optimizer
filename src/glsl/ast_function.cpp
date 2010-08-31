@@ -621,6 +621,11 @@ emit_inline_vector_constructor(const glsl_type *type,
       instructions->push_tail(inst);
    } else {
       unsigned base_component = 0;
+      ir_constant_data data;
+      unsigned constant_mask = 0;
+
+      memset(&data, 0, sizeof(data));
+
       foreach_list(node, parameters) {
 	 ir_rvalue *param = (ir_rvalue *) node;
 	 unsigned rhs_components = param->type->components();
@@ -631,24 +636,80 @@ emit_inline_vector_constructor(const glsl_type *type,
 	    rhs_components = lhs_components - base_component;
 	 }
 
-	 /* Generate a swizzle that puts the first element of the source at
-	  * the location of the first element of the destination.
-	  */
-	 unsigned swiz[4] = { 0, 0, 0, 0 };
-	 for (unsigned i = 0; i < rhs_components; i++)
-	    swiz[i + base_component] = i;
+	 const ir_constant *const c = param->as_constant();
+	 if (c != NULL) {
+	    for (unsigned i = 0; i < rhs_components; i++) {
+	       switch (c->type->base_type) {
+	       case GLSL_TYPE_UINT:
+		  data.u[i + base_component] = c->get_uint_component(i);
+		  break;
+	       case GLSL_TYPE_INT:
+		  data.i[i + base_component] = c->get_int_component(i);
+		  break;
+	       case GLSL_TYPE_FLOAT:
+		  data.f[i + base_component] = c->get_float_component(i);
+		  break;
+	       case GLSL_TYPE_BOOL:
+		  data.b[i + base_component] = c->get_bool_component(i);
+		  break;
+	       default:
+		  assert(!"Should not get here.");
+		  break;
+	       }
+	    }
 
-	 /* Mask of fields to be written in the assignment.
-	  */
-	 const unsigned write_mask = ((1U << rhs_components) - 1)
-	    << base_component;
+	    /* Mask of fields to be written in the assignment.
+	     */
+	    constant_mask |= ((1U << rhs_components) - 1) << base_component;
+	 }
 
+	 /* Advance the component index by the number of components that were
+	  * just assigned.
+	  */
+	 base_component += rhs_components;
+      }
+
+      if (constant_mask != 0) {
 	 ir_dereference *lhs = new(ctx) ir_dereference_variable(var);
-	 ir_rvalue *rhs = new(ctx) ir_swizzle(param, swiz, lhs_components);
+	 ir_rvalue *rhs = new(ctx) ir_constant(var->type, &data);
 
 	 ir_instruction *inst =
-	    new(ctx) ir_assignment(lhs, rhs, NULL, write_mask);
+	    new(ctx) ir_assignment(lhs, rhs, NULL, constant_mask);
 	 instructions->push_tail(inst);
+      }
+
+      base_component = 0;
+      foreach_list(node, parameters) {
+	 ir_rvalue *param = (ir_rvalue *) node;
+	 unsigned rhs_components = param->type->components();
+
+	 /* Do not try to assign more components to the vector than it has!
+	  */
+	 if ((rhs_components + base_component) > lhs_components) {
+	    rhs_components = lhs_components - base_component;
+	 }
+
+	 const ir_constant *const c = param->as_constant();
+	 if (c == NULL) {
+	    /* Generate a swizzle that puts the first element of the source at
+	     * the location of the first element of the destination.
+	     */
+	    unsigned swiz[4] = { 0, 0, 0, 0 };
+	    for (unsigned i = 0; i < rhs_components; i++)
+	       swiz[i + base_component] = i;
+
+	    /* Mask of fields to be written in the assignment.
+	     */
+	    const unsigned write_mask = ((1U << rhs_components) - 1)
+	       << base_component;
+
+	    ir_dereference *lhs = new(ctx) ir_dereference_variable(var);
+	    ir_rvalue *rhs = new(ctx) ir_swizzle(param, swiz, lhs_components);
+
+	    ir_instruction *inst =
+	       new(ctx) ir_assignment(lhs, rhs, NULL, write_mask);
+	    instructions->push_tail(inst);
+	 }
 
 	 /* Advance the component index by the number of components that were
 	  * just assigned.
