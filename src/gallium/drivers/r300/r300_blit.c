@@ -391,9 +391,6 @@ static void r300_resource_copy_region(struct pipe_context *pipe,
         r300_flush_depth_stencil(pipe, src, subsrc, srcz);
     }
     if (old_format != new_format) {
-        dst->format = new_format;
-        src->format = new_format;
-
         r300_texture_reinterpret_format(pipe->screen,
                                         dst, new_format);
         r300_texture_reinterpret_format(pipe->screen,
@@ -404,9 +401,6 @@ static void r300_resource_copy_region(struct pipe_context *pipe,
                         src, subsrc, srcx, srcy, srcz, width, height);
 
     if (old_format != new_format) {
-        dst->format = old_format;
-        src->format = old_format;
-
         r300_texture_reinterpret_format(pipe->screen,
                                         dst, old_format);
         r300_texture_reinterpret_format(pipe->screen,
