@@ -802,9 +802,60 @@ ast_expression::hir(exec_list *instructions,
    case ast_bit_and:
    case ast_bit_xor:
    case ast_bit_or:
+      op[0] = this->subexpressions[0]->hir(instructions, state);
+      op[1] = this->subexpressions[1]->hir(instructions, state);
+
+      if (state->language_version < 130) {
+	 _mesa_glsl_error(&loc, state, "bit-wise operations require GLSL 1.30");
+	 error_emitted = true;
+      }
+
+      if (!op[0]->type->is_integer()) {
+	 _mesa_glsl_error(&loc, state, "LHS of `%s' must be an integer",
+			  operator_string(this->oper));
+	 error_emitted = true;
+      }
+
+      if (!op[1]->type->is_integer()) {
+	 _mesa_glsl_error(&loc, state, "RHS of `%s' must be an integer",
+			  operator_string(this->oper));
+	 error_emitted = true;
+      }
+
+      if (op[0]->type->base_type != op[1]->type->base_type) {
+	 _mesa_glsl_error(&loc, state, "operands of `%s' must have the same "
+			  "base type", operator_string(this->oper));
+	 error_emitted = true;
+      }
+
+      if (op[0]->type->is_vector() && op[1]->type->is_vector()
+	  && op[0]->type->vector_elements != op[1]->type->vector_elements) {
+	 _mesa_glsl_error(&loc, state, "operands of `%s' cannot be vectors of "
+			  "different sizes", operator_string(this->oper));
+	 error_emitted = true;
+      }
+
+      type = op[0]->type->is_scalar() ? op[1]->type : op[0]->type;
+      result = new(ctx) ir_expression(operations[this->oper], type,
+				      op[0], op[1]);
+      error_emitted = op[0]->type->is_error() || op[1]->type->is_error();
+      break;
+
    case ast_bit_not:
-      _mesa_glsl_error(& loc, state, "FINISHME: implement bit-wise operators");
-      error_emitted = true;
+      op[0] = this->subexpressions[0]->hir(instructions, state);
+
+      if (state->language_version < 130) {
+	 _mesa_glsl_error(&loc, state, "bit-wise operations require GLSL 1.30");
+	 error_emitted = true;
+      }
+
+      if (!op[0]->type->is_integer()) {
+	 _mesa_glsl_error(&loc, state, "operand of `~' must be an integer");
+	 error_emitted = true;
+      }
+
+      type = op[0]->type;
+      result = new(ctx) ir_expression(ir_unop_bit_not, type, op[0], NULL);
       break;
 
    case ast_logic_and: {
