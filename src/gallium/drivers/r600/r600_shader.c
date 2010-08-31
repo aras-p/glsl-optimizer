@@ -166,6 +166,7 @@ static int r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_context_sta
 	struct r600_context *rctx = r600_context(ctx);
 	struct radeon_state *state;
 	unsigned i, tmp, exports_ps, num_cout;
+	boolean have_pos = FALSE;
 
 	rasterizer = &rctx->rasterizer->state.rasterizer;
 	rpshader->rstate = radeon_state_decref(rpshader->rstate);
@@ -175,6 +176,8 @@ static int r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_context_sta
 	for (i = 0; i < rshader->ninput; i++) {
 		tmp = S_028644_SEMANTIC(i);
 		tmp |= S_028644_SEL_CENTROID(1);
+		if (rshader->input[i].name == TGSI_SEMANTIC_POSITION)
+			have_pos = TRUE;
 		if (rshader->input[i].name == TGSI_SEMANTIC_COLOR ||
 			rshader->input[i].name == TGSI_SEMANTIC_BCOLOR) {
 			tmp |= S_028644_FLAT_SHADE(rshader->flat_shade);
@@ -201,6 +204,10 @@ static int r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_context_sta
 	}
 	state->states[R600_PS_SHADER__SPI_PS_IN_CONTROL_0] = S_0286CC_NUM_INTERP(rshader->ninput) |
 							S_0286CC_PERSP_GRADIENT_ENA(1);
+	if (have_pos) {
+		state->states[R600_PS_SHADER__SPI_PS_IN_CONTROL_0] |=  S_0286CC_POSITION_ENA(1);
+		                                                       S_0286CC_BARYC_SAMPLE_CNTL(1);
+	}
 	state->states[R600_PS_SHADER__SPI_PS_IN_CONTROL_1] = 0x00000000;
 	state->states[R600_PS_SHADER__SQ_PGM_RESOURCES_PS] = S_028868_NUM_GPRS(rshader->bc.ngpr) |
 		S_028868_STACK_SIZE(rshader->bc.nstack);
