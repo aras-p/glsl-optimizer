@@ -205,7 +205,7 @@ static int r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_context_sta
 	state->states[R600_PS_SHADER__SPI_PS_IN_CONTROL_0] = S_0286CC_NUM_INTERP(rshader->ninput) |
 							S_0286CC_PERSP_GRADIENT_ENA(1);
 	if (have_pos) {
-		state->states[R600_PS_SHADER__SPI_PS_IN_CONTROL_0] |=  S_0286CC_POSITION_ENA(1);
+		state->states[R600_PS_SHADER__SPI_PS_IN_CONTROL_0] |=  S_0286CC_POSITION_ENA(1) |
 		                                                       S_0286CC_BARYC_SAMPLE_CNTL(1);
 	}
 	state->states[R600_PS_SHADER__SPI_PS_IN_CONTROL_1] = 0x00000000;
