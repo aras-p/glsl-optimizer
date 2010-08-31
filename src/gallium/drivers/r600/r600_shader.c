@@ -650,7 +650,7 @@ static int tgsi_split_constant(struct r600_shader_ctx *ctx, struct r600_bc_alu_s
 			for (k = 0; k < 4; k++) {
 				memset(&alu, 0, sizeof(struct r600_bc_alu));
 				alu.inst = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOV;
-				alu.src[0].sel = r600_src[0].sel;
+				alu.src[0].sel = r600_src[j].sel;
 				alu.src[0].chan = k;
 				alu.dst.sel = ctx->temp_reg + j;
 				alu.dst.chan = k;
@@ -661,7 +661,7 @@ static int tgsi_split_constant(struct r600_shader_ctx *ctx, struct r600_bc_alu_s
 				if (r)
 					return r;
 			}
-			r600_src[0].sel = ctx->temp_reg + j;
+			r600_src[j].sel = ctx->temp_reg + j;
 			j--;
 		}
 	}
