@@ -424,14 +424,6 @@ static void r300_translate_fragment_shader(
     /* Invoke the compiler */
     r3xx_compile_fragment_program(&compiler);
 
-    /* Shaders with zero instructions are invalid,
-     * use the dummy shader instead. */
-    if (shader->code.code.r500.inst_end == -1) {
-        rc_destroy(&compiler.Base);
-        r300_dummy_fragment_shader(r300, shader);
-        return;
-    }
-
     if (compiler.Base.Error) {
         fprintf(stderr, "r300 FP: Compiler Error:\n%sUsing a dummy shader"
                 " instead.\n", compiler.Base.ErrorMsg);
@@ -442,6 +434,14 @@ static void r300_translate_fragment_shader(
             abort();
         }
 
+        rc_destroy(&compiler.Base);
+        r300_dummy_fragment_shader(r300, shader);
+        return;
+    }
+
+    /* Shaders with zero instructions are invalid,
+     * use the dummy shader instead. */
+    if (shader->code.code.r500.inst_end == -1) {
         rc_destroy(&compiler.Base);
         r300_dummy_fragment_shader(r300, shader);
         return;
