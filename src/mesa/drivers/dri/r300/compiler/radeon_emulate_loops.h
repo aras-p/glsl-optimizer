@@ -24,11 +24,10 @@ struct emulate_loop_state {
 	int prog_inst_limit;
 };
 
-void rc_transform_loops(struct radeon_compiler *c,
-			struct emulate_loop_state * s, int prog_inst_limit);
+void rc_transform_loops(struct radeon_compiler *c, int prog_inst_limit);
 
 void rc_unroll_loops(struct radeon_compiler * c, int prog_inst_limit);
 
-void rc_emulate_loops(struct emulate_loop_state * s, int prog_inst_limit);
+void rc_emulate_loops(struct radeon_compiler * c, int prog_inst_limit);
 
 #endif /* RADEON_EMULATE_LOOPS_H */

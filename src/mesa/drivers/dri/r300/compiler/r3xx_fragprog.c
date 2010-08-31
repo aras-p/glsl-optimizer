@@ -99,8 +99,6 @@ static void debug_program_log(struct r300_fragment_program_compiler* c, const ch
 
 void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 {
-	struct emulate_loop_state loop_state;
-
 	rewrite_depth_out(c);
 
 	/* This transformation needs to be done before any of the IF
@@ -114,7 +112,7 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 		debug_program_log(c, "after unroll loops");
 	}
 	else{
-		rc_transform_loops(&c->Base, &loop_state, -1);
+		rc_transform_loops(&c->Base, -1);
 		debug_program_log(c, "after transform loops");
 
 		rc_emulate_branches(&c->Base);
@@ -166,8 +164,8 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 
 	debug_program_log(c, "after deadcode");
 
-	if(!c->Base.is_r500){
-		rc_emulate_loops(&loop_state, R300_PFS_MAX_ALU_INST);
+	if (!c->Base.is_r500) {
+		rc_emulate_loops(&c->Base, R300_PFS_MAX_ALU_INST);
 		debug_program_log(c, "after emulate loops");
 	}
 
@@ -188,7 +186,7 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 		debug_program_log(c, "after constants cleanup");
 	}
 
-	if(!c->Base.is_r500) {
+	if (!c->Base.is_r500) {
 		/* This pass makes it easier for the scheduler to group TEX
 		 * instructions and reduces the chances of creating too
 		 * many texture indirections.*/

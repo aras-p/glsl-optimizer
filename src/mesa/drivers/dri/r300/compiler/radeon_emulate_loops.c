@@ -472,9 +472,9 @@ static int transform_loop(struct emulate_loop_state * s,
 	return 1;
 }
 
-void rc_transform_loops(struct radeon_compiler *c,
-			struct emulate_loop_state * s, int prog_inst_limit)
+void rc_transform_loops(struct radeon_compiler *c, int prog_inst_limit)
 {
+	struct emulate_loop_state * s = &c->loop_state;
 	struct rc_instruction * ptr;
 
 	memset(s, 0, sizeof(struct emulate_loop_state));
@@ -506,8 +506,9 @@ void rc_unroll_loops(struct radeon_compiler *c, int prog_inst_limit)
 	}
 }
 
-void rc_emulate_loops(struct emulate_loop_state *s, int prog_inst_limit)
+void rc_emulate_loops(struct radeon_compiler *c, int prog_inst_limit)
 {
+	struct emulate_loop_state * s = &c->loop_state;
 	int i;
 	/* Iterate backwards of the list of loops so that loops that nested
 	 * loops are unrolled first.

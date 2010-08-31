@@ -28,6 +28,7 @@
 #include "memory_pool.h"
 #include "radeon_code.h"
 #include "radeon_program.h"
+#include "radeon_emulate_loops.h"
 
 struct rc_swizzle_caps;
 
@@ -52,6 +53,8 @@ struct radeon_compiler {
 	/*@{*/
 	struct rc_swizzle_caps * SwizzleCaps;
 	/*@}*/
+
+	struct emulate_loop_state loop_state;
 };
 
 void rc_init(struct radeon_compiler * c);
@@ -105,7 +108,6 @@ struct r300_fragment_program_compiler {
 };
 
 void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c);
-
 
 struct r300_vertex_program_compiler {
 	struct radeon_compiler Base;

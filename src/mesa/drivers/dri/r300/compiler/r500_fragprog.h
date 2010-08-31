@@ -36,8 +36,6 @@
 #include "radeon_compiler.h"
 #include "radeon_swizzle.h"
 
-struct emulate_loop_state;
-
 extern void r500BuildFragmentProgramHwCode(struct r300_fragment_program_compiler *compiler);
 
 extern void r500FragmentProgramDump(struct rX00_fragment_program_code *c);

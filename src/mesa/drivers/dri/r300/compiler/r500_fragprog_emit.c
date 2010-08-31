@@ -63,7 +63,7 @@ struct branch_info {
 	int Endif;
 };
 
-struct loop_info {
+struct r500_loop_info {
 	int BgnLoop;
 
 	int BranchDepth;
@@ -84,7 +84,7 @@ struct emit_state {
 	unsigned int CurrentBranchDepth;
 	unsigned int BranchesReserved;
 
-	struct loop_info * Loops;
+	struct r500_loop_info * Loops;
 	unsigned int CurrentLoopDepth;
 	unsigned int LoopsReserved;
 
@@ -387,13 +387,13 @@ static void emit_flowcontrol(struct emit_state * s, struct rc_instruction * inst
 
 	switch(inst->U.I.Opcode){
 	struct branch_info * branch;
-	struct loop_info * loop;
+	struct r500_loop_info * loop;
 	case RC_OPCODE_BGNLOOP:
-		memory_pool_array_reserve(&s->C->Pool, struct loop_info,
+		memory_pool_array_reserve(&s->C->Pool, struct r500_loop_info,
 			s->Loops, s->CurrentLoopDepth, s->LoopsReserved, 1);
 
 		loop = &s->Loops[s->CurrentLoopDepth++];
-		memset(loop, 0, sizeof(struct loop_info));
+		memset(loop, 0, sizeof(struct r500_loop_info));
 		loop->BranchDepth = s->CurrentBranchDepth;
 		loop->BgnLoop = newip;
 
