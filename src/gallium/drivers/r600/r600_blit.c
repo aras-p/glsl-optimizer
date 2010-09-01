@@ -132,7 +132,7 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 				      unsigned srcx, unsigned srcy, unsigned srcz,
 				      unsigned width, unsigned height)
 {
-	util_resource_copy_region(pipe, dst, subdst, dstx, dsty, dstz,
+	util_resource_copy_region(ctx, dst, subdst, dstx, dsty, dstz,
 				  src, subsrc, srcx, srcy, srcz, width, height);
 }
 
