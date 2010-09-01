@@ -599,8 +599,8 @@ destroy_visuals_on_display(Display *dpy)
 static int
 close_display_callback(Display *dpy, XExtCodes *codes)
 {
-   destroy_visuals_on_display(dpy);
    xmesa_destroy_buffers_on_display(dpy);
+   destroy_visuals_on_display(dpy);
    return 0;
 }
 
