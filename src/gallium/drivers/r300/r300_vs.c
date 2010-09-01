@@ -205,6 +205,7 @@ void r300_translate_vertex_shader(struct r300_context *r300,
     compiler.code = &vs->code;
     compiler.UserData = vs;
     compiler.Base.is_r500 = r300->screen->caps.is_r500;
+    compiler.Base.has_half_swizzles = FALSE;
     compiler.Base.max_temp_regs = 32;
     compiler.Base.max_constants = 256;
     compiler.Base.max_alu_insts = r300->screen->caps.is_r500 ? 1024 : 256;

@@ -410,7 +410,7 @@ static void constant_folding(struct radeon_compiler * c, struct rc_instruction *
 				newswz = RC_SWIZZLE_ZERO;
 			} else if (baseimm == 1.0) {
 				newswz = RC_SWIZZLE_ONE;
-			} else if (baseimm == 0.5) {
+			} else if (baseimm == 0.5 && c->has_half_swizzles) {
 				newswz = RC_SWIZZLE_HALF;
 			} else {
 				have_real_reference = 1;

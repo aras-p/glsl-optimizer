@@ -41,6 +41,7 @@ struct radeon_compiler {
 
 	/* Hardware specification. */
 	unsigned is_r500:1;
+	unsigned has_half_swizzles:1;
 	unsigned max_temp_regs;
 	unsigned max_constants;
 	int max_alu_insts;
