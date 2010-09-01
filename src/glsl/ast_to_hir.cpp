@@ -2257,7 +2257,7 @@ ast_function::hir(exec_list *instructions,
     * seen signature for a function with the same name, or, if a match is found,
     * that the previously seen signature does not have an associated definition.
     */
-   f = state->symbols->get_function(name, false);
+   f = state->symbols->get_function(name);
    if (f != NULL && !f->is_builtin) {
       sig = f->exact_matching_signature(&hir_parameters);
       if (sig != NULL) {
