@@ -258,13 +258,24 @@ static void r600_init_config(struct r600_context *rctx)
 	rctx->config.states[R600_CONFIG__SQ_STACK_RESOURCE_MGMT_2] |= S_008C14_NUM_GS_STACK_ENTRIES(num_gs_stack_entries);
 	rctx->config.states[R600_CONFIG__SQ_STACK_RESOURCE_MGMT_2] |= S_008C14_NUM_ES_STACK_ENTRIES(num_es_stack_entries);
 
-	rctx->config.states[R600_CONFIG__SQ_DYN_GPR_CNTL_PS_FLUSH_REQ] = 0x00004000;
-	rctx->config.states[R600_CONFIG__TA_CNTL_AUX] = 0x07000002;
 	rctx->config.states[R600_CONFIG__VC_ENHANCE] = 0x00000000;
-	rctx->config.states[R600_CONFIG__DB_DEBUG] = 0x00000000;
-	rctx->config.states[R600_CONFIG__DB_WATERMARKS] = 0x00420204;
 	rctx->config.states[R600_CONFIG__SX_MISC] = 0x00000000;
-	rctx->config.states[R600_CONFIG__SPI_THREAD_GROUPING] = 0x00000001;
+
+	if (family >= CHIP_RV770) {
+		rctx->config.states[R600_CONFIG__SQ_DYN_GPR_CNTL_PS_FLUSH_REQ] = 0x00004000;
+		rctx->config.states[R600_CONFIG__TA_CNTL_AUX] = 0x07000002;
+		rctx->config.states[R600_CONFIG__DB_DEBUG] = 0x00000000;
+		rctx->config.states[R600_CONFIG__DB_WATERMARKS] = 0x00420204;
+		rctx->config.states[R600_CONFIG__SPI_THREAD_GROUPING] = 0x00000000;
+		rctx->config.states[R600_CONFIG__PA_SC_MODE_CNTL] = 0x00514000;
+	} else {
+		rctx->config.states[R600_CONFIG__SQ_DYN_GPR_CNTL_PS_FLUSH_REQ] = 0x00000000;
+		rctx->config.states[R600_CONFIG__TA_CNTL_AUX] = 0x07000003;
+		rctx->config.states[R600_CONFIG__DB_DEBUG] = 0x82000000;
+		rctx->config.states[R600_CONFIG__DB_WATERMARKS] = 0x01020204;
+		rctx->config.states[R600_CONFIG__SPI_THREAD_GROUPING] = 0x00000001;
+		rctx->config.states[R600_CONFIG__PA_SC_MODE_CNTL] = 0x00004010;
+	}
 	rctx->config.states[R600_CONFIG__CB_SHADER_CONTROL] = 0x00000003;
 	rctx->config.states[R600_CONFIG__SQ_ESGS_RING_ITEMSIZE] = 0x00000000;
 	rctx->config.states[R600_CONFIG__SQ_GSVS_RING_ITEMSIZE] = 0x00000000;
@@ -288,7 +299,6 @@ static void r600_init_config(struct r600_context *rctx)
 	rctx->config.states[R600_CONFIG__VGT_GROUP_VECT_0_FMT_CNTL] = 0x00000000;
 	rctx->config.states[R600_CONFIG__VGT_GROUP_VECT_1_FMT_CNTL] = 0x00000000;
 	rctx->config.states[R600_CONFIG__VGT_GS_MODE] = 0x00000000;
-	rctx->config.states[R600_CONFIG__PA_SC_MODE_CNTL] = 0x00514000;
 	rctx->config.states[R600_CONFIG__VGT_STRMOUT_EN] = 0x00000000;
 	rctx->config.states[R600_CONFIG__VGT_REUSE_OFF] = 0x00000001;
 	rctx->config.states[R600_CONFIG__VGT_VTX_CNT_EN] = 0x00000000;
