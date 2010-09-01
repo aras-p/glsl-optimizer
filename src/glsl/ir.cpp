@@ -454,7 +454,7 @@ ir_constant::ir_constant(const struct glsl_type *type, exec_list *value_list)
 ir_constant *
 ir_constant::zero(void *mem_ctx, const glsl_type *type)
 {
-   assert(type->is_numeric());
+   assert(type->is_numeric() || type->is_boolean());
 
    ir_constant *c = new(mem_ctx) ir_constant;
    c->type = type;
