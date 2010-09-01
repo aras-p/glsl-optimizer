@@ -485,38 +485,17 @@ void
 generate_constructor_matrix(const glsl_type *type, ir_constant *initializer,
 			    ir_constant_data *data)
 {
-   switch (type->base_type) {
-   case GLSL_TYPE_UINT:
-   case GLSL_TYPE_INT:
-      for (unsigned i = 0; i < type->components(); i++)
-	 data->u[i] = 0;
+   assert(type->base_type == GLSL_TYPE_FLOAT);
+   assert(initializer->type->is_scalar());
 
-      for (unsigned i = 0; i < type->matrix_columns; i++) {
-	 /* The array offset of the ith row and column of the matrix.
-	  */
-	 const unsigned idx = (i * type->vector_elements) + i;
+   for (unsigned i = 0; i < type->components(); i++)
+      data->f[i] = 0;
 
-	 data->u[idx] = initializer->value.u[0];
-      }
-      break;
+   for (unsigned i = 0; i < type->matrix_columns; i++) {
+      /* The array offset of the ith row and column of the matrix. */
+      const unsigned idx = (i * type->vector_elements) + i;
 
-   case GLSL_TYPE_FLOAT:
-      for (unsigned i = 0; i < type->components(); i++)
-	 data->f[i] = 0;
-
-      for (unsigned i = 0; i < type->matrix_columns; i++) {
-	 /* The array offset of the ith row and column of the matrix.
-	  */
-	 const unsigned idx = (i * type->vector_elements) + i;
-
-	 data->f[idx] = initializer->value.f[0];
-      }
-
-      break;
-
-   default:
-      assert(!"Should not get here.");
-      break;
+      data->f[idx] = initializer->value.f[0];
    }
 }
 
