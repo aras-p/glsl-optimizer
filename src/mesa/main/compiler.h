@@ -316,6 +316,11 @@ static INLINE GLuint CPU_TO_LE32(GLuint x)
 #endif
 #endif
 
+#if (__GNUC__ >= 3)
+#define PRINTFLIKE(f, a) __attribute__ ((format(__printf__, f, a)))
+#else
+#define PRINTFLIKE(f, a)
+#endif
 
 #ifndef NULL
 #define NULL 0
