@@ -971,15 +971,6 @@ static struct rc_swizzle_caps r300_vertprog_swizzle_caps = {
 	.Split = 0 /* should never be called */
 };
 
-static void validate_final_shader(struct radeon_compiler *c, void *user)
-{
-	/* Check the number of constants. */
-	if (c->Program.Constants.Count > 256) {
-		rc_error(c, "Too many constants. Max: 256, Got: %i\n",
-			 c->Program.Constants.Count);
-	}
-}
-
 void r3xx_compile_vertex_program(struct r300_vertex_program_compiler *c)
 {
 	int is_r500 = c->Base.is_r500;
@@ -1027,7 +1018,7 @@ void r3xx_compile_vertex_program(struct r300_vertex_program_compiler *c)
 		{"dataflow swizzles",		1, 1,		rc_dataflow_swizzles,		NULL},
 		{"register allocation",		1, 1,		allocate_temporary_registers,	NULL},
 		{"dead constants",		1, kill_consts, rc_remove_unused_constants,	&c->code->constants_remap_table},
-		{"final code validation",	0, 1,		validate_final_shader,		NULL},
+		{"final code validation",	0, 1,		rc_validate_final_shader,	NULL},
 		{"machine code generation",	0, 1,		translate_vertex_program,	NULL},
 		{"dump machine code",		0,c->Base.Debug,r300_vertex_program_dump,	NULL},
 		{NULL, 0, 0, NULL, NULL}

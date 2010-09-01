@@ -374,3 +374,12 @@ void rc_run_compiler(struct radeon_compiler *c, struct radeon_compiler_pass *lis
 		}
 	}
 }
+
+void rc_validate_final_shader(struct radeon_compiler *c, void *user)
+{
+	/* Check the number of constants. */
+	if (c->Program.Constants.Count > c->max_constants) {
+		rc_error(c, "Too many constants. Max: 256, Got: %i\n",
+			 c->Program.Constants.Count);
+	}
+}

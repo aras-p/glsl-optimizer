@@ -42,6 +42,7 @@ struct radeon_compiler {
 	/* Hardware specification. */
 	unsigned is_r500:1;
 	unsigned max_temp_regs;
+	unsigned max_constants;
 	int max_alu_insts;
 
 	/* Whether to remove unused constants and empty holes in constant space. */
@@ -136,5 +137,6 @@ struct radeon_compiler_pass {
 /* Executes a list of compiler passes given in the parameter 'list'. */
 void rc_run_compiler(struct radeon_compiler *c, struct radeon_compiler_pass *list,
 		     const char *shader_name);
+void rc_validate_final_shader(struct radeon_compiler *c, void *user);
 
 #endif /* RADEON_COMPILER_H */

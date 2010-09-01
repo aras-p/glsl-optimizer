@@ -246,6 +246,7 @@ static struct r300_vertex_program *build_program(GLcontext *ctx,
 	compiler.SetHwInputOutput = &t_inputs_outputs;
 	compiler.Base.is_r500 = R300_CONTEXT(ctx)->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515;
 	compiler.Base.max_temp_regs = 32;
+	compiler.Base.max_constants = 256;
 	compiler.Base.max_alu_insts = compiler.Base.is_r500 ? 1024 : 256;
 
 	if (compiler.Base.Debug) {
