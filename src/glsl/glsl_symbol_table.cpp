@@ -46,7 +46,7 @@ public:
 
    symbol_table_entry(ir_variable *v)                     : v(v), f(0), t(0) {}
    symbol_table_entry(ir_function *f)                     : v(0), f(f), t(0) {}
-   symbol_table_entry(const glsl_type *t, ir_function *f) : v(0), f(f), t(t) {}
+   symbol_table_entry(const glsl_type *t)                 : v(0), f(0), t(t) {}
 
    ir_variable *v;
    ir_function *f;
@@ -115,10 +115,9 @@ bool glsl_symbol_table::add_variable(const char *name, ir_variable *v)
    return _mesa_symbol_table_add_symbol(table, -1, name, entry) == 0;
 }
 
-bool glsl_symbol_table::add_type(const char *name, const glsl_type *t,
-				 ir_function *constructor)
+bool glsl_symbol_table::add_type(const char *name, const glsl_type *t)
 {
-   symbol_table_entry *entry = new(mem_ctx) symbol_table_entry(t, constructor);
+   symbol_table_entry *entry = new(mem_ctx) symbol_table_entry(t);
    return _mesa_symbol_table_add_symbol(table, -1, name, entry) == 0;
 }
 
