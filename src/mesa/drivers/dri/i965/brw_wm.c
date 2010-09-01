@@ -68,6 +68,7 @@ GLuint brw_wm_is_scalar_result( GLuint opcode )
    case OPCODE_RCP:
    case OPCODE_RSQ:
    case OPCODE_SIN:
+   case OPCODE_DP2:
    case OPCODE_DP3:
    case OPCODE_DP4:
    case OPCODE_DPH:
