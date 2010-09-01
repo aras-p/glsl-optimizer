@@ -4296,8 +4296,6 @@ GLboolean assemble_LIT(r700_AssemblerBase *pAsm)
 {
     unsigned int dstReg;
     unsigned int dstType;
-    unsigned int srcReg;
-    unsigned int srcType;
     checkop1(pAsm);
     int tmp = gethelpr(pAsm);
 
@@ -4305,182 +4303,178 @@ GLboolean assemble_LIT(r700_AssemblerBase *pAsm)
     {
         return GL_FALSE;
     }
-    if( GL_FALSE == assemble_src(pAsm, 0, -1) )
-    {
-        return GL_FALSE;
-    }
     dstReg  = pAsm->D.dst.reg;
     dstType = pAsm->D.dst.rtype;
-    srcReg  = pAsm->S[0].src.reg;
-    srcType = pAsm->S[0].src.rtype;
 
     /* dst.xw, <- 1.0  */
-    pAsm->D.dst.opcode   = SQ_OP2_INST_MOV;
-    pAsm->D.dst.rtype    = dstType;
-    pAsm->D.dst.reg      = dstReg;
-    pAsm->D.dst.writex   = 1;
-    pAsm->D.dst.writey   = 0;
-    pAsm->D.dst.writez   = 0;
-    pAsm->D.dst.writew   = 1;
-    pAsm->S[0].src.rtype = SRC_REG_TEMPORARY;
-    pAsm->S[0].src.reg   = tmp;
-    setaddrmode_PVSSRC(&(pAsm->S[0].src), ADDR_ABSOLUTE);
-    noneg_PVSSRC(&(pAsm->S[0].src));
-    pAsm->S[0].src.swizzlex = SQ_SEL_1;
-    pAsm->S[0].src.swizzley = SQ_SEL_1;
-    pAsm->S[0].src.swizzlez = SQ_SEL_1;
-    pAsm->S[0].src.swizzlew = SQ_SEL_1;
-    if( GL_FALSE == next_ins(pAsm) )
+    if( pAsm->D.dst.writex || pAsm->D.dst.writew )
+    {
+        if( GL_FALSE == assemble_src(pAsm, 0, -1) )
+        {
+            return GL_FALSE;
+        }
+
+        pAsm->D.dst.opcode   = SQ_OP2_INST_MOV;
+        pAsm->D.dst.writey   = 0;
+        pAsm->D.dst.writez   = 0;
+        pAsm->S[0].src.rtype = SRC_REG_TEMPORARY;
+        pAsm->S[0].src.reg   = tmp;
+        setaddrmode_PVSSRC(&(pAsm->S[0].src), ADDR_ABSOLUTE);
+        noneg_PVSSRC(&(pAsm->S[0].src));
+        pAsm->S[0].src.swizzlex = SQ_SEL_1;
+        pAsm->S[0].src.swizzley = SQ_SEL_1;
+        pAsm->S[0].src.swizzlez = SQ_SEL_1;
+        pAsm->S[0].src.swizzlew = SQ_SEL_1;
+        if( GL_FALSE == next_ins(pAsm) )
+        {
+            return GL_FALSE;
+        }
+    }
+
+    if( GL_FALSE == assemble_dst(pAsm) )
     {
         return GL_FALSE;
     }
 
-    if( GL_FALSE == assemble_src(pAsm, 0, -1) )
+    if( pAsm->D.dst.writey ) { 
+
+        if( GL_FALSE == assemble_src(pAsm, 0, -1) )
+        {
+            return GL_FALSE;
+        }
+
+        /* dst.y = max(src.x, 0.0) */
+        pAsm->D.dst.opcode   = SQ_OP2_INST_MAX;
+        pAsm->D.dst.writex   = 0;
+        pAsm->D.dst.writey   = 1;
+        pAsm->D.dst.writez   = 0;
+        pAsm->D.dst.writew   = 0;
+        swizzleagain_PVSSRC(&(pAsm->S[0].src), SQ_SEL_X, SQ_SEL_X, SQ_SEL_X, SQ_SEL_X);
+        pAsm->S[1].src.rtype = SRC_REG_TEMPORARY;
+        pAsm->S[1].src.reg   = tmp;
+        setaddrmode_PVSSRC(&(pAsm->S[1].src), ADDR_ABSOLUTE);
+        noneg_PVSSRC(&(pAsm->S[1].src));
+        pAsm->S[1].src.swizzlex = SQ_SEL_0;
+        pAsm->S[1].src.swizzley = SQ_SEL_0;
+        pAsm->S[1].src.swizzlez = SQ_SEL_0;
+        pAsm->S[1].src.swizzlew = SQ_SEL_0;
+        if( GL_FALSE == next_ins(pAsm) )
+        {
+            return GL_FALSE;
+        }
+    }
+
+    if( GL_FALSE == assemble_dst(pAsm) )
     {
         return GL_FALSE;
     }
+    if ( pAsm->D.dst.writez) {
 
-    /* dst.y = max(src.x, 0.0) */
-    pAsm->D.dst.opcode   = SQ_OP2_INST_MAX;
-    pAsm->D.dst.rtype    = dstType;
-    pAsm->D.dst.reg      = dstReg;
-    pAsm->D.dst.writex   = 0;
-    pAsm->D.dst.writey   = 1;
-    pAsm->D.dst.writez   = 0;
-    pAsm->D.dst.writew   = 0;
-    pAsm->S[0].src.rtype = srcType;
-    pAsm->S[0].src.reg   = srcReg;
-    setaddrmode_PVSSRC(&(pAsm->S[0].src), ADDR_ABSOLUTE);
-    swizzleagain_PVSSRC(&(pAsm->S[0].src), SQ_SEL_X, SQ_SEL_X, SQ_SEL_X, SQ_SEL_X);
-    pAsm->S[1].src.rtype = SRC_REG_TEMPORARY;
-    pAsm->S[1].src.reg   = tmp;
-    setaddrmode_PVSSRC(&(pAsm->S[1].src), ADDR_ABSOLUTE);
-    noneg_PVSSRC(&(pAsm->S[1].src));
-    pAsm->S[1].src.swizzlex = SQ_SEL_0;
-    pAsm->S[1].src.swizzley = SQ_SEL_0;
-    pAsm->S[1].src.swizzlez = SQ_SEL_0;
-    pAsm->S[1].src.swizzlew = SQ_SEL_0;
-    if( GL_FALSE == next_ins(pAsm) )
-    {
-        return GL_FALSE;
+        if( GL_FALSE == assemble_src(pAsm, 0, -1) )
+        {
+            return GL_FALSE;
+        }
+
+        /* dst.z = log(src.y) */
+        if(8 == pAsm->unAsic)
+        {
+            pAsm->D.dst.opcode   = EG_OP2_INST_LOG_CLAMPED;
+        }
+        else
+        {
+            pAsm->D.dst.opcode   = SQ_OP2_INST_LOG_CLAMPED;
+        }
+        pAsm->D.dst.math     = 1;
+        pAsm->D.dst.writex   = 0;
+        pAsm->D.dst.writey   = 0;
+        pAsm->D.dst.writez   = 1;
+        pAsm->D.dst.writew   = 0;
+        swizzleagain_PVSSRC(&(pAsm->S[0].src), SQ_SEL_Y, SQ_SEL_Y, SQ_SEL_Y, SQ_SEL_Y);
+        if( GL_FALSE == next_ins(pAsm) )
+        {
+            return GL_FALSE;
+        }
+
+        if( GL_FALSE == assemble_src(pAsm, 0, -1) )
+        {
+            return GL_FALSE;
+        }
+
+        if( GL_FALSE == assemble_src(pAsm, 0, 2) )
+        {
+            return GL_FALSE;
+        }
+
+        swizzleagain_PVSSRC(&(pAsm->S[0].src), SQ_SEL_W, SQ_SEL_W, SQ_SEL_W, SQ_SEL_W);
+
+        swizzleagain_PVSSRC(&(pAsm->S[2].src), SQ_SEL_X, SQ_SEL_X, SQ_SEL_X, SQ_SEL_X);
+
+        /* tmp.x = amd MUL_LIT(src.w, dst.z, src.x ) */
+        if(8 == pAsm->unAsic)
+        {
+            pAsm->D.dst.opcode = EG_OP3_INST_MUL_LIT;
+        }
+        else
+        {
+            pAsm->D.dst.opcode = SQ_OP3_INST_MUL_LIT;
+        }
+        pAsm->D.dst.math     = 1;
+        pAsm->D.dst.op3      = 1;
+        pAsm->D.dst.rtype    = DST_REG_TEMPORARY;
+        pAsm->D.dst.reg      = tmp;
+        pAsm->D.dst.writex   = 1;
+        pAsm->D.dst.writey   = 0;
+        pAsm->D.dst.writez   = 0;
+        pAsm->D.dst.writew   = 0;
+
+
+        pAsm->S[1].src.rtype = SRC_REG_TEMPORARY;
+        pAsm->S[1].src.reg   = dstReg;
+        setaddrmode_PVSSRC(&(pAsm->S[1].src), ADDR_ABSOLUTE);
+        noneg_PVSSRC(&(pAsm->S[1].src));
+        pAsm->S[1].src.swizzlex = SQ_SEL_Z;
+        pAsm->S[1].src.swizzley = SQ_SEL_Z;
+        pAsm->S[1].src.swizzlez = SQ_SEL_Z;
+        pAsm->S[1].src.swizzlew = SQ_SEL_Z;
+
+        if( GL_FALSE == next_ins(pAsm) )
+        {
+            return GL_FALSE;
+        }
+
+        /* dst.z = exp(tmp.x) */
+        if( GL_FALSE == assemble_dst(pAsm) )
+        {
+            return GL_FALSE;
+        }
+        if(8 == pAsm->unAsic)
+        {
+            pAsm->D.dst.opcode   = EG_OP2_INST_EXP_IEEE;
+        }
+        else
+        {
+            pAsm->D.dst.opcode   = SQ_OP2_INST_EXP_IEEE;
+        }
+        pAsm->D.dst.math     = 1;
+        pAsm->D.dst.writex   = 0;
+        pAsm->D.dst.writey   = 0;
+        pAsm->D.dst.writez   = 1;
+        pAsm->D.dst.writew   = 0;
+
+        pAsm->S[0].src.rtype = SRC_REG_TEMPORARY;
+        pAsm->S[0].src.reg   = tmp;
+        setaddrmode_PVSSRC(&(pAsm->S[0].src), ADDR_ABSOLUTE);
+        noneg_PVSSRC(&(pAsm->S[0].src));
+        pAsm->S[0].src.swizzlex = SQ_SEL_X;
+        pAsm->S[0].src.swizzley = SQ_SEL_X;
+        pAsm->S[0].src.swizzlez = SQ_SEL_X;
+        pAsm->S[0].src.swizzlew = SQ_SEL_X;
+
+        if( GL_FALSE == next_ins(pAsm) )
+        {
+            return GL_FALSE;
+        }
     }
-
-    if( GL_FALSE == assemble_src(pAsm, 0, -1) )
-    {
-        return GL_FALSE;
-    }
-
-    swizzleagain_PVSSRC(&(pAsm->S[0].src), SQ_SEL_Y, SQ_SEL_Y, SQ_SEL_Y, SQ_SEL_Y);
-
-    /* dst.z = log(src.y) */
-    if(8 == pAsm->unAsic)
-    {
-        pAsm->D.dst.opcode   = EG_OP2_INST_LOG_CLAMPED;
-    }
-    else
-    {
-        pAsm->D.dst.opcode   = SQ_OP2_INST_LOG_CLAMPED;
-    }
-    pAsm->D.dst.math     = 1;
-    pAsm->D.dst.rtype    = dstType;
-    pAsm->D.dst.reg      = dstReg;
-    pAsm->D.dst.writex   = 0;
-    pAsm->D.dst.writey   = 0;
-    pAsm->D.dst.writez   = 1;
-    pAsm->D.dst.writew   = 0;
-    pAsm->S[0].src.rtype = srcType;
-    pAsm->S[0].src.reg   = srcReg;
-    setaddrmode_PVSSRC(&(pAsm->S[0].src), ADDR_ABSOLUTE);
-    if( GL_FALSE == next_ins(pAsm) )
-    {
-        return GL_FALSE;
-    }
-
-    if( GL_FALSE == assemble_src(pAsm, 0, -1) )
-    {
-        return GL_FALSE;
-    }
-
-    if( GL_FALSE == assemble_src(pAsm, 0, 2) )
-    {
-        return GL_FALSE;
-    }
-
-    swizzleagain_PVSSRC(&(pAsm->S[0].src), SQ_SEL_W, SQ_SEL_W, SQ_SEL_W, SQ_SEL_W);
-
-    swizzleagain_PVSSRC(&(pAsm->S[2].src), SQ_SEL_X, SQ_SEL_X, SQ_SEL_X, SQ_SEL_X);
-
-    /* tmp.x = amd MUL_LIT(src.w, dst.z, src.x ) */
-    if(8 == pAsm->unAsic)
-    {
-        pAsm->D.dst.opcode = EG_OP3_INST_MUL_LIT;
-    }
-    else
-    {
-        pAsm->D.dst.opcode = SQ_OP3_INST_MUL_LIT;
-    }
-    pAsm->D.dst.math     = 1;
-    pAsm->D.dst.op3      = 1;
-    pAsm->D.dst.rtype    = DST_REG_TEMPORARY;
-    pAsm->D.dst.reg      = tmp;
-    pAsm->D.dst.writex   = 1;
-    pAsm->D.dst.writey   = 0;
-    pAsm->D.dst.writez   = 0;
-    pAsm->D.dst.writew   = 0;
-
-    pAsm->S[0].src.rtype = srcType;
-    pAsm->S[0].src.reg   = srcReg;
-    setaddrmode_PVSSRC(&(pAsm->S[0].src), ADDR_ABSOLUTE);
-
-    pAsm->S[1].src.rtype = SRC_REG_TEMPORARY;
-    pAsm->S[1].src.reg   = dstReg;
-    setaddrmode_PVSSRC(&(pAsm->S[1].src), ADDR_ABSOLUTE);
-    noneg_PVSSRC(&(pAsm->S[1].src));
-    pAsm->S[1].src.swizzlex = SQ_SEL_Z;
-    pAsm->S[1].src.swizzley = SQ_SEL_Z;
-    pAsm->S[1].src.swizzlez = SQ_SEL_Z;
-    pAsm->S[1].src.swizzlew = SQ_SEL_Z;
-
-    pAsm->S[2].src.rtype = srcType;
-    pAsm->S[2].src.reg   = srcReg;
-    setaddrmode_PVSSRC(&(pAsm->S[2].src), ADDR_ABSOLUTE);
-
-    if( GL_FALSE == next_ins(pAsm) )
-    {
-        return GL_FALSE;
-    }
-
-    /* dst.z = exp(tmp.x) */
-    if(8 == pAsm->unAsic)
-    {
-        pAsm->D.dst.opcode   = EG_OP2_INST_EXP_IEEE;
-    }
-    else
-    {
-        pAsm->D.dst.opcode   = SQ_OP2_INST_EXP_IEEE;
-    }
-    pAsm->D.dst.math     = 1;
-    pAsm->D.dst.rtype    = dstType;
-    pAsm->D.dst.reg      = dstReg;
-    pAsm->D.dst.writex   = 0;
-    pAsm->D.dst.writey   = 0;
-    pAsm->D.dst.writez   = 1;
-    pAsm->D.dst.writew   = 0;
-
-    pAsm->S[0].src.rtype = SRC_REG_TEMPORARY;
-    pAsm->S[0].src.reg   = tmp;
-    setaddrmode_PVSSRC(&(pAsm->S[0].src), ADDR_ABSOLUTE);
-    noneg_PVSSRC(&(pAsm->S[0].src));
-    pAsm->S[0].src.swizzlex = SQ_SEL_X;
-    pAsm->S[0].src.swizzley = SQ_SEL_X;
-    pAsm->S[0].src.swizzlez = SQ_SEL_X;
-    pAsm->S[0].src.swizzlew = SQ_SEL_X;
-
-    if( GL_FALSE == next_ins(pAsm) )
-    {
-        return GL_FALSE;
-    }
-
     return GL_TRUE;
 }
  
