@@ -1013,8 +1013,10 @@ void r3xx_compile_vertex_program(struct r300_vertex_program_compiler *c)
 		{"native rewrite",		1, is_r500,	rc_local_transform,		alu_rewrite_r500},
 		{"native rewrite",		1, !is_r500,	rc_local_transform,		alu_rewrite_r300},
 		{"emulate modifiers",		1, !is_r500,	rc_local_transform,		emulate_modifiers},
-		{"source conflict resolve",	1, 1,		rc_local_transform,		resolve_src_conflicts},
 		{"deadcode",			1, 1,		rc_dataflow_deadcode,		dataflow_outputs_mark_used},
+		{"dataflow optimize",		1, 1,		rc_optimize,			NULL},
+		/* This pass must be done after optimizations. */
+		{"source conflict resolve",	1, 1,		rc_local_transform,		resolve_src_conflicts},
 		{"dataflow swizzles",		1, 1,		rc_dataflow_swizzles,		NULL},
 		{"register allocation",		1, 1,		allocate_temporary_registers,	NULL},
 		{"dead constants",		1, kill_consts, rc_remove_unused_constants,	&c->code->constants_remap_table},
