@@ -220,6 +220,7 @@ static void translate_fragment_program(GLcontext *ctx, struct r300_fragment_prog
 	compiler.state = fp->state;
 	compiler.enable_shadow_ambient = GL_TRUE;
 	compiler.Base.is_r500 = (r300->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515) ? GL_TRUE : GL_FALSE;
+	compiler.Base.disable_optimizations = 0;
 	compiler.Base.has_half_swizzles = 1;
 	compiler.Base.max_temp_regs = (compiler.Base.is_r500) ? 128 : 32;
 	compiler.Base.max_constants = compiler.Base.is_r500 ? 256 : 32;

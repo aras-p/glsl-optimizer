@@ -385,6 +385,7 @@ static void r300_translate_fragment_shader(
     compiler.code = &shader->code;
     compiler.state = shader->compare_state;
     compiler.Base.is_r500 = r300->screen->caps.is_r500;
+    compiler.Base.disable_optimizations = DBG_ON(r300, DBG_NO_OPT);
     compiler.Base.has_half_swizzles = TRUE;
     compiler.Base.max_temp_regs = compiler.Base.is_r500 ? 128 : 32;
     compiler.Base.max_constants = compiler.Base.is_r500 ? 256 : 32;

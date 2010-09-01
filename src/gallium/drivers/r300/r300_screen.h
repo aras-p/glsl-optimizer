@@ -97,6 +97,7 @@ r300_winsys_screen(struct pipe_screen *screen) {
 #define DBG_NO_TILING   (1 << 17)
 #define DBG_NO_IMMD     (1 << 18)
 #define DBG_FAKE_OCC    (1 << 19)
+#define DBG_NO_OPT	(1 << 20)
 /* Statistics. */
 #define DBG_STATS       (1 << 24)
 /*@}*/
