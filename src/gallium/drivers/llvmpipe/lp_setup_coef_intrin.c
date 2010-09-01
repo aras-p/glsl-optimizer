@@ -151,13 +151,34 @@ static void perspective_coef( struct lp_rast_shader_inputs *inputs,
  */
 void lp_setup_tri_coef( struct lp_setup_context *setup,
 			struct lp_rast_shader_inputs *inputs,
-			const struct lp_tri_info *info)
+                        const float (*v0)[4],
+                        const float (*v1)[4],
+                        const float (*v2)[4],
+                        boolean frontfacing)
 {
    unsigned slot;
+   struct lp_tri_info info;
+   float dx01 = v0[0][0] - v1[0][0];
+   float dy01 = v0[0][1] - v1[0][1];
+   float dx20 = v2[0][0] - v0[0][0];
+   float dy20 = v2[0][1] - v0[0][1];
+   float oneoverarea = 1.0f / (dx01 * dy20 - dx20 * dy01);
+
+   info.v0 = v0;
+   info.v1 = v1;
+   info.v2 = v2;
+   info.frontfacing = frontfacing;
+   info.x0_center = v0[0][0] - setup->pixel_offset;
+   info.y0_center = v0[0][1] - setup->pixel_offset;
+   info.dx01_ooa  = dx01 * oneoverarea;
+   info.dx20_ooa  = dx20 * oneoverarea;
+   info.dy01_ooa  = dy01 * oneoverarea;
+   info.dy20_ooa  = dy20 * oneoverarea;
+
 
    /* The internal position input is in slot zero:
     */
-   linear_coef(inputs, info, 0, 0);
+   linear_coef(inputs, &info, 0, 0);
 
    /* setup interpolation for all the remaining attributes:
     */
@@ -167,19 +188,19 @@ void lp_setup_tri_coef( struct lp_setup_context *setup,
       switch (setup->fs.input[slot].interp) {
       case LP_INTERP_CONSTANT:
          if (setup->flatshade_first) {
-	    constant_coef4(inputs, info, slot+1, info->v0[vert_attr]);
+	    constant_coef4(inputs, &info, slot+1, info.v0[vert_attr]);
          }
          else {
-	    constant_coef4(inputs, info, slot+1, info->v2[vert_attr]);
+	    constant_coef4(inputs, &info, slot+1, info.v2[vert_attr]);
          }
          break;
 
       case LP_INTERP_LINEAR:
-	 linear_coef(inputs, info, slot+1, vert_attr);
+	 linear_coef(inputs, &info, slot+1, vert_attr);
          break;
 
       case LP_INTERP_PERSPECTIVE:
-	 perspective_coef(inputs, info, slot+1, vert_attr);
+	 perspective_coef(inputs, &info, slot+1, vert_attr);
          break;
 
       case LP_INTERP_POSITION:
@@ -190,7 +211,7 @@ void lp_setup_tri_coef( struct lp_setup_context *setup,
          break;
 
       case LP_INTERP_FACING:
-         setup_facing_coef(inputs, info, slot+1);
+         setup_facing_coef(inputs, &info, slot+1);
          break;
 
       default:

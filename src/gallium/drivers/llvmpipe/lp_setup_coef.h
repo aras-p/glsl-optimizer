@@ -56,6 +56,9 @@ struct lp_tri_info {
 
 void lp_setup_tri_coef( struct lp_setup_context *setup,
 			struct lp_rast_shader_inputs *inputs,
-			const struct lp_tri_info *info);
+                        const float (*v0)[4],
+                        const float (*v1)[4],
+                        const float (*v2)[4],
+                        boolean frontfacing);
 
 #endif

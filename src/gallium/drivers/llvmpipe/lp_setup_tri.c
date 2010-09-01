@@ -227,10 +227,6 @@ do_triangle_ccw(struct lp_setup_context *setup,
    struct lp_rast_triangle *tri;
    int x[3];
    int y[3];
-   float dy01, dy20;
-   float dx01, dx20;
-   float oneoverarea;
-   struct lp_tri_info info;
    int area;
    struct u_rect bbox;
    unsigned tri_bytes;
@@ -330,29 +326,9 @@ do_triangle_ccw(struct lp_setup_context *setup,
       return TRUE;
    }
 
-
-   /* 
-    */
-   dx01 = v0[0][0] - v1[0][0];
-   dy01 = v0[0][1] - v1[0][1];
-   dx20 = v2[0][0] - v0[0][0];
-   dy20 = v2[0][1] - v0[0][1];
-   oneoverarea = 1.0f / (dx01 * dy20 - dx20 * dy01);
-
-   info.v0 = v0;
-   info.v1 = v1;
-   info.v2 = v2;
-   info.frontfacing = frontfacing;
-   info.x0_center = v0[0][0] - setup->pixel_offset;
-   info.y0_center = v0[0][1] - setup->pixel_offset;
-   info.dx01_ooa  = dx01 * oneoverarea;
-   info.dx20_ooa  = dx20 * oneoverarea;
-   info.dy01_ooa  = dy01 * oneoverarea;
-   info.dy20_ooa  = dy20 * oneoverarea;
-
    /* Setup parameter interpolants:
     */
-   lp_setup_tri_coef( setup, &tri->inputs, &info );
+   lp_setup_tri_coef( setup, &tri->inputs, v0, v1, v2, frontfacing );
 
    tri->inputs.facing = frontfacing ? 1.0F : -1.0F;
    tri->inputs.disable = FALSE;
