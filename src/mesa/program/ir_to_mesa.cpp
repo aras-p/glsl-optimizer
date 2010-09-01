@@ -577,6 +577,239 @@ ir_to_mesa_visitor::find_variable_storage(ir_variable *var)
    return NULL;
 }
 
+struct statevar_element {
+   const char *field;
+   int tokens[STATE_LENGTH];
+   int swizzle;
+   bool array_indexed;
+};
+
+static struct statevar_element gl_DepthRange_elements[] = {
+   {"near", {STATE_DEPTH_RANGE, 0, 0}, SWIZZLE_XXXX},
+   {"far", {STATE_DEPTH_RANGE, 0, 0}, SWIZZLE_YYYY},
+   {"diff", {STATE_DEPTH_RANGE, 0, 0}, SWIZZLE_ZZZZ},
+};
+
+static struct statevar_element gl_ClipPlane_elements[] = {
+   {NULL, {STATE_CLIPPLANE, 0, 0}, SWIZZLE_XYZW}
+};
+
+static struct statevar_element gl_Point_elements[] = {
+   {"size", {STATE_POINT_SIZE}, SWIZZLE_XXXX},
+   {"sizeMin", {STATE_POINT_SIZE}, SWIZZLE_YYYY},
+   {"sizeMax", {STATE_POINT_SIZE}, SWIZZLE_ZZZZ},
+   {"fadeThresholdSize", {STATE_POINT_SIZE}, SWIZZLE_WWWW},
+   {"distanceConstantAttenuation", {STATE_POINT_ATTENUATION}, SWIZZLE_XXXX},
+   {"distanceLinearAttenuation", {STATE_POINT_ATTENUATION}, SWIZZLE_YYYY},
+   {"distanceQuadraticAttenuation", {STATE_POINT_ATTENUATION}, SWIZZLE_ZZZZ},
+};
+
+static struct statevar_element gl_FrontMaterial_elements[] = {
+   {"emission", {STATE_MATERIAL, 0, STATE_EMISSION}, SWIZZLE_XYZW},
+   {"ambient", {STATE_MATERIAL, 0, STATE_AMBIENT}, SWIZZLE_XYZW},
+   {"diffuse", {STATE_MATERIAL, 0, STATE_DIFFUSE}, SWIZZLE_XYZW},
+   {"specular", {STATE_MATERIAL, 0, STATE_SPECULAR}, SWIZZLE_XYZW},
+   {"shininess", {STATE_MATERIAL, 0, STATE_SHININESS}, SWIZZLE_XXXX},
+};
+
+static struct statevar_element gl_BackMaterial_elements[] = {
+   {"emission", {STATE_MATERIAL, 1, STATE_EMISSION}, SWIZZLE_XYZW},
+   {"ambient", {STATE_MATERIAL, 1, STATE_AMBIENT}, SWIZZLE_XYZW},
+   {"diffuse", {STATE_MATERIAL, 1, STATE_DIFFUSE}, SWIZZLE_XYZW},
+   {"specular", {STATE_MATERIAL, 1, STATE_SPECULAR}, SWIZZLE_XYZW},
+   {"shininess", {STATE_MATERIAL, 1, STATE_SHININESS}, SWIZZLE_XXXX},
+};
+
+static struct statevar_element gl_LightSource_elements[] = {
+   {"ambient", {STATE_LIGHT, 0, STATE_AMBIENT}, SWIZZLE_XYZW},
+   {"diffuse", {STATE_LIGHT, 0, STATE_DIFFUSE}, SWIZZLE_XYZW},
+   {"specular", {STATE_LIGHT, 0, STATE_SPECULAR}, SWIZZLE_XYZW},
+   {"position", {STATE_LIGHT, 0, STATE_POSITION}, SWIZZLE_XYZW},
+   {"halfVector", {STATE_LIGHT, 0, STATE_HALF_VECTOR}, SWIZZLE_XYZW},
+   {"spotDirection", {STATE_LIGHT, 0, STATE_SPOT_DIRECTION}, SWIZZLE_XYZW},
+   {"spotCosCutoff", {STATE_LIGHT, 0, STATE_SPOT_DIRECTION}, SWIZZLE_WWWW},
+   {"spotCutoff", {STATE_LIGHT, 0, STATE_SPOT_CUTOFF}, SWIZZLE_XXXX},
+   {"spotExponent", {STATE_LIGHT, 0, STATE_ATTENUATION}, SWIZZLE_WWWW},
+   {"constantAttenuation", {STATE_LIGHT, 0, STATE_ATTENUATION}, SWIZZLE_XXXX},
+   {"linearAttenuation", {STATE_LIGHT, 0, STATE_ATTENUATION}, SWIZZLE_YYYY},
+   {"quadraticAttenuation", {STATE_LIGHT, 0, STATE_ATTENUATION}, SWIZZLE_ZZZZ},
+};
+
+static struct statevar_element gl_LightModel_elements[] = {
+   {"ambient", {STATE_LIGHTMODEL_AMBIENT, 0}, SWIZZLE_XYZW},
+};
+
+static struct statevar_element gl_FrontLightModelProduct_elements[] = {
+   {"sceneColor", {STATE_LIGHTMODEL_SCENECOLOR, 0}, SWIZZLE_XYZW},
+};
+
+static struct statevar_element gl_BackLightModelProduct_elements[] = {
+   {"sceneColor", {STATE_LIGHTMODEL_SCENECOLOR, 1}, SWIZZLE_XYZW},
+};
+
+static struct statevar_element gl_FrontLightProduct_elements[] = {
+   {"ambient", {STATE_LIGHTPROD, 0, 0, STATE_AMBIENT}, SWIZZLE_XYZW},
+   {"diffuse", {STATE_LIGHTPROD, 0, 0, STATE_DIFFUSE}, SWIZZLE_XYZW},
+   {"specular", {STATE_LIGHTPROD, 0, 0, STATE_SPECULAR}, SWIZZLE_XYZW},
+};
+
+static struct statevar_element gl_BackLightProduct_elements[] = {
+   {"ambient", {STATE_LIGHTPROD, 0, 1, STATE_AMBIENT}, SWIZZLE_XYZW},
+   {"diffuse", {STATE_LIGHTPROD, 0, 1, STATE_DIFFUSE}, SWIZZLE_XYZW},
+   {"specular", {STATE_LIGHTPROD, 0, 1, STATE_SPECULAR}, SWIZZLE_XYZW},
+};
+
+static struct statevar_element gl_TextureEnvColor_elements[] = {
+   {NULL, {STATE_TEXENV_COLOR, 0}, SWIZZLE_XYZW},
+};
+
+static struct statevar_element gl_EyePlaneS_elements[] = {
+   {NULL, {STATE_TEXGEN, 0, STATE_TEXGEN_EYE_S}, SWIZZLE_XYZW},
+};
+
+static struct statevar_element gl_EyePlaneT_elements[] = {
+   {NULL, {STATE_TEXGEN, 0, STATE_TEXGEN_EYE_T}, SWIZZLE_XYZW},
+};
+
+static struct statevar_element gl_EyePlaneR_elements[] = {
+   {NULL, {STATE_TEXGEN, 0, STATE_TEXGEN_EYE_R}, SWIZZLE_XYZW},
+};
+
+static struct statevar_element gl_EyePlaneQ_elements[] = {
+   {NULL, {STATE_TEXGEN, 0, STATE_TEXGEN_EYE_Q}, SWIZZLE_XYZW},
+};
+
+static struct statevar_element gl_ObjectPlaneS_elements[] = {
+   {NULL, {STATE_TEXGEN, 0, STATE_TEXGEN_OBJECT_S}, SWIZZLE_XYZW},
+};
+
+static struct statevar_element gl_ObjectPlaneT_elements[] = {
+   {NULL, {STATE_TEXGEN, 0, STATE_TEXGEN_OBJECT_T}, SWIZZLE_XYZW},
+};
+
+static struct statevar_element gl_ObjectPlaneR_elements[] = {
+   {NULL, {STATE_TEXGEN, 0, STATE_TEXGEN_OBJECT_R}, SWIZZLE_XYZW},
+};
+
+static struct statevar_element gl_ObjectPlaneQ_elements[] = {
+   {NULL, {STATE_TEXGEN, 0, STATE_TEXGEN_OBJECT_Q}, SWIZZLE_XYZW},
+};
+
+static struct statevar_element gl_Fog_elements[] = {
+   {"color", {STATE_FOG_COLOR}, SWIZZLE_XYZW},
+   {"density", {STATE_FOG_PARAMS}, SWIZZLE_XXXX},
+   {"start", {STATE_FOG_PARAMS}, SWIZZLE_YYYY},
+   {"end", {STATE_FOG_PARAMS}, SWIZZLE_ZZZZ},
+   {"scale", {STATE_FOG_PARAMS}, SWIZZLE_WWWW},
+};
+
+#define MATRIX(name, statevar, modifier)			\
+   static struct statevar_element name ## _elements[] = {		\
+      { NULL, { statevar, 0, 0, 0, modifier}, SWIZZLE_XYZW },		\
+      { NULL, { statevar, 0, 1, 1, modifier}, SWIZZLE_XYZW },		\
+      { NULL, { statevar, 0, 2, 2, modifier}, SWIZZLE_XYZW },		\
+      { NULL, { statevar, 0, 3, 3, modifier}, SWIZZLE_XYZW },		\
+   }
+
+MATRIX(gl_ModelViewMatrix,
+       STATE_MODELVIEW_MATRIX, STATE_MATRIX_TRANSPOSE);
+MATRIX(gl_ModelViewMatrixInverse,
+       STATE_MODELVIEW_MATRIX, STATE_MATRIX_INVTRANS);
+MATRIX(gl_ModelViewMatrixTranspose,
+       STATE_MODELVIEW_MATRIX, 0);
+MATRIX(gl_ModelViewMatrixInverseTranspose,
+       STATE_MODELVIEW_MATRIX, STATE_MATRIX_INVERSE);
+
+MATRIX(gl_ProjectionMatrix,
+       STATE_PROJECTION_MATRIX, STATE_MATRIX_TRANSPOSE);
+MATRIX(gl_ProjectionMatrixInverse,
+       STATE_PROJECTION_MATRIX, STATE_MATRIX_INVTRANS);
+MATRIX(gl_ProjectionMatrixTranspose,
+       STATE_PROJECTION_MATRIX, 0);
+MATRIX(gl_ProjectionMatrixInverseTranspose,
+       STATE_PROJECTION_MATRIX, STATE_MATRIX_INVERSE);
+
+MATRIX(gl_ModelViewProjectionMatrix,
+       STATE_MVP_MATRIX, STATE_MATRIX_TRANSPOSE);
+MATRIX(gl_ModelViewProjectionMatrixInverse,
+       STATE_MVP_MATRIX, STATE_MATRIX_INVTRANS);
+MATRIX(gl_ModelViewProjectionMatrixTranspose,
+       STATE_MVP_MATRIX, 0);
+MATRIX(gl_ModelViewProjectionMatrixInverseTranspose,
+       STATE_MVP_MATRIX, STATE_MATRIX_INVERSE);
+
+MATRIX(gl_TextureMatrix,
+       STATE_TEXTURE_MATRIX, STATE_MATRIX_TRANSPOSE);
+MATRIX(gl_TextureMatrixInverse,
+       STATE_TEXTURE_MATRIX, STATE_MATRIX_INVTRANS);
+MATRIX(gl_TextureMatrixTranspose,
+       STATE_TEXTURE_MATRIX, 0);
+MATRIX(gl_TextureMatrixInverseTranspose,
+       STATE_TEXTURE_MATRIX, STATE_MATRIX_INVERSE);
+
+static struct statevar_element gl_NormalMatrix_elements[] = {
+   { NULL, { STATE_MODELVIEW_MATRIX, 0, 0, 0, STATE_MATRIX_INVERSE},
+     SWIZZLE_XYZW },
+   { NULL, { STATE_MODELVIEW_MATRIX, 0, 1, 1, STATE_MATRIX_INVERSE},
+     SWIZZLE_XYZW },
+   { NULL, { STATE_MODELVIEW_MATRIX, 0, 2, 2, STATE_MATRIX_INVERSE},
+     SWIZZLE_XYZW },
+};
+
+#undef MATRIX
+
+#define STATEVAR(name) {#name, name ## _elements, Elements(name ## _elements)}
+
+static struct {
+   const char *name;
+   struct statevar_element *elements;
+   int num_elements;
+} statevars[] = {
+   STATEVAR(gl_DepthRange),
+   STATEVAR(gl_ClipPlane),
+   STATEVAR(gl_Point),
+   STATEVAR(gl_FrontMaterial),
+   STATEVAR(gl_BackMaterial),
+   STATEVAR(gl_LightSource),
+   STATEVAR(gl_LightModel),
+   STATEVAR(gl_FrontLightModelProduct),
+   STATEVAR(gl_BackLightModelProduct),
+   STATEVAR(gl_FrontLightProduct),
+   STATEVAR(gl_BackLightProduct),
+   STATEVAR(gl_TextureEnvColor),
+   STATEVAR(gl_EyePlaneS),
+   STATEVAR(gl_EyePlaneT),
+   STATEVAR(gl_EyePlaneR),
+   STATEVAR(gl_EyePlaneQ),
+   STATEVAR(gl_ObjectPlaneS),
+   STATEVAR(gl_ObjectPlaneT),
+   STATEVAR(gl_ObjectPlaneR),
+   STATEVAR(gl_ObjectPlaneQ),
+   STATEVAR(gl_Fog),
+
+   STATEVAR(gl_ModelViewMatrix),
+   STATEVAR(gl_ModelViewMatrixInverse),
+   STATEVAR(gl_ModelViewMatrixTranspose),
+   STATEVAR(gl_ModelViewMatrixInverseTranspose),
+
+   STATEVAR(gl_ProjectionMatrix),
+   STATEVAR(gl_ProjectionMatrixInverse),
+   STATEVAR(gl_ProjectionMatrixTranspose),
+   STATEVAR(gl_ProjectionMatrixInverseTranspose),
+
+   STATEVAR(gl_ModelViewProjectionMatrix),
+   STATEVAR(gl_ModelViewProjectionMatrixInverse),
+   STATEVAR(gl_ModelViewProjectionMatrixTranspose),
+   STATEVAR(gl_ModelViewProjectionMatrixInverseTranspose),
+
+   STATEVAR(gl_TextureMatrix),
+   STATEVAR(gl_TextureMatrixInverse),
+   STATEVAR(gl_TextureMatrixTranspose),
+   STATEVAR(gl_TextureMatrixInverseTranspose),
+
+   STATEVAR(gl_NormalMatrix),
+};
+
 void
 ir_to_mesa_visitor::visit(ir_variable *ir)
 {
@@ -585,6 +818,64 @@ ir_to_mesa_visitor::visit(ir_variable *ir)
 
       fp->OriginUpperLeft = ir->origin_upper_left;
       fp->PixelCenterInteger = ir->pixel_center_integer;
+   }
+
+   if (ir->mode == ir_var_uniform && strncmp(ir->name, "gl_", 3) == 0) {
+      unsigned int i;
+
+      struct variable_storage *entry;
+      entry = new(mem_ctx) variable_storage(ir, PROGRAM_TEMPORARY,
+					    this->next_temp);
+      this->variables.push_tail(entry);
+      this->next_temp += type_size(ir->type);
+
+      for (i = 0; i < Elements(statevars); i++) {
+	 if (strcmp(ir->name, statevars[i].name) == 0)
+	    break;
+      }
+
+      if (i == Elements(statevars)) {
+	 fail_link(this->shader_program,
+		   "Failed to find builtin uniform `%s'\n", ir->name);
+	 return;
+      }
+
+      ir_to_mesa_dst_reg dst =
+	 ir_to_mesa_dst_reg_from_src(ir_to_mesa_src_reg(PROGRAM_TEMPORARY,
+							entry->index, NULL));
+
+      int array_count;
+      if (ir->type->is_array()) {
+	 array_count = ir->type->length;
+      } else {
+	 array_count = 1;
+      }
+
+      for (int a = 0; a < array_count; a++) {
+	 for (int j = 0; j < statevars[i].num_elements; j++) {
+	    struct statevar_element *element = &statevars[i].elements[j];
+	    int tokens[STATE_LENGTH];
+
+	    memcpy(tokens, element->tokens, sizeof(element->tokens));
+	    if (ir->type->is_array()) {
+	       tokens[1] = a;
+	    }
+
+	    int index = _mesa_add_state_reference(this->prog->Parameters,
+						  (gl_state_index *)tokens);
+	    ir_to_mesa_src_reg src(PROGRAM_STATE_VAR, index, NULL);
+	    src.swizzle = element->swizzle;
+	    ir_to_mesa_emit_op1(ir, OPCODE_MOV, dst, src);
+	    /* even a float takes up a whole vec4 reg in a struct/array. */
+	    dst.index++;
+	 }
+      }
+      if (dst.index != entry->index + type_size(ir->type)) {
+	 fail_link(this->shader_program,
+		   "failed to load builtin uniform `%s'  (%d/%d regs loaded)\n",
+		   ir->name, dst.index - entry->index,
+		   type_size(ir->type));
+      }
    }
 }
 
@@ -1016,289 +1307,6 @@ ir_to_mesa_visitor::visit(ir_swizzle *ir)
    this->result = src_reg;
 }
 
-static const struct {
-   const char *name;
-   const char *field;
-   int tokens[STATE_LENGTH];
-   int swizzle;
-   bool array_indexed;
-} statevars[] = {
-   {"gl_DepthRange", "near",
-    {STATE_DEPTH_RANGE, 0, 0}, SWIZZLE_XXXX, false},
-   {"gl_DepthRange", "far",
-    {STATE_DEPTH_RANGE, 0, 0}, SWIZZLE_YYYY, false},
-   {"gl_DepthRange", "diff",
-    {STATE_DEPTH_RANGE, 0, 0}, SWIZZLE_ZZZZ, false},
-
-   {"gl_ClipPlane", NULL,
-    {STATE_CLIPPLANE, 0, 0}, SWIZZLE_XYZW, true}
-,
-   {"gl_Point", "size",
-    {STATE_POINT_SIZE}, SWIZZLE_XXXX, false},
-   {"gl_Point", "sizeMin",
-    {STATE_POINT_SIZE}, SWIZZLE_YYYY, false},
-   {"gl_Point", "sizeMax",
-    {STATE_POINT_SIZE}, SWIZZLE_ZZZZ, false},
-   {"gl_Point", "fadeThresholdSize",
-    {STATE_POINT_SIZE}, SWIZZLE_WWWW, false},
-   {"gl_Point", "distanceConstantAttenuation",
-    {STATE_POINT_ATTENUATION}, SWIZZLE_XXXX, false},
-   {"gl_Point", "distanceLinearAttenuation",
-    {STATE_POINT_ATTENUATION}, SWIZZLE_YYYY, false},
-   {"gl_Point", "distanceQuadraticAttenuation",
-    {STATE_POINT_ATTENUATION}, SWIZZLE_ZZZZ, false},
-
-   {"gl_FrontMaterial", "emission",
-    {STATE_MATERIAL, 0, STATE_EMISSION}, SWIZZLE_XYZW, false},
-   {"gl_FrontMaterial", "ambient",
-    {STATE_MATERIAL, 0, STATE_AMBIENT}, SWIZZLE_XYZW, false},
-   {"gl_FrontMaterial", "diffuse",
-    {STATE_MATERIAL, 0, STATE_DIFFUSE}, SWIZZLE_XYZW, false},
-   {"gl_FrontMaterial", "specular",
-    {STATE_MATERIAL, 0, STATE_SPECULAR}, SWIZZLE_XYZW, false},
-   {"gl_FrontMaterial", "shininess",
-    {STATE_MATERIAL, 0, STATE_SHININESS}, SWIZZLE_XXXX, false},
-
-   {"gl_BackMaterial", "emission",
-    {STATE_MATERIAL, 1, STATE_EMISSION}, SWIZZLE_XYZW, false},
-   {"gl_BackMaterial", "ambient",
-    {STATE_MATERIAL, 1, STATE_AMBIENT}, SWIZZLE_XYZW, false},
-   {"gl_BackMaterial", "diffuse",
-    {STATE_MATERIAL, 1, STATE_DIFFUSE}, SWIZZLE_XYZW, false},
-   {"gl_BackMaterial", "specular",
-    {STATE_MATERIAL, 1, STATE_SPECULAR}, SWIZZLE_XYZW, false},
-   {"gl_BackMaterial", "shininess",
-    {STATE_MATERIAL, 1, STATE_SHININESS}, SWIZZLE_XXXX, false},
-
-   {"gl_LightSource", "ambient",
-    {STATE_LIGHT, 0, STATE_AMBIENT}, SWIZZLE_XYZW, true},
-   {"gl_LightSource", "diffuse",
-    {STATE_LIGHT, 0, STATE_DIFFUSE}, SWIZZLE_XYZW, true},
-   {"gl_LightSource", "specular",
-    {STATE_LIGHT, 0, STATE_SPECULAR}, SWIZZLE_XYZW, true},
-   {"gl_LightSource", "position",
-    {STATE_LIGHT, 0, STATE_POSITION}, SWIZZLE_XYZW, true},
-   {"gl_LightSource", "halfVector",
-    {STATE_LIGHT, 0, STATE_HALF_VECTOR}, SWIZZLE_XYZW, true},
-   {"gl_LightSource", "spotDirection",
-    {STATE_LIGHT, 0, STATE_SPOT_DIRECTION}, SWIZZLE_XYZW, true},
-   {"gl_LightSource", "spotCosCutoff",
-    {STATE_LIGHT, 0, STATE_SPOT_DIRECTION}, SWIZZLE_WWWW, true},
-   {"gl_LightSource", "spotCutoff",
-    {STATE_LIGHT, 0, STATE_SPOT_CUTOFF}, SWIZZLE_XXXX, true},
-   {"gl_LightSource", "spotExponent",
-    {STATE_LIGHT, 0, STATE_ATTENUATION}, SWIZZLE_WWWW, true},
-   {"gl_LightSource", "constantAttenuation",
-    {STATE_LIGHT, 0, STATE_ATTENUATION}, SWIZZLE_XXXX, true},
-   {"gl_LightSource", "linearAttenuation",
-    {STATE_LIGHT, 0, STATE_ATTENUATION}, SWIZZLE_YYYY, true},
-   {"gl_LightSource", "quadraticAttenuation",
-    {STATE_LIGHT, 0, STATE_ATTENUATION}, SWIZZLE_ZZZZ, true},
-
-   {"gl_LightModel", "ambient",
-    {STATE_LIGHTMODEL_AMBIENT, 0}, SWIZZLE_XYZW, false},
-
-   {"gl_FrontLightModelProduct", "sceneColor",
-    {STATE_LIGHTMODEL_SCENECOLOR, 0}, SWIZZLE_XYZW, false},
-   {"gl_BackLightModelProduct", "sceneColor",
-    {STATE_LIGHTMODEL_SCENECOLOR, 1}, SWIZZLE_XYZW, false},
-
-   {"gl_FrontLightProduct", "ambient",
-    {STATE_LIGHTPROD, 0, 0, STATE_AMBIENT}, SWIZZLE_XYZW, true},
-   {"gl_FrontLightProduct", "diffuse",
-    {STATE_LIGHTPROD, 0, 0, STATE_DIFFUSE}, SWIZZLE_XYZW, true},
-   {"gl_FrontLightProduct", "specular",
-    {STATE_LIGHTPROD, 0, 0, STATE_SPECULAR}, SWIZZLE_XYZW, true},
-
-   {"gl_BackLightProduct", "ambient",
-    {STATE_LIGHTPROD, 0, 1, STATE_AMBIENT}, SWIZZLE_XYZW, true},
-   {"gl_BackLightProduct", "diffuse",
-    {STATE_LIGHTPROD, 0, 1, STATE_DIFFUSE}, SWIZZLE_XYZW, true},
-   {"gl_BackLightProduct", "specular",
-    {STATE_LIGHTPROD, 0, 1, STATE_SPECULAR}, SWIZZLE_XYZW, true},
-
-   {"gl_TextureEnvColor", NULL,
-    {STATE_TEXENV_COLOR, 0}, SWIZZLE_XYZW, true},
-
-   {"gl_EyePlaneS", NULL,
-    {STATE_TEXGEN, 0, STATE_TEXGEN_EYE_S}, SWIZZLE_XYZW, true},
-   {"gl_EyePlaneT", NULL,
-    {STATE_TEXGEN, 0, STATE_TEXGEN_EYE_T}, SWIZZLE_XYZW, true},
-   {"gl_EyePlaneR", NULL,
-    {STATE_TEXGEN, 0, STATE_TEXGEN_EYE_R}, SWIZZLE_XYZW, true},
-   {"gl_EyePlaneQ", NULL,
-    {STATE_TEXGEN, 0, STATE_TEXGEN_EYE_Q}, SWIZZLE_XYZW, true},
-
-   {"gl_ObjectPlaneS", NULL,
-    {STATE_TEXGEN, 0, STATE_TEXGEN_OBJECT_S}, SWIZZLE_XYZW, true},
-   {"gl_ObjectPlaneT", NULL,
-    {STATE_TEXGEN, 0, STATE_TEXGEN_OBJECT_T}, SWIZZLE_XYZW, true},
-   {"gl_ObjectPlaneR", NULL,
-    {STATE_TEXGEN, 0, STATE_TEXGEN_OBJECT_R}, SWIZZLE_XYZW, true},
-   {"gl_ObjectPlaneQ", NULL,
-    {STATE_TEXGEN, 0, STATE_TEXGEN_OBJECT_Q}, SWIZZLE_XYZW, true},
-
-   {"gl_Fog", "color",
-    {STATE_FOG_COLOR}, SWIZZLE_XYZW, false},
-   {"gl_Fog", "density",
-    {STATE_FOG_PARAMS}, SWIZZLE_XXXX, false},
-   {"gl_Fog", "start",
-    {STATE_FOG_PARAMS}, SWIZZLE_YYYY, false},
-   {"gl_Fog", "end",
-    {STATE_FOG_PARAMS}, SWIZZLE_ZZZZ, false},
-   {"gl_Fog", "scale",
-    {STATE_FOG_PARAMS}, SWIZZLE_WWWW, false},
-};
-
-static ir_to_mesa_src_reg
-get_builtin_uniform_reg(struct gl_program *prog,
-			const char *name, int array_index, const char *field)
-{
-   unsigned int i;
-   ir_to_mesa_src_reg src_reg;
-   int tokens[STATE_LENGTH];
-
-   for (i = 0; i < Elements(statevars); i++) {
-      if (strcmp(statevars[i].name, name) != 0)
-	 continue;
-      if (!field && statevars[i].field) {
-	 assert(!"FINISHME: whole-structure state var dereference");
-      }
-      if (field && (!statevars[i].field || strcmp(statevars[i].field, field) != 0))
-	 continue;
-      break;
-   }
-
-   if (i ==  Elements(statevars)) {
-      printf("builtin uniform %s%s%s not found\n",
-	     name,
-	     field ? "." : "",
-	     field ? field : "");
-      abort();
-   }
-
-   memcpy(&tokens, statevars[i].tokens, sizeof(tokens));
-   if (statevars[i].array_indexed)
-      tokens[1] = array_index;
-
-   src_reg.file = PROGRAM_STATE_VAR;
-   src_reg.index = _mesa_add_state_reference(prog->Parameters,
-					     (gl_state_index *)tokens);
-   src_reg.swizzle = statevars[i].swizzle;
-   src_reg.negate = 0;
-   src_reg.reladdr = false;
-
-   return src_reg;
-}
-
-static int
-add_matrix_ref(struct gl_program *prog, int *tokens)
-{
-   int base_pos = -1;
-   int i;
-
-   /* Add a ref for each column.  It looks like the reason we do
-    * it this way is that _mesa_add_state_reference doesn't work
-    * for things that aren't vec4s, so the tokens[2]/tokens[3]
-    * range has to be equal.
-    */
-   for (i = 0; i < 4; i++) {
-      tokens[2] = i;
-      tokens[3] = i;
-      int pos = _mesa_add_state_reference(prog->Parameters,
-					  (gl_state_index *)tokens);
-      if (base_pos == -1)
-	 base_pos = pos;
-      else
-	 assert(base_pos + i == pos);
-   }
-
-   return base_pos;
-}
-
-static variable_storage *
-get_builtin_matrix_ref(void *mem_ctx, struct gl_program *prog, ir_variable *var,
-		       ir_rvalue *array_index)
-{
-   /*
-    * NOTE: The ARB_vertex_program extension specified that matrices get
-    * loaded in registers in row-major order.  With GLSL, we want column-
-    * major order.  So, we need to transpose all matrices here...
-    */
-   static const struct {
-      const char *name;
-      int matrix;
-      int modifier;
-   } matrices[] = {
-      { "gl_ModelViewMatrix", STATE_MODELVIEW_MATRIX, STATE_MATRIX_TRANSPOSE },
-      { "gl_ModelViewMatrixInverse", STATE_MODELVIEW_MATRIX, STATE_MATRIX_INVTRANS },
-      { "gl_ModelViewMatrixTranspose", STATE_MODELVIEW_MATRIX, 0 },
-      { "gl_ModelViewMatrixInverseTranspose", STATE_MODELVIEW_MATRIX, STATE_MATRIX_INVERSE },
-
-      { "gl_ProjectionMatrix", STATE_PROJECTION_MATRIX, STATE_MATRIX_TRANSPOSE },
-      { "gl_ProjectionMatrixInverse", STATE_PROJECTION_MATRIX, STATE_MATRIX_INVTRANS },
-      { "gl_ProjectionMatrixTranspose", STATE_PROJECTION_MATRIX, 0 },
-      { "gl_ProjectionMatrixInverseTranspose", STATE_PROJECTION_MATRIX, STATE_MATRIX_INVERSE },
-
-      { "gl_ModelViewProjectionMatrix", STATE_MVP_MATRIX, STATE_MATRIX_TRANSPOSE },
-      { "gl_ModelViewProjectionMatrixInverse", STATE_MVP_MATRIX, STATE_MATRIX_INVTRANS },
-      { "gl_ModelViewProjectionMatrixTranspose", STATE_MVP_MATRIX, 0 },
-      { "gl_ModelViewProjectionMatrixInverseTranspose", STATE_MVP_MATRIX, STATE_MATRIX_INVERSE },
-
-      { "gl_TextureMatrix", STATE_TEXTURE_MATRIX, STATE_MATRIX_TRANSPOSE },
-      { "gl_TextureMatrixInverse", STATE_TEXTURE_MATRIX, STATE_MATRIX_INVTRANS },
-      { "gl_TextureMatrixTranspose", STATE_TEXTURE_MATRIX, 0 },
-      { "gl_TextureMatrixInverseTranspose", STATE_TEXTURE_MATRIX, STATE_MATRIX_INVERSE },
-
-      { "gl_NormalMatrix", STATE_MODELVIEW_MATRIX, STATE_MATRIX_INVERSE },
-
-   };
-   unsigned int i;
-   variable_storage *entry;
-
-   /* C++ gets angry when we try to use an int as a gl_state_index, so we use
-    * ints for gl_state_index.  Make sure they're compatible.
-    */
-   assert(sizeof(gl_state_index) == sizeof(int));
-
-   for (i = 0; i < Elements(matrices); i++) {
-      if (strcmp(var->name, matrices[i].name) == 0) {
-	 int tokens[STATE_LENGTH];
-	 int base_pos = -1;
-
-	 tokens[0] = matrices[i].matrix;
-	 tokens[4] = matrices[i].modifier;
-	 if (matrices[i].matrix == STATE_TEXTURE_MATRIX) {
-	    ir_constant *index = array_index->constant_expression_value();
-	    if (index) {
-	       tokens[1] = index->value.i[0];
-	       base_pos = add_matrix_ref(prog, tokens);
-	    } else {
-	       for (i = 0; i < var->type->length; i++) {
-		  tokens[1] = i;
-		  int pos = add_matrix_ref(prog, tokens);
-		  if (base_pos == -1)
-		     base_pos = pos;
-		  else
-		     assert(base_pos + (int)i * 4 == pos);
-	       }
-	    }
-	 } else {
-	    tokens[1] = 0; /* unused array index */
-	    base_pos = add_matrix_ref(prog, tokens);
-	 }
-
-	 entry = new(mem_ctx) variable_storage(var,
-					       PROGRAM_STATE_VAR,
-					       base_pos);
-
-	 return entry;
-      }
-   }
-
-   return NULL;
-}
-
 void
 ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
 {
@@ -1307,11 +1315,6 @@ ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
    if (!entry) {
       switch (ir->var->mode) {
       case ir_var_uniform:
-	 entry = get_builtin_matrix_ref(this->mem_ctx, this->prog, ir->var,
-					NULL);
-	 if (entry)
-	    break;
-
 	 entry = new(mem_ctx) variable_storage(ir->var, PROGRAM_UNIFORM,
 					       ir->var->location);
 	 this->variables.push_tail(entry);
@@ -1370,57 +1373,11 @@ ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
 void
 ir_to_mesa_visitor::visit(ir_dereference_array *ir)
 {
-   ir_variable *var = ir->variable_referenced();
    ir_constant *index;
    ir_to_mesa_src_reg src_reg;
-   ir_dereference_variable *deref_var = ir->array->as_dereference_variable();
    int element_size = type_size(ir->type);
 
    index = ir->array_index->constant_expression_value();
-
-   if (deref_var && strncmp(deref_var->var->name,
-			    "gl_TextureMatrix",
-			    strlen("gl_TextureMatrix")) == 0) {
-      variable_storage *entry;
-
-      entry = get_builtin_matrix_ref(this->mem_ctx, this->prog, deref_var->var,
-				     ir->array_index);
-      assert(entry);
-
-      ir_to_mesa_src_reg src_reg(entry->file, entry->index, ir->type);
-
-      if (index) {
-	 src_reg.reladdr = NULL;
-      } else {
-	 ir_to_mesa_src_reg index_reg = get_temp(glsl_type::float_type);
-
-	 ir->array_index->accept(this);
-	 ir_to_mesa_emit_op2(ir, OPCODE_MUL,
-			     ir_to_mesa_dst_reg_from_src(index_reg),
-			     this->result, src_reg_for_float(element_size));
-
-	 src_reg.reladdr = talloc(mem_ctx, ir_to_mesa_src_reg);
-	 memcpy(src_reg.reladdr, &index_reg, sizeof(index_reg));
-      }
-
-      this->result = src_reg;
-      return;
-   }
-
-   if (var &&
-       strncmp(var->name, "gl_", 3) == 0 && var->mode == ir_var_uniform &&
-       !var->type->is_matrix()) {
-      ir_dereference_record *record = NULL;
-      if (ir->array->ir_type == ir_type_dereference_record)
-	 record = (ir_dereference_record *)ir->array;
-
-      assert(index || !"FINISHME: variable-indexed builtin uniform access");
-
-      this->result = get_builtin_uniform_reg(prog,
-					     var->name,
-					     index->value.i[0],
-					     record ? record->field : NULL);
-   }
 
    ir->array->accept(this);
    src_reg = this->result;
@@ -1466,17 +1423,6 @@ ir_to_mesa_visitor::visit(ir_dereference_record *ir)
    unsigned int i;
    const glsl_type *struct_type = ir->record->type;
    int offset = 0;
-   ir_variable *var = ir->record->variable_referenced();
-
-   if (strncmp(var->name, "gl_", 3) == 0 && var->mode == ir_var_uniform) {
-      assert(var);
-
-      this->result = get_builtin_uniform_reg(prog,
-					     var->name,
-					     0,
-					     ir->field);
-      return;
-   }
 
    ir->record->accept(this);
 
