@@ -450,6 +450,31 @@ ir_constant::ir_constant(const struct glsl_type *type, exec_list *value_list)
       return;
    }
 
+   if (type->is_matrix() && value->type->is_matrix()) {
+      assert(value->next->is_tail_sentinel());
+
+      /* From section 5.4.2 of the GLSL 1.20 spec:
+       * "If a matrix is constructed from a matrix, then each component
+       *  (column i, row j) in the result that has a corresponding component
+       *  (column i, row j) in the argument will be initialized from there."
+       */
+      unsigned cols = MIN2(type->matrix_columns, value->type->matrix_columns);
+      unsigned rows = MIN2(type->vector_elements, value->type->vector_elements);
+      for (unsigned i = 0; i < cols; i++) {
+	 for (unsigned j = 0; j < rows; j++) {
+	    const unsigned src = i * value->type->vector_elements + j;
+	    const unsigned dst = i * type->vector_elements + j;
+	    this->value.f[dst] = value->value.f[src];
+	 }
+      }
+
+      /* "All other components will be initialized to the identity matrix." */
+      for (unsigned i = cols; i < type->matrix_columns; i++)
+	 this->value.f[i * type->vector_elements + i] = 1.0;
+
+      return;
+   }
+
    /* Use each component from each entry in the value_list to initialize one
     * component of the constant being constructed.
     */
