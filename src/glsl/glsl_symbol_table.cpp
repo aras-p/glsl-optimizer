@@ -127,7 +127,7 @@ bool glsl_symbol_table::add_function(const char *name, ir_function *f)
    if (this->language_version == 110 && name_declared_this_scope(name)) {
       /* In 1.10, functions and variables have separate namespaces. */
       symbol_table_entry *existing = get_entry(name);
-      if (existing->f == NULL) {
+      if ((existing->f == NULL) && (existing->t == NULL)) {
 	 existing->f = f;
 	 return true;
       }

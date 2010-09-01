@@ -2730,8 +2730,7 @@ ast_struct_specifier::hir(exec_list *instructions,
       glsl_type::get_record_instance(fields, decl_count, name);
 
    YYLTYPE loc = this->get_location();
-   ir_function *ctor = t->generate_constructor();
-   if (!state->symbols->add_type(name, t, ctor)) {
+   if (!state->symbols->add_type(name, t)) {
       _mesa_glsl_error(& loc, state, "struct `%s' previously defined", name);
    } else {
 
