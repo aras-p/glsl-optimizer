@@ -480,18 +480,18 @@ pass_join_values(struct nv_pc_pass *ctx, int iter)
 
       switch (i->opcode) {
       case NV_OP_PHI:
-         if (!iter)
-            continue;
+         if (iter != 2)
+            break;
          for (c = 0; c < 4 && i->src[c]; ++c)
             try_join_values(ctx, i->def[0], i->src[c]->value);
          break;
       case NV_OP_MOV:
-         if (iter && i->src[0]->value->insn &&
+         if ((iter == 2) && i->src[0]->value->insn &&
              !nv_is_vector_op(i->src[0]->value->join->insn->opcode))
             try_join_values(ctx, i->def[0], i->src[0]->value);
          break;
       case NV_OP_SELECT:
-         if (!iter)
+         if (iter != 1)
             break;
          for (c = 0; c < 4 && i->src[c]; ++c) {
             assert(join_allowed(ctx, i->def[0], i->src[c]->value));
@@ -919,15 +919,21 @@ nv_pc_exec_pass1(struct nv_pc *pc)
       livei_print(&pc->values[i]);
 #endif
 
-   for (i = 0; i < 2; ++i) {
-      ret = pass_join_values(ctx, i);
-      if (ret)
-         goto out;
-      ret = pass_linear_scan(ctx, i);
-      if (ret)
-         goto out;
-   }
-   assert(!ret && "joining");
+   ret = pass_join_values(ctx, 0);
+   if (ret)
+      goto out;
+   ret = pass_linear_scan(ctx, 0);
+   if (ret)
+      goto out;
+   ret = pass_join_values(ctx, 1);
+   if (ret)
+      goto out;
+   ret = pass_join_values(ctx, 2);
+   if (ret)
+      goto out;
+   ret = pass_linear_scan(ctx, 1);
+   if (ret)
+      goto out;
 
    for (i = 0; i < pc->num_values; ++i)
       livei_release(&pc->values[i]);
