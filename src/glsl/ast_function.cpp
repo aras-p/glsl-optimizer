@@ -470,79 +470,6 @@ constant_record_constructor(const glsl_type *constructor_type,
 
 
 /**
- * Generate data for a constant matrix constructor w/a single scalar parameter
- *
- * Matrix constructors in GLSL can be passed a single scalar of the
- * approriate type.  In these cases, the resulting matrix is the identity
- * matrix multipled by the specified scalar.  This function generates data for
- * that matrix.
- *
- * \param type         Type of the desired matrix.
- * \param initializer  Scalar value used to initialize the matrix diagonal.
- * \param data         Location to store the resulting matrix.
- */
-void
-generate_constructor_matrix(const glsl_type *type, ir_constant *initializer,
-			    ir_constant_data *data)
-{
-   assert(type->base_type == GLSL_TYPE_FLOAT);
-   assert(initializer->type->is_scalar());
-
-   for (unsigned i = 0; i < type->components(); i++)
-      data->f[i] = 0;
-
-   for (unsigned i = 0; i < type->matrix_columns; i++) {
-      /* The array offset of the ith row and column of the matrix. */
-      const unsigned idx = (i * type->vector_elements) + i;
-
-      data->f[idx] = initializer->value.f[0];
-   }
-}
-
-
-/**
- * Generate data for a constant vector constructor w/a single scalar parameter
- *
- * Vector constructors in GLSL can be passed a single scalar of the
- * approriate type.  In these cases, the resulting vector contains the specified
- * value in all components.  This function generates data for that vector.
- *
- * \param type         Type of the desired vector.
- * \param initializer  Scalar value used to initialize the vector.
- * \param data         Location to store the resulting vector data.
- */
-void
-generate_constructor_vector(const glsl_type *type, ir_constant *initializer,
-			    ir_constant_data *data)
-{
-   switch (type->base_type) {
-   case GLSL_TYPE_UINT:
-   case GLSL_TYPE_INT:
-      for (unsigned i = 0; i < type->components(); i++)
-	 data->u[i] = initializer->value.u[0];
-
-      break;
-
-   case GLSL_TYPE_FLOAT:
-      for (unsigned i = 0; i < type->components(); i++)
-	 data->f[i] = initializer->value.f[0];
-
-      break;
-
-   case GLSL_TYPE_BOOL:
-      for (unsigned i = 0; i < type->components(); i++)
-	 data->b[i] = initializer->value.b[0];
-
-      break;
-
-   default:
-      assert(!"Should not get here.");
-      break;
-   }
-}
-
-
-/**
  * Determine if a list consists of a single scalar r-value
  */
 bool
@@ -1219,32 +1146,7 @@ ast_function_expression::hir(exec_list *instructions,
        * constant representing the complete collection of parameters.
        */
       if (all_parameters_are_constant) {
-	 if (components_used >= type_components)
-	    return new(ctx) ir_constant(constructor_type,
-					& actual_parameters);
-
-	 /* The above case must handle all scalar constructors.
-	  */
-	 assert(constructor_type->is_vector()
-		|| constructor_type->is_matrix());
-
-	 /* Constructors with exactly one component are special for
-	  * vectors and matrices.  For vectors it causes all elements of
-	  * the vector to be filled with the value.  For matrices it
-	  * causes the matrix to be filled with 0 and the diagonal to be
-	  * filled with the value.
-	  */
-	 ir_constant_data data = { { 0 } };
-	 ir_constant *const initializer =
-	    (ir_constant *) actual_parameters.head;
-	 if (constructor_type->is_matrix())
-	    generate_constructor_matrix(constructor_type, initializer,
-					&data);
-	 else
-	    generate_constructor_vector(constructor_type, initializer,
-					&data);
-
-	 return new(ctx) ir_constant(constructor_type, &data);
+	 return new(ctx) ir_constant(constructor_type, &actual_parameters);
       } else if (constructor_type->is_scalar()) {
 	 return dereference_component((ir_rvalue *) actual_parameters.head,
 				      0);

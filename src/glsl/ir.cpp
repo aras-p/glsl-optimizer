@@ -415,6 +415,41 @@ ir_constant::ir_constant(const struct glsl_type *type, exec_list *value_list)
 
    ir_constant *value = (ir_constant *) (value_list->head);
 
+   /* Constructors with exactly one scalar argument are special for vectors
+    * and matrices.  For vectors, the scalar value is replicated to fill all
+    * the components.  For matrices, the scalar fills the components of the
+    * diagonal while the rest is filled with 0.
+    */
+   if (value->type->is_scalar() && value->next->is_tail_sentinel()) {
+      if (type->is_matrix()) {
+	 /* Matrix - fill diagonal (rest is already set to 0) */
+	 assert(type->base_type == GLSL_TYPE_FLOAT);
+	 for (unsigned i = 0; i < type->matrix_columns; i++)
+	    this->value.f[i * type->vector_elements + i] = value->value.f[0];
+      } else {
+	 /* Vector or scalar - fill all components */
+	 switch (type->base_type) {
+	 case GLSL_TYPE_UINT:
+	 case GLSL_TYPE_INT:
+	    for (unsigned i = 0; i < type->components(); i++)
+	       this->value.u[i] = value->value.u[0];
+	    break;
+	 case GLSL_TYPE_FLOAT:
+	    for (unsigned i = 0; i < type->components(); i++)
+	       this->value.f[i] = value->value.f[0];
+	    break;
+	 case GLSL_TYPE_BOOL:
+	    for (unsigned i = 0; i < type->components(); i++)
+	       this->value.b[i] = value->value.b[0];
+	    break;
+	 default:
+	    assert(!"Should not get here.");
+	    break;
+	 }
+      }
+      return;
+   }
+
    /* Use each component from each entry in the value_list to initialize one
     * component of the constant being constructed.
     */
