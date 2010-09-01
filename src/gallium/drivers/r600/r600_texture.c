@@ -632,7 +632,7 @@ out_word4:
 		*yuv_format_p = yuv_format;
 	return result;
 out_unknown:
-	R600_ERR("Unable to handle texformat %d %s\n", format, util_format_name(format));
+//	R600_ERR("Unable to handle texformat %d %s\n", format, util_format_name(format));
 	return ~0;
 }
 

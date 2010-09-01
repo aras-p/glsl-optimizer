@@ -99,7 +99,7 @@ struct r600_context_state {
 	union pipe_states		state;
 	unsigned			refcount;
 	unsigned			type;
-	struct radeon_state		rstate;
+	struct radeon_state		rstate[16];
 	struct r600_shader		shader;
 	struct radeon_bo		*bo;
 };

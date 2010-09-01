@@ -57,11 +57,13 @@ void r600_flush(struct pipe_context *ctx, unsigned flags,
 	 */
 	if (!rctx->ctx.cdwords)
 		goto out;
+#if 0
 	sprintf(dname, "gallium-%08d.bof", dc);
 	if (dc < 2) {
 		radeon_ctx_dump_bof(&rctx->ctx, dname);
 		R600_ERR("dumped %s\n", dname);
 	}
+#endif
 #if 1
 	radeon_ctx_submit(&rctx->ctx);
 #endif

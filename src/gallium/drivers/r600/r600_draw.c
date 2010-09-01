@@ -91,8 +91,8 @@ static int r600_draw_common(struct r600_draw *draw)
 	r = r600_pipe_shader_update(draw->ctx, rctx->ps_shader);
 	if (r)
 		return r;
-	radeon_draw_bind(&rctx->draw, &rctx->vs_shader->rstate);
-	radeon_draw_bind(&rctx->draw, &rctx->ps_shader->rstate);
+	radeon_draw_bind(&rctx->draw, &rctx->vs_shader->rstate[0]);
+	radeon_draw_bind(&rctx->draw, &rctx->ps_shader->rstate[0]);
 
 	for (i = 0 ; i < rctx->vertex_elements->count; i++) {
 		vs_resource = &rctx->vs_resource[i];
