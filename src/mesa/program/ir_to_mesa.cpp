@@ -288,6 +288,18 @@ ir_to_mesa_dst_reg ir_to_mesa_address_reg = {
    PROGRAM_ADDRESS, 0, WRITEMASK_X, COND_TR, NULL
 };
 
+static void fail_link(struct gl_shader_program *prog, const char *fmt, ...) PRINTFLIKE(2, 3);
+
+static void fail_link(struct gl_shader_program *prog, const char *fmt, ...)
+   {
+      va_list args;
+      va_start(args, fmt);
+      prog->InfoLog = talloc_vasprintf_append(prog->InfoLog, fmt, args);
+      va_end(args);
+
+      prog->LinkStatus = GL_FALSE;
+   }
+
 static int swizzle_for_size(int size)
 {
    int size_swizzles[4] = {
@@ -1870,11 +1882,8 @@ ir_to_mesa_visitor::get_sampler_uniform_value(ir_dereference *sampler)
 					      getname.name);
 
    if (index < 0) {
-      this->shader_program->InfoLog =
-	 talloc_asprintf_append(this->shader_program->InfoLog,
-				"failed to find sampler named %s.\n",
-				getname.name);
-      this->shader_program->LinkStatus = GL_FALSE;
+      fail_link(this->shader_program,
+		"failed to find sampler named %s.\n", getname.name);
       return 0;
    }
 
@@ -2372,12 +2381,9 @@ add_uniforms_to_parameters_list(struct gl_shader_program *shader_program,
 	  * from _mesa_add_uniform) has to match what the linker chose.
 	  */
 	 if (index != parameter_index) {
-	    shader_program->InfoLog =
-	       talloc_asprintf_append(shader_program->InfoLog,
-				      "Allocation of uniform `%s' to target "
-				      "failed (%d vs %d)\n", uniform->Name,
-				      index, parameter_index);
-	    shader_program->LinkStatus = false;
+	    fail_link(shader_program, "Allocation of uniform `%s' to target "
+		      "failed (%d vs %d)\n",
+		      uniform->Name, index, parameter_index);
 	 }
       }
    }
@@ -2410,12 +2416,9 @@ set_uniform_initializer(GLcontext *ctx, void *mem_ctx,
    int loc = _mesa_get_uniform_location(ctx, shader_program, name);
 
    if (loc == -1) {
-      shader_program->InfoLog =
-	 talloc_asprintf_append(shader_program->InfoLog,
-				"Couldn't find uniform for "
-				"initializer %s\n", name);
-      shader_program->LinkStatus = false;
-      abort();
+      fail_link(shader_program,
+		"Couldn't find uniform for initializer %s\n", name);
+      return;
    }
 
    for (unsigned int i = 0; i < (type->is_array() ? type->length : 1); i++) {
@@ -2600,10 +2603,7 @@ get_mesa_program(GLcontext *ctx, struct gl_shader_program *shader_program,
             prog->IndirectRegisterFiles |= 1 << mesa_inst->SrcReg[src].File;
 
       if (ctx->Shader.EmitNoIfs && mesa_inst->Opcode == OPCODE_IF) {
-	 shader_program->InfoLog =
-	    talloc_asprintf_append(shader_program->InfoLog,
-				   "Couldn't flatten if statement\n");
-	 shader_program->LinkStatus = false;
+	 fail_link(shader_program, "Couldn't flatten if statement\n");
       }
 
       switch (mesa_inst->Opcode) {
@@ -2813,9 +2813,7 @@ _mesa_glsl_link_shader(GLcontext *ctx, struct gl_shader_program *prog)
 
    for (i = 0; i < prog->NumShaders; i++) {
       if (!prog->Shaders[i]->CompileStatus) {
-	 prog->InfoLog =
-	    talloc_asprintf_append(prog->InfoLog,
-				   "linking with uncompiled shader");
+	 fail_link(prog, "linking with uncompiled shader");
 	 prog->LinkStatus = GL_FALSE;
       }
    }
