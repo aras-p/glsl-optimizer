@@ -14,18 +14,6 @@
 #define NV34TCL_CHIPSET_3X_MASK 0x00000010
 #define NV35TCL_CHIPSET_3X_MASK 0x000001e0
 
-/* FIXME: It seems I should not include directly ../../winsys/drm/nouveau/drm/nouveau_drm_api.h
-* to get the pointer to the context front buffer, so I copied nouveau_winsys here.
-* nv30_screen_surface_format_supported() can then use it to enforce creating fbo
-* with same number of bits everywhere.
-*/
-struct nouveau_winsys {
-	struct pipe_winsys base;
-
-	struct pipe_screen *pscreen;
-
-	struct pipe_surface *front;
-};
 #define NV4X_GRCLASS4097_CHIPSETS 0x00000baf
 #define NV4X_GRCLASS4497_CHIPSETS 0x00005450
 #define NV6X_GRCLASS4497_CHIPSETS 0x00000088
@@ -170,7 +158,6 @@ nvfx_screen_is_format_supported(struct pipe_screen *pscreen,
 				     unsigned bind, unsigned geom_flags)
 {
 	struct nvfx_screen *screen = nvfx_screen(pscreen);
-	struct pipe_surface *front = ((struct nouveau_winsys *) pscreen->winsys)->front;
 
 	 if (sample_count > 1)
 		return FALSE;
@@ -190,11 +177,7 @@ nvfx_screen_is_format_supported(struct pipe_screen *pscreen,
 		switch (format) {
 		case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
 		case PIPE_FORMAT_X8Z24_UNORM:
-			break;
 		case PIPE_FORMAT_Z16_UNORM:
-			/* TODO: this nv30 limitation probably does not exist */
-			if (!screen->is_nv4x && front && front->format != PIPE_FORMAT_B5G6R5_UNORM)
-				return FALSE;
 			break;
 		default:
 			return FALSE;
