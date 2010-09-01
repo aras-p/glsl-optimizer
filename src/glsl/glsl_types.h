@@ -207,10 +207,6 @@ struct glsl_type {
    static const glsl_type *get_record_instance(const glsl_struct_field *fields,
 					       unsigned num_fields,
 					       const char *name);
-   /**
-    * Generate the constructor for this type and return it
-    */
-   class ir_function *generate_constructor() const;
 
    /**
     * Query the total number of scalars that make up a scalar, vector or matrix

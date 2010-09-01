@@ -232,61 +232,6 @@ _mesa_glsl_release_types(void)
 }
 
 
-ir_function *
-glsl_type::generate_constructor() const
-{
-   void *ctx = (void *) this;
-
-   ir_function *const f = new(ctx) ir_function(name);
-   ir_function_signature *const sig = new(ctx) ir_function_signature(this);
-   f->add_signature(sig);
-
-   ir_variable **declarations =
-      (ir_variable **) malloc(sizeof(ir_variable *) * this->length);
-   for (unsigned i = 0; i < length; i++) {
-      char *const param_name = (char *) malloc(10);
-
-      snprintf(param_name, 10, "p%08X", i);
-
-      ir_variable *var = (this->base_type == GLSL_TYPE_ARRAY)
-	 ? new(ctx) ir_variable(fields.array, param_name, ir_var_in)
-	 : new(ctx) ir_variable(fields.structure[i].type, param_name, ir_var_in);
-
-      declarations[i] = var;
-      sig->parameters.push_tail(var);
-   }
-
-   /* Generate the body of the constructor.  The body assigns each of the
-    * parameters to a portion of a local variable called _ret_val that has
-    * the same type as the constructor.  After initializing _ret_val,
-    * _ret_val is returned.
-    */
-   ir_variable *retval = new(ctx) ir_variable(this, "_ret_val", ir_var_auto);
-   sig->body.push_tail(retval);
-
-   for (unsigned i = 0; i < length; i++) {
-      ir_dereference *const lhs = (this->base_type == GLSL_TYPE_ARRAY)
-	 ? (ir_dereference *) new(ctx) ir_dereference_array(retval,
-							    new(ctx) ir_constant(i))
-	 : (ir_dereference *) new(ctx) ir_dereference_record(retval,
-							     fields.structure[i].name);
-
-      ir_dereference *const rhs = new(ctx) ir_dereference_variable(declarations[i]);
-      ir_instruction *const assign = new(ctx) ir_assignment(lhs, rhs, NULL);
-
-      sig->body.push_tail(assign);
-   }
-
-   free(declarations);
-
-   ir_dereference *const retref = new(ctx) ir_dereference_variable(retval);
-   ir_instruction *const inst = new(ctx) ir_return(retref);
-   sig->body.push_tail(inst);
-
-   return f;
-}
-
-
 glsl_type::glsl_type(const glsl_type *array, unsigned length) :
    base_type(GLSL_TYPE_ARRAY),
    sampler_dimensionality(0), sampler_shadow(0), sampler_array(0),
