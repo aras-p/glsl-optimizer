@@ -30,7 +30,6 @@
 
 #include "radeon_compiler.h"
 
-void rc_remove_unused_constants(struct radeon_compiler *c,
-                                unsigned **out_remap_table);
+void rc_remove_unused_constants(struct radeon_compiler *c, void *user);
 
 #endif

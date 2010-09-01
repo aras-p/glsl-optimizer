@@ -23,7 +23,7 @@ struct emulate_loop_state {
 	unsigned int LoopReserved;
 };
 
-void rc_transform_loops(struct radeon_compiler *c);
+void rc_transform_loops(struct radeon_compiler *c, void *user);
 
 void rc_unroll_loops(struct radeon_compiler * c);
 

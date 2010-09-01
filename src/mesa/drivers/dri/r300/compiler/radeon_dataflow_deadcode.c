@@ -213,11 +213,12 @@ static void mark_output_use(void * data, unsigned int index, unsigned int mask)
 	mark_used(s, RC_FILE_OUTPUT, index, mask);
 }
 
-void rc_dataflow_deadcode(struct radeon_compiler * c, rc_dataflow_mark_outputs_fn dce)
+void rc_dataflow_deadcode(struct radeon_compiler * c, void *user)
 {
 	struct deadcode_state s;
 	unsigned int nr_instructions;
 	unsigned has_temp_reladdr_src = 0;
+	rc_dataflow_mark_outputs_fn dce = (rc_dataflow_mark_outputs_fn)user;
 
 	memset(&s, 0, sizeof(s));
 	s.C = c;

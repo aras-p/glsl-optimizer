@@ -462,8 +462,9 @@ static void ei_endif(struct r300_vertex_program_compiler *compiler,
 	inst[3] = 0;
 }
 
-static void translate_vertex_program(struct r300_vertex_program_compiler * compiler)
+static void translate_vertex_program(struct radeon_compiler *c, void *user)
 {
+	struct r300_vertex_program_compiler *compiler = (struct r300_vertex_program_compiler*)c;
 	struct rc_instruction *rci;
 
 	struct loop * loops = NULL;
@@ -637,8 +638,9 @@ struct temporary_allocation {
 	struct rc_instruction * LastRead;
 };
 
-static void allocate_temporary_registers(struct r300_vertex_program_compiler * compiler)
+static void allocate_temporary_registers(struct radeon_compiler *c, void *user)
 {
+	struct r300_vertex_program_compiler *compiler = (struct r300_vertex_program_compiler*)c;
 	struct rc_instruction *inst;
 	struct rc_instruction *end_loop = NULL;
 	unsigned int num_orig_temps = 0;
@@ -849,8 +851,9 @@ static int transform_source_conflicts(
 	return 1;
 }
 
-static void addArtificialOutputs(struct r300_vertex_program_compiler * compiler)
+static void rc_vs_add_artificial_outputs(struct radeon_compiler *c, void *user)
 {
+	struct r300_vertex_program_compiler * compiler = (struct r300_vertex_program_compiler*)c;
 	int i;
 
 	for(i = 0; i < 32; ++i) {
@@ -926,8 +929,9 @@ static void transform_negative_addressing(struct r300_vertex_program_compiler *c
 	}
 }
 
-static void rc_emulate_negative_addressing(struct r300_vertex_program_compiler *c)
+static void rc_emulate_negative_addressing(struct radeon_compiler *compiler, void *user)
 {
+	struct r300_vertex_program_compiler * c = (struct r300_vertex_program_compiler*)compiler;
 	struct rc_instruction *inst, *lastARL = NULL;
 	int min_offset = 0;
 
@@ -962,144 +966,78 @@ static void rc_emulate_negative_addressing(struct r300_vertex_program_compiler *
 		transform_negative_addressing(c, lastARL, inst, min_offset);
 }
 
-static void debug_program_log(struct r300_vertex_program_compiler* c, const char * where)
-{
-	if (c->Base.Debug) {
-		fprintf(stderr, "Vertex Program: %s\n", where);
-		rc_print_program(&c->Base.Program);
-	}
-}
-
-
 static struct rc_swizzle_caps r300_vertprog_swizzle_caps = {
 	.IsNative = &swizzle_is_native,
 	.Split = 0 /* should never be called */
 };
 
+static void validate_final_shader(struct radeon_compiler *c, void *user)
+{
+	/* Check the number of constants. */
+	if (c->Program.Constants.Count > 256) {
+		rc_error(c, "Too many constants. Max: 256, Got: %i\n",
+			 c->Program.Constants.Count);
+	}
+}
 
 void r3xx_compile_vertex_program(struct r300_vertex_program_compiler *c)
 {
+	int is_r500 = c->Base.is_r500;
+	int kill_consts = c->Base.remove_unused_constants;
+
+	/* Lists of instruction transformations. */
+	struct radeon_program_transformation alu_rewrite_r500[] = {
+		{ &r300_transform_vertex_alu, 0 },
+		{ &r300_transform_trig_scale_vertex, 0 },
+		{ 0, 0 }
+	};
+
+	struct radeon_program_transformation alu_rewrite_r300[] = {
+		{ &r300_transform_vertex_alu, 0 },
+		{ &r300_transform_trig_simple, 0 },
+		{ 0, 0 }
+	};
+
+	/* Note: These passes have to be done seperately from ALU rewrite,
+	 * otherwise non-native ALU instructions with source conflits
+	 * or non-native modifiers will not be treated properly.
+	 */
+	struct radeon_program_transformation emulate_modifiers[] = {
+		{ &transform_nonnative_modifiers, 0 },
+		{ 0, 0 }
+	};
+
+	struct radeon_program_transformation resolve_src_conflicts[] = {
+		{ &transform_source_conflicts, 0 },
+		{ 0, 0 }
+	};
+
+	/* List of compiler passes. */
+	struct radeon_compiler_pass vs_list[] = {
+		/* NAME				DUMP PREDICATE	FUNCTION			PARAM */
+		{"add artificial outputs",	0, 1,		rc_vs_add_artificial_outputs,	NULL},
+		{"transform loops",		1, 1,		rc_transform_loops,		NULL},
+		{"emulate branches",		1, !is_r500,	rc_emulate_branches,		NULL},
+		{"emulate negative addressing", 1, 1,		rc_emulate_negative_addressing,	NULL},
+		{"native rewrite",		1, is_r500,	rc_local_transform,		alu_rewrite_r500},
+		{"native rewrite",		1, !is_r500,	rc_local_transform,		alu_rewrite_r300},
+		{"emulate modifiers",		1, !is_r500,	rc_local_transform,		emulate_modifiers},
+		{"source conflict resolve",	1, 1,		rc_local_transform,		resolve_src_conflicts},
+		{"deadcode",			1, 1,		rc_dataflow_deadcode,		dataflow_outputs_mark_used},
+		{"dataflow swizzles",		1, 1,		rc_dataflow_swizzles,		NULL},
+		{"register allocation",		1, 1,		allocate_temporary_registers,	NULL},
+		{"dead constants",		1, kill_consts, rc_remove_unused_constants,	&c->code->constants_remap_table},
+		{"final code validation",	0, 1,		validate_final_shader,		NULL},
+		{"machine code generation",	0, 1,		translate_vertex_program,	NULL},
+		{"dump machine code",		0,c->Base.Debug,r300_vertex_program_dump,	NULL},
+		{NULL, 0, 0, NULL, NULL}
+	};
+
 	c->Base.SwizzleCaps = &r300_vertprog_swizzle_caps;
 
-	addArtificialOutputs(c);
-
-	debug_program_log(c, "before compilation");
-
-	rc_transform_loops(&c->Base);
-	if (c->Base.Error)
-		return;
-
-	debug_program_log(c, "after emulate loops");
-
-	if (!c->Base.is_r500) {
-		rc_emulate_branches(&c->Base);
-		if (c->Base.Error)
-			return;
-		debug_program_log(c, "after emulate branches");
-	}
-
-	rc_emulate_negative_addressing(c);
-
-	debug_program_log(c, "after negative addressing emulation");
-
-	if (c->Base.is_r500) {
-		struct radeon_program_transformation transformations[] = {
-			{ &r300_transform_vertex_alu, 0 },
-			{ &r300_transform_trig_scale_vertex, 0 },
-			{ 0, 0 }
-		};
-		radeonLocalTransform(&c->Base, transformations);
-		if (c->Base.Error)
-			return;
-
-		debug_program_log(c, "after native rewrite");
-	} else {
-		struct radeon_program_transformation transformations[] = {
-			{ &r300_transform_vertex_alu, 0 },
-			{ &radeonTransformTrigSimple, 0 },
-			{ 0, 0 }
-		};
-		radeonLocalTransform(&c->Base, transformations);
-		if (c->Base.Error)
-			return;
-
-		debug_program_log(c, "after native rewrite");
-
-		/* Note: This pass has to be done seperately from ALU rewrite,
-		 * because it needs to check every instruction.
-		 */
-		struct radeon_program_transformation transformations2[] = {
-			{ &transform_nonnative_modifiers, 0 },
-			{ 0, 0 }
-		};
-		radeonLocalTransform(&c->Base, transformations2);
-		if (c->Base.Error)
-			return;
-
-		debug_program_log(c, "after emulate modifiers");
-	}
-
-	{
-		/* Note: This pass has to be done seperately from ALU rewrite,
-		 * otherwise non-native ALU instructions with source conflits
-		 * will not be treated properly.
-		 */
-		struct radeon_program_transformation transformations[] = {
-			{ &transform_source_conflicts, 0 },
-			{ 0, 0 }
-		};
-		radeonLocalTransform(&c->Base, transformations);
-		if (c->Base.Error)
-			return;
-	}
-
-	debug_program_log(c, "after source conflict resolve");
-
-	rc_dataflow_deadcode(&c->Base, &dataflow_outputs_mark_used);
-	if (c->Base.Error)
-		return;
-
-	debug_program_log(c, "after deadcode");
-
-	rc_dataflow_swizzles(&c->Base);
-	if (c->Base.Error)
-		return;
-
-	debug_program_log(c, "after dataflow");
-
-	allocate_temporary_registers(c);
-	if (c->Base.Error)
-		return;
-
-	debug_program_log(c, "after register allocation");
-
-	if (c->Base.remove_unused_constants) {
-		rc_remove_unused_constants(&c->Base,
-					   &c->code->constants_remap_table);
-		if (c->Base.Error)
-			return;
-
-		debug_program_log(c, "after constants cleanup");
-	}
-
-	translate_vertex_program(c);
-	if (c->Base.Error)
-		return;
-
-	rc_constants_copy(&c->code->constants, &c->Base.Program.Constants);
+	rc_run_compiler(&c->Base, vs_list, "Vertex Program");
 
 	c->code->InputsRead = c->Base.Program.InputsRead;
 	c->code->OutputsWritten = c->Base.Program.OutputsWritten;
-
-	if (c->Base.Debug) {
-		fprintf(stderr, "Final vertex program code:\n");
-		r300_vertex_program_dump(c);
-	}
-
-	/* Check the number of constants. */
-	if (!c->Base.Error &&
-	    c->Base.Program.Constants.Count > 256) {
-		rc_error(&c->Base, "Too many constants. Max: 256, Got: %i\n",
-			 c->Base.Program.Constants.Count);
-	}
+	rc_constants_copy(&c->code->constants, &c->Base.Program.Constants);
 }

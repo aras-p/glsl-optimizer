@@ -197,7 +197,7 @@ static inline void reset_srcreg(struct rc_src_register* reg)
 
 
 /**
- * A transformation that can be passed to \ref radeonLocalTransform.
+ * A transformation that can be passed to \ref rc_local_transform.
  *
  * The function will be called once for each instruction.
  * It has to either emit the appropriate transformed code for the instruction
@@ -214,9 +214,9 @@ struct radeon_program_transformation {
 	void *userData;
 };
 
-void radeonLocalTransform(
+void rc_local_transform(
 	struct radeon_compiler *c,
-	struct radeon_program_transformation* transformations);
+	void *user);
 
 unsigned int rc_find_free_temporary(struct radeon_compiler * c);
 

@@ -123,6 +123,18 @@ struct r300_vertex_program_compiler {
 };
 
 void r3xx_compile_vertex_program(struct r300_vertex_program_compiler* c);
-void r300_vertex_program_dump(struct r300_vertex_program_compiler * c);
+void r300_vertex_program_dump(struct radeon_compiler *compiler, void *user);
+
+struct radeon_compiler_pass {
+	const char *name;	/* Name of the pass. */
+	int dump;		/* Dump the program if Debug == 1? */
+	int predicate;		/* Run this pass? */
+	void (*run)(struct radeon_compiler *c, void *user); /* The main entrypoint. */
+	void *user;		/* Optional parameter which is passed to the run function. */
+};
+
+/* Executes a list of compiler passes given in the parameter 'list'. */
+void rc_run_compiler(struct radeon_compiler *c, struct radeon_compiler_pass *list,
+		     const char *shader_name);
 
 #endif /* RADEON_COMPILER_H */

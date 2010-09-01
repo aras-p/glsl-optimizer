@@ -27,9 +27,9 @@
 
 #include "radeon_remove_constants.h"
 
-void rc_remove_unused_constants(struct radeon_compiler *c,
-                                unsigned **out_remap_table)
+void rc_remove_unused_constants(struct radeon_compiler *c, void *user)
 {
+	unsigned **out_remap_table = (unsigned**)user;
         unsigned char *const_used;
         unsigned *remap_table;
         unsigned *inv_remap_table;

@@ -296,7 +296,7 @@ static void fix_output_writes(struct emulate_branch_state * s, struct rc_instruc
  * on different register sets and choose between their results
  * using CMP instructions in place of the original ENDIF.
  */
-void rc_emulate_branches(struct radeon_compiler * c)
+void rc_emulate_branches(struct radeon_compiler *c, void *user)
 {
 	struct emulate_branch_state s;
 

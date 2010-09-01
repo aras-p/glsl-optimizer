@@ -111,10 +111,10 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 		rc_unroll_loops(&c->Base);
 		debug_program_log(c, "after unroll loops");
 	} else {
-		rc_transform_loops(&c->Base);
+		rc_transform_loops(&c->Base, NULL);
 		debug_program_log(c, "after transform loops");
 
-		rc_emulate_branches(&c->Base);
+		rc_emulate_branches(&c->Base, NULL);
 		debug_program_log(c, "after emulate branches");
 	}
 
@@ -126,7 +126,7 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 			{ &radeonTransformTrigScale, 0 },
 			{ 0, 0 }
 		};
-		radeonLocalTransform(&c->Base, transformations);
+		rc_local_transform(&c->Base, transformations);
 
 		debug_program_log(c, "after native rewrite part 1");
 
@@ -134,10 +134,10 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 	} else {
 		struct radeon_program_transformation transformations[] = {
 			{ &radeonTransformALU, 0 },
-			{ &radeonTransformTrigSimple, 0 },
+			{ &r300_transform_trig_simple, 0 },
 			{ 0, 0 }
 		};
-		radeonLocalTransform(&c->Base, transformations);
+		rc_local_transform(&c->Base, transformations);
 
 		debug_program_log(c, "after native rewrite part 1");
 
@@ -150,10 +150,10 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 		{ &radeonTransformTEX, c },
 		{ 0, 0 }
 	};
-	radeonLocalTransform(&c->Base, common_transformations);
+	rc_local_transform(&c->Base, common_transformations);
 
 	common_transformations[0].function = &radeonTransformALU;
-	radeonLocalTransform(&c->Base, common_transformations);
+	rc_local_transform(&c->Base, common_transformations);
 
 	if (c->Base.Error)
 		return;
@@ -175,7 +175,7 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 
 	debug_program_log(c, "after dataflow optimize");
 
-	rc_dataflow_swizzles(&c->Base);
+	rc_dataflow_swizzles(&c->Base, NULL);
 	if (c->Base.Error)
 		return;
 

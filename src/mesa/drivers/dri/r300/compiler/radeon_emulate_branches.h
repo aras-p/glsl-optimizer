@@ -25,6 +25,6 @@
 
 struct radeon_compiler;
 
-void rc_emulate_branches(struct radeon_compiler * c);
+void rc_emulate_branches(struct radeon_compiler *c, void *user);
 
 #endif /* RADEON_EMULATE_BRANCHES_H */

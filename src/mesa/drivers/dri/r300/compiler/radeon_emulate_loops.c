@@ -470,7 +470,7 @@ static int transform_loop(struct emulate_loop_state * s,
 	return 1;
 }
 
-void rc_transform_loops(struct radeon_compiler *c)
+void rc_transform_loops(struct radeon_compiler *c, void *user)
 {
 	struct emulate_loop_state * s = &c->loop_state;
 	struct rc_instruction * ptr;

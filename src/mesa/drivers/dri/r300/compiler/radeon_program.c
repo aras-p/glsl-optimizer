@@ -47,10 +47,12 @@
  * \note The transform is called 'local' because it can only look at
  * one instruction at a time.
  */
-void radeonLocalTransform(
+void rc_local_transform(
 	struct radeon_compiler * c,
-	struct radeon_program_transformation* transformations)
+	void *user)
 {
+	struct radeon_program_transformation *transformations =
+		(struct radeon_program_transformation*)user;
 	struct rc_instruction * inst = c->Program.Instructions.Next;
 
 	while(inst != &c->Program.Instructions) {

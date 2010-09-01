@@ -166,11 +166,14 @@ static void r300_vs_src_dump(uint32_t src)
 			r300_vs_swiz_debug[(src >> 22) & 0x7]);
 }
 
-void r300_vertex_program_dump(struct r300_vertex_program_compiler * c)
+void r300_vertex_program_dump(struct radeon_compiler *compiler, void *user)
 {
+	struct r300_vertex_program_compiler *c = (struct r300_vertex_program_compiler*)compiler;
 	struct r300_vertex_program_code * vs = c->code;
 	unsigned instrcount = vs->length / 4;
 	unsigned i;
+
+	fprintf(stderr, "Final vertex program code:\n");
 
 	for(i = 0; i < instrcount; i++) {
 		unsigned offset = i*4;

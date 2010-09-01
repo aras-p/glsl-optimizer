@@ -770,7 +770,7 @@ static void transform_r300_vertex_SSG(struct radeon_compiler* c,
 }
 
 /**
- * For use with radeonLocalTransform, this transforms non-native ALU
+ * For use with rc_local_transform, this transforms non-native ALU
  * instructions of the r300 up to r500 vertex engine.
  */
 int r300_transform_vertex_alu(
@@ -870,7 +870,7 @@ static void sin_approx(
  * using only the basic instructions
  *  MOV, ADD, MUL, MAD, FRC
  */
-int radeonTransformTrigSimple(struct radeon_compiler* c,
+int r300_transform_trig_simple(struct radeon_compiler* c,
 	struct rc_instruction* inst,
 	void* unused)
 {
