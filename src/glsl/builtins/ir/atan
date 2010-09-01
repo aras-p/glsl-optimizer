@@ -80,13 +80,9 @@
 
       )
       (
-        (if (expression bool >= (var_ref y) (constant float (0.000000)) ) (
-          (assign (constant bool (1)) (var_ref r)  (constant float (1.570796)) ) 
-        )
-        (
-          (assign (constant bool (1)) (var_ref r)  (constant float (-1.570796)) ) 
-        ))
-
+        (declare () float sgn)
+        (assign (constant bool (1)) (var_ref sgn) (expression float sign (var_ref y)))
+        (assign (constant bool (1)) (var_ref r) (expression float * (var_ref sgn) (constant float (1.5707965))))
       ))
 
       (return (var_ref r) )
