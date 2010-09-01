@@ -3189,6 +3189,9 @@ GLboolean assemble_math_function(r700_AssemblerBase* pAsm, BITS opcode)
         return GL_FALSE;
     }
 
+    if( pAsm->pILInst[pAsm->uiCurInst].Opcode == OPCODE_RSQ )
+        pAsm->S[0].src.abs = 1;
+
     if ( GL_FALSE == next_ins(pAsm) ) 
     {
         return GL_FALSE;
