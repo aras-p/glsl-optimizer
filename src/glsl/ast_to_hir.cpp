@@ -2193,6 +2193,25 @@ ast_function::hir(exec_list *instructions,
 
    const char *const name = identifier;
 
+   /* From page 21 (page 27 of the PDF) of the GLSL 1.20 spec,
+    *
+    *   "Function declarations (prototypes) cannot occur inside of functions;
+    *   they must be at global scope, or for the built-in functions, outside
+    *   the global scope."
+    *
+    * From page 27 (page 33 of the PDF) of the GLSL ES 1.00.16 spec,
+    *
+    *   "User defined functions may only be defined within the global scope."
+    *
+    * Note that this language does not appear in GLSL 1.10.
+    */
+   if ((state->current_function != NULL) && (state->language_version != 110)) {
+      YYLTYPE loc = this->get_location();
+      _mesa_glsl_error(&loc, state,
+		       "declaration of function `%s' not allowed within "
+		       "function body", name);
+   }
+
    /* From page 15 (page 21 of the PDF) of the GLSL 1.10 spec,
     *
     *   "Identifiers starting with "gl_" are reserved for use by
@@ -2275,7 +2294,23 @@ ast_function::hir(exec_list *instructions,
       }
 
       /* Emit the new function header */
-      instructions->push_tail(f);
+      if (state->current_function == NULL)
+	 instructions->push_tail(f);
+      else {
+	 /* IR invariants disallow function declarations or definitions nested
+	  * within other function definitions.  Insert the new ir_function
+	  * block in the instruction sequence before the ir_function block
+	  * containing the current ir_function_signature.
+	  *
+	  * This can only happen in a GLSL 1.10 shader.  In all other GLSL
+	  * versions this nesting is disallowed.  There is a check for this at
+	  * the top of this function.
+	  */
+	 ir_function *const curr =
+	    const_cast<ir_function *>(state->current_function->function());
+
+	 curr->insert_before(f);
+      }
    }
 
    /* Verify the return type of main() */
