@@ -475,18 +475,20 @@ static void translate_vertex_program(struct radeon_compiler *c, void *user)
 
 	compiler->code->pos_end = 0;	/* Not supported yet */
 	compiler->code->length = 0;
+	compiler->code->num_temporaries = 0;
 
 	compiler->SetHwInputOutput(compiler);
 
 	for(rci = compiler->Base.Program.Instructions.Next; rci != &compiler->Base.Program.Instructions; rci = rci->Next) {
 		struct rc_sub_instruction *vpi = &rci->U.I;
 		unsigned int *inst = compiler->code->body.d + compiler->code->length;
+		const struct rc_opcode_info *info = rc_get_opcode_info(vpi->Opcode);
 
 		/* Skip instructions writing to non-existing destination */
 		if (!valid_dst(compiler->code, &vpi->DstReg))
 			continue;
 
-		if (rc_get_opcode_info(vpi->Opcode)->HasDstReg) {
+		if (info->HasDstReg) {
 			/* Relative addressing of destination operands is not supported yet. */
 			if (vpi->DstReg.RelAddr) {
 				rc_error(&compiler->Base, "Vertex program does not support relative "
@@ -608,7 +610,7 @@ static void translate_vertex_program(struct radeon_compiler *c, void *user)
 		}
 
 		default:
-			rc_error(&compiler->Base, "Unknown opcode %s\n", rc_get_opcode_info(vpi->Opcode)->Name);
+			rc_error(&compiler->Base, "Unknown opcode %s\n", info->Name);
 			return;
 		}
 
@@ -623,6 +625,25 @@ static void translate_vertex_program(struct radeon_compiler *c, void *user)
 						<< PVS_DST_PRED_ENABLE_SHIFT);
 			inst[0] |= (PVS_DST_PRED_SENSE_MASK
 						<< PVS_DST_PRED_SENSE_SHIFT);
+		}
+
+		/* Update the number of temporaries. */
+		if (info->HasDstReg && vpi->DstReg.File == RC_FILE_TEMPORARY &&
+		    vpi->DstReg.Index >= compiler->code->num_temporaries)
+			compiler->code->num_temporaries = vpi->DstReg.Index + 1;
+
+		for (unsigned i = 0; i < info->NumSrcRegs; i++)
+			if (vpi->SrcReg[i].File == RC_FILE_TEMPORARY &&
+			    vpi->SrcReg[i].Index >= compiler->code->num_temporaries)
+				compiler->code->num_temporaries = vpi->SrcReg[i].Index + 1;
+
+		if (compiler->PredicateMask)
+			if (compiler->PredicateIndex >= compiler->code->num_temporaries)
+				compiler->code->num_temporaries = compiler->PredicateIndex + 1;
+
+		if (compiler->code->num_temporaries > compiler->Base.max_temp_regs) {
+			rc_error(&compiler->Base, "Too many temporaries.\n");
+			return;
 		}
 
 		compiler->code->length += 4;
@@ -668,7 +689,6 @@ static void allocate_temporary_registers(struct radeon_compiler *c, void *user)
 			}
 		}
 	}
-	compiler->code->num_temporaries = num_orig_temps;
 
 	/* Pass 2: If there is relative addressing of temporaries, we cannot change register indices. Give up. */
 	for (inst = compiler->Base.Program.Instructions.Next; inst != &compiler->Base.Program.Instructions; inst = inst->Next) {
@@ -686,7 +706,6 @@ static void allocate_temporary_registers(struct radeon_compiler *c, void *user)
 		}
 	}
 
-	compiler->code->num_temporaries = 0;
 	ta = (struct temporary_allocation*)memory_pool_malloc(&compiler->Base.Pool,
 			sizeof(struct temporary_allocation) * num_orig_temps);
 	memset(ta, 0, sizeof(struct temporary_allocation) * num_orig_temps);
@@ -755,9 +774,6 @@ static void allocate_temporary_registers(struct radeon_compiler *c, void *user)
 						ta[orig].Allocated = 1;
 						ta[orig].HwTemp = j;
 						hwtemps[j] = 1;
-
-						if (j >= compiler->code->num_temporaries)
-							compiler->code->num_temporaries = j + 1;
 					}
 				}
 
