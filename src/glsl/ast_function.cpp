@@ -833,14 +833,16 @@ emit_inline_matrix_constructor(const glsl_type *type,
 	 new(ctx) ir_assignment(rhs_var_ref, first_param, NULL);
       instructions->push_tail(inst);
 
+      const unsigned last_row = MIN2(src_matrix->type->vector_elements,
+				     var->type->vector_elements);
+      const unsigned last_col = MIN2(src_matrix->type->matrix_columns,
+				     var->type->matrix_columns);
 
       unsigned swiz[4] = { 0, 0, 0, 0 };
       for (unsigned i = 1; i < src_matrix->type->vector_elements; i++)
 	 swiz[i] = i;
 
-      const unsigned last_col = MIN2(src_matrix->type->matrix_columns,
-				     var->type->matrix_columns);
-      const unsigned write_mask = (1U << var->type->vector_elements) - 1;
+      const unsigned write_mask = (1U << last_row) - 1;
 
       for (unsigned i = 0; i < last_col; i++) {
 	 ir_dereference *const lhs =
