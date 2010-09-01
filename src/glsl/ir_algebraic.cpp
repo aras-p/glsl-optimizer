@@ -366,6 +366,58 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
       }
       break;
 
+   case ir_binop_logic_and:
+      /* FINISHME: Also simplify (a && a) to (a). */
+      if (is_vec_one(op_const[0])) {
+	 this->progress = true;
+	 return ir->operands[1];
+      } else if (is_vec_one(op_const[1])) {
+	 this->progress = true;
+	 return ir->operands[0];
+      } else if (is_vec_zero(op_const[0]) || is_vec_zero(op_const[1])) {
+	 this->progress = true;
+	 return ir_constant::zero(mem_ctx, ir->type);
+      }
+      break;
+
+   case ir_binop_logic_xor:
+      /* FINISHME: Also simplify (a ^^ a) to (false). */
+      if (is_vec_zero(op_const[0])) {
+	 this->progress = true;
+	 return ir->operands[1];
+      } else if (is_vec_zero(op_const[1])) {
+	 this->progress = true;
+	 return ir->operands[0];
+      } else if (is_vec_one(op_const[0])) {
+	 this->progress = true;
+	 return new(mem_ctx) ir_expression(ir_unop_logic_not, ir->type,
+					   ir->operands[1], NULL);
+      } else if (is_vec_one(op_const[1])) {
+	 this->progress = true;
+	 return new(mem_ctx) ir_expression(ir_unop_logic_not, ir->type,
+					   ir->operands[0], NULL);
+      }
+      break;
+
+   case ir_binop_logic_or:
+      /* FINISHME: Also simplify (a || a) to (a). */
+      if (is_vec_zero(op_const[0])) {
+	 this->progress = true;
+	 return ir->operands[1];
+      } else if (is_vec_zero(op_const[1])) {
+	 this->progress = true;
+	 return ir->operands[0];
+      } else if (is_vec_one(op_const[0]) || is_vec_one(op_const[1])) {
+	 ir_constant_data data;
+
+	 for (unsigned i = 0; i < 16; i++)
+	    data.b[i] = true;
+
+	 this->progress = true;
+	 return new(mem_ctx) ir_constant(ir->type, &data);
+      }
+      break;
+
    case ir_unop_rcp:
       if (op_expr[0] && op_expr[0]->operation == ir_unop_rcp) {
 	 this->progress = true;
